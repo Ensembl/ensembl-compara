@@ -1,10 +1,10 @@
 package EnsEMBL::Web::Document::Static;
 
 use strict;
-use EnsEMBL::Web::Document::Common;
 use CGI qw(escapeHTML);
+use EnsEMBL::Web::OrderedTree;
 
-our @ISA = qw(EnsEMBL::Web::Document::Common);
+use base qw(EnsEMBL::Web::Document::Common);
 
 sub _initialize {
   my $self = shift;
@@ -24,8 +24,8 @@ sub _initialize {
     breadcrumbs    EnsEMBL::Web::Document::HTML::BreadCrumbs
     tools          EnsEMBL::Web::Document::HTML::ToolLinks
     content        EnsEMBL::Web::Document::HTML::Content
-    global_context EnsEMBL::Web::Document::HTML::Empty
-    local_context  EnsEMBL::Web::Document::HTML::Empty
+    global_context EnsEMBL::Web::Document::HTML::GlobalContext
+    local_context  EnsEMBL::Web::Document::HTML::LocalContext
     copyright      EnsEMBL::Web::Document::HTML::Copyright
     footerlinks    EnsEMBL::Web::Document::HTML::FooterLinks
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
@@ -33,7 +33,38 @@ sub _initialize {
 
   $self->call_child_functions( 'common_page_elements','static_page_elements' );
   $self->_common_HTML();
+  
+  $self->global_context->add_entry( 'caption' => 'Using this website', 'url'     => '/info/website/', 'code'   => 'web'   );
+  $self->global_context->add_entry( 'caption' => 'Fetching the data',  'url'     => '/info/data/',    'code'   => 'data'  );
+  $self->global_context->add_entry( 'caption' => 'Code documentation', 'url'     => '/info/docs/',    'code'   => 'code'  );
+  $self->global_context->add_entry( 'caption' => 'About us',           'url'     => '/info/about/',   'code'   => 'about' );
+  $self->global_context->active( 'code:' );
+  my $tree = EnsEMBL::Web::OrderedTree->new();
+  my @nodes = ();
+  foreach(1..20) {
+    $nodes[$_] = $tree->create_node( "n$_", { 'caption' => "Node $_", 'url' => '/info/' } );
+  }
+  $nodes[1]->append($nodes[2]);
+  $nodes[1]->append($nodes[3]);
+  $nodes[1]->append($nodes[4]);
+  $nodes[1]->append($nodes[5]);
+  $nodes[2]->append($nodes[6]);
+  $nodes[2]->append($nodes[7]);
+  $nodes[2]->append($nodes[8]);
+  $nodes[3]->append($nodes[9]);
+  $nodes[3]->append($nodes[10]);
+  $nodes[3]->append($nodes[11]);
+  $nodes[12]->append($nodes[13]);
+  $nodes[12]->append($nodes[14]);
+  $nodes[12]->append($nodes[15]);
+  $nodes[12]->append($nodes[16]);
+  $nodes[12]->append($nodes[17]);
+  $nodes[18]->append($nodes[19]);
+  $nodes[18]->append($nodes[20]);
 
+  $self->local_context->tree( $tree );
+  $self->local_context->active( "n15" );
+  $self->local_context->caption( "Code documentation" );
 ## Let us set up the search box...
 #  $self->searchbox->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
 

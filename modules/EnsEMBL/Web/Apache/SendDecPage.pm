@@ -115,7 +115,8 @@ sub handler {
   my $html = $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent;
   my $hr = ($ENV{'SCRIPT_NAME'} eq '/index.html') ? '' : '<hr class="end-of-doc" />'; 
   my $panelContent;
-  if ($ENV{'SCRIPT_NAME'} =~ m#^/info/#) {
+  
+  if( 0 && $ENV{'SCRIPT_NAME'} =~ m#^/info/#) {
     $panelContent = qq(<div id="nav">);
     $panelContent .= template_SCRIPT($r, 'EnsEMBL::Web::Document::HTML::DocsMenu');
     $panelContent .= qq(</div>

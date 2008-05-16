@@ -95,6 +95,8 @@ sub createObjects {
 ##  $self->param( 'gene',[ $geneobj->stable_id ] ); # Set gene param
   #warn( "FOO: ", $self->param( 'gene' ) );
   
+  $self->problem('redirect', sprintf( 'db=%s;g=%s',$db,$geneobj->stable_id );
+
   $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Gene', $geneobj, $self->__data ));
 }
 

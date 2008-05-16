@@ -41,6 +41,7 @@ sub populate_tree {
   $self->create_node( 'Overview', "Region overview",
     [qw(
       ideo   EnsEMBL::Web::Component::Location::Ideogram
+      nav    EnsEMBL::Web::Component::Location::RegionNav
       top    EnsEMBL::Web::Component::Location::Region
     )],
     { 'availability' => 1}
@@ -50,6 +51,7 @@ sub populate_tree {
     [qw(
       ideo   EnsEMBL::Web::Component::Location::Ideogram
       top    EnsEMBL::Web::Component::Location::ViewTop
+      botnav EnsEMBL::Web::Component::Location::ViewBottomNav
       bottom EnsEMBL::Web::Component::Location::ViewBottom
       zoom   EnsEMBL::Web::Component::Location::ViewZoom
     )],

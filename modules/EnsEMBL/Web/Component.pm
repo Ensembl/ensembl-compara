@@ -10,6 +10,11 @@ use base qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
 
+sub image_width {
+  my $self = shift;
+
+  return $self->object->param('image_width')||900;
+}
 sub new {
   my( $class, $object ) = shift;
   my $self = {
