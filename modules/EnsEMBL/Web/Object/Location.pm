@@ -14,8 +14,7 @@ use POSIX qw(floor ceil);
 
 sub caption {
   my $self = shift;
-  warn $self->Obj;
-  return $self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
+  return 'Location: '.$self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
                                      $self->thousandify($self->seq_region_end);
 }
 sub centrepoint      { return ( $_[0]->Obj->{'seq_region_end'} + $_[0]->Obj->{'seq_region_start'} ) / 2; }
