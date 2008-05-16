@@ -1,8 +1,2 @@
-#!/usr/local/bin/perl
-
-package syntenyview;
-use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'Chromosome' );
-
-1;
-
+use EnsEMBL::Web::Magic;
+magic carpet Location 'Synteny'
