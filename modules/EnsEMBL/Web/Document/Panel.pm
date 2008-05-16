@@ -621,28 +621,42 @@ sub content {
              );
           $self->_prof( "Component $module_name (runtime failure [new])" );
         } else {
-          my $content;
-          eval {
-            $content = $comp_obj->content;
-          };
-          if( $@ ) {
-            warn $@;
-            $self->_error( qq(Runtime Error in component "<b>$component</b> [content]"),
-              qq(
+          my $caption = $comp_obj->caption;
+          if( $comp_obj->ajaxable() &&
+	      $self->renderer->{'r'}->headers_in->{'X-Requested-With'} ne 'XMLHttpRequest') {
+	    my( $ensembl, $plugin, $component, $type, @T ) = split '::', $module_name;
+	    my $URL = join '/',
+	       '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,@T;
+            $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
+	    if( $caption ) {
+              $self->print( qq(<div class="ajax" title="['$caption','$URL']"></div>) );
+	    } else {
+              $self->print( qq(<div class="ajax" title="['$URL']"></div>) );
+	    }
+	  } else {
+            my $content;
+            eval {
+              $content = $comp_obj->content;
+            };
+            if( $@ ) {
+              warn $@;
+              $self->_error( qq(Runtime Error in component "<b>$component</b> [content]"),
+                qq(
     <p>
       Function <strong>$module_name</strong> fails to
       execute due to the following error:
     </p>).$self->_format_error($@)
-            );
-            $self->_prof( "Component $module_name (runtime failure [content])" );
-          } else {
-            if( $content ) {
-              my $caption = $comp_obj->caption;
-              $self->print( "<h2>$caption</h2>" ) if $caption;
-              $self->print( $content );
+              );
+              $self->_prof( "Component $module_name (runtime failure [content])" );
+            } else {
+              if( $content ) {
+                my $caption = $comp_obj->caption;
+                $self->print( "<h2>$caption</h2>" ) if $caption;
+                $self->print( $content );
+              }
+              $self->_prof( "Component $module_name succeeded" );
             }
-            $self->_prof( "Component $module_name succeeded" );
-          }
+	  }
         }
       } else {
         $self->_error( qq(Compile error in component "<b>$component</b>"),
