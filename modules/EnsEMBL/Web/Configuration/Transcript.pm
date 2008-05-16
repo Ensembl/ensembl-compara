@@ -23,69 +23,72 @@ sub populate_tree {
   my $self = shift;
 
   $self->create_node( 'Structure', "Transcript Neighbourhood",
-    [qw(neighbourhood EnsEMBL::Web::Component::Gene::transcript_neighbourhood)],
+    [qw(neighbourhood EnsEMBL::Web::Component::Transcript::TranscriptNeighbourhood)],
     { 'availability' => 1}
   );
 
   $self->create_node( 'Exons', "Exons  ([[counts::exons]])",
-    [qw(exons       EnsEMBL::Web::Component::Transcript::spreadsheet_exons)],
+   # [qw(exons       EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet)],
+   [qw(exons       EnsEMBL::Web::Component::Transcript::UnderConstruction)],
     { 'availability' => 1, 'concise' => 'Exons'}
   );
 
   $self->create_node( 'Protein', "Peptide product",
-    [qw(image       EnsEMBL::Web::Component::Translation::image
-    statistics  EnsEMBL::Web::Component::Translation::pep_stats)],
+    [qw(image       EnsEMBL::Web::Component::Transcript::TranslationImage
+    statistics  EnsEMBL::Web::Component::Transcript::PepStats)],
     { 'availability' => 1}
   );
 
-  $self->create_node( 'External', "External references  ([[counts::similarity_matches]])",
-    [qw(similarity  EnsEMBL::Web::Component::Transcript::similarity_matches)],
+  $self->create_node( 'Similarity', "Similarity matches  ([[counts::similarity_matches]])",
+    [qw(similarity  EnsEMBL::Web::Component::Transcript::SimilarityMatches)],
     { 'availability' => 1, 'concise' => 'External references'}
   );
 
   $self->create_node( 'Oligos', "Oligos  ([[counts::oligos]])",
-    [qw(arrays      EnsEMBL::Web::Component::Transcript::oligo_arrays)],
+    [qw(arrays      EnsEMBL::Web::Component::Transcript::OligoArrays)],
     { 'availability' => 1,  'concise' => 'Oligos'}
   );
 
   $self->create_node( 'GO', "GO terms  ([[counts::go]])",
-    [qw(go          EnsEMBL::Web::Component::Transcript::go)],
+    [qw(go          EnsEMBL::Web::Component::Transcript::Go)],
     { 'availability' => 1, 'concise' => 'GO terms'}
   );
 
   $self->create_node( 'Evidence', "Supporting evidence  ([[counts::evidence]])",
-    [],
+   # [],
+   [qw(evidence       EnsEMBL::Web::Component::Transcript::UnderConstruction)],
     { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
 
   my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
   $var_menu->append($self->create_node( 'Population',  'Population comparison',
-    [qw()],
+    [qw(snps      EnsEMBL::Web::Component::Transcript::SNPView)],
     { 'availability' => 'database:variation' }
   ));
 
   my $seq_menu = $self->create_submenu( 'Sequence', 'Marked-up sequence' );
   $seq_menu->append($self->create_node( 'Sequence_cDNA',  'cDNA ([[counts::cdna]] bps)',
-    [qw(sequence    EnsEMBL::Web::Component::Transcript::marked_up_seq)],
+    [qw(sequence    EnsEMBL::Web::Component::Transcript::TranscriptSeq)],
     { 'availability' => 1, 'concise' => 'cDNA sequence' }
   ));
   $seq_menu->append($self->create_node( 'Sequence_Protein',  'Protein ([[counts::cdna]] aas)',
-    [qw(sequence    EnsEMBL::Web::Component::Translation::marked_up_seq)],
+    [qw(sequence    EnsEMBL::Web::Component::Transcript::ProteinSeq)],
     { 'availability' => 1, 'concise' => 'Protein sequence' }
   ));
 
   $self->create_node( 'History', "ID history",
-    [qw()],
+   # [qw(history EnsEMBL::Web::Component::Transcript::ID)],
+    [qw(history     EnsEMBL::Web::Component::Transcript::UnderConstruction)],
     { 'availability' => 1}
   );
 
   $self->create_node( 'Domain', "Domain information  ([[counts::domain]])",
-    [qw(interpro    EnsEMBL::Web::Component::Transcript::interpro)],
+    [qw(interpro    EnsEMBL::Web::Component::Transcript::Interpro)],
     { 'availability' => 1}
   );
 
   $self->create_node( 'Families', "Protein families ([[counts::families]])",
-    [qw(family    EnsEMBL::Web::Component::Transcript::family)],
+    [qw(family    EnsEMBL::Web::Component::Transcript::Family)],
     { 'availability' => 1}
   );
 
