@@ -370,8 +370,8 @@ sub createObjects {
     }, $self->__data );
 
     ## Add a slice consisting of the whole chromosome
-    my $chr = $self->_slice_adaptor()->fetch_by_region( undef, $l->seq_region_name);
-    $data->attach_slice( $chr );
+#    my $chr = $self->_slice_adaptor()->fetch_by_region( undef, $l->seq_region_name);
+    $data->attach_slice( $l );
 
     $self->DataObjects($data);
     warn ".... created";
