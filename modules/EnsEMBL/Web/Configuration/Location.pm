@@ -58,25 +58,25 @@ sub populate_tree {
 
   my $align_menu = $self->create_submenu( 'Align', 'Comparative genomics' );
   $align_menu->append( $self->create_node( 'Align_Slice', "Non-continuous alignment ([[counts::align_slice]] options)",
-    [qw(blank      EnsEMBL::Web::Component::UnderConstruction)],
+    [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'database:compara', 'concise' => 'Non-continuous alignment' }
   ));
   $align_menu->append( $self->create_node( 'Comparison', "Region comparison ([[counts::align_contig]] species)",
-    [qw(blank      EnsEMBL::Web::Component::UnderConstruction)],
+    [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'database:compara', 'concise' => 'Region comparison' }
   ));
   $align_menu->append( $self->create_node( 'Align_Seq', "Resequencing ([[counts::align_seq]] individuals)",
-    [qw(blank      EnsEMBL::Web::Component::UnderConstruction)],
+    [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'database:compara', 'concise' => 'Resequencing Alignments' }
   ));
   $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
     [qw(
-    blank      EnsEMBL::Web::Component::UnderConstruction
+    blank      EnsEMBL::Web::Component::Location::UnderConstruction
     )],
     { 'availability' => $self->mapview_possible, 'concise' => 'Synteny'}
   ));
 
-  $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component::UnderConstruction)] );
+  $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)] );
 =pod
   $exp_menu->append( $self->create_node( 'Export_BioMart',  'Jump to BioMart', [qw()] ) );
 
