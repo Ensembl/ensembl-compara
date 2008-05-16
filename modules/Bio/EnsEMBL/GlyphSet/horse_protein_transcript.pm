@@ -127,10 +127,8 @@ sub features {
   my $slice = $self->{'container'};
   my @genes;
   foreach my $analysis( 'horse_protein' ){
-warn "... $analysis ...";
     push @genes, @{ $slice->get_all_Genes( $analysis ) }
   }
-warn @genes;
   return [@genes];
 }
 
