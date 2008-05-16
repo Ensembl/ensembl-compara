@@ -20,6 +20,7 @@ our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript 
 sub Gene       { return 'Gene',       @_; }
 sub Transcript { return 'Transcript', @_; }
 sub Location   { return 'Location',   @_; }
+sub Variation  { return 'Variation',  @_; }
 
 sub magic      {
 ### Usage: use EnsEMBL::Web::Magic; magic stuff
@@ -40,11 +41,11 @@ sub carpet {
 ### mundane old existance of your 7 year old 'view' script to the
 ### wonderous realms of the magical new Ensembl 2.0 routing based
 ### 'action' script.
-  my $object_type = shift;
-  my $action      = shift;
   my $URL         = sprintf '%s%s/%s/%s%s%s',
     '/', ## Fix this to include full path so as to replace URLs...
-    $ENV{'ENSEMBL_SPECIES'},      $object_type,         $action,
+    $ENV{'ENSEMBL_SPECIES'},
+    shift,  # object_type
+    shift,  # action
     $ENV{'QUERY_STRING'}?'?':'',  $ENV{'QUERY_STRING'};
   redirect( -uri => $URL );
   return "Redirecting to $URL (taken away on the magic carpet!)";
@@ -55,7 +56,14 @@ sub ingredient {
 ###
 ### Wrapper around a list of components to produce a panel or
 ### part thereof - for inclusion via AJAX
-
+  my $webpage     = EnsEMBL::Web::Document::WebPage->new(
+    'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
+    'scriptname' => 'component'
+  );
+  my $object      = $webpage->dataObjects->[0];
+  $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
+  $webpage->render;
+  return "Generated magic ingredient ($ENV{'ENSEMBL_ACTION'})";
 }
 
 sub mushroom {
