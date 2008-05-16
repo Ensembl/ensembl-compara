@@ -19,7 +19,7 @@ sub caption {
                                      $self->thousandify($self->seq_region_end);
 }
 sub centrepoint      { return ( $_[0]->Obj->{'seq_region_end'} + $_[0]->Obj->{'seq_region_start'} ) / 2; }
-sub length           { return $_[0]->Obj->{'seq_region_end'} - $_[0]->Obj->{'seq_region_start'} + 1; }
+sub length           { return   $_[0]->Obj->{'seq_region_end'} - $_[0]->Obj->{'seq_region_start'} + 1; }
 
 sub slice            {
   my $self = shift;
@@ -446,7 +446,7 @@ sub individual_genotypes {
 
     # data{name}{AA}
     #we should only consider 1 base genotypes (from compressed table)
-    next if (length($ind_gt_obj->allele1) > 1 || length($ind_gt_obj->allele2)>1);
+    next if ( CORE::length($ind_gt_obj->allele1) > 1 || CORE::length($ind_gt_obj->allele2)>1);
     foreach ($ind_gt_obj->allele1, $ind_gt_obj->allele2) {
       my $allele = $_ =~ /A|C|G|T|N/ ? $_ : "N";
       $genotypes{ $ind_obj->name }.= $allele;
