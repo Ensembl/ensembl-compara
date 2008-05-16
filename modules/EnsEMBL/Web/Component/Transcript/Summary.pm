@@ -103,6 +103,19 @@ sub content {
 
   }
 
+## Now add the protein information...
+
+  my $translation = $object->translation_object;
+  my $protein = $translation->stable_id;
+  $html .= qq(
+    <dl class="summary">
+      <dt>Protein</dt>
+      <dd>
+        <p id="gene_text">$protein is the protein product of this transcript</p>
+      </dd>
+    </dl>);
+
+
   
   return  $html;
 }
