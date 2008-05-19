@@ -29,8 +29,8 @@ sub add_script {
 
 sub render {
   $_[0]->print( $_[0]->{'scripts'} );
-  $_[0]->print( q(  <div id="debug"></div>);
-  $_[0]->print( 
+  $_[0]->print( q(  <div id="debug"></div>));
+  $_[0]->print( q(
   <div id="conf"></div>)) if $self->debug; 
 } 
 1;
