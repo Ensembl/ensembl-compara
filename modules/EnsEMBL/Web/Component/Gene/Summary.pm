@@ -34,12 +34,6 @@ sub content {
 ## Now a link to location;
 
   my $url = $self->object->_url({
-    'object' => 'Location',
-    'action' => 'View',
-    'r'      => $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end
-  });
-
-  my $url = $object->_url({
     'type'   => 'Location',
     'action' => 'View',
     'r'      => $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end
@@ -74,7 +68,7 @@ sub content {
         <table id="transcripts" style="display:none">);
     foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
       my $url = $self->object->_url({
-        'object' => 'Transcript',
+        'type'   => 'Transcript',
         'action' => 'Summary',
         't'      => $_->stable_id
       });
