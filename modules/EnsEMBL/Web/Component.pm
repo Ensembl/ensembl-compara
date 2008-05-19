@@ -13,7 +13,7 @@ our @EXPORT    = @EXPORT_OK;
 sub image_width {
   my $self = shift;
 
-  return $self->object->param('image_width')||900;
+  return $self->object->param('image_width')||800;
 }
 sub new {
   my( $class, $object ) = shift;
