@@ -45,7 +45,13 @@ sub get_Slice {
 sub caption           {
   my $self = shift;
   my( $disp_id ) = $self->display_xref;
-  return $self->type_name.': '.($disp_id||$self->stable_id);
+  my $caption = $self->type_name.': ';
+  if( $disp_id ) {
+    $caption .= "$disp_id (".$self->stable_id.")";
+  } else {
+    $caption .= $self->stable_id;
+  }
+  return $caption;
 }
 
 sub type_name         { my $self = shift; return $self->species_defs->translate('Gene'); }
@@ -635,13 +641,14 @@ warn ">>>>> @ANALYSIS <<<<<<";
 
 ## compute the width of the slice image within the display
   my $PIXEL_WIDTH =
-    $self->param('image_width') -
+    ($self->param('image_width')||800) -
         ( $master_config->get( '_settings', 'label_width' ) || 100 ) -
     3 * ( $master_config->get( '_settings', 'margin' )      ||   5 );
 
 ## Work out the best size for the gaps between the "exons"
   my $fake_intron_gap_size = 11;
   my $intron_gaps  = ((@lengths-1)/2);
+  warn $PIXEL_WIDTH;
   if( $intron_gaps * $fake_intron_gap_size > $PIXEL_WIDTH * 0.75 ) {
      $fake_intron_gap_size = int( $PIXEL_WIDTH * 0.75 / $intron_gaps );
   }

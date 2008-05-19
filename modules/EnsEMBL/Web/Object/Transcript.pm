@@ -89,9 +89,14 @@ sub default_track_by_gene {
 sub caption           {
   my $self = shift;
   my( $disp_id ) = $self->display_xref;
-  return $self->type_name.': '.($disp_id||$self->stable_id);
+  my $caption = $self->type_name.': ';
+  if( $disp_id ) {
+    $caption .= "$disp_id (".$self->stable_id.")";
+  } else {
+    $caption .= $self->stable_id;
+  }
+  return $caption;
 }
-
 
 sub type_name         { my $self = shift; return $self->species_defs->translate('Transcript'); }
 sub source            { my $self = shift; return $self->gene ? $self->gene->source : undef; }

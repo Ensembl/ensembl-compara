@@ -21,7 +21,7 @@ sub counts {
 
 sub caption {
   my $self = shift;
-  return 'Location: '.$self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
+  return 'Location: '.$self->neat_sr_name($self->seq_region_type,$self->seq_region_name).': '.$self->thousandify($self->seq_region_start).'-'.
                                      $self->thousandify($self->seq_region_end);
 }
 sub centrepoint      { return ( $_[0]->Obj->{'seq_region_end'} + $_[0]->Obj->{'seq_region_start'} ) / 2; }
