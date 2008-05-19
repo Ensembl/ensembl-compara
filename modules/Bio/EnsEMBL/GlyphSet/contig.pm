@@ -35,25 +35,41 @@ sub _init {
   my $Container = $self->{'container'};
   $self->{'vc'} = $Container;
   my $length = $Container->length();
-
-  my $ystart = 3;
+  my $module = ref($self);
+     $module = $1 if $module=~/::([^:]+)$/;
 
   my $gline = new Sanger::Graphics::Glyph::Rect({
     'x'         => 0,
-    'y'         => $ystart + 7,
+    'y'         => 0,
     'width'     => $length,
     'height'    => 0,
     'colour'    => 'grey50',
     'absolutey' => 1,
   });
-
   $self->push($gline);
-  
+
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $h = $res[3];
+  my $box_h = $Config->get($module,'h');
+  if( !$box_h ) {
+    $box_h = $h + 4;
+  } elsif( $box_h < $h + 4 ) {
+    $h = 0;
+  }
+
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
 
+  my $gline = new Sanger::Graphics::Glyph::Rect({
+    'x'         => 0,
+    'y'         => $box_h,
+    'width'     => $length,
+    'height'    => 0,
+    'colour'    => 'grey50',
+    'absolutey' => 1,
+  });
+  $self->push($gline);
+  
   my @features = ();
   my @segments = ();
 
@@ -64,8 +80,6 @@ sub _init {
     @coord_systems = @{$Container->adaptor->db->get_CoordSystemAdaptor->fetch_all() || []};
   }
 
-  my $module = ref($self);
-     $module = $1 if $module=~/::([^:]+)$/;
   my $threshold_navigation = ($Config->get($module, 'threshold_navigation')|| 2e6)*1001;
   my $navigation     = $Config->get($module, 'navigation') || 'on';
   my $show_navigation = ($length < $threshold_navigation) && ($navigation eq 'on');
@@ -109,7 +123,7 @@ sub _init {
 	  push @features, $feature;
   }
   if( @features) {
-	  $self->_init_non_assembled_contig($ystart, \@features);
+	  $self->_init_non_assembled_contig($h,$box_h,$fontname,$fontsize,\@features);
   } else {
       my $msg = "Golden path gap - no contigs to display!";
       if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && $Container->{compara} ne 'primary') {
@@ -120,15 +134,12 @@ sub _init {
 }
 
 sub _init_non_assembled_contig {
-  my ($self, $ystart, $contig_tiling_path) = @_;
+  my ($self, $h, $box_h, $fontname, $fontsize, $contig_tiling_path) = @_;
   my $Container = $self->{'vc'};
   my $length = $Container->length();
   my $ch = $Container->seq_region_name;
 
   my $Config = $self->{'config'};
-  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
-  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-  my $h = $res[3];
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
 
   my $module = ref($self);
@@ -204,9 +215,9 @@ sub _init_non_assembled_contig {
 
     my $glyph = new Sanger::Graphics::Glyph::Rect({
       'x'         => $rstart - 1,
-      'y'         => $ystart+2,
+      'y'         => 0,
       'width'     => $rend - $rstart+1,
-      'height'    => $h+4,
+      'height'    => $box_h,
       'colour'    => $colours[$i]->[0],
       'absolutey' => 1, 
     });
@@ -268,7 +279,7 @@ sub _init_non_assembled_contig {
       }
     }
     $self->push($glyph);
-
+    if( $h ) { 
     my @res = $self->get_text_width(
       ($rend-$rstart)*$pix_per_bp,
       $strand > 0 ? "$label >" : "< $label",
@@ -281,7 +292,7 @@ sub _init_non_assembled_contig {
         'height'     => $res[3],
         'width'      => $res[2]/$pix_per_bp,
         'textwidth'  => $res[2],
-        'y'          => $ystart+($h-$res[3])/2+2,
+        'y'          => ($h-$res[3])/2,
         'font'       => $fontname,
         'ptsize'     => $fontsize,
         'colour'     => $label_colours[$i],
@@ -290,85 +301,12 @@ sub _init_non_assembled_contig {
       });
       $self->push($tglyph);
     }
+    }
   } 
 
 ######
 # Draw the scale, ticks, red box etc
 #
-  my $gline = new Sanger::Graphics::Glyph::Rect({
-    'x'         => 0,
-    'y'         => $ystart,
-    'width'     => $im_width,
-    'height'    => 0,
-    'colour'    => $black,
-    'absolutey' => 1,
-    'absolutex' => 1,'absolutewidth'=>1,
-  });
-  $self->unshift($gline);
-  $gline = new Sanger::Graphics::Glyph::Rect({
-    'x'         => 0,
-    'y'         => $ystart + $h + 8,
-    'width'     => $im_width,
-    'height'    => 0,
-    'colour'    => $black,
-    'absolutey' => 1,
-    'absolutex' => 1,    'absolutewidth'=>1,
-  });
-  $self->unshift($gline);
-    
-  ## pull in our subclassed methods if necessary
-  if ($self->can('add_arrows')){
-    $self->add_arrows($im_width, $black, $ystart);
-  }
-
-  my $tick;
-  my $interval = int($im_width/10);
-  # correct for $im_width's that are not multiples of 10
-  my $corr = int(($im_width % 10) / 2);
-  for (my $i=1; $i <=9; $i++){
-    my $pos = $i * $interval + $corr; 
-    $self->unshift( new Sanger::Graphics::Glyph::Rect({# the forward strand ticks
-      'x'         => 0 + $pos,
-      'y'         => $ystart-4,
-      'width'     => 0,
-      'height'    => 3,
-      'colour'    => $black,
-      'absolutey' => 1,
-      'absolutex' => 1,'absolutewidth'=>1,
-    }) );
-    $self->unshift( new Sanger::Graphics::Glyph::Rect({# the reverse strand ticks 
-      'x'         => 0 + $pos,
-      'y'         => $ystart + $h + 8,
-      'width'     => 0,
-      'height'    => 3,
-      'colour'    => $black,
-      'absolutey' => 1,
-      'absolutex' => 1,'absolutewidth'=>1,
-     }) );
-   }
-    
-    # The end ticks
-  $self->unshift( new Sanger::Graphics::Glyph::Rect({
-    'x'         => 0 + $corr,
-    'y'         => $ystart-2,
-    'width'     => 0,
-    'height'    => 1,
-    'colour'    => $black,
-    'absolutey' => 1,
-    'absolutex' => 1,'absolutewidth'=>1,
-  }) );
-   
-  # the reverse strand ticks
-  $self->unshift( new Sanger::Graphics::Glyph::Rect({
-    'x'         => $im_width - 1 - $corr,
-    'y'         => $ystart + $h + 8,
-    'width'     => 0,
-    'height'    => 1,
-    'colour'    => $black,
-    'absolutey' => 1,
-    'absolutex' => 1,'absolutewidth'=>1,
-  }) );
-    
   my $Container_size_limit = $Config->get('_settings', 'default_vc_size');
   # only draw a red box if we are in contigview top and there is a 
   # detailed display
@@ -409,15 +347,15 @@ sub _init_non_assembled_contig {
     # only draw focus box on the correct display...
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
       'x'            => $xc,
-      'y'            => $ystart - 4 ,
+      'y'            => - 4 ,
       'width'        => $gwidth,
-      'height'       => $h + 16,
+      'height'       => $h + 12,
       'bordercolour' => $red,
       'absolutey'    => 1,
     }) );
     $self->unshift( new Sanger::Graphics::Glyph::Rect({
       'x'            => $xc,
-      'y'            => $ystart - 3 ,
+      'y'            => - 3 ,
       'width'        => $gwidth,
       'height'       => $h + 14,
       'bordercolour' => $red,
@@ -428,39 +366,6 @@ sub _init_non_assembled_contig {
 # In case of AlignSlice don't display the navigation popup menu for the contig intervals - the same functionality can be found in alignscalebar.
 # Anyway a better way for navigation is on its way (at least we hope :)
 
-  return if ($Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice"));
-
-  my $width = $interval * ($length / $im_width) ;
-  my $interval_middle = $width/2;
-
-  if($navigation eq 'on') {
-    foreach my $i(0..9){
-      my $pos = $i * $interval;
-      # the forward strand ticks
-      $self->unshift( new Sanger::Graphics::Glyph::Space({
-        'x'         => 0 + $pos,
-        'y'         => $ystart-4,
-        'width'     => $interval,
-        'height'    => 3,
-        'absolutey' => 1,
-        'absolutex' => 1,'absolutewidth'=>1,
-        'href'      => $self->zoom_URL($Container->seq_region_name, $interval_middle + $global_start, $length,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand),
-        'zmenu'     => $self->zoom_zmenu($Container->seq_region_name, $interval_middle + $global_start, $length, $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ),
-      }));
-      # the reverse strand ticks
-      $self->unshift( new Sanger::Graphics::Glyph::Space({
-        'x'         => $im_width - $pos - $interval,
-        'y'         => $ystart + $h + 8,
-        'width'     => $interval,
-        'height'    => 3,
-        'absolutey' => 1,
-        'absolutex' => 1,'absolutewidth'=>1,
-        'href'      => $self->zoom_URL($Container->seq_region_name, $global_end+1-$interval_middle, $length,  1  , $highlights, $self->{'config'}->{'slice_number'}, $contig_strand),
-        'zmenu'     => $self->zoom_zmenu($Container->seq_region_name, $global_end+1-$interval_middle, $length, $highlights, $self->{'config'}->{'slice_number'}, $contig_strand ),
-      }) );
-      $interval_middle += $width;
-    }
-  }
 }
 
 
