@@ -1,0 +1,5 @@
+.relocate{float:left}
+.navbar { background-color: #eaeeff; text-align: right; margin-top: 3px; margin-bottom: 3px; padding: 3px; font-weight: bold }
+.navbar a {font-size:1.2em;color:#369;vertical-align:middle; text-decoration: none; margin: 1px}
+.navbar img{margin:1px;border:0px;background-color:#369;height:4px;vertical-align:bottom;width:10px}
+.go-button { color: #369; background-color: #eaeeff; border: 2px outset #eaeeff }
