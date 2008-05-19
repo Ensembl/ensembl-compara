@@ -17,6 +17,8 @@ send the DOI after the Genebuilders
 
 3. Define priorities and assign jobs to the team members.
 
+3bis. For v50 The new compara_master database is now kb3_ensembl_compara_master on compara1 
+
 4. Add in the master compara database
 (compara1:3306/jh7_ensembl_compara_master) the new entries in the
 genome_db and dnafrag tables. You can set up your registry and use the
