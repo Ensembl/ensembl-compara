@@ -35,6 +35,7 @@ sub content {
      $wuc->set_width(       $image_width );
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
+     $image->{'panel_number'} = 'bottom';
      $image->imagemap = 'yes';
 
      $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
