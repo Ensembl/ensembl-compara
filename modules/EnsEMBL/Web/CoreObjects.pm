@@ -89,24 +89,22 @@ sub location {
   return $self->{objects}{location};
 }
 
+sub _centre_point {
+  my $self = shift;
+  return int( ($self->location->end + $self->location->start) /2);
+}
+
 sub location_short_caption {
   my $self = shift;
-  return '-' unless $self->location;
-  my $midpoint = int($self->location->end - $self->location->start) + $self->location->start;
-  my $label = $self->location->seq_region_name.':'.$self->thousandify($midpoint);
+  my $label = $self->location->seq_region_name.':'.$self->thousandify($self->_centre_point);
   #return $label;
-  if( length($label)>30) {
-    return "Loc: $label";
-  } else {
-    return "Location: $label";
-  }
+  return "Location: $label";
 }
 
 sub location_long_caption {
   my $self = shift;
   return '-' unless $self->location;
-  my $midpoint = int($self->location->end - $self->location->start) + $self->location->start;
-  return "Location: ".$self->location->seq_region_name.':'.$self->thousandify($midpoint);
+  return "Location: ".$self->location->seq_region_name.':'.$self->thousandify($self->_centre_point);
 }
 
 sub location_disabled {
@@ -155,13 +153,22 @@ sub _generate_objects {
   if( $self->param('t') ) {
     $self->transcript( $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('t')) );
     $self->_get_gene_location_from_transcript;
+  } elsif( $self->param('trans') ) {
+    $self->transcript( $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('trans')) );
+    $self->_get_gene_location_from_transcript;
   }
   if( !$self->transcript && $self->param('g') ) {
     $self->gene(       $db_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('g')) );
     $self->_get_location_transcript_from_gene;
+  } elsif( !$self->transcript && $self->param('gene') ) {
+    $self->gene(       $db_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('gene')) );
+    $self->_get_location_transcript_from_gene;
   }
   if( $self->param('r') ) {
     my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(\w+)-(\w+)/;
+    $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
+  } elsif( $self->param('l') ) {
+    my($r,$s,$e) = $self->param('l') =~ /^([^:]+):(\w+)-(\w+)/;
     $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
   }
   $self->_get_gene_transcript_from_location unless $self->transcript;
@@ -187,10 +194,7 @@ sub _get_location_transcript_from_gene {
   return unless $self->gene;
 ## Replace this with canonical transcript calculation!!
   $self->transcript(
-    sort {
-      ( $b->display_xref ? $b->display_xref->priority : 0 ) <=> ( $a->display_xref ? $a->display_xref->priority : 0 ) ||
-      $a->stable_id cmp $b->stable_id
-    } @{$self->gene->get_all_Transcripts} );
+    sort { $a->stable_id cmp $b->stable_id } @{$self->gene->get_all_Transcripts} );
   $self->location(   $self->gene->feature_Slice );
 }
 
@@ -206,7 +210,6 @@ sub _get_gene_transcript_from_location {
   my $e = $self->location->end;
   my $c = ($s+$e)/2;
   my @transcripts;
-  my $distance;
   foreach my $g ( @$genes ) {
     foreach my $t ( @{$g->get_all_Transcripts} ) {
       my $ts = $t->seq_region_start;
@@ -214,26 +217,15 @@ sub _get_gene_transcript_from_location {
       if( $ts <= $c && $te >= $c ) {
         push @transcripts, [ $g,$t ];
         $nearest_distance = 0;
-      } else {
-        $distance = $te<$c ? $c-$te : $ts-$c;
-        if( $distance < $nearest_distance ) {
-          $nearest_transcript = [ $g, $t ];
-          $nearest_distance   = $distance;
-        }
       }
     }
   }
   if( @transcripts ) {
     my($T) = sort { 
-      ( $b->[1]->display_xref ? $b->[1]->display_xref->priority : 0 ) <=> ( $a->[1]->display_xref ? $a->[1]->display_xref->priority : 0 ) ||
-      $a->[0]->stable_id cmp $b->[0]->stable_id ||
-      $a->[1]->stable_id cmp $b->[1]->stable_id 
+      $a->[0]->stable_id cmp $b->[0]->stable_id || $a->[1]->stable_id cmp $b->[1]->stable_id 
     } @transcripts;
     $self->gene(       $T->[0] );
     $self->transcript( $T->[1] );
-  } elsif( $nearest_transcript->[1] ) {
-    $self->gene(       $nearest_transcript->[0] );
-    $self->transcript( $nearest_transcript->[1] );
   }
 }
 
