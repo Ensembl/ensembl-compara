@@ -61,8 +61,6 @@ sub _global_context {
   my $self = shift;
   my $type = $self->type;
 
-  warn $self->{object}->core_objects;
-  
   my @data = (
     ['location',  'Location',   $self->{object}->core_objects->location_short_caption,   $self->{object}->core_objects->location_disabled ],
     ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption,       $self->{object}->core_objects->gene_disabled ],
@@ -71,7 +69,6 @@ sub _global_context {
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
-    warn " @$row ";
     my $url   = '';
     my @class = ();
     if( $row->[2] eq '-' ) {
@@ -98,7 +95,8 @@ sub _local_context {
   my $hash = {}; #  $self->obj->get_summary_counts;
   $self->{'page'}->local_context->tree(    $self->{_data}{'tree'}    );
   $self->{'page'}->local_context->active(  $self->{_data}{'action'}  );
-  $self->{'page'}->local_context->caption( $self->{object}->caption );
+  $self->{'page'}->local_context->caption( $self->{object}->caption  );
+  $self->{'page'}->local_context->counts(  $self->{object}->counts   );
 }
 
 sub _context_panel {
@@ -109,7 +107,6 @@ sub _context_panel {
     'object'   => $obj,
     'caption'  => $obj->caption
   );
-  warn $self->type,' -> ENV -> ',$ENV{'ENSEMBL_TYPE'};
   $panel->add_component( 'summary' => sprintf( 'EnsEMBL::Web::Component::%s::Summary', $self->type ) );
   $self->add_panel( $panel );
 }
