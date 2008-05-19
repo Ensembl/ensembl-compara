@@ -11,7 +11,7 @@ use base qw( EnsEMBL::Web::Configuration );
 
 sub set_default_action {
   my $self = shift;
-  $self->{_data}{default} = 'Structure';
+  $self->{_data}{default} = 'Summary';
 }
 
 sub local_context  { $_[0]->_local_context; }
@@ -20,6 +20,10 @@ sub populate_tree {
   my $self = shift;
 #  my $hash = $obj->get_summary_counts;
 
+  $self->create_node( 'Summary', "Gene Summary",
+    [qw(summary EnsEMBL::Web::Component::Gene::GeneSummary)],
+    { 'availability' => 1, 'concise' => 'Summary' }
+  );
   $self->create_node( 'Structure', "Transcripts ([[counts::transcripts]])",
     [qw(transcripts EnsEMBL::Web::Component::Gene::TranscriptsImage)],
     { 'availability' => 1, 'concise' => 'Transcripts' }
