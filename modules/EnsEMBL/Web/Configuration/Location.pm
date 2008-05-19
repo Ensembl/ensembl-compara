@@ -42,7 +42,6 @@ sub populate_tree {
 
   $self->create_node( 'Overview', "Region overview",
     [qw(
-      ideo   EnsEMBL::Web::Component::Location::Ideogram
       nav    EnsEMBL::Web::Component::Location::RegionNav
       top    EnsEMBL::Web::Component::Location::Region
     )],
@@ -51,7 +50,6 @@ sub populate_tree {
 
   $self->create_node( 'View', "Genome in detail",
     [qw(
-      ideo   EnsEMBL::Web::Component::Location::Ideogram
       top    EnsEMBL::Web::Component::Location::ViewTop
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
       bottom EnsEMBL::Web::Component::Location::ViewBottom

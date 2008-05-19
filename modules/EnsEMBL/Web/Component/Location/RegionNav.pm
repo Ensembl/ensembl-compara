@@ -23,7 +23,7 @@ sub content {
   my $extra_html = '';
   my @ramp_entries = ( [4,1e4], [6,5e4], [8,1e5], [10,5e5], [12,1e6], [14,2e6], [16,5e6], [18,1e7] );
   foreach(@ramp_entries) {
-    $extra_html .= sprintf( '<a href="#%s"><img src="/i/blank.gif" style="height:%dpx" /></a>', $_->[1],$_->[0] );
+    $extra_html .= sprintf( '<a href="#%s"><img src="/i/blank.gif" class="blank" style="height:%dpx" /></a>', $_->[1],$_->[0] );
   }
   return sprintf qq(
   <div class="autocenter navbar" style="width:%spx">
@@ -33,7 +33,7 @@ sub content {
 		<input class="text" style="width:5em" value="%s" type="text" />
 		<input value="Go&gt;" type="submit" class="go-button" />
     </div>
-    <a href="%s">-</a> $extra_html <a href="%s">+</a>
+    <a href="%s"><img src="/i/zoom-plus.gif" class="zoom" alt="zoom in"/></a>$extra_html<a href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a>
   </div>), $image_width,
    $object->seq_region_name,
    $object->seq_region_start,
