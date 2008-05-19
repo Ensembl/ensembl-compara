@@ -497,7 +497,7 @@ sub transcript_structure {
 sub transcript_neighbourhood {
   my( $panel, $transcript ) = @_;
   my $label    = 'Transcript neigbourhood';
-  my $transcript_slice = $transcript->Obj->feature_Slice;
+  my $transcript_slice = $transcript->Obj->feature_Slice; 
      $transcript_slice = $transcript_slice->invert if $transcript_slice->strand < 1; ## Put back onto correct strand!
      $transcript_slice = $transcript_slice->expand( 10e3, 10e3 );
   my $wuc = $transcript->get_userconfig( 'transview' );
@@ -1845,6 +1845,13 @@ sub version {
   return 1 unless $version;
     $panel->add_row($label, qq(<p>$version</p>));
     return 1;
+}
+
+sub EC_URL {
+  my( $self,$string ) = @_;
+  my $URL_string= $string;
+  $URL_string=~s/-/\?/g;
+  return $self->object->get_ExtURL_link( "EC $string", 'EC_PATHWAY', $URL_string );
 }
 
 1;
