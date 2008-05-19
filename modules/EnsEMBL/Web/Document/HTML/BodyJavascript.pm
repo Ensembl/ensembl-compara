@@ -6,8 +6,13 @@ use warnings;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
-sub new { return shift->SUPER::new( 'scripts' => '', 'sources' => {} ); }
+sub new { return shift->SUPER::new( 'scripts' => '', 'sources' => {}, 'debug' => 0 ); }
 
+sub debug {
+  my $self = shift;
+  $self->{'debug'} = shift if @_;
+  return $self->{'debug'};
+}
 sub add_source { 
   my( $self, $src ) = @_;
   return unless $src;
@@ -24,8 +29,9 @@ sub add_script {
 
 sub render {
   $_[0]->print( $_[0]->{'scripts'} );
-  $_[0]->print( q(  <div id="debug"></div>
-  <div id="conf"></div>)); 
+  $_[0]->print( q(  <div id="debug"></div>)
+  $_[0]->print( 
+  <div id="conf"></div>)) if $self->debug; 
 } 
 1;
 
