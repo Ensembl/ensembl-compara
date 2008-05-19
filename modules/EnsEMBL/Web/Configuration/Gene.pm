@@ -39,7 +39,7 @@ sub populate_tree {
 ## Compara menu: alignments/orthologs/paralogs/trees
   my $compara_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
-    [qw(alignments  EnsEMBL::Web::Component::Gene::ComparaAlignments)],
+    [qw(alignments  EnsEMBL::Web::Component::Gene::UnderConstruction)],
     { 'availability' => 'database:compara', , 'concise' => 'Genomic alignments' }
   ));
 ## Compara tree
@@ -53,7 +53,7 @@ sub populate_tree {
   ));
 
   $compara_menu->append( $self->create_node( 'Compara_Tree',       "Gene Trees",
-    [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
+    [qw(image        EnsEMBL::Web::Component::Gene::UnderConstruction)],
     { 'availability' => 'database:compara' }
   ));
 =pod
@@ -66,7 +66,7 @@ sub populate_tree {
 ## DAS tree
   $self->create_node( 'Evidence',   'Supporting evidence', [qw()] );
   $self->create_node( 'Regulation', 'Regulation', 
-    [qw(regulation EnsEMBL::Web::Component::Gene::Regulation)],
+    [qw(regulation EnsEMBL::Web::Component::Gene::UnderConstruction)],
     { 'availability' => 'database:funcgen' }
   );
 ## Variation tree
