@@ -11,7 +11,7 @@ sub init {
   $self->{'general'}->{'contigviewtop'} = {
     '_artefacts'   => [  ],
     '_settings'    => {
-      'width'             => 900,
+      'width'             => 800,
 #      'draw_red_box'      => 'yes',
       'default_vc_size'   => 1000000,
       'opt_zclick'     => 1,
@@ -27,7 +27,7 @@ sub init {
   $self->ADD_SYNTENY_TRACKS( 0, 'on' => 'on' );
   my $POS = 0;
   
-  $self->add_track( 'contig',   'on'=>'on', 'pos' => $POS++ );
+  $self->add_track( 'contig',   'on'=>'on', 'pos' => $POS++, 'h' => 6 );
   $self->add_track( 'scalebar', 'on'=>'on', 'pos' => $POS++, 'str' => 'f', 'abbrev' => 'on' );
   $self->add_track( 'marker',   'on'=>'on', 'pos' => $POS++,
                     'col' => 'magenta', 'colours' => {$self->{'_colourmap'}->colourSet( 'marker' )},

@@ -21,7 +21,7 @@ sub init {
       'hi'  => 'highlight colour',
     },
     '_settings' => {
-      'width'   => 500,
+      'width'   => 800,
       'opt_zclick'   => 1,
       'bgcolor' => 'background1',
       'bgcolor2' => 'background3'

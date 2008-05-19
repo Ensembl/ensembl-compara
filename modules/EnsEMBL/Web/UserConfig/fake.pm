@@ -12,7 +12,7 @@ sub init {
     '_options'  => [],
     '_names'   => [],
     '_settings' => {
-      'width'         => 900,
+      'width'         => 800,
     }
   };
 }

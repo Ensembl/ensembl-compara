@@ -46,7 +46,7 @@ sub init {
     ],
     '_settings' => {
 ## Image size configuration...
-      'width'         => 900,
+      'width'         => 800,
       'spacing'       => 2,
       'margin'        => 5,
       'label_width'   => 100,

@@ -10,7 +10,7 @@ sub init {
   $self->{'general'}->{'alignsliceviewtop'} = {
     '_artefacts'   => [],
     '_settings'    => {
-      'width'             => 900,
+      'width'             => 800,
       'draw_red_box'      => 'yes',
       'default_vc_size'   => 1000000,
       'show_alignsliceview'   => 'yes',

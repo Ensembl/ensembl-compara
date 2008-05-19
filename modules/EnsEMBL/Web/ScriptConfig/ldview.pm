@@ -12,7 +12,7 @@ sub init {
   $script_config->_set_defaults(qw(
     panel_options    on
     panel_image      on
-    image_width      700
+    image_width      800
     context          10000
 
     opt_freq        on

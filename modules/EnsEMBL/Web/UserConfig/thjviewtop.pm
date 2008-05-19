@@ -16,7 +16,7 @@ sub init {
     'no_image_frame' => 1,
     '_options'  => [],
     '_settings' => {
-    'width'      => 900,
+    'width'      => 800,
     'draw_red_box'   => 'yes',
     '_clone_start_at_0'=> 'yes',
     'default_vc_size'  => 1000000,

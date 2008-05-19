@@ -46,7 +46,7 @@ sub init {
       'opt_zmenus'     => 1,
       'opt_zclick'     => 1,
       'show_labels'      => 'yes',
-      'width'     => 900,
+      'width'     => 800,
       'bgcolor'   => 'background1',
       'bgcolour1' => 'background3',
       'bgcolour2' => 'background1',

@@ -12,8 +12,8 @@ sub init {
 		       qw( idhistorytree)
 		       ],
     '_settings'    => {
-      'image_width'             => 900,
-      'width'             => 900,
+      'image_width'             => 800,
+      'width'             => 800,
       'default_vc_size'   => 1000000,
       'show_alignsliceview'   => 'no',
 #      'imagemap'          => 'yes',

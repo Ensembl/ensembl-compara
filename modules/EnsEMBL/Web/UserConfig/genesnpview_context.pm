@@ -14,7 +14,7 @@ sub init {
     '_options'  => [qw(pos col known unknown)],
     '_settings' => {
       'show_labels' => 'yes',
-      'width'   => 900,
+      'width'   => 800,
       'opt_zclick'     => 1,
       'bgcolor'   => 'background1',
       'bgcolour1' => 'background1',

@@ -9,7 +9,7 @@ sub init {
     panel_image          on 
     context              100
     panel_transcript     on
-    image_width          700
+    image_width          800
 
     opt_freq        on
     opt_cluster     on

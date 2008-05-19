@@ -5,8 +5,8 @@ use strict;
 sub init {
   my ($script_config) = @_;
   $script_config->_set_defaults(qw(
-    image_width          900
-    width 900
+    image_width          800
+    width 800
   ));
   $script_config->add_image_configs({qw(
     genetreeview nodas

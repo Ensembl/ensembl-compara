@@ -24,7 +24,7 @@ sub init {
       ],
       'show_labels'       => 'no',
       'show_buttons'      => 'no',
-      'width'             => 500,
+      'width'             => 800,
       'opt_zclick'        => 1,
       'show_empty_tracks' => 'yes',
       'show_empty_tracks' => 'yes',

@@ -25,8 +25,8 @@ sub init {
     },
 
     '_settings'    => {
-      'image_width'             => 900,
-      'width'             => 900,
+      'image_width'             => 800,
+      'width'             => 800,
       'draw_red_box'      => 'yes',
       'default_vc_size'   => 1000000,
       'show_alignsliceview'   => 'yes',

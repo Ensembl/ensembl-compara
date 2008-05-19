@@ -11,7 +11,7 @@ sub init {
     panel_alleles    on
     panel_locations  on
     panel_individual off
-    image_width      700
+    image_width      800
 
     opt_non_synonymous_coding  on
     opt_frameshift_coding      on

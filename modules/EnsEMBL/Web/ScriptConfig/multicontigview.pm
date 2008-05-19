@@ -10,7 +10,7 @@ sub init {
     panel_ideogram   on
     panel_top        on
     panel_bottom     on
-    image_width     900
+    image_width     800
     context        1000
     opt_match       off
     opt_hcr          on

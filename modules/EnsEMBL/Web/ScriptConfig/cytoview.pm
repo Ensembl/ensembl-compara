@@ -9,7 +9,7 @@ sub init {
   $script_config->_set_defaults(qw(
     panel_ideogram    on
     panel_bottom      on
-    image_width      700
+    image_width      800
     context        10000
   ));
   $script_config->add_image_configs({qw(

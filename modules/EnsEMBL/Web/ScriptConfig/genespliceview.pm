@@ -6,7 +6,7 @@ sub init {
   my ($script_config) = @_;
   $script_config->_set_defaults(qw(
     context              100
-    image_width          700
+    image_width          800
   ));
   $script_config->add_image_configs({qw(
     genesnpview_transcript nodas

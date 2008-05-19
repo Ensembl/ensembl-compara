@@ -19,7 +19,7 @@ $self->{'general'}->{'cytoview'} = {
   '_settings' => {
     'URL'       => '',
 ## Image size configuration...
-      'width'         => 900,
+      'width'         => 800,
       'spacing'       => 2,
       'margin'        => 5,
       'label_width'   => 100,
@@ -27,7 +27,7 @@ $self->{'general'}->{'cytoview'} = {
       'show_buttons'  => 'yes',
       'show_labels'   => 'yes',
 
-    'width'      => 900,
+    'width'      => 800,
     'default_vc_size'  => 5000000,
     'band_box'     => 'show',
     'show_cytoview'  => 'yes',
@@ -369,7 +369,7 @@ $self->{'general'}->{'cytoview'} = {
   },
   'chr_band' => {
     'on'  => "on",
-    'pos' => '9000',
+    'pos' => '8000',
   },
   'repeat_lite' => {
     'on'  => "on",

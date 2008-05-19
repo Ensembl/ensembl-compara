@@ -16,7 +16,7 @@ sub init {
     panel_bottom   on
     panel_zoom     off
     zoom_width     100
-    image_width    700
+    image_width    800
     context    1000
   ));
   $script_config->add_image_configs({qw(

@@ -15,7 +15,7 @@ sub init {
     '_artefacts' => [qw(ideogram )],
     '_options'  => [],
     '_settings' => {
-      'width'   => 900,
+      'width'   => 800,
       'show_thjview'          => 'yes',
       'show_multicontigview'  => 'yes',
       'bgcolor'   => 'background1',

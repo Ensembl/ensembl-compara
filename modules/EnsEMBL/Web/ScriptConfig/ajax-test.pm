@@ -8,7 +8,7 @@ sub init {
 
   $script_config->_set_defaults(qw(
     zoom_width     100
-    image_width    700
+    image_width    800
     context    1000
   ));
 }
