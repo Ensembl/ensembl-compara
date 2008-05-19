@@ -30,9 +30,9 @@ sub add_script {
 sub render {
   my $self = shift;
   $self->print( $self->{'scripts'} );
-  $self->print( q(  <div id="debug"></div>));
+  $self->print( q(  <div id="debug"></div>)) if $self->debug();
   $self->print( q(
-  <div id="conf"></div>)) if $self->debug; 
+  <div id="conf"></div>));
 } 
 1;
 
