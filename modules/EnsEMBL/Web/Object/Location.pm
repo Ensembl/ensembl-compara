@@ -12,6 +12,13 @@ use base qw(EnsEMBL::Web::Object);
 
 use POSIX qw(floor ceil);
 
+sub counts {
+  my $self = shift;
+  my $obj = $self->Obj;
+  my $counts = {};
+  return $counts;
+}
+
 sub caption {
   my $self = shift;
   return 'Location: '.$self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.

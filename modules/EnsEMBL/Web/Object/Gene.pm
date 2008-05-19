@@ -10,6 +10,15 @@ use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
 
 use base qw(EnsEMBL::Web::Object);
 
+sub counts {
+  my $self = shift;
+  my $obj = $self->Obj;
+  my $counts = {};
+  $counts->{'transcripts'} = @{$self->gene()->get_all_Transcripts};
+  $counts->{'exons'}       = @{$self->gene()->get_all_Exons};
+  return $counts;
+}
+
 sub get_slice_object {
   my $self = shift;
   my $slice = $self->Obj->feature_Slice->expand( $self->param('flank5_display'), $self->param('flank3_display') );
@@ -289,6 +298,7 @@ sub fetch_homology_species_hash {
   my $homology_adaptor = $databases->get_HomologyAdaptor;
   my $homologies_array = $homology_adaptor->fetch_all_by_Member_method_link_type($query_member,$homology_source);
   
+  warn ".... ".$query_member." ...";
   my $query_taxon = $query_member->taxon;
   my %classification;
   my $idx = 1;

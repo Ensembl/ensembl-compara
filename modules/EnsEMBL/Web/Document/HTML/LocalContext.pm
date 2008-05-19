@@ -8,7 +8,7 @@ use Data::Dumper;
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new( 'tree' => undef, 'active' => undef, 'caption' => 'Local context' );
+  my $self = $class->SUPER::new( 'counts' => {}, 'tree' => undef, 'active' => undef, 'caption' => 'Local context' );
   return $self;
 }
 
@@ -33,6 +33,13 @@ sub caption {
   return $self->{caption};
 }
 
+sub counts {
+  ### a
+  my $self = shift;
+  $self->{counts} = shift if @_;
+  return $self->{counts};
+}
+
 sub render {
   my $self = shift;
   my $t = $self->tree;
@@ -43,7 +50,7 @@ sub render {
   my $active_node = $t->get_node( $active );
   my $active_l    = $active_node->left;
   my $active_r    = $active_node->right;
-  my $counts = {};
+  my $counts = $self->counts;
   $self->printf( q(
       <dl id="local">
         <dt>%s</dt>), $self->caption );

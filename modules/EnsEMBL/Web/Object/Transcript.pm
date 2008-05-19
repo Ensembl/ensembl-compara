@@ -12,6 +12,13 @@ use POSIX qw(floor ceil);
 use Data::Dumper;
 our @ISA = qw(EnsEMBL::Web::Object);
 
+sub counts {
+  my $self = shift;
+  my $counts = {};
+     $counts->{'exons'}       = @{$self->Obj()->get_all_Exons};
+  return $counts;
+}
+
 sub get_database_matches {
   my $self = shift;
   my @DBLINKS;
