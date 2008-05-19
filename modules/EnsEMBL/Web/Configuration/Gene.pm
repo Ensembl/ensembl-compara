@@ -28,10 +28,6 @@ sub populate_tree {
     [qw(transcripts EnsEMBL::Web::Component::Gene::TranscriptsImage)],
     { 'availability' => 1, 'concise' => 'Transcripts' }
   );
-  $self->create_node( 'Splice', "Exons ([[counts::exons]])",
-    [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
-    { 'availability' => 1, 'concise' => 'Exons' }
-  );
 
 ##----------------------------------------------------------------------
 ## Compara menu: alignments/orthologs/paralogs/trees
@@ -64,6 +60,10 @@ sub populate_tree {
   ));
 =cut
 ## DAS tree
+  $self->create_node( 'Splice', "Alternate splicing ([[counts::exons]] exons)",
+    [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
+    { 'availability' => 1, 'concise' => 'Exons' }
+  );
   $self->create_node( 'Evidence',   'Supporting evidence', [qw()] );
   $self->create_node( 'Regulation', 'Regulation', 
     [qw(regulation EnsEMBL::Web::Component::Gene::UnderConstruction)],

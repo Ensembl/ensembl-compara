@@ -1243,8 +1243,8 @@ sub ADD_ALL_TRANSCRIPTS {
   $self->add_new_track_transcript( 'platypus_olfactory_receptors', 'Olfactory receptor Genes', 'olfactory', $POS++, @_ );
 #  $self->add_new_track_transcript( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++, @_ );
 #  $self->add_new_track_transcript( 'medaka_protein',   'Medaka genes',   'medaka_gene',   $POS++, @_ );
-  $self->add_new_track_transcript( 'fugu_protein', 'T.rubripes protein', 'fugu_protein', $POS++,  @_ );
-  $self->add_new_track_transcript( 'lamprey_protein', 'Lamprey protein', 'lamprey_protein', $POS++,  @_ );
+#  $self->add_new_track_transcript( 'fugu_protein', 'T.rubripes protein', 'fugu_protein', $POS++,  @_ );
+#  $self->add_new_track_transcript( 'lamprey_protein', 'Lamprey protein', 'lamprey_protein', $POS++,  @_ );
   $self->add_new_track_transcript( 'gff_prediction',   'MGP genes',   'medaka_gene',   $POS++, @_ );
 
   $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
