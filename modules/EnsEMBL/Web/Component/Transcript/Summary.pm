@@ -17,11 +17,12 @@ sub content {
   my $object = $self->object;
   my $html = '';
 
+
 ## Grab the description of the object...
 
   my $description = escapeHTML( $object->trans_description() );
   if( $description ) {
-    $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/EC_URL($object,$1)/e;
+    $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
     $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
     my($edb, $acc) = ($1, $2);
     $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if $acc;
@@ -54,8 +55,8 @@ sub content {
     </dl>);
 
 ## Now create the gene and transcript information...
- 
-  my $gene = $object->core_objects->gene;
+
+  my $gene = $object->core_objects->gene; 
   my $gene_id = $gene->stable_id;
   my $gene_url = $object->_url({
    'type'    => 'Gene',
