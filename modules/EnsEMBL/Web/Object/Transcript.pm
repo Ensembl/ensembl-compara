@@ -86,6 +86,13 @@ sub default_track_by_gene {
          'ensembl_transcript';
 }
 
+sub short_caption {
+  my $self = shift;
+  my( $disp_id ) = $self->display_xref;
+  return $self->type_name.': '.($disp_id||$self->stable_id);
+}
+
+
 sub caption           {
   my $self = shift;
   my( $disp_id ) = $self->display_xref;

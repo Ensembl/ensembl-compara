@@ -95,7 +95,7 @@ sub _local_context {
   my $hash = {}; #  $self->obj->get_summary_counts;
   $self->{'page'}->local_context->tree(    $self->{_data}{'tree'}    );
   $self->{'page'}->local_context->active(  $self->{_data}{'action'}  );
-  $self->{'page'}->local_context->caption( $self->{object}->caption  );
+  $self->{'page'}->local_context->caption( $self->{object}->short_caption  );
   $self->{'page'}->local_context->counts(  $self->{object}->counts   );
 }
 

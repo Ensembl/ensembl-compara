@@ -19,6 +19,13 @@ sub counts {
   return $counts;
 }
 
+sub short_caption {
+  my $self = shift;
+  return $self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
+    $self->thousandify($self->seq_region_end);
+
+}
+
 sub caption {
   my $self = shift;
   return 'Location: '.$self->neat_sr_name($self->seq_region_type,$self->seq_region_name).': '.$self->thousandify($self->seq_region_start).'-'.
