@@ -73,7 +73,8 @@ sub karyotype {
   # set some dimensions based on number and size of chromosomes    
   if( $wuc->{'_all_chromosomes'} eq 'yes' ) {
     $chr_name = 'ALL';
-    $wuc->container_width( $object->species_defs->MAX_CHR_LENGTH );
+    #$wuc->container_width( $object->species_defs->MAX_CHR_LENGTH );
+    $wuc->container_width( 300000000 );
     my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
 
 	$wuc->{'_rows'} = $object->param('rows') || ceil($total_chrs / 13 );
