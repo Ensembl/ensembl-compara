@@ -40,9 +40,9 @@ function __init_ensembl_web_hide_form() {
   }
 }
 
-addLoadEvent(__init_ensembl_web_expandable_panels )
+addLoadEvent(__init_ensembl_web_expandable_panels );
 
-addLoadEvent(__init_ensembl_web_hide_form )
+addLoadEvent(__init_ensembl_web_hide_form );
 
 
 function __init_ensembl_rel_external() {
@@ -50,4 +50,25 @@ function __init_ensembl_rel_external() {
     n.target = '__blank'
   });
 }
-addLoadEvent( __init_ensembl_rel_external )
+addLoadEvent( __init_ensembl_rel_external );
+
+var Cookie = {
+  set: function(name, value, daysToExpire) {
+    var expire = '';
+    if(daysToExpire != undefined) {
+      var d = new Date();
+      d.setTime(d.getTime() + (86400000 * parseFloat(daysToExpire)));
+      expire = '; expires=' + d.toGMTString();
+    }
+    return (document.cookie = escape(name) + '=' + escape(value || '') + expire);
+  },
+  get: function(name) {
+    var cookie = document.cookie.match(new RegExp('(^|;)\s*' + escape(name) + '=([^;\s]*)'));
+    return (cookie ? unescape(cookie[2]) : null);
+  },
+  unset: function(name) {
+    var cookie = Cookie.get(name) || true;
+    Cookie.set(name, '', -1);
+    return cookie;
+  }
+};
