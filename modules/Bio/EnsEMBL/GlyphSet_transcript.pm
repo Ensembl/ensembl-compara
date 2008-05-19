@@ -424,9 +424,9 @@ sub expanded_init {
                       #Draw a non-filled rectangle around the entire exon
             $Composite2->push(new Sanger::Graphics::Glyph::Rect({
               'x'         => $box_start -1 ,
-              'y'         => $y,
+              'y'         => $y+$h/4,
               'width'     => $box_end-$box_start +1,
-              'height'    => $h,
+              'height'    => $h/2,
               'bordercolour' => $colour,
               'absolutey' => 1,
              }));
@@ -763,9 +763,9 @@ sub as_expanded_init {
 			#Draw a non-filled rectangle around the entire exon
 			$Composite2->push(new Sanger::Graphics::Glyph::Rect({
 			    'x'         => $box_start -1 ,
-			    'y'         => $y,
+			    'y'         => $y+$h/4,
 			    'width'     => $box_end-$box_start +1,
-			    'height'    => $h,
+			    'height'    => $h/2,
 			    'bordercolour' => $colour,
 			    'absolutey' => 1,
 			}));
