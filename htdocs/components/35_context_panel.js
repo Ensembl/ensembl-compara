@@ -20,16 +20,14 @@
 
     if($('transcripts')){                    // Only if search box exists...
       __debug( 'Initializing transcript_dropdown box' );
-      $('transcripts').select('tr').each(function(n){
-        if( n.hasClassName('active') ) { n.show(); } else { n.hide(); }
+      $('transcripts_text').appendChild(
+        Builder.node( 'div', { id: 'transcripts_link' }, 'select transcript' )
+      );
+      Event.observe($('transcripts_link'),'click',function(event){
+        $('transcripts').toggle();
       });
-      $('transcripts').show();
-      $('transcripts').setAttribute('title','Click here to show all transcript identifiers');
       Event.observe($('transcripts'),'click',function(event){
-        var menu = $('transcripts');
-	menu.select('tr').each(function(n) { 
-	  if( n.hasClassName('active') ) { n.show(); } else { n.toggle(); }
-        });
+        $('transcripts').toggle();
       });
       /*
       Event.observe($('transcripts_link'),'click',function(event){
