@@ -14,8 +14,8 @@ sub counts {
   my $self = shift;
   my $obj = $self->Obj;
   my $counts = {};
-  $counts->{'transcripts'} = @{$self->gene()->get_all_Transcripts};
-  $counts->{'exons'}       = @{$self->gene()->get_all_Exons};
+  $counts->{'transcripts'} = @{$self->Obj->get_all_Transcripts};
+  $counts->{'exons'}       = @{$self->Obj->get_all_Exons};
   return $counts;
 }
 

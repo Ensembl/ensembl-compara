@@ -6,7 +6,7 @@ sub init {
   my ($script_config) = @_;
 
   $script_config->_set_defaults(qw(
-    image_width             600
+    image_width             800
     panel_gene              on
     panel_das               on
     panel_transcript        on

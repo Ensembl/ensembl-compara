@@ -25,7 +25,7 @@ sub init {
       'show_buttons' => 'no',
       'opt_zclick'   => 1,
       'opt_lines'    => 1,
-      'width'        => 600,
+      'width'        => 800,
       'bgcolor'      => 'background1',
       'bgcolour1'    => 'background1',
       'bgcolour2'    => 'background1',
