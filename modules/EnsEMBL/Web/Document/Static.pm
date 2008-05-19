@@ -24,8 +24,10 @@ sub _initialize {
     breadcrumbs    EnsEMBL::Web::Document::HTML::BreadCrumbs
     tools          EnsEMBL::Web::Document::HTML::ToolLinks
     content        EnsEMBL::Web::Document::HTML::Content
-#    global_context EnsEMBL::Web::Document::HTML::GlobalContext
-#    local_context  EnsEMBL::Web::Document::HTML::LocalContext
+    global_context EnsEMBL::Web::Document::HTML::Empty
+    local_context  EnsEMBL::Web::Document::HTML::Empty
+    #global_context EnsEMBL::Web::Document::HTML::GlobalContext
+    #local_context  EnsEMBL::Web::Document::HTML::LocalContext
     copyright      EnsEMBL::Web::Document::HTML::Copyright
     footerlinks    EnsEMBL::Web::Document::HTML::FooterLinks
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
@@ -33,7 +35,8 @@ sub _initialize {
 
   $self->call_child_functions( 'common_page_elements','static_page_elements' );
   $self->_common_HTML();
-  
+
+=pod
   $self->global_context->add_entry( 'caption' => 'Using this website', 'url'     => '/info/website/', 'code'   => 'web'   );
   $self->global_context->add_entry( 'caption' => 'Fetching the data',  'url'     => '/info/data/',    'code'   => 'data'  );
   $self->global_context->add_entry( 'caption' => 'Code documentation', 'url'     => '/info/docs/',    'code'   => 'code'  );
@@ -65,6 +68,8 @@ sub _initialize {
   $self->local_context->tree( $tree );
   $self->local_context->active( "n15" );
   $self->local_context->caption( "Code documentation" );
+=cut
+
 ## Let us set up the search box...
 #  $self->searchbox->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
 
