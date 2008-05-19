@@ -78,8 +78,7 @@ sub populate_tree {
   $self->create_node( 'Idhistory', 'ID history',
     [qw(display     EnsEMBL::Web::Component::Gene::IDHistory)]
   );
-  my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
-  $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()] ) );
+  $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component:: >>>Location::UnderConstruction)] );
 }
 
 sub global_context { return $_[0]->_global_context; }
