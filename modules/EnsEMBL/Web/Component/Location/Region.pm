@@ -26,6 +26,7 @@ sub content {
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->imagemap = 'yes';
+     $image->{'panel_number'} = 'region';
 
      $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
   return $image->render;
