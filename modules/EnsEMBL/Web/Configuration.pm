@@ -62,20 +62,17 @@ sub _global_context {
   my $type = $self->type;
 
   my @data = (
-    ['location',  'Location',   $self->{object}->core_objects->location_short_caption,   $self->{object}->core_objects->location_disabled ],
-    ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption,       $self->{object}->core_objects->gene_disabled ],
-    ['transcript','Transcript', $self->{object}->core_objects->transcript_short_caption, $self->{object}->core_objects->transcript_disabled ],
-    ['snp',       'Variation',  $self->{object}->core_objects->snp_short_caption,        $self->{object}->core_objects->snp_disabled ],
+    ['location',  'Location',   $self->{object}->core_objects->location_short_caption ],
+    ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption ],
+    ['transcript','Transcript', $self->{object}->core_objects->transcript_short_caption ],
+    ['snp',       'Variation',  $self->{object}->core_objects->snp_short_caption ],
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
-    my $url   = '';
-    my @class = ();
-    if( $row->[2] eq '-' ) {
-      push @class, 'disabled';
-    } else {
-      $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/Summary?$qs";
+    next if $row->[2] eq '-';
+    my $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/Summary?$qs";
     }
+    my @class = ();
     if( $row->[1] eq $type ) {
       push @class, 'active';
     }
@@ -84,7 +81,6 @@ sub _global_context {
       'caption'   => $row->[2],
       'url'       => $url,
       'class'     => (join ' ',@class),
-      'disabled'  => $row->[3]
     );
   }
   $self->{'page'}->global_context->active( lc($type) );

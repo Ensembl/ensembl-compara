@@ -49,11 +49,6 @@ sub transcript_long_caption {
   return "Transcript: ".$self->transcript->stable_id.$label;
 }
 
-sub transcript_disabled {
-  my $self = shift;
-  return "There is no default transcript for this location";
-}
-
 sub gene {
 ### a
   my $self = shift;
@@ -77,11 +72,6 @@ sub gene_long_caption {
   return "Gene: ".$self->gene->stable_id.$label;
 }
 
-sub gene_disabled {
-  my $self = shift;
-  return "There is no default gene for this location";
-}
-
 sub location {
 ### a
   my $self = shift;
@@ -96,7 +86,7 @@ sub _centre_point {
 
 sub location_short_caption {
   my $self = shift;
-  my $label = $self->location->seq_region_name.':'.$self->thousandify($self->_centre_point);
+  my $label = $self->location->seq_region_name.':'.$self->thousandify($self->location->start).'-'.$self->thousandify($self->location->end);
   #return $label;
   return "Location: $label";
 }
@@ -105,11 +95,6 @@ sub location_long_caption {
   my $self = shift;
   return '-' unless $self->location;
   return "Location: ".$self->location->seq_region_name.':'.$self->thousandify($self->_centre_point);
-}
-
-sub location_disabled {
-  my $self = shift;
-  return "";
 }
 
 sub snp {
@@ -134,11 +119,6 @@ sub snp_long_caption {
   my $self = shift;
   return '-' unless $self->snp;
   return "Variation: ".$self->snp->name;
-}
-
-sub snp_disabled {
-  my $self = shift;
-  return "No variation data has been selected";
 }
 
 sub param {
