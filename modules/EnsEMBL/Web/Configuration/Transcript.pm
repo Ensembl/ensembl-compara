@@ -90,12 +90,15 @@ sub populate_tree {
 
   $self->create_node( 'Domain', "Domain information  ([[counts::domain]])",
     [qw(interpro    EnsEMBL::Web::Component::Transcript::Interpro)],
-    { 'availability' => 1}
+    { 'availability' => 1, 'concise' => 'Domain information'}
   );
 
   $self->create_node( 'Families', "Protein families ([[counts::families]])",
-    [qw(family    EnsEMBL::Web::Component::Transcript::Family)],
-    { 'availability' => 1}
+    [qw(
+      summary  EnsEMBL::Web::Component::Transcript::FamilySummary
+      image    EnsEMBL::Web::Component::Transcript::FamilyImage
+    )],
+    { 'availability' => 1, 'concise' => 'Protein families'}
   );
 
   my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
