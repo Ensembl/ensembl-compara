@@ -84,6 +84,11 @@ sub karyotype {
     $wuc->container_width( $object->seq_region_length );
     $wuc->{'_rows'} = 1;
   }
+
+  if ($object->param('aggregate_colour')) {
+    $wuc->{'_aggregate_colour'} = $object->param('aggregate_colour');
+  }
+
   
   # get some adaptors for chromosome data
   my( $sa, $ka, $da);
