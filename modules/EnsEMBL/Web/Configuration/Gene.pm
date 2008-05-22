@@ -66,6 +66,13 @@ sub populate_tree {
     [qw(regulation EnsEMBL::Web::Component::Gene::UnderConstruction)],
     { 'availability' => 'database:funcgen' }
   );
+  $self->create_node( 'Family', 'Protein families ([[counts::families]])',
+    [qw(
+      family EnsEMBL::Web::Component::Gene::Family
+    )],
+    { 'availability' => 1, 'concise' => 'Protein families' }
+  );
+
 ## Variation tree
   my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
   $var_menu->append($self->create_node( 'Variation_Gene',  'Gene variations',
