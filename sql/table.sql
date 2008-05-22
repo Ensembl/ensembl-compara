@@ -70,7 +70,7 @@ CREATE TABLE genome_db (
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
   locator                     varchar(255),
 
-  FOREIGN KEY (taxon_id) REFERENCES taxon(taxon_id),
+  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   PRIMARY KEY (genome_db_id),
   UNIQUE name (name,assembly,genebuild)
 ) COLLATE=latin1_swedish_ci;
@@ -325,7 +325,7 @@ CREATE TABLE member (
   chr_strand                  tinyint(1) NOT NULL,
   display_label               varchar(128) default NULL,
 
-  FOREIGN KEY (taxon_id) REFERENCES taxon(taxon_id),
+  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
   FOREIGN KEY (gene_member_id) REFERENCES member(member_id),
