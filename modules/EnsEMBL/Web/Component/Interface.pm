@@ -107,8 +107,8 @@ sub preview_form {
   my ($primary_key) = $panel->interface->data->primary_columns;
   my $id = $object->param($primary_key) || $object->param('id');
   my $db_action = $object->param('db_action');
-  if ($object->param('record_type')) {
-    #$panel->interface->data->attach_owner($object->param('record_type'));
+  if ($object->param('owner_type')) {
+    #$panel->interface->data->attach_owner($object->param('owner_type'));
   }
 
   if ($db_action eq 'delete') {
@@ -159,8 +159,8 @@ sub _data_form {
 
   ## form widgets
   my ($key) = $panel->interface->data->primary_columns;
-  if ($object->param('record_type')) {
-    #$panel->interface->data->attach_owner($object->param('record_type'));
+  if ($object->param('owner_type')) {
+    #$panel->interface->data->attach_owner($object->param('owner_type'));
   }
   my $id = $object->param($key) || $object->param('id');
   if ($id) {

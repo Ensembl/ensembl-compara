@@ -282,8 +282,8 @@ sub _render_with_images {
   my $html .= "<dl class='species-list'>\n";
 
   foreach my $species_name (@$species_list) {
-    my $species_dir = $species_name;
-    my $common_name = $species_defs->get_config($species_dir, "SPECIES_COMMON_NAME");
+    my $species_dir = $species_name || '';
+    my $common_name = $species_defs->get_config($species_dir, "SPECIES_COMMON_NAME") || '';
     $species_name =~ s/_/ /g;
     $html .= "<dt class='species-list'><a href='/$species_dir/'><img src='/img/species/thumb_$species_dir.png' alt='$species_name' title='Browse $species_name' class='sp-thumb' height='40' width='40' /></a><a href='/$species_dir/' title='$species_name'>$common_name</a></dt>\n";
     $html .= "<dd>" . $description->{$species_dir}[0] . "</dd>\n" if $description->{$species_dir}[0];

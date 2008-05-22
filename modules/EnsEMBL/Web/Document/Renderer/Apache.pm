@@ -1,7 +1,8 @@
 package EnsEMBL::Web::Document::Renderer::Apache;
+
+use strict;
 use EnsEMBL::Web::Document::Renderer::Table::HTML;
 use EnsEMBL::Web::Document::Renderer::CellFormat::HTML;
-use strict;
 use Apache2::RequestUtil;
 
 sub new {

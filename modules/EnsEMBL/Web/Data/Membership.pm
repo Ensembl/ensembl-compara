@@ -18,4 +18,18 @@ __PACKAGE__->add_queriable_fields(
 __PACKAGE__->has_a(webgroup => 'EnsEMBL::Web::Data::Group');
 __PACKAGE__->tie_a(user     => 'EnsEMBL::Web::Data::User');
 
+
+
+###################################################################################################
+##
+## Cache related stuff
+##
+###################################################################################################
+
+sub invalidate_cache {
+  my $self = shift;
+  $self->cache->delete_by_tags('user['.$self->user_id.']');
+  $self->cache->delete_by_tags('group['.$self->webgroup_id.']');
+}
+
 1;

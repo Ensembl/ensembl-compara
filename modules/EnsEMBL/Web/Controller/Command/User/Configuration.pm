@@ -19,7 +19,7 @@ sub BUILD {
   my $cgi = new CGI;
   my $record;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Data::Configuration', $cgi->param('id'), $cgi->param('record_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::Configuration', $cgi->param('id'), $cgi->param('owner_type'));
   }
 }
 
@@ -57,16 +57,16 @@ sub render_page {
   $interface->script_name($self->get_action->script_name);
 
 ## Form elements
-  $interface->caption({'add'=>'Save configuration'});
-  $interface->caption({'edit'=>'Edit configuration'});
+  $interface->caption({add  => 'Save configuration'});
+  $interface->caption({edit => 'Edit configuration'});
   $interface->permit_delete('yes');
-  $interface->element('name', {'type'=>'String', 'label'=>'Configuration name'});
-  $interface->element('description', {'type'=>'Text', 'label'=>'A brief description of your configuration'});
-  $interface->element('url', {'type'=>'Hidden'});
-  $interface->element('scriptconfig', {'type'=>'Hidden'});
-  $interface->element('record_type', {'type'=>'Hidden'});
+  $interface->element('name',         { type => 'String', label => 'Configuration name'});
+  $interface->element('description',  { type => 'Text',   label => 'A brief description of your configuration'});
+  $interface->element('url',          { type => 'Hidden'});
+  $interface->element('scriptconfig', { type => 'Hidden'});
+  $interface->element('owner_type',   { type => 'Hidden'});
   $interface->extra_data('rename');
-  $interface->element_order('name', 'description', 'url', 'scriptconfig', 'record_type');
+  $interface->element_order(qw/name description url scriptconfig owner_type/);
 
   ## Render page or munge data, as appropriate
   $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::Record');

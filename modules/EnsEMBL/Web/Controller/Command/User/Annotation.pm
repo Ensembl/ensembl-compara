@@ -19,7 +19,7 @@ sub BUILD {
   my $cgi = new CGI;
   my $record;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Data::Annotation', $cgi->param('id'), $cgi->param('record_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::Annotation', $cgi->param('id'), $cgi->param('owner_type'));
   }
 }
 
@@ -58,15 +58,15 @@ warn "Rendering page Annotation";
   $interface->script_name($self->get_action->script_name);
 
 ## Form elements
-  $interface->caption({'add'=>'Create annotation'});
-  $interface->caption({'edit'=>'Edit annotation'});
+  $interface->caption({add  => 'Create annotation'});
+  $interface->caption({edit => 'Edit annotation'});
   $interface->permit_delete('yes');
-  $interface->element('title', {'type'=>'String', 'label'=>'Title'});
-  $interface->element('annotation', {'type'=>'Text', 'label'=>'Annotation notes'});
-  $interface->element('stable_id', {'type'=>'NoEdit', 'label'=>'Stable ID'});
-  $interface->element('url', {'type'=>'Hidden'});
-  $interface->element('record_type', {'type'=>'Hidden'});
-  $interface->element_order('stable_id', 'title', 'annotation', 'url', 'record_type');
+  $interface->element('title',      {type => 'String', label =>'Title'});
+  $interface->element('annotation', {type =>'Text'   , label =>'Annotation notes'});
+  $interface->element('stable_id',  {type =>'NoEdit' , label =>'Stable ID'});
+  $interface->element('url',        {type =>'Hidden'});
+  $interface->element('owner_type', {type => 'Hidden'});
+  $interface->element_order(qw/stable_id title annotation url owner_type/);
 
   ## Render page or munge data, as appropriate
   $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::Record');

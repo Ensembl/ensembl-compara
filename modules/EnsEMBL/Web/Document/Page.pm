@@ -323,13 +323,16 @@ sub print  { my $self = shift; $self->renderer->print( @_ )  if $self->{'_render
 sub renderer :lvalue { $_[0]{'_renderer'} };
 
 sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 1 ); }
+
 sub render {
-  my( $self ) = shift;
-## If this is an AJAX request then we will not render the page wrapper!
-  if( $self->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ) {
-    $self->content->render(); 
+  my $self = shift;
+
+  ## If this is an AJAX request then we will not render the page wrapper!
+  if ($self->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
+    $self->content->render; 
     return;
   }
+
   $self->_render_head_and_body_tag;
   #  my $X = $self->{'page_template'};
   my $X = '

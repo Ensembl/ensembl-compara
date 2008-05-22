@@ -20,7 +20,7 @@ sub BUILD {
   ## If edting, ensure that this record belongs to the logged-in user!
   my $cgi = new CGI;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Data::NewsFilter', $cgi->param('id'), $cgi->param('record_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::NewsFilter', $cgi->param('id'), $cgi->param('owner_type'));
   }
 }
 
@@ -57,10 +57,10 @@ sub render_page {
     push @species_list, {'name' => $species->common_name, 'value' => $species->name};
   }
   my @topic_list = (
-      {'name' => 'Data updates', 'value' => 'data'},
-      {'name' => 'Code changes', 'value' => 'code'},
-      {'name' => 'API changes', 'value' => 'schema'},
-      {'name' => 'Web features', 'value' => 'feature'},
+      {name => 'Data updates', value => 'data'},
+      {name => 'Code changes', value => 'code'},
+      {name => 'API changes',  value => 'schema'},
+      {name => 'Web features', value => 'feature'},
     );
 
   ## Customization
@@ -72,15 +72,21 @@ sub render_page {
   $interface->script_name($self->get_action->script_name);
 
 ## Form elements
-  $interface->caption({'add'=>'Set news filter'});
-  $interface->caption({'edit'=>'Edit news filter'});
+  $interface->caption({add  => 'Set news filter'});
+  $interface->caption({edit => 'Edit news filter'});
   $interface->permit_delete('yes');
   #$interface->element('topic', {'type'=>'MultiSelect', 'label'=>'Topic(s)',
   #                              'values' => \@topic_list, value => ''});
-  $interface->element('species', {'type' => 'MultiSelect', 'label' => 'Species',
-                                  'values' => \@species_list, value => ''});
-  $interface->element('record_type', {'type'=>'Hidden'});
-  $interface->element_order('species', 'record_type');
+  $interface->element('species', {
+                                  type   => 'MultiSelect',
+                                  label  => 'Species',
+                                  values => \@species_list,
+                                  value => ''
+                                 }
+  );
+
+  $interface->element('owner_type', { type => 'Hidden'});
+  $interface->element_order('species', 'owner_type');
 
 
   ## Render page or munge data, as appropriate

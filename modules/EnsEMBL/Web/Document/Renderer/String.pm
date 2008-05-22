@@ -1,12 +1,17 @@
 package EnsEMBL::Web::Document::Renderer::String;
-use EnsEMBL::Web::Document::Renderer::Table::Text;
+
 use strict;
+use EnsEMBL::Web::Document::Renderer::Table::Text;
+use Apache2::RequestUtil;
 
 # use overload '""' => \&value;
 
 sub new {
   my $class = shift;
-  my $self  = { 'string' => '' };
+  my $self = {
+    r      => shift || (Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request() : undef ),
+    string => '',
+  };
   bless $self, $class;
   return $self;
 }

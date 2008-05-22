@@ -4,6 +4,7 @@ use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Session;
+use Data::Dumper;
 
 use strict;
 use Class::Std;
@@ -86,6 +87,9 @@ sub initialize_user {
 ###
   my ($self, $arg_ref) = @_;
   $arg_ref->{'cookie'}->retrieve($arg_ref->{'r'});
+
+  warn Dumper($arg_ref->{'cookie'});
+
   my $id = $arg_ref->{'cookie'}->get_value;
 
   if ($id) {

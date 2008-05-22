@@ -19,7 +19,7 @@ sub BUILD {
   my $cgi = new CGI;
   my $record;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Data::Bookmark', $cgi->param('id'), $cgi->param('record_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::Bookmark', $cgi->param('id'), $cgi->param('owner_type'));
   }
 }
 
@@ -45,7 +45,7 @@ sub render_page {
   ## Create interface object, which controls the forms
   my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
   my $cgi = new CGI;
-  my $data = EnsEMBL::Web::Data::Bookmark->new({'record_type' => $cgi->param('record_type')});
+  my $data = EnsEMBL::Web::Data::Bookmark->new({owner_type => $cgi->param('owner_type')});
   $interface->data($data);
   $interface->discover;
 
@@ -58,15 +58,15 @@ sub render_page {
   $interface->script_name($self->get_action->script_name);
 
 ## Form elements
-  $interface->caption({'add'=>'Create bookmark'});
-  $interface->caption({'edit'=>'Edit bookmark'});
+  $interface->caption({add  => 'Create bookmark'});
+  $interface->caption({edit => 'Edit bookmark'});
   $interface->permit_delete('yes');
-  $interface->element('url', {'type'=>'String', 'label'=>'The URL of your bookmark'});
-  $interface->element('name', {'type'=>'String', 'label'=>'Bookmark name'});
-  $interface->element('description', {'type'=>'String', 'label'=>'Short description'});
-  $interface->element('click', {'type'=>'Hidden'});
-  $interface->element('record_type', {'type'=>'Hidden'});
-  $interface->element_order('name', 'description', 'url', 'record_type', 'click');
+  $interface->element('url',         { type => 'String', label => 'The URL of your bookmark'});
+  $interface->element('name',        { type => 'String', label => 'Bookmark name'});
+  $interface->element('description', { type => 'String', label => 'Short description'});
+  $interface->element('click',       { type => 'Hidden'});
+  $interface->element('owner_type',  { type => 'Hidden'});
+  $interface->element_order(qw/name description url owner_type click/);
 
   ## Render page or munge data, as appropriate
   $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::Record');

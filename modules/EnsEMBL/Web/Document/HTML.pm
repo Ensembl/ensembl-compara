@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Document::HTML;
+
 use strict;
+use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my $class = shift;

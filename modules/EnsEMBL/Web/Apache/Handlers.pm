@@ -18,23 +18,11 @@ use Data::Dumper;
 use Fcntl ':flock';
 use EnsEMBL::Web::RegObj;
 
-#use Cache::Memcached;
+use EnsEMBL::Web::Cache;
 
 use Exporter;
 
-our $memd;
-
-$memd =Cache::Memcached->new({
-  'servers' => [ 'localhost:11211' ],
-  'debug'   => 0,
-  'compress_threshold' => 10000,
-  'namespace'          => $SiteDefs::ENSEMBL_SERVER."-".($SiteDefs::ENSEMBL_PROXY_PORT||80)
-});
-$memd->enable_compress(0);
-
-$memd->flush_all();
-
-warn "FLUSHING MEMCACHE...........................";
+our $memd = new EnsEMBL::Web::Cache;
 
 our $THIS_HOST;
 our $LOG_INFO; 
@@ -54,27 +42,6 @@ BEGIN {
                 : $Config{'osname'} eq 'linux'   ? \&_load_command_linux
                 :                                  \&_load_command_null  ;
 };
-
-sub in_cache {
-  my($type,$key) = @_;
-  my $real_key = join '::', $type, $key;
-  my $val = $memd->get( $real_key );
-#  warn defined $val ? "CACHE HIT  $real_key\n" : "CACHE MISS $real_key\n";
-  return defined $val;
-}
-
-sub cache_value {
-  my($type,$key) = @_;
-  my $real_key = join '::', $type, $key;
-  my $val = $memd->get( $real_key );
-  return $val;
-}
-sub add_to_cache {
-#  return ; # disable caching...
-  my($type,$key,$value) = @_;
-  my $real_key = join '::', $type, $key;
-  $memd->set( $real_key, defined($value)?$value:'' );
-}
 
 #======================================================================#
 # Setting up the directory lists for Perl/webpage                      #
@@ -346,21 +313,21 @@ sub transHandler {
       $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
       $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
       $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $species, 'script'  => $script, 'type' => $type, 'action' => $action });
+
       # Search the mod-perl dirs for a script to run
-      my $to_execute = '';
-      if(in_cache( 'SCRIPT',$script ) ) {
-        $to_execute = cache_value('SCRIPT',$script );
-      } else { 
-        $to_execute ='';
+      my $to_execute = $memd ? $memd->get("::SCRIPT::$script") : '';
+      
+      unless ($to_execute) {
         foreach my $dir( @PERL_TRANS_DIRS ){
           $script || last;
           my $filename = sprintf( $dir, $species ) ."/$script";
           next unless -r $filename;
-	  $to_execute = $filename;
-	}
+      	  $to_execute = $filename;
+      	}
+        $memd->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $memd;
       }
-      add_to_cache( 'SCRIPT', $script, $to_execute );
-      if( $to_execute ) {
+
+      if ($to_execute) {
         $r->filename( $to_execute );
         $r->uri( "/perl/$species/$script" );
         $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
@@ -390,22 +357,22 @@ sub transHandler {
   # Search the htdocs dirs for a file to return
   my $path = join( "/", $species || (), $script || (), $path_info || () );
   $r->uri( "/$path" );
-  my $filename = '';
-  if( in_cache( 'STATIC', $path ) ) {
-    $filename = cache_value( 'STATIC', $path );
-  } else {
-    foreach my $dir( @HTDOCS_TRANS_DIRS ){
+
+  my $filename = $memd ? $memd->get("::STATIC::$path") : '';
+  unless ($filename) {
+    foreach my $dir (@HTDOCS_TRANS_DIRS) {
       $filename = sprintf( $dir, $path );
-      if( -d $filename ) {
+      if (-d $filename) {
         $filename = '! '.$filename;
-	last;
+      	last;
       }
-      if( -r $filename ) {
+      if (-r $filename) {
         last;
       }
     }
-    add_to_cache( 'STATIC', $path, $filename );
+    $memd->set("::STATIC::$path", $filename, undef, 'STATIC') if $memd;
   }
+  
   if( $filename =~ /^! (.*)$/ ) {
     $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
     $r->filename( $1 . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );

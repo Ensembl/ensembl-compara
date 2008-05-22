@@ -784,7 +784,7 @@ sub _render_settings_table {
           $html .= '<td style="text-align:right;"><a href="/common/user/' . $row->{'edit_url'} . '?dataview=edit;id=' . $id;
         }
         if ($row->{'group_id'}) {
-          $html .= ';record_type=group'; 
+          $html .= ';owner_type=group'; 
         }
         my $edit_link = 'Edit';
         if ($row->{'edit_url'} =~ /configuration/) {
@@ -802,7 +802,7 @@ sub _render_settings_table {
       }
       $html .= '</td><td style="text-align:right;"><a href="/common/user/' . $row->{'edit_url'} . qq(?dataview=delete;id=$id);
       if ($row->{'group_id'}) {
-        $html .= ';record_type=group';
+        $html .= ';owner_type=group';
       }
       $html .= qq(">Delete</a></td>);
     }

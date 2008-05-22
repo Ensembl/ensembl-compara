@@ -15,7 +15,7 @@ sub new {
   my $class = shift;
   my $species_defs = new EnsEMBL::Web::SpeciesDefs;
   my %memcached    = $species_defs->multiX('ENSEMBL_MEMCACHED');
-
+  
   return undef
     unless %memcached;
 
@@ -23,40 +23,98 @@ sub new {
     servers         => $memcached{servers},
     debug           => $memcached{debug},
     default_exptime => $memcached{default_exptime},
+    namespace       => $species_defs->ENSEMBL_BASE_URL,
     @,
   );
 
   my $default_exptime = delete $args{default_exptime};
-    
-  my $self = $class->SUPER::new(\%args);
 
+  my $self = $class->SUPER::new(\%args);
+  $self->enable_compress(0) unless $args{enable_compress};
+  
   $self->{default_exptime} = $default_exptime;
   return $self;
 }
 
+sub add_tags {
+  my $self = shift;
+  my $key  = shift;
+  my @tags = @_;
+
+  warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
+  if ($self->{debug}) {
+    warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
+    my $debug_key_list = $self->SUPER::get('debug_key_list') || {};
+    $debug_key_list->{$key} ||= {};
+    push @{ $debug_key_list->{$key}{tags} }, @tags;
+    $self->SUPER::set('debug_key_list', $debug_key_list);
+  }
+
+  my $sock = $self->get_sock($key);
+  foreach my $tag (@tags) {
+    my $cmd = "tag_add $tag $self->{namespace}$key\r\n";
+    my $res = $self->_write_and_read($sock, $cmd);
+    warn $cmd . ' = ' . $res;
+    return 0 unless $res eq "TAG_STORED\r\n";
+  }
+
+  return 1;
+}
+
+
+##
+## delete_by_tags(@tags)
+## deletes all and only items which have ALL tags specified
+##
+sub delete_by_tags {
+  my $self = shift;
+  my @tags = (@_, $self->{namespace});
+  my $sock = $self->get_sock($tags[0]);
+
+  if ($#tags) { ## if more than 1 tag
+    my $cmd = 'tags_delete '.join(' ', @tags)."\r\n";
+    my $res = $self->_write_and_read($sock, $cmd);
+    if ($res =~ /^(\d+) ITEMS_DELETED/) {
+      return $1;
+    } else {
+      return 0;
+    }
+  } else { ## just 1 tag, better use tag_delete (faster)
+    my $cmd = 'tag_delete '.$tags[0]."\r\n";
+    my $res = $self->_write_and_read($sock, $cmd);
+    return $res eq "TAG_DELETED\r\n";
+  }
+}
+
 sub set {
   my $self = shift;
-  my ($key, $value, $exptime) = @_;
+  my ($key, $value, $exptime, @tags) = @_;
 
+  warn "EnsEMBL::Web::Cache->set($key)";
   if ($self->{debug}) {
+    warn "EnsEMBL::Web::Cache->set($key)";
     my $debug_key_list = $self->SUPER::get('debug_key_list') || {};
-    $debug_key_list->{$key} = {} unless $debug_key_list->{$key};
+    $debug_key_list->{$key} ||= {};
     $debug_key_list->{$key}{set_time} ||= localtime;
     $debug_key_list->{$key}{upd_time}   = localtime;
     $debug_key_list->{$key}{upd_cntr}++;
     $debug_key_list->{$key}{get_time}   = 0;
     $debug_key_list->{$key}{get_cntr}   = 0;
+    $debug_key_list->{$key}{tags}       = [];
     $self->SUPER::set('debug_key_list', $debug_key_list);
   }
   
   $self->SUPER::set($key, $value, $exptime || $self->{default_exptime});
+  $self->add_tags($key, $self->{namespace}, @tags);
 }
 
 sub get {
   my $self = shift;
   my $key  = shift;
 
+  warn "EnsEMBL::Web::Cache->get($key)";
   if ($self->{debug} && (my $debug_key_list = $self->SUPER::get('debug_key_list'))) {
+    warn "EnsEMBL::Web::Cache->get($key)";
     $debug_key_list->{$key} ||= {};
     $debug_key_list->{$key}{get_time} = localtime;
     $debug_key_list->{$key}{get_cntr}++;
@@ -70,7 +128,9 @@ sub delete {
   my $self = shift;
   my $key  = shift;
 
+  warn "EnsEMBL::Web::Cache->delete($key)";
   if ($self->{debug} && (my $debug_key_list = $self->SUPER::get('debug_key_list'))) {
+    warn "EnsEMBL::Web::Cache->delete($key)";
     delete $debug_key_list->{$key};
     $self->SUPER::set('debug_key_list', $debug_key_list);
   }

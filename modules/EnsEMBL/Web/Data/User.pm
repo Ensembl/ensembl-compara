@@ -35,12 +35,14 @@ __PACKAGE__->add_has_many(
 __PACKAGE__->has_many(_groups => ['EnsEMBL::Web::Data::Membership' => 'webgroup']);
 
 sub groups {
-  return grep { $_->status eq 'active' } shift->_groups(@_);
+  my $self = shift;
+
+  return grep { $_->status eq 'active' } $self->_groups(@_);
 }
 
 sub find_administratable_groups {
   my $self = shift;
-  ## TODO: Not sure if this will work  
+
   my @admin_groups = (
     $self->groups(level => 'administrator'),
     $self->groups(level => 'superuser'),
@@ -59,6 +61,25 @@ sub is_member_of {
   my ($self, $group) = @_; 
 
   return grep {$group->id eq $_->id} $self->groups;
+}
+
+
+
+###################################################################################################
+##
+## Cache related stuff
+##
+###################################################################################################
+
+sub invalidate_cache {
+  my $self = shift;
+  $self->SUPER::invalidate_cache('user['.$self->id.']');
+}
+
+sub propagate_cache_tags {
+  my $self = shift;
+  $self->SUPER::propagate_cache_tags('user['.$self->id.']')
+    if ref $self;
 }
 
 1;

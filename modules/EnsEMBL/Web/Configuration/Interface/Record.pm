@@ -18,8 +18,8 @@ sub save {
 
   my $id = $object->param($primary_key) || $object->param('id');
 
-  if ($object->param('record_type')) {
-    #$interface->data->attach_owner($object->param('record_type'));
+  if ($object->param('owner_type')) {
+    #$interface->data->attach_owner($object->param('owner_type'));
   }
   
   $interface->cgi_populate($object);
@@ -42,7 +42,7 @@ sub save {
   my $script = $interface->script_name || $object->script;
   my $url;
   if ($success) {
-    if ($object->param('record_type') eq 'group') {
+    if ($object->param('owner_type') eq 'group') {
       #$interface->data->populate($id);
       $url = "/common/user/view_group?id=".$interface->data->webgroup_id;
     }
@@ -71,8 +71,8 @@ sub delete {
 
   my ($primary_key) = $interface->data->primary_columns;
   my $id = $object->param($primary_key) || $object->param('id');
-  if ($object->param('record_type')) {
-    #$interface->data->attach_owner($object->param('record_type'));
+  if ($object->param('owner_type')) {
+    #$interface->data->attach_owner($object->param('owner_type'));
   }
   #$interface->data->populate($id);
 
@@ -80,7 +80,7 @@ sub delete {
   my $script = $interface->script_name || $object->script;
   my $url;
   if ($success) {
-    if ($object->param('record_type') eq 'group') {
+    if ($object->param('owner_type') eq 'group') {
       #$interface->data->populate($id);
       $url = "/common/user/view_group?id=".$interface->data->webgroup_id;
     }

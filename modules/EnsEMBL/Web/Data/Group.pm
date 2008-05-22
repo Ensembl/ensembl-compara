@@ -68,4 +68,23 @@ sub add_user {
   });
 }
 
+
+
+###################################################################################################
+##
+## Cache related stuff
+##
+###################################################################################################
+
+sub invalidate_cache {
+  my $self = shift;
+  $self->SUPER::invalidate_cache('group['.$self->id.']');
+}
+
+sub propagate_cache_tags {
+  my $self = shift;
+  $self->SUPER::propagate_cache_tags('group['.$self->id.']')
+    if ref $self;
+}
+
 1;

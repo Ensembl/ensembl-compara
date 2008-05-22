@@ -13,7 +13,9 @@ use Data::Dumper qw//;
 __PACKAGE__->mk_classdata(data_fields      => {});
 __PACKAGE__->mk_classdata(queriable_fields => {});
 __PACKAGE__->mk_classdata(relations        => {});
+__PACKAGE__->mk_classdata(cache_tags       => {});
 __PACKAGE__->mk_classdata('__type');
+
 
 ##
 ## Enhancement for our MySQLAdaptor (Class::DBI), which doesn't have new constructor by default
@@ -149,6 +151,12 @@ sub get_all_fields {
 }
 
 
+###################################################################################################
+##
+## Record serialized data stuff
+##
+###################################################################################################
+
 sub withdraw_data {
   my $self = shift;
   my $hash = eval ($self->data);
@@ -182,6 +190,14 @@ sub dump_data {
   $dump =~ s/^\$VAR1 = //;
   return $dump;
 }
+
+
+
+###################################################################################################
+##
+## Owner/record related stuff
+##
+###################################################################################################
 
 
 sub has_a {
@@ -269,9 +285,13 @@ sub tie_a {
   }
 }
 
-sub find_all { shift->retrieve_all(@_) }
-sub find     { shift->retrieve(@_) }
-sub destroy  { shift->delete(@_) }
+
+
+###################################################################################################
+##
+## Cache related stuff
+##
+###################################################################################################
 
 ## Set caching object
 ## Any cache object that has a get, set, and remove method is supported
@@ -279,6 +299,49 @@ __PACKAGE__->cache(
   new EnsEMBL::Web::Cache
 );
 
-#__PACKAGE__->default_search_attributes( { use_resultset_cache => 1 } );
+if (__PACKAGE__->cache) {
+    __PACKAGE__->add_trigger(select => sub { $_[0]->propagate_cache_tags } );
+    __PACKAGE__->add_trigger(after_create  => sub { $_[0]->invalidate_cache } );
+    __PACKAGE__->add_trigger(after_udpate  => sub { $_[0]->invalidate_cache } );
+    __PACKAGE__->add_trigger(before_delete => sub { $_[0]->invalidate_cache } );
+}
+
+sub invalidate_cache {
+  my $self = shift;
+  my @tags = (@_, $self->table);
+
+  $self->cache->delete_by_tags(@tags);
+}
+
+sub propagate_cache_tags {
+  my $self = shift;
+  my @tags = (@_, $self->table);
+  
+  $ENV{CACHE_TAGS} ||= {};
+  $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}} ||= {};
+
+  foreach my $tag (@tags) {
+    $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}}->{$tag} = 1;
+  }
+}
+
+## ->search must propogate tags
+sub search {
+    my $proto = shift;
+    $proto->propagate_cache_tags;
+    $proto->SUPER::search(@_);
+}
+
+###################################################################################################
+##
+## Some other nice stuff
+##
+###################################################################################################
+
+
+sub find_all { shift->retrieve_all(@_) }
+sub find     { shift->retrieve(@_) }
+sub destroy  { shift->delete(@_) }
+
 
 1;
