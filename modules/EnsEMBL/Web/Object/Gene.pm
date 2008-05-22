@@ -14,8 +14,10 @@ sub counts {
   my $self = shift;
   my $obj = $self->Obj;
   my $counts = {};
-  $counts->{'transcripts'} = @{$self->Obj->get_all_Transcripts};
-  $counts->{'exons'}       = @{$self->Obj->get_all_Exons};
+  $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
+  $counts->{'exons'}       = @{$obj->get_all_Exons};
+  $counts->{'families'}    = keys %{$self->get_all_families};
+
   return $counts;
 }
 
@@ -104,6 +106,23 @@ sub get_all_transcripts{
     }
   }
   return $self->{'data'}{'_transcripts'};
+}
+
+sub get_all_families {
+  my $self = shift;
+  my $families;
+  foreach my $transcript (@{$self->get_all_transcripts}) {
+    my $trans_families = $transcript->get_families;
+    while (my ($id, $info) = each (%$trans_families)) {
+      if (exists $families->{$id}) {
+        push @{$families->{$id}{'transcripts'}}, $transcript;
+      }
+      else {
+        $families->{$id} = {'info' => $info, 'transcripts' => [$transcript]};
+      }
+    }
+  }
+  return $families;
 }
 
 sub chromosome {
