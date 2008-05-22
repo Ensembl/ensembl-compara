@@ -71,7 +71,6 @@ sub _global_context {
   foreach my $row ( @data ) {
     next if $row->[2] eq '-';
     my $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/Summary?$qs";
-    }
     my @class = ();
     if( $row->[1] eq $type ) {
       push @class, 'active';
