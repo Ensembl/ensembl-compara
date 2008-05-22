@@ -15,7 +15,8 @@ our @ISA = qw(EnsEMBL::Web::Object);
 sub counts {
   my $self = shift;
   my $counts = {};
-     $counts->{'exons'}       = @{$self->Obj()->get_all_Exons};
+  $counts->{'exons'}       = @{$self->Obj()->get_all_Exons};
+  $counts->{'families'}    = keys %{$self->get_families};
   return $counts;
 }
 
@@ -134,6 +135,46 @@ sub gene_description {
   }
 }
 
+sub get_families {
+### Returns a hash of family information and associated (API) Gene objects
+## N.B. moved various bits from Translation and Family objects
+  my $self = shift;
+  my $databases = $self->database('compara') ;
+
+  ## get taxon_id
+  my $taxon_id;
+  eval {
+    my $meta = $self->database('core')->get_MetaContainer();
+    $taxon_id = $meta->get_taxonomy_id();
+  };
+  if( $@ ){ warn($@); return {} }
+
+  ## create family object
+  my $family_adaptor;
+  eval{ $family_adaptor = $databases->get_FamilyAdaptor };
+  if ($@){ warn($@); return {} }
+  my $families = [];
+  my $translation = $self->translation_object;
+  eval{
+    $families = $family_adaptor->fetch_by_Member_source_stable_id('ENSEMBLPEP',$translation->stable_id)
+  };
+
+  ## munge data
+  my $family_hash = {};
+  if (@$families) {
+    my $ga = $self->database( 'core' )->get_GeneAdaptor;
+    foreach my $family( @$families ){
+      $family_hash->{$family->stable_id}  =
+        {
+        'description' => $family->description,
+        'count' => $family->Member_count_by_source_taxon('ENSEMBLGENE', $taxon_id),
+        'genes' => [ map { $ga->fetch_by_stable_id( $_->[0]->stable_id ) } 
+                    @{$family->get_Member_Attribute_by_source_taxon('ENSEMBLGENE', $taxon_id) || []} ],
+        };
+    }
+  }
+  return $family_hash;
+}
 
 sub get_alternative_locations {
   my $self = shift;
