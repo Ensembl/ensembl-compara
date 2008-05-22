@@ -11,6 +11,11 @@ sub _init {
   $self->ajaxable(  1 );
 }
 
+sub caption {
+  my $html = 'Transcripts';
+  return $html;
+}
+
 sub content {
   my $self = shift;
   my $gene = $self->object;
