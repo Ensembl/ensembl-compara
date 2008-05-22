@@ -193,14 +193,15 @@ sub _get_location_transcript_from_gene {
   my( $self ) = @_;
   return unless $self->gene;
 ## Replace this with canonical transcript calculation!!
-  $self->transcript(
-    sort { $a->stable_id cmp $b->stable_id } @{$self->gene->get_all_Transcripts} );
+#  $self->transcript(
+#    sort { $a->stable_id cmp $b->stable_id } @{$self->gene->get_all_Transcripts} );
   $self->location(   $self->gene->feature_Slice );
 }
 
 sub _get_gene_transcript_from_location {
   my( $self ) = @_;
   return unless $self->location;
+  return;
   my $db = $self->{'parameters'}{'db'}||'core';
   my $genes = $self->location->get_all_Genes( undef, $db, 1 );
   my $nearest_transcript = [ undef, undef ];
