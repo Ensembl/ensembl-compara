@@ -1,12 +1,16 @@
 package EnsEMBL::Web::Registry;
 
+use strict;
+
+use Apache2::RequestUtil;
+use CGI::Cookie;
+use Data::Dumper;
+
 use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Session;
-use Data::Dumper;
 
-use strict;
 use Class::Std;
 
 {
@@ -16,6 +20,7 @@ my %DBcache_of        :ATTR( :get<dbcache>  );
 my %SpeciesDefs_of    :ATTR;
 my %Das_sources_of    :ATTR;
 my %User_of           :ATTR( :set<user>     :get<user>     );
+my %Ajax_of           :ATTR( :set<ajax>     :get<ajax>     );
 my %Session_of        :ATTR( :set<session>  :get<session>  );
 my %Script_of         :ATTR( :set<script>   :get<script>   );
 my %Species_of        :ATTR( :set<species>  :get<species>  );
@@ -81,6 +86,22 @@ sub species_defs {
   my $self = shift;
   return $SpeciesDefs_of{ ident $self } ||=
     EnsEMBL::Web::SpeciesDefs->new();
+}
+
+sub check_ajax {
+### Checks whether ajax enabled or not
+  my $self = shift;
+  my $ajax = $self->get_ajax;
+  unless ($ajax) {
+      my $r = Apache2::RequestUtil->request();    
+      my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
+      $ajax = 0;
+      if ($cookies{'ENSEMBL_AJAX'} ne 'none' && $cookies{'ENSEMBL_AJAX'} ne '') {
+        $ajax = 1;
+      }
+      $self->set_ajax($ajax);
+  }
+  return $ajax;
 }
 
 sub initialize_user {

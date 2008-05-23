@@ -63,7 +63,6 @@ sub clone {
 ##
 ###################################################################################################
 
-
 sub propagate_cache_tags {
   my $proto = shift;
   $proto->SUPER::propagate_cache_tags($proto->__type);

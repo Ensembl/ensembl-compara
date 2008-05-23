@@ -328,7 +328,8 @@ sub propagate_cache_tags {
 ## ->search must propogate tags
 sub search {
     my $proto = shift;
-    $proto->propagate_cache_tags;
+    $proto->propagate_cache_tags
+      if $proto->cache;
     $proto->SUPER::search(@_);
 }
 
