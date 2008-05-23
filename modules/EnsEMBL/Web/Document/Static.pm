@@ -26,6 +26,7 @@ sub _initialize {
     content        EnsEMBL::Web::Document::HTML::Content
     global_context EnsEMBL::Web::Document::HTML::Empty
     local_context  EnsEMBL::Web::Document::HTML::Empty
+    local_tools    EnsEMBL::Web::Document::HTML::Empty
     #global_context EnsEMBL::Web::Document::HTML::GlobalContext
     #local_context  EnsEMBL::Web::Document::HTML::LocalContext
     copyright      EnsEMBL::Web::Document::HTML::Copyright

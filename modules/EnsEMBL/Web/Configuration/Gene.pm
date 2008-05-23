@@ -14,8 +14,6 @@ sub set_default_action {
   $self->{_data}{default} = 'Summary';
 }
 
-sub local_context  { $_[0]->_local_context; }
-
 sub populate_tree {
   my $self = shift;
 #  my $hash = $obj->get_summary_counts;
@@ -88,6 +86,7 @@ sub populate_tree {
 sub global_context { return $_[0]->_global_context; }
 sub ajax_content   { return $_[0]->_ajax_content;   }
 sub local_context  { return $_[0]->_local_context;  }
+sub local_tools    { return $_[0]->_local_tools;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
 
