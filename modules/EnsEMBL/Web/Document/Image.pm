@@ -242,154 +242,156 @@ sub add_tracks {
                                                                                 
 sub add_pointers {
                                                                                 
-    my ($self, $object, $extra) = @_;
-    my $config_name = $extra->{'config_name'};
-    my $config   = $object->user_config_hash($config_name);
+  my ($self, $object, $extra) = @_;
+  my $config_name = $extra->{'config_name'};
+  my $config   = $object->user_config_hash($config_name);
 
-    # CREATE DATA ARRAY FROM APPROPRIATE FEATURE SET
-    my ($data, @data, $max_label, %chrs);
-    my $parser = $extra->{'parser'};
-    if ($parser) { # use parsed userdata
-        my $max_label = 0;
-        foreach my $track ($parser->{'tracks'}) {
-            foreach my $type (keys %{$track}) {
-                my @features = $parser->fetch_features_by_tracktype($type);
-                foreach my $row (@features) {
-                    my @array = @$row;
-                    foreach my $feature (@array) {
-                        my $data_row = {
-                                'chr'   => $feature->seqname(),
-                                'start' => $feature->rawstart(),
-                                'end'   => $feature->rawend(),
-                                'label' => $feature->id(),
-                                'gene_id' => $feature->id(),
-                                };
-                        push (@data, $data_row);
-                        $chrs{$feature->seqname()}++;                                         
-                        # track max label length for use with 'text' option
-                        my $label_len = CORE::length($feature->id());
-                        if ($label_len > $max_label) {
-                            $max_label = $label_len;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else { # get features for this object
-        my $ftype = $extra->{'feature_type'};
-        $data = $object->retrieve_features($ftype) unless $ftype eq 'Xref';
-        foreach my $row (
-            map { $_->[0] }
-            sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
-            map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'},
-$_->{'start'}] }
-            @$data
-            ) {
+  # CREATE DATA ARRAY FROM APPROPRIATE FEATURE SET
+  my ($data, @data, $max_label, %chrs);
+  my $parser = $extra->{'parser'};
+  if ($parser) { # use parsed userdata
+    my $max_label = 0;
+    foreach my $track ($parser->{'tracks'}) {
+      foreach my $type (keys %{$track}) {
+        my @features = $parser->fetch_features_by_tracktype($type);
+        foreach my $row (@features) {
+          my @array = @$row;
+          foreach my $feature (@array) {
             my $data_row = {
-                'chr'       => $row->{'region'},
-                'start'     => $row->{'start'},
-                'end'       => $row->{'end'},
-                'length'    => $row->{'length'},
-                'label'     => $row->{'label'},
-                'gene_id'   => $row->{'gene_id'},
-                };
+                           'chr'   => $feature->seqname(),
+                           'start' => $feature->rawstart(),
+                           'end'   => $feature->rawend(),
+                           'label' => $feature->id(),
+                           'gene_id' => $feature->id(),
+                            };
             push (@data, $data_row);
-            $chrs{$row->{'region'}}++;                                         
+            $chrs{$feature->seqname()}++;                                         
+            # track max label length for use with 'text' option
+            my $label_len = CORE::length($feature->id());
+            if ($label_len > $max_label) {
+              $max_label = $label_len;
+            }
+          }
         }
+      }
     }
-                                                                                
-    # CONFIGURE POINTERS
-                                                                                
-    # set sensible defaults
-    my $zmenu   = lc($object->param('zmenu'))    || 'on';
-    my $color   = lc($object->param('col'))  || lc($extra->{'color'}) || 'red';
-    # set style before doing chromosome layout, as layout may need 
-    # tweaking for some pointer styles
-    my $style   = lc($object->param('style')) || lc($extra->{'style'}) || 'rharrow'; 
-
-    if ($config->{'_all_chromosomes'} eq 'yes') {
-        $self->do_chr_layout($object, $config_name, $max_label);
+  }
+  else { # get features for this object
+    $data = $object->retrieve_features($extra->{'features'}) unless $ftype eq 'Xref';
+    foreach my $set (@$data) {
+      foreach my $row (
+        map { $_->[0] }
+        sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
+        map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'},
+$_->{'start'}] }
+        @{$set->[0]}
+        ) {
+        my $data_row = {
+          'chr'       => $row->{'region'},
+          'start'     => $row->{'start'},
+          'end'       => $row->{'end'},
+          'length'    => $row->{'length'},
+          'label'     => $row->{'label'},
+          'gene_id'   => $row->{'gene_id'},
+          };
+        push (@data, $data_row);
+        $chrs{$row->{'region'}}++;                                         
+      }
     }
+  }
+                                                                                
+  # CONFIGURE POINTERS
+                                                                                
+  # set sensible defaults
+  my $zmenu   = lc($object->param('zmenu'))    || 'on';
+  my $color   = lc($object->param('col'))  || lc($extra->{'color'}) || 'red';
+  # set style before doing chromosome layout, as layout may need 
+  # tweaking for some pointer styles
+  my $style   = lc($object->param('style')) || lc($extra->{'style'}) || 'rharrow'; 
 
-    # CREATE POINTERS ('highlights')
-    my %high = ('style' => $style);
-    my $species = $object->species;
-    foreach my $row ( @data ) {
-        my $chr = $row->{'chr'};
-        my $point = {
+  if ($config->{'_all_chromosomes'} eq 'yes') {
+    $self->do_chr_layout($object, $config_name, $max_label);
+  }
+
+  # CREATE POINTERS ('highlights')
+  my %high = ('style' => $style);
+  my $species = $object->species;
+  foreach my $row ( @data ) {
+    my $chr = $row->{'chr'};
+    my $point = {
             'start' => $row->{'start'},
             'end'   => $row->{'end'},
             'id'    => $row->{'label'},
             'col'   => $color,
             };
-        if ($zmenu eq 'on') {
-            $zmenu_config = $extra->{'zmenu_config'};
-            $point->{'zmenu'} = {
+    if ($zmenu eq 'on') {
+      $zmenu_config = $extra->{'zmenu_config'};
+      $point->{'zmenu'} = {
                 'caption'   => $zmenu_config->{'caption'},
-                };
-            my $order = 0;
-            foreach my $entry (@{$zmenu_config->{'entries'}}) {
-                my ($text, $key, $value);
-                if ($entry eq 'contigview') {
-                    $text = "Jump to $entry";
-                    $value = sprintf("/$species/contigview?c=%s:%d;w=%d", $row->{'chr'}, int(($row->{'start'}+$row->{'end'})/2), $row->{'length'}+1000);
-                    # AffyProbe name(s) in URL turn on tracks in contigview
-                    if ($object->param('type') eq 'AffyProbe') {
-                        my @affy_list = split(';', $row->{'label'});
-                        foreach my $affy (@affy_list) {
-                            my @affy_bits = split (':', $affy);
-                            my $affy_id = $affy_bits[0];
-                            $affy_id =~ s/\s//g;
-                            $affy_id = lc($affy_id);
-                            $affy_id =~ s/\W/_/g;
-                            $affy_id =~ s/Plus_/+/i;
-                            $value .= ';'.$affy_id.'=on';
-                        }
-                    }
-                    $key = sprintf('%03d', $order).':'.$text;
-                    $point->{'zmenu'}->{$key} = $value;
-                    $order++;
-                }
-                elsif ($entry eq 'geneview') {
-                    foreach my $gene (@{$row->{'gene_id'}}) {
-                        if (scalar(@{$row->{'gene_id'}}) > 1) {
-                            $text = "$entry: $gene";
-                        }
-                        else {
-                            $text = "Jump to $entry";
-                        }
-                        $value = "/$species/geneview?gene=$gene";
-                        $key = sprintf('%03d', $order).':'.$text;
-                        $point->{'zmenu'}->{$key} = $value;
-                        $order++;
-                    }
-                }
-                elsif ($entry eq 'label') {
-                    $text = length( $row->{'label'} ) > 25 ? ( substr($row->{'label'}, 0, 22).'...') : $row->{'label'};
-                    $value = '';
-                    $key = sprintf('%03d', $order).':'.$text;
-                    $point->{'zmenu'}->{$key} = $value;
-                    $order++;
-                }
-                elsif ($entry eq 'userdata') {
-                    $id = $row->{'label'};
-                    $key = sprintf('%03d', $order).':'.$id;
-                    $point->{'zmenu'}->{$key} = '';
-                    $order++;
-                }
+           };
+      my $order = 0;
+      foreach my $entry (@{$zmenu_config->{'entries'}}) {
+        my ($text, $key, $value);
+        if ($entry eq 'contigview') {
+          $text = "Jump to $entry";
+          $value = sprintf("/$species/contigview?c=%s:%d;w=%d", $row->{'chr'}, int(($row->{'start'}+$row->{'end'})/2), $row->{'length'}+1000);
+          # AffyProbe name(s) in URL turn on tracks in contigview
+          if ($object->param('type') eq 'AffyProbe') {
+            my @affy_list = split(';', $row->{'label'});
+            foreach my $affy (@affy_list) {
+              my @affy_bits = split (':', $affy);
+              my $affy_id = $affy_bits[0];
+              $affy_id =~ s/\s//g;
+              $affy_id = lc($affy_id);
+              $affy_id =~ s/\W/_/g;
+              $affy_id =~ s/Plus_/+/i;
+              $value .= ';'.$affy_id.'=on';
             }
+          }
+          $key = sprintf('%03d', $order).':'.$text;
+          $point->{'zmenu'}->{$key} = $value;
+          $order++;
         }
-
-        # OK, we now have a complete pointer, so add it to the hash of arrays
-        if(exists $high{$chr}) {
-            push @{$high{$chr}}, $point;
-        } else {
-            $high{$chr} = [ $point ];
+        elsif ($entry eq 'geneview') {
+          foreach my $gene (@{$row->{'gene_id'}}) {
+            if (scalar(@{$row->{'gene_id'}}) > 1) {
+              $text = "$entry: $gene";
+            }
+            else {
+              $text = "Jump to $entry";
+            }
+            $value = "/$species/geneview?gene=$gene";
+            $key = sprintf('%03d', $order).':'.$text;
+            $point->{'zmenu'}->{$key} = $value;
+            $order++;
+          }
         }
+        elsif ($entry eq 'label') {
+          $text = length( $row->{'label'} ) > 25 ? ( substr($row->{'label'}, 0, 22).'...') : $row->{'label'};
+          $value = '';
+          $key = sprintf('%03d', $order).':'.$text;
+          $point->{'zmenu'}->{$key} = $value;
+          $order++;
+        }
+        elsif ($entry eq 'userdata') {
+          $id = $row->{'label'};
+          $key = sprintf('%03d', $order).':'.$id;
+          $point->{'zmenu'}->{$key} = '';
+          $order++;
+        }
+      }
     }
+
+    # OK, we now have a complete pointer, so add it to the hash of arrays
+    if(exists $high{$chr}) {
+      push @{$high{$chr}}, $point;
+    } 
+    else {
+      $high{$chr} = [ $point ];
+    }
+  }
                                                                                 
-    return \%high;
+  return \%high;
 }
 
 # common code used by add_tracks and add_pointers (not private because presumably you might want a 'bare' karyotype with no additional data)

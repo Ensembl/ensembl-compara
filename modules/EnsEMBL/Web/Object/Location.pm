@@ -95,6 +95,209 @@ sub addContext {
   $self->seq_region_end   += int($context);
 }
 
+
+######## FeatureView calls ##########################################
+
+sub retrieve_features {
+  my ($self, $features) = @_;
+  my $method;
+  my $results = [];
+ 
+  while (my ($type, $data) = each (%$features)) {
+    $method = 'retrieve_'.$type;
+    push @$results, [$self->$method($data)] if defined &$method;
+  }
+  return $results;
+}
+
+sub retrieve_Gene {
+  my ($self, $data) = @_;
+
+  my $results = [];
+  foreach my $g (@$data) {
+    if (ref($g) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($g);
+      push(@$results, $unmapped);
+    }
+    else {
+      push @$results, {
+        'region'   => $g->seq_region_name,
+        'start'    => $g->start,
+        'end'      => $g->end,
+        'strand'   => $g->strand,
+        'length'   => $g->end-$g->start+1,
+        'extname'  => $g->external_name,
+        'label'    => $g->stable_id,
+        'gene_id'  => [ $g->stable_id ],
+        'extra'    => [ $g->description ]
+      }
+    }
+  }
+
+  return ( $results, ['Description'] );
+}
+
+sub retrieve_Xref {
+  my ($self, $data) = @_;
+
+  my $results = [];
+  foreach my $array (@$data) {
+    my $xref = shift @$array;
+    push @$results, {
+      'label'     => $xref->primary_id,
+      'xref_id'   => [ $xref->primary_id ],
+      'extname'   => $xref->display_id,
+      'extra'     => [ $xref->description, $xref->dbname ]
+    };
+    ## also get genes
+    foreach my $g (@$array) {
+      push @$results, {
+        'region'   => $g->seq_region_name,
+        'start'    => $g->start,
+        'end'      => $g->end,
+        'strand'   => $g->strand,
+        'length'   => $g->end-$g->start+1,
+        'extname'  => $g->external_name,
+        'label'    => $g->stable_id,
+        'gene_id'  => [ $g->stable_id ],
+        'extra'    => [ $g->description ]
+      }
+    }
+  }
+
+  return ( $results, ['Description'] );
+}
+
+sub retrieve_OligoProbe {
+  my ($self, $data) = @_;
+
+  my $results = [];
+  foreach my $probe (@$data) {
+    if (ref($probe) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($probe);
+      push(@$results, $unmapped);
+    }
+    else {
+      my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe->get_all_complete_names()};
+      foreach my $f (@{$probe->get_all_OligoFeatures()}) {
+        push @$results, {
+          'region'   => $f->seq_region_name,
+          'start'    => $f->start,
+          'end'      => $f->end,
+          'strand'   => $f->strand,
+          'length'   => $f->end-$f->start+1,
+          'label'    => $names,
+          'gene_id'  => [$names],
+          'extra'    => [ $f->mismatchcount ]
+        }
+      }
+    }
+  }
+  return ( $results, ['Mismatches'] );
+}
+
+sub retrieve_DnaAlignFeature {
+  my ($self, $data) = @_;
+  my $results = [];
+
+  foreach my $f ( @$data ) {
+    if (ref($f) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($f);
+      push(@$results, $unmapped);
+    }
+    else {
+#     next unless ($f->score > 80);
+      my $coord_systems = $self->coord_systems();
+      my( $region, $start, $end, $strand ) = ( $f->seq_region_name, $f->start, $f->end, $f->strand );
+      if( $f->coord_system_name ne $coord_systems->[0] ) {
+        foreach my $system ( @{$coord_systems} ) {
+          # warn "Projecting feature to $system";
+          my $slice = $f->project( $system );
+          # warn @$slice;
+          if( @$slice == 1 ) {
+            ($region,$start,$end,$strand) = ($slice->[0][2]->seq_region_name, $slice->[0][2]->start, $slice->[0][2]->end, $slice->[0][2]->strand );
+            last;
+          }
+        }
+      }
+      push @$results, {
+        'region'   => $region,
+        'start'    => $start,
+        'end'      => $end,
+        'strand'   => $strand,
+        'length'   => $f->end-$f->start+1,
+        'label'    => $f->display_id." (@{[$f->hstart]}-@{[$f->hend]})",
+        'gene_id'  => ["@{[$f->hstart]}-@{[$f->hend]}"],
+        'extra' => [ $f->alignment_length, $f->hstrand * $f->strand, $f->percent_id, $f->score, $f->p_value ]
+      };
+    }
+  }
+  if ($self->feature_mapped) {
+    return $results, [ 'Alignment length', 'Rel ori', '%id', 'score', 'p-value' ];
+  }
+  else {
+    return $results;
+  }
+}
+
+sub retrieve_ProteinAlignFeature {
+  my ($self, $data) = @_;
+  return $self->retrieve_DnaAlignFeature($data);
+}
+
+sub retrieve_RegulatoryFactor {
+  my ($self, $data) = @_;
+  my $results = [];
+  my $flag = 0;
+
+  foreach my $reg (@$data) {
+    my @stable_ids;
+    my $gene_links;
+    my $db_ent = $reg->get_all_DBEntries;
+    foreach ( @{ $db_ent} ) {
+      push @stable_ids, $_->primary_id;
+      $gene_links .= qq(<a href="geneview?gene=$stable_ids[-1]">$stable_ids[-1]</a>);
+    #  $flag = 1;
+    }
+
+    my @extra_results = $reg->analysis->description;
+    $extra_results[0] =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
+
+  unshift (@extra_results, $gene_links);# if $gene_links;
+
+    push @$results, {
+      'region'   => $reg->seq_region_name,
+      'start'    => $reg->start,
+      'end'      => $reg->end,
+      'strand'   => $reg->strand,
+      'length'   => $reg->end-$reg->start+1,
+      'label'    => $reg->display_label,
+      'gene_id'  => \@stable_ids,
+      'extra'    => \@extra_results,
+    }
+  }
+  my $extras = ["Feature analysis"];
+  unshift @$extras, "Associated gene";# if $flag;
+
+  return ( $results, $extras );
+}
+
+sub unmapped_object {
+  my ($self, $unmapped) = @_;
+  my $analysis = $unmapped->analysis;
+
+  my $result = {
+    'label'     => $unmapped->{'_id_'},
+    'reason'    => $unmapped->description,
+    'object'    => $unmapped->ensembl_object_type,
+    'score'     => $unmapped->target_score,
+    'analysis'  => $$analysis{'_description'},
+  };
+
+  return $result;
+}
+
+
 ######## LDVIEW CALLS ################################################
 
 
