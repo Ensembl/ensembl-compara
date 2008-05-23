@@ -34,14 +34,6 @@ sub content {
   $wuc->{'_add_labels'} = 'true';
   $wuc->set( '_settings', 'width',  $gene->param('image_width') );
 
-  ## Will need to add bit here to configure which tracks to turn on and off!!
-  ## Get the drawable_container
-  my $mc = $gene->new_menu_container(
-    'configname' => 'altsplice',
-    'panel'      => 'altsplice',
-    'leftmenus' => ['Features']
-  );
-  ## Now
   my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
       $image->imagemap           = 'yes';
       $image->set_extra( $gene );
