@@ -21,14 +21,11 @@ sub content {
   my $species = $object->species;
   my $gene_id = $object->stable_id;
   my $transcript= $object->core_objects->transcript;
-  my $transcript_id = $transcript->stable_id;
+  my $transcript_id = $transcript->stable_id if $transcript;
   my $location = sprintf('r=%s:%s-%s' ,    
    $object->seq_region_name,
     $object->seq_region_start,
     $object->seq_region_end);
-
-
-
 
 ## add HGNC synonyms
   my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text ) = $object->display_xref();
@@ -73,9 +70,10 @@ sub content {
     my $syn = $syns{$k};
     my $syn_entry;
     if ($disp_syn ==1){
+      my $url = qq(/@{[$object->species]}/Location/Karyotype?db=core;g=$gene_id;$location;id=$display_name;type=Gene);
       $html .= qq( <dt>Synonyms</dt>
       <dd>
-      <p>$syn </p></dd><dd><span class="small">To view all $site_type genes linked to the name <a href="/@{[$object->species]}/Location/Karyotype?db=core;g=$gene_id;$location;t=$transcript_id">click here</a>.</span>
+      <p>$syn </p></dd><dd><span class="small">To view all $site_type genes linked to the name <a href="$url">click here</a>.</span>
       </dd>);
     }
   }
