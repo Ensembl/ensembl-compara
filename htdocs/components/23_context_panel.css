@@ -1,5 +1,5 @@
-#transcripts_link { cursor: hand; cursor: pointer; font-weight: bold; background-color: #cdf; border:1px outset #cdf; padding: 0px 0.5em; display: inline }
-#transcripts { width:30em; border-collapse: collapse; margin-left: 4em;  cursor: hand; cursor: pointer;  }
+#transcripts_link { cursor: pointer; font-weight: bold; background-color: #cdf; border:1px outset #cdf; padding: 0px 0.5em; display: inline }
+#transcripts { width:30em; border-collapse: collapse; margin-left: 4em;  cursor: pointer;  }
 #transcripts td { border: 1px solid black; margin: 0; text-align: center; width: 15em }
 #transcripts th { border: 1px solid black; margin: 0; text-align: center; width: 15em }
 #transcripts .active { background-color: #cdf }

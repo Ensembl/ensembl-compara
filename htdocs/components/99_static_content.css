@@ -1,8 +1,11 @@
 /* GENERIC STYLES */
 
 /* Footnotes */
-a.notext { text-decoration:none; } // for arrows and other non-text links
-a.fn-link { vertical-align:super; font-size:0.7em; text-decoration:none; } // footnote
+
+/* for arrows and other non-text links */
+a.notext { text-decoration:none; }
+/* footnote */
+a.fn-link { vertical-align:super; font-size:0.7em; text-decoration:none; } 
 div.footnotes { margin-top:2em; }
 div.footnotes ol li { font-size:0.9em; }
 

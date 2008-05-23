@@ -5,7 +5,7 @@ div#content { margin:0em 0em 0em 14em; padding:0; border:none; }
 div#content div.panel { border:1px solid #ccc; background-color:#fff; }
 
 
-p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:none}
+p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
 /* Columns for static content */
 .onecol { margin:1% 1% 0 1%; padding:1% }
