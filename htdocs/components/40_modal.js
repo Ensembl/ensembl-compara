@@ -2,8 +2,10 @@
 
     Public functions: modal_dialog_open(); modal_dialog_close();
 **/
-var modal_width  = 600;
-var modal_height = 400;
+var min_modal_width  = 800;
+var min_modal_height = 600;
+var modal_pad        = 100;
+var min_pad          =  10;
 // Support functions nicked from light box!
 
 function getPageScroll(){
@@ -52,12 +54,21 @@ function getPageSize() {
 function __modal_page_resize() {
   var Psz = getPageSize();
   var Psc = getPageScroll();
+
+  var modal_width  = Psz[2] - modal_pad * 2;
+  var modal_height = Psz[3] - modal_pad * 2;
+  if( modal_width  < min_modal_width  ) { modal_width  = min_modal_width  > Psz[2] - 2 * min_pad ? Psz[2] - 2 * min_pad : min_modal_width;  }
+  if( modal_height < min_modal_height ) { modal_height = min_modal_height > Psz[3] - 2 * min_pad ? Psz[3] - 2 * min_pad : min_modal_height; }
+
   var l = Psc[0]+(Psz[2]-modal_width)/2;
   var t = Psc[1]+(Psz[3]-modal_height)/2;
+
   $('modal_bg').style.width   = Psz[0] + "px";
   $('modal_bg').style.height  = Psz[1] + "px";
   $('modal_panel').style.top  = t      + "px";
   $('modal_panel').style.left = l      + "px";
+  $('modal_panel').style.height = modal_height + "px";
+  $('modal_panel').style.width  = modal_width  + "px";
 }
 
 function modal_dialog_open( ) {
