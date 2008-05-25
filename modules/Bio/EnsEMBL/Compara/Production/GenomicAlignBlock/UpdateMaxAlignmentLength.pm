@@ -255,7 +255,7 @@ sub remove_alignment_data_inconsistencies {
   my @del_args;
   if($self->{'mlss'}) {
     $sql = 'SELECT gab.genomic_align_block_id, ga.genomic_align_id FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE gab.method_link_species_set_id =? GROUP BY genomic_align_block_id HAVING count(*)<2';
-    push(@gab_args, $self->{'mlss'}->dbID);
+    push(@del_args, $self->{'mlss'}->dbID);
   }
   else {
     $sql = 'SELECT genomic_align_block_id, genomic_align_id FROM genomic_align GROUP BY genomic_align_block_id HAVING count(*)<2';
