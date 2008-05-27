@@ -454,7 +454,7 @@ sub expanded_init {
 ## Get array of features and push them into the id hash...
   foreach my $features ( grep { ref($_) eq 'ARRAY' } $self->features ) {
     foreach my $f ( @{$features || []} ){
-      my $hstrand  = 1; #$f->can('hstrand')  ? $f->hstrand : 1;
+      my $hstrand  = $f->can('hstrand')  ? $f->hstrand : 1;
       my $fgroup_name = $self->feature_group( $f );
       next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $f->end < 1 || $f->start > $length ;
       push @{$id{$fgroup_name}}, [$f->start,$f->end,$f];
