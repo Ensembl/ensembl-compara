@@ -11,6 +11,7 @@ use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::RegObj;
 use Class::Std;
+use CGI qw(escapeHTML);
 
 
 {
@@ -73,6 +74,21 @@ sub not_allowed {
     }
   }
   return undef;
+}
+
+sub url {
+  ### Assembles a valid URL, adding the site's base URL
+  ### and CGI-escaping any parameters
+  ### returns a URL string
+  my ($self, $script, $param) = @_;
+  my $url = $script; # TO DO - add site base URL
+  $url .= '?' if keys %$param;
+  while (my $k, $v) = each (%$param) ) {
+    $url .= $k.'='.CGI::escapeHTML($v).';';
+  }
+  $url =~ s/;$//;
+  
+  return $url;
 }
 
 sub add_symbol_lookup {
