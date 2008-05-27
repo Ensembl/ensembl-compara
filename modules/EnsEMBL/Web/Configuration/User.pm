@@ -10,6 +10,9 @@ use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
+sub populate_tree      {}
+sub set_default_action {}
+
 sub _add_javascript_libraries {
   ## 'private' method to load commonly-used JS libraries
   my $self = shift;
