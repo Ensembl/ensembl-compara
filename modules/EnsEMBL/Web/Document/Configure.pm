@@ -22,7 +22,7 @@ sub common_menu_items {
     my @bookmark_sections = ();
 
     if ($user) {
-      #$doc->menu->add_entry( $flag, 'text' => "<a href='/common/user/account'>Your account</a> &middot; <a href='javascript:logout_link()'>Log out</a>", 'raw' => 'yes');
+      #$doc->menu->add_entry( $flag, 'text' => "<a href='/User/Account'>Your account</a> &middot; <a href='javascript:logout_link()'>Log out</a>", 'raw' => 'yes');
       #$doc->menu->add_entry( $flag, 'text' => "Bookmark this page",
       #                              'code' => 'bookmark',
       #                            'href' => "javascript:bookmark_link()" );
@@ -63,12 +63,12 @@ sub common_menu_items {
         push @bookmark_sections, { 'href' => 'javascript:bookmark_link()', 
                                    'text'  => 'Bookmark this page', extra_icon => '/img/bullet_toggle_plus.png' };
 
-        push @bookmark_sections, { 'href' => '/common/user/account', 
+        push @bookmark_sections, { 'href' => '/User/Account', 
                                    'text'  => 'More bookmarks...', extra_icon => '/img/bullet_go.png' };
 
       #  $doc->menu->add_entry(
       #    $flag,
-      #      'href' => '/common/user/account',
+      #      'href' => '/User/Account',
       #      'text' => 'Bookmarks',
       #    'options'=> \@bookmark_sections );
 
@@ -84,36 +84,16 @@ sub common_menu_items {
                                     'href' => "javascript:bookmark_link()" );
     
       #$doc->menu->add_entry( $flag, 'text' => "Your account",
-      #                            'href' => "/common/user/account" );
+      #                            'href' => "/User/Account" );
 
     }
     else {
-      $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:login_link();'>Login</a> or <a href='/common/user/register'>Register</a>", 'raw' => 'yes');
+      $doc->menu->add_entry( $flag, 'text' => "<a href='javascript:login_link();'>Login</a> or <a href='/User/Register'>Register</a>", 'raw' => 'yes');
       $doc->menu->add_entry( $flag, 'text' => "About User Accounts",
                                   'href' => "/info/about/accounts.html",
                                   'icon' => '/img/infoicon.gif' );
     }
   }
-
-  ## Select a random miniad if available
-    if( $doc->species_defs->multidb && $doc->species_defs->multidb->{'ENSEMBL_WEBSITE'} ) {
-      my $db =
-      $doc->species_defs->databases ? $doc->species_defs->databases->{'ENSEMBL_WEBSITE'} : (
-        $doc->species_defs->multidb ? $doc->species_defs->multidb->{'ENSEMBL_WEBSITE'} : undef
-      );
-      return unless $db;
-      my $species = $ENV{'ENSEMBL_SPECIES'} || $ENV{'ENSEMBL_PRIMARY_SPECIES'} || 'common';
-      my $miniads = $doc->species_defs->get_config($species, 'miniads');
-      my $count = (ref($miniads) eq 'ARRAY') ? scalar(@$miniads) : 0;
-      if ($count) {
-        srand;
-        my $rand = int(rand($count));
-        my $miniad = $miniads->[$rand];
-        my $ad_html = $doc->wrap_ad($miniad);
-        $doc->menu->add_miniad($ad_html);
-      }
-    }
-
 
 }
 

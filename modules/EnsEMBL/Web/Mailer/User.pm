@@ -40,7 +40,7 @@ You just need to activate your account, using the link below:
 );
   }
 
-  $message .= $self->base_url.'/common/user/activate?email='.$user->email.';code='.$user->salt;
+  $message .= $self->base_url.'/User/Activate?email='.$user->email.';code='.$user->salt;
 
   if ($params{'group_id'}) {
     $message .= ";group_id=" . $params{'group_id'};
@@ -88,7 +88,7 @@ sub send_invite_email {
  To accept this invitation, click on the following link:
 
  ) . $group->name . qq( 
- ) . $self->base_url . qq(/common/user/accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(;email=$email
+ ) . $self->base_url . qq(/User/_accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(;email=$email
 
  If you do not wish to accept, please just disregard this email.
 

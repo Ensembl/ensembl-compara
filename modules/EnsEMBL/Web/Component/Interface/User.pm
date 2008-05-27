@@ -17,7 +17,7 @@ sub add_form {
   if ($panel->interface->script_name) {
     $script = $panel->interface->script_name;
   }
-  my $form = EnsEMBL::Web::Form->new('add', "/common/$script", 'post');
+  my $form = EnsEMBL::Web::Form->new('add', $script, 'post');
 
   ## form widgets
   my ($key) = $panel->interface->data->primary_columns;
@@ -44,7 +44,7 @@ sub add_form {
 
 sub duplicate {
   my($panel, $object) = @_;
-  my $html = qq(<p>Sorry, you appear to have registered already. If you have lost your password, you can <a href="/common/user/lost_password">have a new one sent to your registered email address</a>.</p>);
+  my $html = qq(<p>Sorry, you appear to have registered already. If you have lost your password, you can <a href="/User/LostPassword">have a new one sent to your registered email address</a>.</p>);
 
   $panel->print($html);
   return 1;

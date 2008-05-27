@@ -227,11 +227,11 @@ sub context_menu {
     $self->add_block( $flag, 'bulleted', "Your $SiteDefs::ENSEMBL_SITETYPE" );
 
     $self->add_entry( $flag, 'text' => "Account summary",
-                                    'href' => "/common/user/account" );
+                                    'href' => "/User/Account" );
     $self->add_entry( $flag, 'text' => "Update details",
-                                    'href' => "/common/user/update" );
+                                    'href' => "/User/Update" );
     $self->add_entry( $flag, 'text' => "Change password",
-                                    'href' => "/common/user/reset_password" );
+                                    'href' => "/User/Password" );
     $self->add_entry( $flag, 'text' => "Log out",
                                     'href' => "javascript:logout_link()" );
   }
@@ -242,9 +242,9 @@ sub context_menu {
     $self->add_entry( $flag, 'text' => "Login",
                                   'href' => "javascript:login_link();" );
     $self->add_entry( $flag, 'text' => "Register",
-                                  'href' => "/common/user/register" );
+                                  'href' => "/User/Register" );
     $self->add_entry( $flag, 'text' => "Lost Password",
-                                  'href' => "/common/user/lost_password" );
+                                  'href' => "/User/LostPassword" );
     $self->add_entry( $flag, 'text' => "About User Accounts",
                                     'href' => "/info/about/accounts.html" );
   }

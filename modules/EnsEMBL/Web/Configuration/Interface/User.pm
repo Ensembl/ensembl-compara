@@ -36,7 +36,7 @@ sub check_input {
       }
       return undef;
     } else {
-      my $url = '/common/user/register?dataview=preview;db_action='.$object->param('db_action').';name='.$object->param('name').';email='.$object->param('email').';organisation='.$object->param('organisation');
+      my $url = '/User/Register?dataview=preview;db_action='.$object->param('db_action').';name='.$object->param('name').';email='.$object->param('email').';organisation='.$object->param('organisation');
       return $url;
     }
   }
@@ -59,10 +59,10 @@ sub save {
   my $url;
   if ($interface->data->save) {
     ## redirect to confirmation page 
-    $url = "/common/$script?dataview=success;email=" . $object->param('email');
+    $url = "/$script?dataview=success;email=" . $object->param('email');
     $url .= ';record_id='.$object->param('record_id') if $object->param('record_id');
   } else {
-    $url = "/common/$script?dataview=failure";
+    $url = "/$script?dataview=failure";
   }
   
   return $url;

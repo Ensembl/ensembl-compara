@@ -44,13 +44,13 @@ sub save {
   if ($success) {
     if ($object->param('owner_type') eq 'group') {
       #$interface->data->populate($id);
-      $url = "/common/user/view_group?id=".$interface->data->webgroup_id;
+      $url = "/User/Group?id=".$interface->data->webgroup_id;
     }
     else {
-      $url = "/common/$script?dataview=success";
+      $url = "/$script?dataview=success";
     }
   } else {
-    $url = "/common/$script?dataview=failure";
+    $url = "/$script?dataview=failure";
   }
   
   if ($object->param('url')) {
@@ -82,12 +82,12 @@ sub delete {
   if ($success) {
     if ($object->param('owner_type') eq 'group') {
       #$interface->data->populate($id);
-      $url = "/common/user/view_group?id=".$interface->data->webgroup_id;
+      $url = "/User/Group?id=".$interface->data->webgroup_id;
     }
     else {
-      $url = "/common/$script?dataview=success";
+      $url = "/$script?dataview=success";
     }
-    $url = "/common/$script?dataview=success";
+    $url = "/$script?dataview=success";
   }
   return $url;
 }

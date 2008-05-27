@@ -9,6 +9,8 @@ use EnsEMBL::Web::RegObj;
 {
 
 sub render {
+
+=pod
   my ($class, $request) = @_;
 
   my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
@@ -41,7 +43,9 @@ sub render {
     $html .= qq(</div>
 </div>);
   }
+
   return $html;
+=cut
 
 }
 sub _render_species_list {
@@ -208,7 +212,7 @@ sub _render_ajax_reorder_list {
   }
 
   $html .= "</ul></div>\n";
-  $html .= "<a href='javascript:void(0);' onclick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/common/user/reset_favourites'>Restore default list</a>";
+  $html .= "<a href='javascript:void(0);' onclick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/User/_reset_favourites'>Restore default list</a>";
 
   return $html;
 }

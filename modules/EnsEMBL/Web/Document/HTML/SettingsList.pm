@@ -28,7 +28,7 @@ sub render {
   $html .= "<div id='settings_content'>\n";
   $html .= "<table width='100%' cellpadding='0' cellspacing='0'>\n";
   $html .= "<tr><td width='49%'>\n";
-  $html .= "<b><a href='/common/user/account'>Your $sitename account</a> &gt; " . $user->name . "</b> &middot; <a href='#' onclick='toggle_settings_drawer()'>Hide</a>\n";
+  $html .= "<b><a href='/User/Account'>Your $sitename account</a> &gt; " . $user->name . "</b> &middot; <a href='#' onclick='toggle_settings_drawer()'>Hide</a>\n";
   $html .= "</td>\n";
   $html .= "<td style='text-align: right;' width='49%'>";
   my @groups = $user->groups;
@@ -131,7 +131,7 @@ sub list_for_records {
       if ($record->url && $record->description) {
         $description = $record->description;
       }
-      my $link = "<a href=/common/user/use_bookmark?id=" . $record->id . " title='" . $description . "'>";
+      my $link = "<a href=/User/_use_bookmark?id=" . $record->id . " title='" . $description . "'>";
       if ($record->type eq 'configuration') {
         my $bold_start = '';
         my $bold_end = '';
@@ -155,7 +155,7 @@ sub list_for_records {
       }
     }
     if ($count > 10) {
-      $html .= "<li><i><a href='/common/user/account'>More settings &rarr;</a></i></li>"
+      $html .= "<li><i><a href='/User/Account'>More settings &rarr;</a></i></li>"
     }
     $html .= "</ul>";
   } else {

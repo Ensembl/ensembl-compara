@@ -30,15 +30,15 @@ sub login_form {
   ### Main site login form
   my( $panel, $object ) = @_;
 
-  my $form = EnsEMBL::Web::Form->new( 'login', "/common/user/set_cookie", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'login', "/User/_set_cookie", 'post' );
 
   $form->add_element('type'  => 'String', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Password', 'required' => 'yes');
   $form->add_element('type'  => 'Hidden', 'name'  => 'url', 'value' => $object->param('url'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Log in');
   $form->add_element('type'  => 'Information',
-                     'value' => qq(<p><a href="/common/user/register">Register</a> 
-                                  | <a href="/common/user/lost_password">Lost password</a></p>));
+                     'value' => qq(<p><a href="/User/Register">Register</a> 
+                                  | <a href="/User/LostPassword">Lost password</a></p>));
   return $form;
 }
 
@@ -47,7 +47,7 @@ sub lost_password_form {
   ## Form to resend activation code to user who has lost password
   my( $panel, $object ) = @_;
 
-  my $form = EnsEMBL::Web::Form->new( 'lost_password', "/common/user/send_activation", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'lost_password', "/User/_send_activation", 'post' );
 
   $form->add_element('type'  => 'Information',
                     'value' => qq(<p>If you have lost your password or activation email, enter your email address and we will send you a new activation code.</p>));
@@ -98,7 +98,7 @@ sub enter_password_form {
   ## TODO: Remove!
   # my $script = $object->script;
 
-  my $form = EnsEMBL::Web::Form->new( 'enter_password', "/common/user/save_password", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'enter_password', "/User/_save_password", 'post' );
  
   $form->add_element('type' => 'Information',
     'value' => 'Passwords should be at least 6 characters long and include both letters and numbers.');
@@ -138,7 +138,7 @@ sub update_failed {
 
 ## return the message
   my $html = qq(<p>Sorry - we were unable to update your account. If the problem persists, please contact <a href="mailto:webmaster\@ensembl.org">webmaster\@ensembl.org</a>. Thank you.</p>
-<p><a href="/common/user/account">Return to your account home page</a>);
+<p><a href="/User/Account">Return to your account home page</a>);
 
   $panel->print($html);
   return 1;
@@ -176,13 +176,13 @@ sub user_prefs {
 <ul>);
 
   if (defined $sortable && $sortable->kind eq 'alpha' ) {
-    $html .= "<li><a href='/common/user/sortable?type=group'>Sort lists by group</a></li>";
+    $html .= "<li><a href='/User/_sortable?type=group'>Sort lists by group</a></li>";
   } else {
-    $html .= "<li><a href='/common/user/sortable?type=alpha'>Sort lists alphabetically</a></li>";
+    $html .= "<li><a href='/User/_sortable?type=alpha'>Sort lists alphabetically</a></li>";
   }
 
   if (scalar(@infoboxes) > 1) {
-    $html .= "<li><a href='/common/user/reset_info_boxes'>Show all information boxes</a></li>";
+    $html .= "<li><a href='/User/_reset_info_boxes'>Show all information boxes</a></li>";
   }
 
 $html .= qq(</ul>
@@ -409,7 +409,7 @@ sub _render_bookmarks {
       'edit_url'   => 'bookmark',
       'delete_url' => 'remove_record',
       'data'       => [
-        '<a href="/common/user/use_bookmark?id=' . $bookmark->id . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>',
+        '<a href="/User/_use_bookmark?id=' . $bookmark->id . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>',
         '&nbsp;',
       ],
     };
@@ -422,7 +422,7 @@ sub _render_bookmarks {
         'ident' => $group->id, 
         'sortable' => $bookmark->name,
         'data' => [
-          '<a href="/common/user/use_bookmark?id=' . $bookmark->id . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>',
+          '<a href="/User/_use_bookmark?id=' . $bookmark->id . '" title="' . $bookmark->description . '">' . $bookmark->name . '</a><br /><span style="font-size: 10px;">' . $bookmark->description . '</span>',
           $group->name,
         ]
       };
@@ -437,7 +437,7 @@ sub _render_bookmarks {
     $html .= qq(<p class="center"><img src="/img/help/bookmark_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
     $html .= qq(<p class="center">You haven't saved any bookmarks. <a href='/info/about/custom.html#bookmarks'>Learn more about bookmarks &rarr;</a>);
   }  
-  $html .= qq(<p><a href="/common/user/bookmark?dataview=add"><b>Add a new bookmark </b>&rarr;</a></p>);
+  $html .= qq(<p><a href="/User/Bookmark?dataview=add"><b>Add a new bookmark </b>&rarr;</a></p>);
   return $html;
 }
 
@@ -641,10 +641,10 @@ sub _render_groups {
       $html .= "<td width='25%'>" . $group->name . "</td>";
       $html .= "<td>" . $group->blurb. "</td>";
       if ($group->id && $user->is_administrator_of($group)) {
-        $html .= '<td style="text-align: right;"><a href="/common/user/view_group?id=' . $group->id . '">Manage group</a></td>';
+        $html .= '<td style="text-align: right;"><a href="/User/Group?id=' . $group->id . '">Manage group</a></td>';
       } else {
-        $html .= '<td style="text-align: right;"><a href="/common/user/view_group?id=' . $group->id . '">View membership details</a></td>';
-        $html .= '<td style="text-align: right;"><a href="/common/unsubscribe?id=' . $group->id . '">Unsubscribe</a></td>';
+        $html .= '<td style="text-align: right;"><a href="/User/Group?id=' . $group->id . '">View membership details</a></td>';
+        $html .= '<td style="text-align: right;"><a href="/User/_unsubscribe?id=' . $group->id . '">Unsubscribe</a></td>';
       }
       $html .= "</tr>\n";
     }
@@ -679,7 +679,7 @@ sub _render_invites_for_group {
         $html .= "<tr>\n";
         $html .= "<td class='$class'>" . $group->name . "</td>";
         $html .= "<td class='$class'>" . $group->blurb . "</td>";
-        $html .= "<td class='$class' style='text-align:right'><a href='/common/join_by_invite?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a> or <a href='/common/user/remove_invite?id=" . $invite->id . "'>decline</a></td>";
+        $html .= "<td class='$class' style='text-align:right'><a href='/User/_accept?record_id=" . $invite->id . "&invite=" . $invite->code . "'>Accept invite</a> or <a href='/User/_remove_invite?id=" . $invite->id . "'>decline</a></td>";
         $html .= "</tr>\n";
         $class = "very_dark";
       }
@@ -709,7 +709,7 @@ sub _render_public_groups {
         $html .= "<tr>\n";
         $html .= "<td class='$class' width='25%'>" . $group->name . "</td>";
         $html .= "<td class='$class'>" . $group->description . "</td>";
-        $html .= "<td class='$class' style='text-align: right;'><a href='/common/subscribe?id=" . $group->id . "'>Subscribe</a></td>";
+        $html .= "<td class='$class' style='text-align: right;'><a href='/User/_subscribe?id=" . $group->id . "'>Subscribe</a></td>";
         $html .= "</tr>\n";
       }
     }
@@ -781,7 +781,7 @@ sub _render_settings_table {
         if ($row->{'absolute_url'}) {
           $html .= '<td style="text-align:right;"><a href="' . $row->{'edit_url'};
         } else {
-          $html .= '<td style="text-align:right;"><a href="/common/user/' . $row->{'edit_url'} . '?dataview=edit;id=' . $id;
+          $html .= '<td style="text-align:right;"><a href="/User/' . $row->{'edit_url'} . '?dataview=edit;id=' . $id;
         }
         if ($row->{'group_id'}) {
           $html .= ';owner_type=group'; 
@@ -795,12 +795,12 @@ sub _render_settings_table {
       }
       $html .= '<td style="text-align:right;">';
       if ($row->{'shareable'} && $user->find_administratable_groups) {
-        $html .= qq(<a href="/common/user/select_group?id=$id&type=$type">Share</a>);
+        $html .= qq(<a href="/User/SelectGroup?id=$id&type=$type">Share</a>);
       }
       else {
         $html .= '&nbsp;';
       }
-      $html .= '</td><td style="text-align:right;"><a href="/common/user/' . $row->{'edit_url'} . qq(?dataview=delete;id=$id);
+      $html .= '</td><td style="text-align:right;"><a href="/User/' . $row->{'edit_url'} . qq(?dataview=delete;id=$id);
       if ($row->{'group_id'}) {
         $html .= ';owner_type=group';
       }
@@ -823,7 +823,7 @@ sub select_group_form {
   ## TODO: Remove this
   # my $script = $object->script;
 
-  my $form = EnsEMBL::Web::Form->new( 'select_group', "/common/user/share_record", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'select_group', "/User/_share_record", 'post' );
   
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
@@ -853,7 +853,7 @@ sub no_group {
   ### Error message if group id not found
   my ($panel, $user) = @_;
 
-  my $html = qq(<p>No group was specified. Please go back to your <a href="/common/user/account">account home page</a> and click a "Manage group"
+  my $html = qq(<p>No group was specified. Please go back to your <a href="/User/Account">account home page</a> and click a "Manage group"
 link for a group you created.</p>);
 
   $panel->print($html);
@@ -922,7 +922,7 @@ sub group_details {
 
   my $html = qq(<h3 class="plain">$group_name</h3>\n<p>$group_blurb</p>\n);
   if ($level eq 'Administrator') {
-    $html .= qq(<p><a href="/common/user/group?dataview=edit;id=$group_id">Edit group description</a></p>);
+    $html .= qq(<p><a href="/User/ManageGroup?dataview=edit;id=$group_id">Edit group description</a></p>);
   }
   if ($group->type ne 'open') {
     $html .= qq(<p><strong>Group created by</strong>: $creator_name ($creator_org));
@@ -957,7 +957,7 @@ sub group_records {
     $html .= _render_group_settings($group, $user, 'group');
   }
   $html .= "<br />";
-  $html .= "&larr; <a href='/common/user/account'>Back to your account</a>";
+  $html .= "&larr; <a href='/User/Account'>Back to your account</a>";
   $html .= "<br /><br />";
   return $html;
 }
@@ -1103,21 +1103,21 @@ sub _render_group_users {
     else {
       if ($user->member_status eq 'active') { 
         if ($user->level eq 'member') {
-          $row->add_column({ content => qq(<a href="/common/user/change_level?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_level=administrator">Promote to Admin</a>), align => 'right' });
+          $row->add_column({ content => qq(<a href="/User/_change_level?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_level=administrator">Promote to Admin</a>), align => 'right' });
         } 
         else {
-          $row->add_column({ content => qq(<a href="/common/user/change_level?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_level=member">Demote to Member</a>), align => 'right' });
+          $row->add_column({ content => qq(<a href="/User/_change_level?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_level=member">Demote to Member</a>), align => 'right' });
         }
-        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=none">Remove</a>), align => 'right' });
+        $row->add_column({ content => qq(<a href="/User/_change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=none">Remove</a>), align => 'right' });
       }
       if ($user->member_status eq 'barred') {
-        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=active">Re-admit</a>), align => 'right' });
+        $row->add_column({ content => qq(<a href="/User/_change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=active">Re-admit</a>), align => 'right' });
       }
       elsif ($user->member_status eq 'inactive') {
-        $row->add_column({ content => qq(<a href="/common/user/invite?invite_email=) . $user->email . qq(;id=) . $group->id . qq(">Re-invite</a>), align => 'right' });
+        $row->add_column({ content => qq(<a href="/User/Invite?invite_email=) . $user->email . qq(;id=) . $group->id . qq(">Re-invite</a>), align => 'right' });
       }
       else {
-        $row->add_column({ content => qq(<a href="/common/user/change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=barred">Ban</a>), align => 'right' });
+        $row->add_column({ content => qq(<a href="/User/_change_status?user_id=) . $user->id . qq(;group_id=) . $group->id . qq(;new_status=barred">Ban</a>), align => 'right' });
       }
     }
     $table->add_row($row);
@@ -1125,10 +1125,10 @@ sub _render_group_users {
 
   $html .= $table->render;
   if ($show_all && $show_all eq 'yes') {
-    $html .= qq(<p><a href="/common/user/view_group?id=).$group->id.qq(;show_all=no">Hide non-active members</a></p>);
+    $html .= qq(<p><a href="/User/Group?id=).$group->id.qq(;show_all=no">Hide non-active members</a></p>);
   }
   else {
-    $html .= qq(<p><a href="/common/user/view_group?id=).$group->id.qq(;show_all=yes">Show non-active members</a> (if any)</p>);
+    $html .= qq(<p><a href="/User/Group?id=).$group->id.qq(;show_all=yes">Show non-active members</a> (if any)</p>);
   }
 
   return $html;
@@ -1137,7 +1137,7 @@ sub _render_group_users {
 sub _render_group_invite {
   my $group = shift;
   my $html = qq(<h4>Invite a user to join this group</h4>
-<form action="/common/user/invite" action="post">
+<form action="/User/Invite" action="post">
 <p>To invite a new member into this group, enter their email address. Users not already registered with $sitename will be asked to do so before accepting your invite.</p>
 <input type="hidden" value=") . $group->id . qq(" name="id" /> 
 <p><textarea name="invite_email" cols="35" rows="6"></textarea><br />Multiple email addresses can be separated by commas.</p>
@@ -1160,7 +1160,7 @@ sub _render_group_pending {
     foreach my $invite (@invites) {
       my $row = EnsEMBL::Web::Interface::Table::Row->new();
       $row->add_column({ content => $invite->email });
-      $row->add_column({ content => '<a href="/common/user/remove_invitation?id=' . $invite->id . ';group_id=' . $group->id . '">Delete</a>' });
+      $row->add_column({ content => '<a href="/User/_remove_invitation?id=' . $invite->id . ';group_id=' . $group->id . '">Delete</a>' });
       $table->add_row($row);
     }
 
@@ -1176,7 +1176,7 @@ sub delete_group {
   my $group_id = shift;
 
   my $html = "<div class='white boxed' id='intro'>\n";
-  $html .= "<form action='remove_group' name='remove' id='remove' method='post'>\n";
+  $html .= "<form action='/User/_remove_group' name='remove' id='remove' method='post'>\n";
   $html .= "<input type='hidden' name='id' value='" . $group_id . "' />\n";
   $html .= "Delete this group? <input type='button' value='Delete' onClick='reallyDelete()' />";
   $html .= "</form>\n";
@@ -1190,7 +1190,7 @@ sub invitation_nonpending {
   my $status = $object->param('status');
   my $html;
   if ($status eq 'accepted') {
-    $html = qq(<p>This invitation seems to have been accepted already. Please <a href="/common/user/account">go to your account</a> or <a href="/common/user/login">log in</a> to check your group membership details.</p>);
+    $html = qq(<p>This invitation seems to have been accepted already. Please <a href="/User/Account">go to your account</a> or <a href="/User/Login">log in</a> to check your group membership details.</p>);
   }
   else {
     $html = qq(<p>Sorry, there was a problem with the invitation record in our database. Please contact the person who invited you to get a new invitation.</p>);
@@ -1244,7 +1244,7 @@ sub invitations {
 
   }
   $html .= qq(</table>
-<p>&larr; <a href="/common/user/view_group?id=$group_id">Back to group details</a></p>);
+<p>&larr; <a href="/User/Group?id=$group_id">Back to group details</a></p>);
 
   $panel->print($html);
 }
