@@ -82,12 +82,10 @@ sub url {
   ### returns a URL string
   my ($self, $script, $param) = @_;
   my $url = $script; # TO DO - add site base URL
-  $url .= '?' if keys %$param;
-  while (my $k, $v) = each (%$param) ) {
-    $url .= $k.'='.CGI::escapeHTML($v).';';
-  }
-  $url =~ s/;$//;
-  
+ 
+  my $query_string = join ';', map { "$_=".escapeHTML($param->{$_}) } sort keys %$param;
+  $url .= "?$query_string" if $query_string;
+
   return $url;
 }
 

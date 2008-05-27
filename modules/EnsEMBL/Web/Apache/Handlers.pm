@@ -278,7 +278,12 @@ sub transHandler_no_species {
     $memd->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $memd;
   }
   if( $to_execute ) {
+    $r->subprocess_env->{'ENSEMBL_TYPE'}   = $species;
+    warn "TYPE:   $species";
+    warn "ACTION: $path_segments->[0]";
+    $r->subprocess_env->{'ENSEMBL_ACTION'} = shift @$path_segments;
     my $path_info = join '/', @$path_segments;
+    warn "............ $path_info ...............";
     $r->filename( $to_execute );
     $r->uri( "/perl/common/$script" );
     warn ".....PI... $path_info ...PI......";
@@ -320,6 +325,7 @@ sub transHandler_species {
 $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
       $path_segments                         = [];
     } else { ## This is a user space script - don't do anything - I think!
+      $r->subprocess_env->{'ENSEMBL_ACTION'} = shift @$path_segments;
     }
     $script                                  = $real_script_name;
     $redirect_if_different                   = 0;

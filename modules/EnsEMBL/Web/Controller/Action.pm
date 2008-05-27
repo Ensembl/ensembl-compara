@@ -19,10 +19,15 @@ sub BUILD {
   $self->set_url($args->{url});
   my ($url, $params) = split(/\?/, $self->get_url);
   $self->set_params($self->parse_params($params));
-  my ($trash, $base, $controller, $action, $id) = split('/', $url);
-  $self->set_controller($controller);
-  $self->set_action($action);
-  $self->set_id($action);
+#   my ($trash, $base, $controller, $action, $id) = split('/', $url);
+  my($X,$id,@X) = split /\//, $ENV{'PATH_INFO'};
+  $self->set_controller($ENV{'ENSEMBL_TYPE'});
+  $self->set_action(    $ENV{'ENSEMBL_ACTION'});
+  $self->set_id($id);
+
+  warn ">> $ENV{'ENSEMBL_TYPE'}";
+  warn ">> $ENV{'ENSEMBL_ACTION'}";
+  warn ">> $ENV{'PATH_INFO'}";
 }
 
 sub script_name {
