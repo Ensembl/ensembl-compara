@@ -6,7 +6,7 @@ use strict;
 use warnings;
 #use CGI;
 
-#warn "sr7: in perl/common/user\n";
+warn "in perl/common/user\n";
 
 use EnsEMBL::Web::Controller;
 
