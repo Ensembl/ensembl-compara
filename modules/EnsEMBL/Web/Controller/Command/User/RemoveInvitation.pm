@@ -34,7 +34,7 @@ sub process {
   my $cgi = new CGI;
   my $invitation = EnsEMBL::Web::Data::Invite->new({'id' => $cgi->param('id')});
   $invitation->destroy;
-  $cgi->redirect('/common/user/view_group?id='.$cgi->param('group_id'));
+  $cgi->redirect($self->url('/User/Group', {'id' => $cgi->param('group_id')}) );
 }
 
 }

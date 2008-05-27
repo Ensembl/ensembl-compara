@@ -55,11 +55,11 @@ sub process {
   #$current_config->save;
 
   ## Forward to the appropriate page
-  my $url = $cgi->param('url');
+  my $url = CGI::escape($cgi->param('url'));
   my $mode = $cgi->param('mode');
   my $new_url;
   if ($mode eq 'edit') {
-    $new_url = '/common/user/account';
+    $new_url = $self->url('/User/Account');
   }
   elsif ($url) {
     $new_url = $url;
@@ -72,7 +72,7 @@ sub process {
     }
     else {
       ## Generic fallback
-      $new_url = '/common/user/account';
+      $new_url = $self->url('/User/Account');
     }
   }
   $cgi->redirect($new_url);

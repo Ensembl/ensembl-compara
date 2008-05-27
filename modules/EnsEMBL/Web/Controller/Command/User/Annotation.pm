@@ -53,8 +53,8 @@ warn "Rendering page Annotation";
   ## Page components
   $interface->default_view('add');
   $interface->panel_footer({'add'=>qq(<p>Need help? <a href="mailto:$help_email">Contact the helpdesk</a> &middot; <a href="/info/about/privacy.html">Privacy policy</a><p>)});
-  $interface->on_success('/common/user/account');
-  $interface->on_failure('/common/user/update_failed');
+  $interface->on_success($self->url('/User/Account'));
+  $interface->on_failure($self->url('/User/UpdateFailed'));
   $interface->script_name($self->get_action->script_name);
 
 ## Form elements

@@ -30,7 +30,7 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
   my $url = $cgi->param('url');
-  if ($url =~ m#common/user#) { ## Don't want to redirect user to restricted page!
+  if ($url =~ m#User#) { ## Don't want to redirect user to restricted page!
     $url = '/index.html';
   }
 
@@ -55,7 +55,7 @@ sub process {
   my $r = Apache2::RequestUtil->request();
   $user_cookie->clear($r);
 
-  $cgi->redirect($url);
+  $cgi->redirect(CGI::escape($url));
 }
 
 }

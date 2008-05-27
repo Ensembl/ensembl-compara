@@ -67,11 +67,11 @@ sub process {
     warn "SETTING CONFIG ", $cgi->param('id'), " FOR SCRIPT: " , $script_name;
     $session->set_script_config_from_string($script_name, $string);
   }
-  my $new_url = '/common/user/set_config?id=' . $cgi->param('id');
+  my $new_param = {'id' => $cgi->param('id')};
   if ($url) {
-    $new_url .= ';url=' . CGI::escape($url);
+    $new_param->{'url'} = $url;
   }
-  $cgi->redirect($new_url);
+  $cgi->redirect($self->url('/User/_set_config', $new_param ););
 }
 
 }

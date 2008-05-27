@@ -43,7 +43,7 @@ sub render_page {
     my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
-    'scriptname' => 'user/select_group',
+    'scriptname' => 'User/SelectGroup',
     'objecttype' => 'User',
   );
 

@@ -61,13 +61,17 @@ sub process {
     $invitation->destroy 
       if $success;
   }
-  my $url = '/common/user/set_cookie?email='.$user->email
-                  .';password='.$cgi->param('new_password_1')
-                  .';url='.$cgi->param('url')
-                  .';updated=yes';
-  $url .= ';record_id='.$cgi->param('record_id') if $cgi->param('record_id'); 
+  my $param = {
+                'email'     => $user->email,
+                'password'  => $cgi->param('new_password_1'),
+                'url'       => $cgi->param('url'),
+                'updated'   => 'yes',
+              };
+  if ($cgi->param('record_id')) {
+    $param{'record_id'} => $cgi->param('record_id');
+  } 
 
-  $cgi->redirect($url);
+  $cgi->redirect($self->url('User/_set_cookie', $param));
 }
 
 }

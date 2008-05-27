@@ -47,20 +47,21 @@ sub process {
         if ($success) {
           $invitation->destroy;
         }
-        $url = '/common/user/view_group?id='.$invitation->webgroup_id;
+        $url = $self->url('/User/Group', {'id' => $invitation->webgroup_id} );
       }
       else {
         ## Set invitation status to 'accepted' (don't delete in case login fails!)
         $invitation->status('accepted');
         $invitation->save;
-        $url = '/common/user/login?url='.$cgi->escape($url).';record_id='.$invitation->id;
+        $url = $self->url('/User/Login', {'url' => $url, 'record_id' => $invitation->id} );
       }
     }
     else {
       ## Set invitation status to 'accepted'
       $invitation->status('accepted');
       $invitation->save;
-      $url = '/common/user/register?email='.$invitation->email.';status=active;record_id='.$invitation->id;
+      $url = $self->url('/User/Register', 
+          {'email' => $invitation->email, 'status' => 'active', 'record_id' => $invitation->id} );
     }
     $cgi->redirect($url);
   }
@@ -68,7 +69,7 @@ sub process {
      my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
-    'scriptname' => 'user/accept',
+    'scriptname' => 'User/_accept',
     'objecttype' => 'User',
       );
 

@@ -36,7 +36,7 @@ sub process {
 
   ## Don't go to config URL if editing/deleting
   if ($mode ne 'add') {
-    $url = '/common/user/account';
+    $url = $self->url('/User/Account');
   }
 
   $cgi->redirect($url);

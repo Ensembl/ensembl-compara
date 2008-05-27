@@ -41,9 +41,9 @@ sub process {
   warn 'USER email: '. $user->email;
   warn 'USER id: '. $user->id;
 
-  my $url = $cgi->param('url'); 
-  if (!$url || $url =~ m#common/user#) { ## Don't want to redirect user to e.g. register or login confirmation!
-    $url = '/index.html';
+  my $url = CGI::escape($cgi->param('url')); 
+  if (!$url || $url =~ m#User#) { ## Don't want to redirect user to e.g. register or login confirmation!
+    $url = $self->url('/index.html');
   }
   if (!$ENV{'ENSEMBL_USER_ID'}) {
     if ($user && $user->id) {
@@ -77,11 +77,11 @@ sub process {
     }
   }
 
-  my $redirect = "/common/user/logged_in?url=$url";
+  my $new_param = {'url' => $url};
   if ($cgi->param('updated')) {
-    $redirect .= ';updated='.$cgi->param('updated');
+    $new_param->{'updated'} = $cgi->param('updated');
   }
-  $cgi->redirect($redirect);
+  $cgi->redirect($self->url('User/LoggedIn', $new_param));
 }
 
 }

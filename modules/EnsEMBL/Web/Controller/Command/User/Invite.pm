@@ -38,7 +38,7 @@ sub render {
 sub render_page {
   my $self = shift;
   my $cgi = new CGI;
-  my $url = "/common/user/view_group?id=" . $cgi->param('id');
+  my $url = $self->url('/User/Group', {'id' => $cgi->param('id')} );
 
   my $group = EnsEMBL::Web::Data::Group->new({ 'id' => $cgi->param('id') });
   my @addresses = split(/,/, $cgi->param('invite_email'));
@@ -78,7 +78,7 @@ sub render_page {
   my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
-    'scriptname' => 'user/invite',
+    'scriptname' => 'User/Invite',
     'objecttype' => 'User',
   );
 

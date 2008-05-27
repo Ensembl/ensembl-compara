@@ -30,7 +30,7 @@ sub render_page {
   my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
-    'scriptname' => 'user/lost_password',
+    'scriptname' => 'User/LostPassword',
     'objecttype' => 'User',
   );
 

@@ -36,7 +36,7 @@ sub process {
   my $group = EnsEMBL::Web::Data::Group->new({ id => $cgi->param('id') });
   $group->status('inactive');
   $group->save;
-  $cgi->redirect('/common/user/account');
+  $cgi->redirect($self->url('/User/Account'));
 }
 
 }

@@ -38,7 +38,7 @@ sub process {
 	      email   => $cgi->param('email'),
   });
   if ($cgi->param('record_id')) {
-    $cgi->redirect('/common/user/activate?email='.$user->email.';code='.$user->salt.';url=/common/user/account;record_id='.$cgi->param('record_id'));
+    $cgi->redirect($self->url('/User/Activate', {'email' => $user->email, 'code' => $user->salt, 'url' => '/User/Account;record_id='.CGI::escape($cgi->param('record_id'))} );
   }
   else {
     if ($user->email) {

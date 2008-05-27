@@ -31,13 +31,12 @@ sub render {
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-  my $url = '/common/user/account';
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $group = EnsEMBL::Web::Data::Group->new({ id => $cgi->param('id') });
   $group->assign_status_to_user($user, 'inactive');
 
-  $cgi->redirect($url);
+  $cgi->redirect($self->url('/User/Account'));
 }
 
 }

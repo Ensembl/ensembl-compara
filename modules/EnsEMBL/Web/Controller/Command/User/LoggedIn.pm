@@ -30,7 +30,7 @@ sub render_page {
   my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
-    'scriptname' => 'login_check',
+    'scriptname' => 'User/_login_check',
     'objecttype' => 'User',
   );
 

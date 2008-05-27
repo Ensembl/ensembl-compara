@@ -30,7 +30,7 @@ sub render_page {
   my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
-    'scriptname' => 'user/update_failed',
+    'scriptname' => 'User/UpdateFailed',
     'objecttype' => 'User',
   );
 

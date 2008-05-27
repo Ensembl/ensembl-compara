@@ -46,7 +46,7 @@ sub render_page {
   $interface->panel_footer({'add'=>qq(<p>Need help? <a href="mailto:$help_email">Contact the helpdesk</a> &middot; <a href="/info/about/privacy.html">Privacy policy</a><p>)});
   $interface->panel_header({'preview'=>qq(<p>Please check that you have entered your details correctly, then click on the button to save them to our database and send your activation email.</p>)});
   $interface->caption({'on_failure'=>'Registration Failed'});
-  $interface->on_success('/common/user/send_activation');
+  $interface->on_success($self->url('/User/_send_activation'));
   $interface->on_failure('EnsEMBL::Web::Component::Interface::User::failed_registration');
   $interface->script_name($self->get_action->script_name);
 

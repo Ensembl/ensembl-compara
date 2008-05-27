@@ -38,7 +38,7 @@ sub process {
   my $group = EnsEMBL::Web::Data::Group->new({ id => $cgi->param('group_id') });
   $group->assign_level_to_user($user, $cgi->param('new_level'));
 
-  $cgi->redirect('/common/user/view_group?id='.$cgi->param('group_id'));
+  $cgi->redirect($self->url('/User/Group', {'id' => $cgi->param('group_id')}) );
 }
 
 }

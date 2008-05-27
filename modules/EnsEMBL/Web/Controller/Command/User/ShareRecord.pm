@@ -54,7 +54,7 @@ sub process {
     ## TODO: error exception
   }
   
-  $cgi->redirect('/common/user/account');
+  $cgi->redirect($self->url('/User/Account'));
 }
 
 }

@@ -16,8 +16,12 @@ use base 'EnsEMBL::Web::Controller::Command::User';
 sub BUILD {
   my ($self, $ident, $args) = @_; 
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
-  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::Redirect');
-  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::DataUser');
+  ## ensure that this record belongs to the logged-in user!
+  my $cgi = new CGI;
+  if ($cgi->param('id')) {
+    $self->user_or_admin('EnsEMBL::Web::Data::Favourites', $cgi->param('id'), $cgi->param('owner_type'));
+  }
+
 }
 
 sub render {
@@ -32,13 +36,13 @@ sub render {
 
 sub render_page {
   my $self = shift;
-  my $user = $self->filters->user;
-  warn "RENDERING PAGE for RESET";
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  #warn "RENDERING PAGE for RESET";
   foreach my $list (@{ $user->specieslists }) {
-    warn "LIST: " . $list->id;
+    #warn "LIST: " . $list->id;
     $list->destroy;
   }
-  $self->filters->redirect('/index.html');
+  $self->filters->redirect($self->url('/index.html'));
 }
 
 }

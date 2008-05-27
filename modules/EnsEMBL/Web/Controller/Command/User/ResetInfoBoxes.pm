@@ -38,7 +38,7 @@ sub process {
     }
   }
 
-  $cgi->redirect('/common/user/account');
+  $cgi->redirect($self->url('/User/Account'));
 }
 
 }
