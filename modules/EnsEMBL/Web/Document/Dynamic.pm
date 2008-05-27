@@ -62,6 +62,7 @@ sub _initialize_HTML {
 
 ## General layout for dynamic pages...
 
+  $self->include_navigation(1);
   $self->add_head_elements qw(
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet

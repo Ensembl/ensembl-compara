@@ -322,6 +322,12 @@ sub print  { my $self = shift; $self->renderer->print( @_ )  if $self->{'_render
 
 sub renderer :lvalue { $_[0]{'_renderer'} };
 
+sub include_navigation {
+  my $self = shift;
+  $self->{_has_navigation} = shift if @_;
+  return $self->{_has_navigation};
+}
+
 sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 1 ); }
 
 sub render {
@@ -347,17 +353,30 @@ sub render {
       <td id="mh_lnk">[[tools]]
       </td>
     </tr>
-  </table>
+  </table>';
+  if( $self->include_navigation ) {
+    $X .= '
   <div id="main">
-
-<!-- Start of real content --> 
-    [[content]]
-
-<!-- End of real content -->
-
-    <div id="nav">[[global_context]][[local_context]]
+    <div id="nav">
+      [[global_context]][[local_context]]
     </div>
-  </div>
+    <div id="content-2col">
+<!-- Start of real content --> 
+      [[content]]
+<!-- End of real content -->
+    </div>
+  </div>';
+  } else {
+    $X .= '
+  <div id="main">
+    <div id="content-1col">
+<!-- Start of real content --> 
+      [[content]]
+<!-- End of real content -->
+    </div>
+  </div>';
+  }
+  $X .= '
   <div id="footer">[[copyright]][[footerlinks]]
   </div>
 [[body_javascript]]';

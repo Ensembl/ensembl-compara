@@ -38,7 +38,7 @@ sub _basic_HTML {
   $self->set_doc_type( 'XHTML', '1.0 Trans' );
   $self->_init();
 #  --- Stylesheets
-  $self->body_javascript->add_source( '/js/protopacked.js' );
+#  $self->body_javascript->add_source( '/js/protopacked.js' );
   $self->body_javascript->add_source( sprintf(
     '/%s/%s.js', $self->species_defs->ENSEMBL_JSCSS_TYPE,  $self->species_defs->ENSEMBL_JS_NAME 
   ));
@@ -55,7 +55,7 @@ sub _common_HTML {
 $self->_prof('A');
   $self->add_body_attr( 'id' => 'ensembl-webpage' );
 #  --- Stylesheets
-  $self->body_javascript->add_source( '/js/protopacked.js' );
+#  $self->body_javascript->add_source( '/js/protopacked.js' );
   $self->body_javascript->add_source( sprintf(
     '/%s/%s.js', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_JS_NAME 
   ));
