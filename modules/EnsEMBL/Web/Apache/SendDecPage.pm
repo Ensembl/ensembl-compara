@@ -96,6 +96,7 @@ sub handler {
 
     my $renderer = new EnsEMBL::Web::Document::Renderer::String($r);
     my $page     = new EnsEMBL::Web::Document::Static($renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs);
+    $page->include_navigation( $ENV{'SCRIPT_NAME'} =~ /^\/info/ );
     $page->_initialize();
   
     $page->title->set( $pageContent =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: '.$r->uri );
