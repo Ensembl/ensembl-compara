@@ -115,6 +115,47 @@ sub render {
   return $output;
 }
 
+
+sub render_js {
+  my $self = shift;
+  my @entries;
+  foreach my $element ( @{$self->{'_elements'}} ) {
+    if($element->validate()) {
+      if( $element->type eq 'DropDownAndString' ) {
+        (my $T_name = $element->name)=~s/'/\\'/g;
+        (my $T_label = $element->label)=~s/'/\\'/g;
+        (my $TS_name = $element->string_name)=~s/'/\\'/g;
+        (my $TS_label = $element->string_label)=~s/'/\\'/g;
+        push @entries, sprintf(
+          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},$T_name,
+          'DropDown', $T_label, $element->required eq 'yes'?1:0
+        );
+        push @entries, sprintf(
+          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},$TS_name,
+          'String', $TS_label, $element->required eq 'yes'?1:0
+        );
+      } else {
+        (my $T_name = $element->name)=~s/'/\\'/g;
+        (my $T_label = $element->label)=~s/'/\\'/g;
+        push @entries, sprintf(
+          " new form_obj( '%s', '%s', '%s', '%s', %d )", $self->{_attributes}{'name'},$T_name,
+          $element->type, $T_label, $element->required eq 'yes'?1:0
+        );
+      }
+    }
+  }
+  my $vars_array = $self->{'_attributes'}{'name'}."_vars";
+  if( @entries ) {
+    return {
+      'head_vars' => "$vars_array = new Array(\n  ".join(",\n  ",@entries)."\n);\n",
+      'body_code' => "on_load( $vars_array );",
+      'scripts'   => '/js/forms.js'
+    };
+  } else {
+    return {};
+  }
+}
+
 sub add_element {
 ### x
 ### Replacement for old method, included for backwards compatibility
