@@ -8,8 +8,9 @@ sub read_tree {
 ###    _path  => '/...',              # web path
 ###    _nav   => 'navigation info',   # from meta tags
 ###    _title => 'title',             # from title tag
-###    file1  => {nav => '...', title => '...'},
-###    file2  => {nav => '...', title => '...'},
+###    _index => '0',                 # order index, from meta tag
+###    file1  => {nav => '...', title => '...', index => '...'},
+###    file2  => {nav => '...', title => '...', index => '...'},
 ###    ...,
 ###    dir1  => { ..same structure as parent.. },
 ###    dir2  => { ..same structure as parent.. },
@@ -47,6 +48,7 @@ sub read_tree {
       if ($index =~ /NO FOLLOW/) {
         $branch->{_title} = $title;
         $branch->{_nav}   = $nav;
+        $branch->{_index} = $index;
         return;
       } elsif ($index =~ /NO INDEX/) {
         $include = 0;
@@ -68,11 +70,13 @@ sub read_tree {
       ## add the directory path and index title to array
       $branch->{_title} = $title;
       $branch->{_nav}   = $nav;
+      $branch->{_index} = $index;
     }
     else {
       unless ($index =~ /NO INDEX/) {
         $branch->{$filename}->{_title} = $title;
         $branch->{$filename}->{_nav}   = $nav;
+        $branch->{$filename}->{_index} = $index;
       }
     }
   }
@@ -80,7 +84,7 @@ sub read_tree {
   ## Descend into directories recursively
   foreach my $dirname (@$sub_dirs) {
     ## omit CVS directories and directories beginning with . or _
-    next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/;
+    next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/ || $dirname eq 'private';
     $branch->{$dirname}->{_path} = "$path$dirname/";
     read_tree( $branch->{$dirname}, $doc_root );
   }
