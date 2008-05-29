@@ -8,7 +8,7 @@ use base qw(EnsEMBL::Web::Component::Transcript);
 sub _init {
   my $self = shift;
   $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->ajaxable(  1 );
 }
 
 sub caption {
@@ -26,9 +26,9 @@ sub content {
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
 
   $table->add_columns(
-      { 'key' => 'id',      'title' => 'Family ID',                                 'width' => '30%', 'align' => 'center' },
-      { 'key' => 'annot',   'title' => 'Concensus annotation',                      'width' => '30%', 'align' => 'center' },
-      { 'key' => 'genes',   'title' => 'Other genes with peptides in this family',  'width' => '40%', 'align' => 'center' },
+      { 'key' => 'id',      'title' => 'Family ID',                                 'width' => '30%', 'align' => 'left' },
+      { 'key' => 'annot',   'title' => 'Concensus annotation',                      'width' => '30%', 'align' => 'left' },
+      { 'key' => 'genes',   'title' => 'Other genes with peptides in this family',  'width' => '40%', 'align' => 'left' },
   );
 
   foreach my $family_id (keys %$families) {
