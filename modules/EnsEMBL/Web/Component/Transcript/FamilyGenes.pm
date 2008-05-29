@@ -20,31 +20,34 @@ sub content {
   my $family_id = $object->param('family');
 
   my $html = undef;
-  if ($family_id && @{$object->species_defs->ENSEMBL_CHROMOSOMES}) {
+
+  if ($family_id) {
 
     $html .= "<h4>Ensembl genes containing peptides in family $family_id</h4>\n";
-
     my $families = $object->get_families;
     my $genes = $families->{$family_id}{'genes'};
 
-    $object->param('aggregate_colour', 'red');
-    my $karyotype = undef;
-    my $gene = $object->gene;
+    ## Karyotype (optional)
+    if (@{$object->species_defs->ENSEMBL_CHROMOSOMES}) {
 
-    my $image    = $object->new_karyotype_image();
-    $image->cacheable  = 'no';
-    $image->image_type = "family";
-    $image->image_name = "$species-".$family_id;
-    $image->imagemap = 'yes';
-    unless( $image->exists ) {
-      my %high = ( 'style' => 'arrow' );
-      foreach my $g (@$genes){
-        my $stable_id = $g->stable_id;
-        my $chr       = $g->slice->seq_region_name;
-        my $start     = $g->start;
-        my $end       = $g->end;
-        my $colour = $stable_id eq $gene->stable_id ? 'red' : 'blue';
-        my $point = {
+      $object->param('aggregate_colour', 'red'); ## Fake CGI param - easiest way to pass this parameter
+      my $karyotype = undef;
+      my $gene = $object->gene;
+
+      my $image    = $object->new_karyotype_image();
+      $image->cacheable  = 'no';
+      $image->image_type = "family";
+      $image->image_name = "$species-".$family_id;
+      $image->imagemap = 'yes';
+      unless( $image->exists ) {
+        my %high = ( 'style' => 'arrow' );
+        foreach my $g (@$genes){
+          my $stable_id = $g->stable_id;
+          my $chr       = $g->slice->seq_region_name;
+          my $start     = $g->start;
+          my $end       = $g->end;
+          my $colour = $stable_id eq $gene->stable_id ? 'red' : 'blue';
+          my $point = {
             'start' => $start,
             'end'   => $end,
             'col'   => $colour,
@@ -52,18 +55,59 @@ sub content {
             'caption'               => 'Genes',
             "00:$stable_id"         => "/$species/Gene/Summary?g=$stable_id",
             '01:Jump to contigview' => "/$species/Location/View?r=$chr:$start-$end;g=$stable_id"
+            }
+          };
+          if(exists $high{$chr}) {
+            push @{$high{$chr}}, $point;
+          } 
+          else {
+            $high{$chr} = [ $point ];
           }
-        };
-        if(exists $high{$chr}) {
-          push @{$high{$chr}}, $point;
-        } 
-        else {
-          $high{$chr} = [ $point ];
         }
+        $image->karyotype( $object, [ \%high ]);
       }
-      $image->karyotype( $object, [ \%high ]);
+      $html .= $image->render if $image;
     }
-    $html .= $image->render if $image;
+
+    ## Table of gene info
+    $html .= qq(<table class="ss tint" style="margin-top:1em">
+<tr>
+  <th width="20%">Gene ID</th>
+  <th width="20%">Gene Name</th>
+  <th width="20%">Genome Location</th>
+  <th width="40%">Description (if known)</th>
+</tr>);
+    my $row = 0;
+    my $bg;
+    foreach my $gene ( sort { $object->seq_region_sort( $a->seq_region_name, $b->seq_region_name ) ||
+                            $a->seq_region_start <=> $b->seq_region_start } @$genes ) {
+    
+      $bg = $row % 2 ? 'bg2' : 'bg1';
+
+      $html .= qq(<tr class="$bg">\n);
+  
+      $html .= sprintf '<td><a href="/%s/Gene/Summary?g=%s">%s</a>',
+                 $object->species, $gene->stable_id, $gene->stable_id;
+      $html .= '<td>';
+      my $xref = $gene->display_xref;
+      if( $xref ) {
+        $html .= $object->get_ExtURL_link( $xref->display_id, $xref->dbname, $xref->primary_id);
+      } 
+      else {
+        $html .= '-novel-';
+      }
+      $html .= '</td>';
+      $html  .= sprintf '<td><a href="/%s/Location/View?r=%s:%s-%s">%s: %s</a></td>', 
+                            $object->species, $gene->slice->seq_region_name, $gene->start, $gene->end, 
+                            $object->neat_sr_name( $object->coord_system, $gene->slice->seq_region_name ),
+                            $object->round_bp( $gene->start );
+      $html .= sprintf '<td>%s</td>', $object->gene_description($gene);
+
+      $html .= "</tr>\n";
+
+      $row++;
+    }
+    $html .= "</table>\n";
   }
 
   return $html;
