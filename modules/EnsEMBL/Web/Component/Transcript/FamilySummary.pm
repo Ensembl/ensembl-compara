@@ -23,24 +23,32 @@ sub content {
   my $families = $object->get_families;
   return unless keys %$families;
 
-  my $html = qq(<table class="ss tint">
-<tr><th>Family ID</th><th>Concensus annotation</th><th>Other genes with peptides in this family</th></tr>
-);
+  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+
+  $table->add_columns(
+      { 'key' => 'id',      'title' => 'Family ID',                                 'width' => '30%', 'align' => 'center' },
+      { 'key' => 'annot',   'title' => 'Concensus annotation',                      'width' => '30%', 'align' => 'center' },
+      { 'key' => 'genes',   'title' => 'Other genes with peptides in this family',  'width' => '40%', 'align' => 'center' },
+  );
+
   foreach my $family_id (keys %$families) {
-    $html .= sprintf(qq(<tr><td>%s</td><td>%s</td>), $family_id, $families->{$family_id}{'description'});
+    my $row = {};
+
+    $row->{'id'}    = $family_id;
+    $row->{'annot'} = $families->{$family_id}{'description'};
 
     my $genes = $families->{$family_id}{'genes'};
 
     if (ref($genes) eq 'ARRAY' && scalar(@$genes) > 1) {
-      $html .= sprintf(qq(
-    <td>%s genes [<a href="/%s/Transcript/Families?%s;family=%s">Display all</a>]</td></tr>
-    ), scalar(@$genes), $object->species, join(';', @{$object->core_params}), $family_id);
+      $row->{'genes'} = sprintf(qq(%s genes [<a href="/%s/Transcript/Families?%s;family=%s">Display all</a>]), 
+          scalar(@$genes), $object->species, join(';', @{$object->core_params}), $family_id);
     }
     else {
-      $html .= qq(<td>none</td></tr>);
+      $row->{'genes'} = 'none';
     }
+    $table->add_row($row);
   }  
-  $html .= '</table>'; 
+  my $html .= $table->render;
 
   $html .= qq(<h3>Prediction method</h3>
     <p>Protein families were generated using the MCL (Markov CLustering)
