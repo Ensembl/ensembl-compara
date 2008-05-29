@@ -70,44 +70,34 @@ sub content {
     }
 
     ## Table of gene info
-    $html .= qq(<table class="ss tint" style="margin-top:1em">
-<tr>
-  <th width="20%">Gene ID</th>
-  <th width="20%">Gene Name</th>
-  <th width="20%">Genome Location</th>
-  <th width="40%">Description (if known)</th>
-</tr>);
-    my $row = 0;
-    my $bg;
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    $table->add_columns( 
+      { 'key' => 'id',   'title' => 'Gene ID',               'width' => '20%', 'align' => 'center' },
+      { 'key' => 'name', 'title' => 'Gene Name',             'width' => '20%', 'align' => 'center' },
+      { 'key' => 'loc',  'title' => 'Genome Location',       'width' => '20%', 'align' => 'left' },
+      { 'key' => 'desc', 'title' => 'Description(if known)', 'width' => '40%', 'align' => 'left' }
+    );
     foreach my $gene ( sort { $object->seq_region_sort( $a->seq_region_name, $b->seq_region_name ) ||
                             $a->seq_region_start <=> $b->seq_region_start } @$genes ) {
-    
-      $bg = $row % 2 ? 'bg2' : 'bg1';
-
-      $html .= qq(<tr class="$bg">\n);
-  
-      $html .= sprintf '<td><a href="/%s/Gene/Summary?g=%s">%s</a>',
+      
+      my $row = {};
+      $row->{'id'} = sprintf '<a href="/%s/Gene/Summary?g=%s">%s</a>',
                  $object->species, $gene->stable_id, $gene->stable_id;
-      $html .= '<td>';
       my $xref = $gene->display_xref;
       if( $xref ) {
-        $html .= $object->get_ExtURL_link( $xref->display_id, $xref->dbname, $xref->primary_id);
+        $row->{'name'} = $object->get_ExtURL_link( $xref->display_id, $xref->dbname, $xref->primary_id);
       } 
       else {
-        $html .= '-novel-';
+        $row->{'name'} = '-novel-';
       }
-      $html .= '</td>';
-      $html  .= sprintf '<td><a href="/%s/Location/View?r=%s:%s-%s">%s: %s</a></td>', 
+      $row->{'loc'} = sprintf '<a href="/%s/Location/View?r=%s:%s-%s">%s: %s</a>', 
                             $object->species, $gene->slice->seq_region_name, $gene->start, $gene->end, 
                             $object->neat_sr_name( $object->coord_system, $gene->slice->seq_region_name ),
                             $object->round_bp( $gene->start );
-      $html .= sprintf '<td>%s</td>', $object->gene_description($gene);
-
-      $html .= "</tr>\n";
-
-      $row++;
+      $row->{'desc'} = $object->gene_description($gene);
+      $table->add_row($row);
     }
-    $html .= "</table>\n";
+    $html .= $table->render;
   }
 
   return $html;
