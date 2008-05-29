@@ -43,8 +43,9 @@ sub render {
   my $options = $self->{_options} || {};
   my $align = $options->{align} ? $options->{align} : 'autocenter';
   my $width = $options->{width} ? $options->{width} : '100%';
+  my $margin = $options->{margin} ? $options->{margin} : '0px';
 
-  my $output = qq(\n<table class="ss $align" style="width:$width" cellpadding="0" cellspacing="0">);
+  my $output = qq(\n<table class="ss $align" style="width:$width;margin:$margin" cellpadding="0" cellspacing="0">);
   foreach my $row ( @{ $self->_process()} ) {
     my $tag = 'td';
     if($row->{style} eq 'header') {
