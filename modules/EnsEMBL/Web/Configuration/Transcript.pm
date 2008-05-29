@@ -90,14 +90,17 @@ sub populate_tree {
   );
 
   $self->create_node( 'Domain', "Interpro domains  ([[counts::domains]])",
-    [qw(interpro    EnsEMBL::Web::Component::Transcript::Interpro)],
-    { 'availability' => 1, 'concise' => 'Domain information'}
+    [qw(
+        interpro      EnsEMBL::Web::Component::Transcript::Interpro
+        domaingenes   EnsEMBL::Web::Component::Transcript::DomainGenes
+      )],
+    { 'availability' => 1, 'concise' => 'Interpro domain'}
   );
 
   $self->create_node( 'Families', "Protein families ([[counts::families]])",
     [qw(
       summary  EnsEMBL::Web::Component::Transcript::FamilySummary
-      image    EnsEMBL::Web::Component::Transcript::FamilyImage
+      genes    EnsEMBL::Web::Component::Transcript::FamilyGenes
     )],
     { 'availability' => 1, 'concise' => 'Protein families'}
   );
