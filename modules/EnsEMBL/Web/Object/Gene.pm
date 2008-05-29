@@ -202,14 +202,6 @@ sub location_string {
   return sprintf( "%s:%s-%s", $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );
 }
 
-sub readable_location {
-  my $self = shift;
-  my $gene = $self->gene;
-  return sprintf "%s: %s",
-     $self->neat_sr_name( $self->coord_system, $gene->slice->seq_region_name ),
-     $self->round_bp( $gene->start );
-}
-
 sub get_contig_location {
   my $self    = shift;
   my ($pr_seg) = @{$self->Obj->project('seqlevel')};
