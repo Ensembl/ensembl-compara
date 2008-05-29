@@ -137,12 +137,6 @@ sub display_xref {
   return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name, $trans_xref->info_text ) if $trans_xref;
 }
 
-sub gene_description {
-  my $self = shift;
-  my %description_by_type = ( 'bacterial_contaminant' => "Probable bacterial contaminant" );
-  return $self->Obj->description() || $description_by_type{ $self->Obj->biotype } || 'No description';
-}
-
 sub mod_date {
   my $self = shift;
   my $time = $self->gene()->modified_date;

@@ -37,6 +37,22 @@ sub _url {
   return $URL;
 }
 
+sub core_params {
+  my $self = shift;
+  my $params = [];
+  if ($self->core_objects->location) {
+    push @$params, 'r='.$self->core_objects->location->seq_region_name.':'.$self->core_objects->location->start.'-'
+                    .$self->core_objects->location->end;
+  }
+  if ($self->core_objects->gene) {
+    push @$params, 'g='.$self->core_objects->gene->stable_id;
+  }
+  if ($self->core_objects->transcript) {
+    push @$params, 't='.$self->core_objects->transcript->stable_id;
+  }
+  return $params;
+}
+
 sub EnsemblObject   {
 ### Deprecated
 ### Sets/gets the underlying Ensembl object wrapped by the web object
@@ -167,6 +183,17 @@ sub seq_region_type_and_name {
     return $name;
   } else {
     return "$coord $name";
+  }
+}
+
+sub gene_description {
+  my $self = shift;
+  my $gene = shift || $self->gene;
+  my %description_by_type = ( 'bacterial_contaminant' => "Probable bacterial contaminant" );
+  if( $gene ) {
+    return $gene->description() || $description_by_type{ $gene->biotype } || 'No description';
+  } else {
+    return 'No description';
   }
 }
 

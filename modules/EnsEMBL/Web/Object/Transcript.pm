@@ -126,16 +126,6 @@ sub seq_region_end    { my $self = shift; return $self->Obj->end; }
 sub seq_region_strand { my $self = shift; return $self->Obj->strand; }
 sub feature_length    { my $self = shift; return $self->Obj->feature_Slice->length; }
 
-sub gene_description {
-  my $self = shift;
-  my %description_by_type = ( 'bacterial_contaminant' => "Probable bacterial contaminant" );
-  if( $self->gene ) {
-    return $self->gene->description() || $description_by_type{ $self->gene->biotype } || 'No description';
-  } else {
-    return 'No description';
-  }
-}
-
 sub get_families {
 ### Returns a hash of family information and associated (API) Gene objects
 ## N.B. moved various bits from Translation and Family objects
