@@ -89,7 +89,7 @@ sub populate_tree {
     { 'availability' => 1}
   );
 
-  $self->create_node( 'Domain', "Domain information  ([[counts::domain]])",
+  $self->create_node( 'Domain', "Interpro domains  ([[counts::domains]])",
     [qw(interpro    EnsEMBL::Web::Component::Transcript::Interpro)],
     { 'availability' => 1, 'concise' => 'Domain information'}
   );

@@ -12,34 +12,36 @@ sub _init {
 }
 
 sub caption {
-  return undef;
+  return 'InterPro';
 }
 
 
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $trans = $object->transcript;
-  my $pepdata  = $object->translation_object;
-  return unless $pepdata;
 
-  my $interpro_hash = $pepdata->get_interpro_links( $trans );
-  return unless (%$interpro_hash);
-  my $label = 'InterPro';
-# add table call here
+  ## Table of Interpro domains
+  my $interpro = $object->get_interpro;
+  return unless keys %$interpro;
   my $html = qq(<table cellpadding="4">);
-  for my $accession (keys %$interpro_hash){
-    my $interpro_link = $object->get_ExtURL_link( $accession, 'INTERPRO',$accession);
-    my $desc = $interpro_hash->{$accession};
-    $html .= qq(
+  while ( my ($accession, $data) = each (%$interpro)){
+    $html .= sprintf(qq(
   <tr>
-    <td>$interpro_link</td>
-    <td>$desc - [<a href="/@{[$object->species]}/domainview?domainentry=$accession">View other genes with this domain</a>]</td>
-  </tr>);
+    <td>%s</td>
+    <td>%s - [<a href="/%s/Transcript/Domain?r=%s:%s-%s;g=%s;t=%s;domain=$accession">Display other genes with this domain</a>]</td>
+  </tr>), $data->{'link'}, $data->{'desc'}, $object->species, 
+        $object->core_objects->location->seq_region_name, 
+        $object->core_objects->location->start, $object->core_objects->location->end,
+        $object->core_objects->gene->stable_id, $object->core_objects->transcript->stable_id);
   }
   $html .= qq( </table> );
 
- return $html;
+  ## Karyotype showing location of other genes with this domain
+  if ($object->param('domain')) {
+    $html .= 'Karyotype goes here!';
+  }
+
+  return $html;
 }
 
 1;

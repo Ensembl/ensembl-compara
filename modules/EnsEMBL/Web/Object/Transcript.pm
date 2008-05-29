@@ -17,6 +17,7 @@ sub counts {
   my $counts = {};
   $counts->{'exons'}       = @{$self->Obj()->get_all_Exons};
   $counts->{'families'}    = keys %{$self->get_families};
+  $counts->{'domains'}     = keys %{$self->get_interpro};
   return $counts;
 }
 
@@ -174,6 +175,22 @@ sub get_families {
     }
   }
   return $family_hash;
+}
+
+sub get_interpro {
+  my $self = shift;
+  my $translation = $self->translation_object;
+  my $hash = $translation->get_interpro_links( $self->transcript );
+  return unless (%$hash);
+
+  my $interpro;
+  for my $accession (keys %$hash){
+    my $data = {};
+    $data->{'link'} = $self->get_ExtURL_link( $accession, 'INTERPRO',$accession);
+    $data->{'desc'} = $hash->{$accession};
+    $interpro->{$accession} = $data;
+  }
+  return $interpro;
 }
 
 sub get_alternative_locations {
