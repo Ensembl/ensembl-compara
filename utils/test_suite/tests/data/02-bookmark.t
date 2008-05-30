@@ -15,7 +15,7 @@ mock_registry;
 my $bookmark = EnsEMBL::Web::Data::Bookmark->new();
 
 isa_ok( $bookmark, 'EnsEMBL::Web::Data::Bookmark' );
-ok( $bookmark->get_record_type eq 'bookmark', 'bookmark type is bookmark');
+ok( $bookmark->owner_type eq 'bookmark', 'bookmark type is bookmark');
 
 my $url = "http://www.ensembl.org";
 my $title = "Ensembl";
