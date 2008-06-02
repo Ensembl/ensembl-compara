@@ -18,7 +18,7 @@ sub allow {
   my $self = shift;
   my $reg = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY;
 
-  my $group = EnsEMBL::Web::Data::Group->new({id => $self->get_group_id});
+  my $group = EnsEMBL::Web::Data::Group->new($self->get_group_id);
   my $user = $reg->get_user;
   if ($user->is_member_of($group)) {
     return 1;

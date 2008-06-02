@@ -15,7 +15,7 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 sub allow {
   my ($self) = @_;
   my $cgi = new CGI;
-  my $invitation = EnsEMBL::Web::Data::Invite->new({id => $cgi->param('id')});
+  my $invitation = EnsEMBL::Web::Data::Invite->new($cgi->param('id'));
   if ($invitation->code eq $cgi->param('code')) {
     return 1;
   } else {

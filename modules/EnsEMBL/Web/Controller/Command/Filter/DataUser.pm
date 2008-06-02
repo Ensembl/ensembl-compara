@@ -14,7 +14,7 @@ sub user {
   my ($self, $id) = @_;
 
   if ($id) {
-    return EnsEMBL::Web::Data::User->new({ id => $id });
+    return EnsEMBL::Web::Data::User->new($id);
   }
 
   return $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
