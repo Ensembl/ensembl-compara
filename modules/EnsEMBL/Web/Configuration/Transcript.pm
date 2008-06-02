@@ -97,14 +97,6 @@ sub populate_tree {
     { 'availability' => 1, 'concise' => 'Interpro domain'}
   );
 
-  $self->create_node( 'Families', "Protein families ([[counts::families]])",
-    [qw(
-      summary  EnsEMBL::Web::Component::Transcript::FamilySummary
-      genes    EnsEMBL::Web::Component::Transcript::FamilyGenes
-    )],
-    { 'availability' => 1, 'concise' => 'Protein families'}
-  );
-
   my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
   $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()] ) );
   $exp_menu->append( $self->create_node( 'Export_Sequence',  'Sequence', [qw()] ) );
