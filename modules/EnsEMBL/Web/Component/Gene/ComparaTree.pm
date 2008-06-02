@@ -31,13 +31,7 @@ sub content {
   my $node = $aligned_member->subroot;
   my $tree = $tree_adapt->fetch_node_by_node_id($node->node_id);
      $node->release_tree;
-  return $self->create_genetree_image( $tree, $member )->render;
-}
 
-sub create_genetree_image {
-  my( $self, $tree, $member ) = @_;
-
-  my $object       = $self->object;
   my $wuc          = $object->user_config_hash( 'genetreeview' );
   my $image_width  = $object->param( 'image_width' ) || 800;
 
@@ -51,7 +45,7 @@ sub create_genetree_image {
   $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
   $image->imagemap    = 'yes';
 
-  return $image;
+  return $image->render;
 }
 
 1;
