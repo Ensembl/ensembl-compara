@@ -17,13 +17,9 @@ sub allow {
   my $cgi = new CGI;
   my $user;
   if ($cgi->param('user_id')) {
-    $user = EnsEMBL::Web::Data::User->new({
-      id      => $cgi->param('user_id'),
-    });
+    $user = EnsEMBL::Web::Data::User->new($cgi->param('user_id'));
   } else {
-    $user = EnsEMBL::Web::Data::User->new({
-      email   => $cgi->param('email'),
-    });
+    $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   }
   warn "USER: " . $user->name;
   warn "SALT: " . $user->salt;
