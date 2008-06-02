@@ -34,21 +34,18 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
 
-  my $user = EnsEMBL::Web::Data::User->new({
-	      email   => $cgi->param('email'),
-  });
+  my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   if ($cgi->param('record_id')) {
     $cgi->redirect($self->url('/User/Activate', {'email' => $user->email, 'code' => $user->salt, 'url' => '/User/Account;record_id='.CGI::escape($cgi->param('record_id'))} );
-  }
-  else {
-    if ($user->email) {
-      my $mailer = EnsEMBL::Web::Mailer::User->new();
+  } else {
+    if ($user && $user->email) {
+      my $mailer = EnsEMBL::Web::Mailer::User->new;
       $mailer->email($user->email);
-      $mailer->send_activation_email((
-          'user'      => $user,
-          'lost'      => $cgi->param('lost') || '',
-          'group_id'  => $cgi->param('group_id') || '',
-        ));
+      $mailer->send_activation_email(
+          user      => $user,
+          lost      => $cgi->param('lost') || '',
+          group_id  => $cgi->param('group_id') || '',
+      );
       $self->set_message(qq(<p>An email has been sent for each account associated with this address and should arrive shortly.</p><p>If you do not receive a message from us within a few hours, please check any spam filters on your email account, and <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a> if you still cannot find the message.</p>));
     }
     $self->render_message;

@@ -7,9 +7,8 @@ use Class::Std;
 use CGI;
 
 use EnsEMBL::Web::Data;
-use EnsEMBL::Web::Data::NewsFilter;
 use EnsEMBL::Web::Data::Species;
-
+use EnsEMBL::Web::Data::User;
 use base 'EnsEMBL::Web::Controller::Command::User';
 
 {
@@ -20,7 +19,7 @@ sub BUILD {
   ## If edting, ensure that this record belongs to the logged-in user!
   my $cgi = new CGI;
   if ($cgi->param('id')) {
-    $self->user_or_admin('EnsEMBL::Web::Data::NewsFilter', $cgi->param('id'), $cgi->param('owner_type'));
+    $self->user_or_admin('EnsEMBL::Web::Data::Record::NewsFilter', $cgi->param('id'), $cgi->param('owner_type'));
   }
 }
 
@@ -36,7 +35,7 @@ sub render {
 
 sub render_page {
   my $self = shift;
-
+  my $cgi = new CGI;
   ## Create basic page object, so we can access CGI parameters
   my $webpage = EnsEMBL::Web::Document::Interface::simple('User');
 
@@ -44,23 +43,23 @@ sub render_page {
   my $help_email = $sd->ENSEMBL_HELPDESK_EMAIL;
 
   ## Create interface object, which controls the forms
-  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new();
-  my $data = EnsEMBL::Web::Data::NewsFilter->new();
+  my $interface = EnsEMBL::Web::Interface::InterfaceDef->new;
+  my $data = EnsEMBL::Web::Data::Record::NewsFilter::User->new($cgi->param('id'));
   $interface->data($data);
   $interface->discover;
 
   ## Set values for checkboxes
-  my $all_species = EnsEMBL::Web::Data::Species->find_all;
+  my @all_species = EnsEMBL::Web::Data::Species->find_all;
   my @species_list;
-  my @sorted = sort {$a->common_name cmp $b->common_name} @$all_species;
+  my @sorted = sort {$a->common_name cmp $b->common_name} @all_species;
   foreach my $species (@sorted) {
     push @species_list, {'name' => $species->common_name, 'value' => $species->name};
   }
   my @topic_list = (
-      {name => 'Data updates', value => 'data'},
-      {name => 'Code changes', value => 'code'},
-      {name => 'API changes',  value => 'schema'},
-      {name => 'Web features', value => 'feature'},
+      {'name' => 'Data updates', 'value' => 'data'},
+      {'name' => 'Code changes', 'value' => 'code'},
+      {'name' => 'API changes', 'value' => 'schema'},
+      {'name' => 'Web features', 'value' => 'feature'},
     );
 
   ## Customization

@@ -8,7 +8,6 @@ use CGI;
 
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
-use EnsEMBL::Web::RegObj;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -34,9 +33,9 @@ sub render {
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-  my $user = EnsEMBL::Web::Data::User->new({ id => $cgi->param('user_id') });
-  my $group = EnsEMBL::Web::Data::Group->new({ id => $cgi->param('group_id') });
-  $group->assign_level_to_user($user, $cgi->param('new_level'));
+
+  my $group = EnsEMBL::Web::Data::Group->new($cgi->param('group_id'));
+  $group->assign_level_to_user($cgi->param('user_id'), $cgi->param('new_level'));
 
   $cgi->redirect($self->url('/User/Group', {'id' => $cgi->param('group_id')}) );
 }

@@ -8,7 +8,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Data::Group;
 use base 'EnsEMBL::Web::Controller::Command::User';
 
 {
@@ -33,7 +33,7 @@ sub render {
 sub process {
   my $self = shift;
   my $cgi = new CGI;
-  my $group = EnsEMBL::Web::Data::Group->new({ id => $cgi->param('id') });
+  my $group = EnsEMBL::Web::Data::Group->new($cgi->param('id'));
   $group->status('inactive');
   $group->save;
   $cgi->redirect($self->url('/User/Account'));

@@ -3,7 +3,7 @@ package EnsEMBL::Web::Controller::Command::Filter::InvitationExists;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Data::Invite;
+use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
@@ -15,7 +15,7 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 sub allow {
   my ($self) = @_;
   my $cgi = new CGI;
-  my $invitation = EnsEMBL::Web::Data::Invite->new($cgi->param('id'));
+  my $invitation = EnsEMBL::Web::Data::Record::Invite::Group->new($cgi->param('id'));
   if ($invitation) {
     return 1;
   } else {

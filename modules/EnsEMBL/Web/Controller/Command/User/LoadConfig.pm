@@ -9,7 +9,7 @@ use Class::Std;
 use CGI;
 
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data::Configuration;
+use EnsEMBL::Web::Data::User;
 
 use base 'EnsEMBL::Web::Controller::Command::User';
 
@@ -19,7 +19,7 @@ sub BUILD {
   my ($self, $ident, $args) = @_; 
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   my $cgi = new CGI;
-  my $config = EnsEMBL::Web::Data::Configuration->new({'id'=>$cgi->param('id')});
+  my $config = EnsEMBL::Web::Data::Record::Configuration::User->new($cgi->param('id'));
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::Owner', {'user_id' => $config->user->id});
 
 }
@@ -56,9 +56,9 @@ sub process {
     $url = $host . $new_params;
   }
 
-  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $session = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_session;
   $session->set_input($cgi);
-  my $configuration = EnsEMBL::Web::Data::Configuration->new({'id'=>$cgi->param('id')});
+  my $configuration = EnsEMBL::Web::Data::Record::Configuration::User->new($cgi->param('id'));
 
   my $string = $configuration->scriptconfig;
   my $r = Apache2::RequestUtil->request();

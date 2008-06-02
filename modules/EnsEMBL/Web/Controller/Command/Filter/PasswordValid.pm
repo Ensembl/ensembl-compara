@@ -21,7 +21,10 @@ sub allow {
   my $email = $cgi->param('email');
   my$password = $cgi->param('password');
 
+  ## TODO: proper error exception
   my $user = EnsEMBL::Web::Data::User->find(email => $email);
+  return 0 unless $user;
+  
   my $input_password = $cgi->param('password');
   my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptPassword($input_password, $user->salt);
   if ($user->password eq $encrypted) {
