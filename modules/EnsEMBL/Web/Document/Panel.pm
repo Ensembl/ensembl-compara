@@ -378,7 +378,7 @@ sub render {
         <h2>%s</h2>), CGI::escapeHTML($self->{caption});
       }
       $HTML .= q(
-      </div>);
+      <p class="invisible">.</p></div>);
     } elsif( exists $self->{'caption'} ) {
       $HTML .= sprintf q(
       <h2>%s</h2>), CGI::escapeHTML($self->{caption});
