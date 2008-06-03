@@ -10,15 +10,33 @@ use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
-sub populate_tree      {}
-sub set_default_action {}
-
-sub _add_javascript_libraries {
-  ## 'private' method to load commonly-used JS libraries
+sub populate_tree {
   my $self = shift;
-  $self->{page}->javascript->add_source( "/js/protopacked.js" );  ## Javascript library 
-  $self->{page}->javascript->add_source( "/js/accountview42.js" ); ## link magic
+
+  #if ($ENV{'ENSEMBL_USER_ID'}) {
+
+    $self->create_node( 'Account', "Your Details",
+    [qw(account EnsEMBL::Web::Component::User::Account
+        )],
+      { 'availability' => 1, 'concise' => 'Summary' }
+    );
+
+  #}
 }
+
+sub set_default_action {
+  my $self = shift;
+  $self->{_data}{default} = 'Login';
+}
+
+sub global_context { return $_[0]->_global_context; }
+sub ajax_content   { return $_[0]->_ajax_content;   }
+sub local_context  { return $_[0]->_local_context;  }
+sub local_tools    { return $_[0]->_local_tools;  }
+sub content_panel  { return $_[0]->_content_panel;  }
+sub context_panel  { return $_[0]->_context_panel;  }
+
+
 
 sub access_denied {
   my $self   = shift;
@@ -44,10 +62,10 @@ sub message {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'command' => $self->{command},
     ) ) {
+    $self->{object}->command($self->{command});
     $panel->add_components(qw(
-        message        EnsEMBL::Web::Component::User::message
+        message        EnsEMBL::Web::Component::User::Message
     ));
 
     ## add panel to page
@@ -61,12 +79,10 @@ sub login {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => 'Log in',
     ) ) {
     $panel->add_components(qw(
-        login       EnsEMBL::Web::Component::User::login
+        login       EnsEMBL::Web::Component::User::Login
     ));
-    $self->add_form($panel, qw(login   EnsEMBL::Web::Component::User::login_form) );
 
     ## add panel to page
     $self->add_panel( $panel );
@@ -80,10 +96,9 @@ sub login_check {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => '',
     ) ) {
     $panel->add_components(qw(
-        login_check       EnsEMBL::Web::Component::User::login_check
+        login_check       EnsEMBL::Web::Component::User::LoginCheck
     ));
 
     ## add panel to page
@@ -97,12 +112,10 @@ sub lost_password {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => 'Lost password/activation code',
     ) ) {
     $panel->add_components(qw(
-        lost_password       EnsEMBL::Web::Component::User::lost_password
+        lost_password       EnsEMBL::Web::Component::User::LostPassword
     ));
-    $self->add_form($panel, qw(lost_password   EnsEMBL::Web::Component::User::lost_password_form) );
 
     ## add panel to page
     $self->add_panel( $panel );
@@ -115,12 +128,10 @@ sub enter_password {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => 'Set your password',
     ) ) {
     $panel->add_components(qw(
-        enter_password        EnsEMBL::Web::Component::User::enter_password
+        enter_password        EnsEMBL::Web::Component::User::EnterPassword
     ));
-    $self->add_form($panel, qw(enter_password   EnsEMBL::Web::Component::User::enter_password_form) );
 
     ## add panel to page
     $self->add_panel( $panel );
@@ -133,10 +144,9 @@ sub update_failed {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => 'Database update failed',
     ) ) {
     $panel->add_components(qw(
-        update_failed       EnsEMBL::Web::Component::User::update_failed
+        update_failed       EnsEMBL::Web::Component::User::UpdateFailed
     ));
 
     ## add panel to page
@@ -150,12 +160,10 @@ sub select_group {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => 'Select group to share this record with',
     ) ) {
     $panel->add_components(qw(
-        select_group        EnsEMBL::Web::Component::User::select_group
+        select_group        EnsEMBL::Web::Component::User::SelectGroup
     ));
-    $self->add_form($panel, qw(select_group   EnsEMBL::Web::Component::User::select_group_form) );
 
     ## add panel to page
     $self->add_panel( $panel );
@@ -168,12 +176,10 @@ sub accept {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => 'Accept invitation',
     ) ) {
     $panel->add_components(qw(
-        accept        EnsEMBL::Web::Component::User::accept
+        accept        EnsEMBL::Web::Component::User::Accept
     ));
-    $self->add_form($panel, qw(accept   EnsEMBL::Web::Component::User::accept_form) );
 
     ## add panel to page
     $self->add_panel( $panel );
@@ -186,10 +192,9 @@ sub invitation_nonpending {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => 'Invitation Error',
     ) ) {
     $panel->add_components(qw(
-        invitation_nonpending       EnsEMBL::Web::Component::User::invitation_nonpending
+        invitation_nonpending       EnsEMBL::Web::Component::User::InvitationNonpending
     ));
 
     ## add panel to page
@@ -203,10 +208,9 @@ sub invitations {
   if (my $panel = $self->new_panel( 'Image',
     'code'    => "info$self->{flag}",
     'object'  => $self->{object},
-    'caption' => 'Invitations',
     ) ) {
     $panel->add_components(qw(
-        invitations       EnsEMBL::Web::Component::User::invitations
+        invitations       EnsEMBL::Web::Component::User::Invitations
     ));
 
     ## add panel to page
@@ -289,8 +293,6 @@ sub accountview {
   ### Dynamic view displaying information about a user account
   my $self   = shift;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-
-  $self->_add_javascript_libraries;
 
   if( my $details_panel = $self->new_panel( 'Image',
     'code'    => "details#",
