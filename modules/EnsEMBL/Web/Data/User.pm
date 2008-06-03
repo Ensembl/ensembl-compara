@@ -13,7 +13,7 @@ __PACKAGE__->add_queriable_fields(
   email        => 'tinytext',
   salt         => 'tinytext',
   password     => 'tinytext',
-  organisation => 'text',
+  organisation => 'tinytext',
   status       => 'tinytext',
 );
 
