@@ -94,42 +94,6 @@ sub _local_context {
   $self->{'page'}->local_context->counts(  $self->{object}->counts   );
 }
 
-sub _local_tools {
-  my $self = shift;
-  my $obj = $self->{object};
-
-  my @data = (
-          ['Configure image',     ''],
-          ['Add/remove tracks',   ''],
-          ['Add your own data',   ''],
-          ['Export data',         ''],
-          ['BLAST/BLAT',          ''],
-          ['BioMart',             'http://www.biomart.org/'],
-  );
-
-  ## Work out UCSC and NCBI links
-  my $UCSC_db = 'hg18'; #$obj->species_defs->other_species( $species, 'UCSC_GOLDEN_PATH' );
-  if( $UCSC_db ) {
-    push @data, ['View region at UCSC', $obj->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $UCSC_db, 'CHR' => $obj->seq_region_name, 'START' => int( $obj->seq_region_start ), 'END' => int( $obj->seq_region_end )} ) ];
-  }
-  my $NCBI_db = '9606'; #$obj->species_defs->other_species( $species, 'NCBI_GOLDEN_PATH' );
-  if( $NCBI_db ) {
-    push @data, ['View region at NCBI', $obj->get_ExtURL( 'EGB_NCBI', { 'NCBI_DB' => $NCBI_db, 'CHR' => $obj->seq_region_name, 'START' => int( $obj->seq_region_start ), 'END' => int( $obj->seq_region_end )} ) ];
-  }
-
-  my $type;
-  foreach my $row ( @data ) {
-    if( $row->[1] =~ /^http/ ) {
-      $type = 'external';
-    }
-    $self->{'page'}->local_tools->add_entry( 
-      'type'      => $type,
-      'caption'   => $row->[0],
-      'url'       => $row->[1],
-    );
-  }
-}
-
 sub _context_panel {
   my $self   = shift;
   my $obj    = $self->{'object'};

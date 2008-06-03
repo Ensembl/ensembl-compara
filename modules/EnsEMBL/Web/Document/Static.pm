@@ -32,7 +32,6 @@ sub _initialize {
     );
   }
   $self->add_body_elements qw(
-    local_tools    EnsEMBL::Web::Document::HTML::Empty
     copyright      EnsEMBL::Web::Document::HTML::Copyright
     footerlinks    EnsEMBL::Web::Document::HTML::FooterLinks
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
