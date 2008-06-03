@@ -67,6 +67,7 @@ sub populate_tree {
   $self->create_node( 'Family', 'Protein families ([[counts::families]])',
     [qw(
       family EnsEMBL::Web::Component::Gene::Family
+      genes    EnsEMBL::Web::Component::Transcript::FamilyGenes
     )],
     { 'availability' => 1, 'concise' => 'Protein families' }
   );
