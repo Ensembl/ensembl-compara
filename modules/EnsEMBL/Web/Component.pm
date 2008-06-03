@@ -5,6 +5,7 @@ use Data::Dumper;
 $Data::Dumper::Indent = 3;
 use EnsEMBL::Web::File::Text;
 use Exporter;
+use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(cache cache_print);
@@ -66,6 +67,7 @@ sub cache_print {
   $cache->print( $$string_ref ) if $string_ref;
 }
 
+=pod
 sub message {
   ### Displays a message (e.g. error) from the Controller::Command module
   my ($panel, $object) = @_;
@@ -85,21 +87,6 @@ sub message {
   }
   $panel->print($html);
 }
-
-
-
-sub xAUTOLOAD {
-## Automagically creates simple form wrapper components
-  my ( $panel, $object ) = @_;
-  our $AUTOLOAD;
-  warn "TRYING TO CALL $AUTOLOAD";
-  my ($method) = ($AUTOLOAD =~ /::([a-z].*)$/);
-  return 0 unless $panel->form($method);
-  my $html = qq(<div class="formpanel" style="width:80%">);
-  $html .= $panel->form($method)->render();
-  $html .= '</div>';
-  $panel->print( $html );
-  return 1;
-}
+=cut
 
 1;
