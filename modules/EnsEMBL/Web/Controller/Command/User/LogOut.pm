@@ -33,6 +33,7 @@ sub process {
   if ($url =~ m#User#) { ## Don't want to redirect user to restricted page!
     $url = '/index.html';
   }
+warn "Redirecting to $url";
 
   ## setting a (blank) expired cookie deletes the current one
   my $SD = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
@@ -55,7 +56,7 @@ sub process {
   my $r = Apache2::RequestUtil->request();
   $user_cookie->clear($r);
 
-  $cgi->redirect(CGI::escape($url));
+  $cgi->redirect($url);
 }
 
 }
