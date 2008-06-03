@@ -46,6 +46,7 @@ sub get_Slice {
 
 sub short_caption {
   my $self = shift;
+  return 'Gene-based displays';
   my( $disp_id ) = $self->display_xref;
   return $self->type_name.': '.($disp_id||$self->stable_id);
 }

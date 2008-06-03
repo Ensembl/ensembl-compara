@@ -89,6 +89,7 @@ sub default_track_by_gene {
 
 sub short_caption {
   my $self = shift;
+  return 'Transcript-based displays';
   my( $disp_id ) = $self->display_xref;
   return $self->type_name.': '.($disp_id||$self->stable_id);
 }

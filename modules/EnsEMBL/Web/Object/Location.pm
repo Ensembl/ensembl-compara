@@ -21,6 +21,7 @@ sub counts {
 
 sub short_caption {
   my $self = shift;
+  return 'Location-based displays';
   return $self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
     $self->thousandify($self->seq_region_end);
 
