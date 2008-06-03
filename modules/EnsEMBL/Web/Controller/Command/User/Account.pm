@@ -26,24 +26,7 @@ sub render {
 }
 
 sub render_page {
-  my $self = shift;
-
-  my $webpage= new EnsEMBL::Web::Document::WebPage(
-    'renderer'   => 'Apache',
-    'outputtype' => 'HTML',
-    'scriptname' => 'User/Account',
-    'objecttype' => 'User',
-  );
-
-  if( $webpage->has_a_problem() ) {
-    $webpage->render_error_page( $webpage->problem->[0] );
-  } else {
-    foreach my $object( @{$webpage->dataObjects} ) {
-      $webpage->configure( $object, 'accountview', 'context_menu' );
-    }
-    $webpage->action();
-  }
-
+  EnsEMBL::Web::Magic::stuff('User', 'Account');
 }
 
 }
