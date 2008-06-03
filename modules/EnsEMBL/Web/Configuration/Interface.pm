@@ -7,13 +7,19 @@ use EnsEMBL::Web::Configuration;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
+sub populate_tree {
+  my $self = shift;
+}
+
+sub set_default_action {
+  my $self = shift;
+}
 
 sub select_to_edit {
   ### Creates a panel containing a record selection form
   my ($self, $object, $interface) = @_;
-  if (my $panel = $self->interface_panel($interface, 'select_to_edit', 'Select a Record')) {
-    $panel->add_components(qw(select    EnsEMBL::Web::Component::Interface::select_to_edit));
-    $self->add_form($panel, qw(select   EnsEMBL::Web::Component::Interface::select_to_edit_form));
+  if (my $panel = $self->interface_panel($interface, 'select_to_edit')) {
+    $panel->add_components(qw(select    EnsEMBL::Web::Component::Interface::SelectToEdit));
     $self->{page}->content->add_panel($panel);
     my $type = $object->__objecttype;
     $self->{page}->set_title("Ensembl $type Database: Select a Record to Edit");
@@ -24,12 +30,11 @@ sub select_to_edit {
 sub add {
   ### Creates a panel containing an empty record form
   my ($self, $object, $interface) = @_;
-  if (my $panel = $self->interface_panel($interface, 'add', 'Add a New Record')) {
-    $panel->add_components(qw(add     EnsEMBL::Web::Component::Interface::add));
-    $self->add_form($panel, qw(add    EnsEMBL::Web::Component::Interface::add_form));
+  if (my $panel = $self->interface_panel($interface, 'add')) {
+    $panel->add_components(qw(add     EnsEMBL::Web::Component::Interface::Add));
     $self->{page}->content->add_panel($panel);
     my $type = $object->__objecttype;
-    $self->{page}->set_title("Ensembl $type Database: Add a Record");
+    $self->{page}->set_title("Ensembl $type Database: Add a New Record");
   }
   return undef;
 }
@@ -37,9 +42,8 @@ sub add {
 sub edit {
   ### Creates a panel containing a record form populated with data
   my ($self, $object, $interface) = @_;
-  if (my $panel = $self->interface_panel($interface, 'edit', 'Edit this Record')) {
-    $panel->add_components(qw(edit    EnsEMBL::Web::Component::Interface::edit));
-    $self->add_form($panel, qw(edit   EnsEMBL::Web::Component::Interface::edit_form));
+  if (my $panel = $self->interface_panel($interface, 'edit')) {
+    $panel->add_components(qw(edit    EnsEMBL::Web::Component::Interface::Edit));
     $self->{page}->content->add_panel($panel);
     my $type = $object->__objecttype;
     $self->{page}->set_title("Ensembl $type Database: Edit a Record");
@@ -50,9 +54,8 @@ sub edit {
 sub select_to_delete {
   ### Creates a panel containing a record selection form
   my ($self, $object, $interface) = @_;
-  if (my $panel = $self->interface_panel($interface, 'select_to_delete', 'Select a Record to Delete')) {
-    $panel->add_components(qw(select   EnsEMBL::Web::Component::Interface::select_to_delete));
-    $self->add_form($panel, qw(select   EnsEMBL::Web::Component::Interface::select_to_delete_form));
+  if (my $panel = $self->interface_panel($interface, 'select_to_delete')) {
+    $panel->add_components(qw(select   EnsEMBL::Web::Component::Interface::SelectToDelete));
     $self->{page}->content->add_panel($panel);
     my $type = $object->__objecttype;
     $self->{page}->set_title("Ensembl $type Database: Select a Record to Delete");
@@ -63,9 +66,8 @@ sub select_to_delete {
 sub preview {
   ### Creates a panel showing a non-editable record
   my ($self, $object, $interface) = @_;
-  if (my $panel = $self->interface_panel($interface, 'preview', 'Preview')) {
-    $panel->add_components(qw(preview     EnsEMBL::Web::Component::Interface::preview));
-    $self->add_form($panel, qw(preview    EnsEMBL::Web::Component::Interface::preview_form));
+  if (my $panel = $self->interface_panel($interface, 'preview')) {
+    $panel->add_components(qw(preview     EnsEMBL::Web::Component::Interface::Preview));
     $self->{page}->content->add_panel($panel);
     my $type = $object->__objecttype;
     $self->{page}->set_title("Ensembl $type Database: Preview");
@@ -179,9 +181,9 @@ sub failure {
 sub on_success {
   ### Creates a panel showing feedback on database success 
   my ($self, $object, $interface, $component) = @_;
-  if (my $panel = $self->interface_panel($interface, 'on_success', 'Database Update Succeeded')) {
+  if (my $panel = $self->interface_panel($interface, 'on_success')) {
     unless ($component) {
-      $component = 'EnsEMBL::Web::Component::Interface::on_success';
+      $component = 'EnsEMBL::Web::Component::Interface::OnSuccess';
     }
     $panel->add_components('success', $component);
     $self->{page}->content->add_panel($panel);
@@ -194,9 +196,9 @@ sub on_success {
 sub on_failure {
   ### Creates a panel showing feedback on database failure
   my ($self, $object, $interface, $component) = @_;
-  if (my $panel = $self->interface_panel($interface, 'on_failure', 'Database Update Failed')) {
+  if (my $panel = $self->interface_panel($interface, 'on_failure')) {
     unless ($component) {
-      $component = 'EnsEMBL::Web::Component::Interface::on_success';
+      $component = 'EnsEMBL::Web::Component::Interface::OnFailure';
     }
     $panel->add_components('failure', $component);
     $self->{page}->content->add_panel($panel);
@@ -208,14 +210,10 @@ sub on_failure {
 
 sub interface_panel {
   ### Utility to instantiate an interface panel
-  my ($self, $interface, $action, $caption) = @_;
-  if ($interface->caption($action)) {
-    $caption = $interface->caption($action);
-  }
+  my ($self, $interface, $action) = @_;
+  $self->{object}->interface($interface);
   my $panel = $self->new_panel('Image',
         'code'      => 'interface_panel',
-        'caption'   => $caption,
-        'interface' => $interface,
         'object'    => $self->{object}
     );
   return $panel;
