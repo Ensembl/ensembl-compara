@@ -2,15 +2,9 @@ package EnsEMBL::Web::Component::User;
 
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Proxy::Object;
-use EnsEMBL::Web::Interface::TabView;
-use EnsEMBL::Web::Interface::Tab;
-use EnsEMBL::Web::Interface::Table;
-use EnsEMBL::Web::Interface::Table::Row;
-use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::Tools::Misc;
 
 use CGI;
 
@@ -22,127 +16,6 @@ our @ISA = qw( EnsEMBL::Web::Component);
 
 our $sitename = $SiteDefs::ENSEMBL_SITETYPE eq 'EnsEMBL' ? 'Ensembl' : $SiteDefs::ENSEMBL_SITETYPE;
 
-##--------------------------------------------------------------------------------------------------
-## USER LOGIN/REGISTRATION COMPONENTS
-##--------------------------------------------------------------------------------------------------
-
-sub login_form {
-  ### Main site login form
-  my( $panel, $object ) = @_;
-
-  my $form = EnsEMBL::Web::Form->new( 'login', "/User/_set_cookie", 'post' );
-
-  $form->add_element('type'  => 'String', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
-  $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Password', 'required' => 'yes');
-  $form->add_element('type'  => 'Hidden', 'name'  => 'url', 'value' => $object->param('url'));
-  $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Log in');
-  $form->add_element('type'  => 'Information',
-                     'value' => qq(<p><a href="/User/Register">Register</a> 
-                                  | <a href="/User/LostPassword">Lost password</a></p>));
-  return $form;
-}
-
-
-sub lost_password_form {
-  ## Form to resend activation code to user who has lost password
-  my( $panel, $object ) = @_;
-
-  my $form = EnsEMBL::Web::Form->new( 'lost_password', "/User/_send_activation", 'post' );
-
-  $form->add_element('type'  => 'Information',
-                    'value' => qq(<p>If you have lost your password or activation email, enter your email address and we will send you a new activation code.</p>));
-  $form->add_element('type'  => 'String', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
-  $form->add_element('type'  => 'Hidden', 'name'  => 'lost', 'value' => 'yes');
-  $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Send');
-  return $form;
-}
-
-sub login_check {
-  ## Interstitial page - confirms login then uses JS redirect to page where logged in
-  my( $panel, $object ) = @_;
-  my $url = $object->param('url') || '/index.html';
-
-  my $html;
-  if ($ENV{'ENSEMBL_USER_ID'}) {
-    if ($object->param('updated') eq 'yes') {
-      $html .= qq(<p>Thank you. Your changes have been saved.</p>);
-    }
-    else {
-      $html .= qq(<p>Thank you for logging into Ensembl</p>);
-    }
-    $html .= qq(
-<script type="text/javascript">
-<!--
-window.setTimeout('backToEnsembl()', 5000);
-
-function backToEnsembl(){
-  window.location = "$url"
-}
-//-->
-</script>
-<p>Please <a href="$url">click here</a> if you are not returned to your starting page within five seconds.</p>
-  );
-  }
-  else {
-    $html .= qq(<p>Sorry, we were unable to log you in. Please check that your browser can accept cookies.</p>
-<p><a href="$url">Click here</a> to return to your starting page.</p>
-);
-  }
-  $panel->print($html);  
-}
-
-sub enter_password_form {
-  ## Form to add/change password
-  my( $panel, $object ) = @_;
-
-  ## TODO: Remove!
-  # my $script = $object->script;
-
-  my $form = EnsEMBL::Web::Form->new( 'enter_password', "/User/_save_password", 'post' );
- 
-  $form->add_element('type' => 'Information',
-    'value' => 'Passwords should be at least 6 characters long and include both letters and numbers.');
- 
-  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
-    ## Logged-in user, changing own password
-    my $email = $user->email;
-    $form->add_element('type'  => 'Hidden', 'name'  => 'email', 'value' => $email);
-    $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Old password', 
-                      'required' => 'yes');
-  } else {
-    ## Setting new/forgotten password
-    $form->add_element('type' => 'Hidden', 'name' => 'user_id', 'value' => $object->param('user_id'));
-    $form->add_element('type' => 'Hidden', 'name' => 'email', 'value' => $object->param('email'));
-    $form->add_element('type' => 'Hidden', 'name' => 'code', 'value' => $object->param('code'));
-  }
-
-  if ($object->param('record_id')) {
-    $form->add_element(
-      'type'  => 'Hidden',
-      'name'  => 'record_id',
-      'value' => $object->param('record_id')
-    );
-  }
-  
-  $form->add_element('type'  => 'Password', 'name'  => 'new_password_1', 'label' => 'New password',
-                      'required' => 'yes');
-  $form->add_element('type'  => 'Password', 'name'  => 'new_password_2', 'label' => 'Confirm new password',
-                      'required' => 'yes');
-  $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Save');
-  return $form;
-}
-
-sub update_failed {
-  ## Generic message component for failed user_db update
-  my( $panel, $object ) = @_;
-
-## return the message
-  my $html = qq(<p>Sorry - we were unable to update your account. If the problem persists, please contact <a href="mailto:webmaster\@ensembl.org">webmaster\@ensembl.org</a>. Thank you.</p>
-<p><a href="/User/Account">Return to your account home page</a>);
-
-  $panel->print($html);
-  return 1;
-}
 
 ##--------------------------------------------------------------------------------------------------
 ## ACCOUNTVIEW
