@@ -70,7 +70,6 @@ sub _initialize_HTML {
     rss        EnsEMBL::Web::Document::HTML::RSS
     meta       EnsEMBL::Web::Document::HTML::Meta
   );
-    #iehover    EnsEMBL::Web::Document::HTML::IEHoverHack
   $self->add_body_elements qw(
     logo            EnsEMBL::Web::Document::HTML::Logo
     search_box      EnsEMBL::Web::Document::HTML::SearchBox
@@ -91,44 +90,8 @@ sub _initialize_HTML {
   $self->_prof( "common HTML called" );
   $self->_script_HTML();
   $self->_prof( "script HTML called" );
-#  $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'};
   $self->rss->add( '/common/rss.xml', 'Ensembl website news feed', 'rss' );
-## Let us set up the search box...
-#  $self->search_box->sp_common  = $self->species_defs->SPECIES_COMMON_NAME;
-#  --- First the search index drop down
   $self->_prof( "page decs configured" );
-  if( $ENV{'ENSEMBL_SPECIES'} ne 'Multi' && $ENV{'ENSEMBL_SPECIES'} ne 'common' ) { # If we are in static content for a species
-#    foreach my $K ( sort @{($self->species_defs->ENSEMBL_SEARCH_IDXS)||[]} ) {
-#      $self->searchbox->add_index( $K );
-#    }
-    ## Now grab the default search links for the species
-#    my $T = $self->species_defs->SEARCH_LINKS || {};
-#    my $flag = 0;
-#    my $regexp = '^('.$ENV{'ENSEMBL_SCRIPT'}.'\d+)_URL';
-#    foreach my $K ( sort keys %$T ) {
-#      if( $K =~ /$regexp/i ) {
-#        $flag = 1;
-#        $self->searchbox->add_link( $T->{$K}, $T->{$1."_TEXT"} );
-#      }
-#    }
-#    unless($flag) { 
-# #     foreach my $K ( sort keys %$T ) {
-#        if( $K =~ /DEFAULT(\d)_URL/ ) {
-#          $self->searchbox->add_link( $T->{$K}, $T->{"DEFAULT$1"."_TEXT"} );
-#        }
-#      }
-#    }
-#  } else { # If we are in general static content...
-#    ## Grab all the search indexes...
-#    foreach my $K ( $self->species_defs->all_search_indexes ) {
-##      $self->searchbox->add_index( $K );
-#    }
-    ## Note we have no example links here!!
-  }
-
-  $self->_prof( "search box set up configured" );
-
-#  --- and the search box links...
 
   $self->call_child_functions( 'extra_configuration' );
 #  $self->call_child_functions( 'common_menu_items', 'dynamic_menu_items' );
