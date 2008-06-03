@@ -385,5 +385,19 @@ sub alternative_object_from_factory {
   }
 }
 
+sub interface {
+### Data interface attached to object
+    my $self = shift;
+    $self->{'interface'} = shift if (@_);
+    return $self->{'interface'};
+}
+
+sub command {
+### Command object attached to proxy object
+    my $self = shift;
+    $self->{'command'} = shift if (@_);
+    return $self->{'command'};
+}
+
 
 1;
