@@ -174,6 +174,7 @@ sub species { return $ENV{'ENSEMBL_SPECIES'}; }
 sub type    { return $ENV{'ENSEMBL_TYPE'}; }
 sub query_string {
   my $self = shift;
+  return unless defined $self->{object}->core_objects;
   my %parameters = (%{$self->{object}->core_objects->{parameters}},@_);
   my @S = ();
   foreach (sort keys %parameters) {
