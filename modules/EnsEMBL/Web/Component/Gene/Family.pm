@@ -16,28 +16,48 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my %family_data = %{$object->get_all_families};
+  my $families = $object->get_all_families;
 
-  my $html;
-  foreach my $family_id (sort keys %family_data) {
-    my $family = $family_data{$family_id};
-    my $plural = $family->{'info'}{'count'} > 1 ? 's' : '';
-    $html .= sprintf(q(<h3>%s</h3><p>%s. This cluster contains %s Ensembl gene member%s 
-in this species.<p><strong>Transcripts with peptides in this family</strong>:</p>
-<ul>),
-            $family_id, $family->{'info'}{'description'}, $family->{'info'}{'count'}, $plural);
+  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+
+  $table->add_columns(
+      { 'key' => 'id',          'title' => 'Family ID',                                 'width' => '20%', 'align' => 'left' },
+      { 'key' => 'annot',       'title' => 'Concensus annotation',                      'width' => '40%', 'align' => 'left' },
+      { 'key' => 'transcripts', 'title' => 'Transcripts with peptides in this family',  'width' => '30%', 'align' => 'left' },
+  );
+
+  foreach my $family_id (sort keys %$families) {
+    my $family = $families->{$family_id};
+    my $row = {};
+
+    $row->{'id'}  = $family_id;
+    my $genes = $families->{$family_id}{'info'}{'genes'};
+    if (scalar(@$genes) > 1) {
+      $row->{'id'} .= sprintf(qq#<br />(<a href="/%s/Gene/Family?%s;family=%s">%s genes</a>)#, 
+                    $object->species, join(';', @{$object->core_params}),
+                    $family_id, scalar(@$genes)
+                    );
+    }
+    else {
+      $row->{'id'} .= '<br />(1 gene)';
+    }
+
+    $row->{'annot'} = $families->{$family_id}{'info'}{'description'};
 
     my @transcripts;
+    $row->{'transcripts'} = '<ul>';
     foreach my $transcript (@{$family->{'transcripts'}}) {
       my $label = $transcript->display_xref;
-      $html .= sprintf(q(<li><a href="/%s/Transcript/Families?g=%s;t=%s">%s</a> (%s)</li>),
+      $row->{'transcripts'} .= sprintf(qq(<li><a href="/%s/Transcript/Families?g=%s;t=%s">%s</a> (%s)</li>),
                         $object->species, $object->Obj->stable_id, 
                         $transcript->stable_id, $label, $transcript->stable_id);
     }
-    $html .= '</ul>';
+    $row->{'transcripts'} .= '</ul>';
+  
+    $table->add_row($row);
   }
-
-  return $html;
+  
+  return $table->render;
 }
 
 1;
