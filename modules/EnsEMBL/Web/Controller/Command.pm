@@ -8,10 +8,12 @@ use EnsEMBL::Web::Document::Interface;
 use EnsEMBL::Web::Interface::InterfaceDef;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::Root;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Magic;
 use Class::Std;
 use CGI qw(escapeHTML);
+
+use base qw(EnsEMBL::Web::Root);
 
 
 {
@@ -74,19 +76,6 @@ sub not_allowed {
     }
   }
   return undef;
-}
-
-sub url {
-  ### Assembles a valid URL, adding the site's base URL
-  ### and CGI-escaping any parameters
-  ### returns a URL string
-  my ($self, $script, $param) = @_;
-  my $url = $script; # TO DO - add site base URL
- 
-  my $query_string = join ';', map { "$_=".escapeHTML($param->{$_}) } sort keys %$param;
-  $url .= "?$query_string" if $query_string;
-
-  return $url;
 }
 
 sub add_symbol_lookup {
