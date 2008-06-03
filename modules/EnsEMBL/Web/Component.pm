@@ -73,6 +73,20 @@ sub site_name {
   return $sitename;
 }
 
+sub pretty_date {
+### Converts a MySQL datestamp into something human-readable
+  my ($self, $datetime) = @_;
+  my ($date, $time) = split(' ', $datetime);
+  my ($year, $mon, $day) = split('-', $date);
+  my ($hour, $min, $sec) = split(':', $date);
+
+  my @months = ('', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
+                'September', 'October', 'November', 'December');
+
+  $day =~ s/^0//;
+  return $day.' '.$months[$mon].' '.$year;
+}
+
 =pod
 sub message {
   ### Displays a message (e.g. error) from the Controller::Command module
