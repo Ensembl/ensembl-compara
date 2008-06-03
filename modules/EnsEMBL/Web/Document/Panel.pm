@@ -716,12 +716,6 @@ sub ajax_is_available {
   return 1;
 }
 
-sub interface {
-    my $self = shift;
-    $self->{'interface'} = shift if (@_);
-    return $self->{'interface'};
-}
-
 
 1;
 
