@@ -85,6 +85,8 @@ $self->_prof('B');
 # $self->masthead->logo_h         = $style->{'SITE_LOGO_HEIGHT'};
 # $self->masthead->logo_href      = $style->{'SITE_LOGO_HREF'};
 
+  $self->tools->logins            = $self->species_defs->ENSEMBL_LOGINS;
+
 $self->_prof('C');
 #  --- The sidebar
 #$self->menu->site_name          = $self->species_defs->ENSEMBL_SITE_NAME;
