@@ -21,9 +21,11 @@ sub BUILD {
 }
 
 sub render {
+warn "Doing cookie setting";
   my ($self, $action) = @_;
   $self->set_action($action);
   if ($self->not_allowed) {
+warn "Not allowed!";
     $self->render_message;
   } else {
     $self->process;
@@ -34,7 +36,11 @@ sub process {
   my $self = shift;
 
   my $cgi = new CGI;
+<<<<<<< SetCookie.pm
+  my $user = EnsEMBL::Web::Data::User->find(email    => $cgi->param('email'));
+=======
   my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
+>>>>>>> 1.10
   
   warn 'USER email: '. $user->email;
   warn 'USER id: '. $user->id;
@@ -67,6 +73,7 @@ sub process {
     }
   }
 
+=pod
   ## Add membership if coming from invitation acceptance
   if ($cgi->param('record_id')) {
     my $invitation = EnsEMBL::Web::Data::Record::Invite::Group->new($cgi->param('record_id'));
@@ -74,12 +81,13 @@ sub process {
     $invitation->destroy
       if $self->add_member_from_invitation($user, $invitation);
   }
+=cut
 
   my $new_param = {'url' => $url};
   if ($cgi->param('updated')) {
     $new_param->{'updated'} = $cgi->param('updated');
   }
-  $cgi->redirect($self->url('User/LoggedIn', $new_param));
+  $cgi->redirect($self->url('/User/LoggedIn', $new_param));
 }
 
 }

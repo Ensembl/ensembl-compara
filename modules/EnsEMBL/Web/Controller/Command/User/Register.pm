@@ -45,15 +45,20 @@ sub render_page {
   $interface->panel_footer({'add'=>qq(<p><strong>Register with $sitetype to bookmark your favourite pages, manage your BLAST tickets and more!</strong></p>)});
   $interface->panel_footer({'add'=>qq(<p>Need help? <a href="mailto:$help_email">Contact the helpdesk</a> &middot; <a href="/info/about/privacy.html">Privacy policy</a><p>)});
   $interface->panel_header({'preview'=>qq(<p>Please check that you have entered your details correctly, then click on the button to save them to our database and send your activation email.</p>)});
-  $interface->caption({'on_failure'=>'Registration Failed'});
+  $interface->caption({
+      'add' => 'Register for '.$sitetype, 
+      'on_failure'=>'Registration Failed'
+  });
   $interface->on_success($self->url('/User/_send_activation'));
   $interface->on_failure('EnsEMBL::Web::Component::Interface::User::failed_registration');
   $interface->script_name($self->get_action->script_name);
 
 ## Form elements
-  $interface->caption({'add'=>'Register for '.$sitetype});
   $interface->customize_element('name', 'label', 'Your name');
-  $interface->customize_element('email', 'label', "Your email address. You'll use this to log in to Ensembl");
+  $interface->customize_element('name', 'required', 'yes');
+  $interface->customize_element('email', 'label', 'Your email address');
+  $interface->customize_element('email', 'required', 'yes');
+  $interface->customize_element('email', 'notes', "You'll use this to log in to Ensembl");
   $interface->customize_element('organisation', 'label', 'Organisation');
   $interface->element('status', {'type'=>'Hidden'});
   $interface->extra_data('record_id');
@@ -61,7 +66,7 @@ sub render_page {
 
   ## Render page or munge data, as appropriate
   ## N.B. Force use of Configuration subclass
-  $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::User');
+  $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::User');
 }
 
 }
