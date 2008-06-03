@@ -13,15 +13,36 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub populate_tree {
   my $self = shift;
 
-  #if ($ENV{'ENSEMBL_USER_ID'}) {
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user->id) {
 
     $self->create_node( 'Account', "Your Details",
     [qw(account EnsEMBL::Web::Component::User::Account
         )],
-      { 'availability' => 1, 'concise' => 'Summary' }
+      { 'availability' => 1, 'concise' => 'Your Details' }
+    );
+    $self->create_node( 'Bookmarks', "Bookmarks",
+    [qw(bookmarks EnsEMBL::Web::Component::User::Bookmarks
+        )],
+      { 'availability' => 1 }
+    );
+    $self->create_node( 'Configurations', "Configurations",
+    [qw(configs EnsEMBL::Web::Component::User::Configurations
+        )],
+      { 'availability' => 1 }
+    );
+    $self->create_node( 'Gene Annotations', "Gene Annotations",
+    [qw(notes EnsEMBL::Web::Component::User::Annotations
+        )],
+      { 'availability' => 1 }
+    );
+    $self->create_node( 'News Filters', "News Filters",
+    [qw(new EnsEMBL::Web::Component::User::NewsFilters
+        )],
+      { 'availability' => 1 }
     );
 
-  #}
+  }
 }
 
 sub set_default_action {
@@ -34,26 +55,6 @@ sub ajax_content   { return $_[0]->_ajax_content;   }
 sub local_context  { return $_[0]->_local_context;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
-
-
-
-sub access_denied {
-  my $self   = shift;
-
-  if (my $panel1 = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    'caption' => 'Access Denied',
-    ) ) {
-    $panel1->add_components(qw(
-        denied        EnsEMBL::Web::Component::User::denied
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel1 );
-  }
-}
-
 
 sub message {
   my $self   = shift;
