@@ -61,7 +61,7 @@ sub new {
 ## Input module...
   my $script = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
   my $input  = $parameters{'cgi'}        || new CGI;
-  $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
+  # $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
   $self->_prof("Parameters initialised from input");
   $self->{'command'} = $parameters{'command'};
 
@@ -100,42 +100,24 @@ sub new {
   $self->_prof("Output method initialized" );
 
 ## Finally we get to the Factory module!
-## This code looks a bit ugly,
-## we need to sort out the way we work with 'common' and other species
-## I dont quite understand it
-
+  my $db_connection;
   if ($ENV{'ENSEMBL_SPECIES'} ne 'common') {
-
-    my $db_connection = EnsEMBL::Web::DBSQL::DBConnection->new(
+    $db_connection = EnsEMBL::Web::DBSQL::DBConnection->new(
       $ENV{'ENSEMBL_SPECIES'},
       $ENSEMBL_WEB_REGISTRY->species_defs
     );
-    my $core_objects = EnsEMBL::Web::CoreObjects->new( $input, $db_connection );
-    $self->factory = EnsEMBL::Web::Proxy::Factory->new(
-      $parameters{'objecttype'}, {
-        '_input'         => $input,
-        '_apache_handle' => $rend->{'r'},
-        '_core_objects'  => $core_objects,
-        '_databases'     => $db_connection
-      }
-    );
-
-  } else {
-
-    $self->factory = EnsEMBL::Web::Proxy::Factory->new(
-      $parameters{'objecttype'}, {
-        '_input'         => $input,
-        '_apache_handle' => $rend->{'r'},
-      }
-    );
-    
   }
-  
-## / END of the code which appears ugly to me :)
-
-  $self->factory->__data->{'timer'} = $self->{'timer'};
-  $self->_prof("Factory compiled and objects created...");
-
+  my $core_objects = EnsEMBL::Web::CoreObjects->new( $input, $db_connection );
+  $self->factory = EnsEMBL::Web::Proxy::Factory->new(
+    $parameters{'objecttype'}, {
+      '_input'         => $input,
+      '_apache_handle' => $rend->{'r'},
+      '_core_objects'  => $core_objects,
+      '_databases'     => $db_connection
+    }
+  );
+    $self->factory->__data->{'timer'} = $self->{'timer'};
+    $self->_prof("Factory compiled and objects created...");
   return $self if $self->factory->has_fatal_problem();
   eval {
     if( $parameters{'fast'} ) {
