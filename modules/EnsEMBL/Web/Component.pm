@@ -67,6 +67,12 @@ sub cache_print {
   $cache->print( $$string_ref ) if $string_ref;
 }
 
+sub site_name {
+  my $self = shift;
+  our $sitename = $SiteDefs::ENSEMBL_SITETYPE eq 'EnsEMBL' ? 'Ensembl' : $SiteDefs::ENSEMBL_SITETYPE;
+  return $sitename;
+}
+
 =pod
 sub message {
   ### Displays a message (e.g. error) from the Controller::Command module
