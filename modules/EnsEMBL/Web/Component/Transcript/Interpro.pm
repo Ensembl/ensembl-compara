@@ -12,7 +12,7 @@ sub _init {
 }
 
 sub caption {
-  return 'InterPro';
+  return 'Domains';
 }
 
 
@@ -28,18 +28,11 @@ sub content {
     $html .= sprintf(qq(
   <tr>
     <td>%s</td>
-    <td>%s - [<a href="/%s/Transcript/Domain?r=%s:%s-%s;g=%s;t=%s;domain=$accession">Display other genes with this domain</a>]</td>
-  </tr>), $data->{'link'}, $data->{'desc'}, $object->species, 
-        $object->core_objects->location->seq_region_name, 
-        $object->core_objects->location->start, $object->core_objects->location->end,
-        $object->core_objects->gene->stable_id, $object->core_objects->transcript->stable_id);
+    <td>%s - [<a href="/%s/Transcript/Domain?%s;domain=%s">Display other genes with this domain</a>]</td>
+  </tr>), 
+    $data->{'link'}, $data->{'desc'}, $object->species, join(';', $object->core_params), $accession );
   }
   $html .= qq( </table> );
-
-  ## Karyotype showing location of other genes with this domain
-  if ($object->param('domain')) {
-    $html .= 'Karyotype goes here!';
-  }
 
   return $html;
 }
