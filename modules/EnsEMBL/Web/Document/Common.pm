@@ -86,6 +86,7 @@ $self->_prof('B');
 # $self->masthead->logo_href      = $style->{'SITE_LOGO_HREF'};
 
   $self->tools->logins            = $self->species_defs->ENSEMBL_LOGINS;
+  $self->copyright->sitename      = $self->species_defs->ENSEMBL_SITE_NAME;
 
 $self->_prof('C');
 #  --- The sidebar
