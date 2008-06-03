@@ -16,7 +16,7 @@ sub validate { return 1; }
 
 sub render {
   my $self = shift;
-  return sprintf( '<label for="%s">%s: </label><input type="%s" name="%s" value="%s" id="%s" class="input-text" %s />%s %s',
+  return sprintf( '<label for="%s">%s: </label><input type="%s" name="%s" value="%s" id="%s" class="input-text" %s />%s<br />%s',
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->label ),
     $self->widget_type,
