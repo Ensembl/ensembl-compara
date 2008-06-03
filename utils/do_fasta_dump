@@ -151,8 +151,8 @@ unless( $no_remotedirs ) {
    # Create directory for ssaha and blast
   info (1, "Creating dir for ssaha and/or blast") unless $no_indexes && $no_ssaha;
   eval{
-    system("ssh -i $key_file $blast_machine mkdir -p /data/blastdb/ensembl/release-$release"        ) unless $no_indexes;
-    system("ssh  $ssaha_machine mkdir -p /ensemblweb/ssaha2/HashTables/release-$release") unless $no_ssaha;
+    system("ssh -i $key_file $blast_machine mkdir -p /data/blastdb/ensembl/release-$release"        ) unless ($no_indexes or $no_remotedirs);
+    system("ssh  $ssaha_machine mkdir -p /ensemblweb/ssaha2/HashTables/release-$release") unless ($no_ssaha or $no_remotedirs);
   };
   if ($@) {
     utils::Tool::warning(1, "$@") unless $@ =~ /File exists/;
@@ -847,6 +847,9 @@ sub blast_indexes {
      my $file_name = $names->{$file};
       my $xd_file = "$basedir$release_dir/xdformat/" . $file_name;
       utils::Tool::warning(1, "Error producing file $xd_file") && next unless -s "$xd_file";
+
+     $no_remotedirs && next; 
+
       system("scp -i $key_file $xd_file $blast_machine:/data/blastdb/ensembl/$release_dir/$file_name");
       unlink($xd_file) || warn "Can't delete $xd_file: $!" unless $file eq $fh;
     }
