@@ -9,6 +9,8 @@ use EnsEMBL::Web::Tools::Encryption;
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::OrderedTree;
+use EnsEMBL::Web::CoreObjects;
+use EnsEMBL::Web::DBSQL::DBConnection;
 
 use CGI qw(header escapeHTML unescape);
 use CGI::Cookie;
@@ -98,21 +100,39 @@ sub new {
   $self->_prof("Output method initialized" );
 
 ## Finally we get to the Factory module!
-  use EnsEMBL::Web::CoreObjects;
-  use EnsEMBL::Web::DBSQL::DBConnection;
-  my $db_connection = EnsEMBL::Web::DBSQL::DBConnection->new(
-    $ENV{'ENSEMBL_SPECIES'},
-    $ENSEMBL_WEB_REGISTRY->species_defs
-  );
-  my $core_objects = EnsEMBL::Web::CoreObjects->new( $input, $db_connection );
-  $self->factory = EnsEMBL::Web::Proxy::Factory->new(
-    $parameters{'objecttype'}, {
-      '_input'         => $input,
-      '_apache_handle' => $rend->{'r'},
-      '_core_objects'  => $core_objects,
-      '_databases'     => $db_connection
-    }
-  );
+## This code looks a bit ugly,
+## we need to sort out the way we work with 'common' and other species
+## I dont quite understand it
+
+  if ($ENV{'ENSEMBL_SPECIES'} ne 'common') {
+
+    my $db_connection = EnsEMBL::Web::DBSQL::DBConnection->new(
+      $ENV{'ENSEMBL_SPECIES'},
+      $ENSEMBL_WEB_REGISTRY->species_defs
+    );
+    my $core_objects = EnsEMBL::Web::CoreObjects->new( $input, $db_connection );
+    $self->factory = EnsEMBL::Web::Proxy::Factory->new(
+      $parameters{'objecttype'}, {
+        '_input'         => $input,
+        '_apache_handle' => $rend->{'r'},
+        '_core_objects'  => $core_objects,
+        '_databases'     => $db_connection
+      }
+    );
+
+  } else {
+
+    $self->factory = EnsEMBL::Web::Proxy::Factory->new(
+      $parameters{'objecttype'}, {
+        '_input'         => $input,
+        '_apache_handle' => $rend->{'r'},
+      }
+    );
+    
+  }
+  
+## / END of the code which appears ugly to me :)
+
   $self->factory->__data->{'timer'} = $self->{'timer'};
   $self->_prof("Factory compiled and objects created...");
 
