@@ -86,6 +86,7 @@ sub _centre_point {
 
 sub location_short_caption {
   my $self = shift;
+  return '-' unless $self->location;
   my $label = $self->location->seq_region_name.':'.$self->thousandify($self->location->start).'-'.$self->thousandify($self->location->end);
   #return $label;
   return "Location: $label";
@@ -128,6 +129,8 @@ sub param {
 
 sub _generate_objects {
   my $self = shift;
+  warn "..... $ENV{'ENSEMBL_SPECIES'} .....";
+  return if $ENV{'ENSEMBL_SPECIES'} eq 'common';
   my $db = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
   my $db_adaptor = $self->database($db);
   if( $self->param('t') ) {
