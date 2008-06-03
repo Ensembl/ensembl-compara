@@ -342,43 +342,54 @@ sub render {
   $self->_render_head_and_body_tag;
   #  my $X = $self->{'page_template'};
   my $X = '
-  <table id="mh">
+  <table class="mh">
     <tr>
       <td id="mh_lo">[[logo]]</td>
       <td id="mh_search">[[search_box]]
       </td>
     </tr>
+  </table>
+  <table class="mh">
     <tr>
       <td id="mh_bc">[[breadcrumbs]]</td>
       <td id="mh_lnk">[[tools]]
       </td>
     </tr>
-  </table>';
+  </table>
+  <table id="global-tabs">
+    <tr>
+      <td>[[global_context]]</td>
+    </tr>
+  </table>
+  <table style="width:100%">
+    <tr>
+      <td>
+  ';
   if( $self->include_navigation ) {
     $X .= '
-  <div id="main">
-    <div id="nav">
-      [[global_context]][[local_context]]
-    </div>
-    <div id="content-2col">
+      <div id="nav">[[local_context]]</div>
+      <div id="main">
 <!-- Start of real content --> 
       [[content]]
 <!-- End of real content -->
-    </div>
-  </div>';
+      </div>';
   } else {
     $X .= '
-  <div id="main">
-    <div id="content-1col">
+      <div id="main">
 <!-- Start of real content --> 
       [[content]]
 <!-- End of real content -->
-    </div>
-  </div>';
+      </div>';
   }
   $X .= '
-  <div id="footer">[[copyright]][[footerlinks]]
-  </div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div id="footer">[[copyright]][[footerlinks]]</div>
+      </td>
+    </tr>
+  </table>
 [[body_javascript]]';
 
   while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {

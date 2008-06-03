@@ -29,7 +29,8 @@ sub entries {
 sub render {
   my $self = shift;
   $self->print( '
-      <dl id="global">' );
+    <div id="tabs">
+      <dl class="tabs">' );
   foreach my $entry ( @{$self->entries} ) {
     my $name = $entry->{caption};
     if ($name eq '-') {
@@ -42,10 +43,12 @@ sub render {
       }
     }
     $self->printf( '
-        <dd class="%s">%s</dd>', $entry->{class}, $name );
+        <dd class="link %s">%s</dd>', $entry->{class}, $name );
   }
   $self->print( '
-      </dl>' );
+        <dt class="hidden">.</dt>
+      </dl>
+    </div>' );
 }
 
 return 1;
