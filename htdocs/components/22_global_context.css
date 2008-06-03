@@ -1,5 +1,31 @@
+#global-tabs {
+ width: 100%; border: 0px; padding: 0px; margin: 0px 0px 10px 0px;
+ border-collapse: collapse; background-color: #336
+}
+#global-tabs td { border: 0px; padding: 0px; margin: 0px }
+
+
+div#tabs {clear: both; width: 100%; background-color: #336; color: #cdf;}
+div#tabs dd a { color: #fff; background: url(/i/tab-l-off.gif) no-repeat top left; }
+div#tabs dd span { color: #eee; background: url(/i/tab-l-off.gif) no-repeat top left; }
+div#tabs dd.active a { color: #336; background: url(/i/tab-l.gif) no-repeat top left; font-weight: bold }
+div#tabs dd a:hover { color: #c00 }
+div#tabs dd.active a:hover { color: #c00 }
+div#tabs dd { background: url(/i/tab-off.gif) no-repeat top right; }
+div#tabs dd.active { background: url(/i/tab.gif) no-repeat top right }
+div#tabs dt.hidden { color:#336; }
+
+dl.tabs { margin: 0; padding: 0; font-size: 1em }
+dl.tabs a { text-decoration: none }
+dl.tabs dd { float: left; padding: 2px 0 0 0; margin:0 }
+dl.tabs dd a, dl.tabs dd span { padding: 0px 0.5em 0px 0.5em; }
+dl.tabs dt { padding: 2px 0 0 0; margin:0 }
+
+/*
+
 #global dt, #global dd { padding: 0 2px 2px 2px; margin:0; font-weight:normal; }
 
 #global dd.active { font-weight:bold; background:#d8ddff; }
 #global dt.sep { border-top: 1px solid #ccc; }
 dl#global { overflow: hidden; background:#eaeeff; }
+*/

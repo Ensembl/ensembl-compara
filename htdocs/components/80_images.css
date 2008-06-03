@@ -5,6 +5,6 @@ img  { border: 0px }
 img.float-left { float:left; margin-right:10px; }
 img.float-right { float:right; margin-left:10px; }
 
-.screenshot { text-align:center; margin:10px auto; }
-.karyomap { text-align:center; margin:auto; }
-.flash { margin:20px auto; }
+img.screenshot { text-align:center; margin:10px auto; }
+img.karyomap { text-align:center; margin:auto; }
+img.flash { margin:20px auto; }

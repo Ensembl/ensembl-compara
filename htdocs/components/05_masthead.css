@@ -1,12 +1,13 @@
-#mh {
+.mh {
  width: 100%; border: 0px; padding: 0px; margin: 0px;
- border-collapse: collapse; border-bottom: 1px solid #003;
- background-color: #336
+ border-collapse: collapse; background-color: #336
 }
-  #mh td { border: 0px; padding: 0px; margin: 0px }
+  .mh td { border: 0px; padding: 0px; margin: 0px }
+
 /** Cell 1 - the main e! logo - currently 40x45 **/
   #mh_lo     { width:50%; vertical-align:middle; white-space: nowrap; padding-left:3px }
   #mh_lo img { width:150px; height: 40px; border: 0px }
+
 /** Cell 2 - **/
   #mh form { margin: 2px; padding: 0; border: 0 }
   table#se { float: right; margin: 2px; background-color: #fff; border: 1px solid #369; border-collapse: collapse; }
@@ -19,6 +20,7 @@
   dl#se_mn { z-index:100;width: 8em; margin: 2px; border-top: 1px solid #369; position: absolute; cursor: pointer }
   dl#se_mn dt { border: 1px solid #369 ; border-top: 0px; font-size: 0.8em;  padding: 0px; background-color: #fff  }
   dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid white; vertical-align: top; padding-right: 0.5em }
+
 /** Cell 3 - the breadcrumb links under the logo **/
   td#mh_bc { color: #ccc; font-weight: bold; padding-left:4px; } 
   #mh_bc a { color: #fff; text-decoration: none }

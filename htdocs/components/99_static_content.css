@@ -49,18 +49,3 @@ table#species-stats td.data { font-weight:bold; }
 
 table#species-stats td.value { text-align:right;}
 
-/* Information and Documentation pages */
-
-a.info { text-decoration: none; font-weight:bold; }
-.blue {color: rgb(51, 102, 187); }
-
-/* Other pages */
-
-div#page table.sitemap td ul.sitemap li.toggle { list-style:none; margin-left:-15px; }
-img.toggle-box { padding-right:4px; }
-dl.sitemap, ul.sitemap { margin:-0.5em -2em; }
-dl.sitemap a, ul.sitemap a { text-decoration:none; }
-dl.sitemap dt { font-size:115%; font-style:italic; }
-dl.sitemap dd { padding-bottom:0.5em; }
-table.sitemap td { padding:0px 40px; }
-
