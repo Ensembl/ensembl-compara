@@ -590,6 +590,9 @@ sub _error {
 
 sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 3+$_[2] ); }
 
+sub _is_ajax_request {
+  return $_[0]->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+}
 sub content {
   my( $self ) = @_;
   $self->reset_buffer;
@@ -622,16 +625,15 @@ sub content {
           $self->_prof( "Component $module_name (runtime failure [new])" );
         } else {
           my $caption = $comp_obj->caption;
-          if( $comp_obj->ajaxable() &&
-	      $self->renderer->{'r'}->headers_in->{'X-Requested-With'} ne 'XMLHttpRequest') {
+          if( $comp_obj->ajaxable() && !$self->_is_ajax_request ) {
 	    my( $ensembl, $plugin, $component, $type, @T ) = split '::', $module_name;
 	    my $URL = join '/',
 	       '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,@T;
             $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
 	    if( $caption ) {
-              $self->print( qq(<div class="ajax" title="['$caption','$URL']"></div>) );
+              $self->printf( qq(<div class="ajax" title="['%s','%s']"></div>), CGI::escapeHTML($caption),CGI::escapeHTML($URL) );
 	    } else {
-              $self->print( qq(<div class="ajax" title="['$URL']"></div>) );
+              $self->printf( qq(<div class="ajax" title="['%s']"></div>), CGI::escapeHTML($URL) );
 	    }
 	  } else {
             my $content;
@@ -650,8 +652,10 @@ sub content {
               $self->_prof( "Component $module_name (runtime failure [content])" );
             } else {
               if( $content ) {
-                my $caption = $comp_obj->caption;
-                $self->print( "<h2>$caption</h2>" ) if $caption;
+		if( ! $self->_is_ajax_request ) {
+                  my $caption = $comp_obj->caption;
+                  $self->printf( "<h2>%s</h2>", CGI::escapeHTML($caption) ) if $caption;
+		}
                 $self->print( $content );
               }
               $self->_prof( "Component $module_name succeeded" );
