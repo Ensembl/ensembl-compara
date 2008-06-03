@@ -28,6 +28,7 @@ sub entries {
 
 sub render {
   my $self = shift;
+  return unless scalar(@{$self->entries});
   $self->print( '
     <div id="tabs">
       <dl class="tabs">' );
