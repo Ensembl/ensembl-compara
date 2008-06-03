@@ -19,6 +19,18 @@ sub new {
   return $class;
 }
 
+sub url { 
+  ### Assembles a valid URL, adding the site's base URL
+  ### and CGI-escaping any parameters
+  ### returns a URL string
+  my ($self, $script, $param) = @_;
+  my $url = $script; # TO DO - add site base URL
+  my $query_string = join ';', map { "$_=".escapeHTML($param->{$_}) } sort keys %$param;
+  $url .= "?$query_string" if $query_string;
+
+  return $url;
+}
+
 sub _format_error {
 ### Format an error message by wrapping text to 120 columns
   my $self = shift;
