@@ -16,7 +16,6 @@ sub counts {
   my $self = shift;
   my $counts = {};
   $counts->{'exons'}       = @{$self->Obj()->get_all_Exons};
-  $counts->{'families'}    = keys %{$self->get_families};
   $counts->{'domains'}     = keys %{$self->get_interpro};
   return $counts;
 }
