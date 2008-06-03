@@ -111,7 +111,7 @@ sub _process {
     my $border;
     my $row = { 'style' => 'header', 'cols' => [] };
     foreach( @$columns ) {
-      push @{$row->{'cols'}}, { 'class' => 'text-align:'.( $options->{alignheader}||'center'), 'value' => $_->{title} ? $_->{title} : $_->{key}, 'class' => 'bottom-border' } 
+      push @{$row->{'cols'}}, { 'class' => 'text-align:'.( $options->{alignheader}||'center'), 'value' => defined $_->{title} ? $_->{title} : $_->{key}, 'class' => 'bottom-border' } 
     }
     push @$return, $row;
   }
