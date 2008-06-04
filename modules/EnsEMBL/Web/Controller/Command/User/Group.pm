@@ -67,7 +67,7 @@ sub render_page {
   $interface->element_order('name', 'blurb');
 
   ## Render page or munge data, as appropriate
-  $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::Group');
+  $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::Group');
 }
 
 }

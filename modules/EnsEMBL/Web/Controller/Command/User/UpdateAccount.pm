@@ -58,7 +58,7 @@ sub render_page {
 
   ## Render page or munge data, as appropriate
   ## N.B. Force use of Configuration subclass
-  $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::User');
+  $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::User');
 }
 
 }

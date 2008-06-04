@@ -69,7 +69,7 @@ warn "Rendering page Annotation";
   $interface->element_order(qw/stable_id title annotation url owner_type/);
 
   ## Render page or munge data, as appropriate
-  $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::Record');
+  $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::Record');
 }
 
 }

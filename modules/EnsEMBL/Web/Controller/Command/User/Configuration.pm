@@ -77,7 +77,7 @@ sub render_page {
   $interface->element_order(qw/name description url scriptconfig owner_type/);
 
   ## Render page or munge data, as appropriate
-  $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::Record');
+  $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::Record');
 }
 
 }

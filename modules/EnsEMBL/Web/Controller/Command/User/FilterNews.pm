@@ -89,7 +89,7 @@ sub render_page {
 
 
   ## Render page or munge data, as appropriate
-  $webpage->render_message($interface, 'EnsEMBL::Web::Configuration::Interface::Record');
+  $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::Record');
 }
 
 }
