@@ -276,7 +276,7 @@ Set the blast envirnment; these environment variables cannot be set in
 either ::Config::Blast or ::Config::General;
 
 in tcsh:
-  $ set path = (/usr/local/ensembl/bin $PATH)
+  $ set PATH = (/usr/local/ensembl/bin $PATH)
   $ setenv BLASTMAT /usr/local/ensembl/data/blastmat:$BLASTMAT
   $ setenv BLASTFILTER /usr/local/ensembl/bin:$BLASTFILTER
 
@@ -482,7 +482,7 @@ One must first make sure that the available hive scripts are available
 in one's path.  This can be done by either extending PATH or linking the
 scripts to an existing directory in the PATH
 
-  tcsh$ set path = (${BASEDIR}/ensembl-hive/scripts $path)
+  tcsh$ set PATH = (${BASEDIR}/ensembl-hive/scripts $path)
   bash$ export PATH=$PATH:$BASEDIR/ensembl-hive/scripts
 
 You may also need to set the LSB_DEFAULTPROJECT environment variable
