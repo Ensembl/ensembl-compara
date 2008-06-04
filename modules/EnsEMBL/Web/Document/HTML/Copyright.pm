@@ -8,6 +8,11 @@ use EnsEMBL::Web::Document::HTML;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
+sub new { return shift->SUPER::new( 'sitename' => '?' ); }
+
+sub sitename    :lvalue { $_[0]{'sitename'};   }
+
+
 sub render {
   my @time = localtime();
   my $year = @time[5] + 1900;
