@@ -21,7 +21,7 @@
     if($('transcripts')){                    // Only if search box exists...
       __debug( 'Initializing transcript_dropdown box' );
       $('transcripts_text').appendChild(
-        Builder.node( 'div', { id: 'transcripts_link' }, 'select transcript' )
+        Builder.node( 'div', { id: 'transcripts_link' }, 'choose a transcript' )
       );
       Event.observe($('transcripts_link'),'click',function(event){
         $('transcripts').toggle();
