@@ -21,10 +21,12 @@
     if($('transcripts')){                    // Only if search box exists...
       __debug( 'Initializing transcript_dropdown box' );
       $('transcripts_text').appendChild(
-        Builder.node( 'div', { id: 'transcripts_link' }, 'choose a transcript' )
+        Builder.node( 'div', { id: 'transcripts_link' }, 'show transcripts' )
       );
       Event.observe($('transcripts_link'),'click',function(event){
         $('transcripts').toggle();
+	var text = $('transcripts_link').firstChild;
+	text.nodeValue = (text.nodeValue == 'hide transcripts') ? 'show transcripts' : 'hide transcripts';
       });
       Event.observe($('transcripts'),'click',function(event){
         $('transcripts').toggle();
