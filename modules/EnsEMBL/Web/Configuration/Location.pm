@@ -48,7 +48,7 @@ sub populate_tree {
     { 'availability' => 1}
   );
 
-  $self->create_node( 'View', "Genome in detail",
+  $self->create_node( 'View', "Region in detail",
     [qw(
       top    EnsEMBL::Web::Component::Location::ViewTop
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
