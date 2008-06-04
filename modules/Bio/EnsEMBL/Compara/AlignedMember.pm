@@ -26,7 +26,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::AlignedMember;
 
 use strict;
-use Time::HiRes qw(time gettimeofday tv_interval);
+#use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Compara::Member;
@@ -238,12 +238,12 @@ sub orthologue_in_genome {
   throw("[$genomedb] must be a Bio::EnsEMBL::Compara::GenomeDB object")
        unless ($genomedb and $genomedb->isa("Bio::EnsEMBL::Compara::GenomeDB"));
 
-  my $starttime = time();
+#  my $starttime = time();
   my $all_leaves = $self->root->get_all_leaves;
   foreach my $member (@{$all_leaves}) {
   }
   
-  printf("%1.3f secs to find orthologue\n", (time()-$starttime));
+#  printf("%1.3f secs to find orthologue\n", (time()-$starttime));
 }
 
 sub get_leaves_in_genome {
