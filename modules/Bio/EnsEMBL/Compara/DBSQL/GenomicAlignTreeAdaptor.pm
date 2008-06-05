@@ -218,6 +218,33 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   return $all_genomic_align_trees;
 }
 
+=head2 fetch_by_GenomicAlignBlock
+
+=cut
+
+sub fetch_by_GenomicAlignBlock {
+  my ($self, $genomic_align_block) = @_;
+  my $genomic_align_trees = [];
+
+  my $genomic_align_block_id = $genomic_align_block->dbID;
+
+  my $join = [
+      [["genomic_align_tree","gat2"], "gat2.root_id = gat.node_id", undef],
+      [["genomic_align_group","gag2"], "gag2.group_id = gat2.node_id", undef],
+      [["genomic_align","ga2"], "ga2.genomic_align_id = gag2.genomic_align_id", undef],
+    ];
+  my $constraint = "WHERE ga2.genomic_align_block_id = $genomic_align_block_id";
+print STDERR "HEEERe\n\n\n";
+  $genomic_align_trees = $self->_generic_fetch($constraint, $join);
+print STDERR "HEEERe\n\n\n";
+$DB::single = 1;
+  if (@$genomic_align_trees > 1) {
+  }
+  if (@$genomic_align_trees == 0) {
+    return undef;
+  }
+  return $genomic_align_trees->[0];
+}
 
 ###########################
 # STORE methods
@@ -450,6 +477,7 @@ sub _objs_from_sth {
 
   my $node_list = [];
   my $genomic_align_groups = {};
+  my $genomic_aligns = {};
   while(my $rowhash = $sth->fetchrow_hashref) {
     my $genomic_align_group = $genomic_align_groups->{$rowhash->{group_id}};
     if (!defined($genomic_align_group)) {
@@ -459,8 +487,11 @@ sub _objs_from_sth {
       $genomic_align_groups->{$rowhash->{group_id}} = $genomic_align_group;
       push @$node_list, $node;
     }
-    my $genomic_align = $self->_create_GenomicAlign_object_from_rowhash($rowhash);
-    $genomic_align_group->add_GenomicAlign($genomic_align);
+    if (!defined($genomic_aligns->{$rowhash->{genomic_align_id}})) {
+      my $genomic_align = $self->_create_GenomicAlign_object_from_rowhash($rowhash);
+      $genomic_align_group->add_GenomicAlign($genomic_align);
+      $genomic_aligns->{$rowhash->{genomic_align_id}} = 1;
+    }
   }
 
   return $node_list;
