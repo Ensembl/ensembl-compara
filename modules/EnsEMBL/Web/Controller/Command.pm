@@ -32,12 +32,13 @@ sub BUILD {
 
 sub render_message {
   my $self = shift;
+  my $type = shift || 'Account';
 
     my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
     'scriptname' => '',
-    'objecttype' => 'User',
+    'objecttype' => $type,
     'command'    => $self,
   );
 
