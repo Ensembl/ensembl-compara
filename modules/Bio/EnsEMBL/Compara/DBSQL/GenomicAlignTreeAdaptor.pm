@@ -234,11 +234,10 @@ sub fetch_by_GenomicAlignBlock {
       [["genomic_align","ga2"], "ga2.genomic_align_id = gag2.genomic_align_id", undef],
     ];
   my $constraint = "WHERE ga2.genomic_align_block_id = $genomic_align_block_id";
-print STDERR "HEEERe\n\n\n";
   $genomic_align_trees = $self->_generic_fetch($constraint, $join);
-print STDERR "HEEERe\n\n\n";
-$DB::single = 1;
+  
   if (@$genomic_align_trees > 1) {
+    warning("Found more than 1 tree. This shouldn't happen. Returning the first one only");
   }
   if (@$genomic_align_trees == 0) {
     return undef;
