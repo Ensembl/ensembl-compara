@@ -265,13 +265,10 @@ sub transHandler_no_species {
   $r->subprocess_env->{'ENSEMBL_SCRIPT' } = $real_script_name;
   my $script     = $real_script_name;
   my $to_execute = $memd ? $memd->get("::SCRIPT::$script") : '';
-  warn "## $script ...";
   unless ($to_execute) {
     foreach my $dir( @PERL_TRANS_DIRS ){
-      warn "... #$dir";
       last unless $script;
       my $filename = sprintf( $dir, 'common' ) ."/$script";
-      warn "..... $filename";
       next unless -r $filename;
       $to_execute = $filename;
     }
@@ -279,14 +276,10 @@ sub transHandler_no_species {
   }
   if( $to_execute ) {
     $r->subprocess_env->{'ENSEMBL_TYPE'}   = $species;
-    warn "TYPE:   $species";
-    warn "ACTION: $path_segments->[0]";
     $r->subprocess_env->{'ENSEMBL_ACTION'} = shift @$path_segments;
     my $path_info = join '/', @$path_segments;
-    warn "............ $path_info ...............";
     $r->filename( $to_execute );
     $r->uri( "/perl/common/$script" );
-    warn ".....PI... $path_info ...PI......";
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
     if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
       my @X = localtime();
@@ -317,7 +310,6 @@ sub transHandler_species {
       $r->subprocess_env->{'ENSEMBL_ACTION'} = join '_', @$path_segments;
       $path_segments                         = [];
     } elsif( $real_script_name eq 'component' ) {
-      warn "... COMPONENT ...";
       $type = shift @$path_segments;
       my @T                                  = map { s/\W//g;$_ } @$path_segments;
       my $plugin                             = shift @T;
@@ -358,7 +350,7 @@ $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
     $memd->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $memd;
   }
 
-  if ($to_execute) {
+  if( $to_execute ) {
     $r->filename( $to_execute );
     $r->uri( "/perl/$species/$script" );
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
@@ -374,6 +366,7 @@ $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
     $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
     return OK;
   }
+  return undef;
 }
 sub transHandler {
   my $r = shift;      # Get the connection handler
@@ -398,7 +391,6 @@ sub transHandler {
   my @path_segments = split( m|/|, $file );
   shift @path_segments; # Always empty
   my $species   = shift @path_segments;
-
   my $Tspecies = $species;
   my $script    = undef;
   my $path_info = undef;
@@ -406,21 +398,21 @@ sub transHandler {
   if( $species eq 'das' ) {
     my $return = transHandler_das( $r, $session_cookie, \@path_segments, $querystring );
     return $return if defined $return;
-  }
-  if( $OBJECT_TO_SCRIPT{ $species } ) { # Species less script??
+  } elsif( $OBJECT_TO_SCRIPT{ $species } ) { # Species less script??
     my $return = transHandler_no_species( $r, $session_cookie, $species, \@path_segments, $querystring );
     return $return if defined $return;
-  }
-  if( $species && ($species = $SPECIES_MAP{lc($species)} || '' ) ) { # species script
+  } elsif( $species && ($species = $SPECIES_MAP{lc($species)} || '' ) ) { # species script
     my $return = transHandler_species( $r, $session_cookie, $species, \@path_segments, $querystring, $file );
     return $return if defined $return;
+  } else {
+    unshift @path_segments, $Tspecies;
   }
   $species = $Tspecies;
   $script = join( '/', @path_segments );
 
 # Search the htdocs dirs for a file to return
-  my $path = join( "/", $species || (), $script || (), $path_info || () );
-  $r->uri( "/$path" );
+  my $path = $script; # join( "/", $species || (), $script || (), $path_info || () );
+  $r->uri( $script );
   my $filename = $memd ? $memd->get("::STATIC::$path") : '';
   unless ($filename) {
     foreach my $dir (@HTDOCS_TRANS_DIRS) {
@@ -435,7 +427,6 @@ sub transHandler {
     }
     $memd->set("::STATIC::$path", $filename, undef, 'STATIC') if $memd;
   }
-  
   if( $filename =~ /^! (.*)$/ ) {
     $r->uri( $r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html' );
     $r->filename( $1 . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
