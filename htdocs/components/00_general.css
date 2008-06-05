@@ -60,6 +60,8 @@ a:link    { color:#3366bb; text-decoration:underline; }
 a:visited { color:#000066; text-decoration:underline; }
 a:hover   { color:#cc0000; text-decoration:underline; }
 a:active  { color:#cc0000; text-decoration:underline; }
+a.button  { background-color: #eaeeff; border: 1px outset #eaeeff; 
+            padding:2px; font-weight:bold; text-decoration:none; }
 
 /* Tables */
 
