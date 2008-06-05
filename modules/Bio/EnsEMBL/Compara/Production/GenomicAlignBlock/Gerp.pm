@@ -144,8 +144,9 @@ sub fetch_input {
 	  my $gata = $self->{'comparaDBA'}->get_GenomicAlignTreeAdaptor;
 	  my $gat = $gata->fetch_by_GenomicAlignBlock($gab);
 	  foreach my $leaf (@{$gat->get_all_leaves}) {
-	      my $name = "_" . $leaf->genomic_align->genome_db->dbID . "_" .
-		$leaf->genomic_align->dnafrag_id . "_" . $leaf->genomic_align->dnafrag_start . "_" . $leaf->genomic_align->dnafrag_end . "_";
+	      my $genomic_align = (sort {$a->dbID <=> $b->dbID} @{$leaf->genomic_align_group->get_all_GenomicAligns})[0];
+	      my $name = "_" . $genomic_align->genome_db->dbID . "_" .
+		$genomic_align->dnafrag_id . "_" . $genomic_align->dnafrag_start . "_" . $genomic_align->dnafrag_end . "_";
 	      $leaf->name($name);
 	  }
 	  $tree_string = $gat->newick_simple_format();
