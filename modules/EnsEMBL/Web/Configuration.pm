@@ -60,12 +60,40 @@ sub _ajax_content {
 sub _global_context {
   my $self = shift;
   my $type = $self->type;
+  return unless $self->{object}->core_objects;
 
   my @data = (
     ['location',  'Location',   $self->{object}->core_objects->location_short_caption ],
     ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption ],
     ['transcript','Transcript', $self->{object}->core_objects->transcript_short_caption ],
     ['snp',       'Variation',  $self->{object}->core_objects->snp_short_caption ],
+  );
+  my $qs = $self->query_string;
+  foreach my $row ( @data ) {
+    next if $row->[2] eq '-';
+    my $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/Summary?$qs";
+    my @class = ();
+    if( $row->[1] eq $type ) {
+      push @class, 'active';
+    }
+    $self->{'page'}->global_context->add_entry( 
+      'type'      => $row->[1],
+      'caption'   => $row->[2],
+      'url'       => $url,
+      'class'     => (join ' ',@class),
+    );
+  }
+  $self->{'page'}->global_context->active( lc($type) );
+}
+
+sub _user_context {
+  my $self = shift;
+  my $type = $self->type;
+
+  my @data = (
+    ['config',    'Config',   'Configure Page' ],
+    ['account',   'Account',  'Your Account' ],
+    ['userdata',  'UserData', 'Custom Data' ],
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
@@ -92,6 +120,50 @@ sub _local_context {
   $self->{'page'}->local_context->active(  $self->{_data}{'action'}  );
   $self->{'page'}->local_context->caption( $self->{object}->short_caption  );
   $self->{'page'}->local_context->counts(  $self->{object}->counts   );
+}
+
+sub _local_tools {
+  my $self = shift;
+  my $obj = $self->{object};
+
+  my @data = (
+          ['Control Panel',   '/sorry.html'],
+          ['Export Data',     '/sorry.html'],
+  );
+
+  my $type;
+  foreach my $row ( @data ) {
+    if( $row->[1] =~ /^http/ ) {
+      $type = 'external';
+    }
+    $self->{'page'}->local_tools->add_entry(
+      'type'      => $type,
+      'caption'   => $row->[0],
+      'url'       => $row->[1],
+    );
+  }
+}
+
+sub _user_tools {
+  my $self = shift;
+  my $obj = $self->{object};
+
+  my $sitename = $obj->species_defs->ENSEMBL_SITETYPE;
+  my @data = (
+          ['Back to '.$sitename,   '/index.html'],
+  );
+
+  my $type;
+  foreach my $row ( @data ) {
+    if( $row->[1] =~ /^http/ ) {
+      $type = 'external';
+    }
+    $self->{'page'}->local_tools->add_entry(
+      'type'      => $type,
+      'caption'   => $row->[0],
+      'url'       => $row->[1],
+    );
+  }
 }
 
 sub _context_panel {
@@ -158,6 +230,7 @@ sub create_node {
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
   }
+warn "TREE ".$self->tree;
   return $self->tree->create_node( $code, $details );
 }
 
