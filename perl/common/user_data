@@ -1,8 +1,24 @@
-#!/usr/local/bin/perl
+#! /usr/local/bin/perl
 
 package user_data;
 
-use EnsEMBL::Web::Document::Wizard;
-EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'wizard_menu');
+use strict;
+use warnings;
+
+use EnsEMBL::Web::Controller;
+
+{
+
+my $controller = EnsEMBL::Web::Controller->new;
+
+$controller->add_connections(
+  {'Upload'     => 'EnsEMBL::Web::Controller::Command::UserData::Upload' },
+  {'Save'       => 'EnsEMBL::Web::Controller::Command::UserData::Save' },
+  {'Manage'     => 'EnsEMBL::Web::Controller::Command::UserData::Manage' },
+);
+
+$controller->dispatch($ENV{REQUEST_URI});
+
+}
 
 1;
