@@ -14,6 +14,9 @@ my %Title :ATTR(:set<title> :get<title>);
 my %Name :ATTR(:set<name> :get<name> :init_arg<name>);
 my %Object :ATTR(:set<object> :get<object> :init_arg<object>);
 my %Elements :ATTR(:set<elements> :get<elements> :init_arg<elements>);
+my %Notes :ATTR(:set<notes> :get<notes>);
+
+## Deprecated
 my %TextAbove :ATTR(:set<textabove> :get<textabove>);
 my %TextBelow :ATTR(:set<textbelow> :get<textbelow>);
 
@@ -65,15 +68,22 @@ sub elements {
   return $self->get_elements;
 }
 
-sub text_above {
+sub notes {
   ### a
+  my $self = shift;
+  $self->set_notes(shift) if @_;
+  return $self->get_notes;
+}
+
+sub text_above {
+  ### x
   my $self = shift;
   $self->set_textabove(shift) if @_;
   return $self->get_textabove;
 }
 
 sub text_below {
-  ### a
+  ### x
   my $self = shift;
   $self->set_textbelow(shift) if @_;
   return $self->get_textbelow;
@@ -83,6 +93,11 @@ sub add_element {
 ### Adds a form element consisting of a hash of parameters
   my( $self, %options ) = @_;
   push @{ $self->elements }, \%options;
+}
+
+sub add_notes {
+  my ($self, %options) = @_;
+  $self->notes(\%options);
 }
 
 }

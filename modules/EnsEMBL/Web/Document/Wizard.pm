@@ -13,15 +13,14 @@ our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 {
 
 sub simple_wizard {
-  ## TO DO: implement access restrictions
-  my ($type, $menu) = @_;
-  my $self = __PACKAGE__->new( 'doctype' => 'Popup', 'objecttype' => $type );
+  my ($type, $method) = @_;
+  my $self = __PACKAGE__->new('objecttype' => $type );
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {
     $self->wizard( EnsEMBL::Web::Wizard->new({'cgi' => $self->factory->input}) );
     foreach my $object( @{$self->dataObjects} ) {
-      $self->configure( $object, $object->script, $menu );
+      $self->configure( $object, $method, 'global_context', 'local_context' );
     }
 
     $self->factory->fix_session;
@@ -65,13 +64,7 @@ sub process_node {
     $r->status( Apache2::Const::REDIRECT );
   }
   else {
-    my $content;
-    if ($object->param('error_message')) {
-      $content = $self->wizard->render_error_message;
-    }
-    else {
-      $content = $self->wizard->render_current_node;
-    }
+    my $content = $self->wizard->render_current_node($object);
     $self->page->content->add_panel(new EnsEMBL::Web::Document::Panel(
               'content' => $content,
     ));

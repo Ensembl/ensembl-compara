@@ -79,6 +79,7 @@ sub current_node {
   my $current_node = undef; 
   my $submit = $self->get_cgi->param('wizard_submit');
   if ($submit && $submit =~ /Back/) {
+    my $previous = $self->find_previous;
     $current_node = $nodes->{$self->find_previous};
   } 
   elsif ($self->get_cgi->param('wizard_next')){
@@ -161,15 +162,23 @@ sub redirect_current_node {
 
 sub render_current_node {
 ### Renders a form for the current node
-  my $self = shift;
+  my ($self, $object) = @_;
   my $node = $self->current_node;
   my $html;
-  my $action = '/common/'.$node->object->script;
-  $self->set_form(EnsEMBL::Web::Form->new('connection_form', $action));
   if ($node) {
+    my $action = '/common/'.$object->script;
+    my $form = EnsEMBL::Web::Form->new('connection_form', $action);
+    $self->set_form($form);
     my $init_method = $node->name;
     $node->$init_method; 
+    my $fieldset = $form->add_fieldset;
+    $fieldset->notes($node->notes);
     $html .= "<h2>".$node->title."</h2>\n";
+
+    if ($object->param('error_message')) {
+      $html .= '<div class="notice">'.$object->param('error_message').'</div>';
+    }
+
     $html .= $node->text_above."\n" if $node->text_above;
     #if ($current_node->is_final) {
       ## redirect to the final destination
@@ -178,7 +187,7 @@ sub render_current_node {
     $html .= $self->render_connection_form($node);
     $html .= "\n".$node->text_below."\n" if $node->text_below;
   } else {
-    $html = $self->render_error_message('No current node has been specified. Check the URL and try again.');
+    $html = $self->render_error_message($object, 'No current node has been specified. Check the URL and try again.');
   }
   return $html;
 }
@@ -199,14 +208,12 @@ sub render_connection_form {
   ## Control elements
   my $forward_connection = $self->forward_connection($node);
   if ($node->name ne $self->get_default_node) {
-    $self->form->add_element('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back', 
-                            'multibutton' => 'yes');
+    $self->form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back');
   }
   if ($forward_connection) {
     my $label = $forward_connection->label || 'Next >';
     $self->form->add_element('type' => 'Hidden', 'name' => 'wizard_next', 'value' => $forward_connection->to->name);
-    $self->form->add_element('type' => 'Submit', 'name' => 'wizard_submit', 'value' => $label, 
-                            'multibutton' => 'yes' );
+    $self->form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => $label);
   }
   $html .= $self->form->render;
   return $html;
@@ -276,17 +283,26 @@ sub add_incoming_parameters {
 
 sub render_error_message {
 ### Outputs an error message; also uses a form to keep track of where we were in the wizard
-  my $self = shift;
-  my $html;
+  my ($self, $object, $message) = @_;
 
-  $self->form->add_element(( type => 'Information', value => $self->get_cgi->param('error_message') ));
-  foreach my $value (@{$self->get_cgi->param('wizard_steps')}) {
-    $self->form->add_element(type => 'Hidden', name => 'wizard_steps', value => $value);
+  my $form = $self->get_form;
+  if (!$form) {
+    my $action = '/common/'.$object->script;
+    $form = EnsEMBL::Web::Form->new('connection_form', $action);
+    $form->add_attribute('class', 'wizard');
   }
-  $self->form->add_element('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back');
+  if (!$message) {
+    $message = $object->param('error_message');
+  }
 
-  $html .= $self->form->render;
-  return $html;
+  $form->add_element(( type => 'Information', value => $message ));
+  my @steps = ($object->param('wizard_steps'));
+  foreach my $value (@steps) {
+    $form->add_element(type => 'Hidden', name => 'wizard_steps', value => $value);
+  }
+  $form->add_element('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back');
+
+  return $form->render;
 }
 
 }
