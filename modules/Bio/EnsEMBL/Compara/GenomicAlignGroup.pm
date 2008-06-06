@@ -470,6 +470,42 @@ sub dnafrag_strand {
 }
 
 
+=head2 aligned_sequence
+
+  Arg [1]     : -none-
+  Example     : $aligned_sequence = $object->aligned_sequence();
+  Description : Get the aligned sequence for this group. When the group
+                contains one single sequence, returns its aligned sequence.
+                For composite segments, returns the combined aligned seq.
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub aligned_sequence {
+  my $self = shift;
+
+  my $aligned_sequence;
+  foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
+    if (!$aligned_sequence) {
+      $aligned_sequence = $this_genomic_align->aligned_sequence;
+    } else {
+      my $pos = 0;
+      foreach my $substr (grep {$_} split(/(\.+)/, $this_genomic_align->aligned_sequence)) {
+        if ($substr =~ /^\.+$/) {
+          $pos += length($substr);
+        } else {
+          substr($aligned_sequence, $pos, length($substr), $substr);
+        }
+      }
+    }
+  }
+
+  return $aligned_sequence;
+}
+
 
 
 1;

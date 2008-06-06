@@ -261,6 +261,26 @@ sub reference_genomic_align {
 }
 
 
+=head2 aligned_sequence
+
+  Arg [1]     : -none-
+  Example     : $aligned_sequence = $object->aligned_sequence();
+  Description : Get the aligned sequence for this node. When the node
+                contains one single sequence, it returns its aligned sequence.
+                For composite segments, it returns the combined aligned seq.
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub aligned_sequence {
+  my $self = shift;
+  return $self->genomic_align_group->aligned_sequence(@_);
+}
+
+
 # # =head2 group_id
 # # 
 # #   Arg [1]    : integer $group_id
