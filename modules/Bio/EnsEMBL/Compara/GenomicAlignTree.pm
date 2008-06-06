@@ -460,9 +460,14 @@ sub restrict_between_alignment_positions {
         push(@$new_genomic_aligns, $restricted_genomic_align);
       }
     }
-    $genomic_align_group->{genomic_align_array} = undef;
-    foreach my $this_genomic_align (@$new_genomic_aligns) {
-      $genomic_align_group->add_GenomicAlign($this_genomic_align);
+    if (@$new_genomic_aligns) {
+      $genomic_align_group->{genomic_align_array} = undef;
+      foreach my $this_genomic_align (@$new_genomic_aligns) {
+        $genomic_align_group->add_GenomicAlign($this_genomic_align);
+      }
+    } else {
+      $this_node->disavow_parent();
+      $genomic_align_tree = $genomic_align_tree->minimize_tree();
     }
   }
 
