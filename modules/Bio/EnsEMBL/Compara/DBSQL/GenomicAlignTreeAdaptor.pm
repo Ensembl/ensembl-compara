@@ -311,9 +311,11 @@ sub store {
   ## Create and store all the GenomicAlignBlock objects (this stores the GenomicAlign objects as well)
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor();
   my $ancestral_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-      -method_link_species_set => $node->get_all_GenomicAligns->[0]->method_link_species_set);
+      -method_link_species_set => $node->get_all_GenomicAligns->[0]->method_link_species_set,
+      -group_id => $node->group_id);
   my $modern_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-      -method_link_species_set => $node->get_all_GenomicAligns->[0]->method_link_species_set);
+      -method_link_species_set => $node->get_all_GenomicAligns->[0]->method_link_species_set,
+      -group_id => $node->group_id);
   foreach my $genomic_align_node (@{$node->get_all_nodes}) {
     if ($genomic_align_node->is_leaf()) {
       foreach my $this_genomic_align (@{$genomic_align_node->get_all_GenomicAligns}) {
