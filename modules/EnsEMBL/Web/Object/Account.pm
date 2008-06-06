@@ -22,10 +22,13 @@ sub counts {
   my $self = shift;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $counts = {};
-  $counts->{'bookmarks'}      = $user->bookmarks;
-  $counts->{'configurations'} = $user->configurations;
-  $counts->{'annotations'}    = $user->annotations;
-  $counts->{'news_filters'}   = $user->newsfilters;
+
+  if ($user && $user->id) {
+    $counts->{'bookmarks'}      = $user->bookmarks;
+    $counts->{'configurations'} = $user->configurations;
+    $counts->{'annotations'}    = $user->annotations;
+    $counts->{'news_filters'}   = $user->newsfilters;
+  }
 
   return $counts;
 }
