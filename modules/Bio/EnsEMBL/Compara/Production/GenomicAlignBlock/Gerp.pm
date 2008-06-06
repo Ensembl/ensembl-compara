@@ -131,8 +131,6 @@ sub fetch_input {
   #only run gerp if there are more than 2 genomic aligns. Gerp requires more
   #than 2 sequences to be represented at a position
   if (scalar(@$gas) > 2) {
-      #write out multiple alignment as a mfa file.
-      $self->_writeMultiFastaAlignment;
 
       #decide whether to use GenomicAlignTree object or species tree.
       my $mlss = $gab->method_link_species_set;
@@ -153,15 +151,21 @@ sub fetch_input {
 
 	  $self->{'modified_tree_file'} = $self->worker_temp_directory . $TREE_FILE;
 
-	  open (TREE, ">$self->{'modified_tree_file'}") or throw "error writing alignment ($self->{'modified_tree_file'}) file\n";
-	  print TREE $tree_string;
-	  close TREE;
-      } else {
-	  #use species tree
+          open (TREE, ">$self->{'modified_tree_file'}") or throw "error writing alignment ($self->{'modified_tree_file'}) file\n";
+          print TREE $tree_string;
+          close TREE;
 
-	  #write out modified tree depending on sequences represented in this
-	  #genomic align block (based on Javier's _update_tree in Pecan.pm)
-	  $tree_string = $self->_build_tree_string($gas);
+          #write out multiple alignment as a mfa file.
+          $self->_writeMultiFastaAlignment($gat);
+      } else {
+          #use species tree
+
+          #write out modified tree depending on sequences represented in this
+          #genomic align block (based on Javier's _update_tree in Pecan.pm)
+          $tree_string = $self->_build_tree_string($gas);
+
+          #write out multiple alignment as a mfa file.
+          $self->_writeMultiFastaAlignment($gab);
       }
 
 
@@ -379,10 +383,10 @@ sub get_params {
 
     #read from input_id in analysis_job table
     if (defined($params->{'genomic_align_block_id'})) {
-	$self->genomic_align_block_id($params->{'genomic_align_block_id'}); 
+        $self->genomic_align_block_id($params->{'genomic_align_block_id'}); 
     }
     if(defined($params->{'species_set'})) {
-	$self->species_set($params->{'species_set'});
+        $self->species_set($params->{'species_set'});
     }
     return 1;
 }
@@ -404,22 +408,37 @@ sub _calculateNeutralRate {
 #write out multiple alignment in mfa format to $self->worker_temp_directory
 sub _writeMultiFastaAlignment {
     my $self = shift;
+    my $object = shift;
 
     #write out the alignment file
     $self->{'mfa_file'} = $self->worker_temp_directory . $ALIGN_FILE;
     open (ALIGN, ">$self->{'mfa_file'}") or throw "error writing alignment ($self->{'mfa_file'}) file\n";    
-    my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
-    my $gab = $gaba->fetch_by_dbID($self->genomic_align_block_id);
+
     
     #create mfa file of multiple alignment from genomic align block
-    foreach my $genomic_align (@{$gab->get_all_GenomicAligns}) {
+    my $segments;
+    if (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+      $segments = $object->get_all_leaves;
+    } elsif (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+      $segments = $object->get_all_GenomicAligns;
+    }
+
+    foreach my $this_segment (@{$segments}) {
         #my $seq_name = $genomic_align->dnafrag->genome_db->name;
         #$seq_name =~ s/(\w*) (\w*)/$1_$2/;
 
         #add _ to either side of genome_db id to make GERP like it
-        my $seq_name = _get_name_from_GenomicAlign($genomic_align);
-        my $aligned_sequence = $genomic_align->aligned_sequence;
+        # Note: the name of the sequence must match the name of the
+        # corresponding leaf in the tree!
+        my $seq_name;
+        if (UNIVERSAL::isa($this_segment, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+          $seq_name = $this_segment->name;
+        } else {
+          $seq_name = _get_name_from_GenomicAlign($this_segment);
+        }
+        my $aligned_sequence = $this_segment->aligned_sequence;
         $aligned_sequence =~ s/(.{80})/$1\n/g;
+        $aligned_sequence =~ s/\./\-/g;
         chomp($aligned_sequence);
         print ALIGN ">$seq_name\n$aligned_sequence\n";
     }
