@@ -12,73 +12,73 @@ use EnsEMBL::Web::Controller;
 my $controller = EnsEMBL::Web::Controller->new;
 
 ## Login basics
-$controller->add_connections(
-  {'Login'       => 'EnsEMBL::Web::Controller::Command::Account::LogIn' },
-  {'_set_cookie'  => 'EnsEMBL::Web::Controller::Command::Account::SetCookie' },
-  {'LoggedIn'     => 'EnsEMBL::Web::Controller::Command::Account::LoggedIn' },
-  {'_logout'      => 'EnsEMBL::Web::Controller::Command::Account::LogOut' },
-);
+$controller->add_connections({
+  'Login'       => 'EnsEMBL::Web::Controller::Command::Account::LogIn',
+  '_set_cookie'  => 'EnsEMBL::Web::Controller::Command::Account::SetCookie',
+  'LoggedIn'     => 'EnsEMBL::Web::Controller::Command::Account::LoggedIn',
+  '_logout'      => 'EnsEMBL::Web::Controller::Command::Account::LogOut',
+});
 
 ## Accountview
-$controller->add_connections(
-  {'Bookmarks'      => 'EnsEMBL::Web::Controller::Command::Account::Bookmarks' }, 
-  {'Configurations' => 'EnsEMBL::Web::Controller::Command::Account::Configurations' },
-  {'Annotations'    => 'EnsEMBL::Web::Controller::Command::Account::Annotations' },
-  {'NewsFilters'    => 'EnsEMBL::Web::Controller::Command::Account::NewsFilters' }, 
-);
+$controller->add_connections({
+  'Bookmarks'      => 'EnsEMBL::Web::Controller::Command::Account::Bookmarks', 
+  'Configurations' => 'EnsEMBL::Web::Controller::Command::Account::Configurations',
+  'Annotations'    => 'EnsEMBL::Web::Controller::Command::Account::Annotations',
+  'NewsFilters'    => 'EnsEMBL::Web::Controller::Command::Account::NewsFilters', 
+});
 
 ## Account management 
-$controller->add_connections(
-  {'Summary'          => 'EnsEMBL::Web::Controller::Command::Account::Details' },
-  {'Register'         => 'EnsEMBL::Web::Controller::Command::Account::Register' },
-  {'_send_activation' => 'EnsEMBL::Web::Controller::Command::Account::SendActivation' }, 
-  {'_email_sent'      => 'EnsEMBL::Web::Controller::Command::Account::EmailSent' }, 
-  {'Activate'         => 'EnsEMBL::Web::Controller::Command::Account::EnterPassword' }, 
-  {'Details'          => 'EnsEMBL::Web::Controller::Command::Account::Details' }, 
-  {'LostPassword'     => 'EnsEMBL::Web::Controller::Command::Account::LostPassword' }, 
-  {'Password'         => 'EnsEMBL::Web::Controller::Command::Account::EnterPassword' }, 
-  {'_save_password'   => 'EnsEMBL::Web::Controller::Command::Account::SavePassword' }, 
-  {'Update'           => 'EnsEMBL::Web::Controller::Command::Account::Update' }, 
-  {'UpdateFailed'     => 'EnsEMBL::Web::Controller::Command::Account::UpdateFailed'}, 
-);
+$controller->add_connections({
+  'Summary'          => 'EnsEMBL::Web::Controller::Command::Account::Details',
+  'Register'         => 'EnsEMBL::Web::Controller::Command::Account::Register',
+  '_send_activation' => 'EnsEMBL::Web::Controller::Command::Account::SendActivation', 
+  '_email_sent'      => 'EnsEMBL::Web::Controller::Command::Account::EmailSent', 
+  'Activate'         => 'EnsEMBL::Web::Controller::Command::Account::EnterPassword', 
+  'Details'          => 'EnsEMBL::Web::Controller::Command::Account::Details', 
+  'LostPassword'     => 'EnsEMBL::Web::Controller::Command::Account::LostPassword', 
+  'Password'         => 'EnsEMBL::Web::Controller::Command::Account::EnterPassword', 
+  '_save_password'   => 'EnsEMBL::Web::Controller::Command::Account::SavePassword', 
+  'Update'           => 'EnsEMBL::Web::Controller::Command::Account::Update', 
+  'UpdateFailed'     => 'EnsEMBL::Web::Controller::Command::Account::UpdateFailed', 
+});
 
 ## User records
-$controller->add_connections(
-  {'SaveFavourites'     => 'EnsEMBL::Web::Controller::Command::Account::SaveFavourites' }, 
-  {'ResetFavourites'    => 'EnsEMBL::Web::Controller::Command::Account::ResetFavourites' }, 
-  {'_sortable'          => 'EnsEMBL::Web::Controller::Command::Account::Sortable' }, 
-  {'_hide_info'         => 'EnsEMBL::Web::Controller::Command::Account::HideInfo' }, 
-  {'_reset_info_boxes'  => 'EnsEMBL::Web::Controller::Command::Account::ResetInfoBoxes' }, 
+$controller->add_connections({
+  'SaveFavourites'     => 'EnsEMBL::Web::Controller::Command::Account::SaveFavourites', 
+  'ResetFavourites'    => 'EnsEMBL::Web::Controller::Command::Account::ResetFavourites', 
+  '_sortable'          => 'EnsEMBL::Web::Controller::Command::Account::Sortable', 
+  '_hide_info'         => 'EnsEMBL::Web::Controller::Command::Account::HideInfo', 
+  '_reset_info_boxes'  => 'EnsEMBL::Web::Controller::Command::Account::ResetInfoBoxes', 
 
-  {'Bookmark'           => 'EnsEMBL::Web::Controller::Command::Account::Bookmark' }, 
-  {'_bookmark_landing'  => 'EnsEMBL::Web::Controller::Command::Account::BookmarkLanding'},
-  {'_use_bookmark'      => 'EnsEMBL::Web::Controller::Command::Account::UseBookmark'},
+  'Bookmark'           => 'EnsEMBL::Web::Controller::Command::Account::Bookmark', 
+  '_bookmark_landing'  => 'EnsEMBL::Web::Controller::Command::Account::BookmarkLanding',
+  '_use_bookmark'      => 'EnsEMBL::Web::Controller::Command::Account::UseBookmark',
 
-  {'Configuration'      => 'EnsEMBL::Web::Controller::Command::Account::Configuration' }, 
-  {'_load_config'       => 'EnsEMBL::Web::Controller::Command::Account::LoadConfig' }, 
-  {'_set_config'        => 'EnsEMBL::Web::Controller::Command::Account::SetConfig' }, 
-  {'_config_landing'    => 'EnsEMBL::Web::Controller::Command::Account::ConfigLanding'},
+  'Configuration'      => 'EnsEMBL::Web::Controller::Command::Account::Configuration', 
+  '_load_config'       => 'EnsEMBL::Web::Controller::Command::Account::LoadConfig', 
+  '_set_config'        => 'EnsEMBL::Web::Controller::Command::Account::SetConfig', 
+  '_config_landing'    => 'EnsEMBL::Web::Controller::Command::Account::ConfigLanding',
 
-  {'Annotation'         => 'EnsEMBL::Web::Controller::Command::Account::Annotation' }, 
-  {'News'               => 'EnsEMBL::Web::Controller::Command::Account::FilterNews' }, 
-);
+  'Annotation'         => 'EnsEMBL::Web::Controller::Command::Account::Annotation', 
+  'News'               => 'EnsEMBL::Web::Controller::Command::Account::FilterNews', 
+});
 
 ## Group records & group management
-$controller->add_connections(
-  {'ManageGroup'        => 'EnsEMBL::Web::Controller::Command::Account::Group' }, 
-  {'Group'              => 'EnsEMBL::Web::Controller::Command::Account::ViewGroup' }, 
-  {'_remove_group'      => 'EnsEMBL::Web::Controller::Command::Account::RemoveGroup' }, 
-  {'_change_status'     => 'EnsEMBL::Web::Controller::Command::Account::ChangeStatus' }, 
-  {'_change_level'      => 'EnsEMBL::Web::Controller::Command::Account::ChangeLevel' }, 
+$controller->add_connections({
+  'ManageGroup'        => 'EnsEMBL::Web::Controller::Command::Account::Group', 
+  'Group'              => 'EnsEMBL::Web::Controller::Command::Account::ViewGroup', 
+  '_remove_group'      => 'EnsEMBL::Web::Controller::Command::Account::RemoveGroup', 
+  '_change_status'     => 'EnsEMBL::Web::Controller::Command::Account::ChangeStatus', 
+  '_change_level'      => 'EnsEMBL::Web::Controller::Command::Account::ChangeLevel', 
 
-  {'SelectGroup'        => 'EnsEMBL::Web::Controller::Command::Account::SelectGroup' }, 
-  {'_share_record'      => 'EnsEMBL::Web::Controller::Command::Account::ShareRecord' }, 
+  'SelectGroup'        => 'EnsEMBL::Web::Controller::Command::Account::SelectGroup', 
+  '_share_record'      => 'EnsEMBL::Web::Controller::Command::Account::ShareRecord', 
 
-  {'Invite'             => 'EnsEMBL::Web::Controller::Command::Account::Invite' }, 
-  {'_remove_invitation' => 'EnsEMBL::Web::Controller::Command::Account::RemoveInvitation' }, 
-  {'_accept'            => 'EnsEMBL::Web::Controller::Command::Account::AcceptInvitation' }, 
-  {'_unsubscribe'       => 'EnsEMBL::Web::Controller::Command::Account::Unsubscribe' }, 
-);
+  'Invite'             => 'EnsEMBL::Web::Controller::Command::Account::Invite', 
+  '_remove_invitation' => 'EnsEMBL::Web::Controller::Command::Account::RemoveInvitation', 
+  '_accept'            => 'EnsEMBL::Web::Controller::Command::Account::AcceptInvitation', 
+  '_unsubscribe'       => 'EnsEMBL::Web::Controller::Command::Account::Unsubscribe', 
+});
 
 $controller->dispatch($ENV{REQUEST_URI});
 

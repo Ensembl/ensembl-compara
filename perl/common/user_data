@@ -11,11 +11,12 @@ use EnsEMBL::Web::Controller;
 
 my $controller = EnsEMBL::Web::Controller->new;
 
-$controller->add_connections(
-  {'Upload'     => 'EnsEMBL::Web::Controller::Command::UserData::Upload' },
-  {'Save'       => 'EnsEMBL::Web::Controller::Command::UserData::Save' },
-  {'Manage'     => 'EnsEMBL::Web::Controller::Command::UserData::Manage' },
-);
+$controller->add_connections({
+  'Summary'    => 'EnsEMBL::Web::Controller::Command::UserData::Upload',
+  'Upload'     => 'EnsEMBL::Web::Controller::Command::UserData::Upload',
+  'Save'       => 'EnsEMBL::Web::Controller::Command::UserData::Save',
+  'Manage'     => 'EnsEMBL::Web::Controller::Command::UserData::Manage',
+});
 
 $controller->dispatch($ENV{REQUEST_URI});
 
