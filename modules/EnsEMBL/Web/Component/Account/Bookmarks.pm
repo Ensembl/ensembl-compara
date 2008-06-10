@@ -27,9 +27,11 @@ sub content {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $sitename = $self->site_name;
 
-  ## Blurb
+=pod
+  ## info box - move to help database!
   $html .= $self->info_box($user, qq(Bookmarks allow you to save frequently used pages from $sitename and elsewhere. When browsing $sitename, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar. <a href="http://www.ensembl.org/info/about/custom.html#bookmarks">Learn more about saving frequently used pages (Ensembl documentation) &rarr;</a>) , 'user_bookmark_info');
-  
+=cut  
+
   ## Get all bookmark records for this user
   my @bookmarks = $user->bookmarks;
   my $has_bookmarks = 0;
@@ -50,10 +52,8 @@ sub content {
         { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
     );
 
-    foreach my $id (@bookmarks) {
+    foreach my $bookmark (@bookmarks) {
       my $row = {};
-=pod
-      my $bookmark = EnsEMBL::Web::Data::Record::Bookmark->new('id'=>$id);
 
       my $description = $bookmark->description || '&nbsp;';
       $row->{'name'} = sprintf(qq(<a href="/Account/_use_bookmark?id=%s" title="%s">%s</a>),
@@ -63,7 +63,7 @@ sub content {
       $row->{'rename'} = $self->rename_link('Bookmark', $bookmark->id);
       $row->{'share'} = $self->share_link('Bookmark', $bookmark->id);
       $row->{'delete'} = $self->delete_link('Bookmark', $bookmark->id);
-=cut
+      $table->add_row($row);
       $has_bookmarks = 1;
     }
     $html .= $table->render;
@@ -96,7 +96,6 @@ sub content {
 
     foreach my $bookmark (values %group_bookmarks) {
       my $row = {};
-=pod
       my $description = $bookmark->description || '&nbsp;';
       $row->{'name'} = sprintf(qq(<a href="/Account/_use_bookmark?id=%s" title="%s">%s</a>),
                         $bookmark->id, $description, $bookmark->name);
@@ -105,15 +104,14 @@ sub content {
       $row->{'rename'} = $self->rename_link('Bookmark', $bookmark->id);
       $row->{'share'} = $self->share_link('Bookmark', $bookmark->id);
       $row->{'delete'} = $self->delete_link('Bookmark', $bookmark->id);
-=cut
       $has_bookmarks = 1;
     }
     $html .= $table->render;
   }
 
   if (!$has_bookmarks) {
-    $html .= qq(<p class="center"><img src="/img/help/bookmark_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
-    $html .= qq(<p class="center">You haven't saved any bookmarks. <a href='/info/website/custom.html#bookmarks'>Learn more about bookmarks &rarr;</a>);
+    $html .= qq(<p class="center"><img src="/i/help/bookmark_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
+    $html .= qq(<p class="center">You haven't saved any bookmarks. <a href="/info/website/account/settings.html#bookmarks">Learn more about bookmarks &rarr;</a>);
   }
   $html .= qq(<p><a href="/Account/Bookmark?dataview=add"><b>Add a new bookmark </b>&rarr;</a></p>);
 
