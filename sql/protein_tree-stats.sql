@@ -1,10 +1,11 @@
-/* SQL statements that probide a summary of the data in a compara
+/* SQL statements that provide a summary of the data in a compara GeneTree
    database. The whole lot should run within 5 mins 
 
   At the moment we have;
   1. Count of total number of protein trees (2 methods)
   2. Count of the total protein_members by species cf the number in trees 
-  3. Breakdown of tree counts and sizes by species of the root node
+  3. Coverage of longest translation peptides that are in Trees
+  4. Breakdown of tree counts and sizes by species of the root node
 */
 
 /* Number of Trees */
@@ -24,15 +25,32 @@ AND    ptt.tag='gene_count';
 /* Number of Species and their Members */
 SELECT gdb.name as species_name, 
        count(*) as protein_member_count,
-       sum( if( tm.member_id, 1, 0 ) ) as members_in_tree,
+       sum( if( tm.member_id, 1, 0 ) ) as peptide_members_in_tree,
        round( sum( if( tm.member_id, 1, 0 ) ) * 100 
-         / count(*) ) as members_in_tree_pct 
+         / count(*) ) as peptide_members_in_tree_pct 
 FROM   genome_db gdb, 
        member m left join protein_tree_member tm on m.member_id=tm.member_id 
 WHERE  gdb.genome_db_id=m.genome_db_id 
 AND    m.source_name = 'ENSEMBLPEP'
 GROUP  BY gdb.name, m.source_name;
 # 20sec
+
+/* Coverage of longest translation peptides that are in Trees */
+/* Uses subset_member which is not a release table */
+
+SELECT gdb.name as species_name, 
+       count(*) as protein_member_count,
+       sum( if( tm.member_id, 1, 0 ) ) as members_in_tree,
+       sum( if( tm.member_id, 1, 0 ) ) * 100 
+         / count(*) as members_in_tree_pct 
+FROM   genome_db gdb,
+       member m, subset_member sm left join protein_tree_member tm on sm.member_id=tm.member_id 
+WHERE sm.member_id=m.member_id 
+AND   gdb.genome_db_id=m.genome_db_id 
+AND   m.source_name = 'ENSEMBLPEP' 
+GROUP  BY gdb.name, m.source_name 
+ORDER BY members_in_tree_pct DESC;
+# 20 sec
 
 /* Breakdown of tree counts and sizes by species of the root node */
 SELECT ptt.value as root_node_species, 
