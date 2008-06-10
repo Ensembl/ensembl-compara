@@ -38,7 +38,7 @@ sub render_page {
     $webpage->render_error_page( $webpage->problem->[0] );
   } else {
     foreach my $object( @{$webpage->dataObjects} ) {
-      $webpage->configure( $object, 'login' );
+      $webpage->configure( $object, 'login', 'global_context', 'local_context' );
     }
     $webpage->action();
   }
