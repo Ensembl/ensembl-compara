@@ -67,12 +67,17 @@ sub render   {
   );
 
   if ($species) {
-    my $common = $sp_info{$species};
-    if ($you_are_here eq '/'.$species.'/index.html') {
-      $html .= qq( &gt; <strong>$common</strong>);
+    if ($species eq 'common') {
+      $html .= qq( &gt; <strong>Control Panel</strong>);
     }
     else {
-      $html .= qq( &gt; <a href="/$species/">).$common.qq(</a>);
+      my $display_name = $sp_info{$species};
+      if ($you_are_here eq '/'.$species.'/index.html') {
+        $html .= qq( &gt; <strong>$display_name</strong>);
+      }
+      else {
+        $html .= qq( &gt; <a href="/$species/">).$display_name.qq(</a>);
+      }
     }
   }
   elsif ($you_are_here =~ m#^/info/#) {
