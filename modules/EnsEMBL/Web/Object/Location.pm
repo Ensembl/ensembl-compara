@@ -299,6 +299,132 @@ sub unmapped_object {
 }
 
 
+######## SYNTENYVIEW CALLS ################################################
+
+sub get_synteny_matches {
+  my $self = shift;
+
+  my @data;
+  my $OTHER = $self->param('otherspecies') || $self->param('species')
+        || ($ENV{ 'ENSEMBL_SPECIES' } eq 'Homo_sapiens' ? 'Mus_musculus' : 'Homo_sapiens');
+  my $gene2_adaptor = $self->database('core', $OTHER)->get_GeneAdaptor();
+  my ($localgenes,$offset ) = $self->get_synteny_local_genes;
+
+  foreach my $localgene (@$localgenes){
+    my ($sppgene, $separate, $syntenygene);
+    my $data;
+    my $spp = $ENV{ 'ENSEMBL_SPECIES'};
+    my $homol_id = "";
+    my $homologues = $self->fetch_homologues_of_gene_in_species($localgene->stable_id, $OTHER);
+    my $homol_num = scalar @{$homologues};
+    my $gene_synonym = $localgene->external_name || $localgene->stable_id;
+
+    if(@{$homologues}) {
+      foreach my $homol(@{$homologues}) {
+        #warn "....    ", $homol->stable_id;
+        my $gene = $gene2_adaptor->fetch_by_stable_id( $homol->stable_id,1 );
+        $homol_id = $gene->external_name;
+        $homol_id ||= $gene->stable_id;
+        my $gene_slice = $gene->slice;
+        my $H_START = $gene->start;
+        my $H_CHR;
+        if( $gene_slice->coord_system->name eq "chromosome" ) {
+          $H_CHR = $gene_slice->seq_region_name;
+        }
+        else {
+          my $coords =$gene_slice->project("chromosome");
+          if( @$coords ) {
+            $H_CHR = $coords->[0]->[2]->seq_region_name();
+          }
+        }
+        my $data_row = {
+            'sp_stable_id'      =>  $localgene->stable_id,
+            'sp_synonym'        =>  $gene_synonym,
+            'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset),
+            'other_stable_id'   =>  $homol->stable_id,
+            'other_synonym'     =>  $homol_id,
+            'other_chr'         =>  $H_CHR,
+            'other_length'      =>  $self->bp_to_nearest_unit($H_START),
+            'homologue_no'      =>  $homol_num
+        };
+
+        push @data, $data_row;
+      }
+    } 
+    else {
+      push @data, { 
+            'sp_stable_id'      =>  $localgene->stable_id,
+            'sp_synonym'        =>  $gene_synonym,
+            'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset) 
+      };
+    }
+  }
+    return \@data;
+}
+
+sub get_synteny_local_genes {
+  my $self = shift ;
+  return @{$self->{'_local_genes'}} if $self->{'_local_genes'};
+
+  my $slice;
+  my @localgenes;
+  my $sliceAdaptor = $self->get_adaptor('get_SliceAdaptor');
+  my $pre = $self->param('pre');
+  my $loc = $self->param('loc') ? $self->evaluate_bp($self->param('loc')) : undef ;
+  my $chr = $sliceAdaptor->fetch_by_region( undef, $self->seq_region_name);
+  my $chr_name = $chr->seq_region_name;
+  my $chr_length = $chr->length;
+  my $num = 15; # minus count means count backwards - get previous genes
+  $num = -$num if $pre;
+  my $start = $loc < 1 ? 1 : $loc;
+  $start = $chr_length if $start > $chr_length;
+
+  if( $num < 0 ) {
+    $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr_name, 1, $start );
+    @localgenes = _local_genes($slice);
+    if(@localgenes>-$num) {
+      @localgenes = @localgenes[$num..-1];
+      $start = 1;
+    } 
+    elsif(@localgenes==0) {
+      $slice = $sliceAdaptor->fetch_by_region('chromosome',$chr_name, $start ,$chr_length);
+      @localgenes = _local_genes($slice);
+      @localgenes = @localgenes[0..(-$num-1)] if(@localgenes>-$num);
+    } 
+    else {
+      $start = 1;
+    }
+  }
+  else {
+    $slice = $sliceAdaptor->fetch_by_region( 'chromosome', $chr_name, $start, $chr_length );
+    @localgenes = _local_genes($slice);
+    if(@localgenes>$num) {
+      @localgenes = @localgenes[0..($num-1)];
+    }
+    elsif(@localgenes==0) {
+      $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr_name, 1 , $start);
+      @localgenes = _local_genes($slice);
+      @localgenes = @localgenes[(-$num)..-1] if(@localgenes>$num);
+      $start = 1;
+    }
+  }
+
+  $self->{'_local_genes'} = [\@localgenes,$start-1];
+  return \@localgenes, $start - 1;
+}
+
+sub _local_genes {
+## Ensures that only protein coding genes are included in syntenyview
+  my $slice = shift;
+  my @local_genes;
+  my @biotypes = ('protein_coding', 'V_segments', 'C_segments');
+  foreach my $type (@biotypes) {
+    push @local_genes, @{$slice->get_all_Genes_by_type($type)};
+  }
+  return @local_genes;
+}
+
+
 ######## LDVIEW CALLS ################################################
 
 

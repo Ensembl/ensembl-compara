@@ -73,7 +73,8 @@ sub populate_tree {
   ));
   $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
     [qw(
-    blank      EnsEMBL::Web::Component::Location::UnderConstruction
+        image      EnsEMBL::Web::Component::Location::SyntenyImage
+        matches    EnsEMBL::Web::Component::Location::SyntenyMatches
     )],
     { 'availability' => $self->mapview_possible($self->{object}->param('r')), 'concise' => 'Synteny'}
   ));
