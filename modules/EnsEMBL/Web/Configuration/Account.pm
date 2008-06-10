@@ -16,6 +16,11 @@ sub populate_tree {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($user && $user->id) {
 
+    $self->create_node( 'Links', "Quick Links",
+    [qw(links EnsEMBL::Web::Component::Account::Links
+        )],
+      { 'availability' => 1 }
+    );
     $self->create_node( 'Details', "Your Details",
     [qw(account EnsEMBL::Web::Component::Account::Details
         )],
@@ -56,6 +61,11 @@ sub populate_tree {
         )],
       { 'availability' => 1 }
     );
+    $self->create_node( 'Register', "Register",
+    [qw(account EnsEMBL::Web::Component::Account::Register
+        )],
+      { 'availability' => 1 }
+    );
     $self->create_node( 'LostPassword', "Lost Password",
     [qw(account EnsEMBL::Web::Component::Account::LostPassword
         )],
@@ -67,7 +77,13 @@ sub populate_tree {
 
 sub set_default_action {
   my $self = shift;
-  $self->{_data}{default} = 'Login';
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user && $user->id) {
+    $self->{_data}{default} = 'Links';
+  }
+  else {
+    $self->{_data}{default} = 'Login';
+  }
 }
 
 sub global_context { return $_[0]->_user_context; }
