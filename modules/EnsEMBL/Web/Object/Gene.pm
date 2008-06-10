@@ -17,6 +17,8 @@ sub counts {
   $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
   $counts->{'exons'}       = @{$obj->get_all_Exons};
   $counts->{'families'}    = keys %{$self->get_all_families};
+  $counts->{'orthologs'} = keys %{$self->get_homology_matches('ENSEMBL_ORTHOLOGUES')};
+  $counts->{'paralogs'}  = keys %{$self->get_homology_matches('ENSEMBL_PARALOGUES', 'within_species_paralog')};
 
   return $counts;
 }
