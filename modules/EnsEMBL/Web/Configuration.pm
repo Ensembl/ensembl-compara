@@ -8,6 +8,12 @@ our @ISA = qw(EnsEMBL::Web::Root);
 use POSIX qw(floor ceil);
 use warnings;
 
+sub populate_tree {
+
+}
+sub set_default_action {
+
+}
 sub new {
   my( $class, $page, $object, $flag, $common_conf ) = @_;
   my $self = {
