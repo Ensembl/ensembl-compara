@@ -21,6 +21,7 @@ $controller->add_connections({
 
 ## Accountview
 $controller->add_connections({
+  'Links'          => 'EnsEMBL::Web::Controller::Command::Account::Links', 
   'Bookmarks'      => 'EnsEMBL::Web::Controller::Command::Account::Bookmarks', 
   'Configurations' => 'EnsEMBL::Web::Controller::Command::Account::Configurations',
   'Annotations'    => 'EnsEMBL::Web::Controller::Command::Account::Annotations',
