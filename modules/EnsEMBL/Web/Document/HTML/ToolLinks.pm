@@ -14,22 +14,25 @@ sub logins    :lvalue { $_[0]{'logins'};   }
 sub render   {
   my $self = shift;
   my $species = $ENV{'ENSEMBL_SPECIES'} || 'default';
-  my ($user, $html);
+  my $html = qq(
+  );
   if ($self->logins) {
     if ($ENV{'ENSEMBL_USER_ID'}) {
-      $html .= qq(<a href="/User/Account">Your Account</a> &nbsp;|&nbsp; <a href="javascript:logout_link();">Logout</a> &nbsp;|&nbsp;
+      $html .= qq(
+      <a href="/Account/Summary">Control Panel</a> &nbsp;|&nbsp;
+      <a href="javascript:logout_link();">Logout</a> &nbsp;|&nbsp;
       );
     }
     else {
-      $html .= qq(<a href="javascript:login_link();">Login</a> / <a href="/User/Register">Register</a> &nbsp;|&nbsp;
+      $html .= qq(
+      <a href="/Account/Login">Control Panel</a> &nbsp;|&nbsp;
+      <a href="javascript:login_link();">Login</a> / <a href="/Account/Register">Register</a> &nbsp;|&nbsp;
       );
     }
   }
   $html .= qq(
-      <a href="/sorry.html" class="modal_link">Control Panel</a> &nbsp;|&nbsp;
       <a href="$species/Blast">BLAST</a> &nbsp;|&nbsp; 
       <a href="$species/Biomart">BioMart</a> &nbsp;|&nbsp;
-      <a href="/info/">Documentation</a> &nbsp;|&nbsp;
       <a href="/info/website/help/" id="help"><img src="/i/e-quest_bg.gif" alt="e?" style="vertical-align:middle" />&nbsp;Help</a>);
   $self->printf($html);
 }
