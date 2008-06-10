@@ -577,14 +577,14 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 
   throw("[$dnafrag] is not a Bio::EnsEMBL::Compara::DnaFrag object")
       unless ($dnafrag and ref $dnafrag and $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
-  my $dnafrag_id = $dnafrag->dbID;
-  throw("[$dnafrag] has no dbID") if (!$dnafrag_id);
+  my $query_dnafrag_id = $dnafrag->dbID;
+  throw("[$dnafrag] has no dbID") if (!$query_dnafrag_id);
 
   throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
       unless ($method_link_species_set and ref $method_link_species_set and
           $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  my $method_link_species_set_id = $method_link_species_set->dbID;
-  throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
+  my $query_method_link_species_set_id = $method_link_species_set->dbID;
+  throw("[$method_link_species_set] has no dbID") if (!$query_method_link_species_set_id);
 
   if ($limit_number) {
     return $self->_fetch_all_by_MethodLinkSpeciesSet_DnaFrag_with_limit($method_link_species_set,
@@ -607,8 +607,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
               genomic_align ga1, genomic_align ga2
           WHERE 
               ga1.genomic_align_block_id = ga2.genomic_align_block_id
-              AND ga2.method_link_species_set_id = $method_link_species_set_id
-              AND ga2.dnafrag_id = $dnafrag_id
+              AND ga2.method_link_species_set_id = $query_method_link_species_set_id
+              AND ga2.dnafrag_id = $query_dnafrag_id
       };
   if (defined($start) and defined($end)) {
     my $max_alignment_length = $method_link_species_set->max_alignment_length;
