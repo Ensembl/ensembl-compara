@@ -346,7 +346,6 @@ sub _summarise_compara_db {
     $self->db_tree->{'ALIGNMENTS'}{$meta_value}{'conservation_score'} = $conservation_score_id;
   }
   my %sections = (
-    'SYNTENY'             => 'GENE_MULTIPLE',
     'ENSEMBL_ORTHOLOGUES' => 'GENE',
     'HOMOLOGOUS_GENE'     => 'GENE',
     'HOMOLOGOUS'          => 'GENE',
