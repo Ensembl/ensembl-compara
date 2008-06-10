@@ -17,7 +17,7 @@ sub user_or_admin {
       ) if $record;
 
     } else {
-      $class = "${class}::Account";
+      $class = "${class}::User";
       my $record = $class->new($id);
       $self->add_filter(
         'EnsEMBL::Web::Controller::Command::Filter::Owner',
