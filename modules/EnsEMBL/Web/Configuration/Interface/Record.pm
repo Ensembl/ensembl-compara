@@ -44,7 +44,7 @@ sub save {
   if ($success) {
     if ($object->param('owner_type') eq 'group') {
       #$interface->data->populate($id);
-      $url = "/User/Group?id=".$interface->data->webgroup_id;
+      $url = "/Account/Group?id=".$interface->data->webgroup_id;
     }
     else {
       $url = "/$script?dataview=success";
@@ -82,7 +82,7 @@ sub delete {
   if ($success) {
     if ($object->param('owner_type') eq 'group') {
       #$interface->data->populate($id);
-      $url = "/User/Group?id=".$interface->data->webgroup_id;
+      $url = "/Account/Group?id=".$interface->data->webgroup_id;
     }
     else {
       $url = "/$script?dataview=success";
