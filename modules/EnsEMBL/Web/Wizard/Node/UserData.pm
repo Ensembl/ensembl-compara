@@ -24,7 +24,7 @@ our @formats = (
 sub start {
   my $self = shift;
 
-  my $tips = ['If your data is distributed across the genome and you wish to view small selections in detail, we recommend uploading it rather than attaching a URL.','You can also save uploaded data in your Ensembl account and reuse it later.'];
+  my $tips = ['If your data is distributed across the genome and you wish to view small selections in detail, pages will load faster if you upload the data to our server rather than attaching a URL.','You can also save uploaded data in your Ensembl account and reuse it later.'];
 
   $self->title('Upload your data');
 
@@ -43,6 +43,9 @@ sub upload {
   my $parameter = {};
 
   if ($self->object->param('file') || $self->object->param('paste') || $self->object->param('url')) {
+    ## TO DO - Do upload here!
+
+    ## Next node!
     $parameter->{'wizard_next'} = 'feedback';
   }
   else {
@@ -58,13 +61,6 @@ sub feedback {
   my $self = shift;
   $self->title('File Uploaded');
   $self->add_element(( type => 'Information', value => 'Thank you - your data was successfully uploaded'));
-}
-
-sub finish {
-  my $self = shift;
-
-  $self->title('Finished');
-  $self->text_above("<p>And we're done. All your data are belong to us.");
 }
 
 
