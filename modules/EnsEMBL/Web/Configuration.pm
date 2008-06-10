@@ -92,8 +92,8 @@ sub _user_context {
 
   my @data = (
     ['config',    'Config',   'Configure Page' ],
-    ['account',   'Account',  'Your Account' ],
     ['userdata',  'UserData', 'Custom Data' ],
+    ['account',   'Account',  'Your Account' ],
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
@@ -184,6 +184,7 @@ sub _content_panel {
 
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
   my $node          = $self->get_node( $action );
+warn "##### ACTION $action, NODE $node";
   my $previous_node = $node->previous_leaf      ;
   my $next_node     = $node->next_leaf          ;
 
@@ -221,16 +222,24 @@ sub query_string {
 
 sub create_node {
   my ( $self, $code, $caption, $components, $options ) = @_;
-  
+ 
+  my $url = '/';
+  if ($self->species && $self->species ne 'common') {
+    $url .= $self->species.'/';
+  }
+  $url .= $self->type.'/'.$code;
+  if ($self->query_string) {
+    $url .= '?'.$self->query_string;
+  }
+ 
   my $details = {
     'caption'    => $caption,
     'components' => $components,
-    'url'        => '/'.$self->species.'/'.$self->type."/$code?".$self->query_string
+    'url'        => $url, 
   };
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
   }
-warn "TREE ".$self->tree;
   return $self->tree->create_node( $code, $details );
 }
 
