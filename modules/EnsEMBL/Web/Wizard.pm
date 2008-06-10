@@ -18,6 +18,7 @@ use EnsEMBL::Web::Wizard::Node;
 {
 
 my %CGI :ATTR(:set<cgi> :get<cgi> :init_arg<cgi>);
+my %ScriptName :ATTR(:set<scriptname> :get<scriptname> :init_arg<scriptname>);
 my %Form :ATTR(:set<form> :get<form>);
 my %Nodes :ATTR(:set<nodes> :get<nodes> :init_arg<nodes>);
 my %Default_Node :ATTR(:set<default_node> :get<default_node>);
@@ -102,31 +103,13 @@ sub forward_connection {
   }
   ## Add in any dynamically-created links
   my $next_name = $self->get_cgi->param('wizard_next');
-  if (!$forward_connection && $next_name) {
+  if (!$forward_connection && $next_name && $next_name ne $self->current_node->name) {
     $forward_connection = EnsEMBL::Web::Wizard::Connection->new({ 
                     from => $node, to => $self->get_nodes->{$next_name} });
   }
   return $forward_connection;
 }
 
-=pod
-
-## Not currently in use!
-
-sub forward_connections {
-my ($self, $node) = @_;
-  my @return_connections = ();
-  foreach my $connection (@{ $self->get_connections }) {
-    if ($connection->from->name eq $node->name) {
-      push @return_connections, $connection;
-      $count++;
-    }
-  }
-  return @return_connections; 
-}
-
-
-=cut
 
 sub add_connection {
 ### Creates and adds a Wizard::Connection object to the array of connections
@@ -166,7 +149,7 @@ sub render_current_node {
   my $node = $self->current_node;
   my $html;
   if ($node) {
-    my $action = '/common/'.$object->script;
+    my $action = $self->get_scriptname;
     my $form = EnsEMBL::Web::Form->new('connection_form', $action);
     $self->set_form($form);
     my $init_method = $node->name;
@@ -180,10 +163,6 @@ sub render_current_node {
     }
 
     $html .= $node->text_above."\n" if $node->text_above;
-    #if ($current_node->is_final) {
-      ## redirect to the final destination
-      #$action = $current_node->get_destination;
-    #}
     $html .= $self->render_connection_form($node);
     $html .= "\n".$node->text_below."\n" if $node->text_below;
   } else {
@@ -287,7 +266,7 @@ sub render_error_message {
 
   my $form = $self->get_form;
   if (!$form) {
-    my $action = '/common/'.$object->script;
+    my $action = $self->get_scriptname;
     $form = EnsEMBL::Web::Form->new('connection_form', $action);
     $form->add_attribute('class', 'wizard');
   }
