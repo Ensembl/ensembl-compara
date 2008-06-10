@@ -72,17 +72,19 @@ sub content {
     ## Table of gene info
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
     $table->add_columns( 
-      { 'key' => 'id',   'title' => 'Gene ID',               'width' => '20%', 'align' => 'center' },
-      { 'key' => 'name', 'title' => 'Gene Name',             'width' => '20%', 'align' => 'center' },
-      { 'key' => 'loc',  'title' => 'Genome Location',       'width' => '20%', 'align' => 'left' },
-      { 'key' => 'desc', 'title' => 'Description(if known)', 'width' => '40%', 'align' => 'left' }
+      {'key' => 'id',   'title' => 'Gene ID and Location', 'width' => '30%', 'align' => 'center'},
+      {'key' => 'name', 'title' => 'Gene Name',            'width' => '20%', 'align' => 'center'},
+      {'key' => 'desc', 'title' => 'Description(if known)','width' => '50%', 'align' => 'left'}
     );
     foreach my $gene ( sort { $object->seq_region_sort( $a->seq_region_name, $b->seq_region_name ) ||
                             $a->seq_region_start <=> $b->seq_region_start } @$genes ) {
       
       my $row = {};
-      $row->{'id'} = sprintf '<a href="/%s/Gene/Summary?g=%s">%s</a>',
-                 $object->species, $gene->stable_id, $gene->stable_id;
+      $row->{'id'} = sprintf '<a href="/%s/Gene/Summary?g=%s" title="More about this gene">%s</a><br /><a href="/%s/Location/View?r=%s:%s-%s" title="View this location on the genome" class="small" style="text-decoration:none">%s: %s</a>',
+                $object->species, $gene->stable_id, $gene->stable_id,
+                $object->species, $gene->slice->seq_region_name, $gene->start, $gene->end,
+                $self->neat_sr_name($object->coord_system, $gene->slice->seq_region_name), 
+                $object->round_bp( $gene->start );
       my $xref = $gene->display_xref;
       if( $xref ) {
         $row->{'name'} = $object->get_ExtURL_link( $xref->display_id, $xref->dbname, $xref->primary_id);
@@ -90,10 +92,6 @@ sub content {
       else {
         $row->{'name'} = '-novel-';
       }
-      $row->{'loc'} = sprintf '<a href="/%s/Location/View?r=%s:%s-%s">%s: %s</a>', 
-                            $object->species, $gene->slice->seq_region_name, $gene->start, $gene->end, 
-                            $object->neat_sr_name( $object->coord_system, $gene->slice->seq_region_name ),
-                            $object->round_bp( $gene->start );
       $row->{'desc'} = $object->gene_description($gene);
       $table->add_row($row);
     }

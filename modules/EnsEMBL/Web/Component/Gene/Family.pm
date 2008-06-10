@@ -33,7 +33,7 @@ sub content {
     $row->{'id'}  = $family_id;
     my $genes = $families->{$family_id}{'info'}{'genes'};
     if (scalar(@$genes) > 1) {
-      $row->{'id'} .= sprintf(qq#<br />(<a href="/%s/Gene/Family?%s;family=%s">%s genes</a>)#, 
+      $row->{'id'} .= sprintf(qq#<br />(<a href="/%s/Gene/Family?%s;family=%s" title="Show locations of these genes">%s genes</a>)#, 
                     $object->species, join(';', @{$object->core_params}),
                     $family_id, scalar(@$genes)
                     );
