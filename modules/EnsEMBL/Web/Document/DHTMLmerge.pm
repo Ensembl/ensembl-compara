@@ -15,6 +15,7 @@ use File::Path;
 use CSS::Minifier;
 use JavaScript::Minifier;
 use Digest::MD5 qw(md5_hex);
+use Pack;
 
 no warnings "uninitialized";
 
@@ -118,19 +119,38 @@ $CONTENTS
   print O $NEW_CONTENTS;
   close O;
   my $minified = "$first_root/minified/$filename.$type";
-  open INFILE,  $fn;
   warn "Creating $minified file??";
-  return undef unless open OUTFILE, ">$minified";
-  if( $type eq 'css' ) {
-    CSS::Minifier::minify(input => *INFILE, outfile => *OUTFILE);
+  my $temp;
+  if( open O, ">$minified" ) {
+    $temp = $type eq 'css' ?
+      CSS::Minifier::minify(input => $NEW_CONTENTS ) :
+      JavaScript::Minifier::minify( input => $NEW_CONTENTS );
+    print O $temp;
+    close O;
   } else {
-    JavaScript::Minifier::minify(input => *INFILE, outfile => *OUTFILE);
+    $minified = '';
   }
-  close OUTFILE;
-  close INFILE;
+  my $packed0 = "$first_root/packed.0/$filename.$type";
+  if( open O, ">$packed0" ) {
+    $temp = Pack::pack($NEW_CONTENTS,0,1,1) if $type eq 'js';
+    print O $temp;
+    close O;
+  } else {
+    $packed0 = '';
+  }
+  my $packed = "$first_root/packed/$filename.$type";
+  if( open O, ">$packed" ) {
+    $temp = Pack::pack($NEW_CONTENTS,62,1,1) if $type eq 'js';
+    print O $temp;
+    close O;
+  } else {
+    $packed = '';
+  }
   warn "New contents for $type saved to:
   Merged:   $fn
   Minified: $minified
+  Packed.0: $packed0
+  Packed:   $packed
 ";
   return $filename;
 }
