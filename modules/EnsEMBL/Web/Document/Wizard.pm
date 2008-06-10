@@ -6,6 +6,7 @@ use warnings;
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::Wizard;
 use Apache2::Const qw(REDIRECT);
+use CGI qw(escape);
 use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::Document::WebPage);
@@ -13,12 +14,14 @@ our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 {
 
 sub simple_wizard {
-  my ($type, $method) = @_;
+  my ($type, $action, $method) = @_;
   my $self = __PACKAGE__->new('objecttype' => $type );
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {
-    $self->wizard( EnsEMBL::Web::Wizard->new({'cgi' => $self->factory->input}) );
+    $self->wizard( EnsEMBL::Web::Wizard->new(
+            {'cgi' => $self->factory->input, 'scriptname' => '/'.$type.'/'.$action }
+    ));
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure( $object, $method, 'global_context', 'local_context' );
     }
@@ -43,16 +46,16 @@ sub process_node {
     my %parameter = %{$self->wizard->redirect_current_node};
 
     ## unpack returned parameters into a URL
-    my $URL = '/common/'.$object->script.'?';
+    my $URL = $self->wizard->get_scriptname.'?';
     foreach my $param_name (keys %parameter) {
       ## assemble rest of url for non-exit redirects
       if (ref($parameter{$param_name}) eq 'ARRAY') {
         foreach my $param_value (@{$parameter{$param_name}}) {
-          $URL .= $param_name.'='.$param_value.';';
+          $URL .= $param_name.'='.CGI::escape($param_value).';';
         }
       }
       else {
-        $URL .= $param_name.'='.$parameter{$param_name}.';';
+        $URL .= $param_name.'='.CGI::escape($parameter{$param_name}).';';
       }
     }
     $URL =~ s/;$//; 
