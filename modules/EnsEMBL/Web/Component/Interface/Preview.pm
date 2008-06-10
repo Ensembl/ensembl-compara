@@ -23,11 +23,10 @@ sub content {
 ### Displays a record or form input as non-editable text,
 ### and also passes the data as hidden form elements
   my $self = shift;
-
-  my($object, $object) = @_;
+  my $object = $self->object;
 
   ## Create form
-  my $script = script_name($object, $object);
+  my $script = $self->script_name($object);
   my $form = EnsEMBL::Web::Form->new('preview', "/common/$script", 'post');
 
   ## get data and assemble form
