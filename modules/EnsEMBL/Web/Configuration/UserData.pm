@@ -2,9 +2,44 @@ package EnsEMBL::Web::Configuration::UserData;
 
 use strict;
 use EnsEMBL::Web::Configuration;
+use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
+sub populate_tree {
+  my $self = shift;
+
+  $self->create_node( 'Upload', "Upload Data",
+   [], { 'availability' => 1 }
+    );
+  $self->create_node( 'Save', "Save Data to Account",
+    [qw(save EnsEMBL::Web::Component::UserData::Save
+        )],
+    { 'availability' => 1, 'concise' => 'Save Data' }
+  );
+  $self->create_node( 'Manage', "Manage Saved Data",
+    [qw(manage EnsEMBL::Web::Component::UserData::Manage
+        )],
+    { 'availability' => 1, 'concise' => 'Manage Data' }
+  );
+}
+
+sub set_default_action {
+  my $self = shift;
+  $self->{_data}{default} = 'Upload';
+}
+
+sub global_context { return $_[0]->_user_context; }
+sub ajax_content   { return $_[0]->_ajax_content;   }
+sub local_context  { return $_[0]->_local_context;  }
+sub local_tools    { return $_[0]->_user_tools;  }
+sub content_panel  { return $_[0]->_content_panel;  }
+sub context_panel  { return $_[0]->_context_panel;  }
+
+
+#####################################################################################
+
+## Interface pages have to be done the 'old-fashioned' way, instead of using Magic
 
 sub user_data {
   my $self   = shift;
@@ -14,53 +49,13 @@ sub user_data {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
-  my $start         = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'start' ));
-
-  ## File upload/link section of wizard
-  my $start_logic   = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'start_logic'));
-  my $distribution  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'distribution'));
-  my $file_guide    = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'file_guide'));
-  my $file_logic    = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'file_logic'));
-  my $file_details  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'file_details'));
-  my $file_upload   = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'file_upload'));
-  my $url_data      = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'url_data'));
-  my $file_feedback = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'file_feedback'));
-
-  ## DAS section of wizard
-  my $das_servers   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'das_servers'));
-  my $das_sources   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'das_sources'));
-
-  #my $conf_tracks   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'conf_tracks'));
-  my $finish        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'finish'));
+  my $start = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'start' ));
+  my $upload = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'upload'));
+  my $feedback = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'feedback'));
 
   ## LINK PAGE NODES TOGETHER
-  $wizard->add_connection(( from => $start,   to => $start_logic));
-
-  ## DAS
-  $wizard->add_connection(( from => $das_servers,    to => $das_sources));
-  $wizard->add_connection(( from => $das_servers,    to => $das_servers));
-  #$wizard->add_connection(( from => $das_sources,    to => $conf_tracks));
-  $wizard->add_connection(( from => $das_sources,    to => $finish));
-
-  ## File upload
-  $wizard->add_connection(( from => $distribution,   to => $file_guide));
-  $wizard->add_connection(( from => $file_guide,     to => $file_logic));
-  $wizard->add_connection(( from => $file_details,   to => $file_upload));
-  $wizard->add_connection(( from => $file_upload,    to => $file_feedback));
-  #$wizard->add_connection(( from => $file_feedback,  to => $conf_tracks));
-  $wizard->add_connection(( from => $file_feedback,  to => $finish));
-
-  ## Universal end-point!
-  #$wizard->add_connection(( from => $conf_tracks,    to => $finish));
-
-}
-
-sub wizard_menu {
-  my $self = shift;
-  #my $object = $self->{object};
-
-  $self->{page}->menu->delete_block( 'ac_mini');
-  $self->{page}->menu->delete_block( 'archive');
+  $wizard->add_connection(( from => $start,    to => $upload));
+  $wizard->add_connection(( from => $upload,   to => $feedback));
 
 }
 
