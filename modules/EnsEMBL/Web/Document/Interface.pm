@@ -104,6 +104,7 @@ warn "Can't use module $config_module_name!";
   } 
 }
 
+=pod
 sub configure {
 ### Copy of 'configure' method from old Document::WebPage, since it's been modified
 ### and no longer works with Interface code
@@ -192,6 +193,7 @@ sub configure {
   $self->add_error_panels(); # Add error panels to end of display!!
   $self->_prof("Script configured ($objecttype)");
 }
+=cut
 
 }
 
