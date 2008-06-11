@@ -47,7 +47,12 @@ sub fetch_all_by_MethodLinkSpeciesSet {
   throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 
   my $constraint = "WHERE ga.method_link_species_set_id = $method_link_species_set_id AND gat.parent_id = 0";
-  $genomic_align_trees = $self->_generic_fetch($constraint);
+  my $final_clause = "";
+  if ($limit_number) {
+    $limit_index_start = 0 if (!$limit_index_start);
+    $final_clause = "LIMIT $limit_index_start, $limit_number";
+  }
+  $genomic_align_trees = $self->_generic_fetch($constraint, undef, $final_clause);
 
   return $genomic_align_trees;
 }
@@ -327,7 +332,9 @@ sub store {
       }
     }
   }
-  $genomic_align_block_adaptor->store($ancestral_genomic_align_block);
+  if (@{$ancestral_genomic_align_block->get_all_GenomicAligns} > 0) {
+    $genomic_align_block_adaptor->store($ancestral_genomic_align_block);
+  }
   $genomic_align_block_adaptor->store($modern_genomic_align_block);
   $node->ancestral_genomic_align_block_id($ancestral_genomic_align_block->dbID);
   $node->modern_genomic_align_block_id($modern_genomic_align_block->dbID);
