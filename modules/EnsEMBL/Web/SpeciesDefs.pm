@@ -68,7 +68,8 @@ use Hash::Merge qw( merge );
 use Time::HiRes qw(time);
 
 our @ISA = qw(EnsEMBL::Web::Root);
-our ( $AUTOLOAD, $CONF );
+our $AUTOLOAD;
+our $CONF;
 
 sub new {
   ### c
@@ -79,7 +80,6 @@ sub new {
   $self->{'_filename'} = $conffile;
 
   $self->parse unless $CONF;
-
   ## Diagnostic - sets up back trace of point at which new was
   ## called - useful for trying to track down where the cacheing
   ## is taking place
@@ -193,7 +193,13 @@ sub parse {
   ### Returns: boolean
   ### Caller: $self->new when filesystem and memory caches are empty
   my $self  = shift;
+# warn "EWTR -> NEW REGISTRY....";
+  warn "SETTING CONF AS UNDEFINED...";
+  $CONF = {};
+  warn "FINISHED SETTING CONF";
   my $reg_conf = EnsEMBL::Web::Tools::Registry->new( $CONF );
+
+#  warn "EWTR -> NOW";
   $self->{_start_time} = time;
   $self->{_last_time } = $self->{_start_time};
   if( ! $SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{_filename} ){
@@ -201,6 +207,8 @@ sub parse {
           "[CONF]    \033[0;32m[INFO] Retrieving conf from $self->{_filename}\033[0;39m\n",
           ( '-' x 78 ) ."\n" );
     $self->retrieve();
+    warn "$self->{_filename}";
+    warn "XXXXXXXXXX - @{[ keys %{$CONF->{_storage}} ]}";
     $reg_conf->configure();
     return 1;
   }

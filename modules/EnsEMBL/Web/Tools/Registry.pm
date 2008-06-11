@@ -7,7 +7,7 @@ our @ISA = qw(EnsEMBL::Web::Root);
 
 sub new {
   my( $class, $conf ) = @_;
-  my $self = { '_conf' => $conf };
+  my $self = { 'conf' => $conf };
   bless $self, $class;
   return $self;
 }
@@ -16,6 +16,7 @@ sub configure {
   ### Loads the adaptor into the registry from the self->{'conf'} definitions
   ### Returns: none
   my $self = shift;
+
   my %adaptors = (
     'VARIATION' => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor',
     'FUNCGEN'   => 'Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor',
@@ -39,10 +40,13 @@ sub configure {
     'FASTA'       => undef,
   );
 
+  warn $self->{conf};
+
   for my $species ( keys %{$self->{'conf'}->{_storage}} ) {
     (my $sp = $species ) =~ s/_/ /g;
     Bio::EnsEMBL::Registry->add_alias( $species, $sp );
     for my $type ( keys %{$self->{'conf'}->{'_storage'}{$species}{databases}}){
+    warn "EWTR -> $species ...................... $type ";
 ## Grab the configuration information from the SpeciesDefs object
       my $TEMP = $self->{'conf'}->{'_storage'}{$species}{databases}{$type};
 ## Skip if the name hasn't been set (mis-configured database)

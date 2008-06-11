@@ -63,7 +63,8 @@ sub _build_conf{
   my $method_conf = $SPECIES_DEFS->ENSEMBL_BLAST_METHODS;
 
   if( ref( $method_conf ) ne 'HASH' or ! scalar( %$method_conf ) ){
-    die( "ENSEMBL_BLAST_METHODS config unavailable" );
+    warn( "ENSEMBL_BLAST_METHODS config unavailable" );
+    return;
   }
 
   my @methods = map{ uc($_) } sort keys %$method_conf;
