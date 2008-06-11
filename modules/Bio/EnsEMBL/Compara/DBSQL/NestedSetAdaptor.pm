@@ -426,9 +426,9 @@ sub _build_tree_from_nodes {
 =cut
   
 sub _generic_fetch {
-  my ($self, $constraint, $join) = @_;
+  my ($self, $constraint, $join, $final_clause) = @_;
 
-  my $sql = $self->_construct_sql_query($constraint, $join);
+  my $sql = $self->_construct_sql_query($constraint, $join, $final_clause);
 
   #print STDERR $sql,"\n";
   my $node_list = [];
@@ -442,7 +442,7 @@ sub _generic_fetch {
 }
 
 sub _construct_sql_query {
-  my ($self, $constraint, $join) = @_;
+  my ($self, $constraint, $join, $final_clause) = @_;
 
   my @tables = @{$self->tables};
   my $columns = join(', ', @{$self->columns()});
@@ -482,7 +482,9 @@ sub _construct_sql_query {
   $sql .= " $constraint" if($constraint);
 
   #append additional clauses which may have been defined
-  my $final_clause = $self->final_clause;
+  if (!$final_clause) {
+    $final_clause = $self->final_clause;
+  }
   $sql .= " $final_clause" if($final_clause);
 
   return $sql;
