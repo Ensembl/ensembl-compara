@@ -16,7 +16,7 @@ while(<I>) {
   $X{$k} = $v;
 }
 
-foreach my $d (qw(minified merged)) {
+foreach my $d (qw(minified merged packed.0 packed)) {
   opendir DH, "$SERVERROOT/htdocs/$d";
   while(my $f = readdir(DH)) {
     my( $code,$type ) = split /\./,$f;
