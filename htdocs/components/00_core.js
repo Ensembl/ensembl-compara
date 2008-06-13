@@ -1,15 +1,3 @@
-function addLoadEvent(func) {
-  var oldonload = window.onload;
-  if( typeof window.onload != 'function' ) {
-    window.onload = func;
-  } else {
-    window.onload = function() {
-      oldonload();
-      func();
-    }
-  }
-}
-
 function __collapse( div_node ) {
   div_node.getElementsBySelector('.content').each(function(child_div){
     child_div.hide();
