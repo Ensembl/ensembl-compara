@@ -56,8 +56,8 @@ sub content {
     </dl>);
 
 ## Now create the transcript information...
-  my $transcripts = $object->Obj->get_all_Transcripts;
-  my $count = @$transcripts;
+  my $transcripts = $object->Obj->get_all_Transcripts; 
+  my $count = @$transcripts; 
   if( $count > 1 ) {
     my $transcript = $object->core_objects->{'parameters'}{'t'};
     $html .= qq(
@@ -71,7 +71,7 @@ sub content {
         'type'   => 'Transcript',
         'action' => 'Summary',
         't'      => $_->stable_id
-      });
+      }); 
       $html .= sprintf( '
           <tr%s>
             <th>%s</th>
@@ -88,6 +88,28 @@ sub content {
       </dd>
     </dl>';
   }
+ else {
+   my $transcript = @$transcripts[0];
+   my $display = $transcript->display_xref->display_id;
+   my $id = $transcript->stable_id;
+   $html .= qq(
+       <dl class="summary">
+      <dt>Transcripts</dt>
+      <dd>
+        <p id="transcripts_text">There is one transcript in this gene: );
+
+     my $url = $self->object->_url({
+        'type'   => 'Transcript',
+        'action' => 'Summary',
+        't'      => $transcript->stable_id
+      });
+ 
+    $html .= qq(
+       <a href=$url> $display</a> <a href=$url>($id)</a> </p>
+     </dd>
+    </dl>
+    );
+}
   return $html;
 }
 
