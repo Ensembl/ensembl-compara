@@ -31,22 +31,31 @@ sub content {
   my $goview    = $object->database('go') ? 1 : 0;
 
   my $go_hash  = $object->get_go_list();
-  my $GOIDURL  = "/@{[$object->species]}/goview?acc=";
-  my $QUERYURL = "/@{[$object->species]}/goview?depth=2;query=";
+  my $GOIDURL  = "http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=";
+  #my $QUERYURL = "http://amigo.geneontology.org/cgi-bin/amigo/search.cgi?query=";
   my $URLS     = $object->ExtURL;
 
   return unless ($go_hash);
   my $html =  "<p><strong>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</strong></p>";
 
-  $html .= qq(<dl>);
+  #$html .= qq(<dl>);
+   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    $table->add_columns(
+      {'key' => 'go',   'title' => 'GO Accession', 'width' => '5%', 'align' => 'left'},
+      {'key' => 'evidence', 'title' => 'Evidence','width' => '3%', 'align' => 'centre'},
+      {'key' => 'description', 'title' => 'Go Term', 'width' => '55%', 'align' => 'left'},
+      {'key' => 'desc', 'title' => 'Annotation Source','width' => '35%', 'align' => 'centre'}
+    );
+
   foreach my $go (sort keys %{$go_hash}){
+    my $row = {};
     my @go_data = @{$go_hash->{$go}||[]};
     my( $evidence, $description, $info_text ) = @go_data;
     my $link_name = $description;
     $link_name =~ s/ /\+/g;
 
     my $goidurl  = qq(<a href="$GOIDURL$go">$go</a>);
-    my $queryurl = qq(<a href="$QUERYURL$link_name">$description</a>);
+    my $queryurl = qq(<a href="$GOIDURL$go">$description</a>);
     unless( $goview ){
       $goidurl  = $object->get_ExtURL_link($go,'GO',$go);
       $queryurl = $object->get_ExtURL_link($description,'GOTERMNAME', $link_name);
@@ -77,10 +86,15 @@ sub content {
       $info_text_html= '';
     }
 
-  $html .= qq(<dd>$goidurl $info_text_html [$queryurl] <code>$evidence</code></dd>\n);
+    $row->{'go'} = $goidurl;
+    $row->{'description'} = $queryurl;
+    $row->{'evidence'} = $evidence;
+    $row->{'desc'} = $info_text_html;
+    $table->add_row($row);
+  #$html .= qq(<dd>$goidurl $info_text_html [$queryurl] <code>$evidence</code></dd>\n);
   }
-  $html .= qq(</dl>);
-
+  #$html .= qq(</dl>);
+  $html .= $table->render;
  return $html;
 }
 
