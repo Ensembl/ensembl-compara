@@ -302,7 +302,7 @@ __PACKAGE__->cache(
 if (__PACKAGE__->cache) {
     __PACKAGE__->add_trigger(select => sub { $_[0]->propagate_cache_tags } );
     __PACKAGE__->add_trigger(after_create  => sub { $_[0]->invalidate_cache } );
-    __PACKAGE__->add_trigger(after_udpate  => sub { $_[0]->invalidate_cache } );
+    __PACKAGE__->add_trigger(after_update  => sub { $_[0]->invalidate_cache } );
     __PACKAGE__->add_trigger(before_delete => sub { $_[0]->invalidate_cache } );
 }
 
