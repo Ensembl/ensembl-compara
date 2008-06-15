@@ -261,6 +261,30 @@ sub reference_genomic_align {
 }
 
 
+=head2 reference_genomic_align_node
+
+  Arg [1]     : (optional) $reference_genomic_align_node
+  Example     : $object->reference_genomic_align_node($reference_genomic_align_node);
+  Example     : $reference_genomic_align_node = $object->reference_genomic_align_node();
+  Description : Getter/setter for the reference_genomic_align_node attribute
+  Returntype  : Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub reference_genomic_align_node {
+  my $self = shift;
+
+  if (@_) {
+    $self->{reference_genomic_align_node} = shift;
+  }
+
+  return $self->{reference_genomic_align_node};
+}
+
+
 =head2 aligned_sequence
 
   Arg [1]     : -none-
