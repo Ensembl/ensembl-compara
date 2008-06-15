@@ -410,17 +410,18 @@ sub get_all_sorted_genomic_align_nodes {
     $reference_genomic_align_node = $self->reference_genomic_align_node;
   }
 
-  if (@{$self->children} == 2) {
-    my $children = [sort _sort_children @{$self->children}];
+  my $children = $self->children;
+  if (@$children >= 1) {
+    $children = [sort _sort_children @$children];
     push(@$sorted_genomic_align_nodes, @{$children->[0]->get_all_sorted_genomic_align_nodes(
             $reference_genomic_align_node)});
     push(@$sorted_genomic_align_nodes, $self);
-    push(@$sorted_genomic_align_nodes, @{$children->[1]->get_all_sorted_genomic_align_nodes(
-            $reference_genomic_align_node)});
-  } elsif (@{$self->children} == 0) {
+    for (my $i = 1; $i <= @$children; $i++) {
+      push(@$sorted_genomic_align_nodes, @{$children->[$i]->get_all_sorted_genomic_align_nodes(
+              $reference_genomic_align_node)});
+    }
+  } elsif (@$children == 0) {
     push(@$sorted_genomic_align_nodes, $self);
-  } else {
-    throw("Cannot sort non-binary trees!");
   }
 
   return $sorted_genomic_align_nodes;
