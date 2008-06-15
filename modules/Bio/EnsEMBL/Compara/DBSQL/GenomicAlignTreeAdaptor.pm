@@ -117,6 +117,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
       foreach my $this_genomic_align (@$all_genomic_aligns) {
         if ($this_genomic_align->dbID == $reference_genomic_align_id) {
           $root->reference_genomic_align($this_genomic_align);
+          $root->reference_genomic_align_node($this_leaf);
           if (@$all_genomic_aligns > 1) {
             ## Reference hits a composite GenomicAlign. We have to restrict the tree
             my $cigar_line = $this_genomic_align->cigar_line;
@@ -434,6 +435,103 @@ sub update_neighbourhood_data {
     foreach my $this_children (@{$node->children}) {
       $self->update_neighbourhood_data($this_children);
     }
+  }
+
+  return $node;
+}
+
+sub set_neighbour_nodes_for_leaf {
+  my ($self, $node, $flanking) = @_;
+  $flanking = 1000000 if (!$flanking);
+
+  next if (!$node->is_leaf());
+  next if (!$node->genomic_align_group);
+  my $genomic_aligns = $node->genomic_align_group->get_all_GenomicAligns;
+
+  my $sth = $self->prepare("SELECT group_id, dnafrag_start, dnafrag_end, dnafrag_strand
+      FROM genomic_align LEFT JOIN genomic_align_group USING (genomic_align_id)
+      WHERE type = 'epo'
+        AND dnafrag_id = ?
+        AND method_link_species_set_id = ?
+        AND dnafrag_start <= ?
+        AND dnafrag_start > ?
+        AND dnafrag_end >= ?
+        ORDER BY dnafrag_start");
+
+  my $genomic_align = $genomic_aligns->[0];
+  my $dnafrag_start = $genomic_align->dnafrag_start;
+  my $dnafrag_end = $genomic_align->dnafrag_end;
+
+  $sth->execute(
+      $genomic_align->dnafrag_id,
+      $genomic_align->method_link_species_set_id,
+      $dnafrag_end + $flanking,
+      $dnafrag_start - $flanking - $genomic_align->method_link_species_set->max_alignment_length,
+      $dnafrag_start - $flanking,
+      );
+  my $table = $sth->fetchall_arrayref;
+
+  if (@$genomic_aligns == 1) {
+    for (my $i = 0; $i < @$table; $i++) {
+      my ($this_group_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
+      if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
+        ## $table->[$i] correspond to the query node
+        if ($this_dnafrag_strand == 1) {
+          $node->left_node_id($table->[$i-1]->[0]) if ($i > 0);
+          $node->right_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
+        } elsif ($this_dnafrag_strand == -1) {
+          $node->right_node_id($table->[$i-1]->[0]) if ($i > 0);
+          $node->left_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
+        }
+        last;
+      }
+    }
+  } else {
+    ## Use the first GenomicAlign to set the LEFT NODE
+    for (my $i = 0; $i < @$table; $i++) {
+      my ($this_group_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
+      if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
+        ## $table->[$i] correspond to the query node
+        if ($this_dnafrag_strand == 1) {
+          $node->left_node_id($table->[$i-1]->[0]) if ($i > 0);
+        } elsif ($this_dnafrag_strand == -1) {
+          $node->left_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
+        }
+        last;
+      }
+    }
+
+    ## Use the last GenomicAlign to set the RIGHT NODE
+    $genomic_align = $genomic_aligns->[-1];
+    $dnafrag_start = $genomic_align->dnafrag_start;
+    $dnafrag_end = $genomic_align->dnafrag_end;
+
+    $sth->execute(
+        $genomic_align->dnafrag_id,
+        $genomic_align->method_link_species_set_id,
+        $dnafrag_end + $flanking,
+        $dnafrag_start - $flanking - $genomic_align->method_link_species_set->max_alignment_length,
+        $dnafrag_start - $flanking,
+        );
+    $table = $sth->fetchall_arrayref;
+    for (my $i = 0; $i < @$table; $i++) {
+      my ($this_group_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
+      if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
+        ## $table->[$i] correspond to the query node
+        if ($this_dnafrag_strand == 1) {
+          $node->right_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
+        } elsif ($this_dnafrag_strand == -1) {
+          $node->right_node_id($table->[$i-1]->[0]) if ($i > 0);
+        }
+        last;
+      }
+    }
+  }
+  $sth->finish;
+
+  # Store this in the DB
+  if ($node->left_node_id or $node->right_node_id) {
+    $self->update_neighbourhood_data($node);
   }
 
   return $node;
