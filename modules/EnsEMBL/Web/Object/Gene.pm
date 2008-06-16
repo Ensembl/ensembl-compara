@@ -16,11 +16,80 @@ sub counts {
   my $counts = {};
   $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
   $counts->{'exons'}       = @{$obj->get_all_Exons};
-  $counts->{'families'}    = keys %{$self->get_all_families};
   $counts->{'orthologs'} = keys %{$self->get_homology_matches('ENSEMBL_ORTHOLOGUES')};
   $counts->{'paralogs'}  = keys %{$self->get_homology_matches('ENSEMBL_PARALOGUES', 'within_species_paralog')};
-
+  if ($self->get_all_families) {
+	$counts->{'families'}    = keys %{$self->get_all_families};
+  }
+  $counts->{'evidence'} =  $self->count_gene_supporting_evidence;
   return $counts;
+}
+
+
+sub count_gene_supporting_evidence {
+	#count all supporting_features and transcript_supporting_features for the gene
+	my $self = shift;
+	my $obj = $self->Obj;
+	my $evi_count = 0;
+	my %c;
+	warn $obj->stable_id;
+	foreach my $trans (@{$obj->get_all_Transcripts()}) {
+		warn $trans->stable_id;
+		foreach my $evi (@{$trans->get_all_supporting_features}) {
+			my $hit_name = $evi->hseqname;
+			$c{$hit_name}++;
+		}
+		foreach my $exon (@{$trans->get_all_Exons()}) {
+			foreach my $evi (@{$exon->get_all_supporting_features}) {
+				my $hit_name = $evi->hseqname;
+				$c{$hit_name}++;
+			}
+		}
+	}
+	return scalar(keys(%c));
+}
+
+sub get_gene_supporting_evidence {
+	#get supporting evidence for the gene. transcript_supporting_features support the
+	#whole transcript or the translation, supporting_features provide depth the the evidence
+	my $self = shift;
+	my $obj = $self->Obj;
+	my $e;
+	foreach my $trans (@{$obj->get_all_Transcripts()}) {
+		my $tsi = $trans->stable_id;
+		my %t_hits;
+		foreach my $evi (@{$trans->get_all_supporting_features}) {
+			my $name = $evi->hseqname;
+			#use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
+			if ( $trans->seq_region_start  == $evi->seq_region_start
+					 || $trans->seq_region_end == $evi->seq_region_end ) {
+###
+##rather than use external_db_id then use the db_name and attach a hyperlink - needs code from core
+###
+				$e->{$tsi}{'evidence'}{'UTR'}{$name} = $evi->external_db_id;
+				$t_hits{$name}++;
+			}
+			elsif ( $trans->coding_region_start == $evi->seq_region_start
+					 || $trans->coding_region_end == $evi->seq_region_end ) {
+				$e->{$tsi}{'evidence'}{'CDS'}{$name} = $evi->external_db_id;
+				$t_hits{$name}++;
+			}
+			elsif (! exists($t_hits{$name})) {
+				$e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $evi->external_db_id;
+				$t_hits{$name}++;				
+			}			
+		}
+		#make a note of the hit_names of the supporting_features
+		foreach my $exon (@{$trans->get_all_Exons()}) {
+			foreach my $evi (@{$exon->get_all_supporting_features}) {
+				my $hit_name = $evi->hseqname;
+				if (! exists($t_hits{$hit_name})) {
+					$e->{$tsi}{'extra_evidence'}{$hit_name}++;
+				}
+			}
+		}
+	}
+	return $e;
 }
 
 sub get_slice_object {
