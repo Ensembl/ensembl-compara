@@ -1,3 +1,5 @@
+function addLoadEvent(funct) { Event.observe(window, 'load',funct); }
+
 function __collapse( div_node ) {
   div_node.getElementsBySelector('.content').each(function(child_div){
     child_div.hide();
@@ -19,6 +21,7 @@ function __init_ensembl_web_expandable_panels() {
     __collapse( div_node );
   });
 }
+Event.observe(window, 'load',__init_ensembl_web_expandable_panels);
 
 function __init_ensembl_web_hide_form() {
   if( $('hideform') ) {
@@ -27,18 +30,14 @@ function __init_ensembl_web_hide_form() {
     });
   }
 }
-
-addLoadEvent(__init_ensembl_web_expandable_panels );
-
-addLoadEvent(__init_ensembl_web_hide_form );
-
+Event.observe(window, 'load',__init_ensembl_web_hide_form );
 
 function __init_ensembl_rel_external() {
   $$('a[rel="external"]').each(function(n){
     n.target = '__blank'
   });
 }
-addLoadEvent( __init_ensembl_rel_external );
+Event.observe(window, 'load', __init_ensembl_rel_external );
 
 var Cookie = {
   set: function(name, value, daysToExpire) {

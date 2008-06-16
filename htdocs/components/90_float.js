@@ -52,4 +52,4 @@ var FLOAT_HIGHLIGHT = 0;
     }
   }
   
-  addLoadEvent( __init_ensembl_web_float_box );
+  Event.observe(window, 'load', __init_ensembl_web_float_box );

@@ -1,46 +1,36 @@
-/** This Javascript module alters the search box to have a graphical
-    drop down akin to the Firefox drop down on server load
-
-    Global variables: Flag to make sure that we only populate the drop down box once!! 
-
-    Public functions: remove_search_index(code); add_search_index(code,label);
-**/
-
-  var ENSEMBL_TRANSCRIPT_DROPDOWN = 0;
+/***********************************************************************
+**                                                                    **
+**  Makes the list of transcripts collapsible                         **
+**                                                                    **
+**  Public functions: None...                                         **
+**                                                                    **
+***********************************************************************/
 
   function __init_transcript_dropdown() {
-/** Initialize the search box... make it a "graphical" drop down and add
-    entries for Ensembl, EBI and Sanger
+/** Initialize link to either collapse or expand transcript list.
 
     PRIVATE - should only be executed once on page load
 **/
 
-    if( ENSEMBL_TRANSCRIPT_DROPDOWN==1 ) return; // Only execute once
-      ENSEMBL_TRANSCRIPT_DROPDOWN = 1;
+// If no transcripts OR already generated link so return....
+    if( !$('transcripts') || $('transcripts_link') ) return;
 
-    if($('transcripts')){                    // Only if search box exists...
-      __debug( 'Initializing transcript_dropdown box' );
-      $('transcripts_text').appendChild(
-        Builder.node( 'div', { id: 'transcripts_link' }, 'show transcripts' )
-      );
-      Event.observe($('transcripts_link'),'click',function(event){
-        $('transcripts').toggle();
-	var text = $('transcripts_link').firstChild;
-	text.nodeValue = (text.nodeValue == 'hide transcripts') ? 'show transcripts' : 'hide transcripts';
-      });
-      Event.observe($('transcripts'),'click',function(event){
-        $('transcripts').toggle();
-      });
-      /*
-      Event.observe($('transcripts_link'),'click',function(event){
-        var box  = $('transcripts_link');
-        var menu = $('transcripts');
-        Position.clone(box,menu,{setWidth:false,offsetTop:box.getHeight()-4});
-        menu.toggle();
-      });
-      */
-// Create the search list!
-    }
+    var initial_open = 1;
+    var txt_on       = 'show transcripts';
+    var txt_off      = 'hide transcripts';
+
+    $('transcripts_text').appendChild(
+      Builder.node( 'div',
+        { id: 'transcripts_link' }, 
+        [ initial_open ? txt_off : txt_on ]
+      )
+    );
+    if( initial_open != 1 ) $('transcripts').hide();
+    Event.observe($('transcripts_link'),'click',function(event){
+      $('transcripts').toggle();
+      var T = $('transcripts_link');
+      T.innerHTML = T.innerHTML == txt_off ? txt_on : txt_off;
+    });
   }
 
-  addLoadEvent( __init_transcript_dropdown );
+  Event.observe(window, 'load', __init_transcript_dropdown );

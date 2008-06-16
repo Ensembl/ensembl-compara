@@ -95,5 +95,5 @@ function exp_all()
 
  exp(0);
 }
-addLoadEvent( codelinks );
+Event.observe(window, 'load', codelinks );
 

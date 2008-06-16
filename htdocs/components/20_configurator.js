@@ -221,7 +221,7 @@
     }
   }
 
-//  addLoadEvent( __init_ensembl_web_configurator );
+//  Event.observe(window, 'load', __init_ensembl_web_configurator );
 /***
     $$('img.ms').each(function(node){node.onclick = progress_state});
     $w('config').each(function(key){

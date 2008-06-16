@@ -57,4 +57,4 @@ function __ensembl_init_ajax_loader() {
   });
 }
 
-addLoadEvent( __ensembl_init_ajax_loader );
+Event.observe(window, 'load', __ensembl_init_ajax_loader );

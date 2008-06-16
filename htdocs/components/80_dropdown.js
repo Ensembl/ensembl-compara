@@ -35,4 +35,4 @@
     }
   }
   
-  addLoadEvent( __init_ensembl_web_dropdown );
+  Event.observe(window, 'load', __init_ensembl_web_dropdown );

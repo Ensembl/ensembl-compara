@@ -1,10 +1,15 @@
-/** This Javascript module alters the search box to have a graphical
-    drop down akin to the Firefox drop down on server load
-
-    Global variables: Flag to make sure that we only populate the drop down box once!! 
-
-    Public functions: remove_search_index(code); add_search_index(code,label);
-**/
+/***********************************************************************
+**                                                                    **
+**  This Javascript module alters the search box to have a graphical  **
+**  drop down akin to the Firefox drop down on server load            **
+**                                                                    **
+**    Global variables: ENSEMBL_SEARCH_BOX - Flag to make sure that   **
+**                      we only populate the drop down box once!!     **
+**                                                                    **
+**    Public functions: remove_search_index(code);                    **
+**                      add_search_index(code,label);                 **
+**                                                                    **
+***********************************************************************/
 
   var ENSEMBL_SEARCH_BOX = 0;
 
@@ -24,10 +29,11 @@
 
     Notes: 
     
-    * The image "/i/search/{code}/.gif" should exist in the web-tree as a 16x16 gif
+    * The image "/i/search/{code}/.gif" should exist in the
+      web-tree as a 16x16 gif
 **/
-    if(!$('se_mn')) return;             // Sanity check can't add to what doesn't exist!
-    if($('se_'+code)) return;           // Don't open up another search box with this link!
+    if(!$('se_mn')) return;   // Sanity check can't add to what doesn't exist!
+    if($('se_'+code)) return; // Don't open up another search box with this link!
     var n = Builder.node( 'dt', { id: 'se_'+code }, [
       Builder.node( 'img', { src: '/i/search/'+code+'.gif', alt: '' } ),
       label
@@ -74,4 +80,4 @@
     }
   }
 
-  addLoadEvent( __init_ensembl_web_search );
+  Event.observe(window, 'load', __init_ensembl_web_search );
