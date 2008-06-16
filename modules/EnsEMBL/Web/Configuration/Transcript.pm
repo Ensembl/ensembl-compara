@@ -60,8 +60,7 @@ sub populate_tree {
   );
 
   $self->create_node( 'Evidence', "Supporting evidence  ([[counts::evidence]])",
-   # [],
-   [qw(evidence       EnsEMBL::Web::Component::Transcript::UnderConstruction)],
+   [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidence)],
     { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
 
