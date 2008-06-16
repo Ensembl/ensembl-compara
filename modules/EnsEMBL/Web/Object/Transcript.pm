@@ -16,9 +16,31 @@ sub counts {
   my $self = shift;
   my $counts = {};
   $counts->{'exons'}       = @{$self->Obj()->get_all_Exons};
-  $counts->{'domains'}     = keys %{$self->get_interpro};
+  if ($self->get_interpro) {
+	$counts->{'domains'}     = keys %{$self->get_interpro};
+  }
+  $counts->{'evidence'} = $self->count_supporting_evidence;
   return $counts;
 }
+
+sub count_supporting_evidence {
+	my $self = shift;
+	my $trans = $self->Obj;
+	my $evi_count = 0;
+	my %c;
+	foreach my $evi (@{$trans->get_all_supporting_features}) {
+		my $hit_name = $evi->hseqname;
+		$c{$hit_name}++;
+	}
+	foreach my $exon (@{$trans->get_all_Exons()}) {
+		foreach my $evi (@{$exon->get_all_supporting_features}) {
+			my $hit_name = $evi->hseqname;
+			$c{$hit_name}++;
+		}
+	}
+	return scalar(keys(%c));
+}
+
 
 sub get_database_matches {
   my $self = shift;
@@ -255,7 +277,7 @@ sub get_munged_slice {
   my $master_config = $self->user_config_hash( $config_name );
   $master_config->{'_draw_single_Transcript'} = $self->stable_id;
 
-  my $slice = $self->get_transcript_Slice( @_ );
+  my $slice = $self->get_transcript_Slice( @_ );  #pushes it onto forward strand, expands if necc.
   my $length = $slice->length();
   my $munged  = '0' x $length;  # Munged is string of 0, length of slice
 
@@ -268,9 +290,12 @@ sub get_munged_slice {
     @lengths = ( $length );
   }
   else {
-    foreach my $exon (@{$self->Obj->get_all_Exons()}) {
+    foreach my $exon (@{$self->Obj->get_all_Exons()}) {		
       my $START    = $exon->start - $slice->start + 1 - $extent;
       my $EXON_LEN = $exon->end-$exon->start + 1 + 2 * $extent;
+
+#	  warn "START = $START";
+#	  warn "EXON_LEN = $EXON_LEN";
 
       # Change munged to 1 where there is exon or extent (i.e. flank)
       substr( $munged, $START-1, $EXON_LEN ) = '1' x $EXON_LEN;
@@ -285,6 +310,8 @@ sub get_munged_slice {
   my $flag = 0;
   my $subslices = [];
   my $pos = 0;
+
+  #warn Dumper(\@lengths);
   foreach( @lengths , 0) {
     if ( $flag = 1-$flag ) {
       push @$subslices, [ $pos+1, 0, 0 ] ;
@@ -294,6 +321,7 @@ sub get_munged_slice {
     }
     $pos+=$_;
   }
+#  warn Dumper($subslices);
 
 ## compute the width of the slice image within the display
   my $PIXEL_WIDTH =
@@ -301,18 +329,25 @@ sub get_munged_slice {
         ( $master_config->get( '_settings', 'label_width' ) || 100 ) -
     3 * ( $master_config->get( '_settings', 'margin' )      ||   5 );
 
+#  warn $self->param('image_width');
+#  warn $PIXEL_WIDTH;
+
 ## Work out the best size for the gaps between the "exons"
   my $fake_intron_gap_size = 11;
   my $intron_gaps  = ((@lengths-1)/2);
   if( $intron_gaps * $fake_intron_gap_size > $PIXEL_WIDTH * 0.75 ) {
      $fake_intron_gap_size = int( $PIXEL_WIDTH * 0.75 / $intron_gaps );
   }
+
+#  warn "$intron_gaps --> $fake_intron_gap_size";
+
 ## Compute how big this is in base-pairs
   my $exon_pixels  = $PIXEL_WIDTH - $intron_gaps * $fake_intron_gap_size;
   my $scale_factor = $collapsed_length / $exon_pixels;
+#  warn "--$scale_factor-->$collapsed_length-->$exon_pixels";
   my $padding      = int($scale_factor * $fake_intron_gap_size) + 1;
   $collapsed_length += $padding * $intron_gaps;
-
+#  warn "collapsed_length = $collapsed_length";
 ## Compute offset for each subslice
   my $start = 0;
   foreach(@$subslices) {
@@ -543,7 +578,7 @@ sub get_source {
 
 sub munge_gaps {
  
- ### TSV
+ ### TSV and SE
 
   my( $self, $slice_code, $bp, $bp2  ) = @_;
   my $subslices = $self->__data->{'slices'}{ $slice_code }[2];
@@ -551,7 +586,6 @@ sub munge_gaps {
     my $tmp =  $self->get_transcript_slices( [ $slice_code, 'munged', $self->extent ] );
     $subslices = $tmp->[2];
   }
-
   foreach( @$subslices ) {
     if( $bp >= $_->[0] && $bp <= $_->[1] ) {
       my $return =  defined($bp2) && ($bp2 < $_->[0] || $bp2 > $_->[1] ) ? undef : $_->[2];
@@ -566,6 +600,7 @@ sub munge_gaps_split {
  ### TSV
 
    my( $self, $slice_code, $bp, $bp2, $obj_ref  ) = @_;
+
   my $subslices = $self->__data->{'slices'}{ $slice_code }[2];
   my @return = ();
   foreach( @$subslices ) {
@@ -1150,7 +1185,7 @@ sub get_go_list {
 
 =cut
 
-sub get_supporting_evidence { ## USED!
+sub get_supporting_evidence { ## USED by alignview as well!
   my $self    = shift;
   my $transid = $self->stable_id;
   my $db      =  $self->get_db;
