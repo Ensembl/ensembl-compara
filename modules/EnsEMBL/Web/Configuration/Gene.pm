@@ -59,7 +59,10 @@ sub populate_tree {
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
     { 'availability' => 1, 'concise' => 'Exons' }
   );
-  $self->create_node( 'Evidence',   'Supporting evidence', [qw()] );
+  $self->create_node( 'Evidence', "Supporting evidence ([[counts::evidence]])",
+     [qw(evidence       EnsEMBL::Web::Component::Gene::SupportingEvidence)],
+    { 'availability' => 1, 'concise' => 'Supporting evidence'}
+  );
   $self->create_node( 'Regulation', 'Regulation', 
     [qw(regulation EnsEMBL::Web::Component::Gene::UnderConstruction)],
     { 'availability' => 'database:funcgen' }
