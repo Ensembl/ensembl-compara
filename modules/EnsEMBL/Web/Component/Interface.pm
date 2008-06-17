@@ -13,7 +13,7 @@ no warnings "uninitialized";
 ## Some methods common to two or more interface child modules
 
 sub script_name {
-  my $object = shift;
+  my ($self, $object) = @_;
   if ($object->interface->script_name) {
     return $object->interface->script_name;
   }
