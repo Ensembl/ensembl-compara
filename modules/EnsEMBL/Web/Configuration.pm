@@ -34,6 +34,11 @@ sub tree {
   return $self->{_data}{tree};
 }
 
+sub configurable {
+  my $self = shift;
+  return $self->{_data}{configurable};
+}
+
 sub set_action {
   my $self = shift;
   $self->{_data}{'action'} = $self->_get_valid_action(shift);
@@ -133,9 +138,14 @@ sub _local_tools {
   my $obj = $self->{object};
 
   my @data = (
-          ['Control Panel',   '/sorry.html'],
-          ['Export Data',     '/sorry.html'],
+          ['Control Panel',       '/Account/Summary'],
+          ['Bookmark this page',  '/Account/Bookmark'],
   );
+  if ($self->configurable) {
+    push @data, ['Configure this page',     '/sorry.html'];
+  }
+
+  push @data, ['Export Data',     '/sorry.html'];
 
   my $type;
   foreach my $row ( @data ) {
@@ -190,7 +200,6 @@ sub _content_panel {
 
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
   my $node          = $self->get_node( $action );
-warn "##### ACTION $action, NODE $node";
   my $previous_node = $node->previous_leaf      ;
   my $next_node     = $node->next_leaf          ;
 
@@ -250,7 +259,7 @@ sub create_node {
 }
 
 sub create_submenu {
-  my ( $self, $code, $caption, $options ) = @_;
+  my ($self, $code, $caption, $options ) = @_;
   my $details = { 'caption'    => $caption, 'url' => '' };
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
