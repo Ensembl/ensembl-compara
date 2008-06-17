@@ -9,19 +9,34 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Upload', "Upload Data",
+  my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
+  $attached_menu->append($self->create_node( 'Attach', "Attach Data",
    [], { 'availability' => 1 }
-    );
-  $self->create_node( 'Save', "Save Data to Account",
-    [qw(save EnsEMBL::Web::Component::UserData::Save
+    ));
+  $attached_menu->append($self->create_node( 'SaveAttached', "Attach to Account",
+    [qw(save_attached EnsEMBL::Web::Component::UserData::SaveAttached
         )],
-    { 'availability' => 1, 'concise' => 'Save Data' }
-  );
-  $self->create_node( 'Manage', "Manage Saved Data",
-    [qw(manage EnsEMBL::Web::Component::UserData::Manage
+    { 'availability' => 1, 'concise' => 'Save' }
+  ));
+  $attached_menu->append($self->create_node( 'ManageAttached', "Manage Data",
+    [qw(manage_attached EnsEMBL::Web::Component::UserData::ManageAttached
         )],
     { 'availability' => 1, 'concise' => 'Manage Data' }
-  );
+  ));
+  my $uploaded_menu = $self->create_submenu( 'Uploaded', 'Uploaded data' );
+  $uploaded_menu->append($self->create_node( 'Upload', "Upload Data",
+   [], { 'availability' => 1 }
+    ));
+  $uploaded_menu->append($self->create_node( 'SaveUploaded', "Save to Account",
+    [qw(save_uploaded EnsEMBL::Web::Component::UserData::SaveUploaded
+        )],
+    { 'availability' => 1, 'concise' => 'Save Data' }
+  ));
+  $uploaded_menu->append($self->create_node( 'ManageUploaded', "Manage Data",
+    [qw(manage_uploaded EnsEMBL::Web::Component::UserData::ManageUploaded
+        )],
+    { 'availability' => 1, 'concise' => 'Manage Data' }
+  ));
 }
 
 sub set_default_action {
@@ -39,9 +54,9 @@ sub context_panel  { return $_[0]->_context_panel;  }
 
 #####################################################################################
 
-## Interface pages have to be done the 'old-fashioned' way, instead of using Magic
+## Wizards have to be done the 'old-fashioned' way, instead of using Magic
 
-sub user_data {
+sub upload {
   my $self   = shift;
   my $object = $self->{'object'};
 
@@ -49,13 +64,35 @@ sub user_data {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
-  my $start = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'start' ));
+  my $select = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_file' ));
   my $upload = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'upload'));
-  my $feedback = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'feedback'));
+  my $feedback = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'upload_feedback'));
 
   ## LINK PAGE NODES TOGETHER
-  $wizard->add_connection(( from => $start,    to => $upload));
+  $wizard->add_connection(( from => $select,   to => $upload));
   $wizard->add_connection(( from => $upload,   to => $feedback));
+
+}
+
+sub attach {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  my $wizard = $self->wizard;
+
+  ## CREATE NODES
+  my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
+  my $server        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_server' ));
+  my $source_logic  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'source_logic'));
+  my $source        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_source' ));
+  my $attach        = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'attach'));
+  my $feedback      = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'attach_feedback'));
+
+  ## LINK PAGE NODES TOGETHER
+  $wizard->add_connection(( from => $server,        to => $source_logic));
+  $wizard->add_connection(( from => $source_logic,  to => $source));
+  $wizard->add_connection(( from => $source_logic,  to => $attach));
+  $wizard->add_connection(( from => $source,        to => $attach));
 
 }
 
