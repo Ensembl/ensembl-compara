@@ -26,26 +26,54 @@ sub content {
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   
-  $html .= qq#
+  $html .= qq(
 <div class="twocol-left">
 <p>Bookmarks:</p>
-<ul>
-<li><a href="">Bookmark 1</a></li>
-<li><a href="">Bookmark 2</a></li>
-<li><a href="">Bookmark 3</a></li>
-</ul>
-<p><a href="javascript:bookmark_link()">Bookmark this page</a></p>
-</div>
+);
+
+  my @bookmarks = $user->bookmarks;
+
+  if ($#bookmarks > -1) {
+    $html .= "<ul>\n";
+    foreach my $bookmark (@bookmarks) {
+      $html .= '<li><a href="/Account/_use_bookmark?id='.$bookmark->id.'"';
+      if ($bookmark->description) {
+        $html .= ' title="'.$bookmark->description.'"';
+      }
+      $html .= '>'.$bookmark->name."</a></li>\n";
+    }
+    $html .= "</ul>\n";
+  }
+  else {
+    $html .= 'You have no saved bookmarks.'
+  }
+  #$html .= qq#<p><a href="javascript:bookmark_link()">Bookmark this page</a></p>#;
+
+  $html .= qq(</div>
 
 <div class="twocol-right">
 <p>Page configurations:</p>
-<ul>
-<li>Config 1: <a href="">Load in page</a> | <a href="">Go to saved page and load</a></li>
-<li>Config 2: <a href="">Load in page</a> | <a href="">Go to saved page and load</a></li>
-<li>Config 3: <a href="">Load in page</a> | <a href="">Go to saved page and load</a></li>
-</ul>
-</div>
-#;
+);
+
+  my @configs = $user->configurations;
+
+  if ($#configs > -1) {
+    $html .= "<ul>\n";
+    foreach my $config (@configs) {
+      $html .= '<li>'.$config->name.' <a href="#" onclick="javascript:go_to_config('.$config->id.');"';
+      if ($config->description) {
+        $html .= ' title="'.$config->description.'"';
+      }
+      $html .= ">Go to saved page and load tracks</a></li>\n";
+    }
+    $html .= "</ul>\n";
+  }
+  else {
+    $html .= 'You have no saved configurations.'
+  }
+
+  $html .= qq(</div>
+);
 
 
   return $html;
