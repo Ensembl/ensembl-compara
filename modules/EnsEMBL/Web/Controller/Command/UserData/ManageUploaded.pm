@@ -1,16 +1,18 @@
-package EnsEMBL::Web::Controller::Command::UserData::Upload;
+package EnsEMBL::Web::Controller::Command::UserData::ManageUploaded;
 
 use strict;
 use warnings;
 
 use Class::Std;
 
+use EnsEMBL::Web::RegObj;
 use base 'EnsEMBL::Web::Controller::Command::UserData';
 
 {
 
 sub BUILD {
-  my ($self, $ident, $args) = @_;
+  my ($self, $ident, $args) = @_; 
+  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
 }
 
 sub render {
@@ -19,13 +21,12 @@ sub render {
   if ($self->not_allowed) {
     $self->render_message;
   } else {
-    $self->render_page;
+    $self->render_page; 
   }
 }
 
 sub render_page {
-use EnsEMBL::Web::Document::Wizard;
-EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'Upload', 'upload');
+  EnsEMBL::Web::Magic::stuff('UserData', 'ManageUploaded');
 }
 
 }

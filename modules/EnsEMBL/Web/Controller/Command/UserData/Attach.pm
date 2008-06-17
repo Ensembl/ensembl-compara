@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Controller::Command::UserData::Upload;
+package EnsEMBL::Web::Controller::Command::UserData::Attach;
 
 use strict;
 use warnings;
@@ -25,7 +25,7 @@ sub render {
 
 sub render_page {
 use EnsEMBL::Web::Document::Wizard;
-EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'Upload', 'upload');
+EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'Attach', 'attach');
 }
 
 }
