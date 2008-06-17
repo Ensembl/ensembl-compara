@@ -44,6 +44,12 @@ sub ajaxable {
   return $self->{'ajaxable'};
 }
 
+sub configurable {
+  my $self = shift;
+  $self->{'configurable'} = shift if @_;
+  return $self->{'configurable'};
+}
+
 sub cache_key {
   return undef;
 }
