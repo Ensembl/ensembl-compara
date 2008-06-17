@@ -78,6 +78,7 @@ sub _initialize_HTML {
     content         EnsEMBL::Web::Document::HTML::Content
     global_context  EnsEMBL::Web::Document::HTML::GlobalContext
     local_context   EnsEMBL::Web::Document::HTML::LocalContext
+    local_tools     EnsEMBL::Web::Document::HTML::LocalTools
     copyright       EnsEMBL::Web::Document::HTML::Copyright
     footerlinks     EnsEMBL::Web::Document::HTML::FooterLinks
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript

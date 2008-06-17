@@ -367,7 +367,7 @@ sub render {
   ';
   if( $self->include_navigation ) {
     $X .= '
-      <div id="nav">[[local_context]]</div>
+      <div id="nav">[[local_context]][[local_tools]]</div>
       <div id="main">
 <!-- Start of real content --> 
       [[content]]

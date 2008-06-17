@@ -27,8 +27,9 @@ sub _initialize {
   );
   if( $self->include_navigation ) {
     $self->add_body_elements qw(
-      global_context EnsEMBL::Web::Document::HTML::GlobalContext
-      local_context  EnsEMBL::Web::Document::HTML::LocalContext
+      global_context  EnsEMBL::Web::Document::HTML::GlobalContext
+      local_context   EnsEMBL::Web::Document::HTML::LocalContext
+      local_tools     EnsEMBL::Web::Document::HTML::LocalTools
     );
   }
   $self->add_body_elements qw(
