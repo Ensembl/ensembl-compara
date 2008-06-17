@@ -13,6 +13,7 @@ sub _init {
   my $self = shift;
   $self->cacheable( 0 );
   $self->ajaxable(  0 );
+  $self->configurable( 1 );
 }
 
 sub content {
@@ -124,7 +125,6 @@ sub create_OligoProbe {
 sub create_DnaAlignFeature {
   my $features = {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
   my $genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
-warn $genes;
   $features->{'Gene'} = $genes if $genes;
   return $features;
 }
