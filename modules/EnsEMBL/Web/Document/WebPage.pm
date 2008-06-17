@@ -52,6 +52,7 @@ sub new {
     'page'         => undef,
     'factory'      => undef,
     'command'      => undef,
+    'configurable' => undef,
     'timer'        => $ENSEMBL_WEB_REGISTRY->timer,
     'species_defs' => $ENSEMBL_WEB_REGISTRY->species_defs
   };
@@ -59,7 +60,7 @@ sub new {
   my %parameters = @_;
   $| = 1;
 ## Input module...
-  my $script = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
+  $self->{'script'} = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
   my $input  = $parameters{'cgi'}        || new CGI;
   # $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
   $self->_prof("Parameters initialised from input");
@@ -121,7 +122,7 @@ sub new {
   return $self if $self->factory->has_fatal_problem();
   eval {
     if( $parameters{'fast'} ) {
-warn "FAST CREATE OBJECTS...";
+#warn "FAST CREATE OBJECTS...";
       $self->factory->fastCreateObjects();
     } else {
       $self->factory->createObjects();
@@ -159,7 +160,8 @@ sub configure {
   my $common_conf = {
     'tree'           => EnsEMBL::Web::OrderedTree->new(),
     'default'        => undef,
-    'action'         => undef
+    'action'         => undef,
+    'configurable'   => 0,
   };
   my @modules = ();
   while( my ($module_root, $X) = splice( @T, 0, 2) ) {
@@ -219,6 +221,18 @@ sub configure {
           );
         } else {
           $FUNCTIONS_CALLED->{$FN} = 1;
+          ## Check if we've added any configurable components
+          my $node = $CONF->get_node($CONF->_get_valid_action( $ENV{'ENSEMBL_ACTION'} ));
+          my @components = @{$node->data->{'components'}};
+          while( my($code, $module) = splice( @components, 0, 2) ) {
+            if ($self->dynamic_use($module)) {
+              my $component = $module->new;
+              if ($component->configurable) {
+                $CONF->{'_data'}{'configurable'} = 1;
+                last;
+              }
+            }
+          }
         } 
       }
     }
@@ -233,6 +247,7 @@ sub configure {
       }
     }
   }
+
 
   $self->add_error_panels(); # Add error panels to end of display!!
   $self->_prof("Script configured ($objecttype)");
