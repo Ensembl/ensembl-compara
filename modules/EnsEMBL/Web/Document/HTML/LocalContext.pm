@@ -48,6 +48,7 @@ sub render {
   my $previous_node;
   my $active = $self->active;
   my $active_node = $t->get_node( $active );
+  return unless $active_node;
   my $active_l    = $active_node->left;
   my $active_r    = $active_node->right;
   my $counts = $self->counts;
