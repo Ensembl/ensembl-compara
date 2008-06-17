@@ -81,11 +81,9 @@ my $estimate_tree = "~/pecan/EstimateTree.py";
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
-  my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $parameters,
-      $jar_file, $java_class, $exonerate) =
+  my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $parameters, $jar_file, $java_class, $exonerate, $options) =
         rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING', 'SPECIES_TREE',
-            'SPECIES_ORDER', 'PARAMETERS', 'JAR_FILE', 'JAVA_CLASS', 'EXONERATE'], @args);
-
+            'SPECIES_ORDER', 'PARAMETERS', 'JAR_FILE', 'JAVA_CLASS', 'EXONERATE', 'OPTIONS'], @args);
 
   chdir $self->workdir;
   $self->fasta_files($fasta_files) if (defined $fasta_files);
@@ -96,6 +94,8 @@ sub new {
     $self->species_order($species_order);
   }
   $self->parameters($parameters) if (defined $parameters);
+  $self->options($options) if (defined $options);
+
 # #   $self->jar_file($jar_file) if (defined $jar_file);
 # #   $self->java_class($java_class) if (defined $java_class);
 # #   unless (defined $self->program) {
@@ -186,6 +186,12 @@ sub exonerate {
   return $self->{'_exonerate'};
 }
 
+sub options {
+  my $self = shift;
+  $self->{'_options'} = shift if(@_);
+  return $self->{'_options'};
+}
+
 =head2 run_analysis
 
   Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Mlagan
@@ -202,7 +208,11 @@ sub run_analysis {
   my ($self, $program) = @_;
 
   $self->run_ortheus;
-  $self->parse_results;
+
+  #move this to compara module instead because it is easier to keep track
+  #of the 2x composite fragments. And also it removes the need to create
+  #compara objects in analysis module.
+  #$self->parse_results;
   return 1;
 }
 
@@ -215,9 +225,6 @@ sub run_ortheus {
   throw("Ortheus [$ORTHEUS] does not exist") unless ($ORTHEUS && -e $ORTHEUS);
 
   my $command = "$PYTHON $ORTHEUS";
-#   if ($self->parameters) {
-#     $command .= " " . $self->parameters;
-#   }
 #   $command .= " -cp ".$self->jar_file." ".$self->java_class;
   $command .= " -l \"#-j 0\" "; #-R\"select[mem>6000] rusage[mem=6000]\" -M6000000 ";
 
@@ -227,7 +234,16 @@ sub run_ortheus {
       $command .= " $fasta_file";
     }
   }
-  $command .= " -m $JAVA -k \"#-J $EXONERATE\"";
+
+  #add more java memory by using java parameters set in $self->parameters
+  my $java_params = "";
+  if ($self->parameters) {
+      $java_params = $self->parameters;
+  }
+
+  #Add -X to fix -ve indices in array bug suggested by BP
+  $command .= " -m \"$JAVA " . $java_params . "\" -k \"#-J $EXONERATE -X\"";
+
   if ($self->tree_string) {
     $command .= " -d '" . $self->tree_string . "'";
 
@@ -241,10 +257,13 @@ sub run_ortheus {
     $command .= " -s $SEMPHY";
   }
   $command .= " -f output.$$.mfa -g output.$$.tree";
-#   if ($self->options) {
-#     $command .= " " . $self->options;
-#   }
-  print "Running otheus: " . $command . "\n";
+
+  #append any additional options to command
+  if ($self->options) {
+      $command .= " " . $self->options;
+  }
+  print "Running ortheus: " . $command . "\n";
+
   unless (system($command) == 0) {
     throw("ortheus execution failed\n");
   }
@@ -373,7 +392,7 @@ print "Reading $alignment_file...\n";
         bless($this_node, "Bio::EnsEMBL::Compara::GenomicAlignTree");
         $this_node->genomic_align($this_genomic_align);
         $this_node->name($name);
-      } elsif ($header =~ /^>DnaFrag(\d+)\|(.+)\.(\d+)\-(\d+)\:(\-?1)$/) {
+    } elsif ($header =~ /^>DnaFrag(\d+)\|(.+)\.(\d+)\-(\d+)\:(\-?1)$/) {
         print "leaf_name?? $name\n";
         my $this_leaf = $tree->find_node_by_name($name);
         if (!$this_leaf) {
@@ -388,6 +407,7 @@ print "Reading $alignment_file...\n";
 #           print "[none]\n";
 #         }
 
+	#information extracted from fasta header
         $this_genomic_align->dnafrag_id($1);
         $this_genomic_align->dnafrag_start($3);
         $this_genomic_align->dnafrag_end($4);
