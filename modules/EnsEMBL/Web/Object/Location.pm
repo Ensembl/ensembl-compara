@@ -41,6 +41,12 @@ sub slice            {
     $self->seq_region_type, $self->seq_region_name, $self->seq_region_start, $self->seq_region_end, $self->seq_region_strand );
 }
 
+sub chromosome {
+  my ($self, $species) = @_;
+  my $sliceAdaptor = $self->get_adaptor('get_SliceAdaptor');
+  return $sliceAdaptor->fetch_by_region( undef, $self->seq_region_name);
+}
+
 sub get_snp { return $_[0]->__data->{'snp'}[0] if $_[0]->__data->{'snp'}; }
 
 sub attach_slice       { $_[0]->Obj->{'slice'} = $_[1];              }
@@ -371,9 +377,8 @@ sub get_synteny_local_genes {
   my $sliceAdaptor = $self->get_adaptor('get_SliceAdaptor');
   my $pre = $self->param('pre');
   my $loc = $self->param('loc') ? $self->evaluate_bp($self->param('loc')) : undef ;
-  my $chr = $sliceAdaptor->fetch_by_region( undef, $self->seq_region_name);
-  my $chr_name = $chr->seq_region_name;
-  my $chr_length = $chr->length;
+  my $chr_name = $self->chromosome->seq_region_name;
+  my $chr_length = $self->chromosome->length;
   my $num = 15; # minus count means count backwards - get previous genes
   $num = -$num if $pre;
   my $start = $loc < 1 ? 1 : $loc;
@@ -423,7 +428,6 @@ sub _local_genes {
   }
   return @local_genes;
 }
-
 
 ######## LDVIEW CALLS ################################################
 
