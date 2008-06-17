@@ -416,7 +416,7 @@ sub get_all_sorted_genomic_align_nodes {
     push(@$sorted_genomic_align_nodes, @{$children->[0]->get_all_sorted_genomic_align_nodes(
             $reference_genomic_align_node)});
     push(@$sorted_genomic_align_nodes, $self);
-    for (my $i = 1; $i <= @$children; $i++) {
+    for (my $i = 1; $i < @$children; $i++) {
       push(@$sorted_genomic_align_nodes, @{$children->[$i]->get_all_sorted_genomic_align_nodes(
               $reference_genomic_align_node)});
     }
@@ -603,6 +603,7 @@ sub copy {
   my $new_copy = $self->SUPER::copy();
   $new_copy->genomic_align_group($self->genomic_align_group->copy) if ($self->genomic_align_group);
   $new_copy->reference_genomic_align($self->reference_genomic_align) if ($self->reference_genomic_align);
+  $new_copy->reference_genomic_align_node($self->reference_genomic_align_node) if ($self->reference_genomic_align_node);
 
   return $new_copy;
 }
