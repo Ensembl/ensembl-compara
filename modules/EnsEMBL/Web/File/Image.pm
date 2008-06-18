@@ -7,9 +7,11 @@ use Image::Size;
 our $TMP_IMG_FORMAT     = 'XXX/X/X/XXXXXXXXXXXXXXX';
 our $DEFAULT_FORMAT = 'png';
 
-use EnsEMBL::Web::Root;
+use EnsEMBL::Web::File::Driver::Disk;
+use EnsEMBL::Web::File::Driver::Memcached;
 
-our @ISA =qw(EnsEMBL::Web::Root);
+use EnsEMBL::Web::Root;
+our @ISA = qw(EnsEMBL::Web::Root);
 
 #  ->cache   = G/S 0/1
 #  ->ticket  = G/S ticketname (o/w uses random date stamp)
@@ -19,20 +21,29 @@ our @ISA =qw(EnsEMBL::Web::Root);
 
 sub new {
   my $class = shift;
+
   my $self = {
-    'cache'     => 0,
-    'species_defs' => shift,
-    'token'     => '',
-    'filename'  => '',
-    'file_root' => '',
-    'URL_root'  => '',
-    'dc'        => undef
+    cache        => 0,
+    species_defs => shift,
+    token        => '',
+    filename     => '',
+    file_root    => '',
+    URL_root     => '',
+    dc           => undef,
+    driver       => undef,
   };
+
   bless $self, $class;
+ 
+  $self->driver = EnsEMBL::Web::File::Driver::Memcached->new ||
+                  EnsEMBL::Web::File::Driver::Disk->new;
+  
   return $self;
 }
 
-sub dc :lvalue { $_[0]->{'dc'}; }
+sub dc     :lvalue { $_[0]->{'dc'}; }
+sub driver :lvalue { $_[0]->{'driver'}; }
+sub cache  :lvalue { $_[0]->{'cache'}; }
 
 sub set_cache_filename {
   my $self     = shift;
@@ -151,52 +162,47 @@ sub render_image_map {
 }
 
 sub exists { 
-  my( $self, $format ) = @_;
+  my ($self, $format) = @_;
   $format ||= $DEFAULT_FORMAT;
   my $file = $self->filename( $format );
-  return $self->{'cache'} && -e $file && -f $file;
+  
+  return $self->cache && $self->driver->exists($file);
 }
  
-use Compress::Zlib;
-
 sub render {
   my( $self, $format ) = @_;
+
   $format ||= $DEFAULT_FORMAT;
+
+
+
   my $file = $self->filename( $format );
-  if( $self->{'cache'} && -e $file && -f $file ) {
-      ## If cached image required and it exists return it!
-    if( $format eq 'imagemap' ) {
-      my $gz = gzopen( $file, 'rb' );
-      my $imagemap = '';
-      my $buffer = 0;
-      $imagemap .= $buffer while $gz->gzread( $buffer ) > 0;
-      $gz->gzclose;
+
+  warn "************************** RENDERING $file $format !";
+
+
+  if ( $self->exists($file) ) {
+    ## If cached image required and it exists return it!
+    if ( $format eq 'imagemap' ) {
+      my $imagemap = $self->driver->get($file, $format);
       return { 'imagemap' => $imagemap };
     } else {
       return { 'URL' => $self->URL($format), 'file' => $file };
     }
   }
+  
   my $image;
 # $self->{'species_defs'}{'timer'}->push( "RAW RENDER START", 7);
 #  warn ".... $format ....";
   eval { $image    = $self->dc->render($format); };
 # $self->{'species_defs'}{'timer'}->push( "RAW RENDER END", 7);
-  if( $image ) {
-    if( $format eq 'imagemap' ) {
-      if( $self->{'cache'} ) { ## Now we write the image...
-        $self->make_directory( $file );
-        my $gz = gzopen( $file, 'wb' );
-        $gz->gzwrite( $image );
-        $gz->gzclose();
-      }
+  if ($image) {
+    if ($format eq 'imagemap') {
+      $self->driver->save($image, $file, $format) if $self->cache;
       return { 'imagemap' => $image };
-    } else { 
-      $self->make_directory( $file );
-      open(IMG_OUT, ">$file") || warn qq(Cannot open temporary image file for $format image: $!);
-      binmode IMG_OUT;
-      print IMG_OUT $image;
-      close(IMG_OUT);
-# $self->{'species_defs'}{'timer'}->push( "FILE WRITE END", 7);
+    } else {
+      $self->driver->save($image, $file, $format);
+      ## TODO: ERROR exception !!!
       return { 'URL' => $self->URL($format), 'file' => $file };
     }
   } else {
