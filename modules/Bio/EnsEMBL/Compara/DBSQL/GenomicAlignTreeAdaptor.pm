@@ -230,7 +230,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
 sub fetch_by_GenomicAlignBlock {
   my ($self, $genomic_align_block) = @_;
-  my $genomic_align_trees = [];
 
   my $genomic_align_block_id = $genomic_align_block->dbID;
 
@@ -240,15 +239,32 @@ sub fetch_by_GenomicAlignBlock {
       [["genomic_align","ga2"], "ga2.genomic_align_id = gag2.genomic_align_id", undef],
     ];
   my $constraint = "WHERE ga2.genomic_align_block_id = $genomic_align_block_id";
-  $genomic_align_trees = $self->_generic_fetch($constraint, $join);
-  
+  my $genomic_align_trees = $self->_generic_fetch($constraint, $join);
+
   if (@$genomic_align_trees > 1) {
     warning("Found more than 1 tree. This shouldn't happen. Returning the first one only");
   }
   if (@$genomic_align_trees == 0) {
-    return undef;
+    return;
   }
-  return $genomic_align_trees->[0];
+  my $genomic_align_tree = $genomic_align_trees->[0];
+  if ($genomic_align_block->reference_genomic_align) {
+    my $ref_genomic_align = $genomic_align_block->reference_genomic_align;
+    LEAF: foreach my $this_leaf (@{$genomic_align_tree->get_all_leaves}) {
+      foreach my $this_genomic_align (@{$this_leaf->get_all_GenomicAligns}) {
+        if ($this_genomic_align->genome_db->name eq $ref_genomic_align->genome_db->name and
+            $this_genomic_align->dnafrag->name eq $ref_genomic_align->dnafrag->name and
+            $this_genomic_align->dnafrag_start eq $ref_genomic_align->dnafrag_start and
+            $this_genomic_align->dnafrag_end eq $ref_genomic_align->dnafrag_end) {
+          $genomic_align_tree->reference_genomic_align_node($this_leaf);
+          $genomic_align_tree->reference_genomic_align($this_genomic_align);
+          last LEAF;
+        }
+      }
+    }
+  }
+
+  return $genomic_align_tree;
 }
 
 ###########################
