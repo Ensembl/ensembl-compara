@@ -38,11 +38,17 @@ form div label.label-checkbox, form div label.label-radio {
                 width: 200px; zoom: 1; padding: 0; margin: 0 0 5px 142px; 
                 text-align: left; font-weight:normal; }
 
+form div label.label-preview {display: block; float: left; width: 130px; font-weight:bold;
+                padding: 0px 3px 5px 3px; margin: 0 0 0 0; text-align: right;}
+
 form div select, form div textarea {  width: 250px; padding: 1px 3px; margin: 0 0 0 0; }
 form div select.narrow {  width: 100px;  }
 
 form div input.input-text, form div input.input-password { width: 250px; 
       padding: 1px 3px; margin: 0 0 0 0; }
+
+form div div.preview { display:inline; width: 250px;
+      padding: 3px 5px; margin: 0 0 0 0;}
 
 form div input.input-file { width: 211px; }
 
@@ -52,7 +58,7 @@ form div input.input-checkbox, form div input.input-radio, input.input-checkbox,
       display: inline; height: auto; width: auto; background-color: transparent;
       border-width: 0; padding: 0; margin: 0 0 0 140px; }
 
-form div.submit { width: 214px; padding: 0 0 1em 170px; }
+form div.submit {width:214px; padding: 0 0 1em 170px; }
 
 form div.submit div { display: inline; float: left; text-align: left; width: auto;
       padding: 0; margin: 0; }
