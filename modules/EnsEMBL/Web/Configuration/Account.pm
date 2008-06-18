@@ -30,7 +30,7 @@ sub populate_tree {
     [], { 'availability' => 1 }
     );
 
-    my $settings_menu = $self->create_submenu( 'Settings', 'Saved Settings' );
+    my $settings_menu = $self->create_submenu( 'Settings', 'Manage Saved Settings' );
     $settings_menu->append($self->create_node( 'Bookmarks', "Bookmarks ([[counts::bookmarks]])",
     [qw(bookmarks EnsEMBL::Web::Component::Account::Bookmarks
         )],
@@ -89,7 +89,7 @@ sub set_default_action {
 sub global_context { return $_[0]->_user_context; }
 sub ajax_content   { return $_[0]->_ajax_content;   }
 sub local_context  { return $_[0]->_local_context;  }
-sub local_tools    { return $_[0]->_user_tools;  }
+sub local_tools    { return undef; }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
 
