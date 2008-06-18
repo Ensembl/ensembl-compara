@@ -36,8 +36,6 @@ sub get {
 sub save {
   my ($self, $image, $file, $format) = @_;
 
-  warn "!!!!!!!!!!!!!!!!!!!!!!! SAVE! $file";
-
   $self->make_directory($file);
 
   if ($format eq 'imagemap') {
@@ -50,6 +48,11 @@ sub save {
     print IMG_OUT $image;
     close(IMG_OUT);
   }
+}
+
+sub imgsize {
+  my ($self, $file) = @_;
+  return Image::Size::imgsize($file);
 }
 
 1;

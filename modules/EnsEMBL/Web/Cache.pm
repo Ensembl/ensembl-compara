@@ -41,7 +41,7 @@ sub add_tags {
   my $key  = shift;
   my @tags = @_;
 
-  warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
+  #warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
   if ($self->{debug}) {
     warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
     my $debug_key_list = $self->SUPER::get('debug_key_list') || {};
@@ -54,7 +54,6 @@ sub add_tags {
   foreach my $tag (@tags) {
     my $cmd = "tag_add $tag $self->{namespace}$key\r\n";
     my $res = $self->_write_and_read($sock, $cmd);
-    warn $cmd . ' = ' . $res;
     return 0 unless $res eq "TAG_STORED\r\n";
   }
 
@@ -90,7 +89,7 @@ sub set {
   my $self = shift;
   my ($key, $value, $exptime, @tags) = @_;
 
-  warn "EnsEMBL::Web::Cache->set($key)";
+  #warn "EnsEMBL::Web::Cache->set($key)";
   if ($self->{debug}) {
     warn "EnsEMBL::Web::Cache->set($key)";
     my $debug_key_list = $self->SUPER::get('debug_key_list') || {};
@@ -112,7 +111,7 @@ sub get {
   my $self = shift;
   my $key  = shift;
 
-  warn "EnsEMBL::Web::Cache->get($key)";
+  #warn "EnsEMBL::Web::Cache->get($key)";
   if ($self->{debug} && (my $debug_key_list = $self->SUPER::get('debug_key_list'))) {
     warn "EnsEMBL::Web::Cache->get($key)";
     $debug_key_list->{$key} ||= {};
@@ -128,7 +127,7 @@ sub delete {
   my $self = shift;
   my $key  = shift;
 
-  warn "EnsEMBL::Web::Cache->delete($key)";
+  #warn "EnsEMBL::Web::Cache->delete($key)";
   if ($self->{debug} && (my $debug_key_list = $self->SUPER::get('debug_key_list'))) {
     warn "EnsEMBL::Web::Cache->delete($key)";
     delete $debug_key_list->{$key};

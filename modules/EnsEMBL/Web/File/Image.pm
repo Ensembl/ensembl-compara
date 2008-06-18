@@ -2,16 +2,15 @@ package EnsEMBL::Web::File::Image;
 
 use strict;
 use Digest::MD5 qw(md5_hex);
-use Image::Size;
-
-our $TMP_IMG_FORMAT     = 'XXX/X/X/XXXXXXXXXXXXXXX';
-our $DEFAULT_FORMAT = 'png';
 
 use EnsEMBL::Web::File::Driver::Disk;
 use EnsEMBL::Web::File::Driver::Memcached;
 
 use EnsEMBL::Web::Root;
 our @ISA = qw(EnsEMBL::Web::Root);
+
+our $TMP_IMG_FORMAT = 'XXX/X/X/XXXXXXXXXXXXXXX';
+our $DEFAULT_FORMAT = 'png';
 
 #  ->cache   = G/S 0/1
 #  ->ticket  = G/S ticketname (o/w uses random date stamp)
@@ -113,11 +112,14 @@ sub extraStyle {
 
 sub render_image_tag {
   my $self = shift;
-# $self->{'species_defs'}{'timer'}->push("Starting render",6);
+
+  #$self->{'species_defs'}{'timer'}->push("Starting render",6);
   my $IF = $self->render( @_ );
-# $self->{'species_defs'}{'timer'}->push("Finished render",6);
-  my( $width, $height ) = imgsize( $IF->{'file'} );
-# $self->{'species_defs'}{'timer'}->push("Got image size",6);
+  #$self->{'species_defs'}{'timer'}->push("Finished render",6);
+
+  my ($width, $height) = $self->driver->imgsize($IF->{'file'});
+  #$self->{'species_defs'}{'timer'}->push("Got image size",6);
+
   my $HTML;
   if ($width > 5000) {
     my $url = $IF->{'URL'};
@@ -138,7 +140,7 @@ sub render_image_tag {
 sub render_image_button {
   my $self = shift;
   my $IF = $self->render( @_ );
-  my($width, $height ) = imgsize( $IF->{'file'} );
+  my ($width, $height) = $self->driver->imgsize($IF->{'file'});
   $self->{'width'}  = $width;
   $self->{'height'} = $height;
   my $HTML = sprintf '<input style="width: %dpx; height: %dpx;" type="image" name="%s" id="%s" src="%s" alt="%s" title="%s" />', $width, $height, $self->{'name'}, $self->{'id'}||$self->{'name'}, $IF->{'URL'}, $self->{'text'}, $self->{'text'};
@@ -174,12 +176,7 @@ sub render {
 
   $format ||= $DEFAULT_FORMAT;
 
-
-
   my $file = $self->filename( $format );
-
-  warn "************************** RENDERING $file $format !";
-
 
   if ( $self->exists($file) ) {
     ## If cached image required and it exists return it!
@@ -192,10 +189,10 @@ sub render {
   }
   
   my $image;
-# $self->{'species_defs'}{'timer'}->push( "RAW RENDER START", 7);
-#  warn ".... $format ....";
-  eval { $image    = $self->dc->render($format); };
-# $self->{'species_defs'}{'timer'}->push( "RAW RENDER END", 7);
+  # $self->{'species_defs'}{'timer'}->push( "RAW RENDER START", 7);
+  # warn ".... $format ....";
+  eval { $image = $self->dc->render($format); };
+  # $self->{'species_defs'}{'timer'}->push( "RAW RENDER END", 7);
   if ($image) {
     if ($format eq 'imagemap') {
       $self->driver->save($image, $file, $format) if $self->cache;

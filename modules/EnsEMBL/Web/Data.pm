@@ -41,7 +41,8 @@ sub new {
   } else {
   	$class->normalize_column_values($data) if ref $data;
   	$class->validate_column_values($data)  if ref $data;
-    return $class->_init($data);
+  	my $key   = $class->_live_object_key($data);
+	  return $class->_fresh_init($key => $data);  	
   }
 }
 
