@@ -684,6 +684,63 @@ CREATE TABLE protein_tree_tag (
   KEY (tag)
 ) COLLATE=latin1_swedish_ci;
 
+# Table sitewise_aln
+# This table stores the values of calculating the sitewise dN/dS ratio
+#  on node_ids (subtrees) for the GeneTrees. A subtree can also be the
+#  root of the tree
+# sitewise_id - identifies the sitewise entry
+# aln_position - is the position in the whole GeneTree alignment, even
+# if it is all_gaps in the subtree
+# node_id - is the root of the subtree for which the sitewise is
+# calculated
+# tree_node_id - is the root of the tree. it will be equal to node_id
+# if we are calculating sitewise for the whole tree
+# omega is the estimated omega value at the position
+# omega_lower is the lower bound of the confidence interval
+# omega_upper is the upper bound of the confidence interval
+# threshold_on_branch_ds is the used threshold to break a tree into
+# subtrees when the dS value of a given branch is too big. This is
+# defined in the configuration file for the genetree pipeline
+# type is the predicted type for the codon/aminoacid
+# (positive4,positive3,positive2,positive1,
+#  negative4,negative3,negative2,negative1,
+#  constant,all_gaps,single_character,synonymous,default)
+
+CREATE TABLE sitewise_aln (
+  sitewise_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
+  aln_position                int(10) unsigned NOT NULL,
+  node_id                     int(10) unsigned NOT NULL,
+  tree_node_id                int(10) unsigned NOT NULL,
+  omega                       float(10,5),
+  omega_lower                 float(10,5),
+  omega_upper                 float(10,5),
+  threshold_on_branch_ds      float(10,5),
+  type                        varchar(10) NOT NULL,
+
+  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+
+  UNIQUE aln_position_node_id_ds (aln_position,node_id,threshold_on_branch_ds),
+  PRIMARY KEY (sitewise_id),
+  KEY (node_id)
+) COLLATE=latin1_swedish_ci;
+
+# Table sitewise_member
+# This table stores the member_positions for a given sitewise entry
+# sitewise_id - identifies the sitewise entry
+# member_id - 
+# member_position - position with respect to the aln_position after
+# mapping the gaps in the multiple alignment
+
+CREATE TABLE sitewise_member (
+  sitewise_id                 int(10) unsigned NOT NULL,
+  member_id                   int(10) unsigned NOT NULL,
+  member_position             int(10) unsigned NOT NULL,
+
+  FOREIGN KEY (sitewise_id) REFERENCES sitewise_aln(sitewise_id),
+
+  UNIQUE sitewise_member_position (sitewise_id,member_id,member_position),
+  KEY (member_id)
+) MAX_ROWS = 1000000000 COLLATE=latin1_swedish_ci;
+
 # Auto add schema version to database
 INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "50");
-
