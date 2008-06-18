@@ -42,7 +42,6 @@ sub handler {
       
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
       $r->headers_out->set('Content-Length' => $data->{'size'});
-      $r->headers_out->set('Last-Modified'  => 'Wed, 18 Jun 2008 11:16:43 GMT');
 
       $r->content_type('image/png');
 
