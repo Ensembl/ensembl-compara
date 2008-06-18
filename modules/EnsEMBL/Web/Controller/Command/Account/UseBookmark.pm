@@ -37,7 +37,13 @@ sub process {
   my $self = shift;
   my $cgi = new CGI;
 
-  my $bookmark = EnsEMBL::Web::Data::Record::Bookmark::User->new($cgi->param('id'));
+  my $bookmark;
+  if ($cgi->param('owner_type') && $cgi->param('owner_type') eq 'group') {
+    $bookmark = EnsEMBL::Web::Data::Record::Bookmark::Group->new($cgi->param('id'));
+  }
+  else {
+    $bookmark = EnsEMBL::Web::Data::Record::Bookmark::User->new($cgi->param('id'));
+  }
 
   my $click = $bookmark->click;
   if ($click) {
@@ -46,8 +52,11 @@ sub process {
     $bookmark->click(1);
   }
   $bookmark->save;
-
-  $cgi->redirect($bookmark->url);
+  my $url = $bookmark->url;
+  if ($url !~ /^http/ && $url !~ /^ftp/) { ## bare addresses of type 'www.domain.com' don't redirect
+    $url = 'http://'.$url;
+  }
+  $cgi->redirect($url);
 }
 
 }
