@@ -137,6 +137,9 @@ sub get_config {
   ### Returns:  parameter value (any type), or undef on failure
   my $self = shift;
   my $species = shift;
+  if ($species eq 'common') {
+    $species = $ENSEMBL_PRIMARY_SPECIES;
+  }
   my $var     = shift || $species;
 
   if(defined $CONF->{'_storage'}) {
