@@ -36,7 +36,8 @@ sub render {
       $self->notes
     );
   } else {
-    my $output = '';
+    my $output = sprintf(qq(<label class="label" for="%s">%s</label><br /><br />),
+        CGI::escapeHTML($self->id), CGI::escapeHTML( $self->label ));
     my $K = 0;
     my $checked;
 
@@ -52,14 +53,13 @@ sub render {
         if ($V->{'checked'}) {
             $checked = 'yes';
         }
-        $output .= sprintf( "    <div class=\"%s\"><input id=\"%s_%d\" class=\"radio\" type=\"checkbox\" name=\"%s\" value=\"%s\" %s/><label for=\"%s_%d\">%s</label></div>\n",
-            $self->{'class'},
-            CGI::escapeHTML($self->id), $K, 
+        $output .= sprintf(qq(
+<input type="checkbox" name="%s" id="%s_%d" value="%s" class="input-checkbox" %s/> %s<br />),
 	          CGI::escapeHTML($self->name), 
+            CGI::escapeHTML($self->id), $K, 
 	          CGI::escapeHTML($V->{'value'}),
             $checked eq 'yes' ? ' checked="checked"' : '', 
-            CGI::escapeHTML($self->id), $K, 
-            $self->{'noescape'} ? $V->{'name'} : CGI::escapeHTML($V->{'name'})
+            CGI::escapeHTML($V->{'name'})
         );
         $K++;
     }
