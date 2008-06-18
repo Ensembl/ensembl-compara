@@ -9,8 +9,10 @@ sub new {
 }
 
 sub render { 
-  my $value = $_[0]->value || '&nbsp;';
-  return "<p>$value</p>"; 
+  my $self = shift;
+  my $value = $self->value || '&nbsp;';
+  return sprintf(qq(<label for="%s" class="label-preview">%s</label> <div class="preview">%s</div>), 
+    $self->name, $self->label, $value); 
 }
 
 1;
