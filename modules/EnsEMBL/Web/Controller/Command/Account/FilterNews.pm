@@ -6,9 +6,7 @@ use warnings;
 use Class::Std;
 use CGI;
 
-use EnsEMBL::Web::Data;
-use EnsEMBL::Web::Data::Species;
-use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Data::Release;
 use base 'EnsEMBL::Web::Controller::Command::Account';
 
 {
@@ -49,7 +47,8 @@ sub render_page {
   $interface->discover;
 
   ## Set values for checkboxes
-  my @all_species = EnsEMBL::Web::Data::Species->find_all;
+  my $release = EnsEMBL::Web::Data::Release->new($sd->ENSEMBL_VERSION);
+  my @all_species = $release->species('assembly_code'=>{'!='=>''});
   my @species_list;
   my @sorted = sort {$a->common_name cmp $b->common_name} @all_species;
   foreach my $species (@sorted) {
