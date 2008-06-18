@@ -138,7 +138,6 @@ sub _local_tools {
   my $obj = $self->{object};
 
   my @data = (
-          ['Control Panel',       '/Account/Summary'],
           ['Bookmark this page',  '/Account/Bookmark'],
   );
   if ($self->configurable) {
