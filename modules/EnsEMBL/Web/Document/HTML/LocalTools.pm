@@ -26,6 +26,7 @@ sub entries {
 
 sub render {
   my $self = shift;
+  return unless @{$self->entries};
   $self->print( q(<div id="local-tools">
       <ul>) );
 
