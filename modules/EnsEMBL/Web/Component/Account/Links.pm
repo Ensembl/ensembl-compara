@@ -60,11 +60,12 @@ sub content {
   if ($#configs > -1) {
     $html .= "<ul>\n";
     foreach my $config (@configs) {
-      $html .= '<li>'.$config->name.' <a href="#" onclick="javascript:go_to_config('.$config->id.');"';
-      if ($config->description) {
-        $html .= ' title="'.$config->description.'"';
-      }
-      $html .= ">Go to saved page and load tracks</a></li>\n";
+      $html .= '<li>'.$config->name.'</li>';
+      #$html .= '<li>'.$config->name.' <a href="#" onclick="javascript:go_to_config('.$config->id.');"';
+      #if ($config->description) {
+      #  $html .= ' title="'.$config->description.'"';
+      #}
+      #$html .= ">Go to saved page and load tracks</a></li>\n";
     }
     $html .= "</ul>\n";
   }
