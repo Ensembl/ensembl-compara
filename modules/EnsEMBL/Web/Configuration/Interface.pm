@@ -8,7 +8,7 @@ use EnsEMBL::Web::Configuration;
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
 sub populate_tree {
-  my $self = shift;
+### Not needed - interface gets its tree for the object being manipulated
 }
 
 sub set_default_action {
