@@ -41,7 +41,7 @@ sub content {
     $table->add_columns(
         { 'key' => 'gene',      'title' => 'Gene ID',       'width' => '20%', 'align' => 'left' },
         { 'key' => 'title',     'title' => 'Title',         'width' => '50%', 'align' => 'left' },
-        { 'key' => 'rename',    'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'edit',      'title' => '',              'width' => '10%', 'align' => 'left' },
         { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
         { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
     );
@@ -52,10 +52,10 @@ sub content {
       $row->{'gene'} = sprintf(qq(<a href="/Gene/Summary?g=%s">%s</a>),
                         $note->stable_id, $note->stable_id);
 
-      $row->{'title'} = $note->title;
-      $row->{'rename'} = $self->rename_link('Annotation', $note->id);
-      $row->{'share'} = $self->share_link('Annotation', $note->id);
-      $row->{'delete'} = $self->delete_link('Annotation', $note->id);
+      $row->{'title'}   = $note->title;
+      $row->{'edit'}    = $self->edit_link('Annotation', $note->id);
+      $row->{'share'}   = $self->share_link('Annotation', $note->id);
+      $row->{'delete'}  = $self->delete_link('Annotation', $note->id);
       $table->add_row($row);
       $has_notes = 1;
     }

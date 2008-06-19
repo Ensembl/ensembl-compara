@@ -47,7 +47,7 @@ sub content {
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
         { 'key' => 'desc',      'title' => 'Description',   'width' => '50%', 'align' => 'left' },
-        { 'key' => 'rename',    'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'edit',      'title' => '',              'width' => '10%', 'align' => 'left' },
         { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
         { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
     );
@@ -59,10 +59,10 @@ sub content {
       $row->{'name'} = sprintf(qq(<a href="/Account/_use_bookmark?id=%s" title="%s">%s</a>),
                         $bookmark->id, $description, $bookmark->name);
 
-      $row->{'desc'} = $description;
-      $row->{'rename'} = $self->rename_link('Bookmark', $bookmark->id);
-      $row->{'share'} = $self->share_link('Bookmark', $bookmark->id);
-      $row->{'delete'} = $self->delete_link('Bookmark', $bookmark->id);
+      $row->{'desc'}    = $description;
+      $row->{'edit'}    = $self->edit_link('Bookmark', $bookmark->id);
+      $row->{'share'}   = $self->share_link('Bookmark', $bookmark->id);
+      $row->{'delete'}  = $self->delete_link('Bookmark', $bookmark->id);
       $table->add_row($row);
       $has_bookmarks = 1;
     }

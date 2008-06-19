@@ -51,7 +51,7 @@ sub content {
       $row->{'species'} = sprintf(qq(<a href="/News" title="View News">%s</a>),
                         $species);
 
-      $row->{'edit'} = $self->rename_link('NewsFilter', $filter->id, 'Edit');
+      $row->{'edit'} = $self->rename_link('NewsFilter', $filter->id);
       $row->{'delete'} = $self->delete_link('NewsFilter', $filter->id);
       $table->add_row($row);
       $has_filters = 1;

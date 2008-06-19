@@ -54,7 +54,7 @@ sub content {
                         $config->id, $description, $config->name);
 
       $row->{'desc'} = $description;
-      $row->{'rename'} = $self->rename_link('Configuration', $config->id);
+      $row->{'rename'} = $self->edit_link('Configuration', $config->id, 'Rename');
       $row->{'share'} = $self->share_link('Configuration', $config->id);
       $row->{'delete'} = $self->delete_link('Configuration', $config->id);
       $table->add_row($row);
