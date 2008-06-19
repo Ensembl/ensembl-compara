@@ -109,7 +109,12 @@ sub _user_context {
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
     next if $row->[2] eq '-';
-    my $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/Summary?$qs";
+    my $url;
+    my $species = $ENV{ENSEMBL_SPECIES};
+    if ($species && $species ne 'common') {
+      $url .= "/$species";
+    }   
+    $url .= "/$row->[1]/Summary?$qs";
     my @class = ();
     if( $row->[1] eq $type ) {
       push @class, 'active';
