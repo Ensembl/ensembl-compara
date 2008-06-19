@@ -47,7 +47,7 @@ sub render_page {
   ## Create interface object, which controls the forms
   my $interface = EnsEMBL::Web::Interface::InterfaceDef->new;
   my $data;
-  if ($cgi->param('record_type') eq 'group') {
+  if ($cgi->param('record_type') && $cgi->param('record_type') eq 'group') {
     $data = EnsEMBL::Web::Data::Record::Configuration::Group->new($cgi->param('id'));
   } else {
     $data = EnsEMBL::Web::Data::Record::Configuration::User->new($cgi->param('id'));
