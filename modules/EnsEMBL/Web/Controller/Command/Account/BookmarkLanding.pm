@@ -36,7 +36,7 @@ sub process {
 
   ## Don't go to bookmark URL if adding external link or editing/deleting existing bookmark
   if ($mode ne 'add' || $url !~ /$ENV{'SERVER_NAME'}/) {
-    $url = $self->url('/Account/Details');
+    $url = $self->url('/Account/Bookmarks');
   }
 
   $cgi->redirect($url);
