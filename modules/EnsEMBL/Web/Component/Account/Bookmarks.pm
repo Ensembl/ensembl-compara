@@ -36,6 +36,9 @@ sub content {
   my @bookmarks = $user->bookmarks;
   my $has_bookmarks = 0;
 
+  my @groups = $user->find_administratable_groups;
+  my $has_groups = $#groups > -1 ? 1 : 0;
+
   if ($#bookmarks > -1) {
   
     $html .= qq(<h3>Your bookmarks</h3>);
@@ -48,7 +51,13 @@ sub content {
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
         { 'key' => 'desc',      'title' => 'Description',   'width' => '50%', 'align' => 'left' },
         { 'key' => 'edit',      'title' => '',              'width' => '10%', 'align' => 'left' },
+    );
+    if ($has_groups) {
+      $table->add_columns(
         { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
+      );
+    }
+    $table->add_columns(
         { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
     );
 
@@ -61,7 +70,9 @@ sub content {
 
       $row->{'desc'}    = $description;
       $row->{'edit'}    = $self->edit_link('Bookmark', $bookmark->id);
-      $row->{'share'}   = $self->share_link('Bookmark', $bookmark->id);
+      if ($has_groups) {
+        $row->{'share'}   = $self->share_link('Bookmark', $bookmark->id);
+      }
       $row->{'delete'}  = $self->delete_link('Bookmark', $bookmark->id);
       $table->add_row($row);
       $has_bookmarks = 1;

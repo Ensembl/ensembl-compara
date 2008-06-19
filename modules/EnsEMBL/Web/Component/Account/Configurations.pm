@@ -29,6 +29,9 @@ sub content {
   
   my @configs = $user->configurations;
   my $has_configs = 0;
+  
+  my @groups = $user->find_administratable_groups;
+  my $has_groups = $#groups > -1 ? 1 : 0;
 
   if ($#configs > -1) {
 
@@ -42,7 +45,13 @@ sub content {
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
         { 'key' => 'desc',      'title' => 'Description',   'width' => '50%', 'align' => 'left' },
         { 'key' => 'rename',    'title' => '',              'width' => '10%', 'align' => 'left' },
+    );
+    if ($has_groups) {
+      $table->add_columns(
         { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
+      );
+    }
+    $table->add_columns(
         { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
     );
 
@@ -55,7 +64,9 @@ sub content {
 
       $row->{'desc'} = $description;
       $row->{'rename'} = $self->edit_link('Configuration', $config->id, 'Rename');
-      $row->{'share'} = $self->share_link('Configuration', $config->id);
+      if ($has_groups) {
+        $row->{'share'}   = $self->share_link('Bookmark', $bookmark->id);
+      }
       $row->{'delete'} = $self->delete_link('Configuration', $config->id);
       $table->add_row($row);
       $has_configs = 1;

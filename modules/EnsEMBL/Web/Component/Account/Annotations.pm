@@ -30,6 +30,9 @@ sub content {
   my @notes = $user->annotations;
   my $has_notes = 0;
 
+  my @groups = $user->find_administratable_groups;
+  my $has_groups = $#groups > -1 ? 1 : 0;
+
   if ($#notes > -1) {
 
     $html .= qq(<h3>Your annotations</h3>);
@@ -42,7 +45,13 @@ sub content {
         { 'key' => 'gene',      'title' => 'Gene ID',       'width' => '20%', 'align' => 'left' },
         { 'key' => 'title',     'title' => 'Title',         'width' => '50%', 'align' => 'left' },
         { 'key' => 'edit',      'title' => '',              'width' => '10%', 'align' => 'left' },
+    );
+    if ($has_groups) {
+      $table->add_columns(
         { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
+      );
+    }
+    $table->add_columns(
         { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
     );
 
@@ -54,7 +63,9 @@ sub content {
 
       $row->{'title'}   = $note->title;
       $row->{'edit'}    = $self->edit_link('Annotation', $note->id);
-      $row->{'share'}   = $self->share_link('Annotation', $note->id);
+      if ($has_groups) {
+        $row->{'share'}   = $self->share_link('Bookmark', $bookmark->id);
+      }
       $row->{'delete'}  = $self->delete_link('Annotation', $note->id);
       $table->add_row($row);
       $has_notes = 1;
