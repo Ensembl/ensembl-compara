@@ -21,6 +21,7 @@ sub caption {
 
 sub content {
   my $self = shift;
+  my $object = $self->object;
 
   my ($primary_key) = $object->interface->data->primary_columns;
   my $id = $object->param($primary_key) || $object->param('id');
