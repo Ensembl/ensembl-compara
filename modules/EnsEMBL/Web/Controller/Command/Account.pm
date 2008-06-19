@@ -8,7 +8,7 @@ use base 'EnsEMBL::Web::Controller::Command';
 sub user_or_admin {
   ### Chooses correct filter for shareable records, based on whether user or group record
   my ($self, $class, $id, $owner) = @_;
-    if ($owner eq 'group') {
+    if ($owner && $owner eq 'group') {
       $class = "${class}::Group";
       my $record = $class->new($id);
       $self->add_filter(
