@@ -99,7 +99,7 @@ sub content {
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
         { 'key' => 'desc',      'title' => 'Description',   'width' => '40%', 'align' => 'left' },
-        { 'key' => 'group',     'title' => 'Group',         'width' => '40%', 'align' => 'left' },
+        { 'key' => 'group',     'title' => 'Group(s)',      'width' => '40%', 'align' => 'left' },
     );
 
     foreach my $config_id (keys %group_configs) {

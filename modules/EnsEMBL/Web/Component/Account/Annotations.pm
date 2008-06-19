@@ -97,8 +97,8 @@ sub content {
 
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'title',     'title' => 'Title',   'width' => '40%', 'align' => 'left' },
-        { 'key' => 'group',     'title' => 'Group',         'width' => '40%', 'align' => 'left' },
+        { 'key' => 'title',     'title' => 'Title',         'width' => '40%', 'align' => 'left' },
+        { 'key' => 'group',     'title' => 'Group(s)',      'width' => '40%', 'align' => 'left' },
     );
 
     foreach my $note_id (keys %group_notes) {
