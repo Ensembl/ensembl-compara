@@ -38,12 +38,10 @@ sub content {
 
   my $ka  = $object->get_adaptor('get_KaryotypeBandAdaptor', 'core', $species);
   my $ka2 = $object->get_adaptor('get_KaryotypeBandAdaptor', 'core', $other);
-  my $raw_data = $object->Obj->get_all_compara_Syntenies($other);   
-
-warn "#### Got data $raw_data";
+  my $raw_data = $object->chromosome->get_all_compara_Syntenies($other);   
 
   ## checks done ## 
-  my $chr_length = $object->length;
+  my $chr_length = $object->chromosome->length;
   my ($localgenes,$offset) = $object->get_synteny_local_genes;
   $loc = ( @$localgenes ? $localgenes->[0]->start+$offset : 1 ); # Jump loc to the location of the genes
         
