@@ -57,71 +57,58 @@ sub print {
   $fh->gzclose();
 }
 
+sub get_url_content {
+  my ($self, $object, $param) = @_;
+  my $content;
+
+  my $useragent = LWP::UserAgent->new();
+  $useragent->proxy( 'http', $object->species_defs->ENSEMBL_WWW_PROXY ) if( $object->species_defs->ENSEMBL_WWW_PROXY );
+  my $request = new HTTP::Request( 'GET', $object->param($param) );
+  $request->header( 'Pragma'           => 'no-cache' );
+  $request->header( 'Cache-control' => 'no-cache' );
+  my $response = $useragent->request($request);
+  if( $response->is_success && $response->content) {
+    $content = $response->content;
+  }    
+  return $content;
+}
+
+sub get_file_content {
+  my ($self, $object, $param) = @_;
+  my $content;
+  
+  my $cgi = $object->[1]->{'_input'};
+  my $in = $cgi->tmpFileName($object->param($param));
+  my $open = open (IN, '<', $in) || warn qq(Cannot open CGI temp file for caching: $!);
+  if( $open ) {
+    while (<IN>) {
+      $content .= $_;
+    }
+  }
+  return $content;
+}
+
 sub save {
-  my( $self, $object, $param ) = @_;
+  my( $self, $content, $param ) = @_;
   my $out = $self->filename;
   my (%result, $fh);
-  return unless $object;
-  return unless $param;
+  return unless $content;
 
-  ## what kind of data do we have?
-  if ($param =~ /^upload/) {
-    ## open data file 
-    my $cgi = $object->[1]->{'_input'};
-    my $in = $cgi->tmpFileName($object->param($param));
-    my $open = open (IN, '<', $in) || warn qq(Cannot open CGI temp file for caching: $!);
-    if( $open ) {
-      $fh = $self->_prep_output($out);
-      if ($fh) {
-        while (<IN>) {
-          $fh->gzwrite( $_ );
-        }
-        $fh->gzclose;
-        close(IN);
-        $result{'file'} = $out;
-      } 
-    } 
-    else {
-      $result{'error'} = 'no_upload';
-      warn $@;
-    }
-  }
-  elsif ($param =~ /^url/) { 
-    my $useragent = LWP::UserAgent->new();
-    $useragent->proxy( 'http', $object->species_defs->ENSEMBL_WWW_PROXY ) if( $object->species_defs->ENSEMBL_WWW_PROXY );
-    my $request = new HTTP::Request( 'GET', $object->param($param) );
-    $request->header( 'Pragma'           => 'no-cache' );
-    $request->header( 'Cache-control' => 'no-cache' );
-    my $response = $useragent->request($request);
-    if( $response->is_success && $response->content) {
-      $fh = $self->_prep_output($out);
-      if( $fh ) {
-        $fh->gzwrite( $response->content );
-        $fh->gzclose;
-      }
-      $result{'file'} = $out;
+  if ($param && ref($content) =~ /Proxy::Object/) { ## Doing one-step save
+    if ($param eq 'url') {
+      $content = $self->get_url_content($content, $content->param($param));
     }
     else {
-      $result{'error'} = 'no_online';
-      warn $@;
-    }
-  }
-  else {
-    my $data = $object->param($param);
-    if ($data) {
-      $fh = $self->_prep_output($out);
-      if( $fh ) {
-        $fh->gzwrite( $data );
-        $fh->gzclose;
-      }
-      $result{'file'} = $out;
-    }
-    else {
-      $result{'error'} = 'no_paste';
-      warn $@;
+      $content = $self->get_file_content($content, $content->param($param));
     }
   }
 
+  $fh = $self->_prep_output($out);
+  if ($fh) {
+    $fh->gzwrite( $content );
+    $fh->gzclose;
+    $result{'file'} = $out;
+  } 
   $result{'error'} = 'no_cache'  unless $fh;
   return \%result;
 }
