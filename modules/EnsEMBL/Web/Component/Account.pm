@@ -15,8 +15,9 @@ no warnings "uninitialized";
 our @ISA = qw( EnsEMBL::Web::Component);
 
 sub rename_link {
-  my ($self, $module, $id) = @_;
-  return sprintf(qq(<a href="/Account/%s?dataview=edit;id=%s">Rename</a>), $module, $id);
+  my ($self, $module, $id, $text) = @_;
+  $text = 'Rename' if !$text;
+  return sprintf(qq(<a href="/Account/%s?dataview=edit;id=%s">%s</a>), $module, $id, $text);
 } 
 
 sub delete_link {
