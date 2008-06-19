@@ -30,8 +30,8 @@ sub content {
   my @configs = $user->configurations;
   my $has_configs = 0;
   
-  my @groups = $user->find_administratable_groups;
-  my $has_groups = $#groups > -1 ? 1 : 0;
+  my @admin_groups = $user->find_administratable_groups;
+  my $has_groups = $#admin_groups > -1 ? 1 : 0;
 
   if ($#configs > -1) {
 
@@ -65,7 +65,7 @@ sub content {
       $row->{'desc'} = $description;
       $row->{'rename'} = $self->edit_link('Configuration', $config->id, 'Rename');
       if ($has_groups) {
-        $row->{'share'}   = $self->share_link('Bookmark', $bookmark->id);
+        $row->{'share'}   = $self->share_link('Bookmark', $config->id);
       }
       $row->{'delete'} = $self->delete_link('Configuration', $config->id);
       $table->add_row($row);
@@ -73,6 +73,54 @@ sub content {
     }
     $html .= $table->render;
   }
+
+ ## Get all config records for this user's groups
+  my %group_configs = ();
+  foreach my $group ($user->groups) {
+    foreach my $config ($group->configurations) {
+      if ($group_configs{$config->id}) {
+        push @{$group_configs{$config->id}{'groups'}}, $group;
+      }
+      else {
+        $group_configs{$config->id}{'config'} = $config;
+        $group_configs{$config->id}{'groups'} = [$group];
+        $has_configs = 1;
+      }
+    }
+  }
+
+  if (scalar values %group_configs > 0) {
+    $html .= qq(<h3>Group configurations</h3>);
+    ## Sort group configs by name if required
+
+    ## Display group configs
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+
+    $table->add_columns(
+        { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
+        { 'key' => 'desc',      'title' => 'Description',   'width' => '40%', 'align' => 'left' },
+        { 'key' => 'group',     'title' => 'Group',         'width' => '40%', 'align' => 'left' },
+    );
+
+    foreach my $config_id (keys %group_configs) {
+      my $row = {};
+      my $config = $group_configs{$config_id}{'config'};
+
+      $row->{'name'} = sprintf(qq(<a href="/Account/_use_config?id=%s">%s</a>),
+                        $config_id, $config->name);
+
+      $row->{'desc'} = $config->description || '&nbsp;';
+
+      my @group_links;
+      foreach my $group (@{$group_configs{$config_id}{'groups'}}) {
+        push @group_links, sprintf(qq(<a href="/Account/Group?id=%s">%s</a>), $group->id, $group->name);
+      }
+      $row->{'group'} = join(', ', @group_links);
+      $table->add_row($row);
+    }
+    $html .= $table->render;
+  }
+
 
   if (!$has_configs) {
     $html .= qq(<p class="center"><img src="/img/help/config_example.gif" /></p>);

@@ -73,6 +73,54 @@ sub content {
     $html .= $table->render;
   }
 
+ ## Get all note records for this user's groups
+  my %group_notes = ();
+  foreach my $group ($user->groups) {
+    foreach my $note ($group->annotations) {
+      if ($group_notes{$note->id}) {
+        push @{$group_notes{$note->id}{'groups'}}, $group;
+      }
+      else {
+        $group_notes{$note->id}{'note'} = $note;
+        $group_notes{$note->id}{'groups'} = [$group];
+        $has_notes = 1;
+      }
+    }
+  }
+
+  if (scalar values %group_notes > 0) {
+    $html .= qq(<h3>Group noteurations</h3>);
+    ## Sort group notes by name if required
+
+    ## Display group notes
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+
+    $table->add_columns(
+        { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
+        { 'key' => 'title',     'title' => 'Title',   'width' => '40%', 'align' => 'left' },
+        { 'key' => 'group',     'title' => 'Group',         'width' => '40%', 'align' => 'left' },
+    );
+
+    foreach my $note_id (keys %group_notes) {
+      my $row = {};
+      my $note = $group_notes{$note_id}{'note'};
+
+      $row->{'name'} = sprintf(qq(<a href="/Gene/Summary?g=%s">%s</a>),
+                        $note->stable_id, $note->stable_id);
+
+      $row->{'title'} = $note->title || '&nbsp;';
+
+      my @group_links;
+      foreach my $group (@{$group_notes{$note_id}{'groups'}}) {
+        push @group_links, sprintf(qq(<a href="/Account/Group?id=%s">%s</a>), $group->id, $group->name);
+      }
+      $row->{'group'} = join(', ', @group_links);
+      $table->add_row($row);
+    }
+    $html .= $table->render;
+  }
+
+
 
   if (!$has_notes) {
     $html .= qq(<p class="center"><img src="/img/help/note_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);

@@ -36,8 +36,8 @@ sub content {
   my @bookmarks = $user->bookmarks;
   my $has_bookmarks = 0;
 
-  my @groups = $user->find_administratable_groups;
-  my $has_groups = $#groups > -1 ? 1 : 0;
+  my @admin_groups = $user->find_administratable_groups;
+  my $has_groups = $#admin_groups > -1 ? 1 : 0;
 
   if ($#bookmarks > -1) {
   
@@ -85,8 +85,12 @@ sub content {
   my %group_bookmarks = ();
   foreach my $group ($user->groups) {
     foreach my $bookmark ($group->bookmarks) {
-      unless ($group_bookmarks{$bookmark->id}) {
-        $group_bookmarks{$bookmark->id} = $bookmark;
+      if ($group_bookmarks{$bookmark->id}) {
+        push @{$group_bookmarks{$bookmark->id}{'groups'}}, $group;
+      }
+      else {
+        $group_bookmarks{$bookmark->id}{'bookmark'} = $bookmark;
+        $group_bookmarks{$bookmark->id}{'groups'} = [$group];
         $has_bookmarks = 1;
       }
     }
@@ -105,17 +109,21 @@ sub content {
         { 'key' => 'group',     'title' => 'Group',         'width' => '40%', 'align' => 'left' },
     );
 
-    foreach my $bookmark (values %group_bookmarks) {
+    foreach my $bookmark_id (keys %group_bookmarks) {
       my $row = {};
-      my $description = $bookmark->description || '&nbsp;';
-      $row->{'name'} = sprintf(qq(<a href="/Account/_use_bookmark?id=%s" title="%s">%s</a>),
-                        $bookmark->id, $description, $bookmark->name);
+      my $bookmark = $group_bookmarks{$bookmark_id}{'bookmark'};
 
-      $row->{'desc'} = $description;
-      $row->{'rename'} = $self->rename_link('Bookmark', $bookmark->id);
-      $row->{'share'} = $self->share_link('Bookmark', $bookmark->id);
-      $row->{'delete'} = $self->delete_link('Bookmark', $bookmark->id);
-      $has_bookmarks = 1;
+      $row->{'name'} = sprintf(qq(<a href="/Account/_use_bookmark?id=%s">%s</a>),
+                        $bookmark->id, $bookmark->name);
+
+      $row->{'desc'} = $bookmark->description || '&nbsp;';
+
+      my @group_links;
+      foreach my $group (@{$group_bookmarks{$bookmark_id}{'groups'}}) {
+        push @group_links, sprintf(qq(<a href="/Account/Group?id=%s">%s</a>), $group->id, $group->name);
+      }
+      $row->{'group'} = join(', ', @group_links);
+      $table->add_row($row);
     }
     $html .= $table->render;
   }
