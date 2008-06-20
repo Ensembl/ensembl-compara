@@ -23,11 +23,8 @@ __PACKAGE__->add_has_many(
   annotations    => 'EnsEMBL::Web::Data::Record::Annotation',
   dases          => 'EnsEMBL::Web::Data::Record::DAS',
   newsfilters    => 'EnsEMBL::Web::Data::Record::NewsFilter',
-  infoboxes      => 'EnsEMBL::Web::Data::Record::Infobox',
-  opentabs       => 'EnsEMBL::Web::Data::Record::Opentab',
   sortables      => 'EnsEMBL::Web::Data::Record::Sortable',
   mixers         => 'EnsEMBL::Web::Data::Record::Mixer',
-  drawers        => 'EnsEMBL::Web::Data::Record::Drawer',
   currentconfigs => 'EnsEMBL::Web::Data::Record::CurrentConfig',
   specieslists   => 'EnsEMBL::Web::Data::Record::SpeciesList',
 );
