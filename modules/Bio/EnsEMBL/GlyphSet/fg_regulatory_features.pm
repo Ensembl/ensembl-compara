@@ -24,7 +24,7 @@ sub features {
   }
   
   my $reg_features = $self->fetch_features($fg_db, $slice);
-  
+  return $reg_features;
 }
 
 sub fetch_features {
@@ -36,25 +36,23 @@ sub fetch_features {
       return [];
     }
 
-    
-  my @reg_feature_sets = @{$dsa->fetch_all_displayable_by_type('regulatory')};
-    
+  my @reg_feature_sets = @{$dsa->fetch_all_displayable_by_type('regulatory')}; 
   foreach my $set (@reg_feature_sets) {  
-	 foreach my $pf (@{$set->get_Features_by_Slice($slice) }){ 
-      my $type = $pf->feature_type->name();
+	 foreach my $pf (@{$set->get_Features_by_Slice($slice) }){    
+      my $type = $pf->feature_type->name(); 
       my $id  = $pf->stable_id; 
       my $label = $pf->display_label;
     }
     my @pf_ref = @{$set->get_Features_by_Slice($slice)}; 
     if(@pf_ref && !$self->{'config'}->{'fg_regulatory_features_legend_features'} ) {
-      #warn "...................".ref($self)."........................";
+     # warn "...................".ref($self)."........................";
       $self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_reglatory_features'} = { 'priority' => 1020, 'legend' => [] };
     }
     $self->{'config'}->{'reg_feats'} = \@pf_ref;
   }  
-
+  
   }
-  my $reg_feats = $self->{'config'}->{'reg_feats'} || [];  
+  my $reg_feats = $self->{'config'}->{'reg_feats'} || [];   
   if (@$reg_feats && $self->{'config'}->{'fg_regulatory_features_legend_features'} ){
     $self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'} = {'priority' =>1020, 'legend' => [] };	
   }
