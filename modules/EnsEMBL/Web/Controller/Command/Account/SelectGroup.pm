@@ -36,8 +36,9 @@ sub render {
 }
 
 sub render_page {
+## Can't use 'Magic' because this isn't a node in the nav tree
   my $self = shift;
- 
+
     my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
@@ -49,11 +50,11 @@ sub render_page {
     $webpage->render_error_page( $webpage->problem->[0] );
   } else {
     foreach my $object( @{$webpage->dataObjects} ) {
-      $webpage->configure( $object, 'select_group' );
+      $webpage->configure( $object, 'select_group', 'global_context', 'local_context' );
     }
-    $webpage->action();
+    $webpage->render();
   }
- 
+
 }
 
 }
