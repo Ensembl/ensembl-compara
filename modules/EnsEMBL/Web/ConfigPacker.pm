@@ -177,6 +177,17 @@ sub _summarise_core_tables {
     ( $_->[0] => { 'name' => $_->[1], 'desc' => $_->[2], 'count' => $_->[3], 'max_length' => $_->[4] })
   } @$t_aref };
 
+#
+# * External-db
+#
+  my $sth = $dbh->prepare(qq(select * from external_db));
+  $sth->execute;
+  my $det;
+  while (my $hashref = $sth->fetchrow_hashref) {
+	  $det->{$hashref->{'external_db_id'}} = $hashref;
+  }
+  $self->db_details($db_name)->{'external_dbs'} = $det;
+
 #---------- Now for the core only ones.......
 
   if( $db_name eq 'core' ) {
