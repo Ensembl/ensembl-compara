@@ -74,9 +74,9 @@ sub content {
     $html .= $table->render;
   }
 
- ## Get all config records for this user's groups
+ ## Get all config records for this user's subscribed groups
   my %group_configs = ();
-  foreach my $group ($user->groups) {
+  foreach my $group ($user->find_nonadmin_groups) {
     foreach my $config ($group->configurations) {
       if ($group_configs{$config->id}) {
         push @{$group_configs{$config->id}{'groups'}}, $group;

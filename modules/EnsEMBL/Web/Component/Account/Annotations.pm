@@ -73,9 +73,9 @@ sub content {
     $html .= $table->render;
   }
 
- ## Get all note records for this user's groups
+ ## Get all note records for this user's subscribed groups
   my %group_notes = ();
-  foreach my $group ($user->groups) {
+  foreach my $group ($user->find_nonadmin_groups) {
     foreach my $note ($group->annotations) {
       if ($group_notes{$note->id}) {
         push @{$group_notes{$note->id}{'groups'}}, $group;

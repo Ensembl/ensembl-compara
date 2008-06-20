@@ -71,7 +71,7 @@ sub content {
       $row->{'desc'}    = $description;
       $row->{'edit'}    = $self->edit_link('Bookmark', $bookmark->id);
       if ($has_groups) {
-        $row->{'share'}   = $self->share_link('Bookmark', $bookmark->id);
+        $row->{'share'}   = $self->share_link('bookmarks', $bookmark->id);
       }
       $row->{'delete'}  = $self->delete_link('Bookmark', $bookmark->id);
       $table->add_row($row);
@@ -81,9 +81,9 @@ sub content {
   }
 
 
-  ## Get all bookmark records for this user's groups
+  ## Get all bookmark records for this user's subscribed groups
   my %group_bookmarks = ();
-  foreach my $group ($user->groups) {
+  foreach my $group ($user->find_nonadmin_groups) {
     foreach my $bookmark ($group->bookmarks) {
       if ($group_bookmarks{$bookmark->id}) {
         push @{$group_bookmarks{$bookmark->id}{'groups'}}, $group;
