@@ -49,33 +49,50 @@ sub count_gene_supporting_evidence {
 	return scalar(keys(%c));
 }
 
+sub get_db_type{
+	# I'm suprised that I have to do this - would've thought there'd be a generic method
+	my $self = shift;
+	my $db   = $self->get_db;
+	my %db_hash = qw(
+					 core    ENSEMBL_DB
+					 vega    ENSEMBL_VEGA
+				 );
+	return  $db_hash{$db};
+}
+
+#get supporting evidence for the gene: transcript_supporting_features support the
+#whole transcript or the translation, supporting_features provide depth the the evidence
 sub get_gene_supporting_evidence {
-	#get supporting evidence for the gene. transcript_supporting_features support the
-	#whole transcript or the translation, supporting_features provide depth the the evidence
 	my $self = shift;
 	my $obj = $self->Obj;
+
+	#species defs contains a summary of the external_db table - can use this to get the dbname
+	#for the evidence although the core team are going to add calls to do this directly
+	my $db_type = $self->get_db_type;
+	my $sd = $self->species_defs;
+	my $external_db_det = $sd->databases->{$db_type}{'external_dbs'};
+
 	my $e;
 	foreach my $trans (@{$obj->get_all_Transcripts()}) {
 		my $tsi = $trans->stable_id;
 		my %t_hits;
 		foreach my $evi (@{$trans->get_all_supporting_features}) {
 			my $name = $evi->hseqname;
+			my $db_name = $external_db_det->{$evi->external_db_id}->{'db_name'};
+
 			#use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
-			if ( $trans->seq_region_start  == $evi->seq_region_start
-					 || $trans->seq_region_end == $evi->seq_region_end ) {
-###
-##rather than use external_db_id then use the db_name and attach a hyperlink - needs code from core
-###
-				$e->{$tsi}{'evidence'}{'UTR'}{$name} = $evi->external_db_id;
-				$t_hits{$name}++;
-			}
-			elsif ( $trans->coding_region_start == $evi->seq_region_start
+			if ( $trans->coding_region_start == $evi->seq_region_start
 					 || $trans->coding_region_end == $evi->seq_region_end ) {
-				$e->{$tsi}{'evidence'}{'CDS'}{$name} = $evi->external_db_id;
+				$e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
 				$t_hits{$name}++;
 			}
-			elsif (! exists($t_hits{$name})) {
-				$e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $evi->external_db_id;
+			elsif ( $trans->seq_region_start  == $evi->seq_region_start
+					 || $trans->seq_region_end == $evi->seq_region_end ) {
+				$e->{$tsi}{'evidence'}{'UTR'}{$name} = $db_name;
+				$t_hits{$name}++;
+			}
+			else {
+				$e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
 				$t_hits{$name}++;				
 			}			
 		}
@@ -90,6 +107,19 @@ sub get_gene_supporting_evidence {
 		}
 	}
 	return $e;
+}
+
+#generate URLs for evidence links
+sub add_evidence_links {
+	my $self = shift;
+	my $ids  = shift;
+	my @ids;
+	foreach my $hit_name (sort keys %$ids) {
+		my $db_name = $ids->{$hit_name};
+		my $display = $self->get_ExtURL_link( $hit_name, $db_name, $hit_name );
+		push @ids, $display;
+	}
+	return join q{, }, @ids;
 }
 
 sub get_slice_object {
