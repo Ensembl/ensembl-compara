@@ -51,6 +51,11 @@ sub find_administratable_groups {
   return @admin_groups;
 }
 
+sub find_nonadmin_groups {
+  my $self = shift;
+  return $self->groups(level => 'member');
+}
+
 sub is_administrator_of {
   my ($self, $group) = @_; 
 
