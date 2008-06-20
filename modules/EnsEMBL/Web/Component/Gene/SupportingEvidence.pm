@@ -5,6 +5,7 @@ package EnsEMBL::Web::Component::Gene::SupportingEvidence;
 use strict;
 use warnings;
 use base qw(EnsEMBL::Web::Component::Gene);
+use Data::Dumper;
 
 sub _init {
 	my $self = shift;
@@ -33,7 +34,7 @@ sub content {
     }
 
 	$html .= qq(<table class="ss tint">);
-	$html .= qq(<tr><th>Transcript</th><th></th><th>View Evidence</th><th>View alignment</th></tr>);
+	$html .= qq(<tr><th width="16%">Transcript</th><th width="28%"></th><th width="28%" >View record</th><th width="28%">View alignment</th></tr>);
 	foreach my $tsi (sort keys %{$e}) {
 		$html .= qq(<tr>);
 
@@ -47,6 +48,7 @@ sub content {
 			$row_c++ if ($cds_ids = $trans_evi->{'CDS'});
 			$row_c++ if ($other_ids = $trans_evi->{'UNKNOWN'});
 		}
+		else { $row_c++; }
 		$row_c++ if $extra_evi;
 			
 		my $url = $self->object->_url({
@@ -59,23 +61,29 @@ sub content {
 		$html .= "<a href=\"$url\">$tsi</a></td>";
 		if ($trans_evi) {
 			if ($cds_ids) {
+				my $links = $object->add_evidence_links($cds_ids);
+				$html .= qq(<td>Translation support:</td><td>$links</td>);
 				my $txt = join q{, }, sort(keys %$cds_ids);
-				$html .= qq(<td>Translation support:</td><td>$txt</td>);
 				$html .= qq(<td>$txt</td>);
 				$html .= qq(</tr><tr>);
 			}
 			if ($utr_ids) {
+				my $links = $object->add_evidence_links($utr_ids);
+				$html .= qq(<td>UTR support:</td><td>$links</td>);
 				my $txt = join q{, }, sort(keys %$utr_ids);
-				$html .= qq(<td>UTR support:</td><td>$txt</td>);
 				$html .= qq(<td>$txt</td>);
 				$html .= qq(</tr><tr>);
 			}
 			if ($other_ids) { 
+				my $links = $object->add_evidence_links($other_ids);
+				$html .= qq(<td>Other support:</td><td>$links</td>);
 				my $txt = join q{, }, sort(keys %$other_ids);
-				$html .= qq(<td>Other support:</td><td>$txt</td>);
 				$html .= qq(<td>$txt</td>);
 				$html .= qq(</tr><tr>);
 			}
+		}
+		else {
+			$html .= qq(<td colspan=3>No evidence stored for the transcript</td></tr><tr>);
 		}
 		if ($extra_evi) {
 			my $c = scalar(keys(%$extra_evi));
@@ -90,6 +98,7 @@ sub content {
 	$html .=  "</table>";
 	return $html;
 }
+
 
 1;
 
