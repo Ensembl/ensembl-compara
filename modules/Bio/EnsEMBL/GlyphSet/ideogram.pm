@@ -50,7 +50,9 @@ sub _init {
     $COL{'gpos100'} = 'black'; #add_rgb([200,200,200]);
     $COL{'tip'}     = 'slategrey';
     $COL{'gpos75'}  = 'grey40'; #add_rgb([210,210,210]);
+    $COL{'gpos66'}  = 'grey50'; #add_rgb([220,220,220]);
     $COL{'gpos50'}  = 'grey60'; #add_rgb([230,230,230]);
+    $COL{'gpos33'}  = 'grey75'; #add_rgb([235,235,235]);
     $COL{'gpos25'}  = 'grey85'; #add_rgb([240,240,240]);
     $COL{'gpos'}    = 'black'; #add_rgb([240,240,240]);
     $COL{'gvar'}    = 'grey88';  #add_rgb([222,220,220]);
@@ -192,7 +194,7 @@ sub _init {
 	##########################################################
 	# change label colour to white if the chr band is dark...
 	##########################################################
-	if ($stain eq "gpos100" || $stain eq "gpos75"){
+	if ($stain eq "gpos100" || $stain eq "gpos75" || $stain eq "gpos66"){
 		$fontcolour = $white;
 	} else {
 		$fontcolour = $black;

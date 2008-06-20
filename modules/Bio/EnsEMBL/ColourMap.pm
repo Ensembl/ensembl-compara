@@ -77,7 +77,9 @@ sub new {
     gpos100 black
     tip     slategrey
     gpos75  grey40
+    gpos66  grey50
     gpos50  grey60
+    gpos33  grey75
     gpos25  grey85
     gpos    black
     gvar    grey88
