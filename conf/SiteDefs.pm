@@ -100,7 +100,7 @@ use Sys::Hostname::Long;
 use Exporter();
 @ISA=qw(Exporter);
 
-$VERSION                   = 49;
+$VERSION                   = 50;
 $ARCHIVE_VERSION           = "Jul2008";    # Change this to the archive site for this version
 $ENSEMBL_RELEASE_DATE      = 'July 2008';
 
