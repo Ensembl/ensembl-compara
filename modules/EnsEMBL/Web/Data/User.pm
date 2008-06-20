@@ -24,7 +24,6 @@ __PACKAGE__->add_has_many(
   dases          => 'EnsEMBL::Web::Data::Record::DAS',
   newsfilters    => 'EnsEMBL::Web::Data::Record::NewsFilter',
   sortables      => 'EnsEMBL::Web::Data::Record::Sortable',
-  mixers         => 'EnsEMBL::Web::Data::Record::Mixer',
   currentconfigs => 'EnsEMBL::Web::Data::Record::CurrentConfig',
   specieslists   => 'EnsEMBL::Web::Data::Record::SpeciesList',
 );
