@@ -242,7 +242,7 @@ sub go {
 
 sub alternative_transcripts {
   my( $panel, $transcript ) = @_;
-  _matches( $panel, $transcript, 'alternative_transcripts', 'Alternate transcripts', 'ALT_TRANS' );
+  _matches( $panel, $transcript, 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
 }
 
 sub oligo_arrays {

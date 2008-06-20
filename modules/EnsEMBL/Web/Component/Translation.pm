@@ -707,7 +707,7 @@ sub snp_list {
     { 'key' => 'type',   'title' => 'SNP type',           'width' => '20%', 'align' => 'center' },
     { 'key' => 'allele', 'title' => 'Alleles',            'width' => '20%', 'align' => 'center' },
     { 'key' => 'ambig',  'title' => 'Ambiguity code',     'width' => '15%', 'align' => 'center' },
-    { 'key' => 'alt',    'title' => 'Alternate residues', 'width' => '20%', 'align' => 'center' }
+    { 'key' => 'alt',    'title' => 'Alternative residues', 'width' => '20%', 'align' => 'center' }
   );
 
   my $counter = 0;

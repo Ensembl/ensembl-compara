@@ -55,7 +55,7 @@ sub populate_tree {
   ));
 =cut
 ## DAS tree
-  $self->create_node( 'Splice', "Alternate splicing ([[counts::exons]] exons)",
+  $self->create_node( 'Splice', "Alternative splicing ([[counts::exons]] exons)",
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
     { 'availability' => 1, 'concise' => 'Exons' }
   );

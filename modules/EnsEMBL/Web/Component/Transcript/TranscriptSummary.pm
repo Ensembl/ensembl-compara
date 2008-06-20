@@ -80,9 +80,9 @@ sub content {
   };
 
 ## add alternative transcript info
-  my $temp =   _matches($object, 'alternative_transcripts', 'Alternate transcripts', 'ALT_TRANS' );
+  my $temp =   _matches($object, 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
   if (my $temp) {
-    $html .= qq( <dt>Alternate transcripts</dt>
+    $html .= qq( <dt>Alternative transcripts</dt>
       <dd>
       <p>$temp</p>
        </dd>);
@@ -119,7 +119,7 @@ sub _image {
 
 sub alternative_transcripts {
   my( $panel, $transcript ) = @_;
-  _matches( $panel, $transcript, 'alternative_transcripts', 'Alternate transcripts', 'ALT_TRANS' );
+  _matches( $panel, $transcript, 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
 }
 
 
