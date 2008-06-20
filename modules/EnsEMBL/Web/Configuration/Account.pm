@@ -53,6 +53,16 @@ sub populate_tree {
     ));
 
     my $groups_menu = $self->create_submenu( 'Groups', 'Groups' );
+    $groups_menu->append($self->create_node( 'MemberGroups', "Subscriptions ([[counts::member]])",
+    [qw(new EnsEMBL::Web::Component::Account::MemberGroups
+        )],
+      { 'availability' => 1, 'concise' => 'Subscriptions' }
+    ));
+    $groups_menu->append($self->create_node( 'AdminGroups', "Administrator ([[counts::admin]])",
+    [qw(new EnsEMBL::Web::Component::Account::AdminGroups
+        )],
+      { 'availability' => 1, 'concise' => 'Administrator' }
+    ));
 
   }
   else {
@@ -189,6 +199,22 @@ sub update_failed {
     ) ) {
     $panel->add_components(qw(
         update_failed       EnsEMBL::Web::Component::Account::UpdateFailed
+    ));
+
+    ## add panel to page
+    $self->add_panel( $panel );
+  }
+}
+
+sub select_group {
+  my $self   = shift;
+
+  if (my $panel = $self->new_panel( 'Image',
+    'code'    => "info$self->{flag}",
+    'object'  => $self->{object},
+    ) ) {
+    $panel->add_components(qw(
+        select_group       EnsEMBL::Web::Component::Account::SelectGroup
     ));
 
     ## add panel to page
