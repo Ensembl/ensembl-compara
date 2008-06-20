@@ -10,7 +10,7 @@ sub init {
 	$self->{'_transcript_names_'} = 'yes';
 	$self->{'_add_labels' }  = 1;
 	$self->{'general'}->{'supporting_evidence_transcript'} = {
-		'_artefacts' => [qw(TSE_transcript TSE_generic_match SE_generic_match)],
+		'_artefacts' => [qw(TSE_background_exon_1 TSE_background_exon_2 TSE_transcript TSE_generic_match SE_generic_match non_can_intron spacer1 spacer2 spacer3)],
 		'_options'  => [],
 		'_settings' => {
 			'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
@@ -25,31 +25,62 @@ sub init {
 			'types' => [ ],
 			'features' => [],
 		},
-		'ruler' => {
-			'on'      => "on",
-			'pos'       => '7000',
-			'col'       => 'black',
+		'TSE_background_exon_1' => {
+			'on'          => "on",
+			'pos'         => '5000',
+			'str'         => 'f',
+			'src'         => 'all',
+			'col'         => 'bisque',
+			'tag'         => 1,
+			'flag'        => 0,
+			'glyphset'    => 'TSE_background_exon',
 		},
 		'TSE_transcript' => {
+			'on'          => "on",
+			'pos'         => '300',
+			'str'         => 'f',
+			'src'         => 'all',
+			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
+		},
+
+		'spacer1' => { 'on'=>'on','pos'=>280, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
+
+		'non_can_intron' => {
+			'on'          => "on",
+			'pos'         => '260',
+			'str'         => 'f',
+			'src'         => 'all',
+			'col'         => 'red',
+		},
+
+		'spacer2' => { 'on'=>'on','pos'=>240, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
+
+		'TSE_generic_match' => {
 			'on'          => "on",
 			'pos'         => '200',
 			'str'         => 'f',
 			'src'         => 'all', # 'ens' or 'all'
 			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
 		},
-		'TSE_generic_match' => {
+
+		'spacer3' => { 'on'=>'on','pos'=>150, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
+
+		'SE_generic_match' => {
 			'on'          => "on",
 			'pos'         => '100',
 			'str'         => 'f',
 			'src'         => 'all', # 'ens' or 'all'
 			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
 		},
-		'SE_generic_match' => {
+		'TSE_background_exon_2' => {
 			'on'          => "on",
-			'pos'         => '50',
+			'pos'         => '0',
 			'str'         => 'f',
-			'src'         => 'all', # 'ens' or 'all'
-			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
+			'src'         => 'all',
+			'col'         => 'bisque',
+			'tag'         => 1,
+			'flag'        => 1,
+			'glyphset'    => 'TSE_background_exon',
 		},
 	};	
 }
