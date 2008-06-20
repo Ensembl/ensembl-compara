@@ -32,15 +32,15 @@ sub render {
       if ($V->{'checked'}) {
 	  $checked = 'yes';
       }
-      $output .= sprintf( "    <div class=\"%s\"><input id=\"%s_%d\" class=\"radio\" type=\"radio\" name=\"%s\" value=\"%s\" %s %s/><label for=\"%s_%d\">%s</label></div>\n",
-			  $self->{'class'},
-			  CGI::escapeHTML($self->id), 
-			  $K, CGI::escapeHTML($self->name), 
-			  CGI::escapeHTML($V->{'value'}),
-        $self->onclick ? 'onclick="'.$self->onclick.'"' : '',
-			  $checked eq 'yes' ? ' checked="checked"' : '', 
+      $output .= sprintf(qq(    
+<label class="label-radio">
+<input type="radio" name="%s" id="%s_%d" value="%s" class="input-radio" %s/> %s %s</label>),
+        CGI::escapeHTML($self->name),
 			  CGI::escapeHTML($self->id), $K,
+			  CGI::escapeHTML($V->{'value'}),
+			  $checked eq 'yes' ? ' checked="checked"' : '', 
 			  $self->{'noescape'} ? $V->{'name'} : CGI::escapeHTML($V->{'name'}),
+        $self->notes,
 			  );
       $K++;
   }
