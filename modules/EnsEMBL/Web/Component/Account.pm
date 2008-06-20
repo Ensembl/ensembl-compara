@@ -21,212 +21,21 @@ sub edit_link {
 } 
 
 sub delete_link {
-  my ($self, $module, $id) = @_;
-  return sprintf(qq(<a href="/Account/%s?dataview=delete;id=%s">Delete</a>), $module, $id);
+  my ($self, $module, $id, $text) = @_;
+  $text = 'Delete' if !$text;
+  return sprintf(qq(<a href="/Account/%s?dataview=delete;id=%s">%s</a>), $module, $id, $text);
 } 
 
 
 sub share_link {
-  my ($self, $module, $id) = @_;
-  return sprintf(qq(<a href="/Account/%s?dataview=edit;id=%s">Share</a>), $module, $id);
+  my ($self, $call, $id) = @_;
+  return sprintf(qq(<a href="/Account/SelectGroup?id=%s;type=%s">Share</a>), $id, $call);
 } 
 
 
 ########################### OLD CODE! #################################
 
 =pod
-sub _render_configs {
-  ### Content for Configurations tab
-  my $user = shift;
-  my @configurations = $user->configurations;
-  my @records;
-
-  foreach my $configuration (@configurations) {
-    my $description = $configuration->description || '&nbsp;';
-    my $link = "<a href='#' onclick='javascript:go_to_config(" . $configuration->id . ");'>";
-    $description = substr($configuration->description, 0, 30);
-    push @records, {
-      'id'        => $configuration->id, 
-      'type'      => 'configurations',
-      'ident'     => 'user',
-      'sortable'  => $configuration->name,
-      'shareable' => 1,
-      'edit_url'  => 'configuration',
-      'data'      => [
-        $link . $configuration->name . '</a>',
-        '&nbsp;',
-        "($description)",
-      ],
-    };
-  }
-
-  foreach my $group ($user->groups) {
-    foreach my $configuration ($group->configurations) {
-      my $description = $configuration->description || '&nbsp;';
-      my $link = "<a href='#' onclick='javascript:got_to_config(" . $configuration->id . ");'>";
-      push @records, {'id' => $configuration->id, 
-                      'ident' => $group->id, 
-                      'sortable' => $configuration->name,
-                      'data' => [
-                        $link . $configuration->name . '</a>', $group->name
-                      ]};
-    }
-  }
-
-  my $html;
-  $html .= &info_box($user, qq(You can save custom view configurations (DAS sources, decorations, additional drawing tracks, etc), and return to them later or share them with fellow group members. Look for the 'Save configuration link' in the sidebar when browsing $sitename. <a href="http://www.ensembl.org/info/about/custom.html#configurations">Learn more about view configurations (Ensembl documentation) &rarr;</a>), 'user_configuration_info');
-  if ($#records > -1) {
-    $html .= _render_settings_table(\@records, $user);
-  }
-  else {
-    $html .= qq(<p class="center"><img src="/img/help/config_example.gif" /></p>);
-    $html .= qq(<p class="center">You haven't saved any $sitename view configurations. <a href='/info/about/custom.html#configurations'>Learn more about configurating views &rarr;</a>);
-  }
-
-  return $html;
-}
-
-sub _render_notes {
-  ### Content for Notes tab
-  my $user = shift;
-  my @notes = $user->annotations;
-  my @records;
-
-  foreach my $note (@notes) {
-    my $description = $note->annotation || '&nbsp;';
-    #warn "NOTE: " . $note;
-    push @records, {
-      'id'        => $note->id,
-      'type'      => 'annotations',
-      'ident'     => 'user',
-      'sortable'  => $note->title,
-      'shareable' => 1,
-      'edit_url'  => 'annotation',
-      'data'      => [
-        '<a href="' . $note->url. '" title="' . $note->title . '">' . $note->stable_id . ': ' . $note->title . '</a>',
-        '&nbsp;',
-      ]
-    };
-  }
-
-  foreach my $group ($user->groups) {
-    foreach my $note ($group->annotations) {
-      my $description = $note->annotation || '&nbsp;';
-      push @records, {'id' => $note->id, 
-                      'ident' => $note->id, 
-                      'sortable' => $note->title,
-                      'data' => [
-        '<a href="' . $note->url . '" title="' . $note->title. '">' . $note->stable_id . ': ' . $note->title . '</a>', $group->name
-      ]};
-    }
-  }
-
-  my $html = "";
-  $html .= &info_box($user, qq(Annotation notes from genes are listed here. <a href='http://www.ensembl.org/info/about/custom.html#notes'>Learn more about notes (Ensembl documentation) &rarr;</a>), 'user_note_info');
-  if ($#records > -1) {
-    $html .= _render_settings_table(\@records, $user);
-  }
-  else {
-    $html .= qq(<p class="center"><img src="/img/help/note_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
-    $html .= qq(<p class="center">You haven't saved any $sitename notes. <a href='/info/about/custom.html#notes'>Learn more about notes &rarr;</a>);
-  }
-  return $html;
-}
-
-sub _render_news {
-  ### Content for News Filters tab
-  my $user = shift;
-  my @filters = $user->newsfilters;
-  my @records;
-  my $both = 0;
-  foreach my $filter (@filters) {
-    my $data;
-
-    ## Topic has been deprecated
-    ## this should be removed:
-    #      if ($filter->topic) {
-    #      my $topic = $filter->topic;
-    #      if (ref($topic) eq 'ARRAY') {
-    #        $topic = join(', ', @$topic);
-    #      }
-    #      $data .= "Topic: $topic";
-    #      $both = 1;
-    #    }
-
-    if ($filter->species) {
-      my $species = $filter->species;
-      if (ref($species) eq 'ARRAY') {
-        $species = join(', ', @$species);
-      }
-      $species =~ s/_/ /g;
-      $data .= '; ' if $both;
-      $data .= "Species: $species";
-    }
-    push @records, {'id' => $filter->id, 
-               'edit_url' => 'filter_news', 'delete_url' => 'remove_record', 
-               'ident' => 'user',
-               'data' => [$data] };
-  }
-
-  my $html;
-  $html .= &info_box($user, qq(You can filter the news headlines on the home page and share these settings with fellow group members.<br /><a href="http://www.ensembl.org/info/about/custom.html#news">Learn more about news filters (Ensembl documentation) &rarr;</a>), 'news_filter_info');
-  if ($#records > -1) {
-    $html .= _render_settings_table(\@records, $user);
-  }
-  else {
-    $html .= qq(<p class="center"><img src="/img/help/filter_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
-    $html .= qq(<p class="center">You do not have any filters set, so you will see general headlines.</p>
-<p><a href="/common/user/filter_news">Add a news filter &rarr;</a></p>
-);
-  }
-  return $html;
-}
-
-sub _render_groups {
-  ### Content for group tab
-  my $user = shift;
-  my $html;
-  my @groups = $user->groups;
-  my @group_rows = ();
-  my %included = ();
-  my @all_groups = EnsEMBL::Web::Data::Group->find_all;
-  $html .= &info_box($user, qq(Groups enable you to organise your saved bookmarks, notes and view configurations, and also let you share them with other users. The groups you're subscribed to are listed below. <a href="http://www.ensembl.org/info/about/groups.html">Learn more about creating and managing groups (Ensembl documentation) &rarr;</a>) , 'user_group_info');
-  if ($#groups > -1) {
-    $html .= "<h5>Your subscribed groups</h5>\n";
-    $html .= "<table width='100%' cellspacing='0' cellpadding='4'>\n";
-    my $class = "bg1";
-    foreach my $group (sort {$a->name cmp $b->name} @groups) {
-      next if $group->status ne 'active';
-      $class = &toggle_class($class);
-      $included{$group->id} = 'yes';
-      $html .= "<tr class='$class'>\n";
-      $html .= "<td width='25%'>" . $group->name . "</td>";
-      $html .= "<td>" . $group->blurb. "</td>";
-      if ($group->id && $user->is_administrator_of($group)) {
-        $html .= '<td style="text-align: right;"><a href="/Account/Group?id=' . $group->id . '">Manage group</a></td>';
-      } else {
-        $html .= '<td style="text-align: right;"><a href="/Account/Group?id=' . $group->id . '">View membership details</a></td>';
-        $html .= '<td style="text-align: right;"><a href="/Account/_unsubscribe?id=' . $group->id . '">Unsubscribe</a></td>';
-      }
-      $html .= "</tr>\n";
-    }
-    #if ($#all_groups > -1) {
-    #  foreach my $group (@all_groups) {
-    #    $html .= &_render_invites_for_group($group, $user);
-    #  }
-    #}
-    $html .= "</table><br />\n";
-  }
-  else {
-    $html .= qq(<p class="center">You are not subscribed to any $sitename groups. &middot; <a href='/info/about/groups.html'>Learn more &rarr;</a> </p>);
-  }  
-  #$html .= "<br />";
-  ## An unimplemented feature - we don't have any public groups yet.
-  #$html .= &_render_public_groups($user, \%included);
-  $html .= "<br />";
-  $html .= qq(<p><a href="/common/user/group">Create a new group &rarr;</a></p>);
-  return $html;
-}
 
 sub _render_invites_for_group {
   ### Additional rows for group tab, displaying invitations
