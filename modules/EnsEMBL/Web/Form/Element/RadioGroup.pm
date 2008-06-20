@@ -21,28 +21,28 @@ sub render {
   my $K = 0;
   my $checked;
   foreach my $V ( @{$self->values} ) {
-      $checked = 'no';
-      # check if we want to tick this box
-      foreach my $M ( @{$self->value||[]} ) {
-	  if ($M eq $$V{'value'}) {
+    $checked = 'no';
+    # check if we want to tick this box
+    foreach my $M ( @{$self->value||[]} ) {
+	    if ($M eq $V->{'value'}) {
 	      $checked = 'yes';
 	      last;
-	  }
-      }
-      if ($V->{'checked'}) {
-	  $checked = 'yes';
-      }
-      $output .= sprintf(qq(    
+	    }
+    }
+    if ($V->{'checked'}) {
+	    $checked = 'yes';
+    }
+    $output .= sprintf(qq(    
 <label class="label-radio">
 <input type="radio" name="%s" id="%s_%d" value="%s" class="input-radio" %s/> %s %s</label>),
         CGI::escapeHTML($self->name),
-			  CGI::escapeHTML($self->id), $K,
+        CGI::escapeHTML($self->name), $K,
 			  CGI::escapeHTML($V->{'value'}),
 			  $checked eq 'yes' ? ' checked="checked"' : '', 
 			  $self->{'noescape'} ? $V->{'name'} : CGI::escapeHTML($V->{'name'}),
         $self->notes,
 			  );
-      $K++;
+    $K++;
   }
   return $self->introduction.$output.$self->notes;
 
