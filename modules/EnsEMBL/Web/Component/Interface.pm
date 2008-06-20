@@ -23,7 +23,7 @@ sub script_name {
 sub data_form {
   ### Function to build a record editing form
   my ($self, $object, $name) = @_;
-  my $script = script_name($object);
+  my $script = $self->script_name($object);
   my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
 
   ## form widgets
@@ -49,7 +49,7 @@ sub record_select {
   ### Function to build a record selection form
   my($self, $object, $name) = @_;
   
-  my $script = script_name($object);
+  my $script = $self->script_name($object);
   my $form = EnsEMBL::Web::Form->new($name, "/common/$script", 'post');
 
   my $select  = $object->interface->dropdown ? 'select' : '';
