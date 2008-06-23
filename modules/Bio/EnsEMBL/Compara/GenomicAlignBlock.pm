@@ -1610,10 +1610,11 @@ sub restrict_between_reference_positions {
   ## Create a new Bio::EnsEMBL::Compara::GenomicAlignBlock object
   throw("Reference GenomicAlign not found!") if (!$reference_genomic_align);
 
-  my @reference_cigar = grep {$_} split(/(\d*[GDM])/, $reference_genomic_align->cigar_line);
+  my @reference_cigar = grep {$_} split(/(\d*[GDMX])/, $reference_genomic_align->cigar_line);
   if ($negative_strand) {
     @reference_cigar = reverse @reference_cigar;
   }
+
   ## Parse start of cigar_line for the reference GenomicAlign
   my $length_of_truncated_seq_at_the_start = 0; # num. of bp in the alignment to be trimmed
   if ($excess_at_the_start >= 0) {
@@ -1621,7 +1622,7 @@ sub restrict_between_reference_positions {
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@reference_cigar)) {
-      my ($num, $type) = ($cigar =~ /^(\d*)([GDM])/);
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
       $num = 1 if ($num eq "");
       $length_of_truncated_seq_at_the_start += $num;
       if ($type eq "M") {
@@ -1649,7 +1650,7 @@ sub restrict_between_reference_positions {
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = pop(@reference_cigar)) {
-      my ($num, $type) = ($cigar =~ /^(\d*)([DIGM])/);
+      my ($num, $type) = ($cigar =~ /^(\d*)([DIGMX])/);
       $num = 1 if ($num eq "");
       $length_of_truncated_seq_at_the_end += $num;
       if ($type eq "M") {
@@ -1684,6 +1685,7 @@ sub restrict_between_reference_positions {
     $aln_start = $length_of_truncated_seq_at_the_start + 1;
     $aln_end = $self->length - $length_of_truncated_seq_at_the_end;
   }
+  
   $genomic_align_block = $self->restrict_between_alignment_positions($aln_start, $aln_end, $skip_empty_GenomicAligns);
   $new_reference_genomic_align = $genomic_align_block->reference_genomic_align;
   if (defined $self->reference_slice) {
