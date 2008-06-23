@@ -760,11 +760,18 @@ sub _create_underlying_Slices {
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
     my $original_genomic_align_block = $this_genomic_align_block;
     my ($from, $to);
+
     if ($preserve_blocks) {
       ## Don't restrict the block. Set from and to to 1 and length respectively
       $from = 1;
       $to = $this_genomic_align_block->length;
     } else {
+	#need to check that the block is still overlapping the slice - it may
+	#have already been restricted by the options above.
+	if ($this_genomic_align_block->reference_genomic_align->dnafrag_start > $self->reference_Slice->end || $this_genomic_align_block->reference_genomic_align->dnafrag_end < $self->reference_Slice->start) {
+	    next;
+	}
+
       ($this_genomic_align_block, $from, $to) = $this_genomic_align_block->restrict_between_reference_positions(
           $self->reference_Slice->start, $self->reference_Slice->end);
     }
@@ -932,12 +939,17 @@ sub _create_underlying_Slices {
       ## the tree on the web interface.
       if ($this_genomic_align->genome_db->name eq "Ancestral sequences") {
         foreach my $genomic_align_node (@{$this_genomic_align_block->get_all_sorted_genomic_align_nodes}) {
-          if ($this_genomic_align == $genomic_align_node->genomic_align) {
-            my $simple_tree = $genomic_align_node->newick_simple_format();
-            $simple_tree =~ s/\_[^\_]+\_\d+\_\d+\[[\+\-]\]//g;
-            $simple_tree =~ s/\:[\d\.]+//g;
-            $this_core_slice->{_tree} = $simple_tree;
-            last;
+	    my $genomic_align_group = $genomic_align_node->genomic_align_group;
+	    next if (!$genomic_align_group);
+
+	    foreach my $genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+		if ($this_genomic_align == $genomic_align) {
+		    my $simple_tree = $genomic_align_node->newick_simple_format();
+		    $simple_tree =~ s/\_[^\_]+\_\d+\_\d+\[[\+\-]\]//g;
+		    $simple_tree =~ s/\:[\d\.]+//g;
+		    $this_core_slice->{_tree} = $simple_tree;
+		    last;
+		}
           }
         }
       }
@@ -1056,7 +1068,6 @@ sub _sort_and_restrict_GenomicAlignBlocks {
     if (defined($last_end) and
         $this_genomic_align_block->reference_genomic_align->dnafrag_start <= $last_end) {
       if ($this_genomic_align_block->reference_genomic_align->dnafrag_end > $last_end) {
-        
         $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions($last_end + 1, undef);
       } else {
         warning("Ignoring Bio::EnsEMBL::Compara::GenomicAlignBlock #".
@@ -1231,9 +1242,20 @@ sub _compile_GenomicAlignBlocks {
       $strand = 0;
     }
     if ($this_genomic_align->dnafrag_strand == -1) {
-      foreach my $genomic_align (@{$this_genomic_align_block->genomic_align_array}) {
-        $genomic_align->reverse_complement;
-      }
+
+	if (UNIVERSAL::isa($this_genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+	    foreach my $this_node (@{$this_genomic_align_block->get_all_nodes}) {
+		my $genomic_align_group = $this_node->genomic_align_group;
+		next if (!$genomic_align_group);
+		foreach my $genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+		    $genomic_align->reverse_complement;
+		}
+	    }
+	} else {
+	    foreach my $genomic_align (@{$this_genomic_align_block->genomic_align_array}) {
+		$genomic_align->reverse_complement;
+	    }
+	}
     }
   }
   ##
@@ -1309,12 +1331,25 @@ sub _compile_GenomicAlignBlocks {
       $aln_pos = $gap_pos + length($gap);
       foreach my $this_genomic_align_block (@$all_genomic_align_blocks) {
         next if ($genomic_align_block eq $this_genomic_align_block); # Do not add gap to itself!!
-        foreach my $this_genomic_align (@{$this_genomic_align_block->genomic_align_array}) {
-          # insert gap in the aligned_sequence
-          my $aligned_sequence = $this_genomic_align->aligned_sequence;
-          substr($aligned_sequence, $gap_pos, 0, $gap);
-          $this_genomic_align->aligned_sequence($aligned_sequence);
-        }
+	if (UNIVERSAL::isa($this_genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+	    foreach my $this_node (@{$this_genomic_align_block->get_all_nodes}) {
+		my $genomic_align_group = $this_node->genomic_align_group;
+		next if (!$genomic_align_group);
+		foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+		    # insert gap in the aligned_sequence
+		    my $aligned_sequence = $this_genomic_align->aligned_sequence;
+		    substr($aligned_sequence, $gap_pos, 0, $gap);
+		    $this_genomic_align->aligned_sequence($aligned_sequence);
+		}
+	    }
+	} else {
+	    foreach my $this_genomic_align (@{$this_genomic_align_block->genomic_align_array}) {
+		# insert gap in the aligned_sequence
+		my $aligned_sequence = $this_genomic_align->aligned_sequence;
+		substr($aligned_sequence, $gap_pos, 0, $gap);
+		$this_genomic_align->aligned_sequence($aligned_sequence);
+	    }
+	}
       }
     }
     
