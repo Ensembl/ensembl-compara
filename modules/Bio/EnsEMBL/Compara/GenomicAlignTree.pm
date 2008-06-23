@@ -482,6 +482,7 @@ sub restrict_between_alignment_positions {
         $genomic_align_tree->reference_genomic_align($restricted_genomic_align);
       }
       if (!$skip_empty_GenomicAligns or $restricted_genomic_align->dnafrag_start <= $restricted_genomic_align->dnafrag_end) {
+	  $restricted_genomic_align->genomic_align_block($genomic_align_tree);
         push(@$new_genomic_aligns, $restricted_genomic_align);
       }
     }
@@ -536,58 +537,12 @@ sub restrict_between_reference_positions {
   throw("A reference Bio::EnsEMBL::Compara::GenomicAlignTree must be given")
       if (!$reference_genomic_align);
 
-  throw("Still unimplemented");
-#   $self->get_all_sorted_genomic_align_nodes;
-#   my $genomic_align_block = $self->SUPER::restrict_between_reference_positions($start, $end,
-#       $reference_genomic_align, 0);
-# 
-#   return $self if (!$genomic_align_block or $genomic_align_block eq $self);
-#   # Get a copy of the tree (this method should return a new object in order to comply with parent one.
-#   $genomic_align_tree = $self->copy;
-# 
-#   # Mess with the genomic_aligns. All of them should be in the same order!
-#   my $all_genomic_align_nodes = $genomic_align_tree->get_all_sorted_genomic_align_nodes;
-#   my $all_original_genomic_aligns = $genomic_align_tree->get_all_GenomicAligns;
-#   my $all_new_genomic_aligns = $genomic_align_block->get_all_GenomicAligns;
-#   return (1) if (@$all_genomic_align_nodes != @$all_original_genomic_aligns);
-#   return (2) if (@$all_original_genomic_aligns != @$all_new_genomic_aligns);
-# #   $genomic_align_tree->{genomic_align_array} = $all_new_genomic_aligns;
-#   for (my $i=0; $i<@$all_genomic_align_nodes; $i++) {
-#     if ($all_new_genomic_aligns->[$i]->genome_db eq $all_original_genomic_aligns->[$i]->genome_db and
-#         $all_new_genomic_aligns->[$i]->dnafrag eq $all_original_genomic_aligns->[$i]->dnafrag and
-#         $all_new_genomic_aligns->[$i]->dnafrag_start >= $all_original_genomic_aligns->[$i]->dnafrag_start and
-#         $all_new_genomic_aligns->[$i]->dnafrag_end <= $all_original_genomic_aligns->[$i]->dnafrag_end and
-#         $all_new_genomic_aligns->[$i]->dnafrag_strand == $all_original_genomic_aligns->[$i]->dnafrag_strand) {
-#       $all_genomic_align_nodes->[$i]->{genomic_align} = $all_new_genomic_aligns->[$i];
-#       if ($self->reference_genomic_align eq $all_original_genomic_aligns->[$i]) {
-# $DB::single = 1;
-#         $genomic_align_tree->reference_genomic_align($all_genomic_align_nodes->[$i]->{genomic_align});
-#       }
-#       $all_genomic_align_nodes->[$i]->{genomic_align}->{genomic_align_block} = $genomic_align_block;
-#     } else {
-#       print STDERR "Fail while checking $i\n";
-#       for (my $i=0; $i<@$all_genomic_align_nodes; $i++) {
-#           print STDERR join(":", $i,
-#               $all_new_genomic_aligns->[$i]->genome_db->name,
-#               $all_new_genomic_aligns->[$i]->dnafrag->name,
-#               $all_new_genomic_aligns->[$i]->dnafrag_start,
-#               $all_new_genomic_aligns->[$i]->dnafrag_end,
-#               $all_new_genomic_aligns->[$i]->dnafrag_strand), "\n";
-#           print STDERR join("|", $i,
-#               $all_original_genomic_aligns->[$i]->genome_db->name,
-#               $all_original_genomic_aligns->[$i]->dnafrag->name,
-#               $all_original_genomic_aligns->[$i]->dnafrag_start,
-#               $all_original_genomic_aligns->[$i]->dnafrag_end,
-#               $all_original_genomic_aligns->[$i]->dnafrag_strand), "\n";
-#       }
-#       warn("Cannot find right order");
-#       return undef;
-#     }
-#   }
-# 
-#   $genomic_align_tree->get_all_sorted_genomic_align_nodes;
+   my @restricted_genomic_align_tree_params = $self->SUPER::restrict_between_reference_positions($start, $end, $reference_genomic_align, $skip_empty_GenomicAligns);
+  my $restricted_genomic_align_tree = $restricted_genomic_align_tree_params[0];
 
-  return $genomic_align_tree;
+  #return $self if (!$restricted_genomic_align_tree or $restricted_genomic_align_tree eq $self);
+
+  return wantarray ? @restricted_genomic_align_tree_params : $restricted_genomic_align_tree;
 }
 
 
