@@ -903,146 +903,212 @@ sub _create_underlying_Slices {
   $self->{_reference_Mapper} = $big_mapper;
 
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
+    if (UNIVERSAL::isa($this_genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+      ## For trees, loop trough all nodes (internal and leaves) to add the GenomicAligns
+      foreach my $this_genomic_align_node (@{$this_genomic_align_block->get_all_nodes}) {
+        # but we have to skip the reference node as this has already been added to the guide Slice
+        next if ($this_genomic_align_node eq $this_genomic_align_block->reference_genomic_align_node);
 
-    GENOMIC_ALIGN: foreach my $this_genomic_align
-            (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
-      my $species = $this_genomic_align->dnafrag->genome_db->name;
-#       throw ("This species [$species] is not included in the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")
-#       next
-      if (!defined($self->{slices}->{$species})) {
-        $self->{slices}->{$species} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
-                -length => $align_slice_length,
-                -requesting_slice => $self->reference_Slice,
-                -align_slice => $self,
-                -method_link_species_set => $self->{_method_link_species_set},
-                -genome_db => $this_genomic_align->dnafrag->genome_db,
-                -expanded => $expanded,
-            )];
-        push(@{$self->{_slices}}, $self->{slices}->{$species}->[0]);
-      }
-      my $this_block_start = $this_genomic_align->genomic_align_block->reference_slice_start;
-      my $this_block_end = $this_genomic_align->genomic_align_block->reference_slice_end;
-      my $this_core_slice = $this_genomic_align->get_Slice();
-      if (!$this_core_slice) {
-        $this_core_slice = new Bio::EnsEMBL::Slice(
-              -coord_system => $aligngap_coord_system,
-              -seq_region_name => "GAP",
-              -start => $this_block_start,
-              -end => $this_block_end,
-              -strand => 0
-            );
-        $this_core_slice->{seq} = "." x ($this_block_end - $this_block_start + 1);
-      }
-      next if (!$this_core_slice); ## The restriction of the GenomicAlignBlock may return a void GenomicAlign
-
-      ## This creates a link between the slice and the tree node. This is required to display
-      ## the tree on the web interface.
-      if ($this_genomic_align->genome_db->name eq "Ancestral sequences") {
-        foreach my $genomic_align_node (@{$this_genomic_align_block->get_all_sorted_genomic_align_nodes}) {
-	    my $genomic_align_group = $genomic_align_node->genomic_align_group;
-	    next if (!$genomic_align_group);
-
-	    foreach my $genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
-		if ($this_genomic_align == $genomic_align) {
-		    my $simple_tree = $genomic_align_node->newick_simple_format();
-		    $simple_tree =~ s/\_[^\_]+\_\d+\_\d+\[[\+\-]\]//g;
-		    $simple_tree =~ s/\:[\d\.]+//g;
-		    $this_core_slice->{_tree} = $simple_tree;
-		    last;
-		}
-          }
+        # For composite segments (2X genomes), the node will link to several GenomicAligns.
+        # Add each of them to one of the AS:Slice objects
+        foreach my $this_genomic_align (@{$this_genomic_align_node->get_all_GenomicAligns}) {
+          $self->_add_GenomicAlign_to_a_Slice($this_genomic_align, $this_genomic_align_block,
+              $species_order, $align_slice_length);
         }
       }
-      if ($species_order) {
-        my $this_underlying_slice = undef;
-        foreach my $underlying_slice (@{$self->{_slices}}) {
-          if (!$this_genomic_align->{original_dbID} and $this_genomic_align->dbID) {
-            $this_genomic_align->{original_dbID} = $this_genomic_align->dbID;
-          }
-          if (grep {$_ == $this_genomic_align->{original_dbID}}
-              @{$underlying_slice->{genomic_align_ids}}) {
-            $this_underlying_slice = $underlying_slice;
-          }
-        }
-        if ($this_underlying_slice) {
-          my $overlap = 0;
-          my $slice_mapper_pairs = $this_underlying_slice->get_all_Slice_Mapper_pairs();
-          foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
-            my $block_start = $slice_mapper_pair->{start};
-            my $block_end = $slice_mapper_pair->{end};
-            if ($this_block_start <= $block_end and $this_block_end >= $block_start) {
-              $overlap = 1;
-              last;
-            }
-          }
-          if (!$overlap) {
-            ## This block does not overlap any previous block: add it!
-            $this_underlying_slice->add_Slice_Mapper_pair(
-                    $this_core_slice,
-                    $this_genomic_align->get_Mapper(0, !$expanded),
-                    $this_block_start,
-                    $this_block_end,
-                    $this_genomic_align->dnafrag_strand
-                );
-            next GENOMIC_ALIGN;
-          }
-        }
+    } else {
+      ## For plain alignments, just use all non-reference GenomicAlign objects
+      foreach my $this_genomic_align
+              (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
+        $self->_add_GenomicAlign_to_a_Slice($this_genomic_align, $this_genomic_align_block,
+            $species_order, $align_slice_length);
       }
-      ## Try to add this alignment to an existing underlying Bio::EnsEMBL::Compara::AlignSlice::Slice
-      SLICE: foreach my $this_underlying_slice (@{$self->{slices}->{$species}}) {
-        my $slice_mapper_pairs = $this_underlying_slice->get_all_Slice_Mapper_pairs();
-        PAIRS: foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
-          my $block_start = $slice_mapper_pair->{start};
-          my $block_end = $slice_mapper_pair->{end};
-          if ($this_block_start <= $block_end and $this_block_end >= $block_start) {
-            next SLICE; ## This block overlaps a previous block
-          }
-        }
-        ## This block does not overlap any previous block: add it!
-        $this_underlying_slice->add_Slice_Mapper_pair(
-                $this_core_slice,
-                $this_genomic_align->get_Mapper(0, !$expanded),
-                $this_block_start,
-                $this_block_end,
-                $this_genomic_align->dnafrag_strand
-            );
-        ## Once this block has been added, go to the next block
-        next GENOMIC_ALIGN;
-
-      }
-
-      ## This block overlaps at least one block in every available underlying
-      ## Bio::EnsEMBL::Compara::AlignSlice::Slice. Create a new one!
-      my $new_underlying_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
-              -length => $align_slice_length,
-              -requesting_slice => $self->reference_Slice,
-              -align_slice => $self,
-              -method_link_species_set => $self->{_method_link_species_set},
-              -genome_db => $this_genomic_align->dnafrag->genome_db,
-              -expanded => $expanded,
-          );
-      $new_underlying_slice->add_Slice_Mapper_pair(
-              $this_core_slice,
-              $this_genomic_align->get_Mapper(0, !$expanded),
-              $this_genomic_align->genomic_align_block->reference_slice_start,
-              $this_genomic_align->genomic_align_block->reference_slice_end,
-              $this_genomic_align->dnafrag_strand
-          );
-      push(@{$self->{_slices}}, $new_underlying_slice);
-      push(@{$self->{slices}->{$species}}, $new_underlying_slice);
-
     }
   }
 
-#   $self->{_slices} = [@{$self->{slices}->{$ref_species}}];
-#   foreach my $species (@{$self->{_method_link_species_set}->species_set}) {
-#   foreach my $species (keys %{$self->{slices}}) {
-#     next if ($species eq $ref_species);
-# #     push(@{$self->{_slices}}, @{$self->{slices}->{$species}});
-#   }
-#   undef($self->{slices});
-
   return $self;
+}
+
+=head2 _add_GenomicAlign_to_a_Slice
+
+=cut
+
+sub _add_GenomicAlign_to_a_Slice {
+  my ($self, $this_genomic_align, $this_genomic_align_block, $species_order, $align_slice_length) = @_;
+
+  my $expanded = $self->{expanded};
+  my $species = $this_genomic_align->dnafrag->genome_db->name;
+
+  if (!defined($self->{slices}->{$species})) {
+    $self->{slices}->{$species} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+            -length => $align_slice_length,
+            -requesting_slice => $self->reference_Slice,
+            -align_slice => $self,
+            -method_link_species_set => $self->{_method_link_species_set},
+            -genome_db => $this_genomic_align->dnafrag->genome_db,
+            -expanded => $expanded,
+        )];
+    push(@{$self->{_slices}}, $self->{slices}->{$species}->[0]);
+  }
+
+  my $this_block_start = $this_genomic_align->genomic_align_block->reference_slice_start;
+  my $this_block_end = $this_genomic_align->genomic_align_block->reference_slice_end;
+  my $this_core_slice = $this_genomic_align->get_Slice();
+  if (!$this_core_slice) {
+    $this_core_slice = new Bio::EnsEMBL::Slice(
+          -coord_system => $aligngap_coord_system,
+          -seq_region_name => "GAP",
+          -start => $this_block_start,
+          -end => $this_block_end,
+          -strand => 0
+        );
+    $this_core_slice->{seq} = "." x ($this_block_end - $this_block_start + 1);
+  }
+  return if (!$this_core_slice); ## The restriction of the GenomicAlignBlock may return a void GenomicAlign
+
+  ## This creates a link between the slice and the tree node. This is required to display
+  ## the tree on the web interface.
+  if ($this_genomic_align->genome_db->name eq "Ancestral sequences") {
+    foreach my $genomic_align_node (@{$this_genomic_align_block->get_all_sorted_genomic_align_nodes}) {
+      my $genomic_align_group = $genomic_align_node->genomic_align_group;
+      next if (!$genomic_align_group);
+
+      foreach my $genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+        if ($this_genomic_align == $genomic_align) {
+          my $simple_tree = $genomic_align_node->newick_simple_format();
+          $simple_tree =~ s/\_[^\_]+\_\d+\_\d+\[[\+\-]\]//g;
+          $simple_tree =~ s/\:[\d\.]+//g;
+          $this_core_slice->{_tree} = $simple_tree;
+          last;
+        }
+      }
+    }
+  }
+
+  # Choose the appropriate AS::Slice for adding this bit of the alignment
+  my $this_underlying_slice = $self->_choose_underlying_Slice($this_genomic_align, $this_block_start,
+      $this_block_end, $align_slice_length, $species_order);
+
+  # Fix block start and block end for composite segments (2X genomes)
+  if ($this_genomic_align->cigar_line =~ /^(\d*)X/) {
+    my $length = $1;
+    $length = 1 if ($length eq "");
+    $this_block_start += $length;
+  }
+  if ($this_genomic_align->cigar_line =~ /(\d*)X$/) {
+    my $length = $1;
+    $length = 1 if (!defined($length));
+    $this_block_end -= $length;
+  }
+
+  # Add a Slice, Mapper, and start-end-strand coordinates to an underlying AS::Slice
+  $this_underlying_slice->add_Slice_Mapper_pair(
+          $this_core_slice,
+          $this_genomic_align->get_Mapper(0, !$expanded),
+          $this_block_start,
+          $this_block_end,
+          $this_genomic_align->dnafrag_strand
+      );
+  return;
+}
+
+
+sub _choose_underlying_Slice {
+  my ($self, $this_genomic_align, $this_block_start, $this_block_end, $align_slice_length, $species_order) = @_;
+  my $underlying_slice = undef;
+
+  my $expanded = $self->{expanded};
+  my $species = $this_genomic_align->dnafrag->genome_db->name;
+
+  if (defined($this_genomic_align->{_temporary_AS_underlying_Slice})) {
+    my $preset_underlying_slice = $this_genomic_align->{_temporary_AS_underlying_Slice};
+    delete($this_genomic_align->{_temporary_AS_underlying_Slice});
+    return $preset_underlying_slice;
+  }
+
+  if (!defined($self->{slices}->{$species})) {
+    ## No slice for this species yet. Create, store and return it
+    $underlying_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+            -length => $align_slice_length,
+            -requesting_slice => $self->reference_Slice,
+            -align_slice => $self,
+            -method_link_species_set => $self->{_method_link_species_set},
+            -genome_db => $this_genomic_align->dnafrag->genome_db,
+            -expanded => $expanded,
+        );
+    push(@{$self->{_slices}}, $underlying_slice);
+    push(@{$self->{slices}->{$species}}, $underlying_slice);
+  }
+
+  if (!$underlying_slice and $species_order) {
+    my $preset_underlying_slice = undef;
+    foreach my $this_underlying_slice (@{$self->{_slices}}) {
+      if (!$this_genomic_align->{original_dbID} and $this_genomic_align->dbID) {
+        $this_genomic_align->{original_dbID} = $this_genomic_align->dbID;
+      }
+      if (grep {$_ == $this_genomic_align->{original_dbID}}
+          @{$this_underlying_slice->{genomic_align_ids}}) {
+        $preset_underlying_slice = $this_underlying_slice;
+      }
+    }
+    if ($preset_underlying_slice) {
+      my $overlap = 0;
+      my $slice_mapper_pairs = $preset_underlying_slice->get_all_Slice_Mapper_pairs();
+      foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
+        my $block_start = $slice_mapper_pair->{start};
+        my $block_end = $slice_mapper_pair->{end};
+        if ($this_block_start <= $block_end and $this_block_end >= $block_start) {
+          $overlap = 1;
+          last;
+        }
+      }
+      if (!$overlap) {
+        ## This block does not overlap any previous block: add it!
+        $underlying_slice = $preset_underlying_slice;
+      }
+    }
+  }
+
+  if (!$underlying_slice) {
+    ## Try to add this alignment to an existing underlying Bio::EnsEMBL::Compara::AlignSlice::Slice
+    SLICE: foreach my $this_underlying_slice (@{$self->{slices}->{$species}}) {
+      my $slice_mapper_pairs = $this_underlying_slice->get_all_Slice_Mapper_pairs();
+      PAIRS: foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
+        my $block_start = $slice_mapper_pair->{start};
+        my $block_end = $slice_mapper_pair->{end};
+        if ($this_block_start <= $block_end and $this_block_end >= $block_start) {
+          next SLICE; ## This block overlaps a previous block
+        }
+      }
+      ## This block does not overlap any previous block: add it!
+      $underlying_slice = $this_underlying_slice;
+    }
+  }
+
+  if (!$underlying_slice) {
+    ## This block overlaps at least one block in every available underlying
+    ## Bio::EnsEMBL::Compara::AlignSlice::Slice. Create a new one!
+    $underlying_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+            -length => $align_slice_length,
+            -requesting_slice => $self->reference_Slice,
+            -align_slice => $self,
+            -method_link_species_set => $self->{_method_link_species_set},
+            -genome_db => $this_genomic_align->dnafrag->genome_db,
+            -expanded => $expanded,
+        );
+    push(@{$self->{_slices}}, $underlying_slice);
+    push(@{$self->{slices}->{$species}}, $underlying_slice);
+  }
+
+  if ($this_genomic_align->cigar_line =~ /X/) {
+    ## This GenomicAlign is part of a composite alignment
+    my $genomic_align_group = $this_genomic_align->genomic_align_group_by_type("composite");
+    foreach my $this_genomic_align (@{$genomic_align_group->genomic_align_array}) {
+    #  next if ($this_genomic_align 
+    }
+  }
+
+  return $underlying_slice;
 }
 
 
