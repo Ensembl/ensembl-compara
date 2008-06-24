@@ -59,3 +59,8 @@ var Cookie = {
     return cookie;
   }
 };
+
+var ajax = Cookie.get('ENSEMBL_AJAX');
+if(!ajax) {
+  Cookie.set('ENSEMBL_AJAX',Ajax.getTransport()?'enabled':'disabled',5000);
+}
