@@ -904,7 +904,7 @@ sub _create_underlying_Slices {
 
   foreach my $this_genomic_align_block (@$sorted_genomic_align_blocks) {
     if (UNIVERSAL::isa($this_genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
-      ## For trees, loop trough all nodes (internal and leaves) to add the GenomicAligns
+      ## For trees, loop through all nodes (internal and leaves) to add the GenomicAligns
       foreach my $this_genomic_align_node (@{$this_genomic_align_block->get_all_nodes}) {
         # but we have to skip the reference node as this has already been added to the guide Slice
         next if ($this_genomic_align_node eq $this_genomic_align_block->reference_genomic_align_node);
@@ -951,8 +951,8 @@ sub _add_GenomicAlign_to_a_Slice {
     push(@{$self->{_slices}}, $self->{slices}->{$species}->[0]);
   }
 
-  my $this_block_start = $this_genomic_align->genomic_align_block->reference_slice_start;
-  my $this_block_end = $this_genomic_align->genomic_align_block->reference_slice_end;
+  my $this_block_start = $this_genomic_align_block->reference_slice_start;
+  my $this_block_end = $this_genomic_align_block->reference_slice_end;
   my $this_core_slice = $this_genomic_align->get_Slice();
   if (!$this_core_slice) {
     $this_core_slice = new Bio::EnsEMBL::Slice(
@@ -985,10 +985,6 @@ sub _add_GenomicAlign_to_a_Slice {
     }
   }
 
-  # Choose the appropriate AS::Slice for adding this bit of the alignment
-  my $this_underlying_slice = $self->_choose_underlying_Slice($this_genomic_align, $this_block_start,
-      $this_block_end, $align_slice_length, $species_order);
-
   # Fix block start and block end for composite segments (2X genomes)
   if ($this_genomic_align->cigar_line =~ /^(\d*)X/) {
     my $length = $1;
@@ -1000,6 +996,10 @@ sub _add_GenomicAlign_to_a_Slice {
     $length = 1 if (!defined($length));
     $this_block_end -= $length;
   }
+
+  # Choose the appropriate AS::Slice for adding this bit of the alignment
+  my $this_underlying_slice = $self->_choose_underlying_Slice($this_genomic_align, $this_block_start,
+      $this_block_end, $align_slice_length, $species_order);
 
   # Add a Slice, Mapper, and start-end-strand coordinates to an underlying AS::Slice
   $this_underlying_slice->add_Slice_Mapper_pair(
@@ -1038,9 +1038,10 @@ sub _choose_underlying_Slice {
         );
     push(@{$self->{_slices}}, $underlying_slice);
     push(@{$self->{slices}->{$species}}, $underlying_slice);
+    return $underlying_slice;
   }
 
-  if (!$underlying_slice and $species_order) {
+  if ($species_order) {
     my $preset_underlying_slice = undef;
     foreach my $this_underlying_slice (@{$self->{_slices}}) {
       if (!$this_genomic_align->{original_dbID} and $this_genomic_align->dbID) {
@@ -1100,13 +1101,13 @@ sub _choose_underlying_Slice {
     push(@{$self->{slices}->{$species}}, $underlying_slice);
   }
 
-  if ($this_genomic_align->cigar_line =~ /X/) {
-    ## This GenomicAlign is part of a composite alignment
-    my $genomic_align_group = $this_genomic_align->genomic_align_group_by_type("composite");
-    foreach my $this_genomic_align (@{$genomic_align_group->genomic_align_array}) {
-    #  next if ($this_genomic_align 
-    }
-  }
+#   if ($this_genomic_align->cigar_line =~ /X/) {
+#     ## This GenomicAlign is part of a composite alignment
+#     my $genomic_align_group = $this_genomic_align->genomic_align_group_by_type("composite");
+#     foreach my $this_genomic_align (@{$genomic_align_group->genomic_align_array}) {
+#     #  next if ($this_genomic_align 
+#     }
+#   }
 
   return $underlying_slice;
 }
