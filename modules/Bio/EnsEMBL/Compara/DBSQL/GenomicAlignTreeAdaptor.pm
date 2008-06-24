@@ -263,6 +263,12 @@ sub fetch_by_GenomicAlignBlock {
       }
     }
   }
+  if ($genomic_align_block->reference_slice) {
+    $genomic_align_tree->reference_slice($genomic_align_block->reference_slice);
+    $genomic_align_tree->reference_slice_start($genomic_align_block->reference_slice_start);
+    $genomic_align_tree->reference_slice_end($genomic_align_block->reference_slice_end);
+    $genomic_align_tree->reference_slice_strand($genomic_align_block->reference_slice_strand);
+  }
 
   return $genomic_align_tree;
 }
