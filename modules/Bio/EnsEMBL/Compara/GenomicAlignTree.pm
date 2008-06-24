@@ -480,6 +480,7 @@ sub restrict_between_alignment_positions {
       if ($genomic_align_tree->reference_genomic_align eq $this_genomic_align) {
         ## Update the reference_genomic_align
         $genomic_align_tree->reference_genomic_align($restricted_genomic_align);
+        $genomic_align_tree->reference_genomic_align_node($this_node);
       }
       if (!$skip_empty_GenomicAligns or $restricted_genomic_align->dnafrag_start <= $restricted_genomic_align->dnafrag_end) {
 	  $restricted_genomic_align->genomic_align_block($genomic_align_tree);
