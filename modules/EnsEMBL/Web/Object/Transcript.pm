@@ -191,18 +191,20 @@ sub get_families {
 
 sub get_interpro {
   my $self = shift;
-  my $translation = $self->translation_object;
-  my $hash = $translation->get_interpro_links( $self->transcript );
-  return unless (%$hash);
-
-  my $interpro;
-  for my $accession (keys %$hash){
-    my $data = {};
-    $data->{'link'} = $self->get_ExtURL_link( $accession, 'INTERPRO',$accession);
-    $data->{'desc'} = $hash->{$accession};
-    $interpro->{$accession} = $data;
+  if (my $translation = $self->translation_object) {
+	  my $hash = $translation->get_interpro_links( $self->transcript );
+	  return unless (%$hash);
+		
+	  my $interpro;
+	  for my $accession (keys %$hash){
+		  my $data = {};
+		  $data->{'link'} = $self->get_ExtURL_link( $accession, 'INTERPRO',$accession);
+		  $data->{'desc'} = $hash->{$accession};
+		  $interpro->{$accession} = $data;
+	  }
+	  return $interpro;
   }
-  return $interpro;
+  return;
 }
 
 sub get_alternative_locations {
