@@ -8,8 +8,12 @@ use HTTP::Request;
 use HTTP::Response;
 use Compress::Zlib;
 
+
+use EnsEMBL::Web::File::Driver::Disk;
+use EnsEMBL::Web::File::Driver::Memcached;
+
 our $TMP_IMG_FORMAT     = 'XXX/X/X/XXXXXXXXXXXXXXX';
-our @ISA =qw(EnsEMBL::Web::Root);
+our @ISA = qw(EnsEMBL::Web::Root);
 
 #  ->cache   = G/S 0/1
 #  ->ticket  = G/S ticketname (o/w uses random date stamp)
@@ -17,23 +21,30 @@ our @ISA =qw(EnsEMBL::Web::Root);
 sub new {
   my $class = shift;
   my $self = {
-    'cache'     => 0,
-    'species_defs' => shift,
-    'token'     => '',
-    'filename'  => '',
-    'file_root' => '',
-    'URL_root'  => '',
+    cache        => 0,
+    species_defs => shift,
+    token        => '',
+    filename     => '',
+    file_root    => '',
+    URL_root     => '',
+    driver       => undef,
   };
   bless $self, $class;
+
+  $self->driver = EnsEMBL::Web::File::Driver::Memcached->new ||
+                  EnsEMBL::Web::File::Driver::Disk->new;
+
   return $self;
 }
 
+sub driver :lvalue { $_[0]->{'driver'}; }
+sub cache  :lvalue { $_[0]->{'cache'}; }
 
 sub set_cache_filename {
   my ($self, $prefix, $filename) = @_;
   
   $filename ||= $self->ticket();
-  $self->{'cache'}      = 1;
+  $self->cache = 1;
   my $MD5 = hex(substr( md5_hex($filename), 0, 6 )); ## Just the first 6 characters will do!
   my $c1  = $EnsEMBL::Web::Root::random_ticket_chars[($MD5>>5)&31];
   my $c2  = $EnsEMBL::Web::Root::random_ticket_chars[$MD5&31];
@@ -50,11 +61,8 @@ sub filename {
 }
 
 sub print {
-  my( $self, $string ) = @_;
-  my $fh = $self->_prep_output();
-  return unless $fh;
-  $fh->gzwrite( $string ); 
-  $fh->gzclose();
+  my ($self, $string) = @_;
+  return $self->save($string);
 }
 
 sub get_url_content {
@@ -90,55 +98,28 @@ sub get_file_content {
 
 sub save {
   my( $self, $content, $param ) = @_;
-  my $out = $self->filename;
-  my (%result, $fh);
   return unless $content;
 
   if ($param && ref($content) =~ /Proxy::Object/) { ## Doing one-step save
     if ($param eq 'url') {
       $content = $self->get_url_content($content, $content->param($param));
-    }
-    else {
+    } else {
       $content = $self->get_file_content($content, $content->param($param));
     }
   }
 
-  $fh = $self->_prep_output($out);
-  if ($fh) {
-    $fh->gzwrite( $content );
-    $fh->gzclose;
-    $result{'file'} = $out;
-  } 
-  $result{'error'} = 'no_cache'  unless $fh;
-  return \%result;
-}
-
-sub _prep_output {
-  my ($self, $out) = @_;
-  $out ||= $self->filename;
-  $self->make_directory( $out );
-  my $fh = gzopen( $out, 'wb' );
-  warn qq(Cannot open local cache file for saving: $!) unless $fh;
-  return $fh;
+  return $self->driver->save($content, $self->filename, {compress => 1});
 }
 
 sub exists {
   my $self = shift;
-  return -e $self->filename && -r $self->filename;
+  return $self->driver->exists($self->filename);
 }
+
 sub retrieve {
-  my( $self, $cache ) = @_;
+  my ($self, $cache) = @_;
   $cache ||= $self->filename;
-  
-  my $fh = gzopen ( $cache, "rb" ) || warn qq(Cannot open cached upload for parsing: $!);
-  my $data;
-  if( $fh ) {
-    $data = '';
-    my $buffer = '';
-    $data .= $buffer while $fh->gzread( $buffer ) > 0;
-    $fh->gzclose;
-  }
-  return $data;
+  return $self->driver->get($cache);
 }
 
 __END__

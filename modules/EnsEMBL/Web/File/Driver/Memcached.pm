@@ -27,24 +27,18 @@ sub exists {
 }
 
 sub get {
-  my ($self, $key, $format) = @_;
+  my ($self, $key, $args) = @_;
 
-#  if ($format eq 'imagemap') {
-#    $self->memd->enable_compress(1);
-#  } else {
-#    $self->memd->enable_compress(0);
-#  }
-
+  $self->memd->enable_compress($args->{compress});
   return $cache->{$key} || $self->memd->get($key);
 }
 
 sub save {
-  my ($self, $data, $key, $format) = @_;
+  my ($self, $data, $key, $args) = @_;
   
-  if ($format eq 'imagemap') {
-    $self->memd->enable_compress(1);
-  } else {
-    $self->memd->enable_compress(0);
+  $self->memd->enable_compress($args->{compress});
+
+  if ($args->{format} eq 'png') {
     my ($x, $y) = Image::Size::imgsize(\$data);
     $cache->{$key} = {
       width  => $x,
@@ -52,10 +46,11 @@ sub save {
       size   => length($data),
       image  => $data,
     };
+  } else {
+    $cache->{$key} = $data;
   }
-
   
-  my $result = $self->memd->set($key, $cache->{$key}, undef, 'IMG', $format);
+  my $result = $self->memd->set($key, $cache->{$key}, undef, 'TMP', $args->{format});
   return $result eq "OK\r?\n";
 }
 

@@ -19,34 +19,38 @@ sub exists {
 }
 
 sub get {
-  my ($self, $file, $format) = @_;
+  my ($self, $file, $args) = @_;
 
-  if ($format eq 'imagemap') {
-    my $gz = gzopen( $file, 'rb' );
-    my $imagemap = '';
-    my $buffer = 0;
-    $imagemap .= $buffer while $gz->gzread( $buffer ) > 0;
+  if ($args->{compress}) {
+    my $gz      = gzopen( $file, 'rb' );
+    my $content = '';
+    my $buffer  = 0;
+    $content   .= $buffer while $gz->gzread( $buffer ) > 0;
     $gz->gzclose;
-    return $imagemap;  
+    return $content;  
   } else {
-    ## We dont read non-imagemap files
+    local $/ = undef;
+    open FILE, $file;
+    my $content = <FILE>;
+    close FILE;    
+    return $content;  
   }
 }
 
 sub save {
-  my ($self, $image, $file, $format) = @_;
+  my ($self, $content, $file, $args) = @_;
 
   $self->make_directory($file);
 
-  if ($format eq 'imagemap') {
+  if ($args->{compress}) {
     my $gz = gzopen($file, 'wb');
-    $gz->gzwrite($image);
+    $gz->gzwrite($content);
     $gz->gzclose();
   } else {
-    open(IMG_OUT, ">$file") || warn qq(Cannot open temporary image file for $format image: $!);
-    binmode IMG_OUT;
-    print IMG_OUT $image;
-    close(IMG_OUT);
+    open(FILE, ">$file") || warn qq(Cannot open temporary image file $file: $!);
+    binmode FILE;
+    print FILE $content;
+    close FILE;
   }
 }
 

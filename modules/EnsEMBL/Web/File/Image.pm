@@ -48,7 +48,7 @@ sub set_cache_filename {
   my $self     = shift;
   my $type     = shift;
   my $filename = shift;
-  $self->{'cache'}      = 1;
+  $self->cache = 1;
   my $MD5 = hex(substr( md5_hex($filename), 0, 6 )); ## Just the first 6 characters will do!
   my $c1  = $EnsEMBL::Web::Root::random_ticket_chars[($MD5>>5)&31];
   my $c2  = $EnsEMBL::Web::Root::random_ticket_chars[$MD5&31];
@@ -181,7 +181,7 @@ sub render {
   if ( $self->exists($file) ) {
     ## If cached image required and it exists return it!
     if ( $format eq 'imagemap' ) {
-      my $imagemap = $self->driver->get($file, $format);
+      my $imagemap = $self->driver->get($file, {format => 'imagemap', compress => 1});
       return { 'imagemap' => $imagemap };
     } else {
       return { 'URL' => $self->URL($format), 'file' => $file };
@@ -195,10 +195,10 @@ sub render {
   # $self->{'species_defs'}{'timer'}->push( "RAW RENDER END", 7);
   if ($image) {
     if ($format eq 'imagemap') {
-      $self->driver->save($image, $file, $format) if $self->cache;
+      $self->driver->save($image, $file, {format => 'imagemap', compress => 1}) if $self->cache;
       return { 'imagemap' => $image };
     } else {
-      $self->driver->save($image, $file, $format);
+      $self->driver->save($image, $file, {format => $format});
       ## TODO: ERROR exception !!!
       return { 'URL' => $self->URL($format), 'file' => $file };
     }
