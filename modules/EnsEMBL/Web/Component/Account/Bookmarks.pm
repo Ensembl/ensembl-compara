@@ -45,7 +45,7 @@ sub content {
     ## Sort user bookmarks by name if required 
 
     ## Display user bookmarks
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
 
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
@@ -78,13 +78,15 @@ sub content {
       $has_bookmarks = 1;
     }
     $html .= $table->render;
+    $html .= $self->_add_bookmark;
   }
 
 
-  ## Get all bookmark records for this user's subscribed groups
+  ## Get all bookmark records for this user's groups
   my %group_bookmarks = ();
-  foreach my $group ($user->find_nonadmin_groups) {
+  foreach my $group ($user->groups) {
     foreach my $bookmark ($group->bookmarks) {
+      next if $bookmark->created_by == $user->id;
       if ($group_bookmarks{$bookmark->id}) {
         push @{$group_bookmarks{$bookmark->id}{'groups'}}, $group;
       }
@@ -101,7 +103,7 @@ sub content {
     ## Sort group bookmarks by name if required 
 
     ## Display group bookmarks
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
 
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
@@ -120,7 +122,7 @@ sub content {
 
       my @group_links;
       foreach my $group (@{$group_bookmarks{$bookmark_id}{'groups'}}) {
-        push @group_links, sprintf(qq(<a href="/Account/Group?id=%s">%s</a>), $group->id, $group->name);
+        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s">%s</a>), $group->id, $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);
@@ -131,10 +133,15 @@ sub content {
   if (!$has_bookmarks) {
     $html .= qq(<p class="center"><img src="/i/help/bookmark_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
     $html .= qq(<p class="center">You haven't saved any bookmarks. <a href="/info/website/account/settings.html#bookmarks">Learn more about bookmarks &rarr;</a>);
+    $html .= $self->_add_bookmark;
   }
-  $html .= qq(<p><a href="/Account/Bookmark?dataview=add"><b>Add a new bookmark </b>&rarr;</a></p>);
 
   return $html;
+}
+
+sub _add_bookmark {
+  my $self = shift;
+  return qq(<p><a href="/Account/Bookmark?dataview=add"><b>Add a new bookmark </b>&rarr;</a></p>);
 }
 
 1;
