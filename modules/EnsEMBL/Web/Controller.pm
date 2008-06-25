@@ -73,8 +73,8 @@ sub command {
   my $class = $self->get_connection($action->get_action);
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
     #warn "Dispatching to: " . $class . " (" . $action->get_action . ")";
-    my $command = $class->new();
-    $command->render($action);
+    my $command = $class->new({'action'=>$action});
+    $command->render;
   } else {
     warn "Cannot use $class";
   }
