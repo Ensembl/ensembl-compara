@@ -17,7 +17,7 @@ use EnsEMBL::Web::Wizard::Node;
 
 {
 
-my %CGI :ATTR(:set<cgi> :get<cgi> :init_arg<cgi>);
+my %Object :ATTR(:set<object> :get<object>);
 my %ScriptName :ATTR(:set<scriptname> :get<scriptname> :init_arg<scriptname>);
 my %Form :ATTR(:set<form> :get<form>);
 my %Nodes :ATTR(:set<nodes> :get<nodes> :init_arg<nodes>);
@@ -78,13 +78,13 @@ sub current_node {
   my ($self) = @_;
   my $nodes = $self->get_nodes;
   my $current_node = undef; 
-  my $submit = $self->get_cgi->param('wizard_submit');
+  my $submit = $self->get_object->param('wizard_submit');
   if ($submit && $submit =~ /Back/) {
     my $previous = $self->find_previous;
     $current_node = $nodes->{$self->find_previous};
   } 
-  elsif ($self->get_cgi->param('wizard_next')){
-    $current_node = $nodes->{$self->get_cgi->param('wizard_next')};
+  elsif ($self->get_object->param('wizard_next')){
+    $current_node = $nodes->{$self->get_object->param('wizard_next')};
   }
   else {
     $current_node = $nodes->{$self->get_default_node};
@@ -102,7 +102,7 @@ sub forward_connection {
     }
   }
   ## Add in any dynamically-created links
-  my $next_name = $self->get_cgi->param('wizard_next');
+  my $next_name = $self->get_object->param('wizard_next');
   if (!$forward_connection && $next_name && $next_name ne $self->current_node->name) {
     $forward_connection = EnsEMBL::Web::Wizard::Connection->new({ 
                     from => $node, to => $self->get_nodes->{$next_name} });
@@ -132,9 +132,9 @@ sub redirect_current_node {
   $parameter = {} if ref($parameter) ne 'HASH'; ## sanity check
 
   ## Add in any unpassed parameters
-  foreach my $param ($self->get_cgi->param) {
+  foreach my $param ($self->get_object->param) {
     next if $param =~ /^wizard_/ && $param ne 'wizard_steps'; ## Don't automatically pass built-in parameters
-    my @value = $self->get_cgi->param($param);
+    my @value = $self->get_object->param($param);
     if (@value) {
       $parameter->{$param} = \@value unless $parameter->{$param};
     }
@@ -145,7 +145,8 @@ sub redirect_current_node {
 
 sub render_current_node {
 ### Renders a form for the current node
-  my ($self, $object) = @_;
+  my $self = shift;
+  my $object = $self->get_object;
   my $node = $self->current_node;
   my $html;
   if ($node) {
@@ -201,7 +202,7 @@ sub render_connection_form {
 sub find_previous {
 ### Returns penultimate element from wizard_steps array
   my $self = shift;
-  my @steps = $self->get_cgi->param('wizard_steps');
+  my @steps = $self->get_object->param('wizard_steps');
   pop(@steps);
   return pop(@steps);
 }
@@ -211,9 +212,9 @@ sub incoming_parameters {
   my $self = shift;
   my %parameter = ();
 
-  my @cgi_params = $self->get_cgi->param();
+  my @cgi_params = $self->get_object->param();
   foreach my $name (@cgi_params) {
-    my @value = $self->get_cgi->param($name);
+    my @value = $self->get_object->param($name);
     if (@value) {
       $parameter{$name} = \@value;
     } 
