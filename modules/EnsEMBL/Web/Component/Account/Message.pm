@@ -20,8 +20,10 @@ sub caption {
 }
 
 sub content {
+  warn "Trying to render message content";
   my $self = shift;
-  return $self->object->command->get_message || '';
+  #return $self->object->command->get_message || '';
+  return $self->object->param('command_message') || '';
 }
 
 1;
