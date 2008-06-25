@@ -82,7 +82,13 @@ sub stuff {
 ### and 'action' - giving nice, clean, systematic URLs for handling
 ### heirarchical object navigation
   my $object_type = shift || $ENV{'ENSEMBL_TYPE'};
-  my $webpage = EnsEMBL::Web::Document::WebPage->new( 'objecttype' => $object_type, 'scriptname' => 'action' );
+  my $action = shift;
+  my $command = shift;
+  my $webpage = EnsEMBL::Web::Document::WebPage->new( 
+                  'objecttype' => $object_type, 
+                  'scriptname' => 'action',
+                  'command'    => $command, 
+  );
 # The whole problem handling code possibly needs re-factoring 
 # Especially the stuff that may end up cyclic! (History/UnMapped)
 # where ID's don't exist but we have a "gene" based display
