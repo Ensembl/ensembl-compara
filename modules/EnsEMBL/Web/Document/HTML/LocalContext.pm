@@ -57,6 +57,7 @@ sub render {
         <dt>%s</dt>), $self->caption );
   my $pad = '';
   foreach my $node ( $t->nodes ) {
+    next if $node->data->{'no_menu_entry'};
     $r = $node->right if $node->right > $r;
     if( $previous_node && $node->left > $previous_node->right ) {
       foreach(1..($node->left - $previous_node->right-1)) {
