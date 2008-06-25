@@ -86,19 +86,25 @@ sub _init {
 			'href'      => $self->href(  $transcript, $exon->[2], %highlights ),
 		});
 		$G->{'zmenu'} = $self->zmenu( $transcript, $exon->[2] ) unless $Config->{'_href_only'};
+
+		#add tags for vertical lines
+		my $tag = "@{[$exon->[2]->end]}:@{[$exon->[2]->start]}";
+		my $col = $Config->get('TSE_transcript','col');
+		$self->join_tag( $G, "X:$tag", 0,  0, $col, 'fill', -99 );
+		$self->join_tag( $G, "X:$tag", 1,  0, $col, 'fill', -99  );
 		$self->push( $G );
 	}
 
 	#draw a direction arrow
+	$self->push(new Sanger::Graphics::Glyph::Line({
+		'x'         => 0,
+		'y'         => -4,
+		'width'     => $length,
+		'height'    => 0,
+		'absolutey' => 1,
+		'colour'    => $colour
+	}));
 	if($strand == 1) {
-		$self->push(new Sanger::Graphics::Glyph::Line({
-			'x'         => 0,
-			'y'         => -4,
-			'width'     => $length,
-			'height'    => 0,
-			'absolutey' => 1,
-			'colour'    => $colour
-		}));
 		$self->push( new Sanger::Graphics::Glyph::Poly({
 			'points' => [
 				$length - 4/$pix_per_bp,-2,
@@ -108,18 +114,10 @@ sub _init {
 			'absolutey' => 1,
 		}));
 	} else {
-		$self->push(new Sanger::Graphics::Glyph::Line({
-			'x'         => 0,
-			'y'         => $h+4,
-			'width'     => $length,
-			'height'    => 0,
-			'absolutey' => 1,
-			'colour'    => $colour
-		}));
 		$self->push(new Sanger::Graphics::Glyph::Poly({
-			'points'    => [ 4/$pix_per_bp,$h+6,
-							 0,              $h+4,
-							 4/$pix_per_bp,$h+2],
+			'points'    => [ 4/$pix_per_bp,-6,
+							 0            ,-4,
+							 4/$pix_per_bp,-2],
 			'colour'    => $colour,
 			'absolutey' => 1,
 		}));
