@@ -250,7 +250,7 @@ sub align_interval {
     my @colours2 = qw(antiquewhite3 brown gray rosybrown1 blue green red gray yellow);
     my @colours = qw(antiquewhite1 mistyrose1 burlywood1 khaki1 cornsilk1 lavenderblush1 lemonchiffon2 darkseagreen2  lightcyan1 papayawhip seashell1);
 
-    foreach my $s (@$mp) {
+    foreach my $s (sort {$a->{start} <=> $b->{start}} @$mp) {
     my $s2 = $s->{slice};
 
     my $ss = $s->{start};
