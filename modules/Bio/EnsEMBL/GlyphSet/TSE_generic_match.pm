@@ -7,7 +7,7 @@ $Data::Dumper::Maxdepth = 3;
 
 sub init_label {
 	my ($self) = @_;
-	$self->init_label_text( 'T. Supp. evidence' );
+	$self->init_label_text( 'Transcript evidence' );
 }
 
 sub _init {
@@ -28,10 +28,12 @@ sub _init {
 
 	#go through each hit (transcript_supporting_feature)
 	my $Y          = 0;
+
 	foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
 		my $hit_name = $hit_details->{'hit_name'};
 		my $start_x  = 1000000;
 		my $finish_x = 0;
+
 
 		#draw hit locations
 		foreach my $block (@{$hit_details->{'data'}}) {
@@ -52,8 +54,8 @@ sub _init {
 		}
 
 		#draw extensions at the left of the image
-		if (   ($hit_details->{'5_extension'} && $strand == 1)
-			|| ($hit_details->{'3_extension'} && $strand == -1)) {
+		if (   ($hit_details->{'start_extension'} && $strand == 1)
+			|| ($hit_details->{'end_extension'} && $strand == -1)) {
 			$self->push(new Sanger::Graphics::Glyph::Line({
 				'x'         => 0,
 				'y'         => $Y + 0.5*$h,
@@ -64,8 +66,8 @@ sub _init {
 			}));
 		}
 		#draw extensions at the right of the image
-		if (   ($hit_details->{'3_extension'} && $strand == 1)
-			|| ($hit_details->{'5_extension'} && $strand == -1)) {
+		if (   ($hit_details->{'end_extension'} && $strand == 1)
+			|| ($hit_details->{'start_extension'} && $strand == -1)) {
 			warn "x = $finish_x";
 			$self->push(new Sanger::Graphics::Glyph::Line({
 				'x'         => $finish_x + (1/$pix_per_bp),
