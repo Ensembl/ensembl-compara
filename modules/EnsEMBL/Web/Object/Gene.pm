@@ -81,7 +81,19 @@ sub get_gene_supporting_evidence {
 			my $db_name = $external_db_det->{$evi->external_db_id}->{'db_name'};
 
 			#use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
-			if ( $trans->coding_region_start == $evi->seq_region_start
+			#for protein features give some leeway in matching to transcript - +- 3 bases
+			if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
+				if (   (int($trans->coding_region_start-$evi->seq_region_start) < 4)
+					|| (int($trans->coding_region_end-$evi->seq_region_end) < 4)) {
+					$e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
+					$t_hits{$name}++;
+				}
+				else {
+					$e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
+					$t_hits{$name}++;	
+				}
+			}
+			elsif ( $trans->coding_region_start == $evi->seq_region_start
 					 || $trans->coding_region_end == $evi->seq_region_end ) {
 				$e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
 				$t_hits{$name}++;
