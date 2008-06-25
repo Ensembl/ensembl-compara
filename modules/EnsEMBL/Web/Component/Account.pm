@@ -32,6 +32,7 @@ sub share_link {
   return sprintf(qq(<a href="/Account/SelectGroup?id=%s;type=%s">Share</a>), $id, $call);
 } 
 
+=pod
 sub message {
   ### Displays a message (e.g. error) from the Controller::Command::Account module
   my ($panel, $object) = @_;
@@ -46,7 +47,18 @@ sub message {
   }
   $panel->print($html);
 }
+=cut
 
+sub dedupe {
+### Removes objects from a list, using a hash of values to filter on and 
+### the name of a method that retrieves a corresponding value from the object
+  my ($self, $list, $compare, $method) = @_;
+  my $ok = [];
+  foreach my $obj (@$list) {
+    push @$ok, $obj unless $compare->{$obj->$method};
+  } 
+  return $ok;
+}
 
 1;
 
