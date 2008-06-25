@@ -19,7 +19,7 @@ use base qw(EnsEMBL::Web::Root);
 {
 
 my %Filters :ATTR(:get<filters> :set<filters>);
-my %Action :ATTR(:get<action> :set<action>);
+my %Action :ATTR(:get<action> :set<action> :init_arg<action>);
 my %Message  :ATTR(:get<message> :set<message>);
 my %SpeciesDefs  :ATTR(:get<species_defs> :set<species_defs>);
 
@@ -30,26 +30,24 @@ sub BUILD {
   }
 }
 
+sub action {
+  my $self = shift;
+  return $self->get_action; 
+}
+
+sub render {
+  my $self = shift;
+  if ($self->not_allowed) {
+    $self->render_message;
+  } else {
+    $self->process;
+  }
+}
+
 sub render_message {
   my $self = shift;
   my $type = shift || 'Account';
-
-    my $webpage= new EnsEMBL::Web::Document::WebPage(
-    'renderer'   => 'Apache',
-    'outputtype' => 'HTML',
-    'scriptname' => '',
-    'objecttype' => $type,
-    'command'    => $self,
-  );
-
-  if( $webpage->has_a_problem() ) {
-    $webpage->render_error_page( $webpage->problem->[0] );
-  } else {
-    foreach my $object( @{$webpage->dataObjects} ) {
-      $webpage->configure( $object, 'message' );
-    }
-    $webpage->render();
-  }
+  EnsEMBL::Web::Magic::stuff($type, 'Message', $self);
 }
 
 sub add_filter {
@@ -72,7 +70,9 @@ sub not_allowed {
   my $filters = $self->get_filters || [];
   foreach my $f (@$filters) {
     if (!$f->allow) {
-      $self->set_message($f->message);
+      ## Set the message in the CGI object so it accessible via the proxy object
+      $self->action->cgi->param('command_message', $f->message);
+      #$self->set_message($f->message);
       return $f->message;
     }
   }

@@ -15,18 +15,10 @@ sub BUILD {
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->render_page; 
-  }
-}
 
-sub render_page {
-  EnsEMBL::Web::Magic::stuff('Account', 'AdminGroups');
+sub process {
+  my $self = shift;
+  EnsEMBL::Web::Magic::stuff('Account', 'AdminGroups', $self);
 }
 
 }

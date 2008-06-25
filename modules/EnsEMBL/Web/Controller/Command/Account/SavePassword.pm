@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Class::Std;
-use CGI;
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
@@ -16,7 +15,7 @@ use base 'EnsEMBL::Web::Controller::Command::Account';
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi; 
   if ($cgi->param('code')) {
     $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::ActivationValid');
   }
@@ -26,19 +25,9 @@ sub BUILD {
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::PasswordSecure');
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->process;
-  }
-}
-
 sub process {
   my $self = shift;
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
 
   my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
 

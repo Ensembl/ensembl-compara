@@ -14,17 +14,7 @@ sub BUILD {
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->render_page;
-  }
-}
-
-sub render_page {
+sub process {
   my $self = shift;
 
   ## Create basic page object, so we can access CGI parameters

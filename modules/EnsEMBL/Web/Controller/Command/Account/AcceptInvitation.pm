@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Class::Std;
-use CGI;
 
 use EnsEMBL::Web::Document::Interface;
 use EnsEMBL::Web::Interface::InterfaceDef;
@@ -22,19 +21,9 @@ sub BUILD {
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::InvitationValid');
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->process;
-  }
-}
-
 sub process {
   my $self = shift;
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
   my $invitation = EnsEMBL::Web::Data::Invite->new($cgi->param('id'));
   my $url; 
   if ($invitation->status eq 'pending') {

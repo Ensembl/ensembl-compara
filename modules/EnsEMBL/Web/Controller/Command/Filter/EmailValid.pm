@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::RegObj;
-use CGI;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
@@ -13,8 +12,8 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 {
 
 sub allow {
-  my ($self) = @_;
-  my $cgi = new CGI;
+  my $self = shift;
+  my $cgi = $self->action->cgi;
   my $email = $cgi->param('email');
   if ($email =~ /^(\w|\-|\.)+\@(\w|\-|\.)+[a-zA-Z]{2,}$/) { 
     return 1;

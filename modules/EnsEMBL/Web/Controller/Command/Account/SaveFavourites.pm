@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Class::Std;
-use CGI;
 
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Document::HTML::SpeciesList;
@@ -18,21 +17,11 @@ sub BUILD {
   my ($self, $ident, $args) = @_; 
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   ## ensure that this record belongs to the logged-in user!
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
   if ($cgi->param('id')) {
     $self->user_or_admin('EnsEMBL::Web::Data::Favourites', $cgi->param('id'), $cgi->param('owner_type'));
   }
 
-}
-
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->render_page;
-  }
 }
 
 sub render_page {
@@ -44,8 +33,8 @@ sub render_page {
   $species_list = EnsEMBL::Web::Data::Record::SpeciesList::User->new
     unless $species_list;
     
-  $species_list->favourites($self->get_action->get_named_parameter('favourites'));
-  $species_list->list($self->get_action->get_named_parameter('list'));
+  $species_list->favourites($self->action->cgi->param('favourites'));
+  $species_list->list($self->action->cgi->param('list'));
   $species_list->user_id($user->id);
   $species_list->save;
 

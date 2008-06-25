@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Class::Std;
-use CGI;
 
 use EnsEMBL::Web::Data::Release;
 use base 'EnsEMBL::Web::Controller::Command::Account';
@@ -15,25 +14,16 @@ sub BUILD {
   my ($self, $ident, $args) = @_; 
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   ## If edting, ensure that this record belongs to the logged-in user!
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
   if ($cgi->param('id')) {
     $self->user_or_admin('EnsEMBL::Web::Data::Record::NewsFilter', $cgi->param('id'), $cgi->param('owner_type'));
   }
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->render_page;
-  }
-}
-
-sub render_page {
+sub process {
   my $self = shift;
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
+
   ## Create basic page object, so we can access CGI parameters
   my $webpage = EnsEMBL::Web::Document::Interface::simple('Account');
 

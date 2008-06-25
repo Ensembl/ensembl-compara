@@ -13,40 +13,13 @@ use base 'EnsEMBL::Web::Controller::Command::Account';
 sub BUILD {
   my ($self, $ident, $args) = @_; 
   ## Only members can view group details
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::Member', {'group_id' => $cgi->param('id')});
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->render_page; 
-  }
-}
-
-sub render_page {
-  my $self = shift;
-
-  my $webpage= new EnsEMBL::Web::Document::WebPage(
-    'renderer'   => 'Apache',
-    'outputtype' => 'HTML',
-    'scriptname' => 'Account/Group',
-    'objecttype' => 'Account',
-  );
-
-  if( $webpage->has_a_problem() ) {
-    $webpage->render_error_page( $webpage->problem->[0] );
-  } else {
-    foreach my $object( @{$webpage->dataObjects} ) {
-      $webpage->configure( $object, 'groupview', 'context_menu' );
-    }
-    $webpage->action();
-  }
-
+sub process {
+  EnsEMBL::Web::Magic::stuff('Account', 'Group', $self);
 }
 
 }

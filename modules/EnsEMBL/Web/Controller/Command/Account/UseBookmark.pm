@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Class::Std;
-use CGI;
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
@@ -16,26 +15,16 @@ use base 'EnsEMBL::Web::Controller::Command::Account';
 sub BUILD {
   my ($self, $ident, $args) = @_; 
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
   if ($cgi->param('id')) {
     $self->user_or_admin('EnsEMBL::Web::Data::Record::Bookmark', $cgi->param('id'), $cgi->param('owner_type'));
   }
 
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->process; 
-  }
-}
-
 sub process {
   my $self = shift;
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
 
   my $bookmark;
   if ($cgi->param('owner_type') && $cgi->param('owner_type') eq 'group') {

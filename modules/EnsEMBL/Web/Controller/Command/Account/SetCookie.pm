@@ -9,7 +9,6 @@ use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::RegObj;
 use Apache2::RequestUtil;
-use CGI;
 
 use base 'EnsEMBL::Web::Controller::Command::Account';
 
@@ -20,22 +19,10 @@ sub BUILD {
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::PasswordValid');
 }
 
-sub render {
-warn "Doing cookie setting";
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-warn "Not allowed!";
-    $self->render_message;
-  } else {
-    $self->process;
-  }
-}
-
 sub process {
   my $self = shift;
+  my $cgi = $self->action->cgi;
 
-  my $cgi = new CGI;
   my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   
   my $url = CGI::escape($cgi->param('url')); 

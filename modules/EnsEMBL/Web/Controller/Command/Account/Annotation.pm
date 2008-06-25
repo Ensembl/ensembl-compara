@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Class::Std;
-use CGI;
 
 use EnsEMBL::Web::Data::User;
 
@@ -16,27 +15,17 @@ sub BUILD {
   my ($self, $ident, $args) = @_; 
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   ## If editing, ensure that this record belongs to the logged-in user!
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
   my $record;
   if ($cgi->param('id')) {
     $self->user_or_admin('EnsEMBL::Web::Data::Record::Annotation', $cgi->param('id'), $cgi->param('owner_type'));
   }
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->render_page;
-  }
-}
-
-sub render_page {
+sub process {
   my $self = shift;
+  my $cgi = $self->action->cgi;
 
-warn "Rendering page Annotation";
   ## Create basic page object, so we can access CGI parameters
   my $webpage = EnsEMBL::Web::Document::Interface::simple('Account');
 

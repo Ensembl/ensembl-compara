@@ -13,8 +13,8 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 {
 
 sub allow {
-  my ($self) = @_;
-  my $cgi = new CGI;
+  my $self = shift;
+  my $cgi = $self->action->cgi;
   my $invitation = EnsEMBL::Web::Data::Record::Invite::Group->new($cgi->param('id'));
   if ($invitation) {
     return 1;

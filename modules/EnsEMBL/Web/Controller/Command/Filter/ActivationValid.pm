@@ -14,15 +14,13 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
 sub allow {
   my ($self) = @_;
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
   my $user;
   if ($cgi->param('user_id')) {
     $user = EnsEMBL::Web::Data::User->new($cgi->param('user_id'));
   } else {
     $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   }
-  warn "USER: " . $user->name;
-  warn "SALT: " . $user->salt;
   ## TO DO: Add email address to validation, once new link is standard
   if ($user->salt eq $cgi->param('code')) {
     return 1;

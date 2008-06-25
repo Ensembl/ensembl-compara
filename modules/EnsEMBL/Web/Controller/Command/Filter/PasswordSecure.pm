@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::RegObj;
-use CGI;
 
 our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
@@ -15,7 +14,7 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 
 sub allow {
   my ($self) = @_;
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
   my $password_1 = $cgi->param('new_password_1');
   my $password_2 = $cgi->param('new_password_2');
 

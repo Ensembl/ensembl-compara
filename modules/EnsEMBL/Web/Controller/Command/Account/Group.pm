@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Class::Std;
-use CGI;
 
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
@@ -17,7 +16,7 @@ sub BUILD {
   my ($self, $ident, $args) = @_; 
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   ## If editing, ensure that this record is editable by the logged-in user!
-  my $cgi = new CGI;
+  my $cgi = $self->action->cgi;
   my $record;
   if ($cgi->param('id')) {
     $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::Admin',
@@ -26,19 +25,9 @@ sub BUILD {
   }
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->render_page;
-  }
-}
-
-sub render_page {
+sub process {
   my $self = shift;
-  my $cgi  = new CGI;
+  my $cgi = $self->action->cgi;
 
   ## Create basic page object, so we can access CGI parameters
   my $webpage = EnsEMBL::Web::Document::Interface::simple('Account');
