@@ -39,7 +39,7 @@ sub content {
     ## Sort user configs by name if required
 
     ## Display user configs
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
 
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
@@ -58,11 +58,10 @@ sub content {
     foreach my $config (@configs) {
       my $row = {};
 
-      my $description = $config->description || '&nbsp;';
-      $row->{'name'} = sprintf(qq(<a href="/Account/_use_config?id=%s" title="%s">%s</a>),
-                        $config->id, $description, $config->name);
+      $row->{'name'} = sprintf(qq(<a href="/Account/_use_config?id=%s">%s</a>),
+                        $config->id, $config->name);
 
-      $row->{'desc'} = $description;
+      $row->{'desc'} = $config->description || '&nbsp;';
       $row->{'rename'} = $self->edit_link('Configuration', $config->id, 'Rename');
       if ($has_groups) {
         $row->{'share'}   = $self->share_link('Bookmark', $config->id);
@@ -76,8 +75,9 @@ sub content {
 
  ## Get all config records for this user's subscribed groups
   my %group_configs = ();
-  foreach my $group ($user->find_nonadmin_groups) {
+  foreach my $group ($user->groups) {
     foreach my $config ($group->configurations) {
+      next if $config->created_by == $user->id;
       if ($group_configs{$config->id}) {
         push @{$group_configs{$config->id}{'groups'}}, $group;
       }
@@ -94,7 +94,7 @@ sub content {
     ## Sort group configs by name if required
 
     ## Display group configs
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
 
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
@@ -113,7 +113,7 @@ sub content {
 
       my @group_links;
       foreach my $group (@{$group_configs{$config_id}{'groups'}}) {
-        push @group_links, sprintf(qq(<a href="/Account/Group?id=%s">%s</a>), $group->id, $group->name);
+        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s">%s</a>), $group->id, $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);
