@@ -39,7 +39,7 @@ sub content {
     ## Sort user notes by name if required
 
     ## Display user notes
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
 
     $table->add_columns(
         { 'key' => 'gene',      'title' => 'Gene ID',       'width' => '20%', 'align' => 'left' },
@@ -75,8 +75,9 @@ sub content {
 
  ## Get all note records for this user's subscribed groups
   my %group_notes = ();
-  foreach my $group ($user->find_nonadmin_groups) {
+  foreach my $group ($user->groups) {
     foreach my $note ($group->annotations) {
+      next if $note->created_by == $user->id;
       if ($group_notes{$note->id}) {
         push @{$group_notes{$note->id}{'groups'}}, $group;
       }
@@ -93,7 +94,7 @@ sub content {
     ## Sort group notes by name if required
 
     ## Display group notes
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
 
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
@@ -112,7 +113,7 @@ sub content {
 
       my @group_links;
       foreach my $group (@{$group_notes{$note_id}{'groups'}}) {
-        push @group_links, sprintf(qq(<a href="/Account/Group?id=%s">%s</a>), $group->id, $group->name);
+        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s">%s</a>), $group->id, $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);
