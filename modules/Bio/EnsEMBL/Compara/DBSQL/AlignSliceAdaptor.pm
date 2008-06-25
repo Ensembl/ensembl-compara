@@ -371,11 +371,15 @@ sub _combine_genomic_align_trees {
   }
 
   foreach my $this_genomic_align_node (@{$next_tree->get_all_sorted_genomic_align_nodes}) {
-      foreach my $this_genomic_align (@{$this_genomic_align_node->get_all_GenomicAligns}) {
-	  my $this_genome_db = $this_genomic_align->genome_db;
-	  my $this_genomic_align_id = $this_genomic_align->dbID;
-	  my $this_node_id = $this_genomic_align_node->node_id;
-	  my $this_right_node_id = _get_right_node_id($this_genomic_align_node);
+    next if (!@{$this_genomic_align_node->get_all_GenomicAligns});
+    my $this_genomic_align = $this_genomic_align_node->get_all_GenomicAligns->[0];
+    my $this_genome_db = $this_genomic_align->genome_db;
+    my $this_node_id = $this_genomic_align_node->node_id;
+    my $this_right_node_id = _get_right_node_id($this_genomic_align_node);
+    my $these_genomic_align_ids = [];
+    foreach my $each_genomic_align (@{$this_genomic_align_node->get_all_GenomicAligns}) {
+      push (@$these_genomic_align_ids, $each_genomic_align->dbID);
+    }
 
 # #     my $this_simple_tree;
 # #     if ($this_genome_db->name eq "Ancestral sequences") {
@@ -388,11 +392,11 @@ sub _combine_genomic_align_trees {
 # #       $this_simple_tree = join(",", sort keys %$sp);
 # #     }
 
-	  my $match = 0;
-	  while (!$match and $species_counter < @$species_order) {
-	      my $species_genome_db = $species_order->[$species_counter]->{genome_db};
-	      my $species_right_node_id = $species_order->[$species_counter]->{right_node_id};
-	      $match = 1;
+    my $match = 0;
+    while (!$match and $species_counter < @$species_order) {
+      my $species_genome_db = $species_order->[$species_counter]->{genome_db};
+      my $species_right_node_id = $species_order->[$species_counter]->{right_node_id};
+      $match = 1;
 # #       my $species_simple_tree;
 # #       if ($species_genome_db->name eq "Ancestral sequences") {
 # #         $species_simple_tree = $species_order->[$species_counter]->{last_node}->newick_simple_format();
@@ -403,49 +407,48 @@ sub _combine_genomic_align_trees {
 # #         $species_simple_tree = join(",", sort keys %$sp);
 # #       }
 
-	      if (defined($species_right_node_id) and $species_right_node_id == $this_node_id) {
-		  $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
-		  # #         $species_order->[$species_counter]->{last_node} = $this_genomic_align_node;
-		  push (@{$species_order->[$species_counter]->{genomic_align_ids}}, $this_genomic_align_id);
-	      } elsif ($this_genome_db->name eq $species_genome_db->name
-		       and (!defined($species_right_node_id) or
-			    !defined($existing_node_ids->{$species_right_node_id}))
+      if (defined($species_right_node_id) and $species_right_node_id == $this_node_id) {
+          $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
+          # #         $species_order->[$species_counter]->{last_node} = $this_genomic_align_node;
+          push (@{$species_order->[$species_counter]->{genomic_align_ids}}, @$these_genomic_align_ids);
+      } elsif ($this_genome_db->name eq $species_genome_db->name
+                and (!defined($species_right_node_id) or
+                    !defined($existing_node_ids->{$species_right_node_id}))
 # #           and ($this_genome_db->name ne "Ancestral sequences" or
 # #               ($this_simple_tree eq $species_simple_tree))
           ) {
 # #         if ($this_genome_db->name eq "Ancestral sequences") {
-# # 
+# #
 # #           print "TREE\nTREE\n$species_simple_tree -- $this_simple_tree\n\n";
-		  # #         }
-		  $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
-		  # #         $species_order->[$species_counter]->{last_node} = $this_genomic_align_node;
-		  push (@{$species_order->[$species_counter]->{genomic_align_ids}}, $this_genomic_align_id);
-	      } elsif (!defined($existing_right_node_ids->{$this_node_id})) {
-		  #         print "Cannot find $this_node_id\n", join(" // ", keys %$existing_right_node_ids), "\n";
-		  splice(@$species_order, $species_counter, 0, {
-								genome_db => $this_genome_db,
-								right_node_id => $this_right_node_id,
-            genomic_align_ids => [$this_genomic_align_id],
-								# #             last_node => $this_genomic_align_node,
-							       });
-	      } else {
-		  $match = 0;
-	      }
-	      $species_counter++;
-	  }
-	  if (!$match) {
-	      push(@$species_order, {
-				     genome_db => $this_genome_db,
-				     right_node_id => $this_right_node_id,
-				     genomic_align_ids => [$this_genomic_align_id],
-				     # #           last_node => $this_genomic_align_node,
-				    });
-	      $species_counter++;
-	  }
+# #         }
+        $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
+# #         $species_order->[$species_counter]->{last_node} = $this_genomic_align_node;
+        push (@{$species_order->[$species_counter]->{genomic_align_ids}}, @$these_genomic_align_ids);
+      } elsif (!defined($existing_right_node_ids->{$this_node_id})) {
+#         print "Cannot find $this_node_id\n", join(" // ", keys %$existing_right_node_ids), "\n";
+          splice(@$species_order, $species_counter, 0, {
+              genome_db => $this_genome_db,
+              right_node_id => $this_right_node_id,
+              genomic_align_ids => [@$these_genomic_align_ids],
+# #             last_node => $this_genomic_align_node,
+            });
+      } else {
+        $match = 0;
       }
+      $species_counter++;
+    }
+    if (!$match) {
+      push(@$species_order, {
+            genome_db => $this_genome_db,
+            right_node_id => $this_right_node_id,
+            genomic_align_ids => [@$these_genomic_align_ids],
+# #           last_node => $this_genomic_align_node,
+        });
+      $species_counter++;
+    }
   }
 
-  return;
+return;
 }
 
 sub _get_right_node_id {
