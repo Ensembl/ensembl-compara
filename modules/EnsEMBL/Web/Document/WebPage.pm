@@ -59,12 +59,21 @@ sub new {
   bless $self, $class;
   my %parameters = @_;
   $| = 1;
+
 ## Input module...
   $self->{'script'} = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
-  my $input  = $parameters{'cgi'}        || new CGI;
+  my $input;
+  if ($parameters{'cgi'}) {
+    $input = $parameters{'cgi'};
+  }  
+  elsif ($parameters{'command'}) {
+    $input = $parameters{'command'}->action->get_cgi;
+  }
+  else {
+    $input  = new CGI;
+  }
   # $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
   $self->_prof("Parameters initialised from input");
-  $self->{'command'} = $parameters{'command'};
 
 ## Page module...
 
@@ -179,7 +188,6 @@ sub configure {
       push @modules, [$CONF,$config_module_name];
       ## Attach any control modules to the configuration
       $CONF->{wizard}  = $self->{wizard};
-      $CONF->{command} = $self->{command};
     } elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) {
 # Handle "use" failures gracefully...
 # Firstly skip Can't locate errors o/w display a "compile time" error message.
