@@ -103,7 +103,7 @@ sub _init {
     
     my $fontcolour;
     # change label colour to white if the chr band is black, else use black...
-    if ($stain eq "gpos100" || $stain eq "gpos" || $stain eq "acen" || $stain eq "stalk" || $stain eq "gpos75" || || $stain eq "gpos66" || $stain eq "tip"){
+    if ($stain eq "gpos100" || $stain eq "gpos" || $stain eq "acen" || $stain eq "stalk" || $stain eq "gpos75" || $stain eq "gpos66" || $stain eq "tip"){
       $fontcolour = $white;
     } else {
       $fontcolour = $black;
