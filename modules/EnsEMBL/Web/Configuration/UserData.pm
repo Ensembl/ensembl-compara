@@ -6,6 +6,18 @@ use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
+sub set_default_action {
+  my $self = shift;
+  $self->{_data}{default} = 'Upload';
+}
+
+sub global_context { return $_[0]->_user_context; }
+sub ajax_content   { return $_[0]->_ajax_content;   }
+sub local_context  { return $_[0]->_local_context;  }
+sub local_tools    { return undef;  }
+sub content_panel  { return $_[0]->_content_panel;  }
+sub context_panel  { return $_[0]->_context_panel;  }
+
 sub populate_tree {
   my $self = shift;
 
@@ -37,19 +49,14 @@ sub populate_tree {
         )],
     { 'availability' => 1, 'concise' => 'Manage Data' }
   ));
-}
 
-sub set_default_action {
-  my $self = shift;
-  $self->{_data}{default} = 'Upload';
+  ## Add "invisible" nodes used by interface but not displayed in navigation
+  $self->create_node( 'Message', '',
+    [qw(message EnsEMBL::Web::Component::UserData::Message
+        )],
+      { 'no_menu_entry' => 1 }
+  );
 }
-
-sub global_context { return $_[0]->_user_context; }
-sub ajax_content   { return $_[0]->_ajax_content;   }
-sub local_context  { return $_[0]->_local_context;  }
-sub local_tools    { return undef;  }
-sub content_panel  { return $_[0]->_content_panel;  }
-sub context_panel  { return $_[0]->_context_panel;  }
 
 
 #####################################################################################
@@ -64,14 +71,18 @@ sub upload {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
-  my $select = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_file' ));
-  my $upload = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'upload'));
+  #my $session  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'check_session'));
+  #my $warning  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'overwrite_warning' ));
+  my $select  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_file' ));
+  my $upload  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'upload'));
+  my $more    = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'more_input'));
   my $feedback = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'upload_feedback'));
 
-  ## LINK PAGE NODES TOGETHER
+  ## SET UP CONNECTION BUTTONS
+  #$wizard->add_connection(( from => $warning,  to => $select));
   $wizard->add_connection(( from => $select,   to => $upload));
-  $wizard->add_connection(( from => $upload,   to => $feedback));
-
+  $wizard->add_connection(( from => $upload,   to => $more));
+  $wizard->add_connection(( from => $more,     to => $feedback));
 }
 
 sub attach {

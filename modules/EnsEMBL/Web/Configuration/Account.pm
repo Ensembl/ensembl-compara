@@ -10,6 +10,25 @@ use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
+sub set_default_action {
+  my $self = shift;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user && $user->id) {
+    $self->{_data}{default} = 'Links';
+  }
+  else {
+    $self->{_data}{default} = 'Login';
+  }
+}
+
+sub global_context { return $_[0]->_user_context; }
+sub ajax_content   { return $_[0]->_ajax_content;   }
+sub local_context  { return $_[0]->_local_context;  }
+sub local_tools    { return undef; }
+sub content_panel  { return $_[0]->_content_panel;  }
+sub context_panel  { return $_[0]->_context_panel;  }
+
+
 sub populate_tree {
   my $self = shift;
 
@@ -54,7 +73,9 @@ sub populate_tree {
 
     my $groups_menu = $self->create_submenu( 'Groups', 'Groups' );
     $groups_menu->append($self->create_node( 'MemberGroups', "Subscriptions ([[counts::member]])",
-    [qw(new EnsEMBL::Web::Component::Account::MemberGroups
+    [qw(
+        groups    EnsEMBL::Web::Component::Account::MemberGroups
+        details   EnsEMBL::Web::Component::Account::MemberDetails
         )],
       { 'availability' => 1, 'concise' => 'Subscriptions' }
     ));
@@ -83,143 +104,44 @@ sub populate_tree {
     );
 
   }
-}
 
-sub set_default_action {
-  my $self = shift;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user && $user->id) {
-    $self->{_data}{default} = 'Links';
-  }
-  else {
-    $self->{_data}{default} = 'Login';
-  }
-}
+  ## Add "invisible" nodes used by interface but not displayed in navigation
+  $self->create_node( 'Message', '',
+    [qw(message EnsEMBL::Web::Component::Account::Message
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'Login', '',
+    [qw(login EnsEMBL::Web::Component::Account::Login
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'LoginCheck', '',
+    [qw(login_check EnsEMBL::Web::Component::Account::LoginCheck
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'LostPassword', '',
+    [qw(lost_password EnsEMBL::Web::Component::Account::LostPassword
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'EnterPassword', '',
+    [qw(enter_password EnsEMBL::Web::Component::Account::Password
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'UpdateFailed', '',
+    [qw(update_failed EnsEMBL::Web::Component::Account::UpdateFailed
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'SelectGroup', '',
+    [qw(select_group EnsEMBL::Web::Component::Account::SelectGroup
+        )],
+      { 'no_menu_entry' => 1 }
+  );
 
-sub global_context { return $_[0]->_user_context; }
-sub ajax_content   { return $_[0]->_ajax_content;   }
-sub local_context  { return $_[0]->_local_context;  }
-sub local_tools    { return undef; }
-sub content_panel  { return $_[0]->_content_panel;  }
-sub context_panel  { return $_[0]->_context_panel;  }
-
-
-#####################################################################################
-
-## Interface pages have to be done the 'old-fashioned' way, instead of using Magic
-
-sub message {
-  my $self   = shift;
-
-  if (my $panel = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $self->{object}->command($self->{command});
-    $panel->add_components(qw(
-        message        EnsEMBL::Web::Component::Account::Message
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel );
-  }
-}
-
-sub login {
-  my $self   = shift;
-
-  if (my $panel = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $panel->add_components(qw(
-        login       EnsEMBL::Web::Component::Account::Login
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel );
-  }
-}
-
-
-sub login_check {
-  my $self   = shift;
-
-  if (my $panel = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $panel->add_components(qw(
-        login_check       EnsEMBL::Web::Component::Account::LoginCheck
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel );
-  }
-}
-
-sub lost_password {
-  my $self   = shift;
-
-  if (my $panel = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $panel->add_components(qw(
-        lost_password       EnsEMBL::Web::Component::Account::LostPassword
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel );
-  }
-}
-
-sub enter_password {
-  my $self   = shift;
-
-  if (my $panel = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $panel->add_components(qw(
-        enter_password        EnsEMBL::Web::Component::Account::Password
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel );
-  }
-}
-
-sub update_failed {
-  my $self   = shift;
-
-  if (my $panel = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $panel->add_components(qw(
-        update_failed       EnsEMBL::Web::Component::Account::UpdateFailed
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel );
-  }
-}
-
-sub select_group {
-  my $self   = shift;
-
-  if (my $panel = $self->new_panel( 'Image',
-    'code'    => "info$self->{flag}",
-    'object'  => $self->{object},
-    ) ) {
-    $panel->add_components(qw(
-        select_group       EnsEMBL::Web::Component::Account::SelectGroup
-    ));
-
-    ## add panel to page
-    $self->add_panel( $panel );
-  }
 }
 
 1;
