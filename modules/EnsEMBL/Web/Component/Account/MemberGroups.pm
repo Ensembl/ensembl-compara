@@ -37,8 +37,9 @@ sub content {
 
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'desc',      'title' => 'Description',   'width' => '50%', 'align' => 'left' },
+        { 'key' => 'desc',      'title' => 'Description',   'width' => '40%', 'align' => 'left' },
         { 'key' => 'admin',     'title' => 'Administrator', 'width' => '20%', 'align' => 'left' },
+        { 'key' => 'details',   'title' => '',              'width' => '10%', 'align' => 'left' },
         { 'key' => 'leave',     'title' => '',              'width' => '10%', 'align' => 'left' },
     );
 
@@ -49,6 +50,12 @@ sub content {
       $row->{'desc'} = $group->blurb || '&nbsp;';
       my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
       $row->{'admin'} = $creator->name;
+      if ($self->object->param('id') && $self->object->param('id') == $group->id) {
+        $row->{'details'} = '<a href="/Account/MemberGroups">Hide Details</a>';
+      }
+      else {
+        $row->{'details'} = '<a href="/Account/MemberGroups?id='.$group->id.'">Show Details</a>';
+      }
       $row->{'leave'} = $self->delete_link('Membership', $group->id, 'Unsubscribe');
       $table->add_row($row);
     }
