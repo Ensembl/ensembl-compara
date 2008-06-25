@@ -65,12 +65,12 @@ sub print {
 }
 
 sub get_url_content {
-  my ($self, $object, $param) = @_;
+  my ($self, $object) = @_;
   my $content;
 
   my $useragent = LWP::UserAgent->new();
   $useragent->proxy( 'http', $object->species_defs->ENSEMBL_WWW_PROXY ) if( $object->species_defs->ENSEMBL_WWW_PROXY );
-  my $request = new HTTP::Request( 'GET', $object->param($param) );
+  my $request = new HTTP::Request( 'GET', $object->param('url') );
   $request->header( 'Pragma'           => 'no-cache' );
   $request->header( 'Cache-control' => 'no-cache' );
   my $response = $useragent->request($request);
@@ -81,11 +81,11 @@ sub get_url_content {
 }
 
 sub get_file_content {
-  my ($self, $object, $param) = @_;
+  my ($self, $object) = @_;
   my $content;
   
   my $cgi = $object->[1]->{'_input'};
-  my $in = $cgi->tmpFileName($object->param($param));
+  my $in = $cgi->tmpFileName($object->param('file'));
   my $open = open (IN, '<', $in) || warn qq(Cannot open CGI temp file for caching: $!);
   if( $open ) {
     while (<IN>) {
@@ -101,9 +101,9 @@ sub save {
 
   if ($param && ref($content) =~ /Proxy::Object/) { ## Doing one-step save
     if ($param eq 'url') {
-      $content = $self->get_url_content($content, $content->param($param));
+      $content = $self->get_url_content($content);
     } else {
-      $content = $self->get_file_content($content, $content->param($param));
+      $content = $self->get_file_content($content);
     }
   }
 
