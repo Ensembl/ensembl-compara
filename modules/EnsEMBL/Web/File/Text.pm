@@ -8,7 +8,6 @@ use HTTP::Request;
 use HTTP::Response;
 use Compress::Zlib;
 
-
 use EnsEMBL::Web::File::Driver::Disk;
 use EnsEMBL::Web::File::Driver::Memcached;
 
@@ -119,7 +118,7 @@ sub exists {
 sub retrieve {
   my ($self, $cache) = @_;
   $cache ||= $self->filename;
-  return $self->driver->get($cache);
+  return $self->driver->get($cache, {compress => 1});
 }
 
 __END__
