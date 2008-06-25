@@ -6,7 +6,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use File::Basename;
 use Data::Bio::Text::FeatureParser;
 use EnsEMBL::Web::File::Text;
 use EnsEMBL::Web::Wizard::Node;
@@ -25,10 +24,42 @@ our @formats = (
     {name => 'PSL', value => 'PSL'},
 );
 
+sub check_session {
+  my $self = shift;
+  my $parameter = {};
+  ## TO DO!
+  my $temp_data;
+  if ($temp_data) {
+    $parameter->{'wizard_next'} = 'overwrite_warning';
+  }
+  else {
+    $parameter->{'wizard_next'} = 'select_file';
+  }
+}
+
+sub overwrite_warning {
+  my $self = shift;
+  
+  $self->add_element(('type'=>'Information', 'value'=>'You have unsaved data uploaded. Uploading a new file will overwrite this data, unless it is first saved to your user account.'));
+  
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user) {
+    $self->add_element(( type => 'CheckBox', name => 'save', label => 'Save current data to my account', 'checked'=>'checked' ));
+  }
+  else {
+    $self->add_element(('type'=>'Information', 'value'=>'<a href="#" onclick="login_link()">Log into your user account</a> to save this data.'));
+  }
+}
+
 sub select_file {
   my $self = shift;
 
   $self->title('Select File to Upload');
+
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($self->object->param('save') && $user) {
+    ## Save current temporary data upload to user account
+  }
 
   my $current_species = $ENV{'ENSEMBL_SPECIES'};
   if ($current_species eq 'common') {
@@ -48,7 +79,14 @@ sub select_file {
   $self->add_element(( type => 'DropDown', name => 'species', label => 'Species', select => 'select', values => $species, 'value' => $current_species));
   $self->add_element(( type => 'File', name => 'file', label => 'Upload file' ));
   $self->add_element(( type => 'String', name => 'url', label => 'or provide file URL' ));
-  $self->add_element(( type => 'CheckBox', name => 'save', label => 'Save to my user account', 'checked'=>'checked' ));
+  
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user) {
+    $self->add_element(( type => 'CheckBox', name => 'save', label => 'Save to my user account', 'checked'=>'checked' ));
+  }
+  else {
+    $self->add_element(('type'=>'Information', 'value'=>'Log into your user account to save this data permanently.'));
+  }
 }
 
 sub upload {
@@ -59,56 +97,40 @@ sub upload {
   my $method = $self->object->param('url') ? 'url' : 'file';
   if ($self->object->param($method)) {
     
-    ## Get file contents
-    my $data;
+    ## Cache data (File::Text knows whether to use memcached or temp file)
     my $file = new EnsEMBL::Web::File::Text($self->object->species_defs);
-    if ($method eq 'url') {
-      $data = $file->get_url_content($self->object, $method);
-    }
-    else {    
-      $data = $file->get_file_content($self->object, $method);
-    }
-warn "DATA: $data";
-
-    my($filename, $dirs, $ext) = fileparse($self->object->param($method), qr/\.[^.]*/); 
-=pod
-    my $memcached = 0;
-    if ($memcached) {
-      ## cache data to memory
-    }
-    else {
-      $file->set_cache_filename('user_'.$method);
-      warn "Saving input file as ", $file->filename;
-      $result = $file->save($data);
-      $error = $result->{'error'};
-      if ($error) {
-        $parameter->{'error'} = $error;
-      }
-      else {
-        $parameter->{'cache'} = $file->filename;
-      }
-    }
-=cut
+    $file->set_cache_filename('user_'.$method);
+    $file->save($self->object, $method);
 
     ## Identify format
+    my $data = $file->retrieve;
     my $parser = Data::Bio::Text::FeatureParser->new();
     my $file_info = $parser->analyse($data);
+    my $format = $file_info->{'format'};
 
-
-
-    my $format = $self->_check_extension($ext);
-    warn "FILE $file is of format $format";
-    if (!$format || $format eq 'GFF') {
-      $format = $self->_identify_format($data);
-    }
-    $parameter->{'format'} = $format;
+    ## Attach data species to session
+    $self->object->get_session()->set_tmpdata({'data'=>'', 'format'=>$format});
 
     ## Work out if multiple assemblies available
-    $parameter->{'assemblies'} = $self->_check_coord_system($data);
+    my $assemblies = $self->_get_assemblies($self->object->param('species'));
 
-    $parameter->{'wizard_next'} = 'upload_feedback';
+    if (scalar(@$assemblies) || !$format) {
+      ## Get more input from user
+      if (scalar(@$assemblies)) {
+        $parameter->{'species'} = $self->object->param('species');
+      }
+      if (!$format) {
+        $parameter->{'format'} = 'none';
+      }
+      $parameter->{'wizard_next'} = 'more_input';
+    }
+    else {
+      $parameter->{'format'} = $format;
+      $parameter->{'wizard_next'} = 'upload_feedback';
+    }
   }
   else {
+warn "NO DATA";
     $parameter->{'wizard_next'} = 'select_file';
     $parameter->{'error_message'} = 'No data was uploaded. Please try again.';
   }
@@ -116,34 +138,42 @@ warn "DATA: $data";
   return $parameter;
 }
 
-sub upload_feedback {
-### Node to confirm data upload
+sub more_input {
   my $self = shift;
-  $self->title('File Uploaded');
+  $self->title('File Details');
 
   ## Format selector
-  my $upload_message = 'Thank you - your data was successfully uploaded.';
-  if ($self->object->param('format')) {
-    $upload_message .= ' File was identified as '.$self->object->param('format').' format.';
-    $self->add_element(( type => 'Information', value => $upload_message));
-  }
-  else {
-    $upload_message .= ' However, file format could not be identified - please select an option:';
-    $self->add_element(( type => 'Information', value => $upload_message));
+  if ($self->object->param('format') eq 'none') {
+    $self->add_element(( type => 'Information', value => 'Your file format could not be identified - please select an option:'));
   $self->add_element(( type => 'DropDown', name => 'format', label => 'File format', select => 'select', values => \@formats));
   }
 
   ### Assembly selector
-  if ($self->object->param('assemblies')) {
-    $self->add_element(( type => 'Information', value => 'This species has more than one assembly in Ensembl. Please choose the assembly that corresponds to your chromosomal coordinates:'));
-    my @assemblies = split(',', $self->object->param('assemblies'));
-    my $values;
-    foreach my $assembly (@assemblies) {
+  if ($self->object->param('species')) {
+    my $assemblies = $self->_get_assemblies($self->object->param('species'));
+    $self->add_element(( type => 'Information', value => 'This species has more than one assembly in Ensembl. If your data uses chromosomal coordinates, please specify the assembly'));
+    my $values = [];
+    foreach my $assembly (@$assemblies) {
       push @$values, {'name'=>$assembly, 'value'=>$assembly};
     }
     $self->add_element(( type => 'DropDown', name => 'assembly', label => 'Assembly', select => 'select', values => $values));
   }
 
+}
+
+sub upload_feedback {
+### Node to confirm data upload
+  my $self = shift;
+  $self->title('File Uploaded');
+  my $assembly = $self->object->param('assembly');
+  if ($assembly) {
+    ## Save assembly info to session
+  }
+  my $format = $self->object->param('format');
+  if ($format) {
+    ## Save format info to session
+  }
+  $self->add_element(( type => 'Information', value => "Thank you - your $format file was successfully uploaded."));
 }
 
 sub select_server {
@@ -248,18 +278,20 @@ sub _check_extension {
   return $ext;
 }
 
-sub _identify_format {
-### Tries to identify file format from content
-  my ($self, $data) = @_;
-  return undef;
-}
-
-sub _check_coord_system {
+sub _get_assemblies {
 ### Tries to identify coordinate system from file contents
 ### If on chromosomal coords and species has multiple assemblies, 
 ### return assembly info
-  my ($self, $data) = @_;
-  return undef;
+  my ($self, $species) = @_;
+  my $assemblies = [];
+  my %assembly = (
+    'Homo_sapiens'=>['NCBI36', 'NCBI37'],
+    'Mus_musculus'=>['NCBIm36', 'NCBIm37'],
+  );
+  if  ($species) {
+    $assemblies = $assembly{$species};
+  }
+  return $assemblies;
 }
 
 
