@@ -36,13 +36,51 @@ sub content {
 
   my $image    = $object->new_karyotype_image();
 
-  ## Do we have feature "tracks" to display?
   my $pointers;
   my %pointer_defaults = (
-        'Gene'      => ['blue', 'lharrow'],
-        'OligoProbe' => ['red', 'rharrow'],
+        'Gene'        => ['blue', 'lharrow'],
+        'OligoProbe'  => ['red', 'rharrow'],
+        'UserData'    => ['red', 'rharrow'],
   );
-  if ($object->param('id')) {
+  
+  ## Check if there is userdata in session
+  my $userdata = 0;
+
+  ## Do we have feature "tracks" to display?
+  if ($userdata) {
+    ## Set some basic image parameters
+    $image->imagemap = 'no';
+    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
+    $image->caption = 'Click on the image above to jump to an overview of the chromosome';
+    
+    ## Create pointers from user data
+    ## TO DO: Retrieve user data from session
+    my $data; 
+
+    my $parser = Data::Bio::Text::FeatureParser->new();
+    $parser->parse($data);
+
+    my $zmenu_config = {
+      'caption' => 'features',
+      'entries' => ['userdata'],
+    };
+
+    ## create image with parsed data
+    $pointer_ref = $image->add_pointers(
+      $object, 
+          {
+          'config_name'   => 'Vkar2view', 
+          'parser'        => $parser, 
+          'zmenu_config'  => $zmenu_config,
+          'color'         => $object->param("col")
+                               || $pointer_defaults{'UserData'}[0], 
+          'style'         => $object->param("style")
+                               || $pointer_defaults{'UserData'}[1]},
+          }
+      );
+    push(@$pointers, $pointer_ref);
+  }
+  elsif ($object->param('id')) {
     $image->cacheable  = 'no';
     $image->image_name = "feature-$species";
     $image->imagemap = 'yes';
@@ -54,11 +92,11 @@ sub content {
 			    $object,
 			    {'config_name'  => 'Vkaryotype',
           'features'      => $features,
-			    'zmenu_config' => $zmenu_config,
-			    'feature_type' => $ftype,
-			    'color'        => $object->param("col_$i")
+			    'zmenu_config'  => $zmenu_config,
+			    'feature_type'  => $ftype,
+			    'color'         => $object->param("col_$i")
 			                         || $pointer_defaults{$ftype}[0],
-			    'style'        => $object->param("style_$i")
+			    'style'         => $object->param("style_$i")
 			                         || $pointer_defaults{$ftype}[1]}
 			 );
       push(@$pointers, $pointer_ref);
