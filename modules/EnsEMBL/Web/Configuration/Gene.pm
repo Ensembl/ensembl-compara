@@ -64,7 +64,10 @@ sub populate_tree {
     { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
   $self->create_node( 'Regulation', 'Regulation', 
-    [qw(regulation EnsEMBL::Web::Component::Gene::UnderConstruction)],
+    [qw(
+      regulation EnsEMBL::Web::Component::Gene::RegulationImage
+      features EnsEMBL::Web::Component::Gene::RegulationTable      
+    )],
     { 'availability' => 'database:funcgen' }
   );
   $self->create_node( 'Family', 'Protein families ([[counts::families]])',
@@ -82,7 +85,10 @@ sub populate_tree {
     { 'availability' => 'database:variation' }
   ));
   $self->create_node( 'Idhistory', 'ID history',
-    [qw(display     EnsEMBL::Web::Component::Gene::UnderConstruction)]
+    [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
+        associated  EnsEMBL::Web::Component::Gene::HistoryLinked
+        map         EnsEMBL::Web::Component::Gene::HistoryMap)],  
+        { 'availability' => 1, 'concise' => 'History' }
   );
   $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component:: >>>Location::UnderConstruction)] );
 }
