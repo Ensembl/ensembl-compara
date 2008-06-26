@@ -33,6 +33,7 @@ our %LOOKUP_HASH;
 
 our %OBJECT_TO_SCRIPT = qw(
   Component   component
+  Zmenu       zmenu
   Gene        action
   Transcript  action
   Location    action
@@ -260,7 +261,7 @@ sub transHandler_no_species {
   my( $r, $session_cookie, $species, $path_segments, $querystring ) = @_;
         warn "... no species script ...";
   my $real_script_name = $OBJECT_TO_SCRIPT{ $species };
-  return undef if $real_script_name eq 'action' || $real_script_name eq 'component';
+  return undef if $real_script_name =~ /^(action|component|zmenu)$/;
   
   $r->subprocess_env->{'ENSEMBL_SPECIES'} = 'common';
   $r->subprocess_env->{'ENSEMBL_SCRIPT' } = $real_script_name;
@@ -317,6 +318,12 @@ sub transHandler_species {
     if( $real_script_name eq 'action' ) {
       $r->subprocess_env->{'ENSEMBL_ACTION'} = join '_', @$path_segments;
       $path_segments                         = [];
+    } elsif( $real_script_name eq 'zmenu' ) {
+      warn "... ZMENU ...";
+      $type   = shift @$path_segments;
+      $action = shift @$path_segments;
+      $r->subprocess_env->{'ENSEMBL_ACTION'}   = $type;
+      $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
     } elsif( $real_script_name eq 'component' ) {
       warn "... COMPONENT ...";
       $type = shift @$path_segments;
