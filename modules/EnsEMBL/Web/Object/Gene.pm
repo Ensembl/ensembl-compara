@@ -32,9 +32,9 @@ sub count_gene_supporting_evidence {
 	my $obj = $self->Obj;
 	my $evi_count = 0;
 	my %c;
-	warn $obj->stable_id;
+  #warn $obj->stable_id;
 	foreach my $trans (@{$obj->get_all_Transcripts()}) {
-		warn $trans->stable_id;
+		#warn $trans->stable_id;
 		foreach my $evi (@{$trans->get_all_supporting_features}) {
 			my $hit_name = $evi->hseqname;
 			$c{$hit_name}++;
@@ -429,7 +429,7 @@ sub fetch_homology_species_hash {
   my $homology_adaptor = $databases->get_HomologyAdaptor;
   my $homologies_array = $homology_adaptor->fetch_all_by_Member_method_link_type($query_member,$homology_source);
   
-  warn ".... ".$query_member." ...";
+  #warn ".... ".$query_member." ...";
   my $query_taxon = $query_member->taxon;
   my %classification;
   my $idx = 1;
@@ -803,8 +803,108 @@ sub generate_query_hash {
 
 }
 
+# Calls for HistoryView
+
+sub get_archive_object {
+  my $self = shift;
+  my $id = $self->stable_id;
+  my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
+  my $archive_object = $archive_adaptor->fetch_by_stable_id($id);
+
+ return $archive_object;
+}
+
+sub get_latest_incarnation {
+  my $self = shift;
+  return $self->Obj->get_latest_incarnation;
+}
+
+=head2 history
+
+ Arg1        : data object
+ Description : gets the archive id history tree based around this ID
+ Return type : listref of Bio::EnsEMBL::ArchiveStableId
+               As every ArchiveStableId knows about it's successors, this is
+                a linked tree.
+
+=cut
+
+sub history {
+  my $self = shift;
+  
+  my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
+  return unless $archive_adaptor;
+
+  my $history = $archive_adaptor->fetch_history_tree_by_stable_id($self->stable_id);
+  return $history;
+}
+
 
 # Calls for GeneRegulationView 
+
+sub get_fg_db {
+  my $self = shift;
+  my $slice = $self->get_Slice( @_ );
+  my $fg_db = undef;
+  my $db_type  = 'funcgen';
+  unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+    $fg_db = $slice->adaptor->db->get_db_adaptor($db_type);
+    if(!$fg_db) {
+      warn("Cannot connect to $db_type db");
+      return [];
+    }
+  }
+
+return $fg_db;
+}
+
+sub feature_sets {
+  my $self = shift;
+  my $fg_db = $self->get_fg_db;
+  my @fsets; 
+  my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
+
+  my @sources;
+  my $spp = $ENV{'ENSEMBL_SPECIES'};
+  if ($spp eq 'Homo_sapiens'){
+   @sources = ('RegulatoryFeatures', 'miRanda miRNA', 'cisRED search regions', 'cisRED group motifs', 'VISTA enhancer set'); 
+  } elsif ($spp eq 'Mus_musculus'){
+   @sources = ('cisRED search regions', 'cisRED group motifs');
+  } 
+  elsif ($spp eq 'Drosophila_melanogaster'){ warn "TEST";
+   @sources = ('BioTIFFIN motifs', 'REDfly CRMs', 'REDfly TFBSs'); 
+  }
+
+  foreach my $name ( @sources){
+    push @fsets, $feature_set_adaptor->fetch_by_name($name);
+  } 
+  return \@fsets; 
+}
+
+
+
+sub reg_factors {
+  my $self = shift;
+  my $gene = $self->gene;  
+  my $fsets = $self->feature_sets;
+  my $fg_db= $self->get_fg_db; 
+  my $ext_feat_adaptor = $fg_db->get_ExternalFeatureAdaptor; 
+  my $factors = $ext_feat_adaptor->fetch_all_by_Gene_FeatureSets($gene, $fsets, 1);
+   
+ 
+ return $factors;   
+}
+
+sub reg_features {
+  my $self = shift;
+  my $gene = $self->gene;
+  my $fsets = $self->feature_sets;
+  my $fg_db= $self->get_fg_db;
+  my $reg_feat_adaptor = $fg_db->get_RegulatoryFeatureAdaptor;
+  my $features = $reg_feat_adaptor->fetch_all_by_Gene_FeatureSets($gene, $fsets, 1); 
+
+  return $features;
+}
 
 sub features {
   my $self = shift;
