@@ -383,6 +383,7 @@ $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
     return OK;
   }
 }
+
 sub transHandler {
   my $r = shift;      # Get the connection handler
   my $u           = $r->parsed_uri;
@@ -403,10 +404,10 @@ sub transHandler {
       'refresh' => $ENSEMBL_ENCRYPT_REFRESH
     }
   });
+
   my @path_segments = split( m|/|, $file );
   shift @path_segments; # Always empty
   my $species   = shift @path_segments;
-
   my $Tspecies = $species;
   my $script    = undef;
   my $path_info = undef;
@@ -422,6 +423,8 @@ sub transHandler {
   if( $species && ($species = $SPECIES_MAP{lc($species)} || '' ) ) { # species script
     my $return = transHandler_species( $r, $session_cookie, $species, \@path_segments, $querystring, $file );
     return $return if defined $return;
+    shift @path_segments;
+    shift @path_segments;
   }
   $species = $Tspecies;
   $script = join( '/', @path_segments );
