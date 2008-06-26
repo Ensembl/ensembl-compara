@@ -28,7 +28,8 @@ sub features {
     my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;  
     my $feature_set = $feature_set_adaptor->fetch_by_name('cisRED search regions'); 
     my $species = $self->{'config'}->{'species'}; 
-    my $external_Feature_adaptor = $fg_db->get_ExternalFeatureAdaptor;
+    if ($species eq 'Drosophila_melanogaster' ){return;} 
+   my $external_Feature_adaptor = $fg_db->get_ExternalFeatureAdaptor;
   my $gene = $self->{'config'}->{'_draw_single_Gene'};
   warn ">>> $gene <<<";
   if( $gene ) {
