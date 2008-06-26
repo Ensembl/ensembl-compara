@@ -29,7 +29,7 @@ my $k;
 my %asmbl;
 
 sub _init {
-  my ($self) = @_;
+  my ($self) = @_; warn $self;
   return unless ($self->strand() == -1);
   my $Config = $self->{'config'};   
   my $history_tree = $self->{'container'}; 
@@ -129,7 +129,7 @@ warn "Releases... @releases";
   my $boxxcoord = $x -90;
   
   foreach my $sc (sort { $b<=>$a } keys %$SCORE_COLOURS) {
-    my $colour = $SCORE_COLOURS->{$sc}; 
+    my $colour = $SCORE_COLOURS->{$sc};  
     my $scorebox = new Sanger::Graphics::Glyph::Rect({
         'x'         => $boxxcoord,
         'y'         => 50,
@@ -361,8 +361,8 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
  });
 
   $self->push($asmbl_label);
-
-  my %archive_info = %{$Config->species_defs->get_config($species, 'archive')};
+   my %temp = %{$Config->species_defs->get_config($species )}; foreach my $key (keys %temp){warn "key $key";}
+  #my %archive_info = %{$Config->species_defs->get_config($species, 'archive')};
   my @a_colours = ('contigblue1', 'contigblue2');
   my $i =0;
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
@@ -371,7 +371,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
   foreach my $r (@releases){
 	my $tempr = $r; 
     if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
-    my $current_r = $archive_info{$tempr};
+    my $current_r = "NCBI36"; #$archive_info{$tempr};
     push @{$asmbl{$current_r}} , $r;
   }
   my %asmbl_seen;
@@ -379,7 +379,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
   foreach my $key ( @releases){	
    my $tempr = $key; 
    if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
-    my $a = $archive_info{$tempr};
+    my $a = "NCBI36";#£$archive_info{$tempr};
     if (exists $asmbl_seen{$a}){
 	  next;
 	}
@@ -499,7 +499,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
 
 sub zmenu_node {
   my( $self, $archive_id ) = @_;
-  my $Config = $self->{'config'};
+  my $Config = $self->{'config'}; 
   my $param =  $archive_id->type eq 'Translation' ? 'peptide' : lc($archive_id->type);
   my $type = ucfirst $param; 
   my $id = $archive_id->stable_id .".". $archive_id->version;
@@ -527,7 +527,7 @@ sub _archive_link {
   my $version = $object->version;
   my $type =  $object->type eq 'Translation' ? 'peptide' : lc($object->type);	
   my $name = $object->stable_id . "." . $object->version;
-  
+
   # no archive for old release, return un-linked display_label
   return $name if ($release < $Config->species_defs->EARLIEST_ARCHIVE);
   
@@ -536,11 +536,12 @@ sub _archive_link {
   if ($object->is_current) {
     $url = "/";
   } else {
-    
-    my %archive_sites = map { $_->{release_id} => $_->{short_date} }
-      @{ $Config->species_defs->RELEASE_INFO }; 
 
-    $url = "http://$archive_sites{$release}.archive.ensembl.org/";
+    
+    #my %archive_sites = map { $_->{release_id} => $_->{short_date} }
+    #  @{ $Config->species_defs->RELEASE_INFO }; 
+
+   # $url = "http://$archive_sites{$release}.archive.ensembl.org/";
     $url =~ s/ //;
 
   }
