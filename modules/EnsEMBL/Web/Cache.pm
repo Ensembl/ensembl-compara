@@ -9,15 +9,38 @@ use warnings;
 use Data::Dumper;
 use EnsEMBL::Web::SpeciesDefs;
 use base 'Cache::Memcached';
-use fields 'default_exptime';
+use fields qw(default_exptime levels);
 
 sub new {
-  my $class = shift;
+  my $class  = shift;
+  my $caller = caller;
   my $species_defs = new EnsEMBL::Web::SpeciesDefs;
   my %memcached    = $species_defs->multiX('ENSEMBL_MEMCACHED');
   
   return undef
     unless %memcached;
+
+  my $levels = $memcached{levels}
+               || [qw(
+                       PLUGGABLE_PATHS
+                       STATIC_PAGES_CONTENT
+                       WEBSITE_DB_DATA
+                       USER_DB_DATA
+                       TMP_IMAGES
+                  )];
+
+  my %levels = map { $_ => 1 } @$levels;
+     
+  return undef if $caller->isa('EnsEMBL::Web::Apache::Handlers')
+                  && !$levels{PLUGGABLE_PATHS};
+  return undef if $caller->isa('EnsEMBL::Web::Apache::SendDecPage')
+                  && !$levels{STATIC_PAGES_CONTENT};
+  return undef if $caller->isa('EnsEMBL::Web::DBSQL::UserDBConnection')
+                  && !$levels{USER_DB_DATA};
+  return undef if $caller->isa('EnsEMBL::Web::DBSQL::WebDBConnection')
+                  && !$levels{WEBSITE_DB_DATA};
+  return undef if $caller->isa('EnsEMBL::Web::File::Driver::Memcached')
+                  && !$levels{TMP_IMAGES};
 
   my %args = (
     servers         => $memcached{servers},
@@ -33,8 +56,11 @@ sub new {
   $self->enable_compress(0) unless $args{enable_compress};
   
   $self->{default_exptime} = $default_exptime;
+  $self->{levels}          = \%levels;
   return $self;
 }
+
+sub levels :lvalue { $_[0]->{'levels'}; }
 
 sub add_tags {
   my $self = shift;

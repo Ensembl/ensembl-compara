@@ -15,6 +15,7 @@ __PACKAGE__->mk_classdata(queriable_fields => {});
 __PACKAGE__->mk_classdata(relations        => {});
 __PACKAGE__->mk_classdata(cache_tags       => {});
 __PACKAGE__->mk_classdata('__type');
+__PACKAGE__->mk_classdata('cache_invalidator');
 
 
 ##
@@ -296,22 +297,29 @@ sub tie_a {
 
 ## Set caching object
 ## Any cache object that has a get, set, and remove method is supported
-__PACKAGE__->cache(
-  new EnsEMBL::Web::Cache
-);
+if (my $cache = new EnsEMBL::Web::Cache) {
 
-if (__PACKAGE__->cache) {
-    __PACKAGE__->add_trigger(select => sub { $_[0]->propagate_cache_tags } );
-    __PACKAGE__->add_trigger(after_create  => sub { $_[0]->invalidate_cache } );
-    __PACKAGE__->add_trigger(after_update  => sub { $_[0]->invalidate_cache } );
-    __PACKAGE__->add_trigger(before_delete => sub { $_[0]->invalidate_cache } );
+  __PACKAGE__->add_trigger(select => sub { $_[0]->propagate_cache_tags } );
+  __PACKAGE__->add_trigger(after_create  => sub { $_[0]->invalidate_cache($cache) } );
+  __PACKAGE__->add_trigger(after_update  => sub { $_[0]->invalidate_cache($cache) } );
+  __PACKAGE__->add_trigger(before_delete => sub { $_[0]->invalidate_cache($cache) } );
+
+  ## ->search must propogate tags
+  sub search {
+      my $proto = shift;
+      $proto->propagate_cache_tags;
+      $proto->SUPER::search(@_);
+  }
+  
 }
 
 sub invalidate_cache {
-  my $self = shift;
+  my $self  = shift;
+  my $cache = shift;
+  
   my @tags = (@_, $self->table);
 
-  $self->cache->delete_by_tags(@tags);
+  $cache->delete_by_tags(@tags);
 }
 
 sub propagate_cache_tags {
@@ -324,14 +332,6 @@ sub propagate_cache_tags {
   foreach my $tag (@tags) {
     $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}}->{$tag} = 1;
   }
-}
-
-## ->search must propogate tags
-sub search {
-    my $proto = shift;
-    $proto->propagate_cache_tags
-      if $proto->cache;
-    $proto->SUPER::search(@_);
 }
 
 ###################################################################################################

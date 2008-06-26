@@ -70,12 +70,13 @@ sub propagate_cache_tags {
 
 
 sub invalidate_cache {
-  my $self = shift;
+  my $self  = shift;
+  my $cache = shift;
 
   my $owner_type = $self->owner_type;
   my $owner = $self->$owner_type;
 
-  $self->SUPER::invalidate_cache("${owner_type}[$owner]", $self->type);
+  $self->SUPER::invalidate_cache($cache, "${owner_type}[$owner]", $self->type);
 }
 
 1;

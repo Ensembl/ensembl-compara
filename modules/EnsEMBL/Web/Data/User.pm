@@ -73,8 +73,10 @@ sub is_member_of {
 ###################################################################################################
 
 sub invalidate_cache {
-  my $self = shift;
-  $self->SUPER::invalidate_cache('user['.$self->id.']');
+  my $self  = shift;
+  my $cache = shift;
+  
+  $self->SUPER::invalidate_cache($cache, 'user['.$self->id.']');
 }
 
 sub propagate_cache_tags {

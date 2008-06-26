@@ -1,9 +1,6 @@
 package EnsEMBL::Web::Registry;
 
 use strict;
-
-use Apache2::RequestUtil;
-use CGI::Cookie;
 use Data::Dumper;
 
 use EnsEMBL::Web::Timer;
@@ -91,17 +88,16 @@ sub species_defs {
 sub check_ajax {
 ### Checks whether ajax enabled or not
   my $self = shift;
-  my $ajax = $self->get_ajax;
-  unless ($ajax) {
-      my $r = Apache2::RequestUtil->request();    
-      my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
-      $ajax = 0;
-      if ($cookies{'ENSEMBL_AJAX'} ne 'none' && $cookies{'ENSEMBL_AJAX'} ne '') {
-        $ajax = 1;
+  if (@_) {
+      my $ajax = shift;
+      if ($ajax && $ajax->value ne 'disabled' && $ajax->value ne '') {
+        $self->set_ajax(1);
+      } else {
+        $self->set_ajax(0);
       }
-      $self->set_ajax($ajax);
+  } else {
+      return $self->get_ajax;
   }
-  return $ajax;
 }
 
 sub initialize_user {

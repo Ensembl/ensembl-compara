@@ -27,9 +27,11 @@ __PACKAGE__->tie_a(user     => 'EnsEMBL::Web::Data::User');
 ###################################################################################################
 
 sub invalidate_cache {
-  my $self = shift;
-  $self->cache->delete_by_tags('user['.$self->user_id.']');
-  $self->cache->delete_by_tags('group['.$self->webgroup_id.']');
+  my $self  = shift;
+  my $cache = shift;
+
+  $cache->delete_by_tags('user['.$self->user_id.']');
+  $cache->delete_by_tags('group['.$self->webgroup_id.']');
 }
 
 1;

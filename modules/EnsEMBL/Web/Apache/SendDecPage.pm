@@ -22,6 +22,7 @@ our $memd = EnsEMBL::Web::Cache->new(
   compress_threshold => 10_000,
 );
 
+
 #############################################################
 # Mod_perl request handler all /htdocs pages
 #############################################################

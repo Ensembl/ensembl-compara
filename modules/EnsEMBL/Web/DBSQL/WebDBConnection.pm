@@ -2,6 +2,9 @@ package EnsEMBL::Web::DBSQL::WebDBConnection;
 
 use strict;
 use warnings;
+use EnsEMBL::Web::Cache;
+
+our $cache = new EnsEMBL::Web::Cache;
 
 sub import {
   my ($class, $species_defs) = @_;
@@ -23,6 +26,9 @@ sub import {
       AutoCommit => 1,
     }
   ) || die "Can not connect to $dsn";
+
+  $caller->cache($cache)
+    if $cache;
 }
 
 1;

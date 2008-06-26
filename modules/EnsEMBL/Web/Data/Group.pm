@@ -77,8 +77,10 @@ sub add_user {
 ###################################################################################################
 
 sub invalidate_cache {
-  my $self = shift;
-  $self->SUPER::invalidate_cache('group['.$self->id.']');
+  my $self  = shift;
+  my $cache = shift;
+
+  $self->SUPER::invalidate_cache($cache, 'group['.$self->id.']');
 }
 
 sub propagate_cache_tags {

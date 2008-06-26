@@ -22,7 +22,7 @@ use EnsEMBL::Web::Cache;
 
 use Exporter;
 
-our $memd = new EnsEMBL::Web::Cache;
+our   $memd = new EnsEMBL::Web::Cache;
 
 our $THIS_HOST;
 our $LOG_INFO; 
@@ -176,7 +176,12 @@ sub postReadRequestHandler {
     'cookie'=> $user_cookie,
     'r'     => $r
   }); ## Initialize the user (and possibly group) objects
-## Unlikely to go to db - just store the IDs
+  ## Unlikely to go to db - just store the IDs
+  
+  ## Ajax cookie
+  my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
+  $ENSEMBL_WEB_REGISTRY->check_ajax($cookies{'ENSEMBL_AJAX'}); 
+  
   return;
 }
 
