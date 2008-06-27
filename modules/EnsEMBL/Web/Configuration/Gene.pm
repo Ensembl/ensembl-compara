@@ -29,6 +29,7 @@ sub populate_tree {
 ##----------------------------------------------------------------------
 ## Compara menu: alignments/orthologs/paralogs/trees
   my $compara_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
+  warn "... $self ... $compara_menu ....";
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
     [qw(alignments  EnsEMBL::Web::Component::Gene::UnderConstruction)],
     { 'availability' => 'database:compara', , 'concise' => 'Genomic alignments' }
@@ -95,8 +96,20 @@ sub populate_tree {
 
 sub global_context { return $_[0]->_global_context; }
 sub ajax_content   { return $_[0]->_ajax_content;   }
+
+sub ajax_zmenu      {
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj  = $self->object;
+  $panel->add_entry( 'Gene: '.    $obj->stable_id, $obj->_url(), 200 );
+  $panel->add_entry( 'Location: '.$obj->location_string, $obj->_url({'type'=>'Location','action'=>'View'}) );
+  $panel->add_entry( 'Length: '.( $obj->seq_region_end - $obj->seq_region_start + 1),   undef, 50          );
+  $panel->add_entry( 'Strand: '.( $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'), undef, 50          );
+  return;
+}
+
 sub local_context  { return $_[0]->_local_context;  }
-sub local_tools    { return $_[0]->_local_tools;  }
+sub local_tools    { return $_[0]->_local_tools;    }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
 

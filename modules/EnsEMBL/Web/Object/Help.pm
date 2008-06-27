@@ -16,7 +16,7 @@ use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::Object);
 
-our $SPAM_THRESHOLD_PARAMETER = 60;
+our $SPAM_THRESHOLD_PARAMETER = 30;
 
 sub adaptor     { return $_[0]->Obj->{'adaptor'}; }
 sub modular     { return $_[0]->Obj->{'modular'}; }
@@ -44,13 +44,17 @@ sub send_email {
 ## HACK OUT BLOG SPAM!
   my $recipient = $self->species_defs->ENSEMBL_HELPDESK_EMAIL;
 
-  (my $check = $comments) =~ s/<a\s+href=".*?"\s*>.*?<\/a>//smg;
+  (my $check = $comments) =~ s/<a\s+href=.*?>.*?<\/a>//smg;
   $check =~ s/\[url=.*?\].*?\[\/url\]//smg;
-  $check =~s/\s+//gsm;
-  if( $check eq '' || length($check)<length($comments)/$SPAM_THRESHOLD_PARAMETER ) {
+  if( length($check)<length($comments)/$SPAM_THRESHOLD_PARAMETER ) {
     warn "MAIL FILTERED DUE TO BLOG SPAM.....";
     return 1;
   } 
+  $check =~ s/\s+//gsm;
+  if( $check eq '' ) {
+    warn "MAIL FILTERED DUE TO ZERO CONTENT!";
+    return 1;
+  }
   my $message = "Support question from $server\n\n";
   $message .= join "\n", map {sprintf("%-16.16s %s","$_->[0]:",$_->[1])} @mail_attributes;
   $message .= "\n\nComments:\n\n@{[$self->param('comments')]}\n\n";

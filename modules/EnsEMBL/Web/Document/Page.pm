@@ -341,7 +341,9 @@ sub render {
 
   $self->_render_head_and_body_tag;
   #  my $X = $self->{'page_template'};
-  my $X = '
+  my $X = '';
+  $X .= '  <div id="debug"></div>'; 
+  $X .= '
   <table class="mh">
     <tr>
       <td id="mh_lo">[[logo]]</td>

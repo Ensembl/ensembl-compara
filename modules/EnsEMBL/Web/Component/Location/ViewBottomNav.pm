@@ -33,12 +33,20 @@ sub content {
 		<input class="text" style="width:5em" value="%s" type="text" />
 		<input value="Go&gt;" type="submit" class="go-button" />
     </div>
-    <a href="%s"><img src="/i/zoom-plus.gif" class="zoom" alt="zoom in"/></a>$extra_html<a href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a>
-
+    <a href="%s"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left"/></a><a 
+       href="%s"><img src="/i/nav-l1.gif" class="zoom" alt="window left"/></a><a
+       href="%s"><img src="/i/zoom-plus.gif" class="zoom" alt="zoom in"/></a>$extra_html<a
+       href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a><a
+       href="%s"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a><a
+       href="%s"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left"/></a>
   </div>), $image_width,
    $object->seq_region_name,
    $object->seq_region_start,
    $object->seq_region_end,
+   '#',
+   '#',
+   '#',
+   '#',
    '#',
    '#';
 }

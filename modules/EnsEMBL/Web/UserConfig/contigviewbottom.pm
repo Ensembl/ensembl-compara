@@ -568,6 +568,11 @@ sub init {
       'threshold'   => '2000',
     }, 
 ## The measurement decorations    
+    'draggable' => {
+      'on'  => "on",
+      'pos' => 8000,
+      'col' => 'black'
+    },
     'ruler' => {
       'on'      => "on",
       'pos'       => '7000',
@@ -778,6 +783,8 @@ sub init {
     },
 
   };
+
+  $self->add_track( 'draggable', 'on'  => "on", 'pos' => 8000);
 
   my $POS = $self->ADD_ALL_TRANSCRIPTS();
 ## Loop through registry for additional transcript tracks...

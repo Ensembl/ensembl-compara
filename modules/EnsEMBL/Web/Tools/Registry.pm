@@ -40,13 +40,10 @@ sub configure {
     'FASTA'       => undef,
   );
 
-  warn $self->{conf};
-
   for my $species ( keys %{$self->{'conf'}->{_storage}} ) {
     (my $sp = $species ) =~ s/_/ /g;
     Bio::EnsEMBL::Registry->add_alias( $species, $sp );
     for my $type ( keys %{$self->{'conf'}->{'_storage'}{$species}{databases}}){
-    warn "EWTR -> $species ...................... $type ";
 ## Grab the configuration information from the SpeciesDefs object
       my $TEMP = $self->{'conf'}->{'_storage'}{$species}{databases}{$type};
 ## Skip if the name hasn't been set (mis-configured database)
