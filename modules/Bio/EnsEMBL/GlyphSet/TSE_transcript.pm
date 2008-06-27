@@ -17,8 +17,6 @@ sub init_label {
 
 sub _init {
 	my ($self) = @_;
-#	my $offset = $self->{'container'}->start - 1;
-
 	my $Config  = $self->{'config'};
 	my $h       = 8;   #Increasing this increases glyph height
 
@@ -32,67 +30,67 @@ sub _init {
 	my $strand = $trans_ref->{'exons'}[0][2]->strand;
 
 	my $transcript = $trans_ref->{'transcript'};
-	my @exons = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
+#	my @exons = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
+	my @introns_and_exons = @{$trans_ref->{'introns_and_exons'}};
 
 	my %highlights;
 	@highlights{$self->highlights} = ();    # build hashkeys of highlight list
 	my($colour, $label, $hilight) = $self->colour( $transcript, $colours, %highlights );
 	
-	## First of all draw the lines behind the exons.....
-	foreach my $subslice (@{$Config->{'subslices'}}) {
-		$self->push( new Sanger::Graphics::Glyph::Rect({
-			'x' => $subslice->[0]+$subslice->[2]-1,
-			'y' => $h/2,
-			'h'=>1,
-			'width'=>$subslice->[1]-$subslice->[0],
-			'colour'=>$colour,
-			'absolutey'=>1,
-		}));
-	}
-
-	## Now draw the exons themselves....	
-	foreach my $exon (@exons) { 
-		next unless defined $exon; #Skip this exon if it is not defined (can happen w/ genscans) 
-
-		# only draw this exon if is inside the slice (of course it really should be but no harm in checking_
-		my $box_start = $exon->[0];
-		$box_start    = 1 if $box_start < 1 ;
-		my $box_end   = $exon->[1];
-		$box_end      = $length if $box_end > $length;
-		
-		# calculate and draw the coding part of the exon
-		my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
-		my $filled_end   = $box_end   > $coding_end   ? $coding_end   : $box_end;
-		if( $filled_start <= $filled_end ) {
-			$self->push( new Sanger::Graphics::Glyph::Rect({
-				'x'         => $filled_start -1,
+	foreach my $obj (@introns_and_exons) {
+		#if we're working with an exon then draw a box
+		if ( $obj->[2] ) {
+			my $box_start = $obj->[0];
+			$box_start    = 1 if $box_start < 1 ;
+			my $box_end   = $obj->[1];
+			$box_end      = $length if $box_end > $length;
+			
+			# calculate and draw the coding part of the exon
+			my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
+			my $filled_end   = $box_end   > $coding_end   ? $coding_end   : $box_end;
+			if( $filled_start <= $filled_end ) {
+				$self->push( new Sanger::Graphics::Glyph::Rect({
+					'x'         => $filled_start -1,
+					'y'         => 0,
+					'width'     => $filled_end - $filled_start + 1,
+					'height'    => $h,
+					'colour'    => $colour,
+					'absolutey' => 1
+				}));
+			}
+			
+			# draw a non-filled rectangle around the entire exon
+			my $G = new Sanger::Graphics::Glyph::Rect({
+				'x'         => $box_start -1 ,
 				'y'         => 0,
-				'width'     => $filled_end - $filled_start + 1,
+				'width'     => $box_end-$box_start +1,
 				'height'    => $h,
-				'colour'    => $colour,
-				'absolutey' => 1
-			}));
+				'bordercolour' => $colour,
+				'absolutey' => 1,
+				'title'     => $obj->[2]->stable_id,
+				'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
+			});
+			$G->{'zmenu'} = $self->zmenu( $transcript, $obj->[2] ) unless $Config->{'_href_only'};
+			
+			#add tags for vertical shading lines
+			my $tag = "@{[$obj->[2]->end]}:@{[$obj->[2]->start]}";
+			my $col = $Config->get('TSE_transcript','col');
+			$self->join_tag( $G, "X:$tag", 0,  0, $col, 'fill', -99 );
+			$self->join_tag( $G, "X:$tag", 1,  0, $col, 'fill', -99  );
+			$self->push( $G );
 		}
-
-		# draw a non-filled rectangle around the entire exon
-		my $G = new Sanger::Graphics::Glyph::Rect({
-			'x'         => $box_start -1 ,
-			'y'         => 0,
-			'width'     => $box_end-$box_start +1,
-			'height'    => $h,
-			'bordercolour' => $colour,
-			'absolutey' => 1,
-			'title'     => $exon->[2]->stable_id,
-			'href'      => $self->href(  $transcript, $exon->[2], %highlights ),
-		});
-		$G->{'zmenu'} = $self->zmenu( $transcript, $exon->[2] ) unless $Config->{'_href_only'};
-
-		#add tags for vertical lines
-		my $tag = "@{[$exon->[2]->end]}:@{[$exon->[2]->start]}";
-		my $col = $Config->get('TSE_transcript','col');
-		$self->join_tag( $G, "X:$tag", 0,  0, $col, 'fill', -99 );
-		$self->join_tag( $G, "X:$tag", 1,  0, $col, 'fill', -99  );
-		$self->push( $G );
+		else {
+			#otherwise draw a line to represent the intron context
+			my $G = new Sanger::Graphics::Glyph::Line({
+				'x'        => $obj->[0] + 1/$pix_per_bp,
+				'y'        => $h/2,
+				'h'        =>1,
+				'width'    =>$obj->[1]-$obj->[0]-1,
+				'colour'   => $colour,
+				'absolutey'=>1,
+			});
+			$self->push($G);
+		}
 	}
 
 	#draw a direction arrow
