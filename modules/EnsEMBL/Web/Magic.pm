@@ -11,7 +11,7 @@ use strict;
 use EnsEMBL::Web::Document::WebPage;
 use base qw(Exporter);
 use CGI qw(redirect); # only need the redirect header stuff!
-our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location);
+our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu);
 
 ### Three constants defined and exported to the parent scripts...
 ### To allow unquoted versions of Gene, Transcript and Location
@@ -51,6 +51,23 @@ sub carpet {
   return "Redirecting to $URL (taken away on the magic carpet!)";
 }
 
+sub menu {
+### use EnsEMBL::Web::Magic; magic menu Gene; 
+###
+### Wrapper around a list of components to produce a zmenu
+### for inclusion via AJAX
+  warn "...CREATING WEBPAGE....";
+  my $webpage     = EnsEMBL::Web::Document::WebPage->new(
+    'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
+    'scriptname' => 'zmenu'
+  );
+  warn $ENV{'ENSEMBL_TYPE'};
+  warn ".... zmenu ...";
+  $webpage->configure( $webpage->dataObjects->[0], 'ajax_zmenu' );
+  $webpage->render;
+  return "Generated magic menu ($ENV{'ENSEMBL_ACTION'})";
+}
+
 sub ingredient {
 ### use EnsEMBL::Web::Magic; magic ingredient Gene 'EnsEMBL::Web::Component::Gene::geneview_image'
 ###
@@ -58,9 +75,38 @@ sub ingredient {
 ### part thereof - for inclusion via AJAX
   my $webpage     = EnsEMBL::Web::Document::WebPage->new(
     'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
-    'scriptname' => 'component'
+    'scriptname' => 'component',
   );
-  my $object      = $webpage->dataObjects->[0];
+  warn $ENV{'HTTP_REFERER'};
+  my ($url,$query_string) = split /\?/, $ENV{'HTTP_REFERER'};
+  $url =~ /^https?:\/\/.*?\/(.*)$/;
+  my($sp,$ot,$view) = split /\//, $1;
+
+  my(@pairs) = split(/[&;]/,$query_string);
+  my $params = {};
+  foreach (@pairs) {
+    my($param,$value) = split('=',$_,2);
+    next unless defined $param;
+    $value = '' unless defined $value;
+    $param = CGI::unescape($param);
+    $value = CGI::unescape($value);
+    push @{$params->{$param}}, $value;
+  }
+  warn "";
+  warn "\n";
+  warn "------------------------------------------------------------------------------\n";
+  warn "AJAX request (ingredient)\n";
+  warn "\n";
+  warn "  SPECIES: $sp\n";
+  warn "  OBJECT:  $ot\n";
+  warn "  VIEW:    $view\n";
+  warn "  QS:      $query_string\n";
+  foreach my $param( sort keys %$params ) {
+    foreach my $value ( sort @{$params->{$param}} ) {
+      warn sprintf( "%20s = %s\n", $param, $value );
+    }
+  }
+  warn "------------------------------------------------------------------------------\n";
   $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
   $webpage->render;
   return "Generated magic ingredient ($ENV{'ENSEMBL_ACTION'})";
