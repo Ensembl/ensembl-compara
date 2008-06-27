@@ -10,7 +10,7 @@ sub init {
 	$self->{'_transcript_names_'} = 'yes';
 	$self->{'_add_labels' }  = 1;
 	$self->{'general'}->{'supporting_evidence_transcript'} = {
-		'_artefacts' => [qw(TSE_background_exon TSE_transcript TSE_generic_match SE_generic_match non_can_intron spacer1 spacer2 spacer3)],
+		'_artefacts' => [qw(TSE_background_exon TSE_transcript TSE_generic_match_label TSE_generic_match SE_generic_match SE_generic_match_label non_can_intron spacer1)],
 		'_options'  => [],
 		'_settings' => {
 			'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
@@ -46,7 +46,12 @@ sub init {
 			'col'         => 'red',
 		},
 
-		'spacer2' => { 'on'=>'on','pos'=>240, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
+		'TSE_generic_match_label' => {
+			'on'          => "on",
+			'pos'         => '201',
+			'str'         => 'f',
+			'src'         => 'all', # 'ens' or 'all'
+		},
 
 		'TSE_generic_match' => {
 			'on'          => "on",
@@ -56,7 +61,13 @@ sub init {
 			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
 		},
 
-		'spacer3' => { 'on'=>'on','pos'=>150, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
+		'SE_generic_match_label' => {
+			'on'          => "on",
+			'pos'         => '101',
+			'str'         => 'f',
+			'src'         => 'all', # 'ens' or 'all'
+			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
+		},
 
 		'SE_generic_match' => {
 			'on'          => "on",
