@@ -270,6 +270,11 @@ sub fetch_by_GenomicAlignBlock {
     $genomic_align_tree->reference_slice_strand($genomic_align_block->reference_slice_strand);
   }
 
+  #if the genomic_align_block has been complemented, then complement the tree
+  if ($genomic_align_block->get_original_strand == 0) {
+      $genomic_align_tree->reverse_complement;
+  }
+
   return $genomic_align_tree;
 }
 
