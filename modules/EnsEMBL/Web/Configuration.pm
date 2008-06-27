@@ -8,6 +8,9 @@ our @ISA = qw(EnsEMBL::Web::Root);
 use POSIX qw(floor ceil);
 use warnings;
 
+sub object { 
+  return $_[0]->{'object'};
+}
 sub populate_tree {
 
 }
@@ -63,9 +66,19 @@ sub _get_valid_action {
 sub _ajax_content {
   my $self   = shift;
   my $obj    = $self->{'object'};
+  $self->{'page'}->renderer->{'r'}->headers_in->{'X-Requested-With'} = 'XMLHttpRequest';
   my $panel  = $self->new_panel( 'Ajax', 'code' => 'ajax_panel', 'object'   => $obj);
   $panel->add_component( 'component' => $ENV{'ENSEMBL_ACTION'} );
   $self->add_panel( $panel );
+}
+
+sub _ajax_zmenu {
+  my $self   = shift;
+  my $obj    = $self->{'object'};
+  $self->{'page'}->renderer->{'r'}->headers_in->{'X-Requested-With'} = 'XMLHttpRequest';
+  my $panel  = $self->new_panel( 'AjaxMenu', 'code' => 'ajax_zmenu', 'object'   => $obj, 'caption' => $obj->caption );
+  $self->add_panel( $panel );
+  return $panel;
 }
 
 sub _global_context {
