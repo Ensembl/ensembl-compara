@@ -84,7 +84,8 @@ sub _content {
     $config->{'extent'}    = $extent; #used for padding between exons and at the end of the transcript
 	$config->{'fakeslice'} = 1; #not sure what this is used for! ??
 
-	#add info on normalised exons (ie flattened introns) to config
+	#add info on normalised exons (ie flattened introns) to config - this is no longer used by the transcript
+    #drawing code so no longer needed to be added to the config ?
 	my $ens_exons;
 	my $offset = $transcript_slice->start -1;
 	my $exons = $object->Obj->get_all_Exons();
@@ -95,7 +96,61 @@ sub _content {
 		push @$ens_exons, [ $es + $munge, $ee + $munge, $exon ];
 	}
 	$config->{'transcript'}{'exons'} = $ens_exons ;
-	
+
+#	warn Dumper($sub_slices);
+#	warn Dumper($ens_exons);
+
+	#identify coordinates of the portions of introns and exons to be drawn. Include the exon object
+	my $e_counter = 0;
+	my $e_count = scalar(@$ens_exons);
+	my $intron_exon_slices;
+	#reverse the order of exons if the strand is negative
+	my @exons = $transcript->strand == 1 ? @{$ens_exons} : reverse(@{$ens_exons});
+ SUBSLICE:
+	foreach my $subslice (@{$sub_slices}) {
+		my $subslice_start = $subslice->[0]+$subslice->[2];
+		my $subslice_end   = $subslice->[1]+$subslice->[2];
+		my ($exon_start,$exon_end);
+#		warn "1. subslice_start = $subslice_start, subslice_end = $subslice_end";
+		for ($e_counter; $e_counter < $e_count; $e_counter++) {
+			my $exon  = $exons[$e_counter];
+			$exon_start = $exon->[0];
+			$exon_end = $exon->[1];
+			my $exon_id = $exon->[2]->stable_id;
+#			warn "$exon_id: exon_start = $exon_start, exon_end = $exon_end";
+#			warn "2. subslice_start = $subslice_start, subslice_end = $subslice_end";
+			#if the exon is still withn the subslice then work with it
+			if ( ($subslice_end > $exon_end) ){
+				my $start = $subslice_start;
+				my $end   = $exon_start;
+#				warn "3. start = $start, end = $end";
+				push @{$intron_exon_slices}, [$start, $end] if $intron_exon_slices; #don't add the first one
+				push @{$intron_exon_slices}, $exon;
+				#set subslice to the end of the ready for the next exon iteration
+				$subslice_start = $exon_end;
+#				warn "setting start of sublice to end of exon";
+			}
+			else {
+				#otherwise drawa line to the end of the subslice and move on
+				my $start = $ens_exons->[$e_counter-1]->[1];
+				my $end = $subslice_end;
+				push @{$intron_exon_slices}, [$exons[$e_counter-1]->[1], $subslice_end];
+#				warn "4. start = $start, end = $end";
+				next SUBSLICE;
+			}
+		}
+		#push @{$intron_exon_slices}, [$subslice_start, $subslice_end]; #uncomment to add last intron
+	}
+	$config->{'transcript'}{'introns_and_exons'} = $intron_exon_slices;
+
+	#add info normalised coding region
+    my $raw_coding_start = defined($transcript->coding_region_start) ? $transcript->coding_region_start-$offset : $transcript->start-$offset;
+    my $raw_coding_end   = defined($transcript->coding_region_end) ? $transcript->coding_region_end-$offset : $transcript->end-$offset;
+    my $coding_start = $raw_coding_start + $object->munge_gaps( 'supporting_evidence_transcript', $raw_coding_start );
+    my $coding_end   = $raw_coding_end   + $object->munge_gaps( 'supporting_evidence_transcript', $raw_coding_end );
+	$config->{'transcript'}{'coding_start'} = $coding_start;
+	$config->{'transcript'}{'coding_end'} = $coding_end;
+
 	#get introns (would be nice to have an API call but until this is there do this)
 	my @introns;
 	my $s = 0;
@@ -133,14 +188,6 @@ sub _content {
 	}
 	$config->{'transcript'}{'non_con_introns'} = $non_con_introns ;
 
-	#add info normalised coding region
-    my $raw_coding_start = defined($transcript->coding_region_start) ? $transcript->coding_region_start-$offset : $transcript->start-$offset;
-    my $raw_coding_end   = defined($transcript->coding_region_end) ? $transcript->coding_region_end-$offset : $transcript->end-$offset;
-    my $coding_start = $raw_coding_start + $object->munge_gaps( 'supporting_evidence_transcript', $raw_coding_start );
-    my $coding_end   = $raw_coding_end   + $object->munge_gaps( 'supporting_evidence_transcript', $raw_coding_end );
-	$config->{'transcript'}{'coding_start'} = $coding_start;
-	$config->{'transcript'}{'coding_end'} = $coding_end;
-
 	#add info on normalised transcript_supporting_evidence
 	my $t_evidence;
 	foreach my $evi (@{$transcript->get_all_supporting_features}) {
@@ -152,7 +199,7 @@ sub _content {
 		#calculate total length of the hit on the normalised slice (used for sorting in display)
 		my $tot_length;
 		foreach my $match (@{$munged_coords}) {
-			my $l = int($match->[1] - $match->[0] ) + 1;
+			my $l = abs($match->[1] - $match->[0] ) + 1;
 			$tot_length += $l;
 		}
 		$t_evidence->{$hit_name}{'hit_length'} = $tot_length;
@@ -202,14 +249,14 @@ sub _content {
 			#only DNA features have to match exactly, protein features have a tolerance of +- 3
 			if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
 				if (   ($evidence_start_stops{$hit_name}{'last_end'}) 
-				    && (int($hit_start - $evidence_start_stops{$hit_name}{'last_end'}+1) > 3 )) {
-					$hit_mismatch = 1;
+				    && (abs($hit_start - $evidence_start_stops{$hit_name}{'last_end'}+1) > 3 )) {
+					$hit_mismatch = $hit_start - $evidence_start_stops{$hit_name}{'last_end'} + 1;
 				}
 			}
 			else {
 				if (   ($evidence_start_stops{$hit_name}{'last_end'}) 
 					&& ($hit_start != $evidence_start_stops{$hit_name}{'last_end'}+1) ) {
-					$hit_mismatch = 1;
+					$hit_mismatch = $hit_start - $evidence_start_stops{$hit_name}{'last_end'} + 1;
 				}
 			}
 			#note position of end of the hit for next iteration
@@ -221,7 +268,7 @@ sub _content {
 
 				#add tag if there is a mismatch between exon / hit boundries
 				if ($hit_mismatch) {
-					push @{$munged_hit}, '1';
+					push @{$munged_hit}, $hit_mismatch;
 				} else {
 					push @{$munged_hit}, '0';
 				}
@@ -245,10 +292,12 @@ sub _content {
 	#add tags if the merged hit extends beyond the end of the transcript
 	while ( my ($hit_name, $coords) = each (%evidence_start_stops)) {
 		if ($coords->{'comb_start'} < $transcript->start) {
-			$e_evidence->{$hit_name}{'start_extension'} = 1;
+#			warn "$hit_name:",$coords->{'comb_start'},"--",$transcript->start;
+#			my $diff =  $transcript->start - $coords->{'comb_start'};
+			$e_evidence->{$hit_name}{'start_extension'} = $transcript->start - $coords->{'comb_start'};
 		}
 		if ($coords->{'comb_end'} > $transcript->end) {
-			$e_evidence->{$hit_name}{'end_extension'} = 1;
+			$e_evidence->{$hit_name}{'end_extension'} = $coords->{'comb_end'} - $transcript->end;
 		}
 	}	
 
@@ -256,7 +305,7 @@ sub _content {
 	while ( my ($hit_name, $hit_details) = each (%{$e_evidence})  ) {
 		my $tot_length;
 		foreach my $match (@{$hit_details->{'data'}}) {
-			my $l = int($match->[1] - $match->[0]) + 1;
+			my $l = abs($match->[1] - $match->[0]) + 1;
 			$tot_length += $l;
 		}
 		$e_evidence->{$hit_name}{'hit_length'} = $tot_length;
@@ -301,7 +350,7 @@ sub split_evidence_and_munge_gaps {
 	foreach my $exon (@{$exons}) {
 		my $estart = $exon->start;
 		my $eend   = $exon->end;
-#		if ($hit->hseqname eq 'NP_543151.1') { warn "exon: - $estart:$eend"; }
+		if ($hit->hseqname eq 'Q96AX9-2') { warn "exon: - $estart:$eend"; }
 		my @coord;
 
 		#go no further if the exon doesn't cover the hit
@@ -322,20 +371,13 @@ sub split_evidence_and_munge_gaps {
 			my $cod_end   = $coding_coords->[1];
 			my $start = $cod_start > $estart ? $cod_start : $estart;
 			my $end = $cod_end < $eend ? $cod_end : $eend;
-#			if ($hit->hseqname eq 'NP_543151.1') {	
-#				warn "cod start = $cod_start, cod_end = $cod_end";
-#			}
-#			if ($hit->hseqname eq 'NP_543151.1') {	
-#				warn "cod start = $cod_start, cod_end = $cod_end";
-#				warn "start = $start, end = $end";
-#				warn "\n";
-#			}
-			$five_end_mismatch = (int($start - $hit_seq_region_start) < 4) ? 0 : 1;
-			$three_end_mismatch = (int($end - $hit_seq_region_end) < 4) ? 0 : 1;
+
+			$five_end_mismatch = (abs($start - $hit_seq_region_start) < 4) ? 0 : $start - $hit_seq_region_start;
+			$three_end_mismatch = (abs($end - $hit_seq_region_end) < 4) ? 0 : $hit_seq_region_end - $end;
 		}
 		else {
-			$five_end_mismatch  = $estart == $hit_seq_region_start ? 0 : 1;
-			$three_end_mismatch = $eend == $hit_seq_region_end ? 0 : 1;
+			$five_end_mismatch  = $estart == $hit_seq_region_start ? 0 : $estart - $hit_seq_region_start;
+			$three_end_mismatch = $eend == $hit_seq_region_end ? 0 : $hit_seq_region_end - $eend;
 		}
 		push @{$coords}, [ $munged_start, $munged_end, $hit, $five_end_mismatch, $three_end_mismatch ];
 	}
