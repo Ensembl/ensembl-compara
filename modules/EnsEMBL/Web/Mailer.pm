@@ -23,14 +23,14 @@ sub new {
   my ($class, %params) = @_;
   my $self = bless \my($scalar), $class;
   my $sd = EnsEMBL::Web::SpeciesDefs->new();
-  $Email_of{$self}   = defined $params{email} ? $params{email} : "";
-  $From_of{$self}   = defined $params{from} ? $params{from} : $sd->ENSEMBL_HELPDESK_EMAIL;
-  $Reply_of{$self}   = defined $params{reply_to} ? $params{reply_to} : $sd->ENSEMBL_HELPDESK_EMAIL;
-  $Subject_of{$self}   = defined $params{subject} ? $params{subject} : "";
-  $SiteName_of{$self}   = defined $params{site_name} ? $params{site_name} : "";
-  $BaseURL_of{$self}   = defined $params{base_url} ? $params{base_url} : $sd->ENSEMBL_BASE_URL;
-  $MailServer_of{$self}   = defined $params{mail_server} ? $params{mail_server} : $sd->ENSEMBL_MAIL_SERVER;
-  $HelpEmail_of{$self}   = defined $params{help_email} ? $params{help_email} : $sd->ENSEMBL_HELPDESK_EMAIL;
+  $Email_of{$self}       = defined $params{email}       ? $params{email}       : "";
+  $From_of{$self}        = defined $params{from}        ? $params{from}        : $sd->ENSEMBL_HELPDESK_EMAIL;
+  $Reply_of{$self}       = defined $params{reply_to}    ? $params{reply_to}    : $sd->ENSEMBL_HELPDESK_EMAIL;
+  $Subject_of{$self}     = defined $params{subject}     ? $params{subject}     : "";
+  $SiteName_of{$self}    = defined $params{site_name}   ? $params{site_name}   : "";
+  $BaseURL_of{$self}     = defined $params{base_url}    ? $params{base_url}    : $sd->ENSEMBL_BASE_URL;
+  $MailServer_of{$self}  = defined $params{mail_server} ? $params{mail_server} : $sd->ENSEMBL_MAIL_SERVER;
+  $HelpEmail_of{$self}   = defined $params{help_email}  ? $params{help_email}  : $sd->ENSEMBL_HELPDESK_EMAIL;
   if (!$SiteName_of{$self}) {
     $SiteName_of{$self} = $sd->ENSEMBL_SITETYPE;
   }
@@ -104,23 +104,16 @@ sub send {
   my $time_string = "$weekDays[$day] $day $months[$month], $year $hour:$min:$sec +0000"; 
 
   $mailer->open({
-                'To'      => $self->escape($self->email),
-                'From'    => $self->escape($self->from),
-                'Reply-To'=> $self->escape($self->reply_to),
-                'Subject' => $self->subject,
-                'Date'    => $time_string,
-                });
+    'To'      => $self->escape($self->email),
+    'From'    => $self->escape($self->from),
+    'Reply-To'=> $self->escape($self->reply_to),
+    'Subject' => $self->subject,
+    'Date'    => $time_string,
+  });
   
-  my $message= $self->message;
+  my $message = $self->message;
  
- 
- # temporary hack to enable mail to be sent outside of sanger
-# my $mail_comm= '/ensweb/sr7/myemail -s "' . $self->subject . '" -f ' . $self->from . ' -t ' . $self->email . ' -S mail.sanger.ac.uk  -m "' . $message . '"';
-
-#warn "$mail_comm";
-# system($mail_comm);
- 
- print $mailer $message;
+  print $mailer $message;
   $mailer->close();
 }
 
@@ -128,6 +121,14 @@ sub escape {
   my ($self, $value) = @_;
   $value =~ s/[\r\n].*$//sm;
   return $value;
+}
+
+sub _spam_quality_score {
+  my $self = shift;
+  local $_ = $self->message;
+  s/<a href=.*?>.*?<\/a>//g;
+  s/\[url=.*?\].*?\[\/url\]//g;
+  return length($_)/length($self->message);
 }
 
 sub DESTROY {

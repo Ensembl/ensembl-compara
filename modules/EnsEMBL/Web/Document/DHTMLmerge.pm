@@ -19,6 +19,8 @@ use Pack;
 
 no warnings "uninitialized";
 
+our $PERFORM_PACK = 0;
+
 sub merge_all {
   my( $ini_file, $species_defs ) = @_;
   warn $ini_file;
@@ -102,6 +104,7 @@ $CONTENTS
   } else {
     $minified = '';
   }
+  return $filename unless $PERFORM_PACK;
   my $packed0 = "$first_root/packed.0/$filename.$type";
   if( open O, ">$packed0" ) {
     $temp = Pack::pack($NEW_CONTENTS,0,1,1) if $type eq 'js';

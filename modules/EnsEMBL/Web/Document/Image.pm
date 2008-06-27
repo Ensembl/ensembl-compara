@@ -537,7 +537,7 @@ sub render {
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
     $HTML .= sprintf '<div style="text-align:center"><div class="center" style="margin:auto;border:0px;padding:0px;width:%dpx">',  $image->{'width'}+2;
-    $HTML .= sprintf qq(<div id="$self->{'prefix'}_$self->{'panel_number'}" style="border: solid 1px black; position: relative; width:%dpx">%s), $image->{'width'},$tag;
+    $HTML .= sprintf qq(<div class="drag_select" id="$self->{'prefix'}_$self->{'panel_number'}" style="border: solid 1px black; position: relative; width:%dpx">%s), $image->{'width'},$tag;
     #$timer->push("Starting Image Map",5);
     if( $self->imagemap eq 'yes' ) {
       $HTML .= $image->render_image_map

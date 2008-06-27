@@ -23,6 +23,8 @@ sub init {
     }
   };
 
+  $self->add_track( 'draggable', 'on'  => "on", 'pos' => 8000);
+
   $self->ADD_GENE_TRACKS();
   $self->ADD_SYNTENY_TRACKS( 0, 'on' => 'on' );
   my $POS = 0;

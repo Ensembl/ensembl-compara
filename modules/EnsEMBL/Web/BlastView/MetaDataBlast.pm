@@ -380,7 +380,7 @@ STAGE_CONFIGURE:{
   $stage->add_javascript_files( '/js/ensFormElementControl.js' );
 
   my $sp = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
-  my %methods = %{$SPECIES_DEFS->get_config($sp, 'ENSEMBL_BLAST_METHODS')};
+  my %methods = %{$SPECIES_DEFS->get_config($sp, 'ENSEMBL_BLAST_METHODS')||{}};
 
  BLOCK_RUN:{
     my $block = $stage->addobj_block();
@@ -751,7 +751,7 @@ Seq %s: %s (%s letters)%s/;
 
 #----------------------------------------------------------------------
 my $sp = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
-my %methods = %{$SPECIES_DEFS->get_config($sp, 'ENSEMBL_BLAST_METHODS')};
+my %methods = %{$SPECIES_DEFS->get_config($sp, 'ENSEMBL_BLAST_METHODS')||{}};
 sub method_processing_callback{
 
   my $cgi   = $blastview::CGI;
@@ -1613,3 +1613,5 @@ function setDatabase(){
 ";
 
 }
+
+1;
