@@ -7,7 +7,7 @@ $Data::Dumper::Maxdepth = 3;
 
 sub init_label {
 	my ($self) = @_;
-	$self->init_label_text( 'Transcript evidence' );
+	$self->init_label_text();#'Transcript evidence' );
 }
 
 sub _init {
@@ -20,11 +20,16 @@ sub _init {
 	my $fontname   = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
 	$fontname      = 'Tiny'; #this is hack since there is no config for Arial
 	my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-	#warn Dumper($Config->texthelper);
+#	warn Dumper($Config->texthelper);
 	
 	my $length      = $Config->container_width(); 
 	my $all_matches = $Config->{'transcript'}{'transcript_evidence'};
 	my $strand      = $Config->{'transcript'}->{'transcript'}->strand;
+
+
+	my @res = $self->get_text_width( 0, "label", '', 'font'=>$fontname, 'ptsize' => 10 );
+#	my $W = ($res[2]+4)/$pix_per_bp;
+	my $W = ($res[2]+25)/$pix_per_bp;
 
 	#go through each hit (transcript_supporting_feature)
 	my $Y          = 0;
@@ -79,22 +84,19 @@ sub _init {
 			}));
 		}			 
 
-		if ($Config->{'_add_labels'}) {
-			my  $T = length( $hit_name );
-			my $width_of_label = $font_w_bp * ( $T ) * 1.5;
-			$Y += $font_h_bp + 2; #this is hack (ie not scalable) since there is no config for Arial
-			$start_x -= $width_of_label/2;
+		if ( $Config->{'_add_labels'}) {
+			#fontsize ?		
 			my $tglyph = new Sanger::Graphics::Glyph::Text({
-				'x'         => $start_x,
+				'x'         => -$W,
 				'y'         => $Y,
 				'height'    => $font_h_bp,
-				'width'     => $width_of_label,
+				'width'     => $res[2]/$pix_per_bp,
+				'textwidth' => $res[2],
 				'font'      => $fontname,
-				'colour'    => 'black',#$colour,
+				'colour'    => 'blue',
 				'text'      => $hit_name,
 				'absolutey' => 1,
 			});
-
 			$self->push($tglyph);
 		}
 		$Y += 13; #this is another hack since there is no config for Arial

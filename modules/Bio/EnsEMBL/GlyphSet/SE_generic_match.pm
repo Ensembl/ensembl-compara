@@ -7,7 +7,7 @@ $Data::Dumper::Maxdepth = 3;
 
 sub init_label {
 	my ($self) = @_;
-	$self->init_label_text( 'Exon evidence' );
+	$self->init_label_text();
 }
 
 sub _init {
@@ -27,6 +27,10 @@ sub _init {
 	my $all_matches = $Config->{'transcript'}{'evidence'};
 	my $strand = $Config->{'transcript'}->{'transcript'}->strand;
 	my $H = 0;
+
+	my @res = $self->get_text_width( 0, "label", '', 'font'=>$fontname, 'ptsize' => 10 );
+#	my $W = ($res[2]+4)/$pix_per_bp;
+	my $W = ($res[2]+25)/$pix_per_bp;
 
 	my @draw_end_lines;
 
@@ -130,21 +134,20 @@ sub _init {
 		}		
 
 		if($Config->{'_add_labels'} ) {
-			my  $T = length( $hit_name );
-			my $width_of_label = $font_w_bp * ( $T ) * 1.5;
-			$H += $font_h_bp + 2; #this is hack since there is no config for Arial
-			$start_x -= $width_of_label/2; #also not sure about this as a way of setting the label to the far left of the feature
+
+			#fontsize ?	
+	
 			my $tglyph = new Sanger::Graphics::Glyph::Text({
-				'x'         => $start_x,
+				'x'         => -$W,
 				'y'         => $H,
 				'height'    => $font_h_bp,
-				'width'     => $width_of_label,
+				'width'     => $res[2]/$pix_per_bp,
+				'textwidth' => $res[2],
 				'font'      => $fontname,
-				'colour'    => 'black',#$colour,
+				'colour'    => 'blue',
 				'text'      => $hit_name,
 				'absolutey' => 1,
 			});
-
 			$self->push($tglyph);
 		}
 		$H += 13; #this is yet another hack since there is no config for Arial
