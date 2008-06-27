@@ -65,22 +65,16 @@ sub _init {
 					'width'=> $w,
 					'colour'=>'black',
 					'absolutey'=>1,});
-				#add a dotted attribute if there is a part of the hit missing (defined by fourth element of $block)
-				if ($block->[5]) {
-					$G->{'dotted'} = 1;
+				#add a red attribute if there is a part of the hit missing
+				if (my $mismatch = $block->[5]) {
+#					$G->{'dotted'} = 1;
+					$G->{'colour'} = 'red';
+					$G->{'title'} = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
 				}
 				$self->push($G);
 			}
 			
 			$last_end = $strand == 1 ? $block->[1] : $block->[0];
-
-			#second and third elements of $block define whether there is a mismatch between exon and hit boundries
-			if ($block->[3]) {
-				push @draw_end_lines, [$block->[0],$H];
-			}
-			if ($block->[4]) {
-				push @draw_end_lines, [$block->[1],$H];
-			}
 
 			#draw the location of the exon hit
 			my $G = new Sanger::Graphics::Glyph::Rect({
@@ -93,31 +87,45 @@ sub _init {
 				'title'     => $hit_name,
 				'href'      => '',
 			});	
+
+			#second and third elements of $block define whether there is a mismatch between exon and hit boundries
+			#(need some logic to add meaningfull terms to zmenu)
+			if ($block->[3]) {
+				push @draw_end_lines, [$block->[0],$H];
+				$G->{'title'} = $hit_name." (".$block->[3].")";
+			}
+			if ($block->[4]) {
+				push @draw_end_lines, [$block->[1],$H];
+				$G->{'title'} = $hit_name." (".$block->[4].")";
+			}
 			$self->push( $G );
 		}
 
 		#draw extensions at the left of the image (ie if evidence extends beyond the start of the image)
-		if (   ($hit_details->{'start_extension'} && $strand == 1)
-			|| ($hit_details->{'end_extension'} && $strand == -1)) {
+		my $diff;
+		if (   ( ($diff = $hit_details->{'start_extension'}) && $strand == 1)
+			|| ( ($diff = $hit_details->{'end_extension'}) && $strand == -1)) {
 			$self->push(new Sanger::Graphics::Glyph::Line({
 				'x'         => 0,
 				'y'         => $H + 0.5*$h,
-				'width'     => $start_x,
+				'width'     => $start_x-(1/$pix_per_bp),
 				'height'    => 0,
 				'absolutey' => 1,
 				'colour'    => 'black',
+				'title'     => $diff.'bp',
 			}));
 		}
 		#draw extensions at the right of the image
-		if (   ($hit_details->{'end_extension'} && $strand == 1)
-			|| ($hit_details->{'start_extension'} && $strand == -1)) {
+		if (   ( ($diff = $hit_details->{'end_extension'}) && $strand == 1)
+			|| ( ($diff = $hit_details->{'start_extension'}) && $strand == -1)) {
 			$self->push(new Sanger::Graphics::Glyph::Line({
 				'x'         => $finish_x + (1/$pix_per_bp),
 				'y'         => $H + 0.5*$h,
-				'width'     => $length-$finish_x,
+				'width'     => $length-$finish_x-1,
 				'height'    => 0,
 				'absolutey' => 1,
 				'colour'    => 'black',
+				'title'     => $diff.'bp',
 			}));
 		}		
 
