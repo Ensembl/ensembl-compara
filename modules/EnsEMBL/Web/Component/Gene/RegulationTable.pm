@@ -44,12 +44,12 @@ sub content {
   ## If there are factors to display ##
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' =>'1em 0px'});
   $table->add_columns(
-   {'key' => 'feature', 'title' => 'Reg. region', 'width' => '8', 'align' => 'left'},
-   {'key' => 'analysis', 'title' => 'Feature analysis', 'width' => '16', 'align' => 'left'},
-   {'key' => 'type', 'title' => 'Feature type', 'width' => '8', 'align' => 'left'},
-   {'key' => 'location', 'title' => 'Location', 'width' => '35', 'align' => 'left'},
-   {'key' => 'length', 'title' => 'Length', 'width' => '9', 'align' => 'left'},
-   {'key' => 'seq', 'title' => 'Sequence ('. $str .' strand)', 'width' => '20', 'align' => 'left'},
+   {'key' => 'feature', 'title' => 'Reg. region', 'width' => '22%', 'align' => 'left'},
+   {'key' => 'analysis', 'title' => 'Analysis', 'width' => '16%', 'align' => 'left'},
+   {'key' => 'type', 'title' => 'Type', 'width' => '18%', 'align' => 'left'},
+   {'key' => 'location', 'title' => 'Location', 'width' => '20%', 'align' => 'left'},
+   {'key' => 'length', 'title' => 'Length', 'width' => '4%', 'align' => 'left'},
+   {'key' => 'seq', 'title' => 'Sequence ('. $str .' strand)', 'width' => '20%', 'align' => 'left'},
   ); 
 
   ## First process Ensembl Funcgen Reg. Factors ##
@@ -99,20 +99,17 @@ sub content {
 
    my $region = $seq_name .":" .$feature_obj->start ."-".$feature_obj->end;
    my $feature_name = $feature_obj->display_label;
-   my $analysis = $feature_obj->analysis->logic_name;
-   #if ($analysis =~/cisRED/){ 
-     #$feature_name =~s/\D*//;
-   # }els
-    if ($analysis =~/miRanda/){
-      $feature_name =~/\D+(\d+)/;
-      my @temp = split (/\:/, $feature_name);
-      $feature_name = $temp[1];
-    } 
-    $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/featureview?r=$region;id=$feature_name;type=RegulatoryFactor;name=$feature">$feature_name</a>) : "unknown";
+   #my $analysis = $feature_obj->analysis->logic_name;
+   $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/featureview?r=$region;id=$feature_name;type=RegulatoryFactor;name=$feature">$feature_name</a>) : "unknown";
 
    $desc = $feature_obj->analysis->description;
    if ($feature  =~/cisRED\sSearch\sRegion/){$desc =~s/cisRED\smotif\ssearch/cisRED Search Region/;}
-   if ($feature_name  =~/cra.*/){$desc =~s/cisRED\smotif\ssearch/cisRED atomic motifs/;}
+    # hack to get around problem with source data file for release 50
+   if ($feature_name  =~/cra.*/){
+         $desc =~s/cisRED\smotif\ssearch/cisRED atomic motifs/;
+         $feature  = "cisRED atomic motifs";
+   }
+     
    if  ($desc =~/\(http/){ $desc =~ s/\(http/#http/;} 
    elsif($desc =~/\(www/){ $desc =~ s/www/#http:\/\/www/;} 
    $desc =~ s/\(#/#/;
