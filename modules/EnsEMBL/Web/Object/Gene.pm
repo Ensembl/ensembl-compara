@@ -21,13 +21,13 @@ sub counts {
   if ($self->get_all_families) {
 	$counts->{'families'}    = keys %{$self->get_all_families};
   }
-  $counts->{'evidence'} =  $self->count_gene_supporting_evidence;
   return $counts;
 }
 
 
 sub count_gene_supporting_evidence {
 	#count all supporting_features and transcript_supporting_features for the gene
+	#- not used in the tree but keep the code just in case we change our minds again!
 	my $self = shift;
 	my $obj = $self->Obj;
 	my $evi_count = 0;
@@ -83,8 +83,8 @@ sub get_gene_supporting_evidence {
 			#use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
 			#for protein features give some leeway in matching to transcript - +- 3 bases
 			if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
-				if (   (int($trans->coding_region_start-$evi->seq_region_start) < 4)
-					|| (int($trans->coding_region_end-$evi->seq_region_end) < 4)) {
+				if (   (abs($trans->coding_region_start-$evi->seq_region_start) < 4)
+					|| (abs($trans->coding_region_end-$evi->seq_region_end) < 4)) {
 					$e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
 					$t_hits{$name}++;
 				}
@@ -108,6 +108,7 @@ sub get_gene_supporting_evidence {
 				$t_hits{$name}++;				
 			}			
 		}
+		$e->{$tsi}{'logic_name'} = $trans->analysis->logic_name;
 		#make a note of the hit_names of the supporting_features
 		foreach my $exon (@{$trans->get_all_Exons()}) {
 			foreach my $evi (@{$exon->get_all_supporting_features}) {
@@ -125,13 +126,14 @@ sub get_gene_supporting_evidence {
 sub add_evidence_links {
 	my $self = shift;
 	my $ids  = shift;
-	my @ids;
+	my $links = [];
 	foreach my $hit_name (sort keys %$ids) {
 		my $db_name = $ids->{$hit_name};
 		my $display = $self->get_ExtURL_link( $hit_name, $db_name, $hit_name );
-		push @ids, $display;
+		warn $display;
+		push @{$links}, $display;
 	}
-	return join q{, }, @ids;
+	return $links;
 }
 
 sub get_slice_object {
