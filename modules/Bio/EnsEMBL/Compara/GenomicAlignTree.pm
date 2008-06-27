@@ -706,4 +706,36 @@ sub _name_for_sorting {
   return $name;
 }
 
+=head2 reverse_complement
+
+  Args       : none
+  Example    : none
+  Description: reverse complement the tree,
+               modifying dnafrag_strand and cigar_line of each GenomicAlign in consequence
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub reverse_complement {
+    my ($self) = @_;
+    
+    if (defined($self->{_original_strand})) {
+	$self->{_original_strand} = 1 - $self->{_original_strand};
+    } else {
+	$self->{_original_strand} = 0;
+    }
+
+    foreach my $this_node (@{$self->get_all_nodes}) {
+	my $genomic_align_group = $this_node->genomic_align_group;
+	next if (!$genomic_align_group);
+	my $gas = $genomic_align_group->get_all_GenomicAligns;
+	foreach my $ga (@{$gas}) {
+	    $ga->reverse_complement;
+	}
+    }
+}
+
+
 1;
