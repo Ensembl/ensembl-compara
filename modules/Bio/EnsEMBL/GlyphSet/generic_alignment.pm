@@ -458,7 +458,7 @@ use Time::HiRes qw(time);
 
 sub features {
 	my ($self, $species, $method ) = @_;
-	(my $species_2 = $species) =~ s/_/ /; 
+	(my $species_2 = $species) =~ s/_/ /g; 
 	my $assembly = $self->species_defs->other_species($species,'ENSEMBL_GOLDEN_PATH');
 	my $START = time();
 	my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
