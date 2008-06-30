@@ -206,6 +206,8 @@ sub get_tmp_data {
 ### Retrieve all temporary data
   my ($self, $code, $force ) = @_; 
 
+  die "code is not defined." unless $code;
+
   ## This is cached so return it unless "force" is set
   return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code} && !$force;
 
