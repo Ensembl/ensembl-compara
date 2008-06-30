@@ -32,7 +32,7 @@ our @ISA = qw(EnsEMBL::Web::Root);
   my %Species_of       :ATTR( :name<species>      );
   my %ColourMap_of     :ATTR;
 ## User temporary data...
-  my %TmpData_of   :ATTR( :get<tmpdata> :set<tmpdata>  );
+  my %TmpData_of       :ATTR( :get<tmp> :set<tmp>  );
 
 
 ### New Session object - passed around inside the data object to handle storage of
@@ -66,10 +66,10 @@ sub BUILD {
   my( $class, $ident,  $arg_ref ) = @_;
 ### Most of the build functions is done automagically by Class::Std, two unusual ones
 ### are the path and Cookie object..
-
   $Configs_of{      $ident } = {}; # Initialize empty hash!
   $Das_sources_of{  $ident } = {}; # Initialize emtpy hash!
   $ImageConfigs_of{ $ident } = {}; # Initialize emtpy hash!
+  $TmpData_of{      $ident } = {}; # Initialize empty hash!
   $Path_of{         $ident } = ['EnsEMBL::Web', reverse @{$arg_ref->{'path'}||[]}];
 }
 
@@ -139,7 +139,7 @@ sub store {
     ) if $storable->{config_key};
   }
   $self->save_das;
-  $self->save_tmp;
+  $self->save_tmp_data;
 }
 
 sub storable_data {
@@ -200,6 +200,36 @@ sub get_internal_das {
 ## sources, making these changes should make the re-work to use registry more
 ## useful - as we can add an "add_das_source_from_registry" call as well as
 ## the add_das_source_from_URL and add_das_source_from_hashref
+
+sub get_tmp_data {
+### TMP
+### Retrieve all temporary data
+  my ($self, $code, $force ) = @_; 
+
+  ## This is cached so return it unless "force" is set
+  return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code} && !$force;
+
+  ## No session so cannot have anything configured!
+  return unless $self->get_session_id;
+
+  ## Get all TMP data from database!
+  my @entries = EnsEMBL::Web::Data::Session->get_config(
+    session_id => $self->get_session_id,
+    type       => 'tmp',
+  );
+  
+  my $TEMP;
+  foreach my $entry (@entries) {
+    $TEMP = $entry->data;
+    $TEMP = eval( $TEMP );
+    $TmpData_of{ ident $self }{$entry->code} = $TEMP
+      unless $@;
+  }
+
+  $TmpData_of{ ident $self }{$code} ||= {};
+  
+  return $TmpData_of{ ident $self }{$code};
+}
 
 sub get_das {
 ### DAS
@@ -287,6 +317,22 @@ sub save_das {
     }
   }
   
+}
+
+sub save_tmp_data {
+### TMP Data
+### Save all temporary data back to the database
+  my ($self, $r) = @_;
+  while (my ($key, $value) = each %{$TmpData_of{ ident $self }}) {
+      my $d =  Data::Dumper->new( [$value], [qw($data)] );
+      $d->Indent(1);
+      EnsEMBL::Web::Data::Session->set_config(
+        session_id => $self->get_session_id,
+        type       => 'tmp',
+        code       => $key,
+        data       => $d->Dump,
+      );    
+  }
 }
 
 
