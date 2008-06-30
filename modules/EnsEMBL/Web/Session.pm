@@ -31,6 +31,9 @@ our @ISA = qw(EnsEMBL::Web::Root);
   my %ExtURL_of        :ATTR( :get<exturl> :set<exturl>  );
   my %Species_of       :ATTR( :name<species>      );
   my %ColourMap_of     :ATTR;
+## User temporary data...
+  my %TmpData_of   :ATTR( :get<tmpdata> :set<tmpdata>  );
+
 
 ### New Session object - passed around inside the data object to handle storage of
 ### ScriptConfigs/UserConfigs in the web_user_db
@@ -122,6 +125,9 @@ sub store {
 ### Write session back to the database if required...
 ### Only work with storable configs and only if they or attached
 ### image configs have been altered!
+### 
+### Comment: not really, we also have das and tmp data which needs
+### to be stored as well
   my ($self, $r) = @_;
   my @storables = @{ $self->storable_data($r) };
   foreach my $storable (@storables) {
@@ -133,6 +139,7 @@ sub store {
     ) if $storable->{config_key};
   }
   $self->save_das;
+  $self->save_tmp;
 }
 
 sub storable_data {
@@ -271,7 +278,7 @@ sub save_das {
     } else {
       my $d =  Data::Dumper->new( [$source->get_data], [qw($data)] );
       $d->Indent(1);
-      EnsEMBL::Web::Data::Session->reset_config(
+      EnsEMBL::Web::Data::Session->set_config(
         session_id => $self->get_session_id,
         type       => 'das',
         code       => $source->get_name,
