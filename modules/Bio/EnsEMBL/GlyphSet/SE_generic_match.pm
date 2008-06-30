@@ -16,21 +16,17 @@ sub _init {
 	my $Config  = $self->{'config'};
 	my $h             = 8;
 #	my $colours       = $self->colours();
-	my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
+	my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
 	my $pix_per_bp    = $Config->transform->{'scalex'};
-	my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
-
-	$fontname = 'Tiny'; #this is hack since there is no config for Arial
-	#warn Dumper($Config->texthelper);
-	my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);		
+	my $bitmap_length = $Config->image_width();
+#	warn "FONT DETAILS ",Dumper($self->get_font_details( 'outertext' ));
+#	$fontname = 'Tiny'; #this is hack - the Arial font retrieved from config doesn't scale correctly
+#	warn Dumper($Config->texthelper);
 	my $length  = $Config->container_width(); 
 	my $all_matches = $Config->{'transcript'}{'evidence'};
 	my $strand = $Config->{'transcript'}->{'transcript'}->strand;
 	my $H = 0;
-
-	my @res = $self->get_text_width( 0, "label", '', 'font'=>$fontname, 'ptsize' => 10 );
-#	my $W = ($res[2]+4)/$pix_per_bp;
-	my $W = ($res[2]+25)/$pix_per_bp;
+	my( $font_w_bp, $font_h_bp);
 
 	my @draw_end_lines;
 
@@ -133,24 +129,30 @@ sub _init {
 			}));
 		}		
 
-		if($Config->{'_add_labels'} ) {
+		my @res = $self->get_text_width(0, "$hit_name", '', 'font'=>$fontname, 'ptsize'=>$fontsize);
+		my $W = ($res[2])/$pix_per_bp;
+		($font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);
+#		warn "label = $hit_name, width $font_w_bp, height = $font_h_bp, x = ",-$W;
 
-			#fontsize ?	
-	
-			my $tglyph = new Sanger::Graphics::Glyph::Text({
-				'x'         => -$W,
-				'y'         => $H,
-				'height'    => $font_h_bp,
-				'width'     => $res[2]/$pix_per_bp,
-				'textwidth' => $res[2],
-				'font'      => $fontname,
-				'colour'    => 'blue',
-				'text'      => $hit_name,
-				'absolutey' => 1,
-			});
-			$self->push($tglyph);
-		}
-		$H += 13; #this is yet another hack since there is no config for Arial
+#		warn $fontsize;
+		my $tglyph = new Sanger::Graphics::Glyph::Text({
+			'x'         => -$res[2],
+			'y'         => $H,
+			'height'    => $font_h_bp,
+			'width'     => $res[2],
+			'textwidth' => $res[2],
+			'font'      => $fontname,
+			'colour'    => 'blue',
+			'text'      => $hit_name,
+			'absolutey' => 1,
+			'absolutex' => 1,
+			'absolutewidth' => 1,
+			'ptsize'    => $fontsize,
+			'halign     '=> 'right',
+		});
+		$self->push($tglyph);
+
+		$H += $font_h_bp + 4;
 	}
 
 	#draw (red) lines for the exon / hit boundry mismatches (draw last so they're on top of everything else)
