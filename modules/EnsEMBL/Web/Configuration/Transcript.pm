@@ -34,8 +34,7 @@ sub populate_tree {
  # );
 
   $self->create_node( 'Exons', "Exons  ([[counts::exons]])",
-   # [qw(exons       EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet)],
-   [qw(exons       EnsEMBL::Web::Component::Transcript::UnderConstruction)],
+    [qw(exons       EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet)],
     { 'availability' => 1, 'concise' => 'Exons'}
   );
 
