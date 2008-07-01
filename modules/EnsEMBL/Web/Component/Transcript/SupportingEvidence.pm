@@ -7,7 +7,7 @@ use base qw(EnsEMBL::Web::Component::Transcript);
 use Bio::EnsEMBL::Intron;
 
 use Data::Dumper;
-$Data::Dumper::Maxdepth = 4;
+$Data::Dumper::Maxdepth = 5;
 
 sub _init {
   my $self = shift;
@@ -131,7 +131,7 @@ sub _content {
 #				warn "setting start of sublice to end of exon";
 			}
 			else {
-				#otherwise drawa line to the end of the subslice and move on
+				#otherwise draw a line to the end of the subslice and move on
 				my $start = $ens_exons->[$e_counter-1]->[1];
 				my $end = $subslice_end;
 				push @{$intron_exon_slices}, [$exons[$e_counter-1]->[1], $subslice_end];
@@ -191,28 +191,64 @@ sub _content {
 	#add info on normalised transcript_supporting_evidence
 	my $t_evidence;
 	foreach my $evi (@{$transcript->get_all_supporting_features}) {
+		my $coords;
 		my $hit_name = $evi->hseqname;
 		$t_evidence->{$hit_name}{'hit_name'} = $hit_name;
-		#map evidence onto exons and munge (ie account for gaps)
-		my $munged_coords = $self->split_evidence_and_munge_gaps($evi,$exons,$offset, [ $raw_coding_start+$offset,$raw_coding_end+$offset ]);
-		$t_evidence->{$hit_name}{'data'} = $munged_coords;
-		#calculate total length of the hit on the normalised slice (used for sorting in display)
+		#split evidence into ungapped features, map onto exons and munge (ie account for gaps)
+		my $last_end = 0;
+		foreach my $feature ($evi->ungapped_features) {
+			my $munged_coords = $self->split_evidence_and_munge_gaps($feature,$exons,$offset, [ $raw_coding_start+$offset,$raw_coding_end+$offset ], ref($evi));
+			if ($last_end) {
+				if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
+					if (abs($feature->hstart - $last_end) > 3) {
+						push @{$munged_coords->[0]}, $feature->hstart - $last_end;
+					}
+				}
+				else {
+					if (abs($feature->hstart - $last_end) > 1) {
+						push @{$munged_coords->[0]}, $feature->hstart - $last_end;
+					}
+					elsif ($feature->hstart == $last_end) {
+						push @{$munged_coords->[0]}, 0;
+					}
+				}
+			}
+			$last_end = $feature->hend;
+			push @{$t_evidence->{$hit_name}{'data'}},$munged_coords->[0];
+		}
+		
+		#		push @{$t_evidence->{$hit_name}{'data'}},$munged_coords;
+		#		#calculate total length of the hit on the normalised slice (used for sorting in display)
+#		my $tot_length;
+#		foreach my $match (@{$munged_coords}) {
+#			my $l = abs($match->[1] - $match->[0] ) + 1;
+#			$tot_length += $l;
+#		}
+#		$t_evidence->{$hit_name}{'hit_length'} = $tot_length;
+#		#note if the evidence extends beyond the ends of the transcript (indicated on display)
+#		if ($evi->start < $transcript->start) {
+#			$t_evidence->{$hit_name}{'5_extension'} = 1;
+#		}
+#		if ($evi->end > $transcript->end) {
+#			$t_evidence->{$hit_name}{'3_extension'} = 1;
+#		}
+	}
+
+	#calculate total length of the hit (used for sorting the display)
+	while ( my ($hit_name, $hit_details) = each (%{$t_evidence})  ) {
 		my $tot_length;
-		foreach my $match (@{$munged_coords}) {
-			my $l = abs($match->[1] - $match->[0] ) + 1;
-			$tot_length += $l;
+		foreach my $match (@{$hit_details->{'data'}}) {
+			my $len = abs($match->[1] - $match->[0]) + 1;
+			$tot_length += $len;
+#			if ($hit_name eq 'NP_543151.1') { warn "length of this bit is $len (",$match->[1]," - ",$match->[0],"; total is now $tot_length"; }
 		}
 		$t_evidence->{$hit_name}{'hit_length'} = $tot_length;
-		#note if the evidence extends beyond the ends of the transcript (indicated on display)
-		if ($evi->start < $transcript->start) {
-			$t_evidence->{$hit_name}{'5_extension'} = 1;
-		}
-		if ($evi->end > $transcript->end) {
-			$t_evidence->{$hit_name}{'3_extension'} = 1;
-		}
 	}
+	
 	$config->{'transcript'}{'transcript_evidence'} = $t_evidence;	
-
+	
+#	warn Dumper($t_evidence);
+	
 	#add info on additional supporting_evidence (exon level)
 	my $e_evidence;
 	my $evidence_checks;
@@ -220,88 +256,91 @@ sub _content {
 	foreach my $exon (@{$exons}) {
 	EVI:
 		foreach my $evi (@{$exon->get_all_supporting_features}) {
-
+			
 			my $hit_name = $evi->hseqname;
-#			next EVI if (exists($t_evidence->{$hit_name})); #only proceed if this hit name has not been used as transcript evidence
-
+			next EVI if (exists($t_evidence->{$hit_name})); #only proceed if this hit name has not been used as transcript evidence
+			
+			##this can be simplified greatly if we're not tagging start and stop##
+			
+			
 			#calculate the beginning and end of each merged hit
 			my $hit_seq_region_start = $evi->start;
 			my $hit_seq_region_end = $evi->end;
-
+			
 			#calculate beginning and end of the combined hit (first steps are needed to autovivify)
 			$evidence_start_stops{$hit_name}{'comb_start'} = $hit_seq_region_start unless exists($evidence_start_stops{$hit_name}{'comb_start'});
 			$evidence_start_stops{$hit_name}{'comb_end'} = $hit_seq_region_end unless exists($evidence_start_stops{$hit_name}{'comb_end'});
 			$evidence_start_stops{$hit_name}{'comb_start'} = $hit_seq_region_start if ($hit_seq_region_start < $evidence_start_stops{$hit_name}{'comb_start'});
 			$evidence_start_stops{$hit_name}{'comb_end'} = $hit_seq_region_end if ($hit_seq_region_end > $evidence_start_stops{$hit_name}{'comb_end'});
-
+			
 			#ignore duplicate entries
 			if ( defined(@{$evidence_start_stops{$hit_name}{'starts_and_ends'}})
-			     && grep {$_ eq "$hit_seq_region_start:$hit_seq_region_end"} @{$evidence_start_stops{$hit_name}{'starts_and_ends'}}) {
+					 && grep {$_ eq "$hit_seq_region_start:$hit_seq_region_end"} @{$evidence_start_stops{$hit_name}{'starts_and_ends'}}) {
 				next EVI;
 			}
 			push @{$evidence_start_stops{$hit_name}{'starts_and_ends'}}, "$hit_seq_region_start:$hit_seq_region_end";
-
-
+			
+			
 			my $hit_mismatch;
 			my $hit_start = $evi->hstart;
-
+			
 			#compare the start of this hit with the end of the last one -
 			#only DNA features have to match exactly, protein features have a tolerance of +- 3
 			if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
 				if (   ($evidence_start_stops{$hit_name}{'last_end'}) 
-				    && (abs($hit_start - $evidence_start_stops{$hit_name}{'last_end'}+1) > 3 )) {
-					$hit_mismatch = $hit_start - $evidence_start_stops{$hit_name}{'last_end'} + 1;
+						   && (abs($hit_start - $evidence_start_stops{$hit_name}{'last_end'}) > 3 )) {
+					$hit_mismatch = $hit_start - $evidence_start_stops{$hit_name}{'last_end'};
 				}
 			}
 			else {
 				if (   ($evidence_start_stops{$hit_name}{'last_end'}) 
-					&& ($hit_start != $evidence_start_stops{$hit_name}{'last_end'}+1) ) {
-					$hit_mismatch = $hit_start - $evidence_start_stops{$hit_name}{'last_end'} + 1;
+						   && (abs($hit_start - $evidence_start_stops{$hit_name}{'last_end'}) > 1) ) {
+					$hit_mismatch = $hit_start - $evidence_start_stops{$hit_name}{'last_end'};
+				}
+				elsif ($hit_start == $evidence_start_stops{$hit_name}{'last_end'}) {
+					$hit_mismatch = 0;
 				}
 			}
 			#note position of end of the hit for next iteration
 			$evidence_start_stops{$hit_name}{'last_end'} = $evi->hend;
-
+			
 			# Use this code since it does the coordinate munging but pass it just a single exon since no need to look across exon boundries
-			my $munged_coords = $self->split_evidence_and_munge_gaps($evi, [ $exon ], $offset, [ $raw_coding_start+$offset,$raw_coding_end+$offset ]);
+			my $munged_coords = $self->split_evidence_and_munge_gaps($evi, [ $exon ], $offset, [ $raw_coding_start+$offset,$raw_coding_end+$offset ], ref($evi));
 			foreach my $munged_hit (@$munged_coords) {
-
-				#add tag if there is a mismatch between exon / hit boundries
-				if ($hit_mismatch) {
-					push @{$munged_hit}, $hit_mismatch;
-				} else {
-					push @{$munged_hit}, '0';
-				}
-
-				push @{$e_evidence->{$hit_name}{'data'}}, $munged_hit ;
 				
+				#add tag if there is a mismatch between exon / hit boundries
+				if (defined($hit_mismatch)) {
+					push @{$munged_hit}, $hit_mismatch;
+				}
+				push @{$e_evidence->{$hit_name}{'data'}}, $munged_hit ;				
 			}
 			$e_evidence->{$hit_name}{'hit_name'} = $hit_name;
 		}
 	}
-
-#hack for transcript ENST00000378708
-#	$evidence_start_stops{'NM_080875.1'}{'comb_start'} = 38;
-#	$evidence_start_stops{'NM_080875.1'}{'comb_end'} = 39000000;
-
-#hack for transcript ENST00000333046
-#	$evidence_start_stops{'BC098411.1'}{'comb_start'} = 38;
-#	$evidence_start_stops{'BC098411.1'}{'comb_end'} = 140000000;
-
-
-	#add tags if the merged hit extends beyond the end of the transcript
-#	while ( my ($hit_name, $coords) = each (%evidence_start_stops)) {
-#		if ($coords->{'comb_start'} < $transcript->start) {
-#			warn "$hit_name:",$coords->{'comb_start'},"--",$transcript->start;
-#			my $diff =  $transcript->start - $coords->{'comb_start'};
-#			$e_evidence->{$hit_name}{'start_extension'} = $transcript->start - $coords->{'comb_start'};
-#		}
-#		if ($coords->{'comb_end'} > $transcript->end) {
-#			$e_evidence->{$hit_name}{'end_extension'} = $coords->{'comb_end'} - $transcript->end;
-#		}
-#	}	
-
-	#calculate total length of the hit (used for sorting the display)
+		
+		
+		#hack for transcript ENST00000378708
+		#	$evidence_start_stops{'NM_080875.1'}{'comb_start'} = 38;
+		#	$evidence_start_stops{'NM_080875.1'}{'comb_end'} = 39000000;
+		
+		#hack for transcript ENST00000333046
+		#	$evidence_start_stops{'BC098411.1'}{'comb_start'} = 38;
+		#	$evidence_start_stops{'BC098411.1'}{'comb_end'} = 140000000;
+		
+		
+		#add tags if the merged hit extends beyond the end of the transcript
+		#	while ( my ($hit_name, $coords) = each (%evidence_start_stops)) {
+		#		if ($coords->{'comb_start'} < $transcript->start) {
+		#			warn "$hit_name:",$coords->{'comb_start'},"--",$transcript->start;
+		#			my $diff =  $transcript->start - $coords->{'comb_start'};
+		#			$e_evidence->{$hit_name}{'start_extension'} = $transcript->start - $coords->{'comb_start'};
+		#		}
+		#		if ($coords->{'comb_end'} > $transcript->end) {
+		#			$e_evidence->{$hit_name}{'end_extension'} = $coords->{'comb_end'} - $transcript->end;
+		#		}
+		#	}	
+		
+		#calculate total length of the hit (used for sorting the display)
 	while ( my ($hit_name, $hit_details) = each (%{$e_evidence})  ) {
 		my $tot_length;
 		foreach my $match (@{$hit_details->{'data'}}) {
@@ -324,10 +363,11 @@ sub _content {
 
 =head2 split_evidence_and_munge_gaps
 
-  Arg [1]    : B::E::DnaDnaAlignFeature or B::E::DnaPepAlignFeature
+  Arg [1]    : B::E::DnaDnaAlignFeature, B::E::DnaPepAlignFeature or B::E::FeaturePair
   Arg [2]    : Arrayref of B::E::Exons
   Arg [3]    : Transcript start (ie offset to convert genomic to transcript genomic coordinates)
   Arg [4]    : Arrayref of coding positions
+  Arg [5]    : type of evidence (B::E::DnaDnaAlignFeature or B::E::DnaPepAlignFeature) 
   Description: Takes a supporting feature and maps to all exons supplied - depending on usage either all exons
                in the transcript or just a single exon. Coordinates returned are those used for drawing.
                Also looks for mismatches between the end of the hit and the end of the exon; takes into account
@@ -339,7 +379,7 @@ sub _content {
 
 sub split_evidence_and_munge_gaps {
 	my $self =  shift;
-	my ($hit,$exons,$offset,$coding_coords) = @_;
+	my ($hit,$exons,$offset,$coding_coords,$obj_type) = @_;
 	my $object    = $self->object;
 	my $hit_seq_region_start = $hit->start;
 	my $hit_seq_region_end   = $hit->end;
@@ -350,11 +390,13 @@ sub split_evidence_and_munge_gaps {
 	foreach my $exon (@{$exons}) {
 		my $estart = $exon->start;
 		my $eend   = $exon->end;
-#		if ($hit->hseqname eq 'Q96AX9-2') { warn "exon: - $estart:$eend"; }
+#		if ($hit->hseqname eq 'NP_543151.1') { warn "  exon: - $estart:$eend"; }
 		my @coord;
 
 		#go no further if the exon doesn't cover the hit
 		next if ( ($eend < $hit_seq_region_start) || ($estart > $hit_seq_region_end) );
+
+#		if ($hit->hseqname eq 'NP_543151.1') { warn "  analysing"; }
 
 		#map start and end positions of the hit from genomic coordinates to transcript genomic coordinates
 		my $start = $hit_seq_region_start >= $estart ? $hit_seq_region_start : $estart;
@@ -366,7 +408,7 @@ sub split_evidence_and_munge_gaps {
 
 		#add tags for hit/exon start/end mismatches - protein evidence has some leeway (+-3), DNA has to be exact
 		my ($left_end_mismatch, $right_end_mismatch);
-		if ($hit->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
+		if ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') {
 			my $cod_start = $coding_coords->[0];
 			my $cod_end   = $coding_coords->[1];
 			my $start = $cod_start > $estart ? $cod_start : $estart;
