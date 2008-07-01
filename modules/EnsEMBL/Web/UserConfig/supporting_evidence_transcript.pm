@@ -10,7 +10,16 @@ sub init {
 	$self->{'_transcript_names_'} = 'yes';
 	$self->{'_add_labels' }  = 1;
 	$self->{'general'}->{'supporting_evidence_transcript'} = {
-		'_artefacts' => [qw(TSE_background_exon TSE_transcript TSE_generic_match_label TSE_generic_match SE_generic_match SE_generic_match_label non_can_intron spacer1)],
+		'_artefacts' => [qw(TSE_background_exon
+							TSE_transcript
+							TSE_generic_match_label
+							TSE_generic_match
+							SE_generic_match
+							SE_generic_match_label
+							non_can_intron
+							spacer1
+							spacer2
+							TSE_legend)],
 		'_options'  => [],
 		'_settings' => {
 			'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
@@ -78,7 +87,7 @@ sub init {
 		},
 		'TSE_background_exon' => {
 			'on'          => "on",
-			'pos'         => '0',
+			'pos'         => '50',
 			'str'         => 'f',
 			'src'         => 'all',
 #			'col'         => 'd8ddff',
@@ -86,6 +95,15 @@ sub init {
 			'tag'         => 1,
 			'flag'        => 1,
 			'glyphset'    => 'TSE_background_exon',
+		},
+
+		'spacer2' => { 'on'=>'on','pos'=>30, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
+
+		'TSE_legend'   => {
+			'on'          => "on",
+			'pos'         => '10',
+			'str'         => 'f',
+			'src'         => 'all',
 		},
 	};	
 }
