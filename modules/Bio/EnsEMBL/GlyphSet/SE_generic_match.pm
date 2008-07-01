@@ -28,6 +28,8 @@ sub _init {
 	my $H = 0;
 	my( $font_w_bp, $font_h_bp);
 
+	my $legend_priority = 4;
+
 	my @draw_end_lines;
 
 	#go through each combined hit sorted on total length
@@ -40,6 +42,11 @@ sub _init {
 #			warn Dumper($hit_details);
 #		}
 		my $last_end = 0; #true/false (prevents drawing of line from first exon
+
+		#note the type of hit drawn, priority defines the order in the legend, height used to draw legend
+		$Config->{'TSE_legend'}{'hit_feature'}{'found'}++;
+		$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
+		$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
 
 		#go through each component of the combined hit (ie each supporting_feature)
 		foreach my $block (@{$hit_details->{'data'}}) {
@@ -67,11 +74,11 @@ sub _init {
 					'absolutey'=>1,});
 				#add a red attribute if there is a part of the hit missing
 				if (my $mismatch = $block->[5]) {
-#					$G->{'dotted'} = 1;
+					$G->{'dotted'} = 1;
 					$G->{'colour'} = 'red';
 					$G->{'title'} = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
 				}
-				$self->push($G);
+				$self->push($G);				
 			}
 			
 			$last_end = $strand == 1 ? $block->[1] : $block->[0];
@@ -91,43 +98,49 @@ sub _init {
 			#second and third elements of $block define whether there is a mismatch between exon and hit boundries
 			#(need some logic to add meaningfull terms to zmenu)
 			if ($block->[3]) {
-				push @draw_end_lines, [$block->[0],$H];
+				my $c = $block->[3] > 0 ? 'red' : 'blue';
+				push @draw_end_lines, [$block->[0],$H,$c];
 				$G->{'title'} = $hit_name." (".$block->[3].")";
 			}
 			if ($block->[4]) {
-				push @draw_end_lines, [$block->[1],$H];
+				my $c = $block->[4] > 0 ? 'red' : 'blue';
+				push @draw_end_lines, [$block->[1],$H,$c];
 				$G->{'title'} = $hit_name." (".$block->[4].")";
 			}
 			$self->push( $G );
 		}
 
 		#draw extensions at the left of the image (ie if evidence extends beyond the start of the image)
-		my $diff;
-		if (   ( ($diff = $hit_details->{'start_extension'}) && $strand == 1)
-			|| ( ($diff = $hit_details->{'end_extension'}) && $strand == -1)) {
-			$self->push(new Sanger::Graphics::Glyph::Line({
-				'x'         => 0,
-				'y'         => $H + 0.5*$h,
-				'width'     => $start_x-(1/$pix_per_bp),
-				'height'    => 0,
-				'absolutey' => 1,
-				'colour'    => 'black',
-				'title'     => $diff.'bp',
-			}));
-		}
-		#draw extensions at the right of the image
-		if (   ( ($diff = $hit_details->{'end_extension'}) && $strand == 1)
-			|| ( ($diff = $hit_details->{'start_extension'}) && $strand == -1)) {
-			$self->push(new Sanger::Graphics::Glyph::Line({
-				'x'         => $finish_x + (1/$pix_per_bp),
-				'y'         => $H + 0.5*$h,
-				'width'     => $length-$finish_x-1,
-				'height'    => 0,
-				'absolutey' => 1,
-				'colour'    => 'black',
-				'title'     => $diff.'bp',
-			}));
-		}		
+		#don't use this for now - makes image more complicated and would require extra space between
+		#the start / end of the transcript and the edge of the image. This information is shown by the
+		#shading of the exon boundry
+
+#		my $diff;
+#		if (   ( ($diff = $hit_details->{'start_extension'}) && $strand == 1)
+#			|| ( ($diff = $hit_details->{'end_extension'}) && $strand == -1)) {
+#			$self->push(new Sanger::Graphics::Glyph::Line({
+#				'x'         => 0,
+#				'y'         => $H + 0.5*$h,
+#				'width'     => $start_x-(1/$pix_per_bp),
+#				'height'    => 0,
+#				'absolutey' => 1,
+#				'colour'    => 'black',
+#				'title'     => $diff.'bp',
+#			}));
+#		}
+#		#draw extensions at the right of the image
+#		if (   ( ($diff = $hit_details->{'end_extension'}) && $strand == 1)
+#			|| ( ($diff = $hit_details->{'start_extension'}) && $strand == -1)) {
+#			$self->push(new Sanger::Graphics::Glyph::Line({
+#				'x'         => $finish_x + (1/$pix_per_bp),
+#				'y'         => $H + 0.5*$h,
+#				'width'     => $length-$finish_x-1,
+#				'height'    => 0,
+#				'absolutey' => 1,
+#				'colour'    => 'black',
+#				'title'     => $diff.'bp',
+#			}));
+#		}		
 
 		my @res = $self->get_text_width(0, "$hit_name", '', 'font'=>$fontname, 'ptsize'=>$fontsize);
 		my $W = ($res[2])/$pix_per_bp;
@@ -162,7 +175,7 @@ sub _init {
 			'y'         => $mismatch_line->[1],
 			'width'     => 0,
 			'height'    => $h,
-			'colour'    => 'red',
+			'colour'    => $mismatch_line->[2],
 			'absolutey' => 1,
 		});
 		$self->push( $G );
