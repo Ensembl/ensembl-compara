@@ -103,13 +103,13 @@ sub _init {
 			$self->push($G);
 			$x++;
 		}
-
+		
 		if($x==$NO_OF_COLUMNS) {
 			$x=0;
 			$y++;
 		}
 	}
-
+	
 	# Draw a separating line to distinguish the above dynamic legend from the following static legend
 	$y++;
 	my $rect = new Sanger::Graphics::Glyph::Rect({
@@ -233,11 +233,11 @@ sub _init {
 		'absolutewidth' => 1,
 	});
 	$self->push($G);
-
+	
 	#new line
 	$y++;
 	$x = 0;
-
+	
 	#draw legends for exon/CDS & hit mismatch
 	my %dets = (
 		'blue' => 'supporting feature start / ends within exon / CDS',
@@ -264,6 +264,7 @@ sub _init {
 			'absolutewidth' => 1,
 		});
 		$self->push($G);
+
 		$G = new Sanger::Graphics::Glyph::Line({
 			'x'             => $start_x,
 			'y'             => $y * ( $th + 3 ) - 1,
@@ -274,10 +275,22 @@ sub _init {
 			'absolutex'     => 1,
 			'absolutewidth' => 1,
 		});
+		$self->push($G);
+
+		$G = new Sanger::Graphics::Glyph::Line({
+			'x'             => $start_x + 1,
+			'y'             => $y * ( $th + 3 ) - 1,
+			'width'         => 0,
+			'height'        => $h,
+			'colour'         => $c,
+			'absolutey'     => 1,
+			'absolutex'     => 1,
+			'absolutewidth' => 1,
+		});
+		$self->push($G);
 		
 		$y += 0.8;
-		
-		$self->push($G);
+
 		$G = new Sanger::Graphics::Glyph::Rect({
 			'x'             => $start_x,
 			'y'             => $y * ( $th + 3 ) - 1,
@@ -289,7 +302,19 @@ sub _init {
 			'absolutewidth' => 1,
 		});
 		$self->push($G);
-		
+
+		$G = new Sanger::Graphics::Glyph::Line({
+			'x'             => $start_x+$BOX_WIDTH-1,
+			'y'             => $y * ( $th + 3 ) - 1,
+			'width'         => 0,
+			'height'        => $h,
+			'colour'        => $c,
+			'absolutey'     => 1,
+			'absolutex'     => 1,
+			'absolutewidth' => 1,
+		});
+		$self->push($G);		
+
 		$G = new Sanger::Graphics::Glyph::Line({
 			'x'             => $start_x+$BOX_WIDTH,
 			'y'             => $y * ( $th + 3 ) - 1,
@@ -304,7 +329,7 @@ sub _init {
 		
 		$G = new Sanger::Graphics::Glyph::Text({
 			'x'             => $start_x + $BOX_WIDTH + 4,
-			'y'             => $y * $th + 4,
+			'y'             => $y * $th + 2,
 			'height'        => $th,
 			'valign'        => 'center',
 			'halign'        => 'left',
