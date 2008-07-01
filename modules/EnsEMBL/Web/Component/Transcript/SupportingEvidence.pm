@@ -285,21 +285,21 @@ sub _content {
 #	$evidence_start_stops{'NM_080875.1'}{'comb_end'} = 39000000;
 
 #hack for transcript ENST00000333046
-	$evidence_start_stops{'BC098411.1'}{'comb_start'} = 38;
-	$evidence_start_stops{'BC098411.1'}{'comb_end'} = 140000000;
+#	$evidence_start_stops{'BC098411.1'}{'comb_start'} = 38;
+#	$evidence_start_stops{'BC098411.1'}{'comb_end'} = 140000000;
 
 
 	#add tags if the merged hit extends beyond the end of the transcript
-	while ( my ($hit_name, $coords) = each (%evidence_start_stops)) {
-		if ($coords->{'comb_start'} < $transcript->start) {
+#	while ( my ($hit_name, $coords) = each (%evidence_start_stops)) {
+#		if ($coords->{'comb_start'} < $transcript->start) {
 #			warn "$hit_name:",$coords->{'comb_start'},"--",$transcript->start;
 #			my $diff =  $transcript->start - $coords->{'comb_start'};
-			$e_evidence->{$hit_name}{'start_extension'} = $transcript->start - $coords->{'comb_start'};
-		}
-		if ($coords->{'comb_end'} > $transcript->end) {
-			$e_evidence->{$hit_name}{'end_extension'} = $coords->{'comb_end'} - $transcript->end;
-		}
-	}	
+#			$e_evidence->{$hit_name}{'start_extension'} = $transcript->start - $coords->{'comb_start'};
+#		}
+#		if ($coords->{'comb_end'} > $transcript->end) {
+#			$e_evidence->{$hit_name}{'end_extension'} = $coords->{'comb_end'} - $transcript->end;
+#		}
+#	}	
 
 	#calculate total length of the hit (used for sorting the display)
 	while ( my ($hit_name, $hit_details) = each (%{$e_evidence})  ) {
@@ -350,7 +350,7 @@ sub split_evidence_and_munge_gaps {
 	foreach my $exon (@{$exons}) {
 		my $estart = $exon->start;
 		my $eend   = $exon->end;
-		if ($hit->hseqname eq 'Q96AX9-2') { warn "exon: - $estart:$eend"; }
+#		if ($hit->hseqname eq 'Q96AX9-2') { warn "exon: - $estart:$eend"; }
 		my @coord;
 
 		#go no further if the exon doesn't cover the hit
@@ -365,21 +365,21 @@ sub split_evidence_and_munge_gaps {
 		my $munged_end = $end + $object->munge_gaps( 'supporting_evidence_transcript', $end );
 
 		#add tags for hit/exon start/end mismatches - protein evidence has some leeway (+-3), DNA has to be exact
-		my ($five_end_mismatch, $three_end_mismatch);
+		my ($left_end_mismatch, $right_end_mismatch);
 		if ($hit->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
 			my $cod_start = $coding_coords->[0];
 			my $cod_end   = $coding_coords->[1];
 			my $start = $cod_start > $estart ? $cod_start : $estart;
 			my $end = $cod_end < $eend ? $cod_end : $eend;
 
-			$five_end_mismatch = (abs($start - $hit_seq_region_start) < 4) ? 0 : $start - $hit_seq_region_start;
-			$three_end_mismatch = (abs($end - $hit_seq_region_end) < 4) ? 0 : $hit_seq_region_end - $end;
+			$left_end_mismatch  = (abs($start - $hit_seq_region_start) < 4) ? 0 : $start - $hit_seq_region_start;
+			$right_end_mismatch = (abs($end - $hit_seq_region_end) < 4)     ? 0 : $hit_seq_region_end - $end;
 		}
 		else {
-			$five_end_mismatch  = $estart == $hit_seq_region_start ? 0 : $estart - $hit_seq_region_start;
-			$three_end_mismatch = $eend == $hit_seq_region_end ? 0 : $hit_seq_region_end - $eend;
+			$left_end_mismatch  = $estart == $hit_seq_region_start ? 0 : $estart - $hit_seq_region_start;
+			$right_end_mismatch = $eend   == $hit_seq_region_end   ? 0 : $hit_seq_region_end - $eend;
 		}
-		push @{$coords}, [ $munged_start, $munged_end, $hit, $five_end_mismatch, $three_end_mismatch ];
+		push @{$coords}, [ $munged_start, $munged_end, $hit, $left_end_mismatch, $right_end_mismatch ];
 	}
 	return $coords;
 }		
