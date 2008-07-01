@@ -45,7 +45,7 @@ sub populate_tree {
   ));
 
   $compara_menu->append( $self->create_node( 'Compara_Tree',       "Gene Trees",
-    [qw(image        EnsEMBL::Web::Component::Gene::UnderConstruction)],
+    [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
     { 'availability' => 'database:compara' }
   ));
 =pod
