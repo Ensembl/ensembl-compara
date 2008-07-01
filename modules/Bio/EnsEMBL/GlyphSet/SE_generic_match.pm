@@ -34,7 +34,7 @@ sub _init {
 
 	#go through each combined hit sorted on total length
 	foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
-		my $start_x = 100000;
+		my $start_x = 1000000;
 		my $finish_x = 0;
 		my $hit_name = $hit_details->{'hit_name'};
 #		warn "drawing $hit_name";
@@ -50,6 +50,7 @@ sub _init {
 
 		#go through each component of the combined hit (ie each supporting_feature)
 		foreach my $block (@{$hit_details->{'data'}}) {
+			my $width = $block->[1]-$block->[0] +1;
 			$start_x = $start_x > $block->[0] ? $block->[0] : $start_x;
 			$finish_x = $finish_x < $block->[1] ? $block->[1] : $finish_x;
 
@@ -82,12 +83,13 @@ sub _init {
 			}
 			
 			$last_end = $strand == 1 ? $block->[1] : $block->[0];
+#			warn "hit = $hit_name: x = ",$block->[0]," width = $width";
 
 			#draw the location of the exon hit
 			my $G = new Sanger::Graphics::Glyph::Rect({
 				'x'         => $block->[0] ,
 				'y'         => $H,
-				'width'     => $block->[1]-$block->[0],
+				'width'     => $width,
 				'height'    => $h,
 				'bordercolour' => 'black',
 				'absolutey' => 1,
@@ -100,10 +102,12 @@ sub _init {
 			if ($block->[3]) {
 				my $c = $block->[3] > 0 ? 'red' : 'blue';
 				push @draw_end_lines, [$block->[0],$H,$c];
+				push @draw_end_lines, [$block->[0]+1/$pix_per_bp,$H,$c];
 				$G->{'title'} = $hit_name." (".$block->[3].")";
 			}
 			if ($block->[4]) {
 				my $c = $block->[4] > 0 ? 'red' : 'blue';
+				push @draw_end_lines, [$block->[1]-1/$pix_per_bp,$H,$c];
 				push @draw_end_lines, [$block->[1],$H,$c];
 				$G->{'title'} = $hit_name." (".$block->[4].")";
 			}
