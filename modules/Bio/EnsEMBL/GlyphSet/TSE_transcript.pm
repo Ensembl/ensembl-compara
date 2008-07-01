@@ -53,7 +53,7 @@ sub _init {
 					'x'         => $filled_start -1,
 					'y'         => 0,
 					'width'     => $filled_end - $filled_start + 1,
-					'height'    => $h,
+					'height'    => 2*$h,
 					'colour'    => $colour,
 					'absolutey' => 1
 				}));
@@ -62,7 +62,7 @@ sub _init {
 			# draw a non-filled rectangle around the entire exon
 			my $G = new Sanger::Graphics::Glyph::Rect({
 				'x'         => $box_start -1 ,
-				'y'         => 0,
+				'y'         => 0.5*$h,
 				'width'     => $box_end-$box_start +1,
 				'height'    => $h,
 				'bordercolour' => $colour,
@@ -83,7 +83,7 @@ sub _init {
 			#otherwise draw a line to represent the intron context
 			my $G = new Sanger::Graphics::Glyph::Line({
 				'x'        => $obj->[0] + 1/$pix_per_bp,
-				'y'        => $h/2,
+				'y'        => $h,
 				'h'        =>1,
 				'width'    =>$obj->[1]-$obj->[0]-1,
 				'colour'   => $colour,
