@@ -107,8 +107,7 @@ sub get_gd_text{
   
   my $fontpath 
       = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}
-        . $font . '.ttf';
-
+        . '/' . $font . '.ttf';
   my $gd_text = GD::Text->new();
   eval {
     if( -e $fontpath ) {
