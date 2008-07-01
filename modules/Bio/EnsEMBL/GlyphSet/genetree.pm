@@ -24,59 +24,63 @@ use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::Feature;
 @ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub fixed { return 1;}
-my $k;
+sub fixed { 
+  # ...No idea what this method is for...
+  return 1;
+}
+
+
+my $CURRENT_ROW;
 
 sub _init {
+  # Populate the canvas with feaures represented as glyphs
+
   my ($self) = @_;
 
   my $current_gene = $self->{highlights}->[0];
   my $current_genome_db = $self->{highlights}->[1] || ' ';
   my $tree      = $self->{'container'};
-  $k = 1;
-#  warn ("A-0:".localtime());
-  my @nodes = sort { ($a->{_rank} <=> $b->{_rank}) * 10 + ($a->{_id} <=> $b->{_id})} @{$self->features($tree, 0, 0, 0) || []};
-
-#  warn ("B-0:".localtime());
-
   my $Config         = $self->{'config'};
   my $bitmap_length = $Config->image_width(); 
 
-  my %labels = map {length($_->{label}) => $_->{label}} @nodes;
 
-  my $li = (sort {$a <=> $b} keys %labels)[-1];
-  my $longest_label = $labels{$li};
-  my $rank_no = $nodes[-1]->{_rank};
 
+  $CURRENT_ROW = 1;
+#  warn ("A-0:".localtime());
+
+  # Create a sorted list of tree nodes sorted by rank then id
+  my @nodes = ( sort { ($a->{_rank} <=> $b->{_rank}) * 10  
+                           + ( $a->{_id} <=> $b->{_id}) } 
+                @{$self->features($tree, 0, 0 ) || [] } );
+
+#  warn ("B-0:".localtime());
+
+  # Calculate space to reserve for the labels
+  my( $longest_label ) = ( sort{ length($b) <=> length($a) } 
+                           map{$_->{label}} @nodes );
   my( $fontname, $fontsize ) = $self->get_font_details( 'small' );
-  my @res = $self->get_text_width( 0, $longest_label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
-
+  my @res = $self->get_text_width( 0, $longest_label, '', 
+                                   'font'=>$fontname, 'ptsize' => $fontsize );
   my $font_height = $res[3];
   my $label_width = $res[2];
 
+
+  # Calculate phylogenetic distance to px scaling
   my $max_distance = $tree->max_distance;
-
-  my $oldscale = ($bitmap_length - $label_width) / 5; # works for most of the genes, but not for trees where max_distance > 100
-
-# basic scaling : probably will need some fine tunning
   my $scale = 100;
-
   if ($max_distance > 10) {
       $scale = 75;
   }
-
   if ($max_distance > 100) {
       $scale = 50;
   }
-
-
   $scale *= ($bitmap_length / 600);
-
-# warn("SCALE : $bitmap_length * $scale * $oldscale * $max_distance");  
+  # warn("SCALE: $bitmap_length | $max_distance | $scale");  
   
   my @alignments;
   my %xcs;
 
+  # Draw each node
   foreach my $f (@nodes) {
       my $xcc = $xcs{$f->{_parent}} + $f->{_distance};
       $xcs{$f->{_id}} = $xcc;
@@ -86,6 +90,7 @@ sub _init {
       push @alignments, [ $f->{y} , $f->{_cigar_line} ] if ($f->{_cigar_line});
       my ($zmenu, $href) = $self->zmenu( $f );
 
+      # Node glyph, coloured for for duplication/specition
       my $t = new Sanger::Graphics::Glyph::Rect({
 	  'x'         => $f->{x},
 	  'y'         => $f->{y},
@@ -95,12 +100,13 @@ sub _init {
 	  'zindex'   => ($f->{_dup} ? 40 : -20),
 	  'zmenu' => $zmenu
 	  });
-
       $self->push( $t );
 
+      # Leaf label, coloured for focus gene/species
       if ($f->{label}) {
-	  my $col = $f->{_gene} eq $current_gene ? 'red' : ( $f->{_genome_db} eq $current_genome_db ? 'blue' : 'black');
-
+        my $col = $f->{_gene} eq $current_gene 
+            ? 'red' 
+            : ( $f->{_genome_db} eq $current_genome_db ? 'blue' : 'black');
 	  my $txt = new Sanger::Graphics::Glyph::Text({
 	      'text'       => $f->{label},
 	      'height'     => $font_height,
@@ -255,14 +261,16 @@ sub _init {
 
 sub features {
   my ($self, $tree, $rank, $pid) = @_;
+  $rank ||= 0;
+  $pid  ||= 0;
 
   my @features = ();
   my $f = {
       '_distance' => $tree->distance_to_parent,
-      '_dup' => $tree->get_tagvalue("Duplication"),
-      '_id' =>  $tree->node_id, 
-      '_rank' => $rank,
-      '_parent' => $pid
+      '_dup'      => $tree->get_tagvalue("Duplication"),
+      '_id'       => $tree->node_id, 
+      '_rank'     => $rank,
+      '_parent'   => $pid
   };
 
   while ($f->{_distance} > 2) {
@@ -281,7 +289,7 @@ sub features {
   if ( @$children > 0) {
       $f->{y} = ($features[0]->{y} + $features[-1]->{y}) / 2;
   } else {
-      $f->{y} = ($k++) * 20;
+      $f->{y} = ($CURRENT_ROW++) * 20;
       $f->{label} = $f->{_name};
   }
 
