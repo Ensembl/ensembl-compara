@@ -34,12 +34,33 @@ sub content {
     }
 
 	$html .= qq(<table class="ss tint">);
-	$html .= qq(<tr>
+
+	#label and space columns, number depends on the data
+	my $other_evi = 0;
+	foreach my $tsi (sort keys %{$e}) {
+		if (my $trans_evi = $e->{$tsi}{'evidence'}) {
+			if (my $other_ids = $trans_evi->{'UNKNOWN'}) {
+				$other_evi = 1;
+			}
+		}
+	}
+	if ($other_evi) {
+		$html .= qq(<tr>
                 <th width="20%">Transcript</th>
                 <th width="20%">CDS support</th>
                 <th width="20%" >UTR support</th>
                 <th width="20%">Other transcript support</th>
                 <th width="20%">Exon support</th></tr>);
+	}
+	else {
+		$html .= qq(<tr>
+                <th width="20%">Transcript</th>
+                <th width="27%">CDS support</th>
+                <th width="27" >UTR support</th>
+                <th width="26%">Exon support</th></tr>);
+		
+	}
+
 	foreach my $tsi (sort keys %{$e}) {
 		my $ln = $e->{$tsi}{'logic_name'};
 		my $url = $self->object->_url({
@@ -48,10 +69,16 @@ sub content {
 			't'      => $tsi,
 		});
 
+		my ($trans_evi,$cds_ids,$utr_ids,$other_ids,$exon_evi);
+
+#		$html .= qq(<tr>
+#                    <td class="bg2"><a href=\"$url\">$tsi</a> <span class="small">[$ln]</span></td>);
+
 		$html .= qq(<tr>
-                    <td class="bg2"><a href=\"$url\">$tsi</a> <span class="small">[$ln]</span></td>);
-		if (my $trans_evi = $e->{$tsi}{'evidence'}) {
-			if (my $cds_ids = $trans_evi->{'CDS'}) {
+                    <td class="bg2"><a href=\"$url\">$tsi</a></td>);
+
+		if ($trans_evi = $e->{$tsi}{'evidence'}) {
+			if ($cds_ids = $trans_evi->{'CDS'}) {
 				$html .= qq(<td>);
 				foreach my $link (@{$object->add_evidence_links($cds_ids)}) {
 					$html .= qq(
@@ -63,7 +90,7 @@ sub content {
 				$html .= qq(<td></td>);
 			}
 
-			if (my $utr_ids = $trans_evi->{'UTR'}) {
+			if ($utr_ids = $trans_evi->{'UTR'}) {
 				$html .= qq(<td>);
 				foreach my $link (@{$object->add_evidence_links($utr_ids)}) {
 					$html .= qq(
@@ -75,7 +102,7 @@ sub content {
 				$html .= qq(<td></td>);
 			}
 
-			if (my $other_ids= $trans_evi->{'UNKNOWN'}) {
+			if ($other_ids = $trans_evi->{'UNKNOWN'}) {
 				$html .= qq(<td>);
 				foreach my $link (@{$object->add_evidence_links($other_ids)}) {
 					$html .= qq(
@@ -83,15 +110,12 @@ sub content {
 				}
 				$html .= qq(</td>);
 			}
-			else {
-				$html .= qq(<td></td>);
-			}
 		}
 		else {
-			$html .= qq(<td colspan=3></td>);
+			$html .= qq(<td colspan=2></td>);
 		}
-		if (my $extra_evi = $e->{$tsi}{'extra_evidence'}) {
-			my $c = scalar(keys(%$extra_evi));
+		if ($exon_evi = $e->{$tsi}{'extra_evidence'}) {
+			my $c = scalar(keys(%$exon_evi));
 			$html .= qq(
                         <td><a href=\"$url\">$c features</a></td>);
 		}
