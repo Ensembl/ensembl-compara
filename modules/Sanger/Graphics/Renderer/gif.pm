@@ -242,7 +242,7 @@ sub render_Line {
   my $y2     = $y1 + $glyph->{'pixelheight'};
 
   if(defined $glyph->dotted()) {
-    $self->{'canvas'}->setStyle($colour,$colour,$colour,gdTransparent,gdTransparent,gdTransparent);
+    $self->{'canvas'}->setStyle(gdTransparent,gdTransparent,gdTransparent,$colour,$colour,$colour);
     $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdStyled);
 
   } else {
