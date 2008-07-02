@@ -24,7 +24,9 @@ sub process {
 
   my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   if ($cgi->param('record_id')) {
-    $cgi->redirect($self->url('/Account/Activate', {'email' => $user->email, 'code' => $user->salt, 'url' => '/Account/Details;record_id='.CGI::escape($cgi->param('record_id'))} );
+      $cgi->redirect(
+		     $self->url('/Account/Activate', 
+				{'email' => $user->email, 'code' => $user->salt, 'url' => '/Account/Details;record_id='.CGI::escape($cgi->param('record_id'))}));
   } else {
     if ($user && $user->email) {
       my $mailer = EnsEMBL::Web::Mailer::User->new;
