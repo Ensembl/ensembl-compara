@@ -3,6 +3,7 @@ package EnsEMBL::Web::Session;
 use strict;
 use Storable qw(nfreeze thaw);
 use Bio::EnsEMBL::ColourMap;
+use Apache2::RequestUtil;
 use Data::Dumper qw(Dumper);
 use Class::Std;
 
@@ -97,6 +98,7 @@ sub create_session_id {
 ### Gets session ID if the session ID doesn't exist
 ### a new one is grabbed and added to the users cookies
   my ($self, $r) = @_;
+  $r = (!$r && Apache2::RequestUtil->can('request')) ? Apache2::RequestUtil->request() : undef
   my $session_id = $self->get_session_id;
   return $session_id if $session_id;
   $session_id = EnsEMBL::Web::Data::Session->create_session_id;
