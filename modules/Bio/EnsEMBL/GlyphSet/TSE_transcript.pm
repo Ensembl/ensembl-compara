@@ -36,48 +36,134 @@ sub _init {
 	my %highlights;
 	@highlights{$self->highlights} = ();    # build hashkeys of highlight list
 	my($colour, $label, $hilight) = $self->colour( $transcript, $colours, %highlights );
-	
+
+	my $tags;
 	foreach my $obj (@introns_and_exons) {
 		#if we're working with an exon then draw a box
 		if ( $obj->[2] ) {
-			my $box_start = $obj->[0];
-			$box_start    = 1 if $box_start < 1 ;
-			my $box_end   = $obj->[1];
-			$box_end      = $length if $box_end > $length;
-			
-			# calculate and draw the coding part of the exon
-			my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
-			my $filled_end   = $box_end   > $coding_end   ? $coding_end   : $box_end;
-			if( $filled_start <= $filled_end ) {
-				$self->push( new Sanger::Graphics::Glyph::Rect({
-					'x'         => $filled_start -1,
+
+#			warn Dumper($obj);
+			my $exon_start = $obj->[0];
+			my $exon_end   = $obj->[1];
+
+			#set the exon boundries to the image boundries in case anything odd has happened
+			$exon_start    = 1 if $exon_start < 1 ;
+			$exon_end      = $length if $exon_end > $length;
+
+			##the following is very verbose and will be rewritten, but it does do the job!
+			my $col1 = $Config->get('TSE_transcript','col');
+			my $col2 = $Config->get('TSE_transcript','col2');
+			my ($G,$tag);
+			#draw and tag completely non-coding exons
+			if ( ($exon_end < $coding_start) || ($exon_start > $coding_end) ) {
+				$G = new Sanger::Graphics::Glyph::Rect({
+					'x'         => $exon_start -1 ,
+					'y'         => 0.5*$h,
+					'width'     => $exon_end-$exon_start +1,
+					'height'    => $h,
+					'bordercolour' => $colour,
+					'absolutey' => 1,
+					'title'     => $obj->[2]->stable_id,
+					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
+				});
+				$tag = "@{[$exon_end]}:@{[$exon_start]}";
+				push @{$tags}, ["X:$tag",$col1];
+				$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
+				$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
+				$self->push( $G );
+			}			
+			elsif ( ($exon_start >= $coding_start) && ($exon_end <= $coding_end) ) {
+				##draw and tag completely coding exons
+				$G = new Sanger::Graphics::Glyph::Rect({
+					'x'         => $exon_start -1,
 					'y'         => 0,
-					'width'     => $filled_end - $filled_start + 1,
+					'width'     => $exon_end - $exon_start + 1,
 					'height'    => 2*$h,
 					'colour'    => $colour,
-					'absolutey' => 1
-				}));
+					'absolutey' => 1,
+					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
+				});
+				$tag = "@{[$exon_end]}:@{[$exon_start]}";
+				push @{$tags}, ["X:$tag",$col2];
+				$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
+				$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
+				$self->push( $G );
 			}
-			
-			# draw a non-filled rectangle around the entire exon
-			my $G = new Sanger::Graphics::Glyph::Rect({
-				'x'         => $box_start -1 ,
-				'y'         => 0.5*$h,
-				'width'     => $box_end-$box_start +1,
-				'height'    => $h,
-				'bordercolour' => $colour,
-				'absolutey' => 1,
-				'title'     => $obj->[2]->stable_id,
-				'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
-			});
-			$G->{'zmenu'} = $self->zmenu( $transcript, $obj->[2] ) unless $Config->{'_href_only'};
-			
-			#add tags for vertical shading lines
-			my $tag = "@{[$obj->[2]->end]}:@{[$obj->[2]->start]}";
-			my $col = $Config->get('TSE_transcript','col');
-			$self->join_tag( $G, "X:$tag", 0,  0, $col, 'fill', -99 );
-			$self->join_tag( $G, "X:$tag", 1,  0, $col, 'fill', -99  );
-			$self->push( $G );
+
+			elsif ( ($exon_start < $coding_start) && ($exon_end > $coding_start) ) {
+				##draw and tag partially coding transcripts left hand)
+				#non coding part
+				$G = new Sanger::Graphics::Glyph::Rect({
+					'x'         => $exon_start -1 ,
+					'y'         => 0.5*$h,
+					'width'     => $coding_start-$exon_start +1,
+					'height'    => $h,
+					'bordercolour' => $colour,
+					'absolutey' => 1,
+					'title'     => $obj->[2]->stable_id,
+					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
+				});
+				$tag = "@{[$coding_start-1]}:@{[$exon_start]}";
+				push @{$tags}, ["X:$tag",$col1];
+				$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
+				$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
+				$self->push( $G );
+
+				#coding part
+				$G = new Sanger::Graphics::Glyph::Rect({
+					'x'         => $coding_start -1,
+					'y'         => 0,
+					'width'     => $exon_end - $coding_start + 1,
+					'height'    => 2*$h,
+					'colour'    => $colour,
+					'absolutey' => 1,
+					'href'      => $self->href( $transcript, $obj->[2], %highlights ),
+				});
+				$tag = "@{[$exon_end]}:@{[$coding_start]}";
+				push @{$tags}, ["X:$tag",$col2];
+				$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
+				$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
+				$self->push( $G );
+			}
+
+			elsif ( ($exon_end > $coding_end) && ($exon_start < $coding_end) ) {
+				##draw and tag partially coding transcripts left hand)
+
+				#coding part
+				$G = new Sanger::Graphics::Glyph::Rect({
+					'x'         => $exon_start -1,
+					'y'         => 0,
+					'width'     => $coding_end - $exon_start + 1,
+					'height'    => 2*$h,
+					'colour'    => $colour,
+					'absolutey' => 1,
+					'href'      => $self->href( $transcript, $obj->[2], %highlights ),
+				});
+				$tag = "@{[$coding_end-1]}:@{[$exon_start]}";
+				push @{$tags}, ["X:$tag",$col2];
+				$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
+				$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
+				$self->push( $G );
+
+				#non coding part
+				$G = new Sanger::Graphics::Glyph::Rect({
+					'x'         => $coding_end -1 ,
+					'y'         => 0.5*$h,
+					'width'     => $exon_end-$coding_end +1,
+					'height'    => $h,
+					'bordercolour' => $colour,
+					'absolutey' => 1,
+					'title'     => $obj->[2]->stable_id,
+					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
+				});
+				$tag = "@{[$exon_end]}:@{[$coding_end]}";
+				push @{$tags}, ["X:$tag",$col1];
+				$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
+				$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
+				$self->push( $G );
+
+			}
+			$Config->{'tags'} = $tags;				
 		}
 		else {
 			#otherwise draw a line to represent the intron context
