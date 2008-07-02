@@ -6,6 +6,8 @@ package EnsEMBL::Web::Data::Session;
 
 use strict;
 use warnings;
+use HTTP::Date qw(str2time time2iso);
+
 use base qw(EnsEMBL::Web::Data);
 use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 

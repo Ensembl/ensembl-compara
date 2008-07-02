@@ -340,6 +340,8 @@ sub save_tmp_data {
 ### TMP Data
 ### Save all temporary data back to the database
   my ($self, $r) = @_;
+  $self->create_session_id($r);
+  
   while (my ($key, $value) = each %{$TmpData_of{ ident $self }}) {
       my $d =  Data::Dumper->new( [$value], [qw($data)] );
       $d->Indent(1);
