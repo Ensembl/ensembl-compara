@@ -67,8 +67,7 @@ sub reset_config {
 }
 
 sub create_session_id {
-  ### If not defined get new session id, and create cookie! must be done before any output is
-  ### handled!
+###
   my $class = shift;
   my $dbh   = $class->db_Main;
 
@@ -81,7 +80,7 @@ sub create_session_id {
     $dbh->do("insert into session set last_session_no = ?", {}, $session_id);
   }
   $dbh->do('unlock tables');
-    return $session_id;
+  return $session_id;
 }
 
 1;

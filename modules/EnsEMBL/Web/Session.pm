@@ -93,12 +93,12 @@ sub colourmap {
 sub create_session_id {
 ### Gets session ID if the session ID doesn't exist
 ### a new one is grabbed and added to the users cookies
-  my( $self, $r ) = @_;
+  my ($self, $r) = @_;
   my $session_id = $self->get_session_id;
   return $session_id if $session_id;
-  $session_id = EnsEMBL::Web::Data::Session->create_session_id($r, $self->get_cookie);
+  $session_id = EnsEMBL::Web::Data::Session->create_session_id;
   $self->set_session_id( $session_id );
-  $self->get_cookie->create( $r, $session_id );  
+  $self->get_cookie->create( $r, $session_id ) if $r;  
   return $session_id;
 }
 
@@ -139,7 +139,6 @@ sub store {
     ) if $storable->{config_key};
   }
   $self->save_das;
-  $self->save_tmp_data;
 }
 
 sub storable_data {
@@ -204,12 +203,12 @@ sub get_internal_das {
 sub get_tmp_data {
 ### TMP
 ### Retrieve all temporary data
-  my ($self, $code, $force ) = @_; 
+  my ($self, $code) = @_; 
 
-  die "code is not defined." unless $code;
+  $code ||= 'generic';
 
   ## This is cached so return it unless "force" is set
-  return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code} && !$force;
+  return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code};
 
   ## No session so cannot have anything configured!
   return unless $self->get_session_id;
@@ -231,6 +230,19 @@ sub get_tmp_data {
   $TmpData_of{ ident $self }{$code} ||= {};
   
   return $TmpData_of{ ident $self }{$code};
+}
+
+sub set_tmp_data {
+### TMP
+### e.g. $object->get_session->set_tmp_data( $key => $value );
+  my $self = shift; 
+  my %args = ref $_[0] ? %{ $_[0] } : @_; 
+
+  $TmpData_of{ ident $self }{'generic'} ||= {};
+  $TmpData_of{ ident $self }{'generic'} = {
+    %{ $TmpData_of{ ident $self }{'generic'} },
+    %args,
+  };
 }
 
 sub get_das {
