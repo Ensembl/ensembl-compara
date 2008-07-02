@@ -36,13 +36,13 @@ sub init {
 		},
 
 		'TSE_transcript' => {
-			'on'          => "on",
-			'pos'         => '300',
-			'str'         => 'f',
-			'src'         => 'all',
+			'on'      => "on",
+			'pos'     => '300',
+			'str'     => 'f',
+			'src'     => 'all',
 			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
-#			'col'         => 'd8ddff',
-			'col'         => 'bisque',
+			'col'     => 'azure1',
+			'col2'    => 'azure2',
 		},
 
 		'spacer1' => { 'on'=>'on','pos'=>280, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
