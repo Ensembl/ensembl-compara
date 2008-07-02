@@ -1,15 +1,18 @@
 package EnsEMBL::Web::Session;
 
+use strict;
+use Storable qw(nfreeze thaw);
+use Bio::EnsEMBL::ColourMap;
+use Data::Dumper qw(Dumper);
+use Class::Std;
+
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::ScriptConfig;
 use EnsEMBL::Web::UserConfig;
 use EnsEMBL::Web::DASConfig;
-use Storable qw(nfreeze thaw);
-use Bio::EnsEMBL::ColourMap;
-use Data::Dumper qw(Dumper);
-use strict;
-use Class::Std;
+use EnsEMBL::Web::Data::Session;
+
 use EnsEMBL::Web::Root;
 our @ISA = qw(EnsEMBL::Web::Root);
 

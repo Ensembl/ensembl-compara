@@ -6,7 +6,7 @@ package EnsEMBL::Web::Data::Session;
 
 use strict;
 use warnings;
-use base qw(EnsEMBL::Web::Data::Trackable);
+use base qw(EnsEMBL::Web::Data);
 use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
 __PACKAGE__->table('session_record');
