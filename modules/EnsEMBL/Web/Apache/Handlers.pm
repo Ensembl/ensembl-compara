@@ -395,6 +395,8 @@ $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
     $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
     return OK;
   }
+  
+  return;
 }
 
 sub transHandler {
