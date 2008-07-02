@@ -14,20 +14,19 @@ our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 {
 
 sub simple_wizard {
-  my ($type, $action, $method) = @_;
-  my $self = __PACKAGE__->new('objecttype' => $type );
+  my ($type, $method, $command) = @_;
+  my $self = __PACKAGE__->new('objecttype' => $type, 'command' => $command );
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {
-    $self->wizard( EnsEMBL::Web::Wizard->new(
-            {'cgi' => $self->factory->input, 'scriptname' => '/'.$type.'/'.$action }
-    ));
+    $self->wizard( EnsEMBL::Web::Wizard->new({'scriptname' => '/'.$command->action->script_name }));
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure( $object, $method, 'global_context', 'local_context' );
     }
+    $self->wizard->set_object($self->dataObjects->[0]);
 
     $self->factory->fix_session;
-    $self->process_node(${$self->dataObjects}[0]);
+    $self->process_node;
   }
 }
 
@@ -41,7 +40,7 @@ sub wizard {
 }
 
 sub process_node {
-  my ($self, $object) = @_;
+  my $self = shift;
   if ($self->wizard->current_node && $self->wizard->current_node->type eq 'logic') {
     my %parameter = %{$self->wizard->redirect_current_node};
 
@@ -67,7 +66,7 @@ sub process_node {
     $r->status( Apache2::Const::REDIRECT );
   }
   else {
-    my $content = $self->wizard->render_current_node($object);
+    my $content = $self->wizard->render_current_node;
     $self->page->content->add_panel(new EnsEMBL::Web::Document::Panel(
               'content' => $content,
     ));
