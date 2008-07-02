@@ -224,10 +224,12 @@ sub get_tmp_data {
     type       => 'tmp',
   );
   
+  my $data;
   my $TEMP;
   foreach my $entry (@entries) {
     $TEMP = $entry->data;
     $TEMP = eval( $TEMP );
+    die "Eval ERROR :$@" if $@;
     $TmpData_of{ ident $self }{$entry->code} = $TEMP
       unless $@;
   }
