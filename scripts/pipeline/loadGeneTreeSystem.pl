@@ -14,6 +14,7 @@ my %analysis_template;
 my @speciesList = ();
 my %hive_params;
 my %dnds_params;
+my %sitewise_dnds_params;
 my %genetree_params;
 
 my %compara_conf = ();
@@ -113,6 +114,9 @@ sub parse_conf {
       }
       if($confPtr->{TYPE} eq 'dNdS') {
         %dnds_params = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'sitewise_dNdS') {
+        %sitewise_dnds_params = %{$confPtr};
       }
       if($confPtr->{TYPE} eq 'SPECIES') {
         push @speciesList, $confPtr;
@@ -545,6 +549,44 @@ sub build_GeneTreeSystem
         );
   }
 
+
+  #
+  # Sitewise_dNdS
+  #
+
+  $parameters = '';
+  my $with_options_sitewise_dnds = 0;
+  #   if (defined $genetree_params{'honeycomb_dir'}) {
+  #     $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
+  #     $with_options_sitewise_dnds = 1;
+  #   }
+  if (defined $sitewise_dnds_params{'saturated'}) {
+    $parameters = "'saturated'=>" . $sitewise_dnds_params{'saturated'};
+    $with_options_sitewise_dnds = 1;
+  }
+  $parameters = '{' . $parameters .'}' if (1==$with_options_sitewise_dnds);
+
+  my $Sitewise_dNdS = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'Sitewise_dNdS',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Sitewise_dNdS',
+      -parameters      => $parameters
+  );
+  $analysisDBA->store($Sitewise_dNdS);
+
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($Sitewise_dNdS->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(200);
+    $stats->status('BLOCKED');
+    $stats->update();
+    $ctrlRuleDBA->create_rule($orthotree,$Sitewise_dNdS);
+  }
+
+  # When a Sitewise_dNdS job is saturated, we reincorporate the
+  # subtrees in the analysis to rerun them again
+  $dataflowRuleDBA->create_rule($orthotree, $Sitewise_dNdS, 1);
+  $dataflowRuleDBA->create_rule($Sitewise_dNdS, $Sitewise_dNdS, 2);
 
   #
   # build graph of control and dataflow rules
