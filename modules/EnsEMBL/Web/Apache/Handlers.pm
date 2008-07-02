@@ -278,7 +278,7 @@ sub transHandler_no_species {
       r       => $r,
       cookie  => $session_cookie,
       species => $species,
-      script  => $script
+      script  => $script,
   });
 
   unless ($to_execute) {
