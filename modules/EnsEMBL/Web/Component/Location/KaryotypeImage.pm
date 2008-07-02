@@ -8,6 +8,8 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 use CGI qw(escapeHTML);
 use Data::Dumper;
+use Data::Bio::Text::FeatureParser;
+use EnsEMBL::Web::File::Text;
 
 sub _init {
   my $self = shift;
@@ -44,10 +46,10 @@ sub content {
   );
   
   ## Check if there is userdata in session
-  my $userdata = 0;
+  my $userdata = $object->get_session->get_tmp_data;
 
   ## Do we have feature "tracks" to display?
-  if ($userdata) {
+  if ($userdata && $userdata->{'filename'}) {
     ## Set some basic image parameters
     $image->imagemap = 'no';
     $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
@@ -55,10 +57,12 @@ sub content {
     
     ## Create pointers from user data
     ## TO DO: Retrieve user data from session
-    my $data; 
+    my $file = new EnsEMBL::Web::File::Text($self->object->species_defs);
+    my $data = $file->retrieve($userdata->{'filename'});
+    my $format  = $userdata->{'format'}; 
 
     my $parser = Data::Bio::Text::FeatureParser->new();
-    $parser->parse($data);
+    $parser->parse($data, $format);
 
     my $zmenu_config = {
       'caption' => 'features',
@@ -66,7 +70,7 @@ sub content {
     };
 
     ## create image with parsed data
-    $pointer_ref = $image->add_pointers(
+    my $pointer_ref = $image->add_pointers(
       $object, 
           {
           'config_name'   => 'Vkar2view', 
@@ -75,7 +79,7 @@ sub content {
           'color'         => $object->param("col")
                                || $pointer_defaults{'UserData'}[0], 
           'style'         => $object->param("style")
-                               || $pointer_defaults{'UserData'}[1]},
+                               || $pointer_defaults{'UserData'}[1],
           }
       );
     push(@$pointers, $pointer_ref);
@@ -104,7 +108,7 @@ sub content {
     }
   }
   else {
-    $image->cacheable  = 'yes';
+    $image->cacheable  = 'no';
     $image->image_name = "karyotype-$species";
     $image->imagemap = 'no';
     $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
