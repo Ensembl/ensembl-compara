@@ -273,6 +273,14 @@ sub transHandler_no_species {
   my $script     = $real_script_name;
   my $to_execute = $memd ? $memd->get("::SCRIPT::$script") : '';
   warn "## $script ...";
+
+  $ENSEMBL_WEB_REGISTRY->initialize_session({
+      r       => $r,
+      cookie  => $session_cookie,
+      species => $species,
+      script  => $script
+  });
+
   unless ($to_execute) {
     foreach my $dir( @PERL_TRANS_DIRS ){
       warn "... #$dir";
