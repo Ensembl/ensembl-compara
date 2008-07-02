@@ -213,7 +213,7 @@ sub get_tmp_data {
   $code ||= 'generic';
 
   ## This is cached so return it unless "force" is set
-  return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code};
+  ## return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code};
 
   ## No session so cannot have anything configured!
   return unless $self->get_session_id;
