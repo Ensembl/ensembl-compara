@@ -230,7 +230,7 @@ sub run_mlagan {
       $command .= " $fasta_file";
     }
   }
-  $command .= " -J '" . $self->exonerate . "'";
+  $command .= " -J '" . $self->exonerate . "' -X";
   if ($self->tree_string) {
     $command .= " -E '" . $self->tree_string . "'";
   }
