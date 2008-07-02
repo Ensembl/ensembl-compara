@@ -489,6 +489,62 @@ sub get_disease_matches{
   return \%omim_disease ;
 }
 
+
+sub get_compara_Member{
+  # Returns the Bio::EnsEMBL::Compara::Member object
+  # corresponding to this gene 
+  my $self = shift;
+
+  # Catch coderef
+  my $error = sub{ warn($_[0]); $self->{_compara_member}=0; return 0};
+
+  unless( defined( $self->{_compara_member} ) ){ # Look in cache
+    # Prepare the adaptors
+    my $dbconn = $self->DBConnection 
+        || &$error( "No DBConnection on $self" );
+    my $db_hashref = $dbconn->get_databases( 'compara' )
+        || &$error( "No compara in $dbconn" );
+    my $compara_dba = $db_hashref->{compara}
+        || &$error( "No compara in $dbconn" );
+    my $member_adaptor = $compara_dba->get_adaptor('Member')
+        || &$error( "Cannot COMPARA->get_adaptor('Member')" );
+    # Fetch the object
+    my $id = $self->stable_id;
+    my $member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE',$id)
+        || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
+    # Update the cache
+    $self->{_compara_member} = $member;
+  }
+  # Return cached value
+  return $self->{_compara_member};
+}
+
+sub get_ProteinTree{
+  # Returns the Bio::EnsEMBL::Compara::ProteinTree object
+  # corresponding to this gene
+  my $self = shift;
+
+  # Where to keep the cached data
+  my $cachekey = '_protein_tree';
+
+  # Catch coderef
+  my $error = sub{ warn($_[0]); $self->{$cachekey}=0; return 0};
+
+  unless( defined( $self->{$cachekey} ) ){ # Look in cache
+    # Fetch the objects
+    my $member = $self->get_compara_Member
+        || &$error( "No compara member for this gene" );
+    my $tree_adaptor = $member->adaptor->db->get_adaptor('ProteinTree')
+        || &$error( "Cannot COMPARA->get_adaptor('ProteinTree')" );
+    my $tree = $tree_adaptor->fetch_by_Member_root_id($member, 0) 
+        || &$error( "No compara tree for ENSEMBLGENE $member" );
+    # Update the cache
+    $self->{$cachekey} = $tree;
+  }
+  # Return cached value
+  return $self->{$cachekey};
+}
+
 #----------------------------------------------------------------------
 
 sub get_das_factories {

@@ -34,20 +34,41 @@ sub populate_tree {
     [qw(alignments  EnsEMBL::Web::Component::Gene::UnderConstruction)],
     { 'availability' => 'database:compara', , 'concise' => 'Genomic alignments' }
   ));
-## Compara tree
-  $compara_menu->append( $self->create_node( 'Compara_Ortholog',   "Orthologues ([[counts::orthologs]])",
-    [qw(orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs)],
-    { 'availability' => 'database:compara', 'concise' => 'Orthologues' }
-  ));
-  $compara_menu->append( $self->create_node( 'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
-    [qw(paralogues  EnsEMBL::Web::Component::Gene::ComparaParalogs)],
-    { 'availability' => 'database:compara', 'concise' => 'Paralogues' }
-  ));
 
-  $compara_menu->append( $self->create_node( 'Compara_Tree',       "Gene Trees",
-    [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
-    { 'availability' => 'database:compara' }
-  ));
+## Compara tree
+  $compara_menu->append
+      ( $self->create_node
+        ( 'Compara_Tree', "Gene Tree",
+          [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
+          { 'availability' => 'database:compara' } ) );
+
+  $compara_menu->append
+      ( $self->create_node
+        ( 'Compara_Tree_Text', "Gene Tree (text)",
+          [qw(treetext        EnsEMBL::Web::Component::Gene::ComparaTreeText)],
+          { 'availability' => 'database:compara' } ) );
+
+  $compara_menu->append
+      ( $self->create_node
+        ( 'Compara_Tree_Align',       "Gene Tree (alignment)",
+          [qw(treealign      EnsEMBL::Web::Component::Gene::ComparaTreeAlign)],
+          { 'availability' => 'database:compara' } ) );
+
+  $compara_menu->append
+      ( $self->create_node
+        ( 'Compara_Ortholog',   "Orthologues ([[counts::orthologs]])",
+          [qw(orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs)],
+          { 'availability' => 'database:compara', 
+            'concise' => 'Orthologues' } ) );
+
+  $compara_menu->append
+      ( $self->create_node
+        ( 'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
+          [qw(paralogues  EnsEMBL::Web::Component::Gene::ComparaParalogs)],
+          { 'availability' => 'database:compara', 
+            'concise' => 'Paralogues' } ) );
+
+
 =pod
   my $user_menu = $self->create_submenu( 'User', 'User data' );
   $user_menu->append( $self->create_node( 'User_Notes', "User's gene based annotation",
