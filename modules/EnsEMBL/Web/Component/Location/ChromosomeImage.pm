@@ -34,16 +34,32 @@ sub content {
             'click_right'       => $ideo_height+$top_margin,
             'click_left'        => $top_margin,
     };
-  # make a drawable container
+
   my $image    = $object->new_karyotype_image();
-  $image->imagemap           = 'no';
-  $image->cacheable          = 'yes';
+  $image->cacheable          = 'no';
   $image->image_type         = 'chromosome';
   $image->image_name         = $species.'-'.$chr_name;
+  $image->imagemap           = 'no';
+
+  ## Check if there is userdata in session
+  my $userdata = $object->get_session->get_tmp_data;
+  my $pointers = [];
+
+  if ($userdata && $userdata->{'filename'}) {
+    ## Set some basic image parameters
+    $image->imagemap = 'no';
+    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
+    $image->caption = 'Click on the image above to jump to an overview of the chromosome';
+
+    ## Create pointers from user data
+    my $pointer_set = $self->create_userdata_pointers($image, $userdata);
+    push(@$pointers, $pointer_set);
+  }
+
   my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
   $image->add_tracks($object, $config_name);
-  $image->karyotype($object, '', $config_name);
+  $image->karyotype($object, $pointers, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
   return '<div class="twocol-left">'.$image->render.'</div>';
 }

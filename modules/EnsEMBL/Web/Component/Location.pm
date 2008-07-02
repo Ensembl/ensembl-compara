@@ -21,8 +21,10 @@ package EnsEMBL::Web::Component::Location;
 use EnsEMBL::Web::Component;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
+use Data::Bio::Text::FeatureParser;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::File::Text;
 use CGI qw(escape);
 use Data::Dumper;
 our @ISA = qw( EnsEMBL::Web::Component);
@@ -45,19 +47,44 @@ sub chr_list {
 }
 
 
-=head2 name
-
-  Arg [panel]:  EnsEMBL::Web::Document::Panel::Information;
-  Arg [object]: EnsEMBL::Web::Proxy::Object({Static});
-  Description: Add a row to an information panel showing the release version and site type
-
-=cut
-
 sub name {
   my($panel,$object) = @_;
   (my $DATE = $object->species_defs->ARCHIVE_VERSION ) =~ s/(\d+)/ $1/;
   $panel->add_row( 'Site summary', qq(<p>@{[$object->species_defs->ENSEMBL_SITETYPE]} - $DATE</p>) );
   return 1;
+}
+
+sub create_userdata_pointers {
+  my ($self, $image, $userdata) = @_;
+  my $object = $self->object;
+
+  my $file = new EnsEMBL::Web::File::Text($object->species_defs);
+  my $data = $file->retrieve($userdata->{'filename'});
+  my $format  = $userdata->{'format'};
+
+  my $parser = Data::Bio::Text::FeatureParser->new();
+  $parser->parse($data, $format);
+
+  my $zmenu_config = {
+    'caption' => 'features',
+    'entries' => ['userdata'],
+  };
+
+  ## create image with parsed data
+  my $pointer_set = $image->add_pointers(
+      $object,
+          {
+          'config_name'   => 'Vkar2view',
+          'parser'        => $parser,
+          'zmenu_config'  => $zmenu_config,
+          'color'         => $object->param("col")
+                               || 'red',
+          'style'         => $object->param("style")
+                               || 'lharrow',
+          }
+  );
+
+  return $pointer_set;
 }
 
 sub multi_ideogram {

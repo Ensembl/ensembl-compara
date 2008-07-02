@@ -42,7 +42,6 @@ sub content {
   my %pointer_defaults = (
         'Gene'        => ['blue', 'lharrow'],
         'OligoProbe'  => ['red', 'rharrow'],
-        'UserData'    => ['red', 'rharrow'],
   );
   
   ## Check if there is userdata in session
@@ -54,38 +53,12 @@ sub content {
     $image->imagemap = 'no';
     $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
     $image->caption = 'Click on the image above to jump to an overview of the chromosome';
-    
+   
     ## Create pointers from user data
-    ## TO DO: Retrieve user data from session
-    my $file = new EnsEMBL::Web::File::Text($self->object->species_defs);
-    my $data = $file->retrieve($userdata->{'filename'});
-    my $format  = $userdata->{'format'}; 
-
-    my $parser = Data::Bio::Text::FeatureParser->new();
-    $parser->parse($data, $format);
-
-    my $zmenu_config = {
-      'caption' => 'features',
-      'entries' => ['userdata'],
-    };
-
-    ## create image with parsed data
-    my $pointer_ref = $image->add_pointers(
-      $object, 
-          {
-          'config_name'   => 'Vkar2view', 
-          'parser'        => $parser, 
-          'zmenu_config'  => $zmenu_config,
-          'color'         => $object->param("col")
-                               || $pointer_defaults{'UserData'}[0], 
-          'style'         => $object->param("style")
-                               || $pointer_defaults{'UserData'}[1],
-          }
-      );
-    push(@$pointers, $pointer_ref);
+    my $pointer_set = $self->create_userdata_pointers($image, $userdata);
+    push(@$pointers, $pointer_set);
   }
   elsif ($object->param('id')) {
-    $image->cacheable  = 'no';
     $image->image_name = "feature-$species";
     $image->imagemap = 'yes';
     my $features = $self->_get_features;
@@ -108,7 +81,6 @@ sub content {
     }
   }
   else {
-    $image->cacheable  = 'no';
     $image->image_name = "karyotype-$species";
     $image->imagemap = 'no';
     $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
