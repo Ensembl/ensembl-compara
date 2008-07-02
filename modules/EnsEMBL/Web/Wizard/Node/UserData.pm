@@ -102,9 +102,8 @@ sub upload {
     my $format = $file_info->{'format'};
 
     ## Attach data species to session
-    my $session_data = $self->object->get_session->get_tmp_data('upload');
-    $session_data->{'data'}   = $data;
-    $session_data->{'format'} = $format;
+    $self->object->get_session->set_tmp_data('filename' => $file->filename, 'format' => $format);
+    $self->object->get_session->save_tmp_data;
 
     ## Work out if multiple assemblies available
     my $assemblies = $self->_get_assemblies($self->object->param('species'));
@@ -125,7 +124,6 @@ sub upload {
     }
   }
   else {
-warn "NO DATA";
     $parameter->{'wizard_next'} = 'select_file';
     $parameter->{'error_message'} = 'No data was uploaded. Please try again.';
   }
@@ -160,19 +158,12 @@ sub upload_feedback {
 ### Node to confirm data upload
   my $self = shift;
   $self->title('File Uploaded');
-  my $session_data = $self->object->get_session->get_tmp_data('upload');
-
-  my $assembly = $self->object->param('assembly');
-  if ($assembly) {
-    ## Save assembly info to session
-    $session_data->{'assembly'} = $assembly;
-  }
-  my $format = $self->object->param('format');
-  if ($format) {
-    ## Save format info to session
-    $session_data->{'format'} = $format;
-  }
-  $self->add_element(( type => 'Information', value => "Thank you - your $format file was successfully uploaded."));
+  $self->object->get_session->set_tmp_data(
+    'assembly' => $self->object->param('assembly'),
+    'format'  => $self->object->param('format'),
+  );
+  $self->object->get_session->save_tmp_data;
+  $self->add_element(( type => 'Information', value => "Thank you - your file was successfully uploaded."));
 }
 
 sub select_server {
