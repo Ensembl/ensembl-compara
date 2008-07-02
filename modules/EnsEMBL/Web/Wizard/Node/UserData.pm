@@ -80,13 +80,6 @@ sub select_file {
   $self->add_element(( type => 'File', name => 'file', label => 'Upload file' ));
   $self->add_element(( type => 'String', name => 'url', label => 'or provide file URL' ));
   
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user) {
-    $self->add_element(( type => 'CheckBox', name => 'save', label => 'Save to my user account', 'checked'=>'checked' ));
-  }
-  else {
-    $self->add_element(('type'=>'Information', 'value'=>'Log into your user account to save this data permanently.'));
-  }
 }
 
 sub upload {
@@ -109,7 +102,9 @@ sub upload {
     my $format = $file_info->{'format'};
 
     ## Attach data species to session
-    $self->object->get_session()->set_tmpdata({'data'=>'', 'format'=>$format});
+    my $session_data = $self->object->get_session->get_tmp_data('upload');
+    $session_data->{'data'}   = $data;
+    $session_data->{'format'} = $format;
 
     ## Work out if multiple assemblies available
     my $assemblies = $self->_get_assemblies($self->object->param('species'));
@@ -165,13 +160,17 @@ sub upload_feedback {
 ### Node to confirm data upload
   my $self = shift;
   $self->title('File Uploaded');
+  my $session_data = $self->object->get_session->get_tmp_data('upload');
+
   my $assembly = $self->object->param('assembly');
   if ($assembly) {
     ## Save assembly info to session
+    $session_data->{'assembly'} = $assembly;
   }
   my $format = $self->object->param('format');
   if ($format) {
     ## Save format info to session
+    $session_data->{'format'} = $format;
   }
   $self->add_element(( type => 'Information', value => "Thank you - your $format file was successfully uploaded."));
 }
