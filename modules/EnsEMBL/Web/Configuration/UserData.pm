@@ -21,31 +21,37 @@ sub context_panel  { return $_[0]->_context_panel;  }
 sub populate_tree {
   my $self = shift;
 
-  my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
-  $attached_menu->append($self->create_node( 'Attach', "Attach Data",
-   [], { 'availability' => 1 }
-    ));
-  $attached_menu->append($self->create_node( 'SaveAttached', "Attach to Account",
-    [qw(save_attached EnsEMBL::Web::Component::UserData::SaveAttached
-        )],
-    { 'availability' => 1, 'concise' => 'Save' }
-  ));
-  $attached_menu->append($self->create_node( 'ManageAttached', "Manage Data",
-    [qw(manage_attached EnsEMBL::Web::Component::UserData::ManageAttached
-        )],
-    { 'availability' => 1, 'concise' => 'Manage Data' }
-  ));
   my $uploaded_menu = $self->create_submenu( 'Uploaded', 'Uploaded data' );
   $uploaded_menu->append($self->create_node( 'Upload', "Upload Data",
    [], { 'availability' => 1 }
     ));
-  $uploaded_menu->append($self->create_node( 'SaveUploaded', "Save to Account",
-    [qw(save_uploaded EnsEMBL::Web::Component::UserData::SaveUploaded
+  $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Uploaded Data",
+    [qw(save_uploaded EnsEMBL::Web::Component::UserData::ShareUpload
+        )],
+    { 'availability' => 1, 'concise' => 'Share Data' }
+  ));
+  $uploaded_menu->append($self->create_node( 'SaveUpload', "Save to Account",
+    [qw(save_uploaded EnsEMBL::Web::Component::UserData::SaveUpload
         )],
     { 'availability' => 1, 'concise' => 'Save Data' }
   ));
-  $uploaded_menu->append($self->create_node( 'ManageUploaded', "Manage Data",
-    [qw(manage_uploaded EnsEMBL::Web::Component::UserData::ManageUploaded
+  $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Saved Data",
+    [qw(manage_uploaded EnsEMBL::Web::Component::UserData::ManageUpload
+        )],
+    { 'availability' => 1, 'concise' => 'Manage Data' }
+  ));
+
+  my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
+  $attached_menu->append($self->create_node( 'Attach', "Attach Data",
+   [], { 'availability' => 1 }
+    ));
+  $attached_menu->append($self->create_node( 'SaveRemote', "Attach to Account",
+    [qw(save_remote EnsEMBL::Web::Component::UserData::SaveRemote
+        )],
+    { 'availability' => 1, 'concise' => 'Save' }
+  ));
+  $attached_menu->append($self->create_node( 'ManageRemote', "Manage Data",
+    [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageRemote
         )],
     { 'availability' => 1, 'concise' => 'Manage Data' }
   ));
