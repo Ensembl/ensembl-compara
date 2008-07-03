@@ -21,24 +21,21 @@ sub context_panel  { return $_[0]->_context_panel;  }
 sub populate_tree {
   my $self = shift;
 
+  ## N.B. Most of these will be empty, as content is created using 
+  ## wizard methods (below) and Wizard::Node::UserData
+
   my $uploaded_menu = $self->create_submenu( 'Uploaded', 'Uploaded data' );
   $uploaded_menu->append($self->create_node( 'Upload', "Upload Data",
    [], { 'availability' => 1 }
     ));
   $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Uploaded Data",
-    [qw(save_uploaded EnsEMBL::Web::Component::UserData::ShareUpload
-        )],
-    { 'availability' => 1, 'concise' => 'Share Data' }
+    [], { 'availability' => 1, 'concise' => 'Share Data' }
   ));
   $uploaded_menu->append($self->create_node( 'SaveUpload', "Save to Account",
-    [qw(save_uploaded EnsEMBL::Web::Component::UserData::SaveUpload
-        )],
-    { 'availability' => 1, 'concise' => 'Save Data' }
+    [], { 'availability' => 1, 'concise' => 'Save Data' }
   ));
   $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Saved Data",
-    [qw(manage_uploaded EnsEMBL::Web::Component::UserData::ManageUpload
-        )],
-    { 'availability' => 1, 'concise' => 'Manage Data' }
+    [], { 'availability' => 1, 'concise' => 'Manage Data' }
   ));
 
   my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
@@ -46,14 +43,10 @@ sub populate_tree {
    [], { 'availability' => 1 }
     ));
   $attached_menu->append($self->create_node( 'SaveRemote', "Attach to Account",
-    [qw(save_remote EnsEMBL::Web::Component::UserData::SaveRemote
-        )],
-    { 'availability' => 1, 'concise' => 'Save' }
+    [], { 'availability' => 1, 'concise' => 'Save' }
   ));
   $attached_menu->append($self->create_node( 'ManageRemote', "Manage Data",
-    [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageRemote
-        )],
-    { 'availability' => 1, 'concise' => 'Manage Data' }
+    [], { 'availability' => 1, 'concise' => 'Manage Data' }
   ));
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
@@ -89,6 +82,33 @@ sub upload {
   $wizard->add_connection(( from => $select,   to => $upload));
   $wizard->add_connection(( from => $upload,   to => $more));
   $wizard->add_connection(( from => $more,     to => $feedback));
+}
+
+sub share_upload {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  my $wizard = $self->wizard;
+
+  ## CREATE NODES
+  my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
+  my $select  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_upload' ));
+  my $save  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'save_upload'));
+  my $share  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'share_url' ));
+
+  ## SET UP CONNECTION BUTTONS
+  $wizard->add_connection(( from => $select, to => $save));
+  $wizard->add_connection(( from => $save,   to => $share));
+}
+
+sub save_upload {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  my $wizard = $self->wizard;
+
+  ## CREATE NODES
+  my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
 }
 
 sub attach {
