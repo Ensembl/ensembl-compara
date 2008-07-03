@@ -66,9 +66,9 @@ sub fetch_input {
 	$self->configure_defaults();
 	$self->get_parameters($self->parameters);
 	#create a Compara::DBAdaptor which shares the same DBI handle with $self->db (Hive DBAdaptor)
-	$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
+	$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc) or die "cant connect\n";
 	$self->{'comparaDBA'}->dbc->disconnect_if_idle();
-	$self->{'hiveDBA'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-DBCONN => $self->{'comparaDBA'}->dbc);
+	$self->{'hiveDBA'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-DBCONN => $self->{'comparaDBA'}->dbc) or die "cant connect\n";
 	$self->{'hiveDBA'}->dbc->disconnect_if_idle();
 	my $analysis_data_adaptor = $self->{hiveDBA}->get_AnalysisDataAdaptor();
 	my $mlssid_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
@@ -100,6 +100,7 @@ sub fetch_input {
 	}				
 	$self->mlssids( \@mlssid_adaptors );
 	$self->ref_dnafrag_coords( [ sort {$a->[0] <=> $b->[0]} @ref_dnafrag_coords ] ); #sort reference genomic_align_blocks (gabs) by start position
+	print "INPUT: ", scalar(@ref_dnafrag_coords), "\n"; 
 	return 1;
 }
 
@@ -163,6 +164,7 @@ sub run {
 		}
 	}
 	$self->genomic_aligns_on_ref_slice( \%genomic_aligns_on_ref_slice );
+	print "RUN: ", scalar(keys %genomic_aligns_on_ref_slice), "\n";
 	return 1;
 }
 
@@ -176,42 +178,74 @@ sub write_output {
 		select_logic_name => "SELECT logic_name FROM analysis WHERE analysis_id = ?",
 		select_next_analysis_id => "SELECT ctrled_analysis_id FROM analysis_ctrl_rule WHERE condition_analysis_url = (SELECT logic_name FROM analysis WHERE analysis_id = ?)",
 		select_next_mlssid => "SELECT method_link_species_set_id FROM method_link_species_set WHERE name = (SELECT logic_name FROM analysis WHERE analysis_id = ?)",
+		select_species_set_id => "SELECT species_set_id FROM method_link_species_set WHERE method_link_species_set_id = ?",
+		select_genome_db_ids => "SELECT GROUP_CONCAT(genome_db_id) FROM species_set WHERE species_set_id = ?",
 	);
 	foreach my$sql_statement(keys %sql_statements) {#prepare all the sql statements
 	       	$sql_statements{$sql_statement} = $self->{'comparaDBA'}->dbc->prepare($sql_statements{$sql_statement});
 	}
 	my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($self->reference_genome_db->name, "core", "Slice");
-	$sql_statements{select_next_analysis_id}->execute( $self->analysis_id );
+	eval {
+		$sql_statements{select_next_analysis_id}->execute( $self->analysis_id ) or die;
+	};
+	if($@) {
+		die $@;
+	}
 	my $next_analysis_id = ($sql_statements{select_next_analysis_id}->fetchrow_array)[0];
 	$sql_statements{select_next_mlssid}->execute( $next_analysis_id );
 	my $next_method_link_species_set_id = ($sql_statements{select_next_mlssid}->fetchrow_array)[0];
-	
+	$sql_statements{select_species_set_id}->execute( $next_method_link_species_set_id );
+	$sql_statements{select_genome_db_ids}->execute( ($sql_statements{select_species_set_id}->fetchrow_array)[0] );
+	my $genome_db_ids = ($sql_statements{select_genome_db_ids}->fetchrow_array)[0];
 	foreach my $ref_coords(sort keys %{$self->genomic_aligns_on_ref_slice}) {
-		eval {
-			$sql_statements{insert_synteny_region}->execute( $self->method_link_species_set_id );
-		};
-		$sql_statements{select_max_synteny_region_id}->execute( $self->method_link_species_set_id );
-		my $synteny_region_id = ($sql_statements{select_max_synteny_region_id}->fetchrow_array)[0];
-		eval {
-			$sql_statements{insert_dnafrag_region}->execute( $synteny_region_id, $self->ref_dnafrag->dbID,
-					split("-", $ref_coords), $self->ref_dnafrag_strand); 
-		};
-		my $input_id_string = "{ synteny_region_id=>$synteny_region_id, method_link_species_set_id=>" .
-				$next_method_link_species_set_id . ", tree_analysis_data_id=>" . $self->tree_analysis_data_id . ", }"; 
-		eval { #add jobs to analysis_job for next analysis (pecan)
-			$sql_statements{insert_next_analysis_job}->execute($next_analysis_id, $input_id_string) or die;
-		};
+		my @Synteny_blocks_to_insert;
+		my $temp_next_analysis_id = $next_analysis_id;
+		my ($ref_from, $ref_to) = split("-", $ref_coords);
+		push(@Synteny_blocks_to_insert, [ $self->ref_dnafrag->dbID, $ref_from, $ref_to, $self->ref_dnafrag_strand ]);
 		foreach my $non_ref_dnafrag_id(sort keys %{$self->genomic_aligns_on_ref_slice->{$ref_coords}}) {
 			foreach my $non_ref_strand(sort keys %{$self->genomic_aligns_on_ref_slice->{$ref_coords}->{$non_ref_dnafrag_id}}) {
 				my $non_ref_coords = $self->genomic_aligns_on_ref_slice->{$ref_coords}->{$non_ref_dnafrag_id}->{$non_ref_strand};
-				next if ($non_ref_coords->[-1]->[1] - $non_ref_coords->[0]->[0] < $self->analysis_data->{min_anc_size}); 
-				eval { 
-					$sql_statements{insert_dnafrag_region}->execute( $synteny_region_id, $non_ref_dnafrag_id, 
-								$non_ref_coords->[0]->[0], $non_ref_coords->[-1]->[1], $non_ref_strand );
+				next if ($non_ref_coords->[-1]->[1] - $non_ref_coords->[0]->[0] < $self->analysis_data->{min_anc_size} || 
+					($non_ref_coords->[-1]->[1] - $non_ref_coords->[0]->[0]) < ($ref_to - $ref_from) * 0.2 ||
+					($non_ref_coords->[-1]->[1] - $non_ref_coords->[0]->[0]) > ($ref_to - $ref_from) * 5 ); #need to change - gets rid of unalignable rubbish 
+				push(@Synteny_blocks_to_insert, [$non_ref_dnafrag_id, $non_ref_coords->[0]->[0], 
+								$non_ref_coords->[-1]->[1], $non_ref_strand]);
+			}
+		}
+		if(@Synteny_blocks_to_insert > 2) { #need at least 3 sequences for gerp
+			$self->{'comparaDBA'}->dbc->db_handle->do("LOCK TABLES synteny_region WRITE");
+			$sql_statements{insert_synteny_region}->execute( $self->method_link_species_set_id );
+			$sql_statements{select_max_synteny_region_id}->execute( $self->method_link_species_set_id );
+			my $synteny_region_id = ($sql_statements{select_max_synteny_region_id}->fetchrow_array)[0];
+			$self->{'comparaDBA'}->dbc->db_handle->do("UNLOCK TABLES");
+			while($temp_next_analysis_id) {
+				my($input_id_string, $next_logic_name);
+				$sql_statements{select_logic_name}->execute( $temp_next_analysis_id );
+				$next_logic_name = ($sql_statements{select_logic_name}->fetchrow_array)[0];
+				if( $next_logic_name=~/pecan/i ) {
+					$input_id_string = "{ synteny_region_id=>$synteny_region_id, method_link_species_set_id=>" .
+						$next_method_link_species_set_id . ", tree_analysis_data_id=>" . $self->tree_analysis_data_id . ", }"; 
+				}
+				elsif( $next_logic_name=~/gerp/i ) {
+					$input_id_string = "{genomic_align_block_id=>$synteny_region_id,species_set=>[$genome_db_ids]}";
+				}
+				eval { #add jobs to analysis_job for next analyses (pecan or gerp)
+					$sql_statements{insert_next_analysis_job}->execute($temp_next_analysis_id, $input_id_string);
 				};
+				$sql_statements{select_next_analysis_id}->execute( $temp_next_analysis_id );
+				$temp_next_analysis_id = ($sql_statements{select_next_analysis_id}->fetchrow_array)[0];
+			}
+			foreach my $dnafrag_region(@Synteny_blocks_to_insert) {
+				eval { 
+					$sql_statements{insert_dnafrag_region}->execute( $synteny_region_id, @{$dnafrag_region} );
+				};
+				if($@) {
+					die $@;
+				}
 			}
 		}
 	}
+	print "Genome_db_ids: $genome_db_ids\n";
 	return 1;
 }
 
