@@ -167,7 +167,7 @@ sub render_current_node {
     $html .= $self->render_connection_form($node);
     $html .= "\n".$node->text_below."\n" if $node->text_below;
   } else {
-    $html = $self->render_error_message($object, 'No current node has been specified. Check the URL and try again.');
+    $html = $self->render_error_message($object, 'Either no current node has been specified, or there is a syntax error in the wizard code. Please check your URL and try again.');
   }
   return $html;
 }
