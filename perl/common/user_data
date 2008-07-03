@@ -12,10 +12,14 @@ use EnsEMBL::Web::Controller;
 my $controller = EnsEMBL::Web::Controller->new;
 
 $controller->add_connections({
-  'Summary'    => 'EnsEMBL::Web::Controller::Command::UserData::Upload',
-  'Upload'     => 'EnsEMBL::Web::Controller::Command::UserData::Upload',
-  'Save'       => 'EnsEMBL::Web::Controller::Command::UserData::Save',
-  'Manage'     => 'EnsEMBL::Web::Controller::Command::UserData::Manage',
+  'Summary'       => 'EnsEMBL::Web::Controller::Command::UserData::Upload',
+  'Upload'        => 'EnsEMBL::Web::Controller::Command::UserData::Upload',
+  'ShareUpload'   => 'EnsEMBL::Web::Controller::Command::UserData::ShareUpload',
+  'SaveUpload'    => 'EnsEMBL::Web::Controller::Command::UserData::SaveUpload',
+  'ManageUpload'  => 'EnsEMBL::Web::Controller::Command::UserData::ManageUpload',
+  'Attach'        => 'EnsEMBL::Web::Controller::Command::UserData::Attach',
+  'SaveRemote'    => 'EnsEMBL::Web::Controller::Command::UserData::SaveRemote',
+  'ManageRemote'  => 'EnsEMBL::Web::Controller::Command::UserData::ManageRemote',
 });
 
 $controller->dispatch($ENV{REQUEST_URI});
