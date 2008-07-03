@@ -70,7 +70,7 @@ sub content {
     <dl class="summary">
       <dt>Gene</dt>
       <dd>
-        <p id="transcripts_text">This transcript is a product of gene <a href=$gene_url>$gene_id</a> - There are $count transcripts in this gene: </p>
+        <p id="transcripts_text">This transcript is a product of gene <a href="$gene_url">$gene_id</a> - There are $count transcripts in this gene: </p>
        <table id="transcripts" style="display:none">);
     foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
       my $url = $object->_url({
@@ -98,7 +98,7 @@ sub content {
     <dl class="summary">
       <dt>Gene</dt>
       <dd>
-        <p id="gene_text">This transcript is a product of gene <a href=$gene_url>$gene_id</a></p>
+        <p id="gene_text">This transcript is a product of gene <a href="$gene_url">$gene_id</a></p>
       </dd>
     </dl>);
 
@@ -111,10 +111,10 @@ sub content {
       <dd>);
   if (my $translation = $object->translation_object) {
 	  my $protein = $translation->stable_id;
-	  $html .= qq(<p id="gene_text">$protein is the protein product of this transcript</p>);
+	  $html .= qq(<p id="prot_text">$protein is the protein product of this transcript</p>);
   } 
   else {
-	  $html .= qq(<p id="gene_text">This transcript has no translation</p>);
+	  $html .= qq(<p id="prot_text">This transcript has no translation</p>);
   }
   $html .= qq(</dd> </dl>);
 

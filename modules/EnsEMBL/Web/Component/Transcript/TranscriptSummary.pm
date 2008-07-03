@@ -34,7 +34,8 @@ sub content {
 
   my $HTML = "<p><strong>Exons:</strong> $exons <strong>Transcript length:</strong> $basepairs bps";
      $HTML .= " <strong>Translation length:</strong> $residues residues" if $residues;
-  $html .= "<dt>Statistics</dt><dd> $HTML</dd></dt>"; 
+     $HTML .= '</p>';
+  $html .= "<dt>Statistics</dt><dd> $HTML</dd>"; 
 
 ## add CCDS info
   if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
