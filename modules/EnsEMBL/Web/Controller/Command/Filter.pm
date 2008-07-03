@@ -21,6 +21,11 @@ sub BUILD {
   }
 }
 
+sub action {
+  my $self = shift;
+  return $self->get_action;
+}
+
 sub redirect {
   return undef;
 }

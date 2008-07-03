@@ -54,6 +54,7 @@ sub add_filter {
   my ($self, $class, $params) = @_;
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
     my $parameters = $params || {};
+    $parameters->{'action'} = $self->action;
     my $filter = $class->new($parameters);
     my $filters = $self->get_filters || [];
     push @$filters, $filter;
