@@ -23,8 +23,8 @@ sub caption {
 sub content {
   my $self = shift;
   my $html;
+  my $sitename = $self->site_name;
 =pod
-  my $sitename = $SiteDefs::ENSEMBL_SITETYPE;
 
   $html .= qq(<p>This is your $sitename account home page. From here you can manage
                 your saved settings, update your details and join or create new
@@ -32,7 +32,12 @@ sub content {
                 from your $sitename account, read our <a href='/info/website/accounts.html'>introductory guide</a>.</p>);
 =cut
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  $html .= '<p>Logged in as: <strong>'.$user->name.'</strong></p>';
+  if ($user) {
+    $html .= '<p>Logged in as: <strong>'.$user->name.'</strong></p>';
+  }
+  else {
+    $html .= qq(<p><a href="">Log in</a> to your $sitename account, or <a href="/Account/Register">register</a>.</p>);
+  }
 
   return $html;
 }
