@@ -11,20 +11,18 @@ sub init_label {
 }
 
 sub _init {
-	my ($self) = @_;
-	my $offset = $self->{'container'}->start - 1;
-	my $Config  = $self->{'config'};
-	my $h             = 8;
-#	my $colours       = $self->colours();
+	my ($self)  = @_;
+	my $offset  = $self->{'container'}->start - 1;
+
+	my $h       = 8;
+	my $colours = $self->colours();
 	my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
+	my $Config        = $self->{'config'};
 	my $pix_per_bp    = $Config->transform->{'scalex'};
 	my $bitmap_length = $Config->image_width();
-#	warn "FONT DETAILS ",Dumper($self->get_font_details( 'outertext' ));
-#	$fontname = 'Tiny'; #this is hack - the Arial font retrieved from config doesn't scale correctly
-#	warn Dumper($Config->texthelper);
-	my $length  = $Config->container_width(); 
-	my $all_matches = $Config->{'transcript'}{'evidence'};
-	my $strand = $Config->{'transcript'}->{'transcript'}->strand;
+	my $length        = $Config->container_width(); 
+	my $all_matches   = $Config->{'transcript'}{'evidence'};
+	my $strand        = $Config->{'transcript'}->{'transcript'}->strand;
 	my $H = 0;
 	my( $font_w_bp, $font_h_bp);
 
@@ -34,6 +32,7 @@ sub _init {
 
 	#go through each combined hit sorted on total length
 	foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
+		next unless @{$hit_details->{'data'}};
 		my $start_x = 1000000;
 		my $finish_x = 0;
 		my $hit_name = $hit_details->{'hit_name'};
@@ -54,25 +53,24 @@ sub _init {
 			$start_x = $start_x > $block->[0] ? $block->[0] : $start_x;
 			$finish_x = $finish_x < $block->[1] ? $block->[1] : $finish_x;
 
-			#draw a line back to the end of the previous exon (little bit hacky to get the boundries just right depending on the strand)
+			#draw a line back to the end of the previous exon
 			my ($w,$x);
 			if ($strand == 1) {
 				$x = $last_end + (1/$pix_per_bp);
 				$w = $block->[0] - $last_end - (1/$pix_per_bp);
 			}
 			else {
-				$x = $last_end;
-				$w = $block->[1] - $last_end;
+				$x = $last_end - (1/$pix_per_bp);
+				$w = $block->[1] - $last_end + (1/$pix_per_bp);
 			}
-
 			if ($last_end) {
 				my $G = new Sanger::Graphics::Glyph::Line({
-					'x' => $x,
-					'y' => $H + $h/2,
-					'h'=>1,
-					'width'=> $w,
-					'colour'=>'black',
-					'absolutey'=>1,});
+					'x'         => $x,
+					'y'         => $H + $h/2,
+					'h'         => 1,
+					'width'     => $w,#-10/$pix_per_bp,
+					'colour'    =>'black',
+					'absolutey' => 1,});
 				#add a red attribute if there is a part of the hit missing
 				if (my $mismatch = $block->[5]) {
 					$G->{'dotted'} = 1;
@@ -83,18 +81,17 @@ sub _init {
 			}
 			
 			$last_end = $strand == 1 ? $block->[1] : $block->[0];
-#			warn "hit = $hit_name: x = ",$block->[0]," width = $width";
 
 			#draw the location of the exon hit
 			my $G = new Sanger::Graphics::Glyph::Rect({
-				'x'         => $block->[0] ,
-				'y'         => $H,
-				'width'     => $width,
-				'height'    => $h,
+				'x'            => $block->[0] ,
+				'y'            => $H,
+				'width'        => $width,
+				'height'       => $h,
 				'bordercolour' => 'black',
-				'absolutey' => 1,
-				'title'     => $hit_name,
-				'href'      => '',
+				'absolutey'    => 1,
+				'title'        => $hit_name,
+				'href'         => '',
 			});	
 
 			#second and third elements of $block define whether there is a mismatch between exon and hit boundries
@@ -114,44 +111,9 @@ sub _init {
 			$self->push( $G );
 		}
 
-		#draw extensions at the left of the image (ie if evidence extends beyond the start of the image)
-		#don't use this for now - makes image more complicated and would require extra space between
-		#the start / end of the transcript and the edge of the image. This information is shown by the
-		#shading of the exon boundry
-
-#		my $diff;
-#		if (   ( ($diff = $hit_details->{'start_extension'}) && $strand == 1)
-#			|| ( ($diff = $hit_details->{'end_extension'}) && $strand == -1)) {
-#			$self->push(new Sanger::Graphics::Glyph::Line({
-#				'x'         => 0,
-#				'y'         => $H + 0.5*$h,
-#				'width'     => $start_x-(1/$pix_per_bp),
-#				'height'    => 0,
-#				'absolutey' => 1,
-#				'colour'    => 'black',
-#				'title'     => $diff.'bp',
-#			}));
-#		}
-#		#draw extensions at the right of the image
-#		if (   ( ($diff = $hit_details->{'end_extension'}) && $strand == 1)
-#			|| ( ($diff = $hit_details->{'start_extension'}) && $strand == -1)) {
-#			$self->push(new Sanger::Graphics::Glyph::Line({
-#				'x'         => $finish_x + (1/$pix_per_bp),
-#				'y'         => $H + 0.5*$h,
-#				'width'     => $length-$finish_x-1,
-#				'height'    => 0,
-#				'absolutey' => 1,
-#				'colour'    => 'black',
-#				'title'     => $diff.'bp',
-#			}));
-#		}		
-
 		my @res = $self->get_text_width(0, "$hit_name", '', 'font'=>$fontname, 'ptsize'=>$fontsize);
 		my $W = ($res[2])/$pix_per_bp;
 		($font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);
-#		warn "label = $hit_name, width $font_w_bp, height = $font_h_bp, x = ",-$W;
-
-#		warn $fontsize;
 		my $tglyph = new Sanger::Graphics::Glyph::Text({
 			'x'         => -$res[2],
 			'y'         => $H,
@@ -172,7 +134,7 @@ sub _init {
 		$H += $font_h_bp + 4;
 	}
 
-	#draw (red) lines for the exon / hit boundry mismatches (draw last so they're on top of everything else)
+	#draw lines for the exon / hit boundry mismatches (draw last so they're on top of everything else)
 	foreach my $mismatch_line ( @draw_end_lines ) {
 		my $G = new Sanger::Graphics::Glyph::Line({
 			'x'         => $mismatch_line->[0] ,
@@ -184,6 +146,13 @@ sub _init {
 		});
 		$self->push( $G );
 	}
+}
+
+sub colours {
+  my $self = shift;
+  my $Config = $self->{'config'};
+#  warn Dumper($Config->get('TSE_transcript','colours')); #
+  return $Config->get('TSE_transcript','colours');
 }
 
 1;
