@@ -3,3 +3,11 @@
 #transcripts td { border: 1px solid black; margin: 0; text-align: center; width: 15em }
 #transcripts th { border: 1px solid black; margin: 0; text-align: center; width: 15em }
 #transcripts .active { background-color: #cdf }
+
+#locations_link { cursor: pointer; font-weight: bold; background-color: #cdf; border:1px outset #cdf; padding: 0px 0.5em; display: inline }
+#locations { width:25em; border-collapse: collapse; margin-left: 4em;  cursor: pointer;  }
+#locations td { border: 1px solid black; margin: 0; text-align: center; width: 15em }
+#locations th { border: 1px solid black; margin: 0; text-align: center; width: 15em }
+#locations .active { background-color: #cdf }
+
+
