@@ -81,6 +81,7 @@ sub _init {
 					'height'    => 2*$h,
 					'colour'    => $colour,
 					'absolutey' => 1,
+					'title'     => $obj->[2]->stable_id,
 					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
 				});
 				$tag = "@{[$exon_end]}:@{[$exon_start]}";
@@ -117,6 +118,7 @@ sub _init {
 					'height'    => 2*$h,
 					'colour'    => $colour,
 					'absolutey' => 1,
+					'title'     => $obj->[2]->stable_id,
 					'href'      => $self->href( $transcript, $obj->[2], %highlights ),
 				});
 				$tag = "@{[$exon_end]}:@{[$coding_start]}";
@@ -137,6 +139,7 @@ sub _init {
 					'height'    => 2*$h,
 					'colour'    => $colour,
 					'absolutey' => 1,
+					'title'     => $obj->[2]->stable_id,
 					'href'      => $self->href( $transcript, $obj->[2], %highlights ),
 				});
 				$tag = "@{[$coding_end-1]}:@{[$exon_start]}";
@@ -171,7 +174,7 @@ sub _init {
 				'x'        => $obj->[0] + 1/$pix_per_bp,
 				'y'        => $h,
 				'h'        =>1,
-				'width'    =>$obj->[1]-$obj->[0]-1,
+				'width'    =>$obj->[1]-$obj->[0]-1/$pix_per_bp,
 				'colour'   => $colour,
 				'absolutey'=>1,
 			});
