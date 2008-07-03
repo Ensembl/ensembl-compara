@@ -24,11 +24,13 @@ our @formats = (
     {name => 'PSL', value => 'PSL'},
 );
 
+
+#----------------------------- FILE UPLOAD NODES -----------------------
+
 sub check_session {
   my $self = shift;
   my $parameter = {};
-  ## TO DO!
-  my $temp_data;
+  my $temp_data = $self->object->get_session->get_tmp_data;
   if ($temp_data) {
     $parameter->{'wizard_next'} = 'overwrite_warning';
   }
@@ -59,6 +61,7 @@ sub select_file {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($self->object->param('save') && $user) {
     ## Save current temporary data upload to user account
+    my $upload = $self->object->get_session->get_tmp_data;
   }
 
   my $current_species = $ENV{'ENSEMBL_SPECIES'};
@@ -102,7 +105,11 @@ sub upload {
     my $format = $file_info->{'format'};
 
     ## Attach data species to session
-    $self->object->get_session->set_tmp_data('filename' => $file->filename, 'format' => $format);
+    $self->object->get_session->set_tmp_data(
+                  'filename'  => $file->filename, 
+                  'species'   => $self->object->param('species'),
+                  'format'    => $format,
+    );
     $self->object->get_session->save_tmp_data;
 
     ## Work out if multiple assemblies available
@@ -165,6 +172,60 @@ sub upload_feedback {
   $self->object->get_session->save_tmp_data;
   $self->add_element(( type => 'Information', value => "Thank you - your file was successfully uploaded."));
 }
+
+sub select_upload {
+## Node to select which data will be shared
+  my $self = shift;
+  $self->title('Select Data to Share');
+
+  ## Temporary uploads
+  my $upload = $self->object->get_session->get_tmp_data;
+  $self->add_element(('type'=>'SubHeader', 'value'=>'Your temporary data'));
+  if ($upload && keys %$upload) {
+    $self->add_element(('type'=>'NoEdit', 'label' => 'Species', 'value' => $upload->{'species'}));
+    $self->add_element(('type'=>'NoEdit', 'label' => 'Format', 'value' => $upload->{'format'}));
+    my $file = new EnsEMBL::Web::File::Text($self->object->species_defs);
+    my $file_content= $file->retrieve($upload->{'filename'});
+    my $file_sample = '<pre>'.substr($file_content, 0, 1000).'</pre>';
+    $self->add_element(('type'=>'NoEdit', 'label' => 'Sample of file content', 'value' => $file_sample));
+    if ($upload->{'assembly'}) {
+      $self->add_element(('type'=>'NoEdit', 'label' => 'Assembly', 'value' => $upload->{'assembly'}));
+    }
+  }
+  else {
+    $self->add_element('type'=>'Information', 'value'=>'You have no shareable data. Please upload a file (maximum 5MB) if you wish to share data with colleagues or collaborators.');
+  }
+}
+
+sub save_upload {
+## Save uploaded data to a genus_species_userdata database
+  my $self = shift;
+  my $parameter = {};
+
+  ## SAVE TEMP DATA TO DATABASE
+
+  ## 1. Retrieve data
+  my $upload = $self->object->get_session->get_tmp_data;
+  my $db = lc($upload->{'species'}).'_userdata';
+ 
+ 
+  $parameter->{'share_id'} = '';
+  $parameter->{'wizard_next'} = 'share_url';
+  return $parameter;
+}
+
+sub share_url {
+  my $self = shift;
+  $self->title('Select Data to Share');
+
+  my $url = 'http://'.$ENV{'ENSEMBL_SERVERNAME'}.'/Location/Karyotype?shared_data='.$self->object->param('share_id');
+
+  $self->add_element(('type'=>'Information', 'value' => "To share this data, use the URL $url"));
+  $self->add_element(('type'=>'Information', 'value' => 'Please note that this link will expire after 72 hours.'));
+
+}
+
+#----------------------------- DAS/ATTACHMENT NODES -----------------------
 
 sub select_server {
   my $self = shift;
