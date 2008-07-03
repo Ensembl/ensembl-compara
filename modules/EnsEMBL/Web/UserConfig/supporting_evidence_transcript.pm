@@ -41,8 +41,8 @@ sub init {
 			'str'     => 'f',
 			'src'     => 'all',
 			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
-			'col'     => 'azure1',
-			'col2'    => 'azure2',
+			'col'     => 'azure2',
+			'col2'    => 'azure3',
 		},
 
 		'spacer1' => { 'on'=>'on','pos'=>280, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
