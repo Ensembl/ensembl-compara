@@ -15,7 +15,7 @@ sub _init {
 	my $Config     = $self->{'config'};
 	my $h          = 8; #height of glyph
 
-#	my $colours       = $self->colours();
+	my $colours       = $self->colours();
 	my $pix_per_bp = $Config->transform->{'scalex'};
 	my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
 	my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
@@ -64,17 +64,18 @@ sub _init {
 
 			if ($last_end) {
 				my $G = new Sanger::Graphics::Glyph::Line({
-					'x' => $x,
-					'y' => $H + $h/2,
-					'h'=>1,
-					'width'=> $w,
-					'colour'=>'black',
-					'absolutey'=>1,});
-				#add a red attribute if there is a part of the hit missing
+					'x'          => $x,
+					'y'         => $H + $h/2,
+					'h'         =>1,
+					'width'     => $w,
+					'colour'    => 'black',
+					'absolutey' => 1,});
+
+				#add attributes if there is a part of the hit missing
 				if (my $mismatch = $block->[5]) {
 					$G->{'dotted'} = 1;
 					$G->{'colour'} = 'red';
-					$G->{'title'} = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
+					$G->{'title'}  = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
 				}
 				$self->push($G);				
 			}
@@ -110,32 +111,6 @@ sub _init {
 			}
 			$self->push( $G );
 		}
-
-		#draw extensions at the left of the image
-#		if (   ($hit_details->{'start_extension'} && $strand == 1)
-#			|| ($hit_details->{'end_extension'} && $strand == -1)) {
-#			$self->push(new Sanger::Graphics::Glyph::Line({
-#				'x'         => 0,
-#				'y'         => $H + 0.5*$h,
-#				'width'     => $start_x,
-#				'height'    => 0,
-#				'absolutey' => 1,
-#				'colour'    => 'blue',
-#			}));
-#		}
-#		#draw extensions at the right of the image
-#		if (   ($hit_details->{'end_extension'} && $strand == 1)
-#			|| ($hit_details->{'start_extension'} && $strand == -1)) {
-#			warn "x = $finish_x";
-#			$self->push(new Sanger::Graphics::Glyph::Line({
-#				'x'         => $finish_x + (1/$pix_per_bp),
-#				'y'         => $H + 0.5*$h,
-#				'width'     => $length-$finish_x,
-#				'height'    => 0,
-#				'absolutey' => 1,
-#				'colour'    => 'blue',
-#			}));
-#		}			 
 
 		my @res = $self->get_text_width(0, "$hit_name", '', 'font'=>$fontname, 'ptsize'=>$fontsize);
 		my $W = ($res[2])/$pix_per_bp;
@@ -174,5 +149,14 @@ sub _init {
 		$self->push( $G );
 	}
 }
+
+sub colours {
+  my $self = shift;
+  my $Config = $self->{'config'};
+  return $Config->get('TSE_transcript','colours');
+}
+
+
+
 
 1;
