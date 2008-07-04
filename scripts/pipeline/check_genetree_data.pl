@@ -77,6 +77,27 @@ my ($sql, $sth);
 
 if ($doit) {
 
+# Check for dangling internal nodes that have no children
+######################################################
+
+  $sql = "select count(*) from protein_tree_node n1 left join protein_tree_node n2 on n1.node_id=n2.parent_id where n2.parent_id is NULL and n1.right_index-n1.left_index > 1";
+  
+  $sth = $dba->dbc->prepare($sql);
+  $sth->execute;
+  
+  while (my $aref = $sth->fetchrow_arrayref) {
+    #should 0, if not delete culprit node_id in protein_tree_member
+    my ($count) = @$aref;
+    if ($count == 0) {
+      print "PASSED: protein_tree_node is consistent - no dangling internal nodes\n";
+    } else {
+      print STDERR "ERROR: protein_tree_node has dangling internal nodes with no children based on the left and right_index\n";
+      print STDERR "ERROR: USED SQL : $sql\n";
+    }
+  }
+  
+  $sth->finish;
+
 # Check data consistency between pt* tables on node_id
 ######################################################
 
