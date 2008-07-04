@@ -245,6 +245,8 @@ sub set_tmp_data {
   my $self = shift; 
   my %args = ref $_[0] ? %{ $_[0] } : @_; 
 
+  $self->get_tmp_data;
+
   $TmpData_of{ ident $self }{'generic'} ||= {};
   $TmpData_of{ ident $self }{'generic'} = {
     %{ $TmpData_of{ ident $self }{'generic'} },

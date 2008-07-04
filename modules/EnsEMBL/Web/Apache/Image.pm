@@ -29,8 +29,6 @@ sub handler {
   my $replace = $ENSEMBL_SERVERROOT . $ENSEMBL_TMP_URL_IMG;
   $path =~ s/$replace/$ENSEMBL_TMP_DIR_IMG/g;
 
-  #warn "PATH ::::::::::::::: ". $path;
-
   if ($memd) {
 
       ##return DECLINED if $r->$r-> ne 'image/png';
@@ -38,8 +36,6 @@ sub handler {
       return DECLINED if $path =~ /\.\./;
     
       my $data = $memd->get($path);
-      #warn "image ::::::::::::::: ". $data->{'width'}. ", ". $data->{'height'}. ", ". $data->{'size'}. " !";
-      
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
       $r->headers_out->set('Content-Length' => $data->{'size'});
 
