@@ -25,4 +25,4 @@ function __init_collapse_tree() {
   });
 }
 
-Event.observe(window, 'load', __init_collapse_tree );
+addLoadEvent( __init_collapse_tree );

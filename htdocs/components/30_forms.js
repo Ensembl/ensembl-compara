@@ -106,4 +106,4 @@ function FormCheck_on_load() {
     f.observe('submit', function (e) { fc.on_submit(e); } );
   });
 };
-Event.observe(window, 'load',FormCheck_on_load);
+addLoadEvent(FormCheck_on_load);

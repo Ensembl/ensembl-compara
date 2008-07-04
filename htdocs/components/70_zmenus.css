@@ -1,0 +1,8 @@
+.zmenu         { position: absolute; width: 18em; background-color: #eee; margin: 0px; border-collapse: collapse; border: 1px solid #eee; }
+
+.zmenu th      { font-weight: bold; padding: 2px; margin:0; text-align: right; width: 8em; font-size: 0.8em ; background-color: #eee }
+.zmenu th.caption { width: auto; text-align: left; font-size: 1em }
+.zmenu .close  { float: right; background-color: #ccc; color: #000; height: 1em; width: 1em; cursor: pointer; text-align: center }
+
+.zmenu td      { background-color: #fff; border: 1px solid #eee; margin: 0px; padding: 2px; font-size: 0.8em; padding: 2px }
+.zmenu a       { text-decoration: none; font-weight: bold }

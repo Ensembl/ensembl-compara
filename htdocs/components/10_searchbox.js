@@ -80,4 +80,4 @@
     }
   }
 
-  Event.observe(window, 'load', __init_ensembl_web_search );
+  addLoadEvent( __init_ensembl_web_search );

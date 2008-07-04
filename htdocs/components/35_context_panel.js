@@ -6,7 +6,7 @@
 **                                                                    **
 ***********************************************************************/
 
-  function __init_transcript_dropdown(table_id) {
+  function __init_table_dropdown(table_id) {
 /** Initialize link to either collapse or expand transcript list.
 
     PRIVATE - should only be executed once on page load
@@ -15,7 +15,7 @@
 // If no transcripts OR already generated link so return....
     if( !$(table_id) || $(table_id + '_link') ) return;
 
-    var initial_open = 1;
+    var initial_open = $(table_id).getStyle('display') != 'none';
     var txt_on       = 'hide ' + table_id;
     var txt_off      = 'show ' + table_id;
 
@@ -32,6 +32,8 @@
       T.innerHTML = T.innerHTML == txt_off ? txt_on : txt_off;
     });
   }
+  function __init_transcript_dropdown() { __init_table_dropdown('transcripts'); }
+  function __init_locaiton_dropdown()   { __init_table_dropdown('locations'); }
 
-  Event.observe(window, 'load', __init_table_dropdown('transcripts'));
-  Event.observe(window, 'load', __init_table_dropdown('locations') );
+  addLoadEvent( __init_transcript_dropdown );
+  addLoadEvent( __init_location_dropdown  );

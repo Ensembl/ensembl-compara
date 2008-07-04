@@ -157,5 +157,5 @@ function __modal_onload() {
   window.onscroll = __modal_page_resize;
 }
 
-Event.observe(window, 'load', __modal_onload );
+addLoadEvent( __modal_onload );
 

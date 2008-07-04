@@ -14,6 +14,8 @@
 
 **/
 
+var timers_hash = {};
+
 function _debug_press(evt) {
   bu    = Event.element(evt);
   bu_id = bu.id;
@@ -50,6 +52,15 @@ function _debug_press(evt) {
   __success( message );
 **/
 
+function _debug_start_time( key ) {
+  var d = new Date();
+  timers_hash[key] = d.getTime();
+}
+
+function _debug_end_time( key ) {
+  var d = new Date();
+  return ( d.getTime() - timers_hash[key] ) / 1000;
+}
 
 function __debug( s,l ) {
   if($('debug')) {
@@ -63,11 +74,28 @@ function __debug( s,l ) {
   }
 }
 
+function __debug_raw( s,l ) {
+  if($('debug')) {
+  if(!l) l = 'info'
+    var cl = "debug_"+l;
+    var X = Builder.node('li',{className:cl}, "["+l+"] ");
+    X.innerHTML = X.innerHTML + s;
+    $('debug_list').appendChild(X);
+    if( $(cl).hasClassName('debug_button_inv') ) {
+      X.hide();
+    }
+  }
+}
+
+
 function __info(s)    { __debug(s,'info');    }
 function __warning(s) { __debug(s,'warning'); }
 function __error(s)   { __debug(s,'error');   }
 function __success(s) { __debug(s,'success'); }
 
+function __status(s)  {
+  $('debug_status').innerHTML = s;
+}
 /**
   debug initialisation function - 
   if a div with id "debug" exists - create debug window;
@@ -80,8 +108,11 @@ function __init_ensembl_debug() {
   if( $('debug') ) {
 // Construct the buttons close/open button for the dialog box
   // Add the debug button which opens/closes the pages
-    $('debug').appendChild(Builder.node('div',{id:'debug_button'},
-      'Debug information...'
+    $('debug').appendChild(Builder.node('div',{id:'debug_button'},[
+      'Debug information... (',
+      Builder.node('span',{id:'debug_status'}),
+      ')'
+      ]
     ));
   // Add the links to clear debug messages; toggle display of
   // message types
@@ -127,5 +158,5 @@ function __init_ensembl_debug() {
 }
 
 // Call initialisation function on page load
-Event.observe(window, 'load', __init_ensembl_debug )
+addLoadEvent( __init_ensembl_debug );
 
