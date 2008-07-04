@@ -21,6 +21,11 @@ sub _munge_databases {
   $self->_summarise_funcgen_db(          );
 }
 
+sub _munge_das { # creates das.packed...
+  my $self = shift;
+
+}
+
 sub _munge_databases_multi {
   my $self = shift;
   $self->_summarise_website_db(    );
@@ -37,7 +42,7 @@ sub _munge_config_tree {
   $self->_munge_website(    );
 
 #---------- parse the DAS configuration
-  $self->_configure_das(    );
+  $self->_configure_das(    ); # merges das.packed into config.packed
 #---------- parse the BLAST configuration
   $self->_configure_blast(  );
 }
