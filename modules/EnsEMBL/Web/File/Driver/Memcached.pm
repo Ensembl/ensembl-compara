@@ -35,7 +35,8 @@ sub get {
 
 sub save {
   my ($self, $data, $key, $args) = @_;
-  
+
+  $args ||= {};  
   $self->memd->enable_compress($args->{compress});
 
   if ($args->{format} eq 'png') {
@@ -45,12 +46,13 @@ sub save {
       height => $y,
       size   => length($data),
       image  => $data,
+      mtime  => time,
     };
   } else {
     $cache->{$key} = $data;
   }
   
-  my $result = $self->memd->set($key, $cache->{$key}, undef, 'TMP', $args->{format});
+  my $result = $self->memd->set($key, $cache->{$key}, $args->{exptime}, 'TMP', $args->{format});
   return $result eq "OK\r?\n";
 }
 

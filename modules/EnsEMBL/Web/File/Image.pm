@@ -176,7 +176,7 @@ sub render {
 
   $format ||= $DEFAULT_FORMAT;
 
-  my $file = $self->filename( $format );
+  my $file = $self->filename($format);
 
   if ( $self->exists($file) ) {
     ## If cached image required and it exists return it!
@@ -195,10 +195,28 @@ sub render {
   # $self->{'species_defs'}{'timer'}->push( "RAW RENDER END", 7);
   if ($image) {
     if ($format eq 'imagemap') {
-      $self->driver->save($image, $file, {format => 'imagemap', compress => 1}) if $self->cache;
+
+      $self->driver->save(
+        $image,
+        $file,
+        {
+          format   => 'imagemap',
+          compress => 1,
+        }
+      ) if $self->cache;
+      
       return { 'imagemap' => $image };
     } else {
-      $self->driver->save($image, $file, {format => $format});
+
+      $self->driver->save(
+        $image,
+        $file, 
+        {
+          format  => $format,
+          exptime => $self->cache ? 60*60*24 : 60*60,
+        }
+      );
+
       ## TODO: ERROR exception !!!
       return { 'URL' => $self->URL($format), 'file' => $file };
     }

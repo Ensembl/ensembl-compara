@@ -315,7 +315,7 @@ sub transHandler_no_species {
     $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
     return OK;
   }
-  return undef;
+  return;
 }
 
 sub transHandler_species {

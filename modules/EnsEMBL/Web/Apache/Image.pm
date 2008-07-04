@@ -38,7 +38,8 @@ sub handler {
       my $data = $memd->get($path);
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
       $r->headers_out->set('Content-Length' => $data->{'size'});
-
+      $r->set_last_modified($data->{'mtime'});
+      
       $r->content_type('image/png');
 
       my $rc = $r->print($data->{'image'});
