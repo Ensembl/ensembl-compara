@@ -165,6 +165,7 @@ sub upload_feedback {
 ### Node to confirm data upload
   my $self = shift;
   $self->title('File Uploaded');
+
   if ($self->object->param('assembly')) {
     $self->object->get_session->set_tmp_data('assembly' => $self->object->param('assembly'));
   }
@@ -172,7 +173,11 @@ sub upload_feedback {
     $self->object->get_session->set_tmp_data('format'  => $self->object->param('format'));
   }
   $self->object->get_session->save_tmp_data;
-  $self->add_element(( type => 'Information', value => "Thank you - your file was successfully uploaded."));
+
+  $self->add_element( 
+    type  => 'Information',
+    value => 'Thank you - your file was successfully uploaded.',
+  );
 }
 
 sub select_upload {
