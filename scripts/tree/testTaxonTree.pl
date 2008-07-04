@@ -294,6 +294,13 @@ sub create_species_tree {
   my $num_leaves = scalar(@{$root->get_all_leaves});
   $outname = $num_leaves . "." . $outname;
 
+  my $newick_common = $root->newick_format("full_common");
+  print("\n\n$newick_common\n\n");
+
+  open T,">newick_common.$outname.nh" or die "$!";
+  print T $newick_common;
+  close T;
+
   my $newick = $root->newick_format;
   print("\n\n$newick\n\n");
 
