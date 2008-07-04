@@ -19,15 +19,15 @@ sub _initialize {
   );
     #iehover    EnsEMBL::Web::Document::HTML::IEHoverHack
   $self->add_body_elements qw(
-    logo           EnsEMBL::Web::Document::HTML::Logo
-    search_box     EnsEMBL::Web::Document::HTML::SearchBox
-    breadcrumbs    EnsEMBL::Web::Document::HTML::BreadCrumbs
-    tools          EnsEMBL::Web::Document::HTML::ToolLinks
-    content        EnsEMBL::Web::Document::HTML::Content
+    logo            EnsEMBL::Web::Document::HTML::Logo
+    search_box      EnsEMBL::Web::Document::HTML::SearchBox
+    breadcrumbs     EnsEMBL::Web::Document::HTML::BreadCrumbs
+    tools           EnsEMBL::Web::Document::HTML::ToolLinks
+    content         EnsEMBL::Web::Document::HTML::Content
+    global_context  EnsEMBL::Web::Document::HTML::GlobalContext
   );
   if( $self->include_navigation ) {
     $self->add_body_elements qw(
-      global_context  EnsEMBL::Web::Document::HTML::GlobalContext
       local_context   EnsEMBL::Web::Document::HTML::LocalContext
       local_tools     EnsEMBL::Web::Document::HTML::LocalTools
     );
