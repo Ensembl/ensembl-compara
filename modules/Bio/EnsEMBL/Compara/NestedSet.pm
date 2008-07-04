@@ -411,6 +411,32 @@ sub get_all_subnodes {
 }
 
 
+=head2 num_leaves
+
+  Example     : my $num_leaves = $node->num_leaves
+  Description : Returns the number of leaves underlying the node
+  ReturnType  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : At risk (relies on left and right indexes)
+
+=cut
+#'
+sub num_leaves{
+   my $self = shift;
+
+   my $left = $self->left_index;
+   my $right = $self->right_index;
+
+   return undef unless (defined($left) && defined($right));
+
+   my $num = $right - $left + 1;
+   my $num_leaves = ( ($num/2) + 1 ) / 2;
+
+   return $num_leaves;
+}
+
+
 sub get_child_count {
   my $self = shift;
   $self->load_children_if_needed;
@@ -643,7 +669,7 @@ sub _internal_nhx_format {
     $nhx .= ")";
   }
   
-  if($format_mode eq "full" || $format_mode eq "display_label_composite" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id") { 
+  if($format_mode eq "full" || $format_mode eq "display_label" || $format_mode eq "display_label_composite" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id") { 
       #full: name and distance on all nodes
       if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
 	  if ($format_mode eq "transcript_id") {
@@ -664,6 +690,19 @@ sub _internal_nhx_format {
             }
             $nhx .= $self->gene_member->stable_id;
             $nhx .= "_" . $self->genome_db->short_name;
+	  } elsif ($format_mode eq "display_label") {
+            my $display_label = $self->gene_member->display_label;
+            if (!defined($display_label) || $display_label eq '') {
+              my $display_xref = $self->gene_member->gene->display_xref;
+              $display_label = $display_xref->display_id if (defined($display_xref));
+            }
+            if (defined($display_label) && $display_label =~ /^\w+$/) {
+              $nhx .= $display_label . "_";
+            } else {
+              $nhx .= $self->gene_member->stable_id . "_";
+            }
+            # $nhx .= $self->gene_member->stable_id;
+            $nhx .= $self->genome_db->short_name;
 	  } elsif ($format_mode eq "protein_id") {
             $nhx .= sprintf("%s", $self->name);
           }
@@ -777,7 +816,29 @@ sub _internal_newick_format {
   
   if($format_mode eq "full") { 
     #full: name and distance on all nodes
-    $newick .= sprintf("%s", $self->name,);
+    $newick .= sprintf("%s", $self->name);
+    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+  }
+  if($format_mode eq "full_common") { 
+    #full: name and distance on all nodes
+    my $name = $self->name;
+    $DB::single=1;1;
+    my $full_common_name = $name;
+    if ($self->is_leaf) {
+      my $common = uc($self->get_tagvalue('genbank common name'));
+      $common = uc($self->get_tagvalue('ensembl common name')) if (1 > length($common));
+      $common =~ s/\,//g;
+      $common =~ s/\ /\./g;
+      $common =~ s/\'//g;
+      $full_common_name .= " " . $common if (1 < length($common));
+    }
+    $newick .= sprintf("%s", $full_common_name);
+    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+  }
+  if($format_mode eq "int_node_id") { 
+    #full: name and distance on all nodes
+    $newick .= sprintf("%s", $self->name) if ($self->is_leaf);
+    $newick .= sprintf("%s", $self->node_id) if (!$self->is_leaf);
     $newick .= sprintf(":%1.4f", $self->distance_to_parent);
   }
   if($format_mode eq "display_label_composite") { 
@@ -792,6 +853,17 @@ sub _internal_newick_format {
     $newick .= $self->name;
     if ($self->is_leaf) {
       $newick .= "_" . $self->genome_db->short_name;
+    }
+    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+  }
+  if($format_mode eq "gene_stable_id") { 
+    #display_label: external name and distance on all nodes
+    my $display_label;
+    if($self->is_leaf) {
+      $display_label = $self->gene_member->stable_id;
+    }
+    if (defined($display_label)) {
+      $newick .= $display_label;
     }
     $newick .= sprintf(":%1.4f", $self->distance_to_parent);
   }
@@ -1180,6 +1252,14 @@ sub _recursive_get_all_leaves {
   return undef;
 }
 
+
+sub get_all_leaves_indexed {
+  my $self = shift;
+
+  my @leaf_list = @{$self->adaptor->fetch_all_leaves_indexed($self)};
+
+  return \@leaf_list;
+}
 
 =head2 max_distance
 
