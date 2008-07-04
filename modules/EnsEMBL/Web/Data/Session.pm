@@ -44,6 +44,7 @@ sub set_config {
   
   if ($config) {
     $config->data($data);
+    $config->save;
   } else {
     $config = $class->insert({
       %args,
