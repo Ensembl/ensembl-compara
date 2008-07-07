@@ -19,14 +19,15 @@ sub render   {
   if ($self->logins) {
     if ($ENV{'ENSEMBL_USER_ID'}) {
       $html .= qq(
-      <a href="javascript:control_panel(1);">Control Panel</a> &nbsp;|&nbsp;
+      <a href="javascript:control_panel('/Account/Links');">Control Panel</a> &nbsp;|&nbsp;
       <a href="javascript:logout_link();">Logout</a> &nbsp;|&nbsp;
       );
     }
     else {
       $html .= qq(
-      <a href="javascript:control_panel(0);">Control Panel</a> &nbsp;|&nbsp;
-      <a href="javascript:login_link();">Login</a> / <a href="/Account/Register">Register</a> &nbsp;|&nbsp;
+      <a href="javascript:control_panel(/UserData/Upload);">Control Panel</a> &nbsp;|&nbsp;
+      <a href="javascript:control_panel('/Account/Login')">Login</a> / 
+      <a href="javascript:control_panel('/Account/Register');">Register</a> &nbsp;|&nbsp;
       );
     }
   }
