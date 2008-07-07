@@ -7,6 +7,10 @@ use EnsEMBL::Web::Document::HTML;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
+## Stubs for functions called by modules that are being replaced
+sub logins      :lvalue { $_[0]{'logins'};  }
+sub sitename    :lvalue { $_[0]{'sitename'};   }
+
 sub render {
   return;
 }
