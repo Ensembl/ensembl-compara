@@ -45,9 +45,10 @@ sub render {
 }
 
 sub render_message {
+  warn "Rendering error message";
   my $self = shift;
   my $type = shift || 'Account';
-  EnsEMBL::Web::Magic::stuff($type, 'Message', $self);
+  EnsEMBL::Web::Magic::stuff($type, 'Message', $self, 'Popup');
 }
 
 sub add_filter {
