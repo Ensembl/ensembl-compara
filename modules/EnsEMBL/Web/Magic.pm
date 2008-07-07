@@ -130,8 +130,10 @@ sub stuff {
   my $object_type = shift || $ENV{'ENSEMBL_TYPE'};
   my $action = shift;
   my $command = shift;
+  my $doctype = shift;
   my $webpage = EnsEMBL::Web::Document::WebPage->new( 
                   'objecttype' => $object_type, 
+                  'doctype'    => $doctype,
                   'scriptname' => 'action',
                   'command'    => $command, 
   );
