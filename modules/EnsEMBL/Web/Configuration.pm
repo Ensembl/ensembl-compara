@@ -227,6 +227,9 @@ sub _content_panel {
   );
   $params{'previous'} = $previous_node->data if $previous_node;
   $params{'next'    } = $next_node->data     if $next_node;
+  if ($self->{doctype} eq 'Popup') {
+    $params{'omit_header'} = 1;
+  }
   my $panel = $self->new_panel( 'Navigation', %params );
   if( $panel ) {
     $panel->add_components( @{$node->data->{'components'}} );
@@ -378,7 +381,8 @@ sub new_panel {
         'object'  => $self->{'object'},
         'code'    => "error_$params{'code'}",
         'caption' => "Panel compilation error",
-        'content' => $error
+        'content' => $error,
+        'has_header' => $params{'has_header'},
       )
     );
     return undef;
