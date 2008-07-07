@@ -33,7 +33,7 @@
     });
   }
   function __init_transcript_dropdown() { __init_table_dropdown('transcripts'); }
-  function __init_locaiton_dropdown()   { __init_table_dropdown('locations'); }
+  function __init_location_dropdown()   { __init_table_dropdown('locations'); }
 
   addLoadEvent( __init_transcript_dropdown );
   addLoadEvent( __init_location_dropdown  );
