@@ -18,7 +18,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Magic::stuff('Account', 'AdminGroups', $self);
+  EnsEMBL::Web::Magic::stuff('Account', 'AdminGroups', $self, 'Popup');
 }
 
 }

@@ -16,7 +16,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Magic::stuff('Account', 'UpdateFailed', $self);
+  EnsEMBL::Web::Magic::stuff('Account', 'UpdateFailed', $self, 'Popup');
 }
 
 }

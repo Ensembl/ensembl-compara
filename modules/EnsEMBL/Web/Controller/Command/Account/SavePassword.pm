@@ -45,13 +45,17 @@ sub process {
       if $group->add_user($user);
   }
 
-  my $url = '/common/user/set_cookie?email='.$user->email
-                  .';password='.$cgi->param('new_password_1')
-                  .';url='.$cgi->param('url')
-                  .';updated=yes';
-  $url .= ';record_id='.$cgi->param('record_id') if $cgi->param('record_id'); 
+  my $param = {
+    'email'     => $user->email,
+    'password'  => $cgi->param('new_password_1'),
+    'url'       => $cgi->param('url'),
+    'updated'   => 'yes',
+  };
+  if ($cgi->param('record_id')) {
+    $param->{'record_id'} = $cgi->param('record_id');
+  } 
 
-  $cgi->redirect($self->url('Account/_set_cookie', $param));
+  $cgi->redirect($self->url('Account/SetCookie', $param));
 }
 
 }

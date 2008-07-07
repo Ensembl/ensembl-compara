@@ -23,7 +23,8 @@ sub process {
   my $self = shift;
   my $cgi = $self->action->cgi;
 
-  my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
+  my $user = EnsEMBL::Web::Data::User->new(email => $cgi->param('email'));
+  #warn "Setting cookie for user ".$user->name;
   
   my $url = CGI::escape($cgi->param('url')); 
   if (!$url || $url =~ m#Account#) { ## Don't want to redirect user to e.g. register or login confirmation!

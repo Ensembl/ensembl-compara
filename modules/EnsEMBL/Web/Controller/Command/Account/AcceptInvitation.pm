@@ -58,7 +58,7 @@ sub process {
      my $webpage= new EnsEMBL::Web::Document::WebPage(
     'renderer'   => 'Apache',
     'outputtype' => 'HTML',
-    'scriptname' => 'Account/_accept',
+    'scriptname' => 'Account/Accept',
     'objecttype' => 'Account',
       );
 

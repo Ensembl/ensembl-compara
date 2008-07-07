@@ -19,7 +19,7 @@ sub BUILD {
 }
 
 sub process {
-  EnsEMBL::Web::Magic::stuff('Account', 'Group', $self);
+  EnsEMBL::Web::Magic::stuff('Account', 'Group', $self, 'Popup');
 }
 
 }

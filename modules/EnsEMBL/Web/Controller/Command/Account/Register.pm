@@ -39,7 +39,7 @@ sub process {
       'add' => 'Register for '.$sitetype, 
       'on_failure'=>'Registration Failed'
   });
-  $interface->on_success($self->url('/Account/_send_activation'));
+  $interface->on_success($self->url('/Account/SendActivation'));
   $interface->on_failure('EnsEMBL::Web::Component::Interface::Account::failed_registration');
   $interface->script_name($self->get_action->script_name);
 

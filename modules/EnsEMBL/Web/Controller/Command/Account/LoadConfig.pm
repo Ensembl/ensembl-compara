@@ -60,7 +60,7 @@ sub process {
   if ($url) {
     $new_param->{'url'} = $url;
   }
-  $cgi->redirect($self->url('/Account/_set_config', $new_param ););
+  $cgi->redirect($self->url('/Account/SetConfig', $new_param ););
 }
 
 }

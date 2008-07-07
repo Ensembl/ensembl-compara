@@ -17,7 +17,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Magic::stuff('UserData', 'ManageUpload', $self);
+  EnsEMBL::Web::Magic::stuff('UserData', 'ManageUpload', $self, 'Popup');
 }
 
 }
