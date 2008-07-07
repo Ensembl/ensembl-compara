@@ -178,7 +178,14 @@ sub stuff {
 # This still works... (beth you may have to change the four parts that are configured - note these
 # have changed from the old WebPage::simple_wrapper...
     foreach my $object( @{$webpage->dataObjects} ) {
-      $webpage->configure( $object, 'global_context', 'local_context', 'local_tools', 'context_panel', 'content_panel' );
+      my @sections;
+      if ($doctype && $doctype eq 'Popup') {
+        @sections = qw(global_context local_context local_tools content_panel);
+      }
+      else {
+        @sections = qw(global_context local_context local_tools context_panel content_panel);
+      }
+      $webpage->configure( $object, @sections );
     }
     $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
     $webpage->render;
