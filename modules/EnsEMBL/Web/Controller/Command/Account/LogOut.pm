@@ -18,11 +18,7 @@ sub BUILD {
 sub process {
   my $self = shift;
   my $cgi = $self->action->cgi;
-  my $url = $cgi->param('url');
-  if ($url =~ m#Account#) { ## Don't want to redirect user to restricted page!
-    $url = '/index.html';
-  }
-warn "Redirecting to $url";
+  my $url = $cgi->param('url') || '/Account/Login';
 
   ## setting a (blank) expired cookie deletes the current one
   my $SD = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
