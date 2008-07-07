@@ -286,6 +286,26 @@ sub binomial {
   }
 }
 
+=head2 ensembl_alias
+
+  Example    : $ncbi->ensembl_alias;
+  Description: The ensembl_alias name (AKA the name in the ensembl website) of this genome
+  Returntype : string
+  Exceptions : warns when node is not a species or has no ensembl_alias
+  Caller     : general
+
+=cut
+
+sub ensembl_alias {
+  my $self = shift;
+  if ($self->has_tag('ensembl alias name')) {
+    return $self->get_tagvalue('ensembl alias name');
+  } else {
+    warning("taxon_id=",$self->node_id," is not a species or subspecies. So ensembl_alias is undef\n");
+    return undef;
+  }
+}
+
 
 =head2 short_name
 
