@@ -85,6 +85,11 @@ sub populate_tree {
       { 'availability' => 1, 'concise' => 'Administrator' }
     ));
 
+    $self->create_node( 'Logout', "Log Out",
+    [],
+      { 'availability' => 1 }
+    );
+
   }
   else {
     $self->create_node( 'Login', "Log in",
@@ -116,8 +121,8 @@ sub populate_tree {
         )],
       { 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'LoginCheck', '',
-    [qw(login_check EnsEMBL::Web::Component::Account::LoginCheck
+  $self->create_node( 'LoggedIn', '',
+    [qw(logged_in EnsEMBL::Web::Component::Account::LoggedIn
         )],
       { 'no_menu_entry' => 1 }
   );
