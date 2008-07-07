@@ -301,7 +301,7 @@ sub dumpGenomicAlignment {
                 $DB_NAME.analysis_description as ad on ad.analysis_id = a.analysis_id
           where a.analysis_id = t.analysis_id
           group by a.logic_name, t.hit_name"
-      ); 
+      );
       $sth->execute();
       while( my( $logic_name, $label, $hid, $count ) = $sth->fetchrow_array ) { 
         print D join "\t",
@@ -312,8 +312,25 @@ sub dumpGenomicAlignment {
           qq($logic_name $hid hits the genome in $count locations.\n);
       }
     }
+	if ($db eq 'cdna') {
+      my $sth    = $conf->{'dbh'}->prepare(
+	   "select uo.identifier, a.logic_name, ur.summary_description, 'Unmapped feature'
+          from $DB_NAME.analysis a, $DB_NAME.unmapped_object uo, $DB_NAME.unmapped_reason ur 
+         where a.analysis_id = uo.analysis_id
+         and uo.unmapped_reason_id = ur.unmapped_reason_id"
+										  );
+	  $sth->execute();
+	  while (my ($name, $ln, $desc, $type) = $sth->fetchrow_array ) {
+        $ln =~ s/_/ /;
+	    print D join "\t",
+			 (INC_SPECIES?"$species\t":"")."$type: ",
+			 "$ln $name",
+             "",
+			 $name,
+             "Reason: $desc\n";
+	  }
+    }
   }
-
   close D;
 }
 
@@ -538,7 +555,7 @@ warn "START... $DB";
     my %exons = ();
     my $T = $conf->{'dbh'}->selectall_arrayref(
       "select distinct t.gene_id, esi.stable_id
-         from transcript as t, exon_transcript as et, exon_stable_id as esi
+         from $DBNAME.transcript as t, $DBNAME.exon_transcript as et, $DBNAME.exon_stable_id as esi
         where t.transcript_id = et.transcript_id and et.exon_id = esi.exon_id"
     );
     foreach( @$T ) {
@@ -618,7 +635,6 @@ warn "Gene query...";
       $extra, join( ' ', grep{$_}keys %{$old{'i'}}), 
       $old{'t'},$old{'tr'},$old{'e'},
       $old{'d'} );
-    warn "FINISHED...... genes $DB ...";
   }
   my %current_stable_ids =();
   foreach my $type (qw(gene transcript translation)) {
@@ -657,7 +673,7 @@ warn "Gene query...";
       }
       if( @current_sis ) {
         print O join( "\t",
-          (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
+          (INC_SPECIES?"$species\t":"").qq(Ensembl $type),
           qq($osi),
           qq(/$species/idhistoryview?).lc($type).qq(=$osi),
           join( ' ', $osi, @current_sis, @deprecated_sis ),
@@ -667,7 +683,7 @@ warn "Gene query...";
         );
       } elsif( @deprecated_sis ) {
         print O join( "\t",
-          (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
+          (INC_SPECIES?"$species\t":"").qq(Ensembl $type),
           qq($osi),
           qq(/$species/idhistoryview?).lc($type).qq(=$osi),
           join( ' ', $osi, @deprecated_sis ),
@@ -675,7 +691,7 @@ warn "Gene query...";
         );
       } else {
         print O join( "\t",
-          (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
+          (INC_SPECIES?"$species\t":"").qq(Ensembl $type),
           qq($osi),
           qq(/$species/idhistoryview?).lc($type).qq(=$osi),
           qq($osi),
@@ -713,7 +729,7 @@ warn "Gene query...";
     ),
     'Translation' => qq(
       select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
-             concat( 'Translation: ',trsi.stable_id,'; Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
+             concat( 'Protein: ',trsi.stable_id,'; Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
         from $COREDB.analysis as a, $COREDB.external_db as e, $COREDB.unmapped_object as uo,
              $COREDB.unmapped_reason as ur, $COREDB.transcript_stable_id as tsi,
              $COREDB.translation as tr, $COREDB.translation_stable_id as trsi,
@@ -734,9 +750,12 @@ warn "Gene query...";
     my $sth = $conf->{'dbh'}->prepare($SQL);
     $sth->execute;
     while( my $T = $sth->fetchrow_arrayref() ) {
-      print O join "\t", (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
+      print O join "\t",
+        (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
         "$T->[1] $T->[2]",
-        "/$conf->{'species'}/featureview?type=Gene;id=$T->[2]", "$T->[2] $T->[4]", "$T->[3]; $T->[4]\n";
+        "/$conf->{'species'}/featureview?type=Gene;id=$T->[2]",
+        "$T->[2] $T->[4]",
+        "$T->[3]; $T->[4]\n";
     }
   }
   close O;
@@ -747,7 +766,7 @@ sub geneLineOld {
   return unless $gid;
   if( @GIDS ) {
     return join( "\t",
-      (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
+      (INC_SPECIES?"$species\t":"").qq(Ensembl $type),
       qq($gid),
       qq(/$species/geneview?).lc($type).qq(=$gid),
       join( ' ', $gid, @GIDS ),
@@ -755,7 +774,7 @@ sub geneLineOld {
     );
   } else {
     return join( "\t",
-      (INC_SPECIES?"$species\t":"").qq(EnsEMBL $type),
+      (INC_SPECIES?"$species\t":"").qq(Ensembl $type),
       qq($gid),
       qq(/$species/geneview?).lc($type).qq(=$gid),
       qq($gid),
@@ -784,7 +803,8 @@ sub geneLine {
       (
         qq(<br />The gene has the following external identifiers mapped to it:<br />).
         ( join '<br />',
-          map { "$_: ".(join ", ", keys %{$external_identifiers->{$_}}) }
+          map { s/Translation:/Protein:/i; $_ }
+		  map { "$_: ".(join ", ", keys %{$external_identifiers->{$_}}) }
           sort { lc($a) cmp lc($b) } keys %$external_identifiers
         )
       ) : ''
