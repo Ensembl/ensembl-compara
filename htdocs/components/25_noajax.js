@@ -1,26 +1,13 @@
 // Functions to pass the referer, in case user has no AJAX therefore no modal window
 
-function login_link() {
-  URL = escape(document.location.href);
-  document.location = '/Account/Login?url=' + URL;
-  return true;
+function control_panel(URL) {
+  window.open(URL,'control_panel','width=950,height=500,resizable,scrollbars');
 }
 
 function logout_link() {
   URL = escape(document.location.href);
-  document.location = '/Account/_logout?url=' + URL;
-  return true;
-}
-
-function control_panel(logged_in) {
-  var URL;
-  if (logged_in) {
-    URL = '/Account/Links';
-  }
-  else {
-    URL = '/UserData/Upload';
-  }
-  window.open(URL,'control_panel','width=950,height=500,resizable,scrollbars')
+  document.location = '/Account/Logout?url=' + URL;
+  return true;  
 }
 
 function bookmark_link() {
