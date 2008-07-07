@@ -13,7 +13,7 @@ sub new {
       'transcript' => undef,
       'gene'       => undef,
       'location'   => undef,
-      'snp'        => undef,
+      'variation'  => undef,
     },
     'parameters' => {}
   };
@@ -98,17 +98,17 @@ sub location_long_caption {
   return "Location: ".$self->location->seq_region_name.':'.$self->thousandify($self->_centre_point);
 }
 
-sub snp {
+sub variation {
 ### a
   my $self = shift;
-  $self->{objects}{snp} = shift if @_;
-  return $self->{objects}{snp};
+  $self->{objects}{variation} = shift if @_;
+  return $self->{objects}{variation};
 }
 
-sub snp_short_caption {
+sub variation_short_caption {
   my $self = shift;
-  return '-' unless $self->snp;
-  my $label = $self->snp->name;
+  return '-' unless $self->variation;
+  my $label = $self->variation->name;
   if( length($label)>30) {
     return "Var: $label";
   } else {
@@ -116,10 +116,10 @@ sub snp_short_caption {
   }
 }
 
-sub snp_long_caption {
+sub variation_long_caption {
   my $self = shift;
-  return '-' unless $self->snp;
-  return "Variation: ".$self->snp->name;
+  return '-' unless $self->variation;
+  return "Variation: ".$self->variation->name;
 }
 
 sub param {
@@ -133,6 +133,14 @@ sub _generate_objects {
   return if $ENV{'ENSEMBL_SPECIES'} eq 'common';
   my $db = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
   my $db_adaptor = $self->database($db);
+  my $vardb_adaptor = $self->database('variation');
+  if( $self->param('variation')) {
+    $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('variation'), $self->param('source')));
+    unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
+  }  elsif( $self->param('v')) {
+    $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('v'), $self->param('source')));
+    unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
+  }  
   if( $self->param('t') ) {
     $self->transcript( $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('t')) );
     $self->_get_gene_location_from_transcript;
@@ -149,9 +157,11 @@ sub _generate_objects {
   }
   if( $self->param('r') ) {
     my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(\w+)-(\w+)/;
+    if ($self->variation) {$db_adaptor= $self->database('core');}
     $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
   } elsif( $self->param('l') ) {
     my($r,$s,$e) = $self->param('l') =~ /^([^:]+):(\w+)-(\w+)/;
+    if ($self->variation) {$db_adaptor= $self->database('core');}
     $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
   }
   $self->_get_gene_transcript_from_location unless $self->transcript;
@@ -159,6 +169,7 @@ sub _generate_objects {
     if $self->location;
   $self->{'parameters'}{'t'} = $self->transcript->stable_id if $self->transcript;
   $self->{'parameters'}{'g'} = $self->gene->stable_id       if $self->gene;
+  $self->{'parameters'}{'v'} = $self->variation->name if $self->variation;
 }
 
 sub _get_gene_location_from_transcript {
@@ -213,4 +224,20 @@ sub _get_gene_transcript_from_location {
   }
 }
 
+sub _check_if_snp_unique_location {
+  my ( $self ) = @_;
+  return unless $self->variation;
+  my $db_adaptor = $self->database('core');
+  my $vardb =  $self->database('variation') ; 
+  my $vf_adaptor = $vardb->get_VariationFeatureAdaptor; warn $vf_adaptor; 
+  my @features = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
+  warn @features;
+  unless (scalar @features > 1){
+   my $s =  $features[0]->start; warn $s;
+   my $e = $features[0]->end;
+   my $r = $features[0]->seq_region_name;
+   $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
+  } 
+ 
+}
 1;
