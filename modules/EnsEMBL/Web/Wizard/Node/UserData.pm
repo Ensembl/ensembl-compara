@@ -394,7 +394,7 @@ sub save_upload {
 	my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
 	my $config = {
-	    'action' => 'overwrite', # or append
+	    'action' => 'append', #'overwrite', # or append
 	    'species' => $tmpdata->{species},
 	    'assembly' => $tmpdata->{assembly},
 	};
