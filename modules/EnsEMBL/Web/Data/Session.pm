@@ -86,4 +86,17 @@ sub create_session_id {
   return $session_id;
 }
 
+sub share_ref {
+  my $self = shift;
+  ## Encode ID
+  ## Return share ref
+}
+
+sub receive_ref {
+  my $self = shift;
+  ## Decode ID
+  ## Retrieve share
+  ## Clone data from it
+}
+
 1;
