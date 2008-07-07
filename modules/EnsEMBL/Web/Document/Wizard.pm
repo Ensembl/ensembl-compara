@@ -15,7 +15,7 @@ our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 
 sub simple_wizard {
   my ($type, $method, $command) = @_;
-  my $self = __PACKAGE__->new('objecttype' => $type, 'command' => $command );
+  my $self = __PACKAGE__->new('objecttype' => $type, doctype => 'Popup', 'command' => $command );
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {
