@@ -23,13 +23,8 @@ sub process {
   my $self = shift;
   my $cgi = $self->action->cgi;
 
-  my $user = EnsEMBL::Web::Data::User->new(email => $cgi->param('email'));
+  my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   #warn "Setting cookie for user ".$user->name;
-  
-  my $url = CGI::escape($cgi->param('url')); 
-  if (!$url || $url =~ m#Account#) { ## Don't want to redirect user to e.g. register or login confirmation!
-    $url = $self->url('/index.html');
-  }
   
   if (!$ENV{'ENSEMBL_USER_ID'}) {
     if ($user && $user->id) {
@@ -64,11 +59,11 @@ sub process {
   }
 =cut
 
-  my $new_param = {'url' => $url};
+  my $new_param = {};
   if ($cgi->param('updated')) {
     $new_param->{'updated'} = $cgi->param('updated');
   }
-  $cgi->redirect($self->url('/Account/LoggedIn', $new_param));
+  $cgi->redirect($self->url('/Account/Links', $new_param));
 }
 
 }
