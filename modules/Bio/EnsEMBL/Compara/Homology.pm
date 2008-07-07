@@ -271,6 +271,31 @@ sub taxonomy_level {
 }
 
 
+=head2 taxonomy_alias
+
+  Arg [1]    : string $taxonomy_alias (optional)
+  Example    : $taxonomy_alias = $homology->taxonomy_alias();
+               $homology->taxonomy_alias($taxonomy_alias);
+  Description: get string description of homology taxonomy_alias.
+               Examples: 'Chordates', 'Bony vertebrates', 'Homo sapiens'
+               Defaults to taxonomy_level if alias is not in the db
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub taxonomy_alias {
+  my $self = shift;
+
+  my $ancestor_node_id = $self->ancestor_node_id;
+  my $tree_dba = $self->adaptor->db->get_ProteinTreeAdaptor;
+  my $ancestor = $tree_dba->fetch_node_by_node_id($ancestor_node_id);
+
+  return $ancestor->get_tagvalue('taxon_alias') || undef;
+}
+
+
 =head2 n
 
   Arg [1]    : float $n (optional)
