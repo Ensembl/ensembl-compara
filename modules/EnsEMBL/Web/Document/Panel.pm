@@ -256,6 +256,7 @@ sub remove_component {
   }
 }
 
+=pod
 sub add_form { 
   my( $self, $page, $key, $function_name ) = @_;
   (my $module_name = $function_name ) =~s/::\w+$//;
@@ -289,6 +290,7 @@ sub form {
   my( $self, $key ) = @_;
   return $self->{'forms'}{$key};
 }
+=cut
 
 sub renderer :lvalue { $_[0]->{'_renderer'}; }
 
@@ -354,34 +356,39 @@ sub render {
     <div class="panel">);
     my $button_text;
     my $counts = {};
-    if( exists $self->{'previous'} || exists $self->{'next'} ) {
-      $HTML .= q(
-      <div class="nav-heading">
-        <div class="left-button">);
-      if( exists $self->{'previous'} && $self->{'previous'}{'url'} ) {
-        $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
-        $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>), $self->{'previous'}{'url'}, $button_text;
-      } else {
-        $HTML .= q(&nbsp;);
-      }
-      $HTML .= q(</div>
-        <div class="right-button">);
-      if( exists $self->{'next'} && $self->{'next'}{'url'} ) {
-        $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
-        $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>), $self->{'next'}{'url'}, $button_text;
-      } else {
-         $HTML .= q(&nbsp;);
-      }
-      $HTML .= q(</div>);
-      if( exists $self->{'caption'} ) {
+    if( !$self->{omit_header}) {
+      if (exists $self->{'previous'} || exists $self->{'next'} ) {
+        $HTML .= q(
+          <div class="nav-heading">
+          <div class="left-button">);
+        if( exists $self->{'previous'} && $self->{'previous'}{'url'} ) {
+          $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
+          $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>), $self->{'previous'}{'url'}, $button_text;
+        } 
+        else {
+          $HTML .= q(&nbsp;);
+        }
+        $HTML .= q(</div>
+          <div class="right-button">);
+        if( exists $self->{'next'} && $self->{'next'}{'url'} ) {
+          $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
+          $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>), $self->{'next'}{'url'}, $button_text;
+        } 
+        else {
+          $HTML .= q(&nbsp;);
+        }
+        $HTML .= q(</div>);
+        if( exists $self->{'caption'} ) {
+          $HTML .= sprintf q(
+            <h2>%s</h2>), CGI::escapeHTML($self->{caption});
+        }
+        $HTML .= q(
+          <p class="invisible">.</p></div>);
+      } 
+      elsif( exists $self->{'caption'} ) {
         $HTML .= sprintf q(
-        <h2>%s</h2>), CGI::escapeHTML($self->{caption});
+          <h2>%s</h2>), CGI::escapeHTML($self->{caption});
       }
-      $HTML .= q(
-      <p class="invisible">.</p></div>);
-    } elsif( exists $self->{'caption'} ) {
-      $HTML .= sprintf q(
-      <h2>%s</h2>), CGI::escapeHTML($self->{caption});
     }
     $self->renderer->print($HTML);
     if( $status ne 'off' ) {
