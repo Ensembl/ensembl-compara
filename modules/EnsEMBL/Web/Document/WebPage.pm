@@ -87,8 +87,8 @@ sub new {
   my $rend = new $render_module();                                   $self->_prof("Renderer compiled and initialized");
 
 ## Compile and create "Document" object ... [ Dynamic, Popup, ... ]
-  my $doctype = $parameters{'doctype'} || DEFAULT_DOCUMENT;
-  my $doc_module = "EnsEMBL::Web::Document::$doctype";
+  $self->{doctype} = $parameters{'doctype'} || DEFAULT_DOCUMENT;
+  my $doc_module = "EnsEMBL::Web::Document::".$self->{doctype};
 
   unless( $self->dynamic_use( $doc_module ) ) {
     $doc_module = "EnsEMBL::Web::Document::".DEFAULT_DOCUMENT;
@@ -188,6 +188,7 @@ sub configure {
       push @modules, [$CONF,$config_module_name];
       ## Attach any control modules to the configuration
       $CONF->{wizard}  = $self->{wizard};
+      $CONF->{doctype} = $self->{doctype};
     } elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) {
 # Handle "use" failures gracefully...
 # Firstly skip Can't locate errors o/w display a "compile time" error message.
