@@ -65,7 +65,7 @@ sub content {
       my $row = {};
 
       my $description = $bookmark->description || '&nbsp;';
-      $row->{'name'} = sprintf(qq(<a href="/Account/_use_bookmark?id=%s" title="%s">%s</a>),
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" title="%s">%s</a>),
                         $bookmark->id, $description, $bookmark->name);
 
       $row->{'desc'}    = $description;
@@ -115,7 +115,7 @@ sub content {
       my $row = {};
       my $bookmark = $group_bookmarks{$bookmark_id}{'bookmark'};
 
-      $row->{'name'} = sprintf(qq(<a href="/Account/_use_bookmark?id=%s">%s</a>),
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s">%s</a>),
                         $bookmark->id, $bookmark->name);
 
       $row->{'desc'} = $bookmark->description || '&nbsp;';

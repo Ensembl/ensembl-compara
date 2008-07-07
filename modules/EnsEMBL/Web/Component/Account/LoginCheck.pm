@@ -7,6 +7,7 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Account);
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -23,10 +24,12 @@ sub content {
 ## Interstitial page - confirms login then uses JS redirect to page where logged in
   my $self = shift;
 
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $url = $self->object->param('url') || '/index.html';
+  warn "Redirecting to URL $url";
 
   my $html;
-  if ($ENV{'ENSEMBL_USER_ID'}) {
+  if ($user) {
     if ($self->object->param('updated') eq 'yes') {
       $html .= qq(<p>Thank you. Your changes have been saved.</p>);
     }

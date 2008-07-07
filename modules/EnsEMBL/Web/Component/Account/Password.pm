@@ -27,7 +27,7 @@ sub content {
     ## TODO: Remove!
   # my $script = $object->script;
 
-  my $form = EnsEMBL::Web::Form->new( 'enter_password', "/Account/_save_password", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'enter_password', "/Account/SavePassword", 'post' );
 
   $form->add_element('type' => 'Information',
     'value' => 'Passwords should be at least 6 characters long and include both letters and numbers.');

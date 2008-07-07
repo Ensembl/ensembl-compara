@@ -22,7 +22,7 @@ sub caption {
 sub content {
   my $self = shift;
 
-  my $form = EnsEMBL::Web::Form->new( 'lost_password', "/Account/_send_activation", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'lost_password', "/Account/SendActivation", 'post' );
 
   $form->add_element('type'  => 'Information',
                     'value' => qq(<p>If you have lost your password or activation email, enter your email address and we will send you a new activation code.</p>));

@@ -22,7 +22,7 @@ sub caption {
 sub content {
   my $self = shift;
 
-  my $form = EnsEMBL::Web::Form->new( 'login', "/Account/_set_cookie", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'login', "/Account/SetCookie", 'post' );
   my $reg_url = $self->url('/Account/Register');
   my $pwd_url = $self->url('/Account/LostPassword');
 

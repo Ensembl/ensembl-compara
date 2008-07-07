@@ -24,7 +24,7 @@ sub content {
 warn "Selecting group";
   my $self = shift;
 
-  my $form = EnsEMBL::Web::Form->new( 'select_group', "/Account/_share_record", 'post' );
+  my $form = EnsEMBL::Web::Form->new( 'select_group', "/Account/ShareRecord", 'post' );
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my @admin_groups = $user->find_administratable_groups;

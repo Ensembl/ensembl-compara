@@ -136,7 +136,7 @@ sub content {
 
 sub _output_bookmark {
   my ($self, $bookmark) = @_;
-  my $html .= '<li><a href="/Account/_use_bookmark?id='.$bookmark->id.'"';
+  my $html .= '<li><a href="/Account/UseBookmark?id='.$bookmark->id.'"';
   if ($bookmark->description) {
     $html .= ' title="'.$bookmark->description.'"';
   }
