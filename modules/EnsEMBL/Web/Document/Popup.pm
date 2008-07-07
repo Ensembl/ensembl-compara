@@ -23,7 +23,7 @@ sub _initialize_HTML {
 
   $self->add_body_elements qw(
     logo            EnsEMBL::Web::Document::HTML::Logo
-    search_box      EnsEMBL::Web::Document::HTML::Empty
+    search_box      EnsEMBL::Web::Document::HTML::LoggedIn
     breadcrumbs     EnsEMBL::Web::Document::HTML::Empty
     tools           EnsEMBL::Web::Document::HTML::Empty
     content         EnsEMBL::Web::Document::HTML::Content
