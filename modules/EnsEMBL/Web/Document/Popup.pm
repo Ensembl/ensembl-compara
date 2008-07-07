@@ -10,6 +10,7 @@ use Data::Dumper qw(Dumper);
 sub _initialize_HTML {
   my $self = shift;
 
+  $self->include_navigation(1);
 ## General layout for popup pages...
 
   $self->add_head_elements qw(
@@ -21,24 +22,32 @@ sub _initialize_HTML {
   );
 
   $self->add_body_elements qw(
-    logo           EnsEMBL::Web::Document::HTML::Empty
-    search_box     EnsEMBL::Web::Document::HTML::Empty
-    breadcrumbs    EnsEMBL::Web::Document::HTML::Empty
-    tools          EnsEMBL::Web::Document::HTML::Empty
-    content        EnsEMBL::Web::Document::HTML::Content
-    global_context EnsEMBL::Web::Document::HTML::Empty
-    local_context  EnsEMBL::Web::Document::HTML::Empty
-    release        EnsEMBL::Web::Document::HTML::Empty
-    copyright      EnsEMBL::Web::Document::HTML::Empty
+    logo            EnsEMBL::Web::Document::HTML::Logo
+    search_box      EnsEMBL::Web::Document::HTML::Empty
+    breadcrumbs     EnsEMBL::Web::Document::HTML::Empty
+    tools           EnsEMBL::Web::Document::HTML::Empty
+    content         EnsEMBL::Web::Document::HTML::Content
+    global_context  EnsEMBL::Web::Document::HTML::GlobalContext
+    local_context   EnsEMBL::Web::Document::HTML::LocalContext
+    local_tools     EnsEMBL::Web::Document::HTML::LocalTools
+    copyright       EnsEMBL::Web::Document::HTML::Empty
+    footerlinks     EnsEMBL::Web::Document::HTML::Empty
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
   );
   $self->call_child_functions( 'common_page_elements' );
 
-  $self->_common_HTML;
-  $self->_script_HTML;
-  $self->helplink->kw = $ENV{'ENSEMBL_SCRIPT'}.';se=1';
+  $self->_prof( "page elements configured" );
+  $self->_common_HTML();
+  $self->_prof( "common HTML called" );
+  $self->_script_HTML();
+  $self->_prof( "script HTML called" );
   $self->rss->add( '/common/rss.xml', 'Ensembl website news feed', 'rss' );
+  $self->_prof( "page decs configured" );
+
   $self->call_child_functions( 'extra_configuration' );
+
+  $self->_prof( "menu items configured" );
+
 }
 
 1;
