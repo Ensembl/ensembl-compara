@@ -12,6 +12,17 @@ function logout_link() {
   return true;
 }
 
+function control_panel(logged_in) {
+  var URL;
+  if (logged_in) {
+    URL = '/Account/Links';
+  }
+  else {
+    URL = '/UserData/Upload';
+  }
+  window.open(URL,'control_panel','width=950,height=500,resizable,scrollbars')
+}
+
 function bookmark_link() {
   URL = escape(document.location.href);
 
