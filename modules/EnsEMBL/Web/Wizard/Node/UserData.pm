@@ -357,7 +357,7 @@ sub _delete_datasource {
 sub _delete_datasource_features {
     my ($self, $dbs, $ds_name) = @_;
 
-    my $dba = $dbs->get_DBAdaptor('userupload');
+    my $dba = $dbs->get_DBAdaptor('userdata');
     my $ud_adaptor  = $dba->get_adaptor( 'Analysis' );
     my $datasource = $ud_adaptor->fetch_by_logic_name($ds_name);
     return "$ds_name not found. " unless $datasource;
