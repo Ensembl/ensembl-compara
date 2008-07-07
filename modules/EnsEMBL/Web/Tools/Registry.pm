@@ -38,6 +38,7 @@ sub configure {
     'MART'        => undef,
     'GO'          => undef,
     'FASTA'       => undef,
+    'USERDATA' => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
   );
 
   for my $species ( keys %{$self->{'conf'}->{_storage}} ) {

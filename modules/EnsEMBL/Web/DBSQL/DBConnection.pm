@@ -518,6 +518,24 @@ sub _get_otherfeatures_database{
     return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' ); 
 }
 
+=head2 _get_userupload_database
+
+ Arg[1]      : String  
+                Species name
+ 
+ Example     : $self->_get_userupload_database($species)
+ Description : Gets est database connection
+ Return type : Bio::EnsEMBL::DBSQL::DBAdaptor
+
+=cut
+
+sub _get_userdata_database{
+    my $self = shift;
+    my $db_info =  $self->_get_database_info( shift, 'ENSEMBL_USERDATA' ) ||
+        die( "No est database for this species" );
+    return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' ); 
+}
+
 =head2 _get_lite_database
 
  Arg[1]      : String  
