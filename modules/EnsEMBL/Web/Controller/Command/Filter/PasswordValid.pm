@@ -16,11 +16,9 @@ our @ISA = qw(EnsEMBL::Web::Controller::Command::Filter);
 sub allow {
   my $self = shift;
   my $cgi = $self->action->cgi;
-  my $email = $cgi->param('email');
-  my$password = $cgi->param('password');
 
   ## TODO: proper error exception
-  my $user = EnsEMBL::Web::Data::User->find(email => $email);
+  my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   return 0 unless $user;
   
   my $input_password = $cgi->param('password');
