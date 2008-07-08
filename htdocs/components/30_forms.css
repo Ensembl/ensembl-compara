@@ -27,6 +27,6 @@ input.submit {
   color:#fff; font-weight:bold;
 }
 
-form.std input.submit {
+form.std div.submit {
   margin-left:10em;
 }
