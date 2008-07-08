@@ -10,8 +10,12 @@ p  { margin-top:0.6em; margin-bottom:0.6em; }
 
 .ajax_error { font-weight: bold; color: #c00; background-color: #fcc }
 .spinner { 
-  height: 16px;width:16px;border:0px;vertical-align:middle;
-  padding: 2px 2px 2px 30px; background-image: url(/i/ajax-loader.gif)
+  height: 100px;width:100%;border:0px; margin: 0px auto;
+  vertical-align: bottom;
+  background-position: bottom center;
+  background-repeat: no-repeat;
+  padding: 2px ; background-image: url(/i/e-loader.gif);
+  text-align: center;
 }
 
 .page { text-align: center; padding: 0.25em }

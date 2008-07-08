@@ -1,4 +1,13 @@
 var ensembl_body = $$('body')[0];
+function ensembl_reload() { }
+
+function addReLoadEvent(func) {
+  var old_reload = ensembl_reload;
+  ensembl_reload = function() {
+    old_reload();
+    func();
+  };
+}
 function addLoadEvent(func) {
   var oldonload = window.onload;
   if( typeof window.onload != 'function' ) {
@@ -7,7 +16,7 @@ function addLoadEvent(func) {
     window.onload = function() {
       oldonload();
       func();
-    }
+    };
   }
 }
 
