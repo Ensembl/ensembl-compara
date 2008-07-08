@@ -451,6 +451,8 @@ sub _parse {
     }
     $self->_merge_db_tree( $tree, $db_tree, $species );
   }
+### DUPLICATE above for $species.das.packed...
+#
 #------------ Do the same for the multi-species file...
   $tree->{'MULTI'} = $self->_read_in_ini_file( 'MULTI', $defaults );                       $self->_info_line( 'Parsing', "MULTI ini file" );
   $self->_expand_database_templates( 'MULTI', $tree->{'MULTI'} );
