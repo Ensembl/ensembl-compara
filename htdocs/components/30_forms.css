@@ -24,6 +24,6 @@ div.notes h4 {
   background-image: url('/i/infoicon.gif');
   background-repeat: no-repeat;
   background-position: top left;
-  margin-top:0px;
+  margin:0px 0px 5px 0px;
   padding-left:16px;
 }
