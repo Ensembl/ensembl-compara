@@ -5,6 +5,7 @@
 #
 package Sanger::Graphics::Renderer;
 use Sanger::Graphics::Glyph::Poly;
+use Sanger::Graphics::Glyph::Rect;
 use strict;
 use Time::HiRes qw(time);
 
@@ -134,13 +135,33 @@ sub render {
 	  ) } (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}});
 	my $first = $glyphset->{'tags'}{$_}[0];
         my $PAR = { 
-		   'pixelpoints'  => [ @points ],
-		   'bordercolour' => $COL,
-		   'absolutex'    => 1,
-		   'absolutey'    => 1,
-		  };
+          'bordercolour' => $COL,
+          'absolutex'    => 1,
+          'absolutewidth'=> 1,
+          'absolutey'    => 1,
+        };
+	my $glyph;
+	$PAR->{'href'}   = $tags{$_}[0]->{'href'};
+	$PAR->{'alt'}    = $tags{$_}[0]->{'alt'};
+	$PAR->{'id'}     = $tags{$_}[0]->{'id'};
         $PAR->{'colour'} = $COL if($FILL);
-	my $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
+# 794 5 123 5 123 421 794 421
+	if( @points == 8 &&
+	    $points[0] == $points[6] &&
+	    $points[1] == $points[3] &&
+	    $points[2] == $points[4] &&
+	    $points[5] == $points[7]
+	) {
+	  $PAR->{'pixelx'}      = $points[0] < $points[2] ? $points[0] : $points[2];
+	  $PAR->{'pixely'}      = $points[1] < $points[5] ? $points[1] : $points[5];
+	  $PAR->{'pixelwidth'}  = $points[0] + $points[2] - 2 * $PAR->{'pixelx'};
+	  $PAR->{'pixelheight'} = $points[1] + $points[5] - 2 * $PAR->{'pixely'};
+	  $glyph = Sanger::Graphics::Glyph::Rect->new($PAR);
+	} else {
+	  $PAR->{'pixelpoints'}  => [ @points ],
+	  $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
+	}
+
 	push @{$layers{defined $Z ? $Z : -1 }}, $glyph;
 	delete $tags{$_};
       } else {
@@ -171,9 +192,6 @@ my $T = time();
       $Ta->{$method}[0] += time()-$T;
       $Ta->{$method}[1] ++;   
     }
-  }
-  foreach (sort keys %$Ta) {
-    #warn sprintf( "%30s %8.3f %5d %8.6f", $_, $Ta->{$_}[0], $Ta->{$_}[1], $Ta->{$_}[0]/$Ta->{$_}[1] );
   }
   $timer->push( "Pushed glyphs", 9 ) if $timer;
   
