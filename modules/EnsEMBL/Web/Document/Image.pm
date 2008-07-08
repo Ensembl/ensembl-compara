@@ -536,15 +536,18 @@ sub render {
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
-    $HTML .= sprintf '<div style="text-align:center"><div class="center" style="margin:auto;border:0px;padding:0px;width:%dpx">',  $image->{'width'}+2;
-    $HTML .= sprintf qq(<div class="drag_select" id="$self->{'prefix'}_$self->{'panel_number'}" style="border: solid 1px black; position: relative; width:%dpx">%s), $image->{'width'},$tag;
+    $HTML .= '<div style="text-align:center">';
+    $HTML .= '<div style="text-align:center;margin:auto;border:0px;padding:0px">';
+    $HTML .= sprintf qq(<div class="drag_select" id="$self->{'prefix'}_$self->{'panel_number'}" style="margin: 0px auto; border: solid 1px black; position: relative; width:%dpx">), $image->{'width'};
     #$timer->push("Starting Image Map",5);
+    $HTML .= $tag;
     if( $self->imagemap eq 'yes' ) {
       $HTML .= $image->render_image_map
     }
     $HTML .= "</div>";
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
-    $HTML .= '</div></div>';
+    $HTML .= '</div>';
+    $HTML .= '</div>';
 # $timer->push("Finishing Image Map",5);
   } else {
     my $tag = $image->render_image_tag();
