@@ -122,12 +122,24 @@ sub ajax_zmenu      {
   my $self = shift;
   my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
-  $panel->add_entry( 'Gene: '.    $obj->stable_id, $obj->_url(), 200 );
-  $panel->add_entry( 'Location: '.$obj->location_string, $obj->_url({'type'=>'Location','action'=>'View'}) );
-  $panel->add_entry( 'Length: '.( $obj->seq_region_end - $obj->seq_region_start + 1),   undef, 50          );
-  $panel->add_entry( 'Strand: '.( $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'), undef, 50          );
+  my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
+  $panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
+
+  $panel->add_entry( 'Gene', $obj->stable_id,       $obj->_url({'type'=>'Gene', 'action'=>'Summary'}), 195 );
+  $panel->add_entry( 'Location',
+    sprintf( "%s: %s-%s",
+      $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
+      $obj->thousandify( $obj->seq_region_start ),
+      $obj->thousandify( $obj->seq_region_end )
+    ),
+    $obj->_url({'type'=>'Location',   'action'=>'View'   })
+  );
+  $panel->add_entry( 'Strand',     $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward',     undef, 100         );
+
+## Protein coding transcripts only....
   return;
 }
+
 
 sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;    }

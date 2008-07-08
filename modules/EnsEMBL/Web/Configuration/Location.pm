@@ -54,8 +54,8 @@ sub populate_tree {
       top    EnsEMBL::Web::Component::Location::ViewTop
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
       bottom EnsEMBL::Web::Component::Location::ViewBottom
-      zoom   EnsEMBL::Web::Component::Location::ViewZoom
     )],
+#      zoom   EnsEMBL::Web::Component::Location::ViewZoom
     { 'availability' => 1}
   );
 

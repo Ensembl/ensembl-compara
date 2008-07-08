@@ -20,6 +20,37 @@ sub local_tools    { return $_[0]->_local_tools;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
 
+sub ajax_zmenu      {
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj  = $self->object;
+  my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
+  $panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
+  $panel->add_entry( 'Transcript', $obj->stable_id,       $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}), 195 );
+## Only if there is a gene (not Prediction transcripts)
+  if( $obj->gene ) {
+    $panel->add_entry( 'Gene',     $obj->gene->stable_id, $obj->_url({'type'=>'Gene',       'action'=>'Summary'}), 190 );
+  }
+  $panel->add_entry( 'Location',   
+    sprintf( "%s: %s-%s",
+      $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
+      $obj->thousandify( $obj->seq_region_start ),
+      $obj->thousandify( $obj->seq_region_end )
+    ),
+    $obj->_url({'type'=>'Location',   'action'=>'View'   })
+  );
+  $panel->add_entry( 'Strand',     $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward',     undef, 100         );
+
+  $panel->add_entry( 'Base pairs', $obj->thousandify( $obj->Obj->seq->length         ),     undef, 50          );
+## Protein coding transcripts only....
+  if( $obj->Obj->translation ) {
+    $panel->add_entry( 'Peptide',    $obj->Obj->translation->stable_id, $obj->_url({'type'=>'Transcript', 'action' => 'Peptide'}), 180          );
+    $panel->add_entry( 'Amino acids',$obj->thousandify( $obj->Obj->translation->length ),   undef, 40          );
+  }
+  return;
+}
+
+
 sub populate_tree {
   my $self = shift;
 
