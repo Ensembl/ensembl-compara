@@ -1,0 +1,29 @@
+/* Replacement for previous (invalid) form css! */
+
+fieldset { border:none; }
+
+label { font-weight:bold; }
+
+input, select { 
+  margin-top:10px; 
+  margin-left:10px;
+}
+
+input.input-submit { 
+  background-color:#336; border:outset #336 2px;
+  color:#fff; font-weight:bold;
+  margin-left:10em;
+}
+
+div.notes {
+  width:50%; padding:4px; margin-bottom:10px; 
+  background-color:#ffd; border:1px #ccc solid;
+}
+
+div.notes h4 {
+  background-image: url('/i/infoicon.gif');
+  background-repeat: no-repeat;
+  background-position: top left;
+  margin-top:0px;
+  padding-left:16px;
+}
