@@ -48,19 +48,20 @@ sub _init {
  
   my $no_sequence = $self->{'config'}->species_defs->NO_SEQUENCE;
 
-  my %COL = ();
-  $COL{'gpos100'} = 'black'; #add_rgb([200,200,200]);
-  $COL{'tip'}     = 'slategrey';
-  $COL{'gpos75'}  = 'grey40'; #add_rgb([210,210,210]);
-  $COL{'gpos66'}  = 'grey50'; #add_rgb([220,220,220]);
-  $COL{'gpos50'}  = 'grey60'; #add_rgb([230,230,230]);
-  $COL{'gpos33'}  = 'grey75'; #add_rgb([235,235,235]);
-  $COL{'gpos25'}  = 'grey85'; #add_rgb([240,240,240]);
-  $COL{'gpos'}    = 'black'; #add_rgb([240,240,240]);
-  $COL{'gvar'}    = 'grey88'; #add_rgb([222,220,220]);
-  $COL{'gneg'}    = 'white';
-  $COL{'acen'}    = 'slategrey';
-  $COL{'stalk'}   = 'slategrey';
+  my %COL = (
+    'gpos100' => [ 'black',     'white' ],
+    'tip'     => [ 'slategrey'. 'white' ],
+    'gpos75'  => [ 'grey40',    'white' ],
+    'gpos66'  => [ 'grey50',    'white' ],
+    'gpos50'  => [ 'grey60',    'black' ],
+    'gpos33'  => [ 'grey75',    'black' ],
+    'gpos25'  => [ 'grey85',    'black' ],
+    'gpos'    => [ 'black'.     'white' ],
+    'gvar'    => [ 'grey88',    'black' ],
+    'gneg'    => [ 'white',     'black' ],
+    'acen'    => [ 'slategrey'. 'white' ],
+    'stalk'   => [ 'slategrey'. 'white' ]
+  );
     
   my $im_width = $self->{'config'}->image_width();
    
@@ -95,19 +96,14 @@ sub _init {
       'y'      => 0,
       'width'  => $vc_band_end - $vc_band_start +1 ,
       'height' => $h + 4,
-      'colour' => $COL{$stain},
+      'colour' => $COL{$stain}[0]||'white',
 #     'bordercolour' => $black,
       'absolutey' => 1,
     });
     $self->push($gband);
     
-    my $fontcolour;
-    # change label colour to white if the chr band is black, else use black...
-    if ($stain eq "gpos100" || $stain eq "gpos" || $stain eq "acen" || $stain eq "stalk" || $stain eq "gpos75" || $stain eq "gpos66" || $stain eq "tip"){
-      $fontcolour = $white;
-    } else {
-      $fontcolour = $black;
-    }
+    my $fontcolour = $COL{$stain}[1]||'black';
+
     my @res = $self->get_text_width( ($vc_band_end-$vc_band_start)*$pix_per_bp, $bandname, '', 'font'=>$fontname, 'ptsize' => $fontsize );
   # only add the lable if the box is big enough to hold it...
     if( $res[0] && $stain ne "tip" && $stain ne "acen"){

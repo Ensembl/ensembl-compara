@@ -115,7 +115,7 @@ sub compact_init {
     my @exons = map { $_->start > $length || $_->end < 1 ? () : $_ } map { @{$_->get_all_Exons()} } @{$gene->get_all_Transcripts()};
     next unless @exons;
 
-    my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h, 'title' => $gene->stable_id });
+    my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h, 'title' => $self->gene_title( $gene ) });
        $Composite->{'href'} = $self->gene_href( $gene, %highlights );
        $Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
     my($colour, $label, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
@@ -298,6 +298,22 @@ sub get_homologous_peptide_ids {
   return map {@$_} @{$results->fetchall_arrayref};
 }
 
+sub title {
+  my( $self, $transcript, $gene ) = @_;
+  my $title = 'Transcript: '.$transcript->stable_id;
+  if( $gene->stable_id ) {
+    $title .= '; Gene: '.$gene->stable_id;
+  }
+  $title .= '; Location: '.$transcript->seq_region_name.':'.$transcript->seq_region_start.'-'.$transcript->seq_region_end;
+  return $title
+}
+
+sub gene_title {
+  my( $self, $gene ) = @_;
+  my $title  = 'Gene: '.$gene->stable_id;
+     $title .= '; Location: '.$gene->seq_region_name.':'.$gene->seq_region_start.'-'.$gene->seq_region_end;
+  return $title;
+}
 sub expanded_init {
   my ($self) = @_;
   my $type = $self->check();
@@ -384,8 +400,8 @@ sub expanded_init {
       next if $target && ($transcript->stable_id() ne $target);
 
       $transcript_drawn=1;        
-      my $title = $transcript->stable_id.($gene->stable_id?" (@{[$gene->stable_id]})":'');
-      my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h,'title'=>$title});
+
+      my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h,'title'=>$self->title($transcript,$gene) });
          $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
          $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
       my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
@@ -424,9 +440,9 @@ sub expanded_init {
                       #Draw a non-filled rectangle around the entire exon
             $Composite2->push(new Sanger::Graphics::Glyph::Rect({
               'x'         => $box_start -1 ,
-              'y'         => $y+$h/4,
+              'y'         => $y+$h/8,
               'width'     => $box_end-$box_start +1,
-              'height'    => $h/2,
+              'height'    => 3*$h/4,
               'bordercolour' => $colour,
               'absolutey' => 1,
              }));
@@ -763,9 +779,9 @@ sub as_expanded_init {
 			#Draw a non-filled rectangle around the entire exon
 			$Composite2->push(new Sanger::Graphics::Glyph::Rect({
 			    'x'         => $box_start -1 ,
-			    'y'         => $y+$h/4,
+			    'y'         => $y+$h/8,
 			    'width'     => $box_end-$box_start +1,
-			    'height'    => $h/2,
+			    'height'    => 3*$h/4,
 			    'bordercolour' => $colour,
 			    'absolutey' => 1,
 			}));

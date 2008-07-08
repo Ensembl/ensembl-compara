@@ -149,9 +149,9 @@ sub _init {
          'alt'       => 'xxx'
       });
       if ($navigation eq 'on' && $Config->{'compara'} ne 'secondary' ){
-        ($t->{'href'},$t->{'zmenu'}) = $self->interval( $param_string, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);
+#        ($t->{'href'},$t->{'zmenu'}) = $self->interval( $param_string, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);
       } elsif( $navigation eq 'zoom' ) {
-        ($t->{'href'},$t->{'zmenu'}) = $self->zoom_interval( $param_string, $start, $end, $contig_strand, $global_start, $main_width, $highlights, $global_end-$global_start);
+#        ($t->{'href'},$t->{'zmenu'}) = $self->zoom_interval( $param_string, $start, $end, $contig_strand, $global_start, $main_width, $highlights, $global_end-$global_start);
       }
       $self->push($t);
       if($start == $box_start ) { # This is the end of the box!

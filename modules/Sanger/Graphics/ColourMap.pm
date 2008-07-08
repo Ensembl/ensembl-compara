@@ -752,7 +752,6 @@ sub tint_by_hex {
 sub brightness {
     my ($self, $name) = @_;
     my ($r, $g, $b) = $self->rgb_by_name( $name );
-#warn "$name = ", (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
     return (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
 }
 

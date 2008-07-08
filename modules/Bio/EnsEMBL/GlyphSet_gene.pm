@@ -123,19 +123,14 @@ sub _init {
     });
 
     if($show_navigation) {
-      $Z = {
-        'caption' 		              => $gene_label,
-        "bp: $chr_start-$chr_end"             => '',
-        "type: $type"                 => '',
-	"length: @{[$chr_end-$chr_start+1]}"  => ''
-      }; 
       if( $ens_ID ne '' ) {
 		$database ||= 'core';
         $Z->{"Gene: $ens_ID"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID;db=$database"; 
-        $HREF= "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID;db=$database";
+        $HREF= "/@{[$self->{container}{_config_file_name_}]}/Gene/Summary?gene=$ens_ID;db=$database";
         $rect->{'href'}  = $HREF;
+	$rect->{'title'} = "Gene: $ens_ID; Location: ".$g->seq_region_name.':'.$g->seq_region_start.'-'.$g->seq_region_end;
       }
-      $rect->{'zmenu'} = $Z;
+      # $rect->{'zmenu'} = $Z;
     }
     push @GENES_TO_LABEL , {
       'start' => $start,

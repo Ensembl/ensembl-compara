@@ -77,10 +77,12 @@ sub href {
   my $gid = $gene->stable_id();
   my $tid = $transcript->stable_id();
   
-  my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
-  return ( $self->{'config'}->get('ensembl_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id())} ) ?
-    "#$tid" : 
-    qq(/@{[$self->{container}{_config_file_name_}]}/$script_name?gene=$gid);
+  return "/@{[$self->{container}{_config_file_name_}]}/Transcript/Summary?t=$tid";
+#
+#  my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
+#  return ( $self->{'config'}->get('ensembl_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id())} ) ?
+#    "#$tid" : 
+#    qq(/@{[$self->{container}{_config_file_name_}]}/$script_name?gene=$gid);
 
 }
 
