@@ -77,8 +77,8 @@ sub _summarise_generic {
         order by meta_key, meta_id'
     );
     my $hash = {};
-    foreach my $r( $t_aref) {
-      push @{ $hash->{$_->[0]} }, $_->[1];
+    foreach my $r( @$t_aref) {
+      push @{ $hash->{$r->[0]} }, $r->[1];
     }
     $self->db_details($db_name)->{'meta_info'} = $hash;
   }
@@ -252,43 +252,21 @@ sub _summarise_website_db {
   my $db_name = 'ENSEMBL_WEBSITE';
   my $dbh     = $self->db_connect( $db_name );
 
-#---- Species info for current ensembl
+  ## Assembly history per species
   my $t_aref = $dbh->selectall_arrayref(
-    'select s.name, s.species_id, s.vega, rs.assembly_name, rs.pre_name
-       from release_species as rs, species as s
-      where s.species_id = rs.species_id and rs.release_id = ?',
-    {}, $SiteDefs::ENSEMBL_VERSION
+    'select s.name, r.number, rs.assembly_code from species as s, ens_release as r, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and rs.assembly_code != ""'
   );
-  foreach my $row ($t_aref) {
-    $self->db_tree->{'species_info'}{$row->[0]} = {
-      'id'       => $row->[1],
-      'vega'     => $row->[2],
-      'assembly' => $row->[3],
-      'pre'      => $row->[4]
-    };
+
+  foreach my $row (@$t_aref) {
+    $self->db_tree->{'ASSEMBLIES'}{$row->[0]}{$row->[1]} = $row->[2];
   }
-#---- Species info for previous ensembl
+
+  ## Current archive list
   my $t_aref = $dbh->selectall_arrayref(
-    'select s.name, rs.assembly_name, rs.pre_name
-       from release_species as rs, species as s
-      where s.species_id = rs.species_id and rs.release_id = ?',
-    {}, $SiteDefs::ENSEMBL_VERSION - 1
+    'select number, archive from ens_release where online = "Y" order by release_id'
   );
-  foreach my $row ($t_aref) {
-    $self->db_tree->{'species_info'}{$row->[0]}{'prev_assembly'} = $row->[1];
-    $self->db_tree->{'species_info'}{$row->[0]}{'prev_pre'}      = $row->[2];
-  }
-#---- Species info for all archived ensembls..
-  $t_aref = $dbh->selectall_arrayref(
-    'select s.name, rs.release_id, rs.assembly_name, e.archive, e.online
-       from release_species as rs, species as s, ens_release as e
-      where s.species_id = rs.species_id and rs.release_id = e.release_id and
-            rs.assembly_name != ""
-      order by s.name, rs.release_id'
-  );
-  foreach my $row ($t_aref) {
-    $self->db_tree->{'archive_info'}{$row->[0]}{'assemblies'}{$row->[1]} = $row->[2];
-    $self->db_tree->{'archive_info'}{$row->[0]}{'online'}{    $row->[1]} = $row->[3] if $row->[4] eq 'Y';
+  foreach my $row (@$t_aref) {
+    $self->db_tree->{'ENSEMBL_ARCHIVES'}{$row->[0]} = {$row->[1]};
   }
 }
 
@@ -428,9 +406,48 @@ sub _summarise_go_db {
 }
 
 sub _munge_meta {
+  my $self = shift;
+
+#use Data::Dumper;
+#warn Dumper($self->db_details('ENSEMBL_DB')->{'meta_info'});
+  ## Quick and easy access to species info
+  $self->tree->{'SPECIES_COMMON_NAME'} = 
+      $self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.ensembl_alias_name'}[0];
+
+  $self->tree->{'ASSEMBLY_NAME'} = 
+      $self->db_details('ENSEMBL_DB')->{'meta_info'}{'assembly.default'}[0];
+
+  my $genebuild =
+      $self->db_details('ENSEMBL_DB')->{'meta_info'}{'genebuild.version'}[0];
+  my @A = split('-', $genebuild);
+  my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+  $self->tree->{'GENEBUILD_DATE'} = $months[$A[1]].$A[0];
+
+  ## Do species name and group
+  my @taxonomy = @{$self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.classification'}};
+  my $order = $self->tree->{'TAXON_ORDER'};
+
+  $self->tree->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
+  foreach my $taxon (@taxonomy) {
+    foreach my $group (@$order) {
+      if ($taxon eq $group) {
+        $self->tree->{'SPECIES_GROUP'} = $group;
+        last;
+      }
+    }
+    last if $self->tree->{'SPECIES_GROUP'};
+  }
 }
 
 sub _munge_website {
+  my $self = shift;
+
+  ## Add flags for new and updated species
+  #my $previous_assembly = $self->db_tree->{'species_info'}{$self->species}{'prev_assembly'}
+
+  ## Archives
+  #$self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_tree->{'archive_info'};
+
 }
 
 sub _configure_das {
