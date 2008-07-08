@@ -28,7 +28,6 @@ sub process {
   
   if (!$ENV{'ENSEMBL_USER_ID'}) {
     if ($user && $user->id) {
-      my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptID($user->id);
       my $SD = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
       my $user_cookie = EnsEMBL::Web::Cookie->new({
         'host'    => $SD->ENSEMBL_COOKIEHOST,
