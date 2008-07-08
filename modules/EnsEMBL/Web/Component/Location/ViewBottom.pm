@@ -34,6 +34,7 @@ sub content {
   my $wuc = $object->user_config_hash( 'contigviewbottom' );
      $wuc->container_width( $length );
      $wuc->set_width(       $image_width );
+     $wuc->{'slice_number'} = '1|3';
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->{'panel_number'} = 'bottom';

@@ -16,6 +16,7 @@ sub content {
   my $self   = shift;
   my $object = $self->object;
 
+  sleep(3);
   my $scaling = $object->species_defs->ENSEMBL_GENOME_SIZE || 1;
 
   my $threshold = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
@@ -43,10 +44,10 @@ sub content {
   }
   my $length = $slice->end - $slice->start + 1;
 
-  warn ".... $length ....";
   my $wuc = $object->user_config_hash( 'contigviewtop' );
      $wuc->container_width( $length );
      $wuc->set_width(       $object->param('image_width') );
+     $wuc->{'slice_number'} = '1|2';
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->imagemap = 'yes';

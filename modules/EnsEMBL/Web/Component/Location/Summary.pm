@@ -8,7 +8,7 @@ use CGI qw(escapeHTML);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
+  $self->cacheable( 1 );
   $self->ajaxable(  1 );
 }
 
@@ -21,7 +21,7 @@ sub content {
   my $wuc = $object->user_config_hash( 'chromosome' );
      $wuc->container_width( $object->seq_region_length );
      $wuc->set_width( $object->param('image_width') );
-
+     $wuc->{'slice_number'} = '1|1';
   my $image    = $object->new_image( $slice, $wuc );
      $image->{'panel_number'} = 'context';
      $image->imagemap = 'yes';
