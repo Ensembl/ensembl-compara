@@ -22,9 +22,11 @@ form.std input, form.std select {
   margin-left:10px;
 }
 
-input.input-submit { 
+input.submit { 
   background-color:#336; border:outset #336 2px;
   color:#fff; font-weight:bold;
-  margin-left:10em;
 }
 
+form.std input.submit {
+  margin-left:10em;
+}
