@@ -159,8 +159,7 @@ sub render_image_map {
   my $self = shift;
   my $IF   = $self->render( 'imagemap' );
   my $map_name = $self->{'id'} ? ($self->{'id'}.'_map') : $self->{'token'};
-  my $HTML = sprintf( qq(<map name="%s" id="%s">\n%s</map>), $map_name, $map_name, $IF->{'imagemap'} );
-  return $HTML
+  return sprintf( qq(<map name="%s" id="%s">\n$IF->{'imagemap'}\n</map>), $map_name, $map_name);
 }
 
 sub exists { 
