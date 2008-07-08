@@ -156,7 +156,7 @@ sub _generate_objects {
     $self->_get_location_transcript_from_gene;
   }
   if( $self->param('r') ) {
-    my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(\w+)-(\w+)/;
+    my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
     if ($self->variation) {$db_adaptor= $self->database('core');}
     $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
   } elsif( $self->param('l') ) {
@@ -180,7 +180,9 @@ sub _get_gene_location_from_transcript {
       $self->transcript->stable_id
     )
   );
-  $self->location( $self->transcript->feature_Slice );
+  my $slice = $self->transcript->feature_Slice;
+  $slice = $slice->invert() if $slice->strand < 0;
+  $self->location( $slice );
 }
 
 sub _get_location_transcript_from_gene {
@@ -189,7 +191,10 @@ sub _get_location_transcript_from_gene {
 ## Replace this with canonical transcript calculation!!
 #  $self->transcript(
 #    sort { $a->stable_id cmp $b->stable_id } @{$self->gene->get_all_Transcripts} );
-  $self->location(   $self->gene->feature_Slice );
+  my $slice = $self->gene->feature_Slice;
+  warn "SSS . ".$slice->strand;
+  $slice = $slice->invert() if $slice->strand < 0;
+  $self->location( $slice );
 }
 
 sub _get_gene_transcript_from_location {
