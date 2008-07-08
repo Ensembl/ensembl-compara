@@ -38,6 +38,7 @@ sub init {
     },
 
     };
+    $self->add_track( 'draggable', 'on'=>'on','pos'=>8000,'col'=>'black');
 ##  $self->add_track( 'redbox', 'on'=>'off', 'col' => 'red', 'zindex' => -20, 'pos' => 1000100 );
 }
 1;
