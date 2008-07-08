@@ -15,7 +15,7 @@ sub new {
         'name'     => $name,
         'id'       => $name,
         'onSubmit' => sprintf( 'return( on_submit( %s_vars ))', $name ),
-        'class'    => '',
+        'class'    => 'std',
     },
     '_buttons'     => [],
     '_fieldsets'   => [],
