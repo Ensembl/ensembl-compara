@@ -44,7 +44,7 @@ sub render {
       }
     }
     $self->printf( '
-        <dd class="link %s">%s</dd>', $entry->{class}, $name );
+        <dd id="%s" class="link %s">%s</dd>', lc('tab_'.$entry->{'type'}), $entry->{class}, $name );
   }
   $self->print( '
         <dt class="hidden">.</dt>
