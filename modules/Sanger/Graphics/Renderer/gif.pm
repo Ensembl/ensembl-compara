@@ -224,9 +224,9 @@ sub render_Intron {
   $xstart  = $glyph->{'pixelx'};
   $xend    = $xstart + $glyph->{'pixelwidth'};
   $xmiddle = $xstart + $glyph->{'pixelwidth'} / 2;
-  $ystart  = $gy + $glyph->{'pixelheight'} / 2;
+  $ystart  = $gy + $glyph->{'pixelheight'}/2;
   $yend    = $ystart;
-  $ymiddle = ($strand == 1)?$gy:($gy+$glyph->{'pixelheight'});
+  $ymiddle = $ystart + ( $strand == 1 ? -1 : 1 ) * $glyph->{'pixelheight'} * 3/8;
 
   $self->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, $colour);
   $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
@@ -244,7 +244,6 @@ sub render_Line {
   if(defined $glyph->dotted()) {
     $self->{'canvas'}->setStyle(gdTransparent,gdTransparent,gdTransparent,$colour,$colour,$colour);
     $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdStyled);
-
   } else {
     $self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
   }
