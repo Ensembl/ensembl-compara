@@ -11,7 +11,7 @@ sub render {
   if ($self->onclick) {
     $html .= ' onclick="'.CGI::escapeHTML($self->onclick).'"';
   }
-  $html .= ' class="input-submit" /></div>';
+  $html .= ' class="submit" /></div>';
   return $html;
 }
 
