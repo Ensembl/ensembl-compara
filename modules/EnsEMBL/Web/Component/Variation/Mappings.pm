@@ -18,6 +18,12 @@ sub content {
   my $object = $self->object;
   my $html = '';
 
+  ## first check we have a location
+  unless ($object->core_objects->location ){
+   $html = "<p>You must select a location from the panel above to see this information</p>";
+   return $html;
+  }
+
   my %mappings = %{ $object->variation_feature_mapping };
 
   return [] unless keys %mappings;
@@ -47,7 +53,7 @@ sub content {
     my $region = $mappings{$varif_id}{Chr};
     my $start  = $mappings{$varif_id}{start};
     my $end    = $mappings{$varif_id}{end};
-    my $v_loc  = $region.":".$start."-".$end;
+    my $v_loc  = $region.":".$start . "-" . $end;
     next unless ($v_loc eq $location);
    
     my @transcript_variation_data = @{ $mappings{$varif_id}{transcript_vari} };
