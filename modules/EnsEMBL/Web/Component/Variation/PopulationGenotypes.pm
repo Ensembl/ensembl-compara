@@ -16,6 +16,13 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
+
+  ## first check we have a location
+  unless ($object->core_objects->location ){
+   my  $html = "<p>You must select a location from the panel above to see this information</p>";
+   return $html;
+  }
+
   
   my $freq_data = $object->freqs; 
   unless (%$freq_data ){ my $html = "<p>No informtaion available for this feature</p>"; return $html; }

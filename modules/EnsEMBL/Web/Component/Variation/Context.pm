@@ -16,13 +16,19 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
+  
+  ## first check we have a location
+  unless ($object->core_objects->location ){
+   my  $html = "<p>You must select a location from the panel above to see this information</p>";
+   return $html;
+  }
 
 
   my $width = $object->param('w') || "30000";
 
   # first determine correct SNP location 
   my %mappings = %{ $object->variation_feature_mapping };
-  my $location = $object->core_objects->{'parameters'}{'r'};
+  my $location = $object->core_objects->{'parameters'}{'vl'};
   my ($seq_region, $start, $seq_type);
 
   foreach my $varif_id (keys %mappings) {
@@ -30,7 +36,7 @@ sub content {
     my $seq_reg = $mappings{$varif_id}{Chr};
     my $st  = $mappings{$varif_id}{start};
     my $end    = $mappings{$varif_id}{end};
-    my $v_loc  = $seq_reg.":".$st."-".$end;
+    my $v_loc  = $seq_reg.":".$st;
     my $type =  $mappings{$varif_id}{region_type};
  
     if  ($v_loc eq $location){
