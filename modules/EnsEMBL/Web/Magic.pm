@@ -68,15 +68,7 @@ sub menu {
   return "Generated magic menu ($ENV{'ENSEMBL_ACTION'})";
 }
 
-sub ingredient {
-### use EnsEMBL::Web::Magic; magic ingredient Gene 'EnsEMBL::Web::Component::Gene::geneview_image'
-###
-### Wrapper around a list of components to produce a panel or
-### part thereof - for inclusion via AJAX
-  my $webpage     = EnsEMBL::Web::Document::WebPage->new(
-    'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
-    'scriptname' => 'component',
-  );
+sub _parse_referer {
   warn $ENV{'HTTP_REFERER'};
   my ($url,$query_string) = split /\?/, $ENV{'HTTP_REFERER'};
   $url =~ /^https?:\/\/.*?\/(.*)$/;
@@ -107,6 +99,26 @@ sub ingredient {
     }
   }
   warn "------------------------------------------------------------------------------\n";
+
+  return {
+    'ENSEMBL_SPECIES' => $sp,
+    'ENSEMBL_TYPE'    => $ot,
+    'ENSEMBL_ACTION'  => $view,
+    'params'          => $params
+  };
+}
+
+sub ingredient {
+### use EnsEMBL::Web::Magic; magic ingredient Gene 'EnsEMBL::Web::Component::Gene::geneview_image'
+###
+### Wrapper around a list of components to produce a panel or
+### part thereof - for inclusion via AJAX
+  my $referer_hash = _parse_referer;
+  my $webpage     = EnsEMBL::Web::Document::WebPage->new(
+    'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
+    'scriptname' => 'component',
+    'parent'     => $referer_hash
+  );
   $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
   $webpage->render;
   return "Generated magic ingredient ($ENV{'ENSEMBL_ACTION'})";
