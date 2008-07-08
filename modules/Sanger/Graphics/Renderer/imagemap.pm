@@ -10,6 +10,7 @@
 package Sanger::Graphics::Renderer::imagemap;
 use strict;
 use warnings;
+no warnings 'uninitialized';
 use base qw(Sanger::Graphics::Renderer);
 use Sanger::Graphics::JSTools;
 use EnsEMBL::Web::Interface::ZMenuCollection;
@@ -176,13 +177,13 @@ sub _getHref_static {
   }
 
   if($self->{'show_zmenus'} == 1) {
-    my $zmenu = $glyph->zmenu();
+    my $zmenu = undef; # $glyph->zmenu();
     if(defined $zmenu && ((ref $zmenu  eq q()) ||
 			  (ref $zmenu eq 'HASH')
 			  && scalar keys(%{$zmenu}) > 0)) {
 
       if($self->{'zmenu_zclick'} || ($self->{'zmenu_behaviour'} =~ /onClick/mix)) {
-        $actions{'alt'}     = 'Click for Menu';
+#        $actions{'alt'}     = 'Click for Menu';
         $actions{'onclick'} = Sanger::Graphics::JSTools::js_menu($zmenu).q(;return false;);
         delete $actions{'onmouseover'};
         delete $actions{'onmouseout'};
@@ -197,6 +198,7 @@ sub _getHref_static {
 
   if(keys %actions && !$actions{'href'}) {
     $actions{'nohref'} = 'nohref';
+    delete $actions{'href'};
   }
 
   return join q(), map { qq( $_="$actions{$_}") } keys %actions;
