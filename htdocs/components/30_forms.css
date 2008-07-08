@@ -1,10 +1,23 @@
 /* Replacement for previous (invalid) form css! */
 
-fieldset { border:none; }
+form.std fieldset { border:none; }
 
-label { font-weight:bold; }
+form.std div.notes {
+  width:50%; padding:4px; margin-bottom:10px; 
+  background-color:#ffd; border:1px #ccc solid;
+}
 
-input, select { 
+form.std div.notes h4 {
+  background-image: url('/i/infoicon.gif');
+  background-repeat: no-repeat;
+  background-position: top left;
+  margin:0px 0px 5px 0px;
+  padding-left:16px;
+}
+
+form.std label { font-weight:bold; }
+
+form.std input, form.std select { 
   margin-top:10px; 
   margin-left:10px;
 }
@@ -15,15 +28,3 @@ input.input-submit {
   margin-left:10em;
 }
 
-div.notes {
-  width:50%; padding:4px; margin-bottom:10px; 
-  background-color:#ffd; border:1px #ccc solid;
-}
-
-div.notes h4 {
-  background-image: url('/i/infoicon.gif');
-  background-repeat: no-repeat;
-  background-position: top left;
-  margin:0px 0px 5px 0px;
-  padding-left:16px;
-}
