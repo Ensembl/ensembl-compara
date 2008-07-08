@@ -10,6 +10,7 @@
 package Sanger::Graphics::Glyph;
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 use Sanger::Graphics::ColourMap;
 use vars qw($AUTOLOAD);
 
@@ -52,10 +53,10 @@ sub AUTOLOAD {
   return $self->{$field};
 }
 
-sub alt {
-  my $self = shift;
-  return $self->id();
-}
+#sub alt {
+#  my $self = shift;
+#  return $self->id();
+#}
 
 #########
 # apply a transformation.
