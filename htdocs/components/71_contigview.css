@@ -1,2 +1,3 @@
-.redbox { position:absolute; background-color: red; z-index: 100 }
-
+.rubberband, .redbox { position:absolute; background-image: url(/i/red.gif); z-index: 100; opacity: 0.5; filter:alpha(opacity=50);  }
+.rubberband img, .redbox img { height: 1px; width: 1px }
+.rubberband { background-image: url(/i/redants.gif); }

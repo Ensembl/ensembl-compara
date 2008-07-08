@@ -1,6 +1,6 @@
 var zmenus         = {};
 var zmenus_counter = 1;
-
+var zmenu_current_zindex = 200;
 function _close_zmenu( evt ) {
   evt.findElement('table').hide();
 }
@@ -24,7 +24,6 @@ function _show_zmenu( x ) {
     });
     __zmenu_add( Q, 'Link', ttl, x.h );
     __zmenu_show( Q, x.x, x.y );
-
     var a = x.h.split(/\?/);
     var link_url     = a[0];
     var query_string = a[1];
@@ -40,6 +39,7 @@ function _show_zmenu( x ) {
     });
   } else {
     $(zmenus[x.key]).show();
+    moveto( $(zmenus[x.key]), x.x, x.y );
   }
   return;
 }
@@ -54,14 +54,22 @@ function _show_zmenu_range( x ) {
 
 function _show_zmenu_location( x ) {
   __zmenu_remove();
-  var Q = __zmenu_init('zmenu_nav', 'Location' );
-  __zmenu_add( Q, '', 'Zoom out x10', 'xx' );
-  __zmenu_add( Q, '', 'Zoom out x5',  'xx' );
-  __zmenu_add( Q, '', 'Zoom out x2',  'xx' );
-  __zmenu_add( Q, '', 'Centre here',  'xx' );
-  __zmenu_add( Q, '', 'Zoom in x2',   'xx' );
-  __zmenu_add( Q, '', 'Zoom in x5',   'xx' );
-  __zmenu_add( Q, '', 'Zoom in x10',  'xx' );
+  var Z = location.href;
+  Z = Z.replace(/#.*$/,'').replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
+  Z+= Z.match(/\?/) ? ';' : '?';
+  Z+= "r="+__seq_region_name+':';
+  
+  var cp = 1 * x.bp;
+  var w  = __seq_region_width-1;
+  var Q  = __zmenu_init('zmenu_nav', 'Location: '+Math.floor(cp) );
+  __info( x.bp+' '+cp+' '+w );
+  __zmenu_add( Q, '', 'Zoom out x10', Z+(cp-w*5)  +'-'+(cp+w*5)   );
+  __zmenu_add( Q, '', 'Zoom out x5',  Z+(cp-w*2.5)+'-'+(cp+w*2.5) );
+  __zmenu_add( Q, '', 'Zoom out x2',  Z+(cp-w*1)  +'-'+(cp+w*1)   );
+  __zmenu_add( Q, '', 'Centre here',  Z+(cp-w/2)  +'-'+(cp+w/2)   );
+  __zmenu_add( Q, '', 'Zoom in x2',   Z+(cp-w/4)  +'-'+(cp+w/4)   );
+  __zmenu_add( Q, '', 'Zoom in x5',   Z+(cp-w/10) +'-'+(cp+w/10)  );
+  __zmenu_add( Q, '', 'Zoom in x10',  Z+(cp-w/20) +'-'+(cp+w/20)  );
   __zmenu_show(Q, x.x, x.y);
 }
 
@@ -95,6 +103,8 @@ function __zmenu_show(Q,x,y) {
   __zmenu_close_button(Q);
   moveto(Q,x,y);
   Q.show();
+  Q.setStyle({'z-index':zmenu_current_zindex++});
+  __info( zmenu_current_zindex+' '+Q.getStyle('z-index') );
 }
 
 function __zmenu_remove() {
@@ -107,4 +117,5 @@ function __zmenu_close_button(Z) {
   var X=1;
   dt_node.insertBefore(b_close,dt_node.firstChild );
   Event.observe( b_close, 'click', _close_zmenu);
+  Event.observe( dt_node, 'mousedown', drag_start );
 }
