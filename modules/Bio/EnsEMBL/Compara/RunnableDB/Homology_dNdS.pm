@@ -57,6 +57,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 
 use Bio::Tools::Run::Phylo::PAML::Codeml;
+use Bio::EnsEMBL::Hive;
 
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
@@ -157,6 +158,11 @@ sub calc_genetic_distance
   if($rc == 0) {
     print_simple_align($aln, 80);
     print("codeml error : ", $codeml->error_string, "\n");
+    if (0 == $aln->remove_gaps->length) {
+      $self->input_job->update_status('FAILED');
+      $self->throw("Codeml : The pairwise alignment is all gapped");
+    }
+    $self->throw("There was an error running codeml");
   }
   my $result;
   eval{ $result = $parser->next_result };
@@ -182,6 +188,32 @@ sub calc_genetic_distance
   $homology->dn($MLmatrix->[0]->[1]->{'dN'});
   $homology->ds($MLmatrix->[0]->[1]->{'dS'});
   $homology->lnl($MLmatrix->[0]->[1]->{'lnL'});
+
+  # We check that the sequences differ to avoid the dS=0.000N0 codeml
+  # problem - there is one case in the DB with dS=0.00110 that is
+  # clearly a 0 because dS*S is way lower than 1
+  if ( (1 > ((($homology->{_ds})*$homology->{_s})+0.1)) || (1 > ((($homology->{_dn})*$homology->{_n})+0.1)) ) {
+    # Bioperl version
+    eval {require Bio::Align::DNAStatistics;};
+    unless ($@) {
+      my $stats = new Bio::Align::DNAStatistics;
+      my ($seq1id,$seq2id) = map { $_->display_id } $aln->each_seq;
+      my $results = $stats->calc_KaKs_pair($aln, $seq1id, $seq2id);
+      my $counting_method_dn = $results->[0]{D_n};
+      my $counting_method_ds = $results->[0]{D_s};
+
+      # We want to be strict in the counting of dS, because sometimes
+      # the counting method gives half a (dS*S) where codeml doesn't. So
+      # we only change to dS=0 when strictly 0 in the counting method
+      if (0 == abs($counting_method_ds) && (1 > ((($homology->{_ds})*$homology->{_s})+0.1))) {
+        $homology->ds(0);       # dS strictly 0
+      }
+      # Also for dN, although this happens very very rarely (seen once so far)
+      if (0 == abs($counting_method_dn) && (1 > ((($homology->{_dn})*$homology->{_n})+0.1))) {
+        $homology->dn(0);       # dN strictly 0
+      }
+    }
+  }
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
