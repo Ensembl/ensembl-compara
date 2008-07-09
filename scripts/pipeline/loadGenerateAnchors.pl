@@ -18,6 +18,7 @@ use constant {
 	dnafrag_chunk_size => 1000000,
 	get_blastz_overlaps => "GetBlastzOverlaps",
 	gerp => "Gerp",
+	trim_and_store_anchors => "TrimStoreAnchors",
 	filter_anchors => "FilterAnchors",
 	tree_file_default =>'/lustre/work1/ensembl/sf5/pecan_gerp/9vert.nw'	
 };
@@ -136,6 +137,7 @@ sub insert_analysis_jobs_data {
 			$method_link_id = ++$sql_statements{select_max_method_link_id}->fetchrow_arrayref->[0];
 			$sql_statements{insert_method_link}->execute($method_link_id, uc($logic_name));
 		}
+		$self->previous_mlssid($self->method_link_species_set_id) if ($self->method_link_species_set_id);
 		my $existing_mlssids;
 		$sql_statements{select_mlssid}->execute();
 		while(my @row = $sql_statements{select_mlssid}->fetchrow_array) {
@@ -179,13 +181,23 @@ sub insert_analysis_jobs_data {
 		if($analysis->{logic_name} eq gerp) {
 			my $tree_file = $self->tree_file ? $self->tree_file : tree_file_default;
 			$parameter_string .= "window_sizes=>\'[]\', tree_file=>\'" . $tree_file . 
-				"\',constrained_element_method_link_type=>'GERP\',}"
+				"\',constrained_element_method_link_type=>'GERP\'"
 		}
 		else {
-			$parameter_string .= " method_link_species_set_id => " . $self->method_link_species_set_id .
-				", analysis_id => $analysis_id, analysis_data_id => " . $self->analysis_data_id .
-				", tree_analysis_data_id => " . $self->tree_analysis_data_id . ", }";
+			die "undefined value(s): method_link_species_set_id, analysis_id, analysis_data_id, tree_analysis_data_id\n$!" 
+			unless ($self->method_link_species_set_id and $analysis_id and $self->analysis_data_id and $self->tree_analysis_data_id);
+			$parameter_string .= "method_link_species_set_id=>" . $self->method_link_species_set_id .
+				",analysis_id=>$analysis_id,analysis_data_id=>" . $self->analysis_data_id .
+				",tree_analysis_data_id=>" . $self->tree_analysis_data_id;
 		}
+		if($analysis->{logic_name} eq trim_and_store_anchors) {
+			die "TrimStoreAnchors analysis should be preceded by another analysis\n$!" unless $self->previous_mlssid;
+			$parameter_string .= ",previous_mlssid=>" . $self->previous_mlssid;
+			eval {
+				$sql_statements{insert_analysis_jobs}->execute($analysis_id,"{}") or die; #dummy analysis to set up jobs for trimming and storing anchors
+			};
+		}
+		$parameter_string .= ", }";
 		#update parameter list in analysis table with analysis_data_id & mlss_id & analysis_id
 		$sql_statements{update_analysis_parameters}->execute($parameter_string, $analysis->{logic_name});
 
@@ -293,6 +305,14 @@ sub method_link_species_set_id {
 		$self->{"method_link_species_set_id"} = shift;
 	}
 	return $self->{"method_link_species_set_id"};
+}
+
+sub previous_mlssid {
+	my $self = shift;
+	if(@_) {
+		$self->{"previous_mlssid"} = shift;
+	}
+	return $self->{"previous_mlssid"};
 }
 
 sub species_set_id {
