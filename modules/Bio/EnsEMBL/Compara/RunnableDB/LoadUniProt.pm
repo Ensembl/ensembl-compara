@@ -121,6 +121,11 @@ sub run
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
+  $self->{internal_taxon_ids};
+  foreach my $genome_db (@{$self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all}) {
+    $self->{internal_taxon_ids}{$genome_db->taxon_id} = 1;
+  }
+
   return unless($self->{'source'});
 
   my $subset_name = $self->{'source'};
@@ -138,8 +143,10 @@ sub run
     # Fungi/Metazoa group
     my $taxon_id = 33154;
     my $node = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
-    
-    foreach my $leaf ( @{$node->get_all_leaves} ) {
+
+    #    foreach my $leaf ( @{$node->get_all_leaves} ) {
+    # the indexed method should be much faster when data has left and right indexes built
+    foreach my $leaf ( @{$node->get_all_leaves_indexed} ) {
       $allowed_taxon_ids{$leaf->node_id} = 1;
       if ($leaf->rank ne "species") {
         $allowed_taxon_ids{$leaf->parent->node_id} = 1;
@@ -281,10 +288,28 @@ sub pfetch_and_store_by_ids {
   open(IN, "pfetch -F $id_string |")
     or $self->throw("Error running pfetch for ids [$id_string]");
 
+  print STDERR "$id_string\n";
   my $fh = Bio::SeqIO->new(-fh=>\*IN, -format=>"swiss");
   my $nb_seq = 0;
   while (my $seq = $fh->next_seq){
     next if ($seq->length < 80);
+
+    ####################################################################
+    # This bit is to avoid duplicated entries btw Ensembl and Uniprot
+    # It only affects the Ensembl species dbs, and right now I am using
+    # a home-brewed version of Bio::SeqIO::swiss to parse the PE entries
+    # in a similar manner as comments (CC) but of type 'evidence'
+    my $evidence_annotations = $seq->get_Annotations('evidence');
+    my $taxon_id; eval { $taxon_id = $seq->species->ncbi_taxid;};
+    if ($evidence_annotations && defined($self->{internal_taxon_ids}{$taxon_id})) {
+      if ($evidence_annotations->text =~ /^4/) {
+        print STDERR $seq->display_id, "PE discarded ", $evidence_annotations->text, "\n";
+        next;
+        # We dont want duplicated entries
+      }
+    }
+    ####################################################################
+
     $self->store_bioseq($seq, $source);
     $nb_seq++;
   }
