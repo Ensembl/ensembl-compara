@@ -60,7 +60,7 @@ sub render {
         next if $sub =~ /^_/;
         my $pages = $subsection->{$sub};
         next unless keys %$pages;
-        my $path = $pages->{'_path'}.$sub;
+        my $path = $pages->{'_path'} || $subsection->{'_path'}.$sub;
         $title = $pages->{'_title'} || ucfirst($sub);
         $html .= sprintf(qq(<dd><a href="%s">%s</a>),
             $path, $title
