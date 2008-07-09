@@ -260,7 +260,7 @@ sub _load_in_webtree {
 ### Check for cached value first....
   my $self = shift;
   my $web_tree_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/packed/web_tree.packed';
-  my $web_tree = { _path => '/' };
+  my $web_tree = { _path => '/info/' };
   if( -e $web_tree_packed ) {
     $web_tree = lock_retrieve( $web_tree_packed );
   } else {
@@ -422,7 +422,7 @@ sub _parse {
   $plugin_locator->children( [ values %{$plugin_locator->results} ] );                     $self->_info_line( 'Parser', 'Child objects attached' );
 
 #------------ Parse the web tree to create the static content site map
-  my $web_tree = $self->_load_in_webtree();                                                $self->_info_line( 'Filesystem', "Trawled web tree" );
+  $tree->{'STATIC_INFO'} = $self->_load_in_webtree();                                                $self->_info_line( 'Filesystem', "Trawled web tree" );
 
 #------------ Grab default settings first and store in defaults...
                                                                                            $self->_info_log(  'Parser', "Parsing ini files and munging dbs" );
