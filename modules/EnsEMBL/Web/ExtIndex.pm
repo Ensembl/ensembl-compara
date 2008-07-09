@@ -15,8 +15,9 @@ sub new {
 
 sub get_indexer {
   my( $self, $db ) = @_;
+
   unless( $self->{'databases'}{$db} ) {
-    my $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db };
+    my $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db } || 'PFETCH';
     my $exe     = $self->{'species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{ $indexer };
     if( $exe ) {
       my $classname = "EnsEMBL::Web::ExtIndex::$indexer";
@@ -58,7 +59,6 @@ sub _get_seq{
   # retrieve the indexer and executable names
   ############################################
   my $db = $args->{'DB'} || 'DEFAULT';
-    
   my $indexer = $self->get_indexer( $db );
   if( $indexer && defined $args->{$type} ) {
     my $function='get_seq_by_'.lc($type);
