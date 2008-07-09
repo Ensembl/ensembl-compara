@@ -117,7 +117,7 @@ sub upload {
     ## Work out if multiple assemblies available
     my $assemblies = $self->_get_assemblies($self->object->param('species'));
 
-    if (scalar(@$assemblies) || !$format) {
+    if (scalar(@$assemblies) > 1 || !$format) {
       ## Get more input from user
       if (scalar(@$assemblies)) {
         $parameter->{'species'} = $self->object->param('species');
@@ -128,6 +128,7 @@ sub upload {
       $parameter->{'wizard_next'} = 'more_input';
     }
     else {
+      $parameter->{'assembly'} = $assemblies->[0];
       $parameter->{'format'} = $format;
       $parameter->{'wizard_next'} = 'upload_feedback';
     }
@@ -169,7 +170,9 @@ sub upload_feedback {
   my $self = shift;
   $self->title('File Uploaded');
 
+  warn "SESSION ".$self->object->get_session->get_session_id;
   if ($self->object->param('assembly')) {
+    warn "Assembly ".$self->object->param('assembly');
     $self->object->get_session->set_tmp_data('assembly' => $self->object->param('assembly'));
   }
   if ($self->object->param('format')) {
@@ -328,18 +331,9 @@ sub _get_assemblies {
 ### If on chromosomal coords and species has multiple assemblies, 
 ### return assembly info
   my ($self, $species) = @_;
-  my $assemblies = [];
-  my %assembly = (
-    'Homo_sapiens'=>['NCBI36', 'NCBI37'],
-    'Mus_musculus'=>['NCBIm36', 'NCBIm37'],
-  );
-  if  ($species) {
-    $assemblies = $assembly{$species};
-  }
-  return $assemblies;
+  my @assemblies = split(',', $self->object->species_defs->get_config($species, 'CURRENT_ASSEMBLIES'));
+  return \@assemblies;
 }
-
-
 
 sub _delete_datasource {
     my ($self, $dbs, $ds_name) = @_;
@@ -389,53 +383,57 @@ sub save_upload {
     $parser->parse($data, $format);
 
     if ($parser->current_key eq 'default') { # No track name
-	$parameter->{'error_message'} = 'No data was uploaded. Please try again.';    
-    } else {
-	my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+	    $parameter->{'error_message'} = 'No data was uploaded. Please try again.';    
+    } 
+    else {
+	    my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
-	my $config = {
+	  my $config = {
 	    'action' => 'append', #'overwrite', # or append
 	    'species' => $tmpdata->{species},
 	    'assembly' => $tmpdata->{assembly},
-	};
+	  };
 
-	if ($user) {
+	  if ($user) {
 	    $config->{id} = $user->id;
 	    $config->{track_type} = 'user';
-	} else {
+	  } 
+    else {
 	    $config->{id} = $self->object->session->get_session_id;
 	    $config->{track_type} = 'session';	
-	}
+	  }
 	
-	foreach my $track ($parser->get_all_tracks) {
+	  foreach my $track ($parser->get_all_tracks) {
 	    foreach my $key (keys %$track) {
-		my $tparam = $self->_store_user_track($config, $track->{$key});
-		$parameter->{feedback} .= $tparam->{feedback};
-		if ($tparam->{error_message}) {
-		    $parameter->{error_message} .= $tparam->{error_message};
-		} else {
-		    push @{$parameter->{'share_id'}} , $tparam->{id};
-		}
+		    my $tparam = $self->_store_user_track($config, $track->{$key});
+		    $parameter->{feedback} .= $tparam->{feedback};
+		    if ($tparam->{error_message}) {
+		      $parameter->{error_message} .= $tparam->{error_message};
+		    } 
+        else {
+		      push @{$parameter->{'share_id'}} , $tparam->{id};
+		    }
 	    }
-	}
-    }
+	  }
+  }
 
-    $parameter->{'wizard_next'} = 'share_url';
+  $parameter->{'wizard_next'} = 'share_url';
     
-    return $parameter;
+  return $parameter;
 }
 
 sub _store_user_track {
-    my $self = shift;
-    my $config = shift;
-    my $track = shift;
+  my $self = shift;
+  my $config = shift;
+  my $track = shift;
 
-    my $parameter = {};
+  my $parameter = {};
 
-    if (my $current_species = $config->{'species'}) {
-	my $action = $config->{action} || 'error';
+  if (my $current_species = $config->{'species'}) {
+	  my $action = $config->{action} || 'error';
+    warn "Track name ".$track->{config}->{name};
 
-	if (my $track_name = $track->{config}->{name}) {
+	  if (my $track_name = $track->{config}->{name}) {
 	    my $logic_name = join ':', $config->{track_type}, $config->{id}, $track_name;
 	    my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species );
 	    my $dba = $dbs->get_DBAdaptor('userdata');
@@ -444,40 +442,41 @@ sub _store_user_track {
 	    my $datasource = $ud_adaptor->fetch_by_logic_name($logic_name);
 
 	    if ($datasource) {
-		if ($action eq 'error') {
-		    $parameter->{error_message} = "$track_name : Such track already exists";
-		    return $parameter;
-		}
+		    if ($action eq 'error') {
+		      $parameter->{error_message} = "$track_name : Such track already exists";
+		      return $parameter;
+		    }
 
-		if ($action eq 'overwrite') {
-		    $self->_delete_datasource_features($datasource);
-		}
-	    } else {
-		$config->{source_adaptor} = $ud_adaptor;
-		$config->{track_name} = $logic_name;
-		$config->{track_label} = $track_name;
-		$datasource = $self->_create_datasource($config);
+		    if ($action eq 'overwrite') {
+		      $self->_delete_datasource_features($datasource);
+		    }
+	    } 
+      else {
+		    $config->{source_adaptor} = $ud_adaptor;
+		    $config->{track_name} = $logic_name;
+		    $config->{track_label} = $track_name;
+		    $datasource = $self->_create_datasource($config);
 		
-		unless ($datasource) {
-		    $parameter->{error_message} =  "$track_name: Could not create datasource!";
-		    return $parameter;
-		}
+		    unless ($datasource) {
+		      $parameter->{error_message} =  "$track_name: Could not create datasource!";
+		      return $parameter;
+		    }
 	    }
 
 	    my $tparam = $self->_save_genomic_features($datasource, $track->{features});
 	    $parameter = $tparam;
 	    $parameter->{feedback} = "$track_name: $tparam->{feedback}";
-	    $parameter->{id} = $datasource->logic_name;
-	    
-	} else {
+	    $parameter->{id} = $datasource->logic_name;	    
+	  } 
+    else {
 	    $parameter->{error_message} =  "Need a trackname!";
-	}
-    } else {
-	$parameter->{error_message} =  "Need species name";
-    }
+	  }
+  } 
+  else {
+	  $parameter->{error_message} =  "Need species name";
+  }
 
-
-    return $parameter;
+  return $parameter;
 }
 
 sub _create_datasource {
