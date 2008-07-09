@@ -7,6 +7,7 @@ use Apache2::RequestUtil;
 use Data::Dumper qw(Dumper);
 use Class::Std;
 
+use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::ScriptConfig;
@@ -230,24 +231,46 @@ sub get_tmp_data {
     $TEMP = $entry->data;
     $TEMP = eval( $TEMP );
     die "Eval ERROR :$@" if $@;
-    $TmpData_of{ ident $self }{$entry->code} = $TEMP
-      unless $@;
   }
 
-  $TmpData_of{ ident $self }{$code} ||= {};
+  $TmpData_of{ ident $self }{'generic'} = {
+    %{ $TmpData_of{ ident $self }{'generic'} || {} },
+    %{ $data },
+  };
   
   return $TmpData_of{ ident $self }{$code};
+}
+
+sub share_tmp_data_ref {
+### TMP
+  my ($self, $code) = @_; 
+
+  $code ||= 'generic';
+  return unless $self->get_session_id;
+
+  ## Get TMP data from the database
+  my $entry = EnsEMBL::Web::Data::Session->get_config(
+    session_id => $self->get_session_id,
+    type       => 'tmp',
+    code       => $code,
+  );
+
+  my $share = $entry->share if $entry;
+  return '000000' . $share->id . '-' . checksum($share->id);
 }
 
 sub set_tmp_data {
 ### TMP
 ### e.g. $object->get_session->set_tmp_data( $key => $value );
   my $self = shift; 
-  my %args = ref $_[0] ? %{ $_[0] } : @_; 
+  my %args;
+  my $code;
+  my %args = ref $_[1] ? %{ $_[1] } : @_; 
+  my $code = ref $_[1] ? $_[0] : 'generic'; 
 
-  $self->get_tmp_data;
+  $self->get_tmp_data($code)
+    unless $TmpData_of{ ident $self }{$code};
 
-  $TmpData_of{ ident $self }{'generic'} ||= {};
   $TmpData_of{ ident $self }{'generic'} = {
     %{ $TmpData_of{ ident $self }{'generic'} },
     %args,
