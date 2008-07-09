@@ -294,7 +294,7 @@ sub _store_user_track {
 
 	  if (my $track_name = $track->{config}->{name}) {
 	    my $logic_name = join ':', $config->{track_type}, $config->{id}, $track_name;
-	    my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species );
+	    my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species, $object->species_defs );
 	    my $dba = $dbs->get_DBAdaptor('userdata');
 	    my $ud_adaptor  = $dba->get_adaptor( 'Analysis' );
 
