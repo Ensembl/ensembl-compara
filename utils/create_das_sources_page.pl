@@ -203,6 +203,7 @@ sub sources {
       <CAPABILITY type="das1:sequence" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/sequence"/>} :
 	    qq{<CAPABILITY type="das1:stylesheet" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/stylesheet"/> };
 
+# TODO: THIS IS NOT CORRECT - WE ARE PUBLISHING SOURCES AS ALWAYS BEING CHROMOSOME COORDINATES
 	print sprintf 
 qq{ 
   <SOURCE uri="%s" title="%s" description="%s">
