@@ -12,6 +12,10 @@ sub init {
     '_artefacts'   => [  ],
     '_settings'    => {
       'width'             => 800,
+      'label_width'   => 113,
+      'button_width'  => 8,
+      'show_buttons'  => 'no',
+      'show_labels'   => 'yes',
 #      'draw_red_box'      => 'yes',
       'default_vc_size'   => 1000000,
       'opt_zclick'     => 1,

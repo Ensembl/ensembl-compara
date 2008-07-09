@@ -16,6 +16,7 @@ sub init {
     '_settings' => {
       'simplehap' => 1,
       'width'   => 800,
+      'label_width' => 113,
       'show_thjview' => 'yes',
       'show_contigview' => 'yes',
       'show_cytoview'   => 'yes',
