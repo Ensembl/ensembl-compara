@@ -326,6 +326,13 @@ sub build_GeneTreeSystem
   # the dynamic creation of the analyses like blast_1_NCBI34
   my $blast_template = new Bio::EnsEMBL::Analysis(%analysis_template);
   $blast_template->logic_name("blast_template");
+  my $blast_template_analysis_data_id = 
+    $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($blast_template->parameters);
+  $parameters = undef;
+  if (defined $blast_template_analysis_data_id) {
+    $parameters = "{'blast_template_analysis_data_id'=>'$blast_template_analysis_data_id'}";
+    $blast_template->parameters($parameters);
+  }
   eval { $analysisDBA->store($blast_template); };
 
   #
@@ -379,10 +386,10 @@ sub build_GeneTreeSystem
   #
   $parameters = "{'options'=>'-maxhours 5'";
   if (defined $genetree_params{'max_gene_count'}) {
-    $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
+    $parameters .= ",'max_gene_count'=>".$genetree_params{'max_gene_count'};
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
+    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
   $parameters .= "'}";
   my $muscle = Bio::EnsEMBL::Analysis->new(
@@ -412,12 +419,12 @@ sub build_GeneTreeSystem
     exit(3);
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
+    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
   $parameters .= "'}";
-  my $analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
-  if (defined $analysis_data_id) {
-    $parameters = "{'analysis_data_id'=>'$analysis_data_id'}";
+  my $njtree_phyml_analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
+  if (defined $njtree_phyml_analysis_data_id) {
+    $parameters = "{'njtree_phyml_analysis_data_id'=>'$njtree_phyml_analysis_data_id'}";
   }
   my $njtree_phyml = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NJTREE_PHYML',
@@ -450,15 +457,32 @@ sub build_GeneTreeSystem
   # OrthoTree
   #
   my $with_options_orthotree = 0;
+  my $ortho_params = '';
   if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
+    $ortho_params = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
     $with_options_orthotree = 1;
   }
   if (defined $dnds_params{'species_sets'}) {
-    $parameters .= ',species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'';
+    $ortho_params .= ',species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'';
     $with_options_orthotree = 1;
   }
-  $parameters = '{' . $parameters .'}' if (1==$with_options_orthotree);
+  if(defined $genetree_params{'species_tree_file'}) {
+    my $tree_file = $genetree_params{'species_tree_file'};
+    $ortho_params .= ",'species_tree_file'=>'${tree_file}'";
+    $with_options_orthotree = 1;
+  }
+
+  #EDIT Originally created a anon hash which caused problems with OrthoTree when using eval
+  if($with_options_orthotree) {
+    $parameters =~ s/\A{//;
+    $parameters =~ s/}\Z//;
+    $parameters = '{' . $parameters . ',' .  $ortho_params . '}'
+  }
+
+  my $analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
+  if (defined $analysis_data_id) {
+    $parameters = "{'analysis_data_id'=>'$analysis_data_id'}";
+  }
 
   my $orthotree = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'OrthoTree',
