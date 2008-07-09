@@ -2,6 +2,7 @@ package EnsEMBL::Web::ConfigPacker;
 
 use strict;
 use EnsEMBL::Web::ConfigPacker_base;
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
 our @ISA = qw(EnsEMBL::Web::ConfigPacker_base);
 
@@ -23,7 +24,7 @@ sub _munge_databases {
 
 sub _munge_das { # creates das.packed...
   my $self = shift;
-
+  $self->_summarise_dasregistry;
 }
 
 sub _munge_databases_multi {
@@ -41,8 +42,6 @@ sub _munge_config_tree {
   $self->_munge_meta(       );
   $self->_munge_website(    );
 
-#---------- parse the DAS configuration
-  $self->_configure_das(    ); # merges das.packed into config.packed
 #---------- parse the BLAST configuration
   $self->_configure_blast(  );
 }
@@ -405,6 +404,51 @@ sub _summarise_go_db {
   $dbh->disconnect();
 }
 
+sub _summarise_dasregistry {
+  my $self = shift;
+  
+  #Bio::EnsEMBL::Utils::Exception::verbose('ALL');
+  my $parser = $self->{'_das_parser'};
+  if (!$parser) {
+    $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
+      -location => $self->tree->{'DAS_REGISTRY_URL'},
+      -timeout  => $self->tree->{'ENSEMBL_DAS_TIMEOUT'},
+      -proxy    => $self->tree->{'ENSEMBL_DAS_PROXY'}  ,
+    );
+    $self->{'_das_parser'} = $parser;
+  }
+  
+  # !!!TODO!!!: get taxid from tree rather than DB
+  my $dbh = $self->db_connect( 'ENSEMBL_DB' );
+  my $res = $dbh->selectrow_hashref("select meta_value from meta ".
+                                    "where meta_key = 'species.taxonomy_id'");
+  my $taxid = $res->{'meta_value'};
+  # my $taxid = $self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.taxonomy_id'}[0];
+  
+  # Parse the registry XML
+  my %sources = map {
+    $_->url => { $_->dsn => $_ }
+  } @{ $parser->fetch_Sources(-taxid => $taxid) };
+  
+  while (my ($key, $val) = each %{ $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'} }) {
+    $val || next;
+    my $cfg = $self->tree->{$key}; # copy from ini to packed
+    defined $cfg || next;
+    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}{$key} = $cfg;
+    delete $self->tree->{$key}; # remove from tree
+    my $src = $sources{$cfg->{'url'}}{$cfg->{'dsn'}};
+    # doesn't have to be in the registry... unfortunately
+    if ($src) {
+      $cfg->{'label'}       ||= $src->label;
+      $cfg->{'description'} ||= $src->description;
+      $cfg->{'maintainer'}  ||= $src->maintainer;
+      $cfg->{'homepage'}    ||= $src->homepage;
+      $cfg->{'coords'}      ||= $src->coord_systems;
+    }
+  }
+  delete $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'};
+}
+
 sub _munge_meta {
   my $self = shift;
 
@@ -448,9 +492,6 @@ sub _munge_website {
   ## Archives
   #$self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_tree->{'archive_info'};
 
-}
-
-sub _configure_das {
 }
 
 sub _configure_blast {

@@ -407,8 +407,9 @@ sub _parse {
   my $self = shift; 
   $CONF->{'_storage'} = {};                                                                $self->_info_log( 'Parser', "Starting to parse tree" );
 
-  my $tree    = {};
-  my $db_tree = {};
+  my $tree     = {};
+  my $db_tree  = {};
+  my $das_tree = {};
 #------------ Initialize plugin locator - and create array of ConfigPacker objects...
   my $plugin_locator = EnsEMBL::Web::Tools::PluginLocator->new( (
     locations  => [ 'EnsEMBL::Web', reverse @{ $self->ENSEMBL_PLUGIN_ROOTS } ], 
@@ -416,7 +417,7 @@ sub _parse {
   ));
   $plugin_locator->include();
 # Create all the child objects with the $tree and $db_tree hashrefs attahed...
-  $plugin_locator->create_all( $tree, $db_tree );
+  $plugin_locator->create_all( $tree, $db_tree, $das_tree );
 # not sure why I have to do this - but copy the results back as children (what does mw4's code do?)
   $plugin_locator->children( [ values %{$plugin_locator->results} ] );                     $self->_info_line( 'Parser', 'Child objects attached' );
 
@@ -431,14 +432,15 @@ sub _parse {
   
 #------------ Loop for each species exported from SiteDefs
 #             grab the contents of the ini file AND
-#             IF  the DB packed file exists expand that 
-#             o/w attach the species databases and load the
-#                 data and store the DB packed file... 
+#             IF  the DB/DAS packed files exist expand them
+#             o/w attach the species databases/parse the DAS registry, load the
+#                 data and store the DB/DAS packed files...
   foreach my $species ( @$ENSEMBL_SPECIES ) {
     $tree->{$species} = $self->_read_in_ini_file( $species, $defaults );                   $self->_info_line( 'Parsing', "$species ini file" );
     $self->_expand_database_templates( $species, $tree->{$species} );
     $self->_promote_general(           $tree->{$species} );
-    my $species_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0]."/packed/$species.db.packed";    
+    my $species_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0]."/packed/$species.db.packed";
+    my $das_packed     = $SiteDefs::ENSEMBL_CONF_DIRS[0]."/packed/$species.das.packed";
 
     if( -e $species_packed ) {
       $db_tree->{ $species } = lock_retrieve( $species_packed );                           $self->_info_line( 'Retrieve', "$species databases" );
@@ -450,9 +452,19 @@ sub _parse {
       lock_nstore( $db_tree->{ $species }, $species_packed );
     }
     $self->_merge_db_tree( $tree, $db_tree, $species );
+    
+    if( -e $das_packed ) {
+      $das_tree->{ $species } = lock_retrieve( $das_packed );                              $self->_info_line( 'Retrieve', "$species DAS sources" );
+    } else {
+# Set species on each of the child objects..
+      $plugin_locator->parameters( [$species] );
+      $plugin_locator->call( 'species' );
+      $plugin_locator->call( '_munge_das' );                                               $self->_info_line( '** DAS **', "$species DAS sources" );
+      lock_nstore( $das_tree->{ $species }, $das_packed );
+    }
+    $self->_merge_db_tree( $tree, $das_tree, $species );
   }
-### DUPLICATE above for $species.das.packed...
-#
+
 #------------ Do the same for the multi-species file...
   $tree->{'MULTI'} = $self->_read_in_ini_file( 'MULTI', $defaults );                       $self->_info_line( 'Parsing', "MULTI ini file" );
   $self->_expand_database_templates( 'MULTI', $tree->{'MULTI'} );
