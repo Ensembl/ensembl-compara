@@ -611,7 +611,7 @@ sub add_repeat_tracks {
 sub add_das_tracks {
   my( $object, $config ) = @_;
 
-## Replace this with the code which gets DAS sources from the Session... probably need some cute cacheing
+ # TODO: Replace this with the code which gets DAS sources from the Session... probably need some cute cacheing
 
 
   my @das_sources = ();
@@ -666,6 +666,35 @@ sub add_das_tracks {
       my $adaptor = undef;
       my $dbname = $EXT->{$source};
 #      warn "ADD $source", Dumper($dbname);
+### Temp thing for sources published with the GR paper
+### The sources will be done in a different way later
+      if ($source eq 'das_Batman') {
+	  foreach my $btsrc (qw(batman_BC batman_CD4 batman_CD8 batman_CX batman_CN batman_GM batman_LR batman_LG batman_PS batman_PL batman_PR batman_RM batman_SM batman_SP batman_US batman_WB)) {
+#	  foreach my $btsrc (qw(batman_BC batman_CD4 batman_CD8 )) {
+	      eval {
+		  (my $URL = $dbname->{'url'}) =~ s/Batman_\%/$btsrc/;
+		  
+		  $adaptor = Bio::EnsEMBL::ExternalData::DAS::DASAdaptor->new(
+									      -url   => $URL,
+									      -dsn   => $btsrc,
+									      -type    => $dbname->{type},
+									      -mapping => $dbname->{'mapping'} || $dbname->{type},
+									      -name  => $btsrc || $dbname->{'name'},
+									      -ens   => $object->database('core'),
+									      -proxy_url => $object->species_defs->ENSEMBL_WWW_PROXY, 
+									      -maxbins   => $image_width,
+									      -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT,
+									      -assembly_version=> $dbname->{'assembly'},
+									      );
+	      };
+	      if($@) {
+		  warn("DAS error >> $@ <<");
+	      } else {
+		  $object->database('core')->add_DASFeatureFactory( Bio::EnsEMBL::ExternalData::DAS::DAS->new( $adaptor ) );
+	      }
+	  }
+      } else {
+### End of GR paper bit      
       eval {
         my $URL = $dbname->{'url'};
         $URL = "http://$URL" unless $URL =~ /https?:\/\//i;
