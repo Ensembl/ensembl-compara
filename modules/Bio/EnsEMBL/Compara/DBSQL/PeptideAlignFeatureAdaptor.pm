@@ -565,6 +565,9 @@ sub _store_PAFS {
       my $hgenome_db_id = $paf->hit_genome_db_id;
       $hgenome_db_id = 0 unless($hgenome_db_id);
 
+      # Null_cigar option for leaner paf tables
+      $paf->cigar_line('') if (defined $paf->{null_cigar});
+
       $query .= ", " if($addComma);
       $query .= "(".$paf->query_member_id.
                 ",".$paf->hit_member_id.
@@ -640,7 +643,9 @@ sub _create_PAF_from_BaseAlignFeature {
   #$paf->hlength($hlength);
   $paf->score($feature->score);
   $paf->evalue($feature->p_value);
+
   $paf->cigar_line($feature->cigar_string);
+  $paf->{null_cigar} = 1 if (defined $feature->{null_cigar});
 
   $paf->alignment_length($feature->alignment_length);
   $paf->identical_matches($feature->identical_matches);
@@ -808,7 +813,7 @@ sub _objs_from_sth {
   }
   $sth->finish;
 
-  return \@pafs
+  return \@pafs;
 }
 
 
