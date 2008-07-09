@@ -44,10 +44,11 @@ sub read_tree {
   my $include = 1;
   foreach my $filename (@$html_files) {
     if( $filename eq 'index.html' ) {
-      ($title, $nav, $index) = get_info( $doc_root . $path . $filename );
+      ($title, $nav, $order, $index) = get_info( $doc_root . $path . $filename );
       if ($index =~ /NO FOLLOW/) {
         $branch->{_title} = $title;
         $branch->{_nav}   = $nav;
+        $branch->{_order} = $order;
         $branch->{_index} = $index;
         return;
       } elsif ($index =~ /NO INDEX/) {
@@ -64,18 +65,20 @@ sub read_tree {
   ## Read files and populate the branch
   foreach my $filename (@$html_files) {
     my $full_path = "$doc_root$path$filename";
-    ($title, $nav, $index) = get_info( $full_path );
+    ($title, $nav, $order, $index) = get_info( $full_path );
 
     if ($filename eq 'index.html') {
       ## add the directory path and index title to array
       $branch->{_title} = $title;
       $branch->{_nav}   = $nav;
+      $branch->{_order} = $order;
       $branch->{_index} = $index;
     }
     else {
       unless ($index =~ /NO INDEX/) {
         $branch->{$filename}->{_title} = $title;
         $branch->{$filename}->{_nav}   = $nav;
+        $branch->{$filename}->{_order} = $order;
         $branch->{$filename}->{_index} = $index;
       }
     }
@@ -119,11 +122,13 @@ sub get_info {
   close IN;
   my $title   = get_title(\@contents);
   my $nav     = get_meta_navigation(\@contents);
+  my $order   = get_meta_order(\@contents);
   my $index   = get_meta_index(\@contents);
   $title = get_first_header(\@contents) unless $title;
   $nav   = $title                       unless $nav;
+  $order = 100                          unless $order; ## Unordered pages go at the end!
 
-  return ($title, $nav, $index);
+  return ($title, $nav, $order, $index);
 }
 
 sub get_title {
@@ -159,6 +164,23 @@ sub get_meta_navigation {
 
   return $nav;
 }
+
+sub get_meta_order {
+### Parses an HTML file and returns the contents of the navigation meta tag
+  my( $contents ) = @_;
+  my $nav;
+
+  foreach(@$contents) {
+    if (/<meta\s+name\s*=\s*"order"\s+content\s*=\s*"([^"]+)"\s*\/?>/ism) {
+      $nav = $1;
+    } elsif (/<meta\s+content\s*=\s*"([^"]+)"\s+name\s*=\s*"order"\s*\/?>/ism) {
+      $nav = $1;
+    }
+  }
+
+  return $nav;
+}
+
 
 sub get_meta_index {
 ### Parses an HTML file and returns the contents of the index meta tag
