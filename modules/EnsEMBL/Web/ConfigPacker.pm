@@ -198,6 +198,7 @@ sub _summarise_core_tables {
 #
 # * Co-ordinate systems..
 #
+
     my $row =  $dbh->selectrow_arrayref(
       'select sr.name, sr.length 
          from seq_region as sr, coord_system as cs 
@@ -214,6 +215,18 @@ sub _summarise_core_tables {
       $self->db_tree->{'MAX_CHR_LENGTH'} = undef;
     }
   }
+
+#---------------
+#
+# * Assemblies...
+  $t_aref = $dbh->selectall_arrayref(
+    'select distinct version from coord_system where version is not null' 
+  );
+  my @assemblies;
+  foreach my $row (@$t_aref) {
+    push @assemblies, $row->[0];
+  }
+  $self->db_tree->{'CURRENT_ASSEMBLIES'} = join(',', @assemblies);
 
 #----------
   $dbh->disconnect();
