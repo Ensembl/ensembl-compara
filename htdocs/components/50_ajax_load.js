@@ -3,7 +3,6 @@ var comp_id=0;
 var counter = 0;
 
 function __ensembl_init_ajax_loader() {
-__info( "looping through the loop!!!" );
 $$('.ajax').each(function(panel) {
   if(panel.hasClassName('ajax')) {
     panel.removeClassName('ajax'); // We only need to auto load this code once

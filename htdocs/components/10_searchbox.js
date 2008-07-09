@@ -47,7 +47,6 @@
       $('se_im').src  = '/i/search/'+name+'.gif';
       $('se_mn').hide();
       $('se_si').value = name;
-      __debug( 'Changing search engine to "'+name+'"','success' );
     });
   }
 
@@ -61,7 +60,6 @@
     if( ENSEMBL_SEARCH_BOX==1 ) return; // Only execute once
       ENSEMBL_SEARCH_BOX = 1;
 
-    __debug( 'Initializing search box' );
     if($('se_but')){                    // Only if search box exists...
       $('se').parentNode.appendChild(
         Builder.node( 'dl', {id: 'se_mn', style: 'display:none' } )

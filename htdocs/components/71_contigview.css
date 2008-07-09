@@ -1,3 +1,8 @@
-.rubberband, .redbox { position:absolute; background-image: url(/i/red.gif); z-index: 100; opacity: 0.5; filter:alpha(opacity=50);  }
-.rubberband img, .redbox img { height: 1px; width: 1px }
-.rubberband { background-image: url(/i/redants.gif); }
+.redbox2, .rubberband, .rubberband2, .redbox { position:absolute; z-index: 100; opacity: 0.5; filter:alpha(opacity=50);  }
+.redbox2 img, .rubberband2 img, .rubberband img, .redbox img { height: 1px; width: 1px }
+.rubberband  { background-image: url(/i/redants.gif); }
+.rubberband2 { background-image: url(/i/redants2.gif); }
+.redbox      { background-image: url(/i/red.gif); }
+.redbox2     { background-color: red; }
+
+.drag_select { cursor: pointer }

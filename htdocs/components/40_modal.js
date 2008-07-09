@@ -116,9 +116,7 @@ function __modal_dialog_link_open( event ) {
       $('modal_content').innerHTML = transport.responseText;
       var x = 0;
       var firstnode = -1;
-      __info( "first_node" );
       while( x < $('modal_content').childNodes.length && firstnode < 0) {
-        __debug( x );
         if( $('modal_content').childNodes[x].nodeType == 1 ) firstnode =x;
         x++;
       }

@@ -13,23 +13,38 @@ function _show_zmenu( x ) {
     var ttl = A.shift();
     if(!ttl) ttl = 'Menu';
     var Q = __zmenu_init( z_id, ttl );
+    var cp = 0;
+    var w  = 0;
+    var s  = 0;
+    var e  = 0;
     A.each(function(s){
       var T = s.split(': ');
 
       if(T.length > 1 ) {
         __zmenu_add( Q, T[0], T[1] );
+	if( T[0] == 'Location' ) {
+          var tmp = T[1].match(/:(-?\d+)-(-?\d+)$/);
+	  if(tmp) {
+            cp = tmp[1]/2+tmp[2]/2;
+	    s  = parseInt(tmp[1]);
+	    e  = parseInt(tmp[2]);
+	  }
+	}
       } else {
         __zmenu_add( Q, '', T[0] );
       }
     });
     __zmenu_add( Q, 'Link', ttl, x.h );
+    if( cp ) {
+      __zmenu_add( Q, ' ', 'Centre on feature', _new_url_cp( cp, __seq_region_width + 1 ) );
+      __zmenu_add( Q, ' ', 'Zoom to feature',   _new_url( s, e ) );
+    }
     __zmenu_show( Q, x.x, x.y );
     var a = x.h.split(/\?/);
     var link_url     = a[0];
     var query_string = a[1];
     var arr = link_url.match(/^(https?:\/\/[^\/]+\/[^\/]+\/)([^\/]+)/);
     var URL = arr[1]+'Zmenu/'+arr[2]+'?'+query_string;
-    __info( 'zmenu...'+URL );
     new Ajax.Request( URL, {
       method: 'get',
       onSuccess: function(transport){
@@ -46,30 +61,33 @@ function _show_zmenu( x ) {
 
 function _show_zmenu_range( x ) {
   __zmenu_remove();
-  var Q = __zmenu_init('zmenu_nav','Region');
-  __zmenu_add( Q, '', 'Zoom into region', 'xx' );
-  __zmenu_add( Q, '', 'Centre here',      'xx' );
+  var Q = __zmenu_init('zmenu_nav','Region: '+x.bp_start+'-'+x.bp_end);
+  __zmenu_add( Q, '', 'Zoom into region', _new_url( x.bp_start, x.bp_end ) );
+  __zmenu_add( Q, '', 'Centre here',      _new_url_cp( (x.bp_start+x.bp_end)/2, __seq_region_width-1 ) );
   __zmenu_show(Q, x.x, x.y);
+}
+
+function _new_url_cp( cp, w ) {
+  return _new_url( Math.round(1*cp-w/2), Math.round(1*cp+w/2) );
+}
+function _new_url( s, e ) {
+  var Z = location.href;
+  Z = Z.replace(/#.*$/,'').replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
+  Z+= Z.match(/\?/) ? ';' : '?';
+  return Z+"r="+__seq_region_name+':'+s+'-'+e;
 }
 
 function _show_zmenu_location( x ) {
   __zmenu_remove();
-  var Z = location.href;
-  Z = Z.replace(/#.*$/,'').replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
-  Z+= Z.match(/\?/) ? ';' : '?';
-  Z+= "r="+__seq_region_name+':';
-  
-  var cp = 1 * x.bp;
   var w  = __seq_region_width-1;
-  var Q  = __zmenu_init('zmenu_nav', 'Location: '+Math.floor(cp) );
-  __info( x.bp+' '+cp+' '+w );
-  __zmenu_add( Q, '', 'Zoom out x10', Z+(cp-w*5)  +'-'+(cp+w*5)   );
-  __zmenu_add( Q, '', 'Zoom out x5',  Z+(cp-w*2.5)+'-'+(cp+w*2.5) );
-  __zmenu_add( Q, '', 'Zoom out x2',  Z+(cp-w*1)  +'-'+(cp+w*1)   );
-  __zmenu_add( Q, '', 'Centre here',  Z+(cp-w/2)  +'-'+(cp+w/2)   );
-  __zmenu_add( Q, '', 'Zoom in x2',   Z+(cp-w/4)  +'-'+(cp+w/4)   );
-  __zmenu_add( Q, '', 'Zoom in x5',   Z+(cp-w/10) +'-'+(cp+w/10)  );
-  __zmenu_add( Q, '', 'Zoom in x10',  Z+(cp-w/20) +'-'+(cp+w/20)  );
+  var Q  = __zmenu_init('zmenu_nav', 'Location: '+Math.floor(x.bp) );
+  __zmenu_add( Q, '', 'Zoom out x10', _new_url_cp( x.bp, w*10 ) );
+  __zmenu_add( Q, '', 'Zoom out x5',  _new_url_cp( x.bp, w*5  ) );
+  __zmenu_add( Q, '', 'Zoom out x2',  _new_url_cp( x.bp, w*2  ) ); 
+  __zmenu_add( Q, '', 'Centre here',  _new_url_cp( x.bp, w*1  ) );
+  __zmenu_add( Q, '', 'Zoom in x2',   _new_url_cp( x.bp, w/2  ) );
+  __zmenu_add( Q, '', 'Zoom in x5',   _new_url_cp( x.bp, w/5  ) );
+  __zmenu_add( Q, '', 'Zoom in x10',  _new_url_cp( x.bp, w/10 ) );
   __zmenu_show(Q, x.x, x.y);
 }
 
@@ -104,7 +122,6 @@ function __zmenu_show(Q,x,y) {
   moveto(Q,x,y);
   Q.show();
   Q.setStyle({'z-index':zmenu_current_zindex++});
-  __info( zmenu_current_zindex+' '+Q.getStyle('z-index') );
 }
 
 function __zmenu_remove() {
