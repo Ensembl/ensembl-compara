@@ -63,26 +63,33 @@ sub content {
 
 	foreach my $tsi (sort keys %{$e}) {
 		my $ln = $e->{$tsi}{'logic_name'};
-		my $url = $self->object->_url({
+		my $t_url = $self->object->_url({
 			'type'   => 'Transcript',
 			'action' => 'Evidence',
 			't'      => $tsi,
 		});
-
 		my ($trans_evi,$cds_ids,$utr_ids,$other_ids,$exon_evi);
 
 #		$html .= qq(<tr>
-#                    <td class="bg2"><a href=\"$url\">$tsi</a> <span class="small">[$ln]</span></td>);
+#                    <td class="bg2"><a href=\"$t_url\">$tsi</a> <span class="small">[$ln]</span></td>);
 
 		$html .= qq(<tr>
-                    <td class="bg2"><a href=\"$url\">$tsi</a></td>);
+                    <td class="bg2"><a href=\"$t_url\">$tsi</a></td>);
 
 		if ($trans_evi = $e->{$tsi}{'evidence'}) {
 			if ($cds_ids = $trans_evi->{'CDS'}) {
 				$html .= qq(<td>);
 				foreach my $link (@{$object->add_evidence_links($cds_ids)}) {
+					my $url = $link->[0];
+					my $id  = $link->[1];
+					my $align_url = $self->object->_url({
+						'type'     => 'Transcript',
+						'action'   => 'SupportingEvidenceAlignment',
+						't'        => $tsi,
+						'sequence' => $id,
+					});
 					$html .= qq(
-                                <p>$link [align]</p>);
+                                <p>$url [<a href=\"$align_url\">align</a>]</p>);
 				}
 				$html .= qq(</td>);
 			} 
@@ -93,8 +100,16 @@ sub content {
 			if ($utr_ids = $trans_evi->{'UTR'}) {
 				$html .= qq(<td>);
 				foreach my $link (@{$object->add_evidence_links($utr_ids)}) {
+					my $url = $link->[0];
+					my $id  = $link->[1];
+					my $align_url = $self->object->_url({
+						'type'     => 'Transcript',
+						'action'   => 'SupportingEvidenceAlignment',
+						't'        => $tsi,
+						'sequence' => $id,
+					});
 					$html .= qq(
-                                <p>$link [align]</p>);
+                                <p>$url [<a href=\"$align_url\">align</a>]</p>);
 				}
 				$html .= qq(</td>);
 			}
@@ -105,8 +120,16 @@ sub content {
 			if ($other_ids = $trans_evi->{'UNKNOWN'}) {
 				$html .= qq(<td>);
 				foreach my $link (@{$object->add_evidence_links($other_ids)}) {
+					my $url = $link->[0];
+					my $id  = $link->[1];
+					my $align_url = $self->object->_url({
+						'type'     => 'Transcript',
+						'action'   => 'SupportingEvidenceAlignment',
+						't'        => $tsi,
+						'sequence' => $id,
+					});
 					$html .= qq(
-                                <p>$link [align]</p>);
+                                <p>$url [<a href=\"$align_url\">align</a>]</p>);
 				}
 				$html .= qq(</td>);
 			}
@@ -117,7 +140,7 @@ sub content {
 		if ($exon_evi = $e->{$tsi}{'extra_evidence'}) {
 			my $c = scalar(keys(%$exon_evi));
 			$html .= qq(
-                        <td><a href=\"$url\">$c features</a></td>);
+                        <td><a href=\"$t_url\">$c features</a></td>);
 		}
 		$html .= qq(</tr>);
 	}		
