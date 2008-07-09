@@ -1153,6 +1153,49 @@ sub build_leftright_indexing {
 }
 
 
+=head2 remove_nodes
+
+  Arg [1]     : arrayref Bio::EnsEMBL::Compara::NestedSet $nodes
+  Example     : my $ret_tree = $tree->remove_nodes($nodes);
+  Description : Returns the tree with removed nodes in list. Nodes should be in the tree.
+  Returntype  : Bio::EnsEMBL::Compara::NestedSet object
+  Exceptions  :
+  Caller      : general
+  Status      : At risk (behaviour on exceptions could change)
+
+=cut
+
+sub remove_nodes {
+  my $self = shift;
+  my $nodes = shift;
+
+  foreach my $node (@$nodes) {
+    if ($node->is_leaf) {
+      $node->disavow_parent;
+      $self = $self->minimize_tree;
+    } else {
+      my $node_children = $node->children;
+      foreach my $child (@$node_children) {
+        $node->parent->add_child($child);
+      }
+      $node->disavow_parent;
+    }
+    # Delete dangling one-child trees (help memory manager)
+    if ($self->get_child_count == 1) {
+      my $child = $self->children->[0];
+      $child->parent->merge_children($child);
+      $child->disavow_parent;
+      return undef;
+    }
+    # Could be zero if all asked to delete, so return undef instead of
+    # fake one-node tree.
+    if ($self->get_child_count < 2) {
+      return undef;
+    }
+  }
+  return $self;
+}
+
 sub minimize_tree {
   my $self = shift;
   return $self if($self->is_leaf);
