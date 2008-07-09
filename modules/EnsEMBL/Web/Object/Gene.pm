@@ -50,7 +50,7 @@ sub count_gene_supporting_evidence {
 }
 
 sub get_db_type{
-	# I'm suprised that I have to do this - would've thought there'd be a generic method
+	#I'm suprised that I have to do this - would've thought there'd be a generic method
 	my $self = shift;
 	my $db   = $self->get_db;
 	my %db_hash = qw(
@@ -60,17 +60,22 @@ sub get_db_type{
 	return  $db_hash{$db};
 }
 
+sub get_external_db_names {
+	#species defs contains a summary of the external_db table - can use this to get the dbname
+	#for the evidence although the core team are going to add calls to do this directly
+	my $self = shift;
+	my $db_type = $self->get_db_type;
+	my $sd = $self->species_defs;
+	return  $sd->databases->{$db_type}{'external_dbs'};
+}
+
 #get supporting evidence for the gene: transcript_supporting_features support the
 #whole transcript or the translation, supporting_features provide depth the the evidence
 sub get_gene_supporting_evidence {
 	my $self = shift;
 	my $obj = $self->Obj;
 
-	#species defs contains a summary of the external_db table - can use this to get the dbname
-	#for the evidence although the core team are going to add calls to do this directly
-	my $db_type = $self->get_db_type;
-	my $sd = $self->species_defs;
-	my $external_db_det = $sd->databases->{$db_type}{'external_dbs'};
+	my $external_db_det = $self->get_external_db_names;
 
 	my $e;
 	foreach my $trans (@{$obj->get_all_Transcripts()}) {
@@ -130,8 +135,8 @@ sub add_evidence_links {
 	foreach my $hit_name (sort keys %$ids) {
 		my $db_name = $ids->{$hit_name};
 		my $display = $self->get_ExtURL_link( $hit_name, $db_name, $hit_name );
-		warn $display;
-		push @{$links}, $display;
+#		warn $display;
+		push @{$links}, [$display,$hit_name];
 	}
 	return $links;
 }
