@@ -617,7 +617,7 @@ sub add_das_tracks {
   my @das_sources = ();
 
   my $image_width = $config->get('_settings', 'width') || 900;
- # warn "Adding das sources";
+
   foreach my $source ( @{$EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted( $object->species )} ) {
     my $config_key = 'managed_extdas_'.$source->get_key ;
     next unless $config->get( $config_key ,'on' ) eq 'on';
@@ -720,6 +720,7 @@ sub add_das_tracks {
       } else {
         $object->database('core')->add_DASFeatureFactory( Bio::EnsEMBL::ExternalData::DAS::DAS->new( $adaptor ) );
       }
+    }
     }
   }
   $config->{'_managers'}{'das'} = \@das_sources;
