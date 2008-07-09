@@ -548,8 +548,15 @@ sub parse_and_store_alignment_into_proteintree
   }
 
   $tree->store_tag('alignment_method', 'Muscle');
-  my $runtime = floor(time()*1000-$self->{'muscle_starttime'});  
+  my $runtime = floor(time()*1000-$self->{'muscle_starttime'});
   $tree->store_tag('MUSCLE_runtime_msec', $runtime);
+
+  # Fetch the alignment and calculate the percent identity
+  my $sa = $tree->get_SimpleAlign;
+  my $avg_pi = $sa->average_percentage_identity;
+  $tree->store_tag('MUSCLE_avg_percent_identity', sprintf("%.3f",$avg_pi));
+  # Also store alignment length
+  $tree->store_tag('MUSCLE_alignment_length', $sa->length);
 
   return undef;
 }
