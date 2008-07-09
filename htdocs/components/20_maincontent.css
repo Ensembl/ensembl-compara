@@ -1,12 +1,14 @@
 #main { margin:0px;padding:0px; border: 0px; position: relative; }
 
 #nav {width:14em;margin:0 0.25em;border:0px;padding:0px;z-index:100; position:absolute; top: 93px; left: 0px}
-#staticmenu {width:12em;margin:0 0.25em;border:0px;padding:0px;z-index:100; position:absolute; top: 10px; left: 0px}
+#staticmenu {width:14em;margin:0 0.25em;border:0px;padding:0px;z-index:100; position:absolute; top: 0px; left: 0px}
 #nav dl, #staticmenu dl {margin: 0 0 0.5em 0; border:1px solid #ccc;padding:0px;background-color:#fff}
 #nav dt, #staticmenu dt {font-weight:bold}
 #nav dd, #staticmenu dd {margin-left:0px; white-space: nowrap}
 #nav dd dl, #staticmenu dd dl {border:0px;padding:0 0 0 14px}
 #nav dd img, #staticmenu dd img {height:14px;width:14px;border:0px;vertical-align:top;padding-right:5px}
+#nav ul {margin: 0 0 0.5em 0; border:1px solid #ccc;padding:0.2em 0 0 1.5em;background-color:#fff}
+#nav ul li { margin-bottom:0; list-style-image:none; color:#933; }
 #nav a, #staticmenu a {color:#369;text-decoration:none;}
 dd._closed dl{display:none}
 

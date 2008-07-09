@@ -31,3 +31,8 @@
             white-space: nowrap; padding: 0px 10px 2px 2px; }
   #mh_lnk a { color: #fff; text-decoration: none }
   #mh_lnk a:hover { color: #c00;}
+
+  #login-status { color: #fff; font-size:0.9em; float: right; text-align: right;
+            white-space: nowrap; padding: 10px 10px 0px 0px; }
+  #login-status a { color: #fff; text-decoration: none }
+  #login-status a:hover { color: #c00;}
