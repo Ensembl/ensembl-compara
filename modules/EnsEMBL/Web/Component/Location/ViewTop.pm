@@ -16,7 +16,6 @@ sub content {
   my $self   = shift;
   my $object = $self->object;
 
-  sleep(3);
   my $scaling = $object->species_defs->ENSEMBL_GENOME_SIZE || 1;
 
   my $threshold = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
