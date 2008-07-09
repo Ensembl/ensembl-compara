@@ -25,7 +25,7 @@ sub render   {
     }
     else {
       $html .= qq(
-      <a href="javascript:control_panel(/UserData/Upload);">Control Panel</a> &nbsp;|&nbsp;
+      <a href="javascript:control_panel('/UserData/Upload');">Control Panel</a> &nbsp;|&nbsp;
       <a href="javascript:control_panel('/Account/Login')">Login</a> / 
       <a href="javascript:control_panel('/Account/Register');">Register</a> &nbsp;|&nbsp;
       );
