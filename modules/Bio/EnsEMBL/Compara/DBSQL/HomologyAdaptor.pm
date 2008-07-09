@@ -241,6 +241,23 @@ sub fetch_by_Member_Member_method_link_type {
   return $self->generic_fetch($constraint, $join);
 }
 
+sub fetch_by_Member_id_Member_id {
+  my ($self, $member_id1, $member_id2) = @_;
+
+  unless ($member_id1 ne $member_id2) {
+    throw("The members should be different");
+  }
+  my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
+
+  my $constraint .= " AND hm1.member_id = " . $member_id1;
+  $constraint .= " AND hm2.member_id = " . $member_id2;
+
+  # See in fetch_by_Member what is this internal variable for
+  $self->{'_this_one_first'} = min($member_id1,$member_id2);
+
+  return $self->generic_fetch($constraint, $join);
+}
+
 
 
 =head2 fetch_all_by_MethodLinkSpeciesSet
@@ -355,6 +372,26 @@ sub fetch_all_by_MethodLinkSpeciesSet_orthology_type {
 
   my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
   $constraint .= " AND h.description=\"$orthology_type\"";
+
+  $self->{'_this_one_first'} = undef; #not relevant
+
+  return $self->generic_fetch($constraint);
+}
+
+
+sub fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype {
+  my ($self, $method_link_species_set, $orthology_type, $subtype) = @_;
+
+  throw ("method_link_species_set arg is required\n")
+    unless ($method_link_species_set);
+  throw ("[$method_link_species_set] must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object\n")
+    unless (UNIVERSAL::isa($method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  throw ("orthology_type arg is required\n")
+    unless ($orthology_type);
+
+  my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
+  $constraint .= " AND h.description=\"$orthology_type\"";
+  $constraint .= " AND h.subtype=\"$subtype\"";
 
   $self->{'_this_one_first'} = undef; #not relevant
 
