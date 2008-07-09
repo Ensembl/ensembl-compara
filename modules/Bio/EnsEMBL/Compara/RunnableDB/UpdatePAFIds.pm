@@ -149,8 +149,18 @@ sub updatepafids {
     my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
     push @tbl_names, $tbl_name;
   }
-
-  my ($first_tbl_name, @rest_tbl_names) = sort @tbl_names;
+  # Find all the max, start from the smallest
+  my $top_max;
+  foreach my $tbl_name (sort @tbl_names) {
+    my $sql = "SELECT MAX(peptide_align_feature_id) as max".
+      " FROM $tbl_name";
+    my $sth = $self->dbc->prepare($sql);
+    $sth->execute();
+    my $first_offset_hash = $sth->fetchrow_hashref;
+    my $first_offset = $first_offset_hash->{max};
+    $top_max->{$first_offset} = $tbl_name;
+  }
+  my ($first_tbl_name, @rest_tbl_names) = map {$top_max->{$_}} sort {$b<=>$a} keys %{$top_max};
   # First offset -- first table remains as it is
   my $sql = "SELECT MAX(peptide_align_feature_id) as max".
             " FROM $first_tbl_name";
@@ -160,15 +170,34 @@ sub updatepafids {
   my $first_offset = $first_offset_hash->{max};
   # Subsequent offsets -- subsequent tables are offsetted
   foreach my $tbl_name (sort @rest_tbl_names) {
-    my $sql = "SELECT MAX(peptide_align_feature_id) as max".
-              " FROM $tbl_name";
+    my $sql = "SELECT MIN(peptide_align_feature_id) as min".
+            " FROM $tbl_name";
     my $sth = $self->dbc->prepare($sql);
     $sth->execute();
+    my $offset_hash = $sth->fetchrow_hashref;
+    my $offset = $offset_hash->{min};
+    if ($offset > 1) {
+      $sql = "SELECT MAX(peptide_align_feature_id) as max".
+              " FROM $tbl_name";
+      $sth = $self->dbc->prepare($sql);
+      $sth->execute();
+      my $second_offset_hash = $sth->fetchrow_hashref;
+      my $second_offset = $second_offset_hash->{max};
+      $first_offset = $second_offset;
+      next;
+    } # Dont reupdate it if done before
+
+    $sql = "SELECT MAX(peptide_align_feature_id) as max".
+              " FROM $tbl_name";
+    $sth = $self->dbc->prepare($sql);
+    $sth->execute();
+
     my $second_offset_hash = $sth->fetchrow_hashref;
     my $second_offset = $second_offset_hash->{max};
     my $sql2 = "UPDATE $tbl_name".
                " SET peptide_align_feature_id=peptide_align_feature_id+$first_offset";
     my $sth2 = $self->dbc->prepare($sql2);
+    print STDERR "Executing [", $sth2->sql, "].\n";
     $sth2->execute();
     $first_offset += $second_offset;
   }
