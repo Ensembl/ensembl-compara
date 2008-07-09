@@ -10,10 +10,9 @@ use EnsEMBL::Web::RegObj;
 
 sub render {
 
-=pod
   my ($class, $request) = @_;
 
-  my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
+  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 
   my @valid_species = $species_defs->valid_species;
   my $species_check;
@@ -23,34 +22,38 @@ sub render {
 
   my %species_info;
   foreach my $species (@valid_species) {
-    my $info = $species_defs->get_config($species, "SPECIES_INFO");
-    $species_info{$species} = $species_defs->get_config($species, "SPECIES_INFO"); 
+    my $info = {};
+    $info->{'common'}     = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
+    $info->{'assembly'}   = $species_defs->get_config($species, "ASSEMBLY_NAME");
+    $info->{'genebuild'}  = $species_defs->get_config($species, "GENEBUILD_DATE");
+    $species_info{$species} = $info;
   }
 
   my %species_description = _setup_species_descriptions(\%species_info);
 
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
   my $html = '';
+
   if ($request && $request eq 'fragment') {
-    $html .= _render_species_list($user, $species_defs, \%species_info, \%species_description); 
+    $html .= _render_species_list(\%species_info, \%species_description); 
   } else {
-    $html .= qq(<div class="white boxed">
-<div id='reorder_species' style='display: none;'>);
-    $html .= _render_ajax_reorder_list($user, $species_defs, \%species_info); 
+    $html .= qq(<div id="reorder_species" style="display: none;">);
+    $html .= _render_ajax_reorder_list(\%species_info); 
     $html .= qq(</div>\n<div id="full_species">);
-    $html .= _render_species_list($user, $species_defs, \%species_info, \%species_description); 
-    $html .= qq(</div>
-</div>);
+    $html .= _render_species_list(\%species_info, \%species_description); 
+    $html .= qq(</div>);
   }
 
   return $html;
-=cut
 
 }
+
 sub _render_species_list {
-  my ($user, $species_defs, $species_info, $description) = @_;
+  my ($species_info, $description) = @_;
   my ($html, $species_name, $species_dir, $id, $group);
+  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
   my @favourites = @{_get_favourites($user, $species_defs, $species_info)};
   my %check_faves;
@@ -59,33 +62,48 @@ sub _render_species_list {
   }
 
   ## output list
-  $html .= "<div id='static_favourite_species'>\n";
-  $html .= "<div class='favourites-species-list'>\n";
-  if ($species_defs->ENSEMBL_LOGINS && $user) {
-    $html .= "<h3>Favourite genomes</h3>";
+  $html .= qq(<div id='static_favourite_species'>
+<h2 class="first">Browse a Genome</h2>
+<p>The Ensembl project produces genome databases
+  for vertebrates and other eukaryotic species, and makes this information
+  freely available online.</p>
+<p>Click on a link below to go to the species' home page.</p>
+
+<div class='favourites-species-list'>
+<p>);
+
+  if ($species_defs->ENSEMBL_LOGINS && $user && scalar(@favourites)) {
+    $html .= qq(<span style="font-size:1.2em;font-weight:bold">Favourite genomes</span>);
   }
   else {
-    $html .= "<h3>Popular genomes</h3>";
+    $html .= qq(<span style="font-size:1.2em;font-weight:bold">Popular genomes</span>);
   }
-  $html .= _render_with_images(\@favourites, $species_defs, $description);
-
-=pod
   if (!$user) {
     if ($species_defs->ENSEMBL_LOGINS) {
-      $html .= '<a href="javascript:login_link()">Log in to customize this list</a>';
+      $html .= qq# (<a href="javascript:control_panel('/Account/Login')">Log in to customize this list</a>)#;
     }
   } else {
     if ($species_defs->ENSEMBL_LOGINS) {
-      $html .= 'You are logged in as '. $user->name .' &middot; <a href="#" onclick="toggle_reorder();">Change favourites</a>';
+      $html .= ' (<a href="#" onclick="toggle_reorder();">Change favourites</a>)';
     }
   }
-=cut 
+  $html .= '</p>';
+  $html .= _render_with_images(\@favourites, $species_defs, $description);
 
   $html .= "</div>\n";
   $html .= "</div>\n";
 
-  $html .= qq(<div id='static_all_species'>
-<form action="#">
+  $html .= qq(<div id='static_all_species'>);
+  $html .= _render_species_dropdown($species_info, $description);
+  $html .= qq(</div>\n);
+  return $html;
+}
+
+sub _render_species_dropdown {
+  my ($species_info, $description) = @_; 
+  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+
+  my $html = qq(<form action="#">
 <h3>All genomes</h3>
 <select name="species"  id="species_dropdown" onchange="dropdown_redirect('species_dropdown');">
   <option value="/">-- Select a species --</option>
@@ -104,7 +122,7 @@ sub _render_species_list {
   }
 
   ## Sort species into desired groups
-  my %phylo_tree;
+  my (%phylo_tree, $species_name);
   foreach $species_name (@all_species) {
     my $group = $species_defs->get_config($species_name, "SPECIES_GROUP");
     if ($group) {
@@ -163,14 +181,15 @@ sub _render_species_list {
 </select>
 </form>
 );
-  
-  $html .= qq(</div>\n);
   return $html;
-}
+
+}  
 
 sub _render_ajax_reorder_list {
-  my ($user, $species_defs, $species_info) = @_;
+  my $species_info = shift;
   my ($html, $species_name, $species_dir, $id);
+  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
   $html .= "For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <a href='#' onClick='toggle_reorder();'>Done</a><br /><br />\n";
 
@@ -195,13 +214,11 @@ sub _render_ajax_reorder_list {
   foreach my $fave (@favourites) {
     delete $sp_to_sort{$fave};
   }
-=pod
   my @sorted_by_common = sort {
                           $species_defs->get_config($a, "SPECIES_COMMON_NAME")
                           cmp
                           $species_defs->get_config($b, "SPECIES_COMMON_NAME")
                           } keys %sp_to_sort;
-=cut
   my @sorted_by_common = keys %sp_to_sort;
   foreach $species_name (@sorted_by_common) {
     $species_dir = $species_name;
@@ -220,6 +237,7 @@ sub _render_ajax_reorder_list {
 sub _setup_species_descriptions {
   my $species_info = shift;
   my %description = ();
+  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 
   my $updated = '<strong class="alert">NEW ASSEMBLY</strong>';
   my ($html, $dropdown);
@@ -227,6 +245,7 @@ sub _setup_species_descriptions {
   while (my ($species, $info) = each (%$species_info)) {
     $html = qq( <span class="small normal">);
     $html .= $info->{'assembly'} if $info->{'assembly'};
+=pod
     if (!$info->{'prev_assembly'}) {
       $dropdown = ' - NEW SPECIES';
     } elsif ($info->{'prev_assembly'} && $info->{'prev_assembly'} ne $info->{'assembly'}) {
@@ -236,6 +255,7 @@ sub _setup_species_descriptions {
     else {
       $dropdown = '';
     }
+=cut
     $html  .= qq(</span>);
     if ($species) {
       $description{$species} = [$html, $dropdown];
@@ -244,7 +264,6 @@ sub _setup_species_descriptions {
 
   return %description;
 }
-
 
 sub _get_favourites {
   ## Returns a list of species as Genus_species strings
