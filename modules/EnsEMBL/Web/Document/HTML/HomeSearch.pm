@@ -11,38 +11,43 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   return shift->SUPER::new(
-    '_home_url' => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_ROOT,
-    '_default'  => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEFAULT_SEARCHCODE,
+    '_home_url' => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_ROOT,
+    '_default'  => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEFAULT_SEARCHCODE,
   );
 }
 
 sub home_url { return $_[0]{'_home_url'};  }
 sub default_search_code { return $_[0]{'_default'}; }
-sub search_url { return $_[0]->home_url.$EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_species.'/Search'; }
+sub search_url { return $_[0]->home_url.$ENSEMBL_WEB_REGISTRY->get_species.'/Search'; }
 
 sub render {
   my $self = shift;
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my $species = $ENV{'ENSEMBL_SPECIES'};
-  (my $bio_name = $species) =~ s/_/ /g; 
+  my $page_species = $ENV{'ENSEMBL_SPECIES'};
+  $page_species = '' if $page_species eq 'common';
+  my $species_name = $species_defs->SPECIES_COMMON_NAME;
+  if ($species_name =~ /\./) {
+    $species_name = '<i>'.$species_name.'</i>'
+  }
   my $html = qq(<div class="center">\n);
 
   $html .= sprintf(qq(<h2>Search %s %s</h2>
 <form action="%s" method="get">
   <input type="hidden" name="site" value="%s" />),
-  $self->default_search_code, $bio_name, $self->search_url, $self->default_search_code
+  $species_defs->ENSEMBL_SITETYPE, $page_species, $self->search_url, $self->default_search_code
 );
 
-  if (!$species) {
+
+  if (!$page_species) {
     $html .= qq(<label for="species">Search</label>: <select name="species">
 <option value="">All species</option>
 <option value="">---</option>
 );
 
     foreach $species (@{$species_defs->ENSEMBL_SPECIES}) {
-      ($bio_name = $species) =~ s/_/ /g;
-      $html .= qq(<option value="$species">$bio_name</option>);
+      my $common_name = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
+      $html .= qq(<option value="$species">$common_name</option>);
     }
 
     $html .= qq(</select>
