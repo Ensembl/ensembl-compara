@@ -32,6 +32,8 @@ sub counts {
   return $counts;
 }
 
+# TODO: rewrite this subroutine to use external-das:SourceParser
+=head
 sub get_ensembl_das {
 ### Returns an array ref of pre-configured DAS servers
   my $self = shift;
@@ -52,6 +54,7 @@ sub get_ensembl_das {
   return  sort keys %known_domains;
 }
 
+# TODO: rewrite this subroutine to use external-das:SourceParser
 sub get_server_dsns {
   my $self = shift;
   if (!$self->param('das_server')) {
@@ -99,13 +102,16 @@ sub get_server_dsns {
     return 'No DSNs found on this DAS server. Please select another server.';
   }
 }
+=cut
 
+# TODO: needed??
+=head
 sub get_das_objects {
 ### replacement for DASCollection Factory code
   my $self = shift;
   my $das_objs = [];
   return $das_objs;
 }
-
+=cut
 
 1;

@@ -14,11 +14,14 @@ __PACKAGE__->add_fields(
   config => 'text',
 );
 
+# TODO: remove?
+=head
 sub get_das_config {
   my ($self) = @_;
   my $dasconfig = EnsEMBL::Web::DASConfig->new;
   $dasconfig->create_from_hash_ref($self->config);
   return $dasconfig;
 }
+=cut
 
 1;
