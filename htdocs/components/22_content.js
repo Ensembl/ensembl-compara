@@ -3,7 +3,7 @@
 /* "Jump to" on species list (home page) */
 
 function dropdown_redirect( id ) {
-  var element = document.getElementById(id);
+  var element = document.getElementById(id);;
   var URL = element.options[element.options.selectedIndex].value;
   document.location = URL;
   return true;
@@ -14,12 +14,12 @@ function dropdown_redirect( id ) {
 var performedSave = 0;
 
 function toggle_reorder() {
-  if (document.getElementById('reorder_species').style.display == 'none') {
-    document.getElementById('reorder_species').style.display = 'block';
-    document.getElementById('full_species').style.display = 'none';
+  if ($('reorder_species').style.display == 'none') {
+    $('reorder_species').style.display = 'block';
+    $('full_species').style.display = 'none';
   } else {
-    document.getElementById('full_species').style.display = 'block';
-    document.getElementById('reorder_species').style.display = 'none';
+    $('full_species').style.display = 'block';
+    $('reorder_species').style.display = 'none';
   }
 }
 
@@ -35,7 +35,7 @@ function update_species(element) {
 }
 
 function saved(response) {
-  document.getElementById('full_species').innerHTML = response.responseText;
+  $('full_species').innerHTML = response.responseText;
   performedSave = 0;
 }
 
@@ -49,5 +49,11 @@ function serialize_fave(element) {
   return queryComponents.join(",");
 }
 
-Sortable.create('species_list', {"onUpdate":update_species, containment:["species_list","favourites_list"], dropOnEmpty:false});
-Sortable.create('favourites_list', {"onUpdate":update_species, containment:["species_list","favourites_list"], dropOnEmpty:false});
+function __init_species_reorder() {
+  if ($('species_list')) {
+    Sortable.create('species_list', {"onUpdate":update_species, containment:["species_list","favourites_list"], dropOnEmpty:false});
+    Sortable.create('favourites_list', {"onUpdate":update_species, containment:["species_list","favourites_list"], dropOnEmpty:false});
+  }
+}
+
+addLoadEvent( __init_species_reorder );
