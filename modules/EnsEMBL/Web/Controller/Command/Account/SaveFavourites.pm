@@ -24,17 +24,16 @@ sub BUILD {
 
 }
 
-sub render_page {
+sub process {
   my $self = shift;
   print "Content-type:text/html\n\n";
-  my $user = $self->filters->user($EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user->id);
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
   my ($species_list) = $user->specieslists;
   $species_list = EnsEMBL::Web::Data::Record::SpeciesList::User->new
     unless $species_list;
     
   $species_list->favourites($self->action->cgi->param('favourites'));
-  $species_list->list($self->action->cgi->param('list'));
   $species_list->user_id($user->id);
   $species_list->save;
 
