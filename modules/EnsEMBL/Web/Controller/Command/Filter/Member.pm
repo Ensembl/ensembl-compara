@@ -29,7 +29,8 @@ sub allow {
 
 sub message {
   my $self = shift;
-  return "You are not a member of this group.";
+  my $group = EnsEMBL::Web::Data::Group->new($self->get_group_id);
+  return 'Access to this page is limited to members of group "'.$group->name.'", and you are not a member of this group. If you think this is incorrect, please contact the group administrator.';
 }
 
 }
