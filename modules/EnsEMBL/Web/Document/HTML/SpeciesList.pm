@@ -307,7 +307,6 @@ sub _get_defaults {
 
 sub _render_with_images {
   my ($species_list, $species_defs, $description) = @_;
-warn "FAVES @$species_list";
 
   my $html .= "<dl class='species-list'>\n";
 
