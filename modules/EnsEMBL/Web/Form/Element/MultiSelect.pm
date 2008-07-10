@@ -42,35 +42,36 @@ sub render {
     my $checked;
 
     foreach my $V ( @{$self->values} ) {
-        $checked = 'no';
-        # check if we want to tick this box
-        foreach my $M ( @{$self->value||[]} ) {
-            if ($M eq $$V{'value'}) {
-                $checked = 'yes';
-                last;
-            }
+      $checked = 'no';
+      # check if we want to tick this box
+      foreach my $M ( @{$self->value||[]} ) {
+        if ($M eq $V->{'value'}) {
+          $checked = 'yes';
+          last;
         }
-        if ($V->{'checked'}) {
-            $checked = 'yes';
-        }
-        $output .= sprintf(qq(
+      }
+      if ($V->{'checked'}) {
+        $checked = 'yes';
+      }
+      $output .= sprintf(qq(
 <input type="checkbox" name="%s" id="%s_%d" value="%s" class="input-checkbox" %s/> %s<br />),
 	          CGI::escapeHTML($self->name), 
             CGI::escapeHTML($self->id), $K, 
 	          CGI::escapeHTML($V->{'value'}),
             $checked eq 'yes' ? ' checked="checked"' : '', 
             CGI::escapeHTML($V->{'name'})
-        );
-        $K++;
+      );
+      $K++;
     }
 
-# To deal with the case when all checkboxes get unselected we intoduce a dummy 
-# hidden field that will force CGI to pass the parameter to our script
+    # To deal with the case when all checkboxes get unselected we intoduce a dummy 
+    # hidden field that will force CGI to pass the parameter to our script
     $output .= sprintf( "    <input id=\"%s_%d\" type=\"hidden\" name=\"%s\" value=\"\" />\n",
             CGI::escapeHTML($self->id), 
 	    $K, 
 	    CGI::escapeHTML($self->name), 
-			);
+			
+    );
 
     return $self->introduction.$output.$self->notes;
   }
