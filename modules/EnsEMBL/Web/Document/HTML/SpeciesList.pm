@@ -41,13 +41,6 @@ sub render {
     $html .= qq(<div id="reorder_species" style="display: none;">);
     $html .= _render_ajax_reorder_list(\%species_info); 
     $html .= qq(</div>\n<div id="full_species">);
-    $html .= qq(
-<div class="float-right alert-box">
-  <h3 class="center"><img src="/i/infoicon.gif" alt="(i)" /> New to Ensembl?</h3>
-  <p>Lorem ipsum audire suscipit abhorreant cum at, tation ancillae delicata ne ius.
-  Iusto nostrum consulatu an eam, id solet civibus vim, sea no dicam nostrud.</p>
-  </div>
-    );
     $html .= _render_species_list(\%species_info, \%species_description); 
     $html .= qq(</div>
 <p>Other pre-build species are available in <a href="http://pre.ensembl.org" rel="external">Ensembl <em>Pre<span class="red">!</span></em> &rarr;</a></p>
@@ -87,6 +80,11 @@ sub _render_species_list {
 <p>Click on a link below to go to the species' home page.</p>
 
 <div class='favourites-species-list'>
+<div class="float-right alert-box">
+  <h3 class="center"><img src="/i/infoicon.gif" alt="(i)" /> New to Ensembl?</h3>
+  <p>Lorem ipsum audire suscipit abhorreant cum at, tation ancillae delicata ne ius.
+  Iusto nostrum consulatu an eam, id solet civibus vim, sea no dicam nostrud.</p>
+  </div>
 <p>);
 
   if ($species_defs->ENSEMBL_LOGINS && $user && scalar(@ok_faves)) {
