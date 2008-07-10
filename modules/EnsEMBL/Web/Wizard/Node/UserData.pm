@@ -186,37 +186,87 @@ sub upload_feedback {
   );
 }
 
+sub check_shareable {
+## Checks if the user actually has any shareable data
+  my $self = shift;
+  my $parameter = {};
+
+  my $upload = $self->object->get_session->get_tmp_data;
+
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user_tracks = 0; ## TO DO!
+  if ($user) {
+  }
+
+  if ($upload || $user_tracks) {
+    $parameter->{'wizard_next'} = 'select_upload';
+  }
+  else {
+    $parameter->{'wizard_next'} = 'no_shareable';
+  }
+  return $parameter; 
+}
+
+sub no_shareable {
+## Feedback page directing user to data upload
+  my $self = shift;
+  $self->title('No Shareable Data');
+
+  $self->add_element('type'=>'Information', 'value'=>'You have no shareable data. Please <a href="/UserData/Upload">upload a file</a> (maximum 5MB) if you wish to share data with colleagues or collaborators.');
+}
+
 sub select_upload {
 ## Node to select which data will be shared
   my $self = shift;
-  $self->title('Share Uploaded Data');
+  $self->title('Share Your Data');
 
-  ## Temporary uploads
+  my @values = ();
+  my ($name, $value);
+
+  ## Temporary data
   my $upload = $self->object->get_session->get_tmp_data;
-  $self->add_element(('type'=>'SubHeader', 'value'=>'Your temporary data'));
   if ($upload && keys %$upload) {
-    $self->add_element(('type'=>'NoEdit', 'label' => 'Species', 'value' => $upload->{'species'}));
-    $self->add_element(('type'=>'NoEdit', 'label' => 'Format', 'value' => $upload->{'format'}));
-    my $file = new EnsEMBL::Web::File::Text($self->object->species_defs);
-    my $file_content= $file->retrieve($upload->{'filename'});
-    my $file_sample = '<pre>'.substr($file_content, 0, 1000).'</pre>';
-    $self->add_element(('type'=>'NoEdit', 'label' => 'Sample of file content', 'value' => $file_sample));
-    $self->add_element(('type'=>'NoEdit', 'label' => 'Assembly', 'value' => $upload->{'assembly'}));
+    $name = 'Unsaved upload: '.$upload->{'format'}.' file for '.$upload->{'species'};
+    $value = 'session_'.$self->object->get_session_id;
+    push @values, {'name' => $name, 'value' => $value};
+  }
+  ## Saved data - TO DO!
+  my @user_records = ();
+  foreach my $record (@user_records) {
+    $name = 'user_';
+    $value = 0;
+    push @values, {'name' => $name, 'value' => $value};
+  }
+  ## If only one record, have the checkbox automatically checked
+  my $autoselect = scalar(@values) == 1 ? [$values[0]->{'value'}] : '';
 
-    ## Also pass unique ID of current tmp data
-    my $track_id = $self->object->get_session->get_tmp_data('');
-    $self->add_element('type' => 'Hidden', 'name' => 'track_id', 'value' => $track_id);
-    $self->add_element('type' => 'Hidden', 'name' => 'track_type', 'value' => 'session');
+  $self->add_element('type' => 'MultiSelect', 'name' => 'share_id', 'value' => $autoselect, 'values' => \@values);
+}
+
+sub check_save {
+## Check to see if the user wants to share any temporary data (which thus needs saving)
+  my $self = shift;
+  my $parameter = {};
+
+  my @shares = ($self->object->param('share_id'));
+  $parameter->{'share_id'} = \@shares;
+  if (grep /^session/, @shares) {
+    $parameter->{'wizard_next'} = 'save_upload';
   }
   else {
-    $self->add_element('type'=>'Information', 'value'=>'You have no shareable data. Please upload a file (maximum 5MB) if you wish to share data with colleagues or collaborators.');
+    $parameter->{'wizard_next'} = 'share_url';
   }
+
 }
 
 sub save_upload {
 ## Save uploaded data to a genus_species_userdata database
   my $self = shift;
   my $parameter = {};
+
+  ## Pass any existing IDs (user can share existing records alongside new data)
+  my @shares = ($self->object->param('share_id'));
+  $parameter->{'share_id'} = \@shares;
 
   my $tmpdata = $self->object->get_session->get_tmp_data;
     
@@ -252,7 +302,8 @@ sub save_upload {
       }
     }
     ## Save share_ids back to session record ready for duplication
-    $self->object->get_session->set_tmp_data('share_ids' => $parameter->{'share_id'});
+    warn "SHARE ID ".$parameter->{'share_id'};
+    $self->object->get_session->set_tmp_data('share_id' => join(',', @{$parameter->{'share_id'}}));
     $self->object->get_session->save_tmp_data;
   }
 
@@ -265,8 +316,9 @@ sub share_url {
   my $self = shift;
   $self->title('Select Data to Share');
 
+  my @passed_ids = ($self->object->param('share_id'));
   my @share_ids;
-  foreach my $id (@{$self->object->param('share_id')}) {
+  foreach my $id (@passed_ids) {
     push @share_ids, "shared_data=$id";
   }
 
@@ -294,7 +346,7 @@ sub _store_user_track {
 
 	  if (my $track_name = $track->{config}->{name}) {
 	    my $logic_name = join ':', $config->{track_type}, $config->{id}, $track_name;
-	    my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species, $object->species_defs );
+	    my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species, $self->object->species_defs );
 	    my $dba = $dbs->get_DBAdaptor('userdata');
 	    my $ud_adaptor  = $dba->get_adaptor( 'Analysis' );
 

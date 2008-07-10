@@ -28,8 +28,8 @@ sub populate_tree {
   $uploaded_menu->append($self->create_node( 'Upload', "Upload Data",
    [], { 'availability' => 1 }
     ));
-  $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Uploaded Data",
-    [], { 'availability' => 1, 'concise' => 'Share Data' }
+  $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Data",
+    [], { 'availability' => 1 }
   ));
   $uploaded_menu->append($self->create_node( 'SaveUpload', "Save to Account",
     [], { 'availability' => 1, 'concise' => 'Save Data' }
@@ -92,12 +92,15 @@ sub share_upload {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
-  my $select  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_upload' ));
-  my $save  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'save_upload'));
+  my $shareable = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'check_shareable', backtrack => 0));
+  my $warning   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'no_shareable' ));
+  my $select    = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_upload' ));
+  my $check     = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'check_save'));
+  my $save      = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'save_upload'));
   my $share  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'share_url' ));
 
   ## SET UP CONNECTION BUTTONS
-  $wizard->add_connection(( from => $select, to => $save));
+  $wizard->add_connection(( from => $select, to => $check));
   $wizard->add_connection(( from => $save,   to => $share));
 }
 
