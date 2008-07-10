@@ -15,6 +15,7 @@ my %Name :ATTR(:set<name> :get<name> :init_arg<name>);
 my %Object :ATTR(:set<object> :get<object> :init_arg<object>);
 my %Elements :ATTR(:set<elements> :get<elements> :init_arg<elements>);
 my %Notes :ATTR(:set<notes> :get<notes>);
+my %Backtrack :ATTR(:set<backtrack> :get<backtrack> :init_arg<backtrack>);
 
 ## Deprecated
 my %TextAbove :ATTR(:set<textabove> :get<textabove>);
@@ -29,6 +30,7 @@ sub BUILD {
   $self->set_type($args->{type});
   $self->set_name($args->{name});
   $self->set_object($args->{object});
+  $self->set_backtrack($args->{backtrack});
   $self->set_elements([]);
 }
 

@@ -46,9 +46,15 @@ sub create_node {
   my $module = $params{module};
   my $name = $params{name};
   my $type = $params{type} || 'page';
+  my $bt = $params{backtrack} || 1;
   if ($module && $name) {
     if (EnsEMBL::Web::Root::dynamic_use(undef, $module)) {
-      my $node = $module->new({ name => $name, type => $type, object => $params{object} });
+      my $node = $module->new({ 
+          name      => $name, 
+          type      => $type, 
+          object    => $params{object},
+          backtrack => $params{backtrack}, 
+      });
       $self->add_node($name, $node);
       return $node;
     }
@@ -187,7 +193,7 @@ sub render_connection_form {
 
   ## Control elements
   my $forward_connection = $self->forward_connection($node);
-  if ($node->name ne $self->get_default_node) {
+  if ($node->name ne $self->get_default_node && $node->get_backtrack) {
     $self->form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back');
   }
   if ($forward_connection) {
