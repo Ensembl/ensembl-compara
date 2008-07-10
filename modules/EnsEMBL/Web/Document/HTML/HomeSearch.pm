@@ -26,7 +26,7 @@ sub render {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $page_species = $ENV{'ENSEMBL_SPECIES'};
   $page_species = '' if $page_species eq 'common';
-  my $species_name = $species_defs->SPECIES_COMMON_NAME;
+  my $species_name = $species_defs->SPECIES_COMMON_NAME if $page_species;
   if ($species_name =~ /\./) {
     $species_name = '<i>'.$species_name.'</i>'
   }
@@ -35,7 +35,7 @@ sub render {
   $html .= sprintf(qq(<h2>Search %s %s</h2>
 <form action="%s" method="get">
   <input type="hidden" name="site" value="%s" />),
-  $species_defs->ENSEMBL_SITETYPE, $page_species, $self->search_url, $self->default_search_code
+  $species_defs->ENSEMBL_SITETYPE, $species_name, $self->search_url, $self->default_search_code
 );
 
 
