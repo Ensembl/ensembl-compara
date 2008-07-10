@@ -1,16 +1,30 @@
+/**
+ zmenu styling... keeping it nice and simple!!
+**/
 .zmenu         { position: absolute; width: 18em; background-color: #eee; margin: 0px; border-collapse: collapse; border: 1px solid #eee; z-index: 200 }
-
 .zmenu th      { font-weight: bold; padding: 2px; margin:0; text-align: right; width: 8em; font-size: 0.8em ; background-color: #eee }
 .zmenu th.caption { width: auto; text-align: left; font-size: 1em }
 .zmenu .close  { float: right; background-color: #ccc; color: #000; height: 1em; width: 1em; cursor: pointer; text-align: center }
 
 .zmenu td      { background-color: #fff; border: 1px solid #eee; margin: 0px; padding: 2px; font-size: 0.8em; padding: 2px }
 .zmenu a       { text-decoration: none; font-weight: bold }
+
+/**
+ redbox      - red box around slice to indicate where in upper slice this slice is!
+ redbox2     - red box in upper slice to indicate where lower slice is.
+ rubberband  - drag region - top and right
+ rubberband2 - drag region - bottom and left
+**/
+
 .redbox2, .rubberband, .rubberband2, .redbox { position:absolute; z-index: 100; opacity: 0.5; filter:alpha(opacity=50);  }
 .redbox2 img, .rubberband2 img, .rubberband img, .redbox img { height: 1px; width: 1px }
 .rubberband  { background-image: url(/i/redants.gif); }
 .rubberband2 { background-image: url(/i/redants2.gif); }
 .redbox      { background-image: url(/i/red.gif); }
 .redbox2     { background-color: red; }
+
+/**
+ as we have to remove the href tags to get IE to work - make the whole of the slice "clickable"...
+**/
 
 .drag_select { cursor: pointer }
