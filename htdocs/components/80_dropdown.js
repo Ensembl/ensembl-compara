@@ -36,3 +36,12 @@
   }
   
   addLoadEvent( __init_ensembl_web_dropdown );
+
+
+function dropdown_redirect( id ) {
+  var element = document.getElementById(id);
+  var URL = element.options[element.options.selectedIndex].value;
+  document.location = URL;
+  return true;
+}
+
