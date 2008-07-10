@@ -3,6 +3,8 @@ package EnsEMBL::Web::DASConfig;
 use strict;
 use Data::Dumper;
 use Time::HiRes qw(time);
+use Bio::EnsEMBL::Utils::Exception qw(warning);
+use base qw(Bio::EnsEMBL::ExternalData::DAS::Source);
 
 our %DAS_DEFAULTS = (
   'LABELFLAG'      => 'u',
@@ -19,62 +21,198 @@ our %DAS_DEFAULTS = (
   'FG_MAX'         => 100,
 );
 
-sub new {
-  my $class   = shift;
-# adaptor was deprecated
-# my $adaptor = shift;
-  my $self = {
-#    '_db'       => $adaptor->{'user_db'},
-#    '_r'        => $adaptor->{'r'},
-    '_data'     => {},
-    '_type'     => 'external',
-    '_altered'  => 0,
-    '_deleted'  => 0
-  };
-
-  bless($self, $class);
+# Create a new SourceConfig using a hash reference for parameters.
+# Can also use an existing Bio::EnsEMBL::ExternalData::DAS::Source or
+# EnsEMBL::Web::DASConfig object.
+# Hash should contain:
+#   url
+#   dsn
+#   coords
+#   logic_name    (optional)
+#   display_label (optional)
+#   description   (optional)
+#   homepage      (optional)
+#   maintainer    (optional)
+#   species       (optional)
+#   active        (optional)
+#   enable        (optional)
+sub new_from_hashref {
+  my ( $class, $hash ) = @_;
+  
+  # Convert old-style type & assembly parameters to single coords
+  while ( defined (my $type = shift @{ $hash->{type}||[] }) ) {
+    $type =~ s/ensembl_location_//;
+    my $version = shift @{ $hash->{assembly}||[] };
+    $hash->{coords} ||= [];
+    push @{ $hash->{coords} }, "$type:$version";
+  }
+  
+  # Create a Bio::EnsEMBL::ExternalData::DAS::Source object to wrap
+  # Valid params: url, dsn, coords, logic_name, display_label, description, homepage, maintainer
+  my %params = map { '-'.uc $_ => $hash->{$_} } keys %{ $hash };
+  my $self   = $class->SUPER::new( %params );
+  
+  $self->species( $ENV{ENSEMBL_SPECIES} );
+  for my $var ( qw( species active enable )  ) {
+    if ( exists $hash->{$var} ) {
+      $self->$var( $hash->{$var} );
+    }
+  }
+  
+  # TODO: process manual stylesheet parameters (e.g. gradients)
+  
+  # TODO: process linkurls???
+  
   return $self;
 }
 
-sub set_internal {
-  my $self = shift;
-  $self->{_type} = 'internal';
+# DAS sources can be added from URL
+# URL will have to be of the following format:
+# /geneview?gene=BRCA2&add_das_source=(url=http://das1:9999/das+dsn=mouse_ko_allele+type=markersymbol+name=MySource+active=1)
+# other parameters also can be specified, but those are optional ..
+#  !!! You have to make sure that the name is unique before calling this function !!!
+# TODO: move this code elsewhere?
+sub new_from_URL {
+  my ( $class, $URL ) = @_;
+  $URL =~ s/[\(|\)]//g;                                # remove ( and |
+  return unless $URL;
+  $URL =~ s/\\ /###/g; # Preserve escaped spaces in source label
+  my @das_keys = split(/\s/, $URL);                    # break on spaces...
+  my %das_data = map { split (/\=/, $_,2) } @das_keys; # split each entry on =
+  
+  unless( exists $das_data{url} && exists $das_data{dsn} && (exists $das_data{type} || exists $das_data{coords}) ) {
+    warning("DAS source ".$das_data{name}." ($URL) has not been added: Missing parameters");
+    next;
+  }
+  
+  # Don't allow external setting of category, ensure default is kept (external)
+  delete $das_data{category};
+  
+  # Expand multi-value parameters
+  $das_data{enable  } = [split /,/, $das_data{enable  }];
+  $das_data{coords  } = [split /,/, $das_data{coords  }];
+  $das_data{type    } = [split /,/, $das_data{type    }]; # deprecated (use coords)
+  $das_data{assembly} = [split /,/, $das_data{assembly}]; # deprecated (use coords)
+  
+  # Restore spaces in the label
+  if ($das_data{label}) {
+    $das_data{label} =~ s/###/ /g ;
+  }
+  
+  # Re-encode link URL
+  if ($das_data{linkurl}) {
+    $das_data{linkurl} =~ s/\$3F/\?/g;
+    $das_data{linkurl} =~ s/\$3A/\:/g;
+    $das_data{linkurl} =~ s/\$23/\#/g;
+    $das_data{linkurl} =~ s/\$26/\&/g;
+  }
+  
+  # TODO: are we still going to have a 'dasconfview'?
+  push @{$das_data{enable}}, $ENV{'ENSEMBL_SCRIPT'} unless $ENV{'ENSEMBL_SCRIPT'} eq 'dasconfview';
+  
+  # TODO: not sure about these, we're handling coordinate systems differently
+  #push @{$das_data{mapping}} , split(/\,/, $das_data{type});
+  #$das_data{conftype} = 'external';
+  #$das_data{type}     = 'mixed'    if scalar @{$das_data{mapping}} > 1;
+
+  my $self = $class->new_from_hashref(\%das_data);
+  return $self;
 }
 
-sub set_external {
-  my $self = shift;
-  $self->{_type} = 'external';
+#================================#
+#  Web-specific get/set methods  #
+#================================#
+
+=head2 species
+
+  Arg [1]    : $species (scalar or arrayref)
+  Description: get/set for the species' supported by the DAS source
+  Returntype : array or arrayref
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+sub species {
+  my ( $self, $species ) = @_;
+  if ( defined $species ) {
+    $self->{'species'} = ref $species ? $species : [ $species ];
+  }
+  return wantarray ? @{ $self->{'species'} } : $self->{'species'};
 }
 
-sub touch_key {
-  my $self = shift;
-  $self->{'_data'}{'name'} .= '::'. $self->unique_string;
+=head2 active
+
+  Arg [1]    : $is_active (scalar)
+  Description: get/set for whether the source is turned on (true/false)
+  Returntype : scalar
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+sub active {
+  my ( $self, $is_active ) = @_;
+  if ( defined $is_active ) {
+    $self->{'active'} = $is_active;
+  }
+  return $self->{'active'};
 }
 
-sub get_key {
-  my $self = shift;
-  return $self->{'_data'}{'name'};
+=head2 enable
+
+  Arg [1]    : $enabled_on (arrayref)
+  Description: get/set for the views the source is available on (arrayref)
+  Returntype : arrayref
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+sub enable {
+  my ( $self, $enabled_on ) = @_;
+  if ( defined $enabled_on ) {
+    $self->{'enable'} = $enabled_on;
+  }
+  return $self->{'enable'};
 }
 
-sub unique_string {
-  my $self = shift;
-  return join '*', $self->{'_data'}{'url'}, $self->{'_data'}{'dsn'}, $self->{'_data'}{'types'};
+=head2 category
+
+  Arg [1]    : $category (scalar)
+  Description: get/set for the data category (menu location) of the source
+  Returntype : scalar
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+sub category {
+  my ( $self, $category ) = @_;
+  if ( defined $category ) {
+    $self->{'category'} = $category;
+  }
+  return $self->{'category'};
 }
 
-sub get_name {
+sub is_session {
   my $self = shift;
-  return $self->{'_data'}{'name'};
+  return $self->category || '' eq 'session';
 }
 
-sub get_data {
+sub is_user {
   my $self = shift;
-  return $self->{'_data'};
+  return $self->category || '' eq 'user';
 }
 
-sub set_data {
-  my( $self , $data ) = @_;
-  $self->{'_data'} = $data;
+sub is_external {
+  my $self = shift;
+  return $self->is_session || $self->is_user ? 1 : 0;
 }
+
+#================================#
+#   Audit/modification methods   #
+#================================#
 
 sub is_deleted {
   my $self = shift;
@@ -99,160 +237,14 @@ sub mark_altered {
 }
 
 sub is_altered {
-### a
-### Set to one if the configuration has been updated...
   my $self = shift;
   return $self->{'_altered'};
 }
 
-sub delete {
-  my $self = shift;
-  $self->mark_deleted;
-#  $self->set_data();
+sub equals {
+  my ( $self, $cmp ) = @_;
+  return $self->full_url eq $cmp->full_url
+    && join '*', sort @{ $self->coord_systems } eq join '*', sort @{ $cmp->coord_systems };
 }
-
-sub load {
-  my( $self, $hash_ref ) = @_;
-  $self->mark_clean;
-  $self->set_data( $hash_ref );
-}
-
-sub amend {
-  my( $self, $hash_ref ) = @_;
-  return if $self->is_deleted; ## Can't amend a deleted source!
-  $self->mark_altered;
-  $self->set_data( $hash_ref );
-#  $self->dump();
-}
-
-sub dump {
-  my ($self) = @_;
-  print STDERR Dumper($self);
-}
-
-# DAS sources can be added from URL
-# URL will have to be of the following format:
-# /geneview?gene=BRCA2&add_das_source=(url=http://das1:9999/das+dsn=mouse_ko_allele+type=markersymbol+name=MySource+active=1)
-# other parameters also can be specified, but those are optional ..
-
-sub create_from_URL {
-  my( $self, $URL ) = @_;
-  $URL =~ s/[\(|\)]//g;                                # remove ( and |
-  return unless $URL;
-  $URL =~ s/\\ /###/g; # Preserve escaped spaces in source label
-  my @das_keys = split(/\s/, $URL);                    # break on spaces...
-  my %das_data = map { split (/\=/, $_,2) } @das_keys; # split each entry on spaces
-  my $das_name = $das_data{name} || $das_data{dsn} || 'NamelessSource';
-
-#  !!! You have to make sure that the name is unique before calling this function !!! 
-
-  unless( exists $das_data{url} && exists $das_data{dsn} && exists $das_data{type}) {
-    warn("WARNING: DAS source $das_name ($URL) has not been added: Missing parameters");
-    next;
-  }
-  $das_data{name} = $das_name;
-
-      # Add to the conf list
-  $das_data{label}      ||= $das_name;
-  $das_data{label} =~ s/###/ /g; # restore the spaces in the label
-  $das_data{caption}    ||= $das_name;
-## Set these to the dafault values....
-  $das_data{stylesheet} ||= $DAS_DEFAULTS{STYLESHEET};
-  $das_data{score}      ||= $DAS_DEFAULTS{SCORE};
-  $das_data{fg_grades}  ||= $DAS_DEFAULTS{FG_GRADES};
-  $das_data{fg_data}    ||= $DAS_DEFAULTS{FG_DATA};
-  $das_data{group}      ||= $DAS_DEFAULTS{GROUP};
-  $das_data{strand}     ||= $DAS_DEFAULTS{STRAND};
-  $das_data{enable}       = [split /,/, $das_data{enable}];
-  $das_data{labelflag}  ||= $DAS_DEFAULTS{LABELFLAG};
-
-  if (my $link_url = $das_data{linkurl}) {
-    $link_url =~ s/\$3F/\?/g;
-    $link_url =~ s/\$3A/\:/g;
-    $link_url =~ s/\$23/\#/g;
-    $link_url =~ s/\$26/\&/g;
-    $das_data{linkurl} = $link_url;
-  }
-  push @{$das_data{enable}}, $ENV{'ENSEMBL_SCRIPT'} unless $ENV{'ENSEMBL_SCRIPT'} eq 'dasconfview';
-  push @{$das_data{mapping}} , split(/\,/, $das_data{type});
-  $das_data{conftype} = 'external';
-  $das_data{type}     = 'mixed'    if scalar @{$das_data{mapping}} > 1;
-
-## Store the configuration back on this object....
-  $self->amend( \%das_data );
-
-#  if( $das_data{active} ) {
-#    $config->set("managed_extdas_$das_name", 'on', 'on', 1);
-#    $das_data{depth}      and $config->set( "managed_extdas_$das_name", "dep", $das_data{depth}, 1);
-#    $das_data{group}      and $config->set( "managed_extdas_$das_name", "group", $das_data{group}, 1);
-#    $das_data{strand}     and $config->set( "managed_extdas_$das_name", "str", $das_data{strand}, 1);
-#    $das_data{stylesheet} and $config->set( "managed_extdas_$das_name", "stylesheet", $das_data{stylesheet}, 1);
-#    $config->set( "managed_extdas_$das_name", "lflag", $das_data{labelflag}, 1);
-#    $config->set( "managed_extdas_$das_name", "manager", 'das', 1);
-#    $das_data{color} and $config->set( "managed_extdas_$das_name", "col", $das_data{col}, 1);
-#    $das_data{linktext} and $config->set( "managed_extdas_$das_name", "linktext", $das_data{linktext}, 1);
-#    $das_data{linkurl} and $config->set( "managed_extdas_$das_name", "linkurl", $das_data{linkurl}, 1);
-#  }
-}
-
-sub create_from_hash_ref {
-  my( $self, $hash_ref ) = @_;
-  $self->amend(  $hash_ref );
-}
-
-sub update_from_hash_ref {
-  my( $self, $hash_ref ) = @_;
-  $self->mark_altered;
-  return;
-warn "....";
-  foreach my $key ( keys %$hash_ref ) {
-warn $key;
-    if( ref($self->{'_data'}{$key}) eq 'ARRAY' ) {
-warn "YAR";
-      my @old = sort @{$self->{'_data'}{$key}};
-      my @new = sort @{$hash_ref->{$key}};
-      my $C = 0;
-      foreach my $o (@old) {
-warn "ALTERED.... @old/@new";
-        $self->mark_altered if $o ne $new[$C];
-        $C++;
-      }
-    } else {
-warn "ARG ", $self->{'_data'}{$key},' = ', $hash_ref->{$key};
-      next if $self->{'_data'}{$key} eq $hash_ref->{$key};
-      $self->mark_altered;
-    }
-    $self->{'_data'}{$key} = $hash_ref->{$key}
-  }
-}
-
-=head
-
-sub attach_to_configs {
-  my( $self, %script_config_names ) = @_;
- ) {
-    my %image_configs = %{$script_config->{'_user_config_names'}}
-    foreach my $name ( keys %image_configs ) { 
-      next if $image_configs->{$name} ne 'das'; ## Only deal with dasable configs...
-      if( $script_configs ) 
-## loop through each image_config
-    foreach my $config ( @image_configs ) {
-      next unless $config->is_das_enabled;
-      my $config_key = "managed_extdas_".$self->get_key;
-      $config->set( $config_key, 'on', 'on', 1);
-      $config->set( $config_key, 'dep',        $self->get_data->{'depth'},     1 ) if  $self->get_data->{'depth'};
-      $config->set( $config_key, 'group',      $self->get_data->{'group'},     1 ) if  $self->get_data->{'group'};
-      $config->set( $config_key, 'str',        $self->get_data->{'strand'},    1 ) if  $self->get_data->{'strand'};
-      $config->set( $config_key, 'stylesheet', $self->get_data->{'stylesheet'},1 ) if  $self->get_data->{'stylesheet'};
-      $config->set( $config_key, 'lflag',      $self->get_data->{'labelflag'}, 1 ) if  $self->get_data->{'labeflag'};
-      $config->set( $config_key, 'manager',    'das',                          1 );
-      $config->set( $config_key, 'col',        $self->get_data->{'color'},     1 ) if  $self->get_data->{'color'};
-      $config->set( $config_key, 'linktext',   $self->get_data->{'linktext'},  1 ) if  $self->get_data->{'linktext'};
-      $config->set( $config_key, 'linkurl',    $self->get_data->{'linkurl'},   1 ) if  $self->get_data->{'linkurl'};
-      $config->set( $config_key, 'assembly',    $self->get_data->{'assembly'},   1 ) if  $self->get_data->{'assembly'};
-    }
-  }
-}
-=cut
 
 1;
