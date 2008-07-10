@@ -2,6 +2,7 @@ package EnsEMBL::Web::Configuration;
 
 use strict;
 use EnsEMBL::Web::Document::Panel;
+use EnsEMBL::Web::DASConfig;
 use base qw(EnsEMBL::Web::Root);
 our @ISA = qw(EnsEMBL::Web::Root);
 
@@ -298,11 +299,9 @@ sub update_configs_from_parameter {
     $self->{'object'}->attach_image_config( $self->{'object'}->script, $config_name );
     $self->{'object'}->user_config_hash( $config_name );
   }
-  if( @das ) {
-    $self->{object}->get_session( )->get_das();
-    foreach( @das ) {
-      $self->{object}->get_session( )->add_das_source_from_URL( $_ );
-    }
+  foreach my $URL ( @das ) {
+    my $das = EnsEMBL::Web::DASConfig->new_from_URL( $URL );
+    $self->{object}->get_session( )->add_das( $das );
   }
   return unless $val || $rst;
   if( $wsc ) {
