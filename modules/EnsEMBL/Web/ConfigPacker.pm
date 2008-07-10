@@ -431,12 +431,7 @@ sub _summarise_dasregistry {
     $self->{'_das_parser'} = $parser;
   }
   
-  # !!!TODO!!!: get taxid from tree rather than DB
-  my $dbh = $self->db_connect( 'ENSEMBL_DB' );
-  my $res = $dbh->selectrow_hashref("select meta_value from meta ".
-                                    "where meta_key = 'species.taxonomy_id'");
-  my $taxid = $res->{'meta_value'};
-  # my $taxid = $self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.taxonomy_id'}[0];
+  my $taxid = $self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.taxonomy_id'}[0];
   
   # Parse the registry XML
   my %sources = map {
@@ -449,14 +444,18 @@ sub _summarise_dasregistry {
     defined $cfg || next;
     $self->das_tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}{$key} = $cfg;
     delete $self->tree->{$key}; # remove from tree
+    
+    $cfg->{'logic_name'}      = $key;
+    $cfg->{'display_label'} ||= $cfg->{'label'};
+    
     my $src = $sources{$cfg->{'url'}}{$cfg->{'dsn'}};
     # doesn't have to be in the registry... unfortunately
     if ($src) {
-      $cfg->{'label'}       ||= $src->label;
-      $cfg->{'description'} ||= $src->description;
-      $cfg->{'maintainer'}  ||= $src->maintainer;
-      $cfg->{'homepage'}    ||= $src->homepage;
-      $cfg->{'coords'}      ||= $src->coord_systems;
+      $cfg->{'display_label'} ||= $src->label;
+      $cfg->{'description'}   ||= $src->description;
+      $cfg->{'maintainer'}    ||= $src->maintainer;
+      $cfg->{'homepage'}      ||= $src->homepage;
+      $cfg->{'coords'}        ||= $src->coord_systems;
     }
   }
   delete $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'};
@@ -466,7 +465,7 @@ sub _munge_meta {
   my $self = shift;
 
 #use Data::Dumper;
-#warn Dumper($self->db_details('ENSEMBL_DB')->{'meta_info'});
+#warn $self->species.Dumper($self->db_details('ENSEMBL_DB')->{'meta_info'});
   ## Quick and easy access to species info
   $self->tree->{'SPECIES_COMMON_NAME'} = 
       $self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.ensembl_alias_name'}[0];
