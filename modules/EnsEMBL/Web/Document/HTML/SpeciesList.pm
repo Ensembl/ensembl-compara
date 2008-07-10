@@ -55,12 +55,20 @@ sub _render_species_list {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
-  my @favourites = @{_get_favourites($user, $species_defs, $species_info)};
+  my @favourites = @{_get_favourites($user, $species_info)};
+  if (scalar(@favourites) < 1) {
+    @favourites = @{_get_defaults($species_defs)};
+  }
   my %check_faves;
   foreach my $fave (@favourites) {
     $check_faves{$fave}++;
   }
-
+  my @ok_faves = sort {
+                          $species_defs->get_config($a, "SPECIES_COMMON_NAME")
+                          cmp
+                          $species_defs->get_config($b, "SPECIES_COMMON_NAME")
+                          } keys %check_faves;
+ 
   ## output list
   $html .= qq(<div id='static_favourite_species'>
 <h2 class="first">Browse a Genome</h2>
@@ -72,7 +80,7 @@ sub _render_species_list {
 <div class='favourites-species-list'>
 <p>);
 
-  if ($species_defs->ENSEMBL_LOGINS && $user && scalar(@favourites)) {
+  if ($species_defs->ENSEMBL_LOGINS && $user && scalar(@ok_faves)) {
     $html .= qq(<span style="font-size:1.2em;font-weight:bold">Favourite genomes</span>);
   }
   else {
@@ -88,7 +96,7 @@ sub _render_species_list {
     }
   }
   $html .= '</p>';
-  $html .= _render_with_images(\@favourites, $species_defs, $description);
+  $html .= _render_with_images(\@ok_faves, $species_defs, $description);
 
   $html .= "</div>\n";
   $html .= "</div>\n";
@@ -115,10 +123,12 @@ sub _render_species_dropdown {
   my $labels = $species_defs->TAXON_LABEL;
   my @group_order;
   my %label_check;
-  foreach my $taxon (@{$species_defs->TAXON_ORDER}) {
-    my $label = $labels->{$taxon} || $taxon;
-    push @group_order, $label unless $label_check{$label};
-    $label_check{$label}++;
+  if ($species_defs->TAXON_ORDER) {
+    foreach my $taxon (@{$species_defs->TAXON_ORDER}) {
+      my $label = $labels->{$taxon} || $taxon;
+      push @group_order, $label unless $label_check{$label};
+      $label_check{$label}++;
+    }
   }
 
   ## Sort species into desired groups
@@ -194,21 +204,22 @@ sub _render_ajax_reorder_list {
   $html .= "For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <a href='#' onClick='toggle_reorder();'>Done</a><br /><br />\n";
 
   $html .= "<div id='favourite_species'>\n<b>Favourites</b>";
-  my @favourites = @{_get_favourites($user, $species_defs, $species_info)};
+  my @favourites = @{_get_favourites($user, $species_info)};
+  if (scalar(@favourites) < 1) {
+    @favourites = @{_get_defaults($species_defs)};
+  }
 
   $html .= "<ul id='favourites_list'>\n";
   foreach $species_name (@favourites) {
     $species_dir = $species_name;
-    $id = $species_info->{$species_name}{'id'};
     $species_name =~ s/_/ /;
     my $common = $species_defs->get_config($species_dir, 'SPECIES_COMMON_NAME');
-    $html .= "<li id='favourite_$id'>$common (<em>" .$species_name."</em>)</li>\n" if $id;
+    $html .= "<li id='favourite-$species_dir'>$common (<em>" .$species_name."</em>)</li>\n";
   }
 
   $html .= "</ul></div>\n";
   $html .= "<div id='all_species'>\n<b>Other available species</b>";
   $html .= "<ul id='species_list'>\n";
-
 
   my %sp_to_sort = %$species_info;
   foreach my $fave (@favourites) {
@@ -219,17 +230,15 @@ sub _render_ajax_reorder_list {
                           cmp
                           $species_defs->get_config($b, "SPECIES_COMMON_NAME")
                           } keys %sp_to_sort;
-  my @sorted_by_common = keys %sp_to_sort;
   foreach $species_name (@sorted_by_common) {
     $species_dir = $species_name;
     $species_name =~ s/_/ /;
-    $id = $sp_to_sort{$species_dir}->{'id'};
     my $common = $species_defs->get_config($species_dir, 'SPECIES_COMMON_NAME');
-    $html .= "<li id='species_$id'>$common (<em>" . $species_name . "</em>)</li>\n" if $id;
+    $html .= "<li id='species-$species_dir'>$common (<em>" . $species_name . "</em>)</li>\n";
   }
 
   $html .= "</ul></div>\n";
-  $html .= "<a href='javascript:void(0);' onclick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/User/_reset_favourites'>Restore default list</a>";
+  $html .= "<a href='javascript:void(0);' onclick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/Account/ResetFavourites'>Restore default list</a>";
 
   return $html;
 }
@@ -267,13 +276,7 @@ sub _setup_species_descriptions {
 
 sub _get_favourites {
   ## Returns a list of species as Genus_species strings
-  my ($user, $species_defs, $species_info) = @_;
-
-  my %id_to_species;
-  while (my ($species, $info) = each (%$species_info)) {
-    next unless keys %$info;
-    $id_to_species{$info->{'id'}} = $species if $info->{'id'};
-  }
+  my ($user, $species_info) = @_;
 
   my @specieslists = ();
   if ($user) {
@@ -283,33 +286,36 @@ sub _get_favourites {
 
   if (scalar(@specieslists) > 0 && $specieslists[0]) {
     my $list = $specieslists[0];
-    my @all_favourites = split(/,/, $list->favourites);
+    my @current_favourites = split(/,/, $list->favourites);
     ## Omit any species not currently online
-    foreach my $fave (@all_favourites) {
-      push @favourites, $id_to_species{$fave} if $id_to_species{$fave};
+    foreach my $fave (@current_favourites) {
+      push @favourites, $fave if $species_info->{$fave};
     }
   }
-  else {
-    @favourites = @{$species_defs->DEFAULT_FAVOURITES};
-    if (scalar(@favourites) < 1) {
-      @favourites = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES);
-    }
-  }
-
   return \@favourites;
+}
+
+sub _get_defaults {
+  my $species_defs = shift;
+  my @defaults = ();
+  @defaults = @{$species_defs->DEFAULT_FAVOURITES} if $species_defs->DEFAULT_FAVOURITES;
+  if (scalar(@defaults) < 1) {
+    @defaults = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES);
+  }
+  return \@defaults;
 }
 
 sub _render_with_images {
   my ($species_list, $species_defs, $description) = @_;
+warn "FAVES @$species_list";
 
   my $html .= "<dl class='species-list'>\n";
 
-  foreach my $species_name (@$species_list) {
-    my $species_dir = $species_name || '';
-    my $common_name = $species_defs->get_config($species_dir, "SPECIES_COMMON_NAME") || '';
-    $species_name =~ s/_/ /g;
-    $html .= "<dt class='species-list'><a href='/$species_dir/'><img src='/img/species/thumb_$species_dir.png' alt='$species_name' title='Browse $species_name' class='sp-thumb' height='40' width='40' /></a><a href='/$species_dir/' title='$species_name'>$common_name</a></dt>\n";
-    $html .= "<dd>" . $description->{$species_dir}[0] . "</dd>\n" if $description->{$species_dir}[0];
+  foreach my $species (@$species_list) {
+    my $common_name = $species_defs->get_config($species, "SPECIES_COMMON_NAME") || '';
+    (my $species_name = $species) =~ s/_/ /g;
+    $html .= "<dt class='species-list'><a href='/$species/'><img src='/img/species/thumb_$species.png' alt='$species_name' title='Browse $species_name' class='sp-thumb' height='40' width='40' /></a><a href='/$species/' title='$species_name'>$common_name</a></dt>\n";
+    $html .= "<dd>" . $description->{$species}[0] . "</dd>\n" if $description->{$species}[0];
   }
   $html .= "</dl>\n";
   
