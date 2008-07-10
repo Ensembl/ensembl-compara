@@ -184,7 +184,6 @@ sub store {
   ### Returns: boolean 
   ### Caller: perl.startup, on first (validation) pass of httpd.conf
   my $self = shift;
-  warn "$self->{_filename}";
   die "[CONF]    [FATAL] Could not write to $self->{'_filename'}: $!" unless
     lock_nstore( $CONF->{'_storage'}, $self->{_filename} );
   return 1;
@@ -196,13 +195,9 @@ sub parse {
   ### Returns: boolean
   ### Caller: $self->new when filesystem and memory caches are empty
   my $self  = shift;
-# warn "EWTR -> NEW REGISTRY....";
-  warn "SETTING CONF AS UNDEFINED...";
   $CONF = {};
-  warn "FINISHED SETTING CONF";
   my $reg_conf = EnsEMBL::Web::Tools::Registry->new( $CONF );
 
-#  warn "EWTR -> NOW";
   $self->{_start_time} = time;
   $self->{_last_time } = $self->{_start_time};
   if( ! $SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{_filename} ){
