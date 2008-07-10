@@ -342,7 +342,7 @@ sub render {
   $self->_render_head_and_body_tag;
   #  my $X = $self->{'page_template'};
   my $X = '';
-  $X .= '  <div id="debug"></div>'; 
+  #$X .= '  <div id="debug"></div>'; 
   $X .= '
   <table class="mh">
     <tr>
@@ -358,7 +358,7 @@ sub render {
       </td>
     </tr>
   </table>
-  <table id="global-tabs">
+  <table class="mh" style="margin-bottom:10px">
     <tr>
       <td>[[global_context]]</td>
     </tr>
