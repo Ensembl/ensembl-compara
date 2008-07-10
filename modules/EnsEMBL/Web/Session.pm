@@ -178,6 +178,11 @@ sub storable_data {
   return $return_data; 
 }
 
+# TODO: remove
+=head
+# Gets SourceConfig objects for the sources configured in SpeciesDefs
+# Arguments:  [1] force : if specified, forces re-loading of data from SpeciesDefs
+# Returns:    hash of unique key -> EnsEMBL::Web::DASConfig pairs
 sub get_internal_das {
   my( $self, $force ) = @_;
   return $Internal_das_of{ ident $self } if keys %{ $Internal_das_of{ ident $self } } && ! $force;
@@ -205,6 +210,7 @@ sub get_internal_das {
 ## sources, making these changes should make the re-work to use registry more
 ## useful - as we can add an "add_das_source_from_registry" call as well as
 ## the add_das_source_from_URL and add_das_source_from_hashref
+=cut
 
 sub get_tmp_data {
 ### TMP
@@ -277,87 +283,57 @@ sub set_tmp_data {
   };
 }
 
-sub get_das {
-### DAS
-### Retrieve all externally configured DAS sources
-### An optional "true" value forces the re-retrival of das sources, otherwise
-### retrieved from the session hash...
-  my( $self, $force ) = @_; 
-  ## This is cached so return it unless "Force" is set to load in other stuff
-  return $Das_sources_of{ ident $self } if keys %{ $Das_sources_of{ ident $self } } && ! $force;
-  ## No session so cannot have anything configured!
-  return unless $self->get_session_id;
-  my $data;
-  ## Get all DAS configurations from database!
+# This method gets all configured DAS sources for the current session, i.e. all
+# those either added or modified externally. Returns a hashref, indexed by name.
+# An optional non-zero argument forces re-retrieval of das sources, otherwise
+# these are cached.
+sub get_all_das {
+  my( $self, $force ) = @_;
+  
+  # This is cached so return it unless "Force" is set to load in other stuff
+  if ( !$force && scalar keys %{ $Das_sources_of{ ident $self } } ) {
+    return $Das_sources_of{ ident $self };
+  }
+  
+  # If there is no session, there are no configs
+  if ( !self->get_session_id ) {
+    return undef;
+  }
+  
+  # Retrieve all DAS configurations from the database
   my @configs = EnsEMBL::Web::Data::Session->get_config(
     session_id => $self->get_session_id,
     type       => 'das'
   );
-  my $TEMP;
-  foreach my $config (@configs) {
-    next if exists $Das_sources_of{ ident $self }{ $config->code };
-    $TEMP = $config->data;
-    $TEMP = eval( $TEMP );
-    next unless $TEMP;
-    ## Create new DAS source and load from value in database...
-    my $DAS = EnsEMBL::Web::DASConfig->new;
-    $DAS->load( $TEMP );
-    $Das_sources_of{ ident $self }{$config->code} = $DAS;
+  
+  foreach my $config ( @configs ) {
+    my $data = eval( $config->data );
+    $data || next;
+    # Create new DAS source and load from value in database...
+    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
+    $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
   }
   return $Das_sources_of{ ident $self };
 }
 
-#sub get_das_filtered_and_sorted {
-#  my( $self, $species ) = @_;
-#  my $T = $self->get_das;# "GET DAS...", warn $T;
-#  my @T =  
-#    map  { $_->[1] }
-#    sort { $a->[0] cmp $b->[0] }
-#    map  { [ $_->get_data->{'label'}, $_ ] }
-#    grep { !( exists $_->get_data->{'species'} && $_->get_data->{'species'} ne $self->{'species'} )} 
-#    values %{ $T||{} };
-#  return \@T;
-#}
-
-sub get_das_config {
-### DAS
-### Retrieve an individual externally configured DAS source
-  my( $self, $key )  = @_;
-  return $Das_sources_of{ ident $self }{$key} if exists $Das_sources_of{ ident $self }{$key};
-  my $config = EnsEMBL::Web::Data::Session->get_config(
-    session_id => $self->get_session_id,
-    type       => 'das',
-    code       => $key,
-  );
-  if ($config) {
-    my $TEMP = eval( $config->data );
-    next unless $TEMP;
-    my $DAS = EnsEMBL::Web::DASConfig->new;
-    $DAS->load( $TEMP );
-    $Das_sources_of{ ident $self }{$key} = $DAS;
-  }
-  return $Das_sources_of{ ident $self }{$key};
-}
-
+# Save all session-specific DAS sources back to the database
 sub save_das {
-### DAS
-### Save all externally configured DAS sources back to the database
-  my ($self, $r) = @_;
+  my $self = shift;
   foreach my $source ( values %{$Das_sources_of{ ident $self }} ) {
     next unless $source->is_altered;
-    if( $source->is_deleted ) {
+    if( $source->is_deleted || !source->is_session ) {
       EnsEMBL::Web::Data::Session->reset_config(
         session_id => $self->get_session_id,
         type       => 'das',
-        code       => $source->get_name,
+        code       => $source->logic_name,
       );
     } else {
-      my $d =  Data::Dumper->new( [$source->get_data], [qw($data)] );
+      my $d =  Data::Dumper->new( [$source], [qw($data)] );
       $d->Indent(1);
       EnsEMBL::Web::Data::Session->set_config(
         session_id => $self->get_session_id,
         type       => 'das',
-        code       => $source->get_name,
+        code       => $source->logic_name,
         data       => $d->Dump,
       );
     }
@@ -385,94 +361,50 @@ sub save_tmp_data {
 
 
 # This function will make sure that a das source is attached with a unique name
-# So in case when you try to attach MySource it will return undef if exactly same source is already attached (
-# i.e the same name, url, dsn and type) If it's only the name that is the same then the function will provide a unique name
+# So in case when you try to attach MySource it will return undef if exactly same source is already attached
+# (i.e the same name, url, dsn and coords) If it's only the name that is the same then the function will provide a unique name
 # for the new source , e.g MySource_1
-# NOTE: THhe function would be much simpler if get_das_config worked for internal sources as well ;)
-
-sub get_unique_source_name {
-  my( $self, $hash_ref ) = @_;
-  my $URL = $hash_ref; 
-  $URL =~ s/[\(|\)]//g;
-  my @das_keys = split(/\s/, $URL);                    # break on spaces...
-  my %das_data = map { split (/\=/, $_,2) } @das_keys; # split each entry on spaces
-  my $key = $das_data{'name'};
-
-  my $isrc = $self->get_internal_das();
-  if (exists ($isrc->{$key})) {
-    if (join('*',$isrc->{url}, $isrc->{dsn}, $isrc->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
-      warn("WARNING: DAS source $key has not been added: It is already attached");
-      return;
-    }
-    my $das_name_ori = $key;
-
-    for( my $i = 1; 1; $i++ ){
-      $key = $das_name_ori ."_$i";
-       if (my $esrc = $self->get_das_config($key)) {
-         if (join('*',$esrc->{_data}->{url}, $esrc->{_data}->{dsn}, $esrc->{_data}->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
-           warn("WARNING: DAS source $key has not been added: It is already attached");
-           return;
-         }
-	 next;
-       }
-       return $key;
-    }
-  }
-
-  if (my $esrc = $self->get_das_config($key)) {
-    if (join('*',$esrc->{_data}->{url}, $esrc->{_data}->{dsn}, $esrc->{_data}->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
-      warn("WARNING: DAS source $key has not been added: It is already attached");
-      return;
-    }
-    my $das_name_ori = $key;
-
-    for( my $i = 1; 1; $i++ ){
-      $key = $das_name_ori ."_$i";
-       if (my $esrc = $self->get_das_config($key)) {
-         if (join('*',$esrc->{_data}->{url}, $esrc->{_data}->{dsn}, $esrc->{_data}->{type}) eq join('*', $das_data{url}, $das_data{dsn}, $das_data{type})) {
-           warn("WARNING: DAS source $key has not been added: It is already attached");
-           return;
-         }
-         next;
-       }
-       return $key;
-    }
-  }
-	
-  return $key;
-}
-
-sub add_das_source_from_URL {
-### DAS
-### Create a new DAS source from a configuration hashref
-  my( $self, $hash_ref ) = @_;
+sub _get_unique_source_name {
+  my( $self, $source ) = @_;
   
-  my $uname = $self->get_unique_source_name($hash_ref);
-  return unless $uname;
-  $hash_ref =~ s/name=(\w)+ /name=$uname /;
-
-  my $DAS = EnsEMBL::Web::DASConfig->new;
-  $DAS->create_from_URL( $hash_ref );
-## We have a duplicate so need to do something clever!
-  if( exists $Das_sources_of{ ident $self }{$DAS->get_key} ) {
-    if( $Das_sources_of{ ident $self }{$DAS->get_key}->unique_string ne $DAS->unique_string ) {
-## If not same URL touch the "key"
-      $DAS->touch_key;
+  my $sources = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_all_das;
+  for ( my $i = 0; 1; $i++ ) {
+    my $test_name = $i ? $source->logic_name . "_$i" : $source->logic_name;
+    if ( my $test_source = $sources->{$test_name} ) {
+      if ( $source->equals( $test_source ) ) {
+        return;
+      }
+      next;
     }
-    $DAS->touch_key; ## Lets try again to see if there is duplicate!!
-    $DAS->mark_altered;
+    return $test_name;
   }
-## Attach the DAS source..
-  $Das_sources_of{ ident $self }{ $DAS->get_key } = $DAS;
-  $self->update_configs_for_das( $DAS, qw(contigview geneview cytoview protview) );
+  
 }
 
+# Add a new DAS source within the session
+sub add_das {
+  my ( $self, $das ) = @_;
+  
+  if ( my $new_name = $self->_get_unique_source_name($das) ) {
+    $das->logic_name( $new_name );
+    $das->category  ( 'session' );
+    $das->mark_altered;
+    # Attach the DAS source..
+    $Das_sources_of{ ident $self }{ $new_name } = $das;
+    $self->update_configs_for_das( $das, qw(contigview geneview cytoview protview) );
+  } else {
+    warning("DAS source ".$das->logic_name." has not been added: It is already attached");
+  }
+  
+  return;
+}
+
+# TODO: remove method
+=head
+# Create a new DAS source from a hash_ref
 sub add_das_source_from_hashref {
-### DAS
-### Create a new DAS source from a hash_ref
-  my( $self, $hash_ref ) = @_;
-  my $DAS = EnsEMBL::Web::DASConfig->new;
-  $DAS->create_from_hash_ref( $hash_ref );
+  my ( $self, $hash_ref ) = @_;
+  my $DAS = EnsEMBL::Web::DASConfig->new_from_hashref( $hash_ref );
 ## We have a duplicate so need to do something clever!
   if( exists $Das_sources_of{ ident $self }{$DAS->get_key} ) {
 ## If not same URL touch the "key"
@@ -485,21 +417,19 @@ sub add_das_source_from_hashref {
   $Das_sources_of{ ident $self }{ $DAS->get_key } = $DAS;
   $self->update_configs_for_das( $DAS, qw(contigview geneview cytoview protview) );
 }
- 
+=cut
+
+# TODO: rework interface with drawing code
 sub update_configs_for_das {
   my( $self, $DAS, @configs ) = @_;
   my %map = qw(
     enable    enable
-    mapping   mapping
-    group     group
-    strand    str
     labelflag lflag
     depth     dep
     color     col
-    stylesheet stylesheet
   );
-  my $N = $DAS->get_name;
-  my %scripts  = map {($_=>1)} @{$DAS->get_data->{'enable'}||[]};
+  my $N = $DAS->logic_name;
+  my %scripts  = map {($_=>1)} @{$DAS->enable||[]};
   foreach my $sc_name (@configs) {
     my $sc = $self->getScriptConfig( $sc_name, 1 );
     foreach my $ic_name ( keys %{$sc->{'_user_config_names'}} ) {
@@ -510,7 +440,7 @@ sub update_configs_for_das {
         $T->set( "managed_extdas_$N", 'on' ,      'on' , 1);
         $T->set( "managed_extdas_$N", 'manager' , 'das', 1);
         foreach my $K (keys %map) {
-          $T->set( "managed_extdas_$N", $map{$K}, $DAS->get_data->{$K}, 1 );
+          $T->set( "managed_extdas_$N", $map{$K}, $DAS->$K, 1 );
         }
       } elsif( exists( $T->{'user'}->{$ic_name}->{$N} ) ) {
         $T->reset( "managed_extdas_$N" );
@@ -527,14 +457,19 @@ sub update_configs_for_das {
     }
   }
 }
-sub remove_das_source {
-### DAS
-### Remove a DAS source from the configuration 
-  my( $self, $key ) = @_;
-  if( exists $Das_sources_of{ ident $self }{ $key } ) {
-    $Das_sources_of{ ident $self }{ $key }->delete;
+
+# TODO: remove this method (is confusing - just change category to 'user' if want to save to user)
+=head
+# Remove a DAS source from the configuration
+#ÊUsed when moving from session to user
+# If you want to remove completely, mark source as deleted INSTEAD
+sub remove_das {
+  my ( $self, $name ) = @_;
+  if ( exists $Das_sources_of{ ident $self }{ $name } ) {
+    $Das_sources_of{ ident $self }{ $name }->delete;
   }
 }
+=cut
 
 sub deepcopy {
 ### Recursive deep copy of hashrefs/arrayrefs...

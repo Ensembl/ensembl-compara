@@ -24,52 +24,62 @@ my %Species_of        :ATTR( :set<species>  :get<species>  );
 my %Type_of           :ATTR( :set<type>     :get<type>     );
 my %Action_of         :ATTR( :set<action>   :get<action>   );
 
-## DAS functionality - most of this is moved from EnsEMBL::Web::ExternalDAS which
-## will be deprecated - and now stores each source in the database separately
-## currently only works with External DAS sources - not Internally configured DAS
-## sources, making these changes should make the re-work to use registry more
-## useful - as we can add an "add_das_source_from_registry" call as well as
-## the add_das_source_from_URL and add_das_source_from_hashref
-
-sub get_das {
-### DAS
-### Retrieve all externally configured DAS sources
-### An optional "true" value forces the re-retrival of das sources, otherwise
-### retrieved from the session hash...
-  my( $self, $force ) = @_;
-## This is cached so return it unless "Force" is set to load in other stuff
-  return $Das_sources_of{ ident $self } if keys %{ $Das_sources_of{ ident $self } } && ! $force;
-## No session so cannot have anything configured!
-  my $session_das = $self->get_session->get_das;
-
-  if (my $user = $self->get_user) {
-    foreach my $das ($user->dases) {
-      $Das_sources_of{ ident $self }{$das->name} = $das->get_das_config;
-      #warn $Das_sources_of{ ident $self }{$das->name};
-    }
+# This method gets all configured DAS sources for the current species.
+# Source configurations are retrieved first from SpeciesDefs, then additions and
+# modifications are added from the User and Session.
+# Returns a hashref, indexed by name.
+# An optional non-zero argument forces re-retrieval of das sources, otherwise
+# these are cached.
+sub get_all_das {
+  my ( $self, $force ) = @_;
+  
+  # This is cached so return it unless "Force" is set to load in other stuff
+  if ( !$force && scalar keys %{ $Das_sources_of{ ident $self } } ) {
+    return $Das_sources_of{ ident $self };
   }
-
-  foreach (keys %$session_das) {
-    $Das_sources_of{ ident $self }{$_} = $session_das->{$_};
+  
+  my $spec_das = $self->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES || {};
+  my $user_das = $self->get_user    ->dases                        || {};
+  my $sess_das = $self->get_session ->get_all_das                  || {};
+  
+  # Build config objects from the speciesdefs data
+  for my $data ( values %{ $spec_das } ) {
+    $data->{'display_label'} ||= $data->{'label'};
+    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
+    $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
+  }
+  
+  # Override with user data
+  for my $data ( values %{ $user_das } ) {
+    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
+    grep { $_ eq $self->get_species } $das->species || next;
+    $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
+  }
+  
+  # Override with session data
+  for my $das ( values %{ $sess_das } ) {
+    grep { $_ eq $self->get_species } $das->species || next;
+    $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
   }
   
   return $Das_sources_of{ ident $self };
 }
 
+# This method gets a single named DAS source for the current species.
+# The source's configuration is an amalgam of species, user and session data.
+sub get_das_by_logic_name {
+  my ( $self, $name ) = @_;
+  return $self->get_all_das->{ $name };
+}
+
 sub get_das_filtered_and_sorted {
-  my( $self, $species ) = @_;
-  my $T = $self->get_das;# "GET DAS...", warn $T;
-#  warn join "\n","KEYS", keys %{$T||{}},"VALUES",map { join '; ',keys %{$_->get_data||{}} } values %{$T||{}};
-  my @T =
-    map  { $_->[1] }
-    sort { $a->[0] cmp $b->[0] }
-    map  { [ $_->get_data->{'label'}, $_ ] }
-    grep { !( exists $_->get_data->{'species'} && $_->get_data->{'species'} ne $species )}
-    values %{ $T||{} };
-#  foreach my $thing (@T) {
-#   warn "THING: " . $thing->get_data->{name};
-#  }
-  return \@T;
+  my ( $self ) = @_;
+  
+  my @sorted = sort {
+    $a->display_label cmp $b->display_label
+  } values %{ $self->get_all_das };
+
+  return \@sorted;
 }
 
 sub timer {
