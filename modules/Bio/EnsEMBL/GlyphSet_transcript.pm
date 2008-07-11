@@ -45,7 +45,7 @@ sub href { return undef; }
 sub gene_href { return undef; }
 sub zmenu { return undef; }
 sub gene_zmenu { return undef; }
-sub colour { return 'red'; }
+sub colour { return [ 'orange', 'Other' ]; }
 sub gene_colour { my $self = shift; return $self->colour(); } 
 
  
@@ -118,7 +118,7 @@ sub compact_init {
     my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h, 'title' => $self->gene_title( $gene ) });
        $Composite->{'href'} = $self->gene_href( $gene, %highlights );
        $Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
-    my($colour, $label, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
+    my($colour, $label, $hilight) = $self->gene_colour( $gene, $colours, %highlights ) || ( 'orange', 'Other' );
     $used_colours{ $label } = $colour;
     my $Composite2 = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
     foreach my $exon (@exons) {
@@ -404,7 +404,7 @@ sub expanded_init {
       my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h,'title'=>$self->title($transcript,$gene) });
          $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
          $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
-      my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
+      my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights ) || ('orange','Other');
       $used_colours{ $label } = $colour;
       my $coding_start = defined ( $transcript->coding_region_start() ) ? $transcript->coding_region_start :  -1e6;
       my $coding_end   = defined ( $transcript->coding_region_end() )   ? $transcript->coding_region_end :    -1e6;
@@ -736,7 +736,7 @@ sub as_expanded_init {
 	    my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
 	    $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
 	    $Composite->{'zmenu'} = $self->zmenu( $gene, $transcript ) unless $Config->{'_href_only'};
-	    my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
+	    my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights ) || ('orange','Other');
 	    $used_colours{ $label } = $colour; 
 
 	    my $coding_start = defined ( $transcript->coding_region_start() ) ? $transcript->coding_region_start :  -1e6;
@@ -1007,7 +1007,7 @@ sub as_compact_init {
 	my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>$y,'height'=>$h});
 	$Composite->{'href'} = $self->gene_href( $gene, %highlights );
 	$Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
-	my($colour, $label, $hilight) = $self->gene_colour( $gene, $colours, %highlights );
+	my($colour, $label, $hilight) = $self->gene_colour( $gene, $colours, %highlights ) || ('orange','Other');
         $used_colours{ $label } = $colour;
 	my @exons = ();
 # In compact mode we 'collapse' exons showing just the gene structure, i.e overlapping exons/transcripts will be merged

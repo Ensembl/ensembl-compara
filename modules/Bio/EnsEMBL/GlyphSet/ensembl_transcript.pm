@@ -12,7 +12,7 @@ use EnsEMBL::Web::Interface::ZMenu;
 
 sub my_label {
   my $self = shift;
-  return $self->{'config'}->{'_draw_single_Transcript'} || $self->{'config'}->{'geneid'} || "Ensembl trans.";
+  return $self->{'config'}->{'_draw_single_Transcript'} || $self->{'config'}->{'geneid'} || "Ensembl transcripts";
 }
 
 sub colours {
@@ -43,6 +43,7 @@ sub colour {
   my $KEY = $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
   #warn "GENECOL $KEY";
   my $genecol = $colours->{ $KEY };
+  return unless $genecol;
   
   if(exists $highlights{lc($transcript->stable_id)}) {
     return (@$genecol, $colours->{'superhi'});
@@ -57,6 +58,7 @@ sub colour {
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
   my $genecol = $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status };
+  return unless $genecol;
 
   if( $gene->biotype eq 'bacterial_contaminant' ) {
     $genecol = $colours->{'_BACCOM'};
