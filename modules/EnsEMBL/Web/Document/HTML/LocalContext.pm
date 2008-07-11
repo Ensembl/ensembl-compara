@@ -82,7 +82,7 @@ $pad        <dd%s>%s</dd>), $node->key eq $active ? ' class="active"' :'', $name
     } else {
       $self->printf( qq(
 $pad        <dd class="%s">%s
-$pad          <dl>), $node->left <= $active_l && $node->right >= $active_r ? 'open' : 'closed', $name );
+$pad          <dl>), $node->left <= $active_l && $node->right >= $active_r ? 'open' : 'open', $name );
       $pad .= '    ';
     }
     $previous_node = $node;
