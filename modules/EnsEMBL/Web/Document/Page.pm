@@ -358,7 +358,7 @@ sub render {
       </td>
     </tr>
   </table>
-  <table class="mh" style="margin-bottom:10px">
+  <table class="mh">
     <tr>
       <td>[[global_context]]</td>
     </tr>
