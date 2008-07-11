@@ -334,12 +334,14 @@ sub propagate_cache_tags {
   my $self = shift;
   my @tags = (@_, $self->table);
   
-  $ENV{CACHE_TAGS} ||= {};
-  $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}} ||= {};
-
-  foreach my $tag (@tags) {
-    $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}}->{$tag} = 1;
-  }
+  if ($ENV{CACHE_KEY}) {
+    $ENV{CACHE_TAGS} ||= {};
+    $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}} ||= {};
+  
+    foreach my $tag (@tags) {
+      $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}}->{$tag} = 1;
+    }
+  }  
 }
 
 ###################################################################################################
