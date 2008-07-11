@@ -164,7 +164,7 @@ sub add_evidence_links {
     my $db_name = $ids->{$hit_name};
     my $display = $self->get_ExtURL_link( $hit_name, $db_name, $hit_name );
     warn $display;
-    push @{$links}, $display;
+    push @{$links}, [$display,$hit_name];
   }
   return $links;
 }
