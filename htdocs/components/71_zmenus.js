@@ -1,45 +1,71 @@
+/*
+  zmenu global variables...
+  zmenus                <- hash of ids for object "zmenus"
+  zmenus_counter        <- incrementing counter to give each zmenu a unique id
+  zmenus_current_zindex <- attempt to get zmenus to come to fron if clicked again
+                           doesn't seem to set z-index tho' will need to look
+			   at this in more detail
+*/
+
 var zmenus         = {};
 var zmenus_counter = 1;
 var zmenu_current_zindex = 200;
-function _close_zmenu( evt ) {
-  evt.findElement('table').hide();
-}
+
+function _close_zmenu( evt ) { evt.findElement('table').hide(); }
 
 function _show_zmenu( x ) {
-  if( ! zmenus[ x.key ] ) {
+/**
+ Show the zmenu for a given feature - details are stored in the passed
+ parameter hash "x"
+  key   - index into zmenus area which stores details of zmenu (based on key for
+          area in display)
+  title - Title of map area; used to construct temporary menu
+          of form "Type: Value; Type: Value; .... Type: Value"
+  h     - The link for the map area - used to generate the temporary menu; munged to
+          make AJAX call 
+  x     - x location of click
+  y     - y location of click
+**/
+
+// If the zmenu is cached just reload it... [ get id out of zmenus hash ]
+  if( zmenus[ x.key ] ) {
+    $(zmenus[x.key]).show();
+    moveto( $(zmenus[x.key]), x.x, x.y );
+  } else {
     var z_id = 'zmenu_'+(zmenus_counter++);
+// Store the id in the zmenus hash...
     zmenus[ x.key ] = z_id;
     var A = x.title.split("; ");
     var ttl = A.shift();
     if(!ttl) ttl = 'Menu';
     var Q = __zmenu_init( z_id, ttl );
-    var cp = 0;
-    var w  = 0;
-    var s  = 0;
-    var e  = 0;
+    var loc = { cp:0,s:0,e:0 };
     A.each(function(s){
       var T = s.split(': ');
-
       if(T.length > 1 ) {
         __zmenu_add( Q, T[0], T[1] );
+/* If the "entry is Location: chr:start-end then save the start/end and centre point for
+   later... */
 	if( T[0] == 'Location' ) {
           var tmp = T[1].match(/:(-?\d+)-(-?\d+)$/);
-	  if(tmp) {
-            cp = tmp[1]/2+tmp[2]/2;
-	    s  = parseInt(tmp[1]);
-	    e  = parseInt(tmp[2]);
-	  }
+	  if(tmp) loc = { cp: tmp[1]/2+tmp[2]/2, s: parseInt(tmp[1]), e: parseInt(tmp[2]) };
 	}
       } else {
         __zmenu_add( Q, '', T[0] );
       }
     });
     __zmenu_add( Q, 'Link', ttl, x.h );
-    if( cp ) {
-      __zmenu_add( Q, ' ', 'Centre on feature', _new_url_cp( cp, __seq_region_width + 1 ) );
-      __zmenu_add( Q, ' ', 'Zoom to feature',   _new_url( s, e ) );
+    if( window.location.pathname.match(/\/Location/) && loc.cp ) {
+      __zmenu_add( Q, ' ', 'Centre on feature', _new_url_cp( loc.cp, __seq_region.width + 1 ) );
+      __zmenu_add( Q, ' ', 'Zoom to feature',   _new_url(    loc.s,  loc.e                  ) );
     }
     __zmenu_show( Q, x.x, x.y );
+/* Rewrite the href URL to a zmenu URL....
+ A link of the form: https?://{domain}/{species}/{type}/{view}?{params}
+ becomes:            http://{domain}/{species}/Zmenu/{type}?{params}
+ Then call this with AJAX - and replace the "temporary" zmenu content with this;
+ Finally add back in the close zmenu button!
+*/
     var a = x.h.split(/\?/);
     var link_url     = a[0];
     var query_string = a[1];
@@ -52,34 +78,56 @@ function _show_zmenu( x ) {
         __zmenu_close_button(Q);
       }
     });
-  } else {
-    $(zmenus[x.key]).show();
-    moveto( $(zmenus[x.key]), x.x, x.y );
   }
   return;
 }
 
-function _show_zmenu_range( x ) {
-  __zmenu_remove();
-  var Q = __zmenu_init('zmenu_nav','Region: '+x.bp_start+'-'+x.bp_end);
-  __zmenu_add( Q, '', 'Zoom into region', _new_url( x.bp_start, x.bp_end ) );
-  __zmenu_add( Q, '', 'Centre here',      _new_url_cp( (x.bp_start+x.bp_end)/2, __seq_region_width-1 ) );
-  __zmenu_show(Q, x.x, x.y);
-}
+function _new_url_cp( cp, w ) { return _new_url( Math.round(1*cp-w/2), Math.round(1*cp+w/2) ); }
 
-function _new_url_cp( cp, w ) {
-  return _new_url( Math.round(1*cp-w/2), Math.round(1*cp+w/2) );
-}
 function _new_url( s, e ) {
+/** compute new url for location based link link...
+ Firstly remove the r parameter from the URL... then add it back again based on:
+   __seq_region.name, s and e
+*/
   var Z = location.href;
   Z = Z.replace(/#.*$/,'').replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
   Z+= Z.match(/\?/) ? ';' : '?';
-  return Z+"r="+__seq_region_name+':'+s+'-'+e;
+  return Z+"r="+__seq_region.name+':'+s+'-'+e;
+}
+
+function _show_zmenu_range_other( x ) {
+  __zmenu_remove();
+  var Q = __zmenu_init('zmenu_nav','Region: '+x.bp_start+'-'+x.bp_end);
+  __zmenu_add( Q, '', 'Jump to location view',
+    '/'+x.species+'/Location/Summary?r='+x.region+':'+x.bp_start+'-'+x.bp_end 
+  );
+  __zmenu_show(Q, x.x, x.y);
+
+}
+function _show_zmenu_range( x ) {
+/**
+  zmenu for range query takes a parameter hash
+  bp_start - start of range in base pairs
+  bp_end   - end of range in base pairs
+  x        - x-coord of pixel at which mouse released
+  y        - y-coord of pixel at which mouse released
+*/
+  __zmenu_remove();
+  var Q = __zmenu_init('zmenu_nav','Region: '+x.bp_start+'-'+x.bp_end);
+  __zmenu_add( Q, '', 'Zoom into region', _new_url( x.bp_start, x.bp_end ) );
+  __zmenu_add( Q, '', 'Centre here',      _new_url_cp( (x.bp_start+x.bp_end)/2, __seq_region.width-1 ) );
+  __zmenu_show(Q, x.x, x.y);
+}
+
+function _show_zmenu_location_other( x ) {
+  __zmenu_remove();
+  var Q = __zmenu_init( 'zmenu_nav', 'Location: '+Math.floor(x.bp) );
+  __zmenu_show( Q, x.x, x.y );
 }
 
 function _show_zmenu_location( x ) {
   __zmenu_remove();
-  var w  = __seq_region_width-1;
+  var w  = __seq_region.width-1;
   var Q  = __zmenu_init('zmenu_nav', 'Location: '+Math.floor(x.bp) );
   __zmenu_add( Q, '', 'Zoom out x10', _new_url_cp( x.bp, w*10 ) );
   __zmenu_add( Q, '', 'Zoom out x5',  _new_url_cp( x.bp, w*5  ) );

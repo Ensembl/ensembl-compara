@@ -16,8 +16,8 @@
     if( !$(table_id) || $(table_id + '_link') ) return;
 
     var initial_open = $(table_id).getStyle('display') != 'none';
-    var txt_on       = 'hide ' + table_id;
-    var txt_off      = 'show ' + table_id;
+    var txt_on       = 'show ' + table_id;
+    var txt_off      = 'hide ' + table_id;
 
     $(table_id + '_text').appendChild(
       Builder.node( 'div',
