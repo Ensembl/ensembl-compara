@@ -50,8 +50,6 @@ sub _init {
 		#go through each component of the combined hit (ie each supporting_feature)
 		foreach my $block (@{$hit_details->{'data'}}) {
 
-warn Dumper($block);
-
 			my $exon_stable_id = $block->[5]->stable_id;
 
 			my $width = $block->[1]-$block->[0] +1;
