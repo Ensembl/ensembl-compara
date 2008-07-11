@@ -8,7 +8,7 @@ use base qw(EnsEMBL::Web::Component::Transcript);
 use Bio::EnsEMBL::Intron;
 
 use Data::Dumper;
-$Data::Dumper::Maxdepth = 5;
+$Data::Dumper::Maxdepth = 2;
 
 sub _init {
   my $self = shift;
@@ -165,18 +165,23 @@ sub _content {
 	}
 
 	#add info on non_canonical splice site sequences for introns
+	my @canonical_sites = ( ['GT', 'AG'],['GC', 'AG'], ['AT', 'AC'] ); #these are considered canonical
+
 	my $non_con_introns;
-	my $hack_c = 0; #set to zero to tag first intron
+	my $hack_c = 1; #set to zero to tag first intron - used for development to highlight first intron
 	foreach my $i_details (@introns) {
 		my $i = $i_details->[0];
 		my $seq = $i->seq;
 		my $l = length($seq);
 		my $donor_seq = substr($seq,0,2); #5'
-		my $acceptor_seq = $hack_c ? substr($seq,$l-2,2) : 'CC'; #hack for development - sets first intron to have non-canonical splice site
-#		my $acceptor_seq = substr($seq,$l-2,2);
+		my $acceptor_seq = $hack_c ? substr($seq,$l-2,2) : 'CC';
 		$hack_c++;
 		my $e_details = $i_details->[1].':'.$i_details->[2]."($donor_seq:$acceptor_seq)";
-		if ( ($donor_seq ne 'GT') || ($acceptor_seq ne 'AG') ) {
+		my $canonical = 0;
+		foreach my $seqs (@canonical_sites) {
+			$canonical = 1 if ( ($donor_seq eq $seqs->[0]) && ($acceptor_seq eq $seqs->[1]) );
+		}
+		unless ($canonical) {
 			my $is = $i->start - $offset;
 			my $ie = $i->end - $offset;
 			my $munged_start = $is + $object->munge_gaps( 'supporting_evidence_transcript', $is );
@@ -216,8 +221,15 @@ sub _content {
 				}
 			}
 			$last_end = $feature->hend;
-			push @{$t_evidence->{$hit_name}{'data'}},$munged_coords->[0];
+			#reverse the exon order if on the reverse strand
+			if ($transcript->strand == 1) {
+				push @{$t_evidence->{$hit_name}{'data'}},$munged_coords->[0];
+			}
+			else {
+				unshift  @{$t_evidence->{$hit_name}{'data'}},$munged_coords->[0];
+			}
 		}
+		warn Dumper($t_evidence->{$hit_name}{'data'}) if ($evi->hseqname eq 'NM_022405.2');
 	}
 
 	#calculate total length of the hit (used for sorting the display)
@@ -230,7 +242,11 @@ sub _content {
 		}
 		$t_evidence->{$hit_name}{'hit_length'} = $tot_length;
 	}
-	
+#	if ($transcript->strand != 1) {
+#		reverse(@{$t_evidence->{$hit_name}{'data'}});
+#	}
+#	warn Dumper($t_evidence->{$hit_name}{'data'}) if ($evi->hseqname eq 'NM_024848.1')
+
 	$config->{'transcript'}{'transcript_evidence'} = $t_evidence;	
 	
 #	warn Dumper($t_evidence);
@@ -239,7 +255,7 @@ sub _content {
 	my $e_evidence;
 	my $evidence_checks;
 	my %evidence_start_stops;
-	foreach my $exon (@{$exons}) {
+	foreach my $exon (@$exons) {
 	EVI:
 		foreach my $evi (@{$exon->get_all_supporting_features}) {
 			
@@ -358,8 +374,9 @@ sub _content {
                in the transcript or just a single exon. Coordinates returned are those used for drawing.
                Also looks for mismatches between the end of the hit and the end of the exon; takes into account
                the end of the CDS if the evidence is a DnaPepAlignFeature, ie evidence that stops at the end of
-               the CDS is not tagged if it's protein evidence
-  Returntype : Arrayref of arrayref (one per exon) - positions for drawing and also tags for hit/exon boundry mismatches
+               the CDS is not tagged if it's protein evidence. Also looks for 'extra' exons, ie those that are in
+               the parsed cigar string but not in the transcript
+  Returntype : Arrayref of arrayrefs (one per exon) - positions for drawing and also tags for hit/exon boundry mismatches
 
 =cut
 
@@ -370,19 +387,29 @@ sub split_evidence_and_munge_gaps {
 	my $hit_seq_region_start = $hit->start;
 	my $hit_seq_region_end   = $hit->end;
 	my $hit_name = $hit->hseqname;
-#	if ($hit->hseqname eq 'NP_003757.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
+	if ($hit->hseqname eq 'NM_022405.2') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
 
 	my $coords;
+	my $last_end;
 	foreach my $exon (@{$exons}) {
 		my $estart = $exon->start;
 		my $eend   = $exon->end;
 		my $ename  = $exon->stable_id;
-#		if ($hit->hseqname eq 'NP_003757.1') { warn "  exon $ename: - $estart:$eend"; }
+		if ($hit->hseqname eq 'NM_022405.2') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
 #		if ($ename eq 'ENSE00000899040') { warn "HIT = ",$hit->hseqname,": exon $ename:$estart:$eend, hit $hit_seq_region_start:$hit_seq_region_end"; }
 		my @coord;
 
-		#go no further if the exon doesn't cover the hit
-		next if ( ($eend < $hit_seq_region_start) || ($estart > $hit_seq_region_end) );
+		#catch any extra 'exons' that are in a parsed hit
+		my $extra_exon = 0;
+		if ( $last_end && ($last_end < $hit_seq_region_end) && ($estart > $hit_seq_region_end) ) {
+			$extra_exon = $hit;
+			$last_end = $eend;
+		}
+
+		elsif ( ($eend < $hit_seq_region_start) || ($estart > $hit_seq_region_end) ) {
+			$last_end = $eend;
+			next;
+		}
 
 #		if ($hit->hseqname eq 'NP_003757.1') { warn "  analysing"; }
 
@@ -427,8 +454,7 @@ sub split_evidence_and_munge_gaps {
 		$end -= $offset;
 		my $munged_end = $end + $object->munge_gaps( 'supporting_evidence_transcript', $end );
 
-
-		push @{$coords}, [ $munged_start, $munged_end, $hit, $left_end_mismatch, $right_end_mismatch ];
+		push @{$coords}, [ $munged_start, $munged_end, $hit, $left_end_mismatch, $right_end_mismatch, $exon, $extra_exon ];
 	}
 	return $coords;
 }		
