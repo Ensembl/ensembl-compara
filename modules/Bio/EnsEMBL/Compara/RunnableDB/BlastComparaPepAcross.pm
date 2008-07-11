@@ -222,7 +222,7 @@ sub run {
          -threshold_type => $thr_type,
          -threshold => $thr,
         );
-      $DB::single=1;1;
+
       ## Create the runnable with the previous parser. The filter is not required
       my $runnable = Bio::EnsEMBL::Analysis::Runnable::Blast->new
         (-query     => $query,
