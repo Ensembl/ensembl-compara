@@ -1,6 +1,6 @@
 #main { margin:0px;padding:0px; border: 0px; position: relative; }
 
-#nav {width:14em;margin:0 0.25em;border:0px;padding:0px;z-index:100; position:absolute; top: 80px; left: 0px}
+#nav {width:14em;margin:0 0.25em;border:0px;padding:0px;z-index:100; position:absolute; top: 5px; left: 0px}
 #nav dl {margin: 0 0 0.5em 0; border:1px solid #ccc;padding:0px;background-color:#fff}
 #nav dt {font-weight:bold}
 #nav dd {margin-left:0px; white-space: nowrap}

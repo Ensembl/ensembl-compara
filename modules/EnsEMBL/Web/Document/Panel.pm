@@ -366,7 +366,7 @@ sub render {
           $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>), $self->{'previous'}{'url'}, $button_text;
         } 
         else {
-          $HTML .= q(&nbsp;);
+          $HTML .= q(<span>&nbsp;</a>); # Do not remove this span it breaks IE7 if only a &nbsp;
         }
         $HTML .= q(</div>
           <div class="right-button">);
@@ -375,7 +375,7 @@ sub render {
           $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>), $self->{'next'}{'url'}, $button_text;
         } 
         else {
-          $HTML .= q(&nbsp;);
+          $HTML .= q(<span>&nbsp;</span>);
         }
         $HTML .= q(</div>);
         if( exists $self->{'caption'} ) {

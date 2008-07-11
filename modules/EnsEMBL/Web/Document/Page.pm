@@ -365,9 +365,7 @@ sub render {
       <td>[[global_context]]</td>
     </tr>
   </table>
-  <table style="width:100%" summary="layout table">
-    <tr>
-      <td>
+  <div style="position: relative">
   ';
   if( $self->include_navigation ) {
     $X .= '
@@ -378,20 +376,15 @@ sub render {
 <!-- Start of real content --> 
       [[content]]
 <!-- End of real content -->
-      </div>
-      </td>
-    </tr>
-    <tr>
-      <td>';
+      </div>';
   if( $self->include_navigation ) {
     $X .= '   <div id="footer">[[copyright]][[footerlinks]]</div>';
   }
   else {
     $X .= '   <div id="wide-footer">[[copyright]][[footerlinks]]</div>';
   }
-  $X .= '   </td>
-    </tr>
-  </table>
+  $X .= '
+  </div>
 [[body_javascript]]';
 
   while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {
