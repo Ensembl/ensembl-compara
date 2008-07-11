@@ -158,7 +158,7 @@ sub render {
 	  $PAR->{'pixelheight'} = $points[1] + $points[5] - 2 * $PAR->{'pixely'};
 	  $glyph = Sanger::Graphics::Glyph::Rect->new($PAR);
 	} else {
-	  $PAR->{'pixelpoints'}  => [ @points ],
+	  $PAR->{'pixelpoints'}  = [ @points ];
 	  $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
 	}
 
