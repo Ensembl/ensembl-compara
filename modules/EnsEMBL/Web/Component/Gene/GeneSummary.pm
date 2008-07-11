@@ -15,7 +15,8 @@ sub _init {
 sub content {
   my $self          = shift;
   my $object        = $self->object;
-  my $html          = '';
+  my $html          = '
+    <dl>';
   my $sp            = $object->species_defs->SPECIES_COMMON_NAME;
   my $species       = $object->species;
   my $gene_id       = $object->stable_id;
@@ -120,7 +121,8 @@ sub content {
 
 
 
- $html .= "</dl>";
+ $html .= '
+   </dl>';
 
  return $html;
 }
