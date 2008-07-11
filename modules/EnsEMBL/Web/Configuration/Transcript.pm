@@ -55,7 +55,8 @@ sub populate_tree {
   my $self = shift;
 
   $self->create_node( 'Summary', "Transcript Summary",
-    [qw(summary EnsEMBL::Web::Component::Transcript::TranscriptSummary)],
+    [qw(image   EnsEMBL::Web::Component::Transcript::TranscriptImage
+        summary EnsEMBL::Web::Component::Transcript::TranscriptSummary)],
     { 'availability' => 1}
   );
 
