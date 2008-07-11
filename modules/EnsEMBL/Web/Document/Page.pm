@@ -369,7 +369,7 @@ sub render {
   ';
   if( $self->include_navigation ) {
     $X .= '
-      <div id="nav">[[local_context]][[local_tools]]</div>
+      <div id="nav">[[local_context]][[local_tools]]<p class="invisible">.</p></div>
       <div id="main">
 <!-- Start of real content --> 
       [[content]]
@@ -387,9 +387,14 @@ sub render {
       </td>
     </tr>
     <tr>
-      <td>
-        <div id="footer">[[copyright]][[footerlinks]]</div>
-      </td>
+      <td>';
+  if( $self->include_navigation ) {
+    $X .= '   <div id="footer">[[copyright]][[footerlinks]]</div>';
+  }
+  else {
+    $X .= '   <div id="wide-footer">[[copyright]][[footerlinks]]</div>';
+  }
+  $X .= '   </td>
     </tr>
   </table>
 [[body_javascript]]';
