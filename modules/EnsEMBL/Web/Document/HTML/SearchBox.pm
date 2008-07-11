@@ -29,17 +29,18 @@ sub render {
   my $i_url = $self->img_url;
   $self->printf( '
         <form action="%s">
-          <input type="hidden" id="se_si" name="site" value="%s" />
-          <table id="se">
+          <table id="se" summary="layout table">
             <tr>
-              <td id="se_but"><img id="se_im" src="%ssearch/%s.gif" alt="" /><img src="%ssearch/down.gif" style="width:7px" alt="" /></td>
-              <td><input id="se_q" type="text" name="q" /></td>
+              <td id="se_but"><img id="se_im" src="%ssearch/%s.gif" alt="" /><input type="hidden" id="se_si" name="site" value="%s" /><img src="%ssearch/down.gif" style="width:7px" alt="" /></td>
+              <td><label class="hidden" for="se_q">Search terms</label><input id="se_q" type="text" name="q" /></td>
               <td id="se_b"><input type="image" src="%ssearch/mag.gif" alt="Search&gt;&gt;" /></td>
             </tr>
           </table>
         </form>',
-    $self->search_url,  $self->default_search_code,
-    $i_url, lc($self->default_search_code), $i_url,
+    $self->search_url,
+    $i_url, lc($self->default_search_code),
+    $self->default_search_code,
+    $i_url, 
     $i_url
   );
 }
