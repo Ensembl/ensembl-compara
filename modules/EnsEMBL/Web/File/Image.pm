@@ -126,7 +126,7 @@ sub render_image_tag {
     $HTML = qq(<p style="text-align:left">The image produced was $width pixels wide, which may be too large for some web browsers to display. If you would like to see the image, please right-click (MAC: Ctrl-click) on the link below and choose the 'Save Image' option from the pop-up menu. Alternatively, try reconfiguring KaryoView, either merging the features into a single track (step 1) or selecting one chromosome at a time (Step 3).</p>
 <p><a href="$url">Image download</a></p>);
   } else {
-    $HTML = sprintf '<img src="%s" alt="%s" title="%s" style="width: %dpx; height: %dpx; %s" %s />',
+    $HTML = sprintf '<img src="%s" alt="%s" title="%s" style="width: %dpx; height: %dpx; %s display: block" %s />',
                        $IF->{'URL'}, $self->{'text'}, $self->{'text'},
                        $width, $height,
                        $self->extraStyle,
@@ -143,7 +143,7 @@ sub render_image_button {
   my ($width, $height) = $self->driver->imgsize($IF->{'file'});
   $self->{'width'}  = $width;
   $self->{'height'} = $height;
-  my $HTML = sprintf '<input style="width: %dpx; height: %dpx;" type="image" name="%s" id="%s" src="%s" alt="%s" title="%s" />', $width, $height, $self->{'name'}, $self->{'id'}||$self->{'name'}, $IF->{'URL'}, $self->{'text'}, $self->{'text'};
+  my $HTML = sprintf '<input style="width: %dpx; height: %dpx; display: block" type="image" name="%s" id="%s" src="%s" alt="%s" title="%s" />', $width, $height, $self->{'name'}, $self->{'id'}||$self->{'name'}, $IF->{'URL'}, $self->{'text'}, $self->{'text'};
   return $HTML;
 } 
 
