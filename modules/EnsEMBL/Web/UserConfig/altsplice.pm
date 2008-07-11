@@ -7,6 +7,7 @@ use vars qw(@ISA);
 sub init {
   my ($self) = @_;
   $self->{'_userdatatype_ID'} = 12;
+  $self->{'image_no_frame'} = 1;
   # $self->{'fakecore'} = 1;
 
   $self->{'_transcript_names_'} = 'yes';
@@ -77,6 +78,8 @@ sub init {
     },
 
   };
+  $self->add_track('draggable','on'=>'on','pos' => 100000,'col'=>'black' );
+
   $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'off', 'compact'     => 0 );
   $self->ADD_ALL_PREDICTIONTRANSCRIPTS( 0, 'on' => 'off', 'compact'     => 0 );
 }

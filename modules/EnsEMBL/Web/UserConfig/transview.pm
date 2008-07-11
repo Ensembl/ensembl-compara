@@ -10,7 +10,9 @@ sub init {
   $self->{'fakecore'} = 1;
   $self->{'_userdatatype_ID'} = 3;
   $self->{'_transcript_names_'} = 'yes';
+  $self->{'no_image_frame'} = 1;
   $self->{'general'}->{'transview'} = {
+
      '_artefacts' => [qw( 
        ruler scalebar
      )],
