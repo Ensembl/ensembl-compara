@@ -104,7 +104,7 @@ sub _init {
 					'title'     => $obj->[2]->stable_id,
 					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
 				});
-				$tag = "@{[$coding_start-1]}:@{[$exon_start]}";
+				$tag = "@{[$coding_start]}:@{[$exon_start]}";
 				push @{$tags}, ["X:$tag",$col1];
 				$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
 				$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
@@ -142,7 +142,7 @@ sub _init {
 					'title'     => $obj->[2]->stable_id,
 					'href'      => $self->href( $transcript, $obj->[2], %highlights ),
 				});
-				$tag = "@{[$coding_end-1]}:@{[$exon_start]}";
+				$tag = "@{[$coding_end]}:@{[$exon_start]}";
 				push @{$tags}, ["X:$tag",$col2];
 				$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
 				$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
@@ -171,7 +171,7 @@ sub _init {
 		else {
 			#otherwise draw a line to represent the intron context
 			my $G = new Sanger::Graphics::Glyph::Line({
-				'x'        => $obj->[0] + 1/$pix_per_bp,
+				'x'        => $obj->[0],
 				'y'        => $h,
 				'h'        =>1,
 				'width'    =>$obj->[1]-$obj->[0]-1/$pix_per_bp,
