@@ -289,7 +289,8 @@ sub dumpGenomicAlignment {
     'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
   );
   my %errors = ();
-  foreach my $db ( keys %dbs) { 
+  my $core_features;
+  foreach my $db ( sort { $b cmp $a } keys %dbs) {
     my $DB_NAME = $dbs{$db};
     foreach my $table ( keys %tables ) {
       my $source = $tables{ $table }[0];
@@ -303,7 +304,7 @@ sub dumpGenomicAlignment {
           group by a.logic_name, t.hit_name"
       );
       $sth->execute();
-      while( my( $logic_name, $label, $hid, $count ) = $sth->fetchrow_array ) { 
+      while( my( $logic_name, $label, $hid, $count ) = $sth->fetchrow_array ) {
         print D join "\t",
           (INC_SPECIES?"$species\t":"")."$type: ".($label||$logic_name),
           $hid,
@@ -323,11 +324,11 @@ sub dumpGenomicAlignment {
 	  while (my ($name, $ln, $desc, $type) = $sth->fetchrow_array ) {
         $ln =~ s/_/ /;
 	    print D join "\t",
-			 (INC_SPECIES?"$species\t":"")."$type: ",
-			 "$ln $name",
-             "",
-			 $name,
-             "Reason: $desc\n";
+		  (INC_SPECIES?"$species\t":"")."$type: ",
+		  "$ln $name",
+          "/$species/featureview?type=UnmappedObject;id=$name;db=$db",
+		  $name,
+          "Reason: $desc\n";
 	  }
     }
   }
@@ -803,7 +804,7 @@ sub geneLine {
       (
         qq(<br />The gene has the following external identifiers mapped to it:<br />).
         ( join '<br />',
-          map { s/Translation:/Protein:/i; $_ }
+          map { s/translation:/protein:/i; $_ }
 		  map { "$_: ".(join ", ", keys %{$external_identifiers->{$_}}) }
           sort { lc($a) cmp lc($b) } keys %$external_identifiers
         )
