@@ -97,7 +97,6 @@ sub handler {
 
     my $renderer = new EnsEMBL::Web::Document::Renderer::String($r);
     my $page     = new EnsEMBL::Web::Document::Static($renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs);
-    $page->include_navigation( $ENV{'SCRIPT_NAME'} =~ /^\/info/ );
     $page->_initialize();
   
     $page->title->set( $pageContent =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: '.$r->uri );
@@ -131,9 +130,9 @@ sub handler {
       $panelContent = qq(<div id="nav">);
       $panelContent .= template_SCRIPT($r, 'EnsEMBL::Web::Document::HTML::DocsMenu');
       $panelContent .= qq(</div>
-      <div id="content">
+      <div id="content"><div class="onecol">
       $html);
-      $panelContent .= qq(\n</div>\n$hr);
+      $panelContent .= qq(\n</div></div>\n$hr);
     }
     else {
       $panelContent = ($html =~ /^\s*<div/) ? "$html\n$hr\n" : qq(\n<div class="onecol">\n$html\n$hr\n</div>\n); 
