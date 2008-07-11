@@ -64,6 +64,7 @@ sub content {
    'g'       => $gene_id
   });
   my $transcripts = $gene->get_all_Transcripts;
+  my $transcript = $object->stable_id;
   my $count = @$transcripts;
   if( $count > 1 ) { 
     $html .= qq(
@@ -71,22 +72,35 @@ sub content {
       <dt>Gene</dt>
       <dd>
         <p id="transcripts_text">This transcript is a product of gene <a href="$gene_url">$gene_id</a> - There are $count transcripts in this gene: </p>
-       <table id="transcripts" style="display:none">);
+       <table id="transcripts" summary="List of transcripts for this gene - along with translation information and type">);
     foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
-      my $url = $object->_url({
-         'type'   => 'Transcript',
-         'action' => 'Summary',
-         't'      => $_->stable_id
-      }); 
+      my $url = $self->object->_url({
+        'type'   => 'Transcript',
+        't'      => $_->stable_id
+      });
+      my $protein = 'No protein product';
+      if( $_->translation ) {
+        $protein = sprintf '<a href="%s">%s</a>',
+          $self->object->_url({
+            'type'   => 'Transcript',
+            'action' => 'Protein',
+            't'      => $_->stable_id
+          }),
+          $_->translation->stable_id ;
+      }
       $html .= sprintf( '
           <tr%s>
-      <th>%s</th>
-      <td><a href="%s">%s</a></td>
-    </tr>',
-  $_->stable_id eq $object->stable_id ? ' class="active"' : '',
+            <th>%s</th>
+            <td><a href="%s">%s</a></td>
+            <td>%s</td>
+            <td>%s</td>
+          </tr>',
+        $_->stable_id eq $transcript ? ' class="active"' : '',
         $_->display_xref ? $_->display_xref->display_id : 'Novel',
         $url,
-        $_->stable_id
+        $_->stable_id,
+        $protein,
+        $_->biotype
       );
     }
     $html .= '
@@ -110,11 +124,10 @@ sub content {
       <dt>Protein</dt>
       <dd>);
   if (my $translation = $object->translation_object) {
-	  my $protein = $translation->stable_id;
-	  $html .= qq(<p id="prot_text">$protein is the protein product of this transcript</p>);
-  } 
-  else {
-	  $html .= qq(<p id="prot_text">This transcript has no translation</p>);
+    my $protein = sprintf ('<a href="%s">%s</a>', $self->object->_url({ 'action' => 'Protein'}), $translation->stable_id );
+    $html .= qq(<p id="prot_text">$protein is the protein product of this transcript</p>);
+  } else {
+    $html .= qq(<p id="prot_text">This transcript has no translation</p>);
   }
   $html .= qq(</dd> </dl>);
 

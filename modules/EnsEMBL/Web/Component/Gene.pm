@@ -5,7 +5,6 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Component::Slice;
-use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
 use EnsEMBL::Web::RegObj;
 
 use EnsEMBL::Web::Form;
@@ -906,7 +905,7 @@ sub get_HGNC_synonyms {
   my ($disp_id_table, $HGNC_table, %syns, %text_info );
   my $disp_syn = 0;
   my $matches = $self->get_database_matches;
-  _sort_similarity_links( $self, @$matches );
+  $self->_sort_similarity_links( @$matches );
   my $links = $self->__data->{'links'}{'PRIMARY_DB_SYNONYM'}||[];
   foreach my $link (@$links){
      my ($key, $text)= @$link;

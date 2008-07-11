@@ -33,10 +33,14 @@ sub content {
   # $wuc->{'_no_label'}   = 'true';
   $wuc->{'_add_labels'} = 'true';
   $wuc->set( '_settings', 'width',  $gene->param('image_width') );
+  $wuc->{'slice_number'} = '1|1';
 
   my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
       $image->imagemap           = 'yes';
       $image->set_extra( $gene );
+      $image->{'panel_number'} = 'top';
+      $image->set_button( 'drag', 'title' => 'Drag to select region' );
+
 
   return $image->render;
 }

@@ -10,7 +10,7 @@ use Data::Dumper;
 sub _init {
 	my $self = shift;
 	$self->cacheable( 0 );
-	$self->ajaxable(  0 );
+	$self->ajaxable(  1 );
 }
 
 sub content {
