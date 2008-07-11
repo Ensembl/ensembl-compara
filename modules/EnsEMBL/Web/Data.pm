@@ -161,10 +161,16 @@ sub get_all_fields {
 
 sub withdraw_data {
   my $self = shift;
-  my $hash = eval ($self->data);
+  my $data = $self->data;
+  $data =~ s/^\$data = //;
+  ##$data =~ s/\n|\r|\f|\\//g;
+  $data = eval ($data);
   foreach my $field (keys %{ $self->data_fields }) {
-    $self->$field($hash->{$field});
+    $self->$field($data->{$field})
+      if $self->can($field) && ref $data;
   }
+  
+  $self->data($data);
 }
 
 
@@ -174,12 +180,14 @@ sub fertilize_data {
   foreach my $field (keys %{ $self->data_fields }) {
     $hash->{$field} = $self->$field;
   }
-  $self->data(dump_data($hash));
+  $self->data($hash);
+  $self->dump_data;
 }
 
 
 sub dump_data {
-  my $data = shift;
+  my $self = shift;
+  my $data = $self->data;
   my $temp_fields = {};
   foreach my $key (keys %{ $data }) {
     $temp_fields->{$key} = $data->{$key};
@@ -190,7 +198,7 @@ sub dump_data {
   my $dump = $dumper->Dump();
   #$dump =~ s/'/\\'/g;
   $dump =~ s/^\$VAR1 = //;
-  return $dump;
+  $self->data($dump);
 }
 
 

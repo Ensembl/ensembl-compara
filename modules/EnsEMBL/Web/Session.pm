@@ -38,6 +38,8 @@ our @ISA = qw(EnsEMBL::Web::Root);
   my %ColourMap_of     :ATTR;
 ## User temporary data...
   my %TmpData_of       :ATTR( :get<tmp> :set<tmp>  );
+## User shared data...
+  my %SharedData_of    :ATTR( :get<shared> :set<sharedp>  );
 
 
 ### New Session object - passed around inside the data object to handle storage of
@@ -141,7 +143,7 @@ sub store {
       session_id => $self->create_session_id($r),
       type       => 'script',
       code       => $storable->{config_key},
-      data       => $storable->{data}->Dump,
+      data       => $storable->{data},
     ) if $storable->{config_key};
   }
   $self->save_das;
@@ -169,14 +171,127 @@ sub storable_data {
       $to_store = 1 if     $image_config->altered;  ## Only store if image config has changed...
       $data->{'image_configs'}{$image_config_key}  = $image_config->get_user_settings();
     }
-    if( $to_store ) {
-      my $d =  Data::Dumper->new( [$data], [qw($data)] );
-         $d->Indent(1);
-      push @{ $return_data }, { config_key => $config_key, data => $d };
-    }
+    push @{ $return_data }, { config_key => $config_key, data => $data }
+      if $to_store;
   }
   return $return_data; 
 }
+
+
+###################################################################################################
+##
+## Tmp data stuff
+##
+###################################################################################################
+
+sub get_tmp_data {
+### TMP
+### Retrieve all temporary data
+  my ($self, $code) = @_; 
+
+  $code ||= 'common';
+
+  ## This is cached so return it unless "force" is set
+  ## return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code};
+
+  ## No session so cannot have anything configured!
+  return unless $self->get_session_id;
+
+  ## Get all TMP data from database!
+  my @entries = EnsEMBL::Web::Data::Session->get_config(
+    session_id => $self->get_session_id,
+    type       => 'tmp',
+  );
+  
+  foreach my $entry (@entries) {
+    $TmpData_of{ ident $self }{$entry->code} = {
+      %{ $TmpData_of{ ident $self }{$entry->code} || {} },
+      %{ $entry->data || {} },
+    };
+  }
+
+  return $TmpData_of{ ident $self }{$code};
+}
+
+sub set_tmp_data {
+### TMP
+### $object->get_session->set_tmp_data( $key => $value, ... ); - which will use 'common' for `code`
+### or $object->get_session->set_tmp_data( $code => { $key => $value, ... } );
+  my $self = shift; 
+  my %args = ref $_[1] ? %{ $_[1] } : @_; 
+  my $code = ref $_[1] ? $_[0] : 'common'; 
+
+  $self->get_tmp_data($code)
+    unless $TmpData_of{ ident $self }{$code};
+
+  $TmpData_of{ ident $self }{$code} = {
+    %{ $TmpData_of{ ident $self }{$code} || {} },
+    %args,
+  };
+}
+
+sub save_tmp_data {
+### TMP Data
+### Save all temporary data back to the database
+  my ($self, $r) = @_;
+  $self->create_session_id($r);
+  
+  while (my ($key, $value) = each %{$TmpData_of{ ident $self }}) {
+      EnsEMBL::Web::Data::Session->set_config(
+        session_id => $self->get_session_id,
+        type       => 'tmp',
+        code       => $key,
+        data       => $value,
+      );    
+  }
+}
+
+
+###################################################################################################
+##
+## Share tmp and other data stuff
+##
+###################################################################################################
+
+## TODO: whar about sharing non-tmp data?
+sub share_tmp_data {
+### Share
+  my ($self, $code) = @_; 
+
+  $code ||= 'common';
+  return unless $self->get_session_id;
+
+  ## Get TMP data from the database
+  my $entry = EnsEMBL::Web::Data::Session->get_config(
+    session_id => $self->get_session_id,
+    type       => 'tmp',
+    code       => $code,
+  );
+
+  my $share = $entry->share if $entry;
+  return $share->data;
+}
+
+sub get_shared_data {
+### Share
+  my ($self, $id, $checksum) = @_; 
+  return unless $self->get_session_id;
+
+  ## TODO: error excemption
+  die "Share violation."
+    unless EnsEMBL::Web::Tools::Encryption::validate_checksum($id, $checksum);
+
+  my $share = EnsEMBL::Web::Data::Session->new($id);
+
+  ## Type??? (e.g. {type}{code} ) ???
+  $SharedData_of{ ident $self }{$share->code} = {
+    %{ $SharedData_of{ ident $self }{$share->code} || {} },
+    $share->data,
+  };
+  
+  return $share->data if $share;
+}
+
 
 # TODO: remove
 =head
@@ -212,77 +327,6 @@ sub get_internal_das {
 ## the add_das_source_from_URL and add_das_source_from_hashref
 =cut
 
-sub get_tmp_data {
-### TMP
-### Retrieve all temporary data
-  my ($self, $code) = @_; 
-
-  $code ||= 'generic';
-
-  ## This is cached so return it unless "force" is set
-  ## return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code};
-
-  ## No session so cannot have anything configured!
-  return unless $self->get_session_id;
-
-  ## Get all TMP data from database!
-  my @entries = EnsEMBL::Web::Data::Session->get_config(
-    session_id => $self->get_session_id,
-    type       => 'tmp',
-  );
-  
-  my $data;
-  my $TEMP;
-  foreach my $entry (@entries) {
-    $TEMP = $entry->data;
-    $TEMP = eval( $TEMP );
-    die "Eval ERROR :$@" if $@;
-  }
-
-  $TmpData_of{ ident $self }{'generic'} = {
-    %{ $TmpData_of{ ident $self }{'generic'} || {} },
-    %{ $data },
-  };
-  
-  return $TmpData_of{ ident $self }{$code};
-}
-
-sub share_tmp_data_ref {
-### TMP
-  my ($self, $code) = @_; 
-
-  $code ||= 'generic';
-  return unless $self->get_session_id;
-
-  ## Get TMP data from the database
-  my $entry = EnsEMBL::Web::Data::Session->get_config(
-    session_id => $self->get_session_id,
-    type       => 'tmp',
-    code       => $code,
-  );
-
-  my $share = $entry->share if $entry;
-  return '000000' . $share->id . '-' . checksum($share->id);
-}
-
-sub set_tmp_data {
-### TMP
-### e.g. $object->get_session->set_tmp_data( $key => $value );
-  my $self = shift; 
-  my %args;
-  my $code;
-  my %args = ref $_[1] ? %{ $_[1] } : @_; 
-  my $code = ref $_[1] ? $_[0] : 'generic'; 
-
-  $self->get_tmp_data($code)
-    unless $TmpData_of{ ident $self }{$code};
-
-  $TmpData_of{ ident $self }{'generic'} = {
-    %{ $TmpData_of{ ident $self }{'generic'} },
-    %args,
-  };
-}
-
 # This method gets all configured DAS sources for the current session, i.e. all
 # those either added or modified externally. Returns a hashref, indexed by name.
 # An optional non-zero argument forces re-retrieval of das sources, otherwise
@@ -306,11 +350,10 @@ sub get_all_das {
     type       => 'das'
   );
   
-  foreach my $config ( @configs ) {
-    my $data = eval( $config->data );
-    $data || next;
+  foreach my $config (@configs) {
+    $config->data || next;
     # Create new DAS source and load from value in database...
-    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
+    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $config->data );
     $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
   }
   return $Das_sources_of{ ident $self };
@@ -328,37 +371,16 @@ sub save_das {
         code       => $source->logic_name,
       );
     } else {
-      my $d =  Data::Dumper->new( [$source], [qw($data)] );
-      $d->Indent(1);
       EnsEMBL::Web::Data::Session->set_config(
         session_id => $self->get_session_id,
         type       => 'das',
         code       => $source->logic_name,
-        data       => $d->Dump,
+        data       => $source,
       );
     }
   }
   
 }
-
-sub save_tmp_data {
-### TMP Data
-### Save all temporary data back to the database
-  my ($self, $r) = @_;
-  $self->create_session_id($r);
-  
-  while (my ($key, $value) = each %{$TmpData_of{ ident $self }}) {
-      my $d =  Data::Dumper->new( [$value], [qw($data)] );
-      $d->Indent(1);
-      EnsEMBL::Web::Data::Session->set_config(
-        session_id => $self->get_session_id,
-        type       => 'tmp',
-        code       => $key,
-        data       => $d->Dump,
-      );    
-  }
-}
-
 
 # This function will make sure that a das source is attached with a unique name
 # So in case when you try to attach MySource it will return undef if exactly same source is already attached
@@ -546,16 +568,9 @@ sub getScriptConfig {
         code       => $script,
       );
 
-      if ($config) {
-        my $TEMP = $config->data;
-        $TEMP =~ s/\n|\r|\f|\\//g;
-        $TEMP = eval($TEMP);
-        if ($TEMP) {
-          $script_config->set_user_settings( $TEMP->{'diffs'} );
-          $image_config_data = $TEMP->{'image_configs'};
-        } else {
-          warn "ERROR: $@" if $@;
-        }
+      if ($config && $config->data) {
+        $script_config->set_user_settings( $config->data->{'diffs'} );
+        $image_config_data = $config->data->{'image_configs'};
       }
     }
     unless( $do_not_pop_from_params ) {

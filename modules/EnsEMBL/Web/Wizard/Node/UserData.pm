@@ -226,8 +226,8 @@ sub select_upload {
   ## Temporary data
   my $upload = $self->object->get_session->get_tmp_data;
   if ($upload && keys %$upload) {
-    $name = 'Unsaved upload: '.$upload->{'format'}.' file for '.$upload->{'species'};
-    $value = 'session_'.$self->object->get_session_id;
+    $name  = 'Unsaved upload: '.$upload->{'format'}.' file for '.$upload->{'species'};
+    $value = 'session_'.$self->object->get_session->get_session_id;
     push @values, {'name' => $name, 'value' => $value};
   }
   ## Saved data - TO DO!
@@ -316,17 +316,15 @@ sub share_url {
   my $self = shift;
   $self->title('Select Data to Share');
 
-  my @passed_ids = ($self->object->param('share_id'));
-  my @share_ids;
-  foreach my $id (@passed_ids) {
-    push @share_ids, "shared_data=$id";
-  }
+  my $share_data  = $self->object->get_session->share_tmp_data;
+  my $share_ref   = '000000'. $share_data->{share_id} .'-'.
+                    EnsEMBL::Web::Tools::Encryption::checksum($share_data->{share_id});
+                    
+  my $url = $self->object->species_defs->ENSEMBL_BASE_URL ."/Location/Karyotype?share_ref=ss-$share_ref";
 
-  my $url = 'http://'.$ENV{'ENSEMBL_SERVERNAME'}.'/Location/Karyotype?'.join(';', @share_ids);
-
-  $self->add_element(('type'=>'Information', 'value' => $self->object->param('feedback')));
-  $self->add_element(('type'=>'Information', 'value' => "To share this data, use the URL $url"));
-  $self->add_element(('type'=>'Information', 'value' => 'Please note that this link will expire after 72 hours.'));
+  $self->add_element('type'=>'Information', 'value' => $self->object->param('feedback'));
+  $self->add_element('type'=>'Information', 'value' => "To share this data, use the URL $url");
+  $self->add_element('type'=>'Information', 'value' => 'Please note that this link will expire after 72 hours.');
 
 }
 

@@ -15,12 +15,13 @@ __PACKAGE__->table('session_record');
 __PACKAGE__->set_primary_key('session_record_id');
 
 __PACKAGE__->add_queriable_fields(
-  session_id  => 'int',
-  type        => 'tinytext',
-  code        => 'tinytext',
-  data        => 'text',
-  created_at  => 'datetime',
-  modified_at => 'datetime',
+  session_id   => 'int',
+  type         => 'tinytext',
+  code         => 'tinytext',
+  data         => 'text',
+  created_at   => 'datetime',
+  modified_at  => 'datetime',
+  valid_thru   => 'datetime', ## Default - 0 = unlimited
 );
 
 __PACKAGE__->add_trigger(
@@ -34,6 +35,15 @@ __PACKAGE__->add_trigger(
                      $_[0]->modified_at(time2iso());
                    }
 );
+
+__PACKAGE__->add_trigger(select => sub {$_[0]->withdraw_data});
+__PACKAGE__->add_trigger(before_create => \&fertilize_data);
+__PACKAGE__->add_trigger(before_update => \&fertilize_data);
+
+sub fertilize_data {
+  my $self = shift;
+  $self->dump_data;
+}
 
 sub set_config {
   my $class = shift;
@@ -86,17 +96,22 @@ sub create_session_id {
   return $session_id;
 }
 
-sub share_ref {
+sub share {
   my $self = shift;
-  ## Encode ID
-  ## Return share ref
-}
+  my %args = @_;
 
-sub receive_ref {
-  my $self = shift;
-  ## Decode ID
-  ## Retrieve share
-  ## Clone data from it
+  my $share = __PACKAGE__->insert({
+     session_id   => $self->create_session_id,
+     type         => $self->type,
+     code         => $self->code,
+     data         => $self->data,
+     valid_thru   => time2iso(time + 60*60*24*3),
+  });
+  
+  $share->data->{share_id} = $share->id;
+  $share->save;
+
+  return $share;
 }
 
 1;
