@@ -39,6 +39,10 @@ sub content {
 	#worting with DNA or PEP ?
 	my $seq_type = $object->determine_sequence_type( $ext_seq );
 
+	my $ext_seq_length = length($ext_seq);
+	my $label = $seq_type eq 'PEP' ? 'aa' : 'bp'; 
+
+
 	my $html;
 
 	#exon alignment (if exon ID is in the URL)
@@ -53,10 +57,11 @@ sub content {
 		}
 		#get exon sequence
 		my $e_sequence  = $object->get_int_seq( $exon, $seq_type, $object->Obj);
+		my $e_length = $exon->length;
 		#get exon alignment
 		my $e_alignment = $object->get_alignment( $ext_seq, $e_sequence, $seq_type );
 		$html .= qq(<div class="content">);
-		$html .= qq(<p>Exon $exon_id aligned with $hit_url ($hit_db_name)</p>);
+		$html .= qq(<p>Exon $exon_id ($e_length bp) aligned with $hit_url ($hit_db_name) ($ext_seq_length $label)</p>);
 		$html .= qq(<p><pre>$e_alignment</pre></p>);
 		$html .= qq(</div>);
 	}
@@ -65,9 +70,10 @@ sub content {
 	my $trans_sequence = $object->get_int_seq( $object->Obj, $seq_type);
 	#get transcript alignment
 	my $trans_alignment =  $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
+	my $trans_length = $object->Obj->length;
 
 	$html .= qq(<div class="content">);
-	$html .= qq(<p>Transcript $tsi aligned with $hit_url ($hit_db_name)</p>);
+	$html .= qq(<p>Transcript $tsi ($trans_length bp) aligned with $hit_url ($hit_db_name) ($ext_seq_length $label)</p>);
 	$html .= qq(<p><pre>$trans_alignment</pre></p>);
 	$html .= qq(</div>);
 	return $html;
