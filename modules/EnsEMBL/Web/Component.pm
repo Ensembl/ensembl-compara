@@ -236,4 +236,27 @@ sub _sort_similarity_links {
 #  return $object->__data->{'similarity_links'};
 }
 
+sub remove_redundant_xrefs {
+  my ($self,@links) = @_;
+  my %priorities;
+  foreach my $link (@links) {
+    my ( $key, $text ) = @$link;
+    if ($text =~ />OTT|>ENST/) {
+      $priorities{$key} = $text;
+    }
+  }
+  foreach my $type (
+    'Transcript having exact match between ENSEMBL and HAVANA',
+    'Ensembl transcript having exact match with Havana',
+    'Havana transcript having same CDS',
+    'Ensembl transcript sharing CDS with Havana',
+    'Havana transcripts') {
+    if ($priorities{$type}) {
+      my @munged_links;
+      $munged_links[0] = [ $type, $priorities{$type} ];
+      return @munged_links;;
+    }
+  }
+  return @links;
+}
 1;
