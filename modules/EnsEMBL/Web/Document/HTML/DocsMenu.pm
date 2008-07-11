@@ -11,9 +11,7 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 sub render {
   my $sd = $ENSEMBL_WEB_REGISTRY->species_defs;
 
-## TO DO - make this dynamic, using web tree!
   my $tree = $sd->STATIC_INFO;
-  warn "SECTIONS: ", join(' ', keys %$tree);
 
   my $html = qq(
 <dl id="local">
