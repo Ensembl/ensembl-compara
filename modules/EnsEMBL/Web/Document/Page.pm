@@ -280,11 +280,11 @@ sub doc_type {
 sub html_line {
   my $self = shift;
   return
-    qq(<html@{[
+    qq(<html @{[
       $self->{'doc_type'} eq 'XHTML' ?
-      qq( xmlns="http://www.w3.org/1999/xhtml" xml:lang="$self->{'language'}" ) :
+      qq(xmlns="http://www.w3.org/1999/xhtml" xml:) :
       ''
-    ]} lang="$self->{'language'}">\n);
+    ]}lang="$self->{'language'}">\n);
 }
 
 sub _init( ) {
@@ -338,20 +338,22 @@ sub render {
     $self->content->render; 
     return;
   }
+  warn "setting content type.... to text/html; charset=utf-8";
+  $self->renderer->{'r'}->content_type( 'text/html; charset=utf-8' );
 
   $self->_render_head_and_body_tag;
   #  my $X = $self->{'page_template'};
   my $X = '';
   #$X .= '  <div id="debug"></div>'; 
   $X .= '
-  <table class="mh">
+  <table class="mh" summary="layout table">
     <tr>
       <td id="mh_lo">[[logo]]</td>
       <td id="mh_search">[[search_box]]
       </td>
     </tr>
   </table>
-  <table class="mh">
+  <table class="mh" summary="layout table">
     <tr>
       <td id="mh_bc">[[breadcrumbs]]</td>
       <td id="mh_lnk">[[tools]]
@@ -363,7 +365,7 @@ sub render {
       <td>[[global_context]]</td>
     </tr>
   </table>
-  <table style="width:100%">
+  <table style="width:100%" summary="layout table">
     <tr>
       <td>
   ';
@@ -495,6 +497,9 @@ sub render_end {
 
 sub _render_head_and_body_tag {
   my( $self ) = shift;
+  if( $self->{doc_type} eq 'XHTML' ) {
+    $self->print( qq(<?xml version="1.0" encoding="utf-8"?>\n) );
+  }
   $self->print( $self->doc_type,$self->html_line,"<head>\n" );
   foreach my $R ( @{$self->{'head_order'}} ) {
     my $attr = $R->[0];
