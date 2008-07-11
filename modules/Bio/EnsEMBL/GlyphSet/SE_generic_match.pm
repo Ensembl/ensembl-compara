@@ -49,6 +49,11 @@ sub _init {
 
 		#go through each component of the combined hit (ie each supporting_feature)
 		foreach my $block (@{$hit_details->{'data'}}) {
+
+warn Dumper($block);
+
+			my $exon_stable_id = $block->[5]->stable_id;
+
 			my $width = $block->[1]-$block->[0] +1;
 			$start_x = $start_x > $block->[0] ? $block->[0] : $start_x;
 			$finish_x = $finish_x < $block->[1] ? $block->[1] : $finish_x;
@@ -72,7 +77,7 @@ sub _init {
 					'colour'    =>'black',
 					'absolutey' => 1,});
 				#add a red attribute if there is a part of the hit missing
-				if (my $mismatch = $block->[5]) {
+				if (my $mismatch = $block->[7]) {
 					$G->{'dotted'} = 1;
 					$G->{'colour'} = 'red';
 					$G->{'title'} = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
