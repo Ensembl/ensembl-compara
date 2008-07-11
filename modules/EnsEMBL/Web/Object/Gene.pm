@@ -6,7 +6,7 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Proxy::Factory;
-use EnsEMBL::Web::Component::Transcript qw(_sort_similarity_links);
+use Time::HiRes qw(time);
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -16,48 +16,72 @@ sub counts {
   my $counts = {};
   $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
   $counts->{'exons'}       = @{$obj->get_all_Exons};
-  $counts->{'orthologs'} = keys %{$self->get_homology_matches('ENSEMBL_ORTHOLOGUES')};
-  $counts->{'paralogs'}  = keys %{$self->get_homology_matches('ENSEMBL_PARALOGUES', 'within_species_paralog')};
-  if ($self->get_all_families) {
-	$counts->{'families'}    = keys %{$self->get_all_families};
+  my $compara_db = $self->database('compara');
+  warn $compara_db;
+  if( $compara_db ) {
+    my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
+    warn $compara_dbh;
+    if( $compara_dbh ) {
+      my %res = map { @$_ } @{$compara_dbh->selectall_arrayref('
+  select ml.type, count(*) as N
+    from member as m, homology_member as hm, homology as h,
+         method_link as ml, method_link_species_set as mlss
+   where m.stable_id = ? and hm.member_id = m.member_id and
+         h.homology_id = hm.homology_id and 
+         mlss.method_link_species_set_id = h.method_link_species_set_id and
+         ml.method_link_id = mlss.method_link_id and
+         ( ml.type = "ENSEMBL_ORTHOLOGUES" or
+           ml.type = "ENSEMBL_PARALOGUES" and
+           h.description = "within_species_paralog" )
+   group by type', {}, $obj->stable_id
+      )};
+      warn keys %res;
+      $counts->{'orthologs'} = $res{'ENSEMBL_ORTHOLOGUES'};
+      $counts->{'paralogs'} = $res{'ENSEMBL_PARALOGUES'};
+      my ($res) = $compara_dbh->selectrow_array(
+        'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
+        {}, $obj->stable_id
+      );
+      $counts->{'families'}    = $res;
+    }
   }
   return $counts;
 }
 
 
 sub count_gene_supporting_evidence {
-	#count all supporting_features and transcript_supporting_features for the gene
-	#- not used in the tree but keep the code just in case we change our minds again!
-	my $self = shift;
-	my $obj = $self->Obj;
-	my $evi_count = 0;
-	my %c;
+  #count all supporting_features and transcript_supporting_features for the gene
+  #- not used in the tree but keep the code just in case we change our minds again!
+  my $self = shift;
+  my $obj = $self->Obj;
+  my $evi_count = 0;
+  my %c;
   #warn $obj->stable_id;
-	foreach my $trans (@{$obj->get_all_Transcripts()}) {
-		#warn $trans->stable_id;
-		foreach my $evi (@{$trans->get_all_supporting_features}) {
-			my $hit_name = $evi->hseqname;
-			$c{$hit_name}++;
-		}
-		foreach my $exon (@{$trans->get_all_Exons()}) {
-			foreach my $evi (@{$exon->get_all_supporting_features}) {
-				my $hit_name = $evi->hseqname;
-				$c{$hit_name}++;
-			}
-		}
-	}
-	return scalar(keys(%c));
+  foreach my $trans (@{$obj->get_all_Transcripts()}) {
+    #warn $trans->stable_id;
+    foreach my $evi (@{$trans->get_all_supporting_features}) {
+      my $hit_name = $evi->hseqname;
+      $c{$hit_name}++;
+    }
+    foreach my $exon (@{$trans->get_all_Exons()}) {
+      foreach my $evi (@{$exon->get_all_supporting_features}) {
+        my $hit_name = $evi->hseqname;
+        $c{$hit_name}++;
+      }
+    }
+  }
+  return scalar(keys(%c));
 }
 
 sub get_db_type{
-	#I'm suprised that I have to do this - would've thought there'd be a generic method
-	my $self = shift;
-	my $db   = $self->get_db;
-	my %db_hash = qw(
-					 core    ENSEMBL_DB
-					 vega    ENSEMBL_VEGA
-				 );
-	return  $db_hash{$db};
+  # I'm suprised that I have to do this - would've thought there'd be a generic method
+  my $self = shift;
+  my $db   = $self->get_db;
+  my %db_hash = qw(
+    core    ENSEMBL_DB
+    vega    ENSEMBL_VEGA
+  );
+  return  $db_hash{$db};
 }
 
 sub get_external_db_names {
@@ -72,73 +96,77 @@ sub get_external_db_names {
 #get supporting evidence for the gene: transcript_supporting_features support the
 #whole transcript or the translation, supporting_features provide depth the the evidence
 sub get_gene_supporting_evidence {
-	my $self = shift;
-	my $obj = $self->Obj;
+  my $self = shift;
+  my $obj = $self->Obj;
 
-	my $external_db_det = $self->get_external_db_names;
+  #species defs contains a summary of the external_db table - can use this to get the dbname
+  #for the evidence although the core team are going to add calls to do this directly
+  my $db_type = $self->get_db_type;
+  my $sd = $self->species_defs;
+  my $external_db_det = $sd->databases->{$db_type}{'external_dbs'};
 
-	my $e;
-	foreach my $trans (@{$obj->get_all_Transcripts()}) {
-		my $tsi = $trans->stable_id;
-		my %t_hits;
-		foreach my $evi (@{$trans->get_all_supporting_features}) {
-			my $name = $evi->hseqname;
-			my $db_name = $external_db_det->{$evi->external_db_id}->{'db_name'};
+  my $e;
+  foreach my $trans (@{$obj->get_all_Transcripts()}) {
+    my $tsi = $trans->stable_id;
+    my %t_hits;
+    foreach my $evi (@{$trans->get_all_supporting_features}) {
+      my $name = $evi->hseqname;
+      my $db_name = $external_db_det->{$evi->external_db_id}->{'db_name'};
 
-			#use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
-			#for protein features give some leeway in matching to transcript - +- 3 bases
-			if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
-				if (   (abs($trans->coding_region_start-$evi->seq_region_start) < 4)
-					|| (abs($trans->coding_region_end-$evi->seq_region_end) < 4)) {
-					$e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
-					$t_hits{$name}++;
-				}
-				else {
-					$e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
-					$t_hits{$name}++;	
-				}
-			}
-			elsif ( $trans->coding_region_start == $evi->seq_region_start
-					 || $trans->coding_region_end == $evi->seq_region_end ) {
-				$e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
-				$t_hits{$name}++;
-			}
-			elsif ( $trans->seq_region_start  == $evi->seq_region_start
-					 || $trans->seq_region_end == $evi->seq_region_end ) {
-				$e->{$tsi}{'evidence'}{'UTR'}{$name} = $db_name;
-				$t_hits{$name}++;
-			}
-			else {
-				$e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
-				$t_hits{$name}++;				
-			}			
-		}
-		$e->{$tsi}{'logic_name'} = $trans->analysis->logic_name;
-		#make a note of the hit_names of the supporting_features
-		foreach my $exon (@{$trans->get_all_Exons()}) {
-			foreach my $evi (@{$exon->get_all_supporting_features}) {
-				my $hit_name = $evi->hseqname;
-				if (! exists($t_hits{$hit_name})) {
-					$e->{$tsi}{'extra_evidence'}{$hit_name}++;
-				}
-			}
-		}
-	}
-	return $e;
+      #use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
+      #for protein features give some leeway in matching to transcript - +- 3 bases
+      if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
+        if (   (abs($trans->coding_region_start-$evi->seq_region_start) < 4)
+          || (abs($trans->coding_region_end-$evi->seq_region_end) < 4)) {
+          $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
+          $t_hits{$name}++;
+        }
+        else {
+          $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
+          $t_hits{$name}++;  
+        }
+      }
+      elsif ( $trans->coding_region_start == $evi->seq_region_start
+           || $trans->coding_region_end == $evi->seq_region_end ) {
+        $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
+        $t_hits{$name}++;
+      }
+      elsif ( $trans->seq_region_start  == $evi->seq_region_start
+           || $trans->seq_region_end == $evi->seq_region_end ) {
+        $e->{$tsi}{'evidence'}{'UTR'}{$name} = $db_name;
+        $t_hits{$name}++;
+      }
+      else {
+        $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
+        $t_hits{$name}++;        
+      }      
+    }
+    $e->{$tsi}{'logic_name'} = $trans->analysis->logic_name;
+    #make a note of the hit_names of the supporting_features
+    foreach my $exon (@{$trans->get_all_Exons()}) {
+      foreach my $evi (@{$exon->get_all_supporting_features}) {
+        my $hit_name = $evi->hseqname;
+        if (! exists($t_hits{$hit_name})) {
+          $e->{$tsi}{'extra_evidence'}{$hit_name}++;
+        }
+      }
+    }
+  }
+  return $e;
 }
 
 #generate URLs for evidence links
 sub add_evidence_links {
-	my $self = shift;
-	my $ids  = shift;
-	my $links = [];
-	foreach my $hit_name (sort keys %$ids) {
-		my $db_name = $ids->{$hit_name};
-		my $display = $self->get_ExtURL_link( $hit_name, $db_name, $hit_name );
-#		warn $display;
-		push @{$links}, [$display,$hit_name];
-	}
-	return $links;
+  my $self = shift;
+  my $ids  = shift;
+  my $links = [];
+  foreach my $hit_name (sort keys %$ids) {
+    my $db_name = $ids->{$hit_name};
+    my $display = $self->get_ExtURL_link( $hit_name, $db_name, $hit_name );
+    warn $display;
+    push @{$links}, $display;
+  }
+  return $links;
 }
 
 sub get_slice_object {
@@ -400,7 +428,7 @@ sub get_homology_matches{
           $homology_list{$displayspp}{$homologue_id}{'display_id'} = $display_id;
           $homology_list{$displayspp}{$homologue_id}{'description'} = $gene_spp->description || 'No description';
           $homology_list{$displayspp}{$homologue_id}{'location'}= $gene_spp->feature_Slice->name;
-		  $homology_list{$displayspp}{$homologue_id}{'chromosome'}= $gene_spp->feature_Slice->seq_region_name;
+      $homology_list{$displayspp}{$homologue_id}{'chromosome'}= $gene_spp->feature_Slice->seq_region_name;
           if( $spp ne $self->{'species'} ) { 
             $database_spp->{'core'}->dbc->disconnect_if_idle();
           }
@@ -578,7 +606,7 @@ sub get_das_features_by_name {
 
     my $key = $url || $dasfact->adaptor->protocol .'://'.$dasfact->adaptor->domain;
     if ($key =~ m!/das$!) {
-	$key .= "/$dsn";
+  $key .= "/$dsn";
     }
     $key .= "/$type";
     unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
@@ -688,24 +716,24 @@ sub store_TransformedTranscripts {
   my $offset = $self->__data->{'slices'}{'transcripts'}->[1]->start -1;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
     my $transcript = $trans_obj->Obj;
-	my ($raw_coding_start,$coding_start);
-	if (defined( $transcript->coding_region_start )) {		
-	  $raw_coding_start = $transcript->coding_region_start;
-	  $raw_coding_start -= $offset;
-	  $coding_start = $raw_coding_start + $self->munge_gaps( 'transcripts', $raw_coding_start );
-	}
-	else {
-	  $coding_start	= undef;
+  my ($raw_coding_start,$coding_start);
+  if (defined( $transcript->coding_region_start )) {    
+    $raw_coding_start = $transcript->coding_region_start;
+    $raw_coding_start -= $offset;
+    $coding_start = $raw_coding_start + $self->munge_gaps( 'transcripts', $raw_coding_start );
+  }
+  else {
+    $coding_start  = undef;
     }
 
-	my ($raw_coding_end,$coding_end);
-	if (defined( $transcript->coding_region_end )) {
-	  $raw_coding_end = $transcript->coding_region_end;
-	  $raw_coding_end -= $offset;
+  my ($raw_coding_end,$coding_end);
+  if (defined( $transcript->coding_region_end )) {
+    $raw_coding_end = $transcript->coding_region_end;
+    $raw_coding_end -= $offset;
       $coding_end = $raw_coding_end   + $self->munge_gaps( 'transcripts', $raw_coding_end );
     }
-	else {
-	  $coding_end = undef;
+  else {
+    $coding_end = undef;
     }
     my $raw_start = $transcript->start;
     my $raw_end   = $transcript->end  ;
@@ -732,12 +760,12 @@ sub store_TransformedSNPS {
     my $snps = {};
     foreach my $S ( @{$self->__data->{'SNPS'}} ) {
       foreach( @{$S->[2]->get_all_TranscriptVariations||[]} ) {
-	next unless  $T eq $_->transcript->stable_id;
-	foreach my $type ( @{ $_->consequence_type || []} ) {
-	  next unless $valids->{'opt_'.lc($type)};
-	  $snps->{ $S->[2]->dbID } = $_;
-	  last;
-	}
+  next unless  $T eq $_->transcript->stable_id;
+  foreach my $type ( @{ $_->consequence_type || []} ) {
+    next unless $valids->{'opt_'.lc($type)};
+    $snps->{ $S->[2]->dbID } = $_;
+    last;
+  }
       }
     }
     $trans_obj->__data->{'transformed'}{'snps'} = $snps;
@@ -788,7 +816,6 @@ sub get_munged_slice {
   ## first get all the transcripts for a given gene...
   my @ANALYSIS = ( $self->get_db() eq 'core' ? (lc($self->species_defs->AUTHORITY)||'ensembl') : 'otter' );
   @ANALYSIS = qw(ensembl havana ensembl_havana_gene) if $ENV{'ENSEMBL_SPECIES'} eq 'Homo_sapiens';
-warn ">>>>> @ANALYSIS <<<<<<";
 # my $features = [map { @{ $slice->get_all_Genes($_)||[]} } @ANALYSIS ];
   my $features = $slice->get_all_Genes( undef, $self->param('opt_db') );
   my @lengths;
@@ -1025,8 +1052,8 @@ sub features {
 
 =head2 vega_projection
 
- Arg[1]	     : EnsEMBL::Web::Proxy::Object
- Arg[2]	     : Alternative assembly name
+ Arg[1]       : EnsEMBL::Web::Proxy::Object
+ Arg[2]       : Alternative assembly name
  Example     : my $v_slices = $object->ensembl_projection($alt_assembly)
  Description : map an object to an alternative (vega) assembly
  Return type : arrayref
@@ -1034,15 +1061,15 @@ sub features {
 =cut
 
 sub vega_projection {
-	my $self = shift;
-	my $alt_assembly = shift;
-	my $alt_projection = $self->Obj->feature_Slice->project('chromosome', $alt_assembly);
-	my @alt_slices = ();
-	foreach my $seg (@{ $alt_projection }) {
-		my $alt_slice = $seg->to_Slice;
-		push @alt_slices, $alt_slice;
-	}
-	return \@alt_slices;
+  my $self = shift;
+  my $alt_assembly = shift;
+  my $alt_projection = $self->Obj->feature_Slice->project('chromosome', $alt_assembly);
+  my @alt_slices = ();
+  foreach my $seg (@{ $alt_projection }) {
+    my $alt_slice = $seg->to_Slice;
+    push @alt_slices, $alt_slice;
+  }
+  return \@alt_slices;
 }
 
 
