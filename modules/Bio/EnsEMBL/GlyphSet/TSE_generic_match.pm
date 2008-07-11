@@ -46,8 +46,25 @@ sub _init {
 		$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
 		$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
 
+		my $last_mismatch = 0;
 		#draw hit locations
 		foreach my $block (@{$hit_details->{'data'}}) {
+
+			next unless (defined(@$block));
+
+#			warn "**block start = ",$block->[0]," end = ",$block->[1];# if ($hit_name eq 'NM_024848.1');
+
+warn Dumper($block) if ($hit_name eq 'NM_024848.1');
+
+			my $exon_stable_id = $block->[5]->stable_id;
+
+			#only draw blocks for those that aren't extra exons
+			my $hit = $block->[6];
+			if ($hit) {
+				$last_mismatch = $hit->seq_region_end - $hit->seq_region_start;
+				next;
+			}
+			
 			my $width = $block->[1]-$block->[0] +1;
 			$start_x  = $start_x  > $block->[0] ? $block->[0] : $start_x;
 			$finish_x = $finish_x < $block->[1] ? $block->[1] : $finish_x;
@@ -59,10 +76,12 @@ sub _init {
 			}
 			else {
 				$x = $last_end;
-				$w = $block->[1] - $last_end;
+				$w = $block->[0] - $last_end;
 			}
 
+
 			if ($last_end) {
+ #			warn "1- drawing line from $x with width of $w";# if ($hit_name eq 'NM_024848.1');
 				my $G = new Sanger::Graphics::Glyph::Line({
 					'x'          => $x,
 					'y'         => $H + $h/2,
@@ -71,8 +90,10 @@ sub _init {
 					'colour'    => 'black',
 					'absolutey' => 1,});
 
-				#add attributes if there is a part of the hit missing
-				if (my $mismatch = $block->[5]) {
+				#add attributes if there is a part of the hit missing, or an extra bit
+				my $mismatch;
+				if ( $block->[7] || $last_mismatch) {
+					$mismatch = $last_mismatch ? $last_mismatch : $block->[7];
 					$G->{'dotted'} = 1;
 					$G->{'colour'} = 'red';
 					$G->{'title'}  = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
@@ -80,7 +101,10 @@ sub _init {
 				$self->push($G);				
 			}
 
-			$last_end = $strand == 1 ? $block->[1] : $block->[0];
+			$last_mismatch = $last_mismatch ? 0 : $last_mismatch;
+
+#			$last_end = $strand == 1 ? $block->[1] : $block->[0];
+			$last_end = $block->[1];
 #			warn "hit = $hit_name: x = ",$block->[0]," width = $width";
 
 			my $G = new Sanger::Graphics::Glyph::Rect({
@@ -93,6 +117,7 @@ sub _init {
 				'title'     => $hit_name,
 				'href'      => '',
 			});		
+#			warn " 2 - drawing box from ",$block->[0]," with width of $width";#  if ($hit_name eq 'NM_024848.1');;
 
 			#second and third elements of $block define whether there is a mismatch between exon and hit boundries
 			#(need some logic to add meaningfull terms to zmenu)
