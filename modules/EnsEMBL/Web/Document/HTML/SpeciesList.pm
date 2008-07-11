@@ -208,25 +208,25 @@ sub _render_ajax_reorder_list {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
-  $html .= "For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <a href='#' onClick='toggle_reorder();'>Done</a><br /><br />\n";
+  $html .= qq(For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <a href="#" onclick="toggle_reorder();">Done</a><br /><br />\n);
 
-  $html .= "<div id='favourite_species'>\n<b>Favourites</b>";
+  $html .= qq(<div id="favourite_species">\n<b>Favourites</b>);
   my @favourites = @{_get_favourites($user, $species_info)};
   if (scalar(@favourites) < 1) {
     @favourites = @{_get_defaults($species_defs)};
   }
 
-  $html .= "<ul id='favourites_list'>\n";
+  $html .= qq(<ul id="favourites_list">\n);
   foreach $species_name (@favourites) {
     $species_dir = $species_name;
     $species_name =~ s/_/ /;
     my $common = $species_defs->get_config($species_dir, 'SPECIES_COMMON_NAME');
-    $html .= "<li id='favourite-$species_dir'>$common (<em>" .$species_name."</em>)</li>\n";
+    $html .= qq#<li id="favourite-$species_dir">$common (<em>$species_name</em>)</li>\n#;
   }
 
-  $html .= "</ul></div>\n";
-  $html .= "<div id='all_species'>\n<b>Other available species</b>";
-  $html .= "<ul id='species_list'>\n";
+  $html .= qq(</ul></div>
+  <div id="all_species">\n<b>Other available species</b>
+    <ul id="species_list">\n);
 
   my %sp_to_sort = %$species_info;
   foreach my $fave (@favourites) {
@@ -241,11 +241,11 @@ sub _render_ajax_reorder_list {
     $species_dir = $species_name;
     $species_name =~ s/_/ /;
     my $common = $species_defs->get_config($species_dir, 'SPECIES_COMMON_NAME');
-    $html .= "<li id='species-$species_dir'>$common (<em>" . $species_name . "</em>)</li>\n";
+    $html .= qq#<li id="species-$species_dir">$common (<em>$species_name</em>)</li>\n#;
   }
 
-  $html .= "</ul></div>\n";
-  $html .= "<a href='javascript:void(0);' onclick='toggle_reorder();'>Finished reordering</a> &middot; <a href='/Account/ResetFavourites'>Restore default list</a>";
+  $html .= qq(</ul></div>
+      <a href="javascript:void(0);" onclick="toggle_reorder();">Finished reordering</a> &middot; <a href="/Account/ResetFavourites">Restore default list</a>);
 
   return $html;
 }
