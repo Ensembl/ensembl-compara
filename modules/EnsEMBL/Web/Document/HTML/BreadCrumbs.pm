@@ -9,7 +9,7 @@ use EnsEMBL::Web::RegObj;
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub render   {
-  my $sd = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $you_are_here = $ENV{'SCRIPT_NAME'};
   my $html;
 
@@ -24,54 +24,16 @@ sub render   {
   ## Species/static content links
   my $species = $ENV{'ENSEMBL_SPECIES'};
 
-  ## Temporary hack to deal with broken species_defs
-  my %sp_info = (
-    'Aedes_aegypti'       => 'Aedes',
-    'Anopheles_gambiae'   => 'Anopheles',
-    'Bos_taurus'          => 'Cow',
-    'Caenorhabditis_elegans' => '<i>C. elegans</i>',
-    'Canis_familiaris'    => 'Dog',
-    'Cavia_porcellus'     => 'Guinea pig',
-    'Ciona_intestinalis'  => '<i>C. intestinalis</i>',
-    'Ciona_savignyi'      => '<i>C. savignyi</i>',
-    'Danio_rerio'         => 'Zebrafish',
-    'Dasypus_novemcinctus' => 'Armadillo',
-    'Drosophila_melanogaster' => 'Fly',
-    'Echinops_telfairi'   => 'Lesser hedgehog tenrec',
-    'Erinaceus_europaeus' => 'Hedgehog',
-    'Equus_caballus'      => 'Horse',
-    'Felis_catus'         => 'Cat',
-    'Gallus_gallus'       => 'Chicken',
-    'Gasterosteus_aculeatus' => 'Stickleback',
-    'Homo_sapiens'        => 'Human',
-    'Loxodonta_africana'  => 'Elephant',
-    'Macaca_mulatta'      => 'Macaque',
-    'Microcebus_murinus'  => 'Bushbaby',
-    'Monodelphis_domestica' => 'Opossum',
-    'Mus_musculus'        => 'Mouse',
-    'Myotis_lucifugus'    => 'Microbat',
-    'Ochotona_princeps'   => 'Pika',
-    'Ornithorhynchus_anatidus' => 'Platypus',
-    'Oryctolagus_cuniculus' => 'Rabbit',
-    'Oryzias_latipes'     => 'Medaka',
-    'Pan_troglodytes'     => 'Chimp',
-    'Pongo_pygmaeus'      => 'Orangutan',
-    'Rattus_norvegicus'   => 'Rat',
-    'Saccharomyces_cerevisiae' => 'Yeast',
-    'Sorex_araneus'       => 'Shrew',
-    'Spermophilus_tridecemlineatus' => 'Ground squirrel',
-    'Takifugu_rubripes'   => 'Fugu',
-    'Tetraodon_nigroviridis' => 'Tetraodon',
-    'Tupaia_belangeri'    => 'Tree shrew',
-    'Xenopus_tropicalis'  => '<i>X. tropicalis</i>',
-  );
 
   if ($species) {
     if ($species eq 'common') {
       $html .= qq( &gt; <strong>Control Panel</strong>);
     }
     else {
-      my $display_name = $sp_info{$species};
+      my $display_name = $species_defs->SPECIES_COMMON_NAME;
+      if ($display_name =~ /\./) {
+        $display_name = '<i>'.$display_name.'</i>'
+      }
       if ($you_are_here eq '/'.$species.'/index.html') {
         $html .= qq( &gt; <strong>$display_name</strong>);
       }
@@ -90,7 +52,22 @@ sub render   {
       $html .= qq( &gt; <a href="/info/">Documentation</a>);
     }
 
-    ## Level 3 link - TO DO
+    ## Level 3 link
+    my $tree = $species_defs->STATIC_INFO;
+    while (my ($k, $v) = each (%$tree)) {
+      next unless ref($v) eq 'HASH';
+      (my $location = $you_are_here) =~ s/index\.html$//;
+      if ($location =~ $v->{'_path'}) {
+        my $title = $v->{'_title'} || ucfirst($k);
+        if ($location eq $v->{'_path'}) {
+          $html .= " &gt; <strong>$title</strong>";
+        }
+        else { 
+          $html .= ' &gt; <a href="'.$v->{'_path'}.'">'.$title.'</a>';
+        }
+        last;
+      }
+    }
   }
   $_[0]->printf($html);
 }
