@@ -42,8 +42,9 @@ sub colour {
 
   my $KEY = $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
   #warn "GENECOL $KEY";
-  my $genecol = $colours->{ $KEY };
-  return unless $genecol;
+  my $genecol = $colours->{ $KEY }||[];
+  warn @$genecol;
+  return () unless @$genecol;
   
   if(exists $highlights{lc($transcript->stable_id)}) {
     return (@$genecol, $colours->{'superhi'});
@@ -57,8 +58,9 @@ sub colour {
 
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
-  my $genecol = $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status };
-  return unless $genecol;
+  my $genecol = $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status }||[];
+  warn @$genecol;
+  return () unless @$genecol;
 
   if( $gene->biotype eq 'bacterial_contaminant' ) {
     $genecol = $colours->{'_BACCOM'};
