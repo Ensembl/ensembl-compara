@@ -5,7 +5,6 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
 use CGI qw(escapeHTML);
-use EnsEMBL::Web::Component::Transcript::SimilarityMatches qw(_matches);
 
 sub _init {
   my $self = shift;
@@ -73,7 +72,7 @@ sub content {
   };
 
 ## add alternative transcript info
-  my $temp =   _matches($object, 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
+  my $temp =  $self->_matches( 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
   if (my $temp) {
     $html .= qq(
     <dt>Alternative transcripts</dt>
