@@ -371,21 +371,14 @@ sub render {
   ';
   if( $self->include_navigation ) {
     $X .= '
-      <div id="nav">[[local_context]][[local_tools]]<p class="invisible">.</p></div>
-      <div id="main">
-<!-- Start of real content --> 
-      [[content]]
-<!-- End of real content -->
-      </div>';
-  } else {
-    $X .= '
-      <div id="main">
-<!-- Start of real content --> 
-      [[content]]
-<!-- End of real content -->
-      </div>';
+      <div id="nav">[[local_context]][[local_tools]]<p class="invisible">.</p></div>';
   }
   $X .= '
+      <div id="main">
+<!-- Start of real content --> 
+      [[content]]
+<!-- End of real content -->
+      </div>
       </td>
     </tr>
     <tr>

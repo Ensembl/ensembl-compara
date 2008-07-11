@@ -97,6 +97,7 @@ sub handler {
 
     my $renderer = new EnsEMBL::Web::Document::Renderer::String($r);
     my $page     = new EnsEMBL::Web::Document::Static($renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs);
+    $page->include_navigation( $ENV{'SCRIPT_NAME'} =~ /^\/info/ );
     $page->_initialize();
   
     $page->title->set( $pageContent =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: '.$r->uri );
@@ -124,18 +125,22 @@ sub handler {
   
     ## Build page content
     my $html = $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent;
-    my $hr = ($ENV{'SCRIPT_NAME'} eq '/index.html') ? '' : '<hr class="end-of-doc" />'; 
-    my $panelContent;
-    if ($ENV{'SCRIPT_NAME'} =~ m#^/info/#) {
-      $panelContent = qq(<div id="nav">);
-      $panelContent .= template_SCRIPT($r, 'EnsEMBL::Web::Document::HTML::DocsMenu');
-      $panelContent .= qq(</div>
-      <div id="content"><div class="onecol">
-      $html);
-      $panelContent .= qq(\n</div></div>\n$hr);
+    my $hr;
+    if ($ENV{'SCRIPT_NAME'} eq '/index.html') {
+      $hr = '';
+    }
+    elsif ($page->include_navigation) {
+      $hr = '<hr class="end-of-doc with-nav" />';
     }
     else {
-      $panelContent = ($html =~ /^\s*<div/) ? "$html\n$hr\n" : qq(\n<div class="onecol">\n$html\n$hr\n</div>\n); 
+      $hr = '<hr class="end-of-doc" />';
+    } 
+    my $panelContent;
+    if ($page->include_navigation) {
+      $panelContent .= qq(<div id="content"><div id="static">\n$html\n</div></div>\n$hr\n);
+    }
+    else {
+      $panelContent = qq(\n<div id="static">\n$html\n$hr\n</div>\n); 
     }
 
     $page->content->add_panel(

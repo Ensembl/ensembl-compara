@@ -25,6 +25,14 @@ sub _initialize {
     tools           EnsEMBL::Web::Document::HTML::ToolLinks
     content         EnsEMBL::Web::Document::HTML::Content
     global_context  EnsEMBL::Web::Document::HTML::GlobalContext
+  );
+  if( $self->include_navigation ) {
+    $self->add_body_elements qw(
+      local_context  EnsEMBL::Web::Document::HTML::DocsMenu
+      local_tools    EnsEMBL::Web::Document::HTML::Empty
+    );
+  }
+  $self->add_body_elements qw(
     copyright      EnsEMBL::Web::Document::HTML::Copyright
     footerlinks    EnsEMBL::Web::Document::HTML::FooterLinks
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
