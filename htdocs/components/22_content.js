@@ -2,13 +2,19 @@
 
 /* "Jump to" on species list (home page) */
 
-function dropdown_redirect( id ) {
-  var element = document.getElementById(id);;
-  var URL = element.options[element.options.selectedIndex].value;
+function dropdown_redirect( evt ) {
+  var el = Event.findElement(evt,'select');
+  var URL = el.options[el.options.selectedIndex].value;
   document.location = URL;
   return true;
 }
 
+function __init_dropdown_redirect( ) {
+  $$('.dropdown_redirect').each(function(n){
+    Event.observe(n,'change',dropdown_redirect);
+  });
+}
+addLoadEvent( __init_dropdown_redirect );
 /* Drag'n'drop selection of favourite species */
 
 var performedSave = 0;
