@@ -61,6 +61,7 @@ h4 { font-size:1em;   color:#000; }
 
 /* Links */
 a { color:inherit; } /* neutral style for anchor target */
+span.link { text-decoration: underline; color:#3366bb; cursor: pointer }
 a:link    { color:#3366bb; text-decoration:underline; }
 a:visited { color:#000066; text-decoration:underline; }
 a:hover   { color:#cc0000; text-decoration:underline; }
