@@ -308,14 +308,6 @@ $fhash->{$fid} = 1;
     'type'     => 'Submit', 'value' => 'Update', 'name' => 'Update', 'layout' => 'spanning'
   );
 
-  $form->add_element(
-    'type'     => 'Button',
-    'value'    => 'Manage Sources',
-    'name'     => 'Manage',
-    'layout'   => 'spanning',
-    'onclick' => "X=window.open('/@{[$species]}/dasconfview?conf_script=$script;$params','das_sources','left=10,top=10,resizable,scrollbars=yes');X.focus()"
-  );
-
   $panel->add_row( $label, $form->render(), "$URL=off" );
 
   ###### End of the sources selector form
