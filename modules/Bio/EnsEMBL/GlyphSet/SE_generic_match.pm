@@ -50,21 +50,21 @@ sub _init {
 		#go through each component of the combined hit (ie each supporting_feature)
 		foreach my $block (@{$hit_details->{'data'}}) {
 
-			my $exon_stable_id = $block->[5]->stable_id;
+			my $exon_stable_id = $block->{'exon'}->stable_id;
 
-			my $width = $block->[1]-$block->[0] +1;
-			$start_x = $start_x > $block->[0] ? $block->[0] : $start_x;
-			$finish_x = $finish_x < $block->[1] ? $block->[1] : $finish_x;
+			my $width = $block->{'munged_end'}-$block->{'munged_start'} +1;
+			$start_x = $start_x > $block->{'munged_start'} ? $block->{'munged_start'} : $start_x;
+			$finish_x = $finish_x < $block->{'munged_end'} ? $block->{'munged_end'} : $finish_x;
 
 			#draw a line back to the end of the previous exon
 			my ($w,$x);
 			if ($strand == 1) {
 				$x = $last_end + (1/$pix_per_bp);
-				$w = $block->[0] - $last_end - (1/$pix_per_bp);
+				$w = $block->{'munged_start'} - $last_end - (1/$pix_per_bp);
 			}
 			else {
 				$x = $last_end - (1/$pix_per_bp);
-				$w = $block->[1] - $last_end + (1/$pix_per_bp);
+				$w = $block->{'munged_end'} - $last_end + (1/$pix_per_bp);
 			}
 			if ($last_end) {
 				my $G = new Sanger::Graphics::Glyph::Line({
@@ -75,7 +75,7 @@ sub _init {
 					'colour'    =>'black',
 					'absolutey' => 1,});
 				#add a red attribute if there is a part of the hit missing
-				if (my $mismatch = $block->[7]) {
+				if (my $mismatch = $block->{'hit_mismatch'}) {
 					$G->{'dotted'} = 1;
 					$G->{'colour'} = 'red';
 					$G->{'title'} = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
@@ -83,11 +83,11 @@ sub _init {
 				$self->push($G);				
 			}
 			
-			$last_end = $strand == 1 ? $block->[1] : $block->[0];
+			$last_end = $strand == 1 ? $block->{'munged_end'} : $block->{'munged_start'};
 
 			#draw the location of the exon hit
 			my $G = new Sanger::Graphics::Glyph::Rect({
-				'x'            => $block->[0] ,
+				'x'            => $block->{'munged_start'} ,
 				'y'            => $H,
 				'width'        => $width,
 				'height'       => $h,
@@ -99,17 +99,20 @@ sub _init {
 
 			#second and third elements of $block define whether there is a mismatch between exon and hit boundries
 			#(need some logic to add meaningfull terms to zmenu)
-			if ($block->[3]) {
-				my $c = $block->[3] > 0 ? 'red' : 'blue';
-				push @draw_end_lines, [$block->[0],$H,$c];
-				push @draw_end_lines, [$block->[0]+1/$pix_per_bp,$H,$c];
-				$G->{'title'} = $hit_name." (".$block->[3].")";
+			#second and third elements of $block define whether there is a mismatch between exon and hit boundries
+			#(need some logic to add meaningfull terms to zmenu)
+			if (my $gap = $block->{'left_end_mismatch'}) {
+				my $c = $gap > 0 ? 'red' : 'blue';
+				push @draw_end_lines, [$block->{'munged_start'},$H,$c];
+				push @draw_end_lines, [$block->{'munged_start'}+1/$pix_per_bp,$H,$c];
+				
+				$G->{'title'} = "$hit_name ($gap)";
 			}
-			if ($block->[4]) {
-				my $c = $block->[4] > 0 ? 'red' : 'blue';
-				push @draw_end_lines, [$block->[1]-1/$pix_per_bp,$H,$c];
-				push @draw_end_lines, [$block->[1],$H,$c];
-				$G->{'title'} = $hit_name." (".$block->[4].")";
+			if (my $gap = $block->{'right_end_mismatch'}) {
+				my $c = $gap > 0 ? 'red' : 'blue';
+				push @draw_end_lines, [$block->{'munged_end'}-1/$pix_per_bp,$H,$c];
+				push @draw_end_lines, [$block->{'munged_end'},$H,$c];
+				$G->{'title'} = "$hit_name ($gap)";
 			}
 			$self->push( $G );
 		}
