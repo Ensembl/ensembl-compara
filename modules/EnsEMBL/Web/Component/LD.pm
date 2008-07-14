@@ -365,6 +365,8 @@ sub options_form {
     'value'     => 'Dump',
 		    );
 
+## TODO - Important! Replace this inline javascript
+=pod
   $form->add_attribute( 'onSubmit',
   qq(this.elements['_format'].value='HTML';this.target='_self';
       flag='';
@@ -378,6 +380,7 @@ if(flag=='asexcel'){this.elements['_format'].value='Excel';this.target='_blank';
 if(flag=='gz'){this.elements['_format'].value='Text';}
 )
     );
+=cut
 
   return $form;
 }

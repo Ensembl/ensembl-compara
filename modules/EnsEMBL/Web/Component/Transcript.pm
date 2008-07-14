@@ -1540,10 +1540,12 @@ sub dump_form {
     'value'     => 'Dump',
                     );
 
-
+=pod
+## TODO - Replace this inline javascript with a class name and function
   $form->add_attribute( 'onSubmit',
   qq(this.elements['_format'].value='HTML';this.target='_self';flag='';for(var i=0;i<this.elements['dump'].length;i++){if(this.elements['dump'][i].checked){flag=this.elements['dump'][i].value;}}if(flag=='astext'){this.elements['_format'].value='Text';this.target='_blank'}if(flag=='gz'){this.elements['_format'].value='Text';})
     );
+=cut
 
   return $form;
 }

@@ -246,6 +246,7 @@ sub add_HTML_select {
        map {{ 'value' => $_->[0], 'name' => $_->[1] }} @options
     ]
   );
+## IMPORTANT - when porting, replace this inline javascript!
   $form->add_attribute( 'onSubmit',
 qq(this.elements['_format'].value='HTML';this.target='_self';flag='';for(var i=0;i<this.elements['output'].length;i++){if(this.elements['output'][i].checked){flag=this.elements['output'][i].value;}}if(flag=='txt'){this.elements['_format'].value='Text';this.target='_blank'}if(flag=='gz'){this.elements['_format'].value='TextGz';})
   );
