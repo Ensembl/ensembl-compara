@@ -6,45 +6,59 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Proxy::Factory;
+use EnsEMBL::Web::Cache;
+
 use Time::HiRes qw(time);
 
 use base qw(EnsEMBL::Web::Object);
 
+our $memd = new EnsEMBL::Web::Cache;
+
 sub counts {
   my $self = shift;
   my $obj = $self->Obj;
-  my $counts = {};
-  $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
-  $counts->{'exons'}       = @{$obj->get_all_Exons};
-  my $compara_db = $self->database('compara');
-  warn $compara_db;
-  if( $compara_db ) {
-    my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
-    warn $compara_dbh;
-    if( $compara_dbh ) {
-      my %res = map { @$_ } @{$compara_dbh->selectall_arrayref('
-  select ml.type, count(*) as N
-    from member as m, homology_member as hm, homology as h,
-         method_link as ml, method_link_species_set as mlss
-   where m.stable_id = ? and hm.member_id = m.member_id and
-         h.homology_id = hm.homology_id and 
-         mlss.method_link_species_set_id = h.method_link_species_set_id and
-         ml.method_link_id = mlss.method_link_id and
-         ( ml.type = "ENSEMBL_ORTHOLOGUES" or
-           ml.type = "ENSEMBL_PARALOGUES" and
-           h.description = "within_species_paralog" )
-   group by type', {}, $obj->stable_id
-      )};
-      warn keys %res;
-      $counts->{'orthologs'} = $res{'ENSEMBL_ORTHOLOGUES'};
-      $counts->{'paralogs'} = $res{'ENSEMBL_PARALOGUES'};
-      my ($res) = $compara_dbh->selectrow_array(
-        'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
-        {}, $obj->stable_id
-      );
-      $counts->{'families'}    = $res;
+
+  my $key = '::COUNTS::'. join '::', values %{ $self->core_objects->{parameters} };
+  my $counts;
+
+  $counts = $memd->get($key) if $memd;
+  
+  unless ($counts) {
+    $counts = {};
+    $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
+    $counts->{'exons'}       = @{$obj->get_all_Exons};
+    my $compara_db = $self->database('compara');
+    if ($compara_db) {
+      my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
+      warn $compara_dbh;
+      if ($compara_dbh) {
+        my %res = map { @$_ } @{$compara_dbh->selectall_arrayref('
+              select ml.type, count(*) as N
+                from member as m, homology_member as hm, homology as h,
+                     method_link as ml, method_link_species_set as mlss
+               where m.stable_id = ? and hm.member_id = m.member_id and
+                     h.homology_id = hm.homology_id and 
+                     mlss.method_link_species_set_id = h.method_link_species_set_id and
+                     ml.method_link_id = mlss.method_link_id and
+                     ( ml.type = "ENSEMBL_ORTHOLOGUES" or
+                       ml.type = "ENSEMBL_PARALOGUES" and
+                       h.description = "within_species_paralog" )
+               group by type', {}, $obj->stable_id
+        )};
+        warn keys %res;
+        $counts->{'orthologs'} = $res{'ENSEMBL_ORTHOLOGUES'};
+        $counts->{'paralogs'} = $res{'ENSEMBL_PARALOGUES'};
+        my ($res) = $compara_dbh->selectrow_array(
+          'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
+          {}, $obj->stable_id
+        );
+        $counts->{'families'}    = $res;
+      }
     }
+
+    $memd->set($key, $counts, undef, 'COUNTS') if $memd;
   }
+  
   return $counts;
 }
 
