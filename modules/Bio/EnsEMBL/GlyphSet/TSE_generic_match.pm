@@ -31,8 +31,6 @@ sub _init {
 
 	my @draw_end_lines;
 
-
-
 	#go through each hit (transcript_supporting_feature)
 	my $H          = 0;
 
@@ -43,7 +41,6 @@ sub _init {
 		my $last_end = 0; #true/false (prevents drawing of line from first exon
 		my $last_end_x = 0; #position of end of last box - needed to draw
 
-
 		$Config->{'TSE_legend'}{'hit_feature'}{'found'}++;
 		$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
 		$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
@@ -51,8 +48,7 @@ sub _init {
 		my $last_mismatch = 0;
 		my ($lh_ext,$rh_ext) = (0,0);
 		#draw hit locations
-
-#		warn Dumper($hit_details->{'data'}) if ($hit_name eq 'NM_024848.1');
+#		warn Dumper($hit_details->{'data'}) if ($hit_name eq 'Q96AX9-4');
 
 	BLOCK:
 		foreach my $block (@{$hit_details->{'data'}}) {
@@ -61,15 +57,13 @@ sub _init {
 #			warn Dumper($block) if ($hit_name eq 'NM_024848.1');
 
 			#draw lhs extensions
-#			warn "$strand--",$block->{'3-ext'};
-			if ( ($block->{'5-ext'} && $strand == 1) || ($block->{'3-ext'} && $strand == -1)){
-#				warn "in eere";
+			if ( $block->{'lh-ext'} ) {
 				$lh_ext = 1;
 				next BLOCK;
 			}
 
 			#draw rhs extensions (not tested)
-			if ( ($block->{'3-ext'} && $strand == -11) && ($block->{'5-ext'} && $strand == -1)){				
+			if ( $block->{'rh-ext'} ) {
 				my $G = new Sanger::Graphics::Glyph::Line({
 					'x'          => $last_end_x,
 					'y'         => $H + $h/2,
@@ -83,9 +77,8 @@ sub _init {
 							
 #			warn "**block start = ",$block->{'munged_start'}," end = ",$block->{'munged_end'} if ($hit_name eq 'NM_024848.1');
 
-#warn Dumper($block) if ($hit_name eq 'NM_024848.1');
-
-			my $exon_stable_id = $block->{'exon'}->stable_id;
+			next BLOCK unless (my $exon = $block->{'exon'});
+			my $exon_stable_id = $exon->stable_id;
 
 			#only draw blocks for those that aren't extra exons
 			my $hit = $block->{'extra_exon'};
@@ -108,7 +101,6 @@ sub _init {
 				$w = $block->{'munged_start'} - $last_end;
 			}
 
-
 			if ($lh_ext) {
 				my $G = new Sanger::Graphics::Glyph::Line({
 					'x'          => 0,
@@ -121,7 +113,6 @@ sub _init {
 				$lh_ext = 0;
 			}
 				
-
 			if ($last_end) {
  #			warn "1- drawing line from $x with width of $w";# if ($hit_name eq 'NM_024848.1');
 				my $G = new Sanger::Graphics::Glyph::Line({
@@ -144,10 +135,7 @@ sub _init {
 			}
 
 			$last_mismatch = $last_mismatch ? 0 : $last_mismatch;
-
-#			$last_end = $strand == 1 ? $block->{'munged_end'} : $block->{'munged_start'};
 			$last_end = $block->{'munged_end'};
-#			warn "hit = $hit_name: x = ",$block->{'munged_start'}," width = $width";
 
 			my $G = new Sanger::Graphics::Glyph::Rect({
 				'x'         => $block->{'munged_start'} ,
@@ -160,7 +148,7 @@ sub _init {
 				'href'      => '',
 			});
 
-			#save location of edge of box in case we need to draw a line to the end of it
+			#save location of edge of box in case we need to draw a line to the end of it later
 			my $last_end_x = $block->{'munged_start'}+ $width;
 
 #			warn " 2 - drawing box from ",$block->{'munged_start'}," with width of $width";#  if ($hit_name eq 'NM_024848.1');;
