@@ -11,7 +11,7 @@ use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Magic;
 use Class::Std;
-use CGI qw(escapeHTML);
+use CGI qw(escape escapeHTML);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -39,7 +39,7 @@ sub render {
   my $self = shift;
   ## Set _referer so we can return to calling page
   unless ($self->action->cgi->param('_referer')) {
-    $self->action->cgi->param('_referer', $ENV{'HTTP_REFERER'});
+    $self->action->cgi->param('_referer', CGI::escape($ENV{'HTTP_REFERER'}));
   }
   if ($self->not_allowed) {
     $self->render_message;
