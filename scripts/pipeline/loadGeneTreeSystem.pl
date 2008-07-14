@@ -394,7 +394,7 @@ sub build_GeneTreeSystem
   $parameters .= "}";
   my $muscle = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Muscle',
-      -program_file    => '/usr/local/ensembl/bin/muscle',
+      -program_file    => '/software/ensembl/compara/bin/muscle',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
       -parameters      => $parameters
     );
