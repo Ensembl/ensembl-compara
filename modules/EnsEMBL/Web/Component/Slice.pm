@@ -1399,8 +1399,8 @@ sub individuals_options_form {
     $form->add_element(
       'type'  => 'Button', 'value' => "Select all $strains", 'onclick' =>"selectAll('individuals')"
     );
-  }
 =cut
+  }
   return $form;
 }
 					      
