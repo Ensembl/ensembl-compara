@@ -41,44 +41,86 @@ sub _init {
 		my $start_x  = 1000000;
 		my $finish_x = 0;
 		my $last_end = 0; #true/false (prevents drawing of line from first exon
+		my $last_end_x = 0; #position of end of last box - needed to draw
+
 
 		$Config->{'TSE_legend'}{'hit_feature'}{'found'}++;
 		$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
 		$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
 
 		my $last_mismatch = 0;
+		my ($lh_ext,$rh_ext) = (0,0);
 		#draw hit locations
+
+#		warn Dumper($hit_details->{'data'}) if ($hit_name eq 'NM_024848.1');
+
+	BLOCK:
 		foreach my $block (@{$hit_details->{'data'}}) {
 
-			next unless (defined(@$block));
+			next BLOCK unless (defined(%$block));
+#			warn Dumper($block) if ($hit_name eq 'NM_024848.1');
 
-#			warn "**block start = ",$block->[0]," end = ",$block->[1];# if ($hit_name eq 'NM_024848.1');
+			#draw lhs extensions
+#			warn "$strand--",$block->{'3-ext'};
+			if ( ($block->{'5-ext'} && $strand == 1) || ($block->{'3-ext'} && $strand == -1)){
+#				warn "in eere";
+				$lh_ext = 1;
+				next BLOCK;
+			}
 
-warn Dumper($block) if ($hit_name eq 'NM_024848.1');
+			#draw rhs extensions (not tested)
+			if ( ($block->{'3-ext'} && $strand == -11) && ($block->{'5-ext'} && $strand == -1)){				
+				my $G = new Sanger::Graphics::Glyph::Line({
+					'x'          => $last_end_x,
+					'y'         => $H + $h/2,
+					'h'         =>1,
+					'width'     => $Config->container_width() - $last_end_x,
+					'colour'    => 'red',
+					'absolutey' => 1,});			
+				$self->push($G);
+				next BLOCK;
+			}
+							
+#			warn "**block start = ",$block->{'munged_start'}," end = ",$block->{'munged_end'} if ($hit_name eq 'NM_024848.1');
 
-			my $exon_stable_id = $block->[5]->stable_id;
+#warn Dumper($block) if ($hit_name eq 'NM_024848.1');
+
+			my $exon_stable_id = $block->{'exon'}->stable_id;
 
 			#only draw blocks for those that aren't extra exons
-			my $hit = $block->[6];
+			my $hit = $block->{'extra_exon'};
 			if ($hit) {
 				$last_mismatch = $hit->seq_region_end - $hit->seq_region_start;
 				next;
 			}
 			
-			my $width = $block->[1]-$block->[0] +1;
-			$start_x  = $start_x  > $block->[0] ? $block->[0] : $start_x;
-			$finish_x = $finish_x < $block->[1] ? $block->[1] : $finish_x;
+			my $width = $block->{'munged_end'}-$block->{'munged_start'} +1;
+			$start_x  = $start_x  > $block->{'munged_start'} ? $block->{'munged_start'} : $start_x;
+			$finish_x = $finish_x < $block->{'munged_end'} ? $block->{'munged_end'} : $finish_x;
 
 			my ($w,$x);
 			if ($strand == 1) {
 				$x = $last_end + (1/$pix_per_bp);
-				$w = $block->[0] - $last_end - (1/$pix_per_bp);
+				$w = $block->{'munged_start'} - $last_end - (1/$pix_per_bp);
 			}
 			else {
 				$x = $last_end;
-				$w = $block->[0] - $last_end;
+				$w = $block->{'munged_start'} - $last_end;
 			}
 
+
+			if ($lh_ext) {
+				my $G = new Sanger::Graphics::Glyph::Line({
+					'x'          => 0,
+					'y'         => $H + $h/2,
+					'h'         =>1,
+					'width'     => $start_x,
+					'colour'    => 'red',
+					'absolutey' => 1,});				
+				$self->push($G);
+				$lh_ext = 0;
+			}
+				
 
 			if ($last_end) {
  #			warn "1- drawing line from $x with width of $w";# if ($hit_name eq 'NM_024848.1');
@@ -92,7 +134,7 @@ warn Dumper($block) if ($hit_name eq 'NM_024848.1');
 
 				#add attributes if there is a part of the hit missing, or an extra bit
 				my $mismatch;
-				if ( $block->[7] || $last_mismatch) {
+				if ( $block->{'hit_mismatch'} || $last_mismatch) {
 					$mismatch = $last_mismatch ? $last_mismatch : $block->[7];
 					$G->{'dotted'} = 1;
 					$G->{'colour'} = 'red';
@@ -103,12 +145,12 @@ warn Dumper($block) if ($hit_name eq 'NM_024848.1');
 
 			$last_mismatch = $last_mismatch ? 0 : $last_mismatch;
 
-#			$last_end = $strand == 1 ? $block->[1] : $block->[0];
-			$last_end = $block->[1];
-#			warn "hit = $hit_name: x = ",$block->[0]," width = $width";
+#			$last_end = $strand == 1 ? $block->{'munged_end'} : $block->{'munged_start'};
+			$last_end = $block->{'munged_end'};
+#			warn "hit = $hit_name: x = ",$block->{'munged_start'}," width = $width";
 
 			my $G = new Sanger::Graphics::Glyph::Rect({
-				'x'         => $block->[0] ,
+				'x'         => $block->{'munged_start'} ,
 				'y'         => $H,
 				'width'     => $width,
 				'height'    => $h,
@@ -116,23 +158,27 @@ warn Dumper($block) if ($hit_name eq 'NM_024848.1');
 				'absolutey' => 1,
 				'title'     => $hit_name,
 				'href'      => '',
-			});		
-#			warn " 2 - drawing box from ",$block->[0]," with width of $width";#  if ($hit_name eq 'NM_024848.1');;
+			});
+
+			#save location of edge of box in case we need to draw a line to the end of it
+			my $last_end_x = $block->{'munged_start'}+ $width;
+
+#			warn " 2 - drawing box from ",$block->{'munged_start'}," with width of $width";#  if ($hit_name eq 'NM_024848.1');;
 
 			#second and third elements of $block define whether there is a mismatch between exon and hit boundries
 			#(need some logic to add meaningfull terms to zmenu)
-			if ($block->[3]) {
-				my $c = $block->[3] > 0 ? 'red' : 'blue';
-				push @draw_end_lines, [$block->[0],$H,$c];
-				push @draw_end_lines, [$block->[0]+1/$pix_per_bp,$H,$c];
+			if (my $gap = $block->{'left_end_mismatch'}) {
+				my $c = $gap > 0 ? 'red' : 'blue';
+				push @draw_end_lines, [$block->{'munged_start'},$H,$c];
+				push @draw_end_lines, [$block->{'munged_start'}+1/$pix_per_bp,$H,$c];
 				
-				$G->{'title'} = $hit_name." (".$block->[3].")";
+				$G->{'title'} = "$hit_name ($gap)";
 			}
-			if ($block->[4]) {
-				my $c = $block->[4] > 0 ? 'red' : 'blue';
-				push @draw_end_lines, [$block->[1]-1/$pix_per_bp,$H,$c];
-				push @draw_end_lines, [$block->[1],$H,$c];
-				$G->{'title'} = $hit_name." (".$block->[4].")";
+			if (my $gap = $block->{'right_end_mismatch'}) {
+				my $c = $gap > 0 ? 'red' : 'blue';
+				push @draw_end_lines, [$block->{'munged_end'}-1/$pix_per_bp,$H,$c];
+				push @draw_end_lines, [$block->{'munged_end'},$H,$c];
+				$G->{'title'} = "$hit_name ($gap)";
 			}
 			$self->push( $G );
 		}
