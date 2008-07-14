@@ -226,14 +226,14 @@ sub _content {
 
 			#is the first feature beyond the end of the transcript
 			if ($first_feature){
-				if ($transcript->strand == 1) {			
+				if ($transcript->strand == 1) {
 					if ($feature->end <  $exons->[0]->seq_region_start) {
-						$munged_coords->[0]{'5-ext'} = 1;
+						$munged_coords->[0]{'lh-ext'} = 1;
 					}
-					else {
-						if ($feature->start > $exons->[0]->seq_region_end) {
-							$munged_coords->[0]{'5-ext'} = 1;
-						}
+				}
+				else {
+					if ($feature->start > $exons->[0]->seq_region_end) {
+						$munged_coords->[0]{'rh-ext'} = 1;
 					}
 				}
 				$first_feature = 0
@@ -243,12 +243,12 @@ sub _content {
 			if ($c == scalar(@features)-1) {
 				if ($transcript->strand == 1) {
 					if ($feature->start > $exons->[-1]->seq_region_end) {
-						$munged_coords->[0]{'3-ext'} = 1;
+						$munged_coords->[0]{'rh-ext'} = 1;
 					}	
 				}
 				else {
 					if ($feature->end < $exons->[-1]->seq_region_start) {
-						$munged_coords->[0]{'3-ext'} = 1;
+						$munged_coords->[0]{'lh-ext'} = 1;
 					}
 				}
 			}
