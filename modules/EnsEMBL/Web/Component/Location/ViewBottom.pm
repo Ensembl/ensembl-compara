@@ -23,7 +23,7 @@ sub content {
   if( $object->length > $threshold ) {
     return sprintf qq(
   <div class="autocenter alert-box" style="width:%spx;">
-    The slice is too large to display in this display - use the navigation above to zoom in...
+    The region selected is too large to display in this view - use the navigation above to zoom in...
   </div>), $image_width;
 
   }
@@ -35,6 +35,14 @@ sub content {
      $wuc->container_width( $length );
      $wuc->set_width(       $image_width );
      $wuc->{'slice_number'} = '1|3';
+
+  ## Add user track to config
+  $wuc->{'general'}->{'contigviewbottom'}{'userdata'} = {      
+      'on'  => "on",
+      'pos' => '6',
+      'col' => 'red',
+      'str' => 'b',
+  };
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->{'panel_number'} = 'bottom';
