@@ -64,7 +64,7 @@ sub content {
       $row->{'title'}   = $note->title;
       $row->{'edit'}    = $self->edit_link('Annotation', $note->id);
       if ($has_groups) {
-        $row->{'share'}   = $self->share_link('Bookmark', $bookmark->id);
+        $row->{'share'}   = $self->share_link('Bookmark', $note->id);
       }
       $row->{'delete'}  = $self->delete_link('Annotation', $note->id);
       $table->add_row($row);

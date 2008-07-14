@@ -17,7 +17,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Magic::stuff('Account', 'Annotations', $stuff, 'Popup');
+  EnsEMBL::Web::Magic::stuff('Account', 'Annotations', $self, 'Popup');
 }
 
 }
