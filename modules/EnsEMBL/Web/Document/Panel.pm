@@ -687,42 +687,6 @@ sub content {
   return $self->buffer;
 }
 
-sub popup_help {
-  my ($self, $object, $help_id, $option) = @_;
-
-  my $species = $object->species;
-  my $script  = $object->script;
-  my $modular = $object->species_defs->ENSEMBL_MODULAR_HELP;
-
-  $help_id = 0 unless $help_id;
-  my $anchor = $$option{'anchor'} ? '#'.$$option{'anchor'} : '';
-  my $image_align = $$option{'image'};
-  my $popup_align = $$option{'popup'};
-
-  my ($html, $class);
-  my $offset_x = 0;
-  my $offset_y = 0;
-  if ($image_align eq 'right') {
-    $class = 'float-right';
-    $html .= qq(<img src="/img/blank.gif" alt="" width="20" class="float-left" />);
-  }
-  if ($popup_align eq 'center') {
-    $offset_x = -200;
-  }
-  elsif ($popup_align eq 'right') {
-    $offset_x = -400;
-  }
-  my $button = qq(<img src="/img/e-quest.gif" alt="(?)" title="Help" class="round-button $class");
-
-  if ($modular) {
-    $html .= qq#$button onclick="javascript:void(miniPopup(event, $help_id, '$species', '$script', $offset_x, $offset_y))" />#;
-  }
-  else {
-    $html .= qq#<a href="javascript:void(window.open('/$species/helpview?se=1;kw=$script$anchor','helpview','width=700,height=550,resizable,scrollbars'))">$button /></a>#;
-  }
-  return $html;
-}
-
 sub ajax_is_available { 
   return 1;
 }
