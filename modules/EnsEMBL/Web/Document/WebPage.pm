@@ -383,7 +383,7 @@ sub add_error_panels {
   $desc
   $eg_html
   <p>
-    If you think this is an error, or you have any questions, you can contact our HelpDesk team by clicking <strong><a href="javascript:void(window.open('/perl/helpview','helpview','width=700,height=550,resizable,scrollbars'))" class="red-button">here</a></strong>.
+    If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="modal_link">contact our HelpDesk team</a>.
   </p>) 
       )
     );
