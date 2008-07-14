@@ -390,12 +390,12 @@ sub align_markup_options_form {
       $object->param("RGselect", "NONE");
   }
 
+## onclick action select_child_boxes needs replacing with generic mechanism
   $form->add_element('type' => 'RadioGroup',
          'name' => 'RGselect',
          'values' =>[{name=> "<b>No alignments</b>", value => "NONE", checked => $aselect eq "NONE" ? "yes" : undef}],
          'label' => 'View in alignment with',
          'noescape' => 'yes',
-         'onclick' => "select_child_boxes('markup_options', this.id, 0)",
          );
   my @align_select;
   my $pairwise_header = 0;
@@ -435,13 +435,13 @@ sub align_markup_options_form {
       }
 
       my $count = scalar(@multi_species);
+## onclick action select_child_boxes needs replacing with generic mechanism
       $form->add_element('type' => 'RadioGroup',
        'name' => 'RGselect',
        'values' =>  [{name=> $label, 'value' => $id, checked=>$aselect eq "$id" ? "yes" : undef}],
        'label' => '     ',
        'class' => 'radiocheck1col',
        'noescape' => 'yes',
-       'onclick' => "select_child_boxes('markup_options', this.id, $count)",
       );
       #warn "Element ".$element->id." ($element)";
       #$element->onclick('select_child_boxes()');
