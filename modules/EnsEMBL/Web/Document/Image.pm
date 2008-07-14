@@ -507,7 +507,7 @@ sub render {
     $image->{'id'}    = $self->{'button_id'};
     my $image_html = $image->render_image_button();
        $image_html .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
-    $HTML .= sprintf '<form style="width: %spx" class="autocenter" action="%s" method="get">%s<div class="autocenter">%s</div></form>',
+    $HTML .= sprintf '<form style="width: %spx" class="autocenter" action="%s" method="get"><div>%s</div><div class="autocenter">%s</div></form>',
       $image->{'width'},
       $self->{'URL'},
       join(
