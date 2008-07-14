@@ -237,7 +237,6 @@ sub GO::AppHandles::AppHandleSqlImpl::commit {
 
 sub DESTROY {
   my $self = shift;
-warn "DESTROYING GO CONNECTION $$";
   $self->disconnect;
 }
 
