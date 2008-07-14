@@ -95,7 +95,7 @@ sub _render_species_list {
   }
   if (!$user) {
     if ($species_defs->ENSEMBL_LOGINS) {
-      $html .= qq# (<a href="javascript:control_panel('/Account/Login')">Log in to customize this list</a>)#;
+      $html .= qq# (<a href="/Account/Login" class="modal_link">Log in to customize this list</a>)#;
     }
   } else {
     if ($species_defs->ENSEMBL_LOGINS) {
