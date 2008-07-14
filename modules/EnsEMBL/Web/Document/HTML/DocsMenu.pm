@@ -9,7 +9,10 @@ use EnsEMBL::Web::RegObj;
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
+  my $self = shift;
   my $sd = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $you_are_here = $ENV{'SCRIPT_NAME'};
+  (my $location = $you_are_here) =~ s/index\.html$//;
 
   my $tree = $sd->STATIC_INFO;
 
@@ -18,7 +21,7 @@ sub render {
 <dt>Documentation</dt>
 );
 
-  my $title;
+  my ($title, $class);
 
   my @sortable_sections;
   foreach my $section (keys %$tree) {
@@ -33,11 +36,15 @@ sub render {
   
   foreach my $section (@section_order) {
     next if $section =~ /^_/;
+    $class = '';
     my $subsection = $tree->{$section};
     next unless keys %$subsection;
     $title = $subsection->{'_title'} || ucfirst($section);
-    $html .= sprintf(qq(<dd class="open"><a href="%s">%s</a>),
-        $subsection->{'_path'}, $title
+    if ($location eq $subsection->{'_path'}) {
+      $class = ' class="active"';
+    }
+    $html .= sprintf(qq(<dd class="open"><a href="%s"%s>%s</a>),
+        $subsection->{'_path'}, $class, $title
     );
     my @sortable_subsections;
     foreach my $sub (keys %$subsection) {
@@ -56,12 +63,16 @@ sub render {
       ), );
       foreach my $sub (@sub_order) {
         next if $sub =~ /^_/;
+        $class = '';
         my $pages = $subsection->{$sub};
         next unless keys %$pages;
         my $path = $pages->{'_path'} || $subsection->{'_path'}.$sub;
         $title = $pages->{'_title'} || ucfirst($sub);
-        $html .= sprintf(qq(<dd><a href="%s">%s</a>),
-            $path, $title
+        if ($location eq $path) {
+          $class = ' class="active"';
+        }
+        $html .= sprintf(qq(<dd><a href="%s"%s>%s</a></dd>),
+            $path, $class, $title
         );
         
       }
@@ -71,7 +82,7 @@ sub render {
   }
   
   $html .= '</dl>';
-  return $html;
+  $self->print($html);
 }
 
 1;
