@@ -217,7 +217,7 @@ sub _render_ajax_reorder_list {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
-  $html .= qq(For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <span class="link toggle_link">Done</span><br /><br />\n);
+  $html .= qq(For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <span class="link toggle_link">Save</span><br /><br />\n);
 
   $html .= qq(<div id="favourite_species">\n<b>Favourites</b>);
   my @favourites = @{_get_favourites($user, $species_info)};
@@ -254,7 +254,7 @@ sub _render_ajax_reorder_list {
   }
 
   $html .= qq(</ul></div>
-      <span class="link toggle_link">Finished re-ordering</span> &middot; <a href="/Account/ResetFavourites">Restore default list</a>);
+      <span class="link toggle_link">Save selection</span> &middot; <a href="/Account/ResetFavourites">Restore default list</a>);
 
   return $html;
 }
