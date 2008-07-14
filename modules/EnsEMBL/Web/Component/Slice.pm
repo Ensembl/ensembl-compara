@@ -1389,7 +1389,9 @@ sub individuals_options_form {
       'values'   => $individuals->{'reseq'},
       'value'    => $object->param('individuals'),
     );
-  
+ 
+=pod
+## This kind of thing needs to be done by some generic mechanism 
     $form->add_element(
       'type'  => 'Button', 'value' => "Deselect all $strains", 'onclick' =>"deselectAll('individuals')"
     );
@@ -1398,7 +1400,7 @@ sub individuals_options_form {
       'type'  => 'Button', 'value' => "Select all $strains", 'onclick' =>"selectAll('individuals')"
     );
   }
-
+=cut
   return $form;
 }
 					      
