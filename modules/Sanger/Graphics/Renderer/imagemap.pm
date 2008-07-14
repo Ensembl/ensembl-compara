@@ -13,7 +13,6 @@ use warnings;
 no warnings 'uninitialized';
 use base qw(Sanger::Graphics::Renderer);
 use Sanger::Graphics::JSTools;
-use EnsEMBL::Web::Interface::ZMenuCollection;
 
 our $VERSION = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
 
@@ -142,28 +141,6 @@ sub render_Line {
 sub _getHref {
   my( $self, $glyph ) = @_;
 
-  if($self->{'show_zmenus'} == 1) {
-    my $zmenu = $glyph->zmenu();
-
-    if (ref $zmenu eq 'EnsEMBL::Web::Interface::ZMenu') {
-      return $self->_getHref_dynamic($zmenu, $glyph);
-
-    } else {
-      return $self->_getHref_static($glyph);
-    }
-  }
-  return;
-}
-
-sub _getHref_dynamic {
-  my ($self, $zmenu) = @_;
-  my $collection     = EnsEMBL::Web::Interface::ZMenuCollection->new();
-  $collection->process($zmenu->populate);
-  return $collection->linkage($zmenu);
-}
-
-sub _getHref_static {
-  my ($self, $glyph) = @_;
   my %actions = ();
 
   foreach (qw(title onmouseover onmouseout onclick alt href target)) {
