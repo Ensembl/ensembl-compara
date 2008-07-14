@@ -14,7 +14,6 @@ sub new {
         'method'   => lc($method) || 'get' ,  
         'name'     => $name,
         'id'       => $name,
-        'onSubmit' => sprintf( 'return( on_submit( %s_vars ))', $name ),
         'class'    => 'std',
     },
     '_buttons'     => [],
