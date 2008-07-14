@@ -25,7 +25,7 @@ sub _initialize_HTML {
     logo            EnsEMBL::Web::Document::HTML::Logo
     search_box      EnsEMBL::Web::Document::HTML::LoggedIn
     breadcrumbs     EnsEMBL::Web::Document::HTML::Empty
-    tools           EnsEMBL::Web::Document::HTML::Empty
+    tools           EnsEMBL::Web::Document::HTML::CloseCP
     content         EnsEMBL::Web::Document::HTML::Content
     global_context  EnsEMBL::Web::Document::HTML::GlobalContext
     local_context   EnsEMBL::Web::Document::HTML::LocalContext
