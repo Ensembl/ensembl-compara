@@ -111,10 +111,15 @@ sub _init {
 				$self->push( $G );
 
 				#coding part
+
+				my $width = ($exon_end > $coding_end) ? $coding_end - $coding_start + 1 : $exon_end - $coding_start + 1;
+					
+
+
 				$G = new Sanger::Graphics::Glyph::Rect({
 					'x'         => $coding_start -1,
 					'y'         => 0,
-					'width'     => $exon_end - $coding_start + 1,
+					'width'     => $width,
 					'height'    => 2*$h,
 					'colour'    => $colour,
 					'absolutey' => 1,
@@ -126,6 +131,25 @@ sub _init {
 				$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
 				$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
 				$self->push( $G );
+
+				#draw non-coding part if there's one of these as well
+				if ($exon_end > $coding_end) {
+					$G = new Sanger::Graphics::Glyph::Rect({
+						'x'         => $coding_end -1,
+						'y'         => 0.5*$h,
+						'width'     => $exon_end-$coding_end+1,
+						'height'    => $h,
+						'bordercolour'    => $colour,
+						'absolutey' => 1,
+						'title'     => $obj->[2]->stable_id,
+						'href'      => $self->href( $transcript, $obj->[2], %highlights ),
+					});
+					$tag = "@{[$exon_end]}:@{[$coding_start]}";
+					push @{$tags}, ["X:$tag",$col2];
+					$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
+					$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
+					$self->push( $G );
+				}
 			}
 
 			elsif ( ($exon_end > $coding_end) && ($exon_start < $coding_end) ) {
