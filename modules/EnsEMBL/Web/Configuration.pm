@@ -253,6 +253,8 @@ sub query_string {
   foreach (sort keys %parameters) {
     push @S, "$_=$parameters{$_}" if defined $parameters{$_}; 
   }
+  push @S, '_referer='.$self->object->param('_referer')
+    if $self->object->param('_referer');
   return join ';', @S;
 }
 
