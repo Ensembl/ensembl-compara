@@ -391,7 +391,7 @@ sub build_GeneTreeSystem
   if (defined $genetree_params{'honeycomb_dir'}) {
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
-  $parameters .= "'}";
+  $parameters .= "}";
   my $muscle = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Muscle',
       -program_file    => '/usr/local/ensembl/bin/muscle',
@@ -421,7 +421,7 @@ sub build_GeneTreeSystem
   if (defined $genetree_params{'honeycomb_dir'}) {
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
-  $parameters .= "'}";
+  $parameters .= "}";
   my $njtree_phyml_analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
   if (defined $njtree_phyml_analysis_data_id) {
     $parameters = "{'njtree_phyml_analysis_data_id'=>'$njtree_phyml_analysis_data_id'}";
