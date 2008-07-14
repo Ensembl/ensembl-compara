@@ -99,7 +99,7 @@ sub _render_species_list {
     }
   } else {
     if ($species_defs->ENSEMBL_LOGINS) {
-      $html .= ' (<a href="#" onclick="toggle_reorder();">Change favourites</a>)';
+      $html .= ' (<span class="link toggle_link">Change favourites</span>)';
     }
   }
   $html .= '</p>';
@@ -120,7 +120,8 @@ sub _render_species_dropdown {
 
   my $html = qq(<form action="#">
 <h3>All genomes</h3>
-<select name="species"  id="species_dropdown" onchange="dropdown_redirect('species_dropdown');">
+<div>
+<select name="species" class="dropdown_redirect" id="species_dropdown">
   <option value="/">-- Select a species --</option>
 );
 
@@ -176,26 +177,34 @@ sub _render_species_dropdown {
         $html .= '<optgroup label="'.$group_text.'">'."\n";
         $optgroup = 1;
       }
-      @sorted_by_common = sort {
-                          $species_defs->get_config($a, "SPECIES_COMMON_NAME")
-                          cmp
-                          $species_defs->get_config($b, "SPECIES_COMMON_NAME")
-                          } @$species_list;
+      @sorted_by_common = sort { $a->{'common'} cmp $b->{'common'} }
+			  map  { { 'name'=> $_, 'common' => $species_defs->get_config($_, "SPECIES_COMMON_NAME")} }
+                          @$species_list;
     }
-    foreach $species_name (@sorted_by_common) {
-      $html .= '<option value="/'.$species_name.'/">'.$species_defs->get_config($species_name, "SPECIES_COMMON_NAME");
-      $html .= $description->{$species_name}[1] if $description->{$species_name}[1];
+    foreach my $species (@sorted_by_common) {
+      $html .= sprintf '<option value="%s">%s', CGI::escapeHTML( $species->{'name'} ), CGI->escapeHTML( $species->{'common'} );
+      $html .= $description->{ $species->{'name'} }[1] if $description->{ $species->{'name'} }[1];
       $html .= '</option>'."\n";
     }
-
-    $html .= '</optgroup>'."\n" if $optgroup == 1;
+    if( $optgroup == 1 ) {
+      $html .= '</optgroup>'."\n";
+      $optgroup == 0;
+    }
   }
 
-  $html .= '<optgroup label="Other species">'."\n" if !$others;
+  my $optgroup = 0;
+  unless($others) {
+    $html .= '<optgroup label="Other species">'."\n";
+    $optgroup = 1;
+  }
 
   $html .= qq(
-  <option value="/species.html">-- Find a species --</option>
+  <option value="/species.html">-- Find a species --</option>);
+  $html .= '
+  </optgroup>'."\n" if $optgroup == 1;
+  $html .= qq(
 </select>
+</div>
 </form>
 );
   return $html;
@@ -208,7 +217,7 @@ sub _render_ajax_reorder_list {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
-  $html .= qq(For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <a href="#" onclick="toggle_reorder();">Done</a><br /><br />\n);
+  $html .= qq(For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <span class="link toggle_link">Done</span><br /><br />\n);
 
   $html .= qq(<div id="favourite_species">\n<b>Favourites</b>);
   my @favourites = @{_get_favourites($user, $species_info)};
@@ -245,7 +254,7 @@ sub _render_ajax_reorder_list {
   }
 
   $html .= qq(</ul></div>
-      <a href="javascript:void(0);" onclick="toggle_reorder();">Finished reordering</a> &middot; <a href="/Account/ResetFavourites">Restore default list</a>);
+      <span class="link toggle_link">Finished re-ordering</span> &middot; <a href="/Account/ResetFavourites">Restore default list</a>);
 
   return $html;
 }

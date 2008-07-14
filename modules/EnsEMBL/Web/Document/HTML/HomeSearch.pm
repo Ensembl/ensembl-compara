@@ -33,14 +33,14 @@ sub render {
   my $html = qq(<div class="center">\n);
 
   $html .= sprintf(qq(<h2>Search %s %s</h2>
-<form action="%s" method="get">
+<form action="%s" method="get"><div>
   <input type="hidden" name="site" value="%s" />),
   $species_defs->ENSEMBL_SITETYPE, $species_name, $self->search_url, $self->default_search_code
 );
 
 
   if (!$page_species) {
-    $html .= qq(<label for="species">Search</label>: <select name="species">
+    $html .= qq(<label for="species">Search</label>: <select id="species" name="species">
 <option value="">All species</option>
 <option value="">---</option>
 );
@@ -57,7 +57,7 @@ sub render {
     $html .= qq(<label for="q">Search for</label>: );
   }
 
-  $html .= qq(<input name="q" size="50" value="" />
+  $html .= qq(<input id="q" name="q" size="50" value="" />
     <input type="submit" value="Go" class="input-submit" />);
 
   ## Examples
@@ -78,7 +78,7 @@ sub render {
   }
   $html .= '<p>e.g. ' . join(' or ', map {'<strong>'.$_.'</strong>'} @examples) . '</p>';
 
-  $html .= qq(\n</form>\n</div>\n);
+  $html .= qq(\n</div></form>\n</div>\n);
 
   return $html;
 
