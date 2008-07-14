@@ -78,6 +78,22 @@ sub Obj {
   return $_[0]{'data'}{'_object'};
 }
 
+
+sub get_adaptor {
+  my ($self, $method, $db, $species) = @_;
+  $db = 'core' if !$db;
+  $species = $self->species if !$species;
+  my $adaptor;
+  eval { $adaptor =  $self->database($db, $species)->$method(); };
+
+  if( $@ ) {
+    warn ($@);
+    $self->problem('fatal', "Sorry, can't retrieve required information.",$@);
+  }
+  return $adaptor;
+}
+
+
 sub dataobj { 
 ### Deprecated
 ### a 
@@ -288,11 +304,6 @@ sub _help_URL {
   push @params, "ref=$ref";
   $URL .= join(';', @params);
   return $URL;
-}
-
-sub _help_link {
-  my( $self, $kw, $text ) = @_;
-  return qq(<a href="javascript:open('@{[$self->_help_URL($kw)]}','helpview','width=750,height=550,resizable,scrollbars')">@{[ CGI::escapeHTML( $text )]}</a>);
 }
 
 sub getCoordinateSystem{
