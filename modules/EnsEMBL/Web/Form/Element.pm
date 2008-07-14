@@ -34,9 +34,6 @@ sub new {
     'width'        => $array{ 'width' },
     'height'       => $array{ 'height' },
     'noescape'     => $array{ 'noescape' },
-    'onclick'      => $array{ 'onclick' },
-    'onfocus'      => $array{ 'onfocus' },
-    'onblur'       => $array{ 'onblur' },
     'in_error'     => 'no'
   };
   bless $self, $class;
@@ -72,9 +69,6 @@ sub alt           :lvalue { $_[0]{'alt'};   }
 sub width         :lvalue { $_[0]{'width'};   }
 sub height        :lvalue { $_[0]{'height'};   }
 sub noescape      :lvalue { $_[0]{'noescape'};   }
-sub onclick       :lvalue { $_[0]{'onclick'};   }
-sub onfocus       :lvalue { $_[0]{'onfocus'};   }
-sub onblur        :lvalue { $_[0]{'onblur'};   }
 
 sub _is_valid { return 1; }
 sub validate  { return $_[0]->required eq 'yes'; }
