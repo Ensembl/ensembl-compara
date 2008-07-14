@@ -38,8 +38,8 @@ sub action {
 sub render {
   my $self = shift;
   ## Set _referer so we can return to calling page
-  unless ($object->get_action->get_cgi->param('_referer')) {
-    $self->get_action->get_cgi->param('_referer', $ENV{'HTTP_REFERER'});
+  unless ($self->action->cgi->param('_referer')) {
+    $self->action->cgi->param('_referer', $ENV{'HTTP_REFERER'});
   }
   if ($self->not_allowed) {
     $self->render_message;
