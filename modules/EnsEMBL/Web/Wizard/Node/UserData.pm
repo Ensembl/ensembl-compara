@@ -157,6 +157,7 @@ sub more_input {
     my $assemblies = $self->_get_assemblies($self->object->param('species'));
     $self->add_element(( type => 'Information', value => 'This species has more than one assembly in Ensembl. If your data uses chromosomal coordinates, please specify the assembly'));
     my $values = [];
+    push @$values, {'name'=>'--- Non-chromosomal ---', 'value'=>'ensembl_peptide'};
     foreach my $assembly (@$assemblies) {
       push @$values, {'name'=>$assembly, 'value'=>$assembly};
     }
@@ -601,8 +602,242 @@ sub _get_assemblies {
 ### If on chromosomal coords and species has multiple assemblies, 
 ### return assembly info
   my ($self, $species) = @_;
+
   my @assemblies = split(',', $self->object->species_defs->get_config($species, 'CURRENT_ASSEMBLIES'));
   return \@assemblies;
+}
+
+
+sub _delete_datasource {
+    my ($self, $species, $ds_name) = @_;
+
+    my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $species );
+    my $dba = $dbs->get_DBAdaptor('userdata');
+    my $ud_adaptor  = $dba->get_adaptor( 'Analysis' );
+    my $datasource = $ud_adaptor->fetch_by_logic_name($ds_name);
+    my $error = $self->_delete_datasource_features($datasource);
+    return $error if $error;
+
+    $ud_adaptor->remove($datasource);
+    return "$ds_name has been removed. ";
+}
+
+
+sub _delete_datasource_features {
+    my ($self, $datasource) = @_;
+
+    my $dba = $datasource->adaptor->db;
+    my $source_type = $datasource->module || $DEFAULT_DS_TYPE;
+    my $parameter;
+
+    if (my $feature_adaptor = $dba->get_adaptor($source_type)) { # 'DnaAlignFeature' or 'ProteinFeature'
+	$feature_adaptor->remove_by_analysis_id($datasource->dbID);    
+    } else {
+	$parameter->{error_message} = "Could not get $source_type adaptor";
+    }
+
+    return $parameter;
+}
+
+sub save_upload {
+## Save uploaded data to a genus_species_userdata database
+    my $self = shift;
+    my $parameter = {};
+
+    my $tmpdata = $self->object->get_session->get_tmp_data;
+    my $assembly = $tmpdata->{assembly};
+    
+    my $file = new EnsEMBL::Web::File::Text($self->object->species_defs);
+    my $data = $file->retrieve($tmpdata->{'filename'});
+    my $format  = $tmpdata->{'format'};
+    my $parser = Data::Bio::Text::FeatureParser->new();
+    $parser->parse($data, $format);
+
+    if ($parser->current_key eq 'default') { # No track name
+	$parameter->{'error_message'} = 'No data was uploaded. Please try again.';    
+    } else {
+	my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+
+	my $config = {
+	    'action' => 'overwrite', # or append
+	    'species' => $tmpdata->{species},
+	    'assembly' => $tmpdata->{assembly},
+	};
+
+	if ($user) {
+	    $config->{id} = $user->id;
+	    $config->{track_type} = 'user';
+	} else {
+	    $config->{id} = $self->object->session->get_session_id;
+	    $config->{track_type} = 'session';	
+	}
+	
+	foreach my $track ($parser->get_all_tracks) {
+	    foreach my $key (keys %$track) {
+		my $tparam = $self->_store_user_track($config, $track->{$key});
+		$parameter->{feedback} .= $tparam->{feedback};
+		if ($tparam->{error_message}) {
+		    $parameter->{error_message} .= $tparam->{error_message};
+		} else {
+		    push @{$parameter->{'share_id'}} , $tparam->{id};
+		}
+	    }
+	}
+    }
+
+    $parameter->{'wizard_next'} = 'share_url';
+    
+    return $parameter;
+}
+
+sub _store_user_track {
+    my $self = shift;
+    my $config = shift;
+    my $track = shift;
+
+    my $parameter = {};
+
+    if (my $current_species = $config->{'species'}) {
+	my $action = $config->{action} || 'error';
+
+	if (my $track_name = $track->{config}->{name}) {
+	    my $logic_name = join ':', $config->{track_type}, $config->{id}, $track_name;
+	    my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species );
+	    my $dba = $dbs->get_DBAdaptor('userdata');
+	    my $ud_adaptor  = $dba->get_adaptor( 'Analysis' );
+
+	    my $datasource = $ud_adaptor->fetch_by_logic_name($logic_name);
+
+	    if ($datasource) {
+		if ($action eq 'error') {
+		    $parameter->{error_message} = "$track_name : Such track already exists";
+		    return $parameter;
+		}
+
+		if ($action eq 'overwrite') {
+		    $self->_delete_datasource_features($datasource);
+		    $self->_update_datasource($datasource, $config);
+		} else { #append 
+		    if ($datasource->module_version ne $config->{assembly}) {
+			$parameter->{error_message} = sprintf "$track_name : Can not add %s features to %s datasource", 
+			$config->{assembly} , $datasource->module_version;
+			return $parameter;
+		    }
+		}
+	    } else {
+		$config->{source_adaptor} = $ud_adaptor;
+		$config->{track_name} = $logic_name;
+		$config->{track_label} = $track_name;
+		$datasource = $self->_create_datasource($config);
+		
+		unless ($datasource) {
+		    $parameter->{error_message} =  "$track_name: Could not create datasource!";
+		    return $parameter;
+		}
+	    }
+
+	    my $tparam = $self->_save_genomic_features($datasource, $track->{features});
+	    $parameter = $tparam;
+	    $parameter->{feedback} = "$track_name: $tparam->{feedback}";
+	    $parameter->{id} = $datasource->logic_name;
+	    
+	} else {
+	    $parameter->{error_message} =  "Need a trackname!";
+	}
+    } else {
+	$parameter->{error_message} =  "Need species name";
+    }
+
+
+    return $parameter;
+}
+
+sub _create_datasource {
+    my ($self, $config) = @_;
+
+
+    my $ds_name = $config->{track_name};
+    my $ds_label = $config->{track_label} || $ds_name;
+
+    my $ds_desc = $config->{description};
+    my $adaptor = $config->{source_adaptor};
+
+    my $datasource = new Bio::EnsEMBL::Analysis(
+						-logic_name => $ds_name, 
+						-description => $ds_desc,
+						-display_label => $ds_label,
+						-displayable => 1,
+						-module => $config->{data_type} || $DEFAULT_DS_TYPE, 
+						-module_version => $config->{assembly},
+				    );
+
+    $adaptor->store($datasource);
+    return $datasource;
+}
+
+sub _update_datasource {
+    my ($self, $datasource, $config) = @_;
+
+    my $adaptor = $config->{source_adaptor};
+
+    $datasource->logic_name($config->{track_name});
+    $datasource->display_label($config->{track_label});
+    $datasource->description($config->{description});
+    $datasource->module($config->{data_type} || $DEFAULT_DS_TYPE);
+    $datasource->module($config->{assembly});
+    $adaptor->update($datasource);
+    return $datasource;
+}
+
+
+sub _save_genomic_features {
+    my ($self, $datasource, $features) = @_;
+
+    my $parameter;
+
+    my $uu_dba = $datasource->adaptor->db;
+    my $feature_adaptor = $uu_dba->get_adaptor('DnaAlignFeature');
+
+    my $current_species = $uu_dba->species;
+
+    my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species );
+    my $core_dba = $dbs->get_DBAdaptor('core');
+    my $slice_adaptor = $core_dba->get_adaptor( 'Slice' );
+
+    my $assembly = $datasource->module_version;
+    my $shash;
+    my @feat_array;
+    foreach my $f (@$features) {
+	my $seqname = $f->seqname;
+	$shash->{ $seqname } ||= $slice_adaptor->fetch_by_region( undef,$seqname, undef, undef, undef, $assembly );
+	if (my $slice = $shash->{$seqname}) {
+	    my $feat = new Bio::EnsEMBL::DnaDnaAlignFeature(
+							    -slice    => $slice,
+							    -start    => $f->rawstart,
+							    -end      => $f->rawend,
+							    -strand   => $f->strand,
+							    -hseqname => $f->id,
+							    -hstart   => $f->rawstart,
+							    -hend     => $f->rawend,
+							    -hstrand  => $f->strand,
+							    -analysis => $datasource,
+							    -cigar_string => $f->{_attrs} || '1M',
+							    );
+	    
+	    push @feat_array, $feat;
+	} else {
+	    $parameter->{error_messsage} .= "Invalid segment: $seqname.";
+	}
+
+    }
+ 
+    $feature_adaptor->save(\@feat_array) if (@feat_array);
+    $parameter->{feedback} = scalar(@feat_array).' saved.';
+    if (my $fdiff = scalar(@$features) - scalar(@feat_array)) {
+	$parameter->{feedback} = " $fdiff features ignored.";
+    }
+    return $parameter;
+
 }
 
 1;
