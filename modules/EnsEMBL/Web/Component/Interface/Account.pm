@@ -27,7 +27,7 @@ sub add_form {
   } else {
     $panel->interface->cgi_populate($object);
   }
-  my @widgets = @{$panel->interface->edit_fields};
+  my @widgets = @{$panel->interface->edit_fields($object)};
 
   foreach my $element (@widgets) {
     $form->add_element(%$element);

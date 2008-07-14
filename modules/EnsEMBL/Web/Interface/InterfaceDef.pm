@@ -536,9 +536,10 @@ sub cgi_populate {
 
 sub edit_fields {
   ### Returns editable fields as form element parameters
-  my ($self, $dataview) = @_;
+  my ($self, $object) = @_;
   my $parameters = [];
   my $data = $self->data;
+  my $dataview = $object->param('dataview');
   my $elements = $self->elements;
   my $element_order = $self->element_order;
   ## populate widgets from Data_of{$self}
@@ -606,6 +607,11 @@ sub edit_fields {
     }
   }
 
+  ## Force passing of _referer parameter
+  if ($object->param('_referer')) {
+    push @$parameters, {'type'=>'Hidden', 'name'=>'_referer', 'value'=> $object->param('_referer')};
+  }
+
   return $parameters;
 }
 
@@ -660,6 +666,11 @@ sub preview_fields {
       push @$parameters, \%ex;  
     }
   }
+  ## Force passing of _referer parameter
+  if ($object->param('_referer')) {
+    push @$parameters, {'type'=>'Hidden', 'name'=>'_referer', 'value'=> $object->param('_referer')};
+  }
+
   return $parameters;
 }
 

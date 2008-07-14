@@ -37,7 +37,7 @@ sub data_form {
   } else {
     $object->interface->cgi_populate($object);
   }
-  my $widgets = $object->interface->edit_fields($object->param('dataview'));
+  my $widgets = $object->interface->edit_fields($object);
 
   foreach my $element (@$widgets) {
     $form->add_element(%$element);
