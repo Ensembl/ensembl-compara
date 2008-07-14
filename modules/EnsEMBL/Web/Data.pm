@@ -170,7 +170,7 @@ sub withdraw_data {
       if $self->can($field) && ref $data;
   }
   
-  $self->data($data);
+  return $data;
 }
 
 

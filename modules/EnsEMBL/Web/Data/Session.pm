@@ -45,6 +45,11 @@ sub fertilize_data {
   $self->dump_data;
 }
 
+sub withdraw_data {
+  my $self = shift;
+  $self->data($self->SUPER::withdraw_data);
+}
+
 sub set_config {
   my $class = shift;
   my %args  = @_;
