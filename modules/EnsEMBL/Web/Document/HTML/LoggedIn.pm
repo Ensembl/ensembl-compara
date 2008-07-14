@@ -12,11 +12,18 @@ sub render {
   my $self = shift;
   my $html = qq(<div id="login-status">);
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $url;
+  my @params = split(';', $ENV{'QUERY_STRING'});
+  foreach my $param (@params) {
+    next unless $param =~ '_referer';
+    ($url = $param) =~ s/_referer=//;
+    last;
+  }
   if ($user) {
-    $html .= 'Logged in as <strong>' . $user->name . '</strong> | <a href="/Account/Logout">Log out</a>';
+    $html .= sprintf(qq(Logged in as <strong>%s</strong> | <a href="/Account/Logout?_referer=%s">Log out</a>), $user->name, $url);
   }
   else {
-    $html .= qq(<a href="/Account/Login">Login</a> / <a href="/Account/Register">Register</a>);
+    $html .= qq(<a href="/Account/Login?_referer=$url">Login</a> / <a href="/Account/Register?_referer=$url">Register</a>);
   }
   $html .= '</div>';
   $self->print($html);
