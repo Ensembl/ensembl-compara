@@ -18,10 +18,10 @@ use base qw(EnsEMBL::Web::Root);
 
 {
 
-my %Filters :ATTR(:get<filters> :set<filters>);
-my %Action :ATTR(:get<action> :set<action> :init_arg<action>);
-my %Message  :ATTR(:get<message> :set<message>);
-my %SpeciesDefs  :ATTR(:get<species_defs> :set<species_defs>);
+my %Filters       :ATTR(:get<filters> :set<filters>);
+my %Action        :ATTR(:get<action> :set<action> :init_arg<action>);
+my %Message       :ATTR(:get<message> :set<message>);
+my %SpeciesDefs   :ATTR(:get<species_defs> :set<species_defs>);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
@@ -37,6 +37,10 @@ sub action {
 
 sub render {
   my $self = shift;
+  ## Set _referer so we can return to calling page
+  unless ($object->get_action->get_cgi->param('_referer')) {
+    $self->get_action->get_cgi->param('_referer', $ENV{'HTTP_REFERER'});
+  }
   if ($self->not_allowed) {
     $self->render_message;
   } else {
