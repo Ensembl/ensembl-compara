@@ -81,14 +81,15 @@ sub save {
   $interface->cgi_populate($object);
 
   my $success = $interface->data->save;
-  my $script = $interface->script_name || $object->script;
+  my $script = $interface->script_name;
   my $url;
   if ($success) {
-    $url = "/common/$script?dataview=success";
+    $url = "/$script?dataview=success;_referer=".$object->param('_referer');
   }
   else {
-    $url = "/common/$script?dataview=failure";
+    $url = "/$script?dataview=failure;_referer=".$object->param('_referer');
   }
+warn "SAVING $url";
   return $url;
 }
 
@@ -99,13 +100,13 @@ sub delete {
   #$interface->data->populate($object->param('id'));
 
   my $success = $interface->data->destroy;
-  my $script = $interface->script_name || $object->script;
+  my $script = $interface->script_name;
   my $url;
   if ($success) {
-    $url = "/common/$script?dataview=success";
+    $url = "/$script?dataview=success;_referer=".$object->param('_referer');
   }
   else {
-    $url = "/common/$script?dataview=failure";
+    $url = "/$script?dataview=failure;_referer=".$object->param('_referer');
   }
   return $url;
 }
