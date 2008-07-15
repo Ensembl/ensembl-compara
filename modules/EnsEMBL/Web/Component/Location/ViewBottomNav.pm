@@ -33,7 +33,7 @@ sub content {
   }
   return sprintf qq(
   <div class="autocenter navbar" style="width:%spx">
-    <form action="#"><div class="relocate">
+    <form action="/%s/Location/View" method="get"><div class="relocate">
       Location: <label class="hidden" for="region">Region</label><input name="region" id="region" class="text" style="width:3em" value="%s" type="text" /> :
                 <label class="hidden" for="start">Start</label><input name="start" id="start" class="text" style="width:5em" value="%s" type="text" /> - 
 		<label class="hidden" for="end">End</label><input name="end" id="end" class="text" style="width:5em" value="%s" type="text" />
@@ -46,6 +46,7 @@ sub content {
        href="%s"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a><a
        href="%s"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left"/></a>
   </div>), $image_width,
+   $object->species,
    $object->seq_region_name,
    $object->seq_region_start,
    $object->seq_region_end,

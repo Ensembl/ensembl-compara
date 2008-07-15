@@ -54,7 +54,7 @@ sub real_species       :lvalue { $_[0]->Obj->{'real_species'};       }
 sub raw_feature_strand :lvalue { $_[0]->Obj->{'raw_feature_strand'}; }
 sub strand             :lvalue { $_[0]->Obj->{'strand'};             }
 sub name               :lvalue { $_[0]->Obj->{'name'};               }
-sub type               :lvalue { $_[0]->Obj->{'type'};               }
+sub sub_type           :lvalue { $_[0]->Obj->{'type'};               }
 sub synonym            :lvalue { $_[0]->Obj->{'synonym'};            }
 sub seq_region_name    :lvalue { $_[0]->Obj->{'seq_region_name'};    }
 sub seq_region_start   :lvalue { $_[0]->Obj->{'seq_region_start'};   }

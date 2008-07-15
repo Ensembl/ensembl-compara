@@ -21,7 +21,7 @@ sub new {
 sub __set_species {
   my( $self, $species, $golden_path, $level ) = @_;
   $species         ||= $self->species;
-  $golden_path     ||= $self->species_defs->get_config( $species, 'ENSEMBL_GOLDEN_PATH' );
+  $golden_path     ||= $self->species_defs->get_config( $species, 'ENSEMBL_GOLDEN_PATH' ) || 'NCBI36';
   $self->__species = $species; ## to store co-ordinate system information
   $self->__species_hash ||= {};
   unless( exists( $self->__species_hash->{'golden_path'} ) && $self->__golden_path eq $golden_path ) {
@@ -151,13 +151,14 @@ sub _location_from_Peptide {
 ## Lets get the transcript....
   my @dbs = $self->__gene_databases;
   foreach my $db ( @dbs ) {
+    my $TF;
     eval {
-      my $TF = $self->_transcript_adaptor( $db )->fetch_by_translation_stable_id( $ID );
+      $TF = $self->_transcript_adaptor( $db )->fetch_by_translation_stable_id( $ID );
       $TS = $self->_slice_adaptor->fetch_by_Feature( $TF ) if $TF;
     };
     if( $TS ) {
       $self->param('db', $db );
-      return $self->_create_from_slice( 'Translation', $ID, $self->expand($TS), $ID );
+      return $self->_create_from_slice( 'Transcript', $TF->stable_id, $self->expand($TS), $ID );
     }
   }
   foreach my $db ( @dbs ) {
@@ -166,7 +167,7 @@ sub _location_from_Peptide {
       $TS = $self->_slice_adaptor->fetch_by_Feature( $features[0] );
       if( $TS ) {
         $self->param('db', $db );
-        return $self->_create_from_slice( 'Translation', $features[0]->translation->stable_id, $self->expand($TS), $ID );
+        return $self->_create_from_slice( 'Transcript', $features[0]->stable_id, $self->expand($TS), $ID );
       }
     }
   }
@@ -260,9 +261,11 @@ sub _location_from_SeqRegion {
     $strand ||= 1;
     $start = 1 if $start < 1;     ## Truncate slice to start of seq region
     ($start,$end) = ($end, $start) if $start > $end;
+    warn "... $chr $start $end $strand ...";
     foreach my $system ( @{$self->__coord_systems} ) {
       my $slice;
       eval { $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand ); };
+      warn "..... ",$system->name, ' ', $slice;
       warn $@ if $@;
       next if $@;
       if( $slice ) {
@@ -333,7 +336,7 @@ eval {
     my $seq_region_length  = $self->param('srlen');
  warn "HERE";
     my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
-      'type'               => "SeqRegion",
+      'type'               => "Location",
       'real_species'       => $self->__species,
       'name'               => $seq_region,
       'seq_region_name'    => $seq_region,
@@ -357,7 +360,7 @@ sub createObjects {
     warn "Creating location object!.....!";
     my $l = $self->core_objects->location;
     my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
-      'type' => 'SeqRegion',
+      'type' => 'Location',
       'real_species'     => $self->__species,
       'name'             => $l->seq_region_name,
       'seq_region_name'  => $l->seq_region_name,
@@ -375,7 +378,7 @@ sub createObjects {
 
     $self->DataObjects($data);
     warn ".... created";
-    return;
+    return 'from core';
   }
 
   $self->get_databases($self->__gene_databases, 'compara','blast');
@@ -541,7 +544,9 @@ sub createObjects {
         }
 ## SeqRegion
       } else {
+	warn "  $seq_region, $start, $end, $strand  ";
         $location = $self->_location_from_SeqRegion( $seq_region, $start, $end, $strand );
+        warn "  $location  ";
       }
     }
     if( $self->param( 'data_URL' ) ) {
@@ -594,6 +599,13 @@ sub _create_from_slice {
       }
     }
   }
+  my $pars = { 
+    'r' => $TS->seq_region_name.':'.$start.'-'.$end,
+    't' => $type eq 'Transcript' ? $ID : undef ,
+    'g' => $type eq 'Gene'       ? $ID : undef
+  };
+  
+  return $self->problem( 'redirect', $self->_url($pars));
   my $data = EnsEMBL::Web::Proxy::Object->new( 
     'Location',
     {

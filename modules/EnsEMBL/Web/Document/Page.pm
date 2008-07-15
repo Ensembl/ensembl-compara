@@ -344,7 +344,7 @@ sub render {
   $self->_render_head_and_body_tag;
   #  my $X = $self->{'page_template'};
   my $X = '';
-  #$X .= '  <div id="debug"></div>'; 
+  $X .= '  <div id="debug"></div>';  ## UNTIL WE GO LIVE PLEASE LEAVE THIS IN !
   $X .= '
   <table class="mh" summary="layout table">
     <tr>

@@ -87,6 +87,8 @@ sub createObjects {
 
   # Set transcript param to Ensembl Stable ID
   # $self->param( 'transcript',[ $transobj->stable_id ] );
+  $self->problem( 'redirect', $self->_url({'db'=>$db, 't' =>$transobj->stable_id,'g'=>undef,'r'=>undef}));
+  return;#
   $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Transcript', $transobj, $self->__data ) );
 }
 

@@ -37,7 +37,7 @@ sub ajax_zmenu      {
       $obj->thousandify( $obj->seq_region_start ),
       $obj->thousandify( $obj->seq_region_end )
     ),
-    $obj->_url({'type'=>'Location',   'action'=>'View'   })
+    $obj->_url({'type'=>'Location',   'action'=>'View', 'r' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end   })
   );
   $panel->add_entry( 'Strand',     $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward',     undef, 100         );
 

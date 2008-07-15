@@ -15,7 +15,7 @@ sub new {
     'user_db'    => $user_db || undef,
     'r'          => $r       || undef,
     'site'       => $site,
-    'species_defs' => $species_defs
+    'species_defs' => $species_defs,
   };
   bless $self, $class;
   return $self;
