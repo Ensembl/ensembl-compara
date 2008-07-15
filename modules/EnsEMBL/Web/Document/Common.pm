@@ -50,6 +50,12 @@ sub _common_HTML {
   $self->_basic_HTML;
 
   $self->tools->logins            = $self->species_defs->ENSEMBL_LOGINS;
+  if ($self->{'input'}) {
+    $self->tools->referer           = $self->{'input'}->param('_referer');
+  }
+  else {
+    $self->tools->referer = undef;
+  }
   $self->copyright->sitename     = $self->species_defs->ENSEMBL_SITETYPE;
 }
 
