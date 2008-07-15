@@ -40,7 +40,7 @@ sub content {
       <p style="margin-top:10px"><a href="/Account/Update?_referer=%s">Update these details &rarr;</a></p>),
       $user->name, $user->email, $user->organisation, 
       $self->pretty_date($user->created_at), $self->pretty_date($user->modified_at),
-      $self->object->param('_referer'),
+      CGI::escape($self->object->param('_referer')),
   );
 
 

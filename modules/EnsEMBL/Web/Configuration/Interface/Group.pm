@@ -35,10 +35,10 @@ sub save {
   my $script = $interface->script_name;
   my $url;
   if ($success) {
-    $url = "/$script?dataview=success;_referer=".$object->param('_referer');
+    $url = "/$script?dataview=success;_referer=".CGI::escape($object->param('_referer'));
   }
   else {
-    $url = "/$script?dataview=failure;_referer=".$object->param('_referer');
+    $url = "/$script?dataview=failure;_referer=".CGI::escape($object->param('_referer'));
   }
   return $url;
 

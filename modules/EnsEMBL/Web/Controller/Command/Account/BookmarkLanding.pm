@@ -27,7 +27,7 @@ sub process {
   if ($mode ne 'add' || $url !~ /$ENV{'SERVER_NAME'}/) {
     $url = $self->url('/Account/Bookmarks');
     if ($cgi->param('_referer')) {
-      $url .= '?_referer='.$cgi->param('_referer');
+      $url .= '?_referer='.CGI::escape($cgi->param('_referer'));
     }
   }
   $cgi->redirect($url);

@@ -46,7 +46,7 @@ sub content {
 
       $row->{'name'} = $group->name;
       $row->{'desc'} = $group->blurb || '&nbsp;';
-      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit;_referer='.$self->object->param('_referer').'">Manage Group</a>';
+      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit;_referer='.CGI::escape($self->object->param('_referer')).'">Manage Group</a>';
       $table->add_row($row);
     }
     $html .= $table->render;
@@ -54,7 +54,7 @@ sub content {
   else {
     $html .= qq(<p class="center">You are not an administrator of any $sitename groups.</p>);
   }
-  $html .= '<p><a href="/Account/Group?dataview=add;_referer='.$self->object->param('_referer').'">Create a new group &rarr;</a></p>';
+  $html .= '<p><a href="/Account/Group?dataview=add;_referer='.CGI::escape($self->object->param('_referer')).'">Create a new group &rarr;</a></p>';
 
   return $html;
 }

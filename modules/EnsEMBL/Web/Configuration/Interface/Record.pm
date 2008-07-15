@@ -61,7 +61,7 @@ warn "SCRIPT NAME $script";
   if ($object->param('mode')) {
     $url .= ';mode='.$object->param('mode');
   }
-  $url .= ';_referer='.$object->param('_referer');
+  $url .= ';_referer='.CGI::escape($object->param('_referer'));
   
   return $url;
 

@@ -19,6 +19,7 @@ sub render {
     ($url = $param) =~ s/_referer=//;
     last;
   }
+  $url = CGI::escape($url);
   if ($user) {
     $html .= sprintf(qq(Logged in as <strong>%s</strong> | <a href="/Account/Logout?_referer=%s">Log out</a>), $user->name, $url);
   }

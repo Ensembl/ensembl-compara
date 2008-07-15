@@ -51,7 +51,7 @@ sub content {
       my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
       $row->{'admin'} = $creator->name;
       if ($self->object->param('id') && $self->object->param('id') == $group->id) {
-        $row->{'details'} = '<a href="/Account/MemberGroups?_referer='.$self->object->param('_referer').'">Hide Details</a>';
+        $row->{'details'} = '<a href="/Account/MemberGroups?_referer='.CGI::escape($self->object->param('_referer')).'">Hide Details</a>';
       }
       else {
         $row->{'details'} = '<a href="/Account/MemberGroups?id='.$group->id.';_referer='.$self->object->param('_referer').'">Show Details</a>';
