@@ -73,7 +73,12 @@ sub content {
       <dd>
         <p id="transcripts_text">This transcript is a product of gene <a href="$gene_url">$gene_id</a> - There are $count transcripts in this gene: </p>
        <table id="transcripts" summary="List of transcripts for this gene - along with translation information and type">);
-    foreach( sort { $a->stable_id cmp $b->stable_id } @$transcripts ) {
+    foreach(
+      map { $_->[2] }
+      sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] }
+      map { [$_->external_name, $_->stable_id, $_] }
+      @$transcripts
+    ) {
       my $url = $self->object->_url({
         'type'   => 'Transcript',
         't'      => $_->stable_id
