@@ -345,7 +345,7 @@ sub build_GeneTreeSystem
     my $species_name = lc($gdb->name);
     $species_name =~ s/\ /\_/g;
     my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
-    my $sql = "CREATE TABLE $tbl_name like peptide_align_feature";
+    my $sql = "CREATE TABLE IF NOT EXISTS $tbl_name like peptide_align_feature";
 
     #print("$sql\n");
     my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
