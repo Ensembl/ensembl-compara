@@ -22,10 +22,11 @@ our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 sub simple {
   ### Creates a new Proxy::Object, configures context menus and does some error checking
   ### N.B. Doesn't render page - that is done after the interface is defined
-  my ($type, $parameter) = @_;
+  my ($object_type, $doc_type) = @_;
   my $self = __PACKAGE__->new((
-      'objecttype' => $type, 
+      'objecttype' => $object_type, 
       'interface' => undef,
+      'doctype'   => $doc_type
     ));
 
   if( $self->has_a_problem ) {
