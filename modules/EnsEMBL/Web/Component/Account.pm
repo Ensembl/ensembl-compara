@@ -17,19 +17,22 @@ our @ISA = qw( EnsEMBL::Web::Component);
 sub edit_link {
   my ($self, $module, $id, $text) = @_;
   $text = 'Edit' if !$text;
-  return sprintf(qq(<a href="/Account/%s?dataview=edit;id=%s">%s</a>), $module, $id, $text);
+  return sprintf(qq(<a href="/Account/%s?dataview=edit;id=%s;_referer=%s">%s</a>), 
+          $module, $id, $self->object->param('_referer'), $text);
 } 
 
 sub delete_link {
   my ($self, $module, $id, $text) = @_;
   $text = 'Delete' if !$text;
-  return sprintf(qq(<a href="/Account/%s?dataview=delete;id=%s">%s</a>), $module, $id, $text);
+  return sprintf(qq(<a href="/Account/%s?dataview=delete;id=%s;_referer=%s">%s</a>), 
+          $module, $id, $self->object->param('_referer'), $text);
 } 
 
 
 sub share_link {
   my ($self, $call, $id) = @_;
-  return sprintf(qq(<a href="/Account/SelectGroup?id=%s;type=%s">Share</a>), $id, $call);
+  return sprintf(qq(<a href="/Account/SelectGroup?id=%s;type=%s;_referer=%s">Share</a>), 
+          $id, $call, $self->object->param('_referer'));
 } 
 
 =pod
