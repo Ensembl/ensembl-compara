@@ -9,21 +9,13 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub new { return shift->SUPER::new(); }
 
-## Needed to avoid problems in Document::Common
-sub logins    :lvalue { $_[0]{'logins'};   }
+sub referer   :lvalue { $_[0]{'referer'};   }
+sub logins    :lvalue { $_[0]{'logins'};   } ## Needed to avoid problems in Document::Common
 
 sub render   {
   my $self = shift;
-  my $url;
-  my @params = split(';', $ENV{'QUERY_STRING'});
-  foreach my $param (@params) {
-    next unless $param =~ '_referer';
-    ($url = $param) =~ s/_referer=//;
-    last;
-  }
-  $self->printf(qq(
-    <a href="$url">Exit Control Panel</a>
-  ));
+  warn "GO TO: ".$self->referer;
+  $self->print('<a href="'.$self->referer.'">Exit Control Panel</a>');
 }
 
 1;
