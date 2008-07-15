@@ -7,7 +7,6 @@ use Sanger::Graphics::Glyph::Space;
 
 sub init_label {
   my ($self) = @_;
-  warn "Draggable init label";
   return;
 }
 

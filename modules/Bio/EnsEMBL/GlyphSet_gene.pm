@@ -86,7 +86,8 @@ sub _init {
        $GT =~ s/XREF//g;
     my $gene_col   = ($used_colours->{ $GT } = $colours->{ $GT });
     my $ens_ID     = $self->ens_ID( $g );
-    my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
+#    my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
+    my $high = $g->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'g'};
     my $type;
 	if ($g->analysis->logic_name =~ /otter/) {
 		$type = ucfirst(lc($g->status)).' '.ucfirst(lc($g->biotype));
@@ -126,7 +127,7 @@ sub _init {
       if( $ens_ID ne '' ) {
 		$database ||= 'core';
         $Z->{"Gene: $ens_ID"} = "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$ens_ID;db=$database"; 
-        $HREF= "/@{[$self->{container}{_config_file_name_}]}/Gene/Summary?gene=$ens_ID;db=$database";
+        $HREF= $self->_url({'type'=>'Gene','action'=>'Summary','g'=>$ens_ID,'db'=>$database});
         $rect->{'href'}  = $HREF;
 	$rect->{'title'} = "Gene: $ens_ID; Location: ".$g->seq_region_name.':'.$g->seq_region_start.'-'.$g->seq_region_end;
       }

@@ -8,7 +8,7 @@ use Bio::EnsEMBL::Glyph::Symbol::line;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 use GD;
 use GD::Text;
-use CGI qw(escapeHTML);
+use CGI qw(escapeHTML escape);
 
 use vars qw(@ISA $AUTOLOAD);
 
@@ -18,6 +18,30 @@ our %cache;
 #########
 # constructor
 #
+
+sub _url {
+  my $self = shift;
+  my $params  = shift || {};
+  my $species = exists( $params->{'species'} ) ? $params->{'species'} : $self->{'container'}{'_config_file_name_'};
+  my $type    = exists( $params->{'type'}    ) ? $params->{'type'}    : $ENV{'ENSEMBL_TYPE'};
+  my $action  = exists( $params->{'action'}  ) ? $params->{'action'}  : $ENV{'ENSEMBL_ACTION'};
+
+  my %pars = %{$self->{'config'}{_core}{'parameters'}};
+  if( $params->{'g'} && $params->{'g'} ne $pars{'g'} ) {
+    delete($pars{'t'});
+  }
+  foreach( keys %$params ) {
+    $pars{$_} = $params->{$_} unless $_ eq 'species' || $_ eq 'type' || $_ eq 'action';
+  }
+  my $URL = sprintf( '/%s/%s/%s', $species, $type, $action );
+  my $join = '?';
+## Sort the keys so that the URL is the same for a given set of parameters...
+  foreach ( sort keys %pars ) {
+    $URL .= sprintf '%s%s=%s', $join, escapeHTML($_), escapeHTML($pars{$_}) if defined $pars{$_};
+    $join = ';';
+  }
+  return $URL;
+}
 
 sub get_font_details {
   my( $self, $type ) = @_;

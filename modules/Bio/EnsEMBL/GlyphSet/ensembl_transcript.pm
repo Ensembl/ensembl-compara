@@ -20,6 +20,7 @@ sub colours {
   return $Config->get('ensembl_transcript','colours');
 }
 
+sub _default { return ['orange','Other']; }
 sub features {
   my ($self) = @_;
   my $track = 'ensembl_transcript';
@@ -41,37 +42,19 @@ sub colour {
 
   my $KEY = $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
   #warn "GENECOL $KEY";
-  my $genecol = $colours->{ $KEY }||[];
-  warn @$genecol;
-  return () unless @$genecol;
+  my @col = @{ $colours->{ $KEY } || $self->_default };
   
-  if(exists $highlights{lc($transcript->stable_id)}) {
-    return (@$genecol, $colours->{'superhi'});
-  } elsif(exists $highlights{lc($transcript->external_name)}) {
-    return (@$genecol, $colours->{'superhi'});
-  } elsif(exists $highlights{lc($gene->stable_id)}) {
-    return (@$genecol, $colours->{'hi'});
-  }
-  return (@$genecol, undef);
+  return ( @col, $colours->{'superhi'} ) if $transcript->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'t'};
+  return ( @col, $colours->{'hi'}      ) if $gene->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'g'};
+  return ( @col, undef                 );
 }
 
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
-  my $genecol = $colours->{ $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status }||[];
-  warn @$genecol;
-  return () unless @$genecol;
-
-  if( $gene->biotype eq 'bacterial_contaminant' ) {
-    $genecol = $colours->{'_BACCOM'};
-  }
-  if(exists $highlights{lc($gene->stable_id)}) {
-    return (@$genecol, $colours->{'hi'});
-  }
-  if(exists $highlights{lc($gene->external_name)}) {
-    return (@$genecol, $colours->{'hi'});
-  }
-
-  return (@$genecol, undef);
+  my $KEY = $gene->analysis->logic_name."_".$gene->biotype."_".$gene->status;
+  my @col = @{ $colours->{ $KEY } || $self->_default };
+  return ( @col, $colours->{'hi'} ) if $gene->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'g'};
+  return ( @col, undef            );
 }
 
 sub href {
@@ -80,13 +63,7 @@ sub href {
   my $gid = $gene->stable_id();
   my $tid = $transcript->stable_id();
   
-  return "/@{[$self->{container}{_config_file_name_}]}/Transcript/Summary?t=$tid";
-#
-#  my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
-#  return ( $self->{'config'}->get('ensembl_transcript','_href_only') eq '#tid' && exists $highlights{lc($gene->stable_id())} ) ?
-#    "#$tid" : 
-#    qq(/@{[$self->{container}{_config_file_name_}]}/$script_name?gene=$gid);
-
+  return $self->_url({'type'=>'Transcript','action'=>'Summary','t'=>$tid,'g'=>$gid});
 }
 
 sub gene_href {
@@ -94,11 +71,7 @@ sub gene_href {
 
   my $gid = $gene->stable_id();
 
-  my $script_name = $ENV{'ENSEMBL_SCRIPT'} eq 'genesnpview' ? 'genesnpview' : 'geneview';
-  return ( $self->{'config'}->get('ensembl_transcript','_href_only') eq '#gid' && exists $highlights{lc($gene->stable_id)} ) ?
-    "#$gid" :
-    qq(/@{[$self->{container}{_config_file_name_}]}/$script_name?gene=$gid);
-
+  return $self->_url({'type'=>'Gene','action'=>'Summary','g'=>$gid});
 }
 
 sub zmenu {
