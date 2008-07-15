@@ -78,11 +78,11 @@ sub new {
   my $renderer     = shift;
   my $timer        = shift;
   my $species_defs = shift;
-  my $access       = shift;
+  my $input        = shift;
   my $self = {
     'body_attr'         => {},
     'species_defs'      => $species_defs,
-    'access'            => $access,
+    'input'             => $input,
     'doc_type'          => DEFAULT_DOCTYPE,
     'doc_type_version'  => DEFAULT_DOCTYPE_VERSION,
     'encoding'          => DEFAULT_ENCODING,
