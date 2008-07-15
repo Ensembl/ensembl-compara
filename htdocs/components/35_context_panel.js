@@ -15,7 +15,7 @@
 // If no transcripts OR already generated link so return....
     if( !$(table_id) || $(table_id + '_link') ) return;
 
-    var initial_open = $(table_id).getStyle('display') != 'none';
+    var initial_open = $(table_id).visible();
     var txt_on       = 'show ' + table_id;
     var txt_off      = 'hide ' + table_id;
 
@@ -25,11 +25,11 @@
         [ initial_open ? txt_off : txt_on ]
       )
     );
-    if( initial_open != 1 ) $(table_id).hide();
+
     Event.observe($(table_id + '_link'),'click',function(event){
       $(table_id).toggle();
-      var T = $(table_id + '_link');
-      T.innerHTML = T.innerHTML == txt_off ? txt_on : txt_off;
+      $(table_id+'_link').remove();
+      __init_table_dropdown(table_id);
     });
   }
   function __init_transcript_dropdown() { __init_table_dropdown('transcripts'); }

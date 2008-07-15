@@ -97,9 +97,12 @@ function _new_url( s, e ) {
 
 function _show_zmenu_range_other( x ) {
   __zmenu_remove();
+  var Z = location.search;
+  Z = Z.replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
+  Z+= Z.match(/\?/) ? ';' : '?';
   var Q = __zmenu_init('zmenu_nav','Region: '+x.bp_start+'-'+x.bp_end);
   __zmenu_add( Q, '', 'Jump to location view',
-    '/'+x.species+'/Location/Summary?r='+x.region+':'+x.bp_start+'-'+x.bp_end 
+    '/'+x.species+'/Location/Summary?'+Z+'r='+x.region+':'+x.bp_start+'-'+x.bp_end 
   );
   __zmenu_show(Q, x.x, x.y);
 
