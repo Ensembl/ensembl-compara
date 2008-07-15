@@ -666,10 +666,6 @@ sub preview_fields {
       push @$parameters, \%ex;  
     }
   }
-  ## Force passing of _referer parameter
-  if ($object->param('_referer')) {
-    push @$parameters, {'type'=>'Hidden', 'name'=>'_referer', 'value'=> $object->param('_referer')};
-  }
 
   return $parameters;
 }
