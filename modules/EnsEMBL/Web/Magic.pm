@@ -154,7 +154,12 @@ sub stuff {
 # where ID's don't exist but we have a "gene" based display
 # for them.
   if( $webpage->has_a_problem ) {
-    if( $webpage->has_problem_type('mapped_id') ) {
+    if( $webpage->has_problem_type( 'redirect' ) ) {
+      warn "####################### REDIRECTING ##########################";
+      my($p) = $webpage->factory->get_problem_type('redirect');
+      warn $p->name;
+      $webpage->redirect( $p->name );
+    } elsif( $webpage->has_problem_type('mapped_id') ) {
       my $feature = $webpage->factory->__data->{'objects'}[0];
       my $URL = sprintf "/%s/%s/%s?%s",
         $webpage->factory->species, $ENV{'ENSEMBL_TYPE'},$ENV{'ENSEMBL_ACTION'},

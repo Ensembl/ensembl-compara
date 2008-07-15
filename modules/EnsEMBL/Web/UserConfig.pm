@@ -37,7 +37,8 @@ sub new {
     '_r'                => undef, # $adaptor->{'r'} || undef,
     'no_load'     	=> undef,
     'storable'          => 1,
-    'altered'           => 0
+    'altered'           => 0,
+    '_core'             => undef
   };
 
   bless($self, $class);
@@ -51,6 +52,9 @@ sub new {
 #  $self->load() unless(defined $self->{'no_load'});
   return $self;
 }
+
+sub _set_core { $_[0]->{'_core'} = $_[1]; }
+sub core_objects { return $_[0]->{'_core'}; }
 
 sub storable :lvalue {
 ### a

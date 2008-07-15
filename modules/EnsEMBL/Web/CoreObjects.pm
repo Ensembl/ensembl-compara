@@ -144,23 +144,13 @@ sub _generate_objects {
   if( $self->param('t') ) {
     $self->transcript( $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('t')) );
     $self->_get_gene_location_from_transcript;
-  } elsif( $self->param('trans') ) {
-    $self->transcript( $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('trans')) );
-    $self->_get_gene_location_from_transcript;
   }
   if( !$self->transcript && $self->param('g') ) {
     $self->gene(       $db_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('g')) );
     $self->_get_location_transcript_from_gene;
-  } elsif( !$self->transcript && $self->param('gene') ) {
-    $self->gene(       $db_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('gene')) );
-    $self->_get_location_transcript_from_gene;
   }
   if( $self->param('r') ) {
     my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
-    if ($self->variation) {$db_adaptor= $self->database('core');}
-    $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
-  } elsif( $self->param('l') ) {
-    my($r,$s,$e) = $self->param('l') =~ /^([^:]+):(\w+)-(\w+)/;
     if ($self->variation) {$db_adaptor= $self->database('core');}
     $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
   }

@@ -23,6 +23,7 @@ sub _url {
   my $species = exists( $params->{'species'} ) ? $params->{'species'} : $self->species;
   my $type    = exists( $params->{'type'}    ) ? $params->{'type'}    : $self->type;
   my $action  = exists( $params->{'action'}  ) ? $params->{'action'}  : $self->action;
+
   my %pars = %{$self->core_objects->{'parameters'}};
   foreach( keys %$params ) {
     $pars{$_} = $params->{$_} unless $_ eq 'species' || $_ eq 'type' || $_ eq 'action';

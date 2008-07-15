@@ -11,8 +11,33 @@ use EnsEMBL::Web::ScriptConfigAdaptor;
 use EnsEMBL::Web::Document::DropDown::MenuContainer;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::DBSQL::DBConnection;
+use CGI qw(escape escapeHTML);
 
 our @ISA = qw( EnsEMBL::Web::Root );
+
+sub _url {
+  my $self = shift;
+  my $params  = shift || {};
+  warn "URL called........................... ";
+  my $species = exists( $params->{'species'} ) ? $params->{'species'} : $self->species;
+  my $type    = exists( $params->{'type'}    ) ? $params->{'type'}    : $self->type;
+  my $action  = exists( $params->{'action'}  ) ? $params->{'action'}  : $self->action;
+
+  warn "$species - $type - $action";
+
+  my %pars = %{$self->core_objects->{'parameters'}};
+  foreach( keys %$params ) {
+    $pars{$_} = $params->{$_} unless $_ eq 'species' || $_ eq 'type' || $_ eq 'action';
+  }
+  my $URL = sprintf( '/%s/%s/%s', $species, $type, $action );
+  my $join = '?';
+## Sort the keys so that the URL is the same for a given set of parameters...
+  foreach ( sort keys %pars ) {
+    $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) if defined $pars{$_};
+    $join = ';';
+  }
+  return $URL;
+}
 
 sub new {
   my( $class, $data ) = @_;
@@ -130,7 +155,9 @@ sub get_userconfig  {
   my( $self, $key ) = @_;
   my $session = $self->get_session || return;
 #warn "JS5 GUC $key";
-  return $session->getImageConfig( $key ); ## No second parameter - this isn't cached!!
+  my $T = $session->getImageConfig( $key ); ## No second parameter - this isn't cached!!
+  $T->_set_core( $self->core_objects );
+  return $T;
 }
 
 sub user_config_hash {
@@ -140,7 +167,12 @@ sub user_config_hash {
   my $type = shift || $key;
   my $session = $self->get_session;
 #warn "JS5 UCH $key $type";
-  return $session ? $session->getImageConfig( $type, $key ) : undef; ## {'user_configs'}{$key} ||= $self->get_userconfig( $type );
+  return undef unless $session;
+  my $T = $session->getImageConfig( $type, $key ); ## {'user_configs'}{$key} ||= $self->get_userconfig( $type );
+  warn "-SETTING CORE....", $self->core_objects;
+  $T->_set_core( $self->core_objects );
+  warn $T->{'_core'};
+  return $T;
 }
 
 sub get_scriptconfig {
@@ -148,13 +180,19 @@ sub get_scriptconfig {
   my( $self, $key ) = @_;
   $key = $self->script unless defined $key;
   my $session = $self->get_session;
-  return $session ? $session->getScriptConfig( $key ) : undef;
+  return undef unless $session;
+  my $T = $session->getScriptConfig( $key );
+  return $T;
 }
 
 sub attach_image_config {
   my( $self, $key, $image_key ) = @_;
   my $session = $self->get_session;
-  return $session ? $session->attachImageConfig( $key, $image_key ) : undef;
+  return undef unless $session;
+  my $T = $session->attachImageConfig( $key, $image_key );
+  warn "SETTING CORE....";
+  $T->_set_core( $self->core_objects );
+  return $T;
 }
 
 # Handling ExtURLs
