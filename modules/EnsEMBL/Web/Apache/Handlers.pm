@@ -22,7 +22,7 @@ use EnsEMBL::Web::Cache;
 
 use Exporter;
 
-our   $memd = new EnsEMBL::Web::Cache;
+our $memd = new EnsEMBL::Web::Cache;
 
 our $THIS_HOST;
 our $LOG_INFO; 
