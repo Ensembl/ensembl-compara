@@ -135,9 +135,6 @@ sub sequencealignview {
 	'code'    => "info#",
 	'caption' => "Sequence Alignment for $region_name",
      ) ) {
-	$self->add_form( $panel1,
-		qw(markup_options EnsEMBL::Web::Component::Slice::sequence_markup_options_form)
-	);
 
 	$panel1->add_components(qw(
 	        markup_options EnsEMBL::Web::Component::Slice::sequence_markup_options
@@ -241,7 +238,6 @@ sub exportview {
             'code'    => 'stage2_form',
             'caption' => qq(Configure $format->{'supername'} output for $format->{'name'})
           );
-          $self->add_form( $panel2, 'stage2_form' => $format->{'superform'} );
           $panel2->add_components( qw(select EnsEMBL::Web::Component::Export::stage2) );
           $self->add_panel( $panel2 );
           return;
@@ -258,7 +254,6 @@ sub exportview {
     'code'    => 'stage1_form',
     'caption' => qq(Select region/feature to Export)
   );
-  $self->add_form( $panel1, qw(stage1_form EnsEMBL::Web::Component::Export::stage1_form) );
   $panel1->add_components( qw(stage1 EnsEMBL::Web::Component::Export::stage1) );
   $self->add_panel( $panel1 );
 }
@@ -631,7 +626,6 @@ if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
     options  EnsEMBL::Web::Component::LD::options
 				  ));
 
-    $form_panel->add_form( $self->{page}, qw(options EnsEMBL::Web::Component::LD::options_form) );
 
     # finally, add the complete panel to the page object
     $self->{page}->content->add_panel( $form_panel );
