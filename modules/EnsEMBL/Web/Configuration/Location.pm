@@ -60,13 +60,13 @@ sub populate_tree {
   );
 
   my $align_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
-  $align_menu->append( $self->create_node( 'Align', "Non-continuous alignment ([[counts::align_slice]] options)",
+  $align_menu->append( $self->create_node( 'Align', "Genomic alignments ([[counts::align_slice]] options)",
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
-    { 'availability' => 'database:compara', 'concise' => 'Non-continuous alignment' }
+    { 'availability' => 'database:compara', 'concise' => 'Genomic alignments' }
   ));
-  $align_menu->append( $self->create_node( 'Comparison', "Region comparison ([[counts::align_contig]] species)",
+  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comparison ([[counts::align_contig]] species)",
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
-    { 'availability' => 'database:compara', 'concise' => 'Region comparison' }
+    { 'availability' => 'database:compara', 'concise' => 'Multi-species comparison' }
   ));
   $align_menu->append( $self->create_node( 'AlignSequence', "Resequencing ([[counts::align_seq]] individuals)",
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
