@@ -44,7 +44,7 @@ sub add_form {
 
 sub duplicate {
   my($panel, $object) = @_;
-  my $html = qq(<p>Sorry, you appear to have registered already. If you have lost your password, you can <a href="/Account/LostPassword">have a new one sent to your registered email address</a>.</p>);
+  my $html = qq(<p>Sorry, you appear to have registered already. If you have lost your password, we can send you a reactivation link to <a href="/Account/LostPassword?_referer=).$object->param('_referer').qq(">your registered email address</a>.</p>);
 
   $panel->print($html);
   return 1;

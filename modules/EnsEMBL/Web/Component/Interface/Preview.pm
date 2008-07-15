@@ -27,7 +27,7 @@ sub content {
 
   ## Create form
   my $script = $self->script_name($object);
-  my $form = EnsEMBL::Web::Form->new('preview', "/common/$script", 'post');
+  my $form = EnsEMBL::Web::Form->new('preview', "/$script", 'post');
 
   ## get data and assemble form
   my ($primary_key) = $object->interface->data->primary_columns;
@@ -61,7 +61,7 @@ sub content {
     'value' => $object->param('mode'),
   );
 
-  my $preview_fields = $object->interface->preview_fields($id);
+  my $preview_fields = $object->interface->preview_fields($id, $object);
   my $element;
   foreach $element (@$preview_fields) {
     $form->add_element(%$element);
@@ -72,6 +72,7 @@ sub content {
   }
 
   ## navigation elements
+  $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $object->param('_referer'));
   $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => $db_action);
   $form->add_element( 'type' => 'Submit', 'value' => 'OK' );
 

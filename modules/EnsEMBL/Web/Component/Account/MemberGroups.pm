@@ -51,10 +51,10 @@ sub content {
       my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
       $row->{'admin'} = $creator->name;
       if ($self->object->param('id') && $self->object->param('id') == $group->id) {
-        $row->{'details'} = '<a href="/Account/MemberGroups">Hide Details</a>';
+        $row->{'details'} = '<a href="/Account/MemberGroups?_referer='.$self->object->param('_referer').'">Hide Details</a>';
       }
       else {
-        $row->{'details'} = '<a href="/Account/MemberGroups?id='.$group->id.'">Show Details</a>';
+        $row->{'details'} = '<a href="/Account/MemberGroups?id='.$group->id.';_referer='.$self->object->param('_referer').'">Show Details</a>';
       }
       $row->{'leave'} = $self->delete_link('Membership', $group->id, 'Unsubscribe');
       $table->add_row($row);
@@ -62,7 +62,7 @@ sub content {
     $html .= $table->render;
   }
   else {
-    $html .= qq(<p class="center">You are not subscribed to any $sitename groups. <a href='/info/help/groups.html'>Learn more about groups &rarr;</a> </p>);
+    $html .= qq(<p class="center">You are not subscribed to any $sitename groups.</p>);
   }
 
   return $html;

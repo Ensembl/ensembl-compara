@@ -113,7 +113,9 @@ sub content {
 
       my @group_links;
       foreach my $group (@{$group_configs{$config_id}{'groups'}}) {
-        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s">%s</a>), $group->id, $group->name);
+        push @group_links, 
+          sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s">%s</a>), 
+              $group->id, $self->object->param('referer'), $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);
@@ -124,7 +126,7 @@ sub content {
 
   if (!$has_configs) {
     $html .= qq(<p class="center"><img src="/img/help/config_example.gif" /></p>);
-    $html .= qq(<p class="center">You haven't saved any $sitename view configurations. <a href='/info/website/custom.html#configurations'>Learn more about configurating views &rarr;</a>);
+    $html .= qq(<p class="center">You haven't saved any $sitename view configurations.);
 
   }
 

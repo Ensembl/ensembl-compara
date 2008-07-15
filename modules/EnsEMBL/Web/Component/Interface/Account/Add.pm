@@ -25,7 +25,7 @@ sub caption {
 sub content {
   my $self = shift;
 
-  my $form = $self->_data_form('', $self->object, 'add');
+  my $form = $self->data_form($self->object, 'add');
 
 }
 

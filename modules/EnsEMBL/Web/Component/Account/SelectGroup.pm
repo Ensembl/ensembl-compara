@@ -21,7 +21,6 @@ sub caption {
 }
 
 sub content {
-warn "Selecting group";
   my $self = shift;
 
   my $form = EnsEMBL::Web::Form->new( 'select_group', "/Account/ShareRecord", 'post' );
@@ -45,6 +44,7 @@ warn "Selecting group";
   }
   $form->add_element('type'  => 'Hidden', 'name'  => 'id', 'value' => $self->object->param('id'));
   $form->add_element('type'  => 'Hidden', 'name'  => 'type', 'value' => $self->object->param('type'));
+  $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => $self->object->param('_referer'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Share');
 
   return $form->render;

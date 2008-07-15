@@ -147,7 +147,8 @@ sub _output_bookmark {
 sub _output_config {
   my ($self, $config) = @_;
   my $html .= '<li>'.$config->name.'</li>';
-    #my $html .= '<li>'.$config->name.' <a href="#" onclick="javascript:go_to_config('.$config->id.');"';
+    ## TODO - update this!
+    #my $html .= '<li>'.$config->name.' <a href=""';
     #if ($config->description) {
     #  $html .= ' title="'.$config->description.'"';
     #}

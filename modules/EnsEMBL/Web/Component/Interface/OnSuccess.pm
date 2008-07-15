@@ -27,7 +27,7 @@ sub content {
 <li><a href="/$script?dataview=select_to_edit">Select a record to edit</a></li>
 );
   if ($self->object->interface->permit_delete) {
-    $html .= qq(<li><a href="/common/$script?dataview=select_to_delete">Select a record to delete</a></li>
+    $html .= qq(<li><a href="/$script?dataview=select_to_delete">Select a record to delete</a></li>
 );
   }
   $html .= '</ul>';

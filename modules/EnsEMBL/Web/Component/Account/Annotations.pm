@@ -90,7 +90,7 @@ sub content {
   }
 
   if (scalar values %group_notes > 0) {
-    $html .= qq(<h3>Group noteurations</h3>);
+    $html .= qq(<h3>Group notes</h3>);
     ## Sort group notes by name if required
 
     ## Display group notes
@@ -113,7 +113,9 @@ sub content {
 
       my @group_links;
       foreach my $group (@{$group_notes{$note_id}{'groups'}}) {
-        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s">%s</a>), $group->id, $group->name);
+        push @group_links, 
+          sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s">%s</a>), 
+            $group->id, $self->object->param('_referer'), $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);

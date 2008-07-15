@@ -37,9 +37,10 @@ sub content {
                 <dt>Last updated</dt>
                   <dd>%s</dd>
               </dl>
-      <p style="margin-top:10px"><a href="/Account/Update">Update these details &rarr;</a></p>),
+      <p style="margin-top:10px"><a href="/Account/Update?_referer=%s">Update these details &rarr;</a></p>),
       $user->name, $user->email, $user->organisation, 
-      $self->pretty_date($user->created_at), $self->pretty_date($user->modified_at)
+      $self->pretty_date($user->created_at), $self->pretty_date($user->modified_at),
+      $self->object->param('_referer'),
   );
 
 

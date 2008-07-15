@@ -26,7 +26,7 @@ sub content {
   my ($primary_key) = $object->interface->data->primary_columns;
   my $id = $object->param($primary_key) || $object->param('id');
 
-  my $form = $self->data_form($object, $object, 'edit');
+  my $form = $self->data_form($object, 'edit');
   $form->add_element(
           'type'  => 'Hidden',
           'name'  => $primary_key,

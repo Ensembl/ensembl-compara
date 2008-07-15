@@ -46,15 +46,15 @@ sub content {
 
       $row->{'name'} = $group->name;
       $row->{'desc'} = $group->blurb || '&nbsp;';
-      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit">Manage Group</a>';
+      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit;_referer='.$self->object->param('_referer').'">Manage Group</a>';
       $table->add_row($row);
     }
     $html .= $table->render;
   }
   else {
-    $html .= qq(<p class="center">You are not an administrator of any $sitename groups. <a href='/info/help/groups.html'>Learn more about groups &rarr;</a> </p>);
+    $html .= qq(<p class="center">You are not an administrator of any $sitename groups.</p>);
   }
-  $html .= qq(<p><a href="/Account/Group?dataview=add">Create a new group &rarr;</a></p>);
+  $html .= '<p><a href="/Account/Group?dataview=add;_referer='.$self->object->param('_referer').'">Create a new group &rarr;</a></p>';
 
   return $html;
 }
