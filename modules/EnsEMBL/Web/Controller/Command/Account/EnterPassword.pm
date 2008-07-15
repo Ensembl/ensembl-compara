@@ -5,9 +5,6 @@ use warnings;
 
 use Class::Std;
 
-use EnsEMBL::Web::Document::Interface;
-use EnsEMBL::Web::Interface::InterfaceDef;
-
 use base 'EnsEMBL::Web::Controller::Command::Account';
 
 {

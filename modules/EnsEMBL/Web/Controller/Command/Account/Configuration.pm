@@ -28,7 +28,7 @@ sub process {
   my $cgi = $self->action->cgi;
 
   ## Create basic page object, so we can access CGI parameters
-  my $webpage = EnsEMBL::Web::Document::Interface::simple('Account');
+  my $webpage = EnsEMBL::Web::Document::Interface::simple('Account', 'Popup');
 
   my $sd = EnsEMBL::Web::SpeciesDefs->new();
   my $help_email = $sd->ENSEMBL_HELPDESK_EMAIL;

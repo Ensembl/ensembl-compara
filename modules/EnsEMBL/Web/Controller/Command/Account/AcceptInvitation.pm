@@ -60,6 +60,7 @@ sub process {
     'outputtype' => 'HTML',
     'scriptname' => 'Account/Accept',
     'objecttype' => 'Account',
+    'doctype'    => 'Popup',
       );
 
     if( $webpage->has_a_problem() ) {
