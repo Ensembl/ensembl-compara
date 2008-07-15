@@ -157,7 +157,7 @@ foreach my $spp (@valid_spp) {
 
     ## logicnames for valid genes
     my $genetypes = "'ensembl', 'ensembl_havana_gene', 'havana', 'ensembl_projection',
-      'ensembl_ncRNA', 'tRNA', 'pseudogene', 'retrotransposed', 'human_ensembl_proteins',
+      'ensembl_ncRNA', 'ncRNA', 'tRNA', 'pseudogene', 'retrotransposed', 'human_ensembl_proteins',
       'flybase', 'wormbase', 'vectorbase', 'sgd', 'HOX', 'CYT', 'GSTEN'";
 
     my $authority = $SD->get_config($spp, 'AUTHORITY');
@@ -265,7 +265,7 @@ foreach my $spp (@valid_spp) {
     "select count(distinct g.gene_id)
       from gene g, analysis a
       where g.analysis_id = a.analysis_id
-      and a.logic_name = 'ensembl_segment'
+      and a.logic_name = 'ensembl_IG_gene'
       ");
     print "Segments:$ig_segments\n" if $DEBUG;
 
