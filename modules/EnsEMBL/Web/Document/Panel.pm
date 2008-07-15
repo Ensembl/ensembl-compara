@@ -256,42 +256,6 @@ sub remove_component {
   }
 }
 
-=pod
-sub add_form { 
-  my( $self, $page, $key, $function_name ) = @_;
-  (my $module_name = $function_name ) =~s/::\w+$//;
-  if( $self->dynamic_use( $module_name ) ) {
-    no strict 'refs';
-    eval {
-      my $T = &$function_name( $self, $self->{'object'} );
-      $self->{'forms'}{$key} = $T if $T;
-    };
-    if( $@ ) {
-      warn $@;
-      my $error = $self->_format_error($@);
-      $self->print( qq(<h4>Runtime error</h4>
-      <p>Unable to execute <strong>$function_name</strong> to add form:</p>
-      $error) );
-    }
-    if( $self->form($key) ) {
-      my $DATA = $self->form($key)->render_js;
-      $page->javascript->add_source( $DATA->{'scripts'} );
-      $page->javascript->add_script( $DATA->{'head_vars'} );
-      $page->add_body_attr( 'onload' => $DATA->{'body_code'} );
-    }
-  } else {
-    $self->printf( qq(<h4>Compile error</h4>
-    <p>Unable to compile <strong>$module_name</strong></p>
-    %s), $self->_format_error( $self->dynamic_use_failure( $module_name ) ) );
-  }
-}
-
-sub form {
-  my( $self, $key ) = @_;
-  return $self->{'forms'}{$key};
-}
-=cut
-
 sub renderer :lvalue { $_[0]->{'_renderer'}; }
 
 sub strip_HTML { my($self,$string) = @_; $string =~ s/<[^>]+>//g; return $string; }
