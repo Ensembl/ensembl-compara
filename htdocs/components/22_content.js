@@ -1,22 +1,31 @@
-/* Bits of JS used on static pages */
+/** 
+  The following file contains a number of small blocks of 
+  javascript code from the static content pages in Ensembl
+**/
 
 /** 
-  "Jump to" on species list (home page)
+  The following code adds code which on changing a drop-down
+  boxes value - goes to the URL specified by the value of the
+  dropdown element.
 **/
 
 function dropdown_redirect( evt ) {
+/** Function that actually does the redirect **/
   var el = Event.findElement(evt,'select');
   var URL = el.options[el.options.selectedIndex].value;
   document.location = URL;
   return true;
 }
 
-function __init_dropdown_redirect( ) {
+/**
+  Add lambda function which adds an observer to each
+  of the nodes which have a value dropdown_redirect
+**/
+addLoadEvent( function(){ 
   $$('.dropdown_redirect').each(function(n){
     Event.observe(n,'change',dropdown_redirect);
   });
-}
-addLoadEvent( __init_dropdown_redirect );
+});
 
 /**
   Drag'n'drop selection of favourite species
