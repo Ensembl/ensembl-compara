@@ -480,7 +480,7 @@ sub _munge_meta {
   $self->tree->{'GENEBUILD_DATE'} = $months[$A[1]].$A[0];
 
   ## Do species name and group
-  my @taxonomy = @{$self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.classification'}};
+  my @taxonomy = @{$self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.classification'}||[]};
   my $order = $self->tree->{'TAXON_ORDER'};
 
   $self->tree->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
