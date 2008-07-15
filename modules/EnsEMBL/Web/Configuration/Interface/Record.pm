@@ -39,7 +39,8 @@ sub save {
 
   my $success = $interface->data->save;
 
-  my $script = $interface->script_name || $object->script;
+  my $script = $interface->script_name;
+warn "SCRIPT NAME $script";
   my $url;
   if ($success) {
     if ($object->param('owner_type') eq 'group') {
@@ -60,6 +61,7 @@ sub save {
   if ($object->param('mode')) {
     $url .= ';mode='.$object->param('mode');
   }
+  $url .= ';_referer='.$object->param('_referer');
   
   return $url;
 
@@ -77,7 +79,7 @@ sub delete {
   #$interface->data->populate($id);
 
   my $success = $interface->data->destroy;
-  my $script = $interface->script_name || $object->script;
+  my $script = $interface->script_name;
   my $url;
   if ($success) {
     if ($object->param('owner_type') eq 'group') {

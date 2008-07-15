@@ -32,13 +32,13 @@ sub save {
     );
   }
 
-  my $script = $interface->script_name || $object->script;
+  my $script = $interface->script_name;
   my $url;
   if ($success) {
-    $url = "/common/$script?dataview=success";
+    $url = "/$script?dataview=success;_referer=".$object->param('_referer');
   }
   else {
-    $url = "/common/$script?dataview=failure";
+    $url = "/$script?dataview=failure;_referer=".$object->param('_referer');
   }
   return $url;
 

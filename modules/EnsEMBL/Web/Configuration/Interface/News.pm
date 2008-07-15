@@ -13,7 +13,7 @@ our @ISA = qw( EnsEMBL::Web::Configuration::Interface );
 sub save {
   my ($self, $object, $interface) = @_;
 
-  my $script = $interface->script_name || $object->script;
+  my $script = $interface->script_name;
   my ($success, $url);
   
   $interface->cgi_populate($object, $object->param('news_item_id'));
@@ -40,10 +40,10 @@ sub save {
     $success = $interface->data->save;
 
     ## redirect to confirmation page 
-    $url = "/common/$script?dataview=success";
+    $url = "/$script?dataview=success";
   }
   else {
-    $url = "/common/$script?dataview=failure";
+    $url = "/$script?dataview=failure";
   }
   return $url;
 }

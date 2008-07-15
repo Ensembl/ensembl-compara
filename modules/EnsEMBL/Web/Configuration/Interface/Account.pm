@@ -46,7 +46,7 @@ sub check_input {
 sub save {
   my ($self, $object, $interface) = @_;
 
-  my $script = $interface->script_name || $object->script;
+  my $script = $interface->script_name;
   $interface->cgi_populate($object);
   
   if ($ENV{'ENSEMBL_USER_ID'}) {
