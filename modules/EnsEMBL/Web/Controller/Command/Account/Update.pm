@@ -36,7 +36,7 @@ sub process {
   $interface->panel_footer({'add'=>qq(<p>Need help? <a href="mailto:$help_email">Contact the helpdesk</a> &middot; <a href="/info/about/privacy.html">Privacy policy</a><p>)});
   $interface->panel_header({'preview'=>qq(<p>Please check that you have entered your details correctly, then click on the button to save them to our database.</p>)});
   $interface->caption({'on_failure'=>'Update Failed'});
-  $interface->on_success($self->url('/Account/Details'));
+  $interface->on_success($self->url('/Account/Details?_referer='.$cgi->param('_referer')));
   $interface->script_name($self->get_action->script_name);
 
 ## Form elements
