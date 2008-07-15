@@ -51,7 +51,7 @@ sub overwrite_warning {
     $self->add_element(( type => 'CheckBox', name => 'save', label => 'Save current data to my account', 'checked'=>'checked' ));
   }
   else {
-    $self->add_element(('type'=>'Information', 'value'=>'<a href="#" onclick="login_link()">Log into your user account</a> to save this data.'));
+    $self->add_element(('type'=>'Information', 'value'=>'<a href="/Account/Login" class="modal_link">Log into your user account</a> to save this data.'));
   }
 }
 
