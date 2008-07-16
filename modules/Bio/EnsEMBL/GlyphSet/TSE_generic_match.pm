@@ -45,10 +45,19 @@ sub _init {
 		$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
 		$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
 
+		my $align_url =  $Config->{'transcript'}->{'web_transcript'}->_url({
+						'type'     => 'Transcript',
+						'action'   => 'SupportingEvidenceAlignment',
+						't'        =>  $Config->{'transcript'}->{'transcript'}->stable_id,
+						'sequence' => $hit_name,
+					});
+
+		warn "me ",Dumper($align_url);
+
 		my $last_mismatch = 0;
 		my ($lh_ext,$rh_ext) = (0,0);
 		#draw hit locations
-#		warn Dumper($hit_details->{'data'}) if ($hit_name eq 'Q96AX9-4');
+		warn Dumper($hit_details->{'data'}) if ($hit_name eq 'Q5T087');
 
 	BLOCK:
 		foreach my $block (@{$hit_details->{'data'}}) {
@@ -57,19 +66,21 @@ sub _init {
 #			warn Dumper($block) if ($hit_name eq 'NM_024848.1');
 
 			#draw lhs extensions
-			if ( $block->{'lh-ext'} ) {
-				$lh_ext = 1;
+			if ( my $mis = $block->{'lh-ext'} ) {
+				$lh_ext = $mis;
 				next BLOCK;
 			}
 
 			#draw rhs extensions (not tested)
-			if ( $block->{'rh-ext'} ) {
+			if ( my $mis = $block->{'rh-ext'} ) {
 				my $G = new Sanger::Graphics::Glyph::Line({
 					'x'          => $last_end_x,
 					'y'         => $H + $h/2,
 					'h'         =>1,
 					'width'     => $Config->container_width() - $last_end_x,
+					'title'     => $mis,
 					'colour'    => 'red',
+					'dotted'    => 1,
 					'absolutey' => 1,});			
 				$self->push($G);
 				next BLOCK;
@@ -102,11 +113,23 @@ sub _init {
 			}
 
 			if ($lh_ext) {
+				#draw a red line with an I end
 				my $G = new Sanger::Graphics::Glyph::Line({
-					'x'          => 0,
+					'x'         => 0,
 					'y'         => $H + $h/2,
 					'h'         =>1,
 					'width'     => $start_x,
+					'colour'    => 'red',
+					'title'     => $lh_ext,
+					'absolutey' => 1,
+				    'dotted'    => 1});				
+				$self->push($G);
+
+				$G = new Sanger::Graphics::Glyph::Line({
+					'x'         => 10,
+					'y'         => $H,
+					'height'    => $h,
+					'width'     => 0,
 					'colour'    => 'red',
 					'absolutey' => 1,});				
 				$self->push($G);
@@ -126,7 +149,7 @@ sub _init {
 				#add attributes if there is a part of the hit missing, or an extra bit
 				my $mismatch;
 				if ( $block->{'hit_mismatch'} || $last_mismatch) {
-					$mismatch = $last_mismatch ? $last_mismatch : $block->[7];
+					$mismatch = $last_mismatch ? $last_mismatch : $block->{'hit_mismatch'};
 					$G->{'dotted'} = 1;
 					$G->{'colour'} = 'red';
 					$G->{'title'}  = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
@@ -137,6 +160,7 @@ sub _init {
 			$last_mismatch = $last_mismatch ? 0 : $last_mismatch;
 			$last_end = $block->{'munged_end'};
 
+			#draw the actual hit
 			my $G = new Sanger::Graphics::Glyph::Rect({
 				'x'         => $block->{'munged_start'} ,
 				'y'         => $H,
@@ -145,7 +169,7 @@ sub _init {
 				'bordercolour' => 'black',
 				'absolutey' => 1,
 				'title'     => $hit_name,
-				'href'      => '',
+				'href'      => $align_url,
 			});
 
 			#save location of edge of box in case we need to draw a line to the end of it later
