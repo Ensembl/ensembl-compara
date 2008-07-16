@@ -25,6 +25,7 @@ sub _init {
 
 #	my $strand = $trans_ref->{'exons'}[0][2]->strand;
 	my $trans_ref = $Config->{'transcript'};
+	return unless ($trans_ref->{'non_con_introns'});
 	my @introns = @{$trans_ref->{'non_con_introns'}};
 
 	##draw the introns themselves....	
