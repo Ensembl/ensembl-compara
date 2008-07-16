@@ -69,7 +69,7 @@ function _show_zmenu( x ) {
     var a = x.h.split(/\?/);
     var link_url     = a[0];
     var query_string = a[1];
-    var arr = link_url.match(/^(https?:\/\/[^\/]+\/[^\/]+\/)([^\/]+)/);
+    var arr = link_url.match(/^(https?:\/\/[^\/]+\/[^\/]+\/)(.+)/);
     var URL = arr[1]+'Zmenu/'+arr[2]+'?'+query_string;
     new Ajax.Request( URL, {
       method: 'get',
