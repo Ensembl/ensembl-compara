@@ -16,11 +16,9 @@ sub referer   :lvalue { $_[0]{'referer'};   } ## Needed by CloseCP
 sub render   {
   my $self = shift;
   my $species = $ENV{'ENSEMBL_SPECIES'} || 'default';
-  my $url = $ENV{'SCRIPT_NAME'};
-  if ($ENV{'QUERY_STRING'}) {
-    $url .= '?'.$ENV{'QUERY_STRING'};
-  }
+  my $url = CGI::escape($ENV{'REQUEST_URI'});
   my $html;
+## TO DO - once config tab is working, make this the default view
   if ($self->logins) {
     if ($ENV{'ENSEMBL_USER_ID'}) {
       $html .= qq(
@@ -36,11 +34,16 @@ sub render   {
       );
     }
   }
+  else {
+    $html .= qq(
+      <a href="/UserData/Upload?_referer=$url" class="modal_link">Control Panel</a> &nbsp;|&nbsp;
+    );
+  }
   $html .= qq(
       <a href="$species/Blast">BLAST</a> &nbsp;|&nbsp; 
       <a href="$species/Biomart">BioMart</a> &nbsp;|&nbsp;
       <a href="/info/website/help/" id="help"><img src="/i/e-quest_bg.gif" alt="e?" style="vertical-align:middle" />&nbsp;Help</a>);
-  $self->printf($html);
+  $self->print($html);
 }
 
 1;
