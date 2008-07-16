@@ -7,6 +7,7 @@ use base qw(EnsEMBL::Web::Root);
 our @ISA = qw(EnsEMBL::Web::Root);
 
 use POSIX qw(floor ceil);
+use CGI qw(escape);
 use warnings;
 
 sub object { 
@@ -118,8 +119,10 @@ sub _user_context {
   my @data = (
     ['config',    'Config',   'Configure Page' ],
     ['userdata',  'UserData', 'Custom Data' ],
-    ['account',   'Account',  'Your Account' ],
   );
+  if ($self->{object}->species_defs->ENSEMBL_LOGINS) {
+    push @data, ['account',   'Account',  'Your Account' ];
+  }
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
     next if $row->[2] eq '-';
@@ -253,7 +256,7 @@ sub query_string {
   foreach (sort keys %parameters) {
     push @S, "$_=$parameters{$_}" if defined $parameters{$_}; 
   }
-  push @S, '_referer='.$self->object->param('_referer')
+  push @S, '_referer='.CGI::escape($self->object->param('_referer'))
     if $self->object->param('_referer');
   return join ';', @S;
 }
