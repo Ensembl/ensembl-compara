@@ -27,7 +27,7 @@ sub content {
      $wuc->{'slice_number'} = '1|1';
   my $image    = $transcript->new_image( $transcript_slice, $wuc, [] );
      $image->imagemap = 'yes';
-     $image->{'panel_number'} = 'top';
+     $image->{'panel_number'} = 'transcript';
      $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
   return $image->render;
