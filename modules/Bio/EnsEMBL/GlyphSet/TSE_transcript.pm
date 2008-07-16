@@ -2,6 +2,7 @@ package Bio::EnsEMBL::GlyphSet::TSE_transcript;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
+#@ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
@@ -28,27 +29,34 @@ sub _init {
 	my $coding_start = $trans_ref->{'coding_start'};
 	my $coding_end   = $trans_ref->{'coding_end'  };
 	my $strand = $trans_ref->{'exons'}[0][2]->strand;
-
 	my $transcript = $trans_ref->{'transcript'};
-#	my @exons = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
+	my $tsi = $transcript->stable_id;
 	my @introns_and_exons = @{$trans_ref->{'introns_and_exons'}};
 
 	my %highlights;
 	@highlights{$self->highlights} = ();    # build hashkeys of highlight list
 	my($colour, $label, $hilight) = $self->colour( $transcript, $colours, %highlights );
+	$colour ||= 'blue';
 
 	my $tags;
+
 	foreach my $obj (@introns_and_exons) {
 		#if we're working with an exon then draw a box
 		if ( $obj->[2] ) {
 
-#			warn Dumper($obj);
 			my $exon_start = $obj->[0];
 			my $exon_end   = $obj->[1];
 
 			#set the exon boundries to the image boundries in case anything odd has happened
 			$exon_start    = 1 if $exon_start < 1 ;
 			$exon_end      = $length if $exon_end > $length;
+
+			my $t_url =  $trans_ref->{'web_transcript'}->_url({
+				'type'   => 'Transcript',
+				'action' => 'Evidence',
+				't'      => $tsi,
+			});
+			warn "me too ",Dumper($t_url);
 
 			##the following is very verbose and will be rewritten, but it does do the job!
 			my $col1 = $Config->get('TSE_transcript','col');
@@ -64,7 +72,7 @@ sub _init {
 					'bordercolour' => $colour,
 					'absolutey' => 1,
 					'title'     => $obj->[2]->stable_id,
-					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
+					'href'      => $t_url,
 				});
 				$tag = "@{[$exon_end]}:@{[$exon_start]}";
 				push @{$tags}, ["X:$tag",$col1];
@@ -82,7 +90,7 @@ sub _init {
 					'colour'    => $colour,
 					'absolutey' => 1,
 					'title'     => $obj->[2]->stable_id,
-					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
+					'href'      => $t_url,
 				});
 				$tag = "@{[$exon_end]}:@{[$exon_start]}";
 				push @{$tags}, ["X:$tag",$col2];
@@ -102,7 +110,7 @@ sub _init {
 					'bordercolour' => $colour,
 					'absolutey' => 1,
 					'title'     => $obj->[2]->stable_id,
-					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
+					'href'      => $t_url,
 				});
 				$tag = "@{[$coding_start]}:@{[$exon_start]}";
 				push @{$tags}, ["X:$tag",$col1];
@@ -124,7 +132,7 @@ sub _init {
 					'colour'    => $colour,
 					'absolutey' => 1,
 					'title'     => $obj->[2]->stable_id,
-					'href'      => $self->href( $transcript, $obj->[2], %highlights ),
+					'href'      => $t_url,
 				});
 				$tag = "@{[$exon_end]}:@{[$coding_start]}";
 				push @{$tags}, ["X:$tag",$col2];
@@ -142,7 +150,7 @@ sub _init {
 						'bordercolour'    => $colour,
 						'absolutey' => 1,
 						'title'     => $obj->[2]->stable_id,
-						'href'      => $self->href( $transcript, $obj->[2], %highlights ),
+						'href'      => $t_url,
 					});
 					$tag = "@{[$exon_end]}:@{[$coding_start]}";
 					push @{$tags}, ["X:$tag",$col2];
@@ -164,7 +172,7 @@ sub _init {
 					'colour'    => $colour,
 					'absolutey' => 1,
 					'title'     => $obj->[2]->stable_id,
-					'href'      => $self->href( $transcript, $obj->[2], %highlights ),
+					'href'      => $t_url,
 				});
 				$tag = "@{[$coding_end]}:@{[$exon_start]}";
 				push @{$tags}, ["X:$tag",$col2];
@@ -181,7 +189,7 @@ sub _init {
 					'bordercolour' => $colour,
 					'absolutey' => 1,
 					'title'     => $obj->[2]->stable_id,
-					'href'      => $self->href(  $transcript, $obj->[2], %highlights ),
+					'href'      => $t_url,
 				});
 				$tag = "@{[$exon_end]}:@{[$coding_end]}";
 				push @{$tags}, ["X:$tag",$col1];
@@ -243,7 +251,7 @@ sub colours {
 
 sub colour {
   my ($self,  $transcript, $colours, %highlights) = @_;
-  my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status };
+  my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status } || [];
 #  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
   if(exists $highlights{lc($transcript->stable_id)}) {
     return (@$genecol, $colours->{'hi'});
