@@ -3,9 +3,11 @@ package EnsEMBL::Web::Object::UserData;
 use strict;
 use warnings;
 no warnings "uninitialized";
-                                                                                   
+=head
+# TODO: remove these                                                                                   
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
+=cut
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::RegObj;
                                                                                    
