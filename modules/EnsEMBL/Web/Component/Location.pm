@@ -1,8 +1,6 @@
 package EnsEMBL::Web::Component::Location;
 
 use EnsEMBL::Web::Component;
-use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
-use Bio::EnsEMBL::ExternalData::DAS::DAS;
 use Data::Bio::Text::FeatureParser;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
