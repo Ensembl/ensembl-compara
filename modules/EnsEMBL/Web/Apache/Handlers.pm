@@ -335,8 +335,8 @@ sub transHandler_species {
       warn "... ZMENU ...";
       $type   = shift @$path_segments;
       $action = shift @$path_segments;
-      $r->subprocess_env->{'ENSEMBL_ACTION'}   = $type;
-      $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
+      $r->subprocess_env->{'ENSEMBL_TYPE'}     = $type;
+      $r->subprocess_env->{'ENSEMBL_ACTION'}   = $action;
     } elsif( $real_script_name eq 'component' ) {
       warn "... COMPONENT ...";
       $type = shift @$path_segments;
