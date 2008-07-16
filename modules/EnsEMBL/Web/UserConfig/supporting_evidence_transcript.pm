@@ -26,6 +26,7 @@ sub init {
 			'opt_zclick'     => 1,
 			'show_labels' => 'yes',
 			'width'   => 1000,
+			'label_width'   => 110,
 			'bgcolor'   => 'background1',
 			'bgcolour1' => 'background1',
 			'bgcolour2' => 'background1',
