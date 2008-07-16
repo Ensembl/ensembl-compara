@@ -44,6 +44,10 @@ sub configurable {
   return $self->{_data}{configurable};
 }
 
+sub action {
+  my $self = shift;
+  return $self->{_data}{'action'};
+}
 sub set_action {
   my $self = shift;
   $self->{_data}{'action'} = $self->_get_valid_action(shift);
@@ -221,6 +225,10 @@ sub _content_panel {
 
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
   my $node          = $self->get_node( $action );
+  my $title = $node->data->{'consise'}||$node->data->{'caption'};
+     $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
+     $title = join ' - ', '', ( $obj ? $obj->caption : () ), $title;
+  $self->set_title( $title );
   my $previous_node = $node->previous_leaf      ;
   my $next_node     = $node->next_leaf          ;
 
