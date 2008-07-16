@@ -19,6 +19,7 @@ sub _init {
 
 	#retrieve tag locations and colours calculated by TSE_transcript track
 	my $tags   = $Config->{'tags'};
+
 	foreach my $tag (@{$tags}) {
 		my ($extra,$e,$s) = split ':', $tag->[0];
 		my $col = $tag->[1];
@@ -26,7 +27,7 @@ sub _init {
 			'x' => $s-1,
 			'y' => 0,
 			'height' => 0,
-			'width'  => $e-$s+1,
+			'width'  => $e-$s,
 			'colour' => '$col',
 		});
 		$self->join_tag( $tglyph, $tag->[0], $flag,  0, $col, 'fill', -99 );
