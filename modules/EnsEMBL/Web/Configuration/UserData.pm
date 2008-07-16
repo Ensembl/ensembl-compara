@@ -23,6 +23,7 @@ sub populate_tree {
 
   ## N.B. Most of these will be empty, as content is created using 
   ## wizard methods (below) and Wizard::Node::UserData
+  my $has_logins = $self->{object}->species_defs->ENSEMBL_LOGINS;
 
   my $uploaded_menu = $self->create_submenu( 'Uploaded', 'Uploaded data' );
   $uploaded_menu->append($self->create_node( 'Upload', "Upload Data",
@@ -32,10 +33,10 @@ sub populate_tree {
     [], { 'availability' => 1 }
   ));
   $uploaded_menu->append($self->create_node( 'SaveUpload', "Save to Account",
-    [], { 'availability' => 1, 'concise' => 'Save Data' }
+    [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
   ));
   $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Saved Data",
-    [], { 'availability' => 1, 'concise' => 'Manage Data' }
+    [], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
   ));
 
   my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
@@ -43,10 +44,10 @@ sub populate_tree {
    [], { 'availability' => 1 }
     ));
   $attached_menu->append($self->create_node( 'SaveRemote', "Attach to Account",
-    [], { 'availability' => 1, 'concise' => 'Save' }
+    [], { 'availability' => $has_logins, 'concise' => 'Save' }
   ));
   $attached_menu->append($self->create_node( 'ManageRemote', "Manage Data",
-    [], { 'availability' => 1, 'concise' => 'Manage Data' }
+    [], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
   ));
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
