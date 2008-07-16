@@ -24,8 +24,8 @@ sub content {
 
   my $referer = CGI::escape($self->object->param('_referer'));
   my $form = EnsEMBL::Web::Form->new( 'login', "/Account/SetCookie", 'post' );
-  my $reg_url = $self->url("/Account/Register?_referer=$referer"));
-  my $pwd_url = $self->url("/Account/LostPassword?_referer=$referer"));
+  my $reg_url = $self->url("/Account/Register?_referer=$referer");
+  my $pwd_url = $self->url("/Account/LostPassword?_referer=$referer");
 
   $form->add_element('type'  => 'String', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Password', 'required' => 'yes');
