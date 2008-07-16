@@ -26,26 +26,55 @@ sub ajax_zmenu      {
   my $obj  = $self->object;
   my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
   $panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
-  $panel->add_entry( 'Transcript', $obj->stable_id,       $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}), 195 );
+  $panel->add_entry({ 
+    'type'     => 'Transcript',
+    'label'    => $obj->stable_id, 
+    'link'     => $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}),
+    'priority' => 195 
+  });
 ## Only if there is a gene (not Prediction transcripts)
   if( $obj->gene ) {
-    $panel->add_entry( 'Gene',     $obj->gene->stable_id, $obj->_url({'type'=>'Gene',       'action'=>'Summary'}), 190 );
+    $panel->add_entry({
+      'type'     => 'Gene',
+      'label'    => $obj->gene->stable_id,
+      'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
+      'priority' => 190 
+    });
   }
-  $panel->add_entry( 'Location',   
-    sprintf( "%s: %s-%s",
-      $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
-      $obj->thousandify( $obj->seq_region_start ),
-      $obj->thousandify( $obj->seq_region_end )
-    ),
-    $obj->_url({'type'=>'Location',   'action'=>'View', 'r' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end   })
-  );
-  $panel->add_entry( 'Strand',     $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward',     undef, 100         );
+  $panel->add_entry({
+    'type'     => 'Location',   
+    'label'    => sprintf( "%s: %s-%s",
+                    $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
+                    $obj->thousandify( $obj->seq_region_start ),
+                    $obj->thousandify( $obj->seq_region_end )
+                  ),
+    'link'     => $obj->_url({'type'=>'Location',   'action'=>'View', 'r' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end })
+  });
+  $panel->add_entry({
+    'type'     => 'Strand',
+    'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'
+  });
 
-  $panel->add_entry( 'Base pairs', $obj->thousandify( $obj->Obj->seq->length         ),     undef, 50          );
+  $panel->add_entry({
+    'type'     => 'Base pairs',
+    'label'    => $obj->thousandify( $obj->Obj->seq->length ),
+    'priority' => 50
+  });
+
+
 ## Protein coding transcripts only....
   if( $obj->Obj->translation ) {
-    $panel->add_entry( 'Peptide',    $obj->Obj->translation->stable_id, $obj->_url({'type'=>'Transcript', 'action' => 'Peptide'}), 180          );
-    $panel->add_entry( 'Amino acids',$obj->thousandify( $obj->Obj->translation->length ),   undef, 40          );
+    $panel->add_entry({
+      'type'     => 'Protein product',
+      'label'    => $obj->Obj->translation->stable_id,
+      'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'Peptide'}),
+      'priority' => 180
+    });
+    $panel->add_entry({
+      'type'     => 'Amino acids',
+      'label'    => $obj->thousandify( $obj->Obj->translation->length ),
+      'priority' => 40 
+    });
   }
   return;
 }

@@ -125,16 +125,25 @@ sub ajax_zmenu      {
   my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
   $panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
 
-  $panel->add_entry( 'Gene', $obj->stable_id,       $obj->_url({'type'=>'Gene', 'action'=>'Summary'}), 195 );
-  $panel->add_entry( 'Location',
-    sprintf( "%s: %s-%s",
-      $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
-      $obj->thousandify( $obj->seq_region_start ),
-      $obj->thousandify( $obj->seq_region_end )
-    ),
-    $obj->_url({'type'=>'Location',   'action'=>'View'   })
-  );
-  $panel->add_entry( 'Strand',     $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward',     undef, 100         );
+  $panel->add_entry({
+    'type'     => 'Gene',
+    'label'    => $obj->stable_id,
+    'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
+    'priority' => 195
+  });
+  $panel->add_entry({
+    'type'     => 'Location',
+    'label'    => sprintf( "%s: %s-%s",
+                    $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
+                    $obj->thousandify( $obj->seq_region_start ),
+                    $obj->thousandify( $obj->seq_region_end )
+                  ),
+    'link' => $obj->_url({'type'=>'Location',   'action'=>'View'   })
+  });
+  $panel->add_entry({
+    'type'     => 'Strand',
+    'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'
+  });
 
 ## Protein coding transcripts only....
   return;

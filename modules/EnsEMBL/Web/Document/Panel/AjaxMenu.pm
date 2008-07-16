@@ -15,14 +15,15 @@ sub _end   {
 }
 
 sub add_entry {
-  my( $self, $type, $label, $link, $priority, $extra ) = @_;
+  my( $self, $hashref ) = @_;
   $self->{'entries'} ||= [];
   push @{$self->{'entries'}}, {
-    'type'     => $type,
-    'label'    => $label,
-    'link'     => $link,
-    'priority' => $priority || 100,
-    'extra'    => $extra||{} 
+    'code'     => $hashref->{'code'}     || 'entry_'.($self->{'counter'}++),
+    'type'     => $hashref->{'type'}     || '',
+    'label'    => $hashref->{'label'}    || '',
+    'link'     => $hashref->{'link'}     || undef,
+    'priority' => $hashref->{'priority'} || 100,
+    'extra'    => $hashref->{'extra'}    || {}
   };
 }
 
