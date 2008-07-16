@@ -51,7 +51,7 @@ sub _init {
 			$exon_start    = 1 if $exon_start < 1 ;
 			$exon_end      = $length if $exon_end > $length;
 
-			my $t_url =  $trans_ref->{'web_transcript'}->_url({
+			my $t_url =  $self->_url({
 				'type'   => 'Transcript',
 				'action' => 'Evidence',
 				't'      => $tsi,

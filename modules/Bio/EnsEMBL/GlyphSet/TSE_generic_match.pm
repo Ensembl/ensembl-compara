@@ -45,7 +45,7 @@ sub _init {
 		$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
 		$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
 
-		my $align_url =  $Config->{'transcript'}->{'web_transcript'}->_url({
+		my $align_url =  $self->_url({
 						'type'     => 'Transcript',
 						'action'   => 'SupportingEvidenceAlignment',
 						't'        =>  $Config->{'transcript'}->{'transcript'}->stable_id,
