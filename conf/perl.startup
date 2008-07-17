@@ -151,41 +151,7 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
   warn "Name: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVERNAME.":".$conf->ENSEMBL_PROXY_PORT,"\n";
   warn "Real: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVER.":".$conf->ENSEMBL_PORT,"\n";
   warn "\n";
-  warn "\n";
-  warn "\n";
-  warn "\n";
-  warn qq{
-                                                                                            
-                              ,ad8888ba,                           88                       
-                             d8"'    `"8b                          88                       
-                            d8'                                    88                       
-                            88             ,adPPYYba,   ,adPPYba,  88,dPPYba,    ,adPPYba,  
-                            88             ""     `Y8  a8"     ""  88P'    "8a  a8P_____88  
-                            Y8,            ,adPPPPP88  8b          88       88  8PP"""""""  
-                             Y8a.    .a8P  88,    ,88  "8a,   ,aa  88       88  "8b,   ,aa  
-                              `"Y8888Y"'   `"8bbdP"Y8   `"Ybbd8"'  88       88   `"Ybbd8"'  
-                                                                                            
-                                                                                            
-                                                                                                                       
- 888b      88                                                                                                          
- 8888b     88                                                                                                          
- 88 `8b    88                                                                                                          
- 88  `8b   88  ,adPPYYba,  88,dPYba,,adPYba,    ,adPPYba,  ,adPPYba,  8b,dPPYba,   ,adPPYYba,   ,adPPYba,   ,adPPYba,  
- 88   `8b  88  ""     `Y8  88P'   "88"    "8a  a8P_____88  I8[    ""  88P'    "8a  ""     `Y8  a8"     ""  a8P_____88  
- 88    `8b 88  ,adPPPPP88  88      88      88  8PP"""""""   `"Y8ba,   88       d8  ,adPPPPP88  8b          8PP"""""""  
- 88     `8888  88,    ,88  88      88      88  "8b,   ,aa  aa    ]8I  88b,   ,a8"  88,    ,88  "8a,   ,aa  "8b,   ,aa  
- 88      `888  `"8bbdP"Y8  88      88      88   `"Ybbd8"'  `"YbbdP"'  88`YbbdP"'   `"8bbdP"Y8   `"Ybbd8"'   `"Ybbd8"'  
-                                                                      88                                               
-                                                                      88
-                                                                      
-                                                                      
-                                                                         
-};
-  warn "      					   ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVERNAME.":".$conf->ENSEMBL_PROXY_PORT,"\n";
-  warn "\n";
-  warn "\n";
-  warn "\n";
-  warn "\n";
+  warn "Cache namespace: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVERNAME.":".$conf->ENSEMBL_PROXY_PORT,"\n";
   warn "\n";
   require EnsEMBL::Web::BlastView::MetaDataBlast;
 } else{
