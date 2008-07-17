@@ -83,8 +83,9 @@ sub insert_blessed {
 
 	my @primary_columns = $self->primary_columns;
 	$self->_attribute_store(
-		$primary_columns[0] => $real->{ $primary_columns[0] })
-		if @primary_columns == 1;
+		$primary_columns[0] => $real->{ $primary_columns[0] }
+  )
+    if @primary_columns == 1;
 
 	delete $self->{__Changed};
 
@@ -169,25 +170,26 @@ sub withdraw_data {
     $self->$field($data->{$field})
       if $self->can($field) && ref $data;
   }
-  
+
   return $data;
 }
 
 
 sub fertilize_data {
   my $self = shift;
-  my $hash = {};
+  my $data = {};
   foreach my $field (keys %{ $self->data_fields }) {
-    $hash->{$field} = $self->$field;
+    $data->{$field} = $self->$field;
   }
-  $self->data($hash);
-  $self->dump_data;
+  
+  $self->_attribute_set(data => $self->dump_data($data));
 }
 
 
 sub dump_data {
   my $self = shift;
-  my $data = $self->data;
+  my $data = shift;
+  
   my $temp_fields = {};
   foreach my $key (keys %{ $data }) {
     $temp_fields->{$key} = $data->{$key};
@@ -198,7 +200,7 @@ sub dump_data {
   my $dump = $dumper->Dump();
   #$dump =~ s/'/\\'/g;
   $dump =~ s/^\$VAR1 = //;
-  $self->data($dump);
+  return $dump;
 }
 
 

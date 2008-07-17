@@ -48,13 +48,13 @@ sub handler {
   return DECLINED                if -d $r->filename;
 
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
+
+  ## Ajax request
+  $ENV{CACHE_KEY} .= '::AJAX'     if $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
 
   ## Ajax disabled
   $ENV{CACHE_KEY} .= '::NO_AJAX'  unless $ENSEMBL_WEB_REGISTRY->check_ajax;
-  ## Ajax request
-  $ENV{CACHE_KEY} .= '::AJAX'     if $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
-  
   
   my $pageContent = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
     

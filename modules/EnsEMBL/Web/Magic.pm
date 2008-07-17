@@ -8,10 +8,20 @@ package EnsEMBL::Web::Magic;
 ### ingredient - to create partial pages for AJAX inclusions.
 
 use strict;
+use Apache2::RequestUtil;
+
 use EnsEMBL::Web::Document::WebPage;
+use EnsEMBL::Web::RegObj;
+
 use base qw(Exporter);
-use CGI qw(redirect); # only need the redirect header stuff!
+use CGI qw(header redirect); # only need the redirect header stuff!
 our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu);
+
+our $memd = EnsEMBL::Web::Cache->new(
+  enable_compress    => 1,
+  compress_threshold => 10_000,
+);
+
 
 ### Three constants defined and exported to the parent scripts...
 ### To allow unquoted versions of Gene, Transcript and Location
@@ -113,14 +123,40 @@ sub ingredient {
 ###
 ### Wrapper around a list of components to produce a panel or
 ### part thereof - for inclusion via AJAX
-  my $referer_hash = _parse_referer;
-  my $webpage     = EnsEMBL::Web::Document::WebPage->new(
-    'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
-    'scriptname' => 'component',
-    'parent'     => $referer_hash
-  );
-  $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
-  $webpage->render;
+
+  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+  $ENV{CACHE_KEY} = $ENV{REQUEST_URI}.'::AJAX';
+  ## Ajax request
+  $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
+
+  my $content = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
+
+  if ($content) {
+    warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
+  } else {
+    warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}";
+    my $referer_hash = _parse_referer;
+
+    my $webpage     = EnsEMBL::Web::Document::WebPage->new(
+      'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
+      'scriptname' => 'component',
+      'parent'     => $referer_hash,
+      'renderer'   => 'String',
+    );
+    
+    $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
+  
+    $webpage->render;
+    $content = $webpage->page->renderer->value;
+  
+    my @tags = qw(AJAX);
+    push @tags, keys %{ $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}} }
+             if $ENV{CACHE_TAGS} && $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}};
+    $memd->set($ENV{CACHE_KEY}, $content, undef, @tags) if $memd;
+  }
+
+  CGI::header;
+  print $content;
   return "Generated magic ingredient ($ENV{'ENSEMBL_ACTION'})";
 }
 

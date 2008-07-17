@@ -24,6 +24,8 @@ __PACKAGE__->add_queriable_fields(
   valid_thru   => 'datetime', ## Default - 0 = unlimited
 );
 
+__PACKAGE__->columns(TEMP => qw/as_string/);
+
 __PACKAGE__->add_trigger(
   before_create => sub {
                      $_[0]->created_at(time2iso());
@@ -40,14 +42,17 @@ __PACKAGE__->add_trigger(select => sub {$_[0]->withdraw_data});
 __PACKAGE__->add_trigger(before_create => \&fertilize_data);
 __PACKAGE__->add_trigger(before_update => \&fertilize_data);
 
-sub fertilize_data {
-  my $self = shift;
-  $self->dump_data;
-}
-
 sub withdraw_data {
   my $self = shift;
-  $self->data($self->SUPER::withdraw_data);
+
+  $self->as_string($self->data);
+  $self->_attribute_store(data => $self->SUPER::withdraw_data);
+}
+
+sub fertilize_data {
+  my $self = shift;
+  
+  $self->_attribute_set(data => $self->dump_data($self->data));
 }
 
 sub set_config {
@@ -73,7 +78,9 @@ sub set_config {
 sub get_config {
   my $class = shift;
   my %args  = @_;
-  
+
+  $class->propagate_cache_tags(%args);
+
   return wantarray
          ? $class->search(%args)
          : $class->retrieve(%args);
@@ -117,6 +124,33 @@ sub share {
   $share->save;
 
   return $share;
+}
+
+
+###################################################################################################
+##
+## Cache stuff
+##
+###################################################################################################
+
+sub invalidate_cache {
+  my $self  = shift;
+  my $cache = shift;
+  
+  $self->SUPER::invalidate_cache($cache, 'session['.$self->session_id.']', 'type['.$self->type.']');
+}
+
+sub propagate_cache_tags {
+  my $self = shift;
+  my %args = @_;
+
+  my @tags;
+  for (my ($key, $value) = each %args) {
+    push @tags, $key.'['.$value.']';
+  }
+  
+  $self->SUPER::propagate_cache_tags('session['.$self->session_id.']', @tags)
+    if ref $self;
 }
 
 1;

@@ -595,7 +595,7 @@ sub get_script_config_as_string {
       type       => 'script',
       code       => $script,
     );
-    return $config->data if $config;
+    return $config->as_string if $config;
   }
   
   return undef; 
