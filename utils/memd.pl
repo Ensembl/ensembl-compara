@@ -11,6 +11,8 @@ if ($ARGV[0] =~ /get/i) {
 } elsif ($ARGV[0] =~ /tags?_delete/i) {
   shift @ARGV;
   print $memd->tags_delete(@ARGV)."\n";
+} elsif ($ARGV[0] =~ /flush_all/i) {
+  print $memd->flush_all."\n";
 } else {
 
   my $debug_key_list = $memd->get('debug_key_list');

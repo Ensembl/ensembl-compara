@@ -41,6 +41,8 @@ sub new {
                   && !$levels{WEBSITE_DB_DATA};
   return undef if $caller->isa('EnsEMBL::Web::File::Driver::Memcached')
                   && !$levels{TMP_IMAGES};
+  return undef if $caller->isa('EnsEMBL::Web::Magic')
+                  && !$levels{AJAX_CONTENT};
 
   my %args = (
     servers         => $memcached{servers},
@@ -115,7 +117,7 @@ sub set {
   my $self = shift;
   my ($key, $value, $exptime, @tags) = @_;
 
-  #warn "EnsEMBL::Web::Cache->set($key)";
+  warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
   if ($self->{debug}) {
     warn "EnsEMBL::Web::Cache->set($key)";
     my $debug_key_list = $self->SUPER::get('debug_key_list') || {};
