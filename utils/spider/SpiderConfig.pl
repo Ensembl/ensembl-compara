@@ -20,8 +20,8 @@ Usage:
 Note:
 
   spider.pl was slightly modified to use SpiderConfig.pl by default
-  instead of SwishSpiderConfig.pl, just because I like the name of it :)
-  It also was modified to accept URL(s) straight from command line, without specifying 
+  instead of SwishSpiderConfig.pl, just because I didn't like the name :)
+  It also was modified to accept URL(s) straight from command line
 
 Futher information:
 
