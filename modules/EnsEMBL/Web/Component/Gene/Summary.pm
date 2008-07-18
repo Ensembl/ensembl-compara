@@ -18,13 +18,20 @@ sub content {
 ## Grab the description of the object...
 
   my $html = '';
+  my($edb, $acc);
   my $description = escapeHTML( $object->gene_description() );
   if( $description ) {
-    $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
-    $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
-    my($edb, $acc) = ($1, $2);
-    $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if $acc;
-
+    if ($object->get_db eq 'vega') {
+      $edb = 'Vega';
+      $acc = $object->Obj->stable_id;
+      $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb", $edb.'_gene', $acc) ]}</span>);
+    }
+    else {
+      $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
+      $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
+      ($edb, $acc) = ($1, $2);
+      $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if $acc;
+    }
     $html .= qq(
     <p>
       $description
