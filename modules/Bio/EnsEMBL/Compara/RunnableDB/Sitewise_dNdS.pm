@@ -344,9 +344,11 @@ sub run_sitewise_dNdS
     chdir($tmpdir);
     my $run;
     my $quiet = ''; $quiet = ' 2>/dev/null' unless ($self->debug);
+    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
     open($run, "$slrexe $quiet |") or $self->throw("Cannot open exe $slrexe");
     my @output = <$run>;
     $exit_status = close($run);
+    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
     $self->{error_string} = (join('',@output));
     if ( (grep { /is saturated/ } @output)) {
       $results->{saturated} = $self->{'saturated'};
