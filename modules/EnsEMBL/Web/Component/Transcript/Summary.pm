@@ -24,21 +24,23 @@ sub content {
 
   my ($edb,$acc);
   if( $description ) {
-    if ($object->get_db eq 'vega') {
-      $edb = 'Vega';
-      $acc = $object->Obj->stable_id;
-      $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb", $edb.'_transcript', $acc) ]}</span>);
+    if ($description != 'No description') {
+      if ($object->get_db eq 'vega') {
+        $edb = 'Vega';
+        $acc = $object->Obj->stable_id;
+        $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb", $edb.'_transcript', $acc) ]}</span>);
+      }
+      else {
+        $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
+        $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
+        ($edb, $acc) = ($1, $2);
+        $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if $acc;
+      }
+      $html .= qq(
+      <p>
+        $description
+      </p>);
     }
-    else {
-      $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
-      $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
-      ($edb, $acc) = ($1, $2);
-      $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if $acc;
-    }
-    $html .= qq(
-    <p>
-      $description
-    </p>);
   }
 
 ## Now a link to location;
