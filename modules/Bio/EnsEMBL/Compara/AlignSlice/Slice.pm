@@ -1737,6 +1737,7 @@ sub get_all_underlying_Slices {
               -strand => $this_subseq_strand
           );
       $this_underlying_slice->{seq} = $self->subseq($start_position, $end_position, $strand);
+      $this_underlying_slice->{_tree} = $this_slice->{_tree} if (defined($this_slice->{_tree}));
     }
 #     if ($strand == 1) {
       push(@$underlying_slices, $this_underlying_slice);
