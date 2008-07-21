@@ -44,20 +44,18 @@ sub _init {
 	$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
 	$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
 
-	warn Dumper($hit_details->{'data'}) if ($hit_name eq 'Q9NUX5');
+	warn Dumper($hit_details->{'data'}) if ($hit_name eq 'O43556.4');
 
 	#go through each component of the combined hit (ie each supporting_feature)
 	foreach my $block (@{$hit_details->{'data'}}) {
 	    
 #	    my $exon_stable_id = $block->{'exon'}->stable_id;
 
-
-
 	    my $width = $block->{'munged_end'}-$block->{'munged_start'} +1;
 	    $start_x = $start_x > $block->{'munged_start'} ? $block->{'munged_start'} : $start_x;
 	    $finish_x = $finish_x < $block->{'munged_end'} ? $block->{'munged_end'} : $finish_x;
 
-#	    if ($hit_name eq 'Q9NUX5') {warn "drawing from $start_x to $finish_x";}
+	    if ($hit_name eq 'O43556.4') {warn "drawing from $start_x to $finish_x";}
 
 
 	    #draw left hand extensions
@@ -162,8 +160,8 @@ sub _init {
 	    }
 	    if (my $gap = $block->{'right_end_mismatch'}) {
 		my $c = $gap > 0 ? 'red' : 'blue';
-		push @draw_end_lines, [$block->{'munged_end'}-1/$pix_per_bp,$H,$c];
-		push @draw_end_lines, [$block->{'munged_end'},$H,$c];
+		push @draw_end_lines, [$block->{'munged_start'}+$width,$H,$c];
+		push @draw_end_lines, [$block->{'munged_start'}+$width-1/$pix_per_bp,$H,$c];
 		$G->{'title'} = "$hit_name ($gap)";
 	    }
 	    $self->push( $G );
