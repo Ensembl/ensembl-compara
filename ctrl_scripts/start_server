@@ -86,7 +86,7 @@ if ($rmconfig) {
 
 	# Flush memcached
 	my $cmd = "perl $serverroot/utils/memd.pl flush_all";
-	exec($cmd);
+	system($cmd);
 
 }
 

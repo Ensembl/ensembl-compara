@@ -55,7 +55,7 @@ if ($memd) {
   
   }
 } else {
-   print "No memd server configured or can not connect\n";
+   print "No memcached server configured or can't connect \n";
 }
 
 
