@@ -23,19 +23,16 @@ sub content {
     #newish content
     my $self = shift;
     my $object = $self->object;
-    my $type = $object->logic_name;
+#    my $type = $object->logic_name;
     my $html = qq(<div class="content">);
     if (! $object->count_supporting_evidence) {
 	$html .=  qq( <dt>No Evidence</dt><dd>);
-	#show message for Prediction Transcripts and Havana transcripts with no evidence
-	if ($object->transcript->isa('Bio::EnsEMBL::PredictionTranscript')) {
-	    $html .= qq(<p>Supporting evidence is not available for Prediction transcripts</p>);
-	}
-	elsif ($type =~ /otter/ ){
+	#show message for transcripts with no evidence
+	if ($object->type =~ /otter/ || $object->db_type eq 'vega' ){
 	    $html .= qq(<p>Although this Vega Havana transcript has been manually annotated and it's structure is supported by experimental evidence, this evidence is currently missing from the database. We are adding the evidence to the database as time permits</p>);
 	}
 	else {
-	    $html .= qq(<p>Supporting evidence not available for this transcript</p>);
+	    $html .= qq(<p>There is no supporting evidence available for this transcript</p>);
 	}
     }
     else {
@@ -302,7 +299,7 @@ sub _content {
 	    my $hit_seq_region_end = $evi->seq_region_end;
 
 	    if ($object->get_db eq 'vega') {
-		next EVI unless ($t_ids{$hit_name}); #only proceed if this hit name has been used as transcript evidence
+		next EVI unless ($t_ids{$hit_name}); #only proceed for vega if this hit name has been used as transcript evidence
 	    }
 	    else {
 		next EVI if (exists($t_evidence->{$hit_name})); #only proceed if this hit name has not been used as transcript evidence
@@ -423,8 +420,8 @@ sub split_evidence_and_munge_gaps {
     my $hit_seq_region_start = $hit->start;
     my $hit_seq_region_end   = $hit->end;
     my $hit_name = $hit->hseqname;
-	if ($hit->hseqname eq 'AB074480.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
-#	if ($hit->hseqname eq 'BC059409.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
+#	if ($hit->hseqname eq 'AB074480.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
+	if ($hit->hseqname eq 'NM_001018161.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
 #    if ($hit->hseqname eq 'Q5T089') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
     
     my $coords;
@@ -436,7 +433,7 @@ sub split_evidence_and_munge_gaps {
 	my $estart = $exon->start;
 	my $eend   = $exon->end;
 	my $ename  = $exon->stable_id;
-	if ($hit->hseqname eq 'AB074480.1') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
+	if ($hit->hseqname eq 'NM_001018161.1') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
 #	if ($hit->hseqname eq 'BC059409.1') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
 #	if ($hit->hseqname eq 'Q5T089') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
 	my @coord;
@@ -444,7 +441,7 @@ sub split_evidence_and_munge_gaps {
 	#catch any extra 'exons' that are in a parsed hit
 	my $extra_exon = 0;
 	if ( $last_end && ($last_end < $hit_seq_region_end) && ($estart > $hit_seq_region_end) ) {
-	    if ($hit->hseqname eq 'AB074480.1') { warn "   **extra";}
+#	    if ($hit->hseqname eq 'AB074480.1') { warn "   **extra";}
 	    $extra_exon = $hit;
 	    $last_end = $eend;
 	}
@@ -457,26 +454,41 @@ sub split_evidence_and_munge_gaps {
 	#set this to save further iteration if we're past the end
 	$past_hit_end = 1 if ($eend >= $hit_seq_region_end);
 
-	    if ($hit->hseqname eq 'AB074480.1') { warn "   *found match";}
+	if ($hit->hseqname eq 'NM_001018161.1') { warn "   *found match";}
 
 	#add tags for hit/exon start/end mismatches - protein evidence has some leeway (+-3), DNA has to be exact
 	#CCDS evidence is considered as protein evidence even though it is a DNA feature 
 	my ($left_end_mismatch, $right_end_mismatch);
 	my ($cod_start,$cod_end);
 	my ($b_start,$b_end);
+#	if ($hit->hseqname eq 'Q4SBT1.1') { warn "*exon = $ename: - $estart:$eend";}
 	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
 	    $cod_start = $coding_coords->[0];
 	    $cod_end   = $coding_coords->[1];
-	    $b_start =    $estart > $cod_end ?  $estart
+	    if ($hit->hseqname eq 'NM_001018161.1') { warn "**exon = $ename: - $estart:$eend";}
+#	    $b_start =    $estart > $cod_end ?  $estart
+#		: $eend < $cod_start ? $estart
+#		: $cod_start > $estart ? $cod_start
+#		    : $estart;
+	    $b_start =    $eend < $cod_start ?  $estart
 		: $cod_start > $estart ? $cod_start
 		    : $estart;
 	    $b_end =   $estart > $cod_end ?  $eend
 		: $cod_end < $eend ? $cod_end
 		    : $eend;
+#	    if ($hit->hseqname eq 'Q4SBT1.1') { warn "***exon = $ename: - $estart:$eend";}
 #	    if ($hit->hseqname eq 'Q5T089') { warn "   CDS: - $cod_start:$cod_end, $b_start:$b_end";  }
 	    #			if ($ename eq 'ENSE00000899040') { warn "   CDS: - $cod_start:$cod_end, $start:$end";  }
 	    $left_end_mismatch  = (abs($b_start - $hit_seq_region_start) < 4) ? 0 : $b_start - $hit_seq_region_start;
 	    $right_end_mismatch = (abs($b_end - $hit_seq_region_end) < 4)     ? 0 : $hit_seq_region_end - $b_end;
+
+	    if ($hit->hseqname eq 'Q4SBT1.1') {
+		warn "coding - $cod_start:$cod_end";
+		warn "exon - $estart:$eend";
+		warn "start/end - $b_start:$b_end";
+		warn "lhmismatch = $left_end_mismatch, rhmismatch = $right_end_mismatch";
+	    }
+
 	}
 	else {
 	    $left_end_mismatch  = $estart == $hit_seq_region_start ? 0 : $estart - $hit_seq_region_start;
@@ -496,7 +508,7 @@ sub split_evidence_and_munge_gaps {
 	my $end;
 	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
 	    $end =  ($hit_seq_region_end - $b_end) > 3 ? $b_end : $hit_seq_region_end;
-	    if ($hit->hseqname eq 'Q5T089') { warn "matching against $end"; }
+	    if ($hit->hseqname eq 'Q4SBT1.1') { warn "matching against $end"; }
 	}
 	else {
 	    $end = $hit_seq_region_end <= $eend ? $hit_seq_region_end : $eend;
@@ -515,7 +527,6 @@ sub split_evidence_and_munge_gaps {
 	    'hit'                => $hit,
 	};	
 	push @{$coords}, $details;
-#	return $coords;
     }
     return $coords;
 }
