@@ -21,7 +21,7 @@ sub content {
   my($edb, $acc);
   my $description = escapeHTML( $object->gene_description() );
   if( $description ) {
-    if ($description != 'No description') {
+    if ($description ne 'No description') {
       if ($object->get_db eq 'vega') {
         $edb = 'Vega';
         $acc = $object->Obj->stable_id;

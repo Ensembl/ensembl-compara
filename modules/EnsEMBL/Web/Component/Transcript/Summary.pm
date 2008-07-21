@@ -24,7 +24,7 @@ sub content {
 
   my ($edb,$acc);
   if( $description ) {
-    if ($description != 'No description') {
+    if ($description ne 'No description') {
       if ($object->get_db eq 'vega') {
         $edb = 'Vega';
         $acc = $object->Obj->stable_id;
