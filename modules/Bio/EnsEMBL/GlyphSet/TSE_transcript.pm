@@ -40,12 +40,19 @@ sub _init {
 
     my $tags;
 
+
+#    warn "coding_start = $coding_start";
+#    warn "coding_end = $coding_end";
+
     foreach my $obj (@introns_and_exons) {
 	#if we're working with an exon then draw a box
 	if ( $obj->[2] ) {
 
 	    my $exon_start = $obj->[0];
 	    my $exon_end   = $obj->[1];
+
+#	    warn " exon_start = $exon_start";
+#	    warn " exon_end = $exon_end";
 
 	    #set the exon boundries to the image boundries in case anything odd has happened
 	    $exon_start    = 1 if $exon_start < 1 ;
@@ -74,7 +81,7 @@ sub _init {
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$exon_end]}:@{[$exon_start]}";
+		$tag = "@{[$exon_end+1]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col1];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
@@ -92,7 +99,7 @@ sub _init {
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$exon_end]}:@{[$exon_start]}";
+		$tag = "@{[$exon_end+1]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col2];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
@@ -100,7 +107,7 @@ sub _init {
 	    }
 
 	    elsif ( ($exon_start < $coding_start) && ($exon_end > $coding_start) ) {
-		##draw and tag partially coding transcripts left hand)
+		##draw and tag partially coding transcripts on left hand
 		#non coding part
 		$G = new Sanger::Graphics::Glyph::Rect({
 		    'x'         => $exon_start -1 ,
@@ -112,18 +119,15 @@ sub _init {
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$coding_start]}:@{[$exon_start]}";
+		$tag = "@{[$coding_start+1]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col1];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
 		$self->push( $G );
 		
-		#coding part
-		
+		#coding part		
 		my $width = ($exon_end > $coding_end) ? $coding_end - $coding_start + 1 : $exon_end - $coding_start + 1;
-		
-		
-		
+		my $y_pos = ($exon_end > $coding_end) ? $coding_end : $exon_end;
 		$G = new Sanger::Graphics::Glyph::Rect({
 		    'x'         => $coding_start -1,
 		    'y'         => 0,
@@ -134,7 +138,7 @@ sub _init {
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$exon_end]}:@{[$coding_start]}";
+		$tag = "@{[$y_pos+1]}:@{[$coding_start]}";
 		push @{$tags}, ["X:$tag",$col2];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
@@ -152,16 +156,16 @@ sub _init {
 			'title'     => $obj->[2]->stable_id,
 			'href'      => $t_url,
 		    });
-		    $tag = "@{[$exon_end]}:@{[$coding_start]}";
-		    push @{$tags}, ["X:$tag",$col2];
-		    $self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
-		    $self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
+		    $tag = "@{[$exon_end+1]}:@{[$coding_end]}";
+		    push @{$tags}, ["X:$tag",$col1];
+		    $self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
+		    $self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
 		    $self->push( $G );
 		}
 	    }
 	    
 	    elsif ( ($exon_end > $coding_end) && ($exon_start < $coding_end) ) {
-		##draw and tag partially coding transcripts left hand)
+		##draw and tag partially coding transcripts on the right hand
 		
 		#coding part
 		$G = new Sanger::Graphics::Glyph::Rect({
@@ -174,7 +178,7 @@ sub _init {
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$coding_end]}:@{[$exon_start]}";
+		$tag = "@{[$coding_end+1]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col2];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
@@ -191,7 +195,7 @@ sub _init {
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$exon_end]}:@{[$coding_end]}";
+		$tag = "@{[$exon_end+1]}:@{[$coding_end]}";
 		push @{$tags}, ["X:$tag",$col1];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
