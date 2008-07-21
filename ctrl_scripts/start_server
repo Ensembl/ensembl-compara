@@ -83,6 +83,11 @@ if ($rmconfig) {
         warn "Could not delete $serverroot/$confdir/config.packed: $!\n" .
             "[WARN] Starting with old config.packed!\n";
     }
+
+	# Flush memcached
+	my $cmd = "perl $serverroot/utils/memd.pl flush_all";
+	exec($cmd);
+
 }
 
 # LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST

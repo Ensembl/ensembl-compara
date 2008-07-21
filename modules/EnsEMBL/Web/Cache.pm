@@ -98,7 +98,7 @@ sub delete_by_tags {
   my @tags = (@_, $self->{namespace});
   my $sock = $self->get_sock($tags[0]);
 
-  if ($#tags) { ## if more than 1 tag
+#  if ($#tags) { ## if more than 1 tag
     my $cmd = 'tags_delete '.join(' ', @tags)."\r\n";
     my $res = $self->_write_and_read($sock, $cmd);
     if ($res =~ /^(\d+) ITEMS_DELETED/) {
@@ -106,11 +106,11 @@ sub delete_by_tags {
     } else {
       return 0;
     }
-  } else { ## just 1 tag, better use tag_delete (faster)
-    my $cmd = 'tag_delete '.$tags[0]."\r\n";
-    my $res = $self->_write_and_read($sock, $cmd);
-    return $res eq "TAG_DELETED\r\n";
-  }
+#  } else { ## just 1 tag, better use tag_delete (faster)
+#    my $cmd = 'tag_delete '.$tags[0]."\r\n";
+#    my $res = $self->_write_and_read($sock, $cmd);
+#    return $res eq "TAG_DELETED\r\n";
+#  }
 }
 
 sub set {

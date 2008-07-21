@@ -1,18 +1,31 @@
 #!/usr/local/bin/perl
 
 use strict;
+use FindBin qw($Bin);
 use Cache::Memcached;
 use Data::Dumper;
 
-my $memd = new Cache::Memcached::Tags {servers => [ '127.0.0.1:11311' ]};
+BEGIN{
+  unshift @INC, "$Bin/../conf";
+  unshift @INC, "$Bin/../modules";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+
+  eval{ require EnsEMBL::Web::Cache };
+  if ($@){ die "Can't use EnsEMBL::Web::Cache - $@\n"; }
+}
+
+my $memd = new EnsEMBL::Web::Cache;
 
 if ($ARGV[0] =~ /get/i) {
   print $memd->get($ARGV[1])."\n";
-} elsif ($ARGV[0] =~ /tags?_delete/i) {
+} elsif ($ARGV[0] =~ /(tags?)?_?delete/i) {
   shift @ARGV;
-  print $memd->tags_delete(@ARGV)."\n";
-} elsif ($ARGV[0] =~ /flush_all/i) {
-  print $memd->flush_all."\n";
+  print $memd->delete_by_tags(@ARGV)."\n";
+} elsif ($ARGV[0] =~ /flush_?all/i) {
+  print "Flushing cache:\n";
+  print $memd->delete_by_tags." cache items deleted\n";
 } else {
 
   my $debug_key_list = $memd->get('debug_key_list');
@@ -34,21 +47,6 @@ if ($ARGV[0] =~ /get/i) {
     print "No debug_key_list found \n";
   }
 
-}
-
-
-package Cache::Memcached::Tags;
-
-use base 'Cache::Memcached';
-
-sub tags_delete {
-  my $self = shift;
-  my @tags = @_;
-  my $sock = $self->get_sock($tags[0]);
-
-  my $cmd = 'tags_delete '.join(' ', @tags)."\r\n";
-  my $res = $self->_write_and_read($sock, $cmd);
-  return $res;
 }
 
 1;
