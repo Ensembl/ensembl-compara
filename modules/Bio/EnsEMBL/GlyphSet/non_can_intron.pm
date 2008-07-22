@@ -41,7 +41,7 @@ sub _init {
 		
 		#Draw an I-bar covering the intron
 		my $G = new Sanger::Graphics::Glyph::Line({
-			'x'         => $box_start -1 ,
+			'x'         => $box_start ,
 			'y'         => 0,
 			'width'     => $box_end-$box_start +1,
 			'height'    => 0,
@@ -52,7 +52,7 @@ sub _init {
 		});
 		$self->push( $G );
 		$G = new Sanger::Graphics::Glyph::Line({
-			'x'         => $box_start -1 ,
+			'x'         => $box_start,
 			'y'         => -3,
 			'width'     => 0,
 			'height'    => 6,
@@ -63,7 +63,7 @@ sub _init {
 		});
 		$self->push( $G );
 		$G = new Sanger::Graphics::Glyph::Line({
-			'x'         => $box_end ,
+			'x'         => $box_end+1 ,
 			'y'         => -3,
 			'width'     => 0,
 			'height'    => 6,
