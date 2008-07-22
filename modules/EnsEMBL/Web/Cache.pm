@@ -27,6 +27,7 @@ sub new {
                        WEBSITE_DB_DATA
                        USER_DB_DATA
                        TMP_IMAGES
+                       AJAX_CONTENT
                   )];
 
   my %levels = map { $_ => 1 } @$levels;
