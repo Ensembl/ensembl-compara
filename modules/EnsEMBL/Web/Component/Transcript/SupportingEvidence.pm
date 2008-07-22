@@ -96,9 +96,6 @@ sub _content {
     }
     $config->{'transcript'}{'exons'} = $ens_exons ;
     
-#   warn Dumper($sub_slices);
-#   warn Dumper($ens_exons);
-    
     #identify coordinates of the portions of introns and exons to be drawn. Include the exon object
     my $e_counter = 0;
     my $e_count = scalar(@$ens_exons);
@@ -110,24 +107,21 @@ sub _content {
 	my $subslice_start = $subslice->[0]+$subslice->[2];
 	my $subslice_end   = $subslice->[1]+$subslice->[2];
 	my ($exon_start,$exon_end);
-#		warn "1. subslice_start = $subslice_start, subslice_end = $subslice_end";
 	for ($e_counter; $e_counter < $e_count; $e_counter++) {
 	    my $exon  = $exons[$e_counter];
 	    $exon_start = $exon->[0];
 	    $exon_end = $exon->[1];
 	    my $exon_id = $exon->[2]->stable_id;
-#			warn "$exon_id: exon_start = $exon_start, exon_end = $exon_end";
-#			warn "2. subslice_start = $subslice_start, subslice_end = $subslice_end";
-	    #if the exon is still withn the subslice then work with it
+
+	    #if the exon is still within the subslice then work with it
 	    if ( ($subslice_end > $exon_end) ){
 		my $start = $subslice_start;
 		my $end   = $exon_start;
-#				warn "3. start = $start, end = $end";
 		push @{$intron_exon_slices}, [$start, $end] if $intron_exon_slices; #don't add the first one
 		push @{$intron_exon_slices}, $exon;
+
 		#set subslice to the end of the ready for the next exon iteration
 		$subslice_start = $exon_end;
-#				warn "setting start of sublice to end of exon";
 	    }
 	    else {
 		#otherwise draw a line to the end of the subslice and move on
@@ -138,7 +132,7 @@ sub _content {
 		next SUBSLICE;
 	    }
 	}
-	#push @{$intron_exon_slices}, [$subslice_start, $subslice_end]; #uncomment to add last intron
+	#push @{$intron_exon_slices}, [$subslice_start, $subslice_end]; #uncomment to add last intron to display
     }
     $config->{'transcript'}{'introns_and_exons'} = $intron_exon_slices;
     
@@ -197,9 +191,9 @@ sub _content {
 	my $coords;
 	my $hit_name = $evi->hseqname;
 	$t_ids{$hit_name}++;
+
 	#don't store any transcript evidence for a vega gene
 	next if ($object->get_db eq 'vega');
-
 	$t_evidence->{$hit_name}{'hit_name'} = $hit_name; 
 	    
 	#split evidence into ungapped features, map onto exons and munge (ie account for gaps)
@@ -254,7 +248,6 @@ sub _content {
 		}
 	    }
 	    
-	    
 	    $last_end = $feature->hend;
 	    #reverse the exon order if on the reverse strand
 	    if ($transcript->strand == 1) {
@@ -264,9 +257,7 @@ sub _content {
 		unshift  @{$t_evidence->{$hit_name}{'data'}},$munged_coords->[0];
 	    }
 	}
-#	warn Dumper($t_evidence->{$hit_name}{'data'});# if ($evi->hseqname eq 'NM_024848.1');
     }
-    #    }
     
     #calculate total length of the hit (used for sorting the display)
     while ( my ($hit_name, $hit_details) = each (%{$t_evidence})  ) {
@@ -274,16 +265,10 @@ sub _content {
 	foreach my $match (@{$hit_details->{'data'}}) {
 	    my $len = abs($match->{'munged_end'} - $match->{'munged_start'}) + 1;
 	    $tot_length += $len;
-	    #			if ($hit_name eq 'NP_543151.1') { warn "length of this bit is $len (",$match->[1]," - ",$match->[0],"; total is now $tot_length"; }
 	}
 	$t_evidence->{$hit_name}{'hit_length'} = $tot_length;
     }
-    
-#	warn Dumper($t_evidence->{$hit_name}{'data'}) if ($evi->hseqname eq 'NM_024848.1')
-    
     $config->{'transcript'}{'transcript_evidence'} = $t_evidence;	
-    
-#	warn Dumper($t_evidence);
     
     #add info on additional supporting_evidence (exon level)
     my $e_evidence;
@@ -420,9 +405,7 @@ sub split_evidence_and_munge_gaps {
     my $hit_seq_region_start = $hit->start;
     my $hit_seq_region_end   = $hit->end;
     my $hit_name = $hit->hseqname;
-#	if ($hit->hseqname eq 'AB074480.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
-	if ($hit->hseqname eq 'NM_001018161.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
-#    if ($hit->hseqname eq 'Q5T089') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
+#    if ($hit->hseqname eq 'NP_001034267.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
     
     my $coords;
     my $last_end;
@@ -433,9 +416,7 @@ sub split_evidence_and_munge_gaps {
 	my $estart = $exon->start;
 	my $eend   = $exon->end;
 	my $ename  = $exon->stable_id;
-	if ($hit->hseqname eq 'NM_001018161.1') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
 #	if ($hit->hseqname eq 'BC059409.1') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
-#	if ($hit->hseqname eq 'Q5T089') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
 	my @coord;
 
 	#catch any extra 'exons' that are in a parsed hit
@@ -454,41 +435,22 @@ sub split_evidence_and_munge_gaps {
 	#set this to save further iteration if we're past the end
 	$past_hit_end = 1 if ($eend >= $hit_seq_region_end);
 
-	if ($hit->hseqname eq 'NM_001018161.1') { warn "   *found match";}
-
 	#add tags for hit/exon start/end mismatches - protein evidence has some leeway (+-3), DNA has to be exact
 	#CCDS evidence is considered as protein evidence even though it is a DNA feature 
 	my ($left_end_mismatch, $right_end_mismatch);
 	my ($cod_start,$cod_end);
 	my ($b_start,$b_end);
-#	if ($hit->hseqname eq 'Q4SBT1.1') { warn "*exon = $ename: - $estart:$eend";}
 	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
 	    $cod_start = $coding_coords->[0];
 	    $cod_end   = $coding_coords->[1];
-	    if ($hit->hseqname eq 'NM_001018161.1') { warn "**exon = $ename: - $estart:$eend";}
-#	    $b_start =    $estart > $cod_end ?  $estart
-#		: $eend < $cod_start ? $estart
-#		: $cod_start > $estart ? $cod_start
-#		    : $estart;
 	    $b_start =    $eend < $cod_start ?  $estart
 		: $cod_start > $estart ? $cod_start
 		    : $estart;
 	    $b_end =   $estart > $cod_end ?  $eend
 		: $cod_end < $eend ? $cod_end
 		    : $eend;
-#	    if ($hit->hseqname eq 'Q4SBT1.1') { warn "***exon = $ename: - $estart:$eend";}
-#	    if ($hit->hseqname eq 'Q5T089') { warn "   CDS: - $cod_start:$cod_end, $b_start:$b_end";  }
-	    #			if ($ename eq 'ENSE00000899040') { warn "   CDS: - $cod_start:$cod_end, $start:$end";  }
 	    $left_end_mismatch  = (abs($b_start - $hit_seq_region_start) < 4) ? 0 : $b_start - $hit_seq_region_start;
 	    $right_end_mismatch = (abs($b_end - $hit_seq_region_end) < 4)     ? 0 : $hit_seq_region_end - $b_end;
-
-	    if ($hit->hseqname eq 'Q4SBT1.1') {
-		warn "coding - $cod_start:$cod_end";
-		warn "exon - $estart:$eend";
-		warn "start/end - $b_start:$b_end";
-		warn "lhmismatch = $left_end_mismatch, rhmismatch = $right_end_mismatch";
-	    }
-
 	}
 	else {
 	    $left_end_mismatch  = $estart == $hit_seq_region_start ? 0 : $estart - $hit_seq_region_start;
@@ -496,9 +458,13 @@ sub split_evidence_and_munge_gaps {
 	}	
 	
 	#map start and end positions of the hit from genomic coordinates to transcript genomic coordinates
+        #account for off-by-three errors by setting boundry of hit to exon boundry
 	my $start;
 	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
-	    $start = ($hit_seq_region_start - $b_start) > 3 ? $hit_seq_region_start : $b_start;
+	    $start = ($b_start - $hit_seq_region_start)   > 4  ? $b_start 
+		     : ($b_start - $hit_seq_region_start) > -4 ? $b_start
+                     : $hit_seq_region_start;
+#	    warn "---$b_start - $hit_seq_region_start : matching against $start";
 	}
 	else {
 	    $start = $hit_seq_region_start >= $estart ? $hit_seq_region_start : $estart;
@@ -507,8 +473,10 @@ sub split_evidence_and_munge_gaps {
 	my $munged_start = $start + $object->munge_gaps( 'supporting_evidence_transcript', $start );
 	my $end;
 	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
-	    $end =  ($hit_seq_region_end - $b_end) > 3 ? $b_end : $hit_seq_region_end;
-	    if ($hit->hseqname eq 'Q4SBT1.1') { warn "matching against $end"; }
+	    $end =  ($b_end - $hit_seq_region_end )   < 4  ? $b_end
+                    : ($b_end - $hit_seq_region_end ) > -4 ? $b_end
+                    : $hit_seq_region_end;
+#	    warn "---$hit_seq_region_end - $b_end : matching against $end";
 	}
 	else {
 	    $end = $hit_seq_region_end <= $eend ? $hit_seq_region_end : $eend;
