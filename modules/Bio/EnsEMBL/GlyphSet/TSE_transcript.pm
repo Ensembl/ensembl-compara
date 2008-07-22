@@ -51,8 +51,8 @@ sub _init {
 	    my $exon_start = $obj->[0];
 	    my $exon_end   = $obj->[1];
 
-#	    warn " exon_start = $exon_start";
-#	    warn " exon_end = $exon_end";
+	    warn " exon_start = $exon_start";
+	    warn " exon_end = $exon_end";
 
 	    #set the exon boundries to the image boundries in case anything odd has happened
 	    $exon_start    = 1 if $exon_start < 1 ;
@@ -72,7 +72,7 @@ sub _init {
 	    #draw and tag completely non-coding exons
 	    if ( ($exon_end < $coding_start) || ($exon_start > $coding_end) ) {
 		$G = new Sanger::Graphics::Glyph::Rect({
-		    'x'         => $exon_start -1 ,
+		    'x'         => $exon_start ,
 		    'y'         => 0.5*$h,
 		    'width'     => $exon_end-$exon_start +1,
 		    'height'    => $h,
@@ -90,7 +90,7 @@ sub _init {
 	    elsif ( ($exon_start >= $coding_start) && ($exon_end <= $coding_end) ) {
 		##draw and tag completely coding exons
 		$G = new Sanger::Graphics::Glyph::Rect({
-		    'x'         => $exon_start -1,
+		    'x'         => $exon_start,
 		    'y'         => 0,
 		    'width'     => $exon_end - $exon_start + 1,
 		    'height'    => 2*$h,
@@ -110,7 +110,7 @@ sub _init {
 		##draw and tag partially coding transcripts on left hand
 		#non coding part
 		$G = new Sanger::Graphics::Glyph::Rect({
-		    'x'         => $exon_start -1 ,
+		    'x'         => $exon_start,
 		    'y'         => 0.5*$h,
 		    'width'     => $coding_start-$exon_start +1,
 		    'height'    => $h,
@@ -126,12 +126,12 @@ sub _init {
 		$self->push( $G );
 		
 		#coding part		
-		my $width = ($exon_end > $coding_end) ? $coding_end - $coding_start + 1 : $exon_end - $coding_start + 1;
+		my $width = ($exon_end > $coding_end) ? $coding_end - $coding_start : $exon_end - $coding_start;
 		my $y_pos = ($exon_end > $coding_end) ? $coding_end : $exon_end;
 		$G = new Sanger::Graphics::Glyph::Rect({
-		    'x'         => $coding_start -1,
+		    'x'         => $coding_start,
 		    'y'         => 0,
-		    'width'     => $width,
+		    'width'     => $width + 1,
 		    'height'    => 2*$h,
 		    'colour'    => $colour,
 		    'absolutey' => 1,
@@ -147,7 +147,7 @@ sub _init {
 		#draw non-coding part if there's one of these as well
 		if ($exon_end > $coding_end) {
 		    $G = new Sanger::Graphics::Glyph::Rect({
-			'x'         => $coding_end -1,
+			'x'         => $coding_end,
 			'y'         => 0.5*$h,
 			'width'     => $exon_end-$coding_end+1,
 			'height'    => $h,
@@ -169,7 +169,7 @@ sub _init {
 		
 		#coding part
 		$G = new Sanger::Graphics::Glyph::Rect({
-		    'x'         => $exon_start -1,
+		    'x'         => $exon_start,
 		    'y'         => 0,
 		    'width'     => $coding_end - $exon_start + 1,
 		    'height'    => 2*$h,
@@ -186,7 +186,7 @@ sub _init {
 
 		#non coding part
 		$G = new Sanger::Graphics::Glyph::Rect({
-		    'x'         => $coding_end -1 ,
+		    'x'         => $coding_end,
 		    'y'         => 0.5*$h,
 		    'width'     => $exon_end-$coding_end +1,
 		    'height'    => $h,
@@ -207,10 +207,10 @@ sub _init {
 	else {
 	    #otherwise draw a line to represent the intron context
 	    my $G = new Sanger::Graphics::Glyph::Line({
-		'x'        => $obj->[0],
+		'x'        => $obj->[0]+1/$pix_per_bp,
 		'y'        => $h,
-		'h'        =>1,
-		'width'    =>$obj->[1]-$obj->[0]-1/$pix_per_bp,
+		'h'        => 1,
+		'width'    => $obj->[1] - $obj->[0] - 2/$pix_per_bp,
 		'colour'   => $colour,
 		'absolutey'=>1,
 	    });
