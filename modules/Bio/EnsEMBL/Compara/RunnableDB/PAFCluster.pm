@@ -190,10 +190,18 @@ sub analyze_table {
     my $species_name = lc($gdb->name);
     $species_name =~ s/\ /\_/g;
     my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
-    my $sql = "ANALYZE TABLE $tbl_name";
+    $DB::single=1;1;
+    # Re-enable the keys before starting the queries
+    my $sql = "ALTER TABLE $tbl_name ENABLE KEYS";
 
-  #print("$sql\n");
+    #print("$sql\n");
     my $sth = $self->dbc->prepare($sql);
+    $sth->execute();
+
+    $sql = "ANALYZE TABLE $tbl_name";
+
+    #print("$sql\n");
+    $sth = $self->dbc->prepare($sql);
     $sth->execute();
   }
   printf("  %1.3f secs to ANALYZE TABLE\n", (time()-$starttime));

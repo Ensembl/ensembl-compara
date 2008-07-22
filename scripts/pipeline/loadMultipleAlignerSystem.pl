@@ -616,7 +616,7 @@ sub create_conservation_score_analysis {
   $parameters = "{$parameters}";
 
   #default program_version
-  my $program_version = 1;
+  my $program_version = 2.1;
   if (defined $conservation_score_params{'program_version'}) {
     $program_version = $conservation_score_params{'program_version'};
   }

@@ -57,7 +57,11 @@ sub slice {
   return undef unless(my $dba = $self->dnafrag->genome_db->db_adaptor);
 
   my $sliceDBA = $dba->get_SliceAdaptor;
-  if ($self->seq_end > $self->seq_start) {
+  #if ($self->seq_end > $self->seq_start) {
+
+  #Should be >= to since end can equal start and the slice be one base long
+  #If seq_start and seq_end are both 0, set the slice to be whole dnafrag
+  if ($self->seq_end >= $self->seq_start && $self->seq_end != 0) {
     $self->{'_slice'} = $sliceDBA->fetch_by_region($self->dnafrag->coord_system_name,
                                                    $self->dnafrag->name,
                                                    $self->seq_start, $self->seq_end);
@@ -91,6 +95,7 @@ sub fetch_masked_sequence {
   my $self = shift;
   
   return undef unless(my $slice = $self->slice());
+
 
   my $dcs = $slice->adaptor->db->dbc->disconnect_when_inactive();
   #print("fetch_masked_sequence disconnect=$dcs\n");
@@ -198,9 +203,9 @@ sub bioseq {
 
   my $seq = undef;
 
-
   if(not defined($self->sequence())) {
     my $starttime = time();
+
     $seq = $self->fetch_masked_sequence;
     my $fetch_time = time()-$starttime;
 

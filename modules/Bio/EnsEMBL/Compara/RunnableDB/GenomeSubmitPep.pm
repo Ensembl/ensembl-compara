@@ -287,6 +287,12 @@ sub create_peptide_align_feature_table {
 
   my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
   $sth->execute();
+
+  # Disable keys makes inserts faster
+  $sql = "ALTER TABLE $table_name DISABLE KEYS";
+
+  $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
+  $sth->execute();
   $sth->finish();
 }
 

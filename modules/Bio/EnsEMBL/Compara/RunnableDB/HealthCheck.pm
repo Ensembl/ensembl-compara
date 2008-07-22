@@ -692,4 +692,35 @@ sub _run_compare_to_previous_db_test {
 
 }
 
+
+=head2 _run_left_and_right_links_in_gat_test
+
+  Arg[1]      : -none-
+  Example     : $self->_run_left_and_right_links_in_gat_test();
+  Description : Tests whether all the trees in the genomic_align_tree table
+                are linked to other trees via their left and right node ids.
+  Returntype  :
+  Exceptions  : die on failure
+  Caller      : general
+
+=cut
+
+sub _run_left_and_right_links_in_gat_test {
+  my ($self) = @_;
+  my $table_name = "genomic_align_tree";
+
+  ## check the table is not empty
+  my $count = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+      "SELECT count(*) FROM $table_name gat1 LEFT JOIN $table_name gat2 ON (gat1.node_id = gat2.root_id)".
+      " WHERE gat1.parent_id = 0 GROUP BY gat1.node_id".
+      " HAVING GROUP_CONCAT(gat2.left_node_id ORDER BY gat2.left_node_id) LIKE \"0%,0\"".
+      "  AND GROUP_CONCAT(gat2.right_node_id ORDER BY gat2.right_node_id) LIKE \"0%,0\"");
+
+  if ($count == 0) {
+    print "All trees in $table_name are linked to their neighbours: OK.\n";
+  } else {
+    die("Some entries ($count) in the $table_name table are not linked!\n");
+  }
+}
+
 1;

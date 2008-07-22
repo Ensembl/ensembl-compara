@@ -14,6 +14,7 @@ my %analysis_template;
 my @speciesList = ();
 my %hive_params;
 my %dnds_params;
+my %sitewise_dnds_params;
 my %genetree_params;
 
 my %compara_conf = ();
@@ -113,6 +114,9 @@ sub parse_conf {
       }
       if($confPtr->{TYPE} eq 'dNdS') {
         %dnds_params = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'sitewise_dNdS') {
+        %sitewise_dnds_params = %{$confPtr};
       }
       if($confPtr->{TYPE} eq 'SPECIES') {
         push @speciesList, $confPtr;
@@ -322,6 +326,13 @@ sub build_GeneTreeSystem
   # the dynamic creation of the analyses like blast_1_NCBI34
   my $blast_template = new Bio::EnsEMBL::Analysis(%analysis_template);
   $blast_template->logic_name("blast_template");
+  my $blast_template_analysis_data_id = 
+    $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($blast_template->parameters);
+  $parameters = undef;
+  if (defined $blast_template_analysis_data_id) {
+    $parameters = "{'blast_template_analysis_data_id'=>'$blast_template_analysis_data_id'}";
+    $blast_template->parameters($parameters);
+  }
   eval { $analysisDBA->store($blast_template); };
 
   #
@@ -334,7 +345,7 @@ sub build_GeneTreeSystem
     my $species_name = lc($gdb->name);
     $species_name =~ s/\ /\_/g;
     my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
-    my $sql = "CREATE TABLE $tbl_name like peptide_align_feature";
+    my $sql = "CREATE TABLE IF NOT EXISTS $tbl_name like peptide_align_feature";
 
     #print("$sql\n");
     my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
@@ -375,15 +386,15 @@ sub build_GeneTreeSystem
   #
   $parameters = "{'options'=>'-maxhours 5'";
   if (defined $genetree_params{'max_gene_count'}) {
-    $parameters .= ",max_gene_count=>".$genetree_params{'max_gene_count'};
+    $parameters .= ",'max_gene_count'=>".$genetree_params{'max_gene_count'};
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
+    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
-  $parameters .= "'}";
+  $parameters .= "}";
   my $muscle = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Muscle',
-      -program_file    => '/usr/local/ensembl/bin/muscle',
+      -program_file    => '/software/ensembl/compara/bin/muscle',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
       -parameters      => $parameters
     );
@@ -408,12 +419,12 @@ sub build_GeneTreeSystem
     exit(3);
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'};
+    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
-  $parameters .= "'}";
-  my $analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
-  if (defined $analysis_data_id) {
-    $parameters = "{'analysis_data_id'=>'$analysis_data_id'}";
+  $parameters .= "}";
+  my $njtree_phyml_analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
+  if (defined $njtree_phyml_analysis_data_id) {
+    $parameters = "{'njtree_phyml_analysis_data_id'=>'$njtree_phyml_analysis_data_id'}";
   }
   my $njtree_phyml = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NJTREE_PHYML',
@@ -446,15 +457,32 @@ sub build_GeneTreeSystem
   # OrthoTree
   #
   my $with_options_orthotree = 0;
+  my $ortho_params = '';
   if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
+    $ortho_params = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
     $with_options_orthotree = 1;
   }
   if (defined $dnds_params{'species_sets'}) {
-    $parameters .= ',species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'';
+    $ortho_params .= ',species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'';
     $with_options_orthotree = 1;
   }
-  $parameters = '{' . $parameters .'}' if (1==$with_options_orthotree);
+  if(defined $genetree_params{'species_tree_file'}) {
+    my $tree_file = $genetree_params{'species_tree_file'};
+    $ortho_params .= ",'species_tree_file'=>'${tree_file}'";
+    $with_options_orthotree = 1;
+  }
+
+  #EDIT Originally created a anon hash which caused problems with OrthoTree when using eval
+  if($with_options_orthotree) {
+    $parameters =~ s/\A{//;
+    $parameters =~ s/}\Z//;
+    $parameters = '{' . $parameters . ',' .  $ortho_params . '}'
+  }
+
+  my $analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
+  if (defined $analysis_data_id) {
+    $parameters = "{'analysis_data_id'=>'$analysis_data_id'}";
+  }
 
   my $orthotree = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'OrthoTree',
@@ -545,6 +573,44 @@ sub build_GeneTreeSystem
         );
   }
 
+
+  #
+  # Sitewise_dNdS
+  #
+
+  $parameters = '';
+  my $with_options_sitewise_dnds = 0;
+  #   if (defined $genetree_params{'honeycomb_dir'}) {
+  #     $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
+  #     $with_options_sitewise_dnds = 1;
+  #   }
+  if (defined $sitewise_dnds_params{'saturated'}) {
+    $parameters = "'saturated'=>" . $sitewise_dnds_params{'saturated'};
+    $with_options_sitewise_dnds = 1;
+  }
+  $parameters = '{' . $parameters .'}' if (1==$with_options_sitewise_dnds);
+
+  my $Sitewise_dNdS = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'Sitewise_dNdS',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Sitewise_dNdS',
+      -parameters      => $parameters
+  );
+  $analysisDBA->store($Sitewise_dNdS);
+
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($Sitewise_dNdS->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(200);
+    $stats->status('BLOCKED');
+    $stats->update();
+    $ctrlRuleDBA->create_rule($orthotree,$Sitewise_dNdS);
+  }
+
+  # When a Sitewise_dNdS job is saturated, we reincorporate the
+  # subtrees in the analysis to rerun them again
+  $dataflowRuleDBA->create_rule($orthotree, $Sitewise_dNdS, 1);
+  $dataflowRuleDBA->create_rule($Sitewise_dNdS, $Sitewise_dNdS, 2);
 
   #
   # build graph of control and dataflow rules

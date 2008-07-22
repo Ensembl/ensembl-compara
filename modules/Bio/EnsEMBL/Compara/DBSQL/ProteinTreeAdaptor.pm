@@ -398,6 +398,18 @@ sub create_instance_from_rowhash {
   return $node;
 }
 
+sub _objs_from_sth {
+  my ($self, $sth) = @_;
+  my $node_list = [];
+
+  while(my $rowhash = $sth->fetchrow_hashref) {
+    my $node = $self->create_instance_from_rowhash($rowhash);        
+    push @$node_list, $node;
+  }
+
+  return $node_list;
+}
+
 
 sub init_instance_from_rowhash {
   my $self = shift;

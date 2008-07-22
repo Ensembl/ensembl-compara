@@ -250,6 +250,23 @@ sub createBlastAnalysis
 
   if($blast_template->parameters()) {
     my $parmhash = eval($blast_template->parameters);
+    if (defined $parmhash->{'blast_template_analysis_data_id'}) {
+      my $blast_template_analysis_data_id = $parmhash->{'blast_template_analysis_data_id'};
+      my $ada = $self->db->get_AnalysisDataAdaptor;
+      my $new_params = eval($ada->fetch_by_dbID($blast_template_analysis_data_id));
+      if (defined $new_params) {
+        $parmhash = $new_params;
+      }
+    }
+    if($parmhash->{'null_cigar'}) {
+      $params .= ",null_cigar=>'" . $parmhash->{'null_cigar'} . "'";
+    }
+    if($parmhash->{'reuse_db'}) {
+      $params .= ",reuse_db=>'" . $parmhash->{'reuse_db'} . "'";
+    }
+    if($parmhash->{'reuse_gdb'}) {
+      $params .= ",reuse_gdb=>" . "[". join(",",@{$parmhash->{'reuse_gdb'}}). "]";
+    }
     if($parmhash->{'options'}) {
       $params .= ",options=>'" . $parmhash->{'options'} . "'";
     }
@@ -269,6 +286,13 @@ sub createBlastAnalysis
       -module          => $blast_template->module(),
       -parameters      => $params,
     );
+
+  my $blast_analysis_data_id = 
+    $self->db->get_AnalysisDataAdaptor->store_if_needed($params);
+  if (defined $blast_analysis_data_id) {
+    my $parameters = "{'analysis_data_id'=>'$blast_analysis_data_id'}";
+    $analysis->parameters($parameters);
+  }
 
   $self->db->get_AnalysisAdaptor()->store($analysis);
   $self->db->get_AnalysisAdaptor()->update($analysis);

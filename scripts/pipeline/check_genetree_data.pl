@@ -1,13 +1,73 @@
 #!/usr/local/ensembl/bin/perl -w
 
+=pod
+
+=head1 NAME
+
+check_genetree_data.pl - QCs the Compara GeneTree data
+
+=head1 SYNOPSIS
+
+  perl check_genetree_data.pl [options]
+
+Options:
+
+ -h|--help  Show brief help and exit.
+ -m|--man   Show detailed help
+ -u|--url   URL-style connection params to compara DB.
+ -l|--long  Run extended test suite.
+
+=head1 OPTIONS
+
+B<-h|--help>
+  Print a brief help message and exits.
+
+B<-m|--man>
+  Print man page and exit
+
+B<-u|--url>
+  URL-style connection params to compara DB in following format:
+  mysql://<user>:<pass>@<host>:<port>/<db_name>
+
+B<-l|--long>
+  Run extended test suite.
+
+=head1 DESCRIPTION
+
+  Add a description of each test here.
+
+Maintained by Albert Vilella <avilella@ebi.ac.uk>
+
+=cut
+
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::URLFactory;
 
-my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
-  (-host => 'compara1',
-   -port => 3306,
-   -user => 'ensro',
-   -dbname => 'avilella_ensembl_compara_48');
+use Getopt::Long;
+use Pod::Usage;
+
+my $DEFAULT_URL = 'mysql://ensro@compara1:3306/avilella_ensembl_compara_48';
+
+# Get options
+my $help=0;
+my $man=0;
+my( $url, $long, $V );
+  GetOptions
+      ( 
+        "help|?"             => \$help,
+        "man"                => \$man,
+        "url=s"              => \$url,
+        "longtests=s"        => \$long,
+        "verbose"            => \$V, # Not yet used
+        )
+    or pod2usage(2);
+pod2usage(-verbose => 2) if $man;
+pod2usage(1) if $help;
+
+$url ||= $DEFAULT_URL;
+
+my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch($url,'compara');
 
 my $doit = 1;
 
@@ -16,6 +76,27 @@ $|=1;
 my ($sql, $sth);
 
 if ($doit) {
+
+# Check for dangling internal nodes that have no children
+######################################################
+
+  $sql = "select count(*) from protein_tree_node n1 left join protein_tree_node n2 on n1.node_id=n2.parent_id where n2.parent_id is NULL and n1.right_index-n1.left_index > 1";
+  
+  $sth = $dba->dbc->prepare($sql);
+  $sth->execute;
+  
+  while (my $aref = $sth->fetchrow_arrayref) {
+    #should 0, if not delete culprit node_id in protein_tree_member
+    my ($count) = @$aref;
+    if ($count == 0) {
+      print "PASSED: protein_tree_node is consistent - no dangling internal nodes\n";
+    } else {
+      print STDERR "ERROR: protein_tree_node has dangling internal nodes with no children based on the left and right_index\n";
+      print STDERR "ERROR: USED SQL : $sql\n";
+    }
+  }
+  
+  $sth->finish;
 
 # Check data consistency between pt* tables on node_id
 ######################################################

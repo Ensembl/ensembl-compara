@@ -28,6 +28,7 @@ package Bio::EnsEMBL::Compara::ProteinTree;
 
 use strict;
 use Bio::EnsEMBL::Compara::BaseRelation;
+use Bio::EnsEMBL::Compara::SitewiseOmega;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::SimpleAlign;
@@ -121,6 +122,12 @@ sub get_SimpleAlign {
   return $sa;
 }
 
+sub get_SitewiseOmega_values {
+  my $self = shift;
 
+  my @values = @{$self->adaptor->db->get_SitewiseOmegaAdaptor->fetch_all_by_ProteinTreeId($self->node_id)};
+
+  return \@values;
+}
 
 1;

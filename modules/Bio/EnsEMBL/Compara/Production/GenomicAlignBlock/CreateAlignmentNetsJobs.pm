@@ -218,6 +218,10 @@ sub createAlignmentNetsJobs
       }
     }
     $sth->finish;
+
+    # Skip if no alignments are found on this slice
+    next if (!defined $slice_start || !defined $slice_end);
+
     push @genomic_slices, [$slice_start,$slice_end];
 
     my @grouped_genomic_slices;
@@ -257,7 +261,14 @@ sub createAlignmentNetsJobs
       $count++;
     }
   }
-  printf("created %d jobs for AlignmentNets\n", $count);
+  if ($count == 0) {
+    # No alignments have been found. Remove the control rule to unblock following analyses
+    my $analysis_ctrl_rule_adaptor = $self->db->get_AnalysisCtrlRuleAdaptor;
+    $analysis_ctrl_rule_adaptor->remove_by_condition_analysis_url($analysis->logic_name);
+    print "No jobs created. Deleting analysis ctrl rule for " . $analysis->logic_name . "\n";
+  } else {
+    printf("created %d jobs for AlignmentNets\n", $count);
+  }
 }
 
 1;

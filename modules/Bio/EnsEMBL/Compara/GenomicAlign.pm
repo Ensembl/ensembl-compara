@@ -341,6 +341,7 @@ sub copy {
   return $new_copy;
 }
 
+
 =head2 adaptor
 
   Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
@@ -901,19 +902,17 @@ sub aligned_sequence {
       $aligned_sequence = $flag;
     }
   }
-  
+
   if (defined($aligned_sequence)) {
     $aligned_sequence =~ s/[\r\n]+$//;
     
     if ($aligned_sequence) {
       ## Check sequence
-      throw("Unreadable sequence ($aligned_sequence)") if ($aligned_sequence !~ /^[\-A-Z]+$/i);
+      throw("Unreadable sequence ($aligned_sequence)") if ($aligned_sequence !~ /^[\-\.A-Z]+$/i);
       $self->{'aligned_sequence'} = $aligned_sequence;
     } else {
       $self->{'aligned_sequence'} = undef;
     }
-
-
   } elsif (!defined($self->{'aligned_sequence'})) {
     # Try to get the aligned_sequence from other sources...
     if (defined($self->cigar_line) and $fake_seq) {
@@ -944,6 +943,41 @@ sub aligned_sequence {
   return $aligned_sequence;
 }
 
+
+=head2 length
+
+  Arg [1]    : -none-
+  Example    : $length = $genomic_align->length;
+  Description: get the length of the aligned sequence. This method will try to
+               get the length from the aligned_sequence if already set or by
+               parsing the cigar_line otherwise
+  Returntype : int
+  Exceptions : none
+  Warning    : 
+  Caller     : object->methodname
+
+=cut
+
+sub length {
+  my $self = shift;
+
+  if ($self->{aligned_sequence}) {
+    return length($self->{aligned_sequence});
+  } elsif ($self->{cigar_line}) {
+    my $length = 0;
+    my $cigar_line = $self->{cigar_line};
+    my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
+    for my $cigElem ( @cig ) {
+      my $cigType = substr( $cigElem, -1, 1 );
+      my $cigCount = substr( $cigElem, 0 ,-1 );
+      $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+      $length += $cigCount;
+    }
+    return $length;
+  }
+
+  return undef;
+}
 
 =head2 cigar_line
 
@@ -982,6 +1016,8 @@ sub cigar_line {
     # Try to get the cigar_line from other sources...
     if (defined($self->{'aligned_sequence'})) {
       # ...from the aligned sequence
+
+
       my $cigar_line = _get_cigar_line_from_aligned_sequence($self->{'aligned_sequence'});
       $self->cigar_line($cigar_line);
     
@@ -1240,10 +1276,10 @@ sub _get_cigar_line_from_aligned_sequence {
     } else {
       $mode = "M"; # M for matches/mismatches
     }
-    if (length($piece) == 1) {
+    if (CORE::length($piece) == 1) {
       $cigar_line .= $mode;
-    } elsif (length($piece) > 1) { #length can be 0 if the sequence starts with a gap
-      $cigar_line .= length($piece).$mode;
+    } elsif (CORE::length($piece) > 1) { #length can be 0 if the sequence starts with a gap
+      $cigar_line .= CORE::length($piece).$mode;
     }
   }
 
@@ -1272,7 +1308,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 
   my $seq_pos = 0;
   
-  my @cig = ( $cigar_line =~ /(\d*[GMD])/g );
+  my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1281,6 +1317,8 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
     if( $cigType eq "M" ) {
       $aligned_sequence .= substr($original_sequence, $seq_pos, $cigCount);
       $seq_pos += $cigCount;
+    } elsif( $cigType eq "X") {
+        $aligned_sequence .=  "." x $cigCount;
     } elsif( $cigType eq "G" || $cigType eq "D") {
       if ($fix_seq) {
         $seq_pos += $cigCount;
@@ -1289,7 +1327,8 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
       }
     }
   }
-  throw("Cigar line ($seq_pos) does not match sequence lenght (".length($original_sequence).")") if ($seq_pos != length($original_sequence));
+  throw("Cigar line ($seq_pos) does not match sequence length (".CORE::length($original_sequence).")")
+      if ($seq_pos != CORE::length($original_sequence));
 
   return $aligned_sequence;
 }
@@ -1314,8 +1353,8 @@ sub _get_fake_aligned_sequence_from_cigar_line {
   return undef if (!$cigar_line);
 
   my $seq_pos = 0;
-  
-  my @cig = ( $cigar_line =~ /(\d*[GMD])/g );
+
+  my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1324,6 +1363,8 @@ sub _get_fake_aligned_sequence_from_cigar_line {
     if( $cigType eq "M" ) {
       $fake_aligned_sequence .= "N" x $cigCount;
       $seq_pos += $cigCount;
+    } elsif( $cigType eq "X") {
+        $fake_aligned_sequence .=  "." x $cigCount;
     } elsif( $cigType eq "G" || $cigType eq "D") {
       if ($fix_seq) {
         $seq_pos += $cigCount;
@@ -1496,8 +1537,8 @@ sub get_Mapper {
       my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
       my $aln_seq_pos = 0;
       my $seq_pos = 0;
-      foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMD])/g) {
-        my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMD])/;
+      foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMDX])/g) {
+        my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMDX])/;
         $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
 
         my $this_piece_of_seq = substr($this_aligned_seq, $aln_seq_pos, $cig_count);
@@ -1549,7 +1590,7 @@ sub _get_Mapper_from_cigar_line {
 
   my $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
 
-  my @cigar_pieces = ($cigar_line =~ /(\d*[GMD])/g);
+  my @cigar_pieces = ($cigar_line =~ /(\d*[GMDX])/g);
   if ($rel_strand == 1) {
     foreach my $cigar_piece (@cigar_pieces) {
       my $cigar_type = substr($cigar_piece, -1, 1 );
@@ -1569,7 +1610,7 @@ sub _get_Mapper_from_cigar_line {
             );
         $sequence_position += $cigar_count;
         $alignment_position += $cigar_count;
-      } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
+      } elsif( $cigar_type eq "G" || $cigar_type eq "D" || $cigar_type eq "X") {
         $alignment_position += $cigar_count;
       }
     }
@@ -1592,7 +1633,7 @@ sub _get_Mapper_from_cigar_line {
             );
         $sequence_position -= $cigar_count;
         $alignment_position += $cigar_count;
-      } elsif( $cigar_type eq "G" || $cigar_type eq "D") {
+      } elsif( $cigar_type eq "G" || $cigar_type eq "D" || $cigar_type eq "X") {
         $alignment_position += $cigar_count;
       }
     }
@@ -1629,6 +1670,113 @@ sub get_Slice {
   return $slice;
 }
 
+
+=head2 restrict
+
+  Arg[1]     : int start
+  Arg[1]     : int end
+  Example    : my $genomic_align = $genomic_align->restrict(10, 20);
+  Description: restrict (trim) this GenomicAlign to the start and end
+               positions (in alignment coordinates). If no trimming is
+               required, the original object is returned instead.
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
+  Exceptions :
+  Status     : At risk
+
+=cut
+
+sub restrict {
+  my ($self, $start, $end) = @_;
+  throw("Wrong arguments") if (!$start or !$end);
+
+  my $restricted_genomic_align = $self->copy();
+  delete($restricted_genomic_align->{dbID});
+  delete($restricted_genomic_align->{genomic_align_block_id});
+  delete($restricted_genomic_align->{original_sequence});
+  delete($restricted_genomic_align->{aligned_sequence});
+  delete($restricted_genomic_align->{cigar_line});
+  $restricted_genomic_align->{original_dbID} = $self->dbID if ($self->dbID);
+
+  my $final_aligned_length = $end - $start + 1;
+  my $length_of_truncated_seq_at_the_start = $start - 1;
+  my $length_of_truncated_seq_at_the_end = $self->genomic_align_block->length - $end;
+
+  my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);
+  ## Trim start of cigar_line if needed
+  if ($length_of_truncated_seq_at_the_start >= 0) {
+    my $aligned_seq_length = 0;
+    my $original_seq_length = 0;
+    my $new_cigar_piece = "";
+    while (my $cigar = shift(@cigar)) {
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
+      $num = 1 if ($num eq "");
+      $aligned_seq_length += $num;
+      if ($aligned_seq_length >= $length_of_truncated_seq_at_the_start) {
+        my $length = $aligned_seq_length - $length_of_truncated_seq_at_the_start;
+        if ($length > 1) {
+          $new_cigar_piece = $length.$type;
+        } elsif ($length == 1) {
+          $new_cigar_piece = $type;
+        }
+        unshift(@cigar, $new_cigar_piece) if ($new_cigar_piece);
+        if ($type eq "M") {
+          $original_seq_length += $length_of_truncated_seq_at_the_start - ($aligned_seq_length - $num);
+        }
+        last;
+      }
+      $original_seq_length += $num if ($type eq "M");
+    }
+    if ($self->dnafrag_strand == 1) {
+      $restricted_genomic_align->dnafrag_start($self->dnafrag_start + $original_seq_length);
+    } else {
+      $restricted_genomic_align->dnafrag_end($self->dnafrag_end - $original_seq_length);
+    }
+  }
+
+  my @final_cigar = ();
+
+  ## Trim end of cigar_line if needed
+  if ($length_of_truncated_seq_at_the_end >= 0) {
+    ## Truncate all the GenomicAligns
+    my $aligned_seq_length = 0;
+    my $original_seq_length = 0;
+    my $new_cigar_piece = "";
+    while (my $cigar = shift(@cigar)) {
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
+      $num = 1 if ($num eq "");
+      $aligned_seq_length += $num;
+      if ($aligned_seq_length >= $final_aligned_length) {
+        my $length = $num - $aligned_seq_length + $final_aligned_length;
+        if ($length > 1) {
+          $new_cigar_piece = $length.$type;
+        } elsif ($length == 1) {
+          $new_cigar_piece = $type;
+        }
+        push(@final_cigar, $new_cigar_piece) if ($new_cigar_piece);
+        if ($type eq "M") {
+          $original_seq_length += $length;
+        }
+        last;
+      } else {
+        push(@final_cigar, $cigar);
+      }
+      $original_seq_length += $num if ($type eq "M");
+    }
+    if ($self->dnafrag_strand == 1) {
+      $restricted_genomic_align->dnafrag_end($restricted_genomic_align->dnafrag_start + $original_seq_length - 1);
+    } else {
+      $restricted_genomic_align->dnafrag_start($restricted_genomic_align->dnafrag_end - $original_seq_length + 1);
+    }
+  } else {
+    @final_cigar = @cigar;
+  }
+
+  ## Save genomic_align's cigar_line
+  $restricted_genomic_align->aligned_sequence(0);
+  $restricted_genomic_align->cigar_line(join("", @final_cigar));
+
+  return $restricted_genomic_align;
+}
 
 #####################################################################
 #####################################################################

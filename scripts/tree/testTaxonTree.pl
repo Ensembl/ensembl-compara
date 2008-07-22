@@ -4,12 +4,8 @@ use strict;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Analysis;
-use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
@@ -20,10 +16,6 @@ use Switch;
 # this is to avoid using global variables in functions, and to consolidate
 # the globals into a nice '$self' package
 my $self = bless {};
-
-$self->{'compara_conf'} = {};
-$self->{'compara_conf'}->{'-user'} = 'ensro';
-$self->{'compara_conf'}->{'-port'} = 3306;
 
 $self->{'speciesList'} = ();
 $self->{'removeXedSeqs'} = undef;
@@ -71,7 +63,34 @@ if($self->{'print_align'}) { $state=8; }
 
 if ($help or !$state) { usage(); }
 
-$self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara') if($url);
+if ($url) {
+  eval { require Bio::EnsEMBL::Hive::URLFactory ;};
+  if ($@) {
+    $url =~ /mysql\:\/\/(\S+)\@(\S+)\/(\S+)/g;
+    my ($myuserpass,$myhost,$mydbname) = ($1,$2,$3);
+    my ($myuser,$mypass);
+    if ($myuserpass =~ /(\S+)\:(\S+)/) {
+      $myuser = $1;
+      $mypass = $1;
+    } else {
+      $myuser = $myuserpass;
+    }
+    my $myport = 3306;
+    if ($myhost =~ /(\S+)\:(\S+)/) {
+      $myport = $2;
+      $myhost = $1;
+    }
+    my %compara_conf;
+    $compara_conf{-user} = $myuser;
+    $compara_conf{-pass} = $mypass if (defined($mypass));
+    $compara_conf{-host} = $myhost;
+    $compara_conf{-dbname} = $mydbname;
+    $compara_conf{-port} = $myport;
+    eval { $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf); }
+  } else {
+    $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
+  }
+}
 unless(defined($self->{'comparaDBA'})) {
   print("no url URL\n\n");
   usage();
@@ -210,6 +229,7 @@ sub create_species_tree {
     print STDERR "Loading taxa from gdbs in $url...\n";
     foreach my $gdb (@$gdb_list) {
       my $taxon_name = $gdb->name;
+      next if ($taxon_name =~ /ncestral/);
       my $taxon_id = $gdb->taxon_id;
       my $taxon = $taxonDBA->fetch_node_by_taxon_id($taxon_id);
       print STDERR "  $taxon_name [$taxon_id]\n";
@@ -273,6 +293,13 @@ sub create_species_tree {
   my $outname = $self->{'comparaDBA'}->dbc->dbname;
   my $num_leaves = scalar(@{$root->get_all_leaves});
   $outname = $num_leaves . "." . $outname;
+
+  my $newick_common = $root->newick_format("full_common");
+  print("\n\n$newick_common\n\n");
+
+  open T,">newick_common.$outname.nh" or die "$!";
+  print T $newick_common;
+  close T;
 
   my $newick = $root->newick_format;
   print("\n\n$newick\n\n");

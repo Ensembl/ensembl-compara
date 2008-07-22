@@ -694,7 +694,7 @@ sub fetch_by_method_link_type_genome_db_ids {
   Arg  1     : string $method_link_type
   Arg 2      : listref of core database aliases [$human, $mouse, $rat]
   Example    : my $method_link_species_set =
-                   $mlssa->fetch_by_method_link_type_genome_db_id("MULTIZ",
+                   $mlssa->fetch_by_method_link_type_registry_aliases("MULTIZ",
                        ["human","mouse","rat"])
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
                corresponding to the given method_link and the given set of

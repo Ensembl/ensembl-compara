@@ -287,7 +287,8 @@ sub get_available_adaptors {
       "NestedSet" => "Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor",
       "ProteinTree" => "Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor",
       "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor",
-      "ConservationScore" => "Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor"
+      "ConservationScore" => "Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor",
+      "SitewiseOmega" => "Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor"
         );
   return (\%pairs);
 }

@@ -3,7 +3,7 @@
 #
 # POD documentation - main docs before the code
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -26,10 +26,10 @@ $runnable->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This analysis/RunnableDB is designed to run after all GenomicAlignBlock entries for a 
+This analysis/RunnableDB is designed to run after all GenomicAlignBlock entries for a
 specific MethodLinkSpeciesSet has been completed and filters out all duplicate entries
 which can result from jobs being rerun or from regions of overlapping chunks generating
-the same HSP hits.  It takes as input (on the input_id string) 
+the same HSP hits.  It takes as input (on the input_id string)
 
 =cut
 
@@ -75,7 +75,7 @@ sub fetch_input {
   # $self->parameters OR
   # $self->input_id
   #
-  $self->debug(0);
+  #$self->debug(0);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
@@ -98,7 +98,7 @@ sub run
 }
 
 
-sub write_output 
+sub write_output
 {
   my $self = shift;
   return 1;
@@ -131,8 +131,17 @@ sub get_params {
   if (defined $self->{'method_link'} && defined $self->{'query_genome_db_id'} && $self->{'target_genome_db_id'}) {
     my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->{'method_link'}, [$self->{'query_genome_db_id'},$self->{'target_genome_db_id'}]);
-    
+
     $self->{'mlss'} = $mlss if (defined $mlss);
+  }
+
+  if($self->debug()) {
+  	if($self->{'mlss'}) {
+  		print 'MLSS : '.$self->{'mlss'}->dbID."\n";
+  	}
+  	else {
+  		print "No MLSS found\n";
+  	}
   }
 
   return 1;
@@ -155,21 +164,28 @@ sub update_meta_table {
   $dba->dbc->do("analyze table genomic_align");
   $dba->dbc->do("analyze table genomic_align_group");
 
-  my $where = "";
+  #Don't like doing this but it looks to be the only way to avoid going mad WRT where & and clauses
+  my @args;
+  my ($mlss_where_clause, $mlss_and_clause) = ('','');
   if ($self->{'mlss'}) {
-    $where = " WHERE method_link_species_set_id = ".$self->{'mlss'}->dbID;
+    $mlss_where_clause = ' WHERE gab.method_link_species_set_id =? ';
+    $mlss_and_clause = ' AND gab.method_link_species_set_id =? ';
+    push(@args, $self->{'mlss'}->dbID);
   }
 
   my $sql;
   if ($self->{'quick'}) {
-    $sql = "SELECT method_link_species_set_id, max(length) FROM genomic_align_block".
-        $where." GROUP BY method_link_species_set_id";
+      $sql = "SELECT gab.method_link_species_set_id, max(gab.length) FROM genomic_align_block gab ${mlss_where_clause} GROUP BY gab.method_link_species_set_id";
   } else {
-    $sql = "SELECT method_link_species_set_id, max(dnafrag_end - dnafrag_start + 1) FROM genomic_align".
-        $where." GROUP BY method_link_species_set_id";
+  	$sql = "SELECT ga.method_link_species_set_id, max(ga.dnafrag_end - ga.dnafrag_start + 1) FROM genomic_align_block gab, genomic_align ga WHERE gab.genomic_align_block_id = ga.genomic_align_block_id ${mlss_and_clause} GROUP BY ga.method_link_species_set_id";
   }
+
+  print "Running: ${sql}\n" if $self->debug();
+
   my $sth = $dba->dbc->prepare($sql);
-  $sth->execute();
+
+  $sth->execute(@args);
+
   my $max_alignment_length = 0;
   my ($method_link_species_set_id,$max_align);
   $sth->bind_columns(\$method_link_species_set_id,\$max_align);
@@ -205,9 +221,18 @@ sub remove_alignment_data_inconsistencies {
   my $sql_ga = "delete from genomic_align where genomic_align_id in ";
   my $sql_gag = "delete from genomic_align_group where genomic_align_id in ";
 
-  my $sql = "SELECT gab.genomic_align_block_id FROM genomic_align_block gab LEFT JOIN genomic_align  ga ON gab.genomic_align_block_id=ga.genomic_align_block_id WHERE ga.genomic_align_block_id IS NULL;";
+  my $gab_sel = '';
+  my @gab_args;
+  if($self->{'mlss'}) {
+    $gab_sel = 'AND gab.method_link_species_set_id =?';
+    push(@gab_args, $self->{'mlss'}->dbID);
+  }
+  my $sql = "SELECT gab.genomic_align_block_id FROM genomic_align_block gab LEFT JOIN genomic_align ga ON gab.genomic_align_block_id=ga.genomic_align_block_id WHERE ga.genomic_align_block_id IS NULL ${gab_sel}";
+
+	print "Running: ${sql}\n" if $self->debug();
+
   my $sth = $dba->dbc->prepare($sql);
-  $sth->execute();
+  $sth->execute(@gab_args);
 
   my @gab_ids;
   while (my $aref = $sth->fetchrow_arrayref) {
@@ -227,10 +252,19 @@ sub remove_alignment_data_inconsistencies {
   #
   #Delete genomic align blocks which have 1 genomic align. Assume not many of these
   #
-  
-  $sql = "SELECT genomic_align_block_id, genomic_align_id FROM genomic_align GROUP BY genomic_align_block_id HAVING count(*)<2;";
+  my @del_args;
+  if($self->{'mlss'}) {
+    $sql = 'SELECT gab.genomic_align_block_id, ga.genomic_align_id FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE gab.method_link_species_set_id =? GROUP BY genomic_align_block_id HAVING count(*)<2';
+    push(@del_args, $self->{'mlss'}->dbID);
+  }
+  else {
+    $sql = 'SELECT genomic_align_block_id, genomic_align_id FROM genomic_align GROUP BY genomic_align_block_id HAVING count(*)<2';
+  }
+
+  print "Running: ${sql}\n" if $self->debug();
+
   $sth = $dba->dbc->prepare($sql);
-  $sth->execute;
+  $sth->execute(@del_args);
 
   @gab_ids = ();
   my @ga_ids;

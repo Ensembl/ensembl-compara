@@ -20,16 +20,17 @@ my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
 $compara_conf{'-port'} = 3306;
 
-my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
+my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor, $ensembl_genomes);
 my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
 
-GetOptions('help'     => \$help,
-           'conf=s'   => \$conf_file,
-           'dbhost=s' => \$host,
-           'dbport=i' => \$port,
-           'dbuser=s' => \$user,
-           'dbpass=s' => \$pass,
-           'dbname=s' => \$dbname,
+GetOptions('help'            => \$help,
+           'conf=s'          => \$conf_file,
+           'dbhost=s'        => \$host,
+           'dbport=i'        => \$port,
+           'dbuser=s'        => \$user,
+           'dbpass=s'        => \$pass,
+           'dbname=s'        => \$dbname,
+           'ensembl_genomes' => \$ensembl_genomes,
            'v' => \$verbose,
           );
 
@@ -104,7 +105,8 @@ sub usage {
   print "  -dbname <name>         : compara mysql database <name>\n";
   print "  -dbuser <name>         : compara mysql connection user <name>\n";
   print "  -dbpass <pass>         : compara mysql connection password\n";
-  print "comparaLoadGenomes.pl v1.1\n";
+	print "  -ensembl_genomes       : use ensembl genomes specific code\n";
+  print "comparaLoadGenomes.pl v1.2\n";
   
   exit(1);
 }
@@ -177,6 +179,23 @@ sub submitGenome
 
   my $meta = $genomeDBA->get_MetaContainer;
   my $taxon_id = $meta->get_taxonomy_id;
+
+#   # If we are in E_G then we need to look for a taxon in meta by 'NAME.species.taxonomy_id'
+#   if($ensembl_genomes) {
+#     if(!defined $taxon_id or $taxon_id == 1) {
+#       # We make the same call as in the MetaContainer code, but with the NAME appendage
+#       my $key = $species->{eg_name}.'.'.'species.taxonomy_id';
+#       my $arrRef = $meta->list_value_by_key($key);
+#       if( @$arrRef ) {
+#         $taxon_id = $arrRef->[0];
+#         print "Found taxonid ${taxon_id}\n" if $verbose;
+#       }
+#       else {
+#         warning("Please insert meta_key '${key}' in meta table at core db.\n");
+#       }
+#     }
+#   }
+
   my $ncbi_taxon = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
   my $genome_name;
   # check for ncbi table
@@ -187,13 +206,23 @@ sub submitGenome
   # to go to the species level - A.G.
   if (!defined $genome_name ) {
     $verbose && print"  Cannot get binomial from NCBITaxon, try Meta...\n";
-    $genome_name = $meta->get_Species->binomial;
+    # We assume that the species field is the binomial name
+    if (defined($species->{species})) {
+      $genome_name = $species->{species};
+    } else {
+      $genome_name = (defined $meta->get_Species) ? meta->get_Species->binomial : $species->{species};
+    }
   }
-
 
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
+  $assembly = '-undef-' if ($ensembl_genomes && !$cs->version);
   my $genebuild = ($meta->get_genebuild or "");
+
+  #EDIT because the meta container always returns a value
+  if ($ensembl_genomes && 1 == length($genebuild)) {
+	$genebuild = '' if (1 == $genebuild);
+  }
 
   if($species->{taxon_id} && ($taxon_id ne $species->{taxon_id})) {
     throw("$genome_name taxon_id=$taxon_id not as expected ". $species->{taxon_id});
@@ -212,6 +241,7 @@ sub submitGenome
     print("    taxon_id = '".$genome->taxon_id."'\n");
     print("    name = '".$genome->name."'\n");
     print("    assembly = '".$genome->assembly."'\n");
+		print("    genebuild = '".$genome->genebuild."'\n");
     print("    genome_db id=".$genome->dbID."\n");
   }
 

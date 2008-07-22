@@ -142,6 +142,17 @@ sub fetch_parent_for_node {
 # subclass override methods
 #
 ##################################
+sub _objs_from_sth {
+  my ($self, $sth) = @_;
+
+  my $node_list = [];
+  while(my $rowhash = $sth->fetchrow_hashref) {
+    my $node = $self->create_instance_from_rowhash($rowhash);        
+    push @$node_list, $node;
+  }
+
+  return $node_list;
+}
 
 sub tables {
   my $self = shift;

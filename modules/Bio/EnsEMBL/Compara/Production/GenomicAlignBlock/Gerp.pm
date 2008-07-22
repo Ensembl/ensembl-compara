@@ -55,6 +55,8 @@ use File::Basename;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::SimpleAlign;
+use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Bio::EnsEMBL::Compara::ConservationScore;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
@@ -62,7 +64,15 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
-my $BIN_DIR = "/software/ensembl/compara/gerp/GERP_03292006/";
+#location of gerp version 1
+my %BIN_DIR;
+$BIN_DIR{"1"} = "/software/ensembl/compara/gerp/GERP_03292006";
+
+#location of gerp version 2.1
+$BIN_DIR{"2.1"} = "/software/ensembl/compara/gerp/GERPv2.1";
+
+#default program_version
+my $program_version = 2.1;
 
 #temporary files written to worker_temp_directory
 my $ALIGN_FILE = "gerp_alignment.mfa";
@@ -71,6 +81,10 @@ my $TREE_FILE = "gerp_tree.nw";
 #ending appended to parameter file to allow for calculation of neutral rate
 #from the tree file
 my $PARAM_FILE_SUFFIX = ".tmp";
+
+my $RATES_FILE_SUFFIX = ".rates";
+my $CONS_FILE_SUFFIX = ".elems";
+
 
 $| = 1;
 
@@ -87,63 +101,106 @@ $| = 1;
 
 sub fetch_input {
   my( $self) = @_;
-   
+
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-  
+
   #read from analysis table
   $self->get_params($self->parameters); 
 
   #read from analysis_job table
   $self->get_params($self->input_id);
 
+  unless (defined $self->program_version) {
+      if (defined($self->analysis) and defined($self->analysis->program_version)) {
+	  $self->program_version($self->analysis->program_version);
+      } else {
+	  $self->program_version($program_version);
+      }
+  }
+
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($self->genomic_align_block_id);
 
   my $gas = $gab->get_all_GenomicAligns;
 
+  #print "NUM GAS " . scalar(@$gas) . "\n";
+
   #only run gerp if there are more than 2 genomic aligns. Gerp requires more
   #than 2 sequences to be represented at a position
   if (scalar(@$gas) > 2) {
-      #write out multiple alignment as a mfa file.
-      $self->_writeMultiFastaAlignment;
 
-      #write out modified tree depending on sequences represented in this
-      #genomic align block (based on Javier's _update_tree in Pecan.pm)
-      my $tree_string = $self->_build_tree_string($gas);
+      #decide whether to use GenomicAlignTree object or species tree.
+      my $mlss = $gab->method_link_species_set;
+      my $method_link_class = $mlss->method_link_class;
 
-      #calculate neutral rate if not given in the parameter file
-      open (PARAM_FILE, $self->param_file) || throw "Could not open file " . $self->param_file;
-      my $neutral_rate;
-      while (<PARAM_FILE>) {
-	  chomp;
-      
-	  my ($flag,$value) = split /\s+/,$_;
-	  if ($flag eq "neutral_rate") {
-	      $neutral_rate = $value;
+      my $tree_string;
+      if ($method_link_class eq "GenomicAlignTree.tree_alignment") {
+	  #use GenomicAlignTree 
+	  my $gata = $self->{'comparaDBA'}->get_GenomicAlignTreeAdaptor;
+	  my $gat = $gata->fetch_by_GenomicAlignBlock($gab);
+	  foreach my $leaf (@{$gat->get_all_leaves}) {
+	      my $genomic_align = (sort {$a->dbID <=> $b->dbID} @{$leaf->genomic_align_group->get_all_GenomicAligns})[0];
+	      my $name = "_" . $genomic_align->genome_db->dbID . "_" .
+		$genomic_align->dnafrag_id . "_" . $genomic_align->dnafrag_start . "_" . $genomic_align->dnafrag_end . "_";
+	      $leaf->name($name);
 	  }
+	  $tree_string = $gat->newick_simple_format();
+
+	  $self->{'modified_tree_file'} = $self->worker_temp_directory . $TREE_FILE;
+
+          open (TREE, ">$self->{'modified_tree_file'}") or throw "error writing alignment ($self->{'modified_tree_file'}) file\n";
+          print TREE $tree_string;
+          close TREE;
+
+          #write out multiple alignment as a mfa file.
+          $self->_writeMultiFastaAlignment($gat);
+      } else {
+          #use species tree
+
+          #write out modified tree depending on sequences represented in this
+          #genomic align block (based on Javier's _update_tree in Pecan.pm)
+          $tree_string = $self->_build_tree_string($gas);
+
+          #write out multiple alignment as a mfa file.
+          $self->_writeMultiFastaAlignment($gab);
       }
-      close (PARAM_FILE);
 
-      #copy param file into temporary param file in worker directory
-      my ($filename) = fileparse($self->param_file);
 
-      $self->param_file_tmp($self->worker_temp_directory . $filename . $PARAM_FILE_SUFFIX);
-      my $cp_cmd = "cp " . $self->param_file . " " . $self->param_file_tmp;
-      unless (system ($cp_cmd) == 0) {
-	  throw("error copying " . $self->param_file . " to " . $self->param_file_tmp . "\n");
+      #if param_file defined, assume use GERP.pl else assume use gerpcol
+      if ($self->program_version == 1 && (defined $self->param_file)) {
+	  #calculate neutral rate if not given in the parameter file
+	  open (PARAM_FILE, $self->param_file) || throw "Could not open file " . $self->param_file;
+	  my $neutral_rate;
+	  while (<PARAM_FILE>) {
+	      chomp;
+	      
+	      my ($flag,$value) = split /\s+/,$_;
+	      if ($flag eq "neutral_rate") {
+		  $neutral_rate = $value;
+	      }
+	  }
+	  close(PARAM_FILE);
+
+	  #copy param file into temporary param file in worker directory
+	  my ($filename) = fileparse($self->param_file);
+
+	  $self->param_file_tmp($self->worker_temp_directory . $filename . $PARAM_FILE_SUFFIX);
+	  my $cp_cmd = "cp " . $self->param_file . " " . $self->param_file_tmp;
+	  unless (system ($cp_cmd) == 0) {
+	      throw("error copying " . $self->param_file . " to " . $self->param_file_tmp . "\n");
+	  }
+
+	  #if param file doesn't have neutral rate, then append the calculated one
+	  if (!defined $neutral_rate) {
+	      $neutral_rate = _calculateNeutralRate($tree_string);
+	      open (PARAM_FILE_TMP, ">>".$self->param_file_tmp) || throw "Could not open file " . $self->param_file_tmp . " for writing";
+	      print PARAM_FILE_TMP "neutral_rate\t$neutral_rate\n";
+	  }
+	  close (PARAM_FILE_TMP);
       }
-
-      #if param file doesn't have neutral rate, then append the calculated one
-      if (!defined $neutral_rate) {
-	  $neutral_rate = _calculateNeutralRate($tree_string);
-	  open (PARAM_FILE_TMP, ">>".$self->param_file_tmp) || throw "Could not open file " . $self->param_file_tmp . " for writing";
-	  print PARAM_FILE_TMP "neutral_rate\t$neutral_rate\n";
-      }
-      close (PARAM_FILE_TMP);
-
       $self->{'run_gerp'} = 1;
   } else {
       $self->{'run_gerp'} = 0;
@@ -163,8 +220,17 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
-    if ($self->{'run_gerp'}) { 
+
+    #only run gerp if there are sufficient species present in the genomic align block
+    if (!$self->{'run_gerp'}) {
+	return;
+    }
+    if ($self->program_version == 1) { 
 	$self->run_gerp;
+    } elsif ($self->program_version == 2.1) { 
+	$self->run_gerp_v2;
+    } else {
+	throw("Invalid version number. Valid values are 1 or 2 or 2.1\n");
     }
 }
 
@@ -185,8 +251,15 @@ sub write_output {
     if (!$self->{'run_gerp'}) { 
 	return 1;
     }
+
     #parse results and store constraints and conserved elements in database
-    $self->_parse_results;
+    if ($self->program_version == 1) {
+	$self->_parse_results;
+    } elsif ($self->program_version == 2.1) {
+	$self->_parse_results_v2;
+    } else {
+	throw("Invalid version number. Valid values are 1 or 2.1\n");
+    }
     
     return 1;
 }
@@ -217,11 +290,31 @@ sub constrained_element_method_link_type {
   return $self->{'_constrained_element_method_link_type'};
 }
 
+#read options from analysis table
+sub options {
+  my $self = shift;
+  $self->{'_options'} = shift if(@_);
+  return $self->{'_options'};
+}
+
 #read from parameters of analysis table
 sub program {
   my $self = shift;
   $self->{'_program'} = shift if(@_);
   return $self->{'_program'};
+}
+
+sub program_file {
+  my $self = shift;
+  $self->{'_program_file'} = shift if(@_);
+  return $self->{'_program_file'};
+}
+
+#read from parameters of analysis table
+sub program_version {
+  my $self = shift;
+  $self->{'_program_version'} = shift if(@_);
+  return $self->{'_program_version'};
 }
 
 #read from parameters of analysis table
@@ -267,8 +360,8 @@ sub get_params {
     my $params = eval($param_string);
     return unless($params);
 
-    if (defined($params->{'-program'})) {
-	$self->program($params->{'-program'}); 
+    if (defined($params->{'program'})) {
+	$self->program($params->{'program'}); 
     }
     
     #read from parameters in analysis table
@@ -284,13 +377,16 @@ sub get_params {
     if (defined($params->{'constrained_element_method_link_type'})) {
 	$self->constrained_element_method_link_type($params->{'constrained_element_method_link_type'});
     }
+    if (defined($params->{'options'})) {
+	$self->options($params->{'options'});
+    }
 
     #read from input_id in analysis_job table
     if (defined($params->{'genomic_align_block_id'})) {
-	$self->genomic_align_block_id($params->{'genomic_align_block_id'}); 
+        $self->genomic_align_block_id($params->{'genomic_align_block_id'}); 
     }
     if(defined($params->{'species_set'})) {
-	$self->species_set($params->{'species_set'});
+        $self->species_set($params->{'species_set'});
     }
     return 1;
 }
@@ -312,39 +408,63 @@ sub _calculateNeutralRate {
 #write out multiple alignment in mfa format to $self->worker_temp_directory
 sub _writeMultiFastaAlignment {
     my $self = shift;
+    my $object = shift;
 
     #write out the alignment file
-    my $align_file = $self->worker_temp_directory . $ALIGN_FILE;
-    open (ALIGN, ">$align_file") || throw "error writing alignment ($align_file) file\n";    
-    my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
-    my $gab = $gaba->fetch_by_dbID($self->genomic_align_block_id);
+    $self->{'mfa_file'} = $self->worker_temp_directory . $ALIGN_FILE;
+    open (ALIGN, ">$self->{'mfa_file'}") or throw "error writing alignment ($self->{'mfa_file'}) file\n";    
 
+    
     #create mfa file of multiple alignment from genomic align block
-    foreach my $genomic_align (@{$gab->get_all_GenomicAligns}) {
-	#add _ to either side of genome_db id to make GERP like it
-	my $seq_name = _get_name_from_GenomicAlign($genomic_align);
-	my $aligned_sequence = $genomic_align->aligned_sequence;
-	$aligned_sequence =~ s/(.{80})/$1\n/g;
-	chomp($aligned_sequence);
-	print ALIGN ">$seq_name\n$aligned_sequence\n";
+    my $segments;
+    if (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+      $segments = $object->get_all_leaves;
+    } elsif (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+      $segments = $object->get_all_GenomicAligns;
+    }
+
+    foreach my $this_segment (@{$segments}) {
+        #my $seq_name = $genomic_align->dnafrag->genome_db->name;
+        #$seq_name =~ s/(\w*) (\w*)/$1_$2/;
+
+        #add _ to either side of genome_db id to make GERP like it
+        # Note: the name of the sequence must match the name of the
+        # corresponding leaf in the tree!
+        my $seq_name;
+        if (UNIVERSAL::isa($this_segment, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+          $seq_name = $this_segment->name;
+        } else {
+          $seq_name = _get_name_from_GenomicAlign($this_segment);
+        }
+        my $aligned_sequence = $this_segment->aligned_sequence;
+        $aligned_sequence =~ s/(.{80})/$1\n/g;
+        $aligned_sequence =~ s/\./\-/g;
+        chomp($aligned_sequence);
+        print ALIGN ">$seq_name\n$aligned_sequence\n";
     }
     close ALIGN;
 }
 
+#run gerp version 1
 sub run_gerp {
     my $self = shift;
 
     #change directory to where the temporary mfa and tree file are written
     chdir $self->worker_temp_directory;
 
-    unless (defined $self->program) {
-	$self->program("$BIN_DIR/GERP.pl");
+    unless (defined $self->program_file) {
+	if (defined($self->analysis) and defined($self->analysis->program_file)) {
+	    $self->program_file($self->analysis->program_file);
+	} else {
+	    #$self->program_file("$BIN_DIR[0]/GERP.pl");
+	    $self->program_file("$BIN_DIR{$self->program_version}/GERP.pl");
+	}
     }
 
-    throw($self->program . " is not executable Gerp::run ")
-	unless ($self->program && -x $self->program);
+    throw($self->program_file . " is not executable Gerp::run ")
+	unless ($self->program_file && -x $self->program_file);
 
-    my $command = $self->program;
+    my $command = $self->program_file;
 
     if ($self->param_file) {
 	$command .= " " . $self->param_file_tmp;
@@ -355,6 +475,51 @@ sub run_gerp {
     }
 }
 
+#run gerp version 2.1
+sub run_gerp_v2 {
+    my ($self, $bin_dir) = @_;
+    my @program_files;
+    my $gerpcol_path;
+    my $gerpelem_path;
+
+    #change directory to where the temporary mfa and tree file are written
+    chdir $self->worker_temp_directory;
+
+    unless (defined $self->program_file) {
+	if (defined($self->analysis) and defined($self->analysis->program_file)) {
+	    $gerpcol_path = $self->analysis->program_file . "/gerpcol";
+	    $gerpelem_path = $self->analysis->program_file . "/gerpelem";
+	} else {
+	    $gerpcol_path = "$BIN_DIR{$self->program_version}/gerpcol";
+	    $gerpelem_path = "$BIN_DIR{$self->program_version}/gerpelem";
+	}
+    }
+    throw($gerpcol_path . " is not executable Gerp::run ")
+      unless ($gerpcol_path && -x $gerpcol_path);
+
+    throw($gerpelem_path . " is not executable Gerp::run ")
+      unless ($gerpelem_path && -x $gerpelem_path);
+
+    #run gerpcol
+    my $command = $gerpcol_path;
+    $command .= " -t " . $self->{'modified_tree_file'} . " -f " . $self->{'mfa_file'};
+    #print STDERR "command $command\n";
+
+    unless (system($command) == 0) {
+	throw("gerp execution failed\n");
+    }
+
+    #run gerpelem
+    $command = $gerpelem_path;
+
+    $command .= " -f " . $self->{'mfa_file'}.$RATES_FILE_SUFFIX;
+    #print STDERR "command $command\n";
+    unless (system($command) == 0) {
+	throw("gerp execution failed\n");
+    }
+}
+
+#Parse results for Gerp version 1
 #parse the param file to find the values required to determine what GERP
 #called the rates and constrained elements
 sub _parse_results {
@@ -390,9 +555,19 @@ sub _parse_results {
   my $rates_file = "$alignment_file.rates";  
   my $cons_file = "$rates_file\_RS$rej_subs_min\_md$merge_distance\_cons.txt";
  
-  $self->_parse_cons_file($cons_file);
-  $self->_parse_rates_file($rates_file);
+  $self->_parse_cons_file($cons_file, 1);
+  $self->_parse_rates_file($rates_file, 1);
 
+}
+
+#Parse results for Gerp version 2.1
+sub _parse_results_v2 {
+  my ($self,) = @_;
+
+  #generate rates and constraints file names
+  $self->_parse_rates_file($self->{'mfa_file'}.$RATES_FILE_SUFFIX, 2);
+
+  $self->_parse_cons_file($self->{'mfa_file'}.$RATES_FILE_SUFFIX.$CONS_FILE_SUFFIX, 2);
 }
 
 
@@ -401,7 +576,7 @@ sub _parse_results {
 #cons_file : full filename of constraints file
 #example : $self->_parse_cons_file(/tmp/worker.2580193/gerp_alignment.mfa.rates_RS8.5_md6_cons.txt);
 sub _parse_cons_file {
-    my ($self, $cons_file) = @_;
+    my ($self, $cons_file, $version) = @_;
 
     my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
     my $gab = $gaba->fetch_by_dbID($self->genomic_align_block_id);
@@ -415,12 +590,17 @@ sub _parse_cons_file {
     }
 
     open CONS, $cons_file || throw("Could not open $cons_file");
+
     while (<CONS>) {
 	unless (/^#/) {
 		chomp;
 		#extract info from constraints file
-		my ($start, $end, $length, $rej_subs) = split /\t/,$_; 
-
+		my ($start, $end, $length, $rej_subs);
+		#if ($version == 1) {
+		    #($start, $end, $length, $rej_subs) = split /\t/,$_; 
+		#} else {
+		($start, $end, $length, $rej_subs) = split /\s/,$_;
+		#}
 		#create new genomic align blocks by converting alignment 
 		#coords to chromosome coords
 		my $constrained_gab = $gab->restrict_between_alignment_positions($start, $end, "skip"); 
@@ -451,7 +631,7 @@ sub _parse_cons_file {
 #rates_file : full filename of rates file
 #example    : $self->_parse_rates_file(/tmp/worker.2580193/gerp_alignment.mfa.rates);
 sub _parse_rates_file {
-    my ($self, $rates_file) = @_;
+    my ($self, $rates_file, $version) = @_;
     my %win_cnt;
     my $win_sizes = eval($self->window_sizes);
 
@@ -488,141 +668,154 @@ sub _parse_rates_file {
 #maximum called length before cut into smaller parts
     my $max_called_dist = 1000;
 
-
     #read in rates file
-    open (RATES,$rates_file) || throw "Could not open rates ($rates_file) file\n";
-    
+    open (RATES,$rates_file) or throw "Could not open rates ($rates_file) file\n";
+
     while (<RATES>) {
-	unless (/^#/) {
-		chomp;
-		my ($obs, $exp) = split/\t/,$_;
-		my $diff;
+	if (/^#/) {
+	    next;
+	}
+	chomp;
+	my ($obs, $exp, $diff);
+	if ($version == 1) {
+	    ($obs, $exp) = split/\t/,$_;
+	    if ($obs == $obs_no_score) {
+		$diff = $diff_no_score;
+	    } else {
+		$diff = $exp - $obs;
+	    }
+	} elsif ($version == 2) {
+	    ($exp, $diff) = split/\t/,$_;
+	} else {
+	    print STDERR "Invalid version, must be 1 or 2\n";
+	    return;
+	}
+	
+	for ($j = 0; $j < scalar(@$win_sizes); $j++) {
+	    
+	    #store called obs, exp and diff in each win_size bucket and keep a count of these with win_called
+	    #if ($diff != $diff_no_score) {
+	    if (($version == 1 && $obs != $obs_no_score) ||
+		($version == 2 && $exp != $exp_no_score)) {
+		$bucket->{$win_sizes->[$j]}->{exp} += $exp;
+		$bucket->{$win_sizes->[$j]}->{diff} += $diff;
+		$bucket->{$win_sizes->[$j]}->{win_called}++;
+	    }
+	    #total count for this bucket
+	    $bucket->{$win_sizes->[$j]}->{win_cnt}++;
+	    
+	    #increment alignment position
+	    $bucket->{$win_sizes->[$j]}->{pos}++;
+	    
+	    #if the bucket is full....
+	    if ($bucket->{$win_sizes->[$j]}->{win_cnt} == $win_sizes->[$j]) {
+		
+		#re-initialise win_cnt
+		$bucket->{$win_sizes->[$j]}->{win_cnt} = 0;
+		
+		#FOUND CALLED SCORE
+		#if ($bucket->{$win_sizes->[$j]}->{diff} != $diff_no_score) {
 
-		if ($obs == $obs_no_score) {
-		    $diff = $diff_no_score;
-		} else {
-		    $diff = $exp - $obs;
-		}
-		for ($j = 0; $j < scalar(@$win_sizes); $j++) {
-
-		    #store called obs, exp and diff in each win_size bucket and keep a count of these with win_called
-		    if ($diff != $diff_no_score) {
-			$bucket->{$win_sizes->[$j]}->{exp} += $exp;
-			$bucket->{$win_sizes->[$j]}->{diff} += $diff;
-			$bucket->{$win_sizes->[$j]}->{win_called}++;
-		    }
-		    #total count for this bucket
-		    $bucket->{$win_sizes->[$j]}->{win_cnt}++;
-
-		    #increment alignment position
-		    $bucket->{$win_sizes->[$j]}->{pos}++;
-
-		    #if the bucket is full....
-		    if ($bucket->{$win_sizes->[$j]}->{win_cnt} == $win_sizes->[$j]) {
-
-			#re-initialise win_cnt
-			$bucket->{$win_sizes->[$j]}->{win_cnt} = 0;
-
-			#FOUND CALLED SCORE
-			if ($bucket->{$win_sizes->[$j]}->{diff} != $diff_no_score) {
-			    #count how many called bases in this block
-			    $bucket->{$win_sizes->[$j]}->{called}++;
-			    
-			    #if found delete_cnt uncalled bases which is less 
-			    #than merge_dist then add these to the 
-			    #relevant score string. If this makes the score 
-			    #string bigger than max_called_dist, then
-			    #store the object in the database
-			    if ($bucket->{$win_sizes->[$j]}->{delete_cnt} > 0 && 
-				$bucket->{$win_sizes->[$j]}->{delete_cnt} <= $merge_dist) {
-				#add uncalled values to span merge_dist
-				for (my $i=0; $i < $bucket->{$win_sizes->[$j]}->{delete_cnt}; $i++) {
-				    $bucket->{$win_sizes->[$j]}->{cnt}++;
-				    $bucket->{$win_sizes->[$j]}->{exp_scores} .= "$exp_no_score ";
-				    $bucket->{$win_sizes->[$j]}->{diff_scores} .= "$diff_no_score ";
-				    
-				    #store in database
-				    if ($bucket->{$win_sizes->[$j]}->{cnt} == $max_called_dist) {
-					my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
-
-					$cs_adaptor->store($conservation_score);  
-					#reset bucket values
-					$bucket->{$win_sizes->[$j]}->{cnt} = 0;
-					$bucket->{$win_sizes->[$j]}->{called} = 0;
-					$bucket->{$win_sizes->[$j]}->{exp_scores} = "";
-					$bucket->{$win_sizes->[$j]}->{diff_scores} = "";
-					$bucket->{$win_sizes->[$j]}->{start_pos} += $max_called_dist;
-				    }
-				}
-			    }
-			    #first time found called score so save current pos 
-			    #as start_pos for this block
-			    if ($bucket->{$win_sizes->[$j]}->{called} == 1) {
-
-				#12.04.07 kfb fixed bug which occurs when the 
-				#1000th score is in a region of 10 or less 
-				#uncalled bases because the next start_pos was
-				#set to be the next called position instead of 
-				#the next (uncalled) position. 
-				#$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos};
- 
-				$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos} - ($bucket->{$win_sizes->[$j]}->{cnt} * $win_sizes->[$j]);
-			    }
-			   
-			    #average over the number of called scores in a 
-			    #window and append to score string
-			    #$bucket->{$win_sizes->[$j]}->{exp_scores} .= ($bucket->{$win_sizes->[$j]}->{exp}/$bucket->{$win_sizes->[$j]}->{win_called}) . " ";
-			    #$bucket->{$win_sizes->[$j]}->{diff_scores} .= ($bucket->{$win_sizes->[$j]}->{diff}/$bucket->{$win_sizes->[$j]}->{win_called}) . " "; 
-			    $bucket->{$win_sizes->[$j]}->{exp_scores} .= ($bucket->{$win_sizes->[$j]}->{exp}/$win_sizes->[$j]) . " ";
-			    $bucket->{$win_sizes->[$j]}->{diff_scores} .= ($bucket->{$win_sizes->[$j]}->{diff}/$win_sizes->[$j]) . " ";
-			    
-			    #increment counter of total called scores in this 
-			    #block
+		#Use the fact that win_called keeps count of how many called
+		#scores I have. If win_called is 0, no called scores have 
+		#been found
+		if ($bucket->{$win_sizes->[$j]}->{win_called} > 0) {
+		    #count how many called bases in this block
+		    $bucket->{$win_sizes->[$j]}->{called}++;
+		    
+		    #if found delete_cnt uncalled bases which is less 
+		    #than merge_dist then add these to the 
+		    #relevant score string. If this makes the score 
+		    #string bigger than max_called_dist, then
+		    #store the object in the database
+		    if ($bucket->{$win_sizes->[$j]}->{delete_cnt} > 0 && 
+			$bucket->{$win_sizes->[$j]}->{delete_cnt} <= $merge_dist) {
+			#add uncalled values to span merge_dist
+			for (my $i=0; $i < $bucket->{$win_sizes->[$j]}->{delete_cnt}; $i++) {
 			    $bucket->{$win_sizes->[$j]}->{cnt}++;
-			    #if have max_called_dist scores in the score 
-			    #string, then store them in the database
+			    $bucket->{$win_sizes->[$j]}->{exp_scores} .= "$exp_no_score ";
+			    $bucket->{$win_sizes->[$j]}->{diff_scores} .= "$diff_no_score ";
+			    
+			    #store in database
 			    if ($bucket->{$win_sizes->[$j]}->{cnt} == $max_called_dist) {
 				my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
 				
 				$cs_adaptor->store($conservation_score);  
-				
-				#reinitialise bucket values
+				#reset bucket values
 				$bucket->{$win_sizes->[$j]}->{cnt} = 0;
 				$bucket->{$win_sizes->[$j]}->{called} = 0;
 				$bucket->{$win_sizes->[$j]}->{exp_scores} = "";
 				$bucket->{$win_sizes->[$j]}->{diff_scores} = "";
 				$bucket->{$win_sizes->[$j]}->{start_pos} += $max_called_dist;
 			    }
-			    
-			    #reset count for uncalled bases
-			    $bucket->{$win_sizes->[$j]}->{delete_cnt} = 0;
-			} else {
-			    #FOUND UNCALLED SCORE
-			    
-			    #count how many uncalled bases in this block
-			    $bucket->{$win_sizes->[$j]}->{delete_cnt}++;
-
-			    #add previous called values to the database
-			    if ($bucket->{$win_sizes->[$j]}->{called} > 0 && $bucket->{$win_sizes->[$j]}->{delete_cnt} > $merge_dist) {
-
-				my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
-
-				$cs_adaptor->store($conservation_score);  
-				
-				$bucket->{$win_sizes->[$j]}->{cnt} = 0;
-				$bucket->{$win_sizes->[$j]}->{called} = 0;
-				$bucket->{$win_sizes->[$j]}->{exp_scores} = "";
-				$bucket->{$win_sizes->[$j]}->{diff_scores} = "";
-			    }
 			}
-			$bucket->{$win_sizes->[$j]}->{exp} = 0;
-			$bucket->{$win_sizes->[$j]}->{diff} = 0;
-			$bucket->{$win_sizes->[$j]}->{win_called} = 0;
+		    }
+		    #first time found called score so save current pos 
+		    #as start_pos for this block
+		    if ($bucket->{$win_sizes->[$j]}->{called} == 1) {
+			
+			#12.04.07 kfb fixed bug which occurs when the 
+			#1000th score is in a region of 10 or less 
+			#uncalled bases because the next start_pos was
+			#set to be the next called position instead of 
+			#the next (uncalled) position. 
+			#$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos};
+			
+			$bucket->{$win_sizes->[$j]}->{start_pos} = $bucket->{$win_sizes->[$j]}->{pos} - ($bucket->{$win_sizes->[$j]}->{cnt} * $win_sizes->[$j]);
+		    }
+		    
+		    #average over the number of called scores in a 
+		    #window and append to score string
+		    #$bucket->{$win_sizes->[$j]}->{exp_scores} .= ($bucket->{$win_sizes->[$j]}->{exp}/$bucket->{$win_sizes->[$j]}->{win_called}) . " ";
+		    #$bucket->{$win_sizes->[$j]}->{diff_scores} .= ($bucket->{$win_sizes->[$j]}->{diff}/$bucket->{$win_sizes->[$j]}->{win_called}) . " "; 
+		    $bucket->{$win_sizes->[$j]}->{exp_scores} .= ($bucket->{$win_sizes->[$j]}->{exp}/$win_sizes->[$j]) . " ";
+		    $bucket->{$win_sizes->[$j]}->{diff_scores} .= ($bucket->{$win_sizes->[$j]}->{diff}/$win_sizes->[$j]) . " ";
+		    
+		    #increment counter of total called scores in this 
+		    #block
+		    $bucket->{$win_sizes->[$j]}->{cnt}++;
+		    #if have max_called_dist scores in the score 
+		    #string, then store them in the database
+		    if ($bucket->{$win_sizes->[$j]}->{cnt} == $max_called_dist) {
+			my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
+			
+			$cs_adaptor->store($conservation_score);  
+			
+			#reinitialise bucket values
+			$bucket->{$win_sizes->[$j]}->{cnt} = 0;
+			$bucket->{$win_sizes->[$j]}->{called} = 0;
+			$bucket->{$win_sizes->[$j]}->{exp_scores} = "";
+			$bucket->{$win_sizes->[$j]}->{diff_scores} = "";
+			$bucket->{$win_sizes->[$j]}->{start_pos} += $max_called_dist;
+		    }
+		    
+		    #reset count for uncalled bases
+		    $bucket->{$win_sizes->[$j]}->{delete_cnt} = 0;
+		} else {
+		    #FOUND UNCALLED SCORE
+		    #count how many uncalled bases in this block
+		    $bucket->{$win_sizes->[$j]}->{delete_cnt}++;
+		    
+		    #add previous called values to the database
+		    if ($bucket->{$win_sizes->[$j]}->{called} > 0 && $bucket->{$win_sizes->[$j]}->{delete_cnt} > $merge_dist) {
+			
+			my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
+			
+			$cs_adaptor->store($conservation_score);  
+			
+			$bucket->{$win_sizes->[$j]}->{cnt} = 0;
+			$bucket->{$win_sizes->[$j]}->{called} = 0;
+			$bucket->{$win_sizes->[$j]}->{exp_scores} = "";
+			$bucket->{$win_sizes->[$j]}->{diff_scores} = "";
 		    }
 		}
+		$bucket->{$win_sizes->[$j]}->{exp} = 0;
+		$bucket->{$win_sizes->[$j]}->{diff} = 0;
+		$bucket->{$win_sizes->[$j]}->{win_called} = 0;
 	    }
-
+	}
     }
+
     #store last lot
     for ($j = 0; $j < scalar(@$win_sizes); $j++) {
 	if ($bucket->{$win_sizes->[$j]}->{delete_cnt} >= 0 && 
@@ -648,6 +841,7 @@ sub _build_tree_string {
     my ($self, $genomic_aligns) = @_;
     
     my $tree_file = $self->tree_file;
+
     my $newick = "";
     if (-e $tree_file) {
 	open NEWICK_FILE, $tree_file || throw("Can not open $tree_file");
@@ -676,9 +870,9 @@ sub _build_tree_string {
 
     $tree->release_tree;
  
-    my $modified_tree_file = $self->worker_temp_directory . $TREE_FILE;
+    $self->{'modified_tree_file'} = $self->worker_temp_directory . $TREE_FILE;
 
-    open (TREE, ">$modified_tree_file") || throw "error writing alignment ($modified_tree_file) file\n";    
+    open (TREE, ">$self->{'modified_tree_file'}") or throw "error writing alignment ($self->{'modified_tree_file'}) file\n";    
     print TREE $tree_string;
     close TREE;
 

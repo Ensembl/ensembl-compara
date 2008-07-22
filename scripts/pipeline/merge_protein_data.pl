@@ -62,7 +62,9 @@ homology
 homology_member
 protein_tree_node
 protein_tree_member
-protein_tree_tag);
+protein_tree_tag
+sitewise_aln
+sitewise_member);
 
 
 open F, "mysql -h$host -u$user -p$pass -N -e 'show tables like \"peptide_align_feature%\"' $source_db |";
@@ -82,7 +84,6 @@ unless ($nobackup) {
   unless(-d $back_up_dir) {
     mkdir $back_up_dir;
   }
-
 
   foreach my $table (@tables_to_merge) {
     unless (system("mysqldump -h$host -u$user -p$pass -d  $source_db $table > $back_up_dir/$table.sql") == 0) {

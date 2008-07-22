@@ -84,16 +84,13 @@
     'max_gap' => 50,
     'input_group_type' => 'chain',
     'output_group_type' => 'default'
-
-    'filter_stack' => 1,
-    'height' => 10, #default 40. Only prune stacks that are above this height.
   },
 
 ## HEALTHCHECKS are run at the end of the pipeline.
 ## If not defined, the healthcheck params are automatically created.
 # { TYPE => HEALTHCHECKS,
-#    'pairwise_gabs' => "params=>{method_link_type=>\'BLASTZ_NET\',genome_db_ids=>\'[25,22,]\'}", 
-    'compare_to_previous_db' => "params=>{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'BLASTZ_NET\',current_genome_db_ids=>\'[25,22,]\',max_percentage_diff=>10}",             
+#    'pairwise_gabs' => "params=>{method_link_type=>\'TRANSLATED_BLAT_NET\',genome_db_ids=>\'[25,22,]\'}", 
+    'compare_to_previous_db' => "params=>{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'TRANSLATED_BLAT_NET\',current_genome_db_ids=>\'[25,22,]\',max_percentage_diff=>10}",             
 #    'previous_db_url' => 'mysql://anonymous@ensembldb.ensembl.org', #default mysql://ensro@ens-livemirror
 #  },            
 

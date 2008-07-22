@@ -191,10 +191,10 @@ sub get_params {
   my $params = eval($param_string);
   return unless($params);
 
-  if (defined $params->{'analysis_data_id'}) {
-    my $analysis_data_id = $params->{'analysis_data_id'};
+  if (defined $params->{'njtree_phyml_analysis_data_id'}) {
+    my $njtree_phyml_analysis_data_id = $params->{'njtree_phyml_analysis_data_id'};
     my $ada = $self->db->get_AnalysisDataAdaptor;
-    my $new_params = eval($ada->fetch_by_dbID($analysis_data_id));
+    my $new_params = eval($ada->fetch_by_dbID($njtree_phyml_analysis_data_id));
     if (defined $new_params) {
       $params = $new_params;
     }
@@ -257,7 +257,8 @@ sub run_njtree_phyml
     if (-e "/proc/version") {
       # it is a linux machine
       # md5sum 91a9da7ad7d38ebedd5ce363a28d509b
-      $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386/njtree_gcc";
+      # $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386/njtree_gcc";
+      $njtree_phyml_executable = "/nfs/acari/avilella/src/_treesoft/treebest/treebest";
     }
   }
   # FIXME - ask systems to add it to ensembl bin
@@ -489,6 +490,24 @@ sub store_tags
       $node->store_tag('lost_taxon_id', $taxon);
     }
   }
+  if (defined($node->get_tagvalue("SISi"))) {
+    my $sis_score = $node->get_tagvalue("SISi");
+    if (defined($sis_score) && $sis_score ne '') {
+      if ($self->debug) {
+        printf("store SISi : $sis_score "); $node->print_node;
+      }
+      $node->store_tag('SISi', $sis_score);
+    }
+  }
+  if (defined($node->get_tagvalue("SISu"))) {
+    my $sis_score = $node->get_tagvalue("SISu");
+    if (defined($sis_score) && $sis_score ne '') {
+      if ($self->debug) {
+        printf("store SISu : $sis_score "); $node->print_node;
+      }
+      $node->store_tag('SISu', $sis_score);
+    }
+  }
   if (defined($node->get_tagvalue("SIS"))) {
     my $sis_score = $node->get_tagvalue("SIS");
     if (defined($sis_score) && $sis_score ne '') {
@@ -498,6 +517,33 @@ sub store_tags
       $node->store_tag('species_intersection_score', $sis_score);
     }
   }
+  if (defined($node->get_tagvalue("SIS1"))) {
+    my $sis_score = $node->get_tagvalue("SIS1");
+    if (defined($sis_score) && $sis_score ne '') {
+      if ($self->debug) {
+        printf("store SIS1 : $sis_score "); $node->print_node;
+      }
+      $node->store_tag('SIS1', $sis_score);
+    }
+  }
+  if (defined($node->get_tagvalue("SIS2"))) {
+    my $sis_score = $node->get_tagvalue("SIS2");
+    if (defined($sis_score) && $sis_score ne '') {
+      if ($self->debug) {
+        printf("store SIS2 : $sis_score "); $node->print_node;
+      }
+      $node->store_tag('SIS2', $sis_score);
+    }
+  }
+#   if (defined($node->get_tagvalue("SIS3"))) {
+#     my $sis_score = $node->get_tagvalue("SIS3");
+#     if (defined($sis_score) && $sis_score ne '') {
+#       if ($self->debug) {
+#         printf("store SIS3 : $sis_score "); $node->print_node;
+#       }
+#       $node->store_tag('SIS3', $sis_score);
+#     }
+#  }
 
   foreach my $child (@{$node->children}) {
     $self->store_tags($child);

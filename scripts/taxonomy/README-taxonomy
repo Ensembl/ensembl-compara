@@ -63,15 +63,15 @@ exit
 
 # This should take about 60 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+#ncbi_taxonomy.ncbi_taxa_node: Records: 429754  Deleted: 0  Skipped: 0  Warnings: 1289262
+# v49
 #ncbi_taxonomy.ncbi_taxa_node: Records: 405924  Deleted: 0  Skipped: 0  Warnings: 1217772
-# v48
-#ncbi_taxonomy.ncbi_taxa_node: Records: 392528  Deleted: 0  Skipped: 0  Warnings: 1177584
 
 # This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
+# ncbi_taxonomy.ncbi_taxa_name: Records: 600389  Deleted: 0  Skipped: 0  Warnings: 0
+# v49
 #ncbi_taxonomy.ncbi_taxa_name: Records: 562606  Deleted: 0  Skipped: 0  Warnings: 0
-# v48
-#ncbi_taxonomy.ncbi_taxa_name: Records: 539728  Deleted: 0  Skipped: 0  Warnings: 0
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
@@ -92,7 +92,7 @@ mysql -hens-livemirror -uensadmin -pensembl -N -e "insert into ncbi_taxa_name (t
 mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy < ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql
 
 ensembl-compara/scripts/taxonomy/ensembl_aliases.sql needs to be updated as new species
-are integarted into Ensembl.
+are integrated into Ensembl.
 
 The basic rule for "ensembl common name" is to use "genbank common
 name" or any of "common name" available. If they don't exist you are

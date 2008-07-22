@@ -6,7 +6,8 @@ use File::Basename;
 
 my ($idqy,$fastadb,$fastaindex,$dir);
 
-my $blast_executable = "/usr/local/ensembl/bin/blastall"; 
+#my $blast_executable = "/software/bin/blastall"; 
+my $blast_executable = "/usr/local/ensembl/bin/blastall";
 
 # There is a new version of fastafetch on the farm, /usr/local/ensembl/bin/fastafetch
 # We had problem previously with it, as sometimes the fasta files we use have IUPAC letter

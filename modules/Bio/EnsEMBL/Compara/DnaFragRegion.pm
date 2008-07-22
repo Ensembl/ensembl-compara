@@ -280,9 +280,9 @@ sub adaptor {
 
 =head2 dnafrag
 
-  Arg 1       : -none-
+  Arg 1       : (optional) Bio::EnsEMBL::Compara::DnaFrag object
   Example     : $dnafrag = $dnafragregion->dnafrag;
-  Description : Returns the Bio::EnsEMBL::Compara::DnaFrag object corresponding to this
+  Description : Getter/setter for the Bio::EnsEMBL::Compara::DnaFrag object corresponding to this
                 Bio::EnsEMBL::Compara::DnaFragRegion object.
   Returntype  : Bio::EnsEMBL::Compara::Dnafrag object
   Exceptions  : warns when the corresponding Bio::EnsEMBL::Compara::GenomeDB,
@@ -293,9 +293,11 @@ sub adaptor {
 =cut
 
 sub dnafrag {
-  my ($self) = @_;
-  
-  unless (defined $self->{'_slice'}) {
+  my ($self) = shift @_;
+
+  if (@_) {
+    $self->{'_dnafrag'} = shift @_;
+  } elsif (!defined $self->{'_dnafrag'}) {
     if (!defined($self->dnafrag_id)) {
       warn "Cannot get the Bio::EnsEMBL::Compara::DnaFrag object without dbID";
       return undef;

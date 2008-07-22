@@ -209,7 +209,7 @@ sub get_SimpleAlign {
     $cigar_start = 1 unless (defined $cigar_start && $cigar_start != 0);
     unless (defined $cigar_end && $cigar_end != 0) {
       $cigar_end = $peptide_member->seq_length;
-      $cigar_end = $cigar_end*3 if ($alignment =~ /^cdna$/i);
+      $cigar_end = $cigar_end*3 if (defined $alignment && $alignment =~ /^cdna$/i);
     }
     #print STDERR "cigar_start $cigar_start cigar_end $cigar_end\n";
     my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
@@ -268,6 +268,31 @@ sub taxonomy_level {
   $self->{'_subtype'} = shift if(@_);
   $self->{'_subtype'} = '' unless($self->{'_subtype'});
   return $self->{'_subtype'};
+}
+
+
+=head2 taxonomy_alias
+
+  Arg [1]    : string $taxonomy_alias (optional)
+  Example    : $taxonomy_alias = $homology->taxonomy_alias();
+               $homology->taxonomy_alias($taxonomy_alias);
+  Description: get string description of homology taxonomy_alias.
+               Examples: 'Chordates', 'Bony vertebrates', 'Homo sapiens'
+               Defaults to taxonomy_level if alias is not in the db
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub taxonomy_alias {
+  my $self = shift;
+
+  my $ancestor_node_id = $self->ancestor_node_id;
+  my $tree_dba = $self->adaptor->db->get_ProteinTreeAdaptor;
+  my $ancestor = $tree_dba->fetch_node_by_node_id($ancestor_node_id);
+
+  return $ancestor->get_tagvalue('taxon_alias') || undef;
 }
 
 
