@@ -199,8 +199,8 @@ sub _init {
 	    }
 	    if (my $gap = $block->{'right_end_mismatch'}) {
 		my $c = $gap > 0 ? 'red' : 'blue';
-		push @draw_end_lines, [$block->{'munged_end'}-1/$pix_per_bp,$H,$c];
-		push @draw_end_lines, [$block->{'munged_end'},$H,$c];
+		push @draw_end_lines, [$block->{'munged_start'}+$width-1/$pix_per_bp,$H,$c];
+		push @draw_end_lines, [$block->{'munged_start'}+$width,$H,$c];
 		$G->{'title'} = "$hit_name ($gap)";
 	    }
 	    $self->push( $G );
