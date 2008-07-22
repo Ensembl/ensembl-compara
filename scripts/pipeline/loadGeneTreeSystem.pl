@@ -450,7 +450,7 @@ sub build_GeneTreeSystem
   $analysisDBA->store($BreakPAFCluster);
   $stats = $BreakPAFCluster->stats;
   $stats->batch_size(1);
-  $stats->hive_capacity(3);
+  $stats->hive_capacity(100); # Shouldnt be a problem with the per-species paf
   $stats->update();
 
   #
@@ -573,19 +573,18 @@ sub build_GeneTreeSystem
         );
   }
 
-
   #
   # Sitewise_dNdS
   #
 
   $parameters = '';
   my $with_options_sitewise_dnds = 0;
-  #   if (defined $genetree_params{'honeycomb_dir'}) {
-  #     $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
-  #     $with_options_sitewise_dnds = 1;
-  #   }
+  if (defined $genetree_params{'honeycomb_dir'}) {
+    $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."',";
+    $with_options_sitewise_dnds = 1;
+  }
   if (defined $sitewise_dnds_params{'saturated'}) {
-    $parameters = "'saturated'=>" . $sitewise_dnds_params{'saturated'};
+    $parameters .= "'saturated'=>" . $sitewise_dnds_params{'saturated'};
     $with_options_sitewise_dnds = 1;
   }
   $parameters = '{' . $parameters .'}' if (1==$with_options_sitewise_dnds);
