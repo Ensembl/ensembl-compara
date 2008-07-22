@@ -50,7 +50,9 @@ sub handler {
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
 
   ## Ajax request
-  $ENV{CACHE_KEY} .= '::AJAX'     if $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  $ENV{CACHE_KEY} .= '::AJAX' if $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+
+  ## User logged in, some content depends on user
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
 
   ## Ajax disabled
