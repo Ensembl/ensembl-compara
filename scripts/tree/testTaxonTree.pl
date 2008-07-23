@@ -71,7 +71,7 @@ if ($url) {
     my ($myuser,$mypass);
     if ($myuserpass =~ /(\S+)\:(\S+)/) {
       $myuser = $1;
-      $mypass = $1;
+      $mypass = $2;
     } else {
       $myuser = $myuserpass;
     }
