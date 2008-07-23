@@ -621,11 +621,18 @@ sub create_conservation_score_analysis {
     $program_version = $conservation_score_params{'program_version'};
   }
   
+  #location of program_file
+  my $program_file = "/software/ensembl/compara/gerp/GERPv2.1";
+  if (defined $conservation_score_params{'program_file'}) {
+    $program_file = $conservation_score_params{'program_file'};
+  }
+
   my $conservation_score_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => $logic_name,
       -module          => $module,
       -parameters      => $parameters,
-      -program_version => $program_version
+      -program_version => $program_version,
+      -program_file    => $program_file
     );
 
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($conservation_score_analysis);
