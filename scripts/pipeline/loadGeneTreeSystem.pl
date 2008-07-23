@@ -600,7 +600,7 @@ sub build_GeneTreeSystem
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($Sitewise_dNdS->dbID);
     $stats->batch_size(1);
-    $stats->hive_capacity(200);
+    $stats->hive_capacity(600);
     $stats->status('BLOCKED');
     $stats->update();
     $ctrlRuleDBA->create_rule($orthotree,$Sitewise_dNdS);
