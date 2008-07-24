@@ -1,7 +1,13 @@
 // Functions to pass the referer, in case user has no AJAX therefore no modal window
+// Needs integration into modal JS
 
 function control_panel(URL) {
   window.open(URL,'control_panel','width=950,height=500,resizable,scrollbars');
+}
+
+function return_to_parent(URL) {
+  opener.document.location = URL;
+  self.close();
 }
 
 function logout_link() {
