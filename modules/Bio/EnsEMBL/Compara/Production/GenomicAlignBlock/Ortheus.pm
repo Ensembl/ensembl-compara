@@ -117,7 +117,20 @@ my $do_hack = 0;
 #Padding character and max_pads to be added when creating the 2X genome
 #composite sequence
 my $pad_char = "N";
-my $max_pads = 100;
+
+#my $max_pads = 100;
+my $max_pads = 1000000;
+
+#percentage of max_pads to use ie to use 80% of the actual pad number, set max_pads to be
+#very large (so won't be trimmed) and set max_pad_percent to 0.8. 
+#my $max_pads_percent = 0.8; 
+my $max_pads_percent = 1.0; 
+
+#which method to use for creating the 2X fragments. If this is true (1), use
+#only the pairwise matching blocks. If this is false (0), use the entire net
+#including the inter-block spanning regions aswell. This leads to large regions
+#in the final alignment containing a single sequence.
+my $create_block_frag_array = 1;
 
 =head2 fetch_input
 
@@ -251,7 +264,7 @@ sub write_output {
 
   foreach my $genomic_align_tree (@{$self->{'_runnable'}->output}) {
        foreach my $genomic_align_node (@{$genomic_align_tree->get_all_nodes}) {
-	   foreach my $genomic_align (@{$genomic_align_node->get_all_GenomicAligns}) {
+	   foreach my $genomic_align (@{$genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
  	      $genomic_align->adaptor($gaa);
  	      $genomic_align->method_link_species_set($mlss);
  	      $genomic_align->level_id(1);
@@ -285,24 +298,47 @@ sub write_output {
  		  $genomic_align->dnafrag_end($length);
 		  $genomic_align->dnafrag($dnafrag);
 	      }
-	   }
+	  }
        }
-       $gata->store($genomic_align_tree);
 
-       $self->_write_gerp_dataflow(
-		       $genomic_align_tree->modern_genomic_align_block_id,
-		       $mlss);
-	}
-	chdir("$self->worker_temp_directory");
-	foreach(glob("*")){
-	    #DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
-	    #to clean up after each job otherwise you get files left over from
-	    #the previous job.
-	    unlink($_);
-	}
+       my $split_trees;
+       #restrict genomic_align_tree if it is too long and store as groups
+       if ($self->max_block_size() && 
+  	   $genomic_align_tree->length >  $self->max_block_size()) {
+  	   for (my $start = 1; $start <= $genomic_align_tree->length; 
+  		$start += $self->max_block_size()) {
+  	       my $end = $start+$self->max_block_size()-1;
+  	       if ($end > $genomic_align_tree->length) {
+  		   $end = $genomic_align_tree->length;
+  	       }
+  	       my $new_gat = $genomic_align_tree->restrict_between_alignment_positions($start, $end, "skip_empty_GenomicAligns");
+	       push @$split_trees, $new_gat;
+  	   }
+	   $gata->store_group($split_trees);
+	   foreach my $tree (@$split_trees) {
+	       $self->_write_gerp_dataflow($tree->modern_genomic_align_block_id,
+					   $mlss);
+	       
+	   }
+       } else {
+	   $gata->store($genomic_align_tree);
+	   $self->_write_gerp_dataflow(
+			    $genomic_align_tree->modern_genomic_align_block_id,
+			    $mlss);
+       }
+   }
+  chdir("$self->worker_temp_directory");
+  foreach(glob("*")){
+      #DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
+      #to clean up after each job otherwise you get files left over from
+      #the previous job.
+      unlink($_);
+  }
 	
   return 1;
 }
+
+
 
 #trim genomic align block from the left hand edge to first position having at
 #least 2 genomic aligns which overlap
@@ -565,8 +601,8 @@ sub parse_results {
 		if (@$genomic_aligns_2x_array) {
 		    print "*****FOUND 2x seq " . length($seq) . "\n" if ($self->debug);
 		    #starting offset
-		    my $offset = $max_pads;
-
+		    #my $offset = $max_pads;
+		    my $offset = $num_frag_pads[0];
 		    #how many X's to add at the start of the cigar_line
 		    my $start_X;
 
@@ -576,7 +612,7 @@ sub parse_results {
 		    my $align_offset = 0;
 		    for (my $i = 0; $i < @$genomic_aligns_2x_array; $i++) {
 			my $genomic_align = $genomic_aligns_2x_array->[$i];
-			my $num_pads = $num_frag_pads[$i];
+			my $num_pads = $num_frag_pads[$i+1];
 			my $ga_length = $genomic_align->dnafrag_end-$genomic_align->dnafrag_start+1;
 
 			print "extract_sequence $offset " .($offset+$ga_length) . " num pads $num_pads\n" if ($self->debug); 
@@ -682,6 +718,9 @@ sub parse_results {
 		    print "FOUND 2X GENOME\n" if $self->debug;
 		    print "num of frags " . @$dfr . "\n" if $self->debug;
 
+		    #first pads
+		    push @num_frag_pads, $dfr->[0]->{first_pads};
+
 		    #create new genomic_align for each pairwise fragment
 		    foreach my $ga_frag (@$dfr) {
 			my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign;
@@ -744,7 +783,8 @@ sub parse_results {
 	print "*****FOUND 2x seq " . length($seq) . "\n" if ($self->debug);
 
 	#starting offset
-	my $offset = $max_pads;
+	#my $offset = $max_pads;
+	my $offset = $num_frag_pads[0];
 
 	#how many X's to add at the start and end of the cigar_line
 	my ($start_X , $end_X);
@@ -752,7 +792,7 @@ sub parse_results {
 	my $align_offset = 0;
 	for (my $i = 0; $i < @$genomic_aligns_2x_array; $i++) {
 	    my $genomic_align = $genomic_aligns_2x_array->[$i];
-	    my $num_pads = $num_frag_pads[$i];
+	    my $num_pads = $num_frag_pads[$i+1];
 	    my $ga_length = $genomic_align->dnafrag_end-$genomic_align->dnafrag_start+1;
 	    print "extract_sequence $offset " .($offset+$ga_length) . " num pads $num_pads\n" if ($self->debug); 
 	    my ($subseq, $aligned_start, $aligned_end) = _extract_sequence($seq, $offset+1, ($offset+$ga_length));
@@ -1131,8 +1171,14 @@ sub _load_2XGenomes {
       #Foreach copy of the ref_genome in the multiple alignment block, 
       #find the alignment blocks between the ref_genome and the 2x 
       #target_genome in the pairwise database
-      my $ga_frag_array = $self->_create_frag_array($gaba, $ref_slice_adaptor, $pairwise_mlss, $ref_dnafrags);
-      
+
+      my $ga_frag_array;
+      if ($create_block_frag_array) {
+	  $ga_frag_array = $self->_create_block_frag_array($gaba, $ref_slice_adaptor, $pairwise_mlss, $ref_dnafrags);
+      } else {
+	  $ga_frag_array = $self->_create_span_frag_array($gaba, $ref_slice_adaptor, $pairwise_mlss, $ref_dnafrags);
+      }
+
       #not found 2x genome
       next if (!defined $ga_frag_array);
 
@@ -1441,11 +1487,98 @@ sub _update_tree {
 
 #
 #From each reference genomic_align, find all the pairwise alignments for this
+#pairwise_mlss. Store only the pairwise match, NOT the region between blocks
+# as the create_span_frag_array does. Return an array
+#of ga_fragments for each reference genomic_align
+#
+sub _create_block_frag_array {
+    my ($self, $gab_adaptor, $ref_slice_adaptor, $pairwise_mlss, $ref_dnafrags) = @_;
+
+    my $ga_frag_array;
+
+    my $ga_num_ns = 0;
+
+    #Multiple alignment reference genomic_aligns (maybe more than 1)
+    foreach my $ref_dnafrag (@$ref_dnafrags) {
+	print "  " . $ref_dnafrag->dnafrag->name . " " . $ref_dnafrag->dnafrag_start . " " . $ref_dnafrag->dnafrag_end . " " . $ref_dnafrag->dnafrag_strand . "\n" if $self->debug;
+	
+	#find the slice corresponding to the ref_genome
+	my $slice = $ref_slice_adaptor->fetch_by_region('toplevel', $ref_dnafrag->dnafrag->name, $ref_dnafrag->dnafrag_start, $ref_dnafrag->dnafrag_end, $ref_dnafrag->dnafrag_strand);
+
+	print "ref_seq " . $slice->start . " " . $slice->end . " " . $slice->strand . " " . substr($slice->seq,0,120) . "\n" if $self->debug;
+
+	#find the pairwise blocks between ref_genome and the 2x genome
+	my $pairwise_gabs = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($pairwise_mlss, $slice, undef,undef,1);
+	
+	#sort by reference_genomic_align start position
+	@$pairwise_gabs = sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start} @$pairwise_gabs;
+
+
+	print "    pairwise gabs " . scalar(@$pairwise_gabs) . "\n" if $self->debug;
+	
+	#if there are no pairwise matches found to 2x genome, then escape
+	#back to loop
+	next if (scalar(@$pairwise_gabs) == 0);
+	
+	my $ga_frags;
+
+	#need to save each match separately but still use same structure as
+	#create_span_frag_array in case we change our minds back again
+
+	foreach my $pairwise_gab (@$pairwise_gabs) {
+
+	    #should only have 1!
+	    my $gas = $pairwise_gab->get_all_non_reference_genomic_aligns;
+	    
+	    my $ga = $gas->[0];
+	    my $ref_start = $ga->genomic_align_block->reference_genomic_align->dnafrag_start;
+	    my $ref_end = $ga->genomic_align_block->reference_genomic_align->dnafrag_end;
+
+	    #need to reverse order of fragments if ref is on reverse strand
+	    if ($slice->strand == -1) {
+		my $tmp_start = $ref_start;
+		$ref_start = $slice->end - $ref_end + $slice->start;
+		$ref_end = $slice->end - $tmp_start + $slice->start;
+		#print "REVERSE $ref_start $ref_end\n";
+	    }
+
+	    my $dnafrag_adaptor = $self->{'comparaDBA'}->get_DnaFragAdaptor;
+	    
+	    my $dnafrag_region = new Bio::EnsEMBL::Compara::DnaFragRegion(
+			      -dnafrag_id => $ga->dnafrag->dbID,
+			      -dnafrag_start => $ga->dnafrag_start,
+			      -dnafrag_end => $ga->dnafrag_end,
+                              -dnafrag_strand => $ga->dnafrag_strand,
+                              -adaptor => $dnafrag_adaptor
+		              );
+		
+
+	    my $ga_fragment = {dnafrag_region => $dnafrag_region,
+			       genome_db => $ga->dnafrag->genome_db,
+			       genome_db_id => $ga->dnafrag->genome_db_id,
+			       ref_dnafrag => $ref_dnafrag,
+			       ref_start => $ref_start,
+			       ref_end => $ref_end,
+			       ref_slice_start => $slice->start,
+			       ref_slice_end => $slice->end};
+	    
+	    push @$ga_frags, $ga_fragment;
+	}
+	#add to array of fragments for each reference genomic_align
+	push @$ga_frag_array, $ga_frags;
+    }
+    return $ga_frag_array;
+}
+
+
+
+#
+#From each reference genomic_align, find all the pairwise alignments for this
 #pairwise_mlss. Summarise the genomic_aligns in the same group_id by storing 
 #the min start and max end and create a new DnaFragRegion. Return an array
 #of ga_fragments for each reference genomic_align
 #
-sub _create_frag_array {
+sub _create_span_frag_array {
     my ($self, $gab_adaptor, $ref_slice_adaptor, $pairwise_mlss, $ref_dnafrags) = @_;
 
     my $ga_frag_array;
@@ -1549,7 +1682,9 @@ sub _create_frag_array {
 				   genome_db_id => $genome_db_id,
 				   ref_dnafrag => $ref_dnafrag,
 				   ref_start => $ref_min_start,
-				   ref_end => $ref_max_end};
+				   ref_end => $ref_max_end,
+				   ref_slice_start => $slice->start,
+				   ref_slice_end => $slice->end};
 		
 		print "store frag $min_start $max_end " . ($max_end - $min_start) . "\n" if $self->debug;
 		print "final seq $ref_min_start $ref_max_end " . substr($dnafrag_region->slice->seq,0,10) . "\n" if $self->debug;
@@ -1603,7 +1738,9 @@ sub _create_frag_array {
 			   genome_db_id => $genome_db_id,
 			   ref_dnafrag => $ref_dnafrag,
 			   ref_start => $ref_min_start,
-			   ref_end => $ref_max_end};
+			   ref_end => $ref_max_end,
+			   ref_slice_start => $slice->start,
+			   ref_slice_end => $slice->end};
 
 	#store last $ga_fragment
 	push @$ga_frags, $ga_fragment;
@@ -1811,9 +1948,19 @@ sub _build_2x_composite_seq {
 
     my $dnafrag_adaptor = $pairwise_dba->get_DnaFragAdaptor;
 
-    #always add $max_pads to the beginning
-    $composite_seq .= $pad_char x $max_pads;
+    #work out how many pads to add to the beginning from the reference seq
+    $num_pads = $first_frag->{ref_start} - $first_frag->{ref_slice_start};
+    #print "slice start " . $first_frag->{ref_slice_start} . " end " . $first_frag->{ref_slice_end} . " num pads $num_pads\n";
+    $num_pads = $max_pads if ($num_pads > $max_pads);
+    $num_pads = int($num_pads * $max_pads_percent);
 
+    $composite_seq .= $pad_char x $num_pads;
+
+    #store first set of pads in {first_pads}
+    $first_frag->{first_pads} = $num_pads;
+
+    #always add $max_pads to the beginning
+    #$composite_seq .= $pad_char x $max_pads;
     foreach my $ga_frag (@$ga_frags) {
 
 	my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($ga_frag->{dnafrag_region}->dnafrag_id);
@@ -1826,8 +1973,11 @@ sub _build_2x_composite_seq {
 	    #Find the number of bases between fragments
 	    $num_pads = $ga_frag->{ref_start} - $prev_frag->{ref_end} - 1;
 
+	    print "before max_pads $num_pads\n" if $self->debug;
+
 	    #Add up to $max_pads between fragments
 	    $num_pads = $max_pads if ($num_pads > $max_pads);
+	    $num_pads = int($num_pads * $max_pads_percent);
 
 	    print "pads $num_pads\n" if $self->debug;
 	    $composite_seq .= $pad_char x $num_pads;
@@ -1852,10 +2002,24 @@ sub _build_2x_composite_seq {
 	$prev_frag = $ga_frag;
     }
 
-    #always write $max_pads at the end
-    print "last pads $max_pads\n" if $self->debug;
+    my $last_frag = $ga_frags->[-1];
 
-    $composite_seq .= $pad_char x $max_pads;
+    #work out how many pads to add to the end
+    $num_pads = $first_frag->{ref_slice_end} - $last_frag->{ref_end};
+    $num_pads = $max_pads if ($num_pads > $max_pads);
+    $num_pads = int($num_pads * $max_pads_percent);
+
+    #print "ref slice end " . $first_frag->{ref_slice_end} . " last ele " . $ga_frags->[-1]->{ref_end} . " num pads $num_pads\n";
+    $composite_seq .= $pad_char x $num_pads;
+
+    #store last pads
+    $last_frag->{num_pads} = $num_pads;
+
+    #always write $max_pads at the end
+    #print "last pads $max_pads\n" if $self->debug;
+
+    #$composite_seq .= $pad_char x $max_pads;
+
     $composite_seq =~ s/(.{80})/$1\n/g;
     chomp $composite_seq;
 
