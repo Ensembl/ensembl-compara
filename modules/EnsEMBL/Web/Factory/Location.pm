@@ -291,9 +291,20 @@ sub _location_from_SeqRegion {
     if ($chr) {
       $self->problem( "fatal", "Locate error","Cannot locate region $chr on the current assembly." );
     }
+    elsif ($ENV{'REQUEST_URI'} =~ /Karyotype/ && $self->species_defs->ENSEMBL_CHROMOSOMES) {
+      ## Create a slice of the first chromosome to force this page to work!
+      my @chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};
+      my $TS;
+      if (scalar(@chrs)) {
+        $TS = $self->_slice_adaptor->fetch_by_region( 'chromosome', $chrs[0] );
+      }
+      if ($TS) {
+        return $self->_create_from_slice( 'chromosome', $chrs[0], $self->expand($TS), '', $chrs[0], $keep_slice );
+      }
+    }
     else {
-    $self->problem( "fatal", "Please enter a location","A location is required to build this page." );
-  }
+      $self->problem( "fatal", "Please enter a location","A location is required to build this page." );
+    }
     return undef;
   }
 }
