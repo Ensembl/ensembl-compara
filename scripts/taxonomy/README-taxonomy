@@ -63,15 +63,15 @@ exit
 
 # This should take about 60 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+#ncbi_taxonomy.ncbi_taxa_node: Records: 445534  Deleted: 0  Skipped: 0  Warnings: 1336602
+# v50
 #ncbi_taxonomy.ncbi_taxa_node: Records: 429754  Deleted: 0  Skipped: 0  Warnings: 1289262
-# v49
-#ncbi_taxonomy.ncbi_taxa_node: Records: 405924  Deleted: 0  Skipped: 0  Warnings: 1217772
 
 # This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
-# ncbi_taxonomy.ncbi_taxa_name: Records: 600389  Deleted: 0  Skipped: 0  Warnings: 0
-# v49
-#ncbi_taxonomy.ncbi_taxa_name: Records: 562606  Deleted: 0  Skipped: 0  Warnings: 0
+#ncbi_taxonomy.ncbi_taxa_name: Records: 622867  Deleted: 0  Skipped: 0  Warnings: 0
+# v50
+#ncbi_taxonomy.ncbi_taxa_name: Records: 600389  Deleted: 0  Skipped: 0  Warnings: 0
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
@@ -98,6 +98,9 @@ The basic rule for "ensembl common name" is to use "genbank common
 name" or any of "common name" available. If they don't exist you are
 free to invent one. This is used in the download page 
 http://www.ensembl.org/info/data/download.html
+
+The other source of info is here:
+http://www.intlgenome.org/viewDatabase.cfm
 
 For "ensembl alias name", it is used at the top of the web page of
 each species, when it says e.g. "e!EnsemblHuman" or
