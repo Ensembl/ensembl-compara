@@ -1697,14 +1697,29 @@ sub restrict {
   delete($restricted_genomic_align->{cigar_line});
   $restricted_genomic_align->{original_dbID} = $self->dbID if ($self->dbID);
 
+  my $aligned_seq_length = 0;
+
+  #unable to retrieve $self->genomic_align_block->length 
+  if ((!$self->{'genomic_align_block_id'}) or (!$self->genomic_align_block->length)) {
+      my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);
+      while (my $cigar = shift(@cigar)) {
+	  my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
+	  $num = 1 if ($num eq "");
+	  $aligned_seq_length += $num;
+      }
+  } else {
+    $aligned_seq_length = $self->genomic_align_block->length;
+  }
+
   my $final_aligned_length = $end - $start + 1;
   my $length_of_truncated_seq_at_the_start = $start - 1;
-  my $length_of_truncated_seq_at_the_end = $self->genomic_align_block->length - $end;
+  my $length_of_truncated_seq_at_the_end = $aligned_seq_length - $end;
+  
+  my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);  
 
-  my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);
   ## Trim start of cigar_line if needed
   if ($length_of_truncated_seq_at_the_start >= 0) {
-    my $aligned_seq_length = 0;
+    $aligned_seq_length = 0;
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@cigar)) {
@@ -1738,7 +1753,7 @@ sub restrict {
   ## Trim end of cigar_line if needed
   if ($length_of_truncated_seq_at_the_end >= 0) {
     ## Truncate all the GenomicAligns
-    my $aligned_seq_length = 0;
+    $aligned_seq_length = 0;
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@cigar)) {
