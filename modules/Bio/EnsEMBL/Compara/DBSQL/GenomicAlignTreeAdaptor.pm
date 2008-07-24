@@ -379,6 +379,46 @@ sub store {
   return $node->node_id;
 }
 
+sub store_group {
+    my ($self, $nodes) = @_;
+
+    #store trees in database
+    foreach my $this_node (@$nodes) {
+	$self->store($this_node);
+    }
+
+    ### Check if this is defined or not!!!
+    my $group_id = 
+      $nodes->[0]->genomic_align_group->get_all_GenomicAligns->[0]->genomic_align_block_id;
+    
+    my $genomic_align_blocks = {};
+    foreach my $this_node (@$nodes) {
+	## Ancestral GAB
+	my $ancestral_genomic_align_block_id = $this_node->genomic_align_group->
+	  get_all_GenomicAligns->[0]->genomic_align_block_id;
+	my $fake_ancestral_gab;
+	$fake_ancestral_gab->{dbID} = $ancestral_genomic_align_block_id;
+	bless $fake_ancestral_gab, "Bio::EnsEMBL::Compara::GenomicAlignBlock";
+	$genomic_align_blocks->{$ancestral_genomic_align_block_id} = 
+	  $fake_ancestral_gab;
+	
+	## Modern GAB
+	my $modern_genomic_align_block_id = 
+	  $this_node->get_all_leaves->[0]->genomic_align_group->
+	    get_all_GenomicAligns->[0]->genomic_align_block_id;
+	my $fake_modern_gab;
+	$fake_modern_gab->{dbID} = $modern_genomic_align_block_id;
+	bless $fake_modern_gab, "Bio::EnsEMBL::Compara::GenomicAlignBlock";
+	$genomic_align_blocks->{$modern_genomic_align_block_id} = 
+	  $fake_modern_gab;
+    }
+    my $genomic_align_block_adaptor = 
+      $self->db->get_GenomicAlignBlockAdaptor;
+    foreach my $gab (values %$genomic_align_blocks) {
+	$genomic_align_block_adaptor->store_group_id($gab, $group_id);
+    }
+}
+
 
 sub store_node {
   my ($self, $node) = @_;
