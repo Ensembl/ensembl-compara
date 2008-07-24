@@ -357,7 +357,6 @@ warn "ATTACHING DATA OBJECT........";
 sub createObjects { 
   my $self      = shift;    
   if( $self->core_objects->location ) {
-    warn "Creating location object!.....!";
     my $l = $self->core_objects->location;
     my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
       'type' => 'Location',
@@ -477,12 +476,15 @@ sub createObjects {
     }
     if( $self->DataObjects ) {
       $self->merge;
-    } else {
+    }
+=pod 
+    else {
       return $self->problem( 'Fatal',
         'Unknown region',
         'Could not locate the region you have specified.  You may not have specified enough information'
       );
     }
+=cut
   } else {
     ## Gene (completed)
     if(!defined($start) && ($temp_id = $self->param('geneid') || $self->param('gene'))) {
@@ -555,9 +557,12 @@ sub createObjects {
     }
     if( $location ) {
       $self->DataObjects( $location );
-    } else {
+    }
+=pod 
+    else {
       return $self->problem( 'Fatal', 'Unknown region', 'Could not locate the region you have specified.  You may not have specified enough information.' );
     }
+=cut
   }
 ## Push location....
 }
