@@ -64,6 +64,7 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (9600,"Orangutan"
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9600,"orangutan","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9796,"Horse","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9796,"horse","ensembl common name");
+
 # 2X genomes
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (42254,"Shrew","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (42254,"European shrew","ensembl common name");
@@ -83,6 +84,22 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (30608,"Mouse Lem
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (30608,"grey mouse lemur","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9978,"Pika","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9978,"American pika","ensembl common name");
+
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9739,"Dolphin","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9739,"Bottlenose dolphin","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9478,"Tarsier","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9478,"Philippine tarsier","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (10020,"Kangaroo rat","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (10020,"Ords kangaroo rat","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (30538,"Alpaca","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (30538,"alpaca","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (132908,"Megabat","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (132908,"Large flying fox","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9813,"Hyrax","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9813,"cape rock hyrax","ensembl common name");
+#insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl alias name");
+#insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl common name");
+
 # Internal nodes for the GeneTrees
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (33553,  "Mouse/Rat/Squirrel ancestor","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (39107,  "Old World rodents","ensembl alias name");
@@ -116,3 +133,6 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (32525,  "Marsupi
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (33154,  "Fungi/Metazoa ancestor","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (33213,  "Bilateral animals","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (33316,  "Coelomate animals","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (376913, "Human/Chimp/Orang/Macaque/Tarsier ancestor","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (91561,  "Cow/Alpaca/Dolphin ancestor","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9397,   "Bats","ensembl alias name");
