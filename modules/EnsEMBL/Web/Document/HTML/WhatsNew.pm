@@ -34,11 +34,16 @@ sub render {
 
   my $html = qq(<div class="species-news">
 <h2>What's New in Release $release_id ($release_date)</h2>);
-  ## get a random miniad
-  my $miniad = EnsEMBL::Web::Data::MiniAd->fetch_random;
 
-  if ($miniad) {
-    $html .=  sprintf('<a href="%s"><img class="float-right" style="width:150px;height:200px" src="/img/mini-ads/%s" alt="%s" title="%s" /></a>', $miniad->url, $miniad->image, $miniad->alt, $miniad->alt);
+  ## get a random miniad, if configured
+  ## TODO - MOVE THE DB QUERYING PART TO CONFIGPACKER/SPECIESDEFS!!!
+  if ($species_defs->ENSEMBL_MINIAD_DIR) {
+    my $miniad = EnsEMBL::Web::Data::MiniAd->fetch_random;
+
+    if ($miniad) {
+      $html .=  sprintf('<a href="%s"><img class="float-right" style="width:150px;height:200px" src="%s/%s" alt="%s" title="%s" /></a>', 
+        $miniad->url, $species_defs->ENSEMBL_MINIAD_DIR, $miniad->image, $miniad->alt, $miniad->alt);
+    }
   }
 
   ## get news headlines
