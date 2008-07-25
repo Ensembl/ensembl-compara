@@ -44,19 +44,16 @@ sub _init {
 	$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
 	$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
 
-	warn Dumper($hit_details->{'data'}) if ($hit_name eq 'O43556.4');
-
 	#go through each component of the combined hit (ie each supporting_feature)
 	foreach my $block (@{$hit_details->{'data'}}) {
-	    
-#	    my $exon_stable_id = $block->{'exon'}->stable_id;
+	    next unless %$block;
+	    my $exon_stable_id = $block->{'exon'} ? $block->{'exon'}->stable_id : '';
 
-	    my $width = $block->{'munged_end'}-$block->{'munged_start'} +1;
+	    my $width = $block->{'munged_end'}-$block->{'munged_start'};
 	    $start_x = $start_x > $block->{'munged_start'} ? $block->{'munged_start'} : $start_x;
 	    $finish_x = $finish_x < $block->{'munged_end'} ? $block->{'munged_end'} : $finish_x;
 
-	    if ($hit_name eq 'O43556.4') {warn "drawing from $start_x to $finish_x";}
-
+#	    if ($hit_name eq 'O43556.4') {warn "drawing from $start_x to $finish_x";}
 
 	    #draw left hand extensions
 	    if ( my $mis = $block->{'lh_ext'}) {
@@ -117,17 +114,18 @@ sub _init {
 	    }
 
 	    if ($last_end) {
+#		warn "1- drawing line from $x with width of $w" if ($hit_name eq 'Q4R8S0.1');
 		my $G = new Sanger::Graphics::Glyph::Line({
 		    'x'         => $x,
 		    'y'         => $H + $h/2,
 		    'h'         => 1,
-		    'width'     => $w,#-10/$pix_per_bp,
+		    'width'     => $w,
 		    'colour'    =>'black',
 		    'absolutey' => 1,});
 		#add a red attribute if there is a part of the hit missing
 		if (my $mismatch = $block->{'hit_mismatch'}) {
 		    $G->{'dotted'} = 1;
-		    $G->{'colour'} = 'red';
+		    $G->{'colour'} = $mismatch > 0 ? 'red' : 'blue';
 		    $G->{'title'} = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
 		}
 		$self->push($G);				
@@ -146,6 +144,8 @@ sub _init {
 		'title'        => $hit_name,
 		'href'         => '',
 	    });	
+
+#	    warn "-drawing hit box from ",$block->{'munged_start'},"with width of $width";
 
 	    #second and third elements of $block define whether there is a mismatch between exon and hit boundries
 	    #(need some logic to add meaningfull terms to zmenu)
@@ -183,7 +183,7 @@ sub _init {
 	    'absolutex' => 1,
 	    'absolutewidth' => 1,
 	    'ptsize'    => $fontsize,
-	    'halign     '=> 'right',
+	    'halign'    => 'right',
 	});
 	$self->push($tglyph);
 
@@ -207,7 +207,6 @@ sub _init {
 sub colours {
     my $self = shift;
     my $Config = $self->{'config'};
-    #  warn Dumper($Config->get('TSE_transcript','colours')); #
     return $Config->get('TSE_transcript','colours');
 }
 
