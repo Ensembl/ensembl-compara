@@ -5,6 +5,7 @@ use Data::Dumper;
 $Data::Dumper::Indent = 3;
 use EnsEMBL::Web::File::Text;
 use Exporter;
+use CGI qw(escape);
 use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Root Exporter);
@@ -77,20 +78,6 @@ sub site_name {
   my $self = shift;
   our $sitename = $SiteDefs::ENSEMBL_SITETYPE eq 'EnsEMBL' ? 'Ensembl' : $SiteDefs::ENSEMBL_SITETYPE;
   return $sitename;
-}
-
-sub pretty_date {
-### Converts a MySQL datestamp into something human-readable
-  my ($self, $datetime) = @_;
-  my ($date, $time) = split(' ', $datetime);
-  my ($year, $mon, $day) = split('-', $date);
-  my ($hour, $min, $sec) = split(':', $date);
-
-  my @months = ('', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
-                'September', 'October', 'November', 'December');
-
-  $day =~ s/^0//;
-  return $day.' '.$months[$mon].' '.$year;
 }
 
 sub _matches {

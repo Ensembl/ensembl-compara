@@ -87,6 +87,20 @@ sub neat_sr_name {
   return "$neat_type $name"; 
 }
 
+sub pretty_date {
+### Converts a MySQL datestamp into something human-readable
+  my ($self, $datetime) = @_;
+  my ($date, $time) = split(' ', $datetime);
+  my ($year, $mon, $day) = split('-', $date);
+  my ($hour, $min, $sec) = split(':', $date);
+
+  my @months = ('', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
+                'September', 'October', 'November', 'December');
+
+  $day =~ s/^0//;
+  return $day.' '.$months[$mon].' '.$year;
+}
+
 sub thousandify {
 ### Retuns comma separated version of number...
   my( $self, $value ) = @_;
