@@ -1,8 +1,7 @@
 package EnsEMBL::Web::Document::HTML::WhatsNew;
 
-### This module outputs two alternative tabbed panels for the Ensembl homepage
-### 1) the "About Ensembl" blurb
-### 2) A selection of news headlines, based on the user's settings or a default list
+### This module outputs a selection of news headlines for the home page, 
+### based on the user's settings or a default list
 
 use strict;
 use warnings;
