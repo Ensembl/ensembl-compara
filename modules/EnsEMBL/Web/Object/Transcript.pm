@@ -24,21 +24,23 @@ sub counts {
 }
 
 sub count_supporting_evidence {
-	my $self = shift;
-	my $trans = $self->Obj;
-	my $evi_count = 0;
-	my %c;
-	foreach my $evi (@{$trans->get_all_supporting_features}) {
-		my $hit_name = $evi->hseqname;
-		$c{$hit_name}++;
+    my $self = shift;
+    my $trans = $self->Obj;
+    my $evi_count = 0;
+    my %c;
+    foreach my $evi (@{$trans->get_all_supporting_features}) {
+	my $hit_name = $evi->hseqname;
+	$c{$hit_name}++;
+    }
+    #only count transcript_supporting_features for vega database genes
+    return scalar(keys(%c)) if ($self->db_type eq 'Vega');
+    foreach my $exon (@{$trans->get_all_Exons()}) {
+	foreach my $evi (@{$exon->get_all_supporting_features}) {
+	    my $hit_name = $evi->hseqname;
+	    $c{$hit_name}++;
 	}
-	foreach my $exon (@{$trans->get_all_Exons()}) {
-		foreach my $evi (@{$exon->get_all_supporting_features}) {
-			my $hit_name = $evi->hseqname;
-			$c{$hit_name}++;
-		}
-	}
-	return scalar(keys(%c));
+    }
+    return scalar(keys(%c));
 }
 
 
