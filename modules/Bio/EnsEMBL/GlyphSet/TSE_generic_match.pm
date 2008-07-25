@@ -7,7 +7,7 @@ $Data::Dumper::Maxdepth = 3;
 
 sub init_label {
     my ($self) = @_;
-    $self->init_label_text();#'Transcript evidence' );
+    $self->init_label_text();
 }
 
 sub _init {
@@ -19,58 +19,40 @@ sub _init {
     my $pix_per_bp = $Config->transform->{'scalex'};
     my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
     my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-#    warn Dumper($Config->texthelper);
 	
     my $length      = $Config->container_width(); 
     my $all_matches = $Config->{'transcript'}{'transcript_evidence'};
     my $strand      = $Config->{'transcript'}->{'transcript'}->strand;
 
     my( $font_w_bp, $font_h_bp);
-    
     my $legend_priority = 4;
-
     my @draw_end_lines;
-
-    #go through each hit (transcript_supporting_feature)
     my $H          = 0;
 
+    #go through each parsed transcript_supporting_feature
     foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
 	my $hit_name = $hit_details->{'hit_name'};
 	my $start_x  = 1000000;
 	my $finish_x = 0;
-	my $last_end = 0; #true/false (prevents drawing of line from first exon
-	my $last_end_x = 0; #position of end of last box - needed to draw
-
+	my $last_end = 0; #true/false (prevents drawing of line from first exon)
+	my $last_end_x = 0; #position of end of last box - needed to draw line
+	my ($lh_ext,$rh_ext) = (0,0); #booleans for drawing of extensions to lh or rh side of image
+	my $last_mismatch = 0; #will be set to the label for the amount of mismatch, but also defines whether the line is drawn
+	#used for legend
 	$Config->{'TSE_legend'}{'hit_feature'}{'found'}++;
 	$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
 	$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
 
-	my $align_url =  $self->_url({
-	    'type'     => 'Transcript',
-	    'action'   => 'SupportingEvidenceAlignment',
-	    't'        =>  $Config->{'transcript'}->{'transcript'}->stable_id,
-	    'sequence' => $hit_name,
-	});
-
-	my $last_mismatch = 0;
-	my ($lh_ext,$rh_ext) = (0,0);
-	my $last_end_x;
-	#draw hit locations
-#	warn Dumper($hit_details->{'data'}) if ($hit_name eq 'Q5T087');
-
       BLOCK:
 	foreach my $block (@{$hit_details->{'data'}}) {
-
 	    next BLOCK unless (defined(%$block));
 #	    warn Dumper($block) if ($hit_name eq 'NM_024848.1');
 
-	    #draw lhs extensions next time
+	    #draw lhs extensions from the next block (first block is always just lhs)
 	    if ( my $mis = $block->{'lh-ext'} ) {
 		$lh_ext = $mis;
-#		next BLOCK;
 	    }
-
-	    #draw rhs extensions
+	    #draw rhs extensions (only last block can be a rhs extension)
 	    if ( my $mis = $block->{'rh-ext'} ) {
 		if ($block->{'exon'}) {
 		    $last_end_x = $block->{'munged_end'};
@@ -96,59 +78,65 @@ sub _init {
 		$self->push($G);
 
 	    }
-	    
-#	    warn "**block start = ",$block->{'munged_start'}," end = ",$block->{'munged_end'} if ($hit_name eq 'NM_024848.1');
-
 	    next BLOCK unless (my $exon = $block->{'exon'});
-	    my $exon_stable_id = $exon->stable_id;
 
-	    #only draw blocks for those that aren't extra exons
+	    #for zmenu
+	    my $align_url =  $self->_url({
+		'type'     => 'Transcript',
+		'action'   => 'SupportingEvidenceAlignment',
+		't'        =>  $Config->{'transcript'}->{'transcript'}->stable_id,
+		'sequence' => $hit_name,
+		'exon'     => $exon->stable_id,
+	    });
+
+	    #allow a hit mismatch to be drawn next time for 'extra exons'
 	    my $hit = $block->{'extra_exon'};
 	    if ($hit) {
 		$last_mismatch = $hit->seq_region_end - $hit->seq_region_start;
 		next;
 	    }
-			
-	    my $width = $block->{'munged_end'}-$block->{'munged_start'} +1;
+
+	    #calculate positions of the 'exon' block
+	    my $width = $block->{'munged_end'} - $block->{'munged_start'};
 	    $start_x  = $start_x  > $block->{'munged_start'} ? $block->{'munged_start'} : $start_x;
-	    $finish_x = $finish_x < $block->{'munged_end'} ? $block->{'munged_end'} : $finish_x;
-	    
-	    my ($w,$x);
-	    if ($strand == 1) {
-		$x = $last_end + (1/$pix_per_bp);
-		$w = $block->{'munged_start'} - $last_end - (1/$pix_per_bp);
-	    }
-	    else {
-		$x = $last_end;
-		$w = $block->{'munged_start'} - $last_end;
-	    }
-	    
+	    $finish_x = $finish_x < $block->{'munged_end'}   ? $block->{'munged_end'}   : $finish_x;
+
+	    #draw a red I line for a lh extension
 	    if ($lh_ext) {
-			#draw a red line with an I end
-			my $G = new Sanger::Graphics::Glyph::Line({
-				'x'         => 0,
-				'y'         => $H + $h/2,
-				'h'         =>1,
-				'width'     => $start_x,
-				'colour'    => 'red',
-				'title'     => $lh_ext,
-				'absolutey' => 1,
-				'dotted'    => 1});				
-			$self->push($G);
-			
-			$G = new Sanger::Graphics::Glyph::Line({
-				'x'         => 0,
-				'y'         => $H,
-				'height'    => $h,
-				'width'     => 0,
-				'colour'    => 'red',
-				'absolutey' => 1,});				
-			$self->push($G);
-			$lh_ext = 0;
+		my $G = new Sanger::Graphics::Glyph::Line({
+		    'x'         => 0,
+		    'y'         => $H + $h/2,
+		    'h'         => 1,
+		    'width'     => $start_x,
+		    'colour'    => 'red',
+		    'title'     => $lh_ext,
+		    'absolutey' => 1,
+		    'dotted'    => 1});				
+		$self->push($G);
+		
+		$G = new Sanger::Graphics::Glyph::Line({
+		    'x'         => 0,
+		    'y'         => $H,
+		    'height'    => $h,
+		    'width'     => 0,
+		    'colour'    => 'red',
+		    'absolutey' => 1,});				
+		$self->push($G);
+		$lh_ext = 0;
 	    }
-				
+
+	    #draw a line back to the last exon end
 	    if ($last_end) {
-#		warn "1- drawing line from $x with width of $w";# if ($hit_name eq 'NM_024848.1');
+		my ($w,$x);
+		if ($strand == 1) {
+		    $x = $last_end + (1/$pix_per_bp);
+		    $w = $block->{'munged_start'} - $last_end - (1/$pix_per_bp);
+		}
+		else {
+		    $x = $last_end;
+		    $w = $block->{'munged_start'} - $last_end;
+		}
+#		warn "1- drawing line from $x with width of $w" if ($hit_name eq 'Q4R8S0.1');
 		my $G = new Sanger::Graphics::Glyph::Line({
 		    'x'          => $x,
 		    'y'         => $H + $h/2,
@@ -162,7 +150,7 @@ sub _init {
 		if ( $block->{'hit_mismatch'} || $last_mismatch) {
 		    $mismatch = $last_mismatch ? $last_mismatch : $block->{'hit_mismatch'};
 		    $G->{'dotted'} = 1;
-		    $G->{'colour'} = 'red';
+		    $G->{'colour'} = $mismatch > 0 ? 'red' : 'blue';
 		    $G->{'title'}  = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
 		}
 		$self->push($G);				
@@ -170,7 +158,7 @@ sub _init {
 
 	    $last_mismatch = $last_mismatch ? 0 : $last_mismatch;
 	    $last_end = $block->{'munged_end'};
-	    
+
 	    #draw the actual hit
 	    my $G = new Sanger::Graphics::Glyph::Rect({
 		'x'         => $block->{'munged_start'} ,
@@ -186,10 +174,11 @@ sub _init {
 	    #save location of edge of box in case we need to draw a line to the end of it later
 	    $last_end_x = $block->{'munged_start'}+ $width;
 	    
-#	    warn " 2 - drawing box from ",$block->{'munged_start'}," with width of $width";#  if ($hit_name eq 'NM_024848.1');;
+#	    warn " 2 - drawing box from ",$block->{'munged_start'}," with width of $width"  if ($hit_name eq 'NM_024848.1');
 
-	    #second and third elements of $block define whether there is a mismatch between exon and hit boundries
-	    #(need some logic to add meaningfull terms to zmenu)
+	    #if there is a mismatch between exon and hit boundries then add a label and also 
+	    #note the position for drawing a red / blue line later
+	    #- need some logic to add meaningfull terms to zmenu depending on strand
 	    if (my $gap = $block->{'left_end_mismatch'}) {
 		my $c = $gap > 0 ? 'red' : 'blue';
 		push @draw_end_lines, [$block->{'munged_start'},$H,$c];
@@ -206,10 +195,10 @@ sub _init {
 	    $self->push( $G );
 	}
 
+	#label the hit (alignment needs fixing)
 	my @res = $self->get_text_width(0, "$hit_name", '', 'font'=>$fontname, 'ptsize'=>$fontsize);
 	my $W = ($res[2])/$pix_per_bp;
-	($font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);
-	
+	($font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);	
 	my $tglyph = new Sanger::Graphics::Glyph::Text({
 	    'x'         => -$res[2],
 	    'y'         => $H,
@@ -223,10 +212,9 @@ sub _init {
 	    'absolutex' => 1,
 	    'absolutewidth' => 1,
 	    'ptsize'    => $fontsize,
-	    'halign     '=> 'right',
+	    'halign'    => 'right',
 	});
 	$self->push($tglyph);
-
 	$H += $font_h_bp + 4;
     }
 
@@ -249,4 +237,5 @@ sub colours {
     my $Config = $self->{'config'};
     return $Config->get('TSE_transcript','colours');
 }
+
 1;
