@@ -77,10 +77,10 @@ sub render {
       my @species = $item->species; 
       my (@sp_ids, $sp_id, $sp_name, $sp_count);
       my $news_url = '';
-      if ($#species == $#all_species) {
+      if (!@species) {
         $sp_name = 'all species';
       }
-      elsif ($#species > 5) {
+      elsif (@species > 5) {
         $sp_name = 'multiple species';
       }
       else {
