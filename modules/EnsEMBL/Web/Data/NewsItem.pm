@@ -46,7 +46,7 @@ sub fetch_news_items {
   my ($class, $criteria, $attr) = @_;
 
   my $where = '';
-  my @args;
+  my @args = ();
   
   foreach my $column ($class->columns) {
     next unless defined $criteria->{$column};
@@ -62,10 +62,12 @@ sub fetch_news_items {
 
   if (exists $criteria->{'species'}) {
     my $sp = $criteria->{'species'};
-    if (ref($sp) eq 'ARRAY' && @$sp) { 
-      my $string = join(' OR ', map { $_ ? 'i.species_id = ?' : 'i.species_id IS NULL' } @$sp);
-      $where .= " AND ($string) ";
-      push @args, grep { $_ } @$sp;
+    if (ref($sp) eq 'ARRAY') { 
+      if (@$sp) {
+        my $string = join(' OR ', map { $_ ? 'i.species_id = ?' : 'i.species_id IS NULL' } @$sp);
+        $where .= " AND ($string) ";
+        push @args, grep { $_ } @$sp;
+      }
     } elsif ($sp) {
       $where .= ' AND i.species_id = ? ';
       push @args, $sp;
