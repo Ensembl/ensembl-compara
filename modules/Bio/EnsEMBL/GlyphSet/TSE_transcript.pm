@@ -40,19 +40,11 @@ sub _init {
 
     my $tags;
 
-
-#    warn "coding_start = $coding_start";
-#    warn "coding_end = $coding_end";
-
     foreach my $obj (@introns_and_exons) {
 	#if we're working with an exon then draw a box
 	if ( $obj->[2] ) {
-
 	    my $exon_start = $obj->[0];
 	    my $exon_end   = $obj->[1];
-
-	    warn " exon_start = $exon_start";
-	    warn " exon_end = $exon_end";
 
 	    #set the exon boundries to the image boundries in case anything odd has happened
 	    $exon_start    = 1 if $exon_start < 1 ;
@@ -63,25 +55,25 @@ sub _init {
 		'action' => 'Evidence',
 		't'      => $tsi,
 	    });
-#	    warn "me too ",Dumper($t_url);
 
 	    ##the following is very verbose and will be rewritten, but it does do the job!
 	    my $col1 = $Config->get('TSE_transcript','col');
 	    my $col2 = $Config->get('TSE_transcript','col2');
 	    my ($G,$tag);
+
 	    #draw and tag completely non-coding exons
 	    if ( ($exon_end < $coding_start) || ($exon_start > $coding_end) ) {
 		$G = new Sanger::Graphics::Glyph::Rect({
 		    'x'         => $exon_start ,
 		    'y'         => 0.5*$h,
-		    'width'     => $exon_end-$exon_start +1,
+		    'width'     => $exon_end - $exon_start,
 		    'height'    => $h,
 		    'bordercolour' => $colour,
 		    'absolutey' => 1,
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$exon_end+1]}:@{[$exon_start]}";
+		$tag = "@{[$exon_end]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col1];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
@@ -92,14 +84,15 @@ sub _init {
 		$G = new Sanger::Graphics::Glyph::Rect({
 		    'x'         => $exon_start,
 		    'y'         => 0,
-		    'width'     => $exon_end - $exon_start + 1,
+		    'width'     => $exon_end - $exon_start,
 		    'height'    => 2*$h,
 		    'colour'    => $colour,
 		    'absolutey' => 1,
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$exon_end+1]}:@{[$exon_start]}";
+#		warn "drawing exon_box from $exon_start to $exon_end";
+		$tag = "@{[$exon_end]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col2];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
@@ -112,14 +105,14 @@ sub _init {
 		$G = new Sanger::Graphics::Glyph::Rect({
 		    'x'         => $exon_start,
 		    'y'         => 0.5*$h,
-		    'width'     => $coding_start-$exon_start +1,
+		    'width'     => $coding_start-$exon_start,
 		    'height'    => $h,
 		    'bordercolour' => $colour,
 		    'absolutey' => 1,
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$coding_start+1]}:@{[$exon_start]}";
+		$tag = "@{[$coding_start]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col1];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
@@ -131,14 +124,14 @@ sub _init {
 		$G = new Sanger::Graphics::Glyph::Rect({
 		    'x'         => $coding_start,
 		    'y'         => 0,
-		    'width'     => $width + 1,
+		    'width'     => $width,
 		    'height'    => 2*$h,
 		    'colour'    => $colour,
 		    'absolutey' => 1,
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$y_pos+1]}:@{[$coding_start]}";
+		$tag = "@{[$y_pos]}:@{[$coding_start]}";
 		push @{$tags}, ["X:$tag",$col2];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
@@ -149,14 +142,14 @@ sub _init {
 		    $G = new Sanger::Graphics::Glyph::Rect({
 			'x'         => $coding_end,
 			'y'         => 0.5*$h,
-			'width'     => $exon_end-$coding_end+1,
+			'width'     => $exon_end-$coding_end,
 			'height'    => $h,
 			'bordercolour'    => $colour,
 			'absolutey' => 1,
 			'title'     => $obj->[2]->stable_id,
 			'href'      => $t_url,
 		    });
-		    $tag = "@{[$exon_end+1]}:@{[$coding_end]}";
+		    $tag = "@{[$exon_end]}:@{[$coding_end]}";
 		    push @{$tags}, ["X:$tag",$col1];
 		    $self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
 		    $self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
@@ -171,14 +164,14 @@ sub _init {
 		$G = new Sanger::Graphics::Glyph::Rect({
 		    'x'         => $exon_start,
 		    'y'         => 0,
-		    'width'     => $coding_end - $exon_start + 1,
+		    'width'     => $coding_end - $exon_start,
 		    'height'    => 2*$h,
 		    'colour'    => $colour,
 		    'absolutey' => 1,
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$coding_end+1]}:@{[$exon_start]}";
+		$tag = "@{[$coding_end]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col2];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
@@ -188,14 +181,14 @@ sub _init {
 		$G = new Sanger::Graphics::Glyph::Rect({
 		    'x'         => $coding_end,
 		    'y'         => 0.5*$h,
-		    'width'     => $exon_end-$coding_end +1,
+		    'width'     => $exon_end-$coding_end,
 		    'height'    => $h,
 		    'bordercolour' => $colour,
 		    'absolutey' => 1,
 		    'title'     => $obj->[2]->stable_id,
 		    'href'      => $t_url,
 		});
-		$tag = "@{[$exon_end+1]}:@{[$coding_end]}";
+		$tag = "@{[$exon_end]}:@{[$coding_end]}";
 		push @{$tags}, ["X:$tag",$col1];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
 		$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
@@ -256,56 +249,13 @@ sub colours {
 sub colour {
     my ($self,  $transcript, $colours, %highlights) = @_;
     my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status } || [];
-    #  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
     if(exists $highlights{lc($transcript->stable_id)}) {
 	return (@$genecol, $colours->{'hi'});
     } elsif(exists $highlights{lc($transcript->external_name)}) {
 	return (@$genecol, $colours->{'hi'});
     }
-    # warn @$genecol;
     return (@$genecol, undef);
     
 }
-
-sub href {
-    my ($self, $transcript, $exon, %highlights ) = @_;
-    
-    my $tid = $transcript->stable_id();
-    
-    return "#$tid" ;
-}
-
-sub zmenu {
-    my ($self, $transcript, $exon, %highlights) = @_;
-    my $eid = $exon->stable_id();
-    my $tid = $transcript->stable_id();
-    my $pid = $transcript->translation ? $transcript->translation->stable_id() : '';
-    #my $gid = $gene->stable_id();
-    my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-    my $zmenu = {
-	'caption'                       => $self->species_defs->AUTHORITY." Gene",
-	"00:$id"			=> "",
-	#	"01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
-        "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
-        "04:Exon:$eid"    	        => "",
-        '11:Export cDNA'                => "/@{[$self->{container}{_config_file_name_}]}/exportview?options=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
-        
-    };
-    
-    if($pid) {
-	$zmenu->{"03:Peptide:$pid"}=
-	    qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid;db=core);
-	$zmenu->{'12:Export Peptide'}=
-	    qq(/@{[$self->{container}{_config_file_name_}]}/exportview?options=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid);	
-    }
-    return $zmenu;
-}
-
-sub text_label {
-    warn "drawing label";
-    return 'name';
-}
-
-sub error_track_name { return $_[0]->species_defs->AUTHORITY.' transcripts'; }
 
 1;
