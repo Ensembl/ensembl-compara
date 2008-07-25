@@ -186,9 +186,9 @@ sub _render_species_dropdown {
       $html .= $description->{ $species->{'name'} }[1] if $description->{ $species->{'name'} }[1];
       $html .= '</option>'."\n";
     }
-    if( $optgroup == 1 ) {
+    if( $optgroup ) {
       $html .= '</optgroup>'."\n";
-      $optgroup == 0;
+      $optgroup = 0;
     }
   }
 
