@@ -26,7 +26,7 @@ sub _init {
 	my ($extra,$e,$s) = split ':', $tag->[0];
 	my $col = $tag->[1];
 	my $tglyph = new Sanger::Graphics::Glyph::Space({
-	    'x' => $s-1,
+	    'x' => $s,
 	    'y' => 0,
 	    'height' => 0,
 	    'width'  => $e-$s,
