@@ -48,6 +48,9 @@ sub _content {
     my $object  = $self->object;
     
     $object->param('image_width',800); ### remove this when user config is possible
+
+    #slight differences for vega objects...
+    my $o_type = lc($object->db_type);
     
     #user defined width in pixels
     my $image_width  = $object->param( 'image_width' );
@@ -78,10 +81,12 @@ sub _content {
     my $fake_length      = $object->__data->{'slices'}{'supporting_evidence_transcript'}[3];
     
     $config->container_width( $fake_length ); #sets width of image
-    $config->{'id'}        = $object->stable_id; #used for label
-    $config->{'subslices'} = $sub_slices; #used to draw lines for exons
-    $config->{'extent'}    = $extent; #used for padding between exons and at the end of the transcript
-    $config->{'fakeslice'} = 1; #not sure what this is used for! ??
+    $config->{'id'}          = $object->stable_id; #used for label
+    $config->{'subslices'}   = $sub_slices; #used to draw lines for exons
+    $config->{'extent'}      = $extent; #used for padding between exons and at the end of the transcript
+    $config->{'fakeslice'}   = 1; #not sure what this is used for! ??
+    $config->{'object_type'} = $o_type; #used for drawing the legend for vega / E! transcripts
+
     
     #add info on normalised exons (ie flattened introns) to config - this is no longer used by the transcript
     #drawing code so no longer needed to be added to the config ?
@@ -128,16 +133,13 @@ sub _content {
 		my $start = $ens_exons->[$e_counter-1]->[1];
 		my $end = $subslice_end;
 		push @{$intron_exon_slices}, [$exons[$e_counter-1]->[1], $subslice_end];
-#				warn "4. start = $start, end = $end";
 		next SUBSLICE;
 	    }
 	}
 	#push @{$intron_exon_slices}, [$subslice_start, $subslice_end]; #uncomment to add last intron to display
     }
     $config->{'transcript'}{'introns_and_exons'} = $intron_exon_slices;
-    
-#	warn Dumper($intron_exon_slices);
-    
+
     #add info normalised coding region
     my $raw_coding_start = defined($transcript->coding_region_start) ? $transcript->coding_region_start-$offset : $transcript->start-$offset;
     my $raw_coding_end   = defined($transcript->coding_region_end)   ? $transcript->coding_region_end-$offset   : $transcript->end-$offset;
@@ -192,8 +194,8 @@ sub _content {
 	my $hit_name = $evi->hseqname;
 	$t_ids{$hit_name}++;
 
-	#don't store any transcript evidence for a vega gene
-	next if ($object->get_db eq 'vega');
+	#don't store any transcript_supporting_features for a vega gene
+	next if ($o_type eq 'vega');
 	$t_evidence->{$hit_name}{'hit_name'} = $hit_name; 
 	    
 	#split evidence into ungapped features, map onto exons and munge (ie account for gaps)
@@ -249,6 +251,7 @@ sub _content {
 	    }
 	    
 	    $last_end = $feature->hend;
+
 	    #reverse the exon order if on the reverse strand
 	    if ($transcript->strand == 1) {
 		push @{$t_evidence->{$hit_name}{'data'}},$munged_coords->[0];
@@ -258,7 +261,9 @@ sub _content {
 	    }
 	}
     }
-    
+
+#    warn Dumper($t_evidence->{'Q08ET0.1'}{'data'});
+
     #calculate total length of the hit (used for sorting the display)
     while ( my ($hit_name, $hit_details) = each (%{$t_evidence})  ) {
 	my $tot_length;
@@ -283,7 +288,7 @@ sub _content {
 	    my $hit_seq_region_start = $evi->seq_region_start;
 	    my $hit_seq_region_end = $evi->seq_region_end;
 
-	    if ($object->get_db eq 'vega') {
+	    if ($o_type eq 'vega') {
 		next EVI unless ($t_ids{$hit_name}); #only proceed for vega if this hit name has been used as transcript evidence
 	    }
 	    else {
@@ -295,6 +300,7 @@ sub _content {
 	    $evidence_start_stops{$hit_name}{'comb_start'} = $hit_seq_region_start if ($hit_seq_region_start < $evidence_start_stops{$hit_name}{'comb_start'});
 	    $evidence_start_stops{$hit_name}{'comb_end'} = $hit_seq_region_end unless exists($evidence_start_stops{$hit_name}{'comb_end'});
 	    $evidence_start_stops{$hit_name}{'comb_end'} = $hit_seq_region_end if ($hit_seq_region_end > $evidence_start_stops{$hit_name}{'comb_end'});
+
 	    #ignore duplicate entries
 	    if ( defined(@{$evidence_start_stops{$hit_name}{'starts_and_ends'}})
 		     && grep {$_ eq "$hit_seq_region_start:$hit_seq_region_end"} @{$evidence_start_stops{$hit_name}{'starts_and_ends'}}) {
@@ -322,6 +328,10 @@ sub _content {
 		    $hit_mismatch = 0;
 		}
 	    }
+
+	    
+	    $hit_mismatch = 0 if ($o_type eq 'vega' && $hit_mismatch < 0);
+
 	    #note position of end of the hit for next iteration
 	    $evidence_start_stops{$hit_name}{'last_end'} = $evi->hend;
 	    
@@ -344,15 +354,41 @@ sub _content {
 	}
     }
 
-    #add tags if the merged hit extends beyond the end of the transcript
-    while ( my ($hit_name, $coords) = each (%evidence_start_stops)) {
-	if ( $e_evidence->{$hit_name}{'data'}) {
-	    if ($coords->{'comb_start'} < $transcript->start) {
-		my $diff =  $transcript->start - $coords->{'comb_start'};
-		$e_evidence->{$hit_name}{'data'}[0]{'lh_ext'}  = $transcript->start - $coords->{'comb_start'};
+    #remove any non-complete matching evidence where it overlaps completely matching evidence
+    while ( my ($hit, $det) = each (%{$e_evidence})) {
+      THIS_MATCH:
+	foreach my $this_match (@{$det->{'data'}}) {
+	    next THIS_MATCH unless $this_match;
+	    next THIS_MATCH unless ($this_match->{'left_end_mismatch'} || $this_match->{'right_end_mismatch'});
+	    my $this_start = $this_match->{'hit'}->seq_region_start;
+	    my $this_end   = $this_match->{'hit'}->seq_region_end;
+	    foreach my $check_match (@{$det->{'data'}}) {
+		next unless $check_match;
+		my $checked_start = $check_match->{'hit'}->seq_region_start;
+		my $checked_end   = $check_match->{'hit'}->seq_region_end;
+		next if ( ($checked_start == $this_start) && ($checked_end == $this_end) );
+		if (   ( ($checked_start == $this_start) && ($checked_end   != $this_end) )
+                    || ( ($checked_end   == $this_end)   && ($checked_start != $this_start) )
+                    || ( ($this_end > $checked_end) && ($this_start < $checked_start) )
+                    || ( ($this_end < $checked_end) && ($this_start > $checked_start) ) ) {
+			$this_match = undef;
+			next THIS_MATCH;
+		    }
 	    }
-	    if ($coords->{'comb_end'} > $transcript->end) {
-		$e_evidence->{$hit_name}{'data'}[-1]{'rh_ext'} = $coords->{'comb_end'} - $transcript->end;
+	}
+    }
+
+    #add tags if the merged hit extends beyond the end of the transcript (but not for Vega db genes)
+    if ($o_type ne 'vega') {
+	while ( my ($hit_name, $coords) = each (%evidence_start_stops)) {
+	    if ( $e_evidence->{$hit_name}{'data'}) {
+		if ($coords->{'comb_start'} < $transcript->start) {
+		    my $diff =  $transcript->start - $coords->{'comb_start'};
+		    $e_evidence->{$hit_name}{'data'}[0]{'lh_ext'}  = $transcript->start - $coords->{'comb_start'};
+		}
+		if ($coords->{'comb_end'} > $transcript->end) {
+		    $e_evidence->{$hit_name}{'data'}[-1]{'rh_ext'} = $coords->{'comb_end'} - $transcript->end;
+		}
 	    }
 	}
     }
@@ -366,8 +402,10 @@ sub _content {
 	}
 	$e_evidence->{$hit_name}{'hit_length'} = $tot_length;
     }
-    $config->{'transcript'}{'evidence'} = $e_evidence;	
-    
+    my $evidence_type = ($o_type eq 'vega') ? 'transcript_evidence' : 'evidence';
+
+    $config->{'transcript'}{$evidence_type} = $e_evidence;	
+
     #draw and render image
     my $image = $object->new_image(
 	$transcript_slice,$config,
@@ -405,7 +443,7 @@ sub split_evidence_and_munge_gaps {
     my $hit_seq_region_start = $hit->start;
     my $hit_seq_region_end   = $hit->end;
     my $hit_name = $hit->hseqname;
-#    if ($hit->hseqname eq 'NP_001034267.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
+#    if ($hit->hseqname eq 'Q08ET0.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
     
     my $coords;
     my $last_end;
@@ -416,13 +454,12 @@ sub split_evidence_and_munge_gaps {
 	my $estart = $exon->start;
 	my $eend   = $exon->end;
 	my $ename  = $exon->stable_id;
-#	if ($hit->hseqname eq 'BC059409.1') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
+#	if ($hit->hseqname eq 'Q08ET0.1') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
 	my @coord;
 
 	#catch any extra 'exons' that are in a parsed hit
 	my $extra_exon = 0;
 	if ( $last_end && ($last_end < $hit_seq_region_end) && ($estart > $hit_seq_region_end) ) {
-#	    if ($hit->hseqname eq 'AB074480.1') { warn "   **extra";}
 	    $extra_exon = $hit;
 	    $last_end = $eend;
 	}
@@ -457,32 +494,40 @@ sub split_evidence_and_munge_gaps {
 	    $right_end_mismatch = $eend   == $hit_seq_region_end   ? 0 : $hit_seq_region_end - $eend;
 	}	
 	
+	if ($hit->hseqname eq 'Q08ET0.1') { warn "   comparing against $b_start to $b_end";}
+
 	#map start and end positions of the hit from genomic coordinates to transcript genomic coordinates
         #account for off-by-three errors by setting boundry of hit to exon boundry
 	my $start;
 	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
-	    $start = ($b_start - $hit_seq_region_start)   > 4  ? $b_start 
-		     : ($b_start - $hit_seq_region_start) > -4 ? $b_start
+	    $start =   ($b_start - $hit_seq_region_start) > 4 ? $b_start
+		     : ($hit_seq_region_start - $b_start) < 4 ? $b_start
                      : $hit_seq_region_start;
-#	    warn "---$b_start - $hit_seq_region_start : matching against $start";
 	}
 	else {
 	    $start = $hit_seq_region_start >= $estart ? $hit_seq_region_start : $estart;
 	}
+#	if ($hit->hseqname eq 'Q08ET0.1') { warn "   start = $start";}
 	$start -= $offset;
 	my $munged_start = $start + $object->munge_gaps( 'supporting_evidence_transcript', $start );
 	my $end;
 	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
-	    $end =  ($b_end - $hit_seq_region_end )   < 4  ? $b_end
-                    : ($b_end - $hit_seq_region_end ) > -4 ? $b_end
+	    $end =    ($b_end - $hit_seq_region_end ) < 4 ? $b_end
+                    : ($hit_seq_region_end - $b_end ) > 4 ? $b_end
                     : $hit_seq_region_end;
-#	    warn "---$hit_seq_region_end - $b_end : matching against $end";
 	}
 	else {
 	    $end = $hit_seq_region_end <= $eend ? $hit_seq_region_end : $eend;
 	}
+#	if ($hit->hseqname eq 'Q08ET0.1') { warn "   end = $end";}
 	$end -= $offset;
 	my $munged_end = $end + $object->munge_gaps( 'supporting_evidence_transcript', $end );
+
+	#don't even attempt to show any end mismatches for vega db genes!
+	if (lc($object->db_type) eq 'vega') {
+	    $left_end_mismatch = 0;
+	    $right_end_mismatch = 0;
+	}
 
 	#store everything so far
 	my $details = {
