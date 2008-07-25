@@ -25,6 +25,8 @@ sub _init {
     my $Config        = $self->{'config'};
     my $im_width      = $Config->image_width();
 
+    my $o_type = $Config->{'object_type'};
+
     my @colours;
     my ($x,$y) = (0,0);
     my( $fontname, $fontsize ) = $self->get_font_details( 'legend' );
@@ -95,7 +97,7 @@ sub _init {
 		'ptsize'        => $fontsize,
 		'font'          => $fontname,
 		'colour'        => 'black',
-		'text'          => 'feature supporting intron - exon structure',
+		'text'          => 'evidence supporting intron - exon structure',
 		'absolutey'     => 1,
 		'absolutex'     => 1,
 		'absolutewidth' =>1,
@@ -166,7 +168,7 @@ sub _init {
     $self->push( $G );
     $G = new Sanger::Graphics::Glyph::Text({
 	'x'             => $start_x + $BOX_WIDTH + 4,
-	'y'             => $y * $th + 4,
+	'y'             => $y * $th + 2,
 	'height'        => $th,
 	'valign'        => 'center',
 	'halign'        => 'left',
@@ -179,76 +181,185 @@ sub _init {
 	'absolutewidth' => 1
     });
     $self->push( $G );
-    $x++;
-    
-    #draw two exons and a dotted red intron to identify hit mismatch
-    $start_x = $im_width * $x/$NO_OF_COLUMNS;
-    $colour = 'black';
-    my $G = new Sanger::Graphics::Glyph::Rect({
-	'x'             => $start_x,
-	'y'             => $y * ( $th + 3 ) - 2,
-	'width'         => $BOX_WIDTH,
-	'height'        => $h,
-	'bordercolour'  => $colour,
-	'absolutey'     => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,
-    });
-    $self->push($G);
-    $G = new Sanger::Graphics::Glyph::Line({
-	'x'             => $start_x + $BOX_WIDTH + 1,
-	'y'             => $y * ( $th + 3 ) + 2,
-	'h'             => 1,
-	'width'         => $BOX_WIDTH - 1,
-	'colour'        => 'red',
-	'absolutey'     => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,
-	'dotted'        => 1,
-    });
-    $self->push($G);
-    $G = new Sanger::Graphics::Glyph::Rect({
-	'x'             => $start_x + 2*$BOX_WIDTH,
-	'y'             => $y * ( $th + 3 ) - 2,
-	'width'         => $BOX_WIDTH,
-	'height'        => $h,
-	'bordercolour'  => $colour,
-	'absolutey'     => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,
-    });
-    $self->push($G);
-    $G = new Sanger::Graphics::Glyph::Text({
-	'x'             => $start_x + 3*$BOX_WIDTH + 4,
-	'y'             => $y * $th + 4,
-	'height'        => $th,
-	'valign'        => 'center',
-	'halign'        => 'left',
-	'ptsize'        => $fontsize,
-	'font'          => $fontname,
-	'colour'        => 'black',
-	'text'          => 'supporting feature not continuous over intron',
-	'absolutey'     => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,
-    });
-    $self->push($G);
+
+    if ($o_type ne 'vega') {
+	$x++;
+
+	#lines extending beyond the end of the hit
+	$start_x = $im_width * $x/$NO_OF_COLUMNS;
+	$G = new Sanger::Graphics::Glyph::Line({
+	    'x'         => $start_x,
+	    'y'         =>  $y * ( $th + 3 ) - 2,
+	    'height'    => $h,
+	    'width'     => 0,
+	    'colour'    => 'red',
+	    'absolutey' => 1,
+	    'absolutex'     => 1,
+	'absolutewidth' => 1,});				
+	$self->push($G);
 	
+	$G = new Sanger::Graphics::Glyph::Line({
+	    'x'         => $start_x,
+	    'y'         => $y * ( $th + 3 ) + 2,
+	    'h'         => 1,
+	    'width'     => 1.5*$BOX_WIDTH,
+	    'colour'    => 'red',
+	    'dotted'    => 1,
+	    'absolutey' => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,});				
+	$self->push($G);
+	
+	$G = new Sanger::Graphics::Glyph::Rect({
+	    'x'             => $start_x + 1.5*$BOX_WIDTH,
+	    'y'             => $y * ( $th + 3 ) - 2,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => 'black',
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+
+	$y += 0.8;
+
+	$G = new Sanger::Graphics::Glyph::Rect({
+	    'x'             => $start_x,
+	    'y'             => $y * ( $th + 3 ) - 2,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => 'black',
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	
+	$G = new Sanger::Graphics::Glyph::Line({
+	    'x'         => $start_x + $BOX_WIDTH,
+	    'y'         => $y * ( $th + 3 ) + 2,
+	    'h'         => 1,
+	    'width'     => 1.5*$BOX_WIDTH,
+	    'colour'    => 'red',
+	    'dotted'    => 1,
+	    'absolutey' => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,});				
+	$self->push($G);
+    
+	$G = new Sanger::Graphics::Glyph::Line({
+	    'x'         => $start_x + 2.5*$BOX_WIDTH,
+	    'y'         =>  $y * ( $th + 3 ) - 2,
+	    'height'    => $h,
+	    'width'     => 0,
+	    'colour'    => 'red',
+	    'absolutey' => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,});				
+	$self->push($G);
+	
+	$G = new Sanger::Graphics::Glyph::Text({
+	    'x'             => $start_x + 2.5*$BOX_WIDTH + 4,
+	    'y'             => $y * $th -2,
+	    'height'        => $th,
+	    'valign'        => 'center',
+	    'halign'        => 'left',
+	    'ptsize'        => $fontsize,
+	    'font'          => $fontname,
+	    'colour'        => 'black',
+	    'text'          => 'evidence extends beyond the end of the transcript',
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$y += 1.5;
+    }
+    else { $y++; }
+
+    $x=0;
+
+    #draw legends for exon/CDS & hit mismatch
+    my %dets = (	'red'  => 'part of evidence missing from transcript structure' );
+    unless ($o_type eq 'vega') {
+	$dets{'blue'} = 'part of evidence duplicated in transcript structure';
+    }
+
+    foreach my $c (sort { $b cmp $a} keys %dets) {
+	my $txt = $dets{$c};
+
+	#draw two exons and a dotted  intron to identify hit mismatches
+	$start_x = $im_width * $x/$NO_OF_COLUMNS;
+	my $G = new Sanger::Graphics::Glyph::Rect({
+	    'x'             => $start_x,
+	    'y'             => $y * ( $th + 3 ) - 2,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => 'black',
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$G = new Sanger::Graphics::Glyph::Line({
+	    'x'             => $start_x + $BOX_WIDTH + 1,
+	    'y'             => $y * ( $th + 3 ) + 2,
+	    'h'             => 1,
+	    'width'         => $BOX_WIDTH - 1,
+	    'colour'        => $c,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	    'dotted'        => 1,
+	});
+	$self->push($G);
+	$G = new Sanger::Graphics::Glyph::Rect({
+	    'x'             => $start_x + 2*$BOX_WIDTH,
+	    'y'             => $y * ( $th + 3 ) - 2,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => 'black',
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$G = new Sanger::Graphics::Glyph::Text({
+	    'x'             => $start_x + 3*$BOX_WIDTH + 4,
+	    'y'             => $y * $th + 8,
+	    'height'        => $th,
+	    'valign'        => 'center',
+	    'halign'        => 'left',
+	    'ptsize'        => $fontsize,
+	    'font'          => $fontname,
+	    'colour'        => 'black',
+	    'text'          => $txt,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	
+	$x++;
+    }
     #new line
     $y += 1.5;
     $x = 0;
-	
-    #draw legends for exon/CDS & hit mismatch
-    my %dets = (
-	'blue' => 'supporting feature start / ends within exon / CDS',
-	'red'  => 'supporting feature extends beyond exon / CDS',
-    );
     
-    while (my ($c, $txt) = each %dets) {
-	#foreach (my $i=0; $i< 2; $i++) {
-	
-	#my $txt = $i ? 'supporting feature start / ends within exon' : 'supporting feature extends beyond exon';
-	#my $c = $i ? 'blue' : 'red';
+    #draw legends for exon/CDS & hit mismatch (not for vega)
+    if ($o_type eq 'vega') {
+	%dets = ();
+    }
+    else {
+	%dets = (
+	    'blue' => 'evidence start / ends within exon / CDS',
+	    'red'  => 'evidence extends beyond exon / CDS',
+	);
+    }
+
+    foreach my $c (sort { $b cmp $a} keys %dets) {
+	my $txt = $dets{$c};
 	
 	#draw red/blue lines on the ends of boxes
 	$start_x = $im_width * $x/$NO_OF_COLUMNS;
@@ -329,7 +440,7 @@ sub _init {
 	
 	$G = new Sanger::Graphics::Glyph::Text({
 	    'x'             => $start_x + $BOX_WIDTH + 4,
-	    'y'             => $y * $th + 2,
+	    'y'             => $y * $th +10,
 	    'height'        => $th,
 	    'valign'        => 'center',
 	    'halign'        => 'left',
@@ -350,95 +461,7 @@ sub _init {
     $start_x = 0;
 
 
-    #lines extending beyond the end of the hit
 
-    $G = new Sanger::Graphics::Glyph::Line({
-	'x'         => $start_x,
-	'y'         =>  $y * ( $th + 3 ) - 2,
-	'height'    => $h,
-	'width'     => 0,
-	'colour'    => 'red',
-	'absolutey' => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,});				
-    $self->push($G);
-
-    $G = new Sanger::Graphics::Glyph::Line({
-	'x'         => $start_x,
-	'y'         => $y * ( $th + 3 ) + 2,
-	'h'         => 1,
-	'width'     => 1.5*$BOX_WIDTH,
-	'colour'    => 'red',
-	'dotted'    => 1,
-	'absolutey' => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,});				
-    $self->push($G);
-    
-    $G = new Sanger::Graphics::Glyph::Rect({
-	'x'             => $start_x + 1.5*$BOX_WIDTH,
-	'y'             => $y * ( $th + 3 ) - 2,
-	'width'         => $BOX_WIDTH,
-	'height'        => $h,
-	'bordercolour'  => $colour,
-	'absolutey'     => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,
-    });
-    $self->push($G);
-
-    $y += 0.8;
-    
-    $G = new Sanger::Graphics::Glyph::Rect({
-	'x'             => $start_x,
-	'y'             => $y * ( $th + 3 ) - 2,
-	'width'         => $BOX_WIDTH,
-	'height'        => $h,
-	'bordercolour'  => $colour,
-	'absolutey'     => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,
-    });
-    $self->push($G);
-    
-    $G = new Sanger::Graphics::Glyph::Line({
-	'x'         => $start_x + $BOX_WIDTH,
-	'y'         => $y * ( $th + 3 ) + 2,
-	'h'         => 1,
-	'width'     => 1.5*$BOX_WIDTH,
-	'colour'    => 'red',
-	'dotted'    => 1,
-	'absolutey' => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,});				
-    $self->push($G);
-    
-    $G = new Sanger::Graphics::Glyph::Line({
-	'x'         => $start_x + 2.5*$BOX_WIDTH,
-	'y'         =>  $y * ( $th + 3 ) - 2,
-	'height'    => $h,
-	'width'     => 0,
-	'colour'    => 'red',
-	'absolutey' => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,});				
-    $self->push($G);
-    
-    $G = new Sanger::Graphics::Glyph::Text({
-	'x'             => $start_x + 2.5*$BOX_WIDTH + 4,
-	'y'             => $y * $th + 7,
-	'height'        => $th,
-	'valign'        => 'center',
-	'halign'        => 'left',
-	'ptsize'        => $fontsize,
-	'font'          => $fontname,
-	'colour'        => 'black',
-	'text'          => 'supporting feature extends beyond the end of the transcript',
-	'absolutey'     => 1,
-	'absolutex'     => 1,
-	'absolutewidth' => 1,
-    });
-    $self->push($G);
 }
 
 1;
