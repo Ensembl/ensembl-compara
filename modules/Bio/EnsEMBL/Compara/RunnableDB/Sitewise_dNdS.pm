@@ -554,7 +554,7 @@ sub store_sitewise_dNdS
       my $stored_id = $sth->{'mysql_insertid'};
       if ($type !~ /default/) {
         foreach my $seq ($aln->each_seq) {
-          # next unless ($seq->display_id =~ /ENSP0/); # only store human
+          next unless ($seq->display_id =~ /ENSP0/ || $seq->display_id =~ /ENSMUSP0/); # only store human and mouse
           my $seq_location;
           eval { $seq_location = $seq->location_from_column($site);};
           if ($@) {
