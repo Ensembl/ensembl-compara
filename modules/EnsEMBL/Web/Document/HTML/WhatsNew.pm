@@ -34,7 +34,6 @@ sub render {
 
   my $html = qq(<div class="species-news">
 <h2>What's New in Release $release_id ($release_date)</h2>);
-
   ## get a random miniad
   my $miniad = EnsEMBL::Web::Data::MiniAd->fetch_random;
 
@@ -76,11 +75,10 @@ sub render {
       ## sort out species names
       my @species = $item->species; 
       my (@sp_ids, $sp_id, $sp_name, $sp_count);
-      my $news_url = '';
-      if (!@species) {
+      if (!scalar(@species)) {
         $sp_name = 'all species';
       }
-      elsif (@species > 5) {
+      elsif (scalar(@species) > 5) {
         $sp_name = 'multiple species';
       }
       else {
@@ -114,7 +112,6 @@ sub render {
     }
   }
   $html .= '</div>';
-
 
   ## Ensembl blog (ensembl.blogspot.com)
   $html .= qq(<h2>Latest Blog Entries</h2>
