@@ -7,6 +7,8 @@ use Class::Std;
 
 use base 'EnsEMBL::Web::Controller::Command::Account';
 
+use EnsEMBL::Web::Magic qw(modal_stuff);
+
 {
 
 sub BUILD {
@@ -22,7 +24,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Magic::stuff('Account', 'Password', $self, 'Popup');
+  modal_stuff 'Account', 'Password', $self, 'Popup';
 }
 
 }

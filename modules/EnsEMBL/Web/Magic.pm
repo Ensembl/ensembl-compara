@@ -179,12 +179,16 @@ sub stuff {
   my $action = shift;
   my $command = shift;
   my $doctype = shift;
+  my $modal_dialog = shift;
   my $webpage = EnsEMBL::Web::Document::WebPage->new( 
                   'objecttype' => $object_type, 
                   'doctype'    => $doctype,
                   'scriptname' => 'action',
                   'command'    => $command, 
   );
+  if( $modal_dialog ) {
+    $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  }
 # The whole problem handling code possibly needs re-factoring 
 # Especially the stuff that may end up cyclic! (History/UnMapped)
 # where ID's don't exist but we have a "gene" based display
@@ -244,6 +248,10 @@ sub stuff {
     $webpage->render;
     return "Completing action";
   }
+}
+
+sub modal_stuff {
+  return stuff( @_, 1 );
 }
 
 1;

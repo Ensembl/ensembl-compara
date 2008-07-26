@@ -8,6 +8,8 @@ use Class::Std;
 use EnsEMBL::Web::RegObj;
 use base 'EnsEMBL::Web::Controller::Command::Account';
 
+use EnsEMBL::Web::Magic qw(modal_stuff);
+
 {
 
 sub BUILD {
@@ -19,7 +21,7 @@ sub BUILD {
 }
 
 sub process {
-  EnsEMBL::Web::Magic::stuff('Account', 'Group', $self, 'Popup');
+  modal_stuff 'Account', 'Group', $self, 'Popup';
 }
 
 }
