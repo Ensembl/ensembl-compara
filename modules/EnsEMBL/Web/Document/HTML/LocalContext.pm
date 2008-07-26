@@ -40,19 +40,31 @@ sub counts {
   return $self->{counts};
 }
 
+sub render_modal {
+  my $self = shift;
+  my $t = $self->_content;
+     $t =~ s/id="local"/id="local_modal"/;
+  return $self->print( $t );
+}
+
 sub render {
   my $self = shift;
+  return $self->print( $self->_content );
+}
+
+sub _content {
+  my $self = shift;
   my $t = $self->tree;
-  return unless $t;
+  return '' unless $t;
   my $r = 0;
   my $previous_node;
   my $active = $self->active;
   my $active_node = $t->get_node( $active );
-  return unless $active_node;
+  return '' unless $active_node;
   my $active_l    = $active_node->left;
   my $active_r    = $active_node->right;
   my $counts = $self->counts;
-  $self->printf( q(
+  my $content = sprintf( q(
       <dl id="local">
         <dt>%s</dt>), $self->caption );
   my $pad = '';
@@ -61,9 +73,9 @@ sub render {
     $r = $node->right if $node->right > $r;
     if( $previous_node && $node->left > $previous_node->right ) {
       foreach(1..($node->left - $previous_node->right-1)) {
-        $self->print( "
+        $content .= "
 $pad      </dl>
-$pad    </dd>" );
+$pad    </dd>";
         substr($pad,0,4)='';
       }
     }
@@ -77,10 +89,10 @@ $pad    </dd>" );
       $name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
     }
     if( $node->is_leaf ) {
-      $self->printf( qq(
+      $content .= sprintf( qq(
 $pad        <dd%s>%s</dd>), $node->key eq $active ? ' class="active"' :'', $name );
     } else {
-      $self->printf( qq(
+      $content .= sprintf( qq(
 $pad        <dd class="%s">%s
 $pad          <dl>), $node->left <= $active_l && $node->right >= $active_r ? 'open' : 'open', $name );
       $pad .= '    ';
@@ -88,13 +100,14 @@ $pad          <dl>), $node->left <= $active_l && $node->right >= $active_r ? 'op
     $previous_node = $node;
   }
   foreach(($previous_node->right+1)..$r) {
-    $self->print( qq(
+    $content .= qq(
 $pad      </dl>
-$pad    </dd>) );
+$pad    </dd>);
     substr($pad,0,4)='';
   }
-  $self->print( q(
-      </dl>) );
+  $content .= q(
+      </dl>);
+  return $content;
 }
 
 return 1;

@@ -26,12 +26,24 @@ sub entries {
   return $self->{'_entries'}||[];
 }
 
+sub render_modal {
+  my $self = shift;
+  my $T = $self->_content;
+     $T =~ s/id="tabs"/id="modal_tabs"/;
+  $self->print( $T );
+}
+
 sub render {
   my $self = shift;
-  return unless scalar(@{$self->entries});
-  $self->print( '
+  $self->print( $self->_content );
+}
+
+sub _content {
+  my $self = shift;
+  return '' unless scalar(@{$self->entries});
+  my $content = '
     <div id="tabs">
-      <dl class="tabs">' );
+      <dl class="tabs">';
   foreach my $entry ( @{$self->entries} ) {
     my $name = $entry->{caption};
     if ($name eq '-') {
@@ -43,13 +55,14 @@ sub render {
         $name = sprintf( '<a href="%s">%s</a>', $entry->{'url'}, $name );
       }
     }
-    $self->printf( '
+    $content .= sprintf( '
         <dd id="%s" class="link %s">%s</dd>', lc('tab_'.$entry->{'type'}), $entry->{class}, $name );
   }
-  $self->print( '
+  $content .= '
         <dt class="hidden">.</dt>
       </dl>
-    </div>' );
+    </div>';
+  return $content;
 }
 
 return 1;
