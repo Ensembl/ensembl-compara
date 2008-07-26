@@ -73,6 +73,8 @@ sub _ajax_content {
   my $self   = shift;
   my $obj    = $self->{'object'};
   $self->{'page'}->renderer->{'r'}->headers_in->{'X-Requested-With'} = 'XMLHttpRequest';
+## Force page type to be ingredient!
+  $self->{'page'}->{'_page_type_'} = 'ingredient';
   my $panel  = $self->new_panel( 'Ajax', 'code' => 'ajax_panel', 'object'   => $obj);
   $panel->add_component( 'component' => $ENV{'ENSEMBL_ACTION'} );
   $self->add_panel( $panel );
