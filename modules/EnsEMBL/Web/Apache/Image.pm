@@ -11,6 +11,7 @@ use Data::Dumper;
 use EnsEMBL::Web::Root;
 
 use Apache2::Const qw(:common :methods :http);
+use Apache2::Util ();
 
 use EnsEMBL::Web::Cache;
 
@@ -38,6 +39,7 @@ sub handler {
       my $data = $memd->get($path);
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
       $r->headers_out->set('Content-Length' => $data->{'size'});
+      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 86400*30) );
       $r->set_last_modified($data->{'mtime'});
       
       $r->content_type('image/png');
