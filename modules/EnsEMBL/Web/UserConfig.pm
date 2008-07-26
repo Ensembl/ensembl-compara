@@ -46,6 +46,7 @@ sub new {
 		
   ########## init sets up defaults in $self->{'general'}
   $self->init( ) if($self->can('init'));
+  $self->{'no_image_frame'}=1;
   $self->das_sources( @_ ) if(@_); # we have das sources!!
 
   ########## load sets up user prefs in $self->{'user'}
