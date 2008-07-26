@@ -46,6 +46,8 @@ sub send_email {
 
   (my $check = $comments) =~ s/<a\s+href=.*?>.*?<\/a>//smg;
   $check =~ s/\[url=.*?\].*?\[\/url\]//smg;
+  $check =~ s/\[link=.*?\].*?\[\/link\]//smg;
+  $check =~ s/https?:\/\/\S+//smg;
   if( length($check)<length($comments)/$SPAM_THRESHOLD_PARAMETER ) {
     warn "MAIL FILTERED DUE TO BLOG SPAM.....";
     return 1;
