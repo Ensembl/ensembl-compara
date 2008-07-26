@@ -60,6 +60,7 @@ sub new {
   my %parameters = @_;
   $| = 1;
 
+  $self->{'parent'} = $parameters{'parent'};
 ## Input module...
   $self->{'script'} = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
   my $input;
