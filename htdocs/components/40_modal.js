@@ -2,73 +2,37 @@
 
     Public functions: modal_dialog_open(); modal_dialog_close();
 **/
-var min_modal_width  = 800;
-var min_modal_height = 600;
-var modal_pad        = 100;
-var min_pad          =  10;
-// Support functions nicked from light box!
 
-function getPageScroll(){
-  var xS,yS;
-  if (self.pageYOffset) {
-    yS = self.pageYOffset;
-    xS = self.pageXOffset;
-  } else if (document.documentElement && document.documentElement.scrollTop){   // Explorer 6 Strict
-    yS = document.documentElement.scrollTop;
-    xS = document.documentElement.scrollLeft;
-  } else if (document.body) {// all other Explorers
-    yS = document.body.scrollTop;
-    xS = document.body.scrollLeft;
-  }
-  aPS = new Array(xS,yS);
-  return aPS;
-}
-
-function getPageSize() {
-  var xS,yS,wW, wH;
-  if(window.innerHeight && window.scrollMaxY) {
-    xS = window.innerWidth + window.scrollMaxX;
-    yS = window.innerHeight + window.scrollMaxY;
-  } else if (document.body.scrollHeight > document.body.offsetHeight){ // all but Explorer Mac
-    xS = document.body.scrollWidth;
-    yS = document.body.scrollHeight;
-  } else { // Explorer Mac...would also work in Explorer 6 Strict, Mozilla and Safari
-    xS = document.body.offsetWidth;
-    yS = document.body.offsetHeight;
-  }
-  if(self.innerHeight) {  // all except Explorer
-    wW = document.documentElement.clientWidth ? document.documentElement.clientWidth :self.innerWidth;
-    wH = self.innerHeight;
-  } else if (document.documentElement && document.documentElement.clientHeight) { // Explorer 6 Strict Mode
-    wW = document.documentElement.clientWidth;
-    wH = document.documentElement.clientHeight;
-  } else if (document.body) { // other Explorers
-    wW = document.body.clientWidth;
-    wH = document.body.clientHeight;
-  }
-  aPS = new Array( xS<wW?xS:wW, yS<wH?wH:yS,wW,wH);
-  return aPS;
-}
-
+var ensembl_modal = {
+  min_width:  800,
+  min_height: 600,
+  padding:    100,
+  min_pad:     10
+};
 
 function __modal_page_resize() {
-  var Psz = getPageSize();
-  var Psc = getPageScroll();
+  var Psc = document.viewport.getScrollOffsets();
+  var Psz = document.viewport.getDimensions();
+  var modal_width  = Psz.width  - ensembl_modal.padding * 2;
+  var modal_height = Psz.height - ensembl_modal.padding * 2;
+  if( modal_width  < ensembl_modal.min_width  ) { modal_width  = ensembl_modal.min_width  > Psz.width  - 2 * ensembl_modal.min_pad ? Psz.width  - 2 * ensembl_modal.min_pad : ensembl_modal.min_width;  }
+  if( modal_height < ensembl_modal.min_height ) { modal_height = ensembl_modal.min_height > Psz.height - 2 * ensembl_modal.min_pad ? Psz.height - 2 * ensembl_modal.min_pad : ensembl_modal.min_height; }
 
-  var modal_width  = Psz[2] - modal_pad * 2;
-  var modal_height = Psz[3] - modal_pad * 2;
-  if( modal_width  < min_modal_width  ) { modal_width  = min_modal_width  > Psz[2] - 2 * min_pad ? Psz[2] - 2 * min_pad : min_modal_width;  }
-  if( modal_height < min_modal_height ) { modal_height = min_modal_height > Psz[3] - 2 * min_pad ? Psz[3] - 2 * min_pad : min_modal_height; }
+  var l = Psc.left + (Psz.width  - modal_width  )/2;
+  var t = Psc.top  + (Psz.height - modal_height )/2;
 
-  var l = Psc[0]+(Psz[2]-modal_width)/2;
-  var t = Psc[1]+(Psz[3]-modal_height)/2;
+// Compute the size of the heading bar!! 
+  var hh = $('modal_content').cumulativeOffset().top - $('modal_panel').cumulativeOffset().top;
 
-  $('modal_bg').style.width   = Psz[0] + "px";
-  $('modal_bg').style.height  = Psz[1] + "px";
-  $('modal_panel').style.top  = t      + "px";
-  $('modal_panel').style.left = l      + "px";
+  $('modal_bg').style.left      = Psc.left     + "px";
+  $('modal_bg').style.top       = Psc.top      + "px";
+  $('modal_bg').style.height    = Psz.height   + "px";
+  $('modal_bg').style.width     = Psz.width    + "px";
+  $('modal_panel').style.top    = t            + "px";
+  $('modal_panel').style.left   = l            + "px";
   $('modal_panel').style.height = modal_height + "px";
   $('modal_panel').style.width  = modal_width  + "px";
+  $('modal_content').style.height = (modal_height - hh) + 'px';
 }
 
 function modal_dialog_open( ) {
@@ -76,9 +40,9 @@ function modal_dialog_open( ) {
 
     PUBLIC: modal_dialog_open();
 **/
+  $('modal_bg').show();
+  $('modal_panel').show();
   __modal_page_resize();
-  $('modal_bg').style.display    = 'block';
-  $('modal_panel').style.display = 'block';
 }
 
 function modal_dialog_close() {
@@ -86,8 +50,8 @@ function modal_dialog_close() {
 
     PUBLIC: modal_dialog_close();
 **/
-  $('modal_bg').style.display    = 'none';
-  $('modal_panel').style.display = 'none';
+  $('modal_bg').hide();
+  $('modal_panel').hide();
 }
 
 function __modal_dialog_link_open( event ) {
@@ -104,8 +68,10 @@ function __modal_dialog_link_open( event ) {
   __success( 'modal dialog open '+title+':'+url );
 
   // Set the title and place holder content...
-  $('modal_title'  ).replaceChild(document.createTextNode(title),$('modal_title').lastChild);
-  $('modal_content' ).innerHTML = '<p>Loading content.....</p>';
+  $('modal_caption' ).update( title );
+  $('modal_content' ).update(Builder.node('div',
+    {className:'spinner'}, 'Loading content')
+  );
 
   modal_dialog_open(); // Resize and open the modal dialog box
 
@@ -113,19 +79,10 @@ function __modal_dialog_link_open( event ) {
   new Ajax.Request( url, {
     method: 'get',
     onSuccess: function(transport){
-      $('modal_content').innerHTML = transport.responseText;
-      var x = 0;
-      var firstnode = -1;
-      while( x < $('modal_content').childNodes.length && firstnode < 0) {
-        if( $('modal_content').childNodes[x].nodeType == 1 ) firstnode =x;
-        x++;
-      }
-      if( firstnode >= 0 ) {
-        var node_title = $('modal_content').childNodes[firstnode].innerHTML.stripTags();
-        var text_node  = document.createTextNode( node_title );
-        $('modal_title').replaceChild( text_node, $('modal_title').firstChild.nextSibling );
-      $('modal_content').removeChild( $('modal_content').childNodes[firstnode] );
-      }
+      $('modal_content').update( transport.responseText ); 
+      var tabs = $('modal_tabs').innerHTML;
+      $('modal_tabs').remove();
+      $('modal_caption').update( tabs );
       window.onload()
     },
     onFailure: function(transport){
@@ -142,11 +99,11 @@ function __modal_onload() {
     s.removeClassName( 'modal_link' );  // Make sure that this only gets run once per link... we will need to re-run this once AJAX has finished loading!!
   });
   if($('modal_bg')) return;
-  $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_bg',    style: 'display:none' }));
+  $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_bg',    style: 'display:none;' + ( Prototype.Browser.IE ? 'filter:alpha(opacity=25)':'opacity:0.25') }));
   $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_panel', style: 'display:none' },[
     Builder.node( 'h3', { id: 'modal_title' }, [
       Builder.node( 'span', { className: 'modal_but', id: 'modal_close' }, [ 'close' ] ),
-      'Modal dialog'
+      Builder.node( 'span', { id: 'modal_caption' }, [ 'Modal dialog' ] )
     ]),
     Builder.node( 'div', { id: 'modal_content' }, 'Modal content' )
   ]));

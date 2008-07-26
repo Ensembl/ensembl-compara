@@ -1,24 +1,24 @@
 .mh {
- width: 100%; border: 0px; padding: 0px; margin: 0px;
+ width: 100%; border: 0; padding: 0; margin: 0;
  border-collapse: collapse; background-color: #336
 }
-  .mh td { border: 0px; padding: 0px; margin: 0px }
+  .mh td { border: 0; padding: 0; margin: 0 }
 
 /** Cell 1 - the main e! logo - currently 40x45 **/
   #mh_lo     { width:50%; vertical-align:middle; white-space: nowrap; padding-left:3px }
-  #mh_lo img { width:150px; height: 40px; border: 0px }
+  #mh_lo img { width:150px; height: 40px; border: 0 }
 
 /** Cell 2 - **/
   #mh form { margin: 2px; padding: 0; border: 0 }
   table#se { float: right; margin: 2px; background-color: #fff; border: 1px solid #369; border-collapse: collapse; }
   table#se td { border: 1px solid #369; vertical-align: middle }
   table#se img { cursor: pointer; padding: 2px; height: 16px; width: 16px; }
-  #se_q { border:0px; width: 20em }
+  #se_q { border:0; width: 20em }
   #se_b { cursor: pointer; }
-  #se_b input { cursor: pointer;margin:0px; border:0px;background-color:#fff;padding:1px 0.5em;font-size: 0.8em; font-weight: bold }
+  #se_b input { cursor: pointer;margin:0; border:0;background-color:#fff;padding:1px 0.5em;font-size: 0.8em; font-weight: bold }
   /** search menu selector **/
   dl#se_mn { z-index:100;width: 8em; margin: 2px; border-top: 1px solid #369; position: absolute; cursor: pointer }
-  dl#se_mn dt { border: 1px solid #369 ; border-top: 0px; font-size: 0.8em;  padding: 0px; background-color: #fff  }
+  dl#se_mn dt { border: 1px solid #369 ; border-top: 0; font-size: 0.8em;  padding: 0; background-color: #fff  }
   dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid white; vertical-align: top; padding-right: 0.5em }
 
 /** Cell 3 - the breadcrumb links under the logo **/
@@ -28,11 +28,11 @@
 
 /** Cell 4 - the links at the bottom right **/
   td#mh_lnk { color: #999; font-size:0.9em;font-weight: bold; float: right; text-align: right;
-            white-space: nowrap; padding: 0px 10px 2px 2px; }
+            white-space: nowrap; padding: 0 10px 2px 2px; }
   #mh_lnk a { color: #fff; text-decoration: none }
   #mh_lnk a:hover { color: #c00;}
 
   #login-status { color: #fff; font-size:0.9em; float: right; text-align: right;
-            white-space: nowrap; padding: 10px 10px 0px 0px; }
+            white-space: nowrap; padding: 10px 10px 0 0; }
   #login-status a { color: #fff; text-decoration: none }
   #login-status a:hover { color: #c00;}

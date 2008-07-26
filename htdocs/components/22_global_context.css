@@ -11,6 +11,6 @@ div#tabs dt.hidden { color:#336; }
 dl.tabs { margin: 0; padding: 0; font-size: 1em }
 dl.tabs a { text-decoration: none }
 dl.tabs dd { float: left; padding: 2px 0 0 0; margin:0 }
-dl.tabs dd a, dl.tabs dd span { padding: 0px 0.5em 0px 0.5em; }
+dl.tabs dd a, dl.tabs dd span { padding: 0 0.5em 0 0.5em; }
 dl.tabs dt { padding: 2px 0 0 0; margin:0 }
 

@@ -1,11 +1,11 @@
-#main { margin:0px;padding:0px; border: 0px; position: relative; }
+#main { margin:0;padding:0; border: 0; position: relative; }
 
-#nav {width:14em;margin:0 0.25em;border:0px;padding:0px;z-index:100; position:absolute; top: 5px; left: 0px}
-#nav dl {margin: 0 0 0.5em 0; border:1px solid #ccc;padding:0px;background-color:#fff}
+#nav {width:14em;margin:0 0.25em;border:0;padding:0;z-index:100; position:absolute; top: 5px; left: 0}
+#nav dl {margin: 0 0 0.5em 0; border:1px solid #ccc;padding:0;background-color:#fff}
 #nav dt {font-weight:bold}
-#nav dd {margin-left:0px; white-space: nowrap}
-#nav dd dl {border:0px;padding:0 0 0 14px}
-#nav dd img {height:14px;width:14px;border:0px;vertical-align:top;padding-right:5px}
+#nav dd {margin-left:0; white-space: nowrap}
+#nav dd dl {border:0;padding:0 0 0 14px}
+#nav dd img {height:14px;width:14px;border:0;vertical-align:top;padding-right:5px}
 #nav ul {margin: 0 0 0.5em 0; border:1px solid #ccc;padding:0.2em 0 0 1.5em;background-color:#fff}
 #nav ul li { margin-bottom:0; list-style-image:none; color:#933; }
 #nav a {color:#369;text-decoration:none;}

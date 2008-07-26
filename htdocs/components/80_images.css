@@ -1,6 +1,6 @@
 /* ENSEMBL STYLES FOR IMAGES, ETC */
 
-img  { border: 0px }
+img  { border: 0 }
 
 img.float-left { float:left; margin-right:10px; }
 img.float-right { float:right; margin-left:10px; }

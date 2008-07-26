@@ -45,7 +45,7 @@ function update_species(element) {
     var serialized_data = $A($('favourites_list').childNodes).map(function(n){return n.id.split('-')[1];}).join(',');
     new Ajax.Request( '/Account/SaveFavourites', {
       method    : 'get',
-      parameters: { favourites: serialize_fave('favourites_list') },
+      parameters: { favourites: serialized_data },
       onSuccess: function(response){ $('full_species').innerHTML = response.responseText; performedSave = 0; },
       onFailure: function(response){ performedSave = 0; }
     });

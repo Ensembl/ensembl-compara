@@ -1,6 +1,12 @@
-/* GENERIC STYLES */
+/***********************************************************************
+**
+** Generic styles.
+**
+***********************************************************************/
 
-/* Footnotes */
+/*----------------------------------------------------------------------
+  Footnotes
+----------------------------------------------------------------------*/
 
 /* for arrows and other non-text links */
 a.notext { text-decoration:none; }
@@ -9,38 +15,49 @@ a.fn-link { vertical-align:super; font-size:0.7em; text-decoration:none; }
 div.footnotes { margin-top:2em; }
 div.footnotes ol li { font-size:0.9em; }
 
-/* Code examples */
+/*----------------------------------------------------------------------
+  Code examples
+----------------------------------------------------------------------*/
 
 code { font: 1em andale mono, sans-serif; font-weight: bold; }
 
 .code     { border: 1px solid #999; background: #eee; margin: 1em 1em 0.2em 1em; padding: 0.2em 0.5em; }
 
-.code pre { margin: 0.5em 0em 1.5em 0em; font: 0.8em andale mono, sans-serif; color: #000 }
+.code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, sans-serif; color: #000 }
 .code pre:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
 .code pre { display: inline-block; }
 
 kbd.line { display:block; margin-left:20px; }
 
-/* PAGE-SPECIFIC */
+/***********************************************************************
+**
+** Page specific styles
+**
+***********************************************************************/
 
-/* Ensembl homepage */
+/*----------------------------------------------------------------------
+  Ensembl homepage
+----------------------------------------------------------------------*/
+
+/* Species thumbnail images*/
 
 .sp-thumb { float:left; margin-right:4px; clear:left; }
-dl.species-list dt { margin:0px; padding:0px; min-height:15px;   font-size:120%; font-style:italic; font-weight:bold; }
-dl.species-list dd { margin:-2px 0px 2px 0px; padding:0px; min-height:40px; }
+
+/* Species list */
+dl.species-list dt { margin:0; padding:0; min-height:15px;   font-size:120%; font-style:italic; font-weight:bold; }
+dl.species-list dd { margin:-2px 0 2px 0; padding:0; min-height:40px; }
 dl.species-list dt a, dl.species-list dd a { text-decoration:none; }
 
-div.species-news p.headline { margin:0px; padding:4px 0px; font-size:110%; min-height:40px; }
+div.species-news p.headline { margin:0; padding:4px 0; font-size:110%; min-height:40px; }
 
 ul#favourites_list li, ul#species_list li { cursor:move; }
 
-/* Species homepages */
+/*----------------------------------------------------------------------
+  Species homepages
+----------------------------------------------------------------------*/
 
-table#species-stats { width:100%; }
-
-table#species-stats td { padding:4px 0px; }
-
-table#species-stats td.data { font-weight:bold; }
-
-table#species-stats td.value { text-align:right;}
+table#species-stats {          width:100%;       }
+table#species-stats td {       padding:4px 0;    }
+table#species-stats td.data {  font-weight:bold; }
+table#species-stats td.value { text-align:right; }
 
