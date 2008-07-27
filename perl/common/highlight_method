@@ -1,56 +1,50 @@
 package highlight_method;
 
+use strict;
+use CGI qw(escapeHTML);
+
 use Syntax::Highlight::Perl;
 
-my $color_table = {
-    'Variable_Scalar'   => 'color:#080;',
-    'Variable_Array'    => 'color:#f70;',
-    'Variable_Hash'     => 'color:#80f;',
-    'Variable_Typeglob' => 'color:#f03;',
-    'Subroutine'        => 'color:#980;',
-    'Quote'             => 'color:#00a;',
-    'String'            => 'color:#00a;',
-    'Comment_Normal'    => 'color:#069;font-style:italic;',
-    'Comment_POD'       => 'color:#014;font-family:' .
-                               'garamond,serif;font-size:11pt;',
-    'Bareword'          => 'color:#3A3;',
-    'Package'           => 'color:#900;',
-    'Number'            => 'color:#f0f;',
-    'Operator'          => 'color:#000;',
-    'Symbol'            => 'color:#000;',
-    'Keyword'           => 'color:#000;',
-    'Builtin_Operator'  => 'color:#300;',
-    'Builtin_Function'  => 'color:#001;',
-    'Character'         => 'color:#800;',
-    'Directive'         => 'color:#399;font-style:italic;',
-    'Label'             => 'color:#939;font-style:italic;',
-    'Line'              => 'color:#000;',
-};
-
-#  Program proper
-#=====================================================================
+my %ct = qw(
+  Variable_Scalar   080 Variable_Array    f70 Variable_Hash     80f Variable_Typeglob f03
+  Subroutine        980 Quote             00a String            00a Bareword          3A3
+  Package           900 Number            f0f Operator          000 Symbol            000
+  Keyword           000 Builtin_Operator  300 Builtin_Function  001 Character         800
+  Directive         399 Label             939 Line              000
+  Comment_Normal    069;background-color:#eee Comment_POD       014;background-color:#eee
+);
 
 my $formatter = Syntax::Highlight::Perl->new();
 
-$formatter->define_substitution('<' => '&lt;', 
-                                '>' => '&gt;', 
-                                '&' => '&amp;'); # HTML escapes.
+$formatter->define_substitution(qw(< &lt; > &gt; & &amp;)); # HTML escapes.
 
 # install the formats set up above
-while ( my ( $type, $style ) = each %{$color_table} ) {
-
-    $formatter->set_format($type, [ qq|<span style="$style">|, 
-                                    '</span>' ] );
+foreach(keys %ct){
+  $formatter->set_format($_, [ qq(<span style="color:#$ct{$_}">),'</span>' ] );
 }
 
-## First we have to find the module!!
 print "Content-type: text/html\n\n";
 
-my( $module, $method ) = $ENV{'PATH_INFO'}=~ /^\/(.*)::(.*)/;
-(my $file = $module) =~ s/::/\//g;
+### Split the method name from the module;
+(my $path_info = $ENV{'PATH_INFO'}) =~ s/^\///;
+my( $module, $method ) = $path_info =~ /^(.*)::(.+)/;
+unless( $module ) {
+  printf "<p>String supplied in URL is invalid</p>", $path_info;
+  exit;
+}
 
+### If not a valid module name then throw an error...
+unless( $module =~ /^[a-zA-Z_]\w*(::\w+)*$/ ) {
+  printf "<p>Invalid module name %s</p>", escapeHTML( $module );
+  exit;
+}
+
+### Search for file in directory tree (@INC)
+(my $file = $module) =~ s/::/\//g;
 my $fullfile = '';
+
 foreach my $dir (@INC) {
+  next if $dir =~ /sanger-plugins/;
   $fullfile = "$dir/$file.pm";
   if( -e $fullfile) {
     last;
@@ -58,25 +52,32 @@ foreach my $dir (@INC) {
   $fullfile = '';
 }
 
-my $flag = $method eq '';
-my $out = '';
-if( $fullfile ) {
-  open I, "<$fullfile";
-  while(<I>) {
-    if( $method ne '' && /^sub\s*(\w+)/) {
-      $flag = $1 eq $method;
-    }
-    if( $flag ) {
-      $out .= $formatter->format_string($_) unless /^\s*###/;
-    }
-  }
-}
-warn $out if $out =~ s/\s+$//;
-if( $out ) {
-  print '<pre style=\"font-size:10pt;color:#336;">';
-  print $out;
-  print "</pre>";
-} else {
-  print "<p>CANNOT FIND METHOD $method in $module</p>\n";
+### If does not exist - throw error...
+unless( $fullfile ) {
+  printf "<p>Unable to find module %s</p>", escapeHTML( $module );
+  exit;
 }
 
+### Open the file
+my $flag = 0;
+my $out = '';
+open I, "<$fullfile";
+while(<I>) {
+  if(/^\s*sub\s*(\w+)/) {
+    $flag = $1 eq $method;
+  }
+  if( $flag ) {
+    $out .= $formatter->format_string($_) unless /^\s*###/;
+  }
+}
+unless( $out ) {
+  printf "<p>Unable to find method %s in module %s</p>", escapeHTML( $method ), escapeHTML( $module );
+  exit;
+}
+
+printf qq(
+<pre style="font-size:10pt;color:#336;">
+%s
+</pre>), $out;
+
+1;
