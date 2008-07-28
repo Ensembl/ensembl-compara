@@ -41,8 +41,8 @@ sub render {
     my $miniad = EnsEMBL::Web::Data::MiniAd->fetch_random;
 
     if ($miniad) {
-      $html .=  sprintf('<a href="%s"><img class="float-right" style="width:150px;height:200px" src="%s/%s" alt="%s" title="%s" /></a>', 
-        $miniad->url, $species_defs->ENSEMBL_MINIAD_DIR, $miniad->image, $miniad->alt, $miniad->alt);
+      $html .=  sprintf('<a href="%s"><img class="float-right" style="width:150px;height:200px" src="/img/mini-ads/%s" alt="%s" title="%s" /></a>', 
+        $miniad->url, $miniad->image, $miniad->alt, $miniad->alt);
     }
   }
 
