@@ -195,7 +195,7 @@ sub get_gene_supporting_evidence {
 		     || $trans->seq_region_end == $max_end ) {
 		$e->{$tsi}{'evidence'}{'UTR'}{$hit_name} = $db_name;
 	    }
-	    else {
+	    elsif (! $e->{$tsi}{'evidence'}{'CDS'}{$hit_name}) {
 		$e->{$tsi}{'evidence'}{'UNKNOWN'}{$hit_name} = $db_name;
 	    }
 	}
