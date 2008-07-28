@@ -185,14 +185,16 @@ sub get_gene_supporting_evidence {
 	    }
 
 	    my $allowed_diff = $evi_type eq 'Bio::EnsEMBL::DnaPepAlignFeature' ? 3 : 0;
-#	    warn "$hit_name -- $min_start $max_end; ",$trans->coding_region_start," ",$trans->coding_region_end,"; ",$trans->seq_region_start," ",$trans->seq_region_end," allowing for $allowed_diff";
 	    if ( (($min_start - $trans->coding_region_start) <= $allowed_diff )
 		     && (($trans->coding_region_end - $max_end) <= $allowed_diff) ) {
 		#CDS evidence for Vega transcript also shown by full length cDNA
 		$e->{$tsi}{'evidence'}{'CDS'}{$hit_name} = $db_name;
 	    }
-	    if ( $trans->seq_region_start  == $min_start
-		     || $trans->seq_region_end == $max_end ) {
+#	    warn "$hit_name -- $min_start $max_end; ",$trans->coding_region_start," ",$trans->coding_region_end,"; ",$trans->seq_region_start," ",$trans->seq_region_end," allowing for $allowed_diff";
+
+	    if ( ( ($trans->coding_region_start - $max_end) >= $allowed_diff )
+		  || ( ($min_start - $trans->coding_region_end) >= $allowed_diff)
+		|| ( $trans->seq_region_start  == $min_start || $trans->seq_region_end == $max_end) ) {
 		$e->{$tsi}{'evidence'}{'UTR'}{$hit_name} = $db_name;
 	    }
 	    elsif (! $e->{$tsi}{'evidence'}{'CDS'}{$hit_name}) {
