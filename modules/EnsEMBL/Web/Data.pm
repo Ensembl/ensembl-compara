@@ -274,7 +274,12 @@ sub has_many {
 sub _type {
   my $class = shift;
   my $type  = shift;
+  no strict 'refs';
   
+  *{$class."::search"}       = sub { shift->SUPER::search(type => $type, @_) };
+  *{$class."::retrieve"}     = sub { shift->SUPER::retrieve(type => $type, @_) };
+  *{$class."::retrieve_all"} = sub { shift->search(@_) };
+
   $class->__type($type);
   $class->add_queriable_fields(type => 'string');
   $class->add_trigger(before_create => sub { my $self = shift; $self->type($self->__type) });
