@@ -14,7 +14,6 @@ sub logins    :lvalue { $_[0]{'logins'};   } ## Needed to avoid problems in Docu
 
 sub render   {
   my $self = shift;
-  warn "GO TO: ".$self->referer;
   $self->print('<a href="'.$self->referer.'">Exit Control Panel</a>');
 }
 

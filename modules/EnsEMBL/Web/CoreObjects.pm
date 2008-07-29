@@ -129,7 +129,7 @@ sub param {
 
 sub _generate_objects {
   my $self = shift;
-  warn "..... $ENV{'ENSEMBL_SPECIES'} .....";
+
   return if $ENV{'ENSEMBL_SPECIES'} eq 'common';
   my $db = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
   my $db_adaptor = $self->database($db);
@@ -182,7 +182,7 @@ sub _get_location_transcript_from_gene {
 #  $self->transcript(
 #    sort { $a->stable_id cmp $b->stable_id } @{$self->gene->get_all_Transcripts} );
   my $slice = $self->gene->feature_Slice;
-  warn "SSS . ".$slice->strand;
+
   $slice = $slice->invert() if $slice->strand < 0;
   $self->location( $slice );
 }
@@ -224,9 +224,9 @@ sub _check_if_snp_unique_location {
   return unless $self->variation;
   my $db_adaptor = $self->database('core');
   my $vardb =  $self->database('variation') ; 
-  my $vf_adaptor = $vardb->get_VariationFeatureAdaptor; warn $vf_adaptor; 
+  my $vf_adaptor = $vardb->get_VariationFeatureAdaptor; 
   my @features = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
-  warn @features;
+
   unless (scalar @features > 1){
    my $s =  $features[0]->start; warn $s;
    my $e = $features[0]->end;

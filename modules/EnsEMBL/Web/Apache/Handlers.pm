@@ -264,7 +264,7 @@ sub transHandler_das {
 
 sub transHandler_no_species {
   my( $r, $session_cookie, $species, $path_segments, $querystring ) = @_;
-        warn "... no species script ...";
+
   my $real_script_name = $OBJECT_TO_SCRIPT{ $species };
   return undef if $real_script_name =~ /^(action|component|zmenu)$/;
   
@@ -272,7 +272,7 @@ sub transHandler_no_species {
   $r->subprocess_env->{'ENSEMBL_SCRIPT' } = $real_script_name;
   my $script     = $real_script_name;
   my $to_execute = $memd ? $memd->get("::SCRIPT::$script") : '';
-  warn "## $script ...";
+
 
   $ENSEMBL_WEB_REGISTRY->initialize_session({
       r       => $r,
@@ -283,10 +283,10 @@ sub transHandler_no_species {
 
   unless ($to_execute) {
     foreach my $dir( @PERL_TRANS_DIRS ){
-      warn "... #$dir";
+
       last unless $script;
       my $filename = sprintf( $dir, 'common' ) ."/$script";
-      warn "..... $filename";
+
       next unless -r $filename;
       $to_execute = $filename;
     }
@@ -294,21 +294,21 @@ sub transHandler_no_species {
   }
   if( $to_execute ) {
     $r->subprocess_env->{'ENSEMBL_TYPE'}   = $species;
-    warn "TYPE:   $species";
-    warn "ACTION: $path_segments->[0]";
+
+
     $r->subprocess_env->{'ENSEMBL_ACTION'} = shift @$path_segments;
     my $path_info = join '/', @$path_segments;
-    warn "............ $path_info ...............";
+
     $r->filename( $to_execute );
     $r->uri( "/perl/common/$script" );
-    warn ".....PI... $path_info ...PI......";
+
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
     if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
       my @X = localtime();
       $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
         substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
         $species, $script, $querystring );
-      warn $LOG_INFO;
+
       $LOG_TIME = time();
     }
     $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script       );

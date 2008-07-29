@@ -338,7 +338,6 @@ sub render {
     $self->content->render; 
     return;
   }
-  warn "setting content type.... to text/html; charset=utf-8";
   $self->renderer->{'r'}->content_type( 'text/html; charset=utf-8' );
 
   $self->_render_head_and_body_tag;
