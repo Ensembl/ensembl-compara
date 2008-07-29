@@ -164,6 +164,7 @@ sub withdraw_data {
   my $self = shift;
   my $data = $self->data;
   $data =~ s/^\$data = //;
+  $data =~ s!\+'!'!g;
   ##$data =~ s/\n|\r|\f|\\//g;
   $data = eval ($data);
   foreach my $field (keys %{ $self->data_fields }) {
@@ -193,7 +194,7 @@ sub dump_data {
   my $temp_fields = {};
   foreach my $key (keys %{ $data }) {
     $temp_fields->{$key} = $data->{$key};
-    $temp_fields->{$key} =~ s/'/\\'/g;
+    ##$temp_fields->{$key} =~ s/'/\\'/g;
   }
   my $dumper = Data::Dumper->new([$temp_fields]);
   $dumper->Indent(0);
