@@ -12,12 +12,12 @@ sub _init {
   $self->ajaxable(  1 );
 }
 
-sub content {
+sub content { 
   my $self = shift;
-  my $object = $self->object;
+  my $object = $self->object; 
 
   ## retrieve default slice
-  my $object_slice = $object->Obj->feature_Slice;
+  my $object_slice = $object->Obj->feature_Slice; 
      $object_slice = $object_slice->invert if $object_slice->strand < 1; ## Put back onto correct strand!
 
 
@@ -79,8 +79,9 @@ sub content {
      $wuc->set( 'fg_regulatory_features_legend', 'on', 'on');
 
   my $image    = $object->new_image( $extended_slice, $wuc, [] );
-  $image->imagemap           = 'yes';
-
+      $image->imagemap           = 'yes';
+      $image->{'panel_number'} = 'top';
+      $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
 return $image->render;
 }
