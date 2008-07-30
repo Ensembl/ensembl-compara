@@ -22,7 +22,7 @@ sub render {
   }
 
   return sprintf(
-    qq(<label for="%s">%s: </label><textarea name="%s" id="%s" rows="%s" cols="%s" class="input-textarea" %s>%s</textarea>),
+    qq(<label for="%s" style="vertical-align:top;">%s: </label><textarea name="%s" id="%s" rows="%s" cols="%s" class="input-textarea" %s>%s</textarea>),
     CGI::escapeHTML( $self->name ), 
     CGI::escapeHTML( $self->label ), 
     CGI::escapeHTML( $self->name ), 
