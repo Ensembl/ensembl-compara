@@ -4,8 +4,6 @@ use strict;
 
 use EnsEMBL::Web::Tools::Ajax;
 
-use CGI;
-
 use base qw( EnsEMBL::Web::Configuration );
 
 use POSIX qw(floor ceil);
