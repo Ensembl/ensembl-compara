@@ -170,6 +170,23 @@ sub seq_region_sort {
   }
 }
 
+sub help_feedback {
+  my ($self, $return_url, $type, $record_id, $style) = @_;
+  my $html = sprintf(qq(
+<div style="%s">
+<form id="help_feedback_%s" action="/Help/Feedback" method="post">
+<strong>Was this helpful?</strong>
+<input type="radio" class="radio_autosubmit" name="help_feedback" value="yes" /><label>Yes</label>
+<input type="radio" class="radio_autosubmit" name="help_feedback" value="no" /><label>No</label>
+<input type="hidden" name="record_id" value="%s" />
+<input type="hidden" name="type" value="%s" />
+<input type="hidden" name="return_url" value="%s" />
+</form>
+</div>
+), $style, $record_id, $record_id, $type, $return_url);
+  return $html;
+}
+
 our @random_ticket_chars = ('A'..'Z','a'..'f');
 
 sub ticket {
