@@ -23,12 +23,13 @@ function _debug_press(evt) {
     if( bu.hasClassName(  'debug_button' ) ){
       bu.addClassName(    'debug_button_inv' );
       bu.removeClassName( 'debug_button'     );
-      Cookie.set( 'ENSEMBL_AJAX', 'disabled' );
+      ENSEMBL_AJAX = 'disabled';
     } else {
       bu.addClassName(    'debug_button'     );
       bu.removeClassName( 'debug_button_inv' );
-      Cookie.set( 'ENSEMBL_AJAX', 'enabled' );
+      ENSEMBL_AJAX = 'enabled';
     }
+    Cookie.set( 'ENSEMBL_AJAX', ENSEMBL_AJAX );
     return;
   }
   if( bu_id == 'debug_clear' ) {
