@@ -182,9 +182,11 @@ sub upload_feedback {
   }
   $self->object->get_session->save_tmp_data;
 
+  my $link = $self->object->param('_referer');
+
   $self->add_element( 
     type  => 'Information',
-    value => 'Thank you - your file was successfully uploaded.',
+    value => qq(Thank you - your file was successfully uploaded. <a href="javascript:return_to_parent('$link')">Exit this Control Panel</a> to view your data),
   );
 }
 
