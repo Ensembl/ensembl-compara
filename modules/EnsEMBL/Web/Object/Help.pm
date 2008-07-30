@@ -16,60 +16,16 @@ use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::Object);
 
+sub caption       { return undef; }
+sub short_caption { return 'Help'; }
+sub counts        { return undef; }
+
+#-----------------------------------------------------------------------------
+
 our $SPAM_THRESHOLD_PARAMETER = 30;
 
 sub adaptor     { return $_[0]->Obj->{'adaptor'}; }
 sub modular     { return $_[0]->Obj->{'modular'}; }
-
-sub send_email {
-  my $self = shift;
-  my @mail_attributes = ();
-  my @T = localtime();
-  my $date = sprintf "%04d-%02d-%02d %02d:%02d:%02d", $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
-  my $email = $self->param('email');
-  ## Do some email address sanitation!
-  $email =~ s/"//g;
-  $email =~ s/''/'/g;
-  my $server = $self->species_defs->ENSEMBL_SERVERNAME;
-  my $url = CGI::unescape($self->param('ref'));
-  push @mail_attributes, (
-    [ 'Date',         $date ],
-    [ 'Name',         $self->param('name') ],
-    [ 'Email',        $email ],
-    [ 'Referrer',     $url ],
-    [ 'Last Keyword', $self->param('kw')||'-none-' ],
-    [ 'User agent',   $ENV{'HTTP_USER_AGENT'}],
-  );
-  my $comments = $self->param('comments');
-## HACK OUT BLOG SPAM!
-  my $recipient = $self->species_defs->ENSEMBL_HELPDESK_EMAIL;
-
-  (my $check = $comments) =~ s/<a\s+href=.*?>.*?<\/a>//smg;
-  $check =~ s/\[url=.*?\].*?\[\/url\]//smg;
-  $check =~ s/\[link=.*?\].*?\[\/link\]//smg;
-  $check =~ s/https?:\/\/\S+//smg;
-  if( length($check)<length($comments)/$SPAM_THRESHOLD_PARAMETER ) {
-    warn "MAIL FILTERED DUE TO BLOG SPAM.....";
-    return 1;
-  } 
-  $check =~ s/\s+//gsm;
-  if( $check eq '' ) {
-    warn "MAIL FILTERED DUE TO ZERO CONTENT!";
-    return 1;
-  }
-  my $message = "Support question from $server\n\n";
-  $message .= join "\n", map {sprintf("%-16.16s %s","$_->[0]:",$_->[1])} @mail_attributes;
-  $message .= "\n\nComments:\n\n@{[$self->param('comments')]}\n\n";
-  my $mailer = new Mail::Mailer 'smtp', Server => "localhost";
-  my $sitetype = $self->species_defs->ENSEMBL_SITETYPE;
-  my $sitename = $sitetype eq 'EnsEMBL' ? 'Ensembl' : $sitetype;
-  my $subject = $self->param('category') || "$sitename Helpdesk";
-  $subject .= " - $server";
-  $mailer->open({ 'To' => $recipient, 'Subject' => $subject, 'From' => $self->param('email') });
-  print $mailer $message;
-  $mailer->close();
-  return 1;
-}
 
 sub search {
   ### a
