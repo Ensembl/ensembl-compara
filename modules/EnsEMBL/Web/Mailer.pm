@@ -12,7 +12,7 @@ use EnsEMBL::Web::RegObj;
 
 {
 
-my %To            :ATTR(:set<email> :get<email>) ;
+my %To            :ATTR(:set<to> :get<to>) ;
 my %From          :ATTR(:set<from> :get<from>);
 my %Reply         :ATTR(:set<reply> :get<reply>);
 my %Subject       :ATTR(:set<subject> :get<subject>);
@@ -24,7 +24,7 @@ my %BaseUrl       :ATTR(:set<base_url> :get<base_url>) ;
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
-  my $sd = $EnsEMBL::Web::Registry->species_defs;
+  my $sd = $ENSEMBL_WEB_REGISTRY->species_defs;
   $From{$ident}           = $args->{from} || $sd->ENSEMBL_HELPDESK_EMAIL;
   $Reply{$ident}          = $args->{reply} || $sd->ENSEMBL_HELPDESK_EMAIL;
   $MailServer{$ident}     = $args->{mail_server} || $sd->ENSEMBL_MAIL_SERVER;
@@ -39,7 +39,7 @@ sub spam_check {
   $check =~ s/\[url=.*?\].*?\[\/url\]//smg;
   $check =~ s/\[link=.*?\].*?\[\/link\]//smg;
   $check =~ s/https?:\/\/\S+//smg;
-  if( length($check)<length($content)/$SPAM_THRESHOLD_PARAMETER ) {
+  if( length($check)<length($content)/$self->get_spam_threshold ) {
     warn "MAIL FILTERED DUE TO BLOG SPAM.....";
     return 1;
   }
@@ -65,9 +65,9 @@ sub send {
   ## Sanitize input and fill in any missing values
   $self->set_message($self->spam_check($self->get_message)) unless $options->{'spam_check'} == 0;
   $self->set_from($self->sanitize_email($self->get_from));
-  $self->set_to($self->sanitize_email($self->to));
+  $self->set_to($self->sanitize_email($self->get_to));
   if ($self->get_reply) {
-    $self->set_reply($self->sanitize_email($self->reply));
+    $self->set_reply($self->sanitize_email($self->get_reply));
   }
   else {
     $self->set_reply($self->get_from);
