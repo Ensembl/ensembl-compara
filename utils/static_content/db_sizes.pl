@@ -1,5 +1,6 @@
 ##
-## As root du -sk *_{version}_* *_mart_{version} ensembl_go_{version} ensembl_compara_version_{version}> db_sizes.inc
+## As root du -sk *_{version}_* *_mart_{version} ensembl_go_{version} ensembl_compara_version_{version} > db_sizes.txt
+## Then run utils/db_sizes < db_sizes.txt > db_sizes.inc
 ##
 
 ## Script to generate list of database sizes
