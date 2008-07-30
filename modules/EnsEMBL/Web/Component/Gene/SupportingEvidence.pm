@@ -36,7 +36,7 @@ sub content {
 
     $html .= qq(<table class="ss tint">);
 
-    #label and space columns - number depends on the data
+    #label and space columns - number of these depends on the data
     # - don't mention exon evidence for Vega
     if ($o_type ne 'vega') {
 	my $other_evi = 0;
