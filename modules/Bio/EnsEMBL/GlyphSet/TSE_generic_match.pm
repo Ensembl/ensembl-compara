@@ -12,7 +12,15 @@ sub init_label {
 
 sub _init {
     my ($self) = @_;
-    my $Config     = $self->{'config'};
+    my $all_matches = $self->{'config'}->{'transcript'}{'transcript_evidence'};
+    $self->draw_glyphs($all_matches);
+}
+
+sub draw_glyphs {
+    my $self = shift;
+    my $all_matches = shift;
+    my $Config = $self->{'config'};
+
     my $h          = 8; #height of glyph
 
     my $colours       = $self->colours();
@@ -21,7 +29,6 @@ sub _init {
     my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
 	
     my $length      = $Config->container_width(); 
-    my $all_matches = $Config->{'transcript'}{'transcript_evidence'};
     my $strand      = $Config->{'transcript'}->{'transcript'}->strand;
 
     my( $font_w_bp, $font_h_bp);
