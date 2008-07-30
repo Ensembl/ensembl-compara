@@ -269,7 +269,6 @@ function sortN(a,b){ return a-b; }
 function sortNr(a,b){ return b-a; }
 function __drag_select_init() {
 //  $$('.drag_select').each(function(n){ n.onmousedown = select_start; });
-  $$('.drag_select').each(function(n){ Event.observe(n,'mousedown', select_start); });
   $$('.drag_select').each(function(n){
     n.getElementsBySelector('img').each(function(i_n){
       var m = $(i_n.id+'_map');
@@ -307,6 +306,7 @@ function __drag_select_init() {
         });
       }
     });
+    Event.observe(n,'mousedown',select_start);
   });
 /** now lets draw the red boxes... **/
   $H(drag_areas).each(function(slice_pair){

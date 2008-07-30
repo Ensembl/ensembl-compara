@@ -6,6 +6,10 @@ function __ensembl_init_ajax_loader() {
 $$('.ajax').each(function(panel) {
   if(panel.hasClassName('ajax')) {
     panel.removeClassName('ajax'); // We only need to auto load this code once
+    if( ENSEMBL_AJAX != 'enabled' ) {
+      panel.appendChild( Builder.node('p',{className:'ajax_error'},'AJAX is disabled in this browser' ) );
+      return;
+    }
     var tmp = eval(panel.title);
     if(!tmp) return;
     panel.setAttribute('title','');
@@ -33,10 +37,12 @@ $$('.ajax').each(function(panel) {
         p_node.appendChild(t_node);
         new Ajax.Request( component, {
 	  method: 'get',
-          onSuccess: function(transport){
-	    $(t_node).replace(transport.responseText);
-          __debug_raw( 'Loaded ('+_debug_end_time(__key)+'s) <a href="'+component+'">'+component+'</a>', 'success' );
+          onSuccess: function(resp){
+	    $(t_node).replace(resp.responseText);
+            __debug_raw( 'Loaded ('+_debug_end_time(__key)+'s) <a href="'+component+'">'+component+'</a>', 'success' );
+	    var t = new Date();
 	    window.onload();
+	    __info( 'Window onload events took '+_time_diff(t)+' seconds' );
           },
           onFailure: function(transport){
             t_node.parentNode.replaceChild(Builder.node('p',

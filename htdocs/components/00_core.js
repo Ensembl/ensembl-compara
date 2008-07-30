@@ -1,86 +1,33 @@
-var ensembl_body = $$('body')[0];
-function ensembl_reload() { }
+// Add the addLoadEvent function first so that is always ready to fire...
+// note the first onload event should be the debug_list code!!
 
-function addReLoadEvent(func) {
-  var old_reload = ensembl_reload;
-  ensembl_reload = function() {
-    old_reload();
-    func();
-  };
+function _time_diff(x) {
+  var d = new Date();
+  return ((d.getTime()-x.getTime())/1000).toFixed(3);
 }
 function addLoadEvent(func) {
   var oldonload = window.onload;
   if( typeof window.onload != 'function' ) {
-    window.onload = func;
+    window.onload = function() {
+      var t = new Date();
+      func();
+      if( $('debug_list') ) {
+        var x = func.toString().split(/\(/);
+	if(!x) x = func;
+	__info(x[0]+' ('+ _time_diff(t)+'s)');
+      }
+    }
   } else {
     window.onload = function() {
       oldonload();
+      var t = new Date();
       func();
+      if( $('debug_list') ) {
+        var x = func.toString().split(/\(/);
+	if(!x) x = func;
+	__info(x[0]+' ('+_time_diff(t)+'s)');
+      }
     };
   }
 }
 
-function __collapse( div_node ) {
-  div_node.getElementsBySelector('.content').each(function(child_div){
-    child_div.hide();
-  });
-  b_node = Builder.node( 'img', { style: 'float:left; vertical-align: top', src: '/i/closed.gif', alt:'' } );
-  b_node.observe('click',function(evt){
-    var el = Event.element(evt);
-    var p  = el.parentNode; 
-    p.getElementsBySelector('.content').each(function(child_div){
-      child_div.toggle();
-    });
-    p.firstChild.src = p.firstChild.src.match(/closed/) ? '/i/open.gif' : '/i/closed.gif'
-  });
-  div_node.insertBefore(b_node,div_node.firstChild)
-}
-
-function __init_ensembl_web_expandable_panels() {
-  $$('div.expandable').each( function(div_node) {
-    __collapse( div_node );
-  });
-}
-addLoadEvent(__init_ensembl_web_expandable_panels);
-
-function __init_ensembl_web_hide_form() {
-  if( $('hideform') ) {
-    Event.observe($('hideform'),'click',function(event){
-      $('selectform').hide();
-    });
-  }
-}
-addLoadEvent(__init_ensembl_web_hide_form );
-
-function __init_ensembl_rel_external() {
-  $$('a[rel="external"]').each(function(n){
-    n.target = '__blank'
-  });
-}
-addLoadEvent( __init_ensembl_rel_external );
-
-var Cookie = {
-  set: function(name, value, daysToExpire) {
-    var expire = '';
-    if(daysToExpire != undefined) {
-      var d = new Date();
-      d.setTime(d.getTime() + (86400000 * parseFloat(daysToExpire)));
-      expire = '; expires=' + d.toGMTString();
-    }
-    return (document.cookie = escape(name) + '=' + escape(value || '') + expire);
-  },
-  get: function(name) {
-    var cookie = document.cookie.match(new RegExp('(^|;)\s*' + escape(name) + '=([^;\s]*)'));
-    return (cookie ? unescape(cookie[2]) : null);
-  },
-  unset: function(name) {
-    var cookie = Cookie.get(name) || true;
-    Cookie.set(name, '', -1);
-    return cookie;
-  }
-};
-
-var ajax = Cookie.get('ENSEMBL_AJAX');
-if(!ajax) {
-  Cookie.set('ENSEMBL_AJAX',Ajax.getTransport()?'enabled':'disabled',5000);
-}

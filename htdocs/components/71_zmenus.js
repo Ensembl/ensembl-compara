@@ -31,55 +31,56 @@ function _show_zmenu( x ) {
   if( zmenus[ x.key ] ) {
     $(zmenus[x.key]).show();
     moveto( $(zmenus[x.key]), x.x, x.y );
-  } else {
-    var z_id = 'zmenu_'+(zmenus_counter++);
+    return;
+  }
+  var z_id = 'zmenu_'+(zmenus_counter++);
 // Store the id in the zmenus hash...
-    zmenus[ x.key ] = z_id;
-    var A = x.title.split("; ");
-    var ttl = A.shift();
-    if(!ttl) ttl = 'Menu';
-    var Q = __zmenu_init( z_id, ttl );
-    var loc = { cp:0,s:0,e:0 };
-    A.each(function(s){
-      var T = s.split(': ');
-      if(T.length > 1 ) {
-        __zmenu_add( Q, T[0], T[1] );
+  zmenus[ x.key ] = z_id;
+  var A = x.title.split("; ");
+  var ttl = A.shift();
+  if(!ttl) ttl = 'Menu';
+  var Q = __zmenu_init( z_id, ttl );
+  var loc = { cp:0,s:0,e:0 };
+  A.each(function(s){
+    var T = s.split(': ');
+    if(T.length > 1 ) {
+      __zmenu_add( Q, T[0], T[1] );
 /* If the "entry is Location: chr:start-end then save the start/end and centre point for
    later... */
-	if( T[0] == 'Location' ) {
-          var tmp = T[1].match(/:(-?\d+)-(-?\d+)$/);
-	  if(tmp) loc = { cp: tmp[1]/2+tmp[2]/2, s: parseInt(tmp[1]), e: parseInt(tmp[2]) };
-	}
-      } else {
-        __zmenu_add( Q, '', T[0] );
+      if( T[0] == 'Location' ) {
+        var tmp = T[1].match(/:(-?\d+)-(-?\d+)$/);
+	if(tmp) loc = { cp: tmp[1]/2+tmp[2]/2, s: parseInt(tmp[1]), e: parseInt(tmp[2]) };
       }
-    });
-    __zmenu_add( Q, 'Link', ttl, x.h );
-    if( window.location.pathname.match(/\/Location/) && loc.cp ) {
-      __zmenu_add( Q, ' ', 'Centre on feature', _new_url_cp( loc.cp, __seq_region.width + 1 ) );
-      __zmenu_add( Q, ' ', 'Zoom to feature',   _new_url(    loc.s,  loc.e                  ) );
+    } else {
+      __zmenu_add( Q, '', T[0] );
     }
-    __zmenu_show( Q, x.x, x.y );
+  });
+  __zmenu_add( Q, 'Link', ttl, x.h );
+  if( window.location.pathname.match(/\/Location/) && loc.cp ) {
+    __zmenu_add( Q, ' ', 'Centre on feature', _new_url_cp( loc.cp, __seq_region.width + 1 ) );
+    __zmenu_add( Q, ' ', 'Zoom to feature',   _new_url(    loc.s,  loc.e                  ) );
+  }
+  __zmenu_show( Q, x.x, x.y );
+// If AJAX isn't enabled return....
+  if( ENSEMBL_AJAX != 'enabled' ) return;
 /* Rewrite the href URL to a zmenu URL....
  A link of the form: https?://{domain}/{species}/{type}/{view}?{params}
  becomes:            http://{domain}/{species}/Zmenu/{type}?{params}
  Then call this with AJAX - and replace the "temporary" zmenu content with this;
  Finally add back in the close zmenu button!
 */
-    var a = x.h.split(/\?/);
-    var link_url     = a[0];
-    var query_string = a[1];
-    var arr = link_url.match(/^(https?:\/\/[^\/]+\/[^\/]+\/)(.+)/);
-    var URL = arr[1]+'Zmenu/'+arr[2]+'?'+query_string;
-    new Ajax.Request( URL, {
-      method: 'get',
-      onSuccess: function(transport){
-        Q.getElementsBySelector('tbody.real')[0].replace( transport.responseText );
-        __zmenu_close_button(Q);
-      }
-    });
-  }
-  return;
+  var a = x.h.split(/\?/);
+  var link_url     = a[0];
+  var query_string = a[1];
+  var arr = link_url.match(/^(https?:\/\/[^\/]+\/[^\/]+\/)(.+)/);
+  var URL = arr[1]+'Zmenu/'+arr[2]+'?'+query_string;
+  new Ajax.Request( URL, {
+    method: 'get',
+    onSuccess: function(transport){
+      Q.getElementsBySelector('tbody.real')[0].replace( transport.responseText );
+      __zmenu_close_button(Q);
+    }
+  });
 }
 
 function _new_url_cp( cp, w ) { return _new_url( Math.round(1*cp-w/2), Math.round(1*cp+w/2) ); }

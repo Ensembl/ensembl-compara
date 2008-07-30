@@ -19,19 +19,31 @@ var timers_hash = {};
 function _debug_press(evt) {
   bu    = Event.element(evt);
   bu_id = bu.id;
-  if( bu_id == 'debug_clear' ) {
-// "the clear" button is different from the rest! - it clears the list
-    $('debug_list').innerHTML = '';
-  } else {
+  if( bu_id == 'debug_ajax' ) {
     if( bu.hasClassName(  'debug_button' ) ){
       bu.addClassName(    'debug_button_inv' );
       bu.removeClassName( 'debug_button'     );
-      $$( '.'+bu_id ).each(function(n){n.hide()});
+      Cookie.set( 'ENSEMBL_AJAX', 'disabled' );
     } else {
       bu.addClassName(    'debug_button'     );
       bu.removeClassName( 'debug_button_inv' );
-      $$( '.'+bu_id ).each(function(n){n.show()});
+      Cookie.set( 'ENSEMBL_AJAX', 'enabled' );
     }
+    return;
+  }
+  if( bu_id == 'debug_clear' ) {
+// "the clear" button is different from the rest! - it clears the list
+    $('debug_list').innerHTML = '';
+    return;
+  } 
+  if( bu.hasClassName(  'debug_button' ) ){
+    bu.addClassName(    'debug_button_inv' );
+    bu.removeClassName( 'debug_button'     );
+    $$( '.'+bu_id ).each(function(n){n.hide()});
+  } else {
+    bu.addClassName(    'debug_button'     );
+    bu.removeClassName( 'debug_button_inv' );
+    $$( '.'+bu_id ).each(function(n){n.show()});
   }
 }
 
@@ -53,20 +65,18 @@ function _debug_press(evt) {
 **/
 
 function _debug_start_time( key ) {
-  var d = new Date();
-  timers_hash[key] = d.getTime();
+  timers_hash[key] = new Date();
 }
 
 function _debug_end_time( key ) {
-  var d = new Date();
-  return ( d.getTime() - timers_hash[key] ) / 1000;
+  return _time_diff( timers_hash[key] );
 }
 
 function __debug( s,l ) {
   if($('debug')) {
-  if(!l) l = 'info'
+    if(!l) l = 'info';
     var cl = "debug_"+l;
-    var X = Builder.node('li',{className:cl}, "["+l+"] "+s);
+    var X = Builder.node('li',{className:cl}, "["+l+":"+_time_diff(ENSEMBL_START_TIME)+"s] "+s+"\n");
     $('debug_list').appendChild(X);
     if( $(cl).hasClassName('debug_button_inv') ) {
       X.hide();
@@ -76,10 +86,10 @@ function __debug( s,l ) {
 
 function __debug_raw( s,l ) {
   if($('debug')) {
-  if(!l) l = 'info'
+    if(!l) l = 'info'
     var cl = "debug_"+l;
-    var X = Builder.node('li',{className:cl}, "["+l+"] ");
-    X.innerHTML = X.innerHTML + s;
+    var X = Builder.node('li',{className:cl}, "["+l+":"+_time_diff(ENSEMBL_START_TIME)+"s] ");
+    X.innerHTML = X.innerHTML + s+"\n";
     $('debug_list').appendChild(X);
     if( $(cl).hasClassName('debug_button_inv') ) {
       X.hide();
@@ -127,7 +137,9 @@ function __init_ensembl_debug() {
         Builder.node('span',
           {id:'debug_error',  className:'debug_button'},'Errors'),
         Builder.node('span',
-          {id:'debug_clear',  className:'debug_button'},'Clear')
+          {id:'debug_clear',  className:'debug_button'},'Clear'),
+        Builder.node('span',
+          {id:'debug_ajax',   className:ENSEMBL_AJAX=='enabled'?'debug_button':'debug_button_inv'},'AJAX')
       ]
     ));
   // Add the area to include the debug messages.
@@ -151,10 +163,11 @@ function __init_ensembl_debug() {
     });
   // Add an on click event to the buttons to toggle the display of
   // messages of given class..
-    $$('.debug_button').each(function(but) {
+    $$('.debug_button','.debug_button_inv').each(function(but) {
       Event.observe( but, 'click', _debug_press );
     });
   }
+  __info( 'AJAX is '+ENSEMBL_AJAX+ '; load time is '+ENSEMBL_LOAD_TIME+'s' );
 }
 
 // Call initialisation function on page load

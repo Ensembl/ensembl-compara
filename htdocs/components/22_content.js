@@ -63,7 +63,11 @@ function __init_species_reorder() {
     });
   }
   $$('.toggle_link').each(function(n){
-    Event.observe(n,'click',toggle_reorder);
+    if( ENSEMBL_AJAX == 'enabled' ) {
+      Event.observe(n,'click',toggle_reorder);
+    } else {
+      n.hide();
+    }
   });
 }
 
