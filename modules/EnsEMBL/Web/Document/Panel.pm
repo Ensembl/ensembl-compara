@@ -6,6 +6,8 @@ use EnsEMBL::Web::Document::Renderer::GzCacheFile;
 use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::Document::Renderer::String;
 
+use EnsEMBL::Web::RegObj;
+
 our @ISA = qw(EnsEMBL::Web::Root);
 
 sub new {
@@ -564,6 +566,7 @@ sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 3+$_[2] ); }
 sub _is_ajax_request {
   return $_[0]->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 }
+
 sub content {
   my( $self ) = @_;
   $self->reset_buffer;
@@ -596,7 +599,9 @@ sub content {
           $self->_prof( "Component $module_name (runtime failure [new])" );
         } else {
           my $caption = $comp_obj->caption;
-          if( $comp_obj->ajaxable() && !$self->_is_ajax_request ) {
+	  warn $ENSEMBL_WEB_REGISTRY->get_ajax() ? ' use ajax ' : '  no ajax ';
+          if( $ENSEMBL_WEB_REGISTRY->get_ajax() &&
+	      $comp_obj->ajaxable() && !$self->_is_ajax_request ) {
 	    my( $ensembl, $plugin, $component, $type, @T ) = split '::', $module_name;
 	    my $URL = join '/',
 	       '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,@T;

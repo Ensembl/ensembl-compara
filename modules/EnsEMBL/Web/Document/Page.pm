@@ -333,17 +333,26 @@ sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 1 ); }
 sub render {
   my $self = shift;
 
-  ## If this is an AJAX request then we will not render the page wrapper!
+## If this is an AJAX request then we will not render the page wrapper!
+  if( $self->{'_modal_dialog_'} ) {
+## We need to add the dialog tabs and navigation tree here....  
+    $self->global_context->render_modal;
+    $self->local_context->render_modal;
+## and then add in the fact that it is an XMLHttpRequest object to render the content only...
+  }
   if ($self->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
     $self->content->render; 
     return;
   }
+## This is now a full page...
   $self->renderer->{'r'}->content_type( 'text/html; charset=utf-8' );
 
   $self->_render_head_and_body_tag;
   #  my $X = $self->{'page_template'};
   my $X = '';
-  $X .= '  <div id="debug"></div>';  ## UNTIL WE GO LIVE PLEASE LEAVE THIS IN !
+  if( $self->species_defs->ENSEMBL_DEBUG_FLAGS & 1024 ) {
+    $X .= '  <div id="debug"></div>';  ## UNTIL WE GO LIVE PLEASE LEAVE THIS IN !
+  }
   $X .= '
   <table class="mh" summary="layout table">
     <tr>
@@ -359,7 +368,7 @@ sub render {
       </td>
     </tr>
   </table>
-  <table class="mh">
+  <table class="mh" summary="layout table">
     <tr>
       <td>[[global_context]]</td>
     </tr>
