@@ -85,22 +85,15 @@ sub count_gene_supporting_evidence {
     return scalar(keys(%c));
 }
 
-sub get_db_type{
-    # I'm suprised that I have to do this - would've thought there'd be a generic method
+sub get_external_dbs {
+    #retrieve a summary of the external_db table from species defs
     my $self = shift;
     my $db   = $self->get_db;
     my %db_hash = qw(
 		     core    ENSEMBL_DB
 		     vega    ENSEMBL_VEGA
 		 );
-    return  $db_hash{$db};
-}
-
-sub get_external_db_names {
-    #species defs contains a summary of the external_db table - can use this to get the dbname
-    #for the evidence although the core team are going to add calls to do this directly
-    my $self = shift;
-    my $db_type = $self->get_db_type;
+    my $db_type = $db_hash{$self->get_db};
     my $sd = $self->species_defs;
     return  $sd->databases->{$db_type}{'external_dbs'};
 }
@@ -110,7 +103,8 @@ sub get_gene_supporting_evidence {
     #whole transcript or the translation, supporting_features provide depth the the evidence
     my $self = shift;
     my $obj = $self->Obj;
-    my $external_db_det = $self->get_external_db_names;
+    my $species = $self->species;
+    my $dbentry_adap = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "DBEntry");
     my $o_type = $self->get_db;
     my $e;
     foreach my $trans (@{$obj->get_all_Transcripts()}) {
@@ -120,7 +114,7 @@ sub get_gene_supporting_evidence {
       EVI:
 	foreach my $evi (@{$trans->get_all_supporting_features}) {
 	    my $name = $evi->hseqname;
-	    my $db_name = $external_db_det->{$evi->external_db_id}->{'db_name'};
+	    my $db_name = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
 	    #save details of evidence for vega genes for later since we need to combine them 
 	    #before we can tellif they match the CDS / UTR 
 	    if ($o_type eq 'vega') {
@@ -174,7 +168,7 @@ sub get_gene_supporting_evidence {
 	    }
 	}
 
-	#now look at vega evidence to see if it can be assigned to 'CDS' 'UTR' etc
+	#look at vega evidence to see if it can be assigned to 'CDS' 'UTR' etc
 	while ( my ($hit_name,$rec) = each %vega_evi ) {
 	    my ($min_start,$max_end) = (1e8,1);
 	    my $db_name  = $rec->{'db_name'};
