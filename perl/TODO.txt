@@ -1,10 +1,10 @@
 [X] common/account          - in new format
-[ ] common/drawer
+[-] common/drawer           - not needed (replaced by control panel)
 [X] common/help             - in new format
-[ ] common/help_feedback
+[-] common/help_feedback    - merged into common/help
 [X] common/highlight_method - secured
-[ ] common/manage_bookmark
-[ ] common/mixer
+[-] common/manage_bookmark  - never used!
+[-] common/mixer            - not needed by new control panel
 [X] common/user_data        - in new format
 
 [X] default/action
@@ -47,10 +47,10 @@
 [ ] default/idhistoryview
 [ ] default/jump_to_contig
 [ ] default/jump_to_location_view
-[ ] default/karyoview
+[X] default/karyoview
 [ ] default/ldtableview
 [ ] default/ldview
-[ ] default/mapview
+[X] default/mapview
 [ ] default/markerview
 [ ] default/martlink
 [ ] default/miscsetview
@@ -79,7 +79,7 @@
 [ ] multi/blastview
 [ ] multi/martview
 
-[ ] private/help_preview
-[ ] private/helpdb
+[-] private/help_preview    - old help interface
+[-] private/helpdb          - old help interface
 [ ] private/modules
 [ ] private/tree
