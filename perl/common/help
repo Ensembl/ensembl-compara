@@ -12,15 +12,24 @@ use EnsEMBL::Web::Controller;
 my $controller = EnsEMBL::Web::Controller->new;
 
 ## Search
-$controller->add_connections({qw(
-  search     EnsEMBL::Web::Controller::Command::Help::Search
-  results    EnsEMBL::Web::Controller::Command::Help::Results
-)});
-## Contact help desk
-$controller->add_connections({qw(
-  contact    EnsEMBL::Web::Controller::Command::Help::Contact
-  send_email EnsEMBL::Web::Controller::Command::Help::SendEmail
-)});
+$controller->add_connections({ 
+  'Search' => 'EnsEMBL::Web::Controller::Command::Help::Search',
+  'Lesults' => 'EnsEMBL::Web::Controller::Command::Help::Results',
+});
+
+## Topics
+$controller->add_connections({ 
+  'FAQ'       => 'EnsEMBL::Web::Controller::Command::Help::FAQ',
+  'Glossary'  => 'EnsEMBL::Web::Controller::Command::Help::Glossary',
+  'Feedback'  => 'EnsEMBL::Web::Controller::Command::Help::Feedback',
+});
+
+## Contact
+$controller->add_connections({ 
+  'Contact' => 'EnsEMBL::Web::Controller::Command::Help::Contact',
+  'SendEmail' => 'EnsEMBL::Web::Controller::Command::Help::SendEmail',
+  'EmailSent' => 'EnsEMBL::Web::Controller::Command::Help::EmailSent',
+});
 
 $controller->dispatch($ENV{REQUEST_URI});
 
