@@ -12,23 +12,23 @@ use EnsEMBL::Web::Controller;
 my $controller = EnsEMBL::Web::Controller->new;
 
 ## Login basics
-$controller->add_connections(qw(
+$controller->add_connections({qw(
   Login              EnsEMBL::Web::Controller::Command::Account::LogIn
   SetCookie          EnsEMBL::Web::Controller::Command::Account::SetCookie
   Logout             EnsEMBL::Web::Controller::Command::Account::LogOut
-));
+)});
 
 ## Accountview
-$controller->add_connections(qw(
+$controller->add_connections({qw(
   Links              EnsEMBL::Web::Controller::Command::Account::Links 
   Bookmarks          EnsEMBL::Web::Controller::Command::Account::Bookmarks 
   Configurations     EnsEMBL::Web::Controller::Command::Account::Configurations
   Annotations        EnsEMBL::Web::Controller::Command::Account::Annotations
   NewsFilters        EnsEMBL::Web::Controller::Command::Account::NewsFilters 
-));
+)});
 
 ## Account management 
-$controller->add_connections(qw(
+$controller->add_connections({qw(
   Summary            EnsEMBL::Web::Controller::Command::Account::Details
   Register           EnsEMBL::Web::Controller::Command::Account::Register
   SendActivation     EnsEMBL::Web::Controller::Command::Account::SendActivation 
@@ -40,10 +40,10 @@ $controller->add_connections(qw(
   SavePassword       EnsEMBL::Web::Controller::Command::Account::SavePassword 
   Update             EnsEMBL::Web::Controller::Command::Account::Update 
   UpdateFailed       EnsEMBL::Web::Controller::Command::Account::UpdateFailed 
-));
+)});
 
 ## User records
-$controller->add_connections(qw(
+$controller->add_connections({qw(
   SaveFavourites     EnsEMBL::Web::Controller::Command::Account::SaveFavourites 
   ResetFavourites    EnsEMBL::Web::Controller::Command::Account::ResetFavourites 
   Sortable           EnsEMBL::Web::Controller::Command::Account::Sortable 
@@ -59,10 +59,10 @@ $controller->add_connections(qw(
 
   Annotation         EnsEMBL::Web::Controller::Command::Account::Annotation 
   News               EnsEMBL::Web::Controller::Command::Account::FilterNews 
-));
+)});
 
 ## Group records & group management
-$controller->add_connections(qw(
+$controller->add_connections({qw(
   MemberGroups       EnsEMBL::Web::Controller::Command::Account::MemberGroups 
   _accept            EnsEMBL::Web::Controller::Command::Account::AcceptInvitation 
   _unsubscribe       EnsEMBL::Web::Controller::Command::Account::Unsubscribe 
@@ -78,7 +78,7 @@ $controller->add_connections(qw(
 
   Invite             EnsEMBL::Web::Controller::Command::Account::Invite 
   _remove_invitation EnsEMBL::Web::Controller::Command::Account::RemoveInvitation 
-));
+)});
 
 $controller->dispatch($ENV{'REQUEST_URI'});
 
