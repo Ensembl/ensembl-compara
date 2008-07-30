@@ -76,7 +76,7 @@ sub fetch_news_items {
     }
   }
 
-  $attr->{order_by} ||= 'n.release_id DESC, c.priority DESC, n.priority DESC ';
+  $attr->{order_by} ||= 'n.release_id DESC, c.priority ASC, n.priority DESC ';
   my $order = " ORDER BY $attr->{order_by} ";
   my $limit = $attr->{limit} ? " LIMIT $attr->{limit} " : '';
 
