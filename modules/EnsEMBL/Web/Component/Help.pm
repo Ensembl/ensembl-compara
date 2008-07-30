@@ -14,15 +14,6 @@ no warnings "uninitialized";
 
 use constant 'HELPVIEW_IMAGE_DIR'   => "/img/help";
 
-sub _wrap_form {
-  my ( $panel, $object, $node ) = @_;
-  my $html = qq(<div class="formpanel" style="width:80%">);
-  $html .= $panel->form($node)->render();
-  $html .= '</div>';
-  $panel->print($html);
-  return 1;
-}
-
 sub helpview {
   my($panel, $object) = @_;
   my ($article) = $object->views;
@@ -446,6 +437,7 @@ sub helpful_form {
   return $form;
 }
 
+=pod
 sub help_feedback {
   my ( $panel, $object ) = @_;
   my $label = '';
@@ -468,6 +460,7 @@ function backToEnsembl(){
   $panel->print($html);
   return 1;
 }
+=cut
 
 sub static {
   my ( $panel, $object ) = @_;
