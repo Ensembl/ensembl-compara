@@ -20,10 +20,8 @@ sub caption {
 }
 
 sub content {
-    #newish content
     my $self = shift;
     my $object = $self->object;
-#    my $type = $object->logic_name;
     my $html = qq(<div class="content">);
     if (! $object->count_supporting_evidence) {
 	$html .=  qq( <dt>No Evidence</dt><dd>);
@@ -46,6 +44,10 @@ sub _content {
 
     my $self    = shift;
     my $object  = $self->object;
+
+    #dbentry adaptor used to get db_name of the hit
+    my $species = $object->species;
+    my $dbentry_adap = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "DBEntry");
     
     $object->param('image_width',800); ### remove this when user config is possible
 
@@ -70,7 +72,7 @@ sub _content {
     $config->{'transcript'}{'transcript'} = $transcript;
     $config->{'transcript'}{'web_transcript'} = $object;
     
-    #get both real slice and normalised slice (ie introns flattened)
+    #get both real slice and normalised slice (ie introns set to fixed width)
     my @slice_defs = ( [ 'supporting_evidence_transcript', 'munged', $extent ] );
     foreach my $slice_type (@slice_defs) {
 	$object->__data->{'slices'}{$slice_type->[0]} = $object->get_transcript_slices($slice_type) || warn "Couldn't get slice";	
@@ -87,9 +89,8 @@ sub _content {
     $config->{'fakeslice'}   = 1; #not sure what this is used for! ??
     $config->{'object_type'} = $o_type; #used for drawing the legend for vega / E! transcripts
 
-    
-    #add info on normalised exons (ie flattened introns) to config - this is no longer used by the transcript
-    #drawing code so no longer needed to be added to the config ?
+    #identify coordinates of the portions of introns and exons to be drawn. Include the exon object
+    my $intron_exon_slices;
     my $ens_exons;
     my $offset = $transcript_slice->start -1;
     my $exons = $object->Obj->get_all_Exons();
@@ -99,12 +100,8 @@ sub _content {
 	my $munge  = $object->munge_gaps('supporting_evidence_transcript', $es);
 	push @$ens_exons, [ $es + $munge, $ee + $munge, $exon ];
     }
-    $config->{'transcript'}{'exons'} = $ens_exons ;
-    
-    #identify coordinates of the portions of introns and exons to be drawn. Include the exon object
     my $e_counter = 0;
-    my $e_count = scalar(@$ens_exons);
-    my $intron_exon_slices;
+    my $e_count   = scalar(@$ens_exons);
     #reverse the order of exons if the strand is negative
     my @exons = $transcript->strand == 1 ? @{$ens_exons} : reverse(@{$ens_exons});
   SUBSLICE:
@@ -113,9 +110,9 @@ sub _content {
 	my $subslice_end   = $subslice->[1]+$subslice->[2];
 	my ($exon_start,$exon_end);
 	for ($e_counter; $e_counter < $e_count; $e_counter++) {
-	    my $exon  = $exons[$e_counter];
+	    my $exon    = $exons[$e_counter];
 	    $exon_start = $exon->[0];
-	    $exon_end = $exon->[1];
+	    $exon_end   = $exon->[1];
 	    my $exon_id = $exon->[2]->stable_id;
 
 	    #if the exon is still within the subslice then work with it
@@ -140,7 +137,7 @@ sub _content {
     }
     $config->{'transcript'}{'introns_and_exons'} = $intron_exon_slices;
 
-    #add info normalised coding region
+    #add info on normalised coding region
     my $raw_coding_start = defined($transcript->coding_region_start) ? $transcript->coding_region_start-$offset : $transcript->start-$offset;
     my $raw_coding_end   = defined($transcript->coding_region_end)   ? $transcript->coding_region_end-$offset   : $transcript->end-$offset;
     my $coding_start = $raw_coding_start + $object->munge_gaps( 'supporting_evidence_transcript', $raw_coding_start );
@@ -162,7 +159,6 @@ sub _content {
     
     #add info on non_canonical splice site sequences for introns
     my @canonical_sites = ( ['GT', 'AG'],['GC', 'AG'], ['AT', 'AC'] ); #these are considered canonical
-    
     my $non_con_introns;
     my $hack_c = 1; #set to zero to tag first intron - used for development to highlight first intron
     foreach my $i_details (@introns) {
@@ -181,7 +177,7 @@ sub _content {
 	    my $is = $i->start - $offset;
 	    my $ie = $i->end - $offset;
 	    my $munged_start = $is + $object->munge_gaps( 'supporting_evidence_transcript', $is );
-	    my $munged_end = $ie + $object->munge_gaps( 'supporting_evidence_transcript', $ie );
+	    my $munged_end   = $ie + $object->munge_gaps( 'supporting_evidence_transcript', $ie );
 	    push @$non_con_introns, [ $munged_start, $munged_end, $donor_seq, $acceptor_seq, $e_details, $i ];
 	}
     }
@@ -196,9 +192,12 @@ sub _content {
 
 	#don't store any transcript_supporting_features for a vega gene
 	next if ($o_type eq 'vega');
-	$t_evidence->{$hit_name}{'hit_name'} = $hit_name; 
+	$t_evidence->{$hit_name}{'hit_name'} = $hit_name;
+	$t_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
 	    
-	#split evidence into ungapped features, map onto exons and munge (ie account for gaps)
+	#split evidence into ungapped features (ie parse cigar string),
+	#map onto exons ie determine mismatches
+	#and munge (ie account for gaps)
 	my $first_feature = 1;
 	my $last_end = 0;
 	my @features = $evi->ungapped_features;
@@ -276,37 +275,37 @@ sub _content {
     $config->{'transcript'}{'transcript_evidence'} = $t_evidence;	
     
     #add info on additional supporting_evidence (exon level)
+    #invloves 
     my $e_evidence;
     my $evidence_checks;
-    my %evidence_start_stops;	
-
+    my %evidence_ends;	
     foreach my $exon (@$exons) {
       EVI:
 	foreach my $evi (@{$exon->get_all_supporting_features}) {
-
 	    my $hit_name = $evi->hseqname;
 	    my $hit_seq_region_start = $evi->seq_region_start;
 	    my $hit_seq_region_end = $evi->seq_region_end;
-
 	    if ($o_type eq 'vega') {
-		next EVI unless ($t_ids{$hit_name}); #only proceed for vega if this hit name has been used as transcript evidence
+		###only proceed for vega if this hit name has been used as transcript evidence
+		next EVI unless ($t_ids{$hit_name});
 	    }
 	    else {
-		next EVI if (exists($t_evidence->{$hit_name})); #only proceed if this hit name has not been used as transcript evidence
+		#only proceed for ensembl if this hit name has *not* been used as transcript evidence
+		next EVI if (exists($t_evidence->{$hit_name}));
 	    }
 
 	    #calculate beginning and end of the combined hit (first steps are needed to autovivify)
-	    $evidence_start_stops{$hit_name}{'comb_start'} = $hit_seq_region_start unless exists($evidence_start_stops{$hit_name}{'comb_start'});
-	    $evidence_start_stops{$hit_name}{'comb_start'} = $hit_seq_region_start if ($hit_seq_region_start < $evidence_start_stops{$hit_name}{'comb_start'});
-	    $evidence_start_stops{$hit_name}{'comb_end'} = $hit_seq_region_end unless exists($evidence_start_stops{$hit_name}{'comb_end'});
-	    $evidence_start_stops{$hit_name}{'comb_end'} = $hit_seq_region_end if ($hit_seq_region_end > $evidence_start_stops{$hit_name}{'comb_end'});
+	    $evidence_ends{$hit_name}{'start'} = $hit_seq_region_start unless exists($evidence_ends{$hit_name}{'start'});
+	    $evidence_ends{$hit_name}{'start'} = $hit_seq_region_start if ($hit_seq_region_start < $evidence_ends{$hit_name}{'start'});
+	    $evidence_ends{$hit_name}{'end'} = $hit_seq_region_end unless exists($evidence_ends{$hit_name}{'end'});
+	    $evidence_ends{$hit_name}{'end'} = $hit_seq_region_end if ($hit_seq_region_end > $evidence_ends{$hit_name}{'end'});
 
 	    #ignore duplicate entries
-	    if ( defined(@{$evidence_start_stops{$hit_name}{'starts_and_ends'}})
-		     && grep {$_ eq "$hit_seq_region_start:$hit_seq_region_end"} @{$evidence_start_stops{$hit_name}{'starts_and_ends'}}) {
+	    if ( defined(@{$evidence_ends{$hit_name}{'starts_and_ends'}})
+		     && grep {$_ eq "$hit_seq_region_start:$hit_seq_region_end"} @{$evidence_ends{$hit_name}{'starts_and_ends'}}) {
 		next EVI;
 	    }
-	    push @{$evidence_start_stops{$hit_name}{'starts_and_ends'}}, "$hit_seq_region_start:$hit_seq_region_end";
+	    push @{$evidence_ends{$hit_name}{'starts_and_ends'}}, "$hit_seq_region_start:$hit_seq_region_end";
 	    
 	    my $hit_mismatch;
 	    my $hit_start = $evi->hstart;
@@ -314,28 +313,28 @@ sub _content {
 	    #compare the start of this hit with the end of the last one -
 	    #only DNA features have to match exactly, protein features have a tolerance of +- 3
 	    if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
-		if (   ($evidence_start_stops{$hit_name}{'last_end'}) 
-			   && (abs($hit_start - $evidence_start_stops{$hit_name}{'last_end'}) > 3 )) {
-		    $hit_mismatch = $hit_start - $evidence_start_stops{$hit_name}{'last_end'};
+		if (   ($evidence_ends{$hit_name}{'last_end'}) 
+			   && (abs($hit_start - $evidence_ends{$hit_name}{'last_end'}) > 3 )) {
+		    $hit_mismatch = $hit_start - $evidence_ends{$hit_name}{'last_end'};
 		}
 	    }
 	    else {
-		if (   ($evidence_start_stops{$hit_name}{'last_end'}) 
-			   && (abs($hit_start - $evidence_start_stops{$hit_name}{'last_end'}) > 1) ) {
-		    $hit_mismatch = $hit_start - $evidence_start_stops{$hit_name}{'last_end'};
+		if (   ($evidence_ends{$hit_name}{'last_end'}) 
+			   && (abs($hit_start - $evidence_ends{$hit_name}{'last_end'}) > 1) ) {
+		    $hit_mismatch = $hit_start - $evidence_ends{$hit_name}{'last_end'};
 		}
-		elsif ($hit_start == $evidence_start_stops{$hit_name}{'last_end'}) {
+		elsif ($hit_start == $evidence_ends{$hit_name}{'last_end'}) {
 		    $hit_mismatch = 0;
 		}
 	    }
 
-	    
+	    #don't show duplicated bits of the hit for vega since sadly the data has lots of this
 	    $hit_mismatch = 0 if ($o_type eq 'vega' && $hit_mismatch < 0);
 
 	    #note position of end of the hit for next iteration
-	    $evidence_start_stops{$hit_name}{'last_end'} = $evi->hend;
+	    $evidence_ends{$hit_name}{'last_end'} = $evi->hend;
 	    
-	    # Use this code to do coordinate munging:
+	    # coordinate munging:
 	    # pass it a single exon but could pass it all if them if we wanted to match the hit across all exons
 	    my $munged_coords = $self->split_evidence_and_munge_gaps($evi,[$exon],$offset,[$raw_coding_start+$offset,$raw_coding_end+$offset],ref($evi));
 	    foreach my $munged_hit (@$munged_coords) {				
@@ -351,10 +350,11 @@ sub _content {
 		}
 	    }
 	    $e_evidence->{$hit_name}{'hit_name'} = $hit_name;
+	    $e_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
 	}
     }
 
-    #remove any non-complete matching evidence where it overlaps completely matching evidence
+    #remove any non-perfect matching evidence where it overlaps perfect matching evidence
     while ( my ($hit, $det) = each (%{$e_evidence})) {
       THIS_MATCH:
 	foreach my $this_match (@{$det->{'data'}}) {
@@ -378,16 +378,16 @@ sub _content {
 	}
     }
 
-    #add tags if the merged hit extends beyond the end of the transcript (but not for Vega db genes)
+    #add tags if the merged hit extends beyond the end of the transcript (but not for Vega db genes since they don't mean anything)
     if ($o_type ne 'vega') {
-	while ( my ($hit_name, $coords) = each (%evidence_start_stops)) {
+	while ( my ($hit_name, $coords) = each (%evidence_ends)) {
 	    if ( $e_evidence->{$hit_name}{'data'}) {
-		if ($coords->{'comb_start'} < $transcript->start) {
-		    my $diff =  $transcript->start - $coords->{'comb_start'};
-		    $e_evidence->{$hit_name}{'data'}[0]{'lh_ext'}  = $transcript->start - $coords->{'comb_start'};
+		if ($coords->{'start'} < $transcript->start) {
+		    my $diff =  $transcript->start - $coords->{'start'};
+		    $e_evidence->{$hit_name}{'data'}[0]{'lh_ext'}  = $transcript->start - $coords->{'start'};
 		}
-		if ($coords->{'comb_end'} > $transcript->end) {
-		    $e_evidence->{$hit_name}{'data'}[-1]{'rh_ext'} = $coords->{'comb_end'} - $transcript->end;
+		if ($coords->{'end'} > $transcript->end) {
+		    $e_evidence->{$hit_name}{'data'}[-1]{'rh_ext'} = $coords->{'end'} - $transcript->end;
 		}
 	    }
 	}
@@ -402,9 +402,11 @@ sub _content {
 	}
 	$e_evidence->{$hit_name}{'hit_length'} = $tot_length;
     }
-    my $evidence_type = ($o_type eq 'vega') ? 'transcript_evidence' : 'evidence';
 
-    $config->{'transcript'}{$evidence_type} = $e_evidence;	
+    #we want to show the vega evidence as transcript evidence but we can't munge the cigar strings for vega evidence
+    #therefore use the supporting_features as transcript_supporting_features - they should be the same anyway
+    my $evidence_type = ($o_type eq 'vega') ? 'transcript_evidence' : 'evidence';
+    $config->{'transcript'}{$evidence_type} = $e_evidence;
 
     #draw and render image
     my $image = $object->new_image(
@@ -414,7 +416,6 @@ sub _content {
     $image->imagemap = 'yes';
     $image->{'panel_number'} = 'top';
     $image->set_button( 'drag', 'title' => 'Drag to select region' );
-    
     return $image->render;
 }
 
@@ -427,12 +428,15 @@ sub _content {
   Arg [4]    : Arrayref of coding positions
   Arg [5]    : type of evidence (B::E::DnaDnaAlignFeature or B::E::DnaPepAlignFeature)
   Description: Takes a supporting feature and maps to all exons supplied - depending on usage either all exons
-               in the transcript or just a single exon. Coordinates returned are those used for drawing.
+               in the transcript or just a single exon. Coordinates returned are relevant to the munged slice,
+               ie fixed length introns, and are those used for drawing.
                Also looks for mismatches between the end of the hit and the end of the exon; takes into account
                the end of the CDS if the evidence is a DnaPepAlignFeature, ie evidence that stops at the end of
-               the CDS is not tagged if it's protein evidence. Also looks for 'extra' exons, ie those that are in
-               the parsed cigar string but not in the transcript
-  Returntype : Arrayref of hashrefs - positions for drawing and also tags for hit/exon boundry mismatches and extra exons
+               the CDS is not tagged if it's protein evidence.
+               Also looks for 'extra' exons, ie those that are in the parsed cigar string or combined exon hits
+               but not in the transcript.
+  Returntype : Arrayref of hashrefs - positions for drawing and also tags for hit/exon boundry mismatches and
+               extra exons
 
 =cut
 
@@ -442,20 +446,16 @@ sub split_evidence_and_munge_gaps {
     my $object    = $self->object;
     my $hit_seq_region_start = $hit->start;
     my $hit_seq_region_end   = $hit->end;
-    my $hit_name = $hit->hseqname;
-#    if ($hit->hseqname eq 'Q08ET0.1') { warn "hit: - $hit_seq_region_start--$hit_seq_region_end"; }
-    
-    my $coords;
+    my $hit_name             = $hit->hseqname;
+ 
+   my $coords;
     my $last_end;
     my $past_hit_end = 0;
-    
     foreach my $exon (@{$exons}) {
 	next if $past_hit_end;
 	my $estart = $exon->start;
 	my $eend   = $exon->end;
 	my $ename  = $exon->stable_id;
-#	if ($hit->hseqname eq 'Q08ET0.1') { warn "  exon $ename: - $estart:$eend; last_end = $last_end"; }
-	my @coord;
 
 	#catch any extra 'exons' that are in a parsed hit
 	my $extra_exon = 0;
@@ -469,11 +469,11 @@ sub split_evidence_and_munge_gaps {
 	    next;
 	}
 	
-	#set this to save further iteration if we're past the end
+	#set this to save any further iteration if we're past the end of the exon
 	$past_hit_end = 1 if ($eend >= $hit_seq_region_end);
 
 	#add tags for hit/exon start/end mismatches - protein evidence has some leeway (+-3), DNA has to be exact
-	#CCDS evidence is considered as protein evidence even though it is a DNA feature 
+	#CCDS evidence is considered as protein evidence even though it is a DNA feature
 	my ($left_end_mismatch, $right_end_mismatch);
 	my ($cod_start,$cod_end);
 	my ($b_start,$b_end);
@@ -493,11 +493,10 @@ sub split_evidence_and_munge_gaps {
 	    $left_end_mismatch  = $estart == $hit_seq_region_start ? 0 : $estart - $hit_seq_region_start;
 	    $right_end_mismatch = $eend   == $hit_seq_region_end   ? 0 : $hit_seq_region_end - $eend;
 	}	
-	
-	if ($hit->hseqname eq 'Q08ET0.1') { warn "   comparing against $b_start to $b_end";}
 
-	#map start and end positions of the hit from genomic coordinates to transcript genomic coordinates
-        #account for off-by-three errors by setting boundry of hit to exon boundry
+	#Map start and end positions of the hit from genomic coordinates to transcript genomic coordinates.
+        #Account for off-by-three errors (which can impact on the display as just a pixel off) by setting
+        #the boundry of the hit to the exon boundry in these cases
 	my $start;
 	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
 	    $start =   ($b_start - $hit_seq_region_start) > 4 ? $b_start
@@ -507,7 +506,6 @@ sub split_evidence_and_munge_gaps {
 	else {
 	    $start = $hit_seq_region_start >= $estart ? $hit_seq_region_start : $estart;
 	}
-#	if ($hit->hseqname eq 'Q08ET0.1') { warn "   start = $start";}
 	$start -= $offset;
 	my $munged_start = $start + $object->munge_gaps( 'supporting_evidence_transcript', $start );
 	my $end;
@@ -519,11 +517,10 @@ sub split_evidence_and_munge_gaps {
 	else {
 	    $end = $hit_seq_region_end <= $eend ? $hit_seq_region_end : $eend;
 	}
-#	if ($hit->hseqname eq 'Q08ET0.1') { warn "   end = $end";}
 	$end -= $offset;
 	my $munged_end = $end + $object->munge_gaps( 'supporting_evidence_transcript', $end );
 
-	#don't even attempt to show any end mismatches for vega db genes!
+	#don't even attempt to show any end mismatches for vega db genes, data won't allow it!
 	if (lc($object->db_type) eq 'vega') {
 	    $left_end_mismatch = 0;
 	    $right_end_mismatch = 0;
