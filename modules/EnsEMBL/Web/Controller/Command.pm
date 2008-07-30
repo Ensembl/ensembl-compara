@@ -30,8 +30,6 @@ sub BUILD {
   }
 }
 
-our $SPAM_THRESHOLD_PARAMETER = 60;
-
 sub action {
   my $self = shift;
   return $self->get_action; 
