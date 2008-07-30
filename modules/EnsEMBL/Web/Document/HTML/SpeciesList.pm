@@ -61,15 +61,11 @@ sub _render_species_list {
   if (scalar(@favourites) < 1) {
     @favourites = @{_get_defaults($species_defs)};
   }
-  my %check_faves;
+  my (%check_faves, @ok_faves);
   foreach my $fave (@favourites) {
+    push @ok_faves, $fave unless $check_faves{$fave};
     $check_faves{$fave}++;
   }
-  my @ok_faves = sort {
-                          $species_defs->get_config($a, "SPECIES_COMMON_NAME")
-                          cmp
-                          $species_defs->get_config($b, "SPECIES_COMMON_NAME")
-                          } keys %check_faves;
  
   ## output list
   $html .= qq(<div id='static_favourite_species'>
