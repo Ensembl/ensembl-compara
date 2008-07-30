@@ -11,21 +11,24 @@ sub new {
 
 sub render {
   my $self = shift;
-  my $style;
+  my ($style, @styles);
   if ( CGI::escapeHTML( $self->rows ) ) {
     my $height = CGI::escapeHTML( $self->rows ) * 1.2;
-    $style = 'style="height:'.$height.'em"';
+    push @styles, 'height:'.$height.'em';
   }
+  
+  if (@styles) {
+    $style = 'style="'.join(';', @styles).'"';
+  }
+
   return sprintf(
-    qq(<label for="%s">%s: </label><textarea name="%s" id="%s" rows="%s" cols="%s" onKeyUp="os_check('text',this,%d)" onChange="os_check( 'text', this, %d )" class="input-textarea" %s>%s</textarea>),
+    qq(<label for="%s">%s: </label><textarea name="%s" id="%s" rows="%s" cols="%s" class="input-textarea" %s>%s</textarea>),
     CGI::escapeHTML( $self->name ), 
     CGI::escapeHTML( $self->label ), 
     CGI::escapeHTML( $self->name ), 
     CGI::escapeHTML( $self->id ),
     CGI::escapeHTML( $self->rows ) ? CGI::escapeHTML( $self->rows ) : '10', 
-    CGI::escapeHTML( $self->cols ) ? 'style="'.CGI::escapeHTML( $self->rows ) * 1.2 : '',
-    $self->required eq 'yes' ? 1 : 0,
-    $self->required eq 'yes' ? 1 : 0,
+    CGI::escapeHTML( $self->cols ) ? CGI::escapeHTML( $self->cols ) : '40',
     $style,
     CGI::escapeHTML( $self->value )
   );
