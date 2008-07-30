@@ -11,7 +11,6 @@ use EnsEMBL::Web::Data::Category;
 use EnsEMBL::Web::Data::View;
 use EnsEMBL::Web::Data::Glossary;
 
-use Mail::Mailer;
 use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::Object);
@@ -21,8 +20,6 @@ sub short_caption { return 'Help'; }
 sub counts        { return undef; }
 
 #-----------------------------------------------------------------------------
-
-our $SPAM_THRESHOLD_PARAMETER = 30;
 
 sub adaptor     { return $_[0]->Obj->{'adaptor'}; }
 sub modular     { return $_[0]->Obj->{'modular'}; }
