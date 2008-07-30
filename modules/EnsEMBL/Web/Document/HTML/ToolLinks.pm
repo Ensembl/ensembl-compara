@@ -21,6 +21,21 @@ sub render   {
 ## TO DO - once config tab is working, make this the default view
   if ($self->logins) {
     if ($ENV{'ENSEMBL_USER_ID'}) {
+      $html .= qq#
+      <a href="javascript:control_panel('/Account/Links?_referer=#.$url.qq#')">Control Panel</a> &nbsp;|&nbsp;
+      <a href="javascript:control_panel('/Account/Links?_referer=#.$url.qq#')">Account</a> &nbsp;|&nbsp;
+      <a href="javascript:control_panel('/Account/Logout?_referer=#.$url.qq#')">Logout</a> &nbsp;|&nbsp;
+      #;
+    }
+    else {
+      $html .= qq#
+      <a href="javascript:control_panel('/UserData/Upload?_referer=#.$url.qq#')">Control Panel</a> &nbsp;|&nbsp;
+      <a href="javascript:control_panel('/Account/Login?_referer=#.$url.qq#')">Login</a> / 
+      <a href="javascript:control_panel('/Account/Register?_referer=#.$url.qq#')">Register</a> &nbsp;|&nbsp;
+      #;
+    }
+=pod
+    if ($ENV{'ENSEMBL_USER_ID'}) {
       $html .= qq(
       <a href="/Account/Links?_referer=$url" class="modal_link">Control Panel</a> &nbsp;|&nbsp;
       <a href="/Account/Logout?_referer=$url" class="modal_link">Logout</a> &nbsp;|&nbsp;
@@ -33,6 +48,7 @@ sub render   {
       <a href="/Account/Register?_referer=$url" class="modal_link">Register</a> &nbsp;|&nbsp;
       );
     }
+=cut
   }
   else {
     $html .= qq(
