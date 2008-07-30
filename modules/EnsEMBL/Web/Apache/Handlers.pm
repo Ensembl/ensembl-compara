@@ -38,6 +38,7 @@ our %OBJECT_TO_SCRIPT = qw(
   Transcript  action
   Location    action
   Variation   action
+  Server      action
   Account     account
   UserData    user_data
   News        news

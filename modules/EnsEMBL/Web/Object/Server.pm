@@ -4,15 +4,20 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Object;
+use EnsEMBL::Web::Cache;
+use base qw(EnsEMBL::Web::Object);
+our $memd = new EnsEMBL::Web::Cache;
+
 use Storable qw(lock_retrieve);
 
-our @ISA = qw(EnsEMBL::Web::Object);
+sub caption { return 'Server information'; }
+sub short_caption { return 'Server'; }
+
+sub counts { return {}; }
 
 sub unpack_db_tree {
   my $self = shift;
   my $f = $self->param('file');
-  warn "**".$f;
   $f = $self->species.'.db' unless $f;
   warn "**".$f;
   $f =~ s/[^\.\w]+//g;
@@ -41,6 +46,7 @@ sub get_all_packed_files {
   unshift @files, 'config';
   return @files;
 }
+
 sub get_all_species {
   my $self = shift;
   my @species = @{ $self->species_defs->ENSEMBL_SPECIES };
