@@ -10,7 +10,7 @@ use EnsEMBL::Web::Controller::Action;
 
 {
 
-my %URL :ATTR(:set<url> :get<url>);
+my %URL        :ATTR(:set<url> :get<url>);
 my %Connection :ATTR(:set<connections> :get<connections>);
 
 sub add_connections {
@@ -56,14 +56,12 @@ sub process {
   my $self = shift;
   my $action = $self->get_action;
   my $found = 0;
-  foreach my $key (keys %{ $self->get_connections }) {
-    #warn "ROUTE: " . $key . "(" . $action->get_action . ")";
-    if ($key eq $action->get_action) {
-      $self->command($action);
-      $found = 1;
-    }
-  }
-  unless ($found) {
+
+  warn "ACTION: $action -> ",$action->get_action;
+  my $action_key = $action->get_action;
+  if( $self->get_connections->{$action_key} ) {
+    $self->command( $action );
+  } else {
     warn "NO ROUTES FOUND FOR: " . $action->get_url;
   }
 }

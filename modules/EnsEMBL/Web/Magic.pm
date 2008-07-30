@@ -15,7 +15,7 @@ use EnsEMBL::Web::RegObj;
 
 use base qw(Exporter);
 use CGI qw(header redirect); # only need the redirect header stuff!
-our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu);
+our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff);
 
 our $memd = EnsEMBL::Web::Cache->new(
   enable_compress    => 1,
@@ -238,8 +238,7 @@ sub stuff {
       my @sections;
       if ($doctype && $doctype eq 'Popup') {
         @sections = qw(global_context local_context local_tools content_panel);
-      }
-      else {
+      } else {
         @sections = qw(global_context local_context local_tools context_panel content_panel);
       }
       $webpage->configure( $object, @sections );

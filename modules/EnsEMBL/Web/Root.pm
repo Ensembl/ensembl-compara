@@ -42,6 +42,12 @@ sub _format_error {
   return $out;
 }
 
+sub is_valid_module_name {
+### returns true if valid module name...
+  my($self,$classname) = @_;
+  return $classname =~ /^[a-zA-Z_]\w*(::\w+)*$/;
+}
+
 sub dynamic_use {
 ### Equivalent of USE - but used at runtime
   my( $self, $classname ) = @_;
