@@ -4,9 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Mailer;
-
-our @ISA = qw(EnsEMBL::Web::Mailer);
+use base qw(EnsEMBL::Web::Mailer);
 
 {
 
@@ -14,12 +12,12 @@ sub send_activation_email {
   ### Sends an activation email to newly registered users.
   my ($self, %params) = @_;
 
-  my $sitename  = $self->site_name;
+  my $sitename  = $self->get_site_name;
   my $user      = $params{'user'};
 
   my $message;
   if ($params{'lost'}) {
-    $self->subject("$sitename account reactivation");
+    $self->set_subject("$sitename account reactivation");
     $message = qq(
 Hello ) . $user->name . qq(,
 
@@ -30,7 +28,7 @@ not, please disregard this email.
 );
   }
   else {
-    $self->subject("Your new $sitename account");
+    $self->set_subject("Your new $sitename account");
     $message = qq(
 Welcome to $sitename,
 
@@ -40,21 +38,21 @@ You just need to activate your account, using the link below:
 );
   }
 
-  $message .= $self->base_url.'/Account/Activate?email='.$user->email.';code='.$user->salt;
+  $message .= $self->get_base_url.'/Account/Activate?email='.$user->email.';code='.$user->salt;
 
   if ($params{'group_id'}) {
     $message .= ";group_id=" . $params{'group_id'};
   }
 
   $message .= $self->email_footer;
-  $self->message($message);
+  $self->set_message($message);
   return eval{ $self->send(); };
 }
 
 sub send_welcome_email {
   ### Sends a welcome email to newly registered users.
   my ($self, $email) = @_;
-  my $sitename = $self->site_name;
+  my $sitename = $self->get_site_name;
   my $message = qq(Welcome to $sitename.
 
   Your account has been activated! In future, you can log in to $sitename using your email address and the password you chose during registration:
@@ -63,18 +61,18 @@ sub send_welcome_email {
 
   More information on how to make the most of your account can be found here:
 
-  ) . $self->base_url . qq(/info/about/accounts.html
+  ) . $self->get_base_url . qq(/info/about/accounts.html
 
 );
   $message .= $self->email_footer;
-  $self->subject("Welcome to $sitename");
-  $self->message($message);
+  $self->set_subject("Welcome to $sitename");
+  $self->set_message($message);
   $self->send();
 }
 
 sub send_invite_email {
   my ($self, $user, $group, $invite, $email) = @_;
-  my $sitename = $self->site_name;
+  my $sitename = $self->get_site_name;
   my $article = 'a';
   if ($sitename =~ /^(a|e|i|o|u)/i) {
     $article = 'an';
@@ -88,32 +86,30 @@ sub send_invite_email {
  To accept this invitation, click on the following link:
 
  ) . $group->name . qq( 
- ) . $self->base_url . qq(/Account/Accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(;email=$email
+ ) . $self->get_base_url . qq(/Account/Accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(;email=$email
 
  If you do not wish to accept, please just disregard this email.
 
  If you have any problems please don't hesitate to contact ) . $user->name . qq( 
- or the $sitename help desk, on ) . 
- $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
+ or the $sitename help desk, at ) . $self->get_reply;
 
   $message .= $self->email_footer;
-  $self->email($email);
-  $self->subject("Invitation to join $article $sitename group");
-  $self->message($message);
+  $self->set_email($email);
+  $self->set_subject("Invitation to join $article $sitename group");
+  $self->set_message($message);
   $self->send();
 }
 
 sub email_footer {
-  my ($self) = @_;
-  my $site_info = shift;
-  my $sitename = $self->site_name;
+  my $self = shift;
+  my $sitename = $self->get_site_name;
   my $footer = qq(
 
 Many thanks,
 
 The $sitename web team
 
-$sitename Privacy Statement: ) . $self->base_url . qq(/info/about/privacy.html
+$sitename Privacy Statement: ) . $self->get_base_url . qq(/info/about/privacy.html
 );
   return $footer;
 }

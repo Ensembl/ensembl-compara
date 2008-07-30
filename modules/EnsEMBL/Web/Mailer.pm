@@ -1,102 +1,79 @@
 package EnsEMBL::Web::Mailer;
 
+## Wrapper around Mail::Mailer with added clean-up functionality
+
 use strict;
 use warnings;
 no warnings "uninitialized";
 
+use Class::Std;
 use Mail::Mailer;
-use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::RegObj;
 
 {
 
-my %Email_of;
-my %MailServer_of;
-my %SiteName_of;
-my %Reply_of;
-my %From_of;
-my %Subject_of;
-my %Message_of;
-my %BaseURL_of;
-my %HelpEmail_of;
+my %To            :ATTR(:set<email> :get<email>) ;
+my %From          :ATTR(:set<from> :get<from>);
+my %Reply         :ATTR(:set<reply> :get<reply>);
+my %Subject       :ATTR(:set<subject> :get<subject>);
+my %Message       :ATTR(:set<message> :get<message>);
+my %MailServer    :ATTR(:set<mail_server> :get<mail_server>);
+my %SpamThreshold :ATTR(:set<spam_threshold> :get<spam_threshold>);
+my %SiteName      :ATTR(:set<site_name> :get<site_name>) ;
+my %BaseUrl       :ATTR(:set<base_url> :get<base_url>) ;
 
-sub new {
-  my ($class, %params) = @_;
-  my $self = bless \my($scalar), $class;
-  my $sd = EnsEMBL::Web::SpeciesDefs->new();
-  $Email_of{$self}       = defined $params{email}       ? $params{email}       : "";
-  $From_of{$self}        = defined $params{from}        ? $params{from}        : $sd->ENSEMBL_HELPDESK_EMAIL;
-  $Reply_of{$self}       = defined $params{reply_to}    ? $params{reply_to}    : $sd->ENSEMBL_HELPDESK_EMAIL;
-  $Subject_of{$self}     = defined $params{subject}     ? $params{subject}     : "";
-  $SiteName_of{$self}    = defined $params{site_name}   ? $params{site_name}   : "";
-  $BaseURL_of{$self}     = defined $params{base_url}    ? $params{base_url}    : $sd->ENSEMBL_BASE_URL;
-  $MailServer_of{$self}  = defined $params{mail_server} ? $params{mail_server} : $sd->ENSEMBL_MAIL_SERVER;
-  $HelpEmail_of{$self}   = defined $params{help_email}  ? $params{help_email}  : $sd->ENSEMBL_HELPDESK_EMAIL;
-  if (!$SiteName_of{$self}) {
-    $SiteName_of{$self} = $sd->ENSEMBL_SITETYPE;
+sub BUILD {
+  my ($self, $ident, $args) = @_;
+  my $sd = $EnsEMBL::Web::Registry->species_defs;
+  $From{$ident}           = $args->{from} || $sd->ENSEMBL_HELPDESK_EMAIL;
+  $Reply{$ident}          = $args->{reply} || $sd->ENSEMBL_HELPDESK_EMAIL;
+  $MailServer{$ident}     = $args->{mail_server} || $sd->ENSEMBL_MAIL_SERVER;
+  $SpamThreshold{$ident}  = $args->{spam_threshold} || 60;
+  $SiteName{$ident}       = $sd->ENSEMBL_SITETYPE;
+  $BaseUrl{$ident}        = $sd->ENSEMBL_BASE_URL;
+}
+
+sub spam_check {
+  my ($self, $content) = @_;
+  (my $check = $content) =~ s/<a\s+href=.*?>.*?<\/a>//smg;
+  $check =~ s/\[url=.*?\].*?\[\/url\]//smg;
+  $check =~ s/\[link=.*?\].*?\[\/link\]//smg;
+  $check =~ s/https?:\/\/\S+//smg;
+  if( length($check)<length($content)/$SPAM_THRESHOLD_PARAMETER ) {
+    warn "MAIL FILTERED DUE TO BLOG SPAM.....";
+    return 1;
   }
-  return $self;
+  $check =~ s/\s+//gsm;
+  if( $check eq '' ) {
+    warn "MAIL FILTERED DUE TO ZERO CONTENT!";
+    return 1;
+  }
+  return 0;
 }
 
-sub email {
-  ### a
-  my $self = shift;
-  $Email_of{$self} = shift if @_;
-  return $Email_of{$self};
-}
-
-sub site_name {
-  ### a
-  my $self = shift;
-  $SiteName_of{$self} = shift if @_;
-  return $SiteName_of{$self};
-}
-
-sub reply_to {
-  ### a
-  my $self = shift;
-  $Reply_of{$self} = shift if @_;
-  return $Reply_of{$self};
-}
-
-sub mail_server {
-  ### a
-  my $self = shift;
-  $MailServer_of{$self} = shift if @_;
-  return $MailServer_of{$self};
-}
-
-sub from {
-  ### a
-  my $self = shift;
-  $From_of{$self} = shift if @_;
-  return $From_of{$self};
-}
-
-sub subject {
-  ### a
-  my $self = shift;
-  $Subject_of{$self} = shift if @_;
-  return $Subject_of{$self};
-}
-
-sub message {
-  ### a
-  my $self = shift;
-  $Message_of{$self} = shift if @_;
-  return $Message_of{$self};
-}
-
-sub base_url {
-  ### a
-  my $self = shift;
-  $BaseURL_of{$self} = shift if @_;
-  return $BaseURL_of{$self};
+sub sanitize_email {
+  my ($self, $email) = @_;
+  $email =~ s/[\r\n].*$//sm;
+  $email =~ s/"//g;
+  $email =~ s/''/'/g;
+  return $email;
 }
 
 sub send {
-  my $self = shift;
-  #my $mailer = new Mail::Mailer 'smtp', Server => $self->mail_server;
-  my $mailer = new Mail::Mailer 'smtp', Server => "localhost";
+  my ($self, $options) = @_;
+
+  ## Sanitize input and fill in any missing values
+  $self->set_message($self->spam_check($self->get_message)) unless $options->{'spam_check'} == 0;
+  $self->set_from($self->sanitize_email($self->get_from));
+  $self->set_to($self->sanitize_email($self->to));
+  if ($self->get_reply) {
+    $self->set_reply($self->sanitize_email($self->reply));
+  }
+  else {
+    $self->set_reply($self->get_from);
+  }
+
+  my $mailer = new Mail::Mailer 'smtp', Server => $self->get_mail_server;
   my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
   my @weekDays = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
   my ($sec, $min, $hour, $day, $month, $year) = gmtime();
@@ -104,43 +81,15 @@ sub send {
   my $time_string = "$weekDays[$day] $day $months[$month], $year $hour:$min:$sec +0000"; 
 
   $mailer->open({
-    'To'      => $self->escape($self->email),
-    'From'    => $self->escape($self->from),
-    'Reply-To'=> $self->escape($self->reply_to),
-    'Subject' => $self->subject,
+    'To'      => $self->get_to,
+    'From'    => $self->get_from,
+    'Reply-To'=> $self->get_reply,
+    'Subject' => $self->get_subject,
     'Date'    => $time_string,
   });
   
-  my $message = $self->message;
- 
-  print $mailer $message;
+  print $mailer $self->get_message;
   $mailer->close();
-}
-
-sub escape {
-  my ($self, $value) = @_;
-  $value =~ s/[\r\n].*$//sm;
-  return $value;
-}
-
-sub _spam_quality_score {
-  my $self = shift;
-  local $_ = $self->message;
-  s/<a href=.*?>.*?<\/a>//g;
-  s/\[url=.*?\].*?\[\/url\]//g;
-  return length($_)/length($self->message);
-}
-
-sub DESTROY {
-  ### d
-  my $self = shift;
-  delete $Email_of{$self};
-  delete $Reply_of{$self};
-  delete $From_of{$self};
-  delete $Subject_of{$self};
-  delete $Message_of{$self};
-  delete $MailServer_of{$self};
-  delete $BaseURL_of{$self};
 }
 
 }
