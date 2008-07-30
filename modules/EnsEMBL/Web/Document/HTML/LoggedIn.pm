@@ -19,11 +19,12 @@ sub render {
     ($url = $param) =~ s/_referer=//;
     last;
   }
-  $url = CGI::escape($url);
   if ($user) {
+    ## Don't escape the URL, as logging out needs to be able to exit the control panel
     $html .= sprintf(qq(Logged in as <strong>%s</strong> | <a href="/Account/Logout?_referer=%s">Log out</a>), $user->name, $url);
   }
   else {
+    $url = CGI::escape($url);
     $html .= qq(<a href="/Account/Login?_referer=$url">Login</a> / <a href="/Account/Register?_referer=$url">Register</a>);
   }
   $html .= '</div>';
