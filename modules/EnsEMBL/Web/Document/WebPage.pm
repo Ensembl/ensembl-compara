@@ -53,6 +53,8 @@ sub new {
     'factory'      => undef,
     'command'      => undef,
     'configurable' => undef,
+    'cache'        => undef,
+    'r'            => undef,
     'timer'        => $ENSEMBL_WEB_REGISTRY->timer,
     'species_defs' => $ENSEMBL_WEB_REGISTRY->species_defs
   };
@@ -60,7 +62,10 @@ sub new {
   my %parameters = @_;
   $| = 1;
 
-  $self->{'parent'} = $parameters{'parent'};
+  $self->{'cache'} = $parameters{'cache'};
+  $self->{'r'}     = $parameters{'r'};
+  $self->{'parent'}     = $parameters{'parent'};
+  
 ## Input module...
   $self->{'script'} = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
   my $input;
@@ -85,7 +90,12 @@ sub new {
     $render_module = "EnsEMBL::Web::Document::Renderer::".DEFAULT_RENDERER;
     $self->dynamic_use( $render_module ); 
   }
-  my $rend = new $render_module();                                   $self->_prof("Renderer compiled and initialized");
+
+  my $rend = new $render_module(
+    r     => $self->{'r'},
+    cache => $self->{'cache'},
+  );
+  $self->_prof("Renderer compiled and initialized");
 
 ## Compile and create "Document" object ... [ Dynamic, Popup, ... ]
   $self->{doctype} = $parameters{'doctype'} || DEFAULT_DOCUMENT;
@@ -122,7 +132,7 @@ sub new {
   $self->factory = EnsEMBL::Web::Proxy::Factory->new(
     $parameters{'objecttype'}, {
       '_input'         => $input,
-      '_apache_handle' => $rend->{'r'},
+      '_apache_handle' => $rend->r,
       '_core_objects'  => $core_objects,
       '_databases'     => $db_connection
     }

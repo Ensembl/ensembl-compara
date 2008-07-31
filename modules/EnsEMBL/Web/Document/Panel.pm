@@ -1,11 +1,15 @@
 package EnsEMBL::Web::Document::Panel;
+
 use strict;
-use EnsEMBL::Web::Root;
+
+use HTTP::Request;
+use Data::Dumper;
 use CGI qw(escape escapeHTML);
-use EnsEMBL::Web::Document::Renderer::GzCacheFile;
+
+use EnsEMBL::Web::Root;
+use EnsEMBL::Web::Document::Renderer::Assembler;
 use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::Document::Renderer::String;
-
 use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Root);
@@ -13,12 +17,12 @@ our @ISA = qw(EnsEMBL::Web::Root);
 sub new {
   my $class = shift;
   my $self = {
-    '_renderer' => undef,
-    'forms' => {},
-    'components'   => {},
-    'component_order' => [],
-    'prefix' => 'p',
-    'asychronous_components' => [],
+    _renderer       => undef,
+    forms           => {},
+    components      => {},
+    component_order => [],
+    prefix          => 'p',
+    asychronous_components => [],
     @_
   };
   bless $self, $class;
@@ -299,7 +303,7 @@ sub content_Text() {
   my $temp_renderer = $self->renderer;
   $self->renderer = new EnsEMBL::Web::Document::Renderer::String();
   $self->content();
-  my $value = $self->strip_HTML( $self->renderer->value() ); 
+  my $value = $self->strip_HTML( $self->renderer->content ); 
   $self->renderer = $temp_renderer;
   $self->renderer->print( $value )
 }
@@ -358,25 +362,27 @@ sub render {
     }
     $self->renderer->print($HTML);
     if( $status ne 'off' ) {
-      if( $self->{'cacheable'} eq 'yes' ) { ### We can cache this panel - so switch the renderer!!!
+
+      if( $self->{'_delayed_write_'} ) {
+        $self->renderer->print($content);
+      } else {
+
         my $temp_renderer = $self->renderer;
-        $self->renderer = new EnsEMBL::Web::Document::Renderer::GzCacheFile( $self->{'cache_type'}, $self->{'cache_filename'} );
-        if( $self->{'_delayed_write_'} ) {
-          $self->renderer->print($content)    unless( $self->renderer->{'exists'} eq 'yes' );
-        } else {
-          $self->_render_content()            unless( $self->renderer->{'exists'} eq 'yes' );
-        }
+        $self->renderer = new EnsEMBL::Web::Document::Renderer::Assembler(
+          r       => $temp_renderer->r,
+          cache   => $temp_renderer->cache,
+          session => $self->{object} ? $self->{object}->get_session : undef,
+        );
+
+        $self->_render_content();
         $self->renderer->close();
+
         $content = $self->renderer->content;
         $self->renderer = $temp_renderer;
-        $self->renderer->print( $content );
-      } else {
-        if( $self->{'_delayed_write_'} ) {
-          $self->renderer->print($content);
-        } else {
-          $self->_render_content();
-        }
+        $self->renderer->print( $content );          
+
       }
+
     }
     $self->renderer->print( q(
     <p class="invisible">.</p></div>) );
@@ -566,7 +572,6 @@ sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 3+$_[2] ); }
 sub _is_ajax_request {
   return $_[0]->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 }
-
 sub content {
   my( $self ) = @_;
   $self->reset_buffer;
@@ -580,64 +585,83 @@ sub content {
       my $result;
       # (my $module_name = $function_name ) =~s/::\w+$//;
       if( $self->dynamic_use( $module_name ) ) {
+
         $self->{'object'} && $self->{'object'}->prefix( $self->prefix );
+
         no strict 'refs';
         my $comp_obj;
         eval {
           $comp_obj = $module_name->new( $self->{'object'} ); # &$function_name( $self, $self->{'object'} );
         };
         $result = $comp_obj->{_end_processing_};
+
+
         if( $@ ) {
-         warn $@;
-          $self->_error( qq(Runtime Error in component "<b>$component</b> [new]"),
-            qq(
-    <p>
-      Function <strong>$module_name</strong> fails to
-      execute due to the following error:
-    </p>).$self->_format_error($@)
-             );
+          warn $@;
+          $self->_error(
+            qq(Runtime Error in component "<b>$component</b> [new]"),
+            qq(<p>
+                Function <strong>$module_name</strong> fails to
+                execute due to the following error:
+               </p>).$self->_format_error($@),
+          );
           $self->_prof( "Component $module_name (runtime failure [new])" );
         } else {
+          
           my $caption = $comp_obj->caption;
-	  warn $ENSEMBL_WEB_REGISTRY->get_ajax() ? ' use ajax ' : '  no ajax ';
-          if( $ENSEMBL_WEB_REGISTRY->get_ajax() &&
-	      $comp_obj->ajaxable() && !$self->_is_ajax_request ) {
-	    my( $ensembl, $plugin, $component, $type, @T ) = split '::', $module_name;
-	    my $URL = join '/',
-	       '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,@T;
-            $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
-	    if( $caption ) {
-              $self->printf( qq(<div class="ajax" title="['%s','%s']"></div>), CGI::escapeHTML($caption),CGI::escapeHTML($URL) );
-	    } else {
-              $self->printf( qq(<div class="ajax" title="['%s']"></div>), CGI::escapeHTML($URL) );
-	    }
-	  } else {
+
+          if( $comp_obj->ajaxable() && !$self->_is_ajax_request ) {
+
+        	    my( $ensembl, $plugin, $component, $type, @T ) = split '::', $module_name;
+        	    my $URL = join '/',
+        	       '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,@T;
+                    $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
+
+              ## Check if ajax enabled
+              if( $ENSEMBL_WEB_REGISTRY->check_ajax ) {
+
+                  if( $caption ) {
+                    $self->printf( qq(<div class="ajax" title="['%s','%s']"></div>), CGI::escapeHTML($caption),CGI::escapeHTML($URL) );
+                  } else {
+                    $self->printf( qq(<div class="ajax" title="['%s']"></div>), CGI::escapeHTML($URL) );
+                  }
+
+              } else {
+
+                  ## if ajax disabled - we get all content by parallel requests to ourself
+                  $self->print(
+                    HTTP::Request->new('GET', $self->{'object'}->species_defs->ENSEMBL_BASE_URL.$URL)
+                  );
+
+              }
+              
+	        } else {
+
             my $content;
             eval {
               $content = $comp_obj->content;
             };
-            if( $@ ) {
+            if ($@) {
               warn $@;
               $self->_error( qq(Runtime Error in component "<b>$component</b> [content]"),
-                qq(
-    <p>
-      Function <strong>$module_name</strong> fails to
-      execute due to the following error:
-    </p>).$self->_format_error($@)
+                qq(<p>
+                    Function <strong>$module_name</strong> fails to
+                    execute due to the following error:
+                   </p>).$self->_format_error($@)
               );
               $self->_prof( "Component $module_name (runtime failure [content])" );
             } else {
               if( $content ) {
-		if( ! $self->_is_ajax_request ) {
-                  my $caption = $comp_obj->caption;
-                  $self->printf( "<h2>%s</h2>", CGI::escapeHTML($caption) ) if $caption;
-		}
+            		if( ! $self->_is_ajax_request ) {
+                              my $caption = $comp_obj->caption;
+                              $self->printf( "<h2>%s</h2>", CGI::escapeHTML($caption) ) if $caption;
+            		}
                 $self->print( $content );
               }
               $self->_prof( "Component $module_name succeeded" );
             }
-	  }
-        }
+    	  }
+      }
       } else {
         $self->_error( qq(Compile error in component "<b>$component</b>"),
           qq(

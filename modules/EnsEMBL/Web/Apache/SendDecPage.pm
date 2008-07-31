@@ -49,9 +49,6 @@ sub handler {
 
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
 
-  ## Ajax request
-  $ENV{CACHE_KEY} .= '::AJAX' if $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
-
   ## User logged in, some content depends on user
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
 
@@ -97,7 +94,7 @@ sub handler {
 
     $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
-    my $renderer = new EnsEMBL::Web::Document::Renderer::String($r);
+    my $renderer = new EnsEMBL::Web::Document::Renderer::String( r => $r );
     my $page     = new EnsEMBL::Web::Document::Static($renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs);
     $page->include_navigation( $ENV{'SCRIPT_NAME'} =~ /^\/info/ );
     $page->_initialize();

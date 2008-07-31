@@ -1,8 +1,6 @@
 package EnsEMBL::Web::Configuration::Gene;
 
 use strict;
-
-use EnsEMBL::Web::Tools::Ajax;
 use EnsEMBL::Web::RegObj;
 
 use base qw( EnsEMBL::Web::Configuration );

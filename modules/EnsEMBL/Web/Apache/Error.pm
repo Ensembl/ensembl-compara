@@ -44,7 +44,7 @@ sub handler {
   my $admin = $r->server->server_admin;
   warn "$error_number ERROR: $error_subject $error_URL\n";
   
-  my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( $r );
+  my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( r => $r );
   my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SD );
 
   $page->_initialize();

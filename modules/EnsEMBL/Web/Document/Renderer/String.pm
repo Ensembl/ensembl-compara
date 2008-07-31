@@ -4,19 +4,14 @@ use strict;
 use EnsEMBL::Web::Document::Renderer::Table::Text;
 use Apache2::RequestUtil;
 
-# use overload '""' => \&value;
+use base 'EnsEMBL::Web::Document::Renderer';
 
 sub new {
   my $class = shift;
-  my $self = {
-    r      => shift || (Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request() : undef ),
-    string => '',
-  };
-  bless $self, $class;
+
+  my $self = $class->SUPER::new(string => '', @_);
   return $self;
 }
-
-sub fh { return undef; }
 
 sub new_table_renderer {
 ### Create a new table renderer.
@@ -24,10 +19,8 @@ sub new_table_renderer {
   return EnsEMBL::Web::Document::Renderer::Table::Text->new( { 'renderer' => $self } );
 }
 
-sub valid  { return 1; }
-sub printf { my $self = shift; my $temp = shift; $self->{'string'} .= sprintf( $temp, @_ ); }
-sub print  { my $self = shift; $self->{'string'} .= join( '', @_ );    }
-sub close  {}
-sub value  { return $_[0]{'string'} }
+sub printf  { shift->{'string'} .= sprintf(shift, @_);  }
+sub print   { shift->{'string'} .= join('', @_); }
+sub content { return $_[0]{'string'} }
 
 1;

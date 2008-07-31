@@ -1,14 +1,16 @@
 package EnsEMBL::Web::Document::Renderer::Apache;
 
 use strict;
+
 use EnsEMBL::Web::Document::Renderer::Table::HTML;
 use EnsEMBL::Web::Document::Renderer::CellFormat::HTML;
-use Apache2::RequestUtil;
+
+use base 'EnsEMBL::Web::Document::Renderer';
 
 sub new {
   my $class = shift;
-  my $self = { 'r' => shift || (Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request() : undef ), 'formats' => {} };
-  bless $self, $class;
+
+  my $self = $class->SUPER::new(formats => {}, @_);
   return $self;
 }
 
@@ -26,9 +28,8 @@ sub fh {
 }
 
 sub valid  { return $_[0]->{'r'}; }
-sub printf { my $self = shift; my $temp = shift; $self->{'r'}->print( sprintf $temp, @_ ) if $self->{'r'}; }
-sub print  { my $self = shift; $self->{'r'}->print(  @_        ) if $self->{'r'}; }
-sub close  {}
+sub printf { shift->r->print( sprintf shift, @_ ); }
+sub print  { shift->r->print(@_); }
 
 sub new_cell_format {
   my( $self, $arg_ref ) = @_;

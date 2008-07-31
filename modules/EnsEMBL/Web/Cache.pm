@@ -57,9 +57,10 @@ sub new {
 
   my $self = $class->SUPER::new(\%args);
   $self->enable_compress(0) unless $args{enable_compress};
-  
+
   $self->{default_exptime} = $default_exptime;
   $self->{levels}          = \%levels;
+  
   return $self;
 }
 
@@ -140,7 +141,7 @@ sub get {
   my $self = shift;
   my $key  = shift;
 
-  #warn "EnsEMBL::Web::Cache->get($key)";
+  warn "EnsEMBL::Web::Cache->get($key)";
   if ($self->{debug} && (my $debug_key_list = $self->SUPER::get('debug_key_list'))) {
     warn "EnsEMBL::Web::Cache->get($key)";
     $debug_key_list->{$key} ||= {};

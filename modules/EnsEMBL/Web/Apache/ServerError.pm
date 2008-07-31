@@ -29,7 +29,7 @@ sub handler {
     }
     return OK if $r->header_only;
       
-    my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( $r );
+    my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( r => $r );
     my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SD );
     $page->_initialize();
     $page->title->set( "500: Internal Server Error" );    

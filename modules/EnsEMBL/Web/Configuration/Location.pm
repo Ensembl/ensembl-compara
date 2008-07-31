@@ -2,8 +2,6 @@ package EnsEMBL::Web::Configuration::Location;
 
 use strict;
 
-use EnsEMBL::Web::Tools::Ajax;
-
 use base qw( EnsEMBL::Web::Configuration );
 
 use POSIX qw(floor ceil);

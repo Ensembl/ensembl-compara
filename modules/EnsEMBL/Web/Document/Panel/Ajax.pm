@@ -19,24 +19,11 @@ sub render {
   if( $self->{'delayed_write'} ) {
     $content = $self->_content_delayed();
   }
-  if( $self->{'cacheable'} eq 'yes' ) { ### We can cache this panel - so switch the renderer!!!
-    my $temp_renderer = $self->renderer;
-    $self->renderer = new EnsEMBL::Web::Document::Renderer::GzCacheFile( $self->{'cache_type'}, $self->{'cache_filename'} );
-    if( $self->{'_delayed_write_'} ) {
-      $self->renderer->print($content)    unless( $self->renderer->{'exists'} eq 'yes' );
-    } else {
-      $self->content()            unless( $self->renderer->{'exists'} eq 'yes' );
-    }
-    $self->renderer->close();
-    $content = $self->renderer->content;
-    $self->renderer = $temp_renderer;
-    $self->renderer->print( $content );
+
+  if( $self->{'_delayed_write_'} ) {
+    $self->renderer->print($content);
   } else {
-    if( $self->{'_delayed_write_'} ) {
-      $self->renderer->print($content);
-    } else {
-      $self->content();
-    }
+    $self->content();
   }
 }
 

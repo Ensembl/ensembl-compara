@@ -2,7 +2,6 @@ package EnsEMBL::Web::Configuration::ArchiveStableId;
 
 use strict;
 use EnsEMBL::Web::Configuration;
-use EnsEMBL::Web::Tools::Ajax;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::File::Text;
 use Bio::EnsEMBL::DBSQL::ArchiveStableIdAdaptor;
@@ -64,7 +63,7 @@ sub idhistoryview {
     $tree_panel->add_components(qw(
       tree            EnsEMBL::Web::Component::ArchiveStableId::tree
     ));
-    if (EnsEMBL::Web::Tools::Ajax::is_enabled()) {
+    if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
       $tree_panel->load_asynchronously('tree');
     }
     $self->add_panel($tree_panel);

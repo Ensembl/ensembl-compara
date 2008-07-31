@@ -2,7 +2,6 @@ package EnsEMBL::Web::Configuration::SNP;
 
 use strict;
 
-use EnsEMBL::Web::Tools::Ajax;
 use EnsEMBL::Web::RegObj;
 
 use base qw( EnsEMBL::Web::Configuration );

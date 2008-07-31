@@ -69,7 +69,8 @@ sub menu {
   warn "...CREATING WEBPAGE....";
   my $webpage     = EnsEMBL::Web::Document::WebPage->new(
     'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
-    'scriptname' => 'zmenu'
+    'scriptname' => 'zmenu',
+    'cache'      => $memd,
   );
   warn $ENV{'ENSEMBL_TYPE'};
   warn ".... zmenu ...";
@@ -123,9 +124,10 @@ sub ingredient {
 ###
 ### Wrapper around a list of components to produce a panel or
 ### part thereof - for inclusion via AJAX
+  my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
 
   my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
-  $ENV{CACHE_KEY} = $ENV{REQUEST_URI}.'::AJAX';
+  $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
   ## Ajax request
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
 
@@ -138,16 +140,17 @@ sub ingredient {
     my $referer_hash = _parse_referer;
 
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
-      'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
+      'objecttype' => $objecttype,
       'scriptname' => 'component',
       'parent'     => $referer_hash,
       'renderer'   => 'String',
+      'cache'      => $memd,
     );
     
     $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
   
     $webpage->render;
-    $content = $webpage->page->renderer->value;
+    $content = $webpage->page->renderer->content;
   
     my @tags = qw(AJAX);
     push @tags, keys %{ $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}} }
@@ -180,11 +183,13 @@ sub stuff {
   my $command = shift;
   my $doctype = shift;
   my $modal_dialog = shift;
+
   my $webpage = EnsEMBL::Web::Document::WebPage->new( 
                   'objecttype' => $object_type, 
                   'doctype'    => $doctype,
                   'scriptname' => 'action',
                   'command'    => $command, 
+                  'cache'      => $memd,
   );
   if( $modal_dialog ) {
     $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
