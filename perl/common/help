@@ -14,12 +14,13 @@ my $controller = EnsEMBL::Web::Controller->new;
 ## Search
 $controller->add_connections({ 
   'Search' => 'EnsEMBL::Web::Controller::Command::Help::Search',
-  'Lesults' => 'EnsEMBL::Web::Controller::Command::Help::Results',
+  'DoSearch' => 'EnsEMBL::Web::Controller::Command::Help::DoSearch',
+  'Results' => 'EnsEMBL::Web::Controller::Command::Help::Results',
 });
 
 ## Topics
 $controller->add_connections({ 
-  'FAQ'       => 'EnsEMBL::Web::Controller::Command::Help::FAQ',
+  'Faq'       => 'EnsEMBL::Web::Controller::Command::Help::Faq',
   'Glossary'  => 'EnsEMBL::Web::Controller::Command::Help::Glossary',
   'Feedback'  => 'EnsEMBL::Web::Controller::Command::Help::Feedback',
 });
