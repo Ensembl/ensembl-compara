@@ -227,7 +227,7 @@ sub _content_panel {
 
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
   my $node          = $self->get_node( $action );
-  my $title = $node->data->{'consise'}||$node->data->{'caption'};
+  my $title = $node->data->{'concise'}||$node->data->{'caption'};
      $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
      $title = join ' - ', '', ( $obj ? $obj->caption : () ), $title;
   $self->set_title( $title );
