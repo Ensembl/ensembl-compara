@@ -25,7 +25,18 @@ sub url {
   ### returns a URL string
   my ($self, $script, $param) = @_;
   my $url = $script; # TO DO - add site base URL
-  my $query_string = join ';', map { "$_=".escapeHTML($param->{$_}) } sort keys %$param;
+  my @params;
+  while (my ($k, $v) = each (%$param)) {
+    if (ref($v) eq 'ARRAY') {
+      foreach my $t (@$v) {
+        push @params, $k.' = '.escapeHTML($t);
+      }
+    }
+    else {
+      push @params, $k.' = '.escapeHTML($v);
+    }
+  } 
+  my $query_string = join ';', @params;
   $url .= "?$query_string" if $query_string;
 
   return $url;
