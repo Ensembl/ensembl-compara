@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Controller::Command::Help::FAQ;
+package EnsEMBL::Web::Controller::Command::Help::Faq;
 
 use strict;
 use warnings;
@@ -15,7 +15,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Magic::stuff('Help', 'FAQ', $self, 'Dynamic');
+  EnsEMBL::Web::Magic::stuff('Help', 'Faq', $self, 'Dynamic');
 }
 
 }
