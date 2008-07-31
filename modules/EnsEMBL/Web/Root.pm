@@ -29,11 +29,11 @@ sub url {
   while (my ($k, $v) = each (%$param)) {
     if (ref($v) eq 'ARRAY') {
       foreach my $t (@$v) {
-        push @params, $k.' = '.escapeHTML($t);
+        push @params, $k.'='.escapeHTML($t);
       }
     }
     else {
-      push @params, $k.' = '.escapeHTML($v);
+      push @params, $k.'='.escapeHTML($v);
     }
   } 
   my $query_string = join ';', @params;
