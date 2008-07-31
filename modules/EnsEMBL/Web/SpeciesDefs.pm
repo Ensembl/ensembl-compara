@@ -448,18 +448,16 @@ sub _parse {
     }
     $self->_merge_db_tree( $tree, $db_tree, $species );
     
-    if (0) {
-      if( -e $das_packed ) {
-        $das_tree->{ $species } = lock_retrieve( $das_packed );                              $self->_info_line( 'Retrieve', "$species DAS sources" );
-      } else {
-        # Set species on each of the child objects..
-        $plugin_locator->parameters( [$species] );
-        $plugin_locator->call( 'species' );
-        $plugin_locator->call( '_munge_das' );                                               $self->_info_line( '** DAS **', "$species DAS sources" );
-        lock_nstore( $das_tree->{ $species }, $das_packed );
-      }
-      $self->_merge_db_tree( $tree, $das_tree, $species );
+    if( -e $das_packed ) {
+      $das_tree->{ $species } = lock_retrieve( $das_packed );                              $self->_info_line( 'Retrieve', "$species DAS sources" );
+    } else {
+# Set species on each of the child objects..
+      $plugin_locator->parameters( [$species] );
+      $plugin_locator->call( 'species' );
+      $plugin_locator->call( '_munge_das' );                                               $self->_info_line( '** DAS **', "$species DAS sources" );
+      lock_nstore( $das_tree->{ $species }, $das_packed );
     }
+    $self->_merge_db_tree( $tree, $das_tree, $species );
   }
 
 #------------ Do the same for the multi-species file...
