@@ -2,10 +2,9 @@
 | Initialize the display of the float box...                              |
 ------------------------------------------------------------------------**/
 
-
-var FLOAT_HIGHLIGHT = 0;
-
   function __float_highlight( dl_node ) {
+    if( !dl_node                          ) return;
+    if( dl_node.hasClassName( 'munged' ) ) return;
     var N=0;
     dl_node.immediateDescendants().each(function(dd_node) {
       if( dd_node.tagName == 'DD' ) {
@@ -42,14 +41,12 @@ var FLOAT_HIGHLIGHT = 0;
       N.removeClassName('notl');
       N.addClassName( 'last' );
     }
+    dl_node.addClassName('munged');
   }
   function __init_ensembl_web_float_box() {
-    if(FLOAT_HIGHLIGHT) return;
-    FLOAT_HIGHLIGHT = 1;
     __debug( 'setting up menu', 'success' );
-    if( $('local') ) {
-      __float_highlight( $('local') );
-    }
+    __float_highlight( $('local_modal') );
+    __float_highlight( $('local') );
   }
   
   addLoadEvent( __init_ensembl_web_float_box );

@@ -145,6 +145,10 @@ function __modal_dialog_link_open( event ) {
         var tabs = $('modal_tabs').innerHTML;
         $('modal_tabs').remove();
         $('modal_caption').update( tabs );
+// Make the main tab links go back to this window!
+	$$('#modal_caption a').each(function(n){n.addClassName('modal_link')});
+// Now make the local tree links go back to this window!
+	$$('#local_modal a'  ).each(function(n){n.addClassName('modal_link')});
         window.onload()
       },
       onFailure: function(transport){
@@ -163,9 +167,9 @@ function __modal_onload() {
   if( ENSEMBL_AJAX!='enabled' || $('modal_bg') ) return;
   $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_bg',    style: 'display:none;' + ( Prototype.Browser.IE ? 'filter:alpha(opacity=25)':'opacity:0.25') }));
   $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_panel', style: 'display:none' },[
-    Builder.node( 'h3', { id: 'modal_title' }, [
+    Builder.node( 'div', { id: 'modal_title' }, [
       Builder.node( 'span', { className: 'modal_but', id: 'modal_close' }, [ 'close' ] ),
-      Builder.node( 'span', { id: 'modal_caption' }, [ 'Modal dialog' ] )
+      Builder.node( 'div', { id: 'modal_caption' }, [ 'Modal dialog' ] )
     ]),
     Builder.node( 'div', { id: 'modal_content' }, 'Modal content' )
   ]));

@@ -30,6 +30,8 @@ sub render_modal {
   my $self = shift;
   my $T = $self->_content;
      $T =~ s/id="tabs"/id="modal_tabs"/;
+     $T =~ s/class="link /class="/g;
+     $T =~ s/ class=""//g;
   $self->print( $T );
 }
 

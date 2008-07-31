@@ -16,6 +16,7 @@ our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 sub simple_wizard {
   my ($type, $method, $command) = @_;
   my $self = __PACKAGE__->new('objecttype' => $type, doctype => 'Popup', 'command' => $command );
+  $self->page->{'_modal_dialog_'} = $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {
