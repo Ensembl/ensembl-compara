@@ -43,14 +43,7 @@ sub _init {
     foreach my $f (sort { $features{$a}->{'priority'} <=> $features{$b}->{'priority'} } keys %features) {
 	$y++ if $x==0;
 
-	#    @colours = @{$features{$_}->{'legend'}};
-	#    while( my ($legend, $colour) = splice @colours, 0, 2 ) {
-	#      $FLAG = 1;
-	#      my $tocolour='';
-	#      ($tocolour,$colour) = ($1,$2) if $colour =~ /(.*):(.*)/;
-
 	my $colour = 'black';
-
 	#draw two exon hits and an intron for each feature type
 	if ($f =~ /hit_feature/) {
 	    $start_x = $im_width * $x/$NO_OF_COLUMNS;
