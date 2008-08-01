@@ -432,7 +432,7 @@ sub transHandler {
     my $return = transHandler_das( $r, $session_cookie, \@path_segments, $querystring );
     return $return if defined $return;
   }
-  if( $OBJECT_TO_SCRIPT{ $species } ) { # Species less script??
+  if( $OBJECT_TO_SCRIPT{ $species } && $path_segments[0]!~/\./ ) { # Species less script??
     my $return = transHandler_no_species( $r, $session_cookie, $species, \@path_segments, $querystring );
     return $return if defined $return;
   }
