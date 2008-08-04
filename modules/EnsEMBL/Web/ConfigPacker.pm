@@ -24,7 +24,7 @@ sub _munge_databases {
 
 sub _munge_das { # creates das.packed...
   my $self = shift;
-  $self->_summarise_dasregistry;
+  #$self->_summarise_dasregistry;
 }
 
 sub _munge_databases_multi {
@@ -441,7 +441,7 @@ sub _summarise_dasregistry {
   while (my ($key, $val) = each %{ $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'} }) {
     $val || next;
     my $cfg = $self->tree->{$key}; # copy from ini to packed
-    defined $cfg || next;
+    next unless (defined $cfg && ref($cfg));
     $self->das_tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}{$key} = $cfg;
     delete $self->tree->{$key}; # remove from tree
     
