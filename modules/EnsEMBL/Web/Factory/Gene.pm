@@ -66,7 +66,7 @@ sub createObjects {
   } else {
     my %sample = %{$self->species_defs->SAMPLE_DATA};
     my $help_text = sprintf(
-qq(<p>This view requires a gene, transcript or peptide identifier in the URL. For example:</p>
+qq(<p>This view requires a gene, transcript or protein identifier in the URL. For example:</p>
 <p class="space-below"><a href="/%s/Gene/%s?g=%s">/%s/Gene/%s?g=%s</a></p>),
         $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'GENE'},
         $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'GENE'},
