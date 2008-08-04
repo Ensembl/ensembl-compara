@@ -49,6 +49,7 @@ sub createObjects {
     @fetch_calls = reverse @fetch_calls if($self->param( 'type1' ) eq 'peptide');
     $KEY = 'anchor1';
   } else {
+    my %sample = %{$self->species_defs->SAMPLE_DATA};
     my $help_text = sprintf(
 qq(<p>This view requires a gene, transcript or peptide identifier in the URL. For example:</p>
 <p class="space-below"><a href="/%s/Transcript/%s?t=%s">/%s/Transcript/%s?t=%s</a></p>),
