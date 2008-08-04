@@ -2,10 +2,14 @@
 .panel h2 { border-bottom: 1px solid #ccc; padding: 2px; margin: 0; }
 .panel h2 { border-bottom: 1px solid #ccc; padding: 2px; margin: 0; }
 .panel p  { margin: 0; padding: 0 }
+.panel p.space-below { margin-bottom:0.5em; }
 .panel div.content { padding: 5px; margin: 0; }
 .panel dl { margin: 0; position: relative; clear: left }
 .panel dt { margin-bottom:0.5em; clear: left; float: left; width: 10em }
 .panel dd { margin: 0.5em 0 0 9em }
+
+.panel dl.normal dt { clear:none; float:none; width:100%; margin:0.5em 0 0 0; font-weight:bold; }
+.panel dl.normal dd { margin: 0.5em 0 0 2em; }
 
 .panel .nav-heading { border-bottom: 0; border-bottom:1px solid #ccc; }
 .panel .nav-heading h2 { border: 0; border-bottom: 0; padding: 0; text-align: center; margin: 0}
