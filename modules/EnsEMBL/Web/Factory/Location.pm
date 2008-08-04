@@ -288,10 +288,11 @@ sub _location_from_SeqRegion {
         return $self->_create_from_slice( $system->name , $chr, $self->expand($TS), '', $chr, $keep_slice );
       }
     }
+    my $action = $ENV{'ENSEMBL_ACTION'};
     if ($chr) {
       $self->problem( "fatal", "Locate error","Cannot locate region $chr on the current assembly." );
     }
-    elsif ($ENV{'REQUEST_URI'} =~ /Karyotype/ && $self->species_defs->ENSEMBL_CHROMOSOMES) {
+    elsif ($action && $action eq 'Karyotype' && $self->species_defs->ENSEMBL_CHROMOSOMES) {
       ## Create a slice of the first chromosome to force this page to work!
       my @chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};
       my $TS;
@@ -303,7 +304,26 @@ sub _location_from_SeqRegion {
       }
     }
     else {
-      $self->problem( "fatal", "Please enter a location","A location is required to build this page." );
+      my %sample = %{$self->species_defs->SAMPLE_DATA};
+      my $assembly_level;
+      if (scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES})) {
+        $assembly_level = 'chromosomal';
+      }
+      else {
+        $assembly_level = 'scaffold';
+      }
+      ## Might need factoring out if we use other methods to get a location (e.g. marker)
+      my $help_text = sprintf(
+qq(<p>A location is required to build this page. For example, %s coordinates:</p>
+<p class="space-below"><a href="/%s/Location/%s?r=%s">/%s/Location/%s?r=%s</a></p>),
+        $assembly_level,
+        $ENV{'ENSEMBL_SPECIES'}, $action, $sample{'LOCATION'},
+        $ENV{'ENSEMBL_SPECIES'}, $action, $sample{'LOCATION'},
+      );
+      if (scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES})) {
+        $help_text .= '<p class="space-below">You can also browse this genome via its <a href="/'.$ENV{'ENSEMBL_SPECIES'}.'/Location/Karyotype">karyotype</a></p>';
+      }
+      $self->problem( "fatal", "Please enter a location",$help_text );
     }
     return undef;
   }

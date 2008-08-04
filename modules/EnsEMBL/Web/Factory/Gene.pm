@@ -64,9 +64,14 @@ sub createObjects {
     $KEY = 'anchor1' unless $self->param('gene');
     @fetch_calls = qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_translation_stable_id); 
   } else {
-    $self->problem('fatal', 'Please enter a valid identifier',
-		     "This view requires a gene, transcript or peptide 
-                    identifier in the URL.")  ;
+    my $help_text = sprintf(
+qq(<p>This view requires a gene, transcript or peptide identifier in the URL. For example:</p>
+<p class="space-below"><a href="/%s/Gene/%s?g=%s">/%s/Gene/%s?g=%s</a></p>),
+        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'GENE'},
+        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'GENE'},
+      );
+
+    $self->problem('fatal', 'Please enter a valid identifier', $help_text)  ;
     return;
   }
 

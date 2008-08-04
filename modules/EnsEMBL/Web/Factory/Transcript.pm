@@ -49,9 +49,14 @@ sub createObjects {
     @fetch_calls = reverse @fetch_calls if($self->param( 'type1' ) eq 'peptide');
     $KEY = 'anchor1';
   } else {
-    $self->problem('fatal', 'Please enter a valid identifier',
-		     "This view requires a transcript, peptide 
-                   or exon identifier in the URL.")  ;
+    my $help_text = sprintf(
+qq(<p>This view requires a gene, transcript or peptide identifier in the URL. For example:</p>
+<p class="space-below"><a href="/%s/Transcript/%s?t=%s">/%s/Transcript/%s?t=%s</a></p>),
+        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT'},
+        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT'},
+      );
+
+    $self->problem('fatal', 'Please enter a valid identifier', $help_text)  ;
     return;
   }
 
