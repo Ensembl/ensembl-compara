@@ -17,6 +17,8 @@ sub get_seq_by_id {
   if( $arghashref->{OPTIONS} eq 'desc'       ) { $str .= " -D" }
   if( $arghashref->{OPTIONS} =~ /(-d\s+\w+)/ ) { $str .= " $1" }
   if( $arghashref->{DB} eq 'PUBLIC'          ) { $str .= " -d public" }
+  if( $arghashref->{DB} =~ /UNIPROT/         ) { $str = " -a $str" }
+
 
   # Get the pfetch server
   my $server = $self->fetch_pfetch_server(
