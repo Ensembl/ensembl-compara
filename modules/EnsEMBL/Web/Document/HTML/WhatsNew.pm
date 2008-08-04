@@ -119,13 +119,24 @@ sub render {
   $html .= '</div>';
 
   ## Ensembl blog (ensembl.blogspot.com)
-  $html .= qq(<h2>Latest Blog Entries</h2>
-      <ul>
-        <li>New Release notes and BAC clones in mouse</li>
-        <li>Ensembl US East Coast Tour</li>
-        <li>March workshops, release and down time</li>
-        <p><a href="http://ensembl.blogspot.com/">Go to Ensembl blog &rarr;</a></p>
-      </ul>);
+  $html .= qq(<h2>Latest Blog Entries</h2>);
+  #my $rss = new XML::RSS;
+  #my $raw = $raw = get('http://ensembl.blogspot.com/feeds/posts/default');
+  #$rss->parse($raw);
+  my @items; # = @{$rss->{'items'}};
+  if (scalar(@items)) {
+    $html .= "<ul>\n";
+    foreach my $item (@items) {
+      my $title = $item->{'title'};
+      my $url = $item->{'link'};
+      $html .= "<a href=\"$url\">$title</a><p\>"; 
+    }
+    $html .= "</ul>\n";
+  }
+  else {
+    $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
+  }
+  $html .= qq(<a href="http://ensembl.blogspot.com/">Go to Ensembl blog &rarr;</a>);
 
 =pod
   if ($species_defs->ENSEMBL_LOGINS) {
