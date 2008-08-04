@@ -24,11 +24,6 @@ sub get_seq_by_id {
 	$str = qq(-d refseq -i ccds:).$id;
 	$str .= qq(&div:NM -v fasta);
     }
-    elsif ($db =~ /uniprot/i) {
-	#strip off any version number for uniprot
-	$id =~ s/\.\d{1,3}$//;
-	$str = qq(-d uniprot -i acc:).$id.' -v fasta';
-    }
     else {
 	$str == $id;
     }
