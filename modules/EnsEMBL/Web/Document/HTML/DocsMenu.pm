@@ -43,7 +43,7 @@ sub render {
     if ($location eq $subsection->{'_path'}) {
       $class = ' class="active"';
     }
-    $html .= sprintf(qq(<dd class="open"><a href="%s"%s>%s</a>),
+    $html .= sprintf(qq(<dd class="open"><strong><a href="%s"%s>%s</a></strong>),
         $subsection->{'_path'}, $class, $title
     );
     my @sortable_subsections;
