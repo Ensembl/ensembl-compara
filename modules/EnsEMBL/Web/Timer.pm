@@ -74,7 +74,7 @@ sub push {
 ### for which the timing is recorded
   my( $self, $message, $level ) = @_;
   $level ||= 0;
-  push @{$Times_of{ ident $self }}, [ time(), $message, $level ];
+  CORE::push @{$Times_of{ ident $self }}, [ time(), $message, $level ];
 }
 
 sub render {
