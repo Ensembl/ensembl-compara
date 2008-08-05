@@ -1,7 +1,0 @@
-#!/usr/local/bin/perl
-
-package geneview;
-
-use EnsEMBL::Web::Document::WebPage;
-simple_with_redirect( 'Go' );
-1;

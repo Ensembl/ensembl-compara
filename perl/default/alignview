@@ -1,8 +1,0 @@
-#!/usr/local/bin/perl
-
-package alignview;
-
-use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'Alignment' );
-
-1;

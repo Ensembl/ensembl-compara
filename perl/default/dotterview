@@ -1,7 +1,0 @@
-#!/usr/local/bin/perl
-
-package dotterview;
-use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'MultipleLocation' );
-
-1;

@@ -1,9 +1,0 @@
-#!/usr/local/bin/perl
-
-package sequencealignview;
-
-use EnsEMBL::Web::Document::WebPage;
-
-EnsEMBL::Web::Document::WebPage::simple( 'Location' );
-
-1;

@@ -1,7 +1,0 @@
-#!/usr/local/bin/perl
-$| = 1;
-
-package protview;
-use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple_with_redirect( 'Translation' );
-1;
