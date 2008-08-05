@@ -140,18 +140,8 @@ function __modal_dialog_link_open( event ) {
   // Now make the AJAX request
     new Ajax.Request( url, {
       method: 'get',
-      onSuccess: function(transport){
-        $('modal_content').update( transport.responseText ); 
-        var tabs = $('modal_tabs').innerHTML;
-        $('modal_tabs').remove();
-        $('modal_caption').update( tabs );
-// Make the main tab links go back to this window!
-	$$('#modal_caption a').each(function(n){n.addClassName('modal_link')});
-// Now make the local tree links go back to this window!
-	$$('#local_modal a'  ).each(function(n){n.addClassName('modal_link')});
-        window.onload()
-      },
-      onFailure: function(transport){
+      onSuccess: function( transport ) { modal_success(transport) },
+      onFailure: function( transport ) {
         $('modal_content').innerHTML = '<p>Failure: the resource failed to load</p>';
       }
     });
@@ -159,6 +149,35 @@ function __modal_dialog_link_open( event ) {
   Event.stop( event );
 }
 
+function modal_success( transport ) {
+  var x = transport.responseText;
+  var M = x.split('</div>');
+  if( M.length > 1 && M[0].match(/<div id="modal_tabs">/) ) {
+    var a = M.shift();
+    $('modal_caption').update( a );
+  }
+  var b = M.join('</div>');
+  $('modal_content').update( b );
+// Make the main tab links go back to this window!
+  $$('#modal_caption a').each(function(n){n.addClassName('modal_link')});
+  $$('#modal_content form').each(function(n){n.onsubmit = modal_form_submit;});
+// Now make the local tree links go back to this window!
+  $$('#local_modal a'  ).each(function(n){n.addClassName('modal_link')});
+  window.onload();
+}
+
+function modal_form_submit( event ) {
+  var el = Event.element( event );
+  new Ajax.Request( el.action, {
+    method: el.method,
+    parameters: el.serialize(true),
+    onSuccess: function( transport ) { modal_success(transport) },
+    onFailure: function( transport ) {
+      $('modal_content').innerHTML = '<p>Failure: the resource failed to load</p>';
+    }
+  });
+  Event.stop( event );
+}
 function __modal_onload() { 
   $$('.modal_link').each(function(s) {
     s.observe( 'click',  __modal_dialog_link_open );
