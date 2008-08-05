@@ -17,6 +17,7 @@ use Sys::Hostname;
 use Data::Dumper;
 use Fcntl ':flock';
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::OldLinks;
 
 use EnsEMBL::Web::Cache;
 
@@ -362,6 +363,16 @@ $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
     $r->child_terminate;
     return HTTP_TEMPORARY_REDIRECT;
   }
+  my $OL = EnsEMBL::Web::OldLinks->new();
+  my $t = $OL->get_redirect( $script );
+  if( $t ) {
+    my $newfile = join '/', '',$species, $t;
+    warn "OLD LINK REDIRECT.....";
+    $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
+    $r->child_terminate;
+    return HTTP_TEMPORARY_REDIRECT;
+  }
+
   # Mess with the environment
   $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
   $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
