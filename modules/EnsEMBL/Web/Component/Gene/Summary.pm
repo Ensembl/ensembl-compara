@@ -31,7 +31,8 @@ sub content {
         $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
         $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
         ($edb, $acc) = ($1, $2);
-        $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if $acc;
+	my $link = $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc);
+        $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if ($acc ne 'content');
       }
       $html .= qq(
       <p>
@@ -117,7 +118,10 @@ sub content {
     </dl>';
   } else {
     my $transcript = @$transcripts[0];
-    my $display = $transcript->display_xref->display_id;
+    my $display;
+    eval {
+	$display = $transcript->display_xref->display_id || $transcript->stable_id;
+    };
     my $id = $transcript->stable_id;
     $html .= qq(
     <dl class="summary">
