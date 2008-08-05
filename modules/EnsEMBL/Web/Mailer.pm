@@ -12,22 +12,22 @@ use EnsEMBL::Web::RegObj;
 
 {
 
-my %To            :ATTR(:set<to> :get<to>) ;
-my %From          :ATTR(:set<from> :get<from>);
-my %Reply         :ATTR(:set<reply> :get<reply>);
-my %Subject       :ATTR(:set<subject> :get<subject>);
-my %Message       :ATTR(:set<message> :get<message>);
-my %MailServer    :ATTR(:set<mail_server> :get<mail_server>);
+my %To            :ATTR(:set<to>             :get<to>) ;
+my %From          :ATTR(:set<from>           :get<from>);
+my %Reply         :ATTR(:set<reply>          :get<reply>);
+my %Subject       :ATTR(:set<subject>        :get<subject>);
+my %Message       :ATTR(:set<message>        :get<message>);
+my %MailServer    :ATTR(:set<mail_server>    :get<mail_server>);
 my %SpamThreshold :ATTR(:set<spam_threshold> :get<spam_threshold>);
-my %SiteName      :ATTR(:set<site_name> :get<site_name>) ;
-my %BaseUrl       :ATTR(:set<base_url> :get<base_url>) ;
+my %SiteName      :ATTR(:set<site_name>      :get<site_name>) ;
+my %BaseUrl       :ATTR(:set<base_url>       :get<base_url>) ;
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
   my $sd = $ENSEMBL_WEB_REGISTRY->species_defs;
-  $From{$ident}           = $args->{from} || $sd->ENSEMBL_HELPDESK_EMAIL;
-  $Reply{$ident}          = $args->{reply} || $sd->ENSEMBL_HELPDESK_EMAIL;
-  $MailServer{$ident}     = $args->{mail_server} || $sd->ENSEMBL_MAIL_SERVER;
+  $From{$ident}           = $args->{from}           || $sd->ENSEMBL_HELPDESK_EMAIL;
+  $Reply{$ident}          = $args->{reply}          || $sd->ENSEMBL_HELPDESK_EMAIL;
+  $MailServer{$ident}     = $args->{mail_server}    || $sd->ENSEMBL_MAIL_SERVER;
   $SpamThreshold{$ident}  = $args->{spam_threshold} || 60;
   $SiteName{$ident}       = $sd->ENSEMBL_SITETYPE;
   $BaseUrl{$ident}        = $sd->ENSEMBL_BASE_URL;
@@ -63,18 +63,13 @@ sub send {
   my ($self, $options) = @_;
 
   ## Sanitize input and fill in any missing values
-  $self->set_message($self->spam_check($self->get_message)) unless $options->{'spam_check'} == 0;
-  $self->set_from($self->sanitize_email($self->get_from));
-  $self->set_to($self->sanitize_email($self->get_to));
-  if ($self->get_reply) {
-    $self->set_reply($self->sanitize_email($self->get_reply));
-  }
-  else {
-    $self->set_reply($self->get_from);
-  }
+  $self->set_message( $self->spam_check( $self->get_message  )  ) unless $options->{'spam_check'} == 0;
+  $self->set_from(    $self->sanitize_email( $self->get_from )  );
+  $self->set_to(      $self->sanitize_email( $self->get_to   )  );
+  $self->set_reply(   $self->sanitize_email( $self->get_reply || $self->get_from ) );
 
-  my $mailer = new Mail::Mailer 'smtp', Server => $self->get_mail_server;
-  my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+  my $mailer   = new Mail::Mailer 'smtp', Server => $self->get_mail_server;
+  my @months   = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
   my @weekDays = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
   my ($sec, $min, $hour, $day, $month, $year) = gmtime();
   $year += 1900;
