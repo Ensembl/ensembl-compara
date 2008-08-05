@@ -69,7 +69,7 @@ sub _content {
         <dt>%s</dt>), $self->caption );
   my $pad = '';
   foreach my $node ( $t->nodes ) {
-    next if $node->data->{'no_menu_entry'};
+    my $no_show = 1 if $node->data->{'no_menu_entry'};
     $r = $node->right if $node->right > $r;
     if( $previous_node && $node->left > $previous_node->right ) {
       foreach(1..($node->left - $previous_node->right-1)) {
@@ -79,23 +79,26 @@ $pad    </dd>";
         substr($pad,0,4)='';
       }
     }
-    my $name = $node->data->{caption};
-       $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
-       $name = CGI::escapeHTML( $name );
-    if( $node->data->{'url'} && $node->data->{'availability'} ) {
-      $name = sprintf( '<a href="%s" title="%s">%s</a>', $node->data->{'url'}, $name, $name );
-    }
-    else {
-      $name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
-    }
-    if( $node->is_leaf ) {
-      $content .= sprintf( qq(
+    unless ($no_show) {
+      my $name = $node->data->{caption};
+      $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
+      $name = CGI::escapeHTML( $name );
+      if( $node->data->{'url'} && $node->data->{'availability'} ) {
+	$name = sprintf( '<a href="%s" title="%s">%s</a>', $node->data->{'url'}, $name, $name );
+      }
+      else {
+	$name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
+      }
+      if( $node->is_leaf ) {
+	$content .= sprintf( qq(
 $pad        <dd%s>%s</dd>), $node->key eq $active ? ' class="active"' :'', $name );
-    } else {
-      $content .= sprintf( qq(
+      }
+      else {
+        $content .= sprintf( qq(
 $pad        <dd class="%s">%s
 $pad          <dl>), $node->left <= $active_l && $node->right >= $active_r ? 'open' : 'open', $name );
-      $pad .= '    ';
+	$pad .= '    ';
+      }
     }
     $previous_node = $node;
   }
