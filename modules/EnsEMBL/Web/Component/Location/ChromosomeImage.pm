@@ -10,8 +10,8 @@ use base qw(EnsEMBL::Web::Component::Location);
 use CGI qw(escapeHTML);
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable( 1 );
+  $self->ajaxable(  1 );
   $self->configurable( 0 );
 }
 
