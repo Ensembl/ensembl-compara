@@ -40,7 +40,7 @@ sub render   {
   $html .= qq(
       <a href="$species/Blast">BLAST</a> &nbsp;|&nbsp; 
       <a href="$species/Biomart">BioMart</a> &nbsp;|&nbsp;
-      <a href="/info/website/help/" id="help"><img src="/i/e-quest_bg.gif" alt="e?" style="vertical-align:middle" />&nbsp;Help</a>);
+      <a href="/info/website/help/" class="modal_link" id="help"><img src="/i/e-quest_bg.gif" alt="e?" style="vertical-align:middle" />&nbsp;Help</a>);
 
   $self->print($html);
 }
