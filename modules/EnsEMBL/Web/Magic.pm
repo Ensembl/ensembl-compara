@@ -15,7 +15,7 @@ use EnsEMBL::Web::RegObj;
 
 use base qw(Exporter);
 use CGI qw(header redirect); # only need the redirect header stuff!
-our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff);
+our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff Variation Server);
 
 our $memd = EnsEMBL::Web::Cache->new(
   enable_compress    => 1,
@@ -31,6 +31,7 @@ sub Gene       { return 'Gene',       @_; }
 sub Transcript { return 'Transcript', @_; }
 sub Location   { return 'Location',   @_; }
 sub Variation  { return 'Variation',  @_; }
+sub Server     { return 'Server',     @_; }
 
 sub magic      {
 ### Usage: use EnsEMBL::Web::Magic; magic stuff
@@ -250,6 +251,7 @@ sub stuff {
     }
     $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
     $webpage->render;
+    warn $webpage->timer->render;
     return "Completing action";
   }
 }
