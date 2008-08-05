@@ -1,7 +1,2 @@
-#!/usr/local/bin/perl
-package status;
-
-use EnsEMBL::Web::Document::WebPage;
-EnsEMBL::Web::Document::WebPage::simple( 'Server' );
-
-1;
+use EnsEMBL::Web::Magic;
+magic carpet Server 
