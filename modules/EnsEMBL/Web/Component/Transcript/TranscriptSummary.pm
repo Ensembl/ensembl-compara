@@ -5,6 +5,7 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
 use CGI qw(escapeHTML);
+use EnsEMBL::Web::Document::HTML::TwoCol;
 
 sub _init {
   my $self = shift;
@@ -15,7 +16,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-  my $html   = '';
+  my $table         = new EnsEMBL::Web::Document::HTML::TwoCol;
   my $sp     = $object->species_defs->SPECIES_COMMON_NAME;
 
 ## add transcript stats
@@ -28,20 +29,17 @@ sub content {
 	  <strong>Transcript length:</strong> $basepairs bps";
      $HTML .= "
           <strong>Translation length:</strong> $residues residues" if $residues;
-  $html .= "
-    <dt>Statistics</dt>
-      <dd>
-        <p>$HTML
-	</p>
-     </dd>"; 
+  $table->add_row('Statitics',
+		  "<p>$HTML</p>",
+		  1 );
 
 ## add CCDS info
   if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
     my %T = map { $_->primary_id,1 } @CCDS;
      @CCDS = sort keys %T;
-     $html .= qq(
-    <dt>CCDS</dt>
-      <dd><p>This transcript is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }</p></dd>);
+     $table->add_row('CCDS',
+		     "<p>This transcript is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }</p>",
+		     1, );
   }
     
 
@@ -66,29 +64,25 @@ sub content {
         $text   = "<strong>FROM DEFAULT CONFIG:</strong> ".$object->species_defs->$confkey;
       }
     }
-    $html .= qq(
-      <dt>$label</dt>
-        <dd><p>$text</p></dd>);
   };
+  $table->add_row($label,
+		  $text,
+		  1 );
 
 ## add alternative transcript info
   my $temp =  $self->_matches( 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
   if (my $temp) {
-    $html .= qq(
-    <dt>Alternative transcripts</dt>
-      <dd><p>$temp</p></dd>);
-
-
+      $table->add_row('Alternative transcripts',
+		      "<p>$temp</p>",
+		      1 );
   }
 
 ## add pepstats info
-  $html .= qq(
-    <dt>Peptide statistics</dt>
-      <dd><p>## Peptide statistics section will go here ##</p></dd>);
+  $table->add_row('Peptide statistics',
+		  '<p>## Peptide statistics section will go here ##</p>',
+		  1 );
 
-  $html .= "</dl>";
-
-  return $html;
+  return $table->render;
 }
 
 #sub alternative_transcripts {
