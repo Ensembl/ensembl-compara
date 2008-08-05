@@ -125,6 +125,11 @@ sub populate_tree {
     { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
 
+  $self->create_node( 'SupportingEvidenceAlignment', '',
+   [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment)],
+    { 'no_menu_entry' => 1 }
+  );
+
   my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
   $var_menu->append($self->create_node( 'Population',  'Population comparison',
   #  [qw(snps      EnsEMBL::Web::Component::Transcript::SNPView)],
