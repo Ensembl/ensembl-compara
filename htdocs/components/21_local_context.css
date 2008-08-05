@@ -1,4 +1,4 @@
-#local dl { overflow: hidden }
+#local dl { overflow: hidden; width: 14em; margin: 0 }
 #local dd { margin-bottom: 0; overflow: hidden }
 #local dt { border-bottom: 1px solid #ccc; padding: 2px; }
 #local dd.notl dl, #local dd.notl { background: url(/i/line.gif) repeat-y;  }
