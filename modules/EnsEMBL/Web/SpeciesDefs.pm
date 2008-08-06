@@ -444,7 +444,7 @@ sub _parse {
       $plugin_locator->parameters( [$species] );
       $plugin_locator->call( 'species' );
       $plugin_locator->call( '_munge_databases' );                                         $self->_info_line( '** DB **', "$species databases" );
-      lock_nstore( $db_tree->{ $species }, $species_packed );
+      lock_nstore( $db_tree->{ $species } || {}, $species_packed );
     }
     $self->_merge_db_tree( $tree, $db_tree, $species );
     
@@ -455,7 +455,7 @@ sub _parse {
       $plugin_locator->parameters( [$species] );
       $plugin_locator->call( 'species' );
       $plugin_locator->call( '_munge_das' );                                               $self->_info_line( '** DAS **', "$species DAS sources" );
-      lock_nstore( $das_tree->{ $species }, $das_packed );
+      lock_nstore( $das_tree->{ $species } || {}, $das_packed );
     }
     $self->_merge_db_tree( $tree, $das_tree, $species );
   }

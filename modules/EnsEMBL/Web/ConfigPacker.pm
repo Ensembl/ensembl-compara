@@ -26,7 +26,7 @@ sub _munge_databases {
 
 sub _munge_das { # creates das.packed...
   my $self = shift;
-  #$self->_summarise_dasregistry;
+  $self->_summarise_dasregistry;
 }
 
 sub _munge_databases_multi {
@@ -439,7 +439,7 @@ sub _summarise_go_db {
 sub _summarise_dasregistry {
   my $self = shift;
   
-  #Bio::EnsEMBL::Utils::Exception::verbose('ALL');
+  # Registry parsing is lazy so re-use the parser between species'
   my $parser = $self->{'_das_parser'};
   if (!$parser) {
     $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
@@ -450,33 +450,42 @@ sub _summarise_dasregistry {
     $self->{'_das_parser'} = $parser;
   }
   
-  my $taxid = $self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.taxonomy_id'}[0];
-  
-  # Parse the registry XML
+  # Fetch the sources for the current species
   my %sources = map {
     $_->url => { $_->dsn => $_ }
-  } @{ $parser->fetch_Sources(-taxid => $taxid) };
+  } @{ $parser->fetch_Sources(-species => $self->species) };
   
+  # The ENSEMBL_INTERNAL_DAS_SOURCES section is a list of enabled DAS sources
+  # Then there is a section for each DAS source containing the config
   while (my ($key, $val) = each %{ $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'} }) {
+    # Skip disabled sources
     $val || next;
-    my $cfg = $self->tree->{$key}; # copy from ini to packed
+    # Skip sources without any config
+    my $cfg = $self->tree->{$key};
     next unless (defined $cfg && ref($cfg));
-    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}{$key} = $cfg;
-    delete $self->tree->{$key}; # remove from tree
     
     $cfg->{'logic_name'}      = $key;
     $cfg->{'display_label'} ||= $cfg->{'label'};
+    delete $cfg->{'label'};
     
+    # Check using the url/dsn if the source is registered
     my $src = $sources{$cfg->{'url'}}{$cfg->{'dsn'}};
-    # doesn't have to be in the registry... unfortunately
+    # Doesn't have to be in the registry... unfortunately
+    # But if it is, fill in the blanks
     if ($src) {
-      $cfg->{'display_label'} ||= $src->label;
+      $cfg->{'display_label'} ||= $src->display_label;
       $cfg->{'description'}   ||= $src->description;
       $cfg->{'maintainer'}    ||= $src->maintainer;
       $cfg->{'homepage'}      ||= $src->homepage;
       $cfg->{'coords'}        ||= $src->coord_systems;
     }
+    
+    # Add to the das packed tree as a hash
+    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}{$key} = $cfg;
+    # Remove the config from the ini tree
+    delete $self->tree->{$key};
   }
+  # Remove the list of sources from the ini tree
   delete $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'};
 }
 
