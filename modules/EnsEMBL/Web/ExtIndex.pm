@@ -14,27 +14,36 @@ sub new {
 }
 
 sub get_indexer {
-  my( $self, $db ) = @_;
+    my( $self, $db ) = @_;
 
-  unless( $self->{'databases'}{$db} ) {
-    my $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db } || 'PFETCH';
-    my $exe     = $self->{'species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{ $indexer };
-    if( $exe ) {
-      my $classname = "EnsEMBL::Web::ExtIndex::$indexer";
-      unless( exists $self->{'indexers'}{$classname} ) {
-        if( $self->dynamic_use( $classname ) ) {
-          $self->{'indexers'}{$classname} = $classname->new();
-        } else {
-          $self->{'indexers'}{$classname} = undef;
-        }
-        $self->{'databases'}{$db} = { 'module' => $self->{'indexers'}{$classname}, 'exe' => $exe };
-      }
-    } else {
-      $self->{'databases'}{$db} = { 'module' => undef };
+    unless( $self->{'databases'}{$db} ) {
+	my ($indexer,$exe);
+
+	#get data from e! databases
+	if ($db =~ /^ENS/) {
+	    $indexer = 'ENSEMBL_RETRIEVE';
+	    $exe     = 1;
+	}
+	else {
+	    $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db } || 'PFETCH';
+	    $exe     = $self->{'species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{ $indexer };
+	}
+	if( $exe ) {
+	    my $classname = "EnsEMBL::Web::ExtIndex::$indexer";
+	    unless( exists $self->{'indexers'}{$classname} ) {
+		if( $self->dynamic_use( $classname ) ) {
+		    $self->{'indexers'}{$classname} = $classname->new();
+		} else {
+		    $self->{'indexers'}{$classname} = undef;
+		}
+		$self->{'databases'}{$db} = { 'module' => $self->{'indexers'}{$classname}, 'exe' => $exe };
+	    }
+	} else {
+	    $self->{'databases'}{$db} = { 'module' => undef };
+	}
     }
-  }
-  return $self->{'databases'}{$db}{'module'};
-} 
+    return $self->{'databases'}{$db}{'module'};
+}
 
 sub get_seq_by_id{
   my ($self, $args)=@_;
