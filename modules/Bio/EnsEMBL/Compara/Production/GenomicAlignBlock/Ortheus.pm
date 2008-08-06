@@ -118,8 +118,8 @@ my $do_hack = 0;
 #composite sequence
 my $pad_char = "N";
 
-#my $max_pads = 100;
-my $max_pads = 1000000;
+my $max_pads = 100;
+#my $max_pads = 1000000;
 
 #percentage of max_pads to use ie to use 80% of the actual pad number, set max_pads to be
 #very large (so won't be trimmed) and set max_pad_percent to 0.8. 
@@ -823,6 +823,7 @@ sub parse_results {
 	}
     }
 
+    $self->remove_empty_cols($tree);
     print $tree->newick_format("simple"), "\n";
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
     #$self->output([$tree]);
@@ -845,6 +846,79 @@ sub parse_results {
 #     }
 
 
+}
+
+sub remove_empty_cols {
+    my ($self, $tree) = @_;
+
+    my $gaa = $self->{'comparaDBA'}->get_GenomicAlignAdaptor;
+
+    ## $seqs is a hash for storing segments of sequence in the alignment
+    my $seqs = {}; ## key => start, value => end; both in e! coord.
+    foreach my $this_leaf (@{$tree->get_all_leaves}) {
+        foreach my $this_genomic_align (@{$this_leaf->genomic_align_group->get_all_GenomicAligns}) {
+            my $cigar_line = $this_genomic_align->cigar_line;
+            my $pos = 1; ## $pos in e! coordinates
+            foreach my $cig_elem (grep {$_} split(/(\d*[DMIGX])/, $cigar_line)) {
+                my ($num, $mode) = $cig_elem =~ /(\d*)([DMIGX])/;
+                $num = 1 if ($num eq "");
+                if ($mode eq "M" or $mode eq "I") {
+                    my $start = $pos;
+                    my $end = $pos + $num - 1;
+                    unless (exists($seqs->{$start}) and $seqs->{$start} >= $end) {
+                        $seqs->{$start} = $end;
+                    }
+                }
+                $pos += $num;
+            }
+	}
+    }
+
+    ## Now goes through all the segments and detect gap-only cols as coordinates with no sequence
+    my $last_start_pos = 0;
+    my $last_end_pos = 0;
+    my $gaps = {};
+    foreach my $start_pos (sort {$a <=> $b} keys %$seqs) {
+        my $end_pos = $seqs->{$start_pos};
+        print " $start_pos -> $end_pos\n" if $self->debug;
+        if ($end_pos <= $last_end_pos) {
+            ## Included in the current block. Skip this
+            print " XXX\n" if $self->debug;
+            next;
+        } elsif ($start_pos <= $last_end_pos + 1) {
+            ## Overlapping or consecutive segments. Change last_end
+            $last_end_pos = $end_pos;
+            print " ---> $end_pos\n" if $self->debug;
+        } else {
+            ## New segment: there are gap-only cols
+            $gaps->{$last_end_pos + 1} = $start_pos - 1 if ($last_end_pos);
+            print " ---> GAP (" . ($last_end_pos + 1) . "-" . ($start_pos - 1) . ")\n" if $self->debug;
+            $last_start_pos = $start_pos;
+            $last_end_pos = $end_pos;
+        }
+    }
+
+    ## Trim the sequences to remove gap-only cols.
+    foreach my $this_leaf (@{$tree->get_all_nodes}) {
+        foreach my $this_genomic_align (@{$this_leaf->genomic_align_group->get_all_GenomicAligns}) {
+
+	    #set adaptor to get the aligned sequence using the dnafrag_id
+	    if (!defined $this_genomic_align->{'adaptor'}) {
+		$this_genomic_align->adaptor($gaa);
+	    }
+            my $aligned_sequence = $this_genomic_align->aligned_sequence;
+	    print "before cigar " . $this_genomic_align->cigar_line . "\n" if $self->debug;
+            foreach my $start_pos (sort {$b <=> $a} keys %$gaps) { ## IN REVERSE ORDER!!
+                my $end_pos = $gaps->{$start_pos};
+                ## substr works with 0-based coordinates
+                substr($aligned_sequence, $start_pos - 1, ($end_pos - $start_pos + 1), "");
+	    }
+	    ## Uses the new sequence
+            $this_genomic_align->{cigar_line} = undef;
+            $this_genomic_align->aligned_sequence($aligned_sequence);
+	    print "after cigar " . $this_genomic_align->cigar_line . "\n" if $self->debug;
+	}
+    }
 }
 
 
