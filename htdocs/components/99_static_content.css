@@ -21,9 +21,9 @@ div.footnotes ol li { font-size:0.9em; }
 
 code { font: 1em andale mono, sans-serif; font-weight: bold; }
 
-.code     { border: 1px solid #999; background: #eee; margin: 1em 1em 0.2em 1em; padding: 0.2em 0.5em; }
+.code     { border: 1px solid [[NEUTRAL_BORDER]]; background: [[NEUTRAL_BG]]; margin: 1em 1em 0.2em 1em; padding: 0.2em 0.5em; }
 
-.code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, sans-serif; color: #000 }
+.code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, sans-serif; color: [[CONTRAST_BG]] }
 .code pre:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
 .code pre { display: inline-block; }
 

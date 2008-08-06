@@ -1,6 +1,6 @@
 .relocate{float:left}
-.navbar { background-color: #eaeeff; text-align: right; margin-top: 3px; margin-bottom: 3px; padding: 3px; font-weight: bold }
-.navbar a {font-size:1.2em;color:#369;vertical-align:middle; text-decoration: none; margin: 0;margin:1px}
-.navbar img.blank {background-color:#369;height:4px;vertical-align:bottom;width:4px;border: outset 1px #369 }
+.navbar { background-color: [[TINT_BG]]; text-align: right; margin-top: 3px; margin-bottom: 3px; padding: 3px; font-weight: bold }
+.navbar a {font-size:1.2em;color:[[MH_BORDER]];vertical-align:middle; text-decoration: none; margin: 0;margin:1px}
+.navbar img.blank {background-color:[[MH_BORDER]];height:4px;vertical-align:bottom;width:4px;border: outset 1px [[MH_BORDER]] }
 .navbar img.zoom  {height:18px;width:18px;vertical-align:bottom}
-.go-button { color: #369; background-color: #eaeeff; border: 1px outset #eaeeff }
+.go-button { color: [[TINT_BORDER]]; background-color:[[TINT_BG]]; border: 1px outset [[TINT_BG]] }

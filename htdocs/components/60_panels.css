@@ -1,6 +1,6 @@
-.panel { border: 1px solid #ccc; padding: 0; margin: 0.25em 0.25em 0.25em 14.5em;}
-.panel h2 { border-bottom: 1px solid #ccc; padding: 2px; margin: 0; }
-.panel h2 { border-bottom: 1px solid #ccc; padding: 2px; margin: 0; }
+.panel { border: 1px solid [[PANEL_BORDER]]; padding: 0; margin: 0.25em 0.25em 0.25em 14.5em;}
+.panel h2 { border-bottom: 1px solid [[PANEL_BORDER]]; padding: 2px; margin: 0; }
+.panel h2 { border-bottom: 1px solid [[PANEL_BORDER]]; padding: 2px; margin: 0; }
 .panel p  { margin: 0; padding: 0 }
 .panel p.space-below { margin-bottom:0.5em; }
 .panel div.content { padding: 5px; margin: 0; }
@@ -11,11 +11,11 @@
 .panel dl.normal dt { clear:none; float:none; width:100%; margin:0.5em 0 0 0; font-weight:bold; }
 .panel dl.normal dd { margin: 0.5em 0 0 2em; }
 
-.panel .nav-heading { border-bottom: 0; border-bottom:1px solid #ccc; }
+.panel .nav-heading { border-bottom: 0; border-bottom:1px solid [[PANEL_BORDER]]; }
 .panel .nav-heading h2 { border: 0; border-bottom: 0; padding: 0; text-align: center; margin: 0}
 .left-button { float: left }
 .right-button { float: right; }
 .panel .nav-heading div { width: 16em; padding: 1px;  }
 .panel .nav-heading div span, .panel .nav-heading div a { height: 1.4em; overflow: hidden; text-decoration: none; margin: 2px; font-weight: bold; display:block; padding: 0 0.5em; text-align: center; }
-.panel .nav-heading div a { background-color: #d8ddff; border:1px outset #cdf; font-size: 0.9em}
+.panel .nav-heading div a { background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; font-size: 0.9em}
 

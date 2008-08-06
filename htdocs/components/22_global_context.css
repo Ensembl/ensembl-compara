@@ -1,12 +1,12 @@
-div#tabs {clear: both; width: 100%; background-color: #336; color: #cdf;}
-div#tabs dd a { color: #fff; background: url(/i/tab-l-off.gif) no-repeat top left; }
-div#tabs dd span { color: #eee; background: url(/i/tab-l-off.gif) no-repeat top left; }
-div#tabs dd.active a { color: #336; background: url(/i/tab-l.gif) no-repeat top left; font-weight: bold }
-div#tabs dd a:hover { color: #c00 }
-div#tabs dd.active a:hover { color: #c00 }
+div#tabs {clear: both; width: 100%; background-color:[[MH_BG]]; color:[[MH_TEXT]];}
+div#tabs dd a { color:[[MH_LINK]]; background: url(/i/tab-l-off.gif) no-repeat top left; }
+div#tabs dd span { color:[[NEUTRAL_BG]]; background: url(/i/tab-l-off.gif) no-repeat top left; }
+div#tabs dd.active a { color:[[MH_BG]]; background: url(/i/tab-l.gif) no-repeat top left; font-weight: bold }
+div#tabs dd a:hover { color:[[MH_HOVER]] }
+div#tabs dd.active a:hover { color:[[MH_HOVER]] }
 div#tabs dd { background: url(/i/tab-off.gif) no-repeat top right; }
 div#tabs dd.active { background: url(/i/tab.gif) no-repeat top right }
-div#tabs dt.hidden { color:#336; }
+div#tabs dt.hidden { color:[[MH_BG]]; }
 
 dl.tabs { margin: 0; padding: 0; font-size: 1em }
 dl.tabs a { text-decoration: none }

@@ -1,6 +1,6 @@
 .mh {
- width: 100%; border: 0; padding: 0; margin: 0;
- border-collapse: collapse; background-color: #336
+ width: 100%; border: 0px; padding: 0px; margin: 0px;
+ border-collapse: collapse; background-color: [[MH_BG]]
 }
   .mh td { border: 0; padding: 0; margin: 0 }
 
@@ -10,29 +10,29 @@
 
 /** Cell 2 - **/
   #mh form { margin: 2px; padding: 0; border: 0 }
-  table#se { float: right; margin: 2px; background-color: #fff; border: 1px solid #369; border-collapse: collapse; }
-  table#se td { border: 1px solid #369; vertical-align: middle }
+  table#se { float: right; margin: 2px; background-color:[[PANEL_BG]]; border: 1px solid [[MH_BORDER]]; border-collapse: collapse; }
+  table#se td { border: 1px solid [[MH_BORDER]]; vertical-align: middle }
   table#se img { cursor: pointer; padding: 2px; height: 16px; width: 16px; }
   #se_q { border:0; width: 20em }
   #se_b { cursor: pointer; }
-  #se_b input { cursor: pointer;margin:0; border:0;background-color:#fff;padding:1px 0.5em;font-size: 0.8em; font-weight: bold }
+  #se_b input { cursor: pointer;margin:0; border:0;background-color:[[PANEL_BG]];padding:1px 0.5em;font-size: 0.8em; font-weight: bold }
   /** search menu selector **/
-  dl#se_mn { z-index:100;width: 8em; margin: 2px; border-top: 1px solid #369; position: absolute; cursor: pointer }
-  dl#se_mn dt { border: 1px solid #369 ; border-top: 0; font-size: 0.8em;  padding: 0; background-color: #fff  }
+  dl#se_mn { z-index:100;width: 8em; margin: 2px; border-top: 1px solid [[MH_BORDER]]; position: absolute; cursor: pointer }
+  dl#se_mn dt { border: 1px solid [[MH_BORDER]] ; border-top: 0; font-size: 0.8em;  padding: 0; background-color: [[PANEL_BG]]  }
   dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid white; vertical-align: top; padding-right: 0.5em }
 
 /** Cell 3 - the breadcrumb links under the logo **/
-  td#mh_bc { color: #ccc; font-weight: bold; padding-left:4px; } 
-  #mh_bc a { color: #fff; text-decoration: none }
-  #mh_bc a:hover { color: #c00;}
+  td#mh_bc { color: [[NEUTRAL_BORDER]]; font-weight: bold; padding-left:4px; } 
+  #mh_bc a { color: [[MH_TEXT]]; text-decoration: none }
+  #mh_bc a:hover { color: [[MH_HOVER]];}
 
 /** Cell 4 - the links at the bottom right **/
-  td#mh_lnk { color: #999; font-size:0.9em;font-weight: bold; float: right; text-align: right;
+  td#mh_lnk { color: [[NEUTRAL_BORDER]]; font-size:0.9em;font-weight: bold; float: right; text-align: right;
             white-space: nowrap; padding: 0 10px 2px 2px; }
-  #mh_lnk a { color: #fff; text-decoration: none }
-  #mh_lnk a:hover { color: #c00;}
+  #mh_lnk a { color: [[MH_LINK]]; text-decoration: none }
+  #mh_lnk a:hover { color: [[MH_HOVER]];}
 
-  #login-status { color: #fff; font-size:0.9em; float: right; text-align: right;
+  #login-status { color:[[MH_LINK]]; font-size:0.9em; float: right; text-align: right;
             white-space: nowrap; padding: 10px 10px 0 0; }
-  #login-status a { color: #fff; text-decoration: none }
-  #login-status a:hover { color: #c00;}
+  #login-status a { color:[[MH_LINK]]; text-decoration: none }
+  #login-status a:hover { color: [[MH_HOVER]];}

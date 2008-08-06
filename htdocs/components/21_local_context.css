@@ -1,7 +1,7 @@
 #local dl { overflow: hidden; width: 14em; margin: 0 }
 #local dd { margin-bottom: 0; overflow: hidden }
-#local dt { border-bottom: 1px solid #ccc; padding: 2px; }
+#local dt { border-bottom: 1px solid [[NEUTRAL_BORDER]]; padding: 2px; }
 #local dd.notl dl, #local dd.notl { background: url(/i/line.gif) repeat-y;  }
 #local dd.notl dl { margin: 0 }
-#local dd.last { background: #fff url(/i/last.gif) no-repeat }
-#local dd.active, #local a.active { font-weight: bold; background-color: #eaeeff }
+#local dd.last { background: [[PANEL_BG]] url(/i/last.gif) no-repeat }
+#local dd.active, #local a.active { font-weight: bold; background-color: [[TINT_BG]] }

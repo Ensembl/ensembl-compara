@@ -4,8 +4,8 @@
 **/
 
 /** 
-  The following code adds code which on changing a drop-down
-  boxes value - goes to the URL specified by the value of the
+  The following code adds code which, on changing a drop-down
+  box's value, goes to the URL specified by the value of the
   dropdown element.
 **/
 
@@ -72,3 +72,28 @@ function __init_species_reorder() {
 }
 
 addLoadEvent( __init_species_reorder );
+
+
+/** 
+  The following code adds code which, on changing a radio
+  button's value, goes to the URL specified by the form action
+**/
+
+function radio_autosubmit( evt ) {
+/** Function that actually does the form submission **/
+  var el = Event.findElement(evt,'input');
+  var form = el.parentNode;
+  form.submit();
+  return true;
+}
+
+/**
+  Add lambda function which adds an observer to each
+  of the nodes which have a value radio_autosubmit
+**/
+addLoadEvent( function(){ 
+  $$('.radio_autosubmit').each(function(n){
+    Event.observe(n,'change',radio_autosubmit);
+  });
+});
+

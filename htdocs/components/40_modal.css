@@ -1,11 +1,11 @@
 .pointer { cursor:pointer }
 
-#modal_bg { position: absolute; top: 0; z-index:19999; background: #369; margin:0;border:0; padding:0; text-align: center; vertical-align: middle; top:0; left:0}
-#modal_panel { text-align: left; position: absolute; background-color: #fff; margin: auto; z-index: 20000; padding:0; border: 1px solid black; }
-#modal_title { overflow: hidden; background-color: #666; margin: 0; padding: 2px; color: #fff; font-weight: bold; }
+#modal_bg { position: absolute; top: 0; z-index:19999; background: [[MH_BORDER]]; margin:0;border:0; padding:0; text-align: center; vertical-align: middle; top:0; left:0}
+#modal_panel { text-align: left; position: absolute; background-color: [[PANEL_BG]]; margin: auto; z-index: 20000; padding:0; border: 1px solid [[CONTRAST_TEXT]]; }
+#modal_title { overflow: hidden; background-color: [[PANEL_TEXT]]; margin: 0; padding: 2px; color: [[PANEL_BG]]; font-weight: bold; }
 #modal_content { overflow:scroll; }
 
-.modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color: #ddd; margin: 2px; text-align: center; font-weight: bold; color: #000; cursor:pointer; }
+.modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color:[[PANEL_BORDER]]; margin: 2px; text-align: center; font-weight: bold; color: [[CONTRAST_TEXT]]; cursor:pointer; }
 
 #modal_close { float:right;margin:0;padding:0; width: 40px; }
 

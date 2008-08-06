@@ -3,13 +3,13 @@
 ***********************************************************************/
 
 table.ss { width: 100%; }
-table.ss th, table.ss tr.ss_header { background-color:#ccc; border: 0px solid #ccc; border-top-width:1px; }
+table.ss th, table.ss tr.ss_header { background-color:[[NEUTRAL_BORDER]]; border: 0px solid [[NEUTRAL_BORDER]]; border-top-width:1px; }
 table.ss td { padding:0.2em; }
 
-table.ss .left-border {    border-left:  1px #ccc solid; }
-table.ss .right-border {   border-right: 1px #ccc solid; }
-table.ss .bottom-border {  border-bottom:1px #ccc solid; }
+table.ss .left-border {    border-left:  1px [[NEUTRAL_BORDER]] solid; }
+table.ss .right-border {   border-right: 1px [[NEUTRAL_BORDER]] solid; }
+table.ss .bottom-border {  border-bottom:1px [[NEUTRAL_BORDER]] solid; }
 
-table.ss   tr.bg1 { background-color:#fff; }
-table.ss   tr.bg2 { background-color:#eee; } /* grey stripe */
-table.tint tr.bg2 { background-color:#eef; } /* coloured stripe */
+table.ss   tr.bg1 { background-color:[[PANEL_BG]]; }
+table.ss   tr.bg2 { background-color:[[NEUTRAL_BG]]; } 
+table.tint tr.bg2 { background-color:[[TINT_BG]; } 

@@ -2,7 +2,7 @@
 
 div#content { margin:0 0 0 14em; padding:0; border:none; }
 
-div#content div.panel { border:1px solid #ccc; background-color:#fff; }
+div#content div.panel { border:1px solid #ccc; background-color:[[PANEL_BG]]; }
 
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
@@ -12,9 +12,9 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 .twocol-left { float:left; width:47%; margin:0 0 1% 0; padding:1%; clear:left; }
 .twocol-right { float:right; width:47%; margin:0 0 1% 0; padding:1%; }
 
-.plain-box  { background-color:#fff; border:1px solid #ccc; }
-.tinted-box { background-color:#eef; border:1px solid #ccf; }
-.alert-box { background-color:#ffd; border:1px solid #fe9; }
+.plain-box  { color:[[PANEL_TEXT]]; background-color:[[PANEL_BG]]; border:1px solid [[PANEL_BORDER]]; }
+.tinted-box { color:[[PANEL_TEXT]]; background-color:[[TINT_BG]]; border:1px solid [[TINT_BORDER]]; }
+.alert-box { color:[[ALERT_TEXT]]; background-color:[[ALERT_BG]]; border:1px solid [[ALERT_BORDER]]; }
 .info-box { width:80%; margin:1em auto; padding:0.5em; }
 
 .float-right { float:right; width:30%; margin:1% 1% 0 0; padding:1%; }
@@ -22,6 +22,6 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 .unpadded { margin:0 1%; padding:0; }
 .noclear { clear:none; }
 
-hr.end-of-doc { height:1px; color:#ccc; background-color:#ccc; border:0; 
+hr.end-of-doc { height:1px; color:[[PANEL_BORDER]]; background-color:[[PANEL_BORDER]]; border:0; 
                 margin:2em 1em 0 1em; padding: 0; clear:both; }
 hr.with-nav { margin-left:15em; }
