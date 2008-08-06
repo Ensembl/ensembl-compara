@@ -10,10 +10,10 @@ sub new {
   my $self = $class->SUPER::new( @_ );
 
   my %new_colourmap = qw(
-    BACKGROUND1 background0
-    BACKGROUND3 background3
-    BACKGROUND4 background2
-    BACKGROUND5 background1
+    CONTRAST_BORDER   background0
+    CONTRAST_BG       background3
+    IMAGE_BG1         background2
+    IMAGE_BG2         background1
     CONTIGBLUE1 contigblue1
     CONTIGBLUE2 contigblue2
     HIGHLIGHT1  highlight1
