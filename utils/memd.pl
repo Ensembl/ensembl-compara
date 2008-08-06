@@ -25,7 +25,7 @@ if ($memd) {
   } elsif ($ARGV[0] =~ /(tags?)?_?delete/i) {
     shift @ARGV;
     print $memd->delete_by_tags(@ARGV)."\n";
-  } elsif ($ARGV[0] =~ /flush_?all/i) {
+  } elsif ($ARGV[0] =~ /flush/i) {
     print "Flushing cache:\n";
     print $memd->delete_by_tags." cache items deleted\n";
   } elsif ($ARGV[0] =~ /stats/i) {
