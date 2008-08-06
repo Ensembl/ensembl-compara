@@ -686,6 +686,7 @@ sub dnafrag {
     }
   
   } elsif (!defined($self->{'dnafrag'})) {
+
     # Try to get data from other sources...
     if (defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
       # ...from the dnafrag_id. Use dnafrag_id function and not the attribute in the <if>
@@ -1268,11 +1269,13 @@ sub _get_cigar_line_from_aligned_sequence {
   my ($aligned_sequence) = @_;
   my $cigar_line = "";
   
-  my @pieces = split(/(\-+)/, $aligned_sequence);
+  my @pieces = split(/([\-\.]+)/, $aligned_sequence);
   foreach my $piece (@pieces) {
     my $mode;
     if ($piece =~ /\-/) {
-      $mode = "D"; # D for gaps (deletions)
+	$mode = "D"; # D for gaps (deletions)
+    } elsif ($piece =~ /\./) {
+	$mode = "X"; # X for pads (in 2X genomes)
     } else {
       $mode = "M"; # M for matches/mismatches
     }
