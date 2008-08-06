@@ -14,17 +14,26 @@ sub _extra {
 
 sub validate { return 1; }
 
+sub _class { return '_string'; }
+
 sub render {
   my $self = shift;
-  return sprintf( '<label for="%s">%s: </label><input type="%s" name="%s" value="%s" id="%s" class="input-text" %s />%s<br />%s',
+  return sprintf( '
+  <dl>
+    <dt><label for="%s">%s: </label></dt>
+    <dd><input type="%s" name="%s" value="%s" id="%s" class="input-text %s" />
+    %s
+    %s
+    </dd>
+  </dt>',
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->label ),
     $self->widget_type,
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->value ), CGI::escapeHTML( $self->id ),
-    $self->_extra(),
+    $self->required eq 'yes' ? 'required' : 'optional',
     $self->required eq 'yes' ? $self->required_string : '',
-    $self->notes,
+    $self->notes ? "<br />".$self->notes : '',
   );
 }
 

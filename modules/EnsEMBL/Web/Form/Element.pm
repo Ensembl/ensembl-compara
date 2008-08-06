@@ -60,19 +60,19 @@ sub required     :lvalue { $_[0]{'required'}; }
 sub notes        :lvalue { $_[0]{'notes'}; }
 sub introduction :lvalue { $_[0]{'introduction'}; }
 sub label        :lvalue { $_[0]{'label'}; }
-sub comment 	   :lvalue { $_[0]{'comment'}; }
+sub comment      :lvalue { $_[0]{'comment'}; }
 sub hidden_label :lvalue { $_[0]{'hidden_label'}; }
 sub in_error     :lvalue { $_[0]{'in_error'}; }
 sub render_as    :lvalue { $_[0]{'render_as'}; }
-sub src           :lvalue { $_[0]{'src'};   }
-sub alt           :lvalue { $_[0]{'alt'};   }
-sub width         :lvalue { $_[0]{'width'};   }
-sub height        :lvalue { $_[0]{'height'};   }
-sub noescape      :lvalue { $_[0]{'noescape'};   }
+sub src          :lvalue { $_[0]{'src'};   }
+sub alt          :lvalue { $_[0]{'alt'};   }
+sub width        :lvalue { $_[0]{'width'};   }
+sub height       :lvalue { $_[0]{'height'};   }
+sub noescape     :lvalue { $_[0]{'noescape'};   }
 
-sub _is_valid { return 1; }
-sub validate  { return $_[0]->required eq 'yes'; }
-sub _extra    { return ''; }
+sub _is_valid    { return 1; }
+sub validate     { return $_[0]->required eq 'yes'; }
+sub _extra       { return ''; }
 
 1;
 
