@@ -3,6 +3,7 @@ package EnsEMBL::Web::ConfigPacker;
 use strict;
 use EnsEMBL::Web::ConfigPacker_base;
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
+use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::ConfigPacker_base);
 
@@ -20,6 +21,7 @@ sub _munge_databases {
 
   $self->_summarise_variation_db(        );
   $self->_summarise_funcgen_db(          );
+  $self->_summarise_website_db_per_species(    );
 }
 
 sub _munge_das { # creates das.packed...
@@ -254,32 +256,49 @@ sub _summarise_funcgen_db {
   $dbh->disconnect();
 }
 
-#========================================================================#
-# The following functions munge the multi-species databases              #
-# * note that summarise_website_db actually stores the results of some   #
-#   of its queries in the species trees not in the multi tree!           #
-#========================================================================#
-sub _summarise_website_db {
+sub _summarise_website_db_per_species {
+  ## Get per_species data that is stored in ensembl_website
   my $self    = shift;
   my $db_name = 'ENSEMBL_WEBSITE';
   my $dbh     = $self->db_connect( $db_name );
 
   ## Assembly history per species
   my $t_aref = $dbh->selectall_arrayref(
-    'select s.name, r.number, rs.assembly_code from species as s, ens_release as r, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and rs.assembly_code != ""'
+    'select r.number, rs.assembly_code from species as s, ens_release as r, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and rs.assembly_code != "" and s.name = "'.$self->species.'"'
   );
 
   foreach my $row (@$t_aref) {
-    $self->db_tree->{'ASSEMBLIES'}{$row->[0]}{$row->[1]} = $row->[2];
+    $self->db_tree->{'ASSEMBLIES'}{$row->[0]} = $row->[1];
   }
 
   ## Current archive list
   my $t_aref = $dbh->selectall_arrayref(
+    'select r.number, r.archive from ens_release as r, species as s, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and s.name = "'.$self->species.'" and r.online = "Y" order by r.release_id'
+  );
+  foreach my $row (@$t_aref) {
+    $self->db_tree->{'ENSEMBL_ARCHIVES'}{$row->[0]} = $row->[1];
+  }
+  $dbh->disconnect();
+}
+
+#========================================================================#
+# The following functions munge the multi-species databases              #
+#========================================================================#
+
+sub _summarise_website_db {
+  ## Get generic data from ensembl_website
+  my $self    = shift;
+  my $db_name = 'ENSEMBL_WEBSITE';
+  my $dbh     = $self->db_connect( $db_name );
+
+  ## Full list of current archives
+  my $t_aref = $dbh->selectall_arrayref(
     'select number, archive from ens_release where online = "Y" order by release_id'
   );
   foreach my $row (@$t_aref) {
-    $self->db_tree->{'ENSEMBL_ARCHIVES'}{$row->[0]} = {$row->[1]};
+    $self->db_tree->{'ENSEMBL_ARCHIVES'}{$row->[0]} = $row->[1];
   }
+  $dbh->disconnect();
 }
 
 sub _summarise_compara_db {
@@ -464,8 +483,6 @@ sub _summarise_dasregistry {
 sub _munge_meta {
   my $self = shift;
 
-#use Data::Dumper;
-#warn $self->species.Dumper($self->db_details('ENSEMBL_DB')->{'meta_info'});
   ## Quick and easy access to species info
   $self->tree->{'SPECIES_COMMON_NAME'} = 
       $self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.ensembl_alias_name'}[0];
@@ -498,11 +515,14 @@ sub _munge_meta {
 sub _munge_website {
   my $self = shift;
 
-  ## Add flags for new and updated species
-  #my $previous_assembly = $self->db_tree->{'species_info'}{$self->species}{'prev_assembly'}
+  ## Release info for ID history etc
+  $self->tree->{'ASSEMBLIES'} = $self->db_tree->{'ASSEMBLIES'};
 
-  ## Archives
-  #$self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_tree->{'archive_info'};
+  ## Add flags for new and updated species
+  #my $previous_release = $ENV{'ENSEMBL_VERSION'} - 1;
+  #$self->tree->{'PREVIOUS_RELEASE'} = $self->db_tree->{'ASSEMBLIES'}{$self->species}{$previous_release};
+
+  $self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_tree->{'ENSEMBL_ARCHIVES'};
 
 }
 
