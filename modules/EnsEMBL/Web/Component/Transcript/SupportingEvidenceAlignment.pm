@@ -56,7 +56,11 @@ sub content {
     if ($hit_db_name =~ /^RefSeq/) {
 	$ext_seq =~ s/\w+\|\d+\|ref\|//;
 	$ext_seq =~ s/\|.+//m;
-	$ext_seq =~ s / //g; #remove white space from the sequence
+	$ext_seq =~ s /^ //mg; #remove white space from the beginning of each line of sequence
+    }
+    if ($hit_db_name =~ /Uniprot/i) {
+	$ext_seq =~ s/ .+$//m;
+	$ext_seq =~ s /^ //mg; #remove white space from the  beginning of each line ofsequence
     }
 
     my $hit_url = $object->get_ExtURL_link( $hit_id, $hit_db_name, $hit_id );
