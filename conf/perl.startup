@@ -123,8 +123,6 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
   warn( "\n" . ('=' x 78) . "\n" );
   $conf->store;
 #--- dynamically build mart registry file...
-  EnsEMBL::Web::Document::ColourChanger::change_ddmenu_colours( $conf ); 
-  EnsEMBL::Web::Document::ColourChanger::change_zoom_colours(   $conf ); 
   EnsEMBL::Web::Document::ColourChanger::change_CSS_colours(    $conf );
   EnsEMBL::Web::Document::DHTMLmerge::merge_all( ${SiteDefs::ENSEMBL_SERVERROOT}.'/conf/packed/dhtml.ini', $conf );
 
