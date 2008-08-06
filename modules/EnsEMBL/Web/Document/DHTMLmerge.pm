@@ -52,6 +52,7 @@ sub merge {
   my %contents = ();
   my $first_root = ${SiteDefs::ENSEMBL_SERVERROOT}.'/htdocs/';
   foreach my $root ( reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS ) {
+    next if $root =~ /biomart/; ## Not part of Ensembl template system!
     my $dir = "$root/components";
     if( -e $dir && -d $dir ) {
       opendir DH, $dir;
@@ -79,6 +80,14 @@ $CONTENTS
   foreach ( sort keys %contents ) {
     $NEW_CONTENTS .= $contents{$_};
   }
+
+  ## Convert style placeholders to actual colours
+  my %colours = %{$species_defs->ENSEMBL_STYLE||{}};
+  foreach (keys %colours) {
+    $colours{$_} =~ s/^([0-9A-F]{6})$/#$1/i;
+  }
+  $NEW_CONTENTS =~ s/\[\[(\w+)\]\]/$colours{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg; 
+
   if( $current_file ) {
     if (open I, "$first_root/merged/$current_file.$type") {
       local $/ = undef;
