@@ -1,0 +1,82 @@
+#!/usr/local/bin/perl
+package jump_to_location_view;
+
+# Form-processing script that takes parameters from various forms
+# and forwards to the appropriate Location URL
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::WebPage;
+use POSIX qw(floor ceil);
+                                                                                
+my $webpage= new EnsEMBL::Web::Document::WebPage(
+  'renderer'   => 'Apache',
+  'outputtype' => 'HTML',
+  'scriptname' => 'jump_to_location_view',
+  'objecttype' => 'Location',
+);
+
+my $f = $webpage->factory;
+my $URL;
+
+if ($f->param('karyotype')) {
+  ## karyoview image map
+  my @chrs = @{$webpage->{species_defs}->ENSEMBL_CHROMOSOMES};
+  my $per_row = int(scalar(@chrs) / 2) + (scalar(@chrs) % 2);
+  my $x = $f->param( 'vclick.x' );
+  my $y = $f->param( 'vclick.y' );
+
+  ## For now, assume largest chr is in row 1
+  my $row = $y > ($f->param('max_chr') - 20) ? 1 : 0;
+  my $col = int($x / 44);
+  my $chr = @chrs[$col + $per_row * $row]; 
+  
+  if ($chr) {
+    $URL = sprintf( "/%s/Location/Chromosome?r=%s:1-100000", $ENV{'ENSEMBL_SPECIES'}, $chr );
+  }
+  else {
+    ## Return to previous location
+    $URL = sprintf( "/%s/Location/Karyotype?r=%s:%s-%s", 
+                    $ENV{'ENSEMBL_SPECIES'}, $f->param('chr'), $f->param('start'), $f->param('end'));
+  }
+}
+
+elsif ($f->param('entry')) {
+  ## Entry form on species homepages
+  my $region = $f->param('region') || $f->param('chr') || '1';
+  my $start = $f->param('start') || '1';
+  my $end = $f->param('end') || '100000';
+  $URL = sprintf( "/%s/Location/View?r=%s:%s-%s", $ENV{'ENSEMBL_SPECIES'}, $region, $start, $end );
+}
+
+elsif ($f->param('chr')) {
+  ## change_chromosome form
+  $URL = sprintf( "/%s/Location/Chromosome?r=%s:1-100000", $ENV{'ENSEMBL_SPECIES'}, $f->param('chr') );
+}
+
+else {
+  ## Using imagemap, so work out coordinates based on click point
+  my $temp_id = $f->param( 'click.x' ) + $f->param( 'vclick.y' );
+  my $centrepoint = floor(
+            $f->param( 'seq_region_left' ) +
+            ( $temp_id - $f->param( 'click_left' ) + 0.5 ) /
+            ( $f->param( 'click_right' ) - $f->param( 'click_left' ) + 1 ) *
+            ( $f->param( 'seq_region_right' ) - $f->param( 'seq_region_left' ) + 1 )
+          );
+  my $seq_region_start = $centrepoint - ($f->param('seq_region_width')-1)/2; 
+  $seq_region_start = 0 if $seq_region_start < 0;
+  my $seq_region_end   = $seq_region_start + $f->param('seq_region_width'); 
+
+  $URL = sprintf( "/%s/Location/View?r=%s:%d-%d",
+    $ENV{'ENSEMBL_SPECIES'},
+    $f->param('seq_region_name'),
+    $seq_region_start,
+    $seq_region_end
+  );
+}
+
+$webpage->redirect( $URL );
+
+1;
