@@ -27,16 +27,41 @@ sub content {
 
     my $hit_id = $input->{'sequence'}->[0];
     my $hit_db_name = $object->get_hit_db_name($hit_id);
-    my $hit_url = $object->get_ExtURL_link( $hit_id, $hit_db_name, $hit_id );
 
-    #get external sequence and type (DNA or PEP)
-    my $query_db = ($hit_db_name =~ /^RefSeq/) ? 'RefSeq' : $hit_db_name;
-    my $ext_seq = $object->get_ext_seq( $hit_id,uc($query_db) );
+    #get external sequence and type (DNA or PEP) - refseq try with and without version
+    my ($query_db, $ext_seq);
+    my @hit_ids = ( $hit_id );
+    if ($hit_db_name =~ /^RefSeq/) {
+	$query_db = 'RefSeq';
+	$hit_id =~ s/\.\d+//;
+	push @hit_ids, $hit_id;
+    }
+    else {
+	$query_db = $hit_db_name;
+    }
+
+    foreach my $id ( @hit_ids ) {
+	$ext_seq = $object->get_ext_seq( $id,uc($query_db) );
+	if ($ext_seq) {
+	    $hit_id = $id;
+	    last;
+	}
+    }
     unless( $ext_seq ) {
 	$object->problem( 'fatal', "External Feature Alignment Does Not Exist", "The sequence for feature $hit_id could not be retrieved.");
 	return;
     }
-    #worting with DNA or PEP ?
+
+    #munge hit name for the display 
+    if ($hit_db_name =~ /^RefSeq/) {
+	$ext_seq =~ s/\w+\|\d+\|ref\|//;
+	$ext_seq =~ s/\|.+//m;
+	$ext_seq =~ s / //g; #remove white space from the sequence
+    }
+
+    my $hit_url = $object->get_ExtURL_link( $hit_id, $hit_db_name, $hit_id );
+
+    #working with DNA or PEP ?
     my $seq_type = $object->determine_sequence_type( $ext_seq );
 
     my $ext_seq_length = length($ext_seq);
