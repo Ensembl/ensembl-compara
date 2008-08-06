@@ -123,6 +123,14 @@ sub valid_species(){
   return @valid_species;
 }
 
+sub species_full_name {
+  ### a
+  ### returns full species name from the short name
+  my $self = shift;
+  my $sp   = shift;
+  return $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$sp};
+}
+
 sub AUTOLOAD {
   ### a
   my $self = shift;
@@ -449,6 +457,7 @@ sub _parse {
     }
     $self->_merge_db_tree( $tree, $db_tree, $species );
     
+#if(0){
     if( -e $das_packed ) {
       $das_tree->{ $species } = lock_retrieve( $das_packed );                              $self->_info_line( 'Retrieve', "$species DAS sources" );
     } else {
@@ -459,8 +468,8 @@ sub _parse {
       lock_nstore( $das_tree->{ $species } || {}, $das_packed );
     }
     $self->_merge_db_tree( $tree, $das_tree, $species );
-  }
-
+#  }
+}
 #------------ Do the same for the multi-species file...
   $tree->{'MULTI'} = $self->_read_in_ini_file( 'MULTI', $defaults );                       $self->_info_line( 'Parsing', "MULTI ini file" );
   $self->_expand_database_templates( 'MULTI', $tree->{'MULTI'} );
