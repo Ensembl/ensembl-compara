@@ -1441,11 +1441,10 @@ sub get_ext_seq{
     my %args;
     $args{'ID'} = $id;
     $args{'DB'} = $ext_db ? $ext_db : 'DEFAULT';
-    
+
     eval{
 	$seq_ary = $indexer->get_seq_by_id(\%args);
     };
-    
     if ( ! $seq_ary) {
 	$self->problem( 'fatal', "Unable to fetch sequence",  "The $ext_db server is unavailable $@");
 	return;
@@ -1537,11 +1536,12 @@ sub get_alignment{
     }
     my $int_seq_file = $self->save_seq($int_seq);
     my $ext_seq_file = $self->save_seq($ext_seq);
+
     my $label_width  = '22'; #width of column for e! object label
-    my $output_width = 60; #width of alignment
+    my $output_width = 61; #width of alignment
     my $dnaAlignExe = "%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s";
     my $pepAlignExe = "%s/bin/psw -m %s/wisecfg/blosum62.bla %s %s -n %s -w %s > %s";
-    
+
     my $out_file = time().int(rand()*100000000).$$;
     $out_file = $self->species_defs->ENSEMBL_TMP_DIR.'/'.$out_file.'.out';
     
