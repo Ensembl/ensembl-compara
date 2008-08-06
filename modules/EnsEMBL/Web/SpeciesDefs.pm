@@ -46,6 +46,7 @@ use warnings;
 no warnings "uninitialized";
 
 use Carp qw( cluck );
+use File::Spec;
 
 use Storable qw(lock_nstore lock_retrieve thaw);
 use Data::Dumper;
@@ -254,7 +255,7 @@ sub _load_in_webtree {
 ### Load in the contents of the web tree....
 ### Check for cached value first....
   my $self = shift;
-  my $web_tree_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/packed/web_tree.packed';
+  my $web_tree_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0],'packed','web_tree.packed');
   my $web_tree = { _path => '/info/' };
   if( -e $web_tree_packed ) {
     $web_tree = lock_retrieve( $web_tree_packed );
@@ -434,8 +435,8 @@ sub _parse {
     $tree->{$species} = $self->_read_in_ini_file( $species, $defaults );                   $self->_info_line( 'Parsing', "$species ini file" );
     $self->_expand_database_templates( $species, $tree->{$species} );
     $self->_promote_general(           $tree->{$species} );
-    my $species_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0]."/packed/$species.db.packed";
-    my $das_packed     = $SiteDefs::ENSEMBL_CONF_DIRS[0]."/packed/$species.das.packed";
+    my $species_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0],'packed',"$species.db.packed");
+    my $das_packed     = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0],'packed',"$species.das.packed");
 
     if( -e $species_packed ) {
       $db_tree->{ $species } = lock_retrieve( $species_packed );                           $self->_info_line( 'Retrieve', "$species databases" );
@@ -464,7 +465,7 @@ sub _parse {
   $tree->{'MULTI'} = $self->_read_in_ini_file( 'MULTI', $defaults );                       $self->_info_line( 'Parsing', "MULTI ini file" );
   $self->_expand_database_templates( 'MULTI', $tree->{'MULTI'} );
   $self->_promote_general(           $tree->{'MULTI'} );
-  my $multi_packed = $SiteDefs::ENSEMBL_CONF_DIRS[0]."/packed/MULTI.db.packed";      
+  my $multi_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0],'packed','MULTI.db.packed');
   if( -e $multi_packed ) {
     $db_tree->{'MULTI'} = lock_retrieve( $multi_packed );                                  $self->_info_line( 'Retrieve', "MULTI ini file" );
   } else {
