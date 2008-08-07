@@ -20,7 +20,17 @@ sub content {
 
   my $html = qq(<h2>FAQs</h2>);
 
-  my @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted;
+  my @faqs;
+  if ($object->param('id')) {
+    my @ids = $object->param('id');
+    foreach my $id (@ids) {
+      push @faqs, EnsEMBL::Web::Data::Faq->new($id);
+    }
+  }
+  else {
+    @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted;
+  }
+
   if (scalar(@faqs) > 0) {
   
     my $style = 'text-align:right;margin-right:2em';
