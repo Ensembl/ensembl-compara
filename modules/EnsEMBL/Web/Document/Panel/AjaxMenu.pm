@@ -38,11 +38,16 @@ sub content {
   foreach my $entry ( sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'label'} cmp $b->{'label'} } @{$self->{'entries'}||[]} ) {
     my $txt = escapeHTML( $entry->{'label'} );
     if( $entry->{'link'} ) {
-      $txt = sprintf( '<a href="%s"%s>%s</a>',
-        escapeHTML($entry->{'link'}),
-	$entry->{'extra'}{'external'} ? ' rel="external"' : '',
-	$txt
-      );
+      if ($entry->{'extra'}{'abs_url'}) {
+	$txt = $entry->{'link'};
+      }
+      else {
+	$txt = sprintf( '<a href="%s"%s>%s</a>',
+          escapeHTML($entry->{'link'}),
+	  $entry->{'extra'}{'external'} ? ' rel="external"' : '',
+	  $txt
+        );
+      }
     }
     if( $entry->{'type'} ) {
       $self->printf( '
