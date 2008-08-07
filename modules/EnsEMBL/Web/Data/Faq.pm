@@ -39,7 +39,7 @@ sub fetch_sorted {
 
   my $where = ' WHERE type = ? ';
   my $order = ' ORDER BY helpful DESC, not_helpful ASC ';
-  my $limit = " LIMIT $limit " if $limit;
+  $limit = " LIMIT $limit " if $limit;
   my @args = ('faq');
 
   my $sth = $class->sql_sorted($where, $order, $limit);
