@@ -39,6 +39,7 @@ sub draw_glyphs {
     #go through each parsed transcript_supporting_feature
     foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
 	my $hit_name = $hit_details->{'hit_name'};
+	my $hit_db = $hit_details->{'hit_db'};
 	my $start_x  = 1000000;
 	my $finish_x = 0;
 	my $last_end = 0; #true/false (prevents drawing of line from first exon)
@@ -91,8 +92,9 @@ sub draw_glyphs {
 	    my $align_url =  $self->_url({
 		'type'     => 'Transcript',
 		'action'   => 'SupportingEvidenceAlignment',
-		't'        =>  $Config->{'transcript'}->{'transcript'}->stable_id,
+		't'        => $Config->{'transcript'}->{'transcript'}->stable_id,
 		'sequence' => $hit_name,
+		'hit_db'   => $hit_db,
 		'exon'     => $exon->stable_id,
 	    });
 
@@ -220,7 +222,7 @@ sub draw_glyphs {
 	    'absolutewidth' => 1,
 	    'ptsize'    => $fontsize,
 	    'halign'    => 'right',
-	});
+	    });
 	$self->push($tglyph);
 	$H += $font_h_bp + 4;
     }
