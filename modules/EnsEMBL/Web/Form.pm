@@ -14,7 +14,7 @@ sub new {
         'method'   => lc($method) || 'get' ,  
         'name'     => $name,
         'id'       => $name,
-        'class'    => 'std',
+        'class'    => 'std check',
     },
     '_buttons'     => [],
     '_fieldsets'   => [],
