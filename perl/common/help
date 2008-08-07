@@ -19,17 +19,26 @@ $controller->add_connections({qw(
 )});
 
 ## Topics
-$controller->add_connections({qw(
-  FAQ        EnsEMBL::Web::Controller::Command::Help::FAQ
-  Glossary   EnsEMBL::Web::Controller::Command::Help::Glossary
-  Feedback   EnsEMBL::Web::Controller::Command::Help::Feedback
-)});
+$controller->add_connections({ 
+  'Faq'       => 'EnsEMBL::Web::Controller::Command::Help::Faq',
+  'Glossary'  => 'EnsEMBL::Web::Controller::Command::Help::Glossary',
+  'Movie'     => 'EnsEMBL::Web::Controller::Command::Help::Movie',
+  'Feedback'  => 'EnsEMBL::Web::Controller::Command::Help::Feedback',
+});
+
 ## Contact
 $controller->add_connections({qw(
   Contact    EnsEMBL::Web::Controller::Command::Help::Contact
   SendEmail  EnsEMBL::Web::Controller::Command::Help::SendEmail
   EmailSent  EnsEMBL::Web::Controller::Command::Help::EmailSent
 )});
+
+## Miscellaneous
+$controller->add_connections({qw(
+  ArchiveList   EnsEMBL::Web::Controller::Command::Help::ArchiveList
+  Permalink     EnsEMBL::Web::Controller::Command::Help::Permalink
+)});
+
 
 $controller->dispatch($ENV{REQUEST_URI});
 
