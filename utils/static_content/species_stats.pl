@@ -570,7 +570,7 @@ sub do_interpro {
                       count(*)
                 FROM  interpro i
                 LEFT JOIN xref x ON i.interpro_ac = x.dbprimary_acc
-                LEFT JOIN protein_feature pf ON i.id = pf.hit_id
+                LEFT JOIN protein_feature pf ON i.id = pf.hit_name
                 LEFT JOIN translation as tr ON tr.translation_id = pf.translation_id
                 LEFT JOIN transcript t ON t.transcript_id = tr.transcript_id
                 LEFT JOIN gene_stable_id gsi ON t.gene_id = gsi.gene_id 
