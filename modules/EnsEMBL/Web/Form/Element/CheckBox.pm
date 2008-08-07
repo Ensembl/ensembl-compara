@@ -1,8 +1,7 @@
 package EnsEMBL::Web::Form::Element::CheckBox;
 
-use EnsEMBL::Web::Form::Element;
 use CGI qw(escapeHTML);
-our @ISA = qw( EnsEMBL::Web::Form::Element );
+use base qw( EnsEMBL::Web::Form::Element );
 
 #sub new {
 #  my $class = shift;

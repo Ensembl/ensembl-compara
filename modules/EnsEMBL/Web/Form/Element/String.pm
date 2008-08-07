@@ -1,21 +1,15 @@
 package EnsEMBL::Web::Form::Element::String;
 
-use EnsEMBL::Web::Form::Element;
 use CGI qw(escapeHTML);
-our @ISA = qw( EnsEMBL::Web::Form::Element );
+
+use base qw( EnsEMBL::Web::Form::Element );
 
 sub _is_valid { return 1; }
-sub _extra {
-  my $self =shift;
-  return sprintf(qq(size="%s" class="%s" onKeyUp="os_check('%s',this,%s)" onChange="os_check( '%s', this, %s )" ),
-    $self->size||20, $self->style , $self->type, $self->required eq 'yes' ? 1 : 0 , $self->type, $self->required eq 'yes' ? 1 : 0
-  );
-}
-
-sub _class { return 'string'; }
-sub validate { return 1; }
 
 sub _class { return '_string'; }
+
+sub validate { return 1; }
+
 
 sub render {
   my $self = shift;
