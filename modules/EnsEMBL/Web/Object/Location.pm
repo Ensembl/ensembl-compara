@@ -4,18 +4,29 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use Data::Dumper;
-
+use POSIX qw(floor ceil);
 use EnsEMBL::Web::Proxy::Factory;
-use Data::Dumper;
+use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Object);
 
-use POSIX qw(floor ceil);
+our $memd = new EnsEMBL::Web::Cache;
 
 sub counts {
   my $self = shift;
   my $obj = $self->Obj;
-  my $counts = {};
+
+  my $key = '::COUNTS::'. join '::', values %{ $self->core_objects->{parameters} };
+  my $counts;
+
+  $counts = $memd->get($key) if $memd;
+
+  unless ($counts) {
+    $counts = {};
+    my %synteny_hash = $self->species_defs->multi('SYNTENY');
+    $counts->{'synteny'} = keys %synteny_hash; 
+
+  }
   return $counts;
 }
 
