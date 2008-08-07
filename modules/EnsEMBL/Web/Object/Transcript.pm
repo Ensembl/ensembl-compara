@@ -1438,6 +1438,11 @@ sub get_hit {
     foreach my $sf (@{$self->Obj->get_all_supporting_features}) {
 	return $sf if ($sf->hseqname eq $id);
     }
+    foreach my $exon (@{$self->Obj->get_all_Exons()}) {
+	foreach my $sf (@{$exon->get_all_supporting_features}) {
+	    return $sf if ($sf->hseqname eq $id);	
+	}
+    }
 }
 
 sub get_ext_seq{
