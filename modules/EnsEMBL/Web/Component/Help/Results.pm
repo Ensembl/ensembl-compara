@@ -19,49 +19,61 @@ sub content {
   my $object = $self->object;
 
   my $html = qq(<h2>Search Results</h2>);
-
-  my %header = (
-    'faq'       =>      'Frequently Asked Questions',
-    'glossary'  =>      'Glossary',
-    'movie'     =>      'Tutorials',
-  );
-
-  ## Generate help records first so we can sort them
   my @results = $object->param('result');
-  my @help_objects;
-  if (@results) {
+
+  if (scalar(@results) && $results[0]) {
+
+    my %header = (
+      'faq'       =>      'Frequently Asked Questions',
+      'glossary'  =>      'Glossary',
+      'movie'     =>      'Tutorials',
+    );
+
+    ## Generate help records first so we can sort them
+    my @help_objects;
     foreach my $result (@results) {
       my ($type, $id) = split('_', $result);
       my $help_obj = ucfirst($type);
       my $module = 'EnsEMBL::Web::Data::'.$help_obj;
       if ($self->dynamic_use($module)) {
-        push @help_objects, $module->new($id);
+        my $help_obj = $module->new($id);
+        push @help_objects, $help_obj if $help_obj->status eq 'live';
       }
     }
-  }
-  my @sorted = sort {$a->type cmp $b->type} @help_objects;
+   
+    my @sorted = sort {$a->type cmp $b->type} @help_objects;
 
-  ## Now display results
-  my ($text, $prev_type);
-  foreach my $help (@sorted) {
-    if ($help->type ne $prev_type) {
-      $html .= "</ul>\n" if $prev_type;
-      $html .= '<h3>'.$header{$help->type}."</h3>\n<ul>\n";
+    ## Now display results
+    my ($text, $extra, $prev_type);
+    foreach my $help (@sorted) {
+      $extra = '';
+      if ($help->type ne $prev_type) {
+        $html .= "</ul>\n" if $prev_type;
+        $html .= '<h3>'.$header{$help->type}."</h3>\n<ul>\n";
+      }
+      if ($help->type eq 'faq') {
+        $text = $help->question;
+      }
+      elsif ($help->type eq 'glossary') {
+        $text = $help->word;
+        $extra = ': '.substr($help->meaning, 0, 50).'...';
+      }
+      else {
+        $text = $help->title;
+      }
+      $html .= sprintf(qq(<li><a href="/Help/%s?id=%s">%s</a>%s</li>), 
+                          ucfirst($help->type), $help->id, $text, $extra);
+      $prev_type = $help->type;
     }
-    if ($help->type eq 'faq') {
-      $text = $help->question;
-    }
-    elsif ($help->type eq 'glossary') {
-      $text = $help->word.': '.substr($help->meaning, 0, 50);
-    }
-    else {
-      $text = $help->title;
-    }
-    $html .= sprintf(qq(<li><a href="/Help/%s?id=%s;type=%s">%s</a></li>), 
-                          ucfirst($help->type), $help->id, $help->type, $text);
-    $prev_type = $help->type;
+    $html .= "</ul>\n";
+  } 
+  else {
+    $html = qq(<p>Sorry, no results were found in the help database matching your query.</p>
+<ul>
+<li><a href="/Help/Search">Search again</a></li>
+<li><a href="/info/">Browse non-searchable pages</a></li>
+</ul>);
   }
-  $html .= "</ul>\n";
 
   return $html;
 }
