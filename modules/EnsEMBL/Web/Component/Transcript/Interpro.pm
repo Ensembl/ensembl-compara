@@ -30,7 +30,7 @@ sub content {
     <td>%s</td>
     <td>%s - [<a href="/%s/Transcript/Domain?%s;domain=%s">Display other genes with this domain</a>]</td>
   </tr>), 
-    $data->{'link'}, $data->{'desc'}, $object->species, join(';', $object->core_params), $accession );
+    $data->{'link'}, $data->{'desc'}, $object->species, join(';', @{$object->core_params}), $accession );
   }
   $html .= qq( </table> );
 
