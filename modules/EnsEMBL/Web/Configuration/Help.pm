@@ -25,9 +25,15 @@ sub populate_tree {
     { 'availability' => 1}
   );
   my $topic_menu = $self->create_submenu( 'Topics', 'Help topics' );
-  $topic_menu->append($self->create_node( 'FAQ', "Frequently Asked Questions",
+  $topic_menu->append($self->create_node( 'Faq', "Frequently Asked Questions",
     [qw(
-      faq    EnsEMBL::Web::Component::Help::FAQ
+      faq    EnsEMBL::Web::Component::Help::Faq
+    )],
+    { 'availability' => 1}
+  ));
+  $topic_menu->append($self->create_node( 'Movie', "Flash Tutorials",
+    [qw(
+      movie    EnsEMBL::Web::Component::Help::Movie
     )],
     { 'availability' => 1}
   ));
@@ -37,6 +43,7 @@ sub populate_tree {
     )],
     { 'availability' => 1}
   ));
+
   $self->create_node( 'Contact', "Contact HelpDesk",
     [qw(
       contact    EnsEMBL::Web::Component::Help::Contact
@@ -47,6 +54,21 @@ sub populate_tree {
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'EmailSent', '',
     [qw(sent EnsEMBL::Web::Component::Help::EmailSent
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'Results', '',
+    [qw(sent EnsEMBL::Web::Component::Help::Results
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'ArchiveList', '',
+    [qw(archive EnsEMBL::Web::Component::Help::ArchiveList
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'Permalink', '',
+    [qw(archive EnsEMBL::Web::Component::Help::Permalink
         )],
       { 'no_menu_entry' => 1 }
   );
