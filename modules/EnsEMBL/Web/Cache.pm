@@ -119,7 +119,7 @@ sub set {
   my $self = shift;
   my ($key, $value, $exptime, @tags) = @_;
 
-  warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
+  #warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
   if ($self->{debug}) {
     warn "EnsEMBL::Web::Cache->set($key)";
     my $debug_key_list = $self->SUPER::get('debug_key_list') || {};
@@ -141,7 +141,7 @@ sub get {
   my $self = shift;
   my $key  = shift;
 
-  warn "EnsEMBL::Web::Cache->get($key)";
+  #warn "EnsEMBL::Web::Cache->get($key)";
   if ($self->{debug} && (my $debug_key_list = $self->SUPER::get('debug_key_list'))) {
     warn "EnsEMBL::Web::Cache->get($key)";
     $debug_key_list->{$key} ||= {};
