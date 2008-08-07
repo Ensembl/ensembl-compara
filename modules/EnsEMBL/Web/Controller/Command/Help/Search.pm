@@ -13,36 +13,9 @@ sub BUILD {
   my ($self, $ident, $args) = @_; 
 }
 
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->render_page; 
-  }
-}
-
-sub render_page {
+sub process {
   my $self = shift;
-
-  my $webpage= new EnsEMBL::Web::Document::WebPage(
-    'doctype'    => 'Popup',
-    'renderer'   => 'Apache',
-    'outputtype' => 'HTML',
-    'scriptname' => 'help/search',
-    'objecttype' => 'Help',
-  );
-
-  if( $webpage->has_a_problem() ) {
-    $webpage->render_error_page( $webpage->problem->[0] );
-  } else {
-    foreach my $object( @{$webpage->dataObjects} ) {
-      $webpage->configure( $object, 'search', 'context_menu' );
-    }
-    $webpage->action();
-  }
-
+  EnsEMBL::Web::Magic::stuff('Help', 'Search', $self, 'Dynamic');
 }
 
 }

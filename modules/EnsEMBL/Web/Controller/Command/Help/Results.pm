@@ -10,53 +10,12 @@ use base 'EnsEMBL::Web::Controller::Command';
 {
 
 sub BUILD {
-  my ($self, $ident, $args) = @_;
-}
-
-sub render {
-  my ($self, $action) = @_;
-  $self->set_action($action);
-  if ($self->not_allowed) {
-    $self->render_message;
-  } else {
-    $self->process;
-  }
+  my ($self, $ident, $args) = @_; 
 }
 
 sub process {
   my $self = shift;
-
-  ## Do search
-  my $webpage= new EnsEMBL::Web::Document::WebPage(
-      'doctype'    => 'Popup',
-      'renderer'   => 'Apache',
-      'outputtype' => 'HTML',
-      'scriptname' => 'help/results',
-      'objecttype' => 'Help',
-  );
-
-  my $object;
-  if( $webpage->has_a_problem() ) {
-    $webpage->render_error_page( $webpage->problem->[0] );
-  } else {
-    foreach my $obj( @{$webpage->dataObjects} ) {
-      $object = $obj;
-    }
-  }
-  my @results = @{ $object->search };
-  my $total = scalar(@results);
-  if ($total < 1) { 
-    $webpage->redirect('/common/help/contact?kw='.$object->param('kw'));
-  }
-  elsif ($total == 1) {
-    my $article = $results[0];
-    $webpage->redirect("/@{[$object->species]}/helpview?id=".$article->id.';hilite='.$object->param('hilite'));
-  }
-  else {
-    $webpage->configure( $object, 'results', 'context_menu' );
-    $webpage->action();
-  }
-  
+  EnsEMBL::Web::Magic::stuff('Help', 'Results', $self, 'Dynamic');
 }
 
 }
