@@ -209,6 +209,13 @@ sub get_interpro {
   return;
 }
 
+sub get_domain_genes {
+  my $self = shift;
+  my $gene = $self->core_objects->gene;
+  return $gene->adaptor->fetch_all_by_domain($self->param('domain')); 
+}
+
+
 sub get_alternative_locations {
   my $self = shift;
   my @alt_locs = map { [ $_->slice->seq_region_name, $_->start, $_->end, $_->slice->coord_system->name, ] }
