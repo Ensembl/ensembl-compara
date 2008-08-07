@@ -158,7 +158,7 @@ sub _content {
     }
     
     #add info on non_canonical splice site sequences for introns
-    my @canonical_sites = ( ['GT', 'AG'],['GC', 'AG'], ['AT', 'AC'] ); #these are considered canonical
+    my @canonical_sites = ( ['GT', 'AG'],['GC', 'AG'], ['AT', 'AC'], ['NN', 'NN'] ); #these are considered not to be non-canonical
     my $non_con_introns;
     my $hack_c = 1; #set to zero to tag first intron - used for development to highlight first intron
     foreach my $i_details (@introns) {
