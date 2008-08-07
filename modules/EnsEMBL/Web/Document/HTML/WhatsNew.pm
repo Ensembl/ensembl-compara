@@ -12,7 +12,7 @@ use EnsEMBL::Web::Data::Species;
 use EnsEMBL::Web::Data::Release;
 use EnsEMBL::Web::Data::MiniAd;
 use LWP::Simple;
-#use XML::RSS;
+use XML::RSS;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -109,10 +109,10 @@ sub render {
 
   ## Ensembl blog (ensembl.blogspot.com)
   $html .= qq(<h2>Latest Blog Entries</h2>);
-  #my $rss = new XML::RSS;
-  #my $raw = $raw = get('http://ensembl.blogspot.com/feeds/posts/default');
+  my $rss = new XML::RSS;
+  my $raw; #= LWP::Simple::get('http://ensembl.blogspot.com/atom.xml');
   #$rss->parse($raw);
-  my @items; # = @{$rss->{'items'}};
+  my @items;# = @{$rss->{'items'}};
   if (scalar(@items)) {
     $html .= "<ul>\n";
     foreach my $item (@items) {
