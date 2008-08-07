@@ -489,6 +489,10 @@ sub _summarise_dasregistry {
   delete $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'};
 }
 
+sub das_tree {
+  return {};
+}
+
 sub _munge_meta {
   my $self = shift;
 
@@ -499,11 +503,15 @@ sub _munge_meta {
   $self->tree->{'ASSEMBLY_NAME'} = 
       $self->db_details('ENSEMBL_DB')->{'meta_info'}{'assembly.default'}[0];
 
+  $self->tree->{'ASSEMBLY_DATE'} = 
+      $self->db_details('ENSEMBL_DB')->{'meta_info'}{'assembly.date'}[0];
+
   my $genebuild =
       $self->db_details('ENSEMBL_DB')->{'meta_info'}{'genebuild.version'}[0];
   my @A = split('-', $genebuild);
   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
   $self->tree->{'GENEBUILD_DATE'} = $months[$A[1]].$A[0];
+  $self->tree->{'GENEBUILD_BY'} = $A[2];
 
   ## Do species name and group
   my @taxonomy = @{$self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.classification'}||[]};
