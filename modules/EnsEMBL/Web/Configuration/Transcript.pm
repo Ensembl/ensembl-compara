@@ -21,64 +21,131 @@ sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
 
 sub ajax_zmenu      {
-  my $self = shift;
-  my $panel = $self->_ajax_zmenu;
-  my $obj  = $self->object;
-  my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
-  $panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
-  $panel->add_entry({ 
-    'type'     => 'Transcript',
-    'label'    => $obj->stable_id, 
-    'link'     => $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}),
-    'priority' => 195 
-  });
-## Only if there is a gene (not Prediction transcripts)
-  if( $obj->gene ) {
-    $panel->add_entry({
-      'type'     => 'Gene',
-      'label'    => $obj->gene->stable_id,
-      'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
-      'priority' => 190 
-    });
-  }
-  $panel->add_entry({
-    'type'     => 'Location',   
-    'label'    => sprintf( "%s: %s-%s",
-                    $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
-                    $obj->thousandify( $obj->seq_region_start ),
-                    $obj->thousandify( $obj->seq_region_end )
-                  ),
-    'link'     => $obj->_url({'type'=>'Location',   'action'=>'View', 'r' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end })
-  });
-  $panel->add_entry({
-    'type'     => 'Strand',
-    'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'
-  });
+    my $self = shift;
+    my $panel = $self->_ajax_zmenu;
+    my $obj  = $self->object;
+    my $dest = $obj->[1]{'_action'};
+    if ($dest eq 'SupportingEvidenceAlignment') {
+	$self->do_SE_align_menu($panel,$obj);
+    }
+    else {
+	my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
+	$panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
+	$panel->add_entry({ 
+	    'type'     => 'Transcript',
+	    'label'    => $obj->stable_id, 
+	    'link'     => $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}),
+	    'priority' => 195 
+	});
+	## Only if there is a gene (not Prediction transcripts)
+	if( $obj->gene ) {
+	    $panel->add_entry({
+		'type'     => 'Gene',
+		'label'    => $obj->gene->stable_id,
+		'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
+		'priority' => 190 
+	    });
+	}
+	$panel->add_entry({
+	    'type'     => 'Location',   
+	    'label'    => sprintf( "%s: %s-%s",
+				   $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
+				   $obj->thousandify( $obj->seq_region_start ),
+				   $obj->thousandify( $obj->seq_region_end )
+			       ),
+	    'link'     => $obj->_url({'type'=>'Location', 'action'=>'View', 'r' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end })
+	});
+	$panel->add_entry({
+	    'type'     => 'Strand',
+	    'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'
+	});
+	
+	$panel->add_entry({
+	    'type'     => 'Base pairs',
+	    'label'    => $obj->thousandify( $obj->Obj->seq->length ),
+	    'priority' => 50
+	});
 
-  $panel->add_entry({
-    'type'     => 'Base pairs',
-    'label'    => $obj->thousandify( $obj->Obj->seq->length ),
-    'priority' => 50
-  });
 
-
-## Protein coding transcripts only....
-  if( $obj->Obj->translation ) {
-    $panel->add_entry({
-      'type'     => 'Protein product',
-      'label'    => $obj->Obj->translation->stable_id,
-      'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'Peptide'}),
-      'priority' => 180
-    });
-    $panel->add_entry({
-      'type'     => 'Amino acids',
-      'label'    => $obj->thousandify( $obj->Obj->translation->length ),
-      'priority' => 40 
-    });
-  }
-  return;
+	## Protein coding transcripts only....
+	if( $obj->Obj->translation ) {
+	    $panel->add_entry({
+		'type'     => 'Protein product',
+		'label'    => $obj->Obj->translation->stable_id,
+		'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'Peptide'}),
+		'priority' => 180
+	    });
+	    $panel->add_entry({
+		'type'     => 'Amino acids',
+		'label'    => $obj->thousandify( $obj->Obj->translation->length ),
+		'priority' => 40 
+	    });
+	}
+    }
+    return;
 }
 
+sub do_SE_align_menu {
+    my $self = shift;
+    my $panel = shift;
+    my $obj  = $self->object;
+    my $params   = $obj->[1]->{'_input'};
+    warn Dumper($params);
+    my $hit_name = $params->{'sequence'}[0];
+    my $hit_db   = $params->{'hit_db'}[0];
+    my $hit_length = $params->{'hit_length'}[0];
+    my $hit_url  = $obj->get_ExtURL_link( $hit_name, $hit_db, $hit_name );
+
+    my $tsid     = $params->{'t'}->[0];
+    if (my $esid     = $params->{'exon'}->[0] ) {
+	my $exon_length = $params->{'exon_length'}[0];
+	#this is drawn for exons
+	my $align_url = $obj->_url({'type'=>'Transcript', 'action' => 'SupportingEvidenceAlignment'}).";sequence=$hit_name;exon=$esid";	
+	$panel->{'caption'} = "$hit_name ($hit_db)";
+	$panel->add_entry({
+	    'type'     => 'View alignments',
+	    'label'    => "$esid ($tsid)",
+	    'link'     => $align_url,
+	    'priority' => 180,
+	});
+	$panel->add_entry({
+	    'type'     => 'View record',
+	    'label'    => $hit_name,
+	    'link'     => $hit_url,
+	    'priority' => 100,
+	    'extra'    => {'abs_url' => 1},
+	});
+	$panel->add_entry({
+	    'type'     => 'exon length',
+	    'label'    => $exon_length.' bp',
+	    'priority' => 50,
+	});
+	if (my $gap = $params->{'five_end_mismatch'}[0]) {
+	    $panel->add_entry({
+		'type'     => '5\' mismatch',
+		'label'    => $gap.' bp',
+		'priority' => 40,
+	    });
+	}
+	if (my $gap = $params->{'three_end_mismatch'}[0]) {
+	    $panel->add_entry({
+		'type'     => '3\' mismatch',
+		'label'    => $gap.' bp',
+		'priority' => 35,
+	    });
+	}
+    }
+    else {
+	$panel->{'caption'} = "$hit_name ($hit_db)";
+	$panel->add_entry({
+	    'type'     => 'View record',
+	    'label'    => $hit_name,
+	    'link'     => $hit_url,
+	    'priority' => 100,
+	    'extra'    => {'abs_url' => 1},
+	});
+    }
+}
 
 sub populate_tree {
   my $self = shift;
