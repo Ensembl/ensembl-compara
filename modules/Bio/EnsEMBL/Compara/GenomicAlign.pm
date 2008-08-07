@@ -448,9 +448,9 @@ sub genomic_align_block {
       $self->{'genomic_align_block'} = $genomic_align_block_adaptor->fetch_by_dbID(
               $self->{'genomic_align_block_id'});
     } else {
-      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block".
-          " You either have to specify more information (see perldoc for".
-          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+#      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block".
+#          " You either have to specify more information (see perldoc for".
+#          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -498,9 +498,9 @@ sub genomic_align_block_id {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block_id".
-          " You either have to specify more information (see perldoc for".
-          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+#      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block_id".
+#          " You either have to specify more information (see perldoc for".
+#          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -1269,13 +1269,13 @@ sub _get_cigar_line_from_aligned_sequence {
   my ($aligned_sequence) = @_;
   my $cigar_line = "";
   
-  my @pieces = split(/([\-\.]+)/, $aligned_sequence);
+  my @pieces = grep {$_} split(/(\-+)|(\.+)/, $aligned_sequence);
   foreach my $piece (@pieces) {
     my $mode;
     if ($piece =~ /\-/) {
-	$mode = "D"; # D for gaps (deletions)
+      $mode = "D"; # D for gaps (deletions)
     } elsif ($piece =~ /\./) {
-	$mode = "X"; # X for pads (in 2X genomes)
+      $mode = "X"; # X for pads (in 2X genomes)
     } else {
       $mode = "M"; # M for matches/mismatches
     }
