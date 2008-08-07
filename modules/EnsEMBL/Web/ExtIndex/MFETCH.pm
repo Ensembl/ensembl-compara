@@ -39,13 +39,20 @@ sub get_seq_by_id {
 	my $hostname = &Sys::Hostname::hostname();
 	print $server "$str \n";		
 	my $output;
-	push @$output, $_ while(<$server>);
+
+	#only return one sequence (more than one can have the same CCDS attached
+	my $rec_c = 0;
+	while (<$server>) {
+	    $rec_c++ if ($_ =~ /^>/m);
+	    unless ($rec_c > 1) {
+		push @$output, $_;
+	    }
+	}
 	return $output;
     }
     else {
 	print qq(Problems retrieving the $db sequence, please refresh the page\n);
     }
-    #	$server->shutdown;
 }
 
 sub fetch_mfetch_server {
