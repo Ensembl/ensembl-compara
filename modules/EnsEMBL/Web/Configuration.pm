@@ -166,13 +166,13 @@ sub _local_tools {
   my $obj = $self->{object};
 
   my @data = (
-          ['Bookmark this page',  '/Account/Bookmark'],
+    ['Bookmark this page',  '/Account/Bookmark', 'modal_link' ],
   );
   if ($self->configurable) {
-    push @data, ['Configure this page',     '/sorry.html'];
+    push @data, ['Configure this page',     '/sorry.html', 'modal_link' ];
   }
 
-  push @data, ['Export Data',     '/sorry.html'];
+  push @data, ['Export Data',     '/sorry.html', 'modal_link' ];
 
   my $type;
   foreach my $row ( @data ) {
@@ -183,6 +183,7 @@ sub _local_tools {
       'type'      => $type,
       'caption'   => $row->[0],
       'url'       => $row->[1],
+      'class'     => $row->[2]
     );
   }
 }
