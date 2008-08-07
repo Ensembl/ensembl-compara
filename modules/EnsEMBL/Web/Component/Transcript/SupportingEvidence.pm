@@ -285,6 +285,7 @@ sub _content {
 	    my $hit_name = $evi->hseqname;
 	    my $hit_seq_region_start = $evi->seq_region_start;
 	    my $hit_seq_region_end = $evi->seq_region_end;
+#	    warn "$hit_name: $hit_seq_region_start - $hit_seq_region_end" if ($hit_name eq 'Q8TC21.1');  
 	    if ($o_type eq 'vega') {
 		###only proceed for vega if this hit name has been used as transcript evidence
 		next EVI unless ($t_ids{$hit_name});
@@ -447,10 +448,28 @@ sub split_evidence_and_munge_gaps {
     my $hit_seq_region_start = $hit->start;
     my $hit_seq_region_end   = $hit->end;
     my $hit_name             = $hit->hseqname;
- 
-   my $coords;
+    my ($cod_start,$cod_end);
+    my $coords;
     my $last_end;
     my $past_hit_end = 0;
+    my $evidence_type;
+
+    # note evidence type
+    if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
+	$cod_start = $coding_coords->[0];
+	$cod_end   = $coding_coords->[1];	
+	#if protein evidence lies completely outside of the CDS then treat it as a DnaDnaAlignFeature
+	if ( ($hit_seq_region_start > $cod_end) || ($hit_seq_region_end < $cod_start) ) {
+	    $evidence_type = 'pretend_this_is_dna';
+	}
+	else {
+	    $evidence_type = 'protein';
+	}
+    }
+    else {
+	$evidence_type = 'dna';	
+    }
+
     foreach my $exon (@{$exons}) {
 	next if $past_hit_end;
 	my $estart = $exon->start;
@@ -468,18 +487,16 @@ sub split_evidence_and_munge_gaps {
 	    $last_end = $eend;
 	    next;
 	}
-	
+		
 	#set this to save any further iteration if we're past the end of the exon
 	$past_hit_end = 1 if ($eend >= $hit_seq_region_end);
 
 	#add tags for hit/exon start/end mismatches - protein evidence has some leeway (+-3), DNA has to be exact
 	#CCDS evidence is considered as protein evidence even though it is a DNA feature
 	my ($left_end_mismatch, $right_end_mismatch);
-	my ($cod_start,$cod_end);
 	my ($b_start,$b_end);
-	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
-	    $cod_start = $coding_coords->[0];
-	    $cod_end   = $coding_coords->[1];
+
+	if ( $evidence_type eq 'protein' ) {
 	    $b_start =    $eend < $cod_start ?  $estart
 		: $cod_start > $estart ? $cod_start
 		    : $estart;
@@ -498,7 +515,7 @@ sub split_evidence_and_munge_gaps {
         #Account for off-by-three errors (which can impact on the display as just a pixel off) by setting
         #the boundry of the hit to the exon boundry in these cases
 	my $start;
-	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
+	if ( $evidence_type eq 'protein' ) {
 	    $start =   ($b_start - $hit_seq_region_start) > 4 ? $b_start
 		     : ($hit_seq_region_start - $b_start) < 4 ? $b_start
                      : $hit_seq_region_start;
@@ -509,7 +526,7 @@ sub split_evidence_and_munge_gaps {
 	$start -= $offset;
 	my $munged_start = $start + $object->munge_gaps( 'supporting_evidence_transcript', $start );
 	my $end;
-	if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
+	if ( $evidence_type eq 'protein' ) {
 	    $end =    ($b_end - $hit_seq_region_end ) < 4 ? $b_end
                     : ($hit_seq_region_end - $b_end ) > 4 ? $b_end
                     : $hit_seq_region_end;
@@ -535,7 +552,10 @@ sub split_evidence_and_munge_gaps {
 	    'extra_exon'         => $extra_exon,
 	    'exon'               => $exon,
 	    'hit'                => $hit,
-	};	
+	    'evidence_type'      => $evidence_type,
+	    'exon_length'        => $eend-$estart+1,
+	    'hit_length'         => $hit_seq_region_end-$hit_seq_region_start+1,
+	};
 	push @{$coords}, $details;
     }
     return $coords;
