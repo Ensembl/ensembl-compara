@@ -19,11 +19,12 @@ sub content {
   my $object = $self->object;
 
   my $url = CGI::unescape($object->param('url'));
+  $url =~ s#^/##;
   my $html;
 
   ## is this a species page?
   my @check = split('/', $object->param('url'));
-  my $dir = $check[1];
+  my $dir = $check[0];
   warn "CHECKING DIR $dir";
   my %archive = %{$object->species_defs->ENSEMBL_ARCHIVES};
   if ($dir =~ /^[A-Z][a-z]+_[a-z]+$/) {
@@ -31,7 +32,7 @@ sub content {
       $html .= "<ul>\n";
       my $missing = 0;
 
-      my $type = $check[2];
+      my $type = $check[1];
       if ($type =~ /\.html/) {
         warn "Plain HTML page";
         foreach my $release (sort keys %archive) {
@@ -39,7 +40,7 @@ sub content {
         }
       }
       else {
-        my @action = split('\?', $check[3]);
+        my @action = split('\?', $check[2]);
         my ($old_view, $initial_release) = EnsEMBL::Web::OldLinks::get_archive_redirect($type, $action[0]);
         warn "REDIRECT TO $old_view ($initial_release)";
 
@@ -90,7 +91,6 @@ sub content {
   else {
     ## TO DO - map static content moves!
     $html .= qq(<ul>\n);
-    warn "NOT A SPECIES PAGE";
     foreach my $release (sort keys %archive) {
       $html .= $self->_output_link(\%archive, $release, $url);
     }
