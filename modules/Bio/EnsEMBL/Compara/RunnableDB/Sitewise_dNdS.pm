@@ -551,38 +551,39 @@ sub store_sitewise_dNdS
                     $upper,
                     $threshold_on_branch_ds,
                     $type);
-      my $stored_id = $sth->{'mysql_insertid'};
-      if ($type !~ /default/) {
-        foreach my $seq ($aln->each_seq) {
-          next unless ($seq->display_id =~ /ENSP0/ || $seq->display_id =~ /ENSMUSP0/); # only store human and mouse
-          my $seq_location;
-          eval { $seq_location = $seq->location_from_column($site);};
-          if ($@) {
-            # gaps before the first nucleotide, skip
-            next;
-          }
-          my $location_type;
-          eval { $location_type = $seq_location->location_type;};
-          if ($@) {
-            # gaps before the first nucleotide, skip
-            next;
-          }
-          if ($seq_location->location_type eq 'EXACT') {
-            my $member = $self->{memberDBA}->fetch_by_source_stable_id("ENSEMBLPEP",$seq->display_id);
-            my $member_id = $member->dbID;
-            my $member_position = $seq_location->start;
-            my $aa = $seq->subseq($seq_location->start,$seq_location->end);
-            my $sth = $self->{'comparaDBA'}->dbc->prepare
-              ("INSERT INTO sitewise_member 
-                           (sitewise_id,
-                            member_id,
-                            member_position) VALUES (?,?,?)");
-            $sth->execute($stored_id,
-                          $member_id,
-                          $member_position);
-          }
-        }
-      }
+# This stuff is disabled right now
+#       my $stored_id = $sth->{'mysql_insertid'};
+#       if ($type !~ /default/) {
+#         foreach my $seq ($aln->each_seq) {
+#           next unless ($seq->display_id =~ /ENSP0/ || $seq->display_id =~ /ENSMUSP0/); # only store human and mouse
+#           my $seq_location;
+#           eval { $seq_location = $seq->location_from_column($site);};
+#           if ($@) {
+#             # gaps before the first nucleotide, skip
+#             next;
+#           }
+#           my $location_type;
+#           eval { $location_type = $seq_location->location_type;};
+#           if ($@) {
+#             # gaps before the first nucleotide, skip
+#             next;
+#           }
+#           if ($seq_location->location_type eq 'EXACT') {
+#             my $member = $self->{memberDBA}->fetch_by_source_stable_id("ENSEMBLPEP",$seq->display_id);
+#             my $member_id = $member->dbID;
+#             my $member_position = $seq_location->start;
+#             my $aa = $seq->subseq($seq_location->start,$seq_location->end);
+#             my $sth = $self->{'comparaDBA'}->dbc->prepare
+#               ("INSERT INTO sitewise_member 
+#                            (sitewise_id,
+#                             member_id,
+#                             member_position) VALUES (?,?,?)");
+#             $sth->execute($stored_id,
+#                           $member_id,
+#                           $member_position);
+#           }
+#         }
+#       }
     }
   }
   $sth->finish();
