@@ -27,11 +27,11 @@ sub content {
   my $reg_url = $self->url("/Account/Register?_referer=$referer");
   my $pwd_url = $self->url("/Account/LostPassword?_referer=$referer");
 
-  $form->add_element('type'  => 'String', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
+  $form->add_element('type'  => 'Email',    'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Password', 'required' => 'yes');
-  $form->add_element('type'  => 'Hidden', 'name'  => 'url', 'value' => $self->object->param('url'));
-  $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => $referer);
-  $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Log in');
+  $form->add_element('type'  => 'Hidden',   'name'  => 'url', 'value' => $self->object->param('url'));
+  $form->add_element('type'  => 'Hidden',   'name'  => '_referer', 'value' => $referer);
+  $form->add_element('type'  => 'Submit',   'name'  => 'submit', 'value' => 'Log in');
   $form->add_element('type'  => 'Information',
                      'value' => qq(<p><a href="$reg_url">Register</a>
                                   | <a href="$pwd_url">Lost password</a></p>));
