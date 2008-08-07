@@ -231,8 +231,16 @@ sub _content_panel {
      $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
      $title = join ' - ', '', ( $obj ? $obj->caption : () ), $title;
   $self->set_title( $title );
-  my $previous_node = $node->previous_leaf      ;
-  my $next_node     = $node->next_leaf          ;
+
+  #don't show tabs for 'no_menu' nodes
+  my $previous_node = $node->previous_leaf;
+  while ($previous_node->data->{'no_menu_entry'}) {
+    $previous_node = $previous_node->previous_leaf;
+  }
+  my $next_node     = $node->next_leaf;
+  while ($next_node->data->{'no_menu_entry'}) {
+    $next_node = $next_node->next_leaf;
+  }
 
   my %params = (
     'object'   => $obj,
@@ -241,6 +249,7 @@ sub _content_panel {
   );
   $params{'previous'} = $previous_node->data if $previous_node;
   $params{'next'    } = $next_node->data     if $next_node;
+
   if ($self->{doctype} eq 'Popup') {
     $params{'omit_header'} = 1;
   }
