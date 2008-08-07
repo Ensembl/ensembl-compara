@@ -18,29 +18,30 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $url = CGI::unescape($object->param('url'));
   my $html;
 
   ## is this a species page?
   my @check = split('/', $object->param('url'));
-  my $dir = $check[3];
-  my %archive;
+  my $dir = $check[1];
+  warn "CHECKING DIR $dir";
+  my %archive = %{$object->species_defs->ENSEMBL_ARCHIVES};
   if ($dir =~ /^[A-Z][a-z]+_[a-z]+$/) {
-    %archive = %{$object->species_defs->ENSEMBL_ARCHIVES};
     if (keys %archive) {
       $html .= "<ul>\n";
       my $missing = 0;
 
-      my $type = $check[4];
+      my $type = $check[2];
       if ($type =~ /\.html/) {
+        warn "Plain HTML page";
         foreach my $release (sort keys %archive) {
           $html .= $self->_output_link(\%archive, $release, $url);
         }
       }
       else {
-        my @action = split('\?', $check[5]);
+        my @action = split('\?', $check[3]);
         my ($old_view, $initial_release) = EnsEMBL::Web::OldLinks::get_archive_redirect($type, $action[0]);
+        warn "REDIRECT TO $old_view ($initial_release)";
 
         foreach my $release (sort keys %archive) {
           next if $release == $object->species_defs->VERSION;
@@ -48,7 +49,7 @@ sub content {
             if ($release >= $initial_release) {
               $url = $dir.'/'.$old_view;
               ## Transform parameters
-              my @params = split(';', @action[1]);
+              my @params = split(';', $action[1]);
               my (%parameter, @new_params);
               foreach my $pair (@params) {
                 my @a = split('=', $pair);
@@ -89,6 +90,7 @@ sub content {
   else {
     ## TO DO - map static content moves!
     $html .= qq(<ul>\n);
+    warn "NOT A SPECIES PAGE";
     foreach my $release (sort keys %archive) {
       $html .= $self->_output_link(\%archive, $release, $url);
     }
@@ -100,7 +102,8 @@ sub content {
 
 sub _output_link {
   my ($self, $archive, $release, $url) = @_;
-  my $date = $archive{$release};
+  my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
+  my $date = $archive->{$release};
   my $month = substr($date, 0, 3);
   my $year = substr($date, 3, 4);
   return qq(<li><a href="http://$date.archive.ensembl.org/$url">$sitename $release: $month $year</a></li>);
