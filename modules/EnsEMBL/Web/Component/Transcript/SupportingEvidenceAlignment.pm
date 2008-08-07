@@ -5,6 +5,8 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
 use EnsEMBL::Web::ExtIndex;
+use EnsEMBL::Web::Document::HTML::TwoCol;
+
 
 #use Data::Dumper;
 #$Data::Dumper::Maxdepth = 3;
@@ -22,6 +24,7 @@ sub caption {
 sub content {
     my $self = shift;
     my $object = $self->object;
+    my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
     my $tsi = $object->stable_id;
     my $input = $object->input;
 
@@ -52,16 +55,16 @@ sub content {
 	return;
     }
 
-    #munge hit name for the display 
+    #munge hit name for the display
     if ($hit_db_name =~ /^RefSeq/) {
 	$ext_seq =~ s/\w+\|\d+\|ref\|//;
 	$ext_seq =~ s/\|.+//m;
-	$ext_seq =~ s /^ //mg; #remove white space from the beginning of each line of sequence
     }
     if ($hit_db_name =~ /Uniprot/i) {
 	$ext_seq =~ s/ .+$//m;
-	$ext_seq =~ s /^ //mg; #remove white space from the  beginning of each line ofsequence
     }
+
+    $ext_seq =~ s /^ //mg; #remove white space from the beginning of each line of sequence
 
     my $hit_url = $object->get_ExtURL_link( $hit_id, $hit_db_name, $hit_id );
 
@@ -69,8 +72,21 @@ sub content {
     my $seq_type = $object->determine_sequence_type( $ext_seq );
 
     my $ext_seq_length = length($ext_seq);
-    my $label = $seq_type eq 'PEP' ? 'aa' : 'bp'; 
+    my $label = $seq_type eq 'PEP' ? 'aa' : 'bp';
 
+    $table->add_row('External record',
+		    "$hit_url ($hit_db_name), length = $ext_seq_length $label",
+		    1, );
+    my $trans_length = $object->Obj->length;
+    my $e_count = scalar(@{$object->Obj->get_all_Exons});
+    my $cds_length = '';
+    if ( ($seq_type eq 'PEP') && (my $tl = $object->Obj->translation)) {
+	$cds_length = ' Translation length: '.$tl->length.' aa';
+    }
+    $table->add_row('Transcript details',
+		    "<p>Exons: $e_count. Length: $trans_length bp.$cds_length</p>",
+		    1, );
+    my $e_alignment;
     my $html;
 
     #exon alignment (if exon ID is in the URL)
@@ -83,28 +99,40 @@ sub content {
 		last;
 	    }
 	}
+	my $e_length = $exon->length;
+
 	#get exon sequence
 	my $e_sequence  = $object->get_int_seq( $exon, $seq_type, $object->Obj);
-	my $e_length = $exon->length;
+
+	#position of exon in the transcript
+	my $trmapper = Bio::EnsEMBL::TranscriptMapper->new($object->Obj);
+	my @cdna_coords = $trmapper->genomic2cdna($exon->start, $exon->end, $exon->strand);
+	my ($cdna_start,$cdna_end);
+	foreach my $map (@cdna_coords) {
+	    $cdna_start = $map->start;
+	    $cdna_end   = $map->end;
+	}
+
 	#get exon alignment
 	my $e_alignment = $object->get_alignment( $ext_seq, $e_sequence, $seq_type );
-	$html .= qq(<div class="content">);
-	$html .= qq(<p>Exon $exon_id ($e_length bp) aligned with $hit_url ($hit_db_name) ($ext_seq_length $label)</p>);
-	$html .= qq(<p><pre>$e_alignment</pre></p>);
-	$html .= qq(</div>);
+	$table->add_row('Exon Information',
+			"<p>$exon_id</p><p>Length: $e_length bp. Transcript coordinates: $cdna_start-$cdna_end bp</p>",
+			1, );
+	$table->add_row('Exon alignment',
+			"<p><pre>$e_alignment</pre></p>",
+			1, );
     }
 
     #get transcript sequence
     my $trans_sequence = $object->get_int_seq( $object->Obj, $seq_type);
+
     #get transcript alignment
     my $trans_alignment =  $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
-    my $trans_length = $object->Obj->length;
+    $table->add_row('Transcript alignment',
+		    "<p><pre>$trans_alignment</pre></p>",
+		    1, );
 
-    $html .= qq(<div class="content">);
-    $html .= qq(<p>Transcript $tsi ($trans_length bp) aligned with $hit_url ($hit_db_name) ($ext_seq_length $label)</p>);
-    $html .= qq(<p><pre>$trans_alignment</pre></p>);
-    $html .= qq(</div>);
-    return $html;
+    return $table->render;
 }		
 
 1;
