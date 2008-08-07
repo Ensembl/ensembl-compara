@@ -116,7 +116,7 @@ sub do_SE_align_menu {
 	    'extra'    => {'abs_url' => 1},
 	});
 	$panel->add_entry({
-	    'type'     => 'exon length',
+	    'type'     => 'Exon length',
 	    'label'    => $exon_length.' bp',
 	    'priority' => 50,
 	});
