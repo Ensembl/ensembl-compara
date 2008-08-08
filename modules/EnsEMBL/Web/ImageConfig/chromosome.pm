@@ -1,45 +1,26 @@
 package EnsEMBL::Web::ImageConfig::chromosome;
+
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my ($self) = @_;
+  $self->set_title( 'Chromosome' );
 
-  $self->{'_userdatatype_ID'} = 6;
-  $self->{'no_image_frame'} = 1;
+  $self->create_menus(
+    'decorations' => 'Chromosome',
+  );
 
-  $self->{'general'}->{'chromosome'} = {
-    '_artefacts' => [qw(ideogram assemblyexception)],
-    '_options'  => [],
-    '_settings' => {
-      'simplehap' => 1,
-      'width'   => 800,
-      'label_width' => 113,
-      'show_thjview' => 'yes',
-      'show_contigview' => 'yes',
-      'show_cytoview'   => 'yes',
-      'bgcolor'   => 'background1',
-      'bgcolour1' => 'background1',
-      'bgcolour2' => 'background1',
-    },
-    'ideogram' => {
-      'on'  => "on",
-      'pos' => '6',
-    },
-    'assemblyexception' => {
-      'on'      => "on",
-      'pos'       => '9998',
-      'str'       => 'x',
-      'height'         => 1,
-      'dep'         => 6,
-      'lab'       => 'black',
-      'navigation'  => 'on',
-    },
+## Load all tracks from the database....
+#  $self->load_tracks();
 
-    };
-    $self->add_track( 'draggable', 'on'=>'on','pos'=>8000,'col'=>'black');
-##  $self->add_track( 'redbox', 'on'=>'off', 'col' => 'red', 'zindex' => -20, 'pos' => 1000100 );
+## Now we have a number of tracks which we have to manually add...
+  $self->add_tracks( 'decorations' => [qw(ideogram assembly_exception)] );
+  $self->configurable( 0 );
+  
+  $self->set_options({
+    'show_buttons'        => { 'value' => 0 },
+    'show_labels'         => { 'value' => 1 }
+  });
 }
 1;

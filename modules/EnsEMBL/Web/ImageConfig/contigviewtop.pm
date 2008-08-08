@@ -19,28 +19,20 @@ sub init {
     'options'     => 'Options'
   );
 
+## Load all tracks from the database....
   $self->load_tracks();
 
-  $self->add_tracks( 'sequence', qw(contig) );
-  $self->add_track(  'marker',   qw(marker) );
-  $
-  $self->set_track_sets( # Listed in direction - middle -> outside
-    'sequence'    => qw(contig),      # assembly contigs...
-    'markers'     => qw(marker),      # data from the marker table
-    'gene'        => qw(:gene),       # data from the gene table
-    'misc_sets'   => qw(:misc_set),   # data from the misc_set table
-    'repeats'     => qw(:repeat),     # data from the repeat_feature table
-    'synteny'     => qw(:synteny),    # data from the compara synteny tables.
-    'user_data'   => qw(:user_data),  # user configured das sources
-    'outer_decs'  => qw(ruler scalebar chr_bands assemblyexception draggable),
-    'legends'     => qw(:legends)
+## Now we have a number of tracks which we have to manually add...
+  $self->add_tracks(
+    'sequence'    => [qw(contig)],
+    'decorations' => [qw(ruler scalebar chr_bands assemblyexception draggable legends)],
   );
   $self->set_options({
-    'show_gene_labels'    => { 'caption' => 'Show gene labels',    'values' => {qw(yes Yes no No)} },
-    'show_register_lines' => { 'caption' => 'Show register lines', 'values' => {qw(yes Yes no No)} }
+    'show_gene_labels'    => { 'caption' => 'Show gene labels',    'values' => {qw(1 Yes 0 No)}, 'value' => 1 },
+    'show_buttons'        => { 'value' => 1 },
+    'show_labels'         => { 'value' => 1 },
+    'show_register_lines' => { 'caption' => 'Show register lines', 'values' => {qw(1 Yes 0 No)}, 'value' => 1 }
   });
-  $self->show_buttons( 'no' );
-  $self->label_width( 113 );
 }
 
 1;
