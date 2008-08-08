@@ -168,7 +168,7 @@ sub _content {
 	my $donor_seq = substr($seq,0,2); #5'
 	my $acceptor_seq = $hack_c ? substr($seq,$l-2,2) : 'CC';
 	$hack_c++;
-	my $e_details = $i_details->[1].':'.$i_details->[2]."($donor_seq:$acceptor_seq)";
+	my $e_details = "Non-canonical splice site ($donor_seq:$acceptor_seq) between exons ".$i_details->[1].' and '.$i_details->[2];
 	my $canonical = 0;
 	foreach my $seqs (@canonical_sites) {
 	    $canonical = 1 if ( ($donor_seq eq $seqs->[0]) && ($acceptor_seq eq $seqs->[1]) );
