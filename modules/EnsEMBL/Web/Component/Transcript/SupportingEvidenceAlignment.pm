@@ -6,6 +6,7 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
 use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::Document::HTML::TwoCol;
+use POSIX;
 
 
 #use Data::Dumper;
@@ -24,6 +25,7 @@ sub caption {
 sub content {
     my $self = shift;
     my $object = $self->object;
+    my $trans = $object->Obj;
     my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
     my $tsi = $object->stable_id;
     my $input = $object->input;
@@ -50,10 +52,6 @@ sub content {
 	    last;
 	}
     }
-    unless( $ext_seq ) {
-	$object->problem( 'fatal', "External Feature Alignment Does Not Exist", "The sequence for feature $hit_id could not be retrieved.");
-	return;
-    }
 
     #munge hit name for the display
     if ($hit_db_name =~ /^RefSeq/) {
@@ -70,19 +68,21 @@ sub content {
 
     #working with DNA or PEP ?
     my $seq_type = $object->determine_sequence_type( $ext_seq );
-
-    my $ext_seq_length = length($ext_seq);
     my $label = $seq_type eq 'PEP' ? 'aa' : 'bp';
 
+    my $ext_seq_length = length($ext_seq);
+
+ 
+    my $trans_length = $trans->length;
+    my $e_count = scalar(@{$trans->get_all_Exons});
+    my $cds_length = '';
+    my $tl;
+    if ( ($seq_type eq 'PEP') && ($tl = $trans->translation) ) {
+	$cds_length = ' Translation length: '.$tl->length.' aa';
+    }
     $table->add_row('External record',
 		    "$hit_url ($hit_db_name), length = $ext_seq_length $label",
 		    1, );
-    my $trans_length = $object->Obj->length;
-    my $e_count = scalar(@{$object->Obj->get_all_Exons});
-    my $cds_length = '';
-    if ( ($seq_type eq 'PEP') && (my $tl = $object->Obj->translation)) {
-	$cds_length = ' Translation length: '.$tl->length.' aa';
-    }
     $table->add_row('Transcript details',
 		    "<p>Exons: $e_count. Length: $trans_length bp.$cds_length</p>",
 		    1, );
@@ -93,45 +93,80 @@ sub content {
     if (my $exon_id = $input->{'exon'}->[0]) {
 	my $exon;
 	#get cached exon off the transcript
-	foreach my $e (@{$object->Obj->get_all_Exons()}) {
+	foreach my $e (@{$trans->get_all_Exons()}) {
 	    if ($e->stable_id eq $exon_id) {
 		$exon = $e;
 		last;
 	    }
 	}
 	my $e_length = $exon->length;
-
 	#get exon sequence
-	my $e_sequence  = $object->get_int_seq( $exon, $seq_type, $object->Obj);
+	my ($e_sequence,$e_sequence_length) = @{$object->get_int_seq( $exon, $seq_type, $trans)};
 
-	#position of exon in the transcript
-	my $trmapper = Bio::EnsEMBL::TranscriptMapper->new($object->Obj);
-	my @cdna_coords = $trmapper->genomic2cdna($exon->start, $exon->end, $exon->strand);
-	my ($cdna_start,$cdna_end);
-	foreach my $map (@cdna_coords) {
-	    $cdna_start = $map->start;
-	    $cdna_end   = $map->end;
+	#get position of exon in the transcript
+	my $cdna_start = $exon->cdna_start($trans);
+	my $cdna_end  = $exon->cdna_end($trans);
+
+	#length of exon in the CDS
+	my $exon_length = "Length: $e_length bp";
+
+	#position of exon in the translation
+	my $exon_cds_pos = '';
+	if ($seq_type eq 'PEP' && $tl) {
+	    #postions of everything we need in cDNA coords
+	    my $tl_start  = $exon->cdna_coding_start($trans);
+	    my $tl_end    = $exon->cdna_coding_end($trans);
+	    my $cds_start = $trans->cdna_coding_start();
+	    my $cds_end   = $trans->cdna_coding_end();
+
+	    if ( ! $tl_start || ! $tl_end ) {
+		$exon_cds_pos = "<p>Exon is not coding</p>";
+	    }
+	    else {
+		$exon_length .= " ($e_sequence_length aa)";
+		my $start = int(($tl_start-$cds_start+1)/3) + 1;
+		my $end   = int(($tl_end-$cds_start+1  )/3);
+		$end -= 1 if ($tl_end == $cds_end); #need to take off one since the stop codon is included
+#switch this on when I'm sure of the numbers!
+#		$exon_cds_pos = "<p>CDS: $start-$end aa</p>";
+	    }
 	}
 
 	#get exon alignment
-	my $e_alignment = $object->get_alignment( $ext_seq, $e_sequence, $seq_type );
 	$table->add_row('Exon Information',
-			"<p>$exon_id</p><p>Length: $e_length bp. Transcript coordinates: $cdna_start-$cdna_end bp</p>",
+			"<p>$exon_id</p><p>$exon_length</p>",
 			1, );
-	$table->add_row('Exon alignment',
-			"<p><pre>$e_alignment</pre></p>",
+	$table->add_row('Exon coordinates',
+			"Transcript: $cdna_start-$cdna_end bp</p>$exon_cds_pos",
 			1, );
+	if ($ext_seq) {
+	    my $e_alignment = $object->get_alignment( $ext_seq, $e_sequence, $seq_type );
+	    $table->add_row('Exon alignment',
+			    "<p><pre>$e_alignment</pre></p>",
+			    1, );
+	}
+	else {
+	    $table->add_row('Exon alignment',
+			    "<p>Unable to retrive sequence for $hit_id</p>",
+			    1, );
+	}
     }
 
     #get transcript sequence
-    my $trans_sequence = $object->get_int_seq( $object->Obj, $seq_type);
+    my $trans_sequence = $object->get_int_seq($trans,$seq_type)->[0];
 
-    #get transcript alignment
-    my $trans_alignment =  $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
-    $table->add_row('Transcript alignment',
-		    "<p><pre>$trans_alignment</pre></p>",
-		    1, );
-
+    if ($ext_seq) {
+	#get transcript alignment
+	my $trans_alignment = $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
+	$table->add_row('Transcript alignment',
+			"<p><pre>$trans_alignment</pre></p>",
+			1, );
+    }
+    else {
+	$table->add_row('Transcript alignment',
+			"<p>Unable to retrieve sequence for $hit_id</p>",
+			1, );
+    }
     return $table->render;
 }		
 
