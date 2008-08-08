@@ -25,12 +25,13 @@ sub _init {
     my $pix_per_bp  = $Config->transform->{'scalex'};
     my $length      = $Config->container_width();
 
-    my $trans_ref = $Config->{'transcript'};
+    my $trans_ref    = $Config->{'transcript'};
     my $coding_start = $trans_ref->{'coding_start'};
     my $coding_end   = $trans_ref->{'coding_end'  };
-    my $strand = $trans_ref->{'exons'}[0][2]->strand;
-    my $transcript = $trans_ref->{'transcript'};
-    my $tsi = $transcript->stable_id;
+    my $transcript   = $trans_ref->{'transcript'};
+    my $strand       = $transcript->strand;
+    my $tsi          = $transcript->stable_id;
+
     my @introns_and_exons = @{$trans_ref->{'introns_and_exons'}};
 
     my %highlights;
