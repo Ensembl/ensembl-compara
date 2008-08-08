@@ -1422,6 +1422,7 @@ sub get_hit_db_name {
     my ($id) = @_;
     return unless $id;
     my $hit = $self->get_hit($id);
+    return unless $hit;
 	
     #species defs contains a summary of the external_db table - can use this to get the dbname
     #for the evidence although the core team are going to add calls to do this directly
@@ -1470,6 +1471,7 @@ sub get_ext_seq{
 sub determine_sequence_type{
     my $self = shift;
     my $sequence = shift;
+    return 'UNKNOWN' unless $sequence;
     my $threshold = shift || 70; # %ACGT for seq to qualify as DNA
     $sequence = uc( $sequence );
     $sequence =~ s/\s|N//;
@@ -1491,19 +1493,21 @@ sub get_int_seq {
     my $seq_type  = shift  || return undef(); # DNA || PEP
     my $other_obj = shift;
     my $fasta_prefix = join( '', '>',$obj->stable_id(),"<br />\n");
-    
     if( $seq_type eq "DNA" ){
-	return $fasta_prefix.$self->split60($obj->seq->seq());
+	return [ $fasta_prefix.$self->split60($obj->seq->seq()),
+		 length($obj->seq->seq()) ];
     }
     elsif( $seq_type eq "PEP" ){
 	if ($obj->isa('Bio::EnsEMBL::Exon') && $other_obj->isa('Bio::EnsEMBL::Transcript') ) {
-	    return $fasta_prefix.$self->split60($obj->peptide($other_obj)->seq()) if ($obj->peptide($other_obj) && $other_obj->translate);
+	    return [ $fasta_prefix.$self->split60($obj->peptide($other_obj)->seq()),
+		     length($obj->peptide($other_obj)->seq()) ] if ($obj->peptide($other_obj) && $other_obj->translate);
 	}
 	elsif( $obj->translate ) {
-	    return $fasta_prefix.$self->split60($obj->translate->seq());
+	    return [ $fasta_prefix.$self->split60($obj->translate->seq()),
+		     length($obj->translate->seq()) ];
 	}
     }
-    return undef;
+    return [];
 }
 
 sub save_seq {
@@ -1581,9 +1585,21 @@ sub get_alignment{
     
     my $alignment ;
     while( <OUT> ){
-	if( $_ =~ /# Report_file/o ){ next; }
-	if( $_ =~ /#----.*/ ){ next; }
-	if( $_ =~ /\/\/\s*/){ next;}
+	next if ( $_ =~  /\#Report_file
+                         |\#----.*
+                         |\/\/\s*
+                         |\#\#\#
+			 |^\#$
+                         |Rundate: #matcher
+	                 |Commandline #matcher
+                         |asequence #matcher
+                         |bsequence #matcher
+                         |outfile #matcher
+                         |aformat #matcher
+                         |Align_format #matcher
+			 |Report_file #matcher
+                         /x
+	      );
 	$alignment .= $_;
     }
     $alignment =~ s/\n+$//;
