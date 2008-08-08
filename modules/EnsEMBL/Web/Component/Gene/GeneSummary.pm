@@ -50,9 +50,11 @@ sub content {
 #	}
     }
     $info_text = '';
-    $table->add_row('Name',
-		    "<p>$linked_display_name ($dbname_disp) $info_text</p>",
-		    1);
+    if ($linked_display_name) {
+	$table->add_row('Name',
+			"<p>$linked_display_name ($dbname_disp) $info_text</p>",
+			1);
+    }
 
     ##add gene name synonyms
     my $site_type = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
