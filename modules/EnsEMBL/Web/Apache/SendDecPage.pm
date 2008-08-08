@@ -152,9 +152,8 @@ sub handler {
     $pageContent = $renderer->value;
 
     my @tags = qw(STATIC);
-    push @tags, keys %{ $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}} }
-             if $ENV{CACHE_TAGS} && $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}};
-    $memd->set($ENV{CACHE_KEY}, $pageContent, undef, @tags) if $memd;
+    push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
+    $memd->set($ENV{CACHE_KEY}, $pageContent, $ENV{CACHE_TIMEOUT}, @tags) if $memd;
 
   }
 

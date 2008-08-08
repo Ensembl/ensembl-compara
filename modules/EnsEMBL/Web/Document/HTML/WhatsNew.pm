@@ -6,13 +6,15 @@ package EnsEMBL::Web::Document::HTML::WhatsNew;
 use strict;
 use warnings;
 
+use LWP::Simple;
+use XML::RSS;
+
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::NewsItem;
 use EnsEMBL::Web::Data::Species;
 use EnsEMBL::Web::Data::Release;
 use EnsEMBL::Web::Data::MiniAd;
-use LWP::Simple;
-use XML::RSS;
+use EnsEMBL::Web::Document::HTML::Blog;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -107,25 +109,15 @@ sub render {
   }
   $html .= '</div>';
 
-  ## Ensembl blog (ensembl.blogspot.com)
-  $html .= qq(<h2>Latest Blog Entries</h2>);
-  my $rss = new XML::RSS;
-  my $raw; #= LWP::Simple::get('http://ensembl.blogspot.com/atom.xml');
-  #$rss->parse($raw);
-  my @items;# = @{$rss->{'items'}};
-  if (scalar(@items)) {
-    $html .= "<ul>\n";
-    foreach my $item (@items) {
-      my $title = $item->{'title'};
-      my $url = $item->{'link'};
-      $html .= "<a href=\"$url\">$title</a><p\>"; 
-    }
-    $html .= "</ul>\n";
+  if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
+    $html .= qq(<div class="ajax" title="['/blog.html']"></div>);
+  } else {
+    my $content;
+    eval {
+      $self->dynamic_use('EnsEMBL::Web::Document::HTML::Blog');
+      $html .=  EnsEMBL::Web::Document::HTML::Blog->render;
+    };    
   }
-  else {
-    $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
-  }
-  $html .= qq(<a href="http://ensembl.blogspot.com/">Go to Ensembl blog &rarr;</a>);
 
 =pod
   if ($species_defs->ENSEMBL_LOGINS) {

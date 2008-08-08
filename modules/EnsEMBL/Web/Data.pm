@@ -344,10 +344,9 @@ sub propagate_cache_tags {
   
   if ($ENV{CACHE_KEY}) {
     $ENV{CACHE_TAGS} ||= {};
-    $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}} ||= {};
   
     foreach my $tag (@tags) {
-      $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}}->{$tag} = 1;
+      $ENV{CACHE_TAGS}->{$tag} = 1;
     }
   }  
 }

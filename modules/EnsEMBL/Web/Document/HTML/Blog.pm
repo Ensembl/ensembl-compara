@@ -1,0 +1,70 @@
+package EnsEMBL::Web::Document::HTML::Blog;
+
+### This module outputs a selection of news headlines for the home page, 
+### based on the user's settings or a default list
+
+use strict;
+use warnings;
+
+use LWP::UserAgent qw();
+use XML::RSS qw();
+use Data::Dumper;
+
+use EnsEMBL::Web::Cache;
+
+use base qw(EnsEMBL::Web::Root);
+
+our $memd = EnsEMBL::Web::Cache->new(
+  enable_compress    => 1,
+  compress_threshold => 10_000,
+);
+
+
+{
+
+sub render {
+  my $self = shift;
+
+  ## Ensembl blog (ensembl.blogspot.com)
+  my $html = qq(<h2>Latest Blog Entries</h2>);
+
+  my $items = $memd ? $memd->get('blog') : undef;
+
+  unless ($items) {
+    my $ua = new LWP::UserAgent;
+    $ua->proxy(['http', 'ftp'], 'http://wwwcache.sanger.ac.uk:3128/');
+  
+    my $response = $ua->get('http://ensembl.blogspot.com/rss.xml');
+    my $rss = new XML::RSS;
+    
+    my $r = $rss->parse($response->decoded_content);
+    warn Dumper($r);
+  
+    warn Dumper($rss);
+    
+    $items = $rss->{'items'};
+    $ENV{CACHE_TIMEOUT} = 3600;
+    $memd->set('blog', $items, $ENV{CACHE_TIMEOUT}, qw(STATIC BLOG))
+      if $memd;
+  }
+
+  if (@$items) {
+    $html .= "<ul>\n";
+    foreach my $item (@$items) {
+      my $title = $item->{'title'};
+      my $url   = $item->{'link'};
+      $html .= "<a href=\"$url\">$title</a><p\>"; 
+    }
+    $html .= "</ul>\n";
+  } else {
+    $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
+  }
+
+  $html .= qq(<a href="http://ensembl.blogspot.com/">Go to Ensembl blog &rarr;</a>);
+
+  return $html;
+}
+
+}
+
+1;

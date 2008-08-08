@@ -154,8 +154,7 @@ sub ingredient {
     $content = $webpage->page->renderer->content;
   
     my @tags = qw(AJAX);
-    push @tags, keys %{ $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}} }
-             if $ENV{CACHE_TAGS} && $ENV{CACHE_TAGS}->{$ENV{CACHE_KEY}};
+    push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
     $memd->set($ENV{CACHE_KEY}, $content, undef, @tags) if $memd;
   }
 
