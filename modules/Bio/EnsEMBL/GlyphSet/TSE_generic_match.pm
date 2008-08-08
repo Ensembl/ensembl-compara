@@ -54,7 +54,7 @@ sub draw_glyphs {
       BLOCK:
 	foreach my $block (@{$hit_details->{'data'}}) {
 	    next BLOCK unless (defined(%$block));
-#	    warn Dumper($block) if ($hit_name eq 'NM_024848.1');
+#	    warn Dumper($block) if ($hit_name eq 'Q8TC21.1');
 
 	    #draw lhs extensions from the next block (first block is always just lhs)
 	    if ( my $mis = $block->{'lh-ext'} ) {
@@ -70,7 +70,7 @@ sub draw_glyphs {
 		    'y'         => $H + $h/2,
 		    'h'         =>1,
 		    'width'     => $Config->container_width() - $last_end_x,
-		    'title'     => $mis,
+		    'title'     => "Evidence extends $mis bp beyond the end of the transcript",
 		    'colour'    => 'red',
 		    'dotted'    => 1,
 		    'absolutey' => 1,});			
@@ -88,15 +88,6 @@ sub draw_glyphs {
 	    }
 	    next BLOCK unless (my $exon = $block->{'exon'});
 
-	    #for zmenu
-	    my $align_url =  $self->_url({
-		'type'     => 'Transcript',
-		'action'   => 'SupportingEvidenceAlignment',
-		't'        => $Config->{'transcript'}->{'transcript'}->stable_id,
-		'sequence' => $hit_name,
-		'hit_db'   => $hit_db,
-		'exon'     => $exon->stable_id,
-	    });
 
 	    #allow a hit mismatch to be drawn next time for 'extra exons'
 	    my $hit = $block->{'extra_exon'};
@@ -118,7 +109,7 @@ sub draw_glyphs {
 		    'h'         => 1,
 		    'width'     => $start_x,
 		    'colour'    => 'red',
-		    'title'     => $lh_ext,
+		    'title'     => "Evidence extends $lh_ext bp beyond the end of the transcript",
 		    'absolutey' => 1,
 		    'dotted'    => 1});				
 		$self->push($G);
@@ -160,7 +151,7 @@ sub draw_glyphs {
 		    $mismatch = $last_mismatch ? $last_mismatch : $block->{'hit_mismatch'};
 		    $G->{'dotted'} = 1;
 		    $G->{'colour'} = $mismatch > 0 ? 'red' : 'blue';
-		    $G->{'title'}  = $mismatch > 0 ? "Missing $mismatch bp of hit" : "Overlapping ".abs($mismatch)." bp of hit";
+		    $G->{'title'}  = $mismatch > 0 ? "$mismatch bp of $hit_name missing" : abs($mismatch)." bp of $hit_name overlaps";
 		}
 		$self->push($G);				
 	    }
@@ -168,39 +159,62 @@ sub draw_glyphs {
 	    $last_mismatch = $last_mismatch ? 0 : $last_mismatch;
 	    $last_end = $block->{'munged_end'};
 
-	    #draw the actual hit
-	    my $G = new Sanger::Graphics::Glyph::Rect({
-		'x'         => $block->{'munged_start'} ,
-		'y'         => $H,
-		'width'     => $width,
-		'height'    => $h,
-		'bordercolour' => 'black',
-		'absolutey' => 1,
-		'title'     => $hit_name,
-		'href'      => $align_url,
-	    });
 
 	    #save location of edge of box in case we need to draw a line to the end of it later
 	    $last_end_x = $block->{'munged_start'}+ $width;
 	    
 #	    warn " 2 - drawing box from ",$block->{'munged_start'}," with width of $width"  if ($hit_name eq 'NM_024848.1');
 
-	    #if there is a mismatch between exon and hit boundries then add a label and also 
+	    my $zmenu_dets = {
+		'type'        => 'Transcript',
+		'action'      => 'SupportingEvidenceAlignment',
+		't'           => $Config->{'transcript'}->{'transcript'}->stable_id,
+		'sequence'    => $hit_name,
+		'hit_db'      => $hit_db,
+		'hit_length'  => $block->{'hit_length'},
+		'exon'        => $exon->stable_id,
+		'exon_length' => $block->{'exon_length'},
+	    };
+
+	    #if there is a mismatch between exon and hit boundries then add a zmenu entry and also
 	    #note the position for drawing a red / blue line later
-	    #- need some logic to add meaningfull terms to zmenu depending on strand
 	    if (my $gap = $block->{'left_end_mismatch'}) {
 		my $c = $gap > 0 ? 'red' : 'blue';
 		push @draw_end_lines, [$block->{'munged_start'},$H,$c];
 		push @draw_end_lines, [$block->{'munged_start'}+1/$pix_per_bp,$H,$c];
 		
-		$G->{'title'} = "$hit_name ($gap)";
+		if ($strand > 0) {
+		    $zmenu_dets->{'five_end_mismatch'} = $gap;
+		}
+		else {
+		    $zmenu_dets->{'three_end_mismatch'} = $gap;
+		}		
 	    }
 	    if (my $gap = $block->{'right_end_mismatch'}) {
 		my $c = $gap > 0 ? 'red' : 'blue';
 		push @draw_end_lines, [$block->{'munged_start'}+$width-1/$pix_per_bp,$H,$c];
 		push @draw_end_lines, [$block->{'munged_start'}+$width,$H,$c];
-		$G->{'title'} = "$hit_name ($gap)";
+
+		if ($strand > 0) {
+		    $zmenu_dets->{'three_end_mismatch'} = $gap;
+		}
+		else {
+		    $zmenu_dets->{'five_end_mismatch'} = $gap;
+		}		
 	    }
+
+	    ##draw the actual hit
+	    my $G = new Sanger::Graphics::Glyph::Rect({
+		'x'            => $block->{'munged_start'} ,
+		'y'            => $H,
+		'width'        => $width,
+		'height'       => $h,
+		'bordercolour' => 'black',
+		'absolutey'    => 1,
+		'title'        => $hit_name,
+		'href'         => $self->_url($zmenu_dets),
+	    });
+
 	    $self->push( $G );
 	}
 
