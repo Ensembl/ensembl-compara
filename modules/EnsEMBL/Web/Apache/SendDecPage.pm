@@ -125,7 +125,7 @@ sub handler {
     ## Build page content
     my $html = $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent;
     my $hr;
-    if ($ENV{'SCRIPT_NAME'} eq '/index.html' || $ENV{'SCRIPT_NAME'} eq '/blog.html') {
+    if ($ENV{'SCRIPT_NAME'} eq '/index.html') {
       $hr = '';
     }
     elsif ($page->include_navigation) {
@@ -137,6 +137,9 @@ sub handler {
     my $panelContent;
     if ($page->include_navigation) {
       $panelContent .= qq(<div id="content"><div id="static">\n$html\n</div></div>\n$hr\n);
+    }
+    elsif ($ENV{'SCRIPT_NAME'} eq '/blog.html') {
+      $panelContent = $html;
     }
     else {
       $panelContent = qq(\n<div id="static">\n$html\n$hr\n</div>\n); 
