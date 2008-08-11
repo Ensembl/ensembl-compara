@@ -125,7 +125,7 @@ sub handler {
     ## Build page content
     my $html = $pageContent =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $pageContent;
     my $hr;
-    if ($ENV{'SCRIPT_NAME'} eq '/index.html') {
+    if ($ENV{'SCRIPT_NAME'} eq '/index.html' || $ENV{'SCRIPT_NAME'} eq '/blog.html') {
       $hr = '';
     }
     elsif ($page->include_navigation) {
