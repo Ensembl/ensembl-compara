@@ -317,8 +317,8 @@ sub _location_from_SeqRegion {
 qq(<p>A location is required to build this page. For example, %s coordinates:</p>
 <p class="space-below"><a href="/%s/Location/%s?r=%s">/%s/Location/%s?r=%s</a></p>),
         $assembly_level,
-        $ENV{'ENSEMBL_SPECIES'}, $action, $sample{'LOCATION'},
-        $ENV{'ENSEMBL_SPECIES'}, $action, $sample{'LOCATION'},
+        $ENV{'ENSEMBL_SPECIES'}, $action, $sample{'LOCATION_PARAM'},
+        $ENV{'ENSEMBL_SPECIES'}, $action, $sample{'LOCATION_PARAM'},
       );
       if (scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES})) {
         $help_text .= '<p class="space-below">You can also browse this genome via its <a href="/'.$ENV{'ENSEMBL_SPECIES'}.'/Location/Karyotype">karyotype</a></p>';

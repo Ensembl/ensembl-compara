@@ -61,20 +61,13 @@ sub render {
     <input type="submit" value="Go" class="input-submit" />);
 
   ## Examples
-  my %example = (
-    'generic'     => ['human gene BRCA2', 'rat X:100000..200000', 'insulin'],
-    'chromosomes' => ['gene BRCA2', '1:100000-200000', 'insulin'],
-    'scaffolds'   => ['gene BRCA2', 'scaffold_1:100000..200000', 'insulin'],
-  ); #TO DO - get from species_defs (ini file)
+  my %sample_data = %{$species_defs->SAMPLE_DATA};
   my @examples;
   if (!$page_species) {
-    @examples = @{$example{'generic'}};
-  }
-  elsif (scalar(@{$species_defs->get_config($page_species, 'ENSEMBL_CHROMOSOMES')})) {
-    @examples = @{$example{'chromosomes'}};
+    @examples = ('human gene BRCA2', 'rat X:100000..200000', 'insulin');
   }
   else {
-    @examples = @{$example{'scaffolds'}};
+    @examples = ('gene '.$sample_data{'GENE_TEXT'}, $sample_data{'LOCATION_PARAM'}, $sample_data{'SEARCH_TEXT'});
   }
   $html .= '<p>e.g. ' . join(' or ', map {'<strong>'.$_.'</strong>'} @examples) . '</p>';
 

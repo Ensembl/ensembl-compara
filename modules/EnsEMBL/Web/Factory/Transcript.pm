@@ -53,8 +53,8 @@ sub createObjects {
     my $help_text = sprintf(
 qq(<p>This view requires a gene, transcript or protein identifier in the URL. For example:</p>
 <p class="space-below"><a href="/%s/Transcript/%s?t=%s">/%s/Transcript/%s?t=%s</a></p>),
-        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT'},
-        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT'},
+        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT_PARAM'},
+        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT_PARAM'},
       );
 
     $self->problem('fatal', 'Please enter a valid identifier', $help_text)  ;
