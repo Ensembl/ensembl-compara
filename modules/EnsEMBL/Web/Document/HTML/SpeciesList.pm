@@ -76,10 +76,12 @@ sub _render_species_list {
 <p>Click on a link below to go to the species' home page.</p>
 
 <div class='favourites-species-list'>
-<div class="float-right alert-box">
+<div class="float-right info-box">
   <h3 class="center"><img src="/i/infoicon.gif" alt="(i)" /> New to Ensembl?</h3>
-  <p>Lorem ipsum audire suscipit abhorreant cum at, tation ancillae delicata ne ius.
-  Iusto nostrum consulatu an eam, id solet civibus vim, sea no dicam nostrud.</p>
+  <p>
+	To add tracks, configure an image, or upload your own data, click on the
+	'Control Panel' link in the top right corner of any page.
+  </p>
   </div>
 <p>);
 
