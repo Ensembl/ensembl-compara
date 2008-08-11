@@ -12,4 +12,4 @@ table.ss .bottom-border {  border-bottom:1px [[NEUTRAL_BORDER]] solid; }
 
 table.ss   tr.bg1 { background-color:[[PANEL_BG]]; }
 table.ss   tr.bg2 { background-color:[[NEUTRAL_BG]]; } 
-table.tint tr.bg2 { background-color:[[TINT_BG]; } 
+table.tint tr.bg2 { background-color:[[TINT_BG]]; } 
