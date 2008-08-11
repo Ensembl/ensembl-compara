@@ -29,7 +29,8 @@ sub content {
   my %archive = %{$object->species_defs->ENSEMBL_ARCHIVES};
   if ($dir =~ /^[A-Z][a-z]+_[a-z]+$/) {
     if (keys %archive) {
-      $html .= "<ul>\n";
+      $html .= "<p>The following archives are available for this page:</p>
+<ul>\n";
       my $missing = 0;
 
       my $type = $check[1];
