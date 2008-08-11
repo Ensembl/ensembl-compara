@@ -50,10 +50,12 @@ sub render {
 
   if (@$items) {
     $html .= "<ul>\n";
-    foreach my $item (@$items) {
+    for (my $i = 0;$i < 5;$i++) {
+      my $item = $items->[$i];
       my $title = $item->{'title'};
       my $url   = $item->{'link'};
-      $html .= "<a href=\"$url\">$title</a><p\>"; 
+      my $date  = substr($item->{'pubDate'}, 0, 16);
+      $html .= "<li>$date: <a href=\"$url\">$title</a></li>\n"; 
     }
     $html .= "</ul>\n";
   } else {
