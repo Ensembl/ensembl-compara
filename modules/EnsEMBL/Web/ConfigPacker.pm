@@ -1,6 +1,7 @@
 package EnsEMBL::Web::ConfigPacker;
 
 use strict;
+use warnings;
 use EnsEMBL::Web::ConfigPacker_base;
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 use Data::Dumper;
@@ -19,9 +20,9 @@ sub _munge_databases {
     $self->_summarise_core_tables( $db, $tables{$db} );
   }
 
-  $self->_summarise_variation_db(        );
-  $self->_summarise_funcgen_db(          );
-  $self->_summarise_website_db_per_species(    );
+  $self->_summarise_variation_db();
+  $self->_summarise_funcgen_db();
+  $self->_summarise_website_db_per_species();
 }
 
 sub _munge_das { # creates das.packed...
@@ -264,16 +265,20 @@ sub _summarise_website_db_per_species {
 
   ## Assembly history per species
   my $t_aref = $dbh->selectall_arrayref(
-    'select r.number, rs.assembly_code from species as s, ens_release as r, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and rs.assembly_code != "" and s.name = "'.$self->species.'"'
+    'select r.release_id, rs.assembly_code from species as s, ens_release as r, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and rs.assembly_code != "" and s.name = "'.$self->species.'"'
   );
 
   foreach my $row (@$t_aref) {
     $self->db_tree->{'ASSEMBLIES'}{$row->[0]} = $row->[1];
   }
+#my $T = $self->db_tree->{'ASSEMBLIES'};
+#foreach my $k (sort keys %$T) {
+#  warn "$k = ".$T->{$k};
+#}
 
   ## Current archive list
   my $t_aref = $dbh->selectall_arrayref(
-    'select r.number, r.archive from ens_release as r, species as s, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and s.name = "'.$self->species.'" and r.online = "Y" order by r.release_id'
+    'select r.release_id, r.archive from ens_release as r, species as s, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and r.online = "Y" and s.name = "'.$self->species.'"'
   );
   foreach my $row (@$t_aref) {
     $self->db_tree->{'ENSEMBL_ARCHIVES'}{$row->[0]} = $row->[1];
@@ -286,17 +291,22 @@ sub _summarise_website_db_per_species {
 #========================================================================#
 
 sub _summarise_website_db {
-  ## Get generic data from ensembl_website
   my $self    = shift;
   my $db_name = 'ENSEMBL_WEBSITE';
   my $dbh     = $self->db_connect( $db_name );
 
-  ## Full list of current archives
+  ## Get component-based help
   my $t_aref = $dbh->selectall_arrayref(
-    'select number, archive from ens_release where online = "Y" order by release_id'
+    'select help_record_id, data from help_record where type = "component"';
   );
   foreach my $row (@$t_aref) {
-    $self->db_tree->{'ENSEMBL_ARCHIVES'}{$row->[0]} = $row->[1];
+    my $data = $row->[1];
+    $data =~ s/^\$data = //;
+    $data =~ s!\+'!'!g;
+    $data = eval ($data);
+    my $object = $data->{'object'};
+    my $action = $data->{'action'};
+    $self->db_tree->{'ENSEMBL_HELP'}{$object}{$action} = $row->[0];
   }
   $dbh->disconnect();
 }
@@ -532,14 +542,11 @@ sub _munge_meta {
 sub _munge_website {
   my $self = shift;
 
-  ## Release info for ID history etc
   $self->tree->{'ASSEMBLIES'} = $self->db_tree->{'ASSEMBLIES'};
 
-  ## Add flags for new and updated species
-  #my $previous_release = $ENV{'ENSEMBL_VERSION'} - 1;
-  #$self->tree->{'PREVIOUS_RELEASE'} = $self->db_tree->{'ASSEMBLIES'}{$self->species}{$previous_release};
-
   $self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_tree->{'ENSEMBL_ARCHIVES'};
+
+  $self->tree->{'ENSEMBL_HELP'} = $self->db_tree->{'ENSEMBL_HELP'};
 
 }
 
