@@ -24,10 +24,14 @@ sub content {
 
   ## is this a species page?
   my @check = split('/', $object->param('url'));
-  my $dir = $check[0];
-  warn "CHECKING DIR $dir";
-  my %archive = %{$object->species_defs->ENSEMBL_ARCHIVES};
+  my $dir = $object->param('url') =~ m#^/# ? $check[1] : $check[0];
+  my $species = undef;
   if ($dir =~ /^[A-Z][a-z]+_[a-z]+$/) {
+    $species = $dir;
+  }
+  my %archive;
+  if ($species) {
+    %archive = %{$object->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')};
     if (keys %archive) {
       $html .= "<p>The following archives are available for this page:</p>
 <ul>\n";
@@ -35,7 +39,6 @@ sub content {
 
       my $type = $check[1];
       if ($type =~ /\.html/) {
-        warn "Plain HTML page";
         foreach my $release (sort keys %archive) {
           $html .= $self->_output_link(\%archive, $release, $url);
         }
@@ -43,7 +46,6 @@ sub content {
       else {
         my @action = split('\?', $check[2]);
         my ($old_view, $initial_release) = EnsEMBL::Web::OldLinks::get_archive_redirect($type, $action[0]);
-        warn "REDIRECT TO $old_view ($initial_release)";
 
         foreach my $release (sort keys %archive) {
           next if $release == $object->species_defs->VERSION;
@@ -90,6 +92,7 @@ sub content {
     }
   }
   else {
+    %archive = %{$object->species_defs->ENSEMBL_ARCHIVES};
     ## TO DO - map static content moves!
     $html .= qq(<ul>\n);
     foreach my $release (sort keys %archive) {
