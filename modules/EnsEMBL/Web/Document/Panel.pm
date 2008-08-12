@@ -349,8 +349,11 @@ sub render {
         }
         $HTML .= q(</div>);
         if( exists $self->{'caption'} ) {
-          $HTML .= sprintf q(
-            <h2>%s</h2>), CGI::escapeHTML($self->{caption});
+          $HTML .= '<h2>'.CGI::escapeHTML($self->{caption});
+          if ( exists $self->{'help'} ) {
+            $HTML .= sprintf('<a href="/Help/Component?id=%s" class="modal_link"><img src="/i/e-quest.gif" style="width:20px;height:19px" alt="(e?)" /></a>', CGI::escapeHTML($self->{help}) );
+          }
+          $HTML .= '</h2>';
         }
         $HTML .= q(
           <p class="invisible">.</p></div>);
