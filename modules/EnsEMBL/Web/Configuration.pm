@@ -254,6 +254,10 @@ sub _content_panel {
   $params{'previous'} = $previous_node->data if $previous_node;
   $params{'next'    } = $next_node->data     if $next_node;
 
+  ## Check for help
+  my $help = $self->{object}->species_defs->{'ENSEMBL_HELP'};
+  $params{'help'} = $help->{$ENV{'ENSEMBL_TYPE'}}{$ENV{'ENSEMBL_ACTION'}} if $help;
+
   if ($self->{doctype} eq 'Popup') {
     $params{'omit_header'} = 1;
   }
