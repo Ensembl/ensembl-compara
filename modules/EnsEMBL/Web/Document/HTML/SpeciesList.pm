@@ -68,21 +68,13 @@ sub _render_species_list {
   }
  
   ## output list
-  $html .= qq(<div id='static_favourite_species'>
+  $html .= qq(<div id="static_favourite_species">
 <h2 class="first">Browse a Genome</h2>
 <p>The Ensembl project produces genome databases
   for vertebrates and other eukaryotic species, and makes this information
   freely available online.</p>
 <p>Click on a link below to go to the species' home page.</p>
 
-<div class='favourites-species-list'>
-<div class="float-right info-box">
-  <h3 class="center"><img src="/i/infoicon.gif" alt="(i)" /> New to Ensembl?</h3>
-  <p>
-	To add tracks, configure an image, or upload your own data, click on the
-	'Control Panel' link in the top right corner of any page.
-  </p>
-  </div>
 <p>);
 
   if ($species_defs->ENSEMBL_LOGINS && $user && scalar(@ok_faves)) {
@@ -103,7 +95,6 @@ sub _render_species_list {
   $html .= '</p>';
   $html .= _render_with_images(\@ok_faves, $species_defs, $description);
 
-  $html .= "</div>\n";
   $html .= "</div>\n";
 
   $html .= qq(<div id='static_all_species'>);
@@ -322,12 +313,12 @@ sub _get_defaults {
 sub _render_with_images {
   my ($species_list, $species_defs, $description) = @_;
 
-  my $html .= "<dl class='species-list'>\n";
+  my $html = qq(\n<dl class="species-list">\n);
 
   foreach my $species (@$species_list) {
     my $common_name = $species_defs->get_config($species, "SPECIES_COMMON_NAME") || '';
     (my $species_name = $species) =~ s/_/ /g;
-    $html .= "<dt class='species-list'><a href='/$species/'><img src='/img/species/thumb_$species.png' alt='$species_name' title='Browse $species_name' class='sp-thumb' height='40' width='40' /></a><a href='/$species/' title='$species_name'>$common_name</a></dt>\n";
+    $html .= qq(<dt><a href="/$species/"><img src="/img/species/thumb_$species.png" alt="$species_name" title="Browse $species_name" class="sp-thumb" height="40" width="40" /></a><a href="/$species/" title="$species_name">$common_name</a></dt>\n);
     $html .= "<dd>" . $description->{$species}[0] . "</dd>\n" if $description->{$species}[0];
   }
   $html .= "</dl>\n";
