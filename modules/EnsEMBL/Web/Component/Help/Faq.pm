@@ -50,7 +50,7 @@ sub content {
     }
 
     if (scalar(@faqs) == 1) {
-      $html .= qq(<p><a href="/Help/FAQ">More FAQs</a></p>);
+      $html .= qq(<p><a href="/Help/Faq">More FAQs</a></p>);
     }
   }
 
