@@ -72,6 +72,11 @@ sub populate_tree {
         )],
       { 'no_menu_entry' => 1 }
   );
+  $self->create_node( 'View', '',
+    [qw(archive EnsEMBL::Web::Component::Help::View
+        )],
+      { 'no_menu_entry' => 1 }
+  );
 
 }
 
