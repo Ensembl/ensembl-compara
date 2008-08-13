@@ -17,17 +17,13 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my @ids = $object->param('id') || $object->param('feedback');
+  my $id = $object->param('id') || $object->param('feedback');
 
   my $html = qq(<h2>FAQs</h2>);
   
-
-
   my @faqs;
-  if (scalar(@ids)) {
-    foreach my $id (@ids) {
-      push @faqs, EnsEMBL::Web::Data::Faq->new($id);
-    }
+  if ($id) {
+    @faqs = (EnsEMBL::Web::Data::Faq->new($id));
   }
   else {
     @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted;
