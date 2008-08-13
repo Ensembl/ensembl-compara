@@ -1,7 +1,6 @@
 package EnsEMBL::Web::Data::View;
 
-## Representation of a help record for an Ensembl view
-## N.B. the keyword for this type of record is the name of the view script
+## Object representing help for an individual Ensembl view
 
 use strict;
 use warnings;
@@ -12,12 +11,12 @@ __PACKAGE__->table('help_record');
 __PACKAGE__->set_primary_key('help_record_id');
 
 __PACKAGE__->add_fields(
-  title   => 'string',
+  object  => "enum('Location','Gene','Transcript','Variation')",
+  action  => 'string',
   content => 'text',
 );
 
-
-__PACKAGE__->_type('view');
+__PACKAGE__->_type('component');
 
 __PACKAGE__->add_queriable_fields(
   keyword     => 'string',
