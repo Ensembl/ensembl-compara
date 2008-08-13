@@ -249,11 +249,11 @@ sub fetch_by_Member_id_Member_id {
   }
   my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
 
-  my $constraint .= " AND hm1.member_id = " . $member_id1;
+  my $constraint .= " hm1.member_id = " . $member_id1;
   $constraint .= " AND hm2.member_id = " . $member_id2;
 
   # See in fetch_by_Member what is this internal variable for
-  $self->{'_this_one_first'} = min($member_id1,$member_id2);
+  $self->{'_this_one_first'} = $member_id1;
 
   return $self->generic_fetch($constraint, $join);
 }
