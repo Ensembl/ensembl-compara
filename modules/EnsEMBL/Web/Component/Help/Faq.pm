@@ -17,12 +17,14 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
+  my @ids = $object->param('id') || $object->param('feedback');
 
   my $html = qq(<h2>FAQs</h2>);
+  
+
 
   my @faqs;
-  if ($object->param('id')) {
-    my @ids = $object->param('id');
+  if (scalar(@ids)) {
     foreach my $id (@ids) {
       push @faqs, EnsEMBL::Web::Data::Faq->new($id);
     }
@@ -47,7 +49,11 @@ sub content {
 
     }
 
+    if (scalar(@faqs) == 1) {
+      $html .= qq(<p><a href="/Help/FAQ">More FAQs</a></p>);
+    }
   }
+
 
   return $html;
 }
