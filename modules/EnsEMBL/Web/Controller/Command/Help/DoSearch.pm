@@ -22,7 +22,10 @@ sub process {
   my $cgi = $self->action->cgi;
 
   my $new_param;
-  $new_param->{'hilite'} = $cgi->param('hilite') if $cgi->param('hilite');
+  if ($cgi->param('hilite')) {
+    $new_param->{'hilite'} = $cgi->param('hilite');
+    $new_param->{'string'} = $cgi->param('string');
+  }
 
   my $help = EnsEMBL::Web::Data::Help->new;
   my @results;
