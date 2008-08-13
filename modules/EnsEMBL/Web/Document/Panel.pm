@@ -351,7 +351,7 @@ sub render {
         if( exists $self->{'caption'} ) {
           $HTML .= '<h2>'.CGI::escapeHTML($self->{caption});
           if ( exists $self->{'help'} ) {
-            $HTML .= sprintf('<a href="/Help/Component?id=%s" class="modal_link"><img src="/i/e-quest.gif" style="width:20px;height:19px" alt="(e?)" /></a>', CGI::escapeHTML($self->{help}) );
+            $HTML .= $self->help_button;
           }
           $HTML .= '</h2>';
         }
@@ -359,8 +359,11 @@ sub render {
           <p class="invisible">.</p></div>);
       } 
       elsif( exists $self->{'caption'} ) {
-        $HTML .= sprintf q(
-          <h2>%s</h2>), CGI::escapeHTML($self->{caption});
+        $HTML .= '<h2>'.CGI::escapeHTML($self->{caption});
+        if ( exists $self->{'help'} ) {
+            $HTML .= $self->help_button;
+        }
+        $HTML .= '</h2>';
       }
     }
     $self->renderer->print($HTML);
@@ -392,20 +395,16 @@ sub render {
   }
 }
 
+sub help_button {
+  my $self = shift;
+  return sprintf('<a href="/Help/View?id=%s" class="modal_link"><img src="/i/e-quest.gif" style="width:20px;height:19px;padding-left:4px" alt="(e?)" /></a>', CGI::escapeHTML($self->{help}));
+}
+
 sub params {
   ### a
   my $self = shift;
   return $self->{params};
 }
-
-=pod
-## getter/setter already defined, above!
-sub caption {
-  ### a
-  my $self = shift;
-  return $self->{caption};
-}
-=cut
 
 sub status {
   ### a
