@@ -233,17 +233,18 @@ sub _content_panel {
      $title = join ' - ', '', ( $obj ? $obj->caption : () ), $title;
   $self->set_title( $title );
 
-  my ($previous_node,$next_node);
-  #don't show tabs for 'no_menu' nodes
-  if ($previous_node = $node->previous_leaf) {
-      while ($previous_node->data->{'no_menu_entry'}) {
-	  $previous_node = $previous_node->previous_leaf;
-      }
+  my $previous_node = $node->previous_leaf;
+  my $next_node     = $node->next_leaf;
+  ## don't show tabs for 'no_menu' nodes
+  if (defined $previous_node) {
+    while ($previous_node && $previous_node->data->{'no_menu_entry'}) {
+	    $previous_node = $previous_node->previous_leaf;
+    }
   }
-  if ($next_node = $node->next_leaf ) {
-      while ($next_node->data->{'no_menu_entry'}) {
-	  $next_node = $next_node->next_leaf;
-      }
+  if (defined $next_node) {
+    while ($next_node && $next_node->data->{'no_menu_entry'}) {
+	    $next_node = $next_node->next_leaf;
+    }
   }
 
   my %params = (
