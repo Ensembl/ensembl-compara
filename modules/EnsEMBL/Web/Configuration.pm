@@ -235,12 +235,12 @@ sub _content_panel {
 
   my ($previous_node,$next_node);
   #don't show tabs for 'no_menu' nodes
-  if ($previous_node == $node->previous_leaf) {
+  if ($previous_node = $node->previous_leaf) {
       while ($previous_node->data->{'no_menu_entry'}) {
 	  $previous_node = $previous_node->previous_leaf;
       }
   }
-  if ($next_node     == $node->next_leaf ) {
+  if ($next_node = $node->next_leaf ) {
       while ($next_node->data->{'no_menu_entry'}) {
 	  $next_node = $next_node->next_leaf;
       }
@@ -255,12 +255,11 @@ sub _content_panel {
   $params{'next'    } = $next_node->data     if $next_node;
 
   ## Check for help
-  my $help = $self->{object}->species_defs->{'ENSEMBL_HELP'};
-  $params{'help'} = $help->{$ENV{'ENSEMBL_TYPE'}}{$ENV{'ENSEMBL_ACTION'}} if $help;
+  my %help = $self->{object}->species_defs->multiX('ENSEMBL_HELP');
+  $params{'help'} = $help{$ENV{'ENSEMBL_TYPE'}}{$ENV{'ENSEMBL_ACTION'}} if keys %help;
 
-  if ($self->{doctype} eq 'Popup') {
-    $params{'omit_header'} = 1;
-  }
+  $params{'omit_header'} = $self->{doctype} eq 'Popup' ? 1 : 0;
+  
   my $panel = $self->new_panel( 'Navigation', %params );
   if( $panel ) {
     $panel->add_components( @{$node->data->{'components'}} );
