@@ -34,8 +34,7 @@ sub render {
 
   my $news_url = '/info/website/news/index.html';
 
-  my $html = qq(<div class="species-news">
-<h2>What's New in Release $release_id ($release_date)</h2>);
+  my $html = qq(<h2 class="first">What's New in Release $release_id ($release_date)</h2>);
 
   ## get news headlines
   my $criteria = {'release_id' => $release_id};
@@ -90,7 +89,7 @@ sub render {
         $sp_name = join(', ', @names);
       }
 ## generate HTML
-      $html .= sprintf(qq(<li><strong><a href="%s#%s" style="text-decoration:none">%s</a></strong> (%s)\n),
+      $html .= sprintf(qq(<li><strong><a href="%s#%s" style="text-decoration:none">%s</a></strong> (%s)</li>\n),
               $news_url, $item->news_item_id, $item->title, $sp_name);
 
     }
@@ -107,7 +106,6 @@ sub render {
       $html .= qq(<p>No news is currently available for release $release_id.</p>\n);
     }
   }
-  $html .= '</div>';
 
   if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
     $html .= qq(<div class="ajax" title="['/blog.html']"></div>);
