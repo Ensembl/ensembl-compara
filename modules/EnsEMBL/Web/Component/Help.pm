@@ -6,7 +6,7 @@ use warnings;
 
 use constant 'HELPVIEW_IMAGE_DIR'   => "/img/help";
 
-sub _link_mapping {
+sub link_mapping {
   my ($object, $content) = @_;
 
   ## internal (Ensembl) links
@@ -19,10 +19,10 @@ sub _link_mapping {
   return $content;
 }
 
-sub _kw_hilite {
-  ### Highlights the search keyword(s) in the text
-  my ($object, $content) = @_;
-  my $kw = $object->param('search') || $object->param('kw');
+sub kw_hilite {
+  ### Highlights the search keyword(s) in the text, omitting HTML tag contents
+  my ($self, $content) = @_;
+  my $kw = $self->object->param('string');
 
   $content =~ s/($kw)(?!(\w|\s|[-\.\/;:#\?"])*>)/<span class="hilite">$1<\/span>/img;
   return $content;
