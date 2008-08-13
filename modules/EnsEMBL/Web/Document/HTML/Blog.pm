@@ -38,9 +38,6 @@ sub render {
     my $rss = new XML::RSS;
     
     my $r = $rss->parse($response->decoded_content);
-    warn Dumper($r);
-  
-    warn Dumper($rss);
     
     $items = $rss->{'items'};
     $ENV{CACHE_TIMEOUT} = 3600;
@@ -48,9 +45,10 @@ sub render {
       if $memd;
   }
 
+  my $count = 3;
   if (@$items) {
     $html .= "<ul>\n";
-    for (my $i = 0;$i < 5;$i++) {
+    for (my $i = 0;$i < $count;$i++) {
       my $item = $items->[$i];
       my $title = $item->{'title'};
       my $url   = $item->{'link'};
