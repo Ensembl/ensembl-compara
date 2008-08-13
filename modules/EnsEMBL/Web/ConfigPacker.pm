@@ -22,7 +22,7 @@ sub _munge_databases {
 
   $self->_summarise_variation_db();
   $self->_summarise_funcgen_db();
-  $self->_summarise_website_db_per_species();
+  $self->_summarise_website_db();
 }
 
 sub _munge_das { # creates das.packed...
@@ -32,7 +32,7 @@ sub _munge_das { # creates das.packed...
 
 sub _munge_databases_multi {
   my $self = shift;
-  $self->_summarise_website_db(    );
+  $self->_summarise_website_db_multi(    );
   $self->_summarise_compara_db(    );
   $self->_summarise_ancestral_db(  );
   $self->_summarise_go_db(         );
@@ -50,6 +50,8 @@ sub _munge_config_tree {
 }
 
 sub _munge_config_tree_multi {
+  my $self = shift;
+  $self->_munge_website_multi(    );
 }
 
 
@@ -257,7 +259,7 @@ sub _summarise_funcgen_db {
   $dbh->disconnect();
 }
 
-sub _summarise_website_db_per_species {
+sub _summarise_website_db {
   ## Get per_species data that is stored in ensembl_website
   my $self    = shift;
   my $db_name = 'ENSEMBL_WEBSITE';
@@ -290,11 +292,12 @@ sub _summarise_website_db_per_species {
 # The following functions munge the multi-species databases              #
 #========================================================================#
 
-sub _summarise_website_db {
+sub _summarise_website_db_multi {
   my $self    = shift;
   my $db_name = 'ENSEMBL_WEBSITE';
   my $dbh     = $self->db_connect( $db_name );
 
+  warn "--------------- GETTING HELP --------------------";
   ## Get component-based help
   my $t_aref = $dbh->selectall_arrayref(
     'select help_record_id, data from help_record where type = "component" and status = "live"'
@@ -304,10 +307,12 @@ sub _summarise_website_db {
     $data =~ s/^\$data = //;
     $data =~ s!\+'!'!g;
     $data = eval ($data);
+    warn Dumper($data);
     my $object = $data->{'object'};
     my $action = $data->{'action'};
     $self->db_tree->{'ENSEMBL_HELP'}{$object}{$action} = $row->[0];
   }
+  warn Dumper($self->db_tree->{'ENSEMBL_HELP'});
   $dbh->disconnect();
 }
 
@@ -545,6 +550,11 @@ sub _munge_website {
   $self->tree->{'ASSEMBLIES'} = $self->db_tree->{'ASSEMBLIES'};
 
   $self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_tree->{'ENSEMBL_ARCHIVES'};
+
+}
+
+sub _munge_website_multi {
+  my $self = shift;
 
   $self->tree->{'ENSEMBL_HELP'} = $self->db_tree->{'ENSEMBL_HELP'};
 
