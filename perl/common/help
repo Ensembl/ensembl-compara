@@ -20,6 +20,7 @@ $controller->add_connections({qw(
 
 ## Topics
 $controller->add_connections({ 
+  'Component' => 'EnsEMBL::Web::Controller::Command::Help::Component',
   'Faq'       => 'EnsEMBL::Web::Controller::Command::Help::Faq',
   'Glossary'  => 'EnsEMBL::Web::Controller::Command::Help::Glossary',
   'Movie'     => 'EnsEMBL::Web::Controller::Command::Help::Movie',
