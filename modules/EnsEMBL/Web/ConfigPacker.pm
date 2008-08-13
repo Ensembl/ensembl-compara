@@ -297,7 +297,7 @@ sub _summarise_website_db {
 
   ## Get component-based help
   my $t_aref = $dbh->selectall_arrayref(
-    'select help_record_id, data from help_record where type = "component" and status = "live"';
+    'select help_record_id, data from help_record where type = "component" and status = "live"'
   );
   foreach my $row (@$t_aref) {
     my $data = $row->[1];
