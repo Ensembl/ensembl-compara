@@ -32,21 +32,22 @@ sub render {
   }
   my $html = qq(<div class="center">\n);
 
-  $html .= sprintf(qq(<h2>Search %s %s</h2>
+  $html .= sprintf(qq(<h2 class="first">Search %s %s</h2>
 <form action="%s" method="get"><div>
   <input type="hidden" name="site" value="%s" />),
   $species_defs->ENSEMBL_SITETYPE, $species_name, $self->search_url, $self->default_search_code
 );
-
+  my $input_size = 50;
 
   if (!$page_species) {
     $html .= qq(<label for="species">Search</label>: <select id="species" name="species">
 <option value="">All species</option>
 <option value="">---</option>
 );
+  $input_size = 30;
 
-    foreach $species (@{$species_defs->ENSEMBL_SPECIES}) {
-      my $common_name = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
+  foreach $species (@{$species_defs->ENSEMBL_SPECIES}) {
+    my $common_name = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
       $html .= qq(<option value="$species">$common_name</option>);
     }
 
@@ -57,7 +58,7 @@ sub render {
     $html .= qq(<label for="q">Search for</label>: );
   }
 
-  $html .= qq(<input id="q" name="q" size="50" value="" />
+  $html .= qq(<input id="q" name="q" size="$input_size" value="" />
     <input type="submit" value="Go" class="input-submit" />);
 
   ## Examples
