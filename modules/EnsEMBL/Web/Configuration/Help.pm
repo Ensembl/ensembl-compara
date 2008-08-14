@@ -31,7 +31,7 @@ sub populate_tree {
     )],
     { 'availability' => 1}
   ));
-  $topic_menu->append($self->create_node( 'Movie', "Flash Tutorials",
+  $topic_menu->append($self->create_node( 'Movie', "Video Tutorials",
     [qw(
       movie    EnsEMBL::Web::Component::Help::Movie
     )],
