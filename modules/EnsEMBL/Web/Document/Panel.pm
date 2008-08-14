@@ -350,7 +350,7 @@ sub render {
         $HTML .= q(</div>);
         if( exists $self->{'caption'} ) {
           $HTML .= '<h2>'.CGI::escapeHTML($self->{caption});
-          if ( exists $self->{'help'} ) {
+          if ( $self->{'help'} ) {
             $HTML .= $self->help_button;
           }
           $HTML .= '</h2>';
