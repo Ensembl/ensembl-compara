@@ -460,7 +460,7 @@ sub _summarise_dasregistry {
     $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
       -location => $self->tree->{'DAS_REGISTRY_URL'},
       -timeout  => $self->tree->{'ENSEMBL_DAS_TIMEOUT'},
-      -proxy    => $self->tree->{'ENSEMBL_DAS_PROXY'}  ,
+      -proxy    => $self->tree->{'ENSEMBL_WWW_PROXY'}  ,
     );
     $self->{'_das_parser'} = $parser;
   }
