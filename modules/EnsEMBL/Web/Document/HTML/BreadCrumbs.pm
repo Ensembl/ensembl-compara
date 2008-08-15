@@ -45,12 +45,7 @@ sub render   {
   elsif ($you_are_here =~ m#^/info/#) {
 
     ## Level 2 link
-    if ($you_are_here eq '/info/index.html') {
-      $html .= qq( &gt; <strong>Documentation</strong>);
-    }
-    else {
-      $html .= qq( &gt; <a href="/info/">Documentation</a>);
-    }
+    $html .= qq( &gt; <strong>Documentation</strong>);
 
     ## Level 3 link
     my $tree = $species_defs->STATIC_INFO;
