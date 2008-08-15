@@ -21,9 +21,11 @@ sub new {
 sub __set_species {
   my( $self, $species, $golden_path, $level ) = @_;
   $species         ||= $self->species;
-  $golden_path     ||= $self->species_defs->get_config( $species, 'ENSEMBL_GOLDEN_PATH' ) || 'NCBI36';
+  $golden_path     ||= $self->species_defs->get_config( $species, 'ENSEMBL_GOLDEN_PATH' );
+  $golden_path     ||= $self->species_defs->get_config( $species, 'ASSEMBLY_NAME' );
   $self->__species = $species; ## to store co-ordinate system information
   $self->__species_hash ||= {};
+
   unless( exists( $self->__species_hash->{'golden_path'} ) && $self->__golden_path eq $golden_path ) {
     $self->__golden_path = $golden_path;
     $self->__coord_systems = [
@@ -253,6 +255,7 @@ sub _location_from_Marker {
 
 sub _location_from_SeqRegion {
   my( $self, $chr, $start, $end, $strand, $keep_slice ) = @_;
+
   if( defined $start ) {
     $start = floor( $start );
     $end   = $start unless defined $end;
@@ -261,11 +264,12 @@ sub _location_from_SeqRegion {
     $strand ||= 1;
     $start = 1 if $start < 1;     ## Truncate slice to start of seq region
     ($start,$end) = ($end, $start) if $start > $end;
-    warn "... $chr $start $end $strand ...";
+
+
     foreach my $system ( @{$self->__coord_systems} ) {
       my $slice;
       eval { $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand ); };
-      warn "..... ",$system->name, ' ', $slice;
+
       warn $@ if $@;
       next if $@;
       if( $slice ) {
@@ -304,9 +308,9 @@ sub _location_from_SeqRegion {
       }
     }
     else {
-      my %sample = %{$self->species_defs->SAMPLE_DATA};
+      my %sample = %{$self->species_defs->SAMPLE_DATA ||{}};
       my $assembly_level;
-      if (scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES})) {
+      if (scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES ||[]})) {
         $assembly_level = 'chromosomal';
       }
       else {
@@ -434,6 +438,7 @@ sub createObjects {
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
   } 
+
   $start = $self->evaluate_bp( $start ) if defined $start;
   $end   = $self->evaluate_bp( $end )   if defined $end;
   if( defined $self->param( 'data_URL' ) ) {
