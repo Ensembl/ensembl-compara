@@ -279,7 +279,7 @@ sub _summarise_website_db {
 #}
 
   ## Current archive list
-  my $t_aref = $dbh->selectall_arrayref(
+  $t_aref = $dbh->selectall_arrayref(
     'select r.release_id, r.archive from ens_release as r, species as s, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and r.online = "Y" and s.name = "'.$self->species.'"'
   );
   foreach my $row (@$t_aref) {
@@ -460,7 +460,8 @@ sub _summarise_dasregistry {
     $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
       -location => $self->tree->{'DAS_REGISTRY_URL'},
       -timeout  => $self->tree->{'ENSEMBL_DAS_TIMEOUT'},
-      -proxy    => $self->tree->{'ENSEMBL_WWW_PROXY'}  ,
+      -proxy    => $self->tree->{'ENSEMBL_WWW_PROXY'},
+      -noproxy  => $self->tree->{'ENSEMBL_NO_PROXY'},
     );
     $self->{'_das_parser'} = $parser;
   }
@@ -477,7 +478,18 @@ sub _summarise_dasregistry {
     $val || next;
     # Skip sources without any config
     my $cfg = $self->tree->{$key};
-    next unless (defined $cfg && ref($cfg));
+    if (!defined $cfg && ref($cfg)) {
+      warn "DAS source $key has no associated configuration";
+      next;
+    }
+    if (!$cfg->{'url'}) {
+      warn "DAS source $key has no 'url' property defined";
+      next;
+    }
+    if (!$cfg->{'dsn'}) {
+      warn "DAS source $key has no 'dsn' property defined";
+      next;
+    }
     
     $cfg->{'logic_name'}      = $key;
     $cfg->{'display_label'} ||= $cfg->{'label'};
