@@ -14,6 +14,7 @@ use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::Wizard::Node);
 my $DEFAULT_CS = 'DnaAlignFeature';
+my $DAS_DESC_WIDTH = 120;
 
 our @formats = (
     {name => '-- Please Select --', value => ''},
@@ -298,28 +299,11 @@ sub select_server {
 
   $self->title('Select a DAS server or data file');
 
-  my $preconf_das = []; ## Preconfigured DAS servers
-  my $NO_REG = 'No registry';
-  my $rurl = $object->species_defs->DAS_REGISTRY_URL || $NO_REG;
-  if (defined (my $url = $object->param("preconf"))) {
-    $url = "http://$url" if ($url !~ m!^\w+://!);
-    $url .= '/das' if ($url !~ m/\/das$/ && $url ne $rurl);
-    $object->param('preconf_das', $url);
-  }
-  my @das_servers = $self->object->get_ensembl_das;
-  if ($rurl eq $NO_REG) {
-    $object->param('preconf_das') or $object->param('preconf_das', $das_servers[0]);
-  } 
-  else {
-    $object->param('preconf_das') or $object->param('preconf_das', $rurl);
-    push @$preconf_das, {'name' => 'DAS Registry', 'value'=>$rurl};
-  }
-  my $default = $object->param("preconf_das");
-  foreach my $dom (@das_servers) { push @$preconf_das, {'name'=>$dom, 'value'=>$dom} ; }
-
+  my @das_servers = $self->object->get_das_servers;
+  my @preconf_das = map { { 'value' => $_ } } @das_servers;
 
   $self->add_element(( type => 'DropDown', name => 'preconf_das', 'select' => 'select',
-    label => $sitename.' DAS server', 'values' => $preconf_das ));
+    label => $sitename.' DAS server', 'values' => \@preconf_das ));
   $self->add_element(( type => 'String', name => 'other_das', label => 'or other DAS server',
     'notes' => '( e.g. http://www.example.com/MyProject/das )' ));
   $self->add_element(( type => 'String', name => '_das_filter', label => 'Filter sources',
@@ -327,6 +311,7 @@ sub select_server {
   $self->add_element(('type'=>'Information', 'value'=>'OR'));
   $self->add_element(( type => 'String', name => 'url', label => 'File URL',
     'notes' => '( e.g. http://www.example.com/MyProject/mydata.gff )' ));
+
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($user && $user->id) {
     $self->add_element(( type => 'CheckBox', name => 'save', label => 'Attach source/url to my account', 'checked'=>'checked' ));
@@ -343,6 +328,7 @@ sub source_logic {
   }
   else {
     $parameter->{'das_server'}  = $self->object->param('other_das') || $self->object->param('preconf_das');
+    $parameter->{'das_filter'}  = $self->object->param('_das_filter');
     $parameter->{'wizard_next'} = 'select_source';
   }
   return $parameter;
@@ -354,24 +340,35 @@ sub select_source {
   my $self = shift;
 
   $self->title('Select a DAS source');
-
-  my $dsns = $self->object->get_server_dsns;
-  if (ref($dsns) eq 'HASH') {
-    my $dwidth = 120;
-    foreach my $id (sort {$dsns->{$a}->{name} cmp $dsns->{$b}->{name} } keys (%{$dsns})) {
-#warn Data::Dumper::Dumper( $dsns->{$id} );
-      my $dassource = $dsns->{$id};
-      my ($id, $name, $url, $desc) = ($dassource->{id}, $dassource->{name}, $dassource->{url}, substr($dassource->{description}, 0, $dwidth));
-      if( length($desc) >= $dwidth ) {
-      # find the last space character in the line and replace the tail with ...        
-        $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./;
-      }
-      $self->add_element( 'type'=>'CheckBox', 'name'=>'dsns', 'value' => $id, 'label' => $name, 'notes' => $desc );
-    }
-  } 
-  else {
-    $self->add_element('type'=>'Information', 'value'=>$dsns);
+  
+  # Get a list of DAS sources (filtered if specified)
+  my $sources = $self->object->get_das_server_dsns;
+  use Data::Dumper; warn Dumper($sources);
+  
+  # Process any errors
+  if (!ref $sources) {
+    $self->add_element( 'type' => 'Information', 'value' => $sources );
   }
+  
+  # Otherwise add a checkbox element for each DAS source
+  else {
+    for my $source (@{ $sources }) {
+      
+      # If the description is long, shorten it and pretty it up
+      my $desc  = $source->description;
+      if (length $desc > $DAS_DESC_WIDTH) {
+        $desc = substr $desc, 0, $DAS_DESC_WIDTH;
+        $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
+      }
+      
+      $self->add_element( 'type'  => 'CheckBox',
+                          'name'  => 'dsns',
+                          'value' => $source->logic_name,
+                          'label' => $source->display_label,
+                          'notes' => $desc );
+    } # end DAS source loop
+  } # end if-else
+  
 }
 
 sub attach {
