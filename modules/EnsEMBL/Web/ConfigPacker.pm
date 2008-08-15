@@ -75,14 +75,14 @@ sub _summarise_generic {
 #---------- Meta table (everything except patches)
   if( $self->_table_exists( $db_name, 'meta' ) ) {
     $t_aref  = $dbh->selectall_arrayref(
-      'select meta_key,meta_value,meta_id 
+      'select meta_key,meta_value,meta_id,species_id 
          from meta
         where meta_key != "patch"
         order by meta_key, meta_id'
     );
     my $hash = {};
     foreach my $r( @$t_aref) {
-      push @{ $hash->{$r->[0]} }, $r->[1];
+      push @{ $hash->{$r->[0]} }, $r->[1], $r->[3];
     }
     $self->db_details($db_name)->{'meta_info'} = $hash;
   }
@@ -573,6 +573,62 @@ sub _munge_website_multi {
 }
 
 sub _configure_blast {
+}
+
+sub _munge_multi_meta {
+  my $self = shift;
+  
+  my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+
+#warn Dumper($self->db_details('ENSEMBL_DB')->{'meta_info'});
+  my $mhash;
+
+  foreach my $meta_key (qw(species.ensembl_alias_name assembly.default assembly.date species.classification genebuild.version)) {
+      if (my @meta_values = @{ $self->db_details('ENSEMBL_DB')->{'meta_info'}{$meta_key} || []}) {
+	  my $i=0;
+	  while( @meta_values) {
+	      my $v = shift @meta_values;
+	      my $sid = shift @meta_values;
+	      push @{$mhash->{$sid}->{$meta_key}}, $v;
+	  }
+      }
+  }
+
+#  warn Dumper $mhash;
+  my $order = $self->tree->{'TAXON_ORDER'};
+#  warn "ORDER:", Dumper $order;
+
+  my @species_list;
+  foreach my $sid (sort keys %$mhash) {
+      my $species_name = $mhash->{$sid}->{'species.ensembl_alias_name'}[0];
+      (my $species_dir = $species_name) =~ s/ /\_/g;
+      $self->tree($species_dir)->{'SPECIES_COMMON_NAME'} = $species_name;
+      $self->tree($species_dir)->{'SPECIES_DBID'} = $sid;
+      push @species_list, $species_name;
+      $self->tree($species_dir)->{'ASSEMBLY_NAME'} = $mhash->{$sid}->{'assembly.default'}[0];
+      $self->tree($species_dir)->{'ASSEMBLY_DATE'} = $mhash->{$sid}->{'assembly.date'}[0];
+
+      my $genebuild = $mhash->{$sid}->{'genebuild.version'}[0];
+      my @A = split('-', $genebuild);
+      $self->tree($species_dir)->{'GENEBUILD_DATE'} = $months[$A[1]].$A[0];
+      $self->tree($species_dir)->{'GENEBUILD_BY'} = $A[2];
+
+      ## Do species name and group
+      my @taxonomy = @{$mhash->{$sid}{'species.classification'}||[]};
+#      warn $species_name;
+#      warn Dumper \@taxonomy;
+      $self->tree($species_dir)->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
+      foreach my $taxon (@taxonomy) {
+	  foreach my $group (@$order) {
+	      if ($taxon eq $group) {
+		  $self->tree($species_dir)->{'SPECIES_GROUP'} = $group;
+		  last;
+	      }
+	  }
+	  last if $self->tree($species_dir)->{'SPECIES_GROUP'};
+      }
+      $self->tree->{'SPECIES_LIST'} = \@species_list;
+  }
 }
 
 1;
