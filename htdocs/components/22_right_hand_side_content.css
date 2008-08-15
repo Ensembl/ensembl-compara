@@ -7,7 +7,7 @@ div#content div.panel { border:1px solid #ccc; background-color:[[PANEL_BG]]; }
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
 /* Columns for static content */
-#static { margin:1% 1% 0 1%; padding:0 }
+#static { margin:1% 1% 0 1%; padding:1em; }
 .onecol { margin:0 0 1% 0; padding:1% }
 .twocol-left { float:left; width:47%; margin:0 0 1% 0; padding:1%; clear:left; }
 .twocol-right { float:right; width:47%; margin:0 0 1% 0; padding:1%; }
