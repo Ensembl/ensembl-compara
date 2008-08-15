@@ -43,9 +43,14 @@ sub render {
     if ($location eq $subsection->{'_path'}) {
       $class = ' class="active"';
     }
-    $html .= sprintf(qq(<dd class="open"><strong><a href="%s"%s>%s</a></strong>),
+    if ($subsection->{'_nolink'}) {
+      $html .= qq(<dd class="open"><strong>$title</strong>);
+    }
+    else {
+      $html .= sprintf(qq(<dd class="open"><strong><a href="%s"%s>%s</a></strong>),
         $subsection->{'_path'}, $class, $title
-    );
+      );
+    }
     my @sortable_subsections;
     foreach my $sub (keys %$subsection) {
       push (@sortable_subsections, $sub) if ref($subsection->{$sub}) eq 'HASH';  

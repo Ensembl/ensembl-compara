@@ -43,7 +43,7 @@ sub read_tree {
   ## Check if we want to do this directory at all
   my $include = 1;
   foreach my $filename (@$html_files) {
-    if( $filename eq 'index.html' ) {
+    if( $filename eq 'index.html' || $filename eq 'index.none' ) {
       ($title, $nav, $order, $index) = get_info( $doc_root . $path . $filename );
       if ($index =~ /NO FOLLOW/) {
         $branch->{_title} = $title;
@@ -67,12 +67,13 @@ sub read_tree {
     my $full_path = "$doc_root$path$filename";
     ($title, $nav, $order, $index) = get_info( $full_path );
 
-    if ($filename eq 'index.html') {
+    if ($filename eq 'index.html' || $filename eq 'index.none' ) {
       ## add the directory path and index title to array
       $branch->{_title} = $title;
       $branch->{_nav}   = $nav;
       $branch->{_order} = $order;
       $branch->{_index} = $index;
+      $branch->{_nolink} = 1 if $filename eq 'index.none';
     }
     else {
       unless ($index =~ /NO INDEX/) {
@@ -105,7 +106,7 @@ sub sortnames {
     if (-d $full_path.$item) {
       push (@dir_list, $item);
     }
-    elsif ($item =~ /\.html$/) {
+    elsif ($item =~ /\.(html|none)$/) {
       push (@file_list, $item);
     }
   }
