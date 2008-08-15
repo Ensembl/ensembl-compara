@@ -125,7 +125,7 @@ sub attach {
   my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
   my $server        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_server' ));
   my $source_logic  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'source_logic'));
-  my $source        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_source' ));
+  my $source        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_source', backtrack => 1 ));
   my $attach        = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'attach'));
   my $feedback      = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'attach_feedback'));
 
