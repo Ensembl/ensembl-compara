@@ -18,7 +18,6 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $html = '<div class="twocol-left">';
   my $form = EnsEMBL::Web::Form->new( 'change_chr', '/'.$object->species.'/jump_to_location_view', 'get' );
 
   my @chrs = $self->chr_list($object);
@@ -44,8 +43,7 @@ sub content {
     'button_value' => 'Go'
   );
 
-  $html .= $form->render;
-  $html .= '</div>';
+  return '<div class="center">'.$form->render.'</div>';
 }
 
 1;

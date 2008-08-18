@@ -46,7 +46,6 @@ sub content {
     'Raw percentage of map covered by sequence clones',
   );
   my $html = qq(
-<div class="twocol-right">
 <h3>Chromosome Statistics</h3>
 <table class="ss tint">);
   my ($stats, %chr_stats, $bg);
@@ -77,7 +76,7 @@ sub content {
   }
   $html .= qq(  </table>
   <ul><li><a href="/info/about/docs/stats.html">How the statistics are calculated</a></li></ul>
-  </div>);
+  );
 
   return $html;
 }

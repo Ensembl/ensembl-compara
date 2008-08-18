@@ -77,15 +77,13 @@ sub content {
     $Config
   );
   $image->imagemap           = 'yes';
-  # $image->cacheable          = 'yes';
   $image->image_type         = 'syntenyview';
   $image->image_name         = $species.'-'.$chr.'-'.$other;
 
-  #$panel->add_image( $image->render, $image->{'width'} );
   foreach my $o (@$raw_data) { ## prevents memory leak!
     $o->release_tree;
   }
-  return $image->render;
+  return '<div class="autocenter" style="width:400px">'.$image->render.'</div>';
 }
 
 1;

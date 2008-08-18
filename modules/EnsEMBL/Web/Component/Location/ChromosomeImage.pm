@@ -43,6 +43,7 @@ sub content {
 
   ## Check if there is userdata in session
   my $userdata = $object->get_session->get_tmp_data;
+  use Data::Dumper;
   my $pointers = [];
 
   if ($userdata && $userdata->{'filename'}) {
@@ -61,7 +62,7 @@ sub content {
   $image->add_tracks($object, $config_name);
   $image->karyotype($object, $pointers, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
-  return '<div class="twocol-left">'.$image->render.'</div>';
+  return '<div class="center">'.$image->render.'</div>';
 }
 
 1;

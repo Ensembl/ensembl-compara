@@ -15,6 +15,8 @@ sub _init {
 sub content {
   my $self   = shift;
   my $object = $self->object;
+  #warn "YOU ARE HERE: ".$ENV{'PATH_INFO'};
+  #return if ($ENV{'REQUEST_URI'} =~ /Karyotype/ || $ENV{'REQUEST_URI'} =~ /Chromosome/);
   my $slice  = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
   );
