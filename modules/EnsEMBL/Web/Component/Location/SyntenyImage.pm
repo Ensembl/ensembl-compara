@@ -7,11 +7,12 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
-use CGI qw(escapeHTML);
+use Data::Dumper;
+
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable( 1 );
+  $self->ajaxable(  1 );
 }
 
 sub content {
@@ -19,10 +20,23 @@ sub content {
   my $object = $self->object;
   my $species = $object->species;
     
-  my $loc = $object->param('loc') ? $object->evaluate_bp($object->param('loc')) : undef ;
-    
-  my $other = $object->param('otherspecies')||$object->param('species') || ($species eq 'Homo_sapiens' ? 'Mus_musculus' : 'Homo_sapiens');
   my %synteny = $object->species_defs->multi('SYNTENY');
+  my $other = $object->param('otherspecies') || $object->param('species');
+  unless ($other) {
+    ## Set default as primary or secondary species, if available
+    my @has_synteny = keys %synteny;
+    foreach my $sp (@has_synteny) {
+      if ($sp eq $object->species_defs->ENSEMBL_PRIMARY_SPECIES 
+            || $sp eq $object->species_defs->ENSEMBL_SECONDARY_SPECIES) {
+        $other = $sp;
+        last;
+      }
+    }  
+    if (!$other) {
+      $other = $has_synteny[0];
+    }
+  } 
+ 
   my $chr = $object->seq_region_name;
   my %chr_1  =  map { ($_,1) } @{$object->species_defs->ENSEMBL_CHROMOSOMES||[]};
   my $chr_2 = scalar  @{$object->species_defs->other_species( $other , 'ENSEMBL_CHROMOSOMES' ) };
@@ -32,18 +46,19 @@ sub content {
     return undef;
   }
   unless ( $chr_1{$chr} && $chr_2>0){
-    $object->problem( 'fatal', "Unable to display", "SyntenyView only displays synteny between real chromosomes - not fragments") ;
+    $object->problem( 'fatal', "Unable to display", "Synteny view only displays synteny between real chromosomes - not fragments") ;
     return undef;
   }
 
   my $ka  = $object->get_adaptor('get_KaryotypeBandAdaptor', 'core', $species);
   my $ka2 = $object->get_adaptor('get_KaryotypeBandAdaptor', 'core', $other);
-  my $raw_data = $object->chromosome->get_all_compara_Syntenies($other);   
+  my $compara_db = $object->database('compara');
+  my $raw_data = $object->chromosome->get_all_compara_Syntenies($other, undef, $compara_db);   
 
   ## checks done ## 
   my $chr_length = $object->chromosome->length;
   my ($localgenes,$offset) = $object->get_synteny_local_genes;
-  $loc = ( @$localgenes ? $localgenes->[0]->start+$offset : 1 ); # Jump loc to the location of the genes
+  my $loc = ( @$localgenes ? $localgenes->[0]->start+$offset : 1 ); # Jump loc to the location of the genes
         
   my $Config = $object->get_userconfig( 'Vsynteny' );
   $Config->{'other_species_installed'} = $synteny{ $other };
