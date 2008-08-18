@@ -181,6 +181,9 @@ sub _content {
   #$image->set_extra( $object );
 
   $image->imagemap = 'yes';
+  $image->set_extra( $object );
+  $image->{'panel_number'} = 'top';
+  $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
   return $image->render;
 }
