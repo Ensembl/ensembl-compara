@@ -21,20 +21,21 @@ sub exists {
 sub get {
   my ($self, $file, $args) = @_;
 
+  my $content = '';
   if ($args->{compress}) {
     my $gz      = gzopen( $file, 'rb' );
-    my $content = '';
-    my $buffer  = 0;
-    $content   .= $buffer while $gz->gzread( $buffer ) > 0;
-    $gz->gzclose;
-    return $content;  
+    if ($gz) {
+      my $buffer  = 0;
+      $content   .= $buffer while $gz->gzread( $buffer ) > 0;
+      $gz->gzclose;
+    }
   } else {
     local $/ = undef;
     open FILE, $file;
-    my $content = <FILE>;
+    $content = <FILE>;
     close FILE;    
-    return $content;  
   }
+  return $content;  
 }
 
 sub save {
