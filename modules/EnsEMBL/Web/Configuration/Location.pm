@@ -30,8 +30,8 @@ sub populate_tree {
   $self->create_node( 'Chromosome', 'Chromosome summary',
     [qw(
         image           EnsEMBL::Web::Component::Location::ChromosomeImage
-        stats           EnsEMBL::Web::Component::Location::ChromosomeStats
         change          EnsEMBL::Web::Component::Location::ChangeChromosome
+        stats           EnsEMBL::Web::Component::Location::ChromosomeStats
     )],
     { 'availability' => $self->mapview_possible($self->{object}->param('r')),
       'disabled' => 'This sequence region is not part of an assembled chromosome' }
@@ -71,6 +71,8 @@ sub populate_tree {
   $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
     [qw(
         image      EnsEMBL::Web::Component::Location::SyntenyImage
+        species    EnsEMBL::Web::Component::Location::ChangeSpecies
+        change     EnsEMBL::Web::Component::Location::ChangeChromosome
         matches    EnsEMBL::Web::Component::Location::SyntenyMatches
     )],
     { 'availability' => $self->mapview_possible($self->{object}->param('r')), 'concise' => 'Synteny'}
