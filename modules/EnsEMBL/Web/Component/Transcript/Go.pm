@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
-use EnsEMBL::Web::Component::Transcript::SimilarityMatches qw(_sort_similarity_links);
 
 sub _init {
   my $self = shift;
@@ -18,14 +17,13 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $object   = $self->object;
-
+  my $object = $self->object;
   my $label = 'GO';
   unless ($object->__data->{'links'}){
     my @similarity_links = @{$object->get_similarity_hash($object->Obj)};
     return unless (@similarity_links);
-    _sort_similarity_links($object, @similarity_links);
-  }
+    $self->_sort_similarity_links(@similarity_links);
+  } 
   return unless $object->__data->{'links'}{'go'}; 
   my $databases = $object->DBConnection;
   my $goview    = $object->database('go') ? 1 : 0;
