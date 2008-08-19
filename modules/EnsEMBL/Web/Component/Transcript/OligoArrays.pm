@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
-use EnsEMBL::Web::Component::Transcript::SimilarityMatches qw(_matches);
 
 sub _init {
   my $self = shift;
@@ -20,7 +19,7 @@ sub content {
   my $self = shift;
   my $transcript = $self->object;
 
-  my $html = _matches($transcript, 'oligo_arrays', 'Oligo Matches', 'ARRAY' );
+  my $html = $self->_matches('oligo_arrays', 'Oligo Matches', 'ARRAY' );
 
  return $html;
 }
