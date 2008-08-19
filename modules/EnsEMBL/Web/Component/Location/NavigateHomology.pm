@@ -30,7 +30,7 @@ sub content {
   my $upstream    = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $object->seq_region_start - 1 );
   my $downstream  = $sliceAdaptor->fetch_by_region('chromosome', $chr, $object->seq_region_end + 1, $object->chromosome->end );
 
-  my @up_genes    = @{$object->get_synteny_local_genes($upstream)};
+  my @up_genes    = reverse @{$object->get_synteny_local_genes($upstream)};
   my @down_genes  = @{$object->get_synteny_local_genes($downstream)};
 
   $html .= qq(
