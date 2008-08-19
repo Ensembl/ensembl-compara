@@ -10,8 +10,8 @@ use base qw(EnsEMBL::Web::Component::Location);
 use CGI qw(escapeHTML);
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable( 1 );
+  $self->ajaxable(  0 );
 }
 
 sub content {
@@ -23,12 +23,15 @@ sub content {
   my @chrs = $self->chr_list($object);
   my $chr_name = $object->seq_region_name;
 
+  my $label = 'Jump to Chromosome';
+
   if ($object->action eq 'Synteny') {
     $form->add_element(
       'type'  => 'Hidden',
       'name'  => 'otherspecies',
       'value' => $object->param('otherspecies'),
     );
+    $label = 'Jump to '.$object->species_defs->SPECIES_COMMON_NAME.' chromosome';
   }
 
   $form->add_element(
@@ -36,8 +39,8 @@ sub content {
     'select'   => 'select',
     'style'    => 'narrow',
     'on_change' => 'submit',
-    'name'     => 'chr',
-    'label'    => 'Jump to Chromosome',
+    'name'     => 'r',
+    'label'    => $label,
     'values'   => \@chrs,
     'value'    => $chr_name,
     'button_value' => 'Go'
