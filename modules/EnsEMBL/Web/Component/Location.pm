@@ -14,6 +14,31 @@ no warnings "uninitialized";
 
 use POSIX qw(floor ceil);
 
+sub default_otherspecies {
+  ## Needs moving to scriptconfig so we don't have to work it out each time
+  my $self = shift;
+  my $sd = $self->object->species_defs;
+  my %synteny = $sd->multi('SYNTENY');
+  my @has_synteny = sort keys %synteny;
+  my $sp;
+
+  ## Set default as primary species, if available
+  foreach my $sp (@has_synteny) {
+    if ($sp eq $sd->ENSEMBL_PRIMARY_SPECIES) {
+      return $sp;
+    }
+  }
+
+  ## Set default as secondary species, if primary not available
+  foreach $sp (@has_synteny) {
+    if ($sp eq $sd->ENSEMBL_SECONDARY_SPECIES) {
+      return $sp;
+    }
+  }
+
+  ## otherwise choose first in list
+  return $has_synteny[0];
+}
 
 sub chr_list {
 ### Method to create an array of chromosome names for use in dropdown lists
