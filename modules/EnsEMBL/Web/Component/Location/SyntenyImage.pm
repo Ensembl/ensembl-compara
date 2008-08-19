@@ -21,21 +21,7 @@ sub content {
   my $species = $object->species;
     
   my %synteny = $object->species_defs->multi('SYNTENY');
-  my $other = $object->param('otherspecies') || $object->param('species');
-  unless ($other) {
-    ## Set default as primary or secondary species, if available
-    my @has_synteny = keys %synteny;
-    foreach my $sp (@has_synteny) {
-      if ($sp eq $object->species_defs->ENSEMBL_PRIMARY_SPECIES 
-            || $sp eq $object->species_defs->ENSEMBL_SECONDARY_SPECIES) {
-        $other = $sp;
-        last;
-      }
-    }  
-    if (!$other) {
-      $other = $has_synteny[0];
-    }
-  } 
+  my $other = $object->param('otherspecies') || $object->param('species') || $self->default_otherspecies;
  
   my $chr = $object->seq_region_name;
   my %chr_1  =  map { ($_,1) } @{$object->species_defs->ENSEMBL_CHROMOSOMES||[]};
@@ -58,7 +44,7 @@ sub content {
   ## checks done ## 
   my $chr_length = $object->chromosome->length;
   my ($localgenes,$offset) = $object->get_synteny_local_genes;
-  my $loc = ( @$localgenes ? $localgenes->[0]->start+$offset : 1 ); # Jump loc to the location of the genes
+  my $loc = ( @$localgenes ? $localgenes->[0]->start + $object->seq_region_start : 1 ); # Jump loc to the location of the genes
         
   my $Config = $object->get_userconfig( 'Vsynteny' );
   $Config->{'other_species_installed'} = $synteny{ $other };
