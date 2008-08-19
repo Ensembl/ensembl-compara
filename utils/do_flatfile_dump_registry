@@ -10,6 +10,7 @@ use Pod::Usage;
 use strict;
 use Time::localtime;
 use Data::Dumper;
+use FindBin qw($Bin);
 
 #$| = 1;
 
@@ -20,10 +21,11 @@ my $MAX_SIZE = 1000000;
 my $GENE_MAX = 3000000; # if gene > $GENE_MAX, skips gene and prints warning
 our $VERBOSITY;
 my $logfile;
-my ($no_log, $start_with, $end_with);
+my ($no_log, $start_with, $end_with, $farm);
 my $dumpdir;
 my $nobundle;
 my $readme_only;
+my $general_options;
 my ($help, $info, $email);
 
 my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region, $listonly, $batch_total, $batch_index);
@@ -34,6 +36,7 @@ my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region, $listonly, $batch_to
              'logfile:s'    => \$logfile,
 	     'email:s'      => \$email,
 	     'no_log'       => \$no_log,
+	     'farm'         => \$farm,
              'dumpdir:s'    => \$dumpdir,
              'nobundle'	    => \$nobundle,
 	     'start_with:s' => \$start_with,
@@ -70,53 +73,6 @@ if(!defined($dbname)){
 			      -user => $user,
 			      -db_version => $dbversion,
 			      );
-
-  if (@species) {
-    @species = @{ check_species(\@species) };
-  } 
-  else {
-    @species = @{all_species()};
-  }
-  my $sort_method = "alphabetic";
-  if(defined($batch_total)){
-    $sort_method = "number of toplevel slices";
-  }
-  @species =  @{ sort_species(\@species,$sort_method) };  
-  if(defined($batch_total) and !defined($batch_index)){
-    info (2,"Need a batch_index if batch_total is set options\n");
-    print "Need a batch_index if batch_total is set options and list generated are:-\n";
-    my $start = 1;
-    while ($start <= $batch_total){
-      print "batch $start\n";
-      my $index = $start-1;
-      while($index < scalar(@species)){
-	print "\t".$species[$index]."\n";
-	$index += $batch_total;
-      }
-      $start++;
-    }          
-    exit;
-  }
-
-  if(defined($batch_total) and defined($batch_index)){
-    if($batch_index < 0 or $batch_index > $batch_total){
-      die "batch_index has to be greater than 0 and not greater then batch_total ($batch_total)\n";
-    }
-    my $index = $batch_index-1;
-    my @new_list;
-    while($index < scalar(@species)){
-      push @new_list, $species[$index];
-      $index += $batch_total;
-    }
-    @species = ();
-    foreach my $sp (@new_list){
-      push @species, $sp;
-    }
-  }
-  @species  = @{ start_with_species($start_with, \@species) } if $start_with;
-  @species  = @{ end_with_species($end_with, \@species) } if $end_with;
-  
-
 }
 else{
   Bio::EnsEMBL::DBSQL::DBAdaptor->new(-host => $host,
@@ -128,6 +84,168 @@ else{
 
   push @species, "dump";
 }
+
+my $exe;
+if($0 =~ /^\//){
+  $exe = "";
+}
+else{
+  $exe = $Bin."/";
+}	
+$exe .= $0;
+
+my $dump_directory = $ENV{PWD}.$dumpdir;
+if($dumpdir =~ /^\//){
+  $dump_directory = $dumpdir;
+}
+elsif($dumpdir =~ s/^.\///){
+  $dump_directory = $ENV{PWD}.$dumpdir;
+}
+
+
+if(defined($farm)){
+  if(!defined($batch_total)){
+    die "Need to set batch total in farm mode to know the number of concurrent dumps allowed\n";
+  }	
+  my $lsf_dir = $dump_directory."/lsf_scripts";
+  if(!-d $lsf_dir){
+    system("mkdir -p $lsf_dir") ==0 or die "Can't create dir $!";
+  }	
+
+   
+
+  create_environ_file($lsf_dir);
+  create_general_options();
+  if (@species) {
+    @species = @{ check_species(\@species) };
+  } 
+  else {
+    @species = @{all_species()};
+  }
+  print "there are ".scalar(@species)." species to be farmed out\n";
+  my $index_2 = 0;
+  while($index_2 < $batch_total){
+    my @new_list;
+    my $index = $index_2;
+    my $jobid = 0;
+    while($index < scalar(@species)){
+      #create job file
+      my $sp = $species[$index];
+      my $main_job = job_file($lsf_dir,$species[$index]);
+      my $main_bsub = 'bsub -Rselect[linux]  -E"test -f '.$exe.'"';
+         $main_bsub .=  ' -E"test -d '.$dump_directory.'"';
+         $main_bsub .=  ' -q long  ';
+         $main_bsub .=  ' -J '.$sp.' ';
+         $main_bsub .=  ' -e"'.$dump_directory.'/lsf_scripts/'.$sp.'.err"';
+         $main_bsub .=  ' -o"'.$dump_directory.'/lsf_scripts/'.$sp.'.out"';
+      if($jobid){
+	$main_bsub .= ' -w "ended('.$jobid.')"';
+      }
+      
+      print $main_bsub."\n";
+#      exit;
+      eval {
+	my $pid;
+        my $reader;
+	
+	local *BSUB;
+	local *BSUB_READER;
+	
+	if (($reader = open(BSUB_READER, '-|'))) {
+	  while (<BSUB_READER>) {
+	    
+	    if (/^Job <(\d+)> is submitted/) {
+	      $jobid = $1;
+	      print "LSF job ID for $sp job: $jobid )\n"
+	    }
+	  }
+	  close(BSUB_READER);
+	} else {
+	  die("Could not fork : $!\n") unless (defined($reader));
+	  open(STDERR, ">&STDOUT");
+	  if (($pid = open(BSUB, '|-'))) {
+	    
+	    print BSUB $main_job;
+	    close BSUB;
+	    if ($? != 0) {
+	      die("bsub exited with non-zero status - job not submitted\n");
+	    }
+	  } else {
+	    if (defined($pid)) {
+	      exec($main_bsub);
+	      die("Could not exec bsub : $!\n");
+	    } else {
+	      die("Could not fork : $!\n");
+	    }
+	  }
+	  exit(0);
+	}
+      };
+      
+      if ($@) {
+	# Something went wrong
+	warn("Job submission failed:\n$@\n");
+	return 0;
+      }
+      
+      
+      $index += $batch_total;
+    }
+    $index_2++;
+  }	
+  
+  
+  exit;
+}
+
+
+
+
+if (@species) {
+  @species = @{ check_species(\@species) };
+} 
+else {
+  @species = @{all_species()};
+}
+my $sort_method = "alphabetic";
+if(defined($batch_total)){
+  $sort_method = "number of toplevel slices";
+}
+@species =  @{ sort_species(\@species,$sort_method) };  
+if(defined($batch_total) and !defined($batch_index)){
+  info (2,"Need a batch_index if batch_total is set options\n");
+  print "Need a batch_index if batch_total is set options and list generated are:-\n";
+  my $start = 1;
+  while ($start <= $batch_total){
+    print "batch $start\n";
+    my $index = $start-1;
+    while($index < scalar(@species)){
+      print "\t".$species[$index]."\n";
+      $index += $batch_total;
+    }
+    $start++;
+  }          
+  exit;
+}
+
+if(defined($batch_total) and defined($batch_index)){
+  if($batch_index < 1 or $batch_index > $batch_total){
+    die "batch_index has to be greater than 0 and not greater then batch_total ($batch_total)\n";
+  }
+  my $index = $batch_index-1;
+  my @new_list;
+  while($index < scalar(@species)){
+    push @new_list, $species[$index];
+    $index += $batch_total;
+  }
+  @species = ();
+  foreach my $sp (@new_list){
+    push @species, $sp;
+  }
+}
+@species  = @{ start_with_species($start_with, \@species) } if $start_with;
+@species  = @{ end_with_species($end_with, \@species) } if $end_with;
+  
 
 my %chr_list;
 
@@ -180,7 +298,6 @@ foreach my $spp (@species){
 if($listonly){
   exit;
 }
-
 
 foreach my $spp (@species){
   info(2, "Species: $spp");
@@ -711,6 +828,57 @@ sub info{
   return 1;
 }
 
+sub create_environ_file {
+  my $dir = shift;
+
+  my $file = $dir."/env";
+  open(EF,">".$file) or die "Could not open enviroment file $file";
+  print EF "setenv PERL5LIB ".$ENV{PERL5LIB}."\n";
+  close EF;
+}
+
+sub create_general_options{
+  
+  $general_options = "perl $exe";
+
+  if(defined($host)){
+    $general_options .= " -host $host";
+  }
+  if(defined($user)){
+    $general_options .= " -user $user";
+  }
+  if(defined($port)){
+    $general_options .= " -port $port";
+  }
+  if(defined($pass)){
+    $general_options .= " -pass $pass";
+  }
+  if(defined($email)){
+    $general_options .= " -email $email";
+  }
+  if(defined(@user_formats)){
+    $general_options .= " -format ",join(",",@user_formats);
+  }
+#  print $general_options."\n";
+#  exit;
+}	
+
+sub job_file {
+  my $dir = shift;
+  my $specie = shift;
+
+
+  my $main_job = $general_options." -species $specie -logfile ".$dump_directory."/lsf_scripts/".$specie.".log -dumpdir $dump_directory";
+  
+  # obviously remove these after testing the ait bit works
+#  print "would be :- $main_job\n";
+#  $main_job = "sleep 300; ls $dump_directory/lsf_scripts";
+  
+  return $main_job;
+
+}
+
+
 #------------------------------------------------------------------------
 sub mail_log {
 
@@ -855,8 +1023,12 @@ sub all_species{
   foreach my $adap (@{$reg->get_all_DBAdaptors(-group => "core")}){
     if(!defined($hash{$adap->species})){
 #      print $adap->species."\n";
-      push @species, $adap->species;
-      $hash{$adap->species} = 1;
+      if($adap->species =~ / /){ # ignore "Ancestral sequences"
+      }
+      else{
+	push @species, $adap->species;
+	$hash{$adap->species} = 1;
+      }
     }
     
   }
