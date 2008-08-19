@@ -33,7 +33,7 @@ sub populate_tree {
   my $self = shift;
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user && $user->id) {
+  if ($user) {
 
     $self->create_node( 'Links', "Quick Links",
     [qw(links EnsEMBL::Web::Component::Account::Links
@@ -147,6 +147,16 @@ sub populate_tree {
       { 'no_menu_entry' => 1 }
   );
 
+}
+
+
+sub tree_key {
+  my $class = shift;
+  if ($ENSEMBL_WEB_REGISTRY->get_user) {
+    return "::${class}::TREE::USER";
+  } else {
+    return "::${class}::TREE";
+  }
 }
 
 1;

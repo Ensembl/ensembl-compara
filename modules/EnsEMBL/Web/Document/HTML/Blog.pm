@@ -28,7 +28,7 @@ sub render {
   ## Ensembl blog (ensembl.blogspot.com)
   my $html = qq(<h2>Latest Blog Entries</h2>);
 
-  my $items = $memd ? $memd->get('blog') : undef;
+  my $items = $memd ? $memd->get('::BLOG') : undef;
 
   unless ($items) {
     my $ua = new LWP::UserAgent;
@@ -41,14 +41,14 @@ sub render {
     
     $items = $rss->{'items'};
     $ENV{CACHE_TIMEOUT} = 3600;
-    $memd->set('blog', $items, $ENV{CACHE_TIMEOUT}, qw(STATIC BLOG))
+    $memd->set('::BLOG', $items, $ENV{CACHE_TIMEOUT}, qw(STATIC BLOG))
       if $memd;
   }
 
   my $count = 3;
   if (@$items) {
     $html .= "<ul>\n";
-    for (my $i = 0;$i < $count;$i++) {
+    for (my $i = 0; $i < $count && $i < scalar(@$items);$i++) {
       my $item = $items->[$i];
       my $title = $item->{'title'};
       my $url   = $item->{'link'};

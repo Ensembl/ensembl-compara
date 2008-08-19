@@ -44,6 +44,8 @@ sub new {
                   && !$levels{TMP_IMAGES};
   return undef if $caller->isa('EnsEMBL::Web::Magic')
                   && !$levels{AJAX_CONTENT};
+  return undef if $caller->isa('EnsEMBL::Web::Configuration')
+                  && !$levels{ORDERED_TREE};
 
   my %args = (
     servers         => $memcached{servers},

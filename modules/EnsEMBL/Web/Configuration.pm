@@ -1,24 +1,30 @@
 package EnsEMBL::Web::Configuration;
 
 use strict;
-use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::DASConfig;
-use base qw(EnsEMBL::Web::Root);
-our @ISA = qw(EnsEMBL::Web::Root);
-
+use warnings;
 use POSIX qw(floor ceil);
 use CGI qw(escape);
-use warnings;
+
+use EnsEMBL::Web::Document::Panel;
+use EnsEMBL::Web::DASConfig;
+use EnsEMBL::Web::Cache;
+
+use base qw(EnsEMBL::Web::Root);
+
+our $memd = new EnsEMBL::Web::Cache;
 
 sub object { 
   return $_[0]->{'object'};
 }
+
 sub populate_tree {
 
 }
+
 sub set_default_action {
 
 }
+
 sub new {
   my( $class, $page, $object, $flag, $common_conf ) = @_;
   my $self = {
@@ -29,9 +35,22 @@ sub new {
     '_data'   => $common_conf
   };
   bless $self, $class;
-  $self->populate_tree;
+
+  my $tree = $memd ? $memd->get($class->tree_key) : undef;
+  if ($tree) {
+    $self->{_data}{tree} = $tree;
+  } else {
+    $self->populate_tree;
+    $memd->set($class->tree_key, $self->{_data}{tree}, undef, 'TREE') if $memd;
+  }
+
   $self->set_default_action;
   return $self;
+}
+
+sub tree_key {
+  my $class = shift;
+  return "::${class}::TREE";
 }
 
 sub tree {
