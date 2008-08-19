@@ -73,6 +73,7 @@ sub populate_tree {
         image      EnsEMBL::Web::Component::Location::SyntenyImage
         species    EnsEMBL::Web::Component::Location::ChangeSpecies
         change     EnsEMBL::Web::Component::Location::ChangeChromosome
+        homo_nav   EnsEMBL::Web::Component::Location::NavigateHomology
         matches    EnsEMBL::Web::Component::Location::SyntenyMatches
     )],
     { 'availability' => $self->mapview_possible($self->{object}->param('r')), 'concise' => 'Synteny'}

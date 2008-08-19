@@ -325,7 +325,8 @@ sub get_synteny_matches {
   my $OTHER = $self->param('otherspecies') || $self->param('species')
         || ($ENV{ 'ENSEMBL_SPECIES' } eq 'Homo_sapiens' ? 'Mus_musculus' : 'Homo_sapiens');
   my $gene2_adaptor = $self->database('core', $OTHER)->get_GeneAdaptor();
-  my ($localgenes,$offset ) = $self->get_synteny_local_genes;
+  my $localgenes = $self->get_synteny_local_genes;
+  my $offset = $self->seq_region_start;
 
   foreach my $localgene (@$localgenes){
     my ($sppgene, $separate, $syntenygene);
@@ -381,63 +382,19 @@ sub get_synteny_matches {
 
 sub get_synteny_local_genes {
   my $self = shift ;
-  return @{$self->{'_local_genes'}} if $self->{'_local_genes'};
 
-  my $slice;
-  my @localgenes;
-  my $sliceAdaptor = $self->get_adaptor('get_SliceAdaptor');
-  my $pre = $self->param('pre');
-  my $loc = $self->param('loc') ? $self->evaluate_bp($self->param('loc')) : undef ;
-  my $chr_name = $self->chromosome->seq_region_name;
-  my $chr_length = $self->chromosome->length;
-  my $num = 15; # minus count means count backwards - get previous genes
-  $num = -$num if $pre;
-  my $start = $loc < 1 ? 1 : $loc;
-  $start = $chr_length if $start > $chr_length;
+  my $slice = shift || $self->core_objects->location;
+  my $localgenes = [];
 
-  if( $num < 0 ) {
-    $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr_name, 1, $start );
-    @localgenes = _local_genes($slice);
-    if(@localgenes>-$num) {
-      @localgenes = @localgenes[$num..-1];
-      $start = 1;
-    } 
-    elsif(@localgenes==0) {
-      $slice = $sliceAdaptor->fetch_by_region('chromosome',$chr_name, $start ,$chr_length);
-      @localgenes = _local_genes($slice);
-      @localgenes = @localgenes[0..(-$num-1)] if(@localgenes>-$num);
-    } 
-    else {
-      $start = 1;
-    }
-  }
-  else {
-    $slice = $sliceAdaptor->fetch_by_region( 'chromosome', $chr_name, $start, $chr_length );
-    @localgenes = _local_genes($slice);
-    if(@localgenes>$num) {
-      @localgenes = @localgenes[0..($num-1)];
-    }
-    elsif(@localgenes==0) {
-      $slice = $sliceAdaptor->fetch_by_region('chromosome', $chr_name, 1 , $start);
-      @localgenes = _local_genes($slice);
-      @localgenes = @localgenes[(-$num)..-1] if(@localgenes>$num);
-      $start = 1;
-    }
-  }
-
-  $self->{'_local_genes'} = [\@localgenes,$start-1];
-  return \@localgenes, $start - 1;
-}
-
-sub _local_genes {
-## Ensures that only protein coding genes are included in syntenyview
-  my $slice = shift;
-  my @local_genes;
+  ## Ensures that only protein coding genes are included in syntenyview
   my @biotypes = ('protein_coding', 'V_segments', 'C_segments');
   foreach my $type (@biotypes) {
-    push @local_genes, @{$slice->get_all_Genes_by_type($type)};
+    my $genes = $slice->get_all_Genes_by_type($type);
+    push @$localgenes, @$genes if scalar(@$genes);
   }
-  return @local_genes;
+
+  my @sorted = sort {$a->start <=> $b->start} @$localgenes;
+  return \@sorted;
 }
 
 ######## LDVIEW CALLS ################################################
