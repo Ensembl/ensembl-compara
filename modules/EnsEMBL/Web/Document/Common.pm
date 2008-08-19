@@ -52,9 +52,17 @@ sub _common_HTML {
 ## Main document attributes...
   $self->_basic_HTML;
 
+  my $style = $self->species_defs->ENSEMBL_STYLE;
+  $self->logo->image              = $style->{'SITE_LOGO'};             
+  $self->logo->width              = $style->{'SITE_LOGO_WIDTH'};             
+  $self->logo->height             = $style->{'SITE_LOGO_HEIGHT'};             
+  $self->logo->alt                = $style->{'SITE_LOGO_ALT'};             
+  $self->logo->href               = $style->{'SITE_LOGO_HREF'};             
+
   $self->tools->logins            = $self->species_defs->ENSEMBL_LOGINS;
   if ($self->{'input'}) {
     $self->tools->referer           = $self->{'input'}->param('_referer');
+    #warn "REFERER ".$self->{'input'}->param('_referer');
   }
   else {
     $self->tools->referer = undef;

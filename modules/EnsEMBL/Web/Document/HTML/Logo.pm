@@ -7,24 +7,26 @@ use EnsEMBL::Web::Document::HTML;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
-sub site_logo  {
-  ### a
-  return 'e-ensembl.gif';
-}
+sub image   :lvalue { $_[0]{'image'};   }
+sub width   :lvalue { $_[0]{'width'};   }
+sub height  :lvalue { $_[0]{'height'};   }
+sub alt     :lvalue { $_[0]{'alt'};   }
+sub href     :lvalue { $_[0]{'href'}  }
 
 sub logo_img {
 ### a
   my $self = shift;
   return sprintf(
-    '<img src="%s%s" alt="Home" title="Return to home page" />',
-    $self->img_url, $self->site_logo
+    '<img src="%s%s" alt="%s" title="%s" style="width:%spx;height:%spx" />',
+    $self->img_url, $self->image, $self->alt, $self->alt, $self->width, $self->height
   );
 }
 
 sub render {
   my $self = shift;
+  my $url = $self->href || $self->home_url;
   $self->printf( '<a href="%s">%s</a>',
-    $self->home_url, $self->logo_img
+    $url, $self->logo_img
   );
 }
 
