@@ -21,7 +21,7 @@ sub content {
   my $form = EnsEMBL::Web::Form->new( 'change_sp', '/'.$object->species.'/Location/Synteny', 'get' );
 
   my %synteny = $object->species_defs->multi('SYNTENY');
-  my @species = keys %synteny;
+  my @species = sort keys %synteny;
   my @values;
   foreach my $next (@species) {
     (my $name = $next) =~ s/_/ /g;
@@ -48,6 +48,7 @@ sub content {
     'name'     => 'otherspecies',
     'label'    => 'Change Species',
     'values'   => \@values,
+    'value'   => $object->param('otherspecies'),
     'button_value' => 'Go'
   );
   return '<div class="center">'.$form->render.'</div>';
