@@ -28,6 +28,7 @@ sub new {
                        USER_DB_DATA
                        TMP_IMAGES
                        AJAX_CONTENT
+                       ORDERED_TREE
                   )];
 
   my %levels = map { $_ => 1 } @$levels;
