@@ -23,7 +23,6 @@ sub content {
   my $sliceAdaptor = $object->get_adaptor('get_SliceAdaptor');
   my $max_index = 15;
   my $max_minus = -15;
-  my $offset = $object->seq_region_end;
 
   my $start = $object->seq_region_start || 1;
   my $end   = $object->seq_region_end || $object->chromosome->end;
@@ -50,8 +49,8 @@ sub content {
       push @up_sample, $up_genes[$i];
     }
     $up_count = @up_sample;
-    my $up_start    = @up_sample ? $up_sample[0]->start + $offset : 0;
-    my $up_end      = @up_sample ? $up_sample[-1]->end + $offset : 0;
+    my $up_start  = @up_sample ? $object->seq_region_start - $up_sample[-1]->end : 0;
+    my $up_end    = @up_sample ? $object->seq_region_start - $up_sample[0]->start: 0;
 
     $html .= sprintf(qq(
 <a href="/%s/Location/Synteny?otherspecies=%s;r=%s:%s-%s">Previous %s genes</a>),
@@ -72,9 +71,9 @@ sub content {
       push @down_sample, $down_genes[$j];
     }
     $down_count = @down_sample;
-    my $down_start  = @down_sample ? $down_sample[0]->start + $offset : 0;
+    my $down_start  = @down_sample ? $down_sample[0]->start + $object->seq_region_end : 0;
     $down_start = -$down_start if $down_start < 0;
-    my $down_end    = @down_sample ? $down_sample[-1]->end + $offset : 0;
+    my $down_end    = @down_sample ? $down_sample[-1]->end + $object->seq_region_end : 0;
 
     $html .= sprintf(qq(
 <a href="/%s/Location/Synteny?otherspecies=%s;r=%s:%s-%s">Next %s genes</a> ),
