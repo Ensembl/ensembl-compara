@@ -39,6 +39,7 @@ sub content {
     'type'    => 'Submit',
     'name'    => 'submit',
     'value'   => 'Go',
+    'class'   => 'cp-internal',
   );
 
   $html .= $form->render;

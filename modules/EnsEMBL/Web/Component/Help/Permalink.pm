@@ -22,7 +22,7 @@ sub content {
 
   my $html = qq(<p class="space-below">For a permanent link to this page, which will not change with the next release 
 of $sitename, use:</p>
-<p class="space-below"><a href="$url">$url</a></p>
+<p class="space-below"><a href="$url" class="cp-external">$url</a></p>
 <p>We aim to maintain all archives for at least two years; some key releases may be maintained 
 for longer);
   

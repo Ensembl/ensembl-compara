@@ -61,7 +61,7 @@ sub content {
 
     foreach my $movie (@movies) {
 
-      my $title_link = sprintf(qq(<a href="/Help/Movie?id=%s">%s</a>\n), $movie->help_record_id, $movie->title);
+      my $title_link = sprintf(qq(<a href="/Help/Movie?id=%s" class="cp_internal">%s</a>\n), $movie->help_record_id, $movie->title);
       $table->add_row( { 'title'  => $title_link, 'mins' => $movie->length } );
 
     }

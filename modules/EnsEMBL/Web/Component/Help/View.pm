@@ -21,11 +21,8 @@ sub content {
   my $html;
 
   my $help = EnsEMBL::Web::Data::View->new(CGI::escapeHTML($object->param('id')));
-
   if ($help) {
-
     $html .= $help->content;  
-
   }
 
   return $html;

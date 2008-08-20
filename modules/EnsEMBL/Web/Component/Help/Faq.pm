@@ -46,13 +46,13 @@ sub content {
     }
 
     if (scalar(@faqs) == 1) {
-      $html .= qq(<p><a href="/Help/Faq">More FAQs</a></p>);
+      $html .= qq(<p><a href="/Help/Faq" class="cp-internal">More FAQs</a></p>);
     }
   }
 
   $html .= qq(<p style="margin-top:1em">If you have any other questions about Ensembl, please do not hesitate to 
-<a href="/Help/Contact">contact our HelpDesk</a>. You may also like to subscribe to the 
-<a href="/info/about/contact/mailing.html">developers' mailing list</a>.</p>);
+<a href="/Help/Contact" class="cp-internal">contact our HelpDesk</a>. You may also like to subscribe to the 
+<a href="/info/about/contact/mailing.html" class="cp-external">developers' mailing list</a>.</p>);
 
   return $html;
 }

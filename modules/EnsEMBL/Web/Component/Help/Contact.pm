@@ -62,6 +62,7 @@ sub content {
     'type'    => 'Submit',
     'name'    => 'submit',
     'value'   => 'Send Email',
+    'class'   => 'cp-internal',
   );
 
   return $form->render;
