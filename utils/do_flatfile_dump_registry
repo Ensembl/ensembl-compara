@@ -112,9 +112,6 @@ if(defined($farm)){
     system("mkdir -p $lsf_dir") ==0 or die "Can't create dir $!";
   }	
 
-   
-
-  create_environ_file($lsf_dir);
   create_general_options();
   if (@species) {
     @species = @{ check_species(\@species) };
@@ -142,8 +139,6 @@ if(defined($farm)){
 	$main_bsub .= ' -w "ended('.$jobid.')"';
       }
       
-      print $main_bsub."\n";
-#      exit;
       eval {
 	my $pid;
         my $reader;
@@ -828,15 +823,6 @@ sub info{
   return 1;
 }
 
-sub create_environ_file {
-  my $dir = shift;
-
-  my $file = $dir."/env";
-  open(EF,">".$file) or die "Could not open enviroment file $file";
-  print EF "setenv PERL5LIB ".$ENV{PERL5LIB}."\n";
-  close EF;
-}
-
 sub create_general_options{
   
   $general_options = "perl $exe";
@@ -859,20 +845,14 @@ sub create_general_options{
   if(defined(@user_formats)){
     $general_options .= " -format ",join(",",@user_formats);
   }
-#  print $general_options."\n";
-#  exit;
 }	
 
 sub job_file {
   my $dir = shift;
   my $specie = shift;
 
-
   my $main_job = $general_options." -species $specie -logfile ".$dump_directory."/lsf_scripts/".$specie.".log -dumpdir $dump_directory";
   
-  # obviously remove these after testing the ait bit works
-#  print "would be :- $main_job\n";
-#  $main_job = "sleep 300; ls $dump_directory/lsf_scripts";
   
   return $main_job;
 
@@ -1022,7 +1002,6 @@ sub all_species{
 
   foreach my $adap (@{$reg->get_all_DBAdaptors(-group => "core")}){
     if(!defined($hash{$adap->species})){
-#      print $adap->species."\n";
       if($adap->species =~ / /){ # ignore "Ancestral sequences"
       }
       else{
@@ -1055,6 +1034,7 @@ Options:
   --logfile, --dumpdir, --nobundle --readme_only --email 
   --start_with --end_with --listonly --species
   --dbname --dbversion --host --user --pass --port --seq_region
+  --farm --batch_total --batch_index
 
 E.g.: time ./do_flatfile_dump --species Anopheles_gambiae
 
@@ -1062,6 +1042,11 @@ Or:
  perl  do_flatfile_dump_registry --email xxx@ebi.ac.uk --logfile human.log 
        --dumpdir /data/new 
        -species human -host ensembl_host -user ensembl_user -seq_region 1
+
+Or: (to dump genbank and embl files for release)
+perl do_flatfile_dump_registry -email xxx@ebi.ac.uk -host ens-staging 
+       -user ensro -farm -batch_total 4 -dumpdir ./ 
+
 
 If no species are specified, all species are done.
 
@@ -1144,14 +1129,18 @@ B<--listonly>
   Optional: list the species to be dumped only. then exit
 
 B<--batch_total>
- Optional: The total number of jobs in set. 
+ Optional: The total number of jobs in set. Or if farm set the number of 
+           concurrent jobs to be ran.
 
 B<--batch_index>
- Optional: The job number for this run.
+ Optional: The job number for this run. (OLD use farm instead now)
 
 B<--species>
  Optional: Only do this species. aliases work here.
 
+B<--farm>
+ Optional: Submit jobs to the farm use batch_total to set the number of
+           concurrent jobs.
 
 =head1 DESCRIPTION
 
