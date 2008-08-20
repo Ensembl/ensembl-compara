@@ -40,7 +40,7 @@
   { TYPE => dNdS,
     'codeml_parameters' => do('/lustre/work1/ensembl/avilella/hive/avilella_compara_homology_small_45/codeml.ctl.hash'),
     'species_sets' => '[[22,38,31,25,3]]',
-    'method_link_type' => 'ENSEMBL_ORTHOLOGUES'
+    'method_link_types' => "['ENSEMBL_ORTHOLOGUES']"
   },
 
 

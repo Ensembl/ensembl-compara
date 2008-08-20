@@ -453,6 +453,16 @@ sub build_GeneTreeSystem
   $stats->hive_capacity(100); # Shouldnt be a problem with the per-species paf
   $stats->update();
 
+  # 
+  # Change $dnds_params{'method_link_type'} to {'method_link_types'} 
+  # 
+  if( defined( $dnds_params{'method_link_type'} ) ){
+    warn('[WARN] dNdS => method_link_type is deprecated. '
+         .'Use method_link_types instead');
+    $dnds_params{'method_link_types'} 
+      ||= '['. $dnds_params{'method_link_type'} . ']';
+  }
+
   #
   # OrthoTree
   #
@@ -463,7 +473,11 @@ sub build_GeneTreeSystem
     $with_options_orthotree = 1;
   }
   if (defined $dnds_params{'species_sets'}) {
-    $ortho_params .= ',species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'';
+    $ortho_params .= ',species_sets=>' . $dnds_params{'species_sets'};
+    if( defined $dnds_params{'method_link_types'} ){
+      $ortho_params .= ',method_link_types=>' 
+          . $dnds_params{'method_link_types'};
+    }
     $with_options_orthotree = 1;
   }
   if(defined $genetree_params{'species_tree_file'}) {
@@ -520,9 +534,13 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'species_sets'}) {
     $self->{'hiveDBA'}->get_AnalysisJobAdaptor->CreateNewJob
         (
-         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
+         -input_id       => ( '{species_sets=>' 
+                              . $dnds_params{'species_sets'} 
+                              . ',method_link_types=>'
+                              . $dnds_params{'method_link_types'}
+                              . '}' ),
          -analysis       => $CreateHomology_dNdSJob,
-        );
+         );
   }
 
   #
@@ -568,7 +586,10 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'species_sets'}) {
     $self->{'hiveDBA'}->get_AnalysisJobAdaptor->CreateNewJob
         (
-         -input_id       => '{species_sets=>' . $dnds_params{'species_sets'} . ',method_link_type=>\''.$dnds_params{'method_link_type'}.'\'}',
+         -input_id => '{species_sets=>' 
+               . $dnds_params{'species_sets'} 
+               . ',method_link_types=>\''
+               . $dnds_params{'method_link_types'}.'\'}',
          -analysis       => $threshold_on_dS,
         );
   }
