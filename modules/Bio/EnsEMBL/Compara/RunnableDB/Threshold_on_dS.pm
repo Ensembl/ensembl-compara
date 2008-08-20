@@ -88,10 +88,15 @@ sub get_params {
   if (defined $params->{'species_sets'}) {
     $self->{'species_sets_aref'} = $params->{'species_sets'};
   }
-  if (defined $params->{'method_link_type'}) {
-    $self->{'method_link_type'} = $params->{'method_link_type'};
+  if (defined $params->{'method_link_types'}){
+    $self->{'method_link_types'} = [@{$params->{'method_link_types'}}];
   }
-  
+  elsif (defined $params->{'method_link_type'}) {
+    warn( 'The method_link_type paramerter is deprecated. '.
+          'Please use method_link_types with an arrayref value instead' );
+    $self->{'method_link_types'} = [$params->{'method_link_type'}];
+  }
+
   return;
 }
 
@@ -135,27 +140,31 @@ sub calc_threshold_on_dS {
   foreach my $species_set (@{$species_sets_aref}) {
     while (my $genome_db_id1 = shift @{$species_set}) {
       foreach my $genome_db_id2 (@{$species_set}) {
-        my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->{'method_link_type'},[$genome_db_id1,$genome_db_id2]);
-        $sth->execute($mlss->dbID);
+        foreach my $method_link_type(@{$self->{'method_link_types'}}){
 
-        my $stats = new Statistics::Descriptive::Full;
-        my $dS;
-        $sth->bind_columns(\$dS);
-        my $count = 0;
-        while ($sth->fetch) {
-          $stats->add_data($dS);
-          $count++;
-        }
-        if ($count) {
-          my $median = $stats->median;
-          print STDERR "method_link_species_set_id: ",$mlss->dbID,"; median: ",$median,"; 2\*median: ",2*$median;
-     
-          if($median >1.0) {
-            print STDERR "  threshold exceeds 2.0 - to distant -> clear values\n";
-            $median = 0.0;
+          my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids
+              ($method_link_type,[$genome_db_id1,$genome_db_id2]);
+          $sth->execute($mlss->dbID);
+
+          my $stats = new Statistics::Descriptive::Full;
+          my $dS;
+          $sth->bind_columns(\$dS);
+          my $count = 0;
+          while ($sth->fetch) {
+            $stats->add_data($dS);
+            $count++;
           }
-          $sth2->execute(2*$median, $mlss->dbID);
-          print STDERR " stored\n";
+          if ($count) {
+            my $median = $stats->median;
+            print STDERR "method_link_species_set_id: ",$mlss->dbID,"; median: ",$median,"; 2\*median: ",2*$median;
+     
+            if($median >1.0) {
+              print STDERR "  threshold exceeds 2.0 - to distant -> clear values\n";
+              $median = 0.0;
+            }
+            $sth2->execute(2*$median, $mlss->dbID);
+            print STDERR " stored\n";
+          }
         }
       }
     }
