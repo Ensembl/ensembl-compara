@@ -131,7 +131,7 @@ file as of ensembl v40.
 
 Pick a mysql instance and create a database;
 
-  $ set COMPARA_DBNAME=${USER}_ensembl_compara_48
+  $ set COMPARA_DBNAME=${USER}_ensembl_compara_50
   $ mysql -e "create database $COMPARA_DBNAME"
 
 And load the schemas;
@@ -224,7 +224,8 @@ Some 'gotchas' with the core databases should be checked;
          FROM transcript f, seq_region_attrib sra, attrib_type at 
          WHERE f.seq_region_id=sra.seq_region_id 
          AND sra.attrib_type_id=at.attrib_type_id  
-         AND at.code='toplevel';
+         AND at.code='toplevel'
+         AND f.biotype='protein_coding';
 
 - The species.taxonomy_id in the meta table must correspond to that in
   the 'my_compara.conf' file;
@@ -239,14 +240,14 @@ In case you want to run the dN/dS part, you will also need this:
     'codeml_parameters' 
       => do($ENV{BASEDIR}.'/ensembl-compara/scripts/homology/codeml.ctl.hash'),
     'species_sets' => '[[3,22,25,31,32,33,34,35,38],[4,13]]',
-    'method_link_type' => 'ENSEMBL_ORTHOLOGUES'
+    'method_link_types' => ['ENSEMBL_ORTHOLOGUES']
   },
 
-Where the species sets define the pairs of species for which one wants
-to run the dNdS. For example:
+Where the species sets define the pairs of species and
+method_link_types (typically 'ENSEMBL_ORTHOLOGUES' and/or
+'ENSEMBL_PARALOGUES') for which one wants to run the dNdS. For example:
 
-    'species_sets' => '[[a,b,c,d],[x,y]]',
-    'method_link_type' => 'ENSEMBL_ORTHOLOGUES'
+    'species_sets' => '[[a,b,c,d],[x,y]]'
 
 would do the dNdS for the species pairs: a+b, a+c, a+d, b+c, b+d and
 c+d and also between x+y.
@@ -276,7 +277,7 @@ Set the blast envirnment; these environment variables cannot be set in
 either ::Config::Blast or ::Config::General;
 
 in tcsh:
-  $ set path = (/usr/local/ensembl/bin $path)
+  $ setenv PATH /usr/local/ensembl/bin:$PATH
   $ setenv BLASTMAT /usr/local/ensembl/data/blastmat:$BLASTMAT
   $ setenv BLASTFILTER /usr/local/ensembl/bin:$BLASTFILTER
 
@@ -288,7 +289,7 @@ A NCBI taxon_id phylogenetic tree file representing the species in the
 compara DB is required for the njtree stage. The file must be in Nexus
 (.nh) format. If you are running the pipeline for your own set of
 species, you can generate such a tree with the script
-ensembl-compara/scripts/tree/testTaxonTree.pl.
+Ensembl-compara/scripts/tree/testTaxonTree.pl.
 
 One example of the species_tree_file can be found in
 ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh
@@ -369,7 +370,7 @@ assembly, gene_build, and names to create entries in the genome_db
 table.  It also sets the genome_db.locator column to allow the system
 to know where the respective core databases are located.  There is an
 additional table called genome_db_extn which will be deprecated
-shortly, but as of today (11 April, 2007) it is still used to hold a
+shortly, but as of today (23 July 2008) it is still used to hold a
 'phylum' value for each genome to allow the option of building
 homologies only within phylums.  This script will also 'seed' the
 pipeline/hive system by creating the first jobs in the analysis_job
@@ -431,17 +432,20 @@ create_mlss.pl script as follows;
       -port    => 3306,
       -species => 'compara-master',
       -dbname  => 'my_ensembl_compara_45');
+  Bio::EnsEMBL::Registry->add_alias("compara-master","DEFAULT");
   1;
   ---
 
 7.2. You may need to create the following method_link entries;
-  
-  $ mysql $COMPARA_DBNAME -e \
-    'INSERT INTO method_link (type, class) \
-     VALUES ("ENSEMBL_ORTHOLOGUES","Homology.homology"), \
-            ("ENSEMBL_PARALOGUES", "Homology.homology"), \
-            ("PROTEIN_TREES",      "ProteinTree.protein_tree_node")'
+     (consistent IDs make merging DBs easier)
 
+  $ mysql $COMPARA_DBNAME -e \
+    'INSERT INTO method_link (method_link_id,type, class) \
+     VALUES (201,"ENSEMBL_ORTHOLOGUES","Homology.homology"), \
+            (202,"ENSEMBL_PARALOGUES", "Homology.homology"), \
+            (204,"ENSEMBL_HOMOLOGUES", "Homology.homology"), \
+            (301,"FAMILY",             "Family.family"), \
+            (401,"PROTEIN_TREES",      "ProteinTree.protein_tree_node")'
 
 7.3. Run the create_mlss.pl script. If, for example, your genome_db_ids
    were 1, 2, 3, 4 and 5, you would need the following;
@@ -482,7 +486,7 @@ One must first make sure that the available hive scripts are available
 in one's path.  This can be done by either extending PATH or linking the
 scripts to an existing directory in the PATH
 
-  tcsh$ set path = (${BASEDIR}/ensembl-hive/scripts $path)
+  tcsh$ setenv PATH ${PATH}:${BASEDIR}/ensembl-hive/scripts
   bash$ export PATH=$PATH:$BASEDIR/ensembl-hive/scripts
 
 You may also need to set the LSB_DEFAULTPROJECT environment variable
@@ -498,14 +502,17 @@ background system commands rather than being submited to an LSF resource.
 
  $ beekeeper.pl -url $COMPARA_URL -loop
 
-where 'user' and 'password' allow write access to the database
-
 Running the complete build for ensembl45 with 35 species on the Sanger
 CPU cluster takes (depending on availability of resources):
 
 - from 1-3 days for the blasts
 - half a day for the clustering
 - 2-3 days for the multialignments, trees and homologies
+
+If, for some reason, the pipeline hangs, it can sometimes be kicked
+back into action using;
+
+  $ beekeeper.pl -url $COMPARA_URL -sync
 
 If you want to manually run one of the jobs in the pipeline in
 debugging mode to see if everything is working as expected, query the
@@ -520,6 +527,19 @@ for one of them and run:
 
  $ perl ensembl-hive/scripts/runWorker.pl -bk LOCAL \
    -url $COMPARA_URL -outdir '' -no_cleanup -debug 1 --job_id 1234567
+
+Sometimes you may need to reset a particular job (or even analysis) to
+rerun it. See the beekeeper's '-reset_job_id' and
+'-reset_all_jobs_for_analysis' flags.
+  
+Finally, some jobs (e.g. Sitewise_dNdS) rely on some jobs failing in
+order to trigger a resubmit on a different set. As the threshold for
+failed jobs is 0, the pipeline will seem to have failed. The following
+SQL fixes this particular example;
+
+  $ mysql -e "update analysis_stats as, analysis a \
+set as.failed_job_tolerance=98 \
+where as.analysis_id=a.analysis_id and logic_name='Sitewise_dNdS'"
 
 for more details on controling the hive system do
   $ beekeeper.pl -help
@@ -569,7 +589,7 @@ command (should complete within 5 mins):
    | mysql -vv -t $COMPARA_DBNAME | less
 
 There is also a 'homology-stats.sql' file that can be processed in the
-same way, but this takes linger to run.
+same way, but this takes longer to run.
 
 For a more detailed analysis of the gene tree data, look at;
 
@@ -578,6 +598,8 @@ For a more detailed analysis of the gene tree data, look at;
 
 11 - Creating the Release Database
      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*** What to do about the protein_feature_<species> tables? ***
 
 Once the pipeline has completed, the database contains many
 pipeline/hive specific tables. These can be removed as follows;
