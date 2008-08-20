@@ -33,7 +33,9 @@ sub content {
 
   my $newick_mode = "full"; # Todo: user-selectable mode
                             # Todo: support nhx in addition to newick
-  return sprintf( $htmlt,$tree->newick_format($newick_mode));
+  my $string = $tree->newick_format($newick_mode);
+  $string =~ s/,/,\n/g;
+  return sprintf( $htmlt,$string);
 
 }
 
