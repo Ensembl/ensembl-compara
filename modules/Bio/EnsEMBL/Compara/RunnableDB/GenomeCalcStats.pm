@@ -27,11 +27,10 @@ $repmask->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Pipeline::Runnable::Blast to add
+This object wraps Bio::EnsEMBL::Analysis::Runnable::Blast to add
 functionality to read and write to databases.
 The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
-required for databse access.
+extraction of appropriate parameters. 
 
 =cut
 
@@ -111,7 +110,7 @@ sub fetch_input {
   $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
   
   #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
+  #with the pipeline DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
 
   #get the Compara::GenomeDB object for the genome_db_id

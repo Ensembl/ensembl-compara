@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna
 =head1 SYNOPSIS
 
 my $db       = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnable = Bio::EnsEMBL::Pipeline::RunnableDB::ChunkAndGroupDna->new (
+my $runnable = Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -61,8 +61,8 @@ use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Analysis::RunnableDB;
+our @ISA = qw(Bio::EnsEMBL::Analysis::RunnableDB);
 
 
 =head2 fetch_input
@@ -104,7 +104,7 @@ sub fetch_input {
   $self->print_params;
   
   #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
+  #with the DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
 
   #get the Compara::GenomeDB object for the genome_db_id

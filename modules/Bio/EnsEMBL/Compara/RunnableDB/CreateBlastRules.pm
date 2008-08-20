@@ -27,11 +27,10 @@ $repmask->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Pipeline::Runnable::Blast to add
+This object wraps Bio::EnsEMBL::Analysis::Runnable::Blast to add
 functionality to read and write to databases.
 The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
-required for databse access.
+extraction of appropriate parameters. 
 
 =cut
 
@@ -79,7 +78,7 @@ sub fetch_input {
   }
   
   #create a new Compara::DBAdaptor which points to the same database
-  #as the Pipeline::DBAdaptor passed in ($self->db)
+  #as the pipeline DBAdaptor passed in ($self->db)
   #the -DBCONN options uses the dbname,user,pass,port,host,driver from the
   #variable DBConnection to create the new connection (in essence a copy)
 

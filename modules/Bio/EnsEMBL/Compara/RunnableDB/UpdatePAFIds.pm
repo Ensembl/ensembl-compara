@@ -64,7 +64,7 @@ sub fetch_input {
 
   $self->{'species_set'} = undef;
   #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
+  #with the pipeline DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
   $self->{gdba} = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
 

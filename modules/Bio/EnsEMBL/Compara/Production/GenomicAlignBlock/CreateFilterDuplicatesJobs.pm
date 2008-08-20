@@ -7,14 +7,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::CreatePairAlignerJobs
+Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs
 
 =cut
 
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Pipeline::RunnableDB::CreateFilterDuplicatesJobs->new (
+my $repmask = Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -56,8 +56,8 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Analysis::RunnableDB;
+our @ISA = qw(Bio::EnsEMBL::Analysis::RunnableDB);
 
 sub fetch_input {
   my $self = shift;

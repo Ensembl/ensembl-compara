@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::CreateAlignmentChainsJobs
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnableDB = Bio::EnsEMBL::Pipeline::RunnableDB::CreateAlignmentChainsJobs->new (
+my $runnableDB = Bio::EnsEMBL::Compara::RunnableDB::CreateAlignmentChainsJobs->new (
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
 $runnableDB->fetch_input(); #reads from DB

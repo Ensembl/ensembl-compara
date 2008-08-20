@@ -87,7 +87,7 @@ sub fetch_input
   # has no value, so just ignore
 
   #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
+  #with the pipeline DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
                            -user => $self->db->dbc->username,
                            -pass => $self->db->dbc->password,
