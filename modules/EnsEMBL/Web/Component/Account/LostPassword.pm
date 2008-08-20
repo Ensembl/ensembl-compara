@@ -29,7 +29,7 @@ sub content {
   $form->add_element('type'  => 'String', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Hidden', 'name'  => 'lost', 'value' => 'yes');
   $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => CGI::escape($self->object->param('_referer')));
-  $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Send');
+  $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Send', 'class'=>'cp-internal');
 
   return $form->render;
 }

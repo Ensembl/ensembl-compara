@@ -31,10 +31,10 @@ sub content {
   $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Password', 'required' => 'yes');
   $form->add_element('type'  => 'Hidden',   'name'  => 'url', 'value' => $self->object->param('url'));
   $form->add_element('type'  => 'Hidden',   'name'  => '_referer', 'value' => $referer);
-  $form->add_element('type'  => 'Submit',   'name'  => 'submit', 'value' => 'Log in');
+  $form->add_element('type'  => 'Submit',   'name'  => 'submit', 'value' => 'Log in', 'class'=>'cp-refresh');
   $form->add_element('type'  => 'Information',
-                     'value' => qq(<p><a href="$reg_url">Register</a>
-                                  | <a href="$pwd_url">Lost password</a></p>));
+                     'value' => qq(<p><a href="$reg_url" class="cp-internal">Register</a>
+                                  | <a href="$pwd_url" class="cp-internal">Lost password</a></p>));
 
   return $form->render;
 }

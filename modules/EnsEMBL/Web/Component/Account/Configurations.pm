@@ -58,7 +58,7 @@ sub content {
     foreach my $config (@configs) {
       my $row = {};
 
-      $row->{'name'} = sprintf(qq(<a href="/Account/_use_config?id=%s">%s</a>),
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseConfig?id=%s" class="cp-refresh">%s</a>),
                         $config->id, $config->name);
 
       $row->{'desc'} = $config->description || '&nbsp;';
@@ -106,7 +106,7 @@ sub content {
       my $row = {};
       my $config = $group_configs{$config_id}{'config'};
 
-      $row->{'name'} = sprintf(qq(<a href="/Account/_use_config?id=%s">%s</a>),
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseConfig?id=%s" class="cp-refresh">%s</a>),
                         $config_id, $config->name);
 
       $row->{'desc'} = $config->description || '&nbsp;';
@@ -114,7 +114,7 @@ sub content {
       my @group_links;
       foreach my $group (@{$group_configs{$config_id}{'groups'}}) {
         push @group_links, 
-          sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s">%s</a>), 
+          sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s" class="cp-internal">%s</a>), 
               $group->id, CGI::escape($self->object->param('referer')), $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
@@ -126,8 +126,6 @@ sub content {
 
   if (!$has_configs) {
     $html .= qq(<p class="center"><img src="/img/help/config_example.gif" /></p>);
-    $html .= qq(<p class="center">You haven't saved any $sitename view configurations.);
-
   }
 
   return $html;

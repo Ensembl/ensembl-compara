@@ -58,7 +58,7 @@ sub content {
   $form->add_element('type'  => 'Password', 'name'  => 'new_password_2', 'label' => 'Confirm new password',
                       'required' => 'yes');
   $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => CGI::escape($self->object->param('_referer')));
-  $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Save');
+  $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Save', 'class' => 'cp-internal');
 
   return $form->render;
 }

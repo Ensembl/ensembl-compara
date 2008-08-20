@@ -89,11 +89,11 @@ sub content {
 
   if ($#configs > -1) {
     $has_configs = 1;
-    $html .= "<ul>\n";
+    $html .= "<dl>\n";
     foreach my $config (@configs) {
       $html .= $self->_output_config($config);
     }
-    $html .= "</ul>\n";
+    $html .= "</dl>\n";
   }
 
   my $group_configs = {};
@@ -113,13 +113,13 @@ sub content {
   }
   else {
     foreach my $id (keys %$group_configs) {
-      $html .= '<p><strong>From subscribed group "'.$group_configs->{$id}{'group'}->name.'"</strong>:</p>';
+      $html .= '<h4>From subscribed group "'.$group_configs->{$id}{'group'}->name.'":</h4>';
       my @configs = @{$group_configs->{$id}{'configs'}};
-      $html .= "<ul>\n";
+      $html .= "<dl>\n";
       foreach my $config (@configs) {
         $html .= $self->_output_config($config);
       }
-      $html .= "</ul>\n";
+      $html .= "</dl>\n";
     }
   }
 
@@ -136,7 +136,7 @@ sub content {
 
 sub _output_bookmark {
   my ($self, $bookmark) = @_;
-  my $html .= '<li><a href="/Account/UseBookmark?id='.$bookmark->id.'"';
+  my $html .= '<li><a href="/Account/UseBookmark?id='.$bookmark->id.'" class="cp-external"';
   if ($bookmark->description) {
     $html .= ' title="'.$bookmark->description.'"';
   }
@@ -146,13 +146,15 @@ sub _output_bookmark {
 
 sub _output_config {
   my ($self, $config) = @_;
-  my $html .= '<li>'.$config->name.'</li>';
-    ## TODO - update this!
-    #my $html .= '<li>'.$config->name.' <a href=""';
-    #if ($config->description) {
-    #  $html .= ' title="'.$config->description.'"';
-    #}
-    #$html .= ">Go to saved page and load tracks</a></li>\n";
+  my $html .= '<dt>'.$config->name.'</dt><dd><a href="" class="cp-internal"';
+  if ($config->description) {
+    $html .= ' title="'.$config->description.'"';
+  }
+  $html .= '>Load&nbsp;into&nbsp;this&nbsp;page</a> | <a href="" class="cp-external"';
+  if ($config->description) {
+    $html .= ' title="'.$config->description.'"';
+  }
+  $html .= ">Go&nbsp;to&nbsp;saved&nbsp;page</a></dd>\n";
   return $html;
 }
 1;

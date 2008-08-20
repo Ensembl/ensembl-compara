@@ -22,8 +22,8 @@ sub caption {
 sub content {
 ### Generic message component for failed user_db update
   my $self = shift;
-  return qq(<p>Sorry - we were unable to update your account. If the problem persists, please contact <a href="mailto:webmaster\@ensembl.org">webmaster\@ensembl.org</a>. Thank you.</p>
-<p><a href="/Account/Details">Return to your account home page</a>);
+  return qq(<p>Sorry - we were unable to update your account. If the problem persists, please contact <a href="/Help/Contact" class="cp-internal">contact our helpdesk</a>. Thank you.</p>
+<p><a href="/Account/Details" class="cp-internal">Return to your account home page</a>);
 
 }
 

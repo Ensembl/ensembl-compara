@@ -58,7 +58,7 @@ sub content {
     foreach my $note (@notes) {
       my $row = {};
 
-      $row->{'gene'} = sprintf(qq(<a href="/Gene/Summary?g=%s">%s</a>),
+      $row->{'gene'} = sprintf(qq(<a href="/Gene/Summary?g=%s" class="cp-external">%s</a>),
                         $note->stable_id, $note->stable_id);
 
       $row->{'title'}   = $note->title;
@@ -106,7 +106,7 @@ sub content {
       my $row = {};
       my $note = $group_notes{$note_id}{'note'};
 
-      $row->{'name'} = sprintf(qq(<a href="/Gene/Summary?g=%s">%s</a>),
+      $row->{'name'} = sprintf(qq(<a href="/Gene/Summary?g=%s" class="cp-external">%s</a>),
                         $note->stable_id, $note->stable_id);
 
       $row->{'title'} = $note->title || '&nbsp;';
@@ -114,7 +114,7 @@ sub content {
       my @group_links;
       foreach my $group (@{$group_notes{$note_id}{'groups'}}) {
         push @group_links, 
-          sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s">%s</a>), 
+          sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s" class="cp-internal">%s</a>), 
             $group->id, CGI::escape($self->object->param('_referer')), $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
@@ -123,11 +123,8 @@ sub content {
     $html .= $table->render;
   }
 
-
-
   if (!$has_notes) {
     $html .= qq(<p class="center"><img src="/img/help/note_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
-    $html .= qq(<p class="center">You haven't saved any $sitename notes. <a href='/info/about/custom.html#notes'>Learn more about notes &rarr;</a>);
   }
 
   return $html;

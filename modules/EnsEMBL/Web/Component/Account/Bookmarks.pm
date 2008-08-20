@@ -27,11 +27,6 @@ sub content {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $sitename = $self->site_name;
 
-=pod
-  ## info box - move to help database!
-  $html .= $self->info_box($user, qq(Bookmarks allow you to save frequently used pages from $sitename and elsewhere. When browsing $sitename, you can add new bookmarks by clicking the 'Add bookmark' link in the sidebar. <a href="http://www.ensembl.org/info/about/custom.html#bookmarks">Learn more about saving frequently used pages (Ensembl documentation) &rarr;</a>) , 'user_bookmark_info');
-=cut  
-
   ## Get all bookmark records for this user
   my @bookmarks = $user->bookmarks;
   my $has_bookmarks = 0;
@@ -65,7 +60,7 @@ sub content {
       my $row = {};
 
       my $description = $bookmark->description || '&nbsp;';
-      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" title="%s">%s</a>),
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" title="%s" class="cp-external">%s</a>),
                         $bookmark->id, $description, $bookmark->name);
 
       $row->{'desc'}    = $description;
@@ -115,14 +110,14 @@ sub content {
       my $row = {};
       my $bookmark = $group_bookmarks{$bookmark_id}{'bookmark'};
 
-      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s">%s</a>),
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" class="cp-external">%s</a>),
                         $bookmark->id, $bookmark->name);
 
       $row->{'desc'} = $bookmark->description || '&nbsp;';
 
       my @group_links;
       foreach my $group (@{$group_bookmarks{$bookmark_id}{'groups'}}) {
-        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s">%s</a>), $group->id, $group->name);
+        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s" class="cp-internal">%s</a>), $group->id, $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);
@@ -132,7 +127,6 @@ sub content {
 
   if (!$has_bookmarks) {
     $html .= qq(<p class="center"><img src="/i/help/bookmark_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
-    $html .= qq(<p class="center">You haven't saved any bookmarks. <a href="/info/website/account/settings.html#bookmarks">Learn more about bookmarks &rarr;</a>);
     $html .= $self->_add_bookmark;
   }
 
@@ -141,7 +135,7 @@ sub content {
 
 sub _add_bookmark {
   my $self = shift;
-  return qq(<p><a href="/Account/Bookmark?dataview=add"><b>Add a new bookmark </b>&rarr;</a></p>);
+  return qq(<p><a href="/Account/Bookmark?dataview=add" class="cp-internal"><b>Add a new bookmark </b>&rarr;</a></p>);
 }
 
 1;

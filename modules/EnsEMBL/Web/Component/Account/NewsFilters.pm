@@ -48,7 +48,7 @@ sub content {
       my $row = {};
       my $species = join(', ', @{$filter->species});
 
-      $row->{'species'} = sprintf(qq(<a href="/News" title="View News">%s</a>),
+      $row->{'species'} = sprintf(qq(<a href="/News" title="View News" class="cp-external">%s</a>),
                         $species);
 
       $row->{'edit'} = $self->rename_link('NewsFilter', $filter->id);
@@ -63,7 +63,7 @@ sub content {
   if (!$has_filters) {
     $html .= qq(<p class="center"><img src="/img/help/filter_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
     $html .= qq(<p class="center">You do not have any filters set, so you will see general headlines.</p>
-<p><a href="/Account/News?_referer=).CGI::escape($self->object->param('_referer')).'">Add a news filter &rarr;</a></p>';
+<p><a href="/Account/News?_referer=).CGI::escape($self->object->param('_referer')).'" class="cp-internal">Add a news filter &rarr;</a></p>';
   }
 
   return $html;
