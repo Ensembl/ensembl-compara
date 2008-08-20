@@ -20,18 +20,18 @@ var FormCheck = Class.create({
   _isalpha:  function( s ) { return /^\w+$/.test(s)                    },
   valid: function( type, s ) {
     switch(type) {
-      case 'Code'        : return this._iscode(  s);
-      case 'Alpha'       : return this._isalpha( s);
-      case 'Email'       : return this._isemail( s);
-      case 'URL'         : return this._isurl(   s);
-      case 'Password'    : return this._ispass(  s);
-      case 'NonNegInt'   : return this._isint(   s) &&   parseInt(s) >= 0; 
-      case 'NonNegFloat' : return this._isfloat( s) && parseFloat(s) >= 0;
-      case 'PosInt'      : return this._isint(   s) &&   parseInt(s) >  0;
-      case 'PosFloat'    : return this._isfloat( s) && parseFloat(s) >  0;
-      case 'Int'         : return this._isint(   s);
-      case 'Float'       : return this._isfloat( s);
-      case 'Age'         : return this._isint(   s) &&   parseInt(s)>=0
+      case 'code'        : return this._iscode(  s);
+      case 'alpha'       : return this._isalpha( s);
+      case 'email'       : return this._isemail( s);
+      case 'url'         : return this._isurl(   s);
+      case 'password'    : return this._ispass(  s);
+      case 'nonnegint'   : return this._isint(   s) &&   parseInt(s) >= 0; 
+      case 'nonnegfloat' : return this._isfloat( s) && parseFloat(s) >= 0;
+      case 'posint'      : return this._isint(   s) &&   parseInt(s) >  0;
+      case 'posfloat'    : return this._isfloat( s) && parseFloat(s) >  0;
+      case 'int'         : return this._isint(   s);
+      case 'float'       : return this._isfloat( s);
+      case 'age'         : return this._isint(   s) &&   parseInt(s)>=0
                                                     &&   parseInt(s)<=150;
       default            : return 1;
     }
@@ -42,7 +42,7 @@ var FormCheck = Class.create({
     if( !req && !opt ) return '';
     var tmpl = '';
     var type = '';
-    el.classNames().each(function(c){ if(c!='required') type = c; });
+    el.classNames().each(function(c){ if(c.substr(0,1)=='_') type = c.substr(1); });
     var V;
     if ( el.nodeName == 'SELECT' ) {
       V = this.trim( el.options[el.selectedIndex].value );
@@ -68,7 +68,7 @@ var FormCheck = Class.create({
     var opt  = el.hasClassName( 'optional' );
     if( !req && !opt ) return;
     var type = '';
-    el.classNames().each(function(c){ if(c!='required') type = c; });
+    el.classNames().each(function(c){ if(c.substr(0,1)=='_') type = c.substr(1); });
     var V;
     if( el.nodeName == 'SELECT' ) {
       V = this.trim( el.options[el.selectedIndex].value );
