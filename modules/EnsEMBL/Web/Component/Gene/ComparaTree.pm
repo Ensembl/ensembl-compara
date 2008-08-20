@@ -40,6 +40,9 @@ sub content {
   $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
   $image->imagemap    = 'yes';
 
+  $image->{'panel_number'} = 'tree';
+  $image->set_button( 'drag', 'title' => 'Drag to select region' );
+
   return $image->render;
 }
 
