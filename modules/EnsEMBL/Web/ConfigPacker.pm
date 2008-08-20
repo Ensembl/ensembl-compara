@@ -246,6 +246,25 @@ sub _summarise_variation_db {
   my $t_aref = $dbh->selectall_arrayref( 'select name from source' );
 #---------- Add in information about the sources from the source table
   $self->db_details($db_name)->{'sources'} = map { ($_,1) } @$t_aref;
+  foreach my $row (@$t_aref){
+    $self->db_tree->{'VARIATION_SOURCES'}{$row->[0]} = $row->[1];
+  } 
+
+  ##  Add strain information
+  my $t_aref = $dbh->selectall_arrayref(
+   'select count(*) from meta where meta_key = "individual.default_strain"'
+  ); 
+  foreach my $row (@$t_aref){
+    $self->db_tree->{'VARIATION_STRAIN'}{$row->[0]} = $row->[1];
+  }
+
+  ## For LD link
+  my $t_aref = $dbh->selectall_arrayref(
+    'select count(*) from meta where meta_key = "pairwise_ld.default_population"' 
+  );
+  foreach my $row (@$t_aref){
+    $self->db_tree->{'VARIATION_LD'}{$row->[0]} = $row->[1];
+  }
   $dbh->disconnect();
 }
 
