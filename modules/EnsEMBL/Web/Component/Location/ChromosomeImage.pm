@@ -62,7 +62,7 @@ sub content {
   $image->add_tracks($object, $config_name);
   $image->karyotype($object, $pointers, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
-  return '<div class="center">'.$image->render.'</div>';
+  return $image->render;
 }
 
 1;

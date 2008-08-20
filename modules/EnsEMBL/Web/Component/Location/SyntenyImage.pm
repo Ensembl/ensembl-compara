@@ -65,11 +65,12 @@ sub content {
   $image->imagemap           = 'yes';
   $image->image_type         = 'syntenyview';
   $image->image_name         = $species.'-'.$chr.'-'.$other;
+  $image->set_button( 'drag', 'title' => 'Click or drag to change region' );
 
   foreach my $o (@$raw_data) { ## prevents memory leak!
     $o->release_tree;
   }
-  return '<div class="autocenter" style="width:400px">'.$image->render.'</div>';
+  return $image->render;
 }
 
 1;
