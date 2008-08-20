@@ -61,7 +61,7 @@ sub fetch_input {
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
+  #with the pipeline DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
 
   $self->get_params($self->input_id);
@@ -83,10 +83,15 @@ sub get_params {
   }
 
   if (defined $params->{'species_sets'}) {
-    $self->{'species_sets_aref'} = $params->{'species_sets'};
+    $self->{'species_sets_aref'} = [@{$params->{'species_sets'}}];
   }
-  if (defined $params->{'method_link_type'}) {
-    $self->{'method_link_type'} = $params->{'method_link_type'};
+  if (defined $params->{'method_link_types'}){
+    $self->{'method_link_types'} = [@{$params->{'method_link_types'}}];
+  }
+  elsif (defined $params->{'method_link_type'}) {
+    warn( 'The method_link_type paramerter is deprecated. '.
+          'Please use method_link_types with an arrayref value instead' );
+    $self->{'method_link_types'} = [$params->{'method_link_type'}];
   }
   
   return;
@@ -130,13 +135,16 @@ sub create_analysis_jobs {
   foreach my $species_set (@{$species_sets_aref}) {
     while (my $genome_db_id1 = shift @{$species_set}) {
       foreach my $genome_db_id2 (@{$species_set}) {
-        my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->{'method_link_type'},[$genome_db_id1,$genome_db_id2]);
-	next unless($mlss);
-        $sth->execute($mlss->dbID);
+        foreach my $mlt(@{$self->{'method_link_types'}||[]}){
+          my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids
+              ($mlt,[$genome_db_id1,$genome_db_id2]);
+	  next unless($mlss);
+          $sth->execute($mlss->dbID);
+        }
       }
     }
   }
-
+  
   $sth->finish;
 }
 
