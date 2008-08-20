@@ -129,8 +129,8 @@ if(defined($farm)){
       #create job file
       my $sp = $species[$index];
       my $main_job = job_file($lsf_dir,$species[$index]);
-      my $main_bsub = 'bsub -Rselect[linux]  -E"test -f '.$exe.'"';
-         $main_bsub .=  ' -E"test -d '.$dump_directory.'"';
+      my $main_bsub = 'bsub -Rselect[linux]  -E"test -x '.$exe.' && test -d '.$dump_directory.'"';
+ #        $main_bsub .=  ' -E"test -d '.$dump_directory.'"';
          $main_bsub .=  ' -q long  ';
          $main_bsub .=  ' -J '.$sp.' ';
          $main_bsub .=  ' -e"'.$dump_directory.'/lsf_scripts/'.$sp.'.err"';
