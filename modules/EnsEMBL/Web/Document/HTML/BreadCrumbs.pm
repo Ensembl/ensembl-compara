@@ -45,8 +45,14 @@ sub render   {
   elsif ($you_are_here =~ m#^/info/#) {
 
     ## Level 2 link
-    $html .= qq( &gt; <strong>Documentation</strong>);
+    if ($you_are_here eq '/info/' || $you_are_here eq '/info/index.html') {
+      $html .= qq( &gt; <strong>Documentation</strong>);
+    }
+    else {
+      $html .= qq( &gt; <strong><a href="/info/">Documentation</a></strong>);
+    }
 
+=pod
     ## Level 3 link
     my $tree = $species_defs->STATIC_INFO;
     while (my ($k, $v) = each (%$tree)) {
@@ -54,7 +60,7 @@ sub render   {
       (my $location = $you_are_here) =~ s/index\.html$//;
       if ($location =~ $v->{'_path'}) {
         my $title = $v->{'_title'} || ucfirst($k);
-        if ($location eq $v->{'_path'}) {
+        if ($location eq $v->{'_path'} || $you_are_here =~ /index\.none/) {
           $html .= " &gt; <strong>$title</strong>";
         }
         else { 
@@ -63,6 +69,7 @@ sub render   {
         last;
       }
     }
+=cut
   }
   $_[0]->printf($html);
 }
