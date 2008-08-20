@@ -43,8 +43,8 @@ sub get_das_servers {
   my @domains = ();
   my @urls    = ();
 
-  push( @domains, $self->species_defs->DAS_REGISTRY_URL );
-  push( @domains, @{$self->species_defs->ENSEMBL_DAS_SERVERS || []});
+  push( @domains, $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_URL') );
+  push( @domains, @{$self->species_defs->get_config('MULTI', 'ENSEMBL_DAS_SERVERS') || []});
   push( @domains, $self->param('preconf_das') );
 
   # Ensure servers are proper URLs
@@ -56,13 +56,13 @@ sub get_das_servers {
   }
   
   # Filter duplicates
-  my %known_domains = map { $_ => 1} grep{$_} @urls ;
-  return sort keys %known_domains;
+  my %known_domains = ();
+  return grep { my $test = !$known_domains{$_}; $known_domains{$_} = 1; $test; } @urls;
 }
 
 # Returns an arrayref of DAS sources for the selected server and species
 sub get_das_server_dsns {
-  my $self = shift;
+  my ($self, $species, $name) = @_;
   
   my $server = $self->param('das_server');
   if ($server =~ /^http/) {
@@ -82,16 +82,21 @@ sub get_das_server_dsns {
     );
     
     $sources = $parser->fetch_Sources(
-      -species => $self->species_defs->name,
-      -name    => $self->param('das_filter'), # A filter, if specified
+      -species => $species, # A filter, if specified
+      -name    => $name,    # A filter, if specified
     );
     
     if (!$sources || !scalar @{ $sources }) {
-      $sources = 'No DAS sources found for this species';
+      $sources = 'No DAS sources found';
     }
     
   } catch {
-    ($sources) = $_ =~ m/MSG: (.*)$/m;
+    warn $_;
+    if ($_ =~ /MSG:/) {
+      ($sources) = $_ =~ m/MSG: (.*)$/m;
+    } else {
+      $sources = $_;
+    }
   };
   
   return $sources;

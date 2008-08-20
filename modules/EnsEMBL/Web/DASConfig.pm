@@ -29,11 +29,10 @@ our %DAS_DEFAULTS = (
 #   dsn
 #   coords
 #   logic_name    (optional)
-#   display_label (optional)
+#   label         (optional)
 #   description   (optional)
 #   homepage      (optional)
 #   maintainer    (optional)
-#   species       (optional)
 #   active        (optional)
 #   enable        (optional)
 sub new_from_hashref {
@@ -44,16 +43,22 @@ sub new_from_hashref {
     $type =~ s/ensembl_location_//;
     my $version = shift @{ $hash->{assembly}||[] };
     $hash->{coords} ||= [];
-    push @{ $hash->{coords} }, "$type:$version";
+    my $coord = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
+      -name    => $type,
+      -version => $version,
+      -species => $ENV{ENSEMBL_SPECIES},
+    );
+    push @{ $hash->{coords} }, $coord;
   }
   
   # Create a Bio::EnsEMBL::ExternalData::DAS::Source object to wrap
-  # Valid params: url, dsn, coords, logic_name, display_label, description, homepage, maintainer
+  # Valid params: url, dsn, coords, logic_name, label, description, homepage, maintainer
   my %params = map { '-'.uc $_ => $hash->{$_} } keys %{ $hash };
   my $self   = $class->SUPER::new( %params );
   
-  $self->species( $ENV{ENSEMBL_SPECIES} );
-  for my $var ( qw( species active enable )  ) {
+  bless $self, $class;
+  
+  for my $var ( qw( active enable )  ) {
     if ( exists $hash->{$var} ) {
       $self->$var( $hash->{$var} );
     }
@@ -123,24 +128,6 @@ sub new_from_URL {
 #  Web-specific get/set methods  #
 #================================#
 
-=head2 species
-
-  Arg [1]    : $species (scalar or arrayref)
-  Description: get/set for the species' supported by the DAS source
-  Returntype : array or arrayref
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-sub species {
-  my ( $self, $species ) = @_;
-  if ( defined $species ) {
-    $self->{'species'} = ref $species ? $species : [ $species ];
-  }
-  return wantarray ? @{ $self->{'species'} } : $self->{'species'};
-}
-
 =head2 active
 
   Arg [1]    : $is_active (scalar)
@@ -197,12 +184,12 @@ sub category {
 
 sub is_session {
   my $self = shift;
-  return $self->category || '' eq 'session';
+  return ($self->category || '') eq 'session';
 }
 
 sub is_user {
   my $self = shift;
-  return $self->category || '' eq 'user';
+  return ($self->category || '') eq 'user';
 }
 
 sub is_external {
@@ -243,8 +230,12 @@ sub is_altered {
 
 sub equals {
   my ( $self, $cmp ) = @_;
-  return $self->full_url eq $cmp->full_url
-    && join '*', sort @{ $self->coord_systems } eq join '*', sort @{ $cmp->coord_systems };
+  if ($self->full_url eq $cmp->full_url) {
+    my $c1 = join '*', sort { $a cmp $b } map { $_->name.':'.$_->version } @{ $self->coord_systems };
+    my $c2 = join '*', sort { $a cmp $b } map { $_->name.':'.$_->version } @{ $cmp ->coord_systems };
+    return $c1 eq $c2;
+  }
+  return 0;
 }
 
 1;

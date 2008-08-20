@@ -7,6 +7,7 @@ use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Session;
+use EnsEMBL::Web::DASConfig;
 
 use Class::Std;
 
@@ -39,26 +40,27 @@ sub get_all_das {
   }
   
   my $spec_das = $self->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES || {};
-  my $user_das = $self->get_user    ->dases                        || {};
   my $sess_das = $self->get_session ->get_all_das                  || {};
   
   # Build config objects from the speciesdefs data
   for my $data ( values %{ $spec_das } ) {
-    $data->{'display_label'} ||= $data->{'label'};
+    ref $data || next;
     my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
     $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
   }
   
-  # Override with user data
-  for my $data ( values %{ $user_das } ) {
-    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
-    grep { $_ eq $self->get_species } $das->species || next;
-    $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
+  if (my $user = $self->get_user) {
+    # Override with user data
+    for my $data ( @{ $user->dases || [] } ) {
+      my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
+      $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
+    }
   }
+  
+  # TODO: group data??
   
   # Override with session data
   for my $das ( values %{ $sess_das } ) {
-    grep { $_ eq $self->get_species } $das->species || next;
     $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
   }
   
@@ -76,7 +78,9 @@ sub get_das_filtered_and_sorted {
   my ( $self ) = @_;
   
   my @sorted = sort {
-    $a->display_label cmp $b->display_label
+    $a->label cmp $b->label
+  } grep {
+    $_->matches_species( $self->get_species ) # always expect this to be called where there is a species
   } values %{ $self->get_all_das };
 
   return \@sorted;

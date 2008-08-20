@@ -478,7 +478,7 @@ sub _summarise_dasregistry {
     $val || next;
     # Skip sources without any config
     my $cfg = $self->tree->{$key};
-    if (!defined $cfg && ref($cfg)) {
+    if (!defined $cfg || !ref($cfg)) {
       warn "DAS source $key has no associated configuration";
       next;
     }
@@ -492,15 +492,13 @@ sub _summarise_dasregistry {
     }
     
     $cfg->{'logic_name'}      = $key;
-    $cfg->{'display_label'} ||= $cfg->{'label'};
-    delete $cfg->{'label'};
     
     # Check using the url/dsn if the source is registered
     my $src = $sources{$cfg->{'url'}}{$cfg->{'dsn'}};
     # Doesn't have to be in the registry... unfortunately
     # But if it is, fill in the blanks
     if ($src) {
-      $cfg->{'display_label'} ||= $src->display_label;
+      $cfg->{'label'}         ||= $src->label;
       $cfg->{'description'}   ||= $src->description;
       $cfg->{'maintainer'}    ||= $src->maintainer;
       $cfg->{'homepage'}      ||= $src->homepage;
@@ -514,10 +512,6 @@ sub _summarise_dasregistry {
   }
   # Remove the list of sources from the ini tree
   delete $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'};
-}
-
-sub das_tree {
-  return {};
 }
 
 sub _munge_meta {

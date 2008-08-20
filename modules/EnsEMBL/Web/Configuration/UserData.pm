@@ -134,6 +134,7 @@ sub attach {
   $wizard->add_connection(( from => $source_logic,  to => $source));
   $wizard->add_connection(( from => $source_logic,  to => $attach));
   $wizard->add_connection(( from => $source,        to => $attach));
+  $wizard->add_connection(( from => $attach,        to => $feedback));
 
 }
 

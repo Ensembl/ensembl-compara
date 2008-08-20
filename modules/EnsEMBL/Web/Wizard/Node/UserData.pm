@@ -10,6 +10,7 @@ use Data::Bio::Text::FeatureParser;
 use EnsEMBL::Web::File::Text;
 use EnsEMBL::Web::Wizard::Node;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::DASConfig;
 use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::Wizard::Node);
@@ -300,13 +301,15 @@ sub select_server {
   $self->title('Select a DAS server or data file');
 
   my @das_servers = $self->object->get_das_servers;
-  my @preconf_das = map { { 'value' => $_ } } @das_servers;
+  my @preconf_das = map { { 'value' => $_, 'name' => $_ } } @das_servers;
 
   $self->add_element(( type => 'DropDown', name => 'preconf_das', 'select' => 'select',
     label => $sitename.' DAS server', 'values' => \@preconf_das ));
   $self->add_element(( type => 'String', name => 'other_das', label => 'or other DAS server',
     'notes' => '( e.g. http://www.example.com/MyProject/das )' ));
-  $self->add_element(( type => 'String', name => '_das_filter', label => 'Filter sources',
+  $self->add_element(( type => 'String', name => '_das_species_filter', label => 'Species',
+    'notes' => sprintf '( e.g. %s )', $object->species_defs->ENSEMBL_PRIMARY_SPECIES ));
+  $self->add_element(( type => 'String', name => '_das_name_filter', label => 'Filter sources',
     'notes' => 'by name, description or URL' ));
   $self->add_element(('type'=>'Information', 'value'=>'OR'));
   $self->add_element(( type => 'String', name => 'url', label => 'File URL',
@@ -328,7 +331,8 @@ sub source_logic {
   }
   else {
     $parameter->{'das_server'}  = $self->object->param('other_das') || $self->object->param('preconf_das');
-    $parameter->{'das_filter'}  = $self->object->param('_das_filter');
+    $parameter->{'das_name'}    = $self->object->param('_das_name_filter');
+    $parameter->{'das_species'} = $self->object->species_defs->species_full_name( $self->object->param('_das_species_filter') );
     $parameter->{'wizard_next'} = 'select_source';
   }
   return $parameter;
@@ -341,9 +345,18 @@ sub select_source {
 
   $self->title('Select a DAS source');
   
+  my $species_filter = $self->object->param('das_species');
+  my $name_filter    = $self->object->param('das_name');
+  
+  if ($species_filter) {
+    $self->add_element( 'type' => 'Information', 'value' => "Filtering sources by species '$species_filter'" );
+  }
+  if ($name_filter) {
+    $self->add_element( 'type' => 'Information', 'value' => "Filtering sources by name '$name_filter'" );
+  }
+  
   # Get a list of DAS sources (filtered if specified)
-  my $sources = $self->object->get_das_server_dsns;
-  use Data::Dumper; warn Dumper($sources);
+  my $sources = $self->object->get_das_server_dsns($species_filter, $name_filter);
   
   # Process any errors
   if (!ref $sources) {
@@ -352,6 +365,9 @@ sub select_source {
   
   # Otherwise add a checkbox element for each DAS source
   else {
+    
+    local $Data::Dumper::Purity = 1;
+    
     for my $source (@{ $sources }) {
       
       # If the description is long, shorten it and pretty it up
@@ -361,20 +377,91 @@ sub select_source {
         $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
       }
       
+      my $frozen;
+      eval{ $frozen = Data::Dumper->Dump( [\$source],["*source"] ) };
+      
       $self->add_element( 'type'  => 'CheckBox',
                           'name'  => 'dsns',
-                          'value' => $source->logic_name,
-                          'label' => $source->display_label,
+                          'value' => $frozen,
+                          'label' => $source->label,
                           'notes' => $desc );
     } # end DAS source loop
   } # end if-else
   
 }
 
+# Logic method, used for attaching either URL or DAS
 sub attach {
+  my $self = shift;
+  my $parameter = {};
+
+  if ($self->object->param('url')) {    
+    # TODO: URL-based attachment
+  }
+  else {
+    my @complete = ();
+    my @incomplete = ();
+    for my $raw ($self->object->param('dsns')) {
+      my $source;
+      eval ( $raw  );
+      die $@ if ($@);
+      $source = $$source;
+      
+      if ($source->coord_systems) {
+        push @complete, $source;
+      } else {
+        push @incomplete, $source;
+      }
+    }
+    
+    # If one or more source has missing details, need to fill them in and resubmit
+    if (@incomplete) {
+      $parameter->{'das_complete'}   = \@complete;
+      $parameter->{'das_incomplete'} = \@incomplete;
+      $parameter->{'wizard_next'}    = 'expand_source';
+    }
+    
+    else {
+      $parameter->{'success'} = [];
+      $parameter->{'failure'} = [];
+      for my $source (@complete) {
+        $source = EnsEMBL::Web::DASConfig->new_from_hashref($source);
+        if ($self->object->get_session->add_das($source)) {
+          push @{ $parameter->{'success'} }, $source->label;
+        } else {
+          push @{ $parameter->{'failure'} }, $source->label;
+        }
+      }
+      $self->object->get_session->save_das;
+      $parameter->{'wizard_next'}    = 'attach_feedback';
+    }
+    
+    
+  }
+  return $parameter;
 }
 
 sub attach_feedback {
+  my ($self) = @_;
+  
+  $self->title('Attached DAS sources');
+  
+  my @added   = grep { defined } $self->object->param('success');
+  my @skipped = grep { defined } $self->object->param('failure');
+  
+  if (scalar @added) {
+    $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources have now been attached:' );
+    for my $source_label (@added) {
+      $self->add_element( 'type' => 'Information', 'value' => $source_label );
+    }
+  }
+  
+  if (scalar @skipped) {
+    $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources were already attached:' );
+    for my $source_label (@skipped) {
+      $self->add_element( 'type' => 'Information', 'value' => $source_label );
+    }
+  }
 }
 
 sub _check_extension {
