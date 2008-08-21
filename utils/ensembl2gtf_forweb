@@ -147,9 +147,9 @@ for my $sp( sort @SPECIES ){  # users selected spp
   if (scalar(@ARGV) == 0) {
     my @tmpslices = @{$sa->fetch_all('toplevel',undef,1)};
 
-    foreach my $slice (@tmpslices) {
-      if ($slice->coord_system->version eq $assembly) {
-	push @slices, $slice;
+    foreach my $slice (@tmpslices) { 
+      if ($slice->coord_system->version eq $assembly || !$slice->coord_system->version) {
+	push @slices, $slice; 
       }
     }
   } 
