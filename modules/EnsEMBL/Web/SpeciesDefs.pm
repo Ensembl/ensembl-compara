@@ -544,7 +544,7 @@ sub multiX {
   ### a
   ### Arguments: configuration type (string)
   my( $self, $type ) = @_;
-  return () unless $CONF;
+  return unless $CONF;
 
   if (exists $CONF->{'_storage'}) {
       if (exists $CONF->{'_storage'}{'MULTI'}) {
@@ -553,9 +553,9 @@ sub multiX {
 	  }
       }
   }
-  return ();
+  return;
 
-  return exists( $CONF->{'_storage'}{'MULTI'}{$type} ) ? %{$CONF->{'_storage'}{'MULTI'}{$type}} : ();
+#  return exists( $CONF->{'_storage'}{'MULTI'}{$type} ) ? %{$CONF->{'_storage'}{'MULTI'}{$type}} : ();
 }
 
 sub get_table_size{
