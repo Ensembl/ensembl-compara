@@ -72,8 +72,8 @@ sub content {
           $text = '<p>'.$text.'</p>';
         }
       }
-      else {
-        $title  = $help->title;
+      elsif ($help->type eq 'movie') {
+        $title  = '<p class="space-below"><strong><a href="/Help/Movie?id='.$help->id.'">'.$help->title.'</a></strong> ('.$help->filesize.'Mb)</p>';
         $text   = '';
       }
       if ($object->param('hilite') eq 'yes') {
