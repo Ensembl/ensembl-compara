@@ -43,6 +43,8 @@ sub new {
                   && !$levels{WEBSITE_DB_DATA};
   return undef if $caller->isa('EnsEMBL::Web::File::Driver::Memcached')
                   && !$levels{TMP_IMAGES};
+  return undef if $caller->isa('EnsEMBL::Web::Apache::Image')
+                  && !$levels{TMP_IMAGES};
   return undef if $caller->isa('EnsEMBL::Web::Magic')
                   && !$levels{AJAX_CONTENT};
   return undef if $caller->isa('EnsEMBL::Web::Configuration')
