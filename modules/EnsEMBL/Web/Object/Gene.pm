@@ -28,9 +28,9 @@ sub counts {
     $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
     $counts->{'exons'}       = @{$obj->get_all_Exons};
     my $compara_db = $self->database('compara');
-    if ($compara_db) {
+    if($compara_db) {
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
-       if ($compara_dbh) {
+      if($compara_dbh) {
         my %res = map { @$_ } @{$compara_dbh->selectall_arrayref('
               select ml.type, count(*) as N
                 from member as m, homology_member as hm, homology as h,
