@@ -211,7 +211,7 @@ sub template_INCLUDE {
       }
     }
   }
-  $r->log->error("Cannot include virtual file: does not exist or permission denied ", $include);
+  $r->log->error("Cannot include virtual file: does not exist or permission denied ", $include) if $r;
   #$content = "[Cannot include virtual file: does not exist or permission denied]";
   return $content;
 }
