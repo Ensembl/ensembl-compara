@@ -42,9 +42,6 @@ sub _basic_HTML {
   $self->add_body_attr( 'id' => 'ensembl-webpage' );
   $self->body_javascript->add_source(  sprintf( '/%s/%s.js',  $self->species_defs->ENSEMBL_JSCSS_TYPE,  $self->species_defs->ENSEMBL_JS_NAME ));
   $self->stylesheet->add_sheet( 'all', sprintf( '/%s/%s.css', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_CSS_NAME ));
-  if( $self->species_defs->ENSEMBL_DEBUG_FLAGS & 1024 ) {
-    $self->javascript->add_script( 'var ENSEMBL_START_TIME=new Date()' );
-  }
 }
  
 sub _common_HTML {
