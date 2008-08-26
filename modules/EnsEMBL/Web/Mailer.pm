@@ -80,6 +80,7 @@ sub send {
     'From'    => $self->get_from,
     'Reply-To'=> $self->get_reply,
     'Subject' => $self->get_subject,
+    'X-URL'   => $self->get_baseurl,
     'Date'    => $time_string,
   });
   
