@@ -40,7 +40,7 @@ sub process {
       [ 'Date',         $date ],
       [ 'Name',         $cgi->param('name') ],
       [ 'Referrer',     $url ],
-      [ 'Last Keyword', $cgi->param('kw')||'-none-' ],
+      [ 'Last Search', $cgi->param('string')||'-none-' ],
       [ 'User agent',   $ENV{'HTTP_USER_AGENT'}],
     );
     my $message = 'Support question from '.$species_defs->ENSEMBL_SERVERNAME."\n\n";
