@@ -19,6 +19,7 @@ sub _sorted_keys { return EnsEMBL::Web::OrderedTree::Node::_sorted_keys( @_ ); }
 our $KEY = 'aaaa';
 sub _generate_unique_key() {
 ### Generate a unique key ...
+  my $self = shift;
   $KEY++ while exists( $self->{'_tree_info'}{'nodes'}{$KEY} );
   return $KEY;
 }
