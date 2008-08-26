@@ -7,6 +7,7 @@ use EnsEMBL::Web::File::Text;
 use Exporter;
 use CGI qw(escape);
 use EnsEMBL::Web::Document::SpreadSheet;
+use Text::Wrap qw(wrap);
 
 use base qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(cache cache_print);
@@ -245,5 +246,43 @@ sub remove_redundant_xrefs {
     }
   }
   return @links;
+}
+
+sub _warn_block {
+### Simple subroutine to dump a formatted "warn" block to the error logs - useful when debugging complex
+### data structures etc... 
+### output looks like:
+###
+###  ###########################
+###  #                         #
+###  # TEXT. TEXT. TEXT. TEXT. #
+###  # TEXT. TEXT. TEXT. TEXT. #
+###  # TEXT. TEXT. TEXT. TEXT. #
+###  #                         #
+###  # TEXT. TEXT. TEXT. TEXT. #
+###  # TEXT. TEXT. TEXT. TEXT. #
+###  #                         #
+###  ###########################
+###
+
+  my $self = shift;
+
+  my $width       = 128;
+  my $border_char = '#';
+  my $template = sprintf "%s %%-%d.%ds %s\n", $border_char, $width-4,$width-4, $border_char;
+  my $line     = $border_charx$width;
+  warn "\n";
+  warn "$line\n";
+  $Text::Wrap::columns = $width-4;
+  foreach my $l (@_) {
+    warn sprintf $template;
+    my $lines = wrap( "","", $l );
+    foreach ( split /\n/, $lines ) { 
+      warn sprintf $template, $_;
+    }
+  }
+  warn sprintf $template;
+  warn "$line\n";
+  warn "\n";
 }
 1;
