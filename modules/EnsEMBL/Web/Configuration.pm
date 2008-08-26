@@ -2,6 +2,7 @@ package EnsEMBL::Web::Configuration;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 use POSIX qw(floor ceil);
 use CGI qw(escape);
 
@@ -253,17 +254,13 @@ sub _content_panel {
   $self->set_title( $title );
 
   my $previous_node = $node->previous_leaf;
-  my $next_node     = $node->next_leaf;
   ## don't show tabs for 'no_menu' nodes
-  if (defined $previous_node) {
-    while ($previous_node && $previous_node->data->{'no_menu_entry'}) {
-	    $previous_node = $previous_node->previous_leaf;
-    }
+  while( defined($previous_node) && $previous_node->data->{'no_menu_entry'} ) {
+    $previous_node = $previous_node->previous_leaf;
   }
-  if (defined $next_node) {
-    while ($next_node && $next_node->data->{'no_menu_entry'}) {
-	    $next_node = $next_node->next_leaf;
-    }
+  my $next_node     = $node->next_leaf;
+  while( defined($next_node) && $next_node->data->{'no_menu_entry'} ) {
+    $next_node = $next_node->next_leaf;
   }
 
   my %params = (
