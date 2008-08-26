@@ -250,7 +250,7 @@ sub stuff {
     }
     $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
     $webpage->render;
-    warn $webpage->timer->render;
+    warn $webpage->timer->render if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS & 32;
     return "Completing action";
   }
 }
