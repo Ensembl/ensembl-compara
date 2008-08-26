@@ -46,7 +46,7 @@ sub _init {
 	if ($f =~ /hit_feature/) {
 	    $start_x = $im_width * $x/$NO_OF_COLUMNS;
 	    $h = $features{$f}->{'height'};
-	    $G = new Sanger::Graphics::Glyph::Line({
+	    $G = new Sanger::Graphics::Glyph::Rect({
 		'x'             => $start_x,
 		'y'             => $y * ( $th + 3 ) - 1,
 		'width'         => $BOX_WIDTH,
@@ -56,7 +56,7 @@ sub _init {
 		'absolutex'     => 1,
 		'absolutewidth' =>1,
 	    });;
-#	    $self->push($self->Line($G));
+#	    $self->push($self->Rect($G));
 	    $self->push($G);
 	    $G = new Sanger::Graphics::Glyph::Line({
 		'x'             => $start_x+$BOX_WIDTH,
