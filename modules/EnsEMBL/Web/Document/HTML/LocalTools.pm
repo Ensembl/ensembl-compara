@@ -32,8 +32,15 @@ sub render {
 
   foreach my $link ( @{$self->entries} ) {
     $self->print('<li><a href="'.$link->{'url'}.'"');
+    my $class = $link->{'class'};
+    if( $link->{'type'} eq 'external' ) {
+      $class .= ' ' if $class;
+      $class .= 'external';
+    }
+    $class = qq( class="$class") if $class;
+    $self->print( $class );
     if ($link->{'type'} eq 'external') {
-      $self->print(' class="external" rel="external"');
+      $self->print(' rel="external"');
     }
     $self->print('>'.$link->{'caption'}.'</a></li>');
   }
