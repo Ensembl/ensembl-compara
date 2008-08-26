@@ -21,93 +21,180 @@ sub new {
   my $type    = $class =~/([^:]+)$/ ? $1 : $class;
   my $style   = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
   my $self = {
-    '_colourmap' 	=> $adaptor->colourmap,
-    '_font_face'        => $style->{GRAPHIC_FONT} || 'Arial',
-    '_font_size'        => ( $style->{GRAPHIC_FONTSIZE} *
-                             $style->{GRAPHIC_LABEL} ) || 20,
-    '_texthelper' 	=> new Sanger::Graphics::TextHelper,
-    '_db'         	=> $adaptor->get_adaptor,
+    '_colourmap'        => $adaptor->colourmap,
+    '_font_face'        => $style->{GRAPHIC_FONT}                                   || 'Arial',
+    '_font_size'        => ( $style->{GRAPHIC_FONTSIZE} * $style->{GRAPHIC_LABEL} ) || 20,
+    '_texthelper'       => new Sanger::Graphics::TextHelper,
+    '_db'               => $adaptor->get_adaptor,
     'type'              => $type,
-    'species'           => $ENV{'ENSEMBL_SPECIES'} || '', 
+    'species'           => $ENV{'ENSEMBL_SPECIES'} || '',
     'species_defs'      => $adaptor->get_species_defs,
     'exturl'            => $adaptor->exturl,
     'general'           => {},
-    'user'        	=> {},
-    '_managers'         => {}, # contains list of added features....
+    'user'              => {},
     '_useradded'        => {}, # contains list of added features....
-    '_userdatatype_ID'	=> 0, 
     '_r'                => undef, # $adaptor->{'r'} || undef,
-    'no_load'     	=> undef,
+    'no_load'           => undef,
     'storable'          => 1,
     'altered'           => 0,
+
+## Core objects...       { for setting URLs .... }
     '_core'             => undef,
-    '_tree'             => EnsEMBL::Web::OrderedTree->new()
+## Glyphset tree...      { Tree of glyphsets to render.... }
+    '_tree'             => EnsEMBL::Web::OrderedTree->new(),
+## Generic parameters... { Generic parameters for glyphsets.... }
+    '_parameters'       => {},
+## Better way to store cache { 
+    '_cache'            => {}
+
   };
 
   bless($self, $class);
 
-		
   ########## init sets up defaults in $self->{'general'}
+  warn "INITIALIZING....";
   $self->init( ) if($self->can('init'));
+  warn "INITIALIZED..... LOADING DAS....";
   $self->{'no_image_frame'}=1;
   $self->das_sources( @_ ) if(@_); # we have das sources!!
-
+  warn "RETURNING....";
   ########## load sets up user prefs in $self->{'user'}
 #  $self->load() unless(defined $self->{'no_load'});
   return $self;
 }
 
-sub set_title {
-  my( $self, $title ) = @_;
-  $self->{'title'} = $title;
+#=============================================================================
+# General setting/getting cache values...
+#=============================================================================
+
+sub cache {
+  my $self = shift;
+  my $key  = shift;
+  $self->{'_cache'}{$key} = shift if @_;
+  return $self->{'_cache'}{$key}
 }
+
+#=============================================================================
+# General setting/getting parameters...
+#=============================================================================
+
+sub set_parameters {
+  my( $self, $params ) = @_;
+
+  foreach (keys %$params) {
+    $self->{'_parameters'}{$_} = $params->{$_};
+  } 
+}
+
+sub get_parameters {
+  my $self = shift;
+  return $self->{'_parameters'};
+}
+
+sub get_parameter {
+  my($self,$key) = @_;
+  return $self->{'_parameters'}{$key};
+}
+
+sub set_parameter {
+  my($self,$key,$value) = @_;
+  $self->{'_parameters'}{$key} = $value;
+}
+
+#-----------------------------------------------------------------------------
+# Specific parameter setting - image width/container width
+#-----------------------------------------------------------------------------
 sub title {
-  return $_[0]{'title'};
+  my $self = shift;
+  $self->set_parameter( 'title', shift ) if @_;
+  return $self->get_parameter( 'title' );
 }
+
+sub container_width {
+  my $self = shift;
+  $self->set_parameter( 'container_width', shift ) if @_;
+  return $self->get_parameter( 'container_width' );
+}
+
+sub image_width {
+  my $self = shift;
+  $self->set_parameter( 'image_width', shift ) if @_;
+  return $self->get_parameter( 'image_width' );
+}
+
+sub slice_number {
+  my $self = shift;
+  $self->set_parameter( 'slice_number', shift ) if @_;
+  return $self->get_parameter( 'slice_number' );
+}
+
+#=============================================================================
+# General setting tree stuff...
+#=============================================================================
+
+
+sub tree {
+  return $_[0]{_tree};
+}
+
+### create_menus - takes an "associate array" i.e. ordered key value pairs
+### to configure the menus to be seen on the display..
+### key and value pairs are the code and the text of the menu...
 
 sub create_menus {
   my( $self, @list ) = @_;
-  while( my( $key, $tracks ) = splice(0,2,@_) ) {
+  while( my( $key, $caption ) = splice(@list,0,2) ) {
     $self->create_submenu( $key, $caption );
   }
 }
 
+### load_tracks - loads in various database derived tracks; 
+###   loop through core like dbs, compara like dbs, funcgen like dbs;
+###                variation like dbs
+
 sub load_tracks() { 
-  my $self     = shift;
-  my $dbs_hash = $self->species_defs->get_config('databases');
-  foreach my $db ( @{$self->species_defs->get_config('core_link_databases')} ) {
+  my $self       = shift;
+  my $species    = $ENV{'ENSEMBL_SPECIES'};
+  my $dbs_hash   = $self->species_defs->databases;
+  my $multi_hash = $self->species_defs->multi_hash;
+  foreach my $db ( @{$self->species_defs->core_like_databases} ) {
     next unless exists $dbs_hash->{$db};
     my $key = $db eq 'ENSEMBL_DB' ? 'core' : lc(substr($db,8));
+    warn "adding core like tracks ($key)";
 ## Look through tables in databases and add data from each one...
-    $self->add_dna_align_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To cDNA/mRNA, est, RNA, other_alignment trees
-    $self->add_ditag_feature(         $key,$dbs_hash->{$db}{'tables'} ); # To ditag_feature tree
+    $self->add_dna_align_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To cDNA/mRNA, est, RNA, other_alignment trees ##DONE
+    $self->add_ditag_feature(         $key,$dbs_hash->{$db}{'tables'} ); # To ditag_feature tree                         ##DONE
     $self->add_gene(                  $key,$dbs_hash->{$db}{'tables'} ); # To gene, transcript, align_slice_transcript, tsv_transcript trees
-    $self->add_marker_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To marker tree
-    $self->add_misc_feature(          $key,$dbs_hash->{$db}{'tables'} ); # To misc_feature tree
-    $self->add_oligo_probe(           $key,$dbs_hash->{$db}{'tables'} ); # To oligo tree
-    $self->add_prediction_transcript( $key,$dbs_hash->{$db}{'tables'} ); # To prediction_transcript tree
-    $self->add_protein_align_feature( $key,$dbs_hash->{$db}{'tables'} ); # To protein_align_feature_tree
-    $self->add_protein_feature(       $key,$dbs_hash->{$db}{'tables'} ); # To protein_feature_tree
-    $self->add_repeat_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To repeat_feature tree
-    $self->add_simple_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To simple_feature tree
-    $self->add_assemblies(            $key,$dbs_hash->{$db}{'tables'} ); # To sequence tree!
+    $self->add_marker_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To marker tree                                ##DONE
+    $self->add_qtl_feature(           $key,$dbs_hash->{$db}{'tables'} ); # To marker tree                                ##DONE
+    $self->add_misc_feature(          $key,$dbs_hash->{$db}{'tables'} ); # To misc_feature tree                          ##DONE
+    $self->add_oligo_probe(           $key,$dbs_hash->{$db}{'tables'} ); # To oligo tree                                 ##DONE
+    $self->add_prediction_transcript( $key,$dbs_hash->{$db}{'tables'} ); # To prediction_transcript tree                 ##DONE
+    $self->add_protein_align_feature( $key,$dbs_hash->{$db}{'tables'} ); # To protein_align_feature_tree                 ##DONE
+    $self->add_protein_feature(       $key,$dbs_hash->{$db}{'tables'} ); # To protein_feature_tree                       ## 2 do ##
+    $self->add_repeat_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To repeat_feature tree                        ##DONE
+    $self->add_simple_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To simple_feature tree                        ##DONE
+    $self->add_assemblies(            $key,$dbs_hash->{$db}{'tables'} ); # To sequence tree!                             ## 2 do ##
   }
   foreach my $db ( 'ENSEMBL_COMPARA') {   # @{$self->species_defs->get_config('compara_databases')} ) {
-    next unless exists $dbs_hash->{$db};
-    my $key = $db eq 'ENSEMBL_DB' ? 'core' : lc(substr($db,8));
+    next unless exists $multi_hash->{$db};
+    my $key = lc(substr($db,8));
+    warn "adding compara like tracks ($key)";
     ## Configure dna_dna_align features and synteny tracks
-    $self->add_synteny_feature(       $key,$dbs_hash->{$db}{'tables'} ); # Add to synteny tree
-    $self->add_alignments(            $key,$dbs_hash->{$db}{'tables'} ); # Add to compara_align tree
+    $self->add_synteny(               $key,$multi_hash->{$db}, $species ); # Add to synteny tree                         ##DONE
+    $self->add_alignments(            $key,$multi_hash->{$db}, $species ); # Add to compara_align tree                   ##DONE
   }
   foreach my $db ( 'ENSEMBL_FUNCGEN' ) {  # @{$self->species_defs->get_config('funcgen_databases')} ) {
     next unless exists $dbs_hash->{$db};
-    my $key = $db eq 'ENSEMBL_DB' ? 'core' : lc(substr($db,8));
+    my $key = lc(substr($db,8));
+    warn "adding func gen like tracks ($key)";
     ## Configure 
     $self->add_regulation_feature(    $key,$dbs_hash->{$db}{'tables'} ); # Add to regulation_feature tree
   }
-  foreach my $db ( 'ENSEMBL_VARATION' ) { # @{$self->species_defs->get_config('variation_databases')} ) {
+  foreach my $db ( 'ENSEMBL_VARIATION' ) { # @{$self->species_defs->get_config('variation_databases')} ) {
     next unless exists $dbs_hash->{$db};
-    my $key = $db eq 'ENSEMBL_DB' ? 'core' : lc(substr($db,8));
+    my $key = lc(substr($db,8));
+    warn "adding variation like tracks ($key)";
     ## Configure variation features
     $self->add_variation_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To variation_feature tree
   }
@@ -118,14 +205,14 @@ sub load_tracks() {
   }
 }
 
-#----------------------------------------------------------------------#
+#-----------------------------------------------------------------------------
 # Functions to add tracks from core like databases....
-#----------------------------------------------------------------------#
+#-----------------------------------------------------------------------------
 
 sub _check_menus {
   my $self = shift;
   foreach( @_ ) {
-    return 1 if $self->get_node( $_ );
+    return 1 if $self->tree->get_node( $_ );
   }
   return 0;
 }
@@ -133,12 +220,14 @@ sub _check_menus {
 sub _merge {
   my( $self, $_sub_tree ) = @_;
   my $data = {};
-  my $sub_tree = $_sub_tree->{'analyses'};
-  foreach my $analysis (%$sub_tree) {
+  my $tree = $_sub_tree->{'analyses'};
+  foreach my $analysis (keys %$tree) {
+    my $sub_tree = $tree->{$analysis};
     my $key = $sub_tree->{'web'}{'key'} || $analysis;
     $data->{$key}{'name'}    ||= $sub_tree->{'web'}{'name'};     # Longer form for help and configuration!
     $data->{$key}{'type'}    ||= $sub_tree->{'web'}{'type'};
     $data->{$key}{'caption'} ||= $sub_tree->{'web'}{'caption'};  # Short form for LHS
+    $data->{$key}{'on'}      ||= $sub_tree->{'web'}{'on'};       # Weather to display the track!!
     if( $sub_tree->{'web'}{'key'} ) {
       if( $sub_tree->{'description'} ) {
          $data->{$key}{'description'} ||= "<dl>\n";
@@ -157,9 +246,11 @@ sub _merge {
     push @{$data->{$key}{'logic_names'}}, $analysis;
   }
   foreach my $key (keys %$data) {
+    $data->{$key}{'name'} ||= $tree->{$key}{'name'};
+    $data->{$key}{'caption'} ||= $data->{$key}{'name'} || $tree->{$key}{'name'};
     $data->{$key}{'description'} .= '</dl>' if $data->{$key}{'description'} =~ '<dl>';
   }
-  return [ sort { $data->{$a}{'name'} cmp $data->{$b}{'name'}  $data;
+  return ( [sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data], $data );
 }
 
 sub add_assemblies {
@@ -167,32 +258,128 @@ sub add_assemblies {
   return unless $self->_check_menus( 'sequence' );
 }
 
-sub add_dna_align_features {
+### add_dna_align_feature...
+### loop through all core databases - and attach the dna align
+### features from the dna_align_feature tables...
+### these are added to one of four menus: cdna/mrna, est, rna, other
+### depending whats in the web_data column in the database
+
+sub add_dna_align_feature {
   my( $self, $key, $hashref ) = @_;
   return unless $self->_check_menus( 'dna_align_cdna' );
-  my $data      = $self->_merge( $hashref->{'dna_align_feature'} ){
+  my( $keys, $data ) = $self->_merge( $hashref->{'dna_align_feature'} );
   
-  foreach my $key_2 (sort keys %$data) {
+  foreach my $key_2 ( @$keys ) {
     my $K = $data->{$key_2}{'type'}||'other';
-    my $menu = $self->get_node( "dna_align_$K" );
+    my $menu = $self->tree->get_node( "dna_align_$K" );
     if( $menu ) {
-      $menu->append( $self->create_node( 'dna_align_'.$key.'_'.$key_2, $data->{$key_2}{'name'},
+      $menu->append( $self->create_track( 'dna_align_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
-        'glyphset'    => 'generic_alignment',
+        'glyphset'    => '_alignment',
         'sub_type'    => $data->{$key_2}{'type'},
         'logicnames'  => $data->{$key_2}{'logic_names'},
-        'name'        => $data->{$key_2}{'name'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-      );
+        'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+	'strand'      => 'b'
+      }));
     }
   }
 }
 
-sub add_ditag_features {
+### add_protein_align_feature...
+### loop through all core databases - and attach the protein align
+### features from the protein_align_feature tables...
+
+sub add_protein_align_feature {
+  my( $self, $key, $hashref ) = @_;
+  return unless $self->_check_menus( 'protein_align' );
+  my( $keys, $data ) = $self->_merge( $hashref->{'protein_align_feature'} );
+  
+  my $menu = $self->tree->get_node( "protein_align" );
+  foreach my $key_2 ( @$keys ) {
+    $menu->append( $self->create_track( 'protein_'.$key.'_'.$key_2, $data->{$key_2}{'name'},{
+      'db'          => $key,
+      'glyphset'    => '_alignment',
+      'sub_type'    => 'protein',
+      'logicnames'  => $data->{$key_2}{'logic_names'},
+      'caption'     => $data->{$key_2}{'caption'},
+      'description' => $data->{$key_2}{'description'},
+      'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+      'strand'      => 'b'
+    }));
+  }
+}
+
+sub add_simple_feature {
+  my( $self, $key, $hashref ) = @_;
+  return unless $self->get_node( 'simple' );
+  my( $keys, $data ) = $self->_merge( $hashref->{'simple_feature'} );
+  
+  my $menu = $self->tree->get_node( "simple" );
+  foreach my $key_2 ( @$keys ) {
+    $menu->append( $self->create_track( 'simple_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+      'db'          => $key,
+      'glyphset'    => '_simple',
+      'logicnames'  => $data->{$key_2}{'logic_names'},
+      'caption'     => $data->{$key_2}{'caption'},
+      'description' => $data->{$key_2}{'description'},
+      'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+      'strand'      => 'r'
+    }));
+  }
+}
+
+sub add_prediction_transcript {
+  my( $self, $key, $hashref ) = @_;
+  return unless $self->get_node( 'prediction' );
+  my( $keys, $data ) = $self->_merge( $hashref->{'prediction_transcript'} );
+  
+  my $menu = $self->tree->get_node( "prediction" );
+  foreach my $key_2 ( @$keys ) {
+    $menu->append( $self->create_track( 'prediction_transcript_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+      'db'          => $key,
+      'glyphset'    => '_prediction_transcript',
+      'logicnames'  => $data->{$key_2}{'logic_names'},
+      'caption'     => $data->{$key_2}{'caption'},
+      'description' => $data->{$key_2}{'description'},
+      'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+      'strand'      => 'b'
+    }));
+  }
+}
+
+sub add_ditag_feature {
   my( $self, $key, $hashref ) = @_;
   return unless $self->_check_menus( 'ditag' );
+  my( $keys, $data ) = $self->_merge( $hashref->{'ditag_feature'} );
+  my $menu = $self->tree->get_node( 'ditag' );
+  foreach my $key_2 ( @$keys ) {
+    if( $menu ) {
+      $menu->append( $self->create_track( 'ditag_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+        'db'          => $key,
+        'glyphset'    => '_ditag',
+        'logicnames'  => $data->{$key_2}{'logic_names'},
+        'caption'     => $data->{$key_2}{'caption'},
+        'description' => $data->{$key_2}{'description'},
+        'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+	'strand'      => 'b'
+      }));
+    }
+  }
 }
+
+### add_gene...
+### loop through all core databases - and attach the gene
+### features from the gene tables...
+### there are a number of menus sub-types these are added to:
+### * gene                    # genes
+### * transcript              # ordinary transcripts
+### * alignslice_transcript   # transcripts in align slice co-ordinates
+### * tse_transcript          # transcripts in collapsed intro co-ords
+### * tsv_transcript          # transcripts in collapsed intro co-ords
+### * gsv_transcript          # transcripts in collapsed gene co-ords
+### depending on which menus are configured
 
 sub add_gene {
   my( $self, $key, $hashref ) = @_;
@@ -202,37 +389,63 @@ sub add_gene {
 
   return unless $self->_check_menus( @types );
 
-  my $data      = $self->_merge( $hashref->{'gene'} );
+  my( $keys, $data )   = $self->_merge( $hashref->{'gene'} );
 
+  my $flag = 0;
   foreach my $type ( @types ) {
     my $menu = $self->get_node( $type );
     next unless $menu;
-    foreach my $key_2 (sort keys %$data) {
-      $menu->append( $self->create_node( $type.'_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+    foreach my $key_2 ( @$keys ) {
+      $menu->append( $self->create_track( $type.'_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
-        'glyphset'    => $type,
+        'glyphset'    => ($type=~/_/?'':'_').$type, ## QUICK HACK..
         'logicnames'  => $data->{$key_2}{'logic_names'},
-        'name'        => $data->{$key_2}{'name'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
+        'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+	'strand'      => $type eq 'gene' ? 'r' : 'b'
       }));
+      $flag=1;
     }
+  }
+  ## Need to add the gene menu track here....
+  if( $flag ) {
+    $self->add_track( 'information', 'gene_legend', 'Gene Legend', 'gene_legend', {} );
   }
 }
 
 sub add_marker_feature {
   my( $self, $key, $hashref ) = @_;
   return unless $self->get_node( 'marker' );
-  my $data      = $self->_merge( $hashref->{'marker_feature'} );
+  my( $keys, $data ) = $self->_merge( $hashref->{'marker_feature'} );
   my $menu      = $self->get_node( 'marker' );
-  foreach my $key_2 (sort keys %$data) {
-    $menu->append( $self->create_node( 'marker_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+  foreach my $key_2 (@$keys) {
+    $menu->append( $self->create_track( 'marker_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
       'db'          => $key,
-      'glyphset'    => 'marker',
+      'glyphset'    => '_marker',
       'logicnames'  => $data->{$key_2}{'logic_names'},
-      'name'        => $data->{$key_2}{'name'},
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
+      'on'          => 'on',
+      'strand'      => 'r'
+    }));
+  }
+}
+
+sub add_qtl_feature {
+  my( $self, $key, $hashref ) = @_;
+  return unless $self->get_node( 'marker' );
+  my( $keys, $data ) = $self->_merge( $hashref->{'qtl'} );
+  my $menu      = $self->get_node( 'marker' );
+  foreach my $key_2 (@$keys) {
+    $menu->append( $self->create_track( 'qtl_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+      'db'          => $key,
+      'glyphset'    => '_qtl',
+      'logicnames'  => $data->{$key_2}{'logic_names'},
+      'caption'     => $data->{$key_2}{'caption'},
+      'description' => $data->{$key_2}{'description'},
+      'on'          => 'on',
+      'strand'      => 'r'
     }));
   }
 }
@@ -240,42 +453,131 @@ sub add_marker_feature {
 sub add_misc_feature {
   my( $self, $key, $hashref ) = @_;
   return unless $self->get_node( 'misc_feature' );
+  my $menu = $self->get_node('misc_feature');
+  ## Different loop - no analyses - just misc_sets... 
+  my $data = $hashref->{'misc_feature'}{'sets'};
+  foreach my $key_2 ( sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data ) {
+    $menu->append( $self->create_track( 'misc_feature_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+      'glyphset'    => '_clone',
+      'db'          => $key,
+      'set'         => $key_2,
+      'caption'     => $data->{$key_2}{'name'},
+      'description' => $data->{$key_2}{'desc'},
+      'max_length'  => $data->{$key_2}{'max_length'},
+      'strand'      => 'r',
+      'on'          => 'on'
+    }));
+  }
+
 }
 
 sub add_oligo_probe {
   my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'oligo_probe' );
+  return unless $self->get_node( 'oligo' );
+
+  my $menu = $self->get_node('oligo');
+  my $data = $hashref->{'oligo_feature'}{'arrays'};
+  my $description = $hashref->{'oligo_feature'}{'analyses'}{'AlignAffy'}{'desc'};
+  ## Different loop - no analyses - base on probeset query results... = $hashref->{'oligo_feaature'}{'arrays'};
+  foreach my $key_2 ( sort keys %$data ) {
+    $menu->append( $self->create_track( 'misc_feature_'.$key.'_'.$key_2, $key_2, {
+      'glyphset'    => '_oligo',
+      'db'          => $key,
+      'array'       => $key_2,
+      'description' => $description,
+      'caption'     => $key_2,
+      'strand'      => 'b',
+      'on'          => 'on'
+    }));
+  }
 }
 
-sub add_prediction_transcript {
-  my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'prediction_transcript' );
-}
-
-sub add_protein_align_feature {
-  my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'protein_align_feature' );
-}
 
 sub add_protein_feature {
   my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'protein' ) ||
-                $self->get_node( 'tsv_protein' );
-}
 
-sub add_feature {
-  my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'prediction_transcript' );
+  my %menus = (
+    'domain'     => [ 'domain',  'P_domain' ],
+    'feature'    => [ 'feature', 'P_feature' ],
+    'gsv_domain' => [ 'domain',  'GSV_domain']
+  );
+  ## We have two separate glyphsets in this in this case
+  ## P_feature and P_domain - plus domains get copied onto GSV_generic_domain as well...
+
+  return unless $self->_check_menus( keys %menus );
+
+  my( $keys, $data )   = $self->_merge( $hashref->{'gene'} );
+
+  foreach my $menu_code ( keys %menus ) {
+    my $menu = $self->get_node( $menu_code );
+    next unless $menu;
+    my $type = $menus{$menu_code}[0];
+    my $gset = $menus{$menu_code}[1];
+    foreach my $key_2 ( @$keys ) {
+      next if $type ne $data->{$key_2}{'type'};
+      $menu->append( $self->create_track( $type.'_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+        'db'          => $key,
+        'glyphset'    => $gset,
+        'logicnames'  => $data->{$key_2}{'logic_names'},
+        'name'        => $data->{$key_2}{'name'},
+        'caption'     => $data->{$key_2}{'caption'},
+        'description' => $data->{$key_2}{'description'},
+        'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+      }));
+    }
+  }
 }
 
 sub add_repeat_feature {
   my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'repeat_feature' );
-}
-
-sub add_simple_feature {
-  my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'simple_feature' );
+  return unless $self->get_node( 'repeat' );
+## Add generic feature track...
+  return unless $hashref->{'repeat_feature'}{'rows'}>0; ## We have repeats...
+  my $data = $hashref->{'repeat_feature'}{'analyses'};
+  my $menu = $self->get_node( 'repeat' );
+  $menu->append( $self->create_track( 'repeat_'.$key, "All repeats", {
+    'db'         => $key,
+    'glyphset'   => '_repeat',
+    'logicnames' => [undef],                ## All logic names...
+    'types'      => [undef],                ## All repeat types...
+    'name'       => 'All repeats',
+    'description' => 'All repeats',
+    'on'         => 'on',
+    'strand'     => 'r'
+  }));
+  my $flag = keys %$data > 1;
+  foreach my $key_2 ( sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data ) {
+    if( $flag ) {
+      $menu->append( $self->create_track( 'repeat_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+        'db'         => $key,
+        'glyphset'   => '_repeat',
+        'logicnames' => [ $key_2 ],           ## Restrict to a single supset of logic names...
+	'types'      => [ undef  ],
+        'name'       => $data->{$key_2}{'name'},
+        'description' => $data->{$key_2}{'desc'},
+        'on'         => 'on',
+	'strand'     => 'r'
+      }));
+    }
+    my $d2 = $data->{$key_2}{'types'};
+    if( keys %$d2 > 1 ) {
+      foreach my $key_3 ( sort keys %$d2 ) {
+        (my $key_3a = $key_3) =~ s/\W/_/g;
+        $menu->append( $self->create_track( 'repeat_'.$key.'_'.$key_2.'_'.$key_3a, "$key_3 (".$data->{$key_2}{'name'}.")",{
+          'db'         => $key,
+          'glyphset'   => '_repeat',
+          'logicnames' => [ $key_2 ],
+          'types'      => [ $key_3 ],
+          'name'       => "$key_3 (".$data->{$key_2}{'name'}.")",
+          'description' => $data->{$key_2}{'desc'}." ($key_3)",
+          'on'         => 'on',
+	  'strand'     => 'r'
+        }));
+      }
+    }
+  }
+## Add track for each analysis ()... break down 1
+## Add track for each repeat_type ();
 }
 
 #----------------------------------------------------------------------#
@@ -283,17 +585,123 @@ sub add_simple_feature {
 #----------------------------------------------------------------------#
 
 sub add_synteny {
-  my( $self, $key, $hashref ) = @_;
+  my( $self, $key, $hashref, $species ) = @_;
   return unless $self->get_node( 'synteny' );
+  my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$species}||{}};
+  return unless @synteny_species;
+  my $menu = $self->get_node( 'synteny' );
+  foreach my $species ( @synteny_species ) {
+    ( my $species_readable = $species ) =~ s/_/ /g;
+    $menu->append( $self->create_track( 'synteny_'.$species, "Synteny with $species_readable", {
+      'db'         => $key,
+      'glyphset'   => '_synteny',
+      'name'       => "Synteny with $species_readable",
+      'caption'    => sprintf( "%1s.%3s synteny", split / /, $species_readable ),
+      'description' => "Synteny blocks",
+      'on'         => 'on',
+      'strand'     => 'r'
+    }));
+  }
 }
 
 sub add_alignments {
-  my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'compara_alignments' );
+  my( $self, $key, $hashref,$species ) = @_;
+  return unless $self->_check_menus( qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other) );
+  my $alignments = {};
+  foreach my $row ( values %{$hashref->{'ALIGNMENTS'}} ) {
+    next unless $row->{'species'}{$species};
+    if( $row->{'class'} =~ /pairwise_alignment/ ) {
+      my( $other_species ) = grep { $species ne $_ } keys %{$row->{'species'}};
+      my $menu_key = $row->{'type'} =~ /BLASTZ/ ? 'pairwise_blastz' 
+                   : $row->{'type'} =~ /TRANSLATED_BLAT/  ? 'pairwise_tblat'
+		   : 'pairwise_align'
+		   ;
+      $alignments->{$menu_key}{ $row->{'id'} } = {
+        'db' => $key,
+        'glyphset'       => '_alignment_pairwise',
+        'name'           => $row->{'name'},
+        'type'           => $row->{'type'},
+        'species_set_id' => $row->{'species_set_id'},
+        'other_species'  => $other_species,
+        'class'          => $row->{'class'},
+        'description'    => "Pairwise alignments",
+        'order'          => $row->{'type'}.'::'.$other_species,
+	'strand'         => 'b',
+        'on'             => 'on'
+      };
+    } else {
+      my $n_species = keys %{$row->{'species'}};
+      $alignments->{'multiple_align'}{ $row->{'id'} } = {
+        'db' => $key,
+        'glyphset'       => '_alignment_multiple',
+        'name'           => $row->{'name'},
+        'type'           => $row->{'type'},
+        'species_set_id' => $row->{'species_set_id'},
+        'class'          => $row->{'class'},
+        'constrained_element' => $row->{'constrained_element'},
+        'conservation_score'  => $row->{'conservation_score'},
+        'description'    => "Multiple alignments",
+        'order'          => sprintf '%12d::%s::%s',1e12-$n_species, $row->{'type'}, $row->{'name'},
+	'strand'         => 'b',
+	'on'             => 'on'
+      };
+    } 
+  }
+  foreach my $menu_key ( keys %$alignments ) {
+    my $menu = $self->get_node( $menu_key );
+    next unless $menu;
+    foreach my $key_2 ( sort {
+      $alignments->{$menu_key}{$a}{'order'} cmp  $alignments->{$menu_key}{$b}{'order'}
+    } keys %{$alignments->{$menu_key}} ) {
+      my $row = $alignments->{$menu_key}{$key_2};
+      $menu->append( $self->create_track( 'alignment_'.$key.'_'.$key_2, $row->{'name'}, $row ));
+    }
+  }
+}
+
+sub add_option {
+  my( $self, $key, $caption, $values ) = @_;
+  my $menu = $self->get_node( 'options' );
+  return unless $menu;
+  $menu->append( $self->create_option( $key, $caption, $values ) );
+}
+
+sub add_options {
+  my $self = shift;
+  my $menu = $self->get_node( 'options' );
+  return unless $menu;
+  foreach my $row (@_) {
+    my ($key, $caption, $values ) = @$row;
+    $menu->append( $self->create_option( $key, $caption, $values ) );
+  } 
+}
+
+sub add_track {
+  my( $self, $menu_key, $key, $caption, $glyphset, $params ) = @_;
+  my $menu =  $self->get_node( $menu_key );
+  return unless $menu;
+  return if $self->get_node( $key ); ## Don't add duplicates...
+  $params->{'glyphset'} = $glyphset;
+  $params->{'caption'}  = $caption;
+  $menu->append( $self->create_track( $key, $caption, $params ) );
+}
+
+sub add_tracks {
+  my $self     = shift;
+  my $menu_key = shift;
+  my $menu =  $self->get_node( $menu_key );
+  return unless $menu;
+  foreach my $row (@_) {
+    my ( $key, $caption, $glyphset, $params ) = @$row; 
+    next if $self->get_node( $key ); ## Don't add duplicates...
+    $params->{'glyphset'} = $glyphset;
+    $params->{'caption'}  = $caption;
+    $menu->append( $self->create_track( $key, $caption, $params ) );
+  }
 }
 
 #----------------------------------------------------------------------#
-# Functions to add tracks from functional genomics like databases....
+# Functions to add tracks from functional genomics like database....
 #----------------------------------------------------------------------#
 
 sub add_regulation_feature {
@@ -307,44 +715,75 @@ sub add_regulation_feature {
 
 sub add_variation_feature {
   my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'variation_feature' );
-}
+  my $menu = $self->get_node( 'variation' );
+  return unless $menu;
+  warn keys %{$hashref};
+  return unless $hashref->{'variation_feature'}{'rows'} > 0;
+  $menu->append( $self->create_track( 'variation_feature_'.$key, sprintf( "All variations" ), {
+    'db'       => $key,
+    'glyphset' => '_variation',
+    'sources'  => undef,
+    'strand'   => 'r',
+    'description' => 'Variation features from all sources'
+  }));
 
-#----------------------------------------------------------------------#
-# Functions to add tracks from core like databases....
-#----------------------------------------------------------------------#
-
-sub set_track_sets {
-  my( $self, @params ) = @_;
-  while( my( $key, $tracks ) = splice(0,2,@_) ) {
-    $self->create_submenu( $key, $caption,  
+  foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'}||{}}) {
+    ( my $k = $key_2 ) =~ s/\W/_/g;
+    $menu->append( $self->create_track( 'variation_feature_'.$key.'_'.$k, sprintf( "%s variations", $key_2 ), {
+      'db'       => $key,
+      'glyphset' => '_variation',
+      'caption'  => $key_2,
+      'sources'  => [ $key_2 ],
+      'strand'   => 'r',
+      'description' => sprintf( 'Variation features from the "%s" source', $key_2 )
+    }));
   }
 }
+
+## return a list of glyphsets...
+sub glyphset_configs {
+  my $self = shift;
+  return grep { $_->data->{'node_type'} eq 'track' } $self->tree->nodes;
+}
+
+sub get_node {
+  my $self = shift;
+  return $self->tree->get_node(@_);
+}
+
 sub create_submenu {
   my ($self, $code, $caption, $options ) = @_;
-  my $details = { 'caption'    => $caption };
+  my $details = { 'caption'    => $caption, 'node_type' => 'menu' };
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
   }
   return $self->tree->create_node( $code, $details );
 }
 
-sub create_node {
+
+sub create_track {
   my ( $self, $code, $caption, $options ) = @_;
-  my $details = { 'caption'    => $caption };
+  my $details = { 'name'    => $caption, 'node_type' => 'track' };
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
   }
+  $details->{'strand'}   ||= 'b';  # Make sure we have a strand setting!!
+  $details->{'on'    }   ||= 'on'; # Show unless we explicitly say no!!
+  $details->{'glyphset'} ||= $code;
+  $details->{'caption'}  ||= $caption;
+
   $self->tree->create_node( $code, $details );
 }
 
-sub _add_tracks_legends {
-  my $branch = $self->create_submenu( 'legends', 'Legends' );
-  foreach( qw( gene variation ) ) {
-    $branch->append( $self->create_node( $_.'_legend', ucfirst($_).' legend', {
-      'on' => 'on'
-    }) );
-  }
+sub create_option {
+  my ( $self, $code, $caption, $values ) = @_;
+  $values ||= {qw(0 no 1 yes)};
+  return $self->tree->create_node( $code, {
+    'node_type' => 'option',
+    'caption'   => $caption,
+    'name'      => $caption,
+    'values'    => $values
+  });
 }
 
 sub _set_core { $_[0]->{'_core'} = $_[1]; }
@@ -382,6 +821,357 @@ sub update_config_from_parameter {
     }
   }
   #$self->save; - deprecated
+}
+
+sub xadd_track {
+  my ($self, $code, %pars) = @_;
+  ## Create drop down menu entry
+  my $type_config = $self->{'general'}->{$self->{'type'}};
+  if( $pars{ '_menu'} ) {
+    $type_config->{'_settings'}{$pars{'_menu'}} ||= [];
+    push( @{ $type_config->{'_settings'}{$pars{'_menu'}}},
+          [ $code, $pars{'_menu_caption'} || $pars{'caption'} ] );
+    delete $pars{'_menu'};
+    delete $pars{'_menu_caption'};
+  }
+  push @{$type_config->{'_artefacts'}}, $code;
+  $type_config->{$code} = {%pars};
+  ## Create configuration entry....
+}
+
+sub add_GSV_protein_domain_track {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->xadd_track( $code,
+    'on'         => 'on',
+    'pos'        => $pos,
+    'glyphset'   => 'GSV_generic_domain',
+    '_menu'      => 'features',
+    'available'  => "features $code",
+    'logic_name' => $code,
+    'caption'    => $text_label,
+    'dep'        => 20,
+    'url_key'    => uc($code),
+    'colours'    => { $self->{'_colourmap'}->colourSet( 'protein_features' ) },
+    %pars
+  );
+}
+
+sub add_protein_domain_track {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->xadd_track( $code,
+    'on'         => 'on',
+    'pos'        => $pos,
+    'glyphset'   => 'P_domain',
+    '_menu'      => 'features',
+    'available'  => "features $code",
+    'logic_name' => $code,
+    'caption'    => $text_label,
+    'dep'        => 20,
+    'url_key'    => uc($code),
+    'colours'    => { $self->{'_colourmap'}->colourSet( 'protein_features' ) },
+    %pars
+  );
+}
+
+sub add_protein_feature_track {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->xadd_track( $code,
+    'on'         => 'on',
+    'pos'        => $pos,
+    'glyphset'   => 'P_feature',
+    '_menu'      => 'features',
+    'available'  => "features $code",
+    'logic_name' => $code,
+    'caption'    => $text_label,
+    'colours'    => { $self->{'_colourmap'}->colourSet( 'protein_features' ) },
+    %pars
+  );
+}
+
+sub add_new_simple_track {
+  my( $self, $code, $text_label, $colour, $pos, %pars ) = @_;
+  $self->xadd_track( $code,
+    'on'         => 'off',
+    'pos'        => $pos,
+    'col'        => $colour,
+    'glyphset'   => 'generic_simplest',
+    '_menu'      => 'features',
+    'available'  => "features $code",
+    'str'        => 'r',
+    'label'      => $text_label,
+    'caption'    => $text_label,
+    'code'       => $code,
+    %pars
+  );
+}
+sub add_new_synteny_track {
+  my( $self, $species, $short, $pos) = @_;
+  $self->xadd_track( "synteny_$species",
+    "_menu" => 'compara',
+    'height'    => 4,
+    'glyphset'  => "generic_synteny",
+    'label'     => "$short synteny",
+    'caption'   => "$short synteny",
+    'species'   => $species,
+    'available' => "multi SYNTENY|$species",
+    'on'        => 'off',
+    'pos'       => $pos,
+    'str'       => 'f',
+    'dep'       => 20,
+  );
+}
+
+sub add_new_track_transcript {
+  my( $self, $code, $text_label, $colours, $pos, %pars ) = @_;
+  my $available = $pars{'available'} || "features $code";
+  delete( $pars{'available'} );
+  $self->xadd_track( $code."_transcript",
+    '_menu'       => 'features',
+    'on'          => 'on',
+    'colours'     => { $self->{'_colourmap'}->colourSet( $colours ) },
+    'colour_set'  => $colours,
+    'pos'         => $pos,
+    'str'         => 'b',
+    'db'          => 'core',
+    'logic_name'  => $code, 
+    'compact'     => 0,
+    'join'        => 0,
+    'join_x'      => -10,
+    'join_col'    => 'blue',
+    'track_label' => $text_label,
+    'label'       => $text_label,
+    'caption'     => $text_label,
+    'available'   => $available,
+    'zmenu_caption' => $text_label,
+    'author'      => $pars{'author'},
+    'glyphset'    => $pars{'glyph'},
+    %pars
+  );
+}
+
+sub add_new_track_generictranscript{
+  my( $self, $code, $text_label, $colour, $pos, %pars ) = @_;
+  my $available = $pars{'available'} || "features $code";
+  delete( $pars{'available'} );
+  $self->xadd_track( $text_label,
+    'glyphset'    => 'generic_transcript',
+    'LOGIC_NAME'  => $code,
+    '_menu'       => 'features',
+    'on'          => 'off',
+    'col'         => $colour,
+    'pos'         => $pos,
+    'str'         => 'b',
+    'hi'          => 'highlight1',
+    'compact'     => 0,
+    'track_label' => $text_label,
+    'caption'     => $text_label,
+    'available'   => $available,
+    %pars
+  );
+}
+
+sub add_new_track_predictiontranscript {
+  my( $self, $code, $text_label, $colour, $pos, $additional_zmenu, %pars ) = @_;
+  $self->xadd_track( $code,
+    'glyphset'    => 'prediction_transcript',
+    'LOGIC_NAME'  => $code,
+    '_menu'       => 'features',
+    'on'          => 'off',
+    'col'         => $colour,
+    'pos'         => $pos,
+    'str'         => 'b',
+    'hi'          => 'highlight1',
+    'compact'     => 0,
+    'track_label' => $text_label,
+    'caption'     => $text_label,
+    'available'   => "features $code",
+    'ADDITIONAL_ZMENU' => $additional_zmenu || {},
+    %pars
+  );
+}
+
+sub add_new_track_gene {
+  my( $self, $code, $text_label, $colours, $pos, %pars ) = @_;
+  $self->xadd_track( "gene_$code",
+    '_menu'       => 'features',
+    'on'          => 'on',
+    'colour_set'  => $colours,
+    'gene_col'    => $code,
+    'pos'         => $pos,
+    'glyphset'    => 'generic_gene',
+    'threshold'   => 2e6,
+    'navigation_threshold' => 1e4,
+    'navigation'  => 'on',
+    'label_threshold' => 1e4,
+    'database'    => '',
+    'logic_name'  => $code,
+    'available'   => "features $code",
+    'caption'     => $text_label,
+    'track_label' => $text_label,
+    'label'       => $text_label,
+    %pars
+  );
+}
+sub add_new_track_cdna {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->xadd_track( $code, 
+    '_menu'       => 'features',
+    'on'          => "off",
+    'colour_set'  => 'cdna',
+    'dep'         => '6',
+    'str'         => 'b',
+    'compact'     => 0,
+    'glyphset'    => 'generic_match',
+    'SUBTYPE'     => sub {$_[0] =~ /^NM_/ ? 'refseq' : ( $_[0] =~ /(RO|ZX|PX|ZA|PL)\d{5}[A-Z]\d{2}/ ? 'riken' : 'default') },
+    'URL_KEY'     => { 'refseq' => 'REFSEQ', 'riken' => 'RIKEN', 'default' => 'EMBL', 'genoscope_ecotig' => 'TETRAODON_ECOTIG', 'genoscope' => 'TETRAODON_CDM' },
+    'ID'          => { 'refseq' => TRIM },
+    'ZMENU'       => {
+                     'refseq'  => [ '###ID###', "REFSEQ: ###ID###" => '###HREF###' ],
+                     'riken'   => [ '###ID###', "RIKEN:  ###ID###" => '###HREF###' ],
+                     'genoscope_ecotig'   => [ '###ID###', "Genoscope Ecotig:  ###ID###" => '###HREF###' ],
+                     'genoscope'          => [ '###ID###', "Genoscope:  ###ID###" => '###HREF###' ],
+                     'default' => [ '###ID###', "EMBL:   ###ID###" => '###HREF###' ],
+    },
+    'pos'         => $pos, 
+    'available'   => "features $code",
+    'caption'     => $text_label,
+    'TEXT_LABEL'  => $text_label,
+    'FEATURES'    => $code,
+    %pars
+  )
+}
+
+sub add_new_track_mrna {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->xadd_track( $code,
+    '_menu'       => 'features',
+    'on'          => "off",
+    'colour_set'  => 'mrna',
+    'dep'         => '6',
+    'str'         => 'b',
+    'compact'     => 0,
+    'glyphset'    => 'generic_match',
+    'SUBTYPE'     => sub { return 'default'; },
+    'URL_KEY'     => 'EMBL',
+    'ZMENU'       => [ '###ID###', "EMBL: ###ID###" => '###HREF###' ],
+    'pos'         => $pos,
+    'available'   => "features $code",
+    'caption'     => $text_label,
+    'TEXT_LABEL'  => $text_label,
+    'FEATURES'    => $code,
+    %pars
+  )
+}
+
+sub add_new_track_rna {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->xadd_track( $code,
+    '_menu'       => 'features',
+    'on'          => "off",
+    'colour_set'  => 'rna',
+    'dep'         => '6',
+    'str'         => 'b',
+    'compact'     => 0,
+    'glyphset'    => 'generic_match',
+    'SUBTYPE'     => $code,
+    'URL_KEY'     => uc( $code ),
+    'ZMENU'       => [ '###ID###', "$text_label: ###ID###" => '###HREF###' ],
+    'pos'         => $pos,
+    'available'   => "features $code",
+    'caption'     => $text_label,
+    'TEXT_LABEL'  => $text_label,
+    'FEATURES'    => $code,
+    %pars
+  )
+}
+
+sub add_new_track_protein {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->xadd_track( $code,
+    '_menu'       => 'features',
+    'on'          => "off",
+    'colour_set'  => 'protein',
+    'CALL'        => 'get_all_ProteinAlignFeatures',
+    'dep'         => '6',
+    'str'         => 'b',
+    'compact'     => 0,
+    'glyphset'    => 'generic_match',
+    'SUBTYPE'     => sub { $_[0] =~ /^NP_/ ? 'refseq' : 'default' } ,
+    'URL_KEY'     => 'SRS_PROTEIN', 'ID' => TRIM, 'LABEL' => TRIM,
+    'ZMENU'       => [ '###ID###' , 'Protein homology ###ID###', '###HREF###' ],
+    'pos'         => $pos,
+    'available'   => "features $code",
+    'caption'     => $text_label,
+    'TEXT_LABEL'  => $text_label,
+    'FEATURES'    => $code,
+    %pars
+  )
+}
+
+sub add_new_track_est {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->xadd_track( $code,
+    '_menu'       => 'features',
+    'on'          => "off",
+    'colour_set'  => 'est',
+    'dep'         => '6',
+    'str'         => 'b',
+    'compact'     => 0,
+    'glyphset'    => 'generic_match',
+    'SUBTYPE'     => sub { $_[0] =~ /^BX/ ? 'genoscope' : 'default' },
+    'URL_KEY'     => 'EMBL',
+    'pos'         => $pos,
+    'available'   => "features $code",
+    'caption'     => $text_label,
+    'TEXT_LABEL'  => $text_label,
+    'FEATURES'    => $code,
+    'ZMENU'       => [ 'EST', "EST: ###ID###" => '###HREF###' ],
+    %pars
+  )
+}
+
+sub add_new_track_est_protein {
+  my( $self, $code, $text_label, $pos, %pars ) = @_;
+  $self->xadd_track( $code,
+    '_menu'       => 'features',
+    'on'          => "off",
+    'colour_set'  => 'est',
+    'dep'         => '6',
+    'str'         => 'b',
+    'compact'     => 0,
+    'glyphset'    => 'generic_match',
+    'CALL'        => 'get_all_ProteinAlignFeatures',
+    'SUBTYPE'     => sub { $_[0] =~ /^BX/ ? 'genoscope' : 'default' },
+    'URL_KEY'     => 'EMBL',
+    'pos'         => $pos,
+    'available'   => "features $code",
+    'caption'     => $text_label,
+    'TEXT_LABEL'  => $text_label,
+    'FEATURES'    => $code,
+    'ZMENU'       => [ 'EST', "EST: ###ID###" => '###HREF###' ],
+    %pars
+  )
+}
+
+sub add_clone_track {
+  my( $self, $code, $track_label, $pos, %pars ) = @_;
+  $self->xadd_track( "cloneset_$code",
+    '_menu'                => 'options',
+    'on'                   => 'off',
+    'dep'                  => 9999,
+    'str'                  => 'r',
+    'glyphset'             => 'generic_clone',
+    'pos'                  => $pos,
+    'navigation'           => 'on',
+    'outline_threshold'    => '350000',
+    'colour_set'           => 'clones',
+    'FEATURES'             => $code,
+    'label'                => $track_label,
+    'caption'              => $track_label,
+    'available'            => 'features MAPSET_'.uc($code),
+    'threshold_array'      => { 100000 => { 'navigation' => 'off', 'height' => 4 }, %{$pars{'thresholds'}||{}} },
+    %pars,
+  );
 }
 
 sub set_species {
@@ -473,11 +1263,6 @@ sub reset_subsection {
   $self->{'user'}->{$script}->{$subsection} = {}; 
   $self->altered = 1;
   return;
-}
-
-sub dump {
-    my ($self) = @_;
-    print STDERR Dumper($self);
 }
 
 sub script {
@@ -709,6 +1494,953 @@ sub container_width {
 sub transform {
     my ($self) = @_;
     return $self->{'transform'};
+}
+
+#----------------------------------------------------------------------
+=head2 das_sources
+
+  Arg [1]   : Hashref - representation of das sources;
+              {$key=>{label=>$label, on=>$on_or_off, ...}}
+  Function  : Adds a track to the config for each das source representation
+              - Adds track to '_artefacts'
+              - Adds manager of type 'das'
+  Returntype: Boolean
+  Exceptions:
+  Caller    :
+  Example   :
+
+=cut
+
+sub das_sources {
+  my( $self, $das_sources) = @_;
+  return;
+  $self->{'_das_offset'} ||= 2000;
+  (my $NAME = ref($self) ) =~s/.*:://;
+  my $cmap = $self->{'_colourmap'};
+
+  foreach( sort { 
+    $das_sources->{$a}->{'label'} cmp $das_sources->{$b}->{'label'} 
+  } keys %$das_sources ) {
+
+    my $das_source = $das_sources->{$_};
+
+        my $on = 'off';
+        if($das_source->{'on'} eq 'on') {
+            $on = 'on';
+        } elsif( ref($das_source->{'on'}) eq 'ARRAY' ) {
+            foreach my $S (@{$das_source->{'on'}}) {
+                $on = 'on' if $S eq $NAME;
+            }
+        }
+
+        my $col = $das_source->{'col'};
+	$col = $cmap->add_hex($col) unless $cmap->is_defined($col);
+	my $manager = $das_source->{'manager'}    || 'das';
+
+        $self->{'general'}->{$NAME}->{$_} = {
+            'on'         => $on,
+            'pos'        => $self->{'_das_offset'},
+            'col'        => $col,
+            'manager'    => $manager,
+            'group'      => $das_source->{'group'}      || 0,
+            'dep'        => $das_source->{'depth'}      || 0,
+            'stylesheet' => $das_source->{'stylesheet'} || 'N',
+            'str'        => $das_source->{'strand'}     || 'b',
+            'labelflag'  => $das_source->{'labelflag'}  || 'N',
+            'fasta'      => $das_source->{'fasta'}      || [],
+        };
+
+        push @{$self->{'general'}->{$NAME}->{'_artefacts'}}, $_;
+	$self->{'_managers'}->{$manager} ||= [];
+        $self->{'_das_offset'}++;
+    }
+
+    return 1;
+}
+
+sub ADD_ALL_DNA_FEATURES {
+  my $self = shift;
+  my $POS  = shift || 2300;
+
+  ## BACends - configured elsewhere, not gene style features
+  ## Full_dbSTS - in r40, leftover from Vega, don't display
+  $self->add_new_track_mrna( 'unigene', 'Unigene', $POS++, 'URL_KEY' => 'UNIGENE', 'ZMENU'       => [ '###ID###' , 'Unigene cluster ###ID###', '###HREF###' ], @_ );
+  $self->add_new_track_mrna( 'vertrna', 'EMBL mRNAs', $POS++, @_ );
+  $self->add_new_track_mrna( 'caenorhabditus_mrna', 'Worm mRNAs', $POS++, @_ );
+  $self->add_new_track_mrna( 'celegans_mrna', 'C.elegans mRNAs', $POS++, @_ );
+  $self->add_new_track_mrna( 'cbriggsae_mrna', 'C.briggsae mRNAs', $POS++, @_ );
+
+  $self->add_new_track_rna( 'BlastmiRNA', 'MiRNA', $POS++, @_ );
+  $self->add_new_track_rna( 'RfamBlast',  'rFam', $POS++, @_ );
+  $self->add_new_track_rna( 'mirbase',  'MiRBase', $POS++, @_ );
+  $self->add_new_track_rna( 'miRNA_Registry',  'miRbase RNAs', $POS++, @_ );
+  $self->add_new_track_rna( 'RFAM',            'RFAM RNAs',    $POS++, @_ );
+
+  $self->add_new_track_cdna( 'jgi_v1',            'JGI 1.0 model', $POS++, @_ );
+
+  $POS = shift || 2400;
+  $self->add_new_track_cdna( 'Harvard_manual', 'Manual annot.', $POS++, 'URL_KEY' => 'NULL', 'ZMENU' => [ '###ID###', 'Internal identifier', '' ], @_ );
+
+  $self->add_new_track_cdna( 'medaka_cdna',    'Medaka cDNAs',    $POS++, @_ );
+
+  $self->add_new_track_cdna( 'human_cdna', 'Human cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'chimp_cdna', 'Chimp cDNAs',     $POS++, @_ );
+  $self->add_new_track_cdna( 'horse_cdna',    'Horse cDNAs',      $POS++, @_ );
+  $self->add_new_track_cdna( 'orangutan_cdna',    'Orangutan cDNAs',      $POS++, @_ );
+  $self->add_new_track_cdna( 'lamprey_cdna', 'Lamprey cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'orangutan_cdna',    'Orangutan cDNAs',      $POS++, @_ );
+  $self->add_new_track_cdna( 'pig_cdna',    'Pig cDNAs',      $POS++, @_ );
+  $self->add_new_track_cdna( 'dog_cdna',   'Dog cDNAs',     $POS++, @_ );
+  $self->add_new_track_cdna( 'rat_cdna',   'Rat cDNAs',     $POS++, @_ );
+  $self->add_new_track_cdna( 'platypus_cdnas', 'Platypus cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'platypus_cdna', 'Platypus cDNAs',   $POS++, @_ );
+
+  $self->add_new_track_cdna( 'zfish_cdna', 'D.rerio cDNAs', $POS++,
+        'SUBTYPE'    => sub { return $_[0] =~ /WZ/ ? 'WZ' : ( $_[0] =~ /IMCB/ ? 'IMCB_HOME' : 'EMBL' ) },
+        'ID'         => sub { return $_[0] =~ /WZ(.*)/ ? $1 : $_[0] },
+        'LABEL'      => sub { return $_[0] },
+        'ZMENU'      => [ 'EST cDNA', "EST: ###LABEL###" => '###HREF###' ],
+        'URL_KEY'    => { 'WZ' => 'WZ', 'IMCB_HOME' => 'IMCB_HOME', 'EMBL' => 'EMBL' },
+                             ,@_ );
+  $self->add_new_track_cdna( 'Exonerate_cDNA',           'Exonerate cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'Btaurus_Exonerate_cDNA',   'Cow cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'Cow_cDNAs',   'Cow cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'cow_cdna',   'Cow cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'chicken_cdna', 'G.gallus cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'macaque_cdna', 'Macaque cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'fugu_cdnas', 'T.rubripes cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'fugu_cdna', 'T.rubripes cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'duck_cdna', 'Duck cDNAs', $POS++, @_ );
+  $self->add_new_track_cdna( 'mouse_cdna', 'Mouse cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'other_cdna', 'Other cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'opossum_cdna', 'Opossum cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'refseq_mouse', 'RefSeqs', $POS++, 'SUBTYPE' => 'refseq', @_);
+## now the tetraodon tracks...
+  $self->add_new_track_cdna( 'cdm', 'Tetraodon cDNAs',   $POS++, 'SUBTYPE'     => 'genoscope', @_ );
+  $self->add_new_track_cdna( 'xlaevis_cDNA', 'X.laevis cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'xtrop_cDNA', 'X.trop cDNAs',   $POS++, @_ );
+  $self->add_new_track_cdna( 'ep3_h', 'Ecotig (Human prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', @_ );
+  $self->add_new_track_cdna( 'ep3_s', 'Ecotig (Mouse prot)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', @_ );
+  $self->add_new_track_cdna( 'eg3_h', 'Ecotig (Human DNA)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', @_ );
+  $self->add_new_track_cdna( 'eg3_s', 'Ecotig (Mouse DNA)',   $POS++, 'SUBTYPE'     => 'genoscope_ecotig', @_ );
+  $self->add_new_track_cdna( 'eg3_f', 'Ecotig (Fugu DNA)',   $POS++,  'SUBTYPE'     => 'genoscope_ecotig', @_ );
+  $self->add_new_track_cdna( 'cdna_update',     'CDNAs',         $POS++,
+                            'FEATURES'  => 'UNDEF', 'available' => 'databases ENSEMBL_CDNA',
+                            'THRESHOLD' => 0,       'DATABASE'  => 'cdna', @_ );
+  $self->add_new_track_cdna( 'cdna_all',  'All CDNAs', $POS++, 'SUBTYPE' => 'cdna_all' , @_ );
+  $self->add_new_track_cdna( 'washu_contig', 'WashU contig', $POS++, 'SUBTYPE' => 'washuc_conitg', @_ );
+  $self->add_new_track_cdna( 'nembase_contig', 'NemBase contig', $POS++, 'SUBTYPE' => 'nembase_conitg', @_ );
+
+  # Otherfeatures db
+  my @EST_DB_CDNA = (
+    [ 'drosophila_cdna_all',   'Fly cDNA (all)',  'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' => [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ] ],
+    [ 'drosophila_gold_cdna',  'Fly cDNA (gold)', 'URL_KEY' => 'DROSOPHILA_EST', 'ZMENU' => [ '###ID###', "Fly cDNA: ###ID###" => '###HREF###' ] ],
+    [ 'kyotograil_2004',  "Kyotograil '04" ],
+    [ 'kyotograil_2005',  "Kyotograil '05" ],
+    [ 'platypus_454_cdna', "Platypus 454 cDNAs" ],
+    [ 'platypus_cdna', "Platypus cDNAs (OF)" ],
+    [ 'sheep_bac_ends',   "Sheep BAC ends", "URL_KEY" => 'TRACE', 'ZMENU' => [ '###ID###', 'Sheep BAC trace: ###ID###' => '###HREF###']  ],
+    [ 'stickleback_cdna',   "Stickleback cDNAs" ], # subset of these in core but don't draw those
+
+    # Duplicated tracks (same logic name used core and otherfeatures). Not ideal!
+    [ 'human_cdna',            'Human cDNAs' ],
+    [ 'macaque_cdna',          'Macaque cDNAs' ],
+    [ 'mouse_cdna',            'Mouse cDNAs' ],
+    [ 'rat_cdna',              'Rat cDNAs' ],
+  );
+
+  foreach ( @EST_DB_CDNA ) {
+    my($A,$B,@T) = @$_;
+    $self->add_new_track_cdna( "otherfeatures_$A",  $B, $POS++,
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
+  }
+
+  $self->add_new_track_cdna( 'community_models', 'Community models',    $POS++, @_ );
+  $self->add_new_track_cdna( 'manual_models',    'Manual models',    $POS++, @_ );
+
+  return $POS;
+}
+
+
+
+sub ADD_ALL_EST_FEATURES {
+  my $self = shift;
+  my $POS  = shift || 2350;
+  $self->add_new_track_est( 'arraymap_e2g',   'ARRAY_MMC1_ests', $POS++, @_ );
+  $self->add_new_track_est( 'BeeESTAlignmentEvidence', 'Bee EST evid.', $POS++, @_ );
+  $self->add_new_track_est( 'est_rna',      'ESTs (RNA)',      $POS++, 'available' => 'features RNA',      'FEATURES' => 'RNA', @_ );
+  $self->add_new_track_est( 'est_rnabest',  'ESTs (RNA best)', $POS++, 'available' => 'features RNA_BEST', 'FEATURES' => 'RNA_BEST', @_ );
+  $self->add_new_track_est( 'ost', 'OSTs', $POS++, @_ );
+  $self->add_new_track_est( 'caenorhabditis_est', 'Worm ESTs', $POS++, @_ );
+  $self->add_new_track_est( 'celegans_est', 'C. elegans ESTs', $POS++, @_ );
+  $self->add_new_track_est( 'cbriggsae_est', 'C. elegans ESTs', $POS++, @_ );
+  $self->add_new_track_est( 'scerevisiae_est', 'S. cerevisiae ESTs', $POS++, @_ );
+  $self->add_new_track_est( 'chicken_est',  'G.gallus ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'dog_est_part2',  'C.familiaris ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'macaque_est',  'Macaque ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'yeast_est',  'Yeast ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'human_est',    'Human ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'medaka_est',    'Medaka ESTs',    $POS++, @_ );
+  $self->add_new_track_est( 'horse_est',    'Horse ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'orangutan_est',    'Orangutan ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'pig_est',    'Pig ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'platypus_ests', 'Platypus ESTs',   $POS++, @_ );
+
+  $self->add_new_track_est( 'species_est',  'Dog ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'mouse_est',    'Mouse ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'fugu_est',    'T.rubripes ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'lamprey_est',    'Lamprey ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'zfish_est',    'D.rerio ESTs',    $POS++, @_ );
+  $self->add_new_track_est( 'Btaurus_Exonerate_EST',    'B.taurus ESTs',    $POS++, @_ );
+  $self->add_new_track_est( 'Cow_ESTs',    'B.taurus ESTs',    $POS++, @_ );
+  $self->add_new_track_est( 'Exonerate_EST_083',    'Ciona ESTs',    $POS++, @_ );
+  $self->add_new_track_est( 'xlaevis_EST', 'X.laevis ESTs',   $POS++, @_ );
+  $self->add_new_track_est( 'xtrop_cluster','X.trop EST clust', 
+							$POS++, 'URL_KEY' => 'XTROP_CLUSTER',
+							'SUBTYPE' => 'default',
+							@_);
+  $self->add_new_track_est( 'xtrop_EST_clusters','X.trop EST clust',
+                                                        $POS++, 'URL_KEY' => 'XTROP_CLUSTER',
+                                                        'SUBTYPE' => 'default',
+                                                        @_);
+
+  $self->add_new_track_est( 'anopheles_cdna_est',    'EST support',           $POS++, @_ );
+  $self->add_new_track_est( 'ciona_dbest_align',     'dbEST align',           $POS++, @_ );
+  $self->add_new_track_est( 'ciona_est_3prim_align', "3' EST-align. (Kyoto)", $POS++, @_ );
+  $self->add_new_track_est( 'ciona_est_5prim_align', "5' EST-align. (Kyoto)", $POS++, @_ );
+  $self->add_new_track_est( 'ciona_cdna_align',      'cDNA-align. (Kyoto)',   $POS++, @_ );
+  $self->add_new_track_est( 'cint_est',              'Ciona ESTs',            $POS++, @_ );
+  #$self->add_new_track_est( 'savignyi_est',          "C.savigyi EST",         $POS++, @_ );  # added to OTHERFEATURES
+  $self->add_new_track_est( 'expression_pattern',    'Expression pattern', $POS++, 'URL_KEY' => 'EXPRESSION_PATTERN', 'SUBTYPE' => 'default', @_ );
+  $self->add_new_track_est( 'other_est',    'Other ESTs',      $POS++, @_ );
+  $self->add_new_track_est( 'cDNA_exonerate',    'ESTs',      $POS++, @_ );
+
+  my @EST_DB_ESTS = (
+    [ 'anopheles_cdna_est',    'RNA (BEST)'],      # subset of these in core but don't draw those
+    [ 'estgene',               'ESTs' ],
+    [ 'bee_est',               'Bee EST' ],
+    [ 'chicken_ests',          'Chicken EST' ],
+    [ 'est_embl',              "C.savigyi EST" ],  # subset of these in core but don't draw those
+    [ 'chicken_est_exonerate', 'Chicken EST (ex.)' ],
+    [ 'human_est',   'Human EST' ],
+    [ 'human_est_exonerate',   'Human EST (ex.)' ],
+    [ 'est_exonerate',         'EST (ex.)' ],
+    [ 'ciona_est',             'Ciona EST' ],
+    [ 'drosophila_est',        'Fly EST' ],
+    [ 'cow_est',               'Cow EST' ],
+    [ 'fugu_est',              'Fugu EST' ],
+    [ 'RNA',                   'Mosquito EST' ],
+    [ 'mouse_est',             'Mouse EST' ],
+    [ 'rat_est',               'Rat EST' ],
+    [ 'xlaevis_EST',           'X.laevis EST' ],
+    [ 'xtrop_EST',             'X.trop EST' ],
+    [ 'zfish_EST',             'Zfish EST' ],
+    [ 'anopheles_cdna_est_all','RNA (ALL)' ],
+    [ 'est_bestn_5prim',       "EST BestN 5'" ],
+    [ 'est_bestn_3prim',       "EST Bestn 3'" ],
+    [ 'stickleback_est',       "Stickleback EST" ],   # subset of these in core but don't draw those
+    [ 'est_3prim_savi',        "C.savigyi EST 3'"],   # subset of these in core but don't draw those
+    [ 'est_5prim_savi',        "C.savigyi EST 5'"],   # subset of these in core but don't draw those
+    [ 'cint_cdna',             'Ciona EST' ],
+    [ 'savignyi_est',          "C.savigyi EST"],      # subset of these in core but don't draw those
+
+    # Duplicated tracks (same logic name used core and otherfeatures). Not ideal!
+    [ 'platypus_est',          'Platypus ESTs (OF)' ],
+    [ 'macaque_est',           'Macaque ESTs' ],
+  );
+
+
+  foreach ( @EST_DB_ESTS ) {
+    my($A,$B,@T) = @$_;
+    $self->add_new_track_est( "otherfeatures_$A",  $B, $POS++,
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
+  }
+
+
+  # Hacky ones
+  $self->add_new_track_est( 'drerio_estclust', 'EST clusters', $POS++,
+							'available'  => 'any_feature EST_cluster_WashU EST_cluster_IMCB EST2genome_clusters Est2genome_clusters',
+							'FEATURES'   => 'EST_Cluster_WashU EST_cluster_IMCB EST2genome_clusters Est2genome_clusters',
+							'SUBTYPE'    => sub { return $_[0] =~ /WZ/i ? 'WZ' : 'IMCB_HOME' },
+							'ID'         => sub { return $_[0] =~ /WZ(.*)/i ? $1 : $_[0] },
+							'LABEL'      => sub { return $_[0] },
+							'ZMENU'      => [ 'EST', "EST: ###LABEL###" => '###HREF###' ],
+							'URL_KEY'    => { 'WZ' => 'WZ', 'IMCB_HOME' => 'IMCB_HOME' },
+							@_);
+#ESTs for Vega
+  $self->add_new_track_est( 'est2genome_all', 'ESTs', $POS++,
+							'available' => 'any_feature Est2genome_human Est2genome_mouse Est2genome_other Est2genome_fish',
+							'FEATURES' => 'Est2genome_human Est2genome_mouse Est2genome_other Est2genome_fish',
+                            'src' => 'all', 
+							@_);
+  $self->add_new_track_est( 'est2clones',   'ARRAY_MMC1_reporters', $POS++, 'URL_KEY' => 'VECTORBASE_REPORTER', 'str' => 'r', 'SUBTYPE' => 'mmc',  'ZMENU' => [ 'Reporter ###LABEL###', '###LABEL###' => '###HREF###' ], @_ );
+  return $POS;
+}
+
+sub ADD_ALL_CLONE_TRACKS {
+  my $self = shift;
+  my $POS = shift || 2500;
+  $self->add_clone_track( 'MAPTP_set_v1', 'MAPTP clone set',   $POS++, @_ );
+  $self->add_clone_track( '10Mb_set', '10Mb clone set',   $POS++, @_ );
+  $self->add_clone_track( '0_5MB_cloneset', '0.5Mb clones',   $POS++, @_ );
+  $self->add_clone_track( '1MB_cloneset',   '1Mb clones',     $POS++, @_ );
+  $self->add_clone_track( 'cloneset_1mb',   '1Mb clones',     $POS++, @_ );
+  $self->add_clone_track( 'cloneset_30k',   '30k TPA clones', $POS++, @_ );
+  $self->add_clone_track( 'cloneset_32k',   '32k clones',     $POS++, @_ );
+  $self->add_clone_track( 'acc_bac_map',    'Acc. BAC map',   $POS++, @_ );
+  $self->add_clone_track( 'pig_acc_bac_map',    'Acc. BAC map',  
+    $POS++, 'LINKS' => [[ 'Sequenced clone', 'pig_seq_clone', '/Sus_scrofa/cytoview?misc_feature=###ID###' ]], @_ );
+  $self->add_clone_track( 'seq_bac_map',    'Sequenced BAC map',   $POS++, @_ );
+  $self->add_clone_track( 'bac_map',        'BAC map',        $POS++, 'thresholds' => { 20000 => {'FEATURES'=>'acc_bac_map seq_bac_map'}}, @_ );
+  $self->add_clone_track( 'pig_bac_map',        'BAC map',        $POS++,      'LINKS' => [[ 'Sequenced clone', 'pig_seq_clone', '/Sus_scrofa/cytoview?misc_feature=###ID###' ]],
+        'thresholds' => { 20000 => {'FEATURES'=>'pig_acc_bac_map'}}, @_ );
+  $self->add_clone_track( 'BAC',            'BAC map',        $POS++, 'LINKS' => [[ 'Clone map', 'clone_name', '/Sus_scrofa_map/cytoview?misc_feature=###ID###' ]], @_ );
+  $self->add_clone_track( 'bacs',           'BACs',           $POS++, @_ );
+  $self->add_clone_track( 'bacs_bands',     'Band BACs',      $POS++, @_ );
+  $self->add_clone_track( 'bacends',        'BAC ends',       $POS++, @_ );
+  $self->add_clone_track( 'extra_bacs',     'Extra BACs',     $POS++, 'thresholds' => { 20000 => { 'navigation' => 'off', 'height' => 4, 'threshold' => 50000 } }, @_ );
+  $self->add_clone_track( 'ex_bac_map',        'BAC map',     $POS++, 'FEATURES' => 'bac_map', 'DATABASE' => 'otherfeatures', 'available' => 'database_tables ENSEMBL_OTHERFEATURES.misc_set',  @_ );
+  $self->add_clone_track( 'tilepath_cloneset', 'Mouse Tilepath', $POS++, 'on' => 'on', @_ );
+  $self->add_clone_track( 'tilepath',       'Human tilepath clones', $POS++, 'on' => 'on', @_ );
+  $self->add_clone_track( 'fosmid_map',     'Fosmid map',     $POS++, 'colour_set' => 'fosmids', 'thresholds' => { 20000 => { 'navigation' => 'off', 'height' => 4, 'threshold' => 50000 }}, @_ );
+}
+
+sub ADD_ALL_PROTEIN_FEATURES {
+  my $self = shift;
+  my $POS  = shift || 2200;
+  $self->add_new_track_protein( 'my_prots',            'My protiens',    $POS++, 'SUBTYPE' => 'my_prot', @_ );
+  $self->add_new_track_protein( 'swall',               'Proteins',       $POS++, @_ );
+  $self->add_new_track_protein( 'swall_blastx',        'Proteins',       $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot',             'UniProtKB',      $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot_SW',          'UniProtKB_SW',   $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot_TR',          'UniProtKB_TR',   $POS++, @_ );
+  $self->add_new_track_protein( 'Uniprot_wublastx',    'UniProtKB (v. genscans)',       $POS++, @_ );
+  $self->add_new_track_protein( 'Uniprot_mammal',      'UniProtKB (mammal)',       $POS++, @_ );
+  $self->add_new_track_protein( 'Uniprot_non_mammal',  'UniProtKB (non-mammal)',       $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot_vertebrate_mammal',  'UniProtKB (mammal)',       $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot_vertebrate_non_mammal',  'UniProtKB (non-mammal)',       $POS++, @_ );
+  $self->add_new_track_protein( 'uniprot_non_vertebrate',         'UniProtKB (non-vertebrate)',    $POS++, @_ );
+  $self->add_new_track_protein( 'drosophila-peptides', 'Dros. peptides', $POS++, @_ );
+  $self->add_new_track_protein( 'swall_high_sens',     'UniProtKB', $POS++, @_ );
+  $self->add_new_track_protein( 'anopheles_peptides',  'Mos. peptides',  $POS++,
+    'SUBTYPE'     => 'default' ,
+    'URL_KEY'     => 'ENSEMBL_ANOPHELES_ESTTRANS', 'ID' => TRIM, 'LABEL' => TRIM,
+  @_ );
+  $self->add_new_track_protein( 'chicken_protein',     'G.gallus pep', $POS++, @_ );
+  $self->add_new_track_protein( 'BeeProteinSimilarity','Bee pep. evid.',  $POS++, @_ );
+  $self->add_new_track_protein( 'riken_prot',          'Riken proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'wormpep',             'Worm proteins',  $POS++, @_ );
+  $self->add_new_track_protein( 'remaneipep',          'C.remanei proteins',  $POS++, @_ );
+  $self->add_new_track_protein( 'brigpep',             'C.briggsae proteins',  $POS++, @_ );
+  $self->add_new_track_protein( 'human-ipr',           'Human IPR',  $POS++, @_ );
+  $self->add_new_track_protein( 'Swissprot',           'UniProtKB/Swissprot',  $POS++, @_ );
+  $self->add_new_track_protein( 'TrEMBL',              'UniProtKB/TrEMBL',  $POS++, @_ );
+  $self->add_new_track_protein( 'flybase',             'FlyBase proteins',  $POS++, @_ );
+  $self->add_new_track_protein( 'sgd',                 'SGD proteins',  $POS++, @_ );
+  $self->add_new_track_protein( 'human_protein',       'Human proteins', $POS++, @_ );
+
+  $self->add_new_track_protein( 'human_refseq',        'Human RefSeqs', $POS++, @_ );
+  $self->add_new_track_protein( 'species_protein',     'Dog proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'platypus_protein', 'Platypus Proteins',   $POS++, @_ );
+
+  $self->add_new_track_protein( 'Btaurus_Exonerate_Protein',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'cow_proteins',        'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'aedes_protein',       'Aedes proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'cow_protein',         'Cow proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'horse_protein',    'Horse proteins',      $POS++, @_ );
+  $self->add_new_track_protein( 'orangutan_protein',   'Orangutan proteins',      $POS++, @_ );
+  $self->add_new_track_protein( 'medaka_protein',      'Medaka proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'fugu_protein',        'Fugu proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'fish_protein',        'Fish proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'macaque_protein',     'Macaque proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'macaque_refseq',      'Macaque RefSeqs', $POS++, @_ );
+  $self->add_new_track_protein( 'mouse_protein',       'Mouse proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'mouse_refseq',        'Mouse RefSeqs', $POS++, @_ );
+  $self->add_new_track_protein( 'opossum_protein',     'Opossum proteins',$POS++, @_ );
+  $self->add_new_track_protein( 'rodent_protein',      'Rodent proteins',$POS++, @_ );
+  $self->add_new_track_protein( 'stickleback_protein', 'Stickleback proteins', $POS++, @_);
+  $self->add_new_track_protein( 'lamprey_protein',        'Lamprey proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'mammal_protein',      'Mammal proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'other_protein',       'Other proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'other_proteins',      'Other proteins', $POS++, @_ );
+  $self->add_new_track_protein( 'GenomeUniprotBlast',  'Genome UniP.Bl.',   $POS++, @_ );
+  $self->add_new_track_protein( 'GenscanPeptidesUniprotBlast', 'Gen.Pep. UniP.BL.', $POS++, @_ );
+  $self->add_new_track_protein( 'BeeProteinBlast',     'Bee Protein blast', $POS++, @_ );
+  $self->add_new_track_protein( 'human_ensembl_peptides', 'Human e! peptides',  $POS++, 'URL_KEY' => 'HUMAN_PROTVIEW', @_ );
+  $self->add_new_track_protein( 'human_ensembl_proteins', 'Human e! proteins',  $POS++, 'URL_KEY' => 'HUMAN_PROTVIEW', @_ );
+  #$self->add_new_track_protein( 'ciona_jgi_v1',            'JGI 1.0 model', $POS++, @_ );
+  #$self->add_new_track_protein( 'ciona_kyotograil_2004',   "Kyotograil '04 model", $POS++, @_ );
+  #$self->add_new_track_protein( 'ciona_kyotograil_2005',   "Kyotograil '05 model", $POS++, @_ );
+  $self->add_new_track_protein( 'blastx',              'BLASTx', $POS++, @_ );
+  $self->add_new_track_protein( 'blastp',              'BLASTp', $POS++, @_ );
+  #$self->add_new_track_protein( 'kyotograil_2004',    "Kyotograil '04 model", $POS++, @_ );
+  #$self->add_new_track_protein( 'kyotograil_2005',    "Kyotograil '05 model", $POS++, @_ );
+#/* aedes additions */
+  $self->add_new_track_protein( 'Similarity_Diptera',   "Similarity Diptera", $POS++, @_ );
+  $self->add_new_track_protein( 'Similarity_Arthropoda',"Similarity Arthropoda", $POS++, @_ );
+  $self->add_new_track_protein( 'Similarity_Metazoa',   "Similarity Metazoa", $POS++, @_ );
+  $self->add_new_track_protein( 'Similarity_Eukaryota', "Similarity Eukaryota", $POS++, @_ );
+
+  $self->add_new_track_protein( 'AedesBlast',      "BLAST Aedes",$POS++, 'URL_KEY' => 'AEDESBLAST',  @_ );
+  $self->add_new_track_protein( 'DrosophilaBlast',      "BLAST Drosophila", $POS++, 'URL_KEY' => 'DROSOPHILABLAST', @_ );
+  $self->add_new_track_protein( 'UniprotBlast',         "BLAST UniProtKB", $POS++, @_ );
+  $self->add_new_track_protein( 'anopheles_protein',    "Anopheles protein", $POS++, @_ );
+  $self->add_new_track_protein( 'drosophila_protein',   "Dros. protein", $POS++, 'URL_KEY' => 'DROSOPHILABLAST',@_ );
+
+  $self->add_new_track_protein( 'DipteraBlast',    "BLAST Diptera", $POS++, @_ );
+  $self->add_new_track_protein( 'ArthropodaBlast', "BLAST Arthropoda", $POS++, @_ );
+  $self->add_new_track_protein( 'MetazoaBlast',    "BLAST Metazoa", $POS++, @_ );
+  $self->add_new_track_protein( 'EukaryotaBlast',  "BLAST Eukaryota", $POS++, @_ );
+  $self->add_new_track_protein( 'EverythingBlast', "BLAST All", $POS++, @_ );
+
+  my @EST_DB_ESTS_PROT = (
+    [ 'jgi_v1',        'JGI V1' ],
+    [ 'jgi_v2',        'JGI V2' ],
+  );
+  foreach ( @EST_DB_ESTS_PROT ) {
+    my($A,$B,@T) = @$_;
+    $self->add_new_track_est_protein( "otherfeatures_$A",  $B, $POS++,
+                              'FEATURES'  => $A, 'available' => "database_features ENSEMBL_OTHERFEATURES.$A",
+                              'THRESHOLD' => 0, 'DATABASE' => 'otherfeatures', @T, @_ );
+  }
+
+
+
+  return $POS;
+}
+
+sub ADD_ALL_PREDICTIONTRANSCRIPTS {
+  my $self = shift;
+  my $POS  = shift || 2100;
+  $self->add_new_track_predictiontranscript( 'fgenesh',   'Fgenesh',     'darkkhaki',       $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'augustus',  'Augustus',    'darkseagreen4',   $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'genscan',   'Genscan',     'lightseagreen',   $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'genefinder','Genefinder',  'darkolivegreen4', $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'snap',      'SNAP',        'darkseagreen4',   $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'snap_ciona','SNAP (Ciona)','darkseagreen4',   $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'slam',      'SLAM',        'darkgreen',       $POS ++, {}, @_ );
+  $self->add_new_track_predictiontranscript( 'gsc',       'Genscan',     'lightseagreen',   $POS ++, { 'Genoscope' => 'TETRAODON_ABINITIO' }, @_ );
+  $self->add_new_track_predictiontranscript( 'gid',       'Gene id',     'red',             $POS ++, { 'Genoscope' => 'TETRAODON_ABINITIO' }, @_ );
+  $self->add_new_track_predictiontranscript( 'gws_h',     'Genewise (Human)', 'orange',     $POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
+  $self->add_new_track_predictiontranscript( 'gws_s',     'Genewise (Mouse)', 'orange',     $POS ++, { 'Genoscope' => 'TETRAODON_GENEWISE' }, @_ );
+
+  return $POS;
+}
+
+sub ADD_SYNTENY_TRACKS {
+  my $self = shift;
+  my $POS = shift || 99900;
+  foreach( sort @{$self->{'species_defs'}->ENSEMBL_SPECIES} ) {
+    $self->add_new_synteny_track( $_, $self->{'species_defs'}->other_species( $_, 'SPECIES_COMMON_NAME' ), $POS++, @_ );
+  }
+}
+
+sub ADD_ALL_TRANSCRIPTS {
+  my $self = shift;
+  my $POS  = shift || 2000;
+  $self->add_new_track_transcript( 'ensembl',   'Ensembl genes',   'ensembl_gene',   $POS++, 'logic_name' => 'havana ensembl_havana_gene ensembl' );
+  $self->add_new_track_transcript( 'ensembl_projection',   'Ensembl proj. genes',   'ensembl_projection',   $POS++, @_ );
+  $self->add_new_track_transcript( 'ensembl_segment',      'Ig segments',           'ensembl_segment',   $POS++, @_ );
+  $self->add_new_track_transcript( 'evega',         'Vega Havana gene',      'vega_gene_havana',    $POS++, 'glyph' => 'evega_transcript', 'db' => 'vega', 'logic_name' => 'otter', 'available' => 'database_features ENSEMBL_VEGA.OTTER',  'on' => 'off',   @_ );
+  $self->add_new_track_transcript( 'evega_external','Vega External gene',    'vega_gene_external',  $POS++, 'glyph' => 'evega_transcript', 'db' => 'vega', 'logic_name' => 'otter_external', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL', 'on' => 'off',    @_ );
+  $self->add_new_track_transcript( 'flybase',   'Flybase genes',   'flybase_gene',   $POS++, @_ );
+  $self->add_new_track_transcript( 'vectorbase', 'Vectorbase genes', 'vectorbase_gene',   $POS++, @_ );
+  $self->add_new_track_transcript( 'wormbase',  'Wormbase genes',  'wormbase_gene',  $POS++, @_ );
+  $self->add_new_track_transcript( 'sgd',       'SGD genes',  'sgd_gene',  $POS++, @_ );
+  $self->add_new_track_transcript( 'genebuilderbeeflymosandswall',
+                                                'Bee genes',       'bee_gene',       $POS++, @_ );
+  $self->add_new_track_transcript( 'gsten',     'Genoscope genes', 'genoscope_gene', $POS++, 'logic_name' => 'gsten hox ctt', @_ );
+  $self->add_new_track_transcript( 'rna',       'ncRNA genes',     'rna_gene',       $POS++, 'available' => 'features NCRNA|MIRNA|TRNA|SNLRNA|SNORNA|SNRNA|RRNA','logic_name' => 'ncrna mirna trna snlrna snorna snrna rrna' ,  'compact' => 1,   @_ );
+  $self->add_new_track_transcript( 'erna',       'e! ncRNA genes', 'rna_gene',   $POS++, 'available' => 'features ensembl_ncRNA', 'logic_name' => 'ensembl_ncrna',  'legend_type' => 'rna',  'compact' => 1,      @_ );
+
+  $self->add_new_track_transcript( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_est_seqn',   "5' EST genes (Kyoto)",  'estgene',$POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_est_seqs',   "full insert cDNA clone",  'estgene',$POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_jgi_v1',     "JGI 1.0 models", 'ciona_gene',  $POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_kyotograil_2004',  "Kyotograil '04 model", 'ciona_gene',  $POS++, @_) ;
+  $self->add_new_track_transcript( 'ciona_kyotograil_2005',  "Kyotograil '05 model",  'ciona_gene', $POS++, @_) ;
+
+  $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene', $POS++, 'available' => 'features rodent_protein','logic_name' => 'rodent_protein',  @_ );
+  $self->add_new_track_transcript( 'mouse_protein',    'Refseq proteins', 'prot_gene',    $POS++, @_ );
+  $self->add_new_track_transcript( 'targettedgenewise',    'Targetted genewise genes', 'prot_gene',    $POS++, @_ );
+  $self->add_new_track_transcript( 'cdna_all',             'cNDA genes', 'prot_gene',    $POS++, @_ );
+  $self->add_new_track_transcript( 'refseq',    'Refseq proteins', 'refseq_gene',    $POS++, @_ );
+  $self->add_new_track_transcript( 'rprot',     'Rodent proteins', 'prot_gene',      $POS++, @_ );
+  $self->add_new_track_transcript( 'jamboree_cdnas',   'X.trop. jambo. genes',   'prot_gene',   $POS++, @_ );
+  $self->add_new_track_transcript( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++, @_ );
+  $self->add_new_track_transcript( 'oxford_fgu', 'Oxford FGU Genes', 'oxford_fgu', $POS++, @_ );
+  $self->add_new_track_transcript( 'platypus_olfactory_receptors', 'Olfactory receptor Genes', 'olfactory', $POS++, @_ );
+#  $self->add_new_track_transcript( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++, @_ );
+#  $self->add_new_track_transcript( 'medaka_protein',   'Medaka genes',   'medaka_gene',   $POS++, @_ );
+#  $self->add_new_track_transcript( 'fugu_protein', 'T.rubripes protein', 'fugu_protein', $POS++,  @_ );
+#  $self->add_new_track_transcript( 'lamprey_protein', 'Lamprey protein', 'lamprey_protein', $POS++,  @_ );
+  $self->add_new_track_transcript( 'gff_prediction',   'MGP genes',   'medaka_gene',   $POS++, @_ );
+
+  $self->add_new_track_transcript( 'dog_protein',   'Dog genes',   'dog_protein',   $POS++, @_ );
+  $self->add_new_track_transcript( 'species_protein', 'Dog protein',       'prot_gene', $POS++,  @_ );
+  $self->add_new_track_transcript( 'horse_protein', 'Horse protein', 'horse_protein', $POS++,  @_ );
+  $self->add_new_track_transcript( 'orangutan_protein', 'Orangutan protein', 'orangutan_protein', $POS++,  @_ );
+  $self->add_new_track_transcript( 'human_one2one_mus_orth', 'Hs/Mm orth', 'prot_gene', $POS++,  @_ );
+  $self->add_new_track_transcript( 'human_one2one_mouse_cow_orth', 'Hs/Mm orth', 'prot_gene', $POS++,  @_ );
+  $self->add_new_track_transcript( 'human_ensembl_proteins',   'Human genes',   'human_ensembl_proteins_gene',   $POS++, @_ );
+  $self->add_new_track_transcript( 'mus_one2one_human_orth', 'Ms/Hs orth', 'prot_gene', $POS++,  @_ );
+
+  $self->add_new_track_transcript( 'cow_proteins',   'Cow genes',   'cow_protein',   $POS++, @_ );
+ # $self->add_new_track_transcript( 'vectorbase_0_5',   'VectorBase genes',   'vectorbase_0_5',   $POS++, @_ );
+  $self->add_new_track_transcript( 'tigr_0_5',   'TIGR genes',   'tigr_0_5',   $POS++, @_ );
+  $self->add_new_track_transcript( 'homology_low', 'Bee genes',    'bee_pre_gene',   $POS++, @_ );
+  # trancripts for Vega
+  $self->add_new_track_transcript('vega_eucomm', 'KO genes (EUCOMM)', 'vega_gene_eucomm',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_eucomm',
+    'available'=>'features VEGA_GENES_OTTER_EUCOMM', @_);
+  $self->add_new_track_transcript('vega_komp', 'KO genes (KOMP)', 'vega_gene_komp',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_komp',
+    'available'=>'features VEGA_GENES_OTTER_KOMP', @_);
+  $self->add_new_track_transcript('vega', 'Havana genes', 'vega_gene_havana',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter',
+    'available'=>'features VEGA_GENES_OTTER', @_);
+  $self->add_new_track_transcript('vega_corf', 'CORF genes', 'vega_gene_corf',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_corf',
+    'available'=>'features VEGA_GENES_OTTER_CORF', @_);
+   $self->add_new_track_transcript('vega_external', 'External genes', 'vega_gene_external',
+    $POS++, 'glyph' => 'vega_transcript', 'logic_name' => 'otter_external',
+    'available'=>'features VEGA_GENES_OTTER_EXTERNAL', @_);
+## OTHER FEATURES DATABASE TRANSCRIPTS....
+  $self->add_new_track_transcript( 'est',       'EST genes',       'est_gene', $POS++,'db' => 'otherfeatures',
+    'available' => 'database_features ENSEMBL_OTHERFEATURES.estgene',  'compact'     => 1,  @_ );
+
+  $self->add_new_track_transcript( 'oxford_fgu_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++, 'db' => 'otherfeatures', 
+    'available' => "database_features ENSEMBL_OTHERFEATURES.oxford_fgu", @_ );
+  $self->add_new_track_transcript( 'medaka_transcriptcoalescer', 'EST Genes',     'medaka_genes',$POS++, 'db' => 'otherfeatures',
+    'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_transcriptcoalescer" , @_ );
+  $self->add_new_track_transcript( 'medaka_genome_project', 'MGP Genes',     'medaka_genes',$POS++,'db' => 'otherfeatures',
+    'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_genome_project", @_ );
+  $self->add_new_track_transcript( 'singapore_est', 'Singapore EST Genes', 'est_gene', $POS++, 'db' => 'otherfeatures',
+     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_est", @_ );
+  $self->add_new_track_transcript( 'singapore_protein', 'Singapore Protein Genes', 'prot_gene', $POS++, 'db' => 'otherfeatures',
+     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_protein", @_ );
+  $self->add_new_track_transcript( 'chimp_cdna', 'Chimp cDNA Genes', 'chimp_genes', $POS++, 'db' => 'otherfeatures',
+     'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_cdna", @_ );
+  $self->add_new_track_transcript( 'human_cdna', 'Human cDNA Genes', 'chimp_genes', $POS++, 'db' => 'otherfeatures',
+     'available' => "database_features ENSEMBL_OTHERFEATURES.human_cdna", @_ );
+  $self->add_new_track_transcript( 'chimp_est', 'Chimp EST Genes', 'chimp_genes', $POS++,'db' => 'otherfeatures',
+     'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_est", @_ );
+  return $POS;
+}
+
+sub ADD_ALL_OLIGO_TRACKS {
+  my $self = shift;
+  my $POS  = shift || 4000;
+  return $POS;
+  my %T = map { %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'}||{} } }
+          keys %{$self->{'species_defs'}{'_storage'}};
+#  foreach (keys %{$self->{'species_defs'}{'_storage'}}) {
+#    warn "$_\n  ",join "\n  ", keys %{ $self->{'species_defs'}{'_storage'}->{$_}{'OLIGO'} };
+#  }
+  my @OLIGO = sort keys %T;
+  foreach my $chipset (@OLIGO) {
+    ( my $T = lc($chipset) ) =~ s/\W/_/g;
+    ( my $T2 = $chipset ) =~ s/Plus_/+/i;
+    $self->xadd_track(
+      $T, 'on' => 'off', 'pos' => $POS++, 'str' => 'b', '_menu' => 'features', 
+          'caption' => "OLIGO $T2",
+          'dep' => 6,
+      'col' => 'springgreen4',
+      'compact'   => 0,
+      'available' => "features oligo_$T",
+      'glyphset'  => 'generic_microarray',
+      'FEATURES'  => $chipset,
+    );
+  }
+  return $POS;
+}
+
+sub ADD_SIMPLE_TRACKS {
+  my $self = shift;
+  my $POS  = shift || 7500;
+  $self->add_new_simple_track( 'abberation_junction',      'Abberation junction', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'enhancer',                 'Enhancer',            'red', $POS++, @_ ); 
+  $self->add_new_simple_track( 'transcription_start_site', 'Transcription start site', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'regulatory_region',        'Regulatory region', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'regulatory_search_region',  'Regulatory search region', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'mature_peptide',           'Mature peptide',      'red', $POS++, @_ );
+  $self->add_new_simple_track( 'insertion_site',           'Insertion site',      'red', $POS++, @_ );
+  $self->add_new_simple_track( 'protein_binding_site',     'Protein binding site','red', $POS++, @_ );
+  $self->add_new_simple_track( 'scaffold',                 'Scaffold',            'red', $POS++, @_ );
+  $self->add_new_simple_track( 'allele',                   'Allele',              'red', $POS++, @_ );
+#  $self->add_new_simple_track( 'RNAi',                     'RNAi',              'red', $POS++, @_ );
+  $self->add_new_simple_track( 'fosmid',                   'Fosmid',              'red', $POS++, @_ );
+  $self->add_new_simple_track( 'transposable_element_insertion_site', 'Transposable element insertion site', 'red', $POS++, @_ );
+  $self->add_new_simple_track( 'transposable_element',     'Transposable element','red', $POS++, @_ );
+  $self->add_new_simple_track( 'rescue_fragment',          'Rescue fragment',     'red', $POS++, @_ );
+  $self->add_new_simple_track( 'signal_peptide',           'Signal peptide',      'red', $POS++, @_ );
+  $self->add_new_simple_track( 'MMC2_probes',              'MMC2 probes',         'red', $POS++, @_ );
+  $self->add_new_simple_track( 'oligo',                    'Oligo',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'deletion',                    'Deletion',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'sequence_variant',                    'Sequence variant',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'transposable_element_insertion',                    'Transposable element insertion',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'transposable_element_target_duplication',                    'Transposable element target duplication',               'red', $POS++, @_ );
+  $self->add_new_simple_track( 'uncharacterized_change_in_nucleotide_seq',                    'Uncharacterized changed in nucleotide seq',               'red', $POS++, @_ );
+
+  # some simple features are configured in contigview
+}
+
+
+sub ADD_GENE_TRACKS {
+  my $self = shift;
+  my $POS  = shift || 2000;
+  $self->add_new_track_gene( 'ensembl', 'Ensembl Genes', 'ensembl_gene', $POS++,
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
+    'logic_name'           => 'ensembl psuedogene havana ensembl_havana_gene', @_
+  );
+  $self->add_new_track_gene( 'otter', 'Vega Havana Genes', 'vega_gene_havana', $POS++,
+                             'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER',
+                             'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->status; },
+                             'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
+                             'glyphset' => 'evega_gene', 'label_threshold' => 500, 'on' => 'off', 
+                               @_ );
+  $self->add_new_track_gene( 'otter_external', 'Vega External Genes', 'vega_gene_external', $POS++,
+                             'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',
+                              'gene_col'            => sub { return $_[0]->biotype.'_'.$_[0]->status; },
+                             'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
+                             'glyphset' => 'evega_gene', 'label_threshold' => 500, 'on' => 'off', 
+                              @_ );
+  $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
+    'logic_name'           => 'flybase pseudogene', @_
+  );
+  $self->add_new_track_gene( 'vectorbase', 'Vectorbase Genes', 'vectorbase_gene', $POS++,
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
+    'logic_name'           => 'vectorbase pseudogene', @_
+  );
+  $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
+    'logic_name'           => 'wormbase pseudogene', @_
+  );
+  $self->add_new_track_gene( 'genebuilderbeeflymosandswall', 'Bee Genes', 'bee_gene', $POS++,
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
+    @_
+  );
+  $self->add_new_track_gene( 'SGD', 'SGD Genes', 'sgd_gene', $POS++,
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
+    @_
+  );
+  $self->add_new_track_gene( 'human_ensembl_proteins', 'Human Genes', 'human_ensembl_proteins_gene', $POS++,
+    'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+    'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : $_[0]->analysis->logic_name.'_'.$_[0]->biotype.'_'.$_[0]->status          },
+    @_
+  );
+
+  $self->add_new_track_gene( 'Homology_low', 'Bee Genes', 'bee_pre_gene', $POS++,
+    'gene_col'   => sub { return $_[0]->analysis->logic_name },
+    'gene_label' => sub { return $_[0]->stable_id },
+    'logic_name' => 'Homology_low Homology_medium Homology_high BeeProtein'
+  );
+  $self->add_new_track_gene( 'oxford_FGU', 'Oxford FGU Genes', 'oxford_fgu', $POS++,
+    'gene_col'   => 'oxford_fgu',
+    'gene_label' => sub { return $_[0]->stable_id }, @_
+  );
+  $self->add_new_track_gene( 'platypus_olfactory_receptors', 'Olfactory Recep Genes', 'olfactory', $POS++,
+    'gene_col'   => 'olfactory',
+    'gene_label' => sub { return $_[0]->stable_id }, @_
+  );
+
+  $self->add_new_track_gene( 'gsten', 'Genoscope Genes', 'genoscope_gene', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => sub { return $_[0]->biotype eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
+    'logic_name'           => 'gsten hox cyt', @_
+  );
+  $self->add_new_track_gene( 'dog_protein', 'Dog proteins', 'dog_protein', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'dog_protein' , @_
+  );
+
+  $self->add_new_track_gene( 'ensembl_projection', 'Ensmebl projection', 'ensembl_projection', $POS++,
+    'gene_label'           => sub { return $_[0]->external_name || $_[0]->stable_id },
+    'gene_col'             => sub { return 'ensembl_projection_'.$_[0]->biotype.'_'.$_[0]->status; },
+    @_
+  );
+
+  $self->add_new_track_gene( 'ensembl_segment', 'Ensembl segment', 'ensembl_segment', $POS++,
+    'gene_label'           => sub { return $_[0]->external_name || $_[0]->stable_id },
+    'gene_col'             => sub { return 'ensembl_segment_'.$_[0]->biotype.'_'.$_[0]->status; },
+    @_
+  );
+
+  $self->add_new_track_gene( 'Cow_proteins', 'Cow proteins', 'cow_protein', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'cow_protein', @_
+  );
+  $self->add_new_track_gene( 'horse_protein', 'Horse proteins', 'horse_protein', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'horse_protein' , @_
+  );
+  $self->add_new_track_gene( 'orangutan_protein', 'Orangutan proteins', 'orangutan_protein', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'orangutan_protein' , @_
+  );
+  $self->add_new_track_gene( 'oxford_genes', 'Oxford Genes', 'oxford_genes', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'oxford', @_
+  );
+   $self->add_new_track_gene( 'fugu_protein', 'T.rubripes proteins', 'fugu_protein', $POS++,
+     'gene_label'           => sub { return $_[0]->stable_id },
+     'gene_col'             => 'fugu_protein' , @_
+   );
+   $self->add_new_track_gene( 'lamprey_protein', 'Lamprey proteins', 'lamprey_protein', $POS++,
+     'gene_label'           => sub { return $_[0]->stable_id },
+     'gene_col'             => 'lamprey_protein' , @_
+   );
+
+#  $self->add_new_track_gene( 'platypus_protein', 'Platypus/Other Genes', 'platypus_protein', $POS++,
+#    'logic_name'           => 'platypus_protein other_protein',
+#    'gene_label'           => sub { return $_[0]->stable_id },
+#    'gene_col'             => sub { return $_[0]->analysis->logic_name }, @_
+#  );
+
+
+#  $self->add_new_track_gene( 'VectorBase_0_5', 'VectorBase proteins', 'vectorbase_0_5', $POS++,
+#    'gene_label'           => sub { return $_[0]->stable_id },
+#    'gene_col'             => 'vectorbase_0_5', @_
+#  );
+
+  $self->add_new_track_gene( 'TIGR_0_5', 'TIGR proteins', 'tigr_0_5', $POS++,
+    'gene_label'           => sub { return $_[0]->stable_id },
+    'gene_col'             => 'tigr_0_5', @_
+  );
+
+  $self->add_new_track_gene( 'medaka_protein',  "Medaka protein",  'medaka_gene', $POS++, 'gene_col' => 'medaka_protein' , @_ );
+  $self->add_new_track_gene( 'gff_prediction',  "MGP genes",       'medaka_gene', $POS++, 'gene_col' => 'gff_prediction', @_ );
+
+  $self->add_new_track_gene( 'species_protein', 'Dog protein', 'prot_gene', $POS++, @_ );
+  $self->add_new_track_gene( 'human_one2one_mus_orth', 'Hs/Mm orth', 'prot_gene', $POS++, @_ );
+  $self->add_new_track_gene( 'human_one2one_mouse_cow_orth', 'Hs/Mm orth', 'prot_gene', $POS++, @_ );
+  $self->add_new_track_gene( 'mus_one2one_human_orth', 'Ms/Hs orth', 'prot_gene', $POS++, @_ );
+
+  $self->add_new_track_gene( 'jamboree_cdnas',  "X.trop. Jambo",  'prot_gene', $POS++,
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+
+  $self->add_new_track_gene( 'ncrna', 'ncRNA Genes', 'rna_gene', $POS++,
+                             'logic_name' => 'miRNA tRNA ncRNA snRNA snlRNA snoRNA rRNA',
+                             'available' => 'features ncrna|miRNA', 'label_threshold' => 100, 'on' => 'off',
+                             'gene_col' => sub { return ($_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real').($_[0]->status) }, @_ );
+  $self->add_new_track_gene( 'ensembl_ncrna', 'e! ncRNA Genes', 'rna_gene', $POS++, 'legend_type' => 'gene_ncrna',
+                             'gene_col' => sub { return $_[0]->biotype =~ /pseudo/i ? 'rna-pseudo' : 'rna-real' }, @_ );
+  $self->add_new_track_gene( 'refseq', 'RefSeq Genes', 'refseq_gene', $POS++, 'gene_col' => '_refseq',  @_ );
+  $self->add_new_track_gene( 'mouse_protein', 'Mouse Protein Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
+  $self->add_new_track_gene( 'targettedgenewise', 'Targetted Genewise Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
+  $self->add_new_track_gene( 'cdna_all', 'cDNA Genes', 'prot_gene', $POS++, 'gene_col' => '_col',  @_ );
+  $self->add_new_track_gene( 'medaka_transcriptcoalescer', 'EST Genes',     'medaka_genes',
+    $POS++, 'database' => 'otherfeatures', 'gene_col' => 'transcriptcoalescer',
+    'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_transcriptcoalescer" ,
+    'label_threshold' => 500,
+    @_ );
+  $self->add_new_track_gene( 'medaka_genome_project', 'MGP Genes',     'medaka_genes',
+    $POS++, 'database' => 'otherfeatures', 'gene_col' => 'genome_project',
+    'available' => "database_features ENSEMBL_OTHERFEATURES.medaka_genome_project",
+    'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'oxford_fgu_ext', 'Oxford FGU Genes', 'oxford_fgu', $POS++,
+    'gene_col'   => 'oxford_fgu', 'gene_label' => sub { return $_[0]->stable_id },
+    'database' => 'otherfeatures', 'logic_name' => 'oxford_fgu',
+    'available' => "database_features ENSEMBL_OTHERFEATURES.oxford_fgu",
+    @_
+  );
+  $self->add_new_track_gene( 'singapore_est', 'Singapore EST Genes', 'est_gene', $POS++,
+     'database' => 'otherfeatures', 'gene_col' => 'estgene', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_est",
+     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'singapore_protein', 'Singapore Protein Genes', 'prot_gene',
+     $POS++, 'database' => 'otherfeatures', 'gene_col' => '_col', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.singapore_protein",
+     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'chimp_cdna', 'Chimp cDNA Genes', 'chimp_genes', $POS++,
+     'database' => 'otherfeatures', 'gene_col' => 'chimp_cdna', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_cdna",
+     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'chimp_cdna', 'Human cDNA Genes', 'chimp_genes', $POS++,
+     'database' => 'otherfeatures', 'gene_col' => 'human_cdna', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.human_cdna",
+     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'chimp_est', 'Chimp EST Genes', 'chimp_genes', $POS++,
+     'database' => 'otherfeatures', 'gene_col' => 'chimp_est', 
+     'available' => "database_features ENSEMBL_OTHERFEATURES.chimp_est",
+     'label_threshold' => 500,
+     @_ );
+  $self->add_new_track_gene( 'estgene', 'EST Genes', 'est_gene', $POS++,
+                             'database' => 'otherfeatures',
+                             'available' => 'database_features ENSEMBL_OTHERFEATURES.estgene',
+                             'logic_name' => 'genomewise estgene', 'label_threshold' => 500, # 'on' => 'off',
+                             'gene_col' => 'estgene', 'on'=>'off',@_ );
+
+#for genes in Vega
+  $self->add_new_track_gene('vega_eucomm_gene', 'KO genes (EUCOMM)', 'vega_gene_eucomm', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EUCOMM', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_eucomm', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene('vega_komp_gene', 'KO genes (KOMP)', 'vega_gene_komp', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EUCOMM', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_komp', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene( 'vega_gene', 'Havana Genes', 'vega_gene_havana', $POS++,
+    'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene_corf', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_CORF', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_);
+  $self->add_new_track_gene( 'vega_external_gene', 'External Genes', 'vega_gene_external', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EXTERNAL', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_external', 'gene_col' => 'vega_gene', @_);
+   $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'targettedgenewise', "Targetted genewise", 'prot_gene', $POS++, 'available' => 'features TargettedGenewise', 'logic_name' => 'TargettedGenewise', 'gene_col' => '_col', @_ );
+  $self->add_new_track_gene( 'cdna_all', "Aligned genes", 'prot_gene', $POS++, 'gene_col' => 'cdna_all', @_ );
+
+  $self->add_new_track_gene( 'ciona_dbest_ncbi', "3/5' EST genes (dbEST)", 'estgene', $POS++, 'on' => 'off', 
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_est_seqc',   "3' EST genes (Kyoto)", 'estgene', $POS++, 'on' => 'off',
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_est_seqn',   "5' EST genes (Kyoto)",  'estgene',$POS++, 'on' => 'off',
+                             'gene_label' => sub { return $_[0]->stable_id } , 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_est_seqs',   "full insert cDNA clone",  'estgene',$POS++, 'on' => 'off',
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_jgi_v1',     "JGI 1.0 models", 'ciona_gene',  $POS++,
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_kyotograil_2004',  "Kyotograil '04 model", 'ciona_gene',  $POS++,
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  $self->add_new_track_gene( 'ciona_kyotograil_2005',  "Kyotograil '05 model",  'ciona_gene', $POS++,
+                             'gene_label' => sub { return $_[0]->stable_id }, 'gene_col' => sub { return $_[0]->biotype }, @_ );
+  return $POS;
+}
+
+sub ADD_ALL_AS_TRANSCRIPTS {
+    my $self = shift;
+    my $POS  = shift || 2000;
+    $self->add_new_track_transcript( 'ensembl',   'Ensembl genes',   'ensembl_gene',   $POS++, @_ );
+    $self->add_new_track_transcript( 'evega',         'Vega Havana gene',      'vega_gene_havana',    $POS++, 'glyph' => 'evega_transcript', 'logic_name' => 'otter', 'available' => 'database_features ENSEMBL_VEGA.OTTER',    @_ );
+    $self->add_new_track_transcript( 'evega_external','Vega External gene',    'vega_gene_external',  $POS++, 'glyph' => 'evega_transcript', 'logic_name' => 'otter_external', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',    @_ );
+    return $POS;
+}
+
+sub ADD_AS_GENE_TRACKS {
+    my $self = shift;
+    my $POS  = shift || 2000;
+    $self->add_new_track_gene( 'ensembl', 'Ensembl Genes', 'ensembl_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       'logic_name'           => 'ensembl psuedogene', @_
+			       );
+
+    $self->add_new_track_gene( 'flybase', 'Flybase Genes', 'flybase_gene', $POS++,
+     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+     'logic_name'           => 'flybase psuedogene', @_
+			       );
+
+     $self->add_new_track_gene( 'vectorbase', 'Vectorbase Genes', 'vectorbase_gene', $POS++,
+     'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+     'logic_name'           => 'vectorbase psuedogene', @_
+			       );
+
+   $self->add_new_track_gene( 'wormbase', 'Wormbase Genes', 'wormbase_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       'logic_name'           => 'wormbase psuedogene', @_
+			       );
+    $self->add_new_track_gene( 'genebuilderbeeflymosandswall', 'Bee Genes', 'bee_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       @_
+			       );
+    $self->add_new_track_gene( 'SGD', 'SGD Genes', 'sgd_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? 'Bac. cont.' : ( $_[0]->biotype eq 'pseudogene' ? 'Pseudogene' : ( $_[0]->external_name || 'NOVEL' ) ) },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'bacterial_contaminant' ? '_BACCOM'    : ( $_[0]->biotype eq 'pseudogene' ? '_PSEUDO'    : '_'.$_[0]->external_status          ) },
+			       @_
+			       );
+  $self->add_new_track_gene( 'gsten', 'Genoscope Genes', 'genoscope_gene', $POS++,
+			       'gene_label'           => sub { return $_[0]->stable_id },
+			       'gene_col'             => sub { return $_[0]->biotype eq 'Genoscope_predicted' ? '_GSTEN'    : '_HOX' },
+			       'logic_name'           => 'gsten hox cyt', @_
+			       );
+  #not sure this is actually used!!
+  $self->add_new_track_gene( 'otter', 'Vega Havana Genes', 'vega_gene_havana', $POS++,
+                             'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER',
+                             'gene_col'             => sub { return $_[0]->biotype.'_'.$_[0]->status; },
+                             'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
+                             'glyphset' => 'evega_gene',
+                               @_ );
+  $self->add_new_track_gene( 'otter_external', 'Vega External Genes', 'vega_gene_external', $POS++,
+                             'database' => 'vega', 'available' => 'database_features ENSEMBL_VEGA.OTTER_EXTERNAL',
+                              'gene_col'            => sub { return $_[0]->biotype.'_'.$_[0]->status; },
+                             'gene_label'           => sub { $_[0]->external_name || $_[0]->stable_id; },
+                             'glyphset' => 'evega_gene',
+                              @_ );    
+    #for genes in Vega
+    $self->add_new_track_gene('vega_eucomm_gene', 'EUCOMM KO genes', 'vega_gene_eucomm', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EUCOMM', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_eucomm', 'gene_col' => 'vega_gene', @_);
+    $self->add_new_track_gene('vega_komp_gene', 'KOMP KO genes', 'vega_gene_komp', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_KOMP', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_komp', 'gene_col' => 'vega_gene', @_);
+    $self->add_new_track_gene( 'vega_gene', 'Vega Genes', 'vega_gene', $POS++,
+	'available' => 'features VEGA_GENES_OTTER', 'glyphset' => 'vega_gene',
+	'logic_name' => 'otter', 'gene_col' => 'vega_gene', @_);
+    $self->add_new_track_gene( 'vega_corf_gene', 'CORF Genes', 'vega_gene', $POS++,
+	'available' => 'features VEGA_GENES_OTTER_CORF', 'glyphset' => 'vega_gene',
+	'logic_name' => 'otter_corf', 'gene_col' => 'vega_gene', @_); 
+	$self->add_new_track_gene( 'vega_external_gene', 'External Genes', 'vega_gene_external', $POS++,
+    'available' => 'features VEGA_GENES_OTTER_EXTERNAL', 'glyphset' => 'vega_gene',
+    'logic_name' => 'otter_external', 'gene_col' => 'vega_gene', @_);
+    return $POS;
+}
+
+sub ADD_ALL_PROTEIN_FEATURE_TRACKS {
+  my $self = shift;
+  my $POS = shift || 2000;
+  $self->add_protein_domain_track( 'Prints', 'PRINTS', $POS++ );
+  $self->add_protein_domain_track( 'PrositePatterns', 'Prosite patterns', $POS++ );
+  $self->add_protein_domain_track( 'scanprosite',     'Prosite patterns', $POS++ );
+  $self->add_protein_domain_track( 'PrositeProfiles', 'Prosite profiles', $POS++ );
+  $self->add_protein_domain_track( 'pfscan',          'Prosite profiles', $POS++ );
+
+  $self->add_protein_domain_track( 'Pfam', 'Pfam', $POS++ );
+  $self->add_protein_domain_track( 'Tigrfam', 'TIGRFAM', $POS++ );
+  $self->add_protein_domain_track( 'Superfamily', 'SUPERFAMILY', $POS++ );
+  $self->add_protein_domain_track( 'Smart', 'SMART', $POS++ );
+  $self->add_protein_domain_track( 'PIRSF', 'PIR SuperFamily', $POS++ );
+
+  $self->add_protein_feature_track( 'ncoils',  'Coiled coils',      $POS++ );
+  $self->add_protein_feature_track( 'SignalP', 'Sig.Pep cleavage',  $POS++ );
+  $self->add_protein_feature_track( 'Seg',     'Low complex seq',   $POS++ );
+  $self->add_protein_feature_track( 'tmhmm',   'Transmem helices',  $POS++ );
+}
+
+sub ADD_ALL_PROTEIN_FEATURE_TRACKS_GSV {
+  my $self = shift;
+  my $POS = shift || 2000;
+  $self->add_GSV_protein_domain_track( 'Prints', 'PRINTS', $POS++ );
+  $self->add_GSV_protein_domain_track( 'PrositePatterns', 'Prosite patterns', $POS++ );
+  $self->add_GSV_protein_domain_track( 'scanprosite',     'Prosite patterns', $POS++ );
+  $self->add_GSV_protein_domain_track( 'PrositeProfiles', 'Prosite profiles', $POS++ );
+  $self->add_GSV_protein_domain_track( 'pfscan',          'Prosite profiles', $POS++ );
+
+  $self->add_GSV_protein_domain_track( 'Pfam',            'PFam', $POS++ );
+  $self->add_GSV_protein_domain_track( 'Tigrfam',         'TIGRFAM', $POS++ );
+  $self->add_GSV_protein_domain_track( 'Superfamily',     'SUPERFAMILY', $POS++ );
+  $self->add_GSV_protein_domain_track( 'Smart',           'SMART', $POS++ );
+  $self->add_GSV_protein_domain_track( 'PIRSF',           'PIR SuperFamily', $POS++ );
 }
 
 1;
