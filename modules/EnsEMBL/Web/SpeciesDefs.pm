@@ -465,7 +465,7 @@ sub _parse {
       $plugin_locator->parameters( [$species] );
       $plugin_locator->call( 'species' );
       $plugin_locator->call( '_munge_das' );                                               $self->_info_line( '** DAS **', "$species DAS sources" );
-      lock_nstore( $das_tree->{ $species } || {}, $das_packed );
+      lock_nstore( $das_tree->{ $species }||{}, $das_packed );
     }
     $self->_merge_db_tree( $tree, $das_tree, $species );
 #  }
@@ -532,6 +532,10 @@ sub multidb {
   return exists( $CONF->{'_storage'}{'MULTI'}{'databases'} ) ? $CONF->{'_storage'}{'MULTI'}{'databases'} : undef;
 }
 
+sub multi_hash {
+  my $self = shift;
+  return $CONF->{'_storage'}{'MULTI'};
+}
 sub multi {
   ### a
   ### Arguments: configuration type (string), species name (string)
