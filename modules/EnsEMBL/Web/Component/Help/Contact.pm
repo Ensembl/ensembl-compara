@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
+use EnsEMBL::Web::Form;
 use CGI qw(escapeHTML);
 
 sub _init {
@@ -19,7 +20,7 @@ sub content {
 
   my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/SendEmail", 'get' );
 
-  if ($object->param('kw')) {
+  if ($object->param('strong')) {
     $form->add_element(
       'type' => 'Information',
       'value' => 'Sorry, no pages were found containing the term <strong>'.$object->param('kw')
