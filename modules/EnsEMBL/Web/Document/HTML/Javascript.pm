@@ -6,7 +6,12 @@ use warnings;
 
 @EnsEMBL::Web::Document::HTML::Javascript::ISA = qw(EnsEMBL::Web::Document::HTML);
 
-sub new { return shift->SUPER::new( 'scripts' => '', 'sources' => {} ); }
+sub new {
+  my $class = shift;
+  my $self = $class->SUPER::new( 'scripts' => '', 'sources' => {} );
+  $self->add_script( 'var ENSEMBL_START_TIME=new Date();' );
+  return $self;
+}
 
 sub add_source { 
   my( $self, $src ) = @_;
