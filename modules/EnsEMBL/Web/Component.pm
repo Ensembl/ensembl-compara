@@ -270,7 +270,7 @@ sub _warn_block {
   my $width       = 128;
   my $border_char = '#';
   my $template = sprintf "%s %%-%d.%ds %s\n", $border_char, $width-4,$width-4, $border_char;
-  my $line     = $border_charx$width;
+  my $line     = $border_char x $width;
   warn "\n";
   warn "$line\n";
   $Text::Wrap::columns = $width-4;
