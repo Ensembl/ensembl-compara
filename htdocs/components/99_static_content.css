@@ -5,8 +5,11 @@
 ***********************************************************************/
 
 /*----------------------------------------------------------------------
-  Footnotes
+  References, footnotes, etc
 ----------------------------------------------------------------------*/
+
+.ref-author { font-weight:bold; }
+.ref-pub { font-style:italic; }
 
 /* for arrows and other non-text links */
 a.notext { text-decoration:none; }
