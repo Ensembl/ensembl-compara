@@ -13,6 +13,10 @@ sub _end   {
   my $self = shift;
 }
 
+sub add_row {
+  my $self = shift;
+
+}
 sub render {
   my( $self, $first ) = @_;
   my $content = '';
@@ -29,7 +33,13 @@ sub render {
 
 sub _error {
   my( $self, $caption, $body ) = @_;
-  $self->add_row( $caption, $body );
+  $self->printf( '
+<h1>AJAX error - %s</h1>
+<pre>
+%s
+</pre>',
+    $caption, $body
+  );
 }
 
 1;
