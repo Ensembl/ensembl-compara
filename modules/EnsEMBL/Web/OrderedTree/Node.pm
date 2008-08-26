@@ -44,11 +44,13 @@ sub nodes {
   return map { $self->get_node( $_ ) } grep { $self->_node($_)->{left} >= $l1 && $self->_node($_)->{left} < $r1 } $self->_sorted_keys;
 }
 
-sub left        { $_[0]->_node()->{left};       }
-sub right       { $_[0]->_node()->{right};      }
-sub key         { $_[0]->{_key};               }
-sub data        { $_[0]->_node()->{data};       }
-sub parent_key  { $_[0]->_node()->{parent_key}; }
+sub left        { $_[0]->_node()->{left};                }
+sub right       { $_[0]->_node()->{right};               }
+sub key         { $_[0]->{_key};                         }
+sub data        { $_[0]->_node()->{data};                }
+sub get         { $_[0]->_node()->{data}{$_[1]};         }
+sub set         { $_[0]->_node()->{data}{$_[1]} = $_[2]; }
+sub parent_key  { $_[0]->_node()->{parent_key};          }
 
 sub _sorted_keys {
   my $self = shift;
