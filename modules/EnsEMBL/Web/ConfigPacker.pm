@@ -75,14 +75,15 @@ sub _summarise_generic {
 #---------- Meta table (everything except patches)
   if( $self->_table_exists( $db_name, 'meta' ) ) {
     $t_aref  = $dbh->selectall_arrayref(
-      'select meta_key,meta_value,meta_id,species_id 
+      'select meta_key,meta_value,meta_id, species_id
          from meta
         where meta_key != "patch"
         order by meta_key, meta_id'
     );
     my $hash = {};
     foreach my $r( @$t_aref) {
-      push @{ $hash->{$r->[0]} }, $r->[1], $r->[3];
+      warn "... $r->[3] $r->[0] ... $r->[1]";
+      push @{ $hash->{$r->[3]}{$r->[0]}}, $r->[1];
     }
     $self->db_details($db_name)->{'meta_info'} = $hash;
   }
@@ -152,13 +153,14 @@ sub _summarise_core_tables {
 # * Oligos
 #
   $t_aref = $dbh->selectall_arrayref(
-    'select aa.name, count(*)
-       from oligo_array as aa, oligo_probe as ap
-      where aa.oligo_array_id = ap.oligo_array_id
-      group by aa.name'
+    'select a.name,count(*) as n
+       from oligo_array as a straight_join oligo_probe as p on
+            a.oligo_array_id=p.oligo_array_id straight_join oligo_feature f on
+            p.oligo_probe_id=f.oligo_probe_id
+      group by a.name'
   );
   foreach my $row (@$t_aref) {
-    $self->db_details($db_name)->{'tables'}{'oligo_probe'}{'arrays'}{$row->[0]} = $row->[1];
+    $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$row->[0]} = $row->[1];
   }
 #  
 # * Repeats
@@ -182,7 +184,7 @@ sub _summarise_core_tables {
       where mfms.misc_set_id = ms.misc_set_id
       group by ms.misc_set_id'
   );
-  $self->db_details($db_name)->{'tables'}{'misc_features'}{'sets'} = { map {
+  $self->db_details($db_name)->{'tables'}{'misc_feature'}{'sets'} = { map {
     ( $_->[0] => { 'name' => $_->[1], 'desc' => $_->[2], 'count' => $_->[3], 'max_length' => $_->[4] })
   } @$t_aref };
 
@@ -243,28 +245,17 @@ sub _summarise_variation_db {
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   $self->_summarise_generic( $db_name, $dbh );
-  my $t_aref = $dbh->selectall_arrayref( 'select name from source' );
+  my $t_aref = $dbh->selectall_arrayref( 'select source_id,name from source' );
 #---------- Add in information about the sources from the source table
-  $self->db_details($db_name)->{'sources'} = map { ($_,1) } @$t_aref;
-  foreach my $row (@$t_aref){
-    $self->db_tree->{'VARIATION_SOURCES'}{$row->[0]} = $row->[1];
-  } 
-
-  ##  Add strain information
-  my $t_aref = $dbh->selectall_arrayref(
-   'select count(*) from meta where meta_key = "individual.default_strain"'
-  ); 
-  foreach my $row (@$t_aref){
-    $self->db_tree->{'VARIATION_STRAIN'}{$row->[0]} = $row->[1];
+  my $temp = {map {$_->[0],[$_->[1],0]} @$t_aref};
+  foreach my $t (qw(variation variation_synonym)) {
+    my $t_aref = $dbh->selectall_arrayref( "select source_id,count(*) from $t group by source_id" );
+    foreach (@$t_aref) {
+      $temp->{$_->[0]}[1] += $_->[1];
+    }
   }
+  $self->db_details($db_name)->{'tables'}{'source'}{'counts'} = { map {@$_} values %$temp};
 
-  ## For LD link
-  my $t_aref = $dbh->selectall_arrayref(
-    'select count(*) from meta where meta_key = "pairwise_ld.default_population"' 
-  );
-  foreach my $row (@$t_aref){
-    $self->db_tree->{'VARIATION_LD'}{$row->[0]} = $row->[1];
-  }
   $dbh->disconnect();
 }
 
@@ -350,14 +341,9 @@ sub _summarise_compara_db {
       where mlss.method_link_id = ml.method_link_id and
             mlss.species_set_id=ss.species_set_id and 
             ss.genome_db_id = gd.genome_db_id and
-            ml.class in (
-              "ConservationScore.conservation_score",
-              "GenomicAlignBlock.constrained_element",
-              "GenomicAlignBlock.multiple_alignment",
-              "GenomicAlignTree.tree_alignment"
-            )
+            ( ml.class like "GenomicAlign%" or ml.class = "ConservationScore.conservation_score" )
   ');
-  my $constrained_elements = {};
+  my $constrained_elements = { $db_name };
   my %valid_species = map {($_,1)} keys %{$self->full_tree};
   foreach my $row (@$res_aref) {
     my( $class, $type, $species, $name, $id, $species_set_id ) =
@@ -372,25 +358,24 @@ sub _summarise_compara_db {
       $KEY = "CONSTRAINED_ELEMENTS";
       $constrained_elements->{$species_set_id} = $id;
       $name = "Constrained elements";
-    } elsif( $class =~ /tree_alignment/ or
-             $type  =~ /ORTHEUS/ ) {
-      unless( exists $self->db_tree->{$KEY}{$id} ) {
-        $self->db_tree->{$KEY}{$id}{'species'}{"Ancestral_sequences"}=1;
+    } elsif( $class =~ /tree_alignment/ || $type  =~ /ORTHEUS/ ) {
+      unless( exists $self->db_tree->{$db_name}{$KEY}{$id} ) {
+        $self->db_tree->{ $db_name }{$KEY}{$id}{'species'}{"Ancestral_sequences"}=1;
       }
     }
     $species =~ tr/ /_/;
-    $self->db_tree->{$KEY}{$id}{'id'}                = $id;
-    $self->db_tree->{$KEY}{$id}{'name'}              = $name;
-    $self->db_tree->{$KEY}{$id}{'type'}              = $type;
-    $self->db_tree->{$KEY}{$id}{'class'}             = $class;
-    $self->db_tree->{$KEY}{$id}{'species_set_id'}    = $species_set_id;
-    $self->db_tree->{$KEY}{$id}{'species'}{$species} = 1;
+    $self->db_tree->{ $db_name }{$KEY}{$id}{'id'}                = $id;
+    $self->db_tree->{ $db_name }{$KEY}{$id}{'name'}              = $name;
+    $self->db_tree->{ $db_name }{$KEY}{$id}{'type'}              = $type;
+    $self->db_tree->{ $db_name }{$KEY}{$id}{'class'}             = $class;
+    $self->db_tree->{ $db_name }{$KEY}{$id}{'species_set_id'}    = $species_set_id;
+    $self->db_tree->{ $db_name }{$KEY}{$id}{'species'}{$species} = 1;
   }
   foreach my $species_set_id (keys %$constrained_elements) {
     my $constr_elem_id = $constrained_elements->{$species_set_id};
-    foreach my $id (keys %{$self->db_tree->{'ALIGNMENTS'}}) {
-      if( $self->db_tree->{'ALIGNMENTS'}{$id}{'species_set_id'} == $species_set_id) {
-        $self->db_tree->{'ALIGNMENTS'}{$id}{'constrained_element'} = $constr_elem_id;
+    foreach my $id (keys %{$self->db_tree->{ $db_name }{'ALIGNMENTS'}}) {
+      if( $self->db_tree->{ $db_name }{'ALIGNMENTS'}{$id}{'species_set_id'} == $species_set_id) {
+        $self->db_tree->{ $db_name }{'ALIGNMENTS'}{$id}{'constrained_element'} = $constr_elem_id;
       }
     }
   }
@@ -402,7 +387,7 @@ sub _summarise_compara_db {
     my ($meta_key, $meta_value) = ($row->[0], $row->[1]);
     my ($conservation_score_id) = $meta_key =~ /gerp_(\d+)/;
     next if (!$conservation_score_id);
-    $self->db_tree->{'ALIGNMENTS'}{$meta_value}{'conservation_score'} = $conservation_score_id;
+    $self->db_tree->{ $db_name }{'ALIGNMENTS'}{$meta_value}{'conservation_score'} = $conservation_score_id;
   }
   my %sections = (
     'ENSEMBL_ORTHOLOGUES' => 'GENE',
@@ -446,7 +431,7 @@ sub _summarise_compara_db {
     $species1 =~ tr/ /_/;
     $species2 =~ tr/ /_/;
     my $KEY = $sections{uc($row->[0])} || uc( $row->[0] );
-    $self->db_tree->{$KEY}{$species1}{$species2} = $valid_species{ $species2 };
+    $self->db_tree->{ $db_name }{$KEY}{$species1}{$species2} = $valid_species{ $species2 };
   }
 #		  &eprof_dump(\*STDERR);		
   $dbh->disconnect();
@@ -533,31 +518,43 @@ sub _summarise_dasregistry {
   delete $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'};
 }
 
+sub _meta_info {
+  my( $self, $db, $key, $species_id ) = @_;
+  $species_id ||= 1;
+  return $self->db_details($db)->{'meta_info'}{$species_id}{$key} ||
+         $self->db_details($db)->{'meta_info'}{0          }{$key} ||
+	 [];
+}
+
 sub _munge_meta {
   my $self = shift;
 
   ## Quick and easy access to species info
-  $self->tree->{'SPECIES_COMMON_NAME'} = 
-      $self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.ensembl_alias_name'}[0];
+  my %keys = qw(
+    SPECIES_COMMON_NAME species.ensembl_alias_name
+    ASSEMBLY_NAME       assembly.default
+    ASSEMBLY_DATE       assembly.date
+  );
 
-  $self->tree->{'ASSEMBLY_NAME'} = 
-      $self->db_details('ENSEMBL_DB')->{'meta_info'}{'assembly.default'}[0];
+  foreach my $key ( keys %keys ) {
+    $self->tree->{$key} = $self->_meta_info('ENSEMBL_DB',$keys{$key})->[0];
+  }
 
-  $self->tree->{'ASSEMBLY_DATE'} = 
-      $self->db_details('ENSEMBL_DB')->{'meta_info'}{'assembly.date'}[0];
-
-  my $genebuild =
-      $self->db_details('ENSEMBL_DB')->{'meta_info'}{'genebuild.version'}[0];
+  my $genebuild = $self->_meta_info('ENSEMBL_DB','genebuild.version')->[0];
   my @A = split('-', $genebuild);
   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
   $self->tree->{'GENEBUILD_DATE'} = $months[$A[1]].$A[0];
   $self->tree->{'GENEBUILD_BY'} = $A[2];
 
   ## Do species name and group
-  my @taxonomy = @{$self->db_details('ENSEMBL_DB')->{'meta_info'}{'species.classification'}||[]};
+  my @taxonomy = @{$self->_meta_info('ENSEMBL_DB','species.classification')};
   my $order = $self->tree->{'TAXON_ORDER'};
 
   $self->tree->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
+
+  warn $self->tree->{'SPECIES_BIO_NAME'};
+  warn $self->tree->{'ASSEMBLY_NAME'};
+  warn $self->tree->{'SPECIES_COMMON_NAME'};
   foreach my $taxon (@taxonomy) {
     foreach my $group (@$order) {
       if ($taxon eq $group) {
@@ -588,60 +585,61 @@ sub _munge_website_multi {
 sub _configure_blast {
 }
 
-sub _munge_multi_meta {
-  my $self = shift;
-  
-  my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 
-#warn Dumper($self->db_details('ENSEMBL_DB')->{'meta_info'});
-  my $mhash;
-
-  foreach my $meta_key (qw(species.ensembl_alias_name assembly.default assembly.date species.classification genebuild.version)) {
-      if (my @meta_values = @{ $self->db_details('ENSEMBL_DB')->{'meta_info'}{$meta_key} || []}) {
-	  my $i=0;
-	  while( @meta_values) {
-	      my $v = shift @meta_values;
-	      my $sid = shift @meta_values;
-	      push @{$mhash->{$sid}->{$meta_key}}, $v;
-	  }
-      }
-  }
-
+# sub _munge_multi_meta {
+#   my $self = shift;
+#   
+#   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+# 
+# #warn Dumper($self->db_details('ENSEMBL_DB')->{'meta_info'});
+#   my $mhash;
+# 
+#   foreach my $meta_key (qw(species.ensembl_alias_name assembly.default assembly.date species.classification genebuild.version)) {
+#       if (my @meta_values = @{ $self->db_details('ENSEMBL_DB')->{'meta_info'}{$meta_key} || []}) {
+# 	  my $i=0;
+# 	  while( @meta_values) {
+# 	      my $v = shift @meta_values;
+# 	      my $sid = shift @meta_values;
+# 	      push @{$mhash->{$sid}->{$meta_key}}, $v;
+# 	  }
+#       }
+#   }
+# 
 #  warn Dumper $mhash;
-  my $order = $self->tree->{'TAXON_ORDER'};
-#  warn "ORDER:", Dumper $order;
-
-  my @species_list;
-  foreach my $sid (sort keys %$mhash) {
-      my $species_name = $mhash->{$sid}->{'species.ensembl_alias_name'}[0];
-      (my $species_dir = $species_name) =~ s/ /\_/g;
-      $self->tree($species_dir)->{'SPECIES_COMMON_NAME'} = $species_name;
-      $self->tree($species_dir)->{'SPECIES_DBID'} = $sid;
-      push @species_list, $species_name;
-      $self->tree($species_dir)->{'ASSEMBLY_NAME'} = $mhash->{$sid}->{'assembly.default'}[0];
-      $self->tree($species_dir)->{'ASSEMBLY_DATE'} = $mhash->{$sid}->{'assembly.date'}[0];
-
-      my $genebuild = $mhash->{$sid}->{'genebuild.version'}[0];
-      my @A = split('-', $genebuild);
-      $self->tree($species_dir)->{'GENEBUILD_DATE'} = $months[$A[1]].$A[0];
-      $self->tree($species_dir)->{'GENEBUILD_BY'} = $A[2];
-
-      ## Do species name and group
-      my @taxonomy = @{$mhash->{$sid}{'species.classification'}||[]};
-#      warn $species_name;
-#      warn Dumper \@taxonomy;
-      $self->tree($species_dir)->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
-      foreach my $taxon (@taxonomy) {
-	  foreach my $group (@$order) {
-	      if ($taxon eq $group) {
-		  $self->tree($species_dir)->{'SPECIES_GROUP'} = $group;
-		  last;
-	      }
-	  }
-	  last if $self->tree($species_dir)->{'SPECIES_GROUP'};
-      }
-      $self->tree->{'SPECIES_LIST'} = \@species_list;
-  }
-}
-
+#   my $order = $self->tree->{'TAXON_ORDER'};
+# #  warn "ORDER:", Dumper $order;
+# 
+#   my @species_list;
+#   foreach my $sid (sort keys %$mhash) {
+#       my $species_name = $mhash->{$sid}->{'species.ensembl_alias_name'}[0];
+##        (my $species_dir = $species_name) =~ s/ /\_/g;
+#       $self->tree($species_dir)->{'SPECIES_COMMON_NAME'} = $species_name;
+#       $self->tree($species_dir)->{'SPECIES_DBID'} = $sid;
+#       push @species_list, $species_name;
+#       $self->tree($species_dir)->{'ASSEMBLY_NAME'} = $mhash->{$sid}->{'assembly.default'}[0];
+#       $self->tree($species_dir)->{'ASSEMBLY_DATE'} = $mhash->{$sid}->{'assembly.date'}[0];
+# 
+#       my $genebuild = $mhash->{$sid}->{'genebuild.version'}[0];
+#       my @A = split('-', $genebuild);
+#       $self->tree($species_dir)->{'GENEBUILD_DATE'} = $months[$A[1]].$A[0];
+#       $self->tree($species_dir)->{'GENEBUILD_BY'} = $A[2];
+# 
+#       ## Do species name and group
+#       my @taxonomy = @{$mhash->{$sid}{'species.classification'}||[]};
+# #      warn $species_name;
+# #      warn Dumper \@taxonomy;
+#       $self->tree($species_dir)->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
+#       foreach my $taxon (@taxonomy) {
+# 	  foreach my $group (@$order) {
+# 	      if ($taxon eq $group) {
+# 		  $self->tree($species_dir)->{'SPECIES_GROUP'} = $group;
+# 		  last;
+# 	      }
+# 	  }
+# 	  last if $self->tree($species_dir)->{'SPECIES_GROUP'};
+#       }
+#       $self->tree->{'SPECIES_LIST'} = \@species_list;
+#   }
+# }
+ 
 1;
