@@ -6,12 +6,10 @@
 package Sanger::Graphics::Renderer::pdf;
 use strict;
 
-use Sanger::Graphics::Renderer;
 
 use PDF::API2;
 
-use vars qw(@ISA);
-@ISA = qw(Sanger::Graphics::Renderer);
+use base qw(Sanger::Graphics::Renderer);
 
 1;
 
@@ -226,7 +224,7 @@ sub render_Sprite {
   my $config         = $self->config();
 
   unless(exists $config->{'_spritecache'}->{$spritename}) {
-    my $libref = $config->get("_settings", "spritelib");
+    my $libref = $config->get_parameter(  "spritelib");
     my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
     my $fn     = "$lib/$spritename.png";
     unless( -r $fn ){

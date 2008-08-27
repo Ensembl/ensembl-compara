@@ -5,11 +5,9 @@
 #
 package Sanger::Graphics::Renderer::wmf;
 use strict;
-use Sanger::Graphics::Renderer::gif;
-use vars qw(@ISA);
 use WMF;
 use WMF::Polygon;
-@ISA = qw(Sanger::Graphics::Renderer::gif);
+use base qw(Sanger::Graphics::Renderer::gif);
 
 sub init_canvas {
     my ($this, $config, $im_width, $im_height) = @_;

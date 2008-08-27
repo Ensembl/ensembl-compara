@@ -1,12 +1,10 @@
 package Sanger::Graphics::Renderer::test;
 use strict;
 
-use Sanger::Graphics::Renderer;
 
-use vars qw(@ISA);
 use vars qw(%classes);
 
-@ISA = qw(Sanger::Graphics::Renderer);
+use base qw(Sanger::Graphics::Renderer);
 
 sub init_canvas {
     my ($self, $config, $im_width, $im_height) = @_;

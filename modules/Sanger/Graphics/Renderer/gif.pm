@@ -349,7 +349,7 @@ sub render_Sprite {
   my $config         = $self->config();
 
   unless(exists $config->{'_spritecache'}->{$spritename}) {
-    my $libref = $config->get('_settings', 'spritelib');
+    my $libref = $config->get_parameter(  'spritelib');
     my $lib    = $libref->{$glyph->{'spritelib'} || 'default'};
     my $fn     = "$lib/$spritename.gif";
 

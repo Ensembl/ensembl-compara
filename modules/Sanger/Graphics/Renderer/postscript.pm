@@ -6,10 +6,8 @@
 package Sanger::Graphics::Renderer::postscript;
 use strict;
 
-use Sanger::Graphics::Renderer;
 
-use vars qw(@ISA);
-@ISA = qw(Sanger::Graphics::Renderer);
+use base qw(Sanger::Graphics::Renderer);
 
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;

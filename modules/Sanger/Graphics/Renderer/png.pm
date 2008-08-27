@@ -5,9 +5,7 @@
 #
 package Sanger::Graphics::Renderer::png;
 use strict;
-use Sanger::Graphics::Renderer::gif;
-use vars qw(@ISA);
-@ISA = qw(Sanger::Graphics::Renderer::gif);
+use base qw(Sanger::Graphics::Renderer::gif);
 
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
@@ -45,7 +43,7 @@ sub render_Sprite {
   my $config         = $self->config();
 
   unless(exists $config->{'_spritecache'}->{$spritename}) {
-    my $libref = $config->get("_settings", "spritelib");
+    my $libref = $config->get_parameter(  "spritelib");
     my $lib    = $libref->{$glyph->{'spritelib'} || "default"};
     my $fn     = "$lib/$spritename.png";
     unless( -r $fn ){ 
