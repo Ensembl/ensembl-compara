@@ -29,6 +29,11 @@ sub _node {
   return $self->_nodes->{$key};
 }
 
+sub user_data {
+  my $self = shift;
+  return $self->{_user_data};
+}
+
 sub leaves {
   my $self = shift;
   my $l1 = $self->left;
@@ -44,13 +49,68 @@ sub nodes {
   return map { $self->get_node( $_ ) } grep { $self->_node($_)->{left} >= $l1 && $self->_node($_)->{left} < $r1 } $self->_sorted_keys;
 }
 
-sub left        { $_[0]->_node()->{left};                }
-sub right       { $_[0]->_node()->{right};               }
-sub key         { $_[0]->{_key};                         }
-sub data        { $_[0]->_node()->{data};                }
-sub get         { $_[0]->_node()->{data}{$_[1]};         }
-sub set         { $_[0]->_node()->{data}{$_[1]} = $_[2]; }
-sub parent_key  { $_[0]->_node()->{parent_key};          }
+sub left        { $_[0]->_node->{left};                }
+sub right       { $_[0]->_node->{right};               }
+sub data        { $_[0]->_node->{data};                }
+
+sub get         { 
+### a
+### Returns user value if defined - otherwise returns value from data...
+  my $self = shift;
+  my $k    = shift;
+  return exists $self->{_user_data}{$self->{_key}} &&
+         exists $self->{_user_data}{$self->{_key}}{$k} ?  $self->{_user_data}{$self->{_key}}{$k} :
+	                                                  $self->data->{$k};
+}
+
+sub set         {
+  my $self = shift;
+  my $k    = shift;
+  my $v    = shift;
+  $self->_node->{data}{$k} = $v;
+}
+
+sub set_user    {
+# Set user data for node...
+  my $self = shift;
+  my $k    = shift;
+  my $v    = shift;
+## If same as default value - flush node!!
+  return $self->flush_user( $k ) if $v eq $self->data->{$k};
+## If not same as current value set and return true!
+  if( $v ne $self->{_user_data}{$self->{_key}}{$k} ) {
+    $self->{_user_data}{$self->{_key}}{$k} = $v;
+    return 1; 
+  }
+  return 0; ## Return false - not updated!!
+}
+
+sub flush_user {
+  my $self = shift;
+  my $k    = shift;
+  if( defined $k ) {
+### Remove a particular user setting for this node...
+    if( exists $self->{_user_data}{$self->{_key}} && exists $self->{_user_data}{$self->{_key}}{$k} ) {
+      ## Only do the delete if the key exists...
+      delete $self->{_user_data}{$self->{_key}}{$k};
+      unless( keys %{ $self->{_user_data}{$self->{_key}}} ) {
+        ## Delete configuration for user if there are no keys left!!
+        delete $self->{_user_data}{$self->{_key}};
+      }
+      return 1;
+    }
+  } else {
+### Remove all user settings for this node...
+    if( exists( $self->{_user_data}{$self->{_key}} ) ) {
+      ## Only delete if entry exists in tree!!
+      delete $self->{_user_data}{$self->{_key}};
+      return 1;
+    }
+  }
+  return 0; ## Not updated!!
+}
+
+sub parent_key  { $_[0]->_node->{parent_key};          }
 
 sub _sorted_keys {
   my $self = shift;

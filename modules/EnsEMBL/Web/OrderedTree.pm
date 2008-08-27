@@ -6,9 +6,17 @@ use strict;
 
 sub new {
   my( $class ) = @_;
-  my $self = { '_tree_info' => { 'nodes' => {}, '_sorted_keys' => [] } };
+  my $self = { '_tree_info' => { 'nodes' => {}, '_sorted_keys' => [] }, '_user_data' => {} };
   bless $self, $class;
   return $self;
+}
+
+sub flush_user {
+### Remove all user data in this tree...
+  my $self = shift;
+  my $return = keys %{$self->{_user_data}} ? 1 : 0;
+  $self->{_user_data} = {};
+  return $return;
 }
 
 sub _node        { return EnsEMBL::Web::OrderedTree::Node::_node(        @_ ); }
@@ -41,7 +49,11 @@ sub create_node {
     'parent_key' => '', 'data' => $data
   };
   $self->{'_tree_info'}{'_sorted_keys'} = [];
-  return EnsEMBL::Web::OrderedTree::Node->new({ '_key' => $key, '_tree_info' => $self->{_tree_info} });
+  return EnsEMBL::Web::OrderedTree::Node->new({
+    '_key'       => $key,
+    '_tree_info' => $self->{_tree_info},
+    '_user_data' => $self->{_user_data}
+  });
 }
 
 sub nodes {
