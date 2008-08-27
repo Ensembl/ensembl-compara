@@ -41,7 +41,33 @@ sub content {
 		     "<p>This transcript is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }</p>",
 		     1, );
   }
-    
+
+## add alternative transcript links
+  my @alts;
+  if (my @poss_alts = grep { $_->type eq 'ALT_TRANS' } @{$object->Obj->get_all_DBLinks} ) {
+      #filter out duplicate or unwanted xrefs
+      my %names_to_filter;
+      foreach my $alt (@poss_alts) {
+	  next unless ($alt->display_id =~ /OTT|ENST/);
+	  push @{$names_to_filter{$alt->dbname}}, $alt;
+      }
+      foreach my $type (qw(
+			   shares_CDS_and_UTR_with_OTTT
+			   ENST_ident
+			   shares_CDS_with_OTTT
+			   ENST_CDS
+			   OTTT ) ) {
+	  if ( $names_to_filter{$type}) {
+	      @alts = @{$names_to_filter{$type}};
+	      last;
+	  }
+      }
+      @alts = @poss_alts unless @alts;
+  }
+  my $txt = join ', ', map {$_->db_display_name .': '. $object->get_ExtURL_link($_->display_id, $_->dbname, $_->display_id)} @alts;
+  $table->add_row('Alternative Transcripts',
+		  "<p>$txt</p>",
+		  '1');
 
 ## add prediction method
   my $db    = $object->get_db ;
