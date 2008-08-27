@@ -5,9 +5,7 @@
 #
 package Sanger::Graphics::Glyph::Circle;
 use strict;
-use vars qw(@ISA);
-use Sanger::Graphics::Glyph;
-@ISA = qw(Sanger::Graphics::Glyph);
+use base qw(Sanger::Graphics::Glyph);
 
 #  The constructor for a circle should be as follows:
 

@@ -5,9 +5,7 @@
 #
 package Sanger::Graphics::Glyph::Poly;
 use strict;
-use vars qw(@ISA);
-use Sanger::Graphics::Glyph;
-@ISA = qw(Sanger::Graphics::Glyph);
+use base qw(Sanger::Graphics::Glyph);
 
 sub points {
     my ($this, $points_ref) = @_;

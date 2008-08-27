@@ -5,8 +5,6 @@
 #
 package Sanger::Graphics::Glyph::Bezier;
 use strict;
-use vars qw(@ISA);
-use Sanger::Graphics::Glyph::Poly;
-@ISA = qw(Sanger::Graphics::Glyph::Poly);
+use base qw(Sanger::Graphics::Glyph::Poly);
 
 1;
