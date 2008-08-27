@@ -75,7 +75,6 @@ sub content {
     $html .= qq(<tr><td><strong>Could not load chromosome stats</strong><td></tr>);
   }
   $html .= qq(  </table>
-  <ul><li><a href="/info/about/docs/stats.html">How the statistics are calculated</a></li></ul>
   );
 
   return $html;
