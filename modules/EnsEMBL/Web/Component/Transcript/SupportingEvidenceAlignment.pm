@@ -61,7 +61,6 @@ sub content {
     if ($hit_db_name =~ /Uniprot/i) {
 	$ext_seq =~ s/ .+$//m;
     }
-
     $ext_seq =~ s /^ //mg; #remove white space from the beginning of each line of sequence
 
     my $hit_url = $object->get_ExtURL_link( $hit_id, $hit_db_name, $hit_id );
@@ -72,13 +71,14 @@ sub content {
 
     my $ext_seq_length = length($ext_seq);
 
- 
     my $trans_length = $trans->length;
     my $e_count = scalar(@{$trans->get_all_Exons});
+    my $cds_aa_length;
     my $cds_length = '';
     my $tl;
     if ( ($seq_type eq 'PEP') && ($tl = $trans->translation) ) {
-	$cds_length = ' Translation length: '.$tl->length.' aa';
+	$cds_aa_length = $tl->length;
+	$cds_length = " Translation length: $cds_aa_length aa";
     }
     $table->add_row('External record',
 		    "$hit_url ($hit_db_name), length = $ext_seq_length $label",
@@ -99,7 +99,7 @@ sub content {
 		last;
 	    }
 	}
-	my $e_length = $exon->length;
+
 	#get exon sequence
 	my ($e_sequence,$e_sequence_length) = @{$object->get_int_seq( $exon, $seq_type, $trans)};
 
@@ -108,9 +108,10 @@ sub content {
 	my $cdna_end  = $exon->cdna_end($trans);
 
 	#length of exon in the CDS
-	my $exon_length = "Length: $e_length bp";
+	my $e_length = $exon->length;
+	my $e_length_text = "Length: $e_length bp";
 
-	#position of exon in the translation
+	##position of exon in the translation
 	my $exon_cds_pos = '';
 	if ($seq_type eq 'PEP' && $tl) {
 	    #postions of everything we need in cDNA coords
@@ -118,28 +119,26 @@ sub content {
 	    my $tl_end    = $exon->cdna_coding_end($trans);
 	    my $cds_start = $trans->cdna_coding_start();
 	    my $cds_end   = $trans->cdna_coding_end();
-
 	    if ( ! $tl_start || ! $tl_end ) {
 		$exon_cds_pos = "<p>Exon is not coding</p>";
 	    }
 	    else {
-		$exon_length .= " ($e_sequence_length aa)";
-		my $start = int(($tl_start-$cds_start+1)/3) + 1;
-		my $end   = int(($tl_end-$cds_start+1  )/3);
+		$e_length_text .= " ($e_sequence_length aa)";
+		my $start = int(($tl_start - $cds_start )/3 + 1);
+		my $end   = int(($tl_end   - $cds_start )/3) + 1;
 		$end -= 1 if ($tl_end == $cds_end); #need to take off one since the stop codon is included
-#switch this on when I'm sure of the numbers!
-#		$exon_cds_pos = "<p>CDS: $start-$end aa</p>";
+		$exon_cds_pos = "<p>CDS: $start-$end aa</p>";
 	    }
 	}
-
-	#get exon alignment
 	$table->add_row('Exon Information',
-			"<p>$exon_id</p><p>$exon_length</p>",
+			"<p>$exon_id</p><p>$e_length_text</p>",
 			1, );
 	$table->add_row('Exon coordinates',
 			"Transcript: $cdna_start-$cdna_end bp</p>$exon_cds_pos",
 			1, );
+
 	if ($ext_seq) {
+	    #get exon alignment
 	    my $e_alignment = $object->get_alignment( $ext_seq, $e_sequence, $seq_type );
 	    $table->add_row('Exon alignment',
 			    "<p><pre>$e_alignment</pre></p>",
