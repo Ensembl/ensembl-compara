@@ -111,7 +111,7 @@ sub _output_link {
   my $date = $archive->{$release};
   my $month = substr($date, 0, 3);
   my $year = substr($date, 3, 4);
-  return qq(<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external" rel="external">$sitename $release: $month $year</a></li>);
+  return qq(<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a></li>);
 }
 
 1;
