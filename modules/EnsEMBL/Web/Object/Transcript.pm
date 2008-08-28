@@ -891,6 +891,14 @@ sub get_author_email {
     }
 }
 
+sub transcript_class {
+    my $self = shift;
+    my $class = ucfirst(lc($self->Obj->status)).' '.ucfirst(lc($self->Obj->biotype));
+    $class =~ s/_/ /g;
+    $class =~ s/unknown//i;
+    return $class;
+}
+
 =head2 trans_description
 
  Arg[1]      : none
