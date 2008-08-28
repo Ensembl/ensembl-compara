@@ -23,7 +23,7 @@ sub content {
 
   my @movies;
   my @ids = $object->param('id') || $object->param('feedback');
-  if (scalar(@ids)) {
+  if (scalar(@ids) && $ids[0]) {
     foreach my $id (@ids) {
       push @movies, EnsEMBL::Web::Data::Movie->new($id);
     }
@@ -57,8 +57,9 @@ sub content {
   }
   elsif (scalar(@movies) > 0) {
 
-    $html .= qq(<p>The tutorials listed below are Flash animations of some of our training presentations, with added popup notes in place of a soundtrack. We are gradually adding to the list, so please check back regularly (the list will also be included in the Release Email, which is sent to the <a href="/info/about/contact/mailing.html">ensembl-announce mailing list</a>).</p>
-<p>Please note that files are around 3MB per minute, so if you are on a dialup connection, playback may be jerky.</p>);
+    $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly (the list will also be included in the Release Email, which is sent to the <a href="/info/about/contact/mailing.html">ensembl-announce mailing list</a>).</p>
+<p class="space-below">Except where noted, there is no audio - popup text is used in place of a soundtrack.</p>
+<p class="space-below">Please note that files are around 3MB per minute, so if you are on a dialup connection, playback may be jerky.</p>);
  
     my $table = EnsEMBL::Web::Document::SpreadSheet->new();
 
