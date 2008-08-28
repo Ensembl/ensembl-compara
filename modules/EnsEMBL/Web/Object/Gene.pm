@@ -367,6 +367,12 @@ sub gene_type {
   if( $db eq 'core' ){
     $type = $self->logic_name;
     $type ||= $self->db_type;
+  } elsif ($db eq 'vega') {
+    my $biotype = ($self->Obj->biotype eq 'tec') ? uc($self->Obj->biotype) : ucfirst(lc($self->Obj->biotype));
+    $type = ucfirst(lc($self->Obj->status))." $biotype";
+    $type =~ s/_/ /g;
+    $type =~ s/unknown //i;
+    return $type;
   } else {
     $type = $self->db_type;
     $type ||= $self->logic_name;
@@ -376,15 +382,13 @@ sub gene_type {
   return $type;
 }
 
-
-sub date_format { 
+sub date_format {
   my( $self, $time, $format ) = @_;
   my( $d,$m,$y) = (localtime($time))[3,4,5];
   my %S = ('d'=>sprintf('%02d',$d),'m'=>sprintf('%02d',$m+1),'y'=>$y+1900);
   (my $res = $format ) =~s/%(\w)/$S{$1}/ge;
   return $res;
 }
-
 
 sub location_string {
   my $self = shift;
