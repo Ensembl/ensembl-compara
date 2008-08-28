@@ -23,12 +23,25 @@ sub content {
   my $html;
 
   ## is this a species page?
-  my @check = split('/', $object->param('url'));
-  my $dir = $object->param('url') =~ m#^/# ? $check[1] : $check[0];
-  my $species = undef;
-  if ($dir =~ /^[A-Z][a-z]+_[a-z]+$/) {
-    $species = $dir;
+  my ($path, $param) = split('\?', $object->param('url'));
+  my @check = split('/', $path);
+  my ($part1, $part2, $part3, $species, $type, $action);
+  if ($object->param('url') =~ m#^/#) {
+    ($part1, $part2, $part3) = ($check[1], $check[2], $check[3]);
   }
+  else {
+    ($part1, $part2, $part3) = ($check[0], $check[1], $check[2]);
+  }
+  if ($part1 =~ /^[A-Z][a-z]+_[a-z]+$/) {
+    $species  = $part1;
+    $type     = $part2;
+    $action   = $part3;
+  }
+  else {
+    $type     = $part1;
+    $action   = $part2;
+  }
+
   my %archive;
   if ($species) {
     %archive = %{$object->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')};
@@ -37,23 +50,21 @@ sub content {
 <ul>\n";
       my $missing = 0;
 
-      my $type = $check[1];
-      if ($type =~ /\.html/) {
+      if ($type =~ /\.html/ || $action =~ /\.html/) {
         foreach my $release (sort keys %archive) {
           $html .= $self->_output_link(\%archive, $release, $url);
         }
       }
       else {
-        my @action = split('\?', $check[2]);
-        my ($old_view, $initial_release) = EnsEMBL::Web::OldLinks::get_archive_redirect($type, $action[0]);
+        my ($old_view, $initial_release) = EnsEMBL::Web::OldLinks::get_archive_redirect($type, $action);
 
         foreach my $release (sort keys %archive) {
           next if $release == $object->species_defs->VERSION;
           if ($release < 51) {
             if ($release >= $initial_release) {
-              $url = $dir.'/'.$old_view;
+              $url = $species.'/'.$old_view;
               ## Transform parameters
-              my @params = split(';', $action[1]);
+              my @params = split(';', $param);
               my (%parameter, @new_params);
               foreach my $pair (@params) {
                 my @a = split('=', $pair);
