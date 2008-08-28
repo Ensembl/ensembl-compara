@@ -100,6 +100,7 @@ sub content {
     }
     $html .= qq(</ul>\n);
   }
+  $html .= qq(<p><a href="/info/website/archives/" class="cp-external">More information about the Ensembl archives</a></p>);
   
   return $html;
 }
