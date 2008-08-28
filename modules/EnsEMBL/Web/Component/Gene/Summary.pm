@@ -49,13 +49,41 @@ sub content {
     'r'      => $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end
   });
 
-  my $location_html = sprintf( '<a href="%s">%s: %s-%s</a> %s',
+  my $location_html = sprintf( '<a href="%s">%s: %s-%s</a> %s.',
     $url,
     $object->neat_sr_name( $object->seq_region_type, $object->seq_region_name ),
     $object->thousandify( $object->seq_region_start ),
     $object->thousandify( $object->seq_region_end ),
     $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
   );
+
+  # alternative (Vega) coordinates
+  my $lc_type  = lc( $object->type_name );
+  my $alt_assembly = $object->species_defs->ALTERNATIVE_ASSEMBLY;
+  if ( $alt_assembly and $object->get_db eq 'vega' ) {
+    # set dnadb to 'vega' so that the assembly mapping is retrieved from there
+    my $reg = "Bio::EnsEMBL::Registry";
+    my $orig_group = $reg->get_DNAAdaptor($object->species, "vega")->group;
+    $reg->add_DNAAdaptor($object->species, "vega", $object->species, "vega");
+    # project feature slice onto Vega assembly
+    my $alt_slices = $object->vega_projection($alt_assembly);
+    # link to Vega if there is an ungapped mapping of whole gene
+    if ((scalar(@$alt_slices) == 1) && ($alt_slices->[0]->length == $object->feature_length) ) {
+      my $l = $alt_slices->[0]->seq_region_name.":".$alt_slices->[0]->start."-".$alt_slices->[0]->end;
+      my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
+      $location_html .= qq( [<span class="small">This corresponds to );
+      $location_html .= sprintf(qq(<a href="%s" target="external">%s-%s</a>),
+				$url,
+				$object->thousandify($alt_slices->[0]->start),
+				$object->thousandify($alt_slices->[0]->end)
+			    );
+      $location_html .= " in $alt_assembly coordinates</span>]";
+  } else {
+    $location_html .= qq( [<span class="small">There is no ungapped mapping of this $lc_type onto the $alt_assembly assembly</span>]);
+  }
+    # set dnadb back to the original group
+    $reg->add_DNAAdaptor($object->species, "vega", $object->species, $orig_group);
+  }
 
   $html .= qq(
     <dl class="summary">
