@@ -108,8 +108,29 @@ sub content {
 			1);
     }
 
+    my $db = $object->get_db;
+
+    ## add some Vega info
+    if ($db eq 'vega') {
+	# class
+	my $type = $object->gene_type;
+	$table->add_row('Gene type',
+			qq(<p>$type [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>),
+			1);
+	# date
+	my $version = $object->version;
+	my $c_date = $object->created_date;
+	my $m_date = $object->mod_date;
+	$table->add_row('Version & date',
+			qq(<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>),
+			1);
+	# author
+	my $auth  = $object->get_author_name;
+	$table->add_row('Author',
+			"This transcript was annotated by $auth");
+    }
+
     ## add prediction method
-    my $db = $object->get_db ;
     my $label = ( ($db eq 'vega' or $object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
     my $text = "<p>No $label defined in database</p>";
     my $o = $object->Obj;
