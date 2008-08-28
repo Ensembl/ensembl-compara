@@ -6,19 +6,19 @@ use Sys::Hostname;
 
 sub new { my $class = shift; my $self = {}; bless $self, $class; return $self; }
 
-
 sub get_seq_by_acc { my $self = shift; $self->get_seq_by_id( @_ ); }
+
 sub get_seq_by_id {
   my ($self, $arghashref)=@_;
 
   # Get the ID to pfetch
   my $str = $arghashref->{ID} || return [];
-  # Additional Options 
+
+  # Additional options
   if( $arghashref->{OPTIONS} eq 'desc'       ) { $str .= " -D" }
   if( $arghashref->{OPTIONS} =~ /(-d\s+\w+)/ ) { $str .= " $1" }
   if( $arghashref->{DB} eq 'PUBLIC'          ) { $str .= " -d public" }
   if( $arghashref->{DB} =~ /UNIPROT/         ) { $str = " -a $str" }
-
 
   # Get the pfetch server
   my $server = $self->fetch_pfetch_server(
@@ -30,6 +30,7 @@ sub get_seq_by_id {
 
   my $output;
   push @$output, $_ while(<$server>);
+
   return $output;
 }
 
