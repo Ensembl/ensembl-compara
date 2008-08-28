@@ -684,71 +684,9 @@ sub stable_id {
   return 1;
 }
 
-sub author {
-    my ($panel, $obj) = @_;
-    my $label = 'Author';
-        unless ($obj->Obj->isa('Bio::EnsEMBL::Translation')) {
-                my $author = $obj->get_author_name;
-                my $text;
-                if ($author) {
-                        $text .= "This locus was annotated by " . $author . " ";
-#                        $text .= email_URL($obj->get_author_email);
-                }
-                else {
-                        $text = "unknown";
-                }
-                $panel->add_row($label, qq(<p>$text</p>));
-        }
-    return 1;
-}
-
 sub email_URL {
     my $email = shift;
     return qq(&lt;<a href='mailto:$email'>$email</a>&gt;) if $email;
-}
-
-sub version_and_date {
-    my ($panel, $obj) = @_;
-    my $label = 'Version & Date';
-    my $version = $obj->version;
-        my $text = "Version $version";
-        return 1 unless $version;
-        eval {
-                my $mod_date = $obj->mod_date;
-                my $c_date = $obj->created_date;
-                if ($mod_date) {
-                        $text .= qq(</p><p>Last modified on $mod_date);
-                        if ($c_date) {
-                                $text .= qq( (<span class="small">Created on $c_date</span>)<small>);
-                        }
-                }
-        };
-    $panel->add_row($label, qq(<p>$text</p>));
-    return 1;
-}
-
-=head2 type
-
- Arg[1]             : information panel (EnsEMBL::Web::Document::Panel::Information)
- Arg[2]             : object (EnsEMBL::Web::Proxy::Object)
- Example     : $panel1->add_component(qw(curated_locus EnsEMBL::Sanger_vega::Component::Gene::type));
- Description : adds gene type to an information panel
- Return type : true
-
-=cut
-
-sub type {
-    my ($panel, $gene) = @_;
-    my $label = 'Gene Type';
-	#return if this is a Eucomm gene
-	return if ($gene->Obj->analysis->logic_name eq 'otter_eucomm');
-	my $biotype = ($gene->Obj->biotype eq 'tec') ? uc($gene->Obj->biotype) : ucfirst(lc($gene->Obj->biotype));
-    my $type = ucfirst(lc($gene->Obj->status))." $biotype";
-	$type =~ s/_/ /g;
-	$type =~ s/unknown //i;
-    # create a colourmap and use it to get label for gene type
-    $panel->add_row($label, qq(<p>$type [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>));
-    return 1;
 }
 
 sub location {
