@@ -16,7 +16,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-  my $table         = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
   my $sp     = $object->species_defs->SPECIES_COMMON_NAME;
 
 ## add transcript stats
@@ -42,35 +42,30 @@ sub content {
 		     1, );
   }
 
-## add alternative transcript links
-  my @alts;
-  if (my @poss_alts = grep { $_->type eq 'ALT_TRANS' } @{$object->Obj->get_all_DBLinks} ) {
-      #filter out duplicate or unwanted xrefs
-      my %names_to_filter;
-      foreach my $alt (@poss_alts) {
-	  next unless ($alt->display_id =~ /OTT|ENST/);
-	  push @{$names_to_filter{$alt->dbname}}, $alt;
-      }
-      foreach my $type (qw(
-			   shares_CDS_and_UTR_with_OTTT
-			   ENST_ident
-			   shares_CDS_with_OTTT
-			   ENST_CDS
-			   OTTT ) ) {
-	  if ( $names_to_filter{$type}) {
-	      @alts = @{$names_to_filter{$type}};
-	      last;
-	  }
-      }
-      @alts = @poss_alts unless @alts;
+  my $db    = $object->get_db ;
+
+## add some Vega info
+  if ($db eq 'vega') {
+      # class
+      my $class = $object->transcript_class;
+      $table->add_row('Class',
+		      qq(<p>$class [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>),
+		      1);
+      # date
+      my $version = $object->version;
+      my $c_date = $object->created_date;
+      my $m_date = $object->mod_date;
+      $table->add_row('Version & date',
+		      qq(<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>),
+		      1);
+      # author
+      my $auth  = $object->get_author_name;
+      $table->add_row('Author',
+		      "This transcript was annotated by $auth");
+
   }
-  my $txt = join ', ', map {$_->db_display_name .': '. $object->get_ExtURL_link($_->display_id, $_->dbname, $_->display_id)} @alts;
-  $table->add_row('Alternative Transcripts',
-		  "<p>$txt</p>",
-		  '1');
 
 ## add prediction method
-  my $db    = $object->get_db ;
   my $label = ( ($db eq 'vega' or $object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
   my $text  = "No $label defined in database";
   my $o     = $object->Obj;
@@ -97,7 +92,7 @@ sub content {
 
 ## add alternative transcript info
   my $temp =  $self->_matches( 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
-  if (my $temp) {
+  if ($temp) {
       $table->add_row('Alternative transcripts',
 		      "<p>$temp</p>",
 		      1 );
@@ -108,13 +103,8 @@ sub content {
 		  '<p>## Peptide statistics section will go here ##</p>',
 		  1 );
 
+
   return $table->render;
 }
-
-#sub alternative_transcripts {
-#  my( $panel, $transcript ) = @_;
-#  _matches( $panel, $transcript, 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
-#}
-
 
 1;
