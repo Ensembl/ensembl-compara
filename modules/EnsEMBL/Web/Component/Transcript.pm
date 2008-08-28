@@ -859,77 +859,6 @@ sub do_markedup_pep_seq {
   return $output;
 }
 
-sub supporting_evidence_image {
-  my( $panel, $object ) = @_;
-  if (! defined $object->get_supporting_evidence) {
-    my $type = $object->logic_name; 
-    if ($type eq "otter" ){ 
-      $panel->print( '
-        <p id="evidence">
-          Although this Vega Havana transcript has been manually annotated and
-          it\'s structure is supported by experimental evidence, this evidence is
-          currently missing from the database. We are adding the evidence back to
-          the database as time permits
-        </p>' );
-    } elsif ($type eq "otter_external"){
-      $panel->print( '
-        <p id="evidence">
-          Although this Vega External transcript has been manually annotated and
-          it\'s structure is supported by experimental evidence, this evidence is
-          missing from the database. This annotation is not being updated
-        </p>' );
-    }
-    else {
-      $panel->print( '
-        <p id="evidence">
-        </p>' );
-    }
-  } else {
-  $panel->print( '
-    <p id="evidence">
-      The supporting evidence below consists of the sequence matches
-      on which the exon predictions were based and are sorted by alignment score.
-    </p>' );
-  my $evidence   = $object->get_supporting_evidence;
-  my $show       = $object->param('showall');
-  my $exon_count = $evidence->{ 'transcript' }{'exon_count'};
-  my $hits       = scalar(keys %{$evidence->{ 'hits' }});
-  if( $exon_count > 100 && !$show ) {
-    $panel->print( qq(
-    <p>
-      The supporting evidence image may take a while to load, please
-      <a href="/@{[$object->species]}/exonview?transcript=@{[$object->stable_id]};db=@{[$object->get_db]};showall=1">click here
-      to view supporting evidence<a/>.
-    </p>) );
-    return 1;
-  }
-  if( $hits > 10 && !$show ){
-    $panel->print( qq(
-    <p>
-      There are a large number of supporting evidence hits for this transcript. Only the
-      top ten 10 hits have been shown.
-      <a href="/@{[$object->species]}/exonview?transcript=@{[$object->stable_id]};db=@{[$object->get_db]};showall=1">Click to view all $hits
-      supporting evidence hits<a/>.
-    </p>) );
-    my @T = sort keys %{$evidence->{ 'hits' }};
-    for(my $i=10;$i<$hits;$i++) {
-      delete $evidence->{'hits'}{$T[$i]};
-    }  
-  }
-
-  my $wuc = $object->get_userconfig( 'exonview' );
-    $wuc->container_width( 1200 );
-    $wuc->set( 'supporting_evidence', 'hide_hits', 'yes') if $object->param('showall');
-    $wuc->set( '_settings', 'width', $object->param('image_width') );
-  my $image    = $object->new_image( $evidence, $wuc );
-  $image->imagemap = 'yes';
-
-  my $T = $image->render;
-  $panel->print( $T );
- }
-  return 1;
-}
-
 sub spreadsheet_variationTable {
   my( $panel, $object ) = @_;
   my %snps = %{$object->__data->{'transformed'}{'snps'}||[]};
@@ -1578,38 +1507,6 @@ sub text_dump {
   }
   $panel->print("\n");
   return 1;
-}
-
-sub class {
-  my ($panel,$transcript) = @_;
-  my $label = 'Transcript Class';
-  my $class = ucfirst(lc($transcript->Obj->status)).' '.ucfirst(lc($transcript->Obj->biotype));
-     $class =~ s/_/ /g;
-     $class =~ s/unknown//i;
-  return 1 unless $class;
-  my $species = $transcript->species;
-  my $text = qq(<p>$class [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>);
-  $panel->add_row($label, qq($text));
-  return 1;
-}
-
-=head2 version
-
- Arg[1]       : information panel (EnsEMBL::Web::Document::Panel::Information)
- Arg[2]       : object (EnsEMBL::Web::Proxy::Object)
- Example     : $panel1->add_component(qw(curated_locus EnsEMBL::Sanger_vega::Component::Gene::version));
- Description : adds version details to an information panel
- Return type : true
-
-=cut
-
-sub version {
-    my ($panel, $obj) = @_; 
-    my $label = 'Version';
-    my $version = $obj->version;
-  return 1 unless $version;
-    $panel->add_row($label, qq(<p>$version</p>));
-    return 1;
 }
 
 sub EC_URL {
