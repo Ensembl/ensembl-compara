@@ -22,8 +22,8 @@ sub content {
   my $html;
 
   my @movies;
-  if ($object->param('id')) {
-    my @ids = $object->param('id');
+  my @ids = $object->param('id') || $object->param('feedback');
+  if (scalar(@ids)) {
     foreach my $id (@ids) {
       push @movies, EnsEMBL::Web::Data::Movie->new($id);
     }
@@ -46,6 +46,14 @@ sub content {
 
       ),
                 $path, $movie->width, $movie->height, $file, $path, $path, $path);
+
+    ## Feedback form
+    if ($object->param('feedback')) {
+      $html .= '<p style="margin-top:2em">Thank you for your feedback.</p>';
+    }
+    else {
+      $html .= $self->help_feedback('/Help/Movie', 'Movie', $movie->id, '"margin-top:2em');
+    }
   }
   elsif (scalar(@movies) > 0) {
 
