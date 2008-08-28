@@ -111,9 +111,6 @@ sub _matches {
     $html = qq(<p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
   }
   $html .= qq(<table cellpadding="4">);
-  if( $keys[0] eq 'ALT_TRANS' ) {
-    @links = $self->remove_redundant_xrefs(@links);
-  }
   my $old_key = '';
   foreach my $link (@links) {
     my ( $key, $text ) = @$link;
@@ -206,9 +203,9 @@ sub _sort_similarity_links {
       $join_links = 1;
     }
  if( $join_links  ) {
-      $text = qq(\n  <div>$text</div>);
+      $text = qq(\n <div>$text</div>);
     } else {
-      $text = qq(\n  <div class="multicol">$text</div>);
+      $text = qq(\n <div class="multicol">$text</div>);
     }
     # override for Affys - we don't want to have to configure each type, and
     # this is an internal link anyway.
@@ -222,30 +219,6 @@ sub _sort_similarity_links {
 #    warn $text;
   }
 #  return $object->__data->{'similarity_links'};
-}
-
-sub remove_redundant_xrefs {
-  my ($self,@links) = @_;
-  my %priorities;
-  foreach my $link (@links) {
-    my ( $key, $text ) = @$link;
-    if ($text =~ />OTT|>ENST/) {
-      $priorities{$key} = $text;
-    }
-  }
-  foreach my $type (
-    'Transcript having exact match between ENSEMBL and HAVANA',
-    'Ensembl transcript having exact match with Havana',
-    'Havana transcript having same CDS',
-    'Ensembl transcript sharing CDS with Havana',
-    'Havana transcripts') {
-    if ($priorities{$type}) {
-      my @munged_links;
-      $munged_links[0] = [ $type, $priorities{$type} ];
-      return @munged_links;;
-    }
-  }
-  return @links;
 }
 
 sub _warn_block {
