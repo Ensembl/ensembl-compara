@@ -549,10 +549,9 @@ sub multiX {
   ### Arguments: configuration type (string)
   my( $self, $type ) = @_;
   return () unless $CONF;
-
   if (exists $CONF->{'_storage'}) {
       if (exists $CONF->{'_storage'}{'MULTI'}) {
-	  if (exists $CONF->{'_storage'}{'MULTI'}{$type}) {
+	  if ($CONF->{'_storage'}{'MULTI'}{$type}) {
 	      return %{$CONF->{'_storage'}{'MULTI'}{$type}};
 	  }
       }
