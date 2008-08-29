@@ -24,8 +24,6 @@ sub populate_tree {
 
 ##----------------------------------------------------------------------
 ## Compara menu: alignments/orthologs/paralogs/trees
-##----------------------------------------------------------------------
-## Compara menu: alignments/orthologs/paralogs/trees
   my $compara_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
   warn "... $self ... $compara_menu ....";
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
@@ -74,19 +72,25 @@ sub populate_tree {
     { 'availability' => 1 }
   ));
 =cut
-## DAS tree
+
   $self->create_node( 'Splice', "Alternative splicing ([[counts::exons]] exons)",
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
     { 'availability' => 1, 'concise' => 'Exons' }
   );
+
   $self->create_node( 'Evidence', "Supporting evidence",
      [qw(evidence       EnsEMBL::Web::Component::Gene::SupportingEvidence)],
     { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
-  $self->create_node( 'Regulation', 'Regulation', 
+
+  $self->create_node( 'Sequence', "Marked-up sequence",
+     [qw(sequence       EnsEMBL::Web::Component::Gene::GeneSeq)],
+    { 'availability' => 1, 'concise' => 'Marked-up sequence'}
+  );
+  $self->create_node( 'Regulation', 'Regulation',
     [qw(
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
-      features EnsEMBL::Web::Component::Gene::RegulationTable      
+      features EnsEMBL::Web::Component::Gene::RegulationTable
     )],
     { 'availability' => 'database:funcgen' }
   );
@@ -107,7 +111,7 @@ sub populate_tree {
   $self->create_node( 'Idhistory', 'ID history',
     [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
         associated  EnsEMBL::Web::Component::Gene::HistoryLinked
-        map         EnsEMBL::Web::Component::Gene::HistoryMap)],  
+        map         EnsEMBL::Web::Component::Gene::HistoryMap)],
         { 'availability' => 1, 'concise' => 'History' }
   );
   $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component:: >>>Location::UnderConstruction)] );
