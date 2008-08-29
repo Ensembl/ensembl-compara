@@ -140,6 +140,14 @@ sub AUTOLOAD {
   return $self->get_config( $species, $var );
 }
 
+sub colour {
+### a
+### return the colour associated with the $key of $set colour set (or the whole hash associated reference);
+  my( $self, $set, $key, $part ) = @_;
+  $part ||= 'default';
+  return defined( $key ) ? $self->{_storage}{MULTI}{COLOURSETS}{$set} : $self->{_storage}{MULTI}{COLOURSETS}{$set}{$key}{'default'};
+}
+
 sub get_config {
   ## Returns the config value for a given species and a given config key
   ### Arguments: species name(string), parameter name (string)
@@ -472,6 +480,8 @@ sub _parse {
 }
 #------------ Do the same for the multi-species file...
   $tree->{'MULTI'} = $self->_read_in_ini_file( 'MULTI', $defaults );                       $self->_info_line( 'Parsing', "MULTI ini file" );
+  $tree->{'MULTI'}{'COLOURSETS'} = $self->_munge_colours( $self->_read_in_ini_file( 'COLOUR', {} ) );
+
   $self->_expand_database_templates( 'MULTI', $tree->{'MULTI'} );
   $self->_promote_general(           $tree->{'MULTI'} );
   my $multi_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0],'packed','MULTI.db.packed');
@@ -499,6 +509,19 @@ sub _parse {
 
 #------------ Store the tree...
   $CONF->{'_storage'} = $tree;
+}
+
+sub _munge_colours {
+  my $self = shift;
+  my $in   = shift;
+  my $out  = {};
+  foreach my $set ( keys %$in) {
+    foreach my $key ( keys %{$in->{$set}} ) {
+      my($c,$n) = split /\s+/,$in->{$set}{$key},2;
+      $out->{$set}{$key} = { 'text' => $n, map { /:/ ? (split /:/,$_,2) : ('default',$_) } split /;/,$c };
+    }
+  }
+  return $out;
 }
 
 sub DESTROY { }
@@ -549,16 +572,12 @@ sub multiX {
   ### Arguments: configuration type (string)
   my( $self, $type ) = @_;
   return () unless $CONF;
-  if (exists $CONF->{'_storage'}) {
-      if (exists $CONF->{'_storage'}{'MULTI'}) {
-	  if ($CONF->{'_storage'}{'MULTI'}{$type}) {
-	      return %{$CONF->{'_storage'}{'MULTI'}{$type}};
-	  }
-      }
-  }
-  return ();
-
-#  return exists( $CONF->{'_storage'}{'MULTI'}{$type} ) ? %{$CONF->{'_storage'}{'MULTI'}{$type}} : ();
+  return
+      exists $CONF->{'_storage'} && 
+      exists $CONF->{'_storage'}{'MULTI'} && 
+      exists $CONF->{'_storage'}{'MULTI'}{$type} 
+    ? %{$CONF->{'_storage'}{'MULTI'}{$type}||{}}
+    : ();
 }
 
 sub get_table_size{
