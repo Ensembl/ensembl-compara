@@ -31,7 +31,7 @@ sub content {
     my $input = $object->input;
 
     my $hit_id = $input->{'sequence'}->[0];
-    my $hit_db_name = $object->get_hit_db_name($hit_id);
+    my $hit_db_name = $object->get_sf_hit_db_name($hit_id);
 
     #get external sequence and type (DNA or PEP) - refseq try with and without version
     my ($query_db, $ext_seq);

@@ -1425,7 +1425,7 @@ sub get_db_type{
     return  $db_hash{$db};
 }
 
-sub get_hit_db_name {
+sub get_sf_hit_db_name {
     my $self = shift;
     my ($id) = @_;
     return unless $id;
