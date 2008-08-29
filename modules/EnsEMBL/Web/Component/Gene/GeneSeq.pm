@@ -33,7 +33,7 @@ sub content {
   my $gene_exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->highlight_display( $object->Obj->get_all_Exons ) : [];
 
   # Create bins for sequence markup --------------------------------------
-  my @bin_locs = @{ bin_starts($slice, $gene_exons, $other_exons, $snps) };
+  my @bin_locs = @{ $self->bin_starts($slice, $gene_exons, $other_exons, $snps) };
   my %bin_idx; # A hash index of bin start locations vs pos in index
 
   my @bin_markup;
@@ -45,18 +45,17 @@ sub content {
     $bin_markup[$i] = [ $bin_length, {} ]; # Init bin, and flag as empty
   }
 
-
   # Define a formatting styles. These correspond to name/value pairs ---------------
   # in HTML style attributes
   my %styles = (
-    DEFAULT =>{},
-		## exon    => { 'color' => 'darkred',  'font-weight' =>'bold' },
-		## high2   => { 'color' => 'darkblue', 'font-weight' =>'bold' },
-		## high1   => { 'background-color' => 'blanchedalmond' },
-		other_exon  => { 'background-color' => 'blanchedalmond' },
-		gene_exon   => { 'color' => 'darkred',  'font-weight' =>'bold'},
-		snp       => { 'background-color' => '#caff70'        },
-		snpexon   => { 'background-color' => '#7fff00'        }
+      DEFAULT =>{},
+      ## exon    => { 'color' => 'darkred',  'font-weight' =>'bold' },
+      ## high2   => { 'color' => 'darkblue', 'font-weight' =>'bold' },
+      ## high1   => { 'background-color' => 'blanchedalmond' },
+      other_exon => { 'background-color' => 'blanchedalmond' },
+      gene_exon  => { 'color' => 'darkred',  'font-weight' =>'bold'},
+      snp        => { 'background-color' => '#caff70'        },
+      snpexon    => { 'background-color' => '#7fff00'        }
   );
 
   my $KEY = '';
@@ -67,7 +66,6 @@ sub content {
     my $type = $gene_exons->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
     my %istyles = %{$styles{gene_exon}};
     my $genename = $object->Obj->stable_id;
-    # color:'darkred';font-weight:'bold'
     my $style = join( ';',map{"$_:$istyles{$_}"} keys %istyles );
     $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of $genename $type" )
   }
@@ -86,11 +84,9 @@ sub content {
     $KEY .= sprintf( $key_tmpl, $style, "", "THIS STYLE:", "Location of SNPs" )
   }
 
-
   # Populate bins with exons ----------------------------
-  populate_bins($other_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "other_exon");
-  populate_bins($gene_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "gene_exon");
-
+  $self->populate_bins($other_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "other_exon");
+  $self->populate_bins($gene_exons, $slice, \%bin_idx, \@bin_markup, \%styles, "gene_exon");
 
   # Populate bins with SNPs -----------------------------
   my %snpstyles = %{$styles{snp}};
@@ -107,7 +103,7 @@ sub content {
     $bin->[2] = $allele || '';
     $bin->[3] = ($snp->end > $snp->start) ? 'ins' : 'del';
     $bin->[4] = $snp->{variation_name};
-    $bin->[5] = ambiguity_code($allele);
+    $bin->[5] = $self->ambiguity_code($allele);
   }
 
   # If strand is -ve ori, invert bins
@@ -150,11 +146,11 @@ sub content {
       my $markup = shift @bin_markup|| last;
       my( $n, $tmpl, $title, $type, $snp_id, $ambiguity ) = @$markup; # Length and template of markup
       if (defined($type)) {
-    # atm, it can only be 'ins' or 'del' to indicate the type of a variation
-    # in case of deletion we highlight flanked bases, and actual region where some bases are missing located at the right flank
-      my $ind = ($type eq 'ins') ? $i+$j : $i+$j+1;
-      push @var_list, qq({<a href="/@{[$object->species]}/snpview?panel_individual=on;snp=$snp_id">base $ind:$title</a>});
-    }
+        # atm, it can only be 'ins' or 'del' to indicate the type of a variation
+        # in case of deletion we highlight flanked bases, and actual region where some bases are missing located at the right flank
+        my $ind = ($type eq 'ins') ? $i+$j : $i+$j+1;
+        push @var_list, qq({<a href="/@{[$object->species]}/snpview?panel_individual=on;snp=$snp_id">base $ind:$title</a>});
+      }
       if( ! $n ){ next }
       if( $n > $linelength-$j ){ # Markup extends over line end. Trim for next
         unshift( @bin_markup, [ $n-($linelength-$j), $tmpl ] );
@@ -186,15 +182,13 @@ sub content {
 }
 
 sub bin_starts {
-
-  ### GeneSeqView
   ### Sequence markup uses a 'variable-length bin' approach.
   ### Each bin has a format.
   ### A feature can span multiple bins.
   ### Allows for feature overlaps - combined formats.
   ### Bins start at feature starts, and end at feature ends + 1
   ### Allow for cigar strings - these split alignments into 'mini-features'
-
+  my $self = shift;
   my ($slice, $gene_exons, $other_exons, $snps) = @_;
   my $slength = $slice->Obj->length;
   my $sstart  = $slice->Obj->start;
@@ -214,7 +208,7 @@ sub bin_starts {
     $fstart = $slength+1   if $fstart > $slength+1;
     $all_locs{$fstart} = 1 if $fstart > 0;
 
-    foreach my $seg(  @{ cigar_segments($feat) } ) {
+    foreach my $seg(  @{ $self->cigar_segments($feat) } ) {
       my $type = chop( $seg ); # Remove seg type - length remains
       next if( $type eq 'D' ); # Ignore deletes
       $fstart += $seg;
@@ -243,10 +237,8 @@ sub bin_starts {
 
 #-------------------------------------------------------
 sub cigar_segments {
-
   ### Arg: Bio::EnsEMBL::Feature
-  ### GeneSeqView
-
+  my $self = shift;
   my ($feat) = @_;
   my $cigar;
   $cigar = $feat->cigar_string if $feat->can('cigar_string');
@@ -260,10 +252,8 @@ sub cigar_segments {
 
 #----------------------------------------------------------
 sub populate_bins {
-
-  ### GeneSeqView
   ### Code to mark up the exons in each bin
-
+  my $self = shift;
   my ($exons, $slice, $bin_idx, $bin_markup, $styles, $key) = @_;
   my %estyles  = %{ $styles->{$key} };
   my $sstart  = $slice->Obj->start;
@@ -277,31 +267,31 @@ sub populate_bins {
     my $title;
     if ($feat->can('stable_id')) { $title = $feat->stable_id; }
 
-   foreach my $seg(  @{ cigar_segments($feat) }  ){
-     my $type = chop( $seg ); # Remove seg type - length remains
-     next if( $type eq 'D' ); # Ignore deletes
-     my $fend = $fstart + $seg;
-     my $idx_start = $fstart > 0 ? $bin_idx->{$fstart} : $bin_idx->{1};
-     my $idx_end   = ( $bin_idx->{$fend} ? $bin_idx->{$fend} : @$bin_markup ) -1;
-     $fstart += $seg;
-     next if $type ne 'M'; # Only markup matches
+    foreach my $seg(  @{ $self->cigar_segments($feat) }  ){
+      my $type = chop( $seg ); # Remove seg type - length remains
+      next if( $type eq 'D' ); # Ignore deletes
+      my $fend = $fstart + $seg;
+      my $idx_start = $fstart > 0 ? $bin_idx->{$fstart} : $bin_idx->{1};
+      my $idx_end   = ( $bin_idx->{$fend} ? $bin_idx->{$fend} : @$bin_markup ) -1;
+      $fstart += $seg;
+      next if $type ne 'M'; # Only markup matches
 
-     # Add styles to affected bins
-     my %istyles = %{$styles->{gene_exon}};
+      # Add styles to affected bins
+      my %istyles = %{$styles->{gene_exon}};
 
-     foreach my $bin( @$bin_markup[ $idx_start .. $idx_end ] ){
-       map{ $bin->[1]->{$_} = $estyles{$_} } keys %estyles;
-       next unless $title;
+      foreach my $bin( @$bin_markup[ $idx_start .. $idx_end ] ){
+        map{ $bin->[1]->{$_} = $estyles{$_} } keys %estyles;
+        next unless $title;
 
-       if ($key eq 'gene_exon' && defined (my $alt = $bin->[2]) ) {
-	 if (! grep {$_ eq $title} split(/ : /, $alt) ) {
-	   $bin->[2] = "$alt:$title";
-	   next;
-	 }
-       }
-       $bin->[2] = join( ' : ', $bin->[2]||(), $title||() );
-     } # end foreach $bin
-   }
+        if ($key eq 'gene_exon' && defined (my $alt = $bin->[2]) ) {
+	  if (! grep {$_ eq $title} split(/ : /, $alt) ) {
+	    $bin->[2] = "$alt:$title";
+	    next;
+	  }
+        }
+        $bin->[2] = join( ' : ', $bin->[2]||(), $title||() );
+      }
+    }
   }
   return 1;
 }
@@ -309,20 +299,19 @@ sub populate_bins {
 #----------------------------------------------------------------------
 
 sub sort_out_snp_strand {
-
-  ### GeneSeqView and GeneSeqAlignView
   ### Arg: variation object
   ### Arg: slice strand
   ### Returns the start of the snp relative to the gene
   ### Returns the snp alleles relative to the orientation of the gene
 
+  my $self = shift;
   my ( $snp, $sstrand ) = @_;
   my( $fstart, $fend ) = ( $snp->start, $snp->end );
   if($fstart > $fend) { # Insertion
     $fstart = $fstart - 2 if $sstrand < 0;
   }
   my $allele = $snp->allele_string;
-  
+
   # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
   if ($sstrand < 0) {
     my @av = split(/\//, $allele);
