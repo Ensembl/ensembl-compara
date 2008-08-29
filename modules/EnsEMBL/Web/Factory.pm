@@ -5,8 +5,7 @@ use warnings;
 no warnings "uninitialized";
 use EnsEMBL::Web::CoreObjects;
 
-use EnsEMBL::Web::Proxiable;
-our @ISA =qw(EnsEMBL::Web::Proxiable);
+use base qw(EnsEMBL::Web::Proxiable);
 
 ## Additional Factory functionality
 
