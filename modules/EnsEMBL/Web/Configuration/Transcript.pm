@@ -177,6 +177,11 @@ sub populate_tree {
     { 'availability' => 1, 'concise' => 'External references'}
   );
 
+  $self->create_node( 'ExternalRecordAlignment', '',
+   [qw(evidence       EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment)],
+    { 'no_menu_entry' => 1 }
+  );
+
   $self->create_node( 'Oligos', "Oligos  ([[counts::oligos]])",
     [qw(arrays      EnsEMBL::Web::Component::Transcript::OligoArrays)],
     { 'availability' => 1,  'concise' => 'Oligos'}
