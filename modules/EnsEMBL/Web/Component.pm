@@ -168,7 +168,7 @@ sub _sort_similarity_links {
       push @{$object->__data->{'links'}{'gkb'}->{$key}} , $type ;
       next;
     }
- my $text = $display_id;
+    my $text = $display_id;
     (my $A = $externalDB ) =~ s/_predicted//;
     if( $urls and $urls->is_linked( $A ) ) {
       my $link;
@@ -194,7 +194,7 @@ sub _sort_similarity_links {
       ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {
       my $seq_arg = $display_id;
       $seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
-      $text .= sprintf( ' [<a href="/%s/alignview?transcript=%s;sequence=%s;db=%s">align</a>] ',
+      $text .= sprintf( ' [<a href="/%s/Transcript/ExternalRecordAlignment?t=%s;sequence=%s;db=%s">align</a>] ',
                   $object->species, $object->stable_id, $seq_arg, $db );
     }
     if($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link
