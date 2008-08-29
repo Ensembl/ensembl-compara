@@ -178,7 +178,7 @@ sub populate_tree {
   );
 
   $self->create_node( 'ExternalRecordAlignment', '',
-   [qw(evidence       EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment)],
+   [qw(alignment       EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment)],
     { 'no_menu_entry' => 1 }
   );
 
@@ -198,7 +198,7 @@ sub populate_tree {
   );
 
   $self->create_node( 'SupportingEvidenceAlignment', '',
-   [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment)],
+   [qw(alignment      EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment)],
     { 'no_menu_entry' => 1 }
   );
 
