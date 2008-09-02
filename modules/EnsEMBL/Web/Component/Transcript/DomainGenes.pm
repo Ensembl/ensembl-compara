@@ -78,9 +78,13 @@ sub content {
   foreach my $gene ( sort { $object->seq_region_sort( $a->seq_region_name, $b->seq_region_name ) ||
                             $a->seq_region_start <=> $b->seq_region_start } @$genes ) {
     my $row = {};
-    my $xref_id = $gene->display_xref->display_id || '-novel-';
+    my $xref_id;
+    if ($gene->display_xref) {
+	$xref_id = $gene->display_xref->display_id;
+    }
+    else { $xref_id = '-novel-';}
     $row->{'id'} = sprintf '<a href="/%s/Gene/Summary?g=%s">%s</a><br />(%s)',
-                 $object->species, $gene->stable_id, $gene->stable_id, $xref_id;
+	$object->species, $gene->stable_id, $gene->stable_id, $xref_id;
 
     my $readable_location =  sprintf(qq(%s: %s),
       $self->neat_sr_name( $gene->slice->coord_system->name, $gene->slice->seq_region_name ),
