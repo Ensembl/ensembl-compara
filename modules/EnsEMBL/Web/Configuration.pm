@@ -307,13 +307,19 @@ sub query_string {
 sub create_node {
   my ( $self, $code, $caption, $components, $options ) = @_;
  
-  my $url = '/';
-  if ($self->species && $self->species ne 'common') {
-    $url .= $self->species.'/';
+  my $url;
+  if ($options->{'url'}) {
+    $url = $options->{'url'};
   }
-  $url .= $self->type.'/'.$code;
-  if ($self->query_string) {
-    $url .= '?'.$self->query_string;
+  else {
+    $url = '/';
+    if ($self->species && $self->species ne 'common') {
+      $url .= $self->species.'/';
+    }
+    $url .= $self->type.'/'.$code;
+    if ($self->query_string) {
+      $url .= '?'.$self->query_string;
+    }
   }
  
   my $details = {
@@ -457,98 +463,6 @@ sub mapview_possible {
   my @coords = split(':', $location);
   my %chrs = map { $_,1 } @{$self->{object}->species_defs->ENSEMBL_CHROMOSOMES || []};
   return 1 if exists $chrs{$coords[0]};
-}
-
-sub initialize_ddmenu_javascript {
-  my $self = shift;
-  $self->{page}->javascript->add_script( 'var LOADED = 0;' );
-  $self->{page}->javascript->add_source( '/js/dd_menus_42.js' );
-  $self->{page}->add_body_attr( 'onLoad' => 'LOADED = 1;' );
-}
-
-sub initialize_zmenu_javascript {
-  my $self = shift;
-  $self->{page}->javascript->add_script( 'var LOADED = 0;' );
-  $self->{page}->javascript->add_source( '/js/zmenu_42.js' );
-  $self->{page}->javascript_div->add_div( 'jstooldiv', { 'style' => 'z-index: 200; position: absolute; visibility: hidden' } , '' );
-  $self->{page}->add_body_attr( 'onLoad' => 'LOADED = 1;' );
-}
-
-sub initialize_zmenu_javascript_new {
-  my $self = shift;
-  #warn "sr7:initialise_zmenu_javascript_new is called\n";
-  $self->{page}->javascript->add_script( 'var LOADED = 0;' );
-  foreach( qw(dd_menus_42.js new_contigview_support_42.js new_drag_imagemap.js new_old_zmenu_42.js new_zmenu_42.js new_support.js protopacked.js) ) {
-    $self->{page}->javascript->add_source( "/js/$_" );
-  }
-  $self->{page}->javascript_div->add_div( 'jstooldiv', { 'style' => 'z-index: 200; position: absolute; visibility: hidden' } , '' );
-  $self->{page}->add_body_attr( 'onLoad' => 'LOADED = 1;' );
-}
-
-sub context_location {
-  my $self = shift;
-  my $obj = $self->{object};
-  return unless $obj->can( 'location_string' );
-  my $species = $obj->species;
-  my( $q_string, $header ) = $obj->location_string;
-  $header = "@{[$obj->seq_region_type_and_name]}<br />@{[$obj->thousandify(floor($obj->seq_region_start))]}";
-  if( floor($obj->seq_region_start) != ceil($obj->seq_region_end) ) {
-    $header .= " - @{[$obj->thousandify(ceil($obj->seq_region_end))]}";
-  }
-  my $flag = "location";
-  $flag .= $self->{flag} if ($self->{flag});
-  return if $self->{page}->menu->block($flag);
-  my $no_sequence = $obj->species_defs->NO_SEQUENCE;
-  if( $q_string ) {
-    my $flag = "location";
-    $flag .= $self->{flag} if ($self->{flag});
-    $self->add_block( $flag, 'bulletted', $header, 'raw'=>1 ); ##RAW HTML!
-    $header =~ s/<br \/>/ /;
-    if( $self->mapview_possible( $obj->seq_region_name ) ) {
-      $self->add_entry( $flag, 'text' => "View of @{[$obj->seq_region_type_and_name]}",
-       'href' => "/$species/mapview?chr=".$obj->seq_region_name,
-       'title' => 'MapView - show chromosome summary' );
-    }
-    unless( $no_sequence ) {
-      $self->add_entry( $flag, 'text' => 'Graphical view',
-        'href'=> "/$species/contigview?l=$q_string",
-        'title'=> "ContigView - detailed sequence display of $header" );
-    }
-    $self->add_entry( $flag, 'text' => 'Graphical overview',
-      'href'=> "/$species/cytoview?l=$q_string",
-      'title' => "CytoView - sequence overview of $header" );
-    unless( $no_sequence ) {
-      $self->add_entry( $flag, 'text' => 'Export from region...',
-        'title' => "ExportView - export information about $header",
-        'href' => "/$species/exportview?l=$q_string"
-      );
-    # $self->add_entry( $flag, 'text' => 'Export sequence as FASTA',
-    #   'title' => "ExportView - export sequence of $header as FASTA",
-    #    'href' => "/$species/exportview?l=$q_string;format=fasta;action=format"
-    # );
-    #  $self->add_entry( $flag, 'text' => 'Export EMBL file',
-    #   'title' => "ExportView - export sequence of $header as EMBL",
-    #   'href' => "/$species/exportview?l=$q_string;format=embl;action=format"
-    # );
-    }
-   unless ( $obj->species_defs->ENSEMBL_NOMART) {
-      if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_ENSEMBL'} ) {
-        $self->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export Gene info in region',
-          'title' => "BioMart - export Gene information in $header",
-          'href' => "/$species/martlink?l=$q_string;type=gene_region" );
-      }
-      if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_SNP'} ) {
-        $self->add_entry( $flag, 'icon' => '/img/biomarticon.gif' , 'text' => 'Export SNP info in region',
-          'title' => "BioMart - export SNP information in $header",
-          'href' => "/$species/martlink?l=$q_string;type=snp_region" ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
-      }
-      if( ${$obj->species_defs->multidb || {}}{'ENSEMBL_MART_VEGA'} ) {
-        $self->add_entry( $flag,  'icon' => '/img/biomarticon.gif' , 'text' => 'Export Vega info in region',
-          'title' => "BioMart - export Vega gene features in $header",
-          'href' => "/$species/martlink?l=$q_string;type=vega_region" ) if $obj->species_defs->databases->{'ENSEMBL_VEGA'};
-      }
-    }
-  }
 }
 
 1;
