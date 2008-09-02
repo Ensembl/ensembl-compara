@@ -529,20 +529,27 @@ sub _munge_meta {
   my %keys = qw(
     SPECIES_COMMON_NAME species.ensembl_alias_name
     ASSEMBLY_NAME       assembly.default
-    ASSEMBLY_DATE       assembly.date
-    GENEBUILD_RELEASE   genebuild.initial_release_date
-    GENEBUILD_LATEST    genebuild.last_geneset_update
   );
 
   foreach my $key ( keys %keys ) {
     $self->tree->{$key} = $self->_meta_info('ENSEMBL_DB',$keys{$key})->[0];
   }
 
-  my $genebuild = $self->_meta_info('ENSEMBL_DB','genebuild.start_date')->[0];
-  my @A = split('-', $genebuild);
   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-  $self->tree->{'GENEBUILD_START'} = $months[$A[1]].$A[0];
+  my $gb_start = $self->_meta_info('ENSEMBL_DB','genebuild.start_date')->[0];
+  my @A = split('-', $gb_start);
+  $self->tree->{'GENEBUILD_START'} = $months[$A[1]].' '.$A[0];
   $self->tree->{'GENEBUILD_BY'} = $A[2];
+
+  my $gb_release = $self->_meta_info('ENSEMBL_DB','genebuild.initial_release_date')->[0];
+  @A = split('-', $gb_start);
+  $self->tree->{'GENEBUILD_RELEASE'} = $months[$A[1]].' '.$A[0];
+  my $gb_latest = $self->_meta_info('ENSEMBL_DB','genebuild.last_geneset_update')->[0];
+  @A = split('-', $gb_latest);
+  $self->tree->{'GENEBUILD_LATEST'} = $months[$A[1]].' '.$A[0];
+  my $assembly_date = $self->_meta_info('ENSEMBL_DB','assembly.date')->[0];
+  @A = split('-', $assembly_date);
+  $self->tree->{'ASSEMBLY_DATE'} = $months[$A[1]].' '.$A[0];
 
   ## Do species name and group
   my @taxonomy = @{$self->_meta_info('ENSEMBL_DB','species.classification')};
