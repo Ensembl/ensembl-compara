@@ -11,6 +11,7 @@ our %mapping = (
   'contigview'            => { 'type' => 'Location',   'action' => 'View',          'initial_release' => 1 },
   'cytoview'              => { 'type' => 'Location',   'action' => 'Overview',      'initial_release' => 1 },
   'domainview'            => { 'type' => 'Transcript', 'action' => 'Domain',        'initial_release' => 1 },
+  'dasconfview'           => { 'type' => 'UserData',   'action' => 'Attach',        'initial_release' => 1 },
   'dotterview'            => { 'type' => 'Location',   'action' => 'Dotter',        'initial_release' => 1 },
   'exonview'              => { 'type' => 'Transcript', 'action' => 'Exons',         'initial_release' => 1 },
   'familyview'            => { 'type' => 'Gene',       'action' => 'Family',        'initial_release' => 1 },
