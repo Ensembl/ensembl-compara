@@ -58,6 +58,12 @@ sub populate_tree {
             'concise' => 'Orthologues' } ) );
 
   $compara_menu->append
+      ( $self->create_node( 'HomologAlignment', '',
+			    [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
+			    {'no_menu_entry' => 1 }
+			));
+
+  $compara_menu->append
       ( $self->create_node
         ( 'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
           [qw(paralogues  EnsEMBL::Web::Component::Gene::ComparaParalogs)],
@@ -73,9 +79,10 @@ sub populate_tree {
   ));
 =cut
 
+
   $self->create_node( 'Splice', "Alternative splicing ([[counts::exons]] exons)",
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
-    { 'availability' => 1, 'concise' => 'Exons' }
+    { 'availability' => 1, 'concise' => 'Alternative splicing' }
   );
 
   $self->create_node( 'Evidence', "Supporting evidence",
