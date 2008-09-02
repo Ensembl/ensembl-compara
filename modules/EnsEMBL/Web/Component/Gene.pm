@@ -1052,6 +1052,40 @@ paralogues with BioMart to see more.)</p>
   return 1;
 }
 
+sub HOMOLOGY_TYPES {
+  my $self = shift;
+  return {
+    'BRH'  => 'Best Reciprocal Hit',
+    'UBRH' => 'Unique Best Reciprocal Hit',
+    'RHS'  => 'Reciprocal Hit based on Synteny around BRH',
+    'DWGA' => 'Derived from Whole Genome Alignment'
+  };
+}
+
+
+sub SIMPLEALIGN_FORMATS {
+    return {
+	'fasta'    => 'FASTA',
+	'msf'      => 'MSF',
+	'clustalw' => 'CLUSTAL',
+	'selex'    => 'Selex',
+	'pfam'     => 'Pfam',
+	'mega'     => 'Mega',
+	'nexus'    => 'Nexus',
+	'phylip'   => 'Phylip',
+	'psi'      => 'PSI',
+    };
+}
+
+sub SIMPLEALIGN_DEFAULT { return 'clustalw'; }
+
+sub renderer_type {
+  my $self = shift;
+  my $K = shift;
+  my $T = SIMPLEALIGN_FORMATS;
+  return $T->{$K} ? $K : SIMPLEALIGN_DEFAULT;
+}
+
 sub paralogues {
   my( $panel, $gene ) = @_;
   # make the paralogues panel a collapsable one
