@@ -56,7 +56,7 @@ sub content {
           (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
           my $EXTRA = qq(<span class="small">[<a href="/@{[$gene->species]}/multicontigview?gene=$STABLE_ID;s1=$spp;g1=$stable_id;context=1000">MultiContigView</a>]</span>);
           if( $paralogue_desc ne 'DWGA' ) {
-            $EXTRA .= qq(&nbsp;<span class="small">[<a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID;g1=$stable_id">Align</a>]</span>);
+            $EXTRA .= qq(&nbsp;<span class="small">[<a href="/@{[$gene->species]}/Gene/HomologAlignment?g=$STABLE_ID;g1=$stable_id">Align</a>]</span>);
             $EXTRA2 = qq(<br /><span class="small">[Target &#37id: $OBJ->{'target_perc_id'}; Query &#37id: $OBJ->{'query_perc_id'}]</span>);
             $ALIGNVIEW = 1;
           }
@@ -86,7 +86,7 @@ sub content {
     }
     $html .= qq(</table>);
     if( $ALIGNVIEW && keys %paralogue_list ) {
-      $html .= qq(\n      <p><a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID">View sequence alignments of all homologues</a>.</p>);
+      $html .= qq(\n      <p><a href="/@{[$gene->species]}/Gene/HomologAlignment?g=$STABLE_ID">View sequence alignments of all homologues</a>.</p>);
     }
   }
   else {
