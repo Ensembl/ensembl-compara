@@ -309,13 +309,6 @@ sub get_user_id {
 }
 
 
-## wrapper around redirect and render
-sub action {
-  warn 'DEPRECATED - use $self->render instead';
-  my $self = shift;
-  $self->render;
-}
-
 sub redirect {
   my( $self, $URL ) = @_;
   CGI::redirect( $URL );
@@ -405,87 +398,5 @@ sub add_error_panels {
 sub DESTROY {
   Bio::EnsEMBL::Registry->disconnect_all();
 }
-
-sub simple { simple_self( @_ ); }
-sub simple_self {
-  my ($type) = @_;
-  my $self = __PACKAGE__->new( 'objecttype' => $type );
-  if( $self->has_a_problem ) {
-     $self->render_error_page;
-  } else {
-    foreach my $object( @{$self->dataObjects} ) {
-      $self->configure( $object, $object->script, 'context_menu', 'context_location' );
-    }
-#warn "FIXING SESSION.............";
-    $self->factory->fix_session;
-    $self->action;
-  }
-  #warn $self->timer->render();
-}
-
-sub wrapper_self { wrapper( @_ ); }
-
-sub wrapper {
-  my $objecttype = shift;
-  my %params = @_;
-  my %new_params = ('objecttype' => $objecttype );
-  foreach(qw(renderer outputtype scriptname doctype)) {
-    $new_params{$_} = $params{$_} if $params{$_};
-  }
-
-  my $self = __PACKAGE__->new( %new_params );
-  $self->{'subtype'} = $params{'subtype'} if exists $params{'subtype'};
-  if( $self->has_a_problem ) {
-      
-    $self->render_error_page;
-  } else {
-    foreach my $object( @{$self->dataObjects} ) {
-      $self->configure( $object, $object->script, @{$params{'extra_config'}||[]} );
-    }
-    $self->factory->fix_session;
-    $self->action;
-  }
-}
-
-sub simple_with_redirect {
-  my $self = __PACKAGE__->new( 'objecttype' => shift );
-  if( $self->has_a_problem ) {
-    if( $self->has_problem_type('mapped_id') ) {
-      my $feature = $self->factory->__data->{'objects'}[0];
-      $self->redirect( sprintf "/%s/%s?%s",
-        $self->factory->species, $self->factory->script,
-        join(';',map {"$_=$feature->{$_}"} keys %$feature )
-      );
-    } elsif ($self->has_problem_type('unmapped')) {
-      my $f     = $self->factory;
-      my $id  = $f->param('peptide') || $f->param('transcript') || $f->param('gene');
-      my $type = $f->param('gene') ? 'Gene' : 'DnaAlignFeature';
-      $self->redirect( sprintf "/%s/featureview?type=%s;id=%s",
-        $self->factory->species, $type, $id 
-      );
-    } elsif ($self->has_problem_type('archived') ) {
-      my $f     = $self->factory;
-      my $id =  $f->param('peptide') || $f->param('transcript') || $f->param('gene');
-      my $type;
-      if ($f->param('peptide')) { $type = 'peptide'; }
-      elsif ($f->param('transcript') ) { $type = 'transcript' }
-      else { $type = "gene" ; }
-
-      $self->redirect( sprintf "/%s/idhistoryview?%s=%s",
-		       $self->factory->species, $type, $id 
-		     );
-    } else {
-      $self->render_error_page;
-    }
-  } else {
-     foreach my $object( @{$self->dataObjects} ) {
-       $self->configure( $object, $object->script, 'context_menu', 'context_location' );
-     }
-    $self->factory->fix_session;
-     $self->action;
-  }
-  return 1;
-}
-
 
 1;
