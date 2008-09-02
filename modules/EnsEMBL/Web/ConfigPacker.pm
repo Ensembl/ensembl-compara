@@ -281,12 +281,8 @@ sub _summarise_website_db {
   );
 
   foreach my $row (@$t_aref) {
-    $self->db_tree->{'ASSEMBLIES'}{$row->[0]} = $row->[1];
+    $self->db_tree->{'ASSEMBLIES'}{$row->[0]}{$row->[1]} = $row->[2];
   }
-#my $T = $self->db_tree->{'ASSEMBLIES'};
-#foreach my $k (sort keys %$T) {
-#  warn "$k = ".$T->{$k};
-#}
 
   ## Current archive list
   $t_aref = $dbh->selectall_arrayref(
@@ -534,16 +530,18 @@ sub _munge_meta {
     SPECIES_COMMON_NAME species.ensembl_alias_name
     ASSEMBLY_NAME       assembly.default
     ASSEMBLY_DATE       assembly.date
+    GENEBUILD_RELEASE   genebuild.initial_release_date
+    GENEBUILD_LATEST    genebuild.last_geneset_update
   );
 
   foreach my $key ( keys %keys ) {
     $self->tree->{$key} = $self->_meta_info('ENSEMBL_DB',$keys{$key})->[0];
   }
 
-  my $genebuild = $self->_meta_info('ENSEMBL_DB','genebuild.version')->[0];
+  my $genebuild = $self->_meta_info('ENSEMBL_DB','genebuild.start_date')->[0];
   my @A = split('-', $genebuild);
   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-  $self->tree->{'GENEBUILD_DATE'} = $months[$A[1]].$A[0];
+  $self->tree->{'GENEBUILD_START'} = $months[$A[1]].$A[0];
   $self->tree->{'GENEBUILD_BY'} = $A[2];
 
   ## Do species name and group
@@ -569,6 +567,7 @@ sub _munge_meta {
 sub _munge_website {
   my $self = shift;
 
+  ## Release info for ID history etc
   $self->tree->{'ASSEMBLIES'} = $self->db_tree->{'ASSEMBLIES'};
 
   $self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_tree->{'ENSEMBL_ARCHIVES'};
