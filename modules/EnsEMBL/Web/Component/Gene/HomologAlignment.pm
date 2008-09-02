@@ -55,13 +55,24 @@ sub content {
 		my $species = $member->genome_db->name;
 		(my $species2 = $species ) =~s/ /_/g;
 		my $location = sprintf('%s:%d-%d',$member->chr_name, $member->chr_start, $member->chr_end);
-		push @$DATA, [
-		    $species,
-		    sprintf( '<a href="/%s/Gene/Summary?g=%s">%s</a>',$species2,$member->stable_id,$member->stable_id ),
-		    sprintf( '<a href="/%s/Transcript/Protein?g=%s;r=%s;peptide=%s">%s</a>',$species2,$gene->stable_id,$location,$peptide->stable_id,$peptide->stable_id ),
-		    sprintf( '%d aa', $peptide->seq_length ),
-		    sprintf( '<a href="/%s/Location/View?g=%s;r=%s">%s</a>',$species2,$member->stable_id,$location,$location),
-		];
+		if ($member->stable_id eq $gene->stable_id) {
+		    push @$DATA, [
+			$species,
+			sprintf( $member->stable_id ),
+			sprintf( $peptide->stable_id ),
+			sprintf( '%d aa', $peptide->seq_length ),
+			sprintf( $location),
+		    ]; 
+		}
+		else {
+		    push @$DATA, [
+			$species,
+			sprintf( '<a href="/%s/Gene/Summary?g=%s">%s</a>',$species2,$member->stable_id,$member->stable_id ),
+			sprintf( '<a href="/%s/Transcript/Protein?g=%s;r=%s;peptide=%s">%s</a>',$species2,$gene->stable_id,$location,$peptide->stable_id,$peptide->stable_id ),
+			sprintf( '%d aa', $peptide->seq_length ),
+			sprintf( '<a href="/%s/Location/View?g=%s;r=%s">%s</a>',$species2,$member->stable_id,$location,$location),
+		    ];
+		}
 	    }
 	    next unless $FLAG;
 	    my $homology_types = $self->HOMOLOGY_TYPES;
