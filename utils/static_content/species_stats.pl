@@ -144,8 +144,12 @@ foreach my $spp (@valid_spp) {
 
     my $a_date  = $SD->get_config($spp, 'ASSEMBLY_DATE') || '';
     $a_date || warn "[ERROR] $spp missing SpeciesDefs->ASSEMBLY_DATE!";
-    my $b_date  = $SD->get_config($spp, 'GENEBUILD_DATE') || '';
-    $b_date || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_DATE!";
+    my $b_start  = $SD->get_config($spp, 'GENEBUILD_START') || '';
+    $b_start || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_START!";
+    my $b_release  = $SD->get_config($spp, 'GENEBUILD_RELEASE') || '';
+    $b_release || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_RELEASE!";
+    my $b_latest  = $SD->get_config($spp, 'GENEBUILD_LATEST') || '';
+    $b_latest || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_LATEST!";
     my $b_id    = $SD->get_config($spp, 'GENEBUILD_BY') || '';
     $b_id   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_BY!";
 
@@ -353,17 +357,29 @@ foreach my $spp (@valid_spp) {
           <td class="value" style="font-size:115%">$a_id, $a_date</td>
       </tr>
       <tr>
-          <td class="data" style="font-size:115%">Genebuild:</td>
-          <td class="value" style="font-size:115%">$b_id, $b_date</td>
-      </tr>
-      <tr class="bg2">
           <td class="data" style="font-size:115%">Database version:</td>
           <td class="value" style="font-size:115%">$db_id</td>
+      </tr>
+      <tr class="bg2">
+          <td class="data" style="font-size:115%">Genebuild by:</td>
+          <td class="value" style="font-size:115%">$b_id</td>
+      </tr>
+      <tr>
+          <td class="data">Genebuild started:</td>
+          <td class="value">$b_start</td>
+      </tr>
+      <tr class="bg2">
+          <td class="data">Genebuild released:</td>
+          <td class="value">$b_release</td>
+      </tr>
+      <tr>
+          <td class="data">Genebuild last updated/patched:</td>
+          <td class="value">$b_latest</td>
       </tr>
   );
 
     my $row;
-    my $rowcount = 3; ## use this to alternate white and coloured rows
+    my $rowcount = 6; ## use this to alternate white and coloured rows
 
     if ($known) {
       $known = thousandify($known);
@@ -516,7 +532,6 @@ foreach my $spp (@valid_spp) {
     }
     print STATS '</table>';
 
-    print STATS qq(<p class="small"><a href="/info/about/docs/stats.html">How the statistics are calculated</a></p>);
     close(STATS);
   }
 } # end of species
@@ -564,31 +579,42 @@ sub stripe_row {
 
 sub do_interpro {
   my ($db, $species) = @_;
+
+  ## Best to do this using API!
+  
+  ## First get all interpro accession IDs
   my $SQL = qq(SELECT  i.interpro_ac,
-                      gsi.stable_id,
                       x.description,
                       count(*)
                 FROM  interpro i
                 LEFT JOIN xref x ON i.interpro_ac = x.dbprimary_acc
                 LEFT JOIN protein_feature pf ON i.id = pf.hit_name
-                LEFT JOIN translation as tr ON tr.translation_id = pf.translation_id
-                LEFT JOIN transcript t ON t.transcript_id = tr.transcript_id
-                LEFT JOIN gene_stable_id gsi ON t.gene_id = gsi.gene_id 
-                LEFT JOIN gene g ON g.gene_id = gsi.gene_id
-                GROUP BY t.gene_id);
+                GROUP BY pf.hit_name);
   my $sth = $db->dbc->prepare($SQL);
   $sth->execute();
 
   my $domain;
-  my @hits;
-
-  while (my ($dom,$gene,$descr,$count) = $sth->fetchrow_array) {
-    #print STDERR "Looking at $dom with $count\n";
-    $domain->{$dom}{genes}++;
-    $domain->{$dom}{descr} = $descr;
-    $domain->{$dom}{count} += $count;
+  while (my ($acc, $descr, $count) = $sth->fetchrow_array) {
+    $domain->{$acc}{descr} = $descr;
+    $domain->{$acc}{count} = $count;
   }
-  return 0 if (!keys %$domain);
+  return 0 if !(keys %$domain);
+
+  use EnsEMBL::Web::DBSQL::DBConnection;
+  my $dbc = EnsEMBL::Web::DBSQL::DBConnection->new();
+  my $adaptor = $dbc->get_DBAdaptor('core', $species);
+  my $ga = $adaptor->get_GeneAdaptor;
+
+  foreach my $ac_id (keys %$domain) { 
+    my @genes = @{$ga->fetch_all_by_domain($ac_id)};
+    next if !@genes;
+    $domain->{$ac_id}{genes} = @genes;
+    #foreach my $g (@genes) {
+    #  $domain->{$acc}{count} += @{ $g->get_all_Transcripts };
+    #}
+  }
+
+  my @hits;
 
   my ($number, $file, $bigtable);
   $number = 40;
@@ -665,20 +691,20 @@ sub hits2html {
     my $count2 = $tmpdom2->{count};
     my $descr2 = $tmpdom2->{descr};
 
-    my $cnt1 = $i+1;
-    my $cnt2 = $i+($number/2)+1;
+    my $order1 = $i+1 || 0;
+    my $order2 = $i+($number/2)+1 || 0;
     my $class = shift @class;
     push @class, $class;
 
   print qq(
 <tr $class>
-  <td><b>$cnt1</b></td>
+  <td><b>$order1</b></td>
   <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name1">$name1</a><br />$descr1</td>
-  <td><a href="/$species/domainview?domainentry=$name1">$gene1</a></td>
+  <td><a href="/$species/Transcript/Domain?domain=$name1">$gene1</a></td>
   <td>$count1</td>
-  <td><b>$cnt2</b></td>
+  <td><b>$order2</b></td>
   <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name2">$name2</a><br />$descr2</td>
-  <td><a href="/$species/domainview?domainentry=$name2">$gene2</a></td>
+  <td><a href="/$species/Transcript/Domain?domain=$name2">$gene2</a></td>
   <td>$count2</td>
 </tr>
 );
@@ -686,7 +712,7 @@ sub hits2html {
 
   print("</table></p>");
 
-  my $interpro_path = "/$species/stats";
+  my $interpro_path = "/$species";
   if($isbig == 0){
     # the Top40 page
     print qq(<p class="center"><a href="$interpro_path/IPtop500.html">View</a> top 500 InterPro hits (large table)</p>);
