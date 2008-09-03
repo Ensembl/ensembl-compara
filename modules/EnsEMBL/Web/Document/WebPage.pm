@@ -82,7 +82,6 @@ sub new {
   $self->_prof("Parameters initialised from input");
 
 ## Page module...
-
 ## Compile and create renderer ... [ Apache, File, ... ]
   my $renderer_type = $parameters{'renderer'} || DEFAULT_RENDERER;
   my $render_module = "EnsEMBL::Web::Document::Renderer::$parameters{'renderer'}";
@@ -137,8 +136,8 @@ sub new {
       '_databases'     => $db_connection
     }
   );
-    $self->factory->__data->{'timer'} = $self->{'timer'};
-    $self->_prof("Factory compiled and objects created...");
+  $self->factory->__data->{'timer'} = $self->{'timer'};
+  $self->_prof("Factory compiled and objects created...");
   return $self if $self->factory->has_fatal_problem();
   eval {
     if( $parameters{'fast'} ) {
