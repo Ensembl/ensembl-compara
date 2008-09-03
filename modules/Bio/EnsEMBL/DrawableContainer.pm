@@ -4,7 +4,8 @@
 # Created: 2001
 #
 
-package EnsEMBL::Web::DrawableContainer;
+package Bio::EnsEMBL::DrawableContainer;
+
 use strict;
 no warnings "uninitialized";
 use Sanger::Graphics::Glyph::Rect;
