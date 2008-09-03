@@ -5,9 +5,6 @@
 #
 package Sanger::Graphics::ColourMap;
 use strict;
-use Exporter;
-use vars qw(@ISA);
-@ISA = qw(Exporter);
 
 sub new {
     my ($class, $cookie) = @_;
