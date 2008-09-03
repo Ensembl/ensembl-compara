@@ -1,9 +1,6 @@
 package Sanger::Graphics::VDrawableContainer;
 use strict;
-use Sanger::Graphics::Root;
-use Data::Dumper;
-use vars qw(@ISA);
-@ISA = qw(Sanger::Graphics::Root);
+use base qw(Sanger::Graphics::Root);
 
 sub new {
   my ($class, $Container, $Config, $highlights, $strandedness, $spacing) = @_;
