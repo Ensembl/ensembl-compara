@@ -151,8 +151,10 @@ sub ingredient {
     $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
   
     $webpage->render;
+    warn $webpage->timer->render if
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
     $content = $webpage->page->renderer->content;
-  
     my @tags = qw(AJAX);
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
     $memd->set($ENV{CACHE_KEY}, $content, undef, @tags) if $memd;
@@ -250,7 +252,9 @@ sub stuff {
     }
     $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
     $webpage->render;
-    warn $webpage->timer->render if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS & 32;
+    warn $webpage->timer->render if
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
     return "Completing action";
   }
 }
