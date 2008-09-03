@@ -145,7 +145,10 @@ sub colour {
 ### return the colour associated with the $key of $set colour set (or the whole hash associated reference);
   my( $self, $set, $key, $part ) = @_;
   $part ||= 'default';
-  return defined( $key ) ? $self->{_storage}{MULTI}{COLOURSETS}{$set} : $self->{_storage}{MULTI}{COLOURSETS}{$set}{$key}{'default'};
+  return defined( $key )
+       ? $self->{_storage}{MULTI}{COLOURSETS}{$set}{$key}{$part}
+       : $self->{_storage}{MULTI}{COLOURSETS}{$set}
+       ;
 }
 
 sub get_config {
