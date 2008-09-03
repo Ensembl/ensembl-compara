@@ -18,9 +18,7 @@ sub new {
     'parameters' => {}
   };
   bless $self, $class;
-  warn "make me objects...";
   $self->_generate_objects;
-  warn "objects made...";
   return $self;
 }
 
@@ -133,7 +131,6 @@ sub _generate_objects {
   my $self = shift;
 
   return if $ENV{'ENSEMBL_SPECIES'} eq 'common';
-  warn "getting db...";
 
 #  if( $self->param('variation')) {
 #    $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('variation'), $self->param('source')));
@@ -151,21 +148,16 @@ sub _generate_objects {
     $self->_get_gene_location_from_transcript;
   }
   if( !$self->transcript && $self->param('g') ) {
-    warn "getting db adaptor...";
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
     my $tdb_adaptor = $self->database($tdb);
-    warn "getting gene...";
     $self->gene(       $tdb_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('g')) );
-    warn "getting location from gene";
     $self->_get_location_from_gene;
-    warn "got location from gene";
   }
   if( $self->param('r') ) {
     my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
     my $db_adaptor= $self->database('core');
     $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
   }
-  warn "storing objects...";
   $self->{'parameters'}{'r'} = $self->location->seq_region_name.':'.$self->location->start.'-'.$self->location->end if $self->location;
   $self->{'parameters'}{'t'} = $self->transcript->stable_id if $self->transcript;
   $self->{'parameters'}{'g'} = $self->gene->stable_id       if $self->gene;
