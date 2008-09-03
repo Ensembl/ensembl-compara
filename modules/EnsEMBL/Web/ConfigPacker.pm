@@ -2,11 +2,12 @@ package EnsEMBL::Web::ConfigPacker;
 
 use strict;
 use warnings;
-use EnsEMBL::Web::ConfigPacker_base;
+no warnings qw(uninitialized);
+
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 use Data::Dumper;
 
-our @ISA = qw(EnsEMBL::Web::ConfigPacker_base);
+use base qw(EnsEMBL::Web::ConfigPacker_base);
 
 sub _munge_databases {
   my $self = shift;
@@ -82,7 +83,6 @@ sub _summarise_generic {
     );
     my $hash = {};
     foreach my $r( @$t_aref) {
-      warn "... $r->[3] $r->[0] ... $r->[1]";
       push @{ $hash->{$r->[3]}{$r->[0]}}, $r->[1];
     }
     $self->db_details($db_name)->{'meta_info'} = $hash;
@@ -193,11 +193,11 @@ sub _summarise_core_tables {
 #
   my $sth = $dbh->prepare(qq(select * from external_db));
   $sth->execute;
-  my $det;
+  my $hashref;
   while (my $hashref = $sth->fetchrow_hashref) {
-	  $det->{$hashref->{'external_db_id'}} = $hashref;
+    $hashref->{$hashref->{'external_db_id'}} = $hashref;
   }
-  $self->db_details($db_name)->{'external_dbs'} = $det;
+  $self->db_details($db_name)->{'tables'}{'external_db'}{'entries'} = $hashref;
 
 #---------- Now for the core only ones.......
 
@@ -313,12 +313,10 @@ sub _summarise_website_db_multi {
     $data =~ s/^\$data = //;
     $data =~ s!\+'!'!g;
     $data = eval ($data);
-    warn Dumper($data);
     my $object = $data->{'object'};
     my $action = $data->{'action'};
     $self->db_tree->{'ENSEMBL_HELP'}{$object}{$action} = $row->[0];
   }
-  warn Dumper($self->db_tree->{'ENSEMBL_HELP'});
   $dbh->disconnect();
 }
 
@@ -557,9 +555,6 @@ sub _munge_meta {
 
   $self->tree->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
 
-  warn $self->tree->{'SPECIES_BIO_NAME'};
-  warn $self->tree->{'ASSEMBLY_NAME'};
-  warn $self->tree->{'SPECIES_COMMON_NAME'};
   foreach my $taxon (@taxonomy) {
     foreach my $group (@$order) {
       if ($taxon eq $group) {
