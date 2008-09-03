@@ -3,8 +3,7 @@
 
 =head1 SYNOPSIS
 
-use Sanger::Graphics::Root
-@MyModule::ISA = qw( Sanger::Graphics::Root );
+use base qw( Sanger::Graphics::Root );
 
 =head1 DESCRIPTION
 
