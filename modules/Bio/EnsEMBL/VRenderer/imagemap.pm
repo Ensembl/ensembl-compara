@@ -1,9 +1,7 @@
 package Bio::EnsEMBL::VRenderer::imagemap;
 use strict;
-use Bio::EnsEMBL::VRenderer;
 use Sanger::Graphics::JSTools;
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::VRenderer);
+use base qw(Bio::EnsEMBL::VRenderer);
 
 #########
 # imagemaps are basically strings, so initialise the canvas with ""
@@ -12,9 +10,9 @@ use vars qw(@ISA);
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
   $self->canvas("");
-  $self->{'show_zmenus'} = defined( $config->get("_settings","opt_zmenus") ) ? $config->get("_settings","opt_zmenus") : 1;
-  $self->{'zmenu_zclick'} = $config->get("_settings","opt_zclick");
-  $self->{'zmenu_behaviour'} = $config->get("_settings","zmenu_behaviour") || 'onmouseover';
+  $self->{'show_zmenus'} = defined( $config->get_parameter( "opt_zmenus") ) ? $config->get_parameter( "opt_zmenus") : 1;
+  $self->{'zmenu_zclick'} = $config->get_parameter( "opt_zclick");
+  $self->{'zmenu_behaviour'} = $config->get_parameter( "zmenu_behaviour") || 'onmouseover';
 }
 
 sub add_canvas_frame {

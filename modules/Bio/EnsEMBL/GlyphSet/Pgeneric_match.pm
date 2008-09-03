@@ -5,18 +5,7 @@ use Data::Dumper qw( Dumper );
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Bump;
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  my $track_label = $self->my_config('track_label') || 
-                      $self->my_config('LOGIC_NAME')  || 'Unknown';
-  my $self->init_label_text( $track_label );
-}
 
 sub _init {
     my ($self) = @_;
@@ -52,7 +41,7 @@ sub _init {
 	my @row  = @{$hash{$key}};
 	my $desc = $row[0]->idesc();
 		
-	my $Composite = new Sanger::Graphics::Glyph::Composite({
+	my $Composite = $self->Composite({
 	    'x'     => $row[0]->start(),
 	    'y'     => $y,
 	    'href'  => $self->ID_URL( $url_key, $key ),
@@ -72,7 +61,7 @@ sub _init {
 	    $maxx  = $pf->end() if ($pf->end() > $maxx || !defined($maxx));
 	    my $id = $pf->hseqname();
 
-	    my $rect = new Sanger::Graphics::Glyph::Rect({
+	    my $rect = $self->Rect({
 		'x'        => $x,
 		'y'        => $y,
 		'width'    => $w,
@@ -86,7 +75,7 @@ sub _init {
         unless( $compact ){
 
           # add a domain linker
-          my $rect = new Sanger::Graphics::Glyph::Rect({
+          my $rect = $self->Rect({
 	    'x'         => $minx,
 	    'y'         => $y + 2,
 	    'width'     => $maxx - $minx,
@@ -98,7 +87,7 @@ sub _init {
           
           # Add a feature label
           my $desc = $pfsave->idesc() || $key;
-          my $text = new Sanger::Graphics::Glyph::Text({
+          my $text = $self->Text({
 	    'font'   => $font,
 	    'text'   => $desc,
 	    'x'      => $row[0]->start(),

@@ -3,16 +3,11 @@ use strict;
 use Bio::EnsEMBL::GlyphSet;
 @Bio::EnsEMBL::GlyphSet::SE_generic_match_label::ISA = qw(Bio::EnsEMBL::GlyphSet);
 
-sub init_label {
-	my ($self) = @_;
-	$self->init_label_text('Exon evidence:' );
-}
-
 sub _init {
     my ($self) = @_;
     my $Config      = $self->{'config'};
     my $height  = $Config->get('spacer','height') || 20;
-    $self->push( new Sanger::Graphics::Glyph::Space({
+    $self->push( $self->Space({
         'x'      	=> 1,
 		'y'      	=> 0,
 		'width'  	=> 1,

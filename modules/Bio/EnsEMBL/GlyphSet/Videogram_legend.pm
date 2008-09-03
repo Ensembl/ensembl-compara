@@ -7,15 +7,7 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Line;
-use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Bump;
-
-sub init_label { return undef; }
 
 sub _init {
   my ($self) = @_;
@@ -29,7 +21,7 @@ sub _init {
 sub highlight_box {
     my $self = shift;
     my $details = shift;
-    return new Sanger::Graphics::Glyph::Rect({
+    return $self->Rect({
         'x'         => $details->{'start'},
         'y'         => $details->{'h_offset'},
         'width'     => $details->{'end'}-$details->{'start'},
@@ -43,7 +35,7 @@ sub highlight_box {
 sub highlight_filledwidebox {
     my $self = shift;
     my $details = shift;
-    return new Sanger::Graphics::Glyph::Rect({
+    return $self->Rect({
         'x'             => $details->{'start'},
         'y'             => $details->{'h_offset'}-$details->{'padding'},
         'width'         => $details->{'end'}-$details->{'start'},
@@ -57,7 +49,7 @@ sub highlight_filledwidebox {
 sub highlight_widebox {
     my $self = shift;
     my $details = shift;
-    return new Sanger::Graphics::Glyph::Rect({
+    return $self->Rect({
         'x'             => $details->{'start'},
         'y'             => $details->{'h_offset'}-$details->{'padding'},
         'width'         => $details->{'end'}-$details->{'start'},
@@ -71,7 +63,7 @@ sub highlight_widebox {
 sub highlight_outbox {
     my $self = shift;
     my $details = shift;
-    return new Sanger::Graphics::Glyph::Rect({
+    return $self->Rect({
         'x'             => $details->{'start'} - $details->{'padding2'} *1.5,
         'y'             => $details->{'h_offset'}-$details->{'padding'} *1.5,
         'width'         => $details->{'end'}-$details->{'start'} + $details->{'padding2'} * 3,
@@ -85,7 +77,7 @@ sub highlight_outbox {
 sub highlight_bowtie {
     my $self = shift;
     my $details = shift;
-    return new Sanger::Graphics::Glyph::Poly({
+    return $self->Poly({
         'points'    => [
             $details->{'mid'},                        $details->{'h_offset'},
             $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'},
@@ -105,9 +97,9 @@ sub highlight_bowtie {
 sub highlight_labelline {
     my $self = shift;
     my $details = shift;
-    my $composite = new Sanger::Graphics::Glyph::Composite();
+    my $composite = $self->Composite();
     $composite->push(
-      new Sanger::Graphics::Glyph::Line({
+      $self->Line({
         'x'         => $details->{'mid'},
         'y'         => $details->{'h_offset'}-$details->{'padding'},,
         'width'     => 0,
@@ -123,7 +115,7 @@ sub highlight_labelline {
 sub highlight_wideline {
     my $self = shift;
     my $details = shift;
-    return new Sanger::Graphics::Glyph::Line({
+    return $self->Line({
         'x'         => $details->{'mid'},
         'y'         => $details->{'h_offset'}-$details->{'padding'},,
         'width'     => 0,
@@ -137,10 +129,10 @@ sub highlight_wideline {
 sub highlight_text {
     my $self = shift;
     my $details = shift;
-    my $composite = new Sanger::Graphics::Glyph::Composite();
+    my $composite = $self->Composite();
   
     $composite->push( 
-        new Sanger::Graphics::Glyph::Rect({
+        $self->Rect({
         'x'             => $details->{'start'},
         'y'             => $details->{'h_offset'}-$details->{'padding'},
         'width'         => $details->{'end'}-$details->{'start'},
@@ -151,7 +143,7 @@ sub highlight_text {
     );
     # line pointing to feature
     #$composite->push(
-    # new Sanger::Graphics::Glyph::Line({
+    # $self->Line({
     #   'x'         => $details->{'mid'},
     #   'y'         => $details->{'h_offset'}-$details->{'padding'},,
     #   'width'     => 0,
@@ -162,7 +154,7 @@ sub highlight_text {
     #);
     
     # text label for feature
-    $composite->push (new Sanger::Graphics::Glyph::Text({
+    $composite->push ($self->Text({
         'x'         => $details->{'mid'}-$details->{'padding2'},
         'y'         => $details->{'wid'}+$details->{'padding'}*3,
         'width'     => 0,
@@ -182,7 +174,7 @@ sub highlight_text {
 sub highlight_lharrow {
     my $self = shift;
     my $details = shift;
-    return new Sanger::Graphics::Glyph::Poly({
+    return $self->Poly({
         'points' => [ $details->{'mid'}, $details->{'h_offset'},
             $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'},
             $details->{'mid'}+$details->{'padding2'}, $details->{'h_offset'}-$details->{'padding'}
@@ -196,7 +188,7 @@ sub highlight_lharrow {
 sub highlight_rharrow {
     my $self = shift;
     my $details = shift;
-    return new Sanger::Graphics::Glyph::Poly({
+    return $self->Poly({
         'points' => [ 
             $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}+$details->{'wid'}+$details->{'padding'},
             $details->{'mid'}+$details->{'padding2'}, $details->{'h_offset'}+$details->{'wid'}+$details->{'padding'},

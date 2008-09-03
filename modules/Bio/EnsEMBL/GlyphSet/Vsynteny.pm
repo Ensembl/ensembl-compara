@@ -4,23 +4,6 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Line;
-use Sanger::Graphics::Glyph::Space;
-
-sub init_label {
-    my ($self) = @_;
-    my $SPECIES_T = $self->{container}{_config_file_name_};
-    $SPECIES_T =~ s/_/ /g;
-    my $label = new Sanger::Graphics::Glyph::Text({
-        'text'      => "$SPECIES_T chromosome ".uc($self->{'container'}->{'chr'}),
-        'font'      => 'Small',
-        'absolutey' => 1,
-    });
-    $self->label($label);
-}
 
 sub chr_sort {
   my $self = shift;
@@ -52,7 +35,7 @@ sub _init {
     my @COLOURS = map { $cmap->add_hex($_) } qw(99ff99 ffccff 9999ff 99ffff ffcc99 cc99ff ffff99);
     @BORDERS = (@BORDERS,@BORDERS,@BORDERS);
     @COLOURS = (@COLOURS,@COLOURS,@COLOURS);
-    my $bg     = $Config->get('_settings','bgcolor');
+    my $bg     = $Config->get_parameter( 'bgcolor');
 
 ## LETS GRAB THE DATA FROM THE CONTAINER
     my $chr         = $self->{'container'}->{'chr'} || 1;
@@ -64,7 +47,7 @@ sub _init {
 
     my $OTHER       = $self->{'container'}->{'other_species'};
     my $OTHER_T     = $OTHER; $OTHER_T =~s/_/ /g;
-    my $SPECIES_T   = $self->{container}{_config_file_name_}; $SPECIES_T =~s/_/ /g;
+    my $SPECIES_T   = $self->{container}{web_species}; $SPECIES_T =~s/_/ /g;
     my $OTHER_SHORT = $self->species_defs->other_species($OTHER,'SPECIES_COMMON_NAME');
     my $SPECIES_SHORT = $self->species_defs->SPECIES_COMMON_NAME;
     $SPECIES_T =~ s/_/ /g;
@@ -151,12 +134,12 @@ sub _init {
                 'caption' => "$OTHER_T chr $other_chr",
                 sprintf("01:%s Chr %s:%0.1fM-%0.1fM",$SPECIES_SHORT,
                         $chr,$main_dfr->dnafrag_start/1e6,$main_dfr->dnafrag_end/1e6) => 
-    qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=@{[$main_dfr->dnafrag_start]};vc_end=@{[$main_dfr->dnafrag_end]}),
+    qq(/@{[$self->{container}{web_species}]}/$script?chr=$chr;vc_start=@{[$main_dfr->dnafrag_start]};vc_end=@{[$main_dfr->dnafrag_end]}),
                 sprintf("02:%s Chr %s:%0.1fM-%0.1fM",$OTHER_SHORT,
                         $other_chr,$other_dfr->dnafrag_start/1e6,$other_dfr->dnafrag_end/1e6) => 
 		( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=@{[$other_dfr->dnafrag_start]};vc_end=@{[$other_dfr->dnafrag_end]}) : '' ),
 
-	    '03:Centre gene list' => qq(/@{[$self->{container}{_config_file_name_}]}/syntenyview?otherspecies=$OTHER;chr=$chr;loc=).int(($main_dfr->dnafrag_end+$main_dfr->dnafrag_start)/2)
+	    '03:Centre gene list' => qq(/@{[$self->{container}{web_species}]}/syntenyview?otherspecies=$OTHER;chr=$chr;loc=).int(($main_dfr->dnafrag_end+$main_dfr->dnafrag_start)/2)
 
 	    };
 
@@ -167,7 +150,7 @@ sub _init {
             'col' => $COL,
             'border' => $BORD,
             'side' => $SIDE,
-            'href' => qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=@{[$main_dfr->dnafrag_start]};vc_end=@{[$main_dfr->dnafrag_end]}),
+            'href' => qq(/@{[$self->{container}{web_species}]}/$script?chr=$chr;vc_start=@{[$main_dfr->dnafrag_start]};vc_end=@{[$main_dfr->dnafrag_end]}),
             'zmenu' => $ZMENU
         };
         if($SIDE) {
@@ -189,7 +172,7 @@ sub _init {
                     $main_dfr->dnafrag_start/1e6,
                     $main_dfr->dnafrag_end/1e6
                 ) => 
-                        qq(/@{[$self->{container}{_config_file_name_}]}/$script?chr=$chr;vc_start=@{[ $main_dfr->dnafrag_start]};vc_end=@{[ $main_dfr->dnafrag_end]} ),                        
+                        qq(/@{[$self->{container}{web_species}]}/$script?chr=$chr;vc_start=@{[ $main_dfr->dnafrag_start]};vc_end=@{[ $main_dfr->dnafrag_end]} ),                        
                 sprintf("03:%s Chr %s:%0.1fM-%0.1fM",
                     $OTHER_SHORT,
                     $other_chr,
@@ -198,7 +181,7 @@ sub _init {
                 ) => 
                     ( $CANSEE_OTHER ? qq(/$OTHER/$script?chr=$other_chr;vc_start=@{[ $other_dfr->dnafrag_start] };vc_end=@{[ $other_dfr->dnafrag_end]} ) : '' )
             );
-            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?otherspecies=@{[$self->{container}{_config_file_name_}]};chr=$other_chr;loc=).int(($other_dfr->dnafrag_end+$other_dfr->dnafrag_start)/2) : '' ;
+            my $href = $CANSEE_OTHER ? qq(/$OTHER/syntenyview?otherspecies=@{[$self->{container}{web_species}]};chr=$other_chr;loc=).int(($other_dfr->dnafrag_end+$other_dfr->dnafrag_start)/2) : '' ;
             $zmenu { 'Centre display on this chr.' } = $href if $CANSEE_OTHER;
             push @{$highlights_secondary->{$other_chr}}, {
                 'rel_ori' => $main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand,
@@ -287,7 +270,7 @@ sub _init {
             $Y2 = $main_coords{$_}->{'left'};
         }
         my $COL = $secondary_coords{$_}->{'rel_ori'} == 1 ? $black : $brown;
-        $self->push(new Sanger::Graphics::Glyph::Line({
+        $self->push($self->Line({
             'x'       => $X1,
             'y'       => $Y1,
             'width'   => 0,
@@ -295,7 +278,7 @@ sub _init {
             'colour'           =>  $COL,
             'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
         }));
-        $self->push(new Sanger::Graphics::Glyph::Line({
+        $self->push($self->Line({
             'x'       => $X1,
             'y'       => $Y1 + ($Y2-$Y1)/10,
             'width'   => $X2-$X1,
@@ -303,7 +286,7 @@ sub _init {
             'colour'           => $COL,
             'absolutey'        => 1, 'absolutex'        => 1,'absolutewidth'=>1,
         }));
-        $self->push(new Sanger::Graphics::Glyph::Line({
+        $self->push($self->Line({
             'x'       => $X2,
             'y'       => $Y2 - ($Y2-$Y1)/10,
             'width'   => 0,
@@ -314,7 +297,7 @@ sub _init {
     }
     my $w = $self->{'config'}->texthelper->width('Tiny');
     my $h = $self->{'config'}->texthelper->height('Tiny');
-    $self->unshift(new Sanger::Graphics::Glyph::Text({
+    $self->unshift($self->Text({
             'x'          => $im_width - $h - 2 - $top_margin,
             'y'          => $outer_padding + $secondary_width/2 - $w * length($OTHER_T)/2,
             'font'       => 'Tiny',
@@ -322,7 +305,7 @@ sub _init {
             'text'       => $OTHER_T,
             'absolutey'  => 1, 'absolutex' => 1,'absolutewidth'=>1,
     }));
-    $self->unshift(new Sanger::Graphics::Glyph::Text({
+    $self->unshift($self->Text({
             'x'          => $im_width - $h - 2 - $top_margin ,
             'y'          => $outer_padding + $inner_padding*2 + $main_width + 3*$secondary_width/2 - $w * length($OTHER_T)/2,
             'font'       => 'Tiny',
@@ -330,7 +313,7 @@ sub _init {
             'text'       => $OTHER_T,
             'absolutey'  => 1, 'absolutex' => 1,'absolutewidth'=>1,
     }));
-    $self->unshift(new Sanger::Graphics::Glyph::Rect({
+    $self->unshift($self->Rect({
             'x'          => 0,
             'y'          => 0,
             'width'      => $im_width,
@@ -367,7 +350,7 @@ sub draw_chromosome {
         if ($stain eq "acen"){
 	  my $gband;
 	  if ($done_1_acen){
-	    $self->push(new Sanger::Graphics::Glyph::Poly
+	    $self->push($self->Poly
 			({
 			  'points'       => [ 
 					     $vc_band_start, 
@@ -383,7 +366,7 @@ sub draw_chromosome {
 			  'absolutewidth'=>1,
                 }));
             } else {
-                $self->push(new Sanger::Graphics::Glyph::Poly
+                $self->push($self->Poly
 			    ({
 			      'points' => [ 
 					   $vc_band_start, 
@@ -401,7 +384,7 @@ sub draw_chromosome {
                 $done_1_acen = 1;
             }
         } elsif ($stain eq "stalk"){
-            $self->push(new Sanger::Graphics::Glyph::Poly
+            $self->push($self->Poly
 			({
 			  'points' => [
 				       $vc_band_start, 
@@ -418,7 +401,7 @@ sub draw_chromosome {
 			  'absolutex'    => 1,
 			  'absolutewidth'=>1,
             }));
-            $self->push(new Sanger::Graphics::Glyph::Rect
+            $self->push($self->Rect
 			({
 			  'x'            => $vc_band_start,
 			  'y'            => $h_offset + int($wid/4),
@@ -430,7 +413,7 @@ sub draw_chromosome {
 			  'absolutewidth'=>1,
             }));
 	  } else {
-            $self->unshift(new Sanger::Graphics::Glyph::Rect
+            $self->unshift($self->Rect
 			   ({
 			     'x'          => $vc_band_start,
 			     'y'          => $h_offset,
@@ -443,7 +426,7 @@ sub draw_chromosome {
 			     'absolutex'  => 1,
 			     'absolutewidth'=>1,
             }));
-            $self->push(new Sanger::Graphics::Glyph::Line
+            $self->push($self->Line
 			({
 			  'x'            => $vc_band_start,
 			  'y'            => $h_offset,
@@ -454,7 +437,7 @@ sub draw_chromosome {
 			  'absolutex'    => 1,
 			  'absolutewidth'=>1,
             }));
-            $self->push(new Sanger::Graphics::Glyph::Line
+            $self->push($self->Line
 			({
 			  'x'            => $vc_band_start,
 			  'y'            => $h_offset+$wid,
@@ -469,7 +452,7 @@ sub draw_chromosome {
       }
     }
     else {
-      $self->unshift(new Sanger::Graphics::Glyph::Rect
+      $self->unshift($self->Rect
 		     ({
 		       'x'          => $v_offset,
 		       'y'          => $h_offset,
@@ -480,7 +463,7 @@ sub draw_chromosome {
 		       'absolutex'  => 1,'absolutewidth'=>1,
 		      }));
       foreach my $Y ($h_offset, $h_offset+$wid){
-	$self->push(new Sanger::Graphics::Glyph::Line
+	$self->push($self->Line
 		    ({
 		      'x'                => $v_offset+1,
 		      'y'                => $Y,
@@ -510,7 +493,7 @@ sub draw_chromosome {
         foreach my $I ( 0..$#lines ) {
             my ( $bg_x, $black_x ) = @{$lines[$I]};
             my $xx =  ($end==1 ? $v_offset : $v_offset + $length) + $end * $I;
-            $self->push(new Sanger::Graphics::Glyph::Line({
+            $self->push($self->Line({
                     'x'         => $xx,
                     'y'         => $h_offset,
                     'width'     => 0,
@@ -518,7 +501,7 @@ sub draw_chromosome {
                     'colour'    => $params{'bg'},
                     'absolutey' => 1,   'absolutex' => 1,'absolutewidth'=>1,
             }));
-            $self->push(new Sanger::Graphics::Glyph::Line({
+            $self->push($self->Line({
                     'x'         => $xx,
                     'y'         => $h_offset + 1 + $wid * (1-$bg_x/$divisor),
                     'width'     => 0,
@@ -526,7 +509,7 @@ sub draw_chromosome {
                     'colour'    => $params{'bg'},
                     'absolutey' => 1,   'absolutex' => 1,'absolutewidth'=>1,
             }));
-            $self->push(new Sanger::Graphics::Glyph::Line({
+            $self->push($self->Line({
                     'x'         => $xx,
                     'y'         => $h_offset + $wid * $bg_x/$divisor,
                     'width'     => 0,
@@ -534,7 +517,7 @@ sub draw_chromosome {
                     'colour'    => $params{'black'},
                     'absolutey' => 1, 'absolutex' => 1,'absolutewidth'=>1,
             }));
-            $self->push(new Sanger::Graphics::Glyph::Line({
+            $self->push($self->Line({
                     'x'         => $xx,
                     'y'         => $h_offset + 1 + $wid * (1-$bg_x/$divisor-$black_x/$divisor),
                     'width'     => 0,
@@ -554,7 +537,7 @@ sub draw_chromosome {
         my $flag = $params{'ruler_offset'};
         while($X<$chr_length) {
             my $xx = $X * $scale + $v_offset;
-            $self->push(new Sanger::Graphics::Glyph::Line({
+            $self->push($self->Line({
                     'x'         => $xx,
                     'y'         => $h_offset + ($params{'ruler_offset'} eq 'r' ? $wid : ($params{'ruler_offset'} eq 'l' ? -3  : 0)),
                     'width'     => 0,
@@ -564,7 +547,7 @@ sub draw_chromosome {
             }));
             if($params{'font'}) {
                 my $TEXT = int($X/1000000)."M";
-                $self->push(new Sanger::Graphics::Glyph::Text({
+                $self->push($self->Text({
                     'x'          => $xx-$h/2,
                     'y'          => $h_offset + ($params{'ruler_offset'} eq 'r' ? $wid + 5 : ($params{'ruler_offset'} eq 'l' ? -5-length($TEXT)*$w : 5)), 
                     'font'       => $params{'font'},
@@ -577,7 +560,7 @@ sub draw_chromosome {
         }
     }
     if($params{'font'} && $params{'chr_name'}) {
-        $self->push(new Sanger::Graphics::Glyph::Text({
+        $self->push($self->Text({
             'x'          => $v_offset + $length +3 ,
             'y'          => $h_offset + $h_wid - $w * length($params{'chr_name'})/2,
             'font'       => $params{'font'},
@@ -598,7 +581,7 @@ sub draw_chromosome {
             'bottom'=> $vc_end,
             'rel_ori' => $box->{'rel_ori'}
         };
-        $self->push(new Sanger::Graphics::Glyph::Rect({
+        $self->push($self->Rect({
             'x'          => $vc_start,
             'y'          => $h_offset + $box->{'side'} * ($wid+4),
             'width'      => $vc_end - $vc_start,
@@ -611,7 +594,7 @@ sub draw_chromosome {
             'zmenu' => $box->{'zmenu'}
         }));
         if($box->{'marked'}==1 || $box->{'marked'}==-1) {
-            $self->push(new Sanger::Graphics::Glyph::Rect({
+            $self->push($self->Rect({
                 'x'          => $vc_start -2,
                 'y'          => $h_offset + ($box->{'marked'}==1 ? $wid+3 : -4 ), 
                 'width'      => $vc_end - $vc_start + 4,
@@ -623,7 +606,7 @@ sub draw_chromosome {
         }
     }
     if($params{'line'}) {
-        $self->push(new Sanger::Graphics::Glyph::Rect({
+        $self->push($self->Rect({
             'x'          => $v_offset + $params{'line'} * $scale - 1,
             'y'          => $h_offset - 2,
             'width'      => 3,
@@ -631,11 +614,11 @@ sub draw_chromosome {
             'bordercolour' => $params{'red'},
             'absolutey'  => 1,
             'absolutex'  => 1,'absolutewidth'=>1,
-            'href'       => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$params{'chr'};vc_start=".($params{'line'}-5e5).";vc_end=".($params{'line'}+5e5),
+            'href'       => "/@{[$self->{container}{web_species}]}/contigview?chr=$params{'chr'};vc_start=".($params{'line'}-5e5).";vc_end=".($params{'line'}+5e5),
             'zmenu'       => {
                 'caption' => "Entry point",
                 "Jump to ContigView" =>
-                "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$params{'chr'};vc_start=".($params{'line'}-5e5).";vc_end=".($params{'line'}+5e5)
+                "/@{[$self->{container}{web_species}]}/contigview?chr=$params{'chr'};vc_start=".($params{'line'}-5e5).";vc_end=".($params{'line'}+5e5)
             }
         }));
     }

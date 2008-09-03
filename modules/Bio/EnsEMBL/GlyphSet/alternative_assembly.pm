@@ -1,22 +1,18 @@
+### Needs go be re-worked to be generic 
+### need to speak to Steve (st3) over this one
+
 package Bio::EnsEMBL::GlyphSet::alternative_assembly;
 
 use strict;
 
-use Bio::EnsEMBL::GlyphSet_simple;
+use base Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::SimpleFeature;
-use EnsEMBL::Web::ExtURL;
-
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
-
-sub my_label {
-    my $self = shift;
-    return $self->my_config('other') . " assembly";
-}
 
 sub features {
   my $self = shift;
 
+  my $db  = $self->my_config( 'assembly_db'   );
+  my $key = $self->my_config( 'assembly_name' );
     # set dnadb to 'vega' so that the assembly mapping is retrieved from there
   my $reg = "Bio::EnsEMBL::Registry";
   my $species = $self->{'config'}->{'species'};
@@ -63,22 +59,17 @@ sub href {
         $self->species_defs->name,
         $self->species_defs
     );
-    return $exturl->get_url(uc($self->my_config('other')))."@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?l=".$f->display_id;
+    return $exturl->get_url(uc($self->my_config('other')))."@{[$self->{container}{web_species}]}/$ENV{'ENSEMBL_SCRIPT'}?l=".$f->display_id;
 }
 
-sub image_label {
-    my ($self, $f ) = @_;
-    return ($f->display_id, 'overlaid');
+sub feature_label {
+  my ($self, $f ) = @_;
+  return ($f->display_id, 'overlaid');
 }
 
-sub zmenu {
-    my ($self, $f ) = @_;
-    my $zmenu = { 
-        'caption' => $f->display_id,
-        '03:Assembly: '.$self->species_defs->ALTERNATIVE_ASSEMBLY => '',
-        '04:Jump to '.$self->my_config('other') => $self->href($f),
-    };
-    return $zmenu;
+sub title {
+ my ($self, $f ) = @_;
+ my $title = $f->display_id.'; Assembly:'.$self->my_config('assembly_name');
 }
 
 1;

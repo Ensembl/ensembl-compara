@@ -5,7 +5,6 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
 use Bio::EnsEMBL::Variation::VariationFeature;
-use Sanger::Graphics::Glyph::Space;
 use Bio::EnsEMBL::GlyphSet;
   
 @Bio::EnsEMBL::GlyphSet::snp_join::ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -36,7 +35,7 @@ sub _init {
     $E = $length if $E > $length;
     my $type = $snp->display_consequence;
     my $colour = $colours->{$type}->[0];
-    my $tglyph = new Sanger::Graphics::Glyph::Space({
+    my $tglyph = $self->Space({
       'x' => $S-1,
       'y' => 0,
       'height' => 0,

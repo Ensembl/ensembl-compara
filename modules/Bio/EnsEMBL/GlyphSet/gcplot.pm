@@ -3,95 +3,68 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Intron;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Line;
 use  Sanger::Graphics::Bump;
 
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( '%GC', 'gcplot' );
-}
-
 sub _init {
-    my ($self) = @_;
+  my ($self) = @_;
 
-    return unless ($self->strand() == -1);
-
-
-    my $slice = $self->{'container'};
+  my $slice = $self->{'container'};
 
     # check we are not in a big gap!
-    return unless @{$slice->project('seqlevel')};
+  return unless @{$slice->project('seqlevel')};
 
-    my $Config          = $self->{'config'};
-    my $vclen           = $slice->length();
-    return if ($vclen < 10000);    # don't want a GC plot for very short sequences
+  my $Config          = $self->{'config'};
+  my $vclen           = $slice->length();
+  return if ($vclen < 10000);    # don't want a GC plot for very short sequences
 
-    my $h               = 0;
-    my $highlights      = $self->highlights();
-    my $feature_colour  = $Config->get('gcplot','hi');
-    my $alt_colour      = $Config->get('gcplot','low');
-    my $black           = 'black';
-    my $red             = 'red';
-    my $rust            = 'rust';
-    my $colour          = $Config->get('gcplot','col');
-    my $line_colour     = $Config->get('gcplot','line');
-    
-    my $im_width        = $Config->image_width();
-    my $divs            = int($im_width/2);
-    my $divlen          = $vclen/$divs;
+  my $h               = 20;
+  my $colour          = $self->my_config('col')  || 'gray50';
+  my $line_colour     = $self->my_config('line') || 'red';
+   
+  my $im_width        = $Config->image_width();
+  my $divs            = int($im_width/2);
+  my $divlen          = $vclen/$divs;
     
     #print STDERR "Divs = $divs\n";
-    my $seq = $slice->seq();
-    my @gc  = ();
-    my $min = 100;
-    my $max = 0;
+  my $seq = $slice->seq();
+  my @gc  = ();
     
-    for (my $i=0; $i<$divs; $i++){
-        my $subseq  = substr($seq, int($i*$divlen), int($divlen));
-#       my $G = $subseq =~ tr/G/G/; my $C = $subseq =~ tr/C/C/;
-        my $GC      = $subseq =~ tr/GC/GC/;
-        my $percent = 99;
-        if ( length($subseq)>0 ) { # catch divide by zero....
-            $percent = $GC / length($subseq);
-            $percent = $percent < .25 ? 0 : ($percent >.75 ? .5 : $percent -.25);
-            $percent *= 40;
-        }
-        push @gc, $percent;
+  foreach my $i ( 0..($divs-1) ) {
+    my $subseq = substr($seq, int($i*$divlen), int($divlen));
+    my $GC     = $subseq =~ tr/GC/GC/;
+    my $value  = 9999;
+    if( length($subseq)>0 ) { # catch divide by zero....
+      $value = $GC / length($subseq);
+      $value = $value < .25 ? 0 : ($value >.75 ? .5 : $value -.25);
     }
+    push @gc, $value;
+  }
         
-    my $range       = $max - $min;
-    my $percent     = shift @gc;
-    my $count       = 0;
-    foreach my $new (@gc) {
-        unless($percent==99 || $new==99) {
-            $self->push(
-                new Sanger::Graphics::Glyph::Line({
-                    'x'            => $count * $divlen,
-                    'y'            => 20 - $percent,
-                    'width'        => $divlen,
-                    'height'       => $percent - $new,
-                    'colour'       => $colour,
-                    'absolutey'    => 1,
-                })
-            ); 
-        }
-        $percent    = $new;
-        $count++;
+  my $value = shift @gc;
+  my $x = 0;
+
+  foreach my $new (@gc) {
+    unless($value==9999 || $new==9999) {
+      $self->push($self->Line({
+        'x'            => $x,
+        'y'            => $h* (1-2*$value),
+        'width'        => $divlen,
+        'height'       => ($value - $new)*2*$h,
+        'colour'       => $colour,
+        'absolutey'    => 1,
+      })); 
     }
-    $self->push(
-        new Sanger::Graphics::Glyph::Line({
-            'x'         => 0,
-            'y'         => 10, # 50% point for line
-            'width'     => $vclen,
-            'height'    => 0,
-            'colour'    => $line_colour,
-            'absolutey' => 1,
-        })
-    );
+    $value    = $new;
+    $x       += $divlen;
+  }
+  $self->push($self->Line({
+    'x'         => 0,
+    'y'         => $h/2, # 50% point for line
+    'width'     => $vclen,
+    'height'    => 0,
+    'colour'    => $line_colour,
+    'absolutey' => 1,
+  }));
 }            
 1;
 

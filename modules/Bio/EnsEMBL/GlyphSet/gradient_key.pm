@@ -1,19 +1,6 @@
-package Sanger::Graphics::GlyphSet::MVP_gradient;
-#########
-# Author: avc
-# Maintainer: avc
-#
+package Sanger::Graphics::GlyphSet::gradient_key;
+use base EnsEMBL::Web::GlyphSet;
 use strict;
-use vars qw(@ISA);
-use Sanger::Graphics::GlyphSet;
-@ISA = qw(Sanger::Graphics::GlyphSet);
-use Sanger::Graphics::Bump;
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'Methylation (%)' );
-}
 
 sub _init {
   my ($self) = @_;
@@ -42,27 +29,24 @@ sub _init {
     
   for( my $i = 0; $i < $coloursteps; $i++ ) {
     my $colour          = $range[int($i)];
-    my $grad = Sanger::Graphics::Glyph::Rect->new({
-      'x'         => ($i * $glyph_width_bp),
-      'y'         => 0,
-      'width'     => $glyph_width_bp,
-      'height'    => $h,
-      'colour'    => $colour,
-      'border'    => 1,
-      'bordercolour'    => 'black',
-      'absolutey' => 1,
-      'zmenu'     => {
-        'caption'           => "Score: " . sprintf("%d", $i + 1),
-       },
+    $self->push($self->Rect({
+      'x'            => ($i * $glyph_width_bp),
+      'y'            => 0,
+      'width'        => $glyph_width_bp,
+      'height'       => $h,
+      'colour'       => $colour,
+      'border'       => 1,
+      'bordercolour' => 'black',
+      'absolutey'    => 1,
+      'title'        => sprintf("Score: %d", $i + 1)
     });
-    $self->push($grad);
   }
 
   $h = 9;
   foreach my $i (0,20,40,60,80) {
     my $text    = "$i%";
     my $x       = $length * ($i/100);
-    my $textg   = Sanger::Graphics::Glyph::Text->new({
+    $self->push($self->Text({
       'x'             => $x,
       'y'             => $h,
       'height'        => $fontheight,
@@ -70,12 +54,11 @@ sub _init {
       'colour'        => 'black',
       'text'          => $text,
       'absolutey'     => 1,
-    });
-    $self->push($textg);
+    }));
   }
     
   my $text    = "100%";
-  my $textg   = Sanger::Graphics::Glyph::Text->new({
+  $self->push($self->Text({
     'x'             => 97 * $glyph_width_bp,
     'y'             => $h,
     'height'        => $fontheight,
@@ -83,7 +66,6 @@ sub _init {
     'colour'        => 'black',
     'text'          => $text,
     'absolutey'     => 1,
-  });
-  $self->push($textg);
+  }));
 }
 1;

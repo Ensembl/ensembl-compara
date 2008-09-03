@@ -43,7 +43,7 @@ sub _init {
   my $th_o = $res_o[3];
 
   my $fontheight = 5;
-  my $bg = $Config->get('_settings', 'bgcolor2');
+  my $bg = $Config->get_parameter(  'bgcolor2');
 
   ## Variable declaration ##
 
@@ -55,16 +55,16 @@ sub _init {
   ## Define Score colours ##
  
   my $cmap = $Config->colourmap();
-  $SCORE_COLOURS  ={
-	   0  => 'CCCCCC',
-	  49  => 'FFF400',
-	  50  => 'FFAA00',   
-	  75  => 'FF5600',
-	  90  => 'FF1900',  
-	  97  => 'BB0000',
-	  99  => '690000',
-	  100 => '000000',
-  };
+  $SCORE_COLOURS  ={qw(
+      0  CCCCCC
+     49  FFF400
+     50  FFAA00   
+     75  FF5600
+     90  FF1900  
+     97  BB0000
+     99  690000
+    100  000000
+  )};
   for my $k (keys %$SCORE_COLOURS) {
     $cmap->add_hex($SCORE_COLOURS->{$k});
   }
@@ -90,28 +90,26 @@ warn "Releases... @releases";
     $y +=50;
     
     # label unique stable IDs
-    my $id_label = new Sanger::Graphics::Glyph::Text({
-     'x'         => 5,
-     'y'         => $y_coord,
-      'width'    => 140,
-     'height'    => $fontheight,
-     'font'      => $fontname,
-     'ptsize'    => $fontsize,
-     'halign'    => 'left',
-     'colour'    => 'blue',
-     'text'      =>  $id,
-     'href'     =>   $id_l
-    });
+    $self->push( $self->Text({
+      'x'         => 5,
+      'y'         => $y_coord,
+      'width'     => 140,
+      'height'    => $fontheight,
+      'font'      => $fontname,
+      'ptsize'    => $fontsize,
+      'halign'    => 'left',
+      'colour'    => 'blue',
+      'text'      =>  $id,
+      'href'     =>   $id_l
+    }));
 
-   $self->push($id_label);
-   ## Highlight the focus id ## 
-   if ($id eq $a_id) {
-     $self->unshift( new Sanger::Graphics::Glyph::Rect({
-           'x'         => -5,
-           'y'         => $y_coord - 15,
-           'width'     => $panel_width + 20,
-           'height'    => 30,
-           'colour'    => $bg,
+    if ($id eq $a_id) { ## Highlight the focus id ##
+      $self->unshift( $self->Rect({
+        'x'         => -5,
+        'y'         => $y_coord - 15,
+        'width'     => $panel_width + 20,
+        'height'    => 30,
+        'colour'    => $bg,
       }));
     }
   }
@@ -130,50 +128,43 @@ warn "Releases... @releases";
   
   foreach my $sc (sort { $b<=>$a } keys %$SCORE_COLOURS) {
     my $colour = $SCORE_COLOURS->{$sc};  
-    my $scorebox = new Sanger::Graphics::Glyph::Rect({
-        'x'         => $boxxcoord,
-        'y'         => 50,
-        'width'     => 20,
-        'height'    => 10,
-        'colour'    => $colour,
+    my $scorebox = $self->Rect({
+      'x'         => $boxxcoord,
+      'y'         => 50,
+      'width'     => 20,
+      'height'    => 10,
+      'colour'    => $colour,
     });
     $self->push($scorebox);
-    my $sc_label;
-    $sc = $sc/100; 
-    $sc = sprintf("%.2f", $sc);
-    if ($sc == 0) {
-      $sc_label = "Unknown";
-    } elsif ($sc <= 0.49 ) {
-      $sc_label ="<0.50" ;
-    } elsif ($sc == 1) {
-      $sc_label = $sc;
-    } else {
-      $sc_label = ">=". $sc;
-    }
 
-    my $score_text = new Sanger::Graphics::Glyph::Text({
-        'x'         => $boxxcoord + 25,
-        'y'         => 55,
-        'height'    => $fontheight,
-        'font'      => $fontname,
-        'ptsize'    => $fontsize,
-        'halign'    => 'left',
-        'colour'    => 'black',
-        'text'      => $sc_label,
-    });
-    $self->push($score_text);
+    $sc = sprintf("%.2f", $sc/100);
+    my $sc_label  = $sc == 0    ? "Unknown" 
+                  : $sc <  0.5  ? "<0.50"
+		  : $sc == 1    ? $sc
+		  :               ">=".$sc
+		  ;
 
-    my $score_label = new Sanger::Graphics::Glyph::Text({
-        'x'         => 1,
-        'y'         => 55,
-        'height'    => $fontheight,
-        'font'      => $fontname,
-        'ptsize'    => $fontsize,
-        'halign'    => 'left',
-        'colour'    => 'black',
-        'text'      => 'Score',
-    });
-    $self->push($score_label);
+    $self->push( $self->Text({
+      'x'         => $boxxcoord + 25,
+      'y'         => 55,
+      'height'    => $fontheight,
+      'font'      => $fontname,
+      'ptsize'    => $fontsize,
+      'halign'    => 'left',
+      'colour'    => 'black',
+      'text'      => $sc_label,
+    }));
+
+    $self->push( $self->Text({
+      'x'         => 1,
+      'y'         => 55,
+      'height'    => $fontheight,
+      'font'      => $fontname,
+      'ptsize'    => $fontsize,
+      'halign'    => 'left',
+      'colour'    => 'black',
+      'text'      => 'Score',
+    }));
     $boxxcoord += 65;
   }
 
@@ -193,9 +184,6 @@ warn "Releases... @releases";
     my $version = $a_id->version;
     my $arelease = $a_id->release;
 warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
-
-
-
     foreach my $e (@events){
       my $old = $e->old_ArchiveStableId;
       my $new = $e->new_ArchiveStableId;
@@ -227,7 +215,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
     my $xcoord = $sortedx[$x];
     my $ycoord = $yc{$a_id->stable_id};
     my $node_col = $SCORE_COLOURS->{'100'};
-    my $node = new Sanger::Graphics::Glyph::Rect({
+    my $node = $self->Rect({
         'x'         => $xcoord,
         'y'         => $ycoord - 1.5,
         'width'     => 3,
@@ -238,7 +226,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
     push (@ns, $node);
 
     my $nl = $a_id->version;
-    my $node_label = new Sanger::Graphics::Glyph::Text({
+    my $node_label = $self->Text({
         'x'         => $xcoord,
         'y'         => $ycoord +7,
         'height'    => $fontheight,
@@ -286,14 +274,14 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
       my $length = $sortedx[$newx] - $sortedx[$oldx];
       my $xend = $x_coord + $length;
       my $y_end = $y_coord +1;
-      my $hbr = new Sanger::Graphics::Glyph::Line({
+      my $hbr = $self->Line({
          'x'         => $x_coord,
          'y'         => $y_coord,
          'height'    => 0,
          'width'     => $length,
          'colour'    => $branch_col,
          'absolutey' => 1,
- 	 	 'absolutewidth' => 1,
+           'absolutewidth' => 1,
          'clickwidth' => 2,
          'zmenu'     => $zmenu_s,
       });
@@ -306,7 +294,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
       my $height = $yc{$new->stable_id} - $yc{$old->stable_id};
       my $xend = $x_coord + $height;
       my $y_end = $y_coord +1;
-      my $vbr = new Sanger::Graphics::Glyph::Line({
+      my $vbr = $self->Line({
          'x'         => $x_coord,
          'y'         => $y_coord,
          'height'    => $height,
@@ -324,14 +312,14 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
       my $y_coord = $yc{$old->stable_id};
       my $x_end = $sortedx[$newx];
       my $y_end = $yc{$new->stable_id};
-      my $dbr = new Sanger::Graphics::Glyph::Line({
+      my $dbr = $self->Line({
          'x'         => $x_coord,
          'y'         => $y_coord,
          'height'    => $y_end - $y_coord,
          'width'     => $x_end - $x_coord,
          'colour'    => $branch_col,
-	 	 'absolutey' => 1,
-	 	 'absolutewidth' => 1,
+          'absolutey' => 1,
+          'absolutewidth' => 1,
          'clickwidth' => 2,
          'zmenu'    => $zmenu_s,
       });
@@ -339,7 +327,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
       
     }
 
-  }	   
+  }       
   
   ## Draw the nodes ##
   foreach my $n (@ns){
@@ -348,8 +336,8 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
 
   ## Add assembly information ##
 
-  my $asmbl_label = new Sanger::Graphics::Glyph::Text({
-	    'x'         => 5,
+  my $asmbl_label = $self->Text({
+        'x'         => 5,
        'y'         => $y,
        'height'    => $fontheight,
        'font'      => $fontname,
@@ -361,7 +349,8 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
  });
 
   $self->push($asmbl_label);
-   my %temp = %{$Config->species_defs->get_config($species )}; foreach my $key (keys %temp){warn "key $key";}
+  my %temp = %{$Config->species_defs->get_config($species )}; 
+  # foreach my $key (keys %temp){warn "key $key";}
   #my %archive_info = %{$Config->species_defs->get_config($species, 'archive')};
   my @a_colours = ('contigblue1', 'contigblue2');
   my $i =0;
@@ -369,23 +358,23 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
   my $strand = ">";
 
   foreach my $r (@releases){
-	my $tempr = $r; 
+    my $tempr = $r; 
     if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
     my $current_r = "NCBI36"; #$archive_info{$tempr};
     push @{$asmbl{$current_r}} , $r;
   }
   my %asmbl_seen;
 
-  foreach my $key ( @releases){	
+  foreach my $key ( @releases){    
    my $tempr = $key; 
    if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
     my $a = "NCBI36";#£$archive_info{$tempr};
     if (exists $asmbl_seen{$a}){
-	  next;
-	}
+      next;
+    }
     else {
-      $asmbl_seen{$a} = $key;	
-      my $r = $asmbl{$a};	
+      $asmbl_seen{$a} = $key;    
+      my $r = $asmbl{$a};    
       my @sorted = sort @{$r};
       my $size = @sorted;
       my $start = ($xc{$sorted[0]}) + 2;
@@ -396,9 +385,9 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
       if ($sorted[0] == $releases[0]){ $start = ($xc{$sorted[0]}) -10; }
       if ($sorted[-1] == $releases[-1]) {$end = $xc{$sorted[-1]} +10; }
       my $length = $end - $start;
-      my $colour = $a_colours[$i]; 	
+      my $colour = $a_colours[$i];     
 
-      my $asmblbox = new Sanger::Graphics::Glyph::Rect({
+      my $asmblbox = $self->Rect({
        'x'         => $start,
        'y'         => $y -3,
        'width'     => $length,
@@ -416,7 +405,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
       );
 
      if( $res[0] ) {
-       my $tglyph = new Sanger::Graphics::Glyph::Text({
+       my $tglyph = $self->Text({
         'x'          => $start +5,
         'height'     => $res[3],
         'width'      => $res[2]/$pix_per_bp,
@@ -438,7 +427,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
  ## Draw scalebar ##
   $y +=30;
   my $mid_point = ($working_length /2 )+ 140;
-  my $label = new Sanger::Graphics::Glyph::Text({
+  my $label = $self->Text({
       'x'         => $mid_point,
       'y'         => $y + 40,
       'height'    => $fontheight,
@@ -452,7 +441,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
 
   $self->push($label); 
 
-  my $bar = new Sanger::Graphics::Glyph::Line({
+  my $bar = $self->Line({
       'x'         => $x,
       'y'         => $y,
       'width'     => $working_length,
@@ -467,7 +456,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
     my $ty = $y + 8;
     #if ($r == $last_rel){ $x_coord = $working_length - 0.25 + 60};    
 
-    my $tick = new Sanger::Graphics::Glyph::Line({
+    my $tick = $self->Line({
         'x'         => $x_coord,
         'y'         => $y,
         'width'     => 0.25,
@@ -477,7 +466,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
     });
     $self->push($tick);
 
-    my $rel_text = new Sanger::Graphics::Glyph::Text({
+    my $rel_text = $self->Text({
         'x'         => $x_coord -3,
         'y'         => $ty,
         'height'    => $fontheight,
@@ -525,7 +514,7 @@ sub _archive_link {
 
   my $release = $object->release;
   my $version = $object->version;
-  my $type =  $object->type eq 'Translation' ? 'peptide' : lc($object->type);	
+  my $type =  $object->type eq 'Translation' ? 'peptide' : lc($object->type);    
   my $name = $object->stable_id . "." . $object->version;
 
   # no archive for old release, return un-linked display_label

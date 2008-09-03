@@ -2,16 +2,9 @@ package Bio::EnsEMBL::GlyphSet::Pprotein;
 use strict;
 use vars qw(@ISA $SPECIES_DEFS);
 use Bio::EnsEMBL::GlyphSet;
-use Sanger::Graphics::Glyph::Rect;
 #use EnsEMBL::Web::GeneTrans::support;
 
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'Peptide' );
-}
 
 sub _init {
     my ($self) = @_;
@@ -49,10 +42,10 @@ sub _init {
         my $exonview_link = '';
         if( $prot_id ){
           $exonview_link = sprintf( "/%s/exonview?peptide=%s;exon=%s;db=%s", 
-          $self->{container}{_config_file_name_}, $prot_id, $exon_id, $db );
+          $self->{container}{web_species}, $prot_id, $exon_id, $db );
         }
 
-        my $rect = new Sanger::Graphics::Glyph::Rect({
+        my $rect = $self->Rect({
           'x'        => $x,
           'y'        => $y,
           'width'    => $exon_offset - $x,
@@ -71,7 +64,7 @@ sub _init {
         $flip = 1-$flip;
       }
     } else {
-      my $rect = new Sanger::Graphics::Glyph::Rect({
+      my $rect = $self->Rect({
         'x'        => 0,
         'y'        => $y,
         'width'    => $protein->length(),

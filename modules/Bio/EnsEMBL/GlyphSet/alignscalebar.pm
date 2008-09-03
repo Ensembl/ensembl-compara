@@ -24,37 +24,7 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use POSIX qw(ceil floor);
-use Sanger::Graphics::Glyph::Sprite;
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
 use Data::Dumper;
-
-sub init_label {
-  my ($self) = @_;
-
-  return if ($self->{strand} < 1);
-
-  my $text =  $self->{'container'}->{_config_file_name_};
-
-  my $extra_height = 0;
-     $extra_height = 15 if $self->{'container'}->{'compara'} eq 'primary';
-  $self->init_label_text($text);
-  my $line = new Sanger::Graphics::Glyph::Rect({
-    'z' => -1,
-    'x' => -120,
-    'y' => 2 - $extra_height,
-    'colour' => 'white', 
-    'width' => 118,
-    'height' => 15 + $extra_height,
-    'absolutex'     => 1,
-    'absolutewidth' => 1,
-    'absolutey'     => 1,
-  });
-  $self->push($line);
-  return;
-}
-
 
 sub _init {
     my ($self) = @_;
@@ -77,7 +47,7 @@ sub _init {
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? "&highlight=$highlights" : '';
     my $object = $Config->{_object};
-    my $REGISTER_LINE  = $Config->get('_settings','opt_lines');
+    my $REGISTER_LINE  = $Config->get_parameter( 'opt_lines');
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');
     my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
@@ -87,10 +57,10 @@ sub _init {
     (my $param_string   = $Container->seq_region_name()) =~ s/\s/\_/g;
     
     
-    my $species =  $Container->{_config_file_name_};
+    my $species =  $Container->{web_species};
 
     my $aslink = $Config->get('alignslice', 'align');
-    my $main_width     = $Config->get('_settings', 'main_vc_width');
+    my $main_width     = $Config->get_parameter(  'main_vc_width');
     my $len            = $Container->length();
 
     my $global_start   = $contig_strand < 0 ? -$Container->end() : $Container->start();
@@ -151,7 +121,7 @@ sub _init {
     my $box_end   = $end   > $global_end   ? $global_end      : $end;
 
       ## Draw the glyph for this box!
-    my $t = new Sanger::Graphics::Glyph::Rect({
+    my $t = $self->Rect({
         'x'         => $box_start - $global_start, 
         'y'         => $yc,
         'width'     => abs( $box_end - $box_start + 1 ),
@@ -176,7 +146,7 @@ sub _init {
     }
 
     unless( $box_start % $major_unit ) { ## Draw the major unit tick 
-        $self->push(new Sanger::Graphics::Glyph::Rect({
+        $self->push($self->Rect({
         'x'         => $box_start - $global_start,
         'y'         => $yc, 
         'width'     => 0,
@@ -184,11 +154,11 @@ sub _init {
         'colour'    => 'black',
         'absolutey' => 1,
         }));
-        my $LABEL = $minor_unit < 250 ? $object->thousandify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
+        my $LABEL = $minor_unit < 250 ? $object->commify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
         my @res = $self->get_text_width( ($box_start-$last_text_X)*$pix_per_bp*1.5, $LABEL, '', 'font'=>$fontname, 'ptsize' => $fontsize );
 
         if( $res[0]) {
-        $self->push(new Sanger::Graphics::Glyph::Text({
+        $self->push($self->Text({
             'x'         => $box_start - $global_start,
             'y'         => $yc - $fontheight - 1,
             'height'    => $fontheight,
@@ -205,7 +175,7 @@ sub _init {
     $start += $minor_unit;
     }
     unless( ($global_end+1) % $major_unit ) { ## Draw the major unit tick 
-    $self->push(new Sanger::Graphics::Glyph::Rect({
+    $self->push($self->Rect({
         'x'         => $global_end - $global_start + 1,
         'y'         => $yc,
         'width'     => 0,
@@ -217,7 +187,7 @@ sub _init {
 
 
     if ($self->{strand} > 0 && $Container->{compara} ne 'primary') {
-    my $line = new Sanger::Graphics::Glyph::Rect({
+    my $line = $self->Rect({
         'x' => -120,
         'y' => 0, # 22,
         'colour' => 'black',
@@ -303,7 +273,7 @@ sub align_interval {
     $colour_map2{$s2t} or $colour_map2{$s2t} =  'darksalmon' ;#shift (@colours2) || 'grey';
 
     my $col2 = $colour_map2{$s2t};
-    my $t = new Sanger::Graphics::Glyph::Rect({
+    my $t = $self->Rect({
         'x'         => $box_start - $global_start, 
         'y'         => $yc,
         'width'     => abs( $box_end - $box_start + 1 ),
@@ -388,7 +358,7 @@ sub align_interval {
           };
       }
 
-      $self->push( new Sanger::Graphics::Glyph::Poly({
+      $self->push( $self->Poly({
       'points'    => [ $xc - 2/$pix_per_bp, $h,
               $xc, $h+6,
               $xc + 2/$pix_per_bp, $h  ],
@@ -451,7 +421,7 @@ sub align_gap {
         $ge = $hs->{end};
     }
     if ($ms > $min_length && $box_start >=  $gs && $box_end < $ge) { 
-        my $t = new Sanger::Graphics::Glyph::Rect({
+        my $t = $self->Rect({
         'x'         => $box_start,
         'y'         => $yc,
         'z'         => $zc,
@@ -519,7 +489,7 @@ sub zoom_zmenu {
           
     return $zmenu;
 
-    return qq(zn('/$species/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$highlights','$ori','$config_number', '@{[$self->{container}{_config_file_name_}]}' ));
+    return qq(zn('/$species/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$highlights','$ori','$config_number', '@{[$self->{container}{web_species}]}' ));
 }
 
 sub zoom_URL {

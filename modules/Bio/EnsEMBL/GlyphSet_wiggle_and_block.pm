@@ -1,25 +1,14 @@
 package Bio::EnsEMBL::GlyphSet_wiggle_and_block;
+
 use strict;
-
 use base qw(Bio::EnsEMBL::GlyphSet);
-
-sub init_label {
-
-  ### Returns (string) the label for the track
-
-  my $self = shift;
-  my $HELP_LINK = $self->check();
-  $self->init_label_text( $self->my_config('label'), $HELP_LINK );
-  $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' );
-  return 1;
-}
 
 sub _init {
   my ($self) = @_;
   my $slice = $self->{'container'};
-  my $max_length    = $self->{'config'}->get( $self->check(), 'threshold' )  || 500;
+  my $max_length    = $self->my_config( 'threshold' )  || 500;
   my $slice_length  = $slice->length;
-  my $wiggle_name   =  $self->my_config('wiggle_name') || $self->my_config('label') ;
+  my $wiggle_name   = $self->my_config('wiggle_name') || $self->my_config('label') ;
   if($slice_length > $max_length*1010) {
     my $height = $self->errorTrack("$wiggle_name only displayed for less than $max_length Kb");
     $self->_offset($height+4);
@@ -47,7 +36,7 @@ sub _init {
   if ( $error or !$self->my_config('compact') ) {
     $error =  $self->draw_features( $db, "wiggle" );
   }
-  return unless $error && $self->{'config'}->get('_settings','opt_empty_tracks')==1;
+  return unless $error && $self->{'config'}->get_parameter( 'opt_empty_tracks')==1;
 
   # Error messages ---------------------
   my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset );
@@ -67,23 +56,23 @@ sub render_block_features {
   my ( $self, $features, $colour, $score ) = @_;
   my $length = $self->{'container'}->length;
 
+  my $h = 10;
   foreach my $f (@$features ) {
     my $start = $f->start;
     my $end   = $f->end;
     $start = 1 if $start < 1;
     $end   = $length if $end > $length;
-    my $Glyph = $self->Rect({
+    $self->push($self->Rect({
       'y'         => $self->_offset,
-      'height'    => 10,
+      'height'    => $h,
       'x'         => $start -1,
       'width'     => $end - $start,
       'absolutey' => 1,          # in pix rather than bp
       'colour'    => $colour,
       'zmenu'     => $self->block_features_zmenu($f, $score),
-    });
-    $self->push( $Glyph );
+    }));
   }
-  $self->_offset(13);
+  $self->_offset( $h+3 );
   return 1;
 }
 
@@ -96,14 +85,15 @@ sub render_wiggle_plot {
   ### Returns 1
 
   my( $self, $features, $colour, $min_score, $max_score, $display_label ) = @_;
-  my $slice = $self->{'container'};
-  my $row_height = 60;
-  my $offset     = $self->_offset();
-  my $P_MAX = $max_score > 0 ? $max_score : 0;
-  my $N_MIN = $min_score < 0 ? $min_score : 0;
+  
+  my $slice           = $self->{'container'};
+  my $row_height      = 60;
+  my $offset          = $self->_offset();
+  my $P_MAX           = $max_score > 0 ? $max_score : 0;
+  my $N_MIN           = $min_score < 0 ? $min_score : 0;
   my $pix_per_score   = ($P_MAX-$N_MIN) ? $row_height / ( $P_MAX-$N_MIN ) : 0;
   my $red_line_offset = $P_MAX * $pix_per_score;
-  my $axis_colour = $self->my_config('axis_colour')|| 'red';
+  my $axis_colour     = $self->my_config('axis_colour')|| 'red';
 
   # Draw the axis ------------------------------------------------
   $self->push( $self->Line({ # horzi line
@@ -114,7 +104,7 @@ sub render_wiggle_plot {
     'absolutey' => 1,
     'colour'    => $axis_colour,
     'dotted'    => 1,
-						   }));
+  }));
 
   $self->push( $self->Line({ # vertical line
     'x'         => 0,
@@ -125,7 +115,7 @@ sub render_wiggle_plot {
     'absolutex' => 1,
     'colour'    => $axis_colour,
     'dotted'    => 1,
-						   }));
+	}));
 
 
   # Draw max and min score ---------------------------------------------
@@ -175,7 +165,7 @@ sub render_wiggle_plot {
       'absolutey'     => 1,
       'absolutex'     => 1,
       'absolutewidth' => 1,
-						    }));
+	  }));
   }
 
 
@@ -187,7 +177,7 @@ sub render_wiggle_plot {
     # warn(join('*', $f, $START, $END, $score));
     my $y = $score < 0 ? 0 : -$score * $pix_per_score;
 
-    my $Glyph = $self->Rect({
+    $self->push($self->Rect({
       'y'         => $offset + $red_line_offset + $y,
       'height'    => abs( $score * $pix_per_score ),
       'x'         => $START-1,
@@ -195,8 +185,7 @@ sub render_wiggle_plot {
       'absolutey' => 1,
       'title'     => sprintf("%.2f", $score),
       'colour'    => $colour,
-						    });
-    $self->push( $Glyph );
+		}));
   }
 
   $offset = $self->_offset($row_height);
@@ -220,7 +209,7 @@ sub render_wiggle_plot {
     'x'         => 1,
     'absolutey' => 1,
     'absolutex' => 1,
-						 }) ); 
+	}) ); 
   $self->_offset($textheight_i);  #update offset
   return 1;
 }
@@ -253,7 +242,7 @@ sub render_track_name {
     'x'         => 1,
     'absolutey' => 1,
     'absolutex' => 1,
-    }) );
+  }));
 
   $self->_offset($res_analysis[3]);
   return 1;
@@ -276,7 +265,7 @@ sub render_space_glyph {
     'x'         => 0,
     'absolutey' => 1,  # puts in pix rather than bp
     'absolutex' => 1,
-          }));
+  }));
   $self->_offset($space);
   return 1;
 }

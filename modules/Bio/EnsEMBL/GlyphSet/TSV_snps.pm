@@ -3,19 +3,10 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
-
-sub init_label {
-  my ($self) = @_;
-  return; 
-}
 
 sub _init {
   my ($self) = @_;
@@ -44,7 +35,7 @@ sub _init {
 
   # Data stuff
   my $colour_map = $Config->get('TSV_snps','colours' );
-  my $EXTENT        = $Config->get('_settings','context')|| 1e6;
+  my $EXTENT        = $Config->get_parameter( 'context')|| 1e6;
      $EXTENT        = 1e6 if $EXTENT eq 'FULL';
   warn "######## ERROR arrays should be same length" unless length @$alleles == length @$consequences_ref;
 
@@ -104,7 +95,7 @@ sub _init {
 
     # SARA snps ----------------------------------------------------
     if ($ref_allele eq $conseq_alleles[0]) { # if 'negative snp'
-       my $bglyph = new Sanger::Graphics::Glyph::Rect({
+       my $bglyph = $self->Rect({
       'x'         => $S - $font_w_bp / 2,
       'y'         => $height + 2,
       'height'    => $height,
@@ -141,7 +132,7 @@ sub _init {
     my @res = $self->get_text_width( 0, $label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $W = ($res[2]+4)/$pix_per_bp;
 
-    my $tglyph = new Sanger::Graphics::Glyph::Text({
+    my $tglyph = $self->Text({
       'x'         => $S-$res[2]/$pix_per_bp/2,
       'y'         => $height + 3,
       'height'    => $font_h_bp,
@@ -154,7 +145,7 @@ sub _init {
       'absolutey' => 1,
     });
 
-    my $bglyph = new Sanger::Graphics::Glyph::Rect({
+    my $bglyph = $self->Rect({
       'x'         => $S - $W / 2,
       'y'         => $height + 2,
       'height'    => $height,
@@ -192,7 +183,7 @@ sub zmenu {
       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
     }
   my $seq_region_name = $self->{'container'}->seq_region_name();
-  my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$seq_region_name;vc_start=$chr_start";
+  my $href = "/@{[$self->{container}{web_species}]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$seq_region_name;vc_start=$chr_start";
 	
   my $strain = $self->species_defs->translate("strain");
   my $zmenu = {

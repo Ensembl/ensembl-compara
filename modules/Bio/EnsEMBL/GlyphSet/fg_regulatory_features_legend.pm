@@ -2,16 +2,8 @@ package Bio::EnsEMBL::GlyphSet::fg_regulatory_features_legend;
 
 use strict;
 use Bio::EnsEMBL::GlyphSet;
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'Reg. feats legend' );
-}
 
 sub _init {
   my ($self) = @_;
@@ -47,7 +39,7 @@ sub _init {
       $FLAG = 1;
       my $tocolour='';
       ($tocolour,$colour) = ($1,$2) if $colour =~ /(.*):(.*)/;
-      $self->push(new Sanger::Graphics::Glyph::Rect({
+      $self->push($self->Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
         'y'         => $y * ( $th + 3 ) + 2,
         'width'     => $BOX_WIDTH,
@@ -56,7 +48,7 @@ sub _init {
         'absolutey' => 1,
         'absolutex' => 1,'absolutewidth'=>1,
       }));
-      $self->push(new Sanger::Graphics::Glyph::Text({
+      $self->push($self->Text({
         'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
         'y'         => $y * ( $th + 3 ),
         'height'    => $th,
@@ -77,7 +69,7 @@ sub _init {
     }
   }
 # Set up a separating line...
-  my $rect = new Sanger::Graphics::Glyph::Rect({
+  my $rect = $self->Rect({
     'x'         => 0,
     'y'         => 0,
     'width'     => $im_width,

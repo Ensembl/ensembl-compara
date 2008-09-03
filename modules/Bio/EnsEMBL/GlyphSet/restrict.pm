@@ -2,16 +2,7 @@ package Bio::EnsEMBL::GlyphSet::restrict;
 use strict;
 use vars qw(@ISA);
 
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Composite;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'Restr.Enzymes' );
-}
 
 sub _init {
   my ($self) = @_;
@@ -127,13 +118,13 @@ sub _init {
     my $colour = ( $f->{'5p'} eq $f->{'3p'} && $f->{'3pr'} eq $f->{'5pr'} ) ? $blunt_colour : $sticky_colour;
     my $start = $f->{'start'} < 1 ? 1 : $f->{'start'};
     my $end   = $f->{'end'} > $length ? $length : $f->{'end'};
-    my $Composite = new Sanger::Graphics::Glyph::Composite({
+    my $Composite = $self->Composite({
       'zmenu'  => { 'caption' => $f->{'name'}, "Seq: $f->{'seq'}" => '' },
       'x' => $start > $length ? $length : $start,
       'y' => 0
     });
     unless($start > $length || $end < 1 ) {
-      $Composite->push( new Sanger::Graphics::Glyph::Rect({
+      $Composite->push( $self->Rect({
         'x'    => $start -1 ,
         'y'    => 0,
         'width'  => $end - $start +1 ,
@@ -146,7 +137,7 @@ sub _init {
         foreach( split //, substr($seq, $start-1, $end-$start+1 ) ) {
           my @res = $self->get_text_width( $pix_per_bp, $_,'', 'font'=>$FONT_I, 'ptsize' => $FONTSIZE_I );
           my $tmp_width = $res[2]/$pix_per_bp;
-          $Composite->push( new Sanger::Graphics::Glyph::Text({
+          $Composite->push( $self->Text({
             'x'      => $start+0.5+$O- $tmp_width/2,
             'y'      => 0,
             'width'    => $tmp_width,
@@ -173,14 +164,14 @@ sub _init {
             if($X<1) { ## DO NOT DRAW DOWN TAG
               $X = 0;
             } else {
-              $Composite->push( new Sanger::Graphics::Glyph::Rect({
+              $Composite->push( $self->Rect({
                 'x'    => $X  , 'y'    => $h1, 'width'  => 0,
                 'height' => 5, 'colour' => $cut_colour, 'absolutey' => 1,
               }));
             }
             my $E = $f->{'start'} >= $length ? $length : $f->{'start'};
             if($E-$X-1>0) {
-              $Composite->push( new Sanger::Graphics::Glyph::Rect({
+              $Composite->push( $self->Rect({
                 'x'    => $X  , 'y'    => $h2, 'width'  => $E - $X - 1,
                 'height' => 0, 'colour' => $cut_colour, 'absolutey' => 1,
               }));
@@ -191,14 +182,14 @@ sub _init {
             if($X>=$length) { ## DO NOT DRAW DOWN TAG
               $X = $length;
             } else {
-              $Composite->push( new Sanger::Graphics::Glyph::Rect({
+              $Composite->push( $self->Rect({
                 'x'    => $X  , 'y'    => $h1, 'width'  => 0,
                 'height' => 5, 'colour' => $cut_colour, 'absolutey' => 1,
               }));
             }
             my $S = $f->{'end'} < 1 ? 0 : $f->{'end'};
             if( $X-$S > 0 ) {
-              $Composite->push( new Sanger::Graphics::Glyph::Rect({
+              $Composite->push( $self->Rect({
                'x'    => $S , 'y'    => $h2, 'width'  => $X - $S ,
                'height' => 0, 'colour' => $cut_colour, 'absolutey' => 1,
               }));
@@ -206,7 +197,7 @@ sub _init {
           }
         } else { ## Within site...
           unless($X<1 || $X>$length) {
-            $Composite->push( new Sanger::Graphics::Glyph::Rect({
+            $Composite->push( $self->Rect({
               'x'    => $X  , 'y'    => $h1, 'width'  => 0,
               'height' => 5, 'colour' => $cut_colour, 'absolutey' => 1,
             }));
@@ -218,7 +209,7 @@ sub _init {
     
     my(@res) = $self->get_text_width(0,$f->{'name'},'','font'=>$FONT_O,'ptsize' => $FONTSIZE_O );
 
-    $Composite->push( new Sanger::Graphics::Glyph::Text({
+    $Composite->push( $self->Text({
       'x'         => $Composite->x,
       'y'         => $th_i+4 ,
       'width'     => $pix_per_bp * $res[2],

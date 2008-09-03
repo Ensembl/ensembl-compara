@@ -1,13 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::histone_modifications;
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-use Bio::EnsEMBL::GlyphSet::wiggle_and_block;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Rect;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump); 
-@ISA = qw(Bio::EnsEMBL::GlyphSet::wiggle_and_block);
-use Data::Dumper;
+use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
 sub get_block_features {
 

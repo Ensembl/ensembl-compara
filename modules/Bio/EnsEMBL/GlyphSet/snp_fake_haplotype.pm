@@ -4,9 +4,6 @@ use vars qw(@ISA);
 
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Space;
-use Sanger::Graphics::Glyph::Rect;
 use Bio::EnsEMBL::GlyphSet;
 use Data::Dumper;  
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -72,10 +69,10 @@ sub _init {
 
   my $track_height = $th + 4;
 
-  $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => 0, 'height' => $track_height, 'x' => 1, 'w' => 1, 'absolutey' => 1, }));
+  $self->push($self->Space({ 'y' => 0, 'height' => $track_height, 'x' => 1, 'w' => 1, 'absolutey' => 1, }));
 
   my $offset = $track_height;
-  my $textglyph = new Sanger::Graphics::Glyph::Text({
+  my $textglyph = $self->Text({
     'x'          => - 115,
     'y'          => 2+$offset,
     'width'      => 0,
@@ -242,7 +239,7 @@ sub _init {
       $c++;
     }
   }
-  $self->push(new Sanger::Graphics::Glyph::Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
+  $self->push($self->Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
 
 
   # Colour legend stuff
@@ -261,7 +258,7 @@ sub strain_name_text {
   (my $url_name = $name) =~ s/Compare to |^\s+//;
   my $URL = $Config->{'URL'}."reference=$url_name;";
   my @link = $fully_inbred ? ( 'title' => "Click to compare to $url_name", 'href' => $URL ) : "";
-  my $textglyph = new Sanger::Graphics::Glyph::Text({
+  my $textglyph = $self->Text({
       'x'          => -115,
       'y'          => $offset+1,
       'height'     => $th,
@@ -303,7 +300,7 @@ sub do_glyphs {
 	       );
   }
 
-  my $back_glyph = new Sanger::Graphics::Glyph::Rect({
+  my $back_glyph = $self->Rect({
     'x'         => ($end+$start-1-$tmp_width)/2,
     'y'         => $offset,
     'colour'    => $colour,
@@ -323,7 +320,7 @@ sub do_glyphs {
     }
 
     my $tmp_width = $res[2]/$pix_per_bp;
-    my $textglyph = new Sanger::Graphics::Glyph::Text({
+    my $textglyph = $self->Text({
       'x'          => ( $end + $start - 1 - $tmp_width)/2,
       'y'          => 1+$offset,
       'width'      => $tmp_width,

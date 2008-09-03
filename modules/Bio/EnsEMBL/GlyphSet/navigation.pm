@@ -2,19 +2,14 @@ package Bio::EnsEMBL::GlyphSet::navigation;
 use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
-use Sanger::Graphics::Glyph::Sprite;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Data::Dumper;
-
-sub init_label {
-  return;
-}
 
 sub _init {
   my ($self) = @_;
 
   if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      my $line = new Sanger::Graphics::Glyph::Rect({
+      my $line = $self->Rect({
 	  'z' => 11,
 	  'x' => -120,
 	  'y' => 4, # 22,
@@ -66,7 +61,7 @@ sub _init {
 
     foreach my $sprite ( @sprite_array ) {
       (my $N = ucfirst($sprite->[0])) =~ s/_/ /g;
-      $self->push(new Sanger::Graphics::Glyph::Sprite({
+      $self->push($self->Sprite({
         'z'             => 1000,
         'x'             => $pos,
         'y'             => 0,
@@ -83,7 +78,7 @@ sub _init {
     }
   }
 }
-  my $line = new Sanger::Graphics::Glyph::Rect({
+  my $line = $self->Rect({
     'z' => 11,
     'x' => -120,
     'y' => 12, # 22,
@@ -100,7 +95,7 @@ sub _init {
     $self->join_tag( $line, "bracket2", 0,0, 'rosybrown1', 'fill', -40 );
   }
   $self->push($line);
-  my $line = new Sanger::Graphics::Glyph::Rect({
+  my $line = $self->Rect({
     'z' => 11,
     'x' => 0,
     'y' => 12, # 22,

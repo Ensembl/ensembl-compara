@@ -26,9 +26,9 @@ sub new {
 
   ########## loop over all the glyphsets the user wants:
   my $tmp = {};
-  $Container->{'_config_file_name_'} ||= $ENV{'ENSEMBL_SPECIES'};
+  $Container->{'web_species'} ||= $ENV{'ENSEMBL_SPECIES'};
   my @chromosomes = $Config->{'_all_chromosomes'} eq 'yes' ?
-                  (@{$Config->{species_defs}->other_species($Container->{'_config_file_name_'}, 'ENSEMBL_CHROMOSOMES')||[] }) :
+                  (@{$Config->{species_defs}->other_species($Container->{'web_species'}, 'ENSEMBL_CHROMOSOMES')||[] }) :
                   ($Container->{'chr'}); 
   my $pos = 100000;
   my $row = '';
@@ -60,7 +60,7 @@ sub new {
       
       if($@ || !$GlyphSet) {
         my $reason = $@ || "No reason given just returns undef";
-        warn "GLYPHSET: glyphset $classname failed (@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason";
+        warn "GLYPHSET: glyphset $classname failed (@{[$self->{container}{web_species}]}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason";
       } else {
          $GlyphSet->_init();
          push @{$self->{'glyphsets'}},  $GlyphSet;

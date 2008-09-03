@@ -1,9 +1,8 @@
 package Bio::EnsEMBL::VRenderer::gif;
+
 use strict;
-use Bio::EnsEMBL::VRenderer;
 use GD;
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::VRenderer);
+use base qw(Bio::EnsEMBL::VRenderer);
 
 sub init_canvas {
   my ($self, $config, $im_height, $im_width) = @_;

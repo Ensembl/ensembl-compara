@@ -6,47 +6,28 @@ use Bio::EnsEMBL::GlyphSet_simple;
 
 sub squish { return 1; }
 
-sub my_label {
- my ($self) = @_;
- my $species = $self->{'config'}->{'species'};
- #warn $species; 
- if ($species =~/Drosophila/ ){ return "FlyReg"; } 
- return "cisRED/miRANDA";
-}
-
-
-sub my_description {
- my ($self) = @_;
- my $species = $self->{'config'}->{'species'};
- if ($species =~/Drosophila/ ){ return "FlyReg"; }
- return "cisRED/miRANDA"; 
-}
-
-# This for 
-sub my_helplink { return "markers"; }
-
 sub features {
   my ($self) = @_;
   my $slice = $self->{'container'};
   my $efg_db = undef;
   my $db_type  = $self->my_config('db_type')||'funcgen';
-    unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      $efg_db = $slice->adaptor->db->get_db_adaptor($db_type);
-      if(!$efg_db) {
-        warn("Cannot connect to $db_type db");
-        return [];
-      }
+  unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+    $efg_db = $slice->adaptor->db->get_db_adaptor($db_type);
+    if(!$efg_db) {
+      warn("Cannot connect to $db_type db");
+      return [];
     }
-  my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor; 
-  my $species = $self->{'config'}->{'species'}; 
-  my $external_Feature_adaptor = $efg_db->get_ExternalFeatureAdaptor; 
+  }
+  my $feature_set_adaptor       = $efg_db->get_FeatureSetAdaptor; 
+  my $species                   = $self->{'config'}->{'species'}; 
+  my $external_Feature_adaptor  = $efg_db->get_ExternalFeatureAdaptor; 
    
   my $gene = $self->{'config'}->{'_draw_single_Gene'};
   if( $gene ) {
      my $gene_id = $gene->stable_id; 
      my $f; 
      if ($species =~/Homo_sapiens/){
-         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
+         my $cisred_fset  = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
          my $miranda_fset = $feature_set_adaptor->fetch_by_name('miRanda miRNA');
          my $vista_fset = $feature_set_adaptor->fetch_by_name('VISTA enhancer set');
          $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset, $miranda_fset, $vista_fset);
@@ -71,8 +52,8 @@ sub features {
      }
    }
    
-  my $data = \@features;
-  return $data || [];
+    my $data = \@features;
+    return $data || [];
   } else {
       my $f;
      if ($species =~/Homo_sapiens/){

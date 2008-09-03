@@ -105,7 +105,7 @@ sub href {
   my ($self, $f) = @_;
   my ($cloneid) = split /\./ ,  $f->display_id;
   my $exturl = new EnsEMBL::Web::ExtURL( $self->species_defs->name,$self->species_defs );
-  return $exturl->get_url(uc($self->my_config('other')))."@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$cloneid;
+  return $exturl->get_url(uc($self->my_config('other')))."@{[$self->{container}{web_species}]}/$ENV{'ENSEMBL_SCRIPT'}?clone=".$cloneid;
 }
 
 sub colour {

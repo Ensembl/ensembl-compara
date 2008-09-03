@@ -1,12 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::info;
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-
-sub init_label {
-    return;
-}
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
@@ -20,27 +14,26 @@ sub _init {
   my $species   = $Config->species_defs->SPECIES_BIO_NAME;
   my $sitetype  = $Config->species_defs->ENSEMBL_SITETYPE;
 
-  my $type = $self->{'container'}->coord_system->name();
-  $type = ucfirst( $type );
-  my $chr = $self->{'container'}->seq_region_name();
-  $chr = "$type $chr" unless $chr =~ /^$type/i;
+  my $type = ucfirst( $self->{'container'}->coord_system->name() );
+  my $name = $self->{'container'}->seq_region_name();
+
+     $name = "$type $name" unless $name =~ /^$type/i;
 
   my $text_to_display = sprintf( "%s %s version %s.%s (%s) %s %s - %s",
     $sitetype, $species, $Version, $SpVersion, $Assembly,
-    $chr,
-    $self->thousandify( $self->{'container'}->start() ),
-    $self->thousandify( $self->{'container'}->end )
+    $name,
+    $self->commify( $self->{'container'}->start() ),
+    $self->commify( $self->{'container'}->end )
   );
 
-  my( $FONT,$FONTSIZE)  = $self->get_font_details( 'text' );
-  my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $text_to_display, '', 'ptsize' => $FONTSIZE, 'font' => $FONT );
+  my $details = $self->get_text_simple( $text_to_display, 'text' );
 
-  $self->push( new Sanger::Graphics::Glyph::Text({
+  $self->push( $self->Text({
     'x'         => 0,
     'y'         => 1,
-    'height'    => $th,
-    'font'      => $FONT,
-    'ptsize'    => $FONTSIZE,
+    'height'    => $details->{'height'},
+    'font'      => $details->{'font'},
+    'ptsize'    => $details->{'fontsize'},
     'colour'    => 'black',
     'halign'    => 'left',
     'text'      => $text_to_display,

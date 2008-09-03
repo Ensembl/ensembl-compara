@@ -5,11 +5,6 @@ use Bio::EnsEMBL::GlyphSet;
 use Data::Dumper;
 $Data::Dumper::Maxdepth = 3;
 
-sub init_label {
-    my ($self) = @_;
-    $self->init_label_text();
-}
-
 sub _init {
     my ($self) = @_;
     my $all_matches = $self->{'config'}->{'transcript'}{'transcript_evidence'};
@@ -65,7 +60,7 @@ sub draw_glyphs {
 		if ($block->{'exon'}) {
 		    $last_end_x = $block->{'munged_end'};
 		}
-		my $G = new Sanger::Graphics::Glyph::Line({
+		my $G = $self->Line({
 		    'x'          => $last_end_x,
 		    'y'         => $H + $h/2,
 		    'h'         =>1,
@@ -76,7 +71,7 @@ sub draw_glyphs {
 		    'absolutey' => 1,});			
 		$self->push($G);
 
-		$G = new Sanger::Graphics::Glyph::Line({
+		$G = $self->Line({
 		    'x'         => $Config->container_width(),
 		    'y'         => $H,
 		    'height'    => $h,
@@ -103,7 +98,7 @@ sub draw_glyphs {
 
 	    #draw a red I line for a lh extension
 	    if ($lh_ext) {
-		my $G = new Sanger::Graphics::Glyph::Line({
+		my $G = $self->Line({
 		    'x'         => 0,
 		    'y'         => $H + $h/2,
 		    'h'         => 1,
@@ -114,7 +109,7 @@ sub draw_glyphs {
 		    'dotted'    => 1});				
 		$self->push($G);
 		
-		$G = new Sanger::Graphics::Glyph::Line({
+		$G = $self->Line({
 		    'x'         => 0,
 		    'y'         => $H,
 		    'height'    => $h,
@@ -137,7 +132,7 @@ sub draw_glyphs {
 		    $w = $block->{'munged_start'} - $last_end;
 		}
 #		warn "1- drawing line from $x with width of $w" if ($hit_name eq 'Q4R8S0.1');
-		my $G = new Sanger::Graphics::Glyph::Line({
+		my $G = $self->Line({
 		    'x'          => $x,
 		    'y'         => $H + $h/2,
 		    'h'         =>1,
@@ -204,7 +199,7 @@ sub draw_glyphs {
 	    }
 
 	    ##draw the actual hit
-	    my $G = new Sanger::Graphics::Glyph::Rect({
+	    my $G = $self->Rect({
 		'x'            => $block->{'munged_start'} ,
 		'y'            => $H,
 		'width'        => $width,
@@ -222,7 +217,7 @@ sub draw_glyphs {
 	my @res = $self->get_text_width(0, "$hit_name", '', 'font'=>$fontname, 'ptsize'=>$fontsize);
 	my $W = ($res[2])/$pix_per_bp;
 	($font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);	
-	my $tglyph = new Sanger::Graphics::Glyph::Text({
+	my $tglyph = $self->Text({
 	    'x'         => -$res[2],
 	    'y'         => $H,
 	    'height'    => $font_h_bp,
@@ -243,7 +238,7 @@ sub draw_glyphs {
 
     #draw lines for the exon / hit boundry mismatches (draw last so they're on top of everything else)
     foreach my $mismatch_line ( @draw_end_lines ) {
-	my $G = new Sanger::Graphics::Glyph::Line({
+	my $G = $self->Line({
 	    'x'         => $mismatch_line->[0] ,
 	    'y'         => $mismatch_line->[1],
 	    'width'     => 0,

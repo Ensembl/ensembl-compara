@@ -4,7 +4,6 @@ use vars qw(@ISA);
 
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
-use Sanger::Graphics::Glyph::Space;
 use Bio::EnsEMBL::GlyphSet;
   
 @Bio::EnsEMBL::GlyphSet::geneexon_bgtrack::ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -66,7 +65,7 @@ sub _init {
     my $tag_root = "@{[$S2]}:@{[$E2]}";
     $S = 1 if $S < 1;
     $E = $length if $E > $length;
-    my $tglyph = new Sanger::Graphics::Glyph::Space({
+    my $tglyph = $self->Space({
       'x' => $S-1,
       'y' => 0,
       'height' => 0,

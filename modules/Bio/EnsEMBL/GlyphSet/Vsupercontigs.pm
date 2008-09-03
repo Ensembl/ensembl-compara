@@ -5,28 +5,9 @@ use vars qw(@ISA);
 
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Line;
 
 
 use Data::Dumper;
-
-sub init_label {
-
-  my ($self) = @_;
-
-  my $Config = $self->{'config'};
-
-  my $label = $Config->get('Vsupercontigs', 'include_labelling') ? 'FPC Contigs' : 'FPC' ;
-  $self->label(new Sanger::Graphics::Glyph::Text({
-    'text'      => $label,
-    'font'      => 'Small',
-    'absolutey' => 1,
-  }));
-
-}
 
 sub _init {
 
@@ -71,7 +52,7 @@ sub _init {
       # make sure that there is a blank image behind the chromosome so that the
       # glyphset doesn't get "horizontally" squashed.
       
-      my $gpadding = new Sanger::Graphics::Glyph::Space({
+      my $gpadding = $self->Space({
     'x'         => 0,
     'y'         => $h_offset - $padding,
     'width'     => 10000,
@@ -94,13 +75,13 @@ sub _init {
     my $vc_ctg_end    = $ctg->seq_region_end()   + $v_offset;
     
     
-    ##$HREF =  "/@{[$self->{container}{_config_file_name_}]}/cytoview?chr=$chr;vc_start=$vc_ctg_start;vc_end=$vc_ctg_end"
+    ##$HREF =  "/@{[$self->{container}{web_species}]}/cytoview?chr=$chr;vc_start=$vc_ctg_start;vc_end=$vc_ctg_end"
     
     $self->{'_colour_flag'} = $self->{'_colour_flag'}==1 ? 2 : 1;
     
     my $ctg_col  = $Config->get('Vsupercontigs',"col_ctgs$self->{'_colour_flag'}" );
     
-    my $g_x = new Sanger::Graphics::Glyph::Rect({
+    my $g_x = $self->Rect({
       'x'         => $vc_ctg_start,
       'y'         => $h_offset+ int($wid/4),
       'width'     => $vc_ctg_end - $vc_ctg_start,
@@ -122,7 +103,7 @@ warn "ADDING LABEL";
       $labely = ($h_offset) -  ($w * length($ctgname));
     }
    
-    my $tglyph = new Sanger::Graphics::Glyph::Text({
+    my $tglyph = $self->Text({
         'x'                => ($vc_ctg_end + $vc_ctg_start - $h)/2,
         'y'                => $labely,
         'width'            => $h,

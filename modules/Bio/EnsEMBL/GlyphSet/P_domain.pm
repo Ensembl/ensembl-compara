@@ -4,20 +4,11 @@ no warnings "uninitialized";
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
 use  Sanger::Graphics::Bump;
 
 ## Variables defined in UserConfig.pm 
 ## 'caption'   -> Track label
 ## 'logicname' -> Logic name
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( $self->my_config('caption') );
-}
 
 sub _init {
   my ($self) = @_;
@@ -66,7 +57,7 @@ sub _init {
       my $w  = $pr->end() - $x;
       $maxx  = $pr->end() if ($pr->end() > $maxx || !defined($maxx));
       my $id = $pr->hseqname();
-      push @rect, new Sanger::Graphics::Glyph::Rect({
+      push @rect, $self->Rect({
         'x'        => $x,
         'y'        => $y,
         'width'    => $w,
@@ -76,7 +67,7 @@ sub _init {
       $prsave = $pr;
     }
 
-    my $Composite = new Sanger::Graphics::Glyph::Composite({
+    my $Composite = $self->Composite({
       'x'     => $minx,
       'y'     => 0,
       'href'  => $href,
@@ -91,7 +82,7 @@ sub _init {
     $Composite->push(@rect);
 
     ##### add a domain linker
-    $Composite->push(new Sanger::Graphics::Glyph::Rect({
+    $Composite->push($self->Rect({
       'x'        => $minx,
       'y'        => $y + 2,
       'width'    => $maxx - $minx,
@@ -103,7 +94,7 @@ sub _init {
     #### add a label
     my $desc = $prsave->idesc() || $key;
     my @res = $self->get_text_width( 0, $desc, '', 'font'=>$fontname, 'ptsize' => $fontsize );
-    $Composite->push(new Sanger::Graphics::Glyph::Text({
+    $Composite->push($self->Text({
       'font'   => $fontname,
       'ptsize' => $fontsize,
       'halign' => 'left',

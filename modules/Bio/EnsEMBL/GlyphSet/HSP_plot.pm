@@ -15,12 +15,6 @@ use Bio::EnsEMBL::GlyphSet;
 #@ISA = qw(Sanger::Graphics::GlyphSet);
 use Sanger::Graphics::Bump;
 
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( (($self->strand()==-1)?"-":"+") . " hsps" );
-}
-
 sub _init {
   my ($self)        = @_;
   my $container     = $self->{'container'};

@@ -1,9 +1,5 @@
 package Bio::EnsEMBL::VRenderer;
 use strict;
-use Exporter;
-use vars qw(@ISA);
-
-@ISA = qw(Exporter);
 
 sub new {
     my ($class, $config, $container, $glyphsets_ref) = @_;

@@ -1,8 +1,6 @@
 package Bio::EnsEMBL::Glyph;
 use strict;
-use Exporter;
-use vars qw(@ISA $AUTOLOAD);
-@ISA = qw(Exporter);
+our $AUTOLOAD;
 
 #########
 # constructor

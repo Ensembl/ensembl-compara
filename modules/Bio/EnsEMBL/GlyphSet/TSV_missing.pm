@@ -3,10 +3,6 @@ use strict;
 use Bio::EnsEMBL::GlyphSet;
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
-sub init_label {
-    return;
-}
-
 
 # The filter message refers to the number of SNPs removed from the 'snp_fake' track
 # i.e. the number will not change if you filter on SARA SNPs

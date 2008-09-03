@@ -3,34 +3,10 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::ColourMap;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Glyph::Symbol::box; 
 use POSIX; #floor
-
-sub init_label {
-  my ($self) = @_;
-
-  return if( defined $self->{'config'}->{'_no_label'} );
-
-  my $numchars = 16;
-  my $indent   = 1;
-  my $Config   = $self->{'config'};
-  my $confkey  = $self->{'extras'}->{'confkey'};
-  my $text     = $self->{'extras'}->{'label'} || $self->{'extras'}->{'name'};
-  my $colour   = $Config->get($confkey,'col') || 'black';
-
-  my $print_label = length($text) > ( $numchars - $indent ) ? 
-    substr( $text, 0, ( $numchars - $indent - 2 ) )."..": 
-    $text;
-  $self->init_label_text( $print_label );
-  $self->{'label'}->{'ptsize'} *= 0.8;
-}
-
 
 sub _init {
   my ($self) = @_;
@@ -221,7 +197,7 @@ sub RENDER_histogram {
       }
     }
     my ($zmenu );
-    my $Composite = new Sanger::Graphics::Glyph::Composite({
+    my $Composite = $self->Composite({
       'y'         => 0,
       'x'         => $START-1,
       'absolutey' => 1,
@@ -282,7 +258,7 @@ sub RENDER_tilingarray{
 
 # Draw the axis
 
-  $self->push( new Sanger::Graphics::Glyph::Line({
+  $self->push( $self->Line({
     'x'         => 0,
     'y'         => $row_height + 1,
     'width'     => $configuration->{'length'},
@@ -292,7 +268,7 @@ sub RENDER_tilingarray{
     'dotted'    => 1,
   }));
 
-  $self->push( new Sanger::Graphics::Glyph::Line({
+  $self->push( $self->Line({
     'x'         => 0,
     'y'         => 0,
     'width'     => 0,
@@ -309,7 +285,7 @@ sub RENDER_tilingarray{
     my $width = ($END - $START +1);
     my $score = $f->das_score || 0;
 
-    my $Composite = new Sanger::Graphics::Glyph::Composite({
+    my $Composite = $self->Composite({
       'y'         => 0,
       'x'         => $START-1,
       'absolutey' => 1,
@@ -323,7 +299,7 @@ sub RENDER_tilingarray{
     $Composite->{'zmenu'} = $zmenu;
 
     # make clickable box to anchor zmenu
-    $Composite->push( new Sanger::Graphics::Glyph::Space({
+    $Composite->push( $self->Space({
       'x'         => $START - 1,
       'y'         => ($score ? (($score > 0) ? 0 : ($row_height + 2)) : ($row_height + 1)),
       'width'     => $width,
@@ -382,7 +358,7 @@ sub RENDER_colourgradient {
     } elsif ($score > $max_value) {
       $score = $max_value;
     }
-    my $Composite = new Sanger::Graphics::Glyph::Composite({
+    my $Composite = $self->Composite({
       'y'         => 0,
       'x'         => $START-1,
       'absolutey' => 1,
@@ -396,7 +372,7 @@ sub RENDER_colourgradient {
     $Composite->{'zmenu'} = $zmenu;
 
     # make clickable box to anchor zmenu
-    $Composite->push( new Sanger::Graphics::Glyph::Space({
+    $Composite->push( $self->Space({
       'x'         => $START - 1,
       'y'         => 0,
       'width'     => $width,
@@ -437,7 +413,7 @@ sub RENDER_grouped {
 
   foreach my $f (@{$self->{extras}->{features}}) {
 # Create a new composite and put the feature there
-    my $Composite = new Sanger::Graphics::Glyph::Composite({
+    my $Composite = $self->Composite({
       'x'     => $f->start,
       'y'     => $y,
       'zmenu' => $self->gmenu($f),
@@ -470,7 +446,7 @@ sub RENDER_grouped {
 
     my $key = join('*', $row,$f->das_feature_id); 
     if (my $ox = $fhash->{$key}) {
-      my $rect = new Sanger::Graphics::Glyph::Rect({
+      my $rect = $self->Rect({
          'x'         => $ox,
          'y'         => 2,
          'width'     => $f->start - $ox,

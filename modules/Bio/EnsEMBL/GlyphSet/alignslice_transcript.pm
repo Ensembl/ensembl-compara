@@ -1,82 +1,74 @@
-package Bio::EnsEMBL::GlyphSet::generic_transcript;
+package Bio::EnsEMBL::GlyphSet::_transcript;
 use strict;
-use vars qw(@ISA);
-
-use Bio::EnsEMBL::GlyphSet_transcript;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
-
-@ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
+use base qw( Bio::EnsEMBL::GlyphSet_transcript );
 
 sub analysis_logic_name{
   my $self = shift;
   return $self->my_config('LOGIC_NAME');
 }
 
-sub my_label {
+sub my_label { 
   my $self = shift;
-  my $label = $self->my_config('track_label') || 'Generic trans.';
-  my $numchars = 16;
-  my $print_label = ( length($label) > $numchars ?
-		      substr($label, 0, ($numchars-2)).'..' :
-		      $label );
-  return $print_label;
+  return $self->my_config('caption');
 }
 
 sub colours {
-    my $self = shift;
-    my $confkey = lc( $self->analysis_logic_name );
-    my $Config = $self->{'config'};
-    return {
-        'hi'    => $Config->get($confkey,'hi')      || 'white',
-        'col'   => $Config->get($confkey,'col')     || 'black',
-        'super' => $Config->get($confkey,'superhi') || 'white',
-    };
+  my $self = shift;
+  my $colour_set = $self->my_config('colour_map') || 'genes';
+  return $self->{'config'}->species_defs->multi( 'colour_map', $colour_set );
 }
 
 sub features {
   my ($self) = @_;
   my $slice = $self->{'container'};
 
-  my $db_alias = $self->my_config('db_alias') || '';
-  my @analyses = ( $self->analysis_logic_name || '' );
-  warn ">>>> @analyses";
+  my $db_alias = $self->my_config('db');
 
-  my @genes;
-  foreach my $analysis( @analyses ){
-    push @genes, @{ $slice->get_all_Genes( $analysis, $db_alias||() ) }
-  }
-  return [@genes];
+  my $analyses = $self->my_config('logicnames');
+
+  warn "fetching features for $db_alias [@{$analyses}]";
+  my @T = map { @{$slice->get_all_Genes( $_, $db_alias )||[]} } @$analyses;
+  return \@T;
 }
 
 
 sub colour {
   my ($self, $gene, $transcript, $colours, %highlights) = @_;
-  my $translation = $transcript->translation;
-  my $translation_id = $translation ? $translation->stable_id : '';
 
-  my $analysis = $gene->analysis ? $gene->analysis->logic_name : '';
-  $colours ||= {};
-  my $genecol = $colours->{$analysis} || $colours->{'col'} || 'black';
-
-  if(exists $highlights{lc($transcript->stable_id)}) {
-    return ($genecol, $colours->{'superhi'});
-  } elsif(exists $highlights{lc($transcript->external_name)}) {
-    return ($genecol, $colours->{'superhi'});
-  } elsif(exists $highlights{lc($gene->stable_id)}) {
-    return ($genecol, $colours->{'hi'});
-  }    
-  return ($genecol, undef);
+  my $highlight = $self->my_config('db') ne $self->{'config'}{'_core'}{'parameters'}{'db'} ? undef
+                : $transcript->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'t'}  ? 'superhi'
+                : $gene->stable_id       eq $self->{'config'}{'_core'}{'parameters'}{'g'}  ? 'hi'
+	        : undef
+		;
+  my $col = $colours->{ $transcript->biotype.'='.$transcript->status } || [ 'orange', 'Other' ];
+  return( @$col, $highlight );
 }
 
 sub gene_colour {
   my ($self, $gene, $colours, %highlights) = @_;
 
-  my $analysis = $gene->analysis ? $gene->analysis->logic_name : '';
-  $colours ||= {};
-  my $genecol = $colours->{$analysis} || $colours->{'col'} || 'black';
+  my $highlight = $self->my_config('db') ne $self->{'config'}{'_core'}{'parameters'}{'db'} ? undef
+                : $gene->stable_id       eq $self->{'config'}{'_core'}{'parameters'}{'g'}  ? 'hi'
+		: undef
+		;
+  my $col = $colours->{ $gene->biotype.'='.$gene->status } || [ 'orange', 'Other' ];
+  return( @$col, $highlight );
+}
 
-  return( $genecol, undef );
+sub href {
+  my ($self, $gene, $transcript, %highlights ) = @_;
 
+  my $gid = $gene->stable_id();
+  my $tid = $transcript->stable_id();
+  return $self->_url({'type'=>'Transcript','action'=>'Summary','t'=>$tid,'g'=>$gid, 'db' => $self->my_config('db')});
+}
+
+sub gene_href {
+  my ($self, $gene, %highlights ) = @_;
+
+  my $gid = $gene->stable_id();
+
+  return $self->_url({'type'=>'Gene','action'=>'Summary','g'=>$gid, 'db' => $self->my_config('db') });
 }
 
 sub href {
@@ -95,7 +87,7 @@ sub href {
   if( $self->my_config('_href_only') eq '#tid' and
       exists $highlights{lc($gid)} ){ return( "#$tid" ) }
 
-  my $species = $self->{container}{_config_file_name_};
+  my $species = $self->{container}{web_species};
   my $db = $self->my_config('db_alias') || 'core';
   return "/$species/$script_name?db=$db;gene=$gid";
 }
@@ -108,7 +100,7 @@ sub gene_href {
 sub zmenu {
   my ($self, $gene, $transcript) = @_;
 
-  my $sp = $self->{container}{_config_file_name_};
+  my $sp = $self->{container}{web_species};
   my $db = $self->my_config('db_alias') || 'core';
   my $name = $self->my_config('db_alias') || 'Ensembl';
 
@@ -168,12 +160,12 @@ sub text_label {
   my $id = $eid || $tid;
 
   my $Config = $self->{config};
-  my $short_labels = $Config->get('_settings','opt_shortlabels');
+  my $short_labels = $Config->get_parameter( 'opt_shortlabels');
 
   if( $Config->{'_both_names_'} eq 'yes') {
     $id .= $eid ? " ($eid)" : '';
   }
-  if( ! $Config->get('_settings','opt_shortlabels') ){
+  if( ! $Config->get_parameter( 'opt_shortlabels') ){
     my $type = ( $gene->analysis ? 
                  $gene->analysis->logic_name : 
                  'Generic trans.' );

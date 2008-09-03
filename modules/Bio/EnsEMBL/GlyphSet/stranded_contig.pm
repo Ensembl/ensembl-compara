@@ -3,7 +3,6 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet::contig;
 @ISA = qw(Bio::EnsEMBL::GlyphSet::contig);
-use Sanger::Graphics::Glyph::Poly;
 
 
 ## We inherit from normal strand-agnostic contig module
@@ -17,7 +16,7 @@ sub add_arrows {
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $h = $res[3];
 
-    $gtriag = new Sanger::Graphics::Glyph::Poly({
+    $gtriag = $self->Poly({
     	'points'       => [$im_width-10,$ystart-4, $im_width-10,$ystart, $im_width,$ystart],
 	    'colour'       => $black,
     	'absolutex'    => 1,'absolutewidth'=>1,
@@ -25,7 +24,7 @@ sub add_arrows {
     });
     
     $self->push($gtriag);
-    $gtriag = new Sanger::Graphics::Glyph::Poly({
+    $gtriag = $self->Poly({
 	    'points'       => [0,$ystart+$h+8, 10,$ystart+$h+8, 10,$ystart+$h+12],
     	'colour'       => $black,
     	'absolutex'    => 1,'absolutewidth'=>1,

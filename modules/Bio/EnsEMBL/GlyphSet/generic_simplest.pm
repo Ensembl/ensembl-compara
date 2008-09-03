@@ -17,7 +17,7 @@ sub das_link {
   my @logic_names = $self->my_config( 'code' );
   
   my $slice   = $self->{container};
-  my $species = $slice->{_config_file_name_};
+  my $species = $slice->{web_species};
   my $assembly = $self->{'config'}->species_defs->other_species($species, 'ENSEMBL_GOLDEN_PATH' );
 
   my $dsn = "$species.$assembly.".join('-',$type, $database, @logic_names);

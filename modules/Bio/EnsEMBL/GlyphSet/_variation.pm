@@ -10,8 +10,7 @@ sub my_label { return "SNPs"; }
 sub features {
   my ($self) = @_;
   my $Config = $self->{'config'};
-  my $type = $self->check();
-  my $max_length     = $Config->get( $type, 'threshold' )  || 1000;
+  my $max_length     = $Config->my_config( 'threshold' )  || 1000;
   my $slice_length  = $self->{'container'}->length;
   if($slice_length > $max_length*1010) {
     $self->errorTrack('Variation features not displayed for more than '.$max_length.'Kb');
@@ -25,28 +24,45 @@ sub fetch_features {
   unless( exists( $self->{'config'}->{'snps'} ) ) {
     my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
     my $vf_ref = $self->{'container'}->get_all_VariationFeatures();
+## Add a filtering step here...
     my @vari_features =
       map  { $_->[1] }
       sort { $a->[0] <=> $b->[0] }
       map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
       grep { $_->map_weight < 4 } @$vf_ref;
-    if(@vari_features && !$self->{'config'}->{'variation_legend_features'} ) {
-      #warn "...................".ref($self)."........................";
-      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
-    }
-    $self->{'config'}->{'snps'} = \@vari_features;
+    $self->cache( $self->_key, \@vari_features );
   }
-  my $snps = $self->{'config'}->{'snps'} || [];
+  my $snps = $self->cache( $self->_key ) || [];
   if(@$snps) {
-    unless( $self->{'config'}->{'variation_legend_features'} ) {
-      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
-    }
+    $self->_add_legend( 'variations_legend', $self->_pos );
+    my %T = ();
     foreach my $f (@$snps) {
-warn $f,' ',$f->display_consequence;
-      $self->colour( $f );
+      my $x = $f->consequence_type;
+      next if $T{$x};
+      $self->legend_add(
+        'variations_legend',
+        $self->my_colour( $x ),
+        $self->my_colour( $x, 'text' )
+      );
+      $T{$x}=1;
     }
   }
   return $snps;
+}
+
+sub colour {
+  my ($self, $f) = @_;
+
+  my $consequence_type = $f->display_consequence();
+    unless($self->{'config'}->{'variation_types'}{$consequence_type}) {
+      push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
+	$self->{'colours'}{$consequence_type}[1],  $self->{'colours'}{$consequence_type}[0];
+
+      $self->{'config'}->{'variation_types'}{$consequence_type} = 1;
+    }
+    return $self->{'colours'}{$consequence_type}[0],
+      $self->{'colours'}{$consequence_type}[2],
+	$f->start > $f->end ? 'invisible' : '';
 }
 
 sub href {
@@ -77,7 +93,7 @@ sub href {
   } else {
       $start  = $self->slice2sr( $f->start, $f->end );
       $region = $self->{'container'}->seq_region_name();
-      $species = "@{[$self->{container}{_config_file_name_}]}";
+      $species = "@{[$self->{container}{web_species}]}";
   }
 
   return "/$species/$view?snp=$id;source=$source;c=$region:$start;w=20000;$pops";

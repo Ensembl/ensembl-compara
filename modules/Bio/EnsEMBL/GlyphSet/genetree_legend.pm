@@ -2,17 +2,8 @@ package Bio::EnsEMBL::GlyphSet::genetree_legend;
 
 use strict;
 use Bio::EnsEMBL::GlyphSet;
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
-
-sub init_label {
-  my ($self) = @_;
-  my $Config        = $self->{'config'};
-  return if( defined $Config->{'_no_label'} );
-  $self->init_label_text( 'Legend' );
-}
 
 sub _init {
   my ($self) = @_;
@@ -52,7 +43,7 @@ sub _init {
 
   my ($legend, $colour, $style, $border, $label, $text);
 
-  $self->push(new Sanger::Graphics::Glyph::Text({
+  $self->push($self->Text({
         'x'         => 0,
         'y'         => 0,
         'height'    => $th,
@@ -73,7 +64,7 @@ sub _init {
   my ($x,$y) = (0, 0);
   foreach my $branch (@branches) {
     ($legend, $colour, $style) = @$branch;
-    $self->push(new Sanger::Graphics::Glyph::Line({
+    $self->push($self->Line({
       'x'         => $im_width * $x/$NO_OF_COLUMNS,
       'y'         => $y * ( $th + 3 ) + 8 + $th,
       'width'     => 20,
@@ -90,7 +81,7 @@ sub _init {
   ($x, $y) = (1, 0);
   foreach my $ortho (@orthos) {
     ($legend, $colour, $text) = @$ortho;
-    $self->push(new Sanger::Graphics::Glyph::Text({
+    $self->push($self->Text({
         'x'         => $im_width * $x/$NO_OF_COLUMNS - 50,
         'y'         => $y * ( $th + 3 ) + $th,
         'height'    => $th,
@@ -114,7 +105,7 @@ sub _init {
   ($x, $y) = (2, 0);
   foreach my $node (@nodes) {
     ($legend, $colour) = @$node;
-    $self->push(new Sanger::Graphics::Glyph::Rect({
+    $self->push($self->Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
         'y'         => $y * ( $th + 3 ) + 5 + $th,
         'width'     => 5,
@@ -130,7 +121,7 @@ sub _init {
   ($x, $y) = (3, 0);
   foreach my $box (@boxes) {
     ($legend, $colour, $border) = @$box;
-    $self->push(new Sanger::Graphics::Glyph::Rect({
+    $self->push($self->Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
         'y'         => $y * ( $th + 3 ) + 5 + $th,
         'width'     => 10,
@@ -138,7 +129,7 @@ sub _init {
         'colour'    => $border,
         })
       );
-    $self->push(new Sanger::Graphics::Glyph::Rect({
+    $self->push($self->Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
         'y'         => $y * ( $th + 3 ) + 6 + $th,
         'width'     => 10,
@@ -146,7 +137,7 @@ sub _init {
         'colour'    => $colour,
         })
       );
-    $self->push(new Sanger::Graphics::Glyph::Rect({
+    $self->push($self->Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
         'y'         => $y * ( $th + 3 ) + 14 + $th,
         'width'     => 10,
@@ -163,7 +154,7 @@ sub _init {
 
 sub _create_label {
   my ($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend) = @_;
-  return new Sanger::Graphics::Glyph::Text({
+  return $self->Text({
       'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH + 5,
       'y'         => $y * ( $th + 3 ) + $th,
       'height'    => $th,

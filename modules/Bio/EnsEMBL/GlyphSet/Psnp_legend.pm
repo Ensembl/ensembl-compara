@@ -4,15 +4,6 @@ no warnings "uninitialized";
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Poly;
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'SNP legend' );
-}
 
 sub _init {
     my ($self) = @_;
@@ -36,7 +27,7 @@ sub _init {
 		$key{$int->{'type'}} = 1;
 	}
 	if ($key{'insert'}){
-	  $self->push(new Sanger::Graphics::Glyph::Poly({
+	  $self->push($self->Poly({
 					'points'    => [ $x, $BOX_HEIGHT,
                                      ($BOX_WIDTH/2), $y,
                                      $BOX_WIDTH, $BOX_HEIGHT  ],
@@ -47,7 +38,7 @@ sub _init {
 					
                 }));	
            my @res = $self->get_text_width( 0, 'Insert', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-	   $self->push(new Sanger::Graphics::Glyph::Text({
+	   $self->push($self->Text({
                 'x'         => $x + $BOX_WIDTH +5,
                 'y'         => $y,
                 'height'    => $h,
@@ -63,7 +54,7 @@ sub _init {
 	$x = $x + $BOX_WIDTH * 4 + $res[2];
 	}
 	if ($key{'deletion'}){
-	$self->push(new Sanger::Graphics::Glyph::Poly({
+	$self->push($self->Poly({
 					'points'    => [ $x, $y,
                                      $x+($BOX_WIDTH/2), $BOX_HEIGHT,
                                      $x+$BOX_WIDTH, $y   ],
@@ -74,7 +65,7 @@ sub _init {
 					
                 }));	
            my @res = $self->get_text_width( 0, 'Deletion', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-	   $self->push(new Sanger::Graphics::Glyph::Text({
+	   $self->push($self->Text({
                 'x'         => $x + $BOX_WIDTH +5,
                 'y'         => $y,
                 'height'    => $h,
@@ -90,7 +81,7 @@ sub _init {
 	$x = $x + $BOX_WIDTH * 4 + $res[2];
 	}
 	if ($key{'syn'}){
-	$self->push(new Sanger::Graphics::Glyph::Rect({
+	$self->push($self->Rect({
 		'x'        => $x,
                 'y'        => 4,
 		'width'    => $BOX_WIDTH,
@@ -101,7 +92,7 @@ sub _init {
 		'absolutewidth' => 1,}));
 		
         my @res = $self->get_text_width( 0, 'Synonymous', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-	$self->push(new Sanger::Graphics::Glyph::Text({
+	$self->push($self->Text({
                 'x'         => $x + $BOX_WIDTH +5,
                 'y'         => $y ,
                 'height'    => $h,
@@ -117,7 +108,7 @@ sub _init {
 	$x = $x + $BOX_WIDTH * 4 + $res[2];
 	}
 	if ($key{'snp'}){
-	$self->push(new Sanger::Graphics::Glyph::Rect({
+	$self->push($self->Rect({
 		'x'        => $x,
                 'y'        => 4,
 		'width'    => $BOX_WIDTH,
@@ -127,7 +118,7 @@ sub _init {
 		'absolutey' => 1,
 		'absolutewidth' => 1,}));
         my @res = $self->get_text_width( 0, 'Non-Synonymous', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-	$self->push(new Sanger::Graphics::Glyph::Text({
+	$self->push($self->Text({
                 'x'         => $x + $BOX_WIDTH +5,
                 'y'         => $y ,
                 'height'    => $h,

@@ -70,7 +70,7 @@ sub image_label {
 sub href {
   my ($self, $f ) = @_;
   my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc));
-  return "/@{[$self->{container}{_config_file_name_}]}/$ENV{'ENSEMBL_SCRIPT'}?misc_feature=$name";
+  return "/@{[$self->{container}{web_species}]}/$ENV{'ENSEMBL_SCRIPT'}?misc_feature=$name";
 }
 
 sub tag {

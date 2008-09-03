@@ -1,32 +1,17 @@
 package Bio::EnsEMBL::GlyphSet::contig;
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Space;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
-use Data::Dumper;
-$Data::Dumper::Indent=2;
-use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
+use base qw(Bio::EnsEMBL::GlyphSet);
 
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'DNA(contigs)', 'contig' );
-}
+use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
 
 sub _init {
   my ($self) = @_;
-
   # only draw contigs once - on one strand
   return unless ($self->strand() == 1);
    
   my $Config = $self->{'config'};
 
-  if( $Config->species_defs->NO_SEQUENCE ) {
+  if( $self->species_defs->NO_SEQUENCE ) {
     my $msg = "Clone map - no sequence to display";
     $self->errorTrack($msg);
     return;
@@ -38,7 +23,7 @@ sub _init {
   my $module = ref($self);
      $module = $1 if $module=~/::([^:]+)$/;
 
-  my $gline = new Sanger::Graphics::Glyph::Rect({
+  my $gline = $self->Rect({
     'x'         => 0,
     'y'         => 0,
     'width'     => $length,
@@ -60,7 +45,7 @@ sub _init {
 
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
 
-  my $gline = new Sanger::Graphics::Glyph::Rect({
+  my $gline = $self->Rect({
     'x'         => 0,
     'y'         => $box_h,
     'width'     => $length,
@@ -122,6 +107,7 @@ sub _init {
 	  $feature->{'ori'} = $ORI;
 	  push @features, $feature;
   }
+  
   if( @features) {
 	  $self->_init_non_assembled_contig($h,$box_h,$fontname,$fontsize,\@features);
   } else {
@@ -178,8 +164,8 @@ sub _init_non_assembled_contig {
  } ##
 
   my $contig_strand = $Container->can('strand') ? $Container->strand : 1;
-  my $clone_based = $Config->get('_settings','clone_based') eq 'yes';
-  my $global_start   = $clone_based ? $Config->get('_settings','clone_start') : $Container->start();
+  my $clone_based = $Config->get_parameter( 'clone_based') eq 'yes';
+  my $global_start   = $clone_based ? $Config->get_parameter( 'clone_start') : $Container->start();
   my $global_end     = $global_start + $length - 1;
   my $im_width = $Config->image_width();
 #
@@ -213,7 +199,7 @@ sub _init_non_assembled_contig {
 		  $i = $tile->{'haplotype_contig'} ? 1 : 0;
 	  }
 
-    my $glyph = new Sanger::Graphics::Glyph::Rect({
+    my $glyph = $self->Rect({
       'x'         => $rstart - 1,
       'y'         => 0,
       'width'     => $rend - $rstart+1,
@@ -232,7 +218,7 @@ sub _init_non_assembled_contig {
     foreach( qw(chunk supercontig scaffold clone contig) ) {
       if( my $Q = $tile->{'locations'}->{$_} ) {
         if($show_href eq 'on') {
-          $glyph->{'href'} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch;region=$Q->[0]);
+          $glyph->{'href'} = qq(/@{[$self->{container}{web_species}]}/$script?ch=$ch;region=$Q->[0]);
         }
         $label = $Q->[0];
       }
@@ -271,9 +257,9 @@ sub _init_non_assembled_contig {
           $POS++;
 	  $glyph->{'zmenu'}{"$POS:EMBL source (latest version)"} = $self->ID_URL( 'EMBL', $name) if /clone/;	
           $POS++;
-          $glyph->{'zmenu'}{"$POS:$caption $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/$script?ch=$ch;region=$name);
+          $glyph->{'zmenu'}{"$POS:$caption $T"} = qq(/@{[$self->{container}{web_species}]}/$script?ch=$ch;region=$name);
           $POS++;
-          $glyph->{'zmenu'}{"$POS:Export this $T"} = qq(/@{[$self->{container}{_config_file_name_}]}/exportview?action=select;option=fasta;type1=region;anchor1=$name);
+          $glyph->{'zmenu'}{"$POS:Export this $T"} = qq(/@{[$self->{container}{web_species}]}/exportview?action=select;option=fasta;type1=region;anchor1=$name);
           $POS++;
         }
       }
@@ -287,7 +273,7 @@ sub _init_non_assembled_contig {
       'font'=>$fontname, 'ptsize' => $fontsize
     );
     if( $res[0] ) {
-      my $tglyph = new Sanger::Graphics::Glyph::Text({
+      my $tglyph = $self->Text({
         'x'          => ($rend + $rstart - $res[2]/$pix_per_bp)/2,
         'height'     => $res[3],
         'width'      => $res[2]/$pix_per_bp,
@@ -307,13 +293,13 @@ sub _init_non_assembled_contig {
 ######
 # Draw the scale, ticks, red box etc
 #
-  my $Container_size_limit = $Config->get('_settings', 'default_vc_size');
+  my $Container_size_limit = $Config->get_parameter(  'default_vc_size');
   # only draw a red box if we are in contigview top and there is a 
   # detailed display
-  my $rbs = $Config->get('_settings','red_box_start');
-  my $rbe = $Config->get('_settings','red_box_end');
+  my $rbs = $Config->get_parameter( 'red_box_start');
+  my $rbe = $Config->get_parameter( 'red_box_end');
 
- if ($Config->get('_settings','draw_red_box') eq 'yes') { 
+ if ($Config->get_parameter( 'draw_red_box') eq 'yes') { 
       my $gwidth = $rbe-$rbs+1;
       my $xc = $rbs - $global_start;
 
@@ -345,7 +331,7 @@ sub _init_non_assembled_contig {
       }
       
     # only draw focus box on the correct display...
-    $self->unshift( new Sanger::Graphics::Glyph::Rect({
+    $self->unshift( $self->Rect({
       'x'            => $xc,
       'y'            => - 4 ,
       'width'        => $gwidth,
@@ -353,7 +339,7 @@ sub _init_non_assembled_contig {
       'bordercolour' => $red,
       'absolutey'    => 1,
     }) );
-    $self->unshift( new Sanger::Graphics::Glyph::Rect({
+    $self->unshift( $self->Rect({
       'x'            => $xc,
       'y'            => - 3 ,
       'width'        => $gwidth,

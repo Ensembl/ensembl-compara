@@ -12,16 +12,14 @@ setting full for default bar_style.
 package Bio::EnsEMBL::Glyph::Symbol::farrow;
 use strict;
 
-use vars qw(@ISA);
-use Bio::EnsEMBL::Glyph::Symbol::anchored_arrow;
-@ISA = qw(Bio::EnsEMBL::Glyph::Symbol::anchored_arrow);
+use base qw(Bio::EnsEMBL::Glyph::Symbol::anchored_arrow);
 
 sub default_bar_style {
-    return 'full';
+  return 'full';
 }
 
 sub orientation {
-    1;
+  1;
 }
 
 

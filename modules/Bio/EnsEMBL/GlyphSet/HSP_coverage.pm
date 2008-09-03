@@ -13,12 +13,6 @@ use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Bump;
 
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'coverage', '' );
-}
-
 sub _init {
   my ($self)       = @_;
   my $container    = $self->{'container'};
@@ -29,19 +23,18 @@ sub _init {
 
   return if(scalar @all_hsps < 2);
 
-  @all_hsps = sort {$a->start() <=> $b->start() || 
-                      $a->end() <=> $b->end() } @all_hsps;
+  @all_hsps = sort {$a->start() <=> $b->start() || $a->end() <=> $b->end() } @all_hsps;
 
-  while(my $hsp = shift @all_hsps) {
+  foreach my $hsp (@all_hsps) {
     my $sample_sskip = $hsp->start() % $sample_size;
     my $sample_start = $hsp->start() - $sample_sskip;
-    my $sample_eskip = $hsp->end() % $sample_size;
+    my $sample_eskip = $hsp->end()   % $sample_size;
     my $sample_end   = $hsp->end();
     $sample_end     += $sample_size if($sample_eskip != 0);
 
     for (my $i = $sample_start; $i <= $sample_end; $i+=$sample_size) {
       for (my $j = $i; $j<$i+$sample_size; $j++) {
-	$distribution->{$i}++;
+        $distribution->{$i}++;
       }
     }
   }
@@ -53,36 +46,23 @@ sub _init {
 
   while(my ($pos, $val) = each %$distribution) {
     my $sval   = $smax * $val / $max;
-    my $colour = "black";
 
-    if($sval == $smax) {
-      $colour = "red";
-    } else {
-      my $inv = int(100 - $sval);
-      $colour = "grey$inv";
-    }
-
-    $self->push(Sanger::Graphics::Glyph::Rect->new({
-						    'x'      => $pos,
-						    'y'      => $smax/3 - $sval/3,
-						    'width'  => $sample_size,
-						    'height' => $sval/3,
-						    'colour' => $colour,
-						   }));
+    $self->push($self->Rect({
+      'x'      => $pos,
+      'y'      => $smax/3 - $sval/3,
+      'width'  => $sample_size,
+      'height' => $sval/3,
+      'colour' => $val == $max ? 'red' : 'grey'.int(100 - $sval)
+    }));
   }
 
-  #########
-  # sneakily cover up those annoying rounding errors ;)
-  # yeah baby!
-  #
-  $self->push(Sanger::Graphics::Glyph::Rect->new({
-						  'x'      => 0,
-						  'y'      => $smax/3,
-						  'width'  => $container->length(),
-						  'height' => 0,
-						  'colour' => "white",
-						 }));
-
+  $self->push($self->Rect({
+    'x'      => 0,
+    'y'      => $smax/3,
+    'width'  => $container->length(),
+    'height' => 0,
+    'colour' => "white",
+  }));
 }
 
 1;

@@ -3,25 +3,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Intron;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
 use  Sanger::Graphics::Bump;
-
-sub init_label {
-  my ($self) = @_;
-	return if( defined $self->{'config'}->{'_no_label'} );
-
-  my $numchars = 16;
-  my $indent   = 1;
-  my $text = ">".$self->{container}->name;
-  my $print_label = ( length($text) > ( $numchars - $indent ) ? 
-                      substr( $text, 0, ( $numchars - $indent - 2 ) )."..": 
-                      $text );
-
-  $self->init_label_text($print_label);
-}
 
 sub _init {
     my ($self) = @_;
@@ -36,20 +18,20 @@ sub _init {
     my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? ";h=$highlights" : '';
-    my $REGISTER_LINE  = $Config->get('_settings','opt_lines');
+    my $REGISTER_LINE  = $Config->get_parameter( 'opt_lines');
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');
     my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
     my $navigation     = $Config->get('scalebar', 'navigation')    || "off";
     my $abbrev         = $Config->get('scalebar', 'abbrev');
-    my $clone_based    = $Config->get('_settings','clone_based') && ($Config->get('_settings','clone_based') eq 'yes');
+    my $clone_based    = $Config->get_parameter( 'clone_based') && ($Config->get_parameter( 'clone_based') eq 'yes');
     my $param_string   = "";
-    $param_string      = $Config->get('_settings', 'clone') if($clone_based);
+    $param_string      = $Config->get_parameter(  'clone') if($clone_based);
     $param_string      = "chr=" . $Container->chr_name() if($Container->can("chr_name"));
-    my $main_width     = $Config->get('_settings', 'main_vc_width');
+    my $main_width     = $Config->get_parameter(  'main_vc_width');
     my $len            = $Container->length();
     my $global_start   = $Container->start() if($Container->can("start"));
-    $global_start      = $Config->get('_settings','clone_start') if($clone_based);
+    $global_start      = $Config->get_parameter( 'clone_start') if($clone_based);
     $global_start      = $Container->chr_start() if($Container->can("chr_start"));
     my $global_end     = $global_start + $len - 1;
 
@@ -94,7 +76,7 @@ sub _init {
       my $box_end   = $end   > $global_end   ? $global_end      : $end;
 
       ## Draw the glyph for this box!
-      my $t = new Sanger::Graphics::Glyph::Rect({
+      my $t = $self->Rect({
          'x'         => $box_start - $global_start, 
          'y'         => 0,
          'width'     => $box_end - $box_start + 1,
@@ -116,7 +98,7 @@ sub _init {
         $self->join_tag( $t, "ruler_end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE);
       }
       unless( $box_start % $major_unit ) { ## Draw the major unit tick 
-        $self->push(new Sanger::Graphics::Glyph::Rect({
+        $self->push($self->Rect({
             'x'         => $box_start - $global_start,
             'y'         => 0,
             'width'     => 0,
@@ -127,7 +109,7 @@ sub _init {
         my $LABEL = $minor_unit < 250 ? $self->commify($box_start): $self->bp_to_nearest_unit( $box_start, 2 );
         my @res = $self->get_text_width( 0, $LABEL, '', 'font'=>$fontname, 'ptsize' => $fontsize );
         if( $last_text_X + $res[2] * 1.5 / $pix_per_bp < $box_start ) {
-          $self->push(new Sanger::Graphics::Glyph::Text({
+          $self->push($self->Text({
             'x'         => $box_start - $global_start,
             'y'         => 8,
             'height'    => $th,
@@ -144,7 +126,7 @@ sub _init {
       $start += $minor_unit;
     }
     unless( ($global_end+1) % $major_unit ) { ## Draw the major unit tick 
-      $self->push(new Sanger::Graphics::Glyph::Rect({
+      $self->push($self->Rect({
         'x'         => $global_end - $global_start + 1,
         'y'         => 0,
         'width'     => 0,

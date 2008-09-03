@@ -2,14 +2,6 @@ package Bio::EnsEMBL::GlyphSet::ld2;
 use strict;
 use Bio::EnsEMBL::GlyphSet;
 our @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Poly;
-
-sub init_label {
-  my $self = shift;
-  $self->init_label_text(
-    $self->my_config( 'source' ) eq 'genotyped' ? "LD (Genotyped)" : "LD (All)"
-  );
-}
 
 sub _init {
   my ($self) = @_;

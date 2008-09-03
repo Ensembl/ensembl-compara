@@ -2,53 +2,39 @@ package Bio::EnsEMBL::GlyphSet::_oligo;
 
 use strict;
 
-use base qw(Bio::EnsEMBL::GlyphSet_feature);
+use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 
-sub my_label { 
-  my $self = shift;
-  return $self->my_config('caption') || 'Oligo microarray';
-}
-
-## Retrieve all MiscFeatures from the misc_set table of the database
-## corresponding to the misc_set_code (UserConfig FEATURES key)
-
-sub features {
+sub features { ## Hack in db in the future!!
   my ($self) = @_;
-  my $T = $self->{'container'}->get_all_OligoFeatures( $self->my_config('FEATURES') );
+  my $T = $self->{'container'}->get_all_OligoFeatures( $self->my_config('array') );
   return $T;
 }
 
-## Return the image label and the position of the label
-## (overlaid means that it is placed in the centre of the
-## feature.
-
-sub image_label {
-  my ($self, $f ) = @_;
-  return '';
+sub feature_group {
+  my( $self, $f ) = @_;
+  return $f->probeset;    ## For core features this is what the sequence name is...
 }
 
-## Link back to this page centred on the map fragment
+sub feature_title {
+  my( $self, $f ) = @_;
+  return "Probe set: ".$f->probeset;
+}
 
 sub href {
-  my ($self, $id, $f ) = @_;
-  my $tmpl = "/%s/featureview?type=OligoProbe;id=%s";
-  return sprintf( "/%s/featureview?type=OligoProbe;id=%s", $self->{container}{_config_file_name_}, $f->probeset );
+### Links to /Location/Feature with type of 'OligoProbe'
+  my ($self, $f ) = @_;
+  return $self->_url({
+    'object' => 'Location',
+    'action' => 'Feature',
+    'fdb'    => $self->my_config('db'),
+    'ftype'  => 'OligoProbe',
+    'fname'  => $f->probeset
+  });
 }
 
-## Create the zmenu...
-## Include each accession id separately
-sub zmenu {
-  my ($self, $id, $f ) = @_;
-  return {
-    'caption' => "Oligo feature: ".$f->probeset,
-    'Probe set details: ' => $self->href( $id, $f )
-  };
-}
 sub feature_group{
   my( $self, $f ) = @_;
   return $f->probeset();
 }
-
-
 
 1;

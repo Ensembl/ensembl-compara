@@ -3,22 +3,6 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Line;
-
-sub init_label {
-    my ($self) = @_;
-    my $Config = $self->{'config'};	
-    my $track     	= $self->{'extras'}{'row'};
-    $self->label( new Sanger::Graphics::Glyph::Text({
-       'text'      => $Config->get( $track,'label'),
-       'font'      => 'Small',
-       'colour'	=> $Config->get( $track,'col'),
-       'absolutey' => 1,
-    }) );
-}
 
 sub _init {
   my ($self) 		= @_;
@@ -53,7 +37,7 @@ sub _init {
     my $new_y = $datum / $max_data * $wid ;
 	  
 	  if(defined $old_y) {
-		  $self->push( new Sanger::Graphics::Glyph::Rect({
+		  $self->push( $self->Rect({
           'x'      => $old_x ,
           'y'      => $old_y ,
 	  	  'width'  => $bin_size * 2 ,

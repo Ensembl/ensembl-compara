@@ -3,15 +3,6 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( $self->my_config('caption') );
-}
 
 sub _init {
   my ($self, $protein, $Config) = @_;
@@ -32,7 +23,7 @@ sub _init {
   foreach my $pf (@{$protein->get_all_ProteinFeatures($logic_name)}) {
     my $x = $pf->start();
     my $w = $pf->end - $x;
-    $self->push(new Sanger::Graphics::Glyph::Rect({
+    $self->push($self->Rect({
       'x'       => $x,
       'y'       => $y,
       'width'   => $w,

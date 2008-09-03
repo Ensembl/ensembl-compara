@@ -3,51 +3,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Line;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Space;
 use  Sanger::Graphics::Bump;
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-
-  my $numchars = 16;
-  my $Config   = $self->{'config'};
-  my $confkey  = $self->{'extras'}->{'confkey'};
-  my $text     = $self->{'extras'}->{'name'};
-  my $authority= $self->{'extras'}->{'authority'} || '';
-  my $zmenu = $self->{'extras'}->{'zmenu'} || {};
-  my $colour   = $Config->get($confkey,'col') || 'black';
-  my $longtext = $text;
-
-  my $textlen = length($text);
-  if( $textlen > $numchars ){ # Truncate
-    $text = substr( $text, 0, 14 ).".."
-  }
-
-  my( $fontname, $fontsize ) = $self->get_font_details( 'label' );
-  my @res = $self->get_text_width(0,$text,'','font'=>$fontname, 'ptsize' => $fontsize );
-  $self->{'extras'}->{'x_offset'} =  $res[2] - 100;
-
-  $zmenu -> { caption } = $longtext;
-  $authority and $zmenu->{"01:Details"} = $authority;
-
-
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'y' => 0,
-    'font'      => $fontname,
-    'ptsize'    => $fontsize,
-    'height'    => $res[3],
-    'text'      => $text,
-    'colour'    => $colour,
-    'absolutey' => 1,
-    'zmenu'     => $zmenu
-  });
-  $self->label($label);
-}
 
 sub _init {
   my ($self) = @_;
@@ -59,7 +15,7 @@ sub _init {
   my $len     = $Config->image_width;
   my $x_offset= $self->{'extras'}->{'x_offset'};
 
-  my $glyph = new Sanger::Graphics::Glyph::Line
+  my $glyph = $self->Line
     ({
       'x'             => $x_offset,
       'y'             => 6,
@@ -74,7 +30,7 @@ sub _init {
   $self->push($glyph);
 
   if( length( $self->{'extras'}->{'name'} ) ){
-    my $glyph2 = new Sanger::Graphics::Glyph::Space
+    my $glyph2 = $self->Space
       ({
         'x'         => 0,
         'y'         => 0,

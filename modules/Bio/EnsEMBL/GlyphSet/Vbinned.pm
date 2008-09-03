@@ -3,22 +3,6 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Line;
-
-sub init_label {
-    my ($self) = @_;
-    my $Config = $self->{'config'};	
-    my $track     	= $self->{'extras'}{'row'};
-    $self->label( new Sanger::Graphics::Glyph::Text({
-       'text'      => $Config->get( $track,'label'),
-       'font'      => 'Small',
-       'colour'	=> $Config->get( $track,'col'),
-       'absolutey' => 1,
-    }) );
-}
 
 sub _init {
     my ($self) 		= @_;
@@ -44,7 +28,7 @@ sub _init {
 		$chr_max_data = $_ if $_>$chr_max_data; 
 	}
 	$chr_min_data ||= 0 ;
-    $self->label2( new Sanger::Graphics::Glyph::Text({
+    $self->label2( $self->Text({
        'text'      => "Min:$chr_min_data Max:$chr_max_data",
        'font'      => 'Tiny',
        'colour'	=> $Config->get( $track,'col'),
@@ -52,11 +36,11 @@ sub _init {
     }) ); 
 		
     my $old_y;
-    $self->push( new Sanger::Graphics::Glyph::Space( {
+    $self->push( $self->Space( {
       'x' => 1, 'width' => 3, 'height' => $wid, 'y' => 0, 'absolutey'=>1 
     } ));
 	# max line (max)
-	$self->push( new Sanger::Graphics::Glyph::Line({
+	$self->push( $self->Line({
       'x'      => $v_offset ,
       'y'      => $chr_max_data / $max_data * $wid,
 	  'width'  => $max_len - $v_offset ,
@@ -65,7 +49,7 @@ sub _init {
 	  'absolutey' => 1,
 	}) ) if ($Config->get( $track, 'maxmin' ));
 	# base line (0)
-	$self->push( new Sanger::Graphics::Glyph::Line({
+	$self->push( $self->Line({
       'x'      => $v_offset ,
       'y'      => 0 ,
 	  'width'  => $max_len - $v_offset ,
@@ -74,7 +58,7 @@ sub _init {
 	  'absolutey' => 1,
 	}) ) if ($Config->get( $track, 'maxmin' ));
 	# global max line (global max)
-	$self->push( new Sanger::Graphics::Glyph::Line({
+	$self->push( $self->Line({
       'x'      => $v_offset ,
       'y'      => $wid,
 	  'width'  => $max_len - $v_offset ,
@@ -89,7 +73,7 @@ sub _init {
 	  
 	  if(defined $old_y) {
         
-		$self->push( new Sanger::Graphics::Glyph::Line({
+		$self->push( $self->Line({
           'x'      => $old_x ,
           'y'      => $old_y ,
 	  	  'width'  => $bin_size ,

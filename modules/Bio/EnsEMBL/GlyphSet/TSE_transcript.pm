@@ -4,17 +4,8 @@ use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 #@ISA = qw(Bio::EnsEMBL::GlyphSet_transcript);
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Line;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
-
-sub init_label {
-  my ($self) = @_;
-  my $sample = $self->{'config'}->{'id'};
-  $self->init_label_text( $sample );
-}
 
 sub _init {
     my ($self) = @_;
@@ -64,7 +55,7 @@ sub _init {
 
 	    #draw and tag completely non-coding exons
 	    if ( ($exon_end < $coding_start) || ($exon_start > $coding_end) ) {
-		$G = new Sanger::Graphics::Glyph::Rect({
+		$G = $self->Rect({
 		    'x'         => $exon_start ,
 		    'y'         => 0.5*$h,
 		    'width'     => $exon_end - $exon_start,
@@ -82,7 +73,7 @@ sub _init {
 	    }			
 	    elsif ( ($exon_start >= $coding_start) && ($exon_end <= $coding_end) ) {
 		##draw and tag completely coding exons
-		$G = new Sanger::Graphics::Glyph::Rect({
+		$G = $self->Rect({
 		    'x'         => $exon_start,
 		    'y'         => 0,
 		    'width'     => $exon_end - $exon_start,
@@ -103,7 +94,7 @@ sub _init {
 	    elsif ( ($exon_start < $coding_start) && ($exon_end > $coding_start) ) {
 		##draw and tag partially coding transcripts on left hand
 		#non coding part
-		$G = new Sanger::Graphics::Glyph::Rect({
+		$G = $self->Rect({
 		    'x'         => $exon_start,
 		    'y'         => 0.5*$h,
 		    'width'     => $coding_start-$exon_start,
@@ -122,7 +113,7 @@ sub _init {
 		#coding part		
 		my $width = ($exon_end > $coding_end) ? $coding_end - $coding_start : $exon_end - $coding_start;
 		my $y_pos = ($exon_end > $coding_end) ? $coding_end : $exon_end;
-		$G = new Sanger::Graphics::Glyph::Rect({
+		$G = $self->Rect({
 		    'x'         => $coding_start,
 		    'y'         => 0,
 		    'width'     => $width,
@@ -140,7 +131,7 @@ sub _init {
 		
 		#draw non-coding part if there's one of these as well
 		if ($exon_end > $coding_end) {
-		    $G = new Sanger::Graphics::Glyph::Rect({
+		    $G = $self->Rect({
 			'x'         => $coding_end,
 			'y'         => 0.5*$h,
 			'width'     => $exon_end-$coding_end,
@@ -162,7 +153,7 @@ sub _init {
 		##draw and tag partially coding transcripts on the right hand
 		
 		#coding part
-		$G = new Sanger::Graphics::Glyph::Rect({
+		$G = $self->Rect({
 		    'x'         => $exon_start,
 		    'y'         => 0,
 		    'width'     => $coding_end - $exon_start,
@@ -179,7 +170,7 @@ sub _init {
 		$self->push( $G );
 
 		#non coding part
-		$G = new Sanger::Graphics::Glyph::Rect({
+		$G = $self->Rect({
 		    'x'         => $coding_end,
 		    'y'         => 0.5*$h,
 		    'width'     => $exon_end-$coding_end,
@@ -200,7 +191,7 @@ sub _init {
 	}
 	else {
 	    #otherwise draw a line to represent the intron context
-	    my $G = new Sanger::Graphics::Glyph::Line({
+	    my $G = $self->Line({
 		'x'        => $obj->[0]+1/$pix_per_bp,
 		'y'        => $h,
 		'h'        => 1,
@@ -213,7 +204,7 @@ sub _init {
     }
     
     #draw a direction arrow
-    $self->push(new Sanger::Graphics::Glyph::Line({
+    $self->push($self->Line({
 	'x'         => 0,
 	'y'         => -4,
 	'width'     => $length,
@@ -222,7 +213,7 @@ sub _init {
 	'colour'    => $colour
 	}));
 	if($strand == 1) {
-	    $self->push( new Sanger::Graphics::Glyph::Poly({
+	    $self->push( $self->Poly({
 		'points' => [
 		    $length - 4/$pix_per_bp,-2,
 		    $length                ,-4,
@@ -231,7 +222,7 @@ sub _init {
 		'absolutey' => 1,
 	    }));
 	} else {
-	    $self->push(new Sanger::Graphics::Glyph::Poly({
+	    $self->push($self->Poly({
 		'points'    => [ 4/$pix_per_bp,-6,
 				 0            ,-4,
 				 4/$pix_per_bp,-2],

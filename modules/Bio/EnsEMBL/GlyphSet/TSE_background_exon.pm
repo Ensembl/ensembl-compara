@@ -4,8 +4,6 @@ use vars qw(@ISA);
 
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
-use Sanger::Graphics::Glyph::Space;
-use Sanger::Graphics::Glyph::Line;
 use Bio::EnsEMBL::GlyphSet;
 use Data::Dumper;
   
@@ -25,7 +23,7 @@ sub _init {
     foreach my $tag (@{$tags}) {
 	my ($extra,$e,$s) = split ':', $tag->[0];
 	my $col = $tag->[1];
-	my $tglyph = new Sanger::Graphics::Glyph::Space({
+	my $tglyph = $self->Space({
 	    'x' => $s,
 	    'y' => 0,
 	    'height' => 0,

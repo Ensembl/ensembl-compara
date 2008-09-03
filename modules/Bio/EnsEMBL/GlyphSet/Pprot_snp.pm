@@ -4,15 +4,7 @@ no warnings "uninitialized";
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
 use Sanger::Graphics::Bump;
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'SNPs' );
-}
 
 sub bump{
 	my ($config ,$container, $glyph, $array) = @_;
@@ -60,7 +52,7 @@ sub _init {
 	  if ($int->{'type'} eq 'insert' && ($last_indel ne $int->{'indel'})){
 	  my $triangle_end   =  $x - 3/$pix_per_bp;
       my $triangle_start =  $x + 3/$pix_per_bp;
-	  my $triangle = new Sanger::Graphics::Glyph::Poly({
+	  my $triangle = $self->Poly({
 					'points'    => [ $triangle_start, $h,
                                      $x, $h-4,
                                      $triangle_end, $h  ],
@@ -69,7 +61,7 @@ sub _init {
 					'absolutewidth' => 1,
 					'zmenu' => {
 						'caption' => "Insert Information",
-						"00:SNP ID: ".$int->{'snp_id'} => "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=".$int->{'snp_id'}.";source=".$int->{'snp_source'},
+						"00:SNP ID: ".$int->{'snp_id'} => "/@{[$self->{container}{web_species}]}/snpview?snp=".$int->{'snp_id'}.";source=".$int->{'snp_source'},
 						"01:Insert: ". $int->{'allele'} => "",
 						"02:Start: $x" => "",
 						'03:End: '.($x + 1)  => "",
@@ -82,7 +74,7 @@ sub _init {
 	  elsif ($int->{'type'} eq 'delete' && ($last_indel ne $int->{'indel'})){
 	  my $triangle_end   =  $x - 3/$pix_per_bp;
       my $triangle_start =  $x + 3/$pix_per_bp;
-	  my $triangle = new Sanger::Graphics::Glyph::Poly({
+	  my $triangle = $self->Poly({
                     'x'        => $x,
 					'width'    => $w,
 					'points'    => [ $triangle_start, $h-4,
@@ -93,7 +85,7 @@ sub _init {
 					'absolutewidth' => 1,
 					'zmenu' => {
 						'caption' => "Deletion Information",
-						"00:SNP ID: ".$int->{'snp_id'} => "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=".$int->{'snp_id'}.";source=".$int->{'snp_source'},
+						"00:SNP ID: ".$int->{'snp_id'} => "/@{[$self->{container}{web_species}]}/snpview?snp=".$int->{'snp_id'}.";source=".$int->{'snp_source'},
 						"01:Deletion: ". $int->{'allele'} => "",
 						"02:Start: $x" => "",
 						'03:End: '. ($x + length($int->{'allele'})) => "",
@@ -119,7 +111,7 @@ sub _init {
 				$snp .= $int->{'ambigcode'}[$letter]  ? '['.$int->{'ambigcode'}[$letter].']' : $int->{'nt'}[$letter];   
 			}
 		}
-		my $rect = new Sanger::Graphics::Glyph::Rect({
+		my $rect = $self->Rect({
 		'x'        => $x-($w/2),
 		'width'    => $w,
 		'height'   => $h,
@@ -128,7 +120,7 @@ sub _init {
 		'absolutewidth' => 1,
 		'zmenu' => {
 			'caption' => "SNP Information",
-			"00:SNP ID: ".$int->{'snp_id'} => "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=".$int->{'snp_id'}.";source=".$int->{'snp_source'},
+			"00:SNP ID: ".$int->{'snp_id'} => "/@{[$self->{container}{web_species}]}/snpview?snp=".$int->{'snp_id'}.";source=".$int->{'snp_source'},
 			"01:SNP Type: $type"   => "",
 			"02:Residue: $x" => "",
 			"03:$snp" => "", 

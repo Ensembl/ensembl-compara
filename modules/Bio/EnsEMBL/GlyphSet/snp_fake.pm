@@ -4,8 +4,6 @@ use vars qw(@ISA);
 
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Rect;
 use Bio::EnsEMBL::GlyphSet;
   
 @Bio::EnsEMBL::GlyphSet::snp_fake::ISA = qw(Bio::EnsEMBL::GlyphSet);
@@ -47,7 +45,7 @@ sub _init {
       if( $res[0] ne $label ) {
         @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $label,'', 'font'=>$fontname, 'ptsize' => $fontsize );
       }
-      my $textglyph = new Sanger::Graphics::Glyph::Text({
+      my $textglyph = $self->Text({
         'x'          => ( $end + $start - 1 - $res[2]/$pix_per_bp)/2,
         'y'          => ($h-$th)/2,
         'width'      => $res[2]/$pix_per_bp,
@@ -64,7 +62,7 @@ sub _init {
       for (my $i = 0; $i < 3; $i ++ ) {
         my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $alleles[$i],'', 'font'=>$fontname, 'ptsize' => $fontsize );
         my $tmp_width = $res[2]/$pix_per_bp;
-	my $textglyph = new Sanger::Graphics::Glyph::Text({
+	my $textglyph = $self->Text({
           'x'          => ( $end + $start  - 1 - $tmp_width)/2,
           'y'          => 3 + ($th+2) * $i,
           'width'      => $tmp_width,
@@ -81,7 +79,7 @@ sub _init {
     }
     my $type = $snp->display_consequence;
     my $colour = $colours->{$type}->[0];
-    my $tglyph = new Sanger::Graphics::Glyph::Rect({
+    my $tglyph = $self->Rect({
       'x' => $start-1,
       'y' => 0,
       'bordercolour' => $colour,
@@ -141,7 +139,7 @@ sub href {
     my $source = $f->source;
     my $seq_region_name = $self->{'container'}->seq_region_name();
 
-    return "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=$snp_id;source=$source;chr=$seq_region_name;vc_start=$start";
+    return "/@{[$self->{container}{web_species}]}/snpview?snp=$snp_id;source=$source;chr=$seq_region_name;vc_start=$start";
 }
 
 1;

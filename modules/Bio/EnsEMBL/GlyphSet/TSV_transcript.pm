@@ -3,19 +3,9 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
-
-sub init_label {
-  my ($self) = @_;
-  my $sample = $self->{'config'}->{'transcript'}->{'sample'};
-  $self->init_label_text( $sample );
-}
 
 sub _init {
   my ($self) = @_;
@@ -48,14 +38,14 @@ sub _init {
   my @exons = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
   # If stranded diagram skip if on wrong strand
   # For exon_structure diagram only given transcript
-  # my $Composite = new Sanger::Graphics::Glyph::Composite({'y'=>0,'height'=>$h});
+  # my $Composite = $self->Composite({'y'=>0,'height'=>$h});
   my($colour, $label, $hilight) = $self->colour( $transcript, $colours, %highlights );
   my $coding_start = $trans_ref->{'coding_start'};
   my $coding_end   = $trans_ref->{'coding_end'  };
 
   ## First of all draw the lines behind the exons.....
   foreach my $subslice (@{$Config->{'subslices'}}) {
-    $self->push( new Sanger::Graphics::Glyph::Rect({
+    $self->push( $self->Rect({
       'x' => $subslice->[0]+$subslice->[2]-1, 'y' => $h/2, 'h'=>1, 'width'=>$subslice->[1]-$subslice->[0], 'colour'=>$colour, 'absolutey'=>1
     }));
   }
@@ -76,7 +66,7 @@ sub _init {
              # only draw the coding region if there is such a region
     if( $filled_start <= $filled_end ) {
     #Draw a filled rectangle in the coding region of the exon
-      $self->push( new Sanger::Graphics::Glyph::Rect({
+      $self->push( $self->Rect({
         'x' => $filled_start -1,
         'y'         => 0,
         'width'     => $filled_end - $filled_start + 1,
@@ -91,7 +81,7 @@ sub _init {
       # coding regions.  Non coding portions of exons, are drawn as
       # non-filled rectangles
       #Draw a non-filled rectangle around the entire exon
-      my $G = new Sanger::Graphics::Glyph::Rect({
+      my $G = $self->Rect({
         'x'         => $box_start -1 ,
         'y'         => 0,
         'width'     => $box_end-$box_start +1,
@@ -115,7 +105,7 @@ sub _init {
       next unless $text_label;
       next if $text_label eq ' ';
       my $width_of_label = $font_w_bp * ( $T ) * 1.5;
-      my $tglyph = new Sanger::Graphics::Glyph::Text({
+      my $tglyph = $self->Text({
        # 'x'         => - $width_of_label,
         'x'         => -100,
         'y'         => $H,
@@ -171,18 +161,18 @@ sub zmenu {
   my $zmenu = {
     'caption'                       => $self->species_defs->AUTHORITY." Gene",
     "00:$id"			=> "",
-#	"01:Gene:$gid"                  => "/@{[$self->{container}{_config_file_name_}]}/geneview?gene=$gid;db=core",
-        "02:Transcr:$tid"    	        => "/@{[$self->{container}{_config_file_name_}]}/transview?transcript=$tid;db=core",                	
+#	"01:Gene:$gid"                  => "/@{[$self->{container}{web_species}]}/geneview?gene=$gid;db=core",
+        "02:Transcr:$tid"    	        => "/@{[$self->{container}{web_species}]}/transview?transcript=$tid;db=core",                	
         "04:Exon:$eid"    	        => "",
-        '11:Export cDNA'                => "/@{[$self->{container}{_config_file_name_}]}/exportview?options=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
+        '11:Export cDNA'                => "/@{[$self->{container}{web_species}]}/exportview?options=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
         
     };
     
     if($pid) {
     $zmenu->{"03:Peptide:$pid"}=
-    	qq(/@{[$self->{container}{_config_file_name_}]}/protview?peptide=$pid;db=core);
+    	qq(/@{[$self->{container}{web_species}]}/protview?peptide=$pid;db=core);
     $zmenu->{'12:Export Peptide'}=
-    	qq(/@{[$self->{container}{_config_file_name_}]}/exportview?options=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid);	
+    	qq(/@{[$self->{container}{web_species}]}/exportview?options=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid);	
     }
     return $zmenu;
 }

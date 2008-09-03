@@ -1,14 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::missing;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-
 use warnings;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-
-sub init_label {
-    return;
-}
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
@@ -29,7 +23,7 @@ sub _init {
 
   my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $text_to_display, '', 'ptsize' => $FONTSIZE, 'font' => $FONT );
  
-  $self->push( new Sanger::Graphics::Glyph::Text({
+  $self->push($self->Text({
     'x'         => 0, 
     'y'         => 1,
     'height'    => $th,
@@ -39,7 +33,7 @@ sub _init {
     'halign'    => 'left',
     'text'      => $text_to_display,
     'absolutey' => 1,
-  }) );
+  }));
 }
 
 1;

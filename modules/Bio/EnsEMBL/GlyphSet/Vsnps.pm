@@ -3,23 +3,6 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Line;
-
-sub init_label {
-  my ($self) = @_;
-  my $Config = $self->{'config'};	
-  my $label = new Sanger::Graphics::Glyph::Text({
-    'text'      => 'SNPs',
-    'font'      => 'Small',
-    'colour'	=> $Config->get('Vsnps','col'),
-    'absolutey' => 1,
-  });
-		
-  $self->label($label);
-}
 
 sub _init {
   my ($self) = @_;
@@ -33,14 +16,14 @@ sub _init {
   $snps->stretch(0);
   my @snps = @{$snps->get_all_binvalues()};
   foreach (@snps){
-    my $g_x = new Sanger::Graphics::Glyph::Rect({
+    my $g_x = $self->Rect({
       'x' => $_->start,
       'y'      => 0,
 			'width'  => $_->end -$_->start,
 			'height' => $_->scaledvalue,
 			'bordercolour' => $snps_col,
 			'absolutey' => 1,
-			'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr;vc_start=$_->start;vc_end=$_->end"
+			'href'   => "/@{[$self->{container}{web_species}]}/contigview?chr=$chr;vc_start=$_->start;vc_end=$_->end"
 		});
 	    $self->push($g_x);
 	}

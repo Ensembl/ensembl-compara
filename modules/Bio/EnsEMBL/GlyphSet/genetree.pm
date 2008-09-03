@@ -91,7 +91,7 @@ sub _init {
       my ($zmenu, $href) = $self->zmenu( $f );
 
       # Node glyph, coloured for for duplication/specition
-      my $t = new Sanger::Graphics::Glyph::Rect({
+      my $t = $self->Rect({
 	  'x'         => $f->{x},
 	  'y'         => $f->{y},
 	  'width'     => 5,
@@ -107,7 +107,7 @@ sub _init {
         my $col = $f->{_gene} eq $current_gene 
             ? 'red' 
             : ( $f->{_genome_db} eq $current_genome_db ? 'blue' : 'black');
-	  my $txt = new Sanger::Graphics::Glyph::Text({
+	  my $txt = $self->Text({
 	      'text'       => $f->{label},
 	      'height'     => $font_height,
               'width'      => $label_width,
@@ -157,7 +157,7 @@ sub _init {
 	  
 	  my $col = 'blue';
 
-	  $self->unshift( new Sanger::Graphics::Glyph::Line({
+	  $self->unshift( $self->Line({
 	      'x'         => $xp,
 	      'y'         => $yp,
 	      'width'     => 0,
@@ -168,7 +168,7 @@ sub _init {
 
 	  $col = $Colours{ ($Nodes{$f}->{_cut} || 0)} || 'red';
 
-	  $self->unshift( new Sanger::Graphics::Glyph::Line({
+	  $self->unshift( $self->Line({
 	      'x'         => $xp,
 	      'y'         => $yc,
 	      'width'     => $xc - $xp,
@@ -204,7 +204,7 @@ sub _init {
   foreach my $a (@alignments) {
       my ($yc, $al) = @$a;
 
-      my $t = new Sanger::Graphics::Glyph::Rect({
+      my $t = $self->Rect({
 	  'x'         => $alignment_start,
 	  'y'         => $yc - 3,
 	  'width'     => $alignment_width,
@@ -237,7 +237,7 @@ sub _init {
 	  }
 
 	  if ($ms >= $min_length ) { 
-	      my $t = new Sanger::Graphics::Glyph::Rect({
+	      my $t = $self->Rect({
 		  'x'         => $alignment_start + ($box_start * $alignment_scale),
 		  'y'         => $yc - 2,
 		  'z'         => $zc,
@@ -339,19 +339,6 @@ sub features {
 
   return \@features;
 }
-
-sub init_label {
-  my ($self) = @_;
-
-  return;
-  my $text =  'Gene Tree';
-  my $max_length = 18;
-  if (length($text) > $max_length) {
-      $text = substr($text, 0, 14). " ...";
-  }
-  $self->init_label_text( $text );
-}
-
 
 sub colour {
     my ($self, $f) = @_;

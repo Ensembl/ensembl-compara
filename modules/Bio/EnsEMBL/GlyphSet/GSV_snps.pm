@@ -3,18 +3,9 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
-
-sub init_label {
-  my ($self) = @_;
-  return; 
-}
 
 sub _init {
   my ($self) = @_;
@@ -36,7 +27,7 @@ sub _init {
   # Data stuff
   my $colour_map = $Config->get('GSV_snps','colours' );
   my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
-  my $EXTENT        = $Config->get('_settings','context');
+  my $EXTENT        = $Config->get_parameter( 'context');
      $EXTENT        = 1e6 if $EXTENT eq 'FULL';
   my $seq_region_name = $self->{'container'}->seq_region_name();
 
@@ -60,7 +51,7 @@ sub _init {
     my $S =  ( $snpref->[0]+$snpref->[1] )/2;
     my @res = $self->get_text_width( 0, $aa_change, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $W = $res[2]/$pix_per_bp;
-    my $tglyph = new Sanger::Graphics::Glyph::Text({
+    my $tglyph = $self->Text({
       'x'         => $S-$W/2,
       'y'         => $h+4,
       'height'    => $font_h_bp,
@@ -82,9 +73,9 @@ sub _init {
     } elsif($chr_end > $chr_start ) {
       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
     }
-    my $href = "/@{[$self->{container}{_config_file_name_}]}/snpview?snp=@{[$snp->variation_name]};source=@{[$snp->source]};chr=$seq_region_name;vc_start=$chr_start";
+    my $href = "/@{[$self->{container}{web_species}]}/snpview?snp=@{[$snp->variation_name]};source=@{[$snp->source]};chr=$seq_region_name;vc_start=$chr_start";
     my $type      = join ", ", @{$cod_snp->consequence_type || [] };
-    my $bglyph = new Sanger::Graphics::Glyph::Rect({
+    my $bglyph = $self->Rect({
       'x'         => $S - $W / 2,
       'y'         => $h + 2,
       'height'    => $h,

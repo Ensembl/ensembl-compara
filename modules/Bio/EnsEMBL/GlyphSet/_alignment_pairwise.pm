@@ -4,15 +4,6 @@ use strict;
 use base qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Bump;
 
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  my $HELP_LINK = 'compara_alignment';
-  my $code      = $self->check();
-  $self->init_label_text(  $self->{'config'}->get($code,'label')||'---', $HELP_LINK );
-  $self->bumped( $self->{'config'}->get($code, 'compact') ? 'no' : 'yes' ) unless $self->{'config'}{'compara'};
-}
-
 sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
 
 sub _init {
@@ -56,11 +47,11 @@ sub expanded_init {
   my %id             = ();
   my $small_contig   = 0;
   my $dep            = $Config->get($type, 'dep');
-  my $h              = $Config->get('_settings','opt_halfheight') ? 4 : 8;
+  my $h              = $Config->get_parameter( 'opt_halfheight') ? 4 : 8;
   my $chr       = $self->{'container'}->seq_region_name;
   my $other_species  = $Config->get($type, 'species' );
   ( my $species_2    = $other_species ) =~ s/_ / /g;
-  my $self_species   = $container->{_config_file_name_};
+  my $self_species   = $container->{web_species};
   my $compara        = $self->{'config'}{'compara'};
   my $link = 0;
   my $TAG_PREFIX;
@@ -276,7 +267,7 @@ sub expanded_init {
     $self->push( $Composite );
   }
 ## No features show "empty track line" if option set....
-  $self->errorTrack( "No ". $self->{'config'}->get($type,'label')." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
+  $self->errorTrack( "No ". $self->{'config'}->get($type,'label')." features in this region" ) unless( $C || $Config->get_parameter( 'opt_empty_tracks')==0 );
   0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
@@ -300,12 +291,12 @@ sub compact_init {
   my %id             = ();
   my $small_contig   = 0;
   my $dep            = $Config->get($type, 'dep');
-  my $h              = $Config->get('_settings','opt_halfheight') ? 4 : 8;
+  my $h              = $Config->get_parameter( 'opt_halfheight') ? 4 : 8;
   my $chr       = $self->{'container'}->seq_region_name;
   my $other_species  = $Config->get($type, 'species' );
   ( my $species_2    = $other_species ) =~ s/_ / /g;
   my $short_other    = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
-  my $self_species   = $container->{_config_file_name_};
+  my $self_species   = $container->{web_species};
   my $short_self     = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
   my $compara        = $self->{'config'}{'compara'};
   my $link = 0;
@@ -444,7 +435,7 @@ sub compact_init {
     $self->push( $TO_PUSH );
   }
 ## No features show "empty track line" if option set....
-  $self->errorTrack( "No ". $self->{'config'}->get($type,'label')." features in this region" ) unless( $C || $Config->get('_settings','opt_empty_tracks')==0 );
+  $self->errorTrack( "No ". $self->{'config'}->get($type,'label')." features in this region" ) unless( $C || $Config->get_parameter( 'opt_empty_tracks')==0 );
   0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 

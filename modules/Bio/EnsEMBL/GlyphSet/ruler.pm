@@ -1,33 +1,17 @@
 package Bio::EnsEMBL::GlyphSet::ruler;
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Poly;
-
-sub init_label {
-  my ($self) = @_;
-  return if defined $self->{'config'}->{'_no_label'};
-  return if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice"));
-  $self->init_label_text('Length' );
-}
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
 
-  my $type = $self->check();
-  return unless defined $type;
-
   my $strand = $self->strand;
 
   if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      return if ($self->{'container'}->{'compara'} ne 'primary');
+    return if ($self->{'container'}->{'compara'} ne 'primary');
   }
 
-  my $Config = $self->{'config'};
-  my $strand_flag    = $Config->get($type, 'str');
+  my $strand_flag    = $self->my_config('strand');
 
   return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
 
@@ -35,8 +19,8 @@ sub _init {
   my $global_start   = $self->{'container'}->start();
   my $global_end     = $self->{'container'}->end();
   my $highlights     = $self->highlights();
-  my $im_width       = $Config->image_width();
-  my $feature_colour = $Config->get('ruler','col');
+  my $im_width       = $self->image_width();
+  my $feature_colour = $self->my_config('colour') || 'black';
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
 
@@ -45,7 +29,7 @@ sub _init {
 
   my $con_strand     = $self->{'container'}->strand();
 
-  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my $pix_per_bp     = $self->scalex;
   #####################################################################
   # The ruler has to be drawn in absolute x, because when the length is
   # too small the rounding errors screw everything
@@ -55,29 +39,13 @@ sub _init {
 
 ##  |-forward strand----------length bp------------------------->
 ##  <-------------------------length bp----------reverse strand-|
-  my( $right, $left, $righttext, $lefttext );
-  if( $Config->get('ruler','notext') ) {
-    $right     = 'arrow';
-    $left      = 'arrow';
-    $lefttext  = '',
-    $righttext = '';
-  } elsif( $strand > 0 ) {
-    $right     = 'arrow';
-    $left      = 'bar';
-    $lefttext  = $con_strand > 0 ? 'Forward strand' : 'Reverse strand'; 
-    $righttext = '';
-  } else {
-    $right     = 'bar';
-    $left      = 'arrow';
-    $righttext = $con_strand > 0 ? 'Reverse strand' : 'Forward strand';
-    $lefttext  = '';
-  }
+  my( $right, $left, $righttext, $lefttext ) 
+    = $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") ? ( 'bar',   'bar',   '', '' )
+    : $self->my_config('notext')                                            ? ( 'arrow', 'arrow', '', '' )
+    : $strand > 0                                                           ? ( 'arrow', 'bar',   $con_strand > 0 ? 'Forward strand' : 'Reverse strand', '' )
+    :                                                                         ( 'bar',   'arrow', '', $con_strand < 0 ? 'Forward strand' : 'Reverse strand' )
+    ;
 
-# in AlignSlice strand does not really make sense as it can consist of multiple slices on different strands - hence we just remove the text
-  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      $righttext = $lefttext = '';
-      $right = $left = 'bar';
-  }
  #   unless( $Config->{'compara'} && $con_strand == 1 ) {
  #   unless( $Config->{'compara'} && $con_strand == -1 ) {
   my $length     = int( $global_end - $global_start + 1 );
@@ -86,79 +54,56 @@ sub _init {
 
     ## First let's draw the blocksize in the middle....
 
-  my @lines = ( 0 );
   my $O = 3; my $P = 20;
-  my @common = (
-    'z' => 1000, 'colour' => $feature_colour, 'absolutex' => 1, 'absolutey' => 1, 'absolutewidth' => 1
-  );
+  my @common = ( 'z' => 1000, 'colour' => $feature_colour, 'absolutex' => 1, 'absolutey' => 1, 'absolutewidth' => 1 );
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
   my($X_1,$X_2,$W,$H) = $self->get_text_width(0,'X','','font'=>$fontname,'ptsize'=>$fontsize);
 
   my @common_text = ( 'height' => $H, 'font' => $fontname, 'ptsize' => $fontsize, @common, 'y' => 0 );
+
+## Now loop through the three blocks of text... Left text; centre text and right text....
+
+  my @lines = (0);
+
+## Left hand side text...
   if( $lefttext ) {
     my($text,$part,$W,$H) = $self->get_text_width( 0, $lefttext, '', @common_text );
     my $start        = $P;
-    $self->push( new Sanger::Graphics::Glyph::Text({
-      'x' => $start, 'text' => $lefttext, 'halign' => 'left', @common_text
-    }));
+    $self->push( $self->Text({ 'x' => $start, 'text' => $lefttext, 'halign' => 'left', @common_text }));
     push @lines, $P-$O, $P+$O+$W;
   }
+## Centre text...
   if( $centretext ) {
     my($text,$part,$W,$H) = $self->get_text_width( 0, $centretext, '', @common_text );
     my $start        = ($im_width-$W)/2;
-    $self->push( new Sanger::Graphics::Glyph::Text({
-      'x' => $start, 'text' => $centretext, 'width' => $W, 'halign' => 'center', @common_text, 'textwidth' => $W
-    }));
+    $self->push( $self->Text({ 'x' => $start, 'text' => $centretext, 'width' => $W, 'halign' => 'center', @common_text, 'textwidth' => $W }));
     push @lines, $im_width/2 - $O-$W/2, $im_width/2 + $O+$W/2;
   }
+## Right text...
   if( $righttext ) {
     my($text,$part,$W,$H) = $self->get_text_width( 0, $righttext, '', @common_text );
     my $start        = $im_width - $P - $W;
-    $self->push( new Sanger::Graphics::Glyph::Text({
-      'x' => $start, 'text' => $righttext, 'halign' => 'right', 'width' => $W,  @common_text, 'textwidth' => $W
-    }));
+    $self->push( $self->Text({ 'x' => $start, 'text' => $righttext, 'halign' => 'right', 'width' => $W,  @common_text, 'textwidth' => $W }));
     push @lines, $im_width - $P-$O-$W, $im_width -$P+$O;
   }
   push @lines, $im_width;
 
+## Loop through lines and draw them...
   while( my($start,$end) = splice( @lines, 0, 2 ) ) {
-    $self->push( new Sanger::Graphics::Glyph::Rect({
-      'x'         => $start,
-      'y'         => 6,
-      'width'     => $end-$start,
-      'height'    => 0,
-      @common
-    }));
+    $self->push( $self->Rect({ 'x' => $start, 'y' => 6, 'width' => $end-$start, 'height' => 0, @common }));
   }  
+## Draw left hand decoration...
   if( $left eq 'arrow' ) {
-    $self->push(new Sanger::Graphics::Glyph::Poly({
-      'points'    => [0,6, ($fontwidth*2),3, ($fontwidth*2),9],
-      @common
-    }));
+    $self->push($self->Poly({ 'points'    => [0,6, ($fontwidth*2),3, ($fontwidth*2),9], @common }));
   } elsif( $left eq 'bar' ) {
-    $self->push(new Sanger::Graphics::Glyph::Rect({
-      'x'         => 0,
-      'y'         => 3,
-      'height'    => 6,
-      'width'     => 0,
-      @common
-    }));
+    $self->push($self->Rect({ 'x' => 0, 'y' => 3, 'height' => 6, 'width' => 0, @common }));
   } 
-  # add the right arrow head....
+## and right hand decoration...
   if( $right eq 'arrow' ) {
-    $self->push(new Sanger::Graphics::Glyph::Poly({
-      'points'    => [$im_width,6, ($im_width-$fontwidth*2),3, ($im_width-$fontwidth*2),9],
-      @common
-    }));
+    $self->push($self->Poly({ 'points' => [$im_width,6, ($im_width-$fontwidth*2),3, ($im_width-$fontwidth*2),9], @common }));
   } elsif( $right eq 'bar' ) {
-    $self->push(new Sanger::Graphics::Glyph::Rect({
-      'x'         => $im_width,
-      'y'         => 3,
-      'height'    => 6,
-      'width'     => 0,
-      @common
-    }));
+    $self->push($self->Rect({ 'x' => $im_width, 'y' => 3, 'height' => 6, 'width' => 0, @common }));
   }
 }
 

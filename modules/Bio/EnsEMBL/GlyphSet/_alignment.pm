@@ -1,124 +1,242 @@
 package Bio::EnsEMBL::GlyphSet::_alignment;
 use strict;
-use base qw(Bio::EnsEMBL::GlyphSet_feature);
+use base qw(Bio::EnsEMBL::GlyphSet);
 
-sub my_label { 
+#==============================================================================
+# The following functions can be over-riden if the class does require
+# something diffirent - main one to be over-riden is probably the
+# features call - as it will need to take different parameters...
+#==============================================================================
+sub _das_link {
+## Returns the 'group' that a given feature belongs to. Features in the same
+## group are linked together via an open rectangle. Can be subclassed.
   my $self = shift;
-  return $self->my_config('TEXT_LABEL') || 'Missing label';
+  return de_camel( $self->my_config('object_type') || 'dna_align_feature' );
 }
 
-sub das_link {
-  my($self) = shift;
-  my $type     = $self->my_config( 'CALL' ) =~ /Protein/ ? 'protein_align' : 'dna_align';
-  my $database = $self->my_config( 'DATABASE' ) || 'core' ;
-  my @logic_names;
-  if( $self->my_config( 'FEATURES' ) eq 'UNDEF' ) {
-    @logic_names = () ;
-  } else {
-    @logic_names = split( /\s+/,
-                          ( $self->my_config( 'FEATURES' ) ||
-                            $self->check() ) );
-  }
-  my $slice   = $self->{container}; 
-  my $species = $slice->{_config_file_name_};
-  my $assembly = $self->{'config'}->species_defs->other_species($species, 'ENSEMBL_GOLDEN_PATH' );
-
-  my $dsn = "$species.$assembly.".join('-',$type, $database, @logic_names);
-  my $das_link = "/das/$dsn/features?segment=".$slice->seq_region_name.':'.$slice->start.','.$slice->end;
-  return $das_link;
+sub feature_group {
+  my( $self, $f ) = @_;
+  return $f->hseqname;    ## For core features this is what the sequence name is...
 }
 
-sub colour {
-  my( $self, $id ) = @_;
-  my $colours =  $self->{'colours'}->{ $self->object_type($id) } || 
-                 $self->{'colours'}->{ 'default' } ||
-                 $self->my_config('col') || 'black';
+sub feature_title {
+  my( $self, $f ) = @_;
+  return "External DB: ".$f->hseqname;
 }
 
 sub features {
   my ($self) = @_;
-  my $method    = $self->my_config('CALL')||'get_all_DnaAlignFeatures';
-  my $database  = $self->my_config('DATABASE') || undef;
-  my $threshold = defined( $self->my_config('THRESHOLD')) ? $self->my_config('THRESHOLD') : 80;
-
-  my @logic_names;
-  if( $self->my_config( 'FEATURES' ) eq 'UNDEF' ) {
-    @logic_names = ( undef() );
-  } else {
-    @logic_names = split( /\s+/, 
-                          ( $self->my_config( 'FEATURES' ) ||
-                            $self->check() ) );
-  }   
-  my @feats;
-  foreach my $nm( @logic_names ){
-    push( @feats, @{$self->{'container'}->$method($nm,undef,$database)} );
-  }
-  return [@feats];
+  my $method      = 'get_all_'.( $self->my_config('object_type') || 'DnaAlignFeature' ).'s';
+  my $db          = $self->my_config('db');
+  my @logic_names = @{ $self->my_config( 'logicnames' )||[] };
+  return map { $self->{'container'}->$method($_,undef,$db)||() } @logic_names;
 }
-
-sub object_type {
-  my($self,$id)=@_;
-  my $F = $self->my_config('SUBTYPE');
-  return $self->{'type_cache'}{$id} ||= ref($F) eq 'CODE' ? &$F($id) : $F;
-}
-
-sub SUB_ID {
-  my( $self, $id ) = @_;
-  my $T = $self->my_config('ID');
-  if( ref( $T ) eq 'HASH' ) {
-    $T = $T->{ $self->object_type($id) }  || $T->{'default'};
-  }
-  return ( $T && ref( $T ) eq 'CODE' ) ? &$T( $id ) : $id;
-}
-
-sub SUB_LABEL {
-  my( $self, $id ) = @_;
-  my $T = $self->my_config('LABEL');
-  if( ref( $T ) eq 'HASH' ) {
-    $T = $T->{ $self->object_type($id) }  || $T->{'default'};
-  }
-  return ( $T && ref( $T ) eq 'CODE' ) ? &$T( $id ) : $id;
-
-}
-
-sub SUB_HREF { return href( @_ ); }
 
 sub href {
-  my ( $self, $id ) = @_;
-  my $T = $self->my_config('URL_KEY');
-  if( ref( $T ) eq 'HASH' ) {
-    $T = $T->{ $self->object_type($id) };
-  }
-  return $self->ID_URL( $T || 'SRS_PROTEIN' , $self->SUB_ID( $id ) );
+### Links to /Location/Feature with type of 'OligoProbe'
+  my( $self, $f ) = @_;
+  return $self->_url({
+    'object' => 'Location',
+    'action' => 'Feature',
+    'fdb'    => $self->my_config('db'),
+    'ftype'  => $self->my_config('object_type') || 'DnaAlignFeature',
+    'fname'  => $f->seqname
+  });
 }
 
-sub zmenu {
-  my ($self, $id) = @_;
-  my $T = $self->my_config('ZMENU');
-  if( ref( $T ) eq 'HASH' ) {
-    $T = $T->{ $self->object_type($id) } || $T->{'default'};
-  }
-  $id =~ s/'/\'/g; #'
+#==============================================================================
+# Next we have the _init function which chooses how to render the
+# features...
+#==============================================================================
+sub _init {
+### initializer - just chooses the display method - currently compact/normal
+### and calls appropriate function...
 
-  my @T = @{$T||[]};
-  my @zmenus=('caption');
-  foreach my $t(@T){
-    if( $t =~ m/###(\w+)###/ ){
-      if( $self->can( "SUB_$1" ) ){
-        my $m="SUB_$1";
-        $t =~ s/###(\w+)###/$self->$m($id)/eg 
-      }                                 
-      else{ $t =~ s/###(\w+)###/$self->ID_URL( $1, $self->SUB_ID( $id ) )/eg }
+  my ($self)      = @_;
+  my $method = "RENDER_".($self->my_config('compact') ? 'compact' : 'normal');
+  return $self->$method();
+}
+
+sub RENDER_normal {
+  my $self = shift;
+## Information about the container...
+  my $strand = $self->strand;
+  my $strand_flag    = $self->my_config('strand');
+  return if $strand_flag eq 'r' && $strand != -1;
+  return if $strand_flag eq 'f' && $strand !=  1;
+
+  my $length = $self->{'container'}->length();
+## And now about the drawing configuration
+  my $pix_per_bp     = $self->scalex;
+  my $DRAW_CIGAR     = ( $self->my_config('force_cigar') eq 'yes' )|| ($pix_per_bp > 0.2) ;
+## Highlights...
+  my %highlights = map { $_,1 } $self->highlights;
+  my $hi_colour = 'highlight1';
+
+  my %id             = ();
+  my $dep            = $self->my_config( 'dep' ) || 6;
+  $self->_init_bump( $dep );
+  my $h              = $self->get_parameter( 'opt_halfheight') ? 4 : 8;
+
+  if( $self->{'extras'} && $self->{'extras'}{'height'} ) {
+    $h = $self->{'extras'}{'height'};
+  }
+
+## Get array of features and push them into the id hash...
+  my @f = grep { ref($_) eq 'ARRAY' } $self->features;
+
+  my $db           = $self->my_config('db');
+  my $external_dbs = $self->species_defs('databases')->{$db}{'external_dbs'}||{};
+
+  foreach my $features ( @f ) {
+    foreach my $f ( @{$features || []} ){
+      my $hstrand  = $f->can('hstrand')  ? $f->hstrand : 1;
+      my $fgroup_name = $self->feature_group( $f );
+      next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $f->end < 1 || $f->start > $length ;
+      push @{$id{$fgroup_name}}, [$f->start,$f->end,$f];
     }
-    push @zmenus, $t;
   }
 
-  my $extra_URL  = "/@{[$self->{container}{_config_file_name_}]}/featureview?type=";
-     $extra_URL .= ( $self->my_config('CALL') eq 'get_all_ProteinAlignFeatures' ? 'ProteinAlignFeature' : 'DnaAlignFeature' );
-     $extra_URL .= ";id=$id";
-     $extra_URL .= ";db=".$self->my_config('DATABASE') if $self->my_config('DATABASE');
-  push @zmenus, 'View all hits',  $extra_URL;
-  push @zmenus, '<pre id="pfetch"></pre>', 'pfetch:'.$id;
-  return {@zmenus};
+## Now go through each feature in turn, drawing them
+  my $y_pos;
+  my $features_drawn = 0;
+  my $features_bumped = 0;
+  my $feature_colour = $self->my_colour( $self->my_config( 'subtype' ) );
+
+  my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
+
+  foreach my $i (keys %id){
+    my @F          = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
+    my $START      = $F[0][0] < 1 ? 1 : $F[0][0];
+    my $END        = $F[-1][1] > $length ? $length : $F[-1][1];
+    my $bump_start = int($START * $pix_per_bp) - 1;
+    my $bump_end   = int($END * $pix_per_bp);
+    my $row        = $self->bump_row( $bump_start, $bump_end );
+    if( $row > $dep ) {
+      $features_bumped++;
+      next;
+    }
+    $y_pos = - $row * int( $h + 2 ) * $strand;
+
+    my $Composite = $self->Composite({
+      'href'  => $self->href( $F[0][2] ),
+      'x'     => $F[0][0]> 1 ? $F[0][0]-1 : 0,
+      'width' => 0,
+      'y'     => 0,
+      'title' => $self->feature_title($F[0][2])
+    });
+    my $X = -1e8;
+    foreach my $f ( @F ){ ## Loop through each feature for this ID!
+      my( $s, $e, $feat ) = @$f;
+      next if int($e * $pix_per_bp) <= int( $X * $pix_per_bp );
+      $features_drawn++;
+      my $cigar;
+      eval { $cigar = $feat->cigar_string; };
+      if($DRAW_CIGAR || $cigar =~ /$regexp/ ) {
+         my $START = $s < 1 ? 1 : $s;
+         my $END   = $e > $length ? $length : $e;
+         $X = $END;
+         $Composite->push($self->Space({
+           'x'          => $START-1,
+           'y'          => 0, # $y_pos,
+           'width'      => $END-$START+1,
+           'height'     => $h,
+           'absolutey'  => 1,
+        }));
+        $self->draw_cigar_feature($Composite, $feat, $h, $feature_colour, 'black', $pix_per_bp, $strand_flag eq 'r'  );
+      } else {
+        my $START = $s < 1 ? 1 : $s;
+        my $END   = $e > $length ? $length : $e;
+        $X = $END;
+        $Composite->push($self->Rect({
+          'x'          => $START-1,
+          'y'          => 0, # $y_pos,
+          'width'      => $END-$START+1,
+          'height'     => $h,
+          'colour'     => $feature_colour,
+          'absolutey'  => 1,
+        }));
+      }
+    }
+    $Composite->y( $Composite->y + $y_pos );
+    $Composite->bordercolour($feature_colour);
+    $self->push( $Composite );
+    if(exists $highlights{$i}) {
+      $self->unshift( $self->Rect({
+        'x'         => $Composite->{'x'} - 1/$pix_per_bp,
+        'y'         => $Composite->{'y'} - 1,
+        'width'     => $Composite->{'width'} + 2/$pix_per_bp,
+        'height'    => $h + 2,
+        'colour'    => 'highlight1',
+        'absolutey' => 1,
+      }));
+    }
+  }
+## No features show "empty track line" if option set....
+  $self->errorTrack( "No ".$self->my_config('name')." features in this region" )
+    unless( $features_drawn || $self->get_parameter( 'opt_empty_tracks')==0 );
+
+  if( $self->get_parameter( 'opt_show_bumped') && $features_bumped ) {
+    my $ypos = $strand < 0
+             ? ($dep+1) * ( $h + 2 ) + 2
+             : 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'})
+	     ;
+    $self->errorTrack( sprintf( '%s %s omitted', $features_bumped, $self->my_config('name')), undef, $y_pos );
+  }
 }
+
+sub RENDER_compact {
+  my $self        = shift;
+  my $strand      = $self->strand;
+  my $strand_flag = $self->my_config('strand');
+  return if $strand_flag eq 'r' && $strand != -1;
+  return if $strand_flag eq 'f' && $strand !=  1;
+
+  my $length      = $self->{'container'}->length();
+  my $pix_per_bp  = $self->pix_per_bp;
+  my $DRAW_CIGAR  = ( $self->my_config('force_cigar') eq 'yes' )|| ($pix_per_bp > 0.2) ;
+  my $h           = $self->my_config('height')||8;
+  my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
+  my $features_drawn = 0;
+  my $X             = -1e8; ## used to optimize drawing!
+  my $feature_colour = $self->my_colour( $self->my_config( 'subtype') );
+
+## Grab all the features;
+## Remove those not on this display strand
+## Create an array of arrayrefs [start,end,feature]
+## Sort according to start of feature....
+  foreach my $f (
+    sort { $a->[0] <=> $b->[0]      }
+    map  { [$_->start, $_->end,$_ ] }
+    grep { !($strand_flag eq 'b' && $strand != ( ( $_->can('hstrand') ? 1 : 1 ) * $_->strand||-1) || $_->start > $length || $_->end < 1) } 
+    map  { @$_                      }
+    grep { ref($_) eq 'ARRAY'       } $self->features
+  ) {
+    my($start,$end,$feat) = @$f;
+    ($start,$end)         = ($end, $start) if $end<$start; # Flip start end YUK!
+    $start                = 1 if $start < 1;
+    $end                  = $length if $end > $length;
+    ### This is where we now grab the colours
+    next if( $end * $pix_per_bp ) == int( $X * $pix_per_bp );
+    $X                    = $start;
+    $features_drawn++;
+    my $cigar;
+    eval { $cigar = $feat->cigar_string; };
+    if($DRAW_CIGAR || $cigar =~ /$regexp/ ) {
+      $self->draw_cigar_feature( $self, $feat, $h, $feature_colour, 'black', $pix_per_bp, $strand_flag eq 'r' );
+    } else {
+      $self->push($self->Rect({
+        'x'          => $X-1,
+        'y'          => 0, # $y_pos,
+        'width'      => $end-$X+1,
+        'height'     => $h,
+        'colour'     => $feature_colour,
+        'absolutey'  => 1,
+      }));
+    }
+  }
+  $self->errorTrack( "No ".$self->my_config('name')." features in this region" )
+    unless( $features_drawn || $self->get_parameter( 'opt_empty_tracks')==0 );
+}
+
 1;

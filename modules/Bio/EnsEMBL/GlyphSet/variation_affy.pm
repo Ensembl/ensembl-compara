@@ -6,20 +6,10 @@ use Data::Dumper;
 @ISA = qw(Bio::EnsEMBL::GlyphSet::variation);
 #use Bio::EnsEMBL::Variation::VariationFeature;
 
-
-sub my_label { 
-  my ($self) = @_;
-  my $key = $self->_key();
-  return "Affy $key SNP"; 
-}
-
-sub _key { return $_[0]->my_config('key') || 'r2'; }
-
 sub features {
   my ($self) = @_;
   my $snps = $self->fetch_features;
   my $key = $self->_key();
-  my $source_name = "Affy GeneChip $key Mapping Array";
 
   my @affy_snps;
   foreach my $vf (@$snps) {

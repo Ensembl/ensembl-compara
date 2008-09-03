@@ -5,55 +5,12 @@ use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 use POSIX qw(ceil floor);
-use Sanger::Graphics::Glyph::Sprite;
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
 use Data::Dumper;
 
 my %SHORT = qw(
   chromosome Chr.
   supercontig S'ctg
 );
-
-sub init_label {
-  my ($self) = @_;
-  return unless $self->{'config'}->get('scalebar','label') eq 'on';
-  return if $self->strand < 0 ;
-  my $type = $self->{'container'}->coord_system->name();
-  my $chr = $self->{'container'}->seq_region_name();
-  my $chr_raw = $chr;
-  unless( $chr =~ /^$type/i ) {
-    $type = $SHORT{lc($type)} || ucfirst( $type );
-    $chr = "$type $chr";
-  }
-  if( $self->{'config'}->{'compara'} ) {
-	  if( length($chr) > 9 ) { 
-		$chr = $chr_raw;
-	  }
-    (my $abbrev = $self->{'config'}->{'species'} ) =~ s/^(\w)\w+_(\w{3})\w+$/\1\2/g;
-    $chr = "$abbrev $chr";
-    my $line = new Sanger::Graphics::Glyph::Rect({
-      'z' => 11,
-      'x' => -120,
-      'y' => 0,
-      'colour' => 'black',
-      'width' => 120,
-      'height' => 0,
-      'absolutex'     => 1,
-      'absolutewidth' => 1,
-      'absolutey'     => 1,
-    });
-    $self->join_tag( $line, "bracket", 0,0, 'black' );
-    if( $self->{'config'}->{'compara'} eq 'primary' ) {
-      $self->join_tag( $line, "bracket2", 0,0, 'rosybrown1', 'fill', -40 );
-      $self->join_tag( $line, "bracket2", 0.9,0, 'rosybrown1', 'fill', -40 );
-    }
-    $self->push($line);
-  }
-  $self->init_label_text( $chr );
-}
-
 
 sub _init {
     my ($self) = @_;
@@ -91,15 +48,15 @@ sub _init {
       $C++;
     }
  } ##
-    my $REGISTER_LINE  = $Config->get('_settings','opt_lines');
-    my $feature_colour = $Config->get('scalebar', 'col');
-    my $subdivs        = $Config->get('scalebar', 'subdivs');
-    my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
-    my $navigation     = $Config->get('scalebar', 'navigation');
-    my $abbrev         = $Config->get('scalebar', 'abbrev');
+    my $REGISTER_LINE  = $Config->get_parameter( 'opt_lines');
+    my $feature_colour = $self->my_config('col');
+    my $subdivs        = $self->my_config('subdivs');
+    my $max_num_divs   = $self->my_config('max_divisions') || 12;
+    my $navigation     = $self->my_config('navigation');
+    my $abbrev         = $self->my_config('abbrev');
     my $param_string   = $Container->seq_region_name();
 
-    my $main_width     = $Config->get('_settings', 'main_vc_width');
+    my $main_width     = $Config->get_parameter(  'main_vc_width');
     my $len            = $Container->length();
     my $global_start   = $contig_strand < 0 ? -$Container->end() : $Container->start();
     my $global_end     = $contig_strand < 0 ? -$Container->start() : $Container->end();
@@ -139,7 +96,7 @@ sub _init {
       my $box_end   = $end   > $global_end   ? $global_end      : $end;
 
       ## Draw the glyph for this box!
-      my $t = new Sanger::Graphics::Glyph::Rect({
+      my $t = $self->Rect({
          'x'         => $box_start - $global_start, 
          'y'         => 0,
          'width'     => abs( $box_end - $box_start + 1 ),
@@ -161,7 +118,7 @@ sub _init {
         $self->join_tag( $t, "ruler_end", 1, 0 , ($global_end+1)%$major_unit ? 'grey90' : 'grey80'  ) if($REGISTER_LINE);
       }
       unless( $box_start % $major_unit ) { ## Draw the major unit tick 
-        $self->push(new Sanger::Graphics::Glyph::Rect({
+        $self->push($self->Rect({
             'x'         => $box_start - $global_start,
             'y'         => 0,
             'width'     => 0,
@@ -172,7 +129,7 @@ sub _init {
         my $LABEL = $minor_unit < 250 ? $self->commify($box_start * $contig_strand ): $self->bp_to_nearest_unit( $box_start * $contig_strand, 2 );
         my($TXT,$PART,$W,$H) = $self->get_text_width(0,$LABEL,'','font'=>$fontname,'ptsize'=>$fontsize);
         if( $last_text_X + $W/$pix_per_bp * 1.5 < $box_start ) {
-          $self->push(new Sanger::Graphics::Glyph::Text({
+          $self->push($self->Text({
             'x'         => $box_start - $global_start,
             'y'         => 5,
             'height'    => $H,
@@ -189,7 +146,7 @@ sub _init {
       $start += $minor_unit;
     }
     unless( ($global_end+1) % $major_unit ) { ## Draw the major unit tick 
-      $self->push(new Sanger::Graphics::Glyph::Rect({
+      $self->push($self->Rect({
         'x'         => $global_end - $global_start + 1,
         'y'         => 0,
         'width'     => 0,

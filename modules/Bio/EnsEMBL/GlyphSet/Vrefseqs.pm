@@ -3,23 +3,6 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Line;
-
-sub init_label {
-    my ($self) = @_;
-    my $Config = $self->{'config'};	
-    my $label = new Sanger::Graphics::Glyph::Text({
-		'text'      => 'RefSeqs',
-		'font'      => 'Small',
-		'colour'	=> $Config->get('Vrefseqs','col'),
-		'absolutey' => 1,
-    });
-		
-    $self->label($label);
-}
 
 sub _init {
     my ($self) = @_;
@@ -42,14 +25,14 @@ sub _init {
     my @refseqs = $refseqs->get_binvalues();
 
     foreach (@refseqs){
-	$self->push(new Sanger::Graphics::Glyph::Rect({
+	$self->push($self->Rect({
 		'x'      => $_->{'chromosomestart'},
 		'y'      => 0,
 		'width'  => $_->{'chromosomeend'}-$_->{'chromosomestart'},
 		'height' => $_->{'scaledvalue'},
 		'bordercolour' => $refseqs_col,
 		'absolutey' => 1,
-		'href'   => "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr;vc_start=$_->{'chromosomestart'};vc_end=$_->{'chromosomeend'}"
+		'href'   => "/@{[$self->{container}{web_species}]}/contigview?chr=$chr;vc_start=$_->{'chromosomestart'};vc_end=$_->{'chromosomeend'}"
 	}));
     }
 }

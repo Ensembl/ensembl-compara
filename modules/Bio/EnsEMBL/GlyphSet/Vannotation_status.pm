@@ -36,7 +36,7 @@ sub _init {
 	    	my $f_length = $f->end - $f->start;
 		    my $width = ($f_length > $bp_per_pixel) ? $f_length : $bp_per_pixel;
 
-        my $glyph = new Sanger::Graphics::Glyph::Rect({
+        my $glyph = $self->Rect({
             'x'      => $f->start,
             'y'      => 0,
             'width'  => $width,

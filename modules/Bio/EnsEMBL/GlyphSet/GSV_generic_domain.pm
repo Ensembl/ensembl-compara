@@ -3,18 +3,9 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
-
-sub init_label {
-  my ($self) = @_;
-  $self->init_label_text( $self->my_config('caption'), 'domains' );
-}
 
 sub _init {
   my ($self) = @_;
@@ -52,12 +43,12 @@ sub _init {
   my @bitmap = undef;
   foreach my $domain_ref ( @{$trans_ref->{$key}||[]} ) {
     my($domain,@pairs) = @$domain_ref;
-    my $Composite3 = new Sanger::Graphics::Glyph::Composite({
+    my $Composite3 = $self->Composite({
       'y'         => 0,
       'height'    => $h
     });
     while( my($S,$E) = splice( @pairs,0,2 ) ) {
-      $Composite3->push( new Sanger::Graphics::Glyph::Rect({
+      $Composite3->push( $self->Rect({
         'x' => $S,
         'y' => 0,
         'width' => $E-$S,
@@ -66,7 +57,7 @@ sub _init {
         'absolutey' => 1
       }));
     }
-    $Composite3->push( new Sanger::Graphics::Glyph::Rect({
+    $Composite3->push( $self->Rect({
       'x' => $Composite3->{'x'},
       'width' => $Composite3->{'width'},
       'y' => $h/2,
@@ -76,7 +67,7 @@ sub _init {
     }));
     my $text_label = $domain->hseqname;
     my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
-    $Composite3->push( new Sanger::Graphics::Glyph::Text({
+    $Composite3->push( $self->Text({
       'x'         => $Composite3->{'x'},
       'y'         => $h,
       'height'    => $th,
@@ -90,7 +81,7 @@ sub _init {
     }));
     $text_label = $domain->idesc;
     my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
-    $Composite3->push( new Sanger::Graphics::Glyph::Text({
+    $Composite3->push( $self->Text({
       'x'         => $Composite3->{'x'},
       'y'         => $h+2 + $th,
       'height'    => $th,

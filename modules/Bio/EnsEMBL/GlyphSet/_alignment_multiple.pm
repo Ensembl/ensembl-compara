@@ -29,16 +29,6 @@ use Time::HiRes qw(time);
 
 use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block );
 
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  my $HELP_LINK = $self->check();
-  if ($self->my_config('label') eq 'Conservation') {
-    $self->bumped( $self->{'config'}->get($HELP_LINK, 'compact') ? 'no' : 'yes' ); # makes track expandable
-  }
-  $self->init_label_text( $self->my_config('label')||'---', 'compara_alignment' );
-}
-
 sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
 
 
@@ -66,11 +56,11 @@ sub draw_features {
   my $pix_per_bp     = $Config->transform()->{'scalex'};
   my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
   my $feature_colour = $Config->get($type, 'col');
-  my $h              = $Config->get('_settings','opt_halfheight') ? 4 : 8;
+  my $h              = $Config->get_parameter( 'opt_halfheight') ? 4 : 8;
   my $chr       = $self->{'container'}->seq_region_name;
   my $other_species  = $Config->get($type, 'species' );
   my $short_other    = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
-  my $self_species   = $container->{_config_file_name_};
+  my $self_species   = $container->{web_species};
   my $short_self     = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
   my $jump_to_alignslice = $Config->get($type, 'jump_to_alignslice');
 
@@ -243,7 +233,7 @@ sub wiggle_plot {
   return 0 unless $db;
 
   $self->render_space_glyph();
-  my $display_size = $self->{'config'}->get('_settings','width') || 700;
+  my $display_size = $self->{'config'}->get_parameter( 'width') || 700;
   my $colour = "pink3";
   my $display_label = "GERP scores";
 

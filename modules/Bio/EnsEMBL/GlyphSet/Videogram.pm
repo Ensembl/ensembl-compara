@@ -9,12 +9,6 @@ package Bio::EnsEMBL::GlyphSet::Videogram;
 use strict;
 use warnings;
 use base qw(Bio::EnsEMBL::GlyphSet::Videogram_legend);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Line;
-use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Bump;
 use Carp;
 
@@ -56,55 +50,6 @@ our $COL = {
   }
 ## end of vega karyotype static image colours ###                                                
 
-our $RECT = 'Sanger::Graphics::Glyph::Rect';
-our $LINE = 'Sanger::Graphics::Glyph::Line';
-our $TEXT = 'Sanger::Graphics::Glyph::Text';
-our $POLY = 'Sanger::Graphics::Glyph::Poly';
-
-sub init_label {
-  my $self = shift;
-
-  if ($self->{'config'}->{'_label'} eq 'none') {
-    return;
-  }
-
-  my $chr = $self->{'container'}->{'chr'} || $self->{'extras'}->{'chr'} || q();
-  my $ucl = $self->{'config'}->{'_uppercase_label'} || q();
-  if($ucl ne 'no') {
-    $chr = uc $chr;
-  }
-
-  #########
-  # two-line label for long chromosome names
-  #
-  if ((length $chr > 4) &&
-      $self->{'config'}->{'_label'} eq 'above' ) {
-    $self->label($TEXT->new({
-			     'text'      => 'Chromosome',
-			     'font'      => 'Small',
-			     'absolutey' => 1,
-			    }));
-
-    $self->label2($TEXT->new({
-			      'text'      => $chr,
-			      'font'      => 'Small',
-			      'absolutey' => 1,
-			     }));
-
-  } else {
-    if ($self->{'config'}->{'_label'} eq 'above') {
-      $chr = "Chromosome $chr";
-    }
-
-    $self->label($TEXT->new({
-			     'text'      => $chr,
-			     'font'      => 'Small',
-			     'absolutey' => 1,
-			    }));
-  }
-  return;
-}
-
 sub _init {
   my ($self) = @_;
   my $config = $self->{'config'};
@@ -119,7 +64,7 @@ sub _init {
   my $col   = undef;
   my $white = 'white';
   my $black = 'black';
-  my $bg    = $config->get('_settings','bgcolor');
+  my $bg    = $config->get_parameter( 'bgcolor');
   my $red   = 'red';
 
   $self->{'pix_per_bp'}     = $config->image_width() / $config->container_width();
@@ -212,13 +157,13 @@ sub _init {
 
       my $HREF;
       if($self->{'config'}->{'_band_links'}) {
-	$HREF = "/@{[$self->{container}{_config_file_name_}]}/contigview?chr=$chr;vc_start=$vc_band_start;vc_end=$vc_band_end";
+	$HREF = "/@{[$self->{container}{web_species}]}/contigview?chr=$chr;vc_start=$vc_band_start;vc_end=$vc_band_end";
       }
 
       if ($stain eq 'acen') {
 	my $gband;
 	if ($done_1_acen) {
-	  $gband = $POLY->new({
+	  $gband = $self->Poly({
 			       'points'    => [
 					       $vc_band_start, $h_offset + $h_wid,
 					       $vc_band_end,   $h_offset,
@@ -229,7 +174,7 @@ sub _init {
 			       'href'      => $HREF,
 			      });
 	} else {
-	  $gband = $POLY->new({
+	  $gband = $self->Poly({
 			       'points'    => [
 					       $vc_band_start, $h_offset,
 					       $vc_band_end,   $h_offset + $h_wid,
@@ -244,7 +189,7 @@ sub _init {
 	push @decorations, $gband;
 
       } elsif ($stain eq 'stalk') {
-	push @decorations, $POLY->new({
+	push @decorations, $self->Poly({
 				       'points'    => [
 						       $vc_band_start, $h_offset,
 						       $vc_band_end,   $h_offset + $wid,
@@ -256,7 +201,7 @@ sub _init {
 				       'href'      => $HREF,
 				      });
 
-	push @decorations, $RECT->new({
+	push @decorations, $self->Rect({
 				       'x'         => $vc_band_start,
 				       'y'         => $h_offset    + int $wid/4,
 				       'width'     => $vc_band_end - $vc_band_start,
@@ -273,7 +218,7 @@ sub _init {
 
 	my $R     = $vc_band_start;
 	my $T     = $bpperpx * ( (int $vc_band_end/$bpperpx) - (int $vc_band_start/$bpperpx) );
-	$self->push($RECT->new({
+	$self->push($self->Rect({
 				'x'                => $R,
 				'y'                => $h_offset,
 				'width'            => $T,
@@ -283,7 +228,7 @@ sub _init {
 				'href'             => $HREF,
 			       }));
 
-	$self->push($LINE->new({
+	$self->push($self->Line({
 				'x'                => $R,
 				'y'                => $h_offset,
 				'width'            => $T,
@@ -292,7 +237,7 @@ sub _init {
 				'absolutey'        => 1,
 			       }));
 
-	$self->push($LINE->new({
+	$self->push($self->Line({
 				'x'                => $R,
 				'y'                => $h_offset+$wid,
 				'width'            => $T,
@@ -311,7 +256,7 @@ sub _init {
 	   ($self->{'config'}->{'_band_labels'} ne 'on') ||
 	   ($h > ($vc_band_end - $vc_band_start)))) {
 
-	$self->push($TEXT->new({
+	$self->push($self->Text({
 				'x'                => ($vc_band_end + $vc_band_start - $h)/2,
 				'y'                => $h_offset+$wid+4,
 				'width'            => $h,
@@ -327,7 +272,7 @@ sub _init {
 
   } else {
     foreach (0, $wid) {
-      $self->push($LINE->new({
+      $self->push($self->Line({
 			      'x'                => $v_offset-1,
 			      'y'                => $h_offset+$_,
 			      'width'            => $chr_length,
@@ -349,7 +294,7 @@ sub _init {
     my $R              = $vc_band_start;
     my $T              = $bpperpx * ( (int $vc_band_end/$bpperpx) - (int $vc_band_start/$bpperpx) );
 
-    $self->push($RECT->new({
+    $self->push($self->Rect({
 			    'x'                => $R,
 			    'y'                => $h_offset,
 			    'width'            => $T,
@@ -357,7 +302,7 @@ sub _init {
 			    'colour'           => $COL->{$stain},
 			    'absolutey'        => 1,
 			   }));
-    $self->push($LINE->new({
+    $self->push($self->Line({
 			    'x'                => $R,
 			    'y'                => $h_offset,
 			    'width'            => $T,
@@ -366,7 +311,7 @@ sub _init {
 			    'absolutey'        => 1,
 			   }));
 
-    $self->push($LINE->new({
+    $self->push($self->Line({
 			    'x'                => $R,
 			    'y'                => $h_offset+$wid,
 			    'width'            => $T,
@@ -407,7 +352,7 @@ sub _init {
 	#########
 	# overwrite karyotype bands with appropriate triangles to produce jags
 	#
-	$self->push($POLY->new({
+	$self->push($self->Poly({
 				'points'         => [
 						     $x, $y,
 						     $x + $width * (1 - ($i % 2)),$y + $height * ($i % 2),
@@ -421,7 +366,7 @@ sub _init {
 	#########
 	# the actual jagged line
 	#
-	$self->push($LINE->new({
+	$self->push($self->Line({
 				'x'              => $x,
 				'y'              => $y,
 				'width'          => $width,
@@ -436,7 +381,7 @@ sub _init {
       # black delimiting lines at each side
       #
       foreach (0, $wid) {
-	$self->push($LINE->new({
+	$self->push($self->Line({
 				'x'             => $v_offset,
 				'y'             => $h_offset + $_,
 				'width'         => 4,
@@ -461,7 +406,7 @@ sub _init {
       my $width  = 0;
       my $height = $wid;
 
-      $self->push($LINE->new({
+      $self->push($self->Line({
 			      'x'             => $x,
 			      'y'             => $y,
 			      'width'         => $width,
@@ -488,7 +433,7 @@ sub _init {
 
 	my ($bg_x, $black_x) = @{$lines[$I]};
 	my $xx               = $v_offset + $chr_length * $end + ($I+.5 * $end) * $direction * $bpperpx + ($end ? $bpperpx : 10);
-	$self->push($LINE->new({
+	$self->push($self->Line({
 				'x'         => $xx,
 				'y'         => $h_offset,
 				'width'     => 0,
@@ -496,7 +441,7 @@ sub _init {
 				'colour'    => $bg,
 				'absolutey' => 1,
 			       }));
-	$self->push($LINE->new({
+	$self->push($self->Line({
 				'x'         => $xx,
 				'y'         => $h_offset + 1 + $wid * (1-$bg_x/24),
 				'width'     => 0,
@@ -505,7 +450,7 @@ sub _init {
 				'absolutey' => 1,
 			       }));
 
-	$self->push($LINE->new({
+	$self->push($self->Line({
 				'x'         => $xx,
 				'y'         => $h_offset + $wid * $bg_x/24,
 				'width'     => 0,
@@ -514,7 +459,7 @@ sub _init {
 				'absolutey' => 1,
 			       }));
 
-	$self->push($LINE->new({
+	$self->push($self->Line({
 				'x'         => $xx,
 				'y'         => $h_offset + 1 + $wid * (1-$bg_x/24-$black_x/24),
 				'width'     => 0,

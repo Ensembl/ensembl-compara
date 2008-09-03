@@ -3,25 +3,10 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Line;
-use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
-
-sub init_label {
-  my $self = shift;
-  my $Config         = $self->{'config'};
-  my $coverage_obj   = $Config->{'transcript'}->{'coverage_obj'};
-  return unless @$coverage_obj;
-  my $text  =  @$coverage_obj ? "Resequence coverage" : "No reseq. coverage";
-  $self->init_label_text( $text );
-  $self->{'label'}->{'ptsize'} *= 0.8;
-}
-
 
 sub _init {
   my ($self) = @_;
@@ -34,7 +19,7 @@ sub _init {
   my $coverage_obj   = $Config->{'transcript'}->{'coverage_obj'};
 
   unless (@$coverage_obj && @coverage_levels) {
-    $self->push(new Sanger::Graphics::Glyph::Space({
+    $self->push($self->Space({
       'x'         => 1,
       'y'         => 0,
       'height'    => 1,
@@ -74,7 +59,7 @@ sub _init {
     my $pos   = "$start-$end";
 
     my $display_level = $level == $max_coverage ? ">".($level-1) : $level;
-    my $bglyph = new Sanger::Graphics::Glyph::Rect({
+    my $bglyph = $self->Rect({
       'x'         => $S,
       'y'         => 8-$h,
       'height'    => $h,                            #$y,

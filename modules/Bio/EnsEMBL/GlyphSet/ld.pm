@@ -1,20 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::ld;
 use strict;
-use Bio::EnsEMBL::GlyphSet;
-our @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Text;
+use base qw(Bio::EnsEMBL::GlyphSet);
 use POSIX;
-use Data::Dumper;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump); 
-
-use Time::HiRes qw( time );
-
-sub init_label {
-  my $self = shift;
-  my $key = $self->_key();
-  $self->init_label_text( "LD ($key)" );
-}
 
 sub _key { return $_[0]->my_config('key') || 'r2'; }
 

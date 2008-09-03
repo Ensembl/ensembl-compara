@@ -3,13 +3,6 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Line;
-
-sub init_label {
-  my ($self) = @_;
-  my $sample = 'Non-canonical splicing';
-  $self->init_label_text( $sample );
-}
 
 sub _init {
     my ($self) = @_;
@@ -31,7 +24,7 @@ sub _init {
 	$box_end    = $length if $box_end > $length;
 		
 	#Draw an I-bar covering the intron
-	my $G = new Sanger::Graphics::Glyph::Line({
+	my $G = $self->Line({
 	    'x'         => $box_start ,
 	    'y'         => 0,
 	    'width'     => $box_end-$box_start,
@@ -42,7 +35,7 @@ sub _init {
 	    'href'      => '',
 	});
 	$self->push( $G );
-	$G = new Sanger::Graphics::Glyph::Line({
+	$G = $self->Line({
 	    'x'         => $box_start,
 	    'y'         => -3,
 	    'width'     => 0,
@@ -53,7 +46,7 @@ sub _init {
 	    'href'      => '',
 	});
 	$self->push( $G );
-	$G = new Sanger::Graphics::Glyph::Line({
+	$G = $self->Line({
 	    'x'         => $box_end ,
 	    'y'         => -3,
 	    'width'     => 0,

@@ -1,12 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::das;
 use strict;
 use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Intron;
+use base qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::Bump;
 use Sanger::Graphics::ColourMap;
 use Bio::EnsEMBL::Glyph::Symbol::box;    # default symbol for features
@@ -14,119 +9,6 @@ use Data::Dumper;
 use POSIX qw(floor);
 use HTML::Entities;
 use Time::HiRes qw(time);
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-
-  my $params;
-  foreach my $param (CGI::param()) {
-    next if ($param eq 'add_das_source');
-    if (defined(my $v = CGI::param($param))) {
-      if (ref($v) eq 'ARRAY') {
-        foreach my $w (@$v) {
-          $params .= ";$param=$w";
-        }
-      } else {
-        $params .= ";$param=$v";
-      }
-    }
-  }
-
-  my $script = $ENV{ENSEMBL_SCRIPT};
-  my $species = $ENV{ENSEMBL_SPECIES};
-  my $helplink = $self->{'extras'}->{'help'} || $self->{'extras'}->{'helplink'} ||  "/$species/helpview?se=1;kw=$ENV{'ENSEMBL_SCRIPT'}#das";
-#  my $helplink = (defined($self->{'extras'}->{'helplink'})) ?  $self->{'extras'}->{'helplink'} :  "/$species/helpview?se=1;kw=$ENV{'ENSEMBL_SCRIPT'}#das";
-## Compute the label for the track...
-  my $track_label = $self->{'extras'}->{'label'} || $self->{'extras'}->{'caption'} || $self->{'extras'}->{'name'};
-  $track_label =~ s/^(managed_|managed_extdas)//;
-
-## Now the zmenu and the URL...
-  my $URL = "";
-  my $das_url = $self->{'extras'}{'url'};
-  my $zmenu = {};
-  if ($self->managed_name =~ /^managed_extdas_(.*)$/){
-    $URL = qq(javascript:X=window.open(\'/$species/dasconfview?_das_edit=$1;conf_script=$script$params\',\'dassources\',\'left=10,top=10,resizable,scrollbars=yes\');X.focus();void(0));
-    $zmenu->{'caption'} =  'Configure';
-    $zmenu->{'01:Advanced configuration...'} = $URL;
-  } else {
-    $zmenu->{'caption'} = 'Help';
-  }
-    if ($self->{'extras'}{'homepage'}){
-      $URL = $self->{'extras'}{'homepage'};
-    } else {
-      $URL = qq(javascript:X=window.open(\'$helplink\',\'helpview\',\'left=20,top=20,resizable,scrollbars=yes\');X.focus();void(0)) ;
-    }
-    $zmenu->{'01:Track information...'}      = $URL;
-  my $Config = $self->{'config'};
-  my $Extras = $self->{'extras'};
-  ( my $das_name        = (my $das_config_key = $self->das_name() ) ) =~ s/managed_(extdas_)?//g;
-  $das_config_key =~ s/^managed_das/das/;
-      
-  if (my $score = uc($Config->get($das_config_key, 'score') || $self->{'extras'}{'score'} || 'N') ne 'N') {
-    $Extras->{dataMin} = $Extras->{fg_min};  
-    $Extras->{dataMax} = $Extras->{fg_max};  
-    my @features = sort {$b->das_score <=> $a->das_score} @{$self->features_nongrouped || []}; ### Sort by score in descending order - preparing for merge_features
-    my @sfeatures = grep { defined ($_->das_score) } @features;
-    my ($max_value, $min_value) = (@sfeatures) ? ($sfeatures[0]->das_score, $sfeatures[-1]->das_score) : (undef, undef);
-    my $min_score = defined ($Extras->{dataMin}) ? $Extras->{dataMin} : ($min_value  || 0);
-    my $max_score = defined ($Extras->{dataMax}) ? $Extras->{dataMax} : (defined $max_value  ? $max_value : 100);
-    $min_score = 0 if ($max_score == $min_score);
-    $self->{_min_score} = $min_score;
-    $self->{_max_score} = $max_score;
-
-    $zmenu->{"04:Region has features in the range $min_value..$max_value"} = '' if (defined $min_value);
-    if (1 || ($Extras->{'autoScale'} eq 'on')) {
-	$zmenu->{"05:Scores are scaled to the range $min_score .. $max_score"} = '';
-    } else {
-	$zmenu->{"05:Displaying features with scores in the range $min_score .. $max_score"} = '';
-	@features = grep {  (! defined $_->das_score) || (($_->das_score >= $min_score) && ($_->das_score <= $max_score)) } @features;
-    }
-    $self->{_features}->{nongrouped} = \@features;
-  }
-
-  $das_url  .= "/".$self->{'extras'}{'dsn'} if $das_url =~  /\/das$/;
-  
-## Add a link to the zmenu which allows people to look at the raw DAS response (or 
-## the pretty one if that is styled with CSS.. Need the URL and the segments list.
-$Data::Dumper::Indent = 1;
-#warn Data::Dumper::Dumper( $self->{'extras'} );
-
-  my @segments;
-  my ($das_type) = $self->{'extras'}{'type'} || @{$self->{'extras'}{'mapping'}||[]};
-  if ( $das_type !~ /^ensembl_location/) {
-    my $ga =  $self->{'container'}->adaptor->db->get_GeneAdaptor();
-    my $genes = $ga->fetch_all_by_Slice( $self->{'container'});
-    (my $name = $self->{'extras'}{'name'}) =~ s/^managed(_das)?_//;
-    foreach my $gene (@$genes) {
-      next if ($gene->strand != $self->strand);
-      my ($fref, $cssref, $segref) = $gene->get_all_DAS_Features;
-      push @segments, @{$segref->{$name} || []};
-    }
-  } else {
-    (my $name = $self->{'extras'}{'name'}) =~ s/^managed(_das)?_//;
-    my ($fref, $cssref, $segref) = $self->{'container'}->get_all_DAS_Features;
-    push @segments, @{$segref->{$name} || []};
-  }
-
-  $zmenu->{'99:View DAS response'} = join '/', $das_url, 'features?'.  join ';', map { "segment=$_" } @segments;
-
-## Now we render the actual link...
-  my( $fontname, $fontsize ) = $self->get_font_details( 'label' );
-  $track_label = "[$Extras->{'alt_assembly'}] $track_label" if $Extras->{'alt_assembly'};
-  my @res = $self->get_text_width( 0, $track_label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
-  $self->label( new Sanger::Graphics::Glyph::Text({
-    'text'      => $track_label,
-    'colour'    => 'contigblue2',
-    'height'    => $res[3],
-    'absolutey' => 1,
-    'font'      => $fontname,
-    'ptsize'    => $fontsize,
-    'href'      => $URL,
-    'zmenu'     => $zmenu
-  }) );
-}
-
 
 # Render ungrouped features
 
@@ -178,7 +60,7 @@ sub RENDER_simple {
     } 
   
     my ($href, $zmenu ) = $self->zmenu( $f );
-    my $Composite = new Sanger::Graphics::Glyph::Composite({
+    my $Composite = $self->Composite({
       'y'         => 0,
       'x'         => $START-1,
       'absolutey' => 1,
@@ -219,7 +101,7 @@ sub RENDER_simple {
       $style->{'glyph'} = $oldglyph;
     } else {
       # make clickable box to anchor zmenu
-      $Composite->push( new Sanger::Graphics::Glyph::Space({
+      $Composite->push( $self->Space({
         'x'         => $START-1,
         'y'         => 0,
         'width'     => $END-$START+1,
@@ -341,13 +223,13 @@ sub RENDER_grouped {
 
 #    warn (Data::Dumper::Dumper($zmenu));
 
-    my $Composite = new Sanger::Graphics::Glyph::Composite({
+    my $Composite = $self->Composite({
       'y'            => 0,
       'x'            => $START-1,
       'absolutey'    => 1,
       'zmenu'        => $zmenu,
     });
-    $Composite->push( new Sanger::Graphics::Glyph::Space({
+    $Composite->push( $self->Space({
       'x'         => $START-1,
       'y'         => 0,
       'width'     => $END-$START+1,
@@ -548,7 +430,7 @@ sub RENDER_density {
     my $F = $divisor ? ($_-$min)/$divisor : 1;
     my $colour_number = $display_method eq 'scale' ? floor( ($rmax-1) * $F ) : 0;
     my $height        = floor( $configuration->{'h'} * ($display_method eq 'bars' ? $F  : 1)  );
-    $self->push( new Sanger::Graphics::Glyph::Rect({
+    $self->push( $self->Rect({
       'x'         => $start,
       'y'         => $configuration->{'h'}-$height,
       'width'     => $bin_length,
@@ -745,7 +627,7 @@ sub feature_label {
     return unless $res[2]/$self->{'pix_per_bp'} < ($end-$start);
 
     my $y_offset = ($row_height - $self->{'textheight_i'})/2;
-    my $tglyph = new Sanger::Graphics::Glyph::Text({
+    my $tglyph = $self->Text({
       'x'          => ( $end + $start - 1 -$res[2]/$self->{'pix_per_bp'})/2,
       'y'          => $y_offset,
       'width'      => $res[2]/$self->{'pix_per_bp'},
@@ -765,7 +647,7 @@ sub feature_label {
     my $y_offset = ($row_height + $glyph_height)/2;
     $y_offset += 1; # give a couple of pixels gap under the glyph
 #warn "$text ............. $start .............. $res[2] / $self->{'pix_per_bp'}" ;
-    my $tglyph = new Sanger::Graphics::Glyph::Text({
+    my $tglyph = $self->Text({
       'x'          => $start -1,
       'y'          => $y_offset,
       'width'      => $res[2]/$self->{'pix_per_bp'},
@@ -1113,7 +995,7 @@ sub RENDER_histogram_simple {
     }
 #    $height = ($score / $fCount - $min_score) / $pix_per_score;
     my ($href, $zmenu );
-    my $Composite = new Sanger::Graphics::Glyph::Composite({
+    my $Composite = $self->Composite({
       'y'         => 0,
       'x'         => $START-1,
       'absolutey' => 1,
@@ -1147,7 +1029,7 @@ sub RENDER_histogram_simple {
     # to geneview where all annotations can be viewed
     
     # make clickable box to anchor zmenu
-    $Composite->push( new Sanger::Graphics::Glyph::Space({
+    $Composite->push( $self->Space({
       'x'         => $gStart - 1,
       'y'         => 0,
       'width'     => $gWidth,
@@ -1158,7 +1040,7 @@ sub RENDER_histogram_simple {
     my $style = $self->get_featurestyle($f, $configuration);
     my $fdata = $self->get_featuredata($f, $configuration, $y_offset);
 
-    my $sm = new Sanger::Graphics::Glyph::Rect({
+    my $sm = $self->Rect({
       'x'          => $gStart - 1,
       'y'          => $row_height - $height, 
       'width'      => $gWidth,
@@ -1222,7 +1104,7 @@ sub RENDER_tilingarray{
   foreach my $fgroup ( sort keys %{$self->{_features}->{grouped}}) {
 
 #  warn join ' * ', $fgroup, scalar(@features);
-    $self->push( new Sanger::Graphics::Glyph::Line({
+    $self->push( $self->Line({
        	'x'         => 0,
 	'y'         => $g_offset + $row_height + 1,
 	'width'     => $configuration->{'length'} + 1,
@@ -1232,7 +1114,7 @@ sub RENDER_tilingarray{
 	'dotted'    => 1,
     }));
     
-    $self->push( new Sanger::Graphics::Glyph::Line({
+    $self->push( $self->Line({
 	'x'         => 0,
 	'y'         => $g_offset,
 	'width'     => 0,
@@ -1289,7 +1171,7 @@ sub RENDER_tilingarray{
        $symbol->{'feature'}->{'row_height'} = $row_height * 2 + 1;
 # warn Dumper($symbol);
        my ($href, $zmenu );
-       my $Composite = new Sanger::Graphics::Glyph::Composite({
+       my $Composite = $self->Composite({
         'y'         => 0,
         'x'         => $START-1,
 	'height' => $row_height,
@@ -1337,7 +1219,7 @@ sub RENDER_colourgradient{
   
   foreach my $fgroup ( sort keys %{$self->{_features}->{grouped}}) {
 # Draw the axis
-    $self->push( new Sanger::Graphics::Glyph::Line({
+    $self->push( $self->Line({
       'x'         => 0,
       'y'         => $g_offset + $row_height + 1,
       'width'     => $configuration->{'length'} + 1,
@@ -1389,7 +1271,7 @@ sub RENDER_colourgradient{
          $symbol->{'style'}->{'bgcolor'} = $col;
        }
        
-        my $Composite = new Sanger::Graphics::Glyph::Composite({
+        my $Composite = $self->Composite({
           'y'         => 0,
           'x'         => $START-1,
 	  'height' => $row_height,
@@ -1433,7 +1315,7 @@ sub RENDER_histogram {
     my @features = sort {($zHash{$a->das_type} <=> $zHash{$b->das_type}) * 10 + ($a->das_score() <=> $b->das_score()) } @{$self->{_features}->{grouped}->{$fgroup}};
 
 #  warn join ' * ', $fgroup, scalar(@features);
-    $self->push( new Sanger::Graphics::Glyph::Line({
+    $self->push( $self->Line({
        	'x'         => 0,
 	'y'         => $g_offset + $row_height + 1,
 	'width'     => $configuration->{'length'} + 1,
@@ -1443,7 +1325,7 @@ sub RENDER_histogram {
 	'dotted'    => 1,
     }));
     
-    $self->push( new Sanger::Graphics::Glyph::Line({
+    $self->push( $self->Line({
 	'x'         => 0,
 	'y'         => $g_offset,
 	'width'     => 0,
@@ -1493,7 +1375,7 @@ sub RENDER_histogram {
        $symbol->{feature}->{y_offset} = $y_offset;
 # warn Dumper($symbol);
       my ($href, $zmenu );
-      my $Composite = new Sanger::Graphics::Glyph::Composite({
+      my $Composite = $self->Composite({
         'y'         => 0,
         'x'         => $START-1,
 	'height' => $row_height,
@@ -1549,7 +1431,7 @@ sub RENDER_plot_2 {
  
   foreach my $fgroup ( sort keys %{$self->{_features}->{grouped}}) {
 
-    $self->push( new Sanger::Graphics::Glyph::Line({
+    $self->push( $self->Line({
        	'x'         => 0,
 	'y'         => $g_offset + $row_height + 1,
 	'width'     => $configuration->{'length'} + 1,
@@ -1559,7 +1441,7 @@ sub RENDER_plot_2 {
 	'dotted'    => 1,
     }));
     
-    $self->push( new Sanger::Graphics::Glyph::Line({
+    $self->push( $self->Line({
 	'x'         => 0,
 	'y'         => $g_offset,
 	'width'     => 0,
@@ -1617,7 +1499,7 @@ sub RENDER_plot_2 {
        $symbol->{'feature'}->{'row_height'} = $row_height * 2 + 1;
 # warn Dumper($symbol);
        my ($href, $zmenu );
-       my $Composite = new Sanger::Graphics::Glyph::Composite({
+       my $Composite = $self->Composite({
         'y'         => 0,
         'x'         => $START-1,
 	'height' => $row_height,
@@ -1631,7 +1513,7 @@ sub RENDER_plot_2 {
 
        my $hh = int(abs($y_offset - $pY));
        if (($START  == $pX) && ($hh > 1) ) {
-         $Composite->push( new Sanger::Graphics::Glyph::Line({
+         $Composite->push( $self->Line({
 	'x'         => $START - 1,
 	'y'         =>  $y_offset > $pY ? $pY : $y_offset, 
 	'width'     => 2,

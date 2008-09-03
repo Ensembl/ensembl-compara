@@ -1,14 +1,9 @@
 package Bio::EnsEMBL::GlyphSet::variation;
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump); 
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
-use Data::Dumper;
+use base qw(Bio::EnsEMBL::GlyphSet_simple);
+
 use Bio::EnsEMBL::Variation::VariationFeature;
 
-
-sub my_label { return "SNPs"; }
 
 sub features {
   my ($self) = @_;
@@ -33,19 +28,17 @@ sub fetch_features {
       sort { $a->[0] <=> $b->[0] }
       map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
       grep { $_->map_weight < 4 } @$vf_ref;
-    if(@vari_features && !$self->{'config'}->{'variation_legend_features'} ) {
-      #warn "...................".ref($self)."........................";
-      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
-    }
     $self->{'config'}->{'snps'} = \@vari_features;
+    if(@vari_features && !$self->{'config'}->{'variation_legend_features'} ) {
+      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => $self->_pos, 'legend' => [] };
+    }
   }
   my $snps = $self->{'config'}->{'snps'} || [];
   if(@$snps) {
     unless( $self->{'config'}->{'variation_legend_features'} ) {
-      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => 1000, 'legend' => [] };
+      $self->{'config'}->{'variation_legend_features'}->{'variations'} = { 'priority' => $self->_pos, 'legend' => [] };
     }
     foreach my $f (@$snps) {
-warn $f,' ',$f->display_consequence;
       $self->colour( $f );
     }
   }
@@ -80,7 +73,7 @@ sub href {
   } else {
       $start  = $self->slice2sr( $f->start, $f->end );
       $region = $self->{'container'}->seq_region_name();
-      $species = "@{[$self->{container}{_config_file_name_}]}";
+      $species = "@{[$self->{container}{web_species}]}";
   }
 
   return "/$species/$view?snp=$id;source=$source;c=$region:$start;w=20000;$pops";
@@ -116,48 +109,4 @@ sub colour {
 	$f->start > $f->end ? 'invisible' : '';
 }
 
-
-sub zmenu {
-  my ($self, $f ) = @_;
-  my( $start, $end );
-  my $allele = $f->allele_string;
-
-
-  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      $start  = $self->{'container'}->get_original_seq_region_position( $f->start );
-      $end  = $self->{'container'}->get_original_seq_region_position( $f->end );
-  } else {
-      ($start, $end) = $self->slice2sr( $f->start, $f->end );
-  }
-
-  my $pos =  $start;
-
-  if($f->start > $f->end  ) {
-    $pos = "between&nbsp;$start&nbsp;&amp;&nbsp;$end";
-  }
-  elsif($f->start < $f->end ) {
-    $pos = "$start&nbsp;-&nbsp;$end";
-  }
-  my $ldview_link =  $self->href( $f, 'ldview' );
-
-  my $status = join ", ", @{$f->get_all_validation_states};
-  my %zmenu = ( 
- 	       caption               => "SNP: " . ($f->variation_name),
- 	       '01:SNP properties'   => $self->href( $f, 'snpview' ),
-               ( $ldview_link  ?
- 	         ( '02:View in LDView'   => $ldview_link ) : ()
-               ),
- 	       "03:bp: $pos"         => '',
- 	       "04:status: ".($status || '-') => '',
- 	       "05:class: ".($f->var_class || '-') => '',
- 	       "07:ambiguity code: ".$f->ambig_code => '',
- 	       "08:alleles: ".$f->allele_string => '',
- 	       "09:source: ".$f->source => '',
-	      );
-
-  my @label;
-  map { push @label, $self->{'colours'}{$_}[1]; }  @{ $f->get_consequence_type || [] };
-  $zmenu{"57:type: ".join ", ", @label} = "";
-  return \%zmenu;
-}
 1;

@@ -3,17 +3,7 @@ use strict;
 use vars qw(@ISA);
 use Bio::EnsEMBL::GlyphSet;
 @ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Intron;
-use Sanger::Graphics::Glyph::Text;
-use Sanger::Graphics::Glyph::Composite;
 use  Sanger::Graphics::Bump;
-
-sub init_label {
-  my ($self) = @_;
-  return if( defined $self->{'config'}->{'_no_label'} );
-  $self->init_label_text( 'Scale (aa)' );
-}
 
 sub _init {
     my ($self) = @_;
@@ -33,7 +23,7 @@ sub _init {
     my $len                   = $self->{'container'}->length();
     my $divs                  = set_scale_division($len);
     
-    my $glyph = new Sanger::Graphics::Glyph::Rect({
+    my $glyph = $self->Rect({
 	'x'         => 0,
 	'y'         => 4,
 	'width'     => $len,
@@ -46,7 +36,7 @@ sub _init {
     my $last_end = 0;
     for (my $i=0;$i<int($len/$divs); $i++){
 	
-	my $tick = new Sanger::Graphics::Glyph::Rect({
+	my $tick = $self->Rect({
 	    'x'         => $i * $divs,
 	    'y'         => 4,
 	    'width'     => 0,
@@ -57,7 +47,7 @@ sub _init {
 	$self->push($tick);
 	
 	my $text = $i * $divs;
-	my $tglyph = new Sanger::Graphics::Glyph::Text({
+	my $tglyph = $self->Text({
 	    'x'      	=> $i * $divs,
 	    'y'      	=> 6,
 	    'height'	=> $fontheight,
@@ -73,7 +63,7 @@ sub _init {
     
     # label first tick
     my $text = "0";
-    my $tglyph = new Sanger::Graphics::Glyph::Text({
+    my $tglyph = $self->Text({
 	'x'      	=> 0,
 	'y'      	=> 6,
 	'height'	=> $fontheight,
@@ -93,7 +83,7 @@ sub _init {
     my @res = $self->get_text_width( 0, $text,'', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $tmp_width = $res[2]/$pix_per_bp;
 
-    my $endglyph = new Sanger::Graphics::Glyph::Text({
+    my $endglyph = $self->Text({
 	'x'      	=> $im_width-$res[2],
         'width'         => $res[2],
         'textwidth'     => $res[2],
@@ -112,7 +102,7 @@ sub _init {
     $self->push($endglyph);
     
     # add last tick
-    my $tick = new Sanger::Graphics::Glyph::Rect({
+    my $tick = $self->Rect({
 	'x'          => $im_width,
 	'y'          => 4,
 	'width'      => 0,
