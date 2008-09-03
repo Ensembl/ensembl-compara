@@ -330,7 +330,7 @@ sub push_primary {
      $wuc->{'multi'}  = 1;
      $wuc->{'compara'} = 'primary';
      $wuc->{'slice_number'}=0;
-     $loc->slice->{_config_file_name_} = $loc->real_species;
+     $loc->slice->{web_species} = $loc->real_species;
   push @$array, $loc->slice, $wuc;
 }
 
@@ -345,7 +345,7 @@ sub push_secondary {
      $wuc->{'multi'}   = 1;
      $wuc->{'compara'} = 'secondary';
      $wuc->{'slice_number'} = $slice_no;
-     $loc->slice->{_config_file_name_} = $loc->real_species;
+     $loc->slice->{web_species} = $loc->real_species;
   push @$array, $loc->slice, $wuc;
 }
 
@@ -662,7 +662,7 @@ sub alignsliceviewbottom {
 
     $as->{species} = $as->genome_db->name;
     $as->{compara} = $cmpstr;
-    $as->{_config_file_name_} = $vsp;
+    $as->{web_species} = $vsp;
     $as->{__type__} = 'alignslice';
 
     if ($id == $num) {
