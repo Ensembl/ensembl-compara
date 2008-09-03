@@ -11,7 +11,7 @@ use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::ScriptConfig;
-use EnsEMBL::Web::UserConfig;
+use EnsEMBL::Web::ImageConfig;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
 
@@ -43,7 +43,7 @@ our @ISA = qw(EnsEMBL::Web::Root);
 
 
 ### New Session object - passed around inside the data object to handle storage of
-### ScriptConfigs/UserConfigs in the web_user_db
+### ScriptConfigs/ImageConfigs in the web_user_db
 ###
 ### How it is used...
 ###
@@ -55,11 +55,11 @@ our @ISA = qw(EnsEMBL::Web::Root);
 ### {{EnsEMBL::Web::Proxiable::user_config_hash}},
 ### {{EnsEMBL::Web::Proxiable::get_scriptconfig}},
 ### {{EnsEMBL::Web::Proxiable::attach_image_config}} all of which create either
-### {{EnsEMBL::Web::ScriptConfig}} or {{EnsEMBL::Web::UserConfig}} objects.
+### {{EnsEMBL::Web::ScriptConfig}} or {{EnsEMBL::Web::ImageConfig}} objects.
 ###
 ### These commands in turn access the database if we already have a session (whose is
 ### accessible by {{session_id}}) and if the appropriate scriptconfig is defined as
-### storable. (In this way it replaces the ScriptConfigAdaptor/UserConfigAdaptor modules
+### storable. (In this way it replaces the ScriptConfigAdaptor/ImageConfigAdaptor modules
 ###
 ### At the end of the configuration section of the webpage if any data needs to be
 ### saved to the session this is done so (and if required a session cookie set and
@@ -568,7 +568,7 @@ sub getImageConfig {
   if( $key && exists $ImageConfigs_of{ ident $self }{$key} ) {
     return $ImageConfigs_of{ ident $self }{$key};
   }
-  my $user_config = $self->getUserConfig( $type ); # $ImageConfigs_of{ ident $self }{ $type };
+  my $user_config = $self->get_ImageConfig( $type ); # $ImageConfigs_of{ ident $self }{ $type };
   foreach my $script ( keys %{$Configs_of{ ident $self }||{}} ) {
     if( $Configs_of{ ident $self }{$script}{'image_config_data'}{$type} ) {
       $user_config->{'user'} = $self->deepcopy( $Configs_of{ ident $self }{$script}{'image_config_data'}{$type} );
@@ -579,28 +579,28 @@ sub getImageConfig {
   return $user_config;
 }
 
-sub getUserConfig {
+sub get_ImageConfig {
 ### Return a new image config object...
   my $self = shift;
   my $type = shift;
   my $classname = '';
 ## Let us hack this for the moment....
 ## If a site is defined in the configuration look for
-## an the user config object in the namespace EnsEMBL::Web::UserConfig::{$site}::{$type}
-## Otherwise fall back on the module EnsEMBL::Web::UserConfig::{$type}
+## an the user config object in the namespace EnsEMBL::Web::ImageConfig::{$site}::{$type}
+## Otherwise fall back on the module EnsEMBL::Web::ImageConfig::{$type}
   $type = 'contigviewbottom' if $type eq 'contigview'; # since there is no contigview config use contigviewbottom
 
   if( $self->get_site ) {
-    $classname = "EnsEMBL::Web::UserConfig::".$self->get_site."::$type";
+    $classname = "EnsEMBL::Web::ImageConfig::".$self->get_site."::$type";
     eval "require $classname";
   }
   if($@ || !$self->get_site ) {
     my $classname_old = $classname;
-    $classname = "EnsEMBL::Web::UserConfig::$type";
+    $classname = "EnsEMBL::Web::ImageConfig::$type";
     eval "require $classname";
 ## If the module can't be required throw and error and return undef;
     if($@) {
-      warn(qq(UserConfigAdaptor failed to require $classname_old OR $classname: $@\n));
+      warn(qq(ImageConfigAdaptor failed to require $classname_old OR $classname: $@\n));
       return undef;
     }
   }
@@ -608,7 +608,7 @@ sub getUserConfig {
   $classname->import();
   $self->colourmap;
   my $user_config = eval { $classname->new( $self, @_ ); };
-  if( $@ || !$user_config ) { warn(qq(UserConfigAdaptor failed to create new $classname: $@\n)); }
+  if( $@ || !$user_config ) { warn(qq(ImageConfigAdaptor failed to create new $classname: $@\n)); }
 ## Return the respectiv config.
   return $user_config;
 }
