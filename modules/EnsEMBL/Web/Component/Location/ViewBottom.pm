@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
-use CGI qw(escapeHTML);
+use Time::HiRes qw(time);
 
 sub _init {
   my $self = shift;
@@ -30,19 +30,16 @@ sub content {
 
   my $slice = $object->slice;
   my $length = $slice->end - $slice->start + 1;
-
+  my $T = time;
   my $wuc = $object->user_config_hash( 'contigviewbottom' );
-     $wuc->container_width( $length );
-     $wuc->set_width(       $image_width );
-     $wuc->{'slice_number'} = '1|3';
+  $T = sprintf "%0.3f", time - $T;
+  $wuc->tree->dump("View Bottom configuration [ time to generate $T sec ]", '([[caption]])');
 
-  ## Add user track to config
-  $wuc->{'general'}->{'contigviewbottom'}{'userdata'} = {      
-      'on'  => "on",
-      'pos' => '6',
-      'col' => 'red',
-      'str' => 'b',
-  };
+  $wuc->set_parameters({
+    'container_width' => $length,
+    'image_width'     => $image_width || 800, ## hack at the moment....
+    'slice_number'    => '1|3',
+  });
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->{'panel_number'} = 'bottom';
