@@ -20,7 +20,7 @@ sub init {
     'bgcolor'       => 'background1',
     'bgcolour1'     => 'background2',
     'bgcolour2'     => 'background3',
-  }):
+  });
 
   $self->create_menus(
     'decorations' => 'Chromosome',
@@ -31,10 +31,16 @@ sub init {
 
 ## Now we have a number of tracks which we have to manually add...
   $self->add_tracks( 'decorations', 
-    [ 'ideogram',           'Ideogram',            'ideogram', { } ],
-    [ 'assembly_exception', 'Assembly exceptions', 'assembly_exception', {} ],
+    [ 'ideogram',           'Ideogram',            'ideogram', {
+      'on' => 'on',
+      'strand'=>'r',
+      'colourset' => 'ideogram'
+    } ],
+    [ 'assembly_exception', 'Assembly exceptions', 'assembly_exception', { 'on' => 'on' } ],
+    [ 'draggable', '', 'draggable', { 'on' => 'on' } ]
   );
 
-  $self->configurable( 0 );
+  $self->tree->dump("Chromosome configuration", '([[caption]])');
+
 }
 1;
