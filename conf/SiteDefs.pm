@@ -169,16 +169,25 @@ $ENSEMBL_MAIL_COMMAND   = '/usr/bin/Mail -s';               # Mail command
 $ENSEMBL_MAIL_ERRORS    = '0';                              # Do we want to email errors?
 $ENSEMBL_ERRORS_TO      = 'webmaster&#064;mydomain.org';    # ...and to whom?
 
-##  64 <- Time stamped logs...
-##  32 <- Enable eprof error diagnostics in web scripts
-##  16 <- Apache handler long process errors
-##   8 <- Apache handler error messages... 
-##   4 <- SpeciesDef autohandler errors...
-##   2 <- Drawing code errors...
-##   1 <- General error messages
+## 1024 <- Debug/timing div - at top left of webpages...
+##   64 <- Time stamped logs...
+##   32 <- Enable eprof error diagnostics in web scripts
+##   16 <- Apache handler long process errors
+##    8 <- Apache handler error messages... 
+##    4 <- SpeciesDef autohandler errors...
+##    2 <- Drawing code errors...
+##    1 <- General error messages
 
 $ENSEMBL_DEBUG_FLAGS = 1;
 
+our $ENSEMBL_DEBUG_JAVASCRIPT_DEBUG = 1024;
+our $ENSEMBL_DEBUG_TIMESTAMPED_LOGS =   64;
+our $ENSEMBL_DEBUG_PERL_PROFILER    =   32;
+our $ENSEMBL_DEBUG_LONG_PROCESS     =   16;
+our $ENSEMBL_DEBUG_HANDLER_ERRORS   =    8;
+our $ENSEMBL_DEBUG_SD_AUTOLOADER    =    4;
+our $ENSEMBL_DEBUG_DRAWING_CODE     =    2;
+our $ENSEMBL_DEBUG_GENRAL_ERRORS    =    1;
 #####################
 # Apache files
 $ENSEMBL_PIDFILE = undef;
