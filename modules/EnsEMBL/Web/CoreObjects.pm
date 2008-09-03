@@ -18,7 +18,9 @@ sub new {
     'parameters' => {}
   };
   bless $self, $class;
+  warn "make me objects...";
   $self->_generate_objects;
+  warn "objects made...";
   return $self;
 }
 
@@ -131,59 +133,51 @@ sub _generate_objects {
   my $self = shift;
 
   return if $ENV{'ENSEMBL_SPECIES'} eq 'common';
-  my $db = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
-  my $db_adaptor = $self->database($db);
-  my $vardb_adaptor = $self->database('variation');
-  if( $self->param('variation')) {
-    $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('variation'), $self->param('source')));
-    unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
-  }  elsif( $self->param('v')) {
+  warn "getting db...";
+
+#  if( $self->param('variation')) {
+#    $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('variation'), $self->param('source')));
+#    unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
+  if( $self->param('v')) {
+    my $vardb = $self->{'parameters'}{'vdb'} = $self->param('vdb') || 'variation';
+    my $vardb_adaptor = $self->database('variation');
     $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('v'), $self->param('source')));
     unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
   }  
   if( $self->param('t') ) {
-    $self->transcript( $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('t')) );
+    my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
+    my $tdb_adaptor = $self->database($tdb);
+    $self->transcript( $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('t')) );
     $self->_get_gene_location_from_transcript;
   }
   if( !$self->transcript && $self->param('g') ) {
-    $self->gene(       $db_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('g')) );
-    $self->_get_location_transcript_from_gene;
+    warn "getting db adaptor...";
+    my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
+    my $tdb_adaptor = $self->database($tdb);
+    warn "getting gene...";
+    $self->gene(       $tdb_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('g')) );
+    warn "getting location from gene";
+    $self->_get_location_from_gene;
+    warn "got location from gene";
   }
   if( $self->param('r') ) {
     my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
-    if ($self->variation) {$db_adaptor= $self->database('core');}
+    my $db_adaptor= $self->database('core');
     $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
   }
-  $self->_get_gene_transcript_from_location unless $self->transcript;
-  $self->{'parameters'}{'r'} = $self->location->seq_region_name.':'.$self->location->start.'-'.$self->location->end
-    if $self->location;
+  warn "storing objects...";
+  $self->{'parameters'}{'r'} = $self->location->seq_region_name.':'.$self->location->start.'-'.$self->location->end if $self->location;
   $self->{'parameters'}{'t'} = $self->transcript->stable_id if $self->transcript;
   $self->{'parameters'}{'g'} = $self->gene->stable_id       if $self->gene;
-  $self->{'parameters'}{'v'} = $self->variation->name if $self->variation;
+  $self->{'parameters'}{'v'} = $self->variation->name       if $self->variation;
 }
 
-sub _get_gene_location_from_transcript {
-  my $self = shift;
-  return unless $self->transcript;
-  $self->gene(
-    $self->transcript->adaptor->db->get_GeneAdaptor->fetch_by_transcript_stable_id(
-      $self->transcript->stable_id
-    )
-  );
-  my $slice = $self->transcript->feature_Slice;
-  $slice = $slice->invert() if $slice->strand < 0;
-  $self->location( $slice );
-}
-
-sub _get_location_transcript_from_gene {
+sub _get_location_from_gene {
   my( $self ) = @_;
   return unless $self->gene;
-## Replace this with canonical transcript calculation!!
-#  $self->transcript(
-#    sort { $a->stable_id cmp $b->stable_id } @{$self->gene->get_all_Transcripts} );
-  my $slice = $self->gene->feature_Slice;
 
-  $slice = $slice->invert() if $slice->strand < 0;
+  my $slice = $self->gene->feature_Slice;
+     $slice = $slice->invert() if $slice->strand < 0;
   $self->location( $slice );
 }
 
