@@ -45,14 +45,16 @@ sub init {
   
   $self->load_tracks();
 
-  $self->add_track( 'other',    'scalebar',  'Scale bar',           'scalebar',         { 'on' => 'on'  } );
-  $self->add_track( 'other',    'ruler',     'Ruler',               'ruler',            { 'on' => 'on'  } );
-  $self->add_track( 'other',    'draggable', 'Drag region',         'draggable',        { 'on' => 'on', 'menu' => 'no' } );
+  $self->add_tracks( 'other',
+    [ 'scalebar',  '', 'scalebar',  { 'on' => 'on'  }],
+    [ 'ruler',     '', 'ruler',     { 'on' => 'on'  }],
+    [ 'draggable', '', 'draggable', { 'on' => 'on', 'menu' => 'no' }]
+  );
   
-  $self->set_options({
-    'opt_halfheight'     => { 'caption' => 'Half height glyphs',  'values' => {qw(1 Yes 0 No)} },
-    'opt_register_lines' => { 'caption' => 'Show register lines', 'values' => {qw(1 Yes 0 No)} }
-  });
+  $self->add_options(
+    ['opt_halfheight',     'Half height glyphs',  {qw(1 Yes 0 No)} ],
+    ['opt_register_lines', 'Show register lines', {qw(1 Yes 0 No)} ]
+  );
 }
 
 1;
