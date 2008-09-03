@@ -11,8 +11,7 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Root;
 use Sanger::Graphics::Glyph::Space;
 
-use vars qw(@ISA);
-@ISA = qw( Sanger::Graphics::Root );
+use base qw( Sanger::Graphics::Root );
 
 #########
 # constructor
@@ -61,7 +60,7 @@ sub _init {
 # Gets the number of Base Pairs per pixel
 sub basepairs_per_pixel {
     my ($self) = @_;
-    my $pixels = $self->{'config'}->get( '_settings' ,'width' );
+    my $pixels = $self->{'config'}->get_parameter( 'width' );
     return (defined $pixels && $pixels) ? $self->{'container'}->length() / $pixels : undef; 
 }    
 

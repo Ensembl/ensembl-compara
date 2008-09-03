@@ -26,20 +26,20 @@ sub _init {
     my $black          = 'black';
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? ";highlight=$highlights" : '';
-    my $REGISTER_LINE  = $Config->get('_settings','opt_lines');
+    my $REGISTER_LINE  = $Config->get_parameter( 'opt_lines');
     my $feature_colour = $Config->get('scalebar', 'col');
     my $subdivs        = $Config->get('scalebar', 'subdivs');
     my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
     my $navigation     = $Config->get('scalebar', 'navigation')    || "off";
     my $abbrev         = $Config->get('scalebar', 'abbrev');
-    my $clone_based    = $Config->get('_settings','clone_based') && ($Config->get('_settings','clone_based') eq 'yes');
+    my $clone_based    = $Config->get_parameter( 'clone_based') && ($Config->get_parameter( 'clone_based') eq 'yes');
     my $param_string   = "";
-    $param_string      = $Config->get('_settings', 'clone') if($clone_based);
+    $param_string      = $Config->get_parameter(  'clone') if($clone_based);
     $param_string      = "chr=" . $Container->chr_name() if($Container->can("chr_name"));
-    my $main_width     = $Config->get('_settings', 'main_vc_width');
+    my $main_width     = $Config->get_parameter(  'main_vc_width');
     my $len            = $Container->length();
     my $global_start   = $Container->start() if($Container->can("start"));
-    $global_start      = $Config->get('_settings','clone_start') if($clone_based);
+    $global_start      = $Config->get_parameter( 'clone_start') if($clone_based);
     $global_start      = $Container->chr_start() if($Container->can("chr_start"));
     my $global_end     = $global_start + $len - 1;
 

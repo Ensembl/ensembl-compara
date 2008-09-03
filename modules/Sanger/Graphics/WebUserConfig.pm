@@ -115,6 +115,15 @@ sub set {
   $self->{'user'}->{$script}->{$subsection}->{$key} = $value;
 }
 
+sub get_parameter {
+  my( $self, $key ) = @_;
+  return $self->get( '_settings', $key );
+}
+sub set_parameter {
+  my( $self, $key, $value ) = @_;
+  return $self->set( '_settings', $key, $value );
+}
+
 sub get {
   my ($self, $subsection, $key) = @_;
   my $script = $self->script();
@@ -143,7 +152,7 @@ sub colourmap {
 sub image_width {
   my ($self, $script) = @_;
   $script ||= $self->{'_script'};
-  return $self->get('_settings','width');
+  return $self->get_parameter( 'width');
 }
 
 sub image_height {
@@ -155,7 +164,7 @@ sub image_height {
 sub bgcolor {
   my ($self, $script) = @_;
   $script ||= $self->{'_script'};
-  return $self->get('_settings','bgcolor');
+  return $self->get_parameter( 'bgcolor');
 }
 
 sub bgcolour {

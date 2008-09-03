@@ -52,14 +52,14 @@ sub new {
   my $class = shift;
   my $self = $class->_init( @_ ); 
   my $T = $self->{'config'};
-  my $button_width = $T->get('_settings','button_width')   || 7;
-  my $show_buttons = $T->get('_settings','show_buttons')   || 'no' ;
-  my $show_labels  = $T->get('_settings','show_labels')    || 'yes';
-  my $label_width  = $T->get('_settings','label_width')    || 100;
-  my $margin       = $T->get('_settings','margin')         || 5;
-  my $trackspacing = $T->get('_settings','spacing')        || 2;
-  my $inter_space  = defined($T->get('_settings','intercontainer')) ? $T->get('_settings','intercontainer') : $margin * 2;
-  my $image_width  = $T->get('_settings','width')          || 700;
+  my $button_width = $T->get_parameter('button_width')   || 7;
+  my $show_buttons = $T->get_parameter('show_buttons')   || 'no' ;
+  my $show_labels  = $T->get_parameter('show_labels')    || 'yes';
+  my $label_width  = $T->get_parameter('label_width')    || 100;
+  my $margin       = $T->get_parameter('margin')         || 5;
+  my $trackspacing = $T->get_parameter('spacing')        || 2;
+  my $inter_space  = defined($T->get_parameter('intercontainer')) ? $T->get_parameter('intercontainer') : $margin * 2;
+  my $image_width  = $T->get_parameter('width')          || 700;
   my $label_start  = $margin      +
                      ( $show_buttons eq 'yes' ? $button_width + $margin : 0 );
   my $panel_start  = $label_start + 
@@ -175,7 +175,7 @@ sub new {
 
    my $x_scale = $panel_width /( ($Config->container_width()|| $Container->length() || $panel_width));
   
-  if($show_buttons eq 'yes' && $Config->get('_settings','URL') ) {
+  if($show_buttons eq 'yes' && $Config->get_parameter('URL') ) {
   for my $glyphset (@glyphsets) {
     next unless defined $glyphset->bumped();
     my $NAME = $glyphset->check();
@@ -228,8 +228,8 @@ sub new {
 
     ## pull out alternating background colours for this script
     my $white  = $Config->bgcolour() || 'white';
-    my $bgcolours = [ $Config->get('_settings', 'bgcolour1') || $white,
-                      $Config->get('_settings', 'bgcolour2') || $white ];
+    my $bgcolours = [ $Config->get_parameter( 'bgcolour1') || $white,
+                      $Config->get_parameter( 'bgcolour2') || $white ];
 
     my $bgcolour_flag;
     $bgcolour_flag = 1 if($bgcolours->[0] ne $bgcolours->[1]);

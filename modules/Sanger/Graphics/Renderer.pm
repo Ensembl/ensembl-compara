@@ -59,8 +59,8 @@ sub new {
 	      'colourmap' => $config->colourmap(),
 	      'config'    => $config,
 	      'extra_spacing' => $extra_spacing,
-	      'spacing'   => $config->get('_settings','spacing')||2,
-	      'margin'    => $config->get('_settings','margin')||5,
+	      'spacing'   => $config->get_parameter( 'spacing')||2,
+	      'margin'    => $config->get_parameter( 'margin')||5,
 	     };
   
   bless($self, $class);

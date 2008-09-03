@@ -13,6 +13,7 @@ use warnings;
 no warnings 'uninitialized';
 use base qw(Sanger::Graphics::Renderer);
 use Sanger::Graphics::JSTools;
+use CGI qw(escapeHTML);
 
 our $VERSION = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
 
@@ -24,9 +25,9 @@ sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
   $self->canvas(q());
 
-  $self->{'show_zmenus'}     = defined( $config->get('_settings','opt_zmenus') ) ? $config->get('_settings','opt_zmenus') : 1;
-  $self->{'zmenu_zclick'}    = $config->get('_settings','opt_zclick');
-  $self->{'zmenu_behaviour'} = $config->get('_settings','zmenu_behaviour') || 'onmouseover';
+  $self->{'show_zmenus'}     = defined( $config->get_parameter('opt_zmenus') ) ? $config->get_parameter('opt_zmenus') : 1;
+  $self->{'zmenu_zclick'}    = $config->get_parameter('opt_zclick');
+  $self->{'zmenu_behaviour'} = $config->get_parameter('zmenu_behaviour') || 'onmouseover';
   return;
 }
 
@@ -147,8 +148,9 @@ sub _getHref {
     my $X = $glyph->$_;
     if(defined $X) {
       $actions{$_} = $X;
-      if($_ eq 'alt') {
-	$actions{'title'} = $X;
+
+      if($_ eq 'alt' || $_ eq 'title') {
+	$actions{'title'} = CGI::escapeHTML($X);
       }
     }
   }
