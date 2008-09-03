@@ -552,11 +552,12 @@ sub get_samples {
     }
     return sort @pops;
   }
-  else { #get configured samples
-    my %configured_pops = (%default_pops, %db_pops);
-    my @pops;
-    foreach my $sample (sort $script_config->options) {
-      next unless $sample =~ s/opt_pop_//;
+  else { #get configured samples 
+    my %configured_pops = (%default_pops, %db_pops); 
+    my @pops; warn $script_config;
+    foreach my $k (keys %$script_config){ warn $k;}
+    foreach my $sample (sort $script_config->options) { warn $sample;
+      next unless $sample =~ s/opt_pop_//; 
       next unless $script_config->get("opt_pop_$sample") eq 'on';
       push @pops, $sample if $configured_pops{$sample};
     }
@@ -1410,6 +1411,41 @@ sub date_format {
   return $res;
 }
 
+# Calls for IDHistoryView
+
+sub get_archive_object {
+  my $self = shift;
+  my $id = $self->stable_id;
+  my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
+  my $archive_object = $archive_adaptor->fetch_by_stable_id($id);
+
+ return $archive_object;
+}
+
+sub get_latest_incarnation {
+  my $self = shift;
+  return $self->Obj->get_latest_incarnation;
+}
+
+=head2 history
+
+ Arg1        : data object
+ Description : gets the archive id history tree based around this ID
+ Return type : listref of Bio::EnsEMBL::ArchiveStableId
+               As every ArchiveStableId knows about it's successors, this is
+                a linked tree.
+
+=cut
+
+sub history {
+  my $self = shift;
+
+  my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
+  return unless $archive_adaptor;
+
+  my $history = $archive_adaptor->fetch_history_tree_by_stable_id($self->stable_id);
+  return $history;
+}
 
 #########################################################################
 #alignview support features - some ported from schema49 AlignmentFactory#
