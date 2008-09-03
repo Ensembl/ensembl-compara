@@ -204,7 +204,8 @@ sub populate_tree {
 
   my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
   $var_menu->append($self->create_node( 'Population',  'Population comparison',
-  #  [qw(snps      EnsEMBL::Web::Component::Transcript::SNPView)],
+   # [qw(snps      EnsEMBL::Web::Component::Transcript::TranscriptSNPImage
+   #     snptable      EnsEMBL::Web::Component::Transcript::TranscriptSNPTable)],
     [qw(snps       EnsEMBL::Web::Component::Transcript::UnderConstruction)], 
     { 'availability' => 'database:variation' }
   ));
@@ -219,10 +220,12 @@ sub populate_tree {
     { 'availability' => 1, 'concise' => 'Protein sequence' }
   ));
 
-  $self->create_node( 'History', "ID history",
-   # [qw(history EnsEMBL::Web::Component::Transcript::ID)],
-    [qw(history     EnsEMBL::Web::Component::Transcript::UnderConstruction)],
-    { 'availability' => 1}
+  $self->create_node( 'idhistory', "ID history",
+    [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
+        associated  EnsEMBL::Web::Component::Gene::HistoryLinked
+        map         EnsEMBL::Web::Component::Gene::HistoryMap)],
+        { 'availability' => 1, 'concise' => 'History' }
+
   );
 
   $self->create_node( 'Domain', "Interpro domains  ([[counts::domains]])",
