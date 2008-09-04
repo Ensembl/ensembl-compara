@@ -26,7 +26,7 @@ sub content {
     my %header = (
       'faq'       =>  'Frequently Asked Questions',
       'glossary'  =>  'Glossary',
-      'movie'     =>  'Tutorials',
+      'movie'     =>  'Video Tutorials',
       'view'      =>  'Page Help',
     );
 
