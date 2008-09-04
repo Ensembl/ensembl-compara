@@ -17,4 +17,29 @@ sub features {
   return \@repeats;
 }
 
+sub colour {
+  my( $self, $f ) = @_;
+  return $self->{'feature_colour'} ||= $self->my_colour( 'repeat' );
+}
+
+sub image_label {
+  my( $self, $f ) = @_;
+  return '', 'invisible';
+}
+
+sub title {
+  my( $self, $f ) = @_;
+  return sprintf "%s; Type: %s; Analysis: %s",
+    $f->repeat_consensus()->name(),
+    $f->repeat_consensus->repeat_type,
+    $f->analysis->logic_name;
+}
+
+sub href {
+  return;
+}
+
+sub tag {
+  return;
+}
 1 ;

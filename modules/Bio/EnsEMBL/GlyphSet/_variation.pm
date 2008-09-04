@@ -9,8 +9,7 @@ sub my_label { return "SNPs"; }
 
 sub features {
   my ($self) = @_;
-  my $Config = $self->{'config'};
-  my $max_length     = $Config->my_config( 'threshold' )  || 1000;
+  my $max_length    = $self->my_config( 'threshold' )  || 1000;
   my $slice_length  = $self->{'container'}->length;
   if($slice_length > $max_length*1010) {
     $self->errorTrack('Variation features not displayed for more than '.$max_length.'Kb');

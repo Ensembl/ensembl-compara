@@ -8,12 +8,14 @@ sub _das_type {  return 'simple'; }
 sub features       { 
   my $self = shift;
   my $call = 'get_all_'.( $self->my_config( 'type' ) || 'SimpleFeatures' ); 
-  return $self->{'container'}->$call( $self->my_config( 'code' ), $self->my_config( 'threshold' ) );
+  my @F = map { @{$self->{'container'}->$call( $_ )||[]} }
+          @{$self->my_config( 'logicnames' )||[]};
+  return \@F;
 }
 
 sub colour {
   my( $self, $f ) = @_;
-  return $self->my_colour( $f->analysis->logic_name );
+  return $self->my_colour(lc( $f->analysis->logic_name ));
 }
 
 sub feature_label {
@@ -22,7 +24,7 @@ sub feature_label {
 
 sub title {
   my( $self, $f ) = @_;
-  return $f->analysis->name.': '.$f->display_label.'; Score: '.$f->score;
+  return $f->analysis->logic_name.': '.$f->display_label.'; Score: '.$f->score;
 }
 
 sub href {

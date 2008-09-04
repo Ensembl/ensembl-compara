@@ -222,7 +222,7 @@ sub new {
       my $NAME = $glyphset->{'my_config'}->key;
       my $ref_glyphset = ref($glyphset);
       eval {
-        $glyphset->__init();
+        $glyphset->_init();
       };
       ## don't waste any more time on this row if there's nothing in it
       if( $@ || scalar @{$glyphset->{'glyphs'} } ==0 ) {
@@ -252,7 +252,8 @@ sub new {
         unshift @{$glyphset->{'glyphs'}}, $background;
       }
       ## set up the "bumping button" label for this strip
-      if(defined $glyphset->label() && $show_labels eq 'yes' ) {
+      if( $glyphset->label() && $show_labels eq 'yes' ) {
+	warn "... ",ref($glyphset );
         my $gh = $glyphset->label->height || $Config->texthelper->height($glyphset->label->font());
         $glyphset->label->y( ( ($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy );
         $glyphset->label->height($gh);

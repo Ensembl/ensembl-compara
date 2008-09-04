@@ -72,14 +72,12 @@ sub _init {
   my ($self) = @_;
   my $slice   = $self->{'container'};
   $self->_threshold_update();
-  my $Config          = $self->{'config'};
   my $strand          = $self->strand();
   my $strand_flag     = $self->my_config( 'strand' );
   my($FONT,$FONTSIZE) = $self->get_font_details( $self->my_config('font') || 'innertext' );
   my $BUMP_WIDTH      = $self->my_config( 'bump_width');
   $BUMP_WIDTH         = 1 unless defined $BUMP_WIDTH;
   
-  warn "INITIALIZING - ",$self->{my_config}->key;
   ## If only displaying on one strand skip IF not on right strand....
   return if $strand_flag eq 'r' && $strand != -1;
   return if $strand_flag eq 'f' && $strand != 1;
@@ -98,7 +96,6 @@ sub _init {
 
   ## Decide whether we are going to include navigation (independent of switch) 
   $navigation = ($navigation eq 'on') && ($slice_length <= $max_length_nav *1010);
-    
 
   ## Set up bumping bitmap    
 
@@ -131,10 +128,12 @@ sub _init {
   my $optimizable = $self->my_config('optimizable') && $dep<1 ; #at the moment can only optimize repeats...
   
   my $features = $self->features(); 
+
   unless(ref($features)eq'ARRAY') {
     # warn( ref($self), ' features not array ref ',ref($features) );
     return; 
   }
+
   my $aggregate = '';
   
   if( $aggregate ) {
@@ -169,7 +168,7 @@ sub _init {
     $flag = 0;
     my $img_start = $start;
     my $img_end   = $end;
-    my( $label,      $style ) = $self->image_label( $f, $tw );
+    my( $label,      $style ) = $self->feature_label( $f, $tw );
     my( $txt, $part, $W, $H ) = $self->get_text_width( 0, $label, '', 'font' => $FONT, 'ptsize' => $FONTSIZE );
     my $bp_textwidth = $W / $pix_per_bp;
     

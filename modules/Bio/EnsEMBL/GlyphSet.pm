@@ -91,9 +91,10 @@ sub get_font_details {
 
 sub init_label {
   my $self = shift;
-  return if defined $self->{'config'}->{'_no_label'};
+  return $self->label(undef) if defined $self->{'config'}->{'_no_label'};
   
   my $text = $self->my_config( 'caption' );
+  return $self->label(undef) unless $text;
   my $name = $self->my_config( 'name'    );
   my $desc = $self->my_config( 'description' );
   
@@ -276,6 +277,7 @@ sub bumpbutton {
   $self->{'bumpbutton'} = shift if @_;
   return $self->{'bumpbutton'};
 }
+
 sub label2 {
   my ($self, $val) = @_;
   $self->{'label2'} = $val if(defined $val);
@@ -678,7 +680,7 @@ sub _threshold_update {
 
   my $self = shift;
   my $thresholds = $self->my_config( 'threshold_array' );
-  next unless $thresholds;
+  return unless $thresholds;
   my $container_length = $self->{'container'}->length();
   foreach my $th ( sort { $a<=>$b} keys %$thresholds ) {
     if( $container_length > $th * 1000 ) {

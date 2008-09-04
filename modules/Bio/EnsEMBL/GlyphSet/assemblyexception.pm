@@ -1,4 +1,5 @@
 package Bio::EnsEMBL::GlyphSet::assemblyexception;
+
 use strict;
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
@@ -6,6 +7,8 @@ sub squish {1;}
 
 sub features {
   my ($self) = @_;
+  warn "THIS IS AN ASSEMBLY EXCEPTION CALL...";
+  warn @{ $self->{'container'}->get_all_AssemblyExceptionFeatures()||[] };
   return $self->{'container'}->get_all_AssemblyExceptionFeatures();
 }
 
@@ -20,7 +23,7 @@ sub feature_label {
   if( $self->{'config'}->get_parameter( 'simplehap') ) {
     return $self->{'strand'} > 0 ? undef : ( $f->{'alternate_slice'}->seq_region_name, 'under' ) ;
   }
-  my $c2 =  $f->{'alternate_slice'}->seq_region_name;
+  my $c2 = $f->{'alternate_slice'}->seq_region_name;
   my $s2 = $f->{'alternate_slice'}->start;
   my $e2 = $f->{'alternate_slice'}->end;
   my $o2 = $f->{'alternate_slice'}->strand;
@@ -54,7 +57,7 @@ sub href {
   my $e2 = $f->{'alternate_slice'}->end;
   my $o2 = $f->{'alternate_slice'}->strand;
   my $script = $ENV{'ENSEMBL_SCRIPT'} eq 'multicontigview' ? 'contigview' : $ENV{'ENSEMBL_SCRIPT'};
-  return $this->_url({
+  return $self->_url({
     'action' => 'View',
     'r'      => "$c2:$s2-$e2"
   });
