@@ -38,7 +38,7 @@ sub content {
 
   my $image    = $object->new_karyotype_image();
 
-  my $pointers;
+  my $pointers = [];
   my %pointer_defaults = (
         'Gene'        => ['blue', 'lharrow'],
         'OligoProbe'  => ['red', 'rharrow'],
