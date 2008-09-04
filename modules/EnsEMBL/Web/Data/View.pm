@@ -16,7 +16,7 @@ __PACKAGE__->add_fields(
   content => 'text',
 );
 
-__PACKAGE__->_type('component');
+__PACKAGE__->_type('view');
 
 __PACKAGE__->add_queriable_fields(
   keyword     => 'string',
