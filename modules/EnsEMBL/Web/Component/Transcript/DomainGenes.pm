@@ -51,11 +51,7 @@ sub content {
         'start' => $gene->seq_region_start,
         'end'   => $gene->seq_region_end,
         'col'   => $colour,
-        'zmenu' => {
-          'caption'               => 'Genes',
-          "00:$stable_id"         => "/$species/Gene/Summary?g=$stable_id",
-          '01:Jump to contigview' => "/$species/Location/View?g=$stable_id"
-        }
+        'href'  => $object->url("/$species/Gene/Summary?g=$stable_id"),
       };
       if(exists $high{$chr}) {
         push @{$high{$chr}}, $point;
@@ -63,8 +59,9 @@ sub content {
         $high{$chr} = [ $point ];
       }
     }
+    $image->set_button('drag');
     $image->karyotype( $object, [\%high] );
-    $html .= $image->render;
+    $html .= '<div style="margin-top:10px">'.$image->render.'</div>';
   }
 
   ## Now do table
