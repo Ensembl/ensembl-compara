@@ -11,8 +11,14 @@ sub new {
 sub render { 
   my $self = shift;
   my $value = $self->value || '&nbsp;';
-  return sprintf(qq(<label for="%s" class="label-preview">%s</label> <div class="preview">%s</div>), 
-    $self->name, $self->label, $value); 
+  return sprintf(qq(
+    <dl>
+      <dt><label for="%s">%s: </label></dt>
+      <dd><div id="%s">%s</div></dd>
+      </dt>
+    </dl>),
+    $self->name, $self->label, $self->name, $value
+  ); 
 }
 
 1;
