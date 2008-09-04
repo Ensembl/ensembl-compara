@@ -11,14 +11,10 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   return shift->SUPER::new(
-    '_home_url' => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_ROOT || '/',
-    '_img_url'  => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_IMAGE_ROOT || '/i/',
     '_default'  => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEFAULT_SEARCHCODE || 'ensembl',
   );
 }
 
-sub img_url  { return $_[0]{'_img_url'};   }
-sub home_url { return $_[0]{'_home_url'};  }
 sub default_search_code { return $_[0]{'_default'}; }
 sub search_url { return $_[0]->home_url.$EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_species.'/Search'; }
 
