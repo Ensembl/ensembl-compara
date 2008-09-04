@@ -25,19 +25,26 @@ sub content {
      $gene_slice = $gene_slice->invert if $gene->seq_region_strand < 0;
     ## Get the web_user_config
   my $wuc        = $gene->user_config_hash( 'altsplice' );
+     $wuc->set_parameters({
+       'container_width'   => $gene_slice->length,
+       'image_width',      => $self->image_width || 800,
+       'slice_number',     => '1|1',
+     });
+
     ## We now need to select the correct track to turn on....
     ## We need to do the turn on turn off for the checkboxes here!!
-  foreach( $trans[0]->default_track_by_gene ) {
-    $wuc->set( $_,'on','on');
-  }
-  # $wuc->{'_no_label'}   = 'true';
-  $wuc->{'_add_labels'} = 'true';
-  $wuc->set( '_settings', 'width',  $gene->param('image_width') );
-  $wuc->{'slice_number'} = '1|1';
+  
+  my $logic_name = $gene->Obj->analysis->logic_name;
+  my $db         = $gene->get_db();
+  my $db_key     = $db eq 'core' ? 'ENSEMBL_DB' : 'ENSEMBL_'.uc($db);
+  my $key        = $gene->species_defs->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
+  my $track_to_turn_on = 'transcript_'.$db.'_'.$key;
+
+  $wuc->get_node( $track_to_turn_on )->set('on','on');
+
 
   my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
-      $image->imagemap           = 'yes';
-      $image->set_extra( $gene );
+      $image->imagemap         = 'yes';
       $image->{'panel_number'} = 'top';
       $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
