@@ -60,6 +60,7 @@ sub set_extra {
                                                                                 
 sub karyotype {
   my( $self, $object, $highs, $config ) = @_;
+  my @highlights = ref($highs) eq 'ARRAY' ? @$highs : ($highs);
   
   if( $self->cacheable eq 'yes' ) {
     my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
@@ -76,8 +77,7 @@ sub karyotype {
     #$wuc->container_width( $object->species_defs->MAX_CHR_LENGTH );
     $wuc->container_width( 300000000 );
     my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
-
-	$wuc->{'_rows'} = $object->param('rows') || ceil($total_chrs / 13 );
+	  $wuc->{'_rows'} = $object->param('rows') || ceil($total_chrs / 13 );
   } 
   else {
     $chr_name = $object->seq_region_name;
@@ -88,20 +88,20 @@ sub karyotype {
   if ($object->param('aggregate_colour')) {
     $wuc->{'_aggregate_colour'} = $object->param('aggregate_colour');
   }
-
   
   # get some adaptors for chromosome data
   my( $sa, $ka, $da);
+  my $species = $object->param('species') || undef;
   eval {
-    $sa = $object->database('core')->get_SliceAdaptor,
-    $ka = $object->database('core')->get_KaryotypeBandAdaptor,
-    $da = $object->database('core')->get_DensityFeatureAdaptor
+    $sa = $object->database('core', $species)->get_SliceAdaptor,
+    $ka = $object->database('core', $species)->get_KaryotypeBandAdaptor,
+    $da = $object->database('core', $species)->get_DensityFeatureAdaptor
   };
   return $@ if $@;
 
   # create the container object and add it to the image
   $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer(
-    { 'sa'=>$sa, 'ka'=>$ka, 'da'=>$da, 'chr'=>$chr_name }, $wuc, $highs
+    { 'sa'=>$sa, 'ka'=>$ka, 'da'=>$da, 'chr'=>$chr_name }, $wuc, \@highlights
   );
   return undef; ## successful...
 }
@@ -277,7 +277,7 @@ sub add_pointers {
     }
   }
   else { # get features for this object
-    $data = $object->retrieve_features($extra->{'features'}) unless $ftype eq 'Xref';
+    $data = $object->retrieve_features($extra->{'features'}) unless $extra->{'feature_type'} eq 'Xref';
     foreach my $set (@$data) {
       foreach my $row (
         map { $_->[0] }
