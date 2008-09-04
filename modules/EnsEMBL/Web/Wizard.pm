@@ -166,7 +166,7 @@ sub render_current_node {
     $html .= "<h2>".$node->title."</h2>\n";
 
     if ($object->param('error_message')) {
-      $html .= '<div class="notice">'.$object->param('error_message').'</div>';
+      $html .= '<div class="alert-box">'.$object->param('error_message').'</div>';
     }
 
     $html .= $node->text_above."\n" if $node->text_above;
