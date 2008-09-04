@@ -29,7 +29,7 @@ sub content {
     $form->add_element(
       'type'  => 'Hidden',
       'name'  => 'otherspecies',
-      'value' => $object->param('otherspecies'),
+      'value' => $object->param('otherspecies') || $self->default_otherspecies,
     );
     $label = 'Jump to '.$object->species_defs->SPECIES_COMMON_NAME.' chromosome';
   }
