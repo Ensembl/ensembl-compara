@@ -82,6 +82,15 @@ sub align_species {
     return $self->Obj->{'align_species'};
 }
 
+
+sub coord_systems {
+  ## Needed by Location/Karyotype to display DnaAlignFeatures
+  my $self = shift;
+  my ($exemplar) = keys(%{$self->Obj});
+#warn $self->Obj->{$exemplar}->[0];
+  return [ map { $_->name } @{ $self->database('core',$self->real_species)->get_CoordSystemAdaptor()->fetch_all() } ];
+}
+
  
 sub misc_set_code { 
   my $self = shift;
@@ -250,7 +259,8 @@ sub retrieve_DnaAlignFeature {
       };
     }
   }
-  if ($self->feature_mapped) {
+  my $feature_mapped = 1; ## TODO - replace with $self->feature_mapped call once unmapped feature display is added
+  if ($feature_mapped) {
     return $results, [ 'Alignment length', 'Rel ori', '%id', 'score', 'p-value' ];
   }
   else {
