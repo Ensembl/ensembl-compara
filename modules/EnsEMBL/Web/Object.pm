@@ -9,13 +9,12 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Proxiable;
+use base qw(EnsEMBL::Web::Proxiable);
 use EnsEMBL::Web::Document::Image;
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
 use CGI qw(escape);
 
-our @ISA =qw(EnsEMBL::Web::Proxiable);
  
 sub _url {
   my $self = shift;
