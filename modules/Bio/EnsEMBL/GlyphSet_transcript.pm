@@ -203,8 +203,8 @@ sub expanded_init {
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my $strand_flag   = $self->my_config('strand') || 'b';
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
-  my $target        = $Config->{'_draw_single_Transcript'};
-  my $target_gene   = $Config->{'geneid'};
+  my $target        = $self->get_parameter('single_Transcript');
+  my $target_gene   = $self->get_parameter('single_Gene'      );
     
   my $y             = 0;
   my $h             = $target ? 30 : 8;   #Single transcript mode - set height to 30 - width to 8!
@@ -241,9 +241,9 @@ sub expanded_init {
         $tsid = $long_trans->stable_id;
         my @long_trans;
         foreach my $gene (@{$alt_alleles}) {
-            my $vtranscripts = $gene->get_all_Transcripts;
-            my @sorted_trans = sort {$a->length <=> $b->length} @{$vtranscripts};
-            push @long_trans,(pop @sorted_trans);
+          my $vtranscripts = $gene->get_all_Transcripts;
+          my @sorted_trans = sort {$a->length <=> $b->length} @{$vtranscripts};
+          push @long_trans,(pop @sorted_trans);
         }
             
         if( $Config->{'previous_species'} ) {
