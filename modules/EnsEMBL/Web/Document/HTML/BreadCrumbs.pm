@@ -46,10 +46,10 @@ sub render   {
 
     ## Level 2 link
     if ($you_are_here eq '/info/' || $you_are_here eq '/info/index.html') {
-      $html .= qq( &gt; <strong>Documentation</strong>);
+      $html .= qq( &gt; <strong>Help &amp; Documentation</strong>);
     }
     else {
-      $html .= qq( &gt; <strong><a href="/info/">Documentation</a></strong>);
+      $html .= qq( &gt; <strong><a href="/info/">Help &amp; Documentation</a></strong>);
     }
 
 =pod
