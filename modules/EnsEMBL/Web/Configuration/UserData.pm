@@ -16,7 +16,7 @@ sub ajax_content   { return $_[0]->_ajax_content;   }
 sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return undef;  }
 sub content_panel  { return $_[0]->_content_panel;  }
-sub context_panel  { return $_[0]->_context_panel;  }
+sub context_panel  { return undef;  }
 
 sub populate_tree {
   my $self = shift;
@@ -39,7 +39,7 @@ sub populate_tree {
     [], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
   ));
 
-  my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
+  my $attached_menu = $self->create_submenu( 'Attached', 'Remote data (DAS/URL)' );
   $attached_menu->append($self->create_node( 'Attach', "Attach Data",
    [], { 'availability' => 1 }
     ));
