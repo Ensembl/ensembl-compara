@@ -553,7 +553,13 @@ sub edit_fields {
     }
     ## Set field values
     if (ref($data) && !$param{'value'}) {
+      ## Set value from data object, if possible
       $param{'value'} = $data->$field;
+      ## Make sure checkboxes are checked
+      if ($param{'type'} eq 'CheckBox' && $param{'value'}) {
+        $param{'checked'} = 'yes';
+      }
+      ## Fall-back - set default value if there is one
       if (!$param{'value'} && $param{'default'}) {
         $param{'value'} = $param{'default'};
       }
