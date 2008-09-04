@@ -41,6 +41,26 @@ sub __set_species {
   $self->__level ||= $level;
 }
 
+sub __set_default_otherspecies {
+  my $self = shift;
+  my %synteny = $self->species_defs->multi('SYNTENY');
+  my @has_synteny = sort keys %synteny;
+  my $other;
+  foreach my $sp (@has_synteny) {
+    ## Set default as primary or secondary species, if available
+    if ($sp eq $self->species_defs->ENSEMBL_PRIMARY_SPECIES
+          || $sp eq $self->species_defs->ENSEMBL_SECONDARY_SPECIES) {
+      $other = $sp;
+      last;
+    }
+  }
+  ## otherwise choose first in list
+  if (!$other) {
+    $other = $has_synteny[0];
+  }
+  $self->__data->{'__location'}{'otherspecies'} = $other;
+}
+
 sub __species       :lvalue { $_[0]->__data->{'__location'}{'species'}; }
 sub __species_hash  :lvalue { $_[0]->__data->{'__location'}{$_[0]->__data->{'__location'}{'species'}}; }
 sub __level         :lvalue { $_[0]->__species_hash->{'level'};         }
