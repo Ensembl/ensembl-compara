@@ -1,96 +1,41 @@
 package EnsEMBL::Web::ImageConfig::geneview;
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
-  my ($self) = @_;
-  my $species = $self->{'species'};
-  my $reg_feat_label = "cisRED/miRANDA";
-  if ($species=~/Drosophila/){ $reg_feat_label = "REDfly"; }
+  my $self = shift;
 
-  $self->{'_userdatatype_ID'} = 11; 
-  $self->{'fakecore'} = 1;
-  $self->{'no_image_frame'} = 1;
+  $self->set_parameters({
+    'title'         => 'Transcript panel',
+    'show_buttons'  => 'no',  # do not show +/- buttons
+    'show_labels'   => 'no',  # show track names on left-hand side
+    'label_width'   => 113,   # width of labels on left-hand side
+    'margin'        => 5,     # margin
+    'spacing'       => 2,     # spacing
+    'bgcolor'       => 'background1',
+    'bgcolour1'     => 'background2',
+    'bgcolour2'     => 'background3',
 
+  });
 
-  $self->{'general'}->{'geneview'} = {
-    '_artefacts' => [qw()],
-    '_options'  => [qw(pos col known unknown)],
- 'fakecore' => 1,
-    '_settings' => {
-#      'features' => [
-#         [ 'regulatory_regions'       => $reg_feat_label  ],
-#         [ 'regulatory_search_regions'=> 'cisRED search regions'  ],
-#         [ 'fg_regulatory_features'       => 'Reg. Features'  ],
-#         [ 'ctcf'=> 'CTCF' ],
-#      ],
-      'show_labels'       => 'no',
-      'show_buttons'      => 'no',
-      'width'             => 800,
-      'opt_zclick'        => 1,
-      'show_empty_tracks' => 'yes',
-      'show_empty_tracks' => 'yes',
-      'bgcolor'           => 'background1',
-      'bgcolour1'         => 'background1',
-      'bgcolour2'         => 'background1',
-    },
-   # col is for colours. Not needed here as overwritten in Glyphset
-#   'regulatory_regions' => {
-#      'on'  => "on",
-#      'pos' => '22',
-#      'str' => 'b',
-#      'available'=> 'database_tables ENSEMBL_FUNCGEN.feature_set', 
-#    },
-#
-# 'regulatory_search_regions' => {
-#      'on'  => "on",
-#      'pos' => '23',
-#       'str' => 'b',
-#      'available'=> 'features REGFEATURES_CISRED',
-#    },
-#
-#    'fg_regulatory_features' => {
-#      'on'  => "on",
-#      'bump_width' => 0,
-#      'dep' => 6,
-#      'pos' => '29',
-#      'str' => 'r',
-#      'col' => 'blue',
-#      'label' => 'FG Reg.features',
-#      'glyphset'    => 'fg_regulatory_features',
-#      'db_type'    => "funcgen",
-#      'colours' => {$self->{'_colourmap'}->colourSet('fg_regulatory_features')},
-#      'available'=> 'species Homo_sapiens',
-#    },
-#
-#   'ctcf' =>{
-#      'on'  => "on",
-#      'dep' => 0.1,
-#      'pos' => '30',
-#      'str' => 'r',
-#      'col' => 'blue',
-#      'compact'  => 0,
-#      'threshold' => '500',
-#      'label' => 'CTCF',
-#      'glyphset'    => 'ctcf',
-#      'db_type'    => "funcgen",
-#      'wiggle_name' => 'tiling array data',
-#      'block_name' => 'predicted features',
-#      'available'=> 'species Homo_sapiens',
-# 
-#  }
+  $self->create_menus(
+    'other'      => 'Decorations',
+    'transcript' => 'Genes',
+    'prediction' => 'Prediction transcripts'
+  );
 
+  $self->add_tracks( 'other',
+    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'f', 'name' => 'Scale bar'  } ],
+    [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'r', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+  );
 
+  $self->load_tracks();
 
-  };
-  $self->add_track('scalebar','on'=>'on','pos'=>9999 ,'col'=>'black','str'=>'r');
-  $self->add_track('ruler','on'=>'on','pos'=>9998,'col'=>'black','str' => 'f');
-  $self->add_track('draggable','on'=>'on','pos' => 100000,'col'=>'black' );
-  $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'off', 'compact' => 0 );
-  $self->ADD_ALL_PREDICTIONTRANSCRIPTS( 0, 'on' => 'off', 'compact' => 0 );
-#  $self->add_track( 'fg_regulatory_features_legend',  'on' => 'on', 'str' => 'r', 'pos' => 2000200, '_menu' => 'options', 'caption' => 'Reg. feats legend'  );
+  foreach my $child ( $self->get_node('transcript')->descendants ) {
+    $child->set( 'on' => 'off' );
+  }
 
 }
 1;
+

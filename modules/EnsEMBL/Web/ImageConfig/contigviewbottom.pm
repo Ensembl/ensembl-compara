@@ -46,7 +46,7 @@ sub init {
     'misc_feature'    => 'Misc. regions',
     'repeat'          => 'Repeats',
     'variation'       => 'Variaton features',
-    'synteny'         => 'Synteny',
+    'functional'      => 'Functional genomics',
     'multiple_align'  => 'Multiple alignments',
     'pairwise_blastz' => 'BLASTZ alignments',
     'pairwise_tblat'  => 'Translated blat alignments',
@@ -82,9 +82,9 @@ sub init {
     [ 'info',      '', 'info',            { 'on' => 'on',  'strand' => 'r', 'name' => 'Information'  } ],
   );
   $self->add_tracks( 'other',  
-    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'r', 'name' => 'Scale bar'  } ],
-    [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'r', 'name' => 'Ruler'      } ],
-    [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ],
+    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'b', 'name' => 'Scale bar'  } ],
+    [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'b', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
   );
 
 ## Finally add details of the options to the options menu...

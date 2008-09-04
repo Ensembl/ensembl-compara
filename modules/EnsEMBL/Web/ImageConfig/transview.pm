@@ -1,56 +1,32 @@
 package EnsEMBL::Web::ImageConfig::transview;
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
-  my ($self) = @_;
+  my $self = shift;
 
-  $self->{'fakecore'} = 1;
-  $self->{'_userdatatype_ID'} = 3;
-  $self->{'_transcript_names_'} = 'yes';
-  $self->{'no_image_frame'} = 1;
-  $self->{'general'}->{'transview'} = {
+  $self->set_parameters({
+    'title'         => 'Transcript panel',
+    'show_buttons'  => 'no',  # do not show +/- buttons
+    'show_labels'   => 'yes', # show track names on left-hand side
+    'label_width'   => 113,   # width of labels on left-hand side
+    'margin'        => 5,     # margin
+    'spacing'       => 2,     # spacing
+  });
 
-     '_artefacts' => [qw( 
-       ruler scalebar
-     )],
-     '_options'  => [qw(pos col known unknown)],
-    'fakecore' => 1,
-    '_settings' => {
-      'show_labels'    => 'no',
-      'show_buttons'  => 'no',
-      'width'   => 800,
-      'opt_zclick'     => 1,
-      'opt_lines' => 1,
-      'bgcolor'   => 'background1',
-      'bgcolour1' => 'background1',
-      'bgcolour2' => 'background1',
-    },
-    'snp' => {
-      'on'  => "on",
-      'pos' => '31',
-      'colours' => {$self->{'_colourmap'}->colourSet( 'snp' )},
-    },
-    'ruler' => {
-      'on'  => "on",
-      'pos' => '99999',
-      'str'   => 'r',
-      'col' => 'black',
-    },
-    'scalebar' => {
-      'on'  => "on",
-      'pos' => '100000',
-      'col' => 'black',
-      'max_divisions' => '6',
-      'str' => 'b',
-      'subdivs' => 'on',
-      'abbrev' => 'on',
-    },
-  };
-  $self->ADD_ALL_TRANSCRIPTS( 0, 'on' => 'off', 'compact'     => 0 );
-  $self->ADD_ALL_PREDICTIONTRANSCRIPTS( 0, 'on' => 'off', 'compact'     => 0 );
+  $self->create_menus(
+    'other'      => 'Decorations',
+    'transcript' => 'Genes',
+    'prediction' => 'Prediction transcripts'
+  );
+
+  $self->add_tracks( 'other',
+    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'f', 'name' => 'Scale bar'  } ],
+    [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'r', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+  );
+
+  $self->load_tracks();
 
 }
 1;

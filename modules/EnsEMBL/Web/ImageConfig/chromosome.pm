@@ -36,11 +36,18 @@ sub init {
       'strand'=>'r',
       'colourset' => 'ideogram'
     } ],
-    [ 'assembly_exception', 'Assembly exceptions', 'assembly_exception', { 'on' => 'on' } ],
+    [ 'assembly_exception', 'Assembly exceptions', 'assemblyexception', {
+      'height'        => 2,
+      'on'            => 'on', 
+      'strand'        => 'x',
+      'label_strand'  => 'r',
+      'short_labels'  => 1,
+      'colourset'     => 'assembly_exception'
+    } ],
     [ 'draggable', '', 'draggable', { 'on' => 'on' } ]
   );
 
-  $self->tree->dump("Chromosome configuration", '([[caption]])');
+  $self->tree->dump("Chromosome configuration", '([[glyphset]] -> [[caption]])');
 
 }
 1;
