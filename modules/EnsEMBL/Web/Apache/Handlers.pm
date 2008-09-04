@@ -40,10 +40,11 @@ our %OBJECT_TO_SCRIPT = qw(
   Location    action
   Variation   action
   Server      action
+  Info        action
   Account     account
   UserData    user_data
-  News        news
   Help        help
+  News        news
 );
 
 #======================================================================#
@@ -266,7 +267,6 @@ sub transHandler_das {
 
 sub transHandler_no_species {
   my( $r, $session_cookie, $species, $path_segments, $querystring ) = @_;
-
   my $real_script_name = $OBJECT_TO_SCRIPT{ $species };
   return undef if $real_script_name =~ /^(action|component|zmenu)$/;
   
@@ -274,7 +274,6 @@ sub transHandler_no_species {
   $r->subprocess_env->{'ENSEMBL_SCRIPT' } = $real_script_name;
   my $script     = $real_script_name;
   my $to_execute = $memd ? $memd->get("::SCRIPT::$script") : '';
-
 
   $ENSEMBL_WEB_REGISTRY->initialize_session({
       r       => $r,
@@ -285,10 +284,8 @@ sub transHandler_no_species {
 
   unless ($to_execute) {
     foreach my $dir( @PERL_TRANS_DIRS ){
-
       last unless $script;
       my $filename = sprintf( $dir, 'common' ) ."/$script";
-
       next unless -r $filename;
       $to_execute = $filename;
     }
@@ -296,14 +293,10 @@ sub transHandler_no_species {
   }
   if( $to_execute ) {
     $r->subprocess_env->{'ENSEMBL_TYPE'}   = $species;
-
-
     $r->subprocess_env->{'ENSEMBL_ACTION'} = shift @$path_segments;
     my $path_info = join '/', @$path_segments;
-
     $r->filename( $to_execute );
     $r->uri( "/perl/common/$script" );
-
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
     if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
       my @X = localtime();
