@@ -27,12 +27,13 @@ sub render {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my $filtered = 0;
+  my $html;
 
   my $release_id = $species_defs->ENSEMBL_VERSION;
-  my $html = qq(<h2 class="first">What's New in Release $release_id ($release_date)</h2>);
   my $release = EnsEMBL::Web::Data::Release->new($release_id);
   if ($release) {
     my $release_date = $self->pretty_date($release->date);
+    $html .= qq(<h2 class="first">What's New in Release $release_id ($release_date)</h2>);
     my $news_url = '/info/website/news/index.html';
 
     ## get news headlines
@@ -107,6 +108,7 @@ sub render {
     }
   }
   else {
+    $html .= qq(<h2 class="first">What's New in Release $release_id</h2>);
     $html .= qq(<p>No information on this release</p>);
     warn "NO RELEASE INFORMATION found in database ensembl_website!";
   }
