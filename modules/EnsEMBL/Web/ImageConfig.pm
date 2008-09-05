@@ -453,7 +453,7 @@ sub add_qtl_feature {
       'glyphset'    => '_qtl',
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
-      'colours'     => $self->species_defs->colour( 'qtl' ),
+      'colourset'   => 'qtl',
       'description' => $data->{$key_2}{'description'},
       'on'          => 'on',
       'strand'      => 'r'
@@ -472,6 +472,7 @@ sub add_misc_feature {
       'glyphset'    => '_clone',
       'db'          => $key,
       'set'         => $key_2,
+      'colourset'   => 'clone',
       'caption'     => $data->{$key_2}{'name'},
       'description' => $data->{$key_2}{'desc'},
       'max_length'  => $data->{$key_2}{'max_length'},
