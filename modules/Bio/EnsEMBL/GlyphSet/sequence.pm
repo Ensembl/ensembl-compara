@@ -22,9 +22,9 @@ sub features {
 }
 
 ## What to use as the colour key...
-sub colour {
+sub colour_key {
   my( $self, $f ) = @_;
-  return $self->my_colour( $f->seqname );
+  return $f->seqname;
 }
 
 ## What to place on the feature...
