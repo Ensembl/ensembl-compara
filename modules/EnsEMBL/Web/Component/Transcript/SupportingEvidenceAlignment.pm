@@ -80,9 +80,11 @@ sub content {
 	$cds_aa_length = $tl->length;
 	$cds_length = " Translation length: $cds_aa_length aa";
     }
-    $table->add_row('External record',
-		    "$hit_url ($hit_db_name), length = $ext_seq_length $label",
-		    1, );
+    if ($ext_seq) {
+	$table->add_row('External record',
+			"$hit_url ($hit_db_name), length = $ext_seq_length $label",
+			1, );
+    }
     $table->add_row('Transcript details',
 		    "<p>Exons: $e_count. Length: $trans_length bp.$cds_length</p>",
 		    1, );
