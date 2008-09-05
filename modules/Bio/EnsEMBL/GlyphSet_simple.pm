@@ -31,6 +31,16 @@ sub tag {
 
 use Bio::EnsEMBL::Feature;
 
+sub get_colours {
+  my( $self, $f ) = @_;
+  my $colour_key     = $self->colour_key( $f );
+  return {
+    'feature' => $self->my_colour( $colour_key ),
+    'label'   => $self->my_colour( $colour_key, 'label' ),
+    'part'    => $self->my_colour( $colour_key, 'style' )
+  };
+}
+
 sub aggregate_coverage {
   my( $self, $features ) = @_; 
   my $Config     = $self->{'config'};
@@ -213,22 +223,19 @@ sub _init {
     }
     my @tag_glyphs = ();
 
-    my $colour_key     = $self->colour_key( $f );
-    my $feature_colour = $self->my_colour( $colour_key );
-    my $label_colour   = $self->my_colour( $colour_key, 'label' );
-    my $part_to_colour = $self->my_colour( $colour_key, 'style' );
-    # warn "$colour_key - $feature_colour, $label_colour";
+    my $colours        = $self->get_colours($f);
+    # warn "$colour_key - $colours->{'feature'}, $colours->{'label'}";
     
     ## Lets see about placing labels on objects...        
     my $composite = $self->Composite();
-    if($part_to_colour eq 'line') {
+    if($colours->{'part'} eq 'line') {
       #    print STDERR "PUSHING LINE\n"; 
       $composite->push( $self->Space({
         'x'          => $start-1,
         'y'          => 0,
         'width'      => $end - $start + 1,
         'height'     => $h,
-        "colour"     => $feature_colour,
+        "colour"     => $colours->{'feature'},
         'absolutey'  => 1
                                }));
       $composite->push( $self->Rect({
@@ -236,10 +243,10 @@ sub _init {
         'y'          => $h/2+1,
         'width'      => $end - $start + 1,
         'height'     => 0,
-        "colour"     => $feature_colour,
+        "colour"     => $colours->{'feature'},
         'absolutey'  => 1
       }));
-    } elsif( $part_to_colour eq 'invisible' ) {
+    } elsif( $colours->{'part'} eq 'invisible' ) {
       $composite->push( $self->Space({
         'x'          => $start-1,
         'y'          => 0,
@@ -247,15 +254,15 @@ sub _init {
         'height'     => $h,
         'absolutey'  => 1
       }) );
-    } elsif( $part_to_colour eq 'align' ) {
+    } elsif( $colours->{'part'} eq 'align' ) {
       $composite->push( $self->Rect({
           'x'          => $start-1,
           'y'          => 0,
           'z' => 20,
           'width'      => $end - $start + 1,
           'height'     => $h+2,
-          "colour" => $feature_colour,
-         'absolutey'  => 1,
+          "colour"     => $colours->{'feature'},
+          'absolutey'  => 1,
           'absolutez'  => 1,
       }) );
     } else {
@@ -264,7 +271,7 @@ sub _init {
         'y'          => 0,
         'width'      => $end - $start + 1,
         'height'     => $h,
-        $part_to_colour."colour" => $feature_colour,
+        $colours->{'part'}."colour" => $colours->{'feature'},
         'absolutey'  => 1
       }) );
     }
@@ -602,17 +609,17 @@ sub _init {
       }
 
       if($bp_textwidth < ($end - $start+1)){
-        # print STDERR "X: $label - $label_colour\n";
+        # print STDERR "X: $label - $colours->{'label'}\n";
         my $tglyph = $self->Text({
           'x'          => $start - 1,
           'y'          => ($h-$H)/2,
           'z' => 5,
           'width'      => $end-$start+1,
           'height'     => $H,
-         'font'       => $FONT,
+          'font'       => $FONT,
           'ptsize'     => $FONTSIZE,
           'halign'     => 'center',
-          'colour'     => $label_colour,
+          'colour'     => $colours->{'label'},
           'text'       => $label,
           'textwidth'  => $bp_textwidth*$pix_per_bp,
           'absolutey'  => 1,
@@ -623,7 +630,7 @@ sub _init {
     } elsif( $style ) {
       if( $style eq 'overlaid' ) {
         if($bp_textwidth < ($end - $start+1)){
-          # print STDERR "X: $label - $label_colour\n";
+          # print STDERR "X: $label - $colours->{'label'}\n";
           $composite->push($self->Text({
             'x'          => $start-1,
             'y'          => ($h-$H)/2-1,
@@ -633,7 +640,7 @@ sub _init {
             'ptsize'     => $FONTSIZE,
             'halign'     => 'center',
             'height'     => $H,
-            'colour'     => $label_colour,
+            'colour'     => $colours->{'label'},
             'text'       => $label,
             'absolutey'  => 1,
           }));
@@ -652,7 +659,7 @@ sub _init {
             'font'       => $FONT,
             'ptsize'     => $FONTSIZE,
             'halign'     => 'left',
-            'colour'     => $label_colour,
+            'colour'     => $colours->{'label'},
             'text'       => $label,
             'absolutey'  => 1,
           }));
@@ -678,8 +685,7 @@ sub _init {
     $self->push( $composite );
     $self->push(@tag_glyphs);
 
-    my $hi_colour = 'highlight1';
-    $self->highlight($f, $composite, $pix_per_bp, $h, $hi_colour);
+    $self->highlight($f, $composite, $pix_per_bp, $h, 'highlight1');
   }
   # warn( ref($self)," $C1 out of $C out of $T features drawn\n" );
   ## No features show "empty track line" if option set....  ##
@@ -688,7 +694,7 @@ sub _init {
 
 sub highlight {
   my $self = shift;
-  my ($f, $composite, $pix_per_bp, $h, $hi_colour) = @_;
+  my ($f, $composite, $pix_per_bp, $h) = @_;
 
   ## Get highlights...
   my %highlights;
@@ -701,7 +707,7 @@ sub highlight {
       'y'         => $composite->y() - 1,
       'width'     => $composite->width() + 2/$pix_per_bp,
       'height'    => $h + 2,
-      'colour'    => $hi_colour,
+      'colour'    => 'highlight1',
       'absolutey' => 1,
     }));
   }
