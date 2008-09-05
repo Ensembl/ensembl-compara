@@ -157,7 +157,7 @@ sub ingredient {
     $content = $webpage->page->renderer->content;
     my @tags = qw(AJAX);
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
-    $memd->set($ENV{CACHE_KEY}, $content, undef, @tags) if $memd;
+    $memd->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags) if $memd;
   }
 
   CGI::header;
@@ -186,77 +186,101 @@ sub stuff {
   my $doctype = shift;
   my $modal_dialog = shift;
 
-  my $webpage = EnsEMBL::Web::Document::WebPage->new( 
-                  'objecttype' => $object_type, 
-                  'doctype'    => $doctype,
-                  'scriptname' => 'action',
-                  'command'    => $command, 
-                  'cache'      => $memd,
-  );
-  if( $modal_dialog ) {
-    $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
-  }
-# The whole problem handling code possibly needs re-factoring 
-# Especially the stuff that may end up cyclic! (History/UnMapped)
-# where ID's don't exist but we have a "gene" based display
-# for them.
-  if( $webpage->has_a_problem ) {
-    if( $webpage->has_problem_type( 'redirect' ) ) {
-      warn "####################### REDIRECTING ##########################";
-      my($p) = $webpage->factory->get_problem_type('redirect');
-      warn $p->name;
-      $webpage->redirect( $p->name );
-    } elsif( $webpage->has_problem_type('mapped_id') ) {
-      my $feature = $webpage->factory->__data->{'objects'}[0];
-      my $URL = sprintf "/%s/%s/%s?%s",
-        $webpage->factory->species, $ENV{'ENSEMBL_TYPE'},$ENV{'ENSEMBL_ACTION'},
-        join(';',map {"$_=$feature->{$_}"} keys %$feature );
-      $webpage->redirect( $URL );
-      return "Redirecting to $URL (mapped object)";
-    } elsif ($webpage->has_problem_type('unmapped')) {
-      my $f     = $webpage->factory;
-      my $id  = $f->param('peptide') || $f->param('transcript') || $f->param('gene');
-      my $type = $f->param('gene')    ? 'Gene' 
-               : $f->param('peptide') ? 'ProteinAlignFeature'
-           :                        'DnaAlignFeature'
-           ;
-      my $URL = sprintf "/%s/$object_type/Karyotype?type=%s;id=%s",
-        $webpage->factory->species, $type, $id;
+  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+  $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
+  ## Ajax request
+  $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
 
-      $webpage->redirect( $URL );
-      return "Redirecting to $URL (unmapped object)";
-    } elsif ($webpage->has_problem_type('archived') ) {
-      my $f     = $webpage->factory;
-      my( $type, $param, $id ) = $f->param('peptide')    ? ( 'Transcript', 'peptide',    $f->param('peptide' )   )
-                               : $f->param('transcript') ? ( 'Transcript', 'transcript', $f->param('transcript') )
-                   :                           ( 'Gene',       'gene',       $f->param('gene')       )
-                   ;
-      my $URL = sprintf "/%s/%s/History?%s=%s", $webpage->factory->species, $type, $param, $id;
-      $webpage->redirect( $URL );
-      return "Redirecting to $URL (archived object)";
-    } else {
-      $webpage->render_error_page;
-      return "Rendering Error page";
-    }
+  my $content = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
+
+  if ($content) {
+    warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}";
   } else {
-# This still works... (beth you may have to change the four parts that are configured - note these
-# have changed from the old WebPage::simple_wrapper...
-    foreach my $object( @{$webpage->dataObjects} ) {
-      my @sections;
-      if ($doctype && $doctype eq 'Popup') {
-        @sections = qw(global_context local_context local_tools content_panel);
-      } else {
-        @sections = qw(global_context local_context local_tools context_panel content_panel);
-      }
-      $webpage->configure( $object, @sections );
+    warn "DYNAMIC CONTENT CACHE MISS $ENV{CACHE_KEY}";
+
+    my $webpage = EnsEMBL::Web::Document::WebPage->new( 
+                    'objecttype' => $object_type, 
+                    'doctype'    => $doctype,
+                    'scriptname' => 'action',
+                    'renderer'   => 'String',
+                    'command'    => $command, 
+                    'cache'      => $memd,
+    );
+    if( $modal_dialog ) {
+      $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
     }
-    $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
-    $webpage->render;
-    warn $webpage->timer->render if
+    # The whole problem handling code possibly needs re-factoring 
+    # Especially the stuff that may end up cyclic! (History/UnMapped)
+    # where ID's don't exist but we have a "gene" based display
+    # for them.
+    if( $webpage->has_a_problem ) {
+      if( $webpage->has_problem_type( 'redirect' ) ) {
+        warn "####################### REDIRECTING ##########################";
+        my($p) = $webpage->factory->get_problem_type('redirect');
+        warn $p->name;
+        $webpage->redirect( $p->name );
+      } elsif( $webpage->has_problem_type('mapped_id') ) {
+        my $feature = $webpage->factory->__data->{'objects'}[0];
+        my $URL = sprintf "/%s/%s/%s?%s",
+          $webpage->factory->species, $ENV{'ENSEMBL_TYPE'},$ENV{'ENSEMBL_ACTION'},
+          join(';',map {"$_=$feature->{$_}"} keys %$feature );
+        $webpage->redirect( $URL );
+        return "Redirecting to $URL (mapped object)";
+      } elsif ($webpage->has_problem_type('unmapped')) {
+        my $f     = $webpage->factory;
+        my $id  = $f->param('peptide') || $f->param('transcript') || $f->param('gene');
+        my $type = $f->param('gene')    ? 'Gene' 
+                 : $f->param('peptide') ? 'ProteinAlignFeature'
+             :                        'DnaAlignFeature'
+             ;
+        my $URL = sprintf "/%s/$object_type/Karyotype?type=%s;id=%s",
+          $webpage->factory->species, $type, $id;
+  
+        $webpage->redirect( $URL );
+        return "Redirecting to $URL (unmapped object)";
+      } elsif ($webpage->has_problem_type('archived') ) {
+        my $f     = $webpage->factory;
+        my( $type, $param, $id ) = $f->param('peptide')    ? ( 'Transcript', 'peptide',    $f->param('peptide' )   )
+                                 : $f->param('transcript') ? ( 'Transcript', 'transcript', $f->param('transcript') )
+                     :                           ( 'Gene',       'gene',       $f->param('gene')       )
+                     ;
+        my $URL = sprintf "/%s/%s/History?%s=%s", $webpage->factory->species, $type, $param, $id;
+        $webpage->redirect( $URL );
+        return "Redirecting to $URL (archived object)";
+      } else {
+        $webpage->render_error_page;
+        #return "Rendering Error page";
+      }
+    } else {
+  # This still works... (beth you may have to change the four parts that are configured - note these
+  # have changed from the old WebPage::simple_wrapper...
+      foreach my $object( @{$webpage->dataObjects} ) {
+        my @sections;
+        if ($doctype && $doctype eq 'Popup') {
+          @sections = qw(global_context local_context local_tools content_panel);
+        } else {
+          @sections = qw(global_context local_context local_tools context_panel content_panel);
+        }
+        $webpage->configure( $object, @sections );
+      }
+      $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
+      $webpage->render;
+      warn $webpage->timer->render if
       $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
       $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
-    return "Completing action";
+      #return "Completing action";
+    }
+
+    $content = $webpage->page->renderer->content;
+
+    my @tags = qw(DYNAMIC);
+    push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
+    $memd->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags) if $memd && !$webpage->has_a_problem;
   }
+  
+  CGI::header;
+  print $content;
+  return "Completing action";
 }
 
 sub modal_stuff {
