@@ -4,7 +4,7 @@ use strict;
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 use Data::Dumper;
-#$Data::Dumper::Maxdepth = 2;
+$Data::Dumper::Maxdepth = 2;
 
 sub _init {
     my ($self) = @_;
@@ -29,68 +29,66 @@ sub _init {
     my $h = 8;
     my $G;
     #retrieve the features that were counted as they were drawn and add (two colum) legends for them
-    my %features = %{$Config->{'TSE_legend'}};	
-    foreach my $f (sort { $features{$a}->{'priority'} <=> $features{$b}->{'priority'} } keys %features) {
-	$y++ if $x==0;
-
-	my $colour = 'black';
+    my %features = $Config->{'TSE_legend'} ? %{$Config->{'TSE_legend'}} : ();
+     foreach my $f (sort { $features{$a}->{'priority'} <=> $features{$b}->{'priority'} } keys %features) {
+	$y = $y+0.5 if $x==0;
+	my $colour = $features{$f}->{'colour'};
+	my $db_type = $f;
 	#draw two exon hits and an intron for each feature type
-	if ($f =~ /hit_feature/) {
-	    $start_x = $im_width * $x/$NO_OF_COLUMNS;
-	    $h = $features{$f}->{'height'};
-	    my $G = $self->Rect({
-		'x'             => $start_x,
-		'y'             => $y * ( $th + 3 ) - 1,
-		'width'         => $BOX_WIDTH,
-		'height'        => $h,
-		'bordercolour'  => $colour,
-		'absolutey'     => 1,
-		'absolutex'     => 1,
-		'absolutewidth' =>1,
-	    });;
-#	    $self->push($self->Rect($G));
-	    $self->push($G);
-	    $G = $self->Line({
-		'x'             => $start_x+$BOX_WIDTH,
-		'y'             => $y * ( $th + 3 ) + 2,
-		'h'             => 1,
-		'width'         => $BOX_WIDTH,
-		'colour'        => $colour,
-		'absolutey'     => 1,
-		'absolutex'     => 1,
-		'absolutewidth' => 1,
-	    });
-	    $self->push($G);
-	    $G = $self->Rect({
-		'x'             => $start_x + 2*$BOX_WIDTH,
-		'y'             => $y * ( $th + 3 ) - 1,
-		'width'         => $BOX_WIDTH,
-		'height'        => $h,
-		'bordercolour'  => $colour,
-		'absolutey'     => 1,
-		'absolutex'     => 1,
-		'absolutewidth' =>1,
-	    });
-	    $self->push($G);
-	    $G = $self->Text({
-		'x'             => $start_x + 3*$BOX_WIDTH + 4,
-		'y'             => $y * $th,
-		'height'        => $th,
-		'valign'        => 'center',
-		'halign'        => 'left',
-		'ptsize'        => $fontsize,
-		'font'          => $fontname,
-		'colour'        => 'black',
-		'text'          => 'evidence supporting intron - exon structure',
-		'absolutey'     => 1,
-		'absolutex'     => 1,
-		'absolutewidth' =>1,
-	    });
-	    $self->push($G);
-	    $x++;
-	}
-	
-	if($x==$NO_OF_COLUMNS) {
+	$start_x = $im_width * $x/$NO_OF_COLUMNS;
+
+	$h = $features{$f}->{'height'};
+	my $G = $self->Rect({
+	    'x'             => $start_x,
+	    'y'             => $y * ( $th + 3 ) - 1,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => $colour,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' =>1,
+	});;
+	$self->push($G);
+	$G = $self->Line({
+	    'x'             => $start_x+$BOX_WIDTH,
+	    'y'             => $y * ( $th + 3 ) + 2,
+	    'h'             => 1,
+	    'width'         => $BOX_WIDTH,
+	    'colour'        => $colour,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$G = $self->Rect({
+	    'x'             => $start_x + 2*$BOX_WIDTH,
+	    'y'             => $y * ( $th + 3 ) - 1,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => $colour,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' =>1,
+	});
+	$self->push($G);
+	$G = $self->Text({
+	    'x'             => $start_x + 3*$BOX_WIDTH + 4,
+	    'y'             => $y * $th,
+	    'height'        => $th,
+	    'valign'        => 'center',
+	    'halign'        => 'left',
+	    'ptsize'        => $fontsize,
+	    'font'          => $fontname,
+	    'colour'        => 'black',
+	    'text'          => "$db_type evidence",
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' =>1,
+	});
+	$self->push($G);
+	$x++;
+
+	if($x==($NO_OF_COLUMNS)) {
 	    $x=0;
 	    $y++;
 	}
@@ -443,7 +441,6 @@ sub _init {
 	$x++;
 	$y -= 0.8;
     }
-
 
     if ($o_type ne 'vega') {
 	$x=0;
