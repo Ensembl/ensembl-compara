@@ -114,7 +114,7 @@ sub _init {
 
     #Draw a red I-bar (non-canonical intron)
     $start_x = $im_width * $x/$NO_OF_COLUMNS;
-    my $colour = 'red';
+    my $colour = $self->my_colour('non_can_intron');
     my $G = $self->Line({
 	'x'         => $start_x,
 	'y'         => $y * ( $th + 3 ) + 2,
@@ -157,7 +157,7 @@ sub _init {
 	'ptsize'        => $fontsize,
 	'font'          => $fontname,
 	'colour'        => 'black',
-	'text'          => 'non canonical splice site',
+	'text'          => 'Non-canonical splice site',
 	'absolutey'     => 0,
 	'absolutex'     => 1,
 	'absolutewidth' => 1
@@ -378,13 +378,24 @@ sub _init {
 	    'y'             => $y * ( $th + 3 ) - 1,
 	    'width'         => 0,
 	    'height'        => $h,
-	    'colour'         => $c,
+	    'colour'        => 'black',
 	    'absolutey'     => 1,
 	    'absolutex'     => 1,
 	    'absolutewidth' => 1,
 	});
 	$self->push($G);
-	
+
+	$G = $self->Line({
+	    'x'             => $start_x + 2,
+	    'y'             => $y * ( $th + 3 ) - 1,
+	    'width'         => 0,
+	    'height'        => $h,
+	    'colour'        => $c,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);	
 	$y += 0.8;
 	
 	$G = $self->Rect({
@@ -401,6 +412,18 @@ sub _init {
 	
 	$G = $self->Line({
 	    'x'             => $start_x+$BOX_WIDTH-1,
+	    'y'             => $y * ( $th + 3 ) - 1,
+	    'width'         => 0,
+	    'height'        => $h,
+	    'colour'        => 'black',
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+
+	$G = $self->Line({
+	    'x'             => $start_x+$BOX_WIDTH-2,
 	    'y'             => $y * ( $th + 3 ) - 1,
 	    'width'         => 0,
 	    'height'        => $h,

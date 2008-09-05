@@ -180,7 +180,8 @@ sub draw_glyphs {
 	    if (my $gap = $block->{'left_end_mismatch'}) {
 		my $c = $gap > 0 ? 'red' : 'blue';
 		push @draw_end_lines, [$block->{'munged_start'},$H,$c];
-		push @draw_end_lines, [$block->{'munged_start'}+1/$pix_per_bp,$H,$c];
+		push @draw_end_lines, [$block->{'munged_start'}+1/$pix_per_bp,$H,'black'];
+		push @draw_end_lines, [$block->{'munged_start'}+2/$pix_per_bp,$H,$c];
 		
 		if ($strand > 0) {
 		    $zmenu_dets->{'five_end_mismatch'} = $gap;
@@ -191,7 +192,8 @@ sub draw_glyphs {
 	    }
 	    if (my $gap = $block->{'right_end_mismatch'}) {
 		my $c = $gap > 0 ? 'red' : 'blue';
-		push @draw_end_lines, [$block->{'munged_start'}+$width-1/$pix_per_bp,$H,$c];
+		push @draw_end_lines, [$block->{'munged_start'}+$width-2/$pix_per_bp,$H,$c];
+		push @draw_end_lines, [$block->{'munged_start'}+$width-1/$pix_per_bp,$H,'black'];
 		push @draw_end_lines, [$block->{'munged_start'}+$width,$H,$c];
 
 		if ($strand > 0) {
