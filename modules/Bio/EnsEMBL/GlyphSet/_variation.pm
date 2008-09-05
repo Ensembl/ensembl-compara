@@ -108,7 +108,7 @@ sub href {
 
   return "/$species/$view?snp=$id;source=$source;c=$region:$start;w=20000;$pops";
 
-  return $this->_url( );
+  return $self->_url( );
 }
 
 sub title {
@@ -130,11 +130,12 @@ sub tag {
               : 'box'
               ;
     my $letter = $style eq 'box' ? $f->ambig_code : "";
+    my $CK = $self->colour_key($f);
     return {
       'style'        => $style,
-      'colour'       => $self->my_colour( $self->colour_key ),
+      'colour'       => $self->my_colour( $CK ),
       'letter'       => $style eq 'box' ? $f->ambig_code : "",
-      'label_colour' => $self->my_config( $self->colour_key, 'label' )
+      'label_colour' => $self->my_config( $CK, 'label' )
     };
   }
   if($f->start > $f->end ) {    
@@ -151,28 +152,25 @@ sub highlight {
   my %highlights;
   @highlights{$self->highlights()} = ();
 
-  # Are we going to highlight this item...
+  # Are we going to highlight self item...
   my $id = $f->variation_name();
   $id =~ s/^rs//;
   return unless $highlights{$id} || $highlights{'rs'.$id};
-  $self->unshift( $self->Rect({
+  $self->unshift( $self->Rect({  # First a white box!
     'x'         => $composite->x() - 1/$pix_per_bp,
     'y'         => $composite->y(),  ## + makes it go down
     'width'     => $composite->width() + 2/$pix_per_bp,
     'height'    => $h + 2,
     'colour'    => "white",
     'absolutey' => 1,
-  })_;
-    # Line of black outermost
-  $self->unshift( $self->Rect({
+  }),$self->Rect({ # Then a 1 pixel bigger black box...!
     'x'         => $composite->x() -2/$pix_per_bp,
     'y'         => $composite->y() -1,  ## + makes it go down
     'width'     => $composite->width() + 4/$pix_per_bp,
     'height'    => $h + 4,
     'colour'    => $hi_colour,
     'absolutey' => 1,
-  });
-  }
+  }));
 }
 
 1;
