@@ -331,20 +331,29 @@ sub render {
         $HTML .= q(
           <div class="nav-heading">
           <div class="left-button">);
-        if( exists $self->{'previous'} && $self->{'previous'}{'url'} ) {
+        if (exists $self->{'previous'}) {
           $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
-          $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>), $self->{'previous'}{'url'}, $button_text;
+          $HTML .= sprintf q(<a href="/%s/%s/%s?%s">&laquo;&nbsp;%s</a>),
+                            $ENV{'ENSEMBL_SPECIES'},
+                            $ENV{'ENSEMBL_TYPE'},
+                            $self->{'previous'}{'code'},
+                            $ENV{'QUERY_STRING'},
+                            $button_text;
         } 
         else {
           $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
         }
         $HTML .= q(</div>
           <div class="right-button">);
-        if( exists $self->{'next'} && $self->{'next'}{'url'} ) {
+        if (exists $self->{'next'}) {
           $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
-          $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>), $self->{'next'}{'url'}, $button_text;
-        } 
-        else {
+          $HTML .= sprintf q(<a href="/%s/%s/%s?%s">%s&nbsp;&raquo;</a>),
+                            $ENV{'ENSEMBL_SPECIES'},
+                            $ENV{'ENSEMBL_TYPE'},
+                            $self->{'next'}{'code'},
+                            $ENV{'QUERY_STRING'},
+                            $button_text;
+        } else {
           $HTML .= q(<span>&nbsp;</span>);
         }
         $HTML .= q(</div>);
