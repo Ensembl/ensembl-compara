@@ -241,7 +241,7 @@ sub new {
       my $NAME = $glyphset->check();
       my $ref_glyphset = ref($glyphset);
       eval {
-        $glyphset->__init();
+        $glyphset->_init();
       };
       ## don't waste any more time on this row if there's nothing in it
       if( $@ || scalar @{$glyphset->{'glyphs'} } ==0 ) {
