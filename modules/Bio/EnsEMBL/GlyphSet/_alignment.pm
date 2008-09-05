@@ -101,7 +101,7 @@ sub RENDER_normal {
   my $y_pos;
   my $features_drawn = 0;
   my $features_bumped = 0;
-  my $feature_colour = $self->my_colour( $self->my_config( 'subtype' ) );
+  my $feature_colour = $self->my_colour( $self->my_config( 'sub_type' ) );
 
   my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
 
@@ -199,7 +199,7 @@ sub RENDER_compact {
   my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
   my $features_drawn = 0;
   my $X             = -1e8; ## used to optimize drawing!
-  my $feature_colour = $self->my_colour( $self->my_config( 'subtype') );
+  my $feature_colour = $self->my_colour( $self->my_config( 'sub_type') );
 
 ## Grab all the features;
 ## Remove those not on this display strand
