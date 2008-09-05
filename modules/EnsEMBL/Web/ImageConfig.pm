@@ -52,12 +52,9 @@ sub new {
   bless($self, $class);
 
   ########## init sets up defaults in $self->{'general'}
-  warn "INITIALIZING....";
   $self->init( ) if($self->can('init'));
-  warn "INITIALIZED..... LOADING DAS....";
   $self->{'no_image_frame'}=1;
   $self->das_sources( @_ ) if(@_); # we have das sources!!
-  warn "RETURNING....";
   ########## load sets up user prefs in $self->{'user'}
 #  $self->load() unless(defined $self->{'no_load'});
   return $self;
@@ -160,7 +157,7 @@ sub load_tracks() {
   foreach my $db ( @{$self->species_defs->core_like_databases} ) {
     next unless exists $dbs_hash->{$db};
     my $key = $db eq 'ENSEMBL_DB' ? 'core' : lc(substr($db,8));
-    warn "adding core like tracks ($key)";
+    warn "   ### adding core like tracks ($key)";
 ## Look through tables in databases and add data from each one...
     $self->add_dna_align_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To cDNA/mRNA, est, RNA, other_alignment trees ##DONE
     $self->add_ditag_feature(         $key,$dbs_hash->{$db}{'tables'} ); # To ditag_feature tree                         ##DONE
@@ -179,7 +176,7 @@ sub load_tracks() {
   foreach my $db ( 'ENSEMBL_COMPARA') {   # @{$self->species_defs->get_config('compara_databases')} ) {
     next unless exists $multi_hash->{$db};
     my $key = lc(substr($db,8));
-    warn "adding compara like tracks ($key)";
+    warn "   ### adding compara like tracks ($key)";
     ## Configure dna_dna_align features and synteny tracks
     $self->add_synteny(               $key,$multi_hash->{$db}, $species ); # Add to synteny tree                         ##DONE
     $self->add_alignments(            $key,$multi_hash->{$db}, $species ); # Add to compara_align tree                   ##DONE
@@ -187,14 +184,14 @@ sub load_tracks() {
   foreach my $db ( 'ENSEMBL_FUNCGEN' ) {  # @{$self->species_defs->get_config('funcgen_databases')} ) {
     next unless exists $dbs_hash->{$db};
     my $key = lc(substr($db,8));
-    warn "adding func gen like tracks ($key)";
+    warn "   ### adding func gen like tracks ($key)";
     ## Configure 
     $self->add_regulation_feature(    $key,$dbs_hash->{$db}{'tables'} ); # Add to regulation_feature tree
   }
   foreach my $db ( 'ENSEMBL_VARIATION' ) { # @{$self->species_defs->get_config('variation_databases')} ) {
     next unless exists $dbs_hash->{$db};
     my $key = lc(substr($db,8));
-    warn "adding variation like tracks ($key)";
+    warn "   ### adding variation like tracks ($key)";
     ## Configure variation features
     $self->add_variation_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To variation_feature tree
   }
@@ -274,7 +271,6 @@ sub add_dna_align_feature {
   return unless $self->_check_menus( 'dna_align_cdna' );
   my( $keys, $data ) = $self->_merge( $hashref->{'dna_align_feature'} , 'dna_align' );
   
-  my $colours = $self->species_defs->colour( 'feature' );
   foreach my $key_2 ( @$keys ) {
     my $K = $data->{$key_2}{'type'}||'other';
     my $menu = $self->tree->get_node( "dna_align_$K" );
@@ -282,8 +278,8 @@ sub add_dna_align_feature {
       $menu->append( $self->create_track( 'dna_align_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
         'glyphset'    => '_alignment',
-        'sub_type'    => $K,
-	'colours'     => $colours,
+        'sub_type'    => lc($K),
+        'colourset'   => 'feature',
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
@@ -310,7 +306,7 @@ sub add_protein_align_feature {
       'glyphset'    => '_alignment',
       'sub_type'    => 'protein',
       'object_type' => 'ProteinAlignFeature',
-      'colours'     => $self->species_defs->colour( 'feature' ),
+      'colourset'   => 'feature',
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
@@ -331,7 +327,7 @@ sub add_simple_feature {
       'db'          => $key,
       'glyphset'    => '_simple',
       'logicnames'  => $data->{$key_2}{'logic_names'},
-      'colours'     => $self->species_defs->colour( 'simple' ),
+      'colourset'   => 'simple',
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
       'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
@@ -352,7 +348,7 @@ sub add_prediction_transcript {
       'glyphset'    => '_prediction_transcript',
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
-      'colours'     => $self->species_defs->colour( 'prediction' ),
+      'colourset'   => 'prediction',
       'description' => $data->{$key_2}{'description'},
       'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
       'strand'      => 'b'
@@ -435,6 +431,7 @@ sub add_marker_feature {
     $menu->append( $self->create_track( 'marker_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
       'db'          => $key,
       'glyphset'    => '_marker',
+      'labels'      => 'on',
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
       'colours'     => $self->species_defs->colour( 'marker' ),
@@ -497,9 +494,10 @@ sub add_oligo_probe {
     $menu->append( $self->create_track( 'oligo_'.$key.'_'.$key_2, $key_2, {
       'glyphset'    => '_oligo',
       'db'          => $key,
+      'sub_type'    => 'oligo',
       'array'       => $key_2,
       'object_type' => 'OligoProbe',
-      'colours'     => $self->species_defs->colour( 'feature' ),
+      'colourset'   => 'feature',
       'description' => $description,
       'caption'     => $key_2,
       'strand'      => 'b',
@@ -562,6 +560,8 @@ sub add_repeat_feature {
     'colours'     => $self->species_defs->colour( 'repeat' ),
     'on'          => 'on',
     'optimizable' => 1,
+    'depth'       => 0.5,
+    'bump_width'  => 0,
     'strand'      => 'r'
   }));
   my $flag = keys %$data > 1;
@@ -578,6 +578,8 @@ sub add_repeat_feature {
 	'colours'     => $self->species_defs->colour( 'repeat' ),
         'on'          => 'on',
         'optimizable' => 1,
+        'depth'       => 0.5,
+        'bump_width'  => 0,
 	'strand'      => 'r'
       }));
     }
@@ -596,6 +598,8 @@ sub add_repeat_feature {
 	  'colours'     => $self->species_defs->colour( 'repeat' ),
           'on'          => 'on',
           'optimizable' => 1,
+          'depth'       => 0.5,
+          'bump_width'  => 0,
 	  'strand'      => 'r'
         }));
       }
@@ -702,14 +706,26 @@ sub add_options {
   } 
 }
 
+sub create_track {
+  my ( $self, $code, $caption, $options ) = @_;
+  my $details = { 'name'    => $caption, 'node_type' => 'track' };
+  foreach ( keys %{$options||{}} ) {
+    $details->{$_} = $options->{$_};
+  }
+  $details->{'strand'}   ||= 'b';  # Make sure we have a strand setting!!
+  $details->{'on'    }   ||= 'on'; # Show unless we explicitly say no!!
+  $details->{'colours'}  ||= $self->species_defs->colour( $options->{'colourset'} ) if exists $options->{'colourset'};
+  $details->{'glyphset'} ||= $code;
+  $details->{'caption'}  ||= $caption;
+  $self->tree->create_node( $code, $details );
+}
+
 sub add_track {
   my( $self, $menu_key, $key, $caption, $glyphset, $params ) = @_;
   my $menu =  $self->get_node( $menu_key );
   return unless $menu;
   return if $self->get_node( $key ); ## Don't add duplicates...
-  $params->{'colours'}  ||= $self->species_defs->colour( $params->{'colourset'} ) if exists $params->{'colourset'};
   $params->{'glyphset'} = $glyphset;
-  $params->{'caption'}  = $caption;
   $menu->append( $self->create_track( $key, $caption, $params ) );
 }
 
@@ -721,9 +737,7 @@ sub add_tracks {
   foreach my $row (@_) {
     my ( $key, $caption, $glyphset, $params ) = @$row; 
     next if $self->get_node( $key ); ## Don't add duplicates...
-    $params->{'colours'}  ||= $self->species_defs->colour( $params->{'colourset'} ) if exists $params->{'colourset'};
     $params->{'glyphset'} = $glyphset;
-    $params->{'caption'}  = $caption;
     $menu->append( $self->create_track( $key, $caption, $params ) );
   }
 }
@@ -745,24 +759,40 @@ sub add_variation_feature {
   my( $self, $key, $hashref ) = @_;
   my $menu = $self->get_node( 'variation' );
   return unless $menu;
-  warn keys %{$hashref};
   return unless $hashref->{'variation_feature'}{'rows'} > 0;
   $menu->append( $self->create_track( 'variation_feature_'.$key, sprintf( "All variations" ), {
-    'db'       => $key,
-    'glyphset' => '_variation',
-    'sources'  => undef,
-    'strand'   => 'r',
+    'db'          => $key,
+    'glyphset'    => '_variation',
+    'sources'     => undef,
+    'strand'      => 'r',
+    'depth'       => 0.5,
+    'bump_width'  => 0,
+    'colourset'   => 'variation',
     'description' => 'Variation features from all sources'
+  }));
+  $menu->append( $self->create_track( 'variation_feature_genotyped_'.$key, sprintf( "Genotyped variations" ), {
+    'db'          => $key,
+    'glyphset'    => '_variation',
+    'sources'     => undef,
+    'strand'      => 'r',
+    'depth'       => 0.5,
+    'bump_width'  => 0,
+    'filter'      => 'genotyped',
+    'colourset'   => 'variation',
+    'description' => 'Genotyped variation features from all sources'
   }));
 
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'}||{}}) {
     ( my $k = $key_2 ) =~ s/\W/_/g;
     $menu->append( $self->create_track( 'variation_feature_'.$key.'_'.$k, sprintf( "%s variations", $key_2 ), {
-      'db'       => $key,
-      'glyphset' => '_variation',
-      'caption'  => $key_2,
-      'sources'  => [ $key_2 ],
-      'strand'   => 'r',
+      'db'          => $key,
+      'glyphset'    => '_variation',
+      'caption'     => $key_2,
+      'sources'     => [ $key_2 ],
+      'strand'      => 'r',
+      'depth'       => 0.5,
+      'bump_width'  => 0,
+      'colourset'   => 'variation',
       'description' => sprintf( 'Variation features from the "%s" source', $key_2 )
     }));
   }
@@ -788,19 +818,6 @@ sub create_submenu {
   return $self->tree->create_node( $code, $details );
 }
 
-
-sub create_track {
-  my ( $self, $code, $caption, $options ) = @_;
-  my $details = { 'name'    => $caption, 'node_type' => 'track' };
-  foreach ( keys %{$options||{}} ) {
-    $details->{$_} = $options->{$_};
-  }
-  $details->{'strand'}   ||= 'b';  # Make sure we have a strand setting!!
-  $details->{'on'    }   ||= 'on'; # Show unless we explicitly say no!!
-  $details->{'glyphset'} ||= $code;
-  $details->{'caption'}  ||= $caption;
-  $self->tree->create_node( $code, $details );
-}
 
 sub create_option {
   my ( $self, $code, $caption, $values ) = @_;
