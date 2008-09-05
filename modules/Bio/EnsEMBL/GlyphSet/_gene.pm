@@ -61,7 +61,6 @@ sub _init {
   my $genes = $self->features();
   foreach my $g (@$genes) {
     my $gene_type_key = lc( $g->biotype.'_'.$g->status );
-    warn "GENE $gene_type_key GENE";
     my $gene_col   = $self->my_colour( $gene_type_key );
 
     my $gene_type  = $self->my_colour( $gene_type_key, 'text' );
