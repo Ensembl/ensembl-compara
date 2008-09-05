@@ -392,7 +392,7 @@ sub add_gene {
   my( $self, $key, $hashref ) = @_;
 ## Gene features end up in each of these menus..
 
-  my @types = qw(transcript alignslice_transcript tsv_transcript gsv_transcript tse_transcript gene);
+  my @types = qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene);
 
   return unless $self->_check_menus( @types );
 
