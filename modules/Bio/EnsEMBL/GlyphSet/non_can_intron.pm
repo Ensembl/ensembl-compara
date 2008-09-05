@@ -1,19 +1,16 @@
 package Bio::EnsEMBL::GlyphSet::non_can_intron;
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
     my ($self) = @_;
     my $Config  = $self->{'config'};
     my $length  = $Config->container_width();
-    my $colour  = $Config->get('non_can_intron','col');
+    my $colour  = 'red';#$Config->get('non_can_intron','col');
     my $trans_ref = $Config->{'transcript'};
-    return unless ($trans_ref->{'non_con_introns'});
+    return unless $trans_ref->{'non_con_introns'};
     my @introns = @{$trans_ref->{'non_con_introns'}};
-
-    foreach my $intron (@introns) { 
+    foreach my $intron (@introns) {
 	next unless defined $intron;
 	my $exon_names = $intron->[4];
 	
