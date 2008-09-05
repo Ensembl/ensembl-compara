@@ -337,8 +337,8 @@ sub get_munged_slice {
 ## compute the width of the slice image within the display
   my $PIXEL_WIDTH =
     $self->param('image_width') -
-        ( $master_config->get( '_settings', 'label_width' ) || 100 ) -
-    3 * ( $master_config->get( '_settings', 'margin' )      ||   5 );
+        ( $master_config->get_parameter( 'label_width' ) || 100 ) -
+    3 * ( $master_config->get_parameter( 'margin' )      ||   5 );
 
 #  warn $self->param('image_width');
 #  warn $PIXEL_WIDTH;
@@ -1450,31 +1450,12 @@ sub history {
 #########################################################################
 #alignview support features - some ported from schema49 AlignmentFactory#
 
-sub get_db_type{
-    # I'm suprised that I have to do this - would've thought there'd be a generic method
-    my $self = shift;
-    my $db   = $self->get_db;
-    my %db_hash = qw(
-		     core    ENSEMBL_DB
-		     vega    ENSEMBL_VEGA
-		 );
-    return  $db_hash{$db};
-}
-
 sub get_sf_hit_db_name {
     my $self = shift;
     my ($id) = @_;
-    return unless $id;
     my $hit = $self->get_hit($id);
     return unless $hit;
-	
-    #species defs contains a summary of the external_db table - can use this to get the dbname
-    #for the evidence although the core team are going to add calls to do this directly
-    my $db_type = $self->get_db_type;
-    my $sd = $self->species_defs;
-    my $external_db_det = $sd->databases->{$db_type}{'external_dbs'};
-    my $db_name = $external_db_det->{$hit->external_db_id}->{'db_name'};
-    return $db_name;
+    return $hit->db_name;
 }
 
 sub get_hit {
@@ -1488,6 +1469,7 @@ sub get_hit {
 	    return $sf if ($sf->hseqname eq $id);	
 	}
     }
+    return;
 }
 
 sub get_ext_seq{
