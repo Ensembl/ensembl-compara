@@ -42,9 +42,9 @@ sub _init {
 
   my $base_url = $self->_url( { 'action' => 'Marker' } );
   foreach my $f (@features){
-    my $ms           = $f->marker->display_MarkerSynonym;
-    my $fid          = $ms ? $ms->name : '';
-    my ($fid) = grep { $_ ne '-' } map { $_->name } @{$f->marker->get_all_MarkerSynonyms||[]} if $fid eq '-' || $fid eq '';
+    my $ms   = $f->marker->display_MarkerSynonym;
+    my $fid  = $ms ? $ms->name : '';
+      ($fid) = grep { $_ ne '-' } map { $_->name } @{$f->marker->get_all_MarkerSynonyms||[]} if $fid eq '-' || $fid eq '';
 
     my $feature_colour = $self->my_colour( $f->marker->type );
 
@@ -75,7 +75,7 @@ sub _init {
       'colour'    => $feature_colour,
       'absolutey' => 1,
       'text'      => $fid,
-      'href' => $href
+      'href'      => $href
     });
 
     my $bump_start = int($glyph->x() * $pix_per_bp);
