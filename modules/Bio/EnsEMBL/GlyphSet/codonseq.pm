@@ -1,13 +1,15 @@
 package Bio::EnsEMBL::GlyphSet::codonseq;
-use base qw(Bio::EnsEMBL::GlyphSet_simple);
+use base qw(Bio::EnsEMBL::GlyphSet::sequence);
 use strict;
+
+## We base this on the sequence drawing as the only
+## code which is different is the code that gets
+## the features...
 
 ## We have to create fake features in the features call...
 
 use Bio::EnsEMBL::Feature;
 use Bio::Seq;
-
-sub fixed { return 1;} ## What does this mean...
 
 sub features {
   my ($self) = @_;
@@ -34,28 +36,4 @@ sub features {
   return \@features;
 }
 
-sub colour {
-  return $self->my_colour( $f->seqname );
-}
-
-## What to place on the feature...
-sub feature_label {
-  my( $self, $f ) = @_;
-  return ( $f->seqname, 'overlaid' );
-}
-
-## No title...
-sub title {
-  return;
-}
-
-## No link...
-sub href {
-  return;
-}
-
-## No tags
-sub tag {
-
-}
 1;
