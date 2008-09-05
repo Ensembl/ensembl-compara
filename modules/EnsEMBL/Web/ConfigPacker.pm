@@ -23,7 +23,6 @@ sub _munge_databases {
 
   $self->_summarise_variation_db();
   $self->_summarise_funcgen_db();
-  $self->_summarise_website_db();
 }
 
 sub _munge_das { # creates das.packed...
@@ -33,7 +32,7 @@ sub _munge_das { # creates das.packed...
 
 sub _munge_databases_multi {
   my $self = shift;
-  $self->_summarise_website_db_multi(    );
+  $self->_summarise_website_db(    );
   $self->_summarise_compara_db(    );
   $self->_summarise_ancestral_db(  );
   $self->_summarise_go_db(         );
@@ -194,8 +193,8 @@ sub _summarise_core_tables {
   my $sth = $dbh->prepare(qq(select * from external_db));
   $sth->execute;
   my $hashref;
-  while (my $hashref = $sth->fetchrow_hashref) {
-    $hashref->{$hashref->{'external_db_id'}} = $hashref;
+  while ( my $t =  $sth->fetchrow_hashref) {
+    $hashref->{$t->{'external_db_id'}} = $t;
   }
   $self->db_details($db_name)->{'tables'}{'external_db'}{'entries'} = $hashref;
 
@@ -269,41 +268,15 @@ sub _summarise_funcgen_db {
   $dbh->disconnect();
 }
 
-sub _summarise_website_db {
-  ## Get per_species data that is stored in ensembl_website
-  my $self    = shift;
-  my $db_name = 'ENSEMBL_WEBSITE';
-  my $dbh     = $self->db_connect( $db_name );
-
-  ## Assembly history per species
-  my $t_aref = $dbh->selectall_arrayref(
-    'select r.release_id, rs.assembly_code from species as s, ens_release as r, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and rs.assembly_code != "" and s.name = "'.$self->species.'"'
-  );
-
-  foreach my $row (@$t_aref) {
-    $self->db_tree->{'ASSEMBLIES'}{$row->[0]}{$row->[1]} = $row->[2];
-  }
-
-  ## Current archive list
-  $t_aref = $dbh->selectall_arrayref(
-    'select r.release_id, r.archive from ens_release as r, species as s, release_species as rs where s.species_id = rs.species_id and r.release_id = rs.release_id and r.online = "Y" and s.name = "'.$self->species.'"'
-  );
-  foreach my $row (@$t_aref) {
-    $self->db_tree->{'ENSEMBL_ARCHIVES'}{$row->[0]} = $row->[1];
-  }
-  $dbh->disconnect();
-}
-
 #========================================================================#
 # The following functions munge the multi-species databases              #
 #========================================================================#
 
-sub _summarise_website_db_multi {
+sub _summarise_website_db {
   my $self    = shift;
   my $db_name = 'ENSEMBL_WEBSITE';
   my $dbh     = $self->db_connect( $db_name );
 
-  warn "--------------- GETTING HELP --------------------";
   ## Get component-based help
   my $t_aref = $dbh->selectall_arrayref(
     'select help_record_id, data from help_record where type = "component" and status = "live"'
@@ -317,6 +290,24 @@ sub _summarise_website_db_multi {
     my $action = $data->{'action'};
     $self->db_tree->{'ENSEMBL_HELP'}{$object}{$action} = $row->[0];
   }
+
+  my $t_aref = $dbh->selectall_arrayref(
+    'select s.name, r.release_id,rs.assembly_code
+       from species as s, ens_release as r, release_species as rs
+      where s.species_id =rs.species_id and r.release_id =rs.release_id and rs.assembly_code !=""'
+  );
+  foreach my $row ( @$t_aref ) {
+    $self->db_tree->{'ASSEMBLIES'}->{$row->[0]}{$row->[1]}=$row->[2];
+  }
+  my $t_aref = $dbh->selectall_arrayref(
+    'select s.name, r.release_id, r.archive
+       from ens_release as r, species as s, release_species as rs
+      where s.species_id = rs.species_id and r.release_id = rs.release_id and r.online = "Y"'
+  );
+  foreach my $row ( @$t_aref ) {
+    $self->db_tree->{'ENSEMBL_ARCHIVES'}->{$row->[0]}{$row->[1]}=$row->[2];
+  }
+
   $dbh->disconnect();
 }
 
@@ -337,7 +328,7 @@ sub _summarise_compara_db {
             ss.genome_db_id = gd.genome_db_id and
             ( ml.class like "GenomicAlign%" or ml.class = "ConservationScore.conservation_score" )
   ');
-  my $constrained_elements = { $db_name };
+  my $constrained_elements = {};# $db_name };
   my %valid_species = map {($_,1)} keys %{$self->full_tree};
   foreach my $row (@$res_aref) {
     my( $class, $type, $species, $name, $id, $species_set_id ) =
@@ -570,10 +561,8 @@ sub _munge_website {
   my $self = shift;
 
   ## Release info for ID history etc
-  $self->tree->{'ASSEMBLIES'} = $self->db_tree->{'ASSEMBLIES'};
-
-  $self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_tree->{'ENSEMBL_ARCHIVES'};
-
+  $self->tree->{'ASSEMBLIES'}       = $self->db_multi_tree->{'ASSEMBLIES'}{$self->{_species}};
+  $self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_multi_tree->{'ENSEMBL_ARCHIVES'}{$self->{_species}};
 }
 
 sub _munge_website_multi {

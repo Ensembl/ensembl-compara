@@ -45,6 +45,11 @@ sub db_details {
   return $self->{'_db_tree'}{$species}{'databases'}{$db_name}||={};
 }
 
+sub db_multi_tree {
+  my $self = shift;
+  return $self->{'_db_tree'}{'MULTI'}||={};
+}
+
 sub db_tree {
   my $self = shift;
   my $species = $self->{'_species'};
