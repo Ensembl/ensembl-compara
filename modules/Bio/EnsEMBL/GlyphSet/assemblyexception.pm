@@ -7,46 +7,46 @@ sub squish {1;}
 
 sub features {
   my ($self) = @_;
-  warn "THIS IS AN ASSEMBLY EXCEPTION CALL...";
   warn @{ $self->{'container'}->get_all_AssemblyExceptionFeatures()||[] };
   return $self->{'container'}->get_all_AssemblyExceptionFeatures();
 }
 
-sub colour {
+sub colour_key {
   my( $self, $f ) = @_;
-  return $self->my_colour( $f->type );
+  ( my $key = lc($f->type) ) =~ s/ /_/g;
+  return $key;
 }
 
 sub feature_label {
   my ($self, $f) = @_;
   return undef if $self->my_config( 'label' ) eq 'off';
-  if( $self->{'config'}->get_parameter( 'simplehap') ) {
-    return $self->{'strand'} > 0 ? undef : ( $f->{'alternate_slice'}->seq_region_name, 'under' ) ;
+  if( $self->my_config( 'short_labels') ) {
+    return( $f->{'alternate_slice'}->seq_region_name, 'under' ) ;
   }
-  my $c2 = $f->{'alternate_slice'}->seq_region_name;
-  my $s2 = $f->{'alternate_slice'}->start;
-  my $e2 = $f->{'alternate_slice'}->end;
-  my $o2 = $f->{'alternate_slice'}->strand;
-  my $name2 = $f->type.": $c2:$s2-$e2 ($o2)";
-  return( $name2,'under' );
+  return(
+    sprintf( "%s: %s:%d-%d (%s)",
+      $f->type,
+      $f->{'alternate_slice'}->seq_region_name,
+      $f->{'alternate_slice'}->start,
+      $f->{'alternate_slice'}->end,
+      $self->readable_strand( $f->{'alternate_slice'}->strand )
+    ), 'undef'
+  );
 }
 
 sub title {
   my ($self, $f ) = @_;
 
-  my $c1 = $f->{'slice'}->seq_region_name;
-  my $s1 = $f->{'slice'}->start+$f->{'start'}-1;
-  my $e1 = $f->{'slice'}->start+$f->{'end'}-1;
-  my $o1 = $f->{'slice'}->strand;
-
-  my $c2 = $f->{'alternate_slice'}->seq_region_name;
-  my $s2 = $f->{'alternate_slice'}->start;
-  my $e2 = $f->{'alternate_slice'}->end;
-  my $o2 = $f->{'alternate_slice'}->strand;
-  my $name1 = "$c1: $s1-$e1 ($o1)";
-  my $name2 = "$c2: $s2-$e2 ($o2)";
-  my $HREF2 = $ENV{'ENSEMBL_SCRIPT'} eq 'multicontigview' ? "/@{[$self->{container}{web_species}]}/contigview?l=$c1:$s1-$e1": '';
-  return $self->my_colour($f->type,'text')."; $c1:$s1-$e1 ($o1); $c2:$s2-$e2 ($o2)";
+  return sprintf "%s; %s:%d-%d (%s); %s:%d-%d (%s)",
+    $self->my_colour($self->colour_key($f),'text'),
+    $f->{'slice'}->seq_region_name,
+    $f->{'slice'}->start+$f->{'start'}-1,
+    $f->{'slice'}->start+$f->{'end'}-1,
+    $self->readable_strand( $f->{'slice'}->strand ),
+    $f->{'alternate_slice'}->seq_region_name,
+    $f->{'alternate_slice'}->start,
+    $f->{'alternate_slice'}->end,
+    $self->readable_strand( $f->{'alternate_slice'}->strand );
 }
 
 
@@ -65,7 +65,13 @@ sub href {
 
 sub tag {
   my ($self, $f) = @_;
-  return { 'style' => 'join', 'tag' => $f->{'start'}.'-'.$f->{'end'}, 'colour' => $f->type eq 'PAR' ? 'aliceblue' : 'bisque', 'zindex' => -20 };
+  
+  return {
+    'style' => 'join',
+    'tag' => $f->{'start'}.'-'.$f->{'end'},
+    'colour' => $self->my_colour( $self->colour_key($f),'join' ),
+    'zindex' => -20
+  };
 }
 
 1;
