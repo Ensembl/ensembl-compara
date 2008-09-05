@@ -30,8 +30,8 @@ sub _init {
 	    'width'  => $e-$s,
 	    'colour' => '$col',
 	});
-	$self->join_tag( $tglyph, $tag->[0], $flag,  0, $col, 'fill', -99 );
-	$self->join_tag( $tglyph, $tag->[0], 1-$flag,0, $col, 'fill', -99  );
+	$self->join_tag( $tglyph, $tag->[0], 1-$flag,  0, $col, 'fill', -99 );
+	$self->join_tag( $tglyph, $tag->[0], $flag,    0, $col, 'fill', -99  );
 	$self->push( $tglyph );
     }
 }
