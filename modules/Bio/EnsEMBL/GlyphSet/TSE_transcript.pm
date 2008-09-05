@@ -12,10 +12,10 @@ sub _init {
     my $Config  = $self->{'config'};
     my $h       = 8;   #Increasing this increases glyph height
 
-    my $colours     = $self->colours();
     my $pix_per_bp  = $Config->transform->{'scalex'};
     my $length      = $Config->container_width();
 
+    my $colour = $self->my_colour;
     my $trans_ref    = $Config->{'transcript'};
     my $coding_start = $trans_ref->{'coding_start'};
     my $coding_end   = $trans_ref->{'coding_end'  };
@@ -25,13 +25,7 @@ sub _init {
 
     my @introns_and_exons = @{$trans_ref->{'introns_and_exons'}};
 
-    my %highlights;
-    @highlights{$self->highlights} = ();    # build hashkeys of highlight list
-    my($colour, $label, $hilight) = $self->colour( $transcript, $colours, %highlights );
-    $colour ||= 'blue';
-
     my $tags;
-
     foreach my $obj (@introns_and_exons) {
 	#if we're working with an exon then draw a box
 	if ( $obj->[2] ) {
@@ -48,11 +42,11 @@ sub _init {
 		't'      => $tsi,
 	    });
 
-	    ##the following is very verbose and will be rewritten, but it does do the job!
-	    my $col1 = $Config->get('TSE_transcript','col');
-	    my $col2 = $Config->get('TSE_transcript','col2');
-	    my ($G,$tag);
+	    my $col1 = $self->my_colour('noncoding_join','join' );
+	    my $col2 = $self->my_colour('coding_join','join' );
 
+	    ##the following is very verbose and will be rewritten, but it does do the job!
+	    my ($G,$tag);
 	    #draw and tag completely non-coding exons
 	    if ( ($exon_end < $coding_start) || ($exon_start > $coding_end) ) {
 		$G = $self->Rect({
@@ -230,24 +224,6 @@ sub _init {
 		'absolutey' => 1,
 	    }));
 	}
-}
-
-sub colours {
-    my $self = shift;
-    my $Config = $self->{'config'};
-    return $Config->get('TSE_transcript','colours');
-}
-
-sub colour {
-    my ($self,  $transcript, $colours, %highlights) = @_;
-    my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status } || [];
-    if(exists $highlights{lc($transcript->stable_id)}) {
-	return (@$genecol, $colours->{'hi'});
-    } elsif(exists $highlights{lc($transcript->external_name)}) {
-	return (@$genecol, $colours->{'hi'});
-    }
-    return (@$genecol, undef);
-    
 }
 
 1;
