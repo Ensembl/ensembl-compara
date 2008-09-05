@@ -76,14 +76,7 @@ sub add_tags {
   my $key  = shift;
   my @tags = @_;
 
-  #warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
-  if ($self->{debug}) {
-    warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
-    my $debug_key_list = $self->SUPER::get('debug_key_list') || {};
-    $debug_key_list->{$key} ||= {};
-    push @{ $debug_key_list->{$key}{tags} }, @tags;
-    $self->SUPER::set('debug_key_list', $debug_key_list);
-  }
+  warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
 
   my $sock = $self->get_sock($key);
   foreach my $tag (@tags) {
@@ -124,19 +117,7 @@ sub set {
   my $self = shift;
   my ($key, $value, $exptime, @tags) = @_;
 
-  #warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
-  if ($self->{debug}) {
-    warn "EnsEMBL::Web::Cache->set($key)";
-    my $debug_key_list = $self->SUPER::get('debug_key_list') || {};
-    $debug_key_list->{$key} ||= {};
-    $debug_key_list->{$key}{set_time} ||= localtime;
-    $debug_key_list->{$key}{upd_time}   = localtime;
-    $debug_key_list->{$key}{upd_cntr}++;
-    $debug_key_list->{$key}{get_time}   = 0;
-    $debug_key_list->{$key}{get_cntr}   = 0;
-    $debug_key_list->{$key}{tags}       = [];
-    $self->SUPER::set('debug_key_list', $debug_key_list);
-  }
+  warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
   
   $self->SUPER::set($key, $value, $exptime || $self->{default_exptime});
   $self->add_tags($key, $self->{namespace}, @tags);
@@ -146,14 +127,7 @@ sub get {
   my $self = shift;
   my $key  = shift;
 
-  #warn "EnsEMBL::Web::Cache->get($key)";
-  if ($self->{debug} && (my $debug_key_list = $self->SUPER::get('debug_key_list'))) {
-    warn "EnsEMBL::Web::Cache->get($key)";
-    $debug_key_list->{$key} ||= {};
-    $debug_key_list->{$key}{get_time} = localtime;
-    $debug_key_list->{$key}{get_cntr}++;
-    $self->SUPER::set('debug_key_list', $debug_key_list);
-  }
+  warn "EnsEMBL::Web::Cache->get($key)";
   
   return $self->SUPER::get($key);
 }
@@ -162,12 +136,7 @@ sub delete {
   my $self = shift;
   my $key  = shift;
 
-  #warn "EnsEMBL::Web::Cache->delete($key)";
-  if ($self->{debug} && (my $debug_key_list = $self->SUPER::get('debug_key_list'))) {
-    warn "EnsEMBL::Web::Cache->delete($key)";
-    delete $debug_key_list->{$key};
-    $self->SUPER::set('debug_key_list', $debug_key_list);
-  }
+  warn "EnsEMBL::Web::Cache->delete($key)";
 
   return $self->SUPER::remove($key, @_);
 }
