@@ -299,13 +299,21 @@ our $CC = 0;
 sub my_colour {
   my( $self, $colour, $part ) = @_;
   $self->{'colours'} ||= $self->my_config('colours')||{};
+  if( $part eq 'text' || $part eq 'style' ) {
+    if( $self->{'colours'} ) {
+      return $self->{'colours'}->{$colour  }{$part}     if exists $self->{'colours'}->{$colour  }{$part    };
+      return $self->{'colours'}->{'default'}{$part}     if exists $self->{'colours'}->{'default'}{$part    };
+    }
+    return 'Other (unknown)' if $part eq 'text';
+    return '';
+  }
   if( $self->{'colours'} ) {
     return $self->{'colours'}->{$colour  }{$part}     if exists $self->{'colours'}->{$colour  }{$part    };
     return $self->{'colours'}->{'default'}{$part}     if exists $self->{'colours'}->{'default'}{$part    };
     return $self->{'colours'}->{$colour  }{'default'} if exists $self->{'colours'}->{$colour  }{'default'};
     return $self->{'colours'}->{'default'}{'default'} if exists $self->{'colours'}->{'default'}{'default'};
   }
-  return $part eq 'text' ? 'Other (unknown)' : 'black';
+  return 'black';
 }
 
 sub _c {
@@ -581,7 +589,7 @@ sub bump_row {
   ($end,$start) = ($start,$end) if $end < $start;
 
   $start = 1 if $start < 1;
-  return -1 if $end > $self->{_bump}{'bitmap'} && $truncate_if_outside; # used to not display partial text labels
+  return -1 if $end > $self->{_bump}{'length'} && $truncate_if_outside; # used to not display partial text labels
   $end   = $self->{_bump}{'length'} if $end > $self->{_bump}{'length'};
 
   my $row = 0;
@@ -623,11 +631,16 @@ sub human_readable {
   return $species
 }
 
+sub readable_strand {
+  my( $self, $strand ) = @_;
+  return $strand < 0 ? 'rev' : 'fwd';
+}
+
 sub cache {
   my $self = shift;
   my $key  = shift;
   $self->{'config'}{'cache'}{ $key } = shift if @_;
-  return $self->{'config'}{'cache'};
+  return $self->{'config'}{'cache'}{$key};
 }
 
 sub legend {

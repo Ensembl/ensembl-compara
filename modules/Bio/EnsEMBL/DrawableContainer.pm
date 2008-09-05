@@ -253,7 +253,6 @@ sub new {
       }
       ## set up the "bumping button" label for this strip
       if( $glyphset->label() && $show_labels eq 'yes' ) {
-	warn "... ",ref($glyphset );
         my $gh = $glyphset->label->height || $Config->texthelper->height($glyphset->label->font());
         $glyphset->label->y( ( ($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy );
         $glyphset->label->height($gh);
