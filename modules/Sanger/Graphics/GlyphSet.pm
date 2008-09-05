@@ -48,10 +48,6 @@ sub new {
 # It should executes bumping and globbing on the fly and also
 # keep track of x,y,width,height as it goes.
 #
-sub __init {
-  my $self = shift;
-  $self->_init(@_);
-}
 sub _init {
     my ($self) = @_;
     print STDERR qq($self unimplemented\n);
