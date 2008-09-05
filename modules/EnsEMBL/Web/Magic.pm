@@ -176,7 +176,7 @@ sub stuff {
 ### Usage use EnsEMBL::Web::Magic; magic stuff
 ###
 ### The stuff that dreams are made of - instead of using separate
-### scripts for each view we know use a 'routing' approach which
+### scripts for each view we now use a 'routing' approach which
 ### transmogrifies the URL and separates it into 'species', 'type' 
 ### and 'action' - giving nice, clean, systematic URLs for handling
 ### heirarchical object navigation
