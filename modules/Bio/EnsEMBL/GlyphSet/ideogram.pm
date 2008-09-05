@@ -13,8 +13,6 @@ sub _init {
   #########
   # only draw contigs once - on one strand
   #
-  warn $self->strand;
-
   my $col    = undef;
   my $white  = 'white';
   my $black  = 'black';
@@ -27,7 +25,6 @@ sub _init {
 
   # fetch the chromosome bands that cover this VC.
   my $bands    = $self->{'container'}->adaptor()->db()->get_KaryotypeBandAdaptor()->fetch_all_by_chr_name($chr);
-  warn @$bands;
   my $chr_length  = $self->{'container'}->length();
   
   # get rid of div by zero...
