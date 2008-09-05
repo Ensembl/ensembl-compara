@@ -18,21 +18,12 @@ sub new {
     HIGHLIGHT1        highlight1
     HIGHLIGHT2        highlight2
   );
-  warn "COLOURMAP........................\n";
   while(my($k,$v) = each %{$species_defs->ENSEMBL_STYLE||{}} ) {
     my $k2 = $new_colourmap{ $k };
     next unless $k2;
-    warn "SETTING $k2 to $v ($k)\n";
     $self->{$k2} = $v;
   }
   return $self;
 }
 
-sub colourSet {
-  my $self = shift;
-  my $name = shift;
-
-  warn qq(The colourSet CALL IS DEPRECATED - colours are now set up in "COLOUR.ini" file [ colourSet( $name ) ] called);
-  return ();
-}
 1;
