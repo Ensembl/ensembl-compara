@@ -13,9 +13,9 @@ sub features       {
   return \@F;
 }
 
-sub colour {
+sub colour_key {
   my( $self, $f ) = @_;
-  return $self->my_colour(lc( $f->analysis->logic_name ));
+  return lc($f->analysis->logic_name);
 }
 
 sub feature_label {

@@ -17,9 +17,9 @@ sub features {
   return \@repeats;
 }
 
-sub colour {
+sub colour_key {
   my( $self, $f ) = @_;
-  return $self->{'feature_colour'} ||= $self->my_colour( 'repeat' );
+  return 'repeat';
 }
 
 sub image_label {
