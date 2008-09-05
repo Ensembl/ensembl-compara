@@ -65,28 +65,41 @@ sub _content {
   my $extent     = $context eq 'FULL' ? 1000 : $context;
   
   my $config = $object->get_userconfig( "supporting_evidence_transcript" );
-  $config->set( '_settings', 'width',  $image_width );
-  
+  my $length = $object->Obj->length;
+  $config->set_parameters({
+      'container_width' => $length,
+      'image_width'     => $image_width || 800, ## hack at the moment....
+  });
+
   #add transcript itself
   my $transcript = $object->Obj;
   $config->{'transcript'}{'transcript'} = $transcript;
   $config->{'transcript'}{'web_transcript'} = $object;
+
+  #identify name of transcript track (to turn on)
+  my $db           = $object->get_db();
+  my $db_key       = $db eq 'core' ? 'ENSEMBL_DB' : 'ENSEMBL_'.uc($db);
+  my $info_summary =  $object->species_defs->databases->{$db_key}{'tables'};
+  my $logic_name   = $object->gene->analysis->logic_name;
+  my $key          = $info_summary->{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
+  my $track_to_turn_on = 'TSE_transcript_'.$db.'_'.$key;
+  $config->get_node( $track_to_turn_on )->set('on','on'); 
+  $config->get_node( $track_to_turn_on )->set('strand','f'); 
+
   
   #get both real slice and normalised slice (ie introns set to fixed width)
   my @slice_defs = ( [ 'supporting_evidence_transcript', 'munged', $extent ] );
   foreach my $slice_type (@slice_defs) {
     $object->__data->{'slices'}{$slice_type->[0]} = $object->get_transcript_slices($slice_type) || warn "Couldn't get slice";    
   }
-  
+
   my $transcript_slice = $object->__data->{'slices'}{'supporting_evidence_transcript'}[1];
   my $sub_slices     = $object->__data->{'slices'}{'supporting_evidence_transcript'}[2];
   my $fake_length    = $object->__data->{'slices'}{'supporting_evidence_transcript'}[3];
-  
+
   $config->container_width( $fake_length ); #sets width of image
-  $config->{'id'}      = $object->stable_id; #used for label
   $config->{'subslices'}   = $sub_slices; #used to draw lines for exons
-  $config->{'extent'}    = $extent; #used for padding between exons and at the end of the transcript
-  $config->{'fakeslice'}   = 1; #not sure what this is used for! ??
+  $config->{'extent'}      = $extent; #used for padding between exons and at the end of the transcript
   $config->{'object_type'} = $o_type; #used for drawing the legend for vega / E! transcripts
 
   #identify coordinates of the portions of introns and exons to be drawn. Include the exon object
@@ -102,6 +115,7 @@ sub _content {
   }
   my $e_counter = 0;
   my $e_count   = scalar(@$ens_exons);
+
   #reverse the order of exons if the strand is negative
   my @exons = $transcript->strand == 1 ? @{$ens_exons} : reverse(@{$ens_exons});
   SUBSLICE:
@@ -192,9 +206,11 @@ sub _content {
 
     #don't store any transcript_supporting_features for a vega gene
     next if ($o_type eq 'vega');
+
     $t_evidence->{$hit_name}{'hit_name'} = $hit_name;
     $t_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
-      
+    $t_evidence->{$hit_name}{'hit_type'} = $self->hit_type($info_summary,$evi);
+     
     #split evidence into ungapped features (ie parse cigar string),
     #map onto exons ie determine mismatches
     #and munge (ie account for gaps)
@@ -275,7 +291,6 @@ sub _content {
   $config->{'transcript'}{'transcript_evidence'} = $t_evidence;    
   
   #add info on additional supporting_evidence (exon level)
-  #invloves 
   my $e_evidence;
   my $evidence_checks;
   my %evidence_ends;    
@@ -334,11 +349,11 @@ sub _content {
 
       #note position of end of the hit for next iteration
       $evidence_ends{$hit_name}{'last_end'} = $evi->hend;
-      
+
       # coordinate munging:
       # pass it a single exon but could pass it all if them if we wanted to match the hit across all exons
       my $munged_coords = $self->split_evidence_and_munge_gaps($evi,[$exon],$offset,[$raw_coding_start+$offset,$raw_coding_end+$offset],ref($evi));
-      foreach my $munged_hit (@$munged_coords) {                
+      foreach my $munged_hit (@$munged_coords) {
         #add tag if there is a mismatch between exon / hit boundries
         if (defined($hit_mismatch)) {
           $munged_hit->{'hit_mismatch'} = $hit_mismatch;
@@ -352,6 +367,7 @@ sub _content {
       }
       $e_evidence->{$hit_name}{'hit_name'} = $hit_name;
       $e_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
+      $e_evidence->{$hit_name}{'hit_type'} = $self->hit_type($info_summary,$evi);
     }
   }
 
@@ -457,7 +473,8 @@ sub split_evidence_and_munge_gaps {
   # note evidence type
   if ( ($obj_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') || ($hit_name =~ /^CCDS/) ) {
     $cod_start = $coding_coords->[0];
-    $cod_end   = $coding_coords->[1];    
+    $cod_end   = $coding_coords->[1];
+
     #if protein evidence lies completely outside of the CDS then treat it as a DnaDnaAlignFeature
     if ( ($hit_seq_region_start > $cod_end) || ($hit_seq_region_end < $cod_start) ) {
       $evidence_type = 'pretend_this_is_dna';
@@ -467,7 +484,7 @@ sub split_evidence_and_munge_gaps {
     }
   }
   else {
-    $evidence_type = 'dna';    
+    $evidence_type = 'dna';
   }
 
   foreach my $exon (@{$exons}) {
@@ -482,12 +499,12 @@ sub split_evidence_and_munge_gaps {
       $extra_exon = $hit;
       $last_end = $eend;
     }
-    
+
     elsif ( ($eend < $hit_seq_region_start) || ($estart > $hit_seq_region_end) ) {
       $last_end = $eend;
       next;
     }
-        
+
     #set this to save any further iteration if we're past the end of the exon
     $past_hit_end = 1 if ($eend >= $hit_seq_region_end);
 
@@ -509,7 +526,7 @@ sub split_evidence_and_munge_gaps {
     else {
       $left_end_mismatch  = $estart == $hit_seq_region_start ? 0 : $estart - $hit_seq_region_start;
       $right_end_mismatch = $eend   == $hit_seq_region_end   ? 0 : $hit_seq_region_end - $eend;
-    }    
+    }
 
     #Map start and end positions of the hit from genomic coordinates to transcript genomic coordinates.
     #Account for off-by-three errors (which can impact on the display as just a pixel off) by setting
@@ -560,5 +577,21 @@ sub split_evidence_and_munge_gaps {
   }
   return $coords;
 }
+
+sub hit_type {
+    #get type of evidence (to use as a key into the colour hash)
+    my ($self,$info_summary,$evi) = @_;
+    my %evidence_table_types = (
+	'Bio::EnsEMBL::DnaDnaAlignFeature' => 'dna_align_feature',
+	'Bio::EnsEMBL::DnaPepAlignFeature' => 'protein_align_feature',
+    );
+    my $ln = $evi->analysis->logic_name;
+    my $evi_object = ref($evi);
+    my $evi_type = $evidence_table_types{$evi_object};
+    my $type = $info_summary->{$evi_type}{'analyses'}{$ln}{'web'}{'type'}  || 'other';
+    return $type;
+}
+
+
 
 1;
