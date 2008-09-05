@@ -29,20 +29,22 @@ sub new {
     file_root    => '',
     URL_root     => '',
     dc           => undef,
-    driver       => undef,
   };
 
   bless $self, $class;
- 
-  $self->driver = EnsEMBL::Web::File::Driver::Memcached->new ||
-                  EnsEMBL::Web::File::Driver::Disk->new;
-  
+
+  ## Drivers by priority order (if one fails to do operation, another)
+  $self->drivers = [
+    EnsEMBL::Web::File::Driver::Memcached->new,
+    EnsEMBL::Web::File::Driver::Disk->new,
+  ];
+
   return $self;
 }
 
-sub dc     :lvalue { $_[0]->{'dc'}; }
-sub driver :lvalue { $_[0]->{'driver'}; }
-sub cache  :lvalue { $_[0]->{'cache'}; }
+sub dc      :lvalue { $_[0]->{'dc'}; }
+sub drivers :lvalue { $_[0]->{'drivers'}; }
+sub cache   :lvalue { $_[0]->{'cache'}; }
 
 sub set_cache_filename {
   my $self     = shift;
@@ -117,7 +119,7 @@ sub render_image_tag {
   my $IF = $self->render( @_ );
   #$self->{'species_defs'}{'timer'}->push("Finished render",6);
 
-  my ($width, $height) = $self->driver->imgsize($IF->{'file'});
+  my ($width, $height) = $self->imgsize($IF->{'file'});
   #$self->{'species_defs'}{'timer'}->push("Got image size",6);
 
   my $HTML;
@@ -140,7 +142,7 @@ sub render_image_tag {
 sub render_image_button {
   my $self = shift;
   my $IF = $self->render( @_ );
-  my ($width, $height) = $self->driver->imgsize($IF->{'file'});
+  my ($width, $height) = $self->imgsize($IF->{'file'});
   $self->{'width'}  = $width;
   $self->{'height'} = $height;
   my $HTML = sprintf '<input style="width: %dpx; height: %dpx; display: block" type="image" name="%s" id="%s" src="%s" alt="%s" title="%s" />', $width, $height, $self->{'name'}, $self->{'id'}||$self->{'name'}, $IF->{'URL'}, $self->{'text'}, $self->{'text'};
@@ -162,14 +164,6 @@ sub render_image_map {
   return sprintf( qq(<map name="%s" id="%s">\n$IF->{'imagemap'}\n</map>), $map_name, $map_name);
 }
 
-sub exists { 
-  my ($self, $format) = @_;
-  $format ||= $DEFAULT_FORMAT;
-  my $file = $self->filename( $format );
-  
-  return $self->cache && $self->driver->exists($file);
-}
- 
 sub render {
   my( $self, $format ) = @_;
 
@@ -180,7 +174,7 @@ sub render {
   if ( $self->exists($file) ) {
     ## If cached image required and it exists return it!
     if ( $format eq 'imagemap' ) {
-      my $imagemap = $self->driver->get($file, {format => 'imagemap', compress => 1});
+      my $imagemap = $self->get($file, {format => 'imagemap', compress => 1});
       return { 'imagemap' => $imagemap };
     } else {
       return { 'URL' => $self->URL($format), 'file' => $file };
@@ -195,24 +189,27 @@ sub render {
   if ($image) {
     if ($format eq 'imagemap') {
 
-      $self->driver->save(
-        $image,
-        $file,
-        {
-          format   => 'imagemap',
-          compress => 1,
-        }
-      ) if $self->cache;
-      
+      if ($self->cache) {
+        $self->save(
+          $image,
+          $file,
+          {
+            format   => 'imagemap',
+            compress => 1,
+            exptime  => 60*60*24*30,
+          }
+        );
+      }
       return { 'imagemap' => $image };
+      
     } else {
 
-      $self->driver->save(
+      $self->save(
         $image,
         $file, 
         {
           format  => $format,
-          exptime => $self->cache ? 60*60*24 : 60*60,
+          exptime => $self->cache ? 60*60*24*30 : 60*60*24*7,
         }
       );
 
@@ -225,6 +222,59 @@ sub render {
   }
 }
 
-                                                                                
+##=============================================================================
+## Driver calls
+##=============================================================================
+
+sub imgsize {
+  my $self = shift;
+  my $file = shift;
+
+  for my $driver (@{ $self->drivers }) {
+    if ($driver && (my @imgsize = $driver->imgsize($file))) {
+      return @imgsize
+        if $#imgsize;
+    }
+  }
+  
+  warn 'Can`t get imgsize';
+}
+
+sub exists { 
+  my ($self, $format) = @_;
+  
+  ## TODO: Following line comes from the old version, need to check if it's correct
+  return 0 unless $self->cache;
+  
+  $format ||= $DEFAULT_FORMAT;
+  my $file = $self->filename( $format );
+  
+  for my $driver (@{ $self->drivers }) {
+    return 1
+      if $driver && $driver->exists($file);
+  }
+}
+
+sub get {
+  my $self = shift;
+
+  for my $driver (@{ $self->drivers }) {
+    if ($driver && (my $result = $driver->get(@_))) {
+      return $result;
+    }
+  }
+}
+
+sub save {
+  my $self = shift;
+
+  for my $driver (@{ $self->drivers }) {
+    return 1 
+      if $driver && $driver->save(@_);
+  }
+  
+  warn 'Can`t save with current drivers';
+}
+
 
 1; 
