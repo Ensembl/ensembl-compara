@@ -7,31 +7,26 @@ use Sanger::Graphics::Bump;
 
 
 sub features {
-  my ($self) = @_;
   return [];
 } 
 
-sub colour {
-  my( $self, $f ) = @_;
-  return $self->my_colour('default');
+sub colour_key {
+  return 'default';
 }
 
 sub feature_label {
-  my( $self, $f ) = @_;
   return ('','none');
 }
 
 sub title {
-  my( $self, $f ) = @_;
-  return $f->score;
+  return;
 }
 
 sub href {
-  my( $self, $f ) = @_;
-  return undef;
+  return;
 }
 sub tag {
-  return ();
+  return;
 }
 
 use Bio::EnsEMBL::Feature;
@@ -103,7 +98,7 @@ sub _init {
   my $pix_per_bp     = $self->scalex;
   my $bitmap_length  = int($slice->length * $pix_per_bp);
   ## And the colours
-  my $dep            = $self->my_config('dep');
+  my $dep            = $self->my_config('depth')||100000;
   $self->_init_bump( $dep );
 
   my $flag           = 1;
@@ -217,7 +212,12 @@ sub _init {
       next if $row > $dep;
     }
     my @tag_glyphs = ();
-    my ($feature_colour, $label_colour, $part_to_colour) = $self->colour( $f );
+
+    my $colour_key     = $self->colour_key( $f );
+    my $feature_colour = $self->my_colour( $colour_key );
+    my $label_colour   = $self->my_colour( $colour_key, 'label' );
+    my $part_to_colour = $self->my_colour( $colour_key, 'style' );
+    # warn "$colour_key - $feature_colour, $label_colour";
     
     ## Lets see about placing labels on objects...        
     my $composite = $self->Composite();
@@ -264,7 +264,7 @@ sub _init {
         'y'          => 0,
         'width'      => $end - $start + 1,
         'height'     => $h,
-        $part_to_colour."colour" => $feature_colour || 'lightpink2' ,
+        $part_to_colour."colour" => $feature_colour,
         'absolutey'  => 1
       }) );
     }
@@ -602,23 +602,23 @@ sub _init {
       }
 
       if($bp_textwidth < ($end - $start+1)){
-         # print STDERR "X: $label - $label_colour\n";
-         my $tglyph = $self->Text({
-           'x'          => $start - 1,
-           'y'          => ($h-$H)/2,
-           'z' => 5,
-           'width'      => $end-$start+1,
-           'height'     => $H,
-           'font'       => $FONT,
-           'ptsize'     => $FONTSIZE,
-           'halign'     => 'center',
-           'colour'     => $label_colour,
-           'text'       => $label,
-           'textwidth'  => $bp_textwidth*$pix_per_bp,
-           'absolutey'  => 1,
-           'absolutez'  => 1,
-         });
-         $composite->push($tglyph);
+        # print STDERR "X: $label - $label_colour\n";
+        my $tglyph = $self->Text({
+          'x'          => $start - 1,
+          'y'          => ($h-$H)/2,
+          'z' => 5,
+          'width'      => $end-$start+1,
+          'height'     => $H,
+         'font'       => $FONT,
+          'ptsize'     => $FONTSIZE,
+          'halign'     => 'center',
+          'colour'     => $label_colour,
+          'text'       => $label,
+          'textwidth'  => $bp_textwidth*$pix_per_bp,
+          'absolutey'  => 1,
+          'absolutez'  => 1,
+        });
+        $composite->push($tglyph);
       }
     } elsif( $style ) {
       if( $style eq 'overlaid' ) {
@@ -639,26 +639,31 @@ sub _init {
           }));
         }
       } else {
-        $rowheight += $H+2;
-        $composite = $self->Composite($composite,$self->Text({
-          'x'          => $start - 1,
-          'y'          => $strand < 0 ? $h+3 : 3+$h,
-          'width'      => $bp_textwidth,
-          'height'     => $H,
-          'font'       => $FONT,
-          'ptsize'     => $FONTSIZE,
-          'halign'     => 'left',
-          'colour'     => $label_colour,
-          'text'       => $label,
-          'absolutey'  => 1,
-        }));
+        my $label_strand = $self->my_config('label_strand');
+        unless( $label_strand eq 'r' && $strand != -1 ||
+	        $label_strand eq 'f' && $strand != 1 ) {
+          $rowheight += $H+2;
+          my $t = $self->Composite();
+          $t->push($composite,$self->Text({
+            'x'          => $start - 1,
+            'y'          => $strand < 0 ? $h+3 : 3+$h,
+            'width'      => $bp_textwidth,
+            'height'     => $H,
+            'font'       => $FONT,
+            'ptsize'     => $FONTSIZE,
+            'halign'     => 'left',
+            'colour'     => $label_colour,
+            'text'       => $label,
+            'absolutey'  => 1,
+          }));
+          $composite = $t;
+	}
       }
     }
 
     ## Lets see if we can Show navigation ?...
     if($navigation) {
       $composite->{'title'} = $self->title( $f ) if $self->can('title');
-      $composite->{'zmenu'} = $self->zmenu( $f ) if $self->can('zmenu');
       $composite->{'href'}  = $self->href(  $f ) if $self->can('href');
     }
     
@@ -670,7 +675,7 @@ sub _init {
       }
     }
     $C1++;
-    $self->push($composite);
+    $self->push( $composite );
     $self->push(@tag_glyphs);
 
     my $hi_colour = 'highlight1';
