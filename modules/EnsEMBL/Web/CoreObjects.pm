@@ -164,6 +164,19 @@ sub _generate_objects {
   $self->{'parameters'}{'v'} = $self->variation->name       if $self->variation;
 }
 
+sub _get_gene_location_from_transcript {
+  my $self = shift; 	 
+  return unless $self->transcript; 	 
+  $self->gene( 	 
+    $self->transcript->adaptor->db->get_GeneAdaptor->fetch_by_transcript_stable_id( 	 
+      $self->transcript->stable_id 	 
+    ) 	 
+  ); 	 
+  my $slice = $self->transcript->feature_Slice; 	 
+     $slice = $slice->invert() if $slice->strand < 0; 	 
+  $self->location( $slice ); 	 
+}
+
 sub _get_location_from_gene {
   my( $self ) = @_;
   return unless $self->gene;
