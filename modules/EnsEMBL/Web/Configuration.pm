@@ -307,29 +307,23 @@ sub query_string {
 sub create_node {
   my ( $self, $code, $caption, $components, $options ) = @_;
  
-  my $url;
-  if ($options->{'url'}) {
-    $url = $options->{'url'};
-  }
-  else {
-    $url = '/';
-    if ($self->species && $self->species ne 'common') {
-      $url .= $self->species.'/';
-    }
-    $url .= $self->type.'/'.$code;
-    if ($self->query_string) {
-      $url .= '?'.$self->query_string;
-    }
-  }
+#  my $url = '/';
+#  $url .= $self->species.'/' if $self->species && $self->species ne 'common';
+#  $url .= $self->type.'/'.$code;
+#  if ($self->query_string) {
+#    $url .= '?'.$self->query_string;
+#  }
  
   my $details = {
-    'caption'    => $caption,
-    'components' => $components,
-    'url'        => $url, 
+    caption    => $caption,
+    components => $components,
+    code       => $code,
   };
+  
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
   }
+  
   return $self->tree->create_node( $code, $details );
 }
 
