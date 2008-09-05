@@ -18,21 +18,42 @@ sub features {
   return $self->fetch_features;
 }
 
-sub fetch_features {
-  my ($self) = @_;
-  unless( exists( $self->{'config'}->{'snps'} ) ) {
-    my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
-    my $vf_ref = $self->{'container'}->get_all_VariationFeatures();
-## Add a filtering step here...
-    my @vari_features =
-      map  { $_->[1] }
-      sort { $a->[0] <=> $b->[0] }
-      map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
-      grep { $_->map_weight < 4 } @$vf_ref;
-    $self->cache( $self->_key, \@vari_features );
+sub check_source {
+  my ($self,$f,$sources) = @_;
+  foreach ( @{$f->get_all_sources} ) {
+    return 1 if $sources->{$_};
   }
-  my $snps = $self->cache( $self->_key ) || [];
-  if(@$snps) {
+  return 0;
+}
+
+sub features {
+  my ($self) = @_;
+  my $max_length    = $self->my_config( 'threshold' )  || 1000;
+  my $slice_length  = $self->{'container'}->length;
+  if($slice_length > $max_length*1010) {
+    $self->errorTrack('Variation features not displayed for more than '.$max_length.'Kb');
+    return;
+  }
+
+  unless( $self->cache( $self->{'my_config'}->key ) ) {
+    my $sources = $self->my_config('sources');
+       $sources = { map { ($_,1) } @$sources } if $sources;
+    my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
+
+## Add a filtering step here...
+    warn "SNP filter... ",$self->my_config('filter');
+    my @vari_features =
+      map  { $_->[1] }              ## Quick indexing schwartzian transform
+      sort { $a->[0] <=> $b->[0] }  ## to make sure that "most functional" snps appear first!
+      map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
+      grep { $sources ? $self->check_source($_,$sources) : 1 } ## If sources filter by source!!
+      grep { $_->map_weight < 4 }
+      @{ $self->{'container'}->get_all_VariationFeatures($self->my_config('filter')) || [] };
+    $self->cache( $self->{'my_config'}->key, \@vari_features );
+  }
+  my $snps = $self->cache( $self->{'my_config'}->key ) || [];
+
+  if(0&&@$snps) {
     $self->_add_legend( 'variations_legend', $self->_pos );
     my %T = ();
     foreach my $f (@$snps) {
@@ -49,19 +70,9 @@ sub fetch_features {
   return $snps;
 }
 
-sub colour {
+sub colour_key {
   my ($self, $f) = @_;
-
-  my $consequence_type = $f->display_consequence();
-    unless($self->{'config'}->{'variation_types'}{$consequence_type}) {
-      push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
-	$self->{'colours'}{$consequence_type}[1],  $self->{'colours'}{$consequence_type}[0];
-
-      $self->{'config'}->{'variation_types'}{$consequence_type} = 1;
-    }
-    return $self->{'colours'}{$consequence_type}[0],
-      $self->{'colours'}{$consequence_type}[2],
-	$f->start > $f->end ? 'invisible' : '';
+  return lc($f->display_consequence);
 }
 
 sub href {
@@ -96,9 +107,15 @@ sub href {
   }
 
   return "/$species/$view?snp=$id;source=$source;c=$region:$start;w=20000;$pops";
+
+  return $this->_url( );
 }
 
-sub image_label {
+sub title {
+
+}
+
+sub feature_label {
   my ($self, $f) = @_;
   my $ambig_code = $f->ambig_code;
   my @T = $ambig_code eq '-' ? undef : ($ambig_code,'overlaid');
@@ -107,86 +124,55 @@ sub image_label {
 
 sub tag {
   my ($self, $f) = @_;
+  if( $self->my_config('style') eq 'box' ) {
+    my $style = $f->start > $f->end       ? 'left-snp'
+              : $f->var_class eq 'in-del' ? 'delta'
+              : 'box'
+              ;
+    my $letter = $style eq 'box' ? $f->ambig_code : "";
+    return {
+      'style'        => $style,
+      'colour'       => $self->my_colour( $self->colour_key ),
+      'letter'       => $style eq 'box' ? $f->ambig_code : "",
+      'label_colour' => $self->my_config( $self->colour_key, 'label' )
+    };
+  }
   if($f->start > $f->end ) {    
-    my $consequence_type = $f->display_consequence;
-    return ( { 'style' => 'insertion', 'colour' => $self->{'colours'}{"$consequence_type"}[0] } );
+    my $consequence_type = lc($f->display_consequence);
+    return ( { 'style' => 'insertion', 'colour' => $self->my_colour($consequence_type) } );
   }
 }
 
-sub colour {
-  my ($self, $f) = @_;
+sub highlight {
+  my $self = shift;
+  my ($f, $composite, $pix_per_bp, $h, $hi_colour) = @_;
+  return if $self->my_config('style') ne 'box';
+  ## Get highlights...
+  my %highlights;
+  @highlights{$self->highlights()} = ();
 
-  my $consequence_type = $f->display_consequence();
-    unless($self->{'config'}->{'variation_types'}{$consequence_type}) {
-      push @{ $self->{'config'}->{'variation_legend_features'}->{'variations'}->{'legend'}},
-	$self->{'colours'}{$consequence_type}[1],  $self->{'colours'}{$consequence_type}[0];
-
-      $self->{'config'}->{'variation_types'}{$consequence_type} = 1;
-    }
-    return $self->{'colours'}{$consequence_type}[0],
-      $self->{'colours'}{$consequence_type}[2],
-	$f->start > $f->end ? 'invisible' : '';
-}
-
-
-sub zmenu {
-  my ($self, $f ) = @_;
-  my( $start, $end );
-  my $allele = $f->allele_string;
-
-
-  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      $start  = $self->{'container'}->get_original_seq_region_position( $f->start );
-      $end  = $self->{'container'}->get_original_seq_region_position( $f->end );
-  } else {
-      ($start, $end) = $self->slice2sr( $f->start, $f->end );
+  # Are we going to highlight this item...
+  my $id = $f->variation_name();
+  $id =~ s/^rs//;
+  return unless $highlights{$id} || $highlights{'rs'.$id};
+  $self->unshift( $self->Rect({
+    'x'         => $composite->x() - 1/$pix_per_bp,
+    'y'         => $composite->y(),  ## + makes it go down
+    'width'     => $composite->width() + 2/$pix_per_bp,
+    'height'    => $h + 2,
+    'colour'    => "white",
+    'absolutey' => 1,
+  })_;
+    # Line of black outermost
+  $self->unshift( $self->Rect({
+    'x'         => $composite->x() -2/$pix_per_bp,
+    'y'         => $composite->y() -1,  ## + makes it go down
+    'width'     => $composite->width() + 4/$pix_per_bp,
+    'height'    => $h + 4,
+    'colour'    => $hi_colour,
+    'absolutey' => 1,
+  });
   }
-
-  my $pos =  $start;
-
-  if($f->start > $f->end  ) {
-    $pos = "between&nbsp;$start&nbsp;&amp;&nbsp;$end";
-  }
-  elsif($f->start < $f->end ) {
-    $pos = "$start&nbsp;-&nbsp;$end";
-  }
-  my $ldview_link =  $self->href( $f, 'ldview' );
-
-  my $status = join ", ", @{$f->get_all_validation_states};
-  my %zmenu = ( 
- 	       caption               => "SNP: " . ($f->variation_name),
- 	       '01:SNP properties'   => $self->href( $f, 'snpview' ),
-               ( $ldview_link  ?
- 	         ( '02:View in LDView'   => $ldview_link ) : ()
-               ),
- 	       "03:bp: $pos"         => '',
- 	       "04:status: ".($status || '-') => '',
- 	       "05:class: ".($f->var_class || '-') => '',
- 	       "07:ambiguity code: ".$f->ambig_code => '',
- 	       "08:alleles: ".$f->allele_string => '',
- 	       "09:source: ".$f->source => '',
-	      );
-
-  my @label;
-  map { push @label, $self->{'colours'}{$_}[1]; }  @{ $f->get_consequence_type || [] };
-  $zmenu{"57:type: ".join ", ", @label} = "";
-  return \%zmenu;
-}
-
-sub affy_features {
-  my ($self) = @_;
-  my $snps = $self->fetch_features;
-  my $key = $self->_key();
-  my $source_name = "Affy GeneChip $key Mapping Array";
-
-  my @affy_snps;
-  foreach my $vf (@$snps) {
-    foreach  ( @{ $vf->get_all_sources || []}) {
-      next unless $_ eq $source_name;
-      push @affy_snps, $vf;
-    }
-  }
-  return \@affy_snps;
 }
 
 1;
