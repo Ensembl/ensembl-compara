@@ -20,7 +20,8 @@ sub _init {
   my $global_end     = $self->{'container'}->end();
   my $highlights     = $self->highlights();
   my $im_width       = $self->image_width();
-  my $feature_colour = $self->my_config('colour') || 'black';
+  warn "... $im_width ...";
+  my $feature_colour = $self->my_colour('default') || 'black';
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
 
