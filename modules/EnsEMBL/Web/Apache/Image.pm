@@ -29,17 +29,14 @@ sub handler {
   my $path = $ENSEMBL_SERVERROOT . $r->parsed_uri->path;
   my $replace = $ENSEMBL_SERVERROOT . $ENSEMBL_TMP_URL_IMG;
   $path =~ s/$replace/$ENSEMBL_TMP_DIR_IMG/g;
+  return DECLINED if $path !~ /png$/;
+  return DECLINED if $path =~ /\.\./;
 
-  if ($memd) {
-
-      ##return DECLINED if $r->$r-> ne 'image/png';
-      return DECLINED if $path !~ /png$/;
-      return DECLINED if $path =~ /\.\./;
+  if( $memd && (my $data = $memd->get($path)) ) {
     
-      my $data = $memd->get($path);
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
       $r->headers_out->set('Content-Length' => $data->{'size'});
-      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 86400*30) );
+      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 86400*30*12) );
       $r->set_last_modified($data->{'mtime'});
       
       $r->content_type('image/png');
@@ -47,17 +44,16 @@ sub handler {
       my $rc = $r->print($data->{'image'});
       return OK;
 
-  } else {
+  } elsif( -e $path ) {
 
-      ##return DECLINED if $r->content_type ne 'image/png';
-      return DECLINED if $path !~ /png$/;
-      return DECLINED if $path =~ /\.\./;
-    
-      ## TODO: Lookup and check file, error exception!
+      $r->headers_out->set('Accept-Ranges'  => 'bytes');
+      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 86400*30*12) );
       my $rc = $r->sendfile($path);
       return OK;
-
+      
   }
+
+  return NOT_FOUND;
 } # end of handler
 
 1;
