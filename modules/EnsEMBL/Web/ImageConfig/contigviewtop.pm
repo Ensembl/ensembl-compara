@@ -32,10 +32,9 @@ sub init {
     'sequence'    => 'Sequence',
     'marker'      => 'Markers',
     'gene'        => 'Genes',
-    'misc_set'    => 'Misc. regions',
-    'repeat'      => 'Repeats',
+#    'misc_set'    => 'Misc. regions',
     'synteny'     => 'Synteny',
-    'user_data'   => 'User uploaded data',
+#    'user_data'   => 'User uploaded data',
     'other'       => 'Additional features',
     'options'     => 'Options'
   );
