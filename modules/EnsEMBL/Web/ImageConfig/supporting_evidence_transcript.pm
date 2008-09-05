@@ -1,111 +1,55 @@
 package EnsEMBL::Web::ImageConfig::supporting_evidence_transcript;
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
-	my ($self) = @_;
-	$self->{'_userdatatype_ID'} = 50;
-	$self->{'_transcript_names_'} = 'yes';
-	$self->{'_add_labels' }  = 1;
-	$self->{'general'}->{'supporting_evidence_transcript'} = {
-		'_artefacts' => [qw(TSE_background_exon
-							TSE_transcript
-							TSE_generic_match_label
-							TSE_generic_match
-							SE_generic_match
-							SE_generic_match_label
-							non_can_intron
-							spacer1
-							spacer2
-							TSE_legend)],
-		'_options'  => [],
-		'_settings' => {
-			'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
-			'opt_zclick'     => 1,
-			'show_labels' => 'yes',
-			'width'   => 1000,
-			'label_width'   => 110,
-			'bgcolor'   => 'background1',
-			'bgcolour1' => 'background1',
-			'bgcolour2' => 'background1',
-			'validation' => [ ],
-			'classes' => [ ],
-			'types' => [ ],
-			'features' => [],
-		},
+    my ($self) = @_;
+    $self->set_parameters({
+	'title'         => 'Supporting Evidence',
+	'show_buttons'  => 'no',   # show +/- buttons
+	'button_width'  => 8,       # width of red "+/-" buttons
+	'show_labels'   => 'yes',   # show track names on left-hand side
+	'label_width'   => 100,     # width of labels on left-hand side
+	'margin'        => 5,       # margin
+	'spacing'       => 2,       # spacing
+	'bgcolor'       => 'background1',
+	'bgcolour1'     => 'background2',
+	'bgcolour2'     => 'background3',
+    });
 
-		'TSE_transcript' => {
-			'on'      => "on",
-			'pos'     => '300',
-			'str'     => 'f',
-			'src'     => 'all',
-			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
-			'col'     => 'azure2',
-			'col2'    => 'azure3',
-		},
+    $self->create_menus(
+	'TSE_transcript'      => 'Genes',
+    );
 
-		'spacer1' => { 'on'=>'on','pos'=>280, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
+    ## Add in additional
+    $self->load_tracks();
 
-		'non_can_intron' => {
-			'on'          => "on",
-			'pos'         => '260',
-			'str'         => 'f',
-			'src'         => 'all',
-			'col'         => 'red',
-		},
-
-		'TSE_generic_match_label' => {
-			'on'          => "on",
-			'pos'         => '201',
-			'str'         => 'f',
-			'src'         => 'all', # 'ens' or 'all'
-		},
-
-		'TSE_generic_match' => {
-			'on'          => "on",
-			'pos'         => '200',
-			'str'         => 'f',
-			'src'         => 'all', # 'ens' or 'all'
-			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
-		},
-
-		'SE_generic_match_label' => {
-			'on'          => "on",
-			'pos'         => '101',
-			'str'         => 'f',
-			'src'         => 'all', # 'ens' or 'all'
-			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
-		},
-
-		'SE_generic_match' => {
-			'on'          => "on",
-			'pos'         => '100',
-			'str'         => 'f',
-			'src'         => 'all', # 'ens' or 'all'
-			'colours' => {$self->{'_colourmap'}->colourSet( 'all_genes' )} ,
-		},
-		'TSE_background_exon' => {
-			'on'          => "on",
-			'pos'         => '50',
-			'str'         => 'f',
-			'src'         => 'all',
-#			'col'         => 'd8ddff',
-			'col'         => 'bisque',
-			'tag'         => 1,
-			'flag'        => 1,
-			'glyphset'    => 'TSE_background_exon',
-		},
-
-		'spacer2' => { 'on'=>'on','pos'=>30, 'height' => 30, 'str' => 'b', 'glyphset' => 'spacer' },
-
-		'TSE_legend'   => {
-			'on'          => "on",
-			'pos'         => '10',
-			'str'         => 'f',
-			'src'         => 'all',
-		},
-	};	
+    #switch off all transcript unwanted transcript tracks
+    foreach my $child ( $self->get_node('TSE_transcript')->descendants ) {
+	$child->set( 'on' => 'off' );
+    }
+    $self->add_tracks( 'TSE_transcript',
+	   [ 'non_can_intron',          'Introns',             'non_can_intron',          { 'on' => 'on',
+											    'strand' => 'r',
+											    'colours'  => $self->species_defs->colour('feature'), } ],
+	   [ 'TSE_generic_match_label', 'Transcript evidence', 'TSE_generic_match_label', { 'on' => 'on',
+											    'strand' => 'r' } ],
+	   [ 'TSE_generic_match',       '',                    'TSE_generic_match',       { 'on' => 'on',
+											    'strand' => 'r',
+											    'colours'  => $self->species_defs->colour('feature'), } ],
+	   [ 'SE_generic_match_label',  'Exon evidence',       'SE_generic_match_label',  { 'on' => 'on', 
+											    'strand' => 'r' } ],
+	   [ 'SE_generic_match',        '',                    'SE_generic_match',        { 'on' => 'on',
+											    'strand' => 'r',
+											    'colours'  => $self->species_defs->colour('feature'), } ],
+	   [ 'TSE_background_exon',     '',                    'TSE_background_exon',     { 'on' => 'on', 
+											    'strand' => 'r' } ],
+#	   [ 'spacer',                  '',                    'spacer',                  { 'on' => 'on',
+#											    'strand' => 'r' } ],
+	   [ 'TSE_legend',              '' ,                   'TSE_legend',              { 'on' => 'on', 
+											    'strand' => 'r',
+											    'colours'  => $self->species_defs->colour('feature') } ],
+		   );	
 }
+
 1;
