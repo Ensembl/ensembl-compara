@@ -45,10 +45,10 @@ sub _push_unshift {
     # track max and min dimensions
     # DO NOT use "||=" because zero is equivalent to undef and zero need to be kept
     #
-    $self->{'x'}      = $gx if(!defined $self->{'x'});
-    $self->{'y'}      = $gy if(!defined $self->{'y'});
-    $self->{'width'}  = $gw if(!defined $self->{'width'});
-    $self->{'height'} = $gh if(!defined $self->{'height'});
+    $self->{'x'}      = $gx unless defined $self->{'x'};
+    $self->{'y'}      = $gy unless defined $self->{'y'};
+    $self->{'width'}  = $gw unless defined $self->{'width'};
+    $self->{'height'} = $gh unless defined $self->{'height'};
 
     #########
     # x
@@ -72,6 +72,7 @@ sub _push_unshift {
       # x unchanged
       #
       $self->{'width'} = $gx + $gw - $self->{'x'};
+      
     }
 
     #########
