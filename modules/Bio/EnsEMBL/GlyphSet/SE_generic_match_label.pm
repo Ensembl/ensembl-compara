@@ -6,7 +6,7 @@ use Bio::EnsEMBL::GlyphSet;
 sub _init {
     my ($self) = @_;
     my $Config      = $self->{'config'};
-    my $height  = $Config->get('spacer','height') || 20;
+    my $height  = $Config->get_parameter('height') || 20;
     $self->push( $self->Space({
         'x'      	=> 1,
 		'y'      	=> 0,
