@@ -46,9 +46,16 @@ sub nodes {
   my $self = shift;
   my $l1 = $self->left;
   my $r1 = $self->right;
-  return map { $self->get_node( $_ ) } grep { $self->_node($_)->{left} >= $l1 && $self->_node($_)->{left} < $r1 } $self->_sorted_keys;
+  return map { $self->_node($_)->{left} >= $l1 && $self->_node($_)->{left} < $r1 ? $self->get_node( $_ ) : () } $self->_sorted_keys;
 }
 
+sub descendants {
+### Returns list of all nodes under this node!
+  my $self = shift;
+  my $l1 = $self->left;
+  my $r1 = $self->right;
+  return map { $self->_node($_)->{left} > $l1 && $self->_node($_)->{left} < $r1 ? $self->get_node( $_ ) : () } $self->_sorted_keys;
+}
 sub left        { $_[0]->_node->{left};                }
 sub right       { $_[0]->_node->{right};               }
 sub data        { $_[0]->_node->{data};                }
