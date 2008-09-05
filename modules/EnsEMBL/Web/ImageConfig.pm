@@ -993,7 +993,7 @@ sub scalex {
 
 sub set_width {
   my( $self, $val ) = @_;
-  $self->set_paramter( 'width', $val );
+  $self->set_parameter( 'width', $val );
 }
 sub container_width {
   my $self = shift;
