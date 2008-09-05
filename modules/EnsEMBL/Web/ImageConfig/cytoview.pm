@@ -29,14 +29,14 @@ sub init {
   });
 
   $self->create_menus(
-    'sequence'    => 'Sequence',
-    'marker'      => 'Markers',
-    'gene'        => 'Genes',
-    'misc_set'    => 'Misc. regions',
-    'synteny'     => 'Synteny',
-    'user_data'   => 'User uploaded data',
-    'other'       => 'Additional features',
-    'options'     => 'Options'
+    'sequence'      => 'Sequence',
+    'marker'        => 'Markers',
+    'gene'          => 'Genes',
+    'misc_feature'  => 'Misc. regions',
+    'synteny'       => 'Synteny',
+    'user_data'     => 'User uploaded data',
+    'other'         => 'Additional features',
+    'options'       => 'Options'
   );
 
   $self->add_track( 'sequence', 'contig',    'Contigs',             'strandard_contig', { 'on' => 'on'  } );
