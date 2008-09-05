@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::TSE_generic_match;
 use strict;
-use Bio::EnsEMBL::GlyphSet;
-@Bio::EnsEMBL::GlyphSet::TSE_generic_match::ISA = qw(Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet);
 use Data::Dumper;
 $Data::Dumper::Maxdepth = 3;
 
@@ -18,7 +17,7 @@ sub draw_glyphs {
 
     my $h          = 8; #height of glyph
 
-    my $colours       = $self->colours();
+    my $colours       = {};#$self->colours();
     my $pix_per_bp = $Config->transform->{'scalex'};
     my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
     my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
@@ -31,20 +30,25 @@ sub draw_glyphs {
     my @draw_end_lines;
     my $H          = 0;
 
+    my $legend;
     #go through each parsed transcript_supporting_feature
     foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
 	my $hit_name = $hit_details->{'hit_name'};
-	my $hit_db = $hit_details->{'hit_db'};
+	my $hit_type = $hit_details->{'hit_type'};
+	my $hit_db   = $hit_details->{'hit_db'};
 	my $start_x  = 1000000;
 	my $finish_x = 0;
 	my $last_end = 0; #true/false (prevents drawing of line from first exon)
 	my $last_end_x = 0; #position of end of last box - needed to draw line
 	my ($lh_ext,$rh_ext) = (0,0); #booleans for drawing of extensions to lh or rh side of image
 	my $last_mismatch = 0; #will be set to the label for the amount of mismatch, but also defines whether the line is drawn
+	my $colour = $self->my_colour($hit_type);
+
 	#used for legend
-	$Config->{'TSE_legend'}{'hit_feature'}{'found'}++;
-	$Config->{'TSE_legend'}{'hit_feature'}{'priority'} = $legend_priority;
-	$Config->{'TSE_legend'}{'hit_feature'}{'height'} = $h;
+	$Config->{'TSE_legend'}{$hit_type}{'found'}++;
+	$Config->{'TSE_legend'}{$hit_type}{'priority'} = $legend_priority;
+	$Config->{'TSE_legend'}{$hit_type}{'height'} = $h;
+	$Config->{'TSE_legend'}{$hit_type}{'colour'} = $colour;
 
       BLOCK:
 	foreach my $block (@{$hit_details->{'data'}}) {
@@ -133,11 +137,11 @@ sub draw_glyphs {
 		}
 #		warn "1- drawing line from $x with width of $w" if ($hit_name eq 'Q4R8S0.1');
 		my $G = $self->Line({
-		    'x'          => $x,
+		    'x'         => $x,
 		    'y'         => $H + $h/2,
-		    'h'         =>1,
+		    'h'         => 1,
 		    'width'     => $w,
-		    'colour'    => 'black',
+		    'colour'    => $colour,
 		    'absolutey' => 1,});
 
 		#add attributes if there is a part of the hit missing, or an extra bit
@@ -204,7 +208,7 @@ sub draw_glyphs {
 		'y'            => $H,
 		'width'        => $width,
 		'height'       => $h,
-		'bordercolour' => 'black',
+		'bordercolour' => $colour,
 		'absolutey'    => 1,
 		'title'        => $hit_name,
 		'href'         => $self->_url($zmenu_dets),
@@ -224,7 +228,7 @@ sub draw_glyphs {
 	    'width'     => $res[2],
 	    'textwidth' => $res[2],
 	    'font'      => $fontname,
-	    'colour'    => 'blue',
+	    'colour'    => 'black',
 	    'text'      => $hit_name,
 	    'absolutey' => 1,
 	    'absolutex' => 1,
