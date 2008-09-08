@@ -76,17 +76,17 @@ sub _content {
   $config->{'transcript'}{'transcript'} = $transcript;
   $config->{'transcript'}{'web_transcript'} = $object;
 
-  #identify name of transcript track (to turn on)
+
+  $config->modify_configs( ## Turn on track associated with this db/logic name
+    [$config->get_track_key( 'TSE_transcript', $object )],
+    {qw(on on strand f)}  ## show on the forward strand only
+  );
+
+  #info needed to get at web_data
   my $db           = $object->get_db();
   my $db_key       = $db eq 'core' ? 'ENSEMBL_DB' : 'ENSEMBL_'.uc($db);
   my $info_summary =  $object->species_defs->databases->{$db_key}{'tables'};
-  my $logic_name   = $object->gene->analysis->logic_name;
-  my $key          = $info_summary->{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
-  my $track_to_turn_on = 'TSE_transcript_'.$db.'_'.$key;
-  $config->get_node( $track_to_turn_on )->set('on','on'); 
-  $config->get_node( $track_to_turn_on )->set('strand','f'); 
 
-  
   #get both real slice and normalised slice (ie introns set to fixed width)
   my @slice_defs = ( [ 'supporting_evidence_transcript', 'munged', $extent ] );
   foreach my $slice_type (@slice_defs) {
@@ -209,7 +209,7 @@ sub _content {
 
     $t_evidence->{$hit_name}{'hit_name'} = $hit_name;
     $t_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
-    $t_evidence->{$hit_name}{'hit_type'} = $self->hit_type($info_summary,$evi);
+    $t_evidence->{$hit_name}{'hit_type'} = ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) ? 'protein' : $self->hit_type($info_summary,$evi);
      
     #split evidence into ungapped features (ie parse cigar string),
     #map onto exons ie determine mismatches
@@ -367,7 +367,7 @@ sub _content {
       }
       $e_evidence->{$hit_name}{'hit_name'} = $hit_name;
       $e_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
-      $e_evidence->{$hit_name}{'hit_type'} = $self->hit_type($info_summary,$evi);
+      $e_evidence->{$hit_name}{'hit_type'} = ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) ? 'protein' : $self->hit_type($info_summary,$evi);
     }
   }
 
