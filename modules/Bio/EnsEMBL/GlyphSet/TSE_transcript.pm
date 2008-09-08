@@ -45,20 +45,20 @@ sub _init {
 	    my $col1 = $self->my_colour('noncoding_join','join' );
 	    my $col2 = $self->my_colour('coding_join','join' );
 
-	    ##the following is very verbose and will be rewritten, but it does do the job!
-	    my ($G,$tag);
+	    my ($G,$G2,$tag);
+	    my $G = $self->Rect({
+		'bordercolour' => $colour,
+		'absolutey'    => 1,
+		'title'        => $obj->[2]->stable_id,
+		'href'         => $t_url,
+	    });
+
 	    #draw and tag completely non-coding exons
 	    if ( ($exon_end < $coding_start) || ($exon_start > $coding_end) ) {
-		$G = $self->Rect({
-		    'x'         => $exon_start ,
-		    'y'         => 0.5*$h,
-		    'width'     => $exon_end - $exon_start,
-		    'height'    => $h,
-		    'bordercolour' => $colour,
-		    'absolutey' => 1,
-		    'title'     => $obj->[2]->stable_id,
-		    'href'      => $t_url,
-		});
+		$G->{'x'}      = $exon_start;
+		$G->{'y'}      = 0.5*$h;
+		$G->{'width'}  = $exon_end - $exon_start;
+		$G->{'height'} = $h;
 		$tag = "@{[$exon_end]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col1];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
@@ -67,17 +67,11 @@ sub _init {
 	    }			
 	    elsif ( ($exon_start >= $coding_start) && ($exon_end <= $coding_end) ) {
 		##draw and tag completely coding exons
-		$G = $self->Rect({
-		    'x'         => $exon_start,
-		    'y'         => 0,
-		    'width'     => $exon_end - $exon_start,
-		    'height'    => 2*$h,
-		    'colour'    => $colour,
-		    'absolutey' => 1,
-		    'title'     => $obj->[2]->stable_id,
-		    'href'      => $t_url,
-		});
-#		warn "drawing exon_box from $exon_start to $exon_end";
+		$G->{'x'}      = $exon_start;
+		$G->{'y'}      = 0;
+		$G->{'width'}  = $exon_end - $exon_start;
+		$G->{'height'} = 2*$h;
+		$G->{'colour'} = $colour;
 		$tag = "@{[$exon_end]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col2];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
@@ -86,94 +80,89 @@ sub _init {
 	    }
 
 	    elsif ( ($exon_start < $coding_start) && ($exon_end > $coding_start) ) {
+		$G2 =  $self->Rect({
+		    'bordercolour' => $G->{'bordercolour'},
+		    'absolutey'    => $G->{'absolutey'},
+		    'title'        => $G->{'title'},
+		    'href'         => $G->{'href'},
+		});
 		##draw and tag partially coding transcripts on left hand
 		#non coding part
-		$G = $self->Rect({
-		    'x'         => $exon_start,
-		    'y'         => 0.5*$h,
-		    'width'     => $coding_start-$exon_start,
-		    'height'    => $h,
-		    'bordercolour' => $colour,
-		    'absolutey' => 1,
-		    'title'     => $obj->[2]->stable_id,
-		    'href'      => $t_url,
-		});
+		$G2->{'x'}      = $exon_start;
+		$G2->{'y'}      = 0.5*$h;
+		$G2->{'width'}  = $coding_start-$exon_start;
+		$G2->{'height'} = $h;
+		;
 		$tag = "@{[$coding_start]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col1];
-		$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
-		$self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
-		$self->push( $G );
+		$self->join_tag( $G2, "X:$tag", 0,  0, $col1, 'fill', -99 );
+		$self->join_tag( $G2, "X:$tag", 1,  0, $col1, 'fill', -99  );
+		$self->push( $G2 );
 		
-		#coding part		
+		#coding part
+		my $G3 =  $self->Rect({
+		    'bordercolour' => $G->{'bordercolour'},
+		    'absolutey'    => $G->{'absolutey'},
+		    'title'        => $G->{'title'},
+		    'href'         => $G->{'href'},
+		});		
 		my $width = ($exon_end > $coding_end) ? $coding_end - $coding_start : $exon_end - $coding_start;
 		my $y_pos = ($exon_end > $coding_end) ? $coding_end : $exon_end;
-		$G = $self->Rect({
-		    'x'         => $coding_start,
-		    'y'         => 0,
-		    'width'     => $width,
-		    'height'    => 2*$h,
-		    'colour'    => $colour,
-		    'absolutey' => 1,
-		    'title'     => $obj->[2]->stable_id,
-		    'href'      => $t_url,
-		});
+		$G3->{'x'}      = $coding_start;
+		$G3->{'y'}      = 0;
+		$G3->{'width'}  = $width;
+		$G3->{'height'} = 2*$h;
+		$G3->{'colour'} = $colour;
 		$tag = "@{[$y_pos]}:@{[$coding_start]}";
 		push @{$tags}, ["X:$tag",$col2];
-		$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
-		$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
-		$self->push( $G );
+		$self->join_tag( $G3, "X:$tag", 0,  0, $col2, 'fill', -99 );
+		$self->join_tag( $G3, "X:$tag", 1,  0, $col2, 'fill', -99  );
+		$self->push( $G3 );
 		
 		#draw non-coding part if there's one of these as well
 		if ($exon_end > $coding_end) {
-		    $G = $self->Rect({
-			'x'         => $coding_end,
-			'y'         => 0.5*$h,
-			'width'     => $exon_end-$coding_end,
-			'height'    => $h,
-			'bordercolour'    => $colour,
-			'absolutey' => 1,
-			'title'     => $obj->[2]->stable_id,
-			'href'      => $t_url,
+		    my $G4 =  $self->Rect({
+			'bordercolour' => $G->{'bordercolour'},
+			'absolutey'    => $G->{'absolutey'},
+			'title'        => $G->{'title'},
+			'href'         => $G->{'href'},
 		    });
+		    $G4->{'x'}      = $coding_end;
+		    $G4->{'y'}      = 0.5*$h;
+		    $G4->{'width'}  = $exon_end-$coding_end;
+		    $G4->{'height'} = $h;
 		    $tag = "@{[$exon_end]}:@{[$coding_end]}";
 		    push @{$tags}, ["X:$tag",$col1];
-		    $self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
-		    $self->join_tag( $G, "X:$tag", 1,  0, $col1, 'fill', -99  );
-		    $self->push( $G );
+		    $self->join_tag( $G4, "X:$tag", 0,  0, $col1, 'fill', -99 );
+		    $self->join_tag( $G4, "X:$tag", 1,  0, $col1, 'fill', -99  );
+		    $self->push( $G4 );
 		}
 	    }
-	    
 	    elsif ( ($exon_end > $coding_end) && ($exon_start < $coding_end) ) {
 		##draw and tag partially coding transcripts on the right hand
-		
+		$G2 =  $self->Rect({
+		    'bordercolour' => $G->{'bordercolour'},
+		    'absolutey'    => $G->{'absolutey'},
+		    'title'        => $G->{'title'},
+		    'href'         => $G->{'href'},
+		});		
 		#coding part
-		$G = $self->Rect({
-		    'x'         => $exon_start,
-		    'y'         => 0,
-		    'width'     => $coding_end - $exon_start,
-		    'height'    => 2*$h,
-		    'colour'    => $colour,
-		    'absolutey' => 1,
-		    'title'     => $obj->[2]->stable_id,
-		    'href'      => $t_url,
-		});
+		$G2->{'x'}      = $exon_start;
+		$G2->{'y'}      = 0;
+		$G2->{'width'}  = $coding_end-$exon_start;
+		$G2->{'height'} = 2*$h;
+		$G2->{'colour'} = $colour;
 		$tag = "@{[$coding_end]}:@{[$exon_start]}";
 		push @{$tags}, ["X:$tag",$col2];
-		$self->join_tag( $G, "X:$tag", 0,  0, $col2, 'fill', -99 );
-		$self->join_tag( $G, "X:$tag", 1,  0, $col2, 'fill', -99  );
-		$self->push( $G );
+		$self->join_tag( $G2, "X:$tag", 0,  0, $col2, 'fill', -99 );
+		$self->join_tag( $G2, "X:$tag", 1,  0, $col2, 'fill', -99  );
+		$self->push( $G2 );
 
 		#non coding part
-		$G = $self->Rect({
-		    'x'         => $coding_end,
-		    'y'         => 0.5*$h,
-		    'width'     => $exon_end-$coding_end,
-		    'height'    => $h,
-		    'bordercolour' => $colour,
-		    'absolutey' => 1,
-		    'title'     => $obj->[2]->stable_id,
-		    'href'      => $t_url,
-		});
+		$G->{'x'}      = $coding_end;
+		$G->{'y'}      = 0.5*$h;
+		$G->{'width'}  = $exon_end-$coding_end;
+		$G->{'height'} = $h;
 		$tag = "@{[$exon_end]}:@{[$coding_end]}";
 		push @{$tags}, ["X:$tag",$col1];
 		$self->join_tag( $G, "X:$tag", 0,  0, $col1, 'fill', -99 );
@@ -196,7 +185,7 @@ sub _init {
 	    $self->push($G);
 	}
     }
-    
+
     #draw a direction arrow
     $self->push($self->Line({
 	'x'         => 0,
