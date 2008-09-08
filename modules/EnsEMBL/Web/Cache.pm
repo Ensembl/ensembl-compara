@@ -76,7 +76,7 @@ sub add_tags {
   my $key  = shift;
   my @tags = @_;
 
-  warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
+  #warn "EnsEMBL::Web::Cache->add_tags( $key, ".join(', ', @tags).')';
 
   my $sock = $self->get_sock($key);
   foreach my $tag (@tags) {
@@ -117,7 +117,7 @@ sub set {
   my $self = shift;
   my ($key, $value, $exptime, @tags) = @_;
 
-  warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
+  #warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
   
   $self->SUPER::set($key, $value, $exptime || $self->{default_exptime});
   $self->add_tags($key, $self->{namespace}, @tags);
@@ -127,7 +127,7 @@ sub get {
   my $self = shift;
   my $key  = shift;
 
-  warn "EnsEMBL::Web::Cache->get($key)";
+  #warn "EnsEMBL::Web::Cache->get($key)";
   
   return $self->SUPER::get($key);
 }
@@ -136,7 +136,7 @@ sub delete {
   my $self = shift;
   my $key  = shift;
 
-  warn "EnsEMBL::Web::Cache->delete($key)";
+  #warn "EnsEMBL::Web::Cache->delete($key)";
 
   return $self->SUPER::remove($key, @_);
 }
