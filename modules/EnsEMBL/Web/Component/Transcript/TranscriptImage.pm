@@ -19,7 +19,7 @@ sub content {
   my $transcript = $self->object;
   my $transcript_slice = $transcript->Obj->feature_Slice;
      $transcript_slice = $transcript_slice->invert if $transcript_slice->strand < 1; ## Put back onto correct strand!
-  my $wuc = $transcript->get_userconfig( 'geneview' );
+  my $wuc = $transcript->get_userconfig( 'single_transcript' );
      $wuc->set_parameters({
        'container_width'   => $transcript_slice->length,
        'image_width',      => $self->image_width || 800,
@@ -28,19 +28,20 @@ sub content {
 
 ## Now we need to turn on the transcript we wish to draw...
 
-     my $logic_name = $transcript->analysis->logic_name;
-     my $db         = $transcript->get_db();
-     my $db_key     = $db eq 'core' ? 'ENSEMBL_DB' : 'ENSEMBL_'.uc($db);
-     my $key        = $transcript->species_defs->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
-     my $track_to_turn_on = 'transcript_'.$db.'_'.$key;
 
-     $wuc->{'_no_label'} = 'true';
+  $wuc->modify_configs( ## Turn on track associated with this db/logic name
+    [$wuc->get_track_key( 'transcript', $transcript )],
+    {qw(on on show_labels off)}  ## also turn off the transcript labels...
+  );
 
-     $wuc->get_node( $track_to_turn_on )->set('on','on'); 
-     $wuc->get_node( 'ruler' )->set( 'strand', $transcript->Obj->strand > 0 ? 'f' : 'r' );
-     $wuc->set_parameter( 'single_Transcript' => $transcript->Obj->stable_id );
+  $wuc->modify_configs( ## Show the ruler only on the same strand as the transcript...
+    ['ruler'],
+    { 'strand', $transcript->Obj->strand > 0 ? 'f' : 'r' }
+  );
 
-     $wuc->tree->dump("Tree", '[[caption]]' );
+  $wuc->set_parameter( 'single_Transcript' => $transcript->Obj->stable_id );
+
+  $wuc->tree->dump("Tree", '[[caption]]' );
 
   my $image    = $transcript->new_image( $transcript_slice, $wuc, [] );
      $image->imagemap = 'yes';

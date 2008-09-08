@@ -16,6 +16,7 @@ sub content {
   my $self   = shift;
   my $object = $self->object;
 
+  $object->DBConnection->get_databases( 'core', 'compara' );
   my $slice = $object->slice;
   my $length = $slice->end - $slice->start + 1;
 
