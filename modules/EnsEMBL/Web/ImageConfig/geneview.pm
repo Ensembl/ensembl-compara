@@ -19,20 +19,21 @@ sub init {
   });
 
   $self->create_menus(
-    'other'      => 'Decorations',
     'transcript' => 'Genes',
-    'prediction' => 'Prediction transcripts'
+    'prediction' => 'Prediction transcripts',
+    'other'      => 'Decorations',
   );
 
   $self->add_tracks( 'other',
-    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'f', 'name' => 'Scale bar'  } ],
+#    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'r', 'name' => 'Scale bar'  } ],
     [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'r', 'name' => 'Ruler'      } ],
     [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
   );
 
   $self->load_tracks();
 
-  foreach my $child ( $self->get_node('transcript')->descendants ) {
+  foreach my $child ( $self->get_node('transcript')->descendants,
+                      $self->get_node('prediction')->descendants ) {
     $child->set( 'on' => 'off' );
   }
 

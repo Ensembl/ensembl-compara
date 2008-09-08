@@ -125,6 +125,30 @@ sub slice_number {
   return $self->get_parameter( 'slice_number' );
 }
 
+sub get_track_key {
+  my( $self, $prefix, $obj ) = @_;
+
+  my $logic_name = $obj->gene->analysis->logic_name;
+  my $db         = $obj->get_db();
+  my $db_key     = $db eq 'core' ? 'ENSEMBL_DB' : 'ENSEMBL_'.uc($db);
+  my $key        = $obj->species_defs->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
+  return join '_', $prefix, $db, $key;
+}
+
+sub modify_configs {
+  my( $self, $nodes, $config ) = @_;
+  foreach my $conf_key ( @$nodes ) {
+    my $n = $self->get_node( $conf_key );
+    next unless $n;
+    foreach my $t ( $n->nodes ) {
+      next unless $t->get('node_type') eq 'track';
+      foreach ( keys %$config) {
+        $t->set($_,$config->{$_});
+      }
+    }
+  }
+}
+
 #=============================================================================
 # General setting tree stuff...
 #=============================================================================
@@ -624,6 +648,7 @@ sub add_synteny {
       'db'          => $key,
       'glyphset'    => '_synteny',
       'name'        => "Synteny with $species_readable",
+      'species'     => $species,
       'caption'     => sprintf( "%1s.%3s synteny", split / /, $species_readable ),
       'description' => "Synteny blocks",
       'colours'     => $self->species_defs->colour( 'synteny' ),
@@ -968,7 +993,7 @@ sub image_height {
 sub bgcolor {
 ### a
   my $self = shift;
-  $self->get_parameter( 'bgcolor' );
+  $self->get_parameter( 'bgcolor' ) || 'background1';
 }
 
 sub bgcolour {

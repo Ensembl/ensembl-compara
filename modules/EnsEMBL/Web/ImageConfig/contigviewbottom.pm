@@ -73,6 +73,8 @@ sub init {
 ## Add in additional
   $self->load_tracks();
 
+#  foreach ( $self->get_node('variation')->descendants ) { $_->set('style','box'); $_->set('depth',2000); $_->set('bump_Width',1); }
+
 ## These tracks get added after the "auto-loaded tracks get addded...
   if( $self->species_defs->ENSEMBL_MOD ) {
     $self->add_track( 'information', 'mod', '', 'text', { 'name' => 'Message of the day', 'on' => 'on', 'menu' => 'no', 'strand' => 'r', 'text' => $self->species_defs->ENSEMBL_MOD } )
