@@ -269,7 +269,7 @@ sub markerLine {
   return join "\t",
     (INC_SPECIES?"$species\t":"").qq(Ensembl Marker),    ## Type
     qq($key),               ## ID
-    qq(/$species/markerview?marker=$key;r=$r),
+    qq(/$species/Location/View?marker=$key;r=$r),
     qq($IDS),     ## Index locations,
     qq(A marker with $counter synonyms ($IDS)\n);
 }
