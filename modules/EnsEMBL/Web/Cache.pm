@@ -5,11 +5,12 @@ package EnsEMBL::Web::Cache;
 ## this applies only when debug mode is on
 
 use strict;
-use warnings;
 use Data::Dumper;
 use EnsEMBL::Web::SpeciesDefs;
 use base 'Cache::Memcached';
 use fields qw(default_exptime levels);
+
+no warnings;
 
 sub new {
   my $class  = shift;
@@ -116,7 +117,7 @@ sub delete_by_tags {
 sub set {
   my $self = shift;
   my ($key, $value, $exptime, @tags) = @_;
-
+  return unless $value;
   #warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
   
   $self->SUPER::set($key, $value, $exptime || $self->{default_exptime});
