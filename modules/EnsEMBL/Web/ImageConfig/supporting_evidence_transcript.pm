@@ -28,6 +28,7 @@ sub init {
     foreach my $child ( $self->get_node('TSE_transcript')->descendants ) {
 	$child->set( 'on' => 'off' );
     }
+
     $self->add_tracks( 'TSE_transcript',
 	   [ 'non_can_intron',          'Non-canonical splicing', 'non_can_intron',          { 'on' => 'on',
 								        		    'strand' => 'r',
@@ -44,9 +45,7 @@ sub init {
 											    'colours'  => $self->species_defs->colour('feature'), } ],
 	   [ 'TSE_background_exon',     '',                    'TSE_background_exon',     { 'on' => 'on', 
 											    'strand' => 'r' } ],
-#	   [ 'spacer',                  '',                    'spacer',                  { 'on' => 'on',
-#											    'strand' => 'r' } ],
-	   [ 'TSE_legend',              '' ,                   'TSE_legend',              { 'on' => 'on', 
+	   [ 'TSE_legend',              'Legend',              'TSE_legend',              { 'on' => 'on', 
 											    'strand' => 'r',
 											    'colours'  => $self->species_defs->colour('feature') } ],
 		   );	
