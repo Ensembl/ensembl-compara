@@ -3,9 +3,6 @@ package Bio::EnsEMBL::GlyphSet::TSE_legend;
 use strict;
 use base qw(Bio::EnsEMBL::GlyphSet);
 
-use Data::Dumper;
-$Data::Dumper::Maxdepth = 2;
-
 sub _init {
     my ($self) = @_;
     my $BOX_WIDTH     = 20;
@@ -41,6 +38,8 @@ sub _init {
     foreach my $f (sort { $features{$a}->{'priority'} <=> $features{$b}->{'priority'} } keys %features) {
 	my $colour = $features{$f}->{'colour'};
 	my $db_type = $f;
+	$db_type =~ s/cdna/cDNA/;
+	$db_type =~ s/est/EST/;
 
 	if($x==($NO_OF_COLUMNS)) {
 	    $x = 0;
@@ -103,7 +102,7 @@ sub _init {
 	
     $NO_OF_COLUMNS = 2;
     #start new line
-    $y++;
+    $y = $y+2;
     $x=0;
 
     #Draw a red I-bar (non-canonical intron)
