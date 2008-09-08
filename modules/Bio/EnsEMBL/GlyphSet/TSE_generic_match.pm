@@ -134,6 +134,7 @@ sub draw_glyphs {
 		    'x'         => $x,
 		    'y'         => $H + $h/2,
 		    'h'         => 1,
+		    'colour'    => $colour,
 		    'width'     => $w,
 		    'absolutey' => 1,});
 
@@ -171,7 +172,7 @@ sub draw_glyphs {
 	    if (my $gap = $block->{'left_end_mismatch'}) {
 		my $c = $gap > 0 ? $self->my_colour('evi_long') : $self->my_colour('evi_short');
 		push @draw_end_lines, [$block->{'munged_start'},$H,$c];
-		push @draw_end_lines, [$block->{'munged_start'}+1/$pix_per_bp,$H,'black'];
+		push @draw_end_lines, [$block->{'munged_start'}+1/$pix_per_bp,$H,$c];
 		push @draw_end_lines, [$block->{'munged_start'}+2/$pix_per_bp,$H,$c];
 		
 		if ($strand > 0) {
@@ -184,7 +185,7 @@ sub draw_glyphs {
 	    if (my $gap = $block->{'right_end_mismatch'}) {
 		my $c = $gap > 0 ? $self->my_colour('evi_long') : $self->my_colour('evi_short');
 		push @draw_end_lines, [$block->{'munged_start'}+$width-2/$pix_per_bp,$H,$c];
-		push @draw_end_lines, [$block->{'munged_start'}+$width-1/$pix_per_bp,$H,'black'];
+		push @draw_end_lines, [$block->{'munged_start'}+$width-1/$pix_per_bp,$H,$c];
 		push @draw_end_lines, [$block->{'munged_start'}+$width,$H,$c];
 
 		if ($strand > 0) {
@@ -201,7 +202,7 @@ sub draw_glyphs {
 		'y'            => $H,
 		'width'        => $width,
 		'height'       => $h,
-		'bordercolour' => $colour,
+		'colour'       => $colour,
 		'absolutey'    => 1,
 		'title'        => $hit_name,
 		'href'         => $self->_url($zmenu_dets),
