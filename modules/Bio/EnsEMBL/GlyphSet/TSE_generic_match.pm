@@ -1,8 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::TSE_generic_match;
 use strict;
 use base qw(Bio::EnsEMBL::GlyphSet);
-use Data::Dumper;
-$Data::Dumper::Maxdepth = 3;
 
 sub _init {
     my ($self) = @_;
@@ -14,14 +12,10 @@ sub draw_glyphs {
     my $self = shift;
     my $all_matches = shift;
     my $Config = $self->{'config'};
-
     my $h          = 8; #height of glyph
-
-    my $colours       = {};#$self->colours();
     my $pix_per_bp = $Config->transform->{'scalex'};
     my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
-    my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
-	
+    my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);	
     my $length      = $Config->container_width(); 
     my $strand      = $Config->{'transcript'}->{'transcript'}->strand;
 
@@ -55,6 +49,7 @@ sub draw_glyphs {
 	    next BLOCK unless (defined(%$block));
 #	    warn Dumper($block) if ($hit_name eq 'Q8TC21.1');
 
+	    my $c = $self->my_colour('evi_long');
 	    #draw lhs extensions from the next block (first block is always just lhs)
 	    if ( my $mis = $block->{'lh-ext'} ) {
 		$lh_ext = $mis;
@@ -65,12 +60,12 @@ sub draw_glyphs {
 		    $last_end_x = $block->{'munged_end'};
 		}
 		my $G = $self->Line({
-		    'x'          => $last_end_x,
+		    'x'         => $last_end_x,
 		    'y'         => $H + $h/2,
-		    'h'         =>1,
+		    'h'         => 1,
 		    'width'     => $Config->container_width() - $last_end_x,
 		    'title'     => "Evidence extends $mis bp beyond the end of the transcript",
-		    'colour'    => 'red',
+		    'colour'    => $c,
 		    'dotted'    => 1,
 		    'absolutey' => 1,});			
 		$self->push($G);
@@ -80,13 +75,12 @@ sub draw_glyphs {
 		    'y'         => $H,
 		    'height'    => $h,
 		    'width'     => 0,
-		    'colour'    => 'red',
+		    'colour'    => $c,
 		    'absolutey' => 1,});				
 		$self->push($G);
 
 	    }
 	    next BLOCK unless (my $exon = $block->{'exon'});
-
 
 	    #allow a hit mismatch to be drawn next time for 'extra exons'
 	    my $hit = $block->{'extra_exon'};
@@ -100,14 +94,14 @@ sub draw_glyphs {
 	    $start_x  = $start_x  > $block->{'munged_start'} ? $block->{'munged_start'} : $start_x;
 	    $finish_x = $finish_x < $block->{'munged_end'}   ? $block->{'munged_end'}   : $finish_x;
 
-	    #draw a red I line for a lh extension
+	    #draw an I line for a lh extension
 	    if ($lh_ext) {
 		my $G = $self->Line({
 		    'x'         => 0,
 		    'y'         => $H + $h/2,
 		    'h'         => 1,
 		    'width'     => $start_x,
-		    'colour'    => 'red',
+		    'colour'    => $c,
 		    'title'     => "Evidence extends $lh_ext bp beyond the end of the transcript",
 		    'absolutey' => 1,
 		    'dotted'    => 1});				
@@ -118,7 +112,7 @@ sub draw_glyphs {
 		    'y'         => $H,
 		    'height'    => $h,
 		    'width'     => 0,
-		    'colour'    => 'red',
+		    'colour'    => $c,
 		    'absolutey' => 1,});				
 		$self->push($G);
 		$lh_ext = 0;
@@ -141,7 +135,6 @@ sub draw_glyphs {
 		    'y'         => $H + $h/2,
 		    'h'         => 1,
 		    'width'     => $w,
-		    'colour'    => $colour,
 		    'absolutey' => 1,});
 
 		#add attributes if there is a part of the hit missing, or an extra bit
@@ -149,7 +142,7 @@ sub draw_glyphs {
 		if ( $block->{'hit_mismatch'} || $last_mismatch) {
 		    $mismatch = $last_mismatch ? $last_mismatch : $block->{'hit_mismatch'};
 		    $G->{'dotted'} = 1;
-		    $G->{'colour'} = $mismatch > 0 ? 'red' : 'blue';
+		    $G->{'colour'} = $mismatch > 0 ? $self->my_colour('evi_missing') : $self->my_colour('evi_extra');
 		    $G->{'title'}  = $mismatch > 0 ? "$mismatch bp of $hit_name missing" : abs($mismatch)." bp of $hit_name overlaps";
 		}
 		$self->push($G);				
@@ -161,8 +154,6 @@ sub draw_glyphs {
 
 	    #save location of edge of box in case we need to draw a line to the end of it later
 	    $last_end_x = $block->{'munged_start'}+ $width;
-	    
-#	    warn " 2 - drawing box from ",$block->{'munged_start'}," with width of $width"  if ($hit_name eq 'NM_024848.1');
 
 	    my $zmenu_dets = {
 		'type'        => 'Transcript',
@@ -176,9 +167,9 @@ sub draw_glyphs {
 	    };
 
 	    #if there is a mismatch between exon and hit boundries then add a zmenu entry and also
-	    #note the position for drawing a red / blue line later
+	    #note the position for drawing coloured lines later
 	    if (my $gap = $block->{'left_end_mismatch'}) {
-		my $c = $gap > 0 ? 'red' : 'blue';
+		my $c = $gap > 0 ? $self->my_colour('evi_long') : $self->my_colour('evi_short');
 		push @draw_end_lines, [$block->{'munged_start'},$H,$c];
 		push @draw_end_lines, [$block->{'munged_start'}+1/$pix_per_bp,$H,'black'];
 		push @draw_end_lines, [$block->{'munged_start'}+2/$pix_per_bp,$H,$c];
@@ -191,7 +182,7 @@ sub draw_glyphs {
 		}		
 	    }
 	    if (my $gap = $block->{'right_end_mismatch'}) {
-		my $c = $gap > 0 ? 'red' : 'blue';
+		my $c = $gap > 0 ? $self->my_colour('evi_long') : $self->my_colour('evi_short');
 		push @draw_end_lines, [$block->{'munged_start'}+$width-2/$pix_per_bp,$H,$c];
 		push @draw_end_lines, [$block->{'munged_start'}+$width-1/$pix_per_bp,$H,'black'];
 		push @draw_end_lines, [$block->{'munged_start'}+$width,$H,$c];
@@ -254,12 +245,6 @@ sub draw_glyphs {
 	});
 	$self->push( $G );
     }
-}
-
-sub colours {
-    my $self = shift;
-    my $Config = $self->{'config'};
-    return $Config->get('TSE_transcript','colours');
 }
 
 1;
