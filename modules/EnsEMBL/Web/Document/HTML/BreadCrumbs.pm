@@ -34,11 +34,11 @@ sub render   {
       if ($display_name =~ /\./) {
         $display_name = '<i>'.$display_name.'</i>'
       }
-      if ($you_are_here eq '/'.$species.'/index.html') {
+      if ($you_are_here =~ '/'.$species.'/Info') {
         $html .= qq( &gt; <strong>$display_name</strong>);
       }
       else {
-        $html .= qq( &gt; <a href="/$species/">).$display_name.qq(</a>);
+        $html .= qq( &gt; <a href="/$species/Info/Index">).$display_name.qq(</a>);
       }
     }
   }
@@ -52,24 +52,6 @@ sub render   {
       $html .= qq( &gt; <strong><a href="/info/">Help &amp; Documentation</a></strong>);
     }
 
-=pod
-    ## Level 3 link
-    my $tree = $species_defs->STATIC_INFO;
-    while (my ($k, $v) = each (%$tree)) {
-      next unless ref($v) eq 'HASH';
-      (my $location = $you_are_here) =~ s/index\.html$//;
-      if ($location =~ $v->{'_path'}) {
-        my $title = $v->{'_title'} || ucfirst($k);
-        if ($location eq $v->{'_path'} || $you_are_here =~ /index\.none/) {
-          $html .= " &gt; <strong>$title</strong>";
-        }
-        else { 
-          $html .= ' &gt; <a href="'.$v->{'_path'}.'">'.$title.'</a>';
-        }
-        last;
-      }
-    }
-=cut
   }
   $_[0]->printf($html);
 }
