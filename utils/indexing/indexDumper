@@ -796,6 +796,7 @@ sub geneLine {
   my $P = scalar (keys %$peptides);
   my $E = scalar (keys %$exons);
   my $EX = scalar (keys %$external_identifiers);
+  $IDX =~ s/\n/ /g;
   return join( "\t",
     (INC_SPECIES?"$species\t":"").qq($X Gene),
     qq($gid $altid),
