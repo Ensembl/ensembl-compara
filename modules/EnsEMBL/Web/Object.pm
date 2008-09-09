@@ -359,6 +359,7 @@ sub getCoordinateSystem{
 
 sub get_DASCollection{
   my $self = shift;
+  return;
   my $data = $self->__data;
 
   unless( $data->{_das_collection} ){
