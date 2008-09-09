@@ -149,6 +149,29 @@ sub modify_configs {
   }
 }
 
+sub _update_missing {
+  my( $self,$object ) = @_;
+  my $missing = $self->get_node( 'missing' );
+  warn "MISSING .... $missing";
+  if( $missing ) {
+    my $count_missing = grep { $_->get('on') ne 'on' } $self->glyphset_configs; 
+    $missing->set( 'text' => $count_missing > 0 ? "There are currently $count_missing tracks turned off." : "All tracks are turned on" );
+  }
+  my $information = $self->get_node( 'info' );
+  warn "INFO .... $information";
+  if( $information ) {
+    $information->set( 'text' => sprintf "%s %s version %s.%s (%s) %s: %s - %s",
+      $self->species_defs->ENSEMBL_SITETYPE,
+      $self->species_defs->SPECIES_BIO_NAME,
+      $self->species_defs->ENSEMBL_VERSION,
+      $self->species_defs->SPECIES_RELEASE_VERSION,
+      $self->species_defs->ASSEMBLY_ID,
+      $object->seq_region_type_and_name,
+      $object->thousandify($object->seq_region_start),
+      $object->thousandify($object->seq_region_end)
+    );
+  }
+}
 #=============================================================================
 # General setting tree stuff...
 #=============================================================================
@@ -247,10 +270,10 @@ sub _merge {
     next unless $sub_tree->{'disp'}; ## Don't include non-displayable tracks
     next if exists $sub_tree->{'web'}{ $sub_type }{'do_not_display'};
     my $key = $sub_tree->{'web'}{'key'} || $analysis;
-    $data->{$key}{'name'}    ||= $sub_tree->{'web'}{'name'};     # Longer form for help and configuration!
-    $data->{$key}{'type'}    ||= $sub_tree->{'web'}{'type'};
-    $data->{$key}{'caption'} ||= $sub_tree->{'web'}{'caption'};  # Short form for LHS
-    $data->{$key}{'on'}      ||= $sub_tree->{'web'}{'on'};       # Weather to display the track!!
+    foreach ( keys %{$sub_tree->{'web'}||{}} ) {
+      next if $_ eq 'desc';
+      $data->{$key}{$_}    ||= $sub_tree->{'web'}{$_};     # Longer form for help and configuration!
+    }
     if( $sub_tree->{'web'}{'key'} ) {
       if( $sub_tree->{'desc'} ) {
         $data->{$key}{'html_desc'} ||= "<dl>\n";
@@ -460,6 +483,7 @@ sub add_marker_feature {
       'caption'     => $data->{$key_2}{'caption'},
       'colours'     => $self->species_defs->colour( 'marker' ),
       'description' => $data->{$key_2}{'description'},
+      'priority'    => $data->{$key_2}{'priority'},
       'on'          => 'on',
       'strand'      => 'r'
     }));
