@@ -11,6 +11,9 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 .onecol { margin:0 0 1% 0; padding:1% }
 .twocol-left { float:left; width:47%; margin:0 0 1% 0; padding:1%; clear:left; }
 .twocol-right { float:right; width:47%; margin:0 0 1% 0; padding:1%; }
+.threecol-left { float:left; width:30%; margin:0 0 1% 0; padding:1%; clear:left; }
+.threecol-middle { float:left; width:30%; margin:0 0 1% 0; padding:1%; }
+.threecol-right { float:right; width:30%; margin:0 0 1% 0; padding:1%; }
 
 .plain-box  { color:[[PANEL_TEXT]]; background-color:[[PANEL_BG]]; border:1px solid [[PANEL_BORDER]]; }
 .tinted-box { color:[[PANEL_TEXT]]; background-color:[[TINT_BG]]; border:1px solid [[TINT_BORDER]]; }
