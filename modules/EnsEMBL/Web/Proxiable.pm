@@ -202,10 +202,11 @@ sub get_ExtURL      {
   my $new_url = $self->ExtURL || return;
   return $new_url->get_url( @_ );
 }
+
 sub get_ExtURL_link {
   my $self = shift;
   my $text = shift;
-  my $URL = $self->get_ExtURL(@_);
+  my $URL = CGI::escapeHTML( $self->get_ExtURL(@_) );
   return $URL ? qq(<a href="$URL">$text</a>) : $text;
 }
 
