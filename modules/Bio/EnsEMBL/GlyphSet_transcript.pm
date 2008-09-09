@@ -74,9 +74,8 @@ sub compact_init {
     my $gene_stable_id    = $gene->stable_id;
     my $gene_key          = $self->gene_key( $gene );
 
-    my $Composite = $self->Composite({'y'=>$y,'height'=>$h, 'title' => $self->gene_title( $gene ) });
-       $Composite->{'href'} = $self->gene_href( $gene, %highlights );
-       $Composite->{'zmenu'} = $self->gene_zmenu( $gene ) unless $Config->{'_href_only'};
+    my $Composite            = $self->Composite({'y'=>$y,'height'=>$h, 'title' => $self->gene_title( $gene ) });
+       $Composite->{'href'}  = $self->gene_href( $gene, %highlights );
 
     my $colour  = $self->my_colour( $gene_key );
     my $label   = $self->my_colour( $gene_key , 'text' );
@@ -86,10 +85,10 @@ sub compact_init {
 
     my $Composite2 = $self->Composite({'y'=>$y,'height'=>$h});
     foreach my $exon (@exons) {
-      my $s = $exon->start;
-      my $e = $exon->end;
-      $s = 1 if $s < 0;
-      $e = $length if $e>$length;
+      my $s   = $exon->start;
+      my $e   = $exon->end;
+      $s      = 1 if $s < 0;
+      $e      = $length if $e>$length;
       $Composite2->push($self->Rect({
         'x' => $s-1, 'y' => $y, 'width' => $e-$s+1,
         'height' => $h, 'colour'=>$colour, 'absolutey' => 1
@@ -137,7 +136,7 @@ sub compact_init {
 
     $Composite->push($Composite2);
     my $bump_height = $h + 2;
-    if( $Config->{'_add_labels'} ) {
+    if( $self->my_config('show_labels') ne 'off' ) {
       if(my $text_label = $self->gene_text_label($gene) ) {
         my @lines = split "\n", $text_label;
         $lines[0] = "< $lines[0]" if $strand < 1;
@@ -207,7 +206,10 @@ sub expanded_init {
   my $target_gene   = $self->get_parameter('single_Gene'      );
     
   my $y             = 0;
-  my $h             = $target ? 30 : 8;   #Single transcript mode - set height to 30 - width to 8!
+  my $h             = $self->my_config('height') || ( $target ? 30 : 8 );
+                        #Single transcript mode - set height to 30 - width to 8!
+  my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
+  my $non_coding_start  = ($h-$non_coding_height)/2;
     
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
@@ -314,12 +316,12 @@ sub expanded_init {
                       # non-filled rectangles
                       #Draw a non-filled rectangle around the entire exon
             $Composite2->push($self->Rect({
-              'x'         => $box_start -1 ,
-              'y'         => $y+$h/8,
-              'width'     => $box_end-$box_start +1,
-              'height'    => 3*$h/4,
+              'x'            => $box_start -1 ,
+              'y'            => $y+$non_coding_start,
+              'width'        => $box_end-$box_start +1,
+              'height'       => $non_coding_height,
               'bordercolour' => $colour,
-              'absolutey' => 1,
+              'absolutey'    => 1,
              }));
            } 
            # Calculate and draw the coding region of the exon
@@ -383,7 +385,7 @@ sub expanded_init {
       }
       $Composite->push($Composite2);
       my $bump_height = 1.5 * $h;
-      if( $Config->{'_add_labels'} ) {
+      if( $self->my_config('show_labels') ne 'off' ) {
         if(my $text_label = $self->text_label($gene, $transcript) ) {
       my @lines = split "\n", $text_label; 
           $lines[0] = "< $lines[0]" if $strand < 1;
@@ -417,7 +419,7 @@ sub expanded_init {
       $Composite->colour($hilight) if(defined $hilight && !defined $target);
       $self->push($Composite);
         
-      if($target) {     
+      if(0 && $target) {     
         # check the strand of one of the transcript's exons
         my ($trans_exon) = @{$transcript->get_all_Exons};
         if($trans_exon->strand() == 1) {
