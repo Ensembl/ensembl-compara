@@ -26,6 +26,8 @@ sub content {
     'image_width'     => $self->image_width || 800,
     'slice_number'    => '1|2'
   });
+
+  $wuc->_update_missing( $object );
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'top';
