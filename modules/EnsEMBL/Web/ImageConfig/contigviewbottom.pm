@@ -77,11 +77,17 @@ sub init {
 
 ## These tracks get added after the "auto-loaded tracks get addded...
   if( $self->species_defs->ENSEMBL_MOD ) {
-    $self->add_track( 'information', 'mod', '', 'text', { 'name' => 'Message of the day', 'on' => 'on', 'menu' => 'no', 'strand' => 'r', 'text' => $self->species_defs->ENSEMBL_MOD } )
+    $self->add_track( 'information', 'mod', '', 'text', {
+      'name' => 'Message of the day',
+      'on'   => 'on',
+      'menu' => 'no',
+      'strand' => 'r', 
+      'text' => $self->species_defs->ENSEMBL_MOD
+    } )
   }
   $self->add_tracks( 'information',
-    [ 'missing',   '', 'missing',         { 'on' => 'on',  'strand' => 'r', 'name' => 'Disabled track summary'  } ],
-    [ 'info',      '', 'info',            { 'on' => 'on',  'strand' => 'r', 'name' => 'Information'  } ],
+    [ 'missing',   '', 'text', { 'on' => 'on', 'strand' => 'r', 'name' => 'Disabled track summary' } ],
+    [ 'info',      '', 'text', { 'on' => 'on', 'strand' => 'r', 'name' => 'Information'  } ],
   );
   $self->add_tracks( 'other',  
     [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'b', 'name' => 'Scale bar'  } ],

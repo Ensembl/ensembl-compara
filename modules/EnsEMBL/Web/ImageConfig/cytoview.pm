@@ -36,19 +36,25 @@ sub init {
     'synteny'       => 'Synteny',
     'user_data'     => 'User uploaded data',
     'other'         => 'Additional features',
+    'information'   => 'Information',
     'options'       => 'Options'
   );
 
-  $self->add_track( 'sequence', 'contig',    'Contigs',             'strandard_contig', { 'on' => 'on'  } );
-  $self->add_track( 'info',     'info',      'Information',         'info',             { 'on' => 'on'  } );
-  
+  $self->add_tracks( 'information',
+    [ 'missing',   '', 'text', { 'on' => 'on', 'strand' => 'r', 'name' => 'Disabled track summary' } ],
+    [ 'info',      '', 'text', { 'on' => 'on', 'strand' => 'r', 'name' => 'Information'  } ],
+  );
   $self->load_tracks();
 
-  foreach( $self->get_node('marker')->descendants ) { $_->set( 'labels', 'off' ); } ## Turn labels off markers.
+  $self->modify_configs(
+    ['marker'],
+    {qw(labels off)}
+  );
+
   $self->add_tracks( 'other',
-    [ 'scalebar',  '', 'scalebar',  { 'on' => 'on'  }],
-    [ 'ruler',     '', 'ruler',     { 'on' => 'on'  }],
-    [ 'draggable', '', 'draggable', { 'on' => 'on', 'menu' => 'no' }]
+    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'b', 'name' => 'Scale bar'  } ],
+    [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'b', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
   );
   
   $self->add_options(
