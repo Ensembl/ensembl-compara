@@ -208,12 +208,10 @@ sub new {
     }
 
     ## pull out alternating background colours for this script
-    my $white  = $Config->bgcolour() || 'white';
-    my $bgcolours = [ $Config->get_parameter(  'bgcolour1') || $white,
-                      $Config->get_parameter(  'bgcolour2') || $white ];
+    my $bgcolours = [ $Config->get_parameter( 'bgcolour1') || 'background1',
+                      $Config->get_parameter( 'bgcolour2') || 'background2' ];
 
-    my $bgcolour_flag;
-    $bgcolour_flag = 1 if($bgcolours->[0] ne $bgcolours->[1]);
+    my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
 
     ## go ahead and do all the database work
     $timer->push("DrawableContainer->new: Start GlyphSets") if $timer;
@@ -235,7 +233,7 @@ sub new {
       my $gminy = $glyphset->miny();
       $Config->{'transform'}->{'translatey'} = -$gminy + $yoffset;
 
-      if(defined $bgcolour_flag) {
+      if($bgcolour_flag) {
         ## colour the area behind this strip
         my $background = new Sanger::Graphics::Glyph::Rect({
           'x'         => 0,

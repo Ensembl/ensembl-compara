@@ -10,11 +10,13 @@ sub new {
   my %new_colourmap = qw(
     CONTRAST_BORDER   background0
     CONTRAST_BG       background3
-    IMAGE_BG1         background2
-    IMAGE_BG2         background1
-    IMAGE_BG          background3
+
+    IMAGE_BG1         background1
+    IMAGE_BG2         background2
+
     CONTIGBLUE1       contigblue1
     CONTIGBLUE2       contigblue2
+
     HIGHLIGHT1        highlight1
     HIGHLIGHT2        highlight2
   );
