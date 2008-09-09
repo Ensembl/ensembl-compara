@@ -20,17 +20,19 @@ use Bio::EnsEMBL::Feature;
 
 sub features {
   my ($self) = @_;
-  my $species = $self->my_config('species');
-  my $species_2 = $self->human_readable( $species );
+  my $species    = $self->my_config('species');
+  my $species_hr = $self->human_readable( $species );
 
-  my $T       = $self->{'container'}->get_all_compara_Syntenies( $species_2, "SYNTENY" );
+  warn "... $species $species_hr ....";
+  my $T       = $self->{'container'}->get_all_compara_Syntenies( $species_hr, "SYNTENY" );
   my $offset  = $self->{'container'}->start - 1;
   my @RET     = ();
   
   foreach my $argh (@$T) {
+    warn "Synteny.... $argh ....";
     my ($main_dfr, $other_dfr);
     foreach my $dfr (@{$argh->children}) {
-      if($dfr->dnafrag->genome_db->name eq $species_2) {
+      if($dfr->dnafrag->genome_db->name eq $species_hr) {
         $other_dfr = $dfr;
       } else {
         $main_dfr = $dfr;
@@ -61,25 +63,31 @@ sub features {
 ## Colour is "nasty" we have a pool of colours we allocate in a loop!
 ## Colour is cached on the main config by chromosome name.
 
-sub colour {
-  my ($self, $f) = @_;
+sub get_colours {
+  my( $self, $f ) = @_;
   unless(exists $self->{'config'}{'pool'}) {
     $self->{'config'}{'pool'} = [];
-    foreach (keys %{$self->{'my_config'}{'colours'}||{}}) {
-      $self->{'config'}{'pool'}[$_] = $self->{'my_config'}{'colours'}[0];
+    my $colours = $self->my_config('colours');
+    if( $colours ) {
+      foreach (sort { $a <=> $b } keys %$colours ) {
+        $self->{'config'}{'pool'}[$_] = $self->my_colour( $_ );
+      }
     } else {
       $self->{'config'}{'pool'} = [qw(red blue green purple yellow orange brown black)]
     }
-    $self->{'config'}{'pool'} = map { $_->{'default'} values  };
     $self->{'config'}{'ptr'}  = 0;
   }
   $self->{'config'}{'_synteny_colours'}||={};
   my $return = $self->{'config'}{'_synteny_colours'}{ $f->{'hit_chr_name'} };
   unless( $return ) {
-    $return = $self->{'config'}{'_synteny_colours'}{$f->{'hit_chr_name'}} =
-      $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)%@{$self->{'config'}{'pool'}} ];
-  } 
-  return $return, $return;
+    $return = $self->{'config'}{'_synteny_colours'}{$f->{'hit_chr_name'}}
+            = $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)%@{$self->{'config'}{'pool'}} ];
+  }
+  return {
+    'feature' => $return,
+    'label'   => $return,
+    'part'    => ''
+  };
 }
 
 ## Return the image label and the position of the label
@@ -119,7 +127,7 @@ sub title {
 ## In this case jump to cytoview on the other species...
 sub href { 
   my ($self, $f ) = @_;
-  return $this->_url({
+  return $self->_url({
     'action'  => 'Overview',
     'species' => $self->my_config('species'),
     't'       => undef,

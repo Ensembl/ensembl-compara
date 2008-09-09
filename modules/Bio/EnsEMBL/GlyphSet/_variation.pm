@@ -41,7 +41,6 @@ sub features {
     my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
 
 ## Add a filtering step here...
-    warn "SNP filter... ",$self->my_config('filter');
     my @vari_features =
       map  { $_->[1] }              ## Quick indexing schwartzian transform
       sort { $a->[0] <=> $b->[0] }  ## to make sure that "most functional" snps appear first!

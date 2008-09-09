@@ -16,7 +16,7 @@ sub _init {
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $h = $res[3];
 
-  my $text = $self->{'config'}->{'text'};
+  my $text = $self->my_config('text');
   $self->push( new Sanger::Graphics::Glyph::Text({
     'x'         => 1, 
     'y'         => 2,

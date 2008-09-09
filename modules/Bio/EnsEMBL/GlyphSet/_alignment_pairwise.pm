@@ -12,12 +12,10 @@ sub _init {
   return unless defined $type;  ## No defined type arghhh!!
 
   my $strand = $self->strand;
-  my $Config = $self->{'config'};
-  use Data::Dumper;
-  my $strand_flag    = $Config->get($type, 'str');
+  my $strand_flag    = $self->my_config('strand');
   return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
 
-  if( $Config->get($type,'compact') ) {
+  if( $self->my_config('compact') ) {
     $self->compact_init($type);
   } else {
     $self->expanded_init($type);

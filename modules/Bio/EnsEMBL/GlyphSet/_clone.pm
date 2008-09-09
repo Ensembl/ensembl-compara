@@ -35,15 +35,12 @@ sub get_colours {
   $T->{'part'} = 'border' if $f->length > $self->my_config('outline_threshold');
 
   $Data::Dumper::Indent = 0;
-  warn "============= CLONE ".$self->colour_key($f);
-  warn Data::Dumper::Dumper( $T );
   return $T;
 }
 
 sub colour_key {
   my ($self, $f) = @_;
   (my $state = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
-  warn "... $state ...";
   return lc( $state || $self->my_config('set') );
 }
 

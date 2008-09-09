@@ -6,9 +6,9 @@ sub new {
 
   my $self = {
     'glyphsets' => $glyphsets_ref,
-    'canvas'  => undef,
+    'canvas'    => undef,
     'colourmap' => $config->colourmap(),
-    'config'  => $config,
+    'config'    => $config,
     'container' => $container,
     'spacing'   => 5,
   };
