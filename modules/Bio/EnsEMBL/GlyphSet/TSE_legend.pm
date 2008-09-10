@@ -6,7 +6,7 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 sub _init {
     my ($self) = @_;
     my $BOX_WIDTH     = 20;
-    my $NO_OF_COLUMNS = 3;
+    my $NO_OF_COLUMNS = 4;
     my $Config        = $self->{'config'};
     my $im_width      = $Config->image_width();
     my $o_type = $Config->{'object_type'};
@@ -54,10 +54,10 @@ sub _init {
 	    'y'             => $y*$th - 1,
 	    'width'         => $BOX_WIDTH,
 	    'height'        => $h,
-	    'colour'  => $colour,
+	    'colour'        => $colour,
 	    'absolutey'     => 1,
 	    'absolutex'     => 1,
-	    'absolutewidth' =>1,
+	    'absolutewidth' => 1,
 	});;
 	$self->push($G);
 	$G = $self->Line({
@@ -71,19 +71,8 @@ sub _init {
 	    'absolutewidth' => 1,
 	});
 	$self->push($G);
-	$G = $self->Rect({
-	    'x'             => $start_x + 2*$BOX_WIDTH,
-	    'y'             => $y*$th - 1,
-	    'width'         => $BOX_WIDTH,
-	    'height'        => $h,
-	    'colour'  => $colour,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' =>1,
-	});
-	$self->push($G);
 	$G = $self->Text({
-	    'x'             => $start_x + 3*$BOX_WIDTH + 4,
+	    'x'             => $start_x + 2*$BOX_WIDTH + 4,
 	    'y'             => $y*$th - 5,
 	    'height'        => $th,
 	    'valign'        => 'center',
@@ -101,16 +90,22 @@ sub _init {
     }
 	
     $NO_OF_COLUMNS = 2;
-    #start new line
-    $y = $y+2;
+    my $line_spacing = 1.2;
+    my $two_box_offset = $line_spacing/1.7;
+
+    #start new new line
+    $y+=$line_spacing;
+    $y+=$line_spacing;
     $x=0;
+
+    my $top_y = $y;
 
     #Draw a red I-bar (non-canonical intron)
     $start_x = $im_width * $x/$NO_OF_COLUMNS;
     my $colour = $self->my_colour('non_can_intron');
     my $G = $self->Line({
 	'x'             => $start_x,
-	'y'             => $y*$th + 2,
+	'y'             => $y*$th + 8,
 	'width'         => $BOX_WIDTH,
 	'height'        => 0,
 	'colour'        => $colour,
@@ -121,7 +116,7 @@ sub _init {
     $self->push( $G );
     $G = $self->Line({
 	'x'             => $start_x,
-	'y'             => $y*$th - 1,
+	'y'             => $y*$th + 5,
 	'width'         => 0,
 	'height'        => 6,
 	'colour'        => $colour,
@@ -132,7 +127,7 @@ sub _init {
     $self->push( $G );
     $G = $self->Line({
 	'x'             => $start_x + $BOX_WIDTH,
-	'y'             => $y*$th - 1,
+	'y'             => $y*$th +5,
 	'width'         => 0,
 	'height'        => 6,
 	'colour'        => $colour,
@@ -143,7 +138,7 @@ sub _init {
     $self->push( $G );
     $G = $self->Text({
 	'x'             => $start_x + $BOX_WIDTH + 4,
-	'y'             => $y*$th - 7,
+	'y'             => $y*$th,
 	'height'        => $th,
 	'valign'        => 'center',
 	'halign'        => 'left',
@@ -157,14 +152,212 @@ sub _init {
     });
     $self->push( $G );
 
+
+   #draw legends for exon/CDS & hit mismatch (not for vega)
+    my %dets;
+    if ($o_type eq 'vega') {
+	%dets = ();
+    }
+    else {
+	%dets = (
+	    $self->my_colour('evi_short') => 'evidence start / ends within exon / CDS',
+	    $self->my_colour('evi_long')  => 'evidence extends beyond exon / CDS',
+	);
+	$y+=$line_spacing;
+	$y+=$two_box_offset;
+    }
+
+   foreach my $c (sort { $b cmp $a} keys %dets) {
+	my $txt = $dets{$c};
+	#draw red/blue lines on the ends of boxes
+	$start_x = $im_width * $x/$NO_OF_COLUMNS;
+	$colour = 'black';
+	$G = $self->Rect({
+	    'x'             => $start_x,
+	    'y'             => ($y-(0.2*$two_box_offset))*$th,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => $colour,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);	
+	$G = $self->Line({
+	    'x'             => $start_x,
+	    'y'             => ($y-(0.2*$two_box_offset))*$th,
+	    'width'         => 0,
+	    'height'        => $h,
+	    'colour'        => $c,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);	
+	$G = $self->Line({
+	    'x'             => $start_x + 1,
+	    'y'             => ($y-(0.2*$two_box_offset))*$th,
+	    'width'         => 0,
+	    'height'        => $h,
+	    'colour'        => $c,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$G = $self->Line({
+	    'x'             => $start_x + 2,
+	    'y'             => ($y-(0.2*$two_box_offset))*$th,
+	    'width'         => 0,
+	    'height'        => $h,
+	    'colour'        => $c,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	
+	$G = $self->Rect({
+	    'x'             => $start_x,
+	    'y'             => ($y+$two_box_offset)*$th,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => $colour,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);	
+	$G = $self->Line({
+	    'x'             => $start_x+$BOX_WIDTH-1,
+	    'y'             => ($y+$two_box_offset)*$th,
+	    'width'         => 0,
+	    'height'        => $h,
+	    'colour'        => $c,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$G = $self->Line({
+	    'x'             => $start_x+$BOX_WIDTH-2,
+	    'y'             => ($y+$two_box_offset)*$th,
+	    'width'         => 0,
+	    'height'        => $h,
+	    'colour'        => $c,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);			
+	$G = $self->Line({
+	    'x'             => $start_x+$BOX_WIDTH,
+	    'y'             => ($y+$two_box_offset)*$th,
+	    'width'         => 0,
+	    'height'        => $h,
+	    'colour'        => $c,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$G = $self->Text({
+	    'x'             => $start_x + $BOX_WIDTH + 4,
+	    'y'             => $y*$th,
+	    'height'        => $th,
+	    'valign'        => 'center',
+	    'halign'        => 'left',
+	    'ptsize'        => $fontsize,
+	    'font'          => $fontname,
+	    'colour'        => 'black',
+	    'text'          => $txt,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$y+=$line_spacing;
+	$y+=$two_box_offset;
+    }
+
+    #start at the top of a new column
+    $x++;
+    $y=$top_y;
+    #draw legends for exon/CDS & hit mismatch
+    my $miss_col  = $self->my_colour('evi_missing');
+    my $extra_col = $self->my_colour('evi_extra');
+    %dets = (	$miss_col  => 'part of evidence missing from transcript structure' );
+    unless ($o_type eq 'vega') {
+	$dets{$extra_col} = 'part of evidence duplicated in transcript structure';
+    }
+
+    foreach my $c (sort { $b cmp $a} keys %dets) {
+	my $txt = $dets{$c};
+
+	#draw two exons and a dotted  intron to identify hit mismatches
+	$start_x = $im_width * $x/$NO_OF_COLUMNS;
+	my $G = $self->Rect({
+	    'x'             => $start_x,
+	    'y'             => $y*$th+6,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => 'black',
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$G = $self->Line({
+	    'x'             => $start_x + $BOX_WIDTH + 1,
+      	    'y'             => $y*$th+10,
+	    'h'             => 1,
+	    'width'         => $BOX_WIDTH - 1,
+	    'colour'        => $c,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	    'dotted'        => 1,
+	});
+	$self->push($G);
+	$G = $self->Rect({
+	    'x'             => $start_x + 2*$BOX_WIDTH,
+	    'y'             => $y*$th+6,
+	    'width'         => $BOX_WIDTH,
+	    'height'        => $h,
+	    'bordercolour'  => 'black',
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$G = $self->Text({
+	    'x'             => $start_x + 3*$BOX_WIDTH + 4,
+	    'y'             => $y*$th,
+	    'height'        => $th,
+	    'valign'        => 'center',
+	    'halign'        => 'left',
+	    'ptsize'        => $fontsize,
+	    'font'          => $fontname,
+	    'colour'        => 'black',
+	    'text'          => $txt,
+	    'absolutey'     => 1,
+	    'absolutex'     => 1,
+	    'absolutewidth' => 1,
+	});
+	$self->push($G);
+	$y+=$line_spacing;
+	$y+=$two_box_offset;
+
+    }
+
     if( $o_type ne 'vega' ) {
-	$x++;
+
 	#lines extending beyond the end of the hit
 	$colour = $self->my_colour('evi_long');
 	$start_x = $im_width * $x/$NO_OF_COLUMNS;
 	$G = $self->Line({
 	    'x'             => $start_x,
-	    'y'             => $y*$th - 2,
+	    'y'             => ($y-(0.2*$two_box_offset))*$th,
 	    'height'        => $h,
 	    'width'         => 0,
 	    'colour'        => $colour,
@@ -174,9 +367,9 @@ sub _init {
 	$self->push($G);	
 	$G = $self->Line({
 	    'x'             => $start_x,
-	    'y'             => $y*$th + 2,
+	    'y'             => ($y-(0.2*$two_box_offset))*$th + 3,
 	    'h'             => 1,
-	    'width'         => 1.5*$BOX_WIDTH,
+	    'width'         => 2*$BOX_WIDTH,
 	    'colour'        => $colour,
 	    'dotted'        => 1,
 	    'absolutey'     => 1,
@@ -184,8 +377,8 @@ sub _init {
 	    'absolutewidth' => 1,});				
 	$self->push($G);	
 	$G = $self->Rect({
-	    'x'             => $start_x + 1.5*$BOX_WIDTH,
-	    'y'             => $y*$th - 2,
+	    'x'             => $start_x + 2*$BOX_WIDTH,
+	    'y'             => ($y-(0.2*$two_box_offset))*$th,
 	    'width'         => $BOX_WIDTH,
 	    'height'        => $h,
 	    'bordercolour'  => 'black',
@@ -195,11 +388,9 @@ sub _init {
 	});
 	$self->push($G);
 
-	$y += 0.8;
-
 	$G = $self->Rect({
 	    'x'             => $start_x,
-	    'y'             => $y*$th - 2,
+	    'y'             => ($y+$two_box_offset)*$th,
 	    'width'         => $BOX_WIDTH,
 	    'height'        => $h,
 	    'bordercolour'  => 'black',
@@ -210,9 +401,9 @@ sub _init {
 	$self->push($G);
 	$G = $self->Line({
 	    'x'             => $start_x + $BOX_WIDTH,
-	    'y'             => $y*$th + 2,
+	    'y'             => ($y+$two_box_offset)*$th+3,
 	    'h'             => 1,
-	    'width'         => 1.5*$BOX_WIDTH,
+	    'width'         => 2*$BOX_WIDTH,
 	    'colour'        => $colour,
 	    'dotted'        => 1,
 	    'absolutey'     => 1,
@@ -220,8 +411,8 @@ sub _init {
 	    'absolutewidth' => 1,});				
 	$self->push($G);
 	$G = $self->Line({
-	    'x'         => $start_x + 2.5*$BOX_WIDTH,
-	    'y'         => $y*$th - 2,
+	    'x'         => $start_x + 3*$BOX_WIDTH,
+	    'y'         => ($y+$two_box_offset)*$th,
 	    'height'    => $h,
 	    'width'     => 0,
 	    'colour'    => $colour,
@@ -230,8 +421,8 @@ sub _init {
 	    'absolutewidth' => 1,});				
 	$self->push($G);
 	$G = $self->Text({
-	    'x'             => $start_x + 2.5*$BOX_WIDTH + 4,
-	    'y'             => ($y-0.8)*$th - 4,
+	    'x'             => $start_x + 3*$BOX_WIDTH + 4,
+	    'y'             => $y*$th,
 	    'height'        => $th,
 	    'valign'        => 'center',
 	    'halign'        => 'left',
@@ -244,211 +435,7 @@ sub _init {
 	    'absolutewidth' => 1,
 	});
 	$self->push($G);
-	$y += 1.5;
-    }
-    else { $y += 1.5; }
-
-    #new line
-    $x=0;
-
-    #draw legends for exon/CDS & hit mismatch
-    my $miss_col  = $self->my_colour('evi_missing');
-    my $extra_col = $self->my_colour('evi_extra');
-    my %dets = (	$miss_col  => 'part of evidence missing from transcript structure' );
-    unless ($o_type eq 'vega') {
-	$dets{$extra_col} = 'part of evidence duplicated in transcript structure';
-    }
-
-    foreach my $c (sort { $b cmp $a} keys %dets) {
-	my $txt = $dets{$c};
-
-	#draw two exons and a dotted  intron to identify hit mismatches
-	$start_x = $im_width * $x/$NO_OF_COLUMNS;
-	my $G = $self->Rect({
-	    'x'             => $start_x,
-	    'y'             => $y*$th - 2,
-	    'width'         => $BOX_WIDTH,
-	    'height'        => $h,
-	    'bordercolour'  => 'black',
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);
-	$G = $self->Line({
-	    'x'             => $start_x + $BOX_WIDTH + 1,
-	    'y'             => $y*$th + 2,
-	    'h'             => 1,
-	    'width'         => $BOX_WIDTH - 1,
-	    'colour'        => $c,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	    'dotted'        => 1,
-	});
-	$self->push($G);
-	$G = $self->Rect({
-	    'x'             => $start_x + 2*$BOX_WIDTH,
-	    'y'             => $y*$th - 2,
-	    'width'         => $BOX_WIDTH,
-	    'height'        => $h,
-	    'bordercolour'  => 'black',
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);
-	$G = $self->Text({
-	    'x'             => $start_x + 3*$BOX_WIDTH + 4,
-	    'y'             => ($y-0.8)*$th + 2,
-	    'height'        => $th,
-	    'valign'        => 'center',
-	    'halign'        => 'left',
-	    'ptsize'        => $fontsize,
-	    'font'          => $fontname,
-	    'colour'        => 'black',
-	    'text'          => $txt,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);
-	$x++;
-    }
-
-    #new line
-    $y += 1.5;
-    $x = 0;
-    
-    #draw legends for exon/CDS & hit mismatch (not for vega)
-    if ($o_type eq 'vega') {
-	%dets = ();
-    }
-    else {
-	%dets = (
-	    $self->my_colour('evi_short') => 'evidence start / ends within exon / CDS',
-	    $self->my_colour('evi_long') => 'evidence extends beyond exon / CDS',
-	);
-    }
-
-    foreach my $c (sort { $b cmp $a} keys %dets) {
-	my $txt = $dets{$c};
-	
-	#draw red/blue lines on the ends of boxes
-	$start_x = $im_width * $x/$NO_OF_COLUMNS;
-	$colour = 'black';
-	$G = $self->Rect({
-	    'x'             => $start_x,
-	    'y'             => $y*$th - 1,
-	    'width'         => $BOX_WIDTH,
-	    'height'        => $h,
-	    'bordercolour'  => $colour,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);	
-	$G = $self->Line({
-	    'x'             => $start_x,
-	    'y'             => $y*$th - 1,
-	    'width'         => 0,
-	    'height'        => $h,
-	    'colour'        => $c,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);	
-	$G = $self->Line({
-	    'x'             => $start_x + 1,
-	    'y'             => $y*$th - 1,
-	    'width'         => 0,
-	    'height'        => $h,
-	    'colour'        => $c,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);
-
-	$G = $self->Line({
-	    'x'             => $start_x + 2,
-	    'y'             => $y*$th - 1,
-	    'width'         => 0,
-	    'height'        => $h,
-	    'colour'        => $c,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);	
-	$y += 0.8;
-	
-	$G = $self->Rect({
-	    'x'             => $start_x,
-	    'y'             => $y*$th - 1,
-	    'width'         => $BOX_WIDTH,
-	    'height'        => $h,
-	    'bordercolour'  => $colour,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);
-	
-	$G = $self->Line({
-	    'x'             => $start_x+$BOX_WIDTH-1,
-	    'y'             => $y*$th - 1,
-	    'width'         => 0,
-	    'height'        => $h,
-	    'colour'        => $c,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);
-
-	$G = $self->Line({
-	    'x'             => $start_x+$BOX_WIDTH-2,
-	    'y'             => $y*$th - 1,
-	    'width'         => 0,
-	    'height'        => $h,
-	    'colour'        => $c,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);		
-	
-	$G = $self->Line({
-	    'x'             => $start_x+$BOX_WIDTH,
-	    'y'             => $y*$th - 1,
-	    'width'         => 0,
-	    'height'        => $h,
-	    'colour'        => $c,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);
-	
-	$G = $self->Text({
-	    'x'             => $start_x + $BOX_WIDTH + 4,
-	    'y'             => ($y-0.8)*$th,
-	    'height'        => $th,
-	    'valign'        => 'center',
-	    'halign'        => 'left',
-	    'ptsize'        => $fontsize,
-	    'font'          => $fontname,
-	    'colour'        => 'black',
-	    'text'          => $txt,
-	    'absolutey'     => 1,
-	    'absolutex'     => 1,
-	    'absolutewidth' => 1,
-	});
-	$self->push($G);
-	$x++;
-	$y -= 0.8;
+	$y+=$line_spacing;
     }
 }
 
