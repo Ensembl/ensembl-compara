@@ -531,7 +531,7 @@ sub _munge_meta {
   $self->tree->{'GENEBUILD_BY'} = $A[2];
 
   my $gb_release = $self->_meta_info('ENSEMBL_DB','genebuild.initial_release_date')->[0];
-  @A = split('-', $gb_start);
+  @A = split('-', $gb_release);
   $self->tree->{'GENEBUILD_RELEASE'} = $months[$A[1]].' '.$A[0];
   my $gb_latest = $self->_meta_info('ENSEMBL_DB','genebuild.last_geneset_update')->[0];
   @A = split('-', $gb_latest);
