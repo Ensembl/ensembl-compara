@@ -1862,6 +1862,457 @@ mysql> SELECT * FROM peptide_align_feature WHERE qmember_id = 442105;
 
 <!--
 #####################################################################
+	TABLE PROTEIN_TREE_NODE
+#####################################################################
+ -->
+<A name="protein_tree_node"></A>
+<h3>
+      protein_tree_node
+    </h3>
+<dl><dd>
+<p>This tables stores the phylogenetic structure of the genetrees.</p>
+<table border="2" cellpadding="2" bgcolor="#dcdcdc">
+  <caption>protein_tree_node description</caption>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>Key</th>
+      <th>Default</th>
+      <th>Extra</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td>NULL</td>
+      <td>auto_increment</td>
+      <td>node unique ID</td>
+    </tr>
+    <tr>
+      <td>parent_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>parent node id</td>
+    </tr>
+    <tr>
+      <td>root_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>cluster node id (usually 1) where this genetree is attached</td>
+    </tr>
+    <tr>
+      <td>left_index</td>
+      <td>int(10)</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>left index of the tree-traversal binary search</td>
+    </tr>
+    <tr>
+      <td>right_index</td>
+      <td>int(10)</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>right index of the tree-traversal binary search</td>
+    </tr>
+    <tr>
+      <td>distance_to_parent</td>
+      <td>double</td>
+      <td>NO</td>
+      <td></td>
+      <td>1</td>
+      <td></td>
+      <td>branch length between this node and parent node</td>
+    </tr>
+  </tbody>
+</table>
+<p>E.g. the rows:</p>
+<PRE>
+mysql> select * from protein_tree_node where node_id=10;
++---------+-----------+---------+------------+-------------+--------------------+
+| node_id | parent_id | root_id | left_index | right_index | distance_to_parent |
++---------+-----------+---------+------------+-------------+--------------------+
+|      10 |    707637 |       1 |       7645 |        7646 |           0.001496 |
++---------+-----------+---------+------------+-------------+--------------------+
+
+</PRE>
+<p>corresponds to the node_id=10 with a branch length of 0.001496. This the right_index-left_index=1 value indicates that is an external node (leaf)</p>
+</dd></dl>
+<br>
+
+<!--
+#####################################################################
+	TABLE PROTEIN_TREE_MEMBER
+#####################################################################
+ -->
+<A name="protein_tree_member"></A>
+<h3>
+      protein_tree_member
+    </h3>
+<dl><dd>
+<p>This tables stores the relationship between the <A href="#protein_tree_node">protein_tree_node</A> and the <A href="#member">member</A> tables.</p>
+<table border="2" cellpadding="2" bgcolor="#dcdcdc">
+  <caption>protein_tree_member description</caption>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>Key</th>
+      <th>Default</th>
+      <th>Extra</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td></td>
+      <td>external reference to <A href="#protein_tree_node">protein_tree_node.node_id</A></td>
+    </tr>
+    <tr>
+      <td>member_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>external reference to <A href="#member">member.member_id</A></td>
+    </tr>
+    <tr>
+      <td>method_link_species_set_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>method_link_species_set_id</td>
+    </tr> 
+    <tr>
+      <td>cigar_line</td>
+      <td>mediumtext</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>cigar string coding the alignment</td>
+    </tr>
+    <tr>
+      <td>cigar_start</td>
+      <td>int(10)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>defines the first alignment aminoacid</td>
+    </tr>
+    <tr>
+      <td>cigar_end</td>
+      <td>int(10)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>defines the last alignment aminoacid</td>
+    </tr>
+  </tbody>
+</table>
+<p>E.g. the rows:</p>
+<PRE>
+mysql> select * from protein_tree_member where node_id=10;
++---------+-----------+----------------------------+------------------------------+-------------+-----------+
+| node_id | member_id | method_link_species_set_id | cigar_line                   | cigar_start | cigar_end |
++---------+-----------+----------------------------+------------------------------+-------------+-----------+
+|      10 |    416753 |                      40046 | 106D53MD9M4D4MD42MD47MD47M8D |        NULL |      NULL |
++---------+-----------+----------------------------+------------------------------+-------------+-----------+
+
+</PRE>
+<p>corresponds to the node_id=10.</p>
+<p><STRONG>N.B.</STRONG>The cigar_start and cigar_end fields will be NULL in multiple sequence alignments (only used in pairwise alignments).</p>
+</dd></dl>
+<br>
+
+<!--
+#####################################################################
+	TABLE PROTEIN_TREE_TAG
+#####################################################################
+ -->
+<A name="protein_tree_tag"></A>
+<h3>
+      protein_tree_tag
+    </h3>
+<dl><dd>
+<p>This tables stores various tags for nodes in <A href="#protein_tree_node">protein_tree_node</A>.</p>
+<table border="2" cellpadding="2" bgcolor="#dcdcdc">
+  <caption>protein_tree_tag description</caption>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>Key</th>
+      <th>Default</th>
+      <th>Extra</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>node unique ID</td>
+    </tr>
+    <tr>
+      <td>tag</td>
+      <td>varchar(50)</td>
+      <td>YES</td>
+      <td>MUL</td>
+      <td>NULL</td>
+      <td></td>
+      <td>tag</td>
+    </tr>
+    <tr>
+      <td>value</td>
+      <td>mediumtext</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>value</td>
+    </tr>
+  </tbody>
+</table>
+<p>E.g. the rows:</p>
+<PRE>
+mysql> select * from protein_tree_tag where node_id=707631;
++---------+----------------------------+------------------+
+| node_id | tag                        | value            |
++---------+----------------------------+------------------+
+|  707631 | Bootstrap                  | 70               |
+|  707631 | Duplication                | 0                |
+|  707631 | Sitewise_dNdS_runtime_msec | 58504.8859863281 |
+|  707631 | Sitewise_dNdS_subroot_id   | 8                |
+|  707631 | taxon_alias                | Primates         |
+|  707631 | taxon_id                   | 9443             |
+|  707631 | taxon_name                 | Primates         |
++---------+----------------------------+------------------+
+
+</PRE>
+<p>corresponds to the node_id=707631 and shows all the tags associated with this internal node.</p>
+</dd></dl>
+<br>
+
+<!--
+#####################################################################
+	TABLE NCBI_TAXA_NODE
+#####################################################################
+ -->
+<A name="ncbi_taxa_node"></A>
+<h3>
+      ncbi_taxa_node
+    </h3>
+<dl><dd>
+<p>This tables stores the phylogenetic structure of the NCBI taxonomy DB.</p>
+<table border="2" cellpadding="2" bgcolor="#dcdcdc">
+  <caption>ncbi_taxa_node description</caption>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>Key</th>
+      <th>Default</th>
+      <th>Extra</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>taxon_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td></td>
+      <td>taxon ID</td>
+    </tr>
+    <tr>
+      <td>parent_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>parent taxon id</td>
+    </tr>
+    <tr>
+      <td>rank</td>
+      <td>char(32)</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>rank in the tree of life (family, genus, species, ...)</td>
+    </tr>
+    <tr>
+      <td>genbank_hidden_flag</td>
+      <td>tynyint(1)</td>
+      <td>NO</td>
+      <td></td>
+      <td>0</td>
+      <td></td>
+      <td>genbank flag</td>
+    </tr>
+    <tr>
+      <td>left_index</td>
+      <td>int(10)</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>left index of the tree-traversal binary search</td>
+    </tr>
+    <tr>
+      <td>right_index</td>
+      <td>int(10)</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>right index of the tree-traversal binary search</td>
+    </tr>
+    <tr>
+      <td>root_id</td>
+      <td>int(10)</td>
+      <td>NO</td>
+      <td></td>
+      <td>1</td>
+      <td></td>
+      <td>cluster node id (usually 1) where this taxonomy node is attached</td>
+    </tr>
+  </tbody>
+</table>
+<p>E.g. the rows:</p>
+<PRE>
+mysql> select * from ncbi_taxa_node limit 10;
++----------+-----------+--------------+---------------------+------------+-------------+---------+
+| taxon_id | parent_id | rank         | genbank_hidden_flag | left_index | right_index | root_id |
++----------+-----------+--------------+---------------------+------------+-------------+---------+
+|        1 |         0 | no rank      |                   0 |          1 |      891068 |       1 |
+|        2 |    131567 | superkingdom |                   0 |       7665 |      234070 |       1 |
+|        6 |    335928 | genus        |                   0 |      97634 |       97669 |       1 |
+|        7 |         6 | species      |                   1 |      97635 |       97638 |       1 |
+|        9 |     32199 | species      |                   1 |     123547 |      123678 |       1 |
+|       10 |    135621 | genus        |                   0 |     129052 |      129111 |       1 |
+|       11 |        10 | species      |                   1 |     129075 |      129076 |       1 |
+|       13 |    203488 | genus        |                   0 |      50174 |       50197 |       1 |
+|       14 |        13 | species      |                   1 |      50179 |       50182 |       1 |
+|       16 |     32011 | genus        |                   0 |      70484 |       70531 |       1 |
++----------+-----------+--------------+---------------------+------------+-------------+---------+
+
+</PRE>
+<p>correspond to some taxon_ids in the NCBI taxonomy DB</p>
+</dd></dl>
+<br>
+
+<!--
+#####################################################################
+	TABLE NCBI_TAXA_NAME
+#####################################################################
+ -->
+<A name="ncbi_taxa_name"></A>
+<h3>
+      ncbi_taxa_name
+    </h3>
+<dl><dd>
+<p>This tables stores the names of the NCBI taxonomy entries.</p>
+<table border="2" cellpadding="2" bgcolor="#dcdcdc">
+  <caption>ncbi_taxa_name description</caption>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>Key</th>
+      <th>Default</th>
+      <th>Extra</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>taxon_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td></td>
+      <td>external reference to <A href="#ncbi_taxa_node">ncbi_taxa_node.taxon_id</A></td>
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>varchar(255)</td>
+      <td>YES</td>
+      <td>MUL</td>
+      <td>NULL</td>
+      <td></td>
+      <td>Name of the taxon</td>
+    </tr>
+    <tr>
+      <td>name_class</td>
+      <td>varchar(50)</td>
+      <td>YES</td>
+      <td>MUL</td>
+      <td>NULL</td>
+      <td></td>
+      <td>class of name</td>
+    </tr>
+  </tbody>
+</table>
+<p>E.g. the rows:</p>
+<PRE>
+mysql> select * from ncbi_taxa_name where taxon_id=9606;
++----------+--------------+---------------------+
+| taxon_id | name         | name_class          |
++----------+--------------+---------------------+
+|     9606 | Homo sapiens | scientific name     |
+|     9606 | human        | genbank common name |
+|     9606 | man          | common name         |
+|     9606 | Human        | ensembl alias name  |
+|     9606 | human        | ensembl common name |
++----------+--------------+---------------------+
+
+</PRE>
+<p>correspond to the human taxon_id names in the NCBI taxonomy DB</p>
+</dd></dl>
+<br>
+
+
+<!--
+#####################################################################
 	TABLE HOMOLOGY
 #####################################################################
  -->
@@ -1907,9 +2358,9 @@ for each homology entry for now, but both the schema and the API can handle more
       <td>int(10) unsigned</td>
       <td></td>
       <td>MUL</td>
-      <td>0</td>
       <td></td>
-      <td>external reference to <A href="#source">method_link_species_set.method_link_species_set_id</A></td>
+      <td></td>
+      <td>external reference to <A href="#method_link_species_set">method_link_species_set.method_link_species_set_id</A></td>
     </tr>
     <tr>
       <td>description</td>
@@ -1919,28 +2370,22 @@ for each homology entry for now, but both the schema and the API can handle more
       <td>NULL</td>
       <td></td>
       <td>describes the type of homology found:
-      <ul><LI><strong>UBRH</strong> for Unique Best Reciprocal Hit</LI>
-      <LI><strong>MBRH</strong> for Multiple Best Reciprocal Hit (see subtype)</LI>
-      <LI><strong>RHS</strong> for Reciprocal Hit based on Synteny</LI>
-      <LI><strong>DWGA</strong> for Derived from Whole Genome Alignment around BRH
-      <p>(only used in Human vs. Chimp comparisons by now)</p></LI>
+      <ul><LI><strong>ortholog_one2one</strong> for one to one orthologs</LI>
+      <LI><strong>apparent_ortholog_one2one</strong> for apparent one to one orthologs</LI>
+      <LI><strong>ortholog_one2many</strong> for one to many orthologs</LI> 
+      <LI><strong>ortholog_many2many</strong> for many to many orthologs</LI> 
+      <LI><strong>between_species_paralog</strong> for between species paralogs</LI> 
+      </LI>
       </ul></td>
     </tr>
     <tr>
       <td>subtype</td>
       <td>varchar(40)</td>
+      <td>NO</td>
       <td></td>
       <td></td>
       <td></td>
-      <td></td>
-      <td>sometimes, due to duplications or to assembly issues, it is possible to find a BRH-like
-      relationship among several sequences. In that case, we define this relation as a MBRH. The
-      subtype defines the type of relationship found:
-      <ul><LI><strong>DUP 1.2</strong> corresponds to a MBRH found twice in the other genome</LI>
-      <LI><strong>DUP 1.3</strong> corresponds to a MBRH found three times in the other genome</LI>
-      <LI><strong>DUP 1.4</strong> corresponds to a MBRH found four times in the other genome</LI>
-      <LI><strong>complex</strong> corresponds to a MBRH for which the same sequence is found several times in both genomes</LI>
-      <LI><strong>SYN</strong> corresponds to a MBRH with synteny support</LI>
+      <td>The subtype defines the taxonomic level of the relationship found (taxon_name).
       </ul></td>
     </tr>
     <tr>
@@ -1997,6 +2442,24 @@ for each homology entry for now, but both the schema and the API can handle more
       <td></td>
       <td>used by the EnsEMBL Web Browser to decide whether or not to display dN/DS ratio</td>
     </tr>
+    <tr>
+      <td>ancestor_node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>ancestor node_id of the relationship</td>
+    </tr>
+    <tr>
+      <td>tree_node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>root node_id for the genetree where this relationship lies</td>
+    </tr>
   </tbody>
 </table>
 <p><strong>dN</strong>, <strong>dS</strong>, <strong>N</strong>, <strong>S</strong> and <strong>lnL</strong> are
@@ -2005,22 +2468,22 @@ statistical values given by the <strong>codeml</strong> program of the
 package.</p>
 <p>E.g. the row</p>
 <PRE>
-mysql> select * from homology where homology_id = 296648;
-+-------------+------------------------+----------------------------+-------------+-···
-| homology_id | stable_id              | method_link_species_set_id | description | 
-+-------------+------------------------+----------------------------+-------------+-···
-|      296648 | 9606_10116_01092698700 |                         28 | UBRH        | 
-+-------------+------------------------+----------------------------+-------------+-···
+mysql> select * from homology where homology_id=79;
++-------------+-----------+----------------------------+------------------+-...
+| homology_id | stable_id | method_link_species_set_id | description      | 
++-------------+-----------+----------------------------+------------------+-...
+|          79 | NULL      |                      22467 | ortholog_one2one | 
++-------------+-----------+----------------------------+------------------+-...
 
- ···-+---------+---------+---------+-------+------+----------+-----------------+
-     | subtype | dn      | ds      | n     | s    | lnl      | threshold_on_ds |
- ···-+---------+---------+---------+-------+------+----------+-----------------+
-     |         | 0.12053 | 0.57107 | 166.2 | 64.8 | -440.544 |         1.27166 |
- ···-+---------+---------+---------+-------+------+----------+-----------------+
+...+------------+---------+---------+------+------+----------+-----------------+------------------+--------------+
+   | subtype    | dn      | ds      | n    | s    | lnl      | threshold_on_ds | ancestor_node_id | tree_node_id |
+...+------------+---------+---------+------+------+----------+-----------------+------------------+--------------+
+   | Catarrhini | 0.14610 | 0.21260 | 82.1 | 37.9 | -222.752 |         0.17120 |              284 |          284 |
+...+------------+---------+---------+------+------+----------+-----------------+------------------+--------------+
+
 </PRE>
-<p>defines a UBRH homology found which stable ID is 9606_10116_01092698700.</p>
-<p><STRONG>N.B.</STRONG> Those stable IDs are not stable for now. Proper stable IDs (e.g. ENSORTHO1234567890) will
-be added in the near future.</p>
+<p>defines a one to one orthology at the taxonomic level Catarrhini (Apes and old world monkeys).</p>
+<p><STRONG>N.B.</STRONG>At the moment there are no stable ids for homologies.</p>
 </dd></dl>
 <br>
 
@@ -2279,8 +2742,8 @@ mysql> select * from homology_member where homology_id = 296648;
 +-------------+-----------+-------------------+--------------------------+------------+-···
 | homology_id | member_id | peptide_member_id | peptide_align_feature_id | cigar_line |
 +-------------+-----------+-------------------+--------------------------+------------+-···
-|      296648 |       685 |               722 |                 13942767 | 77M        |
-|      296648 |    406456 |            406463 |                  3428665 | 77M        |
+|      296648 |       685 |               722 |                     NULL | 77M        |
+|      296648 |    406456 |            406463 |                     NULL | 77M        |
 +-------------+-----------+-------------------+--------------------------+------------+-···
 
  ···-+-------------+-----------+----------+---------+----------+
@@ -2294,8 +2757,162 @@ mysql> select * from homology_member where homology_id = 296648;
 corresponding to the first sequence can be retrieved using the <A href="#member">member.member_id</A> 685 and the
 corresponding peptide using the <A href="#member">member.member_id</A> 722. Gene and peptide sequence of
 the second homologue can retrieved in the same way.</p>
+<p><STRONG>N.B.</STRONG>At the moment the peptide_align_feature_ids are NULL because they are only indirectly used
+in the homology prediction but left there for compatibility with the old BRH system.</p>
 </dd></dl>
 <br>
+
+<!--
+#####################################################################
+	TABLE SITEWISE_ALN
+#####################################################################
+ -->
+<A name="sitewise_aln"></A>
+<h3>sitewise_aln</h3>
+<dl><dd>
+<p>Contains the site wise dN/dS values for the codon alignments.</p>
+<table border="2" cellpadding="2" bgcolor="#dcdcdc">
+  <caption>sitewise_aln table description</caption>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>Key</th>
+      <th>Default</th>
+      <th>Extra</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>sitewise_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td>NULL</td>
+      <td>auto_increment</td>
+      <td>internal unique ID</td>
+    </tr>
+    <tr>
+      <td>aln_position</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>alignment position of the codon/aminoacid</td>
+    </tr>
+    <tr>
+      <td>node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>root node_id for the subtree used in the analysis. External reference to <A href="#protein_tree_node">protein_tree_node.node_id</A></td>
+    </tr>
+    <tr>
+      <td>tree_node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>root node_id for the tree. External reference to <A href="#protein_tree_node">protein_tree_node.node_id</A></td>
+    </tr>
+    <tr>
+      <td>omega</td>
+      <td>float(10,5)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>Omega (dn/ds) value</td>
+    </tr>
+    <tr>
+      <td>omega_lower</td>
+      <td>float(10,5)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>Lower bound of support interval (confidence interval) for omega.</td>
+    </tr>
+    <tr>
+      <td>omega_upper</td>
+      <td>float(10,5)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>Upper bound of support interval (confidence interval) for omega.</td>
+    </tr>
+<!--     <tr> -->
+<!--       <td>optimal</td> -->
+<!--       <td>float(10,5)</td> -->
+<!--       <td>YES</td> -->
+<!--       <td></td> -->
+<!--       <td>NULL</td> -->
+<!--       <td></td> -->
+<!--       <td>(minus) Log-probability of observing site given that it was evolving at the optimal value of omega.</td> -->
+<!--     </tr> -->
+    <tr>
+      <td>threshold_on_branch_ds</td>
+      <td>float(10,5)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>Synonymous length used in the analysis at which a branch is considered to be subject to saturation of synonymous mutation.</td>
+    </tr>
+    <tr>
+      <td>type</td>
+      <td>varchar(10)</td>
+      <td>NO</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>describes the type of site found:
+      <ul><LI><strong>positive1</strong> for positively selected site at uncorrected 95% probability</LI>
+      <LI><strong>positive2</strong> for positively selected site at uncorrected 99% probability</LI>
+      <LI><strong>positive3</strong> for positively selected site at corrected 95% probability</LI>
+      <LI><strong>positive4</strong> for positively selected site at corrected 99% probability</LI>
+      <LI><strong>negative1</strong> for negatively selected site at uncorrected 95% probability</LI>
+      <LI><strong>negative2</strong> for negatively selected site at uncorrected 99% probability</LI>
+      <LI><strong>negative3</strong> for negatively selected site at corrected 95% probability</LI>
+      <LI><strong>negative4</strong> for negatively selected site at corrected 99% probability</LI>
+      <LI><strong>constant</strong> for site with no changes</LI>
+      <LI><strong>all_gaps</strong> for site with only gaps (due to the use of subalignments)</LI>
+      <LI><strong>single_character</strong> for site with only 1 site and the remaining positions being gaps</LI>
+      <LI><strong>synonymous</strong> for site with only synonymous changes</LI>
+      <LI><strong>default</strong> for site that are none of the above</LI>
+      </LI>
+      </ul></td>
+    </tr>
+  </tbody>
+</table>
+<p>E.g. the row</p>
+<PRE>
+mysql> select * from sitewise_aln where sitewise_id=1;
++-------------+--------------+---------+--------------+-...
+| sitewise_id | aln_position | node_id | tree_node_id |
++-------------+--------------+---------+--------------+-...
+|           1 |           31 |    1827 |         1827 |
++-------------+--------------+---------+--------------+-...
+
+...+---------+-------------+-------------+------------------------+-----------+
+   | omega   | omega_lower | omega_upper | threshold_on_branch_ds | type      |
+...+---------+-------------+-------------+------------------------+-----------+
+   | 9.23330 |     3.22020 |    23.21050 |                1.50000 | positive3 |
+...+---------+-------------+-------------+------------------------+-----------+
+
+</PRE>
+<p>defines a positively selected position with an omega value omega=9.23330 with a confidence interval of (3.2,23.2) 
+calculated using a threshold_on_branch_ds=1.5 for the genetree with root 1827 (in this case a full genetree, not a subalignment as node_id=tree_node_id).</p>
+</dd></dl>
+<br>
+
 
 <!--
 #####################################################################
@@ -2371,21 +2988,21 @@ for each family entry.</p>
 </table>
 <p>E.g. the row</p>
 <PRE>
-mysql> select * from family WHERE family_id = 13252;
-+-----------+-----------------+----------------------------+-···
-| family_id | stable_id       | method_link_species_set_id | 
-+-----------+-----------------+----------------------------+-···
-|     13252 | ENSF00000013252 |                         68 | 
-+-----------+-----------------+----------------------------+-···
+mysql> select * from family where family_id=4000;
++-----------+-------------------+----------------------------+-...
+| family_id | stable_id         | method_link_species_set_id |
++-----------+-------------------+----------------------------+-...
+|      4000 | fam51v00000004000 |                      30017 |
++-----------+-------------------+----------------------------+-...
 
- ···-+---------------------------------+-------------------+
-     | description                     | description_score |
- ···-+---------------------------------+-------------------+
-     | NADH PYROPHOSPHATASE EC_3.6.1.- |               100 |
- ···_+---------------------------------+-------------------+
+...+--------------------------------------------------------------------+-------------------+
+   | description                                                        | description_score |
+...+--------------------------------------------------------------------+-------------------+
+   | NUCLEAR PORE COMPLEX NUP205 NUCLEOPORIN NUP205.205 KDA NUCLEOPORIN |               100 |
+...+--------------------------------------------------------------------+-------------------+
 </PRE>
-<p>defines a family homology found which stable ID is ENSF00000013252 and the description of this family is
-"NADH PYROPHOSPHATASE EC_3.6.1.-" scored with a 100.</p>
+<p>defines a family homology found which stable ID is fam51v00000004000 and the description of this family is
+"NUCLEAR PORE COMPLEX NUP205 NUCLEOPORIN NUP205.205 KDA NUCLEOPORIN" scored with a 100.</p>
 </dd></dl>
 <br>
 
