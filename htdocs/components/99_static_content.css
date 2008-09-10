@@ -59,8 +59,8 @@ ul#favourites_list li, ul#species_list li { cursor:move; }
   Species homepages
 ----------------------------------------------------------------------*/
 
-table#species-stats {          width:100%;       }
-table#species-stats td {       padding:4px 0;    }
-table#species-stats td.data {  font-weight:bold; }
-table#species-stats td.value { text-align:right; }
+table.species-stats {          width:100%;       }
+table.species-stats td {       padding:4px 0;    }
+table.species-stats td.data {  font-weight:bold; }
+table.species-stats td.value { text-align:right; }
 
