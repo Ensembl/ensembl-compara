@@ -22,7 +22,7 @@ sub content {
 
   $table->add_columns(
       { 'key' => 'id',          'title' => 'Family ID',                                 'width' => '20%', 'align' => 'left' },
-      { 'key' => 'annot',       'title' => 'Concensus annotation',                      'width' => '40%', 'align' => 'left' },
+      { 'key' => 'annot',       'title' => 'Consensus annotation',                      'width' => '40%', 'align' => 'left' },
       { 'key' => 'transcripts', 'title' => 'Transcripts with peptides in this family',  'width' => '30%', 'align' => 'left' },
   );
 
