@@ -4,13 +4,12 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
     my ($self) = @_;
-    my $Config  = $self->{'config'};
-    my $length  = $Config->container_width();
-    my $colour  = 'red';#$Config->get('non_can_intron','col');
-    my $trans_ref = $Config->{'transcript'};
-    return unless $trans_ref->{'non_con_introns'};
-    my @introns = @{$trans_ref->{'non_con_introns'}};
-    foreach my $intron (@introns) {
+    my $wuc  =   $self->{'config'};
+    my $length  = $wuc->container_width();
+    my $colour  = $self->my_colour('non_can_intron');
+    my $trans_obj = $wuc->cache('trans_object');
+    return unless $trans_obj->{'non_can_introns'};
+    foreach my $intron (@{$trans_obj->{'non_can_introns'}}) {
 	next unless defined $intron;
 	my $exon_names = $intron->[4];
 	
@@ -23,7 +22,7 @@ sub _init {
 	#Draw an I-bar covering the intron
 	my $G = $self->Line({
 	    'x'         => $box_start ,
-	    'y'         => 0,
+	    'y'         => 1,
 	    'width'     => $box_end-$box_start,
 	    'height'    => 0,
 	    'colour'    => $colour,
@@ -34,7 +33,7 @@ sub _init {
 	$self->push( $G );
 	$G = $self->Line({
 	    'x'         => $box_start,
-	    'y'         => -3,
+	    'y'         => -2,
 	    'width'     => 0,
 	    'height'    => 6,
 	    'colour'    => $colour,
@@ -45,7 +44,7 @@ sub _init {
 	$self->push( $G );
 	$G = $self->Line({
 	    'x'         => $box_end ,
-	    'y'         => -3,
+	    'y'         => -2,
 	    'width'     => 0,
 	    'height'    => 6,
 	    'colour'    => $colour,
