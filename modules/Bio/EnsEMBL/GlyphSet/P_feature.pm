@@ -1,40 +1,31 @@
 package Bio::EnsEMBL::GlyphSet::P_feature;
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+use base  qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
-  my ($self, $protein, $Config) = @_;
-  my %hash;
-  my $y      = 0;
-  my $h      = 4;
-  my $highlights = $self->highlights();
-
-  return unless $self->check();
-  $protein = $self->{'container'};
-  $Config  = $self->{'config'}; 
+  my $self      = shift;
+  my $protein   = $self->{'container'};
   return unless $protein->dbID;
-  my $logic_name    = $self->my_config( 'logic_name' );
-  my $colours       = $self->my_config( 'colours'    )||{};
-  my $caption       = $self->my_config('caption');
-  my $colour        = $colours->{lc($logic_name)} || $colours->{'default'};
 
-  foreach my $pf (@{$protein->get_all_ProteinFeatures($logic_name)}) {
-    my $x = $pf->start();
-    my $w = $pf->end - $x;
-    $self->push($self->Rect({
-      'x'       => $x,
-      'y'       => $y,
-      'width'   => $w,
-      'height'  => $h,
-      'zmenu' => {
-         'caption' => "$caption Feature",
-         "aa: ".$pf->start."-".$pf->end,
-      },
-      'title' => $pf->start.'-'.$pf->end,
-      'colour'  => $colour,
-    }));
+  my $caption   = $self->my_config('caption');
+  my $h         = $self->my_config('height') || 4;
+  my $y         = 0;
+  foreach my $logic_name { @{$self->my_config( 'logic_name' )||[]} } {
+    my $colour = $self->my_colour( $logic_name );
+    my $text   = $self->my_colour( $logic_name, 'text', $caption );
+    foreach my $pf (@{$protein->get_all_ProteinFeatures($logic_name)}) {
+      my $x = $pf->start();
+      my $w = $pf->end - $x;
+      $self->push($self->Rect({
+        'x'       => $x,
+        'y'       => $y,
+        'width'   => $w,
+        'height'  => $h,
+	'title'   => "$text feature; Position: ",$pf->start.'-'.$pf->end
+        'colour'  => $colour,
+      })
+    );
+    $y+= $h + 2; ## slip down a line for subsequent analyses...
   }
 }
 1;
