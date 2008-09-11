@@ -97,21 +97,26 @@ sub add_tags {
 sub delete_by_tags {
   my $self = shift;
   my @tags = (@_, $self->{namespace});
-  my $sock = $self->get_sock($tags[0]);
 
-#  if ($#tags) { ## if more than 1 tag
-    my $cmd = 'tags_delete '.join(' ', @tags)."\r\n";
-    my $res = $self->_write_and_read($sock, $cmd);
-    if ($res =~ /^(\d+) ITEMS_DELETED/) {
-      return $1;
-    } else {
-      return 0;
-    }
-#  } else { ## just 1 tag, better use tag_delete (faster)
-#    my $cmd = 'tag_delete '.$tags[0]."\r\n";
-#    my $res = $self->_write_and_read($sock, $cmd);
-#    return $res eq "TAG_DELETED\r\n";
-#  }
+  my $cmd = 'tags_delete '.join(' ', @tags)."\r\n";
+  my $items_deleted = 0;
+
+  my @hosts = @{$self->{'buckets'}};
+  foreach my $host (@hosts) {
+      my $sock = $self->sock_to_host($host);
+      my $res = $self->_write_and_read($sock, $cmd);
+      if ($res =~ /^(\d+) ITEMS_DELETED/) {
+        $items_deleted += $1;
+      }
+  }
+
+  return $items_deleted;
+
+  #  } else { ## just 1 tag, better use tag_delete (faster)
+  #    my $cmd = 'tag_delete '.$tags[0]."\r\n";
+  #    my $res = $self->_write_and_read($sock, $cmd);
+  #    return $res eq "TAG_DELETED\r\n";
+  #  }
 }
 
 sub set {
