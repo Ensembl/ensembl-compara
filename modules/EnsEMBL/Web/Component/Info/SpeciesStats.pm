@@ -11,16 +11,12 @@ sub _init {
   $self->ajaxable(  0 );
 }
 
-sub caption {
-  return 'Statistics';
-}
-
 sub content {
   my $self   = shift;
   my $object = $self->object;
   my $html; 
 
-  my $file = '/'.$object->species.'/ssi/stats.html';
+  my $file = '/ssi/species/stats_'.$object->species.'.html';
   $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file);
 
   return $html;

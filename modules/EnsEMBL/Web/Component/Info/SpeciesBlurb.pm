@@ -18,7 +18,7 @@ sub content {
   my $object = $self->object;
   my $html; 
 
-  my $file = '/'.$object->species.'/ssi/about.html';
+  my $file = '/ssi/species/about_'.$object->species.'.html';
   $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file); 
 
   return $html;
