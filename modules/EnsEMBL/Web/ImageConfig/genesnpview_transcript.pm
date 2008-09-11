@@ -4,22 +4,54 @@ use EnsEMBL::Web::ImageConfig;
 use vars qw(@ISA);
 @ISA = qw(EnsEMBL::Web::ImageConfig);
 
+
 sub init {
   my ($self) = @_;
-  $self->{'_userdatatype_ID'} = 36;
-  $self->{'_transcript_names_'} = 'yes';
-  $self->{'_add_labels' }  = 1;
-  $self->{'general'}->{'genesnpview_transcript'} = {
-    '_artefacts' => [qw(GSV_transcript GSV_snps)],
-    '_options'  => [qw(pos col known unknown)],
-    '_settings' => {
-      'opt_pdf' => 0, 'opt_svg' => 0, 'opt_postscript' => 0,
-      'opt_zclick'     => 1,
-      'show_labels' => 'no',
-      'width'   => 800,
-      'bgcolor'   => 'background1',
-      'bgcolour1' => 'background1',
-      'bgcolour2' => 'background1',
+
+  $self->set_parameters({
+    'title'         => 'Transcript slice',
+    'show_buttons'  => 'yes',   # show +/- buttons
+    'button_width'  => 8,       # width of red "+/-" buttons
+    'show_labels'   => 'yes',   # show track names on left-hand side
+    'label_width'   => 100,     # width of labels on left-hand side
+    'margin'        => 5,       # margin
+    'spacing'       => 2,       # spacing
+    'opt_halfheight'   => 0,    # glyphs are half-height [ probably removed when this becomes a track config ]
+    'opt_empty_tracks' => 0,    # include empty tracks..
+  });
+  $self->create_menus(
+    'sequence'        => 'Sequence',
+    'gsv_transcript'  => 'Transcripts',
+    'gsv_peptides'    => 'Protein domains',
+    'gsv_variation'   => 'Variations',
+    'other'           => 'Other'
+  );
+
+
+  $self->add_tracks( 'sequence',
+    [ 'contig',    'Contigs',              'stranded_contig', { 'on' => 'on',  'strand' => 'r'  } ],
+  );
+  $self->load_tracks();
+
+  $self->add_tracks( 'gsv_variation',
+    [ 'snps',             '',     'gsv_snps',          { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ]
+  );
+  $self->add_tracks( 'other',
+    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'draggable',        '',     'draggable',         { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'snp_join',         '',     'snp_join',          { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'spacer',           '',     'spacer',            { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ],
+    [ 'ruler',            '',     'ruler',             { 'on' => 'on',  'strand' => 'f', 'name' => 'Ruler'      } ],
+    [ 'scalebar',         '',     'scalebar',          { 'on' => 'on',  'strand' => 'f', 'name' => 'Scale bar'  } ],
+  );
+  $self->modify_configs(
+    [qw(gsv_transcript variation)],
+    {'on'=>'off'}
+  );
+}
+1;
+
+__END__
       'validation' => [
         [ 'opt_freq'       => 'By frequency' ],
         [ 'opt_cluster'    => 'By cluster' ],
@@ -54,11 +86,6 @@ sub init {
        [ 'opt_downstream'            => 'Downstream' ],
        [ 'opt_intergenic'            => 'Intergenic' ], 
       ],
-      'features' => [],
-    'snphelp' => [
-        [ 'genesnpview'  => 'GeneSNPView' ],
-      ],
-     },
     'GSV_transcript' => {
       'on'          => "on",
       'pos'         => '100',
