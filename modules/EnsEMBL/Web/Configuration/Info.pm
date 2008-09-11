@@ -5,7 +5,7 @@ use base qw( EnsEMBL::Web::Configuration );
 
 sub set_default_action {
   my $self = shift;
-  $self->{_data}{default} = 'Description';
+  $self->{_data}{default} = 'Index';
 }
 
 sub global_context { return undef; }
@@ -18,24 +18,34 @@ sub context_panel  { return $_[0]->_context_panel;  }
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Description', "Description",
+  $self->create_node( 'Index', "Description",
     [qw(
       blurb    EnsEMBL::Web::Component::Info::SpeciesBlurb
     )],
     { 'availability' => 1}
   );
-  $self->create_node( 'Stats', 'Genome Statistics',
-    [qw(
-      stats     EnsEMBL::Web::Component::Info::SpeciesStats
-    )],
+
+  my $stats_menu = $self->create_submenu( 'Stats', 'Genome Statistics' );
+  $stats_menu->append( $self->create_node( 'StatsTable', 'Assembly and Genebuild',
+    [qw(stats     EnsEMBL::Web::Component::Info::SpeciesStats)],
     { 'availability' => 1}
-  );
+  ));
+  $stats_menu->append( $self->create_node( 'IPtop40', 'Top 40 InterPro hits',
+    [qw(ip40     EnsEMBL::Web::Component::Info::IPtop40)],
+    { 'availability' => 1}
+  ));
+  $stats_menu->append( $self->create_node( 'IPtop500', 'Top 500 InterPro hits',
+    [qw(ip500     EnsEMBL::Web::Component::Info::IPtop500)],
+    { 'availability' => 1}
+  ));
+
   $self->create_node( 'WhatsNew', "What's New",
     [qw(
       whatsnew    EnsEMBL::Web::Component::Info::WhatsNew
     )],
     { 'availability' => 1}
   );
+
   ## SAMPLE DATA
   my $data_menu = $self->create_submenu( 'Data', 'Sample entry points' );
   my %sample_data = %{$self->{object}->species_defs->SAMPLE_DATA};
@@ -51,17 +61,17 @@ sub populate_tree {
     { 'availability' => scalar(@{$self->{object}->species_defs->ENSEMBL_CHROMOSOMES||[]}), 
       'url' => '/'.$self->species.'/Location/Karyotype' }
   ));
-  $data_menu->append( $self->create_node( 'Location', "Location ($location_text)",
+  $data_menu->append( $self->create_node( 'Location', "Location<br />&nbsp;&nbsp;&nbsp;($location_text)",
     [qw(location      EnsEMBL::Web::Component::Location::Summary)],
-    { 'availability' => 1, 'url' => $location_url }
+    { 'availability' => 1, 'url' => $location_url, 'raw' => 1 }
   ));
-  $data_menu->append( $self->create_node( 'Gene', "Gene ($gene_text)",
+  $data_menu->append( $self->create_node( 'Gene', "Gene<br />&nbsp;&nbsp;&nbsp;($gene_text)",
     [],
-    { 'availability' => 1, 'url' => $gene_url }
+    { 'availability' => 1, 'url' => $gene_url, 'raw' => 1 }
   ));
-  $data_menu->append( $self->create_node( 'Transcript', "Transcript ($transcript_text)",
+  $data_menu->append( $self->create_node( 'Transcript', "Transcript<br />&nbsp;&nbsp;&nbsp;($transcript_text)",
     [qw(location      EnsEMBL::Web::Component::Transcript::Summary)],
-    { 'availability' => 1, 'url' => $transcript_url }
+    { 'availability' => 1, 'url' => $transcript_url, 'raw' => 1 }
   ));
 
   ## Menu also needs to link to any static content for this species
