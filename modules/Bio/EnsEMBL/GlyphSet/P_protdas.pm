@@ -1,8 +1,6 @@
-package Bio::EnsEMBL::GlyphSet::Pprotdas;
+package Bio::EnsEMBL::GlyphSet::P_protdas;
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet);
 use Sanger::Graphics::ColourMap;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Glyph::Symbol::box; 
@@ -411,6 +409,8 @@ sub RENDER_grouped {
 
   my $fhash;
 
+  $self->_init_bump;
+
   foreach my $f (@{$self->{extras}->{features}}) {
 # Create a new composite and put the feature there
     my $Composite = $self->Composite({
@@ -430,12 +430,9 @@ sub RENDER_grouped {
 # If it does than 'bump' the row, i.e move the composite down to the next row
 
     my $bump_start = floor($Composite->x() * $pix_per_bp);
-    $bump_start = 0 if ($bump_start < 0);
     next if ($bump_start > $bitmap_length);
     my $bump_end = $bump_start + floor($Composite->width()*$pix_per_bp);
-    if ($bump_end > $bitmap_length){$bump_end = $bitmap_length};
-    my $row = Sanger::Graphics::Bump::bump_row(
-      $bump_start, $bump_end, $bitmap_length, \@bitmap
+    my $row = $self->bump_row( $bump_start, $bump_end );
     );
     $Composite->y($Composite->y() + $row * ($h + 2) );
     $self->push($Composite);

@@ -1,22 +1,17 @@
-package Bio::EnsEMBL::GlyphSet::Pprotein;
+package Bio::EnsEMBL::GlyphSet::P_protein;
 use strict;
-use vars qw(@ISA $SPECIES_DEFS);
-use Bio::EnsEMBL::GlyphSet;
-#use EnsEMBL::Web::GeneTrans::support;
-
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
   my $db;
   my $protein    = $self->{'container'};	
-  my $pep_splice = $protein->{'image_splice'};
-  my $prot_id    = $protein->stable_id;
+  my $pep_splice = $self->cache('image_splice');
 
   my $x          = 0;
   my $h          = $self->my_config('height') || 4; 
   my $flip       = 0;
-  my @colours    = ($self->my_colour('col1'), $self->my_config('col2'));
+  my @colours    = ($self->my_colour('col1'), $self->my_colour('col2'));
   my $start_phase = 1;
   if( $pep_splice ){
     for my $exon_offset (sort { $a <=> $b } keys %$pep_splice){
