@@ -16,36 +16,25 @@ sub _init {
 sub content {
   my $self = shift;
   my $transcript = $self->object;
-  my $object = $transcript->translation_object;
-  warn $object;
-  my $peptideid = $object->stable_id;
-  my $db        = $object->get_db ;
-  my $wuc       = $object->get_userconfig( 'protview' );
-  $wuc->container_width( $object->Obj->length );
-  $wuc->{_object} = $object;
-  my $image_width = $wuc->get('_settings', 'width');
+  my $object     = $transcript->translation_object;
+  my $wuc        = $object->get_userconfig( 'protview' );
+     $wuc->set_parameters({
+       'container_width' => $object->Obj->length,
+       '_object'         => $object,
+       'image_width'     => $self->image_width || 800,
+       'slice_number'    => '1|1'
+     });
+     $wuc->cache( 'object',       $object );
+     $wuc->cache( 'image_snps',   $object->pep_snps );
+     $wuc->cache( 'image_splice', $object->pep_splice_site( $object->Obj ) );
 
-#  my $das_collection = $object->get_DASCollection();
-#  foreach my $das( @{$das_collection->Obj} ){
-#    next unless $das->adaptor->active;
-#   $das->adaptor->maxbins($image_width) if ($image_width);
-#    my $source = $das->adaptor->name();
-#    my $color  = $das->adaptor->color() || 'black';
-#    my $src_label  = $das->adaptor->label() || $source;
-#    $wuc->das_sources( { "genedas_$source" => { on=>'on', col=>$color, label=> $src_label, manager=>'Pprotdas' } } );
-#  }
+  $wuc->tree->dump("Tree", '[[caption]]' );
 
-
-  $object->Obj->{'image_snps'}   = $object->pep_snps;
-  $object->Obj->{'image_splice'} = $object->pep_splice_site( $object->Obj );
-
-  my $image                      = $object->new_image( $object->Obj, $wuc, [], 1 ) ;
-     $image->imagemap            = 'yes';
-
-  warn "WC $wuc"; 
-
-
-return $image->render;
+  my $image    = $transcript->new_image( $object->Obj, $wuc, [] );
+     $image->imagemap = 'yes';
+     $image->{'panel_number'} = 'translation';
+     $image->set_button( 'drag', 'title' => 'Drag to select region' );
+  return $image->render;
 }
 
 1;
