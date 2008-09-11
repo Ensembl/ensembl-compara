@@ -2,62 +2,55 @@ package Bio::EnsEMBL::GlyphSet::_alignment_pairwise;
 
 use strict;
 use base qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Bump;
 
 sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
 
 sub _init {
   my ($self) = @_;
-  my $type = $self->check();
-  return unless defined $type;  ## No defined type arghhh!!
-
-  my $strand = $self->strand;
-  my $strand_flag    = $self->my_config('strand');
-  return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
-
-  if( $self->my_config('compact') ) {
-    $self->compact_init($type);
-  } else {
-    $self->expanded_init($type);
-  }
+  my $method = "RENDER_".($self->my_config('compact') ? 'compact' : 'normal');
+  warn "CALLING METHOD $method...";
+  return $self->$method();
 }
 
-sub expanded_init {
-  my ($self,$type) = @_;
+sub RENDER_normal {
+  my $self           = shift;
+
   my $WIDTH          = 1e5;
   my $container      = $self->{'container'};
-  my $Config         = $self->{'config'};
   my $strand         = $self->strand();
-  my $strand_flag    = $Config->get($type, 'str');
+  my $strand_flag    = $self->my_config('strand');
+  return if $strand_flag eq 'r' && $strand != -1;
+  return if $strand_flag eq 'f' && $strand !=  1;
 
-  my $caption        = $Config->get($type,'title')||$Config->get($type,'label')||'Comparative alignment';
-  my %highlights;
-  @highlights{$self->highlights()} = ();
+  my $caption        = $self->my_config('caption');
+  my $depth          = $self->my_config('depth') || 6;
+  $self->_init_bump( $depth );  ## initialize bumping!!
+
+  my %highlights; @highlights{$self->highlights()} = ();
+
   my $length         = $container->length;
-  my @bitmap         = undef;
-  my $pix_per_bp     = $Config->transform()->{'scalex'};
+  my $pix_per_bp     = $self->scalex;
   my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
-  my $bitmap_length  = int($length * $pix_per_bp);
-  my $feature_colour = $Config->get($type, 'col');
-  my $join_col       = $Config->get($type, 'join_col') || 'gold'; 
-  my $join_z         = $Config->get($type, 'join_z') || 10;
-  my $hi_colour      = $Config->get($type, 'hi');
+  my $feature_key    = lc( $self->my_config('type') );
+  my $feature_colour = $self->my_colour($feature_key);
+  my $join_col       = $self->my_colour($feature_key,'join'  ) || 'gold'; 
+  my $join_z         = $self->my_colour($feature_key,'join_z') || 100;
+  warn "... $feature_key [$feature_colour / $join_col / $join_z] ....";
   my %id             = ();
   my $small_contig   = 0;
-  my $dep            = $Config->get($type, 'dep');
-  my $h              = $Config->get_parameter( 'opt_halfheight') ? 4 : 8;
-  my $chr       = $self->{'container'}->seq_region_name;
-  my $other_species  = $Config->get($type, 'species' );
-  ( my $species_2    = $other_species ) =~ s/_ / /g;
+  my $h              = $self->get_parameter( 'opt_halfheight') ? 4 : 8;
+  my $chr            = $self->{'container'}->seq_region_name;
+  my $other_species  = $self->my_config('species' );
+  my $species_2      = $self->my_config('species_hr');
   my $self_species   = $container->{web_species};
-  my $compara        = $self->{'config'}{'compara'};
+  my $compara        = $self->get_parameter('compara');
   my $link = 0;
   my $TAG_PREFIX;
-  my $METHOD         = $Config->get($type, 'method' );
+  my $METHOD         = $self->my_config('method' );
 #  warn "expanded method is $METHOD";
 
   if( $compara) {
-    $link = $Config->get($type,'join');
+    $link = $self->my_config('join');
     $TAG_PREFIX  = uc( $compara eq 'primary' ? 
                        join ( '_', $METHOD, $self_species, $other_species ) :
                        join ( '_', $METHOD, $other_species, $self_species ) );
@@ -66,7 +59,7 @@ sub expanded_init {
   my $K = 0;
 
 #  warn ">>>>> $other_species $METHOD in expanded init<<<<<";
-  foreach my $f ( @{$self->features( $other_species, $METHOD )} ){
+  foreach my $f ( @{$self->features||[]} ){
     next if $strand_flag eq 'b' && $strand != $f->hstrand || $f->end < 1 || $f->start > $length ;
     push @{$id{$f->hseqname().':'. ($f->group_id||("00".$K++)) }}, [$f->start,$f];
   }
@@ -76,9 +69,9 @@ sub expanded_init {
   my @glyphs;
   my $BLOCK = 0;
   my $script = $ENV{'ENSEMBL_SCRIPT'} eq 'multicontigview' ? 'contigview' : $ENV{'ENSEMBL_SCRIPT'};
-  my $SHORT = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $Config->get( $type, 'species' ) };
-  my $domain = $Config->get( $type, 'linkto' );
-  my $HREF  = $Config->get( $type, 'linkto' )."/$SHORT/$script";
+  my $SHORT = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self->my_config( 'species' ) };
+  my $domain = $self->my_config( 'linkto' );
+  my $HREF  = $self->my_config(  'linkto' )."/$SHORT/$script";
 
   # sort alignments by size
   my @s_i = sort {($id{$b}[0][1]->hend() - $id{$b}[0][1]->hstart()) <=> ($id{$a}[0][1]->hend() - $id{$a}[0][1]->hstart())} keys %id;
@@ -92,11 +85,9 @@ sub expanded_init {
     my $start = $F[0][1]->hstart();
     my $end   = $F[0][1]->hend();
     my $bump_start = int($START * $pix_per_bp) -1 ;
-       $bump_start = 0 if $bump_start < 0;
     my $bump_end   = int($END * $pix_per_bp);
-       $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
-    my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap, $dep );
-    next if $row > $dep;
+    my $row = $self->bump_row( $bump_start, $bump_end );
+    next if $row > $depth;
     my $y_pos = - $row * int( 1.5 * $h ) * $strand;
     $C1 += @{$id{$i}}; ## Diagnostic report....
     my $Composite = $self->Composite({
@@ -126,9 +117,8 @@ sub expanded_init {
           'absolutey'  => 1,
         });
         if( $strand_flag eq 'z' && $join_col) {
-          $self->join_tag( $BOX, "BLOCK_$type$BLOCK", $strand == -1 ? 0 : 1, 0 , $join_col, 'fill', $join_z ) ;
-          $self->join_tag( $BOX, "BLOCK_$type$BLOCK", $strand == -1 ? 1 : 0, 0 , $join_col, 'fill', $join_z ) ;
-#warn "BLOCK_$type$BLOCK";
+          $self->join_tag( $BOX, "BLOCK_".$self->_type."$BLOCK", $strand == -1 ? 0 : 1, 0 , $join_col, 'fill', $join_z ) ;
+          $self->join_tag( $BOX, "BLOCK_".$self->_type."$BLOCK", $strand == -1 ? 1 : 0, 0 , $join_col, 'fill', $join_z ) ;
           $BLOCK++;
         }
         $Composite->push($BOX);
@@ -143,11 +133,11 @@ sub expanded_init {
         my $S = $start2 < $Composite->x ? 0 : ( $start2 - $Composite->x ) / $Composite->width;
         my $E = $end2   > $Composite->x+$Composite->width ? 1 : ( $end2 - $Composite->x ) / $Composite->width;
         if( $strand != -1 ) {
-          my $TAG = $Config->{'slice_id'}."$TAG_PREFIX.$start.$end:$start3.$end3.$strand";
+          my $TAG = $self->{'config'}{'slice_id'}."$TAG_PREFIX.$start.$end:$start3.$end3.$strand";
           $self->join_tag( $Composite, $TAG, $S, $Z, $join_col, 'fill', $join_z );
           $self->join_tag( $Composite, $TAG, $E, $Z, $join_col, 'fill', $join_z );
         } else {
-          my $TAG = ($Config->{'slice_id'}+1)."$TAG_PREFIX.$start3.$end3:$start.$end.".(-$strand);
+          my $TAG = ($self->{'config'}{'slice_id'}+1)."$TAG_PREFIX.$start3.$end3:$start.$end.".(-$strand);
           $self->join_tag( $Composite, $TAG, $E, $Z, $join_col, 'fill', $join_z );
           $self->join_tag( $Composite, $TAG, $S, $Z, $join_col, 'fill', $join_z );
         }
@@ -165,11 +155,11 @@ sub expanded_init {
     }
     $Composite->href(  "$HREF?$ZZ" );
 
-	my $zmenu = {
-				 'caption' => $caption,
-				 "01:$seqregion: $start-$end" => '',
-				 "99:Orientation: @{[ $F[0][1]->hstrand * $F[0][1]->strand>0 ? 'Forward' : 'Reverse' ]}"         => '',
-				};
+    my $zmenu = {
+      'caption' => $caption,
+      "01:$seqregion: $start-$end" => '',
+      "99:Orientation: @{[ $F[0][1]->hstrand * $F[0][1]->strand>0 ? 'Forward' : 'Reverse' ]}"         => '',
+    };
 
     if(exists $highlights{$i}) {
       $self->unshift($self->Rect({
@@ -177,154 +167,155 @@ sub expanded_init {
         'y'         => $Composite->y() - 1,
         'width'     => $Composite->width() + 2/$pix_per_bp,
         'height'    => $h + 2,
-        'colour'    => $hi_colour,
+        'colour'    => 'highlight1',
         'absolutey' => 1,
       }));
     }
-	#add more detailed links for non chained alignments
-	if (scalar(@F) == 1) {
-		my $chr_2 = $F[0][1]->hseqname;
-		my $s_2   = $F[0][1]->hstart;
-		my $e_2   = $F[0][1]->hend;
-		my $CONTIGVIEW_TEXT_LINK =  $compara ? 'Jump to ContigView' : 'Centre on this match' ;
-		my $END   = $F[0][1]->end;
-		my $START  =$F[0][0];
-		($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
-		my( $rs, $re ) = $self->slice2sr( $START, $END );
+    #add more detailed links for non chained alignments
+    if (scalar(@F) == 1) {
+      my $chr_2 = $F[0][1]->hseqname;
+      my $s_2   = $F[0][1]->hstart;
+      my $e_2   = $F[0][1]->hend;
+      my $CONTIGVIEW_TEXT_LINK =  $compara ? 'Jump to ContigView' : 'Centre on this match' ;
+      my $END   = $F[0][1]->end;
+      my $START  =$F[0][0];
+      ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
+      my( $rs, $re ) = $self->slice2sr( $START, $END );
+      my $jump_type;
+      if( my %vega_config = $self->species_defs->multiX('VEGA_COMPARA_CONF')) {
+        if( $self_species eq $species_2 ) {
+          my $regions = $chr.':'.$chr_2;
+          my $coords = $vega_config{$METHOD}->{$self_species}{$species_2}{$regions}{'coord_systems'};
+          my ($source,$link_type) = split ':',$coords;
+          $jump_type = "$link_type $chr_2";
+          if( $compara ) {
+            $CONTIGVIEW_TEXT_LINK = "Go to $link_type $chr";
+          }
+        } else {    
+          $jump_type = "$other_species chr $chr_2";
+          if( $compara) {            
+            $CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
+          }
+        }
+      } else {
+        $jump_type = $species_2;
+      }
 
-		#z menu links depend on whether jumping within or between species;
-		my $jump_type;
-		if( my %vega_config = $self->species_defs->multiX('VEGA_COMPARA_CONF')) {
-			if( $self_species eq $species_2 ) {
-				my $regions = $chr.':'.$chr_2;
-				my $coords = $vega_config{$METHOD}->{$self_species}{$species_2}{$regions}{'coord_systems'};
-				my ($source,$link_type) = split ':',$coords;
-				$jump_type = "$link_type $chr_2";
-				if( $compara ) {
-					$CONTIGVIEW_TEXT_LINK = "Go to $link_type $chr";
-				}
-			} else {	
-				$jump_type = "$other_species chr $chr_2";
-				if( $compara) {			
-					$CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
-				}
-			}
-		} else {
-			$jump_type = $species_2;
-		}
+      my $short_self    = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
+      my $short_other   = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
+      my $HREF_TEMPLATE = "/$short_self/dotterview?c=$chr:%d;s1=$other_species;c1=%s:%d";
+      my $COMPARA_HTML_EXTRA = '';
+      my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
+      $zmenu->{"02:Jump to $jump_type"}    = "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2";
+      $zmenu->{"03:$CONTIGVIEW_TEXT_LINK"} = "/$short_self/contigview?l=$chr:$rs-$re";
 
-		my $short_self    = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
-		my $short_other   = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
-		my $HREF_TEMPLATE = "/$short_self/dotterview?c=$chr:%d;s1=$other_species;c1=%s:%d";
-		my $COMPARA_HTML_EXTRA = '';
-		my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
-        $zmenu->{"02:Jump to $jump_type"}    = "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2";
-		$zmenu->{"03:$CONTIGVIEW_TEXT_LINK"} = "/$short_self/contigview?l=$chr:$rs-$re";
+      my $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
+      $zmenu->{ '04:Dotter' }  = $href;
+      $zmenu->{'05:Alignment'} = "alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
 
-		my $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
-		$zmenu->{ '04:Dotter' }  = $href;
-		$zmenu->{'05:Alignment'} = "alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
+      my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView'; 
+      my $METHOD         = $self->my_config('method' );
 
-		my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView'; 
-		my $METHOD         = $Config->get($type, 'method' );
-
-		my $link = 0;
-		my $TAG_PREFIX;
-		if( $compara) {
-			$link = $Config->get($type,'join');
-			$TAG_PREFIX  = uc( $compara eq 'primary' ?
-							   join ( '_', $METHOD, $self_species, $other_species ) :
-							   join ( '_', $METHOD, $other_species, $self_species ) );
-			my $C=1;
-			foreach my $T ( @{$Config->{'other_slices'}||[]} ) {
-				if( $T->{'species'} ne $self_species && $T->{'species'} ne $other_species ) {
-					$C++;
-					$COMPARA_HTML_EXTRA.=";s$C=".$Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $T->{'species'} };
-				}
-			}
-			$MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
-		}
-		$zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
-	}
-	#more code for vega self compara links (zfish chained alignments)
-	elsif ( my %vega_config = $self->species_defs->multiX('VEGA_COMPARA_CONF')) {
-		my $chr_2 = $F[0][1]->hseqname;
-		if( $self_species eq $species_2 ) {
-			my $regions = $chr.':'.$chr_2;
-			my $coords = $vega_config{$METHOD}->{$self_species}{$species_2}{$regions}{'coord_systems'};
-			my ($source,$link_type) = split ':',$coords;
-			$zmenu->{"02:Jump to $link_type $chr_2"} = "$HREF?$ZZ";
-		}
-		else {
-			$zmenu->{"02:Jump to $species_2 chr $chr_2"} = "$HREF?$ZZ";
-		}
+      my $link = 0;
+      my $TAG_PREFIX;
+      if( $compara) {
+        $link = $self->my_config('join');
+        $TAG_PREFIX  = uc( $compara eq 'primary' ?
+          join ( '_', $METHOD, $self_species, $other_species ) :
+          join ( '_', $METHOD, $other_species, $self_species ) );
+        my $C=1;
+        foreach my $T ( @{$self->{'config'}{'other_slices'}||[]} ) {
+          if( $T->{'species'} ne $self_species && $T->{'species'} ne $other_species ) {
+            $C++;
+            $COMPARA_HTML_EXTRA.=";s$C=".$self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $T->{'species'} };
+          }
+        }
+        $MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
+      }
+      $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
+    #more code for vega self compara links (zfish chained alignments)
+    } elsif ( my %vega_config = $self->species_defs->multiX('VEGA_COMPARA_CONF')) {
+      my $chr_2 = $F[0][1]->hseqname;
+      if( $self_species eq $species_2 ) {
+        my $regions = $chr.':'.$chr_2;
+        my $coords = $vega_config{$METHOD}->{$self_species}{$species_2}{$regions}{'coord_systems'};
+        my ($source,$link_type) = split ':',$coords;
+        $zmenu->{"02:Jump to $link_type $chr_2"} = "$HREF?$ZZ";
+      } else {
+        $zmenu->{"02:Jump to $species_2 chr $chr_2"} = "$HREF?$ZZ";
+      }
     } else {
-		$zmenu->{"02:Jump to $species_2"} = "$HREF?$ZZ";
-	}
+      $zmenu->{"02:Jump to $species_2"} = "$HREF?$ZZ";
+    }
     $Composite->zmenu($zmenu);
     $self->push( $Composite );
   }
 ## No features show "empty track line" if option set....
-  $self->errorTrack( "No ". $self->{'config'}->get($type,'label')." features in this region" ) unless( $C || $Config->get_parameter( 'opt_empty_tracks')==0 );
+  $self->errorTrack( "No ". $self->my_config('name')." features in this region" ) unless( $C || $self->get_parameter( 'opt_empty_tracks')==0 );
   0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
 }
 
-sub compact_init {
-  my ($self,$type) = @_;
+sub RENDER_compact {
+  my $self = shift;
   my $WIDTH          = 1e5;
   my $container      = $self->{'container'};
-  my $Config         = $self->{'config'};
-  my $caption        = $Config->get($type,'title')||$Config->get($type,'label')||'Comparative alignment';
   my $strand         = $self->strand();
-  my $strand_flag    = $Config->get($type, 'str');
-  my %highlights;
-  @highlights{$self->highlights()} = ();
+  my $strand_flag    = $self->my_config('strand');
+  return if $strand_flag eq 'r' && $strand != -1;
+  return if $strand_flag eq 'f' && $strand !=  1;
+
+  my $caption        = $self->my_config('caption');
+  my $depth          = $self->my_config('depth');
+  $self->_init_bump( $depth );  ## initialize bumping!!
+  my %highlights; @highlights{$self->highlights()} = ();
+
   my $length         = $container->length;
-  my $pix_per_bp     = $Config->transform()->{'scalex'};
+  my $pix_per_bp     = $self->scalex;
   my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
-  my $feature_colour = $Config->get($type, 'col');
-  my $join_col       = $Config->get($type, 'join_col') || 'gold';
-  my $join_z         = $Config->get($type, 'join_z') || 10;
-  my $hi_colour      = $Config->get($type, 'hi');
+  my $feature_key    = lc( $self->my_config('type') );
+  warn ".... $feature_key ....";
+  my $feature_colour = $self->my_colour($feature_key);
+  my $join_col       = $self->my_colour($feature_key,'join'  ) || 'gold'; 
+  my $join_z         = $self->my_colour($feature_key,'join_z') || 100;
   my %id             = ();
   my $small_contig   = 0;
-  my $dep            = $Config->get($type, 'dep');
-  my $h              = $Config->get_parameter( 'opt_halfheight') ? 4 : 8;
-  my $chr       = $self->{'container'}->seq_region_name;
-  my $other_species  = $Config->get($type, 'species' );
-  ( my $species_2    = $other_species ) =~ s/_ / /g;
-  my $short_other    = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
+  my $h              = $self->get_parameter( 'opt_halfheight') ? 4 : 8;
+  my $chr            = $self->{'container'}->seq_region_name;
+  my $other_species  = $self->my_config('species' );
+  my $species_2      = $self->my_config('species_hr');
   my $self_species   = $container->{web_species};
-  my $short_self     = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
-  my $compara        = $self->{'config'}{'compara'};
+  my $compara        = $self->get_parameter('compara');
   my $link = 0;
   my $TAG_PREFIX;
+  my $METHOD         = $self->my_config('method' );
 
-  my $METHOD         = $Config->get($type, 'method' );
+  my $short_other    = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
+  my $short_self     = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
+
 #  warn "compact method is $METHOD";
 
   my $COMPARA_HTML_EXTRA = '';
   my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView';
-  if( $compara) {
-    $link = $Config->get($type,'join');
+  if( $compara ) {
+    $link = $self->my_config('join');
     $TAG_PREFIX  = uc( $compara eq 'primary' ?
                        join ( '_', $METHOD, $self_species, $other_species ) :
                        join ( '_', $METHOD, $other_species, $self_species ) );
     my $C=1;
-    foreach my $T ( @{$Config->{'other_slices'}||[]} ) {
+    foreach my $T ( @{$self->{'config'}{'other_slices'}||[]} ) {
       if( $T->{'species'} ne $self_species && $T->{'species'} ne $other_species ) {
         $C++;
-        $COMPARA_HTML_EXTRA.=";s$C=".$Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $T->{'species'} };
+        $COMPARA_HTML_EXTRA.=";s$C=".$self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $T->{'species'} };
       }
     }
     $MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
   }
 
-  my( $T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
-  my $domain = $Config->get( $type, 'linkto' );
+  my $C = 0;
+  my $domain = $self->my_config('linkto' );
   my $HREF_TEMPLATE = "/$short_self/dotterview?c=$chr:%d;s1=$other_species;c1=%s:%d";
   my $X = -1e8;
-  my $CONTIGVIEW_TEXT_LINK =  $compara ? 'Jump to ContigView' : 'Centre on this match' ;
+  my $CONTIGVIEW_TEXT_LINK = $compara ? 'Jump to ContigView' : 'Centre on this match' ;
   my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
 
 #  warn "!>>>>> $other_species $METHOD in compact init<<<<<";
@@ -333,17 +324,15 @@ sub compact_init {
     grep { !( ($strand_flag eq 'b' && $strand != $_->hstrand) ||
               ($_->start > $length) ||
               ($_->end < 1)
-         ) } @{$self->features( $other_species, $METHOD )};
+         ) } @{$self->features()||[]};
 
   foreach (@T) {
-    my $f       = $_->[1];
-    my $START   = $_->[0];
+    my($START,$f) = @$_;
     my $END     = $f->end;
     ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
     my( $rs, $re ) = $self->slice2sr( $START, $END );
     $START      = 1 if $START < 1;
     $END        = $length if $END > $length;
-    $T++; $C1++;
     next if int( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
     $X = $START;
     $C++;
@@ -361,36 +350,35 @@ sub compact_init {
     my $href  = '';
     #z menu links depend on whether jumping within or between species;
     my $jump_type;
-	if (my %vega_config = $self->{'config'}->{'species_defs'}->multiX('VEGA_COMPARA_CONF')) {
-		if( $self_species eq $species_2 ) {
-			my $regions = $chr.':'.$chr_2;
-			my $coords = $vega_config{$METHOD}->{$self_species}{$species_2}{$regions}{'coord_systems'};
-			my ($source,$link_type) = split ':',$coords;
-			$jump_type = "$link_type $chr_2";
-			if( $compara ) {
-				$CONTIGVIEW_TEXT_LINK = "Go to $link_type $chr";			
-			}
-		} else {	
-			$jump_type = "$other_species chr $chr_2";
-			if( $compara) {			
-				$CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
-			}
-		}
+    if (my %vega_config = $self->{'config'}->{'species_defs'}->multiX('VEGA_COMPARA_CONF')) {
+        if( $self_species eq $species_2 ) {
+            my $regions = $chr.':'.$chr_2;
+            my $coords = $vega_config{$METHOD}->{$self_species}{$species_2}{$regions}{'coord_systems'};
+            my ($source,$link_type) = split ':',$coords;
+            $jump_type = "$link_type $chr_2";
+            if( $compara ) {
+                $CONTIGVIEW_TEXT_LINK = "Go to $link_type $chr";            
+            }
+        } else {    
+            $jump_type = "$other_species chr $chr_2";
+            if( $compara) {            
+                $CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
+            }
+        }
     } else {
       $jump_type = $species_2;
     }
 
-    my $zmenu = { 'caption'              => $caption,
-                  "01:$chr_2:$s_2-$e_2"     => '',
-                  "02:Jump to $jump_type"   => "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2",
-                  "03:$CONTIGVIEW_TEXT_LINK"  => "/$short_self/contigview?l=$chr:$rs-$re" };
+    my $zmenu = {
+      'caption'              => $caption,
+      "01:$chr_2:$s_2-$e_2"     => '',
+      "02:Jump to $jump_type"   => "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2",
+      "03:$CONTIGVIEW_TEXT_LINK"  => "/$short_self/contigview?l=$chr:$rs-$re" };
 
-    unless( $domain ) {
-      $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
-      $zmenu->{ '04:Dotter' }    = $href;
-      $zmenu->{ '05:Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
-      $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
-    }
+    $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
+    $zmenu->{ '04:Dotter' }    = $href;
+    $zmenu->{ '05:Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
+    $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
     $zmenu->{ '99:Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) } = undef;
     if($DRAW_CIGAR) {
       $TO_PUSH = $self->Composite({
@@ -421,11 +409,11 @@ sub compact_init {
       my( $start2, $end2 ) = $self->slice2sr( $start2, $end2 );
       my $Z = $strand == -1 ? 1 : 0;
       if( $strand != -1 ) {
-        my $TAG = $Config->{'slice_id'}."$TAG_PREFIX.$start.$end:$start2.$end2.$strand";
+        my $TAG = $self->{'config'}{'slice_id'}."$TAG_PREFIX.$start.$end:$start2.$end2.$strand";
         $self->join_tag( $TO_PUSH, $TAG, 0, $Z, $join_col, 'fill', $join_z );
         $self->join_tag( $TO_PUSH, $TAG, 1, $Z, $join_col, 'fill', $join_z );
       } else {
-        my $TAG = ($Config->{'slice_id'}+1)."$TAG_PREFIX.$start2.$end2:$start.$end.".(-$strand);
+        my $TAG = ($self->{'config'}{'slice_id'}+1)."$TAG_PREFIX.$start2.$end2:$start.$end.".(-$strand);
         $self->join_tag( $TO_PUSH, $TAG, 1, $Z, $join_col, 'fill', $join_z );
         $self->join_tag( $TO_PUSH, $TAG, 0, $Z, $join_col, 'fill', $join_z );
       }
@@ -433,29 +421,18 @@ sub compact_init {
     $self->push( $TO_PUSH );
   }
 ## No features show "empty track line" if option set....
-  $self->errorTrack( "No ". $self->{'config'}->get($type,'label')." features in this region" ) unless( $C || $Config->get_parameter( 'opt_empty_tracks')==0 );
-  0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+  $self->errorTrack( "No ". $self->my_config('name')." features in this region" ) unless( $C || $self->get_parameter( 'opt_empty_tracks')==0 );
 }
 
 1;
 
-use Time::HiRes qw(time);
-
 sub features {
-	my ($self, $species, $method ) = @_;
-	(my $species_2 = $species) =~ s/_/ /g; 
-	my $assembly = $self->species_defs->other_species($species,'ENSEMBL_GOLDEN_PATH');
-	my $START = time();
-	my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
-	my $T = $self->{'container'}->get_all_compara_DnaAlignFeatures( $species_2, $assembly, $method, $compara_db );
-##partial code for retrieving from clones
-#	unless (defined(@$T)) {
-#		my $clone_projection = $self->{'container'}->project('clone');
-#		foreach my $seg (@$clone_projection) {
-#			my $clone = $seg->to_Slice();
-#			$T = $clone->get_all_compara_DnaAlignFeatures( $species_2, $assembly, $method, $compara_db );
-#		}
-#	}
-  return $T;
+  my $self = shift;
+  return $self->{'container'}->get_all_compara_DnaAlignFeatures(
+    $self->my_config( 'species_hr' ),
+    $self->my_config( 'assembly'   ),
+    $self->my_config( 'type'             ),
+    $self->dbadaptor( "multi", $self->my_config('db') )
+  );
 }
 

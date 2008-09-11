@@ -21,10 +21,14 @@ use Bio::EnsEMBL::Feature;
 sub features {
   my ($self) = @_;
   my $species    = $self->my_config('species');
-  my $species_hr = $self->human_readable( $species );
+  my $species_hr = $self->my_config('species_hr');
 
   warn "... $species $species_hr ....";
-  my $T       = $self->{'container'}->get_all_compara_Syntenies( $species_hr, "SYNTENY" );
+  my $T       = $self->{'container'}->get_all_compara_Syntenies(
+    $species_hr,
+    "SYNTENY",
+    $self->dbadaptor( "multi", $self->my_config('db') )
+  );
   my $offset  = $self->{'container'}->start - 1;
   my @RET     = ();
   

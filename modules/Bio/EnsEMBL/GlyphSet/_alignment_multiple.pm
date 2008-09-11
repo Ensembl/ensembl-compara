@@ -34,72 +34,71 @@ sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]-
 
 sub draw_features {
 
-  ### Called from {{ensembl-draw/modules/Bio/EnsEMBL/GlyphSet/wiggle_and_block.pm}}
+  ### Called from {{ensembl-draw/modules/Bio/EnsEMBL/GlyphSet_wiggle_and_block.pm}}
   ### Arg 2 : draws wiggle plot if this is true
   ### Returns 0 if all goes well.  
   ### Returns error message to print if there are features missing (string)
 
-  my ($self, $db, $wiggle) = @_;
-  my $type = $self->check();
-  return unless defined $type;  ## No defined type arghhh!!
+  my( $self, $wiggle ) = @_;
 
   my $strand = $self->strand;
-  my $Config = $self->{'config'};
-  my $strand_flag    = $Config->get($type, 'str');
-  return if( $strand_flag eq 'r' && $strand != -1 || $strand_flag eq 'f' && $strand != 1 );
+  my $strand_flag    = $self->my_config( 'strand' );
   my $drawn_block    = 0;
   my $container      = $self->{'container'};
-  my $caption        = $Config->get($type,'title')||$Config->get($type,'label')||'Comparative alignment';
-  my %highlights;
-  @highlights{$self->highlights()} = ();
+  my $caption        = $self->my_config('caption');
+  my %highlights;      @highlights{$self->highlights()} = ();
   my $length         = $container->length;
-  my $pix_per_bp     = $Config->transform()->{'scalex'};
+  my $pix_per_bp     = $self->scalex;
   my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
-  my $feature_colour = $Config->get($type, 'col');
-  my $h              = $Config->get_parameter( 'opt_halfheight') ? 4 : 8;
-  my $chr       = $self->{'container'}->seq_region_name;
-  my $other_species  = $Config->get($type, 'species' );
-  my $short_other    = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
-  my $self_species   = $container->{web_species};
-  my $short_self     = $Config->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
-  my $jump_to_alignslice = $Config->get($type, 'jump_to_alignslice');
 
-  my $METHOD_ID         = $Config->get($type, 'method_id' );
+  my $feature_type   = $self->my_config( 'constrained_elements' ) ? 'constrained_element' : 'feature';
+
+  my $feature_colour = $self->my_colour( $feature_type );
+  my $feature_text   = $self->my_colour( $feature_type, 'text' );
+
+  my $h              = $self->get_parameter( 'opt_halfheight') ? 4 : 8;
+  my $chr            = $self->{'container'}->seq_region_name;
+  my $other_species  = $self->my_config( 'species' );
+  my $short_other    = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
+  my $self_species   = $container->{web_species};
+  my $short_self     = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
+  my $jump_to_alignslice = $self->my_config( 'jump_to_alignslice');
+
+  my $METHOD_ID      = $self->my_config( 'method_link_species_set_id' );
 
   my $ALIGNSLICEVIEW_TEXT_LINK = 'Jump to AlignSliceView';
 
-  my( $T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
+  my $C = 0;
   my $X = -1e8;
 
   my @T = sort { $a->[0] <=> $b->[0] }
     map { [$_->{start}, $_ ] }
-    grep { !( ($strand_flag eq 'b' && $strand != $_->{strand}) ||
-              ($_->{start} > $length) ||
-              ($_->{end} < 1)
-	      ) } @{$self->features( $other_species, $METHOD_ID, $db )};
+    grep {
+      ( $strand_flag ne 'b' || $strand == $_->{strand} ) &&
+      ( $_->{start} <= $length                         ) &&
+      ( $_->{end} >= 1                                 )
+    } @{$self->element_features};
 
   foreach (@T) {
-    $drawn_block = 1;
-    my $f       = $_->[1];
-    my $START   = $_->[0];
-    my $END     = $f->{end};
+    my($START,$f) = @$_;
+    my $END       = $f->{end};
     ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
-    my( $rs, $re ) = ($f->{hstart}, $f->{hend});
-    $START      = 1 if $START < 1;
-    $END        = $length if $END > $length;
+    my( $rs,$re ) = ($f->{hstart}, $f->{hend});
+    $START        = 1 if $START < 1;
+    $END          = $length if $END > $length;
 
     next if int( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
+    $drawn_block = 1;
     $X = $START;
 
-    my $TO_PUSH;
     my $href  = "/$short_self/alignsliceview?l=$chr:$rs-$re;align=opt_align_$METHOD_ID";
 
     my $zmenu = { 'caption'              => $caption};
 
     # Don't link to AlignSliceView from constrained elements!
     if ($jump_to_alignslice) {
-	$zmenu->{"45:"} = '';
-	$zmenu->{"50:$ALIGNSLICEVIEW_TEXT_LINK"} = $href;
+      $zmenu->{"45:"} = '';
+      $zmenu->{"50:$ALIGNSLICEVIEW_TEXT_LINK"} = $href;
     }
     $zmenu->{"01:Score = ".$f->{score}} = '' if $f->{score};
 
@@ -109,117 +108,125 @@ sub draw_features {
       $zmenu->{"$id:$species_name"} = '';
       $id++;
       foreach my $fr (@{$f->{fragments}->{$species_name}}) {
-	my $flength = abs($fr->[2] - $fr->[1]);
-	(my $species = $species_name) =~ s/\s/\_/g;
-	my $flink = sprintf("/%s/%s?l=%s:%d-%d", $species, $flength > $max_contig ? 'cytoview' : 'contigview', @$fr);
-	my $key = sprintf("%d:&nbsp;%s: %d-%d", $id++, @$fr);
-	$zmenu->{"$key"} = $flink;
-	$C++;
+        my $flength = abs($fr->[2] - $fr->[1]);
+        (my $species = $species_name) =~ s/\s/\_/g;
+        my $flink = sprintf("/%s/%s?l=%s:%d-%d", $species, $flength > $max_contig ? 'cytoview' : 'contigview', @$fr);
+        my $key = sprintf("%d:&nbsp;%s: %d-%d", $id++, @$fr);
+        $zmenu->{"$key"} = $flink;
+        $C++;
       }
     }
 
     if($DRAW_CIGAR) {
-      $TO_PUSH = $self->Composite({
+      my $TO_PUSH = $self->Composite({
         'href'  => $href,
         'zmenu' => $zmenu,
         'x'     => $START-1,
         'width' => 0,
-        'y'     => 0
+        'y'     => 0,
+	'bordercolour' => $feature_colour
       });
-      $self->draw_cigar_feature($TO_PUSH, $f, $h, $feature_colour, 'black', $pix_per_bp, 1 );
-      $TO_PUSH->bordercolour($feature_colour);
+      $self->draw_cigar_feature( $TO_PUSH, $f, $h, $feature_colour, 'black', $pix_per_bp, 1 );
+      $self->push( $TO_PUSH );
     } else {
-      $TO_PUSH = $self->Rect({
-        'x'          => $START-1,
-        'y'          => 0,
-        'width'      => $END-$START+1,
-        'height'     => $h,
-        'colour'     => $feature_colour,
-        'absolutey'  => 1,
-        '_feature'   => $f, 
-        'href'  => $href,
-        'zmenu' => $zmenu,
-      });
+      $self->push( $self->Rect({
+        'x'         => $START-1,
+        'y'         => 0,
+        'width'     => $END-$START+1,
+        'height'    => $h,
+        'colour'    => $feature_colour,
+        'absolutey' => 1,
+        '_feature'  => $f, 
+        'href'      => $href,
+        'zmenu'     => $zmenu,
+      }));
     }
-    $self->push( $TO_PUSH );
   }
   $self->_offset($h);
   $self->render_track_name($caption, $feature_colour) if $drawn_block;
 
-  my $drawn_wiggle = $wiggle ? $self->wiggle_plot($db): 1;
+  my $drawn_wiggle = $wiggle ? $self->wiggle_plot : 1;
   return 0 if $drawn_block && $drawn_wiggle;
 
   # Work out error message if some data is missing
-  my $error;
-  my $track = $self->{'config'}->get($type, 'label');
+  my @errors = ();
 
-  if (!$drawn_block) {
-    my $block_name =  $self->my_config('block_name') ||  $self->my_config('label');
-    $error .= $track eq 'Conservation' ? $block_name: $track;
-  }
-
-  if ($wiggle && !$drawn_wiggle) {
-    $error .= " and ". $self->my_config('wiggle_name');
-  }
-  return $error;
+  push @errors, $self->my_colour($feature_type,'text' ) if !$drawn_block;
+  push @errors, $self->my_colour('score',      'text' ) if $wiggle && !$drawn_wiggle;
+  return join ' and ',@errors;
 }
 
+## Now generate the feature array refs...
 
-
-
-sub features {
-
+sub element_features {
   ### Retrieves block features for constrained elements
   ### Returns arrayref of features
-
-  my ($self, $species, $method_id, $db ) = @_;
+  my $self = shift;
 
   my $slice = $self->{'container'};
   my $genomic_align_blocks;
   if ($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
     $genomic_align_blocks = $slice->get_all_constrained_elements();
-  } elsif ($method_id) {
-    my $mlss_adaptor = $db->get_adaptor("MethodLinkSpeciesSet");
-    my $mlss = $mlss_adaptor->fetch_by_dbID($method_id);
-
-
-## Get the GenomicAlignBlocks
-    my $gab_adaptor = $db->get_adaptor("GenomicAlignBlock");
-    $genomic_align_blocks = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
   } else {
-    return [];
+    my $db   = $self->dbadaptor( 'multi', $self->my_config('db') );
+## Get the GenomicAlignBlocks
+    $genomic_align_blocks = $db->get_adaptor("GenomicAlignBlock")->fetch_all_by_MethodLinkSpeciesSet_Slice(
+      $db->get_adaptor("MethodLinkSpeciesSet")->fetch_by_dbID(
+        $self->my_config('constrained_element')||
+	$self->my_config('method_link_species_set_id')
+      ),
+      $slice
+    )||[];
   }
 
-    my $T = [];
-    foreach (@$genomic_align_blocks) {
-	my $all_gas = $_->get_all_GenomicAligns;
-	my $fragments;
-	foreach my $this_genomic_align (@$all_gas) {
-          push(@{$fragments->{$this_genomic_align->dnafrag->genome_db->name}},
-              [
-		$this_genomic_align->dnafrag->name,
-		$this_genomic_align->dnafrag_start,
-		$this_genomic_align->dnafrag_end,
-		$this_genomic_align->dnafrag_strand
-              ]);
-	}
-	my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split(':',$_->reference_slice->name);
- 
-	push @$T, Bio::EnsEMBL::DnaDnaAlignFeature->new_fast ({
-	   'seqname' => $_->reference_slice->name,
-	   'start' => $_->reference_slice_start,
-	   'end' => $_->reference_slice_end,
-	   'strand' => $_->reference_slice_strand,
-	   'hstart' => $rstart,
-	   'hend' => $rend,
-	   'hstrand' => $rstrand,
-	   'hseqname' => $rname,
-	   'score' => $_->score,
-	   'fragments' => $fragments
-       });
+  my $T = [];
+  foreach my $block (@$genomic_align_blocks) {
+    my $all_gas = $block->get_all_GenomicAligns;
+    my $fragments;
+    foreach (@$all_gas) {
+      push(@{$fragments->{$_->dnafrag->genome_db->name}}, [
+        $_->dnafrag->name,
+        $_->dnafrag_start,
+        $_->dnafrag_end,
+        $_->dnafrag_strand
+      ]);
     }
+    my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split(':',$block->reference_slice->name);
+ 
+    push @$T, Bio::EnsEMBL::DnaDnaAlignFeature->new_fast ({
+      'seqname'   => $block->reference_slice->name,
+      'start'     => $block->reference_slice_start,
+      'end'       => $block->reference_slice_end,
+      'strand'    => $block->reference_slice_strand,
 
-    return $T;
+      'hseqname'  => $rname,
+      'hstart'    => $rstart,
+      'hend'      => $rend,
+      'hstrand'   => $rstrand,
+
+      'score'     => $block->score,
+      'fragments' => $fragments
+    });
+  }
+
+  return $T;
+}
+
+sub score_features {
+  my $self = shift;
+  return [] unless $self->my_config('conservation_score');
+  my $slice = $self->{'container'};
+  my $db   = $self->dbadaptor( 'multi', $self->my_config('db') );
+  return [] unless $db;
+  my $method_link_species_set = $db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->my_config('conservation_score'));
+  return [] unless $method_link_species_set;
+
+  return $db->get_ConservationScoreAdaptor()->fetch_all_by_MethodLinkSpeciesSet_Slice(
+    $method_link_species_set,
+    $self->{'container'},
+    $self->image_width  ## bins - size of track in pixels!
+  ) || [];
+
 }
 
 sub wiggle_plot {
@@ -227,33 +234,26 @@ sub wiggle_plot {
   ### Wiggle_plot
   ### Description: gets features for wiggle plot and passes to render_wiggle_plot
   ### Returns 1 if draws wiggles. Returns 0 if no wiggles drawn
+  my $self = shift;
 
-  my ( $self, $db ) = @_;
-  return 0 unless  $self->my_config('label') eq 'Conservation';
-  return 0 unless $db;
+  my $features = $self->score_features;
 
-  $self->render_space_glyph();
-  my $display_size = $self->{'config'}->get_parameter( 'width') || 700;
-  my $colour = "pink3";
-  my $display_label = "GERP scores";
-
-  my $slice = $self->{'container'};
-  my $wiggle_adaptor   = $db->get_ConservationScoreAdaptor();
-  if (!$wiggle_adaptor) {
-    warn ("Cannot get get adaptors: $wiggle_adaptor");
-    return 0;
-  }
-  my $method_link_species_set = $db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID(50005);
-
-# warn "WIGGLE $method_link_species_set , $slice, $display_size";
-  my $features = $wiggle_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice, $display_size) || [];
-#   warn ">>>> @$features";
   return 0 unless scalar @$features;
 
-  @$features   = sort { $a->score <=> $b->score  } @$features;
-  my ($min_score, $max_score) = ($features->[0]->score || 0, $features->[-1]->score|| 0);#($features->[0]->y_axis_min || 0, $features->[0]->y_axis_min || 0);
-  $self->render_wiggle_plot($features, $colour, $min_score, $max_score, $display_label);
+  $self->render_space_glyph();
+#   warn ">>>> @$features";
 
+  my $min_score = 0;
+  my $max_score = 0;
+  foreach (@$features) {
+    my $s = $_->score;
+    $min_score = $s if $s < $min_score;
+    $max_score = $s if $s > $max_score;
+  }
+  $self->render_wiggle_plot(
+    $features,                      ## Features array
+    { 'min_score' => $min_score, 'max_score' => $max_score }
+  );
   return 1;
 }
 1;

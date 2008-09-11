@@ -9,34 +9,25 @@ sub _init {
   my $max_length    = $self->my_config( 'threshold' )  || 500;
   my $slice_length  = $slice->length;
   my $wiggle_name   = $self->my_config('wiggle_name') || $self->my_config('label') ;
+
   if($slice_length > $max_length*1010) {
     my $height = $self->errorTrack("$wiggle_name only displayed for less than $max_length Kb");
     $self->_offset($height+4);
     return 1;
   }
 
-  my $db = undef;
-  my $db_type = $self->my_config('db_type')||'compara';
-  unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-    $db = $slice->adaptor->db->get_db_adaptor($db_type);
-    if(!$db) {
-      warn("Cannot connect to $db_type db");
-      return [];
-    }
-  }
-
   my %drawn_flag;
   my $error;
   if ( $self->my_config('compact') ) {
     $drawn_flag{ 'wiggle' } = 1;
-    $error =  $self->draw_features( $db );
+    $error =  $self->draw_features;
   }
 
   # If no blocks are drawn or on expand mode: draw wiggles
   if ( $error or !$self->my_config('compact') ) {
-    $error =  $self->draw_features( $db, "wiggle" );
+    $error =  $self->draw_features( 'wiggle' );
   }
-  return unless $error && $self->{'config'}->get_parameter( 'opt_empty_tracks')==1;
+  return unless $error && $self->get_parameter( 'opt_empty_tracks')==1;
 
   # Error messages ---------------------
   my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset );
@@ -78,22 +69,26 @@ sub render_block_features {
 
 
 sub render_wiggle_plot {
-
   ### Wiggle plot
   ### Args: array_ref of features in score order, colour, min score for features, max_score for features, display label
   ### Description: draws wiggle plot using the score of the features
   ### Returns 1
 
-  my( $self, $features, $colour, $min_score, $max_score, $display_label ) = @_;
+  my( $self, $features, $parameters ) = @_;
   
   my $slice           = $self->{'container'};
-  my $row_height      = 60;
+  my $row_height      = $self->my_config('height') || 60;
   my $offset          = $self->_offset();
-  my $P_MAX           = $max_score > 0 ? $max_score : 0;
-  my $N_MIN           = $min_score < 0 ? $min_score : 0;
+
+  my $P_MAX           = $parameters->{'max_score'} > 0 ? $parameters->{'max_score'} : 0;
+  my $N_MIN           = $parameters->{'min_score'} < 0 ? $parameters->{'min_score'} : 0;
+
   my $pix_per_score   = ($P_MAX-$N_MIN) ? $row_height / ( $P_MAX-$N_MIN ) : 0;
   my $red_line_offset = $P_MAX * $pix_per_score;
-  my $axis_colour     = $self->my_config('axis_colour')|| 'red';
+
+  my $colour          = $self->my_colour('score')|| 'blue';
+  my $axis_colour     = $self->my_colour('axis') || 'red';
+  my $label           = $self->my_colour('score','text');
 
   # Draw the axis ------------------------------------------------
   $self->push( $self->Line({ # horzi line
@@ -104,9 +99,7 @@ sub render_wiggle_plot {
     'absolutey' => 1,
     'colour'    => $axis_colour,
     'dotted'    => 1,
-  }));
-
-  $self->push( $self->Line({ # vertical line
+  }),$self->Line({ # vertical line
     'x'         => 0,
     'y'         => $offset,
     'width'     => 0,
@@ -115,17 +108,16 @@ sub render_wiggle_plot {
     'absolutex' => 1,
     'colour'    => $axis_colour,
     'dotted'    => 1,
-	}));
+  }));
 
 
   # Draw max and min score ---------------------------------------------
   my $display_max_score = sprintf("%.2f", $P_MAX); 
   my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
-  my @res_i = $self->get_text_width( 0, $display_max_score, '', 
-				       'font'=>$fontname_i, 
-				       'ptsize' => $fontsize_i );
+  my @res_i = $self->get_text_width(
+    0, $display_max_score, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
   my $textheight_i = $res_i[3];
-  my $pix_per_bp = $self->{'config'}->transform->{'scalex'};
+  my $pix_per_bp = $self->scalex;
 
   $self->push( $self->Text({
     'text'          => $display_max_score,
@@ -142,13 +134,12 @@ sub render_wiggle_plot {
     'absolutey'     => 1,
     'absolutex'     => 1,
     'absolutewidth' => 1,
-    }) );
+  }));
 
-  if ($min_score < 0) {
+  if ($parameters->{'min_score'} < 0) {
     my $display_min_score = sprintf("%.2f", $N_MIN); 
-    my @res_min = $self->get_text_width( 0, $display_min_score, '', 
-					   'font'=>$fontname_i, 
-					   'ptsize' => $fontsize_i );
+    my @res_min = $self->get_text_width(
+      0, $display_min_score, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
 
     $self->push($self->Text({
       'text'          => $display_min_score,
@@ -165,7 +156,7 @@ sub render_wiggle_plot {
       'absolutey'     => 1,
       'absolutex'     => 1,
       'absolutewidth' => 1,
-	  }));
+    }));
   }
 
 
@@ -185,19 +176,17 @@ sub render_wiggle_plot {
       'absolutey' => 1,
       'title'     => sprintf("%.2f", $score),
       'colour'    => $colour,
-		}));
+    }));
   }
 
   $offset = $self->_offset($row_height);
 
 
   # Add line of text -------------------------------------------
-  my @res_analysis = $self->get_text_width( 0,  $display_label,
-					      '', 'font'=>$fontname_i, 
-					      'ptsize' => $fontsize_i );
+  my @res_analysis = $self->get_text_width( 0,  $label, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i ); 
 
   $self->push( $self->Text({
-    'text'      => $display_label,
+    'text'      => $label,
     'width'     => $res_analysis[2],
     'font'      => $fontname_i,
     'ptsize'    => $fontsize_i,
@@ -209,7 +198,7 @@ sub render_wiggle_plot {
     'x'         => 1,
     'absolutey' => 1,
     'absolutex' => 1,
-	}) ); 
+  }) ); 
   $self->_offset($textheight_i);  #update offset
   return 1;
 }
@@ -225,9 +214,8 @@ sub render_track_name {
 
   my ( $self, $name, $colour ) = @_;
   my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
-  my @res_analysis = $self->get_text_width( 0, $name,
-                        '', 'font'=>$fontname_i, 
-                        'ptsize' => $fontsize_i );
+  my @res_analysis = $self->get_text_width(
+    0, $name, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
 
   $self->push( $self->Text({
     'text'      => $name,
