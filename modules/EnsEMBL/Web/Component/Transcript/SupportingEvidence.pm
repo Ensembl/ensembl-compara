@@ -41,66 +41,70 @@ sub content {
 }
 
 sub _content {
-
   my $self  = shift;
   my $object  = $self->object;
 
   #dbentry adaptor used to get db_name of the hit
   my $species = $object->species;
   my $dbentry_adap = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "DBEntry");
-  
+
   $object->param('image_width',800); ### remove this when user config is possible
 
   #slight differences for vega objects...
   my $o_type = lc($object->db_type);
-  
+
   #user defined width in pixels
   my $image_width  = $object->param( 'image_width' );
-  
+
   #context is user defined size of introns
   $object->param('context',100); ### remove this when user config is possible
   my $context    = $object->param('context') ? $object->param('context') : 100;
-  
+
   #set 5' and 3' extensions to the image depending on the context
   my $extent     = $context eq 'FULL' ? 1000 : $context;
-  
-  my $config = $object->get_userconfig( "supporting_evidence_transcript" );
+
+  my $wuc = $object->get_userconfig( "supporting_evidence_transcript" );
   my $length = $object->Obj->length;
-  $config->set_parameters({
+  $wuc->set_parameters({
       'container_width' => $length,
       'image_width'     => $image_width || 800, ## hack at the moment....
   });
 
+  my $trans_obj = {}; # used to store details of transcript
+  my $al_obj    = {}; #used to store all details of alignments
+
   #add transcript itself
   my $transcript = $object->Obj;
-  $config->{'transcript'}{'transcript'} = $transcript;
-  $config->{'transcript'}{'web_transcript'} = $object;
+#  $wuc->{'transcript'}{'transcript'} = $transcript;
+#  $wuc->{'transcript'}{'web_transcript'} = $object;
+  $trans_obj->{'transcript'}     = $transcript;
+  $trans_obj->{'web_transcript'} = $object;
 
-
-  $config->modify_configs( ## Turn on track associated with this db/logic name
-    [$config->get_track_key( 'TSE_transcript', $object )],
+  $wuc->modify_configs( ## Turn on track associated with this db/logic name
+    [$wuc->get_track_key( 'TSE_transcript', $object )],
     {qw(on on strand f)}  ## show on the forward strand only
+
   );
 
   #info needed to get at web_data
   my $db           = $object->get_db();
   my $db_key       = $db eq 'core' ? 'ENSEMBL_DB' : 'ENSEMBL_'.uc($db);
-  my $info_summary =  $object->species_defs->databases->{$db_key}{'tables'};
+  my $info_summary = $object->species_defs->databases->{$db_key}{'tables'};
 
   #get both real slice and normalised slice (ie introns set to fixed width)
   my @slice_defs = ( [ 'supporting_evidence_transcript', 'munged', $extent ] );
   foreach my $slice_type (@slice_defs) {
-    $object->__data->{'slices'}{$slice_type->[0]} = $object->get_transcript_slices($slice_type) || warn "Couldn't get slice";    
+    $object->__data->{'slices'}{$slice_type->[0]} = $object->get_transcript_slices($slice_type) || warn "Couldn't get slice";
   }
 
   my $transcript_slice = $object->__data->{'slices'}{'supporting_evidence_transcript'}[1];
   my $sub_slices     = $object->__data->{'slices'}{'supporting_evidence_transcript'}[2];
   my $fake_length    = $object->__data->{'slices'}{'supporting_evidence_transcript'}[3];
 
-  $config->container_width( $fake_length ); #sets width of image
-  $config->{'subslices'}   = $sub_slices; #used to draw lines for exons
-  $config->{'extent'}      = $extent; #used for padding between exons and at the end of the transcript
-  $config->{'object_type'} = $o_type; #used for drawing the legend for vega / E! transcripts
+  $wuc->container_width( $fake_length ); #sets width of image
+  $trans_obj->{'subslices'}   = $sub_slices; #used to draw lines for exons
+  $trans_obj->{'extent'}      = $extent; #used for padding between exons and at the end of the transcript
+  $trans_obj->{'object_type'} = $o_type; #used for drawing the legend for vega / E! transcripts
 
   #identify coordinates of the portions of introns and exons to be drawn. Include the exon object
   my $intron_exon_slices;
@@ -149,16 +153,16 @@ sub _content {
     }
     #push @{$intron_exon_slices}, [$subslice_start, $subslice_end]; #uncomment to add last intron to display
   }
-  $config->{'transcript'}{'introns_and_exons'} = $intron_exon_slices;
+  $trans_obj->{'introns_and_exons'} = $intron_exon_slices;
 
   #add info on normalised coding region
   my $raw_coding_start = defined($transcript->coding_region_start) ? $transcript->coding_region_start-$offset : $transcript->start-$offset;
   my $raw_coding_end   = defined($transcript->coding_region_end)   ? $transcript->coding_region_end-$offset   : $transcript->end-$offset;
   my $coding_start = $raw_coding_start + $object->munge_gaps( 'supporting_evidence_transcript', $raw_coding_start );
   my $coding_end   = $raw_coding_end   + $object->munge_gaps( 'supporting_evidence_transcript', $raw_coding_end );
-  $config->{'transcript'}{'coding_start'} = $coding_start;
-  $config->{'transcript'}{'coding_end'}   = $coding_end;
-  
+  $trans_obj->{'coding_start'} = $coding_start;
+  $trans_obj->{'coding_end'}   = $coding_end;
+
   #get introns (would be nice to have an API call but until this is there do this)
   my @introns;
   my $s = 0;
@@ -170,10 +174,10 @@ sub _content {
     $s++;
     $e++;
   }
-  
+
   #add info on non_canonical splice site sequences for introns
   my @canonical_sites = ( ['GT', 'AG'],['GC', 'AG'], ['AT', 'AC'], ['NN', 'NN'] ); #these are considered not to be non-canonical
-  my $non_con_introns;
+  my $non_can_introns;
   my $hack_c = 1; #set to zero to tag first intron - used for development to highlight first intron
   foreach my $i_details (@introns) {
     my $i = $i_details->[0];
@@ -192,13 +196,14 @@ sub _content {
       my $ie = $i->end - $offset;
       my $munged_start = $is + $object->munge_gaps( 'supporting_evidence_transcript', $is );
       my $munged_end   = $ie + $object->munge_gaps( 'supporting_evidence_transcript', $ie );
-      push @$non_con_introns, [ $munged_start, $munged_end, $donor_seq, $acceptor_seq, $e_details, $i ];
+      push @$non_can_introns, [ $munged_start, $munged_end, $donor_seq, $acceptor_seq, $e_details, $i ];
     }
   }
-  $config->{'transcript'}{'non_con_introns'} = $non_con_introns ;
+  $trans_obj->{'non_can_introns'} = $non_can_introns ;
 
   #add info on normalised transcript_supporting_evidence
-  my ($t_evidence, %t_ids);
+  my $t_evidence = {};
+  my %t_ids;
   foreach my $evi (@{$transcript->get_all_supporting_features}) {
     my $coords;
     my $hit_name = $evi->hseqname;
@@ -288,19 +293,18 @@ sub _content {
     }
     $t_evidence->{$hit_name}{'hit_length'} = $tot_length;
   }
-  $config->{'transcript'}{'transcript_evidence'} = $t_evidence;    
+  $al_obj->{'transcript_evidence'} = $t_evidence;
   
   #add info on additional supporting_evidence (exon level)
-  my $e_evidence;
+  my $e_evidence = {};
   my $evidence_checks;
-  my %evidence_ends;    
+  my %evidence_ends;
   foreach my $exon (@$exons) {
     EVI:
     foreach my $evi (@{$exon->get_all_supporting_features}) {
       my $hit_name = $evi->hseqname;
       my $hit_seq_region_start = $evi->seq_region_start;
       my $hit_seq_region_end = $evi->seq_region_end;
-#      warn "$hit_name: $hit_seq_region_start - $hit_seq_region_end" if ($hit_name eq 'Q8TC21.1');  
       if ($o_type eq 'vega') {
         ###only proceed for vega if this hit name has been used as transcript evidence
         next EVI unless ($t_ids{$hit_name});
@@ -322,20 +326,20 @@ sub _content {
         next EVI;
       }
       push @{$evidence_ends{$hit_name}{'starts_and_ends'}}, "$hit_seq_region_start:$hit_seq_region_end";
-      
+
       my $hit_mismatch;
       my $hit_start = $evi->hstart;
-      
+
       #compare the start of this hit with the end of the last one -
       #only DNA features have to match exactly, protein features have a tolerance of +- 3
       if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
-        if (   ($evidence_ends{$hit_name}{'last_end'}) 
+        if (   ($evidence_ends{$hit_name}{'last_end'})
                && (abs($hit_start - $evidence_ends{$hit_name}{'last_end'}) > 3 )) {
           $hit_mismatch = $hit_start - $evidence_ends{$hit_name}{'last_end'};
         }
       }
       else {
-        if (   ($evidence_ends{$hit_name}{'last_end'}) 
+        if (   ($evidence_ends{$hit_name}{'last_end'})
                && (abs($hit_start - $evidence_ends{$hit_name}{'last_end'}) > 1) ) {
           $hit_mismatch = $hit_start - $evidence_ends{$hit_name}{'last_end'};
         }
@@ -422,12 +426,35 @@ sub _content {
 
   #we want to show the vega evidence as transcript evidence but we can't munge the cigar strings for vega evidence
   #therefore use the supporting_features as transcript_supporting_features - they should be the same anyway
-  my $evidence_type = ($o_type eq 'vega') ? 'transcript_evidence' : 'evidence';
-  $config->{'transcript'}{$evidence_type} = $e_evidence;
+  if ($o_type eq 'vega') {
+      $al_obj->{'transcript_evidence'} = $e_evidence;
+      $al_obj->{'evidence'} = {};
+  }
+  else {
+      $al_obj->{'evidence'} = $e_evidence;
+  }
+
+  #modify track captions if there is no evidence for a particular type
+  if (! %{$al_obj->{'transcript_evidence'}}) {
+      $wuc->modify_configs(
+	  [ 'TSE_generic_match_label' ],
+	  { 'caption', 'Transcript evidence (none)'}
+      );
+  }
+  if (! %{$al_obj->{'evidence'}}) {
+      $wuc->modify_configs(
+	  [ 'SE_generic_match_label' ],
+	  { 'caption', 'Exon evidence (none)'}
+      );
+  }
+
+  #store everything needed for drawing
+  $wuc->cache( 'trans_object', $trans_obj );
+  $wuc->cache( 'align_object', $al_obj );
 
   #draw and render image
   my $image = $object->new_image(
-    $transcript_slice,$config,
+    $transcript_slice,$wuc,
     [ $object->stable_id ]
   );
   $image->imagemap = 'yes';
@@ -588,7 +615,7 @@ sub hit_type {
     my $ln = $evi->analysis->logic_name;
     my $evi_object = ref($evi);
     my $evi_type = $evidence_table_types{$evi_object};
-    my $type = $info_summary->{$evi_type}{'analyses'}{$ln}{'web'}{'type'}  || 'other';
+    my $type = $info_summary->{$evi_type}{'analyses'}{$ln}{'web'}{'type'} || 'other';
     return $type;
 }
 
