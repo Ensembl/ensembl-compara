@@ -12,15 +12,11 @@ use Data::Dumper;
 #needed for drawing vertical lines on supporting evidence view
 sub _init {
     my ($self) = @_;
-    my $Config = $self->{'config'};
-    my $flag   = $self->my_config('flag');
-    
-    #retrieve tag locations and colours calculated by TSE_transcript track
-    my $tags   = $Config->{'tags'};
+    my $wuc  = $self->{'config'};
+    my $flag = $self->my_config('flag');
 
-#    warn Dumper($tags);
-
-    foreach my $tag (@{$tags}) {
+    #retrieve tag locations and colours (identified by TSE_transcript track)
+    foreach my $tag (@{$wuc->cache('vertical_tags')}) {
 	my ($extra,$e,$s) = split ':', $tag->[0];
 	my $col = $tag->[1];
 	my $tglyph = $self->Space({

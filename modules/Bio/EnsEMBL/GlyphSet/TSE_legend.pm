@@ -7,34 +7,34 @@ sub _init {
     my ($self) = @_;
     my $BOX_WIDTH     = 20;
     my $NO_OF_COLUMNS = 4;
-    my $Config        = $self->{'config'};
-    my $im_width      = $Config->image_width();
-    my $o_type = $Config->{'object_type'};
-    my @colours;
+    my $wuc           = $self->{'config'};
+    my $im_width      = $wuc->image_width();
+    my $o_type        = $wuc->cache('trans_object')->{'object_type'};
+
     my( $fontname, $fontsize ) = $self->get_font_details( 'legend' );
-    my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-    my $th = $res[3];
-    my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};	
-    my $FLAG = 0;
+    my @res                    = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my $th                     = $res[3];
+    my $pix_per_bp             = $self->{'config'}->transform()->{'scalex'};	
+
     my $start_x;
     my ($x,$y) = (0,0.5);
-    my $h = 8;
+    my $h      = 8;
     my $G;
 
     my $rect = $self->Rect({
-	'x'         => 0,
-	'y'         => $y,
-	'width'     => $im_width,
-	'height'    => 0,
-	'colour'    => 'grey50',
-	'absolutey' => 1,
-	'absolutex' => 1,
-	'absolutewidth'=>1,
+	'x'             => 0,
+	'y'             => $y,
+	'width'         => $im_width,
+	'height'        => 0,
+	'colour'        => 'grey50',
+	'absolutey'     => 1,
+	'absolutex'     => 1,
+	'absolutewidth' => 1,
     });
     $self->push($rect);
 
-    #retrieve the features that were counted as they were drawn and add (two colum) legends for them
-    my %features = $Config->{'TSE_legend'} ? %{$Config->{'TSE_legend'}} : ();
+    #retrieve the features that were drawn and add legends for them
+    my %features = $wuc->cache('legend') ? %{$wuc->cache('legend')} : ();
     foreach my $f (sort { $features{$a}->{'priority'} <=> $features{$b}->{'priority'} } keys %features) {
 	my $colour = $features{$f}->{'colour'};
 	my $db_type = $f;
@@ -83,7 +83,7 @@ sub _init {
 	    'text'          => "$db_type evidence",
 	    'absolutey'     => 1,
 	    'absolutex'     => 1,
-	    'absolutewidth' =>1,
+	    'absolutewidth' => 1,
 	});
 	$self->push($G);
 	$x++;
@@ -286,7 +286,7 @@ sub _init {
     #draw legends for exon/CDS & hit mismatch
     my $miss_col  = $self->my_colour('evi_missing');
     my $extra_col = $self->my_colour('evi_extra');
-    %dets = (	$miss_col  => 'part of evidence missing from transcript structure' );
+    %dets = ( $miss_col  => 'part of evidence missing from transcript structure' );
     unless ($o_type eq 'vega') {
 	$dets{$extra_col} = 'part of evidence duplicated in transcript structure';
     }
@@ -411,12 +411,12 @@ sub _init {
 	    'absolutewidth' => 1,});				
 	$self->push($G);
 	$G = $self->Line({
-	    'x'         => $start_x + 3*$BOX_WIDTH,
-	    'y'         => ($y+$two_box_offset)*$th,
-	    'height'    => $h,
-	    'width'     => 0,
-	    'colour'    => $colour,
-	    'absolutey' => 1,
+	    'x'             => $start_x + 3*$BOX_WIDTH,
+	    'y'             => ($y+$two_box_offset)*$th,
+	    'height'        => $h,
+	    'width'         => 0,
+	    'colour'        => $colour,
+	    'absolutey'     => 1,
 	    'absolutex'     => 1,
 	    'absolutewidth' => 1,});				
 	$self->push($G);

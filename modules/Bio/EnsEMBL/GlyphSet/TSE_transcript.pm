@@ -9,21 +9,21 @@ use Data::Dumper;
 
 sub _init {
     my ($self) = @_;
-    my $Config  = $self->{'config'};
+    my $wuc  = $self->{'config'};
     my $h       = 8;   #Increasing this increases glyph height
 
-    my $pix_per_bp  = $Config->transform->{'scalex'};
-    my $length      = $Config->container_width();
+    my $pix_per_bp  = $wuc->transform->{'scalex'};
+    my $length      = $wuc->container_width();
 
-    my $colour = $self->my_colour;
-    my $trans_ref    = $Config->{'transcript'};
-    my $coding_start = $trans_ref->{'coding_start'};
-    my $coding_end   = $trans_ref->{'coding_end'  };
-    my $transcript   = $trans_ref->{'transcript'};
+    my $colour       = $self->my_colour;
+    my $trans_obj    = $self->cache('trans_object');
+    my $coding_start = $trans_obj->{'coding_start'};
+    my $coding_end   = $trans_obj->{'coding_end'  };
+    my $transcript   = $trans_obj->{'transcript'};
     my $strand       = $transcript->strand;
     my $tsi          = $transcript->stable_id;
 
-    my @introns_and_exons = @{$trans_ref->{'introns_and_exons'}};
+    my @introns_and_exons = @{$trans_obj->{'introns_and_exons'}};
 
     my $tags;
     foreach my $obj (@introns_and_exons) {
@@ -170,7 +170,7 @@ sub _init {
 		$self->push( $G );
 		
 	    }
-	    $Config->{'tags'} = $tags;				
+	    $wuc->cache('vertical_tags', $tags);
 	}
 	else {
 	    #otherwise draw a line to represent the intron context

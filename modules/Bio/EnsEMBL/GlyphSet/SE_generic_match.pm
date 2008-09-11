@@ -4,7 +4,7 @@ use strict;
 
 sub _init {
   my $self = shift;
-  my $all_matches = $self->{'config'}->{'transcript'}{'evidence'};
+  my $all_matches = $self->cache('align_object')->{'evidence'};
   $self->draw_glyphs( $all_matches );
 }
 

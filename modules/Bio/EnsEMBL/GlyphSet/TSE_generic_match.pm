@@ -4,25 +4,25 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
     my ($self) = @_;
-    my $all_matches = $self->{'config'}->{'transcript'}{'transcript_evidence'};
+    my $all_matches = $self->cache('align_object')->{'transcript_evidence'};
     $self->draw_glyphs($all_matches);
 }
 
 sub draw_glyphs {
-    my $self = shift;
-    my $all_matches = shift;
-    my $Config = $self->{'config'};
-    my $h          = 8; #height of glyph
-    my $pix_per_bp = $Config->transform->{'scalex'};
+    my $self         = shift;
+    my $all_matches  = shift;
+    my $wuc          = $self->{'config'};
+    my $h            = 8; #height of glyph
+    my $pix_per_bp   = $wuc->transform->{'scalex'};
     my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
-    my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);	
-    my $length      = $Config->container_width(); 
-    my $strand      = $Config->{'transcript'}->{'transcript'}->strand;
+    my($font_w_bp, $font_h_bp) = $wuc->texthelper->px2bp($fontname);	
+    my $length       = $wuc->container_width(); 
+    my $strand       = $wuc->cache('trans_object')->{'transcript'}->strand;
 
     my( $font_w_bp, $font_h_bp);
     my $legend_priority = 4;
+    my $H               = 0;
     my @draw_end_lines;
-    my $H          = 0;
 
     my $legend;
     #go through each parsed transcript_supporting_feature
@@ -39,10 +39,11 @@ sub draw_glyphs {
 	my $colour = $self->my_colour($hit_type);
 
 	#used for legend
-	$Config->{'TSE_legend'}{$hit_type}{'found'}++;
-	$Config->{'TSE_legend'}{$hit_type}{'priority'} = $legend_priority;
-	$Config->{'TSE_legend'}{$hit_type}{'height'} = $h;
-	$Config->{'TSE_legend'}{$hit_type}{'colour'} = $colour;
+	
+	$legend->{$hit_type}{'found'}++;
+	$legend->{$hit_type}{'priority'} = $legend_priority;
+	$legend->{$hit_type}{'height'}   = $h;
+	$legend->{$hit_type}{'colour'}   = $colour;
 
       BLOCK:
 	foreach my $block (@{$hit_details->{'data'}}) {
@@ -63,7 +64,7 @@ sub draw_glyphs {
 		    'x'         => $last_end_x,
 		    'y'         => $H + $h/2,
 		    'h'         => 1,
-		    'width'     => $Config->container_width() - $last_end_x,
+		    'width'     => $wuc->container_width() - $last_end_x,
 		    'title'     => "Evidence extends $mis bp beyond the end of the transcript",
 		    'colour'    => $c,
 		    'dotted'    => 1,
@@ -71,7 +72,7 @@ sub draw_glyphs {
 		$self->push($G);
 
 		$G = $self->Line({
-		    'x'         => $Config->container_width(),
+		    'x'         => $wuc->container_width(),
 		    'y'         => $H,
 		    'height'    => $h,
 		    'width'     => 0,
@@ -159,7 +160,7 @@ sub draw_glyphs {
 	    my $zmenu_dets = {
 		'type'        => 'Transcript',
 		'action'      => 'SupportingEvidenceAlignment',
-		't'           => $Config->{'transcript'}->{'transcript'}->stable_id,
+		't'           => $wuc->cache('trans_object')->{'transcript'}->stable_id,
 		'sequence'    => $hit_name,
 		'hit_db'      => $hit_db,
 		'hit_length'  => $block->{'hit_length'},
@@ -246,6 +247,7 @@ sub draw_glyphs {
 	});
 	$self->push( $G );
     }
+    $wuc->cache('legend',$legend)
 }
 
 1;
