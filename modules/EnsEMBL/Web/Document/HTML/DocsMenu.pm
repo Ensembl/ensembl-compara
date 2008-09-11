@@ -18,7 +18,8 @@ sub render {
 
   my $html = qq(
 <dl id="local">
-<dt>Documentation</dt>
+<dt>Help &amp; Documentation</dt>
+<dd><a href="/info/">Table of Contents</a></dd>
 );
 
   my ($title, $class);
