@@ -4,6 +4,8 @@ div#content { margin:0 0 0 14em; padding:0; border:none; }
 
 div#content div.panel { border:1px solid #ccc; background-color:[[PANEL_BG]]; }
 
+a.help-header { color:[[CONTRAST_HEADER]];text-decoration:none; }
+
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
 /* Columns for static content */
