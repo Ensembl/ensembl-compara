@@ -358,21 +358,13 @@ sub render {
         }
         $HTML .= q(</div>);
         if( exists $self->{'caption'} ) {
-          $HTML .= '<h2>'.CGI::escapeHTML($self->{caption});
-          if ( $self->{'help'} ) {
-            $HTML .= $self->help_button;
-          }
-          $HTML .= '</h2>';
+          $HTML .= $self->_caption_with_helplink;
         }
         $HTML .= q(
           <p class="invisible">.</p></div>);
       } 
       elsif( exists $self->{'caption'} ) {
-        $HTML .= '<h2>'.CGI::escapeHTML($self->{caption});
-        if ( exists $self->{'help'} ) {
-            $HTML .= $self->help_button;
-        }
-        $HTML .= '</h2>';
+        $HTML .= $self->_caption_with_helplink;
       }
     }
     $self->renderer->print($HTML);
@@ -404,9 +396,18 @@ sub render {
   }
 }
 
-sub help_button {
+sub _caption_with_helplink {
   my $self = shift;
-  return sprintf('<a href="/Help/View?id=%s" class="modal_link" style="text-decoration:none;font-weight:bold;font-style:italic;border:1px outset #ccc;padding:1px 3px;margin-left:1em" title="Click for Help" />e<span class="red">?</span></a>', CGI::escapeHTML($self->{help}));
+  my $html = '<h2>';
+  if ( exists $self->{'help'} ) {
+    $html .= sprintf(' <a href="/Help/View?id=%s" class="modal_link help-header" title="Click for Help">', CGI::escapeHTML($self->{help}) );
+  }
+  $html .= CGI::escapeHTML($self->{caption});
+  if ( exists $self->{'help'} ) {
+    $html .= ' <img src="/i/e-quest.gif" style="width:20px;height:19px;padding-left:4px;" alt="(e?)" /></a>';
+  }
+  $html .= '</h2>';
+  return $html; 
 }
 
 sub params {
