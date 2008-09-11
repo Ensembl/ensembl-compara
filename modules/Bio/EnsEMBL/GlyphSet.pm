@@ -15,6 +15,7 @@ use Sanger::Graphics::Glyph::Sprite;
 use Sanger::Graphics::Glyph::Text;
 
 use Bio::EnsEMBL::Glyph::Symbol::line;
+use Bio::EnsEMBL::Registry;
 
 use GD;
 use GD::Text;
@@ -30,7 +31,10 @@ our %cache;
 # constructor
 #
 
-
+sub dbadaptor  {
+  my $self = shift;
+  return Bio::EnsEMBL::Registry->get_DBAdaptor( @_ );
+}
 sub species {
   my $self = shift;
   return $self->{'container'}{'web_species'};
@@ -121,9 +125,17 @@ sub species_defs {
   return $self->{'config'}->{'species_defs'};
 }
 
+sub get_textheight {
+  my( $self, $name ) = @_;
+  my( $fontname, $fontsize ) = $self->get_font_details( $name );
+  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  return $res[3];
+}
+
 sub get_text_simple {
 ### Simple function which calls the get_font_details and caches the result!!
   my( $self, $text, $text_size ) =@_;
+  $text     ||='X';
   $text_size||='text';
 
   my( $f, $fs ) = $self->get_font_details( $text_size );
@@ -297,14 +309,14 @@ sub my_config {
 use Data::Dumper;
 our $CC = 0;
 sub my_colour {
-  my( $self, $colour, $part ) = @_;
+  my( $self, $colour, $part, $default ) = @_;
   $self->{'colours'} ||= $self->my_config('colours')||{};
   if( $part eq 'text' || $part eq 'style' ) {
     if( $self->{'colours'} ) {
       return $self->{'colours'}->{$colour  }{$part}     if exists $self->{'colours'}->{$colour  }{$part    };
       return $self->{'colours'}->{'default'}{$part}     if exists $self->{'colours'}->{'default'}{$part    };
     }
-    return 'Other (unknown)' if $part eq 'text';
+    return defined( $default ) ? $default : 'Other (unknown)' if $part eq 'text';
     return '';
   }
   if( $self->{'colours'} ) {
@@ -313,7 +325,7 @@ sub my_colour {
     return $self->{'colours'}->{$colour  }{'default'} if exists $self->{'colours'}->{$colour  }{'default'};
     return $self->{'colours'}->{'default'}{'default'} if exists $self->{'colours'}->{'default'}{'default'};
   }
-  return 'black';
+  return defined( $default ) ? $default : 'black';
 }
 
 sub _c {
@@ -639,8 +651,8 @@ sub readable_strand {
 sub cache {
   my $self = shift;
   my $key  = shift;
-  $self->{'config'}{'cache'}{ $key } = shift if @_;
-  return $self->{'config'}{'cache'}{$key};
+  $self->{'config'}{'_cache'}{ $key } = shift if @_;
+  return $self->{'config'}{'_cache'}{$key};
 }
 
 sub legend {
@@ -656,7 +668,7 @@ sub scalex {
 
 sub image_width {
   my $self = shift;
-  return $self->{'config'}->image_width;
+  return $self->{'config'}->get_parameter('panel_width')||$self->{'config'}->image_width;
 }
 
 sub das_link {
