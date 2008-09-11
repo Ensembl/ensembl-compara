@@ -121,7 +121,7 @@ function __modal_dialog_link_open( event ) {
    
   PRIVATE: Loaded by __modal_onload;
 **/
-  var el    = Event.element( event );
+  var el    = Event.findElement( event, 'A' );
   var title = el.innerHTML.stripTags();
   var url   = el.href;
   if( ENSEMBL_AJAX != 'enabled' ) {
