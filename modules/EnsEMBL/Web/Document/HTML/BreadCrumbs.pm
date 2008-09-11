@@ -24,7 +24,6 @@ sub render   {
   ## Species/static content links
   my $species = $ENV{'ENSEMBL_SPECIES'};
 
-
   if ($species) {
     if ($species eq 'common') {
       $html .= qq( &gt; <strong>Control Panel</strong>);
@@ -34,7 +33,7 @@ sub render   {
       if ($display_name =~ /\./) {
         $display_name = '<i>'.$display_name.'</i>'
       }
-      if ($you_are_here =~ '/'.$species.'/Info') {
+      if ($ENV{'ENSEMBL_TYPE'} eq 'Info') {
         $html .= qq( &gt; <strong>$display_name</strong>);
       }
       else {
