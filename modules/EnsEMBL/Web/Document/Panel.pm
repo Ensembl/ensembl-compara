@@ -406,7 +406,7 @@ sub render {
 
 sub help_button {
   my $self = shift;
-  return sprintf('<a href="/Help/View?id=%s" class="modal_link"><img src="/i/e-quest.gif" style="width:20px;height:19px;padding-left:4px" alt="(e?)" /></a>', CGI::escapeHTML($self->{help}));
+  return sprintf('<a href="/Help/View?id=%s" class="modal_link" style="text-decoration:none;font-weight:bold;font-style:italic;border:1px outset #ccc;padding:1px 3px;margin-left:1em" title="Click for Help" />e<span class="red">?</span></a>', CGI::escapeHTML($self->{help}));
 }
 
 sub params {
