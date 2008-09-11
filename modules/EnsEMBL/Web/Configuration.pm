@@ -307,13 +307,6 @@ sub query_string {
 sub create_node {
   my ( $self, $code, $caption, $components, $options ) = @_;
  
-#  my $url = '/';
-#  $url .= $self->species.'/' if $self->species && $self->species ne 'common';
-#  $url .= $self->type.'/'.$code;
-#  if ($self->query_string) {
-#    $url .= '?'.$self->query_string;
-#  }
- 
   my $details = {
     caption    => $caption,
     components => $components,

@@ -84,12 +84,11 @@ $pad    </dd>";
       $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
       $name = CGI::escapeHTML( $name );
       if ($node->data->{'availability'}) {
-      	$name = sprintf '<a href="/%s/%s/%s?%s" title="%s">%s</a>',
-      	                 $ENV{'ENSEMBL_SPECIES'},
-      	                 $ENV{'ENSEMBL_TYPE'},
-      	                 $node->data->{'code'},
-      	                 $ENV{'QUERY_STRING'},
-      	                 $name, $name;
+        my $url = $node->data->{'url'};
+        if (!$url) {
+          $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.$ENV{'QUERY_STRING'};
+        }
+      	$name = sprintf '<a href="%s" title="%s">%s</a>', $url, $name, $name;
       } else {
       	$name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
       }
