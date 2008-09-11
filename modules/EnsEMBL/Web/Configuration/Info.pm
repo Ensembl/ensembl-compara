@@ -61,15 +61,15 @@ sub populate_tree {
     { 'availability' => scalar(@{$self->{object}->species_defs->ENSEMBL_CHROMOSOMES||[]}), 
       'url' => '/'.$self->species.'/Location/Karyotype' }
   ));
-  $data_menu->append( $self->create_node( 'Location', "Location<br />&nbsp;&nbsp;&nbsp;($location_text)",
+  $data_menu->append( $self->create_node( 'Location', "Location ($location_text)",
     [qw(location      EnsEMBL::Web::Component::Location::Summary)],
     { 'availability' => 1, 'url' => $location_url, 'raw' => 1 }
   ));
-  $data_menu->append( $self->create_node( 'Gene', "Gene<br />&nbsp;&nbsp;&nbsp;($gene_text)",
+  $data_menu->append( $self->create_node( 'Gene', "Gene ($gene_text)",
     [],
     { 'availability' => 1, 'url' => $gene_url, 'raw' => 1 }
   ));
-  $data_menu->append( $self->create_node( 'Transcript', "Transcript<br />&nbsp;&nbsp;&nbsp;($transcript_text)",
+  $data_menu->append( $self->create_node( 'Transcript', "Transcript ($transcript_text)",
     [qw(location      EnsEMBL::Web::Component::Transcript::Summary)],
     { 'availability' => 1, 'url' => $transcript_url, 'raw' => 1 }
   ));
