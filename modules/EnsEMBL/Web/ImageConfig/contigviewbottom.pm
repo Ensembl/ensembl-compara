@@ -21,12 +21,8 @@ sub init {
     'opt_empty_tracks' => 0,    # include empty tracks..
     'opt_lines'        => 1,    # draw registry lines
     'opt_restrict_zoom' => 1,   # when we get "zoom" working draw restriction enzyme info on it!!
-
 ## Finally some colours... background image colors;
 ## and alternating colours for tracks...
-    'bgcolor'       => 'background1',
-    'bgcolour1'     => 'background2',
-    'bgcolour2'     => 'background3',
   });
 
 ## First add menus in the order you want them for this display....
