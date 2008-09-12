@@ -797,6 +797,7 @@ sub geneLine {
   my $E = scalar (keys %$exons);
   my $EX = scalar (keys %$external_identifiers);
   $IDX =~ s/\n/ /g;
+#  $EX =~ s/\n/ /g;
   return join( "\t",
     (INC_SPECIES?"$species\t":"").qq($X Gene),
     qq($gid $altid),
@@ -810,7 +811,7 @@ sub geneLine {
       (
         qq(<br />The gene has the following external identifiers mapped to it:<br />).
         ( join '<br />',
-          map { s/translation:/protein:/i; $_ }
+          map { s/translation:/protein:/i; s/\n/ /g; $_ }
 		  map { "$_: ".(join ", ", keys %{$external_identifiers->{$_}}) }
           sort { lc($a) cmp lc($b) } keys %$external_identifiers
         )
