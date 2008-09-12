@@ -398,12 +398,13 @@ sub render {
 
 sub _caption_with_helplink {
   my $self = shift;
+  my $id = $self->{'help'};
   my $html = '<h2>';
-  if ( exists $self->{'help'} ) {
-    $html .= sprintf(' <a href="/Help/View?id=%s" class="modal_link help-header" title="Click for Help">', CGI::escapeHTML($self->{help}) );
+  if ( $id ) {
+    $html .= sprintf(' <a href="/Help/View?id=%s" class="modal_link help-header" title="Click for Help">', CGI::escapeHTML($id) );
   }
   $html .= CGI::escapeHTML($self->{caption});
-  if ( exists $self->{'help'} ) {
+  if ( $id ) {
     $html .= ' <img src="/i/e-quest.gif" style="width:20px;height:19px;padding-left:4px;" alt="(e?)" /></a>';
   }
   $html .= '</h2>';
