@@ -158,7 +158,7 @@ sub _generate_objects_Gene {
   my $self = shift;
   $self->{'parameters'}{'db'} ||= 'core';
   my $db_adaptor = $self->database($self->{'parameters'}{'db'});
-  $self->transcript( $db_adaptor->get_GeneAdaptor->fetch_by_stable_id( $self->{'parameters'}{'g'} ) );
+  $self->gene( $db_adaptor->get_GeneAdaptor->fetch_by_stable_id( $self->{'parameters'}{'g'} ) );
 }
 
 sub _generate_objects_Variation {
