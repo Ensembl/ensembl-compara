@@ -659,17 +659,36 @@ sub get_pep_seq{
 sub pep_splice_site {
   my ($self, $peptide) = @_ ;
   return $self->{'pep_splice'} if ($self->{'pep_splice'} && !$peptide);
+
   my $trans = $self->transcript;
   my @exons = @{$trans->get_all_translateable_Exons};
+  my $splice_site = {};
+  my $i = 0;
+  my $cdna_len = 0;
+  my $pep_len  = 0;
+  foreach my $e (@exons) {
+    $cdna_len += $e->length;
+    my $overlap_len = $cdna_len % 3;
+    my $pep_len = $overlap_len ? 1+($cdna_len-$overlap_len)/3 : $cdna_len/3;
+    $i++;
+#    $splice_site->{$pep_len}{'overlap'} = $e->stable_id || $i;
+    $splice_site->{$pep_len-1}{'overlap'} = $pep_len-1 if $overlap_len;
+    $splice_site->{$pep_len}{'exon'}    = $e->stable_id || $i;
+    $splice_site->{$pep_len}{'phase'}   = $overlap_len;
+#    warn sprintf " N> %6d %d %s\n", $pep_len, $overlap_len,  $e->stable_id;
+  }
+  return $self->{'pep_splice'} = $splice_site;
+
   my %splice_site;
   my $pep_len = 0;
   my $overlap_len = 0;
   my $i;
+
   for my $exon (@exons){
     $i++;
-    my $exon_id = $exon->stable_id || $i;
+    my $exon_id  = $exon->stable_id || $i;
     my $exon_len = $exon->length;
-    my $pep_seq = $exon->peptide($trans)->length;
+    my $pep_seq  = $exon->peptide( $trans )->length;
     # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq   
     $pep_seq -= 1 if ($overlap_len);
     $pep_len += $pep_seq;
@@ -680,6 +699,7 @@ sub pep_splice_site {
     }        
     $splice_site{$pep_len}{'exon'} = $exon_id;
     $splice_site{$pep_len}{'phase'} = $overlap_len;                 # positions of exon boundary                      
+    warn sprintf " O> %6d %d %s\n", $pep_len, $overlap_len,  $exon_id;
   }     
   $self->{'pep_splice'} = \%splice_site;
   return  $self->{'pep_splice'};
@@ -709,15 +729,13 @@ sub pep_snps{
   my $self  = shift ;
   return $self->{'pep_snps'} if ($self->{'pep_snps'} );
 
+  use Time::HiRes qw(time);
+  my $T = time;
   unless ($self->species_defs->databases->{'ENSEMBL_VARIATION'} || $self->species_defs->databases->{'ENSEMBL_GLOVAR'}) {
     return [];
   }
   $self->database('variation');
   my $source = "variation";  # only defined if glovar
-  if ($self->species_defs->databases->{'ENSEMBL_GLOVAR'}) {
-    $source = "glovar";
-    $self->database('glovar');
-  }
 
   my $trans           = $self->transcript;
   my $cd_start        = $trans->cdna_coding_start;
@@ -733,15 +751,22 @@ sub pep_snps{
     $j++;  
   }
 
+  warn time - $T," got transcript"; $T = time;
   my %snps= %{$trans->get_all_cdna_SNPs($source)};
+  warn time - $T," got cdna SNPS"; $T = time;
   my %protein_features =%{$trans->get_all_peptide_variations($source)};
+  warn time - $T," got protein features"; $T = time;
   my $coding_snps = $snps{'coding'};            # coding SNP only
   return [] unless @$coding_snps;
+  foreach (@$coding_snps) {
+    warn sprintf "%10d %10d %3s %3s %20s %s\n", $_->start, $_->end, ($_->end-$_->start)||'', $_->strand, $_->variation_name, $_->allele_string;
+  }
+
   foreach my $snp (@$coding_snps) {
     foreach my $residue ( $snp->start..$snp->end ) { # gets residues for snps longer than 1... indels
       my $aa = int(($residue-$cd_start+3)/3); # aminoacid residue number
       my $aa_bp = ($residue-$cd_start+3) % 3; # NT in codon for that amino acid (0,1,2)
-
+      warn ".... $aa_bp:$aa ",$snp->allele_string," ....";
       my $snpclass;
       my $alleles;
       my $id;
@@ -786,7 +811,7 @@ sub pep_snps{
       }
     }  #end $residue
   }  #end $snp    
-  
+  warn time - $T," munged data"; $T = time;
   $self->{'pep_snps'} = \@aas;
   return $self->{'pep_snps'};
 }
