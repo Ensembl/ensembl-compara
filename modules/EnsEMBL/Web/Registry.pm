@@ -51,8 +51,8 @@ sub get_all_das {
   
   if (my $user = $self->get_user) {
     # Override with user data
-    for my $data ( @{ $user->dases || [] } ) {
-      my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
+    for my $data ($user->dases) {
+      my $das = EnsEMBL::Web::DASConfig->new_from_hashref($data);
       $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
     }
   }
