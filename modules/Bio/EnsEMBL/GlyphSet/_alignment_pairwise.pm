@@ -55,7 +55,7 @@ sub RENDER_normal {
                        join ( '_', $METHOD, $self_species, $other_species ) :
                        join ( '_', $METHOD, $other_species, $self_species ) );
   } 
-  my ($T,$C1,$C) = (0, 0, 0 ); ## Diagnostic counters....
+  my $C = 0; ## Diagnostic counters....
   my $K = 0;
 
 #  warn ">>>>> $other_species $METHOD in expanded init<<<<<";
@@ -78,7 +78,6 @@ sub RENDER_normal {
   foreach my $i (@s_i){
     my @F = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
 
-    $T+=@F; ## Diagnostic report....
     my( $seqregion,$group ) = split /:/, $i;
     my $START = $F[0][0] < 1 ? 1 : $F[0][0];
     my $END   = $F[-1][1]->end > $length ? $length : $F[-1][1]->end;
@@ -89,7 +88,6 @@ sub RENDER_normal {
     my $row = $self->bump_row( $bump_start, $bump_end );
     next if $row > $depth;
     my $y_pos = - $row * int( 1.5 * $h ) * $strand;
-    $C1 += @{$id{$i}}; ## Diagnostic report....
     my $Composite = $self->Composite({
       'x'     => $F[0][0]> 1 ? $F[0][0]-1 : 0,
       'width' => 0,
@@ -252,7 +250,7 @@ sub RENDER_normal {
   }
 ## No features show "empty track line" if option set....
   $self->errorTrack( "No ". $self->my_config('name')." features in this region" ) unless( $C || $self->get_parameter( 'opt_empty_tracks')==0 );
-  0 && warn( ref($self), " $C out of a total of ($C1 unbumped) $T glyphs" );
+  $self->timer_push( 'Features drawn' );
 }
 
 sub RENDER_compact {

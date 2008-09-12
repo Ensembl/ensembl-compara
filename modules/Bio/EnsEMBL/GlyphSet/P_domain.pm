@@ -20,24 +20,20 @@ sub _init {
   my $pix_per_bp    = $self->scalex;
 
   foreach my $logic_name ( @{$self->my_config( 'logicnames' )||[]} ) {
-    warn "LOOPING $logic_name";
     my %hash;
     my @ps_feat = @{$protein->get_all_ProteinFeatures( $logic_name )};
     push @{$hash{$_->hseqname}},$_ foreach @ps_feat;
 
     my $colour = $self->my_colour( lc($logic_name) );
     foreach my $key (keys %hash) {
-      warn ".... $key ....";
       my $href = $self->ID_URL( $logic_name, $key );
       my( @rect, $prsave, $minx, $maxx );
       foreach my $pr (@{$hash{$key}}) {
-	warn "...... $pr .....";
         my $x  = $pr->start();
         $minx  = $x if ($x < $minx || !defined($minx));
         my $w  = $pr->end() - $x;
         $maxx  = $pr->end() if ($pr->end() > $maxx || !defined($maxx));
         my $id = $pr->hseqname();
-	warn ">>>>>>>>>>>> $x,0 $w,$h $colour";
         push @rect, $self->Rect({
           'x'        => $x,
           'y'        => 0,
@@ -74,7 +70,7 @@ sub _init {
         'ptsize' => $font_details->{'fontsize'},
         'halign' => 'left',
         'text'   => $desc,
-        'x'      => $Composite->start(),
+        'x'      => $Composite->x(),
         'y'      => $h,
         'height' => $font_details->{'height'},
         'width'  => $res[2]/$pix_per_bp,

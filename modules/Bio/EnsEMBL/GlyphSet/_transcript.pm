@@ -14,6 +14,7 @@ sub features {
   my $db_alias = $self->my_config('db');
   my $analyses = $self->my_config('logicnames');
   my @T = map { @{$slice->get_all_Genes( $_, $db_alias )||[]} } @$analyses;
+  $self->timer_push( 'Fetched transcripts', undef, 'fetch' );
   return \@T;
 }
 

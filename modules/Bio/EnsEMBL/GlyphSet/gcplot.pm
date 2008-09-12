@@ -26,7 +26,9 @@ sub _init {
   my $divlen          = $vclen/$divs;
     
     #print STDERR "Divs = $divs\n";
+  $self->timer_push( 'init' );
   my $seq = $slice->seq();
+  $self->timer_push( 'seq fetched', undef, 'fetch' );
   my @gc  = ();
     
   foreach my $i ( 0..($divs-1) ) {
@@ -40,6 +42,7 @@ sub _init {
     push @gc, $value;
   }
         
+  $self->timer_push( 'gc computed' );
   my $value = shift @gc;
   my $x = 0;
 

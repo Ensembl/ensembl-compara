@@ -27,6 +27,7 @@ sub _init {
   if ( $error or !$self->my_config('compact') ) {
     $error =  $self->draw_features( 'wiggle' );
   }
+  $self->timer_push('finished');
   return unless $error && $self->get_parameter( 'opt_empty_tracks')==1;
 
   # Error messages ---------------------

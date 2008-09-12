@@ -19,19 +19,11 @@ sub gene_href { return undef; }
 
 sub _init {
   my ($self) = @_;
-  my $strand_flag = $self->my_config('strand');
-
-## If forced onto one strand....
-  return if ( $strand_flag eq 'f' and $self->{'container'}{'strand'} != 1 ) ||
-            ( $strand_flag eq 'r' and $self->{'container'}{'strand'} == 1 );
-
-## Compact  - draw all transcripts in a gene as a single block
-## Expanded - draw transcripts with introns...
-
-  return $self->my_config( 'compact' ) ? $self->compact_init() : $self->expanded_init();
+  my $method = "RENDER_".($self->my_config('compact') ? 'compact' : 'normal');
+  return $self->$method();
 } 
 
-sub compact_init {
+sub RENDER_compact {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
@@ -195,7 +187,7 @@ sub compact_init {
   }
 }
 
-sub expanded_init {
+sub RENDER_normal {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};

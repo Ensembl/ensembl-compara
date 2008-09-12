@@ -23,7 +23,6 @@ sub features {
   my $species    = $self->my_config('species');
   my $species_hr = $self->my_config('species_hr');
 
-  warn "... $species $species_hr ....";
   my $T       = $self->{'container'}->get_all_compara_Syntenies(
     $species_hr,
     "SYNTENY",
@@ -33,7 +32,6 @@ sub features {
   my @RET     = ();
   
   foreach my $argh (@$T) {
-    warn "Synteny.... $argh ....";
     my ($main_dfr, $other_dfr);
     foreach my $dfr (@{$argh->children}) {
       if($dfr->dnafrag->genome_db->name eq $species_hr) {
@@ -116,7 +114,7 @@ sub feature_label {
 sub title {
   my( $self, $f ) = @_;
   return sprintf "%s: %s:%s-%s; %s: %s:%s-%s; Orientation: %s",
-    $self->human_readable( $self->web_species ),
+    $self->human_readable( $self->species ),
     $self->{'chr_name'},
     $self->{'chr_start'},
     $self->{'chr_end'},

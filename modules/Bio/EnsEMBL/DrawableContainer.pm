@@ -16,16 +16,6 @@ use base qw(Sanger::Graphics::Root);
 
 sub species_defs { return $_[0]->{'config'}->{'species_defs'}; }
 
-sub debug {
-  my( $self, $pos, $tag ) = @_;
-  $tag = "$ENV{'ENSEMBL_SCRIPT'}_$tag";
-  if( $pos eq 'start' ) {
-    $self->species_defs->{'timer'}->push( "AA".$tag,5 ) if $self->species_defs->{'timer'};
-  } else {
-    $self->species_defs->{'timer'}->push( "BB".$tag,5 ) if $self->species_defs->{'timer'};
-  }
-}
-
 sub _init {
   my $class = shift;
   my $Contents = shift;
@@ -48,12 +38,16 @@ sub _init {
     'highlights'    => $highlights || [],
     'strandedness'  => $strandedness || 0,
     '__extra_block_spacing__'    => 0,
+    'timer'         => $Contents->[0][1]{'species_defs'}->timer
   };
   bless( $self, $class );
   return $self;
 }
 
-
+sub timer_push {
+  my( $self, $tag, $dep ) = @_;
+  $self->{'timer'}->push( $tag, $dep, 'draw' );
+}
 sub new {
   my $class        = shift;
   my $self         = $class->_init( @_ ); 
@@ -75,8 +69,6 @@ sub new {
   my $panel_width    = $image_width - $panel_start - $margin;
   
 
-  my $timer = $self->can('species_defs') ? $self->species_defs->timer : undef;
-
   $self->{'__extra_block_spacing__'} -= $inter_space;
   ## loop over all turned on & tuned in glyphsets
 
@@ -90,7 +82,6 @@ sub new {
 #
   foreach my $CC ( @{$self->{'contents'}} ) {
     my( $Container,$Config) = @$CC;
-    $self->debug( 'start', ref($Config) ) if( $self->can('debug') );
     $Config->set_parameter('panel_width', $panel_width );
 
 ## If either Container or Config not present skip!!
@@ -214,7 +205,7 @@ sub new {
     my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
 
     ## go ahead and do all the database work
-    $timer->push("DrawableContainer->new: Start GlyphSets") if $timer;
+    $self->timer_push( 'GlyphSet list prepared for config '.ref($Config), 1 );
     for my $glyphset (@glyphsets) {
       ## load everything from the database
       my $NAME = $glyphset->{'my_config'}->key;
@@ -225,8 +216,9 @@ sub new {
       ## don't waste any more time on this row if there's nothing in it
       if( $@ || scalar @{$glyphset->{'glyphs'} } ==0 ) {
 	if( $@ ){ warn( $@ ) }
-        $glyphset->_dump('rendered' => 'no');
-        $timer->push("INIT: [ ] $NAME",1) if $timer;
+#        $glyphset->_dump('rendered' => 'no');
+	$self->timer_push("track finished",3);
+        $self->timer_push("INIT: [ ] $NAME",2);
         next;
       };
       ## remove any whitespace at the top of this row
@@ -256,9 +248,9 @@ sub new {
         $glyphset->label->height($gh);
         $glyphset->label()->pixelwidth( $label_width );
         $glyphset->push( $glyphset->label() );
-        $glyphset->_dump('rendered' => $glyphset->label()->text());
+#        $glyphset->_dump('rendered' => $glyphset->label()->text());
       } else {
-        $glyphset->_dump('rendered' => 'No label' );
+#        $glyphset->_dump('rendered' => 'No label' );
       }
       if( $show_buttons eq 'yes' && defined $glyphset->bumpbutton()) {
         my $T = int(($glyphset->maxy() - $glyphset->miny() - 8) / 2 + $gminy );
@@ -271,15 +263,16 @@ sub new {
       ## translate the top of the next row to the bottom of this one
       $yoffset += $glyphset->height() + $trackspacing;
       $iteration ++;
-      $timer->push("INIT: [X] $NAME",1) if $timer;
+      $self->timer_push("track finished",3);
+      $self->timer_push("INIT: [X] $NAME",2);
     }
+    $self->timer_push( 'End of creating glyphs for '.ref($Config), 1);
     push @{$self->{'glyphsets'}}, @glyphsets;
     $yoffset += $inter_space;
     $self->{'__extra_block_spacing__'}+= $inter_space;
     $Config->{'panel_width'} = undef;
-    $self->debug( 'end', ref($Config) ) if( $self->can('debug') );
   }
-  $timer->push("DrawableContainer->new: End GlyphSets") if $timer;
+  $self->timer_push("DrawableContainer->new: End GlyphSets");
 
   return $self;
 }
@@ -289,22 +282,17 @@ sub new {
 sub render {
   my ($self, $type) = @_;
   
- my $timer = $self->can('species_defs') ? $self->species_defs->timer : undef;
-  $timer->push("DrawableContainer->render starting $type",1) if $timer;
   ## build the name/type of render object we want
   my $renderer_type = qq(Sanger::Graphics::Renderer::$type);
   $self->dynamic_use( $renderer_type );
-  #$timer->push("imported $type",2) if $timer;
   ## big, shiny, rendering 'GO' button
   my $renderer = $renderer_type->new(
     $self->{'config'},
     $self->{'__extra_block_spacing__'},
     $self->{'glyphsets'}
   );
-  #$timer->push("created $type",2) if $timer;
   my $canvas = $renderer->canvas();
-  #$timer->push("canvased $type",2) if $timer;
-  $timer->push("DrawableContainer->render ending $type",1) if $timer;
+  $self->timer_push("DrawableContainer->render ending $type",1);
   return $canvas;
 }
 

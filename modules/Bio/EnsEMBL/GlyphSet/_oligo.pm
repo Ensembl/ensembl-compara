@@ -6,7 +6,9 @@ use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 
 sub features { ## Hack in db in the future!!
   my ($self) = @_;
+  $self->timer_push( 'Preped');
   my $T = $self->{'container'}->get_all_OligoFeatures( $self->my_config('array') );
+  $self->timer_push( 'Retrieved oligos', undef, 'fetch' );
   return $T;
 }
 

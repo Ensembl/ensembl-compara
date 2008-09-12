@@ -4,16 +4,14 @@ use base  qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my $self      = shift;
-  return;
   my $protein   = $self->{'container'};
   return unless $protein->dbID;
   my $caption   = $self->my_config('caption');
   my $h         = $self->my_config('height') || 4;
   my $y         = 0;
   foreach my $logic_name ( @{$self->my_config( 'logicnames' )||[]} ) {
-    warn "... $logic_name ....";
-    my $colour = $self->my_colour( $logic_name );
-    my $text   = $self->my_colour( $logic_name, 'text', $caption );
+    my $colour = $self->my_colour( lc($logic_name) );
+    my $text   = $self->my_colour( lc($logic_name), 'text', $caption );
     foreach my $pf (@{$protein->get_all_ProteinFeatures($logic_name)}) {
       my $x = $pf->start();
       my $w = $pf->end - $x;

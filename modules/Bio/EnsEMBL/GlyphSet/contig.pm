@@ -40,7 +40,7 @@ sub _init {
     $h = 0;
   }
 
-  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+  my $pix_per_bp = $self->scalex;
 
   my $gline = $self->Rect({
     'x'         => 0,

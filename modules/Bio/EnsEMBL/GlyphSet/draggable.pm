@@ -18,7 +18,8 @@ sub _init {
     'x'         => 0,
     'y'         => 6,
     'width'     => $end-$start,
-    'height'    => 0
+    'height'    => 0,
+    'color'     => 'black'
   });
 
   $self->push($glyph);

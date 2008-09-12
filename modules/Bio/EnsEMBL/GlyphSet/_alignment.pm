@@ -29,7 +29,10 @@ sub features {
   my $method      = 'get_all_'.( $self->my_config('object_type') || 'DnaAlignFeature' ).'s';
   my $db          = $self->my_config('db');
   my @logic_names = @{ $self->my_config( 'logicnames' )||[] };
-  return map { $self->{'container'}->$method($_,undef,$db)||() } @logic_names;
+  $self->timer_push( 'Initializing don', undef, 'fetch' );
+  my @results = map { $self->{'container'}->$method($_,undef,$db)||() } @logic_names;
+  $self->timer_push( 'Retrieved features', undef, 'fetch' );
+  return @results;
 }
 
 sub href {
@@ -83,7 +86,7 @@ sub RENDER_normal {
   }
 
 ## Get array of features and push them into the id hash...
-  my @f = grep { ref($_) eq 'ARRAY' } $self->features;
+  my @f = $self->features;
 
   my $db           = $self->my_config('db');
   my $external_dbs = $self->species_defs('databases')->{$db}{'external_dbs'}||{};
@@ -96,7 +99,6 @@ sub RENDER_normal {
       push @{$id{$fgroup_name}}, [$f->start,$f->end,$f];
     }
   }
-
 ## Now go through each feature in turn, drawing them
   my $y_pos;
   my $features_drawn = 0;
@@ -183,6 +185,7 @@ sub RENDER_normal {
 	     ;
     $self->errorTrack( sprintf( '%s %s omitted', $features_bumped, $self->my_config('name')), undef, $y_pos );
   }
+  $self->timer_push( 'Features drawn' );
 }
 
 sub RENDER_compact {

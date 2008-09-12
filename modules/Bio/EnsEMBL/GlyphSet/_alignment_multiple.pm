@@ -44,14 +44,15 @@ sub draw_features {
   my $strand = $self->strand;
   my $strand_flag    = $self->my_config( 'strand' );
   my $drawn_block    = 0;
-  my $container      = $self->{'container'};
   my $caption        = $self->my_config('caption');
   my %highlights;      @highlights{$self->highlights()} = ();
-  my $length         = $container->length;
+  my $length         = $self->{'container'}->length;
   my $pix_per_bp     = $self->scalex;
   my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
 
-  my $feature_type   = $self->my_config( 'constrained_elements' ) ? 'constrained_element' : 'feature';
+  my $feature_type   = $self->my_config( 'constrained_elements' ) ?
+                         'constrained_element' :
+			 'feature';
 
   my $feature_colour = $self->my_colour( $feature_type );
   my $feature_text   = $self->my_colour( $feature_type, 'text' );
@@ -60,7 +61,7 @@ sub draw_features {
   my $chr            = $self->{'container'}->seq_region_name;
   my $other_species  = $self->my_config( 'species' );
   my $short_other    = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
-  my $self_species   = $container->{web_species};
+  my $self_species   = $self->species;
   my $short_self     = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
   my $jump_to_alignslice = $self->my_config( 'jump_to_alignslice');
 
@@ -71,13 +72,16 @@ sub draw_features {
   my $C = 0;
   my $X = -1e8;
 
-  my @T = sort { $a->[0] <=> $b->[0] }
-    map { [$_->{start}, $_ ] }
-    grep {
-      ( $strand_flag ne 'b' || $strand == $_->{strand} ) &&
-      ( $_->{start} <= $length                         ) &&
-      ( $_->{end} >= 1                                 )
-    } @{$self->element_features};
+  $self->timer_push('setup');
+  my $els = $self->element_features;
+  $self->timer_push('got features',undef,'fetch');
+  my @T = 
+    sort { $a->[0] <=> $b->[0] }
+    map {
+      ( $strand_flag ne 'b' || $strand == $_->{strand} ) && $_->{start} <= $length && $_->{end}>=1 ?
+      [ $_->{start}, $_ ] : ()
+    } @$els;
+  $self->timer_push('sorted features');
 
   foreach (@T) {
     my($START,$f) = @$_;
@@ -142,6 +146,7 @@ sub draw_features {
       }));
     }
   }
+  $self->timer_push( 'drawn features' );
   $self->_offset($h);
   $self->render_track_name($caption, $feature_colour) if $drawn_block;
 
@@ -214,12 +219,14 @@ sub element_features {
 
 sub score_features {
   my $self = shift;
-  return [] unless $self->my_config('conservation_score');
-  my $slice = $self->{'container'};
-  my $db   = $self->dbadaptor( 'multi', $self->my_config('db') );
-  return [] unless $db;
-  my $method_link_species_set = $db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->my_config('conservation_score'));
+  my $K  = $self->my_config('conservation_score');
+  my $db = $self->dbadaptor( 'multi', $self->my_config('db') );
+  return [] unless $K && $db;
+  $self->timer_push( 'preped score fetch' );
+
+  my $method_link_species_set = $db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($K);
   return [] unless $method_link_species_set;
+  $self->timer_push( 'got mlss' );
 
   return $db->get_ConservationScoreAdaptor()->fetch_all_by_MethodLinkSpeciesSet_Slice(
     $method_link_species_set,
@@ -236,8 +243,9 @@ sub wiggle_plot {
   ### Returns 1 if draws wiggles. Returns 0 if no wiggles drawn
   my $self = shift;
 
+  $self->timer_push( 'score prefetch',undef,'draw');
   my $features = $self->score_features;
-
+  $self->timer_push( 'got score features',undef,'fetch');
   return 0 unless scalar @$features;
 
   $self->render_space_glyph();
@@ -255,5 +263,6 @@ sub wiggle_plot {
     { 'min_score' => $min_score, 'max_score' => $max_score }
   );
   return 1;
+  $self->timer_push( 'wiggle drawn');
 }
 1;

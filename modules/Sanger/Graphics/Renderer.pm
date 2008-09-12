@@ -81,8 +81,6 @@ sub render {
   
   my $config = $self->{'config'};
   
-  my $SD = $self->{'config'}->can('species_defs') ?  $self->{'config'}->species_defs : undef;
-  my $timer = $SD->{'timer'};
   #########
   # now set all our labels up with scaled negative coords
   # and while we're looping, tot up the image height
@@ -106,7 +104,6 @@ sub render {
   $im_height += $self->{'extra_spacing'};
   $config->image_height( $im_height );
   my $im_width = $config->image_width();
-  $timer->push( "Computed size", 9 ) if $timer;
   
   #########
   # create a fresh canvas
@@ -114,7 +111,6 @@ sub render {
   if($self->can('init_canvas')) {
     $self->init_canvas($config, $im_width, $im_height );
   }
-  $timer->push( "Canvas initialized", 9 ) if $timer;
   
   my %tags;
   my %layers = ();
@@ -172,7 +168,6 @@ sub render {
       push @{$layers{$_->{'z'}||0}}, $_;
     }
   }
-  $timer->push( "Sorted Z-indexes", 9 ) if $timer;
 
 my %M;
 my $Ta;
@@ -193,7 +188,6 @@ my $T = time();
       $Ta->{$method}[1] ++;   
     }
   }
-  $timer->push( "Pushed glyphs", 9 ) if $timer;
   
   
   #########
@@ -201,7 +195,6 @@ my $T = time();
   # so that it appears on the top of everything else...
   
   $self->add_canvas_frame($config, $im_width, $im_height);
-  $timer->push( "Added frame", 9 ) if $timer;
 }
 
 sub canvas {

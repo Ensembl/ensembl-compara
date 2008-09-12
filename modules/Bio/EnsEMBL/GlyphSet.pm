@@ -39,7 +39,12 @@ sub species {
   my $self = shift;
   return $self->{'container'}{'web_species'};
 }
-
+sub timer_push {
+  my($self,$capt,$dep,$flag) = @_;
+  $dep  ||= 3;
+  $flag ||= 'draw';
+  $self->{'config'}{'species_defs'}->timer()->push($capt,$dep,$flag);
+}
 
 ### Helper functions to wrap round Glyphs...
 
