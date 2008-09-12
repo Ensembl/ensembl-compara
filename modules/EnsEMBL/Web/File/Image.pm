@@ -115,12 +115,9 @@ sub extraStyle {
 sub render_image_tag {
   my $self = shift;
 
-  #$self->{'species_defs'}{'timer'}->push("Starting render",6);
   my $IF = $self->render( @_ );
-  #$self->{'species_defs'}{'timer'}->push("Finished render",6);
 
   my ($width, $height) = $self->imgsize($IF->{'file'});
-  #$self->{'species_defs'}{'timer'}->push("Got image size",6);
 
   my $HTML;
   if ($width > 5000) {
@@ -161,7 +158,7 @@ sub render_image_map {
   my $self = shift;
   my $IF   = $self->render( 'imagemap' );
   my $map_name = $self->{'id'} ? ($self->{'id'}.'_map') : $self->{'token'};
-  return sprintf( qq(<map name="%s" id="%s">\n$IF->{'imagemap'}\n</map>), $map_name, $map_name);
+  return sprintf( qq(<map name="%s" id="%s">\n%s\n</map>), $map_name, $map_name, $IF->{'imagemap'});
 }
 
 sub render {
@@ -182,10 +179,8 @@ sub render {
   }
   
   my $image;
-  # $self->{'species_defs'}{'timer'}->push( "RAW RENDER START", 7);
   # warn ".... $format ....";
   eval { $image = $self->dc->render($format); };
-  # $self->{'species_defs'}{'timer'}->push( "RAW RENDER END", 7);
   if ($image) {
     if ($format eq 'imagemap') {
 

@@ -45,7 +45,7 @@ sub get_all_das {
   # Build config objects from the speciesdefs data
   for my $data ( values %{ $spec_das } ) {
     ref $data || next;
-    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data, 'category' => '' );
+    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
     $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
   }
   

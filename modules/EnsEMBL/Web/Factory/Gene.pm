@@ -6,6 +6,7 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Factory;
 use EnsEMBL::Web::Proxy::Object;
+use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(  EnsEMBL::Web::Factory );
 
@@ -13,7 +14,9 @@ sub createObjects {
   my $self = shift;
   my ($identifier, @fetch_calls, $geneobj);
   if( $self->core_objects->gene ) {
+    $ENSEMBL_WEB_REGISTRY->timer_push( 'About to create DO' );
     $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Gene', $self->core_objects->gene, $self->__data ));
+    $ENSEMBL_WEB_REGISTRY->timer_push( 'Created DO' );
     return;
   }
   my $db        = $self->param('db')  || 'core'; 

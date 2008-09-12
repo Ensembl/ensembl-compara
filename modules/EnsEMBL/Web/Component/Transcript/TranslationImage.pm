@@ -22,13 +22,13 @@ sub content {
        'image_width'     => $self->image_width || 800,
        'slice_number'    => '1|1'
      });
-  $object->timer_push( 'Cacheing object', 5);
+  $transcript->timer_push( 'Cacheing object', 5);
      $wuc->cache( 'object',       $object );
-  $object->timer_push( 'Cacheing snps', 5);
+  $transcript->timer_push( 'Cacheing snps', 5);
      $wuc->cache( 'image_snps',   $object->pep_snps );
-  $object->timer_push( 'Cacheing splice sites', 5);
+  $transcript->timer_push( 'Cacheing splice sites', 5);
      $wuc->cache( 'image_splice', $object->pep_splice_site( $object->Obj ) );
-  $object->timer_push( 'Cacheing dumping tree', 5);
+  $transcript->timer_push( 'Cacheing dumping tree', 5);
 
   $wuc->tree->dump("Tree", '[[caption]]' );
 

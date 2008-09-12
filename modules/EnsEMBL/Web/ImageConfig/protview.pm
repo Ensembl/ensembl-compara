@@ -16,12 +16,12 @@ sub init {
   });
 
   $self->create_menus(
-    'domain'         => 'Protein domains',
+#    'domain'         => 'Protein domains',
 #    'feature'        => 'Protein features',
     'p_variation'    => 'Variation',
-    'user_data'      => 'User data',
+#    'user_data'      => 'User data',
     'decorations'    => 'Decorations',
-    'legends'        => 'Legends'
+#    'legends'        => 'Legends'
   );
   $self->load_tracks();
 

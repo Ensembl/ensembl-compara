@@ -3,9 +3,9 @@ package EnsEMBL::Web::Proxy;
 use strict;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Problem;
-use EnsEMBL::Web::Root;
+use EnsEMBL::Web::RegObj;
 use vars qw($AUTOLOAD);
-our  @ISA = qw( EnsEMBL::Web::Root );
+use base qw( EnsEMBL::Web::Root );
 
 sub new {
   ### Creates a new Proxy object. Usually called from {{EnsEMBL::Web::Proxy::Object}}.
@@ -70,6 +70,7 @@ sub new {
     $supertype 
   ];
   bless $self, $class;
+  $ENSEMBL_WEB_REGISTRY->timer_push( "Adding all plugins... $supertype $type" );
   foreach my $root( @{$self->species_defs->ENSEMBL_PLUGIN_ROOTS}, 'EnsEMBL::Web' ) {
     my $class_name = join '::', $root, $supertype, $type;
     if( $self->dynamic_use( $class_name ) ) {
@@ -83,6 +84,7 @@ sub new {
 <pre>@{[$self->_format_error( $error )]}</pre>) ) unless $error =~ /$message/;
     }
   }
+  $ENSEMBL_WEB_REGISTRY->timer_push( "Added all plugins... $supertype $type" );
   unless( @{$self->__children} ) {
     $self->problem( 'fatal', "$supertype failure: $type",qq( 
 <p>
@@ -144,6 +146,11 @@ sub __data       :lvalue {
 ### return data hash
   my $self = shift;
   return $self->[1];
+}
+
+sub timer_push {
+  my $self = shift;
+  return $self->[1]{'timer'}->push(@_);
 }
 
 sub timer {

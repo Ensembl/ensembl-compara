@@ -182,9 +182,10 @@ sub category {
   return $self->{'category'};
 }
 
-sub is_internal {
+sub internal {
   my $self = shift;
-  return  ! $self->category;
+  $self->{'internal'} = shift if @_;
+  return $self->{'internal'};
 }
 
 sub is_session {

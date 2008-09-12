@@ -164,7 +164,16 @@ sub content {
     });
  
     $html .= qq(
-       <a href="$url">$display</a> (<a href="$url">$id</a>).</p>
+       <a href="$url">$display</a> (<a href="$url">$id</a>));
+    if( $transcript->translation ) {
+      $html .= sprintf ', with protein product <a href="%s">%s</a>', $self->object->_url({
+        'type'   => 'Transcript',
+        'action' => 'Protein',
+        't'      => $transcript->stable_id
+      }), $transcript->translation->stable_id;
+    }
+       
+    $html .= qq(.</p>
      </dd>
     </dl>
     );

@@ -36,17 +36,18 @@ sub init {
     'synteny'     => 'Synteny',
 #    'user_data'   => 'User uploaded data',
     'other'       => 'Additional features',
+    'information' => 'Information',
     'options'     => 'Options'
   );
 
-  $self->add_track( 'sequence', 'contig',    'Contigs',             'strandard_contig', { 'on' => 'on'  } );
-  $self->add_track( 'info',     'info',      'Information',         'info',             { 'on' => 'on'  } );
+  $self->add_track( 'sequence',    'contig',    'Contigs',             'stranded_contig', { 'on' => 'on', 'strand' => 'f' } );
+  $self->add_track( 'information', 'info',      'Information',         'text',            { 'on' => 'on'  } );
   
   $self->load_tracks();
 
   $self->add_tracks( 'other',
     [ 'scalebar',  '', 'scalebar',  { 'on' => 'on'  }],
-    [ 'ruler',     '', 'ruler',     { 'on' => 'on'  }],
+    [ 'ruler',     '', 'ruler',     { 'on' => 'on', 'strand' => 'f'  }],
     [ 'draggable', '', 'draggable', { 'on' => 'on', 'menu' => 'no' }]
   );
   

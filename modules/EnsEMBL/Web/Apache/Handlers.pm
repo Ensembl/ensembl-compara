@@ -505,10 +505,6 @@ sub cleanupHandler {
   my $end_time    = time();
   my $start_time  = $ENSEMBL_WEB_REGISTRY->timer->get_script_start_time;
   my $length      = $end_time- $start_time;
-  $ENSEMBL_WEB_REGISTRY->timer_push( 'Cleaned up', undef,'Cleanup' );
-  
-  warn $ENSEMBL_WEB_REGISTRY->timer->render
-    if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_PERL_PROFILER;
 
 
   if( $length >= $ENSEMBL_LONGPROCESS_MINTIME ) {
@@ -557,6 +553,9 @@ sub cleanupHandler_script {
   my $r = shift;
   my @X = localtime();
 #  warn "SCRIPT CLEANUP HANDLER $$";
+  $ENSEMBL_WEB_REGISTRY->timer_push( 'Cleaned up', undef,'Cleanup' );
+  warn $ENSEMBL_WEB_REGISTRY->timer->render if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_PERL_PROFILER;
+
   my ($A,$B) = $LOG_INFO =~ /SCRIPT:(.{8}:\d+) +\d{4}-\d\d-\d\d \d\d:\d\d:\d\d (.*)$/;
   warn sprintf( "ENDSCR:%-19s %04d-%02d-%02d %02d:%02d:%02d %10.3f %s\n",
     $A, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0], time()-$LOG_TIME, $B );

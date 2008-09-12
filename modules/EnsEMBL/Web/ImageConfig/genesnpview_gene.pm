@@ -27,25 +27,6 @@ sub init {
       'available'=> 'databases ENSEMBL_VARIATION',
       'colours'=>{$self->{'_colourmap'}->colourSet('variation')}, 'str' => 'b'
     },
-    'ruler' => {
-      'on'          => "on",
-      'pos'         => '10000',
-      'col'         => 'black',
-    },
-    'stranded_contig' => {
-      'on'          => "on",
-      'pos'         => '0',
-      'navigation'  => 'off'
-    },
-    'scalebar' => {
-      'on'          => "on",
-      'nav'         => "off",
-      'pos'         => '8000',
-      'col'         => 'black',
-      'str'         => 'r',
-      'abbrev'      => 'on',
-      'navigation'  => 'off'
-    },
     'geneexon_bgtrack' => {
       'on'          => "on",
       'pos'         => '5000',
@@ -54,21 +35,6 @@ sub init {
       'col'         => 'bisque',
       'tag'         => 1
     }, 
-    'variation' => {
-      'on'  => "on",
-      'bump_width' => 0,
-      'dep' => 0.1,
-      'pos' => '4523',
-      'str' => 'r',
-      'col' => 'blue',
-      'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION',
-    },
-    'snp_legend' => {
-      'on'          => "on",
-      'str'         => 'r',
-      'pos'         => '9999',
-    },
   };
   $self->ADD_ALL_TRANSCRIPTS( );
 }

@@ -3,6 +3,7 @@ package EnsEMBL::Web::CoreObjects;
 use strict;
 
 use base qw(EnsEMBL::Web::Root);
+use EnsEMBL::Web::RegObj;
 
 sub new {
   my( $class, $input, $dbconnection, $flag ) = @_;
@@ -26,6 +27,10 @@ sub new {
   return $self;
 }
 
+sub timer_push {
+  my $self = shift;
+  $ENSEMBL_WEB_REGISTRY->timer->push(@_);
+}
 sub database {
   my $self = shift;
   return $self->{'dbc'}->get_DBAdaptor(@_);
@@ -134,6 +139,7 @@ sub param {
 sub _generate_objects_lw {
   my $self = shift;
   my $action = '_generate_objects_'.$ENV{'ENSEMBL_TYPE'};
+  $self->timer_push( 'Lightweight core objects call' );
   foreach (qw(t g r db v vdb source)) {
     $self->{'parameters'}{$_} = $self->param($_);
   }
@@ -144,28 +150,38 @@ sub _generate_objects_Location {
   my $self = shift;
   my($r,$s,$e) = $self->{'parameters'}{'r'} =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
   my $db_adaptor= $self->database('core');
-  $self->location( $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
+  my $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+  $self->timer_push( 'Location fetched', undef, 'fetch' );
+  $self->location( $t );
 }
 
 sub _generate_objects_Transcript {
   my $self = shift;
   $self->{'parameters'}{'db'} ||= 'core';
   my $db_adaptor = $self->database($self->{'parameters'}{'db'});
-  $self->transcript( $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->{'paramters'}{'t'} ) );
+  my $t = $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->{'parameters'}{'t'} );
+  warn "TRANSCRIPT is .... $t ";
+  $self->timer_push( 'Transcript fetched', undef, 'fetch' );
+  $self->transcript( $t );
 }
 
 sub _generate_objects_Gene {
   my $self = shift;
   $self->{'parameters'}{'db'} ||= 'core';
   my $db_adaptor = $self->database($self->{'parameters'}{'db'});
-  $self->gene( $db_adaptor->get_GeneAdaptor->fetch_by_stable_id( $self->{'parameters'}{'g'} ) );
+  my $t = $db_adaptor->get_GeneAdaptor->fetch_by_stable_id( $self->{'parameters'}{'g'} );
+  $self->timer_push( 'Gene fetched', undef, 'fetch' );
+  $self->gene( $t );
 }
 
 sub _generate_objects_Variation {
   my $self = shift;
   $self->{'parameters'}{'vdb'} ||= 'variation';
   my $db_adaptor = $self->database($self->{'parameters'}{'vdb'});
-  $self->variation( $db_adaptor->getVariationAdaptor->fetch_by_name( $self->{'parameters'}{'v'}, $self->{'parameters'}{'source'} ) );
+  my $t = $db_adaptor->getVariationAdaptor->fetch_by_name( $self->{'parameters'}{'v'}, $self->{'parameters'}{'source'} );
+  $self->timer_push( 'Gene fetched', undef, 'fetch' );
+  $self->variation( $t );
+  $self->timer_push( 'Fetching location', undef );
   $self->_generate_objects_Location;
 }
 
@@ -186,14 +202,25 @@ sub _generate_objects {
   if( $self->param('t') ) {
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
     my $tdb_adaptor = $self->database($tdb);
-    $self->transcript( $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('t')) );
-    $self->_get_gene_location_from_transcript;
+    my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('t'));
+    if( $t ) {
+      $self->transcript( $t );
+      $self->_get_gene_location_from_transcript;
+    }
   }
   if( !$self->transcript && $self->param('g') ) {
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
     my $tdb_adaptor = $self->database($tdb);
-    $self->gene(       $tdb_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('g')) );
-    $self->_get_location_from_gene;
+    my $g = $tdb_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('g') );
+    if( $g ) {
+      $self->gene( $g );
+      if( @{$g->get_all_Transcripts} == 1 ) {
+        my $t = $g->get_all_Transcripts->[0];
+        $self->transcript( $t );
+        $self->{'parameters'}{'t'} = $t->stable_id;
+      }
+      $self->_get_location_from_gene;
+    }
   }
   if( $self->param('r') ) {
     my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
