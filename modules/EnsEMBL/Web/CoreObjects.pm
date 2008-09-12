@@ -5,7 +5,7 @@ use strict;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my( $class, $input, $dbconnection ) = @_;
+  my( $class, $input, $dbconnection, $flag ) = @_;
   my $self = {
     'input'      => $input,
     'dbc'        => $dbconnection,
@@ -18,7 +18,11 @@ sub new {
     'parameters' => {}
   };
   bless $self, $class;
-  $self->_generate_objects;
+  if( $flag ) {
+    $self->_generate_objects_lw;
+  } else {
+    $self->_generate_objects;
+  }
   return $self;
 }
 
@@ -125,6 +129,44 @@ sub variation_long_caption {
 sub param {
   my $self = shift;
   return $self->{input}->param(@_);
+}
+
+sub _generate_objects_lw {
+  my $self = shift;
+  my $action = '_generate_objects_'.$ENV{'ENSEMBL_TYPE'};
+  foreach (qw(t g r db v vdb source)) {
+    $self->{'parameters'}{$_} = $self->param($_);
+  }
+  $self->$action;
+}
+
+sub _generate_objects_Location {
+  my $self = shift;
+  my($r,$s,$e) = $self->{'parameters'}{'r'} =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
+  my $db_adaptor= $self->database('core');
+  $self->location( $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
+}
+
+sub _generate_objects_Transcript {
+  my $self = shift;
+  $self->{'parameters'}{'db'} ||= 'core';
+  my $db_adaptor = $self->database($self->{'parameters'}{'db'});
+  $self->transcript( $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->{'paramters'}{'t'} ) );
+}
+
+sub _generate_objects_Gene {
+  my $self = shift;
+  $self->{'parameters'}{'db'} ||= 'core';
+  my $db_adaptor = $self->database($self->{'parameters'}{'db'});
+  $self->transcript( $db_adaptor->get_GeneAdaptor->fetch_by_stable_id( $self->{'parameters'}{'g'} ) );
+}
+
+sub _generate_objects_Variation {
+  my $self = shift;
+  $self->{'parameters'}{'vdb'} ||= 'variation';
+  my $db_adaptor = $self->database($self->{'parameters'}{'vdb'});
+  $self->variation( $db_adaptor->getVariationAdaptor->fetch_by_name( $self->{'parameters'}{'v'}, $self->{'parameters'}{'source'} ) );
+  $self->_generate_objects_Location;
 }
 
 sub _generate_objects {
