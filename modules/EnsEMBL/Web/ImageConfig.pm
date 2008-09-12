@@ -245,6 +245,7 @@ sub load_tracks {
 }
  
 sub load_configured_das {
+  my $self=shift;
   ## Now we do the das stuff - to append to menus (if the menu exists!!)
   foreach my $das( qw(das_sources) ) { ## Add to approriate menu if it exists!!
     next;
