@@ -88,7 +88,8 @@ sub read_tree {
   ## Descend into directories recursively
   foreach my $dirname (@$sub_dirs) {
     ## omit CVS directories and directories beginning with . or _
-    next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/ || $dirname eq 'private';
+    next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/ 
+        || $dirname eq 'private' || $dirname eq 'ssi';
     $branch->{$dirname}->{_path} = "$path$dirname/";
     read_tree( $branch->{$dirname}, $doc_root );
   }
