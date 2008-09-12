@@ -1,3 +1,5 @@
+#!/usr/local/bin/perl
+
 use strict;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Species;
@@ -12,7 +14,7 @@ my $species      = { reverse %$species_hash };
 my $pars         = { 'release' => $SiteDefs::VERSION };
 my $species_id   = $species->{$ENV{'ENSEMBL_SPECIES'}};
 
-$pars{ 'species' } = $species_id if $species_id;
+$pars->{ 'species' } = $species_id if $species_id;
 
 my $this_species = $ENV{'ENSEMBL_SPECIES'} || 'common';
 
@@ -20,11 +22,11 @@ my @news = EnsEMBL::Web::Data::NewsItem->search(
   {
     release_id  => $SiteDefs::VERSION,
     $species_id
-      ? ( species.species_id => $species_id )
+      ? ( 'species.species_id' => $species_id )
       : (),
-  }
+  },
   {
-    order_by => 'priority',
+    'order_by' => 'priority',
   }
 );
 
@@ -66,12 +68,13 @@ foreach my $item ( @news ) {
     $C = $1;
   }
   $C =~ s/<.*//sm;
-  print '
+  printf '
     <item>
-      <title>'. $item->title .'</title>
-      <description>$C</description>
-      <link>http://dev.ensembl.org/$this_species/newsview?rel=$release_id#'. $item->id .'</link>
-    </item>);
+      <title>%s'. $item->title .'</title>
+      <description>%s</description>
+      <link>http://dev.ensembl.org/%s/newsview?rel=%s#%s</link>
+    </item>',
+    $item->title, $C, $this_species, $release_id, $item->id; 
 }
 print qq(
   </channel>
