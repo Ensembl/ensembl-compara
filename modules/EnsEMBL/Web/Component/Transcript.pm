@@ -284,7 +284,7 @@ sub protein_features {
   return undef unless $translation;
   $translation->Obj->{'image_snps'}   = $translation->pep_snps unless $snps eq 'nosnps';
   $translation->Obj->{'image_splice'} = $translation->pep_splice_site( $translation->Obj );
-  $panel->_prof( "Got snps and slices for protein_feature....", 1 );
+  $panel->timer_push( "Got snps and slices for protein_feature....", 1 );
 
   my $wuc = $transcript->get_userconfig( 'protview' );
   $wuc->container_width( $translation->Obj->length );

@@ -196,7 +196,7 @@ sub create_menus {
 ###   loop through core like dbs, compara like dbs, funcgen like dbs;
 ###                variation like dbs
 
-sub load_tracks() { 
+sub load_tracks { 
   my $self       = shift;
   my $species    = $ENV{'ENSEMBL_SPECIES'};
   my $dbs_hash   = $self->species_defs->databases;
@@ -242,6 +242,9 @@ sub load_tracks() {
     ## Configure variation features
     $self->add_variation_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To variation_feature tree
   }
+}
+ 
+sub load_configured_das {
   ## Now we do the das stuff - to append to menus (if the menu exists!!)
   foreach my $das( qw(das_sources) ) { ## Add to approriate menu if it exists!!
     next;
@@ -330,7 +333,7 @@ sub add_dna_align_feature {
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+        'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
 	'strand'      => 'b'
       }));
     }
@@ -357,7 +360,7 @@ sub add_protein_align_feature {
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
-      'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+      'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
       'strand'      => 'b'
     }));
   }
@@ -377,7 +380,7 @@ sub add_simple_feature {
       'colourset'   => 'simple',
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
-      'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+      'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
       'strand'      => 'r'
     }));
   }
@@ -397,7 +400,7 @@ sub add_prediction_transcript {
       'caption'     => $data->{$key_2}{'caption'},
       'colourset'   => 'prediction',
       'description' => $data->{$key_2}{'description'},
-      'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+      'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
       'strand'      => 'b'
     }));
   }
@@ -416,7 +419,7 @@ sub add_ditag_feature {
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+        'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
 	'strand'      => 'b'
       }));
     }
@@ -457,7 +460,7 @@ sub add_gene {
 	'colours'     => $self->species_defs->colour( 'gene' ),
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+        'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
 	'strand'      => $type eq 'gene' ? 'r' : 'b'
       }));
       $flag=1;
@@ -484,7 +487,7 @@ sub add_marker_feature {
       'colours'     => $self->species_defs->colour( 'marker' ),
       'description' => $data->{$key_2}{'description'},
       'priority'    => $data->{$key_2}{'priority'},
-      'on'          => 'on',
+      'on'          => 'off',
       'strand'      => 'r'
     }));
   }
@@ -525,7 +528,7 @@ sub add_misc_feature {
       'description' => $data->{$key_2}{'desc'},
       'max_length'  => $data->{$key_2}{'max_length'},
       'strand'      => 'r',
-      'on'          => 'on'
+      'on'          => 'off'
     }));
   }
 
@@ -550,7 +553,7 @@ sub add_oligo_probe {
       'description' => $description,
       'caption'     => $key_2,
       'strand'      => 'b',
-      'on'          => 'on'
+      'on'          => 'off'
     }));
   }
 }
@@ -569,7 +572,7 @@ sub add_protein_feature {
 
   return unless $self->_check_menus( keys %menus );
 
-  my( $keys, $data )   = $self->_merge( $hashref->{'gene'} );
+  my( $keys, $data )   = $self->_merge( $hashref->{'protein_feature'} );
 
   foreach my $menu_code ( keys %menus ) {
     my $menu = $self->get_node( $menu_code );
@@ -580,11 +583,13 @@ sub add_protein_feature {
       next if $type ne $data->{$key_2}{'type'};
       $menu->append( $self->create_track( $type.'_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
+	'strand'      => $gset =~ /P_/ ? 'f' : 'b',
+	'depth'       => 1e6,
         'glyphset'    => $gset,
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'name'        => $data->{$key_2}{'name'},
         'caption'     => $data->{$key_2}{'caption'},
-	'colours'     => $self->species_defs->colour( 'protein' ),
+	'colourset'   => 'protein_feature',
         'description' => $data->{$key_2}{'description'},
         'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
       }));
@@ -606,8 +611,8 @@ sub add_repeat_feature {
     'types'       => [undef],                ## All repeat types...
     'name'        => 'All repeats',
     'description' => 'All repeats',
-    'colours'     => $self->species_defs->colour( 'repeat' ),
-    'on'          => 'on',
+    'colourset'   => 'repeat',
+    'on'          => 'off',
     'optimizable' => 1,
     'depth'       => 0.5,
     'bump_width'  => 0,
@@ -625,7 +630,7 @@ sub add_repeat_feature {
         'name'        => $data->{$key_2}{'name'},
         'description' => $data->{$key_2}{'desc'},
 	'colours'     => $self->species_defs->colour( 'repeat' ),
-        'on'          => 'on',
+        'on'          => 'off',
         'optimizable' => 1,
         'depth'       => 0.5,
         'bump_width'  => 0,
@@ -645,7 +650,7 @@ sub add_repeat_feature {
           'name'        => "$key_3 (".$data->{$key_2}{'name'}.")",
           'description' => $data->{$key_2}{'desc'}." ($key_3)",
 	  'colours'     => $self->species_defs->colour( 'repeat' ),
-          'on'          => 'on',
+          'on'          => 'off',
           'optimizable' => 1,
           'depth'       => 0.5,
           'bump_width'  => 0,
@@ -673,10 +678,12 @@ sub add_synteny {
       'glyphset'    => '_synteny',
       'name'        => "Synteny with $species_readable",
       'species'     => $species,
+      'species_hr'  => $species_readable,
       'caption'     => sprintf( "%1s.%3s synteny", split / /, $species_readable ),
       'description' => "Synteny blocks",
       'colours'     => $self->species_defs->colour( 'synteny' ),
-      'on'          => 'on',
+      'on'          => 'off',
+      'height'      => 4,
       'strand'      => 'r'
     }));
   }
@@ -686,44 +693,71 @@ sub add_alignments {
   my( $self, $key, $hashref,$species ) = @_;
   return unless $self->_check_menus( qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other) );
   my $alignments = {};
+  my $regexp = $species =~ /^([A-Z])[a-z]*_([a-z]{3})/ ? "-?$1.$2-?" : 'xxxxxx';
   foreach my $row ( values %{$hashref->{'ALIGNMENTS'}} ) {
     next unless $row->{'species'}{$species};
     if( $row->{'class'} =~ /pairwise_alignment/ ) {
       my( $other_species ) = grep { $species ne $_ } keys %{$row->{'species'}};
+      (my $other_species_hr = $other_species ) =~ s/_/ /g;
       my $menu_key = $row->{'type'} =~ /BLASTZ/ ? 'pairwise_blastz' 
                    : $row->{'type'} =~ /TRANSLATED_BLAT/  ? 'pairwise_tblat'
 		   : 'pairwise_align'
 		   ;
+      (my $caption = $row->{'name'}) =~s/blastz-net \(on.*?\)/BLASTz net/g;
+      $caption =~ s/translated-blat-net/Trans. BLAT net/g;
+      $caption =~ s/$regexp//;
       $alignments->{$menu_key}{ $row->{'id'} } = {
-        'db' => $key,
+        'db'             => $key,
         'glyphset'       => '_alignment_pairwise',
         'name'           => $row->{'name'},
+        'caption'        => $caption,
         'type'           => $row->{'type'},
         'species_set_id' => $row->{'species_set_id'},
-        'other_species'  => $other_species,
+        'species'        => $other_species,
+        'species_hr'     => $other_species_hr,
+	'_assembly'      => $self->species_defs->other_species( $other_species, 'ENSEMBL_GOLDEN_PATH' ),
         'class'          => $row->{'class'},
         'description'    => "Pairwise alignments",
         'order'          => $row->{'type'}.'::'.$other_species,
-	'colours'        => $self->species_defs->colour( 'pairwise' ),
+	'colourset'      => 'pairwise',
 	'strand'         => 'b',
-        'on'             => 'on'
+        'on'             => 'off'
       };
     } else {
       my $n_species = keys %{$row->{'species'}};
+      if( $row->{'conservation_score'} ) {
+        $alignments->{'multiple_align'}{ $row->{'id'}.'_constrained' } = {
+          'db' => $key,
+          'glyphset'       => '_alignment_multiple',
+          'name'           => "Conservation score for ".$row->{'name'},
+          'caption'        => 'Cons. score '.$row->{'name'},
+          'type'           => $row->{'type'},
+          'species_set_id' => $row->{'species_set_id'},
+          'method_link_species_set_id' => $row->{'id'},
+          'class'          => $row->{'class'},
+          'constrained_element' => $row->{'constrained_element'},
+          'conservation_score'  => $row->{'conservation_score'},
+          'description'    => "Multiple alignments",
+          'colourset'      => 'multiple',
+          'order'          => sprintf( '%12d::%s::%s',1e12-$n_species, $row->{'type'}, $row->{'name'} ),
+          'strand'         => 'f',
+          'on'             => 'off'
+        };
+      }
       $alignments->{'multiple_align'}{ $row->{'id'} } = {
         'db' => $key,
         'glyphset'       => '_alignment_multiple',
         'name'           => $row->{'name'},
+        'caption'        => $row->{'name'},
         'type'           => $row->{'type'},
         'species_set_id' => $row->{'species_set_id'},
+        'method_link_species_set_id' => $row->{'id'},
         'class'          => $row->{'class'},
-        'constrained_element' => $row->{'constrained_element'},
-        'conservation_score'  => $row->{'conservation_score'},
         'description'    => "Multiple alignments",
-	'colours'     => $self->species_defs->colour( 'multiple' ),
-        'order'          => sprintf '%12d::%s::%s',1e12-$n_species, $row->{'type'}, $row->{'name'},
-	'strand'         => 'b',
-	'on'             => 'on'
+        'colourset'      => 'multiple',
+        'order'          => sprintf( '%12d::%s::%s',$n_species, $row->{'type'}, $row->{'name'} ),
+        'strand'         => 'f',
+        'on'             => 'off'
       };
     } 
   }
@@ -734,7 +768,7 @@ sub add_alignments {
       $alignments->{$menu_key}{$a}{'order'} cmp  $alignments->{$menu_key}{$b}{'order'}
     } keys %{$alignments->{$menu_key}} ) {
       my $row = $alignments->{$menu_key}{$key_2};
-      $menu->append( $self->create_track( 'alignment_'.$key.'_'.$key_2, $row->{'name'}, $row ));
+      $menu->append( $self->create_track( 'alignment_'.$key.'_'.$key_2, $row->{'caption'}, $row ));
     }
   }
 }
@@ -818,7 +852,8 @@ sub add_variation_feature {
     'depth'       => 0.5,
     'bump_width'  => 0,
     'colourset'   => 'variation',
-    'description' => 'Variation features from all sources'
+    'description' => 'Variation features from all sources',
+    'on'          => 'off'
   }));
   $menu->append( $self->create_track( 'variation_feature_genotyped_'.$key, sprintf( "Genotyped variations" ), {
     'db'          => $key,
@@ -829,7 +864,8 @@ sub add_variation_feature {
     'bump_width'  => 0,
     'filter'      => 'genotyped',
     'colourset'   => 'variation',
-    'description' => 'Genotyped variation features from all sources'
+    'description' => 'Genotyped variation features from all sources',
+    'on'          => 'off'
   }));
 
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'}||{}}) {
@@ -843,7 +879,8 @@ sub add_variation_feature {
       'depth'       => 0.5,
       'bump_width'  => 0,
       'colourset'   => 'variation',
-      'description' => sprintf( 'Variation features from the "%s" source', $key_2 )
+      'description' => sprintf( 'Variation features from the "%s" source', $key_2 ),
+      'on'          => 'off'
     }));
   }
 }

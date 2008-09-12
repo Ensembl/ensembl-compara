@@ -296,18 +296,14 @@ sub get_shared_data {
 # those either added or modified externally. Returns a hashref, indexed by name.
 # An optional non-zero argument forces re-retrieval of das sources, otherwise
 # these are cached.
-sub get_all_das {
+sub get_all_DASConfigs {
   my( $self, $force ) = @_;
   
   # This is cached so return it unless "Force" is set to load in other stuff
-  if ( !$force && scalar keys %{ $Das_sources_of{ ident $self } } ) {
-    return $Das_sources_of{ ident $self };
-  }
+  return $Das_sources_of{ ident $self } if ( !$force && scalar keys %{ $Das_sources_of{ ident $self } } );
   
   # If there is no session, there are no configs
-  if ( !$self->get_session_id ) {
-    return undef;
-  }
+  return {} unless $self->get_session_id;
   
   # Retrieve all DAS configurations from the database
   my @configs = EnsEMBL::Web::Data::Session->get_config(
@@ -319,6 +315,7 @@ sub get_all_das {
     $config->data || next;
     # Create new DAS source and load from value in database...
     my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $config->data );
+    $das->category( 'session' );
     $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
   }
   

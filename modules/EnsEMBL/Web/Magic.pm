@@ -33,6 +33,7 @@ sub Location   { return 'Location',   @_; }
 sub Variation  { return 'Variation',  @_; }
 sub Server     { return 'Server',     @_; }
 
+sub timer_push { $ENSEMBL_WEB_REGISTRY->timer->push( @_ ); }
 sub magic      {
 ### Usage: use EnsEMBL::Web::Magic; magic stuff
 ###
@@ -134,6 +135,8 @@ sub ingredient {
 
   my $content = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
 
+  timer_push( 'Retrieved content from cache' );
+  $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_ACTION'}" );
   if ($content) {
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
   } else {
@@ -143,25 +146,26 @@ sub ingredient {
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
       'objecttype' => $objecttype,
       'scriptname' => 'component',
+      'doctype'    => 'Component',
       'parent'     => $referer_hash,
       'renderer'   => 'String',
       'cache'      => $memd,
     );
     
     $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
-  
+    timer_push( 'Ajax content configured...!' ); 
     $webpage->render;
-    warn $webpage->timer->render if
-      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
-      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
+    timer_push( 'Rendering completed' );
     $content = $webpage->page->renderer->content;
     my @tags = qw(AJAX);
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
     $memd->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags) if $memd;
+    timer_push( 'Rendered content cached' );
   }
 
   CGI::header;
   print $content;
+  timer_push( 'Rendered content printed' );
   return "Generated magic ingredient ($ENV{'ENSEMBL_ACTION'})";
 }
 

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
+use EnsEMBL::Web::Proxy::Object;
 use CGI qw(escapeHTML);
 
 sub _init {
@@ -49,6 +50,14 @@ sub content {
     'image_width'     => $self->image_width,
     'slice_number'    => '1|2'
   });
+  my $s_o = new EnsEMBL::Web::Proxy::Object( 'Location', {
+    'seq_region_name'    => $slice->seq_region_name,
+    'seq_region_type'    => $slice->coord_system->name(),
+    'seq_region_start'   => $slice->start,
+    'seq_region_end'     => $slice->end,
+    'seq_region_strand'  => $slice->strand
+  }, $object->__data );
+  $wuc->_update_missing( $s_o  );
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'top';

@@ -45,7 +45,7 @@ sub get_all_das {
   # Build config objects from the speciesdefs data
   for my $data ( values %{ $spec_das } ) {
     ref $data || next;
-    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
+    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data, 'category' => '' );
     $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
   }
   
@@ -86,6 +86,10 @@ sub get_das_filtered_and_sorted {
   return \@sorted;
 }
 
+sub timer_push {
+  my $self = shift;
+  $self->timer->push( @_ );
+}
 sub timer {
   my $self = shift;
   return $Timer_of{ ident $self } ||= EnsEMBL::Web::Timer->new;

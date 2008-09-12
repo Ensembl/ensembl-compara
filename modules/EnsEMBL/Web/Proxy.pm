@@ -148,7 +148,7 @@ sub __data       :lvalue {
 
 sub timer {
   my $self = shift;
-  return $self->{'timer'};
+  return $self->[1]{'timer'};
 }
 
 sub has_a_problem     { return scalar(                               @{$_[0][1]{'_problem'}} ); }

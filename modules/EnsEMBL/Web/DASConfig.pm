@@ -182,6 +182,11 @@ sub category {
   return $self->{'category'};
 }
 
+sub is_internal {
+  my $self = shift;
+  return  ! $self->category;
+}
+
 sub is_session {
   my $self = shift;
   return ($self->category || '') eq 'session';
@@ -192,9 +197,14 @@ sub is_user {
   return ($self->category || '') eq 'user';
 }
 
+sub is_group {
+  my $self = shift;
+  return ($self->category || '') eq 'group';
+}
+
 sub is_external {
   my $self = shift;
-  return $self->is_session || $self->is_user ? 1 : 0;
+  return $self->is_session || $self->is_user || $self->is_group ? 1 : 0;
 }
 
 #================================#

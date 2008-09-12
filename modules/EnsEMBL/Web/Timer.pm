@@ -13,10 +13,13 @@ use Class::Std;
   my %script_start_time_of  :ATTR( :get<script_start_time>  :set<script_start_time>  );
   my %process_start_time_of :ATTR( :get<process_start_time> :set<process_start_time> );
   my %process_child_count_of :ATTR( :get<process_child_count> :set<process_child_count> );
+  my %Totals_of     :ATTR( :get<totals>     );
+  my %Name_of       :ATTR( :get<name> :set<name> );
   sub BUILD {
   ### c
     my( $class, $ident, $arg_ref ) = @_;
     $Times_of{      $ident } = [];
+    $Totals_of{     $ident } = {};
     $Benchmarks_of{ $ident } = {};
   }
 
@@ -64,17 +67,23 @@ sub end {
 # Functions related to timing blocks of page
 #---------------------------------------------------------------
 
-sub clear_benchmarks {
+sub clear_times {
   my $self = shift;
-  @{$Times_of{ ident $self }} = [];
+  $Times_of{ ident $self } = [];
+  $Totals_of{ ident $self } = {};
 }
 sub push {
 ### Push a new tag onto the "heirarchical diagnsotics"
 ### Message is message to display and level is the depth of the tree
 ### for which the timing is recorded
-  my( $self, $message, $level ) = @_;
+  my( $self, $message, $level, $flag ) = @_;
+  my $i = ident $self;
   $level ||= 0;
-  CORE::push @{$Times_of{ ident $self }}, [ time(), $message, $level ];
+  $flag  ||= 'web';
+  my $last = @{$Times_of{$i}} ? $Times_of{$i}[-1][0] : 0;
+  my $time = time; 
+  CORE::push @{$Times_of{ ident $self }}, [ $time, $message, $level, $flag ];
+  $Totals_of{ ident $self }{$flag} += $time-$last if $last;
 }
 
 sub render {
@@ -83,24 +92,25 @@ sub render {
   #$self->push("Page rendered");
   my $base_time = shift @{$Times_of{ ident $self }};
 
-  my $diagnostics = "
-================================================================
-Script /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}
------------------------------------------------------------------
-Cumulative     Section\n";
+  my $diagnostics = '
+================================================================================
+'.$self->get_name.'
+--------------------------------------------------------------------------------
+Flag      Cumulative     Section
+';
   my @previous  = ();
   my $max_depth = 0;
   foreach( @{$Times_of{ ident $self }} ) { $max_depth = $_->[2] if $max_depth < $_->[2]; }
 
-  $diagnostics .= ('           ' x (2+$max_depth) ) . $base_time->[1]; 
+  $diagnostics .= '           '.('           ' x (2+$max_depth) ) . $base_time->[1]; 
   $base_time = $base_time->[0];
   foreach( @{ $Times_of{ ident $self }} ) {
-    $diagnostics .= sprintf( "\n" );
+    $diagnostics .= sprintf( "\n%10s ",substr($_->[3],0,10) );
     foreach my $i (0..($max_depth+1)) {
       if( $i<=$_->[2] ) {
-        $diagnostics .= sprintf( "%10.6f ", $_->[0]-($previous[$i]||$base_time) );
+        $diagnostics .= sprintf( "%10.5f ", $_->[0]-($previous[$i]||$base_time) );
       } elsif( $i == $_->[2]+1 ) {
-        $diagnostics .= sprintf( "%10.6f ", $_->[0]-($previous[$i]||$base_time) );
+        $diagnostics .= sprintf( "%10.5f ", $_->[0]-($previous[$i]||$base_time) );
         $previous[$i] = $_->[0];
       } else {
         $diagnostics .= '           ';
@@ -109,6 +119,25 @@ Cumulative     Section\n";
     }
     $diagnostics .= ("  | " x $_->[2]).$_->[1];
   }
+
+  my %X = %{$Totals_of{ ident $self }};
+  $diagnostics .='
+--------------------------------------------------------------------------------
+      Time       %age   Category
+---------- ----------   -----------
+';
+  my $T = 0;
+  foreach ( sort keys %X ) {
+    $T+=$X{$_};
+  }
+  foreach ( sort keys %X ) {
+    $diagnostics .= sprintf( "%10.5f %9.3f%%   %s\n", $X{$_}, 100*$X{$_}/$T, $_ );
+  }
+  $diagnostics .='---------- ----------   -----------
+'.sprintf( '%10.5f',$T ),'           TOTAL
+--------------------------------------------------------------------------------';
+    
+  
   my $benchmarks = '';
   foreach (keys %{$Benchmarks_of{ ident $self}} ) {
     my $T = $Benchmarks_of{ ident $self }{$_};
@@ -134,7 +163,7 @@ $benchmarks".
   }
   return "$diagnostics
 $benchmarks
-=================================================================
+================================================================================
 ";
 }
 

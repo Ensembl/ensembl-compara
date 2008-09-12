@@ -4,8 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
-use CGI qw(escapeHTML);
-our @ISA = qw( EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;
@@ -24,9 +22,13 @@ sub content {
        'image_width'     => $self->image_width || 800,
        'slice_number'    => '1|1'
      });
+  $object->timer_push( 'Cacheing object', 5);
      $wuc->cache( 'object',       $object );
+  $object->timer_push( 'Cacheing snps', 5);
      $wuc->cache( 'image_snps',   $object->pep_snps );
+  $object->timer_push( 'Cacheing splice sites', 5);
      $wuc->cache( 'image_splice', $object->pep_splice_site( $object->Obj ) );
+  $object->timer_push( 'Cacheing dumping tree', 5);
 
   $wuc->tree->dump("Tree", '[[caption]]' );
 
@@ -34,7 +36,9 @@ sub content {
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'translation';
      $image->set_button( 'drag', 'title' => 'Drag to select region' );
+  warn "IN IMAGE RENDER";
   return $image->render;
+  warn "OUT OF IMAGE RENDER";
 }
 
 1;

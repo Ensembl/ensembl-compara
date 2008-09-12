@@ -154,6 +154,8 @@ sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
 ## Manipulate the Registry...
   $ENSEMBL_WEB_REGISTRY->timer->set_script_start_time( time  ); ## This is the page rendering start time!
+  $ENSEMBL_WEB_REGISTRY->timer->clear_times();
+  $ENSEMBL_WEB_REGISTRY->timer_push( 'Handling script', undef, 'Apache' );
 #  $r->push_handlers( PerlTransHandler =>   \&transHandler );
 #warn "         $$ PTH....";
 #  $r->push_handlers( PerlCleanupHandler => \&cleanupHandler );
@@ -185,6 +187,7 @@ sub postReadRequestHandler {
   my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
   $ENSEMBL_WEB_REGISTRY->check_ajax($cookies{'ENSEMBL_AJAX'}); 
   
+  $ENSEMBL_WEB_REGISTRY->timer_push( 'Post read request handler comoleted', undef, 'Apache' );
   return;
 }
 
@@ -407,6 +410,7 @@ $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
 sub transHandler {
   my $r = shift;      # Get the connection handler
   my $u           = $r->parsed_uri;
+  $ENSEMBL_WEB_REGISTRY->timer->set_name( "REQUEST ". $r->uri );
   my $file        = $u->path;
   my $querystring = $u->query;
 
@@ -434,14 +438,17 @@ sub transHandler {
 
   if( $species eq 'das' ) {
     my $return = transHandler_das( $r, $session_cookie, \@path_segments, $querystring );
+    $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for DAS scripts finished', undef, 'Apache' );
     return $return if defined $return;
   }
   if( $OBJECT_TO_SCRIPT{ $species } && $path_segments[0]!~/\./ ) { # Species less script??
     my $return = transHandler_no_species( $r, $session_cookie, $species, \@path_segments, $querystring );
+    $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for non-species scripts finished', undef, 'Apache' );
     return $return if defined $return;
   }
   if( $species && ($species = $SPECIES_MAP{lc($species)} || '' ) ) { # species script
     my $return = transHandler_species( $r, $session_cookie, $species, \@path_segments, $querystring, $file );
+    $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for species scripts finished', undef, 'Apache' );
     return $return if defined $return;
     shift @path_segments;
     shift @path_segments;
@@ -472,12 +479,15 @@ sub transHandler {
     $r->filename( $1 . ( $r->filename =~ /\/$/ ? '' : '/' ). 'index.html' );
     $r->headers_out->add( 'Location' => $r->uri );
     $r->child_terminate;
+    $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler "REDIRECT"', undef, 'Apache' );
     return HTTP_TEMPORARY_REDIRECT;
   } elsif( $filename ) {
     $r->filename( $filename );
+    $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler "OK"', undef, 'Apache' );
     return OK;
   }
 # Give up
+  $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler "DECLINED"', undef, 'Apache' );
   return DECLINED;
 }
 
@@ -495,6 +505,11 @@ sub cleanupHandler {
   my $end_time    = time();
   my $start_time  = $ENSEMBL_WEB_REGISTRY->timer->get_script_start_time;
   my $length      = $end_time- $start_time;
+  $ENSEMBL_WEB_REGISTRY->timer_push( 'Cleaned up', undef,'Cleanup' );
+  
+  warn $ENSEMBL_WEB_REGISTRY->timer->render
+    if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_PERL_PROFILER;
+
 
   if( $length >= $ENSEMBL_LONGPROCESS_MINTIME ) {
     my $u           = $r->parsed_uri;
