@@ -53,9 +53,9 @@ sub content_Text {
           $self->_error( qq(Runtime Error in component "<b>$component</b>"),
             qq(<p>Function <strong>$function_name</strong> fails to execute due to the following error:</p>$error)
           );
-          $self->_prof( "Component $function_name (runtime failure)" );
+          $self->timer_push( "Component $function_name (runtime failure)" );
         } else {
-          $self->_prof( "Component $function_name succeeded" );
+          $self->timer_push( "Component $function_name succeeded" );
         }
       } else {
         $self->_error( qq(Compile error in component "<b>$component</b>"),
@@ -65,7 +65,7 @@ sub content_Text {
             <pre>@{[ $self->_format_error( $self->dynamic_use_failure($module_name) ) ]}</pre>
           )
         );
-        $self->_prof( "Component $function_name (compile failure)" );
+        $self->timer_push( "Component $function_name (compile failure)" );
       }
       last if $result;
     }

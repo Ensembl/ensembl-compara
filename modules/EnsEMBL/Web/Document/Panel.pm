@@ -580,7 +580,7 @@ sub _error {
   $self->print( "<h4>$caption</h4>$message" );
 }
 
-sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 3+$_[2] ); }
+sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 3+$_[2] ); }
 
 sub _is_ajax_request {
   return $_[0]->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
@@ -618,7 +618,7 @@ sub content {
                 execute due to the following error:
                </p>).$self->_format_error($@),
           );
-          $self->_prof( "Component $module_name (runtime failure [new])" );
+          $self->timer_push( "Component $module_name (runtime failure [new])" );
         } else {
           
           my $caption = $comp_obj->caption;
@@ -662,7 +662,7 @@ sub content {
                     execute due to the following error:
                    </p>).$self->_format_error($@)
               );
-              $self->_prof( "Component $module_name (runtime failure [content])" );
+              $self->timer_push( "Component $module_name (runtime failure [content])" );
             } else {
               if( $content ) {
             		if( ! $self->_is_ajax_request ) {
@@ -671,7 +671,7 @@ sub content {
             		}
                 $self->print( $content );
               }
-              $self->_prof( "Component $module_name succeeded" );
+              $self->timer_push( "Component $module_name succeeded" );
             }
     	  }
       }
@@ -683,7 +683,7 @@ sub content {
       as unable to compile module.
     </p>). $self->_format_error( $self->dynamic_use_failure($module_name) )
         );
-        $self->_prof( "Component $module_name (compile failure)" );
+        $self->timer_push( "Component $module_name (compile failure)" );
       }
       last if $result;
     }

@@ -26,7 +26,7 @@ our @ISA = qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(redirect simple_self simple_with_redirect wrapper_self);
 our @EXPORT    = @EXPORT_OK;
 
-sub _prof { my $self = shift; $self->timer->push( @_ ); }
+sub timer_push { my $self = shift; $self->timer->push( @_ ); }
 sub timer { return $_[0]{'timer'}; }
 
 sub new {
@@ -62,24 +62,23 @@ sub new {
   my %parameters = @_;
   $| = 1;
 
-  $self->{'cache'} = $parameters{'cache'};
-  $self->{'r'}     = $parameters{'r'};
-  $self->{'parent'}     = $parameters{'parent'};
+  $self->{'cache'}  = $parameters{'cache'};
+  $self->{'r'}      = $parameters{'r'};
+  $self->{'parent'} = $parameters{'parent'};
   
 ## Input module...
   $self->{'script'} = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
   my $input;
   if ($parameters{'cgi'}) {
     $input = $parameters{'cgi'};
-  }  
-  elsif ($parameters{'command'}) {
+  } elsif ($parameters{'command'}) {
     $input = $parameters{'command'}->action->get_cgi;
   }
   else {
     $input  = new CGI;
   }
   # $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
-  $self->_prof("Parameters initialised from input");
+  $self->timer_push("Parameters initialised from input");
 
 ## Page module...
 ## Compile and create renderer ... [ Apache, File, ... ]
@@ -89,12 +88,13 @@ sub new {
     $render_module = "EnsEMBL::Web::Document::Renderer::".DEFAULT_RENDERER;
     $self->dynamic_use( $render_module ); 
   }
+  $self->timer_push("Renderer object compiled");
 
   my $rend = new $render_module(
     r     => $self->{'r'},
     cache => $self->{'cache'},
   );
-  $self->_prof("Renderer compiled and initialized");
+  $self->timer_push("Renderer initialized");
 
 ## Compile and create "Document" object ... [ Dynamic, Popup, ... ]
   $self->{doctype} = $parameters{'doctype'} || DEFAULT_DOCUMENT;
@@ -104,20 +104,21 @@ sub new {
     $doc_module = "EnsEMBL::Web::Document::".DEFAULT_DOCUMENT;
     $self->dynamic_use( $doc_module ); 
   }
+  $self->timer_push("Page object compiled");
   $self->page = new $doc_module( $rend, $self->{'timer'}, $self->{'species_defs'}, $input );          
-  $self->_prof("Page object compiled and initialized");
+  $self->timer_push("Page object initialized");
 
 ## Initialize output type! [ HTML, XML, Excel, Txt ]
   $self->{'format'} = $input->param('_format') 
-      || $parameters{'outputtype'} 
-      || DEFAULT_OUTPUTTYPE;
+    || $parameters{'outputtype'} 
+    || DEFAULT_OUTPUTTYPE;
   my $method = "_initialize_".($self->{'format'});
   $self->{'format_version'} = $input->param('_format_version')
-      || $parameters{'outputtype_version'}
-      || undef();
+    || $parameters{'outputtype_version'}
+    || undef;
 
   $self->page->$method($self->{'format_version'});
-  $self->_prof("Output method initialized" );
+  $self->timer_push("Output method initialized" );
 
 ## Finally we get to the Factory module!
   my $db_connection;
@@ -127,7 +128,9 @@ sub new {
       $ENSEMBL_WEB_REGISTRY->species_defs
     );
   }
-  my $core_objects = EnsEMBL::Web::CoreObjects->new( $input, $db_connection );
+  $self->timer_push("DB connection created..." );
+  my $core_objects = EnsEMBL::Web::CoreObjects->new( $input, $db_connection, $self->{doctype} eq 'Component' ? 'lw' : undef );
+  $self->timer_push("Core objects created...");
   $self->factory = EnsEMBL::Web::Proxy::Factory->new(
     $parameters{'objecttype'}, {
       '_input'         => $input,
@@ -137,7 +140,7 @@ sub new {
     }
   );
   $self->factory->__data->{'timer'} = $self->{'timer'};
-  $self->_prof("Factory compiled and objects created...");
+  $self->timer_push("Factory compiled and objects created...");
   return $self if $self->factory->has_fatal_problem();
   eval {
     if( $parameters{'fast'} ) {
@@ -149,11 +152,11 @@ sub new {
   };
   if( $@ ) {
     $self->problem( 'fatal', "Unable to execute createObject on Factory of type $parameters{'objecttype'}.", $@ );
-                                                                     $self->_prof("Object creation failed");
+    $self->timer_push("Object creation failed");
   } else {
-                                                                     $self->_prof("Objects created");
+    $self->timer_push("Objects created");
     my $sc = $self->factory->get_scriptconfig( );
-#       $sc->update_from_input( $input, $rend->{'r'} ) if $sc;        $self->_prof("Script config updated from input");
+#       $sc->update_from_input( $input, $rend->{'r'} ) if $sc;        $self->timer_push("Script config updated from input");
   }
   return $self;
 }
@@ -269,13 +272,13 @@ sub configure {
 
 
   $self->add_error_panels(); # Add error panels to end of display!!
-  $self->_prof("Script configured ($objecttype)");
+  $self->timer_push("Script configured ($objecttype)");
 }   
 
 sub static_links {
   my $self = shift;
 #  $self->configure( undef, 'links' );
-#  $self->_prof("Static links added");
+#  $self->timer_push("Static links added");
 }
 
 sub factory   :lvalue { $_[0]->{'factory'}; }
@@ -331,7 +334,10 @@ warn "Now we render Excel....";
     CGI::header( -type => "application/octet-stream", -attachment => "ensembl.txt.gz" );
     $self->page->render_TextGz;
   } else {
-    CGI::header; $self->static_links; $self->page->render;
+    CGI::header;
+    $self->static_links;
+    $self->timer_push('Static links generated');
+    $self->page->render;
   }
 }
 

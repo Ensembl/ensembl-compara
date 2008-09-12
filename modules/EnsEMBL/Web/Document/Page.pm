@@ -289,9 +289,9 @@ sub html_line {
 
 sub _init( ) {
   my $self = shift;
-  $self->_prof( "....." );
   foreach my $entry ( @{$self->{'head_order'}}, @{$self->{'body_order'}} ) {
     my($O,$classname) = @$entry;
+    warn "[ $O - $classname ]";
     next unless $self->dynamic_use( $classname ); 
     my $T;
     eval { $T = $classname->new( $self->{'timer'} ); $T->{_renderer} = $self->{_renderer}};
@@ -302,7 +302,7 @@ sub _init( ) {
     $self->{$O} = $T;
     my $method_name = ref($self)."::$O";
     no strict 'refs'; 
-    $self->_prof( "$classname....." );
+    $self->timer_push( "$classname....." );
     *$method_name = sub :lvalue { $_[0]{$O} };
   }
 }
@@ -328,7 +328,7 @@ sub include_navigation {
   return $self->{_has_navigation};
 }
 
-sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 1 ); }
+sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 1 ); }
 
 sub render {
   my $self = shift;
@@ -393,6 +393,7 @@ sub render {
   </div>
 [[body_javascript]]';
 
+  $self->timer_push( 'template generated' );
   while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {
     my($start,$page_element) = ($1,$2);
     $self->print( $start );
@@ -496,7 +497,7 @@ sub _render_head_and_body_tag {
   foreach my $R ( @{$self->{'head_order'}} ) {
     my $attr = $R->[0];
     $self->$attr->render;
-    $self->_prof( "Rendered $attr" );
+    $self->timer_push( "Rendered $attr" );
   }
   $self->print( "</head>\n<body" );
   foreach my $K ( keys( %{$self->{'body_attr'}}) ) {

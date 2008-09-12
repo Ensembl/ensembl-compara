@@ -85,7 +85,7 @@ sub first :lvalue { $_[0]->{'first'}; }
 sub form  :lvalue { $_[0]->{'form'}; }
 
 
-sub _prof { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 2 ); }
+sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 2 ); }
 
 sub render {
   my $self = shift;
@@ -95,7 +95,7 @@ sub render {
     $panel->{'timer'} = $self->{'timer'};
     $panel->render( $self->{'first'} );
     $self->{'first'} = 0;
-    $self->_prof( "Rendered panel ".$panel->{'code'} );
+    $self->timer_push( "Rendered panel ".$panel->{'code'} );
   }
   $self->print( "\n</form>" ) if $self->{'form'};
   $self->_end;

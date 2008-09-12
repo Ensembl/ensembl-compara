@@ -85,18 +85,18 @@ sub _initialize_HTML {
   );
 
   $self->call_child_functions( 'common_page_elements','dynamic_page_elements' );
-  $self->_prof( "page elements configured" );
+  $self->timer_push( "page elements configured" );
   $self->_common_HTML();
-  $self->_prof( "common HTML called" );
+  $self->timer_push( "common HTML called" );
   $self->_script_HTML();
-  $self->_prof( "script HTML called" );
+  $self->timer_push( "script HTML called" );
   $self->rss->add( '/common/rss.xml', 'Ensembl website news feed', 'rss' );
-  $self->_prof( "page decs configured" );
+  $self->timer_push( "page decs configured" );
 
   $self->call_child_functions( 'extra_configuration' );
 #  $self->call_child_functions( 'common_menu_items', 'dynamic_menu_items' );
 
-  $self->_prof( "menu items configured" );
+  $self->timer_push( "menu items configured" );
 }
 
 1;

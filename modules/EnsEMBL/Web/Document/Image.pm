@@ -487,8 +487,6 @@ sub exists {
 
 sub render {
   my $self = shift;
-  my $timer = $self->{'species_defs'}->timer;
-  $timer->push('Image->render starting');
   my $HTML = $self->introduction;
   ## Here we have to do the next bit which is to draw the image itself;
   my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
@@ -515,7 +513,7 @@ sub render {
         keys %{$self->{'hidden'}}
       ),
       $image_html;
-      $self->{'counter'}++;
+    $self->{'counter'}++;
   } elsif ($self->button eq 'yes') {
     $image->{'text'} = $self->{'button_title'};
     $image->{'name'} = $self->{'button_name'};
@@ -523,32 +521,25 @@ sub render {
     $HTML .= $image->render_image_button();
     $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
   } elsif( $self->button eq 'drag' ) {
-    #$timer->push("Starting Image Tag",5);
     $image->{'id'} = $self->{'prefix'} . "_$self->{'panel_number'}_i";
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width
-# $self->{'species_defs'}{'timer'}->push("Finished Image Tag",5);
-    if( $self->menu_container ) {
-      $HTML .= $self->menu_container->render_html;
-      $HTML .= $self->menu_container->render_js;
-    }
+    $HTML .= $self->menu_container->render_html.$self->menu_container->render_js if $self->menu_container;
     ## continue with tag HTML
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
-    $HTML .= '<div style="text-align:center">';
-    $HTML .= '<div style="text-align:center;margin:auto;border:0px;padding:0px">';
-    $HTML .= sprintf qq(<div class="drag_select" id="$self->{'prefix'}_$self->{'panel_number'}" style="margin: 0px auto; border: solid 1px black; position: relative; width:%dpx">), $image->{'width'};
-    #$timer->push("Starting Image Map",5);
-    $HTML .= $tag;
-    if( $self->imagemap eq 'yes' ) {
-      $HTML .= $image->render_image_map
-    }
-    $HTML .= "</div>";
-    $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
-    $HTML .= '</div>';
-    $HTML .= '</div>';
-# $timer->push("Finishing Image Map",5);
+    $HTML .= '<div style="text-align:center">'.
+             '<div style="text-align:center;margin:auto;border:0px;padding:0px">'.
+             sprintf( qq(<div class="drag_select" id="%s_%s" style="margin: 0px auto; border: solid 1px black; position: relative; width:%dpx">),
+	       $self->{'prefix'},$self->{'panel_number'}, $image->{'width'}
+	     ).
+             $tag.
+             ($self->imagemap eq 'yes' ? $image->render_image_map : '' ).
+             '</div>'.
+             ($self->caption ? sprintf( qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption  ) : '' ).
+             '</div>'.
+             '</div>';
   } else {
     my $tag = $image->render_image_tag();
     ## Now we have the image dimensions, we can set the correct DIV width 
@@ -560,20 +551,15 @@ sub render {
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
-    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding:0px">';
-    $HTML .= qq(<div style="text-align: center">$tag</div>);
-    if( $self->imagemap eq 'yes' ) {
-      $HTML .= $image->render_image_map
-    } 
-## 
-    $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
-    $HTML .= '</div>';
+    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding:0px"><div style="text-align: center">%s</div>%s%s</div>',
+               $tag,
+               $self->imagemap eq 'yes' ? $image->render_image_map : '',
+	       $self->caption ? sprintf( '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption ) : '';
   }
   if( @{$self->{'image_formats'}} ) {
     my %URLS;
     foreach( sort @{$self->{'image_formats'}} ) {
       my $T = $image->render($_);
-#$timer->push("Finishing rendering $_",5);
       $URLS{$_} = $T->{'URL'};
       $URLS{$_}.='.eps' if lc($_) eq 'postscript';
     }
@@ -585,8 +571,7 @@ sub render {
   $HTML .= $self->tailnote;
     
   $self->{'width'} = $image->{'width'};
-#  $timer->push("Returning from renderer....",5);
-  $timer->push('Image->render ending');
+  $self->{'species_defs'}->timer_push('Image->render ending',undef,'draw');
   return $HTML
 }
 
