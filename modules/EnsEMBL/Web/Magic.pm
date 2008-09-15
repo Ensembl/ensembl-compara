@@ -128,12 +128,11 @@ sub ingredient {
 ### part thereof - for inclusion via AJAX
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
 
-  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
-  ## Ajax request
-  $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
+  ## If user logged in, some content depends on user
+  $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
 
-  my $content = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
+  my $content = ($memd && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $memd->get($ENV{CACHE_KEY}) : undef;
 
   timer_push( 'Retrieved content from cache' );
   $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_ACTION'}" );
