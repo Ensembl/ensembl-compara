@@ -39,16 +39,13 @@ sub new_from_hashref {
   my ( $class, $hash ) = @_;
   
   # Convert old-style type & assembly parameters to single coords
-  while ( defined (my $type = shift @{ $hash->{type}||[] }) ) {
-    $type =~ s/ensembl_location_//;
-    my $version = shift @{ $hash->{assembly}||[] };
-    $hash->{coords} ||= [];
-    my $coord = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
+  if (my $type = $hash->{type}) {
+    $type =~ s/^ensembl_location//;
+    push @{ $hash->{coords} }, Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
       -name    => $type,
-      -version => $version,
+      -version => $hash->{assembly},
       -species => $ENV{ENSEMBL_SPECIES},
     );
-    push @{ $hash->{coords} }, $coord;
   }
   
   # Create a Bio::EnsEMBL::ExternalData::DAS::Source object to wrap
@@ -94,10 +91,8 @@ sub new_from_URL {
   delete $das_data{category};
   
   # Expand multi-value parameters
-  $das_data{enable  } = [split /,/, $das_data{enable  }];
-  $das_data{coords  } = [split /,/, $das_data{coords  }];
-  $das_data{type    } = [split /,/, $das_data{type    }]; # deprecated (use coords)
-  $das_data{assembly} = [split /,/, $das_data{assembly}]; # deprecated (use coords)
+  $das_data{enable} = [split /,/, $das_data{enable}];
+  $das_data{coords} = [split /,/, $das_data{coords}];
   
   # Restore spaces in the label
   if ($das_data{label}) {
