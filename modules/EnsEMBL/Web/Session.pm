@@ -296,7 +296,7 @@ sub get_shared_data {
 # those either added or modified externally. Returns a hashref, indexed by name.
 # An optional non-zero argument forces re-retrieval of das sources, otherwise
 # these are cached.
-sub get_all_DASConfigs {
+sub get_all_das {
   my( $self, $force ) = @_;
   
   # This is cached so return it unless "Force" is set to load in other stuff
