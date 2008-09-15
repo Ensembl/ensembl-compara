@@ -43,9 +43,9 @@ sub new {
                   && !$levels{ORDERED_TREE};
 
   my %args = (
-    servers         => $memcached{servers},
-    debug           => $memcached{debug},
-    default_exptime => $memcached{default_exptime},
+    servers         => $memcached->{servers},
+    debug           => $memcached->{debug},
+    default_exptime => $memcached->{default_exptime},
     namespace       => $species_defs->ENSEMBL_BASE_URL,
     @,
   );
