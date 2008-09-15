@@ -313,7 +313,7 @@ sub get_all_DASConfigs {
   
   foreach my $config (@configs) {
     $config->data || next;
-    # Create new DAS source and load from value in database...
+    # Create new DAS source from value in database...
     my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $config->data );
     $das->category( 'session' );
     $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
@@ -378,6 +378,7 @@ sub add_das {
     # Attach the DAS source..
     $Das_sources_of{ ident $self }{ $new_name } = $das;
     $self->update_configs_for_das( $das, qw(contigview geneview cytoview protview) );
+    # Note that this doesn't update the Registry cache!
   } else {
     return 0;
   }
