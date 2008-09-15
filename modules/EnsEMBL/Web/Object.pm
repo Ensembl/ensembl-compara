@@ -306,6 +306,10 @@ sub _help_URL {
   return $URL;
 }
 
+=head2 getCoordinateSystem
+
+TODO: replace
+
 sub getCoordinateSystem{
   my ($self, $cs) = @_;
 
@@ -345,6 +349,7 @@ sub getCoordinateSystem{
   return  $cs ? ($DASMapping{$cs} || $cs) : # Either a single entry from the list if there is a param
                 \%DASMapping;               # Or a hash reference if not....
 }
+=cut
 
 =head2 get_DASCollection
 
@@ -355,7 +360,7 @@ sub getCoordinateSystem{
   Caller    : 
   Example   : 
 
-=cut
+TODO: remove
 
 sub get_DASCollection{
   my $self = shift;
@@ -380,6 +385,8 @@ sub get_DASCollection{
   }
   return $data->{_das_collection};
 }
+
+=cut
 
 
 sub alternative_object_from_factory {
