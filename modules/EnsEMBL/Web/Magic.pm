@@ -33,7 +33,6 @@ sub Location   { return 'Location',   @_; }
 sub Variation  { return 'Variation',  @_; }
 sub Server     { return 'Server',     @_; }
 
-sub timer_push { $ENSEMBL_WEB_REGISTRY->timer->push( @_ ); }
 sub magic      {
 ### Usage: use EnsEMBL::Web::Magic; magic stuff
 ###
@@ -128,14 +127,13 @@ sub ingredient {
 ### part thereof - for inclusion via AJAX
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
 
+  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
-  ## If user logged in, some content depends on user
-  $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
+  ## Ajax request
+  $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
 
-  my $content = ($memd && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $memd->get($ENV{CACHE_KEY}) : undef;
+  my $content = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
 
-  timer_push( 'Retrieved content from cache' );
-  $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_ACTION'}" );
   if ($content) {
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
   } else {
@@ -145,26 +143,25 @@ sub ingredient {
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
       'objecttype' => $objecttype,
       'scriptname' => 'component',
-      'doctype'    => 'Component',
       'parent'     => $referer_hash,
       'renderer'   => 'String',
       'cache'      => $memd,
     );
     
     $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
-    timer_push( 'Ajax content configured...!' ); 
+  
     $webpage->render;
-    timer_push( 'Rendering completed' );
+    warn $webpage->timer->render if
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
     $content = $webpage->page->renderer->content;
     my @tags = qw(AJAX);
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
     $memd->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags) if $memd;
-    timer_push( 'Rendered content cached' );
   }
 
   CGI::header;
   print $content;
-  timer_push( 'Rendered content printed' );
   return "Generated magic ingredient ($ENV{'ENSEMBL_ACTION'})";
 }
 
@@ -189,12 +186,11 @@ sub stuff {
   my $doctype = shift;
   my $modal_dialog = shift;
 
-  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
-  ## Ajax request
-  $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
+  ## If user logged in, some content depends on user
+  $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
 
-  my $content = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
+  my $content = ($memd && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $memd->get($ENV{CACHE_KEY}) : undef;
 
   if ($content) {
     warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}";
