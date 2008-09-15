@@ -16,21 +16,12 @@ sub new {
   my $class  = shift;
   my $caller = caller;
   my $species_defs = new EnsEMBL::Web::SpeciesDefs;
-  my %memcached    = $species_defs->multiX('ENSEMBL_MEMCACHED');
+  my $memcached    = $species_defs->ENSEMBL_MEMCACHED;
   
   return undef
-    unless %memcached;
+    unless %$memcached;
 
-  my $levels = $memcached{levels}
-               || [qw(
-                       PLUGGABLE_PATHS
-                       STATIC_PAGES_CONTENT
-                       WEBSITE_DB_DATA
-                       USER_DB_DATA
-                       TMP_IMAGES
-                       AJAX_CONTENT
-                       ORDERED_TREE
-                  )];
+  my $levels = $memcached->{levels} || [ qw(PLUGGABLE_PATHS TMP_IMAGES) ];
 
   my %levels = map { $_ => 1 } @$levels;
      
