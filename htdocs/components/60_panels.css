@@ -6,7 +6,7 @@
 .panel div.content { padding: 5px; margin: 0; }
 .panel dl, form dl { margin: 0; position: relative; clear: left }
 .panel dt, form dt { margin-bottom:0.5em; clear: left; float: left; width: 10em }
-.panel dd, form dd { margin: 0.5em 0 0 9em }
+.panel dd, form dd { margin: 0.5em 0 0 10em }
 
 .panel dl.normal dt { clear:none; float:none; width:100%; margin:0.5em 0 0 0; font-weight:bold; }
 .panel dl.normal dd { margin: 0.5em 0 0 2em; }
