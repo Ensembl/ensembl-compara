@@ -457,7 +457,7 @@ sub _summarise_dasregistry {
   
   # Fetch the sources for the current species
   my %sources = map {
-    $_->url => { $_->dsn => $_ }
+    $_->logic_name => $_
   } @{ $parser->fetch_Sources(-species => $self->species) };
   
   # The ENSEMBL_INTERNAL_DAS_SOURCES section is a list of enabled DAS sources
@@ -483,7 +483,7 @@ sub _summarise_dasregistry {
     $cfg->{'logic_name'}      = $key;
     
     # Check using the url/dsn if the source is registered
-    my $src = $sources{$cfg->{'url'}}{$cfg->{'dsn'}};
+    my $src = $sources{$key};
     # Doesn't have to be in the registry... unfortunately
     # But if it is, fill in the blanks
     if ($src) {
