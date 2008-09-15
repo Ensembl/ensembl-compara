@@ -19,7 +19,7 @@ sub new {
   my $memcached    = $species_defs->ENSEMBL_MEMCACHED;
   
   return undef
-    unless %$memcached;
+    unless $memcached && %$memcached;
 
   my $levels = $memcached->{levels} || [ qw(PLUGGABLE_PATHS TMP_IMAGES) ];
 
