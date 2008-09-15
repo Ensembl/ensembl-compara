@@ -1,4 +1,5 @@
 package EnsEMBL::Web::Configuration::DAS;
+# This configures the DAS server component of the website
 
 use strict;
 use EnsEMBL::Web::Configuration;

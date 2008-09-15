@@ -7,7 +7,6 @@ no warnings "uninitialized";
 use EnsEMBL::Web::Factory;
 use EnsEMBL::Web::Proxy::Object;
 
-use EnsEMBL::Web::Object::UserDAS;
 ## TO ADD
 #use EnsEMBL::Web::Object::File;
 #use EnsEMBL::Web::Data::UserFile;
@@ -37,13 +36,6 @@ sub create_UserData {
   my $self   = shift;
   return {};
 }
-
-sub create_UserDAS {
-  ## Creates a lightweight UserDAS object
-  my $self   = shift;
-  return EnsEMBL::Web::Object::UserDAS->new();
-}
-
 
 1;
 

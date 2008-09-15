@@ -123,18 +123,22 @@ sub attach {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
-  my $server        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_server' ));
+  my $server        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_server' ));
   my $source_logic  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'source_logic'));
-  my $source        = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_source', backtrack => 1 ));
-  my $attach        = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'attach'));
-  my $feedback      = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'attach_feedback'));
+  my $source        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_source', backtrack => 1 ));
+  my $validate_das  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'validate_das'));
+  my $species       = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_species', backtrack => 1  ));
+  my $coords        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_coords', backtrack => 1  ));
+  
+  # END POINTS:
+  my $attach_das    = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'attach_das'));
+  my $attach_url    = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'attach_url'));
 
   ## LINK PAGE NODES TOGETHER
-  $wizard->add_connection(( from => $server,        to => $source_logic));
-  $wizard->add_connection(( from => $source_logic,  to => $source));
-  $wizard->add_connection(( from => $source_logic,  to => $attach));
-  $wizard->add_connection(( from => $source,        to => $attach));
-  $wizard->add_connection(( from => $attach,        to => $feedback));
+  $wizard->add_connection(( from => $server,  to => $source_logic));
+  $wizard->add_connection(( from => $source,  to => $validate_das));
+  $wizard->add_connection(( from => $species, to => $coords));
+  $wizard->add_connection(( from => $coords,  to => $validate_das));
 
 }
 

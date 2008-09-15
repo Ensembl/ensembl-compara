@@ -3,11 +3,7 @@ package EnsEMBL::Web::Object::UserData;
 use strict;
 use warnings;
 no warnings "uninitialized";
-=head
-# TODO: remove these                                                                                   
-use Bio::EnsEMBL::ExternalData::DAS::DAS;
-use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
-=cut
+
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::RegObj;
 use Bio::EnsEMBL::Utils::Exception qw(try catch);
@@ -64,13 +60,18 @@ sub get_das_servers {
 sub get_das_server_dsns {
   my ($self, $species, $name) = @_;
   
+  # Get and "fix" the server URL
   my $server = $self->param('das_server');
+  if ($server !~ /^\w+\:/) {
+    $server = "http://$server";
+  }
   if ($server =~ /^http/) {
     $server =~ s|/*$||;
     if ($server !~ m{/das$}) {
       $server = "$server/das";
     }
   }
+  $self->param('das_server', $server);
   my $sources;
   
   try {
