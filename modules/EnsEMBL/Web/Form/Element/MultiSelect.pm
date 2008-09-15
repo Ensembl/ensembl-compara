@@ -24,8 +24,18 @@ sub render {
   if( $self->render_as eq 'select' ) {
     my $options = '';
     foreach my $V( @{$self->values} ) {
+      my $checked = 'no';
+      foreach my $M ( @{$self->value||[]} ) {
+        if ($M eq $V->{'value'}) {
+          $checked = 'yes';
+          last;
+        }
+      }
+      if ($V->{'checked'}) {
+        $checked = 'yes';
+      }
       $options .= sprintf( "<option value=\"%s\"%s>%s</option>\n",
-			   $V->{'value'}, $V->{'checked'} eq 'yes' ? ' selected="selected"' : '', $V->{'name'}
+			   $V->{'value'}, $checked eq 'yes' ? ' selected="selected"' : '', $V->{'name'}
       );
     }
     return sprintf( qq(%s<select multiple="multiple" name="%s" id="%s" class="normal" onChange="os_check('%s',this,%s)">%s</select>%s),
@@ -39,10 +49,9 @@ sub render {
     my $output = sprintf(qq(<label class="label" for="%s">%s</label><br /><br />),
         CGI::escapeHTML($self->id), CGI::escapeHTML( $self->label ));
     my $K = 0;
-    my $checked;
 
     foreach my $V ( @{$self->values} ) {
-      $checked = 'no';
+      my $checked = 'no';
       # check if we want to tick this box
       foreach my $M ( @{$self->value||[]} ) {
         if ($M eq $V->{'value'}) {
