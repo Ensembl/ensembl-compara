@@ -521,7 +521,7 @@ sub select_coords {
   }
   
   $self->add_element( 'type' => 'SubHeader', 'value' => "Gene & Protein" );
-  for my $cs (@Bio::EnsEMBL::ExternalData::DAS::Coordinator::NON_GENOMIC_COORDS) {
+  for my $cs (values %Bio::EnsEMBL::ExternalData::DAS::Coordinator::NON_GENOMIC_COORDS) {
     my ($auth, $type) = split '_', $cs->name;
     $self->add_element( 'type'    => 'CheckBox',
                         'name'    => 'coords',
