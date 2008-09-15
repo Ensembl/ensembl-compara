@@ -19,9 +19,8 @@ sub render {
 
   my $output = '';
   my $K = 0;
-  my $checked;
   foreach my $V ( @{$self->values} ) {
-    $checked = 'no';
+    my $checked = 'no';
     # check if we want to tick this box
     foreach my $M ( @{$self->value||[]} ) {
 	    if ($M eq $V->{'value'}) {
@@ -29,18 +28,17 @@ sub render {
 	      last;
 	    }
     }
-    if ($V->{'checked'}) {
+    if ($V->{'checked'} eq 'yes') {
 	    $checked = 'yes';
     }
     $output .= sprintf(qq(    
 <label class="label-radio">
-<input type="radio" name="%s" id="%s_%d" value="%s" class="input-radio" %s/> %s %s</label>),
+<input type="radio" name="%s" id="%s_%d" value="%s" class="input-radio" %s/> %s </label>),
         CGI::escapeHTML($self->name),
         CGI::escapeHTML($self->name), $K,
 			  CGI::escapeHTML($V->{'value'}),
 			  $checked eq 'yes' ? ' checked="checked"' : '', 
 			  $self->{'noescape'} ? $V->{'name'} : CGI::escapeHTML($V->{'name'}),
-        $self->notes,
 			  );
     $K++;
   }
