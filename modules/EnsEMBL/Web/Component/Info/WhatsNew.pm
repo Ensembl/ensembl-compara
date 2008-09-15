@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component);
-use EnsEMBL::Web::Apache::SendDecPage;
+use EnsEMBL::Web::Document::HTML::News;
 
 sub _init {
   my $self = shift;
@@ -15,11 +15,7 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $object = $self->object;
-  my $html; 
-
-  my $file = '/'.$object->species.'/ssi/whatsnew.html';
-  $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file); 
+  my $html = EnsEMBL::Web::Document::HTML::News->render; 
 
   return $html;
 }
