@@ -8,7 +8,7 @@ use strict;
 use Data::Dumper;
 use EnsEMBL::Web::SpeciesDefs;
 use base 'Cache::Memcached';
-use fields qw(default_exptime levels);
+use fields qw(default_exptime flags);
 
 no warnings;
 
@@ -21,26 +21,26 @@ sub new {
   return undef
     unless $memcached && %$memcached;
 
-  my $levels = $memcached->{levels} || [ qw(PLUGGABLE_PATHS TMP_IMAGES) ];
+  my $flags = $memcached->{flags} || [ qw(PLUGGABLE_PATHS TMP_IMAGES) ];
 
-  my %levels = map { $_ => 1 } @$levels;
+  my %flags = map { $_ => 1 } @$flags;
      
   return undef if $caller->isa('EnsEMBL::Web::Apache::Handlers')
-                  && !$levels{PLUGGABLE_PATHS};
+                  && !$flags{PLUGGABLE_PATHS};
   return undef if $caller->isa('EnsEMBL::Web::Apache::SendDecPage')
-                  && !$levels{STATIC_PAGES_CONTENT};
+                  && !$flags{STATIC_PAGES_CONTENT};
   return undef if $caller->isa('EnsEMBL::Web::DBSQL::UserDBConnection')
-                  && !$levels{USER_DB_DATA};
+                  && !$flags{USER_DB_DATA};
   return undef if $caller->isa('EnsEMBL::Web::DBSQL::WebDBConnection')
-                  && !$levels{WEBSITE_DB_DATA};
+                  && !$flags{WEBSITE_DB_DATA};
   return undef if $caller->isa('EnsEMBL::Web::File::Driver::Memcached')
-                  && !$levels{TMP_IMAGES};
+                  && !$flags{TMP_IMAGES};
   return undef if $caller->isa('EnsEMBL::Web::Apache::Image')
-                  && !$levels{TMP_IMAGES};
+                  && !$flags{TMP_IMAGES};
   return undef if $caller->isa('EnsEMBL::Web::Magic')
-                  && !$levels{AJAX_CONTENT};
+                  && !$flags{AJAX_CONTENT};
   return undef if $caller->isa('EnsEMBL::Web::Configuration')
-                  && !$levels{ORDERED_TREE};
+                  && !$flags{ORDERED_TREE};
 
   my %args = (
     servers         => $memcached->{servers},
@@ -56,12 +56,12 @@ sub new {
   $self->enable_compress(0) unless $args{enable_compress};
 
   $self->{default_exptime} = $default_exptime;
-  $self->{levels}          = \%levels;
+  $self->{flags}          = \%flags;
   
   return $self;
 }
 
-sub levels :lvalue { $_[0]->{'levels'}; }
+sub flags :lvalue { $_[0]->{'flags'}; }
 
 sub add_tags {
   my $self = shift;
