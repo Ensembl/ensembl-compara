@@ -166,9 +166,29 @@ sub populate_tree {
     { 'availability' => 1, 'concise' => 'Exons'}
   );
 
-  $self->create_node( 'Protein', "Peptide product",
+  $self->create_node( 'Protein', "Protein summary",
     [qw(image       EnsEMBL::Web::Component::Transcript::TranslationImage
-    statistics  EnsEMBL::Web::Component::Transcript::PepStats)],
+        statistics  EnsEMBL::Web::Component::Transcript::PepStats)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'Domains', "Protein domains",
+    [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'ProtVariations', "Protein variation features",
+    [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'OtherFeat', "Other protein features",
+    [qw(otherfeat     EnsEMBL::Web::Component::Transcript::OtherProteinFeatures)],
+    { 'availability' => 1}
+  );
+
+  $self->create_node( 'OtherFeat', "Protein variation features",
+    [qw(otherfeat     EnsEMBL::Web::Component::Transcript::OtherProteinFeatures)],
     { 'availability' => 1}
   );
 
