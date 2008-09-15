@@ -76,7 +76,10 @@ sub db_connect {
   my $db_name = shift;
 
   my $dbname  = $self->tree->{'databases'}->{$db_name}{'NAME'};
-  return unless $dbname;
+  unless ($dbname) {
+    warn "No database found for $db_name";
+    return;
+  }
 
   #warn "Connecting to $db_name";
   my $dbhost  = $self->tree->{'databases'}->{$db_name}{'HOST'};
