@@ -274,7 +274,8 @@ sub stuff {
 
     my @tags = qw(DYNAMIC);
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
-    $memd->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags) if $memd && !$webpage->has_a_problem;
+    $memd->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags)
+      if $memd && !$webpage->has_a_problem && $ENSEMBL_WEB_REGISTRY->check_ajax;
   }
   
   CGI::header;
