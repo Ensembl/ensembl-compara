@@ -14,7 +14,9 @@ sub init {
   $self->{'_userdatatype_ID'} = 109;
 
   $self->{'general'}->{'Vmapview'} = {
-    '_artefacts'   => [qw(Vsnps Vpercents Vgenes Vsupercontigs Videogram Vrefseqs)],
+    #'_artefacts'   => [qw(Vsnps Vpercents Vgenes Vsupercontigs Videogram Vrefseqs)],
+    ## TODO - add supercontigs back in, when their absence is detected correctly
+    '_artefacts'   => [qw(Vsnps Vpercents Vgenes Videogram Vrefseqs)],
     '_options'   => [],
 
     '_settings' => {
