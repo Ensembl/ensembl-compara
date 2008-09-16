@@ -13,6 +13,9 @@
 
 #modal_caption dl.tabs dd a { color: #fff }
 #modal_caption dl.tabs dd a:link, #modal_caption dl.tabs a:hover { color: #fff }
+#modal_caption dl.tabs dd.active { background-color:#eee; }
+#modal_caption dl.tabs dd.active a { color:[[PAGE_TEXT]]; }
+#modal_caption dl.tabs dd.active a:link, #modal_caption dl.tabs dd.active a:hover { color:[[PAGE_HOVER]]; }
 
 dl#local_modal {width:14em; margin:0 0.25em; position:absolute; top: 2em; left: 0;
   border:1px solid #ccc;padding:0;background-color:#fff; overflow: hidden}
@@ -23,7 +26,7 @@ dl#local_modal dd { margin-bottom: 0; overflow: hidden }
 dl#local_modal dd.notl dl, #local_modal dd.notl { background: url(/i/line.gif) repeat-y;  }
 dl#local_modal dd.notl dl { margin:0}
 dl#local_modal dd.last { background: #fff url(/i/last.gif) no-repeat }
-dl#local_modal dd.active, #local_modal a.active { font-weight: bold; background-color: #eaeeff }
+dl#local_modal dd.active, #local_modal a.active { font-weight: bold; border:1px solid #fff; color:#f00 }
 
 
 dl#local_modal dd {margin-left:0;margin-bottom:0; white-space: nowrap}
