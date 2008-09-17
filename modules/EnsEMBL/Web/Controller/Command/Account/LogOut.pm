@@ -19,6 +19,7 @@ sub process {
   my $self = shift;
   my $cgi = $self->action->cgi;
   my $url = $cgi->param('_referer') || '/Account/Login';
+warn "URL $url";
 
   ## setting a (blank) expired cookie deletes the current one
   my $SD = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
