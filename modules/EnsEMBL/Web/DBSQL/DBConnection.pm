@@ -40,6 +40,7 @@ use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use EnsEMBL::Web::Problem;
 use Bio::EnsEMBL::Registry;
+use EnsEMBL::Web::RegObj;
 my $reg = "Bio::EnsEMBL::Registry";
 
 sub new {
@@ -386,9 +387,6 @@ sub _get_blast_database{
   my $self = shift;
   my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_BLAST} ||
      die( "No blast database in MULTI" );
-# Write DB, so update user and pass
-  $db_info->{USER} = $self->{'species_defs'}->get_config('Multi', 'ENSEMBL_WRITE_USER');
-  $db_info->{PASS} = $self->{'species_defs'}->get_config('Multi', 'ENSEMBL_WRITE_PASS');
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::External::BlastAdaptor' );
 }
 
