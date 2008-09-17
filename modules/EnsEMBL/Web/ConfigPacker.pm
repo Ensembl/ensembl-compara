@@ -101,20 +101,26 @@ sub _summarise_core_tables {
 ## Grab each of the analyses - will use these in a moment...
 ##
   my $t_aref = $dbh->selectall_arrayref(
-    'select a.analysis_id, a.logic_name,
+    'select a.analysis_id, a.logic_name, a.created,
             ad.display_label, ad.description,
             ad.displayable, ad.web_data
        from analysis a left join analysis_description as ad on a.analysis_id=ad.analysis_id'
   );
-   my $analysis = {};
-   foreach my $a_aref (@$t_aref) {
+  my $analysis = {};
+  foreach my $a_aref (@$t_aref) {
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
-      'name'        => $a_aref->[2],
-      'description' => $a_aref->[3],
-      'displayable' => $a_aref->[4],
-      'web_data'    => $a_aref->[5]?eval($a_aref->[5]):{}
+      'name'        => $a_aref->[3],
+      'description' => $a_aref->[4],
+      'displayable' => $a_aref->[5],
+      'web_data'    => $a_aref->[6]?eval($a_aref->[6]):{}
     };
+    ## Set last repeat mask date whilst we're at it, as needed by BLAST configuration, below
+    if ($a_aref->[1] eq 'RepeatMask') {
+      my $date = substr($a_aref->[2], 0, 10);
+      $date =~ s/-//g;
+      $self->db_tree->{'REPEAT_MASK_DATE'} = $date;
+    }
   }
 ## 
 ## Let us get analysis information about each feature type...
@@ -573,6 +579,34 @@ sub _munge_website_multi {
 }
 
 sub _configure_blast {
+## TODO: Needs changing to work out available sources based on what's in databases
+  my $self = shift;
+  my $tree = $self->tree;
+  my $species = $self->tree->{'SPECIES_BIO_NAME'};
+  $species =~ s/ /_/g;
+  foreach my $blast_type (keys %$tree) {
+    next unless $blast_type =~ /_DATASOURCES/;
+    foreach my $source ( keys %{$tree->{$blast_type}} ) {
+      my $file = $tree->{$blast_type}{$source};
+      next unless $file =~ /^%_/;
+      my $assembly = $tree->{'ASSEMBLY_NAME'};
+      (my $type = lc($source)) =~ s/_/\./ ;
+      if ($type =~ /latestgp/) {
+        $type =~ s/latestgp(.*)/dna$1\.toplevel/;
+        $type =~ s/.masked/_rm/;
+        my $repeat_date = $self->db_tree->{'REPEAT_MASK_DATE'};;
+        my $new_file = sprintf( '%s.%s.%s.%s', $species, $assembly, $repeat_date, $type ).".fa";
+        #print "AUTOGENERATING $source......$new_file\t";
+        $tree->{$blast_type}{$source} = $new_file;
+      } 
+      else {
+        $type = "ncrna" if $type eq 'rna.nc';
+        my $new_file = sprintf( '%s.%s.%s.%s', $species, $assembly, $SiteDefs::ENSEMBL_VERSION, $type ).".fa";
+        #print "AUTOGENERATING $source......$new_file\t";
+        $tree->{$blast_type}{$source} = $new_file;
+      }
+    }
+  }
 }
 
 
