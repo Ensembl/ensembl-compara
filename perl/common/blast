@@ -1,0 +1,27 @@
+#!/usr/local/bin/perl
+
+package blast;
+
+use strict;
+use warnings;
+
+use EnsEMBL::Web::Controller;
+
+{
+
+my $controller = EnsEMBL::Web::Controller->new;
+
+$controller->add_connections({qw(
+  Search      EnsEMBL::Web::Controller::Command::Blast::Search
+  Ticket      EnsEMBL::Web::Controller::Command::Blast::Ticket
+  Submit      EnsEMBL::Web::Controller::Command::Blast::Submit
+  Status      EnsEMBL::Web::Controller::Command::Blast::Status
+  Raw         EnsEMBL::Web::Controller::Command::Blast::Raw
+  Results     EnsEMBL::Web::Controller::Command::Blast::Results
+)});
+
+$controller->dispatch($ENV{REQUEST_URI});
+
+}
+
+1;
