@@ -6,7 +6,7 @@ no warnings 'uninitialized';
 
 use DBI;
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::Object::BlastRequest;
+#use EnsEMBL::Web::Object::BlastRequest;
 
 use vars qw($STATUS_PENDING $STATUS_RUNNING $STATUS_COMPLETE $STATUS_PARSED);
 

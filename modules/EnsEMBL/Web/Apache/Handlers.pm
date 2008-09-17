@@ -5,7 +5,7 @@ use SiteDefs qw( :APACHE);
 use strict;
 use Apache2::Const qw(:common :http :methods);
 use EnsEMBL::Web::DBSQL::BlastAdaptor;
-use EnsEMBL::Web::Object::BlastJobMaster;
+#use EnsEMBL::Web::Object::BlastJobMaster;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::Registry;
 use Apache2::SizeLimit;
@@ -45,6 +45,7 @@ our %OBJECT_TO_SCRIPT = qw(
   UserData    user_data
   Help        help
   News        news
+  Blast       blast
 );
 
 #======================================================================#
