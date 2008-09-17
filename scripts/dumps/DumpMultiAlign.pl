@@ -485,6 +485,7 @@ if ($skip_species) {
 }
 
 ## MAIN DUMPING LOOP
+my $exit_loop = 0;
 do {
   my $genomic_align_blocks = [];
   if (!@query_slices) {
@@ -532,7 +533,6 @@ do {
       open(STDOUT, ">$this_output_file") or die("Cannot open $this_output_file");
       print_header($output_format, $method_link_species_set, $date, $release, $num);
     }
-
     ## Dump these alignments
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
       if ($method_link_species_set->method_link_class =~ /tree_alignment/) {
@@ -549,14 +549,14 @@ do {
     ## chunk_num means that only this chunk has to be dumped:
     ## set the split_size to 0 in orer to exit the main loop
     if ($chunk_num) {
-      $split_size = 0;
+      $exit_loop = 1;
     }
 
   } else {
     ## No more genomic_align_blocks to dump: set split_size to 0 in orer to exit the main loop
-    $split_size = 0;
+    $exit_loop = 1;
   }
-} while ($split_size or $slice_counter < @query_slices);
+} while (!$exit_loop);
 
 exit(0);
 
