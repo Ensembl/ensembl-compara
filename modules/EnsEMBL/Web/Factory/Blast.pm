@@ -4,41 +4,38 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Factory;
+use base qw(EnsEMBL::Web::Factory);
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::DBSQL::BlastAdaptor;
-use EnsEMBL::Web::Object::BlastRequest;
-use EnsEMBL::Web::Object::BlastTicket;
-
-our @ISA = qw(  EnsEMBL::Web::Factory );
 
 sub blast_adaptor {
   my $self = shift;
-  warn ("Loading fonts from: " . $self->species_defs->{'ENSEMBL_FONT_LOCATION'});
-  my $DB = $self->species_defs->databases->{'ENSEMBL_BLAST'};
-  unless ($DB) {
-    $self->problem('Fatal', 'Blast database', 'Configuration not found for Blast database');
-    return undef;
-  }
-  $self->__data->{'blast_db'} ||= EnsEMBL::Web::DBSQL::BlastAdaptor->new($DB);
-  return $self->__data->{'blast_db'};
+  my $sp = shift || $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_PRIMARY_SPECIES;
+  my $blast_adaptor; 
+
+  eval {
+    $blast_adaptor = $self->DBConnection->get_databases_species( $sp, 'blast' )->{'blast'};
+  };
+
+  $blast_adaptor && return $blast_adaptor;
+
+  # Still here? Something gone wrong!
+  my $err = "Can not connect to blast database...";
+  warn( "$err: $@" );
+
 }
 
 sub createObjects {   
-    my $self = shift;    
-    my $current_version = $self->species_defs->ENSEMBL_VERSION;
-    my $current_species_list = $self->blast_adaptor->fetch_species($current_version);
+  my $self = shift;    
 
-    $self->DataObjects(EnsEMBL::Web::Proxy::Object->new( 
-           'Blast', { 
-           'current_spp' => $current_species_list,
-           'request' => EnsEMBL::Web::Object::BlastRequest->new,
-           'ticket' => EnsEMBL::Web::Object::BlastTicket->new({
-				'blast_adaptor' => $self->blast_adaptor
-				}),
-           'blast_adaptor' => $self->blast_adaptor,
-           }, 
-           $self->__data ));
+  ## Create a very lightweight object, as the data required for a blast page is very variable
+  $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
+    'Blast', {
+      'tickets'    => undef,
+      'adaptor'   => $self->blast_adaptor,
+    }, $self->__data));
+
 }
 
 1;
