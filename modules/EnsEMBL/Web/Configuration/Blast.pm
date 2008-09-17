@@ -1,114 +1,59 @@
 package EnsEMBL::Web::Configuration::Blast;
 
 use strict;
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::Configuration;
-use EnsEMBL::Web::Wizard::Blast;
+use base qw( EnsEMBL::Web::Configuration );
 
-our @ISA = qw( EnsEMBL::Web::Configuration );
-
-#-----------------------------------------------------------------------
-
-sub blastview {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  my $wizard = EnsEMBL::Web::Wizard::Blast->new($object);
-  $wizard->add_nodes([qw(blast_home blast_info blast_ticket blast_prepare blast_submit)]);
-  $wizard->default_node('blast_home');
-  $wizard->chain_nodes([
-          ['blast_home'=>'blast_info'],
-          ['blast_info'=>'blast_prepare'],
-          ['blast_prepare'=>'blast_submit'],
-  ]);
-
-  $self->add_wizard($wizard);
-  my $here = $wizard->current_node($object);
-  if ($here eq 'blast_submit') {
-    warn("Adding Ajax javascript files");
-    $self->{page}->javascript->add_source( "/js/prototype.js" );
-    $self->{page}->javascript->add_source( "/js/blastview.js" );
-  }
-  $self->wizard_panel('Blastview');
-  warn("Configured Blastview for $here");
+sub set_default_action {
+  my $self = shift;
+  $self->{_data}{default} = 'Search';
 }
 
-sub blastsearchview {
-  my $self   = shift;
-  my $object = $self->{'object'};
-  my $ticket = $object->param('ticket');
+sub global_context { return undef; }
+sub ajax_content   { return undef;   }
+sub local_context  { return $_[0]->_local_context;  }
+sub local_tools    { return undef;  }
+sub content_panel  { return $_[0]->_content_panel;  }
+sub context_panel  { return undef;  }
 
-  ## TODO: Change the add_body_attr call below to take settings from
-  ## global config
+sub populate_tree {
+  my $self = shift;
 
-  $self->{page}->javascript->add_source( "/js/prototype.js" );
-  $self->{page}->javascript->add_source( "/js/blastview.js" );
-  #$self->{page}->add_body_attr( 'onload' => "javascript:start_periodic_updates(10000, 'blast_queue_ticket', '$ticket', 'update_status')");
+  $self->create_node( 'Search', "New Search",
+    [qw(
+      search    EnsEMBL::Web::Component::Blast::Search
+    )],
+    { 'availability' => 1}
+  );
 
-  my $panel = $self->new_panel('Image', 'code' => 'info', 'object' => $object);
-  if ($panel) {
-    $panel->add_components(qw(show_news EnsEMBL::Web::Component::Blast::blastsearchview));
-  }
+  $self->create_node( 'Ticket', "Retrieve Ticket",
+    [qw(
+      ticket    EnsEMBL::Web::Component::Blast::Ticket
+    )],
+    { 'availability' => 1}
+  );
 
-  $self->{page}->content->add_panel($panel);
+  ## Add "invisible" nodes used by interface but not displayed in navigation
+  $self->create_node( 'Submit', '',
+    [qw(sent EnsEMBL::Web::Component::Blast::Submit
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'Status', '',
+    [qw(sent EnsEMBL::Web::Component::Blast::Status
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'Raw', '',
+    [qw(sent EnsEMBL::Web::Component::Blast::Raw
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'Results', '',
+    [qw(sent EnsEMBL::Web::Component::Blast::Results
+        )],
+      { 'no_menu_entry' => 1 }
+  );
 
-}
-
-sub context_menu {
-  my $self   = shift;
-  my $object = $self->{'object'};
-  my $wizard = $self->{wizard};
-  if ($wizard) {
-    my $here = $self->{wizard}->current_node($object);
-    $object->request->update($object);
-    if ($here ne 'blast_home' && $here ne 'blast_ticket') {
-      $self->{page}->menu->add_block( $here, 'bulleted', "Blast search" );
-      $self->add_entry($here, 
-        'code' => 'blast_info_sequence_type',
-        'text' => $object->request->type,
-        'title' => "Sequence information",
-        'icon' => '/img/infoicon.gif',
-      );
-
-      if (!$object->request->is_ticket) {  
-        $self->add_entry($here, 
-          'code' => 'blast_info_sequence_count',
-          'text' => $object->request->sequence_length . " " . $object->request->units,
-          'title' => "Sequence information",
-          'icon' => '/img/infoicon.gif',
-        );
-      } 
-
-      if ($here eq 'blast_prepare' || $here eq 'blast_submit') { 
-        if ($object->request->species) {
-          $self->add_entry($here, 
-            'code' => 'blast_info_species',
-            'text' => $object->species_for_id($object->request->species),
-            'title' => "Species",
-            'icon' => '/img/infoicon.gif',
-          );
-        } else {
-          $self->add_entry($here, 
-            'code' => 'blast_info_species',
-            'text' => 'All species', 
-            'title' => "Species",
-            'icon' => '/img/infoicon.gif',
-          );
-        }
-      }
-      $self->add_entry($here,
-        'code' => 'blast_info',
-        'text' => 'Start again',
-        'href' => 'blastview',
-        'title' => "Restart your Blast search (all settings will be reset)",
-       );
-    } # end of wizard check
-   
-   }
-    $self->delete_block( 'archive' );
-}
-
-sub context_location {
 }
 
 1;
