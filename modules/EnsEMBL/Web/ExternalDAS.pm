@@ -35,7 +35,7 @@ sub getConfigs {
   while( my($key,$value) = splice(@Q,0,2) ) {
 warn "JS5 DAS ... $key->$value ...";
     ($key,$value) = ('contigviewbottom','contigviewbottom') if $key eq 'contigview';
-    $self->{'configs'}{$key} = $self->{'proxiable'}->user_config_hash( $value );
+    $self->{'configs'}{$key} = $self->{'proxiable'}->image_config_hash( $value );
   }
 }
 
