@@ -192,7 +192,7 @@ function __modal_onload() {
     ]),
     Builder.node( 'div', { id: 'modal_content' }, 'Modal content' )
   ]));
-  $('modal_close').onclick = modal_dialog_close;
+  Event.observe( $('modal_close'), 'click', modal_dialog_close );
   window.onresize = __modal_page_resize;
   window.onscroll = __modal_page_resize;
 }
