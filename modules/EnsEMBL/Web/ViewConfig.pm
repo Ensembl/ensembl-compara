@@ -2,19 +2,18 @@ package EnsEMBL::Web::ViewConfig;
 
 use strict;
 use Data::Dumper;
-use Storable qw( nfreeze freeze thaw );
 
 sub new {
-  my $class   = shift;
-  my $type    = shift;
-  my $adaptor = shift;
+  my($class,$type,$action,$adaptor) = @_;
+
   my $self = {
-    '_db'       => $adaptor->get_adaptor,
-    '_r'        => $adaptor->get_request || undef,
-    'type'      => $type,
-    '_options'  => {},
-    '_user_config_names' => {},
-    'no_load'   => undef
+    '_db'                 => $adaptor->get_adaptor,
+    '_r'                  => $adaptor->get_request || undef,
+    'type'                => $type,
+    'action'              => $action,
+    '_options'            => {},
+    '_image_config_names' => {},
+    'no_load'             => undef
   };
 
   bless($self, $class);
@@ -23,8 +22,8 @@ sub new {
 
 sub storable :lvalue {
 ### a
-### Set whether this ScriptConfig is changeable by the User, and hence needs to
-### access the database to set storable do $script_config->storable = 1; in SC code...
+### Set whether this ViewConfig is changeable by the User, and hence needs to
+### access the database to set storable do $view_config->storable = 1; in SC code...
   $_[0]->{'storable'};
 }
 
@@ -37,8 +36,13 @@ sub altered :lvalue {
 sub add_image_configs { ## Value indidates that the track can be configured for DAS (das) or not (nodas)
   my( $self, $hash_ref ) = @_;
   foreach( keys %$hash_ref ) {
-    $self->{_user_config_names}{$_} = $hash_ref->{$_};
+    $self->{_image_config_names}{$_} = $hash_ref->{$_};
   }
+}
+
+sub image_configs {
+  my $self = shift;
+  return %{$self->{_image_config_names}||{}};
 }
 
 sub _set_defaults {
@@ -82,6 +86,7 @@ sub update_config_from_parameter {
 sub update_from_input {
 ### Loop through the parameters and update the config based on the parameters passed!
   my( $self, $input ) = @_;
+  warn "......... $input ........";
   my $flag = 0;
   foreach my $key ( $self->options ) {
     if( defined $input->param($key) && $input->param( $key ) ne $self->{'_options'}{$key}{'user'} ) {
@@ -181,31 +186,13 @@ sub get_user_settings {
 
 sub load {
   my ($self) = @_;
-  #warn "Loading from ScriptConfig";
-warn "ScriptConfig load - Deprecated call - now written by session";
+  warn "ViewConfig load - Deprecated call - now written by session";
   return;
-  return unless $self->{'_db'};
-#warn "LOAD SC";
-  my $TEMP = $self->{'_db'}->getConfigByName( $ENV{'ENSEMBL_FIRSTSESSION'}, 'script::'.$self->{'type'} );
-  my $diffs = {};
-  eval { $diffs = Storable::thaw( $TEMP ) if $TEMP; };
-  foreach my $key ( keys %$diffs ) {
-    $self->{'_options'}{$key}{'user'} = $diffs->{$key};
-  }
 }
 
 sub save {
   my ($self) = @_;
-  #warn "Saving from ScriptConfig";
-  warn "ScriptConfig load - Deprecated call - now written by session";
-  return;
-  return unless $self->{'_db'};
-  my $diffs = {};
-  foreach my $key ( $self->options ) {
-    $diffs->{$key} = $self->{'_options'}{$key}{'user'} if exists($self->{'_options'}{$key}{'user'}) && $self->{'_options'}{$key}{'user'} ne $self->{'_options'}{$key}{'default'};
-  }
-  #warn "Diffs: " . $diffs;
-  $self->{'_db'}->setConfigByName( $self->{'_r'}, $ENV{'ENSEMBL_FIRSTSESSION'}, 'script::'.$self->{'type'}, &Storable::nfreeze($diffs) );
+  warn "ViewConfig load - Deprecated call - now written by session";
   return;
 }
 
