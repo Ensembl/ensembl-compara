@@ -147,7 +147,7 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
   warn "Name: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVERNAME.":".$conf->ENSEMBL_PROXY_PORT,"\n";
   warn "Real: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVER.":".$conf->ENSEMBL_PORT,"\n";
   warn "\n";
-  warn "Cache namespace: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVERNAME.":".$conf->ENSEMBL_PROXY_PORT,"\n";
+  warn "Cache namespace: ".$conf->ENSEMBL_BASE_URL, "\n";
   warn "\n";
   require EnsEMBL::Web::BlastView::MetaDataBlast;
 } else{
