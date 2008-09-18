@@ -10,7 +10,7 @@ use Class::Std;
 use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::ExtURL;
-use EnsEMBL::Web::ScriptConfig;
+use EnsEMBL::Web::ViewConfig;
 use EnsEMBL::Web::ImageConfig;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
@@ -43,7 +43,7 @@ our @ISA = qw(EnsEMBL::Web::Root);
 
 
 ### New Session object - passed around inside the data object to handle storage of
-### ScriptConfigs/ImageConfigs in the web_user_db
+### ViewConfigs/ImageConfigs in the web_user_db
 ###
 ### How it is used...
 ###
@@ -51,15 +51,15 @@ our @ISA = qw(EnsEMBL::Web::Root);
 ### accessed via {{EnsEMBL::Web::Proxiable::get_session}} method. You usually won't need
 ### to do this explicitly - because it is done implicitly by methods such as:
 ###
-### {{EnsEMBL::Web::Proxiable::get_userconfig}},
-### {{EnsEMBL::Web::Proxiable::user_config_hash}},
-### {{EnsEMBL::Web::Proxiable::get_scriptconfig}},
+### {{EnsEMBL::Web::Proxiable::get_imageconfig}},
+### {{EnsEMBL::Web::Proxiable::image_config_hash}},
+### {{EnsEMBL::Web::Proxiable::get_viewconfig}},
 ### {{EnsEMBL::Web::Proxiable::attach_image_config}} all of which create either
-### {{EnsEMBL::Web::ScriptConfig}} or {{EnsEMBL::Web::ImageConfig}} objects.
+### {{EnsEMBL::Web::ViewConfig}} or {{EnsEMBL::Web::ImageConfig}} objects.
 ###
 ### These commands in turn access the database if we already have a session (whose is
-### accessible by {{session_id}}) and if the appropriate scriptconfig is defined as
-### storable. (In this way it replaces the ScriptConfigAdaptor/ImageConfigAdaptor modules
+### accessible by {{session_id}}) and if the appropriate viewconfig is defined as
+### storable. (In this way it replaces the ViewConfigAdaptor/ImageConfigAdaptor modules
 ###
 ### At the end of the configuration section of the webpage if any data needs to be
 ### saved to the session this is done so (and if required a session cookie set and
@@ -389,6 +389,8 @@ sub add_das {
 # TODO: rework interface with drawing code
 sub update_configs_for_das {
   my( $self, $DAS, @configs ) = @_;
+
+  warn "....    @configs   .... DAS!!!!!!!!!!!!!!!!!!!!!!!!!!!";
   my %map = qw(
     enable    enable
     labelflag lflag
@@ -398,9 +400,9 @@ sub update_configs_for_das {
   my $N = $DAS->logic_name;
   my %scripts  = map {($_=>1)} @{$DAS->enable||[]};
   foreach my $sc_name (@configs) {
-    my $sc = $self->getScriptConfig( $sc_name, 1 );
-    foreach my $ic_name ( keys %{$sc->{'_user_config_names'}} ) {
-      next  unless $sc->{'_user_config_names'}{$ic_name} eq 'das';
+    my $sc = $self->getViewConfig( $sc_name, 1 );
+    foreach my $ic_name ( keys %{$sc->{'_image_config_names'}} ) {
+      next  unless $sc->{'_image_config_names'}{$ic_name} eq 'das';
       $self->attachImageConfig( $sc_name, $ic_name );
       my $T = $self->getImageConfig( $ic_name, $ic_name );
       if( $scripts{ $sc_name } ) {
@@ -459,9 +461,9 @@ sub attachImageConfig {
   return;
 }
 
-sub getScriptConfig {
-### Create a new {{EnsEMBL::Web::ScriptConfig}} object for the script passed
-### Loops through core and all plugins looking for a EnsEMBL::*::ScriptConfig::$script
+sub getViewConfig {
+### Create a new {{EnsEMBL::Web::ViewConfig}} object for the script passed
+### Loops through core and all plugins looking for a EnsEMBL::*::ViewConfig::$script
 ### package and if it exists calls the function init() on the package to set
 ### (a) the default values, (b) whether or not the user can over-ride these settings
 ### loaded in the order: core first, followed each of the plugin directories
@@ -473,72 +475,78 @@ sub getScriptConfig {
 ### Then loop through the {{EnsEMBL::Web::Input}} object and set anything in this
 ### Keep a record of what the user has changed!!
   my $self   = shift;
-  my $script = shift;
+  my $type   = shift;
+  my $action = shift;
   my $do_not_pop_from_params = shift;
 
-  unless ($Configs_of{ ident $self }{$script}) {
-    my $script_config = EnsEMBL::Web::ScriptConfig->new( $script, $self );
+  my $key = $type.'::'.$action;
 
+  warn "GETTING CALL OF VIEW CONFIG........................................................... $type, $action ...";
+  unless ($Configs_of{ ident $self }{$key} ) {
+    my $view_config = EnsEMBL::Web::ViewConfig->new( $type, $action, $self );
+    warn ".... $view_config .... created ...";
     foreach my $root ( @{$self->get_path} ) {
-      my $classname = $root."::ScriptConfig::$script";
+      my $classname = $root."::ViewConfig::$key";
       unless( $self->dynamic_use( $classname ) ) {
 ## If the module can't be required throw an error and return undef;
         (my $message = "Can't locate $classname\.pm in" ) =~ s/::/\//g;
         my $error = $self->dynamic_use_failure($classname);
-        warn qq(ScriptConfigAdaptor failed to require $classname:\n  $error) unless $error=~/$message/;
+        warn qq(ViewConfig: failed to require $classname:\n  $error) unless $error=~/$message/;
         next;
       }
       my $method_name = $classname."::init";
       eval {
         no strict 'refs';
-        &$method_name( $script_config );
+        &$method_name( $view_config );
       };
+      warn "$method_name - called....";
       if( $@ ) {
         my $message = "Undefined subroutine &$method_name called";
         if( $@ =~ /$message/ ) {
-          warn qq(ScriptConfigAdaptor: init not defined in $classname\n);
+          warn qq(ViewConfig: init not defined in $classname\n);
         } else {
-          warn qq(ScriptConfigAdaptor init call on $classname failed:\n$@);
+          warn qq(ViewConfig: init call on $classname failed:\n$@);
         }
       }
     }
 
     my $image_config_data = {};
-    if( $self->get_session_id && $script_config->storable ) {
+    if( $self->get_session_id && $view_config->storable ) {
       ## Let us see if there is an entry in the database and load it into the script config!
       ## and store any other data which comes back....
       my $config = EnsEMBL::Web::Data::Session->get_config(
         session_id => $self->get_session_id,
-        type       => 'script',
-        code       => $script,
+        type       => 'view',
+        code       => $key,
       );
 
       if ($config && $config->data) {
-        $script_config->set_user_settings( $config->data->{'diffs'} );
+        $view_config->set_user_settings( $config->data->{'diffs'} );
         $image_config_data = $config->data->{'image_configs'};
       }
     }
     unless( $do_not_pop_from_params ) {
-      $script_config->update_from_input( $self->input ); ## Needs access to the CGI.pm object...
+      warn "CALLED... update_from_input...";
+      $view_config->update_from_input( $self->input ); ## Needs access to the CGI.pm object...
     }
 
-    $Configs_of{ ident $self }{$script} = {
-      'config'            => $script_config,       ## List of attached
+    $Configs_of{ ident $self }{$key} = {
+      'config'            => $view_config,         ## List of attached
       'image_configs'     => {},                   ## List of attached image configs
       'image_config_data' => $image_config_data    ## Data retrieved from database to define image config settings.
     };
   }
-  return $Configs_of{ ident  $self }{$script}{'config'};
+  return $Configs_of{ ident  $self }{$key}{'config'};
 }
 
-sub get_script_config_as_string {
-  my ($self, $script) = @_;
+sub get_view_config_as_string {
+  my ($self, $type, $action ) = @_;
 
   if( $self->get_session_id ) {
     my $config = EnsEMBL::Web::Data::Session->get_config(
       session_id => $self->get_session_id,
-      type       => 'script',
-      code       => $script,
+      type       => 'view',
+      code       => $type.'::'.$action,
     );
     return $config->as_string if $config;
   }
@@ -546,12 +554,12 @@ sub get_script_config_as_string {
   return undef; 
 }
 
-sub set_script_config_from_string {
-  my ($self, $script, $string) = @_;
+sub set_view_config_from_string {
+  my ($self, $type, $action, $string) = @_;
   EnsEMBL::Web::Data::Session->set_config(
     session_id => $self->get_session_id,
-    type       => 'script',
-    code       => $script,
+    type       => 'view',
+    code       => $type.'::'.$action,
     data       => $string,
   );
 }
@@ -566,15 +574,15 @@ sub getImageConfig {
   if( $key && exists $ImageConfigs_of{ ident $self }{$key} ) {
     return $ImageConfigs_of{ ident $self }{$key};
   }
-  my $user_config = $self->get_ImageConfig( $type ); # $ImageConfigs_of{ ident $self }{ $type };
+  my $image_config = $self->get_ImageConfig( $type ); # $ImageConfigs_of{ ident $self }{ $type };
   foreach my $script ( keys %{$Configs_of{ ident $self }||{}} ) {
     if( $Configs_of{ ident $self }{$script}{'image_config_data'}{$type} ) {
-      $user_config->{'user'} = $self->deepcopy( $Configs_of{ ident $self }{$script}{'image_config_data'}{$type} );
+      $image_config->{'user'} = $self->deepcopy( $Configs_of{ ident $self }{$script}{'image_config_data'}{$type} );
     }
   }
 ## Store if $key is set!
-  $ImageConfigs_of{ ident $self }{ $key } = $user_config if $key;
-  return $user_config;
+  $ImageConfigs_of{ ident $self }{ $key } = $image_config if $key;
+  return $image_config;
 }
 
 sub get_ImageConfig {
@@ -605,10 +613,10 @@ sub get_ImageConfig {
 ## Import the module
   $classname->import();
   $self->colourmap;
-  my $user_config = eval { $classname->new( $self, @_ ); };
-  if( $@ || !$user_config ) { warn(qq(ImageConfigAdaptor failed to create new $classname: $@\n)); }
+  my $image_config = eval { $classname->new( $self, @_ ); };
+  if( $@ || !$image_config ) { warn(qq(ImageConfigAdaptor failed to create new $classname: $@\n)); }
 ## Return the respectiv config.
-  return $user_config;
+  return $image_config;
 }
 
 }
