@@ -44,7 +44,7 @@ sub content {
   }
   my $length = $slice->end - $slice->start + 1;
 
-  my $wuc = $object->user_config_hash( 'contigviewtop' );
+  my $wuc = $object->image_config_hash( 'contigviewtop' );
   $wuc->set_parameters({
     'container_width' => $length,
     'image_width'     => $self->image_width,

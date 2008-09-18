@@ -1296,8 +1296,8 @@ sub transcripts {
 
     my $gene_slice = $gene->Obj->feature_Slice->expand( 10e3, 10e3 );
     $gene_slice = $gene_slice->invert if $gene->seq_region_strand < 0;
-    ## Get the web_user_config
-    my $wuc        = $gene->user_config_hash( 'altsplice' );
+    ## Get the web_image_config
+    my $wuc        = $gene->image_config_hash( 'altsplice' );
     ## We now need to select the correct track to turn on....
     ## We need to do the turn on turn off for the checkboxes here!!
     foreach( $trans[0]->default_track_by_gene ) {
@@ -1411,7 +1411,7 @@ sub gene_structure {
   my $trans = $object->get_all_transcripts;
   my $gene_track_name =$trans->[0]->default_track_by_gene;
 
-  my $wuc = $object->get_userconfig( 'geneview' );
+  my $wuc = $object->get_imageconfig( 'geneview' );
      $wuc->{'geneid'} = $object->Obj->stable_id;
      $wuc->{'_draw_single_Gene'} = $object->Obj;
      $wuc->set( '_settings',          'width',       900);
@@ -1472,7 +1472,7 @@ sub genetreeview_menu {
                                          'configname'  => $configname,
                                          'panel'       => 'image',
                                          'object' => $object,
-                                         'configs'     => [ $object->user_config_hash( 'genetreeview' ) ],
+                                         'configs'     => [ $object->image_config_hash( 'genetreeview' ) ],
                                          'leftmenus'  => $left,
                                          'rightmenus' => $right
                                          );
@@ -1499,7 +1499,7 @@ sub gene_menu {
   my $mc = $object->new_menu_container(
     'configname'  => $configname,
     'panel'       => 'bottom',
-    'configs'     => [ $object->user_config_hash( 'genesnpview_context' ) ],
+    'configs'     => [ $object->image_config_hash( 'genesnpview_context' ) ],
     'leftmenus'  => $left,
     'rightmenus' => $right
   );
@@ -1520,7 +1520,7 @@ sub genesnpview {
   my $context      = $object->param( 'context' );
   my $extent       = $context eq 'FULL' ? 1000 : $context;
 
-  my $master_config = $object->get_userconfig( "genesnpview_transcript" );
+  my $master_config = $object->get_imageconfig( "genesnpview_transcript" );
      $master_config->set( '_settings', 'width',  $image_width );
 
 
@@ -1532,7 +1532,7 @@ sub genesnpview {
   push @confs, 'snps' unless $no_snps;
 
   foreach( @confs ) {
-    $Configs->{$_} = $object->get_userconfig( "genesnpview_$_" );
+    $Configs->{$_} = $object->get_imageconfig( "genesnpview_$_" );
     $Configs->{$_}->set( '_settings', 'width',  $image_width );
   }
    $object->get_gene_slices( ## Written...
@@ -1578,7 +1578,7 @@ sub genesnpview {
   foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
 ## create config and store information on it...
     $trans_obj->__data->{'transformed'}{'extent'} = $extent;
-    my $CONFIG = $object->get_userconfig( "genesnpview_transcript" );
+    my $CONFIG = $object->get_imageconfig( "genesnpview_transcript" );
     $CONFIG->{'geneid'}     = $object->stable_id;
     $CONFIG->{'snps'}       = $snps unless $no_snps;
     $CONFIG->{'subslices'}  = $sub_slices;
@@ -1830,7 +1830,7 @@ sub external_links {
 sub create_genetree_image {
   my(  $object, $tree, $member ) = @_;
 
-  my $wuc        = $object->user_config_hash( 'genetreeview' );
+  my $wuc        = $object->image_config_hash( 'genetreeview' );
   my $image_width  = $object->param( 'image_width' ) || 1200;
 
   $wuc->container_width($image_width);

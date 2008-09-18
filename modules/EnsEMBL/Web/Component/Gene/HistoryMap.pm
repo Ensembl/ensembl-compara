@@ -92,7 +92,7 @@ sub _archive_link {
 sub _create_idhistory_tree {
   my ($object, $tree, $OBJ) = @_;
 
-  my $wuc = $OBJ->user_config_hash('idhistoryview');
+  my $wuc = $OBJ->image_config_hash('idhistoryview');
   $wuc->container_width($OBJ->param('image_width') || 900);
   $wuc->set_width($OBJ->param('image_width'));
   $wuc->set('_settings', 'LINK', _flip_URL($object));

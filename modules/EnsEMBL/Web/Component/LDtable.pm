@@ -258,8 +258,8 @@ sub _get_pops_from_param {
 
 sub _get_colour_gradient {
   my ($object) = @_;
-  my $user_config = $object->user_config_hash( 'ldview' );
-  my @colour_gradient = ('ffffff', $user_config->colourmap->build_linear_gradient( 41,'mistyrose', 'pink', 'indianred2', 'red' ));
+  my $image_config = $object->image_config_hash( 'ldview' );
+  my @colour_gradient = ('ffffff', $image_config->colourmap->build_linear_gradient( 41,'mistyrose', 'pink', 'indianred2', 'red' ));
   return \@colour_gradient || [];
 }
 

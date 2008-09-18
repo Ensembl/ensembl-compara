@@ -15,7 +15,7 @@ sub content {
   my $self = shift;
   my $transcript = $self->object;
   my $object     = $transcript->translation_object;
-  my $wuc        = $object->get_userconfig( 'protview' );
+  my $wuc        = $object->get_imageconfig( 'protview' );
      $wuc->set_parameters({
        'container_width' => $object->Obj->length,
        '_object'         => $object,

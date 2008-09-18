@@ -15,12 +15,14 @@ sub populate_tree {
   );
 }
 
+sub user_context   { return $_[0]->_user_context; }
 sub global_context { return $_[0]->_global_context; }
 sub ajax_content   { return $_[0]->_ajax_content;   }
 sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;    }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
+sub configurator   { return $_[0]->_configurator;   }
 
 1;
 

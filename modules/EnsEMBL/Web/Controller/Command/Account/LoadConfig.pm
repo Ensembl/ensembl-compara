@@ -49,12 +49,12 @@ sub process {
   $session->set_input($cgi);
   my $configuration = EnsEMBL::Web::Data::Record::Configuration::User->new($cgi->param('id'));
 
-  my $string = $configuration->scriptconfig;
+  my $string = $configuration->viewconfig;
   my $r = Apache2::RequestUtil->request();
   $session->create_session_id($r);
   foreach my $script_name (@scripts) {
     warn "SETTING CONFIG ", $cgi->param('id'), " FOR SCRIPT: " , $script_name;
-    $session->set_script_config_from_string($script_name, $string);
+    $session->set_view_config_from_string($script_name, $string);
   }
   my $new_param = {'id' => $cgi->param('id')};
   if ($url) {

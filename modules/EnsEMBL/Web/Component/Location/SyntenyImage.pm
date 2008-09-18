@@ -46,7 +46,7 @@ sub content {
   my ($localgenes,$offset) = $object->get_synteny_local_genes;
   my $loc = ( @$localgenes ? $localgenes->[0]->start + $object->seq_region_start : 1 ); # Jump loc to the location of the genes
         
-  my $Config = $object->get_userconfig( 'Vsynteny' );
+  my $Config = $object->get_imageconfig( 'Vsynteny' );
   $Config->{'other_species_installed'} = $synteny{ $other };
   $Config->container_width( $chr_length );
 

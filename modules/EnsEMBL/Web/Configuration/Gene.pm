@@ -28,7 +28,7 @@ sub populate_tree {
   warn "... $self ... $compara_menu ....";
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
     [qw(alignments  EnsEMBL::Web::Component::Gene::UnderConstruction)],
-    { 'availability' => 'database:compara', , 'concise' => 'Genomic alignments' }
+    { 'availability' => 'database:compara', 'concise' => 'Genomic alignments' }
   ));
 
 ## Compara tree
@@ -126,6 +126,10 @@ sub populate_tree {
 
 sub global_context { return $_[0]->_global_context; }
 sub ajax_content   { return $_[0]->_ajax_content;   }
+
+sub configurator {
+  return $_[0]->_configurator;
+}
 
 sub ajax_zmenu      {
   my $self = shift;

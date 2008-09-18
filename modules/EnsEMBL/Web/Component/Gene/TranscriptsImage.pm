@@ -23,8 +23,8 @@ sub content {
   my @trans = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts()};
   my $gene_slice = $gene->Obj->feature_Slice->expand( 10e3, 10e3 );
      $gene_slice = $gene_slice->invert if $gene->seq_region_strand < 0;
-    ## Get the web_user_config
-  my $wuc        = $gene->user_config_hash( 'gene_summary' );
+    ## Get the web_image_config
+  my $wuc        = $gene->image_config_hash( 'gene_summary' );
      $wuc->set_parameters({
        'container_width'   => $gene_slice->length,
        'image_width',      => $self->image_width || 800,

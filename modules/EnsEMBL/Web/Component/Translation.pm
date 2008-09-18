@@ -417,7 +417,7 @@ sub image {
   my $label = 'Protein Features';
   my $peptideid = $object->stable_id;
   my $db        = $object->get_db ;
-  my $wuc       = $object->get_userconfig( 'protview' );
+  my $wuc       = $object->get_imageconfig( 'protview' );
   $wuc->container_width( $object->Obj->length );
   $wuc->{_object} = $object;
   my $image_width = $wuc->get('_settings', 'width');

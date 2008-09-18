@@ -7,6 +7,7 @@ use POSIX qw(floor ceil);
 use CGI qw(escape);
 
 use EnsEMBL::Web::Document::Panel;
+use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Cache;
 
@@ -141,35 +142,144 @@ sub _global_context {
 sub _user_context {
   my $self = shift;
   my $type = $self->type;
-
-  my @data = (
-    ['config',    'Config',   'Configure Page' ],
-    ['userdata',  'UserData', 'Custom Data' ],
-  );
-  if ($self->{object}->species_defs->ENSEMBL_LOGINS) {
-    push @data, ['account',   'Account',  'Your Account' ];
-  }
+  my $obj  = $self->{'object'};
   my $qs = $self->query_string;
-  foreach my $row ( @data ) {
-    next if $row->[2] eq '-';
-    my $url;
-    my $species = $ENV{ENSEMBL_SPECIES};
-    if ($species && $species ne 'common') {
-      $url .= "/$species";
-    }   
-    $url .= "/$row->[1]/Summary?$qs";
-    my @class = ();
-    if( $row->[1] eq $type ) {
-      push @class, 'active';
-    }
+
+  ## Do we have a View Config for this display?
+  # Get view configuration...!
+  my $vc  = $obj->get_viewconfig;
+  ## Do we have any image configs for this display?
+  my %ics = $vc->image_configs;
+  ## Can user data be added to this page?
+  my $flag = $obj->param('config') ? 0 : 1;
+  foreach my $ic_code (sort keys %ics) {
+    my $ic = $obj->get_imageconfig( $ic_code );
+    $self->{'page'}->global_context->add_entry(
+      'type'      => 'Config',
+      'id'        => "config_$ic_code",
+      'caption'   => 'Configure "'.$ic->get_parameter('title').'"',
+      'url'       => $obj->_url({
+        'type'   => 'Config',
+	'action' => $type.'/'.$ENV{'ENSEMBL_ACTION'},
+	'config' => $ic_code
+      }),
+      'class'     => ( $type ne 'Account' && 
+                       $type ne 'UserData' &&
+		       (
+		         $obj->param('config') eq $ic_code ||
+			 $flag
+              	       )
+		     ) ? 'active' : ''
+    );
+    $flag = 0;
+  }
+  $self->{'page'}->global_context->add_entry(
+    'type'      => 'UserData',
+    'caption'   => 'Custom Data',
+    'url'       => $obj->_url({
+      'type'   => 'UserData',
+      'action' => 'Summary'
+    }),
+    'class'     => $type eq 'UserData' ? 'active' : ''
+  );
+  ## Now the user account link if the user is logged in!
+
+  if( $obj->species_defs->ENSEMBL_LOGINS 
+     && $ENV{'ENSEMBL_USER_ID'} ) {
     $self->{'page'}->global_context->add_entry( 
-      'type'      => $row->[1],
-      'caption'   => $row->[2],
-      'url'       => $url,
-      'class'     => (join ' ',@class),
+      'type'      => 'Account',
+      'caption'   => 'Your account',
+      'url'       => $obj->_url({
+        'type'   => 'Account',
+	'action' => 'Summary'
+      }),
+      'class'     => $type eq 'Account' ? 'active' : ''
     );
   }
+
   $self->{'page'}->global_context->active( lc($type) );
+}
+
+sub _configurator {
+  my $self = shift;
+  my $obj  = $self->{'object'};
+  my $vc   = $obj->get_viewconfig();
+  my $conf;
+  eval {
+    $conf = $obj->get_imageconfig( $obj->param('config') );
+  };
+  unless( $conf ) {
+    my %T = $vc->image_configs;
+    eval {
+      $conf = $obj->get_imageconfig( sort keys %T );
+    };
+  }
+  $self->{'page'}->{'_page_type_'} = 'configurator';
+  $self->tree->_flush_tree();
+
+  my $rhs_content = sprintf '
+      <form id="config" action="%s">', 'this_url';
+  my $active = '';
+  foreach my $node ($conf->tree->top_level) {
+    my $count = 0;
+    my $link_key = 'link_'.$node->key;
+    my $menu_key = 'menu_'.$node->key;
+    $rhs_content .= sprintf '
+      <dl class="config_menu" id="%s">
+        <dt class="title">%s</dt>', $menu_key, CGI::escapeHTML( $node->get('caption') );
+    my $available = 0;
+    foreach my $track_node ( $node->descendants ) {
+      next if $track_node->get('menu') eq 'no';
+      $rhs_content .= sprintf '
+        <dt><select id="%s" name="%s">', $track_node->key, $track_node->key;
+      my $display = $track_node->get( 'display' ) || 'off';
+      my @states  = @{ $track_node->get( 'renderers' ) || [qw(off Off normal Normal)] };
+      while( my($K,$V) = splice(@states,0,2) ) {
+        $rhs_content .= sprintf '
+          <option value="%s"%s>%s</option>', $K, $K eq $display ? ' selected="selected"' : '',  CGI::escapeHTML($V);
+      }
+      $count ++;
+      $rhs_content .= sprintf '
+        </select> %s</dt>', $track_node->get('name');
+      my $desc =  $track_node->get('description');
+      if( $desc ) {
+        $desc =~ s/&(?!\w+;)/&amp;/g;
+	$desc =~ s/href="?([^"]+?)"?([ >])/href="$1"$2/g;
+	$desc =~ s/<a>/<\/a>/g;
+	$desc =~ s/"[ "]*>/">/g;
+        $rhs_content .= sprintf '
+	<dd>%s</dd>', $desc;
+      }
+    }
+    $rhs_content .= '
+      </dl>';
+    $active    ||= $link_key if $count > 0;
+    $self->create_node(
+      $link_key,
+      $node->get('caption').( $count ? " ($count)" : '' ), 
+      [], # configurator EnsEMBL::Web::Component::Configurator ],
+      { 'url' => "#$menu_key", 'availability' => ($count>0), 'id' => $link_key } 
+    );
+  }
+  $rhs_content .= '
+    </form>';
+
+  $self->{'page'}->local_context->tree(    $self->{_data}{'tree'} );
+  $self->{'page'}->local_context->active(  $active );
+  $self->{'page'}->local_context->caption( $conf->get_parameter('title') );
+  $self->{'page'}->local_context->class(   'track_configuration' );
+  $self->{'page'}->local_context->counts(  {} );
+
+  my $panel = $self->new_panel(
+    'Configurator',
+    'code'         => 'configurator',
+    'object'       => $obj 
+  );
+  $panel->set_content( $rhs_content );
+
+  $self->add_panel( $panel );
+  warn $panel;
+  return $panel;
 }
 
 sub _local_context {
@@ -188,8 +298,15 @@ sub _local_tools {
   my @data = (
     ['Bookmark this page',  '/Account/Bookmark', 'modal_link' ],
   );
-  if ($self->configurable) {
-    push @data, ['Configure this page',     '/sorry.html', 'modal_link' ];
+  if( $self->configurable ) {
+    push @data, [
+      'Configure this page',
+      $obj->_url({
+        'type' => 'Config',
+        'action' => $obj->type.'/'.$obj->action
+      }),
+      'modal_link'
+    ];
   }
 
   push @data, ['Export Data',     '/sorry.html', 'modal_link' ];
@@ -290,7 +407,8 @@ sub get_node {
 }
 
 sub species { return $ENV{'ENSEMBL_SPECIES'}; }
-sub type    { return $ENV{'ENSEMBL_TYPE'}; }
+sub type    { return $ENV{'ENSEMBL_TYPE'};    }
+
 sub query_string {
   my $self = shift;
   return unless defined $self->{object}->core_objects;
@@ -330,15 +448,15 @@ sub create_submenu {
 }
 
 sub update_configs_from_parameter {
-  my( $self, $parameter_name, @userconfigs ) = @_;
+  my( $self, $parameter_name, @imageconfigs ) = @_;
   my $val = $self->{object}->param( $parameter_name );
   my $rst = $self->{object}->param( 'reset' );
-  my $wsc = $self->{object}->get_scriptconfig();
+  my $wsc = $self->{object}->get_viewconfig();
   my @das = $self->{object}->param( 'add_das_source' );
 
-  foreach my $config_name ( @userconfigs ) {
+  foreach my $config_name ( @imageconfigs ) {
     $self->{'object'}->attach_image_config( $self->{'object'}->script, $config_name );
-    $self->{'object'}->user_config_hash( $config_name );
+    $self->{'object'}->image_config_hash( $config_name );
   }
   foreach my $URL ( @das ) {
     my $das = EnsEMBL::Web::DASConfig->new_from_URL( $URL );
@@ -349,9 +467,9 @@ sub update_configs_from_parameter {
     $wsc->reset() if $rst;
     $wsc->update_config_from_parameter( $val ) if $val;
   }
-  foreach my $config_name ( @userconfigs ) {
-    my $wuc = $self->{'object'}->user_config_hash( $config_name );
-#    my $wuc = $self->{'object'}->get_userconfig( $config_name );
+  foreach my $config_name ( @imageconfigs ) {
+    my $wuc = $self->{'object'}->image_config_hash( $config_name );
+#    my $wuc = $self->{'object'}->get_imageconfig( $config_name );
     if( $wuc ) {
       $wuc->reset() if $rst;
       $wuc->update_config_from_parameter( $val ) if $val;

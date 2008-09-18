@@ -23,7 +23,7 @@ sub _content {
   my $context      = $object->param( 'context' );
   my $extent       = $context eq 'FULL' ? 1000 : $context;
 
-  my $master_config = $object->get_userconfig( "genesnpview_transcript" );
+  my $master_config = $object->get_imageconfig( "genesnpview_transcript" );
      $master_config->set( '_settings', 'width',  $image_width );
 
 
@@ -35,7 +35,7 @@ sub _content {
   push @confs, 'snps' unless $no_snps;
 
   foreach( @confs ) {
-    $Configs->{$_} = $object->get_userconfig( "genesnpview_$_" );
+    $Configs->{$_} = $object->get_imageconfig( "genesnpview_$_" );
     $Configs->{$_}->set( '_settings', 'width',  $image_width );
   }
    $object->get_gene_slices( ## Written...
@@ -81,7 +81,7 @@ sub _content {
   foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
 ## create config and store information on it...
     $trans_obj->__data->{'transformed'}{'extent'} = $extent;
-    my $CONFIG = $object->get_userconfig( "genesnpview_transcript" );
+    my $CONFIG = $object->get_imageconfig( "genesnpview_transcript" );
     $CONFIG->{'geneid'}     = $object->stable_id;
     $CONFIG->{'snps'}       = $snps unless $no_snps;
     $CONFIG->{'subslices'}  = $sub_slices;

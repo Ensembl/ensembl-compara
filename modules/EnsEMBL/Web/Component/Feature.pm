@@ -290,7 +290,7 @@ sub key_to_pointers {
                         'padding2'  => $padding * $bpperpx * sqrt(3)/2,
                         'zmenu'     => $zmenu,
         };
-        my $wuc = $object->user_config_hash("key_$i", 'highlight');
+        my $wuc = $object->image_config_hash("key_$i", 'highlight');
         $wuc->container_width(25);
         my $image    = $object->new_image($details, $wuc);
         $image->cacheable  = 'no';
@@ -326,7 +326,7 @@ sub create_karyotype {
   # CREATE IMAGE OBJECT
   my $species = $object->species;
     
-  #my $wuc = $object->get_userconfig( 'Vkaryotype' );
+  #my $wuc = $object->get_imageconfig( 'Vkaryotype' );
   my $image    = $object->new_karyotype_image();
   $image->cacheable  = 'no';
   $image->image_name = "feature-$species";

@@ -23,7 +23,7 @@ sub content {
   my $species   = $object->species;
   my $chr_name  = $object->seq_region_name;
 
-  my $config = $object->get_userconfig($config_name);
+  my $config = $object->get_imageconfig($config_name);
   my $ideo_height = $config->{'_image_height'};
   my $top_margin  = $config->{'_top_margin'};
   my $hidden = {

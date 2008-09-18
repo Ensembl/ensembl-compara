@@ -26,7 +26,7 @@ sub content {
 
   #----------
   # Draw the tree
-  my $wuc          = $object->user_config_hash( 'genetreeview' );
+  my $wuc          = $object->image_config_hash( 'genetreeview' );
   my $image_width  = $object->param( 'image_width' ) || 800;
 
   $wuc->container_width($image_width);

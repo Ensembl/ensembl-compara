@@ -263,7 +263,7 @@ sub tree {
 sub _create_idhistory_tree {
   my ($object, $tree,$panel) = @_;
   
-  my $wuc = $object->user_config_hash('idhistoryview');
+  my $wuc = $object->image_config_hash('idhistoryview');
   $wuc->container_width($object->param('image_width') || 900);
   $wuc->set_width($object->param('image_width'));
   $wuc->set('_settings', 'LINK', _flip_URL($object));

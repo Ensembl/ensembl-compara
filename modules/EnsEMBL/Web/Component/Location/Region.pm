@@ -20,7 +20,7 @@ sub content {
   my $slice = $object->slice;
   my $length = $slice->end - $slice->start + 1;
 
-  my $wuc = $object->user_config_hash( 'cytoview' );
+  my $wuc = $object->image_config_hash( 'cytoview' );
   $wuc->set_parameters({
     'container_width' => $length,
     'image_width'     => $self->image_width || 800,

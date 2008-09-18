@@ -532,7 +532,7 @@ sub snpview_image_menu {
   ### Returns  0
 
   my($panel, $object ) = @_;
-  my $user_config = $object->user_config_hash( 'snpview' );
+  my $image_config = $object->image_config_hash( 'snpview' );
   my $params =  {
 		 'h'          => $object->highlights_string || '',
 		 'source'     => $object->source || "dbSNP",
@@ -540,10 +540,10 @@ sub snpview_image_menu {
 		 'c'          => $object->param('c') || '',
 		 'pop'        => $object->get_default_pop_name || '',
 		};
-  $user_config->set( '_settings', 'URL', "/".$object->species."/snpview?".
+  $image_config->set( '_settings', 'URL', "/".$object->species."/snpview?".
     join(";", map { "$_=".CGI::escapeHTML($params->{$_}) } keys %$params ).
       ";snpview=%7Cbump_", 1);
-  $user_config->{'_ld_population'} = $object->get_default_pop_name;
+  $image_config->{'_ld_population'} = $object->get_default_pop_name;
   my $mc = $object->new_menu_container( 
     'configname' => 'snpview',
     'panel'      => 'snpview',
@@ -589,7 +589,7 @@ sub snpview_image {
   my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
   my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures();
 
-  my $wuc = $object->user_config_hash( 'snpview' );
+  my $wuc = $object->image_config_hash( 'snpview' );
   $wuc->set( '_settings', 'width', $object->param('image_width') );
   $wuc->{'snps'}           = $filtered_snps;
   $wuc->{'genotyped_snps'} = $genotyped_snps;

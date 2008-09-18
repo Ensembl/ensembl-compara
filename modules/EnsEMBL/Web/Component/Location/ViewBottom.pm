@@ -31,7 +31,7 @@ sub content {
   my $slice = $object->slice;
   my $length = $slice->end - $slice->start + 1;
   my $T = time;
-  my $wuc = $object->user_config_hash( 'contigviewbottom' );
+  my $wuc = $object->image_config_hash( 'contigviewbottom' );
   $T = sprintf "%0.3f", time - $T;
   $wuc->tree->dump("View Bottom configuration [ time to generate $T sec ]", '([[caption]])');
 

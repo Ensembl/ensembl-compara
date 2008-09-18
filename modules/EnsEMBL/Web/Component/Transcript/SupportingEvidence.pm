@@ -63,7 +63,7 @@ sub _content {
   #set 5' and 3' extensions to the image depending on the context
   my $extent     = $context eq 'FULL' ? 1000 : $context;
 
-  my $wuc = $object->get_userconfig( "supporting_evidence_transcript" );
+  my $wuc = $object->get_imageconfig( "supporting_evidence_transcript" );
   my $length = $object->Obj->length;
   $wuc->set_parameters({
       'container_width' => $length,

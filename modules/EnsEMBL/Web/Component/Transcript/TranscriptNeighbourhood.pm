@@ -22,7 +22,7 @@ sub content {
   my $context      = $object->param( 'context' );
   my $extent       = $context eq 'FULL' ? 1000 : $context;
 
-  my $master_config = $object->get_userconfig( "transview" );
+  my $master_config = $object->get_imageconfig( "transview" );
      $master_config->set( '_settings', 'width',  $image_width );
   warn "CONF $master_config";
 
@@ -31,7 +31,7 @@ sub content {
   my $transcript_slice = $object->Obj->feature_Slice;
      $transcript_slice = $transcript_slice->invert if $transcript_slice->strand < 1; ## Put back onto correct strand!
      $transcript_slice = $transcript_slice->expand( 10e3, 10e3 );
-  my $wuc = $object->get_userconfig( 'transview' );
+  my $wuc = $object->get_imageconfig( 'transview' );
      $wuc->{'_no_label'} = 'true';
      $wuc->{'_add_labels'} = 'true';
      $wuc->set( 'ruler', 'str', $object->Obj->strand > 0 ? 'f' : 'r' );

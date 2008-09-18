@@ -247,7 +247,7 @@ sub transcript_structure {
   my $label    = 'Transcript structure';
   my $transcript_slice = $transcript->Obj->feature_Slice;
      $transcript_slice = $transcript_slice->invert if $transcript_slice->strand < 1; ## Put back onto correct strand!
-  my $wuc = $transcript->get_userconfig( 'geneview' );
+  my $wuc = $transcript->get_imageconfig( 'geneview' );
      $wuc->{'_draw_single_Transcript'} = $transcript->Obj->stable_id;
      $wuc->{'_no_label'} = 'true';
      $wuc->set( 'ruler', 'str', $transcript->Obj->strand > 0 ? 'f' : 'r' );
@@ -263,7 +263,7 @@ sub transcript_neighbourhood {
   my $transcript_slice = $transcript->Obj->feature_Slice; 
      $transcript_slice = $transcript_slice->invert if $transcript_slice->strand < 1; ## Put back onto correct strand!
      $transcript_slice = $transcript_slice->expand( 10e3, 10e3 );
-  my $wuc = $transcript->get_userconfig( 'transview' );
+  my $wuc = $transcript->get_imageconfig( 'transview' );
      $wuc->{'_no_label'} = 'true';
      $wuc->{'_add_labels'} = 'true';
      $wuc->set( 'ruler', 'str', $transcript->Obj->strand > 0 ? 'f' : 'r' );
@@ -286,7 +286,7 @@ sub protein_features {
   $translation->Obj->{'image_splice'} = $translation->pep_splice_site( $translation->Obj );
   $panel->timer_push( "Got snps and slices for protein_feature....", 1 );
 
-  my $wuc = $transcript->get_userconfig( 'protview' );
+  my $wuc = $transcript->get_imageconfig( 'protview' );
   $wuc->container_width( $translation->Obj->length );
   my $image    = $transcript->new_image( $translation->Obj, $wuc, [], 1 );
      $image->imagemap = 'yes';
@@ -964,7 +964,7 @@ sub transcriptsnpview {
   my $image_width    = $object->param( 'image_width' );
 
   foreach (qw(context transcript transcripts_bottom transcripts_top)) {
-    $Configs->{$_} = $object->user_config_hash( "TSV_$_" );
+    $Configs->{$_} = $object->image_config_hash( "TSV_$_" );
     $Configs->{$_}->set( '_settings', 'width',  $image_width );
     $Configs->{$_}->{'id'} = $object->stable_id;
   }
@@ -982,7 +982,7 @@ sub transcriptsnpview {
   }
 
 
-  $Configs->{'snps'} = $object->user_config_hash( "genesnpview_snps" );
+  $Configs->{'snps'} = $object->image_config_hash( "genesnpview_snps" );
   $Configs->{'snps'}->set( '_settings', 'width',  $image_width );
   $Configs->{'snps'}->{'snp_counts'} = [$count_sample_snps, scalar @$sample_snps, $context_count];
 
@@ -1058,14 +1058,14 @@ sub _sample_configs {
 
   # THIS IS A HACK. IT ASSUMES ALL COVERAGE DATA IN DB IS FROM SANGER fc1
   # Only display coverage data if source Sanger is on
-  my $display_coverage = $object->get_scriptconfig->get( "opt_sanger" ) eq 'off' ? 0 : 1;
+  my $display_coverage = $object->get_viewconfig->get( "opt_sanger" ) eq 'off' ? 0 : 1;
 
   foreach my $sample ( $object->get_samples ) {
     my $sample_slice = $transcript_slice->get_by_strain( $sample );
     next unless $sample_slice;
 
     ## Initialize content...
-    my $sample_config = $object->get_userconfig( "TSV_sampletranscript" );
+    my $sample_config = $object->get_imageconfig( "TSV_sampletranscript" );
     $sample_config->{'id'}         = $object->stable_id;
     $sample_config->{'subslices'}  = $sub_slices;
     $sample_config->{'extent'}     = $extent;
@@ -1151,12 +1151,12 @@ sub transcriptsnpview_menu    {
   }
   $panel->print("<p>Where there is resequencing coverage, SNPs have been called using a computational method.  Here we display the SNP calls observed by transcript$text.  </p>");
 
-  my $user_config = $object->user_config_hash( 'TSV_sampletranscript' );
-  $user_config->{'Populations'}    = \@populations;
+  my $image_config = $object->image_config_hash( 'TSV_sampletranscript' );
+  $image_config->{'Populations'}    = \@populations;
 
 
   my $individual_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
-  $user_config->{'snp_haplotype_reference'}    =  $individual_adaptor->get_reference_strain_name();
+  $image_config->{'snp_haplotype_reference'}    =  $individual_adaptor->get_reference_strain_name();
 
   my $strains = ucfirst($object->species_defs->translate("strain"))."s";
   my $left =  [( 'Features', 'Source', 'SNPClasses', 'SNPTypes', "$strains", 'SNPContext', 'THExport', 'ImageSize' )]; # removed SNPValid
@@ -1164,7 +1164,7 @@ sub transcriptsnpview_menu    {
   my $mc = $object->new_menu_container(
      'configname'  => 'TSV_sampletranscript', #primary config for display
      'panel'       => "bottom",
-     'configs'     => [ $object->user_config_hash( 'TSV_context' ), $object->user_config_hash('TSV_transcript') ], # other configs that are affected by menu changes
+     'configs'     => [ $object->image_config_hash( 'TSV_context' ), $object->image_config_hash('TSV_transcript') ], # other configs that are affected by menu changes
      'leftmenus'  => $left,
      'rightmenus' => ['SNPHelp'],
    );
@@ -1418,12 +1418,12 @@ sub dump_form {
 sub html_dump {
   my( $panel, $object ) = @_;
 
-  my $script_config = $object->get_scriptconfig;
-  $script_config->reset;
+  my $view_config = $object->get_viewconfig;
+  $view_config->reset;
   foreach my $param ( $object->param() ) {
-    $script_config->set($param, $object->param($param) , 1);
+    $view_config->set($param, $object->param($param) , 1);
   }
-  # $script_config->save;
+  # $view_config->save;
   my @samples = sort ( $object->get_samples );
 
   my $snp_data = get_page_data($panel, $object, \@samples );
@@ -1438,8 +1438,8 @@ sub html_dump {
   $panel->print("<tr><th>$header_row</th></tr>\n");
 
   my @background = ('class="bg2"', ""); 
-  my $user_config = $object->user_config_hash( 'genesnpview_snps' );
-  my %colours = $user_config->{'_colourmap'}->colourSet('variation');
+  my $image_config = $object->image_config_hash( 'genesnpview_snps' );
+  my %colours = $image_config->{'_colourmap'}->colourSet('variation');
 
   foreach my $snp_pos ( sort keys %$snp_data ) {
     my $background= shift @background;
@@ -1453,7 +1453,7 @@ sub html_dump {
   (my $type = $row->{consequence}) =~ s/\(Same As Ref. Assembly\)//;
   if ($row->{ID}) {
     if ($row->{aachange} ne "-") {
-      my $colour = $user_config->{'_colourmap'}->hex_by_name($colours{$type}[0]);
+      my $colour = $image_config->{'_colourmap'}->hex_by_name($colours{$type}[0]);
       $style = qq(style="background-color:#$colour");
     }
     push @info, "$row->{ID}; $type; $row->{aachange};";
@@ -1474,12 +1474,12 @@ sub html_dump {
 sub text_dump {
   my( $panel, $object ) = @_;
 
-  my $script_config = $object->get_scriptconfig;
-  $script_config->reset;
+  my $view_config = $object->get_viewconfig;
+  $view_config->reset;
   foreach my $param ( $object->param() ) {
-    $script_config->set($param, $object->param($param) , 1);
+    $view_config->set($param, $object->param($param) , 1);
   }
-  # $script_config->save;
+  # $view_config->save;
   my @samples = sort ( $object->get_samples );
   $panel->print("Variation data for ".$object->stable_id);
   $panel->print("\nFormat: tab separated per strain (SNP id; Type; Amino acid change;)\n\n");

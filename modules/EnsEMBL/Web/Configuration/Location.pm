@@ -14,9 +14,10 @@ sub set_default_action {
 sub global_context { return $_[0]->_global_context; }
 sub ajax_content   { return $_[0]->_ajax_content;   }
 sub local_context  { return $_[0]->_local_context;  }
-sub local_tools    { return $_[0]->_local_tools;  }
+sub local_tools    { return $_[0]->_local_tools;    }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
+sub configurator   { return $_[0]->_configurator;   }
 
 sub populate_tree {
   my $self = shift;
@@ -117,7 +118,7 @@ sub load_configuration {
   my $config_data = eval($config_string);
   foreach my $key (keys %{ $config_data }) {
     #warn "ADDING CONFIG SETTINGS FOR: " . $key;
-    my $wuc = $obj->user_config_hash($key);
+    my $wuc = $obj->image_config_hash($key);
     $wuc->{'user'} = $config_data;
 #    $wuc->save;
   }
@@ -306,7 +307,7 @@ sub add_das_sources {
   my @T = $obj->param('das_sources');
   @T = grep {$_} @T;
   if( @T ) {
-    my $wuc = $obj->user_config_hash( $scriptname );
+    my $wuc = $obj->image_config_hash( $scriptname );
     foreach my $source (@T) {
       $wuc->set("managed_extdas_$source", 'on', 'on', 1);
     }
@@ -344,8 +345,8 @@ sub alignsliceview {
   my $config_name = 'alignsliceviewbottom';
   $self->update_configs_from_parameter( 'bottom', $config_name );
 
-  my $wsc = $self->{object}->get_scriptconfig();
-  my $wuc = $obj->user_config_hash( $config_name );
+  my $wsc = $self->{object}->get_viewconfig();
+  my $wuc = $obj->image_config_hash( $config_name );
 
   my @align_modes = grep { /opt_align/ }keys (%{$wsc->{_options}});
   if (my $set_align = $obj->param('align')) {
@@ -490,12 +491,12 @@ sub ldview {
   # Set default sources
   my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
   my $default_source = $obj->get_source("default");
-  my $script_config = $obj->get_scriptconfig();
+  my $view_config = $obj->get_viewconfig();
   my $restore_default = 1;
 
   $self->update_configs_from_parameter( 'bottom', 'ldview', 'LD_population' );
   foreach my $source ( @sources ) {
-    $restore_default = 0 if $script_config->get(lc("opt_$source") ) eq 'on';
+    $restore_default = 0 if $view_config->get(lc("opt_$source") ) eq 'on';
  }
 
 if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
@@ -507,16 +508,16 @@ if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
      else {
        $switch = 'on';
      }
-     $script_config->set(lc("opt_$source"), $switch, 1);
+     $view_config->set(lc("opt_$source"), $switch, 1);
    }
  }
 
   $self->update_configs_from_parameter( 'bottom', 'ldview', 'LD_population' );
 
   my ($pops_on, $pops_off) = $obj->current_pop_name;
-  map { $script_config->set("opt_pop_$_", 'off', 1); } @$pops_off;
-  map { $script_config->set("opt_pop_$_", 'on', 1); } @$pops_on;
-#  $script_config->save;
+  map { $view_config->set("opt_pop_$_", 'off', 1); } @$pops_off;
+  map { $view_config->set("opt_pop_$_", 'on', 1); } @$pops_on;
+#  $view_config->save;
 
 
  ## This should be moved to the Location::Object module I think....
@@ -592,7 +593,7 @@ if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
     if ( $obj->seq_region_type ) {
       # Store any input from Form into the 'ldview' graphic config..
       if( $obj->param( 'bottom' ) ) {
-	my $wuc = $obj->user_config_hash( 'ldview' );
+	my $wuc = $obj->image_config_hash( 'ldview' );
 	$wuc->update_config_from_parameter( $obj->param('bottom') );
       }
 

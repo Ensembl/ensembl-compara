@@ -65,7 +65,7 @@ sub content {
   my $trans = $object->get_all_transcripts;
   my $gene_track_name =$trans->[0]->default_track_by_gene;
 
-  my $wuc = $object->get_userconfig( 'geneview' );
+  my $wuc = $object->get_imageconfig( 'geneview' );
      $wuc->{'geneid'} = $object->Obj->stable_id;
      $wuc->{'_draw_single_Gene'} = $object->Obj;
      $wuc->set( '_settings',          'width',       900);

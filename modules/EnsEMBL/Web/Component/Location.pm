@@ -15,7 +15,7 @@ no warnings "uninitialized";
 use POSIX qw(floor ceil);
 
 sub default_otherspecies {
-  ## Needs moving to scriptconfig so we don't have to work it out each time
+  ## Needs moving to viewconfig so we don't have to work it out each time
   my $self = shift;
   my $sd = $self->object->species_defs;
   my %synteny = $sd->multi('SYNTENY');
@@ -106,7 +106,7 @@ sub multi_ideogram {
     my $slice = $object->database('core', $loc->real_species )->get_SliceAdaptor()->fetch_by_region(
       $loc->seq_region_type, $loc->seq_region_name, 1, $loc->seq_region_length, 1
     );
-    my $wuc = $object->user_config_hash( "chromosome_$counter", "chromosome" );
+    my $wuc = $object->image_config_hash( "chromosome_$counter", "chromosome" );
        $wuc->set_width(       $loc->param('image_width') - 2 );
        $wuc->set_species(     $loc->real_species );
        $wuc->container_width( $loc->seq_region_length );
@@ -151,7 +151,7 @@ sub multi_top {
     my $slice = $object->database( 'core', $loc->real_species )->get_SliceAdaptor()->fetch_by_region(
       $loc->seq_region_type, $loc->seq_region_name, $panel->option( "start_$counter" ), $panel->option( "end_$counter" ), $loc->seq_region_strand
     );
-    my $wuc = $object->user_config_hash( "contigviewtop_$counter", "contigviewtop" );
+    my $wuc = $object->image_config_hash( "contigviewtop_$counter", "contigviewtop" );
        $wuc->set_species( $loc->real_species );
        $wuc->set_width(   $loc->param('image_width') - 2 );
        $wuc->{ 'no_image_frame' } = 1;
@@ -322,7 +322,7 @@ sub multi_bottom {
 sub push_primary {
   my( $array, $loc ) = @_;
   my $P = @$array;
-  my $wuc = $loc->user_config_hash( "thjviewbottom_$P", "thjviewbottom" );
+  my $wuc = $loc->image_config_hash( "thjviewbottom_$P", "thjviewbottom" );
      $wuc->set_species(     $loc->real_species );
      $wuc->set_width(       $loc->param('image_width') );
      $wuc->container_width( $loc->length );
@@ -337,7 +337,7 @@ sub push_primary {
 sub push_secondary {
   my( $array, $loc, $slice_no ) = @_;
   my $P = @$array;
-  my $wuc = $loc->user_config_hash( "thjviewbottom_$P", "thjviewbottom" );
+  my $wuc = $loc->image_config_hash( "thjviewbottom_$P", "thjviewbottom" );
      $wuc->set_species(     $loc->real_species );
      $wuc->set_width(       $loc->param('image_width') );
      $wuc->container_width( $loc->length );
@@ -354,7 +354,7 @@ sub ideogram_old {
   my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
   );
-  my $wuc = $object->user_config_hash( 'chromosome' );
+  my $wuc = $object->image_config_hash( 'chromosome' );
      $wuc->container_width( $object->seq_region_length );
      $wuc->set_width( $object->param('image_width') );
      $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
@@ -386,7 +386,7 @@ sub ideogram {
   my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
   );
-  my $wuc = $object->user_config_hash( 'chromosome' );
+  my $wuc = $object->image_config_hash( 'chromosome' );
      $wuc->container_width( $object->seq_region_length );
      $wuc->set_width( $object->param('image_width') );
      $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
@@ -493,11 +493,11 @@ sub multi_bottom_menu {
   my( $primary, @secondary ) = ($object->Locations);
   
   my @configs = ();
-  my $T = $object->user_config_hash( 'thjviewbottom' );
+  my $T = $object->image_config_hash( 'thjviewbottom' );
   $T->{'multi'}=1;
   $T->set_species( $primary->real_species );
   foreach( @secondary ) {
-    my $T = $_->user_config_hash( "THJ_".$_->real_species, 'thjviewbottom' );
+    my $T = $_->image_config_hash( "THJ_".$_->real_species, 'thjviewbottom' );
     $T->mult;
     $T->set_species( $_->real_species );
     push @configs, $T;
@@ -579,7 +579,7 @@ sub alignsliceviewbottom {
     my $slice = $object->database('core')->get_SliceAdaptor()
     ->fetch_by_region( $object->seq_region_type, $object->seq_region_name, $object->seq_region_start, $object->seq_region_end, 1 );
 
-    my $wuc = $object->user_config_hash( 'alignsliceviewbottom_0', 'alignsliceviewbottom' );
+    my $wuc = $object->image_config_hash( 'alignsliceviewbottom_0', 'alignsliceviewbottom' );
 
     my $zwa = $object->param('zoom_width');
 
@@ -641,7 +641,7 @@ sub alignsliceviewbottom {
     foreach my $as (@{$as_slices}) {
     (my $vsp = $as->genome_db->name) =~ s/ /_/g;
     $id ++;
-    my $CONF = $object->user_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
+    my $CONF = $object->image_config_hash( "alignsliceviewbottom_$id", "alignsliceviewbottom"  );
     $CONF->{'align_slice'}  = 1;
     $CONF->set('scalebar', 'label', $vsp);
     $CONF->set('alignslice', 'align', $align);
@@ -693,7 +693,7 @@ sub alignsliceviewbottom {
      my $pan_left_1_win  = this_link_offset( $object, -0.8 * $wid );
      my $pan_right_1_win = this_link_offset( $object,  0.8 * $wid );
 
-     my $wuc = $object->user_config_hash( 'alignsliceviewzoom', 'alignsliceviewbottom' );
+     my $wuc = $object->image_config_hash( 'alignsliceviewzoom', 'alignsliceviewbottom' );
      my $selected;
      my $width = $object->param('image_width');
      my %zoomgifs = %{$wuc->get('_settings','align_zoom_gifs')||{}};
@@ -736,7 +736,7 @@ sub alignsliceviewzoom {
     my $fcstart = 0;
     my $fcend = $gend;
 
-    my $wuc = $object->user_config_hash( 'alignsliceviewbottom' );
+    my $wuc = $object->image_config_hash( 'alignsliceviewbottom' );
     my $aID = $wuc->get("alignslice", "id");
     my @selected_species = @{$wuc->get("alignslice", "species") || []};
     unshift @selected_species, $object->species if (@selected_species);
@@ -820,7 +820,7 @@ sub alignsliceviewzoom {
     foreach my $as (@$as_slices) {
     (my $vsp = $as->genome_db->name) =~ s/ /_/g;
     $id ++;
-    my $wuc = $object->user_config_hash( "alignsliceviewzoom_$id", 'alignsliceviewbottom' );
+    my $wuc = $object->image_config_hash( "alignsliceviewzoom_$id", 'alignsliceviewbottom' );
     $wuc->container_width( $panel->option('end') - $panel->option('start') + 1 );
     $wuc->set_width( $object->param('image_width') );
     $wuc->set( '_settings', 'opt_empty_tracks', 'off' );
@@ -947,7 +947,7 @@ sub alignsliceviewtop {
      my $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
      $object->seq_region_type, $object->seq_region_name, $panel->option('start'), $panel->option('end'), 1
                                                                               );
-     my $wuc = $object->user_config_hash( 'alignsliceviewtop' );
+     my $wuc = $object->image_config_hash( 'alignsliceviewtop' );
      $wuc->container_width( $panel->option('end')-$panel->option('start')+1 );
      $wuc->set_width(       $object->param('image_width') );
      $wuc->{'image_frame_colour'} = 'red' if $panel->option( 'red_edge' ) eq 'yes';
@@ -957,7 +957,7 @@ sub alignsliceviewtop {
     foreach my $skey (@skeys) {
       $wuc->set($skey, "on", "off", 1);
     }
-     my $wuc2 = $object->user_config_hash( 'aligncompara', 'alignsliceviewbottom' );
+     my $wuc2 = $object->image_config_hash( 'aligncompara', 'alignsliceviewbottom' );
      foreach my $sp (grep {/_compara_/}keys %{$wuc2->{user}->{alignsliceviewbottom}}) {
       my ($spe, $ctype) = split(/_compara_/, $sp);
        $spe = ucfirst($spe);

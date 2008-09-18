@@ -67,7 +67,7 @@ sub content {
   my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
   my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures();
 
-  my $wuc = $object->user_config_hash( 'snpview' );
+  my $wuc = $object->image_config_hash( 'snpview' );
   $wuc->set( '_settings', 'width', $object->param('image_width') );
   $wuc->{'snps'}           = $filtered_snps;
   $wuc->{'genotyped_snps'} = $genotyped_snps;

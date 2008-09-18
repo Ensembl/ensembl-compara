@@ -19,7 +19,7 @@ sub content {
   my $transcript = $self->object;
   my $transcript_slice = $transcript->Obj->feature_Slice;
      $transcript_slice = $transcript_slice->invert if $transcript_slice->strand < 1; ## Put back onto correct strand!
-  my $wuc = $transcript->get_userconfig( 'single_transcript' );
+  my $wuc = $transcript->get_imageconfig( 'single_transcript' );
      $wuc->set_parameters({
        'container_width'   => $transcript_slice->length,
        'image_width',      => $self->image_width || 800,

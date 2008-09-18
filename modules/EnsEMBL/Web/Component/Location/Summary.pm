@@ -18,7 +18,7 @@ sub content {
   my $slice  = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
   );
-  my $wuc = $object->user_config_hash( 'chromosome' );
+  my $wuc = $object->image_config_hash( 'chromosome' );
      $wuc->set_parameters({
        'container_width' => $object->seq_region_length,
        'image_width'     => $self->image_width,

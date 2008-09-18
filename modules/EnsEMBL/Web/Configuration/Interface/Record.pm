@@ -118,8 +118,8 @@ sub _configuration {
 
   my $session = $ENSEMBL_WEB_REGISTRY->get_session;
   $session->set_input($object->[1]->{_input});
-  my $string = $session->get_script_config_as_string($script);
-  $interface->data->scriptconfig($string);
+  my $string = $session->get_view_config_as_string($script);
+  $interface->data->viewconfig($string);
 }
 
 1;

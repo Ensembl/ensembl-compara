@@ -188,12 +188,12 @@ sub ldview_image_menu {
   ### Returns 0
 
   my($panel, $object ) = @_;
-  my $user_config = $object->user_config_hash( 'LD_population' );
-  $user_config->{'Populations'}    = $object->pops_for_slice(100000);
+  my $image_config = $object->image_config_hash( 'LD_population' );
+  $image_config->{'Populations'}    = $object->pops_for_slice(100000);
 
   my $mc = $object->new_menu_container(
     'configname'  => 'LD_population',
-    'configs'    =>  [$object->user_config_hash('ldview')],
+    'configs'    =>  [$object->image_config_hash('ldview')],
     'panel'       => 'bottom',
     'leftmenus'  => [qw(Features Population Options Export ImageSize)],
     'rightmenus' => [qw(SNPHelp)],
@@ -224,7 +224,7 @@ sub ldview_image {
   my ($count_snps, $snps) = $object->getVariationsOnSlice();
   my ($genotyped_count, $genotyped_snps) = $object->get_genotyped_VariationsOnSlice();
 
-  my $wuc_ldview = $object->user_config_hash( 'ldview' );
+  my $wuc_ldview = $object->image_config_hash( 'ldview' );
   $wuc_ldview->set( '_settings', 'width', $object->param('image_width'));
   $wuc_ldview->container_width($slice->length);
   $wuc_ldview->{'_databases'}     = $object->DBConnection;
@@ -240,7 +240,7 @@ sub ldview_image {
     my $pop_obj = $object->pop_obj_from_name($pop_name);
     next unless $pop_obj->{$pop_name}; # i.e. skip name if not a valid pop name
 
-    my $wuc_pop = $object->user_config_hash( "LD_population_$pop_name", 'LD_population' );
+    my $wuc_pop = $object->image_config_hash( "LD_population_$pop_name", 'LD_population' );
     $wuc_pop->set( '_settings', 'width', $object->param('image_width'));
     $wuc_pop->container_width($slice->length);
     $wuc_pop->{'_databases'}     = $object->DBConnection;
@@ -324,12 +324,12 @@ sub options_form {
   );
 
   my %pop_values;
-  my $script_config = $object->get_scriptconfig();
+  my $view_config = $object->get_viewconfig();
 
-  # Read in all in scriptconfig stuff
-  foreach ($script_config->options) {
+  # Read in all in viewconfig stuff
+  foreach ($view_config->options) {
     next unless $_ =~ /opt_pop_/;
-    $pop_values{$_} = $script_config->get("$_");
+    $pop_values{$_} = $view_config->get("$_");
   }
 
   my @cgi_params = @{$panel->get_params($object, {style =>"form"}) };

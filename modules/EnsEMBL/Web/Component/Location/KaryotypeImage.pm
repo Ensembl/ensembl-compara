@@ -24,7 +24,7 @@ sub content {
   my $species = $object->species;
 
   ## Form with hidden elements for click-through
-  my $config = $object->get_userconfig('Vkaryotype');
+  my $config = $object->get_imageconfig('Vkaryotype');
   my $ideo_height = $config->{'_image_height'};
   my $top_margin  = $config->{'_top_margin'};
   my $hidden = {
