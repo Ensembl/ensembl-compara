@@ -622,34 +622,26 @@ sub content {
         } else {
           
           my $caption = $comp_obj->caption;
-
           if( $comp_obj->ajaxable() && !$self->_is_ajax_request ) {
-
-        	    my( $ensembl, $plugin, $component, $type, @T ) = split '::', $module_name;
-        	    my $URL = join '/',
-        	       '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,@T;
-                    $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
+            my( $ensembl, $plugin, $component, $type, @T ) = split '::', $module_name;
+            my $URL = join '/',
+              '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,@T;
+              $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
 
               ## Check if ajax enabled
-              if( $ENSEMBL_WEB_REGISTRY->check_ajax ) {
-
-                  if( $caption ) {
-                    $self->printf( qq(<div class="ajax" title="['%s','%s']"></div>), CGI::escapeHTML($caption),CGI::escapeHTML($URL) );
-                  } else {
-                    $self->printf( qq(<div class="ajax" title="['%s']"></div>), CGI::escapeHTML($URL) );
-                  }
-
+            if( $ENSEMBL_WEB_REGISTRY->check_ajax ) {
+              if( $caption ) {
+                $self->printf( qq(<div class="ajax" title="['%s','%s']"></div>), CGI::escapeHTML($caption),CGI::escapeHTML($URL) );
               } else {
-
-                  ## if ajax disabled - we get all content by parallel requests to ourself
-                  $self->print(
-                    HTTP::Request->new('GET', $self->{'object'}->species_defs->ENSEMBL_BASE_URL.$URL)
-                  );
-
+                $self->printf( qq(<div class="ajax" title="['%s']"></div>), CGI::escapeHTML($URL) );
               }
-              
-	        } else {
-
+            } else {
+                  ## if ajax disabled - we get all content by parallel requests to ourself
+              $self->print(
+                HTTP::Request->new('GET', $self->{'object'}->species_defs->ENSEMBL_BASE_URL.$URL)
+              );
+            }
+          } else {
             my $content;
             eval {
               $content = $comp_obj->content;
@@ -665,16 +657,16 @@ sub content {
               $self->timer_push( "Component $module_name (runtime failure [content])" );
             } else {
               if( $content ) {
-            		if( ! $self->_is_ajax_request ) {
+                    if( ! $self->_is_ajax_request ) {
                               my $caption = $comp_obj->caption;
                               $self->printf( "<h2>%s</h2>", CGI::escapeHTML($caption) ) if $caption;
-            		}
+                    }
                 $self->print( $content );
               }
               $self->timer_push( "Component $module_name succeeded" );
             }
-    	  }
-      }
+          }
+        }
       } else {
         $self->_error( qq(Compile error in component "<b>$component</b>"),
           qq(

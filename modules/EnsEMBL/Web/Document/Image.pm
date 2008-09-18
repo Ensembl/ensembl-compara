@@ -69,7 +69,7 @@ sub karyotype {
   }
   $config ||= 'Vkaryotype';
   my $chr_name;
-  my $wuc = $object->user_config_hash( $config );
+  my $wuc = $object->image_config_hash( $config );
     
   # set some dimensions based on number and size of chromosomes    
   if( $wuc->{'_all_chromosomes'} eq 'yes' ) {
@@ -113,7 +113,7 @@ sub add_tracks {
   if ($object->seq_region_name eq 'ALL') {
     $self->do_chr_layout($object, $config_name);
   }
-  my $config   = $object->user_config_hash( $config_name );
+  my $config   = $object->image_config_hash( $config_name );
     
   # SELECT APPROPRIATE FEATURE SET(S)
   my $data;
@@ -244,7 +244,7 @@ sub add_pointers {
                                                                                 
   my ($self, $object, $extra) = @_;
   my $config_name = $extra->{'config_name'};
-  my $config   = $object->user_config_hash($config_name);
+  my $config   = $object->image_config_hash($config_name);
 
   # CREATE DATA ARRAY FROM APPROPRIATE FEATURE SET
   my ($data, @data, $max_label, %chrs);
@@ -401,7 +401,7 @@ sub do_chr_layout {
 
     # CONFIGURE IMAGE SIZE AND LAYOUT
     my $chr;
-    my $config  = $object->user_config_hash( $config_name );
+    my $config  = $object->image_config_hash( $config_name );
     if ($config->{'_all_chromosomes'} eq 'yes') {
         $chr = 'ALL';
     }
