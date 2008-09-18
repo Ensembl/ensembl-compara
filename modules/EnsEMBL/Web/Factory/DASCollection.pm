@@ -130,7 +130,7 @@ sub createObjects {
   }
 
 # Get the sources selection, i.e which sources' annotation should be displayed
-  my $config = $self->get_userconfig( 'dasconfview' );
+  my $config = $self->get_imageconfig( 'dasconfview' );
   my $section = $conf_script;
 
   $config->reset_subsection($section);

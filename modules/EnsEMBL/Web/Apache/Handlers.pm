@@ -33,14 +33,17 @@ our $BIOMART_REGISTRY;
 our %LOOKUP_HASH;
 
 our %OBJECT_TO_SCRIPT = qw(
+  Config      config
   Component   component
   Zmenu       zmenu
+
   Gene        action
   Transcript  action
   Location    action
   Variation   action
   Server      action
   Info        action
+
   Account     account
   UserData    user_data
   Help        help
@@ -330,19 +333,19 @@ sub transHandler_species {
     if( $real_script_name eq 'action' ) {
       $r->subprocess_env->{'ENSEMBL_ACTION'} = join '_', @$path_segments;
       $path_segments                         = [];
-    } elsif( $real_script_name eq 'zmenu' ) {
-      warn "... ZMENU ...";
+    } elsif( $real_script_name eq 'zmenu' || $real_script_name eq 'config' ) {
       $type   = shift @$path_segments;
       $action = shift @$path_segments;
       $r->subprocess_env->{'ENSEMBL_TYPE'}     = $type;
       $r->subprocess_env->{'ENSEMBL_ACTION'}   = $action;
+      warn "... ",uc($real_script_name)," $type/$action...";
     } elsif( $real_script_name eq 'component' ) {
       warn "... COMPONENT ...";
       $type = shift @$path_segments;
       my @T                                  = map { s/\W//g;$_ } @$path_segments;
       my $plugin                             = shift @T;
-        $r->subprocess_env->{'ENSEMBL_ACTION'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, @T;
-$r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
+      $r->subprocess_env->{'ENSEMBL_ACTION'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, @T;
+      $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
       $path_segments                         = [];
     } else { ## This is a user space script - don't do anything - I think!
       $r->subprocess_env->{'ENSEMBL_ACTION'} = shift @$path_segments;

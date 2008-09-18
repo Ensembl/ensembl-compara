@@ -7,7 +7,7 @@ use base qw(EnsEMBL::Web::Data::Record);
 __PACKAGE__->_type('configuration');
 
 __PACKAGE__->add_fields(
-  scriptconfig => 'text',
+  viewconfig => 'text',
   url          => 'text',
   name         => 'text',
   description  => 'text',
