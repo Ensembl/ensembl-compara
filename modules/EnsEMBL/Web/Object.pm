@@ -19,6 +19,7 @@ use CGI qw(escape);
 sub _url {
   my $self = shift;
   my $params  = shift || {};
+  die "Not a hashref while calling _url ($params @_)" unless ref($params) eq 'HASH';
   my $species = exists( $params->{'species'} ) ? $params->{'species'} : $self->species;
   my $type    = exists( $params->{'type'}    ) ? $params->{'type'}    : $self->type;
   my $action  = exists( $params->{'action'}  ) ? $params->{'action'}  : $self->action;
@@ -31,7 +32,8 @@ sub _url {
   my $join = '?';
 ## Sort the keys so that the URL is the same for a given set of parameters...
   foreach ( sort keys %pars ) {
-    $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) if defined $pars{$_};
+    next unless defined $pars{$_};
+    $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) ;
     $join = ';';
   }
   return $URL;
