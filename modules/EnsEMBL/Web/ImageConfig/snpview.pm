@@ -218,7 +218,7 @@ Description: Configures this track on the forward (forward :   'str' => 'f') or 
 
 Example: 'pos'         => '4525',
 
-Description: Position of the track within the drawable container and in comparison with all other tracks configured in this userconfig.
+Description: Position of the track within the drawable container and in comparison with all other tracks configured in this imageconfig.
 
 =head3 B<on/off>
 
