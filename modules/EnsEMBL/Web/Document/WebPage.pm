@@ -73,11 +73,10 @@ sub new {
     $input = $parameters{'cgi'};
   } elsif ($parameters{'command'}) {
     $input = $parameters{'command'}->action->get_cgi;
-  }
-  else {
+  } else {
     $input  = new CGI;
   }
-  # $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
+  $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
   $self->timer_push("Parameters initialised from input");
 
 ## Page module...
@@ -129,7 +128,10 @@ sub new {
     );
   }
   $self->timer_push("DB connection created..." );
-  my $core_objects = EnsEMBL::Web::CoreObjects->new( $input, $db_connection, $self->{doctype} eq 'Component' ? 'lw' : undef );
+  my $core_objects = EnsEMBL::Web::CoreObjects->new( 
+    $input, $db_connection,
+    undef, #($self->{doctype} eq 'Component' || $self->{doctype} eq 'Configurator') ? 'lw' : undef
+  );
   $self->timer_push("Core objects created...");
   $self->factory = EnsEMBL::Web::Proxy::Factory->new(
     $parameters{'objecttype'}, {
@@ -155,7 +157,7 @@ sub new {
     $self->timer_push("Object creation failed");
   } else {
     $self->timer_push("Objects created");
-    my $sc = $self->factory->get_scriptconfig( );
+    my $sc = $self->factory->get_viewconfig( );
 #       $sc->update_from_input( $input, $rend->{'r'} ) if $sc;        $self->timer_push("Script config updated from input");
   }
   return $self;
@@ -218,6 +220,7 @@ sub configure {
       );
     }
   }
+  $self->timer_push( 'configuration modules compiled...' );
 ## Tree is now built... so we need to set the action...
 
   $modules[0][0]->set_action( $ENV{'ENSEMBL_ACTION'} );
@@ -245,20 +248,25 @@ sub configure {
           $FUNCTIONS_CALLED->{$FN} = 1;
           ## Check if we've added any configurable components
           my $node = $CONF->get_node($CONF->_get_valid_action( $ENV{'ENSEMBL_ACTION'} ));
-          my @components = @{$node->data->{'components'}};
-          while( my($code, $module) = splice( @components, 0, 2) ) {
-            if ($self->dynamic_use($module)) {
-              my $component = $module->new;
-              if ($component->configurable) {
-                $CONF->{'_data'}{'configurable'} = 1;
-                last;
+	  if( $node ) {
+            my @components = @{$node->data->{'components'}||[]};
+            while( my($code, $module) = splice( @components, 0, 2) ) {
+              if ($self->dynamic_use($module)) {
+                my $component = $module->new;
+                if ($component->configurable) {
+                  $CONF->{'_data'}{'configurable'} = 1;
+                  last;
+                }
               }
             }
-          }
+	  }
         } 
+        $self->timer_push( "configuration function $FN called for $T ...",2 );
       }
     }
+    $self->timer_push( "configuration functions called for $T ...",1 );
   }
+  $self->timer_push( 'configuration functions called ...' );
 
   foreach my $FN ( @functions ) {
     unless( $FUNCTIONS_CALLED->{$FN} ) {
