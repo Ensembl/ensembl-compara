@@ -629,13 +629,13 @@ sub current_pop_name {
   my $self = shift;
   my %pops_on;
   my %pops_off;
-  my $script_config = $self->get_scriptconfig();
+  my $view_config = $self->get_viewconfig();
 
-  # Read in all in scriptconfig stuff
-  foreach ($script_config->options) {
+  # Read in all in viewconfig stuff
+  foreach ($view_config->options) {
     next unless $_ =~ s/opt_pop_//;
-    $pops_on{$_}  = 1 if $script_config->get("opt_pop_$_") eq 'on';
-    $pops_off{$_} = 1 if $script_config->get("opt_pop_$_") eq 'off';
+    $pops_on{$_}  = 1 if $view_config->get("opt_pop_$_") eq 'on';
+    $pops_off{$_} = 1 if $view_config->get("opt_pop_$_") eq 'off';
   }
 
   # Set options according to bottom

@@ -285,7 +285,7 @@ sub get_munged_slice {
 
   my $self = shift;
   my $config_name = shift;
-  my $master_config = $self->user_config_hash( $config_name );
+  my $master_config = $self->image_config_hash( $config_name );
   $master_config->{'_draw_single_Transcript'} = $self->stable_id;
 
   my $slice = $self->get_transcript_Slice( @_ );  #pushes it onto forward strand, expands if necc.
@@ -538,7 +538,7 @@ sub get_samples {
     $db_pops{$_} = 1;
   }
 
-  my $script_config = $self->get_scriptconfig();
+  my $view_config = $self->get_viewconfig();
   if ($options eq 'display') { # return list of pops with default first
     return (sort keys %default_pops), (sort keys %db_pops);
   }
@@ -547,18 +547,18 @@ sub get_samples {
     my @pops;
     foreach my $sample ( $self->param('strain') ) {
       next unless $sample =~ /(.*):(\w+)/;
-      $script_config->set("opt_pop_$1", $2, 1);
+      $view_config->set("opt_pop_$1", $2, 1);
       push @pops, $1 if $2 eq 'on';
     }
     return sort @pops;
   }
   else { #get configured samples 
     my %configured_pops = (%default_pops, %db_pops); 
-    my @pops; warn $script_config;
-    foreach my $k (keys %$script_config){ warn $k;}
-    foreach my $sample (sort $script_config->options) { warn $sample;
+    my @pops; warn $view_config;
+    foreach my $k (keys %$view_config){ warn $k;}
+    foreach my $sample (sort $view_config->options) { warn $sample;
       next unless $sample =~ s/opt_pop_//; 
-      next unless $script_config->get("opt_pop_$sample") eq 'on';
+      next unless $view_config->get("opt_pop_$sample") eq 'on';
       push @pops, $sample if $configured_pops{$sample};
     }
     return sort @pops;
