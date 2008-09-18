@@ -25,6 +25,12 @@ sub active {
   $self->{active} = shift if @_;
   return $self->{active};
 }
+sub class {
+  ### a
+  my $self = shift;
+  $self->{class} = shift if @_;
+  return $self->{class};
+}
 
 sub caption {
   ### a
@@ -55,20 +61,24 @@ sub render {
 sub _content {
   my $self = shift;
   my $t = $self->tree;
-  return '' unless $t;
+  my $content = sprintf( q(
+      <dl id="local"%s>
+        <dt>%s</dt>),
+    $self->{'class'} ? qq( class="$self->{class}") : '',
+    $self->caption
+  );
+  return "$content\n      </dl>" unless $t;
   my $r = 0;
   my $previous_node;
   my $active = $self->active;
-  my $active_node = $t->get_node( $active );
-  return '' unless $active_node;
+  my @n = $t->nodes;
+  my $active_node = $t->get_node( $active ) || $n[0];
+  return "$content\n      </dl>" unless $active_node;
   my $active_l    = $active_node->left;
   my $active_r    = $active_node->right;
   my $counts = $self->counts;
-  my $content = sprintf( q(
-      <dl id="local">
-        <dt>%s</dt>), $self->caption );
   my $pad = '';
-  foreach my $node ( $t->nodes ) {
+  foreach my $node ( @n ) {
     my $no_show = 1 if $node->data->{'no_menu_entry'};
     $r = $node->right if $node->right > $r;
     if( $previous_node && $node->left > $previous_node->right ) {
@@ -83,7 +93,7 @@ $pad    </dd>";
       my $name = $node->data->{caption};
       $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
       $name = CGI::escapeHTML( $name );
-      if ($node->data->{'availability'}) {
+      if( $node->data->{'availability'} ) {
         my $url = $node->data->{'url'};
         if (!$url) {
           $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.$ENV{'QUERY_STRING'};
@@ -95,7 +105,9 @@ $pad    </dd>";
       
       if( $node->is_leaf ) {
 	$content .= sprintf( qq(
-$pad        <dd%s>%s</dd>), $node->key eq $active ? ' class="active"' :'', $name );
+$pad        <dd%s%s>%s</dd>), 
+              $node->data->{'id'} ? ' id="'.$node->data->{'id'}.'"' : '',
+              $node->key eq $active ? ' class="active"' : '', $name );
       }
       else {
         $content .= sprintf( qq(

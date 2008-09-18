@@ -58,7 +58,7 @@ sub _content {
       }
     }
     $content .= sprintf( '
-        <dd id="%s" class="link %s">%s</dd>', lc('tab_'.$entry->{'type'}), $entry->{class}, $name );
+        <dd id="%s" class="link %s">%s</dd>', lc('tab_'.($entry->{'id'}||$entry->{'type'})), $entry->{class}, $name );
   }
   $content .= '
         <dt class="hidden">.</dt>
