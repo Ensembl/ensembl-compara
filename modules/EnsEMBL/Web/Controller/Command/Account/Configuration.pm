@@ -60,10 +60,10 @@ sub process {
   $interface->element('name',         { type => 'String', label => 'Configuration name'});
   $interface->element('description',  { type => 'Text',   label => 'A brief description of your configuration'});
   $interface->element('url',          { type => 'Hidden'});
-  $interface->element('scriptconfig', { type => 'Hidden'});
+  $interface->element('viewconfig', { type => 'Hidden'});
   $interface->element('owner_type',   { type => 'Hidden'});
   $interface->extra_data('rename');
-  $interface->element_order(qw/name description url scriptconfig owner_type/);
+  $interface->element_order(qw/name description url viewconfig owner_type/);
 
   ## Render page or munge data, as appropriate
   $webpage->process($interface, 'EnsEMBL::Web::Configuration::Interface::Record');
