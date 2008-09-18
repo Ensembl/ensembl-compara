@@ -11,6 +11,12 @@ sub new {
   return $self;
 }
 
+sub _flush_tree {
+  my $self = shift;
+  $self->{'_tree_info'} = { 'nodes' => {}, '_sorted_keys' => [] };
+  $self->{'_user_data'} = {};
+}
+
 sub flush_user {
 ### Remove all user data in this tree...
   my $self = shift;
@@ -62,6 +68,19 @@ sub nodes {
   return map { $self->get_node( $_ ) } $self->_sorted_keys;
 }
 
+sub top_level {
+### Returns a list of root nodes...
+  my $self = shift;
+  my @keys   = $self->_sorted_keys;
+  my @nodes  = ();
+  my $pos    = 0;
+  while( $pos < @keys ) {
+    my $n = $self->get_node( $keys[$pos] );
+    push @nodes, $n;
+    $pos = $n->right/2;
+  }
+  return @nodes;
+}
 sub leaves {
 ### Returns array of nodes in L-R order that are leaves [ right = left+1 ]
   my $self = shift;
