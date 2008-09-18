@@ -15,7 +15,6 @@ no warnings;
 sub new {
   my $class  = shift;
   my $caller = caller;
-  my $species_defs = new EnsEMBL::Web::SpeciesDefs;
   my $memcached    = $SiteDefs::ENSEMBL_MEMCACHED;
   
   return undef
@@ -46,7 +45,7 @@ sub new {
     servers         => $memcached->{servers},
     debug           => $memcached->{debug},
     default_exptime => $memcached->{default_exptime},
-    namespace       => $species_defs->ENSEMBL_BASE_URL,
+    namespace       => $SiteDefs::ENSEMBL_BASE_URL,
     @,
   );
 
