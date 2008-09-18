@@ -1,12 +1,12 @@
-package EnsEMBL::Web::ScriptConfig::snpview;
+package EnsEMBL::Web::ViewConfig::snpview;
 
 use strict;
 no strict 'refs';
 
 sub init {
-  my ($script_config ) = @_;
+  my ($view_config ) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_genotypes  on
     panel_alleles    on
     panel_locations  on
@@ -45,10 +45,10 @@ sub init {
     opt_het       on
     opt_          on
   ));
-  $script_config->add_image_configs({qw(
+  $view_config->add_image_configs({qw(
     snpview nodas
   )});
 
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

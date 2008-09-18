@@ -1,11 +1,11 @@
-package EnsEMBL::Web::ScriptConfig::geneview;
+package EnsEMBL::Web::ViewConfig::geneview;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
+  my ($view_config) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     image_width             800
     panel_gene              on
     panel_das               on
@@ -23,9 +23,9 @@ sub init {
     context                 0
     das_sources),           []
   );
-  $script_config->add_image_configs({qw(
+  $view_config->add_image_configs({qw(
     altsplice nodas
   )});
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

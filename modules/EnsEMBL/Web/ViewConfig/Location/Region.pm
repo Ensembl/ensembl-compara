@@ -4,14 +4,14 @@ use strict;
 no strict 'refs';
 
 sub init {
-  my ($script_config ) = @_;
+  my ($view_config ) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     context        10000
   ));
-  $script_config->add_image_configs({qw(
+  $view_config->add_image_configs({qw(
     cytoview das
   )});
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

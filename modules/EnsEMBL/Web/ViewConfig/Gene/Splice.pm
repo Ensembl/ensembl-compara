@@ -1,18 +1,18 @@
-package EnsEMBL::Web::ScriptConfig::genespliceview;
+package EnsEMBL::Web::ViewConfig::genespliceview;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
-  $script_config->_set_defaults(qw(
+  my ($view_config) = @_;
+  $view_config->_set_defaults(qw(
     context              100
     image_width          800
   ));
-  $script_config->add_image_configs({qw(
+  $view_config->add_image_configs({qw(
     genesnpview_transcript nodas
     genesnpview_gene       nodas
     genesnpview_context    nodas
   )});
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

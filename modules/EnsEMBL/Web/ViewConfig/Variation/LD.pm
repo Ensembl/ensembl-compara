@@ -1,15 +1,15 @@
-package EnsEMBL::Web::ScriptConfig::ldview;
+package EnsEMBL::Web::ViewConfig::ldview;
 
 use strict;
 no strict 'refs';
 
-use EnsEMBL::Web::ScriptConfig;
-our @ISA = qw(EnsEMBL::Web::ScriptConfig);
+use EnsEMBL::Web::ViewConfig;
+our @ISA = qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($script_config ) = @_;
+  my ($view_config ) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_options    on
     panel_image      on
     image_width      800
@@ -47,11 +47,11 @@ sub init {
     opt_stop_lost              on
 
   ));
-  $script_config->add_image_configs({qw(
+  $view_config->add_image_configs({qw(
     ldview        nodas
     LD_population nodas
   )});
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 
 }
 1;

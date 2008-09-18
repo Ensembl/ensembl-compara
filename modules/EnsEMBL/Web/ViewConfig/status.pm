@@ -1,13 +1,13 @@
-package EnsEMBL::Web::ScriptConfig::status;
+package EnsEMBL::Web::ViewConfig::status;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
+  my ($view_config) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_species on
   ));
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

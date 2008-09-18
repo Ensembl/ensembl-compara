@@ -4,9 +4,9 @@ use strict;
 no strict 'refs';
 
 sub init {
-  my( $script_config ) = @_;
+  my( $view_config ) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_top        on
     panel_bottom     on
     context        1000
@@ -21,10 +21,10 @@ sub init {
     opt_group_tblat off
   ));
 
-  $script_config->add_image_configs({qw(
+  $view_config->add_image_configs({qw(
     thjviewtop    nodas
     thjviewbottom nodas
   )});
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

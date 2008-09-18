@@ -1,11 +1,11 @@
-package EnsEMBL::Web::ScriptConfig::geneseqview;
+package EnsEMBL::Web::ViewConfig::geneseqview;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
+  my ($view_config) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     flank5_display          600
     flank3_display          600 
     exon_display            core
@@ -13,6 +13,6 @@ sub init {
     snp_display             off
     line_numbering          off
   ));
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

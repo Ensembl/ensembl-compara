@@ -1,15 +1,15 @@
-package EnsEMBL::Web::ScriptConfig::familyview;
+package EnsEMBL::Web::ViewConfig::familyview;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
+  my ($view_config) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_table      on
     panel_other      on
     panel_ensembl    on
   ));
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

@@ -2,7 +2,7 @@ package EnsEMBL::Web::ViewConfig::Compara::Compara_Align;
 
 =head1 NAME
 
-EnsEMBL::Web::ScriptConfig::alignsliceview;
+EnsEMBL::Web::ViewConfig::alignsliceview;
 
 =head1 SYNOPSIS
 
@@ -23,9 +23,9 @@ use strict;
 no strict 'refs';
 
 sub init {
-  my( $script_config ) = @_;
+  my( $view_config ) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_ideogram  on
     panel_top       on
     panel_bottom    on
@@ -33,8 +33,8 @@ sub init {
     zoom_width     100
     context     100000
   ));
-  $script_config->storable = 1;
-  $script_config->add_image_configs({qw(
+  $view_config->storable = 1;
+  $view_config->add_image_configs({qw(
     alignsliceviewbottom nodas
   )});
 }

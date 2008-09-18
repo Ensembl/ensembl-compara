@@ -1,11 +1,11 @@
-package EnsEMBL::Web::ScriptConfig::transview;
+package EnsEMBL::Web::ViewConfig::transview;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
+  my ($view_config) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     show                    plain
     number                  off   
     status_similarity_matches  on
@@ -14,6 +14,6 @@ sub init {
     status_alternative_transcripts on
     das_sources             
   ));
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

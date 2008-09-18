@@ -1,11 +1,11 @@
-package EnsEMBL::Web::ScriptConfig::transcriptsnpview;
+package EnsEMBL::Web::ViewConfig::transcriptsnpview;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
+  my ($view_config) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_image          on 
     context              100
     panel_transcript     on
@@ -43,11 +43,11 @@ sub init {
     opt_stop_lost              on
     opt_sara                   on
   ));
-  $script_config->add_image_configs({qw(
+  $view_config->add_image_configs({qw(
     TSV_content'         nodas
     TSV_sampletranscript nodas
     TSV_content          nodas
   )});
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

@@ -1,11 +1,11 @@
-package EnsEMBL::Web::ScriptConfig::protview;
+package EnsEMBL::Web::ViewConfig::protview;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
+  my ($view_config) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_domain            on
     panel_other             on
     panel_variation         on
@@ -13,9 +13,9 @@ sub init {
     number                  off   
     das_sources),           []
   );
-  $script_config->add_image_configs({qw(
+  $view_config->add_image_configs({qw(
     protview das
   )});
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

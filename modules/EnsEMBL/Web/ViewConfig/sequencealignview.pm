@@ -1,11 +1,11 @@
-package EnsEMBL::Web::ScriptConfig::sequencealignview;
+package EnsEMBL::Web::ViewConfig::sequencealignview;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
+  my ($view_config) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     exon_display            core
     exon_ori                off 
     snp_display             on
@@ -17,6 +17,6 @@ sub init {
     title_display           off
     exon_mark		    colour
   ));
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

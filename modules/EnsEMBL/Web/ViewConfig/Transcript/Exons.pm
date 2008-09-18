@@ -1,11 +1,11 @@
-package EnsEMBL::Web::ScriptConfig::exonview;
+package EnsEMBL::Web::ViewConfig::exonview;
 
 use strict;
 
 sub init {
-  my ($script_config) = @_;
+  my ($view_config) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_exons      on
     panel_supporting on
     sscon            25
@@ -13,6 +13,6 @@ sub init {
     fullseq          no
     oexon            no
   ));
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;

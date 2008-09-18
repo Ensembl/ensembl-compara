@@ -6,21 +6,22 @@ no strict 'refs';
 sub init {
 ### Used by Constructor
 ### init function called to set defaults for the passed
-### {{EnsEMBL::Web::ScriptConfig}} object
+### {{EnsEMBL::Web::ViewConfig}} object
 
-  my( $script_config ) = @_;
+  my( $view_config ) = @_;
 
-  $script_config->_set_defaults(qw(
+  $view_config->_set_defaults(qw(
     panel_top       on
     panel_bottom    on
     panel_zoom     off
+    image_width    500
     zoom_width     100
     context       1000
   ));
-  $script_config->add_image_configs({qw(
+  $view_config->add_image_configs({qw(
     contigviewtop    nodas
     contigviewbottom das
   )});
-  $script_config->storable = 1;
+  $view_config->storable = 1;
 }
 1;
