@@ -334,7 +334,8 @@ sub add_dna_align_feature {
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
+        'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+        'renderers'   => [qw(off Off normal Normal)],
 	'strand'      => 'b'
       }));
     }
@@ -361,7 +362,8 @@ sub add_protein_align_feature {
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
-      'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
+      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+      'renderers'   => [qw(off Off normal Normal)],
       'strand'      => 'b'
     }));
   }
@@ -381,7 +383,8 @@ sub add_simple_feature {
       'colourset'   => 'simple',
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
-      'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
+      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+      'renderers'   => [qw(off Off normal Normal)],
       'strand'      => 'r'
     }));
   }
@@ -401,7 +404,8 @@ sub add_prediction_transcript {
       'caption'     => $data->{$key_2}{'caption'},
       'colourset'   => 'prediction',
       'description' => $data->{$key_2}{'description'},
-      'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
+      'display'     => $data->{$key_2}{'display'}||'normal', ## Default to on at the moment - change to off by default!
+      'renderers'   => [qw(off Off normal Normal)],
       'strand'      => 'b'
     }));
   }
@@ -420,7 +424,8 @@ sub add_ditag_feature {
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
+        'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+        'renderers'   => [qw(off Off normal Normal)],
 	'strand'      => 'b'
       }));
     }
@@ -461,7 +466,8 @@ sub add_gene {
 	'colours'     => $self->species_defs->colour( 'gene' ),
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'on'          => $data->{$key_2}{'on'}||'off', ## Default to on at the moment - change to off by default!
+        'display'     => $data->{$key_2}{'display'}||($type eq 'transcript' ? 'compact' : 'normal'), ## Default to on at the moment - change to off by default!
+        'renderers'   => $type eq 'transcript' ? [qw(off Off normal Normal compact Compact)] :  [qw(off Off normal Normal)],
 	'strand'      => $type eq 'gene' ? 'r' : 'b'
       }));
       $flag=1;
@@ -488,7 +494,8 @@ sub add_marker_feature {
       'colours'     => $self->species_defs->colour( 'marker' ),
       'description' => $data->{$key_2}{'description'},
       'priority'    => $data->{$key_2}{'priority'},
-      'on'          => 'off',
+      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+      'renderers'   => [qw(off Off normal Normal)],
       'strand'      => 'r'
     }));
   }
@@ -507,7 +514,8 @@ sub add_qtl_feature {
       'caption'     => $data->{$key_2}{'caption'},
       'colourset'   => 'qtl',
       'description' => $data->{$key_2}{'description'},
-      'on'          => 'on',
+      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+      'renderers'   => [qw(off Off normal Normal)],
       'strand'      => 'r'
     }));
   }
@@ -529,7 +537,8 @@ sub add_misc_feature {
       'description' => $data->{$key_2}{'desc'},
       'max_length'  => $data->{$key_2}{'max_length'},
       'strand'      => 'r',
-      'on'          => 'off'
+      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+      'renderers'   => [qw(off Off normal Normal)],
     }));
   }
 
@@ -554,7 +563,9 @@ sub add_oligo_probe {
       'description' => $description,
       'caption'     => $key_2,
       'strand'      => 'b',
-      'on'          => 'off'
+      'on'          => 'off',
+      'display'     => 'off', 
+      'renderers'   => [qw(off Off normal Normal compact Compact)],
     }));
   }
 }
@@ -592,7 +603,8 @@ sub add_protein_feature {
         'caption'     => $data->{$key_2}{'caption'},
 	'colourset'   => 'protein_feature',
         'description' => $data->{$key_2}{'description'},
-        'on'          => $data->{$key_2}{'on'}||'on', ## Default to on at the moment - change to off by default!
+        'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+        'renderers'   => [qw(off Off normal Normal)],
       }));
     }
   }
@@ -613,7 +625,8 @@ sub add_repeat_feature {
     'name'        => 'All repeats',
     'description' => 'All repeats',
     'colourset'   => 'repeat',
-    'on'          => 'off',
+    'display'     => 'off', ## Default to on at the moment - change to off by default!
+    'renderers'   => [qw(off Off normal Normal)],
     'optimizable' => 1,
     'depth'       => 0.5,
     'bump_width'  => 0,
@@ -631,7 +644,8 @@ sub add_repeat_feature {
         'name'        => $data->{$key_2}{'name'},
         'description' => $data->{$key_2}{'desc'},
 	'colours'     => $self->species_defs->colour( 'repeat' ),
-        'on'          => 'off',
+        'display'     => 'off', ## Default to on at the moment - change to off by default!
+        'renderers'   => [qw(off Off normal Normal)],
         'optimizable' => 1,
         'depth'       => 0.5,
         'bump_width'  => 0,
@@ -651,7 +665,8 @@ sub add_repeat_feature {
           'name'        => "$key_3 (".$data->{$key_2}{'name'}.")",
           'description' => $data->{$key_2}{'desc'}." ($key_3)",
 	  'colours'     => $self->species_defs->colour( 'repeat' ),
-          'on'          => 'off',
+          'display'     => 'off', ## Default to on at the moment - change to off by default!
+          'renderers'   => [qw(off Off normal Normal)],
           'optimizable' => 1,
           'depth'       => 0.5,
           'bump_width'  => 0,
@@ -683,6 +698,8 @@ sub add_synteny {
       'caption'     => sprintf( "%1s.%3s synteny", split / /, $species_readable ),
       'description' => "Synteny blocks",
       'colours'     => $self->species_defs->colour( 'synteny' ),
+      'display'     => 'off', ## Default to on at the moment - change to off by default!
+      'renderers'   => [qw(off Off normal Normal)],
       'on'          => 'off',
       'height'      => 4,
       'strand'      => 'r'
@@ -722,7 +739,8 @@ sub add_alignments {
         'order'          => $row->{'type'}.'::'.$other_species,
 	'colourset'      => 'pairwise',
 	'strand'         => 'b',
-        'on'             => 'off'
+        'display'        => 'off', ## Default to on at the moment - change to off by default!
+        'renderers'      => [qw(off Off normal Normal)],
       };
     } else {
       my $n_species = keys %{$row->{'species'}};
@@ -742,7 +760,8 @@ sub add_alignments {
           'colourset'      => 'multiple',
           'order'          => sprintf( '%12d::%s::%s',1e12-$n_species, $row->{'type'}, $row->{'name'} ),
           'strand'         => 'f',
-          'on'             => 'off'
+          'display'        => 'off', ## Default to on at the moment - change to off by default!
+          'renderers'      => [qw(off Off normal Normal)],
         };
       }
       $alignments->{'multiple_align'}{ $row->{'id'} } = {
@@ -758,7 +777,8 @@ sub add_alignments {
         'colourset'      => 'multiple',
         'order'          => sprintf( '%12d::%s::%s',$n_species, $row->{'type'}, $row->{'name'} ),
         'strand'         => 'f',
-        'on'             => 'off'
+        'display'        => 'off', ## Default to on at the moment - change to off by default!
+        'renderers'      => [qw(off Off normal Normal)],
       };
     } 
   }
@@ -923,8 +943,8 @@ sub core_objects { return $_[0]->{'_core'}; }
 
 sub storable :lvalue {
 ### a
-### Set whether this ScriptConfig is changeable by the User, and hence needs to
-### access the database to set storable do $script_config->storable = 1; in SC code...
+### Set whether this ViewConfig is changeable by the User, and hence needs to
+### access the database to set storable do $view_config->storable = 1; in SC code...
   $_[0]->{'storable'};
 }
 sub altered :lvalue {
@@ -1006,12 +1026,7 @@ sub _set {
 
 sub save {
   my ($self) = @_;
-  warn "UserConfig->save - Deprecated call now handled by session";
-  return;
-    $self->{'_db'}->setConfigByName(
-    	$self->{'_r'}, $ENV{'ENSEMBL_FIRSTSESSION'}, $self->{'type'},
-    	&Storable::nfreeze($self->{'user'})
-    ) if $self->{'_db'};
+  warn "ImageConfig->save - Deprecated call now handled by session";
   return;
 }
 
