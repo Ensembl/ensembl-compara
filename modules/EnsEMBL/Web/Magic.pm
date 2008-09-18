@@ -15,7 +15,7 @@ use EnsEMBL::Web::RegObj;
 
 use base qw(Exporter);
 use CGI qw(header redirect); # only need the redirect header stuff!
-our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff Variation Server);
+our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff Variation Server configurator);
 
 our $memd = EnsEMBL::Web::Cache->new(
   enable_compress    => 1,
@@ -32,6 +32,8 @@ sub Transcript { return 'Transcript', @_; }
 sub Location   { return 'Location',   @_; }
 sub Variation  { return 'Variation',  @_; }
 sub Server     { return 'Server',     @_; }
+
+sub timer_push { $ENSEMBL_WEB_REGISTRY->timer->push( @_ ); }
 
 sub magic      {
 ### Usage: use EnsEMBL::Web::Magic; magic stuff
@@ -81,7 +83,6 @@ sub menu {
 }
 
 sub _parse_referer {
-  warn $ENV{'HTTP_REFERER'};
   my ($url,$query_string) = split /\?/, $ENV{'HTTP_REFERER'};
   $url =~ /^https?:\/\/.*?\/(.*)$/;
   my($sp,$ot,$view) = split /\//, $1;
@@ -96,7 +97,6 @@ sub _parse_referer {
     $value = CGI::unescape($value);
     push @{$params->{$param}}, $value;
   }
-  warn "";
   warn "\n";
   warn "------------------------------------------------------------------------------\n";
   warn "AJAX request (ingredient)\n";
@@ -120,6 +120,44 @@ sub _parse_referer {
   };
 }
 
+use Apache2::RequestUtil;
+
+sub configurator {
+  my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
+  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+  my $referer_hash = _parse_referer;
+  my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+  my $ajax_flag = $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  my $webpage     = EnsEMBL::Web::Document::WebPage->new(
+    'objecttype' => 'Server',
+    'doctype'    => 'Configurator',
+    'scriptname' => 'config',
+    'r'          => $r,
+    'ajax_flag'  => $ajax_flag,
+    'parent'     => $referer_hash,
+    'renderer'   => 'String',
+    'cache'      => $memd,
+  );
+  $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+
+  warn "Web page object created $webpage";
+  $webpage->configure(
+    $webpage->dataObjects->[0],
+    qw(user_context configurator)
+  );
+    ## Now we need to setup the content of the page -- need to set-up 
+    ##  1) Global context entries
+    ##  2) Local context entries   [ hacked versions with # links / and flags ]
+    ##  3) Content of panel (expansion of tree)
+  warn "Web page configured";
+  $webpage->render;
+  warn "Web page rendered";
+  my $content = $webpage->page->renderer->content;
+  CGI::header;
+  print $content;
+  return "Generated configuration panel ($ENV{'ENSEMBL_ACTION'})";
+}
+
 sub ingredient {
 ### use EnsEMBL::Web::Magic; magic ingredient Gene 'EnsEMBL::Web::Component::Gene::geneview_image'
 ###
@@ -134,6 +172,9 @@ sub ingredient {
 
   my $content = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
 
+  timer_push( 'Retrieved content from cache' ); 	 
+  $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_ACTION'}" );
+
   if ($content) {
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
   } else {
@@ -142,6 +183,8 @@ sub ingredient {
 
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
       'objecttype' => $objecttype,
+      'doctype'    => 'Component',
+      'ajax_flag'  => 1,
       'scriptname' => 'component',
       'parent'     => $referer_hash,
       'renderer'   => 'String',
@@ -151,17 +194,19 @@ sub ingredient {
     $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
   
     $webpage->render;
-    warn $webpage->timer->render if
-      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
-      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
     $content = $webpage->page->renderer->content;
-    my @tags = qw(AJAX);
-    push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
-    $memd->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags) if $memd;
+    $memd->set(
+      $ENV{CACHE_KEY},
+      $content,
+      60*60*24*7,
+      'AJAX', keys %{ $ENV{CACHE_TAGS}||{} }
+    );
+    timer_push( 'Rendered content cached' );
   }
 
   CGI::header;
   print $content;
+  timer_push( 'Rendered content printed' );
   return "Generated magic ingredient ($ENV{'ENSEMBL_ACTION'})";
 }
 
@@ -189,6 +234,9 @@ sub stuff {
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
   ## If user logged in, some content depends on user
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
+
+  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+  $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
 
   my $content = ($memd && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $memd->get($ENV{CACHE_KEY}) : undef;
 
