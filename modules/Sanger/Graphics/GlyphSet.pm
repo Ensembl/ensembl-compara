@@ -49,8 +49,8 @@ sub new {
 # keep track of x,y,width,height as it goes.
 #
 sub _init {
-    my ($self) = @_;
-    print STDERR qq($self unimplemented\n);
+  my ($self) = @_;
+  print STDERR qq($self unimplemented\n);
 }
 
 # Gets the number of Base Pairs per pixel

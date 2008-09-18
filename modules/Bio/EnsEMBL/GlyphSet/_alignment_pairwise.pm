@@ -5,14 +5,7 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
 
-sub _init {
-  my ($self) = @_;
-  my $method = "RENDER_".($self->my_config('compact') ? 'compact' : 'normal');
-  warn "CALLING METHOD $method...";
-  return $self->$method();
-}
-
-sub RENDER_normal {
+sub render_normal {
   my $self           = shift;
 
   my $WIDTH          = 1e5;
@@ -253,7 +246,7 @@ sub RENDER_normal {
   $self->timer_push( 'Features drawn' );
 }
 
-sub RENDER_compact {
+sub render_compact {
   my $self = shift;
   my $WIDTH          = 1e5;
   my $container      = $self->{'container'};

@@ -31,6 +31,17 @@ our %cache;
 # constructor
 #
 
+sub render_normal {
+  my $self = shift;
+  $self->_init(@_);
+}
+
+sub render {
+  my $self = shift;
+  my $method = 'render_'.$self->{'display'};
+  return $self->can($method) ? $self->$method : $self->render_normal;
+}
+
 sub dbadaptor  {
   my $self = shift;
   return Bio::EnsEMBL::Registry->get_DBAdaptor( @_ );
@@ -281,6 +292,7 @@ sub new {
     'container'  => $data->{'container'},
     'config'     => $data->{'config'},
     'my_config'  => $data->{'my_config'},
+    'display'    => $data->{'display'}||'off',
     'extras'     => $data->{'extra'}||{}
   };
   bless($self, $class);

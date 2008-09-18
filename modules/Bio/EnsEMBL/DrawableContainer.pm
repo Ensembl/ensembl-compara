@@ -48,6 +48,7 @@ sub timer_push {
   my( $self, $tag, $dep ) = @_;
   $self->{'timer'}->push( $tag, $dep, 'draw' );
 }
+
 sub new {
   my $class        = shift;
   my $self         = $class->_init( @_ ); 
@@ -114,7 +115,9 @@ sub new {
       for my $strand (@strands_to_show) {
 ## This is much simplified as we just get a row of configurations...
 	for my $row_config ($strand == 1 ? reverse @configs : @configs) {
-	  next unless $row_config->get('on') eq 'on';
+	  my $display = $row_config->get('display')||($row_config->get('on')eq'on'?'normal':'off');
+          warn ".... ",$row_config->get('caption'),"............................... $display ....";
+	  next if $display eq 'off';
 	  my $str_tmp = $row_config->get('strand');
 
 	  next if  defined $str_tmp && ( $str_tmp eq "r" && $strand != -1 || $str_tmp eq "f" && $strand !=  1 );
@@ -131,7 +134,8 @@ sub new {
 	      'my_config'  => $row_config,
 	      'strand'     => $strand,
 	      'extra'      => {},
-	      'highlights' => $self->{'highlights'}
+	      'highlights' => $self->{'highlights'},
+	      'display'    => $display
 	    });
 	  };
 	  if($@ || !$EW_Glyphset) {
@@ -147,38 +151,6 @@ sub new {
 
     my $x_scale = $panel_width /( ($Config->container_width() || $Container->length() || $panel_width) );
 
-    if($show_buttons eq 'yes' && $Config->get_parameter( 'URL') ) {
-      for my $glyphset (@glyphsets) {
-        next unless defined $glyphset->bumped();
-        my $NAME = $glyphset->check();
-        my $box_glyph = new Sanger::Graphics::Glyph::Rect({
-          'x' => -$panel_start + $margin,
-          'y'             => 0,
-          'width'         => $button_width,
-          'height'        => $button_width,
-          'bordercolour'  => 'red',
-          'absolutey' => 1,
-          'absolutex' => 1,
-          'absolutewidth' =>1, 'pixperbp' => $x_scale,
-          'href'      => $Config->get_parameter(  'URL')."$NAME%3A".
-                         ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
-          'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
-        });
-        my $horiz_glyph = new Sanger::Graphics::Glyph::Text({
-          'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
-          'font'      => 'Small',
-          'absolutey' => 1,
-          'x'         => -$panel_start + $margin + 2,
-          'y'         => -2,
-          'width'     => 6,
-          'textwidth'     => 6,
-          'height'    => 6,
-          'colour'    => 'red',
-          'absolutex' => 1, 'absolutewidth' => 1, 'pixperbp' => $x_scale
-        });
-        $glyphset->bumpbutton([$horiz_glyph, $box_glyph]);
-      }
-    }
     ## set scaling factor for base-pairs -> pixels
     $Config->{'transform'}->{'scalex'} = $x_scale;
     $Config->{'transform'}->{'absolutescalex'} = 1;
@@ -211,7 +183,7 @@ sub new {
       my $NAME = $glyphset->{'my_config'}->key;
       my $ref_glyphset = ref($glyphset);
       eval {
-        $glyphset->_init();
+        $glyphset->render();
       };
       ## don't waste any more time on this row if there's nothing in it
       if( $@ || scalar @{$glyphset->{'glyphs'} } ==0 ) {

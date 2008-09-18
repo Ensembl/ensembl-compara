@@ -51,16 +51,8 @@ sub href {
 # Next we have the _init function which chooses how to render the
 # features...
 #==============================================================================
-sub _init {
-### initializer - just chooses the display method - currently compact/normal
-### and calls appropriate function...
 
-  my ($self)      = @_;
-  my $method = "RENDER_".($self->my_config('compact') ? 'compact' : 'normal');
-  return $self->$method();
-}
-
-sub RENDER_normal {
+sub render_normal {
   my $self = shift;
 ## Information about the container...
   my $strand = $self->strand;
@@ -188,7 +180,7 @@ sub RENDER_normal {
   $self->timer_push( 'Features drawn' );
 }
 
-sub RENDER_compact {
+sub render_compact {
   my $self        = shift;
   my $strand      = $self->strand;
   my $strand_flag = $self->my_config('strand');

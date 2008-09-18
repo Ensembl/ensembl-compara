@@ -12,7 +12,7 @@ use Time::HiRes qw(time);
 
 # Render ungrouped features
 
-sub RENDER_simple {
+sub render_simple {
 
   my( $self, $configuration ) = @_;
   my $empty_flag = 1;
@@ -131,10 +131,10 @@ sub RENDER_simple {
     $self->errorTrack($ID, undef, $yx);
   }    
   return $empty_flag ? 0 : 1 ;
-}   # END RENDER_simple
+}   # END render_simple
 
 
-sub RENDER_grouped {
+sub render_grouped {
   my( $self, $configuration ) = @_; 
   my %grouped;
 
@@ -351,7 +351,7 @@ sub RENDER_grouped {
   }    
 
   return 1; ## We have rendered at least one feature....
-}   # END RENDER_grouped
+}   # END render_grouped
 
 sub to_bin {
   my( $self, $BP, $bin_length, $no_of_bins ) = @_;
@@ -365,7 +365,7 @@ sub to_bin {
   return ($bin,$offset);
 }
 
-sub RENDER_density {
+sub render_density {
   my( $self, $configuration ) = @_;
   my $empty_flag = 1;
   my $no_of_bins = floor( $configuration->{'length'} * $self->{'pix_per_bp'} / 2);
@@ -780,17 +780,17 @@ sub _init {
       $self->{_features}->{grouped}->{'_default'} = \@das_features;
     }
     my %rendererHash = (
-    	'H' => 'RENDER_histogram',
-	'C' => 'RENDER_colourgradient',
-	'P' => 'RENDER_plot',
-	'S' => 'RENDER_tilingarray',
+    	'H' => 'render_histogram',
+	'C' => 'render_colourgradient',
+	'P' => 'render_plot',
+	'S' => 'render_tilingarray',
 	);
 
     $configuration->{'fg_grades'} = $Config->get($das_config_key, 'fg_grades') || $Extra->{'fg_grades'} || 20;
     $renderer = $rendererHash{$score};											 
   } else {
-    $renderer = $renderer ? "RENDER_$renderer" : ($group eq 'N' ? 'RENDER_simple' : 'RENDER_grouped');  
-    $renderer =~ s/RENDER_RENDER/RENDER/;
+    $renderer = $renderer ? "render_$renderer" : ($group eq 'N' ? 'render_simple' : 'render_grouped');  
+    $renderer =~ s/render_render/render/;
   }  
   return $self->$renderer( $configuration );
 }
@@ -918,7 +918,7 @@ sub get_groupsymbol{
 }
 
 # Function will display DAS features with variable height depending on SCORE attribute
-sub RENDER_histogram_simple {
+sub render_histogram_simple {
   my( $self, $configuration ) = @_;
 
 # Display histogram only on a reverse strand if the track is configured to be shown on both strands
@@ -1064,10 +1064,10 @@ sub RENDER_histogram_simple {
   $self->errorTrack( 'No '.$self->{'extras'}->{'caption'}.' features in this region' ) if $empty_flag;
   return $empty_flag ? 0 : 1 ;
 
-}   # END RENDER_simple
+}   # END render_simple
 
 
-sub RENDER_tilingarray{
+sub render_tilingarray{
   my( $self, $configuration ) = @_;
 
 # Display histogram only on a reverse strand if the track is configured to be shown on both strands
@@ -1191,10 +1191,10 @@ sub RENDER_tilingarray{
   } # END of looop over groups
 
   return 1;
-}   # END RENDER_tilingarray
+}   # END render_tilingarray
 
 
-sub RENDER_colourgradient{
+sub render_colourgradient{
   my( $self, $configuration ) = @_;
 
 # Display histogram only on a reverse strand if the track is configured to be shown on both strands
@@ -1288,10 +1288,10 @@ sub RENDER_colourgradient{
      $g_offset += $row_height + 2;
   } # END loop over features
   return 1;
-}   # END RENDER_colourgradient
+}   # END render_colourgradient
 
 # Function will display DAS features with variable height depending on SCORE attribute
-sub RENDER_histogram {
+sub render_histogram {
   my( $self, $configuration ) = @_;
 
 # Display histogram only on a reverse strand if the track is configured to be shown on both strands
@@ -1394,9 +1394,9 @@ sub RENDER_histogram {
     $g_offset += $row_height + 2;
   } # END of looop over groups
 
-}   # END RENDER_histogram
+}   # END render_histogram
 
-sub RENDER_plot_2 {
+sub render_plot_2 {
   my( $self, $configuration ) = @_;
 # Display histogram only on a reverse strand if the track is configured to be shown on both strands
   return if ($configuration->{'strand'} eq 'b' && $self->strand == 1);
@@ -1534,7 +1534,7 @@ sub RENDER_plot_2 {
   } # END of looop over groups
 
   return 1;
-}   # END RENDER_plot
+}   # END render_plot
 
 sub features {
   my $self = shift;

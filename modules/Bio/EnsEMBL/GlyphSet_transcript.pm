@@ -17,13 +17,7 @@ sub features { return []; }
 sub href { return undef; }
 sub gene_href { return undef; }
 
-sub _init {
-  my ($self) = @_;
-  my $method = "RENDER_".($self->my_config('compact') ? 'compact' : 'normal');
-  return $self->$method();
-} 
-
-sub RENDER_compact {
+sub render_compact {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
@@ -187,7 +181,7 @@ sub RENDER_compact {
   }
 }
 
-sub RENDER_normal {
+sub render_normal {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};

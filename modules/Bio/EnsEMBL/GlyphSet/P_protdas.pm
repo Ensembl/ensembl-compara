@@ -72,11 +72,11 @@ sub _init {
   }
 
   if (my $chart = $conf->{'score'}){
-    return $self->RENDER_colourgradient( $conf ) if ($chart eq 'c');
-    return $self->RENDER_tilingarray( $conf )   if ($chart eq 's');
-    return $self->RENDER_histogram( $conf )     if ($chart eq 'h');
+    return $self->render_colourgradient( $conf ) if ($chart eq 'c');
+    return $self->render_tilingarray( $conf )   if ($chart eq 's');
+    return $self->render_histogram( $conf )     if ($chart eq 'h');
   }
-  return $self->RENDER_grouped($conf);
+  return $self->render_grouped($conf);
 }
 
 sub gmenu {
@@ -143,7 +143,7 @@ if( my $m = $f->das_note       ) {
 }
 
 # Function will display DAS features with variable height depending on SCORE attribute
-sub RENDER_histogram {
+sub render_histogram {
   my( $self, $configuration ) = @_;
 
   my @features = sort { $a->das_start() <=> $b->das_start() } @{$configuration->{'features'} || []};
@@ -230,14 +230,14 @@ sub RENDER_histogram {
   } # END loop over features
 
   return 1;
-}   # END RENDER_histogram
+}   # END render_histogram
 
 # Function will display DAS features with variable height depending on SCORE attribute
 # Similar to histogram but allows for negative values and will highlight pick values, i.e
 # when 2 or more features are merged due to resolution the highest score will be used to determine the feature height
 # Probably should merge with histogram as they are very similar
 
-sub RENDER_tilingarray{
+sub render_tilingarray{
   my( $self, $configuration ) = @_;
   
   my @features = sort { $a->das_score <=> $b->das_score  } @{$configuration->{'features'}};
@@ -316,11 +316,11 @@ sub RENDER_tilingarray{
   } # END loop over features
 
  return 1;
-}   # END RENDER_tilingarray
+}   # END render_tilingarray
 
 
 # Function will display DAS features in different colour with depending on SCORE attribute
-sub RENDER_colourgradient {
+sub render_colourgradient {
   my ($self, $configuration) = @_; 
 
   my $bp_per_pix = 1 / $self->{pix_per_bp};
@@ -389,13 +389,13 @@ sub RENDER_colourgradient {
   } # END loop over features
 
   return 1;
-}   # END RENDER_colourgradient
+}   # END render_colourgradient
 
 
 # Function will display DAS features grouped by feature id ( which is wrong ! DAS spec demands unique feature id! )
 # Need to talk to das source maintainers first to convience them to update das sources to comply with DAS spec
 
-sub RENDER_grouped {
+sub render_grouped {
   my ($self, $configuration) = @_; 
   my $Config        = $self->{'config'};
   my @bitmap        = undef;
