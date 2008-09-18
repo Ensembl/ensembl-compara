@@ -6,7 +6,7 @@ package EnsEMBL::Web::Cache;
 
 use strict;
 use Data::Dumper;
-use EnsEMBL::Web::SpeciesDefs;
+use SiteDefs;
 use base 'Cache::Memcached';
 use fields qw(default_exptime flags);
 
@@ -16,7 +16,7 @@ sub new {
   my $class  = shift;
   my $caller = caller;
   my $species_defs = new EnsEMBL::Web::SpeciesDefs;
-  my $memcached    = $species_defs->ENSEMBL_MEMCACHED;
+  my $memcached    = $SiteDefs::ENSEMBL_MEMCACHED;
   
   return undef
     unless $memcached && %$memcached;
