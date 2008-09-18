@@ -8,18 +8,18 @@ sub init {
   my ($self ) = @_;
 
   $self->set_parameters({
-    'title'         => 'Detailed panel',
-    'show_buttons'  => 'yes',   # show +/- buttons
-    'button_width'  => 8,       # width of red "+/-" buttons
-    'show_labels'   => 'yes',   # show track names on left-hand side
-    'label_width'   => 100,     # width of labels on left-hand side
-    'margin'        => 5,       # margin
-    'spacing'       => 2,       # spacing
+    'title'             => 'Detailed panel',
+    'show_buttons'      => 'yes',   # show +/- buttons
+    'button_width'      => 8,       # width of red "+/-" buttons
+    'show_labels'       => 'yes',   # show track names on left-hand side
+    'label_width'       => 100,     # width of labels on left-hand side
+    'margin'            => 5,       # margin
+    'spacing'           => 2,       # spacing
 
 ## Now let us set some of the optional parameters....
-    'opt_halfheight'   => 0,    # glyphs are half-height [ probably removed when this becomes a track config ]
-    'opt_empty_tracks' => 0,    # include empty tracks..
-    'opt_lines'        => 1,    # draw registry lines
+    'opt_halfheight'    => 0,    # glyphs are half-height [ probably removed when this becomes a track config ]
+    'opt_empty_tracks'  => 0,    # include empty tracks..
+    'opt_lines'         => 1,    # draw registry lines
     'opt_restrict_zoom' => 1,   # when we get "zoom" working draw restriction enzyme info on it!!
 ## Finally some colours... background image colors;
 ## and alternating colours for tracks...
