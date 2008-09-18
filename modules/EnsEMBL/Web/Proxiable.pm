@@ -6,8 +6,6 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::ExtURL;
-use EnsEMBL::Web::UserConfigAdaptor;
-use EnsEMBL::Web::ScriptConfigAdaptor;
 use EnsEMBL::Web::Document::DropDown::MenuContainer;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::DBSQL::DBConnection;
@@ -72,7 +70,7 @@ sub param {
     if( @T ) {
       return wantarray ? @T : $T[0];
     }
-    my $wsc = $self->get_scriptconfig( );
+    my $wsc = $self->get_viewconfig( );
     if( $wsc ) {
       if( @_ > 1 ) { $wsc->set(@_); }
       my @val = $wsc->get(@_);
@@ -81,7 +79,7 @@ sub param {
     return wantarray ? () : undef;
   } else {
     my @params = map { _sanitize($_) } $self->{'data'}{'_input'}->param();
-    my $wsc    = $self->get_scriptconfig( );
+    my $wsc    = $self->get_viewconfig( );
     push @params, $wsc->options() if $wsc;
     my %params = map { $_,1 } @params;
     return keys %params;
@@ -102,7 +100,7 @@ sub species      { return $_[0]{'data'}{'_species'}; }
 sub fix_session {
 ### Fix the session back to the database - if a session object has been created
 ### calls store on... this will check whether (a) there are any saveable
-### scriptconfigs AND (b) if any of the saveable scriptconfigs have been altered
+### viewconfigs AND (b) if any of the saveable viewconfigs have been altered
   my( $self, $r ) = @_;
   my $session = $self->get_session;
   $session->store($self->apache_handle) if $session;
@@ -150,8 +148,8 @@ sub web_user_db {
 
 sub apache_handle { $_[0]{'data'}{'_apache_handle'}; }
 
-sub get_userconfig  {
-### Returns the named (or one based on script) {{EnsEMBL::Web::UserConfig}} object
+sub get_imageconfig  {
+### Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
   my( $self, $key ) = @_;
   my $session = $self->get_session || return;
 #warn "JS5 GUC $key";
@@ -160,7 +158,7 @@ sub get_userconfig  {
   return $T;
 }
 
-sub user_config_hash {
+sub image_config_hash {
 ### Retuns a copy of the script config stored in the database with the given key
   my $self = shift;
   my $key  = shift;
@@ -168,20 +166,20 @@ sub user_config_hash {
   my $session = $self->get_session;
 #warn "JS5 UCH $key $type";
   return undef unless $session;
-  my $T = $session->getImageConfig( $type, $key ); ## {'user_configs'}{$key} ||= $self->get_userconfig( $type );
+  my $T = $session->getImageConfig( $type, $key ); ## {'image_configs'}{$key} ||= $self->get_imageconfig( $type );
+  return unless $T;
   warn "-SETTING CORE....", $self->core_objects;
   $T->_set_core( $self->core_objects );
   warn $T->{'_core'};
   return $T;
 }
 
-sub get_scriptconfig {
-### Returns the named (or one based on script) {{EnsEMBL::Web::ScriptConfig}} object
-  my( $self, $key ) = @_;
-  $key = $self->script unless defined $key;
+sub get_viewconfig {
+### Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
+  my( $self, $type, $action ) = @_;
   my $session = $self->get_session;
   return undef unless $session;
-  my $T = $session->getScriptConfig( $key );
+  my $T = $session->getViewConfig( $type || $self->type, $action || $self->action );
   return $T;
 }
 
@@ -220,7 +218,7 @@ sub new_menu_container {
   my %N = (
     'species'      => $self->species,
     'script'       => $self->script,
-    'scriptconfig' => $self->get_scriptconfig,
+    'viewconfig'   => $self->get_viewconfig,
     'width'        => $self->param('image_width'),
     'object'       => $self
   );
@@ -230,7 +228,7 @@ sub new_menu_container {
   $N{'fields'}   = $params{'fields'}   || ( $self->can('generate_query_hash') ? $self->generate_query_hash : {} );
   if( $params{'configname'} ) {
    # warn ".. $params{'configname'}";
-    $N{'config'}   = $self->user_config_hash( $params{'configname'} );
+    $N{'config'}   = $self->image_config_hash( $params{'configname'} );
     $N{'config'}->set_species( $self->species );
   }
   $N{'configs'}  = $params{'configs'};
