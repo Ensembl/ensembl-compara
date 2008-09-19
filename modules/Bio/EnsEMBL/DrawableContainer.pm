@@ -148,8 +148,10 @@ sub new {
 	}
       }
     }
-
-    my $x_scale = $panel_width /( ($Config->container_width() || $Container->length() || $panel_width) );
+    
+    my $w = $Config->container_width;
+    $w = $Container->length if !$w && $Container->can('length');
+    my $x_scale = $w ? $panel_width /$w : 1; 
 
     ## set scaling factor for base-pairs -> pixels
     $Config->{'transform'}->{'scalex'} = $x_scale;
