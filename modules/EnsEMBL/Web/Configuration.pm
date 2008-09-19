@@ -13,7 +13,7 @@ use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Root);
 
-our $memd = new EnsEMBL::Web::Cache;
+our $MEMD = new EnsEMBL::Web::Cache;
 
 sub object { 
   return $_[0]->{'object'};
@@ -38,12 +38,12 @@ sub new {
   };
   bless $self, $class;
 
-  my $tree = $memd ? $memd->get($class->tree_key) : undef;
+  my $tree = $MEMD ? $MEMD->get($class->tree_key) : undef;
   if ($tree) {
     $self->{_data}{tree} = $tree;
   } else {
     $self->populate_tree;
-    $memd->set($class->tree_key, $self->{_data}{tree}, undef, 'TREE') if $memd;
+    $MEMD->set($class->tree_key, $self->{_data}{tree}, undef, 'TREE') if $MEMD;
   }
 
   $self->set_default_action;
