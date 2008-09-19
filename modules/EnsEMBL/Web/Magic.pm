@@ -17,7 +17,7 @@ use base qw(Exporter);
 use CGI qw(header redirect); # only need the redirect header stuff!
 our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff Variation Server configurator);
 
-our $memd = EnsEMBL::Web::Cache->new(
+our $MEMD = EnsEMBL::Web::Cache->new(
   enable_compress    => 1,
   compress_threshold => 10_000,
 );
@@ -73,7 +73,7 @@ sub menu {
   my $webpage     = EnsEMBL::Web::Document::WebPage->new(
     'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
     'scriptname' => 'zmenu',
-    'cache'      => $memd,
+    'cache'      => $MEMD,
   );
   warn $ENV{'ENSEMBL_TYPE'};
   warn ".... zmenu ...";
@@ -136,7 +136,7 @@ sub configurator {
     'ajax_flag'  => $ajax_flag,
     'parent'     => $referer_hash,
     'renderer'   => 'String',
-    'cache'      => $memd,
+    'cache'      => $MEMD,
   );
   $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 
@@ -170,7 +170,7 @@ sub ingredient {
   ## Ajax request
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
 
-  my $content = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
+  my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
 
   timer_push( 'Retrieved content from cache' ); 	 
   $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_ACTION'}" );
@@ -188,19 +188,19 @@ sub ingredient {
       'scriptname' => 'component',
       'parent'     => $referer_hash,
       'renderer'   => 'String',
-      'cache'      => $memd,
+      'cache'      => $MEMD,
     );
     
     $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
   
     $webpage->render;
     $content = $webpage->page->renderer->content;
-    $memd->set(
+    $MEMD->set(
       $ENV{CACHE_KEY},
       $content,
       60*60*24*7,
       'AJAX', keys %{ $ENV{CACHE_TAGS}||{} }
-    ) if $memd;
+    ) if $MEMD;
     timer_push( 'Rendered content cached' );
   }
 
@@ -238,7 +238,7 @@ sub stuff {
   my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
 
-  my $content = ($memd && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $memd->get($ENV{CACHE_KEY}) : undef;
+  my $content = ($MEMD && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $MEMD->get($ENV{CACHE_KEY}) : undef;
 
   if ($content) {
     warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}";
@@ -251,7 +251,7 @@ sub stuff {
                     'scriptname' => 'action',
                     'renderer'   => 'String',
                     'command'    => $command, 
-                    'cache'      => $memd,
+                    'cache'      => $MEMD,
     );
     if( $modal_dialog ) {
       $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
@@ -322,8 +322,8 @@ sub stuff {
 
     my @tags = qw(DYNAMIC);
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
-    $memd->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags)
-      if $memd && !$webpage->has_a_problem && $ENSEMBL_WEB_REGISTRY->check_ajax;
+    $MEMD->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags)
+      if $MEMD && !$webpage->has_a_problem && $ENSEMBL_WEB_REGISTRY->check_ajax;
   }
   
   CGI::header;
