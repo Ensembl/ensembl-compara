@@ -29,10 +29,13 @@ sub content {
   my $wuc          = $object->image_config_hash( 'genetreeview' );
   my $image_width  = $object->param( 'image_width' ) || 800;
 
-  $wuc->container_width($image_width);
-  $wuc->set_width( $object->param('image_width') );
-  $wuc->{_object} = $object;
+  $wuc->set_parameters({
+    'container_width'   => $image_width,
+    'image_width',      => $image_width,
+    'slice_number',     => '1|1',
+  });
 
+  $wuc->tree->dump("GENE TREE CONF", '([[caption]])');
   my $image  = $object->new_image
       ( $tree, $wuc, [$object->stable_id, $member->genome_db->dbID] );
 #  $image->cacheable   = 'yes';
