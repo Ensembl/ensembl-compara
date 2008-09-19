@@ -200,7 +200,7 @@ sub ingredient {
       $content,
       60*60*24*7,
       'AJAX', keys %{ $ENV{CACHE_TAGS}||{} }
-    );
+    ) if $memd;
     timer_push( 'Rendered content cached' );
   }
 
