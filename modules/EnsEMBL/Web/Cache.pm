@@ -37,7 +37,7 @@ sub new {
   return undef if $caller->isa('EnsEMBL::Web::Apache::Image')
                   && !$flags{TMP_IMAGES};
   return undef if $caller->isa('EnsEMBL::Web::Magic')
-                  && !$flags{AJAX_CONTENT};
+                  && !$flags{DYNAMIC_PAGES_CONTENT};
   return undef if $caller->isa('EnsEMBL::Web::Configuration')
                   && !$flags{ORDERED_TREE};
 
