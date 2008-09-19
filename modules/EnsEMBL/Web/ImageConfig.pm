@@ -50,11 +50,22 @@ sub new {
   };
 
   bless($self, $class);
+## Check to see if we have a user/session saved copy of tree.... 
+##   Load tree from cache...
+##   If not check to see if we have a "common" saved copy of tree
+##     If not generate and cache it!
+##   If we have a (user/session) modify the common tree
+##     Cache the user/session version.
 
   ########## init sets up defaults in $self->{'general'}
   $self->init( ) if($self->can('init'));
   $self->{'no_image_frame'}=1;
+## At this point tree doesn't depend on session/user....
+
+## Add user defined data sources.....
   $self->das_sources( @_ ) if(@_); # we have das sources!!
+## Now tree does depend on session/user...
+#
   ########## load sets up user prefs in $self->{'user'}
 #  $self->load() unless(defined $self->{'no_load'});
   return $self;
