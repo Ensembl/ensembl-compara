@@ -4,9 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Cache;
 use base qw(EnsEMBL::Web::Object);
-our $memd = new EnsEMBL::Web::Cache;
 
 use Storable qw(lock_retrieve);
 
