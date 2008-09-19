@@ -544,15 +544,6 @@ sub snpview_image_menu {
     join(";", map { "$_=".CGI::escapeHTML($params->{$_}) } keys %$params ).
       ";snpview=%7Cbump_", 1);
   $image_config->{'_ld_population'} = $object->get_default_pop_name;
-  my $mc = $object->new_menu_container( 
-    'configname' => 'snpview',
-    'panel'      => 'snpview',
-    'fields'     => $params,
-    'leftmenus'   => [qw(Features Source SNPClasses SNPTypes Options Export ImageSize)],
-    'rightmenus'  => [qw(SNPHelp)]
-  );
-  $panel->print( $mc->render_html );
-  $panel->print( $mc->render_js );
   return 0;
 }
 

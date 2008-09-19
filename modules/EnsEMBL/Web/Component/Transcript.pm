@@ -1159,17 +1159,7 @@ sub transcriptsnpview_menu    {
   $image_config->{'snp_haplotype_reference'}    =  $individual_adaptor->get_reference_strain_name();
 
   my $strains = ucfirst($object->species_defs->translate("strain"))."s";
-  my $left =  [( 'Features', 'Source', 'SNPClasses', 'SNPTypes', "$strains", 'SNPContext', 'THExport', 'ImageSize' )]; # removed SNPValid
 
-  my $mc = $object->new_menu_container(
-     'configname'  => 'TSV_sampletranscript', #primary config for display
-     'panel'       => "bottom",
-     'configs'     => [ $object->image_config_hash( 'TSV_context' ), $object->image_config_hash('TSV_transcript') ], # other configs that are affected by menu changes
-     'leftmenus'  => $left,
-     'rightmenus' => ['SNPHelp'],
-   );
-  $panel->print( $mc->render_html );
-  $panel->print( $mc->render_js );
   return 0;
 }
 

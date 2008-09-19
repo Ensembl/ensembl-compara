@@ -477,40 +477,11 @@ sub alignsliceviewbottom_menu {
     my $configname = 'alignsliceviewbottom';
 
     my @menu_items = qw(Features AlignCompara Repeats Options ASExport ImageSize);
-    my $mc = $object->new_menu_container(
-                     'configname' => $configname,
-                     'panel'      => 'bottom',
-                     'leftmenus'  => \@menu_items,
-                     'rightmenus' => [qw(Help)],
-                     );
-    $panel->print( $mc->render_html );
-    $panel->print( $mc->render_js );
     return 0;
 }
 
 sub multi_bottom_menu {
   my($panel, $object ) = @_;
-  my( $primary, @secondary ) = ($object->Locations);
-  
-  my @configs = ();
-  my $T = $object->image_config_hash( 'thjviewbottom' );
-  $T->{'multi'}=1;
-  $T->set_species( $primary->real_species );
-  foreach( @secondary ) {
-    my $T = $_->image_config_hash( "THJ_".$_->real_species, 'thjviewbottom' );
-    $T->mult;
-    $T->set_species( $_->real_species );
-    push @configs, $T;
-  }
-  my $mc = $object->new_menu_container(
-    'configname' => 'thjviewbottom',
-    'panel'      => 'bottom',
-    'configs'    => \@configs,
-    'leftmenus'  => [qw(Features Compara Repeats Options THExport ImageSize)],
-    'rightmenus' => [qw(Help)]
-  );
-  $panel->print( $mc->render_html );
-  $panel->print( $mc->render_js );
   return 0;
 }
 

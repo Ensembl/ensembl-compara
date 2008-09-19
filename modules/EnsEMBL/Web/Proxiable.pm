@@ -6,7 +6,6 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::ExtURL;
-use EnsEMBL::Web::Document::DropDown::MenuContainer;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use CGI qw(escape escapeHTML);
@@ -206,39 +205,6 @@ sub get_ExtURL_link {
   my $text = shift;
   my $URL = CGI::escapeHTML( $self->get_ExtURL(@_) );
   return $URL ? qq(<a href="$URL">$text</a>) : $text;
-}
-
-sub new_menu_container {
-  my($self, %params ) = @_;
-
-#  foreach my $p (sort keys %params) {
-#      warn ("$p => $params{$p}");
-#  }
-
-  my %N = (
-    'species'      => $self->species,
-    'script'       => $self->script,
-    'viewconfig'   => $self->get_viewconfig,
-    'width'        => $self->param('image_width'),
-    'object'       => $self
-  );
-
-  $N{'location'} = $self->location if $self->can('location');
-  $N{'panel'}    = $params{'panel'}    || $params{'configname'} || $N{'script'};
-  $N{'fields'}   = $params{'fields'}   || ( $self->can('generate_query_hash') ? $self->generate_query_hash : {} );
-  if( $params{'configname'} ) {
-   # warn ".. $params{'configname'}";
-    $N{'config'}   = $self->image_config_hash( $params{'configname'} );
-    $N{'config'}->set_species( $self->species );
-  }
-  $N{'configs'}  = $params{'configs'};
-
-  my $mc = EnsEMBL::Web::Document::DropDown::MenuContainer->new(%N);
-
-  foreach( @{$params{'leftmenus'} ||[]} ) { $mc->add_left_menu( $_); }
-  foreach( @{$params{'rightmenus'}||[]} ) { $mc->add_right_menu($_); }
-  $mc->{'config'}->{'missing_tracks'} = $mc->{'missing_tracks'};
-  return $mc;
 }
 
 1;

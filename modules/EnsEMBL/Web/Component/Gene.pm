@@ -1309,17 +1309,10 @@ sub transcripts {
 
     ## Will need to add bit here to configure which tracks to turn on and off!!
     ## Get the drawable_container
-    my $mc = $gene->new_menu_container(
-      'configname' => 'altsplice',
-      'panel'      => 'altsplice',
-      'leftmenus' => ['Features']
-    );
-    $mc->{'ajax'} = $panel->{'ajax'};
     ## Now
     my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
     $image->introduction       = qq($extra\n<table style="width:100%">$rows</table>\n);
     $image->imagemap           = 'yes';
-    $image->menu_container     = undef;
     $image->set_extra( $gene );
 
     $panel->add_content( $image->render, "$URL=odd" );
@@ -1465,20 +1458,6 @@ sub genespliceview_menu {  return gene_menu( @_, 'genesnpview_transcript',
    [qw( Features SNPContext ImageSize THExport )] ); }
 
 sub genetreeview_menu {
-    my($panel, $object, $configname, $left, $right ) =
-        (@_, 'genetreeview', [qw( GTExport ImageSize )], ['GeneTreeHelp'] );
-
-    my $mc = $object->new_menu_container(
-                                         'configname'  => $configname,
-                                         'panel'       => 'image',
-                                         'object' => $object,
-                                         'configs'     => [ $object->image_config_hash( 'genetreeview' ) ],
-                                         'leftmenus'  => $left,
-                                         'rightmenus' => $right
-                                         );
-    $panel->print( $mc->render_html );
-    $panel->print( $mc->render_js );
-    return 0;
 }
 
 sub nogenetree {
@@ -1495,16 +1474,6 @@ sub genesnpview_menu    {  return gene_menu( @_, 'genesnpview_transcript',
    [qw( Features  Source SNPClasses SNPValid SNPTypes SNPContext THExport ImageSize)], ['SNPHelp'] ); }
 
 sub gene_menu {
-  my($panel, $object, $configname, $left, $right ) = @_;
-  my $mc = $object->new_menu_container(
-    'configname'  => $configname,
-    'panel'       => 'bottom',
-    'configs'     => [ $object->image_config_hash( 'genesnpview_context' ) ],
-    'leftmenus'  => $left,
-    'rightmenus' => $right
-  );
-  $panel->print( $mc->render_html );
-  $panel->print( $mc->render_js );
   return 0;
 }
 

@@ -269,32 +269,15 @@ sub _create_idhistory_tree {
   $wuc->set('_settings', 'LINK', _flip_URL($object));
   $wuc->{_object} = $object;
   
-  my $mc = _id_history_tree_menu($object, 'idhistoryview', [qw(IdhImageSize)]);
-  $mc->{'ajax'}=$panel->{'ajax'};  
   my $image = $object->new_image($tree, $wuc, [$object->stable_id]);
   $image->image_type = 'idhistorytree';
   $image->image_name = $object->param('image_width').'-'.$object->stable_id;
   $image->imagemap = 'yes';
-  $image->menu_container = $mc;
   
   return $image;
 }
 
  
-sub _id_history_tree_menu {
-  my ($object, $configname, $left) = @_;
-
-  my $mc = $object->new_menu_container(
-      'configname'  => $configname,
-      'panel'       => 'image',
-      'object' => $object,
-      'leftmenus'  => $left,
-  );
-
-  return $mc;
-}
-
-
 sub _flip_URL {
   my ($object) = @_;
   

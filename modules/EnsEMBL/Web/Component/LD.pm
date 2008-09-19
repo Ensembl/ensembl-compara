@@ -191,15 +191,6 @@ sub ldview_image_menu {
   my $image_config = $object->image_config_hash( 'LD_population' );
   $image_config->{'Populations'}    = $object->pops_for_slice(100000);
 
-  my $mc = $object->new_menu_container(
-    'configname'  => 'LD_population',
-    'configs'    =>  [$object->image_config_hash('ldview')],
-    'panel'       => 'bottom',
-    'leftmenus'  => [qw(Features Population Options Export ImageSize)],
-    'rightmenus' => [qw(SNPHelp)],
-  );
-  $panel->print( $mc->render_html );
-  $panel->print( $mc->render_js );
   return 0;
 }
 
