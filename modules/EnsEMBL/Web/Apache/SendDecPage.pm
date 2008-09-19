@@ -17,7 +17,7 @@ use EnsEMBL::Web::Cache;
 
 use Carp qw(cluck);
 
-our $memd = EnsEMBL::Web::Cache->new(
+our $MEMD = EnsEMBL::Web::Cache->new(
   enable_compress    => 1,
   compress_threshold => 10_000,
 );
@@ -55,7 +55,7 @@ sub handler {
   ## Ajax disabled
   $ENV{CACHE_KEY} .= '::NO_AJAX'  unless $ENSEMBL_WEB_REGISTRY->check_ajax;
   
-  my $pageContent = $memd ? $memd->get($ENV{CACHE_KEY}) : undef;
+  my $pageContent = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
     
   if ($pageContent) {
     warn "STATIC CONTENT CACHE HIT $ENV{CACHE_KEY}";
@@ -156,7 +156,7 @@ sub handler {
 
     my @tags = qw(STATIC);
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
-    $memd->set($ENV{CACHE_KEY}, $pageContent, $ENV{CACHE_TIMEOUT}, @tags) if $memd;
+    $MEMD->set($ENV{CACHE_KEY}, $pageContent, $ENV{CACHE_TIMEOUT}, @tags) if $MEMD;
 
   }
 

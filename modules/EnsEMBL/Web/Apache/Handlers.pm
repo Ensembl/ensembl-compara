@@ -23,7 +23,7 @@ use EnsEMBL::Web::Cache;
 
 use Exporter;
 
-our $memd = new EnsEMBL::Web::Cache;
+our $MEMD = new EnsEMBL::Web::Cache;
 
 our $THIS_HOST;
 our $LOG_INFO; 
@@ -280,7 +280,7 @@ sub transHandler_no_species {
   $r->subprocess_env->{'ENSEMBL_SPECIES'} = 'common';
   $r->subprocess_env->{'ENSEMBL_SCRIPT' } = $real_script_name;
   my $script     = $real_script_name;
-  my $to_execute = $memd ? $memd->get("::SCRIPT::$script") : '';
+  my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';
 
   $ENSEMBL_WEB_REGISTRY->initialize_session({
       r       => $r,
@@ -296,7 +296,7 @@ sub transHandler_no_species {
       next unless -r $filename;
       $to_execute = $filename;
     }
-    $memd->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $memd;
+    $MEMD->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $MEMD;
   }
   if( $to_execute ) {
     $r->subprocess_env->{'ENSEMBL_TYPE'}   = $species;
@@ -379,7 +379,7 @@ sub transHandler_species {
   $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $species, 'script'  => $script, 'type' => $type, 'action' => $action });
 
   # Search the mod-perl dirs for a script to run
-  my $to_execute = $memd ? $memd->get("::SCRIPT::$script") : '';
+  my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';
   
   unless ($to_execute) {
     foreach my $dir( @PERL_TRANS_DIRS ){
@@ -388,7 +388,7 @@ sub transHandler_species {
       next unless -r $filename;
       $to_execute = $filename;
     }
-    $memd->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $memd;
+    $MEMD->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $MEMD;
   }
 
   if ($to_execute) {
@@ -463,7 +463,7 @@ sub transHandler {
 # Search the htdocs dirs for a file to return
   my $path = join( "/", $species || (), $script || (), $path_info || () );
   $r->uri( "/$path" );
-  my $filename = $memd ? $memd->get("::STATIC::$path") : '';
+  my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
   unless ($filename) {
     foreach my $dir (@HTDOCS_TRANS_DIRS) {
       $filename = sprintf( $dir, $path );
@@ -475,7 +475,7 @@ sub transHandler {
         last;
       }
     }
-    $memd->set("::STATIC::$path", $filename, undef, 'STATIC') if $memd;
+    $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
   }
   
   if( $filename =~ /^! (.*)$/ ) {

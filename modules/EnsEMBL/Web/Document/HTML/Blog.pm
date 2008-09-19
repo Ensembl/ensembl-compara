@@ -14,7 +14,7 @@ use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Root);
 
-our $memd = EnsEMBL::Web::Cache->new(
+our $MEMD = EnsEMBL::Web::Cache->new(
   enable_compress    => 1,
   compress_threshold => 10_000,
 );
@@ -28,7 +28,7 @@ sub render {
   ## Ensembl blog (ensembl.blogspot.com)
   my $html = qq(<h2>Latest Blog Entries</h2>);
 
-  my $items = $memd ? $memd->get('::BLOG') : undef;
+  my $items = $MEMD ? $MEMD->get('::BLOG') : undef;
 
   unless ($items) {
     my $ua = new LWP::UserAgent;
@@ -41,8 +41,8 @@ sub render {
     
     $items = $rss->{'items'};
     $ENV{CACHE_TIMEOUT} = 3600;
-    $memd->set('::BLOG', $items, $ENV{CACHE_TIMEOUT}, qw(STATIC BLOG))
-      if $memd;
+    $MEMD->set('::BLOG', $items, $ENV{CACHE_TIMEOUT}, qw(STATIC BLOG))
+      if $MEMD;
   }
 
   my $count = 3;

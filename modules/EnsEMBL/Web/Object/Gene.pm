@@ -12,7 +12,7 @@ use Time::HiRes qw(time);
 
 use base qw(EnsEMBL::Web::Object);
 
-our $memd = new EnsEMBL::Web::Cache;
+our $MEMD = new EnsEMBL::Web::Cache;
 
 sub counts {
   my $self = shift;
@@ -21,7 +21,7 @@ sub counts {
   my $key = '::COUNTS::'. join '::', values %{ $self->core_objects->{parameters} };
   my $counts;
 
-  $counts = $memd->get($key) if $memd;
+  $counts = $MEMD->get($key) if $MEMD;
   
   unless ($counts) {
     $counts = {};
@@ -55,7 +55,7 @@ sub counts {
       }
     }
 
-    $memd->set($key, $counts, undef, 'COUNTS') if $memd;
+    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
   
   return $counts;

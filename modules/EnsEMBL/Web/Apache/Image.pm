@@ -15,7 +15,7 @@ use Apache2::Util ();
 
 use EnsEMBL::Web::Cache;
 
-our $memd = EnsEMBL::Web::Cache->new;
+our $MEMD = EnsEMBL::Web::Cache->new;
 
 #############################################################
 # Mod_perl request handler all /img-tmp and /img-cache images
@@ -32,7 +32,7 @@ sub handler {
   return DECLINED if $path !~ /png$/;
   return DECLINED if $path =~ /\.\./;
 
-  if( $memd && (my $data = $memd->get($path)) ) {
+  if( $MEMD && (my $data = $MEMD->get($path)) ) {
     
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
       $r->headers_out->set('Content-Length' => $data->{'size'});
