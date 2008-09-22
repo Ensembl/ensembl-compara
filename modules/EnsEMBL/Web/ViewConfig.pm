@@ -2,6 +2,7 @@ package EnsEMBL::Web::ViewConfig;
 
 use strict;
 use Data::Dumper;
+use EnsEMBL::Web::Form;
 
 sub new {
   my($class,$type,$action,$adaptor) = @_;
@@ -13,6 +14,7 @@ sub new {
     'action'              => $action,
     '_options'            => {},
     '_image_config_names' => {},
+    '_form'               => undef,
     'no_load'             => undef
   };
 
@@ -38,6 +40,11 @@ sub add_image_configs { ## Value indidates that the track can be configured for 
   foreach( keys %$hash_ref ) {
     $self->{_image_config_names}{$_} = $hash_ref->{$_};
   }
+}
+
+sub has_image_configs {
+  my $self = shift;
+  return keys %{$self->{_image_config_names}||{}};
 }
 
 sub image_configs {
@@ -69,6 +76,22 @@ sub _remove_defaults {
 sub options { 
   my $self = shift;
   return keys %{$self->{'_options'}};
+}
+
+sub has_form {
+  my $self = shift;
+  return $self->{_form};
+}
+
+sub get_form {
+  my $self = shift;
+  $self->{_form}||=EnsEMBL::Web::Form->new( 'configuration', '', 'get' );
+  return $self->{_form};
+}
+
+sub add_form_element {
+  my($self,$hashref) = @_;
+  $self->get_form->add_element(%$hashref,'value'=>$self->get($hashref->{'name'}));
 }
 
 sub update_config_from_parameter {
