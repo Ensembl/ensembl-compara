@@ -79,11 +79,9 @@ addLoadEvent( __init_species_reorder );
   button's value, goes to the URL specified by the form action
 **/
 
-function radio_autosubmit( evt ) {
+function autosubmit( evt ) {
 /** Function that actually does the form submission **/
-  var el = Event.findElement(evt,'input');
-  var form = el.parentNode;
-  form.submit();
+  Event.findElement(evt,'form').submit();
   return true;
 }
 
@@ -92,8 +90,8 @@ function radio_autosubmit( evt ) {
   of the nodes which have a value radio_autosubmit
 **/
 addLoadEvent( function(){ 
-  $$('.radio_autosubmit').each(function(n){
-    Event.observe(n,'change',radio_autosubmit);
+  $$('.autosubmit').each(function(n){
+    Event.observe(n,'change',autosubmit);
   });
 });
 

@@ -17,6 +17,7 @@ var FormCheck = Class.create({
   _isurl:    function( s ) { return /^https?:\/\/\w.*$/.test(s)        },
   _ispass:   function( s ) { return /^\S{6,32}$/.test(s)               },
   _iscode:   function( s ) { return /^\S+$/.test(s)                    },
+  _ishtml:   function( s ) { var err = XhtmlValidator().validate( s ); return err ? 0 : 1 },
   _isalpha:  function( s ) { return /^\w+$/.test(s)                    },
   valid: function( type, s ) {
     switch(type) {
@@ -30,6 +31,7 @@ var FormCheck = Class.create({
       case 'posint'      : return this._isint(   s) &&   parseInt(s) >  0;
       case 'posfloat'    : return this._isfloat( s) && parseFloat(s) >  0;
       case 'int'         : return this._isint(   s);
+      case 'html'        : return this._ishtml(  s);
       case 'float'       : return this._isfloat( s);
       case 'age'         : return this._isint(   s) &&   parseInt(s)>=0
                                                     &&   parseInt(s)<=150;
@@ -51,6 +53,9 @@ var FormCheck = Class.create({
       V = this.trim(el.value);
       if( V == '' ) { // If required then check to see it isn't blank...
         if( req ) tmpl = "You must enter a value for '####'";
+      } else if( type == 'html' ) { // Check HTML - need to error out of validator...
+      	err = XhtmlValidator().validate( V );
+	if( err ) tmpl = "The value of '####' is invalid ("+err+")";
       } else {        // Now check the types of parameters - currently only email but could add URL...
         if( !this.valid(type,V) ) tmpl = "The value of '####' is invalid.";
       }
