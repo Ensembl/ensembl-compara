@@ -494,18 +494,16 @@ sub getViewConfig {
         warn qq(ViewConfig: failed to require $classname:\n  $error) unless $error=~/$message/;
         next;
       }
-      my $method_name = $classname."::init";
-      eval {
-        no strict 'refs';
-        &$method_name( $view_config );
-      };
-      warn "$method_name - called....";
-      if( $@ ) {
-        my $message = "Undefined subroutine &$method_name called";
-        if( $@ =~ /$message/ ) {
-          warn qq(ViewConfig: init not defined in $classname\n);
-        } else {
-          warn qq(ViewConfig: init call on $classname failed:\n$@);
+      foreach my $part (qw(init form)) {
+        my $method_name = $classname."::".$part;
+        eval { no strict 'refs'; &$method_name( $view_config ); };
+        if( $@ ) {
+          my $message = "Undefined subroutine &$method_name called";
+          if( $@ =~ /$message/ ) {
+            warn qq(ViewConfig: init not defined in $classname\n);
+          } else {
+            warn qq(ViewConfig: init call on $classname failed:\n$@);
+          }
         }
       }
     }
