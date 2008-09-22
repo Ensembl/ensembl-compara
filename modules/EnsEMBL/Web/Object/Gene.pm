@@ -1068,15 +1068,15 @@ sub features {
          my $cis_fset = $feature_set_adaptor->fetch_by_name('cisRED search regions');
          my $miranda_fset = $feature_set_adaptor->fetch_by_name('miRanda miRNA');
          my $vista_fset = $feature_set_adaptor->fetch_by_name('VISTA enhancer set');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset, $cis_fset, $miranda_fset, $vista_fset);
+         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, [$cisred_fset, $cis_fset, $miranda_fset, $vista_fset]);
       } elsif ($species=~/Mus_musculus/){
          my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset);
+         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, [$cisred_fset]);
      } elsif ($species=~/Drosophila/){
          my $tiffin_fset = $feature_set_adaptor->fetch_by_name('BioTIFFIN motifs');
          my $crm_fset = $feature_set_adaptor->fetch_by_name('REDfly CRMs');
          my $tfbs_fset = $feature_set_adaptor->fetch_by_name('REDfly TFBSs');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $tiffin_fset, $crm_fset, $tfbs_fset);
+         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, [$tiffin_fset, $crm_fset, $tfbs_fset]);
      }
 
   my @features;
