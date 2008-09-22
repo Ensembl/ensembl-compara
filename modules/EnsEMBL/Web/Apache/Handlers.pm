@@ -344,8 +344,8 @@ sub transHandler_species {
       $type = shift @$path_segments;
       my @T                                  = map { s/\W//g;$_ } @$path_segments;
       my $plugin                             = shift @T;
-      $r->subprocess_env->{'ENSEMBL_ACTION'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, @T;
-      $r->subprocess_env->{'ENSEMBL_TYPE'}   = $type;
+      $r->subprocess_env->{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, @T;
+      $r->subprocess_env->{'ENSEMBL_TYPE'}      = $type;
       $path_segments                         = [];
     } else { ## This is a user space script - don't do anything - I think!
       $r->subprocess_env->{'ENSEMBL_ACTION'} = shift @$path_segments;

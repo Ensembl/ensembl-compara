@@ -120,7 +120,6 @@ sub _parse_referer {
   };
 }
 
-use Apache2::RequestUtil;
 
 sub configurator {
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
@@ -173,14 +172,14 @@ sub ingredient {
   my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
 
   timer_push( 'Retrieved content from cache' ); 	 
-  $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_ACTION'}" );
+  $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_COMPONENT'}" );
 
   if ($content) {
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
   } else {
     warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}";
     my $referer_hash = _parse_referer;
-
+    $ENV{'ENSEMBL_ACTION'} = $referer_hash->{'ENSEMBL_ACTION'};
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
       'objecttype' => $objecttype,
       'doctype'    => 'Component',
@@ -207,7 +206,7 @@ sub ingredient {
   CGI::header;
   print $content;
   timer_push( 'Rendered content printed' );
-  return "Generated magic ingredient ($ENV{'ENSEMBL_ACTION'})";
+  return "Generated magic ingredient ($ENV{'ENSEMBL_COMPONENT'})";
 }
 
 sub mushroom {
@@ -246,12 +245,12 @@ sub stuff {
     warn "DYNAMIC CONTENT CACHE MISS $ENV{CACHE_KEY}";
 
     my $webpage = EnsEMBL::Web::Document::WebPage->new( 
-                    'objecttype' => $object_type, 
-                    'doctype'    => $doctype,
-                    'scriptname' => 'action',
-                    'renderer'   => 'String',
-                    'command'    => $command, 
-                    'cache'      => $MEMD,
+      'objecttype' => $object_type, 
+      'doctype'    => $doctype,
+      'scriptname' => 'action',
+      'renderer'   => 'String',
+      'command'    => $command, 
+      'cache'      => $MEMD,
     );
     if( $modal_dialog ) {
       $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
