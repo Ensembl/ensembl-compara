@@ -1,5 +1,6 @@
 package EnsEMBL::Web::Form::Element::DropDown;
-
+use strict;
+use base qw( EnsEMBL::Web::Form::Element );
 #--------------------------------------------------------------------
 # Creates a form element for an option set, as either a select box
 # or a set of radio buttons
@@ -12,9 +13,7 @@ package EnsEMBL::Web::Form::Element::DropDown;
 # whilst the 'value' element is passed as a form variable
 #--------------------------------------------------------------------
 
-use EnsEMBL::Web::Form::Element;
 use CGI qw(escapeHTML);
-our @ISA = qw( EnsEMBL::Web::Form::Element );
 
 sub new {
   my $class  = shift;
@@ -68,18 +67,18 @@ sub render {
 #       sprintf( "document.forms[%s].submit()", $self->form ) :
        sprintf( "document.%s.submit()", $self->{formname} ) :
        sprintf( "os_check('%s',this,%s)", $self->type, $self->required eq 'yes'?1:0 );  
-    return sprintf( qq(<label for="%s">%s: </label><select name="%s" id="%s" class="%s" onChange="%s">\n%s</select>%s),
+    return sprintf( qq(<label for="%s">%s: </label><select name="%s" id="%s" class="%s %s">\n%s</select>%s),
       CGI::escapeHTML( $self->name ), 
       CGI::escapeHTML( $self->label ),
       CGI::escapeHTML( $self->name ), 
       CGI::escapeHTML( $self->id ),
       $self->style,
-      $ON_CHANGE,
+      $ON_CHANGE ? ' autosubmit' : '',
       $options,
       $self->notes
     );
   } else {
-    $output = '';
+    my $output = '';
     my $K = 0;
     foreach my $V ( @{$self->values} ) {
       $output .= sprintf( qq(    <div class="%s"><input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label></div>\n),

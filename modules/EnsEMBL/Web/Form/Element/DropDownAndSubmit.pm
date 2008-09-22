@@ -40,7 +40,7 @@ sub render {
         $v_hash{'value'}, $self->value eq $v_hash{'value'} ? ' selected="selected"' : '', $v_hash{'name'}
       );
     }
-    return sprintf( qq(<label for="%s">%s</label><select name="%s" id="%s" class="%s" onChange="os_check('%s',this,%s)">\n%s</select>
+    return sprintf( qq(<label for="%s">%s</label><select name="%s" id="%s" class="%s %s autosubmit">\n%s</select>
       <input type="submit" value="%s" class="input-submit" />%s
     %s),
       CGI::escapeHTML( $self->id ),
@@ -48,8 +48,7 @@ sub render {
       CGI::escapeHTML( $self->name ), 
       CGI::escapeHTML( $self->id ),
       $self->style,
-      $self->type, 
-      $self->required eq 'yes' ? 1 : 0,
+      $self->required eq 'yes' ? 'required' : 'optional',
       $options,
       CGI::escapeHTML( $self->button_value ),
       $self->required eq 'yes' ? $self->required_string : '',

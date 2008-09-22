@@ -8,7 +8,7 @@ our @ISA = qw( EnsEMBL::Web::Root );
 sub new {
   my ($class, %option) = @_;
   my $self = {
-    '_name'       => $option{'name'},
+    '_id'         => $option{'form'},
     '_elements'   => [],
     '_set_id'     => 1,
     '_required'   => 0,
@@ -25,7 +25,7 @@ sub add_element {
   my $module = "EnsEMBL::Web::Form::Element::$options{'type'}";
   
   if( $self->dynamic_use( $module ) ) {
-    $self->_add_element( $module->new( 'form' => $self->{'_attributes'}{'name'}, %options ) );
+    $self->_add_element( $module->new( 'form' => $self->{'_attributes'}{'id'}, %options ) );
   } else {
     warn "Unable to dynamically use module $module. Have you spelt the element type correctly?";
   }
@@ -65,7 +65,7 @@ sub extra {
 
 sub _next_id {
   my $self = shift;
-  return $self->{'_name'}.'_'.($self->{'_set_id'}++);
+  return $self->{'_id'}.'_'.($self->{'_set_id'}++);
 }
 
 sub _render_element {

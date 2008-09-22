@@ -8,11 +8,11 @@ our @ISA = qw( EnsEMBL::Web::Root );
 
 sub new {
   my( $class, $name, $action, $method ) = @_;
+  warn "FORM CREATED...";
   my $self = {
     '_attributes' => {
         'action'   => $action,
         'method'   => lc($method) || 'get' ,  
-        'name'     => $name,
         'id'       => $name,
         'class'    => 'std check',
     },
@@ -31,7 +31,7 @@ sub add_button {
   if ($type eq 'Submit' || $type eq 'Button') {
     my $module = "EnsEMBL::Web::Form::Element::$type";
     if( $self->dynamic_use( $module ) ) {
-      my $button = $module->new( 'form' => $self->{'_attributes'}{'name'}, %options );
+      my $button = $module->new( 'form' => $self->{'_attributes'}{'id'}, %options );
       push @{$self->{'_buttons'}}, $button;
     } 
     else {
@@ -52,7 +52,7 @@ sub add_attribute {
 sub add_fieldset {
 ### Add a fieldset object to the form
   my( $self, %options ) = @_;
-  my $fieldset = EnsEMBL::Web::Form::FieldSet->new('form' => $self->{'_attributes'}{'name'}, %options );
+  my $fieldset = EnsEMBL::Web::Form::FieldSet->new('form' => $self->{'_attributes'}{'id'}, %options );
   if (!$fieldset->{'_name'}) {
     $fieldset->{'_name'} =  $self->_next_id();
   }
@@ -63,7 +63,7 @@ sub add_fieldset {
 sub _next_id {
 ### Returns an autoincremented ID for fieldset (used if not defined manually in the component) 
   my $self = shift;
-  return $self->{'_attributes'}{'name'}.'_'.($self->{'_form_id'}++);
+  return $self->{'_attributes'}{'id'}.'_'.($self->{'_form_id'}++);
 }
 
 sub _render_buttons {
@@ -123,7 +123,7 @@ sub add_element {
 
   my $fieldset = $self->{'_fieldsets'}[-1];
   if (!$fieldset) {
-    $fieldset = EnsEMBL::Web::Form::FieldSet->new('form' => $self->{'_attributes'}{'name'});
+    $fieldset = EnsEMBL::Web::Form::FieldSet->new('form' => $self->{'_attributes'}{'id'});
     push @{$self->{'_fieldsets'}}, $fieldset;
   }
   $fieldset->add_element(%options);

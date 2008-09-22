@@ -1,22 +1,17 @@
 package EnsEMBL::Web::Form::Element::CheckBox;
-
-use CGI qw(escapeHTML);
+use strict;
 use base qw( EnsEMBL::Web::Form::Element );
 
-#sub new {
-#  my $class = shift;
-#  return $class->SUPER::new( @_ );
-#}
-                                                                                
+use CGI qw(escapeHTML);
+
 sub new {
   my $class = shift;
   my %params = @_;
-  my $self = $class->SUPER::new(
-    %params,
-  );
+  my $self = $class->SUPER::new( %params );
   $self->checked = $params{'checked'};
   return $self;
 }
+
 sub checked  :lvalue { $_[0]->{'checked'};  }
 
 sub render {
@@ -33,6 +28,4 @@ sub render {
 }
                                                                                 
 sub validate { return 1; }
-
-
 1;
