@@ -18,7 +18,7 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $show = $object->param('show') || '';
+  my $show   = $object->param('show') || '';
   my $number = $object->param('number' || 'off');
   my $html = ''; 
 
