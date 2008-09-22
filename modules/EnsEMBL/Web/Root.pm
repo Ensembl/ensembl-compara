@@ -187,8 +187,8 @@ sub help_feedback {
 <div style="%s">
 <form id="help_feedback_%s" action="/Help/Feedback" method="post">
 <strong>Was this helpful?</strong>
-<input type="radio" class="radio_autosubmit" name="help_feedback" value="yes" /><label>Yes</label>
-<input type="radio" class="radio_autosubmit" name="help_feedback" value="no" /><label>No</label>
+<input type="radio" class="autosubmit" name="help_feedback" value="yes" /><label>Yes</label>
+<input type="radio" class="autosubmit" name="help_feedback" value="no" /><label>No</label>
 <input type="hidden" name="record_id" value="%s" />
 <input type="hidden" name="type" value="%s" />
 <input type="hidden" name="return_url" value="%s" />
