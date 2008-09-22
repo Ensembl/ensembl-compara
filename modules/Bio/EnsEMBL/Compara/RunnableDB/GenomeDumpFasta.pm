@@ -53,7 +53,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta;
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::Runnable::BlastDB;
+use Bio::EnsEMBL::Analysis::Tools::BlastDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use Bio::EnsEMBL::Hive::Process;
@@ -203,12 +203,14 @@ sub dumpPeptidesToFasta
   $self->{'comparaDBA'}->get_SubsetAdaptor->dumpFastaForSubset($self->{'pepSubset'}, $fastafile);
 
   # configure the fasta file for use as a blast database file
-  my $blastdb     = new Bio::EnsEMBL::Pipeline::Runnable::BlastDB (
-      -dbfile     => $fastafile,
-      -type       => 'PROTEIN');
-  $blastdb->run;
-  if( ! $blastdb->db_formatted() ){ $self->throw("BlastDB not formatted!")}
-  print("registered ". $blastdb->dbname . " for ".$blastdb->dbfile . "\n");
+  my $blastdb        = new Bio::EnsEMBL::Analysis::Tools::BlastDB (
+      -sequence_file => $fastafile,
+      -mol_type => "PROTEIN");
+  $blastdb->create_blastdb;
+
+  my $seq_name = $blastdb->sequence_file;
+  my ($dbname) = $seq_name =~ /([^\/]+)$/;
+  print("registered ". $dbname . " for ".$blastdb->sequence_file . "\n");
 
   return $blastdb;
 }
@@ -274,10 +276,12 @@ sub createBlastAnalysis
   $params .= '}';
   
   print("createBlastAnalysis\n  params = $params\n");
-  
+  my $seq_name = $blastdb->sequence_file;
+  my ($dbname) = $seq_name =~ /([^\/]+)$/;
+
   my $analysis = Bio::EnsEMBL::Analysis->new(
-      -db              => $blastdb->dbname,
-      -db_file         => $blastdb->dbfile,
+      -db              => $dbname,
+      -db_file         => $blastdb->sequence_file,
       -db_version      => '1',
       -logic_name      => $self->{'logic_name'},
       -program         => $blast_template->program(),
