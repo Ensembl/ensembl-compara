@@ -97,7 +97,7 @@ sub _ajax_content {
 ## Force page type to be ingredient!
   $self->{'page'}->{'_page_type_'} = 'ingredient';
   my $panel  = $self->new_panel( 'Ajax', 'code' => 'ajax_panel', 'object'   => $obj);
-  $panel->add_component( 'component' => $ENV{'ENSEMBL_ACTION'} );
+  $panel->add_component( 'component' => $ENV{'ENSEMBL_COMPONENT'} );
   $self->add_panel( $panel );
 }
 
@@ -152,6 +152,21 @@ sub _user_context {
   my %ics = $vc->image_configs;
   ## Can user data be added to this page?
   my $flag = $obj->param('config') ? 0 : 1;
+  if( $vc->has_form ) {
+    $self->{'page'}->global_context->add_entry(
+      'type'      => 'Config',
+      'id'        => "config_page",
+      'caption'   => 'Configure page',
+      'url'       => $obj->_url({
+        'type'   => 'Config',
+        'action' => $type.'/'.$ENV{'ENSEMBL_ACTION'},
+      }),
+      'class'     => ( $type ne 'Account' &&
+                       $type ne 'UserData' &&
+                       !$obj->param('config') ) ? 'active' : ''
+    );
+    $flag = 0;
+  }
   foreach my $ic_code (sort keys %ics) {
     my $ic = $obj->get_imageconfig( $ic_code );
     $self->{'page'}->global_context->add_entry(
@@ -204,16 +219,39 @@ sub _configurator {
   my $self = shift;
   my $obj  = $self->{'object'};
   my $vc   = $obj->get_viewconfig();
+
+  if( $vc->has_form ) {
+    warn $vc->get_form->render;
+  }
   my $conf;
   eval {
     $conf = $obj->get_imageconfig( $obj->param('config') );
   };
   unless( $conf ) {
-    my %T = $vc->image_configs;
-    eval {
-      $conf = $obj->get_imageconfig( sort keys %T );
-    };
+## This must be the view config....
+    if( $vc->has_form ) {
+      $self->tree->_flush_tree();
+      $self->create_node( 'form_conf', 'Configure', [],  { 'url' => '', 'availability' => 0, 'id' => 'form_conf_id', 'caption' => 'Configure' } );
+      $self->{'page'}->{'_page_type_'} = 'configurator';
+
+      $self->{'page'}->local_context->tree(    $self->{_data}{'tree'} );
+      $self->{'page'}->local_context->active(  'form_conf' );
+      $self->{'page'}->local_context->caption( 'Configure view'     );
+      $self->{'page'}->local_context->class(   'view_configuration' );
+      $self->{'page'}->local_context->counts(  {} );
+      my $panel = $self->new_panel( 'Configurator',
+        'code'         => 'configurator',
+        'object'       => $obj
+      );
+      $panel->set_content( $vc->get_form->render );
+      $self->add_panel( $panel );
+      return;
+    }
   }
+  my %T = $vc->image_configs;
+  eval {
+    $conf = $obj->get_imageconfig( sort keys %T );
+  };
   $self->{'page'}->{'_page_type_'} = 'configurator';
   $self->tree->_flush_tree();
 
@@ -298,12 +336,21 @@ sub _local_tools {
   my @data = (
     ['Bookmark this page',  '/Account/Bookmark', 'modal_link' ],
   );
-  if( $self->configurable ) {
+  my $vc  = $obj->get_viewconfig;
+  my $config = {};
+  if( $vc->has_form ) {
+    $config = 1;
+  } else {
+    my %configs = $vc->image_configs();
+    ($config) = sort keys %configs;
+  }
+  if( $config ) {
     push @data, [
       'Configure this page',
       $obj->_url({
         'type' => 'Config',
-        'action' => $obj->type.'/'.$obj->action
+        'action' => $obj->type.'/'.$obj->action,
+        ( $config eq '1' ? ('config' => $config) : () )
       }),
       'modal_link'
     ];
