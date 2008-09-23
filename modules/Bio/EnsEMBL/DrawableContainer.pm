@@ -116,7 +116,6 @@ sub new {
 ## This is much simplified as we just get a row of configurations...
 	for my $row_config ($strand == 1 ? reverse @configs : @configs) {
 	  my $display = $row_config->get('display')||($row_config->get('on')eq'on'?'normal':'off');
-          warn ".... ",$row_config->get('caption'),"............................... $display ....";
 	  next if $display eq 'off';
 	  my $str_tmp = $row_config->get('strand');
 

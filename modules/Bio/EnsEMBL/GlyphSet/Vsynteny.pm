@@ -58,7 +58,7 @@ sub _init {
 ## LETS GRAB THE CHROMOSOME BANDS FOR THE CENTRAL CHROMOSOME
 
     my $chr_length  = $sa->fetch_by_region( 'toplevel', $chr )->length; 
-    my $bands       = $Config->is_available_artefact('databases_tables ENSEMBL_DB.karyotype' ) ? $kba->fetch_all_by_chr_name( $chr ) : [];
+    my $bands       = $Config->is_available_artefact('databases_tables DATABASE_CORE.karyotype' ) ? $kba->fetch_all_by_chr_name( $chr ) : [];
 
 ## NOW LETS GRAB THE IMAGE PARAMETERS
     my $im_width            = $Config->image_width();
