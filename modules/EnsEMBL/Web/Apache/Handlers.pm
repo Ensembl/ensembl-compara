@@ -39,6 +39,7 @@ our %OBJECT_TO_SCRIPT = qw(
 
   Gene        action
   Transcript  action
+  Search      action
   Location    action
   Variation   action
   Server      action
