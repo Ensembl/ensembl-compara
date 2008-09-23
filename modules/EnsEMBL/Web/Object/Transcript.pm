@@ -14,16 +14,56 @@ our @ISA = qw(EnsEMBL::Web::Object);
 
 sub counts {
   my $self = shift;
+  my $sd = $self->species_defs;
+
   my $counts = {};
-  $counts->{'exons'}       = @{$self->Obj()->get_all_Exons};
+#  $sd->timer_push( 'Counting all', 1, 'Fetching' );
+  $counts->{'exons'} = @{$self->Obj()->get_all_Exons};
+#  $sd->timer_push( 'Counted exons', 2, 'Fetching' );
+  $counts->{'evidence'}           = $self->count_supporting_evidence;
+#  $sd->timer_push( 'Counted evidence', 2, 'Fetching' );
+  $counts->{'similarity_matches'} = $self->count_similarity_matches;
+#  $sd->timer_push( 'Counted xrefs', 2, 'Fetching' );
+  $counts->{'oligos'}             = $self->count_oligos;
+#  $sd->timer_push( 'Counted oligos', 2, 'Fetching' );
+  $counts->{'prot_domains'}       = $self->count_prot_domains;
+#  $sd->timer_push( 'Counted prot domains ', 2, 'Fetching' );
+  $counts->{'prot_variations'}    = $self->count_prot_variations;
+#  $sd->timer_push( 'Counted prot variations', 2, 'Fetching' );
+  $counts->{'other_prot_feat'}    = $self->count_other_prot_features;
+#  $sd->timer_push( 'Counted prot features', 2, 'Fetching' );
+  $counts->{'go'}                 = $self->count_go;
+#  $sd->timer_push( 'Counted go', 2, 'Fetching' );
   if ($self->get_interpro) {
-	$counts->{'domains'}     = keys %{$self->get_interpro};
+      $counts->{'domains'} = keys %{$self->get_interpro};
+#      $sd->timer_push( 'Counted interpro', 2, 'Fetching' );
   }
-  $counts->{'evidence'} = $self->count_supporting_evidence;
+#  $sd->timer_push( 'Finished counting for transcript menu', 1, 'Fetching' );
   return $counts;
 }
 
-sub count_supporting_evidence {
+sub count_prot_domains {
+    my $self = shift;
+    return scalar(@{$self->translation_object->get_protein_domains()});
+}
+
+sub count_prot_variations {
+    my $self = shift;
+    my $snps = $self->translation_object->pep_snps();
+    my $c = 0;
+    foreach my $residue (@$snps){
+	next if !$residue->{'allele'};
+	$c++;
+    }
+    return $c;
+}
+
+sub count_other_prot_features {
+    my $self = shift;
+    return map { @{$self->translation_object->get_all_ProteinFeatures($_)} } qw( tmhmm SignalP ncoils Seg );
+}
+
+sub count_supporting_evidence_old {
     my $self = shift;
     my $trans = $self->Obj;
     my $evi_count = 0;
@@ -43,6 +83,142 @@ sub count_supporting_evidence {
     return scalar(keys(%c));
 }
 
+sub count_supporting_evidence {
+    my $self = shift;
+    my $type = $self->get_db;
+    my $dbc = $self->database($type)->dbc;
+    my %all_evidence;
+    if ($self->db_type ne 'Vega'){
+	my $sql = qq(
+                    SELECT feature_type, feature_id
+                    FROM transcript_supporting_feature
+                    WHERE transcript_id = ?);
+	my $sth = $dbc->prepare($sql);
+	$sth->execute($self->Obj->dbID);
+	while (my ($type,$feature_id) = $sth->fetchrow_array) {
+	    $all_evidence{$type}{$feature_id}++;
+	}
+    }
+    my $sql = qq(
+                SELECT feature_type, feature_id
+                  FROM supporting_feature sf, exon_transcript et
+                 WHERE et.exon_id = sf.exon_id
+                   AND et.transcript_id = ?);
+    my $sth = $dbc->prepare($sql);
+    $sth->execute($self->Obj->dbID);
+    while (my ($type,$feature_id) = $sth->fetchrow_array) {
+	$all_evidence{$type}{$feature_id}++;
+    };
+    my %names = ('dna_align_feature'     => 'dna_align_feature_id',
+	       'protein_align_feature' => 'protein_align_feature_id');
+    my %hits;
+    my $dbh = $dbc->db_handle;
+    while ( my ($evi_type, $hits) = each %all_evidence) {
+	foreach my $hit_id (keys %$hits) {
+	    my $type = $names{$evi_type};
+	    my $sql = "SELECT hit_name FROM $evi_type where $type = $hit_id";
+	    my ($hit_name) = $dbh->selectrow_array($sql);
+	    $hits{$hit_name}++
+	}
+    }
+    return scalar(keys %hits);
+}
+
+sub count_similarity_matches {
+    my $self = shift;
+    my $type = $self->get_db;
+    my $dbc = $self->database($type)->dbc;
+    my %all_xrefs;
+
+    #xrefs on the transcript
+    my $sql1 = qq(
+                SELECT x.display_label, edb.db_name, edb.type, edb.status
+                  FROM transcript t, object_xref ox, xref x, external_db edb
+                 WHERE t.transcript_id = ox.ensembl_id
+                   AND ox.xref_id = x.xref_id
+                   AND x.external_db_id = edb.external_db_id
+                   AND ox.ensembl_object_type = 'Transcript'
+                   AND t.transcript_id = ?);
+
+    my $sth = $dbc->prepare($sql1);
+    $sth->execute($self->Obj->dbID);
+    while (my ($label,$db_name,$type,$status) = $sth->fetchrow_array) {
+	$all_xrefs{'transcript'}{$label} = {'db_name'=>$db_name, 'type'=>$type, 'status'=>$status};
+    }
+
+    #xrefs on the translation
+    my $sql2 = qq(
+                SELECT x.display_label, edb.db_name, edb.type, edb.status
+                  FROM translation tl, object_xref ox, xref x, external_db edb
+                 WHERE tl.translation_id = ox.ensembl_id
+                   AND ox.xref_id = x.xref_id
+                   AND x.external_db_id = edb.external_db_id
+                   AND ox.ensembl_object_type = 'Translation'
+                   AND tl.transcript_id = ?);
+    $sth = $dbc->prepare($sql2);
+    $sth->execute($self->Obj->dbID);
+    while (my ($label,$db_name,$type,$status) = $sth->fetchrow_array) {
+	$all_xrefs{'translation'}{$label} = {'db_name'=>$db_name, 'type'=>$type, 'status'=>$status};
+    }
+
+    #filter out what isn't shown on the 'External References' page
+    my @counted_xrefs;
+    foreach my $t (qw(transcript translation)) {
+	my $xrefs = $all_xrefs{$t};
+	while (my ($id,$det) = each %$xrefs) {
+	    next unless (grep {$det->{'type'} eq $_} qw(MISC PRIMARY_DB_SYNONYM));
+
+	    #these filters are taken directly from Component::_sort_similarity_links
+            #code duplication needs removing, and some of these may well not be needed any more
+	    next if ($det->{'status'} eq 'ORTH');                        # remove all orthologs
+	    next if (lc($det->{'db_name'}) eq 'medline');                # ditch medline entries - redundant as we also have pubmed
+	    next if ($det->{'db_name'} =~ /^flybase/i && $id =~ /^CG/ ); # Ditch celera genes from FlyBase
+	    next if ($det->{'db_name'} eq 'Vega_gene');                  # remove internal links to self and transcripts
+	    next if ($det->{'db_name'} eq 'Vega_transcript');
+	    next if ($det->{'db_name'} eq 'Vega_translation');
+	    next if ($det->{'db_name'} eq 'GO');
+	    push @counted_xrefs, $id;
+	}
+    }
+    return scalar @counted_xrefs;
+}
+
+sub count_oligos {
+    my $self = shift;
+    my $type = $self->get_db;
+    my $dbc = $self->database($type)->dbc;
+    my $sql = qq(
+                SELECT count(distinct(x.display_label))
+                  FROM object_xref ox, xref x, external_db edb
+                 WHERE ox.xref_id = x.xref_id
+                   AND x.external_db_id = edb.external_db_id
+                   AND ox.ensembl_object_type = 'Transcript'
+                   AND edb.type = 'ARRAY'
+                   AND ox.ensembl_id = ?);
+    my $sth = $dbc->prepare($sql);
+    $sth->execute($self->Obj->dbID);
+    my $c = $sth->fetchall_arrayref->[0][0];
+    return $c;
+}
+
+sub count_go {
+    my $self = shift;
+    my $type = $self->get_db;
+    my $dbc = $self->database($type)->dbc;
+    my $tl_dbID = $self->Obj->translation->dbID;
+    my $sql = qq(
+                SELECT count(distinct(x.display_label))
+                  FROM object_xref ox, xref x, external_db edb
+                 WHERE ox.xref_id = x.xref_id
+                   AND x.external_db_id = edb.external_db_id
+                   AND edb.db_name = 'GO'
+                   AND ox.ensembl_object_type = 'Translation'
+                   AND ox.ensembl_id = ?);
+    my $sth = $dbc->prepare($sql);
+    $sth->execute($self->transcript->translation->dbID);
+    my $c = $sth->fetchall_arrayref->[0][0];
+    return $c;
+}
 
 sub get_database_matches {
   my $self = shift;
@@ -955,8 +1131,8 @@ sub get_prediction_method {
 =cut
 
 sub display_xref{
-  my $trans_xref = $_[0]->transcript->display_xref();    
-  return ( $trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name ) if $trans_xref;    
+  my $trans_xref = $_[0]->transcript->display_xref();
+  return ( $trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name ) if $trans_xref;
 }
 
 =head2 get_contig_location
@@ -1143,8 +1319,7 @@ sub get_similarity_hash{
   my $DBLINKS;
   eval { $DBLINKS = $recurse ? $self->transcript->get_all_DBLinks
                              : $self->transcript->get_all_DBEntries; };
-
-  warn ("SIMILARITY_MATCHES Error on retrieving gene DB links $@") if ($@);    
+  warn ("SIMILARITY_MATCHES Error on retrieving gene DB links $@") if ($@);
   return $DBLINKS  || [];
 }
 
@@ -1168,16 +1343,14 @@ sub get_go_list {
   my %hash;
   foreach my $goxref ( sort{ $a->display_id cmp $b->display_id } @goxrefs ){
     my $go = $goxref->display_id;
-
-		my $info_text;
-
-		if($goxref->info_type eq 'PROJECTION'){
-			$info_text= $goxref->info_text; 
-		}
-
+    my $info_text;
+    if($goxref->info_type eq 'PROJECTION'){
+	$info_text= $goxref->info_text; 
+    }
+    
     my $evidence = '';
     if( $goxref->isa('Bio::EnsEMBL::GoXref') ){
-      $evidence = join( ", ", @{$goxref->get_all_linkage_types } ); 
+	$evidence = join( ", ", @{$goxref->get_all_linkage_types } ); 
     }
     my ($go2) = $go=~/GO:0*(\d+)/;
     my $term;
