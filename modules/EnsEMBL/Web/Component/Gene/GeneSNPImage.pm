@@ -19,12 +19,17 @@ sub _content {
   my $self    = shift;
   my $no_snps = shift;
   my $object  = $self->object;
-  my $image_width  = $object->param( 'image_width' );
+  my $image_width  = $object->param( 'image_width' ) || 800;
   my $context      = $object->param( 'context' );
   my $extent       = $context eq 'FULL' ? 1000 : $context;
 
   my $master_config = $object->get_imageconfig( "genesnpview_transcript" );
-     $master_config->set( '_settings', 'width',  $image_width );
+     $master_config->set_parameters( {
+       'image_width' =>  $self->image_width || 800,
+       'container_width' => 100,
+       'slice_number' => '1|1',
+     });
+
 
 
   # Padding-----------------------------------------------------------
@@ -36,7 +41,7 @@ sub _content {
 
   foreach( @confs ) {
     $Configs->{$_} = $object->get_imageconfig( "genesnpview_$_" );
-    $Configs->{$_}->set( '_settings', 'width',  $image_width );
+    $Configs->{$_}->set_parameter('image_width' => $image_width );
   }
    $object->get_gene_slices( ## Written...
     $master_config,
@@ -45,7 +50,7 @@ sub _content {
     [ 'transcripts', 'munged', $extent ]
   );
 
-  my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
+  my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1]; warn $transcript_slice;
   my $sub_slices       =  $object->__data->{'slices'}{'transcripts'}[2];
 
 
@@ -101,8 +106,9 @@ sub _content {
       $CONFIG->{'transcript'}{lc($_).'_hits'} = $TS->{lc($_).'_hits'};
     }
 
-    $CONFIG->container_width( $object->__data->{'slices'}{'transcripts'}[3] );
-    if( $object->seq_region_strand < 0 ) {
+   # $CONFIG->container_width( $object->__data->{'slices'}{'transcripts'}[3] );
+   $CONFIG->set_parameters({'container_width' => $object->__data->{'slices'}{'transcripts'}[3] });  
+   if( $object->seq_region_strand < 0 ) {
       push @containers_and_configs, $transcript_slice, $CONFIG;
     } else {
       ## If forward strand we have to draw these in reverse order (as forced on -ve strand)
@@ -139,33 +145,37 @@ sub _content {
 ## Gene context block;
   my $gene_stable_id = $object->stable_id;
   $Configs->{'context'}->{'geneid2'} = $gene_stable_id; ## Only skip background stripes...
-  $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
-  $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
-  $Configs->{'context'}->set('variation','on','off') if $no_snps;
-  $Configs->{'context'}->set('snp_join','on','off') if $no_snps;
+ # $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
+  $Configs->{'context'}->set_parameters({ 'container_width' =>  $object->__data->{'slices'}{'context'}[1]->length() });  
+  $Configs->{'context'}->get_node( 'scalebar')->set('label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
+  #$Configs->{'context'}->get_node('variation')->set('on','off') if $no_snps;
+#  $Configs->{'context'}->set('snp_join','on','off') if $no_snps;
 ## Transcript block
   $Configs->{'gene'}->{'geneid'}      = $gene_stable_id;
-  $Configs->{'gene'}->container_width( $object->__data->{'slices'}{'gene'}[1]->length() );
-  $Configs->{'gene'}->set('snp_join','on','off') if $no_snps;
+#  $Configs->{'gene'}->container_width( $object->__data->{'slices'}{'gene'}[1]->length() );
+  $Configs->{'gene'}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'gene'}[1]->length() }); 
+  $Configs->{'gene'}->get_node('snp_join')->set('on','off') if $no_snps;
 ## Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
   foreach(qw(transcripts_top transcripts_bottom)) {
-    $Configs->{$_}->set('snp_join','on','off') if $no_snps;
+   # $Configs->{$_}->get_node('snp_join')->set('on','off') if $no_snps;
     $Configs->{$_}->{'extent'}      = $extent;
     $Configs->{$_}->{'geneid'}      = $gene_stable_id;
     $Configs->{$_}->{'transcripts'} = \@transcripts;
     $Configs->{$_}->{'snps'}        = $object->__data->{'SNPS'} unless $no_snps;
     $Configs->{$_}->{'subslices'}   = $sub_slices;
     $Configs->{$_}->{'fakeslice'}   = 1;
-    $Configs->{$_}->container_width( $object->__data->{'slices'}{'transcripts'}[3] );
+#    $Configs->{$_}->container_width( $object->__data->{'slices'}{'transcripts'}[3] );
+    $Configs->{$_}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'transcripts'}[3] }); 
   }
-  $Configs->{'transcripts_bottom'}->set('spacer','on','off') if $no_snps;
+  #$Configs->{'transcripts_bottom'}->get_node('spacer')->set('on','off') if $no_snps;
 ## SNP box track...
   unless( $no_snps ) {
     $Configs->{'snps'}->{'fakeslice'}   = 1;
     $Configs->{'snps'}->{'snps'}        = \@snps2;
-    $Configs->{'snps'}->container_width(   $fake_length   );
+ #   $Configs->{'snps'}->container_width(   $fake_length   );
+    $Configs->{'snps'}->set_parameters({ 'container_width' => $fake_length }); 
     $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps, $context_count];
-  }
+  } 
 #  return if $do_not_render;
 ## -- Render image ------------------------------------------------------ ##
   my $image    = $object->new_image([
