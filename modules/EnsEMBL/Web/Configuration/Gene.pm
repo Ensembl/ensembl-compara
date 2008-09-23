@@ -16,16 +16,37 @@ sub populate_tree {
   my $self = shift;
 #  my $hash = $obj->get_summary_counts;
 
-  $self->create_node( 'Summary', "Gene Summary",
+  $self->create_node( 'Summary', "Summary",
     [qw(summary EnsEMBL::Web::Component::Gene::GeneSummary
         transcripts EnsEMBL::Web::Component::Gene::TranscriptsImage)],
-    { 'availability' => 1, 'concise' => 'Summary' }
+    { 'availability' => 1, 'concise' => 'Gene summary' }
   );
 
-##----------------------------------------------------------------------
+  $self->create_node( 'Splice', "Alternative splicing ([[counts::exons]] exons)",
+    [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
+    { 'availability' => 1, 'concise' => 'Alternative splicing' }
+  );
+
+  $self->create_node( 'Evidence', "Supporting evidence",
+     [qw(evidence       EnsEMBL::Web::Component::Gene::SupportingEvidence)],
+    { 'availability' => 1, 'concise' => 'Supporting evidence'}
+  );
+
+  $self->create_node( 'Sequence', "Marked-up sequence",
+     [qw(sequence       EnsEMBL::Web::Component::Gene::GeneSeq)],
+    { 'availability' => 1, 'concise' => 'Marked-up sequence'}
+  );
+
+  $self->create_node( 'Regulation', 'Regulation',
+    [qw(
+      regulation EnsEMBL::Web::Component::Gene::RegulationImage
+      features EnsEMBL::Web::Component::Gene::RegulationTable
+    )],
+    { 'availability' => 'database:funcgen' }
+  );
+
 ## Compara menu: alignments/orthologs/paralogs/trees
   my $compara_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
-  warn "... $self ... $compara_menu ....";
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
     [qw(alignments  EnsEMBL::Web::Component::Gene::UnderConstruction)],
     { 'availability' => 'database:compara', 'concise' => 'Genomic alignments' }
@@ -58,10 +79,10 @@ sub populate_tree {
             'concise' => 'Orthologues' } ) );
 
   $compara_menu->append
-      ( $self->create_node( 'HomologAlignment', '',
-			    [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
-			    {'no_menu_entry' => 1 }
-			));
+      ( $self->create_node
+	    ( 'HomologAlignment', '',
+	      [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
+	      {'no_menu_entry' => 1 } ) );
 
   $compara_menu->append
       ( $self->create_node
@@ -69,6 +90,14 @@ sub populate_tree {
           [qw(paralogues  EnsEMBL::Web::Component::Gene::ComparaParalogs)],
           { 'availability' => 'database:compara', 
             'concise' => 'Paralogues' } ) );
+  $compara_menu->append
+      ($self->create_node( 'Family', 'Protein families ([[counts::families]])',
+    [qw(
+      family EnsEMBL::Web::Component::Gene::Family
+      genes    EnsEMBL::Web::Component::Gene::FamilyGenes
+    )],
+    { 'availability' => 1, 'concise' => 'Protein families' }
+  ));
 
 
 =pod
@@ -79,49 +108,22 @@ sub populate_tree {
   ));
 =cut
 
-
-  $self->create_node( 'Splice', "Alternative splicing ([[counts::exons]] exons)",
-    [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
-    { 'availability' => 1, 'concise' => 'Alternative splicing' }
-  );
-
-  $self->create_node( 'Evidence', "Supporting evidence",
-     [qw(evidence       EnsEMBL::Web::Component::Gene::SupportingEvidence)],
-    { 'availability' => 1, 'concise' => 'Supporting evidence'}
-  );
-
-  $self->create_node( 'Sequence', "Marked-up sequence",
-     [qw(sequence       EnsEMBL::Web::Component::Gene::GeneSeq)],
-    { 'availability' => 1, 'concise' => 'Marked-up sequence'}
-  );
-  $self->create_node( 'Regulation', 'Regulation',
-    [qw(
-      regulation EnsEMBL::Web::Component::Gene::RegulationImage
-      features EnsEMBL::Web::Component::Gene::RegulationTable
-    )],
-    { 'availability' => 'database:funcgen' }
-  );
-  $self->create_node( 'Family', 'Protein families ([[counts::families]])',
-    [qw(
-      family EnsEMBL::Web::Component::Gene::Family
-      genes    EnsEMBL::Web::Component::Gene::FamilyGenes
-    )],
-    { 'availability' => 1, 'concise' => 'Protein families' }
-  );
-
 ## Variation tree
   my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
   $var_menu->append($self->create_node( 'Variation_Gene',  'Gene variations',
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSNPImage)],
     { 'availability' => 'database:variation' }
   ));
+
+  $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component:: >>>Location::UnderConstruction)] );
+
   $self->create_node( 'Idhistory', 'ID history',
     [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
         associated  EnsEMBL::Web::Component::Gene::HistoryLinked
         map         EnsEMBL::Web::Component::Gene::HistoryMap)],
-        { 'availability' => 1, 'concise' => 'History' }
+        { 'availability' => 1, 'concise' => 'ID History' }
   );
-  $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component:: >>>Location::UnderConstruction)] );
+
 }
 
 sub global_context { return $_[0]->_global_context; }

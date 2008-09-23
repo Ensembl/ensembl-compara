@@ -47,7 +47,7 @@ sub ajax_zmenu      {
 	    });
 	}
 	$panel->add_entry({
-	    'type'     => 'Location',   
+	    'type'     => 'Location',
 	    'label'    => sprintf( "%s: %s-%s",
 				   $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
 				   $obj->thousandify( $obj->seq_region_start ),
@@ -90,7 +90,6 @@ sub do_SE_align_menu {
     my $panel = shift;
     my $obj  = $self->object;
     my $params   = $obj->[1]->{'_input'};
-    warn Dumper($params);
     my $hit_name = $params->{'sequence'}[0];
     my $hit_db   = $params->{'hit_db'}[0];
     my $hit_length = $params->{'hit_length'}[0];
@@ -150,72 +149,54 @@ sub do_SE_align_menu {
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Summary', "Transcript Summary",
+  $self->create_node( 'Summary', "Summary",
     [qw(image   EnsEMBL::Web::Component::Transcript::TranscriptImage
         summary EnsEMBL::Web::Component::Transcript::TranscriptSummary)],
-    { 'availability' => 1}
+    { 'availability' => 1, 'concise' => 'Transcript summary'}
   );
 
- # $self->create_node( 'Structure', "Transcript Neighbourhood",
- #   [qw(neighbourhood EnsEMBL::Web::Component::Transcript::TranscriptNeighbourhood)],
- #   { 'availability' => 1}
- # );
+#  $self->create_node( 'Structure', "Transcript Neighbourhood",
+#    [qw(neighbourhood EnsEMBL::Web::Component::Transcript::TranscriptNeighbourhood)],
+#    { 'availability' => 1}
+#  );
 
   $self->create_node( 'Exons', "Exons  ([[counts::exons]])",
     [qw(exons       EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet)],
     { 'availability' => 1, 'concise' => 'Exons'}
   );
 
-  $self->create_node( 'Protein', "Protein summary",
-    [qw(image       EnsEMBL::Web::Component::Transcript::TranslationImage
-        statistics  EnsEMBL::Web::Component::Transcript::PepStats)],
-    { 'availability' => 1}
-  );
-
-  $self->create_node( 'Domains', "Protein domains",
-    [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet)],
-    { 'availability' => 1}
-  );
-
-  $self->create_node( 'ProtVariations', "Protein variation features",
-    [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
-    { 'availability' => 1}
-  );
-
-  $self->create_node( 'OtherFeat', "Other protein features",
-    [qw(otherfeat     EnsEMBL::Web::Component::Transcript::OtherProteinFeatures)],
-    { 'availability' => 1}
-  );
-
-  $self->create_node( 'Similarity', "External references  ([[counts::similarity_matches]])",
-    [qw(similarity  EnsEMBL::Web::Component::Transcript::SimilarityMatches)],
-    { 'availability' => 1, 'concise' => 'External references'}
-  );
-
-  $self->create_node( 'ExternalRecordAlignment', '',
-   [qw(alignment       EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment)],
-    { 'no_menu_entry' => 1 }
-  );
-
-  $self->create_node( 'Oligos', "Oligos  ([[counts::oligos]])",
-    [qw(arrays      EnsEMBL::Web::Component::Transcript::OligoArrays)],
-    { 'availability' => 1,  'concise' => 'Oligos'}
-  );
-
-  $self->create_node( 'GO', "GO terms  ([[counts::go]])",
-    [qw(go          EnsEMBL::Web::Component::Transcript::Go)],
-    { 'availability' => 1, 'concise' => 'GO terms'}
-  );
 
   $self->create_node( 'Evidence', "Supporting evidence  ([[counts::evidence]])",
    [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidence)],
     { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
-
   $self->create_node( 'SupportingEvidenceAlignment', '',
    [qw(alignment      EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment)],
     { 'no_menu_entry' => 1 }
   );
+  my $seq_menu = $self->create_submenu( 'Sequence', 'Marked-up sequence' );
+  $seq_menu->append($self->create_node( 'Sequence_cDNA',  'cDNA',
+    [qw(sequence    EnsEMBL::Web::Component::Transcript::TranscriptSeq)],
+    { 'availability' => 1, 'concise' => 'cDNA sequence' }
+  ));
+  $seq_menu->append($self->create_node( 'Sequence_Protein',  'Protein',
+    [qw(sequence    EnsEMBL::Web::Component::Transcript::ProteinSeq)],
+    { 'availability' => 1, 'concise' => 'Protein sequence' }
+  ));
+
+  my $record_menu = $self->create_submenu( 'ExternalRecords', 'External records' );
+  $record_menu->append($self->create_node( 'Similarity', "Similarity matches  ([[counts::similarity_matches]])",
+    [qw(similarity  EnsEMBL::Web::Component::Transcript::SimilarityMatches)],
+    { 'availability' => 1, 'concise' => 'Similarity matches'}
+  ));
+  $record_menu->append($self->create_node( 'ExternalRecordAlignment', '',
+   [qw(alignment       EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment)],
+    { 'no_menu_entry' => 1 }
+  ));
+  $record_menu->append($self->create_node( 'Oligos', "Oligo matches  ([[counts::oligos]])",
+    [qw(arrays      EnsEMBL::Web::Component::Transcript::OligoArrays)],
+    { 'availability' => 1,  'concise' => 'Oligo matches'}
+  ));
 
   my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
   $var_menu->append($self->create_node( 'Population',  'Population comparison',
@@ -225,36 +206,47 @@ sub populate_tree {
     { 'availability' => 'database:variation' }
   ));
 
-  my $seq_menu = $self->create_submenu( 'Sequence', 'Marked-up sequence' );
-  $seq_menu->append($self->create_node( 'Sequence_cDNA',  'cDNA ([[counts::cdna]] bps)',
-    [qw(sequence    EnsEMBL::Web::Component::Transcript::TranscriptSeq)],
-    { 'availability' => 1, 'concise' => 'cDNA sequence' }
+  my $prot_menu = $self->create_submenu( 'Protein', 'Protein Information' );
+  $prot_menu->append($self->create_node( 'ProteinSummary', "Summary",
+    [qw(image       EnsEMBL::Web::Component::Transcript::TranslationImage
+        statistics  EnsEMBL::Web::Component::Transcript::PepStats)],
+    { 'availability' => 1, 'concise' => 'Protein summary'}
   ));
-  $seq_menu->append($self->create_node( 'Sequence_Protein',  'Protein ([[counts::cdna]] aas)',
-    [qw(sequence    EnsEMBL::Web::Component::Transcript::ProteinSeq)],
-    { 'availability' => 1, 'concise' => 'Protein sequence' }
+  $prot_menu->append($self->create_node( 'Domains', "Domains  ([[counts::prot_domains]])",
+    [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet)],
+    { 'availability' => 1, 'concise' => 'Protein domains'}
   ));
-
-  $self->create_node( 'idhistory', "ID history",
-    [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
-        associated  EnsEMBL::Web::Component::Gene::HistoryLinked
-        map         EnsEMBL::Web::Component::Gene::HistoryMap)],
-        { 'availability' => 1, 'concise' => 'History' }
-
-  );
-
-  $self->create_node( 'Domain', "Interpro domains  ([[counts::domains]])",
+  $prot_menu->append($self->create_node( 'ProtVariations', "Variation features  ([[counts::prot_variations]])",
+    [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
+    { 'availability' => 1, 'concise' => 'Protein variation features'}
+  ));
+  $prot_menu->append($self->create_node( 'OtherFeat', "Other features  ([[counts::other_prot_feat]])",
+    [qw(otherfeat     EnsEMBL::Web::Component::Transcript::OtherProteinFeatures)],
+    { 'availability' => 1, 'concise' => 'Other protein features'}
+  ));
+  $prot_menu->append($self->create_node( 'GO', "GO terms  ([[counts::go]])",
+    [qw(go          EnsEMBL::Web::Component::Transcript::Go)],
+    { 'availability' => 1, 'concise' => 'GO terms'}
+  ));
+  $prot_menu->append($self->create_node( 'Domain', "Interpro domains  ([[counts::domains]])",
     [qw(
         interpro      EnsEMBL::Web::Component::Transcript::Interpro
         domaingenes   EnsEMBL::Web::Component::Transcript::DomainGenes
       )],
     { 'availability' => 1, 'concise' => 'Interpro domain'}
-  );
+  ));
 
   my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
-  $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()] ) );
-  $exp_menu->append( $self->create_node( 'Export_Sequence',  'Sequence', [qw()] ) );
-  $exp_menu->append( $self->create_node( 'Export_BioMart',  'Jump to BioMart', [qw()] ) );
+  $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()],{'concise'=>'Export Features'} ));
+  $exp_menu->append( $self->create_node( 'Export_Sequence',  'Sequence', [qw()],{'concise'=>'Export Sequence'} ));
+  $exp_menu->append( $self->create_node( 'Export_BioMart',  'Jump to BioMart', [qw()],{'concise'=>'Biomart'} ));
+
+  $self->create_node( 'idhistory', "ID history",
+    [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
+        associated  EnsEMBL::Web::Component::Gene::HistoryLinked
+        map         EnsEMBL::Web::Component::Gene::HistoryMap)],
+        { 'availability' => 1, 'concise' => 'ID History' }
+  );
 }
 
 # Transcript: BRCA2_HUMAN
