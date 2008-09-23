@@ -179,7 +179,7 @@ sub _get_databases_common {
 
   # find out if core is an annotation DB (like in Vega)
   my $is_annot_db = $self->{'species_defs'}->get_table_size(
-    { -db =>'ENSEMBL_DB', -table => 'gene_remark'}
+    { -db =>'DATABASE_CORE', -table => 'gene_remark'}
   ); 
     ## Get core DB first
   if( $databases{'core'} ) {
@@ -258,7 +258,7 @@ sub _get_databases_common {
 
 sub _get_core_database{
   my $self = shift;
-  my $db_info =  $self->_get_database_info( shift, 'ENSEMBL_DB' ) ||
+  my $db_info =  $self->_get_database_info( shift, 'DATABASE_CORE' ) ||
     confess( "No core database for this species" );
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
 }
@@ -303,7 +303,7 @@ sub _get_db_with_dnadb {
 
 sub _get_fasta_database{
     my $self = shift;
-    my $db_info =  $self->_get_database_info( shift, 'ENSEMBL_FASTA' ) ||
+    my $db_info =  $self->_get_database_info( shift, 'DATABASE_FASTA' ) ||
         die( "No fasta database for this species" );
     my $adpt =  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
     $self->dynamic_use('Bio::EnsEMBL::ExternalData::FASTA::FASTAAdaptor');
@@ -323,7 +323,7 @@ sub _get_fasta_database{
 
 sub _get_userdata_database{
     my $self = shift;
-    my $db_info =  $self->_get_database_info( shift, 'ENSEMBL_USERDATA' ) ||
+    my $db_info =  $self->_get_database_info( shift, 'DATABASE_USERDATA' ) ||
         die( "No est database for this species" );
     return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' ); 
 }
@@ -344,7 +344,7 @@ sub _get_compara_database{
   if(defined($dba)){
     return $dba;
   }
-  my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_COMPARA} ||
+  my $db_info = $self->{'species_defs'}->multidb->{DATABASE_COMPARA} ||
      die( "No compara database for this species" );
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor' );
 }
@@ -361,14 +361,14 @@ sub _get_compara_database{
 
 sub _get_help_database{
   my $self = shift;
-  my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_WEBSITE} ||
+  my $db_info = $self->{'species_defs'}->multidb->{DATABASE_WEBSITE} ||
      die( "No go database for this species" );
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
 }
 
 sub _get_go_database{
   my $self = shift;
-  my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_GO} ||
+  my $db_info = $self->{'species_defs'}->multidb->{DATABASE_GO} ||
      die( "No go database for this species" );
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::ExternalData::GO::GOAdaptor' );
 }

@@ -180,11 +180,11 @@ sub flat_form {
     [ 'genscan'    => 'Prediction features (genscan)' ],
     [ 'contig'     => 'Contig Information' ],
   );
-  push @options, [ 'variation'  => 'Variation features' ]     if $object->species_defs->databases->{'ENSEMBL_VARIATION'};
-  push @options, [ 'marker'     => 'Marker features' ]        if $object->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'marker' });
+  push @options, [ 'variation'  => 'Variation features' ]     if $object->species_defs->databases->{'DATABASE_VARIATION'};
+  push @options, [ 'marker'     => 'Marker features' ]        if $object->species_defs->get_table_size({ -db => 'DATABASE_CORE', -table => 'marker' });
   push @options, [ 'gene'       => 'Gene Information' ];
-  push @options, [ 'vegagene'   => 'Vega Gene Information' ]  if $object->species_defs->databases->{'ENSEMBL_VEGA'};
-  push @options, [ 'estgene'    => 'EST Gene Information' ]   if $object->species_defs->get_table_size({ -db => 'ENSEMBL_OTHERFEATURES', -table => 'gene' });
+  push @options, [ 'vegagene'   => 'Vega Gene Information' ]  if $object->species_defs->databases->{'DATABASE_VEGA'};
+  push @options, [ 'estgene'    => 'EST Gene Information' ]   if $object->species_defs->get_table_size({ -db => 'DATABASE_OTHERFEATURES', -table => 'gene' });
   my %checked = map { $_ => 'yes' } $object->param('options');
   $form->add_element( 'type' => 'MultiSelect',
     'class'  => 'radiocheck1col',
@@ -263,7 +263,7 @@ sub features_form {
     [ 'repeat'     => 'Repeat features' ],
     [ 'genscan'    => 'Prediction features (genscan)' ],
   );
-  push @options, [ 'variation'  => 'Variation features' ]     if $object->species_defs->databases->{'ENSEMBL_VARIATION'};
+  push @options, [ 'variation'  => 'Variation features' ]     if $object->species_defs->databases->{'DATABASE_VARIATION'};
   push @options, [ 'gene'       => 'Gene Information' ];
   my %checked = map { $_ => 'yes' } $object->param('options');
   $form->add_element( 'type' => 'MultiSelect',
@@ -604,8 +604,8 @@ sub _feature {
 sub __gene_databases {
   my $species_defs = shift;
   my @return = ('core');
-  push @return, 'vega' if $species_defs->databases->{ 'ENSEMBL_VEGA' };
-  push @return, 'otherfeatures' if $species_defs->databases->{ 'ENSEMBL_OTHERFEATURES' };
+  push @return, 'vega' if $species_defs->databases->{ 'DATABASE_VEGA' };
+  push @return, 'otherfeatures' if $species_defs->databases->{ 'DATABASE_OTHERFEATURES' };
   return @return;
 }
 

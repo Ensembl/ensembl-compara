@@ -45,7 +45,7 @@ foreach my $sp ( @species ) {
   my $tree = $SD->{_storage}{$sp};
   my $dbhandle_hash = {};
   my $analysis_hash = {};
-  foreach my $db_name ( qw(ENSEMBL_DB ENSEMBL_VEGA ENSEMBL_OTHERFEATURES ENSEMBL_CDNA) ) {
+  foreach my $db_name ( qw(DATABASE_CORE DATABASE_VEGA DATABASE_OTHERFEATURES DATABASE_CDNA) ) {
     next unless $tree->{'databases'}->{$db_name}{'NAME'};
 warn "... ",$tree->{'databases'}->{$db_name}{'NAME'};
     my $dbh = $SD->db_connect( $tree, $db_name );

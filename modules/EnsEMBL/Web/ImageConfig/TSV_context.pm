@@ -50,7 +50,7 @@ sub init {
       'tag'=>0,
       'on'=>'on',
       'pos'=>4600,
-      'vailable'=> 'database ENSEMBL_VARIATION',
+      'vailable'=> 'database DATABASE_VARIATION',
       'colours'=>{$self->{'_colourmap'}->colourSet('variation')}, 'str' => 'r'
     },
     'transcriptexon_bgtrack' => {
@@ -69,7 +69,7 @@ sub init {
       'str' => 'r',
       'col' => 'blue',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION',
+      'available'=> 'databases DATABASE_VARIATION',
     },
   };
   $self->ADD_ALL_TRANSCRIPTS(2000);  #first is position

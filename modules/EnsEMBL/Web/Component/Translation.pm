@@ -462,7 +462,7 @@ sub marked_up_seq_form {
     $form->add_element( 'type' => 'Hidden', 'name' => 'transcript', 'value' => $object->transcript->stable_id);
   }
   my $show = [{ 'value' => 'plain', 'name' => 'None' }, {'value'=>'exons', 'name'=>'Exons'} ];
-  if( $object->species_defs->databases->{'ENSEMBL_VARIATION'}||$object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
+  if( $object->species_defs->databases->{'DATABASE_VARIATION'}||$object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
     push @$show, { 'value' => 'snps', 'name' => 'Exons and SNPs' };
   }
   $form->add_element(
@@ -598,7 +598,7 @@ sub do_markedup_pep_seq {
   if($number eq'on') { $sel_numbers = ' selected'; }
   else {$sel_no=' selected'; }
   
-  my $SNP_LINE = exists($object->species_defs->databases->{'ENSEMBL_VARIATION'}) ? qq(<option value="snps" $sel_snps>Exons/SNPs</option>) : '' ;
+  my $SNP_LINE = exists($object->species_defs->databases->{'DATABASE_VARIATION'}) ? qq(<option value="snps" $sel_snps>Exons/SNPs</option>) : '' ;
   return ($output);
 }
 

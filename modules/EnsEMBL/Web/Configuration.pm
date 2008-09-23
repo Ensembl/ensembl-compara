@@ -249,9 +249,11 @@ sub _configurator {
     }
   }
   my %T = $vc->image_configs;
-  eval {
-    $conf = $obj->get_imageconfig( sort keys %T );
-  };
+  my @Q = sort keys %T;
+  if(@Q) {
+    warn ">>>>>>>>>>>>>>>> ",ref($Q[0])," <<<<<<<<<<<<<<<<<";
+    $conf = $obj->get_imageconfig( $Q[0] );
+  }
   $self->{'page'}->{'_page_type_'} = 'configurator';
   $self->tree->_flush_tree();
 
@@ -316,7 +318,6 @@ sub _configurator {
   $panel->set_content( $rhs_content );
 
   $self->add_panel( $panel );
-  warn $panel;
   return $panel;
 }
 

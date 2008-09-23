@@ -110,7 +110,7 @@ my @aas = map {{'aa' => $_ }} split //, uc($pep_seq) ; # store peptide seq in ha
   if($number eq'on') { $sel_numbers = ' selected'; }
   else {$sel_no=' selected'; }
  
-  my $SNP_LINE = exists($object->species_defs->databases->{'ENSEMBL_VARIATION'}) ? qq(<option value="snps" $sel_snps>Exons/SNPs</option>) : '' ;
+  my $SNP_LINE = exists($object->species_defs->databases->{'DATABASE_VARIATION'}) ? qq(<option value="snps" $sel_snps>Exons/SNPs</option>) : '' ;
 
   my $html = $output;
   $html .="</pre>";

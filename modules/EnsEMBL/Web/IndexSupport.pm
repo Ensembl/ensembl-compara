@@ -127,15 +127,15 @@ sub connect {
   my $self = shift;
   my $admin = shift;
   my $connection_string = join '',
-     "DBI:mysql:", $self->{'dbs'}{'ENSEMBL_DB'},         ';host=',
-                   $self->{'vals'}{'ENSEMBL_HOST'},      ';port=',
-                   $self->{'vals'}{'ENSEMBL_HOST_PORT'} ;
+     "DBI:mysql:", $self->{'dbs'}{'DATABASE_CORE'},         ';host=',
+                   $self->{'vals'}{'DATABASE_HOST'},      ';port=',
+                   $self->{'vals'}{'DATABASE_HOST_PORT'} ;
   print STDERR "\nConnecting to DB...\n" if $self->{'debug'}; 
   print STDERR $connection_string . "\n" if $self->{'debug'};
   $self->{'dbh'} = DBI->connect(
     $connection_string,
-    $self->{'vals'}{ $admin eq 'write' ? 'ENSEMBL_WRITE_USER' : 'ENSEMBL_DBUSER' },
-    $self->{'vals'}{ $admin eq 'write' ? 'ENSEMBL_WRITE_PASS' : 'ENSEMBL_DBPASS' },
+    $self->{'vals'}{ $admin eq 'write' ? 'DATABASE_WRITE_USER' : 'DATABASE_DBUSER' },
+    $self->{'vals'}{ $admin eq 'write' ? 'DATABASE_WRITE_PASS' : 'DATABASE_COREPASS' },
   );
 }
 

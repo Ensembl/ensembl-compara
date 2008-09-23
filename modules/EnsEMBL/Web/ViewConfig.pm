@@ -12,6 +12,7 @@ sub new {
     '_r'                  => $adaptor->get_request || undef,
     'type'                => $type,
     'action'              => $action,
+    '_classes'            => [],
     '_options'            => {},
     '_image_config_names' => {},
     '_form'               => undef,
@@ -91,7 +92,14 @@ sub get_form {
 
 sub add_form_element {
   my($self,$hashref) = @_;
-  $self->get_form->add_element(%$hashref,'value'=>$self->get($hashref->{'name'}));
+  my @extra;
+  my $value = $self->get($hashref->{'name'});
+  if( $hashref->{'type'} eq 'checkbox' ) {
+    push @extra, 'checked' => $value eq $hashref->{'value'} ? 'yes' : 'no';
+  } else {
+    push @extra, 'value' => $value;
+  }
+  $self->get_form->add_element(%$hashref,@extra);
 }
 
 sub update_config_from_parameter {
@@ -146,6 +154,19 @@ sub reset {
     delete $self->{'_options'}{$key}{'user'};
   }
   return;
+}
+
+sub push_class {
+  my($self, $class) =@_;
+  push @{$self->{'_classes'}}, $class;
+}
+
+sub form {
+  my( $self, $object ) = @_;
+  foreach my $classname (@{$self->{'_classes'}}) {
+    my $method = $classname.'::form';
+    eval { no strict 'refs'; &$method( $self ); };
+  }
 }
 
 sub set {

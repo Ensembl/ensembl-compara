@@ -72,8 +72,8 @@ sub __coord_systems :lvalue { $_[0]->__species_hash->{'coord_systems'}; }
 sub __gene_databases {
   my $self = shift;
   my @return = ('core');
-  push @return, 'vega' if $self->species_defs->databases->{ 'ENSEMBL_VEGA' };
-  push @return, 'est' if $self->species_defs->databases->{ 'ENSEMBL_OTHERFEATURES' };
+  push @return, 'vega' if $self->species_defs->databases->{ 'DATABASE_VEGA' };
+  push @return, 'est' if $self->species_defs->databases->{ 'DATABASE_OTHERFEATURES' };
   return @return;
 }
 

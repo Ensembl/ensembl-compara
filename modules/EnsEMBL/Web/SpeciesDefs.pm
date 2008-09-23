@@ -360,11 +360,11 @@ sub _promote_general {
 
 sub _expand_database_templates {
   my( $self, $filename, $tree ) = @_;
-  my $HOST   = $tree->{'general'}{'ENSEMBL_HOST'};      
-  my $PORT   = $tree->{'general'}{'ENSEMBL_HOST_PORT'}; 
-  my $USER   = $tree->{'general'}{'ENSEMBL_DBUSER'};    
-  my $PASS   = $tree->{'general'}{'ENSEMBL_DBPASS'};    
-  my $DRIVER = $tree->{'general'}{'ENSEMBL_DRIVER'} || 'mysql'; 
+  my $HOST   = $tree->{'general'}{'DATABASE_HOST'};      
+  my $PORT   = $tree->{'general'}{'DATABASE_HOST_PORT'}; 
+  my $USER   = $tree->{'general'}{'DATABASE_DBUSER'};    
+  my $PASS   = $tree->{'general'}{'DATABASE_DBPASS'};    
+  my $DRIVER = $tree->{'general'}{'DATABASE_DRIVER'} || 'mysql'; 
   if( exists $tree->{'databases'} ) {
     foreach my $key ( keys %{$tree->{'databases'}} ) {
       my $DB_NAME = $tree->{'databases'}{$key};
@@ -592,7 +592,7 @@ sub multiX {
 
 sub get_table_size{
 ### Accessor function for table size,
-### Arguments: hashref: {-db => 'database' (e.g. 'ENSEMBL_DB'), 
+### Arguments: hashref: {-db => 'database' (e.g. 'DATABASE_CORE'), 
 ###                      -table =>'table name' (e.g. 'feature' ) }
 ###            species name (string)
 ### Returns: Number of rows in the table
@@ -632,15 +632,15 @@ sub set_write_access {
   my $self = shift;
   my $type = shift;
   my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
-  if( $type =~ /ENSEMBL_(\w+)/ ) {
+  if( $type =~ /DATABASE_(\w+)/ ) {
 ## If the value is defined then we will create the adaptor here...
     my $key = $1;
-## Hack because we map ENSEMBL_DB to 'core' not 'DB'....
-    my $group = $key eq 'DB' ? 'core' : lc( $key );
+## Hack because we map DATABASE_CORE to 'core' not 'DB'....
+    my $group = lc($key);
     my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($species,$group)->dbc;
     my $db_ref = $self->databases;
-    $db_ref->{$type}{'USER'} = $self->ENSEMBL_WRITE_USER;
-    $db_ref->{$type}{'PASS'} = $self->ENSEMBL_WRITE_PASS;
+    $db_ref->{$type}{'USER'} = $self->DATABASE_WRITE_USER;
+    $db_ref->{$type}{'PASS'} = $self->DATABASE_WRITE_PASS;
     Bio::EnsEMBL::Registry->change_access(
       $dbc->host,$dbc->port,$dbc->username,$dbc->dbname,
       $db_ref->{$type}{'USER'},$db_ref->{$type}{'PASS'}

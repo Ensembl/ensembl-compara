@@ -108,13 +108,9 @@ sub new {
   $self->timer_push("Page object initialized");
 
 ## Initialize output type! [ HTML, XML, Excel, Txt ]
-  $self->{'format'} = $input->param('_format') 
-    || $parameters{'outputtype'} 
-    || DEFAULT_OUTPUTTYPE;
+  $self->{'format'} = $input->param('_format') || $parameters{'outputtype'} || DEFAULT_OUTPUTTYPE;
   my $method = "_initialize_".($self->{'format'});
-  $self->{'format_version'} = $input->param('_format_version')
-    || $parameters{'outputtype_version'}
-    || undef;
+  $self->{'format_version'} = $input->param('_format_version') || $parameters{'outputtype_version'} || undef;
 
   $self->page->$method($self->{'format_version'});
   $self->timer_push("Output method initialized" );
@@ -144,6 +140,7 @@ sub new {
   $self->factory->__data->{'timer'} = $self->{'timer'};
   $self->timer_push("Factory compiled and objects created...");
   return $self if $self->factory->has_fatal_problem();
+  warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> $$ this is where we create the objects";
   eval {
     if( $parameters{'fast'} ) {
 #warn "FAST CREATE OBJECTS...";
@@ -165,11 +162,12 @@ sub new {
 
 sub configure {
   my( $self, $object, @functions ) = @_;
+  warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> $$ CONFIGURING FORM...";
+  $object->get_viewconfig->form($object);
   my $objecttype;
   if (ref($object)) { ## Actual object
     $objecttype = $object->__objecttype;
-  }
-  elsif ($object =~ /^\w+$/) { ## String (type of E::W object)
+  } elsif ($object =~ /^\w+$/) { ## String (type of E::W object)
     $objecttype = $object;
   }
   else {

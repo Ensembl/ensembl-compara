@@ -141,7 +141,7 @@ sub get_track_key {
 
   my $logic_name = $obj->gene->analysis->logic_name;
   my $db         = $obj->get_db();
-  my $db_key     = $db eq 'core' ? 'ENSEMBL_DB' : 'ENSEMBL_'.uc($db);
+  my $db_key     = 'DATABASE_'.uc($db);
   my $key        = $obj->species_defs->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
   return join '_', $prefix, $db, $key;
 }
@@ -214,7 +214,7 @@ sub load_tracks {
   my $multi_hash = $self->species_defs->multi_hash;
   foreach my $db ( @{$self->species_defs->core_like_databases} ) {
     next unless exists $dbs_hash->{$db};
-    my $key = $db eq 'ENSEMBL_DB' ? 'core' : lc(substr($db,8));
+    my $key = lc(substr($db,9));
     warn "   ### adding core like tracks ($key)";
 ## Look through tables in databases and add data from each one...
     $self->add_dna_align_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To cDNA/mRNA, est, RNA, other_alignment trees ##DONE
@@ -231,24 +231,24 @@ sub load_tracks {
     $self->add_simple_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To simple_feature tree                        ##DONE
     $self->add_assemblies(            $key,$dbs_hash->{$db}{'tables'} ); # To sequence tree!                             ## 2 do ##
   }
-  foreach my $db ( 'ENSEMBL_COMPARA') {   # @{$self->species_defs->get_config('compara_databases')} ) {
+  foreach my $db ( 'DATABASE_COMPARA') {   # @{$self->species_defs->get_config('compara_databases')} ) {
     next unless exists $multi_hash->{$db};
-    my $key = lc(substr($db,8));
+    my $key = lc(substr($db,9));
     warn "   ### adding compara like tracks ($key)";
     ## Configure dna_dna_align features and synteny tracks
     $self->add_synteny(               $key,$multi_hash->{$db}, $species ); # Add to synteny tree                         ##DONE
     $self->add_alignments(            $key,$multi_hash->{$db}, $species ); # Add to compara_align tree                   ##DONE
   }
-  foreach my $db ( 'ENSEMBL_FUNCGEN' ) {  # @{$self->species_defs->get_config('funcgen_databases')} ) {
+  foreach my $db ( 'DATABASE_FUNCGEN' ) {  # @{$self->species_defs->get_config('funcgen_databases')} ) {
     next unless exists $dbs_hash->{$db};
-    my $key = lc(substr($db,8));
+    my $key = lc(substr($db,9));
     warn "   ### adding func gen like tracks ($key)";
     ## Configure 
     $self->add_regulation_feature(    $key,$dbs_hash->{$db}{'tables'} ); # Add to regulation_feature tree
   }
-  foreach my $db ( 'ENSEMBL_VARIATION' ) { # @{$self->species_defs->get_config('variation_databases')} ) {
+  foreach my $db ( 'DATABASE_VARIATION' ) { # @{$self->species_defs->get_config('variation_databases')} ) {
     next unless exists $dbs_hash->{$db};
-    my $key = lc(substr($db,8));
+    my $key = lc(substr($db,9));
     warn "   ### adding variation like tracks ($key)";
     ## Configure variation features
     $self->add_variation_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To variation_feature tree

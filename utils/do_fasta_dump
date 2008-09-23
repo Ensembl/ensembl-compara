@@ -140,9 +140,9 @@ $DUMPDIR   ||= $basedir."release-$release/";
 utils::Tool::check_dir($DUMPDIR);
 
 my %db_names = qw(
-  ENSEMBL_DB      core
+  DATABASE_CORE      core
   ENSEMBL_ESTGENE estgene
-  ENSEMBL_VEGA    vega
+  DATABASE_VEGA    vega
 );
 our $ssaha_machine = $cdna_ssaha_server->($release);
 #    system("ssh -i $key_file $ssaha_machine mkdir -p /ensemblweb/ssaha2/HashTables/release-$release") unless $no_ssaha;
@@ -175,7 +175,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
 
   my $dbConnection = EnsEMBL::Web::DBSQL::DBConnection->new($sp, $SPECIES_DEFS);
 
-  foreach my $db( @DATABASES || "ENSEMBL_DB"){
+  foreach my $db( @DATABASES || "DATABASE_CORE"){
     my $db_adaptor = $dbConnection->get_DBAdaptor( $db_names{$db} ) ||
       ( utils::Tool::warning( 1, "DB $db is not valid for $sp" ) && next );
     info( 2, "Dumping @TYPES from \n$db $sp - $DUMPDIR" );
@@ -1547,8 +1547,8 @@ B<-s, --species>
   One or more species to dump.  Default: All species
 
 B<-d, --database>
-  One or more databases to dump (ENSEMBL_DB, ENSEMBL_VEGA etc.). 
-  Defaults to ENSEMBL_DB.
+  One or more databases to dump (DATABASE_CORE, DATABASE_VEGA etc.). 
+  Defaults to DATABASE_CORE.
 
 B<--no_compress>
   Specify no gzip compression of dumped files.

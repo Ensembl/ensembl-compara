@@ -128,7 +128,7 @@ my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
 
 foreach my $sp ( @species ) {
   my $tree = $SD->{_storage}{$sp};
-  foreach my $db_name ( qw(ENSEMBL_DB ENSEMBL_VEGA ENSEMBL_OTHERFEATURES ENSEMBL_CDNA) ) {
+  foreach my $db_name ( qw(DATABASE_CORE DATABASE_VEGA DATABASE_OTHERFEATURES DATABASE_CDNA) ) {
     next unless $tree->{'databases'}->{$db_name}{'NAME'};
     my $dbh = $SD->db_connect( $tree, $db_name );
     my %analyses = (0=>'Coordinatesystems', map {@$_} @{$dbh->selectall_arrayref(

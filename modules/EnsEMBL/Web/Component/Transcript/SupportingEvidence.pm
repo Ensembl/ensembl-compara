@@ -88,7 +88,7 @@ sub _content {
 
   #info needed to get at web_data
   my $db           = $object->get_db();
-  my $db_key       = $db eq 'core' ? 'ENSEMBL_DB' : 'ENSEMBL_'.uc($db);
+  my $db_key       = 'DATABASE_'.uc($db);
   my $info_summary = $object->species_defs->databases->{$db_key}{'tables'};
 
   #get both real slice and normalised slice (ie introns set to fixed width)

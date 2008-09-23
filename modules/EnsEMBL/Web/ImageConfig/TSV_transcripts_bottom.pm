@@ -25,7 +25,7 @@ sub init {
       'tag'=>2, 'context'=>50,
       'on'=>'on','pos'=>4600,
       'str' => 'r',
-      'available'=> 'databases ENSEMBL_VARIATION',
+      'available'=> 'databases DATABASE_VARIATION',
       'colours'=>{$self->{'_colourmap'}->colourSet('variation')}, 
     },
     'ruler' => {

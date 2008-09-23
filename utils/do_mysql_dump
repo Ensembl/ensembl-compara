@@ -95,8 +95,8 @@ utils::Tool::info(1, "Dumping data to $dumpdir" );
 my %web_userdb = (
 	   USER => $species_defs->ENSEMBL_USERDB_USER,
 	   PASS => $species_defs->ENSEMBL_USERDB_PASS,
-	   HOST => $species_defs->ENSEMBL_USERDB_HOST,
-	   PORT => $species_defs->ENSEMBL_USERDB_PORT,
+	   HOST => $species_defs->DATABASE_USERDB_HOST,
+	   PORT => $species_defs->DATABASE_USERDB_PORT,
 	   NAME => $species_defs->ENSEMBL_USERDB_NAME,
 	   DRIVER => 'mysql',
 	  );
@@ -105,10 +105,10 @@ my %web_userdb = (
 foreach my $sp( @SPECIES ){
   # Hard-code all databases _never_ to dump
   my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST 
-				ENSEMBL_COMPARA_MULTIPLE
+				DATABASE_COMPARA_MULTIPLE
 				ENSEMBL_BLAST_LOG
-				ENSEMBL_FASTA
-        ENSEMBL_HEALTHCHECK
+				DATABASE_FASTA
+        DATABASE_HEALTHCHECK
 				ENSEMBL_GLOVAR );
   # Work out dumpdir ---------------------------------------------------------
   my @sp_dumpdirs;
@@ -122,7 +122,7 @@ foreach my $sp( @SPECIES ){
     $sp_release =~ s/\.//g;
 
     @sp_dumpdirs= join "_", ("$dumpdir/".lc($sp), $sitedefs_release, "$sp_release/data/mysql");
-    $kill_list{"ENSEMBL_WEBSITE"} = 1;
+    $kill_list{"DATABASE_WEBSITE"} = 1;
     $kill_list{"ensembl_web_user_db"} = 1;
   }
 
@@ -131,8 +131,8 @@ foreach my $sp( @SPECIES ){
   $all_db_info{"ensembl_web_user_db"} = {%web_userdb};
   @dbs = ( keys %all_db_info ) unless @dbs;
   push (@dbs, 'ensembl_web_user_db') if $sp eq 'Multi';
-  my $write_user = $species_defs->get_config($sp, 'ENSEMBL_WRITE_USER');
-  my $write_pass = $species_defs->get_config($sp, 'ENSEMBL_WRITE_PASS');
+  my $write_user = $species_defs->get_config($sp, 'DATABASE_WRITE_USER');
+  my $write_pass = $species_defs->get_config($sp, 'DATABASE_WRITE_PASS');
   my $flag_mart = 0;
 
   foreach my $db( @dbs ){
@@ -386,7 +386,7 @@ B<--species>
   One or more species to dump.
 
 B<--database>
-  One or more databases to dump (ENSEMBL_DB, ENSEMBL_EST etc)
+  One or more databases to dump (DATABASE_CORE, DATABASE_EST etc)
   All DBs in config (not in kill list) will be dumped if omitted.
 
 B<--dumpdir>

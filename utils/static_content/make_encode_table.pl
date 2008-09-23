@@ -33,7 +33,7 @@ my ($help);
 
 if(defined $help) {
     die qq(
-    Generates a table of ENCODE regions using data from the ENSEMBL_DB
+    Generates a table of ENCODE regions using data from the DATABASE_CORE
     database configured.
 
     Usage: $0 [options]
@@ -42,11 +42,11 @@ if(defined $help) {
     );
 }
 
-my $db_user = $db_info{ENSEMBL_DB}->{USER};
-my $db_pass = $db_info{ENSEMBL_DB}->{PASS};
-my $db_host = $db_info{ENSEMBL_DB}->{HOST};
-my $db_port = $db_info{ENSEMBL_DB}->{PORT};
-my $db_name = $db_info{ENSEMBL_DB}->{NAME};
+my $db_user = $db_info{DATABASE_CORE}->{USER};
+my $db_pass = $db_info{DATABASE_CORE}->{PASS};
+my $db_host = $db_info{DATABASE_CORE}->{HOST};
+my $db_port = $db_info{DATABASE_CORE}->{PORT};
+my $db_name = $db_info{DATABASE_CORE}->{NAME};
 
 # DB connections
 my $dbh;

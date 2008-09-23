@@ -12,14 +12,14 @@ sub import {
   my $dsn = join(':',
     'dbi',
     'mysql',
-    $species_defs->multidb->{'ENSEMBL_WEBSITE'}{'NAME'},
-    $species_defs->multidb->{'ENSEMBL_WEBSITE'}{'HOST'},
-    $species_defs->multidb->{'ENSEMBL_WEBSITE'}{'PORT'},
+    $species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'},
+    $species_defs->multidb->{'DATABASE_WEBSITE'}{'HOST'},
+    $species_defs->multidb->{'DATABASE_WEBSITE'}{'PORT'},
   );
   $caller->connection(
     $dsn,
-    $species_defs->ENSEMBL_WRITE_USER,
-    $species_defs->ENSEMBL_WRITE_PASS,
+    $species_defs->DATABASE_WRITE_USER,
+    $species_defs->DATABASE_WRITE_PASS,
     {
       RaiseError => 1,
       PrintError => 1,

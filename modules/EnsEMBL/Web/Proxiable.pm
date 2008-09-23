@@ -176,6 +176,7 @@ sub image_config_hash {
 sub get_viewconfig {
 ### Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
   my( $self, $type, $action ) = @_;
+  warn "GET VIEWCONFIG ",$type||$self->type," ",$action||$self->action;
   my $session = $self->get_session;
   return undef unless $session;
   my $T = $session->getViewConfig( $type || $self->type, $action || $self->action );

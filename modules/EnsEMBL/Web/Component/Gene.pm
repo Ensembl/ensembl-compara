@@ -194,7 +194,7 @@ sub gene_options_form {
     'Ensembl';
   my $exon_display = [
     { 'value' => 'core'       , 'name' => "$sitetype exons" },
-    $object->species_defs->databases->{'ENSEMBL_VEGA'} ? { 'value' => 'vega', 'name' => 'Vega exons' } : (),
+    $object->species_defs->databases->{'DATABASE_VEGA'} ? { 'value' => 'vega', 'name' => 'Vega exons' } : (),
     $object->species_defs->databases->{'ENSEMBL_OTHEFEATURES'}  ? { 'value' => 'otherfeatures'  , 'name' => 'EST-gene exons' } : (),
     { 'value' => 'Ab-initio' , 'name' => 'Ab-initio exons' },
     { 'value' => 'off'        , 'name' => 'No exon markup' }
@@ -218,7 +218,7 @@ sub gene_options_form {
     'values'   => $exon_ori,
     'value'    => $object->param('exon_ori')
   );
-  if( $object->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
+  if( $object->species_defs->databases->{'DATABASE_VARIATION'} ) {
     my $snp_display = [
      { 'value' =>'snp' , 'name' => 'Yes' },
      { 'value' =>'snp_link' , 'name' => 'Yes and show links' },

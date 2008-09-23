@@ -59,7 +59,7 @@ my $species_info;
 
 my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
 
-my $cdb_info = $species_defs->{_storage}->{Multi}->{databases}->{ENSEMBL_COMPARA};
+my $cdb_info = $species_defs->{_storage}->{Multi}->{databases}->{DATABASE_COMPARA};
 my $cdb = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 						       -dbname => $cdb_info->{'NAME'},
 						       -host => $cdb_info->{'HOST'},
@@ -85,7 +85,7 @@ foreach my $sp (@$species) {
     print STDERR " No Taxon ID ..." and next unless $tanode;
     $species_info->{$sp}->{'taxon_id'} = $tanode->taxon_id;
 
-    my $db_info = $species_defs->get_config($sp, 'databases')->{'ENSEMBL_DB'};
+    my $db_info = $species_defs->get_config($sp, 'databases')->{'DATABASE_CORE'};
     my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 			  	 -species => $sp,
 				 -dbname => $db_info->{'NAME'},
@@ -136,7 +136,7 @@ foreach my $sp (@$species) {
     print STDERR "\t\t\tTEST REGION : ", $shash->{$mapmaster}->{'test_range'}, "\n";
 
     foreach my $feature ( qw(karyotype transcripts ditags cagetags)) {
-	my $dbn = 'ENSEMBL_DB';
+	my $dbn = 'DATABASE_CORE';
 	my $table = $featuresMasterTable{$feature};
 	my $rv = $species_defs->get_table_size(
 					      { 

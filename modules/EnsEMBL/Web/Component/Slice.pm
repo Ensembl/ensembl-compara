@@ -1263,7 +1263,7 @@ sub sequence_options_form {
     'value'    => $object->param('exon_ori')
   );
 
-  if( $object->species_defs->databases->{'ENSEMBL_VARIATION'} ) {
+  if( $object->species_defs->databases->{'DATABASE_VARIATION'} ) {
     my $snp_display = [
       { 'value' =>'snp' , 'name' => 'Yes' },
       { 'value' =>'snp_link' , 'name' => 'Yes and show links' },

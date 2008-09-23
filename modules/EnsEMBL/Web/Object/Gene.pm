@@ -87,15 +87,11 @@ sub count_gene_supporting_evidence {
 
 sub get_external_dbs {
     #retrieve a summary of the external_db table from species defs
-    my $self = shift;
-    my $db   = $self->get_db;
-    my %db_hash = qw(
-                   core    ENSEMBL_DB
-                   vega    ENSEMBL_VEGA
-               );
-    my $db_type = $db_hash{$self->get_db};
-    my $sd = $self->species_defs;
-    return  $sd->databases->{$db_type}{'external_dbs'};
+  my $self = shift;
+  my $db   = $self->get_db;
+  my $db_type = 'DATABASE_'.uc($db);
+  my $sd = $self->species_defs;
+  return  $sd->databases->{$db_type}{'external_dbs'};
 }
 
 sub get_gene_supporting_evidence {

@@ -322,7 +322,7 @@ sub find_available_anchor_points {
   my $avail_anchor_points = [];
   foreach my $poss_anchor (@$all_anchor_points) {
     if ($poss_anchor->{'table'}) {
-      if ($species_defs->get_table_size( {-db=>'ENSEMBL_DB',-table => $poss_anchor->{'table'}},$species )) {
+      if ($species_defs->get_table_size( {-db=>'DATABASE_CORE',-table => $poss_anchor->{'table'}},$species )) {
         push @$avail_anchor_points, {'value'=>$poss_anchor->{'value'}, 'name'=>$poss_anchor->{'name'} };
       }
     }

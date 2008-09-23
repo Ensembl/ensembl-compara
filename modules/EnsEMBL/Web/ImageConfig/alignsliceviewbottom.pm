@@ -168,7 +168,7 @@ sub init {
       'str' => 'r',
       'col' => 'blue',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION', 
+      'available'=> 'databases DATABASE_VARIATION', 
     },
 
 

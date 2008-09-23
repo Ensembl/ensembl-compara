@@ -74,10 +74,7 @@ sub _render_element {
   return $element->render() if $element->type eq 'Hidden';
 
   #my $style = $element->required ? 'required' : 'optional';
-  return qq(
-  <div>
-    ).$element->render().qq(
-  </div>\n);
+  return $element->render();
 }
 
 

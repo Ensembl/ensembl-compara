@@ -74,12 +74,9 @@ sub db_connect {
   ### Returns: DBI database handle
   my $self    = shift;
   my $db_name = shift;
-
+  return unless exists $self->tree->{'databases'}->{$db_name};
   my $dbname  = $self->tree->{'databases'}->{$db_name}{'NAME'};
-  unless ($dbname) {
-    warn "No database found for $db_name";
-    return;
-  }
+  return unless $dbname;
 
   #warn "Connecting to $db_name";
   my $dbhost  = $self->tree->{'databases'}->{$db_name}{'HOST'};

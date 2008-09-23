@@ -67,7 +67,11 @@ sub render {
 #       sprintf( "document.forms[%s].submit()", $self->form ) :
        sprintf( "document.%s.submit()", $self->{formname} ) :
        sprintf( "os_check('%s',this,%s)", $self->type, $self->required eq 'yes'?1:0 );  
-    return sprintf( qq(<label for="%s">%s: </label><select name="%s" id="%s" class="%s %s">\n%s</select>%s),
+    return sprintf( qq(
+  <dl>
+    <dt><label for="%s">%s: </label></dt>
+    <dd><select name="%s" id="%s" class="%s %s">\n%s</select>%s</dd>
+  </dl>),
       CGI::escapeHTML( $self->name ), 
       CGI::escapeHTML( $self->label ),
       CGI::escapeHTML( $self->name ), 

@@ -15,7 +15,6 @@ sub _end   {
 
 sub set_content {
   my ( $self, $content ) =@_;
-  warn "CONTENT SET to $content";
   $self->{'content'} = qq(
   <div class="panel">
     <div class="content">$content

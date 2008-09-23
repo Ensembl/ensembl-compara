@@ -50,8 +50,8 @@ foreach my $species ( @species ) {
   $conf->{'species'}   = $species;
   my %dbs = %{$SD->get_config($species,'databases')||{}};
   $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
-  $conf->{'dbs'}{'ENSEMBL_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
-  my $core = $dbs{'ENSEMBL_DB'};
+  $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
+  my $core = $dbs{'DATABASE_CORE'};
   $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
   $conf->{'dbh'}         = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'} );
   warn join ' ', $species, Data::Dumper::Dumper $conf;
@@ -136,7 +136,7 @@ sub dumpSNP {
   my $conf = shift;
 #  next if $conf->{'species'} eq 'Homo_sapiens'; ## SKIP HUMAN SNPS....
 #  next if $conf->{'species'} eq 'Mus_musculus'; ## SKIP HUMAN SNPS....
-  my $SNPDB = $conf->{'dbs'}->{'ENSEMBL_VARIATION'};
+  my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
   return unless $SNPDB;
 
   `/usr/local/ensembl/mysql/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation order by variation_id' > v.txt`;
@@ -281,9 +281,9 @@ sub dumpGenomicAlignment {
     open D, ">$conf->{'directory'}/GenomicAlignment.txt";
 
     my $species = $conf->{'species'};
-    my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};    
-    my $ESTDB  = $conf->{'dbs'}->{'ENSEMBL_OTHERFEATURES'};
-    my $CDNADB = $conf->{'dbs'}->{'ENSEMBL_CDNA'};
+    my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};    
+    my $ESTDB  = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
+    my $CDNADB = $conf->{'dbs'}->{'DATABASE_CDNA'};
     my %dbs    = ( 'core' => $COREDB );
     $dbs{'otherfeatures'}  =  $ESTDB  if $ESTDB;
     $dbs{'cdna'} = $CDNADB if $CDNADB;
@@ -342,7 +342,7 @@ sub dumpOligoProbe {
   my $conf = shift;
   open A, ">$conf->{'directory'}/OligoProbe.txt";
   my $species = $conf->{'species'};
-  my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};
+  my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $sth    = $conf->{'dbh'}->prepare(
     "select p.probeset, count(*) as hits, a.type, sr.name, f.seq_region_start, f.seq_region_end
        from oligo_probe p, oligo_feature f, oligo_array a, seq_region sr
@@ -368,7 +368,7 @@ sub dumpDisease {
   my $conf = shift;
   my $DISDB   = $conf->{'dbs'}->{'ENSEMBL_DISEASE'};    
   return unless $DISDB;
-  my $COREDB   = $conf->{'dbs'}->{'ENSEMBL_DB'};    
+  my $COREDB   = $conf->{'dbs'}->{'DATABASE_CORE'};    
   my $sth = $conf->{'dbh'}->prepare(
     "select distinct concat( g.gene_symbol,':',g.omim_id, ' (',gsi.stable_id,')') as name,
             d.disease, d.disease
@@ -422,7 +422,7 @@ sub diseaseLine {
 
 sub dumpDomain {
   my $conf = shift;
-  my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};
+  my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $t_sth = $conf->{'dbh'}->prepare(
       "select i.interpro_ac, tsi.stable_id
        from $COREDB.interpro i, $COREDB.protein_feature pf, $COREDB.translation tl, $COREDB.transcript_stable_id tsi
@@ -485,8 +485,8 @@ sub domainLine {
 sub dumpFamily {
     return; #don't do these for now
     my $conf = shift;
-    my $FAMDB = $conf->{'dbs'}->{'ENSEMBL_COMPARA'};
-    my $CORE  = $conf->{'dbs'}->{'ENSEMBL_DB'};
+    my $FAMDB = $conf->{'dbs'}->{'DATABASE_COMPARA'};
+    my $CORE  = $conf->{'dbs'}->{'DATABASE_CORE'};
     my $t_sth = $conf->{'dbh'}->prepare(
 	"select meta_value from $CORE.meta where meta_key='species.taxonomy_id'"
     );
@@ -544,9 +544,9 @@ sub familyLine {
 
 sub dumpGene {
   my $conf = shift;
-  my $COREDB = $conf->{'dbs'}->{'ENSEMBL_DB'};
-  my $SANGDB = $conf->{'dbs'}->{'ENSEMBL_VEGA'};
-  my $ESTGENEDB = $conf->{'dbs'}->{'ENSEMBL_OTHERFEATURES'};
+  my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my $SANGDB = $conf->{'dbs'}->{'DATABASE_VEGA'};
+  my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
   my %DBS = ( 'core' => $COREDB );
   $DBS{'vega'}          = $SANGDB    if $SANGDB;
   $DBS{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
@@ -847,8 +847,8 @@ sub dumpSequence {
       ]
     );
 
-  my $COREDB   = $conf->{'dbs'}->{'ENSEMBL_DB'};
-  my $ESTDB    = $conf->{'dbs'}->{'ENSEMBL_OTHERFEATURES'};
+  my $COREDB   = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my $ESTDB    = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
   open O, ">$conf->{'directory'}/Sequence.txt";
   my @types = @{$config{$conf->{'species'}}||[]};
   foreach my $arrayref ( @types ) {

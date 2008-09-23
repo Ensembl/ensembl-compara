@@ -26,7 +26,7 @@ sub init {
       'tag' => 3,
       'on'=>'on',
       'pos'=>50,
-      'available'=> 'databases ENSEMBL_VARIATION', 
+      'available'=> 'databases DATABASE_VARIATION', 
       'colours'=>{$self->{'_colourmap'}->colourSet('variation')}, 
     },
 
@@ -34,7 +34,7 @@ sub init {
       'str' => 'r',
       'on'=>'off',
       'pos'=>10001,
-      'available'=> 'databases ENSEMBL_VARIATION',
+      'available'=> 'databases DATABASE_VARIATION',
     },
    'TSV_missing' => {
       'on'  => "on",
@@ -55,7 +55,7 @@ sub init {
       'on'          => "off",
       'str'         => 'r',
       'pos'         => '10004',
-     'available'    => 'databases ENSEMBL_VARIATION',
+     'available'    => 'databases DATABASE_VARIATION',
      'colours'      => {$self->{'_colourmap'}->colourSet('haplotype')}, 
 				   },
   };

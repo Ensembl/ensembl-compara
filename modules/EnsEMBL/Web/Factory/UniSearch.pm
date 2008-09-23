@@ -371,8 +371,8 @@ sub search_GENE {
   my $self = shift;
 
   my @databases = ('core');
-  push @databases, 'vega' if $self->species_defs->databases->{'ENSEMBL_VEGA'};
-  push @databases, 'est' if $self->species_defs->databases->{'ENSEMBL_OTHERFEATURES'};
+  push @databases, 'vega' if $self->species_defs->databases->{'DATABASE_VEGA'};
+  push @databases, 'est' if $self->species_defs->databases->{'DATABASE_OTHERFEATURES'};
   foreach my $db (@databases) {
   $self->_fetch_results( 
     [ $db, 'Gene',

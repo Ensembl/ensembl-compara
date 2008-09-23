@@ -98,7 +98,7 @@ require EnsEMBL::Web::SpeciesDefs;
 my $species_info;
 my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
 my $sitetype = ucfirst(lc($species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
-my $cdb_info = $species_defs->{_storage}->{Multi}->{databases}->{ENSEMBL_COMPARA};
+my $cdb_info = $species_defs->{_storage}->{Multi}->{databases}->{DATABASE_COMPARA};
 my $cdb = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
   -dbname => $cdb_info->{'NAME'},
   -host   => $cdb_info->{'HOST'},
@@ -121,7 +121,7 @@ warn "Parsing species $sp ".gmtime();
   my $snode = $ta->fetch_node_by_name($vsp) or next;
   $species_info->{$sp}->{'taxon_id'} = $snode->taxon_id;
 
-  my $db_info = $species_defs->get_config($sp, 'databases')->{'ENSEMBL_DB'};
+  my $db_info = $species_defs->get_config($sp, 'databases')->{'DATABASE_CORE'};
   my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -species => $sp,
     -dbname  => $db_info->{'NAME'},
@@ -158,7 +158,7 @@ warn "Parsing species $sp ".gmtime();
 
   entry_points( $toplevel_slices, "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster/entry_points", "$SERVERROOT/htdocs/das/$mapmaster" );
   foreach my $feature (@feature_types) {
-    my $dbn = 'ENSEMBL_DB';
+    my $dbn = 'DATABASE_CORE';
     my $table = $featuresMasterTable{$feature};
     my $rv = $species_defs->get_table_size( { -db => $dbn, -table=> $table }, $sp);
     next unless $rv;

@@ -24,7 +24,7 @@ sub init {
     'snp_join' => {
       'tag' => 1,
       'on'=>'on','pos'=>4600,
-      'available'=> 'databases ENSEMBL_VARIATION',
+      'available'=> 'databases DATABASE_VARIATION',
       'colours'=>{$self->{'_colourmap'}->colourSet('variation')}, 'str' => 'b'
     },
     'geneexon_bgtrack' => {

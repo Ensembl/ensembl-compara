@@ -79,7 +79,7 @@ sub init {
       'track_label' => "Genotyped SNPs",
       'hi'          => 'black',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION',
+      'available'=> 'databases DATABASE_VARIATION',
     },
 
    'variation' => {
@@ -92,7 +92,7 @@ sub init {
       'track_height'=> 7,
       'hi'          => 'black',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION', 
+      'available'=> 'databases DATABASE_VARIATION', 
     },
 
 

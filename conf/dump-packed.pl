@@ -25,7 +25,7 @@ Description:
     dumps the whole human configuration
 
   * perl dump-packed.pl config.packed Homo_sapiens databases \
-                        ENSEMBL_DB tables gene
+                        DATABASE_CORE tables gene
 
     Prints summary information for human gene table in core database...
 

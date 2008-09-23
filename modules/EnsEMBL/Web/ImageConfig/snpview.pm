@@ -115,7 +115,7 @@ sub init {
       'track_height'=> 7,
       'hi'          => 'black',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION', 
+      'available'=> 'databases DATABASE_VARIATION', 
     },
 
     'genotyped_variation' => {
@@ -129,7 +129,7 @@ sub init {
       'track_label' => "Genotyped variation",
       'hi'          => 'black',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION',
+      'available'=> 'databases DATABASE_VARIATION',
     },
 
     'ld_r2' => {
@@ -145,7 +145,7 @@ sub init {
       'key'         => 'r2',
       'glyphset'    => 'ld',
       'colours'     => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'   => 'databases ENSEMBL_VARIATION',
+      'available'   => 'databases DATABASE_VARIATION',
     },
     'ld_d_prime' => {
       'on'          => "off",
@@ -160,7 +160,7 @@ sub init {
       'hi'          => 'black',
       'glyphset'    => 'ld',
       'colours'     => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'   => 'databases ENSEMBL_VARIATION',
+      'available'   => 'databases DATABASE_VARIATION',
     },
 
      'TSV_missing' => {
@@ -230,5 +230,5 @@ Description: Position of the track within the drawable container and in comparis
 
 =head3 B<available>
 
-  Description: This track only displays if the availability criteria is met.  For example checking the database is there (e.g. 'databases ENSEMBL_VARIATION' ) or a specific table is there.
+  Description: This track only displays if the availability criteria is met.  For example checking the database is there (e.g. 'databases DATABASE_VARIATION' ) or a specific table is there.
 

@@ -11,14 +11,9 @@ use base qw(EnsEMBL::Web::ConfigPacker_base);
 
 sub _munge_databases {
   my $self = shift;
-  my %tables = qw(
-    core ENSEMBL_DB
-    cdna ENSEMBL_CDNA
-    vega ENSEMBL_VEGA
-    otherfeatures ENSEMBL_OTHERFEATURES
-  );
-  foreach my $db ( keys %tables ) {
-    $self->_summarise_core_tables( $db, $tables{$db} );
+  my @tables = qw(core cdna vega otherfeatures );
+  foreach my $db ( @tables ) {
+    $self->_summarise_core_tables( $db, 'DATABASE_'.uc($db) );
   }
 
   $self->_summarise_variation_db();
@@ -246,7 +241,7 @@ sub _summarise_core_tables {
 
 sub _summarise_variation_db {
   my $self    = shift;
-  my $db_name = 'ENSEMBL_VARIATION';
+  my $db_name = 'DATABASE_VARIATION';
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   $self->_summarise_generic( $db_name, $dbh );
@@ -266,7 +261,7 @@ sub _summarise_variation_db {
 
 sub _summarise_funcgen_db {
   my $self    = shift;
-  my $db_name = 'ENSEMBL_FUNCGEN';
+  my $db_name = 'DATABASE_FUNCGEN';
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   $self->_summarise_generic( $db_name, $dbh );
@@ -280,7 +275,7 @@ sub _summarise_funcgen_db {
 
 sub _summarise_website_db {
   my $self    = shift;
-  my $db_name = 'ENSEMBL_WEBSITE';
+  my $db_name = 'DATABASE_WEBSITE';
   my $dbh     = $self->db_connect( $db_name );
 
   ## Get component-based help
@@ -297,7 +292,7 @@ sub _summarise_website_db {
     $self->db_tree->{'ENSEMBL_HELP'}{$object}{$action} = $row->[0];
   }
 
-  my $t_aref = $dbh->selectall_arrayref(
+  $t_aref = $dbh->selectall_arrayref(
     'select s.name, r.release_id,rs.assembly_code
        from species as s, ens_release as r, release_species as rs
       where s.species_id =rs.species_id and r.release_id =rs.release_id and rs.assembly_code !=""'
@@ -305,7 +300,7 @@ sub _summarise_website_db {
   foreach my $row ( @$t_aref ) {
     $self->db_tree->{'ASSEMBLIES'}->{$row->[0]}{$row->[1]}=$row->[2];
   }
-  my $t_aref = $dbh->selectall_arrayref(
+  $t_aref = $dbh->selectall_arrayref(
     'select s.name, r.release_id, r.archive
        from ens_release as r, species as s, release_species as rs
       where s.species_id = rs.species_id and r.release_id = rs.release_id and r.online = "Y"'
@@ -319,7 +314,7 @@ sub _summarise_website_db {
 
 sub _summarise_compara_db {
   my $self = shift;
-  my $db_name = 'ENSEMBL_COMPARA';
+  my $db_name = 'DATABASE_COMPARA';
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   $self->_summarise_generic( $db_name, $dbh );
@@ -430,7 +425,7 @@ sub _summarise_compara_db {
 
 sub _summarise_ancestral_db {
   my $self = shift;
-  my $db_name = 'ENSEMBL_DB';
+  my $db_name = 'DATABASE_CORE';
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   $self->_summarise_generic( $db_name, $dbh );
@@ -439,7 +434,7 @@ sub _summarise_ancestral_db {
 
 sub _summarise_go_db {
   my $self = shift;
-  my $db_name = 'ENSEMBL_GO';
+  my $db_name = 'DATABASE_GO';
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   $self->_summarise_generic( $db_name, $dbh );
@@ -451,6 +446,7 @@ sub _summarise_dasregistry {
   
   # Registry parsing is lazy so re-use the parser between species'
   my $parser = $self->{'_das_parser'};
+
   if (!$parser) {
     $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
       -location => $self->tree->{'DAS_REGISTRY_URL'},
@@ -527,27 +523,27 @@ sub _munge_meta {
   );
 
   foreach my $key ( keys %keys ) {
-    $self->tree->{$key} = $self->_meta_info('ENSEMBL_DB',$keys{$key})->[0];
+    $self->tree->{$key} = $self->_meta_info('DATABASE_CORE',$keys{$key})->[0];
   }
 
   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-  my $gb_start = $self->_meta_info('ENSEMBL_DB','genebuild.start_date')->[0];
+  my $gb_start = $self->_meta_info('DATABASE_CORE','genebuild.start_date')->[0];
   my @A = split('-', $gb_start);
   $self->tree->{'GENEBUILD_START'} = $months[$A[1]].' '.$A[0];
   $self->tree->{'GENEBUILD_BY'} = $A[2];
 
-  my $gb_release = $self->_meta_info('ENSEMBL_DB','genebuild.initial_release_date')->[0];
+  my $gb_release = $self->_meta_info('ENSEMBL_CORE','genebuild.initial_release_date')->[0];
   @A = split('-', $gb_release);
   $self->tree->{'GENEBUILD_RELEASE'} = $months[$A[1]].' '.$A[0];
-  my $gb_latest = $self->_meta_info('ENSEMBL_DB','genebuild.last_geneset_update')->[0];
+  my $gb_latest = $self->_meta_info('ENSEMBL_CORE','genebuild.last_geneset_update')->[0];
   @A = split('-', $gb_latest);
   $self->tree->{'GENEBUILD_LATEST'} = $months[$A[1]].' '.$A[0];
-  my $assembly_date = $self->_meta_info('ENSEMBL_DB','assembly.date')->[0];
+  my $assembly_date = $self->_meta_info('ENSEMBL_CORE','assembly.date')->[0];
   @A = split('-', $assembly_date);
   $self->tree->{'ASSEMBLY_DATE'} = $months[$A[1]].' '.$A[0];
 
   ## Do species name and group
-  my @taxonomy = @{$self->_meta_info('ENSEMBL_DB','species.classification')};
+  my @taxonomy = @{$self->_meta_info('ENSEMBL_CORE','species.classification')};
   my $order = $self->tree->{'TAXON_ORDER'};
 
   $self->tree->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
@@ -615,11 +611,11 @@ sub _configure_blast {
 #   
 #   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 # 
-# #warn Dumper($self->db_details('ENSEMBL_DB')->{'meta_info'});
+# #warn Dumper($self->db_details('DATABASE_CORE')->{'meta_info'});
 #   my $mhash;
 # 
 #   foreach my $meta_key (qw(species.ensembl_alias_name assembly.default assembly.date species.classification genebuild.version)) {
-#       if (my @meta_values = @{ $self->db_details('ENSEMBL_DB')->{'meta_info'}{$meta_key} || []}) {
+#       if (my @meta_values = @{ $self->db_details('DATABASE_CORE')->{'meta_info'}{$meta_key} || []}) {
 # 	  my $i=0;
 # 	  while( @meta_values) {
 # 	      my $v = shift @meta_values;

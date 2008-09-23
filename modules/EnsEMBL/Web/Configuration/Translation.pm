@@ -121,7 +121,7 @@ sub context_menu {
     'text'  => "Gene regulation info.",
     'title' => 'GeneRegulationView - Regulatory factors for this gene'.$obj->stable_id,
     'href'  => "/$species/generegulationview?$q_string_g" 
-  ) if $obj->species_defs->get_table_size({ -db => 'ENSEMBL_DB', -table => 'regulatory_feature'}) && $obj->gene;
+  ) if $obj->species_defs->get_table_size({ -db => 'DATABASE_CORE', -table => 'regulatory_feature'}) && $obj->gene;
 
   if ( $q_string_g && $obj->get_db eq 'core' ) {
    $self->add_entry( $flag,
@@ -146,13 +146,13 @@ sub context_menu {
 		      'coed' => 'gene_var_info',
 		      'text' => "Gene variation info.",
 		      'href' => "/$species/genesnpview?$q_string_g"
-		    ) if $obj->species_defs->databases->{'ENSEMBL_VARIATION'};
+		    ) if $obj->species_defs->databases->{'DATABASE_VARIATION'};
 
     $self->add_entry( $flag,
 		      'code'  => 'id_history',
 		      'text'  => 'ID history',
 		      'title' => 'ID history - Protein stable ID history for'. $obj->stable_id,
-		      'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "ENSEMBL_DB", -table => 'gene_archive'});
+		      'href'  => "/$species/idhistoryview?$q_string") if $obj->species_defs->get_table_size({-db  => "DATABASE_CORE", -table => 'gene_archive'});
   }
 
   $self->add_entry( $flag,

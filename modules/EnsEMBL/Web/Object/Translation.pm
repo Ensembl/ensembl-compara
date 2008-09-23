@@ -731,7 +731,7 @@ sub pep_snps{
 
   use Time::HiRes qw(time);
   my $T = time;
-  unless ($self->species_defs->databases->{'ENSEMBL_VARIATION'} || $self->species_defs->databases->{'ENSEMBL_GLOVAR'}) {
+  unless ($self->species_defs->databases->{'DATABASE_VARIATION'} || $self->species_defs->databases->{'ENSEMBL_GLOVAR'}) {
     return [];
   }
   $self->database('variation');
@@ -751,22 +751,15 @@ sub pep_snps{
     $j++;  
   }
 
-  warn time - $T," got transcript"; $T = time;
   my %snps= %{$trans->get_all_cdna_SNPs($source)};
-  warn time - $T," got cdna SNPS"; $T = time;
   my %protein_features =%{$trans->get_all_peptide_variations($source)};
-  warn time - $T," got protein features"; $T = time;
   my $coding_snps = $snps{'coding'};            # coding SNP only
   return [] unless @$coding_snps;
-  foreach (@$coding_snps) {
-    warn sprintf "%10d %10d %3s %3s %20s %s\n", $_->start, $_->end, ($_->end-$_->start)||'', $_->strand, $_->variation_name, $_->allele_string;
-  }
 
   foreach my $snp (@$coding_snps) {
     foreach my $residue ( $snp->start..$snp->end ) { # gets residues for snps longer than 1... indels
       my $aa = int(($residue-$cd_start+3)/3); # aminoacid residue number
       my $aa_bp = ($residue-$cd_start+3) % 3; # NT in codon for that amino acid (0,1,2)
-      warn ".... $aa_bp:$aa ",$snp->allele_string," ....";
       my $snpclass;
       my $alleles;
       my $id;

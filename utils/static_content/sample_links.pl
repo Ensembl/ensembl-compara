@@ -162,7 +162,7 @@ foreach my $sp (@species) {
 
   ## get species-specific db info
   my %db        = %{$SPECIES_DEFS->get_config($sp,  "databases")};
-  die "No database!" unless $db{'ENSEMBL_DB'};
+  die "No database!" unless $db{'DATABASE_CORE'};
 
   #------------- tidy up view list for this species -------------------------
 
@@ -208,12 +208,12 @@ foreach my $sp (@species) {
   }
 
   ## Variation
-  if (!$db{'ENSEMBL_VARIATION'}) {
+  if (!$db{'DATABASE_VARIATION'}) {
     delete ($sp_views{snpview});
     delete ($sp_views{genesnpview});
     delete ($sp_views{transcriptsnpview});
   }
-  if ($db{'ENSEMBL_VARIATION'} && !$SPECIES_DEFS->get_config($sp,"VARIATION_STRAIN")) {
+  if ($db{'DATABASE_VARIATION'} && !$SPECIES_DEFS->get_config($sp,"VARIATION_STRAIN")) {
     delete ($sp_views{sequencealignview});
   }
 
@@ -390,8 +390,8 @@ exit;
 
 sub rand_chr {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db, ['ENSEMBL_DB']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_DB');
+  my $dbs = get_dbs($db, ['DATABASE_CORE']);
+  my $dbh = get_handle($dbs, 'DATABASE_CORE');
   my $params = {'name' => 'chr'};
   my $sql = qq(SELECT sr.name 
                 FROM seq_region sr LEFT JOIN coord_system c ON sr.coord_system_id = c.coord_system_id 
@@ -419,8 +419,8 @@ sub rand_synteny {
 sub rand_domain {
   my ($db, $sp, $view, $options) = @_;
   $sp =~ s/_/ /g;
-  my $dbs = get_dbs($db, ['ENSEMBL_DB']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_DB');
+  my $dbs = get_dbs($db, ['DATABASE_CORE']);
+  my $dbh = get_handle($dbs, 'DATABASE_CORE');
   my $params = {'interpro_ac' => 'domainentry'};
   my $sql = qq(SELECT i.interpro_ac, count( distinct tr.gene_id ) as c
                              FROM interpro as i, protein_feature as pf,
@@ -439,8 +439,8 @@ sub rand_family {
   my ($db, $sp, $view, $options) = @_;
   return if $options->{site_type} eq 'pre'; ## No compara in pre
   $sp =~ s/_/ /g;
-  my $dbs = get_dbs($db, ['ENSEMBL_COMPARA']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_COMPARA');
+  my $dbs = get_dbs($db, ['DATABASE_COMPARA']);
+  my $dbh = get_handle($dbs, 'DATABASE_COMPARA');
   my $params = {'stable_id' => 'family'};
   my $sql = qq(SELECT f.stable_id
                     FROM  family as f, genome_db,  family_member as fm,
@@ -477,8 +477,8 @@ sub rand_family {
 
 sub rand_feature {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db, ['ENSEMBL_DB']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_DB');
+  my $dbs = get_dbs($db, ['DATABASE_CORE']);
+  my $dbh = get_handle($dbs, 'DATABASE_CORE');
   my $eg = $options->{eg};
 
   ## What type of feature?
@@ -524,8 +524,8 @@ sub rand_feature {
 
 sub rand_gene {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db, ['ENSEMBL_DB']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_DB');
+  my $dbs = get_dbs($db, ['DATABASE_CORE']);
+  my $dbh = get_handle($dbs, 'DATABASE_CORE');
   my ($params, $sql);
   if ($options->{site_type} eq 'pre') {
     $params = {'display_label' => 'gene'};
@@ -548,9 +548,9 @@ sub rand_gene {
 
 sub rand_genesnp {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db,  ['ENSEMBL_DB', 'ENSEMBL_VARIATION']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_DB');
-  my $db2 = $dbs->{'ENSEMBL_VARIATION'}{'name'} || 1;
+  my $dbs = get_dbs($db,  ['DATABASE_CORE', 'DATABASE_VARIATION']);
+  my $dbh = get_handle($dbs, 'DATABASE_CORE');
+  my $db2 = $dbs->{'DATABASE_VARIATION'}{'name'} || 1;
   my $params = {'stable_id' => 'gene'};
   my $sql = qq(SELECT gs.stable_id
            FROM $db2.gene_stable_id as gs,
@@ -565,8 +565,8 @@ sub rand_genesnp {
 
 sub rand_location {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db, ['ENSEMBL_DB']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_DB');
+  my $dbs = get_dbs($db, ['DATABASE_CORE']);
+  my $dbh = get_handle($dbs, 'DATABASE_CORE');
   ## get a random gene, so we don't have empty sequence!
   my $sql = qq(SELECT seq_region_id, seq_region_start, seq_region_end
                 FROM gene
@@ -595,8 +595,8 @@ sub rand_location {
 
 sub rand_marker {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db, ['ENSEMBL_DB']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_DB');
+  my $dbs = get_dbs($db, ['DATABASE_CORE']);
+  my $dbh = get_handle($dbs, 'DATABASE_CORE');
   my $params = {'name' => 'marker'};
   my $sql = get_simple_sql('name', 'marker_synonym');
   my $eg = do_query($dbh, $sql, $view, $params);
@@ -605,8 +605,8 @@ sub rand_marker {
 
 sub rand_snp {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db,  ['ENSEMBL_VARIATION']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_VARIATION');
+  my $dbs = get_dbs($db,  ['DATABASE_VARIATION']);
+  my $dbh = get_handle($dbs, 'DATABASE_VARIATION');
   my $params = {'name' => 'snp'};
   my $sql = get_simple_sql('name', 'variation');
   my $eg = do_query($dbh, $sql, $view, $params);
@@ -615,8 +615,8 @@ sub rand_snp {
 
 sub rand_splice {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db, ['ENSEMBL_DB']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_DB');
+  my $dbs = get_dbs($db, ['DATABASE_CORE']);
+  my $dbh = get_handle($dbs, 'DATABASE_CORE');
   my $params = {'stable_id' => 'gene'};
   my $sql = qq(SELECT g.stable_id, count(*) as x
           FROM transcript as t, gene_stable_id as g
@@ -630,8 +630,8 @@ sub rand_splice {
 
 sub rand_trans {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db, ['ENSEMBL_DB']);
-  my $dbh = get_handle($dbs, 'ENSEMBL_DB');
+  my $dbs = get_dbs($db, ['DATABASE_CORE']);
+  my $dbh = get_handle($dbs, 'DATABASE_CORE');
   my ($params, $sql);
   if ($options->{site_type} eq 'pre') {
     $params = {'display_label' => 'transcript'};
@@ -655,15 +655,15 @@ sub rand_trans {
 
 sub rand_tree {
   my ($db, $sp, $view, $options) = @_;
-  my $dbs = get_dbs($db, ['ENSEMBL_COMPARA']);
+  my $dbs = get_dbs($db, ['DATABASE_COMPARA']);
   use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-  my $user = $dbs->{'ENSEMBL_COMPARA'}{user} || $db->{'ENSEMBL_DB'}{'USER'};
+  my $user = $dbs->{'DATABASE_COMPARA'}{user} || $db->{'DATABASE_CORE'}{'USER'};
 
-  my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $dbs->{'ENSEMBL_COMPARA'}{host},
-                                                       -port => $dbs->{'ENSEMBL_COMPARA'}{port},
+  my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => $dbs->{'DATABASE_COMPARA'}{host},
+                                                       -port => $dbs->{'DATABASE_COMPARA'}{port},
                                                        -user => $user,
-                                                       -dbname => $dbs->{'ENSEMBL_COMPARA'}{name});
+                                                       -dbname => $dbs->{'DATABASE_COMPARA'}{name});
 
   my $gdba = $dba->get_GenomeDBAdaptor;
   my $ma = $dba->get_MemberAdaptor;
@@ -728,7 +728,7 @@ sub get_dbs {
   my %db_multi = %{$SPECIES_DEFS->get_config("Multi","databases")};
   my $dbs;
   foreach my $db_string ( @$db_ref ){
-    if ($db_string eq 'ENSEMBL_COMPARA' or $db_string eq 'ENSEMBL_GO') {
+    if ($db_string eq 'DATABASE_COMPARA' or $db_string eq 'DATABASE_GO') {
       $dbs->{$db_string} = {
             "name" => $db_multi{$db_string}{'NAME'},
             "host" => $db_multi{$db_string}{'HOST'},

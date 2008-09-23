@@ -19,15 +19,22 @@ form.std div.notes h4 {
 
 form.std label { font-weight:bold; }
 
-form.std input, form.std select, form.std textarea { 
-  margin-left:10px;
-}
-
 input.submit { 
   background-color:[[MH_BG]]; border:outset [[MH_BG]] 2px;
   color:#fff; font-weight:bold;
 }
 
 form.std div.submit {
-  margin-left:10em;
+
 }
+
+form.std { margin: 0; padding:3px;}
+form.std dl { margin: 0; position: relative }
+form.std dl dt { clear: left; width: 32%; float: left; margin: 0; padding: 0; padding-bottom: 0.5em }
+form.std dl dd { width: 63%; float: left; margin: 0; padding: 0.1em 0 0.5em 0 }
+form.std dt.wide { float: none; width: 100% }
+form.std input.normal { width: 90% }
+form.std input.short  { width: 10em }
+form.std input.narrow { width: 20em }
+form.std input.vshort { width: 4em }
+

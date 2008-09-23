@@ -15,7 +15,7 @@ sub createObjects {
   my $db          = $self->param( 'db' ) || 'core';
   my $db_adaptor  = $self->database($db) ;
   my $size = $self->species_defs->get_table_size(
-    {-db    => "ENSEMBL_DB", -table => "gene_archive"}  );
+    {-db    => "DATABASE_CORE", -table => "gene_archive"}  );
 
   return $self->problem('Fatal', "No archive for this species", "No IDs have been archived in this species") unless $size;
 

@@ -114,7 +114,7 @@ sub info{
 sub mysql_db {
   my $release = shift || "";
   my $species_defs = &species_defs;
-  my $dsn = "DBI:mysql:host=". $species_defs->ENSEMBL_HOST .";port=" . $species_defs->ENSEMBL_HOST_PORT;
+  my $dsn = "DBI:mysql:host=". $species_defs->DATABASE_HOST .";port=" . $species_defs->DATABASE_HOST_PORT;
   my $dbh = DBI->connect($dsn, 'ensro') or die "\n[*DIE] Can't connect to database '$dsn'";
   my $mysql = $dbh->selectall_arrayref("show databases like '%$release%'");
   $dbh->disconnect;

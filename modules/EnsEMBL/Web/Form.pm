@@ -8,7 +8,6 @@ our @ISA = qw( EnsEMBL::Web::Root );
 
 sub new {
   my( $class, $name, $action, $method ) = @_;
-  warn "FORM CREATED...";
   my $self = {
     '_attributes' => {
         'action'   => $action,

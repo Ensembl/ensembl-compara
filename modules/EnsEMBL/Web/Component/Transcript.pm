@@ -652,7 +652,7 @@ sub marked_up_seq_form {
     { 'value' => 'codons',  'name' => 'Exons and Codons' },
     { 'value' => 'peptide', 'name' => 'Exons, Codons and Translation'},
   ];
-  if( $object->species_defs->databases->{'ENSEMBL_VARIATION'} ||
+  if( $object->species_defs->databases->{'DATABASE_VARIATION'} ||
       $object->species_defs->databases->{'ENSEMBL_GLOVAR'} ) {
     push @$show, { 'value' => 'snps', 'name' => 'Exons, Codons, Translations and SNPs' };
     push @$show, { 'value' => 'snp_coding', 'name' => 'Exons, Codons, Translation, SNPs and Coding sequence'};

@@ -73,8 +73,8 @@ sub createObjects {
 warn "...$option...";
   my $conf = $configuration->{$option};
   return $self->problem( 'Fata', 'Unknown Link type', 'Could not redirect to mart' ) unless $conf;
-  if( $conf->{'dependency'} eq 'snp'  && ! $self->species_defs->databases->{'ENSEMBL_VARIATION'} ||
-      $conf->{'dependency'} eq 'vega' && ! $self->species_defs->databases->{'ENSEMBL_VEGA'} ) {
+  if( $conf->{'dependency'} eq 'snp'  && ! $self->species_defs->databases->{'DATABASE_VARIATION'} ||
+      $conf->{'dependency'} eq 'vega' && ! $self->species_defs->databases->{'DATABASE_VEGA'} ) {
     $self->problem( 'fatal', 'Unknown dataset', qq(Do not know about dataset of type "$option" for this species) );
   }
   (my $dataset = lc($self->species)) =~ s/^([a-z])[a-z]+_/$1/;

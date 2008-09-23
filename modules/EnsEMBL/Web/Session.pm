@@ -484,7 +484,6 @@ sub getViewConfig {
   warn "GETTING CALL OF VIEW CONFIG........................................................... $type, $action ...";
   unless ($Configs_of{ ident $self }{$key} ) {
     my $view_config = EnsEMBL::Web::ViewConfig->new( $type, $action, $self );
-    warn ".... $view_config .... created ...";
     foreach my $root ( @{$self->get_path} ) {
       my $classname = $root."::ViewConfig::$key";
       unless( $self->dynamic_use( $classname ) ) {
@@ -494,7 +493,8 @@ sub getViewConfig {
         warn qq(ViewConfig: failed to require $classname:\n  $error) unless $error=~/$message/;
         next;
       }
-      foreach my $part (qw(init form)) {
+      $view_config->push_class( $classname );
+      foreach my $part (qw(init)) {
         my $method_name = $classname."::".$part;
         eval { no strict 'refs'; &$method_name( $view_config ); };
         if( $@ ) {
@@ -583,16 +583,18 @@ sub getImageConfig {
   return $image_config;
 }
 
+use Carp qw(cluck);
 sub get_ImageConfig {
 ### Return a new image config object...
   my $self = shift;
   my $type = shift;
+  "................ $type ........................";
+  cluck;  
   my $classname = '';
 ## Let us hack this for the moment....
 ## If a site is defined in the configuration look for
 ## an the user config object in the namespace EnsEMBL::Web::ImageConfig::{$site}::{$type}
 ## Otherwise fall back on the module EnsEMBL::Web::ImageConfig::{$type}
-  $type = 'contigviewbottom' if $type eq 'contigview'; # since there is no contigview config use contigviewbottom
 
   if( $self->get_site ) {
     $classname = "EnsEMBL::Web::ImageConfig::".$self->get_site."::$type";

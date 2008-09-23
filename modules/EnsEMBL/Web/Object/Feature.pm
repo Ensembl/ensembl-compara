@@ -277,7 +277,7 @@ sub find_available_features {
 
 	my $used_feature_types = [];
 	foreach my $poss_feature (@$all_feature_types) {
-		if ($species_defs->get_table_size( {-db=>'ENSEMBL_DB',-table => $poss_feature->{'table'}},$species )) {
+		if ($species_defs->get_table_size( {-db=>'DATABASE_CORE',-table => $poss_feature->{'table'}},$species )) {
 			push @$used_feature_types, $poss_feature;
 		}
 	}

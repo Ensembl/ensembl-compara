@@ -34,19 +34,19 @@ sub createObjects {
 	
   # Attach satellite databases
   if(0) {
-  if( $self->species_defs->databases->{'ENSEMBL_DB'} ){
+  if( $self->species_defs->databases->{'DATABASE_CORE'} ){
     my $adaptor  = $self->database('core');
     if( $adaptor ){ $db_adaptor->add_db_adaptor( 'core', $adaptor ) }
   }
-  if( $self->species_defs->databases->{'ENSEMBL_OTHERFEATURES'} ){
+  if( $self->species_defs->databases->{'DATABASE_OTHERFEATURES'} ){
     my $adaptor  = $self->database('otherfeatures');
     if( $adaptor ){ $db_adaptor->add_db_adaptor( 'otherfeatures', $adaptor ) }
   }
-  if( $self->species_defs->databases->{'ENSEMBL_VEGA'} ){
+  if( $self->species_defs->databases->{'DATABASE_VEGA'} ){
     my $adaptor  = $self->database('vega');
     if( $adaptor ){ $db_adaptor->add_db_adaptor( 'vega', $adaptor ) }
   }
-  if( $self->species_defs->databases->{'ENSEMBL_VARIATION'} ){
+  if( $self->species_defs->databases->{'DATABASE_VARIATION'} ){
     my $adaptor  = $self->database('variation');
     if( $adaptor ){ $db_adaptor->add_db_adaptor( 'variation', $adaptor ) }
   }

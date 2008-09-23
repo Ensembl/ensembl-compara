@@ -61,7 +61,7 @@ sub init {
       'track_label' => "Population",
       'hi'          => 'black',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION',
+      'available'=> 'databases DATABASE_VARIATION',
     },
 
     'tagged_snp'    => {
@@ -75,7 +75,7 @@ sub init {
       'track_label' => "Tagged SNPs",
       'hi'          => 'black',
       'colours' => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'=> 'databases ENSEMBL_VARIATION',
+      'available'=> 'databases DATABASE_VARIATION',
     },
 
 
@@ -92,7 +92,7 @@ sub init {
       'key'         => 'r2',
       'glyphset'    => 'ld',
       'colours'     => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'   => 'databases ENSEMBL_VARIATION',
+      'available'   => 'databases DATABASE_VARIATION',
     },
     'ld_d_prime' => {
       'on'          => "on",
@@ -107,7 +107,7 @@ sub init {
       'hi'          => 'black',
       'glyphset'    => 'ld',
       'colours'     => {$self->{'_colourmap'}->colourSet('variation')},
-      'available'   => 'databases ENSEMBL_VARIATION',
+      'available'   => 'databases DATABASE_VARIATION',
     },
   };
 }
