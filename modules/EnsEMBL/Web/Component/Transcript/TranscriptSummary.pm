@@ -98,12 +98,6 @@ sub content {
 		      1 );
   }
 
-## add pepstats info
-  $table->add_row('Peptide statistics',
-		  '<p>## Peptide statistics section will go here ##</p>',
-		  1 );
-
-
   return $table->render;
 }
 
