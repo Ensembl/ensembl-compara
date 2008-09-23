@@ -2788,19 +2788,16 @@ sub genome_markup_string{
   my %databases = %{$SPECIES_DEFS->databases($sp)};
   my @exontype_options;
   my @snptype_options;
-  if( $databases{ENSEMBL_DB} ){
+  if( $databases{DATABASE_CORE} ){
     if ($sitetype eq 'Vega') {
       push @exontype_options, [core=>'Vega exons'];
     } else {
       push @exontype_options, [ 'core' => 'Ensembl exons'], [ 'prediction' =>'Ab-initio exons'] ;
     }
   }
-  push @exontype_options, ['vega'   =>'VEGA exons'    ] if $databases{ENSEMBL_VEGA};
-  push @exontype_options, ['estgene'=>'EST-gene exons'] if $databases{ENSEMBL_EST};
+  push @exontype_options, ['vega'   =>'VEGA exons'    ] if $databases{DATABASE_VEGA};
+  push @exontype_options, ['estgene'=>'EST-gene exons'] if $databases{DATABASE_OTHERFEATURES};
   push @exontype_options, ['off'=>'No exon markup'    ];
-
-  push @snptype_options,  ['snp'    =>'All SNPs'      ] if $databases{ENSEMBL_LITE};
-  push @snptype_options,  ['off'=>'No SNP markup'     ];
 
   # Options input form
   my $run_id = $CGI->param("run_id");
