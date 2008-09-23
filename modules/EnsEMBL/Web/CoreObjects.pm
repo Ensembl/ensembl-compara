@@ -15,6 +15,7 @@ sub new {
       'gene'       => undef,
       'location'   => undef,
       'variation'  => undef,
+      'search'     => undef,
     },
     'parameters' => {}
   };
