@@ -18,8 +18,9 @@ sub init {
   });
   $self->create_menus(
     'sequence'        => 'Sequence',
-    'transcript'      => 'Transcripts',
-    'variation'       => 'Variation',
+    'gsv_transcript'  => 'Transcripts',
+    'gsv_domain'      => 'Protein domains',
+    'gsv_variations'   => 'Variations',
     'other'           => 'Other'
   );
   
