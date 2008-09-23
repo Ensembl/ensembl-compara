@@ -1,9 +1,40 @@
 package EnsEMBL::Web::ImageConfig::genesnpview_snps;
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use base qw(EnsEMBL::Web::ImageConfig);
 
+sub init {
+  my ($self) = @_;
+
+  $self->set_parameters({
+    'title'         => 'SNPs',
+    'show_buttons'  => 'no',  # do not show +/- buttons
+    'show_labels'   => 'no',   # show track names on left-hand side
+    'label_width'   => 100,     # width of labels on left-hand side
+    'margin'        => 5,     # margin
+    'spacing'       => 2,     # spacing
+    'bgcolor'       => 'background1',
+    'bgcolour1'     => 'background3',
+    'bgcolour2'     => 'background1',
+  });
+  $self->create_menus(
+    'other'           => 'Other'
+  );
+
+  $self->add_tracks( 'other',
+    [ 'ruler',     '', 'ruler',     { 'on' => 'on',  'strand' => 'r', 'name' => 'Ruler' } ],
+  );
+
+  $self->load_tracks();
+
+  $self->modify_configs(
+    [qw(transcript prediction)],
+    {qw(on off height 32 non_coding_scale 0.5)}
+  );
+
+}
+1;
+
+__END__
 sub init {
   my ($self) = @_;
   $self->{'_userdatatype_ID'} = 38;
