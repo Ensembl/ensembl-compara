@@ -28,15 +28,17 @@ sub render_normal {
   my @nodes = (
     ['speciation node', 'navyblue'],
     ['duplication node', 'red3'],
+    ['ambiguous node', 'turquoise'],
   );
   my @orthos = (
     ['current gene', 'red', 'Gene ID Species A'],
     ['within-sp. paralogue', 'blue', 'Gene ID Species A'],
   );
   my @boxes = (
-    ['AA alignment match/mismatch', 'yellowgreen', 'yellowgreen'],
-    ['AA alignment gap',            'white',       'yellowgreen'],
-  );
+    ['AA alignment match/mismatch',   'yellowgreen', 'yellowgreen'],
+    ['AA alignment (consensus)',      'darkgreen',   'darkgreen'],
+    ['AA alignment gap',              'white',       'yellowgreen'],
+               );
 
   my ($legend, $colour, $style, $border, $label, $text);
 
