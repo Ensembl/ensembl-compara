@@ -526,6 +526,62 @@ sub sequence {
   return $self->{'_sequence'};
 }
 
+=head2 sequence_exon_cased
+
+  Args       : none
+  Example    : my $sequence_exon_cased = $member->sequence_exon_cased;
+
+  Description: Get/set the sequence string of this peptide member with
+               alternating upper and lower case corresponding to the translateable exons.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub sequence_exon_cased {
+  my $self = shift;
+
+  my $sequence = $self->sequence;
+  my $trans = $self->transcript;
+  my @exons = @{$trans->get_all_translateable_Exons};
+  return $sequence if (1 == scalar @exons);
+
+  my %splice_site;
+  my $pep_len = 0;
+  my $overlap_len = 0;
+  for my $exon (@exons) {
+    my $exon_len = $exon->length;
+    my $pep_seq = $exon->peptide($trans)->length;
+    # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq
+    $pep_seq -= 1 if ($overlap_len);
+    $pep_len += $pep_seq;
+    if ($overlap_len = (($exon_len + $overlap_len ) %3)){          # if there is an overlap
+      $splice_site{$pep_len-1}{'overlap'} = $pep_len -1;         # stores overlapping aa-exon boundary
+    } else {
+      $overlap_len = 0;
+    }
+    $splice_site{$pep_len}{'phase'} = $overlap_len;                 # positions of exon boundary
+  }
+
+  my $seqsplice = '';
+  my $splice = 0;
+  foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
+    next if (defined($splice_site{$pep_len}{'overlap'}));
+    next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
+    $splice++;
+    my $length = $pep_len;
+    $length-- if (defined($splice_site{$pep_len}{'phase'}) && 1 == $splice_site{$pep_len}{'phase'});
+    my $peptide;
+    $peptide = substr($sequence,$length,length($sequence),'');
+    $peptide = lc($peptide) unless ($splice % 2); # Even splice lower-cased
+    $seqsplice = $peptide . $seqsplice;
+  }
+  $seqsplice = $sequence . $seqsplice; # First exon AS IS
+
+  return $seqsplice;
+}
+
 
 =head2 seq_length
 

@@ -124,12 +124,18 @@ sub method_link_species_set_id {
 
 sub alignment_string {
   my $self = shift;
+  my $exon_cased = shift;
 
   unless (defined $self->cigar_line && $self->cigar_line ne "") {
     throw("To get an alignment_string, the cigar_line needs to be define\n");
   }
   unless (defined $self->{'alignment_string'}) {
-    my $sequence = $self->sequence;
+    my $sequence;
+    if ($exon_cased) {
+      $sequence = $self->sequence_exon_cased;
+    } else {
+      $sequence = $self->sequence;
+    }
     if (defined $self->cigar_start || defined $self->cigar_end) {
       unless (defined $self->cigar_start && defined $self->cigar_end) {
         throw("both cigar_start and cigar_end should be defined");
