@@ -69,10 +69,24 @@ sub fetch_input {
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
+  $self->{ha} = $self->{'comparaDBA'}->get_HomologyAdaptor;
 
   $self->get_params($self->parameters);
   my $homology_id = $self->input_id;
-  $self->{'homology'}= $self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_dbID($homology_id);
+  if ($homology_id =~ /ids/) { # it's the job_array-based input_id
+    my $ids = eval($homology_id);
+    my @homologies;
+    foreach my $id (@{$ids->{ids}}) {
+      my $homology = $self->{ha}->fetch_by_dbID($id);
+      push @homologies, $homology;
+    }
+    $self->{'homology'} = \@homologies;
+  } else {
+    my @homologies;
+    push @homologies, $self->{ha}->fetch_by_dbID($homology_id);
+    $self->{'homology'} = \@homologies;
+  }
+
   return 1 if($self->{'homology'});
   return 0;
 }
@@ -110,15 +124,21 @@ sub get_params {
 sub run
 {
   my $self = shift;
-  $self->calc_genetic_distance($self->{'homology'});
+
+  foreach my $homology (@{$self->{'homology'}}) {
+    $self->calc_genetic_distance($homology);
+  }
   return 1;
 }
 
 
 sub write_output {
   my $self = shift;
+
   my $homologyDBA = $self->{'comparaDBA'}->get_HomologyAdaptor;
-  $homologyDBA->update_genetic_distance($self->{'homology'});
+  foreach my $homology (@{$self->{'homology'}}) {
+    $homologyDBA->update_genetic_distance($homology);
+  }
   return 1;
 }
 
@@ -135,7 +155,7 @@ sub calc_genetic_distance
   my $homology = shift;
 
   #print("use codeml to get genetic distance of homology\n");
-  #$homology->print_homology;
+  $homology->print_homology if ($self->debug);
   
   # second argument will change selenocyteine TGA codons to NNN
   my $aln = $homology->get_SimpleAlign("cdna", 1);
@@ -157,11 +177,16 @@ sub calc_genetic_distance
   if($rc == 0) {
     print_simple_align($aln, 80);
     print("codeml error : ", $codeml->error_string, "\n");
-    if (0 == $aln->remove_gaps->length) {
-      $self->input_job->update_status('FAILED');
-      $self->throw("Codeml : The pairwise alignment is all gapped");
+    my $collapsed_aln = $aln->remove_gaps;
+    $collapsed_aln->gap_char('N'); # Ns are not used either, so default to gaps
+    if (0 == $collapsed_aln->remove_gaps->length) {
+      # $self->input_job->update_status('FAILED');
+      # $self->throw("Codeml : The pairwise alignment is all gapped");
+      warn("Codeml : The pairwise alignment is all gapped or Ns");
+      return $homology;
     }
-    $self->throw("There was an error running codeml");
+    warn("There was an error running codeml");
+    return $homology;
   }
   my $result;
   eval{ $result = $parser->next_result };
