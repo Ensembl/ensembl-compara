@@ -132,6 +132,7 @@ sub create_analysis_jobs {
   my $sth = $self->db->dbc->prepare($sql);
 
   my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
+  my @homologies;
   foreach my $species_set (@{$species_sets_aref}) {
     while (my $genome_db_id1 = shift @{$species_set}) {
       foreach my $genome_db_id2 (@{$species_set}) {
@@ -140,11 +141,28 @@ sub create_analysis_jobs {
               ($mlt,[$genome_db_id1,$genome_db_id2]);
 	  next unless($mlss);
           $sth->execute($mlss->dbID);
+          while( my $ref  = $sth->fetchrow_arrayref() ) {
+            my ($homology_id) = @$ref;
+            push @homologies, $homology_id;
+          }
         }
       }
     }
   }
-  
+
+  my $job_size = int(((scalar @homologies)/25000));
+  $job_size = 1 if ($job_size < 1);
+  $job_size = 25 if ($job_size > 20); # limit of 255 chars in input_id
+
+  while (@homologies) {
+    my @job_array = splice(@homologies,0,$job_size);
+    my $input_id = "[" . join(',',@job_array) . "]";
+    my $input_string = "{'ids'=>" . $input_id . "}";
+    my $sql = "insert ignore into analysis_job (analysis_id,input_id,status) VALUES ($analysis_id,\"$input_string\",'READY')";
+    my $sth2 = $self->db->dbc->prepare($sql);
+    $sth2->execute;
+  }
+
   $sth->finish;
 }
 
