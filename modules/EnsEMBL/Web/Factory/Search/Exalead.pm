@@ -9,31 +9,25 @@ use CGI;
 use Data::Dumper;
 our @ISA = qw(EnsEMBL::Web::Factory);
 
-sub createObjects {
-    use Carp qw(cluck);
-    cluck 'in the constructor';
-    my $self       = shift;    
-    ### Parse parameters to get index names
-    my $idx      = $self->param('type') || $self->param('idx') || 'all';
-    ### Parse parameters to get Species names
-    my $species  = $self->param('species') || $self->species || 'all';
-    warn "SEARCHING USING EXALEAD TO FIND $idx in $species";
-}
-
 sub generic_search {
     my $self = shift;
 }
 
 sub _search_all {
     my $self = shift;
+    my $idx = shift;
+    my $species = shift;
     my $exalead = new ExaLead;
-    $exalead->engineURL = $self->species_defs->ENSEMBL_SEARCH_URL; 
+    $exalead->engineURL = $self->species_defs->ENSEMBL_SEARCH_URL;
     $exalead->__timeout = 30;
     $exalead->rootURL   = "/$ENV{'ENSEMBL_SPECIES'}/search";
     ( my $SPECIES   = $ENV{'ENSEMBL_SPECIES'} ) =~ s/_/ /g;
     my $source = "Top/Source/".$self->species_defs->ENSEMBL_EXALEAD_SITE_INDEX;
     my $q = CGI->new();
     my $not_fresh = $q->param;
+    if (@$species) {
+	$q->param('species',@$species);
+    }
     if( $not_fresh ) {
 	if( $q->param('q') ) {
 	    $q->param('_q',$q->param('q'));
@@ -45,7 +39,8 @@ sub _search_all {
 		    $CAT .= '/'.$q->param('idx');
 		    $CAT2 = "Top/Feature type/".$q->param('idx').'/'.$q->param('species');
 		}
-	    } elsif( $q->param('idx') && lc($q->param('idx')) ne 'all' ) {
+	    }
+	    elsif( $q->param('idx') && lc($q->param('idx')) ne 'all' ) {
 		$CAT = "Top/Feature type/".$q->param('idx');
 	    }
 	    if( $CAT ) {
@@ -56,7 +51,8 @@ sub _search_all {
 		} else {
 		    $q->param('_q', $q->param('_q').qq( corporate/tree:"$CAT" corporate/tree:"$source"));
 		}
-	    } else {
+	    }
+	    else {
 		$q->param('_q', $q->param('_q').qq( corporate/tree:"$source"));
 	    }
 	} elsif( $q->param('_q') ){
