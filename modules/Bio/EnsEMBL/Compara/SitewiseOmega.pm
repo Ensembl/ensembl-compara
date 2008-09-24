@@ -180,10 +180,10 @@ sub omega {
 
 =head2 omega_lower
 
-  Arg [1]    : (opt) integer
+  Arg [1]    : (opt) float
   Example    : $sitewise_dnds->omega_lower(1);
   Description: Getter/Setter for the omega_lower value
-  Returntype : integer. Return 1 if value not defined
+  Returntype : float. Return 1 if value not defined
   Exceptions : none
   Caller     : general
   Status     : At risk
@@ -204,10 +204,10 @@ sub omega_lower {
 
 =head2 omega_upper
 
-  Arg [1]    : (opt) integer
+  Arg [1]    : (opt) float
   Example    : $sitewise_dnds->omega_upper(1);
   Description: Getter/Setter for the omega_upper value
-  Returntype : integer. Return 1 if value not defined
+  Returntype : float. Return 1 if value not defined
   Exceptions : none
   Caller     : general
   Status     : At risk
@@ -225,6 +225,53 @@ sub omega_upper {
   return $self->{'omega_upper'};
 }
 
+
+=head2 optimal
+
+  Arg [1]    : (opt) float
+  Example    : $sitewise_dnds->optimal(1);
+  Description: Getter/Setter for the optimal value
+  Returntype : float. Return 1 if value not defined
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub optimal {
+    my ($self, $optimal) = @_;
+
+    if(defined $optimal) {
+	$self->{'optimal'} = $optimal;
+    }
+
+  $self->{'optimal'}= undef unless(defined($self->{'optimal'}));
+  return $self->{'optimal'};
+}
+
+
+=head2 threshold_on_branch_ds
+
+  Arg [1]    : (opt) float
+  Example    : $sitewise_dnds->threshold_on_branch_ds(1);
+  Description: Getter/Setter for the threshold_on_branch_ds value
+  Returntype : float. Return 1 if value not defined
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub threshold_on_branch_ds {
+    my ($self, $threshold_on_branch_ds) = @_;
+
+    if(defined $threshold_on_branch_ds) {
+	$self->{'threshold_on_branch_ds'} = $threshold_on_branch_ds;
+    }
+
+  $self->{'threshold_on_branch_ds'}= undef unless(defined($self->{'threshold_on_branch_ds'}));
+  return $self->{'threshold_on_branch_ds'};
+}
 
 =head2 type
 
@@ -271,6 +318,29 @@ sub node_id {
 
   $self->{'node_id'}= undef unless(defined($self->{'node_id'}));
   return $self->{'node_id'};
+}
+
+=head2 tree_node_id
+
+  Arg [1]    : (opt) integer
+  Example    : $sitewise_dnds->tree_node_id(1);
+  Description: Getter/Setter for the tree_node_id value
+  Returntree_node_id : integer. Return 1 if value not defined
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub tree_node_id {
+    my ($self, $tree_node_id) = @_;
+
+    if(defined $tree_node_id) {
+	$self->{'tree_node_id'} = $tree_node_id;
+    }
+
+  $self->{'tree_node_id'}= undef unless(defined($self->{'tree_node_id'}));
+  return $self->{'tree_node_id'};
 }
 
 
