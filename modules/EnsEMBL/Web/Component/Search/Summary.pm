@@ -17,7 +17,10 @@ sub content {
     my $html = '';
     my $exa_obj = $self->object->Obj;
     my $renderer = new ExaLead::Renderer::HTML( $exa_obj );
-    return;
+    my $html =  $renderer->render_summary.
+         	$renderer->render_navigation.
+	        $renderer->render_hits;
+    return $html;
 }
 
 1;
