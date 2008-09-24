@@ -128,11 +128,10 @@ sub get_SimpleAlign {
 sub consensus_cigar_line {
 
    my $self = shift;
-   my $tree = shift || die( "Need a ProteinTree object!" );
    my @cigars;
 
    # First get an 'expanded' cigar string for each leaf of the subtree
-   foreach my $leaf (@{$tree->get_all_leaves}) {
+   foreach my $leaf (@{$self->get_all_leaves}) {
      next unless( UNIVERSAL::can( $leaf, 'cigar_line' ) );
      my @cigar;
      foreach my $num ($leaf->cigar_line =~ m/\d*[A-Z]/g) {
@@ -150,7 +149,7 @@ sub consensus_cigar_line {
    # and start at the same point.
    my $cigar_len = length( $cigars[0] );
    my $cons_cigar;
-   for( my $i=1; $i<=$cigar_len; $i++ ){
+   for( my $i=0; $i<$cigar_len; $i++ ){
      my $char = 'M';
      foreach my $cigar( @cigars ){
        if ( substr($cigar,$i,1) eq 'D'){
