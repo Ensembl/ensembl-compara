@@ -21,8 +21,8 @@ sub content {
 
   #----------
   # Get the Member and ProteinTree objects 
-  my $member = $object->get_compara_Member; 
-  my $tree   = $object->get_ProteinTree;
+  my $member = $object->get_compara_Member || die("No compara Member"); 
+  my $tree   = $object->get_ProteinTree    || die("No ProteinTree");
 
   #----------
   # Draw the tree
@@ -35,9 +35,13 @@ sub content {
     'slice_number',     => '1|1',
   });
 
-  $wuc->tree->dump("GENE TREE CONF", '([[caption]])');
+  #$wuc->tree->dump("GENE TREE CONF", '([[caption]])');
+  my @highlights = ($object->stable_id, $member->genome_db->dbID);
+  # Keep track of collapsed nodes
+  push @highlights, $object->param('collapse') || undef;
+
   my $image  = $object->new_image
-      ( $tree, $wuc, [$object->stable_id, $member->genome_db->dbID] );
+      ( $tree, $wuc, [@highlights] );
 #  $image->cacheable   = 'yes';
   $image->image_type  = 'genetree';
   $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
