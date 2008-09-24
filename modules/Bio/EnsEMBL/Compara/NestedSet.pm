@@ -266,6 +266,9 @@ sub has_ancestor {
   Overview   : returns the root NestedSet object for this node
                returns $self if node has no parent (this is the root)
   Example    : my $root = $object->root();
+  Description: Returns the root of the tree for this node
+               with links to all the intermediate nodes. Sister nodes
+               are not included in the result.
   Returntype : undef or Bio::EnsEMBL::Compara::NestedSet
   Exceptions : none
   Caller     : general
@@ -274,6 +277,10 @@ sub has_ancestor {
 
 sub root {
   my $self = shift;
+
+  if (!defined($self->{'_parent_link'}) and $self->adaptor) {
+    return $self->adaptor->fetch_root_by_node($self);
+  }
 
   return $self unless(defined($self->parent));
  #  return $self if($self->node_id eq $self->parent->node_id);

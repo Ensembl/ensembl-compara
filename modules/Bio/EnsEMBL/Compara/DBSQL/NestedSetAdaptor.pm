@@ -145,6 +145,40 @@ sub fetch_subroot_by_left_right_index {
 }
 
 
+=head2 fetch_root_by_node
+
+  Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $node
+  Example    : $root = $nested_set_adaptor->fetch_root_by_node($node);
+  Description: Returns the root of the tree for this node
+               with links to all the intermediate nodes. Sister nodes
+               are not included in the result. Use fetch_node_by_node_id()
+               method to get the whole tree (loaded on demand)
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : thrown if $node is not defined
+  Status     : At-risk
+  Caller     : $nested_set->root
+
+=cut
+
+sub fetch_root_by_node {
+  my ($self, $node) = @_;
+
+  unless(UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $left_index = $node->left_index;
+  my $right_index = $node->right_index;
+
+  my $constraint = "WHERE t.left_index <= $left_index AND t.right_index >= $right_index";
+  my $nodes = $self->_generic_fetch($constraint);
+  my $root = $self->_build_tree_from_nodes($nodes);
+
+  return $root;
+}
+
+
+
 ###########################
 # STORE methods
 ###########################
