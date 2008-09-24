@@ -69,6 +69,22 @@ sub fetch_all_children_for_node {
   return $node;
 }
 
+sub fetch_all_leaves_indexed {
+  my ($self, $node) = @_;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $table= $self->tables->[0]->[1];
+  my $left_index = $node->left_index;
+  my $right_index = $node->right_index;
+  my $constraint = "WHERE ($table.right_index - $table.left_index) = 1 AND $table.left_index > $left_index AND $table.right_index < $right_index";
+  my @leaves = @{$self->_generic_fetch($constraint)};
+
+  return \@leaves;
+}
+
 
 sub fetch_subtree_under_node {
   my $self = shift;
