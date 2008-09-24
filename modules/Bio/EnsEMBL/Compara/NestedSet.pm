@@ -829,7 +829,6 @@ sub _internal_newick_format {
   if($format_mode eq "full_common") { 
     #full: name and distance on all nodes
     my $name = $self->name;
-    $DB::single=1;1;
     my $full_common_name = $name;
     if ($self->is_leaf) {
       my $common = uc($self->get_tagvalue('genbank common name'));
