@@ -183,7 +183,7 @@ sub run {
 
     # Here we can look at a previous build and try to reuse the blast
     # results for this query peptide against this hit genome
-    my $reusable_pafs = $self->try_reuse_blast($p,$member) if (defined $p->{reuse_db});
+    my $reusable_pafs = $self->try_reuse_blast($p,$gdb->dbID,$member) if (defined $p->{reuse_db});
     if (defined($reusable_pafs)) {
       push @cross_pafs, @$reusable_pafs;
     } else {
@@ -344,6 +344,7 @@ sub dumpPeptidesToFasta
 sub try_reuse_blast {
   my $self = shift;
   my $p = shift;
+  my $gdb_id = shift;
   my $member = shift;
 
   # 1 - Check that both the query and hit genome are reusable - ie
@@ -352,12 +353,12 @@ sub try_reuse_blast {
   foreach my $reusable_gdb (@{$p->{reuse_gdb}}) {
     $self->{reusable_gdb}{$reusable_gdb} = 1;
   }
-  my $hit_genome_db_id = $p->{genome_db_id};
+  my $hit_genome_db_id = $gdb_id;
   return undef unless (defined($self->{reusable_gdb}{$hit_genome_db_id}) 
                  && 
                  defined($self->{reusable_gdb}{$member->genome_db_id}));
 
-  $self->{'comparaDBA_reuse'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($p->{reuse_db}, 'compara');
+  $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($p->{reuse_db}, 'compara');
   my $paf_adaptor = $self->{'comparaDBA_reuse'}->get_PeptideAlignFeatureAdaptor;
   my $member_adaptor = $self->{'comparaDBA_reuse'}->get_MemberAdaptor;
   my $member_reuse = $member_adaptor->fetch_by_source_stable_id('ENSEMBLPEP',$member->stable_id);
@@ -375,17 +376,18 @@ sub try_reuse_blast {
     my $hit_member_reuse = $paf->hit_member;
     my $hit_member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP',$hit_member_reuse->stable_id);
     # 3 - Check that the hit member is an identical sequence in both dbs
+    unless (defined ($hit_member)) { return undef; }
     unless ($hit_member_reuse->sequence eq $hit_member->sequence) {
           print STDERR "Different hit sequence for ", $hit_member->stable_id ," when trying to reuse blast from previous build.\n" if ($self->debug);
           return undef;
     }
-    print STDERR "Reusing ", $hit_member->member_id, " ", $hit_member->stable_id, " from previous build.\n" if ($self->debug);
+    print STDERR "Reusing ", $hit_member->member_id, " ", $hit_member->stable_id, " - ", $member->member_id, " ", $member->stable_id, " (",$hit_member->genome_db_id, ":", $member->genome_db_id, ")", " from previous build.\n" if ($self->debug);
 
     # Now we can reuse this paf
     my $new_paf = new Bio::EnsEMBL::Compara::PeptideAlignFeature;
     $new_paf->query_genome_db_id($member->genome_db_id);
     $new_paf->query_member($member);
-    $new_paf->hit_genome_db_id($hit_genome_db_id);
+    $new_paf->hit_genome_db_id($hit_member->genome_db_id);
     $new_paf->hit_member($hit_member);
     $new_paf->qstart($paf->qstart);
     $new_paf->hstart($paf->hstart);
