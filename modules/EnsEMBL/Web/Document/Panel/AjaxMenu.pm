@@ -18,12 +18,13 @@ sub add_entry {
   my( $self, $hashref ) = @_;
   $self->{'entries'} ||= [];
   push @{$self->{'entries'}}, {
-    'code'     => $hashref->{'code'}     || 'entry_'.($self->{'counter'}++),
-    'type'     => $hashref->{'type'}     || '',
-    'label'    => $hashref->{'label'}    || '',
-    'link'     => $hashref->{'link'}     || undef,
-    'priority' => $hashref->{'priority'} || 100,
-    'extra'    => $hashref->{'extra'}    || {}
+    'code'       => $hashref->{'code'}      || 'entry_'.($self->{'counter'}++),
+    'type'       => $hashref->{'type'}      || '',
+    'label'      => $hashref->{'label'}     || '',
+    'label_html' => $hashref->{'label_html'}|| '',
+    'link'       => $hashref->{'link'}      || undef,
+    'priority'   => $hashref->{'priority'}  || 100,
+    'extra'      => $hashref->{'extra'}     || {}
   };
 }
 
@@ -37,6 +38,7 @@ sub content {
   </tr>', escapeHTML($self->{'caption'}) );
   foreach my $entry ( sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'label'} cmp $b->{'label'} } @{$self->{'entries'}||[]} ) {
     my $txt = escapeHTML( $entry->{'label'} );
+    $txt .= ( $entry->{'label_html'} );
     if( $entry->{'link'} ) {
       if ($entry->{'extra'}{'abs_url'}) {
 	$txt = $entry->{'link'};
