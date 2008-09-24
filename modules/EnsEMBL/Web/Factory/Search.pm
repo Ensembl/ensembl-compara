@@ -2,17 +2,20 @@ package EnsEMBL::Web::Factory::Search;
 
 use strict;
 
-use EnsEMBL::Web::Factory;
 use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Proxy::Object;
-our @ISA = qw(EnsEMBL::Web::Factory);
+use base qw(EnsEMBL::Web::Factory);
+
+use Data::Dumper;
+$Data::Dumper::Maxdepth = 2;
 
 sub createObjects { 
-  my $self       = shift;    
+  my $self       = shift;
+  my $indexer  = $self->species_defs->ENSEMBL_TEXT_INDEXER || 'Exalead';
 
-  my $indexer  = $self->species_defs->ENSEMBL_TEXT_INDEXER || 'Unisearch';
   ### Parse parameters to get index names
   my $idx      = $self->param('type') || $self->param('idx') || 'all';
+
   ### Parse parameters to get Species names
   my @species  = $self->param('species') || $self->species;
      @species  = @{$self->species_defs->ENSEMBL_SPECIES} if $species[0] =~ /^all$/i ;
