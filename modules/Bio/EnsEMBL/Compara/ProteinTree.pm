@@ -64,9 +64,10 @@ sub get_SimpleAlign {
   my $stop2x = 0;
   my $append_taxon_id = 0;
   my $append_sp_short_name = 0;
+  my $exon_cased = 0;
   if (scalar @args) {
-    ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name) = 
-       rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME)], @args);
+    ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $exon_cased) = 
+       rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME EXON_CASED)], @args);
   }
   $id_type = 'STABLE' unless(defined($id_type));
 
@@ -88,7 +89,7 @@ sub get_SimpleAlign {
       $seqstr = $member->cdna_alignment_string;
       $seqstr =~ s/\s+//g;
     } else {
-      $seqstr = $member->alignment_string;
+      $seqstr = $member->alignment_string($exon_cased);
     }
     next if(!$seqstr);
 
@@ -120,6 +121,50 @@ sub get_SimpleAlign {
   }
 
   return $sa;
+}
+
+# Takes a protein tree and creates a consensus cigar line from the
+# constituent leaf nodes.
+sub consensus_cigar_line {
+
+   my $self = shift;
+   my $tree = shift || die( "Need a ProteinTree object!" );
+   my @cigars;
+
+   # First get an 'expanded' cigar string for each leaf of the subtree
+   foreach my $leaf (@{$tree->get_all_leaves}) {
+     next unless( UNIVERSAL::can( $leaf, 'cigar_line' ) );
+     my @cigar;
+     foreach my $num ($leaf->cigar_line =~ m/\d*[A-Z]/g) {
+       my $type = chop $num;
+       $num ||= 1;
+       push @cigar, $type x $num;
+     }
+     push @cigars, join( '', @cigar );
+   }
+
+   # Itterate through each character of the expanded cigars.
+   # If there is a 'D' at a given location in any cigar,
+   # set the consensus to 'D', otherwise assume an 'M'.
+   # TODO: Fix assumption that cigar strings are always the same length,
+   # and start at the same point.
+   my $cigar_len = length( $cigars[0] );
+   my $cons_cigar;
+   for( my $i=1; $i<=$cigar_len; $i++ ){
+     my $char = 'M';
+     foreach my $cigar( @cigars ){
+       if ( substr($cigar,$i,1) eq 'D'){
+         $char='D';
+         last;
+       }
+     }
+     $cons_cigar .= $char;
+   }
+
+   # TODO: collapse the consensus cigar, e.g. 'DDDD' = 4D
+
+   # Return the consensus
+   return $cons_cigar;
 }
 
 sub get_SitewiseOmega_values {
