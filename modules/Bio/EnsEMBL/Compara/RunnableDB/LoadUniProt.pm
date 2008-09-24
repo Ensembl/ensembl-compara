@@ -298,12 +298,15 @@ sub pfetch_and_store_by_ids {
     # It only affects the Ensembl species dbs, and right now I am using
     # a home-brewed version of Bio::SeqIO::swiss to parse the PE entries
     # in a similar manner as comments (CC) but of type 'evidence'
-    my $evidence_annotations = $seq->get_Annotations('evidence');
+    $DB::single=1;1;
     my $taxon_id; eval { $taxon_id = $seq->species->ncbi_taxid;};
-    if ($evidence_annotations && defined($self->{internal_taxon_ids}{$taxon_id})) {
-      if ($evidence_annotations->text =~ /^4/) {
-        print STDERR $seq->display_id, "PE discarded ", $evidence_annotations->text, "\n";
-        next;
+    if (defined($self->{internal_taxon_ids}{$taxon_id})) {
+      my $evidence_annotations = $seq->get_Annotations('evidence');
+      if (defined $evidence_annotations) {
+        if ($evidence_annotations->text =~ /^4/) {
+          print STDERR $seq->display_id, "PE discarded ", $evidence_annotations->text, "\n";
+          next;
+        }
         # We dont want duplicated entries
       }
     }
