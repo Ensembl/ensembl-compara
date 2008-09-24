@@ -45,6 +45,12 @@ sub populate_tree {
     { 'availability' => 'database:funcgen' }
   );
 
+# $self->create_node( 'XRefs', "External references",
+#   [qw(xrefs EnsEMBL::Web::Component::Gene::XRefs)],
+#   { 'availability' => 1, 'concise' => 'XRefs' }
+# );
+
+##----------------------------------------------------------------------
 ## Compara menu: alignments/orthologs/paralogs/trees
   my $compara_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
@@ -137,13 +143,30 @@ sub ajax_zmenu      {
   my $self = shift;
   my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
+
+  my $action = $obj->[1]{'_action'} || 'Summary';
+
+  if( $action =~ 'Compara_Tree_Node' ){
+    return $self->_ajax_zmenu_compara_tree_node();
+  }
+
   my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
   $panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
+
+  if( $action =~ 'Compara_Tree' ){
+    my $species = $obj->species;
+    $panel->add_entry({
+      'type'     => 'Species',
+      'label'    => $species,
+      'link'     => "/$species",
+      'priority' => 200
+        });    
+  }
 
   $panel->add_entry({
     'type'     => 'Gene',
     'label'    => $obj->stable_id,
-    'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
+    'link'     => $obj->_url({'type'=>'Gene', 'action'=>$action}),
     'priority' => 195
   });
   $panel->add_entry({
@@ -162,6 +185,218 @@ sub ajax_zmenu      {
 
 ## Protein coding transcripts only....
   return;
+}
+
+sub _ajax_zmenu_compara_tree_node{
+  # Specific zmenu for compara tree nodes
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj = $self->object;
+
+  my $collapse = $obj->param('collapse');
+  my $node_id  = $obj->param('node') || die( "No node value in params" );
+  my %collapsed_ids = map{$_=>1} grep{$_} split(',', $collapse);
+  my $tree = $obj->get_ProteinTree || die( "No protein tree for gene" );
+  my $node = $tree->find_node_by_node_id($node_id) 
+      || die( "No node_id $node_id in ProteinTree" );
+  
+  my $tagvalues = $node->get_tagvalue_hash; 
+  #warn Data::Dumper::Dumper($tagvalues);
+  my $leaf_count = scalar @{$node->get_all_leaves};
+  my $parent_distance = $node->distance_to_parent;
+
+  $panel->{'caption'} = "Taxon: " . $tagvalues->{'taxon_name'} || 'unknown';
+  
+  # Branch length
+  $panel->add_entry({
+    'type' => 'Branch_Length',
+    'label' => $parent_distance,
+    'priority' => 9,
+  });
+  # Bootstrap
+  if( my $boot = $tagvalues->{'Bootstrap'} ){
+    $panel->add_entry({
+      'type' => 'Bootstrap',
+      'label' => $boot,
+      'priority' => 8,
+    });
+  }
+
+  if( $leaf_count > 1 ){
+
+    # Duplication confidence
+    my $dup = $tagvalues->{'Duplication'};
+    if( defined( $dup ) ){
+      $dup = 'dubious' if $tagvalues->{'dubious_duplication'};
+      $dup = "confidence $dup" if $dup;
+      $panel->add_entry({
+        'type' => 'Type',
+        'label' => ($dup ? "Duplication ($dup)" : 'Speciation' ),
+        'priority' => 7,
+      });
+    }
+
+    # Gene count
+    $panel->add_entry({
+      'type' => 'Gene_Count',
+      'label' => $leaf_count,
+      'priority' => 10,
+    });
+
+    # Expand this node
+    if( $collapsed_ids{$node_id} ){
+      $panel->add_entry({
+        'type'     => 'ACTION',
+        'label'    => 'expand this node',
+        'priority' => 5,
+        'link'     => $obj->_url
+            ({'type'     =>'Gene', 
+              'action'   =>'Compara_Tree',
+              'collapse' => join( ',', 
+                                  ( grep{$_ != $node_id} 
+                                    keys %collapsed_ids ) ) }),
+           });
+    }
+
+    # Collapse this node
+    else {
+      $panel->add_entry({
+        'type'     => 'ACTION',
+        'label'    => 'collapse this node',
+        'priority' => 3,
+        'link'     => $obj->_url
+            ({'type'   =>'Gene',
+              'action' =>'Compara_Tree',
+              'collapse' => join( ',', $node_id, (keys %collapsed_ids) ) }),
+          });
+    }
+
+    # Expand all nodes
+    if( %collapsed_ids ){
+      $panel->add_entry({
+        'type'     => 'ACTION',
+        'label'    => 'expand all nodes',
+        'priority' => 4,
+        'link'     => $obj->_url
+            ({'type'     =>'Gene',
+              'action'   =>'Compara_Tree',
+              'collapse' => '' }),
+          });
+
+    }
+
+    # Collapse other nodes
+    # First get a list of ancestor nodes for the current node
+    my %ancestors = ( $node_id => 1 );
+    my $this = $node;
+    while( $this = $this->parent ){
+      $ancestors{$this->node_id} ++;
+    }
+    
+    # Next itterate through the tree, noting adjacent IDs to the ancestor nodes
+    $this = $tree;
+    my @collapse_children;
+    while( $this ){
+      last if $this->node_id == $node_id; # Stop on reaching current node
+      my $next;
+      foreach my $child (@{$this->children}){
+        next if $child->is_leaf; # Cannot collapse leaves
+        my $child_id = $child->node_id;
+        if( $ancestors{$child_id} ){ # Ancestor node
+          $next = $child;
+        } else {
+          push @collapse_children, $child_id;
+        }
+      }
+      $this = $next || undef;
+    }
+    $panel->add_entry({
+      'type'     => 'ACTION',
+      'label'    => 'collapse other nodes',
+      'priority' => 2,
+      'link'     => $obj->_url
+          ({'type'   =>'Gene',
+            'action' =>'Compara_Tree',
+            'collapse' => join( ',', 
+                                (keys %collapsed_ids),
+                                @collapse_children ) }), });
+
+    # Jalview
+    warn( "$panel" );
+    my $jalview_html = $self->_compara_tree_jalview_html( $tree, $node_id );
+    $panel->add_entry({
+      'type'      => 'View Subtree',
+      'label'     => '[Requires Java]',
+      'label_html'=> $jalview_html,
+      'priority'  => 1, } );
+  }
+
+
+  return;
+}
+
+our $_JALVIEW_HTML_TMPL = qq(
+<applet code="jalview.bin.JalviewLite"
+       width="140" height="35"
+       archive="%s/jalview/jalviewApplet.jar">
+  <param name="file" value="%s">
+  <param name="treeFile" value="%s">
+  <param name="defaultColour" value="clustal">
+</applet> );
+
+sub _compara_tree_jalview_html{
+  # Constructs the html needed to launch jalview for a ProteinTree tree
+  # and optional subnode_id
+  my $self = shift;
+  my $tree = shift || die( "Need a ProteinTree object!" );
+  my $node_id = shift || $tree->node_id;
+
+  my $subtree = $tree->find_node_by_node_id($node_id)
+      || die( "Node_id $node_id not found in ProteinTree" );
+
+  # Establish some URL/file paths
+  my $object = $self->object;
+  my $defs   = $object->species_defs;
+  my $temp_name = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
+  my $file_base = $defs->ENSEMBL_TMP_DIR_IMG . "/$temp_name";
+  my $file_fa   = $file_base . '.fa.png'; # .png suffix until httpd.conf fixed
+  my $file_nh   = $file_base . '.nh.png';
+  my $url_site  = $defs->ENSEMBL_BASE_URL;
+  my $url_base  = $url_site . $defs->ENSEMBL_TMP_URL_IMG . "/$temp_name";
+  my $url_fa    = $url_base . '.fa.png';
+  my $url_nh    = $url_base . '.nh.png';
+  $object->make_directory( $file_base );
+
+  # Write the fasta and nh files
+  open( FA, ">$file_fa" ) or die( "Cannot open $file_fa for write: $!" );
+  open( NH, ">$file_nh" ) or die( "Cannot open $file_nh for write: $!" );
+
+  foreach my $leaf( @{$subtree->get_all_leaves} ){
+    my $binomial = $leaf->genome_db->name;
+    my @bits = split( /\s+/, $binomial );
+    my $species;
+    if( ! @bits ){
+      $species = 'Unk';
+    } elsif( @bits == 1 ){ 
+      $species = ucfirst( substr($bits[0],0,3 ));
+    } elsif( @bits == 2 ){ 
+      $species = uc( substr($bits[0],0,1) )
+          . lc( substr($bits[1],0,2 ) );
+    } else{
+      $species = uc( substr($bits[0],0,1) )
+          . lc( substr($bits[1],0,1 ) )
+          . lc( substr($bits[2],0,1 ) );
+    }
+    print FA "> $species:" . $leaf->stable_id . "\n";
+    print FA $leaf->sequence . "\n";
+  }
+  print( NH $subtree->newick_format("full") );
+
+  close FA;
+  close NH; 
+
+  my $html = sprintf( $_JALVIEW_HTML_TMPL, $url_site, $url_fa, $url_nh );
+  return $html;
 }
 
 
