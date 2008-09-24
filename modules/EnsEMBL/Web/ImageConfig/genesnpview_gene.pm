@@ -22,13 +22,13 @@ sub init {
     'sequence'        => 'Sequence',
     'gsv_transcript'  => 'Transcripts',
     'gsv_domain'    => 'Protein domains',
-    'gsv_variation'   => 'Variations',
+    'gsv_variations'   => 'Variations',
     'other'           => 'Other'
   );
   $self->load_tracks();
 
   $self->add_tracks( 'gsv_variation',
-    [ 'variation',             '',     'gsv_variation',          { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ]
+    [ 'variation',             '',     'gsv_variations',          { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ]
   );
   $self->add_tracks( 'other',
     [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],

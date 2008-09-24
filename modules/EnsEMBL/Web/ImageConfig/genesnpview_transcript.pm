@@ -23,7 +23,7 @@ sub init {
     'sequence'        => 'Sequence',
     'gsv_transcript'  => 'Transcripts',
     'gsv_domain'      => 'Protein domains',
-    'gsv_variation'   => 'Variations',
+    'gsv_variations'  => 'Variations',
     'other'           => 'Other'
   );
 
@@ -33,7 +33,7 @@ sub init {
 #  );
   $self->load_tracks();
 
-  $self->add_tracks( 'gsv_variation',
+  $self->add_tracks( 'gsv_variations'),
     [ 'variation',             '',     'gsv_variations',          { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ],
     [ 'domain',               '',     'gsv_domain',             { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ],
   );
