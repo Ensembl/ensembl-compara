@@ -158,6 +158,7 @@ function modal_success( transport ) {
   }
   var b = M.join('</div>');
   $('modal_content').update( b );
+//  $('modal_content').appendChild(document.createTextNode(b));
 // Make the main tab links go back to this window!
   $$('#modal_caption a').each(function(n){n.addClassName('modal_link')});
   $$('#modal_content form').each(function(n){n.onsubmit = modal_form_submit;});

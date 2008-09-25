@@ -30,9 +30,14 @@ form.std div.submit {
 
 form.std { margin: 0; padding:3px;}
 form.std dl { margin: 0; position: relative }
-form.std dl dt { clear: left; width: 32%; float: left; margin: 0; padding: 0; padding-bottom: 0.5em }
-form.std dl dd { width: 63%; float: left; margin: 0; padding: 0.1em 0 0.5em 0 }
-form.std dt.wide { float: none; width: 100% }
+form.std dl dt { clear: left; width: 50%; float: left; margin: 0; padding: 0; padding-bottom: 0.5em }
+form.std dl dd { width: 45%; float: left; margin: 0; padding: 0.1em 0 0.5em 0 }
+form.std dl.narrow-labels dt { width: 30% }
+form.std dl.narrow-labels dd { width: 65% }
+form.std dl dt.checkbox-long { width: 90% }
+form.std dl dd.checkbox-long { width: 5%; float: right }
+
+form.std dt.wide { float: left; width: 95% }
 form.std input.normal { width: 90% }
 form.std input.short  { width: 10em }
 form.std input.narrow { width: 20em }

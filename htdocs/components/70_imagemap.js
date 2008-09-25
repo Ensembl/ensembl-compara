@@ -127,10 +127,12 @@ function select_move( evt ) {
   if(eny>drag_bounds.b) eny = drag_bounds.b;
   W = enx-SELECTION_X;
   H = eny-SELECTION_Y;
-  moveto($('other_0'), SELECTION_X+(W>0?0:1), SELECTION_Y,           W+(W>0?1:-1), 1            );
-  moveto($('other_1'), enx,                   SELECTION_Y+(H>0?0:1), 1,            H+(H>0?1:-1) );
-  moveto($('other_2'), SELECTION_X+(W>0?0:1), eny,                   W+(W>0?1:-1), 1            );
-  moveto($('other_3'), SELECTION_X,           SELECTION_Y+(H>0?0:1), 1,            H+(H>0?1:-1) );
+  if($('other_0')) {
+    moveto($('other_0'), SELECTION_X+(W>0?0:1), SELECTION_Y,           W+(W>0?1:-1), 1            );
+    moveto($('other_1'), enx,                   SELECTION_Y+(H>0?0:1), 1,            H+(H>0?1:-1) );
+    moveto($('other_2'), SELECTION_X+(W>0?0:1), eny,                   W+(W>0?1:-1), 1            );
+    moveto($('other_3'), SELECTION_X,           SELECTION_Y+(H>0?0:1), 1,            H+(H>0?1:-1) );
+  }
   Event.stop(evt);
 }
 

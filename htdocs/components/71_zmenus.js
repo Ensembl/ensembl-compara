@@ -28,7 +28,7 @@ function _show_zmenu( x ) {
 **/
 
 // If the zmenu is cached just reload it... [ get id out of zmenus hash ]
-  if( zmenus[ x.key ] ) {
+  if( zmenus[ x.key ] && $(zmenus[x.key])) {
     $(zmenus[x.key]).show();
     moveto( $(zmenus[x.key]), x.x, x.y );
     return;
