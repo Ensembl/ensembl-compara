@@ -80,7 +80,7 @@ sub _render_element {
 
 sub render {
   my $self = shift;
-  my $output = '';#'<fieldset'.$self->extra.">\n";
+  my $output = '<fieldset'.$self->extra.">\n";
  
   if ($self->notes) {
     $output .= '<div class="notes">';
@@ -103,7 +103,7 @@ sub render {
   foreach my $element ( @{$self->{'_elements'}} ) {
     $output .= $self->_render_element( $element );
   }
-#  $output .= "\n</fieldset>\n";
+  $output .= "\n</fieldset>\n";
   return $output;
 }
 
