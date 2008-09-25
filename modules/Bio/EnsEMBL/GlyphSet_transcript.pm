@@ -17,7 +17,7 @@ sub features { return []; }
 sub href { return undef; }
 sub gene_href { return undef; }
 
-sub render_compact {
+sub render_collapsed {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
@@ -182,6 +182,10 @@ sub render_compact {
 }
 
 sub render_normal {
+  my $self = shift;
+  $self->render_transcript(@_);
+}
+sub render_transcript {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
