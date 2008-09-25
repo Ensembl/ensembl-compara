@@ -6,9 +6,9 @@ sub new {
 
   my $self = {
     'glyphsets' => $glyphsets_ref,
-    'canvas'  => undef,
+    'canvas'    => undef,
     'colourmap' => $config->colourmap(),
-    'config'  => $config,
+    'config'    => $config,
     'container' => $container
   };
   bless($self, $class);
@@ -21,8 +21,8 @@ sub render {
 
   my $config = $self->{'config'};
 
-  my $im_width  = $config->{'_max_width'};
-  my $im_height = $config->{'_max_height'};
+  my $im_width  = $config->get_parameter('max_width');
+  my $im_height = $config->get_parameter('max_height');
 
   ########## create a fresh canvas
   if($self->can('init_canvas')) {
