@@ -6,6 +6,7 @@ use Time::HiRes qw(time);
 use Bio::EnsEMBL::Utils::Exception qw(warning);
 use base qw(Bio::EnsEMBL::ExternalData::DAS::Source);
 
+# TODO: do these need to exist, and if so is this the best place for them?
 our %DAS_DEFAULTS = (
   'LABELFLAG'      => 'u',
   'STRAND'         => 'b',
