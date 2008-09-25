@@ -23,6 +23,9 @@ The rest of the documentation details each of the object methods. Internal metho
 
 package Sanger::Graphics::Root;
 use strict;
+use warnings;
+no warnings 'uninitialized';
+
 use Data::Dumper;
 
 =head2 new

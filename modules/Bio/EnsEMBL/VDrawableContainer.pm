@@ -29,10 +29,12 @@ sub new {
   ########## loop over all the glyphsets the user wants:
   my $tmp = {};
   $Container->{'web_species'} ||= $ENV{'ENSEMBL_SPECIES'};
-  my @chromosomes =
-    $Config->get_parameter('all_chromosomes') eq 'yes' ?
-   (@{$Config->{species_defs}->other_species($Container->{'web_species'}, 'ENSEMBL_CHROMOSOMES')||[] }) :
-   ($Container->{'chr'}); 
+  my @chromosomes = ($Container->{'chr'});
+  my $flag        = 0;
+  if( $Config->get_parameter('all_chromosomes') eq 'yes' ) { 
+    @chromosomes =  @{$Config->{species_defs}->other_species($Container->{'web_species'}, 'ENSEMBL_CHROMOSOMES')||[] };
+    $flag = 1;
+  }
   my $pos = 100000;
   my $row = '';
 
@@ -45,26 +47,25 @@ sub new {
   my @glyphsets;
   my @configs = $Config->glyphset_configs;
   foreach my $chr ( @chromosomes ) {
-    warn "VD:CHR ... $chr ...";
     $Container->{'chr'} = $chr;
     for my $row_config (@configs) {
       ########## create a new glyphset for this row
       my $glyphset  = $row_config->get('glyphset')||$row_config->code;
-      warn "VD:GST ... $glyphset ...";
       my $classname = qq($self->{'prefix'}::GlyphSet::$glyphset);
       next unless $self->dynamic_use( $classname );
       my $EW_Glyphset;
       eval { # Generic glyphsets need to have the type passed as a fifth parameter...
         $EW_Glyphset = new $classname({
 	  'container'  => $Container,
+	  'chr'        => $chr,
 	  'config'     => $Config,
 	  'my_config'  => $row_config,
 	  'strand'     => 0,
 	  'extra'      => {},
 	  'highlights' => $highlights,
 	  'row'        => $row,
-	  'chr'        => $chr,
         });
+	$EW_Glyphset->{'chr'} = $chr;
       };
       if($@ || !$EW_Glyphset) {
         my $reason = $@ || "No reason given just returns undef";
@@ -113,7 +114,7 @@ sub new {
   my $xoffset = -$translateX * $scalex;
 
   for my $glyphset (@glyphsets) {
-    $Config->set_parameter( 'max_width',  $xoffset + $Config->get_parameter('image_height') );
+    $Config->set_parameter( 'max_width',  $xoffset + $Config->get_parameter('image_width') );
     ########## set up the label for this strip 
     ########## first we get the max width of label in characters
     my $feature_type_1 = $glyphset->my_config('feature_type') ||
@@ -124,6 +125,9 @@ sub new {
                   ( $feature_type_1 ? $glyphset->my_colour( $feature_type_1, 'text' ) : undef );
     my $label_2 = $glyphset->my_config('label_2') ||
                   ( $feature_type_2 ? $glyphset->my_colour( $feature_type_2, 'text' ) : undef );
+    if( $glyphset->{'my_config'}->key eq 'Videogram' && $flag ) {
+      $label_1 = $glyphset->{'chr'};
+    }
     warn "$glyphset          --> $label_1 / $label_2";
     my $gw  = length( length($label_2) > length($label_1) ? $label_2 : $label_1 );
     if($gw>0) {

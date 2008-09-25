@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::VRenderer;
 use strict;
+use warnings;
+no warnings 'uninitialized';
 
 sub new {
   my ($class, $config, $container, $glyphsets_ref) = @_;
