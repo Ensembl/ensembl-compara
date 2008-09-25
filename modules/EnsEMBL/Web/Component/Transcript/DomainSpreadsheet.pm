@@ -75,7 +75,7 @@ sub content {
 	  'acc'   => '-',
 	  'start' => $domain->[1]->start,
 	  'end'   => $domain->[1]->end,
-
+	  'interpro' => '-',
 	  '_loc'  => join '::', $domain->[1]->start,$domain->[1]->end,
       } );
   }
