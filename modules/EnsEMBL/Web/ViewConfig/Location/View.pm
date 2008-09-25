@@ -14,7 +14,7 @@ sub init {
     panel_top       on
     panel_bottom    on
     panel_zoom     off
-    image_width    500
+    image_width   1200
     zoom_width     100
     context       1000
   ));
