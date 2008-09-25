@@ -291,7 +291,6 @@ sub _init( ) {
   my $self = shift;
   foreach my $entry ( @{$self->{'head_order'}}, @{$self->{'body_order'}} ) {
     my($O,$classname) = @$entry;
-    warn "[ $O - $classname ]";
     next unless $self->dynamic_use( $classname ); 
     my $T;
     eval { $T = $classname->new( $self->{'timer'} ); $T->{_renderer} = $self->{_renderer}};

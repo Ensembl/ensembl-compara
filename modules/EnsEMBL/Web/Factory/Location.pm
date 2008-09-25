@@ -431,7 +431,6 @@ sub createObjects {
     $data->attach_slice( $l );
 
     $self->DataObjects($data);
-    warn ".... created";
     return 'from core';
   }
 

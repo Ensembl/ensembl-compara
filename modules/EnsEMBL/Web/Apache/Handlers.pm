@@ -339,9 +339,7 @@ sub transHandler_species {
       $action = shift @$path_segments;
       $r->subprocess_env->{'ENSEMBL_TYPE'}     = $type;
       $r->subprocess_env->{'ENSEMBL_ACTION'}   = $action;
-      warn "... ",uc($real_script_name)," $type/$action...";
     } elsif( $real_script_name eq 'component' ) {
-      warn "... COMPONENT ...";
       $type = shift @$path_segments;
       my @T                                  = map { s/\W//g;$_ } @$path_segments;
       my $plugin                             = shift @T;

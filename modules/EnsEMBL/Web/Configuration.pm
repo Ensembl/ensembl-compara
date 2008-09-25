@@ -347,7 +347,6 @@ sub _local_tools {
     $config = 1;
   } else {
     my %configs = $vc->image_configs();
-    warn "LOCAL TOOLS...", $vc, ' -> ', keys %configs;
     ($config) = sort keys %configs;
   }
   if( $config ) {

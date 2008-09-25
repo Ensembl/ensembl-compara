@@ -1,3 +1,2 @@
 use EnsEMBL::Web::Magic;
-warn "USING CONFIGURATOR";
 magic configurator

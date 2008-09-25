@@ -181,16 +181,13 @@ sub image_config_hash {
   return undef unless $session;
   my $T = $session->getImageConfig( $type, $key ); ## {'image_configs'}{$key} ||= $self->get_imageconfig( $type );
   return unless $T;
-  warn "-SETTING CORE....", $self->core_objects;
   $T->_set_core( $self->core_objects );
-  warn $T->{'_core'};
   return $T;
 }
 
 sub get_viewconfig {
 ### Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
   my( $self, $type, $action ) = @_;
-  warn "GET VIEWCONFIG ",$type||$self->type," ",$action||$self->action;
   my $session = $self->get_session;
   return undef unless $session;
   my $T = $session->getViewConfig( $type || $self->type, $action || $self->action );
@@ -202,7 +199,6 @@ sub attach_image_config {
   my $session = $self->get_session;
   return undef unless $session;
   my $T = $session->attachImageConfig( $key, $image_key );
-  warn "SETTING CORE....";
   $T->_set_core( $self->core_objects );
   return $T;
 }

@@ -163,13 +163,11 @@ sub modify_configs {
 sub _update_missing {
   my( $self,$object ) = @_;
   my $missing = $self->get_node( 'missing' );
-  warn "MISSING .... $missing";
   if( $missing ) {
     my $count_missing = grep { $_->get('on') ne 'on' } $self->glyphset_configs; 
     $missing->set( 'text' => $count_missing > 0 ? "There are currently $count_missing tracks turned off." : "All tracks are turned on" );
   }
   my $information = $self->get_node( 'info' );
-  warn "INFO .... $information";
   if( $information ) {
     $information->set( 'text' => sprintf "%s %s version %s.%s (%s) %s: %s - %s",
       $self->species_defs->ENSEMBL_SITETYPE,
@@ -215,7 +213,6 @@ sub load_tracks {
   foreach my $db ( @{$self->species_defs->core_like_databases} ) {
     next unless exists $dbs_hash->{$db};
     my $key = lc(substr($db,9));
-    warn "   ### adding core like tracks ($key)";
 ## Look through tables in databases and add data from each one...
     $self->add_dna_align_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To cDNA/mRNA, est, RNA, other_alignment trees ##DONE
     $self->add_ditag_feature(         $key,$dbs_hash->{$db}{'tables'} ); # To ditag_feature tree                         ##DONE
@@ -234,7 +231,6 @@ sub load_tracks {
   foreach my $db ( 'DATABASE_COMPARA') {   # @{$self->species_defs->get_config('compara_databases')} ) {
     next unless exists $multi_hash->{$db};
     my $key = lc(substr($db,9));
-    warn "   ### adding compara like tracks ($key)";
     ## Configure dna_dna_align features and synteny tracks
     $self->add_synteny(               $key,$multi_hash->{$db}, $species ); # Add to synteny tree                         ##DONE
     $self->add_alignments(            $key,$multi_hash->{$db}, $species ); # Add to compara_align tree                   ##DONE
@@ -242,14 +238,12 @@ sub load_tracks {
   foreach my $db ( 'DATABASE_FUNCGEN' ) {  # @{$self->species_defs->get_config('funcgen_databases')} ) {
     next unless exists $dbs_hash->{$db};
     my $key = lc(substr($db,9));
-    warn "   ### adding func gen like tracks ($key)";
     ## Configure 
     $self->add_regulation_feature(    $key,$dbs_hash->{$db}{'tables'} ); # Add to regulation_feature tree
   }
   foreach my $db ( 'DATABASE_VARIATION' ) { # @{$self->species_defs->get_config('variation_databases')} ) {
     next unless exists $dbs_hash->{$db};
     my $key = lc(substr($db,9));
-    warn "   ### adding variation like tracks ($key)";
     ## Configure variation features
     $self->add_variation_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To variation_feature tree
   }

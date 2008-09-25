@@ -481,7 +481,6 @@ sub getViewConfig {
 
   my $key = $type.'::'.$action;
 
-  warn "GETTING CALL OF VIEW CONFIG........................................................... $type, $action ...";
   unless ($Configs_of{ ident $self }{$key} ) {
     my $view_config = EnsEMBL::Web::ViewConfig->new( $type, $action, $self );
     foreach my $root ( @{$self->get_path} ) {

@@ -140,7 +140,6 @@ sub new {
   $self->factory->__data->{'timer'} = $self->{'timer'};
   $self->timer_push("Factory compiled and objects created...");
   return $self if $self->factory->has_fatal_problem();
-  warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> $$ this is where we create the objects";
   eval {
     if( $parameters{'fast'} ) {
 #warn "FAST CREATE OBJECTS...";
@@ -162,7 +161,6 @@ sub new {
 
 sub configure {
   my( $self, $object, @functions ) = @_;
-  warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> $$ CONFIGURING FORM...";
   $object->get_viewconfig->form( $object );
   my $objecttype;
   if (ref($object)) { ## Actual object
