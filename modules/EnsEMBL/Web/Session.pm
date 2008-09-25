@@ -583,13 +583,10 @@ sub getImageConfig {
   return $image_config;
 }
 
-use Carp qw(cluck);
 sub get_ImageConfig {
 ### Return a new image config object...
   my $self = shift;
   my $type = shift;
-  "................ $type ........................";
-  cluck;  
   my $classname = '';
 ## Let us hack this for the moment....
 ## If a site is defined in the configuration look for
