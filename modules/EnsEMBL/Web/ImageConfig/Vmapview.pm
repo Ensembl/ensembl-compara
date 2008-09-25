@@ -13,6 +13,7 @@ sub init {
     'label'         => 'above',     # margin
     'band_labels'   => 'on',
     'image_height'  => 450,
+    'image_width'   => 500,
     'top_margin'    => 40,
     'band_links'    => 'yes',
   });

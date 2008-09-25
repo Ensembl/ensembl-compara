@@ -24,24 +24,30 @@ sub content {
   my $species = $object->species;
 
   ## Form with hidden elements for click-through
-  my $config = $object->get_imageconfig('Vkaryotype');
+  warn "MCL =",$object->species_defs->MAX_CHR_LENGTH;
+  my $config = $object->image_config_hash('Vkaryotype');
+     $config->set_parameter(
+       'container_width',
+       $object->species_defs->MAX_CHR_LENGTH
+     );
+
   my $ideo_height = $config->{'_image_height'};
   my $top_margin  = $config->{'_top_margin'};
   my $hidden = {
-            'karyotype'   => 'yes',
-            'max_chr'     => $ideo_height,
-            'margin'      => $top_margin,
-            'chr'         => $object->seq_region_name,
-            'start'       => $object->seq_region_start,
-            'end'         => $object->seq_region_end,
-    };
+    'karyotype'   => 'yes',
+    'max_chr'     => $ideo_height,
+    'margin'      => $top_margin,
+    'chr'         => $object->seq_region_name,
+    'start'       => $object->seq_region_start,
+    'end'         => $object->seq_region_end,
+  };
 
   my $image    = $object->new_karyotype_image();
 
   my $pointers = [];
   my %pointer_defaults = (
-        'Gene'        => ['blue', 'lharrow'],
-        'OligoProbe'  => ['red', 'rharrow'],
+    'Gene'        => ['blue', 'lharrow'],
+    'OligoProbe'  => ['red', 'rharrow'],
   );
   
   ## Check if there is userdata in session
@@ -57,30 +63,25 @@ sub content {
     ## Create pointers from user data
     my $pointer_set = $self->create_userdata_pointers($image, $userdata);
     push(@$pointers, $pointer_set);
-  }
-  elsif ($object->param('id')) {
+  } elsif ($object->param('id')) {
     $image->image_name = "feature-$species";
     $image->imagemap = 'yes';
     my $features = $self->_get_features;
     my $i = 0;
     my $zmenu_config;
     foreach my $ftype  (keys %$features) {
-      my $pointer_ref = $image->add_pointers(
-			    $object,
-			    {'config_name'  => 'Vkaryotype',
-          'features'      => $features,
-			    'zmenu_config'  => $zmenu_config,
-			    'feature_type'  => $ftype,
-			    'color'         => $object->param("col_$i")
-			                         || $pointer_defaults{$ftype}[0],
-			    'style'         => $object->param("style_$i")
-			                         || $pointer_defaults{$ftype}[1]}
-			 );
+      my $pointer_ref = $image->add_pointers( $object, {
+        'config_name'  => 'Vkaryotype',
+        'features'      => $features,
+        'zmenu_config'  => $zmenu_config,
+        'feature_type'  => $ftype,
+        'color'         => $object->param("col_$i")   || $pointer_defaults{$ftype}[0],
+        'style'         => $object->param("style_$i") || $pointer_defaults{$ftype}[1]}
+      );
       push(@$pointers, $pointer_ref);
       $i++;
     }
-  }
-  else {
+  } else {
     $image->image_name = "karyotype-$species";
     $image->imagemap = 'no';
     $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);

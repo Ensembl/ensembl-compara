@@ -201,7 +201,7 @@ sub _summarise_core_tables {
 
 #---------- Now for the core only ones.......
 
-  if( $db_name eq 'core' ) {
+  if( $db_key eq 'core' ) {
 #
 # * Co-ordinate systems..
 #
@@ -217,6 +217,7 @@ sub _summarise_core_tables {
     if( $row ) {
       $self->db_tree->{'MAX_CHR_NAME'  } = $row->[0];
       $self->db_tree->{'MAX_CHR_LENGTH'} = $row->[1];
+    warn ".......... $row->[1] ...........";
     } else {
       $self->db_tree->{'MAX_CHR_NAME'  } = undef;
       $self->db_tree->{'MAX_CHR_LENGTH'} = undef;

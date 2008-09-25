@@ -35,7 +35,7 @@ sub content {
   
   my $key = $wuc->get_track_key( 'transcript', $gene );
   ## Then we turn it on....
-  $wuc->modify_configs( [$key], {qw(on on)} );
+  $wuc->modify_configs( [$key], {qw(display transcript)} );
 
   my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
       $image->imagemap         = 'yes';

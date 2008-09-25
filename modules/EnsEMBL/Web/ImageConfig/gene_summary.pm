@@ -24,9 +24,9 @@ sub init {
   );
 
   $self->add_tracks( 'other',
-    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'b', 'name' => 'Scale bar'  } ],
-    [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'b', 'name' => 'Ruler'      } ],
-    [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'scalebar',  '',            'scalebar',        { 'display' => 'on',  'strand' => 'b', 'name' => 'Scale bar'  } ],
+    [ 'ruler',     '',            'ruler',           { 'display' => 'on',  'strand' => 'b', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',            'draggable',       { 'display' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
   );
   $self->add_tracks( 'sequence',
     [ 'contig',    'Contigs',              'stranded_contig', { 'on' => 'on',  'strand' => 'r'  } ],
@@ -36,7 +36,7 @@ sub init {
 
   $self->modify_configs(
     [qw(transcript prediction variation)],
-    {qw(on off)} 
+    {qw(display off)} 
   );
 
 }
