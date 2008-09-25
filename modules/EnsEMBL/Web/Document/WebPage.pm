@@ -163,7 +163,7 @@ sub new {
 sub configure {
   my( $self, $object, @functions ) = @_;
   warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> $$ CONFIGURING FORM...";
-  $object->get_viewconfig->form($object);
+  $object->get_viewconfig->form( $object );
   my $objecttype;
   if (ref($object)) { ## Actual object
     $objecttype = $object->__objecttype;

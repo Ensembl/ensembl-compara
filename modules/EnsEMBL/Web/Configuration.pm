@@ -343,6 +343,7 @@ sub _local_tools {
     $config = 1;
   } else {
     my %configs = $vc->image_configs();
+    warn "LOCAL TOOLS...", $vc, ' -> ', keys %configs;
     ($config) = sort keys %configs;
   }
   if( $config ) {
@@ -351,7 +352,7 @@ sub _local_tools {
       $obj->_url({
         'type' => 'Config',
         'action' => $obj->type.'/'.$obj->action,
-        ( $config eq '1' ? ('config' => $config) : () )
+        ( $config eq '1' ? ( ) : ('config' => $config) )
       }),
       'modal_link'
     ];

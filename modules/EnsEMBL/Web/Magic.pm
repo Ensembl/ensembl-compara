@@ -139,7 +139,6 @@ sub configurator {
   );
   $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 
-  warn "Web page object created $webpage";
   $webpage->configure(
     $webpage->dataObjects->[0],
     qw(user_context configurator)
@@ -148,9 +147,7 @@ sub configurator {
     ##  1) Global context entries
     ##  2) Local context entries   [ hacked versions with # links / and flags ]
     ##  3) Content of panel (expansion of tree)
-  warn "Web page configured";
   $webpage->render;
-  warn "Web page rendered";
   my $content = $webpage->page->renderer->content;
   CGI::header;
   print $content;
