@@ -1,8 +1,56 @@
 package EnsEMBL::Web::ImageConfig::Vmapview;
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::ImageConfig);
+
+sub init {
+  my ($self) = @_;
+
+  $self->set_parameters({
+    'title'         => 'Chromosome panel',
+    'label'         => 'above',     # margin
+    'band_labels'   => 'on',
+    'image_height'  => 450,
+    'top_margin'    => 40,
+    'band_links'    => 'yes',
+  });
+
+  $self->create_menus( 'features' => 'Features' );
+
+  $self->add_tracks( 'features',
+    [ 'Videogram', 'Ideogram', 'Videogram', {
+      'display'   => 'normal',
+      'renderers' => [qw(normal normal)],
+      'colourset' => 'ideogram'
+    } ],
+    [ 'Vgenes',    'Genes',    'Vdensity', {
+      'same_scale' => 1,
+      'display'   => 'normal',
+      'renderers' => [qw(normal normal)],
+      'colourset' => 'densities',
+      'keys'      => [qw(knownGeneDensity geneDensity)]
+    }],
+    [ 'Vpercents',  'Percent GC/Repeats',    'Vdensity', {
+      'same_scale' => 1,
+      'display'   => 'normal',
+      'renderers' => [qw(normal normal)],
+      'colourset' => 'densities',
+      'keys'      => [qw(PercentGC PercentageRepeat)]
+    }],
+    [ 'Vsnps',      'Variations',    'Vdensity', {
+      'display'   => 'normal',
+      'renderers' => [qw(normal normal)],
+      'colourset' => 'densities',
+      'keys'      => [qw(snpDensity)]
+    }],
+  );
+}
+
+1;
+__END__
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my ($self) = @_;
