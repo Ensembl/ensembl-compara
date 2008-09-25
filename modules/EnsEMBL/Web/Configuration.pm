@@ -116,22 +116,22 @@ sub _global_context {
   return unless $self->{object}->core_objects;
 
   my @data = (
-    ['location',  'Location',   $self->{object}->core_objects->location_short_caption ],
-    ['gene',      'Gene',       $self->{object}->core_objects->gene_short_caption ],
-    ['transcript','Transcript', $self->{object}->core_objects->transcript_short_caption ],
-    ['variation',       'Variation',  $self->{object}->core_objects->variation_short_caption ],
+    ['location',        'Location',   'View',    $self->{object}->core_objects->location_short_caption ],
+    ['gene',            'Gene',       'Summary', $self->{object}->core_objects->gene_short_caption ],
+    ['transcript',      'Transcript', 'Summary', $self->{object}->core_objects->transcript_short_caption ],
+    ['variation',       'Variation',  'Summary', $self->{object}->core_objects->variation_short_caption ],
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
-    next if $row->[2] eq '-';
-    my $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/Summary?$qs";
+    next if $row->[3] eq '-';
+    my $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/$row->[2]?$qs";
     my @class = ();
     if( $row->[1] eq $type ) {
       push @class, 'active';
     }
     $self->{'page'}->global_context->add_entry( 
       'type'      => $row->[1],
-      'caption'   => $row->[2],
+      'caption'   => $row->[3],
       'url'       => $url,
       'class'     => (join ' ',@class),
     );
