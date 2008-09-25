@@ -43,6 +43,11 @@ sub new {
   return $self; 
 }
 
+sub timer_push {
+  my $self = shift;
+  return $self->{'data'}{'timer'}->push(@_);
+}
+
 sub __data { return $_[0]{'data'}; }
 sub input { 
   my $self = shift;
@@ -117,7 +122,16 @@ sub get_session {
   my $self = shift;
   return $self->{'session'} || $ENSEMBL_WEB_REGISTRY->get_session;
 }
-sub database {      my $self = shift; $self->DBConnection->get_DBAdaptor( @_ ); }
+
+sub database {
+  my $self = shift;
+  if( $_[0]=~/compara/) {
+    return Bio::EnsEMBL::Registry->get_DBAdaptor( 'multi', $_[0] );
+  } else {
+    return $self->DBConnection->get_DBAdaptor( @_ );
+  }
+}
+
 sub get_databases { my $self = shift; $self->DBConnection->get_databases( @_ ); }
 sub databases_species { my $self = shift; $self->DBConnection->get_databases_species( @_ ); }
 sub has_a_problem     { my $self = shift; return scalar( @{$self->{'data'}{'_problem'}} ); }
