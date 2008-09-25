@@ -18,7 +18,7 @@ sub init {
 }
 
 sub form {
-  my $view_config = shift;
+  my($view_config,$object) = @_;
 
   warn "FORM CALLED....";
   $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'exons',       'select' => 'select', 'label'  => 'Show exons' });
