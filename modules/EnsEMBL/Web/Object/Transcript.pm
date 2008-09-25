@@ -30,21 +30,17 @@ sub counts {
 #  $sd->timer_push( 'Counted prot domains ', 2, 'Fetching' );
   $counts->{'prot_variations'}    = $self->count_prot_variations;
 #  $sd->timer_push( 'Counted prot variations', 2, 'Fetching' );
-  $counts->{'other_prot_feat'}    = $self->count_other_prot_features;
-#  $sd->timer_push( 'Counted prot features', 2, 'Fetching' );
   $counts->{'go'}                 = $self->count_go;
 #  $sd->timer_push( 'Counted go', 2, 'Fetching' );
-  if ($self->get_interpro) {
-      $counts->{'domains'} = keys %{$self->get_interpro};
-#      $sd->timer_push( 'Counted interpro', 2, 'Fetching' );
-  }
 #  $sd->timer_push( 'Finished counting for transcript menu', 1, 'Fetching' );
   return $counts;
 }
 
 sub count_prot_domains {
     my $self = shift;
-    return scalar(@{$self->translation_object->get_protein_domains()});
+    my $c = scalar(@{$self->translation_object->get_protein_domains()});
+    $c   += map{ @{$self->translation_object->get_all_ProteinFeatures($_)} } qw( tmhmm SignalP ncoils Seg );
+    return $c;
 }
 
 sub count_prot_variations {
@@ -56,11 +52,6 @@ sub count_prot_variations {
 	$c++;
     }
     return $c;
-}
-
-sub count_other_prot_features {
-    my $self = shift;
-    return map { @{$self->translation_object->get_all_ProteinFeatures($_)} } qw( tmhmm SignalP ncoils Seg );
 }
 
 sub count_supporting_evidence_old {
@@ -367,6 +358,7 @@ sub get_families {
   return $family_hash;
 }
 
+#almost certainly deprecated
 sub get_interpro {
   my $self = shift;
   if (my $translation = $self->translation_object) {

@@ -213,29 +213,18 @@ sub populate_tree {
     { 'availability' => 1, 'concise' => 'Protein summary'}
   ));
   $prot_menu->append($self->create_node( 'Domains', "Domains  ([[counts::prot_domains]])",
-    [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet)],
+    [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet
+        domaingenes   EnsEMBL::Web::Component::Transcript::DomainGenes)],
     { 'availability' => 1, 'concise' => 'Protein domains'}
   ));
   $prot_menu->append($self->create_node( 'ProtVariations', "Variation features  ([[counts::prot_variations]])",
     [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
     { 'availability' => 1, 'concise' => 'Protein variation features'}
   ));
-  $prot_menu->append($self->create_node( 'OtherFeat', "Other features  ([[counts::other_prot_feat]])",
-    [qw(otherfeat     EnsEMBL::Web::Component::Transcript::OtherProteinFeatures)],
-    { 'availability' => 1, 'concise' => 'Other protein features'}
-  ));
   $prot_menu->append($self->create_node( 'GO', "GO terms  ([[counts::go]])",
     [qw(go          EnsEMBL::Web::Component::Transcript::Go)],
     { 'availability' => 1, 'concise' => 'GO terms'}
   ));
-  $prot_menu->append($self->create_node( 'Domain', "Interpro domains  ([[counts::domains]])",
-    [qw(
-        interpro      EnsEMBL::Web::Component::Transcript::Interpro
-        domaingenes   EnsEMBL::Web::Component::Transcript::DomainGenes
-      )],
-    { 'availability' => 1, 'concise' => 'Interpro domain'}
-  ));
-
   my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
   $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()],{'concise'=>'Export Features'} ));
   $exp_menu->append( $self->create_node( 'Export_Sequence',  'Sequence', [qw()],{'concise'=>'Export Sequence'} ));
