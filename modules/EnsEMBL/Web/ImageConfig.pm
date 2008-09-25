@@ -292,13 +292,13 @@ sub _merge {
     if( $sub_tree->{'web'}{'key'} ) {
       if( $sub_tree->{'desc'} ) {
         $data->{$key}{'html_desc'} ||= "<dl>\n";
-	$data->{$key}{'description'}      ||= '';
+    $data->{$key}{'description'}      ||= '';
         $data->{$key}{'html_desc'} .= sprintf(
           "  <dt>%s</dt>\n  <dd>%s</dd>\n",
           CGI::escapeHTML( $sub_tree->{'web'}{'name'}       ),     # Description for pop-help - merged of all descriptions!!
           CGI::escapeHTML( $sub_tree->{'desc'})
         );
-	$data->{$key}{'description'}.= ($data->{$key}{'description'}?'; ':'').$sub_tree->{'desc'};
+    $data->{$key}{'description'}.= ($data->{$key}{'description'}?'; ':'').$sub_tree->{'desc'};
       }
     } else {
       $data->{$key}{'description'} = $sub_tree->{'desc'};
@@ -345,9 +345,16 @@ sub add_dna_align_feature {
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
-        'renderers'   => [qw(off Off normal Normal)],
-	'strand'      => 'b'
+        'display'     => $data->{$key_2}{'display'}||'unlimited', ## Default to on at the moment - change to off by default!
+        'renderers'   => [
+          'off'         => 'Off',
+          'normal'      => 'Normal',
+          'half_height' => 'Half height',
+          'stack'       => 'Stacked',
+          'unlimited'   => 'Stacked unlimited',
+          'ungrouped'   => 'Ungrouped'
+        ],
+        'strand'      => 'b'
       }));
     }
   }
@@ -373,8 +380,15 @@ sub add_protein_align_feature {
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
-      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
-      'renderers'   => [qw(off Off normal Normal)],
+      'display'     => $data->{$key_2}{'display'}||'ungrouped', ## Default to on at the moment - change to off by default!
+      'renderers'   => [
+        'off'         => 'Off',
+        'normal'      => 'Normal',
+        'half_height' => 'Half height',
+        'stack'       => 'Stacked',
+        'unlimited'   => 'Stacked unlimited',
+        'ungrouped'   => 'Ungrouped'
+      ],
       'strand'      => 'b'
     }));
   }
@@ -437,7 +451,7 @@ sub add_ditag_feature {
         'description' => $data->{$key_2}{'description'},
         'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
         'renderers'   => [qw(off Off normal Normal)],
-	'strand'      => 'b'
+        'strand'      => 'b'
       }));
     }
   }
@@ -474,12 +488,14 @@ sub add_gene {
         'db'          => $key,
         'glyphset'    => ($type=~/_/?'':'_').$type, ## QUICK HACK..
         'logicnames'  => $data->{$key_2}{'logic_names'},
-	'colours'     => $self->species_defs->colour( 'gene' ),
+        'colours'     => $self->species_defs->colour( 'gene' ),
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'display'     => $data->{$key_2}{'display'}||($type eq 'transcript' ? 'compact' : 'normal'), ## Default to on at the moment - change to off by default!
-        'renderers'   => $type eq 'transcript' ? [qw(off Off normal Normal compact Compact)] :  [qw(off Off normal Normal)],
-	'strand'      => $type eq 'gene' ? 'r' : 'b'
+        'display'     => $data->{$key_2}{'display'}||($type eq 'transcript' ? 'transcript' : 'normal'), ## Default to on at the moment - change to off by default!
+        'renderers'   => $type eq 'transcript' ?
+          [qw(off Off transcript Expanded collapsed Collapsed)] : 
+          [qw(off Off normal Normal)],
+        'strand'      => $type eq 'gene' ? 'r' : 'b'
       }));
       $flag=1;
     }
@@ -575,8 +591,15 @@ sub add_oligo_probe {
       'caption'     => $key_2,
       'strand'      => 'b',
       'on'          => 'off',
-      'display'     => 'off', 
-      'renderers'   => [qw(off Off normal Normal compact Compact)],
+      'display'     => 'half_height', 
+      'renderers'   => [
+        'off'         => 'Off',
+        'normal'      => 'Normal',
+        'half_height' => 'Half height',
+        'stack'       => 'Stacked',
+        'unlimited'   => 'Stacked unlimited',
+        'ungrouped'   => 'Ungrouped'
+      ]
     }));
   }
 }
@@ -606,13 +629,13 @@ sub add_protein_feature {
       next if $type ne $data->{$key_2}{'type'};
       $menu->append( $self->create_track( $type.'_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
-	'strand'      => $gset =~ /P_/ ? 'f' : 'b',
-	'depth'       => 1e6,
+        'strand'      => $gset =~ /P_/ ? 'f' : 'b',
+        'depth'       => 1e6,
         'glyphset'    => $gset,
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'name'        => $data->{$key_2}{'name'},
         'caption'     => $data->{$key_2}{'caption'},
-	'colourset'   => 'protein_feature',
+        'colourset'   => 'protein_feature',
         'description' => $data->{$key_2}{'description'},
         'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
         'renderers'   => [qw(off Off normal Normal)],
@@ -651,16 +674,16 @@ sub add_repeat_feature {
         'db'          => $key,
         'glyphset'    => '_repeat',
         'logicnames'  => [ $key_2 ],           ## Restrict to a single supset of logic names...
-	'types'       => [ undef  ],
+        'types'       => [ undef  ],
         'name'        => $data->{$key_2}{'name'},
         'description' => $data->{$key_2}{'desc'},
-	'colours'     => $self->species_defs->colour( 'repeat' ),
+        'colours'     => $self->species_defs->colour( 'repeat' ),
         'display'     => 'off', ## Default to on at the moment - change to off by default!
         'renderers'   => [qw(off Off normal Normal)],
         'optimizable' => 1,
         'depth'       => 0.5,
         'bump_width'  => 0,
-	'strand'      => 'r'
+        'strand'      => 'r'
       }));
     }
 ## Add track for each repeat_type ();
@@ -675,13 +698,13 @@ sub add_repeat_feature {
           'types'       => [ $key_3 ],
           'name'        => "$key_3 (".$data->{$key_2}{'name'}.")",
           'description' => $data->{$key_2}{'desc'}." ($key_3)",
-	  'colours'     => $self->species_defs->colour( 'repeat' ),
+          'colours'     => $self->species_defs->colour( 'repeat' ),
           'display'     => 'off', ## Default to on at the moment - change to off by default!
           'renderers'   => [qw(off Off normal Normal)],
           'optimizable' => 1,
           'depth'       => 0.5,
           'bump_width'  => 0,
-	  'strand'      => 'r'
+          'strand'      => 'r'
         }));
       }
     }
@@ -730,8 +753,8 @@ sub add_alignments {
       (my $other_species_hr = $other_species ) =~ s/_/ /g;
       my $menu_key = $row->{'type'} =~ /BLASTZ/ ? 'pairwise_blastz' 
                    : $row->{'type'} =~ /TRANSLATED_BLAT/  ? 'pairwise_tblat'
-		   : 'pairwise_align'
-		   ;
+           : 'pairwise_align'
+           ;
       (my $caption = $row->{'name'}) =~s/blastz-net \(on.*?\)/BLASTz net/g;
       $caption =~ s/translated-blat-net/Trans. BLAT net/g;
       $caption =~ s/$regexp//;
@@ -744,12 +767,12 @@ sub add_alignments {
         'species_set_id' => $row->{'species_set_id'},
         'species'        => $other_species,
         'species_hr'     => $other_species_hr,
-	'_assembly'      => $self->species_defs->other_species( $other_species, 'ENSEMBL_GOLDEN_PATH' ),
+        '_assembly'      => $self->species_defs->other_species( $other_species, 'ENSEMBL_GOLDEN_PATH' ),
         'class'          => $row->{'class'},
         'description'    => "Pairwise alignments",
         'order'          => $row->{'type'}.'::'.$other_species,
-	'colourset'      => 'pairwise',
-	'strand'         => 'b',
+        'colourset'      => 'pairwise',
+        'strand'         => 'b',
         'display'        => 'off', ## Default to on at the moment - change to off by default!
         'renderers'      => [qw(off Off normal Normal)],
       };
