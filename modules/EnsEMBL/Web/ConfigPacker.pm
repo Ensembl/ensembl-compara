@@ -472,16 +472,7 @@ sub _summarise_dasregistry {
     # Skip sources without any config
     my $cfg = $self->tree->{$key};
     if (!defined $cfg || !ref($cfg)) {
-      warn "DAS source $key has no associated configuration";
-      next;
-    }
-    if (!$cfg->{'url'}) {
-      warn "DAS source $key has no 'url' property defined";
-      next;
-    }
-    if (!$cfg->{'dsn'}) {
-      warn "DAS source $key has no 'dsn' property defined";
-      next;
+      $cfg = {};
     }
     
     $cfg->{'logic_name'}      = $key;
@@ -496,6 +487,17 @@ sub _summarise_dasregistry {
       $cfg->{'maintainer'}    ||= $src->maintainer;
       $cfg->{'homepage'}      ||= $src->homepage;
       $cfg->{'coords'}        ||= $src->coord_systems;
+      $cfg->{'url'}           ||= $src->url;
+      $cfg->{'dsn'}           ||= $src->dsn;
+    }
+    
+    if (!$cfg->{'url'}) {
+      warn "DAS source $key has no 'url' property defined";
+      next;
+    }
+    if (!$cfg->{'dsn'}) {
+      warn "DAS source $key has no 'dsn' property defined";
+      next;
     }
     
     # Add to the das packed tree as a hash
