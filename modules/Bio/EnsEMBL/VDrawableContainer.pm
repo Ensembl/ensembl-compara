@@ -18,84 +18,88 @@ sub new {
 
   my $self = {
     'vc'     => $Container,
-    'glyphsets'  => [],
-    'config'   => $Config,
-    'spacing'  => $spacing || $Config->{'_spacing'} || 20,
+    'glyphsets' => [],
+    'config'    => $Config,
+    'timer'     => $Config->{'species_defs'}->timer,
+    'prefix'    => 'Bio::EnsEMBL',
+    'spacing'   => $spacing || $Config->get_parameter('spacing') || 20,
   };
   bless($self, $class);
 
   ########## loop over all the glyphsets the user wants:
   my $tmp = {};
   $Container->{'web_species'} ||= $ENV{'ENSEMBL_SPECIES'};
-  my @chromosomes = $Config->{'_all_chromosomes'} eq 'yes' ?
-                  (@{$Config->{species_defs}->other_species($Container->{'web_species'}, 'ENSEMBL_CHROMOSOMES')||[] }) :
-                  ($Container->{'chr'}); 
+  my @chromosomes =
+    $Config->get_parameter('all_chromosomes') eq 'yes' ?
+   (@{$Config->{species_defs}->other_species($Container->{'web_species'}, 'ENSEMBL_CHROMOSOMES')||[] }) :
+   ($Container->{'chr'}); 
   my $pos = 100000;
   my $row = '';
-  my @subsections =
-    map { $_->[1] }
-    sort { $a->[0] <=> $b->[0] }
-    map {
-      $Config->get($_, 'on') eq "on" ? [$Config->get($_,'pos')||$pos++,$_] : () ;
-    } $Config->subsections;
+
+  my $scalex = $Config->get_parameter('image_height') / $Config->get_parameter('container_width');
+  $Config->{'transform'}->{'scalex'}         = $scalex;
+  $Config->texthelper->{'_scalex'}           = $scalex;
+  $Config->{'transform'}->{'absolutescalex'} = 1; # $Config->{'_image_height'} / $Config->image_width();
+  $Config->{'transform'}->{'translatex'}    += $Config->get_parameter('top_margin');
+
+  my @glyphsets;
+  my @configs = $Config->glyphset_configs;
   foreach my $chr ( @chromosomes ) {
+    warn "VD:CHR ... $chr ...";
     $Container->{'chr'} = $chr;
-    for my $row (@subsections) {
+    for my $row_config (@configs) {
       ########## create a new glyphset for this row
-      my $classname;
-      my $GlyphSet;
-      if( my $glyphset = $Config->get($row,'glyphset') ) {
-        $classname = qq(Bio::EnsEMBL::GlyphSet::$glyphset);
-        next unless $self->dynamic_use( $classname );
-        eval { # Generic glyphsets need to have the type passed as a fifth parameter...
-          $GlyphSet = new $classname( $Container, $Config, $highlights, 0, { 'config_key' => $row, 'chr' => $chr, 'row' => $row } );
-        };
-      } else {
-        my $classname = qq(Bio::EnsEMBL::GlyphSet::).( $Config->get($row, 'manager')||$row );
-        next unless $self->dynamic_use( $classname );
-        eval {
-          $GlyphSet = new $classname($Container, $Config, $highlights, 0, { 'chr' => $chr, 'row' => $row } );
-        };
-      }
-      
-      if($@ || !$GlyphSet) {
+      my $glyphset  = $row_config->get('glyphset')||$row_config->code;
+      warn "VD:GST ... $glyphset ...";
+      my $classname = qq($self->{'prefix'}::GlyphSet::$glyphset);
+      next unless $self->dynamic_use( $classname );
+      my $EW_Glyphset;
+      eval { # Generic glyphsets need to have the type passed as a fifth parameter...
+        $EW_Glyphset = new $classname({
+	  'container'  => $Container,
+	  'config'     => $Config,
+	  'my_config'  => $row_config,
+	  'strand'     => 0,
+	  'extra'      => {},
+	  'highlights' => $highlights,
+	  'row'        => $row,
+	  'chr'        => $chr,
+        });
+      };
+      if($@ || !$EW_Glyphset) {
         my $reason = $@ || "No reason given just returns undef";
         warn "GLYPHSET: glyphset $classname failed (@{[$self->{container}{web_species}]}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason";
-      } else {
-         $GlyphSet->_init();
-         push @{$self->{'glyphsets'}},  $GlyphSet;
+	next;
       }
+      $EW_Glyphset->_init();
+      push @glyphsets,  $EW_Glyphset;
     }
   }
 
   ########## sort out the resulting mess
   $spacing = $self->{'spacing'};
-  my $scalex = $Config->{'_image_height'} / $Config->container_width();
-  $Config->{'transform'}->{'scalex'} = $scalex;
-  $Config->{'transform'}->{'absolutescalex'} = 1; # $Config->{'_image_height'} / $Config->image_width();
-  $Config->{'transform'}->{'translatex'} += $Config->{'_top_margin'};
 
   ########## go ahead and do all the database work
   my $yoffset = 0;
-  my $glyphsets = @{$self->{'glyphsets'}};
 
 ## Firstly lets work how many entries to draw per row!
 ## Then work out the minimum start for each of these rows
 ## We then shift up all these points up by that many base 
 ## pairs to close up any gaps
 
-  my $GS = $Config->{'_group_size'} || 1;
-  my $entries_per_row = $Config->{'_columns'} || ( int( ($glyphsets/$GS - 1) / ($Config->{'_rows'} || 1) + 1 ) * $GS );
+  my $glyphsets = @glyphsets;
+  my $GS = $Config->get_parameter( 'group_size' ) || 1;
+  my $entries_per_row = $Config->get_parameter( 'columns' ) || ( int( ($glyphsets/$GS - 1) / ($Config->get_parameter('rows') || 1) + 1 ) * $GS );
 
   my $entry_no = 0;
-  $Config->{'_max_height'} =  0;
-  $Config->{'_max_width'}  =  0;
+  $Config->set_parameter('max_height', 0);
+  $Config->set_parameter('max_width', 0);
 
   my @min   = ();
   my @max   = ();
   my $row_count = 0;
   my $row_index = 0;
-  for my $glyphset (@{$self->{'glyphsets'}}) {
+  for my $glyphset (@glyphsets) {
     $min[$row_index] = $glyphset->minx() if(!defined $min[$row_index] || $min[$row_index] > $glyphset->minx() );
     unless(++$row_count < $entries_per_row) {
       $row_count = 0;
@@ -108,43 +112,58 @@ sub new {
   $Config->{'transform'}->{'translatex'} -= $translateX * $scalex; #$xoffset;
   my $xoffset = -$translateX * $scalex;
 
-  for my $glyphset (@{$self->{'glyphsets'}}) {
-    $Config->{'_max_width'} = $xoffset + $Config->image_width();
+  for my $glyphset (@glyphsets) {
+    $Config->set_parameter( 'max_width',  $xoffset + $Config->get_parameter('image_height') );
     ########## set up the label for this strip 
     ########## first we get the max width of label in characters
-    my $gw = 0;
-    $gw = length($glyphset->label->text()) if(defined $glyphset->label());
-    if(defined $glyphset->label2()) {
-      my $gw2 = length($glyphset->label2->text());        
-      $gw = $gw2 if $gw2>$gw;
-    }
+    my $feature_type_1 = $glyphset->my_config('feature_type') ||
+                         ( $glyphset->my_config('keys') ? $glyphset->my_config('keys')->[0] : undef );
+    my $feature_type_2 = $glyphset->my_config('feature_type_2') ||
+                         ( $glyphset->my_config('keys') ? $glyphset->my_config('keys')->[1] : undef );
+    my $label_1 = $glyphset->my_config('label') ||
+                  ( $feature_type_1 ? $glyphset->my_colour( $feature_type_1, 'text' ) : undef );
+    my $label_2 = $glyphset->my_config('label_2') ||
+                  ( $feature_type_2 ? $glyphset->my_colour( $feature_type_2, 'text' ) : undef );
+    warn "$glyphset          --> $label_1 / $label_2";
+    my $gw  = length( length($label_2) > length($label_1) ? $label_2 : $label_1 );
     if($gw>0) {
       ########## and convert it to pels
-      $gw *= $Config->texthelper->width($glyphset->label->font());
+      warn $gw;
+      $gw = $Config->texthelper->width('Small');
       ########## If the '_label' position is not 'above' move the labels below the image
-      my $label_x = $Config->{'_label'} eq 'above' ? 0 : $Config->{'_image_height'};
-      $label_x   += 4 - $Config->{'_top_margin'};
+      my $label_x = $Config->get_parameter('label') eq 'above' ? 0 : $Config->get_parameter('image_height');
+        $label_x   += 4 - $Config->get_parameter('top_margin');
       my $label_y = ($glyphset->maxy() + $glyphset->miny() - $gw ) / 2;
-      if(defined $glyphset->label()) {
-        $glyphset->label->y( $label_y );
-        $glyphset->label->x( $label_x / $scalex);            
-        $glyphset->label->height($gw);
-        $glyphset->push($glyphset->label());
-      }
-      if(defined $glyphset->label2()) {
-        $glyphset->label2->y( $label_y );
-        $glyphset->label2->x( ( $label_x + 2 +
-                    $Config->texthelper->height($glyphset->label->font()) ) / $scalex);
-        $glyphset->label2->height($gw);
-        $glyphset->push($glyphset->label2());
-      }        
+      warn $gw;
+      my $colour_1 = $glyphset->my_config('colour') ||
+                     ( $feature_type_1 ? $glyphset->my_colour( $feature_type_1, 'label' ) : undef );
+      my $colour_2 = $glyphset->my_config('colour_2') ||
+                     ( $feature_type_2 ? $glyphset->my_colour( $feature_type_2, 'label' ) : undef );
+      $glyphset->push($glyphset->Text({
+        'x'      => $label_x / $scalex,
+	'y'      => ($glyphset->maxy() + $glyphset->miny() - length($label_1)*$gw ) / 2,
+	'height' => $gw * length($label_1),
+	'font'   => 'Small',
+	'text'   => $label_1,
+        'absolutey' => 1,
+	'colour' => $colour_1
+      })) if $label_1;
+      $glyphset->push($glyphset->Text({
+        'x'      => ( $label_x + 2 + $Config->texthelper->height('Tiny') )/ $scalex,
+	'y'      => ($glyphset->maxy() + $glyphset->miny() - length($label_2)*$gw ) / 2,
+	'height' => $gw * length($label_2),
+	'font'   => 'Small',
+	'text'   => $label_2,
+        'absolutey' => 1,
+	'colour' => $colour_2
+      })) if $label_2;
     }
     ########## remove any whitespace at the top of this row
     $Config->{'transform'}->{'translatey'} = -$glyphset->miny() + $spacing/2 + $yoffset;
     $glyphset->transform();
     ########## translate the top of the next row to the bottom of this one
     $yoffset += $glyphset->height() + $spacing;
-    $Config->{'_max_height'} = $yoffset + $spacing if( $yoffset + $spacing > $Config->{'_max_height'} );
+    $Config->set_parameter('max_height',  $yoffset + $spacing ) if( $yoffset + $spacing > $Config->get_parameter('max_height') );
     unless( ++$entry_no < $entries_per_row ) {
       $entry_no = 0;
       $yoffset = 0;
@@ -154,7 +173,7 @@ sub new {
         $Config->{'transform'}->{'translatex'} += $Config->image_width() - $translateX * $scalex; #$xoffset;
     }
   }
-
+  $self->{'glyphsets'} = \@glyphsets;
   ########## Store the maximum "width of the image"
   return $self;
 }
