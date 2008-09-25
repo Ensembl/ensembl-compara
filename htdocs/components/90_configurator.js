@@ -87,14 +87,15 @@ function __init_config_menu() {
   Section 2)
   Add a hide/show link to each of the menu items on the right handside...
 */
-  $$('.config_menu').each(function(menu_n){
+  $$('dl.config_menu').each(function(menu_n){
     var col          = 1;
     var current_node = 0;
+    var div_n = menu_n.up('div');
     menu_n.childElements().each(function(n){
       if(n.nodeName == 'DT') {
         col = 3-col;
         n.addClassName('col'+col);
-	if( ! n.hasClassName( 'title' ) && !n.hasClassName('munged') ) {
+	if( !n.hasClassName('munged') ) {
 	  n.addClassName( 'munged' ); // Stop a double rendering of the links!
           _menu_create_node( n, 'mn_'+next_menu_node_id, 0 );
 	}

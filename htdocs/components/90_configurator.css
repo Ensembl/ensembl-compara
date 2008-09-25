@@ -1,8 +1,8 @@
   dl.config_menu { margin: 0 }
   dl.config_menu dt { margin: 0; font-weight: normal }
   dl.config_menu dt.title { margin: 0; font-weight: bold }
-  dl.config_menu .col1 { background-color: #fed }
-  dl.config_menu .col2 { background-color: #ffc }
+  dl.config_menu .col1 { background-color: [[IMAGE_BG1]] }
+  dl.config_menu .col2 { background-color: [[IMAGE_BG2]] }
   dl.config_menu dd { margin: 0; padding-left: 2em;}
   dl.config_menu dd img { height: 17px; width: 17px; margin: 0; padding: 0; vertical-align: top  }
   dl.config_menu dd select { margin: 0; border:0; font-size: 80% }
