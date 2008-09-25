@@ -15,6 +15,7 @@ sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
   $self->{'im_width'}  = $im_width;
   $self->{'im_height'} = $im_height;
+
   my $canvas = GD::Image->newTrueColor($im_height, $im_width);
 
   my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
@@ -25,7 +26,7 @@ sub init_canvas {
   my $bgcolor = $self->colour($config->bgcolor);
   $self->{'canvas'}->filledRectangle(0,0, $im_height, $im_width, $bgcolor );
 
-  $species_defs->timer_push( "CANVAS INIT", 1, 'draw' );
+  $self->{'config'}->species_defs->timer_push( "CANVAS INIT", 1, 'draw' );
 }
 
 1;
