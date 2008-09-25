@@ -86,7 +86,7 @@ sub has_form {
 
 sub get_form {
   my $self = shift;
-  $self->{_form}||=EnsEMBL::Web::Form->new( 'configuration', '', 'get' );
+  $self->{_form}||=EnsEMBL::Web::Form->new( 'configuration', '/Homo_sapiens', 'get' );
   return $self->{_form};
 }
 
@@ -96,7 +96,7 @@ sub add_form_element {
   my $value = $self->get($hashref->{'name'});
   if( $hashref->{'type'} eq 'checkbox' ) {
     push @extra, 'checked' => $value eq $hashref->{'value'} ? 'yes' : 'no';
-  } else {
+  } elsif( !exists $hashref->{'value'} ) {
     push @extra, 'value' => $value;
   }
   $self->get_form->add_element(%$hashref,@extra);
@@ -165,8 +165,11 @@ sub form {
   my( $self, $object ) = @_;
   foreach my $classname (@{$self->{'_classes'}}) {
     my $method = $classname.'::form';
-    eval { no strict 'refs'; &$method( $self ); };
+    eval { no strict 'refs'; &$method( $self, $object ); };
   }
+  $self->add_form_element({
+   'type' => 'Submit', 'value' => 'Update configuration'
+  }) if $self->has_form;
 }
 
 sub set {
