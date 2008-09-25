@@ -597,8 +597,9 @@ sub get_symbol {
 
 sub _init_bump {
 ### Initialize bumping - single parameter - max depth - if undefined it is "infinite"
-  my $self = shift;
-  $self->{_bump} = {
+  my( $self, $key ) = @_;
+  $key ||= '_bump';
+  $self->{$key} = {
     'length' => $self->{'config'}->image_width(),
     'rows'   => @_ ? shift : 1e8,
     'array'  => []
@@ -606,39 +607,40 @@ sub _init_bump {
 }
 
 sub _max_bump_row {
-  my $self = shift;
-  return scalar @{$self->{_bump}{'array'}||[]};
+  my( $self, $key ) = @_;
+  $key||='_bump';
+  return scalar @{$self->{$key}{'array'}||[]};
 }
 
 sub bump_row {
 ### compute the row to bump the feature to.. parameters are start/end in
 ### drawing (pixel co-ordinates)
-  my( $self, $start, $end, $truncate_if_outside ) = @_;
-
+  my( $self, $start, $end, $truncate_if_outside, $key ) = @_;
+  $key||='_bump';
   ($end,$start) = ($start,$end) if $end < $start;
 
   $start = 1 if $start < 1;
-  return -1 if $end > $self->{_bump}{'length'} && $truncate_if_outside; # used to not display partial text labels
-  $end   = $self->{_bump}{'length'} if $end > $self->{_bump}{'length'};
+  return -1 if $end > $self->{$key}{'length'} && $truncate_if_outside; # used to not display partial text labels
+  $end   = $self->{$key}{'length'} if $end > $self->{$key}{'length'};
 
   my $row = 0;
   my $len = $end-$start + 1 ;
 
-  my $element = '0' x $self->{_bump}{length};
+  my $element = '0' x $self->{$key}{length};
 
   substr ($element,$start,$len) = '1' x $len;
 
   LOOP:{
-    if($self->{_bump}{array}[$row]) {
-      if( ( $self->{_bump}{array}[$row] & $element ) == 0 ) {
-        $self->{_bump}{array}[$row] |= $element;
+    if($self->{$key}{array}[$row]) {
+      if( ( $self->{$key}{array}[$row] & $element ) == 0 ) {
+        $self->{$key}{array}[$row] |= $element;
       } else {
         $row++;
-        return 1e9 if $row > $self->{_bump}{rows};
+        return 1e9 if $row > $self->{$key}{rows};
         redo LOOP;
       }
     } else {
-      $self->{_bump}{array}[$row] |= $element;
+      $self->{$key}{array}[$row] |= $element;
     }
   }
   return $row;
