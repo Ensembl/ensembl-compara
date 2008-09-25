@@ -7,7 +7,6 @@ sub squish {1;}
 
 sub features {
   my ($self) = @_;
-  warn @{ $self->{'container'}->get_all_AssemblyExceptionFeatures()||[] };
   return $self->{'container'}->get_all_AssemblyExceptionFeatures();
 }
 

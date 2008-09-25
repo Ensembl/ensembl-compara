@@ -597,8 +597,8 @@ sub get_symbol {
 
 sub _init_bump {
 ### Initialize bumping - single parameter - max depth - if undefined it is "infinite"
-  my( $self, $key ) = @_;
-  $key ||= '_bump';
+  my $self = shift;
+  my $key  = shift || '_bump';
   $self->{$key} = {
     'length' => $self->{'config'}->image_width(),
     'rows'   => @_ ? shift : 1e8,
@@ -617,6 +617,7 @@ sub bump_row {
 ### drawing (pixel co-ordinates)
   my( $self, $start, $end, $truncate_if_outside, $key ) = @_;
   $key||='_bump';
+
   ($end,$start) = ($start,$end) if $end < $start;
 
   $start = 1 if $start < 1;

@@ -109,7 +109,7 @@ sub _init {
   my $bitmap_length  = int($slice->length * $pix_per_bp);
   ## And the colours
   my $dep            = $self->my_config('depth')||100000;
-  $self->_init_bump( $dep );
+  $self->_init_bump( undef, $dep );
 
   my $flag           = 1;
   my($temp1,$temp2,$temp3,$H) = $self->get_text_width(0,'X','','font'=>$FONT,'ptsize' => $FONTSIZE );

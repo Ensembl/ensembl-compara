@@ -56,7 +56,6 @@ sub _init {
   my @segments = ();
 
   @segments = @{$Container->project('seqlevel')||[]};
-  warn "............. @segments ..............";
 
   my @coord_systems;
   if ( ! $Container->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice") && ($Container->{__type__} ne 'alignslice')) {

@@ -85,7 +85,7 @@ sub render_normal {
   my $hi_colour = 'highlight1';
 
   my %id             = ();
-  $self->_init_bump( $dep );
+  $self->_init_bump( undef, $dep );
 
   if( $self->{'extras'} && $self->{'extras'}{'height'} ) {
     $h = $self->{'extras'}{'height'};

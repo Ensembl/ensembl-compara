@@ -14,7 +14,7 @@ sub _init {
   my $last_indel = '##############';
   my $pix_per_bp = $self->scalex;
   my $t_width    = $h*3/4/$pix_per_bp;
-  $self->_init_bump( $self->my_config('depth')||1e6 );
+  $self->_init_bump( undef,  $self->my_config('depth') );
 
   return unless $snps;
   foreach my $int (@$snps) {

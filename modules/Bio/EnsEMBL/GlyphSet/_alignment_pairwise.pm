@@ -17,7 +17,7 @@ sub render_normal {
 
   my $caption        = $self->my_config('caption');
   my $depth          = $self->my_config('depth') || 6;
-  $self->_init_bump( $depth );  ## initialize bumping!!
+  $self->_init_bump( undef, $depth );  ## initialize bumping!!
 
   my %highlights; @highlights{$self->highlights()} = ();
 
@@ -257,7 +257,7 @@ sub render_compact {
 
   my $caption        = $self->my_config('caption');
   my $depth          = $self->my_config('depth');
-  $self->_init_bump( $depth );  ## initialize bumping!!
+  $self->_init_bump( undef, $depth );  ## initialize bumping!!
   my %highlights; @highlights{$self->highlights()} = ();
 
   my $length         = $container->length;
