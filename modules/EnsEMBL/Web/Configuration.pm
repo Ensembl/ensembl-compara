@@ -161,9 +161,7 @@ sub _user_context {
         'type'   => 'Config',
         'action' => $type.'/'.$ENV{'ENSEMBL_ACTION'},
       }),
-      'class'     => ( $type ne 'Account' &&
-                       $type ne 'UserData' &&
-                       !$obj->param('config') ) ? 'active' : ''
+      'class'     => ( $type ne 'Account' && $type ne 'UserData' && !$obj->param('config') ) ? 'active' : ''
     );
     $flag = 0;
   }
@@ -199,8 +197,7 @@ sub _user_context {
   );
   ## Now the user account link if the user is logged in!
 
-  if( $obj->species_defs->ENSEMBL_LOGINS 
-     && $ENV{'ENSEMBL_USER_ID'} ) {
+  if( $obj->species_defs->ENSEMBL_LOGINS && $ENV{'ENSEMBL_USER_ID'} ) {
     $self->{'page'}->global_context->add_entry( 
       'type'      => 'Account',
       'caption'   => 'Your account',
@@ -225,7 +222,7 @@ sub _configurator {
   }
   my $conf;
   eval {
-    $conf = $obj->get_imageconfig( $obj->param('config') );
+    $conf = $obj->get_imageconfig( $obj->param('config') ) if $obj->param('config');
   };
   unless( $conf ) {
 ## This must be the view config....
@@ -243,7 +240,10 @@ sub _configurator {
         'code'         => 'configurator',
         'object'       => $obj
       );
-      $panel->set_content( $vc->get_form->render );
+      my $content  = '';
+         $content .= sprintf '<h2>Configuration for: "%s"</h2>', CGI::escapeHTML($vc->title) if $vc->title;
+	 $content .= $vc->get_form->render;
+      $panel->set_content( $content );
       $self->add_panel( $panel );
       return;
     }
@@ -251,9 +251,9 @@ sub _configurator {
   my %T = $vc->image_configs;
   my @Q = sort keys %T;
   if(@Q) {
-    warn ">>>>>>>>>>>>>>>> ",ref($Q[0])," <<<<<<<<<<<<<<<<<";
     $conf = $obj->get_imageconfig( $Q[0] );
   }
+  return unless $conf;
   $self->{'page'}->{'_page_type_'} = 'configurator';
   $self->tree->_flush_tree();
 
@@ -265,8 +265,11 @@ sub _configurator {
     my $link_key = 'link_'.$node->key;
     my $menu_key = 'menu_'.$node->key;
     $rhs_content .= sprintf '
-      <dl class="config_menu" id="%s">
-        <dt class="title">%s</dt>', $menu_key, CGI::escapeHTML( $node->get('caption') );
+      <div id="%s">
+      <h2>%s</h2>
+      <dl class="config_menu">', $menu_key, CGI::escapeHTML( $node->get('caption') );
+#      <dl class="config_menu" id="%s">
+#       <dt class="title">%s</dt>', $menu_key, CGI::escapeHTML( $node->get('caption') );
     my $available = 0;
     foreach my $track_node ( $node->descendants ) {
       next if $track_node->get('menu') eq 'no';
@@ -292,7 +295,8 @@ sub _configurator {
       }
     }
     $rhs_content .= '
-      </dl>';
+      </dl>
+      </div>';
     $active    ||= $link_key if $count > 0;
     $self->create_node(
       $link_key,

@@ -12,6 +12,7 @@ sub new {
     '_r'                  => $adaptor->get_request || undef,
     'type'                => $type,
     'action'              => $action,
+    'title'               => undef,
     '_classes'            => [],
     '_options'            => {},
     '_image_config_names' => {},
@@ -23,6 +24,10 @@ sub new {
   return $self;
 }
 
+sub title :lvalue {
+### a
+  $_[0]->{'title'};
+}
 sub storable :lvalue {
 ### a
 ### Set whether this ViewConfig is changeable by the User, and hence needs to

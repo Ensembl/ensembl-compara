@@ -7,6 +7,7 @@ no warnings 'uninitialized';
 sub init {
   my ($view_config) = @_;
 
+  $view_config->title = 'Marked up gene sequence';
   $view_config->_set_defaults(qw(
     flank5_display          600
     flank3_display          600 
