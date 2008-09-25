@@ -52,13 +52,29 @@ sub href {
 # features...
 #==============================================================================
 
+sub render_unlimited {
+  my $self = shift;
+  $self->render_normal( 1, 1000 );
+}
+
+sub render_stack {
+  my $self = shift;
+  $self->render_normal( 1, 40 );
+}
+
+sub render_half_height {
+  my $self = shift;
+  $self->render_normal( $self->my_config('height')/2 || 4);
+}
+
 sub render_normal {
   my $self = shift;
+  my $h      = @_ ? shift : ($self->my_config('height') || 8);
+  my $dep    = @_ ? shift : ($self->my_config('dep'   ) || 6);
+  my $gap    = $h<2 ? 1 : 2;   
 ## Information about the container...
   my $strand = $self->strand;
   my $strand_flag    = $self->my_config('strand');
-  return if $strand_flag eq 'r' && $strand != -1;
-  return if $strand_flag eq 'f' && $strand !=  1;
 
   my $length = $self->{'container'}->length();
 ## And now about the drawing configuration
@@ -69,9 +85,7 @@ sub render_normal {
   my $hi_colour = 'highlight1';
 
   my %id             = ();
-  my $dep            = $self->my_config( 'dep' ) || 6;
   $self->_init_bump( $dep );
-  my $h              = $self->get_parameter( 'opt_halfheight') ? 4 : 8;
 
   if( $self->{'extras'} && $self->{'extras'}{'height'} ) {
     $h = $self->{'extras'}{'height'};
@@ -84,11 +98,18 @@ sub render_normal {
   my $external_dbs = $self->species_defs('databases')->{$db}{'external_dbs'}||{};
 
   foreach my $features ( @f ) {
-    foreach my $f ( @{$features || []} ){
+    foreach my $f (
+      map { $_->[2] }
+      sort{ $a->[0] <=> $b->[0] }
+      map { [$_->start,$_->end, $_ ] }
+      @{$features || []}
+    ){
       my $hstrand  = $f->can('hstrand')  ? $f->hstrand : 1;
       my $fgroup_name = $self->feature_group( $f );
-      next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $f->end < 1 || $f->start > $length ;
-      push @{$id{$fgroup_name}}, [$f->start,$f->end,$f];
+      my $s =$f->start;
+      my $e =$f->end;
+      next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $e < 1 || $s > $length ;
+      push @{$id{$fgroup_name}}, [$s,$e,$f,int($s*$pix_per_bp),int($e*$pix_per_bp)];
     }
   }
 ## Now go through each feature in turn, drawing them
@@ -96,11 +117,15 @@ sub render_normal {
   my $features_drawn = 0;
   my $features_bumped = 0;
   my $feature_colour = $self->my_colour( $self->my_config( 'sub_type' ) );
+  my $join_colour    = $self->my_colour( $self->my_config( 'sub_type' ), 'join' );
 
   my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
 
-  foreach my $i (keys %id){
-    my @F          = sort { $a->[0] <=> $b->[0] } @{$id{$i}};
+  foreach my $i ( sort {
+    $id{$a}[0][3] <=> $id{$b}[0][3]  ||
+    $id{$b}[-1][4] <=> $id{$a}[-1][4]
+  } keys %id){
+    my @F          = @{$id{$i}}; # sort { $a->[0] <=> $b->[0] } @{$id{$i}};
     my $START      = $F[0][0] < 1 ? 1 : $F[0][0];
     my $END        = $F[-1][1] > $length ? $length : $F[-1][1];
     my $bump_start = int($START * $pix_per_bp) - 1;
@@ -110,7 +135,7 @@ sub render_normal {
       $features_bumped++;
       next;
     }
-    $y_pos = - $row * int( $h + 2 ) * $strand;
+    $y_pos = - $row * int( $h + $gap ) * $strand;
 
     my $Composite = $self->Composite({
       'href'  => $self->href( $F[0][2] ),
@@ -152,8 +177,19 @@ sub render_normal {
         }));
       }
     }
+    if( $h > 1 ) {
+      $Composite->bordercolour($feature_colour);
+    } else {
+      $Composite->unshift( $self->Rect({
+        'x' => $Composite->{'x'},
+        'y' => $Composite->{'y'},
+	'width' => $Composite->{'width'},
+	'height' => $h,
+	'colour' => $join_colour,
+	'absolutey' => 1
+      }));
+    }
     $Composite->y( $Composite->y + $y_pos );
-    $Composite->bordercolour($feature_colour);
     $self->push( $Composite );
     if(exists $highlights{$i}) {
       $self->unshift( $self->Rect({
@@ -172,7 +208,7 @@ sub render_normal {
 
   if( $self->get_parameter( 'opt_show_bumped') && $features_bumped ) {
     my $ypos = $strand < 0
-             ? ($dep+1) * ( $h + 2 ) + 2
+             ? ($dep+1) * ( $h + $gap ) + 2
              : 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'})
 	     ;
     $self->errorTrack( sprintf( '%s %s omitted', $features_bumped, $self->my_config('name')), undef, $y_pos );
@@ -180,15 +216,13 @@ sub render_normal {
   $self->timer_push( 'Features drawn' );
 }
 
-sub render_compact {
+sub render_ungrouped {
   my $self        = shift;
   my $strand      = $self->strand;
   my $strand_flag = $self->my_config('strand');
-  return if $strand_flag eq 'r' && $strand != -1;
-  return if $strand_flag eq 'f' && $strand !=  1;
 
   my $length      = $self->{'container'}->length();
-  my $pix_per_bp  = $self->pix_per_bp;
+  my $pix_per_bp  = $self->scalex;
   my $DRAW_CIGAR  = ( $self->my_config('force_cigar') eq 'yes' )|| ($pix_per_bp > 0.2) ;
   my $h           = $self->my_config('height')||8;
   my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
@@ -204,8 +238,7 @@ sub render_compact {
     sort { $a->[0] <=> $b->[0]      }
     map  { [$_->start, $_->end,$_ ] }
     grep { !($strand_flag eq 'b' && $strand != ( ( $_->can('hstrand') ? 1 : 1 ) * $_->strand||-1) || $_->start > $length || $_->end < 1) } 
-    map  { @$_                      }
-    grep { ref($_) eq 'ARRAY'       } $self->features
+    map  { @$_                      } $self->features
   ) {
     my($start,$end,$feat) = @$f;
     ($start,$end)         = ($end, $start) if $end<$start; # Flip start end YUK!
