@@ -8,6 +8,12 @@ sub new {
   return $class->SUPER::new( @_, 'layout' => 'spanning' );
 }
 
-sub render { return $_[0]->value; }
+sub render {
+  my $self = shift;
+  return sprintf '
+  <dl>
+    <dt>%s</dt>
+  </dl>', $self->value;
+}
 
 1;

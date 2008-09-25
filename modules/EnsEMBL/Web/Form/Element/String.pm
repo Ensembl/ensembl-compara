@@ -20,7 +20,7 @@ sub render {
     %s
     %s
     </dd>
-  </dt>',
+  </dl>',
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->label ),
     $self->widget_type,

@@ -63,10 +63,8 @@ sub render {
       $optcount++;
     }
     if( $current_group ) { $options.="</optgroup>\n"; }
-    my $ON_CHANGE = $self->{'on_change'} eq 'submit' ? 
+    my $ON_CHANGE = $self->{'on_change'} eq 'submit';
 #       sprintf( "document.forms[%s].submit()", $self->form ) :
-       sprintf( "document.%s.submit()", $self->{formname} ) :
-       sprintf( "os_check('%s',this,%s)", $self->type, $self->required eq 'yes'?1:0 );  
     return sprintf( qq(
   <dl>
     <dt><label for="%s">%s: </label></dt>
