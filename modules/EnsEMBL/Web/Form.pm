@@ -104,12 +104,13 @@ sub render {
   
   if ($required) {
     $self->add_element( 'type' => 'Information', 
-    'value' => '<div class="right">Fields marked with <strong>*</strong> are required</div>'
+    'value' => 'Fields marked with <strong>*</strong> are required'
     )
   }
 
   $output .= $self->_render_buttons;
   $output .= "\n</form>\n";
+  $output .= '<div style="height:1px;overflow: hidden;clear:both;font-size:1pt">&nbsp;</div>';
   return $output;
 }
 
