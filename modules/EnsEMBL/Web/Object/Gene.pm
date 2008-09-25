@@ -449,34 +449,12 @@ sub get_homology_matches{
         $homology_list{$displayspp}{$homologue_id}{'homology_desc'}       = $homology_desc ;
         $homology_list{$displayspp}{$homologue_id}{'homology_subtype'}    = $homology_subtype ;
         $homology_list{$displayspp}{$homologue_id}{'spp'}                 = $displayspp ;
-        $homology_list{$displayspp}{$homologue_id}{'description'}         = $homologue->description ;
+        $homology_list{$displayspp}{$homologue_id}{'description'}         = $homologue->description || 'No description';
         $homology_list{$displayspp}{$homologue_id}{'order'}               = $order ;
         $homology_list{$displayspp}{$homologue_id}{'query_perc_id'}       = $query_perc_id ;
         $homology_list{$displayspp}{$homologue_id}{'target_perc_id'}      = $target_perc_id ;
         $homology_list{$displayspp}{$homologue_id}{'homology_dnds_ratio'} = $dnds_ratio; 
- 
-        if ($self->species_defs->valid_species($spp)){
-          my $database_spp = $self->DBConnection->get_databases_species( $spp, 'core') ;
-          unless( $database_spp->{'core'} ) {
-            warn "NO CORE DB CONNECTION ($spp)";
-            next;
-          }
-          my $geneadaptor_spp = $database_spp->{'core'}->$adaptor_call;
-                  my $gene_spp = $geneadaptor_spp->fetch_by_stable_id( $homologue->stable_id, 1 );
-          unless ( $gene_spp ) {
-            warn "Gene @{[$homologue->stable_id]} not in core database for $spp";
-            next;
-          }
-          my $display_xref = $gene_spp->display_xref;
-          my $display_id = $display_xref ?  $display_xref->display_id() : 'Novel Ensembl prediction';
-          $homology_list{$displayspp}{$homologue_id}{'display_id'} = $display_id;
-          $homology_list{$displayspp}{$homologue_id}{'description'} = $gene_spp->description || 'No description';
-          $homology_list{$displayspp}{$homologue_id}{'location'}= $gene_spp->feature_Slice->name;
-      $homology_list{$displayspp}{$homologue_id}{'chromosome'}= $gene_spp->feature_Slice->seq_region_name;
-          if( $spp ne $self->{'species'} ) { 
-            $database_spp->{'core'}->dbc->disconnect_if_idle();
-          }
-        }
+        $homology_list{$displayspp}{$homologue_id}{'display_id'}          = $homologue->display_label || 'Novel Ensembl prediction';
         $order++;
       }
     }
@@ -496,31 +474,34 @@ sub fetch_homology_species_hash {
   $homology_description= "ortholog" unless (defined $homology_description);
   
   my $geneid = $self->stable_id;
-  my $databases = $self->database('compara') ;
+  my $database = $self->database('compara') ;
   my %homologues;
 
-  return {} unless $databases;
+  return {} unless $database;
+  $self->timer_push( 'starting to fetch' , 6 );
 
-  my $member_adaptor = $databases->get_MemberAdaptor;
+  my $member_adaptor = $database->get_MemberAdaptor;
   my $query_member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$geneid);
 
   return {} unless defined $query_member ;
-  my $homology_adaptor = $databases->get_HomologyAdaptor;
-  my $homologies_array = $homology_adaptor->fetch_all_by_Member_method_link_type($query_member,$homology_source);
-  
-  #warn ".... ".$query_member." ...";
-  my $query_taxon = $query_member->taxon;
+  my $homology_adaptor = $database->get_HomologyAdaptor;
+#  It is faster to get all the Homologues and discard undesired entries
+#  my $homologies_array = $homology_adaptor->fetch_all_by_Member_method_link_type($query_member,$homology_source);
+  my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member);
+
+  $self->timer_push( 'fetched' , 6 );
+
+  # Strategy: get the root node (this method gets the whole lineage without getting sister nodes)
+  # We use right - left indexes to get the order in the hierarchy.
+  my $node = $query_member->taxon->root();
   my %classification;
-  my $idx = 1;
-  my $node = $query_taxon;
   while ($node){
-    $classification{$node->get_tagvalue('scientific name')} = $idx;
-    $node = $node->parent;
-    $idx++;
-
-
+    $node->get_tagvalue('scientific name');
+    $classification{$node->get_tagvalue('scientific name')} = $node->right_index - $node->left_index;
+    $node = $node->children->[0];
   }
  
+  $self->timer_push( 'classification' , 6 );
  
  foreach my $homology (@{$homologies_array}){
     next unless ($homology->description =~ /$homology_description/);
@@ -528,17 +509,18 @@ sub fetch_homology_species_hash {
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
       my ($member, $attribute) = @{$member_attribute};
       if ($member->stable_id eq $query_member->stable_id) {
-          $query_perc_id = $attribute->perc_id;
+        $query_perc_id  = $attribute->perc_id;
       } else {
-          $target_perc_id = $attribute->perc_id;
-          $genome_db_name = $member->genome_db->name;
-          $target_member = $member;
-          $dnds_ratio = $homology->dnds_ratio; 
+        $target_perc_id = $attribute->perc_id;
+        $genome_db_name = $member->genome_db->name;
+        $target_member  = $member;
+        $dnds_ratio     = $homology->dnds_ratio; 
       }
     }  
     push (@{$homologues{$genome_db_name}}, [ $target_member, $homology->description, $homology->subtype, $query_perc_id, $target_perc_id, $dnds_ratio ]);
   }
 
+  $self->timer_push( 'homologies hacked', 6 );
   foreach my $species_name (keys %homologues){
     @{$homologues{$species_name}} = sort {$classification{$a->[2]} <=> $classification{$b->[2]}} @{$homologues{$species_name}};
 
@@ -577,18 +559,11 @@ sub get_compara_Member{
 
   unless( defined( $self->{_compara_member} ) ){ # Look in cache
     # Prepare the adaptors
-    my $dbconn = $self->DBConnection 
-        || &$error( "No DBConnection on $self" );
-    my $db_hashref = $dbconn->get_databases( 'compara' )
-        || &$error( "No compara in $dbconn" );
-    my $compara_dba = $db_hashref->{compara}
-        || &$error( "No compara in $dbconn" );
-    my $member_adaptor = $compara_dba->get_adaptor('Member')
-        || &$error( "Cannot COMPARA->get_adaptor('Member')" );
+    my $compara_dba = $self->database( 'compara' )           || &$error( "No compara db" );
+    my $member_adaptor = $compara_dba->get_adaptor('Member') || &$error( "Cannot COMPARA->get_adaptor('Member')" );
     # Fetch the object
     my $id = $self->stable_id;
-    my $member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE',$id)
-        || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
+    my $member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE',$id) || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
     # Update the cache
     $self->{_compara_member} = $member;
   }
