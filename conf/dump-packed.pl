@@ -20,7 +20,7 @@ Description:
 
   e.g.
    
-  * perl dump-packed.pl config.packed Homo_sapiens
+  * perl dump-packed.pl [-k] config.packed Homo_sapiens
 
     dumps the whole human configuration
 
@@ -29,11 +29,17 @@ Description:
 
     Prints summary information for human gene table in core database...
 
+  if switch -k is included then dumps just the key of the hash
+    useful for "diving" into tree without seeing too much
+
 ------------------------------------------------------------------------
 
 ';
   exit;
 }
+
+my $mode = $ARGV[0] eq '-k';
+shift @ARGV if $mode;
 
 my $T = lock_retrieve( shift @ARGV );
 
@@ -51,16 +57,19 @@ foreach( @ARGV ) {
 }
 
 $Data::Dumper::Indent = 1;
-
-my $X = Data::Dumper::Dumper($T);
-
 print "
 ------------------------------------------------------------------------
 @ARGV
 ------------------------------------------------------------------------
+";
 
-",substr( $X, 8, -2 ),"
-
+if( $mode ) {
+  print "\t",join("\n\t",sort keys %$T );
+} else {
+  my $X = Data::Dumper::Dumper($T);
+  print "\n",substr( $X, 8, -2 ),"\n";
+}
+print "
 ------------------------------------------------------------------------
 ";
 
