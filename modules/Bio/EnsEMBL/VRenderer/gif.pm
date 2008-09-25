@@ -7,23 +7,14 @@ use base qw(Bio::EnsEMBL::VRenderer);
 sub init_canvas {
   my ($self, $config, $im_height, $im_width) = @_;
   my $canvas = new GD::Image($im_width, $im_height);
-  $canvas->colorAllocate($config->colourmap()->rgb_by_name($config->bgcolor()));
+  $canvas->colorAllocate($config->colourmap()->rgb_by_name( $config->bgcolor ));
   $self->canvas($canvas);
 }
 
 sub add_canvas_frame {
   my ($self, $config, $im_height, $im_width) = @_;
   
-  return if (defined $config->{'no_image_frame'});
-  
-  my $framecolour = $self->colour($config->{'image_frame_colour'} || 'black');
-  
-  # for contigview bottom box we need an extra thick border...
-  if ($config->script() eq "contigviewbottom"){		
-    $self->{'canvas'}->rectangle(1, 1, $im_width-2, $im_height-2, $framecolour);		
-  }
-  
-  $self->{'canvas'}->rectangle(0, 0, $im_width-1, $im_height-1, $framecolour);
+  return;
 }
 
 sub canvas {
