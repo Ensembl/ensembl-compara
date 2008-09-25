@@ -23,23 +23,30 @@ sub content {
   my $species   = $object->species;
   my $chr_name  = $object->seq_region_name;
 
-  my $config = $object->get_imageconfig($config_name);
-  my $ideo_height = $config->{'_image_height'};
-  my $top_margin  = $config->{'_top_margin'};
+  my $config = $object->image_config_hash($config_name);
+     $config->set_parameter(
+       'container_width',
+       $object->Obj->{'slice'}->seq_region_length
+     );
+  warn $config->get_parameter( 'container_width' );
+  my $ideo_height = $config->get_parameter('image_height');
+  my $top_margin  = $config->get_parameter('top_margin');
   my $hidden = {
-            'seq_region_name'   => $chr_name,
-            'seq_region_width'  => '100000',
-            'seq_region_left'   => '1',
-            'seq_region_right'  => $object->Obj->{'slice'}->seq_region_length,
-            'click_right'       => $ideo_height+$top_margin,
-            'click_left'        => $top_margin,
-    };
+    'seq_region_name'   => $chr_name,
+    'seq_region_width'  => '100000',
+    'seq_region_left'   => '1',
+    'seq_region_right'  => $object->Obj->{'slice'}->seq_region_length,
+    'click_right'       => $ideo_height+$top_margin,
+    'click_left'        => $top_margin,
+  };
 
+  $config->get_node('Videogram')->set('label',   ucfirst($object->seq_region_type) );
+  $config->get_node('Videogram')->set('label_2', $chr_name );
   my $image    = $object->new_karyotype_image();
-  $image->cacheable          = 'no';
-  $image->image_type         = 'chromosome';
-  $image->image_name         = $species.'-'.$chr_name;
-  $image->imagemap           = 'no';
+    $image->cacheable          = 'no';
+    $image->image_type         = 'chromosome';
+    $image->image_name         = $species.'-'.$chr_name;
+    $image->imagemap           = 'no';
 
   ## Check if there is userdata in session
   my $userdata = $object->get_session->get_tmp_data;
