@@ -58,6 +58,7 @@ sub new {
       '_apache_handle'   => $data->{_apache_handle}   || undef,
       '_type'            => $data->{_type}            || $ENV{'ENSEMBL_TYPE'},
       '_action'          => $data->{_action}          || $ENV{'ENSEMBL_ACTION'},
+      '_function'        => $data->{_function}        || $ENV{'ENSEMBL_FUNCTION'},
       '_species'         => $data->{_species}         || $ENV{'ENSEMBL_SPECIES'},
       '_script'          => $data->{_script}          || $ENV{'ENSEMBL_SCRIPT'},
 #      '_feature_types'   => $data->{_feature_types}   || [],
@@ -105,19 +106,29 @@ sub species {
 ### a
 ### sets/gets species
   my $self = shift;
-  if(@_) {
-    $self->[1]{_species} = shift;
-  }
+  $self->[1]{_species} = shift if @_;
   return $self->[1]{_species};
 }
 
 sub script               { 
   ### a
-  my ($self, $value) = @_;
-  if ($value) {
-    $self->[1]{'_script'} = $value;
-  }
+  my $self = shift;
+  $self->[1]{_script} = shift if @_;
   return $self->[1]{'_script'}; 
+}
+
+sub action               { 
+  ### a
+  my $self = shift;
+  $self->[1]{_action} = shift if @_;
+  return $self->[1]{'_action'}; 
+}
+
+sub function             { 
+  ### a
+  my $self = shift;
+  $self->[1]{_function} = shift if @_;
+  return $self->[1]{'_function'}; 
 }
 
 sub __supertype  :lvalue {

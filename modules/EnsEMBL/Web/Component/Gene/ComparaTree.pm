@@ -71,7 +71,7 @@ sub content_align {
 <p>The species included in the tree can be configured using the
 'configure tree' link in the left panel.<p>
 <pre>%s</pre>);
-  my $align_format = 'fasta'; # TODO: user configurable format
+  my $align_format = $object->param( 'text_format' ) || 'fasta'; # TODO: user configurable format
   my $formatted; # Variable to hold the formatted alignment string
   my $SH = IO::Scalar->new(\$formatted);
   #print $SH "FOO\n";

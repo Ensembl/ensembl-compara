@@ -66,13 +66,13 @@ sub populate_tree {
   );
   $tree_node->append( $self->create_subnode(
     'Compara_Tree/Text', "Gene Tree (text)",
-    [qw(treetext        EnsEMBL::Web::Component::Gene::ComparaTree)],
+    [qw(treetext        EnsEMBL::Web::Component::Gene::ComparaTree/text)],
     { 'availability' => 'database:compara' }
   ));
 
   $tree_node->append( $self->create_subnode(
     'Compara_Tree/Align',       "Gene Tree (alignment)",
-    [qw(treealign      EnsEMBL::Web::Component::Gene::ComparaTree)],
+    [qw(treealign      EnsEMBL::Web::Component::Gene::ComparaTree/align)],
     { 'availability' => 'database:compara' }
   ));
   $compara_menu->append( $tree_node );

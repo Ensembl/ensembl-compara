@@ -594,7 +594,8 @@ sub content {
   }
   foreach my $component ($self->components) {
 #warn "Starting component $component";
-    foreach my $module_name ( @{$self->{'components'}{$component}} ) { 
+    foreach my $temp ( @{$self->{'components'}{$component}} ) { 
+      my( $module_name, $function_name ) = split /\//, $temp;
       my $result;
       # (my $module_name = $function_name ) =~s/::\w+$//;
       if( $self->dynamic_use( $module_name ) ) {
@@ -626,7 +627,7 @@ sub content {
             my( $ensembl, $plugin, $component, $type, $module ) = split '::', $module_name;
             my $URL = join '/',
               '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,$module;
-	      $URL .= "/$ENV{'ENSEMBL_FUNCTION'}" if $ENV{'ENSEMBL_FUNCTION'} && $comp_obj->can( 'content_'.lc($ENV{'ENSEMBL_FUNCTION'}) );
+ 	      $URL .= "/$function_name" if $function_name && $comp_obj->can( "content_$function_name" );
               $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
 	    warn "CREATING URL.... $ENV{'ENSEMBL_FUNCTION'} ::: $URL";
 

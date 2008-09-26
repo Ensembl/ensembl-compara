@@ -327,6 +327,7 @@ sub transHandler_species {
   my $script = shift @$path_segments;
   my $action = '';
   my $type   = '';
+  my $function = '';
   my $real_script_name = $OBJECT_TO_SCRIPT{ $script };
 
   if( $real_script_name ) {
@@ -338,8 +339,10 @@ sub transHandler_species {
     } elsif( $real_script_name eq 'zmenu' || $real_script_name eq 'config' ) {
       $type   = shift @$path_segments;
       $action = shift @$path_segments;
+      $function = shift @$path_segments;
       $r->subprocess_env->{'ENSEMBL_TYPE'}     = $type;
       $r->subprocess_env->{'ENSEMBL_ACTION'}   = $action;
+      $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $function;
     } elsif( $real_script_name eq 'component' ) {
       $type = shift @$path_segments;
       my @T                                  = map { s/\W//g;$_ } @$path_segments;

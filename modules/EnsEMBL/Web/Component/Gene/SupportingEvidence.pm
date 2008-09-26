@@ -92,7 +92,8 @@ sub content {
 		    my $id  = $link->[1];
 		    my $align_url = $self->object->_url({
 			'type'     => 'Transcript',
-			'action'   => 'SupportingEvidenceAlignment',
+			'action'   => 'SupportingEvidence',
+			'function' => 'Alignment',
 			't'        => $tsi,
 			'sequence' => $id,
 		    });
@@ -114,7 +115,8 @@ sub content {
 		    my $id  = $link->[1];
 		    my $align_url = $self->object->_url({
 			'type'     => 'Transcript',
-			'action'   => 'SupportingEvidenceAlignment',
+			'action'   => 'SupportingEvidence',
+			'function' => 'Alignment',
 			't'        => $tsi,
 			'sequence' => $id,
 		    });
@@ -136,7 +138,8 @@ sub content {
 		    my $id  = $link->[1];
 		    my $align_url = $self->object->_url({
 			'type'     => 'Transcript',
-			'action'   => 'SupportingEvidenceAlignment',
+			'action'   => 'SupportingEvidence',
+			'function' => 'Alignment',
 			't'        => $tsi,
 			'sequence' => $id,
 		    });

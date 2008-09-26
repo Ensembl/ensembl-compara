@@ -71,7 +71,7 @@ sub action {
 }
 sub set_action {
   my $self = shift;
-  $self->{_data}{'action'} = $self->_get_valid_action(shift);
+  $self->{_data}{'action'} = $self->_get_valid_action(@_);
 }
 
 sub default_action {
@@ -86,12 +86,16 @@ sub default_action {
 sub _get_valid_action {
   my $self = shift;
   my $action = shift;
+  my $func   = shift;
   # my %hash = map { $_ => 1 } $self->{_data}{tree}->get_node(';
 
   warn "... $action ...";
-  my $node = $self->tree->get_node( $action );
-  warn "... $node   ...";
-  return $node && $node->get('type') =~ /view/ ? $action : $self->default_action;
+  my $node;
+  $node = $self->tree->get_node( $action."/".$func ) if $func;
+  return $action."/".$func if $node && $node->get('type') =~ /view/;
+  $node = $self->tree->get_node( $action )           unless $node;
+  return $action if $node && $node->get('type') =~ /view/;
+  return $node;
 }
 
 sub _ajax_content {
@@ -333,7 +337,8 @@ sub _local_context {
   my $self = shift;
   my $hash = {}; #  $self->obj->get_summary_counts;
   $self->{'page'}->local_context->tree(    $self->{_data}{'tree'}    );
-  $self->{'page'}->local_context->active(  $self->{_data}{'action'}  );
+  my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} );
+  $self->{'page'}->local_context->active(  $action );#$self->{_data}{'action'}  );
   $self->{'page'}->local_context->caption( $self->{object}->short_caption  );
   $self->{'page'}->local_context->counts(  $self->{object}->counts   );
 }
@@ -419,7 +424,9 @@ sub _content_panel {
   my $self   = shift;
   my $obj    = $self->{'object'};
 
-  my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'} );
+  warn ".......... $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} ............";
+  my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} );
+  warn "......... $action ...........";
   my $node          = $self->get_node( $action );
   my $title = $node->data->{'concise'}||$node->data->{'caption'};
      $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;

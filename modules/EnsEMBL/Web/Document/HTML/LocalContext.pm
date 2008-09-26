@@ -108,13 +108,12 @@ $pad    </dd>";
 $pad        <dd%s%s>%s</dd>), 
               $node->data->{'id'} ? ' id="'.$node->data->{'id'}.'"' : '',
               $node->key eq $active ? ' class="active"' : '', $name );
-      }
-      else {
+      } else {
         $content .= sprintf( qq(
 $pad        <dd class="%s">%s
 $pad          <dl>),
         ($node->left <= $active_l && $node->right >= $active_r ? 'open' : 'open').
-	  $node->key eq $active ? ' active' :'',
+	($node->key eq $active ? ' active' :''),
 	$name );
 	$pad .= '    ';
       }

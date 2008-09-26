@@ -24,11 +24,10 @@ sub ajax_zmenu      {
     my $self = shift;
     my $panel = $self->_ajax_zmenu;
     my $obj  = $self->object;
-    my $dest = $obj->[1]{'_action'};
-    if ($dest eq 'SupportingEvidenceAlignment') {
+    my $dest = $obj->action().'/'.$obj->function();
+    if ($dest eq 'SupportingEvidence/Alignment') {
 	$self->do_SE_align_menu($panel,$obj);
-    }
-    else {
+    } else {
 	my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
 	$panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
 	$panel->add_entry({ 
@@ -99,7 +98,7 @@ sub do_SE_align_menu {
     if (my $esid     = $params->{'exon'}->[0] ) {
 	my $exon_length = $params->{'exon_length'}[0];
 	#this is drawn for exons
-	my $align_url = $obj->_url({'type'=>'Transcript', 'action' => 'SupportingEvidenceAlignment'}).";sequence=$hit_name;exon=$esid";	
+	my $align_url = $obj->_url({'type'=>'Transcript', 'action' => 'SupportingEvidence', 'function' => 'Alignment'}).";sequence=$hit_name;exon=$esid";	
 	$panel->{'caption'} = "$hit_name ($hit_db)";
 	$panel->add_entry({
 	    'type'     => 'View alignments',
@@ -166,14 +165,15 @@ sub populate_tree {
   );
 
 
-  $self->create_node( 'SupportingEvidence', "Supporting evidence  ([[counts::evidence]])",
+  my $T = $self->create_node( 'SupportingEvidence', "Supporting evidence  ([[counts::evidence]])",
    [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidence)],
     { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
-  $self->create_node( 'SupportingEvidenceAlignment', '',
-   [qw(alignment      EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment)],
+  $T->append($self->create_subnode( 'SupportingEvidence/Alignment', '',
+    [qw(alignment      EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment)],
     { 'no_menu_entry' => 1 }
-  );
+  ));
+
   my $seq_menu = $self->create_submenu( 'Sequence', 'Marked-up sequence' );
   $seq_menu->append($self->create_node( 'Sequence_cDNA',  'cDNA',
     [qw(sequence    EnsEMBL::Web::Component::Transcript::TranscriptSeq)],
