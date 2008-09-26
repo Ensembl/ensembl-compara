@@ -102,7 +102,7 @@ $pad    </dd>";
       } else {
       	$name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
       }
-      
+      my $row_content = '';
       if( $node->is_leaf ) {
 	$content .= sprintf( qq(
 $pad        <dd%s%s>%s</dd>), 
@@ -112,7 +112,10 @@ $pad        <dd%s%s>%s</dd>),
       else {
         $content .= sprintf( qq(
 $pad        <dd class="%s">%s
-$pad          <dl>), $node->left <= $active_l && $node->right >= $active_r ? 'open' : 'open', $name );
+$pad          <dl>),
+        ($node->left <= $active_l && $node->right >= $active_r ? 'open' : 'open').
+	  $node->key eq $active ? ' active' :'',
+	$name );
 	$pad .= '    ';
       }
     }
