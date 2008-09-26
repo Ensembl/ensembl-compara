@@ -5,6 +5,7 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Gene);
 
+use EnsEMBL::Web::Constants;
 use Bio::AlignIO;
 use IO::Scalar;
 
@@ -113,11 +114,20 @@ sub content_text {
 'configure tree' link in the left panel.<p>
 <pre>%s</pre>);
 
-  my $newick_mode = "full"; # Todo: user-selectable mode
-                            # Todo: support nhx in addition to newick
-  my $string = $tree->newick_format($newick_mode);
-  $string =~ s/,/,\n/g;
-  return sprintf( $htmlt,$string);
+  my %formats = EnsEMBL::Web::Constants::TREE_FORMATS();
+
+  my $mode = $object->param('tree_format');
+     $mode = 'newick' unless $formats{$mode};
+  my $fn   = $formats{$mode}{'method'};
+
+  my @params = map { $object->param( $_ ) } @{ $formats{$mode}{'parameters'} || [] };
+  warn "MODE $mode FN $fn PARAMS @params";
+  my $string = $tree->$fn(@params);
+  if( $formats{$mode}{'split'} ) {
+    my $reg = '(['.quotemeta($formats{$mode}{'split'}).'])';
+    $string =~ s/$reg/\1\n/g;
+  }
+  return sprintf( $htmlt, $string );
 }
 
 1;
