@@ -196,6 +196,36 @@ sub get_node {
          undef;
 }
 
+sub previous {
+### Get the previous leaf node - irrespective of the subtree it is in
+### Returns node object - or undef if current node is first leaf....
+  my( $self ) = @_;
+  my $l1 = $self->left;
+  my @Q = $self->_sorted_keys;
+  my $previous = undef;
+  foreach(@Q) {
+    my $n = $self->_node($_);
+    last if $n->{left} == $l1;
+    $previous = $_;
+  }
+  return $previous ? $self->get_node( $previous ) : undef;
+}
+
+sub next {
+### Get the next leaf node - irrespective of the subtree it is in
+### Returns node object - or undef if current node is last leaf....
+  my( $self ) = @_;
+  my $l1 = $self->left;
+  my @Q = reverse $self->_sorted_keys;
+  my $next = undef;
+  foreach(@Q) {
+    my $n = $self->_node($_);
+    last if $n->{left} == $l1;
+    $next = $_;
+  }
+  return $next ? $self->get_node( $next ) : undef;
+}
+
 sub previous_leaf {
 ### Get the previous leaf node - irrespective of the subtree it is in
 ### Returns node object - or undef if current node is first leaf....
