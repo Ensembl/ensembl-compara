@@ -234,7 +234,7 @@ sub _initialise_runnables{
 	if( defined( $self->{-runnable_index}->{$me}->{$db}->{$sid} ) ){next}
 
 	my $factory = $self->{-methods}->{$me};
-	$factory->retrievable && $factory->retrieve( $self->adaptor );
+	$factory->retrievable && $factory->retrieve(undef, $self->adaptor );
 	# Update factory status to prevent any more parameters being set
 	$factory->status("RUNNING"); 
 
