@@ -355,7 +355,7 @@ sub sorted_children {
 
 =head2 get_all_nodes
 
-  Arg 1       : hashref $node_hash [used for recursivity, don't use it!]
+  Arg 1       : hashref $node_hash [used for recursivity, do not use it!]
   Example     : my $all_nodes = $root->get_all_nodes();
   Description : Returns this and all underlying sub nodes
   ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
@@ -387,9 +387,9 @@ sub get_all_nodes {
 }
 
 
-=head2 get_all_nodes
+=head2 get_all_subnodes
 
-  Arg 1       : hashref $node_hash [used for recursivity, don't use it!]
+  Arg 1       : hashref $node_hash [used for recursivity, do not use it!]
   Example     : my $all_nodes = $root->get_all_nodes();
   Description : Returns all underlying sub nodes
   ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
@@ -415,6 +415,68 @@ sub get_all_subnodes {
   }
   return values(%$node_hash) if($toplevel);
   return undef;
+}
+
+=head2 get_all_ancestors
+
+  Arg 1       : 
+  Example     : my @ancestors = @{$node->get_all_ancestors};
+  Description : Returns all ancestor nodes for a given node
+  ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
+  Exceptions  : none
+  Caller      : general
+  Status      :
+
+=cut
+
+sub get_all_ancestors {
+  my $self = shift;
+  my $this = $self;
+  my @ancestors;
+  while( $this = $this->parent ){
+    push @ancestors, $this;
+  }
+  return [@ancestors]
+}
+
+=head2 get_all_adjacent_subtrees
+
+  Arg 1       : 
+  Example     : my @subtrees = @{$node->get_all_adjacent_subtrees};
+  Description : Returns subtree 'root' nodes where the subtree is adjacent
+                to this node. Used e.g. by the web code for the 'collapse 
+                other nodes' action 
+  ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
+  Exceptions  : none
+  Caller      : EnsEMBL::Web::Component::Gene::ComparaTree
+  Status      :
+
+=cut
+
+sub get_all_adjacent_subtrees {
+  my $self = shift;
+  my $node_id = $self->node_id;
+  my @node_path_to_root = ($self, @{$self->get_all_ancestors} );
+  my %path_node_ids = map{ $_->node_id => 1 } @node_path_to_root;
+
+  my $this = $self->subroot; # Start at the root node
+  my @adjacent_subtrees;
+  while( $this ){
+    last if $this->node_id == $node_id; # Stop on reaching current node
+    my $next;
+    foreach my $child (@{$this->children}){
+      warn( " => ", $child->node_id );
+      next if $child->is_leaf; # Leaves cannot be subtrees
+      if( $path_node_ids{$child->node_id} ){ # Ancestor node
+        $next = $child;
+      } else {
+        push @adjacent_subtrees, $child;
+      }
+    }
+    $this = $next || undef;
+  }
+
+  return [@adjacent_subtrees]
 }
 
 
