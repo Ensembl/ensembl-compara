@@ -142,33 +142,36 @@ sub content {
 	if ($ext_seq) {
 	    #get exon alignment
 	    my $e_alignment = $object->get_alignment( $ext_seq, $e_sequence, $seq_type );
-	    $table->add_row('Exon alignment',
-			    "<p><pre>$e_alignment</pre></p>",
-			    1, );
+	    $table->add_row('Exon alignment:','',1);
+	    $html .= $table->render;
+	    $html .= "<p><br /><pre>$e_alignment</pre></p>";
 	}
 	else {
 	    $table->add_row('Exon alignment',
 			    "<p>Unable to retrive sequence for $hit_id</p>",
 			    1, );
+	    $html .=  $table->render;
 	}
     }
 
     #get transcript sequence
     my $trans_sequence = $object->get_int_seq($trans,$seq_type)->[0];
 
+    my $table2  = new EnsEMBL::Web::Document::HTML::TwoCol;
     if ($ext_seq) {
 	#get transcript alignment
 	my $trans_alignment = $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
-	$table->add_row('Transcript alignment',
-			"<p><pre>$trans_alignment</pre></p>",
-			1, );
+	$table2->add_row('Transcript alignment:','',1);
+	$html .= $table2->render;
+	$html .= "<p><br /><pre>$trans_alignment</pre></p>";
     }
     else {
 	$table->add_row('Transcript alignment',
 			"<p>Unable to retrieve sequence for $hit_id</p>",
 			1, );
+	$html .= $table2->render;
     }
-    return $table->render;
+    return $html;;
 }		
 
 1;
