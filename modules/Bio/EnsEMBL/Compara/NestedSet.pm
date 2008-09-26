@@ -652,6 +652,48 @@ sub print_tree {
   $self->_internal_print_tree(undef, 0, $scale);
 }
 
+sub string_tree {
+  my $self  = shift;
+  my $scale = shift;
+     $scale ||= 100;
+  my $buffer = '';
+  $self->_internal_string_tree(undef, 0, $scale, \$buffer);
+  return $buffer;
+}
+
+sub _internal_string_tree {
+  my $self    = shift;
+  my $indent  = shift;
+  my $lastone = shift;
+  my $scale   = shift;
+  my $buffer  = shift;
+
+  if(defined($indent)) {
+    $$buffer .= $indent;
+    for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { $$buffer .= '-'; }
+  }
+
+  $$buffer .= $self->string_node($indent);
+
+  if(defined($indent)) {
+    if($lastone) {
+      chop($indent);
+      $indent .= " ";
+    }
+    for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { $indent .= ' '; }
+  }
+  $indent = '' unless(defined($indent));
+  $indent .= "|";
+
+  my $children = $self->sorted_children;
+  my $count=0;
+  $lastone = 0;
+  foreach my $child_node (@$children) {
+    $count++;
+    $lastone = 1 if($count == scalar(@$children));
+    $child_node->_internal_string_tree($indent,$lastone,$scale,$buffer);
+  }
+}
 
 sub _internal_print_tree {
   my $self  = shift;
@@ -686,29 +728,34 @@ sub _internal_print_tree {
   }
 }
 
-
 sub print_node {
-  my $self  = shift;
+  my $self = shift;
+  print $self->string_node;
+}
 
-  print("(");
+sub string_node {
+  my $self  = shift;
+  my $str = '(';
+
   if(defined $self->get_tagvalue("Duplication") 
      && $self->get_tagvalue("Duplication") ne '' 
      && $self->get_tagvalue("Duplication") > 0 
      && $self->get_tagvalue("dubious_duplication") ne '1') 
     {
-      print("DUP ");
+      $str .= "DUP ";
     } elsif (defined $self->get_tagvalue("Duplication") 
      && $self->get_tagvalue("Duplication") ne '' 
      && $self->get_tagvalue("Duplication") > 0 
      && $self->get_tagvalue("dubious_duplication") eq '1'
             ) 
     {
-      print("DD  ");
+      $str .= "DD  ";
     }
-  if(defined $self->get_tagvalue("Bootstrap") && $self->get_tagvalue("Bootstrap") ne '') { my $bootstrap_value = $self->get_tagvalue("Bootstrap"); print("B=$bootstrap_value "); }
-  if(defined $self->get_tagvalue("taxon_name") && $self->get_tagvalue("taxon_name") ne '') { my $taxon_name_value = $self->get_tagvalue("taxon_name"); print("T=$taxon_name_value "); }
-  printf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
-  printf("%s\n", $self->name);
+  if(defined $self->get_tagvalue("Bootstrap") && $self->get_tagvalue("Bootstrap") ne '') { my $bootstrap_value = $self->get_tagvalue("Bootstrap"); $str .= "B=$bootstrap_value "; }
+  if(defined $self->get_tagvalue("taxon_name") && $self->get_tagvalue("taxon_name") ne '') { my $taxon_name_value = $self->get_tagvalue("taxon_name"); $str .="T=$taxon_name_value "; }
+  $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
+  $str .= sprintf("%s\n", $self->name);
+  return $str;
 }
 
 sub nhx_format {
