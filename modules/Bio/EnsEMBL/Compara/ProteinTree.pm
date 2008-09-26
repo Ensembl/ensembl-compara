@@ -54,6 +54,18 @@ sub description_score {
   return $self->{'_description_score'};
 }
 
+sub get_leaf_by_Member {
+  my $self = shift;
+  my $member = shift;
+
+  if($member->isa('Bio::EnsEMBL::Compara::ProteinTree')) {
+    return $self->find_leaf_by_node_id($member->node_id);
+  } elsif ($member->isa('Bio::EnsEMBL::Compara::Member')) {
+    return $self->find_leaf_by_name($member->get_longest_peptide_Member->stable_id);
+  } else {
+    die "Need a Member object!";
+  }
+}
 
 sub get_SimpleAlign {
   my ($self, @args) = @_;
