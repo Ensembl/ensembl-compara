@@ -74,53 +74,90 @@ sub get_status {
   foreach my $t (@tickets) {
 
     my $blast = $self->retrieve_ticket($t);
-    eval { $blast->_initialise_runnables };
-    if ($@) { warn $@; }
-    my @A = $blast->runnables;
     my @run_list;
-    foreach $runnable ($blast->runnables) {
-      if ($runnable->status eq 'PENDING' || $runnable->status eq 'DISPATCHED') {
-        ## Dispatch this search
+    if ($blast) {
+      eval { $blast->_initialise_runnables };
+      if ($@) { warn $@; }
+      my @A = $blast->runnables($t);
+      foreach $runnable (@A) {
         if ($runnable->status eq 'PENDING') {
-          $runnable->status('DISPATCHED');
-          push @run_list, $runnable;
+          $report->{$t} = 'queued';
+          $report->{'complete'} = 0;
+          $report->{'pending'} = 1;
         }
-        $report->{$t} = 'queued';
-        $report->{'complete'} = 0;
-      }
-      elsif ($runnable->status eq 'COMPLETED') {
-        $report->{$t} = 'completed';
-        $report->{'complete'} = 1;
-      }
-      else {
-        warn "UNKNOWN STATUS: ".$runnable->status;
-        $report->{$t} = 'unknown';
-        $report->{'complete'} = 0;
-      }
-    }
-    ## Save changes made so far
-    $blast->store;
-
-    ## Now run any pending searches
-    foreach $runnable (@run_list) {
-      eval { $runnable->run };
-      if ($@) {
-        ## TODO: error message
-      }
-      if ($runnable->status eq 'COMPLETED') {
-        $runnable->store;
-        $report->{$t} = 'completed';
-        $report->{'complete'} = 1;
-      }
-      else {
-        $report->{$t} = 'queued';
-        $report->{'complete'} = 0;
+        elsif ($runnable->status eq 'COMPLETED') {
+          $report->{$t} = 'completed';
+          $report->{'complete'} = 1;
+          my $token = $runnable->token;
+          if ($token =~ m#/(\w+)$#) {
+            $report->{'run_id'} = $1;
+          }
+        }
+        else {
+          # TODO: make this more user-friendly!
+          $report->{$t} = $runnable->status;
+          $report->{'complete'} = 0;
+        }
       }
     }
-  
   }
 
   return $report;
+}
+
+sub run_jobs {
+### Run any pending jobs
+  my ($self, @tickets) = @_;
+
+  foreach my $t (@tickets) {
+
+    my $blast = $self->retrieve_ticket($t);
+    my @run_list;
+    if ($blast) {
+      eval { $blast->_initialise_runnables };
+      if ($@) { warn $@; }
+      my @A = $blast->runnables($t);
+      foreach my $runnable (@A) {
+        if ($runnable->status eq 'PENDING') {
+          ## Dispatch this search
+          $runnable->status('DISPATCHED');
+          push @run_list, $runnable;
+        }
+        warn "RUNNABLE = ".$runnable->status;
+      }
+      ## Save changes made so far
+      $blast->store;
+
+      ## Now run any pending searches
+      foreach my $runnable (@run_list) {
+        eval { $runnable->run };
+        if ($@) {
+          ## TODO: error message
+          warn "BLAST RUN ERROR: $@";
+        }
+        if ($runnable->status eq 'COMPLETED') {
+          $runnable->store;
+        }
+      }
+    }
+  }
+}
+
+sub fetch_coord_systems {
+  my $self = shift;
+
+  my $runnable = $self->retrieve_runnable;
+  my $species = $runnable->result->database_species;
+  my $DBAdaptor = $self->DBConnection->get_databases_species($species, 'core')->{'core'};
+  my $coord_systems = {};
+  my $CoordSystemAdaptor = $DBAdaptor->get_CoordSystemAdaptor;
+  foreach my $CoordSystem( @{$CoordSystemAdaptor->fetch_all} ) {
+    my $name = $CoordSystem->name;
+    my $rank = $CoordSystem->rank;
+    next if $coord_systems->{$name} && $rank > $coord_systems->{$name};
+    $coord_systems->{$name} = $rank;
+  }
+  return $coord_systems;
 }
 
 sub retrieve_ticket {
@@ -129,10 +166,9 @@ sub retrieve_ticket {
   my ($self, $ticket) = @_;
   warn "TICKET $ticket";
   return unless $ticket;
-
-  my $search_multi;
   $VERBOSE && warn( "RETRIEVING BLAST: $ticket [PID=$$ TIME=".
                     (time()-1060600000)."]" );
+  my $search_multi;
   eval{
     $search_multi = Bio::Tools::Run::EnsemblSearchMulti->retrieve
       ( $ticket, $self->adaptor ? $self->adaptor : () );
@@ -142,18 +178,150 @@ sub retrieve_ticket {
     eval{ $search_multi->runnables };
     $@ || return $search_multi; # Object OK
   }
-  my $err = "Can not retrieve BlastView ticket $ticket";
+  my $err = "Cannot retrieve BlastView ticket $ticket";
+  $self->problem($err);
   my $msg = "$err: ". ( $@ || 'Unknown' );
   warn( $msg );
-  #log_blast_error( $ticket, $msg );
-  #add_warning( 'setup','query', $err );
   return;
 }
 
-sub retrieve_features {
-  my ($self, $blast) = @_;
+sub retrieve_data {
+  my ($self, $data_type) = @_;
+
+  my $runnable = $self->retrieve_runnable;
+  if ($runnable) {
+    my $species = $runnable->result->database_species;
+
+    my $data;
+    if ($data_type eq 'hsp') {
+      $data = $self->retrieve_hsp;
+    }
+    elsif ($data_type eq 'hit') {
+      $data = $self->retrieve_hit;
+    }
+    else {
+      $data = $self->_retrieve_alignments($runnable);
+    }
+    return ($species, $data);
+  }
+  else {
+    warn "@@@ No runnable found!";
+  }
+  return undef;
+}
+
+sub retrieve_runnable {
+  my $self = shift;
+
+  my $ticket = $self->param('ticket');
+  $self->problem("INTERFACE ERROR: no ticket number supplied") unless $ticket;
+  my $run_id = $self->param('run_id');
+  $self->problem("INTERFACE ERROR: no run ID supplied!") unless $run_id;
+  my $blast = $self->retrieve_ticket($ticket);
+  return unless $blast;
+
+  my $run_token = $blast->workdir."/".$run_id;
+  my( $runnable )= $blast->runnables_like( -token=>$run_token );
+  $self->problem("ERROR: Result $run_id not found for ticket $ticket") unless $runnable;
+  return $runnable;
+}
+
+sub retrieve_hsp {
+  my $self = shift;
+
+  my $hsp;
+  if( my $hsp_id = $self->param('hsp_id') ){
+    eval{ $hsp = Bio::Search::HSP::EnsemblHSP->retrieve($hsp_id, $self->adaptor) };
+    $@ and warn( $@ );
+    $self->problem("HSP $hsp_id not found for ticket ".$self->param('ticket')) unless $hsp;
+  }
+  return $hsp;
+}
+
+sub retrieve_hit {
+  my $self = shift;
+
+  my $hit;
+  if( my $hit_id = $self->param('hit_id') ){
+    eval{ $hit = Bio::Search::Hit::EnsemblHit->retrieve($hit_id, $self->adaptor) };
+    $@ and warn( $@ );
+    $self->problem("Hit $hit_id not found for ticket ".$self->param('ticket')) unless $hit;
+  }
+  return $hit;
+}
+
+sub _retrieve_alignments {
+  my ($self, $runnable) = @_;
+
+  ## Create sorted alignment [$hit,$hsp] from top NN scoring HSPs
   my $data = [];
+  my $result  = $runnable->result;
+  my $sortby = $self->param('view_sortby') || 'score';
+
+  my $num_aligns = $self->param('view_numaligns') || 100;
+  my $max_aligns  = 10000;
+  my $tot_aligns = 0;
+  map{ $tot_aligns += $_->num_hsps } $result->hits;
+  if ( $num_aligns > $max_aligns ) {
+    $num_aligns = $max_aligns if $num_aligns > $max_aligns;
+    $num_aligns = $tot_aligns if $num_aligns > $tot_aligns;
+  }
+
+  foreach my $hit( $result->hits ){
+    push @$data, map{ [$hit,$_] } $hit->hsps;
+  }
+
+  if (scalar(@$data) > 0) {
+
+    if (scalar(@$data) > 1) {
+      @$data = ( sort{ $b->[1]->$sortby <=> $a->[1]->$sortby }
+                       @$data )[0..$num_aligns-1];
+    }
+  }
+
   return $data;
+}
+
+sub sort_table_values {
+  my ($self, $alignments, $coord_systems) = @_;
+
+  my $sort = $self->param('view_sort') || "evalue_dsc";
+  my( $sort_by, $direction ) = split( '_', $sort );
+  my $sorted = 0; # Whether we have found a valid sort
+  foreach my $csname( @$coord_systems ){
+    next if $csname ne $sort_by;
+    my $scode = sub{
+      my( $up, $do ) =
+        ( $direction eq 'asc' ?
+          ( $a->[1]->genomic_hit($csname)||'', $b->[1]->genomic_hit($csname)||'' ) :
+          ( $b->[1]->genomic_hit($csname)||'', $a->[1]->genomic_hit($csname)||'' ) );
+      if( $up && $do ){
+        return ( 3 * ($up->seq_region_name cmp $do->seq_region_name) +
+                 1 * ($up->start           <=> $do->start ) );
+      }
+      if( $up ){ return -1 }
+      if( $do ){ return 1  }
+      return 0;
+    };
+    @$alignments = sort{ &$scode } @$alignments;
+    $sorted++;
+    last;
+  }
+  foreach my $stat qw( score evalue pvalue identity length ){
+    last if $sorted;
+    next if $stat ne $sort_by;
+    my $method = $stat;
+    if( $stat eq 'identity' ){ $method = 'percent_identity' }
+    if ( $direction eq 'asc') {
+      @$alignments = sort{ $a->[1]->$method <=> $b->[1]->$method } @$alignments;
+    }
+    else {
+      @$alignments = sort{ $b->[1]->$method <=> $a->[1]->$method } @$alignments;
+    }
+    $sorted++;
+    last;
+  }
+  return $alignments;
 }
 
 
@@ -238,8 +406,6 @@ sub _process_query {
     warn "No query sequences have been entered";
   }
 
-  #if( ! $changed ){ return }
-
   # Construct the _query_sequence summary
   my $htmpl = qq(
 ***QUERY INFO: %s %s SEQUENCE\(S\)***\n);
@@ -304,22 +470,10 @@ sub _process_method {
   my $changed_me = $self->param('_changed_method')       ? 1 : 0;
   my $changed_se = $self->param('_changed_sensitivity' ) ? 1 : 0;
 
-=pod
-  # test config validity of method
-  foreach my $sp( @sp ){
-    my( $test ) = $DEFS->dice( -q_type  =>$qt,
-             -d_type  =>$dt,
-             -species =>$sp,
-             -database=>$db,
-             -method  =>$me );
-    $test || return "Method '$me' is invalid";
-  }
-=cut
-
-    # Get current method
+  # Get current method
   my $method;
   eval{ ( $method ) = $blast->methods };
-  if( $@ ){ warn( $@ ) && return "Ensembl system error" }
+  if( $@ ){ warn( $@ ) && $self->problem("Ensembl system error") }
 
   # Only set method if we have a new one
   if( ! $method or $changed_me or $changed_se){
