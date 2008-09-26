@@ -41,7 +41,22 @@ sub content {
   #$wuc->tree->dump("GENE TREE CONF", '([[caption]])');
   my @highlights = ($object->stable_id, $member->genome_db->dbID);
   # Keep track of collapsed nodes
-  push @highlights, $object->param('collapse') || undef;
+
+  my $collapsed_nodes = $object->param('collapse');
+
+  unless( defined( $collapsed_nodes ) ){
+    my $leaf_node = $tree->get_leaf_by_Member($member);
+    if( $leaf_node ){
+      $collapsed_nodes = join(',', 
+                              map{$_->node_id=>1} 
+                              @{$leaf_node->get_all_adjacent_subtrees});
+    } else {
+      warn sprintf( "[WARN] Member %s not in tree %s", 
+                    $member->stable_id, $tree->node_id );
+    }
+  }
+
+  push @highlights, $collapsed_nodes || undef;
 
   my $image  = $object->new_image
       ( $tree, $wuc, [@highlights] );

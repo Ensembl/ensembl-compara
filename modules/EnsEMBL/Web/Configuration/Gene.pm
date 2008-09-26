@@ -286,40 +286,20 @@ sub _ajax_zmenu_compara_tree_node{
     }
 
     # Collapse other nodes
-    # First get a list of ancestor nodes for the current node
-    my %ancestors = ( $node_id => 1 );
-    my $this = $node;
-    while( $this = $this->parent ){
-      $ancestors{$this->node_id} ++;
+    my @adjacent_subtree_ids 
+        = map{$_->node_id} @{$node->get_all_adjacent_subtrees};
+    if( @adjacent_subtree_ids ){
+      $panel->add_entry({
+        'type'     => 'ACTION',
+        'label'    => 'collapse other nodes',
+        'priority' => 2,
+        'link'     => $obj->_url
+            ({'type'   =>'Gene',
+              'action' =>'Compara_Tree',
+              'collapse' => join( ',', 
+                                  (keys %collapsed_ids),
+                                  @adjacent_subtree_ids ) }), });
     }
-    
-    # Next itterate through the tree, noting adjacent IDs to the ancestor nodes
-    $this = $tree;
-    my @collapse_children;
-    while( $this ){
-      last if $this->node_id == $node_id; # Stop on reaching current node
-      my $next;
-      foreach my $child (@{$this->children}){
-        next if $child->is_leaf; # Cannot collapse leaves
-        my $child_id = $child->node_id;
-        if( $ancestors{$child_id} ){ # Ancestor node
-          $next = $child;
-        } else {
-          push @collapse_children, $child_id;
-        }
-      }
-      $this = $next || undef;
-    }
-    $panel->add_entry({
-      'type'     => 'ACTION',
-      'label'    => 'collapse other nodes',
-      'priority' => 2,
-      'link'     => $obj->_url
-          ({'type'   =>'Gene',
-            'action' =>'Compara_Tree',
-            'collapse' => join( ',', 
-                                (keys %collapsed_ids),
-                                @collapse_children ) }), });
 
     # Jalview
     warn( "$panel" );
