@@ -130,8 +130,8 @@ sub _summarise_core_tables {
       "select analysis_id,count(*) from $table group by analysis_id"
     );
     foreach my $T ( @$res_aref ) {
-      my $a_ref = $analysis->{$T->[0]};
-      warn "Missing analysis entry $table - $T->[0]\n" unless $a_ref;
+      my $a_ref = $analysis->{$T->[0]}
+        || ( warn("Missing analysis entry $table - $T->[0]\n") && next );
       my $value = {
         'name'  => $a_ref->{'name'},
         'desc'  => $a_ref->{'description'},
@@ -217,7 +217,6 @@ sub _summarise_core_tables {
     if( $row ) {
       $self->db_tree->{'MAX_CHR_NAME'  } = $row->[0];
       $self->db_tree->{'MAX_CHR_LENGTH'} = $row->[1];
-    warn ".......... $row->[1] ...........";
     } else {
       $self->db_tree->{'MAX_CHR_NAME'  } = undef;
       $self->db_tree->{'MAX_CHR_LENGTH'} = undef;
