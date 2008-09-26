@@ -862,6 +862,18 @@ sub _internal_newick_format {
     }
     $newick .= sprintf(":%1.4f", $self->distance_to_parent);
   }
+  if($format_mode eq "full_web") { 
+    #display_label: external name and distance on all nodes
+    my $display_label;
+    if($self->is_leaf) {
+      my $gene_member = $self->gene_member;
+      my $short_name = $gene_member->genome_db->short_name;
+      $display_label = $gene_member->display_label || $gene_member->stable_id;
+      $display_label = $short_name . ":" . $display_label;
+    }
+    # $newick .= $self->name;
+    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+  }
   if($format_mode eq "gene_stable_id") { 
     #display_label: external name and distance on all nodes
     my $display_label;
