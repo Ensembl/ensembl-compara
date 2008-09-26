@@ -53,6 +53,21 @@ sub populate_tree {
         )],
       { 'no_menu_entry' => 1 }
   );
+  $self->create_node( 'Alignment', '',
+    [qw(sent EnsEMBL::Web::Component::Blast::Alignment
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'QuerySequence', '',
+    [qw(sent EnsEMBL::Web::Component::Blast::QuerySequence
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'GenomicSequence', '',
+    [qw(sent EnsEMBL::Web::Component::Blast::GenomicSequence
+        )],
+      { 'no_menu_entry' => 1 }
+  );
 
 }
 
