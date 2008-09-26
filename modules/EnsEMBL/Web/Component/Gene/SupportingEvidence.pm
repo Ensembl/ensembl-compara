@@ -76,7 +76,7 @@ sub content {
 	my $ln = $e->{$tsi}{'logic_name'};
 	my $t_url = $self->object->_url({
 	    'type'   => 'Transcript',
-	    'action' => 'Evidence',
+	    'action' => 'SupportingEvidence',
 	    't'      => $tsi,
 	});
 	my ($trans_evi,$cds_ids,$utr_ids,$other_ids,$exon_evi);

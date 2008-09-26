@@ -166,7 +166,7 @@ sub populate_tree {
   );
 
 
-  $self->create_node( 'Evidence', "Supporting evidence  ([[counts::evidence]])",
+  $self->create_node( 'SupportingEvidence', "Supporting evidence  ([[counts::evidence]])",
    [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidence)],
     { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
@@ -214,7 +214,7 @@ sub populate_tree {
   ));
   $prot_menu->append($self->create_node( 'Domains', "Domains  ([[counts::prot_domains]])",
     [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet
-        domaingenes   EnsEMBL::Web::Component::Transcript::DomainGenes)],
+	domaingenes   EnsEMBL::Web::Component::Transcript::DomainGenes)],
     { 'availability' => 1, 'concise' => 'Protein domains'}
   ));
   $prot_menu->append($self->create_node( 'ProtVariations', "Variation features  ([[counts::prot_variations]])",
