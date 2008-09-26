@@ -82,7 +82,7 @@ sub _content {
 
   $wuc->modify_configs( ## Turn on track associated with this db/logic name
     [$wuc->get_track_key( 'TSE_transcript', $object )],
-    {qw(on on strand f)}  ## show on the forward strand only
+    {qw(display supporting_evidence_transcript strand f)}  ## show on the forward strand only
 
   );
 
