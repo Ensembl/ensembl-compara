@@ -394,7 +394,7 @@ sub _map {
 
   # DNA || DNA_RM
   else{
-    my $coord_system_name = $dbseq_meta{subtype};
+    my $coord_system_name = $dbseq_meta{subtype} || 'toplevel';
     my $seq_name          = $dbseq_meta{name};
     my $start             = $hit->start + ( $dbseq_meta{offset} || 0 );
     my $end               = $hit->end   + ( $dbseq_meta{offset} || 0 );
