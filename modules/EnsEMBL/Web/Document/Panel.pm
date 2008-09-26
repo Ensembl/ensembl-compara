@@ -623,10 +623,12 @@ sub content {
           
           my $caption = $comp_obj->caption;
           if( $comp_obj->ajaxable() && !$self->_is_ajax_request ) {
-            my( $ensembl, $plugin, $component, $type, @T ) = split '::', $module_name;
+            my( $ensembl, $plugin, $component, $type, $module ) = split '::', $module_name;
             my $URL = join '/',
-              '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,@T;
+              '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,$module;
+	      $URL .= "/$ENV{'ENSEMBL_FUNCTION'}" if $ENV{'ENSEMBL_FUNCTION'} && $comp_obj->can( 'content_'.lc($ENV{'ENSEMBL_FUNCTION'}) );
               $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
+	    warn "CREATING URL.... $ENV{'ENSEMBL_FUNCTION'} ::: $URL";
 
               ## Check if ajax enabled
             if( $ENSEMBL_WEB_REGISTRY->check_ajax ) {
@@ -644,7 +646,8 @@ sub content {
           } else {
             my $content;
             eval {
-              $content = $comp_obj->content;
+              my $FN = lc($ENV{'ENSEMBL_FUNCTION'});
+	      $content = $FN && $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
             };
             if ($@) {
               warn $@;

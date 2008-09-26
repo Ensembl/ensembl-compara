@@ -59,23 +59,23 @@ sub populate_tree {
   ));
 
 ## Compara tree
-  $compara_menu->append
-      ( $self->create_node
-        ( 'Compara_Tree', "Gene Tree",
-          [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
-          { 'availability' => 'database:compara' } ) );
+  my $tree_node = $self->create_node(
+    'Compara_Tree', "Gene Tree",
+    [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
+    { 'availability' => 'database:compara' }
+  );
+  $tree_node->append( $self->create_subnode(
+    'Compara_Tree/Text', "Gene Tree (text)",
+    [qw(treetext        EnsEMBL::Web::Component::Gene::ComparaTree)],
+    { 'availability' => 'database:compara' }
+  ));
 
-  $compara_menu->append
-      ( $self->create_node
-        ( 'Compara_Tree_Text', "Gene Tree (text)",
-          [qw(treetext        EnsEMBL::Web::Component::Gene::ComparaTreeText)],
-          { 'availability' => 'database:compara' } ) );
-
-  $compara_menu->append
-      ( $self->create_node
-        ( 'Compara_Tree_Align',       "Gene Tree (alignment)",
-          [qw(treealign      EnsEMBL::Web::Component::Gene::ComparaTreeAlign)],
-          { 'availability' => 'database:compara' } ) );
+  $tree_node->append( $self->create_subnode(
+    'Compara_Tree/Align',       "Gene Tree (alignment)",
+    [qw(treealign      EnsEMBL::Web::Component::Gene::ComparaTree)],
+    { 'availability' => 'database:compara' }
+  ));
+  $compara_menu->append( $tree_node );
 
   $compara_menu->append
       ( $self->create_node

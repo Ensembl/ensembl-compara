@@ -18,7 +18,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $form = EnsEMBL::Web::Form->new( 'change_chr', '/'.$object->species.'/jump_to_location_view', 'get' );
+  my $form = EnsEMBL::Web::Form->new( 'change_chr', $object->_url({'r'=>undef}), 'get' );
 
   my @chrs = $self->chr_list($object);
   my $chr_name = $object->seq_region_name;
@@ -39,7 +39,7 @@ sub content {
     'select'   => 'select',
     'style'    => 'narrow',
     'on_change' => 'submit',
-    'name'     => 'r',
+    'name'     => 'chr',
     'label'    => $label,
     'values'   => \@chrs,
     'value'    => $chr_name,

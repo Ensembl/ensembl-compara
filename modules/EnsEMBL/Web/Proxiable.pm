@@ -3,6 +3,7 @@ package EnsEMBL::Web::Proxiable;
 use strict;
 use warnings;
 no warnings "uninitialized";
+use base qw( EnsEMBL::Web::Root );
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::ExtURL;
@@ -10,17 +11,14 @@ use EnsEMBL::Web::Root;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use CGI qw(escape escapeHTML);
 
-our @ISA = qw( EnsEMBL::Web::Root );
 
 sub _url {
   my $self = shift;
   my $params  = shift || {};
-  warn "URL called........................... ";
+  die "Not a hashref while calling _url ($params @_)" unless ref($params) eq 'HASH';
   my $species = exists( $params->{'species'} ) ? $params->{'species'} : $self->species;
   my $type    = exists( $params->{'type'}    ) ? $params->{'type'}    : $self->type;
   my $action  = exists( $params->{'action'}  ) ? $params->{'action'}  : $self->action;
-
-  warn "$species - $type - $action";
 
   my %pars = %{$self->core_objects->{'parameters'}};
   foreach( keys %$params ) {
@@ -30,9 +28,12 @@ sub _url {
   my $join = '?';
 ## Sort the keys so that the URL is the same for a given set of parameters...
   foreach ( sort keys %pars ) {
-    $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) if defined $pars{$_};
+    next unless defined $pars{$_};
+    $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) ;
     $join = ';';
   }
+  warn "WE HAVE CALLED URL............. $URL, @{[keys %$params]} | @{[values %$params]}";
+
   return $URL;
 }
 

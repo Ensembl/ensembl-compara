@@ -285,14 +285,14 @@ sub _merge {
     }
     if( $sub_tree->{'web'}{'key'} ) {
       if( $sub_tree->{'desc'} ) {
-        $data->{$key}{'html_desc'} ||= "<dl>\n";
-    $data->{$key}{'description'}      ||= '';
+        $data->{$key}{'html_desc'}   ||= "<dl>\n";
+        $data->{$key}{'description'} ||= '';
         $data->{$key}{'html_desc'} .= sprintf(
           "  <dt>%s</dt>\n  <dd>%s</dd>\n",
           CGI::escapeHTML( $sub_tree->{'web'}{'name'}       ),     # Description for pop-help - merged of all descriptions!!
           CGI::escapeHTML( $sub_tree->{'desc'})
         );
-    $data->{$key}{'description'}.= ($data->{$key}{'description'}?'; ':'').$sub_tree->{'desc'};
+        $data->{$key}{'description'}.= ($data->{$key}{'description'}?'; ':'').$sub_tree->{'desc'};
       }
     } else {
       $data->{$key}{'description'} = $sub_tree->{'desc'};
@@ -339,7 +339,7 @@ sub add_dna_align_feature {
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'display'     => $data->{$key_2}{'display'}||'unlimited', ## Default to on at the moment - change to off by default!
+        'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
         'renderers'   => [
           'off'         => 'Off',
           'normal'      => 'Normal',
@@ -374,7 +374,7 @@ sub add_protein_align_feature {
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
-      'display'     => $data->{$key_2}{'display'}||'ungrouped', ## Default to on at the moment - change to off by default!
+      'display'     => $data->{$key_2}{'display'}||'unlimited', ## Default to on at the moment - change to off by default!
       'renderers'   => [
         'off'         => 'Off',
         'normal'      => 'Normal',
@@ -422,6 +422,7 @@ sub add_prediction_transcript {
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
       'colourset'   => 'prediction',
+      'colour_key'  => lc($key_2),
       'description' => $data->{$key_2}{'description'},
       'display'     => $data->{$key_2}{'display'}||'normal', ## Default to on at the moment - change to off by default!
       'renderers'   => [qw(off Off normal Normal)],
@@ -484,6 +485,7 @@ sub add_gene {
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'colours'     => $self->species_defs->colour( 'gene' ),
         'caption'     => $data->{$key_2}{'caption'},
+	'colour_key'  => $data->{$key_2}{'colour_key'},
         'description' => $data->{$key_2}{'description'},
         'display'     => $data->{$key_2}{'display'}||($type eq 'transcript' ? 'transcript' : 'normal'), ## Default to on at the moment - change to off by default!
         'renderers'   => $type eq 'transcript' ?
@@ -584,8 +586,7 @@ sub add_oligo_probe {
       'description' => $description,
       'caption'     => $key_2,
       'strand'      => 'b',
-      'on'          => 'off',
-      'display'     => 'half_height', 
+      'display'     => 'off', 
       'renderers'   => [
         'off'         => 'Off',
         'normal'      => 'Normal',

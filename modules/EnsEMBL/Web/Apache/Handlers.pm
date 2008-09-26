@@ -332,8 +332,9 @@ sub transHandler_species {
   if( $real_script_name ) {
     $r->subprocess_env->{'ENSEMBL_TYPE'}     = $script;
     if( $real_script_name eq 'action' ) {
-      $r->subprocess_env->{'ENSEMBL_ACTION'} = join '_', @$path_segments;
-      $path_segments                         = [];
+      $r->subprocess_env->{'ENSEMBL_ACTION'}   = shift @$path_segments;
+      $r->subprocess_env->{'ENSEMBL_FUNCTION'} = shift @$path_segments;
+#      $path_segments                         = [];
     } elsif( $real_script_name eq 'zmenu' || $real_script_name eq 'config' ) {
       $type   = shift @$path_segments;
       $action = shift @$path_segments;
@@ -343,7 +344,10 @@ sub transHandler_species {
       $type = shift @$path_segments;
       my @T                                  = map { s/\W//g;$_ } @$path_segments;
       my $plugin                             = shift @T;
-      $r->subprocess_env->{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, @T;
+      my $Module                             = shift @T;
+      my $fn                                 = @T ? 'content_'.shift(@T) : 'content';
+      $r->subprocess_env->{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $Module;
+      $r->subprocess_env->{'ENSEMBL_FUNCTION'}  = $fn;
       $r->subprocess_env->{'ENSEMBL_TYPE'}      = $type;
       $path_segments                         = [];
     } else { ## This is a user space script - don't do anything - I think!

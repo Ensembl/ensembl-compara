@@ -86,8 +86,12 @@ sub default_action {
 sub _get_valid_action {
   my $self = shift;
   my $action = shift;
-  my %hash = map { $_ => 1 } $self->{_data}{tree}->leaf_codes;
-  return exists( $hash{$action} ) ? $action : $self->default_action;
+  # my %hash = map { $_ => 1 } $self->{_data}{tree}->get_node(';
+
+  warn "... $action ...";
+  my $node = $self->tree->get_node( $action );
+  warn "... $node   ...";
+  return $node && $node->get('type') =~ /view/ ? $action : $self->default_action;
 }
 
 sub _ajax_content {
@@ -422,14 +426,14 @@ sub _content_panel {
      $title = join ' - ', '', ( $obj ? $obj->caption : () ), $title;
   $self->set_title( $title );
 
-  my $previous_node = $node->previous_leaf;
+  my $previous_node = $node->previous;
   ## don't show tabs for 'no_menu' nodes
-  while( defined($previous_node) && $previous_node->data->{'no_menu_entry'} ) {
-    $previous_node = $previous_node->previous_leaf;
+  while( defined($previous_node) && $previous_node->get('type') ne 'view' ) {
+    $previous_node = $previous_node->previous;
   }
-  my $next_node     = $node->next_leaf;
-  while( defined($next_node) && $next_node->data->{'no_menu_entry'} ) {
-    $next_node = $next_node->next_leaf;
+  my $next_node     = $node->next;
+  while( defined($next_node) && $next_node->get('type') ne 'view' ) {
+    $next_node = $next_node->next;
   }
 
   my %params = (
@@ -481,6 +485,7 @@ sub create_node {
     caption    => $caption,
     components => $components,
     code       => $code,
+    type       => 'view',
   };
   
   foreach ( keys %{$options||{}} ) {
@@ -490,9 +495,24 @@ sub create_node {
   return $self->tree->create_node( $code, $details );
 }
 
+sub create_subnode {
+  my ( $self, $code, $caption, $components, $options ) = @_;
+
+  my $details = {
+    caption    => $caption,
+    components => $components,
+    code       => $code,
+    type       => 'subview',
+  };
+  foreach ( keys %{$options||{}} ) {
+    $details->{$_} = $options->{$_};
+  }
+  return $self->tree->create_node( $code, $details );
+
+}
 sub create_submenu {
   my ($self, $code, $caption, $options ) = @_;
-  my $details = { 'caption'    => $caption, 'url' => '' };
+  my $details = { 'caption'    => $caption, 'url' => '', 'type' => 'menu' };
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
   }

@@ -8,37 +8,14 @@ package EnsEMBL::Web::Object;
 use strict;
 use warnings;
 no warnings "uninitialized";
-
 use base qw(EnsEMBL::Web::Proxiable);
+
 use EnsEMBL::Web::Document::Image;
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
 use CGI qw(escape);
 
  
-sub _url {
-  my $self = shift;
-  my $params  = shift || {};
-  die "Not a hashref while calling _url ($params @_)" unless ref($params) eq 'HASH';
-  my $species = exists( $params->{'species'} ) ? $params->{'species'} : $self->species;
-  my $type    = exists( $params->{'type'}    ) ? $params->{'type'}    : $self->type;
-  my $action  = exists( $params->{'action'}  ) ? $params->{'action'}  : $self->action;
-
-  my %pars = %{$self->core_objects->{'parameters'}};
-  foreach( keys %$params ) {
-    $pars{$_} = $params->{$_} unless $_ eq 'species' || $_ eq 'type' || $_ eq 'action';
-  }
-  my $URL = sprintf( '/%s/%s/%s', $species, $type, $action );
-  my $join = '?';
-## Sort the keys so that the URL is the same for a given set of parameters...
-  foreach ( sort keys %pars ) {
-    next unless defined $pars{$_};
-    $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) ;
-    $join = ';';
-  }
-  return $URL;
-}
-
 sub core_params {
   my $self = shift;
   my $params = [];
