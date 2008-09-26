@@ -1,6 +1,4 @@
-package EnsEMBL::Web::Controller::Command::Blast::Status;
-
-### Wrapper module for Component::Blast::Status
+package EnsEMBL::Web::Controller::Command::Blast::Alignment;
 
 use strict;
 use warnings;
@@ -8,9 +6,9 @@ use warnings;
 use Class::Std;
 
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Magic qw(stuff);
 use base 'EnsEMBL::Web::Controller::Command::Blast';
 
-use EnsEMBL::Web::Magic qw(stuff);
 {
 
 sub BUILD {
@@ -19,7 +17,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  stuff 'Blast', 'Status', $self;
+  stuff 'Blast', 'Alignment', $self;
 }
 
 }

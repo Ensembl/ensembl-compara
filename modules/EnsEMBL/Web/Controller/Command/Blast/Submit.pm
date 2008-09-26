@@ -1,5 +1,8 @@
 package EnsEMBL::Web::Controller::Command::Blast::Submit;
 
+### Command module to submit a new Blast query to the database
+### and forward to an appropriate feedback page
+
 use strict;
 use warnings;
 
@@ -16,33 +19,32 @@ sub BUILD {
 }
 
 sub process {
-### This method handles the initial stages of the blast query - submitting the data
-### and checking ticket status - before forwarding to the appropriate page
   my $self = shift;
   my $cgi = $self->action->cgi;
   my ($script, $new_param);
 
   my $object = $self->_create_object;
-  my $blast;
+  my $ticket = $object->submit_query;
+
   $new_param->{'species'} = $cgi->param('species');
-
-  my $ticket = $cgi->param('_ticket') || $cgi->param('ticket');
-
-  if ($ticket) {
-    $ticket =~ s/\s//g;
-  }
-  else {
-    ## Submit new query
-    $ticket = $object->submit_query;
-  }
   $new_param->{'ticket'} = $ticket;
 
   my $report = $object->get_status($ticket);
-  my $status = $report->{$ticket};
-  if ($report->{'complete'}) {
-    $script = 'Results';
+  if ($cgi->param('method') eq 'BLAT' && $report->{'pending'}) {
+    ## Run BLAT jobs immediately and get results
+    $object->run_jobs($ticket);
+    $report = $object->get_status($ticket);
+    if ($report->{'complete'}) {
+      $script = 'Results';
+      $new_param->{'run_id'} = $report->{'run_id'};
+    }
+    else {
+      $script = 'Status';
+      $new_param->{'status'} = $report->{$ticket};
+    }
   }
   else {
+    ## BLAST always gets queued, so redirect to status page (and then run in background)
     $script = 'Status';
     $new_param->{'status'} = $report->{$ticket};
   }
@@ -52,7 +54,7 @@ sub process {
 
 
 sub _create_object {
-  ## This module needs to create a fully-fledged Blast object in order to talk to the blast server
+### Helper method - creates a fully-fledged Blast object in order to talk to the blast server
   my $self = shift;
 
   my $db_connection = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $ENSEMBL_WEB_REGISTRY->species_defs);
