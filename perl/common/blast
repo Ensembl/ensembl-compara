@@ -12,12 +12,15 @@ use EnsEMBL::Web::Controller;
 my $controller = EnsEMBL::Web::Controller->new;
 
 $controller->add_connections({qw(
-  Search      EnsEMBL::Web::Controller::Command::Blast::Search
-  Ticket      EnsEMBL::Web::Controller::Command::Blast::Ticket
-  Submit      EnsEMBL::Web::Controller::Command::Blast::Submit
-  Status      EnsEMBL::Web::Controller::Command::Blast::Status
-  Raw         EnsEMBL::Web::Controller::Command::Blast::Raw
-  Results     EnsEMBL::Web::Controller::Command::Blast::Results
+  Search          EnsEMBL::Web::Controller::Command::Blast::Search
+  Ticket          EnsEMBL::Web::Controller::Command::Blast::Ticket
+  Submit          EnsEMBL::Web::Controller::Command::Blast::Submit
+  Status          EnsEMBL::Web::Controller::Command::Blast::Status
+  Raw             EnsEMBL::Web::Controller::Command::Blast::Raw
+  Results         EnsEMBL::Web::Controller::Command::Blast::Results
+  Alignment       EnsEMBL::Web::Controller::Command::Blast::Alignment
+  QuerySequence   EnsEMBL::Web::Controller::Command::Blast::QuerySequence
+  GenomicSequence EnsEMBL::Web::Controller::Command::Blast::GenomicSequence
 )});
 
 $controller->dispatch($ENV{REQUEST_URI});
