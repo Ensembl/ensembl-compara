@@ -1359,6 +1359,21 @@ sub find_node_by_node_id {
   return undef;
 }
 
+sub find_leaf_by_node_id {
+  my $self = shift;
+  my $node_id = shift;
+  
+  return $self if($node_id eq $self->node_id);
+  
+  my $leaves = $self->get_all_leaves;
+  foreach my $leaf (@$leaves) {
+    my $found = $leaf->find_node_by_node_id($node_id);
+    return $found if(defined($found));
+  }
+  
+  return undef;
+}
+
 
 =head2 get_all_leaves
 
