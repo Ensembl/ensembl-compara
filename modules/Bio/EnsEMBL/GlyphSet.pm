@@ -82,15 +82,18 @@ sub _url {
   my $species = exists( $params->{'species'} ) ? $params->{'species'} : $self->{'container'}{'web_species'};
   my $type    = exists( $params->{'type'}    ) ? $params->{'type'}    : $ENV{'ENSEMBL_TYPE'};
   my $action  = exists( $params->{'action'}  ) ? $params->{'action'}  : $ENV{'ENSEMBL_ACTION'};
+  my $function  = exists( $params->{'function'}) ? $params->{'function'}: $ENV{'ENSEMBL_FUNCTION'};
+
+  $function = '' if $action ne $ENV{'ENSEMBL_ACTION'};
 
   my %pars = %{$self->{'config'}{_core}{'parameters'}};
   if( $params->{'g'} && $params->{'g'} ne $pars{'g'} ) {
     delete($pars{'t'});
   }
   foreach( keys %$params ) {
-    $pars{$_} = $params->{$_} unless $_ eq 'species' || $_ eq 'type' || $_ eq 'action';
+    $pars{$_} = $params->{$_} unless $_ =~ /^(species|type|action|function)$/;
   }
-  my $URL = sprintf( '/%s/%s/%s', $species, $type, $action );
+  my $URL = sprintf '/%s/%s/%s', $species, $type, $action.( $function ? "/$function" : "" );
   my $join = '?';
 ## Sort the keys so that the URL is the same for a given set of parameters...
   foreach ( sort keys %pars ) {

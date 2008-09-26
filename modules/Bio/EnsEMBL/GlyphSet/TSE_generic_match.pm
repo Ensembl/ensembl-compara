@@ -159,7 +159,7 @@ sub draw_glyphs {
 
 	    my $zmenu_dets = {
 		'type'        => 'Transcript',
-		'action'      => 'SupportingEvidenceAlignment',
+		'action'      => 'SupportingEvidence/Alignment',
 		't'           => $wuc->cache('trans_object')->{'transcript'}->stable_id,
 		'sequence'    => $hit_name,
 		'hit_db'      => $hit_db,
