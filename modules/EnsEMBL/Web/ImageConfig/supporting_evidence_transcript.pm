@@ -26,7 +26,7 @@ sub init {
 
     #switch off all transcript unwanted transcript tracks
     foreach my $child ( $self->get_node('TSE_transcript')->descendants ) {
-	$child->set( 'on' => 'off' );
+	$child->set( 'display' => 'off' );
     }
 
     $self->add_tracks( 'TSE_transcript',
