@@ -450,7 +450,7 @@ sub _summarise_dasregistry {
 
   if (!$parser) {
     my $das_reg = $self->tree->{'DAS_REGISTRY_URL'}
-      || die( "No DAS_REGISTRY_URL in config tree" );
+      || ( warn( "No DAS_REGISTRY_URL in config tree" ) && return );
     $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
       -location => $das_reg,
       -timeout  => $self->tree->{'ENSEMBL_DAS_TIMEOUT'},
