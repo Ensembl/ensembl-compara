@@ -19,7 +19,7 @@ sub content {
   my $object = $self->object;
 
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-  my $html = qq(<h2>$sitename Blast Search</h2>);
+  my $html; 
 
   my $form = EnsEMBL::Web::Form->new( 'blastsearch', "/Blast/Submit", 'get' );
 
@@ -56,14 +56,14 @@ sub content {
     'type'    => 'NoEdit',
     'name'    => 'method_noedit',
     'label'   => 'Search method',
-    'value'   => 'BLASTN',
-    #'value'   => 'BLAT',
+    #'value'   => 'BLASTN',
+    'value'   => 'BLAT',
   );
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'method',
-    'value'   => 'BLASTN',
-    #'value'   => 'BLAT',
+    #'value'   => 'BLASTN',
+    'value'   => 'BLAT',
   );
 
   $form->add_element(
