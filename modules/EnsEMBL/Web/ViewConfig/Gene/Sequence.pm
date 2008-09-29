@@ -57,7 +57,7 @@ sub form {
       { 'value' =>'all' , 'name' => 'Display exons in both orientations' }
     ]
   });
-  if( $object->species_defs->databases->{'DATABASE__VARIATION'} ) {
+  if( $object->species_defs->databases->{'DATABASE_VARIATION'} ) {
     $view_config->add_form_element({
       'type'     => 'DropDown', 'select'   => 'select',
       'required' => 'yes',      'name'     => 'snp_display',
@@ -79,6 +79,7 @@ sub form {
       { 'value' =>'off'      , 'name' => 'None' },
     ]
   });
+
 }
 1;
 
