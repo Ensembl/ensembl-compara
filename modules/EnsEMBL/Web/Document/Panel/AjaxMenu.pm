@@ -17,11 +17,14 @@ sub _end   {
 sub add_entry {
   my( $self, $hashref ) = @_;
   $self->{'entries'} ||= [];
+  foreach( 'label', 'label_html' ){
+    unless( defined $hashref->{$_} ){$hashref->{$_} = '' }
+  }
   push @{$self->{'entries'}}, {
     'code'       => $hashref->{'code'}      || 'entry_'.($self->{'counter'}++),
     'type'       => $hashref->{'type'}      || '',
-    'label'      => $hashref->{'label'}     || '',
-    'label_html' => $hashref->{'label_html'}|| '',
+    'label'      => $hashref->{'label'},
+    'label_html' => $hashref->{'label_html'},
     'link'       => $hashref->{'link'}      || undef,
     'priority'   => $hashref->{'priority'}  || 100,
     'extra'      => $hashref->{'extra'}     || {}
