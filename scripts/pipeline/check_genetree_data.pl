@@ -77,6 +77,29 @@ my ($sql, $sth);
 
 if ($doit) {
 
+# Check data consistency between gene_count and number of homology entries
+##########################################################################
+
+  $sql = "select node_id,value,(value*(value-1))/2 from protein_tree_tag where tag='gene_count'";
+  
+  $sth = $dba->dbc->prepare($sql);
+  $sth->execute;
+  
+  while (my $aref = $sth->fetchrow_arrayref) {
+    my ($node_id, $value, $homology_count) = @$aref;
+    my $sql2 = "select count(*) from homology where tree_node_id=$node_id";
+    my $sth2 = $dba->dbc->prepare($sql2);
+    $sth2->execute;
+    my $count = $sth2->fetchrow_array;
+    if ($count !=0 && $count != $homology_count) {
+      print STDERR "ERROR: tree $node_id (gene_count = $value) gene_count != homologies : should have $homology_count homologies instead of $count\n";
+      print STDERR "ERROR: USED SQL : $sql\n                  $sql2\n";
+    }
+    $sth2->finish;
+  }
+
+  $sth->finish;
+
 # Check for dangling internal nodes that have no children
 ######################################################
 
@@ -136,7 +159,6 @@ if ($doit) {
   }
   
   $sth->finish;
-
 
 # check for unique member presence in ptm
 #########################################
