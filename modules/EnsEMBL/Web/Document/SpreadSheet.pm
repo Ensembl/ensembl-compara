@@ -23,14 +23,16 @@ sub ALTERNATING_BACKGROUND { my $self = shift ; rows => [qw(bg1 bg2)] };
 
 sub new { ## All now configured by the component!!
   my $class = shift;
-  my( $c,$d,$o ) = @_;
+  my( $c,$s, $d,$o ) = @_;
   $c||=[];
+  $s||=[];
   $d||=[];
   $o||={};
   my $self = {
-    '_columns' => $c,
-    '_data'    => $d,
-    '_options' => $o
+    '_columns'  => $c,
+    '_spanning' => $s,
+    '_data'     => $d,
+    '_options'  => $o
   };
   bless $self, $class ;
 }
@@ -46,6 +48,16 @@ sub render {
   my $margin = $options->{margin} ? $options->{margin} : '0px';
 
   my $output = qq(\n<table class="ss $align" style="width:$width;margin:$margin" cellpadding="0" cellspacing="0">);
+
+  if (scalar(@{$self->{_spanning}})) {
+    $output .= qq(\n  <tr class="ss_header">);
+    foreach my $header (@{$self->{_spanning}}) {
+      my $span = $header->{'colspan'} || 1;
+      $output .= '<th colspan="'.$span.'"><em>'.$header->{'title'}.'</em></th>';
+    }
+    $output .= "</tr>\n";
+  }
+
   foreach my $row ( @{ $self->_process()} ) {
     my $tag = 'td';
     if($row->{style} eq 'header') {
@@ -61,7 +73,8 @@ sub render {
     my $no_columns = @{$row->{'cols'}};
     foreach my $cell ( @{$row->{'cols'}} ) {
       my $extra = ( $cell->{'class'} ? qq( class="$cell->{class}") : '' ).
-                  ( $cell->{'style'} ? qq( style="$cell->{style}") : '' );
+                  ( $cell->{'style'} ? qq( style="$cell->{style}") : '' ).
+                  ( $cell->{'colspan'} ? qq( colspan="$cell->{colspan}") : '' );
       $output .= qq(\n    <$tag$extra>@{[ (defined($cell->{'value'}) && $cell->{'value'}ne'' ) ? $cell->{'value'}:'&nbsp;']}</$tag>);
     }
 
@@ -250,6 +263,11 @@ sub add_option {
 sub add_columns {        
   my $self = shift;     
   push @{$self->{_columns}}, @_;        
+}       
+         
+sub add_spanning_headers {        
+  my $self = shift;     
+  push @{$self->{_spanning}}, @_;        
 }       
          
 sub add_row {   
