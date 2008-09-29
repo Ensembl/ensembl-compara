@@ -65,7 +65,7 @@ sub render_collapsed {
 
     my $colour  = $self->my_colour( $gene_key );
     my $label   = $self->my_colour( $gene_key , 'text' );
-    my $hilight = $selected_db eq $db && $selected_gene eq $gene_stable_id;
+    my $hilight = $selected_db eq $db && $selected_gene eq $gene_stable_id && $gene_stable_id;
 
     $used_colours{ $label } = $colour;
 
@@ -185,6 +185,7 @@ sub render_normal {
   my $self = shift;
   $self->render_transcript(@_);
 }
+
 sub render_transcript {
   my ($self) = @_;
 
@@ -194,6 +195,10 @@ sub render_transcript {
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target        = $self->get_parameter('single_Transcript');
   my $target_gene   = $self->get_parameter('single_Gene'      );
+  my $db            = $self->my_config('db');
+  my $selected_db   = $self->core('db');
+  my $selected_gene = $self->core('g');
+  my $selected_trans= $self->core('t');
     
   my $y             = 0;
   my $h             = $self->my_config('height') || ( $target ? 30 : 8 );
@@ -255,6 +260,8 @@ sub render_transcript {
     my $join_z   = -10;
 
     foreach my $transcript (@{$gene->get_all_Transcripts()}) {
+      warn "... $transcript ...";
+      my $transcript_stable_id = $transcript->stable_id;
       next if $transcript->start > $length ||  $transcript->end < 1;
       my @exons = sort {$a->start <=> $b->start} grep { $_ } @{$transcript->get_all_Exons()};#sort exons on their start coordinate 
 
@@ -270,7 +277,17 @@ sub render_transcript {
 
       my $Composite = $self->Composite({'y'=>$y,'height'=>$h,'title'=>$self->title($transcript,$gene) });
          $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
-      my($colour, $label, $hilight) = ();#$self->colour( $gene, $transcript );
+
+      my $colour_key = $self->transcript_key($transcript,$gene);
+      my $colour  = $self->my_colour( $colour_key );
+      my $label   = $self->my_colour( $colour_key , 'text' );
+      my $hilight = $selected_db eq $db && $transcript_stable_id ? (  $selected_trans eq $transcript_stable_id ? 'highlight2'
+                                                                   :   $selected_gene eq $gene_stable_id       ? 'highlight1' 
+								   : undef 
+								   )
+                                                                 : undef
+								 ;
+
       ($colour,$label) = ('orange','Other') unless $colour;
       $used_colours{ $label } = $colour;
       my $coding_start = defined ( $transcript->coding_region_start() ) ? $transcript->coding_region_start :  -1e6;
@@ -286,7 +303,9 @@ sub render_transcript {
               $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col2, 'line', $join_z ) ;
           }
       }
+	warn "@exons";
       for(my $i = 0; $i < @exons; $i++) {
+	warn "..>$i<..";
         my $exon = @exons[$i];
         next unless defined $exon; #Skip this exon if it is not defined (can happen w/ genscans) 
         my $next_exon = ($i < $#exons) ? @exons[$i+1] : undef; #First draw the exon
@@ -573,9 +592,24 @@ sub gene_title {
   return $title;
 }
 
+sub transcript_key {
+  my( $self, $transcript, $gene ) = @_;
+  my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
+  warn "--- $pattern ---";
+  $pattern =~ s/\[(\w+)\]/$transcript->$1/eg;
+  $pattern =~ s/\[(gene.\w+)\]/$gene->$1/eg;
+  warn "... $pattern ...";
+  return lc( $pattern );
+}
+
 sub gene_key {
-  my( $self, $obj ) = @_;
-  return lc( $obj->biotype.'_'.$obj->status );
+  my( $self, $gene ) = @_;
+  my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
+  warn "--- $pattern ---";
+  $pattern =~ s/\[(\w+)\]/$gene->$1/eg;
+  $pattern =~ s/\[(gene.\w+)\]/$gene->$1/eg;
+  warn "... $pattern ...";
+  return lc( $pattern );
 }
 
 1;
