@@ -323,7 +323,8 @@ CREATE TABLE member (
   member_id                   int(10) unsigned NOT NULL auto_increment, # unique internal id
   stable_id                   varchar(40) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     int(10) DEFAULT '0', 
-  source_name                 varchar(40) NOT NULL,
+#  source_name                 varchar(40) NOT NULL,
+  source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
   sequence_id                 int(10) unsigned, # FK sequence.sequence_id
@@ -476,7 +477,8 @@ CREATE TABLE homology (
   homology_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
   stable_id                   varchar(40),
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 varchar(40), # UBRH, MBRH, RHS
+#  description                 varchar(40), # UBRH, MBRH, RHS
+  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','between_species_paralog'),
   subtype                     varchar(40) NOT NULL DEFAULT '',
   dn                          float(10,5),
   ds                          float(10,5),
@@ -732,8 +734,10 @@ CREATE TABLE sitewise_aln (
   omega                       float(10,5),
   omega_lower                 float(10,5),
   omega_upper                 float(10,5),
+  optimal                     float(10,5),
   threshold_on_branch_ds      float(10,5),
-  type                        varchar(10) NOT NULL,
+#  type                        varchar(10) NOT NULL,
+  type                        ENUM('all_gaps','constant','default','negative1','negative2','negative3','negative4','positive1','positive2','positive3','positive4','synonymous') NOT NULL,
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
 
@@ -741,24 +745,6 @@ CREATE TABLE sitewise_aln (
   PRIMARY KEY (sitewise_id),
   KEY (node_id)
 ) COLLATE=latin1_swedish_ci;
-
-# Table sitewise_member
-# This table stores the member_positions for a given sitewise entry
-# sitewise_id - identifies the sitewise entry
-# member_id - 
-# member_position - position with respect to the aln_position after
-# mapping the gaps in the multiple alignment
-
-CREATE TABLE sitewise_member (
-  sitewise_id                 int(10) unsigned NOT NULL,
-  member_id                   int(10) unsigned NOT NULL,
-  member_position             int(10) unsigned NOT NULL,
-
-  FOREIGN KEY (sitewise_id) REFERENCES sitewise_aln(sitewise_id),
-
-  UNIQUE sitewise_member_position (sitewise_id,member_id,member_position),
-  KEY (member_id)
-) MAX_ROWS = 1000000000 COLLATE=latin1_swedish_ci;
 
 # Auto add schema version to database
 INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "50");
