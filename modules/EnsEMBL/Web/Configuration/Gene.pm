@@ -1,6 +1,7 @@
 package EnsEMBL::Web::Configuration::Gene;
 
 use strict;
+use Bio::AlignIO; # Needed for tree alignments
 use EnsEMBL::Web::RegObj;
 
 use base qw( EnsEMBL::Web::Configuration );
@@ -213,6 +214,7 @@ sub _ajax_zmenu_compara_tree_node{
     'label' => $parent_distance,
     'priority' => 9,
   });
+
   # Bootstrap
   if( my $boot = $tagvalues->{'Bootstrap'} ){
     $panel->add_entry({
@@ -227,11 +229,13 @@ sub _ajax_zmenu_compara_tree_node{
     # Duplication confidence
     my $dup = $tagvalues->{'Duplication'};
     if( defined( $dup ) ){
-      $dup = 'dubious' if $tagvalues->{'dubious_duplication'};
-      $dup = "confidence $dup" if $dup;
+      my $con = 'dubious' if $tagvalues->{'dubious_duplication'};
+      $con ||= $tagvalues->{'duplication_confidence_score'};
+      $con ||= $dup;
+      $con = "confidence $con";
       $panel->add_entry({
         'type' => 'Type',
-        'label' => ($dup ? "Duplication ($dup)" : 'Speciation' ),
+        'label' => ($dup ? "Duplication ($con)" : 'Speciation' ),
         'priority' => 7,
       });
     }
@@ -246,7 +250,7 @@ sub _ajax_zmenu_compara_tree_node{
     # Expand this node
     if( $collapsed_ids{$node_id} ){
       $panel->add_entry({
-        'type'     => 'ACTION',
+        'type'     => 'Image',
         'label'    => 'expand this node',
         'priority' => 5,
         'link'     => $obj->_url
@@ -261,7 +265,7 @@ sub _ajax_zmenu_compara_tree_node{
     # Collapse this node
     else {
       $panel->add_entry({
-        'type'     => 'ACTION',
+        'type'     => 'Image',
         'label'    => 'collapse this node',
         'priority' => 3,
         'link'     => $obj->_url
@@ -274,7 +278,7 @@ sub _ajax_zmenu_compara_tree_node{
     # Expand all nodes
     if( %collapsed_ids ){
       $panel->add_entry({
-        'type'     => 'ACTION',
+        'type'     => 'Image',
         'label'    => 'expand all nodes',
         'priority' => 4,
         'link'     => $obj->_url
@@ -290,9 +294,9 @@ sub _ajax_zmenu_compara_tree_node{
         = map{$_->node_id} @{$node->get_all_adjacent_subtrees};
     if( @adjacent_subtree_ids ){
       $panel->add_entry({
-        'type'     => 'ACTION',
+        'type'     => 'Image',
         'label'    => 'collapse other nodes',
-        'priority' => 2,
+        'priority' => 3,
         'link'     => $obj->_url
             ({'type'   =>'Gene',
               'action' =>'Compara_Tree',
@@ -301,9 +305,28 @@ sub _ajax_zmenu_compara_tree_node{
                                   @adjacent_subtree_ids ) }), });
     }
 
+    # Subtree dumps
+    my( $url_align, $url_tree ) = $self->_dump_tree_as_text($node);
+
+    $panel->add_entry({
+      'type'      => 'View Subtree',
+      'label'     => 'Tree: New Hampshire',
+      'priority'  => 2,
+      'link'      => $url_tree,
+      'extra'     => {'external' => 1}, 
+    });
+
+    $panel->add_entry({
+      'type'      => 'View Subtree',
+      'label'     => 'Alignment: FASTA',
+      'priority'  => 2,
+      'link'      => $url_align,
+      'extra'     => {'external' => 1},
+    });
+
     # Jalview
-    warn( "$panel" );
-    my $jalview_html = $self->_compara_tree_jalview_html( $tree, $node_id );
+    my $jalview_html 
+        = $self->_compara_tree_jalview_html( $url_align, $url_tree );
     $panel->add_entry({
       'type'      => 'View Subtree',
       'label'     => '[Requires Java]',
@@ -315,24 +338,12 @@ sub _ajax_zmenu_compara_tree_node{
   return;
 }
 
-our $_JALVIEW_HTML_TMPL = qq(
-<applet code="jalview.bin.JalviewLite"
-       width="140" height="35"
-       archive="%s/jalview/jalviewApplet.jar">
-  <param name="file" value="%s">
-  <param name="treeFile" value="%s">
-  <param name="defaultColour" value="clustal">
-</applet> );
 
-sub _compara_tree_jalview_html{
-  # Constructs the html needed to launch jalview for a ProteinTree tree
-  # and optional subnode_id
+sub _dump_tree_as_text{
+  # Takes a compara tree and dumps the alignment and tree as text files.
+  # Returns the urls of the files that contain the trees
   my $self = shift;
   my $tree = shift || die( "Need a ProteinTree object!" );
-  my $node_id = shift || $tree->node_id;
-
-  my $subtree = $tree->find_node_by_node_id($node_id)
-      || die( "Node_id $node_id not found in ProteinTree" );
 
   # Establish some URL/file paths
   my $object = $self->object;
@@ -347,34 +358,36 @@ sub _compara_tree_jalview_html{
   my $url_nh    = $url_base . '.nh.png';
   $object->make_directory( $file_base );
 
-  # Write the fasta and nh files
-  open( FA, ">$file_fa" ) or die( "Cannot open $file_fa for write: $!" );
+  # Write the fasta alignment using BioPerl
+  my $format = 'fasta';
+  my $align = $tree->get_SimpleAlign('','','','','',1);
+  my $aio = Bio::AlignIO->new( -format => $format, -file => ">$file_fa" );
+  $aio->write_aln( $align );
+
+  #and nh files
   open( NH, ">$file_nh" ) or die( "Cannot open $file_nh for write: $!" );
-
-  foreach my $leaf( @{$subtree->get_all_leaves} ){
-    my $binomial = $leaf->genome_db->name;
-    my @bits = split( /\s+/, $binomial );
-    my $species;
-    if( ! @bits ){
-      $species = 'Unk';
-    } elsif( @bits == 1 ){ 
-      $species = ucfirst( substr($bits[0],0,3 ));
-    } elsif( @bits == 2 ){ 
-      $species = uc( substr($bits[0],0,1) )
-          . lc( substr($bits[1],0,2 ) );
-    } else{
-      $species = uc( substr($bits[0],0,1) )
-          . lc( substr($bits[1],0,1 ) )
-          . lc( substr($bits[2],0,1 ) );
-    }
-    print FA "> $species:" . $leaf->stable_id . "\n";
-    print FA $leaf->sequence . "\n";
-  }
-  print( NH $subtree->newick_format("full") );
-
-  close FA;
+  print( NH $tree->newick_format("full_web") );
   close NH; 
 
+  return( $url_fa, $url_nh );
+
+}
+
+our $_JALVIEW_HTML_TMPL = qq(
+<applet code="jalview.bin.JalviewLite"
+       width="140" height="35"
+       archive="%s/jalview/jalviewApplet.jar">
+  <param name="file" value="%s">
+  <param name="treeFile" value="%s">
+  <param name="defaultColour" value="clustal">
+</applet> );
+
+sub _compara_tree_jalview_html{
+  # Constructs the html needed to launch jalview for fasta and nh file urls
+  my $self = shift;
+  my $url_fa = shift;
+  my $url_nh = shift;
+  my $url_site  = $self->object->species_defs->ENSEMBL_BASE_URL;
   my $html = sprintf( $_JALVIEW_HTML_TMPL, $url_site, $url_fa, $url_nh );
   return $html;
 }
