@@ -142,7 +142,6 @@ sub new {
   return $self if $self->factory->has_fatal_problem();
   eval {
     if( $parameters{'fast'} ) {
-#warn "FAST CREATE OBJECTS...";
       $self->factory->fastCreateObjects();
     } else {
       $self->factory->createObjects();
@@ -243,7 +242,7 @@ sub configure {
         } else {
           $FUNCTIONS_CALLED->{$FN} = 1;
           ## Check if we've added any configurable components
-          my $node = $CONF->get_node($CONF->_get_valid_action( $ENV{'ENSEMBL_ACTION'} ));
+          my $node = $CONF->get_node( $CONF->_get_valid_action( $ENV{'ENSEMBL_ACTION'} ) );
 	  if( $node ) {
             my @components = @{$node->data->{'components'}||[]};
             while( my($code, $module) = splice( @components, 0, 2) ) {
@@ -332,7 +331,6 @@ sub render {
     CGI::header("text/xml"); $self->page->render_XML;
   } elsif( $self->{'format'} eq 'Excel' ) { 
     CGI::header( -type => "application/x-msexcel", -attachment => "ensembl.xls" );
-warn "Now we render Excel....";
     $self->page->render_Excel;
   } elsif( $self->{'format'} eq 'TextGz' ) { 
     CGI::header( -type => "application/octet-stream", -attachment => "ensembl.txt.gz" );
