@@ -224,8 +224,37 @@ sub _ajax_zmenu_compara_tree_node{
     });
   }
 
-  if( $leaf_count > 1 ){
+  # Expand all nodes
+  if( %collapsed_ids ){
+    $panel->add_entry({
+      'type'     => 'Image',
+      'label'    => 'expand all nodes',
+      'priority' => 4,
+      'link'     => $obj->_url
+          ({'type'     =>'Gene',
+            'action'   =>'Compara_Tree',
+            'collapse' => '' }),
+        });
+  }
 
+  # Collapse other nodes
+  my @adjacent_subtree_ids 
+      = map{$_->node_id} @{$node->get_all_adjacent_subtrees};
+  if( grep{ !$collapsed_ids{$_} } @adjacent_subtree_ids ){
+    $panel->add_entry({
+      'type'     => 'Image',
+      'label'    => 'collapse other nodes',
+      'priority' => 3,
+      'link'     => $obj->_url
+          ({'type'   =>'Gene',
+            'action' =>'Compara_Tree',
+            'collapse' => join( ',', 
+                                (keys %collapsed_ids),
+                                @adjacent_subtree_ids ) }), });
+  }
+  
+  if( $leaf_count > 1 ){
+    
     # Duplication confidence
     my $dup = $tagvalues->{'Duplication'};
     if( defined( $dup ) ){
@@ -273,36 +302,6 @@ sub _ajax_zmenu_compara_tree_node{
               'action' =>'Compara_Tree',
               'collapse' => join( ',', $node_id, (keys %collapsed_ids) ) }),
           });
-    }
-
-    # Expand all nodes
-    if( %collapsed_ids ){
-      $panel->add_entry({
-        'type'     => 'Image',
-        'label'    => 'expand all nodes',
-        'priority' => 4,
-        'link'     => $obj->_url
-            ({'type'     =>'Gene',
-              'action'   =>'Compara_Tree',
-              'collapse' => '' }),
-          });
-
-    }
-
-    # Collapse other nodes
-    my @adjacent_subtree_ids 
-        = map{$_->node_id} @{$node->get_all_adjacent_subtrees};
-    if( @adjacent_subtree_ids ){
-      $panel->add_entry({
-        'type'     => 'Image',
-        'label'    => 'collapse other nodes',
-        'priority' => 3,
-        'link'     => $obj->_url
-            ({'type'   =>'Gene',
-              'action' =>'Compara_Tree',
-              'collapse' => join( ',', 
-                                  (keys %collapsed_ids),
-                                  @adjacent_subtree_ids ) }), });
     }
 
     # Subtree dumps
