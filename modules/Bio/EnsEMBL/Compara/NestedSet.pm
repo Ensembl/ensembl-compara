@@ -460,12 +460,12 @@ sub get_all_adjacent_subtrees {
   my %path_node_ids = map{ $_->node_id => 1 } @node_path_to_root;
 
   my $this = $self->subroot; # Start at the root node
+
   my @adjacent_subtrees;
   while( $this ){
     last if $this->node_id == $node_id; # Stop on reaching current node
     my $next;
     foreach my $child (@{$this->children}){
-      warn( " => ", $child->node_id );
       next if $child->is_leaf; # Leaves cannot be subtrees
       if( $path_node_ids{$child->node_id} ){ # Ancestor node
         $next = $child;
