@@ -50,7 +50,7 @@ var Cookie = {
     return ( document.cookie =
       escape(name) + '=' + escape(value || '') +
       '; expires='+ ( expiry == -1 ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038' ) +
-      ' 00:00:00 GMT; path=/'
+      ' 00:00:00 GMT; path=/;'
     );
   },
   get: function(name) {
