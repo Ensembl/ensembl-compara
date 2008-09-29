@@ -173,9 +173,22 @@ sub consensus_cigar_line {
    }
 
    # TODO: collapse the consensus cigar, e.g. 'DDDD' = 4D
+   my $last_c;
+   my $i = 0;
+   my $short_cigar;
+   $cons_cigar .= '_'; # Pad to force last itteration
+   while ($cons_cigar =~ /(.)/g) {
+     my $c=  $1;
+     if( $last_c and $last_c ne $c ){
+       $short_cigar .= ( $i == 1 ? '' : $i ) . $last_c;
+       $i = 0;
+     } 
+     $i ++;
+     $last_c = $c;
+   }
 
    # Return the consensus
-   return $cons_cigar;
+   return $short_cigar;
 }
 
 sub get_SitewiseOmega_values {
