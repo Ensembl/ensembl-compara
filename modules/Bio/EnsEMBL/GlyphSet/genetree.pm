@@ -28,7 +28,8 @@ sub fixed {
 
 
 my $CURRENT_ROW;
-
+my $CURRENT_Y;
+my $MIN_ROW_HEIGHT = 20;
 sub _init {
   # Populate the canvas with feaures represented as glyphs
   my ($self) = @_;
@@ -42,6 +43,7 @@ sub _init {
 
 
   $CURRENT_ROW = 1;
+  $CURRENT_Y   = 1;
 #  warn ("A-0:".localtime());
 
   # Handle collapsed/removed nodes
@@ -137,18 +139,8 @@ sub _init {
     my @node_glyphs;
     my $collapsed_xoffset = 0;
     if( $f->{_collapsed} ){ # Collapsed
-      my $node_glyph = Sanger::Graphics::Glyph::Rect->new
-          ({
-            'x'      => $f->{x},
-            'y'      => $f->{y},
-            'width'  => 5,
-            'height' => 5,
-            'colour' => $node_colour,
-            'href'   => $node_href,
-          });
-      push @node_glyphs, $node_glyph;
 
-      my $height = 12;# * log( $f->{_collapsed_count} );
+      my $height = $f->{_height};
       my $width  = $f->{_collapsed_distance} * $nodes_scale + 10; 
       my $y = $f->{y} + 2;
       my $x = $f->{x} + 2;
@@ -161,6 +153,18 @@ sub _init {
             'colour' => $collapsed_colour,
             'href'   => $node_href,
           });
+
+      my $node_glyph = Sanger::Graphics::Glyph::Rect->new
+          ({
+            'x'      => $f->{x},
+            'y'      => $f->{y},
+            'width'  => 5,
+            'height' => 5,
+            'colour' => $node_colour,
+            'href'   => $node_href,
+          });
+      push @node_glyphs, $node_glyph;
+
     }
     elsif( $f->{_child_count} ){ # Expanded internal node
       # Add a 'collapse' href
@@ -407,6 +411,7 @@ sub features {
     $f->{_collapsed_count}    = $leaf_count;
     $f->{_collapsed_distance} = $sum_dist/$leaf_count;
     $f->{_collapsed_cut}      = 0;
+    $f->{_height}             = 12 * log( $f->{_collapsed_count} );
     #while ($f->{_collapsed_distance} > 1) { # Scale the length
     #  $f->{_collapsed_distance} /= 10;
     #  $f->{_collapsed_cut} ++;
@@ -434,7 +439,11 @@ sub features {
     #warn( "==> $node_id " . $tree->get_tagvalue('taxon_name') . 
     #      ' ' . scalar(@features ) );
   } else { # Leaf node or collapsed
-    $f->{y} = ($CURRENT_ROW++) * 20;
+    my $height = $f->{_height} || 0;
+    if( $height < $MIN_ROW_HEIGHT ){ $height = $MIN_ROW_HEIGHT }
+    #$f->{y} = ($CURRENT_ROW++) * 20;
+    $f->{y} = $CURRENT_Y + ($height/2);
+    $CURRENT_Y += $height;
   }
 
   #----------
