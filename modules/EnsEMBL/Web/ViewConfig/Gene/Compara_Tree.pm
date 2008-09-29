@@ -24,6 +24,8 @@ sub init {
 sub form {
   my( $view_config, $object ) = @_;
   our %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+
+  $view_config->add_fieldset('Text aligment output options');
   $view_config->add_form_element({
     'type'     => 'DropDown', 'select'   => 'select',
     'required' => 'yes',      'name'     => 'text_format',
@@ -31,6 +33,7 @@ sub form {
     'values'   => [ map { { 'value' => $_,'name' => $formats{$_} } } sort keys %formats ]
   });
 
+  $view_config->add_fieldset('Text tree output options');
   %formats =  EnsEMBL::Web::Constants::TREE_FORMATS;
   $view_config->add_form_element({
     'type'     => 'DropDown', 'select'   => 'select',
