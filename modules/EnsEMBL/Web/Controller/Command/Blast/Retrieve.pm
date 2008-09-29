@@ -1,6 +1,4 @@
-package EnsEMBL::Web::Controller::Command::Blast::Status;
-
-### Wrapper module for Component::Blast::Status
+package EnsEMBL::Web::Controller::Command::Blast::Retrieve;
 
 use strict;
 use warnings;
@@ -19,7 +17,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  stuff 'Blast', 'Status', $self;
+  stuff 'Blast', 'Retrieve', $self;
 }
 
 }

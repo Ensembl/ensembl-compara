@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Controller::Command::Blast::Ticket;
 
+### Wrapper module for Component::Blast::Ticket
+
 use strict;
 use warnings;
 

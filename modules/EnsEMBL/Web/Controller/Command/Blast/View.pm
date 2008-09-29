@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Controller::Command::Blast::Results;
+package EnsEMBL::Web::Controller::Command::Blast::View;
 
 use strict;
 use warnings;
@@ -17,7 +17,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  stuff 'Blast', 'Results', $self;
+  stuff 'Blast', 'View', $self;
 }
 
 }
