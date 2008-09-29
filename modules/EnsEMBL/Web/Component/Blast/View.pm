@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Component::Blast::Results;
+package EnsEMBL::Web::Component::Blast::View;
 
 use strict;
 use warnings;
@@ -120,11 +120,30 @@ sub _display_alignment_table {
 
   ## Do options table -----------------------------------
   ## TODO: move to ViewConfig
+
+  ## Make big hash of settings
+
+
+
   my @view_types = qw( query subject );
+  my %defaults = (
+    'query' => [],
+    'subject' => ['off'],
+  );
   my %coords = reverse %{$object->fetch_coord_systems};
   my $toplevel = $coords{1};
   my @coord_systems = sort { $coords{$a} <=> $coords{$b} } values %coords;
   push @view_types, @coord_systems, qw(stats sort_by);
+  foreach my $C (@coord_systems) {
+    if ($C eq $toplevel) {
+      $defaults{$C} = ['start', 'end', 'ori'];
+    }
+    else {
+      $defaults{$C} = ['off'];
+    }
+  }
+  $defaults{'stats'} = ['score', 'evalue', 'identity', 'length'];
+  $defaults{'sort_by'} = ['score_dsc'];
 
   my $opt_table = EnsEMBL::Web::Document::SpreadSheet->new();
   my $width = int(100 / scalar(@view_types));
@@ -145,24 +164,30 @@ sub _display_alignment_table {
       push @sort_types, @stat_types;
       foreach my $T (@sort_types) {
         my $text = $lookup{$T} || ucfirst($T);
-        $widget .= '<option value="'.$T.'_asc">&lt;'."$text</option>\n";
-        $widget .= '<option value="'.$T.'_dsc">&gt;'."$text</option>\n";
+        my $selected = $defaults{'sort_by'};
+        $widget .= _add_option($T.'_asc', '>&lt;'.$text, $selected);
+        $widget .= _add_option($T.'_dsc', '>&gt;'.$text, $selected);
       }
     }
     else {
-      $widget .= qq(<option value="off">_off_</option>\n);
+      my $selected = $defaults{$type};
+      $widget .= _add_option('off', '_off_', $selected);
       if ($type eq 'stats') {
         foreach my $S (@stat_types) {
           my $text = $lookup{$S} || ucfirst($S);
-          $widget .= qq(<option value="$S">$text</option>\n);
+          $widget .= _add_option($S, $text, $selected);
         }
       }
       else {
-        $widget .= qq(<option value="name">Name</option>
-<option value="start">Start</option>
-<option value="end">End</option>
-<option value="orientation">Ori</option>
-);
+        my %options = (
+          'name'        => 'Name',
+          'start'       => 'Start',
+          'end'         => 'End',
+          'orientation' => 'Ori',
+        );
+        while (my ($k, $v) = each(%options)) {
+          $widget .= _add_option($k, $v, $selected);
+        }
       }
     }
     $widget .= "</select>\n";
@@ -180,7 +205,9 @@ sub _display_alignment_table {
   my @display_types; ## only show the requested columns
   foreach $type (@view_types) {
     next if $type eq 'sort_by';
-    next if $object->param('view_'.$type) eq 'off';
+    if ($object->param('view_'.$type) eq 'off' || $defaults{$type}->[0] eq 'off') {
+      next;
+    }
     push @display_types, $type;
   }
 
@@ -197,7 +224,6 @@ sub _display_alignment_table {
     my ($hit, $hsp) = @$A;
     next unless $hit && $hsp;
     my $align_info = _munge_alignment($hsp, \@coord_systems, \@stat_types);
-    warn "************ INFO: ", Dumper($align_info);
     my $result_row;
 
     my @align_parameters = (
@@ -259,14 +285,27 @@ sub _display_alignment_table {
   $html .= $result_table->render; 
 }
 
+sub _add_option {
+  my ($value, $text, $selected) = @_;
+  my $html = '<option value="'.$value.'"';
+  if (ref($selected) eq 'SCALAR') {
+    $selected = [$selected];
+  }
+  foreach my $S (@$selected) {
+    if ($value eq $S) {
+      $html .= ' selected="selected"';
+      last;
+    }
+  }
+  $html .= '>'.$text.'</option>';
+  return $html;
+}
+
 sub _munge_alignment {
 ### Helper method to get useable information for displaying in alignments table
   my ($hsp, $coord_systems, $stat_types) = @_;
-warn "*** HSP ".Dumper($hsp);
   my $info;
-  warn "*** MUNGING DATA";
   my $gh = $hsp->genomic_hit;
-  warn "*** GENOMIC HIT $gh (generic)";
   if ($gh) {
     my $context = 2000;
     $info->{'generic'}->{'name'}  = $gh->seq_region_name;
@@ -274,15 +313,12 @@ warn "*** HSP ".Dumper($hsp);
     $info->{'generic'}->{'end'}   = $gh->end + $context;
   }
   foreach my $C (@$coord_systems) {
-    warn "*** Getting data for coord_system $C";
     $gh = $hsp->genomic_hit($C);
-    warn "*** GENOMIC HIT $gh";
     next if !$gh;
     $info->{$C}->{'name'} = $gh->seq_region_name;
     $info->{$C}->{'start'} = $gh->start;
     $info->{$C}->{'end'} = $gh->end;
     $info->{$C}->{'orientation'} = $gh->start < 0 ? '-' : '+';
-    warn Dumper($info->{$C});
   }
   foreach my $S (@$stat_types) {
     my $method = $S;
