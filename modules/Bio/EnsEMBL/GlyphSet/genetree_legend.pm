@@ -9,7 +9,7 @@ sub render_normal {
   return unless ($self->strand() == -1);
 
   my $BOX_WIDTH     = 20;
-  my $NO_OF_COLUMNS = 4;
+  my $NO_OF_COLUMNS = 5;
 
   my $vc            = $self->{'container'};
   my $im_width      = $self->image_width();
@@ -31,8 +31,13 @@ sub render_normal {
     ['ambiguous node', 'turquoise'],
   );
   my @orthos = (
-    ['current gene', 'red', 'Gene ID Species A'],
-    ['within-sp. paralogue', 'blue', 'Gene ID Species A'],
+    ['current gene', 'red', 'Gene ID'],
+    ['within-sp. paralog', 'blue', 'Gene ID'],
+  );
+  my @polys = (
+    ['collapsed node', 'grey'], 
+    ['collapsed (current gene)', 'red' ],
+    ['collapsed (paralog)', 'royalblue'],
   );
   my @boxes = (
     ['AA alignment match/mismatch',   'yellowgreen', 'yellowgreen'],
@@ -79,7 +84,7 @@ sub render_normal {
   foreach my $ortho (@orthos) {
     ($legend, $colour, $text) = @$ortho;
     $self->push($self->Text({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS - 50,
+        'x'         => $im_width * $x/$NO_OF_COLUMNS - 0,
         'y'         => $y * ( $th + 3 ) + $th,
         'height'    => $th,
         'valign'    => 'center',
@@ -116,6 +121,25 @@ sub render_normal {
   }
 
   ($x, $y) = (3, 0);
+  foreach my $poly (@polys) {
+    ($legend, $colour) = @$poly;
+    my $px = $im_width * $x/$NO_OF_COLUMNS;
+    my $py = $y * ( $th + 3 ) + 8 + $th;
+    my($width,$height) = (12,12);
+    $self->push($self->Poly({
+      'points' => [ $px, $py,
+                    $px + $width, $py - ($height / 2 ),
+                    $px + $width, $py + ($height / 2 ) ],
+      'colour'   => $colour,
+    }) );
+    $label = $self->_create_label
+        ($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 8, $th, 
+         $fontsize, $fontname, $legend);
+    $self->push($label);
+    $y++;
+  }
+
+  ($x, $y) = (4, 0);
   foreach my $box (@boxes) {
     ($legend, $colour, $border) = @$box;
     $self->push($self->Rect({
