@@ -35,17 +35,17 @@ sub process {
     $object->run_jobs($ticket);
     $report = $object->get_status($ticket);
     if ($report->{'complete'}) {
-      $script = 'Results';
+      $script = 'View';
       $new_param->{'run_id'} = $report->{'run_id'};
     }
     else {
-      $script = 'Status';
+      $script = 'Ticket';
       $new_param->{'status'} = $report->{$ticket};
     }
   }
   else {
     ## BLAST always gets queued, so redirect to status page (and then run in background)
-    $script = 'Status';
+    $script = 'Ticket';
     $new_param->{'status'} = $report->{$ticket};
   }
 
