@@ -27,7 +27,7 @@ sub populate_tree {
 
   $self->create_node( 'Ticket', "Retrieve Ticket",
     [qw(
-      ticket    EnsEMBL::Web::Component::Blast::Ticket
+      retrieve    EnsEMBL::Web::Component::Blast::Retrieve
     )],
     { 'availability' => 1}
   );
@@ -38,33 +38,33 @@ sub populate_tree {
         )],
       { 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'Status', '',
-    [qw(sent EnsEMBL::Web::Component::Blast::Status
+  $self->create_node( 'Ticket', '',
+    [qw(ticket EnsEMBL::Web::Component::Blast::Ticket
         )],
       { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'Raw', '',
-    [qw(sent EnsEMBL::Web::Component::Blast::Raw
+    [qw(raw EnsEMBL::Web::Component::Blast::Raw
         )],
       { 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'Results', '',
-    [qw(sent EnsEMBL::Web::Component::Blast::Results
+  $self->create_node( 'View', '',
+    [qw(view EnsEMBL::Web::Component::Blast::View
         )],
       { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'Alignment', '',
-    [qw(sent EnsEMBL::Web::Component::Blast::Alignment
+    [qw(align EnsEMBL::Web::Component::Blast::Alignment
         )],
       { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'QuerySequence', '',
-    [qw(sent EnsEMBL::Web::Component::Blast::QuerySequence
+    [qw(query EnsEMBL::Web::Component::Blast::QuerySequence
         )],
       { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'GenomicSequence', '',
-    [qw(sent EnsEMBL::Web::Component::Blast::GenomicSequence
+    [qw(genomic EnsEMBL::Web::Component::Blast::GenomicSequence
         )],
       { 'no_menu_entry' => 1 }
   );
