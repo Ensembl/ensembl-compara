@@ -65,9 +65,11 @@ sub get         {
 ### Returns user value if defined - otherwise returns value from data...
   my $self = shift;
   my $k    = shift;
-  return exists $self->{_user_data}{$self->{_key}} &&
+  my $v= exists $self->{_user_data} &&
+         exists $self->{_user_data}{$self->{_key}} &&
          exists $self->{_user_data}{$self->{_key}}{$k} ?  $self->{_user_data}{$self->{_key}}{$k} :
 	                                                  $self->data->{$k};
+  return $v;
 }
 
 sub set         {
@@ -191,9 +193,10 @@ sub get_node {
   my $self = shift;
   my $key  = shift;
   
-  return exists( $self->_nodes->{$key} ) ?
-         EnsEMBL::Web::OrderedTree::Node->new({ '_key' => $key, '_tree_info' => $self->{_tree_info} }) :
-         undef;
+  return
+    exists( $self->_nodes->{$key} ) ?
+    EnsEMBL::Web::OrderedTree::Node->new( { '_key' => $key, '_tree_info' => $self->{_tree_info}, '_user_data' => $self->{_user_data} } ) :
+    undef;
 }
 
 sub previous {
