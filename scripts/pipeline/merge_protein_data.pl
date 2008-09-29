@@ -63,8 +63,7 @@ homology_member
 protein_tree_node
 protein_tree_member
 protein_tree_tag
-sitewise_aln
-sitewise_member);
+sitewise_aln);
 
 
 open F, "mysql -h$host -u$user -p$pass -N -e 'show tables like \"peptide_align_feature%\"' $source_db |";
