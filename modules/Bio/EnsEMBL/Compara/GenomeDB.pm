@@ -125,7 +125,8 @@ sub name{
 
   Example    : $gdb->short_name;
   Description: The name of this genome in the Gspe ('G'enera
-               'spe'cies) format.
+               'spe'cies) format. Can also handle 'G'enera 's'pecies
+               's'ub 's'pecies (Gsss)
   Returntype : string
   Exceptions : none
   Caller     : general
@@ -135,8 +136,13 @@ sub name{
 sub short_name {
   my $self = shift;
   my $name = $self->name;
-  $name =~  s/(\S)\S+\s(\S{3})\S+/$1$2/;
-  $name =~ s/\ //g;
+  unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S)\S*\s(\S).*/$1$2$3$4/ ){
+    unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S{2,2}).*/$1$2$3/ ){
+      unless( $name =~  s/(\S)\S*\s(\S{3,3}).*/$1$2/ ){
+        $name = substr( $name, 0, 4 );
+      }
+    }
+  }
   return $name;
 }
 
