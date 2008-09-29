@@ -17,6 +17,7 @@ sub new {
     '_options'            => {},
     '_image_config_names' => {},
     '_form'               => undef,
+    '_url'                => undef,
     'no_load'             => undef
   };
 
@@ -24,6 +25,10 @@ sub new {
   return $self;
 }
 
+sub url :lvalue {
+### a
+  $_[0]->{'_url'};
+}
 sub title :lvalue {
 ### a
   $_[0]->{'title'};
@@ -48,6 +53,10 @@ sub add_image_configs { ## Value indidates that the track can be configured for 
   }
 }
 
+sub has_image_config {
+  my $self = shift;
+  return exists $self->{_image_config_names}{shift};
+}
 sub has_image_configs {
   my $self = shift;
   return keys %{$self->{_image_config_names}||{}};
@@ -91,16 +100,23 @@ sub has_form {
 
 sub get_form {
   my $self = shift;
-  $self->{_form}||=EnsEMBL::Web::Form->new( 'configuration', '/Homo_sapiens', 'get' );
+  $self->{_form}||=EnsEMBL::Web::Form->new( 'configuration', $self->url,'get' );
   return $self->{_form};
+}
+
+sub add_fieldset {
+  my( $self, $legend ) = @_;
+  my $fieldset = $self->get_form->add_fieldset('form'=>'configuration');
+  $fieldset->legend($legend);
 }
 
 sub add_form_element {
   my($self,$hashref) = @_;
   my @extra;
   my $value = $self->get($hashref->{'name'});
-  if( $hashref->{'type'} eq 'checkbox' ) {
-    push @extra, 'checked' => $value eq $hashref->{'value'} ? 'yes' : 'no';
+  warn ".. $value .. $hashref->{'value'} ..";
+  if( $hashref->{'type'} eq 'CheckBox' ) {
+    push @extra, 'checked' => $value eq $hashref->{'value'} ? 1 : 0;
   } elsif( !exists $hashref->{'value'} ) {
     push @extra, 'value' => $value;
   }
@@ -123,14 +139,17 @@ sub update_from_input {
 ### Loop through the parameters and update the config based on the parameters passed!
   my( $self, $input ) = @_;
   my $flag = 0;
+  warn "UPDATE FROM INPUT .............. ", join ", ", $input->param;
+
   foreach my $key ( $self->options ) {
+    warn ".. $key -> ",$input->param($key)," (", $self->{'_options'}{$key}{'user'},"/", $self->{'_options'}{$key}{'default'},")";
     if( defined $input->param($key) && $input->param( $key ) ne $self->{'_options'}{$key}{'user'} ) {
       $flag = 1;
       my @values = $input->param( $key );
       if( scalar(@values) > 1 ) {
         $self->set( $key, \@values );
       } else {
-        $self->set( $key, $input->param( $key ), $key=~ /^panel_/ );
+        $self->set( $key, $input->param( $key ) );
       }
     }
   }
