@@ -29,6 +29,10 @@ sub _url {
   my $URL = sprintf '/%s/%s/%s', $species, $type, $action.( $fn ? "/$fn" : '' );
   my $join = '?';
 ## Sort the keys so that the URL is the same for a given set of parameters...
+  my $flag = shift;
+  if( $flag ) {
+    return [$URL, \%pars];
+  } 
   foreach ( sort keys %pars ) {
     next unless defined $pars{$_};
     $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) ;
@@ -86,7 +90,7 @@ sub param {
     return wantarray ? () : undef;
   } else {
     my @params = map { _sanitize($_) } $self->{'data'}{'_input'}->param();
-    my $wsc    = $self->get_viewconfig( );
+    my $wsc    = $self->get_viewconfig( ); 
     push @params, $wsc->options() if $wsc;
     my %params = map { $_,1 } @params;
     return keys %params;
