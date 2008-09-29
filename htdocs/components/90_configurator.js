@@ -1,5 +1,7 @@
 var next_menu_node_id = 1;
 
+var configuration_updated = false;
+
 function _menu_create_node( n, n_id, current_state ) {
 /* 
   Function to create a hide/show link on a node...
@@ -37,22 +39,10 @@ function __init_config_menu() {
   add an onclick event to show the appropriate menu and hide the menu
 */
   if( ! initial_configuration ) { 
-    initial_configuration = $('config') ? $('config').serialize(true) : false;
+    initial_configuration = $('configuration') ? $('configuration').serialize(true) : false;
   }
 
   var has_configuration = $$('.track_configuration').length > 0;
-  if( has_configuration ) {
-    if($('modal_tabs')) { // This is in the AJAX mode!!
-      $$('modal_tabs a').each(function(n){
-        alert( n.innerHTML );
-        Event.observe(n,'click',configurator_submit_form);
-      });
-      Event.observe( $('modal_close'),'click',function(e){
-        configurator_submit_form();
-        modal_dialog_close();
-      });
-    }
-  }
   $$('.track_configuration dd').each(function(n) {
     var link_id = n.id;
     var menu_id = 'menu_'+link_id.substr(5);
@@ -126,24 +116,70 @@ function __init_config_menu() {
       }
     });
   });
+/* deprecated!!  
   if( $('config') ) {
     Event.observe( $('config'), 'submit', function(f){
       alert($('config').serialize());
     });
+  } */
+}
+
+var configurator_action_url = '';
+var configurator_action_title = '';
+
+function configurator_submit_form( url, title ) {
+  remove_grey_box(); // Remove our "pseudo" graphical dropdowns....
+
+  // Grab the final configuration ...
+  var final_configuration = $H( $('configuration') ? $('configuration').serialize(true) :{} );
+  // ... and compare it with the initial configuration
+  var diff_configuration = {};
+  var config_name = '';
+  final_configuration.each(function(pair){
+    if( pair.key == 'config' ) {
+      config_name = pair.value;
+    } else if( pair.value != initial_configuration[pair.key] ) {
+      diff_configuration[ pair.key ] = pair.value;
+    }
+    delete initial_configuration[pair.key];
+  });
+  $H(initial_configuration).each(function(pair){ diff_configuration[ pair.key ] = 'no'; }); // CheckBox 0 value!
+  if( $H(diff_configuration).keys().size() == 0 ) {
+    __modal_dialog_link_open_2( url, title );
+    return;
+  }
+  if( config_name ) {
+    diff_configuration[ 'config' ] = config_name;
+  }
+  diff_configuration[ 'submit' ] = 1;
+//  alert("SUBMITTING FORM:"+$H(diff_configuration).toQueryString() );
+  // ... create a query string from this...
+  if( ENSEMBL_AJAX == 'enabled' ) { // We have Ajax so submit it using AJAX
+    $('modal_disable').show();
+    configurator_action_url   = url;
+    configurator_action_title = title;
+    new Ajax.Request( $('configuration').action,{
+      method : $('configuration').method,
+      parameters: $H(diff_configuration),
+      onSuccess: function( transport ) { configurator_success(transport) },
+      onFailure: function( transport ) {
+        $('modal_disable').hide();
+	$('modal_content').innerHTML = '<p class="ajax-error">Failure: unable to update configuration</p>';
+      }
+    });
   }
 }
 
-function configurator_submit_form() {
-  remove_grey_box();
-  var final_configuration = $('config') ? $('config').serialize(true) : {};
-  initial_configuration = false;
-  var diff_configuration = {};
-  final_configuation.each(function(pair){
-    if( pair.value != inital_configuration[pair.key] ) {
-      diff_configuration[ pair.key ] = pair.value;
-    }
-  });
-  alert( diff_config.toQueryString() );
+function configurator_success( transport ) {
+  var x = transport.responseText;
+  $('modal_disable').hide();
+  if( x == 'SUCCESS' ) { // Form submitted OK!... we need to flag this case!
+    configuration_updated = true;
+    $('modal_content').update(Builder.node('div', 'Content updated'));
+    __modal_dialog_link_open_2( configurator_action_url, configurator_action_title );
+  } else { // We've got the form back....
+    modal_success( transport ); // Act like we just loaded it!!!
+  }
 }
 
 function remove_grey_box() {

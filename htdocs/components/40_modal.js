@@ -87,6 +87,11 @@ function __modal_page_resize() {
   $('modal_bg').style.height      = bg_height   + "px";
   $('modal_bg').style.width       = bg_width    + "px";
 
+  $('modal_disable').style.left   = bg_left     + "px";
+  $('modal_disable').style.top    = bg_top      + "px";
+  $('modal_disable').style.height = bg_height   + "px";
+  $('modal_disable').style.width  = bg_width    + "px";
+
   $('modal_panel').style.top      = t            + "px";
   $('modal_panel').style.left     = l            + "px";
   $('modal_panel').style.height   = modal_height + "px";
@@ -109,6 +114,16 @@ function modal_dialog_close() {
 
     PUBLIC: modal_dialog_close();
 **/
+  if($('configuration')) {
+    configurator_submit_form( 'close' );
+  }
+  modal_dialog_close_2();
+}
+
+function modal_dialog_close_2() {
+  if( configuration_updated ) { // If a config has been updated reload the page!
+    window.location.href = window.location.href;
+  }
   $('modal_bg').hide();
   $('modal_panel').hide();
 }
@@ -124,6 +139,19 @@ function __modal_dialog_link_open( event ) {
   var el    = Event.findElement( event, 'A' );
   var title = el.innerHTML.stripTags();
   var url   = el.href;
+  if( $('configuration') ) {
+    configurator_submit_form( url, title ); //If this returns true it indicates a successful problem and returns true!
+  } else {
+    __modal_dialog_link_open_2( url, title );
+  }
+  Event.stop(event);
+}
+
+function __modal_dialog_link_open_2( url, title ) {
+  if( url == 'close' ) {
+    modal_dialog_close_2();
+    return;
+  }
   if( ENSEMBL_AJAX != 'enabled' ) {
     window.open(url,'control_panel','width=950,height=500,resizable,scrollbars');
   } else { 
@@ -142,11 +170,10 @@ function __modal_dialog_link_open( event ) {
       method: 'get',
       onSuccess: function( transport ) { modal_success(transport) },
       onFailure: function( transport ) {
-        $('modal_content').innerHTML = '<p>Failure: the resource failed to load</p>';
+        $('modal_content').innerHTML = '<p class="ajax-error">Failure: the resource failed to load</p>';
       }
     });
   }
-  Event.stop( event );
 }
 
 function modal_success( transport ) {
@@ -179,14 +206,16 @@ function modal_form_submit( event ) {
   });
   Event.stop( event );
 }
+
 function __modal_onload() { 
   $$('.modal_link').each(function(s) {
     s.observe( 'click',  __modal_dialog_link_open );
     s.removeClassName( 'modal_link' );  // Make sure that this only gets run once per link... we will need to re-run this once AJAX has finished loading!!
   });
   if( ENSEMBL_AJAX!='enabled' || $('modal_bg') ) return;
-  $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_bg',    style: 'display:none;' + ( Prototype.Browser.IE ? 'filter:alpha(opacity=25)':'opacity:0.25') }));
-  $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_panel', style: 'display:none' },[
+  $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_disable',style: 'display:none;' + ( Prototype.Browser.IE ? 'filter:alpha(opacity=25)':'opacity:0.25') }));
+  $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_bg',     style: 'display:none;' + ( Prototype.Browser.IE ? 'filter:alpha(opacity=25)':'opacity:0.25') }));
+  $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_panel',  style: 'display:none' },[
     Builder.node( 'div', { id: 'modal_title' }, [
       Builder.node( 'span', { className: 'modal_but', id: 'modal_close' }, [ 'close' ] ),
       Builder.node( 'div', { id: 'modal_caption' }, [ 'Modal dialog' ] )

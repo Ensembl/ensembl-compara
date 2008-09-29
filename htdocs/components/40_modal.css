@@ -1,6 +1,7 @@
 .pointer { cursor:pointer }
 
 #modal_bg { position: absolute; top: 0; z-index:19999; background: [[MH_BORDER]]; margin:0;border:0; padding:0; text-align: center; vertical-align: middle; top:0; left:0}
+#modal_disable { position: absolute; top: 0; z-index:20001; background: [[MH_BORDER]]; margin:0;border:0; padding:0; text-align: center; vertical-align: middle; top:0; left:0}
 #modal_panel { text-align: left; position: absolute; background-color: [[PANEL_BG]]; margin: auto; z-index: 20000; padding:0; border: 1px solid [[CONTRAST_TEXT]]; }
 #modal_title { overflow: hidden; background-color: [[PANEL_TEXT]]; margin: 0; padding: 2px; color: [[PANEL_BG]]; font-weight: bold; }
 #modal_content { overflow:scroll; }

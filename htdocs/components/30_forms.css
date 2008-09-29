@@ -28,6 +28,10 @@ form.std div.submit {
 
 }
 
+form.std fieldset { padding: 0 0.5em; text-align: left; margin: 0; }
+
+legend { border: #f00 solid 1px; background-color: #fcc; color: #f00; padding: 2px 4px; font-weight: bold; margin: 0 }
+
 form.std { margin: 0; padding:3px;}
 form.std dl { margin: 0; position: relative }
 form.std dl dt { clear: left; width: 50%; float: left; margin: 0; padding: 0; padding-bottom: 0.5em }
