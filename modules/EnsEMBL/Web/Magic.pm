@@ -124,9 +124,12 @@ sub _parse_referer {
 sub configurator {
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
   my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+  warn "MY SESSION $session_id";
   my $referer_hash = _parse_referer;
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $ajax_flag = $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  warn "AJAX FLAG.....";
+
   my $webpage     = EnsEMBL::Web::Document::WebPage->new(
     'objecttype' => 'Server',
     'doctype'    => 'Configurator',
@@ -139,10 +142,29 @@ sub configurator {
   );
   $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 
-  $webpage->configure(
-    $webpage->dataObjects->[0],
-    qw(user_context configurator)
-  );
+  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $input = $session->get_input;
+  if( $input->param('submit') ) {
+    my $config = $input->param('config');
+    my $vc = $session->getViewConfig( $ENV{'ENSEMBL_TYPE'}, $ENV{'ENSEMBL_ACTION'} );
+    if($config && $vc->has_image_config($config) ) { ### We are updating an image config!
+## We need to update the image config....
+      ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+      $session->getImageConfig( $config, $config );
+      ## If not AJAX - refresh page!
+      # redirect( to this page )
+    } else { ### We are updating a view config!
+         $vc->update_from_input( $input );
+	 $session->store;
+      if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+        ## We need to 
+        CGI::header( 'text/plain' );
+	print "SUCCESS";
+        return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config)";
+      }
+    }
+  }
+  $webpage->configure( $webpage->dataObjects->[0], qw(user_context configurator) );
     ## Now we need to setup the content of the page -- need to set-up 
     ##  1) Global context entries
     ##  2) Local context entries   [ hacked versions with # links / and flags ]
@@ -151,7 +173,7 @@ sub configurator {
   my $content = $webpage->page->renderer->content;
   CGI::header;
   print $content;
-  return "Generated configuration panel ($ENV{'ENSEMBL_ACTION'})";
+  return "Generated configuration panel ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'})";
 }
 
 sub ingredient {
