@@ -1,9 +1,9 @@
 package EnsEMBL::Web::Form::FieldSet;
 
 use strict;
-use EnsEMBL::Web::Root;
+use base qw( EnsEMBL::Web::Root );
+
 use CGI qw(escapeHTML);
-our @ISA = qw( EnsEMBL::Web::Root );
 
 sub new {
   my ($class, %option) = @_;
@@ -15,6 +15,7 @@ sub new {
     '_file'       => 0,
     '_extra'      => '',
     '_notes'      => '',
+    '_legend'     => ''
   };
   bless $self, $class;
   return $self;
@@ -45,21 +46,23 @@ sub _add_element {
   push @{$self->{'_elements'}}, $element;
 }
 
+sub legend {
+  my $self = shift;
+  $self->{'_legend'} = shift if @_;
+  return $self->{'_legend'};
+}
+
 sub notes {
 ### a
-  my ($self, $notes) = @_;
-  if (!$self->{'_notes'}) {
-    $self->{'_notes'} = $notes;
-  }
+  my $self = shift;
+  $self->{'_notes'} = shift if @_;
   return $self->{'_notes'};
 }
 
 sub extra {
 ### a
-  my ($self, $extra) = @_;
-  if (!$self->{'_extra'}) {
-    $self->{'_extra'} = $extra;
-  }
+  my $self = shift;
+  $self->{'_extra'} = shift if @_;
   return $self->{'_extra'};
 }
 
@@ -81,7 +84,7 @@ sub _render_element {
 sub render {
   my $self = shift;
   my $output = '<fieldset'.$self->extra.">\n";
- 
+  $output .= '<h2>'.CGI::escapeHTML( $self->legend )."</h2>\n" if $self->legend; 
   if ($self->notes) {
     $output .= '<div class="notes">';
     if ($self->notes->{'heading'}) {
