@@ -95,7 +95,9 @@ sub _get_valid_action {
   return $action."/".$func if $node && $node->get('type') =~ /view/;
   $node = $self->tree->get_node( $action )           unless $node;
   return $action if $node && $node->get('type') =~ /view/;
-  return $node;
+  warn "RESORTING TO DEFAULT ",$self->default_action;
+  return $self->default_action;
+#  return $node;
 }
 
 sub _ajax_content {
@@ -160,60 +162,56 @@ sub _user_context {
   my %ics = $vc->image_configs;
   ## Can user data be added to this page?
   my $flag = $obj->param('config') ? 0 : 1;
+  my $active = $type ne 'Account' && $type ne 'UserData' && !$obj->param('config');
+  my $action = $type.'/'.$ENV{'ENSEMBL_ACTION'};
+     $action .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
   if( $vc->has_form ) {
     $self->{'page'}->global_context->add_entry(
       'type'      => 'Config',
       'id'        => "config_page",
       'caption'   => 'Configure page',
-      'url'       => $obj->_url({
+      $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
         'type'   => 'Config',
         'action' => $type.'/'.$ENV{'ENSEMBL_ACTION'},
-      }),
-      'class'     => ( $type ne 'Account' && $type ne 'UserData' && !$obj->param('config') ) ? 'active' : ''
+      }))
     );
     $flag = 0;
   }
   foreach my $ic_code (sort keys %ics) {
     my $ic = $obj->get_imageconfig( $ic_code );
+    $active = $type ne 'Account' && $type ne 'UserData' && $obj->param('config') eq $ic_code || $flag;
+
     $self->{'page'}->global_context->add_entry(
       'type'      => 'Config',
       'id'        => "config_$ic_code",
       'caption'   => 'Configure "'.$ic->get_parameter('title').'"',
-      'url'       => $obj->_url({
+      $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
         'type'   => 'Config',
 	'action' => $type.'/'.$ENV{'ENSEMBL_ACTION'},
 	'config' => $ic_code
-      }),
-      'class'     => ( $type ne 'Account' && 
-                       $type ne 'UserData' &&
-		       (
-		         $obj->param('config') eq $ic_code ||
-			 $flag
-              	       )
-		     ) ? 'active' : ''
+      }))
     );
     $flag = 0;
   }
+  $active = $type eq 'UserData';
   $self->{'page'}->global_context->add_entry(
     'type'      => 'UserData',
     'caption'   => 'Custom Data',
-    'url'       => $obj->_url({
+    $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
       'type'   => 'UserData',
       'action' => 'Summary'
-    }),
-    'class'     => $type eq 'UserData' ? 'active' : ''
+    }))
   );
   ## Now the user account link if the user is logged in!
-
+  $active = $type eq 'Account';
   if( $obj->species_defs->ENSEMBL_LOGINS && $ENV{'ENSEMBL_USER_ID'} ) {
     $self->{'page'}->global_context->add_entry( 
       'type'      => 'Account',
       'caption'   => 'Your account',
-      'url'       => $obj->_url({
+      $active ? ( 'class' => 'active') : ( 'url' => $obj->_url({
         'type'   => 'Account',
 	'action' => 'Summary'
-      }),
-      'class'     => $type eq 'Account' ? 'active' : ''
+      }))
     );
   }
 
@@ -225,18 +223,24 @@ sub _configurator {
   my $obj  = $self->{'object'};
   my $vc   = $obj->get_viewconfig();
 
-  if( $vc->has_form ) {
-    warn $vc->get_form->render;
-  }
   my $conf;
   eval {
-    $conf = $obj->get_imageconfig( $obj->param('config') ) if $obj->param('config');
+    $conf = $obj->image_config_hash( $obj->param('config') ) if $obj->param('config');
   };
+  my $action = $ENV{'ENSEMBL_TYPE'}.'/'.$ENV{'ENSEMBL_ACTION'};
+     $action .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
+  my $url = $obj->_url({'type'=>'Config','action'=>$action},1);
   unless( $conf ) {
 ## This must be the view config....
     if( $vc->has_form ) {
+      $vc->get_form->{'_attributes'}{'action'} = $url->[0];
+      foreach( keys %{$url->[1]}) {
+        $vc->add_form_element({'type'=>'Hidden','name'=>$_,'value' => $url->[1]{$_}});
+      }
       $self->tree->_flush_tree();
-      $self->create_node( 'form_conf', 'Configure', [],  { 'url' => '', 'availability' => 0, 'id' => 'form_conf_id', 'caption' => 'Configure' } );
+      $self->create_node( 'form_conf', 'Configure', [],  {
+        'url' => '', 'availability' => 0, 'id' => 'form_conf_id', 'caption' => 'Configure'
+      } );
       $self->{'page'}->{'_page_type_'} = 'configurator';
 
       $self->{'page'}->local_context->tree(    $self->{_data}{'tree'} );
@@ -255,18 +259,25 @@ sub _configurator {
       $self->add_panel( $panel );
       return;
     }
-  }
-  my %T = $vc->image_configs;
-  my @Q = sort keys %T;
-  if(@Q) {
-    $conf = $obj->get_imageconfig( $Q[0] );
+    my %T = $vc->image_configs;
+    my @Q = sort keys %T;
+    if(@Q) {
+      $conf = $obj->image_config_hash( $Q[0] );
+    }
   }
   return unless $conf;
   $self->{'page'}->{'_page_type_'} = 'configurator';
   $self->tree->_flush_tree();
 
   my $rhs_content = sprintf '
-      <form id="config" action="%s">', 'this_url';
+      <form id="configuration" action="%s">
+        <div>', $url->[0];
+  foreach( keys %{ $url->[1] } ) {
+    $rhs_content .= sprintf '
+          <input type="hidden" name="%s" value="%s">', $_, CGI::escapeHTML( $url->[1]{$_} );
+  }
+  $rhs_content .= '
+        </div>';
   my $active = '';
   foreach my $node ($conf->tree->top_level) {
     my $count = 0;
@@ -358,12 +369,14 @@ sub _local_tools {
     my %configs = $vc->image_configs();
     ($config) = sort keys %configs;
   }
+  my $action = $obj->type.'/'.$obj->action;
+  $action .= '/'.$obj->function if $obj->function;
   if( $config ) {
     push @data, [
       'Configure this page',
       $obj->_url({
         'type' => 'Config',
-        'action' => $obj->type.'/'.$obj->action,
+        'action' => $action,
         ( $config eq '1' ? ( ) : ('config' => $config) )
       }),
       'modal_link'
@@ -426,8 +439,9 @@ sub _content_panel {
 
   warn ".......... $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} ............";
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} );
-  warn "......... $action ...........";
+  warn ":......... $action ...........";
   my $node          = $self->get_node( $action );
+  warn "... $node ...";
   my $title = $node->data->{'concise'}||$node->data->{'caption'};
      $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
      $title = join ' - ', '', ( $obj ? $obj->caption : () ), $title;
