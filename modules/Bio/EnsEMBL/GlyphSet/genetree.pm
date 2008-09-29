@@ -117,10 +117,17 @@ sub _init {
     my $node_colour = ($f->{_dup} 
                        ? ($f->{_dubious_dup} ? 'turquoise' : 'red3') 
                        : 'navyblue');
-    my $label_colour = 'black';
+    my $label_colour     = 'black';
+    my $collapsed_colour = 'grey';
     if ($f->{label}) {
-      $label_colour = 'blue' if( $f->{_genome_dbs}->{$current_genome_db} );
-      $label_colour = 'red'  if( $f->{_genes}->{$current_gene} );
+      if( $f->{_genome_dbs}->{$current_genome_db} ){
+        $label_colour     = 'blue';
+        $collapsed_colour = 'royalblue';
+      }
+      if( $f->{_genes}->{$current_gene} ){
+        $label_colour     = 'red';
+        $collapsed_colour = 'red';
+      }
     }
 
     my $node_href = $self->_url
@@ -141,7 +148,7 @@ sub _init {
           });
       push @node_glyphs, $node_glyph;
 
-      my $height = 12;
+      my $height = 12;# * log( $f->{_collapsed_count} );
       my $width  = $f->{_collapsed_distance} * $nodes_scale + 10; 
       my $y = $f->{y} + 2;
       my $x = $f->{x} + 2;
@@ -151,7 +158,7 @@ sub _init {
             'points' => [ $x, $y,
                           $x + $width, $y - ($height / 2 ),
                           $x + $width, $y + ($height / 2 ) ],
-            'colour' => $label_colour,
+            'colour' => $collapsed_colour,
             'href'   => $node_href,
           });
     }
@@ -385,22 +392,25 @@ sub features {
   if( $self->{_collapsed_nodes}->{$node_id} ){
     # What is the size of the collapsed node?
     my $leaf_count = 0;
+    my $paralog_count = 0;
+    my $sum_dist = 0;
     my %genome_dbs;
     my %genes;
-    my( $max_dist ) = ( sort{$b<=>$a}
-                        map{$leaf_count++;
-                            $genome_dbs{$_->genome_db->dbID} ++;
-                            $genes{$_->gene_member->stable_id} ++;
-                            $_->distance_to_ancestor($tree)}
-                        @{$tree->get_all_leaves} );
+    foreach my $leaf( @{$tree->get_all_leaves} ){
+      my $dist = $leaf->distance_to_ancestor($tree);
+      $leaf_count++;
+      $sum_dist += $dist || 0;
+      $genome_dbs{$leaf->genome_db->dbID} ++;
+      $genes{$leaf->gene_member->stable_id} ++;
+    }
     $f->{_collapsed}          = 1,
     $f->{_collapsed_count}    = $leaf_count;
-    $f->{_collapsed_distance} = $max_dist;
+    $f->{_collapsed_distance} = $sum_dist/$leaf_count;
     $f->{_collapsed_cut}      = 0;
-    while ($f->{_collapsed_distance} > 1) { # Scale the length
-      $f->{_collapsed_distance} /= 10;
-      $f->{_collapsed_cut} ++;
-    }
+    #while ($f->{_collapsed_distance} > 1) { # Scale the length
+    #  $f->{_collapsed_distance} /= 10;
+    #  $f->{_collapsed_cut} ++;
+    #}
     $f->{_genome_dbs} = {%genome_dbs};
     $f->{_genes}      = {%genes};
     $f->{label} = sprintf( '%s: %d homologs', 
@@ -416,7 +426,7 @@ sub features {
             @{$self->features($child_node, $rank, $node_id,$x_offset)} );
     }
   }
-
+  #----------
 
   # Assign 'y' coordinates
   if ( @features > 0) { # Internal node
