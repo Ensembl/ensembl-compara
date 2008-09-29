@@ -237,12 +237,12 @@ sub save_tmp_data {
   $self->create_session_id($r);
   
   while (my ($key, $value) = each %{$TmpData_of{ ident $self }}) {
-      EnsEMBL::Web::Data::Session->set_config(
-        session_id => $self->get_session_id,
-        type       => 'tmp',
-        code       => $key,
-        data       => $value,
-      );    
+    EnsEMBL::Web::Data::Session->set_config(
+      session_id => $self->get_session_id,
+      type       => 'tmp',
+      code       => $key,
+      data       => $value,
+    );    
   }
 }
 
@@ -513,19 +513,18 @@ sub getViewConfig {
       ## and store any other data which comes back....
       my $config = EnsEMBL::Web::Data::Session->get_config(
         session_id => $self->get_session_id,
-        type       => 'view',
+        type       => 'script',
         code       => $key,
       );
-
       if ($config && $config->data) {
         $view_config->set_user_settings( $config->data->{'diffs'} );
         $image_config_data = $config->data->{'image_configs'};
       }
     }
-    unless( $do_not_pop_from_params ) {
-      warn "CALLED... update_from_input...";
-      $view_config->update_from_input( $self->input ); ## Needs access to the CGI.pm object...
-    }
+#   unless( $do_not_pop_from_params ) {
+#     warn "CALLED... update_from_input...";
+#      $view_config->update_from_input( $self->input ); ## Needs access to the CGI.pm object...
+#   }
 
     $Configs_of{ ident $self }{$key} = {
       'config'            => $view_config,         ## List of attached
@@ -574,7 +573,10 @@ sub getImageConfig {
   my $image_config = $self->get_ImageConfig( $type ); # $ImageConfigs_of{ ident $self }{ $type };
   foreach my $script ( keys %{$Configs_of{ ident $self }||{}} ) {
     if( $Configs_of{ ident $self }{$script}{'image_config_data'}{$type} ) {
-      $image_config->{'user'} = $self->deepcopy( $Configs_of{ ident $self }{$script}{'image_config_data'}{$type} );
+      my $T = $Configs_of{ ident $self }{$script}{'image_config_data'}{$type}||{};
+      foreach (keys %$T) {
+        $image_config->tree->{_user_data}{$_} = $self->deepcopy( $T->{$_} );
+      }
     }
   }
 ## Store if $key is set!
