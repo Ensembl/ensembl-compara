@@ -4,8 +4,6 @@ use strict;
 
 use base qw( EnsEMBL::Web::Configuration );
 
-use POSIX qw(floor ceil);
-
 sub set_default_action {
   my $self = shift;
   $self->{_data}{default} = 'View';
@@ -80,14 +78,6 @@ sub populate_tree {
     { 'availability' => $self->mapview_possible($self->{object}->param('r')), 'concise' => 'Synteny'}
   ));
 
-  $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)] );
-=pod
-  $exp_menu->append( $self->create_node( 'Export_BioMart',  'Jump to BioMart', [qw()] ) );
-
-  my $exp_menu = $self->create_submenu( 'External', 'View in other browsers' );
-  $exp_menu->append( $self->create_node( 'External_UCSC',  'UCSC', [qw()] ) );
-  $exp_menu->append( $self->create_node( 'External_NCBI',  'NCBI', [qw()] ) );
-=cut
 }
 
 
