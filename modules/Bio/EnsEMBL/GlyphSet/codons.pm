@@ -1,6 +1,6 @@
 package Bio::EnsEMBL::GlyphSet::codons;
 use strict;
-use base Bio::EnsEMBL::GlyphSet;
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
@@ -8,7 +8,7 @@ sub _init {
 
   my $height     = 3;  # Pixels in height for glyphset
   my $padding    = 1;  # Padding
-  my $max_length = $config->my_config('threshold') || 50; # In Kbases...
+  my $max_length = $self->my_config('threshold') || 50; # In Kbases...
   my $stop_col   = $self->my_colour( 'stop'  ) || 'red';
   my $start_col  = $self->my_colour( 'start' ) || 'green';
 
@@ -77,7 +77,7 @@ sub _init {
     foreach(@{$data->[ $offset + $phase * 4 ]}) { # start codon info
       my $glyph = $self->Rect({
         'x'         => $_,
-        'y'         => $base + $phase * $fullheight * $strand,
+        'y'         => $base + (2-$phase) * $fullheight * $strand,
         'width'     => 3,
         'height'    => $height-1,
         'colour'    => $start_col,
@@ -88,7 +88,7 @@ sub _init {
     foreach(@{$data->[ $offset + $phase * 4 + 1]}) {
       my $glyph = $self->Rect({
         'x'         => $_,
-        'y'         => $base + ($phase * $fullheight + $height) * $strand,
+        'y'         => $base + ((2-$phase) * $fullheight + $height) * $strand,
         'width'     => 3,
         'height'    => $height-1,
         'colour'    => $stop_col,
