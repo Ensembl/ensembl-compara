@@ -20,7 +20,7 @@ sub content {
   my $object = $self->object;
   my $species = $object->species;
     
-  my %synteny = $object->species_defs->multi('SYNTENY');
+  my %synteny = $object->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
   my $other = $object->param('otherspecies') || $object->param('species') || $self->default_otherspecies;
  
   my $chr = $object->seq_region_name;
