@@ -18,21 +18,25 @@ sub default_otherspecies {
   ## Needs moving to viewconfig so we don't have to work it out each time
   my $self = shift;
   my $sd = $self->object->species_defs;
-  my %synteny = $sd->multi('SYNTENY');
+  my %synteny = $sd->multi('DATABASE_COMPARA', 'SYNTENY');
   my @has_synteny = sort keys %synteny;
   my $sp;
 
   ## Set default as primary species, if available
-  foreach my $sp (@has_synteny) {
-    if ($sp eq $sd->ENSEMBL_PRIMARY_SPECIES) {
-      return $sp;
+  unless ($ENV{'ENSEMBL_SPECIES'} eq $sd->ENSEMBL_PRIMARY_SPECIES) {
+    foreach my $sp (@has_synteny) {
+      if ($sp eq $sd->ENSEMBL_PRIMARY_SPECIES) {
+        return $sp;
+      }
     }
   }
 
   ## Set default as secondary species, if primary not available
-  foreach $sp (@has_synteny) {
-    if ($sp eq $sd->ENSEMBL_SECONDARY_SPECIES) {
-      return $sp;
+  unless ($ENV{'ENSEMBL_SPECIES'} eq $sd->ENSEMBL_SECONDARY_SPECIES) {
+    foreach $sp (@has_synteny) {
+      if ($sp eq $sd->ENSEMBL_SECONDARY_SPECIES) {
+        return $sp;
+      }
     }
   }
 
