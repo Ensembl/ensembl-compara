@@ -9,7 +9,7 @@ use CGI qw(escapeHTML);
 sub _init {
   my $self = shift;
   $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->ajaxable(  1 );
 }
 
 sub caption {
@@ -92,16 +92,32 @@ sub _archive_link {
 sub _create_idhistory_tree {
   my ($object, $tree, $OBJ) = @_;
 
-  my $wuc = $OBJ->image_config_hash('idhistoryview');
-  $wuc->container_width($OBJ->param('image_width') || 900);
-  $wuc->set_width($OBJ->param('image_width'));
-  $wuc->set('_settings', 'LINK', _flip_URL($object));
+  #user defined width in pixels
+  my $image_width  = $OBJ->param( 'image_width' );
+
+  my $wuc = $OBJ->image_config_hash( 'idhistoryview' );
+   $wuc->set_parameters({
+      'container_width' => $image_width || 800,
+      'image_width'     => $image_width || 800, ## hack at the moment....
+      'slice_number',     => '1|1',
+  });
+
+#  $wuc->set_parameter( 'LINK'  => _flip_URL($object));
+#  my $wuc = $OBJ->image_config_hash('idhistoryview');
+#  $wuc->container_width($OBJ->param('image_width') || 900);
+#  $wuc->set_width($OBJ->param('image_width'));
+ # $wuc->set('_settings', 'LINK', _flip_URL($object));
+
   $wuc->{_object} = $object;
 
+  
   my $image = $OBJ->new_image($tree, $wuc, [$object->stable_id], $OBJ );
   $image->image_type = 'idhistorytree';
   $image->image_name = $OBJ->param('image_width').'-'.$object->stable_id;
   $image->imagemap = 'yes';
+  $image->{'panel_number'} = 'top';
+  $image->set_button( 'drag', 'title' => 'Drag to select region' );
+
   return $image;
 }
 
