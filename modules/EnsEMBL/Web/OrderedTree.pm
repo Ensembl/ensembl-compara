@@ -17,6 +17,10 @@ sub _flush_tree {
   $self->{'_user_data'} = {};
 }
 
+sub user_data {
+  my $self = shift;
+  return $self->{_user_data};
+}
 sub flush_user {
 ### Remove all user data in this tree...
   my $self = shift;

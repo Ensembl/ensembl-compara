@@ -165,14 +165,14 @@ sub storable_data {
     };
 
     ## get the script config diffs
-    foreach my $image_config_key ( keys %{$Configs_of{ ident $self }{$config_key}{'image_configs'}||{} } ) {
+    foreach my $image_config_key ( keys %{$sc_hash_ref->{'config'}->{'_image_config_names'}||{} }) {
       my $image_config = $ImageConfigs_of{ ident $self }{$image_config_key};
+      $image_config = $self->getImageConfig($image_config_key,$image_config_key) unless $image_config;
       next          unless $image_config->storable; ## Cannot store unless told to do so by image config
       $to_store = 1 if     $image_config->altered;  ## Only store if image config has changed...
       $data->{'image_configs'}{$image_config_key}  = $image_config->get_user_settings();
     }
-    push @{ $return_data }, { config_key => $config_key, data => $data }
-      if $to_store;
+    push @{ $return_data }, { config_key => $config_key, data => $data } if $to_store;
   }
   return $return_data; 
 }
