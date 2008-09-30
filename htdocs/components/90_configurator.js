@@ -153,6 +153,8 @@ function configurator_submit_form( url, title ) {
     diff_configuration[ 'config' ] = config_name;
   }
   diff_configuration[ 'submit' ] = 1;
+  var T = new Date();
+  diff_configuration[ 'time_of_submission' ] = T.getTime();
   // ... create a query string from this...
   if( ENSEMBL_AJAX == 'enabled' ) { // We have Ajax so submit it using AJAX
     $('modal_disable').show();
