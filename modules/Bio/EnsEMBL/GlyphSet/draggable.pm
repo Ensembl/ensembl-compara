@@ -25,7 +25,7 @@ sub _init {
   $self->push($glyph);
   my $A = $strand > 0 ? 1 : 0;
   my $href = join '|',
-    '#drag', $self->{'config'}->{'slice_number'},
+    '#drag', $self->get_parameter('slice_number'),
     $self->{'config'}->{'species'}, $self->{'container'}->seq_region_name,
     $start, $end, $self->{'container'}->strand;
 
