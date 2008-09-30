@@ -128,7 +128,6 @@ sub configurator {
   my $referer_hash = _parse_referer;
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $ajax_flag = $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
-  warn "AJAX FLAG.....";
 
   my $webpage     = EnsEMBL::Web::Document::WebPage->new(
     'objecttype' => 'Server',
@@ -150,7 +149,15 @@ sub configurator {
     if($config && $vc->has_image_config($config) ) { ### We are updating an image config!
 ## We need to update the image config....
       ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
-      $session->getImageConfig( $config, $config );
+      my $ic = $session->getImageConfig( $config, $config );
+      $vc->altered = $ic->update_from_input( $input );
+      $session->store;
+      if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+        ## We need to
+        CGI::header( 'text/plain' );
+        print "SUCCESS";
+        return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config)";
+      }
       ## If not AJAX - refresh page!
       # redirect( to this page )
     } else { ### We are updating a view config!
@@ -160,7 +167,7 @@ sub configurator {
         ## We need to 
         CGI::header( 'text/plain' );
 	print "SUCCESS";
-        return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config)";
+        return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}";
       }
     }
   }
