@@ -48,26 +48,21 @@ sub _content {
   my $species = $object->species;
   my $dbentry_adap = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "DBEntry");
 
-  $object->param('image_width',800); ### remove this when user config is possible
-
   #slight differences for vega objects...
   my $o_type = lc($object->db_type);
 
   #user defined width in pixels
-  my $image_width  = $object->param( 'image_width' );
-
+  my $image_width  = $object->param( 'image_width' ) ? $object->param( 'image_width' ) : 700;
   #context is user defined size of introns
-  $object->param('context',100); ### remove this when user config is possible
   my $context    = $object->param('context') ? $object->param('context') : 100;
-
   #set 5' and 3' extensions to the image depending on the context
-  my $extent     = $context eq 'FULL' ? 1000 : $context;
+  my $extent     = $context eq 'FULL' ? 10000 : $context;
 
   my $wuc = $object->get_imageconfig( "supporting_evidence_transcript" );
   my $length = $object->Obj->length;
   $wuc->set_parameters({
       'container_width' => $length,
-      'image_width'     => $image_width || 800, ## hack at the moment....
+      'image_width'     => $image_width,
   });
 
   my $trans_obj = {}; # used to store details of transcript
@@ -75,15 +70,13 @@ sub _content {
 
   #add transcript itself
   my $transcript = $object->Obj;
-#  $wuc->{'transcript'}{'transcript'} = $transcript;
-#  $wuc->{'transcript'}{'web_transcript'} = $object;
   $trans_obj->{'transcript'}     = $transcript;
   $trans_obj->{'web_transcript'} = $object;
 
-  $wuc->modify_configs( ## Turn on track associated with this db/logic name
+  ## Turn on track associated with this db/logic name
+  $wuc->modify_configs(
     [$wuc->get_track_key( 'TSE_transcript', $object )],
     {qw(display supporting_evidence_transcript strand f)}  ## show on the forward strand only
-
   );
 
   #info needed to get at web_data
