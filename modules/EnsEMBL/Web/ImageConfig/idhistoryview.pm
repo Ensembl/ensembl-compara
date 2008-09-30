@@ -1,40 +1,28 @@
 package EnsEMBL::Web::ImageConfig::idhistoryview;
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
-  my ($self) = @_;
-  $self->{'_userdatatype_ID'} = 160;
-  $self->{'general'}->{'idhistoryview'} = {
-    '_artefacts'   => [
-		       qw( idhistorytree)
-		       ],
-    '_settings'    => {
-      'image_width'             => 800,
-      'width'             => 800,
-      'default_vc_size'   => 1000000,
-      'show_alignsliceview'   => 'no',
-#      'imagemap'          => 'yes',
-      'show_labels' => 'no',
-      'opt_zclick'     => 1,
-      'show_buttons' => 'no',
-      'bgcolor'           => 'background1',
-      'bgcolor1'         => 'background2',
-      'bgcolor2'         => 'bisque',
-    },
+  my ($self) = @_; 
+  $self->set_parameters({
+    'title'         => 'ID History Map',
+    'show_buttons'  => 'no',   # show +/- buttons
+    'button_width'  => 8,       # width of red "+/-" buttons
+    'show_labels'   => 'no',   # show track names on left-hand side
+    'label_width'   => 100,     # width of labels on left-hand side
+    'margin'        => 5,       # margin
+    'spacing'       => 2,       # spacing
+  });
 
-    'idhistorytree' => {
-      'on'  => "on",
-      'pos' => '0',
-      'str' => 'f'
-    },
+  $self->create_menus(
+    'ID_History'      => 'History',
+  );
 
-  };
-  my $POS = 0;
-  $self->add_track( 'idhistorytree',   'on'=>'on', 'pos' => $POS++ );
+  ## Add in additional
+   $self->load_tracks();
 
+  $self->add_tracks('ID_History',
+  ['idhistorytree',   '',   'idhistorytree', { 'on' => 'on',   'strand' => 'f'} ]
+  );
 }
-
 1;
