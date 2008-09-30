@@ -260,7 +260,6 @@ sub render_transcript {
     my $join_z   = -10;
 
     foreach my $transcript (@{$gene->get_all_Transcripts()}) {
-      warn "... $transcript ...";
       my $transcript_stable_id = $transcript->stable_id;
       next if $transcript->start > $length ||  $transcript->end < 1;
       my @exons = sort {$a->start <=> $b->start} grep { $_ } @{$transcript->get_all_Exons()};#sort exons on their start coordinate 
@@ -303,9 +302,7 @@ sub render_transcript {
               $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col2, 'line', $join_z ) ;
           }
       }
-	warn "@exons";
       for(my $i = 0; $i < @exons; $i++) {
-	warn "..>$i<..";
         my $exon = @exons[$i];
         next unless defined $exon; #Skip this exon if it is not defined (can happen w/ genscans) 
         my $next_exon = ($i < $#exons) ? @exons[$i+1] : undef; #First draw the exon
@@ -595,20 +592,16 @@ sub gene_title {
 sub transcript_key {
   my( $self, $transcript, $gene ) = @_;
   my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
-  warn "--- $pattern ---";
   $pattern =~ s/\[(\w+)\]/$transcript->$1/eg;
   $pattern =~ s/\[(gene.\w+)\]/$gene->$1/eg;
-  warn "... $pattern ...";
   return lc( $pattern );
 }
 
 sub gene_key {
   my( $self, $gene ) = @_;
   my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
-  warn "--- $pattern ---";
   $pattern =~ s/\[(\w+)\]/$gene->$1/eg;
   $pattern =~ s/\[(gene.\w+)\]/$gene->$1/eg;
-  warn "... $pattern ...";
   return lc( $pattern );
 }
 
