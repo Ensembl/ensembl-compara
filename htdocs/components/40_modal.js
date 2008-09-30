@@ -137,6 +137,9 @@ function __modal_dialog_link_open( event ) {
   PRIVATE: Loaded by __modal_onload;
 **/
   var el    = Event.findElement( event, 'A' );
+  if( el.hasClassName('reset-button')) {
+    configuration_updated = 1;
+  }
   var title = el.innerHTML.stripTags();
   var url   = el.href;
   if( $('configuration') ) {
