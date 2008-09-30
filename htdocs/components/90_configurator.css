@@ -13,5 +13,5 @@
   dl.popup_menu dt { padding: 0 0.5em 0 0; border-bottom: 1px solid #666 }
   dl.popup_menu dt img { padding: 2px }
 
-  dl.config_menu .fake_link { font-weight: bold; color:[[PAGE_LINK]]; cursor: pointer }
+  dl#local_modal .fake_link { color:[[PAGE_LINK]]; cursor: pointer }
 

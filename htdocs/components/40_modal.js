@@ -182,6 +182,7 @@ function modal_success( transport ) {
   if( M.length > 1 && M[0].match(/<div id="modal_tabs">/) ) {
     var a = M.shift();
     $('modal_caption').update( a );
+    $('modal_caption').setStyle({ paddingBottom: '0px' });
   }
   var b = M.join('</div>');
   $('modal_content').update( b );
