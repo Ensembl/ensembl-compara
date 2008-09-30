@@ -24,7 +24,7 @@ sub features {
 ## What to use as the colour key...
 sub colour_key {
   my( $self, $f ) = @_;
-  return $f->seqname;
+  return lc($f->seqname);
 }
 
 ## What to place on the feature...
