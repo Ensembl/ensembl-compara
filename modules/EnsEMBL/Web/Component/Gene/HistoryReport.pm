@@ -13,7 +13,7 @@ sub _init {
 }
 
 sub caption {
-  return 'ID History Report';
+  return; 
 }
 
 sub content {
