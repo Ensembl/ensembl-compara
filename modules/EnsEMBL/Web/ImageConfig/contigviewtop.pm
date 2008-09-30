@@ -40,15 +40,15 @@ sub init {
     'options'     => 'Options'
   );
 
-  $self->add_track( 'sequence',    'contig',    'Contigs',             'stranded_contig', { 'on' => 'on', 'strand' => 'f' } );
-  $self->add_track( 'information', 'info',      'Information',         'text',            { 'on' => 'on'  } );
+  $self->add_track( 'sequence',    'contig',    'Contigs',             'stranded_contig', { 'display' => 'normal', 'strand' => 'f' } );
+  $self->add_track( 'information', 'info',      'Information',         'text',            { 'display' => 'normal'  } );
   
   $self->load_tracks();
 
   $self->add_tracks( 'other',
-    [ 'scalebar',  '', 'scalebar',  { 'on' => 'on'  }],
-    [ 'ruler',     '', 'ruler',     { 'on' => 'on', 'strand' => 'f'  }],
-    [ 'draggable', '', 'draggable', { 'on' => 'on', 'menu' => 'no' }]
+    [ 'scalebar',  '', 'scalebar',  { 'display' => 'normal'  }],
+    [ 'ruler',     '', 'ruler',     { 'display' => 'normal', 'strand' => 'f'  }],
+    [ 'draggable', '', 'draggable', { 'display' => 'normal', 'menu' => 'no' }]
   );
   
   $self->add_options(

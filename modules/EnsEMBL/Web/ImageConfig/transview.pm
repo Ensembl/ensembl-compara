@@ -21,9 +21,9 @@ sub init {
   );
 
   $self->add_tracks( 'other',
-    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'f', 'name' => 'Scale bar'  } ],
-    [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'r', 'name' => 'Ruler'      } ],
-    [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'f', 'name' => 'Scale bar'  } ],
+    [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'r', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
   );
 
   $self->load_tracks();

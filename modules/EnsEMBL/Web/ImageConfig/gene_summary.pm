@@ -24,12 +24,12 @@ sub init {
   );
 
   $self->add_tracks( 'other',
-    [ 'scalebar',  '',            'scalebar',        { 'display' => 'on',  'strand' => 'b', 'name' => 'Scale bar'  } ],
-    [ 'ruler',     '',            'ruler',           { 'display' => 'on',  'strand' => 'b', 'name' => 'Ruler'      } ],
-    [ 'draggable', '',            'draggable',       { 'display' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar'  } ],
+    [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
   );
   $self->add_tracks( 'sequence',
-    [ 'contig',    'Contigs',              'stranded_contig', { 'on' => 'on',  'strand' => 'r'  } ],
+    [ 'contig',    'Contigs',              'stranded_contig', { 'display' => 'normal',  'strand' => 'r'  } ],
   );
 
   $self->load_tracks;

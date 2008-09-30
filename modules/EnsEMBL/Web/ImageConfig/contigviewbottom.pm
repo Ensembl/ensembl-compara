@@ -56,14 +56,14 @@ sub init {
 
 ## Note these tracks get added before the "auto-loaded tracks" get added...
   $self->add_tracks( 'sequence', 
-    [ 'contig',    'Contigs',              'stranded_contig', { 'on' => 'on',  'strand' => 'r'  } ],
-#   [ 'prelim',    'Preliminary release', 'preliminary',      { 'on' => 'off', 'menu' => 'no',  'strand' => 'r' } ],
-    [ 'seq',       'Sequence',             'seq',             { 'on' => 'off',  'strand' => 'r' } ],
-    [ 'codon_seq', 'Translated sequence',  'codonseq',        { 'on' => 'off',  'strand' => 'r' } ],
-    [ 'codons',    'Start/stop codons',    'codons',          { 'on' => 'off',  'strand' => 'r' } ],
+    [ 'contig',    'Contigs',              'stranded_contig', { 'display' => 'normal',  'strand' => 'r'  } ],
+#   [ 'prelim',    'Preliminary release', 'preliminary',      { 'display' => 'off', 'menu' => 'no',  'strand' => 'r' } ],
+    [ 'seq',       'Sequence',             'sequence',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.2, 'colourset' => 'seq'      } ],
+    [ 'codon_seq', 'Translated sequence',  'codonseq',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.5, 'colourset' => 'codonseq' } ],
+    [ 'codons',    'Start/stop codons',    'codons',          { 'display' => 'off',  'strand' => 'b', 'threshold' => 50,  'colourset' => 'codons'   } ],
   );
   $self->add_tracks( 'other', 
-    [ 'gc_plot',   '%GC',                  'gcplot',          { 'on' => 'on',  'strand' => 'r'  } ],
+    [ 'gc_plot',   '%GC',                  'gcplot',          { 'display' => 'normal',  'strand' => 'r'  } ],
   );
   
 ## Add in additional
@@ -82,13 +82,13 @@ sub init {
     } )
   }
   $self->add_tracks( 'information',
-    [ 'missing',   '', 'text', { 'on' => 'on', 'strand' => 'r', 'name' => 'Disabled track summary' } ],
-    [ 'info',      '', 'text', { 'on' => 'on', 'strand' => 'r', 'name' => 'Information'  } ],
+    [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary' } ],
+    [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information'  } ],
   );
   $self->add_tracks( 'other',  
-    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'b', 'name' => 'Scale bar'  } ],
-    [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'b', 'name' => 'Ruler'      } ],
-    [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar'  } ],
+    [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
   );
 
 ## Finally add details of the options to the options menu...

@@ -21,8 +21,8 @@ sub init {
   );
 
   $self->add_tracks( 'other',
-    [ 'ruler',     '', 'ruler',     { 'on' => 'on',  'strand' => 'r', 'name' => 'Ruler' } ],
-    [ 'draggable', '', 'draggable', { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'    } ],
+    [ 'ruler',     '', 'ruler',     { 'display' => 'normal',  'strand' => 'r', 'name' => 'Ruler' } ],
+    [ 'draggable', '', 'draggable', { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'    } ],
   );
 
   $self->load_tracks();

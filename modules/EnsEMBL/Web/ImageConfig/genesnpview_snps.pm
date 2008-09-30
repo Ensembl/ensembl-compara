@@ -21,7 +21,7 @@ sub init {
   );
 
   $self->add_tracks( 'other',
-    [ 'ruler',     '', 'ruler',     { 'on' => 'on',  'strand' => 'r', 'name' => 'Ruler' } ],
+    [ 'ruler',     '', 'ruler',     { 'display' => 'normal',  'strand' => 'r', 'name' => 'Ruler' } ],
   );
 
   $self->load_tracks();

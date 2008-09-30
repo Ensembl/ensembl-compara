@@ -26,9 +26,9 @@ sub init {
   $self->load_tracks();
 
   $self->add_tracks( 'decorations',
-    [ 'variation','Variations','P_variation',{ 'on' => 'on', 'colourset' => 'protein_feature', 'strand' => 'r' } ],
-    [ 'scalebar', 'Scale bar', 'P_scalebar', { 'on' => 'on', 'strand' => 'r' } ],
-    [ 'protein',  'Protein',   'P_protein',  { 'on' => 'on', 'colourset' => 'protein_feature', 'strand' => 'f' } ],
+    [ 'variation','Variations','P_variation',{ 'display' => 'normal', 'colourset' => 'protein_feature', 'strand' => 'r' } ],
+    [ 'scalebar', 'Scale bar', 'P_scalebar', { 'display' => 'normal', 'strand' => 'r' } ],
+    [ 'protein',  'Protein',   'P_protein',  { 'display' => 'normal', 'colourset' => 'protein_feature', 'strand' => 'f' } ],
   );
   ## Psnp_legend....  'syn'	  => 'chartreuse2', 'in-del'  => 'skyblue2', 'non-syn' => 'gold',
 }

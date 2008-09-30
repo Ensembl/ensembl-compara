@@ -29,21 +29,21 @@ sub init {
 
 
 #  $self->add_tracks( 'sequence',
-#    [ 'contig',    'Contigs',              'stranded_contig', { 'on' => 'on',  'strand' => 'r'  } ],
+#    [ 'contig',    'Contigs',              'stranded_contig', { 'display' => 'normal',  'strand' => 'r'  } ],
 #  );
   $self->load_tracks();
 
   $self->add_tracks( 'gsv_variations',
-    [ 'variation',             '',     'gsv_variations',          { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ],
-    [ 'domain',               '',     'gsv_domain',             { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ],
+    [ 'variation',             '',     'gsv_variations',          { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ],
+    [ 'domain',               '',     'gsv_domain',             { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ],
   );
   $self->add_tracks( 'other',
-    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
-    [ 'draggable',        '',     'draggable',         { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
-    [ 'snp_join',         '',     'snp_join',          { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
-    [ 'spacer',           '',     'spacer',            { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ],
- #   [ 'ruler',            '',     'ruler',             { 'on' => 'on',  'strand' => 'f', 'name' => 'Ruler'      } ],
- #   [ 'scalebar',         '',     'scalebar',          { 'on' => 'on',  'strand' => 'f', 'name' => 'Scale bar'  } ],
+    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'draggable',        '',     'draggable',         { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'spacer',           '',     'spacer',            { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ],
+ #   [ 'ruler',            '',     'ruler',             { 'display' => 'normal',  'strand' => 'f', 'name' => 'Ruler'      } ],
+ #   [ 'scalebar',         '',     'scalebar',          { 'display' => 'normal',  'strand' => 'f', 'name' => 'Scale bar'  } ],
   );
   $self->modify_configs(
     [qw(gsv_transcript variation)],

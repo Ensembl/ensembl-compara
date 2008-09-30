@@ -41,8 +41,8 @@ sub init {
   );
 
   $self->add_tracks( 'information',
-    [ 'missing',   '', 'text', { 'on' => 'on', 'strand' => 'r', 'name' => 'Disabled track summary' } ],
-    [ 'info',      '', 'text', { 'on' => 'on', 'strand' => 'r', 'name' => 'Information'  } ],
+    [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary' } ],
+    [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information'  } ],
   );
   $self->load_tracks();
 
@@ -52,9 +52,9 @@ sub init {
   );
 
   $self->add_tracks( 'other',
-    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'b', 'name' => 'Scale bar'  } ],
-    [ 'ruler',     '',            'ruler',           { 'on' => 'on',  'strand' => 'b', 'name' => 'Ruler'      } ],
-    [ 'draggable', '',            'draggable',       { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar'  } ],
+    [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
   );
   
   $self->add_options(

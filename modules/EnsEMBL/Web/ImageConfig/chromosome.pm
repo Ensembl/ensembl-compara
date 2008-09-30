@@ -32,19 +32,19 @@ sub init {
 ## Now we have a number of tracks which we have to manually add...
   $self->add_tracks( 'decorations', 
     [ 'ideogram',           'Ideogram',            'ideogram', {
-      'on' => 'on',
+      'display' => 'normal',
       'strand'=>'r',
       'colourset' => 'ideogram'
     } ],
     [ 'assembly_exception', 'Assembly exceptions', 'assemblyexception', {
       'height'        => 2,
-      'on'            => 'on', 
+      'display'       => 'normal', 
       'strand'        => 'x',
       'label_strand'  => 'r',
       'short_labels'  => 1,
       'colourset'     => 'assembly_exception'
     } ],
-    [ 'draggable', '', 'draggable', { 'on' => 'on' } ]
+    [ 'draggable', '', 'draggable', { 'display' => 'normal' } ]
   );
 
   $self->tree->dump("Chromosome configuration", '([[glyphset]] -> [[caption]])');

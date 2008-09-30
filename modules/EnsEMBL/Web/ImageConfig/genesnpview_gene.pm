@@ -28,13 +28,13 @@ sub init {
   $self->load_tracks();
 
   $self->add_tracks( 'gsv_variation',
-    [ 'variation',             '',     'gsv_variations',          { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ]
+    [ 'variation',             '',     'gsv_variations',          { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ]
   );
   $self->add_tracks( 'other',
-    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
-    [ 'draggable',        '',     'draggable',         { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
-    [ 'snp_join',         '',     'snp_join',          { 'on' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
-    [ 'spacer',           '',     'spacer',            { 'on' => 'on',  'strand' => 'r', 'menu' => 'no'         } ],
+    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'draggable',        '',     'draggable',         { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'spacer',           '',     'spacer',            { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ],
   );
   $self->modify_configs(
     [qw(gsv_transcript variation)],

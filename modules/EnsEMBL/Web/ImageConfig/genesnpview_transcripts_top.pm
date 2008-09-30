@@ -23,9 +23,9 @@ sub init {
     'other'           => 'Other'
   );
   $self->add_tracks( 'other',
-    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'on' => 'on',  'strand' => 'f', 'menu' => 'no'         } ],
-    [ 'snp_join',         '',     'snp_join',          { 'on' => 'on',  'strand' => 'f', 'menu' => 'no'         } ],
-    [ 'draggable',        '',     'draggable',         { 'on' => 'on',  'strand' => 'f', 'menu' => 'no'         } ],
+    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal',  'strand' => 'f', 'menu' => 'no'         } ],
+    [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'f', 'menu' => 'no'         } ],
+    [ 'draggable',        '',     'draggable',         { 'display' => 'normal',  'strand' => 'f', 'menu' => 'no'         } ],
   );
 }
 1;
