@@ -18,14 +18,16 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $form = EnsEMBL::Web::Form->new( 'change_sp', '/'.$object->species.'/Location/Synteny', 'get' );
+  my $form = EnsEMBL::Web::Form->new( 'change_sp', '/'.$object->species.'/Location/Synteny', 'get', 'nonstd check' );
 
-  my %synteny = $object->species_defs->multi('SYNTENY');
-  my @species = sort keys %synteny;
+  my %synteny = $object->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  my @species = keys %synteny;
+  my @sorted_by_common = sort { $a->{'common'} cmp $b->{'common'} }
+        map  { { 'name'=> $_, 'common' => $object->species_defs->get_config($_, "SPECIES_COMMON_NAME")} }
+                          @species;
   my @values;
-  foreach my $next (@species) {
-    (my $name = $next) =~ s/_/ /g;
-    push @values, {'name'=>$name, 'value'=>$next} ;
+  foreach my $next (@sorted_by_common) {
+    push @values, {'name'=>$next->{'common'}, 'value'=>$next->{'name'}} ;
   }
 
   $form->add_element(
