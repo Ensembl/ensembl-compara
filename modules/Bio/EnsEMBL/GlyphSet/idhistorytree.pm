@@ -28,10 +28,10 @@ my $k;
 #warn ("A-0:".localtime());
 my %asmbl;
 
-sub _init {
-  my ($self) = @_; warn $self;
-  return unless ($self->strand() == -1);
-  my $Config = $self->{'config'};   
+sub render_normal { 
+  my ($self) = @_;
+  return unless ($self->strand() == 1);
+  my $Config = $self->{'config'};  
   my $history_tree = $self->{'container'}; 
   my $a_id = $self->{'config'}->{_object}->stable_id;
 
@@ -43,7 +43,8 @@ sub _init {
   my $th_o = $res_o[3];
 
   my $fontheight = 5;
-  my $bg = $Config->get_parameter(  'bgcolor2');
+  my $bg = $Config->get_parameter('bgcolour2') || 'background2';
+   
 
   ## Variable declaration ##
 
@@ -72,7 +73,7 @@ sub _init {
   ## Set X coordinates ##
 
   my @releases = sort {$a <=> $b} @{$history_tree->get_release_display_names};
-warn "Releases... @releases";
+#warn "Releases... @releases";
   my $count = scalar(@releases);
      $count --;
   my $interval = $working_length / $count;
@@ -100,7 +101,7 @@ warn "Releases... @releases";
       'halign'    => 'left',
       'colour'    => 'blue',
       'text'      =>  $id,
-      'href'     =>   $id_l
+      #'href'     =>   $id_l
     }));
 
     if ($id eq $a_id) { ## Highlight the focus id ##
@@ -183,7 +184,7 @@ warn "Releases... @releases";
     my $id = $a_id->stable_id;
     my $version = $a_id->version;
     my $arelease = $a_id->release;
-warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
+#warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
     foreach my $e (@events){
       my $old = $e->old_ArchiveStableId;
       my $new = $e->new_ArchiveStableId;
@@ -221,7 +222,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
         'width'     => 3,
         'height'    => 3,
         'colour'    => $node_col,
-        'zmenu'     => $zmenu,
+        'href'     =>  $self->_url($zmenu),
         });
     push (@ns, $node);
 
@@ -283,7 +284,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
          'absolutey' => 1,
            'absolutewidth' => 1,
          'clickwidth' => 2,
-         'zmenu'     => $zmenu_s,
+         'href'     => $self->_url($zmenu_s),
       });
       $self->push($hbr);   
     
@@ -349,9 +350,9 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
  });
 
   $self->push($asmbl_label);
-  my %temp = %{$Config->species_defs->get_config($species )}; 
-  # foreach my $key (keys %temp){warn "key $key";}
-  #my %archive_info = %{$Config->species_defs->get_config($species, 'archive')};
+
+  my %archive_info = %{$Config->species_defs->get_config($species, 'ASSEMBLIES')}; 
+
   my @a_colours = ('contigblue1', 'contigblue2');
   my $i =0;
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
@@ -360,7 +361,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
   foreach my $r (@releases){
     my $tempr = $r; 
     if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
-    my $current_r = "NCBI36"; #$archive_info{$tempr};
+    my $current_r = $archive_info{$tempr}; 
     push @{$asmbl{$current_r}} , $r;
   }
   my %asmbl_seen;
@@ -368,7 +369,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
   foreach my $key ( @releases){    
    my $tempr = $key; 
    if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
-    my $a = "NCBI36";#£$archive_info{$tempr};
+    my $a = $archive_info{$tempr};
     if (exists $asmbl_seen{$a}){
       next;
     }
@@ -454,7 +455,7 @@ warn ">>>> $id($version/$arelease) $x <<>> $y <<<";
   foreach my $r (@releases){
     my $x_coord = $xc{$r};
     my $ty = $y + 8;
-    #if ($r == $last_rel){ $x_coord = $working_length - 0.25 + 60};    
+   # if ($r == $last_rel){ $x_coord = $working_length - 0.25 + 60};    
 
     my $tick = $self->Line({
         'x'         => $x_coord,
@@ -498,11 +499,11 @@ sub zmenu_node {
   my $link = _archive_link($archive_id, $Config);
 
   my $zmenu = { 
-    caption         => $id,
-    "10:$type: $link" =>'', 
-    "20:Release: $rel" =>'',
-    "30:Assembly: $assembly" =>'',
-    "40:Database: $db" =>, 
+    'caption'        =>  $id,
+    '90:'.$type      =>  $link, 
+    '80:Release'     =>  $rel,
+    '70:Assembly'    =>  $assembly,
+    '60:Database'    =>  $db, 
   };
 
   return ($zmenu, $link) ;
@@ -528,11 +529,12 @@ sub _archive_link {
 
     
     #my %archive_sites = map { $_->{release_id} => $_->{short_date} }
-    #  @{ $Config->species_defs->RELEASE_INFO }; 
-
-   # $url = "http://$archive_sites{$release}.archive.ensembl.org/";
-    $url =~ s/ //;
-
+    my %archive_sites = %{ $Config->species_defs->ENSEMBL_ARCHIVES }; 
+    if ($archive_sites{$release}){
+     $url = "http://$archive_sites{$release}.archive.ensembl.org/";
+     $url =~ s/ //;
+    } else { return $name;}
+    
   }
 
   $url .=  $ENV{'ENSEMBL_SPECIES'};
@@ -544,7 +546,20 @@ sub _archive_link {
     $view = 'transview';
   }
 
+   
   my $html = qq(<a href="$url/$view?$type=$name">$name</a>);
+  if ($release >= 51 ){
+    my $p;
+    if ($type eq 'gene') {
+      $type = 'Gene';
+      $p = 'g';
+    } else {
+      $type = 'Transcript';
+      $p = 't';
+    }  
+    $html = qq(<a href="$url/$type/Summary?$p=$name">$name</a>);
+  } 
+
   return $html;
 }
 
@@ -571,16 +586,16 @@ sub zmenu_score {
   else {$s = sprintf("%.2f", $s);}  
 
   my $zmenu = {
-    caption  => 'Similarity Match',
-    "10:Old $oldType: $old_link"        =>'',
-    "20:&nbsp;&nbsp;Release: $oldRel" =>'',
-    "30:&nbsp;&nbsp;Assembly: $oldAss" =>'',
-    "40:&nbsp;&nbsp;Database: $oldDb"  =>'',
-    "50:New $newType: $new_link"        =>'',
-    "60:&nbsp;&nbsp;Release: $newRel"  =>'',
-    "70:&nbsp;&nbsp;Assembly: $newAss" =>'',
-    "80:&nbsp;&nbsp;Database: $newDb"  =>'',
-    "90:Score: $s" => '', 
+    caption             => 'Similarity Match',
+    "100:Old $oldType:" => $old_link,
+    "90:Old Release:"   =>  $oldRel,
+    "80:Old Assembly:"  =>  $oldAss,
+    "70:Old Database:"  =>  $oldDb,
+    "60:New $newType:"  =>  $new_link,
+    "50:New Release:"   =>  $newRel,
+    "40:New Assembly:"  =>  $newAss,
+    "30:New Database:"  =>  $newDb,
+    "20:Score:"         =>  $s, 
   };
   return $zmenu;
 }
