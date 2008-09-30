@@ -89,13 +89,12 @@ sub _get_valid_action {
   my $func   = shift;
   # my %hash = map { $_ => 1 } $self->{_data}{tree}->get_node(';
 
-  warn "... $action ...";
   my $node;
   $node = $self->tree->get_node( $action."/".$func ) if $func;
   return $action."/".$func if $node && $node->get('type') =~ /view/;
   $node = $self->tree->get_node( $action )           unless $node;
   return $action if $node && $node->get('type') =~ /view/;
-  warn "RESORTING TO DEFAULT ",$self->default_action;
+  #warn "RESORTING TO DEFAULT ",$self->default_action;
   return $self->default_action;
 #  return $node;
 }
@@ -224,6 +223,7 @@ sub _configurator {
   my $vc   = $obj->get_viewconfig();
 
   my $conf;
+  my $config_key = $obj->param('config');
   eval {
     $conf = $obj->image_config_hash( $obj->param('config') ) if $obj->param('config');
   };
@@ -262,6 +262,7 @@ sub _configurator {
     my %T = $vc->image_configs;
     my @Q = sort keys %T;
     if(@Q) {
+      $config_key = $Q[0];
       $conf = $obj->image_config_hash( $Q[0] );
     }
   }
@@ -270,14 +271,15 @@ sub _configurator {
   $self->tree->_flush_tree();
 
   my $rhs_content = sprintf '
-      <form id="configuration" action="%s">
+      <form id="configuration" action="%s" method="get">
         <div>', $url->[0];
   foreach( keys %{ $url->[1] } ) {
     $rhs_content .= sprintf '
-          <input type="hidden" name="%s" value="%s">', $_, CGI::escapeHTML( $url->[1]{$_} );
+          <input type="hidden" name="%s" value="%s" />', $_, CGI::escapeHTML( $url->[1]{$_} );
   }
-  $rhs_content .= '
-        </div>';
+  $rhs_content .= sprintf '
+          <input type="hidden" name="config" value="%s" />
+        </div>', $obj->param('config') ;
   my $active = '';
   foreach my $node ($conf->tree->top_level) {
     my $count = 0;
@@ -437,11 +439,8 @@ sub _content_panel {
   my $self   = shift;
   my $obj    = $self->{'object'};
 
-  warn ".......... $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} ............";
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} );
-  warn ":......... $action ...........";
   my $node          = $self->get_node( $action );
-  warn "... $node ...";
   my $title = $node->data->{'concise'}||$node->data->{'caption'};
      $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
      $title = join ' - ', '', ( $obj ? $obj->caption : () ), $title;
