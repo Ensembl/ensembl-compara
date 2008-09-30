@@ -121,7 +121,7 @@ sub content_text {
   my $fn   = $formats{$mode}{'method'};
 
   my @params = map { $object->param( $_ ) } @{ $formats{$mode}{'parameters'} || [] };
-  warn "MODE $mode FN $fn PARAMS @params";
+  warn "MODE $mode FN $fn PARAMS @{ $formats{$mode}{'parameters'} || [] } PARAMS @params";
   my $string = $tree->$fn(@params);
   if( $formats{$mode}{'split'} ) {
     my $reg = '(['.quotemeta($formats{$mode}{'split'}).'])';

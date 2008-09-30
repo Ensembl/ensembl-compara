@@ -55,7 +55,8 @@ sub add_image_configs { ## Value indidates that the track can be configured for 
 
 sub has_image_config {
   my $self = shift;
-  return exists $self->{_image_config_names}{shift};
+  my $config = shift;
+  return exists $self->{_image_config_names}{$config};
 }
 sub has_image_configs {
   my $self = shift;

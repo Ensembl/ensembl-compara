@@ -629,7 +629,6 @@ sub content {
               '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,$module;
  	      $URL .= "/$function_name" if $function_name && $comp_obj->can( "content_$function_name" );
               $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
-	    warn "CREATING URL.... $ENV{'ENSEMBL_FUNCTION'} ::: $URL";
 
               ## Check if ajax enabled
             if( $ENSEMBL_WEB_REGISTRY->check_ajax ) {

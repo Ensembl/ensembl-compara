@@ -38,7 +38,6 @@ sub _url {
     $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) ;
     $join = ';';
   }
-  warn "WE HAVE CALLED URL............. $URL, @{[keys %$params]} | @{[values %$params]}";
 
   return $URL;
 }
@@ -104,7 +103,7 @@ sub input_param  {
 
 sub delete_param { my $self = shift; $self->{'data'}{'_input'}->delete(@_); }
 sub type         { return $_[0]{'data'}{'_type'};    }
-sub action       { warn "AC..", $_[0]{'data'}{'_action'}; return $_[0]{'data'}{'_action'};  }
+sub action       { return $_[0]{'data'}{'_action'};  }
 sub function     { return $_[0]{'data'}{'_function'};  }
 sub script       { return $_[0]{'data'}{'_script'};  }
 sub species      { return $_[0]{'data'}{'_species'}; }
@@ -114,6 +113,7 @@ sub fix_session {
 ### calls store on... this will check whether (a) there are any saveable
 ### viewconfigs AND (b) if any of the saveable viewconfigs have been altered
   my( $self, $r ) = @_;
+return;
   my $session = $self->get_session;
   $session->store($self->apache_handle) if $session;
 }

@@ -49,6 +49,7 @@ sub retrieve {
   my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
   return unless exists $cookies{$self->get_name};
   my( $ID, $flag ) = $self->decrypt_value( $cookies{$self->get_name}->value );
+# warn "COOKIE $ID $flag";
   if( $flag eq 'expired' ) {      ## Remove the cookie!
     $self->clear();
   } elsif( $flag eq 'refresh' ) { ## Refresh the cookie

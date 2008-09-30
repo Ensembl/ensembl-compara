@@ -6,10 +6,12 @@ package EnsEMBL::Web::Data::Session;
 
 use strict;
 use warnings;
-use HTTP::Date qw(str2time time2iso);
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Data);
+
 use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
+use HTTP::Date qw(str2time time2iso);
 
 __PACKAGE__->table('session_record');
 __PACKAGE__->set_primary_key('session_record_id');
