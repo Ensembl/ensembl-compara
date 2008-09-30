@@ -23,7 +23,7 @@ sub counts {
 
   unless ($counts) {
     $counts = {};
-    my %synteny_hash = $self->species_defs->multi('SYNTENY');
+    my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
     $counts->{'synteny'} = keys %synteny_hash; 
 
   }
@@ -368,11 +368,16 @@ sub get_synteny_matches {
         my $data_row = {
             'sp_stable_id'      =>  $localgene->stable_id,
             'sp_synonym'        =>  $gene_synonym,
+            'sp_chr'            =>  $localgene->seq_region_name,
+            'sp_start'          =>  $localgene->start,
+            'sp_end'            =>  $localgene->end,
             'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset),
             'other_stable_id'   =>  $homol->stable_id,
             'other_synonym'     =>  $homol_id,
             'other_chr'         =>  $H_CHR,
-            'other_length'      =>  $self->bp_to_nearest_unit($H_START),
+            'other_start'       =>  $H_START,
+            'other_end'         =>  $gene->end,
+            'other_length'      =>  $self->bp_to_nearest_unit($gene->end - $H_START),
             'homologue_no'      =>  $homol_num
         };
 
@@ -382,6 +387,9 @@ sub get_synteny_matches {
     else {
       push @data, { 
             'sp_stable_id'      =>  $localgene->stable_id,
+            'sp_chr'            =>  $localgene->seq_region_name,
+            'sp_start'          =>  $localgene->start,
+            'sp_end'            =>  $localgene->end,
             'sp_synonym'        =>  $gene_synonym,
             'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset) 
       };
