@@ -129,7 +129,6 @@ var configurator_action_title = '';
 
 function configurator_submit_form( url, title ) {
   remove_grey_box(); // Remove our "pseudo" graphical dropdowns....
-
   // Grab the final configuration ...
   var final_configuration = $H( $('configuration') ? $('configuration').serialize(true) :{} );
   // ... and compare it with the initial configuration
@@ -144,6 +143,7 @@ function configurator_submit_form( url, title ) {
     delete initial_configuration[pair.key];
   });
   $H(initial_configuration).each(function(pair){ diff_configuration[ pair.key ] = 'no'; }); // CheckBox 0 value!
+  initial_configuration = false;
   if( $H(diff_configuration).keys().size() == 0 ) {
     __modal_dialog_link_open_2( url, title );
     return;
@@ -152,7 +152,6 @@ function configurator_submit_form( url, title ) {
     diff_configuration[ 'config' ] = config_name;
   }
   diff_configuration[ 'submit' ] = 1;
-//  alert("SUBMITTING FORM:"+$H(diff_configuration).toQueryString() );
   // ... create a query string from this...
   if( ENSEMBL_AJAX == 'enabled' ) { // We have Ajax so submit it using AJAX
     $('modal_disable').show();
