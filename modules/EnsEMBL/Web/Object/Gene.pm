@@ -701,10 +701,10 @@ sub getVariationsOnSlice {
   my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
         'Slice', $slice, $self->__data
        );
-
-  my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene);
+  
+  my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene);  
   $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
-  $self->__data->{'SNPS'} = $filtered_snps;
+  $self->__data->{'SNPS'} = $filtered_snps; 
   return ($count_snps, $filtered_snps, $context_count);
 }
 
@@ -876,13 +876,13 @@ sub get_munged_slice {
 ## compute the width of the slice image within the display
   my $PIXEL_WIDTH =
     ($self->param('image_width')||800) -
-        ( $master_config->get( '_settings', 'label_width' ) || 100 ) -
-    3 * ( $master_config->get( '_settings', 'margin' )      ||   5 );
+        ( $self->param( 'label_width' ) || 100 ) -
+    3 * ( $self->param( 'margin' )      ||   5 );
 
 ## Work out the best size for the gaps between the "exons"
   my $fake_intron_gap_size = 11;
   my $intron_gaps  = ((@lengths-1)/2);
-  warn $PIXEL_WIDTH;
+  
   if( $intron_gaps * $fake_intron_gap_size > $PIXEL_WIDTH * 0.75 ) {
      $fake_intron_gap_size = int( $PIXEL_WIDTH * 0.75 / $intron_gaps );
   }
@@ -976,11 +976,11 @@ sub feature_sets {
   my @sources;
   my $spp = $ENV{'ENSEMBL_SPECIES'};
   if ($spp eq 'Homo_sapiens'){
-   @sources = ('RegulatoryFeatures', 'miRanda miRNA', 'cisRED search regions', 'cisRED group motifs', 'VISTA enhancer set'); 
+   @sources = ('RegulatoryFeatures', 'miRanda miRNA', 'cisRED search regions', 'cisRED motifs', 'VISTA enhancer set'); 
   } elsif ($spp eq 'Mus_musculus'){
-   @sources = ('cisRED search regions', 'cisRED group motifs');
+   @sources = ('cisRED search regions', 'cisRED motifs');
   } 
-  elsif ($spp eq 'Drosophila_melanogaster'){ warn "TEST";
+  elsif ($spp eq 'Drosophila_melanogaster'){ 
    @sources = ('BioTIFFIN motifs', 'REDfly CRMs', 'REDfly TFBSs'); 
   }
 
