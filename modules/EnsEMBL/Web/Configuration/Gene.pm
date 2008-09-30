@@ -145,7 +145,11 @@ sub ajax_zmenu      {
   my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
 
-  my $action = $obj->[1]{'_action'} || 'Summary';
+  my $action = $obj->[1]{'_action'} || 'Summary'; 
+
+  if( $action =~ 'Idhistory'){
+    return $self->_ajax_zmenu_id_history_tree($panel, $obj);
+  }
 
   if( $action =~ 'Compara_Tree_Node' ){
     return $self->_ajax_zmenu_compara_tree_node();
@@ -391,6 +395,27 @@ sub _compara_tree_jalview_html{
   return $html;
 }
 
+sub _ajax_zmenu_id_history_tree {
+  my ($self, $panel ) = @_; 
+  my $obj = $self->object;
+  my $params = $obj->[1]->{'_input'};
+  $panel->{'caption'} = $params->{'caption'}[0];
+  my $link = $params->{$obj->type}[0];
+
+  foreach my $p (keys %{$params}){
+    if ($p =~/^\d+/){ 
+      my $value = $params->{$p}[0];
+      my ($priority, $type) = split(/:/, $p);
+      $panel->add_entry({
+        'type'     =>  $type,
+        'label'    =>  $value,
+        'priority' =>  $priority,
+      });
+
+    }
+  }
+  return;
+}
 
 sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;    }
