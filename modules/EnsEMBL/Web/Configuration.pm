@@ -3,17 +3,18 @@ package EnsEMBL::Web::Configuration;
 use strict;
 use warnings;
 no warnings qw(uninitialized);
+use base qw(EnsEMBL::Web::Root);
+
 use POSIX qw(floor ceil);
 use CGI qw(escape);
-
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Cache;
 
-use base qw(EnsEMBL::Web::Root);
 
 our $MEMD = new EnsEMBL::Web::Cache;
+use Time::HiRes qw(time);
 
 sub object { 
   return $_[0]->{'object'};
@@ -170,6 +171,7 @@ sub _user_context {
       'id'        => "config_page",
       'caption'   => 'Configure page',
       $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
+        'time' => time, 
         'type'   => 'Config',
         'action' => $type.'/'.$ENV{'ENSEMBL_ACTION'},
       }))
@@ -185,6 +187,7 @@ sub _user_context {
       'id'        => "config_$ic_code",
       'caption'   => 'Configure "'.$ic->get_parameter('title').'"',
       $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
+        'time' => time, 
         'type'   => 'Config',
 	'action' => $type.'/'.$ENV{'ENSEMBL_ACTION'},
 	'config' => $ic_code
@@ -197,6 +200,7 @@ sub _user_context {
     'type'      => 'UserData',
     'caption'   => 'Custom Data',
     $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
+      'time' => time, 
       'type'   => 'UserData',
       'action' => 'Summary'
     }))
@@ -208,6 +212,7 @@ sub _user_context {
       'type'      => 'Account',
       'caption'   => 'Your account',
       $active ? ( 'class' => 'active') : ( 'url' => $obj->_url({
+      'time' => time, 
         'type'   => 'Account',
 	'action' => 'Summary'
       }))
@@ -291,7 +296,7 @@ sub _configurator {
   $self->tree->_flush_tree();
 
   my $rhs_content = sprintf '
-      <form id="configuration" action="%s" method="get">
+      <form id="configuration" action="%s" method="post">
         <div>', $url->[0];
   foreach( keys %{ $url->[1] } ) {
     $rhs_content .= sprintf '
@@ -400,6 +405,7 @@ sub _local_tools {
     push @data, [
       'Configure this page',
       $obj->_url({
+        'time' => time, 
         'type' => 'Config',
         'action' => $action,
         ( $config eq '1' ? ( ) : ('config' => $config) )

@@ -101,7 +101,7 @@ sub has_form {
 
 sub get_form {
   my $self = shift;
-  $self->{_form}||=EnsEMBL::Web::Form->new( 'configuration', $self->url,'get' );
+  $self->{_form}||=EnsEMBL::Web::Form->new( 'configuration', $self->url,'post' );
   return $self->{_form};
 }
 
