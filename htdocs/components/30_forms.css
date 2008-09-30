@@ -17,7 +17,7 @@ form.std div.notes h4 {
   padding-left:16px;
 }
 
-form.std label { font-weight:bold; }
+form.std label, form.nonstd label { font-weight:bold; }
 
 input.submit { 
   background-color:[[MH_BG]]; border:outset [[MH_BG]] 2px;
