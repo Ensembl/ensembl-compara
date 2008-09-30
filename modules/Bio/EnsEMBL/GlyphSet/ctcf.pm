@@ -6,7 +6,7 @@ sub my_helplink { return "ctcf"; }
 
 sub get_block_features {
   ### block_features
-  my ( $self, $db ) = @_; 
+  my ( $self, $db ) = @_;  
   unless ( $self->{'block_features'} ) {
     my $feature_adaptor = $db->get_DataSetAdaptor(); 
     if (!$feature_adaptor) {
@@ -14,7 +14,7 @@ sub get_block_features {
       return [];
     }
      #warn "Adapt $feature_adaptor"; 
-     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('Insulator') || [] ;  warn "FEATS $features";
+     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('Insulator') || [] ;  
     $self->{'block_features'} = $features; 
   }
 
@@ -29,20 +29,21 @@ sub draw_features {
   ### Draws wiggles if wiggle flag is 1
   ### Returns 1 if draws blocks. Returns 0 if no blocks drawn
 
-  my ($self, $db, $wiggle)= @_; 
+  my ($self, $wiggle)= @_; 
+  my $db =  $self->dbadaptor( 'homo sapiens', 'FUNCGEN' ); warn $db; 
   my ($block_features, $colour) = $self->get_block_features($db);
   my $drawn_flag = 0;
   my $drawn_wiggle_flag = $wiggle ? 0: "wiggle"; warn $wiggle;
   my $slice = $self->{'container'};
   my $wiggle_colour = "steelblue";
   foreach my $feature ( @$block_features ) {
-
+    warn $feature; 
     # render wiggle if wiggle
    if ($wiggle) { 
-	foreach my $result_set  (  @{ $feature->get_displayable_supporting_sets() } ){ 
-	 
+	foreach my $result_set  ( @{ $feature->get_displayable_supporting_sets() } ){ 
+	  warn $result_set;
 	 #get features for slice and experimental chip set
-	 my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; 
+	 my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; warn scalar @features;
 	 next unless @features; 	
 	 $drawn_wiggle_flag = "wiggle";
 	 @features   = sort { $a->score <=> $b->score  } @features;

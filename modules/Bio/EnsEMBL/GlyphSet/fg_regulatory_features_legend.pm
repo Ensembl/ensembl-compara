@@ -15,7 +15,7 @@ sub _init {
   my $vc            = $self->{'container'};
   my $Config        = $self->{'config'};
   my $im_width      = $Config->image_width();
-  my $type          = $Config->get('fg_regulatory_features_legend', 'src');
+ # my $type          = $Config->get_parameter('fg_regulatory_features_legend', 'src');
    
   my @colours;
   return unless $Config->{'fg_regulatory_features_legend_features'};
@@ -30,8 +30,8 @@ sub _init {
   my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
   
   my $FLAG = 0;
-  foreach (sort { $features{$b}->{'priority'} <=> $features{$a}->{'priority'} } keys %features) {
-    @colours = @{$features{$_}->{'legend'}};
+  foreach (sort { $features{$b}->{'priority'} <=> $features{$a}->{'priority'} } keys %features) {                                              
+    @colours = @{$features{$_}->{'legend'}}; 
 
     $y++ unless $x==0;
     $x=0;

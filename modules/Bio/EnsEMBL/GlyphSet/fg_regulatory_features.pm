@@ -23,12 +23,12 @@ sub features {
     }
   }
   
-  my $reg_features = $self->fetch_features($fg_db, $slice);
+  my $reg_features = $self->fetch_features($fg_db, $slice, $Config);
   return $reg_features;
 }
 
 sub fetch_features {
-  my ($self, $db, $slice ) = @_;
+  my ($self, $db, $slice, $Config ) = @_;
   unless ( exists( $self->{'config'}->{'reg_feats'} ) ){
     my $dsa = $db->get_FeatureSetAdaptor(); 
     if (!$dsa) {
@@ -37,9 +37,10 @@ sub fetch_features {
     }
 
   my @reg_feature_sets = @{$dsa->fetch_all_displayable_by_type('regulatory')}; 
+
   foreach my $set (@reg_feature_sets) {  
-	 foreach my $pf (@{$set->get_Features_by_Slice($slice) }){    
-      my $type = $pf->feature_type->name(); 
+	 foreach my $pf (@{$set->get_Features_by_Slice($slice) }){  
+      my $type = $pf->feature_type->name();  
       my $id  = $pf->stable_id; 
       my $label = $pf->display_label;
     }
@@ -59,24 +60,23 @@ sub fetch_features {
   return $reg_feats;
 }
 
-
-
-sub colour {
+sub colour_key {
   my ($self, $f) = @_;
-  my $type = $f->feature_type->name();
+  my $type = $f->feature_type->name(); 
   if ($type =~/Promoter/){$type = 'Promoter_associated';}
   elsif ($type =~/Gene/){$type = 'Genic';}
   elsif ($type =~/Unclassified/){$type = 'Unclassified';}
   if ($type =~/Non/){$type = 'Non-genic';}
-  unless ($self->{'config'}->{'reg_feat_type'}{$type}) {
-   push @{$self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'}->{'legend'}},
-    $self->{'colours'}{$type}[1], $self->{'colours'}{$type}[0];
-    $self->{'config'}->{'reg_feat_type'}{$type}	= 1;
-  }	
-  return $self->{'colours'}{$type}[0],
-  $self->{'colours'}{$type}[2],
-  $f->start > $f->end ? 'invisible' : '';
+  ## Add feature types to legend
+  my $t = lc($type);
+  unless ($self->{'config'}->{'reg_feat_type'}{$type}){ 
+   push @{$self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'}->{'legend'}},$self->{'colours'}{lc($type)}{'text'} , $self->my_colour(lc($type));
+    $self->{'config'}->{'reg_feat_type'}{$type} = 1;
+  }
+ 
+  return lc($type);
 }
+
 
 sub tag {
   my ($self, $f) = @_;
@@ -84,8 +84,9 @@ sub tag {
   if ($type =~/Promoter/){$type = 'Promoter_associated';}
   elsif ($type =~/Gene/){$type = 'Genic';}
   elsif ($type =~/Unclassified/){$type = 'Unclassified';}
-  if ($type =~/Non/){$type = 'Non-genic';}
-  my $colour = $self->{'colours'}{$type}[0];
+  if ($type =~/Non/){$type = 'Non-genic';} 
+  $type = lc($type);
+  my $colour = $self->my_colour( $type );
   my ($b_start, $b_end) = $self->slice2sr($f->bound_start, $f->bound_end);
   my @result = ();
   push @result, { 

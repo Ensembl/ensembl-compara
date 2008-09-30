@@ -99,6 +99,13 @@ sub zmenu {
 
 # Search regions with similar analyses should be in the same colour
 
+sub colour_key {
+  my ($self, $f) = @_;
+  my $name = $f->feature_type->name;
+  if ($name =~/cisRED\sSearch\sRegion/){return 'cisred_search'; }
+  else { return};
+}
+
 sub colour {
   my ($self, $f) = @_;
   my $name = $f->analysis->logic_name;

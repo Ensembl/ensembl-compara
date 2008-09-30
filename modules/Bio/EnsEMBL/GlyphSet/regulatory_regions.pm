@@ -9,6 +9,9 @@ sub squish { return 1; }
 sub features {
   my ($self) = @_;
   my $slice = $self->{'container'};
+  my $wuc = $self->{'config'}; warn $wuc;
+  my @fsets = @{$wuc->cache('feature_sets')};  
+ 
   my $efg_db = undef;
   my $db_type  = $self->my_config('db_type')||'funcgen';
   unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
@@ -18,28 +21,71 @@ sub features {
       return [];
     }
   }
-  my $feature_set_adaptor       = $efg_db->get_FeatureSetAdaptor; 
+ 
+  ## Remove CisRED search region feature set (drawn by another glyphset)
+  my @sets; 
+  foreach my $set (@fsets){
+   unless ($set->name =~/cisRED\s+search\s+regions/){ push (@sets, $set);}
+  } 
+     
+  my $external_Feature_adaptor  = $efg_db->get_ExternalFeatureAdaptor;
+  my $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, \@sets);
+  ## If for gene regulation view display only those features that are linked to the gene 
+  if ($wuc->cache('gene')) {
+    my @gene_assoc_feats;
+    my $gene = $wuc->cache('gene');
+    foreach my $feat (@$f){ 
+      my $db_ent = $feat->get_all_DBEntries;
+      foreach my $dbe (@{$db_ent}){
+        if ( $gene->stable_id eq $dbe->primary_id ) {
+          push (@gene_assoc_feats, $feat);
+        }
+      }         
+    } 
+   $f = \@gene_assoc_feats;
+  }
+
+  my $count = 0;
+  foreach my $feat (@$f){
+   $wuc->cache($feat->display_label, $count);   
+   $count ++;
+   if ($count >= 15) {$count = 0;} 
+  } 
+  return $f;
+}
+=pod
+  my $efg_db = undef;
+  my $db_type  = $self->my_config('db_type')||'funcgen';
+  unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
+    $efg_db = $slice->adaptor->db->get_db_adaptor($db_type);
+    if(!$efg_db) {
+      warn("Cannot connect to $db_type db");
+      return [];
+    }
+  }
+  my $feature_set_adaptor       = $efg_db->get_FeatureSetAdaptor;  
   my $species                   = $self->{'config'}->{'species'}; 
   my $external_Feature_adaptor  = $efg_db->get_ExternalFeatureAdaptor; 
-   
-  my $gene = $self->{'config'}->{'_draw_single_Gene'};
+
+  my $gene = $self->{'config'}->{'_draw_single_Gene'};  warn $self->{'config'};
   if( $gene ) {
      my $gene_id = $gene->stable_id; 
+     
      my $f; 
-     if ($species =~/Homo_sapiens/){
-         my $cisred_fset  = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-         my $miranda_fset = $feature_set_adaptor->fetch_by_name('miRanda miRNA');
-         my $vista_fset = $feature_set_adaptor->fetch_by_name('VISTA enhancer set');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset, $miranda_fset, $vista_fset);
-      } elsif ($species=~/Mus_musculus/){
-         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset);
-     } elsif ($species=~/Drosophila/){
-         my $tiffin_fset = $feature_set_adaptor->fetch_by_name('BioTIFFIN motifs');
-         my $crm_fset = $feature_set_adaptor->fetch_by_name('REDfly CRMs');
-         my $tfbs_fset = $feature_set_adaptor->fetch_by_name('REDfly TFBSs');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $tiffin_fset, $crm_fset, $tfbs_fset);
-     }
+#     if ($species =~/Homo_sapiens/){
+#         my $cisred_fset  = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
+#         my $miranda_fset = $feature_set_adaptor->fetch_by_name('miRanda miRNA');
+#         my $vista_fset = $feature_set_adaptor->fetch_by_name('VISTA enhancer set');
+#         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset, $miranda_fset, $vista_fset);
+#      } elsif ($species=~/Mus_musculus/){
+#         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
+#         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset);
+#     } elsif ($species=~/Drosophila/){
+#         my $tiffin_fset = $feature_set_adaptor->fetch_by_name('BioTIFFIN motifs');
+#         my $crm_fset = $feature_set_adaptor->fetch_by_name('REDfly CRMs');
+#         my $tfbs_fset = $feature_set_adaptor->fetch_by_name('REDfly TFBSs');
+#         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $tiffin_fset, $crm_fset, $tfbs_fset);
+#     }
     my @features; 
     foreach my $feat (@$f){
     my $db_ent = $feat->get_all_DBEntries;
@@ -74,7 +120,7 @@ sub features {
       return $f;
   }
 }
-
+=cut
 sub href {
     my ($self, $f ) = @_;
     return undef;
@@ -158,14 +204,27 @@ sub zmenu {
     return $return;
 }
 
+sub colour_key {
+  my ($self, $f) = @_;
+  my $wuc = $self->{'config'}; 
+  my $colour = $wuc->cache($f->display_label); 
+  return $colour;
+}
 
 
 # Features associated with the same factor should be in the same colour
 # Choose a colour from the pool
+#sub colour_key {
+#  my ($self, $f) = @_;
+#  my $name = $f->display_label; warn $name;
 
+
+#}
+
+=pod
 sub colour {
   my ($self, $f) = @_;
-  my $name = $f->display_label;
+  my $name = $f->display_label; warn $name;
 #  my $name = $f->factor->name;
   unless ( exists $self->{'config'}{'pool'} ) {
     $self->{'config'}{'pool'} = $self->{'config'}->colourmap->{'colour_sets'}{'synteny'};
@@ -180,5 +239,5 @@ sub colour {
   return $return, $return;
 }
 
-
+=cut
 1;
