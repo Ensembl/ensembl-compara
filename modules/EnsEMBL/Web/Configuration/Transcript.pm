@@ -225,10 +225,6 @@ sub populate_tree {
     [qw(go          EnsEMBL::Web::Component::Transcript::Go)],
     { 'availability' => 1, 'concise' => 'GO terms'}
   ));
-  my $exp_menu = $self->create_submenu( 'Export', 'Export data' );
-  $exp_menu->append( $self->create_node( 'Export_Features',  'Features', [qw()],{'concise'=>'Export Features'} ));
-  $exp_menu->append( $self->create_node( 'Export_Sequence',  'Sequence', [qw()],{'concise'=>'Export Sequence'} ));
-  $exp_menu->append( $self->create_node( 'Export_BioMart',  'Jump to BioMart', [qw()],{'concise'=>'Biomart'} ));
 
   $self->create_node( 'idhistory', "ID history",
     [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
@@ -254,11 +250,6 @@ sub populate_tree {
 # # ID History
 # # Domain information (6)
 # # Protein families (1)
-# # Export data
-# #   Export features
-# #   Export sequence
-# #   Jump to BioMart
-
 
 1;
 

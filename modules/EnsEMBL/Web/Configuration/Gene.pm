@@ -122,8 +122,6 @@ sub populate_tree {
     { 'availability' => 'database:variation' }
   ));
 
-  $self->create_node( 'Export',  'Export Data', [qw(blank      EnsEMBL::Web::Component:: >>>Location::UnderConstruction)] );
-
   $self->create_node( 'Idhistory', 'ID history',
     [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
         associated  EnsEMBL::Web::Component::Gene::HistoryLinked
