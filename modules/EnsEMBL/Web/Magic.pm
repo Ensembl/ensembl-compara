@@ -143,7 +143,10 @@ sub configurator {
 
   my $session = $ENSEMBL_WEB_REGISTRY->get_session;
   my $input = $session->get_input;
-  if( $input->param('submit') ) {
+  if(
+    $input->param('submit') ||
+    $input->param('reset')
+  ) {
     my $config = $input->param('config');
     my $vc = $session->getViewConfig( $ENV{'ENSEMBL_TYPE'}, $ENV{'ENSEMBL_ACTION'} );
     if($config && $vc->has_image_config($config) ) { ### We are updating an image config!
@@ -152,7 +155,8 @@ sub configurator {
       my $ic = $session->getImageConfig( $config, $config );
       $vc->altered = $ic->update_from_input( $input );
       $session->store;
-      if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+      if( $ajax_flag && $input->param('submit') ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+## Note reset links drop back into the form....
         ## We need to
         CGI::header( 'text/plain' );
         print "SUCCESS";
@@ -163,7 +167,7 @@ sub configurator {
     } else { ### We are updating a view config!
          $vc->update_from_input( $input );
 	 $session->store;
-      if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+      if( $ajax_flag && $input->param('submit') ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
         ## We need to 
         CGI::header( 'text/plain' );
 	print "SUCCESS";

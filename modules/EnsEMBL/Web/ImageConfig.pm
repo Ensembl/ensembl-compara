@@ -74,6 +74,9 @@ sub new {
 sub update_from_input {
   my( $self, $input ) = @_;
   
+  if( $input->param('reset') ) {
+    return $self->tree->flush_user;
+  }
   my $flag = 0;
   foreach my $node ($self->tree->nodes) {
     my $key = $node->key;

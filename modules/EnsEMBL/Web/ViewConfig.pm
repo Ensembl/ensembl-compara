@@ -115,7 +115,6 @@ sub add_form_element {
   my($self,$hashref) = @_;
   my @extra;
   my $value = $self->get($hashref->{'name'});
-  warn ".. $value .. $hashref->{'value'} ..";
   if( $hashref->{'type'} eq 'CheckBox' ) {
     push @extra, 'checked' => $value eq $hashref->{'value'} ? 1 : 0;
   } elsif( !exists $hashref->{'value'} ) {
@@ -140,10 +139,10 @@ sub update_from_input {
 ### Loop through the parameters and update the config based on the parameters passed!
   my( $self, $input ) = @_;
   my $flag = 0;
-  warn "UPDATE FROM INPUT .............. ", join ", ", $input->param;
-
+  if( $input->param('reset') ) {
+    return $self->reset;
+  }
   foreach my $key ( $self->options ) {
-    warn ".. $key -> ",$input->param($key)," (", $self->{'_options'}{$key}{'user'},"/", $self->{'_options'}{$key}{'default'},")";
     if( defined $input->param($key) && $input->param( $key ) ne $self->{'_options'}{$key}{'user'} ) {
       $flag = 1;
       my @values = $input->param( $key );

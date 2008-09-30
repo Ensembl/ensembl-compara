@@ -24,8 +24,11 @@ sub user_data {
 sub flush_user {
 ### Remove all user data in this tree...
   my $self = shift;
-  my $return = keys %{$self->{_user_data}} ? 1 : 0;
-  $self->{_user_data} = {};
+  my $return = 0;
+  foreach (keys %{$self->{_user_data}} ) {
+    $return =1;
+    delete $self->{_user_data}{$_};
+  }
   return $return;
 }
 

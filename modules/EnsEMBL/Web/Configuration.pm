@@ -230,16 +230,17 @@ sub _reset_config_panel {
     'code' => 'x',
     'object' => $obj
   );
-  my $url = $obj->_url({'type'=>'Config','action'=>$action,'reset'=>1,'config'=>$config});
+  my $url = $obj->_url({'type'=>'Config','action'=>$action,'reset'=>1,'config'=>$config,'time'=>time});
   $panel->set_content( sprintf '
 <p>
   To update the configuration of the view make the changes above and close
   the configuration panel, your view will then be automatically updated.
 </p>
 <p>
-  <a class="reset-button" href="%s">Reset configuration for %s to default settings</a>.
-</p>', $url, CGI::escapeHTML( $title )
+  <a class="modal_link reset-button" href="%s">Reset configuration for %s to default settings</a>.
+</p>', $url, CGI::escapeHTML( $title ) || 'this page'
   );
+  $self->add_panel( $panel );
 }
 sub _configurator {
   my $self = shift;
