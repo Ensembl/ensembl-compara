@@ -23,11 +23,11 @@ sub ALTERNATING_BACKGROUND { my $self = shift ; rows => [qw(bg1 bg2)] };
 
 sub new { ## All now configured by the component!!
   my $class = shift;
-  my( $c,$s, $d,$o ) = @_;
+  my( $c,$d,$o,$s ) = @_;
   $c||=[];
-  $s||=[];
   $d||=[];
   $o||={};
+  $s||=[];
   my $self = {
     '_columns'  => $c,
     '_spanning' => $s,
@@ -272,6 +272,7 @@ sub add_spanning_headers {
          
 sub add_row {   
   my( $self, $data ) = @_;      
+  warn "ADD ROW to ".$self->{_data};
   push @{$self->{_data}}, $data;        
 }       
         
