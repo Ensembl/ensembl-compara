@@ -7,13 +7,13 @@ use CGI qw(escapeHTML);
 our @ISA = qw( EnsEMBL::Web::Root );
 
 sub new {
-  my( $class, $name, $action, $method ) = @_;
+  my( $class, $name, $action, $method, $style ) = @_;
   my $self = {
     '_attributes' => {
         'action'   => $action,
         'method'   => lc($method) || 'get' ,  
         'id'       => $name,
-        'class'    => 'std check',
+        'class'    => $style || 'std check',
     },
     '_buttons'     => [],
     '_fieldsets'   => [],
