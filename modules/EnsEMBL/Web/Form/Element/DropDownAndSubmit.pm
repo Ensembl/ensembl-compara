@@ -40,7 +40,7 @@ sub render {
         $v_hash{'value'}, $self->value eq $v_hash{'value'} ? ' selected="selected"' : '', $v_hash{'name'}
       );
     }
-    return sprintf( qq(<label for="%s">%s</label><select name="%s" id="%s" class="%s %s autosubmit">\n%s</select>
+    return sprintf( qq(<label for="%s">%s</label> <select name="%s" id="%s" class="%s %s autosubmit">\n%s</select>
       <input type="submit" value="%s" class="input-submit" />%s
     %s),
       CGI::escapeHTML( $self->id ),
