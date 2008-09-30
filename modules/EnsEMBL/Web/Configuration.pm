@@ -217,6 +217,25 @@ sub _user_context {
   $self->{'page'}->global_context->active( lc($type) );
 }
 
+
+sub _reset_config_panel {
+  my( $self, $title, $action, $config ) = @_;
+  my $obj = $self->{'object'};
+  my $panel = $self->new_panel( 'Configurator',
+    'code' => 'x',
+    'object' => $obj
+  );
+  my $url = $obj->_url({'type'=>'Config','action'=>$action,'reset'=>1,'config'=>$config});
+  $panel->set_content( sprintf '
+<p>
+  To update the configuration of the view make the changes above and close
+  the configuration panel, your view will then be automatically updated.
+</p>
+<p>
+  <a class="reset-button" href="%s">Reset configuration for %s to default settings</a>.
+</p>', $url, CGI::escapeHTML( $title )
+  );
+}
 sub _configurator {
   my $self = shift;
   my $obj  = $self->{'object'};
@@ -257,6 +276,7 @@ sub _configurator {
 	 $content .= $vc->get_form->render;
       $panel->set_content( $content );
       $self->add_panel( $panel );
+      $self->_reset_config_panel( $vc->title, $action );
       return;
     }
     my %T = $vc->image_configs;
@@ -292,6 +312,7 @@ sub _configurator {
 #      <dl class="config_menu" id="%s">
 #       <dt class="title">%s</dt>', $menu_key, CGI::escapeHTML( $node->get('caption') );
     my $available = 0;
+    my $on        = 0;
     foreach my $track_node ( $node->descendants ) {
       next if $track_node->get('menu') eq 'no';
       $rhs_content .= sprintf '
@@ -303,6 +324,7 @@ sub _configurator {
           <option value="%s"%s>%s</option>', $K, $K eq $display ? ' selected="selected"' : '',  CGI::escapeHTML($V);
       }
       $count ++;
+      $on    ++ if $display ne 'off';
       $rhs_content .= sprintf '
         </select> %s</dt>', $track_node->get('name');
       my $desc =  $track_node->get('description');
@@ -321,7 +343,7 @@ sub _configurator {
     $active    ||= $link_key if $count > 0;
     $self->create_node(
       $link_key,
-      $node->get('caption').( $count ? " ($count)" : '' ), 
+      ( $count ? "($on/$count) " : '' ).$node->get('caption'),
       [], # configurator EnsEMBL::Web::Component::Configurator ],
       { 'url' => "#$menu_key", 'availability' => ($count>0), 'id' => $link_key } 
     );
@@ -343,6 +365,7 @@ sub _configurator {
   $panel->set_content( $rhs_content );
 
   $self->add_panel( $panel );
+  $self->_reset_config_panel( $conf->get_parameter('title'), $action, $config_key );
   return $panel;
 }
 
