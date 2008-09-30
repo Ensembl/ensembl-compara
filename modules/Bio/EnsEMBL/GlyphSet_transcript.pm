@@ -601,7 +601,7 @@ sub gene_key {
   my( $self, $gene ) = @_;
   my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
   $pattern =~ s/\[(\w+)\]/$gene->$1/eg;
-  $pattern =~ s/\[(gene.\w+)\]/$gene->$1/eg;
+  $pattern =~ s/\[gene.(\w+)\]/$gene->$1/eg;
   return lc( $pattern );
 }
 
