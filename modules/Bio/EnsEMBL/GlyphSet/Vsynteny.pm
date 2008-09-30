@@ -58,18 +58,18 @@ sub _init {
 ## LETS GRAB THE CHROMOSOME BANDS FOR THE CENTRAL CHROMOSOME
 
     my $chr_length  = $sa->fetch_by_region( 'toplevel', $chr )->length; 
-    my $bands       = $Config->is_available_artefact('databases_tables DATABASE_CORE.karyotype' ) ? $kba->fetch_all_by_chr_name( $chr ) : [];
+    my $bands       = $kba->fetch_all_by_chr_name( $chr ) || [];
 
 ## NOW LETS GRAB THE IMAGE PARAMETERS
     my $im_width            = $Config->image_width();
-    my $length              = $Config->get('Vsynteny','_image_height');
-    my $top_margin          = $Config->get('Vsynteny','_top_margin');
-    my $main_width          = $Config->get('Vsynteny','_main_width');
-    my $padding             = $Config->get('Vsynteny','_padding');
-    my $outer_padding       = $Config->get('Vsynteny','_outer_padding');
-    my $inner_padding       = $Config->get('Vsynteny','_inner_padding');
-    my $secondary_width     = $Config->get('Vsynteny','_secondary_width');
-    my $spacing             = $Config->get('Vsynteny','_spacing');
+    my $length              = $Config->get_parameter('image_height'); 
+    my $top_margin          = $Config->get_parameter('top_margin');
+    my $main_width          = $Config->get_parameter('main_width');
+    my $padding             = $Config->get_parameter('padding');
+    my $outer_padding       = $Config->get_parameter('outer_padding');
+    my $inner_padding       = $Config->get_parameter('inner_padding');
+    my $secondary_width     = $Config->get_parameter('secondary_width');
+    my $spacing             = $Config->get_parameter('spacing');
 ## LET us derive the next set of values....        
     my $h_offset            = $im_width - $top_margin * 2 - $length;
 #    my $bpperpx             = $Config->container_width()/$length;
@@ -498,7 +498,7 @@ sub draw_chromosome {
                     'y'         => $h_offset,
                     'width'     => 0,
                     'height'    => $wid * $bg_x/$divisor -1,
-                    'colour'    => $params{'bg'},
+                    'colour'    => 'background1',
                     'absolutey' => 1,   'absolutex' => 1,'absolutewidth'=>1,
             }));
             $self->push($self->Line({
@@ -506,7 +506,7 @@ sub draw_chromosome {
                     'y'         => $h_offset + 1 + $wid * (1-$bg_x/$divisor),
                     'width'     => 0,
                     'height'    => $wid * $bg_x/$divisor -1 ,
-                    'colour'    => $params{'bg'},
+                    'colour'    => 'background1',
                     'absolutey' => 1,   'absolutex' => 1,'absolutewidth'=>1,
             }));
             $self->push($self->Line({
@@ -514,7 +514,7 @@ sub draw_chromosome {
                     'y'         => $h_offset + $wid * $bg_x/$divisor,
                     'width'     => 0,
                     'height'    => $wid * $black_x/$divisor -1 ,
-                    'colour'    => $params{'black'},
+                    'colour'    => 'black',
                     'absolutey' => 1, 'absolutex' => 1,'absolutewidth'=>1,
             }));
             $self->push($self->Line({
@@ -522,7 +522,7 @@ sub draw_chromosome {
                     'y'         => $h_offset + 1 + $wid * (1-$bg_x/$divisor-$black_x/$divisor),
                     'width'     => 0,
                     'height'    => $wid * $black_x/$divisor -1 ,
-                    'colour'    => $params{'black'},
+                    'colour'    => 'black',
                     'absolutey' => 1, 'absolutex' => 1,'absolutewidth'=>1,
             }));
         }
