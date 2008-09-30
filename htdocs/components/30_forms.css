@@ -1,6 +1,6 @@
 /* Replacement for previous (invalid) form css! */
 
-form.std fieldset { border:none; }
+form fieldset { border:none; }
 
 form.std fieldset div { margin-top:10px; }
 
@@ -29,6 +29,7 @@ form.std div.submit {
 }
 
 form.std fieldset { padding: 0 0.5em; text-align: left; margin: 0; }
+form.nonstd fieldset { padding: 0.5em; margin: 0; }
 
 legend { border: #f00 solid 1px; background-color: #fcc; color: #f00; padding: 2px 4px; font-weight: bold; margin: 0 }
 
