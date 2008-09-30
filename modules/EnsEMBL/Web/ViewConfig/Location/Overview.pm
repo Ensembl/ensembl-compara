@@ -1,7 +1,8 @@
-package EnsEMBL::Web::ViewConfig::Location::Region;
+package EnsEMBL::Web::ViewConfig::Location::Overview;
 
 use strict;
-no strict 'refs';
+use warnings;
+no warnings 'uninitialized';
 
 sub init {
   my ($view_config ) = @_;
