@@ -71,6 +71,19 @@ sub new {
   return $self;
 }
 
+sub update_from_input {
+  my( $self, $input ) = @_;
+  
+  my $flag = 0;
+  foreach my $node ($self->tree->nodes) {
+    my $key = $node->key;
+    if( defined $input->param($key) ) {
+      $flag += $node->set_user( 'display', $input->param( $key ) );
+    }
+  }
+  $self->altered = 1 if $flag;
+  return $flag;
+}
 #=============================================================================
 # General setting/getting cache values...
 #=============================================================================
@@ -1011,7 +1024,7 @@ sub set_species {
 
 sub get_user_settings {
   my $self = shift;
-  return $self->{'user'};
+  return $self->tree->user_data;
 }
 
 sub artefacts { my $self = shift; return @{ $self->{'general'}->{$self->{'type'}}->{'_artefacts'}||[]} };
