@@ -33,8 +33,8 @@ sub content {
  }
 
   my $fg_slice_adaptor = $fg_db->get_SliceAdaptor;
-  my @fsets = @{$object->feature_sets};
-  my $gr_slice = $fg_slice_adaptor->fetch_by_Gene_FeatureSets($object->Obj, \@fsets);
+  my $fsets = $object->feature_sets;  
+  my $gr_slice = $fg_slice_adaptor->fetch_by_Gene_FeatureSets($object->Obj, $fsets);
   $gr_slice = $gr_slice->invert if $gr_slice->strand < 1; ## Put back onto correct strand!
 
 
@@ -65,18 +65,36 @@ sub content {
   my $trans = $object->get_all_transcripts;
   my $gene_track_name =$trans->[0]->default_track_by_gene;
 
-  my $wuc = $object->get_imageconfig( 'geneview' );
-     $wuc->{'geneid'} = $object->Obj->stable_id;
-     $wuc->{'_draw_single_Gene'} = $object->Obj;
-     $wuc->set( '_settings',          'width',       900);
-     $wuc->set( '_settings',          'show_labels', 'yes');
-     $wuc->set( 'ruler',              'str',         $object->Obj->strand > 0 ? 'f' : 'r' );
-     $wuc->set( $gene_track_name,     'on',          'on');
-     $wuc->set( 'regulatory_regions', 'on',          'on');
-     $wuc->set( 'regulatory_search_regions', 'on',   'on');
-     $wuc->set( 'ctcf', 'on', 'on');
-     $wuc->set( 'fg_regulatory_features', 'on',       'on');
-     $wuc->set( 'fg_regulatory_features_legend', 'on', 'on');
+  my $wuc = $object->get_imageconfig( 'generegview' );
+ #    $wuc->{'geneid'} = $object->Obj->stable_id;
+ #    $wuc->{'_draw_single_Gene'} = $object->Obj;
+ 
+ $wuc->set_parameters({
+       'container_width'   => $extended_slice->length,
+       'image_width',      => $self->image_width || 800,
+       'slice_number',     => '1|1',
+     });
+
+  ## We now need to select the correct track to turn on....
+
+  my $key = $wuc->get_track_key( 'transcript', $object );
+  ## Then we turn it on....
+  $wuc->modify_configs( [$key], {qw(display transcript)} );
+  $wuc->cache( 'feature_sets', $fsets);  
+  $wuc->cache('gene', $object);
+  
+ 
+#     $wuc->set_parameters({ 
+#       'width',       900,
+#       'show_labels', 'yes',
+#     );
+#     $wuc->set( 'ruler',              'str',         $object->Obj->strand > 0 ? 'f' : 'r' );
+#     $wuc->set( $gene_track_name,     'on',          'on');
+#     $wuc->set( 'regulatory_regions', 'on',          'on');
+#     $wuc->set( 'regulatory_search_regions', 'on',   'on');
+#     $wuc->set( 'ctcf', 'on', 'on');
+#     $wuc->set( 'fg_regulatory_features', 'on',       'on');
+#     $wuc->set( 'fg_regulatory_features_legend', 'on', 'on');
 
   my $image    = $object->new_image( $extended_slice, $wuc, [] );
       $image->imagemap           = 'yes';
