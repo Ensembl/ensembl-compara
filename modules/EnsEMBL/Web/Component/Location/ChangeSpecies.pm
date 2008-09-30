@@ -50,7 +50,7 @@ sub content {
     'name'     => 'otherspecies',
     'label'    => 'Change Species',
     'values'   => \@values,
-    'value'   => $object->param('otherspecies'),
+    'value'   => $object->param('otherspecies') || $self->default_otherspecies,
     'button_value' => 'Go'
   );
   return '<div class="center">'.$form->render.'</div>';
