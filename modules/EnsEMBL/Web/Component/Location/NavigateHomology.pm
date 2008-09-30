@@ -11,7 +11,7 @@ use CGI qw(escapeHTML);
 sub _init {
   my $self = shift;
   $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->ajaxable(  0 );
 }
 
 sub content {
@@ -32,15 +32,7 @@ sub content {
   my @up_genes    = reverse @{$object->get_synteny_local_genes($upstream)};
   my @down_genes  = @{$object->get_synteny_local_genes($downstream)};
 
-  $html .= qq(
-<table class="autocenter">
-<tr>
-<th class="center" style="padding:0px 2em" rowspan="2">Navigate homology:</th>
-<th class="center" style="padding:0px 2em">&laquo;&nbsp;Upstream</th>
-<th class="center" style="padding:0px 2em">Downstream&nbsp;&raquo;</th></tr>
-<tr><td class="center">
-);
-
+  my ($up_link, $down_link, $gene_text);
   my $up_count = @up_genes;
   if ($up_count) {
     my @up_sample;
@@ -49,19 +41,17 @@ sub content {
       push @up_sample, $up_genes[$i];
     }
     $up_count = @up_sample;
+    $gene_text = $up_count > 1 ? 'genes' : 'gene';
     my $up_start  = @up_sample ? $object->seq_region_start - $up_sample[-1]->end : 0;
     my $up_end    = @up_sample ? $object->seq_region_start - $up_sample[0]->start: 0;
-
-    $html .= sprintf(qq(
-<a href="/%s/Location/Synteny?otherspecies=%s;r=%s:%s-%s">Previous %s genes</a>),
-  $object->species, $object->param('otherspecies'), $chr, $up_start, $up_end, $up_count,
+    $up_link = sprintf(qq(
+<a href="/%s/Location/Synteny?otherspecies=%s;r=%s:%s-%s"><img src="/i/nav-l2.gif" class="zoom" alt="<<"/> %s upstream %s</a>),
+  $object->species, $object->param('otherspecies'), $chr, $up_start, $up_end, $up_count, $gene_text,
     );
   }
   else {
-    $html .= 'No upstream homologues';
+    $up_link = 'No upstream homologues';
   }
-
-  $html .= '</td><td class="center">';
 
   my $down_count = @down_genes;
   if ($down_count) {
@@ -71,23 +61,31 @@ sub content {
       push @down_sample, $down_genes[$j];
     }
     $down_count = @down_sample;
+    $gene_text = $down_count > 1 ? 'genes' : 'gene';
     my $down_start  = @down_sample ? $down_sample[0]->start + $object->seq_region_end : 0;
     $down_start = -$down_start if $down_start < 0;
     my $down_end    = @down_sample ? $down_sample[-1]->end + $object->seq_region_end : 0;
 
-    $html .= sprintf(qq(
-<a href="/%s/Location/Synteny?otherspecies=%s;r=%s:%s-%s">Next %s genes</a> ),
-  $object->species, $object->param('otherspecies'), $chr, $down_start, $down_end, $down_count,
+    $down_link = sprintf(qq(
+<a href="/%s/Location/Synteny?otherspecies=%s;r=%s:%s-%s">%s downstream %s <img src="/i/nav-r2.gif" class="zoom" alt=">>"/></a> ),
+  $object->species, $object->param('otherspecies'), $chr, $down_start, $down_end, $down_count, $gene_text,
     );
   }
   else {
-    $html .= 'No downstream homologues';
+    $down_link = 'No downstream homologues';
   }
-  $html .= qq(</td></tr>
+
+  $html .= qq(
+<table class="autocenter" style="width:100%">
+<tr>
+<td class="left" style="padding:0px 2em">$up_link</td>
+<td class="center" style="font-size:1.2em;padding:0px 2em">Navigate homology</td>
+<td class="right" style="padding:0px 2em">$down_link</td>
+</tr>
 </table>
 );
 
-  return '<div class="center">'.$html.'</div>';
+  return '<div class="navbar">'.$html.'</div>';
 }
 
 1;
