@@ -9,7 +9,7 @@ sub init {
     $view_config->title = 'Supporting Evidence';
     $view_config->_set_defaults(qw(
 				   context          100
-				   width            700
+				   image_width      700
 			       ));
     $view_config->storable = 1;
 }
@@ -34,7 +34,7 @@ sub form {
     });
     $view_config->add_form_element({
 	'type'     => 'DropDown', 'select'   => 'select',
-	'required' => 'yes',      'name'     => 'width',
+	'required' => 'yes',      'name'     => 'image_width',
 	'label'    => 'Image width',
 	'values'   => [
 	    { 'value' => '600',  'name' => '600px' },
