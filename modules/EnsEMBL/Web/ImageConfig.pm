@@ -1140,15 +1140,6 @@ sub set_width {
   my( $self, $val ) = @_;
   $self->set_parameter( 'width', $val );
 }
-sub container_width {
-  my $self = shift;
-  if(@_) {
-    $self->{'_containerlength'} = $_[0];
-    my $width = $self->image_width();
-    $self->scalex($width/$_[0]) if $_[0];
-  }
-  return $self->{'_containerlength'};
-}
 
 sub transform {
   my $self = shift;
