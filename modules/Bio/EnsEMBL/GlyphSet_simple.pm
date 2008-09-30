@@ -95,7 +95,7 @@ sub _init {
   my $max_length_nav = $self->my_config( 'navigation_threshold' ) || 15000000;
   
   if( $slice_length > $max_length *1010 ) {
-    $self->errorTrack( $self->my_label." only displayed for less than $max_length Kb.");
+    $self->errorTrack( $self->my_config('caption')." only displayed for less than $max_length Kb.");
     return;
   }
 
