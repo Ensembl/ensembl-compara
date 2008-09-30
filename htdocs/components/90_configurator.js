@@ -100,7 +100,7 @@ function __init_config_menu() {
                 var x = on.value;
                 var i = Builder.node('img',{
                   src:'/i/render/'+x+'.gif', title:on.text,
-                  cursor: 'hand',
+                  cursor: 'pointer',
                   id:'gif_'+sn.id
                 });
                 n.insertBefore(i,sn.nextSibling);
@@ -116,6 +116,7 @@ function __init_config_menu() {
       }
     });
   });
+  $$('dt.submit').each(function(n){ n.hide(); });
 /* deprecated!!  
   if( $('config') ) {
     Event.observe( $('config'), 'submit', function(f){
