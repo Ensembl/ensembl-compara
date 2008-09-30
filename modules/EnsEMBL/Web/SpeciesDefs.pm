@@ -331,7 +331,7 @@ sub _read_in_ini_file {
               $tree->{$current_section}{$_} = $defaults->{$current_section}{$_};
             }
           }
-        } elsif (/(\w\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
+        } elsif (/([\w*]\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
           my ($key,$value) = ($1,$2); ## Add a config entry under the current 'top level'
           $value=~s/\s*$//;
           if($value=~/^\[\s*(.*?)\s*\]$/) { # [ - ] signifies an array
