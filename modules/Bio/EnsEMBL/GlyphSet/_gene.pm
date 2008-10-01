@@ -35,7 +35,7 @@ sub _init {
 
   my $max_length     = $self->my_config('threshold') || 1e6;
   my $max_length_nav = $self->my_config('navigation_threshold') || 50e3;
-  my $navigation     = $self->my_config('navigation') || 'off';
+  my $navigation     = $self->my_config('navigation') || 'on';
 
   if( $vc_length > ($max_length*1001)) {
     $self->errorTrack("Genes only displayed for less than $max_length Kb.");
@@ -60,10 +60,10 @@ sub _init {
 
   my $genes = $self->features();
   foreach my $g (@$genes) {
-    my $gene_type_key = lc( $g->biotype.'_'.$g->status );
-    my $gene_col   = $self->my_colour( $gene_type_key );
+    my $gene_key   = $self->gene_key( $g );
+    my $gene_col   = $self->my_colour( $gene_key );
 
-    my $gene_type  = $self->my_colour( $gene_type_key, 'text' );
+    my $gene_type  = $self->my_colour( $gene_key, 'text' );
     my $label      = $gene_type.' '.$g->external_name;
 #    my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
     my $high = $g->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'g'};

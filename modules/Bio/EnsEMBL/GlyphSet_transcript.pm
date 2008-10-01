@@ -589,20 +589,4 @@ sub gene_title {
   return $title;
 }
 
-sub transcript_key {
-  my( $self, $transcript, $gene ) = @_;
-  my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
-  $pattern =~ s/\[(\w+)\]/$transcript->$1/eg;
-  $pattern =~ s/\[(gene.\w+)\]/$gene->$1/eg;
-  return lc( $pattern );
-}
-
-sub gene_key {
-  my( $self, $gene ) = @_;
-  my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
-  $pattern =~ s/\[gene.(\w+)\]/$gene->$1/eg;
-  $pattern =~ s/\[(\w+)\]/$gene->$1/eg;
-  return lc( $pattern );
-}
-
 1;

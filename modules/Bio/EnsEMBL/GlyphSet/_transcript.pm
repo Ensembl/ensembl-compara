@@ -60,4 +60,16 @@ sub legend {
 
 ## sub error_track_name { return $_[0]->my_label }
 
+sub href { 	 
+  my ($self, $gene, $transcript, %highlights ) = @_; 	 
+  my $gid = $gene->stable_id(); 	 
+  my $tid = $transcript->stable_id(); 	 
+  return $self->_url({'type'=>'Transcript','action'=>'Summary','t'=>$tid,'g'=>$gid, 'db' => $self->my_config('db')}); 	 
+} 	 
+  	 
+sub gene_href { 	 
+  my ($self, $gene, %highlights ) = @_; 	 
+  my $gid = $gene->stable_id(); 	 
+  return $self->_url({'type'=>'Gene','action'=>'Summary','g'=>$gid, 'db' => $self->my_config('db') }); 	 
+}
 1;

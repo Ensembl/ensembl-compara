@@ -739,6 +739,26 @@ sub _threshold_update {
   }
 }
 
+#==============================================================================================================
+# Shared by a number of the transcript/gene drawing code - so putting here!
+#==============================================================================================================
+
+sub transcript_key {
+  my( $self, $transcript, $gene ) = @_;
+  my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
+  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
+  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $gene->$1/eg;
+  return lc( $pattern );
+}
+
+sub gene_key {
+  my( $self, $gene ) = @_;
+  my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
+  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
+  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
+  return lc( $pattern );
+}
+
 1;
 
 
