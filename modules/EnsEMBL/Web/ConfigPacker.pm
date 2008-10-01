@@ -16,8 +16,8 @@ sub _munge_databases {
     $self->_summarise_core_tables( $db, 'DATABASE_'.uc($db) );
   }
 
-  $self->_summarise_variation_db();
-  $self->_summarise_funcgen_db();
+  $self->_summarise_variation_db( 'variation', 'DATABASE_VARIATION' );
+  $self->_summarise_funcgen_db(   'funcgen',   'DATABASE_FUNCGEN'   );
 }
 
 sub _munge_das { # creates das.packed...
@@ -28,8 +28,8 @@ sub _munge_das { # creates das.packed...
 sub _munge_databases_multi {
   my $self = shift;
   $self->_summarise_website_db(    );
-  $self->_summarise_compara_db(    );
-  $self->_summarise_ancestral_db(  );
+  $self->_summarise_compara_db(   'compara', 'DATABASE_COMPARA' );
+  $self->_summarise_ancestral_db( 'core',    'DATABASE_CORE'    );
   $self->_summarise_go_db(         );
 }
 
@@ -240,10 +240,10 @@ sub _summarise_core_tables {
 }
 
 sub _summarise_variation_db {
-  my $self    = shift;
-  my $db_name = 'DATABASE_VARIATION';
+  my($self,$code,$db_name) = @_;
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
+  push @{ $self->db_tree->{'variation_like_databases'} }, $db_name;
   $self->_summarise_generic( $db_name, $dbh );
   my $t_aref = $dbh->selectall_arrayref( 'select source_id,name from source' );
 #---------- Add in information about the sources from the source table
@@ -260,10 +260,10 @@ sub _summarise_variation_db {
 }
 
 sub _summarise_funcgen_db {
-  my $self    = shift;
-  my $db_name = 'DATABASE_FUNCGEN';
+  my($self,$code,$db_name) = @_;
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
+  push @{ $self->db_tree->{'funcgen_like_databases'} }, $db_name;
   $self->_summarise_generic( $db_name, $dbh );
 #---------- Currently have to do nothing additional to this!!
   $dbh->disconnect();
@@ -313,10 +313,12 @@ sub _summarise_website_db {
 }
 
 sub _summarise_compara_db {
-  my $self = shift;
+  my($self,$code,$db_name) = @_;
   my $db_name = 'DATABASE_COMPARA';
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
+  push @{ $self->db_tree->{'compara_like_databases'} }, $db_name;
+
   $self->_summarise_generic( $db_name, $dbh );
 #---------- Lets first look at all the multiple alignments
   my $res_aref = $dbh->selectall_arrayref( ## We've done the DB hash...So lets get on with the multiple alignment hash;
@@ -424,8 +426,7 @@ sub _summarise_compara_db {
 }
 
 sub _summarise_ancestral_db {
-  my $self = shift;
-  my $db_name = 'DATABASE_CORE';
+	my($self,$code,$db_name) = @_;
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   $self->_summarise_generic( $db_name, $dbh );
