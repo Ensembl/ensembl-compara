@@ -32,7 +32,7 @@ sub init {
    [ 'fg_regulatory_features',  '',     'fg_regulatory_features',    { 'display' => 'on', 'colourset' => 'fg_regulatory_features', 'strand' => 'r', 'name' => 'Reg. Features'  } ],
    [ 'regulatory_search_regions',      '',     'regulatory_search_regions',        { 'display' => 'on', 'colourset' => 'regulatory_search_regions', 'strand' => 'r', 'name' => 'Reg. Regions'  } ],
    [ 'regulatory_regions',      '',     'regulatory_regions',        { 'display' => 'on', 'colourset' => 'synteny', 'strand' => 'r', 'name' => 'Reg. Regions' , 'depth' => 1.5 } ],
-   [ 'ctcf',  '',            'ctcf',        { 'on' => 'on',  'strand' => 'r', 'name' => 'CTCF'  } ],
+   [ 'ctcf',  '',            'ctcf',        { 'on' => 'on',  'colourset' => 'ctcf', 'strand' => 'r', 'name' => 'CTCF'  } ],
    [ 'fg_regulatory_features_legend',  '',     'fg_regulatory_features_legend',    { 'display' => 'on', 'colourset' => 'fg_regulatory_features', 'strand' => 'r', 'name' => 'Reg. Features Legend'  } ],
  );
  
