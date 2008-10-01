@@ -36,168 +36,6 @@ use base qw(EnsEMBL::Web::Component);
 
 # General info table #########################################################
 
-sub name {
-
-  ### General_table_info
-  ### Arg1        : panel
-  ### Arg2        : data object
-  ### Example     : $panel1->add_rows(qw(name   EnsEMBL::Web::Component::SNP::name) );
-  ### Description : adds a label and the variation name, source to the panel
-  ### Returns  1
-
-  my($panel, $object) = @_;
-  my $label  = 'SNP';
-  my $name   = $object->name;
-  my $source = $object->source;
-  $name      = $object->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP';
-  my $html  = "<b>$name</b> ($source". $object->source_version.")";
-  $panel->add_row( $label, $html );
-  return 1;
-}
-
-
-
-sub synonyms {
-
-  ### General_table_info
-  ### Arg1        : panel
-  ### Arg2        : data object
-  ### Example     : $panel1->add_rows(qw(synonyms   EnsEMBL::Web::Component::SNP::synonyms) );
-  ### Description : adds a label and the variation synonyms to the panel
-  ### Returns  1
-
-  my($panel, $object) = @_;
-  my $label = 'Synonyms';
-  my %synonyms = %{$object->dblinks};
-  my $info;
-
-  foreach my $db (keys %synonyms) {
-    my @ids =  @{ $synonyms{$db} } ;
-    my @urls;
-
-    if ($db =~ /dbsnp rs/i) {  # Glovar stuff
-      @urls  = map {  $object->get_ExtURL_link( $_, 'SNP', $_)  } @ids;
-    }
-    elsif ($db =~ /dbsnp/i) { 
-      foreach (@ids) {
-	next if $_ =~/^ss/; # don't display SSIDs - these are useless
-	push @urls , $object->get_ExtURL_link( $_, 'DBSNPSS', $_ );
-      }
-      next unless @urls;
-    }
-    #elsif ($db =~ /hgvbase/i) {
-    #  @urls  = map {  $object->get_ExtURL_link( $_, 'HGVBASE', $_) } @ids;
-    #} 
-    #elsif ($db =~ /tsc/i) {
-    #  @urls  = map {  $object->get_ExtURL_link( $_, 'TSC', $_)  } @ids;
-    #}
-    #elsif ($db =~ /Sanger/i) {  # don't link to this as it gives no extra info
-    #  @urls = map {  $object->get_ExtURL_link( $_, 'SNPVIEW', {source=>$db, ID=>$_} ) } @ids;
-    #}
-    else {
-      @urls = @ids;
-    }
-
-    # Do wrapping
-    for (my $counter = 7; $counter < $#urls; $counter +=7) {
-      my @front = splice (@urls, 0, $counter);
-      $front[-1] .= "</tr><tr><td></td>";
-      @urls = (@front, @urls);
-    }
-
-    $info .= "<b>$db</b> ". (join ", ", @urls ). "<br />";
-  }
-
-  $info ||= "None currently in the database";
-  $panel->add_row( $label, $info );
-  return 1;
-}
-
-
-
-sub status {
-
-  ### General_table_info
-  ### Arg1        : panel
-  ### Arg2        : data object
-  ### Example     : $panel1->add_rows("status EnsEMBL::Web::Component::SNP::status");
-  ### Description : adds a label and string for the variation validation status to the panel
-  ### Returns  1
-
-  my ( $panel, $object ) = @_;
-  my $label = 'Validation status';
-  my @status = @{$object->status};
-  unless ( @status ) {
-    $panel->add_row($label, "Unknown");
-    return 1;
-  }
-
-  my $snp_name = $object->name;
-  my (@status_list, $hapmap_html);
-  foreach my $status (@status) {
-    if ($status eq 'hapmap') {
-      $hapmap_html = "<b>HapMap SNP</b>", $object->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
-    } 
-    elsif ($status eq 'failed') {
-      my $description = $object->vari->failed_description;
-      $panel->add_row($label, "<font color='red'>$description.  <br />This SNP will be removed from Ensembl from release 44.</font>");
-      return $status;
-    }
-    else {
-      $status = "frequency" if $status eq 'freq';
-      push @status_list, $status;
-    }
-  }
-
-  my $html = join(", ", @status_list);
-  if ($html) {
-    if ($html eq 'observed' or $html eq 'non-polymorphic') {
-      $html = '<b>'.ucfirst($html).'</b> ';
-    } else {
-      $html = "Proven by <b>$html</b> ";
-    }
-    $html .= ' (<i>SNP tested and validated by a non-computational method</i>).<br /> ';
-  }
-  $html .= $hapmap_html;
-
-  $panel->add_row($label, $html||"Undefined");
-  return 1;
-}
-
-
-
-
-sub alleles {
-
-  ### General_table_info
-  ### Arg1        : panel
-  ### Arg2        : data object
-  ### Example     : $panel1->add_rows(qw(alleles EnsEMBL::Web::Component::SNP::alleles) );
-  ### Description : adds a label and html for the Variations alleles
-  ###              adds a line describing the ancestor allele if this exists
-  ### Returns  1
-
-   my ( $panel, $object ) = @_;
-   my $label = 'Alleles';
-   my $alleles = $object->alleles;
-   my $vari_class = $object->vari_class || "Unknown";
-   my $html;
-
-   if ($vari_class ne 'snp') {
-     $html = qq(<b>$alleles</b> (Type: <b><font color="red">$vari_class</font></b>));
-   }
-   else {
-     my $ambig_code = $object->vari->ambig_code;
-     $html = qq(<b>$alleles</b> (ambiguity code: <b><font color="red">$ambig_code</font></b>));
-   }
-   my $ancestor  = $object->ancestor;
-   $html .= qq(<br /><em>Ancestral allele</em>: $ancestor) if $ancestor;
-   $panel->add_row($label, $html);
-   return 1;
- }
-
-
-
 sub moltype {
 
   ### General_table_info
@@ -246,46 +84,6 @@ sub ld_data {
   $panel->add_row($label, link_to_ldview($panel, $object, \%ld) );
   return 1;
 }
-
-
-
-
-
-sub seq_region {
-
-### General_table_info
- ### Arg1        : panel
- ### Arg2        : data object
- ### Example     : $panel1->add_rows(qw(seq_region EnsEMBL::Web::Component::SNP::seq_region) );
- ### Description : adds a label and html to the panel
- ###              the variations sequence region in two_col_table format
- ### Returns  1
-  my ( $panel, $object ) = @_;
-  my $label = 'Flanking sequence';
-  my $status   = 'status_ambig_sequence';
-  my $URL = _flip_URL( $object, $status );
-  if( $object->param( $status ) eq 'off' ) { $panel->add_row( $label, '', "$URL=on" ); return 0; }
-
-  my $ambig_code = $object->vari->ambig_code;
-  unless ($ambig_code) {
-    $ambig_code = "[".$object->alleles."]";
-  }
-  my $downstream = $object->flanking_seq("down");
-
-#  my $ambiguity_seq = $object->ambiguity_flank;
-  # genomic context with ambiguities
-
-  # Make the flanking sequence and wrap it
-  my $html = uc( $object->flanking_seq("up") ) .lc( $ambig_code ).uc( $downstream );
-  $html =~ s/(.{60})/$1\n/g;
-  $html =~ s/(([a-z]|-|\[|\])+)/'<font color="red">'.uc("$1").'<\/font>'/eg;
-  $html =~ s/\n/\n/g;
-  $html .= "     <i>(Variation Feature highlighted)</i>";
-  $panel->add_row($label, "<pre>$html</pre>");
-  return 1;
-}
-
-
 
 # Population genotype table and Allele Frequency Table ######################
 
@@ -379,7 +177,6 @@ sub format_frequencies {
   return 1;
 }
 
-
 sub _format_number {
 
   ### Population_genotype_alleles
@@ -394,7 +191,6 @@ sub _format_number {
 }
 
 # Variation feature mapping table #############################################
-
 
 sub mappings {
 
@@ -502,8 +298,6 @@ sub mappings {
   return 1;
 }
 
-
-
 sub _sort_start_end {
 
  ### Mapping_table
@@ -549,71 +343,6 @@ sub snpview_image_menu {
   $image_config->{'_ld_population'} = $object->get_default_pop_name;
   return 0;
 }
-
-
-sub snpview_image {
-
-### Image
- ### Arg1     : panel
- ### Arg2     : data object
- ### Arg[3]   : width (optional)
- ### Example  : $image_panel->add_components(qw(
- ###     menu  EnsEMBL::Web::Component::SNP::snpview_image_menu
- ###     image EnsEMBL::Web::Component::SNP::snpview_image
- ###   ));
- ### Description : Creates a drawable container for snpview and adds it to the panel
- ### Returns  0
-
-  my($panel, $object) = @_;
-  my $width = $object->param('w') || "30000";
-  my ($seq_region, $start, $seq_type ) = $object->seq_region_data;
-  return [] unless $seq_region;
-
-  my $end   = $start + ($width/2);
-  $start -= ($width/2);
-  my $slice =
-    $object->database('core')->get_SliceAdaptor()->fetch_by_region(
-    $seq_type, $seq_region, $start, $end, 1
-  );
-
-  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
-        'Slice', $slice, $object->__data
-       );
-
-  my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
-  my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures();
-
-  my $wuc = $object->image_config_hash( 'snpview' );
-  $wuc->set( '_settings', 'width', $object->param('image_width') );
-  $wuc->{'snps'}           = $filtered_snps;
-  $wuc->{'genotyped_snps'} = $genotyped_snps;
-  $wuc->{'snp_counts'}     = [$count_snps+$genotyped_count, scalar @$filtered_snps+scalar @$genotyped_snps];
-
-  ## If you want to resize this image
-  my $image    = $object->new_image( $slice, $wuc, [$object->name] );
-  $image->imagemap = 'yes';
-  my $T = $image->render;
-  $panel->print( $T );
-  return 0;
-}
-
-
-sub snpview_noimage {
-
-  ### Image
-  ### Arg1     : panel
-  ### Arg2     : data object
-  ### Example  :  $image_panel->add_components(qw(
-  ###      no_image EnsEMBL::Web::Component::SNP::snpview_noimage
-  ### ));
-  ### Description : Adds an HTML string to the panel if the SNP cannot be mapped uniquely
-  ### Returns  1
-
-  my ($panel, $object) = @_;
-  $panel->print("<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the SNP's location</p>");
-  return 1;
-}
-
 
 # Individual table ############################################################
 
@@ -806,12 +535,6 @@ sub _ld_populations {
     $pops{ $pop_obj->{$_}{Name} } = 1;
   }
   return \%pops;
-}
-
-
-sub _flip_URL {
-  my( $object, $code ) = @_;
-  return sprintf '/%s/%s?snp=%s;db=%s;%s', $object->species, $object->script, $object->name, $object->param('source'), $code;
 }
 
 1;
