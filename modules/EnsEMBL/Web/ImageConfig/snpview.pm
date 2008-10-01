@@ -1,8 +1,6 @@
 package EnsEMBL::Web::ImageConfig::snpview;
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my ($self) = @_;
