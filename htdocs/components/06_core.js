@@ -68,7 +68,13 @@ var Cookie = {
 // either enabled/disabled...
 
 var ENSEMBL_AJAX = Cookie.get('ENSEMBL_AJAX');
-if(!ENSEMBL_AJAX) {
-  ENSEMBL_AJAX = Ajax.getTransport()?'enabled':'disabled';
+if( ENSEMBL_AJAX != 'enabled' && ENSEMBL_AJAX != 'disabled' && ENSEMBL_AJAX != 'none' ) {
+  ENSEMBL_AJAX = Ajax.getTransport()?'enabled':'none';
   Cookie.set('ENSEMBL_AJAX',ENSEMBL_AJAX);
+}
+var ENSEMBL_WIDTH = Cookie.get('ENSEMBL_WIDTH');
+if( ! ENSEMBL_WIDTH ) {
+  ENSEMBL_WIDTH = Math.floor( ( document.viewport.getWidth() - 200 ) /100 ) * 100;
+  if(ENSEMBL_WIDTH < 500) ENSEMBL_WIDTH = 500;
+  Cookie.set( 'ENSEMBL_WIDTH',ENSEMBL_WIDTH );
 }
