@@ -270,7 +270,7 @@ sub flanking_seq {
     $sequence = $self->vari->$call;
   };
   if ($@) {
-    print STDERR "*****[ERROR]: No flanking sequence!\n\n\n";
+    warn "*****[ERROR]: No flanking sequence!";
     return 'unavailable';
   }
   return uc($sequence);
@@ -605,7 +605,7 @@ sub individual_genotypes_obj {
     $individuals = $self->vari->get_all_IndividualGenotypes;
   };
   if ($@) {
-    print STDERR "\n\n************ERROR************:  Bio::EnsEMBL::Variation::Variation::get_all_IndividualGenotypes fails.\n\n ";
+    warn "\n\n************ERROR************:  Bio::EnsEMBL::Variation::Variation::get_all_IndividualGenotypes fails.";
   }
   return $individuals;
 }
