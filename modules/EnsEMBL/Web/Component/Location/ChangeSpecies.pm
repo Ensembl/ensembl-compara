@@ -27,6 +27,7 @@ sub content {
                           @species;
   my @values;
   foreach my $next (@sorted_by_common) {
+    next if $next->{'name'} eq $ENV{'ENSEMBL_SPECIES'};
     push @values, {'name'=>$next->{'common'}, 'value'=>$next->{'name'}} ;
   }
 
