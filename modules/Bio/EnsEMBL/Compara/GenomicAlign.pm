@@ -921,12 +921,12 @@ sub length {
   } elsif ($self->{cigar_line}) {
     my $length = 0;
     my $cigar_line = $self->{cigar_line};
-    my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
+    my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
     for my $cigElem ( @cig ) {
       my $cigType = substr( $cigElem, -1, 1 );
       my $cigCount = substr( $cigElem, 0 ,-1 );
       $cigCount = 1 unless ($cigCount =~ /^\d+$/);
-      $length += $cigCount;
+      $length += $cigCount unless ($cigType eq "I");
     }
     return $length;
   }
@@ -1182,7 +1182,7 @@ sub original_sequence {
   } elsif (!defined($self->{'original_sequence'})) {
     # Try to get the data from other sources...
     
-    if ($self->{'aligned_sequence'}) {
+    if ($self->{'aligned_sequence'} and $self->{'cigar_line'} !~ /I/) {
       # ...from the aligned sequence
       $self->{'original_sequence'} = $self->{'aligned_sequence'};
       $self->{'original_sequence'} =~ s/\-//g;
@@ -1265,7 +1265,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 
   my $seq_pos = 0;
   
-  my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
+  my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1273,6 +1273,8 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 
     if( $cigType eq "M" ) {
       $aligned_sequence .= substr($original_sequence, $seq_pos, $cigCount);
+      $seq_pos += $cigCount;
+    } elsif( $cigType eq "I") {
       $seq_pos += $cigCount;
     } elsif( $cigType eq "X") {
       $aligned_sequence .=  "." x $cigCount;
@@ -1311,7 +1313,7 @@ sub _get_fake_aligned_sequence_from_cigar_line {
 
   my $seq_pos = 0;
 
-  my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
+  my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1319,6 +1321,8 @@ sub _get_fake_aligned_sequence_from_cigar_line {
 
     if( $cigType eq "M" ) {
       $fake_aligned_sequence .= "N" x $cigCount;
+      $seq_pos += $cigCount;
+    } elsif( $cigType eq "I") {
       $seq_pos += $cigCount;
     } elsif( $cigType eq "X") {
       $fake_aligned_sequence .=  "." x $cigCount;
