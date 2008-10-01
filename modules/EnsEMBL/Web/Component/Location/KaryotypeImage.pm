@@ -24,15 +24,14 @@ sub content {
   my $species = $object->species;
 
   ## Form with hidden elements for click-through
-  warn "MCL =",$object->species_defs->MAX_CHR_LENGTH;
   my $config = $object->image_config_hash('Vkaryotype');
      $config->set_parameter(
        'container_width',
        $object->species_defs->MAX_CHR_LENGTH
      );
 
-  my $ideo_height = $config->{'_image_height'};
-  my $top_margin  = $config->{'_top_margin'};
+  my $ideo_height = $config->get_parameter('image_height');
+  my $top_margin  = $config->get_parameter('top_margin');
   my $hidden = {
     'karyotype'   => 'yes',
     'max_chr'     => $ideo_height,
