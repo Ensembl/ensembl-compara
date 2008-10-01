@@ -22,11 +22,12 @@ sub render {
 
   return sprintf(
     qq(<dl>
-<dt><label for="%s" style="vertical-align:top;">%s: </label></dt>
+<dt><label for="%s" style="vertical-align:top;">%s: </label><br />%s</dt>
 <dd><textarea name="%s" id="%s" rows="%s" cols="%s" class="input-textarea %s" %s>%s</textarea></dd>
 </dl>),
     CGI::escapeHTML( $self->name ), 
     CGI::escapeHTML( $self->label ), 
+    CGI::escapeHTML( $self->notes ), 
     CGI::escapeHTML( $self->name ), 
     CGI::escapeHTML( $self->id ),
     CGI::escapeHTML( $self->rows ) ? CGI::escapeHTML( $self->rows ) : '10', 
