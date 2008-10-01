@@ -116,7 +116,7 @@ function __init_config_menu() {
       }
     });
   });
-  $$('dt.submit').each(function(n){ n.hide(); });
+  $$('#configuration dt.submit').each(function(n){ n.hide(); });
 /* deprecated!!  
   if( $('config') ) {
     Event.observe( $('config'), 'submit', function(f){
