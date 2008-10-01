@@ -48,7 +48,12 @@ sub draw_features {
 	 $drawn_wiggle_flag = "wiggle";
 	 @features   = sort { $a->score <=> $b->score  } @features;
 	 my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0); 
-	 $self->render_wiggle_plot(\@features, $wiggle_colour, $min_score, $max_score, $result_set->display_label);
+#	 $self->render_wiggle_plot(\@features, $min_score, $max_score, $result_set->display_label, $wiggle_colour );
+   $self->render_wiggle_plot(
+    \@features,                      ## Features array
+    { 'min_score' => $min_score, 'max_score' => $max_score }
+  );
+
    }
       $self->render_space_glyph() if $drawn_wiggle_flag;
   }
