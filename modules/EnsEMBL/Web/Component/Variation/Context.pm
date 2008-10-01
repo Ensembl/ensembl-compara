@@ -61,8 +61,14 @@ sub content {
   my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
   my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures();
 
-  my $wuc = $object->image_config_hash( 'snpview' );
-  $wuc->set( '_settings', 'width', $object->param('image_width') );
+  my $wuc = $object->image_config_hash( 'snpview' ); 
+ # $wuc->tree->dump("View Bottom configuration", '([[caption]])');
+  $wuc->set_parameters( {
+    'image_width' =>  $self->image_width || 800,
+    'container_width' => $slice->length,
+    'slice_number' => '1|1',
+  });
+
   $wuc->{'snps'}           = $filtered_snps;
   $wuc->{'genotyped_snps'} = $genotyped_snps;
   $wuc->{'snp_counts'}     = [$count_snps+$genotyped_count, scalar @$filtered_snps+scalar @$genotyped_snps];
@@ -70,6 +76,8 @@ sub content {
   ## If you want to resize this image
   my $image    = $object->new_image( $slice, $wuc, [$object->name] );
   $image->imagemap = 'yes';
+  $image->{'panel_number'} = 'transcript';
+  $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
  my $T = $image->render;
  return $T;
