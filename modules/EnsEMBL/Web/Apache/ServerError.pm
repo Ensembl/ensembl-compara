@@ -101,7 +101,7 @@ sub handler {
 <h2>Ensembl Server Error</h2>
 <p>Sorry, an error occurred while the Ensembl server was processing your request</p>
 <p>Please email a report , quoting any additional information given below, along with the URL, to $admin</p>
-<p><b>The error was:</b>
+<p><strong>The error was:</strong>
 <blockquote class="error"><pre>$error</pre></blockquote>
       )
     ));
@@ -120,7 +120,7 @@ sub handler {
 <p>Sorry, an error occurred while the Ensembl server was processing your request</p>
 <p>Please email a report , quoting any additional information given below, along
    with the URL to the website administrator</p>
-<p><b>The error was:</b>
+<p><strong>The error was:</strong>
 <blockquote class="error"><pre>$error</pre></blockquote>
 <pre>$@</pre>
     );

@@ -256,7 +256,7 @@ sub content {
       }
     }
     if ($entry_exon && $entry_exon eq $exonA_ID){
-      $exonA_ID = "<b>$exonA_ID</b>" ;
+      $exonA_ID = "<strong>$exonA_ID</strong>" ;
     }
     $exon_info = {
       'Number'    => $j,

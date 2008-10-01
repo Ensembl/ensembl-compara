@@ -135,7 +135,7 @@ sub content {
 
 sub _add_bookmark {
   my $self = shift;
-  return qq(<p><a href="/Account/Bookmark?dataview=add" class="cp-internal"><b>Add a new bookmark </b>&rarr;</a></p>);
+  return qq(<p><a href="/Account/Bookmark?dataview=add" class="cp-internal"><strong>Add a new bookmark </strong>&rarr;</a></p>);
 }
 
 1;

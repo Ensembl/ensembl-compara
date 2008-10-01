@@ -18,7 +18,7 @@ sub caption {
 sub content {
   my $self = shift;
   my $gene   = $self->object;
-  my $html = qq{<p><b>This gene can be viewed in genomic alignment with other species</b></p>} ;
+  my $html = qq{<p><strong>This gene can be viewed in genomic alignment with other species</strong></p>} ;
 
   my %alignments = $gene->species_defs->multiX('ALIGNMENTS');
   my $species = $gene->species;
@@ -35,7 +35,7 @@ sub content {
     if ( scalar(@species) == 1) {
      ($label = $species[0]) =~ s/_/ /g;
     }
-    $html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with <b>%s</b></a> <br/>),
+    $html .= sprintf( qq(&nbsp;&nbsp;&nbsp;<a href="/%s/alignsliceview?l=%s:%s-%s;align=%s">view genomic alignment with <strong>%s</strong></a> <br/>),
        $gene->species,
        $gene->seq_region_name,
        $gene->seq_region_start,
