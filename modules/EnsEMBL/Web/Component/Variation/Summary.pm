@@ -107,7 +107,7 @@ sub content {
      if ($str < 0 ) {$strand ="(reverse strand)";} 
  
      my $location_string = $region.":".$start."-".$end;
-     my $location_html = qq(<a href=$link>$location_string</a> $strand) ;
+     my $location_html = qq(<a href="$link">$location_string</a> $strand) ;
      $html .= qq(<dt>Location</dt><dd>$location_html</dd></dl>);
    }
   }else {
