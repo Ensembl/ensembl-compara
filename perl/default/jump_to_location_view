@@ -29,7 +29,9 @@ if ($f->param('karyotype')) {
   my $y = $f->param( 'vclick.y' );
 
   ## For now, assume largest chr is in row 1
-  my $row = $y > ($f->param('max_chr') - 20) ? 1 : 0;
+  my $top_row_height = $f->param('total_height') - ($f->param('max_chr') - 55);
+  my $bottom_row_height = $f->param('max_chr') - 55;
+  my $row = $y > $bottom_row_height ? 1 : 0;
   my $col = int($x / 44);
   my $chr = @chrs[$col + $per_row * $row]; 
   
