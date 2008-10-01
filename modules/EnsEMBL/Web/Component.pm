@@ -16,7 +16,7 @@ our @EXPORT    = @EXPORT_OK;
 sub image_width {
   my $self = shift;
 
-  return $self->object->param('image_width')||800;
+  return $ENV{'ENSEMBL_IMAGE_WIDTH'};
 }
 sub new {
   my( $class, $object ) = shift;
