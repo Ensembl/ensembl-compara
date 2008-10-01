@@ -449,6 +449,7 @@ sub get_homology_matches{
         $homology_list{$displayspp}{$homologue_id}{'homology_desc'}       = $homology_desc ;
         $homology_list{$displayspp}{$homologue_id}{'homology_subtype'}    = $homology_subtype ;
         $homology_list{$displayspp}{$homologue_id}{'spp'}                 = $displayspp ;
+        $homology_list{$displayspp}{$homologue_id}{'sp_common'}           = $homologue->taxon ? $homologue->taxon->common_name : '';
         $homology_list{$displayspp}{$homologue_id}{'description'}         = $homologue->description || 'No description';
         $homology_list{$displayspp}{$homologue_id}{'order'}               = $order ;
         $homology_list{$displayspp}{$homologue_id}{'query_perc_id'}       = $query_perc_id ;
