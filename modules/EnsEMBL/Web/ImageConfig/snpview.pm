@@ -4,6 +4,64 @@ use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my ($self) = @_;
+
+  $self->set_parameters({
+    'title'         => 'Overview panel',
+    'show_buttons'  => 'no',  # do not show +/- buttons
+    'button_width'  => 8,     # width of red "+/-" buttons
+    'show_labels'   => 'yes', # show track names on left-hand side
+    'label_width'   => 113,   # width of labels on left-hand side
+    'margin'        => 5,     # margin
+    'spacing'       => 2,     # spacing
+
+## Now let us set some of the optional parameters....
+    'opt_halfheight'    => 1, # glyphs are half-height [ probably removed when this becomes a track config ]
+    'opt_empty_tracks'  => 0, # include empty tracks..
+    'opt_lines'         => 1, # draw registry lines
+    'opt_restrict_zoom' => 1, # when we get "zoom" working draw restriction enzyme info on it!!
+  });
+
+
+
+  $self->create_menus(
+    'transcript' => 'Genes',
+    'prediction' => 'Prediction transcripts',
+    'sequence'   => 'Sequence',
+    'variation'  => 'Variation',
+    'other'      => 'Decorations',
+  );
+
+
+  $self->add_tracks( 'sequence',
+    [ 'contig',    'Contigs',              'stranded_contig', { 'display' => 'normal',  'strand' => 'r'  } ],
+  );
+
+  $self->add_tracks( 'other',
+    [ 'ruler',     '',            'ruler',           { 'display' => 'on',  'strand' => 'b', 'name' => 'Ruler'      } ],
+    [ 'scalebar',  '',            'scalebar',        { 'display' => 'on',  'strand' => 'r', 'name' => 'Scale bar'  } ],
+  );
+
+
+  $self->load_tracks();
+
+  $self->modify_configs(
+    [qw(variation)],
+    {qw(style box)}
+  );
+
+  $self->modify_configs(
+    [qw(variation_feature_variation)],
+    {qw(display normal)}
+  );
+
+
+
+}
+
+1;
+__END__
+sub init {
+  my ($self) = @_;
   $self->{'_userdatatype_ID'} = 30;
   $self->{'_transcript_names_'} = 'yes';
   #$self->{'_no_label'} = 'true';
@@ -203,7 +261,7 @@ __END__
  bgcolour: configures the background colours of the tracks. Alternate them to get differing shades: e.g.
      'bgcolor'   => 'background1',
       'bgcolour1' => 'background3',
-      'bgcolour2' => 'background1',
+      'bg
 
 =head2 OPTIONS
 
