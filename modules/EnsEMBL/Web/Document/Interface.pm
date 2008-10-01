@@ -89,7 +89,7 @@ sub process {
         new EnsEMBL::Web::Document::Panel(
           'caption' => 'Invalid action request',
           'content' => qq(
-          <p>Action <b>$action</b> is not specified. Please request a valid action.</p>)
+          <p>Action <strong>$action</strong> is not specified. Please request a valid action.</p>)
         )
       );
     $self->render;

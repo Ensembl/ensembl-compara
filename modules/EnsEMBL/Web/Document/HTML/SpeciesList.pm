@@ -208,7 +208,7 @@ sub _render_ajax_reorder_list {
 
   $html .= qq(For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <span class="link toggle_link">Save</span><br /><br />\n);
 
-  $html .= qq(<div id="favourite_species">\n<b>Favourites</b>);
+  $html .= qq(<div id="favourite_species">\n<strong>Favourites</strong>);
   my @favourites = @{_get_favourites($user, $species_info)};
   if (scalar(@favourites) < 1) {
     @favourites = @{_get_defaults($species_defs)};
@@ -223,7 +223,7 @@ sub _render_ajax_reorder_list {
   }
 
   $html .= qq(</ul></div>
-  <div id="all_species">\n<b>Other available species</b>
+  <div id="all_species">\n<strong>Other available species</strong>
     <ul id="species_list">\n);
 
   my %sp_to_sort = %$species_info;

@@ -207,7 +207,7 @@ sub configure {
          'caption' => 'Configuration module compilation error',
          'content' => sprintf( qq(
     <p>
-      Unable to use Configuration module <b>$config_module_name</b> due to
+      Unable to use Configuration module <strong>$config_module_name</strong> due to
       the following error:
     </p>
     <pre>%s</pre>), $self->_format_error( $self->dynamic_use_failure( $config_module_name )) )
@@ -233,7 +233,7 @@ sub configure {
               'caption' => 'Configuration module runtime error',
               'content' => sprintf( qq(
     <p>
-      Unable to execute configuration $FN from configuration module <b>$config_module_name</b>
+      Unable to execute configuration $FN from configuration module <strong>$config_module_name</strong>
       due to the following error:
     </p>
     <pre>%s</pre>), $self->_format_error($@) )

@@ -613,7 +613,7 @@ sub content {
         if( $@ ) {
           warn $@;
           $self->_error(
-            qq(Runtime Error in component "<b>$component</b> [new]"),
+            qq(Runtime Error in component "<strong>$component</strong> [new]"),
             qq(<p>
                 Function <strong>$module_name</strong> fails to
                 execute due to the following error:
@@ -651,7 +651,7 @@ sub content {
             };
             if ($@) {
               warn $@;
-              $self->_error( qq(Runtime Error in component "<b>$component</b> [content]"),
+              $self->_error( qq(Runtime Error in component "<strong>$component</strong> [content]"),
                 qq(<p>
                     Function <strong>$module_name</strong> fails to
                     execute due to the following error:
@@ -671,7 +671,7 @@ sub content {
           }
         }
       } else {
-        $self->_error( qq(Compile error in component "<b>$component</b>"),
+        $self->_error( qq(Compile error in component "<strong>$component</strong>"),
           qq(
     <p>
       Component <strong>$module_name</strong> not used

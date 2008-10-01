@@ -50,7 +50,7 @@ sub content_Text {
           # if( $@ =~ /^Undefined subroutine / ) {
           #  $error = "<p>This function is not defined</p>";
           # }
-          $self->_error( qq(Runtime Error in component "<b>$component</b>"),
+          $self->_error( qq(Runtime Error in component "<strong>$component</strong>"),
             qq(<p>Function <strong>$function_name</strong> fails to execute due to the following error:</p>$error)
           );
           $self->timer_push( "Component $function_name (runtime failure)" );
@@ -58,7 +58,7 @@ sub content_Text {
           $self->timer_push( "Component $function_name succeeded" );
         }
       } else {
-        $self->_error( qq(Compile error in component "<b>$component</b>"),
+        $self->_error( qq(Compile error in component "<strong>$component</strong>"),
           qq(
             <p>Function <strong>$function_name</strong> not executed as unable to use module <strong>$module_name</strong>
                due to syntax error.</p>

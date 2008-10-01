@@ -48,8 +48,8 @@ sub web_usage {
     my $class = $2;
     my( $desc, $req, $opt ) = $self->$1();
     $ss->add_row([ $class, $desc,
-      @$req ? qq(<dl><dt>@{[join ";</dt>\n<dt>", map {qq(<b>$_->[0]</b>: $_->[1])} @$req  ]}.</dt></dl>) : '&nbsp;',
-      @$opt ? qq(<dl><dt>@{[join ";</dt>\n<dt>", map {qq(<b>$_->[0]</b>: $_->[1])} @$opt  ]}.</dt></dl>) : '&nbsp;'
+      @$req ? qq(<dl><dt>@{[join ";</dt>\n<dt>", map {qq(<strong>$_->[0]</strong>: $_->[1])} @$req  ]}.</dt></dl>) : '&nbsp;',
+      @$opt ? qq(<dl><dt>@{[join ";</dt>\n<dt>", map {qq(<strong>$_->[0]</strong>: $_->[1])} @$opt  ]}.</dt></dl>) : '&nbsp;'
     ]);
   }
   return '
