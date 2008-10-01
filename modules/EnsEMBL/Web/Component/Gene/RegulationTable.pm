@@ -78,7 +78,7 @@ sub content {
    $row = {
      'location'  => $position,
      'length'    => $length,
-     'seq'       => qq(<font face="courier" color="black">$seq</font>),
+     'seq'       => qq(<span class="sequence">$seq</span>),
      'feature'    => $feature_link,
      'type'   => $type,
      'analysis'  => $analysis
@@ -124,7 +124,7 @@ sub content {
    $row = {
      'location'  => $position,
      'length'    => $length,
-     'seq'       => qq(<font face="courier" color="black">$seq</font>),
+     'seq'       => qq(<span class="sequence">$seq</span>),
      'feature'   => $feature_link,
      'type'      => $feature,
      'analysis'  => $description
