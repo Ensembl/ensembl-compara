@@ -390,7 +390,7 @@ sub _local_tools {
   my $obj = $self->{object};
 
   my @data = (
-    ['Bookmark this page',  '/Account/Bookmark', 'modal_link' ],
+    ['Bookmark this page',  '/Account/Bookmark?_referer='.$ENV{'HTTP_REFERER'}, 'modal_link' ],
   );
   my $vc  = $obj->get_viewconfig;
   my $config = {};
