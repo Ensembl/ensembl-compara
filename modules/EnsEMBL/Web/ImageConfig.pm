@@ -244,7 +244,6 @@ sub load_tracks {
     $self->add_simple_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To simple_feature tree                        ##DONE
     $self->add_assemblies(            $key,$dbs_hash->{$db}{'tables'} ); # To sequence tree!                             ## 2 do ##
   }
-  foreach my $db ( 'DATABASE_COMPARA') {   # @{$self->species_defs->get_config('compara_databases')} ) {
   foreach my $db ( @{$self->species_defs->compara_like_databases||[]} ) {
     next unless exists $multi_hash->{$db};
     my $key = lc(substr($db,9));
