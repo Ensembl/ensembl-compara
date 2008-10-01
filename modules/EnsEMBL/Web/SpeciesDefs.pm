@@ -574,7 +574,32 @@ sub multi {
   ### Arguments: configuration type (string), species name (string)
   my( $self, $type, $species ) = @_;
   $species ||= $ENV{'ENSEMBL_SPECIES'};
-  return exists( $CONF->{'_storage'}{'MULTI'}{$type}{$species} ) ? %{$CONF->{'_storage'}{'MULTI'}{$type}{$species}} : ();
+  return 
+    exists $CONF->{'_storage'} && 
+    exists $CONF->{'_storage'}{'MULTI'} && 
+    exists $CONF->{'_storage'}{'MULTI'}{$type} &&
+    exists $CONF->{'_storage'}{'MULTI'}{$type}{$species} ? %{$CONF->{'_storage'}{'MULTI'}{$type}{$species}} : ();
+}
+
+sub compara_like_databases {
+  my $self = shift;
+  return $self->multi_val('compara_like_databases');
+}
+
+sub multi_val {
+  my( $self, $type, $species ) = @_;
+  if( defined $species ) {
+    return 
+      exists $CONF->{'_storage'} && 
+      exists $CONF->{'_storage'}{'MULTI'} && 
+      exists $CONF->{'_storage'}{'MULTI'}{$type} &&
+      exists $CONF->{'_storage'}{'MULTI'}{$type}{$species} ? $CONF->{'_storage'}{'MULTI'}{$type}{$species} : undef;
+  } else {
+    return 
+      exists $CONF->{'_storage'} && 
+      exists $CONF->{'_storage'}{'MULTI'} && 
+      exists $CONF->{'_storage'}{'MULTI'}{$type} ? $CONF->{'_storage'}{'MULTI'}{$type} : undef;
+  }
 }
 
 sub multiX {
@@ -585,9 +610,7 @@ sub multiX {
   return
       exists $CONF->{'_storage'} && 
       exists $CONF->{'_storage'}{'MULTI'} && 
-      exists $CONF->{'_storage'}{'MULTI'}{$type} 
-    ? %{$CONF->{'_storage'}{'MULTI'}{$type}||{}}
-    : ();
+      exists $CONF->{'_storage'}{'MULTI'}{$type} ? %{$CONF->{'_storage'}{'MULTI'}{$type}||{}} : ();
 }
 
 sub get_table_size{
