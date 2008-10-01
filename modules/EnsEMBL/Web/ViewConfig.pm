@@ -50,6 +50,7 @@ sub add_image_configs { ## Value indidates that the track can be configured for 
   my( $self, $hash_ref ) = @_;
   foreach( keys %$hash_ref ) {
     $self->{_image_config_names}{$_} = $hash_ref->{$_};
+    $self->has_images(1);
   }
 }
 
@@ -184,11 +185,43 @@ sub push_class {
   push @{$self->{'_classes'}}, $class;
 }
 
+sub has_images {
+  my $self = shift;
+  $self->{_has_images} = shift if @_;
+  return $self->{_has_images};
+}
+
 sub form {
   my( $self, $object ) = @_;
   foreach my $classname (@{$self->{'_classes'}}) {
     my $method = $classname.'::form';
     eval { no strict 'refs'; &$method( $self, $object ); };
+  }
+  if( $self->has_images || $ENV{'ENSEMBL_AJAX_VALUE'} =~ /^(en|dis)abled$/ ) {
+    $self->add_fieldset( 'General view configurations' );
+    if( $self->has_images ) {
+      $self->add_form_element({
+        'type'     => 'DropDown', 'select' => 'select',
+        'required' => 'yes',      'name'   => 'cookie_width',
+        'values'   => [
+          map { { 'value' => $_, 'name' => "$_ pixels" } } map {$_*100} (5..20)
+        ],
+        'value'    => $ENV{'ENSEMBL_IMAGE_WIDTH'},
+        'label'    => "Width of image",
+      });
+    }
+    if( $ENV{'ENSEMBL_AJAX_VALUE'} =~ /^(en|dis)abled$/ ) {
+      $self->add_form_element({
+        'type'     => 'DropDown', 'select' => 'select',
+        'required' => 'yes',      'name'   => 'cookie_ajax',
+        'values'   => [
+          { 'value' => 'enabled',  'name' => 'Enabled' },
+          { 'value' => 'disabled', 'name' => 'Disabled' },
+        ],
+        'value'    => $ENV{'ENSEMBL_AJAX_VALUE'},
+        'label'    => "Enable/disable use of AJAX in rendering"
+      });
+    }
   }
   $self->add_form_element({
    'type' => 'Submit', 'value' => 'Update configuration'
