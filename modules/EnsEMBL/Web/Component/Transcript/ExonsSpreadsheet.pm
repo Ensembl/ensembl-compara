@@ -24,19 +24,20 @@ sub content {
 
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
   $table->add_columns(
-    {'key' => 'Number', 'title' => 'No.', 'width' => '5%', 'align' => 'center' },
-    {'key' => 'exint',  'title' => 'Exon / Intron', 'width' => '20%', 'align' => 'center' },
-    {'key' => 'Chr', 'title' => 'Chr', 'width' => '10%', 'align' => 'center' },
-    {'key' => 'Strand',     'title' => 'Strand', 'width' => '10%', 'align' => 'center' },
-    {'key' => 'Start', 'title' => 'Start', 'width' => '15%', 'align' => 'right' },
-    {'key' => 'End', 'title' => 'End', 'width' => '15%', 'align' => 'right' },
-    {'key' => 'StartPhase', 'title' => 'Start Phase', 'width' => '15%', 'align' => 'center' },
-    {'key' => 'EndPhase', 'title' => 'End Phase', 'width' => '15%', 'align' => 'center' },
+    {'key' => 'Number', 'title' => 'No.', 'width' => '6%', 'align' => 'center' },
+    {'key' => 'exint',  'title' => 'Exon / Intron', 'width' => '15%', 'align' => 'center' },
+#    {'key' => 'Chr', 'title' => 'Chr', 'width' => '10%', 'align' => 'center' },
+#    {'key' => 'Strand',     'title' => 'Strand', 'width' => '10%', 'align' => 'center' },
+    {'key' => 'Start', 'title' => 'Start', 'width' => '10%', 'align' => 'right' },
+    {'key' => 'End', 'title' => 'End', 'width' => '10%', 'align' => 'right' },
+    {'key' => 'StartPhase', 'title' => 'Start Phase', 'width' => '7%', 'align' => 'center' },
+    {'key' => 'EndPhase', 'title' => 'End Phase', 'width' => '7%', 'align' => 'center' },
     {'key' => 'Length', 'title' => 'Length', 'width' => '10%', 'align' => 'right' },
-    {'key' => 'Sequence', 'title' => 'Sequence', 'width' => '20%', 'align' => 'left' }
+    {'key' => 'Sequence', 'title' => 'Sequence', 'width' => '15%', 'align' => 'left' }
   );
 
 
+  my $seq_cols   = $object->param('seq_cols') || 60;
   my $sscon      = $object->param('sscon');            # no of bp to show either side of a splice site
   my $flanking   = $object->param('flanking') || 50;    # no of bp up/down stream of transcript
   my $full_seq   = $object->param('fullseq') eq 'yes';  # flag to display full sequence (introns and exons)
@@ -57,8 +58,8 @@ sub content {
   my( $exonA, $exonB, $j, $upstream, $exon_info,$intron_info );
     $sscon = 25 unless $sscon >= 1;
 # works out length needed to join intron ends with dots
-  my $sscon_dot_length = 60-2*($sscon %30);
-  my $flanking_dot_length = 60-($flanking%60);
+  my $sscon_dot_length = $seq_cols-2*($sscon % ($seq_cols/2) );
+  my $flanking_dot_length = $seq_cols-($flanking%$seq_cols);
 # upstream flanking seq
   if( $flanking && !$only_exon ){
     my $exon = $el[0];
@@ -68,9 +69,9 @@ sub content {
       $upstream = $exon->slice()->subseq( ($exon->end)+1,   ($exon->end)+($flanking),  $strand);
     }
     $upstream =  lc(('.'x $flanking_dot_length).$upstream);
-    $upstream =~ s/([\.\w]{60})/$1<br \/>/g;
+    $upstream =~ s/([\.\w]{$seq_cols})/$1<br \/>/g;
     $exon_info = { 'exint'    => qq(5\' upstream sequence),
-                   'Sequence' => qq(<font face="courier" color="green">$upstream</font>) };
+                   'Sequence' => qq(<span class="exons_flank">$upstream</span>) };
     $table->add_row( $exon_info );
   }
   # Loop over each exon
@@ -89,14 +90,14 @@ sub content {
     my $exonA_end     = $exonA->end;
     my $exonB_start   = $exonB->start if $exonB ;
     my $exonB_end     = $exonB->end if $exonB ;
-    my $utrspan_start = qq(<span style="color: #9400d3">);  ##set colour of UTR
+    my $utrspan_start = qq(<span class="exons_utr">);  ##set colour of UTR
     my $count = 0;
     my $k = 0;
 
 
  # Is this exon entirely UTR?
     if( $coding_end < $exonA_start || $coding_start > $exonA_end ){
-      $seq   =~ s/([\.\w]{60})/$1<\/span><br \/>$utrspan_start/g ;
+      $seq   =~ s/([\.\w]{$seq_cols})/$1<\/span><br \/>$utrspan_start/g ;
       $seq   .= qq(</span>);
       $seq = "$utrspan_start"."$seq";
     } elsif( $strand eq '-1' ) {
@@ -110,21 +111,21 @@ sub content {
       if( $coding_start > $exonA_start &&  $coding_end < $exonA_end ) {
         $seq = qq($utrspan_start);
         for (@exon_nt){
-          if( $count == 60 && ($k < $coding_len && $k > $utr_len) ){
+          if( $count == $seq_cols && ($k < $coding_len && $k > $utr_len) ){
             $seq .= "<br />";
             $count =0;
-          } elsif( $count == 60 && ($k > $coding_len || $k < $utr_len) ){
+          } elsif( $count == $seq_cols && ($k > $coding_len || $k < $utr_len) ){
             $seq .= "</span><br />$utrspan_start";
             $count =0;
           } elsif ($k == $utr_len) {
             $seq .= "</span>";
-            if( $count == 60 ) {
+            if( $count == $seq_cols ) {
               $seq .= "<br />";
               $count = 0;
             }
           } elsif( $k == $coding_len ) {
             $seq .= "$utrspan_start";
-            if( $count == 60 ) {
+            if( $count == $seq_cols ) {
              $seq .= "<br />";
               $count = 0;
             }
@@ -136,14 +137,14 @@ sub content {
       } elsif ($coding_start > $exonA_start ) { # exon starts with UTR
         $seq = "";
         for( @exon_nt ){
-          if ($count == 60 && ($k > $coding_len)){
+          if ($count == $seq_cols && ($k > $coding_len)){
             $seq .= "</span><br />$utrspan_start";
             $count =0;
-          }elsif ($count == 60 && $k < $coding_len){
+          }elsif ($count == $seq_cols && $k < $coding_len){
             $seq .= "<br />";
             $count =0;
           }elsif ($k == $coding_len){
-            if ($count == 60) {
+            if ($count == $seq_cols) {
               $seq .= "<br />";
               $count = 0;
             }
@@ -156,15 +157,15 @@ sub content {
       } elsif($coding_end < $exonA_end ) { # exon ends with UTR
         $seq = $utrspan_start;
         for( @exon_nt ){
-          if ($count == 60 && $utr_len > $k ){
+          if ($count == $seq_cols && $utr_len > $k ){
             $seq .= "</span><br />$utrspan_start";
             $count =0;
-          } elsif ($count == 60 && $k > $utr_len){
+          } elsif ($count == $seq_cols && $k > $utr_len){
             $seq .= "<br />";
             $count =0;
          } elsif ($k == $utr_len) {
             $seq .= qq(</span>);
-            if ($count == 60) {
+            if ($count == $seq_cols) {
               $seq .= "<br />";
               $count = 0;
             }
@@ -175,7 +176,7 @@ sub content {
         }
         $seq .= "</span>";
       } else{ # entirely coding exon
-        $seq =~ s/([\.\w]{60})/$1<br \/>/g ;
+        $seq =~ s/([\.\w]{$seq_cols})/$1<br \/>/g ;
       }
     } else { # Handle forward strand transcripts
       my @exon_nt  = split '', $seq;
@@ -186,21 +187,21 @@ sub content {
       if ($coding_start > $exonA_start &&  $coding_end < $exonA_end){
         $seq = qq($utrspan_start);
         for (@exon_nt){
-          if ($count == 60 && ($k > $utr_len && $k < $coding_len)){
+          if ($count == $seq_cols && ($k > $utr_len && $k < $coding_len)){
             $seq .= "<br />";
             $count =0;
-          } elsif ($count == 60 && ($k < $utr_len || $k > $coding_len)){
+          } elsif ($count == $seq_cols && ($k < $utr_len || $k > $coding_len)){
             $seq .= "</span><br />$utrspan_start";
             $count =0;
           } elsif ($k == $utr_len) {
             $seq .= "</span>";
-            if ($count == 60) {
+            if ($count == $seq_cols) {
               $seq .= "<br />";
               $count = 0;
             }
    } elsif ($k == $coding_len) {
             $seq .= "$utrspan_start";
-            if ($count == 60) {
+            if ($count == $seq_cols) {
               $seq .= "<br />";
               $count = 0;
             }
@@ -212,15 +213,15 @@ sub content {
       } elsif ($coding_start > $exonA_start ){# exon starts with UTR
         $seq = qq($utrspan_start);
         for (@exon_nt){
-          if ($count == 60 && ($k > $utr_len)){
+          if ($count == $seq_cols && ($k > $utr_len)){
             $seq .= "<br />";
             $count =0;
-          } elsif ($count == 60 && $k < $utr_len){
+          } elsif ($count == $seq_cols && $k < $utr_len){
             $seq .= "</span><br />$utrspan_start";
             $count =0;
           } elsif ($k == $utr_len){
             $seq .= "</span>";
-            if( $count == 60) {
+            if( $count == $seq_cols) {
               $seq .= "<br />";
               $count = 0;
             }
@@ -232,14 +233,14 @@ sub content {
       } elsif($coding_end < $exonA_end ){ # exon ends with UTR
         $seq = '';
         for (@exon_nt){
-          if ($count == 60 && $coding_len > $k ){
+          if ($count == $seq_cols && $coding_len > $k ){
             $seq .= "<br />";
             $count =0;
-     }elsif ($count == 60 && $k > $coding_len){
+     }elsif ($count == $seq_cols && $k > $coding_len){
             $seq .= "</span><br />$utrspan_start";
             $count =0;
           }elsif ($k == $coding_len){
-            if ($count == 60) {
+            if ($count == $seq_cols) {
               $seq .= "<br />";
               $count = 0;
             }
@@ -251,24 +252,25 @@ sub content {
         }
         $seq .= "</span>";
       } else { # Entirely coding exon.
-        $seq =~ s/([\.\w]{60})/$1<br \/>/g ;
+        $seq =~ s/([\.\w]{$seq_cols})/$1<br \/>/g ;
       }
     }
     if ($entry_exon && $entry_exon eq $exonA_ID){
       $exonA_ID = "<b>$exonA_ID</b>" ;
     }
-    $exon_info = {      'Number'    => $j,
-                        'exint'     => qq(<a href="/@{[$object->species]}/contigview?l=$chr_name:$exonA_start-$exonA_end;context=100">$exonA_ID</a>),
-                        'Chr'       => $chr_name,
-                        'Strand'    => $strand,
-                        'Start'     => $object->thousandify( $exonA_start ),
-                        'End'       => $object->thousandify( $exonA_end ),
-                        'StartPhase' => $exonA->phase    >= 0 ? $exonA->phase     : '-',
-                        'EndPhase'  => $exonA->end_phase >= 0 ? $exonA->end_phase : '-',
-                        'Length'    => $object->thousandify( $seqlen ),
-                        'Sequence'  => qq(<font face="courier" color="black">$seq</font>) };
+    $exon_info = {
+      'Number'    => $j,
+      'exint'     => qq(<a href="/@{[$object->species]}/contigview?l=$chr_name:$exonA_start-$exonA_end;context=100">$exonA_ID</a>),
+    #  'Chr'       => $chr_name, 'Strand'    => $strand,
+      'Start'     => $object->thousandify( $exonA_start ),
+      'End'       => $object->thousandify( $exonA_end ),
+      'StartPhase' => $exonA->phase    >= 0 ? $exonA->phase     : '-',
+      'EndPhase'  => $exonA->end_phase >= 0 ? $exonA->end_phase : '-',
+      'Length'    => $object->thousandify( $seqlen ),
+      'Sequence'  => qq(<span class="exons_exon">$seq</span>)
+    };
     $table->add_row( $exon_info );
-  if( !$only_exon && $exonB ) {
+    if( !$only_exon && $exonB ) {
       eval{
         if($strand == 1 ) { # ...on the forward strand
           $intron_start = $exonA_end+1;
@@ -295,16 +297,17 @@ sub content {
         }
       }; # end of eval
       $intron_seq =  lc($intron_seq);
-      $intron_seq =~ s/([\.\w]{60})/$1<br \/>/g;
+      $intron_seq =~ s/([\.\w]{$seq_cols})/$1<br \/>/g;
 
-      $intron_info = {   'Number'    => "&nbsp;",
-                         'exint'     => qq(<a href="/@{[$object->species]}/contigview?l=$chr_name:$intron_start-$intron_end;context=100">$intron_id</a>),
-                         'Chr'       => $chr_name,
-                         'Strand'    => $strand,
-                         'Start'     => $object->thousandify( $intron_start ),
-                         'End'       => $object->thousandify( $intron_end ),
-                         'Length'    => $object->thousandify( $intron_len ),
-                         'Sequence'  => qq(<font face="courier" color="blue">$intron_seq</font>)};
+      $intron_info = {
+        'Number'    => "&nbsp;",
+        'exint'     => qq(<a href="/@{[$object->species]}/contigview?l=$chr_name:$intron_start-$intron_end;context=100">$intron_id</a>),
+      # 'Chr'       => $chr_name, 'Strand'    => $strand,
+        'Start'     => $object->thousandify( $intron_start ),
+        'End'       => $object->thousandify( $intron_end ),
+        'Length'    => $object->thousandify( $intron_len ),
+        'Sequence'  => qq(<span class="exons_intron">$intron_seq</span>)
+      };
       $table->add_row( $intron_info );
     }
   }     #finished foreach loop
@@ -317,14 +320,13 @@ sub content {
       $downstream = $exon->slice()->subseq( ($exon->start)-($flanking),   ($exon->start)-1 , $strand);
     }
     $downstream =  lc($downstream). ('.'x $flanking_dot_length);
-    $downstream =~ s/([\.\w]{60})/$1<br \/>/g;
+    $downstream =~ s/([\.\w]{$seq_cols})/$1<br \/>/g;
     $exon_info = { 'exint'    => qq(3\' downstream sequence),
-                   'Sequence' => qq(<font face="courier" color="green">$downstream</font>) };
+                   'Sequence' => qq(<span class="exons_flank">$downstream</span>) };
     $table->add_row( $exon_info );
   }
 
- 
-return $table->render;
+  return $table->render;
 }
 
 1;
