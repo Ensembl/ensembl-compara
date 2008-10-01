@@ -17,6 +17,12 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
+
+  ## Don't show this component if the slice covers or exceeds the whole chromosome!
+  if ($object->seq_region_start < 2 && $object->seq_region_end > ($object->chromosome->end - 1)) {
+    return;
+  } 
+
   my $chr     = $object->seq_region_name; 
   my $html;
 
@@ -24,8 +30,9 @@ sub content {
   my $max_index = 15;
   my $max_minus = -15;
 
-  my $start = $object->seq_region_start || 1;
-  my $end   = $object->seq_region_end || $object->chromosome->end;
+  my $start = $object->seq_region_start || 100;
+  my $end   = $object->seq_region_end || ($object->chromosome->end - 100);
+
   my $upstream    = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $object->seq_region_start - 1 );
   my $downstream  = $sliceAdaptor->fetch_by_region('chromosome', $chr, $object->seq_region_end + 1, $object->chromosome->end );
 
