@@ -212,11 +212,15 @@ sub populate_tree {
         statistics  EnsEMBL::Web::Component::Transcript::PepStats)],
     { 'availability' => 1, 'concise' => 'Protein summary'}
   ));
-  $prot_menu->append($self->create_node( 'Domains', "Domains  ([[counts::prot_domains]])",
-    [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet
-	domaingenes   EnsEMBL::Web::Component::Transcript::DomainGenes)],
+  my $D = $self->create_node( 'Domains', "Domains  ([[counts::prot_domains]])",
+    [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet)],
     { 'availability' => 1, 'concise' => 'Protein domains'}
+  );
+  $D->append($self->create_subnode( 'Domain/Genes', '',
+    [qw(domaingenes      EnsEMBL::Web::Component::Transcript::DomainGenes)],
+    { 'no_menu_entry' => 1 }
   ));
+  $prot_menu->append($D);
   $prot_menu->append($self->create_node( 'ProtVariations', "Variation features  ([[counts::prot_variations]])",
     [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
     { 'availability' => 1, 'concise' => 'Protein variation features'}

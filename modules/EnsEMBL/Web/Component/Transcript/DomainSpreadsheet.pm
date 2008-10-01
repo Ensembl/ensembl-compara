@@ -44,7 +44,7 @@ sub content {
     my $interpro_link = $object->get_ExtURL_link($interpro_acc,'INTERPRO',$interpro_acc);
     my $other_urls;
     if ($interpro_acc) {
-	$other_urls = sprintf(qq( [<a href="/%s/Transcript/Domains?%s;domain=%s">Display other genes with this domain</a>]),
+	$other_urls = sprintf(qq( [<a href="/%s/Transcript/Domain/Genes?%s;domain=%s">Display all genes with this domain</a>]),
 			      $object->species,
 			      join(';', @{$object->core_params}),
 			      $interpro_acc );
