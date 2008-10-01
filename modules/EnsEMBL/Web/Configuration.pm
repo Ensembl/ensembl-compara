@@ -389,14 +389,14 @@ sub _local_tools {
   my $self = shift;
   my $obj = $self->{object};
 
-  warn $ENV{'REQUEST_URI'};
   my $current_page = $ENV{'SERVER_NAME'};
   if (my $port = $ENV{'SERVER_PORT'}) {
     $current_page .= ':'.$port;
   }
   $current_page .= $ENV{'REQUEST_URI'};
+  $current_page = CGI::escape($current_page);
   my @data = (
-    ['Bookmark this page',  '/Account/Bookmark?url='.CGI::escape($current_page), 'modal_link' ],
+    ['Bookmark this page',  '/Account/Bookmark?url='.$current_page.';_referer='.$current_page, 'modal_link' ],
   );
   my $vc  = $obj->get_viewconfig;
   my $config = {};
