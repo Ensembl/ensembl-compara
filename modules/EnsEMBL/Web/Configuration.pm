@@ -185,7 +185,7 @@ sub _user_context {
     $self->{'page'}->global_context->add_entry(
       'type'      => 'Config',
       'id'        => "config_$ic_code",
-      'caption'   => 'Configure "'.$ic->get_parameter('title').'"',
+      'caption'   => $ic->get_parameter('title'),
       $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
         'time' => time, 
         'type'   => 'Config',
