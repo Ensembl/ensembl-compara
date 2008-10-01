@@ -280,7 +280,7 @@ sub _summarise_website_db {
 
   ## Get component-based help
   my $t_aref = $dbh->selectall_arrayref(
-    'select help_record_id, data from help_record where type = "component" and status = "live"'
+    'select help_record_id, data from help_record where type = "view" and status = "live"'
   );
   foreach my $row (@$t_aref) {
     my $data = $row->[1];
@@ -537,18 +537,18 @@ sub _munge_meta {
   $self->tree->{'GENEBUILD_START'} = $months[$A[1]].' '.$A[0];
   $self->tree->{'GENEBUILD_BY'} = $A[2];
 
-  my $gb_release = $self->_meta_info('ENSEMBL_CORE','genebuild.initial_release_date')->[0];
+  my $gb_release = $self->_meta_info('DATABASE_CORE','genebuild.initial_release_date')->[0];
   @A = split('-', $gb_release);
   $self->tree->{'GENEBUILD_RELEASE'} = $months[$A[1]].' '.$A[0];
-  my $gb_latest = $self->_meta_info('ENSEMBL_CORE','genebuild.last_geneset_update')->[0];
+  my $gb_latest = $self->_meta_info('DATABASE_CORE','genebuild.last_geneset_update')->[0];
   @A = split('-', $gb_latest);
   $self->tree->{'GENEBUILD_LATEST'} = $months[$A[1]].' '.$A[0];
-  my $assembly_date = $self->_meta_info('ENSEMBL_CORE','assembly.date')->[0];
+  my $assembly_date = $self->_meta_info('DATABASE_CORE','assembly.date')->[0];
   @A = split('-', $assembly_date);
   $self->tree->{'ASSEMBLY_DATE'} = $months[$A[1]].' '.$A[0];
 
   ## Do species name and group
-  my @taxonomy = @{$self->_meta_info('ENSEMBL_CORE','species.classification')};
+  my @taxonomy = @{$self->_meta_info('DATABASE_CORE','species.classification')};
   my $order = $self->tree->{'TAXON_ORDER'};
 
   $self->tree->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
