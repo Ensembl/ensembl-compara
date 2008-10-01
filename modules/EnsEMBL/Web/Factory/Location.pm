@@ -71,10 +71,7 @@ sub __coord_systems :lvalue { $_[0]->__species_hash->{'coord_systems'}; }
 
 sub __gene_databases {
   my $self = shift;
-  my @return = ('core');
-  push @return, 'vega' if $self->species_defs->databases->{ 'DATABASE_VEGA' };
-  push @return, 'est' if $self->species_defs->databases->{ 'DATABASE_OTHERFEATURES' };
-  return @return;
+  return map { lc(substr($_,9)) }  @{$self->species_defs->core_like_databases||[]}
 }
 
 sub _location_from_RegFeature {
