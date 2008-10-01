@@ -191,7 +191,8 @@ sub postReadRequestHandler {
   ## Ajax cookie
   my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
   $ENSEMBL_WEB_REGISTRY->check_ajax($cookies{'ENSEMBL_AJAX'}); 
-  
+  $r->subprocess_env->{'ENSEMBL_AJAX_VALUE'}  = $cookies{'ENSEMBL_AJAX' } ? $cookies{'ENSEMBL_AJAX' }->value : 'none';
+  $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'} = $cookies{'ENSEMBL_WIDTH'} ? $cookies{'ENSEMBL_WIDTH'}->value : 800;
   $ENSEMBL_WEB_REGISTRY->timer_push( 'Post read request handler comoleted', undef, 'Apache' );
   return;
 }
