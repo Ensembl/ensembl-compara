@@ -72,7 +72,7 @@ sub karyotype {
   my $wuc = $object->image_config_hash( $config );
     
   # set some dimensions based on number and size of chromosomes    
-  if( $wuc->{'_all_chromosomes'} eq 'yes' ) {
+  if( $wuc->get_parameter('all_chromosomes') eq 'yes' ) {
     $chr_name = 'ALL';
     #$wuc->container_width( $object->species_defs->MAX_CHR_LENGTH );
     $wuc->container_width( 300000000 );
@@ -468,7 +468,7 @@ sub image_type         : lvalue { $_[0]->{'image_type'}; }
 sub image_name         : lvalue { $_[0]->{'image_name'}; }
 sub cacheable          : lvalue { $_[0]->{'cacheable'}; }
 
-sub image_width        { $_[0]->drawable_container->{'config'}->get('_settings','width'); }
+sub image_width        { $_[0]->drawable_container->{'config'}->get_parameter('image_width'); }
 sub introduction       : lvalue { $_[0]->{'introduction'}; }
 sub tailnote           : lvalue { $_[0]->{'tailnote'}; }
 sub caption            : lvalue { $_[0]->{'caption'}; }
@@ -504,6 +504,7 @@ sub render {
     $image->{'name'}  = $self->{'button_name'};
     $image->{'id'}    = $self->{'button_id'};
     my $image_html = $image->render_image_button();
+    $self->{'hidden'}{'total_height'} = $image->{'height'};
        $image_html .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
     $HTML .= sprintf '<form style="width: %spx" class="autocenter" action="%s" method="get"><div>%s</div><div class="autocenter">%s</div></form>',
       $image->{'width'},
