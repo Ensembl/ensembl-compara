@@ -55,9 +55,15 @@ paralogues with BioMart to see more.)</p>
       my $C_species = 1;
       my $rowspan = scalar(keys %{$orthologue_list{$species}});
       $rowspan++ if $rowspan > 1;
+      (my $spp = $species) =~ tr/ /_/ ;
+      my $common_name = $gene->species_defs->other_species($spp,'SPECIES_COMMON_NAME');
+      unless($common_name){
+        my ($OBJ) = values %{$orthologue_list{$species}};
+        $common_name = $OBJ->{'sp_common'};
+      }
       $html .= sprintf( qq(
       <tr>
-        <th rowspan="$rowspan"><em>%s</em></th>), $species );
+        <th rowspan="$rowspan">%s<em>%s</em></th>), ucfirst( $common_name ? "$common_name<br />":"" ),$species );
       my $start = '';
       my $mcv_species = $multicv_link;
       foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
