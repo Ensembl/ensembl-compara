@@ -31,15 +31,16 @@ sub write_info_page {
   my ($self, $packages) = @_;
   open (my $fh, ">", $self->location . "/info.html") or die "$!: " . $self->location;
   print $fh $self->html_header();
-  print $fh "<div class='front'>";
-  print $fh "<h1><i><span style='color: #3366bb'>e</span><span style='color: #880000'>!</span></i> documentation info</h1>";
-  print $fh qq(<div class='coverage'>);
-  print $fh qq(<table>);
-  print $fh qq(<tr>);
-  print $fh qq(<td width='40%'><b>Family</b></td>);
-  print $fh qq(<td width='20%' align='center'><b>Size</b></td>);
-  print $fh qq(<td width='40%' align='center'><b>Average coverage</b></td>);
-  print $fh qq(</tr>);
+  print $fh '
+<div class="front">
+  <h1><i><span style="color:#3366bb">e</span><span style="color:#880000">!</span></i> documentation info</h1>
+  <div class="coverage">
+  <table>
+    <tr>
+      <th style="width:20%">Family</th>
+      <th style="width:40%;text-align:center">Size</th>
+      <th style="width:40%;text-align:center">Average coverage</th>
+    </tr>';
   my %count;
   my %total;
   my %average;
@@ -75,19 +76,22 @@ sub write_info_page {
     my $text = $family;
     $text =~ s/::$//;
 
-    print $fh "<tr>";
-    print $fh "<td>" . $text. "</td>";
-    print $fh "<td align='center'>" . $count{$family}  . "</td>";
-    print $fh "<td align='center' >" . sprintf("%.0f", $average{$family}) . " %</td>";
-    print $fh "</tr>";
-
+    print $fh '
+    <tr>
+      <td>', $text, '</td>
+      <td style="text-align:center">', $count{$family},'</td>
+      <td style="text-align:center">', sprintf("%.0f", $average{$family}), '%</td>
+    </tr>';
   }
 
-  print $fh qq(</table><br /><br />);
-  print $fh "<a href='base.html'>&larr; Home</a>";
-  print $fh "<br /><br />";
-  print $fh qq(</div>);
-  print $fh $self->html_footer;
+  print $fh '
+  </table>
+  <br />
+  <br />
+  <a href="base.html">&larr; Home</a>
+  <br /><br />
+  </div>',
+  self->html_footer;
 }
 
 sub write_package_frame {
@@ -95,10 +99,10 @@ sub write_package_frame {
   my ($self, $packages) = @_;
   open (my $fh, ">", $self->location . "/package.html") or die "$!: " . $self->location;
   print $fh $self->html_header( (class => "list" ));
-  print $fh qq(<div class='heading'>Packages</div>);
+  print $fh qq(<div class="heading">Packages</div>);
   print $fh qq(<ul>);
   foreach my $package (@{ $packages }) {
-    print $fh "<li><a href='" . $self->link_for_package($package->name) . "' target='base'>" . $package->name . "</a></li>\n";
+    print $fh '<li><a href="', $self->link_for_package($package->name), '" target="base">', $package->name, "</a></li>\n";
   }
   print $fh qq(</ul>);
   print $fh $self->html_footer;
@@ -109,7 +113,7 @@ sub write_method_frame {
   my ($self, $methods) = @_;
   open (my $fh, ">", $self->location . "/methods.html") or die "$!: " . $self->location;
   print $fh $self->html_header( (class => "list" ));
-  print $fh qq(<div class='heading'>Methods</div>);
+  print $fh qq(<div class="heading">Methods</div>);
   print $fh qq(<ul>);
   my %exists = ();
   foreach my $method (@{ $methods }) {
@@ -133,37 +137,33 @@ sub write_hierarchy {
   my ($self, $module) = @_;
   my $html = "";
   if (@{ $module->inheritance }) {
-    $html .= "<div class='hier'>";
+    $html .= '<div class="hier">';
     $html .= "<h3>Inherits from:</h3>\n";
     $html .= "<ul>\n";
     foreach my $class (@{ $module->inheritance }) {
-      $html .= "<li><a href='" . $self->link_for_package($class->name) . "'> " . $class->name . "</a></li>";
+      $html .= '<li><a href="' . $self->link_for_package($class->name) . '">' . $class->name . "</a></li>\n";
     }
     $html .= "</ul>\n";
     $html .= "</div>";
   } else {
-    $html .= "<div class='hier'>";
-    $html .= "No superclasses\n";
-    $html .= "</div>";
+    $html .= '<div class="hier">No superclasses</div>';
   } 
 
   if (@{ $module->subclasses } > 0) {
-    $html .= "<div class='hier'>";
+    $html .= '<div class="hier">';
     $html .= "<h3>Subclasses:</h3>\n";
     $html .= "<ul>\n";
     foreach my $subclass (sort { $a->name cmp $b->name } @{ $module->subclasses }) {
-      $html .= "<li><a href='" . $self->link_for_package($subclass->name) . "'> " . $subclass->name. "</a></li>";
+      $html .= '<li><a href="' . $self->link_for_package($subclass->name) . '">' . $subclass->name. "</a></li>\n";
     }
     $html .= "</ul>\n";
     $html .= "</div>";
   } else {
-    $html .= "<div class='hier'>";
-    $html .= "No subclasses\n";
-    $html .= "</div>";
+    $html .= '<div class="hier">No subclasses</div>';
   }
 
   if ($html ne "") {
-    $html .= "<br clear='all' />\n";
+    $html .= '<br style="clear:all" />';
   }
 
   return $html;
@@ -173,29 +173,35 @@ sub write_module_page {
   ### Writes the complete HTML documentation page for a module. 
   my ($self, $module) = @_;
   open (my $fh, ">", $self->_html_path_from_package($module->name));
-  print $fh $self->html_header( (package => $module->name) );
-  print $fh "<div class='title'><h1>" . $module->name . "</h1>";
   my $location = $module->location;
   my $root = $self->server_root;
   $location =~ s/$root//g;
-  print $fh "Location: " . $location . "<br />\n";
-  print $fh "<a href='" . source_code_link($module->name) . "' target='_new'>Source code</a>\n";
-  print $fh "&middot; <a href='" . $self->link_for_package($module->name) . "'>Permalink</a>\n";
-  print $fh "</div>";
-  print $fh "<div class='content'>";
-  print $fh "<div class='classy'>";
-  print $fh $self->write_hierarchy($module);
-  print $fh "<div class='methods'>";
-  print $fh $self->toc_html($module);
-  print $fh "<br /><br /><div class='definitions'>";
-  print $fh $self->methods_html($module);
-  print $fh "</div>";
-  print $fh "<br clear='all'></div></div></div>";
-  print $fh "<div class='footer'>&larr; <a href='" .
-            ("../" x element_count_from_package($module->name)) .
-            "base.html'>Home</a>";
-  print $fh " &middot; <a href='" . source_code_link($module->name) . "' target='_new'>Source code</a>";
-  print $fh $self->html_footer;
+
+  print $fh $self->html_header( (package => $module->name) ),'
+  <div class="title">
+    <h1>' . $module->name . '</h1>
+    Location: ', $location, '<br />
+    <a href="', source_code_link($module->name) , '" target="_new">Source code</a> &middot;
+    <a href="', $self->link_for_package($module->name), '">Permalink</a>
+  </div>
+  <div class="content">
+    <div class="classy">',
+    $self->write_hierarchy($module),'
+      <div class="methods">',
+    $self->toc_html($module),'
+        <br /><br />
+        <div class="definitions">',
+    $self->methods_html($module),'
+        </div>
+        <br clear="all">
+      </div>
+    </div>
+  </div>
+  <div class="footer">&larr; 
+    <a href="', "../" x element_count_from_package($module->name),'base.html">Home</a> &middot;
+    <a href="', source_code_link($module->name),'" target="_new">Source code</a>
+  </div>',
+    $self->html_footer;
 }
 
 sub source_code_link {
@@ -224,7 +230,7 @@ sub toc_html {
     $html .= "<ul>";
     foreach my $method (sort {$a->name cmp $b->name} @{ $module->methods_of_type($type) }) {
       if ($method->type !~ /unknown/) {
-        $html .= "<li><a href='#" . $method->name . "'>" . $method->name . "</a>";
+        $html .= '<li><a href="#' . $method->name . '">' . $method->name . '</a>';
         if ($method->package->name ne $module->name) { 
           $html .= " (" . $method->package->name . ")";
         }
