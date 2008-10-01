@@ -65,7 +65,7 @@ h4 { font-size:1em;   color:[[CONTRAST_TEXT]]; }
 .latin    { font-style: italic; }
 .normal   { font-style: normal; font-weight:normal; }
 .small    { font-size: 80%; }
-.sequence { font-family: 'Courier New'; }
+.sequence { font-family: Courier New, Courier, Monaco, monospace }
 
 /*----------------------------------------------------------------------
   Text layout

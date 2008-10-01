@@ -1,0 +1,10 @@
+/* SNP sequence markup */
+
+.alt_allele   { color: red; font-weight: bold }
+
+/* Exon view */
+.exons_flank  { color: green }
+.exons_utr    { color: #9400d3 }
+.exons_exon   { color: black }
+.exons_intron { color: blue }
+.exons_flank, .exons_utr, .exons_intron, .exons_exon { font-family:Courier New, Courier, Monaco, monospace; }
