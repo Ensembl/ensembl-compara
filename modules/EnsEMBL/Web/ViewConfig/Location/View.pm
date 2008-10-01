@@ -12,9 +12,8 @@ sub init {
   my( $view_config ) = @_;
 
   $view_config->_set_defaults(qw(
-    panel_top       on
-    panel_bottom    on
-    panel_zoom     off
+    panel_top      yes
+    panel_zoom      no
     image_width   1200
     zoom_width     100
     context       1000
@@ -24,5 +23,12 @@ sub init {
     contigviewbottom das
   )});
   $view_config->storable = 1;
+}
+
+sub form {
+  my( $view_config, $object ) = @_;
+
+  $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'panel_top', 'select' => 'select', 'label'  => 'Show overview panel' });
+ 
 }
 1;
