@@ -26,8 +26,6 @@ sub content {
      $master_config->set( '_settings', 'width',  $image_width );
   warn "CONF $master_config";
 
-
- 
   my $transcript_slice = $object->Obj->feature_Slice;
      $transcript_slice = $transcript_slice->invert if $transcript_slice->strand < 1; ## Put back onto correct strand!
      $transcript_slice = $transcript_slice->expand( 10e3, 10e3 );
