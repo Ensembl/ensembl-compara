@@ -69,14 +69,11 @@ sub menu {
 ###
 ### Wrapper around a list of components to produce a zmenu
 ### for inclusion via AJAX
-  warn "...CREATING WEBPAGE....";
   my $webpage     = EnsEMBL::Web::Document::WebPage->new(
     'objecttype' => shift || $ENV{'ENSEMBL_TYPE'},
     'scriptname' => 'zmenu',
     'cache'      => $MEMD,
   );
-  warn $ENV{'ENSEMBL_TYPE'};
-  warn ".... zmenu ...";
   $webpage->configure( $webpage->dataObjects->[0], 'ajax_zmenu' );
   $webpage->render;
   return "Generated magic menu ($ENV{'ENSEMBL_ACTION'})";
@@ -165,8 +162,31 @@ sub configurator {
       ## If not AJAX - refresh page!
       # redirect( to this page )
     } else { ### We are updating a view config!
-         $vc->update_from_input( $input );
-	 $session->store;
+      $vc->update_from_input( $input );
+      $session->store;
+      my $cookie_host = $session->get_species_defs->ENSEMBL_COOKIEHOST;
+      if( $input->param( 'cookie_width' ) && $input->param( 'cookie_width' ) != $ENV{'ENSEMBL_IMAGE_WIDTH'} ) { ## Set width!
+        my $cookie = CGI::Cookie->new(
+          -name    => 'ENSEMBL_WIDTH',
+          -value   => $input->param( 'cookie_width' ),
+          -domain  => $cookie_host,
+          -path    => "/",
+          -expires => "Monday, 31-Dec-2037 23:59:59 GMT"
+        );
+        $r->headers_out->add(  'Set-cookie' => $cookie );
+        $r->err_headers_out->add( 'Set-cookie' => $cookie );
+      }
+      if( $input->param( 'cookie_ajax' ) && $input->param( 'cookie_ajax' ) ne $ENV{'ENSEMBL_AJAX_VALUE'} ) {  ## Set ajax cookie!
+        my $cookie = CGI::Cookie->new(
+          -name    => 'ENSEMBL_AJAX',
+          -value   => $input->param( 'cookie_ajax' ),
+          -domain  => $cookie_host,
+          -path    => "/",
+          -expires => "Monday, 31-Dec-2037 23:59:59 GMT"
+        );
+        $r->headers_out->add(  'Set-cookie' => $cookie );
+        $r->err_headers_out->add( 'Set-cookie' => $cookie );
+      }
       if( $ajax_flag && $input->param('submit') ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
         ## We need to 
         CGI::header( 'text/plain' );
