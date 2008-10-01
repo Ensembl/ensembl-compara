@@ -29,40 +29,34 @@ sub content {
   # first determine correct SNP location 
   my %mappings = %{ $object->variation_feature_mapping };
   my $location = $object->core_objects->{'parameters'}{'vl'};
-  my ($seq_region, $start, $seq_type);
-
-  foreach my $varif_id (keys %mappings) {
-    ## Check vari feature matches the location we are intrested in
-    my $seq_reg = $mappings{$varif_id}{Chr};
-    my $st  = $mappings{$varif_id}{start};
-    my $end    = $mappings{$varif_id}{end};
-    my $v_loc  = $seq_reg.":".$st;
-    my $type =  $mappings{$varif_id}{region_type};
- 
-    if  ($v_loc eq $location){
-      $seq_region = $seq_reg;
-      $start = $st;
-      $seq_type = $type; 
-    } else { next;}
-  
-         
+  my $v;
+  if( keys %mappings == 1 ) {
+    ($v) = values %mappings;
+  } else {
+    foreach my $t (values %mappings) {
+      ## Check vari feature matches the location we are intrested in
+      next unless $location eq "$t->{Chr}:$t->{start}";
+      $v = $t;
+      last;
+    }
+  }
+  unless ($v) { 
+    return "<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the SNP's location</p>";
   }
 
-  unless ($seq_region) { 
-  my $html = "<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the SNP's location</p>";
-  return $html; 
-  }
+  my $seq_region = $v->{Chr};  
+  my $start      = $v->{start};  
+  my $seq_type   = $v->{type};  
+
 
   my $end   = $start + ($width/2);
-  $start -= ($width/2);
+     $start -= ($width/2);
   my $slice =
     $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $seq_type, $seq_region, $start, $end, 1
   );
 
-  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
-        'Slice', $slice, $object->__data
-       );
+  my $sliceObj = EnsEMBL::Web::Proxy::Object->new( 'Slice', $slice, $object->__data );
 
   my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
   my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures();
