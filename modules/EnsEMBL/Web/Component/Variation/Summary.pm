@@ -69,11 +69,11 @@ sub content {
    my $allele_html;
 
    if ($vari_class ne 'snp') {
-     $allele_html = qq(<b>$alleles</b> (Type: <b><font color="red">$vari_class</font></b>));
+     $allele_html = qq(<b>$alleles</b> (Type: <strong>$vari_class</strong>));
    }
    else {
      my $ambig_code = $object->vari->ambig_code;
-     $allele_html = qq(<b>$alleles</b> (ambiguity code: <b><font color="red">$ambig_code</font></b>));
+     $allele_html = qq(<b>$alleles</b> (Ambiguity code: <strong>$ambig_code</strong>));
    }
    my $ancestor  = $object->ancestor;
    $allele_html .= qq(<br /><em>Ancestral allele</em>: $ancestor) if $ancestor;

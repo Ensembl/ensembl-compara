@@ -37,14 +37,14 @@ sub content {
   # Make the flanking sequence and wrap it
   $f_html = uc( $object->flanking_seq("up") ) .lc( $ambig_code ).uc( $downstream );
   $f_html =~ s/(.{60})/$1\n/g;
-  $f_html =~ s/(([a-z]|-|\[|\])+)/'<font color="red">'.uc("$1").'<\/font>'/eg;
+  $f_html =~ s/(([a-z]|\/|-|\[|\])+)/'<span class="alt_allele">'.uc("$1").'<\/span>'/eg;
   $f_html =~ s/\n/\n/g;
-  $f_html .= "     <i>(Variation feature highlighted)</i>";
 
 
   $html .=  qq(<dl class="summary">
       <dt>$f_label</dt>
-      <dd><pre>$f_html</pre></dd></dl>);
+      <dd><pre>$f_html</pre>
+      <blockquote><em>(Variation feature highlighted)</em></blockquote></dd></dl>);
 
 
   return $html;
