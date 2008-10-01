@@ -107,14 +107,10 @@ sub check_ajax {
 ### Checks whether ajax enabled or not
   my $self = shift;
   if (@_) {
-      my $ajax = shift;
-      if ($ajax && $ajax->value ne 'disabled' && $ajax->value ne '') {
-        $self->set_ajax(1);
-      } else {
-        $self->set_ajax(0);
-      }
+    my $ajax = shift;
+    $self->set_ajax( $ajax && $ajax->value eq 'enabled' ? 1 : 0 );
   } else {
-      return $self->get_ajax;
+    return $self->get_ajax;
   }
 }
 
