@@ -128,6 +128,7 @@ $pad    </dd>);
   }
   $content .= q(
       </dl>);
+  $content =~ s/\s+<dl>\s+<\/dl>//g;
   return $content;
 }
 
