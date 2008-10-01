@@ -17,6 +17,7 @@ sub content {
   my $self   = shift;
   my $object = $self->object;
 
+  return if $object->param('panel_top') eq 'no';
   my $threshold = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
 
   my $slice = $object->slice;
