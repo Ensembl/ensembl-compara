@@ -46,7 +46,7 @@ sub init {
 
   $self->modify_configs(
     [qw(variation)],
-    {qw(style box)}
+    {qw(style box depth 100000)}
   );
 
   $self->modify_configs(
