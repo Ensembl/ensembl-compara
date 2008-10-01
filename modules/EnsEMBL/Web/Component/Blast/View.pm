@@ -60,9 +60,8 @@ sub content {
 sub _draw_karyotype {
   my ($object, $species, $alignments) = @_;
 
-  return "[KARYOTYPE GOES HERE!]"; ## Placeholder until drawing code fixed!
   my $config_name = 'Vkaryotype';
-  my $config = $object->get_userconfig($config_name);
+  my $config = $object->get_imageconfig($config_name);
   my $image    = $object->new_karyotype_image();
 
   ## Create highlights - arrows and outline box
@@ -84,7 +83,7 @@ sub _draw_karyotype {
     my $score     = $hsp->score;
     my $pct_id    = $hsp->percent_identity;
     my $colour_id = int( ($pct_id-1)/20 );
-    my $colour    = @colours[ $colour_id ];
+    my $colour    = $colours[ $colour_id ];
 
     $highlights1{$chr} ||= [];
     push( @{$highlights1{$chr}}, $config );
@@ -101,7 +100,7 @@ sub _draw_karyotype {
   }
 
   $image->image_name = "blast";
-  $image->imagemap = 'yes';
+  $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view");
   my $pointers = [\%highlights1, \%highlights2];
   $image->karyotype( $object, $pointers, $config_name );
 
@@ -116,107 +115,162 @@ sub _draw_alignment {
 
 sub _display_alignment_table {
   my ($object, $species, $alignments) = @_;
-  my $html = qq(<p class="space-below">Select rows to include in table, and type of sort (Use the 'ctrl' key to select multiples) [Refresh display]</p>);
 
   ## Do options table -----------------------------------
   ## TODO: move to ViewConfig
-
-  ## Make big hash of settings
-
-
-
-  my @view_types = qw( query subject );
-  my %defaults = (
-    'query' => [],
-    'subject' => ['off'],
+  my $html = qq(<form action="/Blast/View" method="post">
+<input type="hidden" name="" value="" />
   );
+  
+  ## Make big array of settings
+  ## Standard dropdown is to be off by default
+  my @standard_off = (
+    {'value' => 'off',          'text' => '-off-',  'default' => 1},
+    {'value' => 'name',         'text' => 'Name',   'default' => 0},
+    {'value' => 'start',        'text' => 'Start',  'default' => 0},
+    {'value' => 'end',          'text' => 'End',    'default' => 0},
+    {'value' => 'orientation',  'text' => 'Ori',    'default' => 0},
+  );
+  ## Some settings however are on by default
+  my @standard_on = (
+    {'value' => 'off',          'text' => '-off-',  'default' => 0},
+    {'value' => 'name',         'text' => 'Name',   'default' => 1},
+    {'value' => 'start',        'text' => 'Start',  'default' => 1},
+    {'value' => 'end',          'text' => 'End',    'default' => 1},
+    {'value' => 'orientation',  'text' => 'Ori',    'default' => 1},
+  );
+
+  my @settings = (
+    {'name' => 'query',
+    'label' => 'Query',
+    'values'  => \@standard_on,
+    },
+    {'name' => 'subject',
+    'label' => 'Subject',
+    'values' => \@standard_off,
+    },
+  );
+
   my %coords = reverse %{$object->fetch_coord_systems};
   my $toplevel = $coords{1};
   my @coord_systems = sort { $coords{$a} <=> $coords{$b} } values %coords;
-  push @view_types, @coord_systems, qw(stats sort_by);
+  my $coord_settings; ## We need to be able to access these separately from other settings
   foreach my $C (@coord_systems) {
-    if ($C eq $toplevel) {
-      $defaults{$C} = ['start', 'end', 'ori'];
-    }
-    else {
-      $defaults{$C} = ['off'];
-    }
+    my $values = $C eq $toplevel ? \@standard_on : \@standard_off;
+    my $coord_select = {
+      'name' => $C,
+      'label' => ucfirst($C),
+      'values' => $values,
+    };
+    push @$coord_settings, $coord_select;
   }
-  $defaults{'stats'} = ['score', 'evalue', 'identity', 'length'];
-  $defaults{'sort_by'} = ['score_dsc'];
+  push @settings, @$coord_settings;
 
+  my $stat_values = [
+    {'value' => 'score',    'text' => 'Score',  'default' => 1},
+    {'value' => 'evalue',   'text' => 'E-val',  'default' => 1},
+    {'value' => 'pvalue',   'text' => 'P-val',  'default' => 0},
+    {'value' => 'identity', 'text' => '% ID',   'default' => 1},
+    {'value' => 'length',   'text' => 'Length', 'default' => 1},
+  ];
+  my @stat_types = qw(score evalue pvalue identity length);
+  push @settings, {'name' => 'stats', 'label' => 'Stats', 'values' => $stat_values};
+
+  my $sort_values = [
+    {'value' => 'query_asc',    'text' => '&lt;Query',    'default' => 0},
+    {'value' => 'query_dsc',    'text' => '&gt;Query',    'default' => 0},
+    {'value' => 'subject_asc',  'text' => '&lt;Subject',  'default' => 0},
+    {'value' => 'subject_dsc',  'text' => '&gt;Subject',  'default' => 0},
+  ];
+  foreach my $setting (@$coord_settings) {
+    my $cs = $setting->{'name'};
+    my $text = $setting->{'label'};
+    push @$sort_values, {'value' => $cs.'_asc', 'text' => '&lt;'.$text, 'default' => 0};
+    push @$sort_values, {'value' => $cs.'_dsc', 'text' => '&gt;'.$text, 'default' => 0};
+  }
+  foreach my $value (@$stat_values) {
+    my $key = $value->{'value'};
+    my $set = $key eq 'score' ? 1 : 0; ## default sort is score_dsc
+    push @$sort_values, {'value' => $key.'_asc', 'text' => '&lt;'.ucfirst($key), 'default' => 0};
+    push @$sort_values, {'value' => $key.'_dsc', 'text' => '&gt;'.ucfirst($key), 'default' => $set};
+  }
+  push @settings, {'name' => 'sort_by', 'label' => 'Sort by', 'values' => $sort_values};
+
+  ## Now do the selection widgets
   my $opt_table = EnsEMBL::Web::Document::SpreadSheet->new();
-  my $width = int(100 / scalar(@view_types));
+  my $width = int(100 / scalar(@settings));
 
   my ($selector, $type);
-  my @stat_types = qw(score evalue pvalue identity length);
-  my %lookup = (
-    'evalue'    => 'E-val',
-    'pvalue'    => 'P-val',
-    'identity'  => '%ID',
-  );
-  foreach $type (@view_types) {
-    $opt_table->add_columns( {'key' => $type, 'title' => ucfirst($type), 'width' => $width.'%', 'align' => 'left'} );
-    my $widget = qq(<select name="view_$type" multiple="multiple" size="3">\n");
-    if ($type eq 'sort_by') { 
-      my @sort_types = @view_types;
-      pop @sort_types;
-      push @sort_types, @stat_types;
-      foreach my $T (@sort_types) {
-        my $text = $lookup{$T} || ucfirst($T);
-        my $selected = $defaults{'sort_by'};
-        $widget .= _add_option($T.'_asc', '>&lt;'.$text, $selected);
-        $widget .= _add_option($T.'_dsc', '>&gt;'.$text, $selected);
-      }
-    }
-    else {
-      my $selected = $defaults{$type};
-      $widget .= _add_option('off', '_off_', $selected);
-      if ($type eq 'stats') {
-        foreach my $S (@stat_types) {
-          my $text = $lookup{$S} || ucfirst($S);
-          $widget .= _add_option($S, $text, $selected);
-        }
-      }
-      else {
-        my %options = (
-          'name'        => 'Name',
-          'start'       => 'Start',
-          'end'         => 'End',
-          'orientation' => 'Ori',
-        );
-        while (my ($k, $v) = each(%options)) {
-          $widget .= _add_option($k, $v, $selected);
-        }
-      }
+  foreach $type (@settings) {
+    my $name = $type->{'name'};
+    $opt_table->add_columns( {'key' => $name, 'title' => $type->{'label'}, 'width' => $width.'%', 'align' => 'left'} );
+    my $widget = qq(<select name="view_$name" multiple="multiple" size="3">\n");
+    foreach my $V (@{$type->{'values'}}) {
+      $widget .= '<option value="'.$V->{'value'}.'"';
+      $widget .= $V->{'default'} == 1 ? ' selected="selected"' : '';
+      $widget .= '>'.$V->{'text'}.'</option>';
     }
     $widget .= "</select>\n";
-    $selector->{$type} = $widget;
+    $selector->{$name} = $widget;
   }
   $opt_table->add_row($selector);
 
   $html .= $opt_table->render; 
+  $html .= qq(<p class="space-below">Select rows to include in table, and type of sort (Use the 'ctrl' key to select multiples) <input type="submit" name="submit" class="submit" value="Refresh display" /></p>);
 
   $html .= '<p style="margin-bottom:1em">&nbsp;</p>';
 
-  ## Do actual results table! --------------------------------------------------
+  ## Finally, do actual results table! --------------------------------------------------
   my @sorted = scalar(@$alignments) > 1 ? @{$object->sort_table_values($alignments, \@coord_systems)} : @$alignments;
   
   my @display_types; ## only show the requested columns
-  foreach $type (@view_types) {
-    next if $type eq 'sort_by';
-    if ($object->param('view_'.$type) eq 'off' || $defaults{$type}->[0] eq 'off') {
+  my $column_count;
+  foreach $type (@settings) {
+    next if $type->{'name'} eq 'sort_by';
+    my $off_by_default = 0;
+    my $columns = [];
+    foreach my $V (@{$type->{'values'}}) {
+      if ($V->{'value'} eq 'off' && $V->{'default'} == 1) {
+        $off_by_default = 1;
+      }
+    }
+    my $chosen = $object->param('view_'.$type->{'name'});
+    if (ref($chosen) eq 'ARRAY') { ## CASE 1: columns have been selected by user
+      foreach my $V (@{$type->{'values'}}) {
+        my $value = $V->{'value'};
+        my @matches = grep(/^$value$/, @$chosen);
+        if ($matches[0]) {
+          push @$columns, $V;
+        }
+      }
+      $column_count += scalar(@$columns);
+    }
+    elsif ($chosen eq 'off' || $off_by_default) { ## CASE 2: this type is turned off
       next;
     }
-    push @display_types, $type;
+    else { ## CASE 3: this type is turned on by default
+      foreach my $V (@{$type->{'values'}}) {
+        next if $V->{'value'} eq 'off';
+        if ($V->{'default'} == 1) {
+          push @$columns, $V;
+        }
+      }
+      $column_count += scalar(@$columns);
+    }
+    push @display_types, {'name' => $type->{'name'}, 'label' => $type->{'label'}, 'columns' => $columns};
   }
 
   my $result_table = EnsEMBL::Web::Document::SpreadSheet->new(); 
-  $width = int( 100 / (scalar(@display_types)+1) );
-  $result_table->add_columns( {'key' => 'links', 'title' => 'Links', 'width' => $width.'%', 'align' => 'left'} );
-
+  ## Top level of headers
+  $width = int(100 / $column_count);
+  $result_table->add_spanning_headers( {'title' => 'Links'} );
+  $result_table->add_columns({'key' => 'links', 'title' => '', 'width' => $width.'%', 'align' => 'left'} );
   foreach $type (@display_types) {
-    $result_table->add_columns( {'key' => $type, 'title' => ucfirst($type), 'width' => $width.'%', 'align' => 'left'} );
+    $result_table->add_spanning_headers( {'title' => $type->{'label'}, 'colspan' => scalar(@{$type->{'columns'}})  } );
+    foreach my $col (@{$type->{'columns'}}) {
+      $result_table->add_columns({'key' => $type->{'name'}.'_'.$col->{'value'}, 'title' => $col->{'text'}, 
+                                'width' => $width.'%', 'align' => 'left'} );
+    }
   }
 
   ## Finally, the results!
@@ -248,57 +302,24 @@ sub _display_alignment_table {
     '/Blast/Alignment?display=genomic;'.$parameter_string,
     '/'.$species.'/Location/View?'.$location_parameters,
     );
-
     foreach $type (@display_types) {
-      my $cell_data = '';
-      if ($type eq 'stats') {
-        foreach my $S (@stat_types) {
-          my $V = $align_info->{$S};
-          next unless $V;
-          $cell_data .= $V.' ';
-        }
-      }
-      elsif ($type eq 'query') {
-        $cell_data = sprintf(qq(%s %s %s),
-          '1', '100', '+',
-        );
-      }
-      else {
-        my $info = $align_info->{$type};
-        if ($type eq 'chromosome') {
-          $cell_data = sprintf(qq(<a href="/%s/Location/Chromosome?%s">Chr %s</a> %s %s),
-                $species, $location_parameters, $info->{'generic'}->{'name'}, 
-                $align_info->{'generic'}->{'start'}, $align_info->{'generic'}->{'end'},
-          );
+      my $name = $type->{'name'};
+      foreach my $col (@{$type->{'columns'}}) {
+        my $value = $col->{'value'};
+        if ($type->{'name'} eq 'chromosome' && $value eq 'name') {
+            $result_row->{$name.'_'.$value} = sprintf(qq(<a href="/%s/Location/Chromosome?%s">Chr %s</a>),
+              $species, $location_parameters, $align_info->{'generic'}->{'name'}, 
+            );
         }
         else {
-          $cell_data = sprintf(qq(%s %s %s),
-                $info->{'name'}, $info->{'start'}, $info->{'end'}
-          );
+          $result_row->{$name.'_'.$value} = $align_info->{$name}->{$value} || '&nbsp;';
         }
       }
-      $result_row->{$type} = $cell_data;
     }
     $result_table->add_row($result_row);
   }
 
   $html .= $result_table->render; 
-}
-
-sub _add_option {
-  my ($value, $text, $selected) = @_;
-  my $html = '<option value="'.$value.'"';
-  if (ref($selected) eq 'SCALAR') {
-    $selected = [$selected];
-  }
-  foreach my $S (@$selected) {
-    if ($value eq $S) {
-      $html .= ' selected="selected"';
-      last;
-    }
-  }
-  $html .= '>'.$text.'</option>';
-  return $html;
 }
 
 sub _munge_alignment {
@@ -318,12 +339,22 @@ sub _munge_alignment {
     $info->{$C}->{'name'} = $gh->seq_region_name;
     $info->{$C}->{'start'} = $gh->start;
     $info->{$C}->{'end'} = $gh->end;
-    $info->{$C}->{'orientation'} = $gh->start < 0 ? '-' : '+';
+    $info->{$C}->{'orientation'} = $gh->strand < 0 ? '-' : '+';
   }
+  $info->{'query'}->{'name'}        = $hsp->query->seq_id;
+  $info->{'query'}->{'start'}       = $hsp->query->start;
+  $info->{'query'}->{'end'}         = $hsp->query->end;
+  $info->{'query'}->{'orientation'} = $hsp->query->strand < 0 ? '-' : '+';
+  my $subject_name = $hsp->hit->seq_id;
+  $subject_name =~ s/^\w+://o;
+  $info->{'subject'}->{'name'}        = $subject_name;
+  $info->{'subject'}->{'start'}       = $hsp->hit->start;
+  $info->{'subject'}->{'end'}         = $hsp->hit->end;
+  $info->{'subject'}->{'orientation'} = $hsp->hit->strand < 0 ? '-' : '+';
   foreach my $S (@$stat_types) {
     my $method = $S;
     $method = 'percent_identity' if $method eq 'identity';
-    $info->{$S} = $hsp->$method || 'N/A';
+    $info->{'stats'}->{$S} = $hsp->$method || 'N/A';
   }
   return $info;
 }
