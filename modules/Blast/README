@@ -1,0 +1,3 @@
+These files comprise Matt Wood's preliminary code for a new Blast backend. They have been moved here from EnsEMBL::Web, as the backend ought to be separate from the web code. The files herein will need substantial rewriting in order to create a web-independent Blast API...
+
+Anne Parker (ap5@sanger.ac.uk), October 2008
