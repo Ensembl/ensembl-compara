@@ -80,6 +80,17 @@ sub ajax_zmenu      {
 		'priority' => 40 
 	    });
 	}
+        if( $obj->analysis ) {
+          $panel->add_entry({
+            'type'     => 'Analysis',
+            'label'    => $obj->analysis->display_label,
+	    'priority' => 2
+          });
+          $panel->add_entry({
+            'label_html'    => $obj->analysis->description,
+	    'priority' => 1
+          });
+        }
     }
     return;
 }
