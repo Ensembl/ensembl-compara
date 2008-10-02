@@ -74,7 +74,7 @@ $controller->add_connections({qw(
   _change_level      EnsEMBL::Web::Controller::Command::Account::ChangeLevel 
 
   SelectGroup        EnsEMBL::Web::Controller::Command::Account::SelectGroup 
-  _share_record      EnsEMBL::Web::Controller::Command::Account::ShareRecord 
+  ShareRecord        EnsEMBL::Web::Controller::Command::Account::ShareRecord 
 
   Invite             EnsEMBL::Web::Controller::Command::Account::Invite 
   _remove_invitation EnsEMBL::Web::Controller::Command::Account::RemoveInvitation 
