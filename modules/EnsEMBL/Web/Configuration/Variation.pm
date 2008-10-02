@@ -40,7 +40,7 @@ sub populate_tree {
     [qw(summary EnsEMBL::Web::Component::Variation::IndividualGenotypes)],
     { 'availability' => 1, 'concise' => 'Individual genotypes' }
   );
-  $self->create_node( 'context', "Feature Context",
+  $self->create_node( 'Context', "Feature Context",
     [qw(summary EnsEMBL::Web::Component::Variation::Context)],
     { 'availability' => 1, 'concise' => 'Feature context' }
   );
