@@ -1,10 +1,15 @@
 package EnsEMBL::Web::DASConfig;
 
 use strict;
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(Bio::EnsEMBL::ExternalData::DAS::Source);
+
 use Data::Dumper;
 use Time::HiRes qw(time);
 use Bio::EnsEMBL::Utils::Exception qw(warning);
-use base qw(Bio::EnsEMBL::ExternalData::DAS::Source);
+use Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
 
 # TODO: do these need to exist, and if so is this the best place for them?
 our %DAS_DEFAULTS = (
@@ -41,7 +46,10 @@ our %DAS_DEFAULTS = (
 sub new_from_hashref {
   my ( $class, $hash ) = @_;
   
+  $hash->{'coords'} = [ map { Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new( $_ ) } @{$hash->{'coords'}||[]} ];
+
   # Convert old-style type & assembly parameters to single coords
+
   if (my $type = $hash->{type}) {
     $type =~ s/^ensembl_location//;
     push @{ $hash->{coords} }, Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
