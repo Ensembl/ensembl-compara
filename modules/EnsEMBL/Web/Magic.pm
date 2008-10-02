@@ -171,7 +171,7 @@ sub configurator {
           -value   => $input->param( 'cookie_width' ),
           -domain  => $cookie_host,
           -path    => "/",
-          -expires => "Monday, 31-Dec-2037 23:59:59 GMT"
+          -expires => $input->param( 'cookie_width' ) =~ /\d+/ ? "Monday, 31-Dec-2037 23:59:59 GMT" : "Monday, 31-Dec-1970 00:00:01 GMT"
         );
         $r->headers_out->add(  'Set-cookie' => $cookie );
         $r->err_headers_out->add( 'Set-cookie' => $cookie );
