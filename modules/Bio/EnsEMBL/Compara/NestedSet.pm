@@ -387,6 +387,34 @@ sub get_all_nodes {
 }
 
 
+=head2 get_all_nodes_by_tagvalue
+
+  Arg 1       : tag_name
+  Arg 2       : tag_value (optional)
+  Example     : my $all_nodes = $root->get_all_nodes_by_tagvalue('taxon_name'=>'Mamalia');
+  Description : Returns all underlying nodes that have a tag of the given name, and optionally a value of the given value.
+  ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
+  Exceptions  : none
+  Caller      : general
+  Status      : 
+
+=cut
+
+sub get_all_nodes_by_tag_value{
+  my $self  = shift;
+  my $tag   = shift || die( "Need a tag name" );
+  my $value = shift;
+  my @found;
+  foreach my $node( @{$self->get_all_nodes} ){
+    my $tval = $node->get_tagvalue($tag);
+    if( defined $tval and $value ? $tval eq $value : 1 ){
+      push @found, $node;
+    }
+  }
+  return [@found];
+}
+
+
 =head2 get_all_subnodes
 
   Arg 1       : hashref $node_hash [used for recursivity, do not use it!]
@@ -977,7 +1005,7 @@ sub _internal_newick_format {
     if($self->is_leaf) {
       my $gene_member = $self->gene_member;
       my $short_name = $gene_member->genome_db->short_name;
-      $display_label = $gene_member->display_label || $gene_member->stable_id;
+      $display_label = $gene_member->stable_id;
       $display_label = $display_label . '_' . $short_name . '_' ;
     }
     $newick .= $display_label;
