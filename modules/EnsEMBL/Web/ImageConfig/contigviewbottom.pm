@@ -67,7 +67,8 @@ sub init {
   );
   
 ## Add in additional
-  $self->load_tracks();
+  $self->load_tracks;
+  $self->load_configured_das;
 
 #  foreach ( $self->get_node('variation')->descendants ) { $_->set('style','box'); $_->set('depth',2000); $_->set('bump_Width',1); }
 
