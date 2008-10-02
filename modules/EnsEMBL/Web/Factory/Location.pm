@@ -406,29 +406,36 @@ warn "ATTACHING DATA OBJECT........";
   }
 }
 
-sub createObjects { 
-  my $self      = shift;    
-  if( $self->core_objects->location ) {
-    my $l = $self->core_objects->location;
-    my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
-      'type' => 'Location',
-      'real_species'     => $self->__species,
-      'name'             => $l->seq_region_name,
-      'seq_region_name'  => $l->seq_region_name,
-      'seq_region_start' => $l->start,
-      'seq_region_end'    => $l->end,
-      'seq_region_strand' => 1,
-      'seq_region_type'   => $l->coord_system->name,
-      'raw_feature_strand' => 1,
-      'seq_region_length' => $l->seq_region_length,
-    }, $self->__data );
+sub _create_object_from_core {
+  my $self = shift;
+  my $l = $self->core_objects->location;
+  my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
+    'type' => 'Location',
+    'real_species'     => $self->__species,
+    'name'             => $l->seq_region_name,
+    'seq_region_name'  => $l->seq_region_name,
+    'seq_region_start' => $l->start,
+    'seq_region_end'    => $l->end,
+    'seq_region_strand' => 1,
+    'seq_region_type'   => $l->coord_system->name,
+    'raw_feature_strand' => 1,
+    'seq_region_length' => $l->seq_region_length,
+  }, $self->__data );
 
     ## Add a slice consisting of the whole chromosome
 #    my $chr = $self->_slice_adaptor()->fetch_by_region( undef, $l->seq_region_name);
-    $data->attach_slice( $l );
+  $data->attach_slice( $l );
 
-    $self->DataObjects($data);
-    return 'from core';
+  $self->DataObjects($data);
+  return 'from core';
+}
+
+sub createObjects { 
+  my $self      = shift;    
+  if( $self->core_objects->location &&
+     !$self->core_objects->gene
+  ) {
+    return $self->_create_object_from_core;
   }
 
   $self->get_databases($self->__gene_databases, 'compara','blast');
@@ -597,10 +604,8 @@ sub createObjects {
           ), $self->param( 'seq_region_width' ) );
         }
 ## SeqRegion
-      } else {
-	warn "  $seq_region, $start, $end, $strand  ";
+      } elsif( $seq_region ) {
         $location = $self->_location_from_SeqRegion( $seq_region, $start, $end, $strand );
-        warn "  $location  ";
       }
     }
     if( $self->param( 'data_URL' ) ) {
@@ -609,6 +614,8 @@ sub createObjects {
     }
     if( $location ) {
       $self->DataObjects( $location );
+    } elsif( $self->core_objects->location ) {
+      $self->_create_object_from_core;
     }
 =pod 
     else {
@@ -656,10 +663,28 @@ sub _create_from_slice {
       }
     }
   }
+  my $transcript = $self->core_objects->transcript;
+  my $gene       = $self->core_objects->gene;
+  my $db         = $self->core_objects->{'parameters'}{'db'};
+  my $tid        = $transcript ? $transcript->stable_id : undef;
+  my $gid        = $gene       ? $gene->stable_id : undef;
+  if( $type eq 'Transcript' ) {
+    $tid = $ID;
+    $gid = undef;
+    $db  = $self->param('db');
+  } elsif( $type eq 'Gene' ) {
+    $tid = undef;
+    $gid = $ID;
+    $db  = $self->param('db');
+  } else {
+    if( $gene && $gene->seq_region_name ne $TS->seq_region_name ) {
+      $tid = undef;
+      $gid = undef; 
+    }
+  }
   my $pars = { 
     'r' => $TS->seq_region_name.':'.$start.'-'.$end,
-    't' => $type eq 'Transcript' ? $ID : undef ,
-    'g' => $type eq 'Gene'       ? $ID : undef
+    't' => $tid, 'g' => $gid, 'db' => $db
   };
   
   return $self->problem( 'redirect', $self->_url($pars));
