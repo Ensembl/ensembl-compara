@@ -1,4 +1,4 @@
-package EnsEMBL::Web::ViewConfig::snpview;
+package EnsEMBL::Web::ViewConfig::Variation::Context;
 
 use strict;
 no strict 'refs';
