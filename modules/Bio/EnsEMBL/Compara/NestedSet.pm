@@ -1003,9 +1003,10 @@ sub _internal_newick_format {
     #display_label: external name and distance on all nodes
     my $display_label = $self->name;
     if($self->is_leaf) {
-      my $gene_member = $self->gene_member;
-      my $short_name = $gene_member->genome_db->short_name;
-      $display_label = $gene_member->stable_id;
+      my $prot_member = $self->get_longest_peptide_Member;
+      #my $gene_member = $self->gene_member;
+      my $short_name = $prot_member->genome_db->short_name;
+      $display_label = $prot_member->stable_id;
       $display_label = $display_label . '_' . $short_name . '_' ;
     }
     $newick .= $display_label;
