@@ -24,9 +24,6 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-    ## TODO: Remove!
-  # my $script = $object->script;
-
   my $form = EnsEMBL::Web::Form->new( 'enter_password', "/Account/SavePassword", 'post' );
 
   $form->add_element('type' => 'Information',
@@ -60,7 +57,9 @@ sub content {
   $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => CGI::escape($self->object->param('_referer')));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Save', 'class' => 'cp-internal');
 
-  return $form->render;
+  my $html = $form->render;
+  warn $html;
+  return $html;
 }
 
 1;

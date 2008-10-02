@@ -32,12 +32,14 @@ sub content {
   if (@groups) {
 
     $html .= qq(<h3>Your groups</h3>);
+    $html .= '<p>Sorry, group administration has been temporarily suspended whilst we test that user accounts are working correctly.</p>';
 
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
 
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
         { 'key' => 'desc',      'title' => 'Description',   'width' => '50%', 'align' => 'left' },
+        { 'key' => 'details',   'title' => '',              'width' => '10%', 'align' => 'left' },
         { 'key' => 'manage',    'title' => '',              'width' => '20%', 'align' => 'left' },
     );
 
@@ -46,7 +48,14 @@ sub content {
 
       $row->{'name'} = $group->name;
       $row->{'desc'} = $group->blurb || '&nbsp;';
-      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit;_referer='.CGI::escape($self->object->param('_referer')).'" class="cp-internal">Manage Group</a>';
+      if ($self->object->param('id') && $self->object->param('id') == $group->id) {
+        $row->{'details'} = '<a href="/Account/AdminGroups?_referer='.CGI::escape($self->object->param('_referer')).'" class="cp-internal">Hide Details</a>';
+      }
+      else {
+        $row->{'details'} = '<a href="/Account/AdminGroups?id='.$group->id.';_referer='.$self->object->param('_referer').'" class="cp-internal">Show Details</a>';
+      }
+
+#      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit;_referer='.CGI::escape($self->object->param('_referer')).'" class="cp-internal">Manage Group</a>';
       $table->add_row($row);
     }
     $html .= $table->render;
@@ -54,7 +63,7 @@ sub content {
   else {
     $html .= qq(<p class="center">You are not an administrator of any $sitename groups.</p>);
   }
-  $html .= '<p><a href="/Account/Group?dataview=add;_referer='.CGI::escape($self->object->param('_referer')).'" class="cp-internal">Create a new group &rarr;</a></p>';
+ # $html .= '<p><a href="/Account/Group?dataview=add;_referer='.CGI::escape($self->object->param('_referer')).'" class="cp-internal">Create a new group &rarr;</a></p>';
 
   return $html;
 }
