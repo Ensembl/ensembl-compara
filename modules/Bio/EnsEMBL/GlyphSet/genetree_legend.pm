@@ -35,7 +35,7 @@ sub render_normal {
     ['within-sp. paralog', 'blue', 'Gene ID'],
   );
   my @polys = (
-    ['collapsed node', 'grey'], 
+    ['collapsed sub-tree', 'grey'], 
     ['collapsed (current gene)', 'red' ],
     ['collapsed (paralog)', 'royalblue'],
   );
