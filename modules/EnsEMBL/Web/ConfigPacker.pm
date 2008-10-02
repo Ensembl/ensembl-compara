@@ -481,15 +481,12 @@ sub _summarise_dasregistry {
     
     # If specified in the config, "coords" is expected to look like:
     # [ chromosome:NCBI36:Homo_sapiens ]
-    if ( my $coords = $cfg->{'coords'} ) {
+    if( my $coords = $cfg->{'coords'} ) {
       $cfg->{'coords'} = [map {
         my @pieces = split /:/, $_;
-        Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
-          -name    => $pieces[0],
-          -version => $pieces[1],
-          -species => $pieces[2],
-        );
-      } ref $coords ? @{ $coords } : ($coords)];
+#        Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
+        { name    => $pieces[0], version => $pieces[1], species => $pieces[2] }
+      } ref $coords ? @{ $coords } : ($coords) ];
     }
     
     # Check using the url/dsn if the source is registered
@@ -501,7 +498,10 @@ sub _summarise_dasregistry {
       $cfg->{'description'}   ||= $src->description;
       $cfg->{'maintainer'}    ||= $src->maintainer;
       $cfg->{'homepage'}      ||= $src->homepage;
-      $cfg->{'coords'}        ||= $src->coord_systems;
+# We need to get the hash of parameters...
+      $cfg->{'coords'}        ||= [ map { 
+        { 'name' => $_->name, 'version' => $_->version, 'species' => $_->species }
+      } @{ $src->coord_systems } ];
       $cfg->{'url'}           ||= $src->url;
       $cfg->{'dsn'}           ||= $src->dsn;
     }
