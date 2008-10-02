@@ -197,13 +197,15 @@ sub form {
     my $method = $classname.'::form';
     eval { no strict 'refs'; &$method( $self, $object ); };
   }
-  if( $self->has_images || $ENV{'ENSEMBL_AJAX_VALUE'} =~ /^(en|dis)abled$/ ) {
+  if( $self->has_images ||
+       $ENV{'ENSEMBL_AJAX_VALUE'} =~ /^(en|dis)abled$/ && $self->has_form ) {
     $self->add_fieldset( 'General view configurations' );
     if( $self->has_images ) {
       $self->add_form_element({
         'type'     => 'DropDown', 'select' => 'select',
         'required' => 'yes',      'name'   => 'cookie_width',
         'values'   => [
+          { 'value' => 'bestfit', 'name' => 'best fit' },
           map { { 'value' => $_, 'name' => "$_ pixels" } } map {$_*100} (5..20)
         ],
         'value'    => $ENV{'ENSEMBL_IMAGE_WIDTH'},
