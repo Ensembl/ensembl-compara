@@ -185,6 +185,18 @@ sub ajax_zmenu      {
     'type'     => 'Strand',
     'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'
   });
+  if( $obj->analysis ) {
+    $panel->add_entry({
+      'type'     => 'Analysis',
+      'label'    => $obj->analysis->display_label,
+      'priority' => 2
+    });
+    $panel->add_entry({
+      'label_html'    => $obj->analysis->description,
+      'priority' => 1
+    });
+  }
+
 
 ## Protein coding transcripts only....
   return;
