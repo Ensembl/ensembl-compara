@@ -145,13 +145,9 @@ sub consensus_cigar_line {
    # First get an 'expanded' cigar string for each leaf of the subtree
    foreach my $leaf (@{$self->get_all_leaves}) {
      next unless( UNIVERSAL::can( $leaf, 'cigar_line' ) );
-     my @cigar;
-     foreach my $num ($leaf->cigar_line =~ m/\d*[A-Z]/g) {
-       my $type = chop $num;
-       $num ||= 1;
-       push @cigar, $type x $num;
-     }
-     push @cigars, join( '', @cigar );
+     my $cigar = $leaf->cigar_line;
+     $cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
+     push @cigars, $cigar;
    }
 
    # Itterate through each character of the expanded cigars.
@@ -172,23 +168,11 @@ sub consensus_cigar_line {
      $cons_cigar .= $char;
    }
 
-   # TODO: collapse the consensus cigar, e.g. 'DDDD' = 4D
-   my $last_c;
-   my $i = 0;
-   my $short_cigar;
-   $cons_cigar .= '_'; # Pad to force last itteration
-   while ($cons_cigar =~ /(.)/g) {
-     my $c=  $1;
-     if( $last_c and $last_c ne $c ){
-       $short_cigar .= ( $i == 1 ? '' : $i ) . $last_c;
-       $i = 0;
-     } 
-     $i ++;
-     $last_c = $c;
-   }
+   # Collapse the consensus cigar, e.g. 'DDDD' = 4D
+   $cons_cigar =~ s/(\w)(\1*)/($2?length($2)+1:"").$1/ge;
 
    # Return the consensus
-   return $short_cigar;
+   return $cons_cigar;
 }
 
 sub get_SitewiseOmega_values {
