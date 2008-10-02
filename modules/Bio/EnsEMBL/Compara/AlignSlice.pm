@@ -912,6 +912,8 @@ sub _create_underlying_Slices {
         # For composite segments (2X genomes), the node will link to several GenomicAligns.
         # Add each of them to one of the AS:Slice objects
         foreach my $this_genomic_align (@{$this_genomic_align_node->get_all_GenomicAligns}) {
+          # Link to genomic_align_block may have been lost during tree minimization
+          $this_genomic_align->genomic_align_block($this_genomic_align_block);
           $self->_add_GenomicAlign_to_a_Slice($this_genomic_align, $this_genomic_align_block,
               $species_order, $align_slice_length);
         }

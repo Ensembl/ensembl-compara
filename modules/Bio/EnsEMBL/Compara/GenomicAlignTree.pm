@@ -503,7 +503,9 @@ sub restrict_between_alignment_positions {
       my $reference_genomic_align = $genomic_align_tree->reference_genomic_align;
       my $reference_genomic_align_node = $genomic_align_tree->reference_genomic_align_node;
       $genomic_align_tree = $genomic_align_tree->minimize_tree();
+      ## Make sure links are not broken after tree minimization
       $genomic_align_tree->reference_genomic_align($reference_genomic_align);
+      $genomic_align_tree->reference_genomic_align->genomic_align_block($genomic_align_tree);
       $genomic_align_tree->reference_genomic_align_node($reference_genomic_align_node);
     }
   }
