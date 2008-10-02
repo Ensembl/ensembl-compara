@@ -38,7 +38,7 @@ sub populate_tree {
 
   $self->create_node( 'Overview', "Region overview",
     [qw(
-      nav    EnsEMBL::Web::Component::Location::RegionNav
+      nav    EnsEMBL::Web::Component::Location::ViewBottomNav/region
       top    EnsEMBL::Web::Component::Location::Region
     )],
     { 'availability' => 1}
@@ -46,17 +46,24 @@ sub populate_tree {
 
   $self->create_node( 'View', "Region in detail",
     [qw(
-      top    EnsEMBL::Web::Component::Location::ViewTop
-      botnav EnsEMBL::Web::Component::Location::ViewBottomNav
-      bottom EnsEMBL::Web::Component::Location::ViewBottom
+      top     EnsEMBL::Web::Component::Location::ViewTop
+      botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
+      bottom  EnsEMBL::Web::Component::Location::ViewBottom
     )],
-#      zoom   EnsEMBL::Web::Component::Location::ViewZoom
+#      zoomnav EnsEMBL::Web::Component::Location::ViewZoomNav
+#      zoom    EnsEMBL::Web::Component::Location::ViewZoom
     { 'availability' => 1}
   );
 
   my $align_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
   $align_menu->append( $self->create_node( 'Align', "Genomic alignments ([[counts::align_slice]] options)",
-    [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
+    [qw(
+      top      EnsEMBL::Web::Component::Location::Compara_AlignSliceTop
+      nav      EnsEMBL::Web::Component::Location::ViewBottomNav
+      bottom   EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom
+    )],
+#      zoomnav EnsEMBL::Web::Component::Location::Compara_AlignSliceZoomNav
+#      zoom    EnsEMBL::Web::Component::Location::Compara_AlignSliceZoom
     { 'availability' => 'database:compara', 'concise' => 'Genomic alignments' }
   ));
   $align_menu->append( $self->create_node( 'Comparison', "Multi-species comparison ([[counts::align_contig]] species)",
@@ -69,11 +76,11 @@ sub populate_tree {
   ));
   $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
     [qw(
-        image      EnsEMBL::Web::Component::Location::SyntenyImage
-        species    EnsEMBL::Web::Component::Location::ChangeSpecies
-        change     EnsEMBL::Web::Component::Location::ChangeChromosome
-        homo_nav   EnsEMBL::Web::Component::Location::NavigateHomology
-        matches    EnsEMBL::Web::Component::Location::SyntenyMatches
+      image      EnsEMBL::Web::Component::Location::SyntenyImage
+      species    EnsEMBL::Web::Component::Location::ChangeSpecies
+      change     EnsEMBL::Web::Component::Location::ChangeChromosome
+      homo_nav   EnsEMBL::Web::Component::Location::NavigateHomology
+      matches    EnsEMBL::Web::Component::Location::SyntenyMatches
     )],
     { 'availability' => $self->mapview_possible($self->{object}->param('r')), 'concise' => 'Synteny'}
   ));
