@@ -308,6 +308,7 @@ sub _configurator {
         </div>', $obj->param('config') ;
   my $active = '';
   foreach my $node ($conf->tree->top_level) {
+    next if $node->is_leaf;
     my $count = 0;
     my $link_key = 'link_'.$node->key;
     my $menu_key = 'menu_'.$node->key;
