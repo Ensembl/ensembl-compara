@@ -645,9 +645,11 @@ sub content {
             }
           } else {
             my $content;
+warn "REAL CONTENT $module_name -> $ENV{'ENSEMBL_FUNCTION'}";
             eval {
-              my $FN = lc($ENV{'ENSEMBL_FUNCTION'});
-	      $content = $FN && $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
+              my $FN = $self->_is_ajax_request ? lc($ENV{'ENSEMBL_FUNCTION'}) : $function_name;
+              $FN = $FN ? "content_$FN" : $FN;
+	      $content = $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
             };
             if ($@) {
               warn $@;

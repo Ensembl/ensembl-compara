@@ -349,7 +349,7 @@ sub transHandler_species {
       my @T                                  = map { s/\W//g;$_ } @$path_segments;
       my $plugin                             = shift @T;
       my $Module                             = shift @T;
-      my $fn                                 = @T ? 'content_'.shift(@T) : 'content';
+      my $fn                                 = shift @T;
       $r->subprocess_env->{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $Module;
       $r->subprocess_env->{'ENSEMBL_FUNCTION'}  = $fn;
       $r->subprocess_env->{'ENSEMBL_TYPE'}      = $type;
