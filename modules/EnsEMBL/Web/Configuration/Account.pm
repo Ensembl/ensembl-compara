@@ -46,7 +46,9 @@ sub populate_tree {
       { 'availability' => 1 }
     );
     $self->create_node( 'Password', "Change Password",
-    [], { 'availability' => 1 }
+    [qw(password EnsEMBL::Web::Component::Account::Password
+      )], 
+      { 'availability' => 1 }
     );
 
     my $settings_menu = $self->create_submenu( 'Settings', 'Manage Saved Settings' );
