@@ -180,7 +180,7 @@ sub _update_missing {
   my( $self,$object ) = @_;
   my $missing = $self->get_node( 'missing' );
   if( $missing ) {
-    my $count_missing = grep { $_->get('on') ne 'on' } $self->glyphset_configs; 
+    my $count_missing = grep { $_->get('display') eq 'off' || !$_->get('display') } $self->glyphset_configs; 
     $missing->set( 'text' => $count_missing > 0 ? "There are currently $count_missing tracks turned off." : "All tracks are turned on" );
   }
   my $information = $self->get_node( 'info' );
@@ -268,10 +268,24 @@ sub load_tracks {
 sub load_configured_das {
   my $self=shift;
   ## Now we do the das stuff - to append to menus (if the menu exists!!)
-  foreach my $das( qw(das_sources) ) { ## Add to approriate menu if it exists!!
-    next;
-    $self->add_source( $das );
+  my $internal_das_sources = $self->species_defs->get_all_das;
+  foreach my $source ( values %$internal_das_sources ) {
+    $self->add_das_track( $source->category,  $source );
   }
+}
+
+sub add_das_track {
+  my( $self, $menu, $source ) = @_;
+  my $node = $self->get_node($menu);
+     $node = $self->get_node('other') unless $node; 
+  return unless $node;
+warn "$menu -> $source -> ",$node->key;
+  $node->append( $self->create_track( "das_".$source->logic_name, $source->label, {
+    'glyphset'    => '_das',
+    'logicnames'  => [ $source->logic_name ],
+    'caption'     => $source->caption,
+    'description' => $source->description
+  }));
 }
 
 #-----------------------------------------------------------------------------
