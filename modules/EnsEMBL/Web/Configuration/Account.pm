@@ -66,7 +66,7 @@ sub populate_tree {
       { 'availability' => 1, 'concise' => 'Annotations' }
     ));
     $settings_menu->append($self->create_node( 'NewsFilters', "News Filters ([[counts::news_filters]])",
-    [qw(new EnsEMBL::Web::Component::Account::NewsFilters
+    [qw(news EnsEMBL::Web::Component::Account::NewsFilters
         )],
       { 'availability' => 1, 'concise' => 'News Filters' }
     ));
@@ -80,7 +80,8 @@ sub populate_tree {
       { 'availability' => 1, 'concise' => 'Subscriptions' }
     ));
     $groups_menu->append($self->create_node( 'AdminGroups', "Administrator ([[counts::admin]])",
-    [qw(new EnsEMBL::Web::Component::Account::AdminGroups
+    [qw(admingroups EnsEMBL::Web::Component::Account::AdminGroups
+        admindetails   EnsEMBL::Web::Component::Account::MemberDetails
         )],
       { 'availability' => 1, 'concise' => 'Administrator' }
     ));
