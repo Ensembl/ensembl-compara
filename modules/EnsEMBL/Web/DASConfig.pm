@@ -31,11 +31,13 @@ our %DAS_DEFAULTS = (
 #   coords
 #   logic_name    (optional)
 #   label         (optional)
+#   caption       (optinal short label)
 #   description   (optional)
 #   homepage      (optional)
 #   maintainer    (optional)
 #   active        (optional)
 #   enable        (optional)
+#   category      (menu location)
 sub new_from_hashref {
   my ( $class, $hash ) = @_;
   
@@ -56,7 +58,7 @@ sub new_from_hashref {
   
   bless $self, $class;
   
-  for my $var ( qw( active enable )  ) {
+  for my $var ( qw( active enable category caption )  ) {
     if ( exists $hash->{$var} ) {
       $self->$var( $hash->{$var} );
     }
@@ -176,6 +178,24 @@ sub category {
     $self->{'category'} = $category;
   }
   return $self->{'category'};
+}
+
+=head2 caption
+
+  Arg [1]    : $caption (scalar)
+  Description: get/set for the short label (for images) of the source
+  Returntype : scalar
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+sub caption {
+  my ( $self, $caption ) = @_;
+  if ( defined $caption ) {
+    $self->{'caption'} = $caption;
+  }
+  return $self->{'caption'};
 }
 
 sub internal {
