@@ -24,7 +24,12 @@ sub _url {
 
   my %pars = %{$self->core_objects->{'parameters'}};
   foreach( keys %$params ) {
-    $pars{$_} = $params->{$_} unless $_ =~ /^(species|type|action|function)$/;
+    next if $_ =~ /^(species|type|action|function)$/;
+    if( defined( $params->{$_} ) ) {
+      $pars{$_} = $params->{$_};
+    } else {
+      delete $pars{$_};
+    }
   }
   my $URL = sprintf '/%s/%s/%s', $species, $type, $action.( $fn ? "/$fn" : '' );
   my $join = '?';
