@@ -204,12 +204,21 @@ sub _ajax_zmenu_compara_tree_node{
       || die( "No node_id $node_id in ProteinTree" );
   
   my $tagvalues = $node->get_tagvalue_hash; 
-  #warn Data::Dumper::Dumper($tagvalues);
+  my $is_leaf = $node->is_leaf;
   my $leaf_count = scalar @{$node->get_all_leaves};
-  my $parent_distance = $node->distance_to_parent;
+  my $parent_distance = $node->distance_to_parent || 0;
 
-  $panel->{'caption'} = "Taxon: " . $tagvalues->{'taxon_name'} || 'unknown';
-  
+  # Caption
+  my $taxon = $tagvalues->{'taxon_name'};
+  if( ! $taxon  and $is_leaf ){
+    $taxon = $node->genome_db->name;
+  }
+  $taxon ||= 'unknown';
+  $panel->{'caption'} = "Taxon: $taxon";
+  if( my $alias = $tagvalues->{'taxon_alias'} ){
+    $panel->{'caption'} .= " ($alias)";
+  }
+
   # Branch length
   $panel->add_entry({
     'type' => 'Branch_Length',
@@ -230,7 +239,7 @@ sub _ajax_zmenu_compara_tree_node{
   if( %collapsed_ids ){
     $panel->add_entry({
       'type'     => 'Image',
-      'label'    => 'expand all nodes',
+      'label'    => 'expand all sub-trees',
       'priority' => 4,
       'link'     => $obj->_url
           ({'type'     =>'Gene',
@@ -255,7 +264,37 @@ sub _ajax_zmenu_compara_tree_node{
                                 @adjacent_subtree_ids ) }), });
   }
   
-  if( $leaf_count > 1 ){
+
+  if( $is_leaf ){ # Leaf node
+    # expand all paralogs
+    my $gdb_id = $node->genome_db_id;
+    my %collapse_nodes;
+    my %expand_nodes;
+    foreach my $leaf( @{$tree->get_all_leaves} ){
+      if( $leaf->genome_db_id == $gdb_id ){
+        foreach my $ancestor( @{$leaf->get_all_ancestors} ){
+          $expand_nodes{$ancestor->node_id} = $ancestor;
+        }
+        foreach my $adjacent( @{$leaf->get_all_adjacent_subtrees} ){
+          $collapse_nodes{$adjacent->node_id} = $adjacent;
+        }
+      }
+    }
+    my @collapse_node_ids = grep{! $expand_nodes{$_}} keys %collapse_nodes;
+    if( @collapse_node_ids ){
+      $panel->add_entry({
+        'type'     => 'Image',
+        'label'    => 'show all paralogs',
+        'priority' => 5,
+        'link'     => $obj->_url
+            ({'type'     =>'Gene', 
+              'action'   =>'Compara_Tree',
+              'collapse' => join( ',', @collapse_node_ids ) }),
+          }); 
+    }
+  }
+
+  if( ! $is_leaf ){
     
     # Duplication confidence
     my $dup = $tagvalues->{'Duplication'};
@@ -270,7 +309,7 @@ sub _ajax_zmenu_compara_tree_node{
         'priority' => 7,
       });
     }
-
+    
     # Gene count
     $panel->add_entry({
       'type' => 'Gene_Count',
@@ -282,7 +321,7 @@ sub _ajax_zmenu_compara_tree_node{
     if( $collapsed_ids{$node_id} ){
       $panel->add_entry({
         'type'     => 'Image',
-        'label'    => 'expand this node',
+        'label'    => 'expand this sub-tree',
         'priority' => 5,
         'link'     => $obj->_url
             ({'type'     =>'Gene', 
@@ -310,7 +349,7 @@ sub _ajax_zmenu_compara_tree_node{
     my( $url_align, $url_tree ) = $self->_dump_tree_as_text($node);
 
     $panel->add_entry({
-      'type'      => 'View Subtree',
+      'type'      => 'View Sub-tree',
       'label'     => 'Tree: New Hampshire',
       'priority'  => 2,
       'link'      => $url_tree,
@@ -318,7 +357,7 @@ sub _ajax_zmenu_compara_tree_node{
     });
 
     $panel->add_entry({
-      'type'      => 'View Subtree',
+      'type'      => 'View Sub-tree',
       'label'     => 'Alignment: FASTA',
       'priority'  => 2,
       'link'      => $url_align,
@@ -329,7 +368,7 @@ sub _ajax_zmenu_compara_tree_node{
     my $jalview_html 
         = $self->_compara_tree_jalview_html( $url_align, $url_tree );
     $panel->add_entry({
-      'type'      => 'View Subtree',
+      'type'      => 'View Sub-tree',
       'label'     => '[Requires Java]',
       'label_html'=> $jalview_html,
       'priority'  => 1, } );

@@ -27,11 +27,15 @@ sub content {
   # Get the Member and ProteinTree objects 
   my $member = $object->get_compara_Member || die("No compara Member"); 
   my $tree   = $object->get_ProteinTree    || die("No ProteinTree");
-
+  my $node   = $tree->get_leaf_by_Member($member)
+      || die sprintf( "Member %s not in tree %s", 
+                      $member->stable_id, $tree->node_id );
+  
   #----------
   # Draw the tree
   my $wuc          = $object->image_config_hash( 'genetreeview' );
   my $image_width  = $object->param( 'image_width' ) || 800;
+  my $collapsability = $object->param('collapsability') || 'gene';
 
   $wuc->set_parameters({
     'container_width'   => $image_width,
@@ -44,18 +48,20 @@ sub content {
   # Keep track of collapsed nodes
 
   my $collapsed_nodes = $object->param('collapse');
+  
+  my $collapsed_to_gene = $self->_collapsed_nodes($tree,$node, 'gene');
+  my $collapsed_to_para = $self->_collapsed_nodes($tree,$node, 'paralogs');
+  my $collapsed_to_dups = $self->_collapsed_nodes($tree,$node, 'duplications');
 
-  unless( defined( $collapsed_nodes ) ){
-    my $leaf_node = $tree->get_leaf_by_Member($member);
-    if( $leaf_node ){
-      $collapsed_nodes = join(',', 
-                              map{$_->node_id=>1} 
-                              @{$leaf_node->get_all_adjacent_subtrees});
-    } else {
-      warn sprintf( "[WARN] Member %s not in tree %s", 
-                    $member->stable_id, $tree->node_id );
-    }
+  unless( defined( $collapsed_nodes ) ){ #Examine collapsabilty
+    $collapsed_nodes = $collapsed_to_gene if( $collapsability eq 'gene');
+    $collapsed_nodes = $collapsed_to_para if( $collapsability eq 'paralogs');
+    $collapsed_nodes = $collapsed_to_dups if( $collapsability eq 'duplications');
+    $collapsed_nodes ||= '';
   }
+  #warn "==> $collapsed_to_gene";
+  #warn "==> $collapsed_to_para";
+  #warn "==>$collapsed_to_dups";
 
   push @highlights, $collapsed_nodes || undef;
 
@@ -69,7 +75,80 @@ sub content {
   $image->{'panel_number'} = 'tree';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
-  return $image->render;
+  my @view_links;
+  push @view_links, sprintf('<li><a href="%s">%s</a></li>',
+                             $object->_url({'collapse'=>$collapsed_to_gene}),
+                             'View current gene only');
+
+  push @view_links, sprintf('<li><a href="%s">%s</a></li>',
+                             $object->_url({'collapse'=>$collapsed_to_para}),
+                             'View paralogs of current gene');
+
+  push @view_links, sprintf('<li><a href="%s">%s</a></li>',
+                             $object->_url({'collapse'=>$collapsed_to_dups}),
+                             'View all duplication nodes');
+
+  push @view_links, sprintf('<li><a href="%s">%s</a></li>',
+                             $object->_url({'collapse'=>''}),
+                             'View fully expanded tree');
+  
+  my $view_options_html = sprintf("View options. use 'configure page' link in the left panel to set the default. Further options are available from menus on individual tree nodes.<small><ul>%s</ul></small>", join( '', @view_links) );
+
+  return $view_options_html . $image->render;
+}
+
+sub _collapsed_nodes{
+  # Takes the ProteinTree and node related to this gene and a view action
+  # ('gene', 'paralogs', 'duplications' ) and returns the list of
+  # tree nodes that should be collapsed according to the view action.
+  # TODO: Move to Object::Gene, as the code is shared by the ajax menus
+  my $self = shift;
+  my $tree = shift;
+  my $node = shift;
+  my $action = shift;
+  $tree->isa('Bio::EnsEMBL::Compara::ProteinTree') 
+      || die( "Need a ProteinTree, not a $tree" );
+  $node->isa('Bio::EnsEMBL::Compara::AlignedMember')
+      || die( "Need an AlignedMember, not a $node" );
+
+  my %collapsed_nodes;
+  my %expanded_nodes;
+  
+  if( $action eq 'gene' ){ # View current gene
+    foreach my $adj( @{$node->get_all_adjacent_subtrees} ){
+      $collapsed_nodes{$adj->node_id} = $_;
+    }
+  }
+  elsif( $action eq 'paralogs' ){ # View all paralogs
+    my $gdb_id = $node->genome_db_id;
+    foreach my $leaf( @{$tree->get_all_leaves} ){
+      if( $leaf->genome_db_id == $gdb_id ){
+        foreach my $ancestor( @{$leaf->get_all_ancestors} ){
+          $expanded_nodes{$ancestor->node_id} = $ancestor;
+        }
+        foreach my $adjacent( @{$leaf->get_all_adjacent_subtrees} ){
+          $collapsed_nodes{$adjacent->node_id} = $adjacent;
+        }
+      }
+    }
+  }
+  elsif( $action eq 'duplications' ){ # View all duplications
+    foreach my $tnode( @{$tree->get_all_nodes} ){
+      next if $tnode->is_leaf;
+      if($tnode->get_tagvalue('dubious_duplication') or
+         ! $tnode->get_tagvalue('Duplication') ){
+        $collapsed_nodes{$tnode->node_id} = $tnode;
+        next;
+      }
+      $expanded_nodes{$tnode->node_id} = $tnode;
+      foreach my $ancestor( @{$tnode->get_all_ancestors} ){
+        $expanded_nodes{$ancestor->node_id} = $ancestor;
+      }
+    }
+  }
+  my $collapsed_node_ids
+      = join( ',', grep{! $expanded_nodes{$_}} keys %collapsed_nodes );
+  return $collapsed_node_ids;
 }
 
 sub content_align {
@@ -87,7 +166,7 @@ sub content_align {
 <p>The species included in the tree can be configured using the
 'configure tree' link in the left panel.<p>
 <pre>%s</pre>);
-  my $align_format = $object->param( 'text_format' ) || 'fasta'; # TODO: user configurable format
+  my $align_format = $object->param( 'text_format' ) || 'fasta'; # user configurable format
   my $formatted; # Variable to hold the formatted alignment string
   my $SH = IO::Scalar->new(\$formatted);
   #print $SH "FOO\n";
