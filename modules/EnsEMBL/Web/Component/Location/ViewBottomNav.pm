@@ -16,28 +16,41 @@ sub _nav_url {
   my( $self, $s, $e ) = @_;
   return $self->object->_url({'r'=>$self->object->seq_region_name.':'.$s.'-'.$e});
 }
+
+sub content_region {
+  my $self = shift;
+  return $self->content( [ [4,1e4], [6,5e4], [8,1e5], [10,5e5], [12,1e6], [14,2e6], [16,5e6], [18,1e7] ] )
+}
+
 sub content {
   my $self   = shift;
+  my $ramp_entries = shift || [ [4,1e3], [6,5e3], [8,1e4], [10,5e4], [12,1e5], [14,2e5], [16,5e5], [18,1e6] ];
   my $object = $self->object;
 
   my $threshold = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
   my $image_width = $self->image_width;
 
   my $extra_html = '';
-  my @ramp_entries = ( [4,1e3], [6,5e3], [8,1e4], [10,5e4], [12,1e5], [14,2e5], [16,5e5], [18,1e6] );
   my $cp = int( ($object->seq_region_end+$object->seq_region_start) / 2);
   my $wd = $object->seq_region_end-$object->seq_region_start+1;
-  foreach(@ramp_entries) {
+  my $url = $object->_url( {'r'=>undef}, 1 );
+  foreach(@$ramp_entries) {
     $extra_html .= sprintf( '<a href="%s"><img title="%d bp" alt="%s bp" src="/i/blank.gif" class="blank" style="height:%dpx" /></a>', 
       $self->_nav_url( $cp - $_->[1]/2+1, $cp + $_->[1]/2), $_->[1], $_->[1],$_->[0] );
   }
+  my $extra_inputs;
+  foreach(sort keys %{$url->[1]||{}}) {
+    $extra_inputs .= sprintf '
+        <input type="hidden" name="%s" value="%s" />', escapeHTML($_),escapeHTML($url->[1]{$_});
+  }
   return sprintf qq(
   <div class="autocenter navbar" style="width:%spx">
-    <form action="/%s/Location/View" method="get"><div class="relocate">
-      Location: <label class="hidden" for="region">Region</label><input name="region" id="region" class="text" style="width:3em" value="%s" type="text" /> :
-                <label class="hidden" for="start">Start</label><input name="start" id="start" class="text" style="width:5em" value="%s" type="text" /> - 
-		<label class="hidden" for="end">End</label><input name="end" id="end" class="text" style="width:5em" value="%s" type="text" />
-		<input value="Go&gt;" type="submit" class="go-button" />
+    <form action="%s" method="get"><div class="relocate">
+      Location: %s
+        <label class="hidden" for="region">Region</label><input name="region" id="region" class="text" style="width:3em" value="%s" type="text" /> :
+        <label class="hidden" for="start">Start</label><input name="start" id="start" class="text" style="width:5em" value="%s" type="text" /> - 
+        <label class="hidden" for="end">End</label><input name="end" id="end" class="text" style="width:5em" value="%s" type="text" />
+        <input value="Go&gt;" type="submit" class="go-button" />
     </div></form>
     <a href="%s"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left"/></a><a 
        href="%s"><img src="/i/nav-l1.gif" class="zoom" alt="window left"/></a><a
@@ -45,8 +58,10 @@ sub content {
        href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a><a
        href="%s"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a><a
        href="%s"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left"/></a>
-  </div>), $image_width,
-   $object->species,
+  </div>), 
+   $image_width,
+   $url->[0],
+   $extra_inputs,
    $object->seq_region_name,
    $object->seq_region_start,
    $object->seq_region_end,
