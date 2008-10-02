@@ -1196,6 +1196,24 @@ sub remove_nodes {
   return $self;
 }
 
+
+=head2 minimize_tree
+
+  Arg [1]     : -none-
+  Example     : $leaf->disavow_parent();
+                $tree = $tree->minimize_tree();
+  Description : Returns the tree after removing internal nodes that do not
+                represent an multi- or bi-furcation anymore. This is typically
+                required after disavowing a node. Please ensure you use the
+                object returned by the method and not the original object
+                anymore!
+  Returntype  : Bio::EnsEMBL::Compara::NestedSet object
+  Exceptions  :
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub minimize_tree {
   my $self = shift;
   return $self if($self->is_leaf);
