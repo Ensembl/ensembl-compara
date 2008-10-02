@@ -62,6 +62,7 @@ use EnsEMBL::Web::Tools::WebTree;
 use EnsEMBL::Web::Tools::RobotsTxt;
 use EnsEMBL::Web::Tools::Registry;
 use EnsEMBL::Web::Tools::MartRegistry;
+use EnsEMBL::Web::DASConfig;
 
 use DBI;
 use SiteDefs qw(:ALL);
@@ -97,6 +98,18 @@ sub new {
   return $self;
 }
 
+sub get_all_das {
+  my $self = shift;
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
+  my $sources_hash = $self->get_config( $species, 'ENSEMBL_INTERNAL_DAS_SOURCES' )||{};
+  return { 
+    map {
+      my $t = EnsEMBL::Web::DASConfig->new_from_hashref( $sources_hash->{$_} );
+      $t->matches_species( $species ) ? ($t->logic_name => $t) : ()
+    }
+    keys %$sources_hash
+  };
+}
 
 sub name {
   ### a
