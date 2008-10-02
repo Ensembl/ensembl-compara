@@ -477,6 +477,20 @@ sub _summarise_dasregistry {
     }
     
     $cfg->{'logic_name'}      = $key;
+    $cfg->{'category'}        = $val;
+    
+    # If specified in the config, "coords" is expected to look like:
+    # [ chromosome:NCBI36:Homo_sapiens ]
+    if ( my $coords = $cfg->{'coords'} ) {
+      $cfg->{'coords'} = [map {
+        my @pieces = split /:/, $_;
+        Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
+          -name    => $pieces[0],
+          -version => $pieces[1],
+          -species => $pieces[2],
+        );
+      } ref $coords ? @{ $coords } : ($coords)];
+    }
     
     # Check using the url/dsn if the source is registered
     my $src = $sources{$key};
