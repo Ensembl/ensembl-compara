@@ -130,7 +130,10 @@ foreach my $sp ( @species ) {
   my $tree = $SD->{_storage}{$sp};
   foreach my $db_name ( qw(DATABASE_CORE DATABASE_VEGA DATABASE_OTHERFEATURES DATABASE_CDNA) ) {
     next unless $tree->{'databases'}->{$db_name}{'NAME'};
-    my $dbh = $SD->db_connect( $tree, $db_name );
+    my $dbh = db_connect( $tree, $db_name );
+use Data::Dumper;
+    $tree->{'databases'}->{$db_name}{'tables'}=undef;
+    $tree->{'databases'}->{$db_name}{'meta_info'}=undef;
     my %analyses = (0=>'Coordinatesystems', map {@$_} @{$dbh->selectall_arrayref(
 "select a.analysis_id, concat( a.logic_name, if( isnull(ad.analysis_id),'****NO DESCRIPTION****',
   concat( '(',if(ad.displayable,'**','--'),display_label,')' )) )
@@ -151,3 +154,45 @@ foreach my $sp ( @species ) {
     }
   }
 }
+
+sub db_connect {
+  ### Connects to the specified database
+  ### Arguments: configuration tree (hash ref), database name (string)
+  ### Returns: DBI database handle
+  my $tree    = shift @_ || die( "Have no data! Can't continue!" );
+  my $db_name = shift @_ || confess( "No database specified! Can't continue!" );
+
+  my $dbname  = $tree->{'databases'}->{$db_name}{'NAME'};
+  if($dbname eq '') {
+    warn( "No database name supplied for $db_name." );
+    return undef;
+  }
+
+  #warn "Connecting to $db_name";
+  my $dbhost  = $tree->{'databases'}->{$db_name}{'HOST'};
+  my $dbport  = $tree->{'databases'}->{$db_name}{'PORT'};
+  my $dbuser  = $tree->{'databases'}->{$db_name}{'USER'};
+  my $dbpass  = $tree->{'databases'}->{$db_name}{'PASS'};
+  my $dbdriver= $tree->{'databases'}->{$db_name}{'DRIVER'};
+  my ($dsn, $dbh);
+  eval {
+    if( $dbdriver eq "mysql" ) {
+      $dsn = "DBI:$dbdriver:database=$dbname;host=$dbhost;port=$dbport";
+      $dbh = DBI->connect(
+        $dsn,$dbuser,$dbpass, { 'RaiseError' => 1, 'PrintError' => 0 }
+      );
+    } else {
+      print STDERR "\t  [WARN] Can't connect using unsupported DBI driver type: $dbdriver\n";
+    }
+  };
+
+  if( $@ ) {
+    print STDERR "\t  [WARN] Can't connect to $db_name\n", "\t  [WARN] $@";
+    return undef();
+  } elsif( !$dbh ) {
+    print STDERR ( "\t  [WARN] $db_name database handle undefined\n" );
+    return undef();
+  }
+  return $dbh;
+}
+
