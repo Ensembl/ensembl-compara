@@ -323,7 +323,9 @@ sub _configurator {
     foreach my $track_node ( $node->descendants ) {
       next if $track_node->get('menu') eq 'no';
       $rhs_content .= sprintf '
-        <dt><select id="%s" name="%s">', $track_node->key, $track_node->key;
+        <dt%s><select id="%s" name="%s">', 
+        $track_node->get('glyphset') =~ /_(prot)?das/ ? ' class="das_menu_entry"' : '',
+        $track_node->key, $track_node->key;
       my $display = $track_node->get( 'display' ) || 'off';
       my @states  = @{ $track_node->get( 'renderers' ) || [qw(off Off normal Normal)] };
       while( my($K,$V) = splice(@states,0,2) ) {
