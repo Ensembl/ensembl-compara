@@ -14,6 +14,10 @@ use base qw(EnsEMBL::Web::Object);
 
 our $MEMD = new EnsEMBL::Web::Cache;
 
+sub analysis {
+  my $self = shift;
+  return $self->Obj->analysis;
+}
 sub counts {
   my $self = shift;
   my $obj = $self->Obj;
