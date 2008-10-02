@@ -1,32 +1,43 @@
 package EnsEMBL::Web::ImageConfig::alignsliceviewtop;
+
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my ($self) = @_;
-  $self->{'_userdatatype_ID'} = 2;
-  $self->{'general'}->{'alignsliceviewtop'} = {
-    '_artefacts'   => [],
-    '_settings'    => {
-      'width'             => 800,
-      'draw_red_box'      => 'yes',
-      'default_vc_size'   => 1000000,
-      'show_alignsliceview'   => 'yes',
-      'imagemap'          => 1,
-      'bgcolor'           => 'background1',
-      'bgcolour1'         => 'background1',
-      'bgcolour2'         => 'background1',
-    }
-  };
 
-  $self->ADD_GENE_TRACKS();
-  $self->ADD_SYNTENY_TRACKS();
-  my $POS = 0;
-  
-  $self->add_track( 'contig',   'on'=>'on', 'pos' => $POS++ );
-  $self->add_track( 'scalebar', 'on'=>'on', 'pos' => $POS++, 'str' => 'f', 'abbrev' => 'on' );
+  $self->set_parameters({
+    'title'         => 'Overview panel',
+    'show_buttons'  => 'no',  # do not show +/- buttons
+    'button_width'  => 8,     # width of red "+/-" buttons
+    'show_labels'   => 'yes', # show track names on left-hand side
+    'label_width'   => 113,   # width of labels on left-hand side
+    'margin'        => 5,     # margin
+    'spacing'       => 2,     # spacing
+
+## Now let us set some of the optional parameters....
+    'opt_lines'         => 1, # draw registry lines
+  });
+
+  $self->create_menus(
+    'sequence'    => 'Sequence',
+    'gene'        => 'Genes',
+    'synteny'     => 'Synteny',
+    'other'       => 'Additional features',
+    'information' => 'Information',
+    'options'     => 'Options'
+  );
+
+  $self->add_track( 'sequence',    'contig',    'Contigs',             'stranded_contig', { 'display' => 'normal', 'strand' => 'f' } );
+
+  $self->load_tracks();
+
+  $self->add_tracks( 'other',
+    [ 'scalebar',  '', 'scalebar',  { 'display' => 'normal'  }],
+  );
 }
 
 1;

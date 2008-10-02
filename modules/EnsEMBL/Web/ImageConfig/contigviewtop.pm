@@ -1,6 +1,9 @@
 package EnsEMBL::Web::ImageConfig::contigviewtop;
 
 use strict;
+use warnings;
+no warnings 'uninitialized';
+
 use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
@@ -16,16 +19,9 @@ sub init {
     'spacing'       => 2,     # spacing
 
 ## Now let us set some of the optional parameters....
-    'opt_halfheight'    => 1, # glyphs are half-height [ probably removed when this becomes a track config ]
     'opt_empty_tracks'  => 0, # include empty tracks..
     'opt_lines'         => 1, # draw registry lines
     'opt_restrict_zoom' => 1, # when we get "zoom" working draw restriction enzyme info on it!!
-
-## Finally some colours... background image colors;
-## and alternating colours for tracks...
-    'bgcolor'       => 'background1',
-    'bgcolour1'     => 'background2',
-    'bgcolour2'     => 'background3',
   });
 
   $self->create_menus(
