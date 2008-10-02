@@ -11,6 +11,7 @@ sub init {
   $view_config->_set_defaults(qw(
     image_width          800
     width                800
+    collapsability       gene
     text_format          msf
     tree_format          newick_mode
     newick_mode          full_web
@@ -24,6 +25,22 @@ sub init {
 sub form {
   my( $view_config, $object ) = @_;
   our %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+
+  $view_config->add_fieldset('Image options');
+  $view_config->add_form_element({
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'collapsability',
+    'label'    => "Viewing options for tree image",
+    'values'   => [ { 'value' => 'gene',
+                      'name' => 'View current gene only' },
+                    { 'value' => 'paralogs',
+                      'name' => 'View paralogs of current gene' },
+                    { 'value' => 'duplications',
+                      'name' => 'View all duplication nodes' },
+                    { 'value' => 'all',
+                      'name' => 'View fully expanded tree' } ]
+      });
+
 
   $view_config->add_fieldset('Text aligment output options');
   $view_config->add_form_element({
