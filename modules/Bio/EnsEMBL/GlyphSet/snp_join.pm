@@ -13,19 +13,22 @@ sub _init {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
-  my $strand_flag   = $self->{'config'}->get('snp_join','str');
+#  my $strand_flag   = $self->{'config'}->get('snp_join','str');
+  my $strand_flag = $self->my_config('str');
   my $strand        = $self->strand();
   return if ( $strand_flag eq 'f' && $strand != 1 ) || ( $strand_flag eq 'r'  && $strand == 1 );
 
   my @snps = @ { $self->get_snps($Config)  || []};
-  my $tag = $Config->get( 'snp_join', 'tag' );
+ # my $tag = $Config->get( 'snp_join', 'tag' );
+  my $tag = $self->my_config('tag');
   my $tag2 = $tag + ($strand == -1 ? 1 : 0);
   my $T = $strand == 1 ? 1 : 0;
   my $C=0;
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $start = $container->start();
   my $length  = $container->length;
-  my $colours       = $Config->get('snp_join','colours' );
+  #my $colours       = $Config->get('snp_join','colours' );
+  my $colours = $self->my_config('colours');
 
   foreach my $snp_ref ( @snps ) { 
     my $snp = $snp_ref->[2];
@@ -34,8 +37,9 @@ sub _init {
     $S = 1 if $S < 1;
     $E = $length if $E > $length;
     my $type = $snp->display_consequence;
-    my $colour = $colours->{$type}->[0];
-    my $tglyph = $self->Space({
+   # my $colour = $colours->{$type}->[0];
+    my $colour = $self->my_colour($type);
+    my $tglyph = $self->Rect({
       'x' => $S-1,
       'y' => 0,
       'height' => 0,
@@ -66,7 +70,8 @@ sub get_snps {
 
   my %exons = ();
   my $target_gene   = $Config->{'geneid'};
-  my $context = $Config->get( 'snp_join', 'context' );
+  #my $context = $Config->get( 'snp_join', 'context' );
+  my $context = $self->my_config('context');
   if( $context && @snps ) {
     my $features = $self->{'container'}->get_all_Genes(lc($self->species_defs->AUTHORITY));
     foreach my $gene ( @$features ) {
