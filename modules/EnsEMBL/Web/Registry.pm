@@ -16,7 +16,6 @@ my %Timer_of     :ATTR( :set<timer>    :get<timer>    );
 #-- Lazy loaded objects - these will have appropriate lazy loaders attached!
 my %DBcache_of        :ATTR( :get<dbcache>  );
 my %SpeciesDefs_of    :ATTR;
-my %Das_sources_of    :ATTR;
 my %User_of           :ATTR( :set<user>     :get<user>     );
 my %Ajax_of           :ATTR( :set<ajax>     :get<ajax>     );
 my %Session_of        :ATTR( :set<session>  :get<session>  );
@@ -28,43 +27,18 @@ my %Action_of         :ATTR( :set<action>   :get<action>   );
 # This method gets all configured DAS sources for the current species.
 # Source configurations are retrieved first from SpeciesDefs, then additions and
 # modifications are added from the User and Session.
-# Returns a hashref, indexed by name.
-# An optional non-zero argument forces re-retrieval of das sources, otherwise
-# these are cached.
+# Returns a hashref, indexed by logic_name.
 sub get_all_das {
-  my ( $self, $force ) = @_;
+  my ( $self, $species ) = @_;
   
-  # This is cached so return it unless "Force" is set to load in other stuff
-  if ( !$force && scalar keys %{ $Das_sources_of{ ident $self } } ) {
-    return $Das_sources_of{ ident $self };
-  }
-  
-  my $spec_das = $self->species_defs->ENSEMBL_INTERNAL_DAS_SOURCES || {};
-  my $sess_das = $self->get_session ->get_all_das                  || {};
-  
-  # Build config objects from the speciesdefs data
-  for my $data ( values %{ $spec_das } ) {
-    ref $data || next;
-    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
-    $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
-  }
-  
-  if (my $user = $self->get_user) {
-    # Override with user data
-    for my $data ($user->dases) {
-      my $das = EnsEMBL::Web::DASConfig->new_from_hashref($data);
-      $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
-    }
-  }
+  my $spec_das = $self->species_defs->get_all_das( $species );
+  my $user_das = $self->get_user    ->get_all_das( $species );
+  my $sess_das = $self->get_session ->get_all_das( $species );
   
   # TODO: group data??
   
-  # Override with session data
-  for my $das ( values %{ $sess_das } ) {
-    $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
-  }
-  
-  return $Das_sources_of{ ident $self };
+  my %merged = ( %{ $spec_das }, %{ $user_das }, %{ $sess_das } );
+  return \%merged;
 }
 
 # This method gets a single named DAS source for the current species.
@@ -72,18 +46,6 @@ sub get_all_das {
 sub get_das_by_logic_name {
   my ( $self, $name ) = @_;
   return $self->get_all_das->{ $name };
-}
-
-sub get_das_filtered_and_sorted {
-  my ( $self ) = @_;
-  
-  my @sorted = sort {
-    $a->label cmp $b->label
-  } grep {
-    $_->matches_species( $self->get_species ) # always expect this to be called where there is a species
-  } values %{ $self->get_all_das };
-
-  return \@sorted;
 }
 
 sub timer_push {

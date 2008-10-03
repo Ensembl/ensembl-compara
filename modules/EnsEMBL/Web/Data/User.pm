@@ -65,6 +65,22 @@ sub is_member_of {
 }
 
 
+sub get_all_das {
+  my ( $self, $species ) = @_;
+  
+  my $sources = {};
+  for my $data ( $self->dases ) {
+    # Create new DAS source from value in database...
+    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
+    $species && !$das->matches_species( $species ) && next;
+    $das->category( 'user' );
+    $sources->{ $das->logic_name } = $das;
+  }
+  
+  return $sources;
+}
+
+
 
 ###################################################################################################
 ##

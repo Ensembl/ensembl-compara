@@ -501,7 +501,7 @@ sub _summarise_dasregistry {
 # We need to get the hash of parameters...
       $cfg->{'coords'}        ||= [ map { 
         { 'name' => $_->name, 'version' => $_->version, 'species' => $_->species }
-      } @{ $src->coord_systems } ];
+      } @{ $src->coord_systems || []  } ];
       $cfg->{'url'}           ||= $src->url;
       $cfg->{'dsn'}           ||= $src->dsn;
     }
@@ -515,13 +515,9 @@ sub _summarise_dasregistry {
       next;
     }
     
-    # Add to the das packed tree as a hash
-    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}{$key} = $cfg;
-    # Remove the config from the ini tree
-    delete $self->tree->{$key};
+    # Add the final config hash to the das packed tree
+    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_CONFIGS'}{$key} = $cfg;
   }
-  # Remove the list of sources from the ini tree
-  delete $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'};
 }
 
 sub _meta_info {

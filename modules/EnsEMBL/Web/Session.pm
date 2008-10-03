@@ -28,7 +28,6 @@ our @ISA = qw(EnsEMBL::Web::Root);
   my %Session_id_of    :ATTR( :name<session_id>   );
 ## Modified parameters built in BUILD fnuction...
   my %Configs_of       :ATTR;
-  my %Internal_das_of  :ATTR;
   my %Das_sources_of   :ATTR( :get<das_sources>  );
   my %ImageConfigs_of  :ATTR;
   my %Path_of          :ATTR( :get<path> );
@@ -74,7 +73,6 @@ sub BUILD {
 ### Most of the build functions is done automagically by Class::Std, two unusual ones
 ### are the path and Cookie object..
   $Configs_of{      $ident } = {}; # Initialize empty hash!
-  $Das_sources_of{  $ident } = {}; # Initialize emtpy hash!
   $ImageConfigs_of{ $ident } = {}; # Initialize emtpy hash!
   $TmpData_of{      $ident } = {}; # Initialize empty hash!
   $Path_of{         $ident } = ['EnsEMBL::Web', reverse @{$arg_ref->{'path'}||[]}];
@@ -293,39 +291,55 @@ sub get_shared_data {
 }
 
 # This method gets all configured DAS sources for the current session, i.e. all
-# those either added or modified externally. Returns a hashref, indexed by name.
-# An optional non-zero argument forces re-retrieval of das sources, otherwise
-# these are cached.
+# those either added or modified externally.
+# Returns a hashref, indexed by logic_name.
 sub get_all_das {
-  my( $self, $force ) = @_;
-  
-  # This is cached so return it unless "Force" is set to load in other stuff
-  return $Das_sources_of{ ident $self } if ( !$force && scalar keys %{ $Das_sources_of{ ident $self } } );
+  my( $self, $species ) = @_;
   
   # If there is no session, there are no configs
   return {} unless $self->get_session_id;
   
-  # Retrieve all DAS configurations from the database
-  my @configs = EnsEMBL::Web::Data::Session->get_config(
-    session_id => $self->get_session_id,
-    type       => 'das'
-  );
+  # If the cache hasn't been initialised, do it
+  if ( ! $Das_sources_of{ ident $self } ) {
+    
+    $Das_sources_of{ ident $self } = {};
+    
+    # Retrieve all DAS configurations from the database
+    my @configs = EnsEMBL::Web::Data::Session->get_config(
+      session_id => $self->get_session_id,
+      type       => 'das'
+    );
+    
+    foreach my $config (@configs) {
+      $config->data || next;
+      # Create new DAS source from value in database...
+      my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $config->data );
+      $das->category( 'session' );
+      $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
+    }
+  }
   
-  foreach my $config (@configs) {
-    $config->data || next;
-    # Create new DAS source from value in database...
-    my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $config->data );
-    $das->category( 'session' );
-    $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
+  if ( $species ) {
+    return { map {
+      $_->logic_name => $_
+    } grep {
+      $_->matches_species( $species )
+    } values %{ $Das_sources_of{ ident $self } }};
   }
   
   return $Das_sources_of{ ident $self };
 }
 
 # Save all session-specific DAS sources back to the database
+# Usage examples:
+#   $session->add_das( $source1 );
+#   $source2->mark_deleted;       # delete entirely
+#   $source3->category( 'user' ); # move from session to user
+#   $source3->mark_altered;       # mark as updated
+#   $session->save_das;           # save session data
 sub save_das {
   my $self = shift;
-  foreach my $source ( values %{$Das_sources_of{ ident $self }} ) {
+  foreach my $source ( values %{ $self->get_all_das } ) {
     next unless $source->is_altered;
     if( $source->is_deleted || !$source->is_session ) {
       EnsEMBL::Web::Data::Session->reset_config(
@@ -378,7 +392,6 @@ sub add_das {
     # Attach the DAS source..
     $Das_sources_of{ ident $self }{ $new_name } = $das;
     $self->update_configs_for_das( $das, qw(contigview geneview cytoview protview) );
-    # Note that this doesn't update the Registry cache!
   } else {
     return 0;
   }
@@ -426,19 +439,6 @@ sub update_configs_for_das {
     }
   }
 }
-
-# TODO: remove this method (is confusing - just change category to 'user' if want to save to user)
-=head
-# Remove a DAS source from the configuration
-#ÊUsed when moving from session to user
-# If you want to remove completely, mark source as deleted INSTEAD
-sub remove_das {
-  my ( $self, $name ) = @_;
-  if ( exists $Das_sources_of{ ident $self }{ $name } ) {
-    $Das_sources_of{ ident $self }{ $name }->delete;
-  }
-}
-=cut
 
 sub deepcopy {
 ### Recursive deep copy of hashrefs/arrayrefs...

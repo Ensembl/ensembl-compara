@@ -101,7 +101,7 @@ sub new {
 sub get_all_das {
   my $self = shift;
   my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
-  my $sources_hash = $self->get_config( $species, 'ENSEMBL_INTERNAL_DAS_SOURCES' )||{};
+  my $sources_hash = $self->get_config( $species, 'ENSEMBL_INTERNAL_DAS_CONFIGS' )||{};
   return { 
     map {
       my $t = EnsEMBL::Web::DASConfig->new_from_hashref( $sources_hash->{$_} );
@@ -832,7 +832,7 @@ sub _is_available_artefact{
       return $fail;
     }
   } elsif( $test[0] eq 'das_source' ){ ## Is the given DAS source specified?
-    my $source = $self->ENSEMBL_INTERNAL_DAS_SOURCES || {};
+    my $source = $self->ENSEMBL_INTERNAL_DAS_CONFIGS || {};
     return $fail unless $source->{$test[1]}   ;
     return $success;
   }
