@@ -8,21 +8,21 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
 
 sub _init {
-  my ($self) = @_;
-  my $type = $self->check();
+  my ($self) = @_; 
+  my $type = $self->check(); 
   return unless defined $type;
   return unless $self->strand() == -1;
   my $offset = $self->{'container'}->start - 1;
-  my $Config        = $self->{'config'};
+  my $Config        = $self->{'config'}; 
     
-  my @transcripts   = $Config->{'transcripts'};
+  my @transcripts   = $Config->{'transcripts'}; 
   my $y             = 0;
   my $h             = 8;   #Single transcript mode - set height to 30 - width to 8!
     
-  my %highlights;
+  my %highlights; 
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
-  my $colours       = $self->colours();
+  #my $colours       = $self->colours(); warn $colours;
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -38,7 +38,8 @@ sub _init {
   # If stranded diagram skip if on wrong strand
   # For exon_structure diagram only given transcript
   # my $Composite = $self->Composite({'y'=>0,'height'=>$h});
-  my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
+  #my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
+  my $colour = $self->colour($transcript);
   my $coding_start = $trans_ref->{'coding_start'};
   my $coding_end   = $trans_ref->{'coding_end'  };
   my( $fontname, $fontsize ) = $self->get_font_details( 'caption' );
@@ -46,7 +47,7 @@ sub _init {
   my $th = $res[3];
 
   ## First of all draw the lines behind the exons.....
-  my $Y = $Config->{'_add_labels'} ? $th : 0;
+  my $Y = $Config->{'_add_labels'} ? $th : 0; 
   foreach my $subslice (@{$Config->{'subslices'}}) {
     $self->push( $self->Rect({
       'x' => $subslice->[0]+$subslice->[2]-1, 'y' => $Y+$h/2, 'h'=>1, 'width'=>$subslice->[1]-$subslice->[0], 'colour'=>$colour, 'absolutey'=>1
@@ -129,27 +130,35 @@ sub _init {
   }
 }
 
-sub colours {
-  my $self = shift;
+#sub colours {
+#  my $self = shift;
 #  my $Config = $self->{'config'};
-#  return $Config->get('GSV_transcript','colours');
-  return $self->my_config('colours');
-}
+#  return $Config->get('GSV_transcript','colours'); 
+#  return $self->my_config('colours');
+#}
 
 sub colour {
-  my ($self, $gene, $transcript, $colours, %highlights) = @_;
-  my $genecol = $colours->{ $transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status };
-#  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
-  if(exists $highlights{lc($transcript->stable_id)}) {
-    return (@$genecol, $colours->{'superhi'}[0]);
-  } elsif(exists $highlights{lc($transcript->external_name)}) {
-    return (@$genecol, $colours->{'superhi'}[0]);
-  } elsif(exists $highlights{lc($gene->stable_id)}) {
-    return (@$genecol, $colours->{'hi'}[0]);
-  }
-  return (@$genecol, undef);
-
+  my ($self, $transcript ) = @_;
+  my $trans_type = lc($transcript->biotype."_".$transcript->status);
+  my $trans_col =  $self->my_colour($trans_type);
+  
+  return $trans_col; 
 }
+#sub colour {
+#  my ($self, $gene, $transcript, $colours, %highlights) = @_; 
+#  warn lc($transcript->biotype."_".$transcript->status); 
+#  my $genecol = $colours->{ lc($transcript->biotype."_".$transcript->status) }; 
+#  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
+#  if(exists $highlights{lc($transcript->stable_id)}) {
+#    return (@$genecol, $colours->{'superhi'}[0]);
+#  } elsif(exists $highlights{lc($transcript->external_name)}) {
+#    return (@$genecol, $colours->{'superhi'}[0]);
+#  } elsif(exists $highlights{lc($gene->stable_id)}) {
+#    return (@$genecol, $colours->{'hi'}[0]);
+#  }
+#  return (@$genecol, undef);
+
+#}
 
 sub href {
     my ($self, $gene, $transcript, $exon, %highlights ) = @_;
@@ -157,10 +166,11 @@ sub href {
     my $gid = $gene->stable_id();
     my $tid = $transcript->stable_id();
     
-    return ( $self->{'config'}->get('transcript_lite','_href_only') eq '#tid' ) ?
-        "#$tid" : 
-        qq(/@{[$self->{container}{web_species}]}/geneview?gene=$gid);
+    #return ( $self->{'config'}->get('transcript_lite','_href_only') eq '#tid' ) ?
+    #    "#$tid" : 
+    #    qq(/@{[$self->{container}{web_species}]}/geneview?gene=$gid);
 
+   return;
 }
 
 sub zmenu {
