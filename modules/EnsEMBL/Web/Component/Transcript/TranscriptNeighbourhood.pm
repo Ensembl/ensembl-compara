@@ -33,13 +33,12 @@ sub content {
      $wuc->{'_no_label'} = 'true';
      $wuc->{'_add_labels'} = 'true';
      $wuc->set( 'ruler', 'str', $object->Obj->strand > 0 ? 'f' : 'r' );
-     $wuc->set( $object->default_track_by_gene,'on','on');
+     $wuc->set( $object->default_track_by_gene,'display','on');
 
   my $image    = $object->new_image( $transcript_slice, $wuc, [] );
      $image->imagemap = 'yes';
 
-
-return $image->render;
+  return $image->render;
 }
 
 1;
