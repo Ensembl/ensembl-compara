@@ -246,8 +246,9 @@ sub get_gd_text {
 }
 
 sub commify {
+### Puts commas into numbers over 1000
   my( $self, $val ) = @_;
-  
+  return $val if $val < 1000;
   $val = reverse $val;
   $val =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
   return reverse $_;
