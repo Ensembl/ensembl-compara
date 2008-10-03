@@ -324,6 +324,26 @@ sub sort_table_values {
   return $alignments;
 }
 
+sub new_hsp_image {
+  my ($self, $alignments) = @_;
+
+  my $runnable = $self->retrieve_runnable;
+  my $result = $runnable->result;
+
+  my $bucket = EnsEMBL::Web::Container::HSPContainer->new($result, $alignments);
+  my $config = $self->get_imageconfig('hsp_query_plot');
+  $config->set_parameters({
+       'image_width',      => $self->param('image_width') || 500,
+       'slice_number',     => '1|1',
+     });
+  my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket, $config);
+
+  my $image = new EnsEMBL::Web::File::Image( $self->species_defs );
+  $image->set_tmp_filename();
+  $image->dc = $hsp_dc;
+  $image->{'img_map'} = 1;
+  return $image;
+}
 
 ###-------------------------------- PRIVATE METHODS ------------------------------------------
 

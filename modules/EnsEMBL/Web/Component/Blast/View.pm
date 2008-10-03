@@ -4,10 +4,15 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Blast);
-use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::File::Image;
+use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Container::HSPContainer;
+use Bio::EnsEMBL::DrawableContainer;
 use Data::Dumper;
 use CGI qw(escapeHTML);
+
+our @colours = qw( gold orange chocolate firebrick darkred );
 
 sub _init {
   my $self = shift;
@@ -43,6 +48,7 @@ sub content {
     }
 
     ## Alignment image
+    $html .= _draw_key();
     $html .= "<h3>Alignment locations vs query</h3>";
     $html .= _draw_alignment($object, $species, $alignments);
 
@@ -67,8 +73,6 @@ sub _draw_karyotype {
   ## Create highlights - arrows and outline box
   my %highlights1 = ('style' => 'rharrow');
   my %highlights2 = ('style' => 'outbox');
-
-  my @colours = qw( gold orange chocolate firebrick darkred );
 
   # Create per-hit glyphs
   my @glyphs;
@@ -99,7 +103,7 @@ sub _draw_karyotype {
 
   }
 
-  $image->image_name = "blast";
+  $image->image_name = "blast-karyotype";
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view");
   my $pointers = [\%highlights1, \%highlights2];
   $image->karyotype( $object, $pointers, $config_name );
@@ -107,10 +111,26 @@ sub _draw_karyotype {
   return $image->render;
 }
 
+sub _draw_key {
+  my $html = qq(<h3>Key to colours</h3>
+<table><tr>
+);
+  ## Print out colours in percentage intervals of 20
+  for( my $i=0; $i<@colours; $i++ ){
+    $html .=  sprintf( '<td style="width:10%%;background-color:%s">&nbsp;</td><td style="width:10%%">%d-%d%%</td>', 
+      $colours[$i], $i * 20, ($i+1) * 20 ); 
+  }
+
+  $html .= "</tr></table>\n";
+  return $html;
+}
+
 sub _draw_alignment {
   my ($object, $species, $alignments) = @_;
-  return "<p>ALIGNMENT IMAGE GOES HERE</p>";
-  # See &draw_hsp_vs_query in perl/multi/blastview
+
+  my $image = $object->new_hsp_image($alignments);  
+
+  return $image->render_image_button();
 }
 
 sub _display_alignment_table {
@@ -118,8 +138,11 @@ sub _display_alignment_table {
 
   ## Do options table -----------------------------------
   ## TODO: move to ViewConfig
+  my $ticket = $object->param('ticket');
+  my $run_id = $object->param('run_id');
   my $html = qq(<form action="/Blast/View" method="post">
-<input type="hidden" name="" value="" />
+<input type="hidden" name="ticket" value="$ticket" />
+<input type="hidden" name="ticket" value="$run_id" />
   );
   
   ## Make big array of settings
