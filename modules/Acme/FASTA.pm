@@ -75,7 +75,7 @@ Acme::FASTA cannot convert the source.
 
 =head1 AUTHOR
 
-baggy <baggy@baggy.me.uk>
+James Smith <js5@sanger.ac.uk>
 
 =head1 LICENSE
 
