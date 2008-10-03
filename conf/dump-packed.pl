@@ -64,7 +64,7 @@ print "
 ";
 
 if( $mode ) {
-  print "\t",join("\n\t",sort keys %$T );
+  print "\t",join("\n\t",sort { lc($a) cmp lc($b) } keys %$T );
 } else {
   my $X = Data::Dumper::Dumper($T);
   print "\n",substr( $X, 8, -2 ),"\n";
