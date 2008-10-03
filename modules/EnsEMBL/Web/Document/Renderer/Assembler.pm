@@ -23,7 +23,6 @@ sub process {
   my $self = shift;
 
   my $agent = LWP::Parallel::UserAgent->new();
-  $agent->default_header(Cookie => $self->r->headers_in->{'Cookie'});
 
   foreach my $request (@{ $self->{content} }) {
     next unless ref $request;
@@ -41,6 +40,7 @@ sub process {
     if ($content) {
       $request = $content;
     } else {
+      $request->header('Cookie' => $self->r->headers_in->{'Cookie'});
       $agent->register($request);
     }
 
