@@ -13,6 +13,10 @@ use base qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
 
+sub _error {
+  my($self,$caption,$desc) = @_;
+  return sprintf '<div class="error"><h3>%s</h3><div class="error-pad">%s</div></div>', $caption, $desc;
+}
 sub image_width {
   my $self = shift;
 
