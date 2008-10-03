@@ -78,31 +78,36 @@ sub populate_tree {
   ));
   $compara_menu->append( $tree_node );
 
-  $compara_menu->append
-      ( $self->create_node
-        ( 'Compara_Ortholog',   "Orthologues ([[counts::orthologs]])",
-          [qw(orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs)],
-          { 'availability' => 'database:compara', 
-            'concise' => 'Orthologues' } ) );
-
-  $compara_menu->append
-      ( $self->create_node
-	    ( 'HomologAlignment', '',
-	      [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
-	      {'no_menu_entry' => 1 } ) );
-
-  $compara_menu->append
-      ( $self->create_node
-        ( 'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
-          [qw(paralogues  EnsEMBL::Web::Component::Gene::ComparaParalogs)],
-          { 'availability' => 'database:compara', 
-            'concise' => 'Paralogues' } ) );
-  $compara_menu->append
-      ($self->create_node( 'Family', 'Protein families ([[counts::families]])',
-    [qw(
-      family EnsEMBL::Web::Component::Gene::Family
-      genes    EnsEMBL::Web::Component::Gene::FamilyGenes
-    )],
+  my $ol_node = $self->create_node(
+    'Compara_Ortholog',   "Orthologues ([[counts::orthologs]])",
+    [qw(orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs)],
+    { 'availability' => 'database:compara', 
+      'concise'      => 'Orthologues' }
+  );
+  $compara_menu->append( $ol_node );
+  $ol_node->append( $self->create_subnode(
+    'Compara_Ortholog/Alignment', 'Ortholog Alignment',
+    [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
+    { 'availability'  => 'database:compara',
+      'no_menu_entry' => 1 }
+  ));
+  my $pl_node = $self->create_node(
+    'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
+    [qw(paralogues  EnsEMBL::Web::Component::Gene::ComparaParalogs)],
+    { 'availability' => 'database:compara', 
+           'concise' => 'Paralogues' }
+  );
+  $compara_menu->append( $pl_node );
+  $pl_node->append( $self->create_subnode(
+    'Compara_Paralog/Alignment', 'Paralog Alignment',
+    [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
+    { 'availability'  => 'database:compara',
+      'no_menu_entry' => 1 }
+  ));
+  $compara_menu->append( $self->create_node(
+    'Family', 'Protein families ([[counts::families]])',
+    [qw(family EnsEMBL::Web::Component::Gene::Family
+        genes    EnsEMBL::Web::Component::Gene::FamilyGenes)],
     { 'availability' => 1, 'concise' => 'Protein families' }
   ));
 
