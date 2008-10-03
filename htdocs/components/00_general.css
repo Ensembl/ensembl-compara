@@ -127,3 +127,7 @@ dd { margin-bottom:1em; }
 }
 
 .syntax-error { color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]] }
+
+.error { margin: 0.2em; border-color:1px solid black [[ALERT_BORDER]]; color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]]; padding: 0; }
+.error h3 { padding: 2px 0.5em; background-color:[[ALERT_BORDER]];color:[[ALERT_BG]];margin: 0; }
+.error-pad { padding: 0.5em }
