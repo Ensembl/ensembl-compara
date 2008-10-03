@@ -181,6 +181,7 @@ sub _getHref {
     delete $actions{'href'};
   }
 
+  $actions{'alt'} ||= '';
   return join q(), map { qq( $_="$actions{$_}") } keys %actions;
 }
 
