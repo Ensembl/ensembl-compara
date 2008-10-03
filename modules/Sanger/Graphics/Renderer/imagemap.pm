@@ -83,7 +83,7 @@ sub render_Circle {
   $y2 += 1;
   $x2 += 1;
 
-  $self->{'canvas'} = qq(<area coords="$x1 $y1 $x2 $y2"$href alt="" />\n).$self->{'canvas'};
+  $self->{'canvas'} = qq(<area coords="$x1 $y1 $x2 $y2"$href />\n).$self->{'canvas'};
   return;
 }
 
@@ -99,7 +99,7 @@ sub render_Poly {
   $href or return;
 
   my $pointslist = join q( ), map { int } @{$glyph->pixelpoints()};
-  $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href alt="" />\n).$self->{'canvas'} ;
+  $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href />\n).$self->{'canvas'} ;
   return;
 }
 
@@ -134,7 +134,7 @@ sub render_Line {
     $x2-$u_y,$y2+$u_x,
     $x2+$u_x,$y2+$u_y );
 
-  $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href alt="" />\n).$self->{'canvas'} ;
+  $self->{'canvas'} = qq(<area shape="poly" coords="$pointslist"$href />\n).$self->{'canvas'} ;
   return;
 
 }
@@ -151,6 +151,7 @@ sub _getHref {
 
       if($_ eq 'alt' || $_ eq 'title') {
 	$actions{'title'} = CGI::escapeHTML($X);
+	$actions{'alt'}   = CGI::escapeHTML($X);
       }
     }
   }
