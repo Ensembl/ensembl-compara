@@ -24,7 +24,7 @@ sub get_block_features {
 
 sub draw_features {
 
-  ### Description: gets features for block features and passes to render_block_features
+  ### Description: gets features for block features and passes to draw_block_features
   ### Draws wiggles if wiggle flag is 1
   ### Returns 1 if draws blocks. Returns 0 if no blocks drawn
 
@@ -50,9 +50,9 @@ sub draw_features {
 	$drawn_wiggle_flag = "wiggle";
 	@features   = sort { $a->score <=> $b->score  } @features;
 	my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0);
-	$self->render_wiggle_plot(\@features, $wiggle_colour, $min_score, $max_score, $result_set->display_label);
+	$self->draw_wiggle_plot(\@features, $wiggle_colour, $min_score, $max_score, $result_set->display_label);
       }
-      $self->render_space_glyph() if $drawn_wiggle_flag;
+      $self->draw_space_glyph() if $drawn_wiggle_flag;
     }
 
     # Block features
@@ -61,12 +61,12 @@ sub draw_features {
       my $features = $fset->get_AnnotatedFeatures_by_Slice($slice ) ;
       next unless @$features;
       $drawn_flag = "block_features";
-      $self->render_block_features( $features, $colour );
-      $self->render_track_name($display_label, $colour);
+      $self->draw_block_features( $features, $colour );
+      $self->draw_track_name($display_label, $colour);
     }
   }
 
-  $self->render_space_glyph() if $drawn_flag;
+  $self->draw_space_glyph() if $drawn_flag;
   my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
   return $error;
 }

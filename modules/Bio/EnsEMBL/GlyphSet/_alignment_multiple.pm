@@ -50,13 +50,12 @@ sub draw_features {
   my $pix_per_bp     = $self->scalex;
   my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
 
-  my $feature_type   = $self->my_config( 'constrained_elements' ) ?
-                         'constrained_element' :
-			 'feature';
+  my $feature_type   = $self->my_config( 'constrained_element' ) ?  'element' : 'feature';
 
   my $feature_colour = $self->my_colour( $feature_type );
   my $feature_text   = $self->my_colour( $feature_type, 'text' );
-
+  my $name           = $self->my_config('short_name') || $self->my_config('name');
+     $feature_text   =~ s/\[\[name\]\]/$name/;
   my $h              = $self->get_parameter( 'opt_halfheight') ? 4 : 8;
   my $chr            = $self->{'container'}->seq_region_name;
   my $other_species  = $self->my_config( 'species' );
@@ -73,6 +72,7 @@ sub draw_features {
   my $X = -1e8;
 
   $self->timer_push('setup');
+unless( $wiggle eq 'wiggle' ) {
   my $els = $self->element_features;
   $self->timer_push('got features',undef,'fetch');
   my @T = 
@@ -148,8 +148,9 @@ sub draw_features {
   }
   $self->timer_push( 'drawn features' );
   $self->_offset($h);
-  $self->render_track_name($caption, $feature_colour) if $drawn_block;
-
+  $self->draw_track_name($feature_text, $feature_colour) if $drawn_block;
+}
+warn "WIGGLE $wiggle....";
   my $drawn_wiggle = $wiggle ? $self->wiggle_plot : 1;
   return 0 if $drawn_block && $drawn_wiggle;
 
@@ -248,17 +249,19 @@ sub wiggle_plot {
   $self->timer_push( 'got score features',undef,'fetch');
   return 0 unless scalar @$features;
 
-  $self->render_space_glyph();
-#   warn ">>>> @$features";
-
+warn "GOT FEATURES";
+  $self->draw_space_glyph();
+warn "DRAWN SPACER";
   my $min_score = 0;
   my $max_score = 0;
+warn "DRAWING FEATURES...";
   foreach (@$features) {
     my $s = $_->score;
     $min_score = $s if $s < $min_score;
     $max_score = $s if $s > $max_score;
   }
-  $self->render_wiggle_plot(
+warn "YAY $min_score $max_score";
+  $self->draw_wiggle_plot(
     $features,                      ## Features array
     { 'min_score' => $min_score, 'max_score' => $max_score }
   );

@@ -39,36 +39,37 @@ sub draw_features {
   foreach my $feature ( @$block_features ) {
     warn $feature; 
     # render wiggle if wiggle
-   if ($wiggle) { 
-	foreach my $result_set  ( @{ $feature->get_displayable_supporting_sets() } ){ 
-	  warn $result_set;
-	 #get features for slice and experimental chip set
-	 my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; warn scalar @features;
-	 next unless @features; 	
-	 $drawn_wiggle_flag = "wiggle";
-	 @features   = sort { $a->score <=> $b->score  } @features;
-	 my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0); 
-#	 $self->render_wiggle_plot(\@features, $min_score, $max_score, $result_set->display_label, $wiggle_colour );
-   $self->render_wiggle_plot(
-    \@features,                      ## Features array
-    { 'min_score' => $min_score, 'max_score' => $max_score }
-  );
-
-   }
-      $self->render_space_glyph() if $drawn_wiggle_flag;
-  }
+    if( $wiggle ) { 
+      foreach my $result_set  ( @{ $feature->get_displayable_supporting_sets() } ){ 
+        warn $result_set;
+     #get features for slice and experimental chip set
+        my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; warn scalar @features;
+        next unless @features;     
+        $drawn_wiggle_flag = "wiggle";
+        @features   = sort { $a->score <=> $b->score  } @features;
+        my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0); 
+#     $self->render_wiggle_plot(\@features, $min_score, $max_score, $result_set->display_label, $wiggle_colour );
+        $self->draw_wiggle_plot(
+          \@features,                      ## Features array
+          { 'min_score' => $min_score, 'max_score' => $max_score }
+        );
+      }
+      $self->draw_space_glyph() if $drawn_wiggle_flag;
+    }
 
     # Block feature 
-   my $fset = $feature->get_displayable_product_FeatureSet();   
-      my $display_label = $fset->display_label();
-      my $features = $fset->get_Features_by_Slice($slice ) ;
-      next unless @$features;
-      $drawn_flag = "block_features";
-      $self->render_block_features( $features, $colour );
-     $self->render_track_name($display_label, $colour);
+    if( !$wiggle || $wiggle eq 'both' ) {
+       my $fset = $feature->get_displayable_product_FeatureSet();   
+       my $display_label = $fset->display_label();
+       my $features = $fset->get_Features_by_Slice($slice ) ;
+       next unless @$features;
+       $drawn_flag = "block_features";
+       $self->draw_block_features( $features, $colour );
+       $self->draw_track_name($display_label, $colour);
+    }
   }
 
-  $self->render_space_glyph() if $drawn_flag;
+  $self->draw_space_glyph() if $drawn_flag;
   my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
   return $error;
 }

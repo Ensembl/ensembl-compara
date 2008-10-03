@@ -3,11 +3,20 @@ package Bio::EnsEMBL::GlyphSet_wiggle_and_block;
 use strict;
 use base qw(Bio::EnsEMBL::GlyphSet);
 
-sub _init {
-  my ($self) = @_;
-  my $slice = $self->{'container'};
-  my $max_length    = $self->my_config( 'threshold' )  || 500;
-  my $slice_length  = $slice->length;
+sub draw_error {
+  my($self, $string ) = @_;
+}
+sub render_compact        { return $_[0]->_render();         }
+sub render_signal_map     { return $_[0]->_render('wiggle'); }
+sub render_signal_feature { return $_[0]->_render('both');   }
+
+sub _render { ## Show both map and features
+  my $self = shift;
+
+## Check to see if we draw anything because of size!
+
+  my $max_length    = $self->my_config( 'threshold' ) || 500;
+  my $slice_length  = $self->{'container'}->length;
   my $wiggle_name   = $self->my_config('wiggle_name') || $self->my_config('label') ;
 
   if($slice_length > $max_length*1010) {
@@ -16,28 +25,16 @@ sub _init {
     return 1;
   }
 
-  my %drawn_flag;
-  my $error;
-  if ( $self->my_config('compact') ) {
-    $drawn_flag{ 'wiggle' } = 1;
-    $error =  $self->draw_features;
-  }
+## Now we try and draw the features
+  my $error = $self->draw_features( @_ );
 
-  # If no blocks are drawn or on expand mode: draw wiggles
-  if ( $error or !$self->my_config('compact') ) {
-    $error =  $self->draw_features( 'wiggle' );
-  }
-  $self->timer_push('finished');
-  return unless $error && $self->get_parameter( 'opt_empty_tracks')==1;
-
-  # Error messages ---------------------
+  return unless $error && $self->{'config'}->get_parameter('opt_empty_tracks')==1;
   my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset );
   $self->_offset($height + 4);
   return 1;
 }
 
-
-sub render_block_features {
+sub draw_block_features {
 
   ### Predicted features
   ### Draws the predicted features track
@@ -69,7 +66,7 @@ sub render_block_features {
 }
 
 
-sub render_wiggle_plot {
+sub draw_wiggle_plot {
   ### Wiggle plot
   ### Args: array_ref of features in score order, colour, min score for features, max_score for features, display label
   ### Description: draws wiggle plot using the score of the features
@@ -90,6 +87,8 @@ sub render_wiggle_plot {
   my $colour          = $self->my_colour('score')|| 'blue';
   my $axis_colour     = $self->my_colour('axis') || 'red';
   my $label           = $self->my_colour('score','text');
+  my $name            = $self->my_config('short_name') || $self->my_config('name');
+     $label =~ s/\[\[name\]\]/$name/;
 
   # Draw the axis ------------------------------------------------
   $self->push( $self->Line({ # horzi line
@@ -205,7 +204,7 @@ sub render_wiggle_plot {
 }
 
 
-sub render_track_name {
+sub draw_track_name {
 
   ### Predicted features
   ### Draws the name of the predicted features track
@@ -238,7 +237,7 @@ sub render_track_name {
 }
 
 
-sub render_space_glyph {
+sub draw_space_glyph {
 
   ### Draws a an empty glyph as a spacer
   ### Arg1 : (optional) integer for space height,
