@@ -71,8 +71,8 @@ sub _draw_karyotype {
   my $image    = $object->new_karyotype_image();
 
   ## Create highlights - arrows and outline box
-  my %highlights1 = ('style' => 'rharrow');
-  my %highlights2 = ('style' => 'outbox');
+  my %all_hits = ('style' => 'rharrow');
+  my %top_hit  = ('style' => 'outbox');
 
   # Create per-hit glyphs
   my @glyphs;
@@ -89,23 +89,25 @@ sub _draw_karyotype {
     my $colour_id = int( ($pct_id-1)/20 );
     my $colour    = $colours[ $colour_id ];
 
-    $highlights1{$chr} ||= [];
-    push( @{$highlights1{$chr}}, $config );
+    $config->{'col'}    = $colour;
+    $config->{'start'}  = $chr_start;
+    $config->{'end'}    = $chr_end;
+    $config->{'score'}  = $score;
 
     if( $first ){
       $first = 0;
-      $highlights2{$chr} ||= [];
-      push ( @{$highlights2{$chr}}, { start => $chr_start,
-                                      end   => $chr_end,
-                                      score => $score,
-                                      col   => $colour } );
+      $top_hit{$chr} ||= [];
+      push ( @{$top_hit{$chr}}, $config );
     }
+    $all_hits{$chr} ||= [];
+    push( @{$all_hits{$chr}}, $config );
+
 
   }
 
   $image->image_name = "blast-karyotype";
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view");
-  my $pointers = [\%highlights1, \%highlights2];
+  my $pointers = [\%all_hits, \%top_hit];
   $image->karyotype( $object, $pointers, $config_name );
 
   return $image->render;
