@@ -31,7 +31,7 @@ sub content {
 
   $wuc->modify_configs( ## Turn on track associated with this db/logic name
     [$wuc->get_track_key( 'transcript', $transcript )],
-    {qw(on on show_labels off)}  ## also turn off the transcript labels...
+    {qw(display on show_labels off)}  ## also turn off the transcript labels...
   );
 
   $wuc->modify_configs( ## Show the ruler only on the same strand as the transcript...
@@ -40,6 +40,7 @@ sub content {
   );
 
   $wuc->set_parameter( 'single_Transcript' => $transcript->Obj->stable_id );
+  $wuc->set_parameter( 'single_Gene' => $transcript->gene->stable_id );
 
   $wuc->tree->dump("Tree", '[[caption]]' );
 
