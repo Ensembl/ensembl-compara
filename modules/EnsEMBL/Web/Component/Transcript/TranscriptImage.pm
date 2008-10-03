@@ -40,7 +40,7 @@ sub content {
   );
 
   $wuc->set_parameter( 'single_Transcript' => $transcript->Obj->stable_id );
-  $wuc->set_parameter( 'single_Gene' => $transcript->gene->stable_id );
+  $wuc->set_parameter( 'single_Gene'       => $transcript->gene->stable_id ) if $transcript->gene;
 
   $wuc->tree->dump("Tree", '[[caption]]' );
 
