@@ -37,82 +37,86 @@ sub counts {
 }
 
 sub count_prot_domains {
-    my $self = shift;
-    my $c = scalar(@{$self->translation_object->get_protein_domains()});
-    $c   += map{ @{$self->translation_object->get_all_ProteinFeatures($_)} } qw( tmhmm SignalP ncoils Seg );
-    return $c;
+  my $self = shift;
+  return 0 unless $self->translation_object;
+  my $c = scalar(@{$self->translation_object->get_protein_domains()});
+  $c   += map{ @{$self->translation_object->get_all_ProteinFeatures($_)} } qw( tmhmm SignalP ncoils Seg );
+  return $c;
 }
 
 sub count_prot_variations {
-    my $self = shift;
-    my $snps = $self->translation_object->pep_snps();
-    my $c = 0;
-    foreach my $residue (@$snps){
-	next if !$residue->{'allele'};
-	$c++;
-    }
-    return $c;
+  my $self = shift;
+  return 0 unless $self->translation_object;
+  my $snps = $self->translation_object->pep_snps();
+  my $c = 0;
+  foreach my $residue (@$snps){
+    next if !$residue->{'allele'};
+    $c++;
+  }
+  return $c;
 }
 
 sub count_supporting_evidence_old {
-    my $self = shift;
-    my $trans = $self->Obj;
-    my $evi_count = 0;
-    my %c;
-    foreach my $evi (@{$trans->get_all_supporting_features}) {
-	my $hit_name = $evi->hseqname;
-	$c{$hit_name}++;
+  my $self = shift;
+  my $trans = $self->Obj;
+  my $evi_count = 0;
+  my %c;
+  foreach my $evi (@{$trans->get_all_supporting_features}) {
+    my $hit_name = $evi->hseqname;
+    $c{$hit_name}++;
+  }
+  #only count transcript_supporting_features for vega database genes
+  return scalar(keys(%c)) if ($self->db_type eq 'Vega');
+  foreach my $exon (@{$trans->get_all_Exons()}) {
+    foreach my $evi (@{$exon->get_all_supporting_features}) {
+      my $hit_name = $evi->hseqname;
+      $c{$hit_name}++;
     }
-    #only count transcript_supporting_features for vega database genes
-    return scalar(keys(%c)) if ($self->db_type eq 'Vega');
-    foreach my $exon (@{$trans->get_all_Exons()}) {
-	foreach my $evi (@{$exon->get_all_supporting_features}) {
-	    my $hit_name = $evi->hseqname;
-	    $c{$hit_name}++;
-	}
-    }
-    return scalar(keys(%c));
+  }
+  return scalar(keys(%c));
 }
 
 sub count_supporting_evidence {
-    my $self = shift;
-    my $type = $self->get_db;
-    my $dbc = $self->database($type)->dbc;
-    my %all_evidence;
-    if ($self->db_type ne 'Vega'){
-	my $sql = qq(
-                    SELECT feature_type, feature_id
-                    FROM transcript_supporting_feature
-                    WHERE transcript_id = ?);
-	my $sth = $dbc->prepare($sql);
-	$sth->execute($self->Obj->dbID);
-	while (my ($type,$feature_id) = $sth->fetchrow_array) {
-	    $all_evidence{$type}{$feature_id}++;
-	}
-    }
+  my $self = shift;
+  my $type = $self->get_db;
+  my $dbc = $self->database($type)->dbc;
+  my %all_evidence;
+  if( $self->db_type ne 'Vega' ){
     my $sql = qq(
-                SELECT feature_type, feature_id
-                  FROM supporting_feature sf, exon_transcript et
-                 WHERE et.exon_id = sf.exon_id
-                   AND et.transcript_id = ?);
+      SELECT feature_type, feature_id
+        FROM transcript_supporting_feature
+       WHERE transcript_id = ?);
     my $sth = $dbc->prepare($sql);
     $sth->execute($self->Obj->dbID);
-    while (my ($type,$feature_id) = $sth->fetchrow_array) {
-	$all_evidence{$type}{$feature_id}++;
-    };
-    my %names = ('dna_align_feature'     => 'dna_align_feature_id',
-	       'protein_align_feature' => 'protein_align_feature_id');
-    my %hits;
-    my $dbh = $dbc->db_handle;
-    while ( my ($evi_type, $hits) = each %all_evidence) {
-	foreach my $hit_id (keys %$hits) {
-	    my $type = $names{$evi_type};
-	    my $sql = "SELECT hit_name FROM $evi_type where $type = $hit_id";
-	    my ($hit_name) = $dbh->selectrow_array($sql);
-	    $hits{$hit_name}++
-	}
+    while ( my ($type,$feature_id) = $sth->fetchrow_array ) {
+      $all_evidence{$type}{$feature_id}++;
     }
-    return scalar(keys %hits);
+  }
+  my $sql = qq(
+    SELECT feature_type, feature_id
+      FROM supporting_feature sf, exon_transcript et
+     WHERE et.exon_id = sf.exon_id
+       AND et.transcript_id = ?);
+  my $sth = $dbc->prepare($sql);
+  $sth->execute($self->Obj->dbID);
+  while (my ($type,$feature_id) = $sth->fetchrow_array) {
+    $all_evidence{$type}{$feature_id}++;
+  };
+  my %names = (
+    'dna_align_feature'     => 'dna_align_feature_id',
+    'protein_align_feature' => 'protein_align_feature_id'
+  );
+  my %hits;
+  my $dbh = $dbc->db_handle;
+  while ( my ($evi_type, $hits) = each %all_evidence) {
+    foreach my $hit_id (keys %$hits) {
+      my $type = $names{$evi_type};
+      my $sql = "SELECT hit_name FROM $evi_type where $type = $hit_id";
+      my ($hit_name) = $dbh->selectrow_array($sql);
+      $hits{$hit_name}++
+    }
+  }
+  return scalar(keys %hits);
 }
 
 sub count_similarity_matches {
@@ -193,22 +197,24 @@ sub count_oligos {
 }
 
 sub count_go {
-    my $self = shift;
-    my $type = $self->get_db;
-    my $dbc = $self->database($type)->dbc;
-    my $tl_dbID = $self->Obj->translation->dbID;
-    my $sql = qq(
-                SELECT count(distinct(x.display_label))
-                  FROM object_xref ox, xref x, external_db edb
-                 WHERE ox.xref_id = x.xref_id
-                   AND x.external_db_id = edb.external_db_id
-                   AND edb.db_name = 'GO'
-                   AND ox.ensembl_object_type = 'Translation'
-                   AND ox.ensembl_id = ?);
-    my $sth = $dbc->prepare($sql);
-    $sth->execute($self->transcript->translation->dbID);
-    my $c = $sth->fetchall_arrayref->[0][0];
-    return $c;
+  my $self = shift;
+  return 0 unless $self->Obj->translation;
+  my $type = $self->get_db;
+  my $dbc = $self->database($type)->dbc;
+  my $tl_dbID = $self->Obj->translation->dbID;
+  my $sql = qq(
+    SELECT count(distinct(x.display_label))
+      FROM object_xref ox, xref x, external_db edb
+     WHERE ox.xref_id = x.xref_id
+       AND x.external_db_id = edb.external_db_id
+       AND edb.db_name = 'GO'
+       AND ox.ensembl_object_type = 'Translation'
+       AND ox.ensembl_id = ?
+  );
+  my $sth = $dbc->prepare($sql);
+  $sth->execute($self->transcript->translation->dbID);
+  my $c = $sth->fetchall_arrayref->[0][0];
+  return $c;
 }
 
 sub get_database_matches {
