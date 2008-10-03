@@ -1,64 +1,32 @@
-#########
-# Author: rmp
-# Maintainer: rmp
-# Created: 2003
-# Last Modified: 2003-05-02
-# configuration for BLAST HSP-drawing canvases
-#
 package EnsEMBL::Web::ImageConfig::hsp_query_plot;
 use strict;
-use vars qw(@ISA);
-use EnsEMBL::Web::ImageConfig;
-@ISA = qw( EnsEMBL::Web::ImageConfig );
-#use Sanger::Graphics::WebImageConfig;
-#@ISA = qw(Sanger::Graphics::WebImageConfig);
+use base qw( EnsEMBL::Web::ImageConfig );
 
 sub init {
-  my ($self) = @_;
-  #my $cmap   = $self->colourmap();
+  my ($self) = shift;
 
-  $self->{'general'}->{'queryview'} = 
-    {
-     '_artefacts' => [
-                      'HSP_query_plot',
-                      'HSP_scalebar',
-                      'HSP_coverage',
-                     ],
-     '_options'   => [qw(on pos col hi known unknown)],
-     '_names'     => {
-                      'on'  => 'activate',
-                      'pos' => 'position',
-                      'col' => 'colour',
-                      'dep' => 'bumping depth',
-                      'str' => 'strand',
-                      'hi'  => 'highlight colour',
-                     },
-     '_settings' => {
-                     'opt_zclick' => 1,
-                     'width'           => 600,
-                     'bgcolor'   => 'background1',
-                    },
-     'HSP_query_plot' => {
-                          'dep'  => 50, 
-                          'on'   => "on",
-                          'pos'  => '30',
-                          'txt'  => 'black',
-                          'str'  => 'b', 
-                          'col'  => 'red',
-                          'mode' => "allhsps",
-                         },
-     'HSP_scalebar' => {
-                    'on'         => "on",
-                    'pos'        => '11',
-                    'col'        => 'black',
-                    'str'        => 'f',
-                    'label'      => 'foobar',
-                   },
-     'HSP_coverage' => {
-                        'on'         => "on",
-                        'pos'        => '20',
-                        'str'        => 'f',
-                       },
-    };
+  $self->set_parameters({
+   'title'         => 'Alignment panel',
+    'show_buttons'  => 'no',  # do not show +/- buttons
+    'show_labels'   => 'yes', # show track names on left-hand side
+    'label_width'   => 113,   # width of labels on left-hand side
+    'margin'        => 5,     # margin
+    'spacing'       => 2,     # spacing
+  });
+
+  $self->create_menus(
+    'other'      => 'Decorations',
+    'alignments' => 'Alignment',
+  );
+
+  $self->add_tracks( 'other',
+    [ 'scalebar',  '',            'HSP_scalebar',        { 'display' => 'normal',  'strand' => 'f', 'name' => 'Scale bar', 'col' => 'black', 'pos' => 11  } ],
+  );
+
+  $self->add_tracks('alignments',
+    ['query_plot',    '+ hsps',     'HSP_query_plot', {'display' => 'normal',  'strand' => 'b', 'name' => 'HSP Query Plot', 'dep' => 50, 'txt' => 'black', 'col' => 'red', 'mode' => 'allhsps', 'pos' => 30}],  
+    ['coverage',    'coverage',       'HSP_coverage',   {'display' => 'normal',  'strand' => 'f', 'name' => 'HSP Coverage', 'pos' => 20}],  
+  );
+
 }
 1;
