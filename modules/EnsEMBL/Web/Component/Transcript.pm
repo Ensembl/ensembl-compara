@@ -18,6 +18,10 @@ no warnings "uninitialized";
 ## No sub description <- uses Gene's description
 ## No sub location    <- uses Gene's location call
 
+sub non_coding_error {
+  my $self = shift;
+  return $self->_error( 'No protein product', '<p>This transcript does not have a protein product</p>' );
+}
 sub Summary {
   my( $panel, $object ) =@_;
   my $ob = $object->Obj;

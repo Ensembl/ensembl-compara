@@ -19,6 +19,8 @@ sub caption {
 sub content {
   my $self = shift;
   my $object   = $self->object;
+  return $self->non_coding_error unless $object->translation_object;
+
   my $snps = $object->translation_object->pep_snps();
   return unless @$snps;
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );

@@ -18,6 +18,8 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
+  return $self->non_coding_error unless $object->translation_object;
+
   my $label = 'GO';
   unless ($object->__data->{'links'}){
     my @similarity_links = @{$object->get_similarity_hash($object->Obj)};

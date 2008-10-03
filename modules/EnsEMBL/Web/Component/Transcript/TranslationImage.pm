@@ -15,6 +15,8 @@ sub content {
   my $self = shift;
   my $transcript = $self->object;
   my $object     = $transcript->translation_object;
+  return $self->non_coding_error unless $object;
+
   my $wuc        = $object->get_imageconfig( 'protview' );
      $wuc->set_parameters({
        'container_width' => $object->Obj->length,

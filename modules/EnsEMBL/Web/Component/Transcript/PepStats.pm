@@ -17,7 +17,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $tl = $object->Obj->translation;
-
+  return '' unless $tl;
   my $attributeAdaptor = $object->database('core')->get_AttributeAdaptor();
   my $attributes = $attributeAdaptor->fetch_all_by_Translation($tl);
   my $stats_to_show = '';

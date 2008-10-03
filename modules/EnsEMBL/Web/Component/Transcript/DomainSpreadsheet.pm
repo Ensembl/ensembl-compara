@@ -19,6 +19,8 @@ sub caption {
 sub content {
   my $self = shift;
   my $object   = $self->object;
+  return $self->non_coding_error unless $object->translation_object;
+
   my $domains = $object->translation_object->get_protein_domains();
   my @other_domains = map { @{$object->translation_object->get_all_ProteinFeatures($_)} } qw( tmhmm SignalP ncoils Seg );
   return unless (@other_domains || @$domains) ;
