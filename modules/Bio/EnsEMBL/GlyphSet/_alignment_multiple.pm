@@ -108,6 +108,7 @@ unless( $wiggle eq 'wiggle' ) {
 
     my $id = 10; 
     my $max_contig = 250000;
+if(0){
     foreach my $species_name (sort keys %{$f->{fragments}}) {
       $zmenu->{"$id:$species_name"} = '';
       $id++;
@@ -120,7 +121,7 @@ unless( $wiggle eq 'wiggle' ) {
         $C++;
       }
     }
-
+}
     if($DRAW_CIGAR) {
       my $TO_PUSH = $self->Composite({
         'href'  => $href,
