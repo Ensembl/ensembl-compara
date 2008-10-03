@@ -6,8 +6,8 @@
 
 #locations_link { cursor: pointer; font-weight: bold; background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; padding: 0 0.5em; display: inline }
 #locations { width:30em; border-collapse: collapse; margin: 0.5em 0 0.5em 4em;  cursor: pointer;  }
-#locations td { border: 1px solid [[TINT_TEXT]]; margin: 0; text-align: center; width: 15em }
-#locations th { border: 1px solid [[TINT_TEXT]]; margin: 0; text-align: center; width: 15em }
+#locations td { border: 1px solid [[TINT_BORDER]]; margin: 0; text-align: center; width: 15em }
+#locations th { border: 1px solid [[TINT_BORDER]]; margin: 0; text-align: center; width: 15em }
 #locations .active { background-color:  [[TINT_BG]] }
 
 
