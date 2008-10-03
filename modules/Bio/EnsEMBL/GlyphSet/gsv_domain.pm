@@ -9,11 +9,13 @@ use Data::Dumper;
 
 sub _init {
   my ($self) = @_;
-  my $type = $self->check(); warn "TEST" .$type;
-  return unless defined $type;
+  my $type = $self->check();
+  return unless defined $type; warn $type;
+  
+  return unless $self->strand() == -1; 
+  my $key = lc($self->my_config('logicnames')).'_hits'; 
+  warn $key;
 
-  return unless $self->strand() == -1;
-  my $key = lc($self->my_config('logic_name')).'_hits';
 
   my $Config        = $self->{'config'};
   my $trans_ref = $Config->{'transcript'};
@@ -28,7 +30,7 @@ sub _init {
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my @res = $self->get_text_width( 0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize );
   my $th = $res[3];
-  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'}; 
   
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -40,7 +42,7 @@ sub _init {
     my $gene = $trans_ref->{'gene'};
     my $transcript = $trans_ref->{'transcript'};
 
-  my @bitmap = undef;
+  my @bitmap = undef; #foreach (keys %$trans_ref){ warn $_;}
   foreach my $domain_ref ( @{$trans_ref->{$key}||[]} ) {
     my($domain,@pairs) = @$domain_ref;
     my $Composite3 = $self->Composite({
