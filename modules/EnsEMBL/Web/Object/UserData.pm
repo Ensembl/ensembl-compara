@@ -60,18 +60,7 @@ sub get_das_servers {
 sub get_das_server_dsns {
   my ($self, $species, $name) = @_;
   
-  # Get and "fix" the server URL
-  my $server = $self->param('das_server');
-  if ($server !~ /^\w+\:/) {
-    $server = "http://$server";
-  }
-  if ($server =~ /^http/) {
-    $server =~ s|/*$||;
-    if ($server !~ m{/das$}) {
-      $server = "$server/das";
-    }
-  }
-  $self->param('das_server', $server);
+  my $server = $self->_server_param();
   my $sources;
   
   try {
@@ -101,6 +90,24 @@ sub get_das_server_dsns {
   };
   
   return $sources;
+}
+
+sub _server_param {
+  my $self = shift;
+  
+  # Get and "fix" the server URL
+  my $server = $self->param('das_server');
+  if ($server !~ /^\w+\:/) {
+    $server = "http://$server";
+  }
+  if ($server =~ /^http/) {
+    $server =~ s|/*$||;
+    if ($server !~ m{/das1?$}) {
+      $server = "$server/das";
+    }
+  }
+  $self->param('das_server', $server);
+  return $server;
 }
 
 1;

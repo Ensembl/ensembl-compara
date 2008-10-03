@@ -298,6 +298,10 @@ sub select_server {
   my $self = shift;
   my $object = $self->object;
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
+  my $current_species = $ENV{ENSEMBL_SPECIES};
+  if ($current_species eq 'common') {
+    $current_species = '';
+  }
 
   $self->title('Select a DAS server or data file');
 
@@ -319,7 +323,7 @@ sub select_server {
   $self->add_element('type'  => 'String',
                      'name'  => '_das_species_filter',
                      'label' => 'Species',
-                     'value' => $object->param('_das_species_filter'),
+                     'value' => $object->param('_das_species_filter') || $current_species,
                      'notes' => sprintf '( e.g. %s )', $object->species_defs->ENSEMBL_PRIMARY_SPECIES);
   $self->add_element('type'  => 'String',
                      'name'  => '_das_name_filter',
@@ -539,12 +543,7 @@ sub attach_das {
   
   my $expand_coords = $self->object->param('coords');
   if ($expand_coords) {
-    my ($name, $version, $species) = split /:/, $expand_coords;
-    $expand_coords = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
-      -name    => $name,
-      -version => $version,
-      -species => $species,
-    );
+    $expand_coords = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_string($expand_coords);
   }
   
   for my $raw ($self->object->param('dsns')) {
@@ -557,6 +556,8 @@ sub attach_das {
     if (!$source->coord_systems) {
       $source->coord_systems([$expand_coords]);
     }
+    
+    
     if ($self->object->get_session->add_das($source)) {
       push @success, $source->label;
     } else {
