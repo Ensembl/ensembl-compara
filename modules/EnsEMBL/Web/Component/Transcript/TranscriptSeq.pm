@@ -19,7 +19,8 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $show   = $object->param('show') || '';
-  my $number = $object->param('number' || 'off');
+  my $number = $object->param('number') || 'no';
+  my $seq_cols  = $object->param('seq_cols') || 60;
   my $html = ''; 
 
   if( $show eq 'plain' ) {
@@ -33,14 +34,13 @@ sub content {
     $fasta =~ s/([acgtn\*]+)/'<span style="color: blue">'.uc($1).'<\/span>'/eg;
     $html = "<pre>" . $fasta ."</pre>";
     return $html;
-  }
- elsif( $show eq 'rna' ) {
+  } elsif( $show eq 'rna' ) {
     my @strings = $object->rna_notation;
     my @extra_array;
     foreach( @strings ) {
-      s/(.{60})/$1\n/g;
+      s/(.{$seq_cols})/$1\n/g;
       my @extra = split /\n/;
-      if( $number eq 'on' ) {
+      if( $number eq 'yes' ) {
         @extra = map { "       $_\n" } @extra;
       } else {
         @extra = map { "$_\n" } @extra;
@@ -63,13 +63,13 @@ sub content {
   # If $show ne rna or plan
   my( $cd_start, $cd_end, $trans_strand, $bps ) = $object->get_markedup_trans_seq;
   my $trans  = $object->transcript;
-  my $wrap = 60;
+  my $wrap = $seq_cols;
   my $count = 0;
   my ($pep_previous, $ambiguities, $previous, $coding_previous, $output, $fasta, $peptide)  = '';
   my $coding_fasta;
   $output .= "<pre>";
   my $pos = 1;
-  my $SPACER = $number eq 'on' ? '       ' : '';
+  my $SPACER = $number eq 'yes' ? '       ' : '';
   my %bg_color = (  # move to constant MARKUP_COLOUR
     'utr'      => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND1'},
     'c0'       => 'ffffff',
@@ -90,7 +90,7 @@ sub content {
    if($count == $wrap) {
       my( $NUMBER, $PEPNUM ) = ('','');
       my $CODINGNUM;
-      if($number eq 'on') {
+      if($number eq 'yes') {
         $NUMBER = sprintf("%6d ",$pos);
         $PEPNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ",int( ($pos-$cd_start+3)/3) ) : $SPACER ;
         $CODINGNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ", $pos-$cd_start+1 ) : $SPACER ;
@@ -163,7 +163,7 @@ sub content {
   }# end foreach bp
 
   my( $NUMBER, $PEPNUM, $CODINGNUM)  = ("", "", "");
-  if($number eq 'on') {
+  if($number eq 'yes') {
     $NUMBER = sprintf("%6d ",$pos);
     $CODINGNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ", $pos-$cd_start +1 ) : $SPACER ;
     $PEPNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ",int( ($pos-$cd_start-1)/3 +1) ) : $SPACER ;

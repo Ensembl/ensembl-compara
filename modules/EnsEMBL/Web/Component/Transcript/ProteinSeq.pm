@@ -21,13 +21,13 @@ sub content {
   my $object = $transcript->translation_object;
   return $self->non_coding_error unless $object;
 
-  my $number     = $object->param('number') || "No";
+  my $number     = $object->param('number') || "no";
   my $show       = $object->param('show') || "snps"; 
   my $peptide    = $object->Obj;
   my $trans      = $object->transcript;
   my $pep_splice = $object->pep_splice_site($peptide);
   my $pep_snps   = $object->pep_snps;;
-  my $wrap       = 60;
+  my $wrap       = $object->param('seq_cols') || 60;
   my $db         = $object->get_db;
   my $pep_id     = $object->stable_id;
   my $pep_seq    = $peptide->seq;
@@ -44,11 +44,11 @@ my @aas = map {{'aa' => $_ }} split //, uc($pep_seq) ; # store peptide seq in ha
   $output .= "<pre>";
   my ($count, $flip, $i) = 0;
   my $pos = 1;
-  my $SPACER = $number eq 'on' ? '       ' : '';
+  my $SPACER = $number eq 'yes' ? '       ' : '';
   foreach (@aas) {                        # build markup
     if($count == $wrap) {
       my $NUMBER = '';
-      if($number eq 'on') {
+      if($number eq 'yes') {
         $NUMBER = sprintf("%6d ",$pos);
         $pos += $wrap;
       }
@@ -96,7 +96,7 @@ my @aas = map {{'aa' => $_ }} split //, uc($pep_seq) ; # store peptide seq in ha
   }
 
   my $NUMBER = '';
-  if($number eq 'on') {
+  if($number eq 'yes') {
     $NUMBER = sprintf("%6d ",$pos); $pos += $wrap;
   }
   $output .= ($show eq 'snps' ? "\n$SPACER" : '' ).$NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
@@ -107,7 +107,7 @@ my @aas = map {{'aa' => $_ }} split //, uc($pep_seq) ; # store peptide seq in ha
   else { ($sel_snps, $sel_exons ) = ''; }
 
   my ( $sel_numbers, $sel_no)=('','');
-  if($number eq'on') { $sel_numbers = ' selected'; }
+  if($number eq 'yes') { $sel_numbers = ' selected'; }
   else {$sel_no=' selected'; }
  
   my $SNP_LINE = exists($object->species_defs->databases->{'DATABASE_VARIATION'}) ? qq(<option value="snps" $sel_snps>Exons/SNPs</option>) : '' ;

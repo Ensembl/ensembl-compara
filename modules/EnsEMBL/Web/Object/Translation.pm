@@ -623,21 +623,19 @@ sub get_pepstats {
 =cut
 
 sub get_pep_seq{
-      my $self = shift;
-      my $peptide_seq ;
-      eval {$peptide_seq = $self->translation->seq ;};
-
-      return undef if (@_);
-      my $number = $self->param('number');   
-      my $wrap = 60;
-      my $pos = 1-$wrap; 
-  
-      if($number eq 'on') {
-        $peptide_seq =~ s|([\w*]{1,$wrap})|sprintf( "%6d %s\n",$pos+=$wrap,"$1")|eg;    
-      } else {
-        $peptide_seq =~ s|([\w*]{1,$wrap})|$1\n|g;    
-      }      
-      return $peptide_seq;
+  my $self = shift;
+  my $peptide_seq ;
+  eval {$peptide_seq = $self->translation->seq ;};
+  return undef if (@_);
+  my $wrap   = $self->param('seq_cols') || 60;
+  my $number = $self->param('number');   
+  my $pos    = 1-$wrap; 
+  if($number eq 'yes') {
+    $peptide_seq =~ s|([\w*]{1,$wrap})|sprintf( "%6d %s\n",$pos+=$wrap,"$1")|eg;    
+  } else {
+    $peptide_seq =~ s|([\w*]{1,$wrap})|$1\n|g;    
+  }      
+  return $peptide_seq;
 }
 
 #----------------------------------------------------------------------
