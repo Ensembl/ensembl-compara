@@ -30,11 +30,7 @@ sub form {
     'type'     => 'DropDown', 'select' => 'select',
     'required' => 'yes',      'name'   => 'seq_cols',
     'values'   => [
-      { 'value' => '30', 'name' => '30 bps' },
-      { 'value' => '45', 'name' => '45 bps' },
-      { 'value' => '60', 'name' => '60 bps' },
-      { 'value' => '90', 'name' => '90 bps' },
-      { 'value' => '120', 'name' => '120 bps' },
+      map {{ 'value' => $_, 'name' => "$_ bps" }} map {$_*15} (2..8)
     ],
     'label'    => "Number of base pairs per row"
   });

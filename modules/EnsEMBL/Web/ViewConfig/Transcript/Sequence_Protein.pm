@@ -6,13 +6,14 @@ sub init {
   my ($view_config) = @_;
 
   $view_config->_set_defaults(qw(
-    exons        on
-    codons       on
-    codingseq    on
-    translation  on
-    rna          on
-    variation    on
-    number       on
+    exons        yes
+    codons       yes
+    codingseq    yes
+    seq_cols         60
+    translation  yes
+    rna          yes
+    variation    yes
+    number       yes
   ));
   $view_config->storable = 1;
 }
@@ -20,7 +21,15 @@ sub init {
 sub form {
   my $view_config = shift;
 
-  warn "FORM CALLED....";
+  $view_config->add_form_element({
+    'type'     => 'DropDown', 'select' => 'select',
+    'required' => 'yes',      'name'   => 'seq_cols',
+    'values'   => [
+      map { {'value' => $_, 'name' => "$_ aa"} } map { 10 * $_ } (3..20)
+    ],
+    'label'    => "Number of amino acids per row"
+  });
+
   $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'exons',       'select' => 'select', 'label'  => 'Show exons' });
   $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'codons',      'select' => 'select', 'label'  => 'Show codons' });
   $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'codingseq',   'select' => 'select', 'label'  => 'Show coding sequence' });
