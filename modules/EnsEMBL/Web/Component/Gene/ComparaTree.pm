@@ -19,20 +19,40 @@ sub caption {
   return undef;
 }
 
+sub _get_details {
+  my $self = shift;
+  my $object = $self->object;
+  my $member = $object->get_compara_Member;
+  return (undef, $self->_error(
+    'No compara member',
+    q(<p>Unable to render gene tree as gene isn't in Comparative genomics database</p>)
+  ));
+
+  my $tree   = $object->get_ProteinTree;
+  return return (undef,$self->_error(
+    'Gene not in protein tree',
+    q(<p>This gene has no orthologues in Ensembl Compara, so a gene tree cannot be built.</p>)
+  ));
+  my $node   = $tree->get_leaf_by_Member($member);
+  return return(undef,$self->_error(
+    'Gene not in tree',
+    sprintf( q(<p>Member %s not in tree %s</p>), $member->stable_id, $tree->node_id )
+  ));
+  return ($member,$tree,$node);
+}
+
 sub content {
   my $self           = shift;
   my $object         = $self->object;
 
   #----------
   # Get the Member and ProteinTree objects 
-  my $member = $object->get_compara_Member || die("No compara Member"); 
-  my $tree   = $object->get_ProteinTree    || die("No ProteinTree");
-  my $node   = $tree->get_leaf_by_Member($member)
-      || die sprintf( "Member %s not in tree %s", 
-                      $member->stable_id, $tree->node_id );
-  
   #----------
   # Draw the tree
+
+  my ( $member,$tree,$node ) = $self->_get_details;
+  return $tree if !defined $member;
+
   my $wuc          = $object->image_config_hash( 'genetreeview' );
   my $image_width  = $object->param( 'image_width' ) || 800;
   my $collapsability = $object->param('collapsability') || 'gene';
@@ -157,7 +177,8 @@ sub content_align {
 
   #----------
   # Get the ProteinTree object
-  my $tree   = $object->get_ProteinTree;
+  my ( $member,$tree,$node ) = $self->_get_details;
+  return $tree if !defined $member;
 
   #----------
   # Return the text representation of the tree
@@ -182,7 +203,8 @@ sub content_text {
 
   #----------
   # Get the ProteinTree object
-  my $tree   = $object->get_ProteinTree;
+  my ( $member,$tree,$node ) = $self->_get_details;
+  return $tree if !defined $member;
 
   #----------
   # Return the text representation of the tree
