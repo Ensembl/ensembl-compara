@@ -214,9 +214,7 @@ sub _init {
     my $row = 0;
     if ($dep > 0){ # we bump
       $img_start = int($img_start * $pix_per_bp);
-      $img_start = 0 if $img_start < 0;
       $img_end   = $BUMP_WIDTH + int( $img_end * $pix_per_bp );
-      $img_end   = $bitmap_length if $img_end > $bitmap_length;
       $img_end   = $img_start if $img_end < $img_start;
       $row = $self->bump_row( $img_start, $img_end );
       next if $row > $dep;
@@ -627,7 +625,7 @@ sub _init {
         });
         $composite->push($tglyph);
       }
-    } elsif( $style ) {
+    } elsif( $style && $label ) {
       if( $style eq 'overlaid' ) {
         if($bp_textwidth < ($end - $start+1)){
           # print STDERR "X: $label - $colours->{'label'}\n";
@@ -647,8 +645,7 @@ sub _init {
         }
       } else {
         my $label_strand = $self->my_config('label_strand');
-        unless( $label_strand eq 'r' && $strand != -1 ||
-	        $label_strand eq 'f' && $strand != 1 ) {
+        unless( $label_strand eq 'r' && $strand != -1 || $label_strand eq 'f' && $strand != 1 ) {
           $rowheight += $H+2;
           my $t = $self->Composite();
           $t->push($composite,$self->Text({
