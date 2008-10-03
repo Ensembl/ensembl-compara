@@ -682,25 +682,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   }
 
   if (!$self->lazy_loading) {
-    # Load all the DnaFrags at once which is much faster, especially for large numbers of blocks
-    # 1. Collect all the dnafrag_ids
-    my $dnafrag_ids = {};
-    foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-      foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
-        $dnafrag_ids->{$this_genomic_align->{dnafrag_id}} = 1;
-      }
-    }
-
-    # 2. Fetch all the DnaFrags
-    my %dnafrags = map {$_->{dbID}, $_}
-        @{$self->db->get_DnaFragAdaptor->fetch_all_by_dbID_list([keys %$dnafrag_ids])};
-
-    # 3. Assign the DnaFrags to the GenomicAligns
-    foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-      foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
-        $this_genomic_align->{'dnafrag'} = $dnafrags{$this_genomic_align->{dnafrag_id}};
-      }
-    }
+    $self->_load_DnaFrags($genomic_align_blocks);
   }
 
   return $genomic_align_blocks;
@@ -1250,7 +1232,7 @@ sub use_autoincrement {
                Bio::EnsEMBL::Compara::GenomicAlignGroup object
   Exceptions : 
   Caller     : internal
-  Status     : at risk
+  Status     : stable
 
 =cut
 
@@ -1274,5 +1256,44 @@ sub _create_GenomicAlign {
   return $new_genomic_align;
 }
 
+
+=head2 _load_DnaFrags
+
+  [Arg  1]   : listref Bio::EnsEMBL::Compara::GenomicAlignBlock objects
+  Example    : $self->_load_DnaFrags($genomic_align_blocks);
+  Description: Load the DnaFrags for all the GenomicAligns in these
+               GenomicAlignBlock objects. This is much faster, especially
+               for a large number of objects, as we fetch all the DnaFrags
+               at once. Note: These DnaFrags are not cached by the
+               DnaFragAdaptor at the moment
+  Returntype : -none-
+  Exceptions : 
+  Caller     : fetch_all_* methods
+  Status     : at risk
+
+=cut
+
+sub _load_DnaFrags {
+  my ($self, $genomic_align_blocks) = @_;
+
+  # 1. Collect all the dnafrag_ids
+  my $dnafrag_ids = {};
+  foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+    foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
+      $dnafrag_ids->{$this_genomic_align->{dnafrag_id}} = 1;
+    }
+  }
+
+  # 2. Fetch all the DnaFrags
+  my %dnafrags = map {$_->{dbID}, $_}
+      @{$self->db->get_DnaFragAdaptor->fetch_all_by_dbID_list([keys %$dnafrag_ids])};
+
+  # 3. Assign the DnaFrags to the GenomicAligns
+  foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+    foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
+      $this_genomic_align->{'dnafrag'} = $dnafrags{$this_genomic_align->{dnafrag_id}};
+    }
+  }
+}
 
 1;
