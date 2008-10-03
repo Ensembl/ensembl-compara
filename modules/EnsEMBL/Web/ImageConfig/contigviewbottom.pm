@@ -9,10 +9,10 @@ sub init {
 
   $self->set_parameters({
     'title'             => 'Detailed panel',
-    'show_buttons'      => 'yes',   # show +/- buttons
+    'show_buttons'      => 'no',   # show +/- buttons
     'button_width'      => 8,       # width of red "+/-" buttons
     'show_labels'       => 'yes',   # show track names on left-hand side
-    'label_width'       => 100,     # width of labels on left-hand side
+    'label_width'       => 113,     # width of labels on left-hand side
     'margin'            => 5,       # margin
     'spacing'           => 2,       # spacing
 
