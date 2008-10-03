@@ -602,11 +602,16 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
               ga1.dnafrag_strand,
               ga1.cigar_line,
               ga1.level_id,
-              ga2.genomic_align_id
+              ga2.genomic_align_id,
+              gab.score,
+              gab.perc_id,
+              gab.length,
+              gab.group_id
           FROM
-              genomic_align ga1, genomic_align ga2
+              genomic_align ga1, genomic_align_block gab, genomic_align ga2
           WHERE 
               ga1.genomic_align_block_id = ga2.genomic_align_block_id
+              AND gab.genomic_align_block_id = ga1.genomic_align_block_id
               AND ga2.method_link_species_set_id = $query_method_link_species_set_id
               AND ga2.dnafrag_id = $query_dnafrag_id
       };
@@ -627,11 +632,11 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my $genomic_align_groups = {};
   my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
       $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line, $level_id,
-      $query_genomic_align_id);
+      $query_genomic_align_id, $score, $perc_id, $length, $group_id);
   $sth->bind_columns(\$genomic_align_id, \$genomic_align_block_id, \$method_link_species_set_id,
       \$dnafrag_id, \$dnafrag_start, \$dnafrag_end, \$dnafrag_strand, \$cigar_line, \$level_id,
-      \$query_genomic_align_id);
-  while ($sth->fetchrow_array) {
+      \$query_genomic_align_id, \$score, \$perc_id, \$length, \$group_id);
+  while ($sth->fetch) {
 
     ## Index GenomicAlign by ga2.genomic_align_id ($query_genomic_align). All the GenomicAlign
     ##   with the same ga2.genomic_align_id correspond to the same GenomicAlignBlock.
@@ -641,6 +646,10 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
               -adaptor => $self,
               -dbID => $genomic_align_block_id,
               -method_link_species_set_id => $method_link_species_set_id,
+              -score => $score,
+              -perc_id => $perc_id,
+              -length => $length,
+              -group_id => $group_id,
               -reference_genomic_align_id => $query_genomic_align_id,
           );
       push(@$genomic_align_blocks, $all_genomic_align_blocks->{$query_genomic_align_id});
@@ -671,7 +680,29 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
     }
     $genomic_align_blocks = $restricted_genomic_align_blocks;
   }
-  
+
+  if (!$self->lazy_loading) {
+    # Load all the DnaFrags at once which is much faster, especially for large numbers of blocks
+    # 1. Collect all the dnafrag_ids
+    my $dnafrag_ids = {};
+    foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+      foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
+        $dnafrag_ids->{$this_genomic_align->{dnafrag_id}} = 1;
+      }
+    }
+
+    # 2. Fetch all the DnaFrags
+    my %dnafrags = map {$_->{dbID}, $_}
+        @{$self->db->get_DnaFragAdaptor->fetch_all_by_dbID_list([keys %$dnafrag_ids])};
+
+    # 3. Assign the DnaFrags to the GenomicAligns
+    foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+      foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns}) {
+        $this_genomic_align->{'dnafrag'} = $dnafrags{$this_genomic_align->{dnafrag_id}};
+      }
+    }
+  }
+
   return $genomic_align_blocks;
 }
 
