@@ -50,7 +50,7 @@ sub _content {
     [ 'transcripts', 'munged', $extent ]
   );
 
-  my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1]; warn $transcript_slice;
+  my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1]; 
   my $sub_slices       =  $object->__data->{'slices'}{'transcripts'}[2];
 
 
@@ -145,16 +145,19 @@ sub _content {
 ## Gene context block;
   my $gene_stable_id = $object->stable_id;
   $Configs->{'context'}->{'geneid2'} = $gene_stable_id; ## Only skip background stripes...
- # $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
   $Configs->{'context'}->set_parameters({ 'container_width' =>  $object->__data->{'slices'}{'context'}[1]->length() });  
   $Configs->{'context'}->get_node( 'scalebar')->set('label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
   #$Configs->{'context'}->get_node('variation')->set('on','off') if $no_snps;
 #  $Configs->{'context'}->set('snp_join','on','off') if $no_snps;
 ## Transcript block
   $Configs->{'gene'}->{'geneid'}      = $gene_stable_id;
-#  $Configs->{'gene'}->container_width( $object->__data->{'slices'}{'gene'}[1]->length() );
-  $Configs->{'gene'}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'gene'}[1]->length() }); 
-  $Configs->{'gene'}->get_node('snp_join')->set('on','off') if $no_snps;
+  $Configs->{'gene'}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'gene'}[1]->length(), 'single_Gene' => $object->stable_id }); 
+  $Configs->{'gene'}->modify_configs( ## Turn on track associated with this db/logic name
+    [$Configs->{'gene'}->get_track_key( 'transcript', $object )],
+    {qw(display on show_labels off)}  
+  );
+
+ # $Configs->{'gene'}->get_node('snp_join')->set('on','off') if $no_snps;
 ## Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
   foreach(qw(transcripts_top transcripts_bottom)) {
    # $Configs->{$_}->get_node('snp_join')->set('on','off') if $no_snps;
@@ -164,7 +167,6 @@ sub _content {
     $Configs->{$_}->{'snps'}        = $object->__data->{'SNPS'} unless $no_snps;
     $Configs->{$_}->{'subslices'}   = $sub_slices;
     $Configs->{$_}->{'fakeslice'}   = 1;
-#    $Configs->{$_}->container_width( $object->__data->{'slices'}{'transcripts'}[3] );
     $Configs->{$_}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'transcripts'}[3] }); 
   }
   #$Configs->{'transcripts_bottom'}->get_node('spacer')->set('on','off') if $no_snps;
@@ -172,10 +174,15 @@ sub _content {
   unless( $no_snps ) {
     $Configs->{'snps'}->{'fakeslice'}   = 1;
     $Configs->{'snps'}->{'snps'}        = \@snps2;
- #   $Configs->{'snps'}->container_width(   $fake_length   );
     $Configs->{'snps'}->set_parameters({ 'container_width' => $fake_length }); 
     $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps, $context_count];
   } 
+
+  $master_config->modify_configs( ## Turn on track associated with this db/logic name
+    [$master_config->get_track_key( 'gene', $object )],
+    {qw(on on show_labels off)}  ## also turn off the transcript labels...
+  );
+
 #  return if $do_not_render;
 ## -- Render image ------------------------------------------------------ ##
   my $image    = $object->new_image([
