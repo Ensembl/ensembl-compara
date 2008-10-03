@@ -50,7 +50,7 @@ var Cookie = {
     return ( document.cookie =
       escape(name) + '=' + escape(value || '') +
       '; expires='+ ( expiry == -1 ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038' ) +
-      ' 00:00:00 GMT; path=/;'
+      ' 00:00:00 GMT; path=/'
     );
   },
   get: function(name) {
@@ -74,7 +74,7 @@ if( ENSEMBL_AJAX != 'enabled' && ENSEMBL_AJAX != 'disabled' && ENSEMBL_AJAX != '
 }
 var ENSEMBL_WIDTH = Cookie.get('ENSEMBL_WIDTH');
 if( ! ENSEMBL_WIDTH ) {
-  ENSEMBL_WIDTH = Math.floor( ( document.viewport.getWidth() - 200 ) /100 ) * 100;
+  ENSEMBL_WIDTH = Math.floor( ( document.viewport.getWidth() - 250 ) /100 ) * 100;
   if(ENSEMBL_WIDTH < 500) ENSEMBL_WIDTH = 500;
   Cookie.set( 'ENSEMBL_WIDTH',ENSEMBL_WIDTH );
 }
