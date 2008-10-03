@@ -19,7 +19,7 @@ sub init {
   $self->create_menus(
     'sequence'        => 'Sequence',
     'transcript'      => 'Genes',
-    'variation'       => 'Variation',
+#    'variation'       => 'Variation',
     'other'           => 'Other'
   );
   
@@ -30,16 +30,17 @@ sub init {
   $self->load_tracks();
 
   $self->add_tracks( 'other',
-    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal',  'src' => 'all', 'colour' => 'bisque', 'tag' => 0,'strand' => 'b', 'menu' => 'no'         } ],
     [ 'draggable',        '',     'draggable',         { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
-    [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+#    [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
     [ 'spacer',           '',     'spacer',            { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ],
     [ 'ruler',            '',     'ruler',             { 'display' => 'normal',  'strand' => 'f', 'name' => 'Ruler'      } ],
-    [ 'scalebar',         '',     'scalebar',          { 'display' => 'normal',  'strand' => 'f', 'name' => 'Scale bar'  } ],
+    [ 'scalebar',         '',     'scalebar',          { 'display' => 'normal',  'height' => 50, 'strand' => 'f', 'name' => 'Scale bar'  } ],
   );
-  $self->modify_configs(
-    [qw(transcript variation)],
-    {'on'=>'off'}
-  );
+
+#  $self->modify_configs(
+#    [qw(transcript variation)],
+#    {'on'=>'off'}
+#  );
 }
 1;
