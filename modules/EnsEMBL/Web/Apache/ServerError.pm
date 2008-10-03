@@ -115,7 +115,7 @@ sub handler {
     return 500;
   };
   if($@) {
-    print qq(Content-type: text/html
+    print qq(Content-type: text/html; charset=utf-8
 
 <p>Sorry, an error occurred while the Ensembl server was processing your request</p>
 <p>Please email a report , quoting any additional information given below, along

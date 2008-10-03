@@ -37,7 +37,7 @@ sub handler {
     qq( 'Unrecognised error' ),
     $ENV{'REDIRECT_ERROR_NOTES'}
   ) unless $error_subject;
-  $r->content_type('text/html');
+  $r->content_type('text/html; charset=utf-8');
   $r->uri( $error_URL );
   return OK if $r->header_only;
   

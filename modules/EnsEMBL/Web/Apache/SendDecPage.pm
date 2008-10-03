@@ -161,7 +161,7 @@ sub handler {
   }
 
   if($ENV{PERL_SEND_HEADER}) {
-    print "Content-type: text/html\n\n";
+    print "Content-type: text/html; charset=utf-8";
   } else {
     $r->content_type('text/html; charset=utf-8');
     #$r->send_http_header;
