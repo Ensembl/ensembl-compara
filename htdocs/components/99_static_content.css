@@ -64,3 +64,12 @@ table.species-stats td {       padding:4px 0;    }
 table.species-stats td.data {  font-weight:bold; }
 table.species-stats td.value { text-align:right; }
 
+/**
+*/
+
+table.img-table { width: 80%;margin: auto; border-collapse: collapse }
+table.img-table th { background-color: [[NEUTRAL_BORDER]]; color: [[NEUTRAL_BG]] }
+table.img-table td { vertical-align: top }
+table.img-table .img-1 td { background-color: [[BACKGROUND1]] }
+table.img-table .img-2 td { background-color: [[BACKGROUND2]] }
+
