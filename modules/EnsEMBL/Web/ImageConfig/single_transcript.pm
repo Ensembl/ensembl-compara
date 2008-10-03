@@ -29,7 +29,7 @@ sub init {
 
   $self->modify_configs(
     [qw(transcript prediction)],
-    {qw(on off height 32 non_coding_scale 0.5)}
+    {qw(display off height 32 non_coding_scale 0.5)}
   );
 }
 1;
