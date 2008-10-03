@@ -19,7 +19,7 @@ sub content {
   my $self = shift;
   my $transcript = $self->object;
   my $object = $transcript->translation_object;
-
+  return $self->non_coding_error unless $object;
 
   my $number     = $object->param('number') || "No";
   my $show       = $object->param('show') || "snps"; 
