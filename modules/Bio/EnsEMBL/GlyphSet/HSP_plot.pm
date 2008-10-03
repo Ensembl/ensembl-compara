@@ -19,8 +19,7 @@ sub _init {
   my ($self)        = @_;
   my $container     = $self->{'container'};
   my $config        = $self->{'config'};
-  my $mode          = ( $config->get('HSP_plot', 'mode') || 
-                        $config->get('HSP_query_plot', 'mode') || 
+  my $mode          = ( $self->my_config('mode') || 
                         "byhit" );
 
   my $opts = 
@@ -30,8 +29,7 @@ sub _init {
                             $config->transform->{'scalex'}),
      'id'            => $container->name,
      'db'            => $container->{'database'},
-     'dep'           => ( $config->get('HSP_plot', 'dep') ||  
-                          $config->get('HSP_query_plot', 'dep') || 10 ),
+     'dep'           => ( $self->my_config('dep') || 10 ),
      'bitmap'        => [],
      'tally'         => {},
     };

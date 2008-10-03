@@ -19,11 +19,11 @@ sub _init {
     my $highlights     = join('|',$self->highlights());
     $highlights        = $highlights ? ";h=$highlights" : '';
     my $REGISTER_LINE  = $Config->get_parameter( 'opt_lines');
-    my $feature_colour = $Config->get('scalebar', 'col');
-    my $subdivs        = $Config->get('scalebar', 'subdivs');
-    my $max_num_divs   = $Config->get('scalebar', 'max_divisions') || 12;
-    my $navigation     = $Config->get('scalebar', 'navigation')    || "off";
-    my $abbrev         = $Config->get('scalebar', 'abbrev');
+    my $feature_colour = $self->my_config('col');
+    my $subdivs        = $self->my_config('subdivs');
+    my $max_num_divs   = $self->my_config('max_divisions') || 12;
+    my $navigation     = $self->my_config('navigation')    || "off";
+    my $abbrev         = $self->my_config('abbrev');
     my $clone_based    = $Config->get_parameter( 'clone_based') && ($Config->get_parameter( 'clone_based') eq 'yes');
     my $param_string   = "";
     $param_string      = $Config->get_parameter(  'clone') if($clone_based);
