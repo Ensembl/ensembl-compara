@@ -277,6 +277,21 @@ sub fetch_all {
    return $self->_objs_from_sth( $sth );
 }
 
+sub _tables {
+  return (
+      ['dnafrag', 'df']
+      );
+}
+
+sub _columns {
+  return ('df.dnafrag_id',
+          'df.length',
+          'df.name',
+          'df.genome_db_id',
+          'df.coord_system_name'
+          );
+}
+
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -298,13 +313,13 @@ sub _objs_from_sth {
 
   while ($sth->fetch()) {
 
-    my $this_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new(
-            -dbID => $dbID,
-            -adaptor => $self,
-            -length => $length,
-            -name => $name,
-            -genome_db_id => $genome_db_id,
-            -coord_system_name => $coord_system_name
+    my $this_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_fast(
+            {'dbID' => $dbID,
+            'adaptor' => $self,
+            'length' => $length,
+            'name' => $name,
+            'genome_db_id' => $genome_db_id,
+            'coord_system_name' => $coord_system_name}
         );
 
 
