@@ -91,8 +91,9 @@ paralogues with BioMart to see more.)</p>
           $C_species++;
           $C++;
         if( $orthologue_desc ne 'DWGA' ) {
+          my $url = $gene->_url({ 'action' => 'Compara_Ortholog/Alignment', 'g1' => $stable_id });
 	  $target_links .= qq(
-	  <span class="small">[<a href="/@{[$gene->species]}/Gene/HomologAlignment?g=$STABLE_ID;g1=$stable_id">Align</a>]</span> );
+	  <span class="small">[<a href="$url">Align</a>]</span> );
           $percent_ids = qq(<br />
 	  <span class="small">Target &#37id: $OBJ->{'target_perc_id'}; Query &#37id: $OBJ->{'query_perc_id'}</span>);
 	  $ALIGNVIEW = 1;
@@ -113,7 +114,7 @@ paralogues with BioMart to see more.)</p>
         push @external, qq(<span class="small">$description</span>);
 	my $external = join "<br />\n          ", @external;
 
-        $html .= sprintf( qq(
+        $html .= qq(
         <td>$orthologue_desc</td>
         <td>$orthologue_dnds_ratio</td>
         <td>
@@ -122,7 +123,7 @@ paralogues with BioMart to see more.)</p>
         <td>
 	  $external
 	</td>
-      </tr>));
+      </tr>);
       }
       if( $rowspan > 1) {
         $html .= qq(
@@ -135,8 +136,9 @@ paralogues with BioMart to see more.)</p>
     $html .= '
     </table>';
     if( $ALIGNVIEW && keys %orthologue_list ) {
+      my $url = $gene->_url({ 'action' => 'Compara_Ortholog/Alignment' });
       $html .= qq(
-    <p><a href="/@{[$gene->species]}/Gene/HomologAlignment?g=$STABLE_ID">View sequence alignments of all homologues</a>.</p>);
+    <p><a href="$url">View sequence alignments of all homologues</a>.</p>);
     }
   }
   else {

@@ -44,7 +44,7 @@ sub content {
 
     foreach my $homology (@{$homologies}) {
 	my $sa;
-	eval { $sa = $homology->get_SimpleAlign( $object->param('seq') eq 'DNA' ? 'cdna' : undef ); };
+	eval { $sa = $homology->get_SimpleAlign( $object->param('seq') eq 'cDNA' ? 'cdna' : undef ); };
 	if( $sa ) {
 	    my $DATA = [];
 	    my $FLAG = ! $second_gene;
@@ -84,11 +84,7 @@ sub content {
 
 	    my $homology_desc_mapped= $desc_mapping{$homology_desc};
 	    $homology_desc_mapped= 'no description' unless (defined $homology_desc_mapped);
-	    my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
-	    $table->add_row('Ortholog type',
-			    "$homology_desc_mapped",
-			);
-	    $html .= $table->render;
+            $html .= sprintf '<h2>Ortholog type: %s</h2>',$homology_desc_mapped;
 
 	    my $ss = EnsEMBL::Web::Document::SpreadSheet->new(
 		[ { 'title' => 'Species', 'width'=>'20%' },
@@ -102,7 +98,7 @@ sub content {
 
 	    my $alignio = Bio::AlignIO->newFh(
 		-fh     => IO::String->new(my $var),
-		-format => $self->renderer_type($object->param('format'))
+		-format => $self->renderer_type($object->param('text_format'))
 	    );
 	    print $alignio $sa;
 	    $html .= qq(<pre>$var</pre>);
