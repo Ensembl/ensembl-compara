@@ -93,7 +93,7 @@ $pad    </dd>";
       my $name = $node->data->{caption};
       $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
       $name = CGI::escapeHTML( $name );
-      if( $node->data->{'availability'} ) {
+      if( $node->data->{'availability'} && $self->is_available( $node->data->{'availability'} )) {
         my $url = $node->data->{'url'};
         if (!$url) {
           $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.$ENV{'QUERY_STRING'};
@@ -132,4 +132,11 @@ $pad    </dd>);
   return $content;
 }
 
-return 1;
+sub availability {
+  my $self = shift;
+  $self->{'availability'} = shift if @_;
+  $self->{'availability'}||={};
+  return $self->{'availability'};
+}
+
+1;
