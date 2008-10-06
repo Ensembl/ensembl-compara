@@ -155,7 +155,7 @@ sub slice_number {
 sub get_track_key {
   my( $self, $prefix, $obj ) = @_;
 
-  my $logic_name = $obj->gene->analysis->logic_name;
+  my $logic_name = $obj->gene ? $obj->gene->analysis->logic_name : $obj->analysis->logic_name;
   my $db         = $obj->get_db();
   my $db_key     = 'DATABASE_'.uc($db);
   my $key        = $obj->species_defs->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
@@ -447,7 +447,7 @@ sub add_prediction_transcript {
   
   my $menu = $self->tree->get_node( "prediction" );
   foreach my $key_2 ( @$keys ) {
-    $menu->append( $self->create_track( 'prediction_transcript_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+    $menu->append( $self->create_track( 'transcript_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
       'db'          => $key,
       'glyphset'    => '_prediction_transcript',
       'logicnames'  => $data->{$key_2}{'logic_names'},
