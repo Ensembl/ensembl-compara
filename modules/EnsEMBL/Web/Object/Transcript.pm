@@ -12,12 +12,28 @@ use POSIX qw(floor ceil);
 use Data::Dumper;
 our @ISA = qw(EnsEMBL::Web::Object);
 
+sub availability {
+  my $self = shift;
+  my $hash = $self->_availability;
+  if( $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ) {
+    $hash->{'history'}    = 1;
+  } elsif( $self->Obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
+    $hash->{'either'}     = 1;
+  } else {
+    $hash->{'history'}    = 1;
+    $hash->{'either'}     = 1;
+    $hash->{'transcript'} = 1;
+  }
+  return $hash;
+}
+
 sub counts {
   my $self = shift;
   my $sd = $self->species_defs;
 
   my $counts = {};
 #  $sd->timer_push( 'Counting all', 1, 'Fetching' );
+  return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
   $counts->{'exons'} = @{$self->Obj()->get_all_Exons};
 #  $sd->timer_push( 'Counted exons', 2, 'Fetching' );
   $counts->{'evidence'}           = $self->count_supporting_evidence;
@@ -1128,8 +1144,10 @@ sub get_prediction_method {
 
 =cut
 
-sub display_xref{
-  my $trans_xref = $_[0]->transcript->display_xref();
+sub display_xref {
+  my $self = shift;
+  return unless $self->transcript->can('display_xref');
+  my $trans_xref = $self->transcript->display_xref();
   return ( $trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name ) if $trans_xref;
 }
 
