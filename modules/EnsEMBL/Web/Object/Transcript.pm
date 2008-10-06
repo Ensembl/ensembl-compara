@@ -468,11 +468,8 @@ sub get_transcript_slices {
   }
 }
 
-
 sub get_munged_slice {
-
- ### TSV
-
+ ### TSV/TSE
   my $self = shift;
   my $config_name = shift;
   my $master_config = $self->image_config_hash( $config_name );
@@ -494,10 +491,6 @@ sub get_munged_slice {
     foreach my $exon (@{$self->Obj->get_all_Exons()}) {		
       my $START    = $exon->start - $slice->start + 1 - $extent;
       my $EXON_LEN = $exon->end-$exon->start + 1 + 2 * $extent;
-
-#	  warn "START = $START";
-#	  warn "EXON_LEN = $EXON_LEN";
-
       # Change munged to 1 where there is exon or extent (i.e. flank)
       substr( $munged, $START-1, $EXON_LEN ) = '1' x $EXON_LEN;
     }
@@ -512,7 +505,6 @@ sub get_munged_slice {
   my $subslices = [];
   my $pos = 0;
 
-  #warn Dumper(\@lengths);
   foreach( @lengths , 0) {
     if ( $flag = 1-$flag ) {
       push @$subslices, [ $pos+1, 0, 0 ] ;
@@ -522,7 +514,6 @@ sub get_munged_slice {
     }
     $pos+=$_;
   }
-#  warn Dumper($subslices);
 
 ## compute the width of the slice image within the display
   my $PIXEL_WIDTH =
@@ -530,25 +521,19 @@ sub get_munged_slice {
         ( $master_config->get_parameter( 'label_width' ) || 100 ) -
     3 * ( $master_config->get_parameter( 'margin' )      ||   5 );
 
-#  warn $self->param('image_width');
-#  warn $PIXEL_WIDTH;
-
 ## Work out the best size for the gaps between the "exons"
   my $fake_intron_gap_size = 11;
   my $intron_gaps  = ((@lengths-1)/2);
-  if( $intron_gaps * $fake_intron_gap_size > $PIXEL_WIDTH * 0.75 ) {
+  if( $intron_gaps && ( $intron_gaps * $fake_intron_gap_size > $PIXEL_WIDTH * 0.75 ) ) {
      $fake_intron_gap_size = int( $PIXEL_WIDTH * 0.75 / $intron_gaps );
   }
-
-#  warn "$intron_gaps --> $fake_intron_gap_size";
 
 ## Compute how big this is in base-pairs
   my $exon_pixels  = $PIXEL_WIDTH - $intron_gaps * $fake_intron_gap_size;
   my $scale_factor = $collapsed_length / $exon_pixels;
-#  warn "--$scale_factor-->$collapsed_length-->$exon_pixels";
   my $padding      = int($scale_factor * $fake_intron_gap_size) + 1;
   $collapsed_length += $padding * $intron_gaps;
-#  warn "collapsed_length = $collapsed_length";
+
 ## Compute offset for each subslice
   my $start = 0;
   foreach(@$subslices) {
@@ -560,9 +545,7 @@ sub get_munged_slice {
 
 }
 
-
 sub valids {
- 
   ### TSV
   ### Description: Valid user selections
   ### Returns hashref
@@ -575,11 +558,8 @@ sub valids {
   return \%valids;
 }
 
-
 sub extent {
-
  ### TSV
-
   my $self = shift;
   my $extent = $self->param( 'context' );
   if( $extent eq 'FULL' ) {
