@@ -73,7 +73,7 @@ sub _content {
  $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
 
   my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles Tigrfam Superfamily Smart PIRSF);
-  foreach( @domain_logic_names ) {
+  foreach( @domain_logic_names ) { 
     $object->store_TransformedDomains( $_ );    ## Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'}
   }
   $object->store_TransformedSNPS() unless $no_snps;      ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
@@ -102,9 +102,9 @@ sub _content {
       'gene'         => $object->Obj,
       $no_snps ? (): ('snps' => $TS->{'snps'})
     };
-    foreach ( @domain_logic_names ) {
+    foreach ( @domain_logic_names ) { 
       $CONFIG->{'transcript'}{lc($_).'_hits'} = $TS->{lc($_).'_hits'};
-    }
+    }  
 
    # $CONFIG->container_width( $object->__data->{'slices'}{'transcripts'}[3] );
    $CONFIG->set_parameters({'container_width' => $object->__data->{'slices'}{'transcripts'}[3] });  
@@ -178,9 +178,15 @@ sub _content {
     $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps, $context_count];
   } 
 
+  #$master_config->tree->dump("Tree", '[[caption]]' );
   $master_config->modify_configs( ## Turn on track associated with this db/logic name
     [$master_config->get_track_key( 'gene', $object )],
     {qw(on on show_labels off)}  ## also turn off the transcript labels...
+  );
+
+  $master_config->modify_configs( ## Turn on track associated with this db/logic name
+    [$master_config->get_track_key( 'gsv_transcript', $object )],
+    {qw(display off show_labels off)}  ## also turn off the transcript labels...
   );
 
 #  return if $do_not_render;
