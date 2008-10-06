@@ -12,6 +12,11 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 use CGI qw(escape escapeHTML);
 
 
+sub table_info {
+  my( $self, $db, $table ) = @_;
+  return $self->species_defs->databases->{$db}{'tables'}{$table};
+}
+
 sub _url {
   my $self = shift;
   my $params  = shift || {};
@@ -23,6 +28,10 @@ sub _url {
                     ( $action eq $self->action ? $self->function      : undef );
 
   my %pars = %{$self->core_objects->{'parameters'}};
+  delete $pars{'t'}  if $params->{'pt'};
+  delete $pars{'pt'} if $params->{'t'};
+  delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
+
   foreach( keys %$params ) {
     next if $_ =~ /^(species|type|action|function)$/;
     if( defined( $params->{$_} ) ) {
