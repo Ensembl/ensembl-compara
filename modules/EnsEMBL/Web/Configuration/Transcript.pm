@@ -70,7 +70,7 @@ sub ajax_zmenu      {
 	if( $obj->Obj->translation ) {
 	    $panel->add_entry({
 		'type'     => 'Protein product',
-		'label'    => $obj->Obj->translation->stable_id,
+		'label'    => $obj->Obj->translation->stable_id || $obj->Obj->stable_id,
 		'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'Peptide'}),
 		'priority' => 180
 	    });
@@ -162,7 +162,7 @@ sub populate_tree {
   $self->create_node( 'Summary', "Summary",
     [qw(image   EnsEMBL::Web::Component::Transcript::TranscriptImage
         summary EnsEMBL::Web::Component::Transcript::TranscriptSummary)],
-    { 'availability' => 1, 'concise' => 'Transcript summary'}
+    { 'availability' => 'either', 'concise' => 'Transcript summary'}
   );
 
 #  $self->create_node( 'Structure', "Transcript Neighbourhood",
@@ -172,41 +172,43 @@ sub populate_tree {
 
   $self->create_node( 'Exons', "Exons  ([[counts::exons]])",
     [qw(exons       EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet)],
-    { 'availability' => 1, 'concise' => 'Exons'}
+    { 'availability' => 'either', 'concise' => 'Exons'}
   );
 
 
   my $T = $self->create_node( 'SupportingEvidence', "Supporting evidence  ([[counts::evidence]])",
    [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidence)],
-    { 'availability' => 1, 'concise' => 'Supporting evidence'}
+    { 'availability' => 'transcript', 'concise' => 'Supporting evidence'}
   );
   $T->append($self->create_subnode( 'SupportingEvidence/Alignment', '',
     [qw(alignment      EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment)],
-    { 'no_menu_entry' => 1 }
+    { 'no_menu_entry' => 'transcript' }
   ));
 
   my $seq_menu = $self->create_submenu( 'Sequence', 'Marked-up sequence' );
   $seq_menu->append($self->create_node( 'Sequence_cDNA',  'cDNA',
     [qw(sequence    EnsEMBL::Web::Component::Transcript::TranscriptSeq)],
-    { 'availability' => 1, 'concise' => 'cDNA sequence' }
+    { 'availability' => 'either', 'concise' => 'cDNA sequence' }
   ));
   $seq_menu->append($self->create_node( 'Sequence_Protein',  'Protein',
     [qw(sequence    EnsEMBL::Web::Component::Transcript::ProteinSeq)],
-    { 'availability' => 1, 'concise' => 'Protein sequence' }
+    { 'availability' => 'either', 'concise' => 'Protein sequence' }
   ));
 
   my $record_menu = $self->create_submenu( 'ExternalRecords', 'External records' );
-  $record_menu->append($self->create_node( 'Similarity', "Similarity matches  ([[counts::similarity_matches]])",
+
+  my $sim_node = $self->create_node( 'Similarity', "Similarity matches  ([[counts::similarity_matches]])",
     [qw(similarity  EnsEMBL::Web::Component::Transcript::SimilarityMatches)],
-    { 'availability' => 1, 'concise' => 'Similarity matches'}
-  ));
-  $record_menu->append($self->create_node( 'ExternalRecordAlignment', '',
+    { 'availability' => 'transcript', 'concise' => 'Similarity matches'}
+  );
+  $record_menu->append( $sim_node );
+  $sim_node->append($self->create_subnode( 'ExternalRecords/Alignment', '',
    [qw(alignment       EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment)],
-    { 'no_menu_entry' => 1 }
+    { 'no_menu_entry' => 'transcript' }
   ));
   $record_menu->append($self->create_node( 'Oligos', "Oligo matches  ([[counts::oligos]])",
     [qw(arrays      EnsEMBL::Web::Component::Transcript::OligoArrays)],
-    { 'availability' => 1,  'concise' => 'Oligo matches'}
+    { 'availability' => 'transcript',  'concise' => 'Oligo matches'}
   ));
 
   my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
@@ -214,38 +216,39 @@ sub populate_tree {
    # [qw(snps      EnsEMBL::Web::Component::Transcript::TranscriptSNPImage
    #     snptable      EnsEMBL::Web::Component::Transcript::TranscriptSNPTable)],
     [qw(snps       EnsEMBL::Web::Component::Transcript::UnderConstruction)], 
-    { 'availability' => 'database:variation' }
+    { 'availability' => 'either database:variation' }
   ));
 
   my $prot_menu = $self->create_submenu( 'Protein', 'Protein Information' );
   $prot_menu->append($self->create_node( 'ProteinSummary', "Summary",
     [qw(image       EnsEMBL::Web::Component::Transcript::TranslationImage
         statistics  EnsEMBL::Web::Component::Transcript::PepStats)],
-    { 'availability' => 1, 'concise' => 'Protein summary'}
+    { 'availability' => 'either', 'concise' => 'Protein summary'}
   ));
   my $D = $self->create_node( 'Domains', "Domains  ([[counts::prot_domains]])",
     [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet)],
-    { 'availability' => 1, 'concise' => 'Protein domains'}
+    { 'availability' => 'transcript', 'concise' => 'Protein domains'}
   );
-  $D->append($self->create_subnode( 'Domain/Genes', '',
+  $D->append($self->create_subnode( 'Domains/Genes', '',
     [qw(domaingenes      EnsEMBL::Web::Component::Transcript::DomainGenes)],
-    { 'no_menu_entry' => 1 }
+    { 'no_menu_entry' => 'transcript' }
   ));
   $prot_menu->append($D);
   $prot_menu->append($self->create_node( 'ProtVariations', "Variation features  ([[counts::prot_variations]])",
     [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
-    { 'availability' => 1, 'concise' => 'Protein variation features'}
+    { 'availability' => 'either', 'concise' => 'Protein variation features'}
   ));
   $prot_menu->append($self->create_node( 'GO', "GO terms  ([[counts::go]])",
     [qw(go          EnsEMBL::Web::Component::Transcript::Go)],
-    { 'availability' => 1, 'concise' => 'GO terms'}
+    { 'availability' => 'transcript', 'concise' => 'GO terms'}
   ));
 
   $self->create_node( 'idhistory', "ID history",
-    [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
-        associated  EnsEMBL::Web::Component::Gene::HistoryLinked
-        map         EnsEMBL::Web::Component::Gene::HistoryMap)],
-        { 'availability' => 1, 'concise' => 'ID History' }
+    [qw(
+      display     EnsEMBL::Web::Component::Gene::HistoryReport
+      associated  EnsEMBL::Web::Component::Gene::HistoryLinked
+      map         EnsEMBL::Web::Component::Gene::HistoryMap)],
+      { 'availability' => 'history', 'concise' => 'ID History' }
   );
 }
 
