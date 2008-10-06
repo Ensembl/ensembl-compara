@@ -46,7 +46,7 @@ sub transcript {
 sub transcript_short_caption {
   my $self = shift;
   return '-' unless $self->transcript;
-  my $dxr = $self->transcript->display_xref;
+  my $dxr = $self->transcript->can('display_xref') ? $self->transcript->display_xref : undef;
   my $label = $dxr ? $dxr->display_id : $self->transcript->stable_id;
   return length( $label ) < 15 ? "Transcript: $label" : "Trans: $label";
 }
@@ -54,7 +54,7 @@ sub transcript_short_caption {
 sub transcript_long_caption {
   my $self = shift;
   return '-' unless $self->transcript;
-  my $dxr = $self->transcript->display_xref;
+  my $dxr = $self->transcript->can('display_xref') ? $self->transcript->display_xref : undef;
   my $label = $dxr ? " (".$dxr->display_id.")" : '';
   return "Transcript: ".$self->transcript->stable_id.$label;
 }
@@ -69,7 +69,7 @@ sub gene {
 sub gene_short_caption {
   my $self = shift;
   return '-' unless $self->gene;
-  my $dxr = $self->gene->display_xref;
+  my $dxr = $self->gene->can('display_xref') ? $self->gene->display_xref : undef;
   my $label = $dxr ? $dxr->display_id : $self->gene->stable_id;
   return "Gene: $label";
 }
@@ -77,7 +77,7 @@ sub gene_short_caption {
 sub gene_long_caption {
   my $self = shift;
   return '-' unless $self->gene;
-  my $dxr = $self->gene->display_xref;
+  my $dxr = $self->gene->can('display_xref') ? $self->gene->display_xref : undef;
   my $label = $dxr ? " (".$dxr->display_id.")" : '';
   return "Gene: ".$self->gene->stable_id.$label;
 }
@@ -141,7 +141,7 @@ sub _generate_objects_lw {
   my $self = shift;
   my $action = '_generate_objects_'.$ENV{'ENSEMBL_TYPE'};
   $self->timer_push( 'Lightweight core objects call' );
-  foreach (qw(t g r db v vdb source)) {
+  foreach (qw(pt t g r db v vdb source)) {
     $self->{'parameters'}{$_} = $self->param($_);
   }
   $self->$action;
@@ -160,10 +160,15 @@ sub _generate_objects_Transcript {
   my $self = shift;
   $self->{'parameters'}{'db'} ||= 'core';
   my $db_adaptor = $self->database($self->{'parameters'}{'db'});
-  my $t = $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->{'parameters'}{'t'} );
-  warn "TRANSCRIPT is .... $t ";
-  $self->timer_push( 'Transcript fetched', undef, 'fetch' );
-  $self->transcript( $t );
+  if( $self->{'parameters'}{'t'} ) {
+    my $t = $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->{'parameters'}{'t'} );
+    $self->timer_push( 'Transcript fetched', undef, 'fetch' );
+    $self->transcript( $t );
+  } elsif( $self->{'parameters'}{'pt'} ) {
+    my $t = $db_adaptor->get_PredictionTranscriptAdaptor->fetch_by_stable_id( $self->{'parameters'}{'pt'} );
+    $self->timer_push( 'Transcript fetched', undef, 'fetch' );
+    $self->transcript( $t );
+  }
 }
 
 sub _generate_objects_Gene {
@@ -207,6 +212,21 @@ sub _generate_objects {
     if( $t ) {
       $self->transcript( $t );
       $self->_get_gene_location_from_transcript;
+    } else {
+      my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
+      $t = $a->fetch_by_stable_id( $self->param('t') ); 
+      $self->transcript( $t );
+    }
+  }
+  if( $self->param('pt') ) {
+    my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
+    my $tdb_adaptor = $self->database($tdb);
+    my $t = $tdb_adaptor->get_PredictionTranscriptAdaptor->fetch_by_stable_id( $self->param('pt') );
+    if( $t ) {
+      $self->transcript( $t );
+      my $slice = $self->transcript->feature_Slice;
+         $slice = $slice->invert() if $slice->strand < 0;
+      $self->location( $slice );
     }
   }
   if( !$self->transcript && $self->param('g') ) {
@@ -229,7 +249,13 @@ sub _generate_objects {
     $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
   }
   $self->{'parameters'}{'r'} = $self->location->seq_region_name.':'.$self->location->start.'-'.$self->location->end if $self->location;
-  $self->{'parameters'}{'t'} = $self->transcript->stable_id if $self->transcript;
+  if( $self->transcript ) {
+    if( $self->transcript->isa('Bio::EnsEMBL::StableIdHistoryTree') ) {
+      $self->{'parameters'}{'t'} = $self->param('t');
+    } else {
+      $self->{'parameters'}{$self->transcript->isa('Bio::EnsEMBL::PredictionTranscript')?'pt':'t'} = $self->transcript->stable_id;
+    }
+  }
   $self->{'parameters'}{'g'} = $self->gene->stable_id       if $self->gene;
   $self->{'parameters'}{'v'} = $self->variation->name       if $self->variation;
 }
@@ -297,7 +323,7 @@ sub _check_if_snp_unique_location {
   my @features = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
 
   unless (scalar @features > 1){
-   my $s =  $features[0]->start; warn $s;
+   my $s =  $features[0]->start; 
    my $e = $features[0]->end;
    my $r = $features[0]->seq_region_name;
    $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
