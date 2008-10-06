@@ -15,11 +15,12 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $html = '';
 
+  return '<p>This transcript is not in the current gene set</p>' unless $object->isa('Bio::EnsEMBL::Transcript');
 
 ## Grab the description of the object...
 
+  my $html = '';
   my $description = escapeHTML( $object->trans_description() );
 
   my ($edb,$acc);
@@ -95,6 +96,7 @@ sub content {
 ## Now create the gene and transcript information...
 
   my $gene = $object->core_objects->gene; 
+if( $gene ) {
   my $gene_id = $gene->stable_id;
   my $gene_url = $object->_url({
    'type'    => 'Gene',
@@ -175,6 +177,7 @@ sub content {
       }
     $html .= qq(</dd> </dl>);
   }
+}
   return  $html;
 }
 
