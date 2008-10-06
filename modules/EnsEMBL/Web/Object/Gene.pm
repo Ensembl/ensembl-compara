@@ -14,6 +14,18 @@ use base qw(EnsEMBL::Web::Object);
 
 our $MEMD = new EnsEMBL::Web::Cache;
 
+sub availability {
+  my $self = shift;
+  my $hash = $self->_availability;
+  if( $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ) {
+    $hash->{'history'}    = 1;
+  } else {
+    $hash->{'history'}    = 1;
+    $hash->{'gene'}       = 1;
+  }
+  return $hash;
+}
+
 sub analysis {
   my $self = shift;
   return $self->Obj->analysis;
