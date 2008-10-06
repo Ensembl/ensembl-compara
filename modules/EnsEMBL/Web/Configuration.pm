@@ -386,6 +386,7 @@ sub _local_context {
   $self->{'page'}->local_context->active(  $action );#$self->{_data}{'action'}  );
   $self->{'page'}->local_context->caption( $self->{object}->short_caption  );
   $self->{'page'}->local_context->counts(  $self->{object}->counts   );
+  $self->{'page'}->local_context->availability( $self->{object}->availability );
 }
 
 sub _local_tools {
@@ -487,11 +488,20 @@ sub _content_panel {
 
   my $previous_node = $node->previous;
   ## don't show tabs for 'no_menu' nodes
-  while( defined($previous_node) && $previous_node->get('type') ne 'view' ) {
+  $self->{'availability'} = $obj->availability;
+  while(
+    defined($previous_node) &&
+    ( $previous_node->get('type') ne 'view' ||
+      ! $self->is_available( $previous_node->get('availability') ) )
+  ) {
     $previous_node = $previous_node->previous;
   }
   my $next_node     = $node->next;
-  while( defined($next_node) && $next_node->get('type') ne 'view' ) {
+  while(
+    defined($next_node) &&
+    ( $next_node->get('type') ne 'view' ||
+      ! $self->is_available( $next_node->get('availability') ) )
+  ) {
     $next_node = $next_node->next;
   }
 
