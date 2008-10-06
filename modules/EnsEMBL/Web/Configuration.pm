@@ -53,7 +53,7 @@ sub new {
 
 sub tree_key {
   my $class = shift;
-  return "::${class}::TREE";
+  return "::${class}::$ENV{ENSEMBL_SPECIES}::TREE";
 }
 
 sub tree {
