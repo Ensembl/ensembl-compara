@@ -52,11 +52,11 @@ sub _content {
   my $o_type = lc($object->db_type);
 
   #user defined width in pixels
-  my $image_width  = $object->param( 'image_width' ) ? $object->param( 'image_width' ) : 700;
+  my $image_width  = $self->image_width ? $self->image_width : 700;
   #context is user defined size of introns
   my $context    = $object->param('context') ? $object->param('context') : 100;
   #set 5' and 3' extensions to the image depending on the context
-  my $extent     = $context eq 'FULL' ? 10000 : $context;
+  my $extent     = $context eq 'FULL' ? 1000 : $context;
 
   my $wuc = $object->get_imageconfig( "supporting_evidence_transcript" );
   my $length = $object->Obj->length;
