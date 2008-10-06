@@ -272,7 +272,6 @@ sub add_spanning_headers {
          
 sub add_row {   
   my( $self, $data ) = @_;      
-  warn "ADD ROW to ".$self->{_data};
   push @{$self->{_data}}, $data;        
 }       
         
