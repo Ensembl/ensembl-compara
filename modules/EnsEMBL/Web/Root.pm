@@ -268,4 +268,19 @@ sub templatize {
   return $fn;
 }
 
+sub is_available {
+  my( $self, $value ) = @_;
+  return 1 unless $self->{'availability'};
+  return $value if $value =~ /^\d+$/; ## Return value if number...
+  my @keys = split /\s+/, $value;
+  foreach (@keys) {
+    my $value = 0;
+    foreach my $k ( split /\|/ ) {
+      $value ||= $self->{'availability'}{$k};
+    }
+    return 0 unless $value;
+  }
+  return 1;
+}
+
 1;
