@@ -202,7 +202,7 @@ sub populate_tree {
     { 'availability' => 'transcript', 'concise' => 'Similarity matches'}
   );
   $record_menu->append( $sim_node );
-  $sim_node->append($self->create_subnode( 'ExternalRecords/Alignment', '',
+  $sim_node->append($self->create_subnode( 'Similarity/Align', '',
    [qw(alignment       EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment)],
     { 'no_menu_entry' => 'transcript' }
   ));

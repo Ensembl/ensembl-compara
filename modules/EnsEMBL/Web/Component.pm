@@ -198,7 +198,7 @@ sub _sort_similarity_links {
       ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {
       my $seq_arg = $display_id;
       $seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
-      $text .= sprintf( ' [<a href="/%s/Transcript/ExternalRecordAlignment?t=%s;sequence=%s;db=%s">align</a>] ',
+      $text .= sprintf( ' [<a href="/%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s">align</a>] ',
                   $object->species, $object->stable_id, $seq_arg, $db );
     }
     if($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link
@@ -289,4 +289,5 @@ sub _warn_block {
   warn "$line\n";
   warn "\n";
 }
+
 1;
