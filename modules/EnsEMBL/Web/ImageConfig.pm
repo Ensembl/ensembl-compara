@@ -499,7 +499,7 @@ sub add_gene {
   my( $self, $key, $hashref ) = @_;
 ## Gene features end up in each of these menus..
 
-  my @types = qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene);
+  my @types = qw(transcript alignslice_transcript TSV_transcript gsv_transcript TSE_transcript gene);
 
   return unless $self->_check_menus( @types );
 
@@ -637,10 +637,10 @@ sub add_protein_feature {
   my %menus = (
     'domain'     => [ 'domain',  'P_domain' ],
     'feature'    => [ 'feature', 'P_feature' ],
-    'gsv_domain' => [ 'domain',  'GSV_domain']
+    'gsv_domain' => [ 'domain',  'gsv_domain']
   );
   ## We have two separate glyphsets in this in this case
-  ## P_feature and P_domain - plus domains get copied onto GSV_generic_domain as well...
+  ## P_feature and P_domain - plus domains get copied onto gsv_generic_domain as well...
 
   return unless $self->_check_menus( keys %menus );
 
@@ -917,7 +917,68 @@ sub add_tracks {
 
 sub add_regulation_feature {
   my( $self, $key, $hashref ) = @_;
+=pod
   return unless $self->get_node( 'regulation_feature' );
+  my ( $keys, $data) = $self->_merge( $hashref->{'result_set'}); foreach ( keys %$data) {warn $_;}
+  return  unless $hashref->{'result_set'}{'rows'} > 0;
+  my $menu = $self->get_node( 'regulation_feature' );
+  $menu->append( $self->create_track('fg_regulatory_features_'.$key, sprintf("Reg. Features"),{
+    'db'          => $key,
+    'glyphset'    => 'fg_regulatory_features',
+    'sources'     => undef,
+    'strand'      => 'r',
+    'labels'      => 'on',
+    'depth'       => 10,
+    'colourset'   => 'fg_regulatory_features', 
+    'description' => 'Features from Ensembl Regulatory build',
+    'display'     => 'off'
+  }));
+  $menu->append( $self->create_track('regulatory_search_regions_'.$key, sprintf("cisRED Search Regions"),{
+    'db'          => $key,
+    'glyphset'    => 'regulatory_search_regions',
+    'sources'     => undef,
+    'strand'      => 'r',
+    'labels'      => 'on',
+    'depth'       => 0.5,
+    'colourset'   => 'regulatory_search_regions',
+    'description' => 'cisRED Search regions',
+    'display'     => 'off'
+  }));
+  $menu->append( $self->create_track('regulatory_regions_'.$key, sprintf("cisRED/miRANDA"),{
+    'db'          => $key,
+    'glyphset'    => 'regulatory_regions',
+    'sources'     => undef,
+    'strand'      => 'r',
+    'labels'      => 'on',
+    'depth'       => 1.5,
+    'colourset'   => 'synteny',
+    'description' => 'cisRED/miRANDA',
+    'display'     => 'off'
+  }));
+  $menu->append( $self->create_track('ctcf_'.$key, sprintf("ctcf"),{
+    'db'          => $key,
+    'glyphset'    => 'ctcf',
+    'sources'     => undef,
+    'strand'      => 'r',
+    'labels'      => 'on',
+    'colourset'   => 'ctcf',
+    'description' => 'ctcf',
+    'display'     => 'off'
+  }));
+  $menu->append( $self->create_track('histone_modifications_'.$key, sprintf("histone_modifications"),{
+    'db'          => $key,
+    'glyphset'    => 'histone_modifications',
+    'sources'     => undef,
+    'strand'      => 'r',
+    'labels'      => 'on',
+    'colourset'   => 'ctcf',
+    'description' => 'histone_modifications',
+#    'display'     => 'off'
+  }));
+
+  $self->add_track('regulation_feature', 'fg_regulatory_features_legend', 'Regulatory Features Legend', 'fg_regulatory_features_legend', {'strand' => 'r'});
+=cut
+return;
 }
 
 #----------------------------------------------------------------------#
@@ -938,7 +999,7 @@ sub add_variation_feature {
     'bump_width'  => 0,
     'colourset'   => 'variation',
     'description' => 'Variation features from all sources',
-    'on'          => 'off'
+    'display'          => 'off'
   }));
   $menu->append( $self->create_track( 'variation_feature_genotyped_'.$key, sprintf( "Genotyped variations" ), {
     'db'          => $key,
@@ -950,7 +1011,7 @@ sub add_variation_feature {
     'filter'      => 'genotyped',
     'colourset'   => 'variation',
     'description' => 'Genotyped variation features from all sources',
-    'on'          => 'off'
+    'display'          => 'off'
   }));
 
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'}||{}}) {
@@ -965,7 +1026,7 @@ sub add_variation_feature {
       'bump_width'  => 0,
       'colourset'   => 'variation',
       'description' => sprintf( 'Variation features from the "%s" source', $key_2 ),
-      'on'          => 'off'
+      'display'          => 'off'
     }));
   }
 }
