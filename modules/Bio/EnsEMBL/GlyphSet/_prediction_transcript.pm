@@ -27,10 +27,10 @@ sub features {
   return \@genes;
 }
 
-## Hacked url for prediction transcripts t=xxx;st=PT
+## Hacked url for prediction transcripts pt=xxx
 sub href {
   my ($self, $gene, $transcript) = @_;
-  $self->_url({'object'=>'Transcript','action'=>'Summary','t'=>$transcript->stable_id,'subtype'=>'PredictionTranscript'});
+  $self->_url({'object'=>'Transcript','action'=>'Summary','pt'=>$transcript->stable_id});
 }
 
 1;

@@ -87,9 +87,10 @@ sub _url {
   $function = '' if $action ne $ENV{'ENSEMBL_ACTION'};
 
   my %pars = %{$self->{'config'}{_core}{'parameters'}};
-  if( $params->{'g'} && $params->{'g'} ne $pars{'g'} ) {
-    delete($pars{'t'});
-  }
+  delete $pars{'t'}  if $params->{'pt'};
+  delete $pars{'pt'} if $params->{'t'}; 
+  delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
+
   foreach( keys %$params ) {
     $pars{$_} = $params->{$_} unless $_ =~ /^(species|type|action|function)$/;
   }
