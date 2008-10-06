@@ -10,15 +10,17 @@ use Data::Dumper;
 sub _init {
   my ($self) = @_;
   my $type = $self->check();
-  return unless defined $type; warn $type;
+  return unless defined $type; 
   
-  return unless $self->strand() == -1; 
-  my $key = lc($self->my_config('logicnames')).'_hits'; 
-  warn $key;
+  return unless $self->strand() == -1;  
+  #my $key = lc($self->my_config('logic_name')).'_hits'; 
+  my $key = lc($type).'_hits';
+  $key =~s/domain_core_//;
+ 
 
 
   my $Config        = $self->{'config'};
-  my $trans_ref = $Config->{'transcript'};
+  my $trans_ref = $Config->{'transcript'}; 
   my $offset = $self->{'container'}->start - 1;
     
   my $y             = 0;
@@ -30,26 +32,27 @@ sub _init {
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my @res = $self->get_text_width( 0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize );
   my $th = $res[3];
-  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'}; 
+  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};  
   
-  my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
+  #my $bitmap_length = $Config->image_width(); 
+   my $bitmap_length = int($Config->container_width() * $pix_per_bp); 
 
-  my $length  = $Config->container_width();
+  my $length  = $Config->container_width(); 
   my $transcript_drawn = 0;
     
   my $voffset = 0;
-  my $strand = $trans_ref->{'exons'}[0][2]->strand;
+  my $strand = $trans_ref->{'exons'}[0][2]->strand;  
     my $gene = $trans_ref->{'gene'};
-    my $transcript = $trans_ref->{'transcript'};
+    my $transcript = $trans_ref->{'transcript'}; 
 
-  my @bitmap = undef; #foreach (keys %$trans_ref){ warn $_;}
-  foreach my $domain_ref ( @{$trans_ref->{$key}||[]} ) {
-    my($domain,@pairs) = @$domain_ref;
+  my @bitmap = undef; 
+  foreach my $domain_ref ( @{$trans_ref->{$key}||[]} ) { 
+    my($domain,@pairs) = @$domain_ref;  
     my $Composite3 = $self->Composite({
       'y'         => 0,
       'height'    => $h
     });
-    while( my($S,$E) = splice( @pairs,0,2 ) ) {
+    while( my($S,$E) = splice( @pairs,0,2 ) ) {  
       $Composite3->push( $self->Rect({
         'x' => $S,
         'y' => 0,
@@ -67,7 +70,7 @@ sub _init {
       'colour' => 'purple4',
       'absolutey' => 1
     }));
-    my $text_label = $domain->hseqname;
+    my $text_label = $domain->hseqname;  
     my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
     $Composite3->push( $self->Text({
       'x'         => $Composite3->{'x'},
@@ -81,7 +84,7 @@ sub _init {
       'text'      => $text_label,
       'absolutey' => 1,
     }));
-    $text_label = $domain->idesc;
+    $text_label = $domain->idesc; 
     my @res = $self->get_text_width( 0, $text_label, '', 'font' => $fontname, 'ptsize' => $fontsize );
     $Composite3->push( $self->Text({
       'x'         => $Composite3->{'x'},
@@ -95,6 +98,8 @@ sub _init {
       'text'      => $text_label,
       'absolutey' => 1,
     }));
+
+    
     my $bump_start = int($Composite3->{'x'} * $pix_per_bp);
        $bump_start = 0 if ($bump_start < 0);
     my $bump_end = $bump_start + int($Composite3->width()*$pix_per_bp) +1;
