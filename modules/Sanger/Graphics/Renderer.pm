@@ -142,7 +142,15 @@ sub render {
 	$PAR->{'id'}     = $tags{$_}[0]->{'id'};
         $PAR->{'colour'} = $COL if($FILL);
 # 794 5 123 5 123 421 794 421
-	if( @points == 8 &&
+        if( @points == 4 &&
+          ($points[0] == $points[2] || $points[1] == $points[3])
+        ) {
+          $PAR->{'pixelx'}      = $points[0] < $points[2] ? $points[0] : $points[2];
+          $PAR->{'pixely'}      = $points[1] < $points[3] ? $points[1] : $points[3];
+          $PAR->{'pixelwidth'}  = $points[0] + $points[2] - 2 * $PAR->{'pixelx'};
+          $PAR->{'pixelheight'} = $points[1] + $points[3] - 2 * $PAR->{'pixely'};
+          $glyph = Sanger::Graphics::Glyph::Rect->new($PAR);
+        } elsif( @points == 8 &&
 	    $points[0] == $points[6] &&
 	    $points[1] == $points[3] &&
 	    $points[2] == $points[4] &&
