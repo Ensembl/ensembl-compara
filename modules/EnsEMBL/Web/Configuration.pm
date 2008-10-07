@@ -95,7 +95,7 @@ sub _get_valid_action {
   return $action."/".$func if $node && $node->get('type') =~ /view/;
   $node = $self->tree->get_node( $action )           unless $node;
   return $action if $node && $node->get('type') =~ /view/;
-  #warn "RESORTING TO DEFAULT ",$self->default_action;
+  $self->{'object'}->problem( 'redirect', $self->{'object'}->_url({'action' => $self->default_action}) );
   return $self->default_action;
 #  return $node;
 }
@@ -155,16 +155,24 @@ sub _user_context {
   my $obj  = $self->{'object'};
   my $qs = $self->query_string;
 
+  my $vc  = $obj->get_viewconfig;
+  my $action = $type.'/'.$ENV{'ENSEMBL_ACTION'};
+     $action .= $ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
+
+  if( !$vc->real && $obj->parent->{'ENSEMBL_TYPE'} ) {
+    $vc = $obj->get_viewconfig( $obj->parent->{'ENSEMBL_TYPE'}, $obj->parent->{'ENSEMBL_ACTION'} );
+    $vc->form($obj);
+    $action  = $obj->parent->{'ENSEMBL_TYPE'}.'/'.$obj->parent->{'ENSEMBL_ACTION'};
+    $action .= $obj->parent->{'ENSEMBL_FUNCTION'} if $obj->parent->{'ENSEMBL_FUNCTION'};
+  }
+
   ## Do we have a View Config for this display?
   # Get view configuration...!
-  my $vc  = $obj->get_viewconfig;
   ## Do we have any image configs for this display?
   my %ics = $vc->image_configs;
   ## Can user data be added to this page?
   my $flag = $obj->param('config') ? 0 : 1;
   my $active = $type ne 'Account' && $type ne 'UserData' && !$obj->param('config');
-  my $action = $type.'/'.$ENV{'ENSEMBL_ACTION'};
-     $action .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
   if( $vc->has_form ) {
     $self->{'page'}->global_context->add_entry(
       'type'      => 'Config',
@@ -173,7 +181,7 @@ sub _user_context {
       $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
         'time' => time, 
         'type'   => 'Config',
-        'action' => $type.'/'.$ENV{'ENSEMBL_ACTION'},
+        'action' => $action
       }))
     );
     $flag = 0;
@@ -181,7 +189,6 @@ sub _user_context {
   foreach my $ic_code (sort keys %ics) {
     my $ic = $obj->get_imageconfig( $ic_code );
     $active = $type ne 'Account' && $type ne 'UserData' && $obj->param('config') eq $ic_code || $flag;
-
     $self->{'page'}->global_context->add_entry(
       'type'      => 'Config',
       'id'        => "config_$ic_code",
@@ -189,18 +196,23 @@ sub _user_context {
       $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
         'time' => time, 
         'type'   => 'Config',
-	'action' => $type.'/'.$ENV{'ENSEMBL_ACTION'},
+	'action' => $action,
 	'config' => $ic_code
       }))
     );
     $flag = 0;
   }
+  my $referer = $obj->param('_referer')||$obj->_url({'type'=>$type,'action'=>$ENV{'ENSEMBL_ACTION'},'time'=>undef});
+
   $active = $type eq 'UserData';
   $self->{'page'}->global_context->add_entry(
     'type'      => 'UserData',
+    'id'        => 'user_data',
     'caption'   => 'Custom Data',
     $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
-      'time' => time, 
+      'time' => time,
+      '_referer' => $referer,
+      '__clear' => 1,
       'type'   => 'UserData',
       'action' => 'Summary'
     }))
@@ -210,9 +222,12 @@ sub _user_context {
   if( $obj->species_defs->ENSEMBL_LOGINS && $ENV{'ENSEMBL_USER_ID'} ) {
     $self->{'page'}->global_context->add_entry( 
       'type'      => 'Account',
+      'id'        => 'account',
       'caption'   => 'Your account',
       $active ? ( 'class' => 'active') : ( 'url' => $obj->_url({
-      'time' => time, 
+        '_referer' => $referer,
+        'time' => time, 
+        '__clear' => 1,
         'type'   => 'Account',
 	'action' => 'Summary'
       }))
@@ -393,14 +408,19 @@ sub _local_tools {
   my $self = shift;
   my $obj = $self->{object};
 
-  my $current_page = $ENV{'SERVER_NAME'};
-  if (my $port = $ENV{'SERVER_PORT'}) {
-    $current_page .= ':'.$port;
-  }
-  $current_page .= $ENV{'REQUEST_URI'};
-  $current_page = CGI::escape($current_page);
+#  my $current_page = $ENV{'SERVER_NAME'};
+#  if (my $port = $ENV{'SERVER_PORT'}) {
+#    $current_page .= ':'.$port;
+#  }
+#  $current_page .= $ENV{'REQUEST_URI'};
   my @data = (
-    ['Bookmark this page',  '/Account/Bookmark?url='.$current_page.';_referer='.$current_page, 'modal_link' ],
+    ['Bookmark this page',  $obj->_url({
+      'type'     => 'Account',
+      'action'   => 'Bookmark',
+      'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'},
+      '_referer' => $ENV{'REQUEST_URI'},
+      '__clear'  =>1
+     }), 'modal_link' ],
   );
   my $vc  = $obj->get_viewconfig;
   my $config = {};
