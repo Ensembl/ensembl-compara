@@ -1,36 +1,36 @@
 
-<P>
+<p>
 
 
 
-<FORM action='/<TMPL_VAR SPECIES_URL>/<TMPL_VAR SCRIPT_NAME>/<TMPL_VAR MART_STATE_ID>' 
+<form action='/<TMPL_VAR SPECIES_URL>/<TMPL_VAR SCRIPT_NAME>/<TMPL_VAR MART_STATE_ID>' 
       name='settings' method='post' target='_self' 
       enctype='multipart/form-data'>
-<TABLE align="center" width=700 cellspacing=0 cellpadding=0 border=1>
- <TR>
-  <TD valign='top' height="1" bgcolor='<TMPL_VAR VDARK_BG_COLOR>'>
+<table align="center" style="width:700px;border:1px solid #ccc">
+ <tr>
+  <td style="height:1px;vertical-align:top" bgcolor='<TMPL_VAR VDARK_BG_COLOR>'>
 <!-- Top HTML -->
 <TMPL_VAR TOP_BOX>
-  </TD>
-  <TD width=200 bgcolor='<TMPL_VAR VDARK_BG_COLOR>' valign='top' rowspan=2>
+  </td>
+  <td style="width:200px;vertical-align:top" bgcolor='<TMPL_VAR VDARK_BG_COLOR>' rowspan=2>
 <!-- Status HTML -->
 <TMPL_VAR STATUS_BOX>
-  </TD>
- </TR>
- <TR>
+  </td>
+ </tr>
+ <tr>
   <!-- Main panel -->
-  <TD width=500 height="100%" align='center' valign='top' bgcolor='<TMPL_VAR MAIN_BG_COLOR>'>
+  <td style="width:500px;height:100%;text-align:center" bgcolor='<TMPL_VAR MAIN_BG_COLOR>'>
 <!-- Main HTML -->
 <TMPL_VAR MAIN_BOX>
-  </TD>
+  </td>
   <!-- Main panel end -->
-  </TD>
- </TR>
-</TABLE>
+  </td>
+ </tr>
+</table>
 
 <!-- State form -->
 <!--TMPL_VAR CURRENT_STATE-->
-</FORM>
+</form>
 
 <!-- Arbitrary HTML to include at the end of the page -->
 <TMPL_VAR SUFFIX_HTML>
