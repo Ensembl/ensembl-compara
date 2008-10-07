@@ -41,7 +41,7 @@ sub content {
   my $latest = $object->get_latest_incarnation;
   my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
   $id = $latest->stable_id.".".$latest->version;
-  my $version_html = _archive_link($object, $OBJ, $latest, $latest->stable_id, $param, $id);
+  my $version_html = $self->_archive_link($object, $OBJ, $latest, $latest->stable_id, $param, $id);
   $version_html .= "<br />\n";
   $version_html .= "Release: ".$latest->release;
   $version_html .= " (current)" if ($object->is_current);
@@ -69,13 +69,13 @@ sub content {
 
 
 sub _archive_link {
-  my ($object, $OBJ, $latest, $name, $type, $display_label, $release, $version ) = @_;
+  my ($self, $object, $latest, $name, $type, $display_label, $release, $version ) = @_;
 
   $release ||= $latest->release;
   $version ||= $latest->version;
 
   # no archive for old release, return un-linked display_label
-  return $display_label if ($release < $OBJ->species_defs->EARLIEST_ARCHIVE);
+  return $display_label if ($release < $self->object->species_defs->EARLIEST_ARCHIVE);
 
   my $url;
   my $site_type;
@@ -88,7 +88,7 @@ sub _archive_link {
   } else {
 
     my %archive_sites = map { $_->{release_id} => $_->{short_date} }
-      @{ $object->species_defs->RELEASE_INFO };
+      @{ $self->object->species_defs->RELEASE_INFO };
 
     $url = "http://$archive_sites{$release}.archive.ensembl.org/";
     $url =~ s/ //;
