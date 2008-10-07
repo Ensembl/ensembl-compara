@@ -692,9 +692,9 @@ sub get_gene_slices {
   my( $self, $master_config, @slice_configs ) = @_;
   foreach my $array ( @slice_configs ) { 
     if($array->[1] eq 'normal') {
-      my $slice= $self->get_Slice( $array->[2], 1 ); warn $slice;
+      my $slice= $self->get_Slice( $array->[2], 1 ); 
       $self->__data->{'slices'}{ $array->[0] } = [ 'normal', $slice, [], $slice->length ];
-    } else { warn $array->[2];
+    } else { 
       $self->__data->{'slices'}{ $array->[0] } = $self->get_munged_slice( $master_config, $array->[2], 1 );
     }
   }
