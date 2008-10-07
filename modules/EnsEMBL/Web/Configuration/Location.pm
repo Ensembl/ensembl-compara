@@ -32,7 +32,7 @@ sub populate_tree {
         change          EnsEMBL::Web::Component::Location::ChangeChromosome
         stats           EnsEMBL::Web::Component::Location::ChromosomeStats
     )],
-    { 'availability' => $self->mapview_possible($self->{object}->param('r')),
+    { 'availability' => 'chromosome',
       'disabled' => 'This sequence region is not part of an assembled chromosome' }
   );
 
@@ -56,7 +56,7 @@ sub populate_tree {
   );
 
   my $align_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
-  $align_menu->append( $self->create_node( 'Align', "Genomic alignments ([[counts::align_slice]] options)",
+  $align_menu->append( $self->create_node( 'Align', "Genomic alignments ([[counts::align_slice]] sets)",
     [qw(
       top      EnsEMBL::Web::Component::Location::Compara_AlignSliceTop
       nav      EnsEMBL::Web::Component::Location::ViewBottomNav
@@ -82,7 +82,7 @@ sub populate_tree {
       homo_nav   EnsEMBL::Web::Component::Location::NavigateHomology
       matches    EnsEMBL::Web::Component::Location::SyntenyMatches
     )],
-    { 'availability' => $self->mapview_possible($self->{object}->param('r')), 'concise' => 'Synteny'}
+    { 'availability' => 'chromosome', 'concise' => 'Synteny'}
   ));
 
 }
