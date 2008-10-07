@@ -385,11 +385,13 @@ sub render {
   $X .= '
 <!-- End of real content -->
       </div>' unless $flag eq 'start';
-  if( $self->include_navigation ) {
-    $X .= '   <div id="footer">[[copyright]][[footerlinks]]</div>';
-  }
-  else {
-    $X .= '   <div id="wide-footer">[[copyright]][[footerlinks]]</div>';
+  unless ($flag eq 'start') {
+    if( $self->include_navigation ) {
+      $X .= '   <div id="footer">[[copyright]][[footerlinks]]</div>';
+    }
+    else {
+      $X .= '   <div id="wide-footer">[[copyright]][[footerlinks]]</div>';
+    }
   }
   $X .= '
   </div>
