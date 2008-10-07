@@ -20,7 +20,8 @@ sub availability {
   } elsif( $self->Obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
     $hash->{'either'}     = 1;
   } else {
-    $hash->{'history'}    = 1;
+    my $rows = $self->table_info( $self->db, 'stable_id_event' )->{'rows'};
+    $hash->{'history'}    = $rows ? 1 : 0;
     $hash->{'either'}     = 1;
     $hash->{'transcript'} = 1;
   }
@@ -933,8 +934,7 @@ sub translation_object {
 # need call in API
 sub get_db {
   my $self = shift;
-  my $db = $self->param('db') || 'core';
-  return $db eq 'estgene'|| $db eq 'est' ? 'otherfeatures' : $db;
+  my $db = $self->core_objects->{'parameters'}{'db'} || $self->param('db') || 'core';
 }
 
 =head2 db_type
@@ -953,8 +953,6 @@ sub db_type{
   my %db_hash = qw(
     core    Ensembl
     otherfeatures     EST
-    est     EST
-    estgene EST
     vega    Vega
   );
   return  $db_hash{$db};
