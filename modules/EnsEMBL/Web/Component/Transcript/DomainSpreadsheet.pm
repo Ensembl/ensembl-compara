@@ -20,9 +20,7 @@ sub content {
   my $self = shift;
   my $object   = $self->object;
   return $self->non_coding_error unless $object->translation_object;
-
-  my $db_key      = 'DATABASE_'.uc($object->core_objects->{'parameters'}{'db'} || 'core');
-  my $analyses    = $object->table_info( $db_key, 'protein_feature' )->{'analyses'};
+  my $analyses    = $object->table_info( $object->get_db, 'protein_feature' )->{'analyses'}||{};
   my @domain_keys = grep { $analyses->{$_}{'web'}{'type'} eq 'domain' } keys %$analyses;
   my @other_keys  = grep { $analyses->{$_}{'web'}{'type'} ne 'domain' } keys %$analyses;
 ##  my $domains = $object->translation_object->get_protein_domains();
