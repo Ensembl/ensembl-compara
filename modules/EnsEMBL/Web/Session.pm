@@ -482,6 +482,7 @@ sub getViewConfig {
   my $key = $type.'::'.$action;
 
   unless ($Configs_of{ ident $self }{$key} ) {
+    my $flag = 0;
     my $view_config = EnsEMBL::Web::ViewConfig->new( $type, $action, $self );
     foreach my $root ( @{$self->get_path} ) {
       my $classname = $root."::ViewConfig::$key";
@@ -503,10 +504,11 @@ sub getViewConfig {
           } else {
             warn qq(ViewConfig: init call on $classname failed:\n$@);
           }
+        } else {
+          $view_config->real = 1;
         }
       }
     }
-
     my $image_config_data = {};
     if( $self->get_session_id && $view_config->storable ) {
       ## Let us see if there is an entry in the database and load it into the script config!
@@ -516,7 +518,7 @@ sub getViewConfig {
         type       => 'script',
         code       => $key,
       );
-      if ($config && $config->data) {
+      if( $config && $config->data ) {
         $view_config->set_user_settings( $config->data->{'diffs'} );
         $image_config_data = $config->data->{'image_configs'};
       }

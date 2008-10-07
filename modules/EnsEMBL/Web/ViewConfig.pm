@@ -11,6 +11,7 @@ sub new {
     '_db'                 => $adaptor->get_adaptor,
     '_r'                  => $adaptor->get_request || undef,
     'type'                => $type,
+    'real'                => 0,
     'action'              => $action,
     'title'               => undef,
     '_classes'            => [],
@@ -23,6 +24,10 @@ sub new {
 
   bless($self, $class);
   return $self;
+}
+
+sub real :lvalue {
+  $_[0]->{'real'};
 }
 
 sub url :lvalue {
