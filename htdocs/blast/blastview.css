@@ -1,0 +1,93 @@
+td.panel_big_head{ 	
+  background-color: #ffffff
+  font-size:        large;
+  font-weight:      bold;   
+  color:            #990000;
+  text-align:            left; }
+
+td.panel_head{ 	
+  background-color: #ffffff;
+  font-weight:      bold;   
+  color:            #000070;
+  text-align:            left; }
+
+td.block_head { 
+  background-color: #ffffff;
+  font-style:       italic;
+  color:            #000070;
+  text-align:            left;  }
+
+td.mart_block_head { 
+  background-color: #ffffff;
+  font-style:       italic;
+  text-align:            left;  }
+
+td.alt_mart_block_head { 
+  background-color: #ffffff;
+  font-style:       italic;
+  color:            navy;
+  text-align:            left;  }
+
+td.entry_warning { 
+  background-color: #ffffff;
+  font-style:       italic;
+  color:            #990000;
+  text-align:            left;  }
+
+td.panel_text{ 
+  background-color: #ffffff;
+  text-align:            left; }
+
+td.status_panel_head{ 
+  background-color: #ffffff;
+  color:            #5A85D6;
+  font-size:        large;
+  font-weight:      bold;   
+  text-align:            left; }
+
+td.status_block_head{ 
+  background-color: #eaeeff;
+  color:            #5A85D6;
+  font-size:        medium;
+  font-weight:      bold;   
+  text-align:            left; }
+
+td.status_entry{ 
+  background-color: #eaeeff;
+  color:            #5A85D6;
+  font-size:        medium;
+  text-align:            left; }
+
+td.status_warning { 
+  background-color: #eaeeff;
+  color:            #990000;
+  font-size:        small;
+  font-style:       italic;
+  text-align:            left;  }
+
+td.main_panel_bg {
+  background-color: #ffffff
+}
+
+td.main_panel_fg {
+  background-color: #ffffff;
+  text-align:            left;
+}
+
+td.alt_main_panel_fg {
+  background-color: #ffffff;
+  text-align:            left;
+  color:            navy;
+}
+
+td.main_panel_border {
+  background-color: #999999;
+}
+
+td.main_panel_fg_bold {
+  background-color: #ffffff;
+  color:            #000070;
+  text-align:       left;
+  font-size:        small;
+  font-weight:      bold;
+}
