@@ -172,7 +172,7 @@ sub draw_wiggle_plot {
       'y'         => $offset + $red_line_offset + $y,
       'height'    => abs( $score * $pix_per_score ),
       'x'         => $START-1,
-      'width'     => $END - $START,
+      'width'     => $END - $START+1,
       'absolutey' => 1,
       'title'     => sprintf("%.2f", $score),
       'colour'    => $colour,
