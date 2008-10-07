@@ -60,7 +60,7 @@ sub counts {
                        h.description = "within_species_paralog" )
                group by type', {}, $obj->stable_id
         )};
-        warn keys %res;
+        #warn keys %res;
         $counts->{'orthologs'} = $res{'ENSEMBL_ORTHOLOGUES'};
         $counts->{'paralogs'} = $res{'ENSEMBL_PARALOGUES'};
         my ($res) = $compara_dbh->selectrow_array(
@@ -690,11 +690,11 @@ sub get_das_features_by_slice {
 
 sub get_gene_slices {
   my( $self, $master_config, @slice_configs ) = @_;
-  foreach my $array ( @slice_configs ) {
+  foreach my $array ( @slice_configs ) { 
     if($array->[1] eq 'normal') {
-      my $slice= $self->get_Slice( $array->[2], 1 );
+      my $slice= $self->get_Slice( $array->[2], 1 ); warn $slice;
       $self->__data->{'slices'}{ $array->[0] } = [ 'normal', $slice, [], $slice->length ];
-    } else {
+    } else { warn $array->[2];
       $self->__data->{'slices'}{ $array->[0] } = $self->get_munged_slice( $master_config, $array->[2], 1 );
     }
   }
@@ -809,19 +809,19 @@ sub store_TransformedSNPS {
 }
 
 sub store_TransformedDomains {
-  my( $self, $key ) = @_;
+  my( $self, $key ) = @_; 
   my %domains;
   my $offset = $self->__data->{'slices'}{'transcripts'}->[1]->start -1;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
     my $transcript = $trans_obj->Obj;
-    next unless $transcript->translation;
-    foreach my $pf ( @{$transcript->translation->get_all_ProteinFeatures($key)} ) {
+    next unless $transcript->translation; 
+    foreach my $pf ( @{$transcript->translation->get_all_ProteinFeatures($key)} ) { 
 ## rach entry is an arry containing the actual pfam hit, and mapped start and end co-ordinates
       my @A = ($pf);
       foreach( $transcript->pep2genomic( $pf->start, $pf->end ) ) {
-        my $O = $self->munge_gaps( 'transcripts', $_->start - $offset, $_->end - $offset) - $offset;
+        my $O = $self->munge_gaps( 'transcripts', $_->start - $offset, $_->end - $offset) - $offset; 
         push @A, $_->start + $O, $_->end + $O;
-      }
+      } 
       push @{$trans_obj->__data->{'transformed'}{lc($key).'_hits'}}, \@A;
     }
   }
@@ -845,9 +845,9 @@ sub get_munged_slice {
   my $slice = $self->get_Slice( @_ );
   my $gene_stable_id = $self->stable_id;
 
-  my $length = $slice->length();
+  my $length = $slice->length(); 
   my $munged  = '0' x $length;
-  my $CONTEXT = $self->param( 'context' );
+  my $CONTEXT = $self->param( 'context' )|| 100;
   my $EXTENT  = $CONTEXT eq 'FULL' ? 1000 : $CONTEXT;
   ## first get all the transcripts for a given gene...
   my @ANALYSIS = ( $self->get_db() eq 'core' ? (lc($self->species_defs->AUTHORITY)||'ensembl') : 'otter' );
@@ -1022,13 +1022,14 @@ sub reg_factors {
 }
 
 sub reg_features {
-  my $self = shift;
+  my $self = shift; 
   my $gene = $self->gene;
   my $fsets = $self->feature_sets;
-  my $fg_db= $self->get_fg_db;
-  my $reg_feat_adaptor = $fg_db->get_RegulatoryFeatureAdaptor;
+  my $fg_db= $self->get_fg_db; warn $fg_db;
+  my $reg_feat_adaptor = $fg_db->get_RegulatoryFeatureAdaptor; warn $reg_feat_adaptor;
   my $features = $reg_feat_adaptor->fetch_all_by_Gene_FeatureSets($gene, $fsets, 1); 
-
+#  my $features = $reg_feat_adaptor->fetch_all_by_stable_id_FeatureSets( $gene->stable_id, $fsets, 1);
+  warn scalar @$features;
   return $features;
 }
 
