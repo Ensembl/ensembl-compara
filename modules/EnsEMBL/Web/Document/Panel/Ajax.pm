@@ -34,10 +34,7 @@ sub render {
 sub _error {
   my( $self, $caption, $body ) = @_;
   $self->printf( '
-<h1>AJAX error - %s</h1>
-<pre>
-%s
-</pre>',
+<h1>AJAX error - %s</h1>%s',
     $caption, $body
   );
 }
