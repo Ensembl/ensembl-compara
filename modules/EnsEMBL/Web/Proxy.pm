@@ -47,12 +47,13 @@ sub new {
       '_problem'         => $data->{_problem}         || [],
       '_species_defs'    => $data->{_species_defs}    || undef,
       '_ext_url_'        => $data->{_ext_url}         || undef,
+      '_parent'          => $data->{_parent}          || undef,
       '_user'            => $data->{_user}            || undef,
       '_input'           => $data->{_input}           || undef,
       '_databases'       => $data->{_databases}       || undef,
       '_wsc_adaptor'     => $data->{_wsc_adaptor}     || undef,
       '_wuc_adaptor'     => $data->{_wuc_adaptor}     || undef,
-      '_view_configs_' => $data->{_view_configs_} || {},
+      '_view_configs_'   => $data->{_view_configs_} || {},
       '_user_details'    => $data->{_user_details}    || undef,
       '_web_user_db'     => $data->{_web_user_db}     || undef,
       '_apache_handle'   => $data->{_apache_handle}   || undef,
@@ -108,6 +109,13 @@ sub species {
   my $self = shift;
   $self->[1]{_species} = shift if @_;
   return $self->[1]{_species};
+}
+
+sub parent               { 
+  ### a
+  my $self = shift;
+  $self->[1]{_parent} = shift if @_;
+  return $self->[1]{'_parent'}; 
 }
 
 sub script               { 
