@@ -20,7 +20,7 @@ sub availability {
   } elsif( $self->Obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
     $hash->{'either'}     = 1;
   } else {
-    my $rows = $self->table_info( $self->db, 'stable_id_event' )->{'rows'};
+    my $rows = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'};
     $hash->{'history'}    = $rows ? 1 : 0;
     $hash->{'either'}     = 1;
     $hash->{'transcript'} = 1;
