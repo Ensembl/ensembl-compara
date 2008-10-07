@@ -333,7 +333,7 @@ sub render {
           <div class="left-button">);
         if (exists $self->{'previous'}) {
           $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
-          my $url = $self->{'object'}->_url({'action'=>$self->{'previous'}{'code'}});
+          my $url = $self->{'object'}->_url({'action'=>$self->{'previous'}{'code'},'function'=>undef});
           $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>),CGI::escapeHTML($url),CGI::escapeHTML($button_text);
         } 
         else {
@@ -343,7 +343,7 @@ sub render {
           <div class="right-button">);
         if (exists $self->{'next'}) {
           $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
-          my $url = $self->{'object'}->_url({'action'=>$self->{'next'}{'code'}});
+          my $url = $self->{'object'}->_url({'action'=>$self->{'next'}{'code'},'function'=>undef});
           $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>),CGI::escapeHTML($url),CGI::escapeHTML($button_text);
         } else {
           $HTML .= q(<span>&nbsp;</span>);
