@@ -34,9 +34,22 @@ sub content {
   my $cp = int( ($object->seq_region_end+$object->seq_region_start) / 2);
   my $wd = $object->seq_region_end-$object->seq_region_start+1;
   my $url = $object->_url( {'r'=>undef}, 1 );
+  my @mp = ();
+  my $x=0;
   foreach(@$ramp_entries) {
-    $extra_html .= sprintf( '<a href="%s"><img title="%d bp" alt="%s bp" src="/i/blank.gif" class="blank" style="height:%dpx" /></a>', 
-      $self->_nav_url( $cp - $_->[1]/2+1, $cp + $_->[1]/2), $_->[1], $_->[1],$_->[0] );
+    push @mp, sqrt( $x * $_->[1] );
+    $x = $_->[1];
+  }
+  push @mp, 1e30;
+  my $l = shift @mp;
+  foreach(@$ramp_entries) {
+    my $r = shift @mp;
+    $extra_html .= sprintf( '<a href="%s"><img title="%d bp" alt="%s bp" src="/i/blank.gif" class="blank%s" style="height:%dpx" /></a>', 
+      $self->_nav_url( $cp - $_->[1]/2+1, $cp + $_->[1]/2), $_->[1], $_->[1],
+      $wd > $l && $wd <= $r ? '_high' : '',
+      $_->[0]
+    );
+    $l = $r;
   }
   my $extra_inputs;
   foreach(sort keys %{$url->[1]||{}}) {
