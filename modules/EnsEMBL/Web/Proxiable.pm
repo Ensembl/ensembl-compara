@@ -14,7 +14,8 @@ use CGI qw(escape escapeHTML);
 
 sub table_info {
   my( $self, $db, $table ) = @_;
-  return $self->species_defs->databases->{$db}{'tables'}{$table};
+  $db = "DATABASE_".uc($db) unless $db;
+  return $self->species_defs->databases->{$db}{'tables'}{$table}||{};
 }
 
 sub _url {
@@ -28,6 +29,10 @@ sub _url {
                     ( $action eq $self->action ? $self->function      : undef );
 
   my %pars = %{$self->core_objects->{'parameters'}};
+  if( $params->{'__clear'} ) {
+    %pars = ();
+    delete $params->{'__clear'};
+  }
   delete $pars{'t'}  if $params->{'pt'};
   delete $pars{'pt'} if $params->{'t'};
   delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
