@@ -29,6 +29,50 @@ our @EXPORT    = @EXPORT_OK;
 sub timer_push { my $self = shift; $self->timer->push( @_ ); }
 sub timer { return $_[0]{'timer'}; }
 
+sub _parse_referer {
+  my( $self, $uri ) = @_;
+  my ($url,$query_string) = split /\?/, $uri;
+  $url =~ /^https?:\/\/.*?\/(.*)$/;
+  my($sp,$ot,$view,$subview) = split /\//, $1;
+
+  my(@pairs) = split(/[&;]/,$query_string);
+  my $params = {};
+  foreach (@pairs) {
+    my($param,$value) = split('=',$_,2);
+    next unless defined $param;
+    $value = '' unless defined $value;
+    $param = CGI::unescape($param);
+    $value = CGI::unescape($value);
+    push @{$params->{$param}}, $value;
+  }
+  warn "\n";
+  warn "------------------------------------------------------------------------------\n";
+  warn "\n";
+  warn "  SPECIES: $sp\n";
+  warn "  OBJECT:  $ot\n";
+  warn "  VIEW:    $view\n";
+  warn "  SUBVIEW: $subview\n";
+  warn "  QS:      $query_string\n";
+  foreach my $param( sort keys %$params ) {
+    foreach my $value ( sort @{$params->{$param}} ) {
+      warn sprintf( "%20s = %s\n", $param, $value );
+    }
+  }
+  warn "\n";
+  warn "  URI:     $uri\n";
+  warn "\n";
+  warn "------------------------------------------------------------------------------\n";
+
+  return {
+    'ENSEMBL_SPECIES'  => $sp,
+    'ENSEMBL_TYPE'     => $ot,
+    'ENSEMBL_ACTION'   => $view,
+    'ENSEMBL_FUNCTION' => $subview,
+    'params'           => $params,
+    'uri'              => $uri
+  };
+}
+
 sub new {
 ### Object Instantiation
 ### Arg[1]: hash of parameters, keys include;
@@ -64,7 +108,6 @@ sub new {
 
   $self->{'cache'}  = $parameters{'cache'};
   $self->{'r'}      = $parameters{'r'};
-  $self->{'parent'} = $parameters{'parent'};
   
 ## Input module...
   $self->{'script'} = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'};
@@ -76,6 +119,7 @@ sub new {
   } else {
     $input  = new CGI;
   }
+  $self->{'parent'} = $self->_parse_referer( $input->param('referer')||$ENV{'HTTP_REFERER'} );
   $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
   $self->timer_push("Parameters initialised from input");
 
@@ -134,7 +178,8 @@ sub new {
       '_input'         => $input,
       '_apache_handle' => $rend->r,
       '_core_objects'  => $core_objects,
-      '_databases'     => $db_connection
+      '_databases'     => $db_connection,
+      '_parent'        => $self->{'parent'}
     }
   );
   $self->factory->__data->{'timer'} = $self->{'timer'};
@@ -166,8 +211,7 @@ sub configure {
     $objecttype = $object->__objecttype;
   } elsif ($object =~ /^\w+$/) { ## String (type of E::W object)
     $objecttype = $object;
-  }
-  else {
+  } else {
     $objecttype = 'Static';
   }
   $objecttype = 'DAS' if ($objecttype =~ /^DAS::.+/);
@@ -370,6 +414,7 @@ sub add_error_panels {
   }
 
   foreach my $problem ( sort { $b->isFatal <=> $a->isFatal } @problems ) {
+    next if $problem->isRedirect;
     next if !$problem->isFatal && $self->{'show_fatal_only'};
     my $desc = $problem->description;
     #warn "PROBLEM: $desc"; ## Just in case other bugs prevent error page rendering!
