@@ -17,12 +17,16 @@ sub new {
 }
 
 sub home_url { return $_[0]{'_home_url'};  }
+
 sub default_search_code { return $_[0]{'_default'}; }
-sub search_url { return $_[0]->home_url.$ENSEMBL_WEB_REGISTRY->get_species.'/Search'; }
+
+sub search_url {
+    my $species = $_[0]->home_url.$ENSEMBL_WEB_REGISTRY->get_species;
+    return $species ? "$species/psychic" : '/common/psychic';
+}
 
 sub render {
   my $self = shift;
-
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $page_species = $ENV{'ENSEMBL_SPECIES'};
   $page_species = '' if $page_species eq 'common';
@@ -37,6 +41,7 @@ sub render {
   <input type="hidden" name="site" value="%s" />),
   $species_defs->ENSEMBL_SITETYPE, $species_name, $self->search_url, $self->default_search_code
 );
+
   my $input_size = 50;
 
   if (!$page_species) {

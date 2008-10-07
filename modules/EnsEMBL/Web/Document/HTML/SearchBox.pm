@@ -15,8 +15,13 @@ sub new {
   );
 }
 
-sub default_search_code { return $_[0]{'_default'}; }
-sub search_url { return $_[0]->home_url.$EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_species.'/Search'; }
+sub default_search_code { my $self = shift; return $self->{'_default'}; }
+
+sub search_url {
+    my $species = $_[0]->home_url.$EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_species;
+    $species =~ s/^\/$//;
+    return $species ? "$species/psychic" : '/common/psychic';
+}
 
 sub add_index { push @{$_[0]->{'indexes'}}, $_[1]; }
 
