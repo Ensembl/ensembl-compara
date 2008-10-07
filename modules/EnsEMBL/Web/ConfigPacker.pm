@@ -477,17 +477,6 @@ sub _summarise_dasregistry {
     }
     
     $cfg->{'logic_name'}      = $key;
-    $cfg->{'category'}        = $val;
-    
-    # If specified in the config, "coords" is expected to look like:
-    # [ chromosome:NCBI36:Homo_sapiens ]
-    if( my $coords = $cfg->{'coords'} ) {
-      $cfg->{'coords'} = [map {
-        my @pieces = split /:/, $_;
-#        Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
-        { name    => $pieces[0], version => $pieces[1], species => $pieces[2] }
-      } ref $coords ? @{ $coords } : ($coords) ];
-    }
     
     # Check using the url/dsn if the source is registered
     my $src = $sources{$key};
@@ -498,10 +487,7 @@ sub _summarise_dasregistry {
       $cfg->{'description'}   ||= $src->description;
       $cfg->{'maintainer'}    ||= $src->maintainer;
       $cfg->{'homepage'}      ||= $src->homepage;
-# We need to get the hash of parameters...
-      $cfg->{'coords'}        ||= [ map { 
-        { 'name' => $_->name, 'version' => $_->version, 'species' => $_->species }
-      } @{ $src->coord_systems || []  } ];
+      $cfg->{'coords'}        ||= $src->coord_systems;
       $cfg->{'url'}           ||= $src->url;
       $cfg->{'dsn'}           ||= $src->dsn;
     }
@@ -515,9 +501,13 @@ sub _summarise_dasregistry {
       next;
     }
     
-    # Add the final config hash to the das packed tree
-    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_CONFIGS'}{$key} = $cfg;
+    # Add to the das packed tree as a hash
+    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}{$key} = $cfg;
+    # Remove the config from the ini tree
+    delete $self->tree->{$key};
   }
+  # Remove the list of sources from the ini tree
+  delete $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'};
 }
 
 sub _meta_info {
@@ -590,33 +580,50 @@ sub _munge_website_multi {
 }
 
 sub _configure_blast {
-## TODO: Needs changing to work out available sources based on what's in databases
   my $self = shift;
   my $tree = $self->tree;
   my $species = $self->tree->{'SPECIES_BIO_NAME'};
   $species =~ s/ /_/g;
-  foreach my $blast_type (keys %$tree) {
-    next unless $blast_type =~ /_DATASOURCES/;
-    foreach my $source ( keys %{$tree->{$blast_type}} ) {
-      my $file = $tree->{$blast_type}{$source};
-      next unless $file =~ /^%_/;
+  my $method = $self->full_tree->{'MULTI'}{'ENSEMBL_BLAST_METHODS'};
+  foreach my $blast_type (keys %$method) { ## BLASTN, BLASTP, BLAT, etc
+    my @method_info = @{$method->{$blast_type}};
+    my $search_type = uc($method_info[0]); ## BLAST or BLAT at the moment
+    my $sources = $self->full_tree->{'MULTI'}{$search_type.'_DATASOURCES'};
+    $tree->{$blast_type.'_DATASOURCES'}{'DATASOURCE_TYPE'} = $method_info[1]; ## dna or peptide
+    my $db_type = $method_info[2]; ## dna or peptide
+    foreach my $source_type (keys %$sources) { ## CDNA_ALL, PEP_ALL, etc
+      next if $source_type eq 'DEFAULT';
+      next if ($db_type eq 'dna' && $source_type =~ /^PEP/);
+      next if ($db_type eq 'peptide' && $source_type !~ /^PEP/);
+      if ($source_type eq 'CDNA_ABINITIO') { ## Does this species have prediction transcripts?
+        next unless 1;
+      }
+      elsif ($source_type eq 'RNA_NC') { ## Does this species have RNA data?
+        next unless 1;
+      }
+      elsif ($source_type eq 'PEP_KNOWN') { ## Does this species have species-specific protein data?
+        next unless 1;
+      }
       my $assembly = $tree->{'ASSEMBLY_NAME'};
-      (my $type = lc($source)) =~ s/_/\./ ;
+      (my $type = lc($source_type)) =~ s/_/\./ ;
       if ($type =~ /latestgp/) {
-        $type =~ s/latestgp(.*)/dna$1\.toplevel/;
-        $type =~ s/.masked/_rm/;
-        my $repeat_date = $self->db_tree->{'REPEAT_MASK_DATE'};;
-        my $new_file = sprintf( '%s.%s.%s.%s', $species, $assembly, $repeat_date, $type ).".fa";
-        #print "AUTOGENERATING $source......$new_file\t";
-        $tree->{$blast_type}{$source} = $new_file;
+        if ($search_type ne 'BLAT') {
+          $type =~ s/latestgp(.*)/dna$1\.toplevel/;
+          $type =~ s/.masked/_rm/;
+          my $repeat_date = $self->db_tree->{'REPEAT_MASK_DATE'};;
+          my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $repeat_date, $type ).".fa";
+          #print "AUTOGENERATING $source......$new_file\t";
+          $tree->{$blast_type.'_DATASOURCES'}{$source_type} = $file;
+        }
       } 
       else {
         $type = "ncrna" if $type eq 'rna.nc';
-        my $new_file = sprintf( '%s.%s.%s.%s', $species, $assembly, $SiteDefs::ENSEMBL_VERSION, $type ).".fa";
+        my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $SiteDefs::ENSEMBL_VERSION, $type ).".fa";
         #print "AUTOGENERATING $source......$new_file\t";
-        $tree->{$blast_type}{$source} = $new_file;
+        $tree->{$blast_type.'_DATASOURCES'}{$source_type} = $file;
       }
     }
+    #warn "TREE $blast_type = ".Dumper($tree->{$blast_type.'_DATASOURCES'});
   }
 }
 
