@@ -4,6 +4,7 @@ use FindBin qw($Bin);
 use File::Basename qw(dirname);
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 BEGIN{
   warn dirname( $Bin );
@@ -14,6 +15,7 @@ BEGIN{
 }
 
 use EnsEMBL::Web::SpeciesDefs;
+use XHTML::Validator;
 
 my $SD = new EnsEMBL::Web::SpeciesDefs;
 
@@ -126,6 +128,11 @@ my %queries = (
 
 my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
 
+my $x = XHTML::Validator->new();
+
+print join "\t",
+  "Species", "DB", "Type", "Logic name", "ID", "Sub-type", "Count",
+  "Displayable", "Label", "Description", "Web", "Error\n";
 foreach my $sp ( @species ) {
   my $tree = $SD->{_storage}{$sp};
   foreach my $db_name ( qw(DATABASE_CORE DATABASE_VEGA DATABASE_OTHERFEATURES DATABASE_CDNA) ) {
@@ -134,23 +141,51 @@ foreach my $sp ( @species ) {
 use Data::Dumper;
     $tree->{'databases'}->{$db_name}{'tables'}=undef;
     $tree->{'databases'}->{$db_name}{'meta_info'}=undef;
-    my %analyses = (0=>'Coordinatesystems', map {@$_} @{$dbh->selectall_arrayref(
-"select a.analysis_id, concat( a.logic_name, if( isnull(ad.analysis_id),'****NO DESCRIPTION****',
-  concat( '(',if(ad.displayable,'**','--'),display_label,')' )) )
-   from analysis as a left join analysis_description as ad on a.analysis_id = ad.analysis_id"
-)});
-    my %used     = map {($_=>1)} keys %analyses;
+    my $analyses = $dbh->selectall_hashref(
+      'select a.analysis_id, a.logic_name, ad.display_label,
+              ad.displayable, ad.web_data, ad.description
+         from analysis as a left join analysis_description as ad on
+              a.analysis_id = ad.analysis_id', 'analysis_id'
+    );
+    foreach ( keys %$analyses ) {
+      $analyses->{$_}{'description'} =~ s/\s+/ /g; $analyses->{$_}{'description'} =~ s/^ //; $analyses->{$_}{'description'} =~ s/ $//;
+      $analyses->{$_}{'web_data'}    =~ s/\s+/ /g; $analyses->{$_}{'web_data'}    =~ s/^ //; $analyses->{$_}{'web_data'}    =~ s/ $//;
+      $analyses->{$_}{'valid'}       = $x->validate( $analyses->{$_}{'description'} );
+      $analyses->{$_}{'valid'}       =~ s/\s+/ /g; $analyses->{$_}{'valid'}       =~ s/^ //; $analyses->{$_}{'valid'}       =~ s/ $//;
+    }
+    $analyses->{0} = { 'analysis_id'=>0,'logic_name'=>'fake_coord','display_label'=> 'Co-ordinate systems', 'web_data'=>'{}', 'description' => 'Fake', 'displayable' => 0, 'valid' => 1 };
+    my %used     = map {($_=>1)} keys %$analyses;
+
     foreach my $K ( sort keys %queries ) {
       my $results = $dbh->selectall_arrayref( $queries{$K} );
-      next unless $results;
-      next unless @{$results};
+      next unless $results && @{$results};
       foreach( @{$results} ) {
-        print join "\t", $sp, $db_name, $K, $analyses{$_->[0]}||"**$_->[0]**", $_->[1],"$_->[2]\n";
+        my $a = $analyses->{$_->[0]}||{};
+        print join "\t", $sp, $db_name, $K,
+          $a->{'logic_name'}||'-missing-',
+          $_->[0],
+          $_->[1],
+          $_->[2],
+          $a->{'displayable'} ? 'YES' : exists($a->{'displayable'})?'NO':'--',
+          $a->{'display_label'},
+          $a->{'description'},
+          $a->{'web_data'},
+          "$a->{'valid'}\n";
         delete $used{$_->[0]};
       }
     }
     foreach( sort keys %used ) {
-      print join "\t", $sp, $db_name, 'ununsed', $analyses{$_},'',0,"\n";
+      my $a = $analyses->{$_};
+      print join "\t", $sp, $db_name, 'ununsed',
+        $a->{'logic_name'}||'-missing-',
+        $_,
+        "",
+        0,
+        $a->{'displayable'} ? 'YES' : exists($a->{'displayable'})?'NO':'--',
+        $a->{'display_label'},
+        $a->{'description'},
+        $a->{'web_data'},
+        "$a->{'valid'}\n";
     }
   }
 }
