@@ -80,6 +80,7 @@ sub menu {
 }
 
 sub _parse_referer {
+  my $referer = shift || $ENV{'HTTP_REFERER'};
   my ($url,$query_string) = split /\?/, $ENV{'HTTP_REFERER'};
   $url =~ /^https?:\/\/.*?\/(.*)$/;
   my($sp,$ot,$view) = split /\//, $1;
@@ -122,7 +123,7 @@ sub configurator {
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
   my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
   warn "MY SESSION $session_id";
-  my $referer_hash = _parse_referer;
+#  my $referer_hash = _parse_referer;
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $ajax_flag = $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 
@@ -132,7 +133,7 @@ sub configurator {
     'scriptname' => 'config',
     'r'          => $r,
     'ajax_flag'  => $ajax_flag,
-    'parent'     => $referer_hash,
+#    'parent'     => $referer_hash,
     'renderer'   => 'String',
     'cache'      => $MEMD,
   );
@@ -228,22 +229,28 @@ sub ingredient {
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
   } else {
     warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}";
-    my $referer_hash = _parse_referer;
-    $ENV{'ENSEMBL_ACTION'} = $referer_hash->{'ENSEMBL_ACTION'};
+    # my $referer_hash = _parse_referer;
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
       'objecttype' => $objecttype,
       'doctype'    => 'Component',
       'ajax_flag'  => 1,
       'scriptname' => 'component',
-      'parent'     => $referer_hash,
+#      'parent'     => $referer_hash,
       'renderer'   => 'String',
       'cache'      => $MEMD,
     );
-    
-    $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
+    $ENV{'ENSEMBL_ACTION'} = $webpage->{'parent'}->{'ENSEMBL_ACTION'};
+## Set the ACTION....
+    $webpage->factory->action( $webpage->{'parent'}->{'ENSEMBL_ACTION'} );
+    if( $webpage->dataObjects->[0] ) {
+      $webpage->dataObjects->[0]->action(  $webpage->{'parent'}->{'ENSEMBL_ACTION'} );
+      $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
   
-    $webpage->render;
-    $content = $webpage->page->renderer->content;
+      $webpage->render;
+      $content = $webpage->page->renderer->content;
+    } else {
+      $content = '<p>Unable to produce objects - panic!</p>';
+    }
     $MEMD->set(
       $ENV{CACHE_KEY},
       $content,
@@ -359,12 +366,20 @@ sub stuff {
         }
         $webpage->configure( $object, @sections );
       }
-      $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
-      $webpage->render;
-      warn $webpage->timer->render if
-      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
-      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
-      #return "Completing action";
+warn "==================== ",$webpage->dataObjects->[0]->get_problem_type('redirect');
+      if( $webpage->dataObjects->[0]->has_problem_type( 'redirect' ) ) {
+        my($p) = $webpage->dataObjects->[0]->get_problem_type('redirect');
+  use Data::Dumper;      warn Data::Dumper::Dumper( $p );
+        warn $p->name;
+        $webpage->redirect( $p->name );
+      } else {
+        $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
+        $webpage->render;
+        warn $webpage->timer->render if
+        $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+        $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
+        #return "Completing action";
+      }
     }
 
     $content = $webpage->page->renderer->content;
