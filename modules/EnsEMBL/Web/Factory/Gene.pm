@@ -105,7 +105,7 @@ qq(<p>This view requires a gene, transcript or protein identifier in the URL. Fo
   #warn( "FOO: ", $self->param( 'gene' ) );
   
 #  $self->problem('redirect', sprintf( 'db=%s;g=%s',$db,$geneobj->stable_id );
-  $self->problem( 'redirect', $self->_url({'db'=>$db, 'g' =>$geneobj->stable_id,'t'=>undef,'r'=>undef}));
+  $self->problem( 'redirect', $self->_url({'db'=>$db, 'g' =>$geneobj->stable_id,'t'=>undef,'r'=>undef,'pt'=>undef}));
   return;# $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Gene', $geneobj, $self->__data ));
 }
 
