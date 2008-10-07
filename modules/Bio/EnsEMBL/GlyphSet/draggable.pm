@@ -17,7 +17,7 @@ sub _init {
   my $glyph = $self->Rect({
     'x'         => 0,
     'y'         => 6,
-    'width'     => $end-$start,
+    'width'     => $end-$start+1,
     'height'    => 0,
     'color'     => 'black'
   });
