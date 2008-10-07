@@ -172,14 +172,14 @@ function select_stop( evt ) {
     if( e < s ) { var t = e; e = s; s = t; }
     if( window.location.pathname.match(/\/Location/) ) {
       _show_zmenu_range( { 
-        bp_start: Math.round(s * _scale_factor + _start),
-        bp_end:   Math.round(e * _scale_factor + _start),
+        bp_start: Math.floor(s * _scale_factor + _start),
+        bp_end:   Math.floor(e * _scale_factor + _start),
         x: end_x, y: end_y
       } );
     } else {
       _show_zmenu_range_other( {
-        bp_start: Math.round(s * _scale_factor + _start),
-        bp_end:   Math.round(e * _scale_factor + _start),
+        bp_start: Math.floor(s * _scale_factor + _start),
+        bp_end:   Math.floor(e * _scale_factor + _start),
         x: end_x, y: end_y,
 	species:    A[3],
 	region:     A[4]
@@ -387,3 +387,11 @@ function __get_location_info() {
 
 addLoadEvent(__get_location_info);
 
+
+function __resize_nav() {
+  $$('.navbar').each(function(n){
+    n.setStyle({width:ENSEMBL_WIDTH+'px'});
+  });
+}
+
+addLoadEvent(__resize_nav);
