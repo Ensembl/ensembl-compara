@@ -331,7 +331,7 @@ sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 1 ); }
 
 sub render {
   my $self = shift;
-
+  my $flag = shift;
   ## If this is an AJAX request then we will not render the page wrapper!
   if( $self->{'_modal_dialog_'} ) {
     ## We need to add the dialog tabs and navigation tree here....
@@ -344,10 +344,10 @@ sub render {
     return;
   }
   ## This is now a full page...
-  $self->_render_head_and_body_tag;
+  $self->_render_head_and_body_tag unless $flag eq 'end';
   #  my $X = $self->{'page_template'};
   my $X = '';
-  if( $self->species_defs->ENSEMBL_DEBUG_FLAGS & 1024 ) {
+  if( $self->species_defs->ENSEMBL_DEBUG_FLAGS & 1024 && $flag ne 'end' ) {
     $X .= '  <div id="debug"></div>';  ## UNTIL WE GO LIVE PLEASE LEAVE THIS IN !
   }
   $X .= '
@@ -371,17 +371,20 @@ sub render {
     </tr>
   </table>
   <div style="position: relative">
-  ';
+  ' unless $flag eq 'end';
   if( $self->include_navigation ) {
     $X .= '
       <div id="nav">[[local_context]][[local_tools]]<p class="invisible">.</p></div>';
   }
   $X .= '
       <div id="main">
-<!-- Start of real content --> 
-      [[content]]
+<!-- Start of real content --> ';
+
+  $X .= '
+      [[content]]' unless $flag;
+  $X .= '
 <!-- End of real content -->
-      </div>';
+      </div>' unless $flag eq 'start';
   if( $self->include_navigation ) {
     $X .= '   <div id="footer">[[copyright]][[footerlinks]]</div>';
   }
@@ -400,7 +403,7 @@ sub render {
     $self->printf( '%s - %s', $page_element, $@ ) if $@;
   }
   $self->print( $X );
-  $self->_render_close_body_tag;
+  $self->_render_close_body_tag unless $flag eq 'start';
 }
 
 sub render_DAS {
@@ -468,23 +471,12 @@ sub render_TextGz {
 
 sub render_start {
   my( $self ) = shift;
-  $self->_render_head_and_body_tag;
-  foreach my $R ( @{$self->{'body_order'}} ) {
-    my $attr = $R->[0];
-    return if $attr eq 'content';
-    $self->$attr->render;
-  }
+  $self->render( 'start' );
 }
 
 sub render_end {
   my( $self ) = shift;
-  my $flag = 0;
-  foreach my $R ( @{$self->{'body_order'}} ) {
-    my $attr = $R->[0];
-    $self->$attr->render if( $flag );
-    $flag = 1 if $attr eq 'content';
-  }
-  $self->_render_close_body_tag;
+  $self->render( 'end' );
 }
 
 sub _render_head_and_body_tag {
