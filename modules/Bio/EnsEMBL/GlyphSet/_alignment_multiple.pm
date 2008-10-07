@@ -151,7 +151,6 @@ if(0){
   $self->_offset($h);
   $self->draw_track_name($feature_text, $feature_colour) if $drawn_block;
 }
-warn "WIGGLE $wiggle....";
   my $drawn_wiggle = $wiggle ? $self->wiggle_plot : 1;
   return 0 if $drawn_block && $drawn_wiggle;
 

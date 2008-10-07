@@ -103,7 +103,6 @@ sub _init {
          'height'    => 3,
          ( $filled == 1 ? 'colour' : 'bordercolour' )  => 'black',
          'absolutey' => 1,
-         'alt'       => 'xxx'
       });
       if ($navigation eq 'on' && $Config->{'compara'} ne 'secondary' ){
 #        ($t->{'href'},$t->{'zmenu'}) = $self->interval( $param_string, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);

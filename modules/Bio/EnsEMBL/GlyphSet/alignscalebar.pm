@@ -128,7 +128,6 @@ sub _init {
         'height'    => 3,
         ( $filled == 1 ? 'colour' : 'bordercolour' )  => 'black',
         'absolutey' => 1,
-        'alt'       => 'xxx'
         });
     if ($navigation eq 'on'){
         ($t->{'href'},$t->{'zmenu'}) = $self->interval( $species, $aslink, $Container, $start, $end, $contig_strand, $global_start, $global_end-$global_start+1, $highlights);
@@ -280,7 +279,6 @@ sub align_interval {
         'height'    => 3,
         ( $filled == 1 ? 'colour' : 'bordercolour' )  => $col2,
         'absolutey' => 1,
-        'alt'       => 'xxx', 
         'zmenu' => $zmenu
         });
 

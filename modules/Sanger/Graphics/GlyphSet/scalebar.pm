@@ -91,7 +91,6 @@ sub _init {
          'height'    => 3,
          ( $filled == 1 ? 'colour' : 'bordercolour' )  => 'black',
          'absolutey' => 1,
-         'alt'       => 'xxx'
       });
       if ($navigation eq 'on'){
         ($t->{'href'},$t->{'zmenu'}) = $self->interval( $param_string, $start, $end, $global_start, $global_end-$global_start+1, $highlights);
