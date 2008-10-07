@@ -14,12 +14,12 @@ sub _init {
 
 sub content {
     my $self = shift;
-    my $html = '';
     my $exa_obj = $self->object->Obj;
     my $renderer = new ExaLead::Renderer::HTML( $exa_obj );
-    my $html =  $renderer->render_summary.
-         	$renderer->render_navigation.
-	        $renderer->render_hits;
+    my $html = $renderer->render_form.
+	       $renderer->render_summary.
+               $renderer->render_navigation.
+	       $renderer->render_hits;
     return $html;
 }
 
