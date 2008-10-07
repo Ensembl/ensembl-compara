@@ -18,9 +18,8 @@ use Digest::MD5;
 ## Ensembl modules.....
 use Bio::EnsEMBL::VDrawableContainer;
 use Bio::EnsEMBL::DrawableContainer;
-use EnsEMBL::Web::UserConfigAdaptor;
+#use EnsEMBL::Web::UserConfigAdaptor;
 use EnsEMBL::Web::Container::HSPContainer;
-# use EnsEMBL::HTML::Page;
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
@@ -46,7 +45,7 @@ use vars qw( %ERRORS ); # Errors per-stage
 
 BEGIN {
   $META_DATA = EnsEMBL::Web::BlastView::MetaDataBlast->config || die( "Can't configure MetaData" );
-  $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new();
+  $SPECIES_DEFS = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
   $DBCONNECTION = EnsEMBL::Web::DBSQL::DBConnection->new( undef, $SPECIES_DEFS );
 }
 
@@ -92,9 +91,7 @@ MAIN:{
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
   my $page     = new EnsEMBL::Web::Document::Dynamic( $renderer, undef, $SPECIES_DEFS );
   $page->_initialize_HTML;
-  $page->menu->delete_block('archive');
-  $page->masthead->sp_bio    ||= 'Multi';
-  $page->masthead->sp_common ||= 'Multi';
+  $page->include_navigation(0);
 
   # Get BlastAdaptor object
   my $blast_adpt = &fetch_blast_adaptor( $page );
@@ -181,10 +178,9 @@ MAIN:{
     $page->add_body_attr( 'onload', $_ );
   }
   $page->add_body_attr( 'onload', "LOADED = 1;"  );
-  $page->stylesheet->add_sheet( 'all', '/css/blastview.css' );
+  $page->stylesheet->add_sheet( 'all', '/blast/blastview.css' );
   $page->javascript->add_script( 'var LOADED = 0;' );
-  $page->javascript->add_source( '/js/zmenu_42.js' );
-  $page->javascript_div->add_div( 'jstooldiv', { 'style' => 'z-index: 200; position: absolute; visibility: hidden' } , '' );
+  #$page->javascript->add_source( '/js/zmenu_42.js' );
 
 
   $| = 1;
@@ -837,7 +833,7 @@ sub get_status_panel{
                              VALUE => $CGI->param( 'stage' ),
                              SRC   => gen_button_src('refresh', 'on') },
 
-                           { HREF  => qq(javascript:void(window.open(\'/perl/helpview?se=1&kw=$VIEW_SCRIPT\',\'$VIEW_SCRIPT\',\'width=750,height=550,resizable,scrollbars\'));),
+                           { HREF  => qq(javascript:void(window.open(\'http://mar2008.archive.ensembl.org/Homo_sapiens/helpview?se=1&kw=$VIEW_SCRIPT\',\'$VIEW_SCRIPT\',\'width=750,height=550,resizable,scrollbars\'));),
                              SRC   => gen_button_src('help', 'on') }
                           );
 
@@ -1822,13 +1818,16 @@ sub populate_karyotype{
   my $site_type= $SPECIES_DEFS->get_config( $sp, 'ENSEMBL_SITETYPE'    );
 
   my $session      = $ENSEMBL_WEB_REGISTRY->get_session;
-  my $web_config   = $session->getUserConfig('Vkaryotype');
+  my $web_config   = $session->getImageConfig('Vkaryotype');
 
   my $num_chrs = scalar( @$chrs_ref );
-  $web_config->{'_rows'}                   = int( ($num_chrs-1)/12 ) + 1;
-  $web_config->{'chromosomes'}             = $chrs_ref;
-  $web_config->{'_all_chromosomes'}        = 'yes';
-  $web_config->container_width( $chr_maxln );
+  $web_config->set_parameter('rows',  int( ($num_chrs-1)/12 ) + 1);
+  $web_config->set_parameter('chromosomes', $chrs_ref);
+  $web_config->set_parameter('all_chromosomes', 'yes');
+  $web_config->set_parameter('container_width', $chr_maxln );
+  warn "MAX ".$web_config->container_width;
+  warn "WIDTH  ".$web_config->get_parameter('image_width');
+  warn "HEIGHT ".$web_config->get_parameter('image_height');
   
   my $karyo_dc = Bio::EnsEMBL::VDrawableContainer->new(
     { '_config_file_name_' => $sp, ka=>$ka, sa=>$sa, 'chr' => 'ALL' }, $web_config, [ \%highlights, \%highlights2 ] 
