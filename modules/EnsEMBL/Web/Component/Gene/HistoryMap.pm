@@ -37,76 +37,25 @@ sub content {
     return $html;
   }
 
-  my $tree = _create_idhistory_tree($object, $historytree, $OBJ);
+  my $tree = $self->_create_idhistory_tree($object, $historytree, $OBJ);
   my $T = $tree->render;
-    if ($historytree->is_incomplete) {
-      $T = qq(<p>Too many related stable IDs found to draw complete tree - tree shown is only partial.</p>) . $T;
-    }
-
+  if ($historytree->is_incomplete) {
+    $T = qq(<p>Too many related stable IDs found to draw complete tree - tree shown is only partial.</p>) . $T;
+  }
 
   return $T;
 }
 
-
-sub _archive_link {
-  my ($object, $OBJ, $latest, $name, $type, $display_label, $release, $version ) = @_;
-
-  $release ||= $latest->release;
-  $version ||= $latest->version;
-  
-  #no archive for old release, return un-linked display_label
-  return $display_label if ($release < $OBJ->species_defs->EARLIEST_ARCHIVE);
-
-  my $url;
-  my $site_type;
-
-  if ($latest->is_current) {
-
-    $url = "/";
-    $site_type = "current";
- 
-  } else {
-
-    my %archive_sites = map { $_->{release_id} => $_->{short_date} }
-      @{ $object->species_defs->RELEASE_INFO };
-
-    $url = "http://$archive_sites{$release}.archive.ensembl.org/";
-    $url =~ s/ //;
-    $site_type = "archived";
-
-  }
-
-  $url .=  $ENV{'ENSEMBL_SPECIES'};
-
-  my $view = $type."view";
-  if ($type eq 'peptide') {
-    $view = 'protview';
-  } elsif ($type eq 'transcript') {
-    $view = 'transview';
-  }
-
-  my $html = qq(<a title="View in $site_type $view" href="$url/$view?$type=$name">$display_label</a>);
-  return $html;
-}
-
 sub _create_idhistory_tree {
-  my ($object, $tree, $OBJ) = @_;
+  my ($self, $object, $tree, $OBJ) = @_;
 
   #user defined width in pixels
-  my $image_width  = $OBJ->param( 'image_width' );
-
   my $wuc = $OBJ->image_config_hash( 'idhistoryview' );
    $wuc->set_parameters({
-      'container_width' => $image_width || 800,
-      'image_width'     => $image_width || 800, ## hack at the moment....
+      'container_width' => $self->image_width || 800,
+      'image_width'     => $self->image_width || 800, ## hack at the moment....
       'slice_number',     => '1|1',
   });
-
-#  $wuc->set_parameter( 'LINK'  => _flip_URL($object));
-#  my $wuc = $OBJ->image_config_hash('idhistoryview');
-#  $wuc->container_width($OBJ->param('image_width') || 900);
-#  $wuc->set_width($OBJ->param('image_width'));
- # $wuc->set('_settings', 'LINK', _flip_URL($object));
 
   $wuc->{_object} = $object;
 
@@ -119,15 +68,6 @@ sub _create_idhistory_tree {
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
   return $image;
-}
-
-sub _flip_URL {
-  my ($object) = @_;
- 
-  my $temp = $object->type;
-  my $type = $temp eq 'Translation' ? "peptide" : lc($temp);
-
-  return sprintf('%s=%s', $type, $object->stable_id .".". $object->version);
 }
 
 1;
