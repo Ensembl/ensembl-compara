@@ -10,6 +10,14 @@ use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Object);
 
+sub availability {
+  my $self = shift;
+  my $hash = $self->_availability;
+  my %chrs = map { $_,1 } @{$self->species_defs->ENSEMBL_CHROMOSOMES || []};
+  $hash->{'chromosome'} = $chrs{ $self->Obj->{'seq_region_name'} } ? 1 : 0;
+  return $hash;
+}
+
 our $MEMD = new EnsEMBL::Web::Cache;
 
 sub counts {
@@ -22,10 +30,28 @@ sub counts {
   $counts = $MEMD->get($key) if $MEMD;
 
   unless ($counts) {
-    $counts = {};
-    my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-    $counts->{'synteny'} = keys %synteny_hash; 
+    my $species = $self->species;
 
+## Count the entries in the synteny hash for this species...
+    my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+
+## Count the alignments (excluding TBLAT for alignslice view AND only pairwise for MultiContigView)
+
+    my %alignments = $self->species_defs->multi('DATABASE_COMPARA','ALIGNMENTS');
+    my %c_species;
+    my $c_align;
+    foreach( values %alignments ) {
+      $c_align++             if $_->{'species'}{$species} && $_->{'type'} !~ /TRANSLATED_BLAT/;
+      next unless $_->{'species'}{$species} && ( keys %{$_->{'species'}} == 2 );
+      my ($other_species) = grep { $_ ne $species } keys %{$_->{'species'}};
+      $c_species{$other_species}++;
+    }
+
+    $counts = {
+      'synteny'      => scalar( keys %{ $synteny_hash{$species}||{} } ),
+      'align_slice'  => $c_align,
+      'align_contig' => scalar( keys %c_species )
+    }
   }
   return $counts;
 }
