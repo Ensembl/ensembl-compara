@@ -38,8 +38,8 @@ sub render   {
       <a href="/UserData/Upload?_referer=$url" class="modal_link">Control Panel</a> &nbsp;|&nbsp;);
   }
   $html .= qq(
-      <a href="$species/Blast">BLAST</a> &nbsp;|&nbsp; 
-      <a href="$species/Biomart">BioMart</a> &nbsp;|&nbsp;
+      <a href="/Multi/blastview">BLAST</a> &nbsp;|&nbsp; 
+      <a href="/$species/Biomart">BioMart</a> &nbsp;|&nbsp;
       <a href="/info/website/help/" id="help">Help &amp; Documentation</a>);
 
   $self->print($html);
