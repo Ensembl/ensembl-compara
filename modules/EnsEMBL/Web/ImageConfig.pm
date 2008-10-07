@@ -804,7 +804,6 @@ sub add_alignments {
       };
     } else {
       my $n_species = grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}};
-warn "XX: $row->{'conservation_score'} $row->{'constrained_element'}";
       if( $row->{'conservation_score'} ) {
         $alignments->{'multiple_align'}{ $row->{'id'}.'_constrained' } = {
           'db' => $key,
