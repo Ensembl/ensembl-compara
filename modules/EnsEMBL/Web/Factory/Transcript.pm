@@ -53,9 +53,9 @@ sub createObjects {
     my $help_text = sprintf(
 qq(<p>This view requires a gene, transcript or protein identifier in the URL. For example:</p>
 <p class="space-below"><a href="/%s/Transcript/%s?t=%s">/%s/Transcript/%s?t=%s</a></p>),
-        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT_PARAM'},
-        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT_PARAM'},
-      );
+      $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT_PARAM'},
+      $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'TRANSCRIPT_PARAM'},
+    );
 
     $self->problem('fatal', 'Please enter a valid identifier', $help_text)  ;
     return;
@@ -93,7 +93,11 @@ qq(<p>This view requires a gene, transcript or protein identifier in the URL. Fo
 
   # Set transcript param to Ensembl Stable ID
   # $self->param( 'transcript',[ $transobj->stable_id ] );
-  $self->problem( 'redirect', $self->_url({'db'=>$db, 't' =>$transobj->stable_id,'g'=>undef,'r'=>undef}));
+  if( $transobj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
+    $self->problem( 'redirect', $self->_url({'db'=>$db, 'pt' =>$transobj->stable_id,'g'=>undef,'r'=>undef,'t'=>undef}));
+  } else {
+    $self->problem( 'redirect', $self->_url({'db'=>$db, 't' =>$transobj->stable_id,'g'=>undef,'r'=>undef,'pt'=>undef}));
+  }
   return;#
   $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Transcript', $transobj, $self->__data ) );
 }
