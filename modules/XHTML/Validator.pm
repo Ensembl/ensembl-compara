@@ -83,10 +83,10 @@ sub validate {
         push @a, $x;
         push @a, $y if $y =~ /\S/;
       } else {
-        return 'Not well formed: "'.$self->_trim($w).'"';
+        return 'Not well formed: "'.$self->trim($w).'"';
       }
     } elsif( $w =~ />/ ) {
-      return 'Not well formed: "'.$self->_trim($w).'"';
+      return 'Not well formed: "'.$self->trim($w).'"';
     } else {
       push @a, $w;
     }
