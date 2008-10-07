@@ -30,9 +30,10 @@ sub description {$_[0]->{description}} ### a
 
 sub get_by_type       {$_[0]->{type} =~ /$_[1]/i} ### typematch
 sub isFatal           {$_[0]->{type} =~ /fatal/i} ### typematch
-sub isNoMatch         {$_[0]->{type} =~ 'no_match'} ### typematch
-sub isMultipleMatches {$_[0]->{type} =~ 'multiple_matches'} ### typematch
-sub isMappedId        {$_[0]->{type} =~ 'mapped_id'} ### typematch
+sub isRedirect        {$_[0]->{type} =~ /redirect/i} ### typematch
+sub isNoMatch         {$_[0]->{type} =~ /no_match/i} ### typematch
+sub isMultipleMatches {$_[0]->{type} =~ /multiple_matches/i} ### typematch
+sub isMappedId        {$_[0]->{type} =~ /mapped_id/i} ### typematch
 
 sub isNonFatal        {
   ### typematch
