@@ -95,26 +95,31 @@ sub content {
   $image->{'panel_number'} = 'tree';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
+  my $li_tmpl = qq(
+<li><a href="%s">%s</a></li>);
   my @view_links;
-  push @view_links, sprintf('<li><a href="%s">%s</a></li>',
+  push @view_links, sprintf( $li_tmpl,
                              $object->_url({'collapse'=>$collapsed_to_gene}),
                              'View current gene only');
 
-  push @view_links, sprintf('<li><a href="%s">%s</a></li>',
+  push @view_links, sprintf( $li_tmpl,
                              $object->_url({'collapse'=>$collapsed_to_para}),
                              'View paralogs of current gene');
 
-  push @view_links, sprintf('<li><a href="%s">%s</a></li>',
+  push @view_links, sprintf( $li_tmpl,
                              $object->_url({'collapse'=>$collapsed_to_dups}),
                              'View all duplication nodes');
 
-  push @view_links, sprintf('<li><a href="%s">%s</a></li>',
+  push @view_links, sprintf( $li_tmpl,
                              $object->_url({'collapse'=>''}),
                              'View fully expanded tree');
   
-  my $view_options_html = sprintf("View options. use 'configure page' link in the left panel to set the default. Further options are available from menus on individual tree nodes.<small><ul>%s</ul></small>", join( '', @view_links) );
+  my $view_options_html = sprintf( qq(
+<div style="margin-top:1em"><b>View options:</b><br/>
+<small><ul>%s</ul></small>
+Use the 'configure page' link in the left panel to set the default. Further options are available from menus on individual tree nodes.</div>), join( '', @view_links) );
 
-  return $view_options_html . $image->render;
+  return $image->render . $view_options_html ;
 }
 
 sub _collapsed_nodes{
