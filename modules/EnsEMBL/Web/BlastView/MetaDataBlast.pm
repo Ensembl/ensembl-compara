@@ -48,7 +48,7 @@ STAGE_SETUP:{
   my $stage = $GLOBAL->addobj_stage();
   $GLOBAL->set_default_stage($stage);
   $stage->set_name( 'setup' );
-  $stage->add_javascript_files( '/js/ensFormElementControl.js' );
+  $stage->add_javascript_files( '/blast/ensFormElementControl.js' );
   
   my $block = $stage->addobj_block();
      $block->set_label( qq( Important Notice ) );
@@ -236,7 +236,7 @@ STAGE_SETUP:{
 	    #$entry->set_options( \@opts );
 	    $entry->set_default($def_db);
       # Get option labels. Note hack to send abinitio to bottom
-	    my $optref = [ map { [$_->[0],$_->[1]] }
+	    my $optref = [ map { [$_->[0],$_->[0]] }
                      sort{ $a->[2] <=> $b->[2] || $a->[1] cmp $b->[1] }
                      map { [$_,$db_labels{$_},/ABINITIO/i?1:0] } @opts ];
 	    $entry->set_options( $optref );
@@ -366,8 +366,8 @@ STAGE_SETUP:{
 	my $entry = $form->addobj_form_entry();
         my $sitetype = ucfirst(lc($SiteDefs::ENSEMBL_SITETYPE));
 	$entry->set_label( qq(
-<SMALL>BlastView provides an integrated platform for sequence similarity searches against $sitetype databases, offering access to both BLAST and SSAHA programs. <A href='/Homo_sapiens/helpview?se=1&kw=blastview' target='onlinehelp'>[More]</A><BR /><IMG src="/img/blank.gif" height=5 /><BR />
-We would like to hear your impressions of BlastView, especially regarding functionality that you would like to see provided in the future. Many thanks for your time. <A href='/info/about/contact.html'>[Feedback]</SMALL></A>) );
+<SMALL>BlastView provides an integrated platform for sequence similarity searches against $sitetype databases, offering access to both BLAST and BLAT programs. <BR /><IMG src="/img/blank.gif" height=5 /><BR />
+We would like to hear your impressions of BlastView, especially regarding functionality that you would like to see provided in the future. Many thanks for your time. <A href='/info/about/contact/'>[Feedback]</SMALL></A>) );
       }
     }
   }
@@ -377,10 +377,15 @@ We would like to hear your impressions of BlastView, especially regarding functi
 STAGE_CONFIGURE:{
   my $stage = $GLOBAL->addobj_stage();
   $stage->set_name( 'configure' );
-  $stage->add_javascript_files( '/js/ensFormElementControl.js' );
+  $stage->add_javascript_files( '/blast/ensFormElementControl.js' );
 
   my $sp = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
-  my %methods = %{$SPECIES_DEFS->get_config($sp, 'ENSEMBL_BLAST_METHODS')||{}};
+  ## Build the old-style hash using the new-style settings
+  my %tmp_methods = %{$SPECIES_DEFS->multi_val('ENSEMBL_BLAST_METHODS')||{}};
+  my %methods;
+  while (my ($k, $v) = each (%tmp_methods)) {
+    $methods{$k} = $v->[3];
+  }
 
  BLOCK_RUN:{
     my $block = $stage->addobj_block();
@@ -487,7 +492,7 @@ STAGE_CONFIGURE:{
 STAGE_RESULTS:{
   my $stage = $GLOBAL->addobj_stage();
   $stage->set_name( 'results' );
-  $stage->add_javascript_files( '/js/ensFormElementControl.js' );
+  $stage->add_javascript_files( '/blast/ensFormElementControl.js' );
 
  BLOCK_TICKET:{
     my $block = $stage->addobj_block();
@@ -751,7 +756,12 @@ Seq %s: %s (%s letters)%s/;
 
 #----------------------------------------------------------------------
 my $sp = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
-my %methods = %{$SPECIES_DEFS->get_config($sp, 'ENSEMBL_BLAST_METHODS')||{}};
+my %tmp_methods = %{$SPECIES_DEFS->multi_val('ENSEMBL_BLAST_METHODS')||{}};
+my %methods;
+while (my ($k, $v) = each (%tmp_methods)) {
+  $methods{$k} = $v->[3];
+}
+
 sub method_processing_callback{
 
   my $cgi   = $blastview::CGI;
@@ -1046,6 +1056,7 @@ sensitivityConf[\"%s\"][\"%s\"] = 1;";
       }
     }
   }
+#warn Dumper($js_method_conf);
   # TODO: get sensitivity data into $DEFS!
   my $js_sensitivity_conf = '';
   foreach my $me( @methods ){
@@ -1076,7 +1087,8 @@ sensitivityConf[\"%s\"][\"%s\"] = 1;";
 #  }
 
 return "
-    <SCRIPT LANGUAGE=\"JavaScript\">
+<script type=\"text/javascript\">
+<!--//--><![CDATA[//><!--
 //----------------------------------------------------------------------
 // Define global constants
 
@@ -1609,7 +1621,8 @@ function setDatabase(){
   setSelectOptions( protTargetDB, optProtValues, dbPeptideLabels, lastDatabasePeptide );
 
 }
-    </SCRIPT>
+//--><!]]>
+</script>
 ";
 
 }

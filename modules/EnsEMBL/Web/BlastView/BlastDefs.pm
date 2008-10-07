@@ -60,7 +60,7 @@ sub _build_conf{
 
   my @species = sort grep{ !/_map$/ } $SPECIES_DEFS->valid_species();
 
-  my $method_conf = $SPECIES_DEFS->ENSEMBL_BLAST_METHODS;
+  my $method_conf = $SPECIES_DEFS->multi_val('ENSEMBL_BLAST_METHODS');
 
   if( ref( $method_conf ) ne 'HASH' or ! scalar( %$method_conf ) ){
     warn( "ENSEMBL_BLAST_METHODS config unavailable" );
@@ -82,8 +82,10 @@ sub _build_conf{
 
   foreach my $sp( @species ){
     foreach my $me( 'BLAST', @methods ){
+      #warn "METHOD $me";
 
       my $conf = $SPECIES_DEFS->get_config( $sp, "${me}_DATASOURCES" );
+      #warn "CONF ".Dumper($conf);
 
       # Check that there's something in the conf
       if( ref( $conf ) ne 'HASH' or ! scalar( keys %$conf ) ){ next }
@@ -96,26 +98,28 @@ sub _build_conf{
       $CONF->{species_by_method}->{$me}->{$sp} = 1;
       # Loop for each conf entry
       foreach my $db( sort keys %$conf ){	
-	my $lb = '';
-	if( $db =~ /^DATASOURCE/ ){ next }
-	if( $me eq 'BLAST' ){ 
-	  if( $db =~ /DEFAULT/ ){ next }
-	  $lb = $conf->{$db};
-	  $CONF->{DATABASES}->{$db}->{LABEL} = $lb;
-	  next;
-	}
-	if( $me eq 'SSAHA' ){ 
-	  if( $db =~ /^SOURCE/ ){ next }
-	}
+	      my $lb = '';
+	      if( $db =~ /^DATASOURCE/ ){ next }
+	      if( $me eq 'BLAST' ){ 
+	        if( $db =~ /DEFAULT/ ){ next }
+	        $lb = $conf->{$db};
+	        $CONF->{DATABASES}->{$db}->{LABEL} = $lb;
+	        next;
+	      }
+  	    if( $me eq 'SSAHA' ){ 
+	        if( $db =~ /^SOURCE/ ){ next }
+	      }
 
-	my $qty = $db =~ /PEP/ ? 'peptide' : 'dna';
+	      my $qty = $db =~ /PEP/ ? 'peptide' : 'dna';
 
-	push @$FACT, [ $sp, $db, $me, $qty, $dty ];
+        #my $a = [ $sp, $db, $me, $qty, $dty ];
+	      push @$FACT, [ $sp, $db, $me, $qty, $dty ];
+        #warn "DATASOURCE ".Dumper($a);
 
-	$CONF->{SPECIES}->{$sp}->{$db} = 1;
-	$CONF->{DATABASES}->{$db}->{LABEL}       = $lb if $lb;
-	$CONF->{DATABASES}->{$db}->{D_TYPE}      = $dty;
-	$CONF->{DATABASES}->{$db}->{$sp} = 1;
+	      $CONF->{SPECIES}->{$sp}->{$db} = 1;
+	      $CONF->{DATABASES}->{$db}->{LABEL}       = $lb if $lb;
+	      $CONF->{DATABASES}->{$db}->{D_TYPE}      = $dty;
+	      $CONF->{DATABASES}->{$db}->{$sp} = 1;
 
       }
     }
