@@ -28,7 +28,7 @@ sub render {
     </dd>
   </dl>),
     $self->{'class'} ? ' class="'.$self->{'class'}.'"' : '',
-    CGI::escapeHTML( $self->label ), 
+    $self->{'raw'} ? $self->label : CGI::escapeHTML( $self->label ), 
     $self->notes,
     $self->{'class'} ? ' class="'.$self->{'class'}.'"' : '',
     CGI::escapeHTML( $self->name ), 

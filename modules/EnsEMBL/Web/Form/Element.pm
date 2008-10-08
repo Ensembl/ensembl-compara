@@ -34,6 +34,7 @@ sub new {
     'width'        => $array{ 'width' },
     'height'       => $array{ 'height' },
     'noescape'     => $array{ 'noescape' },
+    'raw'          => $array{ 'raw' } || 0,
     'in_error'     => 'no'
   };
   bless $self, $class;
@@ -64,6 +65,7 @@ sub comment      :lvalue { $_[0]{'comment'}; }
 sub hidden_label :lvalue { $_[0]{'hidden_label'}; }
 sub in_error     :lvalue { $_[0]{'in_error'}; }
 sub render_as    :lvalue { $_[0]{'render_as'}; }
+sub raw          :lvalue { $_[0]{'raw'};   }
 sub src          :lvalue { $_[0]{'src'};   }
 sub alt          :lvalue { $_[0]{'alt'};   }
 sub width        :lvalue { $_[0]{'width'};   }
