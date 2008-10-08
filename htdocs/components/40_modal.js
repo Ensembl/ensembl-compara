@@ -120,8 +120,10 @@ function modal_dialog_close() {
   modal_dialog_close_2();
 }
 
+var page_needs_to_be_reloaded = false;
+
 function modal_dialog_close_2() {
-  if( configuration_updated ) { // If a config has been updated reload the page!
+  if( page_needs_to_be_reloaded ) { // If a config has been updated reload the page!
     window.location.href = window.location.href;
   }
   $('modal_bg').hide();
@@ -138,7 +140,8 @@ function __modal_dialog_link_open( event ) {
 **/
   var el    = Event.findElement( event, 'A' );
   if( el.hasClassName('reset-button')) {
-    configuration_updated = 1;
+    page_needs_to_be_reloaded = true;
+    configuration_updated     = true;
   }
   var title = el.innerHTML.stripTags();
   var url   = el.href;

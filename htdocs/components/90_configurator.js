@@ -177,6 +177,7 @@ function configurator_success( transport ) {
   $('modal_disable').hide();
   if( x == 'SUCCESS' ) { // Form submitted OK!... we need to flag this case!
     configuration_updated = true;
+    page_needs_to_be_reloaded = true;
     $('modal_content').update(Builder.node('div', 'Content updated'));
     __modal_dialog_link_open_2( configurator_action_url, configurator_action_title );
   } else { // We've got the form back....
