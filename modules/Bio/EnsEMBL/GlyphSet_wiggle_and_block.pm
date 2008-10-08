@@ -15,7 +15,7 @@ sub _render { ## Show both map and features
 
 ## Check to see if we draw anything because of size!
 
-  my $max_length    = $self->my_config( 'threshold' ) || 500;
+  my $max_length    = $self->my_config( 'threshold' ) || 10000;
   my $slice_length  = $self->{'container'}->length;
   my $wiggle_name   = $self->my_config('wiggle_name') || $self->my_config('label') ;
 
