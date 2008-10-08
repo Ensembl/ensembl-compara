@@ -24,7 +24,7 @@ sub draw_glyphs {
     my $H               = 0;
     my @draw_end_lines;
 
-    my $legend;
+    my $legend = $wuc->cache('legend') || {};
     #go through each parsed transcript_supporting_feature
     foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
 	my $hit_name = $hit_details->{'hit_name'};
@@ -247,7 +247,7 @@ sub draw_glyphs {
 	});
 	$self->push( $G );
     }
-    $wuc->cache('legend',$legend)
+    $wuc->cache('legend',$legend) if $legend;
 }
 
 1;
