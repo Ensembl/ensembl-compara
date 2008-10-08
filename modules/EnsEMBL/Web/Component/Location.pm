@@ -69,6 +69,7 @@ sub create_userdata_pointers {
 
   my $file = new EnsEMBL::Web::File::Text($object->species_defs);
   my $data = $file->retrieve($userdata->{'filename'});
+warn Dumper( $data );
   my $format  = $userdata->{'format'};
 
   my $parser = Data::Bio::Text::FeatureParser->new();
@@ -80,18 +81,13 @@ sub create_userdata_pointers {
   };
 
   ## create image with parsed data
-  my $pointer_set = $image->add_pointers(
-      $object,
-          {
-          'config_name'   => 'Vkar2view',
-          'parser'        => $parser,
-          'zmenu_config'  => $zmenu_config,
-          'color'         => $object->param("col")
-                               || 'red',
-          'style'         => $object->param("style")
-                               || 'lharrow',
-          }
-  );
+  my $pointer_set = $image->add_pointers( $object, {
+    'config_name'   => 'Vkar2view',
+    'parser'        => $parser,
+    'zmenu_config'  => $zmenu_config,
+    'color'         => $object->param("col")   || 'red',
+    'style'         => $object->param("style") || 'lharrow',
+  });
 
   return $pointer_set;
 }

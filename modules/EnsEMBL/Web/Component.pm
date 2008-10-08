@@ -17,6 +17,10 @@ sub _error {
   my($self,$caption,$desc) = @_;
   return sprintf '<div class="error"><h3>%s</h3><div class="error-pad">%s</div></div>', $caption, $desc;
 }
+sub _warning {
+  my($self,$caption,$desc) = @_;
+  return sprintf '<div class="warning"><h3>%s</h3><div class="error-pad">%s</div></div>', $caption, $desc;
+}
 sub image_width {
   my $self = shift;
 

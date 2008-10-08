@@ -1,7 +1,7 @@
 /** Debug messages **/
 .vis { display:block;}
 .invis {display:none; }
-#debug { position:absolute; margin: 1em; left: 0; top: 0; padding: 0; font-size: 0.7em; z-index: 9999 }
+#debug { position:absolute; margin: 1em; left: 4em; top: 0; padding: 0; font-size: 0.7em; z-index: 9999 }
 #debug_button { background-color: #c90; color: #fff; font-size: 1.2em; font-weight: bold; width: 40em; padding: 1px 0.5em }
 #debug_links { height: 1.3em; width: 80em; border: 1px solid #c00; background-color: #c00; padding: 2px; margin: 0; }
 #debug_list { height: 40em; width: 80em; border: 1px solid #c00; background-color: #fee; padding: 0.5em; margin: 0; overflow: scroll }
