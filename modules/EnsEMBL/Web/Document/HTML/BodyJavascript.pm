@@ -30,9 +30,10 @@ sub add_script {
 sub render {
   my $self = shift;
   $self->print( $self->{'scripts'} );
+
+#  $self->print( q(  <iframe id="uploadframe" name="uploadframe" style="display:hidden"></iframe>) );
+  $self->print( q(  <iframe id="uploadframe" name="uploadframe" style="width: 60px;height:40px;border:0"></iframe>) );
   $self->print( q(  <div id="debug"></div>)) if $self->debug();
-  $self->print( q(
-  <div id="conf"></div>));
 } 
 1;
 

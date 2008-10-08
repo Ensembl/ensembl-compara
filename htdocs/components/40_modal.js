@@ -193,6 +193,10 @@ function modal_success( transport ) {
 // Make the main tab links go back to this window!
   $$('#modal_caption a').each(function(n){n.addClassName('modal_link')});
   $$('#modal_content form').each(function(n){n.onsubmit = modal_form_submit;});
+  $$('#modal_content form.upload').each(function(n){
+    n.setAttribute('target','uploadframe');
+    n.appendChild(Builder.node('div',[Builder.node('input',{type:'hidden',name:'uploadto',value:'iframe'})]));
+  });
 // Now make the local tree links go back to this window!
   $$('#local_modal a'  ).each(function(n){n.addClassName('modal_link')});
   window.onload();
@@ -200,15 +204,19 @@ function modal_success( transport ) {
 
 function modal_form_submit( event ) {
   var el = Event.element( event );
-  new Ajax.Request( el.action, {
-    method: el.method,
-    parameters: el.serialize(true),
-    onSuccess: function( transport ) { modal_success(transport) },
-    onFailure: function( transport ) {
-      $('modal_content').innerHTML = '<p>Failure: the resource failed to load</p>';
-    }
-  });
-  Event.stop( event );
+  if( el.hasClassName('upload') ) {
+    alert( 'iframe' );
+  } else {
+    new Ajax.Request( el.action, {
+      method: el.method,
+      parameters: el.serialize(true),
+      onSuccess: function( transport ) { modal_success(transport) },
+      onFailure: function( transport ) {
+        $('modal_content').innerHTML = '<p>Failure: the resource failed to load</p>';
+      }
+    });
+    Event.stop( event );
+  }
 }
 
 function __modal_onload() { 
