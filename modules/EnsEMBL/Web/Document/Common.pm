@@ -36,8 +36,8 @@ sub _basic_HTML {
   my $self = shift;
 ## Main document attributes...
 
-#  $self->set_doc_type( 'XHTML', '1.0 Trans' );
-  $self->set_doc_type( 'XHTML', '1.0 Strict' );
+  $self->set_doc_type( 'XHTML', '1.0 Trans' );
+# $self->set_doc_type( 'XHTML', '1.0 Strict' );
   $self->_init();
   $self->add_body_attr( 'id' => 'ensembl-webpage' );
   $self->body_javascript->add_source(  sprintf( '/%s/%s.js',  $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_JS_NAME ));
