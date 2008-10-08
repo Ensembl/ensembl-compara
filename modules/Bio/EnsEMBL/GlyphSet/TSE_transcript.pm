@@ -15,11 +15,16 @@ sub _init {
     my $pix_per_bp  = $wuc->transform->{'scalex'};
     my $length      = $wuc->container_width();
 
-    my $colour       = $self->my_colour;
     my $trans_obj    = $self->cache('trans_object');
     my $coding_start = $trans_obj->{'coding_start'};
     my $coding_end   = $trans_obj->{'coding_end'  };
+
+    #need both gene and transcript to get the colour
     my $transcript   = $trans_obj->{'transcript'};
+    my $gene         = $trans_obj->{'web_transcript'}->core_objects->gene;
+    my $colour_key   = $self->transcript_key($transcript,$gene);
+    my $colour       = $self->my_colour($colour_key);
+
     my $strand       = $transcript->strand;
     my $tsi          = $transcript->stable_id;
 
