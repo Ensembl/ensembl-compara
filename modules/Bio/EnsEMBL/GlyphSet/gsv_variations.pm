@@ -8,14 +8,14 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
 
 sub _init {
-  my ($self) = @_;
-  my $type = $self->check();
+  my ($self) = @_; 
+  my $type = $self->check(); ;
   return unless defined $type;
   return unless $self->strand() == -1;
 
-  my $Config = $self->{'config'};
+  my $Config = $self->{'config'}; 
   my $transcript =  $Config->{'transcript'}->{'transcript'};
-
+ 
   # Drawing params
   
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
@@ -25,27 +25,27 @@ sub _init {
   my $h = $res[3] + 4; 
 
   # Data stuff
-  #my $colour_map = $Config->get('GSV_snps','colours' );
-  my $colour_map  = $self->my_config('colours');
-  my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
-  my $EXTENT        = $Config->get_parameter( 'context');
+  my $colour_map  = $self->my_config('colours');  
+  my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1; 
+  my $EXTENT        = $Config->get_parameter( 'context'); 
    
-     $EXTENT        = 1e6 if $EXTENT eq 'FULL';
-  my $seq_region_name = $self->{'container'}->seq_region_name();
+     $EXTENT        = 1e6 if $EXTENT eq 'FULL'; 
+  my $seq_region_name = $self->{'container'}->seq_region_name(); 
 
   # Bumping params
-  my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
+  my $bitmap_length = int($Config->container_width() * $pix_per_bp);
   my $voffset = 0;
   my @bitmap;
   my $max_row = -1;
 
-  foreach my $snpref ( @{$Config->{'snps'}} ) {
+  foreach my $snpref ( @{$Config->{'snps'}} ) { 
     my $snp = $snpref->[2];
     my $cod_snp =  $Config->{'transcript'}->{'snps'}->{$snp->dbID()};
     next unless $cod_snp;
     next if $snp->end < $transcript->start - $EXTENT - $offset;
     next if $snp->start > $transcript->end + $EXTENT - $offset;
-    my $colour    = $colour_map->{$cod_snp->display_consequence}->[0];
+    my $snp_type = lc($cod_snp->display_consequence); 
+    my $colour = $colour_map->{$snp_type}->{'default'};
     my $aa_change = $cod_snp->pep_allele_string;
     
     my @tmp = $aa_change ? ("10:amino acid: $aa_change", '' ) : ();
@@ -76,7 +76,8 @@ sub _init {
       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
     }
     my $href = "/@{[$self->{container}{web_species}]}/snpview?snp=@{[$snp->variation_name]};source=@{[$snp->source]};chr=$seq_region_name;vc_start=$chr_start";
-    my $type      = join ", ", @{$cod_snp->consequence_type || [] };
+    my $type      = join ", ", @{$cod_snp->consequence_type || [] }; 
+    $type = lc($type);
     my $bglyph = $self->Rect({
       'x'         => $S - $W / 2,
       'y'         => $h + 2,
