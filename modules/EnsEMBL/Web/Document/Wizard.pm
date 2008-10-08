@@ -6,7 +6,7 @@ use warnings;
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::Wizard;
 use Apache2::Const qw(REDIRECT);
-use CGI qw(escape);
+use CGI qw(escape escapeHTML);
 use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::Document::WebPage);
@@ -59,14 +59,24 @@ sub process_node {
       }
     }
     $URL =~ s/;$//; 
-    my $r = $self->page->renderer->{'r'};
 
-    ## do redirect
-    $r->headers_out->add( "Location" => $URL );
-    $r->err_headers_out->add( "Location" => $URL );
-    $r->status( Apache2::Const::REDIRECT );
-  }
-  else {
+## Is this in the iframe???
+    my $r = $self->page->renderer->{'r'};
+    if( $self->factory->param('uploadto' ) eq 'iframe' ) {
+      CGI::header( -type=>"text/html",-charset=>'utf-8' );
+      printf q(<html><head><script type="text/javascript">
+  window.parent.__modal_dialog_link_open_2( '%s' ,'File uploaded' );
+</script>
+</head><body><p>UP</p></body></html>), CGI::escapeHTML($URL);
+    } else {
+      ## do redirect
+      $r->headers_out->add( 'X-Requested-With' => $r->headers_in->{'X-Requested-With'} );
+      $r->err_headers_out->add( 'X-Requested-With' => $r->headers_in->{'X-Requested-With'} );
+      $r->headers_out->add( "Location" => $URL );
+      $r->err_headers_out->add( "Location" => $URL );
+      $r->status( Apache2::Const::REDIRECT );
+    }
+  } else {
     my $content = $self->wizard->render_current_node;
     $self->page->content->add_panel(new EnsEMBL::Web::Document::Panel(
               'content' => $content,

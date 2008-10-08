@@ -31,8 +31,7 @@ sub render {
   my $self = shift;
   $self->print( $self->{'scripts'} );
 
-#  $self->print( q(  <iframe id="uploadframe" name="uploadframe" style="display:hidden"></iframe>) );
-  $self->print( q(  <iframe id="uploadframe" name="uploadframe" style="width: 60px;height:40px;border:0"></iframe>) );
+  $self->print( q(  <div id="uploadframe_div" style="display: hidden"><iframe name="uploadframe"></iframe></div>) );
   $self->print( q(  <div id="debug"></div>)) if $self->debug();
 } 
 1;
