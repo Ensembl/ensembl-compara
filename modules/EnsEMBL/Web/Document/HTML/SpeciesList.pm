@@ -25,7 +25,7 @@ sub render {
     my $info = {};
     $info->{'common'}     = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
     $info->{'assembly'}   = $species_defs->get_config($species, "ASSEMBLY_NAME");
-    $info->{'genebuild'}  = $species_defs->get_config($species, "GENEBUILD_DATE");
+    $info->{'genebuild'}  = $species_defs->get_config($species, "GENEBUILD_LATEST");
     $species_info{$species} = $info;
   }
 
@@ -318,7 +318,7 @@ sub _render_with_images {
   foreach my $species (@$species_list) {
     my $common_name = $species_defs->get_config($species, "SPECIES_COMMON_NAME") || '';
     (my $species_name = $species) =~ s/_/ /g;
-    $html .= qq(<dt><a href="/$species/"><img src="/img/species/thumb_$species.png" alt="$species_name" title="Browse $species_name" class="sp-thumb" height="40" width="40" /></a><a href="/$species/Info/Index" title="$species_name">$common_name</a></dt>\n);
+    $html .= qq(<dt><a href="/$species/Info/Index"><img src="/img/species/thumb_$species.png" alt="$species_name" title="Browse $species_name" class="sp-thumb" height="40" width="40" /></a><a href="/$species/Info/Index" title="$species_name">$common_name</a></dt>\n);
     $html .= "<dd>" . $description->{$species}[0] . "</dd>\n" if $description->{$species}[0];
   }
   $html .= "</dl>\n";
