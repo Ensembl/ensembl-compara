@@ -169,6 +169,7 @@ sub storable_data {
       next          unless $image_config->storable; ## Cannot store unless told to do so by image config
       $to_store = 1 if     $image_config->altered;  ## Only store if image config has changed...
       $data->{'image_configs'}{$image_config_key}  = $image_config->get_user_settings();
+warn "storable_data: USER_CONFIG HASH: $config_key $image_config_key" if $data->{'image_configs'}{$image_config_key} =~ /HASH\(/;
     }
     push @{ $return_data }, { config_key => $config_key, data => $data } if $to_store;
   }
