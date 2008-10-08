@@ -38,8 +38,8 @@ function __init_config_menu() {
   configuration box, remove the link (so the href doesn't get fired (yuk!)
   add an onclick event to show the appropriate menu and hide the menu
 */
-  if( ! initial_configuration ) { 
-    initial_configuration = $('configuration') ? $('configuration').serialize(true) : false;
+  if( ! initial_configuration ) {
+     initial_configuration = $('configuration') ? $('configuration').serialize(true) : false;
   }
 
   var has_configuration = $$('.track_configuration').length > 0;
