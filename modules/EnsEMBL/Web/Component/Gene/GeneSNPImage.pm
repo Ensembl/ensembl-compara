@@ -16,11 +16,11 @@ sub caption {
 }
 
 sub _content {
-  my $self    = shift;
-  my $no_snps = shift;
+  my $self    = shift; 
+  my $no_snps = shift; 
   my $object  = $self->object;
   my $image_width  = $object->param( 'image_width' ) || 800;
-  my $context      = $object->param( 'context' );
+  my $context      = $object->param( 'context' ) || 100;
   my $extent       = $context eq 'FULL' ? 1000 : $context;
 
   my $master_config = $object->get_imageconfig( "genesnpview_transcript" );
@@ -28,6 +28,7 @@ sub _content {
        'image_width' =>  $self->image_width || 800,
        'container_width' => 100,
        'slice_number' => '1|1',
+       'context'      => $context,
      });
 
 
@@ -37,12 +38,13 @@ sub _content {
   # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
   my $Configs;
   my @confs = qw(context gene transcripts_top transcripts_bottom);
-  push @confs, 'snps' unless $no_snps;
+  push @confs, 'snps' unless $no_snps;  
 
-  foreach( @confs ) {
+  foreach( @confs ){ 
     $Configs->{$_} = $object->get_imageconfig( "genesnpview_$_" );
-    $Configs->{$_}->set_parameter('image_width' => $image_width );
+    $Configs->{$_}->set_parameters({ 'image_width' => $image_width, 'context' => $context });
   }
+  
    $object->get_gene_slices( ## Written...
     $master_config,
     [ 'context',     'normal', '100%'  ],
@@ -51,13 +53,13 @@ sub _content {
   );
 
   my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1]; 
-  my $sub_slices       =  $object->__data->{'slices'}{'transcripts'}[2];
+  my $sub_slices       =  $object->__data->{'slices'}{'transcripts'}[2];  
 
 
   # Fake SNPs -----------------------------------------------------------
   # Grab the SNPs and map them to subslice co-ordinate
   # $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'}
-  my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  );
+  my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  );  
   my $start_difference =  $object->__data->{'slices'}{'transcripts'}[1]->start - $object->__data->{'slices'}{'gene'}[1]->start;
 
   my @fake_filtered_snps;
@@ -91,6 +93,7 @@ sub _content {
     $CONFIG->{'snps'}       = $snps unless $no_snps;
     $CONFIG->{'subslices'}  = $sub_slices;
     $CONFIG->{'extent'}     = $extent;
+    $CONFIG->{'_add_labels'} = 1;
       ## Store transcript information on config....
     my $TS = $trans_obj->__data->{'transformed'};
 #        warn Data::Dumper::Dumper($TS);
@@ -101,13 +104,13 @@ sub _content {
       'transcript'   => $trans_obj->Obj,
       'gene'         => $object->Obj,
       $no_snps ? (): ('snps' => $TS->{'snps'})
-    };
+    }; 
     foreach ( @domain_logic_names ) { 
       $CONFIG->{'transcript'}{lc($_).'_hits'} = $TS->{lc($_).'_hits'};
     }  
 
-   # $CONFIG->container_width( $object->__data->{'slices'}{'transcripts'}[3] );
-   $CONFIG->set_parameters({'container_width' => $object->__data->{'slices'}{'transcripts'}[3] });  
+   # $CONFIG->container_width( $object->__data->{'slices'}{'transcripts'}[3] ); 
+   $CONFIG->set_parameters({'container_width' => $object->__data->{'slices'}{'transcripts'}[3],   });  
    if( $object->seq_region_strand < 0 ) {
       push @containers_and_configs, $transcript_slice, $CONFIG;
     } else {
@@ -147,20 +150,25 @@ sub _content {
   $Configs->{'context'}->{'geneid2'} = $gene_stable_id; ## Only skip background stripes...
   $Configs->{'context'}->set_parameters({ 'container_width' =>  $object->__data->{'slices'}{'context'}[1]->length() });  
   $Configs->{'context'}->get_node( 'scalebar')->set('label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
-  #$Configs->{'context'}->get_node('variation')->set('on','off') if $no_snps;
-#  $Configs->{'context'}->set('snp_join','on','off') if $no_snps;
+  $Configs->{'context'}->modify_configs( ## Turn on track associated with this db/logic name
+    ['variation'],
+    {qw(display off show_labels off)}
+  ) if $no_snps;
+  $Configs->{'context'}->get_node('snp_join')->set('display','off') if $no_snps; 
+
 ## Transcript block
   $Configs->{'gene'}->{'geneid'}      = $gene_stable_id;
   $Configs->{'gene'}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'gene'}[1]->length(), 'single_Gene' => $object->stable_id }); 
   $Configs->{'gene'}->modify_configs( ## Turn on track associated with this db/logic name
     [$Configs->{'gene'}->get_track_key( 'transcript', $object )],
-    {qw(display on show_labels off)}  
+    {qw(display on show_labels off),"caption" => $object->stable_id}  
   );
 
- # $Configs->{'gene'}->get_node('snp_join')->set('on','off') if $no_snps;
+ 
+  $Configs->{'gene'}->get_node('snp_join')->set('display','off') if $no_snps;
 ## Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
   foreach(qw(transcripts_top transcripts_bottom)) {
-   # $Configs->{$_}->get_node('snp_join')->set('on','off') if $no_snps;
+    $Configs->{$_}->get_node('snp_join')->set('display','off') if $no_snps;
     $Configs->{$_}->{'extent'}      = $extent;
     $Configs->{$_}->{'geneid'}      = $gene_stable_id;
     $Configs->{$_}->{'transcripts'} = \@transcripts;
@@ -169,16 +177,16 @@ sub _content {
     $Configs->{$_}->{'fakeslice'}   = 1;
     $Configs->{$_}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'transcripts'}[3] }); 
   }
-  #$Configs->{'transcripts_bottom'}->get_node('spacer')->set('on','off') if $no_snps;
+  $Configs->{'transcripts_bottom'}->get_node('spacer')->set('on','off') if $no_snps;
 ## SNP box track...
   unless( $no_snps ) {
     $Configs->{'snps'}->{'fakeslice'}   = 1;
-    $Configs->{'snps'}->{'snps'}        = \@snps2;
+    $Configs->{'snps'}->{'snps'}        = \@snps2; 
     $Configs->{'snps'}->set_parameters({ 'container_width' => $fake_length }); 
     $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps, $context_count];
   } 
 
-  #$master_config->tree->dump("Tree", '[[caption]]' );
+  $master_config->tree->dump("Tree", '[[caption]]' );
   $master_config->modify_configs( ## Turn on track associated with this db/logic name
     [$master_config->get_track_key( 'gene', $object )],
     {qw(on on show_labels off)}  ## also turn off the transcript labels...
