@@ -43,7 +43,7 @@ return $counts;
 
 sub caption {
  my $self = shift; 
- my $caption = $self->name;
+ my $caption = 'Variation: '.$self->name;
 
  return $caption;
 }

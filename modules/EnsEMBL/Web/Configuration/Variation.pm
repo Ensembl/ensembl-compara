@@ -23,10 +23,10 @@ sub context_panel  { return $_[0]->_context_panel;  }
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Summary', "Variation Summary",
+  $self->create_node( 'Summary', "Summary",
     [qw(summary EnsEMBL::Web::Component::Variation::VariationSummary
         flanking EnsEMBL::Web::Component::Variation::FlankingSequence )],
-    { 'availability' => 1, 'concise' => 'Summary' }
+    { 'availability' => 1, 'concise' => 'Variation summary' }
   );
   $self->create_node( 'Mappings', "Location",
     [qw(summary EnsEMBL::Web::Component::Variation::Mappings)],
@@ -40,7 +40,7 @@ sub populate_tree {
     [qw(summary EnsEMBL::Web::Component::Variation::IndividualGenotypes)],
     { 'availability' => 1, 'concise' => 'Individual genotypes' }
   );
-  $self->create_node( 'Context', "Feature Context",
+  $self->create_node( 'Context', "Feature context",
     [qw(summary EnsEMBL::Web::Component::Variation::Context)],
     { 'availability' => 1, 'concise' => 'Feature context' }
   );

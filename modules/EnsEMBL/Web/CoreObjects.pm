@@ -284,34 +284,6 @@ sub _get_location_from_gene {
 
 sub _get_gene_transcript_from_location {
   my( $self ) = @_;
-  return unless $self->location;
-  return;
-  my $db = $self->{'parameters'}{'db'}||'core';
-  my $genes = $self->location->get_all_Genes( undef, $db, 1 );
-  my $nearest_transcript = [ undef, undef ];
-  my $nearest_distance   = 1e20;
-
-  my $s = $self->location->start;
-  my $e = $self->location->end;
-  my $c = ($s+$e)/2;
-  my @transcripts;
-  foreach my $g ( @$genes ) {
-    foreach my $t ( @{$g->get_all_Transcripts} ) {
-      my $ts = $t->seq_region_start;
-      my $te = $t->seq_region_end;
-      if( $ts <= $c && $te >= $c ) {
-        push @transcripts, [ $g,$t ];
-        $nearest_distance = 0;
-      }
-    }
-  }
-  if( @transcripts ) {
-    my($T) = sort { 
-      $a->[0]->stable_id cmp $b->[0]->stable_id || $a->[1]->stable_id cmp $b->[1]->stable_id 
-    } @transcripts;
-    $self->gene(       $T->[0] );
-    $self->transcript( $T->[1] );
-  }
 }
 
 sub _check_if_snp_unique_location {
