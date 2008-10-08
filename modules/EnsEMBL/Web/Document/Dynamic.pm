@@ -10,7 +10,7 @@ use Data::Dumper qw(Dumper);
 sub set_title {
   my $self  = shift;
   my $title = shift;
-  $self->title->set( $self->species_defs->ENSEMBL_SITE_NAME.' r'.$self->species_defs->ENSEMBL_VERSION.': '.$self->species_defs->SPECIES_BIO_SHORT.' '.$title );
+  $self->title->set( $self->species_defs->ENSEMBL_SITE_NAME.' release '.$self->species_defs->ENSEMBL_VERSION.': '.$self->species_defs->SPECIES_BIO_SHORT.' '.$title );
 }
 
 sub _initialize_TextGz {
