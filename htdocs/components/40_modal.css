@@ -8,7 +8,7 @@
 
 .modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color:[[PANEL_BORDER]]; margin: 2px; text-align: center; font-weight: bold; color: [[CONTRAST_TEXT]]; cursor:pointer; }
 
-#modal_close { float:right;margin:0;padding:0; width: 40px; }
+#modal_close { float:right;margin:0;padding:0; width: 10em; text-align: center }
 
 #modal_caption { padding-bottom:2px }
 /* tab bar on pop-up... */
