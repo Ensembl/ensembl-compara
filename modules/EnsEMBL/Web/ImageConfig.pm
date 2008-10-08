@@ -663,7 +663,7 @@ sub add_protein_feature {
         'caption'     => $data->{$key_2}{'caption'},
         'colourset'   => 'protein_feature',
         'description' => $data->{$key_2}{'description'},
-        'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+        'display'     => 'normal', ## Default to on at the moment - change to off by default!
         'renderers'   => [qw(off Off normal Normal)],
       }));
     }
@@ -798,9 +798,9 @@ sub add_alignments {
         'description'    => "Pairwise alignments",
         'order'          => $row->{'type'}.'::'.$other_species,
         'colourset'      => 'pairwise',
-        'strand'         => 'b',
+        'strand'         => 'r',
         'display'        => 'off', ## Default to on at the moment - change to off by default!
-        'renderers'      => [qw(off Off normal Normal)],
+        'renderers'      => [qw(off Off compact Compact normal Normal)],
       };
     } else {
       my $n_species = grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}};
