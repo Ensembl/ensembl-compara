@@ -10,7 +10,7 @@ use Bio::EnsEMBL::GlyphSet;
 sub _init {
   my ($self) = @_;
 
-  my $Config        = $self->{'config'}; 
+  my $Config        = $self->{'config'};  
   my $strand_flag = $self->my_config('strand'); 
   my $strand  = $self->strand(); 
   return if ( $strand_flag eq 'f' && $strand != 1 ) || ( $strand_flag eq 'r'  && $strand == 1 );
@@ -20,7 +20,7 @@ sub _init {
   my $h             = 1;
     
   my @bitmap        = undef;
-  my $colour = $self->my_config('colour');
+  my $colour = $self->my_config('colours');
 
   my $fontname      = "Tiny";    
   my $pix_per_bp    = $Config->transform->{'scalex'}; 
