@@ -25,22 +25,15 @@ sub content {
 
   if (keys %orthologue_list) {
 # Find the selected method_link_set
-    $html = qq#
-    <p>
-      The following gene(s) have been identified as putative
-      orthologues:
-    </p>
-    <p>(N.B. If you don't find a homologue here, it may be a 'between-species paralogue'.
-Please view the <a href="/#.$gene->species.'/Gene/Compara_Tree?g='.$gene->stable_id.qq#">gene tree info</a> or export between-species
-paralogues with BioMart to see more.)</p>
-    <table width="100%" cellpadding="4">
+    $html = q(
+    <table class="orthologues">
       <tr>
         <th>Species</th>
         <th>Type</th>
         <th>dN/dS</th>
         <th>Ensembl identifier</th>
         <th>External ref.</th>
-      </tr>#;
+      </tr>);
     my %orthologue_map = qw(SEED BRH PIP RHS);
 
     my %SPECIES;
@@ -51,12 +44,20 @@ paralogues with BioMart to see more.)</p>
     my $multicv_link = sprintf "/%s/multicontigview?gene=%s;context=10000", $gene->species, $gene->stable_id;
     my $FULL_URL     = $multicv_link;
 
+    my $orthologues_skipped_count   = 0;
+    my @orthologues_skipped_species = ();
     foreach my $species (sort keys %orthologue_list) {
+      (my $spp = $species) =~ tr/ /_/ ;
+      my $common_name = $gene->species_defs->other_species($spp,'SPECIES_COMMON_NAME');
+
+      if( $gene->param('species_'.lc($spp) ) eq 'no' ) {
+        $orthologues_skipped_count += keys %{$orthologue_list{$species}};
+        push @orthologues_skipped_species, sprintf '%s (<i>%s</i>)', $common_name, $species;
+        next;
+      }
       my $C_species = 1;
       my $rowspan = scalar(keys %{$orthologue_list{$species}});
       $rowspan++ if $rowspan > 1;
-      (my $spp = $species) =~ tr/ /_/ ;
-      my $common_name = $gene->species_defs->other_species($spp,'SPECIES_COMMON_NAME');
       unless($common_name){
         my ($OBJ) = values %{$orthologue_list{$species}};
         $common_name = $OBJ->{'sp_common'};
@@ -135,13 +136,29 @@ paralogues with BioMart to see more.)</p>
     }
     $html .= '
     </table>';
+
+    $html = sprintf q(
+    <p>
+      The following gene(s) have been identified as putative
+      orthologues:
+    </p>
+    <p>(N.B. If you don't find a homologue here, it may be a "between-species paralogue".
+Please view the <a href="%s">gene tree info</a> or export between-species
+paralogues with BioMart to see more.)</p>%s),
+      $gene->_url({'action'=>'Compara_Tree'}), $html;
     if( $ALIGNVIEW && keys %orthologue_list ) {
       my $url = $gene->_url({ 'action' => 'Compara_Ortholog/Alignment' });
       $html .= qq(
     <p><a href="$url">View sequence alignments of all homologues</a>.</p>);
     }
-  }
-  else {
+    if( $orthologues_skipped_count ) {
+      $html .= $self->_warning( 'Orthologues hidden by configuration', sprintf '
+  <p>
+    %d orthologues not shown in the table below from the following species: %s. Use the "<strong>Configure this page</strong>" on the left to show them.
+  </p>%s', $orthologues_skipped_count, join (', ',sort @orthologues_skipped_species )
+      )
+    }
+  } else {
     $html .= qq(
     <p>No orthologues have been identified for this gene</p>);
   }
