@@ -47,7 +47,7 @@ sub fetch_features {
   my $snps = $self->cache( $self->{'my_config'}->key ) || [];
 
   if (@$snps){
-    foreach my $f (@$snps) { warn $f;
+    foreach my $f (@$snps) {
       my $Config        = $self->{'config'};
       my $colours = $self->my_config('colours');
       my $type = lc($f->display_consequence);
