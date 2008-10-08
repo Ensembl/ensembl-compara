@@ -249,14 +249,20 @@ sub add_pointers {
   # CREATE DATA ARRAY FROM APPROPRIATE FEATURE SET
   my ($data, @data, $max_label, %chrs);
   my $parser = $extra->{'parser'};
+
+  warn           "Parser:     $parser";
   if ($parser) { # use parsed userdata
     my $max_label = 0;
     foreach my $track ($parser->{'tracks'}) {
+      warn         "  Track:    $track ",keys %$track;
       foreach my $type (keys %{$track}) {
+        warn       "    Type:   $type";
         my @features = $parser->fetch_features_by_tracktype($type);
         foreach my $row (@features) {
+          warn     "      Row:  $row";
           my @array = @$row;
           foreach my $feature (@array) {
+            warn   "        F:  $feature";
             my $data_row = {
                            'chr'   => $feature->seqname(),
                            'start' => $feature->rawstart(),
