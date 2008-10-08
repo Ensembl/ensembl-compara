@@ -14,13 +14,13 @@ sub _init {
   my $NO_OF_COLUMNS = 3;
 
   my $vc            = $self->{'container'};
-  my $Config        = $self->{'config'};
+  my $Config        = $self->{'config'}; warn $Config;
   my $im_width      = $Config->image_width();
-  my $type          = $Config->get('variaion_legend', 'src');
+  my $type          = 'all'; #$Config->get('variation_legend', 'src');
 
   my @colours;
   return unless $Config->{'variation_legend_features'};
-  my %features = %{$Config->{'variation_legend_features'}};
+  my %features = %{$Config->{'variation_legend_features'}}; warn %features;
   return unless %features;
  
   my ($x,$y) = (0,0);
