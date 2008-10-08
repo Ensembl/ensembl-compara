@@ -360,9 +360,9 @@ sub stuff {
       foreach my $object( @{$webpage->dataObjects} ) {
         my @sections;
         if ($doctype && $doctype eq 'Popup') {
-          @sections = qw(global_context local_context local_tools content_panel);
+          @sections = qw(global_context local_context content_panel local_tools);
         } else {
-          @sections = qw(global_context local_context local_tools context_panel content_panel);
+          @sections = qw(global_context local_context context_panel content_panel local_tools);
         }
         $webpage->configure( $object, @sections );
       }
