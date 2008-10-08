@@ -83,7 +83,7 @@ function _show_zmenu( x ) {
   });
 }
 
-function _new_url_cp( cp, w ) { return _new_url( Math.round(1*cp-w/2), Math.round(1*cp+w/2) ); }
+function _new_url_cp( cp, w ) { return w>=1 ? _new_url( Math.round(1*cp-(w-1)/2), Math.round(1*cp+(w-1)/2) ) : ''; }
 
 function _new_url( s, e ) {
 /** compute new url for location based link link...
@@ -131,7 +131,7 @@ function _show_zmenu_location_other( x ) {
 
 function _show_zmenu_location( x ) {
   __zmenu_remove();
-  var w  = __seq_region.width-1;
+  var w  = __seq_region.width;
   var Q  = __zmenu_init('zmenu_nav', 'Location: '+Math.floor(x.bp) );
   __zmenu_add( Q, '', 'Zoom out x10', _new_url_cp( x.bp, w*10 ) );
   __zmenu_add( Q, '', 'Zoom out x5',  _new_url_cp( x.bp, w*5  ) );
