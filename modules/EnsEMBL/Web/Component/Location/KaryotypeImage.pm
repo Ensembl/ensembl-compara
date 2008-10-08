@@ -32,14 +32,6 @@ sub content {
 
   my $ideo_height = $config->get_parameter('image_height');
   my $top_margin  = $config->get_parameter('top_margin');
-  my $hidden = {
-    'karyotype'   => 'yes',
-    'max_chr'     => $ideo_height,
-    'margin'      => $top_margin,
-    'chr'         => $object->seq_region_name,
-    'start'       => $object->seq_region_start,
-    'end'         => $object->seq_region_end,
-  };
 
   my $image    = $object->new_karyotype_image();
 
@@ -49,6 +41,7 @@ sub content {
     'OligoProbe'  => ['red', 'rharrow'],
   );
   
+=pod
   ## Check if there is userdata in session
   my $userdata = $object->get_session->get_tmp_data;
 
@@ -62,7 +55,9 @@ sub content {
     ## Create pointers from user data
     my $pointer_set = $self->create_userdata_pointers($image, $userdata);
     push(@$pointers, $pointer_set);
-  } elsif ($object->param('id')) {
+  } 
+=cut 
+  if ($object->param('id')) {
     $image->image_name = "feature-$species";
     $image->imagemap = 'yes';
     my $features = $self->_get_features;
@@ -83,6 +78,14 @@ sub content {
   } else {
     $image->image_name = "karyotype-$species";
     $image->imagemap = 'no';
+    my $hidden = {
+      'karyotype'   => 'yes',
+      'max_chr'     => $ideo_height,
+      'margin'      => $top_margin,
+      'chr'         => $object->seq_region_name,
+      'start'       => $object->seq_region_start,
+      'end'         => $object->seq_region_end,
+    };
     $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
     $image->caption = 'Click on the image above to jump to an overview of the chromosome';
   }
