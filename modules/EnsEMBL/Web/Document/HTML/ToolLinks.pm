@@ -15,7 +15,7 @@ sub referer   :lvalue { $_[0]{'referer'};   } ## Needed by CloseCP
 
 sub render   {
   my $self    = shift;
-  my $species = $ENV{'ENSEMBL_SPECIES'} || 'default';
+  my $species = $ENV{'ENSEMBL_SPECIES'} || 'common';
   my $url     = CGI::escape($ENV{'REQUEST_URI'});
   my $html;
 ## TO DO - once config tab is working, make this the default view
@@ -24,7 +24,7 @@ sub render   {
       $html .= qq(
       <a href="/Account/Links?_referer=$url" class="modal_link">Control Panel</a> &nbsp;|&nbsp;
       <a href="/Account/Links?_referer=$url" class="modal_link">Account</a> &nbsp;|&nbsp;
-      <a href="/Account/Logout?_referer=$url" class="modal_link">Logout</a> &nbsp;|&nbsp;);
+      <a href="/Account/Logout?_referer=$url">Logout</a> &nbsp;|&nbsp;);
     }
     else {
       $html .= qq(
@@ -32,14 +32,13 @@ sub render   {
       <a href="/Account/Login?_referer=$url" class="modal_link">Login</a> / 
       <a href="/Account/Register?_referer=$url" class="modal_link">Register</a> &nbsp;|&nbsp;);
     }
-  }
-  else {
+  } else {
     $html .= qq(
       <a href="/UserData/Upload?_referer=$url" class="modal_link">Control Panel</a> &nbsp;|&nbsp;);
   }
   $html .= qq(
       <a href="/Multi/blastview">BLAST</a> &nbsp;|&nbsp; 
-      <a href="/$species/Biomart">BioMart</a> &nbsp;|&nbsp;
+      <a href="/biomart/martview">BioMart</a> &nbsp;|&nbsp;
       <a href="/info/website/help/" id="help">Help &amp; Documentation</a>);
 
   $self->print($html);
