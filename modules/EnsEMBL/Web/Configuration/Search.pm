@@ -16,6 +16,12 @@ sub context_panel  { return $_[0]->_context_panel;  }
 #ie restrict on gene then on Felis cattus; now if gene filter is removed then the Felis catus filter is also lost
 # - labels are often wider than the panel -> shoren species name when shorter than eg 6 characters ?
  
+sub _get_valid_action {
+  my $self = shift;
+  my $action = shift;
+  my $func   = shift;
+	return $func ? "$action/$func" : "action";
+}
 sub populate_tree {
     my $self = shift;
     my $menu;
