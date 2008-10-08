@@ -20,60 +20,25 @@ sub init {
   });
   $self->create_menus(
     'sequence'        => 'Sequence',
-    'transcript'     => 'Genes',
+    'transcript'      => 'Genes',
     'other'           => 'Other'
   );
   $self->load_tracks();
 
   $self->add_tracks( 'other',
-    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal', 'src' => 'all', 'colour' => 'bisque', 'tag' => 1, 'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal', 'src' => 'all', 'colours' => 'bisque', 'tag' => 1, 'strand' => 'b', 'menu' => 'no'         } ],
     [ 'draggable',        '',     'draggable',         { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
- #   [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'snp_join',         '',     'snp_join',          { 'display' => 'on',  'strand' => 'b', 'colours' => $self->species_defs->colour('variation'), 'tag' => 1, 'menu' => 'no'         } ], 
+    [ 'variation_legend',           '',     'variation_legend',            { 'display' => 'on', 'strand' => 'r',          } ],
     [ 'spacer',           '',     'spacer',            { 'display' => 'normal', 'height' => 50,   'strand' => 'r', 'menu' => 'no'         } ],
   );
-
 
 
   $self->modify_configs(
     [qw(transcript )],
     {'display'=>'off'}
   );
+
 }
 
-1;
-__END__
-sub init {
-  my ($self) = @_;
-  $self->{'_userdatatype_ID'} = 32;
-  $self->{'_transcript_names_'} = 'yes';
-  $self->{'general'}->{'genesnpview_gene'} = {
-    '_artefacts' => [qw( geneexon_bgtrack spacer snp_join)],
-    '_options'  => [qw(pos col known unknown)],
-    '_settings' => {
-      'show_labels' => 'no',
-      'width'   => 800,
-      'opt_zclick'     => 1,
-      'bgcolor'   => 'background1',
-      'bgcolour1' => 'background1',
-      'bgcolour2' => 'background1',
-    },
-    'spacer' => { 'on'=>'on','pos'=>1e6, 'height' => 50, 'str' => 'r' },
-
-    'snp_join' => {
-      'tag' => 1,
-      'on'=>'on','pos'=>4600,
-      'available'=> 'databases DATABASE_VARIATION',
-      'colours'=>{$self->{'_colourmap'}->colourSet('variation')}, 'str' => 'b'
-    },
-    'geneexon_bgtrack' => {
-      'on'          => "on",
-      'pos'         => '5000',
-      'str'         => 'b',
-      'src'         => 'all', # 'ens' or 'all'
-      'col'         => 'bisque',
-      'tag'         => 1
-    }, 
-  };
-  $self->ADD_ALL_TRANSCRIPTS( );
-}
 1;
