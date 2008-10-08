@@ -22,7 +22,6 @@ sub _init {
   my %highlights; 
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
-  #my $colours       = $self->colours(); warn $colours;
   my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
 
@@ -37,7 +36,7 @@ sub _init {
   my @exons = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
   # If stranded diagram skip if on wrong strand
   # For exon_structure diagram only given transcript
-  # my $Composite = $self->Composite({'y'=>0,'height'=>$h});
+  my $Composite = $self->Composite({'y'=>0,'height'=>$h});
   #my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
   my $colour = $self->colour($transcript);
   my $coding_start = $trans_ref->{'coding_start'};
@@ -46,8 +45,9 @@ sub _init {
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $th = $res[3];
 
-  ## First of all draw the lines behind the exons.....
-  my $Y = $Config->{'_add_labels'} ? $th : 0; 
+  
+  ## First of all draw the lines behind the exons..... 
+  my $Y = $Config->{'_add_labels'} ? $th : 0;  
   foreach my $subslice (@{$Config->{'subslices'}}) {
     $self->push( $self->Rect({
       'x' => $subslice->[0]+$subslice->[2]-1, 'y' => $Y+$h/2, 'h'=>1, 'width'=>$subslice->[1]-$subslice->[0], 'colour'=>$colour, 'absolutey'=>1
@@ -81,7 +81,7 @@ sub _init {
          }));
       }
     }
-    # if($box_start < $coding_start || $box_end > $coding_end ) {
+     if($box_start < $coding_start || $box_end > $coding_end ) {
       # The start of the transcript is before the start of the coding
       # region OR the end of the transcript is after the end of the
       # coding regions.  Non coding portions of exons, are drawn as
@@ -95,14 +95,14 @@ sub _init {
         'bordercolour' => $colour,
         'absolutey' => 1,
         'title'     => $exon->[2]->stable_id,
-        'href'     => $self->href( $gene, $transcript, $exon->[2], %highlights ),
+       'href'     => $self->href( $gene, $transcript, $exon->[2], %highlights ),
       });
       $G->{'zmenu'} = $self->zmenu( $gene, $transcript, $exon->[2] ) unless $Config->{'_href_only'};
       $self->push( $G );
-    # } 
+     } 
   } #we are finished if there is no other exon defined
 
-  if( $Config->{'_add_labels'} ) { 
+  if( $Config->{'_add_labels'} ) {   
     my $H = 0;
     my  $T = length( $transcript->stable_id );
     my $name =  ' '.$transcript->external_name;
@@ -130,12 +130,6 @@ sub _init {
   }
 }
 
-#sub colours {
-#  my $self = shift;
-#  my $Config = $self->{'config'};
-#  return $Config->get('GSV_transcript','colours'); 
-#  return $self->my_config('colours');
-#}
 
 sub colour {
   my ($self, $transcript ) = @_;
@@ -159,6 +153,8 @@ sub colour {
 #  return (@$genecol, undef);
 
 #}
+
+sub gene_href { return undef; }
 
 sub href {
     my ($self, $gene, $transcript, $exon, %highlights ) = @_;
