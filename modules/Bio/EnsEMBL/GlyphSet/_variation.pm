@@ -5,7 +5,7 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 use Bio::EnsEMBL::Variation::VariationFeature;
 
 
-sub my_label { return "SNPs"; }
+sub my_label { return "Variations"; }
 
 sub features {
   my ($self) = @_;
@@ -26,14 +26,8 @@ sub check_source {
   return 0;
 }
 
-sub features {
+sub fetch_features {
   my ($self) = @_;
-  my $max_length    = $self->my_config( 'threshold' )  || 1000;
-  my $slice_length  = $self->{'container'}->length;
-  if($slice_length > $max_length*1010) {
-    $self->errorTrack('Variation features not displayed for more than '.$max_length.'Kb');
-    return;
-  }
 
   unless( $self->cache( $self->{'my_config'}->key ) ) {
     my $sources = $self->my_config('sources');
@@ -52,18 +46,16 @@ sub features {
   }
   my $snps = $self->cache( $self->{'my_config'}->key ) || [];
 
-  if(0&&@$snps) {
-    $self->_add_legend( 'variations_legend', $self->_pos );
-    my %T = ();
-    foreach my $f (@$snps) {
-      my $x = $f->consequence_type;
-      next if $T{$x};
-      $self->legend_add(
-        'variations_legend',
-        $self->my_colour( $x ),
-        $self->my_colour( $x, 'text' )
-      );
-      $T{$x}=1;
+  if (@$snps){
+    foreach my $f (@$snps) { warn $f;
+      my $Config        = $self->{'config'};
+      my $colours = $self->my_config('colours');
+      my $type = lc($f->display_consequence);
+
+      unless($Config->{'variation_types'}{$type}) {
+        push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->{'text'},   $colours->{$type}->{'default'};
+        $Config->{'variation_types'}{$type} = 1;
+      }
     }
   }
   return $snps;
@@ -129,12 +121,15 @@ sub tag {
               : 'box'
               ;
     my $letter = $style eq 'box' ? $f->ambig_code : "";
-    my $CK = $self->colour_key($f);
+    my $CK = $self->colour_key($f); 
+    my $label_colour = $self->my_colour( $CK, 'label' );
+    if ($label_colour eq $self->my_colour( $CK )){ $label_colour = 'black';}
+
     return {
       'style'        => $style,
       'colour'       => $self->my_colour( $CK ),
       'letter'       => $style eq 'box' ? $f->ambig_code : "",
-      'label_colour' => $self->my_config( $CK, 'label' )
+      'label_colour' => $label_colour
     };
   }
   if($f->start > $f->end ) {    
@@ -149,27 +144,30 @@ sub highlight {
   return if $self->my_config('style') ne 'box';
   ## Get highlights...
   my %highlights;
-  @highlights{$self->highlights()} = ();
+  @highlights{$self->highlights()} = (1);
 
   # Are we going to highlight self item...
-  my $id = $f->variation_name();
+  my $id = $f->variation_name(); 
   $id =~ s/^rs//;
-  return unless $highlights{$id} || $highlights{'rs'.$id};
-  $self->unshift( $self->Rect({  # First a white box!
-    'x'         => $composite->x() - 1/$pix_per_bp,
+ 
+ return unless $highlights{$id} || $highlights{'rs'.$id};
+  $self->unshift( $self->Rect({  # First a black box!
+    'x'         => $composite->x() - 2/$pix_per_bp,
+    'y'         => $composite->y() -1, ## + makes it go down
+    'width'     => $composite->width() + 4/$pix_per_bp,
+    'height'    => $h + 4,
+    'colour'    => "black",
+    'absolutey' => 1,
+  }),$self->Rect({ # Then a 1 pixel smaller white box...!
+    'x'         => $composite->x() -1/$pix_per_bp,
     'y'         => $composite->y(),  ## + makes it go down
     'width'     => $composite->width() + 2/$pix_per_bp,
     'height'    => $h + 2,
-    'colour'    => "white",
-    'absolutey' => 1,
-  }),$self->Rect({ # Then a 1 pixel bigger black box...!
-    'x'         => $composite->x() -2/$pix_per_bp,
-    'y'         => $composite->y() -1,  ## + makes it go down
-    'width'     => $composite->width() + 4/$pix_per_bp,
-    'height'    => $h + 4,
-    'colour'    => $hi_colour,
+    'colour'    => "white", 
     'absolutey' => 1,
   }));
+
+
 }
 
 1;
