@@ -408,20 +408,16 @@ sub _local_tools {
   my $self = shift;
   my $obj = $self->{object};
 
-#  my $current_page = $ENV{'SERVER_NAME'};
-#  if (my $port = $ENV{'SERVER_PORT'}) {
-#    $current_page .= ':'.$port;
-#  }
-#  $current_page .= $ENV{'REQUEST_URI'};
-  my @data = (
-    ['Bookmark this page',  $obj->_url({
-      'type'     => 'Account',
-      'action'   => 'Bookmark',
-      'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'},
-      '_referer' => $ENV{'REQUEST_URI'},
-      '__clear'  =>1
-     }), 'modal_link' ],
-  );
+  if( $ENV{'ENSEMBL_USER_ID'} ) {
+    $self->{'page'}->local_tools->add_entry(
+      'caption' => 'Bookmark this page',
+      'class'   => 'modal_link',
+      'url'     => $obj->_url({ 'type'     => 'Account', 'action'   => 'Bookmark',
+                                '_referer' => $ENV{'REQUEST_URI'}, '__clear'  =>1,
+                                'name'     => $self->{'page'}->title->get,
+                                'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'} })
+    );
+  }
   my $vc  = $obj->get_viewconfig;
   my $config = {};
   if( $vc->has_form ) {
@@ -430,33 +426,30 @@ sub _local_tools {
     my %configs = $vc->image_configs();
     ($config) = sort keys %configs;
   }
-  my $action = $obj->type.'/'.$obj->action;
-  $action .= '/'.$obj->function if $obj->function;
   if( $config ) {
-    push @data, [
-      'Configure this page',
-      $obj->_url({
-        'time' => time, 
-        'type' => 'Config',
-        'action' => $action,
-        ( $config eq '1' ? ( ) : ('config' => $config) )
-      }),
-      'modal_link'
-    ];
+    my $action = $obj->type.'/'.$obj->action;
+       $action .= '/'.$obj->function if $obj->function;
+    $self->{'page'}->local_tools->add_entry(
+      'caption' => 'Configure this page',
+      'class'   => 'modal_link',
+      'url'     => $obj->_url({ 'time' => time, 'type' => 'Config', 'action' => $action,
+                                'config' => $config eq '1' ? undef : $config })
+    );
+    if( $vc->can_upload ) {
+      $self->{'page'}->local_tools->add_entry(
+        'caption' => 'Add custom data to page',
+        'class'   => 'modal_link',
+        'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => 'Summary',
+                                 '_referer' => $ENV{'REQUEST_URI'}, '__clear' => 1 })
+      );
+    }
   }
 
-  push @data, ['Export Data',     '/sorry.html', 'modal_link' ];
-
-  my $type;
-  foreach my $row ( @data ) {
-    if( $row->[1] =~ /^http/ ) {
-      $type = 'external';
-    }
+  if( 0 ) {
     $self->{'page'}->local_tools->add_entry(
-      'type'      => $type,
-      'caption'   => $row->[0],
-      'url'       => $row->[1],
-      'class'     => $row->[2]
+      'caption' => 'Export data',
+      'class'   => 'modal_link',
+      'url'     => '/sorry.html'
     );
   }
 }
@@ -503,7 +496,7 @@ sub _content_panel {
   my $node          = $self->get_node( $action );
   my $title = $node->data->{'concise'}||$node->data->{'caption'};
      $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
-     $title = join ' - ', '', ( $obj ? $obj->caption : () ), $title;
+     $title = join ' - ', '', $title, ( $obj ? $obj->caption : () );
   $self->set_title( $title );
 
   my $previous_node = $node->previous;
