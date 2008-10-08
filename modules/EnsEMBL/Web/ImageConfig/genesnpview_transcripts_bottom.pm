@@ -22,9 +22,10 @@ sub init {
   $self->create_menus(
     'other'           => 'Other'
   );
+
   $self->add_tracks( 'other',
-    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal', 'src' => 'all', 'colour' => 'bisque', 'tag' => 2, 'strand' => 'r', 'menu' => 'no'         } ],
-#    [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ],
+    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal', 'src' => 'all', 'colours' => 'bisque', 'tag' => 2, 'strand' => 'r', 'menu' => 'no'         } ],
+    [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'r', 'colours' => $self->species_defs->colour('variation'), 'tag' => 2, 'context' => 50,  'menu' => 'no'         } ],
     [ 'draggable',        '',     'draggable',         { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ],
     [ 'ruler',            '',     'ruler',             { 'display' => 'normal',  'strand' => 'r', 'name' => 'Ruler'      } ],
     [ 'spacer',           '',     'spacer',            { 'display' => 'normal', 'height' => 50,   'strand' => 'r', 'menu' => 'no'         } ],
