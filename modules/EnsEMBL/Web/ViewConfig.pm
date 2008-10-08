@@ -19,7 +19,8 @@ sub new {
     '_image_config_names' => {},
     '_form'               => undef,
     '_url'                => undef,
-    'no_load'             => undef
+    'no_load'             => undef,
+    'can_upload'          => 0
   };
 
   bless($self, $class);
@@ -55,10 +56,14 @@ sub add_image_configs { ## Value indidates that the track can be configured for 
   my( $self, $hash_ref ) = @_;
   foreach( keys %$hash_ref ) {
     $self->{_image_config_names}{$_} = $hash_ref->{$_};
+    $self->can_upload = 1 if $hash_ref->{$_} eq 'das';
     $self->has_images(1);
   }
 }
 
+sub can_upload :lvalue {
+  $_[0]->{'can_upload'}
+}
 sub has_image_config {
   my $self = shift;
   my $config = shift;
