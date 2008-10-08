@@ -552,6 +552,7 @@ sub _munge_meta {
   my $order = $self->tree->{'TAXON_ORDER'};
 
   $self->tree->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
+  $self->tree->{'SPECIES_BIO_SHORT'} = substr($taxonomy[1],0,1).'.'.$taxonomy[0];
 
   foreach my $taxon (@taxonomy) {
     foreach my $group (@$order) {
