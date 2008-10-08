@@ -9,6 +9,7 @@ sub new {
 
   my $self = {
     '_db'                 => $adaptor->get_adaptor,
+    '_species_defs'       => $adaptor->get_species_defs,
     '_r'                  => $adaptor->get_request || undef,
     'type'                => $type,
     'real'                => 0,
@@ -29,6 +30,11 @@ sub new {
 
 sub real :lvalue {
   $_[0]->{'real'};
+}
+
+sub species_defs :lvalue {
+### a
+  $_[0]->{'_species_defs'};
 }
 
 sub url :lvalue {
