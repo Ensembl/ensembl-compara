@@ -41,23 +41,31 @@ sub content {
     'OligoProbe'  => ['red', 'rharrow'],
   );
   
-=pod
   ## Check if there is userdata in session
   my $userdata = $object->get_session->get_tmp_data;
 
+  warn keys %$userdata; 
   ## Do we have feature "tracks" to display?
-  if ($userdata && $userdata->{'filename'}) {
+  my $hidden = {
+    'karyotype'   => 'yes',
+    'max_chr'     => $ideo_height,
+    'margin'      => $top_margin,
+    'chr'         => $object->seq_region_name,
+    'start'       => $object->seq_region_start,
+    'end'         => $object->seq_region_end,
+  };
+  if( $userdata && $userdata->{'filename'} ) {
     ## Set some basic image parameters
+warn "trying to create image";
     $image->imagemap = 'no';
-    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
+    $image->set_button( 'form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden );
     $image->caption = 'Click on the image above to jump to an overview of the chromosome';
    
     ## Create pointers from user data
     my $pointer_set = $self->create_userdata_pointers($image, $userdata);
+warn keys %$pointer_set; 
     push(@$pointers, $pointer_set);
-  } 
-=cut 
-  if ($object->param('id')) {
+  } elsif ($object->param('id')) {
     $image->image_name = "feature-$species";
     $image->imagemap = 'yes';
     my $features = $self->_get_features;
@@ -78,14 +86,6 @@ sub content {
   } else {
     $image->image_name = "karyotype-$species";
     $image->imagemap = 'no';
-    my $hidden = {
-      'karyotype'   => 'yes',
-      'max_chr'     => $ideo_height,
-      'margin'      => $top_margin,
-      'chr'         => $object->seq_region_name,
-      'start'       => $object->seq_region_start,
-      'end'         => $object->seq_region_end,
-    };
     $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
     $image->caption = 'Click on the image above to jump to an overview of the chromosome';
   }
