@@ -128,7 +128,6 @@ sub new {
     if( $glyphset->{'my_config'}->key eq 'Videogram' && $flag ) {
       $label_1 = $glyphset->{'chr'};
     }
-    warn "$glyphset          --> $label_1 / $label_2";
     my $gw  = length( length($label_2) > length($label_1) ? $label_2 : $label_1 );
     if($gw>0) {
       ########## and convert it to pels
