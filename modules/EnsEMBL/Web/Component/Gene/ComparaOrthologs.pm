@@ -25,14 +25,13 @@ sub content {
 
   if (keys %orthologue_list) {
 # Find the selected method_link_set
-    my $param_string = 'g='.$gene->stable_id.';r='.$gene->param('r').';t='.$gene->param('t');
     $html = qq#
     <p>
       The following gene(s) have been identified as putative
       orthologues:
     </p>
     <p>(N.B. If you don't find a homologue here, it may be a 'between-species paralogue'.
-Please view the <a href="/#.$gene->species.'/Gene/Compara_Tree?'.$param_string.qq#">gene tree info</a> or export between-species
+Please view the <a href="/#.$gene->species.'/Gene/Compara_Tree?g='.$gene->stable_id.qq#">gene tree info</a> or export between-species
 paralogues with BioMart to see more.)</p>
     <table width="100%" cellpadding="4">
       <tr>
