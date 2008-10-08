@@ -1,4 +1,4 @@
-package EnsEMBL::Web::ViewConfig::genesnpview;
+package EnsEMBL::Web::ViewConfig::Gene::Variation_Gene;
 
 use strict;
 
