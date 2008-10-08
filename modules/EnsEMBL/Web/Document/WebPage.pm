@@ -32,8 +32,8 @@ sub timer { return $_[0]{'timer'}; }
 sub _parse_referer {
   my( $self, $uri ) = @_;
   my ($url,$query_string) = split /\?/, $uri;
-  $url =~ /^https?:\/\/.*?\/(.*)$/;
-  my($sp,$ot,$view,$subview) = split /\//, $1;
+  $url =~ s/^(https?:\/\/.*?)?\///i;
+  my($sp,$ot,$view,$subview) = split /\//, $url;
 
   my(@pairs) = split(/[&;]/,$query_string);
   my $params = {};
@@ -119,7 +119,7 @@ sub new {
   } else {
     $input  = new CGI;
   }
-  $self->{'parent'} = $self->_parse_referer( $input->param('referer')||$ENV{'HTTP_REFERER'} );
+  $self->{'parent'} = $self->_parse_referer( $input->param('_referer')||$ENV{'HTTP_REFERER'} );
   $ENSEMBL_WEB_REGISTRY->get_session->set_input( $input );
   $self->timer_push("Parameters initialised from input");
 
