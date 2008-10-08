@@ -43,6 +43,7 @@ sub counts {
     $counts = {};
     $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
     $counts->{'exons'}       = @{$obj->get_all_Exons};
+    $counts->{'similarity_matches'} = $self->count_xrefs;
     my $compara_db = $self->database('compara');
     if($compara_db) {
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
@@ -77,6 +78,27 @@ sub counts {
   return $counts;
 }
 
+sub count_xrefs {
+    my $self = shift;
+    my $type = $self->get_db;
+    my $dbc = $self->database($type)->dbc;
+
+    #xrefs on the gene
+    my $xrefs_c = 0;
+    my $sql = qq(
+                SELECT distinct(x.display_label)
+                  FROM object_xref ox, xref x, external_db edb
+                 WHERE ox.xref_id = x.xref_id
+                   AND x.external_db_id = edb.external_db_id
+                   AND ox.ensembl_object_type = 'Gene'
+                   AND ox.ensembl_id = ?);
+    my $sth = $dbc->prepare($sql);
+    $sth->execute($self->Obj->dbID);
+    while (my ($label) = $sth->fetchrow_array) {
+	$xrefs_c++;
+    }
+    return $xrefs_c;
+}
 
 sub count_gene_supporting_evidence {
     #count all supporting_features and transcript_supporting_features for the gene
@@ -1107,6 +1129,23 @@ sub vega_projection {
     push @alt_slices, $alt_slice;
   }
   return \@alt_slices;
+}
+
+=head2 get_similarity_hash
+
+ Arg[1]      : none
+ Example     : $similarity_matches = $webobj->get_similarity_hash
+ Description : Returns an arrayref of hashes containing similarity matches
+ Return type : an array ref
+
+=cut
+
+sub get_similarity_hash{
+  my $self = shift;
+  my $DBLINKS;
+  eval { $DBLINKS = $self->Obj->get_all_DBEntries; };
+  warn ("SIMILARITY_MATCHES Error on retrieving gene DB links $@") if ($@);
+  return $DBLINKS  || [];
 }
 
 
