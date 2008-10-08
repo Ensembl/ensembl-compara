@@ -56,7 +56,7 @@ sub transcript_long_caption {
   return '-' unless $self->transcript;
   my $dxr = $self->transcript->can('display_xref') ? $self->transcript->display_xref : undef;
   my $label = $dxr ? " (".$dxr->display_id.")" : '';
-  return "Transcript: ".$self->transcript->stable_id.$label;
+  return $self->transcript->stable_id.$label;
 }
 
 sub gene {
@@ -79,7 +79,7 @@ sub gene_long_caption {
   return '-' unless $self->gene;
   my $dxr = $self->gene->can('display_xref') ? $self->gene->display_xref : undef;
   my $label = $dxr ? " (".$dxr->display_id.")" : '';
-  return "Gene: ".$self->gene->stable_id.$label;
+  return $self->gene->stable_id.$label;
 }
 
 sub location {
@@ -105,7 +105,7 @@ sub location_short_caption {
 sub location_long_caption {
   my $self = shift;
   return '-' unless $self->location;
-  return "Location: ".$self->location->seq_region_name.':'.$self->thousandify($self->_centre_point);
+  return $self->location->seq_region_name.':'.$self->thousandify($self->_centre_point);
 }
 
 sub variation {
@@ -129,7 +129,7 @@ sub variation_short_caption {
 sub variation_long_caption {
   my $self = shift;
   return '-' unless $self->variation;
-  return "Variation: ".$self->variation->name;
+  return $self->variation->name;
 }
 
 sub param {
@@ -322,11 +322,12 @@ sub _check_if_snp_unique_location {
   my $vf_adaptor = $vardb->get_VariationFeatureAdaptor; 
   my @features = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
 
+  my $context = $self->param('vw')||5000;
   unless (scalar @features > 1){
    my $s =  $features[0]->start; 
    my $e = $features[0]->end;
    my $r = $features[0]->seq_region_name;
-   $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
+   $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s-$context, $e+$context ) );
   } 
  
 }
