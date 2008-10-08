@@ -24,11 +24,12 @@ sub init {
 
 
   $self->create_menus(
-    'transcript' => 'Genes',
-    'prediction' => 'Prediction transcripts',
-    'sequence'   => 'Sequence',
-    'variation'  => 'Variation',
-    'other'      => 'Decorations',
+    'transcript'  => 'Genes',
+    'prediction'  => 'Prediction transcripts',
+    'sequence'    => 'Sequence',
+    'variation'   => 'Variation',
+    'information' => 'Information',
+    'other'       => 'Decorations',
   );
 
 
@@ -36,8 +37,11 @@ sub init {
     [ 'contig',    'Contigs',              'stranded_contig', { 'display' => 'normal',  'strand' => 'r'  } ],
   );
 
+  $self->add_tracks( 'information',
+    [ 'variation_legend',      '',   'variation_legend',     { 'display' => 'on', 'strand' => 'r',  'caption' => 'Variation legend'         } ],
+  ); 
   $self->add_tracks( 'other',
-    [ 'ruler',     '',            'ruler',           { 'display' => 'on',  'strand' => 'b', 'name' => 'Ruler'      } ],
+    [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler'      } ],
     [ 'scalebar',  '',            'scalebar',        { 'display' => 'on',  'strand' => 'r', 'name' => 'Scale bar'  } ],
   );
 
@@ -47,6 +51,11 @@ sub init {
   $self->modify_configs(
     [qw(variation)],
     {qw(style box depth 100000)}
+  );
+ 
+  $self->modify_configs(
+   [qw(gene_legend)],
+   {qw(display off menu no)}
   );
 
   $self->modify_configs(

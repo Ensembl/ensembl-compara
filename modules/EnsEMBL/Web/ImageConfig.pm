@@ -1028,6 +1028,7 @@ sub add_variation_feature {
       'display'          => 'off'
     }));
   }
+  $self->add_track( 'information', 'variation_legend', 'Variation Legend', 'variation_legend', { 'strand' => 'r' } );
 }
 
 ## return a list of glyphsets...
