@@ -384,6 +384,7 @@ STAGE_CONFIGURE:{
   my %tmp_methods = %{$SPECIES_DEFS->multi_val('ENSEMBL_BLAST_METHODS')||{}};
   my %methods;
   while (my ($k, $v) = each (%tmp_methods)) {
+	  next unless ref($v) eq 'ARRAY';
     $methods{$k} = $v->[3];
   }
 
@@ -759,6 +760,7 @@ my $sp = $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
 my %tmp_methods = %{$SPECIES_DEFS->multi_val('ENSEMBL_BLAST_METHODS')||{}};
 my %methods;
 while (my ($k, $v) = each (%tmp_methods)) {
+	next unless ref($v) eq 'ARRAY';
   $methods{$k} = $v->[3];
 }
 

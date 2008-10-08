@@ -586,6 +586,7 @@ sub _configure_blast {
   $species =~ s/ /_/g;
   my $method = $self->full_tree->{'MULTI'}{'ENSEMBL_BLAST_METHODS'};
   foreach my $blast_type (keys %$method) { ## BLASTN, BLASTP, BLAT, etc
+		next unless ref($method->{$blast_type}) eq 'ARRAY';
     my @method_info = @{$method->{$blast_type}};
     my $search_type = uc($method_info[0]); ## BLAST or BLAT at the moment
     my $sources = $self->full_tree->{'MULTI'}{$search_type.'_DATASOURCES'};
