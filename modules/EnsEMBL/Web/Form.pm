@@ -45,7 +45,11 @@ sub add_button {
 sub add_attribute {
 ### Add an attribute to the FORM tag
   my( $self, $type, $value ) = @_;
-  $self->{'_attributes'}{$type} = $value;
+  if( $type eq 'class' && $self->{'_attributes'}{'class'} ) {
+    $self->{'_attributes'}{$type}.= " $value";
+  } else {
+    $self->{'_attributes'}{$type} = $value;
+  }
 }
 
 sub add_fieldset {
@@ -91,6 +95,7 @@ sub render {
 
   if( $has_file ) { # File types must always be multipart Posts 
     $self->add_attribute( 'method',  'post' );
+    $self->add_attribute( 'class',   'upload' );
     $self->add_attribute( 'enctype', 'multipart/form-data' );
   }
 
