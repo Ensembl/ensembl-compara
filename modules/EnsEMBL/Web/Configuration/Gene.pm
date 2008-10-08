@@ -38,6 +38,11 @@ sub populate_tree {
     { 'availability' => 1, 'concise' => 'Marked-up sequence'}
   );
 
+  $self->create_node( 'Matches', "Similarity matches ([[counts::similarity_matches]])",
+     [qw(matches       EnsEMBL::Web::Component::Gene::SimilarityMatches)],
+    { 'availability' => 1, 'concise' => 'SimilarityMatches'}
+  );
+
   $self->create_node( 'Regulation', 'Regulation',
     [qw(
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
