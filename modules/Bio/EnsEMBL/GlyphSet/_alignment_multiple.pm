@@ -174,6 +174,7 @@ sub element_features {
   if ($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
     $genomic_align_blocks = $slice->get_all_constrained_elements();
   } else {
+$self->timer_push('STARTING_API_CALL',5,'fetch');
     my $db   = $self->dbadaptor( 'multi', $self->my_config('db') );
 ## Get the GenomicAlignBlocks
     $genomic_align_blocks = $db->get_adaptor("GenomicAlignBlock")->fetch_all_by_MethodLinkSpeciesSet_Slice(
@@ -183,12 +184,14 @@ sub element_features {
       ),
       $slice
     )||[];
+$self->timer_push('ENDING_API_CALL',5,'fetch');
   }
 
   my $T = [];
   foreach my $block (@$genomic_align_blocks) {
-    my $all_gas = $block->get_all_GenomicAligns;
     my $fragments;
+if(0){
+    my $all_gas = $block->get_all_GenomicAligns;
     foreach (@$all_gas) {
       push(@{$fragments->{$_->dnafrag->genome_db->name}}, [
         $_->dnafrag->name,
@@ -197,6 +200,7 @@ sub element_features {
         $_->dnafrag_strand
       ]);
     }
+}
     my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split(':',$block->reference_slice->name);
  
     push @$T, Bio::EnsEMBL::DnaDnaAlignFeature->new_fast ({
