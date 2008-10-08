@@ -87,28 +87,26 @@ sub site_name {
 
 sub _matches {
   my(  $self, $key, $caption, @keys ) = @_;
+  my $object = $self->object;
+  my $label    = $object->species_defs->translate( $caption );
+  my $obj     = $object->Obj;
 
-  my $transcript = $self->object;
-
-  my $label      = $transcript->species_defs->translate( $caption );
-  my $trans      = $transcript->transcript;
   # Check cache
-
-  unless ($transcript->__data->{'links'}){
-    my @similarity_links = @{$transcript->get_similarity_hash($trans)};
+  unless ($object->__data->{'links'}){
+    my @similarity_links = @{$object->get_similarity_hash($obj)};
     return unless (@similarity_links);
     $self->_sort_similarity_links( @similarity_links);
   }
 
-  my @links = map { @{$transcript->__data->{'links'}{$_}||[]} } @keys;
+  my @links = map { @{$object->__data->{'links'}{$_}||[]} } @keys;
   return unless @links;
 
-  my $db = $transcript->get_db();
-  my $entry = $transcript->gene_type || 'Ensembl';
+  my $db = $object->get_db();
+  my $entry = $object->gene_type || 'Ensembl';
 
   # add table call here
   my $html;
-  if ($transcript->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+  if ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
     $html = qq(<p></p>);
   }
   else {
