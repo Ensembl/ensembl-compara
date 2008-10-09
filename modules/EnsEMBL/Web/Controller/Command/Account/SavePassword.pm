@@ -45,6 +45,7 @@ sub process {
       if $group->add_user($user);
   }
 
+
   my $param = {
     'email'     => $user->email,
     'password'  => $cgi->param('new_password_1'),
@@ -53,6 +54,10 @@ sub process {
   };
   if ($cgi->param('record_id')) {
     $param->{'record_id'} = $cgi->param('record_id');
+  } 
+  ## Account activation needs to go to the home page, not the control panel
+  if ($cgi->param('code')) {
+    $param->{'activated'} = 'yes';
   } 
 
   $cgi->redirect($self->url('Account/SetCookie', $param));

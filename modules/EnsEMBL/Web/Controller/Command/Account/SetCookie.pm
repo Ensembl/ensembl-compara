@@ -58,11 +58,18 @@ sub process {
   }
 =cut
 
-  my $new_param = {};
-  if ($cgi->param('updated')) {
-    $new_param->{'updated'} = $cgi->param('updated');
+  if ($cgi->param('activated')) {
+    my $style = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_STYLE;
+    my $home = $style->{'SITE_LOGO_HREF'} || '/';
+    $cgi->redirect($self->url($home));
   }
-  $cgi->redirect($self->url('/Account/Links', $new_param));
+  else {
+    my $new_param = {};
+    if ($cgi->param('updated')) {
+      $new_param->{'updated'} = $cgi->param('updated');
+    }
+    $cgi->redirect($self->url('/Account/Links', $new_param));
+  }
 }
 
 }

@@ -7,7 +7,7 @@ use Class::Std;
 
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
-
+use CGI qw(escape);
 use base 'EnsEMBL::Web::Controller::Command::Account';
 
 {
