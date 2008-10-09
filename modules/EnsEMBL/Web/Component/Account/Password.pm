@@ -1,6 +1,6 @@
 package EnsEMBL::Web::Component::Account::Password;
 
-### Module to create user login form 
+### Module to create password entry/update form 
 
 use strict;
 use warnings;
