@@ -51,7 +51,7 @@ sub populate_tree {
         )],
       { 'availability' => 1 }
     );
-    $self->create_node( 'Password', "Change Password",
+    $self->create_node( 'ChangePassword', "Change Password",
     [qw(password EnsEMBL::Web::Component::Account::Password
       )], 
       { 'availability' => 1 }
@@ -111,6 +111,11 @@ sub populate_tree {
     [qw(account EnsEMBL::Web::Component::Account::LostPassword
         )],
       { 'availability' => 1 }
+    );
+    $self->create_node( 'Activate', "",
+    [qw(password EnsEMBL::Web::Component::Account::Password
+      )], 
+      { 'no_menu_entry' => 1 }
     );
 
   }
