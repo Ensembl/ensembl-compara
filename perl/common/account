@@ -34,10 +34,10 @@ $controller->add_connections({qw(
   Register           EnsEMBL::Web::Controller::Command::Account::Register
   SendActivation     EnsEMBL::Web::Controller::Command::Account::SendActivation 
   EmailSent          EnsEMBL::Web::Controller::Command::Account::EmailSent 
-  Activate           EnsEMBL::Web::Controller::Command::Account::Password 
+  Activate           EnsEMBL::Web::Controller::Command::Account::Activate 
   Details            EnsEMBL::Web::Controller::Command::Account::Details 
   LostPassword       EnsEMBL::Web::Controller::Command::Account::LostPassword 
-  Password           EnsEMBL::Web::Controller::Command::Account::Password 
+  Password           EnsEMBL::Web::Controller::Command::Account::ChangePassword 
   SavePassword       EnsEMBL::Web::Controller::Command::Account::SavePassword 
   Update             EnsEMBL::Web::Controller::Command::Account::Update 
   UpdateFailed       EnsEMBL::Web::Controller::Command::Account::UpdateFailed 
