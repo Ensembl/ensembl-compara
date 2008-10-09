@@ -24,7 +24,7 @@ sub render   {
   ## Species/static content links
   my $species = $ENV{'ENSEMBL_SPECIES'};
 
-  if ($species) {
+  if ($species && $species ne 'multi') {
     if ($species eq 'common') {
       $html .= qq( &gt; <strong>Control Panel</strong>);
     }
