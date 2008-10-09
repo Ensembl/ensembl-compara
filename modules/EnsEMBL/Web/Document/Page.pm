@@ -92,10 +92,10 @@ sub new {
     '_renderer'         => $renderer,
     'timer'             => $timer,
     'plugin_locator'    => EnsEMBL::Web::Tools::PluginLocator->new( (
-                                         locations  => [ 'EnsEMBL::Web', reverse @{ $species_defs->ENSEMBL_PLUGIN_ROOTS } ], 
-                                         suffix     => "Document::Configure",
-                                         method     => "new"
-                                                                  ) )
+      locations  => [ 'EnsEMBL::Web', reverse @{ $species_defs->ENSEMBL_PLUGIN_ROOTS } ], 
+      suffix     => "Document::Configure",
+      method     => "new"
+    ) )
   };
   bless $self, $class;
   $self->plugin_locator->parameters([ $self ]);
@@ -339,7 +339,9 @@ sub render {
     $self->local_context->render_modal;
     ## and then add in the fact that it is an XMLHttpRequest object to render the content only...
   }
-  if ($self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
+  if( $self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
+    $self->{'input'}->param('x_requested_with') eq 'XMLHttpRequest'
+  ) {
     $self->content->render; 
     return;
   }

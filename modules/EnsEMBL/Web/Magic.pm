@@ -125,7 +125,14 @@ sub configurator {
   warn "MY SESSION $session_id";
 #  my $referer_hash = _parse_referer;
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $ajax_flag = $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+use CGI;
+  my $input  = new CGI;
+  $session->set_input( $input );
+  my $ajax_flag = $r && (
+    $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'||
+    $input->param('x_requested_with') eq 'XMLHttpRequest'
+  );
 
   my $webpage     = EnsEMBL::Web::Document::WebPage->new(
     'objecttype' => 'Server',
@@ -133,14 +140,15 @@ sub configurator {
     'scriptname' => 'config',
     'r'          => $r,
     'ajax_flag'  => $ajax_flag,
+    'cgi'        => $input,
 #    'parent'     => $referer_hash,
     'renderer'   => 'String',
     'cache'      => $MEMD,
   );
-  $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  $webpage->page->{'_modal_dialog_'} = $ajax_flag;#$webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+warn "SETTING MODAL DIALOG TO ". $webpage->page->{'_modal_dialog_'};
 
-  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
-  my $input = $session->get_input;
+
   if(
     $input->param('submit') ||
     $input->param('reset')
@@ -225,6 +233,7 @@ sub ingredient {
   timer_push( 'Retrieved content from cache' ); 	 
   $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_COMPONENT'}" );
 
+  my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   if ($content) {
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
   } else {
@@ -235,7 +244,7 @@ sub ingredient {
       'doctype'    => 'Component',
       'ajax_flag'  => 1,
       'scriptname' => 'component',
-#      'parent'     => $referer_hash,
+      'r'          => $r,
       'renderer'   => 'String',
       'cache'      => $MEMD,
     );
@@ -287,6 +296,7 @@ sub stuff {
   my $doctype = shift;
   my $modal_dialog = shift;
 
+  my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
   ## If user logged in, some content depends on user
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
@@ -310,7 +320,9 @@ sub stuff {
       'cache'      => $MEMD,
     );
     if( $modal_dialog ) {
-      $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+      $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
+                                           $webpage->factory->param('x_requested_with') eq 'XMLHttpRequest';
+warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
     }
     # The whole problem handling code possibly needs re-factoring 
     # Especially the stuff that may end up cyclic! (History/UnMapped)
@@ -321,7 +333,12 @@ sub stuff {
         warn "####################### REDIRECTING ##########################";
         my($p) = $webpage->factory->get_problem_type('redirect');
         warn $p->name;
+        my $u = $p->name;
+        if( $r->headers_in->{'X-Requested-With'} ) {
+          $u.= ($p->name=~/\?/?';':'?').'x_requested_with='.$r->headers_in->{'X-Requested-With'};
+        }
         $webpage->redirect( $p->name );
+        return;
       } elsif( $webpage->has_problem_type('mapped_id') ) {
         my $feature = $webpage->factory->__data->{'objects'}[0];
         my $URL = sprintf "/%s/%s/%s?%s",
@@ -371,7 +388,11 @@ warn "==================== ",$webpage->dataObjects->[0]->get_problem_type('redir
         my($p) = $webpage->dataObjects->[0]->get_problem_type('redirect');
   use Data::Dumper;      warn Data::Dumper::Dumper( $p );
         warn $p->name;
-        $webpage->redirect( $p->name );
+        my $u = $p->name;
+        if( $r->headers_in->{'X-Requested-With'} ) {
+          $u.= ($u=~/\?/?';':'?').'x_requested_with='.$r->headers_in->{'X-Requested-With'};
+        }
+        $webpage->redirect( $u );
       } else {
         $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
         $webpage->render;
@@ -383,7 +404,6 @@ warn "==================== ",$webpage->dataObjects->[0]->get_problem_type('redir
     }
 
     $content = $webpage->page->renderer->content;
-
     my @tags = qw(DYNAMIC);
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
     $MEMD->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags)

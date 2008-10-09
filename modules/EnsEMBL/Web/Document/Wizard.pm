@@ -16,7 +16,11 @@ our @ISA = qw(EnsEMBL::Web::Document::WebPage);
 sub simple_wizard {
   my ($type, $method, $command) = @_;
   my $self = __PACKAGE__->new('objecttype' => $type, doctype => 'Popup', 'command' => $command );
-  $self->page->{'_modal_dialog_'} = $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'}||'' eq 'XMLHttpRequest';
+  $self->page->{'_modal_dialog_'} =
+    $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
+    $self->factory->param( 'x_requested_with' ) eq 'XMLHttpRequest';
+warn "SETTING MODAL DIALOG TO ". $self->page->{'_modal_dialog_'};
+
   if( $self->has_a_problem ) {
      $self->render_error_page;
   } else {
@@ -70,8 +74,7 @@ sub process_node {
 </head><body><p>UP</p></body></html>), CGI::escapeHTML($URL);
     } else {
       ## do redirect
-      $r->headers_out->add( 'X-Requested-With' => $r->headers_in->{'X-Requested-With'} );
-      $r->err_headers_out->add( 'X-Requested-With' => $r->headers_in->{'X-Requested-With'} );
+      $URL .= 'x_requested_with='.$self->page->renderer->{'r'}->headers_in->{'X-Requested-With'};
       $r->headers_out->add( "Location" => $URL );
       $r->err_headers_out->add( "Location" => $URL );
       $r->status( Apache2::Const::REDIRECT );
