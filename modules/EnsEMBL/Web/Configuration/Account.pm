@@ -125,22 +125,12 @@ sub populate_tree {
         )],
       { 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'Login', '',
-    [qw(login EnsEMBL::Web::Component::Account::Login
-        )],
-      { 'no_menu_entry' => 1 }
-  );
   $self->create_node( 'LoggedIn', '',
     [qw(logged_in EnsEMBL::Web::Component::Account::LoggedIn
         )],
       { 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'LostPassword', '',
-    [qw(lost_password EnsEMBL::Web::Component::Account::LostPassword
-        )],
-      { 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'EnterPassword', '',
+  $self->create_node( 'Password', '',
     [qw(enter_password EnsEMBL::Web::Component::Account::Password
         )],
       { 'no_menu_entry' => 1 }
