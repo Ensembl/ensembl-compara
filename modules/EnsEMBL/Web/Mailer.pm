@@ -73,7 +73,7 @@ sub send {
   my @weekDays = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
   my ($sec, $min, $hour, $day, $month, $year) = gmtime();
   $year += 1900;
-  my $time_string = "$weekDays[$day] $day $months[$month], $year $hour:$min:$sec +0000"; 
+  my $time_string = sprintf('%s %s %s %s, %02d:%02d:%02d +0000', $weekDays[$day], $day, $months[$month], $year, $hour, $min, $sec); 
 
   $mailer->open({
     'To'      => $self->get_to,
