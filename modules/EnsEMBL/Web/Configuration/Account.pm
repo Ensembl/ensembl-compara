@@ -128,11 +128,6 @@ sub populate_tree {
   );
   $self->create_node( 'Logout', "Log Out",
     [],
-      { 'availability' => 1 }
-  );
-  $self->create_node( 'Password', '',
-    [qw(enter_password EnsEMBL::Web::Component::Account::Password
-        )],
       { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'UpdateFailed', '',
