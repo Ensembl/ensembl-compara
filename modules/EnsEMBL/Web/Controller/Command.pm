@@ -49,10 +49,10 @@ sub render {
 }
 
 sub render_message {
-  warn "Rendering error message";
   my $self = shift;
-  my $type = shift || 'Account';
-  EnsEMBL::Web::Magic::stuff($type, 'Message', $self, 'Popup');
+  my $type = $ENV{'ENSEMBL_TYPE'} || 'Account';
+  my $url = "/$type/Message?command_message=".$self->get_message;
+  $self->action->cgi->redirect($url);
 }
 
 sub add_filter {
@@ -76,10 +76,8 @@ sub not_allowed {
   my $filters = $self->get_filters || [];
   foreach my $f (@$filters) {
     if (!$f->allow) {
-      ## Set the message in the CGI object so it accessible via the proxy object
-      $self->action->cgi->param('command_message', $f->message);
-      #$self->set_message($f->message);
-      return $f->message;
+      $self->set_message($f->message);
+      return 1;
     }
   }
   return undef;
