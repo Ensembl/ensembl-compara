@@ -18,7 +18,7 @@ sub context_panel  { return undef;  }
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Search', "Search",
+  my $T = $self->create_node( 'Search', "Search",
     [qw(
       search    EnsEMBL::Web::Component::Help::Search
     )],
@@ -52,31 +52,31 @@ sub populate_tree {
   );
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
-  $self->create_node( 'EmailSent', '',
+  $T->append($self->create_subnode( 'EmailSent', '',
     [qw(sent EnsEMBL::Web::Component::Help::EmailSent
         )],
       { 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'Results', '',
+  ));
+  $T->append($self->create_subnode( 'Results', '',
     [qw(sent EnsEMBL::Web::Component::Help::Results
         )],
       { 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'ArchiveList', '',
+  ));
+  $T->append($self->create_subnode( 'ArchiveList', '',
     [qw(archive EnsEMBL::Web::Component::Help::ArchiveList
         )],
       { 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'Permalink', '',
+  ));
+  $T->append($self->create_subnode( 'Permalink', '',
     [qw(archive EnsEMBL::Web::Component::Help::Permalink
         )],
       { 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'View', '',
+  ));
+  $T->append($self->create_subnode( 'View', '',
     [qw(archive EnsEMBL::Web::Component::Help::View
         )],
       { 'no_menu_entry' => 1 }
-  );
+  ));
 
 }
 
