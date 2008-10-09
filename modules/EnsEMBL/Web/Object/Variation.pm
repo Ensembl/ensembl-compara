@@ -240,6 +240,18 @@ sub dblinks {
   return \%synonyms;
 }
 
+sub consequence_type {
+  my $self = shift;
+  my $consequence_type;
+  my @vari_mappings = @{ $self->get_variation_features };
+  foreach my $f (@vari_mappings){
+    return '-' unless $f->variation_name eq $self->name;
+    $consequence_type = $f->display_consequence;
+  }
+  $consequence_type =~s/_/ /g;
+ 
+  return $consequence_type;
+}
 
 sub status { 
 
@@ -882,13 +894,13 @@ sub ld_pops_for_snp {
   ### Description: gets an LDfeature container for this SNP and calls all the populations on this
   ### Returns array ref of population IDs
 
-  my $self = shift;
-  my @vari_mappings = @{ $self->unique_variation_feature };
+  my $self = shift; 
+  my @vari_mappings = @{ $self->unique_variation_feature }; 
   return [] unless @vari_mappings;
 
   my @pops;
-  foreach ( @vari_mappings ) {
-    my $ldcontainer = $_->get_all_LD_values;
+  foreach ( @vari_mappings ) { warn $_;
+    my $ldcontainer = $_->get_all_LD_values; warn scalar @{$ldcontainer->get_all_populations};
     push @pops, @{$ldcontainer->get_all_populations};
 
   }
