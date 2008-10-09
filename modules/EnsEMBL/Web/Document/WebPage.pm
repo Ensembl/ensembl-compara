@@ -300,10 +300,10 @@ sub configure {
             }
 	  }
         } 
-        $self->timer_push( "configuration function $FN called for $T ...",2 );
+        $self->timer_push( "configuration function $FN called for @$T ...",2 );
       }
     }
-    $self->timer_push( "configuration functions called for $T ...",1 );
+    $self->timer_push( "configuration functions called for @$T ...",1 );
   }
   $self->timer_push( 'configuration functions called ...' );
 
@@ -360,6 +360,7 @@ sub get_user_id {
 
 sub redirect {
   my( $self, $URL ) = @_;
+
   CGI::redirect( $URL );
   alarm(0);
 }
