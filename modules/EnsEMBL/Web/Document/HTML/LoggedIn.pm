@@ -12,7 +12,7 @@ sub render {
   my $self = shift;
   my $html = qq(<div id="login-status">);
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $url;
+  my $url = '';
   my @params = split(';', $ENV{'QUERY_STRING'});
   foreach my $param (@params) {
     next unless $param =~ '_referer';
