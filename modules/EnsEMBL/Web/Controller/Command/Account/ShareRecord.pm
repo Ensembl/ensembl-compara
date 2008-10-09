@@ -35,8 +35,12 @@ sub process {
   my $cgi = $self->action->cgi;
 
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my ($records_accessor) = grep { $_ eq $cgi->param('type') } keys %{ $user->relations };
+  my $type = lc($cgi->param('type')).'s';
+
+  my ($records_accessor) = grep { $_ eq $type } keys %{ $user->relations };
+warn keys %{ $user->relations };
   ## TODO: this should use abstraction limiting facility rather then grep
+
   my ($user_record)      = grep { $_->id == $cgi->param('id') } $user->$records_accessor;
 
   my $group = EnsEMBL::Web::Data::Group->new($cgi->param('webgroup_id'));
