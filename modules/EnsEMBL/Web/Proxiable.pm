@@ -14,7 +14,7 @@ use CGI qw(escape escapeHTML);
 
 sub table_info {
   my( $self, $db, $table ) = @_;
-  $db = "DATABASE_".uc($db) unless $db;
+  $db = "DATABASE_".uc($db) unless $db =~ /^DATABASE_/;
   return $self->species_defs->databases->{$db}{'tables'}{$table}||{};
 }
 
