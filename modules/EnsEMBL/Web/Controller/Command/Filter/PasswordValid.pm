@@ -23,7 +23,6 @@ sub allow {
   
   my $input_password = $cgi->param('password');
   my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptPassword($input_password, $user->salt);
-  warn "INPUT = $encrypted, FETCHED = ".$user->password;
   if ($user->password eq $encrypted) {
     return 1;
   } else {
