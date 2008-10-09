@@ -38,7 +38,7 @@ You just need to activate your account, using the link below:
 );
   }
 
-  $message .= $self->get_base_url.'/Account/Activate?email='.$user->email.';code='.$user->salt;
+  $message .= $self->get_baseurl.'/Account/Activate?email='.$user->email.';code='.$user->salt;
 
   if ($params{'group_id'}) {
     $message .= ";group_id=" . $params{'group_id'};
@@ -46,7 +46,7 @@ You just need to activate your account, using the link below:
 
   $message .= $self->email_footer;
   $self->set_message($message);
-  return eval{ $self->send(); };
+  $self->send;
 }
 
 sub send_welcome_email {
@@ -61,7 +61,7 @@ sub send_welcome_email {
 
   More information on how to make the most of your account can be found here:
 
-  ) . $self->get_base_url . qq(/info/about/accounts.html
+  ) . $self->get_baseurl . qq(/info/about/accounts.html
 
 );
   $message .= $self->email_footer;
@@ -86,7 +86,7 @@ sub send_invite_email {
  To accept this invitation, click on the following link:
 
  ) . $group->name . qq( 
- ) . $self->get_base_url . qq(/Account/Accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(;email=$email
+ ) . $self->get_baseurl . qq(/Account/Accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(;email=$email
 
  If you do not wish to accept, please just disregard this email.
 
@@ -109,7 +109,7 @@ Many thanks,
 
 The $sitename web team
 
-$sitename Privacy Statement: ) . $self->get_base_url . qq(/info/about/privacy.html
+$sitename Privacy Statement: ) . $self->get_baseurl . qq(/info/about/legal/privacy.html
 );
   return $footer;
 }
