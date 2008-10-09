@@ -20,7 +20,7 @@ my %Message       :ATTR(:set<message>        :get<message>);
 my %MailServer    :ATTR(:set<mail_server>    :get<mail_server>);
 my %SpamThreshold :ATTR(:set<spam_threshold> :get<spam_threshold>);
 my %SiteName      :ATTR(:set<site_name>      :get<site_name>) ;
-my %BaseUrl       :ATTR(:set<base_url>       :get<base_url>) ;
+my %BaseUrl       :ATTR(:set<baseurl>        :get<baseurl>) ;
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
