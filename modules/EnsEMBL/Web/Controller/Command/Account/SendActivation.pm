@@ -30,7 +30,7 @@ sub process {
   } else {
     if ($user && $user->email) {
       my $mailer = EnsEMBL::Web::Mailer::User->new;
-      $mailer->email($user->email);
+      $mailer->set_to($user->email);
       $mailer->send_activation_email(
           user      => $user,
           lost      => $cgi->param('lost') || '',
