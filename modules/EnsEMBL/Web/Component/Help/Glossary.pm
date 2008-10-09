@@ -21,7 +21,7 @@ sub content {
   my $html = qq(<h2>Glossary</h2>);
 
   my @words;
-  if ($object->param('id')) {
+  if ($object && $object->param('id')) {
     my @ids = $object->param('id');
     foreach my $id (@ids) {
       push @words, EnsEMBL::Web::Data::Glossary->new($id);
