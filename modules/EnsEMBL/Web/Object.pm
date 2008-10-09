@@ -16,6 +16,7 @@ use Bio::EnsEMBL::VDrawableContainer;
 use CGI qw(escape);
 
 sub counts       { return {}; } 
+
 sub _availability { 
   my $self = shift;
   my $hash = {
@@ -24,7 +25,9 @@ sub _availability {
   $hash->{'database:compara'} = 1 if $self->species_defs->compara_like_databases;
   return $hash;
 }
+
 sub availability { return {}; }
+
 sub core_params {
   my $self = shift;
   my $params = [];

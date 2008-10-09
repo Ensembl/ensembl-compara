@@ -95,7 +95,9 @@ sub _get_valid_action {
   return $action."/".$func if $node && $node->get('type') =~ /view/;
   $node = $self->tree->get_node( $action )           unless $node;
   return $action if $node && $node->get('type') =~ /view/;
-  $self->{'object'}->problem( 'redirect', $self->{'object'}->_url({'action' => $self->default_action}) );
+  $self->{'object'}->problem( 'redirect',
+    $self->{'object'}->_url({'action' => $self->default_action})
+  );
   return $self->default_action;
 #  return $node;
 }
@@ -494,6 +496,7 @@ sub _content_panel {
 
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} );
   my $node          = $self->get_node( $action );
+  return unless $node;
   my $title = $node->data->{'concise'}||$node->data->{'caption'};
      $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
      $title = join ' - ', '', $title, ( $obj ? $obj->caption : () );
