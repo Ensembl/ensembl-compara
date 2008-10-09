@@ -10,6 +10,12 @@ use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
+sub _get_valid_action {
+  my $self = shift;
+  return $_[0] if $_[0] eq 'SetCookie';
+  return $self->SUPER::_get_valid_action( @_ );
+}
+
 sub set_default_action {
   my $self = shift;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
