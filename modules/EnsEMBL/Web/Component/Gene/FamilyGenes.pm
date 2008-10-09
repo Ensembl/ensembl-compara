@@ -23,7 +23,7 @@ sub content {
 
   if ($family_id) {
 
-    $html .= "<h4>Ensembl genes containing peptides in family $family_id</h4>\n";
+    $html .= "<h4>Ensembl genes containing proteins in family $family_id</h4>\n";
     my $families = $object->get_all_families;
     my $genes = $families->{$family_id}{'info'}{'genes'};
 
