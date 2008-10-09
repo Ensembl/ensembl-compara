@@ -28,14 +28,14 @@ sub content {
 
   # first determine correct SNP location 
   my %mappings = %{ $object->variation_feature_mapping };
-  my $location = $object->core_objects->{'parameters'}{'vl'};
+  my $location = $object->core_objects->{'parameters'}{'r'}; 
   my $v;
   if( keys %mappings == 1 ) {
     ($v) = values %mappings;
   } else {
-    foreach my $t (values %mappings) {
+    foreach my $t (values %mappings) { 
       ## Check vari feature matches the location we are intrested in
-      next unless $location eq "$t->{Chr}:$t->{start}";
+      next unless $location eq "$t->{Chr}:$t->{start}-$t->{end}";
       $v = $t;
       last;
     }
