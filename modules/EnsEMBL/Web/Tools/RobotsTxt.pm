@@ -5,8 +5,22 @@ sub create {
   ### time on server startup and gets placed in the first directory in the htdocs
   ### tree.
   ### Returns: none
-  my $root = $ENSEMBL_HTDOCS_DIRS[0];
+  my $root = $SiteDefs::ENSEMBL_HTDOCS_DIRS[0];
   my %allowed = map { ($_,1) } @{$SiteDefs::ENSEMBL_EXTERNAL_SEARCHABLE||[]};
+
+  my %ignore = qw(robots.txt 1 .cvsignore 1);
+  if( -e "$root/.cvsignore" ) {
+    open I, "$root/.cvsignore";
+    while(<I>) {
+      $ignore{$1}=1 if/(\S+)/;
+    }
+    close I;
+  }
+warn "CREATING CVSIGNORE $root";
+  open O, ">$root/.cvsignore";
+  print O join "\n", sort keys %ignore;
+  close O;
+
   if( open FH, ">$root/robots.txt" ) {
     print FH qq(
 User-agent: *

@@ -20,6 +20,11 @@ our $MAX_WIDTH  = 400;
 our $MAX_HEIGHT = 300;
 my @directory_listing = reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS;
 
+my $warnings = 0;
+if( $ARGV[0] eq '-v' ) {
+  shift @ARGV;
+  $warnings = 1;
+}
 @ARGV = qw(i img) unless @ARGV;
 while( my $dir = shift @ARGV) {
   $dir =~ s/\/+$//;
@@ -51,6 +56,19 @@ while( my $dir = shift @ARGV) {
     }
   }
   next unless $last && ( keys %images || keys %dirs );
+  my %ignore = qw(index.html 1 .cvsignore 1);
+  if( -e "$last/.cvsignore" ) {
+    open I, "$last/.cvsignore";
+    while(<I>) {
+      $ignore{$1}=1 if/(\S+)/; 
+    }
+    close I;
+  }
+  open O, ">$last/.cvsignore";
+  print O join "\n", sort keys %ignore;
+  close O;
+  warn "Created file $last/.cvsignore\n";
+  warn "Created file $last/index.html\n";
   open O, ">$last/index.html" || die "cant open dir to write";
   printf O '<html>
 <head>
