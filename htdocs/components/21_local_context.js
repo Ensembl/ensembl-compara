@@ -11,15 +11,22 @@
         dd_node.addClassName('notl');
         var flip = 0;
         var name = 'leaf';
+     
         if( dd_node.hasClassName( 'open' ) ) {
-          name = 'open';
-          flip = 1;
+          if( dd_node.select('dl').length > 0 ) {
+            name = 'open';
+            flip = 1;
+          } else {
+            dd_node.removeClassName('open');
+          }
         }
         if( dd_node.hasClassName( 'closed' ) ) {
+          if(  dd_node.select('dl').length > 0 ) {
+            dd_node.toggleClassName('_closed');
+            flip = 1;
+            name = 'closed';
+          }
           dd_node.toggleClassName('closed');
-          dd_node.toggleClassName('_closed');
-          name = 'closed';
-          flip = 1;
         }
         b_node = Builder.node( 'img', { src: '/i/'+name+'.gif', alt:'' } );
         dd_node.insertBefore( b_node, dd_node.firstChild );
