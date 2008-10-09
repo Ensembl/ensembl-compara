@@ -340,7 +340,7 @@ sub render {
     ## and then add in the fact that it is an XMLHttpRequest object to render the content only...
   }
   if( $self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
-    $self->{'input'}->param('x_requested_with') eq 'XMLHttpRequest'
+    $self->{'input'} && $self->{'input'}->param('x_requested_with') eq 'XMLHttpRequest'
   ) {
     $self->content->render; 
     return;
