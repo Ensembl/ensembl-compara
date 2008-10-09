@@ -114,12 +114,12 @@ sub _draw_karyotype {
 }
 
 sub _draw_key {
-  my $html = qq(<h3>Key to colours</h3>
+  my $html = qq#<h4>Key to colours (percentage identity)</h4>
 <table><tr>
-);
+#;
   ## Print out colours in percentage intervals of 20
   for( my $i=0; $i<@colours; $i++ ){
-    $html .=  sprintf( '<td style="width:10%%;background-color:%s">&nbsp;</td><td style="width:10%%">%d-%d%%</td>', 
+    $html .=  sprintf( '<td style="width:10%%;background-color:%s">&nbsp;</td><td style="width:10%%">%d-%d</td>', 
       $colours[$i], $i * 20, ($i+1) * 20 ); 
   }
 
