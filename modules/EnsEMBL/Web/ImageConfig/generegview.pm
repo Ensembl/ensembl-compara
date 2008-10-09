@@ -21,23 +21,15 @@ sub init {
   });
 
   $self->create_menus(
-    'transcript' => 'Genes',
-    'prediction' => 'Prediction transcripts',
-    'functional' => 'Functional genomics',
-    'other'      => 'Decorations',
+    'transcript'          => 'Genes',
+    'prediction'          => 'Prediction transcripts',
+    'functional'          => 'Functional genomics',
+    'other'               => 'Decorations',
   );
 
 
- $self->add_tracks( 'functional',
-   [ 'fg_regulatory_features',  '',     'fg_regulatory_features',    { 'display' => 'on', 'colourset' => 'fg_regulatory_features', 'strand' => 'r', 'name' => 'Reg. Features'  } ],
-   [ 'regulatory_search_regions',      '',     'regulatory_search_regions',        { 'display' => 'on', 'colourset' => 'regulatory_search_regions', 'strand' => 'r', 'name' => 'Reg. Regions'  } ],
-   [ 'regulatory_regions',      '',     'regulatory_regions',        { 'display' => 'on', 'colourset' => 'synteny', 'strand' => 'r', 'name' => 'Reg. Regions' , 'depth' => 1.5 } ],
-   [ 'ctcf',  '',            'ctcf',        { 'on' => 'on',  'colourset' => 'ctcf', 'strand' => 'r', 'name' => 'CTCF'  } ],
-   [ 'fg_regulatory_features_legend',  '',     'fg_regulatory_features_legend',    { 'display' => 'on', 'colourset' => 'fg_regulatory_features', 'strand' => 'r', 'name' => 'Reg. Features Legend'  } ],
- );
  
   $self->add_tracks( 'other',
-#    [ 'scalebar',  '',            'scalebar',        { 'on' => 'on',  'strand' => 'r', 'name' => 'Scale bar'  } ],
     [ 'ruler',     '',            'ruler',           { 'display' => 'on',  'strand' => 'r', 'name' => 'Ruler'      } ],
     [ 'draggable', '',            'draggable',       { 'display' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
   );
@@ -49,6 +41,10 @@ sub init {
     $child->set( 'display' => 'off' );
   }
 
+  $self->modify_configs(
+    [qw(regulation_feature)],
+    {qw(display on)}
+  );
 }
 1;
 
