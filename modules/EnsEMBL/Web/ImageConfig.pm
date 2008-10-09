@@ -931,13 +931,12 @@ sub add_tracks {
 # Functions to add tracks from functional genomics like database....
 #----------------------------------------------------------------------#
 
-sub add_regulation_feature {
+sub add_regulation_feature { ## needs configuring so tracks only display if data in species fg_database
   my( $self, $key, $hashref ) = @_;
-=pod
-  return unless $self->get_node( 'regulation_feature' );
+  return unless $self->get_node( 'functional' );
   my ( $keys, $data) = $self->_merge( $hashref->{'result_set'}); foreach ( keys %$data) {warn $_;}
   return  unless $hashref->{'result_set'}{'rows'} > 0;
-  my $menu = $self->get_node( 'regulation_feature' );
+  my $menu = $self->get_node( 'functional' );
   $menu->append( $self->create_track('fg_regulatory_features_'.$key, sprintf("Reg. Features"),{
     'db'          => $key,
     'glyphset'    => 'fg_regulatory_features',
@@ -992,8 +991,7 @@ sub add_regulation_feature {
 #    'display'     => 'off'
   }));
 
-  $self->add_track('regulation_feature', 'fg_regulatory_features_legend', 'Regulatory Features Legend', 'fg_regulatory_features_legend', {'strand' => 'r'});
-=cut
+  $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', {'strand' => 'r'});
 return;
 }
 
