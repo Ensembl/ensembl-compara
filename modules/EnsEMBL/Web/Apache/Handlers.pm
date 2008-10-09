@@ -586,63 +586,6 @@ sub childExitHandler {
   }
 }
 
-#======================================================================#
-# BLAST Support functionality.                                         #
-#======================================================================#
-
-sub _run_blast_no_ticket {
-  my( $loads, $seconds_since_last_run ) = @_;
-  return $loads->{'blast'} < 3 &&
-         rand( $loads->{'httpd'} ) < 10 &&
-         rand( $seconds_since_last_run ) > 1;
-}
-
-sub _run_blast_ticket {
-  my( $loads, $seconds_since_last_run ) = @_;
-  return $loads->{'blast'} < 8;
-}
-
-sub  _load_command_null {
-  return 1;
-}
-sub _load_command_alpha {
-  my $command = shift;
-  my $VAL = `ps -A | grep $command | wc -l`;
-  return $VAL-1;
-}
-sub _load_command_linux {
-  my $command = shift;
-  my $VAL = `ps --no-heading -C $command  | wc -l`;
-  return $VAL+0;
-}
-
-sub _get_loads {
-  return { 'blast' => &$LOAD_COMMAND( 'blast' ),
-           'httpd' => &$LOAD_COMMAND( 'httpd' ) };
-}
-
-sub queue_pending_blast_jobs {
-
-  my $queue_class = "EnsEMBL::Web::Queue::LSF";
-
-  my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
-#  my $DB = $species_defs->databases->{'ENSEMBL_BLAST'}; 
-
-  my $DB = { 'NAME' => 'ensembl_blast',
-             'USER' => 'ensadmin',
-             'PASS' => 'ensembl',
-             'HOST' => 'ensarc-1-08',
-             'PORT' => '3306' }; 
-
-  my $blast_adaptor = EnsEMBL::Web::DBSQL::BlastAdaptor->new($DB);
-  warn "Blast adaptor: " . $blast_adaptor;
-  warn "Species def databases: " . $species_defs->databases->{'ENSEMBL_BLAST'};
-  my $job_master = EnsEMBL::Web::Object::BlastJobMaster->new($blast_adaptor, $queue_class);
-  $job_master->queue_pending_jobs;
-  $job_master->process_completed_jobs;
-
-}
-
 sub cleanupHandler_blast {
   my $r = shift;
 # warn "BLAST CLEANUP HANDLER... $$";
@@ -710,5 +653,62 @@ warn "BLAST: $COMMAND";
       closedir(DH);
     }
   }
+}
+
+#======================================================================#
+# BLAST Support functionality - TODO: update before implementing!      #
+#======================================================================#
+
+sub _run_blast_no_ticket {
+  my( $loads, $seconds_since_last_run ) = @_;
+  return $loads->{'blast'} < 3 &&
+         rand( $loads->{'httpd'} ) < 10 &&
+         rand( $seconds_since_last_run ) > 1;
+}
+
+sub _run_blast_ticket {
+  my( $loads, $seconds_since_last_run ) = @_;
+  return $loads->{'blast'} < 8;
+}
+
+sub  _load_command_null {
+  return 1;
+}
+sub _load_command_alpha {
+  my $command = shift;
+  my $VAL = `ps -A | grep $command | wc -l`;
+  return $VAL-1;
+}
+sub _load_command_linux {
+  my $command = shift;
+  my $VAL = `ps --no-heading -C $command  | wc -l`;
+  return $VAL+0;
+}
+
+sub _get_loads {
+  return { 'blast' => &$LOAD_COMMAND( 'blast' ),
+           'httpd' => &$LOAD_COMMAND( 'httpd' ) };
+}
+
+sub queue_pending_blast_jobs {
+
+  my $queue_class = "EnsEMBL::Web::Queue::LSF";
+
+  my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+#  my $DB = $species_defs->databases->{'ENSEMBL_BLAST'}; 
+
+  my $DB = { 'NAME' => 'ensembl_blast',
+             'USER' => 'ensadmin',
+             'PASS' => 'ensembl',
+             'HOST' => 'ensarc-1-08',
+             'PORT' => '3306' }; 
+
+  my $blast_adaptor = EnsEMBL::Web::DBSQL::BlastAdaptor->new($DB);
+  warn "Blast adaptor: " . $blast_adaptor;
+  warn "Species def databases: " . $species_defs->databases->{'ENSEMBL_BLAST'};
+  my $job_master = EnsEMBL::Web::Object::BlastJobMaster->new($blast_adaptor, $queue_class);
+  $job_master->queue_pending_jobs;
+  $job_master->process_completed_jobs;
+
 }
 
