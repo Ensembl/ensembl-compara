@@ -67,6 +67,16 @@ sub colour_key {
 }
 
 sub href {
+  my ($self, $f)  = @_;
+  my $vid = $f->variation_name;
+  my $source = $f->source;  
+
+  return $self->_url({'type'=>'Variation','action'=>'Summary','v'=>$vid, 'source'=>$source});
+}
+
+
+=pod
+sub href {
   my $self = shift;
   my $f    = shift;
   my $view = shift || 'snpview';
@@ -101,6 +111,7 @@ sub href {
 
   return $self->_url( );
 }
+=cut
 
 sub title {
 
