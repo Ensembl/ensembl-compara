@@ -805,7 +805,7 @@ sub add_alignments {
     } else {
       my $n_species = grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}};
       if( $row->{'conservation_score'} ) {
-        $alignments->{'multiple_align'}{ $row->{'id'}.'_constrained' } = {
+        $alignments->{'multiple_align'}{ $row->{'id'}.'_scores' } = {
           'db' => $key,
           'glyphset'       => '_alignment_multiple',
           'name'           => "Conservation score for ".$row->{'name'},
@@ -815,14 +815,31 @@ sub add_alignments {
           'species_set_id' => $row->{'species_set_id'},
           'method_link_species_set_id' => $row->{'id'},
           'class'          => $row->{'class'},
-          'constrained_element' => $row->{'constrained_element'},
           'conservation_score'  => $row->{'conservation_score'},
           'description'    => "Multiple alignments",
           'colourset'      => 'multiple',
-          'order'          => sprintf( '%12d::%s::%s',1e12-$n_species, $row->{'type'}, $row->{'name'} ),
+          'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10, $row->{'type'}, $row->{'name'} ),
           'strand'         => 'f',
           'display'        => 'off', ## Default to on at the moment - change to off by default!
-          'renderers'      => ['off'=>'Off','compact'=>'Regions only','signal_map'=>'Scores only','signal_feature'=>'Regions and scores']
+          'renderers'      => ['off'=>'Off','signal_map'=>'Signal map']
+        };
+        $alignments->{'multiple_align'}{ $row->{'id'}.'_constrained' } = {
+          'db' => $key,
+          'glyphset'       => '_alignment_multiple',
+          'name'           => "Constrained elements for ".$row->{'name'},
+          'short_name'     => $row->{'name'},
+          'caption'        => "Constrained el. $n_species way",
+          'type'           => $row->{'type'},
+          'species_set_id' => $row->{'species_set_id'},
+          'method_link_species_set_id' => $row->{'id'},
+          'class'          => $row->{'class'},
+          'constrained_element' => $row->{'constrained_element'},
+          'description'    => "Multiple alignments",
+          'colourset'      => 'multiple',
+          'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10+1, $row->{'type'}, $row->{'name'} ),
+          'strand'         => 'f',
+          'display'        => 'off', ## Default to on at the moment - change to off by default!
+          'renderers'      => [qw(off Off compact Normal)]
         };
       }
       $alignments->{'multiple_align'}{ $row->{'id'} } = {
@@ -837,7 +854,7 @@ sub add_alignments {
         'class'          => $row->{'class'},
         'description'    => "Multiple alignments",
         'colourset'      => 'multiple',
-        'order'          => sprintf( '%12d::%s::%s',1e12-$n_species-1, $row->{'type'}, $row->{'name'} ),
+        'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10-1, $row->{'type'}, $row->{'name'} ),
         'strand'         => 'f',
         'display'        => 'off', ## Default to on at the moment - change to off by default!
         'renderers'      => [qw(off Off compact Normal)],
