@@ -29,7 +29,13 @@ sub new {
   my $class = shift; 
   my $data  = shift;
 
-  if ($data && !ref($data)) {
+## Sometimes data comes throuh as a empty string..
+## convert this back to undef other wise 
+## _live_object_key fails as can't work with an
+## empty string - requires "undef"
+
+  $data = undef if $data eq '';
+  if( $data && !ref($data) ) {
     if ($class->__type) {
       my $key = $class->get_primary_key;
       return $class->retrieve(
@@ -40,10 +46,10 @@ sub new {
       return $class->retrieve($data);
     }
   } else {
-  	$class->normalize_column_values($data) if ref $data;
-  	$class->validate_column_values($data)  if ref $data;
-  	my $key   = $class->_live_object_key($data);
-	  return $class->_fresh_init($key => $data);  	
+    $class->normalize_column_values($data) if ref $data;
+    $class->validate_column_values($data)  if ref $data;
+    my $key   = $class->_live_object_key($data);
+    return $class->_fresh_init($key => $data);  	
   }
 }
 
