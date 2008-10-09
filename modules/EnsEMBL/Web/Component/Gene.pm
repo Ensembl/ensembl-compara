@@ -966,7 +966,7 @@ sub orthologues {
         orthologues:
       </p>
       <p>(N.B. If you don't find a homologue here, it may be a 'between-species paralogue'.
-Please view the <a href="/#.$gene->species.'/genetreeview?gene='.$gene->stable_id.qq#">gene tree info</a> or export between-species
+Please view the <a href="/#.$gene->species.'/Gene/Compara_Tree?gene='.$gene->stable_id.qq#">gene tree info</a> or export between-species
 paralogues with BioMart to see more.)</p>
       <table width="100%" cellpadding="4">
         <tr>
@@ -1008,7 +1008,8 @@ paralogues with BioMart to see more.)</p>
         my ($last_col, $EXTRA2);
         if(exists( $OBJ->{'display_id'} )) {
           (my $spp = $OBJ->{'spp'}) =~ tr/ /_/ ;
-          my $EXTRA = qq(<span class="small">[<a href="$multicv_link;s1=$spp;g1=$stable_id">MultiContigView</a>]</span>);
+          my $EXTRA;
+          # = qq(<span class="small">[<a href="$multicv_link;s1=$spp;g1=$stable_id">MultiContigView</a>]</span>);
           if( $orthologue_desc ne 'DWGA' ) {
             $EXTRA .= qq(&nbsp;<span class="small">[<a href="/@{[$gene->species]}/alignview?class=Homology;gene=$STABLE_ID;g1=$stable_id">Align</a>]</span> );
             $EXTRA2 = qq(<br /><span class="small">[Target &#37id: $OBJ->{'target_perc_id'}; Query &#37id: $OBJ->{'query_perc_id'}]</span>);
