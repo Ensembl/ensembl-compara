@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Controller::Command::Account::EnterPassword;
+package EnsEMBL::Web::Controller::Command::Account::Password;
 
 use strict;
 use warnings;
