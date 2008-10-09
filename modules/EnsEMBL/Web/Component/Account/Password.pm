@@ -26,6 +26,13 @@ sub content {
 
   my $form = EnsEMBL::Web::Form->new( 'enter_password', "/Account/SavePassword", 'post' );
 
+  if ($object->param('code')) {
+    $form->add_element('type'=>'SubHeader', 'value'=>'Activate your account');
+  }
+  else {
+    $form->add_element('type'=>'SubHeader', 'value'=>'Change your password');
+  }
+
   $form->add_element('type' => 'Information',
     'value' => 'Passwords should be at least 6 characters long and include both letters and numbers.');
 
@@ -57,9 +64,7 @@ sub content {
   $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => $self->object->param('_referer'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Save', 'class' => 'cp-internal');
 
-  my $html = $form->render;
-  warn $html;
-  return $html;
+  return $form->render;
 }
 
 1;
