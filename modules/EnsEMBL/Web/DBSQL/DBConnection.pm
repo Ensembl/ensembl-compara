@@ -385,7 +385,7 @@ sub _get_go_database{
 
 sub _get_blast_database{
   my $self = shift;
-  my $db_info = $self->{'species_defs'}->multidb->{ENSEMBL_BLAST} ||
+  my $db_info = $self->{'species_defs'}->multidb->{DATABASE_BLAST} ||
      die( "No blast database in MULTI" );
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::External::BlastAdaptor' );
 }
