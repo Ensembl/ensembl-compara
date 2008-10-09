@@ -3,13 +3,12 @@ package EnsEMBL::Web::Document::Wizard;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::Wizard;
 use Apache2::Const qw(REDIRECT);
 use CGI qw(escape escapeHTML);
 use Data::Dumper;
 
-our @ISA = qw(EnsEMBL::Web::Document::WebPage);
+use base qw(EnsEMBL::Web::Document::WebPage);
 
 {
 
