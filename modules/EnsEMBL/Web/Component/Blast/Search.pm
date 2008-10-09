@@ -21,7 +21,7 @@ sub content {
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $html; 
 
-  my $form = EnsEMBL::Web::Form->new( 'blastsearch', "/Blast/Submit", 'get' );
+  my $form = EnsEMBL::Web::Form->new( 'blastsearch', "/Blast/Submit", 'get', 'std narrow-labels check' );
 
   my @values;
   my @species = $object->species_defs->valid_species;
@@ -42,14 +42,10 @@ sub content {
   );
 
   $form->add_element(
-    'type'    => 'SubHeader',
-    'value'   => 'Sequences, in FASTA or plain text:',
-  );
-
-  $form->add_element(
     'type'    => 'Text',
     'name'    => '_query_sequence',
-    'label'   => 'Paste (max 30)',
+    'label'   => 'Sequences, in FASTA or plain text',
+    'notes'   => '(max 30 sequences)',
   );
 
   $form->add_element(
