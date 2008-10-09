@@ -148,6 +148,7 @@ sub AUTOLOAD {
   ### a
   my $self = shift;
   my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
+  $species = $ENSEMBL_PRIMARY_SPECIES if $species eq 'Multi';
   my $var = our $AUTOLOAD;
   $var =~ s/.*:://;
   return $self->get_config( $species, $var );
