@@ -44,7 +44,7 @@ sub content {
   }
   $form->add_element('type'  => 'Hidden', 'name'  => 'id', 'value' => $self->object->param('id'));
   $form->add_element('type'  => 'Hidden', 'name'  => 'type', 'value' => $self->object->param('type'));
-  $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => CGI::escape($self->object->param('_referer')));
+  $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => $self->object->param('_referer'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Share', 'class' => 'cp-internal');
 
   return $form->render;

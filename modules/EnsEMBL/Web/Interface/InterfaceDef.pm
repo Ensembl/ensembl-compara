@@ -9,7 +9,6 @@ use warnings;
 
 use EnsEMBL::Web::Data;
 use EnsEMBL::Web::Interface::ElementDef;
-use CGI qw(escape);
 
 {
 
@@ -616,7 +615,7 @@ sub edit_fields {
 
   ## Force passing of _referer parameter
   if ($object->param('_referer')) {
-    push @$parameters, {'type'=>'Hidden', 'name'=>'_referer', 'value'=> CGI::escape($object->param('_referer'))};
+    push @$parameters, {'type'=>'Hidden', 'name'=>'_referer', 'value'=> $object->param('_referer')};
   }
 
   return $parameters;

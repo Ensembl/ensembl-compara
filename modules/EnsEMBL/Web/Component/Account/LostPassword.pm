@@ -28,7 +28,7 @@ sub content {
                     'value' => qq(<p>If you have lost your password or activation email, enter your email address and we will send you a new activation code.</p>));
   $form->add_element('type'  => 'String', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Hidden', 'name'  => 'lost', 'value' => 'yes');
-  $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => CGI::escape($self->object->param('_referer')));
+  $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => $self->object->param('_referer'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Send', 'class'=>'cp-internal');
 
   return $form->render;
