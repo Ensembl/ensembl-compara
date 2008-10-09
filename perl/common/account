@@ -16,6 +16,7 @@ $controller->add_connections({qw(
   Login              EnsEMBL::Web::Controller::Command::Account::LogIn
   SetCookie          EnsEMBL::Web::Controller::Command::Account::SetCookie
   Logout             EnsEMBL::Web::Controller::Command::Account::LogOut
+  Message            EnsEMBL::Web::Controller::Command::Account::Message
 )});
 
 ## Accountview
@@ -33,10 +34,10 @@ $controller->add_connections({qw(
   Register           EnsEMBL::Web::Controller::Command::Account::Register
   SendActivation     EnsEMBL::Web::Controller::Command::Account::SendActivation 
   EmailSent          EnsEMBL::Web::Controller::Command::Account::EmailSent 
-  Activate           EnsEMBL::Web::Controller::Command::Account::EnterPassword 
+  Activate           EnsEMBL::Web::Controller::Command::Account::Password 
   Details            EnsEMBL::Web::Controller::Command::Account::Details 
   LostPassword       EnsEMBL::Web::Controller::Command::Account::LostPassword 
-  Password           EnsEMBL::Web::Controller::Command::Account::EnterPassword 
+  Password           EnsEMBL::Web::Controller::Command::Account::Password 
   SavePassword       EnsEMBL::Web::Controller::Command::Account::SavePassword 
   Update             EnsEMBL::Web::Controller::Command::Account::Update 
   UpdateFailed       EnsEMBL::Web::Controller::Command::Account::UpdateFailed 
