@@ -354,6 +354,20 @@ sub get_all_families {
   return $families;
 }
 
+sub create_family {
+  my ($self, $id) = @_;
+  my $databases = $self->database('compara') ;
+  my $family_adaptor;
+  eval{ $family_adaptor = $databases->get_FamilyAdaptor };
+  if ($@){ warn($@); return {} }
+  return $family_adaptor->fetch_by_stable_id($id);
+}
+
+sub member_by_source {
+  my ($self, $family, $source) = @_;
+  return $family->get_Member_Attribute_by_source($source) || [];
+}
+
 sub chromosome {
   my $self = shift;
   return undef if lc($self->coord_system) ne 'chromosome';
