@@ -120,6 +120,7 @@ if($species) {
     if( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i       ||
         $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i ) {
       my( $seq_region_name, $start, $end ) = ( $1, $2, $4 );
+      $seq_region_name =~ s/chr//;
       $start = $webpage->evaluate_bp( $start );
       $end   = $webpage->evaluate_bp( $end   );
       ($end,$start)=($start,$end) if $end < $start;
