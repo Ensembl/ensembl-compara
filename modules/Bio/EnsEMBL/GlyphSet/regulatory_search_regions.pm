@@ -31,22 +31,22 @@ sub features {
     if ($species eq 'Drosophila_melanogaster' ){return;} 
    my $external_Feature_adaptor = $fg_db->get_ExternalFeatureAdaptor;
   my $gene = $self->{'config'}->{'_draw_single_Gene'};
-  warn ">>> $gene <<<";
+ # warn ">>> $gene <<<";
   if( $gene ) {
     my $data =  $feature_set->get_Features_by_Slice($slice);
     return $data;
   } else 
  { 
    foreach my $search_region_feature(@{$feature_set->get_Features_by_Slice($slice)}){
-     warn "Found ".$search_region_feature->feature_type->class."\n";
+    # warn "Found ".$search_region_feature->feature_type->class."\n";
    }
       return $feature_set->get_Features_by_Slice($slice);
   }
 }
 
 sub href {
-    my ($self, $f ) = @_;
-    return undef;
+  my ($self, $f) = @_;
+  return $self->_url($self->zmenu($f));
 }
 
 sub zmenu {
@@ -58,19 +58,22 @@ sub zmenu {
     my ($start,$end) = $self->slice2sr( $f->start, $f->end );
     my $analysis = $f->analysis->logic_name;
     if ($analysis =~/cisRED/){$analysis = "cisred_search";}
+    my $location = $seq_region.":".$start."-".$end;
+     
+   
     my $return = {
-        'caption'                    => 'regulatory_search_regions',
-        "01:bp: $start-$end"         => "contigview?c=$seq_region:$start;w=1000",
+        caption   => "regulatory_search_regions",
+        "100:Location:"    =>  $location,    
 		 };
 
     my ($id, $type);
     my $db_ent = $f->get_all_DBEntries;
     foreach my $dbe (@{$db_ent}){
       $id = $dbe->primary_id;
-      my $dbname = $dbe->dbname;
-      if ($dbname =~/gene/) {$type = "gene";}
-      elsif ($dbname =~/transcript/){$type = "transcript";}
-      elsif ($dbname =~/translation/){$type = "peptide"; } 
+      my $dbname = $dbe->dbname; 
+      if ($dbname =~/gene/i) {$type = "gene";}
+      elsif ($dbname =~/transcript/i){$type = "transcript";}
+      elsif ($dbname =~/translation/i){$type = "peptide"; } 
     }
       
      if ( $type =~/^\w*/){
@@ -90,9 +93,10 @@ sub zmenu {
       if ($species=~/Homo_sapiens/){ $cis_link = "http://www.cisred.org/human9/gene_view?ensembl_id=";}
       elsif ( $species =~/Mus_musculus/) { $cis_link = "http://www.cisred.org/mouse4/gene_view?ensembl_id=";}
      my $cisred = $analysis =~/cisred/i ? "$cis_link" . "$id" : "";
-	$return->{"02:Analysis: $analysis"} = "$cisred";
+      $return->{"90:Analysis:"} = 'cisred_search';
       }
-      $return->{"04:Associated $type: $id"} = "$link?$type=$id";
+      
+      $return->{"80:Associated $type:"} = $id;
     }
     return $return;
 }
