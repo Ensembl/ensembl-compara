@@ -419,6 +419,13 @@ sub _local_tools {
                                 'name'     => $self->{'page'}->title->get,
                                 'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'} })
     );
+  } else {
+    $self->{'page'}->local_tools->add_entry(
+      'caption' => 'Bookmark this page',
+      'class'   => 'disabled',
+      'url'     => undef,
+      'title'   => 'You must be logged in to bookmark pages'
+    );
   }
   my $vc  = $obj->get_viewconfig;
   my $config = {};
@@ -428,6 +435,7 @@ sub _local_tools {
     my %configs = $vc->image_configs();
     ($config) = sort keys %configs;
   }
+  my $disabled_upload = 1;
   if( $config ) {
     my $action = $obj->type.'/'.$obj->action;
        $action .= '/'.$obj->function if $obj->function;
@@ -444,7 +452,23 @@ sub _local_tools {
         'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => 'Summary',
                                  '_referer' => $ENV{'REQUEST_URI'}, '__clear' => 1 })
       );
+      $disabled_upload = 0;
     }
+  } else {
+    $self->{'page'}->local_tools->add_entry(
+      'caption' => 'Configure this page',
+      'class'   => 'disabled',
+      'url'     => undef,
+      'title'   => 'There are no options for this page'
+    );
+  }
+  if( $disabled_upload ) {
+    $self->{'page'}->local_tools->add_entry(
+      'caption' => 'Add custom data to page',
+      'class'   => 'disabled',
+      'url'     => undef,
+      'title'   => 'You cannot add custom data to thie page'
+    );
   }
 
   if( 0 ) {
