@@ -15,6 +15,7 @@ sub availability {
   my $hash = $self->_availability;
   my %chrs = map { $_,1 } @{$self->species_defs->ENSEMBL_CHROMOSOMES || []};
   $hash->{'chromosome'} = $chrs{ $self->Obj->{'seq_region_name'} } ? 1 : 0;
+  $hash->{'has_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} ? 1 : 0;
   return $hash;
 }
 
@@ -51,6 +52,11 @@ sub counts {
       'synteny'      => scalar( keys %{ $synteny_hash{$species}||{} } ),
       'align_slice'  => $c_align,
       'align_contig' => scalar( keys %c_species )
+    };
+    if( $self->species_defs->databases->{'DATABASE_VARIATION'} ) {
+      my $reseq = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'};
+                  
+      $counts->{'reseq_strains'} = $reseq;
     }
   }
   return $counts;
