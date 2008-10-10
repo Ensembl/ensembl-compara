@@ -84,7 +84,10 @@ sub populate_tree {
     )],
     { 'availability' => 'chromosome', 'concise' => 'Synteny'}
   ));
-
+  ($self->create_node( 'Variation_alignment',  'Resequencing alignment',
+    [qw(var_align       EnsEMBL::Web::Component::Gene::UnderConstruction)],
+    { 'availability' => 'database:variation' }
+  ));
 }
 
 
