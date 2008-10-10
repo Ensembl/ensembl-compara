@@ -21,8 +21,8 @@ sub ALIGNMENT_FORMATS {
 sub TREE_FORMATS {
   return (
     'text'      => { 'caption' => 'Text dump', 'method' => 'string_tree',   'parameters' => [ 'scale'       ] },
-    'newick'    => { 'caption' => 'Newick format',    'method' => 'newick_format', 'parameters' => [ 'newick_mode' ], 'split' => ',', 'link' => 'http://en.wikipedia.org/wiki/Newick_format' },
-    'nhx'       => { 'caption' => 'New Hampshire eXtended format (NHX)',       'method' => 'nhx_format',    'parameters' => [ 'nhx_mode'    ], 'split' => ',', 'link' => 'http://www.phylosoft.org/forester/NHX.html' }
+    'newick'    => { 'caption' => 'Newick',    'method' => 'newick_format', 'parameters' => [ 'newick_mode' ], 'split' => ',', 'link' => 'http://en.wikipedia.org/wiki/Newick_format' },
+    'nhx'       => { 'caption' => 'New Hampshire eXtended (NHX)',       'method' => 'nhx_format',    'parameters' => [ 'nhx_mode'    ], 'split' => ',', 'link' => 'http://www.phylosoft.org/forester/NHX.html' }
   );
 }
 
