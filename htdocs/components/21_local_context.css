@@ -7,3 +7,5 @@
 #local dd.active, #local a.active { font-weight: bold; background-color: [[TINT_BG]] }
 #local dd.active dl { background-color: [[PANEL_BG]] }
 #local dd.active dd { font-weight: normal }
+
+#local-tools li.disabled { color:[[PAGE_TEXT]] }
