@@ -341,7 +341,10 @@ sub invalidate_cache {
   
   my @tags = (@_, $self->table);
 
-  $cache->delete_by_tags(@tags);
+  my $items = $cache->delete_by_tags(@tags);
+  ## TODO: Kill this warn:
+  warn ' - - - - -  Delete by tags '. Data::Dumper::Dumper(\@tags);
+  warn $items. ' items deleted';
 }
 
 sub propagate_cache_tags {
@@ -354,7 +357,10 @@ sub propagate_cache_tags {
     foreach my $tag (@tags) {
       $ENV{CACHE_TAGS}->{$tag} = 1;
     }
-  }  
+  }
+  
+  ## TODO: Kill this warn:
+  warn ' + + + + +  Propagate tags for '. $ENV{CACHE_KEY} ." \n ".Data::Dumper::Dumper($ENV{CACHE_TAGS});
 }
 
 ###################################################################################################
