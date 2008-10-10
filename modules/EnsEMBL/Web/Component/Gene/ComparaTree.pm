@@ -25,7 +25,7 @@ sub _get_details {
   my $member = $object->get_compara_Member;
   return (undef, $self->_error(
     'No compara member',
-    q(<p>Unable to render gene tree as gene isn't in Comparative genomics database</p>)
+    q(<p>Unable to render gene tree as gene is not in the Comparative genomics database</p>)
   )) unless $member;
 
   my $tree   = $object->get_ProteinTree;
@@ -188,18 +188,27 @@ sub content_align {
   #----------
   # Return the text representation of the tree
   my $htmlt = qq(
-<p>Multiple sequence alignment in FASTA format:</p>
-<p>The species included in the tree can be configured using the
-'configure tree' link in the left panel.<p>
+<p>Multiple sequence alignment in "<i>%s</i>" format:</p>
+<p>The sequence alignment format can be configured using the
+'configure page' link in the left panel.<p>
 <pre>%s</pre>);
-  my $align_format = $object->param( 'text_format' ) || 'fasta'; # user configurable format
+
+  #----------
+  # Determine the format
+  my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS();
+  my $mode = $object->param('text_format');
+     $mode = 'fasta' unless $formats{$mode};
+  my $fmt_caption = $formats{$mode} || $mode;
+
+  my $align_format = $mode;
+
   my $formatted; # Variable to hold the formatted alignment string
   my $SH = IO::Scalar->new(\$formatted);
   #print $SH "FOO\n";
   my $aio = Bio::AlignIO->new( -format => $align_format, -fh => $SH );
   $aio->write_aln( $tree->get_SimpleAlign );
 
-  return sprintf( $htmlt, $formatted );
+  return sprintf( $htmlt, $fmt_caption, $formatted );
 }
 
 sub content_text {
@@ -212,27 +221,31 @@ sub content_text {
   return $tree if !defined $member;
 
   #----------
-  # Return the text representation of the tree
+  # Template for the section HTML
   my $htmlt = qq(
-<p>The following is a representation of the tree in
-<a href=http://en.wikipedia.org/wiki/Newick_format>newick</a> format</p>
-<p>The species included in the tree can be configured using the
-'configure tree' link in the left panel.<p>
+<p>The following is a representation of the tree in "<i>%s</i>" format</p>
+<p>The tree representation can be configured using the
+'configure page' link in the left panel.<p>
 <pre>%s</pre>);
 
-  my %formats = EnsEMBL::Web::Constants::TREE_FORMATS();
 
+  #----------
+  # Return the text representation of the tree
+  my %formats = EnsEMBL::Web::Constants::TREE_FORMATS();
   my $mode = $object->param('tree_format');
      $mode = 'newick' unless $formats{$mode};
   my $fn   = $formats{$mode}{'method'};
+  my $fmt_caption = $formats{$mode}{caption} || $mode;
 
-  my @params = map { $object->param( $_ ) } @{ $formats{$mode}{'parameters'} || [] };
+  my @params = ( map { $object->param( $_ ) } 
+                 @{ $formats{$mode}{'parameters'} || [] } );
   my $string = $tree->$fn(@params);
   if( $formats{$mode}{'split'} ) {
     my $reg = '(['.quotemeta($formats{$mode}{'split'}).'])';
     $string =~ s/$reg/\1\n/g;
   }
-  return sprintf( $htmlt, $string );
+
+  return sprintf( $htmlt, $fmt_caption, $string );
 }
 
 1;
