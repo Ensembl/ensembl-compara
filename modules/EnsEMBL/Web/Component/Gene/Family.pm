@@ -17,14 +17,13 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $families = $object->get_all_families;
-  my $genename = $object->core_objects->gene_long_caption;
 
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
 
   $table->add_columns(
       { 'key' => 'id',          'title' => 'Family ID',                             'width' => '20%', 'align' => 'left' },
       { 'key' => 'annot',       'title' => 'Consensus annotation',                  'width' => '30%', 'align' => 'left' },
-      { 'key' => 'transcripts', 'title' => $genename.' transcripts in this family',  'width' => '30%', 'align' => 'left' },
+      { 'key' => 'transcripts', 'title' => $object->gene_name.' transcripts in this family',  'width' => '30%', 'align' => 'left' },
       { 'key' => 'jalview', 'title' => 'Multiple alignments',  'width' => '20%', 'align' => 'left' },
   );
 
@@ -35,7 +34,7 @@ sub content {
     $row->{'id'}  = $family_id;
     my $genes = $families->{$family_id}{'info'}{'genes'};
     if (scalar(@$genes) > 1) {
-      $row->{'id'} .= sprintf(qq#<br />(<a href="/%s/Gene/Family?%s;family=%s" title="Show locations of these genes">%s genes</a>)#, 
+      $row->{'id'} .= sprintf(qq#<br />(<a href="/%s/Gene/Family/Genes?%s;family=%s" title="Show locations of these genes">%s genes</a>)#, 
                     $object->species, join(';', @{$object->core_params}),
                     $family_id, scalar(@$genes)
                     );
