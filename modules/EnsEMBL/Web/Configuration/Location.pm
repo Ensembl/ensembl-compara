@@ -70,9 +70,9 @@ sub populate_tree {
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'database:compara', 'concise' => 'Multi-species comparison' }
   ));
-  $align_menu->append( $self->create_node( 'AlignSequence', "Resequencing ([[counts::align_seq]] individuals)",
+  $align_menu->append( $self->create_node( 'AlignSequence', "Resequencing ([[counts::reseq_strains]] individuals)",
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
-    { 'availability' => 'database:compara', 'concise' => 'Resequencing Alignments' }
+    { 'availability' => 'has_strains', 'concise' => 'Resequencing Alignments' }
   ));
   $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
     [qw(
