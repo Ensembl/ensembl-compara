@@ -272,11 +272,16 @@ sub get_Slice {
   return $slice->expand( $context, $context );
 }
 
+sub gene_name {
+  my $self = shift;
+  my( $disp_id ) = $self->display_xref || $self->stable_id;
+  return $disp_id;
+}
+
 sub short_caption {
   my $self = shift;
   return 'Gene-based displays';
-  my( $disp_id ) = $self->display_xref;
-  return $self->type_name.': '.($disp_id||$self->stable_id);
+  return $self->type_name.': '.$self->gene_name;
 }
 
 sub caption           {
