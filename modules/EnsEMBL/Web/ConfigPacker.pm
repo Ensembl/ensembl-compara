@@ -38,6 +38,7 @@ sub _munge_config_tree {
 #---------- munge the results obtained from the database queries
 #           of the website and the meta tables
   $self->_munge_meta(       );
+  $self->_munge_variation(  );
   $self->_munge_website(    );
 
 #---------- parse the BLAST configuration
@@ -77,7 +78,7 @@ sub _summarise_generic {
     );
     my $hash = {};
     foreach my $r( @$t_aref) {
-      push @{ $hash->{$r->[3]}{$r->[0]}}, $r->[1];
+      push @{ $hash->{$r->[3]+0}{$r->[0]}}, $r->[1];
     }
     $self->db_details($db_name)->{'meta_info'} = $hash;
   }
@@ -513,9 +514,17 @@ sub _summarise_dasregistry {
 sub _meta_info {
   my( $self, $db, $key, $species_id ) = @_;
   $species_id ||= 1;
-  return $self->db_details($db)->{'meta_info'}{$species_id}{$key} ||
-         $self->db_details($db)->{'meta_info'}{0          }{$key} ||
-	 [];
+  return [] unless $self->db_details($db) &&
+                   exists( $self->db_details($db)->{'meta_info'} );
+  if( exists( $self->db_details($db)->{'meta_info'}{$species_id} ) &&
+      exists( $self->db_details($db)->{'meta_info'}{$species_id}{$key} ) ) {
+    return $self->db_details($db)->{'meta_info'}{$species_id}{$key};
+  }
+  if( exists( $self->db_details($db)->{'meta_info'}{0} ) &&
+      exists( $self->db_details($db)->{'meta_info'}{0}{$key} ) ) {
+    return $self->db_details($db)->{'meta_info'}{0}{$key};
+  }
+  return [];
 }
 
 sub _munge_meta {
@@ -563,6 +572,18 @@ sub _munge_meta {
     }
     last if $self->tree->{'SPECIES_GROUP'};
   }
+}
+
+sub _munge_variation {
+  my $self = shift;
+  return unless $self->db_details('DATABASE_VARIATION');
+  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'}  = $self->_meta_info('DATABASE_VARIATION','individual.display_strain');
+  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'}  = $self->_meta_info('DATABASE_VARIATION','individual.default_strain');
+  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'#STRAINS'}         =
+    @{ $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'} }+
+    @{ $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} };
+  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'REFERENCE_STRAIN'} = $self->_meta_info('DATABASE_VARIATION','individual.reference_strain')->[0];
+  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}   = $self->_meta_info('DATABASE_VARIATION','pairwise_ld.default_population')->[0];
 }
 
 sub _munge_website {
