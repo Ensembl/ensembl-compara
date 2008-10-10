@@ -128,14 +128,16 @@ sub zmenu {
   }
 
   $label =~s/\,\s$//;
-  my $bp_string = 
+
+  
   my $type = $f->feature_type->name();
   my ($start, $end) = $self->slice2sr($f->start, $f->end);
+  my $seq_region = $f->slice->seq_region_name; 
   my $zmenu = {
          caption       		 =>  $display_label,
          "100:Stable ID:"  =>  $stable_id,
          "90:Type:"        =>  $type,
-         "80:bp:"          =>  $start."-".$end,    
+         "80:Location:"    =>  $seq_region.":".$start."-".$end,    
          "70:Attributes:"  =>  $label,
   };	
  
