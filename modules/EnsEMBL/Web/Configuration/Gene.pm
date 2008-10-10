@@ -178,6 +178,39 @@ sub ajax_zmenu      {
       'link'     => "/$species",
       'priority' => 200
         });    
+
+    # Link to protein sequence for cannonical or longest translation
+    my $ens_tran = $obj->Obj->canonical_transcript;
+    my $ens_prot;
+    unless( $ens_tran ){
+      my ($longest) = ( sort{ $b->[1]->length <=> $a->[1]->length } 
+                        map{[$_, ( $_->translation || next ) ]} 
+                        @{$obj->Obj->get_all_Transcripts} );
+      ($ens_tran, $ens_prot) = @{$longest||[]};
+    }
+    if( $ens_prot ){
+      $panel->add_entry({
+        'type'     => 'Protein',
+        'label'    => $ens_prot->display_id,
+        'link'     => $obj->_url({'type'=>'Transcript',
+                                  'action'=>'Sequence_Protein',
+                                  't'=>$ens_tran->stable_id }),
+        'priority' => 180
+          });
+    }
+
+    # Link to TreeFam
+    # Currently broken!
+    warn( "==> @$obj" );
+    if( my $treefam_link = $obj->get_ExtUrl($obj->stable_id, 'TREEFAM') ){
+      $panel->add_entry({
+        'type'     => 'TreeFam',
+        'label'    => 'TreeFam',
+        'link'     => $treefam_link,
+        'priority' => 195,
+        'extra'     => {'external' => 1}, 
+      });
+    }
   }
 
   $panel->add_entry({
@@ -325,13 +358,13 @@ sub _ajax_zmenu_compara_tree_node{
     # Duplication confidence
     my $dup = $tagvalues->{'Duplication'};
     if( defined( $dup ) ){
-      my $con = 'dubious' if $tagvalues->{'dubious_duplication'};
-      $con ||= $tagvalues->{'duplication_confidence_score'};
-      $con ||= $dup;
-      $con = "confidence $con";
+      my $con = sprintf( "%.3f",
+                         $tagvalues->{'duplication_confidence_score'} 
+                         || $dup || 0 );
+      $con = 'dubious' if $tagvalues->{'dubious_duplication'};
       $panel->add_entry({
         'type' => 'Type',
-        'label' => ($dup ? "Duplication ($con)" : 'Speciation' ),
+        'label' => ($dup ? "Duplication (confidence $con)" : 'Speciation' ),
         'priority' => 7,
       });
     }
