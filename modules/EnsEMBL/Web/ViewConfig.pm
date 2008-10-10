@@ -9,6 +9,7 @@ sub new {
 
   my $self = {
     '_db'                 => $adaptor->get_adaptor,
+    '_species'            => $adaptor->get_species,
     '_species_defs'       => $adaptor->get_species_defs,
     '_r'                  => $adaptor->get_request || undef,
     'type'                => $type,
@@ -30,6 +31,11 @@ sub new {
 
 sub real :lvalue {
   $_[0]->{'real'};
+}
+
+sub species :lvalue {
+### a
+  $_[0]->{'_species'};
 }
 
 sub species_defs :lvalue {
@@ -322,4 +328,14 @@ sub dump {
   print STDERR Dumper($self);
 }
 
+sub _species_label {
+  my( $self, $key ) = @_;
+  return "Ancestral sequence" unless $self->species_defs->other_species( $key, 'SPECIES_BIO_NAME' );
+  return sprintf(
+    '%s (<i>%s</i>)',
+    $self->species_defs->other_species( $key, 'SPECIES_COMMON_NAME' ),
+    $self->species_defs->other_species( $key, 'SPECIES_BIO_NAME' )
+  );
+
+}
 1;
