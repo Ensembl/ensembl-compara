@@ -3,14 +3,19 @@ package EnsEMBL::Web::Object::Transcript;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
 use Bio::EnsEMBL::Utils::TranscriptAlleles;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::ExtIndex;
+use EnsEMBL::Web::Cache;
+
 use POSIX qw(floor ceil);
 use Data::Dumper;
 our @ISA = qw(EnsEMBL::Web::Object);
+
+our $MEMD = new EnsEMBL::Web::Cache;
 
 sub availability {
   my $self = shift;
@@ -32,24 +37,37 @@ sub counts {
   my $self = shift;
   my $sd = $self->species_defs;
 
-  my $counts = {};
-#  $sd->timer_push( 'Counting all', 1, 'Fetching' );
-  return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
-  $counts->{'exons'} = @{$self->Obj()->get_all_Exons};
-#  $sd->timer_push( 'Counted exons', 2, 'Fetching' );
-  $counts->{'evidence'}           = $self->count_supporting_evidence;
-#  $sd->timer_push( 'Counted evidence', 2, 'Fetching' );
-  $counts->{'similarity_matches'} = $self->count_similarity_matches;
-#  $sd->timer_push( 'Counted xrefs', 2, 'Fetching' );
-  $counts->{'oligos'}             = $self->count_oligos;
-#  $sd->timer_push( 'Counted oligos', 2, 'Fetching' );
-  $counts->{'prot_domains'}       = $self->count_prot_domains;
-#  $sd->timer_push( 'Counted prot domains ', 2, 'Fetching' );
-  $counts->{'prot_variations'}    = $self->count_prot_variations;
-#  $sd->timer_push( 'Counted prot variations', 2, 'Fetching' );
-  $counts->{'go'}                 = $self->count_go;
-#  $sd->timer_push( 'Counted go', 2, 'Fetching' );
-#  $sd->timer_push( 'Finished counting for transcript menu', 1, 'Fetching' );
+  my $key = '::COUNTS::TRANSCRIPT::'.
+            $ENV{ENSEMBL_SPECIES}                 .'::'.
+            $self->core_objects->{parameters}{db} .'::'.
+            $self->core_objects->{parameters}{g}  .'::';
+
+  my $counts;
+
+  $counts = $MEMD->get($key) if $MEMD;
+
+  unless ($counts) {
+    #$sd->timer_push( 'Counting all', 1, 'Fetching' );
+    return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
+    $counts->{'exons'} = @{$self->Obj()->get_all_Exons};
+    #$sd->timer_push( 'Counted exons', 2, 'Fetching' );
+    $counts->{'evidence'}           = $self->count_supporting_evidence;
+    #$sd->timer_push( 'Counted evidence', 2, 'Fetching' );
+    $counts->{'similarity_matches'} = $self->count_similarity_matches;
+    #$sd->timer_push( 'Counted xrefs', 2, 'Fetching' );
+    $counts->{'oligos'}             = $self->count_oligos;
+    #$sd->timer_push( 'Counted oligos', 2, 'Fetching' );
+    $counts->{'prot_domains'}       = $self->count_prot_domains;
+    #$sd->timer_push( 'Counted prot domains ', 2, 'Fetching' );
+    $counts->{'prot_variations'}    = $self->count_prot_variations;
+    #$sd->timer_push( 'Counted prot variations', 2, 'Fetching' );
+    $counts->{'go'}                 = $self->count_go;
+    #$sd->timer_push( 'Counted go', 2, 'Fetching' );
+    #$sd->timer_push( 'Finished counting for transcript menu', 1, 'Fetching' );
+
+    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+  }
+
   return $counts;
 }
 

@@ -34,7 +34,11 @@ sub counts {
   my $self = shift;
   my $obj = $self->Obj;
 
-  my $key = '::COUNTS::'. join '::', values %{ $self->core_objects->{parameters} };
+  my $key = '::COUNTS::GENE::'.
+            $ENV{ENSEMBL_SPECIES}                 .'::'.
+            $self->core_objects->{parameters}{db} .'::'.
+            $self->core_objects->{parameters}{g}  .'::';
+
   my $counts;
 
   $counts = $MEMD->get($key) if $MEMD;

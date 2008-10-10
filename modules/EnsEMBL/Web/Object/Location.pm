@@ -25,7 +25,8 @@ sub counts {
   my $self = shift;
   my $obj = $self->Obj;
 
-  my $key = '::COUNTS::'. join '::', values %{ $self->core_objects->{parameters} };
+  my $key = '::COUNTS::LOCATION::'. $ENV{ENSEMBL_SPECIES};
+
   my $counts;
 
   $counts = $MEMD->get($key) if $MEMD;
@@ -58,6 +59,8 @@ sub counts {
                   
       $counts->{'reseq_strains'} = $reseq;
     }
+    
+    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
   return $counts;
 }
