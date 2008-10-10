@@ -54,7 +54,7 @@ sub render_form {
     foreach my $query_par ( $self->exalead->query->parameters ) {
       next if $query_par->name eq '_f';
       next if $query_par->name eq '_q'; 
-      # $HIDDEN_FIELDS .= sprintf '<input type="hidden" name="%s" value="%s" />', $query_par->{'name'}, $query_par->{'value'};
+      $HIDDEN_FIELDS .= sprintf '<input type="hidden" name="%s" value="%s" />', $query_par->{'name'}, $query_par->{'value'};
     }
   }
   return qq(
