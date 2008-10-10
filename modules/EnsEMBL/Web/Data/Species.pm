@@ -14,6 +14,7 @@ __PACKAGE__->add_queriable_fields(
   common_name => 'varchar(32)',
   vega        => "enum('N','Y')",
   dump_notes  => 'text',
+  online      => "enum('N','Y')"
 );
 
 __PACKAGE__->has_many(releases   => 'EnsEMBL::Web::Data::ReleaseSpecies');
