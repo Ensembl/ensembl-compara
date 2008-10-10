@@ -6,11 +6,34 @@ use Bio::EnsEMBL::GlyphSet_simple;
 
 sub squish { return 1; }
 
+sub get_feature_sets {
+  my ($self, $fg_db) = @_;
+  my @fsets;
+  my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
+
+  my @sources;
+  my $spp = $ENV{'ENSEMBL_SPECIES'}; warn $spp;
+  if ($spp eq 'Homo_sapiens'){
+   @sources = ('miRanda miRNA', 'cisRED motifs', 'VISTA enhancer set');
+  } elsif ($spp eq 'Mus_musculus'){
+   @sources = ('cisRED motifs');
+  }
+  elsif ($spp eq 'Drosophila_melanogaster'){
+   @sources = ('BioTIFFIN motifs', 'REDfly CRMs', 'REDfly TFBSs');
+  }
+
+  foreach my $name ( @sources){
+    push @fsets, $feature_set_adaptor->fetch_by_name($name);
+  }
+  
+  return \@fsets;
+}
+
 sub features {
   my ($self) = @_;
   my $slice = $self->{'container'};
-  my $wuc = $self->{'config'}; warn $wuc;
-  my @fsets = @{$wuc->cache('feature_sets')};  
+  my $wuc = $self->{'config'};
+  my @fsets;
  
   my $efg_db = undef;
   my $db_type  = $self->my_config('db_type')||'funcgen';
@@ -21,6 +44,10 @@ sub features {
       return [];
     }
   }
+
+  if ($wuc->cache('feature_sets') ){ @fsets = @{$wuc->cache('feature_sets')}; }
+  else { @fsets = @{$self->get_feature_sets($efg_db)}; }
+
  
   ## Remove CisRED search region feature set (drawn by another glyphset)
   my @sets; 
@@ -53,77 +80,10 @@ sub features {
   } 
   return $f;
 }
-=pod
-  my $efg_db = undef;
-  my $db_type  = $self->my_config('db_type')||'funcgen';
-  unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-    $efg_db = $slice->adaptor->db->get_db_adaptor($db_type);
-    if(!$efg_db) {
-      warn("Cannot connect to $db_type db");
-      return [];
-    }
-  }
-  my $feature_set_adaptor       = $efg_db->get_FeatureSetAdaptor;  
-  my $species                   = $self->{'config'}->{'species'}; 
-  my $external_Feature_adaptor  = $efg_db->get_ExternalFeatureAdaptor; 
 
-  my $gene = $self->{'config'}->{'_draw_single_Gene'};  warn $self->{'config'};
-  if( $gene ) {
-     my $gene_id = $gene->stable_id; 
-     
-     my $f; 
-#     if ($species =~/Homo_sapiens/){
-#         my $cisred_fset  = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-#         my $miranda_fset = $feature_set_adaptor->fetch_by_name('miRanda miRNA');
-#         my $vista_fset = $feature_set_adaptor->fetch_by_name('VISTA enhancer set');
-#         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset, $miranda_fset, $vista_fset);
-#      } elsif ($species=~/Mus_musculus/){
-#         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-#         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset);
-#     } elsif ($species=~/Drosophila/){
-#         my $tiffin_fset = $feature_set_adaptor->fetch_by_name('BioTIFFIN motifs');
-#         my $crm_fset = $feature_set_adaptor->fetch_by_name('REDfly CRMs');
-#         my $tfbs_fset = $feature_set_adaptor->fetch_by_name('REDfly TFBSs');
-#         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $tiffin_fset, $crm_fset, $tfbs_fset);
-#     }
-    my @features; 
-    foreach my $feat (@$f){
-    my $db_ent = $feat->get_all_DBEntries;
-     foreach my $dbe (@{$db_ent}){ 
-      if ( $gene_id eq $dbe->primary_id ) {
-       #$feat->{'start'} += $offset;
-       #$feat->{'end'} += $offset; 
-       push (@features, $feat);
-       }
-     }
-   }
-   
-    my $data = \@features;
-    return $data || [];
-  } else {
-      my $f;
-     if ($species =~/Homo_sapiens/){
-         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-         my $miranda_fset = $feature_set_adaptor->fetch_by_name('miRanda miRNA');
-         my $vista_fset = $feature_set_adaptor->fetch_by_name('VISTA enhancer set');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset, $miranda_fset, $vista_fset);
-      } elsif ($species=~/Mus_musculus/){
-         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $cisred_fset);
-     } elsif ($species=~/Drosophila/){
-         my $tiffin_fset = $feature_set_adaptor->fetch_by_name('BioTIFFIN motifs');
-         my $crm_fset = $feature_set_adaptor->fetch_by_name('REDfly CRMs');
-         my $tfbs_fset = $feature_set_adaptor->fetch_by_name('REDfly TFBSs');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, $tiffin_fset, $crm_fset, $tfbs_fset);
-     }
-
-      return $f;
-  }
-}
-=cut
 sub href {
-    my ($self, $f ) = @_;
-    return undef;
+  my ($self, $f) = @_;
+  return $self->_url($self->zmenu($f));
 }
 
 sub zmenu {
@@ -138,10 +98,12 @@ sub zmenu {
     my $species = $self->{'config'}->{'species'};
     my $seq_region = $f->slice->seq_region_name;
     my ($start,$end) = $self->slice2sr( $f->start, $f->end );
+    my ($factor, $feature);
 
     my $return = {
-        'caption'                    => 'regulatory_regions',
-        "06:bp: $start-$end"         => "contigview?c=$seq_region:$start;w=1000",
+        caption                    => 'regulatory_regions',
+        "100:Location:"            => $seq_region.":".$start."-".$end,
+        "80:Analysis:"             => $analysis 
     };
     if ($analysis =~/cisRED/){
       $name =~/\D+(\d+)/;
@@ -152,55 +114,55 @@ sub zmenu {
        } elsif ($species =~/Mus_musculus/) {
         $feature_link = "http://www.cisred.org/mouse4/siteseq?fid=$i"; 
        }        
-       my $factor = $name;
+       $factor = $name;
        my $feat_name = $name;
        $name .= "  [CisRed]";
-       $return->{"01:Feature: $name"} = $feature_link;
+     #  $return->{"01:Feature: $name"} = $feature_link;
        $factor=~s/\D*//; 
-       $return->{"02:Factor: $factor"} = "featureview?type=RegulatoryFactor;id=$factor;name=$type";
        
     } elsif ($analysis =~/miRanda/){
        $name =~/\D+(\d+)/;
        my $temp_factor = $name;
        my @temp = split (/\:/, $temp_factor);
-       my $factor = $temp[1];    
+       $factor = $temp[1];    
        
-       $return->{"01:Feature: $name"} = "";
-       $return->{"02:Factor: $factor"} = "featureview?type=RegulatoryFactor;id=$factor;name=$type";
+      # $return->{"01:Feature: $name"} = "";
     } elsif ($analysis =~/VISTA/){
        $name =~/\D+(\d+)/;
        my $temp_factor = $name;
        my @temp = split (/\:/, $temp_factor);
-       my $factor = $temp[1];
+       $factor = $temp[1];
 
-       $return->{"01:Feature: $name"} = "";
-       $return->{"02:Factor: $factor"} = "featureview?type=RegulatoryFactor;id=$factor;name=$type";
+       #$return->{"01:Feature: $name"} = "";
     }elsif ($analysis =~/MICA/){
        $name =~/\D+(\d+)/;
-       my $factor = $name;
+       $factor = $name;
        my $feature_link = "http://servlet.sanger.ac.uk/tiffin/motif.jsp?acc=$name";
-       $return->{"01:Feature: $name"} = $feature_link;
-       $return->{"02:Factor: $factor"} = "featureview?type=RegulatoryFactor;id=$factor;name=$type";
+       #$return->{"01:Feature: $name"} = $feature_link;
     }else {
        if ($analysis!~/\w+/){
-        my $factor = "Unknown";  
-        $return->{"01:Feature: $name"} = "";
-        $return->{"02:Factor: $factor"} = "";
+        $factor = "Unknown";  
+        #$return->{"01:Feature: $name"} = "";
        } else {
-        my $factor = $name; 
-        $return->{"01:Feature: $name"} = "";
-        $return->{"02:Factor: $factor"} = "featureview?type=RegulatoryFactor;id=$factor;name=$type";
+        $factor = $name; 
+        #$return->{"01:Feature: $name"} = "";
       }
     }
 
+    $return->{"90:Feature:"} = $name;
+    if ($factor) { $return->{"70:Factor:"} = $factor;}
+
+    my ($assoc, $type);
     foreach my $dbe (@{$db_ent}){
-       my $assoc = $dbe->primary_id;
-       my $db_type = $dbe->dbname;
-       if ($db_type =~/transcript/){$return->{"05:Associated transcript: $assoc"} = "transview?transcript=$assoc";}
-       elsif ($db_type =~/gene/  ){$return->{"05:Associated gene: $assoc"} = "geneview?gene=$assoc";}
-       elsif ($db_type =~/translation/){$return->{"05:Associated protein: $assoc"} = "protview?=peptide$assoc";}
-     }
-  
+       $assoc = $dbe->primary_id;
+       my $dbname = $dbe->dbname;
+       if ($dbname =~/gene/i) {$type = "gene";}
+       elsif ($dbname =~/transcript/i){$type = "transcript";}
+       elsif ($dbname =~/translation/i){$type = "peptide"; }
+    }
+
+    $return->{"80:Associated $type:"} = $assoc;
+   
     return $return;
 }
 
