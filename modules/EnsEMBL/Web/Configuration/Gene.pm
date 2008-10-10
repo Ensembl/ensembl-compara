@@ -154,10 +154,14 @@ sub ajax_zmenu      {
   my $obj  = $self->object;
 
   my $action = $obj->[1]{'_action'} || 'Summary'; 
+ # warn $action;
 
-  if( $action =~ 'Idhistory'){
+  if( $action =~ /Idhistory|Regulation/){
     return $self->_ajax_zmenu_id_history_tree($panel, $obj);
   }
+ # if( $action =~ 'Regulation'){
+ #   return $self->_ajax_zmenu_regulation($panel, $obj);
+ # }
 
   if( $action =~ 'Compara_Tree_Node' ){
     return $self->_ajax_zmenu_compara_tree_node();
