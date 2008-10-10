@@ -59,12 +59,12 @@ sub content {
     }
     $row->{'transcripts'} .= '</ul>';
 
-    my $family = $object->create_family($family_id);
-    my $ensembl_members   = $object->member_by_source($family, 'ENSEMBLPEP');
+    my $fam_obj = $object->create_family($family_id);
+    my $ensembl_members   = $object->member_by_source($fam_obj, 'ENSEMBLPEP');
     my @all_pep_members;
     push @all_pep_members, @$ensembl_members;
-    push @all_pep_members, @{$object->member_by_source($family, 'Uniprot/SPTREMBL')};
-    push @all_pep_members, @{$object->member_by_source($family, 'Uniprot/SWISSPROT')};
+    push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SPTREMBL')};
+    push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SWISSPROT')};
 
     my $jalview = _jalview_link( 'Ensembl', $ensembl_members, $object ) .
                _jalview_link( '', \@all_pep_members, $object );
