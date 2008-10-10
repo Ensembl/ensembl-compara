@@ -102,6 +102,7 @@ BEGIN {
     }
   }
 
+warn join "\n",@PERL_TRANS_DIRS;
   %SPECIES_MAP = (
 ##      BioMart biomart  biomart biomart
     qw(
@@ -323,7 +324,8 @@ sub transHandler_no_species {
 }
 
 sub transHandler_species {
-  my( $r, $session_cookie, $species, $path_segments, $querystring, $file ) = @_;
+  my( $r, $session_cookie, $species, $path_segments, $querystring, $file, $flag ) = @_;
+
   my $redirect_if_different = 1;
   my $script = shift @$path_segments;
   my $action = '';
@@ -331,7 +333,7 @@ sub transHandler_species {
   my $function = '';
   my $real_script_name = $OBJECT_TO_SCRIPT{ $script };
 
-  if( $real_script_name ) {
+  if( $flag && $real_script_name ) {
     $r->subprocess_env->{'ENSEMBL_TYPE'}     = $script;
     if( $real_script_name eq 'action' ) {
       $r->subprocess_env->{'ENSEMBL_ACTION'}   = shift @$path_segments;
@@ -364,7 +366,7 @@ sub transHandler_species {
   unshift ( @$path_segments, '', $species, $script );
   my $newfile = join( '/', @$path_segments );
 
-  if( $redirect_if_different && $newfile ne $file ){ # Path is changed; HTTP_TEMPORARY_REDIRECT
+  if( !$flag || ( $redirect_if_different && $newfile ne $file ) ){ # Path is changed; HTTP_TEMPORARY_REDIRECT
     $r->uri( $newfile );
     $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
     $r->child_terminate;
@@ -457,8 +459,9 @@ sub transHandler {
     $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for non-species scripts finished', undef, 'Apache' );
     return $return if defined $return;
   }
-  if( $species && ($species = $SPECIES_MAP{lc($species)} || '' ) ) { # species script
-    my $return = transHandler_species( $r, $session_cookie, $species, \@path_segments, $querystring, $file );
+  if( $species && $SPECIES_MAP{lc($species)} ) { # species script
+    my $species2 = $SPECIES_MAP{ lc($species) };
+    my $return = transHandler_species( $r, $session_cookie, $species2, \@path_segments, $querystring, $file, $species2 eq $species );
     $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for species scripts finished', undef, 'Apache' );
     return $return if defined $return;
     shift @path_segments;
