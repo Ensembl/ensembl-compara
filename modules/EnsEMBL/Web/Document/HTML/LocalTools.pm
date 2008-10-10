@@ -31,6 +31,10 @@ sub render {
       <ul>) );
 
   foreach my $link ( @{$self->entries} ) {
+    if( $link->{'class'} eq 'disabled' ) {
+      $self->printf('<li class="disabled" title="%s">%s</li>',$link->{'title'},$link->{'caption'});
+      next;
+    }
     $self->print('<li><a href="'.$link->{'url'}.'"');
     my $class = $link->{'class'};
     if( $link->{'type'} eq 'external' ) {
