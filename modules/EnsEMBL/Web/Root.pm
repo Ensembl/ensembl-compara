@@ -6,6 +6,7 @@ use File::Path;
 use File::Spec::Functions qw(splitpath);
 use CGI qw( escapeHTML escape);
 use POSIX qw(floor ceil);
+use Carp qw(cluck);
 
 our $failed_modules;
 
@@ -80,7 +81,7 @@ sub dynamic_use {
   if($@) {
     my $module = $classname; 
     $module =~ s/::/\//g;
-    warn "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~/^Can't locate $module/;
+    cluck "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~/^Can't locate $module/;
 #    warn "DYNAMIC USE FAILURE: $@";
 #    $parent_namespace->{$module.'::'} = {};
     $failed_modules->{$classname} = $@ || "Unknown failure when dynamically using module";
