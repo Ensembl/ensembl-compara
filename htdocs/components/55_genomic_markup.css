@@ -10,3 +10,17 @@
 .exons_flank, .exons_utr, .exons_intron, .exons_exon { font-family:Courier New, Courier, Monaco, monospace; }
 
 .orthologues { width: 100% }
+
+/* Mark up for geneseqview features */
+span.n   { background-color:#fefefe; color:black; } /* Normal bp */
+span.ns { background-color:#caff70; color:black; } /* SNP */
+span.nd { background-color:#12ff70; color:black; } /* Deletion */
+span.nc { background-color:#b0e2ff; color:black; } /* Conversed regions */
+span.no { background-color:#ffd700; color:black; } /* Codons */
+span.nt { background-color:#f7f7f7; color:black; } /* resequencing data*/
+span.e   { background-color:#fefefe; color:red; }   /* Exon */
+span.es { background-color:#caff70; color:red; }
+span.ed { background-color:#12ff70; color:red; }
+span.ec { background-color:#b0e2ff; color:red; }
+span.eo { background-color:#ffd700; color:red; }
+span.et { background-color:#f7f7f7; color:red; } /* resequencing data*/
