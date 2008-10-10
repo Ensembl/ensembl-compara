@@ -18,9 +18,13 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $form = EnsEMBL::Web::Form->new( 'change_sp', '/'.$object->species.'/Location/Synteny', 'get', 'nonstd check' );
+  my $url = $object->_url({'otherspecies'=>undef},1);
+use Data::Dumper;warn Dumper($url);
+  my $form = EnsEMBL::Web::Form->new( 'change_sp', $url->[0], 'get', 'nonstd check' );
+  $form->add_hidden( $url->[1] );
 
-  my %synteny = $object->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  my %synteny_hash = $object->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  my %synteny      = %{$synteny_hash{ $object->species || {} }};
   my @species = keys %synteny;
   my @sorted_by_common = sort { $a->{'common'} cmp $b->{'common'} }
         map  { { 'name'=> $_, 'common' => $object->species_defs->get_config($_, "SPECIES_COMMON_NAME")} }
@@ -30,18 +34,6 @@ sub content {
     next if $next->{'name'} eq $ENV{'ENSEMBL_SPECIES'};
     push @values, {'name'=>$next->{'common'}, 'value'=>$next->{'name'}} ;
   }
-
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'r',
-    'value'   => $object->param('r'),
-  );
-
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'db',
-    'value'   => 'core',
-  );
 
   $form->add_element(
     'type'     => 'DropDownAndSubmit',
