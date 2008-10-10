@@ -41,8 +41,11 @@ function __init_config_menu() {
   if( ! initial_configuration ) {
      initial_configuration = $('configuration') ? $('configuration').serialize(true) : false;
   }
-
   var has_configuration = $$('.track_configuration').length > 0;
+  if(( $$('.track_configuration').length +
+       $$('.view_configuration').length    ) > 0 ) {
+    $('modal_close').innerHTML = 'SAVE and close';
+  }
   $$('.track_configuration dd').each(function(n) {
     var link_id = n.id;
     var menu_id = 'menu_'+link_id.substr(5);
