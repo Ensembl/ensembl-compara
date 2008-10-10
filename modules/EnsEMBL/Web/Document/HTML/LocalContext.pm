@@ -95,6 +95,7 @@ $pad    </dd>";
       $name = CGI::escapeHTML( $name );
       if( $node->data->{'availability'} && $self->is_available( $node->data->{'availability'} )) {
         my $url = $node->data->{'url'};
+        $ENV{'QUERY_STRING'} =~ s/[\?;]time=\d+\.\d+//g;
         if (!$url) {
           $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.$ENV{'QUERY_STRING'};
         }

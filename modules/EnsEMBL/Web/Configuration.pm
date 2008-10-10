@@ -205,7 +205,9 @@ sub _user_context {
     $flag = 0;
   }
   my $referer = $obj->param('_referer')||$obj->_url({'type'=>$type,'action'=>$ENV{'ENSEMBL_ACTION'},'time'=>undef});
-
+warn ">$referer";
+  $referer =~ s/[\?;]time=\d+\.\d+//g;
+warn "<$referer";
   $active = $type eq 'UserData';
   $self->{'page'}->global_context->add_entry(
     'type'      => 'UserData',
