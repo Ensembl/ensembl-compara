@@ -18,7 +18,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $form = EnsEMBL::Web::Form->new( 'change_chr', $object->_url({'r'=>undef}), 'get', 'nonstd check' );
+  my $form = EnsEMBL::Web::Form->new( 'change_chr', $object->_url({'__clear'=>1}), 'get', 'nonstd check' );
 
   my @chrs = $self->chr_list($object);
   my $chr_name = $object->seq_region_name;
