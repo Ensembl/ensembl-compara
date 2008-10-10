@@ -80,6 +80,13 @@ sub _render_buttons {
   return $output;
 }
 
+sub add_hidden {
+  my $self = shift;
+  my $hash_ref = shift;
+  foreach (keys %{ $hash_ref || {} } ) {
+    $self->add_element('type'=>'Hidden','name'=>$_,'value'=>$hash_ref->{$_});
+  }
+}
 sub render {
 ### Render the FORM tag and its contents
   my $self = shift;
