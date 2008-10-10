@@ -120,7 +120,7 @@ sub content {
         $protein = sprintf '<a href="%s">%s</a>',
           $self->object->_url({
             'type'   => 'Transcript',
-            'action' => 'Protein',
+            'action' => 'ProteinSummary',
             't'      => $_->stable_id
           }),
 	  $_->translation->stable_id ;
@@ -168,7 +168,7 @@ sub content {
     if( $transcript->translation ) {
       $html .= sprintf ', with protein product <a href="%s">%s</a>', $self->object->_url({
         'type'   => 'Transcript',
-        'action' => 'Protein',
+        'action' => 'ProteinSummary',
         't'      => $transcript->stable_id
       }), $transcript->translation->stable_id;
     }
