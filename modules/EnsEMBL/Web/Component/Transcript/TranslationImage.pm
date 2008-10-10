@@ -38,9 +38,7 @@ sub content {
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'translation';
      $image->set_button( 'drag', 'title' => 'Drag to select region' );
-  warn "IN IMAGE RENDER";
   return $image->render;
-  warn "OUT OF IMAGE RENDER";
 }
 
 1;
