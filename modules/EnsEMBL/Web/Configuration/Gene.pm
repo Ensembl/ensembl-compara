@@ -109,13 +109,25 @@ sub populate_tree {
     { 'availability'  => 'database:compara',
       'no_menu_entry' => 1 }
   ));
-  $compara_menu->append( $self->create_node(
+  my $fam_node = $self->create_node(
     'Family', 'Protein families ([[counts::families]])',
-    [qw(family EnsEMBL::Web::Component::Gene::Family
-        genes    EnsEMBL::Web::Component::Gene::FamilyGenes)],
+    [qw(family EnsEMBL::Web::Component::Gene::Family)],
     { 'availability' => 1, 'concise' => 'Protein families' }
+  );
+  $compara_menu->append($fam_node);
+  my $sd = my $obj  = $self->{'object'}->species_defs;
+  $fam_node->append($self->create_subnode(
+    'Family/Genes', 'Other '.$sd->SPECIES_COMMON_NAME.' genes in this family',
+    [qw(genes    EnsEMBL::Web::Component::Gene::FamilyGenes)],
+    { 'availability'  => 'database:compara',
+      'no_menu_entry' => 1 }
   ));
-
+  $fam_node->append($self->create_subnode(
+    'Family/Proteins', 'Other proteins in this family',
+    [qw(proteins    EnsEMBL::Web::Component::Gene::FamilyProteins)],
+    { 'availability'  => 'database:compara',
+      'no_menu_entry' => 1 }
+  ));
 
 =pod
   my $user_menu = $self->create_submenu( 'User', 'User data' );
