@@ -227,6 +227,7 @@ sub ingredient {
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
   ## Ajax request
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
+  $ENV{CACHE_KEY} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
 
   my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
 
@@ -383,7 +384,7 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
         }
         $webpage->configure( $object, @sections );
       }
-warn "==================== ",$webpage->dataObjects->[0]->get_problem_type('redirect');
+  warn "==================== ",$webpage->dataObjects->[0]->get_problem_type('redirect');
       if( $webpage->dataObjects->[0] && $webpage->dataObjects->[0]->has_problem_type( 'redirect' ) ) {
         my($p) = $webpage->dataObjects->[0]->get_problem_type('redirect');
   use Data::Dumper;      warn Data::Dumper::Dumper( $p );
