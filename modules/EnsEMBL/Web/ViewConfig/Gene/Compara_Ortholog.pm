@@ -39,13 +39,8 @@ sub form {
   });
   $view_config->add_fieldset('Show alignments from the following species');
   foreach( @{$view_config->species_defs->ENSEMBL_SPECIES} ) {
-    my $label = sprintf( 
-      '%s (<i>%s</i>)',
-      $view_config->species_defs->other_species( $_, 'SPECIES_COMMON_NAME' ),
-      $view_config->species_defs->other_species( $_, 'SPECIES_BIO_NAME' )
-    );
     $view_config->add_form_element({
-      'type'     => 'CheckBox', 'label' => $label,
+      'type'     => 'CheckBox', 'label' => $view_config->_species_label($_),
       'name'     => 'species_'.lc($_),
       'value'    => 'yes', 'raw' => 1
     });
