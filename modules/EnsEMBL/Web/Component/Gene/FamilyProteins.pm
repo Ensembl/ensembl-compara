@@ -18,9 +18,9 @@ sub content {
   my $object = $self->object;
   my $species = $object->species;
   my $family = $object->create_family($object->param('family'));
+  return '' unless $family;
   my $html;
   
-
   ## External protein IDs
   my %sources = (
     'UniProt/Swiss-Prot' => 'Uniprot/SWISSPROT',
@@ -33,9 +33,8 @@ sub content {
     $data{$key} = \@peptides;
     $count .= scalar(@peptides);
   }
+  $html .= '<h3>Other proteins in this family</h3>';
   if ($count > 0) {
-    $html .= '<h3>Other proteins in this family</h3>';
-
     my $pep_table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
     $pep_table->add_columns(
       {'key' => 'source',   'title' => 'Source',    'width' => '20%', 'align' => 'left'},
@@ -53,12 +52,15 @@ sub content {
     }
     $html .= $pep_table->render;
   }
+  else {
+    $html .= '<p>No other proteins from this family were found in the following sources:'.join(', ', keys %sources).'</p>';
+  }
 
   ## Ensembl proteins
   %data = ();
   $count = 0;
   my $current_taxon = $object->database('core')->get_MetaContainer->get_taxonomy_id();
-  my @taxa = @{ $object->taxa($family) };
+  my @taxa = @{ $family->get_all_taxa_by_member_source_name('ENSEMBLPEP') };
   foreach my $taxon (@taxa) {
     my $id   = $taxon->ncbi_taxid;
     next if $id == $current_taxon;
@@ -67,9 +69,9 @@ sub content {
     $count .= scalar(@peptides);
   }
 
+  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
+  $html .= "<h3>$sitename proteins in this family</h3>";
   if ($count > 0) {
-    $html .= '<h3>Ensembl proteins in this family</h3>';
-
     my $ens_table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
     $ens_table->add_columns(
       {'key' => 'species',   'title' => 'Species',  'width' => '20%', 'align' => 'left'},
@@ -89,6 +91,9 @@ sub content {
       $ens_table->add_row( $row );
     }
     $html .= $ens_table->render;
+  }
+  else {
+    $html .= "<p>No proteins from this family were found in any other $sitename species</p>";
   }
 
   return $html;
