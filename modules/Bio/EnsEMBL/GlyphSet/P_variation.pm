@@ -14,7 +14,7 @@ sub _init {
   my $last_indel = '##############';
   my $pix_per_bp = $self->scalex;
   my $t_width    = $h*3/4/$pix_per_bp;
-  $self->_init_bump( undef,  $self->my_config('depth') );
+  $self->_init_bump( undef,  $self->my_config('depth')||1e6 );
 
   return unless $snps;
   foreach my $int (@$snps) {
@@ -25,6 +25,7 @@ sub _init {
       my( $in,$out,$end ) = $int->{'type'} eq 'insert' ? ($h,0,1) : (0,$h, length $int->{'allele'});
       my $glyph = $self->Poly({
         'x'             => $x-$t_width,
+        'y'        => 0,
         'width'         => $t_width * 2,
         'points'        => [ $x-$t_width, $out, $x, $in, $x+$t_width, $out  ],
         'colour'        => $self->my_colour( 'insert' ),
@@ -55,6 +56,7 @@ sub _init {
       }
       my $glyph = $self->Rect({
         'x'        => $x-$h/2,
+        'y'        => 0,
         'width'    => $h,
         'height'   => $h,
         'colour'   => $self->my_colour( $int->{'type'} ),
