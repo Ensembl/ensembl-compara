@@ -280,7 +280,6 @@ sub gene_name {
 
 sub short_caption {
   my $self = shift;
-  return 'Gene-based displays';
   return $self->type_name.': '.$self->gene_name;
 }
 
@@ -371,6 +370,13 @@ sub create_family {
 sub member_by_source {
   my ($self, $family, $source) = @_;
   return $family->get_Member_Attribute_by_source($source) || [];
+}
+
+sub taxa {
+  my ($self, $family) = @_;
+  my $taxon_adaptor = $family->adaptor->db->get_TaxonAdaptor;
+  my $taxa = $taxon_adaptor->fetch_by_Family_Member_source($family, 'ENSEMBLPEP');
+  return $taxa || [];
 }
 
 sub chromosome {
