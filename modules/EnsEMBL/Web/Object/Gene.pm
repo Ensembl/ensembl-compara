@@ -1046,13 +1046,14 @@ sub reg_factors {
 sub reg_features {
   my $self = shift; 
   my $gene = $self->gene;
-  my $fsets = $self->feature_sets;
-  my $fg_db= $self->get_fg_db; warn $fg_db;
+  my $fsets = $self->feature_sets; 
+  my $fg_db= $self->get_fg_db; 
+  my $slice = $self->get_Slice( @_ );
+
   my $reg_feat_adaptor = $fg_db->get_RegulatoryFeatureAdaptor; warn $reg_feat_adaptor;
-  my $features = $reg_feat_adaptor->fetch_all_by_Gene_FeatureSets($gene, $fsets, 1); 
-#  my $features = $reg_feat_adaptor->fetch_all_by_stable_id_FeatureSets( $gene->stable_id, $fsets, 1);
-  warn scalar @$features;
-  return $features;
+  my $feats = $reg_feat_adaptor->fetch_all_by_Slice($slice);
+  return $feats;
+
 }
 
 sub features {
