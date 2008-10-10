@@ -43,16 +43,25 @@ sub save {
 
   $self->make_directory($file);
 
-  if ($args->{compress}) {
-    my $gz = gzopen($file, 'wb');
-    $gz->gzwrite($content);
-    $gz->gzclose();
-  } else {
-    open(FILE, ">$file") || warn qq(Cannot open temporary image file $file: $!);
-    binmode FILE;
-    print FILE $content;
-    close FILE;
+  eval {
+    if ($args->{compress}) {
+      my $gz = gzopen($file, 'wb');
+      $gz->gzwrite($content);
+      $gz->gzclose();
+    } else {
+      open(FILE, ">$file") || warn qq(Cannot open temporary image file $file: $!);
+      binmode FILE;
+      print FILE $content;
+      close FILE;
+    }
+  };
+
+  if ($@) {
+    warn $@;
+    return undef;
   }
+  
+  return 1;
 }
 
 sub imgsize {

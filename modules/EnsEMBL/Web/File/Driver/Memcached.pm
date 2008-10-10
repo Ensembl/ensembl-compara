@@ -47,9 +47,20 @@ sub save {
       mtime  => time,
     };
   }
+
+  my $result = $self->memd->set(
+    $key,
+    $data,
+    $args->{exptime},
+    ( 'TMP', $args->{format}, keys %{ $ENV{CACHE_TAGS}||{} } ),
+  );
+
+  unless ($result eq "OK\r?\n") {
+    warn $result;
+    return undef;
+  }
   
-  my $result = $self->memd->set($key, $data, $args->{exptime}, 'TMP', $args->{format});
-  return $result eq "OK\r?\n";
+  return 1;
 }
 
 sub imgsize {
