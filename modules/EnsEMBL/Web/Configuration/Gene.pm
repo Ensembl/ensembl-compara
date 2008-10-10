@@ -154,14 +154,15 @@ sub ajax_zmenu      {
   my $obj  = $self->object;
 
   my $action = $obj->[1]{'_action'} || 'Summary'; 
- # warn $action;
+  warn $action;
 
-  if( $action =~ /Idhistory|Regulation/){
+  if( $action =~ 'Idhistory'){
     return $self->_ajax_zmenu_id_history_tree($panel, $obj);
   }
- # if( $action =~ 'Regulation'){
- #   return $self->_ajax_zmenu_regulation($panel, $obj);
- # }
+
+  if( $action =~ 'Regulation'){
+    return $self->_ajax_zmenu_regulation($panel, $obj);
+  }
 
   if( $action =~ 'Compara_Tree_Node' ){
     return $self->_ajax_zmenu_compara_tree_node();
@@ -491,10 +492,49 @@ sub _compara_tree_jalview_html{
   return $html;
 }
 
+sub _ajax_zmenu_regulation {
+  my ($self, $panel ) = @_;
+  my $obj = $self->object;
+  my $params = $obj->[1]->{'_input'}; warn $params->{'caption'}[0];
+  $panel->{'caption'} = $params->{'caption'}[0];
+  my $link = $params->{$obj->type}[0];
+  my $species = $obj->species_defs->species;
+
+  foreach my $p (keys %{$params}){
+    if ($p =~/^\d+/){
+      my $value = $params->{$p}[0];
+      my ($priority, $type) = split(/:/, $p);
+      my $link;
+      if ($type =~/location/i){
+        $link = $obj->_url({'type'=>'Location','action'=>'View','r'=>$value});
+      } elsif ($type =~/Analysis/i && $value =~/cisred/i){
+          my $cis_red;
+          if ($species=~/Homo_sapiens/){ $cis_red = "http://www.cisred.org/human9/gene_view?ensembl_id=";}
+          elsif ( $species =~/Mus_musculus/) { $cis_red = "http://www.cisred.org/mouse4/gene_view?ensembl_id=";}
+          $link = $cis_red . $obj->stable_id;
+      } elsif ($type =~ /Associated/i){
+          if ($type =~/gene/i){ $link = $obj->_url({'type'=>'Gene','action'=>'Summary','g'=>$value});}
+          elsif ($type =~/transcript/i) {$link = $obj->_url({'type'=>'Transcript','action'=>'Summary','t'=>$value}); }        } elsif ( $type =~/factor/i){
+          $link = $link = $obj->_url({'type'=>'Location','View'=>'Karyotype','feat_type'=>'RegulatoryFeature','id'=>$value}); 
+      }
+       
+
+      $panel->add_entry({
+        'type'     =>  $type,
+        'label'    =>  $value,
+        'priority' =>  $priority,
+        'link'     =>  $link,
+      });
+
+    }
+  }
+  return;
+}
+
 sub _ajax_zmenu_id_history_tree {
   my ($self, $panel ) = @_; 
   my $obj = $self->object;
-  my $params = $obj->[1]->{'_input'};
+  my $params = $obj->[1]->{'_input'}; warn $params->{'caption'}[0];
   $panel->{'caption'} = $params->{'caption'}[0];
   my $link = $params->{$obj->type}[0];
 
@@ -502,12 +542,13 @@ sub _ajax_zmenu_id_history_tree {
     if ($p =~/^\d+/){ 
       my $value = $params->{$p}[0];
       my ($priority, $type) = split(/:/, $p);
+ 
       $panel->add_entry({
         'type'     =>  $type,
         'label'    =>  $value,
         'priority' =>  $priority,
+        'link'     =>  $link,
       });
-
     }
   }
   return;
