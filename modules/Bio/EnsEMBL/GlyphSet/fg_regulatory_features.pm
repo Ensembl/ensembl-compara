@@ -100,6 +100,11 @@ sub tag {
 
 }
 
+sub href {
+  my ($self, $f) = @_;
+  return $self->_url($self->zmenu($f));
+}
+
 sub zmenu {
   my ($self, $f) = @_; 
   my $stable_id = $f->stable_id;
@@ -123,14 +128,15 @@ sub zmenu {
   }
 
   $label =~s/\,\s$//;
+  my $bp_string = 
   my $type = $f->feature_type->name();
   my ($start, $end) = $self->slice2sr($f->start, $f->end);
   my $zmenu = {
-         qq(caption)       		=> qq($display_label),
-         qq(01:Stable ID: $stable_id) => '',
-         qq(02:Type: $type) =>'',
-         qq(03:bp: $start-$end) =>'',    
-         "04:Attributes: $label"   => '',
+         caption       		 =>  $display_label,
+         "100:Stable ID:"  =>  $stable_id,
+         "90:Type:"        =>  $type,
+         "80:bp:"          =>  $start."-".$end,    
+         "70:Attributes:"  =>  $label,
   };	
  
  
