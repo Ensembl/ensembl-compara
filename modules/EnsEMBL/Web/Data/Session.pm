@@ -139,7 +139,12 @@ sub invalidate_cache {
   my $self  = shift;
   my $cache = shift;
   
-  $self->SUPER::invalidate_cache($cache, 'session['.$self->session_id.']', 'type['.$self->type.']');
+  $self->SUPER::invalidate_cache(
+    $cache,
+    'session['.$self->session_id.']',
+    'type['.$self->type.']',
+    'code['.$self->code.']',
+  );
 }
 
 sub propagate_cache_tags {
@@ -148,11 +153,15 @@ sub propagate_cache_tags {
 
   my @tags;
   for (my ($key, $value) = each %args) {
-    push @tags, $key.'['.$value.']';
+    push @tags, $key.'['.$value.']' if $key && $value;
   }
   
-  $self->SUPER::propagate_cache_tags('session['.$self->session_id.']', @tags)
-    if ref $self;
+  $self->SUPER::propagate_cache_tags(
+    'session['.$self->session_id.']',
+    'type['.$self->type.']',
+    'code['.$self->code.']',
+    @tags,
+  ) if ref $self;
 }
 
 1;
