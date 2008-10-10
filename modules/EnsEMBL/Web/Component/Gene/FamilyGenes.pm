@@ -5,7 +5,7 @@ package EnsEMBL::Web::Component::Gene::FamilyGenes;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Transcript);
+use base qw(EnsEMBL::Web::Component::Gene);
 use CGI qw(escapeHTML);
 sub _init {
   my $self = shift;
@@ -39,6 +39,7 @@ sub content {
       $image->image_type = "family";
       $image->image_name = "$species-".$family_id;
       $image->imagemap = 'yes';
+      $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view");
       unless( $image->exists ) {
         my %high = ( 'style' => 'arrow' );
         foreach my $g (@$genes){
