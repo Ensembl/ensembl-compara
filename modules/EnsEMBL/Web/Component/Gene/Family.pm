@@ -34,14 +34,18 @@ sub content {
     $row->{'id'}  = $family_id;
     my $genes = $families->{$family_id}{'info'}{'genes'};
     if (scalar(@$genes) > 1) {
-      $row->{'id'} .= sprintf(qq#<br />(<a href="/%s/Gene/Family/Genes?%s;family=%s" title="Show locations of these genes">%s genes</a>)#, 
+      $row->{'id'} .= sprintf(qq#<br /><br />(<a href="/%s/Gene/Family/Genes?%s;family=%s" title="Show locations of these genes">%s genes</a>)#, 
                     $object->species, join(';', @{$object->core_params}),
                     $family_id, scalar(@$genes)
                     );
     }
     else {
-      $row->{'id'} .= '<br />(1 gene)';
+      $row->{'id'} .= '<br /><br />(1 gene)';
     }
+    my $prot_url = sprintf('/%s/Gene/Family/Proteins?%s;family=%s', 
+                    $object->species, join(';', @{$object->core_params}), $family_id
+    );
+    $row->{'id'} .= '<br />(<a href="'.$prot_url.'">all proteins in family</a>)';
 
     $row->{'annot'} = $families->{$family_id}{'info'}{'description'};
 
