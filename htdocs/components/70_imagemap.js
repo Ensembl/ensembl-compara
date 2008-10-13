@@ -273,6 +273,7 @@ function __drag_select_init() {
 //  $$('.drag_select').each(function(n){ n.onmousedown = select_start; });
   $$('.drag_select').each(function(n){
     n.getElementsBySelector('img').each(function(i_n){
+      if( ! i_n.hasClassName('munged_image_map') ) return;
       var m = $(i_n.id+'_map');
       if(m) {
         m.descendants().each(function(ma){
@@ -307,6 +308,7 @@ function __drag_select_init() {
           }
         });
       }
+      i_n.addClassName('munged_image_map');
     });
     Event.observe(n,'mousedown',select_start);
   });
