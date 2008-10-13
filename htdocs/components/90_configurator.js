@@ -86,6 +86,7 @@ function __init_config_menu() {
     var div_n = menu_n.up('div');
     menu_n.childElements().each(function(n){
       if(n.nodeName == 'DT') {
+        if( current_node ) $('mn_'+current_node).remove();
         col = 3-col;
         n.addClassName('col'+col);
 	if( !n.hasClassName('munged') ) {
@@ -116,8 +117,10 @@ function __init_config_menu() {
         n.setAttribute('id','mn_'+current_node+'_dd');
         n.addClassName('col'+col);
         n.hide();
+        current_node = 0;
       }
     });
+    if( current_node ) $('mn_'+current_node).remove();
   });
   $$('#configuration dt.submit').each(function(n){ n.hide(); });
 /* deprecated!!  
@@ -183,6 +186,8 @@ function configurator_success( transport ) {
     page_needs_to_be_reloaded = true;
     $('modal_content').update(Builder.node('div', 'Content updated'));
     __modal_dialog_link_open_2( configurator_action_url, configurator_action_title );
+  } else if( x.match('/^FAILURE:/') ) {
+    $('modal_content').update(Builder.node('div','Content failed to update: '+x));
   } else { // We've got the form back....
     modal_success( transport ); // Act like we just loaded it!!!
   }
