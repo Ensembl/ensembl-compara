@@ -43,7 +43,7 @@ sub _parse_referer {
     $value = '' unless defined $value;
     $param = CGI::unescape($param);
     $value = CGI::unescape($value);
-    push @{$params->{$param}}, $value;
+    push @{$params->{$param}}, $value unless $param eq 'time'; ## don't copy time!
   }
   warn "\n";
   warn "------------------------------------------------------------------------------\n";
@@ -290,6 +290,7 @@ sub configure {
 	  if( $node ) {
             my @components = @{$node->data->{'components'}||[]};
             while( my($code, $module) = splice( @components, 0, 2) ) {
+              $module =~ s/\/\w+$//;
               if ($self->dynamic_use($module)) {
                 my $component = $module->new;
                 if ($component->configurable) {
