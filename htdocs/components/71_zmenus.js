@@ -77,8 +77,11 @@ function _show_zmenu( x ) {
   new Ajax.Request( URL, {
     method: 'get',
     onSuccess: function(transport){
-      Q.getElementsBySelector('tbody.real')[0].replace( transport.responseText );
-      __zmenu_close_button(Q);
+      var t = transport.responseText;
+      if( t ) {
+        Q.getElementsBySelector('tbody.real')[0].replace( transport.responseText );
+        __zmenu_close_button(Q);
+      }
     }
   });
 }
