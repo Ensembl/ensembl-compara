@@ -17,15 +17,15 @@ sub populate_tree {
   my $self = shift;
 #  my $hash = $obj->get_summary_counts;
 
-  $self->create_node( 'Summary', "Summary",
+  $self->create_node( 'Summary', "Gene summary",
     [qw(summary EnsEMBL::Web::Component::Gene::GeneSummary
         transcripts EnsEMBL::Web::Component::Gene::TranscriptsImage)],
     { 'availability' => 1, 'concise' => 'Gene summary' }
   );
 
-  $self->create_node( 'Splice', "Alternative splicing ([[counts::exons]] exons)",
+  $self->create_node( 'Splice', "Splice variants ([[counts::transcripts]])",
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
-    { 'availability' => 1, 'concise' => 'Alternative splicing' }
+    { 'availability' => 1, 'concise' => 'Splice variants' }
   );
 
   $self->create_node( 'Evidence', "Supporting evidence",
@@ -33,14 +33,14 @@ sub populate_tree {
     { 'availability' => 1, 'concise' => 'Supporting evidence'}
   );
 
-  $self->create_node( 'Sequence', "Marked-up sequence",
+  $self->create_node( 'Sequence', "Sequence",
      [qw(sequence       EnsEMBL::Web::Component::Gene::GeneSeq)],
     { 'availability' => 1, 'concise' => 'Marked-up sequence'}
   );
 
-  $self->create_node( 'Matches', "Similarity matches ([[counts::similarity_matches]])",
+  $self->create_node( 'Matches', "External references ([[counts::similarity_matches]])",
      [qw(matches       EnsEMBL::Web::Component::Gene::SimilarityMatches)],
-    { 'availability' => 1, 'concise' => 'SimilarityMatches'}
+    { 'availability' => 1, 'concise' => 'External references'}
   );
 
   $self->create_node( 'Regulation', 'Regulation',
@@ -58,7 +58,7 @@ sub populate_tree {
 
 ##----------------------------------------------------------------------
 ## Compara menu: alignments/orthologs/paralogs/trees
-  my $compara_menu = $self->create_submenu( 'Compara', 'Comparative genomics' );
+  my $compara_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
     [qw(alignment_options  EnsEMBL::Web::Component::Gene::ComparaAlignmentsOptions),
      qw(alignments  EnsEMBL::Web::Component::Gene::ComparaAlignments), ],
@@ -139,7 +139,7 @@ sub populate_tree {
 =cut
 
 ## Variation tree
-  my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
+  my $var_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   $var_menu->append($self->create_node( 'Variation_Gene',  'Gene variations',
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSNPImage)],
     { 'availability' => 'database:variation' }

@@ -159,7 +159,7 @@ sub do_SE_align_menu {
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Summary', "Summary",
+  $self->create_node( 'Summary', "Transcript summary",
     [qw(image   EnsEMBL::Web::Component::Transcript::TranscriptImage
         summary EnsEMBL::Web::Component::Transcript::TranscriptSummary)],
     { 'availability' => 'either', 'concise' => 'Transcript summary'}
@@ -185,7 +185,7 @@ sub populate_tree {
     { 'no_menu_entry' => 'transcript' }
   ));
 
-  my $seq_menu = $self->create_submenu( 'Sequence', 'Marked-up sequence' );
+  my $seq_menu = $self->create_submenu( 'Sequence', 'Sequence' );
   $seq_menu->append($self->create_node( 'Sequence_cDNA',  'cDNA',
     [qw(sequence    EnsEMBL::Web::Component::Transcript::TranscriptSeq)],
     { 'availability' => 'either', 'concise' => 'cDNA sequence' }
@@ -195,7 +195,7 @@ sub populate_tree {
     { 'availability' => 'either', 'concise' => 'Protein sequence' }
   ));
 
-  my $record_menu = $self->create_submenu( 'ExternalRecords', 'External records' );
+  my $record_menu = $self->create_submenu( 'ExternalRecords', 'External References' );
 
   my $sim_node = $self->create_node( 'Similarity', "Similarity matches  ([[counts::similarity_matches]])",
     [qw(similarity  EnsEMBL::Web::Component::Transcript::SimilarityMatches)],
@@ -206,12 +206,15 @@ sub populate_tree {
    [qw(alignment       EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment)],
     { 'no_menu_entry' => 'transcript' }
   ));
-  $record_menu->append($self->create_node( 'Oligos', "Oligo matches  ([[counts::oligos]])",
+  $record_menu->append($self->create_node( 'Oligos', "Oligo probes  ([[counts::oligos]])",
     [qw(arrays      EnsEMBL::Web::Component::Transcript::OligoArrays)],
-    { 'availability' => 'transcript',  'concise' => 'Oligo matches'}
+    { 'availability' => 'transcript',  'concise' => 'Oligo probes'}
   ));
-
-  my $var_menu = $self->create_submenu( 'Variation', 'Variational genomics' );
+  $record_menu->append($self->create_node( 'GO', "Gene ontology  ([[counts::go]])",
+    [qw(go          EnsEMBL::Web::Component::Transcript::Go)],
+    { 'availability' => 'transcript', 'concise' => 'Gene ontology'}
+  ));
+  my $var_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   $var_menu->append($self->create_node( 'Population',  'Population comparison',
    # [qw(snps      EnsEMBL::Web::Component::Transcript::TranscriptSNPImage
    #     snptable      EnsEMBL::Web::Component::Transcript::TranscriptSNPTable)],
@@ -220,27 +223,23 @@ sub populate_tree {
   ));
 
   my $prot_menu = $self->create_submenu( 'Protein', 'Protein Information' );
-  $prot_menu->append($self->create_node( 'ProteinSummary', "Summary",
+  $prot_menu->append($self->create_node( 'ProteinSummary', "Protein summary",
     [qw(image       EnsEMBL::Web::Component::Transcript::TranslationImage
         statistics  EnsEMBL::Web::Component::Transcript::PepStats)],
     { 'availability' => 'either', 'concise' => 'Protein summary'}
   ));
-  my $D = $self->create_node( 'Domains', "Domains  ([[counts::prot_domains]])",
+  my $D = $self->create_node( 'Domains', "Domains & features  ([[counts::prot_domains]])",
     [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet)],
-    { 'availability' => 'transcript', 'concise' => 'Protein domains'}
+    { 'availability' => 'transcript', 'concise' => 'Domains & features'}
   );
   $D->append($self->create_subnode( 'Domains/Genes', '',
     [qw(domaingenes      EnsEMBL::Web::Component::Transcript::DomainGenes)],
     { 'no_menu_entry' => 'transcript' }
   ));
   $prot_menu->append($D);
-  $prot_menu->append($self->create_node( 'ProtVariations', "Variation features  ([[counts::prot_variations]])",
+  $prot_menu->append($self->create_node( 'ProtVariations', "Variations  ([[counts::prot_variations]])",
     [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
-    { 'availability' => 'either', 'concise' => 'Protein variation features'}
-  ));
-  $prot_menu->append($self->create_node( 'GO', "GO terms  ([[counts::go]])",
-    [qw(go          EnsEMBL::Web::Component::Transcript::Go)],
-    { 'availability' => 'transcript', 'concise' => 'GO terms'}
+    { 'availability' => 'either', 'concise' => 'Variations'}
   ));
 
   $self->create_node( 'idhistory', "ID history",
