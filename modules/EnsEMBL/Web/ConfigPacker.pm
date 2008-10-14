@@ -478,6 +478,17 @@ sub _summarise_dasregistry {
     }
     
     $cfg->{'logic_name'}      = $key;
+    $cfg->{'category'}        = $val;
+
+    # If specified in the config, "coords" is expected to look like:
+    # [ chromosome:NCBI36:Homo_sapiens ]
+    if( my $coords = $cfg->{'coords'} ) {
+      $cfg->{'coords'} = [map {
+        my @pieces = split /:/, $_;
+#        Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
+        { name    => $pieces[0], version => $pieces[1], species => $pieces[2] }
+      } ref $coords ? @{ $coords } : ($coords) ];
+    }
     
     # Check using the url/dsn if the source is registered
     my $src = $sources{$key};
@@ -488,7 +499,10 @@ sub _summarise_dasregistry {
       $cfg->{'description'}   ||= $src->description;
       $cfg->{'maintainer'}    ||= $src->maintainer;
       $cfg->{'homepage'}      ||= $src->homepage;
-      $cfg->{'coords'}        ||= $src->coord_systems;
+# We need to get the hash of parameters...
+      $cfg->{'coords'}        ||= [ map {
+        { 'name' => $_->name, 'version' => $_->version, 'species' => $_->species }
+      } @{ $src->coord_systems || []  } ];
       $cfg->{'url'}           ||= $src->url;
       $cfg->{'dsn'}           ||= $src->dsn;
     }
@@ -502,13 +516,9 @@ sub _summarise_dasregistry {
       next;
     }
     
-    # Add to the das packed tree as a hash
-    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}{$key} = $cfg;
-    # Remove the config from the ini tree
-    delete $self->tree->{$key};
+    # Add the final config hash to the das packed tree
+    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_CONFIGS'}{$key} = $cfg;
   }
-  # Remove the list of sources from the ini tree
-  delete $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'};
 }
 
 sub _meta_info {
