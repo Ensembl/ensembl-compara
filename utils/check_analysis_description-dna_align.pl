@@ -1,9 +1,11 @@
 #!/usr/local/bin/perl
 
-# patch web_data column for dna align features for which we can guess at the type
+# patch web_data column for the type of dna align feature
 # run as follows to allow command prompts if you try and change a type
 # ( ./check_analysis_description-dna_align.pl > check_analysis_description-dna_align.log_2 )
-
+# grep the log for 'WARN' to see types missing an analysis_description entry and new features
+# that need a type defining - cdna, est, rna or other (note 'other' is the default, is not
+# specified in the database
 
 use FindBin qw($Bin);
 use File::Basename qw(dirname);
@@ -20,6 +22,8 @@ BEGIN{
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
+$| = 1;
+
 use EnsEMBL::Web::SpeciesDefs;
 use XHTML::Validator;
 
@@ -27,6 +31,15 @@ my $SD = new EnsEMBL::Web::SpeciesDefs;
 my $x = XHTML::Validator->new();
 
 my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
+
+#manually assigned types
+my %types = (
+    'cdna' => [qw(UniGene Unigene Vertrna exonerate_IG_gene CCDS ccds Exonerate_segment CDM )],
+    'est'  => [qw(Expression_pattern kyotograil_2004 kyotograil_2005 xtrop_cluster)],
+    'rna'  => [qw(RfamBlast)],
+);
+#types that we know of and know to ignore
+my @other_types = qw(nembase_contig ost washu_contig BACends sheep_bac_ends platypus_olfactory_receptors ensembl_projection EG3_Mm EG3_Fr EG3_Rn EG3_Hs EG3_Gg);
 
 foreach my $sp ( @species ) {
     print "$sp\n";
@@ -46,40 +59,46 @@ foreach my $sp ( @species ) {
          from analysis as a left join analysis_description as ad on
               a.analysis_id = ad.analysis_id', 'analysis_id'
 	  );
+#	warn Dumper($analyses);
 	foreach ( keys %$analyses ) {
 	    $analyses->{$_}{'description'} =~ s/\s+/ /g; $analyses->{$_}{'description'} =~ s/^ //; $analyses->{$_}{'description'} =~ s/ $//;
 	    $analyses->{$_}{'web_data'}    =~ s/\s+/ /g; $analyses->{$_}{'web_data'}    =~ s/^ //; $analyses->{$_}{'web_data'}    =~ s/ $//;
 	    $analyses->{$_}{'valid'}       = $x->validate( $analyses->{$_}{'description'} );
 	    $analyses->{$_}{'valid'}       =~ s/\s+/ /g; $analyses->{$_}{'valid'}       =~ s/^ //; $analyses->{$_}{'valid'}       =~ s/ $//;
 	}
-#	warn Dumper($analyses);
-#	exit;
-	#set web_data if logic_name of dna_align_feature matches cdna|mrna|est
+
+	#set web_data according to logic_name
       ID:
 	foreach my $id ( keys %$analyses ) {
 	    my $ln = $analyses->{$id}{'logic_name'};
 	    next ID unless (grep { $_->[0] eq $ln } @{$dafs});
+	    if (! $analyses->{$id}{'analysis_desc_id'}) {
+		print "    WARNING: Ignoring $sp:$db_name $ln at present since there is no analysis_description entry\n";
+		next ID;
+	    }
+	    if (! $analyses->{$id}{'displayable'}) {
+		print "     Skipping $sp:$db_name $ln at present since it is not to be displayed\n";
+		next ID;
+		}
 	    my $new_type_value;
 	    if ($ln =~ /cdna/i) {
 		$new_type_value = 'cdna';
 	    }
-	    if ($ln =~ /rna/i) {
+	    if ($ln =~ /rna/i && ($ln ne 'Vertrna') ) {
 		$new_type_value = 'rna';
 	    }
 	    if ($ln =~ /est/i) {
 		$new_type_value = 'est';
 	    }
-	    #hack
-	    if ($ln =~ /vertrna/i) {
-		$new_type_value = 'cdna';
-	    }
-	    if ($new_type_value) {
-		if (! $analyses->{$id}{'analysis_desc_id'}) {
-		    print "     Skipping $sp:$db_name $ln at present since there is no analysis_description entry\n";
-		    next ID;
+	    if (! $new_type_value ) {
+		foreach my $type (keys %types) {
+		    if (grep { $ln eq $_} @{$types{$type}}) {
+			$new_type_value = $type;
+		    }
 		}
+	    }
+	    if ($new_type_value) {	
 		my $old_values = $analyses->{$id}{'web_data'};
-
 		if (! $old_values) {
 		    print "     [$sp:$db_name $ln ] Inserting web_data type of $new_type_value\n";
 		    #do the update
@@ -109,6 +128,9 @@ foreach my $sp ( @species ) {
 			update_ad($obj,$id,$dbh);
 		    }
 		}
+	    }
+	    elsif ( ! grep { $ln eq $_} @other_types) {
+		print "    WARNING: skipping $sp:$db_name $ln since we don't know what type it is\n";
 	    }
 	}		
     }
