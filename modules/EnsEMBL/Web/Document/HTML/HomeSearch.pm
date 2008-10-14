@@ -46,20 +46,23 @@ sub render {
 
   if (!$page_species) {
     $html .= qq(<label for="species">Search</label>: <select id="species" name="species">
-<option value="">All species</option>
-<option value="">---</option>
-);
-  $input_size = 30;
+      <option value="">All species</option>
+      <option value="">---</option>
+    );
+    $input_size = 30;
 
-  foreach $species (@{$species_defs->ENSEMBL_SPECIES}) {
-    my $common_name = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
-      $html .= qq(<option value="$species">$common_name</option>);
+    my %species = map {
+      $species_defs->get_config($_, 'SPECIES_COMMON_NAME') => $_
+    } @{$species_defs->ENSEMBL_SPECIES};
+  
+    foreach my $common_name (sort {uc($a) cmp uc($b)} keys %species) {
+      $html .= qq(<option value="$species{$common_name}">$common_name</option>);
     }
 
     $html .= qq(</select>
-    <label for="q">for</label> );
-  }
-  else {
+      <label for="q">for</label> );
+
+  } else {
     $html .= qq(<label for="q">Search for</label>: );
   }
 
