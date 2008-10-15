@@ -19,7 +19,8 @@ sub content {
   my $tl = $object->Obj->translation;
   return '' unless $tl;
   return '<p>Pepstats currently disabled for Prediction Transcripts</p>' unless $tl->stable_id;
-  my $attributeAdaptor = $object->database('core')->get_AttributeAdaptor();
+  my $db_type = ($object->db_type eq 'Ensembl') ? 'core' : lc($object->db_type); #thought there was a better way to do this!
+  my $attributeAdaptor = $object->database($db_type)->get_AttributeAdaptor();
   my $attributes = $attributeAdaptor->fetch_all_by_Translation($tl);
   my $stats_to_show = '';
   my @attributes_pepstats = grep {$_->description =~ /Pepstats/} @{$attributes};
