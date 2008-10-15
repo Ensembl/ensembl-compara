@@ -218,6 +218,8 @@ sub form {
   foreach my $classname (@{$self->{'_classes'}}) {
     my $method = $classname.'::form';
     eval { no strict 'refs'; &$method( $self, $object ); };
+    ## TODO: proper error exception
+    warn $@ if $@;
   }
   if( $self->has_images ||
        $ENV{'ENSEMBL_AJAX_VALUE'} =~ /^(en|dis)abled$/ && $self->has_form ) {
