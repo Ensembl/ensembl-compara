@@ -488,7 +488,7 @@ sub getViewConfig {
     foreach my $root ( @{$self->get_path} ) {
       my $classname = $root."::ViewConfig::$key";
       unless( $self->dynamic_use( $classname ) ) {
-## If the module can't be required throw an error and return undef;
+        ## If the module can't be required throw an error and return undef;
         (my $message = "Can't locate $classname\.pm in" ) =~ s/::/\//g;
         my $error = $self->dynamic_use_failure($classname);
         warn qq(ViewConfig: failed to require $classname:\n  $error) unless $error=~/$message/;
