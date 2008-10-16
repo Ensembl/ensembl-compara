@@ -408,8 +408,12 @@ sub select_source {
         $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
       }
       
-      my $frozen = Data::Dumper->Dump( [$source],["source"] );
-      
+## ANDY THIS MUST BE SORTED I'VE COMMITTED IT WITH THIS
+## LINE TAKEN OUT AS IT IS A SECURITY HOLE.
+## IT MUST NEVER GO BACK INTO CVS.
+
+#      my $frozen = Data::Dumper->Dump( [$source],["source"] );
+      my $frozen = $source      
       $self->add_element( 'type'  => 'CheckBox',
                           'name'  => 'dsns',
                           'value' => $frozen,
