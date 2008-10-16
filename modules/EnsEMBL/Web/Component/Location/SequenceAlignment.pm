@@ -7,7 +7,7 @@ use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 
-our ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On, $reseq_On) = (1, 16, 32, 64, 128, 256, 512);
+my ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On, $reseq_On) = (1, 16, 32, 64, 128, 256, 512);
 
 sub _init {
   my $self = shift;
@@ -26,15 +26,17 @@ sub content {
   #Get reference slice
   my $refslice = new EnsEMBL::Web::Proxy::Object( 'Slice', $object->slice, $object->__data );
 
+  my @individuals;
+  my $sp = $object->species;
+  my $vari_hash = $object->species_defs->vari_hash($sp);
+  foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS)) {
+      my $set = $vari_hash->{$_};
+      foreach my $ind (@{$set}) {
+	  push @individuals, $ind if ($object->param($ind) eq 'yes');
+      }
+  }
 
-  my @individuals =  $refslice->param('individuals');
-
-
-  @individuals = qw(Venter);
-
-
-
-  # Get slice for each display strain
+  # Get slice for each selected display strain
   my @individual_slices;
   foreach my $individual ( @individuals ) {
     next unless $individual;
@@ -47,7 +49,7 @@ sub content {
   unless (scalar @individual_slices) {
     my $strains = ($object->species_defs->translate('strain') || 'strain') . "s";
     if ( $refslice->get_individuals('reseq') ) {
-      $html = qq(Please select $strains to display from the panel above);
+      $html = qq(Please select $strains to display from the 'Configure this page' link to the left);
     } else {
       $html = qq(No resequenced $strains available for these species);
     }

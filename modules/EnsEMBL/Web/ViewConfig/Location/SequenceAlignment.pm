@@ -5,23 +5,33 @@ use warnings;
 no warnings 'uninitialized';
 use EnsEMBL::Web::Constants;
 
+use Data::Dumper;
+
+
 sub init {
-  my ($view_config) = @_;
-  $view_config->title = 'Resequencing Alignments';
-  $view_config->_set_defaults(qw(
-    display_width           120
-    exon_ori                all
-    match_display           off
-    snp_display             off
-    line_numbering          off
-    codons_display          off
-    title_display           off
-  ));
-  $view_config->storable = 1;
+    my ($view_config) = @_;
+    $view_config->title = 'Resequencing Alignments';
+    $view_config->_set_defaults(qw(
+				   display_width           120
+				   exon_ori                all
+				   match_display           off
+				   snp_display             off
+				   line_numbering          off
+				   codons_display          off
+				   title_display           off
+			       ));
+    my $sp = $view_config->species;
+    my $vari_hash = $view_config->species_defs->vari_hash($sp);
+    foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS)) {
+	my $set = $vari_hash->{$_};
+	foreach my $ind (@{$set}) {
+	    $view_config->_set_defaults( $ind, 'no' );
+	}
+    }
+    $view_config->storable = 1;
 }
 
 sub form {
-    use Data::Dumper;
     my( $view_config, $object ) = @_;
 
     #shared with compara_markup and marked-up sequence
@@ -51,11 +61,8 @@ sub form {
     $view_config->add_form_element($other_markup_options{'codons_display'});
     $view_config->add_form_element($other_markup_options{'title_display'});
 
- #   $view_config->add_fieldset( "Options for Alignment" );
     my $sp = $view_config->species;
     my $vari_hash = $object->species_defs->vari_hash($sp);
-
-#    warn Dumper($vari_hash);
 
     my $strains =  $object->species_defs->translate( 'strain' );
     my $ref = $vari_hash->{'REFERENCE_STRAIN'};
@@ -68,29 +75,17 @@ sub form {
 
     $strains .= 's';
 
-    my @comparisons;
+    $view_config->add_fieldset( "Options for resequenced $sp $strains" );
     foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS)) {
 	my $set = $vari_hash->{$_};
 	foreach (@{$set}) {
-	    push @comparisons, { value => $_, name => $_ };
+	    $view_config->add_form_element({
+		'type'     => 'CheckBox', 'label' => $_,
+		'name'     => $_,
+		'value'    => 'yes', 'raw' => 1
+	    });
 	}
     }
-    $view_config->add_form_element({
-      'type'     => 'MultiSelect',
-      'name'     => 'individuals',
-      'label'    => "Resequenced $sp $strains",
-      'values'   => \@comparisons,
-      'value'    => $object->param('individuals'),
-      'raw'      => 1,
-    });
-#   $view_config->add_form_element({
-#      'type'     => 'CheckBox',
-#      'name'     => 'individuals',
-#      'label'    => "Resequenced $sp $strains",
-#      'values'   => 'Venter',
-#      'value'    => 'yes',
-#      'raw'      => 1,
-#    });
 }
 
 1;
