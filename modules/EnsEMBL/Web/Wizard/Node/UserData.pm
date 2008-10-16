@@ -413,7 +413,7 @@ sub select_source {
 ## IT MUST NEVER GO BACK INTO CVS.
 
 #      my $frozen = Data::Dumper->Dump( [$source],["source"] );
-      my $frozen = $source      
+      my $frozen = $source      ;
       $self->add_element( 'type'  => 'CheckBox',
                           'name'  => 'dsns',
                           'value' => $frozen,
