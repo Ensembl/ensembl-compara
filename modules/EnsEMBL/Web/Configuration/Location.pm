@@ -81,8 +81,8 @@ sub populate_tree {
     { 'availability' => 'chromosome', 'concise' => 'Synteny'}
   ));
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
-  $variation_menu->append( $self->create_node( 'AlignSequence', "Resequencing ([[counts::reseq_strains]] sets)",
-    [qw(blank      EnsEMBL::Web::Component::Location::VariationAlignment)],
+  $variation_menu->append( $self->create_node( 'SequenceAlignment', "Resequencing ([[counts::reseq_strains]] sets)",
+    [qw(blank      EnsEMBL::Web::Component::Location::SequenceAlignment)],
     { 'availability' => 'has_strains', 'concise' => 'Resequencing Alignments' }
   ));
 }
