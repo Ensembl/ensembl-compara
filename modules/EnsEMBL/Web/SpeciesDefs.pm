@@ -583,6 +583,13 @@ sub multi_hash {
   my $self = shift;
   return $CONF->{'_storage'}{'MULTI'};
 }
+
+sub vari_hash {
+  my $self = shift;
+  my $sp   = shift;
+  return $CONF->{'_storage'}{$sp}{'databases'}{'DATABASE_VARIATION'};
+}
+
 sub multi {
   ### a
   ### Arguments: configuration type (string), species name (string)
@@ -848,6 +855,4 @@ sub table_info {
   return $self->databases->{$db}{'tables'}{$table}||{};
 }
 
-  
-}
 1;
