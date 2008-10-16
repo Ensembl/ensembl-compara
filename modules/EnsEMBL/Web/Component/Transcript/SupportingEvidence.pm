@@ -6,9 +6,6 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
 use Bio::EnsEMBL::Intron;
 
-use Data::Dumper;
-$Data::Dumper::Maxdepth = 2;
-
 sub _init {
   my $self = shift;
   $self->cacheable( 1 );
@@ -274,8 +271,6 @@ sub _content {
       }
     }
   }
-
-#  warn Dumper($t_evidence->{'Q08ET0.1'}{'data'});
 
   #calculate total length of the hit (used for sorting the display)
   while ( my ($hit_name, $hit_details) = each (%{$t_evidence})  ) {
