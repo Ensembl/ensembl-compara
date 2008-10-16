@@ -7,7 +7,6 @@ package EnsEMBL::Web::Data::Session;
 use strict;
 use warnings;
 no warnings 'uninitialized';
-
 use base qw(EnsEMBL::Web::Data);
 
 use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
@@ -63,7 +62,7 @@ sub set_config {
   my $data  = delete $args{data};
   
   my $config = $class->retrieve(%args);
-  
+
   if ($config) {
     $config->data($data);
     $config->save;
@@ -141,27 +140,22 @@ sub invalidate_cache {
   
   $self->SUPER::invalidate_cache(
     $cache,
-    'session['.$self->session_id.']',
+    'session_id['.$self->session_id.']',
     'type['.$self->type.']',
     'code['.$self->code.']',
   );
 }
 
 sub propagate_cache_tags {
-  my $self = shift;
+  my $class = shift;
   my %args = @_;
 
   my @tags;
-  for (my ($key, $value) = each %args) {
+  while (my ($key, $value) = each %args) {
     push @tags, $key.'['.$value.']' if $key && $value;
   }
   
-  $self->SUPER::propagate_cache_tags(
-    'session['.$self->session_id.']',
-    'type['.$self->type.']',
-    'code['.$self->code.']',
-    @tags,
-  ) if ref $self;
+  $class->SUPER::propagate_cache_tags(@tags);
 }
 
 1;
