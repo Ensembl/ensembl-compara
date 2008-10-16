@@ -51,7 +51,7 @@ sub content {
     if ( $refslice->get_individuals('reseq') ) {
       $html = qq(Please select $strains to display from the 'Configure this page' link to the left);
     } else {
-      $html = qq(No resequenced $strains available for these species);
+      $html = qq(No resequenced $strains available for this species);
     }
     return $html;
   }
@@ -94,20 +94,17 @@ sub sequence_markup_and_render {
       $KEY .= sprintf( $key_tmpl, 'e', "THIS STYLE:", "Location of selected exons ");
     }
     sequence_markupExons($object, \%sliceHash);
-    
     if(  $object->param( 'codons_display' ) ne 'off' ){
       sequence_markupCodons($object, \%sliceHash);
       $KEY .= sprintf( $key_tmpl, 'eo', "THIS STYLE:", "Location of START/STOP codons ");
     }
   }
 
-
-  if(0) {# $object->param( 'snp_display' )  ne 'off'){
+  if( $object->param( 'snp_display' )  ne 'off') {
     markupSNPs($object, \%sliceHash);
     $KEY .= sprintf( $key_tmpl, 'ns', "THIS STYLE:", "Location of SNPs" );
     $KEY .= sprintf( $key_tmpl, 'nd', "THIS STYLE:", "Location of deletions" );
   }
-
 
   if ($object->param('line_numbering') eq 'slice' &&  $object->param("RGselect") ) {
      $KEY .= qq{ NOTE:     For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line };
@@ -809,6 +806,109 @@ sub sequence_markupCodons {
   }
 }
 
+
+sub markupSNPs {
+  my ($object, $hRef) = @_;
+
+  my $width = $object->param("display_width") || 60;
+  foreach my $display_name (keys %$hRef) {
+    my $slice =  $hRef->{$display_name}->{slice};
+    my $sstrand = $slice->strand; # SNP strand bug has been fixed in snp_display function
+
+    foreach my $s (@{$slice->get_all_VariationFeatures(1) || []}) {
+      my ( $end, $id, $mask) = ($s->end, $s->variation_name, $snp_On);
+      my ( $start, $allele ) = sort_out_snp_strand($s, $sstrand);
+      if ($end < $start) {
+        ($start, $end) = ($end, $start);
+        $mask = $snp_Del;
+      }
+      $end ++;
+      my $ambiguity = ambiguity_code($allele);
+      push @{$hRef->{$display_name}->{markup}}, { 'pos'     => $start,  'mask'      => $mask, 
+						  'textSNP' => $allele, 'mark'      => 0, 
+						  'snpID'   => $id,     'ambiguity' => $ambiguity };
+      push @{$hRef->{$display_name}->{markup}}, { 'pos'     => $end,    'mask'      => -$mask  };
+
+      # For variations that aren't SNPs
+      my $bin  = int(($start-1) / $width);
+      my $num_of_bins = int(($end-2) / $width);
+      while ($bin < $num_of_bins) {
+        $bin ++;
+        my $pp = $bin * $width + 1;
+        push @{$hRef->{$display_name}->{markup}}, { 'pos' => $pp, 'mask' => $mask, 'textSNP' => $allele   };
+        push @{$hRef->{$display_name}->{markup}}, { 'pos' => $pp-1, 'mark' => 1, 'mask' => -$mask  };
+      }
+    } # end foreach $s (@snps)
+  }
+}
+
+
+sub markupSNPs {
+  my ($object, $hRef) = @_;
+
+  my $width = $object->param("display_width") || 60;
+  foreach my $display_name (keys %$hRef) {
+    my $slice =  $hRef->{$display_name}->{slice};
+    my $sstrand = $slice->strand; # SNP strand bug has been fixed in snp_display function
+
+    foreach my $s (@{$slice->get_all_VariationFeatures(1) || []}) {
+      my ( $end, $id, $mask) = ($s->end, $s->variation_name, $snp_On);
+      my ( $start, $allele ) = sort_out_snp_strand($s, $sstrand);
+      if ($end < $start) {
+        ($start, $end) = ($end, $start);
+        $mask = $snp_Del;
+      }
+      $end ++;
+      my $ambiguity = ambiguity_code($allele);
+      push @{$hRef->{$display_name}->{markup}}, { 'pos'     => $start,  'mask'      => $mask, 
+						  'textSNP' => $allele, 'mark'      => 0, 
+						  'snpID'   => $id,     'ambiguity' => $ambiguity };
+      push @{$hRef->{$display_name}->{markup}}, { 'pos'     => $end,    'mask'      => -$mask  };
+
+      # For variations that aren't SNPs
+      my $bin  = int(($start-1) / $width);
+      my $num_of_bins = int(($end-2) / $width);
+      while ($bin < $num_of_bins) {
+        $bin ++;
+        my $pp = $bin * $width + 1;
+        push @{$hRef->{$display_name}->{markup}}, { 'pos' => $pp, 'mask' => $mask, 'textSNP' => $allele   };
+        push @{$hRef->{$display_name}->{markup}}, { 'pos' => $pp-1, 'mark' => 1, 'mask' => -$mask  };
+      }
+    } # end foreach $s (@snps)
+  }
+}
+
+
+sub sort_out_snp_strand {
+
+  ### GeneSeqView and GeneSeqAlignView
+  ### Arg: variation object
+  ### Arg: slice strand
+  ### Returns the start of the snp relative to the gene
+  ### Returns the snp alleles relative to the orientation of the gene
+
+  my ( $snp, $sstrand ) = @_;
+  my( $fstart, $fend ) = ( $snp->start, $snp->end );
+  if($fstart > $fend) { # Insertion
+    $fstart = $fstart - 2 if $sstrand < 0;
+  }
+  my $allele = $snp->allele_string;
+  
+  # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
+  if ($sstrand < 0) {
+    my @av = split(/\//, $allele);
+    $allele = '';
+
+    foreach (@av) {
+      $allele .= reverse($_).'/';
+    }
+    $allele =~ s/\/$//;
+  }
+
+  # if snp is on reverse strand - flip the bases
+  $allele =~ tr/ACGTacgt/TGCAtgca/ if $snp->strand < 0;
+  return ($fstart, $allele);
+}
 
 
 1;
