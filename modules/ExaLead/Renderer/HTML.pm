@@ -50,11 +50,11 @@ sub render_form {
   my $HIDDEN_FIELDS = '';
   my $QUERY_STRING  = '';
   if( $self->exalead->query ) {
-    $QUERY_STRING = $self->exalead->query->string;
+    $QUERY_STRING =  CGI::escapeHTML($self->exalead->query->string);
     foreach my $query_par ( $self->exalead->query->parameters ) {
       next if $query_par->name eq '_f';
       next if $query_par->name eq '_q'; 
-      $HIDDEN_FIELDS .= sprintf '<input type="hidden" name="%s" value="%s" />', $query_par->{'name'}, $query_par->{'value'};
+#      $HIDDEN_FIELDS .= sprintf '<input type="hidden" name="%s" value="%s" />', $query_par->{'name'}, $query_par->{'value'};
     }
   }
   return qq(
