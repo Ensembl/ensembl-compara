@@ -841,4 +841,13 @@ sub _is_available_artefact{
   return $success; ## Test not found - pass anyway to prevent borkage!
 }
 
+sub table_info {
+  my( $self, $db, $table ) =@_;
+  $db = "DATABASE_".uc($db) unless $db =~ /^DATABASE_/;
+  return {} unless $self->databases->{$db};
+  return $self->databases->{$db}{'tables'}{$table}||{};
+}
+
+  
+}
 1;
