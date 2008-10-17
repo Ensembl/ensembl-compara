@@ -19,8 +19,8 @@ sub _content {
   my $self    = shift; 
   my $no_snps = shift; 
   my $object  = $self->object;
-  my $image_width  = $object->param( 'image_width' ) || 800;
-  my $context      = $object->param( 'context' ) || 100;
+  my $image_width  = $self->image_width || 800;  
+  my $context      = $object->param( 'context' ) || 100; 
   my $extent       = $context eq 'FULL' ? 1000 : $context;
 
   my $master_config = $object->get_imageconfig( "genesnpview_transcript" );
@@ -186,7 +186,7 @@ sub _content {
     $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps, $context_count];
   } 
 
-  $master_config->tree->dump("Tree", '[[caption]]' );
+  #$master_config->tree->dump("Tree", '[[caption]]' );
   $master_config->modify_configs( ## Turn on track associated with this db/logic name
     [$master_config->get_track_key( 'gene', $object )],
     {qw(on on show_labels off)}  ## also turn off the transcript labels...

@@ -64,7 +64,7 @@ sub content {
   # General page configs -------------------------------------
   # Get 4 configs (one for each section) set width to width of context config
   my $Configs;
-  my $image_width    = $object->param( 'image_width' ) || 800;
+  my $image_width  = $self->image_width || 800;
   my $context      = $object->param( 'context' ) || 100;
 
   foreach (qw(context transcript transcripts_bottom transcripts_top)) {
