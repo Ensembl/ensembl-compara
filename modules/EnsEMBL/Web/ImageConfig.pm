@@ -300,7 +300,6 @@ sub add_das_track {
   my $node = $self->get_node($menu);
      $node = $self->get_node('other') unless $node; 
   return unless $node;
-warn "$menu -> $source -> ",$node->key;
   $node->append( $self->create_track( "das_".$source->logic_name,'[DAS] '.$source->label, {
     'glyphset'    => '_das',
     'display'     => 'off',
@@ -326,16 +325,27 @@ sub _merge {
   my( $self, $_sub_tree, $sub_type ) = @_;
   my $data = {};
   my $tree = $_sub_tree->{'analyses'};
+ 
+
+  my $config_name = $self->{'type'};
+
   foreach my $analysis (keys %$tree) {
     my $sub_tree = $tree->{$analysis};
     next unless $sub_tree->{'disp'}; ## Don't include non-displayable tracks
-    warn $sub_tree->{'web'};
+local $Data::Dumper::Indent=0;
+    warn Data::Dumper::Dumper($sub_tree->{'web'});
     warn ".... $sub_type {",$sub_tree->{'web'}{ $sub_type },"}";
     next if exists $sub_tree->{'web'}{ $sub_type }{'do_not_display'};
     my $key = $sub_tree->{'web'}{'key'} || $analysis;
     foreach ( keys %{$sub_tree->{'web'}||{}} ) {
+warn "............ $_ ...............";
       next if $_ eq 'desc';
-      $data->{$key}{$_}    ||= $sub_tree->{'web'}{$_};     # Longer form for help and configuration!
+      if( $_ eq 'default' ) {
+warn ".... $_ $config_name : ",keys %{$sub_tree->{'web'}{$_}||{}};
+        $data->{$key}{'display'} ||= $sub_tree->{'web'}{$_}{$config_name};
+      } else {
+        $data->{$key}{$_}    ||= $sub_tree->{'web'}{$_};     # Longer form for help and configuration!
+      }
     }
     if( $sub_tree->{'web'}{'key'} ) {
       if( $sub_tree->{'desc'} ) {
@@ -428,7 +438,7 @@ sub add_protein_align_feature {
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
-      'display'     => $data->{$key_2}{'display'}||'unlimited', ## Default to on at the moment - change to off by default!
+      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
       'renderers'   => [
         'off'         => 'Off',
         'normal'      => 'Normal',
@@ -478,7 +488,7 @@ sub add_prediction_transcript {
       'colourset'   => 'prediction',
       'colour_key'  => lc($key_2),
       'description' => $data->{$key_2}{'description'},
-      'display'     => $data->{$key_2}{'display'}||'normal', ## Default to on at the moment - change to off by default!
+      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
       'renderers'   => [qw(off Off normal Normal)],
       'strand'      => 'b'
     }));
@@ -542,10 +552,10 @@ sub add_gene {
         'caption'     => $data->{$key_2}{'caption'},
 	'colour_key'  => $data->{$key_2}{'colour_key'},
         'description' => $data->{$key_2}{'description'},
-        'display'     => $data->{$key_2}{'display'}||($type eq 'transcript' ? 'transcript' : 'normal'), ## Default to on at the moment - change to off by default!
+        'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
         'renderers'   => $type eq 'transcript' ?
           [qw(off Off transcript Expanded collapsed Collapsed)] : 
-          [qw(off Off normal Normal)],
+          [qw(off Off gene_nolabel gene_label )],
         'strand'      => $type eq 'gene' ? 'r' : 'b'
       }));
       $flag=1;
@@ -784,7 +794,6 @@ sub add_synteny {
       'colours'     => $self->species_defs->colour( 'synteny' ),
       'display'     => 'off', ## Default to on at the moment - change to off by default!
       'renderers'   => [qw(off Off normal Normal)],
-      'on'          => 'off',
       'height'      => 4,
       'strand'      => 'r'
     }));
@@ -920,8 +929,8 @@ sub create_track {
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
   }
-  $details->{'strand'}   ||= 'b';  # Make sure we have a strand setting!!
-  $details->{'display'}  ||= 'on'; # Show unless we explicitly say no!!
+  $details->{'strand'}   ||= 'b';      # Make sure we have a strand setting!!
+  $details->{'display'}  ||= 'normal'; # Show unless we explicitly say no!!
   $details->{'renderers'}||= [qw(off Off normal Normal)];
   $details->{'colours'}  ||= $self->species_defs->colour( $options->{'colourset'} ) if exists $options->{'colourset'};
   $details->{'glyphset'} ||= $code;
