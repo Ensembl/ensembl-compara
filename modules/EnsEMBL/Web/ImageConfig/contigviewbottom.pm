@@ -4,6 +4,10 @@ no strict 'refs';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub init_user {
+  my $self = shift;
+  return $self->load_user_tracks;
+}
 sub init {
   my ($self ) = @_;
 
@@ -41,13 +45,14 @@ sub init {
     'simple'          => 'Simple features',
     'misc_feature'    => 'Misc. regions',
     'repeat'          => 'Repeats',
-    'variation'       => 'Variaton features',
+    'variation'       => 'Variation features',
     'functional'      => 'Functional genomics',
     'multiple_align'  => 'Multiple alignments',
     'pairwise_blastz' => 'BLASTZ alignments',
     'pairwise_tblat'  => 'Translated blat alignments',
     'pairwise_other'  => 'Pairwise alignment',
-    'user_data'       => 'User uploaded data', # DAS/URL tracks/uploaded data/blast responses
+    'user_data'       => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
+    'external_data'   => 'External data',
     'other'           => 'Additional decorations',
     'information'     => 'Information',
     'options'         => 'Options'
@@ -99,6 +104,8 @@ sub init {
     [ 'opt_lines',         'Show registry lines?'         ],
     [ 'opt_restrict_zoom', 'Restriction enzymes on zoom?' ],
   );
+
+  #use Data::Dumper; local $Data::Dumper::Indent = 1; warn Data::Dumper::Dumper( $self->tree );
 }
 
 1;
