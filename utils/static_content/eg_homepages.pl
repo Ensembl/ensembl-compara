@@ -49,29 +49,23 @@ foreach my $species (@valid_species) {
     $info->{'assembly'}   = $species_defs->get_config($species, "ASSEMBLY_NAME");
     $info->{'genebuild'}  = $species_defs->get_config($species, "GENEBUILD_DATE");
     $info->{'species_dbid'}  = $species_defs->get_config($species, "SPECIES_DBID");
+    $info->{'filename'} = $species_defs->get_config($species, "FILENAME");
+
+
     if (my $group = $info->{'group'}  = $species_defs->get_config($species, "SPECIES_GROUP")) {
 	push @{$group_info{$group}->{'species'}}, $species;
 	
     }
+
+    my $h = $species_defs->get_config($species, "databases");
+    $info->{'db'} = $h->{DATABASE_CORE};
     $species_info{$species} = $info;
 
 }
 
-my $h = $species_defs->{_storage};
-foreach my $k (sort keys %$h) {
-    next unless ref $h->{$k} eq 'HASH';
-
-    if (my @slist = @{$h->{$k}->{SPECIES_LIST} || []}) {
-	foreach my $sp (@slist) {
-	    $sp =~ s/ /\_/g;
-	    $species_info{$sp}->{'db'} = $h->{$k}->{databases}->{ENSEMBL_DB};
-	}
-    }
-}
-
 #  warn Dumper \%species_info;
 #  warn Dumper \%group_info;
-
+#exit 0;
 my @species_inconf = @{$SiteDefs::ENSEMBL_SPECIES};
 
 my ($help, @species, $site_type, $mirror);
@@ -104,6 +98,8 @@ else {
 }
 
 warn "Output to $outdir ... ";
+
+
 
 generate_index_pages($outdir);
 generate_about_pages($outdir);
@@ -198,7 +194,8 @@ sub generate_index_pages {
 
 	foreach my $spp (@sp_list) {
 	    my $spdir = "$spgdir/$spp";
-	    
+	    my $sppdir = "$spgdir/".$species_info{$spp}->{'filename'};
+	    $sppdir or (warn "No filename for $spp" and next);
 	    if( ! -e $spdir ){
 		warn "[INFO]: Creating species directory $spdir\n";
 		eval { mkpath($spdir) };
@@ -255,6 +252,7 @@ sub generate_entry_points {
 	    my $dbname = $species_info{$spp}->{db}->{NAME};
 	    if (! exists $entry_info{$dbname}) {
 		my $dbh = db_connect($species_info{$spp}->{db});
+		if (!$dbh) {warn "NO DB for $spp"; exit}
 		my $sth = $dbh->prepare($sql);
 		$sth->execute();
 		my $sinfo;
@@ -273,7 +271,7 @@ sub generate_entry_points {
 #	    warn "$spp : @entries \n";
 
 	    my $sp_path = "$sp_group/$spp";
-	    my $spdir = "$spgdir/$spp/ssi";
+	    my $spdir = sprintf("$spgdir/%s/ssi"), $species_info{$spp}->{'filename'};
 
 	    if( ! -e $spdir ){
 		warn "[INFO]: Creating species directory $spdir\n";
@@ -343,7 +341,8 @@ sub generate_karyomaps {
 	my @sp_list = @{$group_info{$sp_group}->{'species'}||[]};
 	foreach my $spp (@sp_list) {
 	    my $sp_path = "$spgdir/$spp";
-	    my $spdir = "$spgdir/$spp/ssi";
+	    my $spdir = sprintf("$spgdir/%s/ssi"), $species_info{$spp}->{'filename'};
+#	    my $spdir = "$spgdir/$spp/ssi";
 
 	    if( ! -e $spdir ){
 		warn "[INFO]: Creating species directory $spdir\n";
@@ -454,7 +453,8 @@ sub generate_species_stats {
 #	    warn "$spp : @entries \n";
 
 	    my $sp_path = "$sp_group/$spp";
-	    my $spdir = "$spgdir/$spp/ssi";
+	    my $spdir = sprintf("$spgdir/%s/ssi"), $species_info{$spp}->{'filename'};
+#	    my $spdir = "$spgdir/$spp/ssi";
 
 	    if( ! -e $spdir ){
 		warn "[INFO]: Creating species directory $spdir\n";
@@ -575,6 +575,15 @@ sub db_connect {
     return undef();
   }
   return $dbh;
+}
+
+
+sub dump_keys {
+    my ($hash) = @_;
+    foreach my $key (sort keys %$hash) {
+	warn "$key => $hash->{$key} \n";
+    }
+    warn '-' x 50;
 }
 
 exit;
