@@ -12,7 +12,7 @@ our @ISA = qw(EnsEMBL::Web::Object);
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
 use EnsEMBL::Web::File::Text;
-use Data::Bio::Text::DensityFeatureParser;
+use EnsEMBL::Web::Text::DensityFeatureParser;
 use Digest::MD5 ;
 
 #----------------------------------------------------------------------------
@@ -272,7 +272,7 @@ sub get_synteny_nav {
 
 =head2 parse_user_data
 
- Arg[1]     : $parser - a Data::Bio::Text parser object
+ Arg[1]     : $parser - a EnsEMBL::Web::Text parser object
  Example     : 
  Description : Parses user input and stores each feature as an object 
  Return type : None
