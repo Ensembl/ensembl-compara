@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Component::Location;
 
 use EnsEMBL::Web::Component;
-use Data::Bio::Text::FeatureParser;
+use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::File::Text;
@@ -72,7 +72,7 @@ sub create_userdata_pointers {
 warn Dumper( $data );
   my $format  = $userdata->{'format'};
 
-  my $parser = Data::Bio::Text::FeatureParser->new();
+  my $parser = EnsEMBL::Web::Text::FeatureParser->new();
   $parser->parse($data, $format);
 
   my $zmenu_config = {
