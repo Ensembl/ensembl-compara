@@ -10,7 +10,7 @@ use Bio::EnsEMBL::GlyphSet;
 sub _init {
   my ($self) = @_;
 
-  my $Config        = $self->{'config'};
+  my $Config  = $self->{'config'}; 
   my $colours = $self->my_config('colours');
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
@@ -100,7 +100,7 @@ sub _init {
       $Config->{'variation_types'}{$type} = 1;
     }
   }
-  push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{"SARA"}->[1],   $colours->{"SARA"}->[0] if  $ENV{'ENSEMBL_SCRIPT'} eq 'transcriptsnpview';
+  push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{"sara"}->[1],   $colours->{"sara"}->[0] if  $ENV{'ENSEMBL_SCRIPT'} eq 'transcriptsnpview';
 }
 
 sub zmenu {
