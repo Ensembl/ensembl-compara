@@ -20,7 +20,9 @@ our $MEMD = new EnsEMBL::Web::Cache;
 sub availability {
   my $self = shift;
   my $hash = $self->_availability;
-  if( $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ) {
+  if( $self->Obj->isa('EnsEMBL::Web::Fake') ) {
+    $hash->{$self->Obj->type} = 1;
+  } elsif( $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ) {
     $hash->{'history'}    = 1;
   } elsif( $self->Obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
     $hash->{'either'}     = 1;
@@ -339,7 +341,13 @@ sub caption           {
   return $caption;
 }
 
-sub type_name         { my $self = shift; return $self->species_defs->translate('Transcript'); }
+sub type_name         {
+  my $self = shift;
+  if( $self->Obj->isa( 'EnsEMBL::Web::Fake' ) ){
+    return ucfirst($self->Obj->type);
+  }
+  return $self->species_defs->translate('Transcript');
+}
 sub source            { my $self = shift; return $self->gene ? $self->gene->source : undef; }
 sub stable_id         { my $self = shift; return $self->Obj->stable_id;  }
 sub feature_type      { my $self = shift; return $self->Obj->type;       }
@@ -420,8 +428,8 @@ sub get_interpro {
 
 sub get_domain_genes {
   my $self = shift;
-  my $gene = $self->core_objects->gene;
-  return $gene->adaptor->fetch_all_by_domain($self->param('domain')); 
+  my $a = $self->gene ? $self->gene->adaptor : $self->Obj->adaptor;
+  return $a->fetch_all_by_domain($self->param('domain')); 
 }
 
 
@@ -1142,6 +1150,7 @@ sub get_prediction_method {
 
 sub display_xref {
   my $self = shift;
+  return $self->transcript->name if $self->transcript->isa('EnsEMBL::Web::Fake');
   return unless $self->transcript->can('display_xref');
   my $trans_xref = $self->transcript->display_xref();
   return ( $trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name ) if $trans_xref;
