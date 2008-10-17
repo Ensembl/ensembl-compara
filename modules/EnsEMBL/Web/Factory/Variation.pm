@@ -22,7 +22,7 @@ sub createObjects {
   return $self->problem( 'Fatal', 'Database Error', "Could not connect to the variation database." ) unless $variation_db;
   $variation_db->dnadb($dbs->{'core'});
 
-  my $snp    = $self->param('snp');
+  my $snp    = $self->param('snp') || $self->param('v');
   my $source = $self->param('source');
   return $self->problem( 'Fatal', 'SNP ID required', "A SNP ID is required to build this page." ) unless $snp;
 
