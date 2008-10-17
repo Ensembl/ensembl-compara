@@ -13,16 +13,14 @@ sub ajax_content   { return undef;   }
 sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return undef;  }
 sub content_panel  { return $_[0]->_content_panel;  }
-sub context_panel  { return $_[0]->_context_panel;  }
+sub context_panel  { return $_[0]->_context_panel(1);  } ## RAW AS CONTAINS <i> tags
 
 sub populate_tree {
   my $self = shift;
   my $sd = $self->{object}->species_defs;
 
   $self->create_node( 'Index', "Description",
-    [qw(
-      blurb    EnsEMBL::Web::Component::Info::SpeciesBlurb
-    )],
+    [qw(blurb    EnsEMBL::Web::Component::Info::SpeciesBlurb)],
     { 'availability' => 1}
   );
 
@@ -41,9 +39,7 @@ sub populate_tree {
   ));
 
   $self->create_node( 'WhatsNew', "What's New",
-    [qw(
-      whatsnew    EnsEMBL::Web::Component::Info::WhatsNew
-    )],
+    [qw(whatsnew    EnsEMBL::Web::Component::Info::WhatsNew)],
     { 'availability' => 1}
   );
 
