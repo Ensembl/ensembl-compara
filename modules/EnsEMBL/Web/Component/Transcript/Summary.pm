@@ -16,6 +16,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
+  return sprintf( '<p>%s</p>', $object->Obj->description ) if $object->Obj->isa('EnsEMBL::Web::Fake');
   return '<p>This transcript is not in the current gene set</p>' unless $object->Obj->isa('Bio::EnsEMBL::Transcript');
 
 ## Grab the description of the object...
