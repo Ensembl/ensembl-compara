@@ -40,7 +40,10 @@ sub process {
     if ($content) {
       $request = $content;
     } else {
-      $request->header('Cookie' => $self->r->headers_in->{'Cookie'});
+      $request->header(
+        Cookie  => $self->r->headers_in->{'Cookie'},
+        Referer => $ENV{REQUEST_URI},
+      );
       $agent->register($request);
     }
 
