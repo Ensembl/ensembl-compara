@@ -278,8 +278,8 @@ sub get_Slice {
 
 sub gene_name {
   my $self = shift;
-  my( $disp_id ) = $self->display_xref || $self->stable_id;
-  return $disp_id;
+  my( $disp_id ) = $self->display_xref;
+  return $disp_id || $self->stable_id;
 }
 
 sub short_caption {
@@ -385,7 +385,8 @@ sub chromosome {
 sub display_xref {
   my $self = shift; 
   my $trans_xref = $self->Obj->display_xref();
-  return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name, $trans_xref->info_text ) if $trans_xref;
+  return undef unless  $trans_xref;
+  return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name, $trans_xref->info_text );
 }
 
 sub mod_date {
