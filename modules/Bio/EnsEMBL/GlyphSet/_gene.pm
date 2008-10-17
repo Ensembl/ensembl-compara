@@ -64,7 +64,7 @@ sub _init {
     my $gene_col   = $self->my_colour( $gene_key );
 
     my $gene_type  = $self->my_colour( $gene_key, 'text' );
-    my $label      = $gene_type.' '.$g->external_name;
+    my $label      = $g->external_name || $g->stable_id;
 #    my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
     my $high = $g->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'g'};
 
