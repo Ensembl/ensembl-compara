@@ -161,12 +161,20 @@ warn "SETTING MODAL DIALOG TO ". $webpage->page->{'_modal_dialog_'};
       my $ic = $session->getImageConfig( $config, $config );
       $vc->altered = $ic->update_from_input( $input );
       $session->store;
-      if( $ajax_flag && $input->param('submit') ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+      if( $input->param('submit') ) {
+        if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
 ## Note reset links drop back into the form....
         ## We need to
-        CGI::header( 'text/plain' );
-        print "SUCCESS";
-        return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config)";
+          CGI::header( 'text/plain' );
+          print "SUCCESS";
+          return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config)";
+        }
+        if( $input->param('_') eq 'close' ) {
+          CGI::redirect( $input->param('_referer') );
+          return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config Redirect (closing form)";
+        }
+        CGI::redirect( $input->param('_') );
+        return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config Redirect (new form page)";
       }
       ## If not AJAX - refresh page!
       # redirect( to this page )
@@ -196,11 +204,19 @@ warn "SETTING MODAL DIALOG TO ". $webpage->page->{'_modal_dialog_'};
         $r->headers_out->add(  'Set-cookie' => $cookie );
         $r->err_headers_out->add( 'Set-cookie' => $cookie );
       }
-      if( $ajax_flag && $input->param('submit') ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
-        ## We need to 
-        CGI::header( 'text/plain' );
-	print "SUCCESS";
-        return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}";
+      if( $input->param('submit') ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+        if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+          ## We need to 
+          CGI::header( 'text/plain' );
+  	  print "SUCCESS";
+          return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} AJAX";
+        }
+        if( $input->param('_') eq 'close' ) {
+          CGI::redirect( $input->param('_referer') );
+          return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} Redirect (closing form)";
+        }
+        CGI::redirect( $input->param('_') );
+        return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} Redirect (new form page)";
       }
     }
   }
@@ -384,11 +400,8 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
         }
         $webpage->configure( $object, @sections );
       }
-  warn "==================== ",$webpage->dataObjects->[0]->get_problem_type('redirect');
       if( $webpage->dataObjects->[0] && $webpage->dataObjects->[0]->has_problem_type( 'redirect' ) ) {
         my($p) = $webpage->dataObjects->[0]->get_problem_type('redirect');
-  use Data::Dumper;      warn Data::Dumper::Dumper( $p );
-        warn $p->name;
         my $u = $p->name;
         if( $r->headers_in->{'X-Requested-With'} ) {
           $u.= ($u=~/\?/?';':'?').'x_requested_with='.$r->headers_in->{'X-Requested-With'};
