@@ -4,6 +4,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Root);
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Fake;
 
 sub new {
   my( $class, $input, $dbconnection, $flag ) = @_;
@@ -46,6 +47,7 @@ sub transcript {
 sub transcript_short_caption {
   my $self = shift;
   return '-' unless $self->transcript;
+  return ucfirst($self->transcript->type).': '.$self->transcript->stable_id if $self->transcript->isa('EnsEMBL::Web::Fake');
   my $dxr = $self->transcript->can('display_xref') ? $self->transcript->display_xref : undef;
   my $label = $dxr ? $dxr->display_id : $self->transcript->stable_id;
   return length( $label ) < 15 ? "Transcript: $label" : "Trans: $label";
@@ -215,7 +217,7 @@ sub _generate_objects {
     } else {
       my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
       $t = $a->fetch_by_stable_id( $self->param('t') ); 
-      $self->transcript( $t );
+      $self->transcript( $t ) if $t;
     }
   }
   if( $self->param('pt') ) {
@@ -227,6 +229,19 @@ sub _generate_objects {
       my $slice = $self->transcript->feature_Slice;
          $slice = $slice->invert() if $slice->strand < 0;
       $self->location( $slice );
+    }
+  }
+  if( $self->param('domain') ) {
+    if( ! $self->transcript ) {
+      my $tdb         = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
+      my $tdb_adaptor = $self->database($tdb);
+      my $sth = $tdb_adaptor->dbc()->db_handle()->prepare( 'select i.interpro_ac,x.display_label, x.description from interpro as i left join xref as x on i.interpro_ac=x.dbprimary_acc where i.interpro_ac = ?' );
+      $sth->execute( $self->param('domain') ); 
+      my ($t,$n,$d) = $sth->fetchrow();
+      if( $t ) {
+        $self->transcript( new EnsEMBL::Web::Fake({ 'view' => 'Domains/Genes', 'type'=>'Interpro Domain', 'id' => $t, 'name' => $n, 'description' => $d, 'adaptor' => $tdb_adaptor->get_GeneAdaptor }) );
+        $self->{'parameters'}{'domain'} = $self->param('domain');
+      }
     }
   }
   if( !$self->transcript && $self->param('g') ) {
@@ -241,6 +256,10 @@ sub _generate_objects {
         $self->{'parameters'}{'t'} = $t->stable_id;
       }
       $self->_get_location_from_gene;
+    } else {
+      my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
+      $g = $a->fetch_by_stable_id( $self->param('g') ); 
+      $self->gene( $g ) if $g;
     }
   }
   if( $self->param('r') ) {
@@ -250,7 +269,9 @@ sub _generate_objects {
   }
   $self->{'parameters'}{'r'} = $self->location->seq_region_name.':'.$self->location->start.'-'.$self->location->end if $self->location;
   if( $self->transcript ) {
-    if( $self->transcript->isa('Bio::EnsEMBL::StableIdHistoryTree') ) {
+    if( $self->transcript->isa('EnsEMBL::Web::Fake')) {
+      ## Do nothing!
+    } elsif( $self->transcript->isa('Bio::EnsEMBL::StableIdHistoryTree') ) {
       $self->{'parameters'}{'t'} = $self->param('t');
     } else {
       $self->{'parameters'}{$self->transcript->isa('Bio::EnsEMBL::PredictionTranscript')?'pt':'t'} = $self->transcript->stable_id;
