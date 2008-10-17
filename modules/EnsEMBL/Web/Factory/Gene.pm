@@ -59,12 +59,12 @@ sub createObjects {
   my $KEY = 'gene';
   if( $identifier = $self->param( 'peptide' ) ){ 
     @fetch_calls = qw(fetch_by_translation_stable_id fetch_by_transcript_stable_id);
-  } elsif( $identifier = $self->param( 'transcript' ) ){ 
+  } elsif( $identifier = $self->param( 'transcript' ) || $self->param( 't' ) ){ 
     @fetch_calls = qw(fetch_by_transcript_stable_id fetch_by_translation_stable_id);
   } elsif( $identifier = $self->param( 'exon' ) ){ 
     @fetch_calls = qw(fetch_by_exon_stable_id);
   } elsif( $identifier = $self->param( 'gene' ) || $self->param('g') || $self->param( 'anchor1' ) ){
-    $KEY = 'anchor1' unless $self->param('gene');
+    $KEY = 'anchor1' unless $self->param('gene') || $self->param('g');
     @fetch_calls = qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_translation_stable_id); 
   } else {
     my %sample = %{$self->species_defs->SAMPLE_DATA};
@@ -82,6 +82,7 @@ qq(<p>This view requires a gene, transcript or protein identifier in the URL. Fo
   (my $T = $identifier) =~ s/^(\S+)\.\d*/$1/g ; # Strip versions
   (my $T2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; # Strip versions
   foreach my $fetch_call(@fetch_calls) {  
+    warn "FETCH($fetch_call) BY ID $identifier $T2 $T";
     eval { $geneobj = $adaptor->$fetch_call($identifier) } unless $geneobj; 
     eval { $geneobj = $adaptor->$fetch_call($T2) } unless $geneobj;
     eval { $geneobj = $adaptor->$fetch_call($T) } unless $geneobj;
@@ -89,7 +90,9 @@ qq(<p>This view requires a gene, transcript or protein identifier in the URL. Fo
 
   if(!$geneobj || $@) {
     $self->_archive( 'Gene', $KEY );
+warn "ARCHIVE..";
     return if( $self->has_a_problem );
+warn "KNOWN..";
     $self->_known_feature( 'Gene', $KEY );
     $self->clear_problems if $KEY eq 'anchor1';
     return ;    
