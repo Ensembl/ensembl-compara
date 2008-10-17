@@ -29,8 +29,8 @@ sub _init {
     return;
   }
   my $sample         = $Config->{'transcript'}->{'sample'};
-  my $A = $Config->get( $type, 'type' ) eq 'bottom' ? 0 : 1;
-
+  my $A = $self->my_config('type') eq 'bottom' ? 0 : 1;
+ 
   my %draw_coverage = (
     $coverage_levels[0] => [0, "grey70"],
     $coverage_levels[1] => [1, "grey40"],
@@ -38,8 +38,10 @@ sub _init {
 
 
   # Drawing stuff
-  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
-  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);
+  my $fontname      = $Config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'}; 
+  my($font_w_bp, $font_h_bp) = $Config->texthelper->px2bp($fontname);   
+     
+
 
   foreach my $coverage ( sort { $a->[2]->level <=> $b->[2]->level } @$coverage_obj  ) {
     my $level  = $coverage->[2]->level;

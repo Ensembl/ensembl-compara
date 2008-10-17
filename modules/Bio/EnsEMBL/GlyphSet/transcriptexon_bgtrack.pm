@@ -10,7 +10,7 @@ use Bio::EnsEMBL::GlyphSet;
 sub _init {
   my ($self) = @_;
   my $Config        = $self->{'config'};
-  my $strand_flag   = $self->{'config'}->get('transcriptexon_bgtrack','str');
+  my $strand_flag   = $self->my_config('strand'); #->get('transcriptexon_bgtrack','str');
   my $strand  = $self->strand();
   return if ( $strand_flag eq 'f' && $strand != 1 ) || ( $strand_flag eq 'r'  && $strand == 1 );
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
@@ -18,11 +18,12 @@ sub _init {
   my $h             = 1;
     
   my @bitmap        = undef;
-  my $colour        = $Config->get('transcriptexon_bgtrack','col' );
+  my $colour        = $self->my_config ('colours'); #Config->get('transcriptexon_bgtrack','col' );
 
   my $fontname      = "Tiny";    
   my $pix_per_bp    = $Config->transform->{'scalex'};
-  my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
+ # my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
+  my $bitmap_length = int($Config->container_width() * $pix_per_bp);
 
   my $length  = $container->length;
     
@@ -47,7 +48,8 @@ sub _init {
       }
     } 
   }
-  my $tag = $Config->get( 'transcriptexon_bgtrack', 'tag' );
+  #my $tag = $Config->get( 'transcriptexon_bgtrack', 'tag' );
+  my $tag = $self->my_config('tag');
   $tag ++ if $strand == -1;
   my $start = $container->start();
   my @exons = sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } map { [ split /:/, $_ ] } keys %exons;
