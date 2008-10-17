@@ -19,17 +19,24 @@ sub new {
     '_classes'            => [],
     '_options'            => {},
     '_image_config_names' => {},
+    '_default_config'     => '_page',
+    '_can_upload'         => 0,
     '_form'               => undef,
     '_url'                => undef,
     'no_load'             => undef,
-    'can_upload'          => 0
   };
 
   bless($self, $class);
   return $self;
 }
 
+sub default_config :lvalue {
+### a
+  $_[0]->{_default_config};
+}
+
 sub real :lvalue {
+### a
   $_[0]->{'real'};
 }
 
@@ -74,7 +81,7 @@ sub add_image_configs { ## Value indidates that the track can be configured for 
 }
 
 sub can_upload :lvalue {
-  $_[0]->{'can_upload'}
+  $_[0]->{'_can_upload'}
 }
 sub has_image_config {
   my $self = shift;
