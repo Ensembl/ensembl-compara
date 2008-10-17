@@ -21,7 +21,7 @@ our %mapping = (
   'geneseqview'           => { 'type' => 'Gene',       'action' => 'Seq',           'initial_release' => 34 },
   'genesnpview'           => { 'type' => 'Gene',       'action' => 'Variation',     'initial_release' => 1 },
   'genespliceview'        => { 'type' => 'Gene',       'action' => 'Splice',        'initial_release' => 34 },
-  'genetreeview'          => { 'type' => 'Gene',       'action' => 'Tree',          'initial_release' => 40 },
+  'genetreeview'          => { 'type' => 'Gene',       'action' => 'Compara_Tree',  'initial_release' => 40 },
   'geneview'              => { 'type' => 'Gene',       'action' => 'Summary',       'initial_release' => 1 },
   'helpview'              => { 'type' => 'Help',       'action' => 'Search',        'initial_release' => 34 },
   'idhistoryview'         => { 'type' => 'Gene',       'action' => 'History',       'initial_release' => 39 },
