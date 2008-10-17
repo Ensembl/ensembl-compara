@@ -8,7 +8,7 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 use CGI qw(escapeHTML);
 use Data::Dumper;
-use Data::Bio::Text::FeatureParser;
+use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::Text;
 
 sub _init {
