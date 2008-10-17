@@ -1,8 +1,8 @@
-package Data::Bio::Text::FeatureParser::GBrowse;
+package EnsEMBL::Web::Text::FeatureParser::GBrowse;
 
 =head1 NAME
 
-Data::Bio::Text::FeatureParser::GBrowse;
+EnsEMBL::Web::Text::FeatureParser::GBrowse;
 
 =head1 SYNOPSIS
 
@@ -10,7 +10,7 @@ This object parses data supplied by the user in BED format and identifies sequen
 
 =head1 DESCRIPTION
 
-    my $parser = Data::Bio::Text::FeatureParser->new();
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
     $parser->init($data);
     $parser->parse($data);
 
@@ -25,11 +25,11 @@ Please see http://www.ensembl.org/code_licence.html for details
 
 use strict;
 use warnings;
-use Data::Bio::Text::FeatureParser;
-use Data::Bio::Text::Feature::GBrowse;
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::Text::Feature::GBrowse;
 use Data::Dumper;
 
-our @ISA = qw(Data::Bio::Text::FeatureParser);
+our @ISA = qw(EnsEMBL::Web::Text::FeatureParser);
 
 #----------------------------------------------------------------------
 
@@ -135,7 +135,7 @@ sub parse_row {
 			my ($fstart, $fend) = ($fpart=~/\.\./) ? split /\.\./, $fpart : split /\-/, $fpart;
 			my $fstrand = ($fstart > $fend) ? -1 : 1;
 
-			$self->store_feature( $current_key , Data::Bio::Text::Feature::GBrowse->new( [$wigConfig->{'name'}, $fstart, $fend, $fstrand, $fname, $fscore, $ftype, $fdesc, $flink]));
+			$self->store_feature( $current_key , EnsEMBL::Web::Text::Feature::GBrowse->new( [$wigConfig->{'name'}, $fstart, $fend, $fstrand, $fname, $fscore, $ftype, $fdesc, $flink]));
 		    }
 		}
 	    }

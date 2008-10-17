@@ -1,8 +1,8 @@
-package Data::Bio::Text::Feature::WIG;
+package EnsEMBL::Web::Text::Feature::WIG;
 use strict;
-use Data::Bio::Text::Feature;
+use EnsEMBL::Web::Text::Feature;
 use vars qw(@ISA);
-@ISA = qw(Data::Bio::Text::Feature);
+@ISA = qw(EnsEMBL::Web::Text::Feature);
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }
 sub strand   { return -1;}

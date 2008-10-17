@@ -1,8 +1,8 @@
-package Data::Bio::Text::FeatureParser::generic;
+package EnsEMBL::Web::Text::FeatureParser::generic;
 
 =head1 NAME
 
-Data::Bio::Text::FeatureParser::generic;
+EnsEMBL::Web::Text::FeatureParser::generic;
 
 =head1 SYNOPSIS
 
@@ -10,7 +10,7 @@ This object parses data supplied by the user in BED format and identifies sequen
 
 =head1 DESCRIPTION
 
-    my $parser = Data::Bio::Text::FeatureParser->new();
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
     $parser->init($data);
     $parser->parse($data);
 
@@ -25,11 +25,11 @@ Please see http://www.ensembl.org/code_licence.html for details
 
 use strict;
 use warnings;
-use Data::Bio::Text::FeatureParser;
-use Data::Bio::Text::Feature::generic;
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::Text::Feature::generic;
 use Data::Dumper;
 
-our @ISA = qw(Data::Bio::Text::FeatureParser);
+our @ISA = qw(EnsEMBL::Web::Text::FeatureParser);
 
 #----------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ sub parse_row {
     } else {
 	my @ws_delimited = split /\s+/, $row; 
 	my $current_key = $self->{'_current_key'} ; # $ws_delimited[4]
-        $self->store_feature( $current_key , Data::Bio::Text::Feature::generic->new( \@ws_delimited ) ) 
+        $self->store_feature( $current_key , EnsEMBL::Web::Text::Feature::generic->new( \@ws_delimited ) ) 
           if $self->filter($ws_delimited[1],$ws_delimited[2],$ws_delimited[3]);
 
 

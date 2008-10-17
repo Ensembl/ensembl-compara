@@ -1,4 +1,4 @@
-package Data::Bio::Text::Feature;
+package EnsEMBL::Web::Text::Feature;
 
 use strict;
 use warnings;

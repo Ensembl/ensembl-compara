@@ -1,8 +1,8 @@
-package Data::Bio::Text::FeatureParser::PSL;
+package EnsEMBL::Web::Text::FeatureParser::PSL;
 
 =head1 NAME
 
-Data::Bio::Text::FeatureParser::PSL;
+EnsEMBL::Web::Text::FeatureParser::PSL;
 
 =head1 SYNOPSIS
 
@@ -10,7 +10,7 @@ This object parses data supplied by the user in BED format and identifies sequen
 
 =head1 DESCRIPTION
 
-    my $parser = Data::Bio::Text::FeatureParser->new();
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
     $parser->init($data);
     $parser->parse($data);
 
@@ -25,11 +25,11 @@ Please see http://www.ensembl.org/code_licence.html for details
 
 use strict;
 use warnings;
-use Data::Bio::Text::FeatureParser;
-use Data::Bio::Text::Feature::PSL;
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::Text::Feature::PSL;
 use Data::Dumper;
 
-our @ISA = qw(Data::Bio::Text::FeatureParser);
+our @ISA = qw(EnsEMBL::Web::Text::FeatureParser);
 
 #----------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ sub parse_row {
     } else {
 	my $current_key = $self->{'_current_key'} ;
 	my @ws_delimited = split /\s+/, $row; 
-	$self->store_feature( $current_key, Data::Bio::Text::Feature::PSL->new( \@ws_delimited ) ) 
+	$self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::PSL->new( \@ws_delimited ) ) 
 	    if $self->filter($ws_delimited[13],$ws_delimited[15],$ws_delimited[16]);
     } 
 }

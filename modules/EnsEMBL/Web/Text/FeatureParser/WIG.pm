@@ -1,8 +1,8 @@
-package Data::Bio::Text::FeatureParser::WIG;
+package EnsEMBL::Web::Text::FeatureParser::WIG;
 
 =head1 NAME
 
-Data::Bio::Text::FeatureParser::WIG;
+EnsEMBL::Web::Text::FeatureParser::WIG;
 
 =head1 SYNOPSIS
 
@@ -10,7 +10,7 @@ This object parses data supplied by the user in BED format and identifies sequen
 
 =head1 DESCRIPTION
 
-    my $parser = Data::Bio::Text::FeatureParser->new();
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
     $parser->init($data);
     $parser->parse($data);
 
@@ -25,11 +25,11 @@ Please see http://www.ensembl.org/code_licence.html for details
 
 use strict;
 use warnings;
-use Data::Bio::Text::FeatureParser;
-use Data::Bio::Text::Feature::WIG;
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::Text::Feature::WIG;
 use Data::Dumper;
 
-our @ISA = qw(Data::Bio::Text::FeatureParser);
+our @ISA = qw(EnsEMBL::Web::Text::FeatureParser);
 
 #----------------------------------------------------------------------
 
@@ -104,14 +104,14 @@ sub parse_row {
 	    my $wigConfig = $self->{'tracks'}{ $current_key }->{'mode'};
 	    if ($wigConfig->{format}) {
 		if ($wigConfig->{format} eq 'v') {
-		    $self->store_feature( $current_key , Data::Bio::Text::Feature::WIG->new( [$wigConfig->{'region'}, $ws_delimited[0], $ws_delimited[0] + $wigConfig->{span} - 1, $ws_delimited[1], $ws_delimited[2]] ));
+		    $self->store_feature( $current_key , EnsEMBL::Web::Text::Feature::WIG->new( [$wigConfig->{'region'}, $ws_delimited[0], $ws_delimited[0] + $wigConfig->{span} - 1, $ws_delimited[1], $ws_delimited[2]] ));
 		    
 		}elsif ($wigConfig->{format} eq 'f') {
-		    $self->store_feature( $current_key , Data::Bio::Text::Feature::WIG->new( [$wigConfig->{'region'}, $wigConfig->{start}, $wigConfig->{start} + $wigConfig->{span} - 1, $ws_delimited[0], $ws_delimited[1]] ));
+		    $self->store_feature( $current_key , EnsEMBL::Web::Text::Feature::WIG->new( [$wigConfig->{'region'}, $wigConfig->{start}, $wigConfig->{start} + $wigConfig->{span} - 1, $ws_delimited[0], $ws_delimited[1]] ));
 		    $self->{'tracks'}{ $current_key }->{'mode'}->{'start'} += $wigConfig->{step};
 		}
 	    } else {
-		$self->store_feature( $current_key , Data::Bio::Text::Feature::WIG->new( \@ws_delimited ));
+		$self->store_feature( $current_key , EnsEMBL::Web::Text::Feature::WIG->new( \@ws_delimited ));
 	    }
 	}
     } 

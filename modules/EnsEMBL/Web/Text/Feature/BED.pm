@@ -1,8 +1,8 @@
-package Data::Bio::Text::Feature::BED;
+package EnsEMBL::Web::Text::Feature::BED;
 use strict;
-use Data::Bio::Text::Feature;
+use EnsEMBL::Web::Text::Feature;
 use vars qw(@ISA);
-@ISA = qw(Data::Bio::Text::Feature);
+@ISA = qw(EnsEMBL::Web::Text::Feature);
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }
 sub strand   { my $self = shift; return @{$self->{'__raw__'}}>5 ? -1 : $self->_strand( $self->{'__raw__'}[5] ); }

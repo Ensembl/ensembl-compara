@@ -1,5 +1,5 @@
 #
-# Ensembl web module for Data::Bio::Text::DensityFeatureParser
+# Ensembl web module for EnsEMBL::Web::Text::DensityFeatureParser
 #
 # Cared for by James Smith <js5@sanger.ac.uk>
 #
@@ -9,11 +9,11 @@
 
 =head1 NAME
 
-Data::Bio::Text::DensityFeatureParser - Density from text based data (URL,file or text)
+EnsEMBL::Web::Text::DensityFeatureParser - Density from text based data (URL,file or text)
 
 =head1 SYNOPSIS
 
-    my $dfp = new Data::Bio::Text::DensityFeatureParser();
+    my $dfp = new EnsEMBL::Web::Text::DensityFeatureParser();
        $dfp->no_of_bins(150);
        $dfp->no_of_bins($chr_length/150);
        $dfp->filter( '1' );
@@ -37,12 +37,12 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
-package Data::Bio::Text::DensityFeatureParser;
+package EnsEMBL::Web::Text::DensityFeatureParser;
 
-use Data::Bio::Text::FeatureParser;
+use EnsEMBL::Web::Text::FeatureParser;
 
-@Data::Bio::Text::DensityFeatureParser::ISA =
-  qw(Data::Bio::Text::FeatureParser);
+@EnsEMBL::Web::Text::DensityFeatureParser::ISA =
+  qw(EnsEMBL::Web::Text::FeatureParser);
 
 use strict;
 use warnings;

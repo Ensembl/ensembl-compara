@@ -1,8 +1,8 @@
-package Data::Bio::Text::Feature::generic;
+package EnsEMBL::Web::Text::Feature::generic;
 use strict;
-use Data::Bio::Text::Feature;
+use EnsEMBL::Web::Text::Feature;
 use vars qw(@ISA);
-@ISA = qw(Data::Bio::Text::Feature);
+@ISA = qw(EnsEMBL::Web::Text::Feature);
 
 sub seqname   	{  return $_[0]->{'__raw__'}[1]; }
 sub rawstart 	{  return $_[0]->{'__raw__'}[2]; }
