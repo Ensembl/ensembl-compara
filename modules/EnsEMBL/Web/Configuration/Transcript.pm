@@ -219,9 +219,8 @@ sub populate_tree {
   ));
   my $var_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   $var_menu->append($self->create_node( 'Population',  'Population comparison',
-   # [qw(snps      EnsEMBL::Web::Component::Transcript::TranscriptSNPImage
+    [qw(snps      EnsEMBL::Web::Component::Transcript::SNPView )],
    #     snptable      EnsEMBL::Web::Component::Transcript::TranscriptSNPTable)],
-    [qw(snps       EnsEMBL::Web::Component::Transcript::UnderConstruction)], 
     { 'availability' => 'either database:variation' }
   ));
 
