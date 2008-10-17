@@ -4,8 +4,8 @@
   dl.config_menu .col1 { background-color: [[IMAGE_BG1]] }
   dl.config_menu .col2 { background-color: [[IMAGE_BG2]] }
   dl.config_menu dd { margin: 0; padding-left: 2em;}
-  dl.config_menu dd img { height: 17px; width: 17px; margin: 0; padding: 0; vertical-align: top  }
-  dl.config_menu dd select { margin: 0; border:0; font-size: 80% }
+  dl.config_menu dt img { height: 17px; width: 17px; margin: 0; padding: 2px; vertical-align: top  }
+  dl.config_menu dt select { margin: 0; border:0; font-size: 80% }
   dl.config_menu dt .menu_help { background-color: #fcc; font-size: 80%; padding: 0 0.5em; margin: 2px 0.5em }
   dl.config_menu dd .menu_help { background-color: #fcc; font-size: 80%; padding: 0 0.5em; margin: 2px 0.5em }
 

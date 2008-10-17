@@ -22,7 +22,6 @@ function _menu_create_node( n, n_id, current_state ) {
       $(x).toggle();
       _menu_create_node( n, t, $(x).visible() );
     }
-
   });
 }
 
@@ -38,14 +37,24 @@ function __init_config_menu() {
   configuration box, remove the link (so the href doesn't get fired (yuk!)
   add an onclick event to show the appropriate menu and hide the menu
 */
+  __info( 'start of fn' );
   if( ! initial_configuration ) {
      initial_configuration = $('configuration') ? $('configuration').serialize(true) : false;
   }
   var has_configuration = $$('.track_configuration').length > 0;
-  if(( $$('.track_configuration').length +
-       $$('.view_configuration').length    ) > 0 ) {
-    $('modal_close').innerHTML = 'SAVE and close';
+  if(
+    ( $$('.track_configuration').length + $$('.view_configuration').length ) > 0
+  ) {
+    if( $('modal_close') ) {
+      $('modal_close').innerHTML = 'SAVE and close';
+    } else if($('cp_close') ) {
+      $('cp_close').innerHTML = 'SAVE and close';
+      Element.observe( $('cp_close'),'click', function(){ configurator_submit_form($('cp_close').href,'close');}  );
+      $$('#tabs dd').each(function(n){ Element.observe( n,'click',function(n){ configurator_submit_form(n.href,n.innerHTML);}) });
+    }
   }
+  __info( 'end of loop1' );
+
   $$('.track_configuration dd').each(function(n) {
     var link_id = n.id;
     var menu_id = 'menu_'+link_id.substr(5);
@@ -76,6 +85,7 @@ function __init_config_menu() {
       current_link_id=link_id;
     });
   });
+  __info( 'end of loop2' );
 /*
   Section 2)
   Add a hide/show link to each of the menu items on the right handside...
@@ -102,11 +112,7 @@ function __init_config_menu() {
             sn.select('option').each(function(on){
               if(on.selected) {
                 var x = on.value;
-                var i = Builder.node('img',{
-                  src:'/i/render/'+x+'.gif', title:on.text,
-                  cursor: 'pointer',
-                  id:'gif_'+sn.id
-                });
+                var i = Builder.node('img',{ src:'/i/render/'+x+'.gif', title:on.text, cursor: 'pointer', id:'gif_'+sn.id });
                 n.insertBefore(i,sn.nextSibling);
                 Event.observe(i,'click',change_img_value);
              }
@@ -122,7 +128,9 @@ function __init_config_menu() {
     });
     if( current_node ) $('mn_'+current_node).remove();
   });
+  __info( 'end of loop3' );
   $$('#configuration dt.submit').each(function(n){ n.hide(); });
+  __info( 'end of loop4' );
 /* deprecated!!  
   if( $('config') ) {
     Event.observe( $('config'), 'submit', function(f){
@@ -137,6 +145,7 @@ var configurator_action_title = '';
 function configurator_submit_form( url, title ) {
   remove_grey_box(); // Remove our "pseudo" graphical dropdowns....
   // Grab the final configuration ...
+  var _referer = initial_configuration._referer;
   var final_configuration = $H( $('configuration') ? $('configuration').serialize(true) :{} );
   // ... and compare it with the initial configuration
   var diff_configuration = {};
@@ -152,15 +161,20 @@ function configurator_submit_form( url, title ) {
   $H(initial_configuration).each(function(pair){ diff_configuration[ pair.key ] = 'no'; }); // CheckBox 0 value!
   initial_configuration = false;
   if( $H(diff_configuration).keys().size() == 0 ) {
-    __modal_dialog_link_open_2( url, title );
-    return;
+    if( title == 'close' ) {
+      window.opener.location.href = _referer;
+      window.close();
+    } else {
+      __modal_dialog_link_open_2( url, title );
+      return;
+    }
   }
   if( config_name ) {
     diff_configuration[ 'config' ] = config_name;
   }
   diff_configuration[ 'submit' ] = 1;
   var T = new Date();
-  diff_configuration[ 'time_of_submission' ] = T.getTime();
+  diff_configuration[ 'time' ] = T.getTime();
   // ... create a query string from this...
   if( ENSEMBL_AJAX == 'enabled' ) { // We have Ajax so submit it using AJAX
     $('modal_disable').show();
@@ -175,6 +189,20 @@ function configurator_submit_form( url, title ) {
 	$('modal_content').innerHTML = '<p class="ajax-error">Failure: unable to update configuration</p>';
       }
     });
+  } else {
+    if( title == 'close' ) {
+      diff_configuration._ = 'close';
+      diff_configuration._referer = _referer;
+      var url_2 = $('configuration').action+"?"+$H(diff_configuration).toQueryString();
+      window.opener.location.href = url_2;
+      window.close();
+    } else {
+      diff_configuration._ = url;
+      diff_configuration._referer = _referer;
+      var url_2 = $('configuration').action+"?"+$H(diff_configuration).toQueryString();
+      var url_2 = $('configuration').action+"?"+$H(diff_configuration).toQueryString();
+      window.location.href = url_2; // Jump to the configuration changing code!
+    } 
   }
 }
 
