@@ -18,6 +18,7 @@ my $reg = "Bio::EnsEMBL::Registry";
 sub new {
   my $class   = shift;
   my $adaptor = shift;
+  my $can_attach_user = shift;
   my $type    = $class =~/([^:]+)$/ ? $1 : $class;
   my $style   = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
   my $self = {
@@ -37,7 +38,6 @@ sub new {
     'no_load'           => undef,
     'storable'          => 1,
     'altered'           => 0,
-
 ## Core objects...       { for setting URLs .... }
     '_core'             => undef,
 ## Glyphset tree...      { Tree of glyphsets to render.... }
@@ -61,9 +61,10 @@ sub new {
   $self->init( ) if($self->can('init'));
   $self->{'no_image_frame'}=1;
 ## At this point tree doesn't depend on session/user....
-
+#  if( $can_attach_user ) {
+    $self->load_user_tracks( $adaptor );
+#  }
 ## Add user defined data sources.....
-  $self->das_sources( @_ ) if(@_); # we have das sources!!
 ## Now tree does depend on session/user...
 #
   ########## load sets up user prefs in $self->{'user'}
@@ -71,6 +72,25 @@ sub new {
   return $self;
 }
 
+sub load_user_tracks {
+  my( $self, $adaptor ) = @_;
+  my $menu = $self->get_node('user_data');
+  return unless $menu;
+  my %T = %{$adaptor->get_tmp_data||{}};
+  if( $T{'species'} eq $self->{'species'} ) {
+    $menu->append($self->create_track( 'temporary_user_data', '[USER] Temporary user data', {
+      %T,
+      'glyphset'    => '_tmp_user_data',
+      'url'         => 'tmp',
+      'caption'     => 'Temporary data',
+      'description' => 'Temporary uploaded user data',
+      'display'     => 'normal',
+      'renderers'   => [qw(off Off normal Normal)],
+      'strand'      => 'b',
+    }));
+  }
+  return;
+}
 sub update_from_input {
   my( $self, $input ) = @_;
   
@@ -269,7 +289,8 @@ sub load_configured_das {
   my $self=shift;
   ## Now we do the das stuff - to append to menus (if the menu exists!!)
   my $internal_das_sources = $self->species_defs->get_all_das;
-  foreach my $source ( values %$internal_das_sources ) {
+  foreach my $source ( sort {$a->caption cmp $b->caption } values %$internal_das_sources ) {
+warn "SOURCE........... $source";
     $self->add_das_track( $source->category,  $source );
   }
 }
@@ -280,11 +301,11 @@ sub add_das_track {
      $node = $self->get_node('other') unless $node; 
   return unless $node;
 warn "$menu -> $source -> ",$node->key;
-  $node->append( $self->create_track( "das_".$source->logic_name, $source->label, {
+  $node->append( $self->create_track( "das_".$source->logic_name,'[DAS] '.$source->label, {
     'glyphset'    => '_das',
     'display'     => 'off',
     'logicnames'  => [ $source->logic_name ],
-    'caption'     => $source->caption,
+    'caption'     => '[DAS] '.$source->caption,
     'description' => $source->description
   }));
 }
@@ -308,6 +329,8 @@ sub _merge {
   foreach my $analysis (keys %$tree) {
     my $sub_tree = $tree->{$analysis};
     next unless $sub_tree->{'disp'}; ## Don't include non-displayable tracks
+    warn $sub_tree->{'web'};
+    warn ".... $sub_type {",$sub_tree->{'web'}{ $sub_type },"}";
     next if exists $sub_tree->{'web'}{ $sub_type }{'do_not_display'};
     my $key = $sub_tree->{'web'}{'key'} || $analysis;
     foreach ( keys %{$sub_tree->{'web'}||{}} ) {
