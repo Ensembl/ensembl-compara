@@ -6,7 +6,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use Data::Bio::Text::FeatureParser;
+use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::Text;
 use EnsEMBL::Web::Wizard::Node;
 use EnsEMBL::Web::RegObj;
@@ -106,7 +106,7 @@ sub upload {
 
     ## Identify format
     my $data = $file->retrieve;
-    my $parser = Data::Bio::Text::FeatureParser->new();
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
     $parser = $parser->init($data);
 #    warn Dumper $parser;
     my $format = $parser->{'_info'}->{'format'};
@@ -114,9 +114,9 @@ sub upload {
     $parameter->{'parser'} = $parser;
     ## Attach data species to session
     $self->object->get_session->set_tmp_data(
-                  'filename'  => $file->filename, 
-                  'species'   => $self->object->param('species'),
-                  'format'    => $format,
+      'filename'  => $file->filename, 
+      'species'   => $self->object->param('species'),
+      'format'    => $format,
     );
     $self->object->get_session->save_tmp_data;
 
@@ -655,7 +655,7 @@ sub save_upload {
     my $format  = $tmpdata->{'format'};
 
     
-    my $parser = Data::Bio::Text::FeatureParser->new();
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
     $parser->init($data);
     $parser->parse($data, $format);
 
