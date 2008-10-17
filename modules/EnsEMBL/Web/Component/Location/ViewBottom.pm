@@ -13,7 +13,6 @@ sub _init {
   $self->configurable(  1 );
 }
 
-
 sub content {
   my $self        = shift;
   my $object      = $self->object;
