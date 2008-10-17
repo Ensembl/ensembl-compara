@@ -8,9 +8,9 @@ sub init {
 
   $self->set_parameters({
  
-    'title'         => 'Transcript panel',
+    'title'         => 'Regulation Image',
     'show_buttons'  => 'no',  # do not show +/- buttons
-    'show_labels'   => 'no',  # show track names on left-hand side
+    'show_labels'   => 'yes',  # show track names on left-hand side
     'label_width'   => 113,   # width of labels on left-hand side
     'margin'        => 5,     # margin
     'spacing'       => 2,     # spacing
@@ -25,6 +25,7 @@ sub init {
     'prediction'          => 'Prediction transcripts',
     'functional'          => 'Functional genomics',
     'other'               => 'Decorations',
+    'information'         => 'Information'
   );
 
 
@@ -45,6 +46,18 @@ sub init {
     [qw(regulation_feature)],
     {qw(display on)}
   );
+
+  $self->modify_configs(
+    [qw(histone_modifications)],
+    {qw(display off)}
+  );
+
+  $self->modify_configs(
+    [qw(gene_legend)],
+    {qw(display off)}
+  );
+
+
 }
 1;
 
