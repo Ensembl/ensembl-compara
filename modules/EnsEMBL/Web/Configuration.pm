@@ -472,7 +472,7 @@ sub _local_tools {
   my $config = $vc->default_config;
 
   my $disabled_upload = 1;
-  if( $config ) {
+  if( $vc->real && $config ) {
     my $action = $obj->type.'/'.$obj->action;
        $action .= '/'.$obj->function if $obj->function;
     $self->{'page'}->local_tools->add_entry(
