@@ -8,7 +8,10 @@ no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Object);
 
-sub caption       { return undef; }
+sub caption       { 
+  my $self = shift;
+  return $self->species_defs->ENSEMBL_SITETYPE.' '.$self->species_defs->SPECIES_COMMON_NAME.' (<i>'.$self->species_defs->SPECIES_BIO_NAME.'</i>)';
+}
 sub short_caption { return 'About this species'; }
 sub counts        { return undef; }
 
