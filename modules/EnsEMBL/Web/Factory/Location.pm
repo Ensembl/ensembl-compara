@@ -355,17 +355,17 @@ sub expand {
   return $slice->expand( $self->param('context'), $self->param('context') );
 }
 
-use EnsEMBL::Web::URLfeatureParser;
-sub _location_from_URL {
-  my( $self, $URL ) = @_;
-  return unless $URL;
-  my $P = new EnsEMBL::Web::URLfeatureParser( $self->species_defs, $self->param( 'data_URL' ) );
-  $P->parse_URL;
-  ( my $T = $P->{'browser_switches'}->{'position'} ) =~ s/^chr//;
-  my($chr,$start,$sep,$end) = $T =~/^(.*?):(.*?)(-|\.\.|,)(.*)/;
-  return unless $chr || $start || $end;
-  $self->_location_from_SeqRegion( $chr, $start, $end );
-}
+# use EnsEMBL::Web::URLfeatureParser;
+# sub _location_from_URL {
+#  my( $self, $URL ) = @_;
+#  return unless $URL;
+#  my $P = new EnsEMBL::Web::URLfeatureParser( $self->species_defs, $self->param( 'data_URL' ) );
+#  $P->parse_URL;
+#  ( my $T = $P->{'browser_switches'}->{'position'} ) =~ s/^chr//;
+#  my($chr,$start,$sep,$end) = $T =~/^(.*?):(.*?)(-|\.\.|,)(.*)/;
+#  return unless $chr || $start || $end;
+#  $self->_location_from_SeqRegion( $chr, $start, $end );
+#}
 
 #----------------- Create objects ----------------------------------------------
 
@@ -378,7 +378,6 @@ sub fastCreateObjects {
  warn "\n\n\n\nFCO: (", $self->param('l'),')';
   if( $self->param('l') =~ /^([-\w\.]+):(-?\d+)-(\d+)$/) {
 eval {
- warn "HERE";
     my $seq_region         = $1;
     my $start              = $2;
     my $end                = $3;
@@ -386,7 +385,6 @@ eval {
     my $seq_region_type    = $self->param('type');
     my $slice = $self->_slice_adaptor()->fetch_by_region( undef, $seq_region, $start, $end, $strand );
     my $seq_region_length  = $self->param('srlen');
- warn "HERE";
     my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
       'type'               => "Location",
       'real_species'       => $self->__species,
@@ -432,12 +430,11 @@ sub _create_object_from_core {
 
 sub createObjects { 
   my $self      = shift;    
-  if( $self->core_objects->location &&
-     !$self->core_objects->gene
+  if( $self->core_objects->location
+    && !$self->core_objects->gene
   ) {
     return $self->_create_object_from_core;
   }
-
   $self->get_databases($self->__gene_databases, 'compara','blast');
   my $database  = $self->database('core');
   return $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." ) unless $database;
@@ -456,7 +453,13 @@ sub createObjects {
   my $end        = $self->param( 'vc_end'  )   || $self->param( 'chr_end' )    ||
                    $self->param( 'wvc_end' )   || $self->param( 'fpos_end' )   ||
                    $self->param( 'end' );
-  if( defined $self->param('l') ) {
+  if( defined $self->param('r') && ! $self->core_objects->gene ) {
+    ($seq_region,$start,$end) = $self->param('r') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
+    $start = $self->evaluate_bp($start);
+    $end   = $self->evaluate_bp($end);
+  } 
+
+  if( defined $self->param('l') ) { 
     ($seq_region,$start,$end) = $self->param('l') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
@@ -464,14 +467,14 @@ sub createObjects {
 
   $start = $self->evaluate_bp( $start ) if defined $start;
   $end   = $self->evaluate_bp( $end )   if defined $end;
-  if( defined $self->param( 'data_URL' ) ) {
-    my $loc = $self->_location_from_URL( $self->param( 'data_URL' ) );
-    if($loc) {
-      $self->DataObjects( $loc );
-      return;
-    }
-    $self->clear_problems(); 
-  }
+#  if( defined $self->param( 'data_URL' ) ) {
+#    my $loc = $self->_location_from_URL( $self->param( 'data_URL' ) );
+#    if($loc) {
+#      $self->DataObjects( $loc );
+#      return;
+#    }
+#    $self->clear_problems(); 
+#  }
   if( defined $self->param('c') ) {
     my($cp,$t_strand);
     ($seq_region,$cp,$t_strand) = $self->param('c') =~ /^([-\w\.]+):(-?[.\w,]+)(:-?1)?$/;
@@ -546,11 +549,17 @@ sub createObjects {
 =cut
   } else {
     ## Gene (completed)
-    if(!defined($start) && ($temp_id = $self->param('geneid') || $self->param('gene'))) {
+    if(!defined($start) && (
+      $temp_id = $self->param('geneid') || $self->param('gene') ||
+      ( $self->core_objects->gene ? undef : $self->param('g') )
+    )) {
       $location = $self->_location_from_Gene( $temp_id );
+warn "FROM GENE";
     ## Transcript (completed)
     } 
-    elsif( $temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript') ) {
+    elsif( $temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript')||
+      ( $self->core_objects->transcript ? undef : $self->param('t' ) ) ) {
+warn "FROM TRANSCRIPT";
       $location = $self->_location_from_Transcript( $temp_id );
     }
     elsif( $temp_id = $self->param('exonid') || $self->param('exon') ) {  
@@ -572,7 +581,7 @@ sub createObjects {
     elsif( $temp_id = $self->param('band') ) { 
         $location = $self->_location_from_Band( $temp_id, $seq_region );
     } 
-    elsif( !$start && ($temp_id = $self->param('snp')||$self->param('variation')) ) { 
+    elsif( !$start && ($temp_id = $self->param('snp')||$self->param('variation') || $self->param('v') ) ) { 
         $location = $self->_location_from_Variation( $temp_id, $seq_region );
     } 
     else {
@@ -608,13 +617,16 @@ sub createObjects {
         $location = $self->_location_from_SeqRegion( $seq_region, $start, $end, $strand );
       }
     }
-    if( $self->param( 'data_URL' ) ) {
-      my $newloc   = $self->_location_from_URL();
-      $location = $newloc if $newloc;
-    }
+#    if( $self->param( 'data_URL' ) ) {
+#      my $newloc   = $self->_location_from_URL();
+#      $location = $newloc if $newloc;
+#    }
     if( $location ) {
+warn "PART 1";
+warn @$location;
       $self->DataObjects( $location );
     } elsif( $self->core_objects->location ) {
+warn "PART 2";
       $self->_create_object_from_core;
     }
 =pod 
