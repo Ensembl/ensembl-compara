@@ -12,7 +12,7 @@ sub _init {
   my ($self) = @_;
 
   my $Config        = $self->{'config'};
-  my $conf_colours  = $Config->get('TSV_haplotype_legend','colours' );
+  my $conf_colours  = $self->my_config('colours' );
 
   my @snps = @{$Config->{'snps'}};
   return unless scalar @snps;
@@ -28,24 +28,24 @@ sub _init {
   my %coverage;         # $coverage{strain} = [ [start, end, level], [start, end, level]   ];
 
   my $fully_inbred;
-  foreach my $data ( @{$Config->{'snp_fake_haplotype'}} ) {
+  foreach my $data ( @{$Config->{'snp_fake_haplotype'}} ) { 
     my( $strain, $allele_ref, $coverage_ref ) = @$data;
 
     # find out once if this species is inbred or not. Then apply to all
     unless (defined $fully_inbred) {
       my ($individual) = @{$individual_adaptor->fetch_all_by_name($strain)};
       if ($individual) {
-	$fully_inbred = $individual->type_individual eq 'Fully_inbred' ? 1 : 0;
+	      $fully_inbred = $individual->type_individual eq 'Fully_inbred' ? 1 : 0;
       }
     }
     $strain_alleles{$strain} = {};  # every strain should be in here
-    foreach my $a_ref ( @$allele_ref ) {
+    foreach my $a_ref ( @$allele_ref ) { 
       next unless $a_ref->[2];
 
       # strain_alleles{strain_name}{snp_id::start} = allele
       $strain_alleles{$strain}{ join "::", $a_ref->[2]->{'_variation_id'}, $a_ref->[2]->{'start'} } = $a_ref->[2]->allele_string ;
     }
-    foreach my $c_ref ( @$coverage_ref ) {
+    foreach my $c_ref ( @$coverage_ref ) { 
       push @{ $coverage{$strain} }, [ $c_ref->[2]->start, $c_ref->[2]->end, $c_ref->[2]->level ];
     }
   }
@@ -113,35 +113,36 @@ sub _init {
     my $tmp_width = ($w*2+$res[2])/$pix_per_bp;
     $tmp_width =  $end-$start+1 if  $end-$start+1 < $tmp_width;
     push @widths, $tmp_width;
-    my $label =  $snp->allele_string;
+    my $label =  $snp->allele_string; 
 
     my ($golden_path_base) = split "\/", $label;
     my $reference_base;
     my $colour = "white";
 
     if ($reference_name eq $golden_path) {
-      $reference_base = $golden_path_base;
+      $reference_base = $golden_path_base; 
     }
-    else {
+    else { 
       return unless $strain_alleles{$reference_name};
       my $start  = $snp->start;
-      $reference_base =  $strain_alleles{$reference_name}{ join "::", $snp->{_variation_id}, $start };
+      $reference_base =  $strain_alleles{$reference_name}{ join "::", $snp->{_variation_id}, $start }; 
 
       # If no allele for SNP but there is coverage, allele = golden path allele
       unless ($reference_base) {
-	foreach my $cov ( @{$coverage{$reference_name}} ) {
-	  if( $start >= $cov->[0] && $start <= $cov->[1] ) {
-	    $reference_base = $golden_path_base;
-	    last;
-	  }
-	}
+	      foreach my $cov ( @{$coverage{$reference_name}} ) {
+	        if( $start >= $cov->[0] && $start <= $cov->[1] ) {
+	          $reference_base = $golden_path_base;
+	          last;
+	        }
+	      }
       }
 
       # Golden path ne reference but still need the golden path track in there somewhere
       my $golden_colour = undef;
 
       if ($reference_base) { # determine colours for golden path row dp on reference colours
-	$conf_colours->{$self->bases_match($golden_path_base, $reference_base) }[0];
+        warn $self; #->bases_match($golden_path_base, $reference_base);          
+      	$conf_colours->{$self->bases_match($golden_path_base, $reference_base) }[0];
       }
       push @golden_path, {
 			  label   => $label,
@@ -152,22 +153,21 @@ sub _init {
     }
 
     # Set ref base colour and draw glyphs ----------------------------------
-    #$colour = $conf_colours->{'SAME'}[0] if $reference_base;
-    $colour = $conf_colours->{'SAME'}[0] if $reference_base;
+    $colour = $conf_colours->{'same'}->{'default'} if $reference_base; 
     $snp_ref->[3] = {};
 
     # If ref base is like "G", have to define "G|G" as also having ref base colour
     if (length $reference_base ==1) {
-      $snp_ref->[3]{ "$reference_base|$reference_base"} = $conf_colours->{'SAME'}[0];
-      $snp_ref->[3]{ $reference_base} = $conf_colours->{'SAME'}[0];
+      $snp_ref->[3]{ "$reference_base|$reference_base"} = $conf_colours->{'same'}{'default'};
+      $snp_ref->[3]{ $reference_base} = $conf_colours->{'same'}{'default'};
     }
     elsif ($reference_base =~/(\w)\|(\w)/) {
       if ($1 ne $2) { # heterozygous it should be stripy
-	$snp_ref->[3]{ $reference_base} = $conf_colours->{'HET'}[0];
-	$snp_ref->[3]{ $2.$1} = $conf_colours->{'HET'}[0];
+	      $snp_ref->[3]{ $reference_base} = $conf_colours->{'het'}{'default'};
+	      $snp_ref->[3]{ $2.$1} = $conf_colours->{'het'}{'deafult'};
       }
       else {
-	$snp_ref->[3]{ $reference_base } = $conf_colours->{'SAME'}[0];
+	      $snp_ref->[3]{ $reference_base } = $conf_colours->{'same'}{'default'};
       }
     }
 
@@ -191,8 +191,8 @@ sub _init {
 
   # Draw SNPs for each strain -----------------------------------------------
   foreach my $strain ( sort {$a cmp $b} keys %strain_alleles ) {
-    next if $strain eq $reference_name;
-
+    next if $strain eq $reference_name; 
+                                            
     $offset += $track_height;
     $self->strain_name_text($th,$fontname, $fontsize, $offset, $strain, $Config, $fully_inbred);
 
@@ -206,12 +206,12 @@ sub _init {
 
       # If no allele for SNP but there is coverage, allele = reference allele
       unless( $allele_string ) {
-	foreach my $cov ( @{$coverage{$strain}} ) {
-	  if( $start >= $cov->[0] && $start <= $cov->[1] ) {
-	    ($allele_string) = split "\/", $label;
-	    last;
-	  }
-	}
+	      foreach my $cov ( @{$coverage{$strain}} ) {
+	        if( $start >= $cov->[0] && $start <= $cov->[1] ) {
+	          ($allele_string) = split "\/", $label;
+	          last;
+	        }
+	      }
       }
 
       # Determine colour ------------------------------------
@@ -222,11 +222,11 @@ sub _init {
 	
         unless($colour) {                           # allele not the same as reference
 	  if (length $allele_string ==1 ) {
-	    $colour =  $snp_ref->[3]{ $allele_string } = $conf_colours->{'DIFFERENT'}[0];
+	    $colour =  $snp_ref->[3]{ $allele_string } = $conf_colours->{'different'}{'default'};
 	  }
 	  else{ # must be a het or must be different
 	    my $type = $self->bases_match((split /\|/, $allele_string), "one_allele");
-	    $colour = $snp_ref->[3]{ $allele_string } = $conf_colours->{$type}[0];
+	    $colour = $snp_ref->[3]{ $allele_string } = $conf_colours->{$type}{'default'};
 	    #$colours[ scalar(values %{ $snp_ref->[3] } )] || $colours[-1];
 	  }
 
@@ -241,10 +241,9 @@ sub _init {
   }
   $self->push($self->Space({ 'y' => $offset + $track_height, 'height' => $th+2, 'x' => 1, 'width' => 1, 'absolutey' => 1, }));
 
-
   # Colour legend stuff
-  foreach (keys %$conf_colours) {
-    push @{ $Config->{'TSV_haplotype_legend_features'}->{'variations'}->{'legend'}}, $conf_colours->{$_}->[1],   $conf_colours->{$_}->[0];
+  foreach (keys %$conf_colours) { 
+    push @{ $Config->{'tsv_haplotype_legend_features'}->{'variations'}->{'legend'}}, $conf_colours->{$_}->{'text'},   $conf_colours->{$_}->{'default'};
   }
   return 1;
 }
@@ -293,10 +292,10 @@ sub do_glyphs {
   my @stripes;
   if ($colour eq 'stripes') {
     my $Config        = $self->{'config'};
-    my $conf_colours  = $Config->get('TSV_haplotype_legend','colours' );
-    $colour = $conf_colours->{'SAME'}[0];
+    my $conf_colours  = $self->my_config('colours');
+    $colour = $conf_colours->{'same'}{'default'};
     @stripes = ( 'pattern'       => 'hatch_thick',
-		 'patterncolour' => $conf_colours->{'DIFFERENT'}[0],
+		 'patterncolour' => $conf_colours->{'different'}{'default'},
 	       );
   }
 
@@ -342,13 +341,13 @@ sub bases_match {
   $one .= "|$one" if length $one == 1;
   $two .= "|$two" if length $two == 1;
 
-  my $same = $one_allele ? "DIFFERENT" : "SAME";
-  my $different = $one_allele ? "HET"  : "DIFFERENT";
+  my $same = $one_allele ? "different" : "same";
+  my $different = $one_allele ? "het"  : "different";
   return $same if ($one eq $two);
 
   foreach (split /\|/, $one) {
-    return "HET" if $_ eq substr $two, 0, 1;
-    return "HET" if $_ eq substr $two, 2, 1;
+    return "het" if $_ eq substr $two, 0, 1;
+    return "het" if $_ eq substr $two, 2, 1;
   }
   return $different;
 }
