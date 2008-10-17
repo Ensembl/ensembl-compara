@@ -85,7 +85,9 @@ if ($rmconfig) {
     }
 
 	# Flush memcached
-	my $cmd = "perl $serverroot/utils/memd.pl flush_all";
+  ## TODO: kill the hack
+  ## HACK: add extra tag for everything except user upload data	
+	my $cmd = "perl $serverroot/utils/memd.pl delete no_user_upload";
 	system($cmd);
 
 }
