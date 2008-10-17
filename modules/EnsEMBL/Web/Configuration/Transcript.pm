@@ -156,6 +156,10 @@ sub do_SE_align_menu {
     }
 }
 
+## either - prediction transcript or transcript
+## domain - domain only (no transcript)
+## history - IDHistory object or transcript
+## database:variation - Variation database
 sub populate_tree {
   my $self = shift;
 
@@ -174,7 +178,6 @@ sub populate_tree {
     [qw(exons       EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet)],
     { 'availability' => 'either', 'concise' => 'Exons'}
   );
-
 
   my $T = $self->create_node( 'SupportingEvidence', "Supporting evidence  ([[counts::evidence]])",
    [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidence)],
@@ -232,14 +235,14 @@ sub populate_tree {
     [qw(domains     EnsEMBL::Web::Component::Transcript::DomainSpreadsheet)],
     { 'availability' => 'transcript', 'concise' => 'Domains & features'}
   );
-  $D->append($self->create_subnode( 'Domains/Genes', '',
+  $D->append($self->create_subnode( 'Domains/Genes', 'Genes in domain',
     [qw(domaingenes      EnsEMBL::Web::Component::Transcript::DomainGenes)],
-    { 'no_menu_entry' => 'transcript' }
+    { 'availability' => 'transcript|domain', 'no_menu_entry' => 1 }
   ));
   $prot_menu->append($D);
   $prot_menu->append($self->create_node( 'ProtVariations', "Variations  ([[counts::prot_variations]])",
     [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
-    { 'availability' => 'either', 'concise' => 'Variations'}
+    { 'availability' => 'either database:variation', 'concise' => 'Variations'}
   ));
 
   $self->create_node( 'idhistory', "ID history",
