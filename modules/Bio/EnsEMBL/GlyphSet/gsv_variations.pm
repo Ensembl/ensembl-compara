@@ -75,7 +75,7 @@ sub _init {
     } elsif($chr_end > $chr_start ) {
       $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
     }
-    my $href = "/@{[$self->{container}{web_species}]}/snpview?snp=@{[$snp->variation_name]};source=@{[$snp->source]};chr=$seq_region_name;vc_start=$chr_start";
+#    my $href = "/@{[$self->{container}{web_species}]}/snpview?snp=@{[$snp->variation_name]};source=@{[$snp->source]};chr=$seq_region_name;vc_start=$chr_start";
     my $type      = join ", ", @{$cod_snp->consequence_type || [] }; 
     $type = lc($type);
     my $bglyph = $self->Rect({
@@ -85,17 +85,17 @@ sub _init {
       'width'     => $W,
       'colour'    => $colour,
       'absolutey' => 1,
-      'zmenu' => {
-        'caption' => 'SNP '.$snp->variation_name,
-        "14:type: $type" => '',
-        @tmp,
-        '01:SNP properties' => $href,
-        "02:bp $pos" => '',
-        "03:class: ".$snp->var_class => '',
-        "12:source: ". (join ", ", @{$snp->get_all_sources ||[] }) => '',
-        "06:ambiguity code: ".$snp->ambig_code => '',
-        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
-      }
+#      'zmenu' => {
+#        'caption' => 'SNP '.$snp->variation_name,
+#        "14:type: $type" => '',
+#        @tmp,
+#        '01:SNP properties' => $href,
+#        "02:bp $pos" => '',
+#        "03:class: ".$snp->var_class => '',
+#        "12:source: ". (join ", ", @{$snp->get_all_sources ||[] }) => '',
+#        "06:ambiguity code: ".$snp->ambig_code => '',
+#        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => ''
+#      }
     });
     my $bump_start = int($bglyph->{'x'} * $pix_per_bp);
        $bump_start = 0 if ($bump_start < 0);
@@ -108,6 +108,7 @@ sub _init {
     $self->push( $bglyph, $tglyph );
   }
 }
+
 
 sub error_track_name { return $_[0]->species_defs->AUTHORITY.' transcripts'; }
 
