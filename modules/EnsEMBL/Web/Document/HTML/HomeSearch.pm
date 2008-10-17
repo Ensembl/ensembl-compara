@@ -30,43 +30,49 @@ sub render {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $page_species = $ENV{'ENSEMBL_SPECIES'};
   $page_species = '' if $page_species eq 'common';
-  my $species_name = $species_defs->SPECIES_COMMON_NAME if $page_species;
-  if ($species_name =~ /\./) {
+  my $species_name = '';
+  $species_name = $species_defs->SPECIES_COMMON_NAME if $page_species;
+  if( $species_name =~ /\./ ) {
     $species_name = '<i>'.$species_name.'</i>'
   }
-  my $html = qq(<div class="center">\n);
+  my $html = q(
+<div class="center">);
 
-  $html .= sprintf(qq(<h2 class="first">Search %s %s</h2>
-<form action="%s" method="get"><div>
-  <input type="hidden" name="site" value="%s" />),
-  $species_defs->ENSEMBL_SITETYPE, $species_name, $self->search_url, $self->default_search_code
-);
+  $html .= sprintf q(
+  <h2 class="first">Search %s %s</h2>), $species_defs->ENSEMBL_SITETYPE, $species_name unless $species_name;
+  $html .= sprintf q(
+  <form action="%s" method="get"><div>
+    <input type="hidden" name="site" value="%s" />),
+  $self->search_url, $self->default_search_code;
 
   my $input_size = 50;
 
   if (!$page_species) {
-    $html .= qq(<label for="species">Search</label>: <select id="species" name="species">
+    $html .= q(
+    <label for="species">Search</label>: <select id="species" name="species">
       <option value="">All species</option>
       <option value="">---</option>
-    );
+);
     $input_size = 30;
 
     my %species = map {
       $species_defs->get_config($_, 'SPECIES_COMMON_NAME') => $_
     } @{$species_defs->ENSEMBL_SPECIES};
-  
     foreach my $common_name (sort {uc($a) cmp uc($b)} keys %species) {
       $html .= qq(<option value="$species{$common_name}">$common_name</option>);
     }
 
-    $html .= qq(</select>
-      <label for="q">for</label> );
-
-  } else {
-    $html .= qq(<label for="q">Search for</label>: );
+    $html .= q(
+    </select>
+    <label for="q">for</label>);
+  }
+  else {
+    $html .= q(
+    <label for="q">Search for</label>:);
   }
 
-  $html .= qq(<input id="q" name="q" size="$input_size" value="" />
+  $html .= qq(
+    <input id="q" name="q" size="$input_size" value="" />
     <input type="submit" value="Go" class="input-submit" />);
 
   ## Examples
@@ -78,9 +84,12 @@ sub render {
   else {
     @examples = ('gene '.$sample_data{'GENE_TEXT'}, $sample_data{'LOCATION_PARAM'}, $sample_data{'SEARCH_TEXT'});
   }
-  $html .= '<p>e.g. ' . join(' or ', map {'<strong>'.$_.'</strong>'} @examples) . '</p>';
+  $html .= '
+    <p>e.g. ' . join(' or ', map {'<strong>'.$_.'</strong>'} @examples) . '</p>';
 
-  $html .= qq(\n</div></form>\n</div>\n);
+  $html .= qq(
+  </div></form>
+</div>);
 
   return $html;
 
