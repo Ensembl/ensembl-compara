@@ -29,7 +29,7 @@ sub render {
   </dl>),
     $self->{'class'} ? ' class="'.$self->{'class'}.'"' : '',
     $self->{'raw'} ? $self->label : CGI::escapeHTML( $self->label ), 
-    $self->notes,
+    $self->notes ? '<div style="font-weight:normal">'.CGI::escapeHTML($self->notes).'</div>':'',
     $self->{'class'} ? ' class="'.$self->{'class'}.'"' : '',
     CGI::escapeHTML( $self->name ), 
     CGI::escapeHTML( $self->id ),
