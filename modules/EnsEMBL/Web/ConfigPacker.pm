@@ -104,12 +104,14 @@ sub _summarise_core_tables {
   );
   my $analysis = {};
   foreach my $a_aref (@$t_aref) {
+    my $T = eval($a_aref->[6]);
+       $T = {} unless ref($T) eq 'HASH';
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
       'description' => $a_aref->[4],
       'displayable' => $a_aref->[5],
-      'web_data'    => $a_aref->[6]?eval($a_aref->[6]):{}
+      'web_data'    => $T
     };
     ## Set last repeat mask date whilst we're at it, as needed by BLAST configuration, below
     if ($a_aref->[1] eq 'RepeatMask') {
