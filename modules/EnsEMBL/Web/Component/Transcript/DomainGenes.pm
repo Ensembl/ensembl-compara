@@ -34,8 +34,8 @@ sub content {
   my $html;
 
   ## Karyotype showing genes associated with this domain (optional)
-  if (@{$object->species_defs->ENSEMBL_CHROMOSOMES}) {
-
+  my $gene_stable_id = $object->gene ? $object->gene->stable_id : 'xx';
+  if( @{$object->species_defs->ENSEMBL_CHROMOSOMES} ) {
     $object->param('aggregate_colour', 'red'); ## Fake CGI param - easiest way to pass this parameter
     my $wuc   = $object->get_imageconfig( 'Vkaryotype' );
     my $image = $object->new_karyotype_image();
@@ -44,9 +44,10 @@ sub content {
     $image->imagemap = 'yes';
     my %high = ( 'style' => 'arrow' );
     foreach my $gene (@$genes){
+warn "HERE........................ $gene";
       my $stable_id = $gene->stable_id;
       my $chr       = $gene->seq_region_name;
-      my $colour    = $stable_id eq $object->core_objects->gene->stable_id ? 'red' : 'blue';
+      my $colour    = $gene_stable_id eq $stable_id ? 'red' : 'blue';
       my $point = {
         'start' => $gene->seq_region_start,
         'end'   => $gene->seq_region_end,
