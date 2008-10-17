@@ -401,7 +401,7 @@ sub _caption_with_helplink {
   if ( $id ) {
     $html .= sprintf(' <a href="/Help/View?id=%s" class="modal_link help-header" title="Click for Help">', CGI::escapeHTML($id) );
   }
-  $html .= CGI::escapeHTML($self->{caption});
+  $html .= $self->{'raw_caption'} ? $self->{'caption'} : CGI::escapeHTML($self->{caption});
   if ( $id ) {
     $html .= ' <img src="/i/e-quest.gif" style="width:20px;height:19px;padding-left:4px;" alt="(e?)" /></a>';
   }
@@ -591,7 +591,7 @@ sub content {
     $self->print( $self->{'content'} );
   }
   foreach my $component ($self->components) {
-#warn "Starting component $component";
+warn "Starting component $component";
     foreach my $temp ( @{$self->{'components'}{$component}} ) { 
       my( $module_name, $function_name ) = split /\//, $temp;
       my $result;
