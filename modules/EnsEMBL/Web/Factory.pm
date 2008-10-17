@@ -124,7 +124,7 @@ sub _archive {
 sub _known_feature {
   my( $self, $type, $parameter ) = @_;
   my $db        = $self->param('db')||'core';
-  my $name      = $self->param($parameter)||$self->param('peptide') || $self->param('transcript') || $self->param('gene');
+  my $name      = $self->param($parameter)||$self->param(lc(substr($parameter,0,1)))||$self->param('peptide') || $self->param('transcript') || $self->param('gene');
   my $sitetype = $self->species_defs->ENSEMBL_SITETYPE || 'Ensembl';
   my @features  = ();
   my $adaptor;
