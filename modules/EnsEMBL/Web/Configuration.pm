@@ -95,10 +95,18 @@ sub _get_valid_action {
   return $action."/".$func if $node && $node->get('type') =~ /view/;
   $node = $self->tree->get_node( $action )           unless $node;
   return $action if $node && $node->get('type') =~ /view/;
+warn "REDIRECTING HERE.........";
+  $node = $self->tree->get_node( $self->default_action );
+  if( $node ) {
+    $self->{'object'}->problem( 'redirect',
+      $self->{'object'}->_url({'action' => $self->default_action})
+    );
+    return $self->default_action;
+  }
   $self->{'object'}->problem( 'redirect',
-    $self->{'object'}->_url({'action' => $self->default_action})
+    $self->{'object'}->_url({'action' => 'idhistory'})
   );
-  return $self->default_action;
+  return 'idhistory'
 #  return $node;
 }
 
@@ -125,18 +133,24 @@ sub _ajax_zmenu {
 sub _global_context {
   my $self = shift;
   my $type = $self->type;
-  return unless $self->{object}->core_objects;
+  my $co = $self->{object}->core_objects;
+  return unless $co;
 
   my @data = (
-    ['location',        'Location',   'View',    $self->{object}->core_objects->location_short_caption ],
-    ['gene',            'Gene',       'Summary', $self->{object}->core_objects->gene_short_caption ],
-    ['transcript',      'Transcript', 'Summary', $self->{object}->core_objects->transcript_short_caption ],
-    ['variation',       'Variation',  'Summary', $self->{object}->core_objects->variation_short_caption ],
+    ['location',        'Location',   'View',    $co->location_short_caption,   $co->location,   0 ],
+    ['gene',            'Gene',       'Summary', $co->gene_short_caption,       $co->gene,       1 ],
+    ['transcript',      'Transcript', 'Summary', $co->transcript_short_caption, $co->transcript, 1 ],
+    ['variation',       'Variation',  'Summary', $co->variation_short_caption,  $co->variation,  0 ],
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
-    next if $row->[3] eq '-';
-    my $url   = "/$ENV{ENSEMBL_SPECIES}/$row->[1]/$row->[2]?$qs";
+    next unless $row->[4];
+    my $action = 
+      $row->[4]->isa('EnsEMBL::Web::Fake')            ? $row->[4]->view :
+      $row->[4]->isa('Bio::EnsEMBL::ArchiveStableId') ? 'idhistory'     : $row->[2];
+    my $url  = $self->{object}->_url({'type'=> $row->[1], 'action' => $action,'__clear'=>1 });
+       $url .="?$qs" if $qs;
+    
     my @class = ();
     if( $row->[1] eq $type ) {
       push @class, 'active';
@@ -151,11 +165,23 @@ sub _global_context {
   $self->{'page'}->global_context->active( lc($type) );
 }
 
+sub trim_referer {
+  my( $self, $referer ) = @_;
+  $referer =~ s/;time=\d+\.\d+//g;   # remove all references to time...
+  $referer =~ s/\?time=\d+\.\d+;/?/;
+  $referer =~ s/\?time=\d+\.\d+//g;
+  $referer .= ($referer =~ /\?/ ? ';' : '?')."time=".time();
+  return $referer;
+}
 sub _user_context {
   my $self = shift;
   my $type = $self->type;
   my $obj  = $self->{'object'};
   my $qs = $self->query_string;
+
+  my $referer = $self->trim_referer(
+    $obj->param('_referer')||$obj->_url({'type'=>$type,'action'=>$ENV{'ENSEMBL_ACTION'},'time'=>undef})
+  );
 
   my $vc  = $obj->get_viewconfig;
   my $action = $type.'/'.$ENV{'ENSEMBL_ACTION'};
@@ -174,7 +200,12 @@ sub _user_context {
   my %ics = $vc->image_configs;
   ## Can user data be added to this page?
   my $flag = $obj->param('config') ? 0 : 1;
-  my $active = $type ne 'Account' && $type ne 'UserData' && !$obj->param('config');
+  my $active_config = $obj->param('config') || $vc->default_config();
+
+  my $active = $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
+
+  my $upload_data = $vc->can_upload;
+
   if( $vc->has_form ) {
     $self->{'page'}->global_context->add_entry(
       'type'      => 'Config',
@@ -183,14 +214,16 @@ sub _user_context {
       $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
         'time' => time, 
         'type'   => 'Config',
-        'action' => $action
+        'action' => $action,
+        'config' => '_page',
+        '_referer' => $referer
       }))
     );
     $flag = 0;
   }
   foreach my $ic_code (sort keys %ics) {
     my $ic = $obj->get_imageconfig( $ic_code );
-    $active = $type ne 'Account' && $type ne 'UserData' && $obj->param('config') eq $ic_code || $flag;
+    $active = $type ne 'Account' && $type ne 'UserData' && $active_config eq $ic_code || $flag;
     $self->{'page'}->global_context->add_entry(
       'type'      => 'Config',
       'id'        => "config_$ic_code",
@@ -199,28 +232,28 @@ sub _user_context {
         'time' => time, 
         'type'   => 'Config',
 	'action' => $action,
-	'config' => $ic_code
+	'config' => $ic_code,
+        '_referer' => $referer
       }))
     );
     $flag = 0;
   }
-  my $referer = $obj->param('_referer')||$obj->_url({'type'=>$type,'action'=>$ENV{'ENSEMBL_ACTION'},'time'=>undef});
-warn ">$referer";
-  $referer =~ s/[\?;]time=\d+\.\d+//g;
-warn "<$referer";
-  $active = $type eq 'UserData';
-  $self->{'page'}->global_context->add_entry(
-    'type'      => 'UserData',
-    'id'        => 'user_data',
-    'caption'   => 'Custom Data',
-    $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
-      'time' => time,
-      '_referer' => $referer,
-      '__clear' => 1,
-      'type'   => 'UserData',
-      'action' => 'Summary'
-    }))
-  );
+  if( $vc->can_upload ) {
+    $active = $type eq 'UserData';
+    $self->{'page'}->global_context->add_entry(
+      'type'      => 'UserData',
+      'id'        => 'user_data',
+      'caption'   => 'Custom Data',
+      $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
+        'time' => time,
+        '_referer' => $referer,
+        '__clear' => 1,
+        'type'   => 'UserData',
+        'action' => 'Summary'
+      }))
+    );
+  }
+
   ## Now the user account link if the user is logged in!
   $active = $type eq 'Account';
   if( $obj->species_defs->ENSEMBL_LOGINS && $ENV{'ENSEMBL_USER_ID'} ) {
@@ -261,6 +294,7 @@ sub _reset_config_panel {
   );
   $self->add_panel( $panel );
 }
+
 sub _configurator {
   my $self = shift;
   my $obj  = $self->{'object'};
@@ -273,7 +307,8 @@ sub _configurator {
   };
   my $action = $ENV{'ENSEMBL_TYPE'}.'/'.$ENV{'ENSEMBL_ACTION'};
      $action .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
-  my $url = $obj->_url({'type'=>'Config','action'=>$action},1);
+  my $referer = $self->trim_referer( $obj->param('_referer'), $ENV{'REQUEST_URI'} );
+  my $url = $obj->_url({'type'=>'Config','action'=>$action,'_referer'=>$referer},1);
   unless( $conf ) {
 ## This must be the view config....
     if( $vc->has_form ) {
@@ -343,7 +378,7 @@ sub _configurator {
       next if $track_node->get('menu') eq 'no';
       $rhs_content .= sprintf '
         <dt%s><select id="%s" name="%s">', 
-        $track_node->get('glyphset') =~ /_(prot)?das/ ? ' class="das_menu_entry"' : '',
+        '', # $track_node->get('glyphset') =~ /_(prot)?das/ ? ' class="das_menu_entry"' : '',
         $track_node->key, $track_node->key;
       my $display = $track_node->get( 'display' ) || 'off';
       my @states  = @{ $track_node->get( 'renderers' ) || [qw(off Off normal Normal)] };
@@ -353,8 +388,10 @@ sub _configurator {
       }
       $count ++;
       $on    ++ if $display ne 'off';
+      my $t = CGI::escapeHTML( $track_node->get('name') );
+      $t =~ s/\[(\w+)\]/sprintf( '<img src="\/i\/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" \/>', lc($1), $1, $1 )/e;
       $rhs_content .= sprintf '
-        </select> %s</dt>', $track_node->get('name');
+        </select> %s</dt>', $t;
       my $desc =  $track_node->get('description');
       if( $desc ) {
         $desc =~ s/&(?!\w+;)/&amp;/g;
@@ -412,6 +449,8 @@ sub _local_tools {
   my $self = shift;
   my $obj = $self->{object};
 
+  my $referer = $self->trim_referer( $ENV{'REQUEST_URI'} );
+
   if( $ENV{'ENSEMBL_USER_ID'} ) {
     $self->{'page'}->local_tools->add_entry(
       'caption' => 'Bookmark this page',
@@ -429,14 +468,9 @@ sub _local_tools {
       'title'   => 'You must be logged in to bookmark pages'
     );
   }
-  my $vc  = $obj->get_viewconfig;
-  my $config = {};
-  if( $vc->has_form ) {
-    $config = 1;
-  } else {
-    my %configs = $vc->image_configs();
-    ($config) = sort keys %configs;
-  }
+  my $vc = $obj->get_viewconfig;
+  my $config = $vc->default_config;
+
   my $disabled_upload = 1;
   if( $config ) {
     my $action = $obj->type.'/'.$obj->action;
@@ -445,14 +479,14 @@ sub _local_tools {
       'caption' => 'Configure this page',
       'class'   => 'modal_link',
       'url'     => $obj->_url({ 'time' => time, 'type' => 'Config', 'action' => $action,
-                                'config' => $config eq '1' ? undef : $config })
+                                'config' => $config, '_referer' => $referer })
     );
     if( $vc->can_upload ) {
       $self->{'page'}->local_tools->add_entry(
         'caption' => 'Add custom data to page',
         'class'   => 'modal_link',
         'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => 'Summary',
-                                 '_referer' => $ENV{'REQUEST_URI'}, '__clear' => 1 })
+                                 '_referer' => $referer, '__clear' => 1 })
       );
       $disabled_upload = 0;
     }
@@ -506,10 +540,12 @@ sub _user_tools {
 
 sub _context_panel {
   my $self   = shift;
+  my $raw    = shift;
   my $obj    = $self->{'object'};
   my $panel  = $self->new_panel( 'Summary',
     'code'     => 'summary_panel',
     'object'   => $obj,
+    'raw_caption' => $raw,
     'caption'  => $obj->caption
   );
   $panel->add_component( 'summary' => sprintf( 'EnsEMBL::Web::Component::%s::Summary', $self->type ) );
