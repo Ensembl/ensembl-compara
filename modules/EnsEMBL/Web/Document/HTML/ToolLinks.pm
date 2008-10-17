@@ -22,19 +22,14 @@ sub render   {
   if( $self->logins ) {
     if ($ENV{'ENSEMBL_USER_ID'}) {
       $html .= qq(
-      <a href="/Account/Links?_referer=$url" class="modal_link">Control Panel</a> &nbsp;|&nbsp;
       <a href="/Account/Links?_referer=$url" class="modal_link">Account</a> &nbsp;|&nbsp;
       <a href="/Account/Logout?_referer=$url">Logout</a> &nbsp;|&nbsp;);
     }
     else {
       $html .= qq(
-      <a href="/UserData/Upload?_referer=$url" class="modal_link">Control Panel</a> &nbsp;|&nbsp;
       <a href="/Account/Login?_referer=$url" class="modal_link">Login</a> / 
       <a href="/Account/Register?_referer=$url" class="modal_link">Register</a> &nbsp;|&nbsp;);
     }
-  } else {
-    $html .= qq(
-      <a href="/UserData/Upload?_referer=$url" class="modal_link">Control Panel</a> &nbsp;|&nbsp;);
   }
   $html .= qq(
       <a href="/Multi/blastview">BLAST/BLAT</a> &nbsp;|&nbsp; 
