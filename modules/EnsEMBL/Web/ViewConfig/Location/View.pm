@@ -22,7 +22,8 @@ sub init {
     contigviewtop    nodas
     contigviewbottom das
   )});
-  $view_config->storable = 1;
+  $view_config->default_config = 'contigviewbottom';
+  $view_config->storable       = 1;
 }
 
 sub form {
