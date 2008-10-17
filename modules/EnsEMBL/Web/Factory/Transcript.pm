@@ -40,7 +40,7 @@ sub createObjects {
   my $KEY = 'transcript';
   if( $identifier = $self->param( 'peptide' ) ){ 
     @fetch_calls = qw(fetch_by_translation_stable_id fetch_by_stable_id);
-  } elsif( $identifier = $self->param( 'transcript' ) ){ 
+  } elsif( $identifier = $self->param( 'transcript' )|| $self->param('t') ){ 
     @fetch_calls = qw(fetch_by_stable_id fetch_by_translation_stable_id);
   } elsif( $identifier = $self->param( 'exon' ) ){
     @fetch_calls = qw(fetch_all_by_exon_stable_id);
