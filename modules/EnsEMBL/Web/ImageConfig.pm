@@ -530,6 +530,7 @@ sub add_gene {
 
   my $flag = 0;
   foreach my $type ( @types ) {
+#      warn "looking for type $type-$key";
     my $menu = $self->get_node( $type );
     next unless $menu;
     foreach my $key_2 ( @$keys ) {
@@ -843,7 +844,7 @@ sub add_alignments {
           'colourset'      => 'multiple',
           'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10, $row->{'type'}, $row->{'name'} ),
           'strand'         => 'f',
-          'display'        => 'off', ## Default to on at the moment - change to off by default!
+          'display'        => 'signal_map', ## Default to on at the moment - change to off by default!
           'renderers'      => ['off'=>'Off','signal_map'=>'Signal map']
         };
         $alignments->{'multiple_align'}{ $row->{'id'}.'_constrained' } = {
@@ -861,7 +862,7 @@ sub add_alignments {
           'colourset'      => 'multiple',
           'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10+1, $row->{'type'}, $row->{'name'} ),
           'strand'         => 'f',
-          'display'        => 'off', ## Default to on at the moment - change to off by default!
+          'display'        => 'compact', ## Default to on at the moment - change to off by default!
           'renderers'      => [qw(off Off compact Normal)]
         };
       }
@@ -969,7 +970,7 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
     'depth'       => 10,
     'colourset'   => 'fg_regulatory_features', 
     'description' => 'Features from Ensembl Regulatory build',
-    'display'     => 'off'
+    'display'     => 'default'
   }));
   $menu->append( $self->create_track('regulatory_search_regions_'.$key, sprintf("cisRED Search Regions"),{
     'db'          => $key,
