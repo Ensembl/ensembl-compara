@@ -40,6 +40,8 @@ sub new {
                   && !$flags{DYNAMIC_PAGES_CONTENT};
   return undef if $caller->isa('EnsEMBL::Web::Configuration')
                   && !$flags{ORDERED_TREE};
+  return undef if $caller->isa('EnsEMBL::Web::Object')
+                  && !$flags{OBJECTS_COUNTS};
 
   my %args = (
     servers         => $memcached->{servers},
@@ -88,6 +90,8 @@ sub delete_by_tags {
   my $self = shift;
   my @tags = (@_, $self->{namespace});
 
+  #warn 'EnsEMBL::Web::Cache->tags_delete( '.join(', ', @tags).')';
+
   my $cmd = 'tags_delete '.join(' ', @tags)."\r\n";
   my $items_deleted = 0;
 
@@ -114,6 +118,11 @@ sub set {
   my ($key, $value, $exptime, @tags) = @_;
   return unless $value;
   #warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
+  
+  ## TODO: kill the hack
+  ## HACK: add extra tag for everything except user upload data
+  push @tags, 'no_user_upload'
+    unless 'EnsEMBL::Web::File::Driver::Memcached' eq caller;
   
   $self->SUPER::set($key, $value, $exptime || $self->{default_exptime});
   $self->add_tags($key, $self->{namespace}, @tags);

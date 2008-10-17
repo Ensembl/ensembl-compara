@@ -27,7 +27,11 @@ if ($MEMD) {
     print $MEMD->delete_by_tags(@ARGV)."\n";
   } elsif ($ARGV[0] =~ /flush/i) {
     print "Flushing cache:\n";
-    print $MEMD->delete_by_tags." cache items deleted\n";
+
+    ## TODO: kill the hack
+    ## HACK: add extra tag for everything except user upload data
+    print $MEMD->delete_by_tags('no_user_upload') . " cache items deleted\n";
+
   } elsif ($ARGV[0] =~ /stats/i) {
     shift @ARGV;
     print "Stats:\n";
