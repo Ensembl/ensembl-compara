@@ -689,7 +689,7 @@ CREATE TABLE protein_tree_member (
 
 CREATE TABLE protein_tree_tag (
   node_id                int(10) unsigned NOT NULL,
-  tag                    varchar(50),
+  tag                    varchar(50) NOT NULL,
   value                  mediumtext,
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
