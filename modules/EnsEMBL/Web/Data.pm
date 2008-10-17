@@ -204,6 +204,8 @@ sub dump_data {
   }
   my $dumper = Data::Dumper->new([$temp_fields]);
   $dumper->Indent(0);
+  $dumper->Maxdepth(0);
+  
   my $dump = $dumper->Dump();
   #$dump =~ s/'/\\'/g;
   $dump =~ s/^\$VAR1 = //;
