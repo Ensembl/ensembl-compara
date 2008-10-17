@@ -123,7 +123,7 @@ sub _das_server_param {
 
 sub _das_species_param {
   my $self = shift;
-  my $species_filter = $self->species_defs->species_full_name(  $self->param('das_species_filter') );
+  my $species_filter = $self->species_defs->species_full_name( $self->param('das_species_filter') ) || $self->param('das_species_filter');
   $self->param('das_species_filter', $species_filter);
   return $species_filter;
 }
