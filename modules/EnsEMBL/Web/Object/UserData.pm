@@ -58,9 +58,12 @@ sub get_das_servers {
 
 # Returns an arrayref of DAS sources for the selected server and species
 sub get_das_server_dsns {
-  my ($self, $species, $name) = @_;
+  my ($self, @logic) = @_;
   
-  my $server = $self->_server_param();
+  my $server  = $self->_das_server_param();
+  my $species = $self->_das_species_param();
+  my $name    = $self->param('das_name_filter');
+  @logic      = grep { $_ } @logic;
   my $sources;
   
   try {
@@ -72,12 +75,13 @@ sub get_das_server_dsns {
     );
     
     $sources = $parser->fetch_Sources(
-      -species => $species, # A filter, if specified
-      -name    => $name,    # A filter, if specified
+      -species    => $species || undef,
+      -name       => $name    || undef,
+      -logic_name => scalar @logic ? \@logic : undef,
     );
     
     if (!$sources || !scalar @{ $sources }) {
-      $sources = 'No DAS sources found';
+      $sources = "No DAS sources found for $server";
     }
     
   } catch {
@@ -92,22 +96,36 @@ sub get_das_server_dsns {
   return $sources;
 }
 
-sub _server_param {
+sub _das_server_param {
   my $self = shift;
   
-  # Get and "fix" the server URL
-  my $server = $self->param('das_server');
-  if ($server !~ /^\w+\:/) {
-    $server = "http://$server";
-  }
-  if ($server =~ /^http/) {
-    $server =~ s|/*$||;
-    if ($server !~ m{/das1?$}) {
-      $server = "$server/das";
+  for my $key ( 'other_das', 'preconf_das' ) {
+    
+    # Get and "fix" the server URL
+    my $server = $self->param( $key ) || next;
+    
+    if ($server !~ /^\w+\:/) {
+      $server = "http://$server";
     }
+    if ($server =~ /^http/) {
+      $server =~ s|/*$||;
+      if ($server !~ m{/das1?$}) {
+        $server = "$server/das";
+      }
+    }
+    $self->param( $key, $server );
+    return $server;
+    
   }
-  $self->param('das_server', $server);
-  return $server;
+  
+  return undef;
+}
+
+sub _das_species_param {
+  my $self = shift;
+  my $species_filter = $self->species_defs->species_full_name(  $self->param('das_species_filter') );
+  $self->param('das_species_filter', $species_filter);
+  return $species_filter;
 }
 
 1;

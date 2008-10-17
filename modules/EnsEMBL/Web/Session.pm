@@ -340,15 +340,20 @@ sub get_all_das {
 #   $session->save_das;           # save session data
 sub save_das {
   my $self = shift;
+  
   foreach my $source ( values %{ $self->get_all_das } ) {
+    # If the source hasn't changed in some way, skip it
     next unless $source->is_altered;
+    # Delete moved or deleted records
     if( $source->is_deleted || !$source->is_session ) {
       EnsEMBL::Web::Data::Session->reset_config(
         session_id => $self->create_session_id,
         type       => 'das',
         code       => $source->logic_name,
       );
-    } else {
+    }
+    # Create new source records
+    else {
       EnsEMBL::Web::Data::Session->set_config(
         session_id => $self->create_session_id,
         type       => 'das',

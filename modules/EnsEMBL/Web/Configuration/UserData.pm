@@ -120,15 +120,34 @@ sub attach {
   my $object = $self->{'object'};
 
   my $wizard = $self->wizard;
+  
+  # Page:                select_server
+  #                            |
+  #                            V
+  # Logic:        +----- source_logic------+
+  #               |                        |
+  #               V                        V
+  # Page:    select_das                UNFINISHED
+  #               |                        |
+  #               V                        |
+  # Logic:  validate_das-------+           |
+  #           |    ^           |           |
+  #           |    |           V           |
+  # Page:     |    |   select_das_species  |
+  #           |    |           |           |
+  #           |    |           V           |
+  # Page:     |    +-->select_das_coords   |
+  #           V                            V
+  # Page:    attach_das                attach_url
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
   my $server        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_server' ));
   my $source_logic  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'source_logic'));
-  my $source        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_source', backtrack => 1 ));
+  my $source        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_das', backtrack => 1 ));
   my $validate_das  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'validate_das'));
-  my $species       = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_species', backtrack => 1  ));
-  my $coords        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_coords', backtrack => 1  ));
+  my $species       = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_das_species', backtrack => 1  ));
+  my $coords        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_das_coords', backtrack => 1  ));
   
   # END POINTS:
   my $attach_das    = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'attach_das'));
