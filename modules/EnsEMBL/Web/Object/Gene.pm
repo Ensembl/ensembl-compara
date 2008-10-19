@@ -990,6 +990,24 @@ sub get_latest_incarnation {
   return $self->Obj->get_latest_incarnation;
 }
 
+=head2 get_all_associated_archived
+
+ Arg1        : data object
+ Description : fetches all associated archived IDs
+ Return type : Arrayref of
+                  Bio::EnsEMBL::ArchiveStableId archived gene
+                  Bio::EnsEMBL::ArchiveStableId archived transcript
+                  Bio::EnsEMBL::ArchiveStableId archived translation (optional)
+                  String peptide sequence (optional)
+
+=cut
+
+sub get_all_associated_archived {
+  my $self = shift;
+  return $self->Obj->get_all_associated_archived;
+}
+
+
 =head2 history
 
  Arg1        : data object
@@ -1073,7 +1091,7 @@ sub reg_features {
   my $fg_db= $self->get_fg_db; 
   my $slice = $self->get_Slice( @_ );
 
-  my $reg_feat_adaptor = $fg_db->get_RegulatoryFeatureAdaptor; warn $reg_feat_adaptor;
+  my $reg_feat_adaptor = $fg_db->get_RegulatoryFeatureAdaptor; 
   my $feats = $reg_feat_adaptor->fetch_all_by_Slice($slice);
   return $feats;
 
