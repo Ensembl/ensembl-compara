@@ -41,7 +41,9 @@ sub content {
   my $latest = $object->get_latest_incarnation;
   my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
   $id = $latest->stable_id.".".$latest->version;
-  my $version_html = $self->_archive_link($object, $OBJ, $latest, $latest->stable_id, $param, $id);
+ # my $version_html = $self->_archive_link($object, $OBJ, $latest, $latest->stable_id, $param, $id);
+my $version_html = $self->_archive_link($OBJ, $latest, $latest->stable_id, $param, $id);
+
   $version_html .= "<br />\n";
   $version_html .= "Release: ".$latest->release;
   $version_html .= " (current)" if ($object->is_current);
