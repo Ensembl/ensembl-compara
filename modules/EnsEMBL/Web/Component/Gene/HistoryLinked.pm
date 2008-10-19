@@ -57,7 +57,7 @@ sub get_assoc {
 
   my $last_release;
   my $last_gsi;
-  my @associated; 
+  my @a; 
 
   while (my $r = shift(@sorted)) { 
   my %temp;
@@ -95,10 +95,10 @@ sub get_assoc {
     $temp{'gene'} = $gsi;
     $temp{'transcript'} = $tsi;
     $temp{'translation'} = $tlsi;
-    push (@associated, \%temp);
+    push (@a, \%temp);
   }
 
-  return \@associated;
+  return \@a;
 }
 
 
