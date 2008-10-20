@@ -26,21 +26,23 @@ sub content {
   my $self = shift; 
   my $protein = shift; 
   my $OBJ = $self->object;  
+  my $object;
  
   if ($protein == 1){ 
     my $translation_object;
     if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId')){ 
-      warn $OBJ->transcript->adaptor->get_peptide();
-      my $transcript_obj; 
+       my $protein = $self->object->param('p');
+       my $db    = $self->{'parameters'}{'db'}  = $self->object->param('db')  || 'core';
+       my $db_adaptor = $self->object->database($db);
+       my $a = $db_adaptor->get_ArchiveStableIdAdaptor;
+       $object = $a->fetch_by_stable_id( $protein );
     } else { 
        $translation_object = $OBJ->translation_object;
+       $object = $translation_object->get_archive_object();
     }
-
-    #$OBJ = $translation_object;
-  }  
-
-  # retrieve archive object 
-  my $object = $OBJ->get_archive_object(); 
+  } else {    # retrieve archive object 
+    $object = $OBJ->get_archive_object(); 
+  }
 
   my $html = '';
 
@@ -130,19 +132,13 @@ sub _archive_link {
     $url = $object->_url ({'type' => $type, 'action' => $action, $param => $display_label});
     $html = qq(<a title="View in $site_type $action" href="$url">$display_label</a>);
   } elsif ( $site_type eq "archived" ){
-
-    my $archives =  EnsEMBL::Web::Data::Release->find_all; 
-    warn $archives;
-    my %archive_info = %{$object->species_defs->ENSEMBL_ARCHIVES};
-    #warn %archive_info;
-
     my %archive_sites = %{$object->species_defs->ENSEMBL_ARCHIVES};
     $url = "http://$archive_sites{$release}.archive.ensembl.org/";
     my $species = $object->species;
     if ($latest->release >= 51){
       my $arch_url = $object->_url ({'type' => $type, 'action' => $action, $param => $display_label});
-       $html = qq(<a title="View in $site_type $action" href="$url$species/$arch_url">$display_label</a>);
-    } else {
+      $html = qq(<a title="View in $site_type $action" href="$url$species/$arch_url">$display_label</a>);
+    }  else {
       $type = lc($type);
       $html = qq(<a title="View in $site_type $view" href="$url$species/$view?$type=$name">$display_label</a>);      
     }
