@@ -339,12 +339,10 @@ sub dump {
 
 sub _species_label {
   my( $self, $key ) = @_;
-  return "Ancestral sequence" unless $self->species_defs->other_species( $key, 'SPECIES_BIO_NAME' );
-  return sprintf(
-    '%s (<i>%s</i>)',
-    $self->species_defs->other_species( $key, 'SPECIES_COMMON_NAME' ),
-    $self->species_defs->other_species( $key, 'SPECIES_BIO_NAME' )
-  );
-
+  return $self->species_defs->species_label( $key );
+}
+sub species_label {
+  my( $self, $key ) = @_;
+  return $self->species_defs->species_label( $key );
 }
 1;
