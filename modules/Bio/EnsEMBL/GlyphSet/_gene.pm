@@ -13,8 +13,11 @@ sub features {
   return \@T;
 }
 
+sub render_gene_nolabel { $_[0]->_init(0); }
+sub render_gene_label   { $_[0]->_init(1); }
+
 sub _init {
-  my ($self) = @_;
+  my $self = shift;
 
   return unless ($self->strand() == -1);
 
@@ -120,6 +123,7 @@ sub _init {
   if($FLAG) { ## NOW WE NEED TO ADD THE LABELS_TRACK.... FOLLOWED BY THE LEGEND
     my $GL_FLAG = $self->get_parameter(  'opt_gene_labels' );
        $GL_FLAG = 1 unless defined($GL_FLAG);
+       $GL_FLAG = shift if @_;
        $GL_FLAG = 0 if ( $self->my_config( 'label_threshold' ) || 50e3 )*1001 < $vc->length;
     if( $GL_FLAG ) {
       my $START_ROW = $self->_max_bump_row+1;
