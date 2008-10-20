@@ -49,7 +49,6 @@ sub content {
     foreach my $species (sort keys %orthologue_list) {
       (my $spp = $species) =~ tr/ /_/ ;
       my $label = $gene->species_defs->species_label( $spp );
-warn "$label - $spp ";
 
       if( $gene->param('species_'.lc($spp) ) eq 'no' ) {
         $orthologues_skipped_count += keys %{$orthologue_list{$species}};
