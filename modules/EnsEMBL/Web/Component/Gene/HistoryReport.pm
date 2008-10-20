@@ -84,7 +84,7 @@ sub content {
     <dl class = "summary">
       <dt>Latest Version</dt>
       <dd>$version_html</dd> 
-    </dl>);
+    </dl><br />);
          
   return $html;
 }
