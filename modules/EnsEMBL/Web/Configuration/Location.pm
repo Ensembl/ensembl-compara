@@ -56,7 +56,7 @@ sub populate_tree {
   );
 
   my $align_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );
-  $align_menu->append( $self->create_node( 'Align', "Genomic alignments ([[counts::align_slice]] sets)",
+  $align_menu->append( $self->create_node( 'Align', "Genomic alignments ([[counts::align_slice]])",
     [qw(
       top      EnsEMBL::Web::Component::Location::Compara_AlignSliceTop
       nav      EnsEMBL::Web::Component::Location::ViewBottomNav
@@ -66,11 +66,11 @@ sub populate_tree {
 #      zoom    EnsEMBL::Web::Component::Location::Compara_AlignSliceZoom
     { 'availability' => 'slice database:compara', 'concise' => 'Genomic alignments' }
   ));
-  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comparison ([[counts::align_contig]] species)",
+  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comp. ([[counts::align_contig]])",
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
   ));
-  $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]] species)",
+  $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]])",
     [qw(
       image      EnsEMBL::Web::Component::Location::SyntenyImage
       species    EnsEMBL::Web::Component::Location::ChangeSpecies
@@ -78,10 +78,10 @@ sub populate_tree {
       homo_nav   EnsEMBL::Web::Component::Location::NavigateHomology
       matches    EnsEMBL::Web::Component::Location::SyntenyMatches
     )],
-    { 'availability' => 'chromosome has_syteny', 'concise' => 'Synteny'}
+    { 'availability' => 'chromosome has_synteny', 'concise' => 'Synteny'}
   ));
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
-  $variation_menu->append( $self->create_node( 'SequenceAlignment', "Resequencing ([[counts::reseq_strains]] sets)",
+  $variation_menu->append( $self->create_node( 'SequenceAlignment', "Resequencing ([[counts::reseq_strains]])",
     [qw(botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
 	align   EnsEMBL::Web::Component::Location::SequenceAlignment)],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
