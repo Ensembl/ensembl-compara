@@ -273,7 +273,7 @@ function __drag_select_init() {
 //  $$('.drag_select').each(function(n){ n.onmousedown = select_start; });
   $$('.drag_select').each(function(n){
     n.getElementsBySelector('img').each(function(i_n){
-      if( ! i_n.hasClassName('munged_image_map') ) return;
+      if( i_n.hasClassName('munged_image_map') ) return;
       var m = $(i_n.id+'_map');
       if(m) {
         m.descendants().each(function(ma){
@@ -359,7 +359,7 @@ function __drag_select_init() {
   });
 }
 
-function __draw_red_box( d, l, r, t, b, c ) {
+function __draw_red_box( d, l, r, t, b, c ) { 
   var w = r-l+1;
   var h = b-t+1;
   var s1 = 'left:'+l+'px;width:1px;top:'+t+'px;height:'+h+'px';
