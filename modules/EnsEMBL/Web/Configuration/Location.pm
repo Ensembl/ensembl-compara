@@ -83,7 +83,7 @@ sub populate_tree {
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   $variation_menu->append( $self->create_node( 'SequenceAlignment', "Resequencing ([[counts::reseq_strains]] sets)",
     [qw(botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
-	nav     EnsEMBL::Web::Component::Location::SequenceAlignment)],
+	align   EnsEMBL::Web::Component::Location::SequenceAlignment)],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
 }
