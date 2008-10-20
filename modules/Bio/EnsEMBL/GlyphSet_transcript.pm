@@ -65,7 +65,7 @@ sub render_collapsed {
 
     my $colour  = $self->my_colour( $gene_key );
     my $label   = $self->my_colour( $gene_key , 'text' );
-    my $hilight = $selected_db eq $db && $selected_gene eq $gene_stable_id && $gene_stable_id;
+    my $hilight = ( $selected_db eq $db && $selected_gene eq $gene_stable_id && $gene_stable_id ) ? 'highlight1' : undef;
 
     $used_colours{ $label } = $colour;
 
