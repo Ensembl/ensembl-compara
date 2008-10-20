@@ -37,26 +37,26 @@ if ($site eq 'ebi') {
 } elsif ($site eq 'sanger') {
   $URL = 'http://search.sanger.ac.uk/cgi-bin/exasearch?_q='.$query;
 } elsif ($site eq 'vega') {
-   $URL = "http://vega.sanger.ac.uk/Homo_sapiens/searchview?species=all&idx=All&q=$query";
+  $URL = "http://vega.sanger.ac.uk/Homo_sapiens/searchview?species=all&idx=All&q=$query";
 } else {
 
 ## Let us parse the first string to see if it is the name of a species or one
 ## of its aliases... (should we do this if we specify a species in the drop
 ## down!
 
-# unless( $species ) {
-  $query .= ' ';
-  my %sp_hash = %{ $webpage->{'species_defs'}->ENSEMBL_SPECIES_ALIASES };
-  foreach my $sp ( sort keys %sp_hash ) {
-    if( lc(substr($query,0,length($sp)+1)) eq lc($sp).' ') {
-      $species = $sp_hash{$sp};
-      $query = substr($query, length($sp)+1 );
+#  unless( $species ) {
+    $query .= ' ';
+    my %sp_hash = %{ $webpage->{'species_defs'}->ENSEMBL_SPECIES_ALIASES };
+    foreach my $sp ( sort keys %sp_hash ) {
+      if( lc(substr($query,0,length($sp)+1)) eq lc($sp).' ') {
+        $species = $sp_hash{$sp};
+        $query = substr($query, length($sp)+1 );
+      }
     }
-  }
-  chop $query;
-# }
+    chop $query;
+#  }
 
-my $feature_maps = {qw(
+  my $feature_maps = {qw(
   gene       Gene
   affyprobe  OligoProbe
   oliogprobe OligoProbe
@@ -89,21 +89,21 @@ my $feature_maps = {qw(
 ## of the search string - if so use that as the provisional name
 ## of the index....
 
-my $index_t = '';
-if( $query=~/^(\w+)\b/ ) {
-  $index_t = $feature_maps->{lc($1)};
-  if( $index_t ) {
-    $query=~s/^\w+\W*//;
+  my $index_t = '';
+  if( $query=~/^(\w+)\b/ ) {
+    $index_t = $feature_maps->{lc($1)};
+    if( $index_t ) {
+      $query=~s/^\w+\W*//;
+    }
+  } elsif( $query =~ s/^(chromosome)//i || $query =~ s/^(chr)//i ) {
+      $index_t = 'Chromosome';
+  } elsif( $query =~/^(contig|clone|supercontig|region)/i ) {
+      $index_t = 'Sequence';
   }
-} elsif( $query =~ s/^(chromosome)//i || $query =~ s/^(chr)//i ) {
-  $index_t = 'Chromosome';
-} elsif( $query =~/^(contig|clone|supercontig|region)/i ) {
-  $index_t = 'Sequence';
-}
 
-my $flag = 0;
+  my $flag = 0;
 
-$index = $index_t if $index_t;
+  $index = $index_t if $index_t;
 
 ## We have a species so we can see if we can generate a mapview/contigview/cytoview
 ## link....
@@ -111,32 +111,33 @@ $index = $index_t if $index_t;
 ## these are old links that therefore rely on the magic carpet -> need reformatting
 ## do this at the same time as rewriting the script
 
-if($species) {
-  if(!$query) { ## nothing to search for
-    $URL = URL( '/%s/', $species );
-    $flag = 1;
-  } elsif( $index eq 'Sequence' || $index eq 'Chromosome' || ! $index ) {
-  ## match any of the following:
-    if( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i       ||
-        $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i ) {
-      my( $seq_region_name, $start, $end ) = ( $1, $2, $4 );
-      $seq_region_name =~ s/chr//;
-      $start = $webpage->evaluate_bp( $start );
-      $end   = $webpage->evaluate_bp( $end   );
-      ($end,$start)=($start,$end) if $end < $start;
-      my $script = 'contigview';
-         $script = 'cytoview' if  $end - $start > 1000000;
-      if($start && $end ) {
-        $URL = URL( "/%s/%s?region=%s;start=%s;end=%s", $species, $script, $seq_region_name, $start, $end );
-    $flag = 1;
-      } elsif( $index eq 'Chromosome' ) {
-        $URL = "/$species/mapview?chr=$seq_region_name";
-    $flag = 1;
-      } else {
-        $URL = URL( "/%s/%s?region=%s", $species, $script, $seq_region_name );
-    $flag = 1;
+  if($species) {
+      if(!$query) { ## nothing to search for
+	  $URL = "Search/Summary?species=$species;idx=;q=";
+	  $flag = 1;
       }
-
+      elsif( $index eq 'Sequence' || $index eq 'Chromosome' || ! $index ) {
+	  ## match any of the following:
+	  if( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i       ||
+		  $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i ) {
+	      my( $seq_region_name, $start, $end ) = ( $1, $2, $4 );
+	      $seq_region_name =~ s/chr//;
+	      $start = $webpage->evaluate_bp( $start );
+	      $end   = $webpage->evaluate_bp( $end   );
+	      ($end,$start)=($start,$end) if $end < $start;
+	      my $script = 'contigview';
+	      $script = 'cytoview' if  $end - $start > 1000000;
+	      if($start && $end ) {
+		  $URL = URL( "/%s/%s?region=%s;start=%s;end=%s", $species, $script, $seq_region_name, $start, $end );
+		  $flag = 1;
+	      } elsif( $index eq 'Chromosome' ) {
+		  $URL = "/$species/mapview?chr=$seq_region_name";
+		  $flag = 1;
+	      } else {
+		  $URL = URL( "/%s/%s?region=%s", $species, $script, $seq_region_name );
+		  $flag = 1;
+	      }
+	      
 #    } elsif( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)$/i ) {
 #      my( $seq_region_name, $start, $end ) = ( $1, $2 );
 #      $start = $webpage->evaluate_bp( $start );
@@ -146,24 +147,30 @@ if($species) {
 #    $flag = 1;
 #      }
    
-    } else {
-      if( $index eq 'Chromosome' ) {
-        $URL = "/$species/mapview?chr=$query";
-    $flag = 1;
-      } elsif( $index eq 'Sequence' ) {
-        $URL = URL( "/%s/contigview?region=%s", $species, $query );
-    $flag = 1;
+	  } else {
+	      if( $index eq 'Chromosome' ) {
+		  $URL = "/$species/mapview?chr=$query";
+		  $flag = 1;
+	      } elsif( $index eq 'Sequence' ) {
+		  $URL = URL( "/%s/contigview?region=%s", $species, $query );
+		  $flag = 1;
+	      }
+	  }
       }
-    }
+      if (  $query =~ /\.\./ && !$flag ) {  ## other pairs of identifiers
+	  ## str.string..str.string
+	  ## str.string-str.string
+	  $query =~ /([\w|\.]*\w)(\.\.)(\w[\w|\.]*)/;
+	  $URL = URL( '/%s/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s', $species, $1, $3 );
+	  $flag = 1;
+      }
   }
-  if (  $query =~ /\.\./ && !$flag ) {  ## other pairs of identifiers
-    ## str.string..str.string
-    ## str.string-str.string
-    $query =~ /([\w|\.]*\w)(\.\.)(\w[\w|\.]*)/;
-    $URL = URL( '/%s/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s', $species, $1, $3 );
-    $flag = 1;
+
+  else {
+      $URL = '/Search/Summary?species=;idx=;q=';
   }
-}
+
+
   unless( $flag ) {
       $URL = $query =~ /^BLA_\w+$/            ? URL( '/Multi/blastview/%s', $query  )        ## Blast ticket
 	  : $query =~ /[ACGT]{20,}/i         ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $query )         ## BLAST seq search
