@@ -41,8 +41,8 @@ sub content {
     my $ALIGNVIEW = 0;
     my $matching_orthologues = 0;
     my %SP = ();
-    my $multicv_link = sprintf "/%s/multicontigview?gene=%s;context=10000", $gene->species, $gene->stable_id;
-    my $FULL_URL     = $multicv_link;
+#    my $multicv_link = sprintf "/%s/multicontigview?gene=%s;context=10000", $gene->species, $gene->stable_id;
+#    my $FULL_URL     = $multicv_link;
 
     my $orthologues_skipped_count   = 0;
     my @orthologues_skipped_species = ();
@@ -57,7 +57,7 @@ sub content {
       }
       my $C_species = 1;
       my $rowspan = scalar(keys %{$orthologue_list{$species}});
-      $rowspan++ if $rowspan > 1;
+#      $rowspan++ if $rowspan > 1;
       unless($common_name){
         my ($OBJ) = values %{$orthologue_list{$species}};
         $common_name = $OBJ->{'sp_common'};
@@ -66,7 +66,7 @@ sub content {
       <tr>
         <th rowspan="$rowspan">%s<em>%s</em></th>), ucfirst( $common_name ? "$common_name<br />":"" ),$species );
       my $start = '';
-      my $mcv_species = $multicv_link;
+#      my $mcv_species = $multicv_link;
       foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
         my $OBJ = $orthologue_list{$species}{$stable_id};
         $matching_orthologues = 1;
@@ -85,12 +85,13 @@ sub content {
 	my $link = qq(/$spp/Gene/Summary?g=$stable_id;db=$db);   ### USE _url
 	my $gene_stable_id_link = sprintf '<a href="%s">%s</a>', $link, $stable_id;
         my $percent_ids  = '';
-        my $target_links = qq(<br />
-          <span class="small">[<a href="$multicv_link;s1=$spp;g1=$stable_id">MultiContigView</a>]</span>);
-          $mcv_species .= ";s$C_species=$spp;g$C_species=$stable_id";
-          $FULL_URL    .= ";s$C=$spp;g$C=$stable_id";
-          $C_species++;
-          $C++;
+        my $target_links = '';
+#        my $target_links = qq(<br />
+#          <span class="small">[<a href="$multicv_link;s1=$spp;g1=$stable_id">MultiContigView</a>]</span>);
+#          $mcv_species .= ";s$C_species=$spp;g$C_species=$stable_id";
+#          $FULL_URL    .= ";s$C=$spp;g$C=$stable_id";
+#          $C_species++;
+#          $C++;
         if( $orthologue_desc ne 'DWGA' ) {
           my $url = $gene->_url({ 'action' => 'Compara_Ortholog/Alignment', 'g1' => $stable_id });
 	  $target_links .= qq(
@@ -126,13 +127,13 @@ sub content {
 	</td>
       </tr>);
       }
-      if( $rowspan > 1) {
-        $html .= qq(
-      <tr>
-        <td colspan="2">&nbsp;</td>
-	<td colspan="2"><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td>
-      </tr>);
-      }
+#     if( $rowspan > 1) {
+#        $html .= qq(
+#      <tr>
+#        <td colspan="2">&nbsp;</td>
+#	<td colspan="2"><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td>
+#      </tr>);
+#      }
     }
     $html .= '
     </table>';
@@ -165,5 +166,7 @@ paralogues with BioMart to see more.)</p>%s),
 
   return $html;
 }
+
 1;
+
 
