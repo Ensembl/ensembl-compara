@@ -407,22 +407,32 @@ warn "ATTACHING DATA OBJECT........";
 sub _create_object_from_core {
   my $self = shift;
   my $l = $self->core_objects->location;
-  my $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
-    'type' => 'Location',
-    'real_species'     => $self->__species,
-    'name'             => $l->seq_region_name,
-    'seq_region_name'  => $l->seq_region_name,
-    'seq_region_start' => $l->start,
-    'seq_region_end'    => $l->end,
-    'seq_region_strand' => 1,
-    'seq_region_type'   => $l->coord_system->name,
-    'raw_feature_strand' => 1,
-    'seq_region_length' => $l->seq_region_length,
-  }, $self->__data );
-
+  my $data = undef;
+  if( $l->isa( 'EnsEMBL::Web::Fake' ) ) {
+    $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
+        'type' => 'Karyotype',
+        'real_species' => $self->__species
+      },
+      $self->__data
+    );
+  } else {
+    $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
+      'type' => 'Location',
+      'real_species'     => $self->__species,
+      'name'             => $l->seq_region_name,
+      'seq_region_name'  => $l->seq_region_name,
+      'seq_region_start' => $l->start,
+      'seq_region_end'    => $l->end,
+      'seq_region_strand' => 1,
+      'seq_region_type'   => $l->coord_system->name,
+      'raw_feature_strand' => 1,
+      'seq_region_length' => $l->seq_region_length,
+      }, $self->__data
+    );
+    $data->attach_slice( $l );
+  }
     ## Add a slice consisting of the whole chromosome
 #    my $chr = $self->_slice_adaptor()->fetch_by_region( undef, $l->seq_region_name);
-  $data->attach_slice( $l );
 
   $self->DataObjects($data);
   return 'from core';
@@ -430,8 +440,9 @@ sub _create_object_from_core {
 
 sub createObjects { 
   my $self      = shift;    
-  if( $self->core_objects->location
-    && !$self->core_objects->gene
+  if(   $self->core_objects->location
+     && !$self->core_objects->location->isa('EnsEMBL::Web::Fake') 
+     && !$self->core_objects->gene
   ) {
     return $self->_create_object_from_core;
   }
