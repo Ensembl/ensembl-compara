@@ -31,7 +31,7 @@ sub init {
 #    'misc_set'    => 'Misc. regions',
     'synteny'     => 'Synteny',
 #    'user_data'   => 'User uploaded data',
-    'other'       => 'Additional features',
+    'decorations' => 'Additional features',
     'information' => 'Information',
     'options'     => 'Options'
   );
@@ -41,7 +41,7 @@ sub init {
   
   $self->load_tracks();
 
-  $self->add_tracks( 'other',
+  $self->add_tracks( 'decorations',
     [ 'scalebar',  '', 'scalebar',  { 'display' => 'normal'  }],
     [ 'ruler',     '', 'ruler',     { 'display' => 'normal', 'strand' => 'f'  }],
     [ 'draggable', '', 'draggable', { 'display' => 'normal', 'menu' => 'no' }]

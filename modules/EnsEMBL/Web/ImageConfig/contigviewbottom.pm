@@ -53,7 +53,7 @@ sub init {
     'pairwise_other'  => 'Pairwise alignment',
     'user_data'       => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
     'external_data'   => 'External data',
-    'other'           => 'Additional decorations',
+    'decorations'     => 'Additional decorations',
     'information'     => 'Information',
     'options'         => 'Options'
   );
@@ -67,7 +67,7 @@ sub init {
     [ 'codon_seq', 'Translated sequence',  'codonseq',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.5, 'colourset' => 'codonseq', 'description' => 'Track showing 6-frame translation of sequence'  } ],
     [ 'codons',    'Start/stop codons',    'codons',          { 'display' => 'off',  'strand' => 'b', 'threshold' => 50,  'colourset' => 'codons' ,  'description' => 'Track indicating locations of start and stop codons in region'  } ],
   );
-  $self->add_tracks( 'other', 
+  $self->add_tracks( 'decorations', 
     [ 'gc_plot',   '%GC',                  'gcplot',          { 'display' => 'normal',  'strand' => 'r', 'description' => 'Shows %age of Gs & Cs in region'  } ],
   );
   
@@ -91,7 +91,7 @@ sub init {
     [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary', 'description' => 'Show counts of number of tracks turned off by the user' } ],
     [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information',            'description' => 'Details of the region shown in the image'               } ],
   );
-  $self->add_tracks( 'other',  
+  $self->add_tracks( 'decorations',  
     [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar', 'description' => 'Track ' } ],
     [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler',     'description' => 'Shows the length of the region being displayed'    } ],
     [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],

@@ -26,24 +26,23 @@ sub init {
     'decorations' => 'Chromosome',
   );
 
-## Load all tracks from the database....
-#  $self->load_tracks();
-
 ## Now we have a number of tracks which we have to manually add...
   $self->add_tracks( 'decorations', 
     [ 'ideogram',           'Ideogram',            'ideogram', {
       'display' => 'normal',
       'strand'=>'r',
       'colourset' => 'ideogram'
-    } ],
-    [ 'assembly_exception', 'Assembly exceptions', 'assemblyexception', {
-      'height'        => 2,
-      'display'       => 'normal', 
-      'strand'        => 'x',
-      'label_strand'  => 'r',
-      'short_labels'  => 1,
-      'colourset'     => 'assembly_exception'
-    } ],
+    } ]
+  );
+## Load all tracks from the database....
+  $self->load_tracks();
+
+  $self->modify_configs(
+    [qw(decorations)],
+    {qw(short_labels 1)}
+  );
+
+  $self->add_tracks( 'decorations', 
     [ 'draggable', '', 'draggable', { 'display' => 'normal' } ]
   );
 
