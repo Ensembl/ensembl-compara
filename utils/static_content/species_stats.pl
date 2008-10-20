@@ -55,8 +55,7 @@ BEGIN{
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use constant SSI_PATH         => qq(%s/htdocs/%s/ssi/);
-use constant STATS_PATH       => qq(%s/htdocs/%s/stats/);
+use constant STATS_PATH       => qq(%s/htdocs/ssi/species/);
 
 use Bio::EnsEMBL::DBLoader;
 use EnsEMBL::Web::DBSQL::DBConnection;
@@ -125,10 +124,10 @@ foreach my $spp (@valid_spp) {
   else {
 
     ## PREPARE TO WRITE TO OUTPUT FILE
-    my $fq_path_dir = sprintf( SSI_PATH, $PLUGIN_ROOT, $spp);
+    my $fq_path_dir = sprintf( STATS_PATH, $PLUGIN_ROOT);
     #print $fq_path_dir, "\n";
     &check_dir($fq_path_dir);
-    my $fq_path_html = $fq_path_dir."stats.html";
+    my $fq_path_html = $fq_path_dir."stats_$spp.html";
     open (STATS, ">$fq_path_html") or die "Cannot write $fq_path_html: $!";
 
     ### GET ASSEMBLY AND GENEBUILD INFO
@@ -349,20 +348,41 @@ foreach my $spp (@valid_spp) {
 
   ##--------------------------- OUTPUT STATS TABLE -----------------------------
 
-    print STATS qq(<h3 class="boxed">Statistics</h3>
+    print STATS qq(<h3 class="boxed">Summary</h3>
 
-  <table id="species-stats" class="ss tint">
+  <table class="ss tint species-stats">
       <tr class="bg2">
-          <td class="data" style="font-size:115%">Assembly:</td>
-          <td class="value" style="font-size:115%">$a_id, $a_date</td>
+          <td class="data">Assembly:</td>
+          <td class="value">$a_id, $a_date</td>
       </tr>
       <tr>
-          <td class="data" style="font-size:115%">Database version:</td>
-          <td class="value" style="font-size:115%">$db_id</td>
+          <td class="data">Database version:</td>
+          <td class="value">$db_id</td>
       </tr>
+  );
+
+    my $row;
+    my $rowcount = 1; ## use this to alternate white and coloured rows
+
+    $bp = thousandify($bp);
+    $row = stripe_row($rowcount);
+    print STATS qq($row
+          <td class="data">Base Pairs:</td>
+          <td class="value">$bp</td>
+      </tr>);
+
+    $rowcount++;
+    $gpl = thousandify($gpl);
+    $row = stripe_row($rowcount);
+    print STATS qq($row
+          <td class="data">Golden Path Length:</td>
+          <td class="value">$gpl</td>
+      </tr>
+
+
       <tr class="bg2">
-          <td class="data" style="font-size:115%">Genebuild by:</td>
-          <td class="value" style="font-size:115%">$b_id</td>
+          <td class="data">Genebuild by:</td>
+          <td class="value">$b_id</td>
       </tr>
       <tr>
           <td class="data">Genebuild started:</td>
@@ -376,10 +396,14 @@ foreach my $spp (@valid_spp) {
           <td class="data">Genebuild last updated/patched:</td>
           <td class="value">$b_latest</td>
       </tr>
+  </table>
   );
-
-    my $row;
-    my $rowcount = 6; ## use this to alternate white and coloured rows
+  
+    print STATS qq(
+  <h3>Gene counts</h3>
+  <table class="ss tint species-stats">
+  );
+    $rowcount = 0;
 
     if ($known) {
       $known = thousandify($known);
@@ -448,6 +472,30 @@ foreach my $spp (@valid_spp) {
       );
     }
 
+    $rowcount++;
+    $exons = thousandify($exons);
+    $row = stripe_row($rowcount);
+    print STATS qq($row
+          <td class="data">Gene exons:</td>
+          <td class="value">$exons</td>
+      </tr>);
+
+    $rowcount++;
+    $transcripts = thousandify($transcripts);
+    $row = stripe_row($rowcount);
+    print STATS qq($row
+          <td class="data">Gene transcripts:</td>
+          <td class="value">$transcripts</td>
+      </tr>
+  </table>
+    );
+
+    print STATS qq(
+  <h3>Other</h3>
+  <table class="ss tint species-stats">
+  );
+    $rowcount = 0;
+
     if ($genpept){
       $genpept = thousandify($genpept);
       $rowcount++;
@@ -478,22 +526,6 @@ foreach my $spp (@valid_spp) {
   </tr>);
     }
 
-    $rowcount++;
-    $exons = thousandify($exons);
-    $row = stripe_row($rowcount);
-    print STATS qq($row
-          <td class="data">Gene exons:</td>
-          <td class="value">$exons</td>
-      </tr>);
-
-    $rowcount++;
-    $transcripts = thousandify($transcripts);
-    $row = stripe_row($rowcount);
-    print STATS qq($row
-          <td class="data">Gene transcripts:</td>
-          <td class="value">$transcripts</td>
-      </tr>);
-
     if ($snps) {
       $rowcount++;
       $snps = thousandify($snps);
@@ -504,32 +536,6 @@ foreach my $spp (@valid_spp) {
           </tr>);
     }
 
-    $rowcount++;
-    $bp = thousandify($bp);
-    $row = stripe_row($rowcount);
-    print STATS qq($row
-          <td class="data">Base Pairs:</td>
-          <td class="value">$bp</td>
-      </tr>);
-
-    $rowcount++;
-    $gpl = thousandify($gpl);
-    $row = stripe_row($rowcount);
-    print STATS qq($row
-          <td class="data">Golden Path Length:</td>
-          <td class="value">$gpl</td>
-      </tr>
-  );
-
-    if ($ip_tables) {
-      print STATS qq(
-  <tr>
-          <td class="data">Most common InterPro domains:</td>
-          <td class="value"><a href="/$spp/stats/IPtop40.html">Top 40</a> 
-                            <a href="/$spp/stats/IPtop500.html">Top 500</a></td>
-      </tr>
-  );
-    }
     print STATS '</table>';
 
     close(STATS);
@@ -632,7 +638,7 @@ sub do_interpro {
 
 sub hits2html {
   my ($ENS_ROOT, $domain, $number, $file, $isbig, $species ) = @_;
-  my $interpro_dir = sprintf(STATS_PATH, $ENS_ROOT, $species);
+  my $interpro_dir = sprintf(STATS_PATH, $ENS_ROOT);
 
   if( ! -e $interpro_dir ){
     #utils::Tool::info(1, "Creating $interpro_dir" );
@@ -640,7 +646,7 @@ sub hits2html {
       ( warning( 1, "Cannot create $interpro_dir: $!" ) && next );
   }
 
-  my $fq_path = $interpro_dir."/$file";
+  my $fq_path = $interpro_dir.'/stats_'.$species.'_'.$file;
   open (HTML, ">$fq_path") or warn "Cannot write HTML file for pfam hits: $!\n";
   #utils::Tool::info(1, "Writing file \'$fq_path\'");
 
@@ -712,14 +718,14 @@ sub hits2html {
 
   print("</table></p>");
 
-  my $interpro_path = "/$species";
+  my $interpro_path = "/$species/Info";
   if($isbig == 0){
     # the Top40 page
-    print qq(<p class="center"><a href="$interpro_path/IPtop500.html">View</a> top 500 InterPro hits (large table)</p>);
+    print qq(<p class="center"><a href="$interpro_path/IPtop500">View</a> top 500 InterPro hits (large table)</p>);
   }
   else{
     # >top40  page
-    print qq(<p class="center"><a href="$interpro_path/IPtop40.html">View</a> top 40 InterPro hits</p>);
+    print qq(<p class="center"><a href="$interpro_path/IPtop40">View</a> top 40 InterPro hits</p>);
   }
 
   print(qq(
