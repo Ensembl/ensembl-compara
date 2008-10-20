@@ -263,6 +263,7 @@ sub ingredient {
       'ajax_flag'  => 1,
       'scriptname' => 'component',
       'r'          => $r,
+      'outputtype' => $objecttype eq 'DAS' ? 'DAS': undef,
       'renderer'   => 'String',
       'cache'      => $MEMD,
     );
