@@ -59,6 +59,13 @@ sub NEWICK_OPTIONS {
   );
 }
 
+sub FAMILY_EXTERNAL {
+  return (
+    'swissprot' => { 'name' => 'UniProt/Swiss-Prot' , 'key' => 'Uniprot/SWISSPROT' },
+    'trembl'    => { 'name' => 'UniProt/TrEMBL',      'key' => 'Uniprot/SPTREMBL'  }
+  );
+}
+
 #shared by 'Genomic Alignments', 'Marked-up Sequence' and 'Resequencing'
 sub GENERAL_MARKUP_OPTIONS {
   return (
