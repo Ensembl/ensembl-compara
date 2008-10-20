@@ -51,7 +51,8 @@ sub content {
       my $missing = 0;
 
       if ($type =~ /\.html/ || $action =~ /\.html/) {
-        foreach my $release (sort keys %archive) {
+        foreach my $release (reverse sort keys %archive) {
+          next if $release == $object->species_defs->VERSION;
           $html .= $self->_output_link(\%archive, $release, $url);
         }
       }
@@ -59,7 +60,7 @@ sub content {
         my ($old_view, $initial_release) = EnsEMBL::Web::OldLinks::get_archive_redirect($type, $action);
 
         foreach my $release (sort keys %archive) {
-          next if $release == $object->species_defs->VERSION;
+          next if $release == $object->species_defs->ENSEMBL_VERSION;
           if ($release < 51) {
             if ($release >= $initial_release) {
               $url = $species.'/'.$old_view;
@@ -106,7 +107,8 @@ sub content {
     %archive = %{$object->species_defs->ENSEMBL_ARCHIVES};
     ## TO DO - map static content moves!
     $html .= qq(<ul>\n);
-    foreach my $release (sort keys %archive) {
+    foreach my $release (reverse sort keys %archive) {
+      next if $release == $object->species_defs->ENSEMBL_VERSION;
       $html .= $self->_output_link(\%archive, $release, $url);
     }
     $html .= qq(</ul>\n);
