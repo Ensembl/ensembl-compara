@@ -5,6 +5,8 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 use Time::HiRes qw(time);
+use EnsEMBL::Web::RegObj;
+use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 
 sub _init {
   my $self = shift;
@@ -40,6 +42,24 @@ sub content {
     'slice_number'    => '1|3',
   });
 
+## Lets see if we have any das sources....
+  my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{ $_->get('logicnames')||[] } : () }  $wuc->tree->nodes;
+  if( @das_nodes ) {
+    my %T         = %{ $ENSEMBL_WEB_REGISTRY->get_all_das( $object->species ) || {}  };
+    my @das_sources = @T{ @das_nodes };
+    if( @das_sources ) {
+      my $das_co = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
+        -sources => \@das_sources,
+        -proxy   => $object->species_defs->ENSEMBL_WWW_PROXY,
+        -noproxy => $object->species_defs->ENSEMBL_NO_PROXY,
+        -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT
+      );
+      $wuc->cache( 'das_coord', $das_co );
+    }
+  } 
+  
+#  warn "DAS SOURCES @das_sources";
+  
   $wuc->_update_missing( $object );
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->{'panel_number'} = 'bottom';
