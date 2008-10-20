@@ -855,4 +855,15 @@ sub table_info {
   return $self->databases->{$db}{'tables'}{$table}||{};
 }
 
+sub _species_label {
+  my( $self, $key ) = @_;
+  return "Ancestral sequence" unless $self->other_species( $key, 'SPECIES_BIO_NAME' );
+  return sprintf(
+    '%s (<i>%s</i>)',
+    $self->other_species( $key, 'SPECIES_COMMON_NAME' ),
+    $self->other_species( $key, 'SPECIES_BIO_NAME' )
+  );
+}
+
 1;
+
