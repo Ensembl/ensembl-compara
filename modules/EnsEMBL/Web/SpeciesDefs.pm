@@ -855,14 +855,22 @@ sub table_info {
   return $self->databases->{$db}{'tables'}{$table}||{};
 }
 
-sub _species_label {
+sub species_label {
   my( $self, $key ) = @_;
   return "Ancestral sequence" unless $self->other_species( $key, 'SPECIES_BIO_NAME' );
-  return sprintf(
-    '%s (<i>%s</i>)',
-    $self->other_species( $key, 'SPECIES_COMMON_NAME' ),
-    $self->other_species( $key, 'SPECIES_BIO_NAME' )
-  );
+  my $common = $self->other_species( $key, 'SPECIES_COMMON_NAME' );
+  if ($common =~ /\./) {
+    return sprintf(
+      '<i>%s</i>',
+      $self->other_species( $key, 'SPECIES_BIO_NAME' )
+    );
+  }
+  else {
+    return sprintf(
+      '%s (<i>%s</i>)',
+      $common, $self->other_species( $key, 'SPECIES_BIO_NAME' )
+    );
+  }
 }
 
 1;
