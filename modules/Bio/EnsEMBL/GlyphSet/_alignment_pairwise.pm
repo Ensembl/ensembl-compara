@@ -196,7 +196,7 @@ sub render_normal {
       my $short_other   = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
       my $HREF_TEMPLATE = "/$short_self/dotterview?c=$chr:%d;s1=$other_species;c1=%s:%d";
       my $COMPARA_HTML_EXTRA = '';
-      my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
+#      my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
       $zmenu->{"02:Jump to $jump_type"}    = "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2";
       $zmenu->{"03:$CONTIGVIEW_TEXT_LINK"} = "/$short_self/contigview?l=$chr:$rs-$re";
 
@@ -204,7 +204,7 @@ sub render_normal {
       $zmenu->{ '04:Dotter' }  = $href;
       $zmenu->{'05:Alignment'} = "alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
 
-      my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView'; 
+#      my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView'; 
       my $METHOD         = $self->my_config('method' );
 
       my $link = 0;
@@ -221,9 +221,9 @@ sub render_normal {
             $COMPARA_HTML_EXTRA.=";s$C=".$self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $T->{'species'} };
           }
         }
-        $MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
+#        $MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
       }
-      $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
+#      $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
     #more code for vega self compara links (zfish chained alignments)
     } elsif ( my %vega_config = $self->species_defs->multiX('VEGA_COMPARA_CONF')) {
       my $chr_2 = $F[0][1]->hseqname;
@@ -286,7 +286,7 @@ sub render_compact {
 #  warn "compact method is $METHOD";
 
   my $COMPARA_HTML_EXTRA = '';
-  my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView';
+#  my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView';
   if( $compara ) {
     $link = $self->my_config('join');
     $TAG_PREFIX  = uc( $compara eq 'primary' ?
@@ -299,7 +299,7 @@ sub render_compact {
         $COMPARA_HTML_EXTRA.=";s$C=".$self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $T->{'species'} };
       }
     }
-    $MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
+#    $MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
   }
 
   my $C = 0;
@@ -307,7 +307,7 @@ sub render_compact {
   my $HREF_TEMPLATE = "/$short_self/dotterview?c=$chr:%d;s1=$other_species;c1=%s:%d";
   my $X = -1e8;
   my $CONTIGVIEW_TEXT_LINK = $compara ? 'Jump to ContigView' : 'Centre on this match' ;
-  my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
+#  my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
 
 #  warn "!>>>>> $other_species $METHOD in compact init<<<<<";
   my @T = sort { $a->[0] <=> $b->[0] }
@@ -369,7 +369,7 @@ sub render_compact {
     $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
     $zmenu->{ '04:Dotter' }    = $href;
     $zmenu->{ '05:Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
-    $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
+#    $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
     $zmenu->{ '99:Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) } = undef;
     if($DRAW_CIGAR) {
       $TO_PUSH = $self->Composite({
