@@ -16,11 +16,33 @@ sub caption {
   return "Associated archived ID's for this stable ID version";
 }
 
+sub content_protein {
+  my $self = shift;
+  $self->content( 1 );
+}
+
 sub content {
   my $self = shift;
+  my $protein = shift;
   my $OBJ = $self->object;
-  my $object = $OBJ->get_archive_object();
-  
+  my $object;
+
+ if ($protein == 1){
+    my $translation_object;
+    if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId')){
+       my $protein = $self->object->param('p');
+       my $db    = $self->{'parameters'}{'db'}  = $self->object->param('db')  || 'core';
+       my $db_adaptor = $self->object->database($db);
+       my $a = $db_adaptor->get_ArchiveStableIdAdaptor;
+       $object = $a->fetch_by_stable_id( $protein );
+    } else {
+       $translation_object = $OBJ->translation_object;
+       $object = $translation_object->get_archive_object();
+    }
+  } else {    # retrieve archive object
+    $object = $OBJ->get_archive_object();
+  }
+
   my $assoc = get_assoc($object, $OBJ);
   if ($assoc ==0) { 
     my $html = "<p>No associated ID's found</p>";
@@ -34,7 +56,7 @@ sub content {
       { 'key' => 'release',     'title' => 'Release', },
       { 'key' => 'gene' ,       'title' => "Gene" },   
       { 'key' => 'transcript',  'title' => 'Transcript', },
-      { 'key' => 'translation', 'title' => "Peptide" },  
+      { 'key' => 'translation', 'title' => "Protein" },  
     );  
 
     foreach (@associated){ 
@@ -82,7 +104,7 @@ sub get_assoc {
     warn $tsi;
     # translation
     if ($r->[2]) {
-      $tlsi = _idhistoryview_link($OBJ,'peptide','p', $r->[2]->stable_id);
+      $tlsi = _idhistoryview_link($OBJ,'Transcript','p', $r->[2]->stable_id);
       $tlsi .= '<br />'._get_formatted_pep_seq($r->[3], $r->[2]->stable_id);
     } else {
       $tlsi = 'none';
@@ -106,7 +128,7 @@ sub _idhistoryview_link {
   my ($OBJ, $type, $param, $stable_id) = @_;
   return undef unless ($stable_id);
   
-  my $url = $OBJ->_url({'type' => $type, 'action' => 'Idhistory', $param => $stable_id});
+  my $url = $OBJ->_url({'type' => $type, 'action' => 'Idhistory/Protein', $param => $stable_id});
   my $link = sprintf( '<a href="%s">%s</a>',
   $url,
   $stable_id); ;

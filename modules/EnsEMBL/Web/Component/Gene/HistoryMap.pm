@@ -16,15 +16,41 @@ sub caption {
   return 'ID History Map';
 }
 
+sub content_protein {
+  my $self = shift;
+  $self->content( 1 );
+}
+
 sub content {
   my $self = shift;
+  my $protein = shift;
   my $OBJ = $self->object;
-  my $type = lc($OBJ->type);
-  my $image;
-  my $object = $OBJ->get_archive_object; 
+  my $object;
+  my $htree;
+
+if ($protein == 1){
+    my $translation_object;
+    if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId')){
+       my $protein = $self->object->param('p');
+       my $db    = $self->{'parameters'}{'db'}  = $self->object->param('db')  || 'core';
+       my $db_adaptor = $self->object->database($db);
+       my $a = $db_adaptor->get_ArchiveStableIdAdaptor;
+       $object = $a->fetch_by_stable_id( $protein );
+       ## get tree from Archve stableid object
+       $htree = $a->fetch_history_tree_by_stable_id($protein);
+    } else {
+       $translation_object = $OBJ->translation_object;
+       $object = $translation_object->get_archive_object();
+       $htree = $translation_object->history;
+    }
+  } else {    # retrieve archive object
+    $object = $OBJ->get_archive_object();
+  }
 
   my $name = $object->stable_id .".". $object->version;
-  my $historytree = $OBJ->history;
+
+  my $historytree = $OBJ->history; 
+  if ($htree) {$historytree = $htree;}
 
   unless (defined $historytree) {
     my $html =  qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>);
