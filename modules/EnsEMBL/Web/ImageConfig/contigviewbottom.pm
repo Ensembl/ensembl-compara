@@ -61,14 +61,14 @@ sub init {
 
 ## Note these tracks get added before the "auto-loaded tracks" get added...
   $self->add_tracks( 'sequence', 
-    [ 'contig',    'Contigs',              'stranded_contig', { 'display' => 'normal',  'strand' => 'r'  } ],
+    [ 'contig',    'Contigs',              'stranded_contig', { 'display' => 'normal',  'strand' => 'r', 'description' => 'Track showing underlying assembly contigs'  } ],
 #   [ 'prelim',    'Preliminary release', 'preliminary',      { 'display' => 'off', 'menu' => 'no',  'strand' => 'r' } ],
-    [ 'seq',       'Sequence',             'sequence',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.2, 'colourset' => 'seq'      } ],
-    [ 'codon_seq', 'Translated sequence',  'codonseq',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.5, 'colourset' => 'codonseq' } ],
-    [ 'codons',    'Start/stop codons',    'codons',          { 'display' => 'off',  'strand' => 'b', 'threshold' => 50,  'colourset' => 'codons'   } ],
+    [ 'seq',       'Sequence',             'sequence',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.2, 'colourset' => 'seq',      'description' => 'Track showing sequence in both directions'  } ],
+    [ 'codon_seq', 'Translated sequence',  'codonseq',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.5, 'colourset' => 'codonseq', 'description' => 'Track showing 6-frame translation of sequence'  } ],
+    [ 'codons',    'Start/stop codons',    'codons',          { 'display' => 'off',  'strand' => 'b', 'threshold' => 50,  'colourset' => 'codons' ,  'description' => 'Track indicating locations of start and stop codons in region'  } ],
   );
   $self->add_tracks( 'other', 
-    [ 'gc_plot',   '%GC',                  'gcplot',          { 'display' => 'normal',  'strand' => 'r'  } ],
+    [ 'gc_plot',   '%GC',                  'gcplot',          { 'display' => 'normal',  'strand' => 'r', 'description' => 'Shows %age of Gs & Cs in region'  } ],
   );
   
 ## Add in additional
@@ -81,28 +81,27 @@ sub init {
   if( $self->species_defs->ENSEMBL_MOD ) {
     $self->add_track( 'information', 'mod', '', 'text', {
       'name' => 'Message of the day',
-      'on'   => 'on',
+      'display'   => 'normal',
       'menu' => 'no',
       'strand' => 'r', 
       'text' => $self->species_defs->ENSEMBL_MOD
     } )
   }
   $self->add_tracks( 'information',
-    [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary' } ],
-    [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information'  } ],
+    [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary', 'description' => 'Show counts of number of tracks turned off by the user' } ],
+    [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information',            'description' => 'Details of the region shown in the image'               } ],
   );
   $self->add_tracks( 'other',  
-    [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar'  } ],
-    [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler'      } ],
+    [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar', 'description' => 'Track ' } ],
+    [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler',     'description' => 'Shows the length of the region being displayed'    } ],
     [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
   );
 
 ## Finally add details of the options to the options menu...
   $self->add_options(
-    [ 'opt_halfheight',    'Half height glyphs?'          ],
     [ 'opt_empty_tracks',  'Show empty tracks?'           ],
     [ 'opt_lines',         'Show registry lines?'         ],
-    [ 'opt_restrict_zoom', 'Restriction enzymes on zoom?' ],
+#    [ 'opt_restrict_zoom', 'Restriction enzymes on zoom?' ],
   );
 
   #use Data::Dumper; local $Data::Dumper::Indent = 1; warn Data::Dumper::Dumper( $self->tree );
