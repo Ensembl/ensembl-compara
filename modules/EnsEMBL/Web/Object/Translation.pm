@@ -847,6 +847,40 @@ sub location_string {
 
 
 #######################################################################
+## ID history view stuff............................................ ##
+#######################################################################
+
+
+sub get_archive_object {
+  my $self = shift;
+  my $id = $self->stable_id;
+  my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
+  my $archive_object = $archive_adaptor->fetch_by_stable_id($id);
+
+ return $archive_object;
+}
+
+=head2 history
+
+ Arg1        : data object
+ Description : gets the archive id history tree based around this ID
+ Return type : listref of Bio::EnsEMBL::ArchiveStableId
+               As every ArchiveStableId knows about it's successors, this is
+                a linked tree.
+
+=cut
+
+sub history {
+  my $self = shift;
+
+  my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
+  return unless $archive_adaptor;
+
+  my $history = $archive_adaptor->fetch_history_tree_by_stable_id($self->stable_id);
+  return $history;
+}
+
+#######################################################################
 ## DAS collection stuff............................................. ##
 #######################################################################
 
