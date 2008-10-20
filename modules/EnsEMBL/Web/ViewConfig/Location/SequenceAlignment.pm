@@ -14,9 +14,9 @@ sub init {
   $view_config->_set_defaults(qw(
     display_width   120
     exon_ori        all
-    match_display   off
-    snp_display     off
-    line_numbering  off
+    match_display   dot
+    snp_display     snp
+    line_numbering  sequence
     codons_display  off
     title_display   off
   ));
