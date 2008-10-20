@@ -14,8 +14,9 @@ sub availability {
   my $self = shift;
   my $hash = $self->_availability;
   my %chrs = map { $_,1 } @{$self->species_defs->ENSEMBL_CHROMOSOMES || []};
-  $hash->{'chromosome'} = $chrs{ $self->Obj->{'seq_region_name'} } ? 1 : 0;
+  $hash->{'chromosome'}  = $chrs{ $self->Obj->{'seq_region_name'} } ? 1 : 0;
   $hash->{'has_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} ? 1 : 0;
+  $hash->{'slice'}       = $self->Obj->{'seq_region_name'} ? 1 : 0;
   return $hash;
 }
 
@@ -75,6 +76,7 @@ sub short_caption {
 
 sub caption {
   my $self = shift;
+  return "Karyotype" unless $self->seq_region_name;
   return $self->neat_sr_name($self->seq_region_type,$self->seq_region_name).': '.$self->thousandify($self->seq_region_start).'-'.
                                      $self->thousandify($self->seq_region_end);
 }
@@ -367,9 +369,10 @@ sub get_synteny_matches {
   my $self = shift;
 
   my @data;
-  my $OTHER = $self->param('otherspecies') || $self->param('species')
-        || ($ENV{ 'ENSEMBL_SPECIES' } eq 'Homo_sapiens' ? 'Mus_musculus' : 'Homo_sapiens');
-  my $gene2_adaptor = $self->database('core', $OTHER)->get_GeneAdaptor();
+  my $OTHER = $self->param('otherspecies') || 
+              $self->param('species')      ||
+              ( $ENV{ 'ENSEMBL_SPECIES' } eq 'Homo_sapiens' ? 'Mus_musculus' : 'Homo_sapiens' );
+  my $gene2_adaptor = $self->database( 'core', $OTHER )->get_GeneAdaptor();
   my $localgenes = $self->get_synteny_local_genes;
   my $offset = $self->seq_region_start;
 
@@ -377,7 +380,6 @@ sub get_synteny_matches {
     my ($sppgene, $separate, $syntenygene);
     my $data;
     my $spp = $ENV{ 'ENSEMBL_SPECIES'};
-    my $homol_id = "";
     my $homologues = $self->fetch_homologues_of_gene_in_species($localgene->stable_id, $OTHER);
     my $homol_num = scalar @{$homologues};
     my $gene_synonym = $localgene->external_name || $localgene->stable_id;
@@ -385,48 +387,41 @@ sub get_synteny_matches {
     if(@{$homologues}) {
       foreach my $homol(@{$homologues}) {
         #warn "....    ", $homol->stable_id;
-        my $gene = $gene2_adaptor->fetch_by_stable_id( $homol->stable_id,1 );
-        $homol_id = $gene->external_name;
-        $homol_id ||= $gene->stable_id;
+        my $gene       = $gene2_adaptor->fetch_by_stable_id( $homol->stable_id,1 );
+        my $homol_id   = $gene->external_name || $gene->stable_id;
         my $gene_slice = $gene->slice;
-        my $H_START = $gene->start;
+        my $H_START    = $gene->start;
         my $H_CHR;
         if( $gene_slice->coord_system->name eq "chromosome" ) {
           $H_CHR = $gene_slice->seq_region_name;
-        }
-        else {
+        } else {
           my $coords =$gene_slice->project("chromosome");
-          if( @$coords ) {
-            $H_CHR = $coords->[0]->[2]->seq_region_name();
-          }
+          $H_CHR = $coords->[0]->[2]->seq_region_name() if @$coords;
         }
-        my $data_row = {
-            'sp_stable_id'      =>  $localgene->stable_id,
-            'sp_synonym'        =>  $gene_synonym,
-            'sp_chr'            =>  $localgene->seq_region_name,
-            'sp_start'          =>  $localgene->start,
-            'sp_end'            =>  $localgene->end,
-            'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset),
-            'other_stable_id'   =>  $homol->stable_id,
-            'other_synonym'     =>  $homol_id,
-            'other_chr'         =>  $H_CHR,
-            'other_start'       =>  $H_START,
-            'other_end'         =>  $gene->end,
-            'other_length'      =>  $self->bp_to_nearest_unit($gene->end - $H_START),
-            'homologue_no'      =>  $homol_num
+        push @data, {
+          'sp_stable_id'    =>  $localgene->stable_id,
+          'sp_synonym'      =>  $gene_synonym,
+          'sp_chr'          =>  $localgene->seq_region_name,
+          'sp_start'        =>  $localgene->seq_region_start,
+          'sp_end'          =>  $localgene->seq_region_end,
+          'sp_length'       =>  $self->bp_to_nearest_unit($localgene->start()+$offset),
+          'other_stable_id' =>  $homol->stable_id,
+          'other_synonym'   =>  $homol_id,
+          'other_chr'       =>  $H_CHR,
+          'other_start'     =>  $H_START,
+          'other_end'       =>  $gene->end,
+          'other_length'    =>  $self->bp_to_nearest_unit($gene->end - $H_START),
+          'homologue_no'    =>  $homol_num
         };
-
-        push @data, $data_row;
       }
-    } 
-    else {
+    } else {
       push @data, { 
-            'sp_stable_id'      =>  $localgene->stable_id,
-            'sp_chr'            =>  $localgene->seq_region_name,
-            'sp_start'          =>  $localgene->start,
-            'sp_end'            =>  $localgene->end,
-            'sp_synonym'        =>  $gene_synonym,
-            'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset) 
+        'sp_stable_id'      =>  $localgene->stable_id,
+        'sp_chr'            =>  $localgene->seq_region_name,
+        'sp_start'          =>  $localgene->seq_region_start,
+        'sp_end'            =>  $localgene->seq_region_end,
+        'sp_synonym'        =>  $gene_synonym,
+        'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset) 
       };
     }
   }
