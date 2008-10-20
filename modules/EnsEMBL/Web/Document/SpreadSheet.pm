@@ -47,6 +47,7 @@ sub render {
   my $width = $options->{width} ? $options->{width} : '100%';
   my $margin = $options->{margin} ? $options->{margin} : '0px';
 
+  $align .= ' top-border' if $options->{'header'} eq 'no';
   my $output = qq(\n<table class="ss $align" style="width:$width;margin:$margin" cellpadding="0" cellspacing="0">);
 
   if (scalar(@{$self->{_spanning}})) {
