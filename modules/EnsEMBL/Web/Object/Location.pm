@@ -17,6 +17,9 @@ sub availability {
   $hash->{'chromosome'}  = $chrs{ $self->Obj->{'seq_region_name'} } ? 1 : 0;
   $hash->{'has_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} ? 1 : 0;
   $hash->{'slice'}       = $self->Obj->{'seq_region_name'} ? 1 : 0;
+  my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  
+  $hash->{'has_synteny'} = scalar( keys %{ $synteny_hash{$self->species}||{} } ) ? 1 : 0;
   return $hash;
 }
 
