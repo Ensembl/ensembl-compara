@@ -22,11 +22,10 @@ sub content {
   my $image_width = $self->image_width;
 
   if( $object->length > $threshold ) {
-    return sprintf qq(
-  <div class="autocenter alert-box" style="width:%spx;">
+    return $self->_warning( 'Region too large','
+  <p>
     The region selected is too large to display in this view - use the navigation above to zoom in...
-  </div>), $image_width;
-
+  </p>' );
   }
 
   my $slice = $object->slice;
