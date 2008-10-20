@@ -17,6 +17,13 @@ sub content {
 
 ## Grab the description of the object...
 
+warn ref($object->Obj );
+  if( $object->Obj->isa('Bio::EnsEMBL::Compara::Family' ) ){
+    return sprintf '<p>%s</p>', CGI::escapeHTML( $object->Obj->description );
+  } # elsif( $object->Obj->isa('Bio::EnsEMBL::ID
+  if( $object->Obj->isa('Bio::EnsEMBL::ArchiveStableId' ) ){
+    return sprintf '<p>%s</p>', 'This identifier is not in the current EnsEMBL database';
+  }
   my $html = '';
   my($edb, $acc);
   my $description = escapeHTML( $object->gene_description() );

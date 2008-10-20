@@ -15,6 +15,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $object = $self->object;
+  return '' unless $object->seq_region_name;
   my $slice  = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
   );
