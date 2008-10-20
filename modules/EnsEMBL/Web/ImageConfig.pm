@@ -9,6 +9,8 @@ use EnsEMBL::Web::OrderedTree;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
+our $MEMD = EnsEMBL::Web::Cache->new;
+
 #########
 # 'general' settings contain defaults.
 # 'user' settings are restored from cookie if available
@@ -58,7 +60,24 @@ sub new {
 ##     Cache the user/session version.
 
   ########## init sets up defaults in $self->{'general'}
-  $self->init( ) if($self->can('init'));
+  ## Check memcached for defaults
+  if (my $defaults = $MEMD ? $MEMD->get("::${class}::defaults") : undef) {
+    $self->{$_} = $defaults->{$_} for keys %$defaults;
+  } else {
+    ## No cached defaults found,
+    ## so initialize them
+    $self->init if $self->can('init');
+    ## And cahce
+    if ($MEMD) {
+      my $defaults = {
+        _tree       => $self->{'_tree'},
+        _parameters => $self->{'_parameters'},
+        general     => $self->{'general'},
+      };
+      $MEMD->set("::${class}::defaults", $defaults, undef, 'IMAGE_CONFIG');
+    }
+  }
+  
   $self->{'no_image_frame'}=1;
 ## At this point tree doesn't depend on session/user....
 #  if( $can_attach_user ) {
