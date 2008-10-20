@@ -5,6 +5,7 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Gene);
 use CGI qw(escapeHTML);
+use EnsEMBL::Web::Data::Release;
 
 sub _init {
   my $self = shift;
@@ -16,12 +17,30 @@ sub caption {
   return; 
 }
 
-sub content {
+sub content_protein {
   my $self = shift;
-  my $OBJ = $self->object;
-  my $type = lc($OBJ->type);
+  $self->content( 1 );
+}
+
+sub content {
+  my $self = shift; 
+  my $protein = shift; 
+  my $OBJ = $self->object;  
+ 
+  if ($protein == 1){ 
+    my $translation_object;
+    if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId')){ 
+      warn $OBJ->transcript->adaptor->get_peptide();
+      my $transcript_obj; 
+    } else { 
+       $translation_object = $OBJ->translation_object;
+    }
+
+    #$OBJ = $translation_object;
+  }  
+
   # retrieve archive object 
-  my $object = $OBJ->get_archive_object();
+  my $object = $OBJ->get_archive_object(); 
 
   my $html = '';
 
@@ -39,10 +58,9 @@ sub content {
   }
 
   my $latest = $object->get_latest_incarnation;
-  my $param = $object->type eq 'Translation' ? 'peptide' : lc($object->type);
+  my $type = $object->type eq 'Translation' ? 'protein' : lc($object->type);
   $id = $latest->stable_id.".".$latest->version;
- # my $version_html = $self->_archive_link($object, $OBJ, $latest, $latest->stable_id, $param, $id);
-my $version_html = $self->_archive_link($OBJ, $latest, $latest->stable_id, $param, $id);
+  my $version_html = $self->_archive_link($OBJ, $latest, $latest->stable_id, $type, $id);
 
   $version_html .= "<br />\n";
   $version_html .= "Release: ".$latest->release;
@@ -79,35 +97,58 @@ sub _archive_link {
   # no archive for old release, return un-linked display_label
   return $display_label if ($release < $self->object->species_defs->EARLIEST_ARCHIVE);
 
-  my $url;
-  my $site_type;
+  my ($url, $site_type, $action, $view, $param);
 
   if ($latest->is_current) {
-
-    $url = "/";
     $site_type = "current";
-
   } else {
-
-    my %archive_sites = map { $_->{release_id} => $_->{short_date} }
-      @{ $self->object->species_defs->RELEASE_INFO };
-
-    $url = "http://$archive_sites{$release}.archive.ensembl.org/";
-    $url =~ s/ //;
     $site_type = "archived";
-
   }
 
-  $url .=  $ENV{'ENSEMBL_SPECIES'};
-
-  my $view = $type."view";
-  if ($type eq 'peptide') {
+  if ($type =~/gene/){
+    $type = 'Gene';
+    $param = 'g';
+    $action = 'Summary',
+    $view = 'geneview'
+  } elsif ($type=~/transcript/){
+    $type = 'Transcript';
+    $param = 't';
+    $action = 'Summary';
+    $view = 'transview'; 
+  } else {
+    $type = 'Transcript';
+    $param = 'protein';
+    $action = 'ProteinSummary';
     $view = 'protview';
-  } elsif ($type eq 'transcript') {
-    $view = 'transview';
   }
 
-  my $html = qq(<a title="View in $site_type $view" href="$url/$view?$type=$name">$display_label</a>);
+  $url = $object->_url ({'type' => $type, 'action' => $action, $param => $display_label});
+
+  my $html;
+
+  if ($site_type eq 'current' && $latest->release >= 51 ) {
+    $url = $object->_url ({'type' => $type, 'action' => $action, $param => $display_label});
+    $html = qq(<a title="View in $site_type $action" href="$url">$display_label</a>);
+  } elsif ( $site_type eq "archived" ){
+
+    my $archives =  EnsEMBL::Web::Data::Release->find_all; 
+    warn $archives;
+    my %archive_info = %{$object->species_defs->ENSEMBL_ARCHIVES};
+    #warn %archive_info;
+
+    my %archive_sites = %{$object->species_defs->ENSEMBL_ARCHIVES};
+    $url = "http://$archive_sites{$release}.archive.ensembl.org/";
+    my $species = $object->species;
+    if ($latest->release >= 51){
+      my $arch_url = $object->_url ({'type' => $type, 'action' => $action, $param => $display_label});
+       $html = qq(<a title="View in $site_type $action" href="$url$species/$arch_url">$display_label</a>);
+    } else {
+      $type = lc($type);
+      $html = qq(<a title="View in $site_type $view" href="$url$species/$view?$type=$name">$display_label</a>);      
+    }
+  }
+
+
   return $html;
 }
 
