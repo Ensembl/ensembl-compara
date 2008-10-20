@@ -209,10 +209,11 @@ sub transHandler_das {
   if(
     $path_segments->[1] eq 'entry_points' && -e $SiteDefs::ENSEMBL_SERVERROOT."/htdocs/das/$DSN/entry_points" ||
     $DSN                eq 'sources' ||
-    $DSN                eq 'dsn'
+    $DSN                eq 'dsn'     
   ) { ## Fall through this is a static page!!
     return undef;
   }
+
   my @dsn_fields  = split /\./, $DSN;
   my $das_species = shift @dsn_fields;
   my $type        = pop @dsn_fields;
@@ -230,6 +231,7 @@ sub transHandler_das {
   $r->subprocess_env->{'ENSEMBL_SPECIES'     } = $das_species;
   $r->subprocess_env->{'ENSEMBL_DAS_ASSEMBLY'} = $assembly;
   $r->subprocess_env->{'ENSEMBL_DAS_TYPE'    } = $type;
+  $r->subprocess_env->{'ENSEMBL_TYPE'    } = 'DAS';
   $r->subprocess_env->{'ENSEMBL_DAS_SUBTYPE' } = $subtype;
   $r->subprocess_env->{'ENSEMBL_SCRIPT'      } = $command;
   my $error_filename = '';
@@ -449,7 +451,6 @@ sub transHandler {
   my $script    = undef;
   my $path_info = undef;
   my $species_name = $SPECIES_MAP{ lc($species) };
-  
   if( $species eq 'das' ) {
     my $return = transHandler_das( $r, $session_cookie, \@path_segments, $querystring );
     $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for DAS scripts finished', undef, 'Apache' );
