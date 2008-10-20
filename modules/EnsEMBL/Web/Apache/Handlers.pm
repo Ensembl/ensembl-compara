@@ -445,10 +445,11 @@ sub transHandler {
   my @path_segments = split( m|/|, $file );
   shift @path_segments; # Always empty
   my $species   = shift @path_segments;
-  my $Tspecies = $species;
+  my $Tspecies  = $species;
   my $script    = undef;
   my $path_info = undef;
-
+  my $species_name = $SPECIES_MAP{ lc($species) };
+  
   if( $species eq 'das' ) {
     my $return = transHandler_das( $r, $session_cookie, \@path_segments, $querystring );
     $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for DAS scripts finished', undef, 'Apache' );
@@ -459,9 +460,16 @@ sub transHandler {
     $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for non-species scripts finished', undef, 'Apache' );
     return $return if defined $return;
   }
-  if( $species && $SPECIES_MAP{lc($species)} ) { # species script
-    my $species2 = $SPECIES_MAP{ lc($species) };
-    my $return = transHandler_species( $r, $session_cookie, $species2, \@path_segments, $querystring, $file, $species2 eq $species );
+  if( $species && $species_name ) { # species script
+    my $return = transHandler_species(
+      $r,
+      $session_cookie,
+      $species_name,
+      \@path_segments,
+      $querystring,
+      $file,
+      $species_name eq $species
+    );
     $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for species scripts finished', undef, 'Apache' );
     return $return if defined $return;
     shift @path_segments;
@@ -469,6 +477,16 @@ sub transHandler {
   }
   $species = $Tspecies;
   $script = join( '/', @path_segments );
+
+# Permanent redirect for old species home pages:
+# e.g. /Homo_sapiens or Homo_sapiens/index.html -> /Homo_sapiens/Info/Index
+  if( $species && $species_name && ( !$script || $script eq 'index.html' ) ) {
+    $r->uri( "/$species_name/Info/Index" );
+    $r->headers_out->add( 'Location' => $r->uri );
+    $r->child_terminate;
+    $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler "REDIRECT"', undef, 'Apache' );
+    return HTTP_MOVED_PERMANENTLY;
+  }
 
 # Search the htdocs dirs for a file to return
   my $path = join( "/", $species || (), $script || (), $path_info || () );
