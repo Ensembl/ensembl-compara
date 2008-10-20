@@ -19,9 +19,12 @@ sub availability {
   my $hash = $self->_availability;
   if( $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ) {
     $hash->{'history'}    = 1;
-  } else {
+  } elsif( $self->Obj->isa('Bio::EnsEMBL::Gene') ) {
     $hash->{'history'}    = 1;
     $hash->{'gene'}       = 1;
+  } elsif( $self->Obj->isa('Bio::EnsEMBL::Compara::Family' ) ) {
+warn "FAMILY............";
+    $hash->{'family'}     = 1;
   }
   return $hash;
 }
@@ -34,6 +37,7 @@ sub counts {
   my $self = shift;
   my $obj = $self->Obj;
 
+  return {} unless $obj->isa('Bio::EnsEMBL::Gene');
   my $key = '::COUNTS::GENE::'.
             $ENV{ENSEMBL_SPECIES}                 .'::'.
             $self->core_objects->{parameters}{db} .'::'.
@@ -384,6 +388,8 @@ sub chromosome {
 
 sub display_xref {
   my $self = shift; 
+  return undef if $self->Obj->isa('Bio::EnsEMBL::Compara::Family');
+  return undef if $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId');
   my $trans_xref = $self->Obj->display_xref();
   return undef unless  $trans_xref;
   return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name, $trans_xref->info_text );
