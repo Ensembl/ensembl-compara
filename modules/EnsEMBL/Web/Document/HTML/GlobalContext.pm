@@ -51,6 +51,9 @@ sub _content {
     if ($name eq '-') {
       $name =  sprintf( '<span title="%s">%s</span>', $entry->{'disabled'}, $entry->{'type'});
     } else { 
+      $name =~ s/<\\\w+>//g;
+      $name =~ s/<[^>]+>/ /g;
+      $name =~ s/\s+/ /g;
       $name = CGI::escapeHTML( $name );
       if( $entry->{'url'} ) {
         $name = sprintf( '<a href="%s">%s</a>', $entry->{'url'}, $name );

@@ -61,11 +61,15 @@ sub render {
 sub _content {
   my $self = shift;
   my $t = $self->tree;
+  my $caption = $self->caption;
+  $caption =~ s/<\\\w+>//g;
+  $caption =~ s/<[^>]+>/ /g;
+  $caption =~ s/\s+/ /g;
   my $content = sprintf( q(
       <dl id="local"%s>
         <dt>%s</dt>),
     $self->{'class'} ? qq( class="$self->{class}") : '',
-    $self->caption
+    CGI::escapeHTML( $caption )
   );
   return "$content\n      </dl>" unless $t;
   my $r = 0;
