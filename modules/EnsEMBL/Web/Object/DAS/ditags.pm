@@ -26,7 +26,6 @@ sub Types {
     my $dfa = $dba->get_DitagFeatureAdaptor;
     my $da = $dba->get_DitagAdaptor;
 
-    my $tHash;
     if (my @segments = $self->Locations) {
       foreach my $s (@segments) {
         if (ref($s) eq 'HASH' && $s->{'TYPE'} eq 'ERROR') {
@@ -34,22 +33,32 @@ sub Types {
             next;
         }
         my $slice = $s->slice;
-
+	my $tHash;
         foreach my $ft (@{$dfa->fetch_all_by_Slice($slice) || [] }) {
 	  next unless $ditag_analysis{ $ft->analysis->logic_name };
 	  $tHash->{ $ft->analysis->logic_name } ++;
         }
+
+	my @tarray = map { {id=>$_, text=>$tHash->{$_}} } sort keys %{$tHash ||{}};
+	push @features, {
+	    REGION => $slice->seq_region_name,
+	    START => $slice->start,
+	    STOP => $slice->end,
+	    FEATURES => \@tarray,
+	}
       }
     } else {
+	my $tHash;
         foreach my $ft (@{$dfa->fetch_all || [] }) {
 	  next unless $ditag_analysis{ $ft->analysis->logic_name };
 	  $tHash->{ $ft->analysis->logic_name } ++;
         }
+	my @tarray = map { {id=>$_, text=>$tHash->{$_}} } sort keys %{$tHash ||{}};
+	push @features, {
+	    REGION => '*',
+	    FEATURES => \@tarray,
+	}
     }
-    foreach my $t (sort keys %$tHash) {
-      push @features, { 'id' => $t, 'text' => $tHash->{$t} };
-    }
-
     return \@features;
 }
 
