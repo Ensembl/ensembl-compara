@@ -106,6 +106,7 @@ function modal_dialog_open( ) {
 **/
   $('modal_bg').show();
   $('modal_panel').show();
+  
   __modal_page_resize();
 }
 
