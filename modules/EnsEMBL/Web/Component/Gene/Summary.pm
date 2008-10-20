@@ -130,7 +130,7 @@ warn ref($object->Obj );
             'action' => 'ProteinSummary',
             't'      => $_->stable_id
           }),
-	  $_->translation->stable_id ;
+	  CGI::escapeHTML( $_->translation->stable_id );
       }
       $html .= sprintf( '
           <tr%s>
@@ -140,9 +140,9 @@ warn ref($object->Obj );
             <td>%s</td>
           </tr>',
         $_->stable_id eq $transcript ? ' class="active"' : '',
-        $_->display_xref ? $_->display_xref->display_id : 'Novel',
+        CGI::escapeHTML( $_->display_xref ? $_->display_xref->display_id : 'Novel' ),
         $url,
-        $_->stable_id,
+        CGI::escapeHTML( $_->stable_id ),
 	$protein,
 	$_->biotype
       );
@@ -170,14 +170,14 @@ warn ref($object->Obj );
       't'      => $transcript->stable_id
     });
  
-    $html .= qq(
-       <a href="$url">$display</a> (<a href="$url">$id</a>));
+    $html .= sprintf q(
+       <a href="%s">%s</a> (<a href="%s">%s</a>)), $url, CGI::escapeHTML( $display), $url, CGI::escapeHTML( $id );
     if( $transcript->translation ) {
       $html .= sprintf ', with protein product <a href="%s">%s</a>', $self->object->_url({
         'type'   => 'Transcript',
         'action' => 'ProteinSummary',
         't'      => $transcript->stable_id
-      }), $transcript->translation->stable_id;
+      }), CGI::escapeHTML( $transcript->translation->stable_id );
     }
        
     $html .= qq(.</p>
