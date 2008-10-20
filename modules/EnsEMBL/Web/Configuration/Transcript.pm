@@ -244,7 +244,7 @@ sub populate_tree {
     { 'availability' => 'either database:variation', 'concise' => 'Variations'}
   ));
 
-  $self->create_node( 'idhistory', "ID history",
+  $self->create_node( 'Idhistory', "ID history",
     [qw(
       display     EnsEMBL::Web::Component::Gene::HistoryReport
       associated  EnsEMBL::Web::Component::Gene::HistoryLinked

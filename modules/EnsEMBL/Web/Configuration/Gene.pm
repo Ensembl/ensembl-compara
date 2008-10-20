@@ -20,27 +20,27 @@ sub populate_tree {
   $self->create_node( 'Summary', "Gene summary",
     [qw(summary EnsEMBL::Web::Component::Gene::GeneSummary
         transcripts EnsEMBL::Web::Component::Gene::TranscriptsImage)],
-    { 'availability' => 1, 'concise' => 'Gene summary' }
+    { 'availability' => 'gene', 'concise' => 'Gene summary' }
   );
 
   $self->create_node( 'Splice', "Splice variants ([[counts::transcripts]])",
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSpliceImage)],
-    { 'availability' => 1, 'concise' => 'Splice variants' }
+    { 'availability' => 'gene', 'concise' => 'Splice variants' }
   );
 
   $self->create_node( 'Evidence', "Supporting evidence",
      [qw(evidence       EnsEMBL::Web::Component::Gene::SupportingEvidence)],
-    { 'availability' => 1, 'concise' => 'Supporting evidence'}
+    { 'availability' => 'gene', 'concise' => 'Supporting evidence'}
   );
 
   $self->create_node( 'Sequence', "Sequence",
      [qw(sequence       EnsEMBL::Web::Component::Gene::GeneSeq)],
-    { 'availability' => 1, 'concise' => 'Marked-up sequence'}
+    { 'availability' => 'gene', 'concise' => 'Marked-up sequence'}
   );
 
   $self->create_node( 'Matches', "External references ([[counts::similarity_matches]])",
      [qw(matches       EnsEMBL::Web::Component::Gene::SimilarityMatches)],
-    { 'availability' => 1, 'concise' => 'External references'}
+    { 'availability' => 'gene', 'concise' => 'External references'}
   );
 
   $self->create_node( 'Regulation', 'Regulation',
@@ -48,7 +48,7 @@ sub populate_tree {
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
       features EnsEMBL::Web::Component::Gene::RegulationTable
     )],
-    { 'availability' => 'database:funcgen' }
+    { 'availability' => 'gene database:funcgen' }
   );
 
 # $self->create_node( 'XRefs', "External references",
@@ -62,71 +62,71 @@ sub populate_tree {
   $compara_menu->append( $self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
     [
      qw(alignments  EnsEMBL::Web::Component::Gene::ComparaAlignments), ],
-    { 'availability' => 'database:compara', 'concise' => 'Genomic alignments' }
+    { 'availability' => 'gene database:compara', 'concise' => 'Genomic alignments' }
   ));
 
 ## Compara tree
   my $tree_node = $self->create_node(
     'Compara_Tree', "Gene Tree",
     [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
-    { 'availability' => 'database:compara' }
+    { 'availability' => 'gene database:compara' }
   );
   $tree_node->append( $self->create_subnode(
     'Compara_Tree/Text', "Gene Tree (text)",
     [qw(treetext        EnsEMBL::Web::Component::Gene::ComparaTree/text)],
-    { 'availability' => 'database:compara' }
+    { 'availability' => 'gene database:compara' }
   ));
 
   $tree_node->append( $self->create_subnode(
     'Compara_Tree/Align',       "Gene Tree (alignment)",
     [qw(treealign      EnsEMBL::Web::Component::Gene::ComparaTree/align)],
-    { 'availability' => 'database:compara' }
+    { 'availability' => 'gene database:compara' }
   ));
   $compara_menu->append( $tree_node );
 
   my $ol_node = $self->create_node(
     'Compara_Ortholog',   "Orthologues ([[counts::orthologs]])",
     [qw(orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs)],
-    { 'availability' => 'database:compara', 
+    { 'availability' => 'gene database:compara', 
       'concise'      => 'Orthologues' }
   );
   $compara_menu->append( $ol_node );
   $ol_node->append( $self->create_subnode(
     'Compara_Ortholog/Alignment', 'Ortholog Alignment',
     [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
-    { 'availability'  => 'database:compara',
+    { 'availability'  => 'gene database:compara',
       'no_menu_entry' => 1 }
   ));
   my $pl_node = $self->create_node(
     'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
     [qw(paralogues  EnsEMBL::Web::Component::Gene::ComparaParalogs)],
-    { 'availability' => 'database:compara', 
+    { 'availability' => 'gene database:compara', 
            'concise' => 'Paralogues' }
   );
   $compara_menu->append( $pl_node );
   $pl_node->append( $self->create_subnode(
     'Compara_Paralog/Alignment', 'Paralog Alignment',
     [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
-    { 'availability'  => 'database:compara',
+    { 'availability'  => 'gene database:compara',
       'no_menu_entry' => 1 }
   ));
   my $fam_node = $self->create_node(
     'Family', 'Protein families ([[counts::families]])',
     [qw(family EnsEMBL::Web::Component::Gene::Family)],
-    { 'availability' => 1, 'concise' => 'Protein families' }
+    { 'availability' => 'gene' , 'concise' => 'Protein families' }
   );
   $compara_menu->append($fam_node);
   my $sd = my $obj  = $self->{'object'}->species_defs;
   $fam_node->append($self->create_subnode(
     'Family/Genes', 'Other '.$sd->SPECIES_COMMON_NAME.' genes in this family',
     [qw(genes    EnsEMBL::Web::Component::Gene::FamilyGenes)],
-    { 'availability'  => 'database:compara',
+    { 'availability'  => 'gene database:compara',
       'no_menu_entry' => 1 }
   ));
   $fam_node->append($self->create_subnode(
     'Family/Proteins', 'Other proteins in this family',
     [qw(proteins    EnsEMBL::Web::Component::Gene::FamilyProteins)],
-    { 'availability'  => 'database:compara',
+    { 'availability'  => 'family database:compara',
       'no_menu_entry' => 1 }
   ));
 
@@ -142,14 +142,14 @@ sub populate_tree {
   my $var_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   $var_menu->append($self->create_node( 'Variation_Gene',  'Gene variations',
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSNPImage)],
-    { 'availability' => 'database:variation' }
+    { 'availability' => 'gene database:variation' }
   ));
 
   $self->create_node( 'Idhistory', 'ID history',
     [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
         associated  EnsEMBL::Web::Component::Gene::HistoryLinked
         map         EnsEMBL::Web::Component::Gene::HistoryMap)],
-        { 'availability' => 1, 'concise' => 'ID History' }
+        { 'availability' => 'history', 'concise' => 'ID History' }
   );
 
 }
