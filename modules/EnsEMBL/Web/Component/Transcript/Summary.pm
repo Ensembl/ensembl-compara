@@ -47,11 +47,14 @@ sub content {
 
 ## Now a link to location;
 
-  my $location_html = sprintf( '<a href="/%s/Location/View?r=%s:%s-%s">%s: %s-%s</a> %s.',
-    $object->species,
-    $object->seq_region_name,
-    $object->seq_region_start,
-    $object->seq_region_end,
+  my $url = $self->object->_url({
+    'type'   => 'Location',
+    'action' => 'View',
+    'r'      => $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end
+  });
+
+  my $location_html = sprintf( '<a href="%s">%s: %s-%s</a> %s.',
+    $url,
     $object->neat_sr_name( $object->seq_region_type, $object->seq_region_name ),
     $object->thousandify( $object->seq_region_start ),
     $object->thousandify( $object->seq_region_end ),
