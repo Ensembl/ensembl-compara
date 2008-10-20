@@ -5,6 +5,7 @@ use strict;
 use base qw(EnsEMBL::Web::Root);
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Fake;
+use Bio::EnsEMBL::Registry;
 
 sub new {
   my( $class, $input, $dbconnection, $flag ) = @_;
@@ -33,6 +34,13 @@ sub timer_push {
   my $self = shift;
   $ENSEMBL_WEB_REGISTRY->timer->push(@_);
 }
+
+sub compara_db {
+  my $self = shift;
+  my $key  = shift;
+  return Bio::EnsEMBL::Registry->get_DBAdaptor( 'multi', $key );
+}
+
 sub database {
   my $self = shift;
   return $self->{'dbc'}->get_DBAdaptor(@_);
@@ -99,6 +107,7 @@ sub _centre_point {
 sub location_short_caption {
   my $self = shift;
   return '-' unless $self->location;
+  return 'Karyotype' if $self->location->isa('EnsEMBL::Web::Fake');
   my $label = $self->location->seq_region_name.':'.$self->thousandify($self->location->start).'-'.$self->thousandify($self->location->end);
   #return $label;
   return "Location: $label";
@@ -107,6 +116,7 @@ sub location_short_caption {
 sub location_long_caption {
   my $self = shift;
   return '-' unless $self->location;
+  return 'Karyotype' if $self->location->isa('EnsEMBL::Web::Fake');
   return $self->location->seq_region_name.':'.$self->thousandify($self->_centre_point);
 }
 
@@ -231,17 +241,15 @@ sub _generate_objects {
       $self->location( $slice );
     }
   }
-  if( $self->param('domain') ) {
-    if( ! $self->transcript ) {
-      my $tdb         = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
-      my $tdb_adaptor = $self->database($tdb);
-      my $sth = $tdb_adaptor->dbc()->db_handle()->prepare( 'select i.interpro_ac,x.display_label, x.description from interpro as i left join xref as x on i.interpro_ac=x.dbprimary_acc where i.interpro_ac = ?' );
-      $sth->execute( $self->param('domain') ); 
-      my ($t,$n,$d) = $sth->fetchrow();
-      if( $t ) {
-        $self->transcript( new EnsEMBL::Web::Fake({ 'view' => 'Domains/Genes', 'type'=>'Interpro Domain', 'id' => $t, 'name' => $n, 'description' => $d, 'adaptor' => $tdb_adaptor->get_GeneAdaptor }) );
-        $self->{'parameters'}{'domain'} = $self->param('domain');
-      }
+  if( !$self->transcript &&  $self->param('domain') ) {
+    my $tdb         = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
+    my $tdb_adaptor = $self->database($tdb);
+    my $sth = $tdb_adaptor->dbc()->db_handle()->prepare( 'select i.interpro_ac,x.display_label, x.description from interpro as i left join xref as x on i.interpro_ac=x.dbprimary_acc where i.interpro_ac = ?' );
+    $sth->execute( $self->param('domain') ); 
+    my ($t,$n,$d) = $sth->fetchrow();
+    if( $t ) {
+      $self->transcript( new EnsEMBL::Web::Fake({ 'view' => 'Domains/Genes', 'type'=>'Interpro Domain', 'id' => $t, 'name' => $n, 'description' => $d, 'adaptor' => $tdb_adaptor->get_GeneAdaptor }) );
+      $self->{'parameters'}{'domain'} = $self->param('domain');
     }
   }
   if( !$self->transcript && $self->param('g') ) {
@@ -262,14 +270,38 @@ sub _generate_objects {
       $self->gene( $g ) if $g;
     }
   }
-  if( $self->param('r') ) {
-    my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
-    my $db_adaptor= $self->database('core');
-    $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
+  if( !$self->gene && $self->param('family') ) {
+    my $compara_db = $self->compara_db( 'compara' );
+    if( $compara_db ) {
+      my $fa = $compara_db->get_FamilyAdaptor;
+      if( $fa ) {
+        my $f = $fa->fetch_by_stable_id( $self->param('family') );
+        $self->gene( $f ) if $f;
+      }
+    }   
   }
   $self->{'parameters'}{'r'} = $self->location->seq_region_name.':'.$self->location->start.'-'.$self->location->end if $self->location;
+  if( $self->param('r') ) {
+    my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
+    $r ||= $self->param('r');
+    if( $r ) {
+      if( ($s||$e) ) {
+        my $db_adaptor= $self->database('core');
+        $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
+        $self->{'parameters'}{'r'} = $self->location->seq_region_name.':'.$self->location->start.'-'.$self->location->end if $self->location;
+      } else {
+        my $db_adaptor= $self->database('core');
+        $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $self->param('r') ) );
+        $self->{'parameters'}{'r'} = $self->location->seq_region_name;
+      }
+    }
+  }
+  if( !$self->location ) {
+    $self->location( new EnsEMBL::Web::Fake({ 'view' => 'Karyotype', 'type'=>'Karyotype' } ) );
+  }
+
   if( $self->transcript ) {
-    if( $self->transcript->isa('EnsEMBL::Web::Fake')) {
+    if( $self->transcript->isa('EnsEMBL::Web::Fake') ) {
       ## Do nothing!
     } elsif( $self->transcript->isa('Bio::EnsEMBL::StableIdHistoryTree') ) {
       $self->{'parameters'}{'t'} = $self->param('t');
@@ -277,7 +309,11 @@ sub _generate_objects {
       $self->{'parameters'}{$self->transcript->isa('Bio::EnsEMBL::PredictionTranscript')?'pt':'t'} = $self->transcript->stable_id;
     }
   }
-  $self->{'parameters'}{'g'} = $self->gene->stable_id       if $self->gene;
+  if( $self->gene ) {
+    if( $self->gene->isa( 'Bio::EnsEMBL::Gene') ) {
+      $self->{'parameters'}{'g'} = $self->gene->stable_id;
+    }
+  }
   $self->{'parameters'}{'v'} = $self->variation->name       if $self->variation;
   unless( keys %{$self->{'parameters'}} ) {
     $self->{'parameters'}{'_referer'} = $self->param('_referer') if $self->param('_referer');
