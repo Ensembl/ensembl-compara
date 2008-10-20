@@ -555,7 +555,7 @@ sub add_text {
 
       # If $display name is a strain, need to replace with the species instead for SNPview URL
       my $link_species = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") ? $display_name : $object->species();
-      push @$notes, sprintf("{<a href=\"/%s/Variation/Summary?v=%s;vdb=variation\">base %u:%s</a>}", $link_species, $previous->{snpID}, $pos, $previous->{textSNP})  if ($object->param('snp_display') eq 'snp_link');
+      push @$notes, sprintf("<a href=\"/%s/Variation/Summary?v=%s;vdb=variation\">%u:%s</a>", $link_species, $previous->{snpID}, $pos, $previous->{textSNP})  if ($object->param('snp_display') eq 'snp_link');
     }
 
 
@@ -671,15 +671,15 @@ sub add_text {
       if ($pos) {
         if (($pos - $linenumbers->[0]) < $slice_length) {
           $species_html .= sprintf("%*u", $max_position_length, $pos);
-          if ($notes) {
-	    $species_html .= join('|', " ", @$notes);
+          if( $notes ) {
+	    $species_html .= ' '.join('; ', @$notes);
 	    $notes = undef;
 	  }
 	  $species_html .= "\n";
         }
       } else {
         if ($notes) {
-	  $species_html .= join('|', " ", @$notes);
+	  $species_html .= ' '.join('; ', @$notes);
 	  $notes = undef;
         }
         $species_html .= "\n";

@@ -149,7 +149,7 @@ sub content {
         # atm, it can only be 'ins' or 'del' to indicate the type of a variation
         # in case of deletion we highlight flanked bases, and actual region where some bases are missing located at the right flank
         my $ind = ($type eq 'ins') ? $i+$j : $i+$j+1;
-        push @var_list, qq({<a href="/@{[$object->species]}/snpview?panel_individual=on;snp=$snp_id">base $ind:$title</a>});
+        push @var_list, qq(<a href="/@{[$object->species]}/snpview?panel_individual=on;snp=$snp_id">$ind:$title</a>);
       }
       if( ! $n ){ next }
       if( $n > $linelength-$j ){ # Markup extends over line end. Trim for next
@@ -171,7 +171,7 @@ sub content {
       $markedup_seq .= " $num";
     }
     if (@var_list) {
-      $markedup_seq .= "&nbsp;|".join(qq{ |}, @var_list);
+      $markedup_seq .= " ".join(qq{;&nbsp;}, @var_list);
     }
     $markedup_seq .= "\n";
   }

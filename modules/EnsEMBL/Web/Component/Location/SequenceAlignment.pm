@@ -26,11 +26,10 @@ sub content {
   my $image_width = $self->image_width;
 
   if( $object->length > $threshold ) {
-    return sprintf qq(
-  <div class="autocenter alert-box" style="width:%spx;">
+    return $self->_warning( 'Region too large','
+  <p>
     The region selected is too large to display in this view - use the navigation above to zoom in...
-  </div>), $image_width;
-
+  </p>' );
   }
 
   my $width = $object->param("display_width") || 60;
@@ -499,7 +498,7 @@ sub add_text {
 
       # If $display name is a strain, need to replace with the species instead for SNPview URL
       my $link_species = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") ? $display_name : $object->species();
-      push @$notes, sprintf("{<a href=\"/%s/snpview?panel_individual=on;snp=%s\">base %u:%s</a>}", $link_species, $previous->{snpID}, $pos, $previous->{textSNP})  if ($object->param('snp_display') eq 'snp_link');
+      push @$notes, sprintf("<a href=\"/%s/snpview?panel_individual=on;snp=%s\">%u:%s</a>", $link_species, $previous->{snpID}, $pos, $previous->{textSNP})  if ($object->param('snp_display') eq 'snp_link');
     }
 
 
@@ -616,14 +615,14 @@ sub add_text {
         if (($pos - $linenumbers->[0]) < $slice_length) {
           $species_html .= sprintf("%*u", $max_position_length, $pos);
           if ($notes) {
-	    $species_html .= join('|', " ", @$notes);
+	    $species_html .= ' '.join('; ', @$notes);
 	    $notes = undef;
 	  }
 	  $species_html .= "\n";
         }
       } else {
         if ($notes) {
-	  $species_html .= join('|', " ", @$notes);
+	  $species_html .= ' '.join('; ', @$notes);
 	  $notes = undef;
         }
         $species_html .= "\n";
