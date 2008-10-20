@@ -254,8 +254,9 @@ sub ingredient {
   if ($content) {
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
   } else {
-    warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}";
+#    warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}";
     # my $referer_hash = _parse_referer;
+
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
       'objecttype' => $objecttype,
       'doctype'    => 'Component',
@@ -266,12 +267,15 @@ sub ingredient {
       'cache'      => $MEMD,
     );
     $ENV{'ENSEMBL_ACTION'} = $webpage->{'parent'}->{'ENSEMBL_ACTION'};
-## Set the ACTION....
+
     $webpage->factory->action( $webpage->{'parent'}->{'ENSEMBL_ACTION'} );
     if( $webpage->dataObjects->[0] ) {
       $webpage->dataObjects->[0]->action(  $webpage->{'parent'}->{'ENSEMBL_ACTION'} );
-      $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
-  
+      if ($objecttype eq 'DAS') {
+	  $webpage->configure( $webpage->dataObjects->[0], $ENV{ENSEMBL_SCRIPT} );
+      } else {
+	  $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
+      }
       $webpage->render;
       $content = $webpage->page->renderer->content;
     } else {
