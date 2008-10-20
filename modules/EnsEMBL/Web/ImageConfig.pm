@@ -282,6 +282,7 @@ sub load_tracks {
     $self->add_repeat_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To repeat_feature tree                        ##DONE
     $self->add_simple_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To simple_feature tree                        ##DONE
     $self->add_assemblies(            $key,$dbs_hash->{$db}{'tables'} ); # To sequence tree!                             ## 2 do ##
+    $self->add_decorations(           $key,$dbs_hash->{$db}{'tables'} );
   }
   foreach my $db ( @{$self->species_defs->compara_like_databases||[]} ) {
     next unless exists $multi_hash->{$db};
@@ -309,7 +310,6 @@ sub load_configured_das {
   ## Now we do the das stuff - to append to menus (if the menu exists!!)
   my $internal_das_sources = $self->species_defs->get_all_das;
   foreach my $source ( sort {$a->caption cmp $b->caption } values %$internal_das_sources ) {
-warn "SOURCE........... $source";
     $self->add_das_track( $source->category,  $source );
   }
 }
@@ -1048,6 +1048,24 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
 return;
 }
 
+sub add_decorations {
+  my( $self, $key, $hashref ) = @_;
+  my $menu = $self->get_node( 'decorations' ); 
+  return unless $menu;
+  if( $key eq 'core' && $hashref->{'assembly_exception'}{'rows'} > 0 ) {
+    $menu->append( $self->create_track( 'assembly_exception_'.$key, 'Assembly exceptions',{
+      'db'            => $key,
+      'glyphset'      => 'assemblyexception',
+      'height'        => 2,
+      'display'       => 'normal',
+      'strand'        => 'x',
+      'label_strand'  => 'r',
+      'short_labels'  => 0,
+      'description'   => 'Haplotype (HAPs) and Pseudo autosomal regions (PARs)',
+      'colourset'     => 'assembly_exception'
+    }));
+  }
+}
 #----------------------------------------------------------------------#
 # Functions to add tracks from variation like databases....
 #----------------------------------------------------------------------#
