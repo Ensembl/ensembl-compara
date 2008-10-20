@@ -95,18 +95,15 @@ sub _get_valid_action {
   return $action."/".$func if $node && $node->get('type') =~ /view/;
   $node = $self->tree->get_node( $action )           unless $node;
   return $action if $node && $node->get('type') =~ /view/;
-warn "REDIRECTING HERE.........";
-  $node = $self->tree->get_node( $self->default_action );
-  if( $node ) {
-    $self->{'object'}->problem( 'redirect',
-      $self->{'object'}->_url({'action' => $self->default_action})
-    );
-    return $self->default_action;
+  my @nodes = ( $self->default_action, 'Idhistory', 'Chromosome', 'Karyotype' );
+  foreach( @nodes ) {
+    $node = $self->tree->get_node( $_ );
+    if( $node ) {
+      $self->{'object'}->problem( 'redirect', $self->{'object'}->_url({'action' => $_}) );
+      return $_;
+    }
   }
-  $self->{'object'}->problem( 'redirect',
-    $self->{'object'}->_url({'action' => 'idhistory'})
-  );
-  return 'idhistory'
+  return undef;
 #  return $node;
 }
 
@@ -170,7 +167,7 @@ sub trim_referer {
   $referer =~ s/;time=\d+\.\d+//g;   # remove all references to time...
   $referer =~ s/\?time=\d+\.\d+;/?/;
   $referer =~ s/\?time=\d+\.\d+//g;
-  $referer .= ($referer =~ /\?/ ? ';' : '?')."time=".time();
+#  $referer .= ($referer =~ /\?/ ? ';' : '?')."time=".time();
   return $referer;
 }
 sub _user_context {
