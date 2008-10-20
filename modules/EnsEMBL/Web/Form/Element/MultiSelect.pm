@@ -38,15 +38,27 @@ sub render {
 			   $V->{'value'}, $checked eq 'yes' ? ' selected="selected"' : '', $V->{'name'}
       );
     }
-    return sprintf( qq(%s<select multiple="multiple" name="%s" id="%s" class="normal" onChange="os_check('%s',this,%s)">%s</select>%s),
+    return sprintf( qq(
+    <dl>
+      <dt><label for="%s">%s: </label></dt>
+      <dd>%s<select multiple="multiple" name="%s" id="%s" class="normal" size="%s">
+      %s
+      </select>
+      %s</dd>
+    </dl>),
+      CGI::escapeHTML( $self->id ),
+      CGI::escapeHTML( $self->label ), 
       $self->introduction,
       CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
-      $self->type, $self->required eq 'yes'?1:0,
+      $self->size,
       $options,
       $self->notes
     );
   } else {
-    my $output = sprintf(qq(<label class="label" for="%s">%s</label><br /><br />),
+    my $output = sprintf(qq(
+    <dl>
+    <dt><label class="label" for="%s">%s</label></dt>
+    <dd>),
         CGI::escapeHTML($self->id), CGI::escapeHTML( $self->label ));
     my $K = 0;
 
@@ -81,6 +93,8 @@ sub render {
 	    CGI::escapeHTML($self->name), 
 			
     );
+    $output .= qq(</dd>
+    </dl>);
 
     return $self->introduction.$output.$self->notes;
   }
