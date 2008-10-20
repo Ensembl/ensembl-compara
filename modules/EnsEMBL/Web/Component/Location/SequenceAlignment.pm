@@ -28,9 +28,9 @@ sub content {
 
   my @individuals;
   my $sp = $object->species;
-  my $vari_hash = $object->species_defs->vari_hash($sp);
+  my $var_hash = $object->species_defs->databases->{'DATABASE_VARIATION'};
   foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS)) {
-      my $set = $vari_hash->{$_};
+      my $set = $var_hash->{$_};
       foreach my $ind (@{$set}) {
 	  push @individuals, $ind if ($object->param($ind) eq 'yes');
       }

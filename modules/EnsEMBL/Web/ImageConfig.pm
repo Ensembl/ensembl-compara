@@ -298,7 +298,7 @@ warn "SOURCE........... $source";
 sub add_das_track {
   my( $self, $menu, $source ) = @_;
   my $node = $self->get_node($menu);
-     $node = $self->get_node('other') unless $node; 
+     $node = $self->get_node('external_data') unless $node; 
   return unless $node;
   $node->append( $self->create_track( "das_".$source->logic_name,'[DAS] '.$source->label, {
     'glyphset'    => '_das',
@@ -551,11 +551,12 @@ sub add_gene {
         'colours'     => $self->species_defs->colour( 'gene' ),
         'caption'     => $data->{$key_2}{'caption'},
 	'colour_key'  => $data->{$key_2}{'colour_key'},
+        'label_key'   => $data->{$key_2}{'label_key'},
         'description' => $data->{$key_2}{'description'},
         'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
         'renderers'   => $type eq 'transcript' ?
           [qw(off Off transcript Expanded collapsed Collapsed)] : 
-          [qw(off Off gene_nolabel gene_label )],
+          [qw(off Off gene_nolabel), 'No labels', 'gene_label', 'With labels'],
         'strand'      => $type eq 'gene' ? 'r' : 'b'
       }));
       $flag=1;

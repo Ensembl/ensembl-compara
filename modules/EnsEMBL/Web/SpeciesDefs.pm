@@ -584,11 +584,11 @@ sub multi_hash {
   return $CONF->{'_storage'}{'MULTI'};
 }
 
-sub vari_hash {
-  my $self = shift;
-  my $sp   = shift;
-  return $CONF->{'_storage'}{$sp}{'databases'}{'DATABASE_VARIATION'};
-}
+#sub vari_hash {
+#  my $self = shift;
+#  my $sp   = shift;
+#  return $CONF->{'_storage'}{$sp}{'databases'}{'DATABASE_VARIATION'};
+#}
 
 sub multi {
   ### a
