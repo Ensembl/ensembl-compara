@@ -724,7 +724,8 @@ sub pep_splice_site {
 =cut
 
 sub pep_snps{
-  my $self  = shift ;
+  my $self  = shift;
+  my $rtn_structure = shift;
   return $self->{'pep_snps'} if ($self->{'pep_snps'} );
 
   use Time::HiRes qw(time);
@@ -745,7 +746,7 @@ sub pep_snps{
 
   # add triplicate NTs into array into AA hash
   while( $coding_sequence =~ /(...)/g ){    
-    $aas[$j]{'nt'} = [split //, $1];
+    $aas[$j]{'nt'} = [split (//, $1)];
     $j++;  
   }
 
@@ -804,6 +805,19 @@ sub pep_snps{
   }  #end $snp    
   warn time - $T," munged data"; $T = time;
   $self->{'pep_snps'} = \@aas;
+  
+  if ($rtn_structure eq 'hash') {
+    my $rtn = {};
+    my $i = 0;
+    
+    for (@aas) {
+      $rtn->{$i} = $_;
+      $i++;
+    }
+    
+    $self->{'pep_snps'} = $rtn;
+  }
+  
   return $self->{'pep_snps'};
 }
 
