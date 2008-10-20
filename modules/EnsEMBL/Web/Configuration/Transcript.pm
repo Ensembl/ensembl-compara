@@ -219,11 +219,14 @@ sub populate_tree {
   ));
   my $var_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   $var_menu->append($self->create_node( 'Population',  'Population comparison',
-    [qw(snps      EnsEMBL::Web::Component::Transcript::SNPView )],
-   #     snptable      EnsEMBL::Web::Component::Transcript::TranscriptSNPTable)],
+    [qw(snpinfo       EnsEMBL::Web::Component::Transcript::TranscriptSNPInfo 
+        snptable      EnsEMBL::Web::Component::Transcript::TranscriptSNPTable)],
     { 'availability' => 'either database:variation' }
   ));
-
+  $var_menu->append($self->create_node( 'Population/Image',  'Comparison image',
+    [qw(snps      EnsEMBL::Web::Component::Transcript::SNPView)],
+    { 'availability' => 'either database:variation' }
+  ));
   my $prot_menu = $self->create_submenu( 'Protein', 'Protein Information' );
   $prot_menu->append($self->create_node( 'ProteinSummary', "Protein summary",
     [qw(image       EnsEMBL::Web::Component::Transcript::TranslationImage
@@ -243,14 +246,21 @@ sub populate_tree {
     [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
     { 'availability' => 'either database:variation', 'concise' => 'Variations'}
   ));
-
-  $self->create_node( 'Idhistory', "ID history",
+  my $history_menu = $self->create_submenu('History', "ID History");
+  $history_menu->append($self->create_node( 'Idhistory', "Transcript history",
     [qw(
       display     EnsEMBL::Web::Component::Gene::HistoryReport
       associated  EnsEMBL::Web::Component::Gene::HistoryLinked
       map         EnsEMBL::Web::Component::Gene::HistoryMap)],
       { 'availability' => 'history', 'concise' => 'ID History' }
-  );
+  ));
+  $history_menu->append($self->create_node( 'Idhistory/Protein', "Protein history",
+    [qw(
+      display     EnsEMBL::Web::Component::Gene::HistoryReport/protein
+      associated  EnsEMBL::Web::Component::Gene::HistoryLinked/protein
+      map         EnsEMBL::Web::Component::Gene::HistoryMap/protein)],
+      { 'availability' => 'history', 'concise' => 'ID History' }
+  ));
 }
 
 # Transcript: BRCA2_HUMAN
