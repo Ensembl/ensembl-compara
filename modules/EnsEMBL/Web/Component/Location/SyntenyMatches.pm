@@ -88,7 +88,7 @@ sub content {
     $html .= $table->render;
   }
   else {
-    $html .= '<p>Sorry, there are no homologous genes in this region. Use the links below to navigate to the nearest matches.</p>';
+    $html .= '<p>Sorry, there are no genes in this region. Use the links below to navigate to the nearest ones.</p>';
   }
   return $html;
 }
