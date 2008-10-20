@@ -413,11 +413,12 @@ sub render {
 sub render_DAS {
   my( $self ) = shift;
   my $r = $self->renderer->{'r'};
+  $self->{'subtype'} = 'das'; # Possibly should come from somewhere higher up 
   if( $r ) {
     $r->headers_out->add('X-Das-Status'  => '200'     );
     $r->headers_out->add('X-Das-Version' => 'DAS/1.5' );
   }
-  $self->{'xsl'} = "/das/$self->{'subtype'}.xsl" if exists $self->{'subtype'}; #'/das/dasgff.xsl';
+  $self->{'xsl'} = "/das/$self->{'subtype'}.xsl" if $self->{'subtype'}; #'/das/dasgff.xsl';
   $self->render_XML();
 }
 sub render_XML {
