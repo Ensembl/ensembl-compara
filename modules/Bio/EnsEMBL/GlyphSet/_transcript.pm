@@ -20,31 +20,20 @@ sub features {
 
 sub text_label {
   my ($self, $gene, $transcript) = @_;
-
-  my $obj = $transcript || $gene || return '';
-
-  my $tid = $obj->stable_id();
-  my $eid = $obj->external_name();
-  my $id = $eid || $tid;
-
-  my $Config = $self->{config};
-  my $short_labels = $Config->get_parameter( 'opt_shortlabels');
-
-  if( $Config->{'_both_names_'} eq 'yes') {
-    $id .= $eid ? " ($eid)" : '';
-  }
-  if( ! $Config->get_parameter( 'opt_shortlabels') ){
-    my $type = ( $gene->analysis ? 
-                 $gene->analysis->logic_name : 
-                 'Generic trans.' );
-    $id .= "\n$type";
-  }
+  my $id  = $transcript->external_name || $transcript->stable_id;
+  return $id if $self->get_parameter( 'opt_shortlabels');
+  my $label = $self->transcript_label($transcript, $gene);
+  $id .= "\n$label" unless $label eq '-';
   return $id;
 }
 
 sub gene_text_label {
   my ($self, $gene ) = @_;
-  return $self->text_label($gene);
+  my $id  = $gene->external_name || $gene->stable_id;
+  return $id if $self->get_parameter( 'opt_shortlabels');
+  my $label = $self->gene_label( $gene);
+  $id .= "\n$label" unless $label eq '-';
+  return $id;
 }
 
 sub _add_legend_entry {

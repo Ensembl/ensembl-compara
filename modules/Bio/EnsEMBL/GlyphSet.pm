@@ -74,7 +74,8 @@ sub Text       { my $self = shift; return new Sanger::Graphics::Glyph::Text(    
 
 sub core {
   my $self = shift;
-  return $self->{'config'}{_core}{'parameters'}{shift};
+  my $k    = shift;
+  return $self->{'config'}{_core}{'parameters'}{$k};
 }
 sub _url {
   my $self = shift;
@@ -745,6 +746,26 @@ sub _threshold_update {
 # Shared by a number of the transcript/gene drawing code - so putting here!
 #==============================================================================================================
 
+sub transcript_label {
+  my( $self, $transcript, $gene ) = @_;
+  my $pattern = $self->my_config('label_key') || '[text_label]';
+  return '' if $pattern eq '-';
+  $pattern =~ s/\[text_label\]/$self->my_colour($self->transcript_key($transcript,$gene),'text')/eg;
+  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
+  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $transcript->analysis->$1 : $gene->$1/eg;
+  $pattern;
+}
+
+sub gene_label {
+  my( $self, $gene ) = @_;
+  my $pattern = $self->my_config('label_key') || '[text_label]';
+  return '' if $pattern eq '-';
+  $pattern =~ s/\[text_label\]/$self->my_colour($self->gene_key($gene),'text')/eg;
+  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
+  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
+  $pattern;
+}
+
 sub transcript_key {
   my( $self, $transcript, $gene ) = @_;
   my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
@@ -762,5 +783,4 @@ sub gene_key {
 }
 
 1;
-
 
