@@ -10,7 +10,7 @@ sub init {
   my ($self) = @_;
 
   $self->set_parameters({
-    'title'         => 'Overview panel',
+    'title'         => 'Top panel',
     'show_buttons'  => 'no',  # do not show +/- buttons
     'button_width'  => 8,     # width of red "+/-" buttons
     'show_labels'   => 'yes', # show track names on left-hand side
