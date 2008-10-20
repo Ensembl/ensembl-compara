@@ -13,7 +13,14 @@
 **/
 
 // If no transcripts OR already generated link so return....
+    
     if( !$(table_id) || $(table_id + '_link') ) return;
+    var t = Cookie.get('ENSEMBL_'+table_id);
+    if( t == 'close' ) {
+      $(table_id).hide();
+    } else { 
+      $(table_id).show();
+    }
 
     var initial_open = $(table_id).visible();
     var txt_on       = 'show ' + table_id;
@@ -28,6 +35,8 @@
 
     Event.observe($(table_id + '_link'),'click',function(event){
       $(table_id).toggle();
+      __info( 'Setting cookie ENSEMBL_'+table_id+' to ' + ( $(table_id).visible() ? 'open' : 'close' ) );
+      Cookie.set( 'ENSEMBL_'+table_id, $(table_id).visible() ? 'open' : 'close' );
       $(table_id+'_link').remove();
       __init_table_dropdown(table_id);
     });
