@@ -48,23 +48,20 @@ sub content {
     my @orthologues_skipped_species = ();
     foreach my $species (sort keys %orthologue_list) {
       (my $spp = $species) =~ tr/ /_/ ;
-      my $common_name = $gene->species_defs->other_species($spp,'SPECIES_COMMON_NAME');
+      my $label = $gene->species_defs->species_label( $spp );
+warn "$label - $spp ";
 
       if( $gene->param('species_'.lc($spp) ) eq 'no' ) {
         $orthologues_skipped_count += keys %{$orthologue_list{$species}};
-        push @orthologues_skipped_species, sprintf '%s (<i>%s</i>)', $common_name, $species;
+        push @orthologues_skipped_species, $label;
         next;
       }
       my $C_species = 1;
       my $rowspan = scalar(keys %{$orthologue_list{$species}});
 #      $rowspan++ if $rowspan > 1;
-      unless($common_name){
-        my ($OBJ) = values %{$orthologue_list{$species}};
-        $common_name = $OBJ->{'sp_common'};
-      }
       $html .= sprintf( qq(
       <tr>
-        <th rowspan="$rowspan">%s<em>%s</em></th>), ucfirst( $common_name ? "$common_name<br />":"" ),$species );
+        <th rowspan="$rowspan">%s</th>), $label );
       my $start = '';
 #      my $mcv_species = $multicv_link;
       foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
@@ -155,8 +152,8 @@ paralogues with BioMart to see more.)</p>%s),
     if( $orthologues_skipped_count ) {
       $html .= $self->_warning( 'Orthologues hidden by configuration', sprintf '
   <p>
-    %d orthologues not shown in the table below from the following species: %s. Use the "<strong>Configure this page</strong>" on the left to show them.
-  </p>%s', $orthologues_skipped_count, join (', ',sort @orthologues_skipped_species )
+    %d orthologues not shown in the table above from the following species: %s. Use the "<strong>Configure this page</strong>" on the left to show them.
+  </p>%s', $orthologues_skipped_count, join (', ', map { "<i>$_</i>" } sort @orthologues_skipped_species )
       )
     }
   } else {
