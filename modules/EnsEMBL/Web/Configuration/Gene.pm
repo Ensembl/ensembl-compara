@@ -125,7 +125,8 @@ sub populate_tree {
   ));
   $fam_node->append($self->create_subnode(
     'Family/Proteins', 'Other proteins in this family',
-    [qw(proteins    EnsEMBL::Web::Component::Gene::FamilyProteins)],
+    [qw(ensembl EnsEMBL::Web::Component::Gene::FamilyProteins/ensembl
+        other   EnsEMBL::Web::Component::Gene::FamilyProteins/other)],
     { 'availability'  => 'family database:compara',
       'no_menu_entry' => 1 }
   ));
