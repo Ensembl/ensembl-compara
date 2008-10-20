@@ -46,7 +46,9 @@ our %DAS_DEFAULTS = (
 sub new_from_hashref {
   my ( $class, $hash ) = @_;
   
-  $hash->{'coords'} = [ map { Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new( $_ ) } @{$hash->{'coords'}||[]} ];
+  $hash->{'coords'} = [ map {
+    Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_hashref($_)
+  } @{$hash->{'coords'}||[]} ];
 
   # Convert old-style type & assembly parameters to single coords
 
