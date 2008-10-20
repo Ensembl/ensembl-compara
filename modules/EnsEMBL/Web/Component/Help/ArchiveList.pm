@@ -5,7 +5,7 @@ use warnings;
 no warnings "uninitialized";
 use EnsEMBL::Web::OldLinks;
 use base qw(EnsEMBL::Web::Component::Help);
-use CGI qw(escapeHTML);
+use CGI qw(escapeHTML unescape);
 
 sub _init {
   my $self = shift;
@@ -69,7 +69,7 @@ sub content {
               my (%parameter, @new_params);
               foreach my $pair (@params) {
                 my @a = split('=', $pair);
-                $parameter{$a[0]} = $a[1]; 
+                $parameter{$a[0]} = CGI::unescape($a[1]); 
               }
               if ($type eq 'Location') {
                 my $location = $parameter{'r'};
