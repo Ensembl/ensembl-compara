@@ -129,8 +129,8 @@ dd { margin-bottom:1em; }
 .syntax-error { color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]] }
 
 .error { margin: 0.2em; border:1px solid [[ALERT_BORDER]]; color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]]; padding: 0; }
-.error h3 { padding: 2px 0.5em; background-color:[[ALERT_BORDER]];color:[[ALERT_BG]];margin: 0; }
+.error h3 { padding: 2px 0.5em 2px 20px; background-color:[[ALERT_BORDER]];color:[[ALERT_BG]];margin: 0;  background-image:url(/i/warning.gif); background-position: top left; background-repeat: no-repeat }
 .error-pad { padding: 0.5em }
-.warning { margin: 0.2em; border:1px solid orange; color:orange; background-color: white; padding: 0; }
-.warning h3 { padding: 2px 0.5em; background-color:orange;color:white;margin: 0; }
+.warning { margin: 0.2em auto; border:1px solid orange;background-color: white; padding: 0; }
+.warning h3 { padding: 2px 0.5em 2px 20px; background-color:orange;color:black;margin: 0; background-image:url(/i/warning.gif); background-position: top left; background-repeat: no-repeat }
 .error-pad { padding: 0.5em }
