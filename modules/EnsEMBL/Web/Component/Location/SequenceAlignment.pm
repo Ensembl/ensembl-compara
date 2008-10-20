@@ -22,6 +22,17 @@ sub caption {
 sub content {
   my $self   = shift;
   my $object = $self->object;
+  my $threshold   = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $image_width = $self->image_width;
+
+  if( $object->length > $threshold ) {
+    return sprintf qq(
+  <div class="autocenter alert-box" style="width:%spx;">
+    The region selected is too large to display in this view - use the navigation above to zoom in...
+  </div>), $image_width;
+
+  }
+
   my $width = $object->param("display_width") || 60;
   #Get reference slice
   my $refslice = new EnsEMBL::Web::Proxy::Object( 'Slice', $object->slice, $object->__data );
