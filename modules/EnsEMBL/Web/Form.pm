@@ -105,6 +105,10 @@ sub render {
     $self->add_attribute( 'class',   'upload' );
     $self->add_attribute( 'enctype', 'multipart/form-data' );
   }
+  $self->add_element( 'type' => 'Hidden',
+    'name' => '__submit',
+    'value' => ''
+  );
 
   my $output = "<form";
   while (my ($k, $v) = each ( %{$self->{'_attributes'}} )) {
