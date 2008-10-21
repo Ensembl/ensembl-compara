@@ -5,6 +5,8 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Gene);
 
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
+
 sub _init {
   my $self = shift;
   $self->cacheable( 1 );
@@ -24,7 +26,7 @@ sub content {
   my $sitetype = ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
 
   # Return all variation features on slice if param('snp display');
-  my $snps  = $slice->param( 'snp_display' )  eq 'snp' ? $slice->snp_display()  : [];
+  my $snps  = $slice->param( 'snp_display' )  =~ /snp/ ? $slice->snp_display()  : [];
 
   # Return additional specific exons as chosen in form by user
   my $other_exons = $slice->param( 'exon_display' ) ne 'off' ? $slice->exon_display() : [];
@@ -92,9 +94,9 @@ sub content {
   my %snpstyles = %{$styles{snp}};
   my %snpexonstyles = %{$styles{snpexon}};
   my $sstrand = $slice->Obj->strand; # SNP strand bug has been fixed in snp_display function
-
+  
   foreach my $snp( @$snps ){
-    my ( $fstart, $allele ) = sort_out_snp_strand($snp, $sstrand);
+    my ( $fstart, $allele ) = $self->sort_out_snp_strand($snp, $sstrand);
     my $idx_start = $bin_idx{$fstart};
     my $bin = $bin_markup[$idx_start];
     my %usestyles = ( $bin->[1]->{'background-color'} ?  %snpexonstyles : %snpstyles );
@@ -145,7 +147,7 @@ sub content {
     while( $j < $linelength ){
       my $markup = shift @bin_markup|| last;
       my( $n, $tmpl, $title, $type, $snp_id, $ambiguity ) = @$markup; # Length and template of markup
-      if (defined($type)) {
+      if ($slice->param('snp_display') eq 'snp_link' && defined($type)) {
         # atm, it can only be 'ins' or 'del' to indicate the type of a variation
         # in case of deletion we highlight flanked bases, and actual region where some bases are missing located at the right flank
         my $ind = ($type eq 'ins') ? $i+$j : $i+$j+1;
@@ -306,6 +308,7 @@ sub sort_out_snp_strand {
 
   my $self = shift;
   my ( $snp, $sstrand ) = @_;
+  
   my( $fstart, $fend ) = ( $snp->start, $snp->end );
   if($fstart > $fend) { # Insertion
     $fstart = $fstart - 2 if $sstrand < 0;
