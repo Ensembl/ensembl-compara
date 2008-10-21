@@ -92,13 +92,18 @@ sub _get_valid_action {
 
   my $node;
   $node = $self->tree->get_node( $action."/".$func ) if $func;
-  return $action."/".$func if $node && $node->get('type') =~ /view/;
+  $self->{'availability'} = $self->object->availability;
+
+  return $action."/".$func if $node && $node->get('type') =~ /view/ &&
+                              $self->is_available( $node->get('availability') );
   $node = $self->tree->get_node( $action )           unless $node;
-  return $action if $node && $node->get('type') =~ /view/;
+  return $action if $node && $node->get('type') =~ /view/ &&
+                    $self->is_available( $node->get('availability') );
   my @nodes = ( $self->default_action, 'Idhistory', 'Chromosome', 'Karyotype' );
   foreach( @nodes ) {
     $node = $self->tree->get_node( $_ );
-    if( $node ) {
+     #warn( "H: $_:",$node->get('availability').'; '.join ("\t", grep { $self->{'availability'}{$_} } keys %{$self->{'availability'}||{} } ) ) if $node;
+    if( $node && $self->is_available( $node->get('availability') ) ) {
       $self->{'object'}->problem( 'redirect', $self->{'object'}->_url({'action' => $_}) );
       return $_;
     }
@@ -170,6 +175,7 @@ sub trim_referer {
 #  $referer .= ($referer =~ /\?/ ? ';' : '?')."time=".time();
   return $referer;
 }
+
 sub _user_context {
   my $self = shift;
   my $type = $self->type;
