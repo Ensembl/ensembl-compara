@@ -17,6 +17,13 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 .threecol-middle { float:left; width:30%; margin:0 0 1% 0; padding:1%; }
 .threecol-right { float:right; width:30%; margin:0 0 1% 0; padding:1%; }
 
+/* Alternative column styles for IE6, which doesn't interpret percentages properly */
+* html .twocol-left { float:left; width:40%; margin:0 0 1% 0; padding:1%; clear:left; }
+* html .twocol-right { float:right; width:40%; margin:0 0 1% 0; padding:1%; }
+* html .threecol-left { float:left; width:25%; margin:0 0 1% 0; padding:1%; clear:left; }
+* html .threecol-middle { float:left; width:25%; margin:0 0 1% 0; padding:1%; }
+* html .threecol-right { float:right; width:25%; margin:0 0 1% 0; padding:1%; }
+
 .plain-box  { color:[[PANEL_TEXT]]; background-color:[[PANEL_BG]]; border:1px solid [[PANEL_BORDER]]; }
 .tinted-box { color:[[PANEL_TEXT]]; background-color:[[TINT_BG]]; border:1px solid [[TINT_BORDER]]; }
 .info-box { color:[[CONTRAST_TEXT]]; background-color:[[CONTRAST_BG]]; border:1px solid [[CONTRAST_BORDER]]; }
