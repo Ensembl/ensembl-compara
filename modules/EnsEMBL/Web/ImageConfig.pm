@@ -309,7 +309,8 @@ sub load_configured_das {
   my $self=shift;
   ## Now we do the das stuff - to append to menus (if the menu exists!!)
   my $internal_das_sources = $self->species_defs->get_all_das;
-  foreach my $source ( sort {$a->caption cmp $b->caption } values %$internal_das_sources ) {
+  foreach my $source ( sort { ($a->caption||$a->label) cmp ($b->caption||$b->label) } values %$internal_das_sources ) {
+    warn "D: ", $source->caption||$source->label;
     $self->add_das_track( $source->category,  $source );
   }
 }
@@ -323,7 +324,7 @@ sub add_das_track {
     'glyphset'    => '_das',
     'display'     => 'off',
     'logicnames'  => [ $source->logic_name ],
-    'caption'     => '[DAS] '.$source->caption,
+    'caption'     => '[DAS] '.( $source->caption||$source->label),
     'description' => $source->description
   }));
 }
