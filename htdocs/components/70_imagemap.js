@@ -355,6 +355,23 @@ function __drag_select_init() {
         });
         first_panel = panel;
       });
+    } else if( first_panel ) {
+      __info( 'got here....' );
+      slice_pair.value[first_panel].each(function(area_t){
+        var img_t = $(area_t.img);
+        var div_t = img_t.up('div');
+        var off_t = img_t.cumulativeOffset().top - div_t.cumulativeOffset().top;
+        var bp_w_t = area_t.bp_end-area_t.bp_start+1;
+        var sf     = bp_w_t ? (area_t.pixel_end-area_t.pixel_start)/bp_w_t : 1;
+        var pixel_start = (__seq_region.start-area_t.bp_start) * sf + parseInt( area_t.pixel_start );
+        var pixel_end   = (__seq_region.end  -area_t.bp_start) * sf + parseInt( area_t.pixel_start );
+        __draw_red_box( div_t,
+          pixel_start,pixel_end,
+          off_t + parseInt( area_t.pixel_top    )+2,
+          off_t + parseInt( area_t.pixel_bottom )-2,
+          'redbox2'
+        );
+      });
     }
   });
 }
