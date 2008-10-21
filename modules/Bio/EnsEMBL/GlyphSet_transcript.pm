@@ -17,8 +17,12 @@ sub features { return []; }
 sub href { return undef; }
 sub gene_href { return undef; }
 
-sub render_collapsed {
-  my ($self) = @_;
+sub render_collapsed_label {
+  my $self = shift;
+  $self->render_collapsed_nolabel( 1 );
+}
+sub render_collapsed_nolabel {
+  my ($self,$labels) = @_;
 
   my $Config        = $self->{'config'};
   my $strand_flag   = $self->my_config('strand');
@@ -122,7 +126,7 @@ sub render_collapsed {
 
     $Composite->push($Composite2);
     my $bump_height = $h + 2;
-    if( $self->my_config('show_labels') ne 'off' ) {
+    if( $self->my_config('show_labels') ne 'off' && $labels ) {
       if(my $text_label = $self->gene_text_label($gene) ) {
         my @lines = split "\n", $text_label;
         $lines[0] = "< $lines[0]" if $strand < 1;
@@ -181,13 +185,22 @@ sub render_collapsed {
   }
 }
 
-sub render_normal {
+sub render_transcript {
   my $self = shift;
-  $self->render_transcript(@_);
+  $self->render_transcript_nolabel( 1 );
 }
 
-sub render_transcript {
-  my ($self) = @_;
+sub render_normal {
+  my $self = shift;
+  $self->render_transcript_nolabel( 1 );
+}
+
+sub render_transcript_label {
+  my $self = shift;
+  $self->render_transcript_nolabel( 1 );
+}
+sub render_transcript_nolabel {
+  my ($self,$labels) = @_;
 
   my $Config        = $self->{'config'};
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
@@ -391,7 +404,7 @@ sub render_transcript {
       }
       $Composite->push($Composite2);
       my $bump_height = 1.5 * $h;
-      if( $self->my_config('show_labels') ne 'off' ) {
+      if( $self->my_config('show_labels') ne 'off' && $labels ) {
         if(my $text_label = $self->text_label($gene, $transcript) ) {
       my @lines = split "\n", $text_label; 
           $lines[0] = "< $lines[0]" if $strand < 1;
