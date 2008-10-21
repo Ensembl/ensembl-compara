@@ -556,7 +556,7 @@ sub select_das_coords {
 sub attach_das {
   my $self = shift;
   
-  my @expand_coords = $self->object->param('coords');
+  my @expand_coords = grep { $_ } $self->object->param('coords');
   if (scalar @expand_coords) {
     @expand_coords = map {
       Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_string($_)
