@@ -46,7 +46,6 @@ sub create_node {
   my $module = $params{module};
   my $name = $params{name};
   my $type = $params{type} || 'page';
-  my $bt = $params{backtrack} || 1;
   if ($module && $name) {
     if (EnsEMBL::Web::Root::dynamic_use(undef, $module)) {
       my $node = $module->new({ 
