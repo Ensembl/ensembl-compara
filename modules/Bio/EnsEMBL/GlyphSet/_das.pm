@@ -23,7 +23,7 @@ sub features       {
     my @features   = @{ $data->{ $logic_name }{ 'features' } };
     my @errors     = @{ $data->{ $logic_name }{ 'errors'   } };
     
-    warn sprintf "DAS / %s / %d features / %d errors", $logic_name, scalar @features, scalar @errors;
+    warn sprintf "DAS / %s / %d features / %d errors / %s", $logic_name, scalar @features, scalar @errors, $stylesheet;
     
     for my $error ( @errors ) {
       warn "DAS / $logic_name / $error";
