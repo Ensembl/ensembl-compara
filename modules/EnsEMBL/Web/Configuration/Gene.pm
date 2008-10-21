@@ -153,17 +153,23 @@ sub populate_tree {
 
 ## Variation tree
   my $var_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
-  $var_menu->append($self->create_node( 'Variation_Gene',  'Gene variations',
+  $var_menu->append($self->create_node( 'Variation_Gene',  'Variation Table',
+    [qw(snpinfo       EnsEMBL::Web::Component::Gene::GeneSNPInfo
+        snptable       EnsEMBL::Web::Component::Gene::GeneSNPTable)],
+    { 'availability' => 'gene database:variation' }
+  ));
+  $var_menu->append($self->create_node( 'Variation_Gene/Image',  'Variation Image',
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSNPImage)],
     { 'availability' => 'gene database:variation' }
   ));
 
-  $self->create_node( 'Idhistory', 'ID history',
+  my $history_menu = $self->create_submenu( 'History', 'ID History' );
+  $history_menu->append($self->create_node( 'Idhistory', 'Gene history',
     [qw(display     EnsEMBL::Web::Component::Gene::HistoryReport
         associated  EnsEMBL::Web::Component::Gene::HistoryLinked
         map         EnsEMBL::Web::Component::Gene::HistoryMap)],
         { 'availability' => 'history', 'concise' => 'ID History' }
-  );
+  ));
 
 }
 
