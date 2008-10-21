@@ -22,6 +22,13 @@ sub availability {
   } elsif( $self->Obj->isa('Bio::EnsEMBL::Gene') ) {
     $hash->{'history'}    = 1;
     $hash->{'gene'}       = 1;
+    my $compara_db  = $self->database('compara');
+    my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
+    my ($res) = $compara_dbh->selectrow_array(
+      'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1',
+      {}, $self->Obj->stable_id
+    );
+    $hash->{'family'}     = $res ? 1 : 0;
   } elsif( $self->Obj->isa('Bio::EnsEMBL::Compara::Family' ) ) {
 warn "FAMILY............";
     $hash->{'family'}     = 1;
