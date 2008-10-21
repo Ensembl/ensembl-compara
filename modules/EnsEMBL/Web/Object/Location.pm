@@ -14,9 +14,11 @@ sub availability {
   my $self = shift;
   my $hash = $self->_availability;
   my %chrs = map { $_,1 } @{$self->species_defs->ENSEMBL_CHROMOSOMES || []};
+  $hash->{'karyotype'}   = 1;
   $hash->{'chromosome'}  = $chrs{ $self->Obj->{'seq_region_name'} } ? 1 : 0;
   $hash->{'has_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} ? 1 : 0;
-  $hash->{'slice'}       = $self->Obj->{'seq_region_name'} ? 1 : 0;
+  $hash->{'slice'}       = $self->Obj->{'seq_region_name'} && 
+                           $self->Obj->{'seq_region_name'} ne $self->core_objects->{'parameters'}{'r'} ? 1 : 0;
   my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
   
   $hash->{'has_synteny'} = scalar( keys %{ $synteny_hash{$self->species}||{} } ) ? 1 : 0;
