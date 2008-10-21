@@ -33,6 +33,8 @@ sub content {
   my %tables;
  
   foreach my $sample (@samples) {
+    my %flags;
+    $flags{$sample} = 0;  
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' } );  
   
     $table->add_columns (
@@ -51,12 +53,18 @@ sub content {
       { 'key' => 'Source', },
       { 'key' => 'Status', 'title' => 'Validation',  },
     );
-    foreach my $snp_row (sort keys %$snp_data) {
-      foreach my $row ( @{$snp_data->{$snp_row}{$sample} || [] } ) {
+    foreach my $snp_row (sort keys %$snp_data) { 
+      foreach my $row ( @{$snp_data->{$snp_row}{$sample} || [] } ) {  
+        $flags{$sample} = 1;
         $table->add_row($row);
       }
     }
-    $tables{$sample} = $table->render; 
+    if ($flags{$sample} == 1){ 
+      $tables{$sample} = $table->render;
+    }
+    else {  
+      $tables{$sample} = qq(<p>There are no variations in this region in this strain, or the variations have been filtered out by the options set in the page configuration. To change the filtering options select the 'Configure this page' link from the menu on the left hand side of this page.</p><br />);   
+    }
   }
 
   my $html;
