@@ -355,169 +355,232 @@ sub marked_up_seq {
   return 1;
 }
 
-sub do_markedup_pep_seq {
-  my $object = shift;
-  my $show = $object->param('show');
-  my $number = $object->param('number');
 
-  if( $show eq 'plain' ) {
-    my $fasta = $object->get_trans_seq;
-    $fasta =~ s/([acgtn\*]+)/'<span style="color: blue">'.uc($1).'<\/span>'/eg;
-    return $fasta;
-  } 
-  elsif( $show eq 'revcom' ) {
-    my $fasta = $object->get_trans_seq("revcom");
-    $fasta =~ s/([acgtn\*]+)/'<span style="color: blue">'.uc($1).'<\/span>'/eg;
-    return $fasta;
-  }
-  elsif( $show eq 'rna' ) {
-    my @strings = $object->rna_notation;
-    my @extra_array;
-    foreach( @strings ) {
-      s/(.{60})/$1\n/g;
-      my @extra = split /\n/;
-      if( $number eq 'on' ) {
-        @extra = map { "       $_\n" } @extra;
-      } else {
-        @extra = map { "$_\n" } @extra;
-      }
-      push @extra_array, \@extra;
-    }
-
-    my @fasta = split /\n/, $object->get_trans_seq;
-    my $out = '';
-    foreach( @fasta ) {
-      $out .= "$_\n";
-      foreach my $array_ref (@extra_array) {
-        $out .= shift @$array_ref; 
-      }
-    }
-    return $out; 
-  }
-
-  # If $show ne rna or plan
-  my( $cd_start, $cd_end, $trans_strand, $bps ) = $object->get_markedup_trans_seq;
-  my $trans  = $object->transcript;
-  my $wrap = 60;
-  my $count = 0;
-  my ($pep_previous, $ambiguities, $previous, $coding_previous, $output, $fasta, $peptide)  = '';
-  my $coding_fasta;
-  my $pos = 1;
-  my $SPACER = $number eq 'on' ? '       ' : '';
-  my %bg_color = (  # move to constant MARKUP_COLOUR
-    'utr'      => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND1'},
-    'c0'       => 'ffffff',
-    'c1'       => $object->species_defs->ENSEMBL_STYLE->{'BACKGROUND2'},
-    'c99'      => 'ffcc99',
-    'synutr'   => '7ac5cd',
-    'sync0'    => '76ee00',
-    'sync1'    => '76ee00',
-    'indelutr' => '9999ff',
-    'indelc0'  => '99ccff',
-    'indelc1'  => '99ccff',
-    'snputr'   => '7ac5cd',
-    'snpc0'    => 'ffd700',
-    'snpc1'    => 'ffd700',
-  );
-
-  foreach(@$bps) {
-    if($count == $wrap) {
-      my( $NUMBER, $PEPNUM ) = ('','');
-      my $CODINGNUM;
-      if($number eq 'on') {
-        $NUMBER = sprintf("%6d ",$pos);
-        $PEPNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ",int( ($pos-$cd_start+3)/3) ) : $SPACER ;
-        $CODINGNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ", $pos-$cd_start+1 ) : $SPACER ;
-      }
-      $pos += $wrap;
-      $output .=  "$SPACER$ambiguities\n" if $show =~ /^snp/;
-      $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
-      $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show =~ /coding/;
-      $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show =~/^snp/ || $show eq 'peptide' || $show =~ /coding/;
-  
-      $previous='';
-      $pep_previous='';
-      $coding_previous='';
-      $ambiguities = '';
-      $count=0;
-      $peptide = '';
-      $fasta ='';
-      $coding_fasta ='';
-    }
-    my $bg = $bg_color{"$_->{'snp'}$_->{'bg'}"};
-    my $style = qq(style="color: $_->{'fg'};). ( $bg ? qq( background-color: #$bg;) : '' ) .qq(");
-    my $pep_style = '';
-    my $coding_style;
-
-    # SNPs
-    if( $show =~ /^snp/) {
-      if($_->{'snp'} ne '') {
-        if( $trans_strand == -1 ) {
-          $_->{'alleles'}=~tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-          $_->{'ambigcode'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-        }
-        $style .= qq( title="Alleles: $_->{'alleles'}");
-      }
-      if($_->{'aminoacids'} ne '') {
-        $pep_style = qq(style="color: #ff0000" title="$_->{'aminoacids'}");
-      }
-
-      # Add links to SNPs in markup
-      if ( my $url_params = $_->{'url_params'} ){ 
-  $ambiguities .= qq(<a href="snpview?$url_params">).$_->{'ambigcode'}."</a>";
-      } else {
-        $ambiguities.= $_->{'ambigcode'};
-      }
-    }
-
-    my $where =  $count + $pos;
-    if($style ne $previous) {
-      $fasta.=qq(</span>) unless $previous eq '';
-      $fasta.=qq(<span $style>) unless $style eq '';
-      $previous = $style;
-    }
-    if ($coding_style ne $coding_previous) {
-      if ( $where>=$cd_start && $where<=$cd_end ) {
-  $coding_fasta.=qq(<span $coding_style>) unless $coding_style eq '';
-      }
-      $coding_fasta.=qq(</span>) unless $coding_previous eq '';
-      $coding_previous = $coding_style;
-    }
-
-    if($pep_style ne $pep_previous) {
-      $peptide.=qq(</span>) unless $pep_previous eq '';
-      $peptide.=qq(<span $pep_style>) unless $pep_style eq '';
-      $pep_previous = $pep_style;
-    }
-    $count++;
-    $fasta.=$_->{'letter'};
-    $coding_fasta.=( $where>=$cd_start && $where<=$cd_end ) ? $_->{'letter'} :".";
-    $peptide.=$_->{'peptide'};
-
-  }# end foreach bp
-
-
-  my( $NUMBER, $PEPNUM, $CODINGNUM)  = ("", "", "");
-  if($number eq 'on') {
-    $NUMBER = sprintf("%6d ",$pos);
-    $CODINGNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ", $pos-$cd_start +1 ) : $SPACER ;
-    $PEPNUM = ( $pos>=$cd_start && $pos<=$cd_end ) ? sprintf("%6d ",int( ($pos-$cd_start-1)/3 +1) ) : $SPACER ;
-    $pos += $wrap;
-  }
-      $output .=  "$SPACER$ambiguities\n" if $show =~ /^snp/;
-      $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
-      $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show =~ /coding/;
-      $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show =~/^snp/ || $show eq 'peptide' || $show =~ /coding/;
-#  $output .=  "$SPACER$ambiguities\n" if $show eq 'snps';
-#  $output .= $NUMBER.$fasta. ($previous eq '' ? '':'</span>')."\n";
-#  $output .="$CODINGNUM$coding_fasta".($coding_previous eq ''?'':'</span>')."\n" if $show eq 'coding';
-#  $output .="$PEPNUM$peptide". ($pep_previous eq ''?'':'</span>')."\n\n" if $show eq 'snps' || $show eq 'peptide' || $show eq 'coding';
-
-  return $output;
-}
 
 
 # Transcript SNP View ---------------------------------------###################
+
+sub transcriptsnpview { 
+  my( $panel, $object, $do_not_render ) = @_;
+
+  # Params for context transcript expansion.
+  my $db = $object->get_db();
+  my $transcript = $object->stable_id;
+  my $script = 'transcriptsnpview';
+  my $base_URL = "/".$object->species."/$script?db=$db;transcript=$transcript;";
+
+  # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
+  my $extent = tsv_extent($object);
+  foreach my $slice_type (
+    [ 'context',           'normal', '100%'  ],
+    [ 'transcript',        'normal', '20%'  ],
+    [ 'TSV_transcript',    'munged', $extent ],
+  ) {
+    $object->__data->{'slices'}{ $slice_type->[0] } =  $object->get_transcript_slices( $slice_type ) || warn "Couldn't get slice";
+  }
+  my $transcript_slice = $object->__data->{'slices'}{'TSV_transcript'}[1];
+  my $sub_slices       =  $object->__data->{'slices'}{'TSV_transcript'}[2];
+  my $fake_length      =  $object->__data->{'slices'}{'TSV_transcript'}[3];
+
+  #SNPs
+  my ($count_sample_snps, $sample_snps, $context_count) = $object->getFakeMungedVariationsOnSlice( $transcript_slice, $sub_slices  );
+  my $start_difference =  $object->__data->{'slices'}{'TSV_transcript'}[1]->start - $object->__data->{'slices'}{'transcript'}[1]->start;
+
+  my @transcript_snps;
+  map { push @transcript_snps, 
+    [ $_->[2]->start + $start_difference, 
+      $_->[2]->end   + $start_difference, 
+      $_->[2]] } @$sample_snps;
+
+  # Taken out domains (prosite, pfam)
+
+  # Tweak the configurations for the five sub images ------------------ 
+  # Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
+  my @ens_exons;
+  foreach my $exon (@{ $object->Obj->get_all_Exons() }) {
+    my $offset = $transcript_slice->start -1;
+    my $es     = $exon->start - $offset;
+    my $ee     = $exon->end   - $offset;
+    my $munge  = $object->munge_gaps( 'TSV_transcript', $es );
+    push @ens_exons, [ $es + $munge, $ee + $munge, $exon ];
+  }
+
+
+  # General page configs -------------------------------------
+  # Get 4 configs (one for each section) set width to width of context config
+  my $Configs;
+  my $image_width    = $object->param( 'image_width' );
+
+  foreach (qw(context transcript transcripts_bottom transcripts_top)) {
+    $Configs->{$_} = $object->image_config_hash( "TSV_$_" );
+    $Configs->{$_}->set( '_settings', 'width',  $image_width );
+    $Configs->{$_}->{'id'} = $object->stable_id;
+  }
+
+  $Configs->{'transcript'}->{'filtered_fake_snps'} = \@transcript_snps;
+
+  foreach(qw(transcripts_top transcripts_bottom)) {
+    $Configs->{$_}->{'extent'}      = $extent;
+    $Configs->{$_}->{'transid'}     = $object->stable_id;
+    $Configs->{$_}->{'transcripts'} = [{ 'exons' => \@ens_exons }];
+    $Configs->{$_}->{'snps'}        = $sample_snps;
+    $Configs->{$_}->{'subslices'}   = $sub_slices;
+    $Configs->{$_}->{'fakeslice'}   = 1;
+    $Configs->{$_}->container_width( $fake_length );
+  }
+
+
+  $Configs->{'snps'} = $object->image_config_hash( "genesnpview_snps" );
+  $Configs->{'snps'}->set( '_settings', 'width',  $image_width );
+  $Configs->{'snps'}->{'snp_counts'} = [$count_sample_snps, scalar @$sample_snps, $context_count];
+
+  $Configs->{'context'}->container_width( $object->__data->{'slices'}{'context'}[1]->length() );
+  $Configs->{'context'}->set( 'scalebar', 'label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
+  $Configs->{'context'}->set( 'est_transcript','on','off');
+  $Configs->{'context'}->set( '_settings', 'URL', $base_URL."bottom=%7Cbump_", 1);
+  #$Configs->{'context'}->{'filtered_fake_snps'} = $context_snps;
+
+  # SNP stuff ------------------------------------------------------------
+  my ($containers_and_configs, $haplotype);
+
+  # Foreach sample ... 
+  ($containers_and_configs, $haplotype) = _sample_configs($object, $transcript_slice, $sub_slices, $fake_length);
+
+  # -- Map SNPs for the last SNP display to fake even spaced co-ordinates
+  # @snps: array of arrays  [fake_start, fake_end, B:E:Variation obj]
+  my $SNP_REL     = 5; ## relative length of snp to gap in bottom display...
+  my $snp_fake_length = -1; ## end of last drawn snp on bottom display...
+  my @fake_snps = map {
+    $snp_fake_length +=$SNP_REL+1;
+      [ $snp_fake_length - $SNP_REL+1, $snp_fake_length, $_->[2], $transcript_slice->seq_region_name,
+  $transcript_slice->strand > 0 ?
+  ( $transcript_slice->start + $_->[2]->start - 1,
+    $transcript_slice->start + $_->[2]->end   - 1 ) :
+  ( $transcript_slice->end - $_->[2]->end     + 1,
+    $transcript_slice->end - $_->[2]->start   + 1 )
+      ]
+    } sort { $a->[0] <=> $b->[0] } @$sample_snps;
+
+  if (scalar @$haplotype) {
+    $Configs->{'snps'}->set( 'snp_fake_haplotype', 'on', 'on' );
+    $Configs->{'snps'}->set( 'TSV_haplotype_legend', 'on', 'on' );
+    $Configs->{'snps'}->{'snp_fake_haplotype'}  =  $haplotype;
+  }
+  $Configs->{'snps'}->container_width(   $snp_fake_length   );
+  $Configs->{'snps'}->{'snps'}        = \@fake_snps;
+  $Configs->{'snps'}->{'reference'}   = $object->param('reference')|| "";
+  $Configs->{'snps'}->{'fakeslice'}   = 1;
+  $Configs->{'snps'}->{'URL'} =  $base_URL;
+  return if $do_not_render;
+
+  ## -- Render image ----------------------------------------------------- ##
+  # Send the image pairs of slices and configurations
+  my $image    = $object->new_image(
+    [
+     $object->__data->{'slices'}{'context'}[1],     $Configs->{'context'},
+     $object->__data->{'slices'}{'transcript'}[1],  $Configs->{'transcript'},
+     $transcript_slice, $Configs->{'transcripts_top'},
+     @$containers_and_configs,
+    $transcript_slice, $Configs->{'transcripts_bottom'},
+     $transcript_slice, $Configs->{'snps'},
+    ],
+    [ $object->stable_id ]
+  );
+
+  $image->imagemap = 'yes';
+  my $T = $image->render;
+  $panel->print( $T );
+
+  return 0;
+}
+
+
+
+
+sub _sample_configs {
+  my ($object, $transcript_slice, $sub_slices, $fake_length) = @_;
+
+  my @containers_and_configs = (); ## array of containers and configs
+  my @haplotype = ();
+  my $extent = tsv_extent($object);
+
+  # THIS IS A HACK. IT ASSUMES ALL COVERAGE DATA IN DB IS FROM SANGER fc1
+  # Only display coverage data if source Sanger is on
+  my $display_coverage = $object->get_viewconfig->get( "opt_sanger" ) eq 'off' ? 0 : 1;
+
+  foreach my $sample ( $object->get_samples ) {
+    my $sample_slice = $transcript_slice->get_by_strain( $sample );
+    next unless $sample_slice;
+
+    ## Initialize content...
+    my $sample_config = $object->get_imageconfig( "TSV_sampletranscript" );
+    $sample_config->{'id'}         = $object->stable_id;
+    $sample_config->{'subslices'}  = $sub_slices;
+    $sample_config->{'extent'}     = $extent;
+
+    ## Get this transcript only, on the sample slice
+    my $transcript;
+
+    foreach my $test_transcript ( @{$sample_slice->get_all_Transcripts} ) {
+      next unless $test_transcript->stable_id eq $object->stable_id;
+      $transcript = $test_transcript;  # Only display on e transcripts...
+      last;
+    }
+    next unless $transcript;
+
+    my $raw_coding_start = defined( $transcript->coding_region_start ) ? $transcript->coding_region_start : $transcript->start;
+    my $raw_coding_end   = defined( $transcript->coding_region_end )   ? $transcript->coding_region_end : $transcript->end;
+    my $coding_start = $raw_coding_start + $object->munge_gaps( 'TSV_transcript', $raw_coding_start );
+    my $coding_end   = $raw_coding_end   + $object->munge_gaps( 'TSV_transcript', $raw_coding_end );
+
+    my @exons = ();
+    foreach my $exon (@{$transcript->get_all_Exons()}) {
+      my $es = $exon->start;
+      my $offset = $object->munge_gaps( 'TSV_transcript', $es );
+      push @exons, [ $es + $offset, $exon->end + $offset, $exon ];
+    }
+
+    my ( $allele_info, $consequences ) = $object->getAllelesConsequencesOnSlice($sample, "TSV_transcript", $sample_slice);
+    my ($coverage_level, $raw_coverage_obj) = ([], []);
+    if ($display_coverage) {
+      ($coverage_level, $raw_coverage_obj) = $object->read_coverage($sample, $sample_slice);
+    }
+    my $munged_coverage = $object->munge_read_coverage($raw_coverage_obj);
+
+    $sample_config->{'transcript'} = {
+      'sample'          => $sample,
+      'exons'           => \@exons,  
+      'coding_start'    => $coding_start,
+      'coding_end'      => $coding_end,
+      'transcript'      => $transcript,
+      'allele_info'     => $allele_info,
+      'consequences'    => $consequences,
+      'coverage_level'  => $coverage_level,
+      'coverage_obj'    => $munged_coverage,
+    };
+    unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
+
+warn "#### $sample\n";
+warn map { "  >> @$_\n" } @$allele_info;
+#warn map { "  << @$_\n" } @$munged_coverage;
+    $sample_config->container_width( $fake_length );
+  
+    ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get 
+
+    ## Now push onto config hash...
+    push @containers_and_configs,    $sample_slice, $sample_config;
+  } #end foreach sample
+
+  return (\@containers_and_configs, \@haplotype);
+}
+
+
+
+sub tsv_extent {
+  my $object = shift;
+  return $object->param( 'context' ) eq 'FULL' ? 1000 : $object->param( 'context' );
+}
+
 
 sub transcriptsnpview_menu    {
   my ($panel, $object) = @_;
@@ -720,6 +783,271 @@ sub EC_URL {
   my $URL_string= $string;
   $URL_string=~s/-/\?/g;
   return $self->object->get_ExtURL_link( "EC $string", 'EC_PATHWAY', $URL_string );
+}
+
+sub markup_exons {
+  my $self = shift;
+  my ($sequence, $data, $config) = @_;
+
+  my $flip = 0;
+  
+  foreach (sort {$a <=> $b} keys %$data) {
+    $flip = 1 - $flip if ($data->{$_}->{'exon'});
+    
+    $sequence->[$_]->{'color'} = $data->{$_}->{'overlap'} ? $config->{'colours'}->{'exon2'} : $config->{'colours'}->{"exon$flip"};
+  }
+
+  # Set the initial color if it hasn't been done yet
+  $sequence->[0]->{'color'} = $config->{'colours'}->{'exon0'} unless $data->{0}->{'exon'};
+}
+
+sub markup_codons {
+  my $self = shift;
+  my ($sequence, $data, $config) = @_;
+  
+  foreach (sort {$a <=> $b} keys %$data) {
+    $sequence->[$_]->{'background-color'} = $config->{'colours'}->{"codon$data->{$_}->{'bg'}"};
+  }
+}
+
+sub markup_variation {
+  my $self = shift;
+  my ($sequence, $data, $config) = @_;
+  
+  my $title = {
+    'delete' => sub { return "Deletion: $_[0]->{'allele'}" },
+    'insert' => sub { shift; $_{'alleles'} = join '', @{$_->{'nt'}}; $_->{'alleles'} = Bio::Perl::translate_as_string($_->{'alleles'}); return "Insert: $_->{'allele'}" },
+    'frameshift' => sub { return "Frame-shift" },
+    'snp' => sub { return "Residues: $_[0]->{'pep_snp'}" },
+    'syn' => sub { my $p = shift; my $t = ''; $t .= $p->{'ambigcode'}[$_]  ? '('.$p->{'ambigcode'}[$_].')' : $p->{'nt'}[$_] for (0..2); return "Codon: $t" }
+  };
+
+  foreach (sort {$a <=> $b} keys %$data) {
+    $sequence->[$_]->{'title'} = &{$title->{$data->{$_}->{'type'}}}($data->{$_}) if $title->{$data->{$_}->{'type'}};
+    $sequence->[$_]->{'background-color'} = $config->{'colours'}->{$data->{$_}->{'type'}} if $data->{$_}->{'type'};
+  }
+
+  $config->{'v_space'} = "\n";
+}
+
+sub markup_translation {
+  my $self = shift;
+  my ($sequence, $data, $config) = @_;
+  
+  my ($number, $check, $previous_check, $previous_number, $add);
+  my @post_number;
+  
+  my $wrap = $config->{'wrap'}/3;
+  
+  for (sort {$a <=> $b} keys %$data) {
+    $sequence->[$_]->{'peptide'} = $data->{$_}->{'peptide'};
+    
+    if ($config->{'number'}) {      
+      $check = int ($_/$config->{'wrap'});
+      
+      $number++ if $data->{$_}->{'peptide'} =~ /\w|\*/;
+      
+      if ($check > $previous_check) {
+        if (!$previous_check) { # Add number for the first line if needed
+          $add = $data->{0}->{'peptide'} ? 1 : 0;
+          $number += $add;
+          
+          push (@post_number, $add);
+        } elsif (!$add && !$previous_number && $data->{$_}->{'peptide'} =~ /-|=/ && $data->{$_+1}->{'peptide'} =~ /\w|\*/) {
+          $number++; # Add one for the first line with translation if it is at the start of the codon
+        }
+        
+        # If the translation has ended, set the line number to 0 (will not be displayed)
+        my $num = $data->{$_}->{'peptide'} ? $number : 0;
+        
+        push (@post_number, $num);
+        
+        $previous_number = $number;
+        $previous_check = $check;
+      }
+    }
+     
+    if ($config->{'variation'} && $data->{$_}->{'aminoacids'} ne '') {
+      $sequence->[$_]->{'peptide'} = qq{<span style="color: $config->{'colours'}->{'aminoacids'}" title="$data->{$_}->{'aminoacids'}">$data->{$_}->{'peptide'}</span>};
+    }
+  }
+  
+  push (@{$config->{'post_number'}}, \@post_number) if scalar @post_number;
+  
+  $config->{'v_space'} = "\n";
+}
+
+sub markup_coding_seq {
+  my $self = shift;
+  my ($sequence, $data, $config) = @_;
+  
+  my ($number, $check, $previous);
+  my @post_number;
+    
+  for (sort {$a <=> $b} keys %$data) {
+    $sequence->[$_]->{'coding_seq'} = $data->{$_}->{'coding_seq'};
+    
+    if ($config->{'number'}) {
+      $check = int ($_/$config->{'wrap'});
+
+      $number++ if $data->{$_}->{'coding_seq'};
+      
+      if ($check > $previous) {
+        if (!$previous) { # Add number for the first line if needed    
+          push (@post_number, $data->{0}->{'coding_seq'} ? 1 : 0);
+        }
+        
+        # If the coding sequence has ended, set the line number to 0 (will not be displayed)
+        my $num = $data->{$_}->{'coding_seq'} ? $number : 0;
+        
+        push (@post_number, $num);
+        
+        $previous = $check;
+      }
+    }
+  }
+  
+  push (@{$config->{'post_number'}}, \@post_number) if scalar @post_number;
+  
+  $config->{'v_space'} = "\n";
+}
+
+sub markup_rna {
+  my $self = shift;
+  my ($sequence, $rna_notation, $config) = @_;
+  
+  my $i = 0;
+  
+  $sequence->[$i++]->{'rna'} = $_ for (split (//, $rna_notation));
+}
+
+sub build_sequence {
+  my $self = shift;
+  my ($sequence, $config) = @_;
+  
+  my ($html, $row, $style, $previous_style, $new_line_style);
+  my ($count, $i, $j);
+  my @output;
+  my $post = [];
+  my $pre = [];
+  
+  foreach my $seq (@$sequence) {    
+    my $title = $seq->{'title'} ? qq(title="$seq->{'title'}") : '';
+    
+    my $new_style = '';    
+    $previous_style = $style;
+    
+    if ($seq->{'background-color'}) {
+      $new_style .= "background-color:$seq->{'background-color'};";
+    } elsif ($style =~ /background-color/) {
+      $new_style .= "background-color:auto;";
+    }
+
+    if ($seq->{'color'}) {
+      $new_style .= "color:$seq->{'color'};";
+    } elsif ($style =~ /(?<!background-)color:(.+);/) {
+      $new_style .= "color:$1;";
+    }
+    
+    $style = qq(style="$new_style") if ($new_style);
+    
+    if ($config->{'pre'}) {
+      for (my $p = 0; $p < scalar @{$config->{'pre'}}; $p++) {
+        $pre->[$p] .= $seq->{$config->{'pre'}->[$p]->{'key'}} || $config->{'pre'}->[$p]->{'default'};
+      }
+    }
+    
+    if ($config->{'post'}) {
+      for (my $p = 0; $p < scalar @{$config->{'post'}}; $p++) {
+        $post->[$p] .= $seq->{$config->{'post'}->[$p]->{'key'}} || $config->{'post'}->[$p]->{'default'};
+      }
+    }
+    
+    if ($i == 0) {
+      $row .= "<span $style $title>";
+    } elsif ($style ne $previous_style) {      
+      $row .= "</span><span $style $title>";
+    }
+    
+    $row .= $seq->{'letter'};
+    
+    $count++; 
+    $i++;
+    
+    if ($count == $config->{'wrap'} || $i == scalar @$sequence) {
+      my $r;
+      
+      if ($i == $config->{'wrap'}) {
+        $r = "$row</span>";
+      } else {
+        $r = "<span $new_line_style $title>$row</span>";
+      }
+      
+      push (@output, { pre => $pre, row => $r, post => $post });
+
+      $new_line_style = $style || $previous_style;
+      $count = 0; 
+      $row = '';
+      $pre = [];
+      $post = [];
+    }
+  }
+  
+  for (@output) {
+    if ($config->{'number'}) {
+      my $num = '       ';
+      
+      $_->{'row'} = $config->{'h_space'} . sprintf("%6d ", $config->{'number'}) . $_->{'row'};
+      
+      if ($_->{'pre'}) {
+        for (my $p = 0; $p < scalar @{$_->{'pre'}}; $p++) {
+          if ($config->{'pre_number'}) {
+            $num = shift @{$config->{'pre_number'}->[$p]};
+            $num = $num ? sprintf("%6d ", $num) : '       ';
+          }
+          
+          $_->{'pre'}->[$p] = "$config->{'h_space'}$num$_->{'pre'}->[$p]";
+        }
+      }
+      
+      if ($_->{'post'}) {
+        $num = '       ';
+  
+        for (my $p = 0; $p < scalar @{$_->{'post'}}; $p++) {
+          if ($config->{'post_number'}) {
+            $num = shift @{$config->{'post_number'}->[$p]};
+            $num = $num ? sprintf("%6d ", $num) : '       ';
+          }
+          
+          $_->{'post'}->[$p] = "$config->{'h_space'}$num$_->{'post'}->[$p]";
+        }
+      }
+      
+      $config->{'number'} += $config->{'wrap'};
+    }
+    
+    $j++;
+    
+    if ($config->{'pre'}) {
+      for (my $p = 0; $p < scalar @{$config->{'pre'}}; $p++) {
+        $html .= "$_->{'pre'}->[$p]\n" if $_->{'pre'}->[$p] && ($j > 1 || $_->{'pre'}->[$p] =~ /\w/); # Ignore blank first lines
+      }
+    }
+    
+    $html .= "$_->{'row'}\n";
+    
+    if ($config->{'post'}) {
+      for (my $p = 0; $p < scalar @{$config->{'post'}}; $p++) {
+        $html .= "$_->{'post'}->[$p]\n" if $_->{'post'}->[$p] && ($j != scalar @$sequence || $_->{'post'}->[$p] =~ /\w/); # Ignore blank last lines
+      }
+    }
+    
+    $html .= $config->{'v_space'};
+  }
+  
+  $html = "<pre>$html</pre>";
+   
+  return $html;
 }
 
 1;
