@@ -61,7 +61,7 @@ sub new {
 
   ########## init sets up defaults in $self->{'general'}
   ## Check memcached for defaults
-  if (my $defaults = $MEMD ? $MEMD->get("::${class}::defaults") : undef) {
+  if (my $defaults = $MEMD ? $MEMD->get("::${class}::$ENV{ENSEMBL_SPECIES}") : undef) {
     $self->{$_} = $defaults->{$_} for keys %$defaults;
   } else {
     ## No cached defaults found,
@@ -74,7 +74,13 @@ sub new {
         _parameters => $self->{'_parameters'},
         general     => $self->{'general'},
       };
-      $MEMD->set("::${class}::defaults", $defaults, undef, 'IMAGE_CONFIG');
+      $MEMD->set(
+        "::${class}::$ENV{ENSEMBL_SPECIES}",
+        $defaults,
+        undef,
+        'IMAGE_CONFIG',
+        $ENV{ENSEMBL_SPECIES},
+      );
     }
   }
   
