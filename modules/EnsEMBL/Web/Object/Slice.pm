@@ -20,12 +20,11 @@ sub snp_display {
 
   my $self = shift; 
   my $SNPS = [];
-  if( $self->param('snp_display') eq 'snp' ){
-    my $slice = $self->Obj();
-    eval {
-        $SNPS = $slice->get_all_VariationFeatures;
-    };
-  }
+  my $slice = $self->Obj();
+  eval {
+      $SNPS = $slice->get_all_VariationFeatures;
+  };
+
   return $SNPS;
 }
 
