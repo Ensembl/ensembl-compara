@@ -1329,6 +1329,7 @@ sub get_markedup_trans_seq {
 
 sub get_trans_seq_with_markup {
   my $self   = shift;
+  my $config = shift;
   my $trans  = $self->Obj;
   my $number = $self->param('number');
   my $snp    = $self->param('variation');
@@ -1344,18 +1345,22 @@ sub get_trans_seq_with_markup {
   my $i = 0;
   
   my @bps = map { 
-    $i += length $_->seq->seq; 
-    $markup->{$i}->{'exon'} = 1; 
+    $i += length $_->seq->seq;
+    $markup->{$i}->{'exon'} = 1 if $config->{'exons'}; 
     map {{ 'letter' => $_, }} split (//, uc($_->seq->seq)) 
   } @exons;
   
-  for (0..scalar @bps-1) {
-    $markup->{$_}->{'ambigcode'} = ' ';
-    $markup->{$_}->{'bg'} = 'utr';
-    $markup->{$_}->{'coding_seq'} = ($_+1 >= $cd_start && $_+1 <= $cd_end) ? $bps[$_]->{'letter'} : '.';
-    $markup->{$_}->{'peptide'} = '.';
-  }
+  delete $markup->{scalar @bps}; # We get a key which is too big, causing an empty span to be printed later 
 
+  for (0..scalar @bps-1) {
+    if ($_+1 >= $cd_start && $_+1 <= $cd_end) {
+      $markup->{$_}->{'bg'} = 'c99' if $config->{'codons'};
+      $markup->{$_}->{'coding_seq'} = $bps[$_]->{'letter'} if $config->{'coding_seq'};
+    } elsif ($config->{'codons'}) {
+      $markup->{$_}->{'bg'} = 'utr';
+    }
+  }
+  
   my $can_translate = 0;
   
   eval {
@@ -1363,25 +1368,24 @@ sub get_trans_seq_with_markup {
     my $peptide = $pep_obj->seq();
     my $flip = 0;
     my $startphase = $trans->translation->start_Exon->phase;
+    my $S = 0;
     
     $can_translate = 1;
-    
-    for my $i (($cd_start-1)..($cd_end-1)) {
-      $markup->{$i}->{'bg'} = "c99";
-    }
-    
-    my $S = 0;
     
     if ($startphase > 0) {
       $S = 3 - $startphase;
       $peptide = substr($peptide,1);
     }
     
-    for (my $i = $cd_start + $S - 1; ($i+2) <= $cd_end; $i+=3) {      
-      $markup->{$i}->{'bg'} = $markup->{$i+1}->{'bg'} = $markup->{$i+2}->{'bg'} = "c$flip";
+    for (my $i = $cd_start + $S - 1; ($i+2) <= $cd_end; $i+=3) {
+      if ($config->{'codons'}) {
+        $markup->{$i}->{'bg'} = $markup->{$i+1}->{'bg'} = $markup->{$i+2}->{'bg'} = "c$flip";
+      }
       
-      $markup->{$i}->{'peptide'} = $markup->{$i+2}->{'peptide'} = '-';
-      $markup->{$i+1}->{'peptide'} = substr($peptide, int(($i+1-$cd_start)/3), 1) || ($i+1 < $cd_end ? '*' : '.');
+      if ($config->{'translation'}) {
+        $markup->{$i}->{'peptide'} = $markup->{$i+2}->{'peptide'} = '-';
+        $markup->{$i+1}->{'peptide'} = substr($peptide, int(($i+1-$cd_start)/3), 1) || ($i+1 < $cd_end ? '*' : '.');
+      }
       
       $flip = 1 - $flip;
     }
@@ -1389,7 +1393,7 @@ sub get_trans_seq_with_markup {
     $peptide = '';
   };
 
-  if ($snp eq "yes") {
+  if ($config->{'variation'}) {
     $self->database('variation');
     my $source = "";
     
@@ -1416,37 +1420,37 @@ sub get_trans_seq_with_markup {
         }
         
         foreach my $r ($st..$en) {          
-          $markup->{$r-1}{'alleles'}.= $snp->allele_string;
-          $markup->{$r-1}{'url_params'} .= "source=" . $snp->source . ";snp=" . $snp->variation_name;
+          $markup->{$r-1}->{'alleles'}.= $snp->allele_string;
+          $markup->{$r-1}->{'url_params'} .= "source=" . $snp->source . ";snp=" . $snp->variation_name;
           
           my $snpclass = $snp->var_class;
           
           if ($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') {
             my $aa = int(($r - $cd_start + 3)/3);
             my $aa_bp = $aa * 3 + $cd_start - 3;
-            my @Q = @{$protein_features{ "$aa" }||[]};
+            my @Q = @{$protein_features{"$aa"}||[]};
             
-            if (@Q > 1) {
+            if ($config->{'translation'} && @Q > 1) {
               my $aas = join ', ', @Q;
               
-              $markup->{$aa_bp-1}{'aminoacids'} =
-              $markup->{$aa_bp}{'aminoacids'} = 
-              $markup->{$aa_bp+1}{'aminoacids'} = $aas;
-                            
+              $markup->{$aa_bp-1}->{'aminoacids'} =
+              $markup->{$aa_bp}->{'aminoacids'} = 
+              $markup->{$aa_bp+1}->{'aminoacids'} = $aas;
+              
               $markup->{$aa_bp-1}->{'peptide'} = 
               $markup->{$aa_bp+1}->{'peptide'} = '=';
             }
             
-            $markup->{$r-1}{'ambigcode'}= $snp->ambig_code;
+            $markup->{$r-1}->{'ambigcode'}= $snp->ambig_code;
             
             if ($snp->strand ne "$trans_strand") {              
-              $markup->{$r-1}{'ambigcode'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-              $markup->{$r-1}{'alleles'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+              $markup->{$r-1}->{'ambigcode'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+              $markup->{$r-1}->{'alleles'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
             }
                         
-            $markup->{$r-1}{'snp'} = ( $markup->{$r-1}{'snp'} eq 'snp' || @Q != 1 ) ? 'snp' : 'syn';
+            $markup->{$r-1}->{'snp'} = ($markup->{$r-1}->{'snp'} eq 'snp' || @Q != 1) ? 'snp' : 'syn';
           } else {            
-            $markup->{$r-1}{'snp'}= 'indel'
+            $markup->{$r-1}->{'snp'}= 'indel'
           }
         }
       }
