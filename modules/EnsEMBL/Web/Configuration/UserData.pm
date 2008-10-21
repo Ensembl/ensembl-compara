@@ -39,12 +39,15 @@ sub populate_tree {
     [], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
   ));
 
-  my $attached_menu = $self->create_submenu( 'Attached', 'Remote data (DAS/URL)' );
-  $attached_menu->append($self->create_node( 'Attach', "Attach Data",
+  my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
+  $attached_menu->append($self->create_node( 'AttachDAS', "Attach DAS",
    [], { 'availability' => 1 }
     ));
-  $attached_menu->append($self->create_node( 'SaveRemote', "Attach to Account",
-    [], { 'availability' => $has_logins, 'concise' => 'Save' }
+  $attached_menu->append($self->create_node( 'AttachURL', "Attach URL Data",
+   [], { 'availability' => 1 }
+    ));
+  $attached_menu->append($self->create_node( 'SaveRemote', "Save to Account",
+    [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
   ));
   $attached_menu->append($self->create_node( 'ManageRemote', "Manage Data",
     [], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
@@ -70,7 +73,7 @@ sub upload {
   my $wizard = $self->wizard;
 
   ## CREATE NODES
-  my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
+  my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
   #my $session  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'check_session'));
   #my $warning  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'overwrite_warning' ));
   my $select  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_file' ));
@@ -92,7 +95,7 @@ sub share_upload {
   my $wizard = $self->wizard;
 
   ## CREATE NODES
-  my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
+  my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
   my $shareable = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'check_shareable', backtrack => 0));
   my $warning   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'no_shareable' ));
   my $select    = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_upload' ));
@@ -112,53 +115,59 @@ sub save_upload {
   my $wizard = $self->wizard;
 
   ## CREATE NODES
-  my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
+  my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
 }
 
-sub attach {
+sub attach_das {
   my $self   = shift;
   my $object = $self->{'object'};
 
   my $wizard = $self->wizard;
   
-  # Page:                select_server
-  #                            |
-  #                            V
-  # Logic:        +----- source_logic------+
-  #               |                        |
-  #               V                        V
-  # Page:    select_das                UNFINISHED
-  #               |                        |
-  #               V                        |
-  # Logic:  validate_das-------+           |
-  #           |    ^           |           |
-  #           |    |           V           |
-  # Page:     |    |   select_das_species  |
-  #           |    |           |           |
-  #           |    |           V           |
-  # Page:     |    +-->select_das_coords   |
-  #           V                            V
-  # Page:    attach_das                attach_url
+  # Page:     select_server
+  #               |
+  #               V
+  # Page:    select_das                
+  #               |                        
+  #               V                        
+  # Logic:  validate_das-------+           
+  #           |    ^           |           
+  #           |    |           V           
+  # Page:     |    |   select_das_species  
+  #           |    |           |           
+  #           |    |           V           
+  # Page:     |    +-->select_das_coords   
+  #           V                            
+  # Page:    attach_das                
 
   ## CREATE NODES
-  my $node  = 'EnsEMBL::Web::Wizard::Node::UserData';
-  my $server        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_server' ));
-  my $source_logic  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'source_logic'));
-  my $source        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_das', backtrack => 1 ));
-  my $validate_das  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'validate_das'));
-  my $species       = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_das_species', backtrack => 1  ));
-  my $coords        = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'select_das_coords', backtrack => 1  ));
+  my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
+  my $server        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_server' );
+  my $source        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das' );
+  my $validate_das  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'validate_das');
+  my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species', backtrack => 1  );
+  my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords', backtrack => 1  );
   
   # END POINTS:
-  my $attach_das    = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'attach_das'));
-  my $attach_url    = $wizard->create_node(( object => $object, module => $node, type => 'page',  name => 'attach_url'));
+  my $attach_das    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'attach_das');
 
   ## LINK PAGE NODES TOGETHER
-  $wizard->add_connection(( from => $server,  to => $source_logic));
-  $wizard->add_connection(( from => $source,  to => $validate_das));
-  $wizard->add_connection(( from => $species, to => $coords));
-  $wizard->add_connection(( from => $coords,  to => $validate_das));
+  $wizard->add_connection( from => $server,  to => $source);
+  $wizard->add_connection( from => $source,  to => $validate_das);
+  $wizard->add_connection( from => $species, to => $coords);
+  $wizard->add_connection( from => $coords,  to => $validate_das);
 
+}
+
+sub attach_url {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  my $wizard = $self->wizard;
+  my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
+  
+  my $select_url    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_url');
+  my $attach_url    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'attach_url');
 }
 
 1;
