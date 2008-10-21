@@ -42,6 +42,8 @@ sub new {
                   && !$flags{ORDERED_TREE};
   return undef if $caller->isa('EnsEMBL::Web::Object')
                   && !$flags{OBJECTS_COUNTS};
+  return undef if $caller->isa('EnsEMBL::Web::ImageConfig')
+                  && !$flags{IMAGE_CONFIG};
 
   my %args = (
     servers         => $memcached->{servers},
