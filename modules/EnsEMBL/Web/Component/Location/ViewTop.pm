@@ -13,8 +13,12 @@ sub _init {
   $self->ajaxable(  1 );
 }
 
+sub _extra {
+  return undef;
+}
+
 sub content {
-  my $self   = shift;
+  my $self = shift;
   my $object = $self->object;
 
   return if $object->param('panel_top') eq 'no';
@@ -58,6 +62,9 @@ sub content {
     'seq_region_end'     => $slice->end,
     'seq_region_strand'  => $slice->strand
   }, $object->__data );
+
+  $self->_extra( $wuc, $slice );
+
   $wuc->_update_missing( $s_o  );
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->imagemap = 'yes';
