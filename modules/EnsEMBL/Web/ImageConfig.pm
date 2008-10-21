@@ -508,7 +508,7 @@ sub add_prediction_transcript {
       'colour_key'  => lc($key_2),
       'description' => $data->{$key_2}{'description'},
       'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
-      'renderers'   => [qw(off Off normal Normal)],
+      'renderers'   => [qw(off Off), 'transcript_nolabel' => 'No labels', 'transcript_label' => 'With labels'],
       'strand'      => 'b'
     }));
   }
@@ -574,7 +574,10 @@ sub add_gene {
         'description' => $data->{$key_2}{'description'},
         'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
         'renderers'   => $type eq 'transcript' ?
-          [qw(off Off transcript Expanded collapsed Collapsed)] : 
+          [qw(off Off), 
+            'transcript_nolabel' => 'Expanded without labels',  'transcript_label' => 'Expanded with labels',
+            'collapsed_nolabel'  => 'Collapsed without labels', 'collapsed_label'  => 'Collapsed with labels',
+          ] : 
           [qw(off Off gene_nolabel), 'No labels', 'gene_label', 'With labels'],
         'strand'      => $type eq 'gene' ? 'r' : 'b'
       }));
@@ -801,16 +804,20 @@ sub add_synteny {
   my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$species}||{}};
   return unless @synteny_species;
   my $menu = $self->get_node( 'synteny' );
+  my $self_label = $self->species_defs->species_label( $species );
   foreach my $species ( @synteny_species ) {
     ( my $species_readable = $species ) =~ s/_/ /g;
-    $menu->append( $self->create_track( 'synteny_'.$species, "Synteny with $species_readable", {
+    my ($a,$b) = split / /, $species_readable;
+    my $caption = substr($a,0,1).".$b synteny";
+    my $label = $self->species_defs->species_label( $species );
+    ( my $name = "Synteny with $label" ) =~ s/<.*?>//g;
+    $menu->append( $self->create_track( 'synteny_'.$species, $name, {
       'db'          => $key,
       'glyphset'    => '_synteny',
-      'name'        => "Synteny with $species_readable",
       'species'     => $species,
       'species_hr'  => $species_readable,
-      'caption'     => sprintf( "%1s.%3s synteny", split / /, $species_readable ),
-      'description' => "Synteny blocks",
+      'caption'     => $caption,
+      'description' => "Synteny regions between $self_label and $label",
       'colours'     => $self->species_defs->colour( 'synteny' ),
       'display'     => 'off', ## Default to on at the moment - change to off by default!
       'renderers'   => [qw(off Off normal Normal)],
