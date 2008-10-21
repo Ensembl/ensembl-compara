@@ -13,6 +13,18 @@ sub set_default_action {
   $self->{_data}{default} = 'Summary';
 }
 
+sub set_default_action {
+  my $self = shift;
+  my $x = $self->object->availability || {};
+  if( $x->{'gene'} ) {
+    $self->{_data}{default} = 'Summary';
+  } elsif( $x->{'idhistory'} ) {
+    $self->{_data}{default} = 'Idhistory';
+  } elsif( $x->{'family'} ) {
+    $self->{_data}{default} = 'Family';#/Proteins';
+  }
+}
+
 sub populate_tree {
   my $self = shift;
 #  my $hash = $obj->get_summary_counts;
@@ -120,7 +132,7 @@ sub populate_tree {
   $fam_node->append($self->create_subnode(
     'Family/Genes', 'Other '.$sd->SPECIES_COMMON_NAME.' genes in this family',
     [qw(genes    EnsEMBL::Web::Component::Gene::FamilyGenes)],
-    { 'availability'  => 'gene database:compara',
+    { 'availability'  => 'family database:compara',
       'no_menu_entry' => 1 }
   ));
   $fam_node->append($self->create_subnode(

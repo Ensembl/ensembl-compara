@@ -6,7 +6,14 @@ use base qw( EnsEMBL::Web::Configuration );
 
 sub set_default_action {
   my $self = shift;
-  $self->{_data}{default} = 'View';
+  my $x = $self->object->availability || {};
+  if( $x->{'slice'} ) {
+    $self->{_data}{default} = 'View';
+  } elsif( $x->{'chromosome'} ) {
+    $self->{_data}{default} = 'Chromosome';
+  } else {
+    $self->{_data}{default} = 'Karyotype';
+  }
 }
 
 sub global_context { return $_[0]->_global_context; }

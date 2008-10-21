@@ -10,7 +10,12 @@ use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
-  $self->{_data}{default} = 'Summary';
+  my $x = $self->object->availability || {};
+  if( $x->{'either'} ) {
+    $self->{_data}{default} = 'Summary';
+  } elsif( $x->{'idhistory'} ) {
+    $self->{_data}{default} = 'Idhistory';
+  }
 }
 
 sub global_context { return $_[0]->_global_context; }
