@@ -164,6 +164,11 @@ sub _generate_objects_Location {
   my($r,$s,$e) = $self->{'parameters'}{'r'} =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
   my $db_adaptor= $self->database('core');
   my $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+  if($t && $s < 1 || $e > $t->seq_region_length ) {
+    $s = 1 if $s<1;
+    $e = $t->seq_region_length if $e > $t->seq_region_length;
+    $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+  }
   $self->timer_push( 'Location fetched', undef, 'fetch' );
   $self->location( $t );
 }
@@ -277,6 +282,7 @@ sub _generate_objects {
       if( $fa ) {
         my $f = $fa->fetch_by_stable_id( $self->param('family') );
         $self->gene( $f ) if $f;
+        $self->{'parameters'}{'family'} = $self->param('family') if $f;
       }
     }   
   }
@@ -287,12 +293,29 @@ sub _generate_objects {
     if( $r ) {
       if( ($s||$e) ) {
         my $db_adaptor= $self->database('core');
-        $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e ) );
-        $self->{'parameters'}{'r'} = $self->location->seq_region_name.':'.$self->location->start.'-'.$self->location->end if $self->location;
+        my $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+        if( $t ) {
+          my @attrib = @{ $t->get_all_Attributes( 'toplevel' )||[] }; ## Check to see if top-level as "toplevel" above is b*ll*cks
+          if( @attrib && ( $s < 1 || $e > $t->seq_region_length ) ) {
+            $s = 1 if $s<1;
+            $e = $t->seq_region_length if $e > $t->seq_region_length;
+            $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+          }
+          if( $t && @attrib ) {
+            $self->location( $t );
+            $self->{'parameters'}{'r'} = $t->seq_region_name.':'.$t->start.'-'.$t->end;
+          }
+        }
       } else {
         my $db_adaptor= $self->database('core');
-        $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $self->param('r') ) );
-        $self->{'parameters'}{'r'} = $self->location->seq_region_name;
+        my $slice = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r );
+        if( $slice ) {
+          my @attrib = @{ $slice->get_all_Attributes( 'toplevel' )||[] };  ## Check to see if top-level as "toplevel" above is b*ll*cks
+          if(@attrib){ 
+            $self->location( $slice );
+            $self->{'parameters'}{'r'} = $slice->seq_region_name;
+          }
+        }
       }
     }
   }
