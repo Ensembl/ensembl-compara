@@ -7,11 +7,7 @@ sub init {
 
   $view_config->_set_defaults(qw(
     exons        yes
-    codons       yes
-    codingseq    yes
-    seq_cols         60
-    translation  yes
-    rna          yes
+    seq_cols     60
     variation    yes
     number       yes
   ));
@@ -31,10 +27,6 @@ sub form {
   });
 
   $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'exons',       'select' => 'select', 'label'  => 'Show exons' });
-  $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'codons',      'select' => 'select', 'label'  => 'Show codons' });
-  $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'codingseq',   'select' => 'select', 'label'  => 'Show coding sequence' });
-  $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'translation', 'select' => 'select', 'label'  => 'Show protein sequence' });
-  $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'rna',         'select' => 'select', 'label'  => 'Show RNA features' });
   $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'variation',   'select' => 'select', 'label'  => 'Show variation features' });
   $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'number',      'select' => 'select', 'label'  => 'Number residues' });
 
