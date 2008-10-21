@@ -188,6 +188,15 @@ function __modal_dialog_link_open_2( url, title ) {
   }
 }
 
+function modal_form_change_submit(event) {
+  var el = Event.element(event);
+  var val = event.value;
+  var f  = el.up('form');
+  f.getInputs('hidden','__submit').each(function(n){
+    n.value = val;
+  });
+}
+
 function modal_success( transport ) {
   var x = transport.responseText;
   var M = x.split('</div>');
@@ -202,7 +211,12 @@ function modal_success( transport ) {
 //  $('modal_content').appendChild(document.createTextNode(b));
 // Make the main tab links go back to this window!
   $$('#modal_caption a').each(function(n){n.addClassName('modal_link')});
-  $$('#modal_content form').each(function(n){n.onsubmit = modal_form_submit;});
+  $$('#modal_content form').each(function(n){
+    Event.observe( n, 'submit', modal_form_submit );
+    n.select('input[type="submit"]').each(function(b){
+      Event.observe( b, 'mousedown', modal_form_change_submit );
+    });
+  });
   $$('#modal_content form.upload').each(function(n){
     n.setAttribute('target','uploadframe');
     n.appendChild(Builder.node('div',[Builder.node('input',{type:'hidden',name:'uploadto',value:'iframe'})]));
@@ -214,19 +228,25 @@ function modal_success( transport ) {
 
 function modal_form_submit( event ) {
   var el = Event.element( event );
-  if( el.hasClassName('upload') ) {
-    alert( 'iframe' );
-  } else {
-    new Ajax.Request( el.action, {
-      method: el.method,
-      parameters: el.serialize(true),
-      onSuccess: function( transport ) { modal_success(transport) },
-      onFailure: function( transport ) {
-        $('modal_content').innerHTML = '<p>Failure: the resource failed to load</p>';
-      }
-    });
+  if(el.id == 'configuration') {
     Event.stop( event );
+    return;
   }
+  if( el.hasClassName('upload') ) {
+    return;
+  }
+  new Ajax.Request( el.action, {
+    method: el.method,
+    parameters: el.serialize(true),
+    onSuccess: function( transport ) { 
+      modal_success(transport) 
+    },
+    onFailure: function( transport ) {
+      $('modal_content').innerHTML = '<p>Failure: the resource failed to load</p>';
+    }
+  });
+  Event.stop( event );
+  return;
 }
 
 function __modal_onload() { 
