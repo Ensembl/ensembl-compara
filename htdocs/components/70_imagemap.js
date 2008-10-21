@@ -355,7 +355,7 @@ function __drag_select_init() {
         });
         first_panel = panel;
       });
-    } else if( first_panel ) {
+    } else if( first_panel && $('tab_location').hasClassName('active') ) {
       __info( 'got here....' );
       slice_pair.value[first_panel].each(function(area_t){
         var img_t = $(area_t.img);
