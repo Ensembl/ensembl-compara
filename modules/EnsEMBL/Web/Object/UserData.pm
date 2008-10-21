@@ -33,27 +33,36 @@ sub counts {
 }
 
 sub get_das_servers {
-### Returns an array ref of pre-configured DAS servers
+### Returns a hash ref of pre-configured DAS servers
   my $self = shift;
   
   my @domains = ();
   my @urls    = ();
 
-  push( @domains, $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_URL') );
-  push( @domains, @{$self->species_defs->get_config('MULTI', 'ENSEMBL_DAS_SERVERS') || []});
-  push( @domains, $self->param('preconf_das') );
+  my $reg_url = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_URL');
+  my $reg_name = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_NAME') || $reg_url;
 
-  # Ensure servers are proper URLs
-  foreach my $url (@domains) {
+  push( @domains, {'name'  => $reg_name, 'value' => $reg_url} );
+  my @extras = @{$self->species_defs->get_config('MULTI', 'ENSEMBL_DAS_SERVERS')};
+  foreach my $e (@extras) {
+    push( @domains, {'name' => $e, 'value' => $e} );
+  }
+  #push( @domains, {'name' => $self->param('preconf_das'), 'value' => $self->param('preconf_das')} );
+
+  # Ensure servers are proper URLs, and omit duplicate domains
+  my %known_domains = ();
+  foreach my $server (@domains) {
+    my $url = $server->{'value'};
     next unless $url;
+    next if $known_domains{$url};
+    $known_domains{$url}++;
     $url = "http://$url" if ($url !~ m!^\w+://!);
     $url .= "/das" if ($url !~ /\/das1?$/);
-    push @urls, $url;
+    $server->{'name'}  = $url if ( $server->{'name'} eq $server->{'value'});
+    $server->{'value'} = $url;
   }
-  
-  # Filter duplicates
-  my %known_domains = ();
-  return grep { my $test = !$known_domains{$_}; $known_domains{$_} = 1; $test; } @urls;
+
+  return @domains;
 }
 
 # Returns an arrayref of DAS sources for the selected server and species
@@ -61,7 +70,11 @@ sub get_das_server_dsns {
   my ($self, @logic) = @_;
   
   my $server  = $self->_das_server_param();
-  my $species = $self->_das_species_param();
+  my $species = $ENV{ENSEMBL_SPECIES};
+  if ($species eq 'common') {
+    $species = $self->species_defs->ENSEMBL_PRIMARY_SPECIES;
+  }
+
   my $name    = $self->param('das_name_filter');
   @logic      = grep { $_ } @logic;
   my $sources;
@@ -119,13 +132,6 @@ sub _das_server_param {
   }
   
   return undef;
-}
-
-sub _das_species_param {
-  my $self = shift;
-  my $species_filter = $self->species_defs->species_full_name( $self->param('das_species_filter') ) || $self->param('das_species_filter');
-  $self->param('das_species_filter', $species_filter);
-  return $species_filter;
 }
 
 1;
