@@ -316,6 +316,7 @@ function __drag_select_init() {
   $H(drag_areas).each(function(slice_pair){
 // Remove any current red-boxes so we can start again...
     $$('.redbox').each(function(n){n.remove();});
+    $$('.redbox2').each(function(n){n.remove();});
     var T = $H(slice_pair.value);
     var panel_ids = T.keys();
     panel_ids.sort(sortNr);
