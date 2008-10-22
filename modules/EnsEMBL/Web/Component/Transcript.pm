@@ -1038,7 +1038,7 @@ sub build_sequence {
     
     if ($config->{'post'}) {
       for (my $p = 0; $p < scalar @{$config->{'post'}}; $p++) {
-        $html .= "$_->{'post'}->[$p]\n" if $_->{'post'}->[$p] && ($j != scalar @$sequence || $_->{'post'}->[$p] =~ /\w/); # Ignore blank last lines
+        $html .= "$_->{'post'}->[$p]\n" if $_->{'post'}->[$p] && ($j != scalar @output || $_->{'post'}->[$p] =~ /\w/); # Ignore blank last lines
       }
     }
     
