@@ -1,18 +1,15 @@
-package EnsEMBL::Web::Data::Record::Upload;
+package EnsEMBL::Web::Data::Record::Invite;
 
 use strict;
 use warnings;
 use base qw(EnsEMBL::Web::Data::Record);
 
-__PACKAGE__->_type('upload');
+__PACKAGE__->_type('invite');
 
 __PACKAGE__->add_fields(
-{
-  filename => 'text',
-  format   => 'text',
-  species  => 'text',
-  share_id => 'int',
-  assembly => 'text',
-};
+  email  => 'text',
+  status => 'text',
+  code   => 'text',
+);
 
 1;
