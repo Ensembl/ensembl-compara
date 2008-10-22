@@ -77,7 +77,12 @@ sub _init {
   my ($self) = @_;
   my $slice           = $self->{'container'};
 ## Grab and cache features as we need to find out which strands to draw them on!
-  my $features = $self->cache( 'generic:'.$self->{'my_config'}->key ) ||= $self->features();
+  warn "CHECKING CACHE...",$self->{'my_config'}->key;
+  my $features = $self->cache( 'generic:'.$self->{'my_config'}->key );
+  unless( $features ) {
+    warn "FETCHING FEATURES AS WE DONT HAVE THEM...",$self->{'my_config'}->key;
+    $features = $self->cache( 'generic:'.$self->{'my_config'}->key, $self->features() );
+  }
   $self->_threshold_update();
   my $strand          = $self->strand();
 ## Which strand to render on!
@@ -135,7 +140,8 @@ sub _init {
   my ($T,$C,$C1) = 0;
   my $optimizable = $self->my_config('optimizable') && $dep<1 ; #at the moment can only optimize repeats...
   
-  my $features = $self->features(); 
+
+#  my $features = $self->features(); 
 
   unless(ref($features)eq'ARRAY') {
     # warn( ref($self), ' features not array ref ',ref($features) );

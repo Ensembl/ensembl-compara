@@ -1,7 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::_das;
 
 use strict;
-use base qw(Bio::EnsEMBL::GlyphSet_simple);
+use base qw(Bio::EnsEMBL::GlyphSet_generic);
 
 use Bio::EnsEMBL::ExternalData::DAS::Stylesheet;
 
@@ -15,7 +15,7 @@ sub features       {
   ## Fetch all the das features...
   unless( $self->cache('das_features') ) {
     # Query by slice:
-    $self->cache('das_features', $self->cache('das_coord')->fetch_Features( $self->{'container'}, $self->{'config'}->image_width() )||{} );
+    $self->cache('das_features', $self->cache('das_coord')->fetch_Features( $self->{'container'}, 'maxbins' => $self->{'config'}->image_width() )||{} );
   }
   
   my $data = $self->cache('das_features');
@@ -58,12 +58,13 @@ sub features       {
         $min_score = $f->score if $f->score < $min_score;
         $max_score = $f->score if $f->score > $max_score;
       }
-      my $gs = $group_styles{$logic_name}{ $f->type } ||= { 'style' => $stylesheet->find_group_glyph( $f->type, 'default' ) };
 ## Loop through each group so we can merge this into "group-based clusters"
       my $st = $f->seq_region_strand || 0;
       $orientations{ $st }++;
       foreach( @{$f->groups} ) {
         my $g = $_->{'group_id'};
+        my $ty = $_->{'group_type'};
+        my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
         if( exists $groups{$logic_name}{$g}{$st} ) {
           my $t = $groups{$logic_name}{$g}{$st};
           push @{ $t->{'features'}{$f->type_category}{$f->type } }, $f;
@@ -89,12 +90,12 @@ sub features       {
     }
   }  
   warn sprintf "%d features returned in %d groups", $c_f, $c_g;
-  warn "Logic name           Group ID            Ori Count     Start       End Label\n";
+  warn "Logic name           Type                 Group ID            Ori Count     Start       End Label\n";
   foreach my $l (keys %groups) {
     foreach my $g (keys %{$groups{$l}}) {
       foreach my $st (keys %{$groups{$l}{$g}}) {
         my $t = $groups{$l}{$g}{$st};
-        warn sprintf "%-20.20s %-20.20s %2d %5d %9d %9d %s\n", $l, $g, $st, $t->{count}, $t->{start}, $t->{end}, $t->{details}{'label'};
+        warn sprintf "%-20.20s %-20.20s %-20.20s %2d %5d %9d %9d %s\n", $l, $t->{details}{'group_type'},$g, $st, $t->{count}, $t->{start}, $t->{end}, $t->{details}{'label'};
       }
     }
   }
