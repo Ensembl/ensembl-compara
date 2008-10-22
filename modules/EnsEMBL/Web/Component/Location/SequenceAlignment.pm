@@ -22,7 +22,7 @@ sub caption {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-  my $threshold   = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $threshold   = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
   my $image_width = $self->image_width;
 
   if( $object->length > $threshold ) {
