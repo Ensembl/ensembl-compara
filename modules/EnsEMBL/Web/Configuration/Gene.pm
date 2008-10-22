@@ -225,11 +225,13 @@ sub ajax_zmenu      {
       $panel->add_entry({
         'type'     => 'Protein',
         'label'    => $ens_prot->display_id,
-        'link'     => $obj->_url({'type'=>'Transcript',
-                                  'action'=>'Sequence_Protein',
-                                  't'=>$ens_tran->stable_id }),
+        'link'     => $obj->_url({
+          'type'  => 'Transcript',
+          'action'=> 'Sequence_Protein',
+          't'     => $ens_tran->stable_id 
+        }),
         'priority' => 180
-          });
+      });
     }
 
     # Link to TreeFam
