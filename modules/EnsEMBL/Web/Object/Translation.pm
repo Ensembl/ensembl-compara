@@ -726,12 +726,14 @@ sub pep_splice_site {
 sub pep_snps{
   my $self  = shift;
   my $rtn_structure = shift;
-  return $self->{'pep_snps'} if ($self->{'pep_snps'} );
+  return $self->{'pep_snps'} if $self->{'pep_snps'};
+
+  my $rtn = $rtn_structure eq 'hash' ? {} : [];
 
   use Time::HiRes qw(time);
   my $T = time;
   unless ($self->species_defs->databases->{'DATABASE_VARIATION'} || $self->species_defs->databases->{'ENSEMBL_GLOVAR'}) {
-    return [];
+    return $rtn;
   }
   $self->database('variation');
   my $source = "variation";  # only defined if glovar
@@ -753,7 +755,7 @@ sub pep_snps{
   my %snps= %{$trans->get_all_cdna_SNPs($source)};
   my %protein_features =%{$trans->get_all_peptide_variations($source)};
   my $coding_snps = $snps{'coding'};            # coding SNP only
-  return [] unless @$coding_snps;
+  return $rtn unless @$coding_snps;
 
   foreach my $snp (@$coding_snps) {
     foreach my $residue ( $snp->start..$snp->end ) { # gets residues for snps longer than 1... indels
@@ -807,7 +809,6 @@ sub pep_snps{
   $self->{'pep_snps'} = \@aas;
   
   if ($rtn_structure eq 'hash') {
-    my $rtn = {};
     my $i = 0;
     
     for (@aas) {
