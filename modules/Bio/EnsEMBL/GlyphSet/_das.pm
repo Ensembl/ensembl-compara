@@ -15,7 +15,7 @@ sub features       {
   ## Fetch all the das features...
   unless( $self->cache('das_features') ) {
     # Query by slice:
-    $self->cache('das_features', $self->cache('das_coord')->fetch_Features( $self->{'container'}, 'maxbins' => $self->{'config'}->image_width() )||{} );
+    $self->cache('das_features', $self->cache('das_coord')->fetch_Features( $self->{'container'}, 'maxbins' => $self->image_width )||{} );
   }
   
   my $data = $self->cache('das_features');
@@ -61,9 +61,34 @@ sub features       {
 ## Loop through each group so we can merge this into "group-based clusters"
       my $st = $f->seq_region_strand || 0;
       $orientations{ $st }++;
-      foreach( @{$f->groups} ) {
-        my $g = $_->{'group_id'};
-        my $ty = $_->{'group_type'};
+      if( @{$f->groups} ) { ## Feature has groups so use them...
+        foreach( @{$f->groups} ) {
+          my $g  = $_->{'group_id'};
+          my $ty = $_->{'group_type'};
+          my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
+          if( exists $groups{$logic_name}{$g}{$st} ) {
+            my $t = $groups{$logic_name}{$g}{$st};
+            push @{ $t->{'features'}{$f->type_category}{$f->type } }, $f;
+            $t->{'start'} = $f->start if $f->start < $t->{'start'};
+            $t->{'end'}   = $f->end   if $f->end   > $t->{'end'};
+            $t->{'count'} ++;
+          } else {
+            $c_g++;
+            $groups{$logic_name}{$g}{$st} = {
+              'count'   => 1,
+              'type'    => $ty,
+              'id'      => $g,
+              'label'   => $_->{'group_label'},
+              'notes'   => $_->{'notes'},
+              'links'   => $_->{'links'},
+              'targets' => $_->{'target'},
+              'features'=>{$f->type_category=>{$f->type=>[$f]}},'start'=>$f->start,'end'=>$f->end
+            };
+          }
+        }
+      } else { ## Feature doesn't have groups so fake it with the feature id as group id!
+        my $g  = $f->display_id; # Just use the feature ID
+        my $ty = $f->type;       # & the feature type
         my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
         if( exists $groups{$logic_name}{$g}{$st} ) {
           my $t = $groups{$logic_name}{$g}{$st};
@@ -73,7 +98,16 @@ sub features       {
           $t->{'count'} ++;
         } else {
           $c_g++;
-          $groups{$logic_name}{$g}{$st} = { 'count' => 1, 'details'=>$_,'features'=>{$f->type_category=>{$f->type=>[$f]}},'start'=>$f->start,'end'=>$f->end }
+          $groups{$logic_name}{$g}{$st} = {
+            'count'   => 1,
+            'type'    => $ty,
+            'id'      => $g,
+            'label'   => $f->display_label,
+            'notes'   => $f->{'note'},   ## Push the features notes/links and targets on!
+            'links'   => $f->{'link'},
+            'targets' => $f->{'target'},
+            'features'=>{$f->type_category=>{$f->type=>[$f]}},'start'=>$f->start,'end'=>$f->end
+          };
         }
       }
     }
@@ -105,6 +139,8 @@ sub features       {
   warn Dumper( \%feature_styles );
   warn Dumper( \%group_styles );
   return {
+    'f_count'    => $c_f,
+    'g_count'    => $c_g,
     'merge'      => 1, ## Merge all logic names into one track! note different from other systems!!
     'groups'     => \%groups,
     'f_styles'   => \%feature_styles,
