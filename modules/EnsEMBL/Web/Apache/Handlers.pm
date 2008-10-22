@@ -440,12 +440,6 @@ sub cleanURI {
 
 sub transHandler {
   my $r = shift;      # Get the connection handler
-
-  ## Clean out the uri
-  my $uri = $r->uri;
-  $uri =~ s/time=\d+\.\d+;?//g;
-  $r->uri($uri);
-  
   my $u           = $r->parsed_uri;
   $ENSEMBL_WEB_REGISTRY->timer->set_name( "REQUEST ". $r->uri );
   my $file        = $u->path;
