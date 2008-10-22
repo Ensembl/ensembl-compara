@@ -17,7 +17,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  modal_stuff 'Account', 'Message', $self, 'Popup';
+  modal_stuff $ENV{'ENSEMBL_TYPE'}, 'Message', $self, 'Popup';
 }
 
 }
