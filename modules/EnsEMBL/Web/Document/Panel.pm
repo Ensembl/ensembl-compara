@@ -583,8 +583,10 @@ sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 3+$_[2] ); }
 sub _is_ajax_request {
   return $_[0]->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 }
+
 sub content {
   my( $self ) = @_;
+
   $self->reset_buffer;
   $self->_start;
   if( $self->{'content'} ) {
@@ -592,6 +594,40 @@ sub content {
   }
   foreach my $component ($self->components) {
 warn "Starting component $component";
+if ($component eq 'das_features') {
+    foreach my $function_name ( @{$self->{'components'}{$component}} ) {
+	my $result;
+	(my $module_name = $function_name ) =~s/::\w+$//;
+	if( $self->dynamic_use( $module_name ) ) {
+	    $self->{'object'} && $self->{'object'}->prefix($self->prefix);
+	    no strict 'refs';
+	    eval {
+		$result = &$function_name( $self, $self->{'object'} );
+	    };
+	    if( $@ ) {
+		my $error = sprintf( '<pre>%s</pre>', $self->_format_error($@) );
+		$self->_error( qq(Runtime Error in component "<b>$component</b>"),
+			       qq(<p>Function <strong>$function_name</strong> fails to execute due to the following error:</p>$error)
+			       );
+		warn( "Component $function_name (runtime failure)" );
+	    } else {
+		warn( "Component $function_name succeeded" );
+	    }
+	} else {
+	    $self->_error( qq(Compile error in component "<b>$component</b>"),
+			   qq(
+			      <p>Function <strong>$function_name</strong> not executed as unable to use module <strong>$module_name</strong>
+			      due to syntax error.</p>
+			      <pre>@{[ $self->_format_error( $self->dynamic_use_failure($module_name) ) ]}</pre>
+			      )
+			   );
+	    warn( "Component $function_name (compile failure)" );
+	}
+	last if $result;
+    }
+
+    next;
+}
     foreach my $temp ( @{$self->{'components'}{$component}} ) { 
       my( $module_name, $function_name ) = split /\//, $temp;
       my $result;
