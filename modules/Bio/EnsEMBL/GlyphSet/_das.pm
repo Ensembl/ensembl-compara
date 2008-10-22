@@ -87,10 +87,12 @@ sub features       {
           }
         }
       } else { ## Feature doesn't have groups so fake it with the feature id as group id!
-        my $g  = $f->display_id; # Just use the feature ID
+        my $g     = $fs->{'use_score'} ? 'default' : $f->display_id;
+        my $label = $fs->{'use_score'} ? ''        : $f->display_label;
         my $ty = $f->type;       # & the feature type
         my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
         if( exists $groups{$logic_name}{$g}{$st} ) {
+## Ignore all subsequent notes, links and targets, probably should merge arrays somehow....
           my $t = $groups{$logic_name}{$g}{$st};
           push @{ $t->{'features'}{$f->type_category}{$f->type } }, $f;
           $t->{'start'} = $f->start if $f->start < $t->{'start'};
@@ -102,7 +104,7 @@ sub features       {
             'count'   => 1,
             'type'    => $ty,
             'id'      => $g,
-            'label'   => $f->display_label,
+            'label'   => $label,
             'notes'   => $f->{'note'},   ## Push the features notes/links and targets on!
             'links'   => $f->{'link'},
             'targets' => $f->{'target'},
@@ -138,6 +140,7 @@ sub features       {
   local $Data::Dumper::Indent = 1;
   warn Dumper( \%feature_styles );
   warn Dumper( \%group_styles );
+warn "MH: $max_height";
   return {
     'f_count'    => $c_f,
     'g_count'    => $c_g,
@@ -152,27 +155,4 @@ sub features       {
   };
 }
 
-sub colour_key {
-  my( $self, $f ) = @_;
-  return '';
-}
-
-sub feature_label {
-  return undef;
-}
-
-sub title {
-  my( $self, $f ) = @_;
-  return 'DAS'
-}
-
-sub href {
-  my ($self, $f ) = @_;
-  return undef;
-}
-
-sub tag {
-  my ($self, $f ) = @_;
-  return; 
-}
 1;

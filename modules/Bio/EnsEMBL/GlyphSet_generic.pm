@@ -31,62 +31,91 @@ sub tag {
 
 use Bio::EnsEMBL::Feature;
 
-sub get_colours {
-  my( $self, $f ) = @_;
-  my $colour_key     = $self->colour_key( $f );
-  return {
-    'feature' => $self->my_colour( $colour_key ),
-    'label'   => $self->my_colour( $colour_key, 'label' ),
-    'part'    => $self->my_colour( $colour_key, 'style' )
-  };
+sub render_nolabel {
+  my $self = shift;
+  $self->render_normal( 'nolabel' );
 }
 
-sub aggregate_coverage {
-  my( $self, $features ) = @_; 
-  my $Config     = $self->{'config'};
-  my $LN         = $Config->length();
-  my $pix_per_bp = $Config->transform()->{'scalex'};
-  my $BINS       = int($LN * $pix_per_bp / 4 );
-  my $BL         = int($LN/$BINS);
-  my $string     = '0' x ($LN+1);
-  foreach my $f (@$features) {
-         my $s = $f->start();
-    next if $s > $LN;           ## Skip if totally outside VC
-            $s = 1 if $s < 1;
-         my $e = $f->end();
-    next if $e < 1;             ## Skip if totally outside VC
-            $e = $LN if $e>$LN;
-    substr( $string,$s,$e ) = '1' x ($e-$s+1);
+sub _draw_features {
+  my( $self, $ori, $features, $render_flags ) = @_;
+
+  $self->_init_bump();
+  my $ppbp    = $self->scalex;
+  my $seq_len = $self->{'container'}->length;
+  my $h       = $features->{'max_height'} || 8;
+  my $colour = $ori ? 'blue' : 'green';
+  foreach my $lname    ( sort keys %{$features->{'groups'}} ) {
+    foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
+      my $group = $features->{'groups'}{$lname}{$gkey}{$ori};
+      next unless $group;
+#      foreach my $cat    ( sort keys %{$group->{'features'}} ) {
+#        foreach my $type ( sort keys %{$group->{'features'}{$cat}} ) {
+## We now have a feature....
+      next if $group->{'end'} < 1 || $group->{'start'} > $seq_len; ## Can't draw group!
+      my $s = $group->{'start'}<1?1:$group->{'start'};
+      my $e = $group->{'end'}  >$seq_len?$seq_len:$group->{'end'};
+      my $row = $self->bump_row( $group->{'start'}*$ppbp, $group->{'end'}*$ppbp );
+      $self->push($self->Rect({
+        'absolutey' => 1,
+        'x'         => $s,
+        'width'     => $e-$s+1,
+        'y'         => $row * ($h+2),
+        'height'    => $h,
+        'bordercolour'    => 'red',
+        'title'     => $group->{id}
+      }));
+#        }
+#      }
+    }
   }
-  my $new_features = [];
-  for(my  $bs = 1; $bs <= $LN; $bs+=$BL ) {
-    my $count = (my $T =substr($string,$bs,$bs+$BL-1)) =~ tr/1/1/; 
-    push @$new_features, {
-      Bio::EnsEMBL::Feature->new(
-        -start   => $bs
-        -end     => $bs+$BL-1,
-        -strand  => 1,
-        -seqname => sprintf( "Coverage %0.1f%%", ($count/length($T) * 100) )
-      )
-    };
-  }
-  return $new_features;
 }
 
-sub _init {
-  my ($self) = @_;
+sub render_normal {
+  my ($self, $render_flags ) = @_;
   my $slice           = $self->{'container'};
+
 ## Grab and cache features as we need to find out which strands to draw them on!
-  warn "CHECKING CACHE...",$self->{'my_config'}->key;
   my $features = $self->cache( 'generic:'.$self->{'my_config'}->key );
   unless( $features ) {
-    warn "FETCHING FEATURES AS WE DONT HAVE THEM...",$self->{'my_config'}->key;
     $features = $self->cache( 'generic:'.$self->{'my_config'}->key, $self->features() );
   }
-  $self->_threshold_update();
+
   my $strand          = $self->strand();
+
+  my $y_offset = 0; ## Useful to track errors!!
+
+  if( @{$features->{'errors'}} ) {
+    my %saw;
+    @saw{ @{$features->{'errors'}} } = ();
+    
+    foreach( sort keys %saw ) {
+      $self->errorTrack( $_, undef, $y_offset+=12 );
+    }
+  }
+
+## Draw unstranded features first!!
+
+  if( $features->{'ori'}{1} || $features->{'ori'}{-1} ) { ## We have stranded features...
+    if( $features->{'ori'}{$strand} ) { ## No features on this strand...
+      $self->_draw_features( $strand, $features, $render_flags );
+    } else {
+      $self->errorTrack( 'There are no features on this strand', undef, $y_offset+=12 );
+    }
+  }
+  if( $features->{'ori'}{0} && $strand == -1 ) { ## We have unstranded features so draw them on reverse strand
+    $self->_draw_features( 0, $features, $render_flags );
+  }
+  return;
+}
 ## Which strand to render on!
+
+sub _x {
+  my $self = shift;
   my $strand_flag     = $self->my_config( 'strand' );
+  my $strand          = $self->strand();
+
+  my $features = [];
+  my $slice = $self->{'container'};
   my($FONT,$FONTSIZE) = $self->get_font_details( $self->my_config('font') || 'innertext' );
   my $BUMP_WIDTH      = $self->my_config( 'bump_width');
   $BUMP_WIDTH         = 1 unless defined $BUMP_WIDTH;
