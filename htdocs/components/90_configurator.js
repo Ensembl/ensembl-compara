@@ -232,14 +232,18 @@ function change_img_value(e) {
       current_selected_index = select_id;
   var value     = i_node.src;
   if($('s_menu')) $('s_menu').remove();
-//  i_node.absolutize();
   var x = Position.cumulativeOffset(i_node);
+  if( Prototype.Browser.Gecko ) {
+    var x2 = i_node.cumulativeScrollOffset();
+    x[1]-= x2[1];
+  } __info( x[1]+'::'+x[0] );
   var select_menu = Builder.node('dl',{
     id:       's_menu',
     className:'popup_menu',
     style:    'position:absolute;top:'+(x[1]+15)+'px;left:'+(x[0]+10)+'px;z-index: 1000000;'
   });
   $$('body')[0].appendChild(select_menu);
+  //$('modal_panel').appendChild(select_menu);
 
   $(select_id).select('option').each(function(on){
     dt_node = Builder.node('dt',
