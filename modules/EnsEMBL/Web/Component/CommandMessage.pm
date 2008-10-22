@@ -1,12 +1,11 @@
-package EnsEMBL::Web::Component::Account::Message;
+package EnsEMBL::Web::Component::CommandMessage;
 
 ### Module to create user login form 
 
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
+use base qw(EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;
