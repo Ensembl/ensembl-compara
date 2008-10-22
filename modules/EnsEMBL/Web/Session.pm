@@ -190,11 +190,11 @@ sub get_tmp_data {
 
   $code ||= 'common';
 
-  ## This is cached so return it unless "force" is set
-  ## return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code};
-
   ## No session so cannot have anything configured!
   return unless $self->get_session_id;
+
+  ## This is cached
+  return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code};
 
   ## Get all TMP data from database!
   my @entries = EnsEMBL::Web::Data::Session->get_config(
@@ -227,21 +227,44 @@ sub set_tmp_data {
     %{ $TmpData_of{ ident $self }{$code} || {} },
     %args,
   };
+  
+  $self->save_tmp_data($code);
+}
+
+sub purge_tmp_data {
+### TMP
+### $object->get_session->purge_tmp_data
+  my $self = shift; 
+  my $code = shift || 'common'; 
+
+  $TmpData_of{ ident $self }{$code} = {};
+  $self->save_tmp_data($code);
 }
 
 sub save_tmp_data {
 ### TMP Data
 ### Save all temporary data back to the database
-  my ($self, $r) = @_;
-  $self->create_session_id($r);
+  my ($self, $code) = @_;
+  $self->create_session_id;
   
-  while (my ($key, $value) = each %{$TmpData_of{ ident $self }}) {
-    EnsEMBL::Web::Data::Session->set_config(
-      session_id => $self->get_session_id,
-      type       => 'tmp',
-      code       => $key,
-      data       => $value,
-    );    
+  if ($code) {
+      EnsEMBL::Web::Data::Session->set_config(
+        session_id => $self->get_session_id,
+        type       => 'tmp',
+        code       => $code,
+        data       => $TmpData_of{ ident $self }{$code},
+      );    
+  } else {
+    
+    while (my ($key, $value) = each %{$TmpData_of{ ident $self }}) {
+      EnsEMBL::Web::Data::Session->set_config(
+        session_id => $self->get_session_id,
+        type       => 'tmp',
+        code       => $key,
+        data       => $value,
+      );    
+    }
+    
   }
 }
 
