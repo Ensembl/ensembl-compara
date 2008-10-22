@@ -20,7 +20,7 @@ sub _get_valid_action {
   my $self = shift;
   my $action = shift;
   my $func   = shift;
-	return $func ? "$action/$func" : "action";
+  return $func ? "$action/$func" : "action";
 }
 sub populate_tree {
     my $self = shift;
