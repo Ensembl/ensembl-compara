@@ -8,8 +8,13 @@ use base qw(EnsEMBL::Web::Object::DAS::base_align);
 sub Types {
   my $self = shift;
   return [
-    { 'id' => 'protein alignment'  }
-  ];
+	  {
+	      'REGION' => '*',
+	      'FEATURES' => [
+			     { 'id' => 'protein alignment'  }
+			     ]
+			     }
+	  ];
 }
 
 sub Features {

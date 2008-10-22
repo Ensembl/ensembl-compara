@@ -9,14 +9,17 @@ our @ISA = qw(EnsEMBL::Web::Object::DAS);
 use Data::Dumper;
 
 sub Types {
-### Returns a list of types served by this das source....
-## Incomplete at present....
   my $self = shift;
-  return [
-    { 'id' => 'gene'  }
-  ];
-}
 
+  return [
+	  {
+	      'REGION' => '*',
+	      'FEATURES' => [
+			     { 'id' => 'gene'  }
+			     ]
+			     }
+	  ];
+}
 
 sub Features {
 	my $self = shift;

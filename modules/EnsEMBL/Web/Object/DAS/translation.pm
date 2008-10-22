@@ -8,10 +8,16 @@ use EnsEMBL::Web::Object::DAS::transcript;
 our @ISA = qw(EnsEMBL::Web::Object::DAS::transcript);
 
 sub Types {
-	my $self = shift;
-	return [
-			{ 'id' => 'exon'  }
-		];
+### Returns a list of types served by this das source....
+  my $self = shift;
+  return [
+	  {
+	      'REGION' => '*',
+	      'FEATURES' => [
+			     { 'id' => 'exon'  }
+			     ]
+			     }
+	  ];
 }
 
 ###gets features on a slice, and adds to those any other features / groups requested

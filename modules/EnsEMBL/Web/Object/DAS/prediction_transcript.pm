@@ -8,6 +8,7 @@ our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
 sub Types {
   my $self = shift;
+
   my $features = [
     { 'id' => 'exon', 'method' => 'Genscan',    'text' => "Ab initio prediction of protein coding genes by Genscan (C. Burge et. al., J. Mol. Biol. 1997 268:78-94). The splice site models used are described in more detail in C. Burge, Modelling dependencies in pre-mRNA splicing signals. 1998 In Salzberg, S., Searls, D. and Kasif, S., eds. Computational Methods in Molecular Biology, Elsevier Science, Amsterdam, 127-163." },
     { 'id' => 'exon', 'method' => 'SNAP',       'text' => "Ab initio gene prediction by SNAP (I. Korf, BMC Bioinformatics 2004 5:59)" },
@@ -18,7 +19,13 @@ sub Types {
     { 'id' => 'exon', 'method' => 'GWS_H',      'text' => "Alignment of a human protein to the genome by GeneWise (E. Birney et al., Genome Res. 2004 14:988-95)" },
     { 'id' => 'exon', 'method' => 'GWS_S',      'text' => "Alignment of a mouse protein to the genome by GeneWise (E. Birney et al., Genome Res. 2004 14:988-95)" },
   ];
-  return $features;
+
+  return [
+	  {
+	      'REGION' => '*',
+	      'FEATURES' => $features
+	      }
+	  ];
 }
 
 sub Stylesheet {

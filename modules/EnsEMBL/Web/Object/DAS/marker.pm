@@ -5,11 +5,19 @@ use warnings;
 
 use base qw(EnsEMBL::Web::Object::DAS);
 
+
+
 sub Types {
   my $self = shift;
+
   return [
-    { 'id' => 'marker'  }
-  ];
+	  {
+	      'REGION' => '*',
+	      'FEATURES' => [
+			     { 'id' => 'marker'  }
+			     ]
+			     }
+	  ];
 }
 
 sub Features {

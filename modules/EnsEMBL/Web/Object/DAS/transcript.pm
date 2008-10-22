@@ -13,8 +13,13 @@ sub Types {
 ## Incomplete at present....
   my $self = shift;
   return [
-    { 'id' => 'exon'  }
-  ];
+	  {
+	      'REGION' => '*',
+	      'FEATURES' => [
+			     { 'id' => 'exon'  }
+			     ]
+			     }
+	  ];
 }
 
 #put exon IDS here for debugging

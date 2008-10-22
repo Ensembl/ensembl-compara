@@ -8,8 +8,13 @@ use base qw(EnsEMBL::Web::Object::DAS);
 sub Types {
   my $self = shift;
   return [
-    { 'id' => 'repeat'  }
-  ];
+	  {
+	      'REGION' => '*',
+	      'FEATURES' => [
+			     { 'id' => 'repeat'  }
+			     ]
+			     }
+	  ];
 }
 
 sub Features {

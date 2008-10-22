@@ -24,7 +24,10 @@ sub Features {
         ($region_name,$region_start,$region_end) = ($1,$2,$3);
     }
 
-    my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, $s->seq_region_strand); 
+#    my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, $s->seq_region_strand); 
+
+    my $slice = $s->slice;
+
     my $subparts = 'yes';
     my $superparts = 'no';
 
@@ -248,18 +251,18 @@ sub DNA {
     if($s->name =~ /^([-\w\.]+):([\.\w]+),([\.\w]+)$/ ) {
       ($region_name,$region_start,$region_end) = ($1,$2,$3);
     }
+
     unless(defined $region_start ) {
-      my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, 1 );
+	my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region(undef, $region_name, $region_start, $region_end, 1 );
       $region_start = $slice->start;
       $region_end   = $slice->end;
     }
-
 
     push @features, {
       'REGION' => $region_name, 
       'START'  => $region_start, 
       'STOP'   => $region_end,
- #     'SLICE'  => $slice->seq(),
+
     };
   }
 
@@ -268,6 +271,9 @@ sub DNA {
 
 sub subslice {
   my( $self, $sr, $start, $end ) = @_;
-  return $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $sr, $start, $end, 1 );
+
+  my $dba = $self->database('core', $self->real_species);
+
+  return $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region(undef, $sr, $start, $end, 1 );
 }
 1;

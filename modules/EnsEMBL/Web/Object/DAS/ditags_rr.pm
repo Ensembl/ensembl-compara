@@ -9,35 +9,62 @@ use EnsEMBL::Web::Object::DAS;
 our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
 use Bio::EnsEMBL::Map::DBSQL::DitagFeatureAdaptor;
-my @ditag_analysis = qw(CHIP_PET);
+my %ditag_analysis = (
+	CHIP_PET => 1 # got its own track 
+	);
+
 sub Types {
     my $self = shift;
 
-    my @segments = $self->Locations;
     my @features;
     my $dba = $self->database('core', $self->real_species);
 
     my $dfa = $dba->get_DitagFeatureAdaptor;
     my $da = $dba->get_DitagAdaptor;
 
-    my $tHash;
+    if (my @segments = $self->Locations) {
+      foreach my $s (@segments) {
+        if (ref($s) eq 'HASH' && $s->{'TYPE'} eq 'ERROR') {
+            push @features, $s;
+            next;
+        }
+        my $slice = $s->slice;
+	my $tHash;
+        foreach my $ft (@{$dfa->fetch_all_by_Slice($slice) || [] }) {
+	  next unless $ditag_analysis{ $ft->analysis->logic_name };
+	  $tHash->{ $ft->analysis->logic_name } ++;
+        }
 
-    foreach my $ft (@{$dfa->fetch_all || [] }) {
-        next unless grep {$_ eq $ft->analysis->logic_name} @ditag_analysis;
-        $tHash->{ $ft->ditag_side } ++;
-    }
-    foreach my $t (sort keys %$tHash) {
-        push @features, { 'id' => $t, 'method' => 'CHIP_PET', 'text' => $tHash->{$t} };
+	my @tarray = map { {id=>$_, text=>$tHash->{$_}} } sort keys %{$tHash ||{}};
+	push @features, {
+	    REGION => $slice->seq_region_name,
+	    START => $slice->start,
+	    STOP => $slice->end,
+	    FEATURES => \@tarray,
+	}
+      }
+    } else {
+	my $tHash;
+        foreach my $ft (@{$dfa->fetch_all || [] }) {
+	  next unless $ditag_analysis{ $ft->analysis->logic_name };
+	  $tHash->{ $ft->analysis->logic_name } ++;
+        }
+	my @tarray = map { {id=>$_, text=>$tHash->{$_}} } sort keys %{$tHash ||{}};
+	push @features, {
+	    REGION => '*',
+	    FEATURES => \@tarray,
+	}
     }
     return \@features;
 }
+
 
 sub Features {
     my $self = shift;
     my $dba = $self->database('core', $self->real_species); 
 
     my $species = $self->real_species;
-
+    my @ditag_analysis = keys %ditag_analysis;
 
     my @segments = $self->Locations;
     my @features;
