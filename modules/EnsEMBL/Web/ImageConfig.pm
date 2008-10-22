@@ -358,16 +358,16 @@ sub _merge {
   foreach my $analysis (keys %$tree) {
     my $sub_tree = $tree->{$analysis};
     next unless $sub_tree->{'disp'}; ## Don't include non-displayable tracks
-local $Data::Dumper::Indent=0;
-    warn Data::Dumper::Dumper($sub_tree->{'web'});
-    warn ".... $sub_type {",$sub_tree->{'web'}{ $sub_type },"}";
+#local $Data::Dumper::Indent=0;
+#    warn Data::Dumper::Dumper($sub_tree->{'web'});
+#    warn ".... $sub_type {",$sub_tree->{'web'}{ $sub_type },"}";
     next if exists $sub_tree->{'web'}{ $sub_type }{'do_not_display'};
     my $key = $sub_tree->{'web'}{'key'} || $analysis;
     foreach ( keys %{$sub_tree->{'web'}||{}} ) {
-warn "............ $_ ...............";
+#warn "............ $_ ...............";
       next if $_ eq 'desc';
       if( $_ eq 'default' ) {
-warn ".... $_ $config_name : ",keys %{$sub_tree->{'web'}{$_}||{}};
+#warn ".... $_ $config_name : ",keys %{$sub_tree->{'web'}{$_}||{}};
         $data->{$key}{'display'} ||= $sub_tree->{'web'}{$_}{$config_name};
       } else {
         $data->{$key}{$_}    ||= $sub_tree->{'web'}{$_};     # Longer form for help and configuration!
