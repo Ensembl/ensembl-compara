@@ -422,6 +422,22 @@ sub transHandler_species {
   return;
 }
 
+sub cleanURI {
+  my $r = shift;
+
+  ## Void call to populate ENV
+  $r->subprocess_env;
+  
+  ## Clean out the uri
+  my $uri = $r->unparsed_uri;
+  if ($uri =~ s/;?time=\d+\.\d+//g) {
+    $r->parse_uri($uri);
+    $r->subprocess_env('REQUEST_URI' => $uri);
+  }
+
+  return Apache2::Const::DECLINED;
+}
+
 sub transHandler {
   my $r = shift;      # Get the connection handler
 
