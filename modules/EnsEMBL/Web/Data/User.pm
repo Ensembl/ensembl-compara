@@ -26,6 +26,7 @@ __PACKAGE__->add_has_many(
   sortables      => 'EnsEMBL::Web::Data::Record::Sortable',
   currentconfigs => 'EnsEMBL::Web::Data::Record::CurrentConfig',
   specieslists   => 'EnsEMBL::Web::Data::Record::SpeciesList',
+  uploads        => 'EnsEMBL::Web::Data::Record::Upload',
 );
 
 __PACKAGE__->has_many(_groups => ['EnsEMBL::Web::Data::Membership' => 'webgroup']);
