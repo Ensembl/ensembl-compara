@@ -10,10 +10,10 @@ sub new {
 
 sub render {
   my $self = shift;
+  my $class = $self->style eq 'spaced' ? ' class="space-below"' : '';
   return sprintf '
-  <dl>
-    <dt>%s</dt>
-  </dl>', $self->value;
+    <p%s>%s</p>
+  ', $class, $self->value;
 }
 
 1;
