@@ -7,11 +7,18 @@ use Class::Std;
 
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Controller::Action;
+use Data::Dumper;
 
 {
 
 my %URL        :ATTR(:set<url> :get<url>);
 my %Connection :ATTR(:set<connections> :get<connections>);
+
+sub BUILD {
+    my( $self, $ident, $arg_ref ) = @_;
+    ## Common error message node
+    $self->add_connection({'Message' => 'EnsEMBL::Web::Controller::Command::Message'});
+}
 
 sub add_connections {
   my ($self, $connections) = @_;
@@ -57,8 +64,11 @@ sub process {
   my $action = $self->get_action;
   my $found = 0;
 
-  warn "ACTION: $action -> ",$action->get_action;
+  #warn "ACTION: $action -> ",$action->get_action;
   my $action_key = $action->get_action;
+  warn "ACTION KEY = $action_key";
+  my $connections = $self->get_connections;
+  warn Dumper($connections);
   if( $self->get_connections->{$action_key} ) {
     $self->command( $action );
   } else {
@@ -70,7 +80,7 @@ sub command {
   my ($self, $action) = @_;
   my $class = $self->get_connection($action->get_action);
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    #warn "Dispatching to: " . $class . " (" . $action->get_action . ")";
+    warn "Dispatching to: " . $class . " (" . $action->get_action . ")";
     my $command = $class->new({'action'=>$action});
     $command->render;
   } else {
