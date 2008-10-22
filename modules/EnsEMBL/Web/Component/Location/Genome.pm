@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Component::Location::KaryotypeImage;
+package EnsEMBL::Web::Component::Location::Genome;
 
 ### Module to replace Karyoview
 
@@ -22,6 +22,8 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $species = $object->species;
+
+  return unless $object->species_defs->ENSEMBL_CHROMOSOMES;
 
   ## Form with hidden elements for click-through
   my $config = $object->image_config_hash('Vkaryotype');
@@ -94,10 +96,12 @@ sub content {
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
   $image->karyotype( $object, $pointers, 'Vkaryotype' );
   my $html = $image->render;
-  if (@$pointers) {
-    if ($object->param('id')) { ## FeatureView
-      $html .= $self->feature_table;
-    }
+
+  if ($object->param('id')) { ## FeatureView
+    $html .= $self->feature_table;
+  }
+  elsif (@$pointers) {
+    ## User data - do nothing at the moment
   }
   else {
     my $file = '/ssi/species/stats_'.$object->species.'.html';
@@ -113,5 +117,6 @@ sub feature_table {
   my $table;
   return $table;
 }
+
 
 1;

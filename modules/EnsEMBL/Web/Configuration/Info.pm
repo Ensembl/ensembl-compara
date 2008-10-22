@@ -56,9 +56,9 @@ sub populate_tree {
     my $transcript_text = $sample_data{'TRANSCRIPT_TEXT'};
     my $karyotype = scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}) ? 'Karyotype' : 'Karyotype (not available)';
     $data_menu->append( $self->create_node( 'Karyotype', $karyotype,
-      [qw(location      EnsEMBL::Web::Component::Location::Karyotype)],
+      [qw(location      EnsEMBL::Web::Component::Location::Genome)],
       { 'availability' => scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}), 
-        'url' => '/'.$self->species.'/Location/Karyotype' }
+        'url' => '/'.$self->species.'/Location/Genome' }
     ));
     $data_menu->append( $self->create_node( 'Location', "Location ($location_text)",
       [qw(location      EnsEMBL::Web::Component::Location::Summary)],

@@ -27,10 +27,11 @@ sub configurator   { return $_[0]->_configurator;   }
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Karyotype', "Karyotype",
-    [qw(image EnsEMBL::Web::Component::Location::KaryotypeImage)],
-    { 'availability' => 'karyotype',
-      'disabled' => 'This genome is not assembled into chromosomes'}
+  $self->create_node( 'Genome', "Whole Genome",
+    [qw(
+      genome   EnsEMBL::Web::Component::Location::Genome
+    )],
+    { 'availability' => '1'}
   );
 
   $self->create_node( 'Chromosome', 'Chromosome summary',
