@@ -26,7 +26,7 @@ sub markup_variation {
         $data->{$_}->{'ambigcode'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
       }
       
-      $sequence->[$_]->{'background-color'} = $config->{'translation'} ?  $config->{'colours'}->{"$data->{$_}->{'snp'}$data->{$_}->{'bg'}"} : $config->{'colours'}->{'utr'};
+      $sequence->[$_]->{'background-color'} = $config->{'translation'} ?  $config->{'colours'}->{"$data->{$_}->{'snp'}$data->{$_}->{'bg'}"} : $config->{'colours'}->{'default'};
       $sequence->[$_]->{'title'} = "Alleles: $data->{$_}->{'alleles'}";
       $sequence->[$_]->{'ambigcode'} = $data->{$_}->{'url_params'} ? qq{<a href="../snpview?$data->{$_}->{'url_params'}">$data->{$_}->{'ambigcode'}</a>} : $data->{$_}->{'ambigcode'};
     } else {
@@ -36,8 +36,8 @@ sub markup_variation {
 }
 
 sub content {
-  my $self        = shift;
-  my $object      = $self->object;
+  my $self   = shift;
+  my $object = $self->object;
   
   my $colours = $object->species_defs->colour('sequence_markup');
   my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
