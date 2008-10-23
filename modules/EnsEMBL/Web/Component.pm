@@ -148,6 +148,10 @@ sub _sort_similarity_links {
   my $db       = $object->get_db() ;
   my $urls     = $object->ExtURL;
   my @links ;
+
+  #default link to featureview is to retrieve an Xref
+  my $fv_type = $object->action eq 'Oligos' ? 'OligoProbe' : 'Xref';
+
   my (%affy, %exdb);
   # @ice names
   foreach my $type (sort {
@@ -190,8 +194,6 @@ sub _sort_similarity_links {
         $text = qq($word);
       }
     }
-#    warn $externalDB;
-#    warn $type->db_display_name;
     if( $type->isa('Bio::EnsEMBL::IdentityXref') ) {
       $text .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';
       $join_links = 1;
@@ -211,24 +213,36 @@ sub _sort_similarity_links {
       $text .= "<br />".CGI::escapeHTML($D);
       $join_links = 1;
     }
- if( $join_links  ) {
-      $text = qq(\n <div>$text</div>);
+    if( $join_links  ) {
+      $text = qq(\n <div>$text);
     } else {
-      $text = qq(\n <div class="multicol">$text</div>);
+      $text = qq(\n <div class="multicol">$text);
     }
     # override for Affys - we don't want to have to configure each type, and
     # this is an internal link anyway.
     if( $externalDB =~ /^AFFY_/i) {
       next if ($affy{$display_id} && $exdb{$type->db_display_name}); ## remove duplicates
-      $text = "\n".'  <div class="multicol"><a href="' .$urls->get_url('AFFY_FASTAVIEW', $display_id) .'">'. $display_id. '</a></div>';
+      $text = "\n".'  <div class="multicol"><a href="' .$urls->get_url('AFFY_FASTAVIEW', $display_id) .'">'. $display_id. '</a>';
       $affy{$display_id}++;
       $exdb{$type->db_display_name}++;
     }
+
+    #add link to featureview
+    my $link_name = ($fv_type eq 'OligoProbe') ? $display_id : $primary_id;
+    my $link_type = ($fv_type eq 'OligoProbe') ? $fv_type : $fv_type . "_$externalDB";
+    my $k_url = $object->_url({
+	'type'   => 'Location',
+	'action' => 'Genome',
+	'id'     => $link_name,
+	'ftype'  => $link_type,
+    });
+    $text .= "  [<a href=$k_url>view all locations</a>]";
+
+    $text .= '</div>';
     push @{$object->__data->{'links'}{$type->type}}, [ $type->db_display_name || $externalDB, $text ] ;
-#    warn $text;
   }
-#  return $object->__data->{'similarity_links'};
 }
+
 
 sub remove_redundant_xrefs {
   my ($self,@links) = @_;
