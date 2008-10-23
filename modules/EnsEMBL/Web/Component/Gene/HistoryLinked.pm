@@ -13,7 +13,7 @@ sub _init {
 }
 
 sub caption {
-  return "Associated archived ID's for this stable ID version";
+  return "Associated archived IDs for this stable ID version";
 }
 
 sub content_protein {
@@ -101,7 +101,6 @@ sub get_assoc {
 
     # transcript
     $tsi = _idhistoryview_link($OBJ, 'Transcript','t', $r->[1]->stable_id);
-    warn $tsi;
     # translation
     if ($r->[2]) {
       $tlsi = _idhistoryview_link($OBJ,'Transcript','p', $r->[2]->stable_id);
@@ -127,11 +126,15 @@ sub get_assoc {
 sub _idhistoryview_link {
   my ($OBJ, $type, $param, $stable_id) = @_;
   return undef unless ($stable_id);
-  
-  my $url = $OBJ->_url({'type' => $type, 'action' => 'Idhistory/Protein', $param => $stable_id});
+
+  warn $param;  
+  my $url = $OBJ->_url({'type' => $type, 'action' => 'Idhistory', $param => $stable_id});
+  if ($param eq 'p') { $url = $OBJ->_url({'type' => $type, 'action' => 'Idhistory/Protein', $param => $stable_id}); }
+  else {$url=~s/\/Protein//; } 
   my $link = sprintf( '<a href="%s">%s</a>',
   $url,
   $stable_id); ;
+  warn $link;
   return $link;                          
 }
 

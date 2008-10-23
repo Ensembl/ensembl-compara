@@ -62,8 +62,14 @@ sub content {
   my $latest = $object->get_latest_incarnation;
   my $type = $object->type eq 'Translation' ? 'protein' : lc($object->type);
   $id = $latest->stable_id.".".$latest->version;
-  my $version_html = $self->_archive_link($OBJ, $latest, $latest->stable_id, $type, $id);
-
+  my $version_html;
+  if ($object->release >= $OBJ->species_defs->EARLIEST_ARCHIVE){ 
+    my $url = _archive_link($OBJ, $object); 
+    $version_html = qq(<a href="$url">$id</a>);
+  } else {
+    $version_html = $id;
+  } 
+ 
   $version_html .= "<br />\n";
   $version_html .= "Release: ".$latest->release;
   $version_html .= " (current)" if ($object->is_current);
@@ -91,61 +97,57 @@ sub content {
 
 
 sub _archive_link {
-  my ($self, $object, $latest, $name, $type, $display_label, $release, $version ) = @_;
-
-  $release ||= $latest->release;
-  $version ||= $latest->version;
+  my ($OBJ, $obj) = @_;
 
   # no archive for old release, return un-linked display_label
-  return $display_label if ($release < $self->object->species_defs->EARLIEST_ARCHIVE);
+  return $obj->stable_id."." .$obj->version if ($obj->release < $OBJ->species_defs->EARLIEST_ARCHIVE);
 
-  my ($url, $site_type, $action, $view, $param);
+  my $type =  $obj->type eq 'Translation' ? 'protein' : lc($obj->type);
+  my $name = $obj->stable_id . "." . $obj->version;
+  my $url;
+  my $current =  $OBJ->species_defs->ENSEMBL_VERSION;
 
-  if ($latest->is_current) {
-    $site_type = "current";
-  } else {
-    $site_type = "archived";
-  }
-
-  if ($type =~/gene/){
-    $type = 'Gene';
-    $param = 'g';
-    $action = 'Summary',
-    $view = 'geneview'
-  } elsif ($type=~/transcript/){
-    $type = 'Transcript';
-    $param = 't';
-    $action = 'Summary';
-    $view = 'transview'; 
-  } else {
-    $type = 'Transcript';
-    $param = 'protein';
-    $action = 'ProteinSummary';
+  my $view = $type."view";
+  if ($type eq 'protein') {
     $view = 'protview';
+  } elsif ($type eq 'transcript') {
+    $view = 'transview';
   }
 
-  $url = $object->_url ({'type' => $type, 'action' => $action, $param => $display_label});
-
-  my $html;
-
-  if ($site_type eq 'current' && $latest->release >= 51 ) {
-    $url = $object->_url ({'type' => $type, 'action' => $action, $param => $display_label});
-    $html = qq(<a title="View in $site_type $action" href="$url">$display_label</a>);
-  } elsif ( $site_type eq "archived" ){
-    my %archive_sites = %{$object->species_defs->ENSEMBL_ARCHIVES};
-    $url = "http://$archive_sites{$release}.archive.ensembl.org/";
-    my $species = $object->species;
-    if ($latest->release >= 51){
-      my $arch_url = $object->_url ({'type' => $type, 'action' => $action, $param => $display_label});
-      $html = qq(<a title="View in $site_type $action" href="$url$species/$arch_url">$display_label</a>);
-    }  else {
-      $type = lc($type);
-      $html = qq(<a title="View in $site_type $view" href="$url$species/$view?$type=$name">$display_label</a>);      
+  my ($action, $p);
+  ### Set parameters for new style URLs post release 50
+  if ($obj->release >= 51 ){
+    if ($type eq 'gene') {
+      $type = 'Gene';
+      $p = 'g';
+      $action = 'Summary';
+    } elsif ($type eq 'transcript'){
+      $type = 'Transcript';
+      $p = 't';
+      $action = 'Summary';
+    } else {
+      $type = 'Transcript';
+      $p = 'p';
+      $action = 'ProteinSummary';
     }
   }
 
+  if ($obj->release == $current){
+     $url = $OBJ->_url({'type' => $type, 'action' => $action, $p => $name });
+     return $url;
+  } else {
+    my $release_info = EnsEMBL::Web::Data::Release->new($obj->release);
+    my $archive_site = $release_info->archive;
+    $url = "http://$archive_site.archive.ensembl.org";
+    if ($obj->release >=51){
+      $url .= $OBJ->_url({'type' => $type, 'action' => $action, $p => $name });
+    } else {
+      $url .= "/".$ENV{'ENSEMBL_SPECIES'};
+      $url .= "/$view?$type=$name";
+    }
+  }
 
-  return $html;
+ return $url;
 }
 
 1;
