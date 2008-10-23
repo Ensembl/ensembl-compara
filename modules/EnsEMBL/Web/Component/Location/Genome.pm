@@ -69,6 +69,7 @@ sub content {
    
     ## Create pointers from user data
     my $pointer_set = $self->create_userdata_pointers($image, $userdata, $pointer_defaults{'UserData'});
+    $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]); ## Userdata setting overrides any other tracks
     push(@$pointers, $pointer_set);
   } 
   if ($object->param('id')) { ## "FeatureView"
