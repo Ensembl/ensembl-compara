@@ -172,7 +172,12 @@ sub render_normal {
   ## Define nodes Nodes ##
   my @x_c = values (%xc);
   my @sortedx = sort ({$a <=> $b} @x_c);
+
   foreach my $a_id (@{ $history_tree->get_all_ArchiveStableIds }) {
+    my $node_href = $self->_url
+      ({'action'   => 'Idhistory_Node',
+        'node'     => $a_id->stable_id,
+        'db_name'  => $a_id->db_name });
 
     # only draw node if the version from the next release is different or if
     # this version links to a different id      
@@ -212,7 +217,6 @@ sub render_normal {
       }
     }     
 
-    my ($zmenu, $href ) = $self->zmenu_node($a_id);
     my $xcoord = $sortedx[$x];
     my $ycoord = $yc{$a_id->stable_id};
     my $node_col = $SCORE_COLOURS->{'100'};
@@ -222,7 +226,7 @@ sub render_normal {
         'width'     => 3,
         'height'    => 3,
         'colour'    => $node_col,
-        'href'     =>  $self->_url($zmenu),
+        'href'     =>  $node_href,
         });
     push (@ns, $node);
 
@@ -249,9 +253,23 @@ sub render_normal {
 
     next unless ($old && $new);
 
-    my $old_id = $old->stable_id .".".$old->version;
-    my $new_id = $new->stable_id."." .$new->version;
+    my $old_id = $old->stable_id;
+    my $new_id = $new->stable_id;
+    my $old_db = $old->db_name;
+    my $new_db = $new->db_name;
     my $escore = $event->score;
+
+   
+    my $branch_href = $self->_url
+      ({'action'   => 'Idhistory_Branch',
+        'old'     => $old_id,
+        'new'     => $new_id,
+        'old_db'  => $old_db,
+        'new_db'  => $new_db,
+        'score'   => $escore,
+      });
+
+
     $escore = $escore * 100;
     my $score_group; 
     if ($escore >= 100) {$score_group = '100' ;}
@@ -264,7 +282,6 @@ sub render_normal {
     elsif ($escore >=0) {$score_group = '0' ;}
     $branch_col = $SCORE_COLOURS->{$score_group};
 
-    my $zmenu_s = $self->zmenu_score($event);
     my ($oldx, $oldy) = @{$history_tree->coords_by_ArchiveStableId($old)};
     my ($newx, $newy) = @{$history_tree->coords_by_ArchiveStableId($new)};
     
@@ -284,7 +301,7 @@ sub render_normal {
          'absolutey' => 1,
            'absolutewidth' => 1,
          'clickwidth' => 2,
-         'href'     => $self->_url($zmenu_s),
+         'href'     => $branch_href,
       });
       $self->push($hbr);   
     
@@ -303,7 +320,7 @@ sub render_normal {
          'width'     => 0.25,
          'colour'    => $branch_col,
          'clickwidth' => 2,
-         'zmenu'    => $zmenu_s,
+         'href'    => $branch_href,
       });
       $self->push($vbr);
       
@@ -322,7 +339,7 @@ sub render_normal {
           'absolutey' => 1,
           'absolutewidth' => 1,
          'clickwidth' => 2,
-         'zmenu'    => $zmenu_s,
+         'href'    => $branch_href,
       });
       $self->push($dbr);
       
@@ -484,120 +501,6 @@ sub render_normal {
   #warn ("B-0:".localtime());      
 
   return 1;
-}
-
-
-sub zmenu_node {
-  my( $self, $archive_id ) = @_;
-  my $Config = $self->{'config'}; 
-  my $param =  $archive_id->type eq 'Translation' ? 'peptide' : lc($archive_id->type);
-  my $type = ucfirst $param; 
-  my $id = $archive_id->stable_id .".". $archive_id->version;
-  my $rel = $archive_id->release;
-  my $assembly = $archive_id->assembly;  
-  my $db = $archive_id->db_name;
-  my $link = _archive_link($archive_id, $Config);
-
-  my $zmenu = { 
-    'caption'        =>  $id,
-    '90:'.$type      =>  $link, 
-    '80:Release'     =>  $rel,
-    '70:Assembly'    =>  $assembly,
-    '60:Database'    =>  $db, 
-  };
-
-  return ($zmenu, $link) ;
-}
-
-
-sub _archive_link {
-  my ($object, $Config) = @_;
-
-  my $release = $object->release;
-  my $version = $object->version;
-  my $type =  $object->type eq 'Translation' ? 'peptide' : lc($object->type);    
-  my $name = $object->stable_id . "." . $object->version;
-
-  # no archive for old release, return un-linked display_label
-  return $name if ($release < $Config->species_defs->EARLIEST_ARCHIVE);
-  
-  my $url;
-
-  if ($object->is_current) {
-    $url = "/";
-  } else {
-
-    
-    #my %archive_sites = map { $_->{release_id} => $_->{short_date} }
-    my %archive_sites = %{ $Config->species_defs->ENSEMBL_ARCHIVES }; 
-    if ($archive_sites{$release}){
-     $url = "http://$archive_sites{$release}.archive.ensembl.org/";
-     $url =~ s/ //;
-    } else { return $name;}
-    
-  }
-
-  $url .=  $ENV{'ENSEMBL_SPECIES'};
-
-  my $view = $type."view";
-  if ($type eq 'peptide') {
-    $view = 'protview';
-  } elsif ($type eq 'transcript') {
-    $view = 'transview';
-  }
-
-   
-  my $html = qq(<a href="$url/$view?$type=$name">$name</a>);
-  if ($release >= 51 ){
-    my $p;
-    if ($type eq 'gene') {
-      $type = 'Gene';
-      $p = 'g';
-    } else {
-      $type = 'Transcript';
-      $p = 't';
-    }  
-    $html = qq(<a href="$url/$type/Summary?$p=$name">$name</a>);
-  } 
-
-  return $html;
-}
-
-
-sub zmenu_score {
-  my( $self, $event) = @_;
-  my $Config = $self->{'config'};
-  my $old = $event->old_ArchiveStableId;
-  my $old_id = $old->stable_id .".".$old->version;
-  my $new = $event->new_ArchiveStableId;
-  my $s = $event->score;
-  my $new_id = $new->stable_id ."." .$new->version;
-  my $old_link = _archive_link($old, $Config);
-  my $new_link = _archive_link($new, $Config);
-  my $oldRel = $old->release;
-  my $oldAss = $old->assembly;
-  my $oldDb = $old->db_name;
-  my $oldType = $old->type;
-  my $newRel = $new->release;
-  my $newAss = $new->assembly;
-  my $newDb = $new->db_name;
-  my $newType = $new->type;
-  if ($s == 0){$s ="Unknown";}
-  else {$s = sprintf("%.2f", $s);}  
-
-  my $zmenu = {
-    caption             => 'Similarity Match',
-    "100:Old $oldType:" => $old_link,
-    "90:Old Release:"   =>  $oldRel,
-    "80:Old Assembly:"  =>  $oldAss,
-    "70:Old Database:"  =>  $oldDb,
-    "60:New $newType:"  =>  $new_link,
-    "50:New Release:"   =>  $newRel,
-    "40:New Assembly:"  =>  $newAss,
-    "30:New Database:"  =>  $newDb,
-    "20:Score:"         =>  $s, 
-  };
-  return $zmenu;
 }
 
 1;
