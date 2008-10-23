@@ -28,7 +28,9 @@ sub handler {
       $error =~ s!$serverroot!!ig;
     }
     return OK if $r->header_only;
-      
+
+    $r->content_type('text/html; charset=utf-8');
+
     my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( r => $r );
     my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SD );
     $page->_initialize();
@@ -93,7 +95,7 @@ sub handler {
   #######################
   # Report error to user
   #######################
-    my $admin = $r->server->server_admin;
+    my $admin = $SD->ENSEMBL_HELPDESK_EMAIL;
     
     $page->content->add_panel(
       new EnsEMBL::Web::Document::Panel(
