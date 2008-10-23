@@ -699,8 +699,9 @@ sub add_protein_feature {
   my( $self, $key, $hashref ) = @_;
 
   my %menus = (
-    'domain'     => [ 'domain',  'P_domain' ],
-    'feature'    => [ 'feature', 'P_feature' ],
+    'domain'     => [ 'domain',  'P_domain', 'normal' ],
+    'feature'    => [ 'feature', 'P_feature', 'normal' ],
+    'alignment'  => [ 'alignment', 'P_domain', 'off' ],
     'gsv_domain' => [ 'domain',  'gsv_domain']
   );
   ## We have two separate glyphsets in this in this case
@@ -715,6 +716,8 @@ sub add_protein_feature {
     next unless $menu;
     my $type = $menus{$menu_code}[0];
     my $gset = $menus{$menu_code}[1];
+    my $renderer =  $menus{$menu_code}[2];
+    next if ($renderer eq 'off');
     foreach my $key_2 ( @$keys ) {
       next if $type ne $data->{$key_2}{'type'};
       $menu->append( $self->create_track( $type.'_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
