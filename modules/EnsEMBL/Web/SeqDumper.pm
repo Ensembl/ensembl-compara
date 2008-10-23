@@ -23,8 +23,9 @@ print uses the panel's print function.
 =cut
 
 sub print {
-  my($self, $panel, $string ) = @_;
-  $panel->print( $string );
+  my ($self, $panel, $string) = @_;
+  
+  $self->{'string'} .= $string;
 }
 
 =head3 sub dump( $slice, $format, $panel );
@@ -37,10 +38,16 @@ the parent class passes around
 
 sub dump {
   my ($self, $slice, $format, $panel) = @_;
-  my $dump_handler = 'dump_'.lc($format);
-  if( $self->can( $dump_handler ) ) {
-    $self->$dump_handler( $slice, $panel );
+
+  my $dump_handler = 'dump_' . lc($format);
+  
+  $self->{'string'} = '';
+  
+  if ($self->can($dump_handler)) {
+    $self->$dump_handler($slice, $panel);
   }
+  
+  return $self->{'string'}
 }
 
 1;
