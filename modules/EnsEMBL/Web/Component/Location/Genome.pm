@@ -44,6 +44,8 @@ sub content {
     'RegulatoryFactor'    => ['blue', 'lharrow'],
     'Gene'                => ['blue', 'lharrow'],
     'OligoProbe'          => ['red', 'rharrow'],
+    'XRef'                => ['red', 'rharrow'],
+    'UserData'            => ['darkgreen', 'lharrow'],
   );
   
   ## Check if there is userdata in session
@@ -59,15 +61,17 @@ sub content {
     'start'       => $object->seq_region_start,
     'end'         => $object->seq_region_end,
   };
+
   if( $userdata && $userdata->{'filename'} ) {
     ## Set some basic image parameters
     $image->imagemap = 'no';
     $image->caption = 'Click on the image above to jump to an overview of the chromosome';
    
     ## Create pointers from user data
-    my $pointer_set = $self->create_userdata_pointers($image, $userdata);
+    my $pointer_set = $self->create_userdata_pointers($image, $userdata, $pointer_defaults{'UserData'});
     push(@$pointers, $pointer_set);
-  } elsif ($object->param('id')) {
+  } 
+  if ($object->param('id')) { ## "FeatureView"
     $image->image_name = "feature-$species";
     $image->imagemap = 'yes';
     my $features = $object->create_features; ## Now that there's no Feature factory, we create these on the fly
@@ -87,7 +91,8 @@ sub content {
       push(@$pointers, $pointer_ref);
       $i++;
     }
-  } else {
+  } 
+  if (!@$pointers) { ## Ordinary "KaryoView"
     $image->image_name = "karyotype-$species";
     $image->imagemap = 'no';
     $image->caption = 'Click on the image above to jump to an overview of the chromosome';
