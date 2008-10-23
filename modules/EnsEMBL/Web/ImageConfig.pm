@@ -368,7 +368,12 @@ sub _merge {
       next if $_ eq 'desc';
       if( $_ eq 'default' ) {
 #warn ".... $_ $config_name : ",keys %{$sub_tree->{'web'}{$_}||{}};
-        $data->{$key}{'display'} ||= $sub_tree->{'web'}{$_}{$config_name};
+	if ( ref($sub_tree->{'web'}{$_}) eq 'HASH') {
+	  $data->{$key}{'display'} ||= $sub_tree->{'web'}{$_}{$config_name};
+	}
+	else {
+	  $data->{$key}{'display'} ||= $sub_tree->{'web'}{$_};
+        }
       } else {
         $data->{$key}{$_}    ||= $sub_tree->{'web'}{$_};     # Longer form for help and configuration!
       }
