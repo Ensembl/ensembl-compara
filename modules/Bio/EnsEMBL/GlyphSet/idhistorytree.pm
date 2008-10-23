@@ -89,6 +89,13 @@ sub render_normal {
     my $y_coord = $y;
     $yc{$id} = $y_coord;
     $y +=50;
+
+    my $label_href = $self->_url
+    ({'action'  => 'Idhistory_Label',
+      'label'   => $id,
+      'feat_type'    =>  $param2, 
+    });
+    
     
     # label unique stable IDs
     $self->push( $self->Text({
@@ -101,7 +108,7 @@ sub render_normal {
       'halign'    => 'left',
       'colour'    => 'blue',
       'text'      =>  $id,
-      #'href'     =>   $id_l
+      'href'     =>   $label_href
     }));
 
     if ($id eq $a_id) { ## Highlight the focus id ##
@@ -286,17 +293,17 @@ sub render_normal {
     my ($newx, $newy) = @{$history_tree->coords_by_ArchiveStableId($new)};
     
     if ($oldy == $newy) {
-    
+      # add horizontal branches
       my $y_coord = $yc{$old->stable_id};
       my $x_coord = $sortedx[$oldx];
       my $length = $sortedx[$newx] - $sortedx[$oldx];
       my $xend = $x_coord + $length;
       my $y_end = $y_coord +1;
       my $hbr = $self->Line({
-         'x'         => $x_coord,
+         'x'         => $x_coord + 3.2 ,
          'y'         => $y_coord,
          'height'    => 0,
-         'width'     => $length,
+         'width'     => $length -6.4,
          'colour'    => $branch_col,
          'absolutey' => 1,
            'absolutewidth' => 1,
@@ -306,7 +313,7 @@ sub render_normal {
       $self->push($hbr);   
     
     } elsif ($oldx == $newx) {
-    
+      # add vertical branches
       my $y_coord = $yc{$old->stable_id};
       my $x_coord = $sortedx[$oldx] ;
       my $height = $yc{$new->stable_id} - $yc{$old->stable_id};
@@ -325,7 +332,7 @@ sub render_normal {
       $self->push($vbr);
       
     } else {
-    
+      # add diagonal branches
       my $x_coord = $sortedx[$oldx];
       my $y_coord = $yc{$old->stable_id};
       my $x_end = $sortedx[$newx];
