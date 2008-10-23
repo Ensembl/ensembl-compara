@@ -19,11 +19,12 @@ our @ISA = qw(EnsEMBL::Web::Root);
 
 sub new {
   my $class = shift;
+  
   my $self = {
     cache        => 0,
     species_defs => shift,
     token        => '',
-    filename     => '',
+    filename     => shift,
     file_root    => '',
     URL_root     => '',
     driver       => undef,
