@@ -102,13 +102,13 @@ sub _archive_link {
   # no archive for old release, return un-linked display_label
   return $obj->stable_id."." .$obj->version if ($obj->release < $OBJ->species_defs->EARLIEST_ARCHIVE);
 
-  my $type =  $obj->type eq 'Translation' ? 'protein' : lc($obj->type);
+  my $type =  $obj->type eq 'Translation' ? 'peptide' : lc($obj->type);
   my $name = $obj->stable_id . "." . $obj->version;
   my $url;
   my $current =  $OBJ->species_defs->ENSEMBL_VERSION;
 
   my $view = $type."view";
-  if ($type eq 'protein') {
+  if ($type eq 'peptide') {
     $view = 'protview';
   } elsif ($type eq 'transcript') {
     $view = 'transview';
