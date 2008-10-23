@@ -115,6 +115,11 @@ sub exists {
   return $self->driver->exists($self->filename);
 }
 
+sub delete {
+  my $self = shift;
+  return $self->driver->delete($self->filename);
+}
+
 sub retrieve {
   my ($self, $cache) = @_;
   $cache ||= $self->filename;

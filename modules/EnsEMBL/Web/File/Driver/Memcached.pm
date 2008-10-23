@@ -24,6 +24,11 @@ sub exists {
   return $self->memd->get($key);
 }
 
+sub delete {
+  my ($self, $key) = @_;
+  return $self->memd->delete($key);
+}
+
 sub get {
   my ($self, $key, $args) = @_;
 

@@ -18,6 +18,11 @@ sub exists {
   return -e $file && -f $file;
 }
 
+sub delete {
+  my ($self, $file) = @_;
+  return unlink $file;
+}
+
 sub get {
   my ($self, $file, $args) = @_;
 
