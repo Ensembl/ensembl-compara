@@ -17,7 +17,6 @@ sub content {
 
 ## Grab the description of the object...
 
-warn ref($object->Obj );
   if( $object->Obj->isa('Bio::EnsEMBL::Compara::Family' ) ){
     return sprintf '<p>%s</p>', CGI::escapeHTML( $object->Obj->description );
   } # elsif( $object->Obj->isa('Bio::EnsEMBL::ID
