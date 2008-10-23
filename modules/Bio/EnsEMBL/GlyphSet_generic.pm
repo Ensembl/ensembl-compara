@@ -10,31 +10,7 @@ sub features {
   return [];
 } 
 
-sub colour_key {
-  return 'default';
-}
-
-sub feature_label {
-  return ('','none');
-}
-
-sub title {
-  return;
-}
-
-sub href {
-  return;
-}
-sub tag {
-  return;
-}
-
 use Bio::EnsEMBL::Feature;
-
-sub render_nolabel {
-  my $self = shift;
-  $self->render_normal( 'nolabel' );
-}
 
 sub _draw_features {
   my( $self, $ori, $features, $render_flags ) = @_;
@@ -48,9 +24,20 @@ sub _draw_features {
     foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
       my $group = $features->{'groups'}{$lname}{$gkey}{$ori};
       next unless $group;
-#      foreach my $cat    ( sort keys %{$group->{'features'}} ) {
-#        foreach my $type ( sort keys %{$group->{'features'}{$cat}} ) {
 ## We now have a feature....
+## Now let us grab all the features in the group as we need to work out the width of the "group"
+## which may be wider than the feature if
+##   (a) we have labels (width of label if wider than feature)
+##   (b) have fixed width glyphs at points
+##   (c) have histogram data - has nos to left of graph..
+
+## Start with looking for special "aggregator glyphs"
+#       foreach my $style_key ( keys %{ $group->{'features'} } ) {
+#         if( $features->{'f_styles'}{$style_key}{'symbol'} =~ /^(histogram|tiling)$/ ) { ## We need to prepend width with of label!
+#
+#         }
+#       }
+
       next if $group->{'end'} < 1 || $group->{'start'} > $seq_len; ## Can't draw group!
       my $s = $group->{'start'}<1?1:$group->{'start'};
       my $e = $group->{'end'}  >$seq_len?$seq_len:$group->{'end'};
@@ -61,53 +48,246 @@ sub _draw_features {
         'width'     => $e-$s+1,
         'y'         => $row * ($h+2),
         'height'    => $h,
-        'bordercolour'    => 'red',
-        'title'     => $group->{id}
+        'colour'    => 'papayawhip',
+        'title'     => $group->{label}.' : '.$group->{id}
       }));
-#        }
-#      }
+      foreach my $style_key ( sort { $features->{'f_style'}{$a}{'style'}{'zindex'} <=> $features->{'f_style'}{$b}{'style'}{'zindex'} }  keys %{$group->{'features'}} ) {
+        foreach my $f ( @{$group->{'features'}{$style_key}} ) {
+          my $fs = $f->start;
+          my $fe = $f->end;
+          next if $fe < 1;
+          next if $fs > $seq_len;
+          $fs = 1        if $fs < 1;
+          $fe = $seq_len if $fs < 1;
+
+          $self->push($self->Rect({
+           'absolutey' => 1,
+           'x'         => $fs,
+           'width'     => $fe-$fs+1,
+           'y'         => $row * ($h+2),
+           'height'    => $h,
+           'bordercolour' => 'red',
+          }));
+        }
+      }
     }
   }
 }
 
+sub render_nolabel {
+  my $self = shift;
+  $self->render_normal( 'nolabel' );
+}
+
+sub render_label_on {
+  my $self = shift;
+  $self->render_normal( 'label_on' );
+}
+
+sub render_label_under {
+  my $self = shift;
+  $self->render_normal( 'label_under' );
+}
+
 sub render_normal {
   my ($self, $render_flags ) = @_;
-  my $slice           = $self->{'container'};
+  $self->{'y_offset'} = 0;
 
-## Grab and cache features as we need to find out which strands to draw them on!
+  ## Grab and cache features as we need to find out which strands to draw them on!
   my $features = $self->cache( 'generic:'.$self->{'my_config'}->key );
-  unless( $features ) {
-    $features = $self->cache( 'generic:'.$self->{'my_config'}->key, $self->features() );
-  }
+  $features = $self->cache( 'generic:'.$self->{'my_config'}->key, $self->features() ) unless $features;
+  
+  $self->timer_push( 'Fetched DAS features', undef, 'fetch' );
 
   my $strand          = $self->strand();
 
   my $y_offset = 0; ## Useful to track errors!!
 
-  if( @{$features->{'errors'}} ) {
-    my %saw;
-    @saw{ @{$features->{'errors'}} } = ();
-    
-    foreach( sort keys %saw ) {
-      $self->errorTrack( $_, undef, $y_offset+=12 );
-    }
+  if( @{$features->{'errors'}} ) { ## If we have errors then we will uniquify and sort!
+    my %saw = map { ($_,1) } @{$features->{'errors'}};
+    $self->errorTrack( $_, undef, $self->{'y_offset'}+=12 ) foreach sort keys %saw;
   }
 
-## Draw unstranded features first!!
+  ## Draw stranded features first!!
+  $self->_draw_features( $strand, $features, $render_flags ) if $features->{'ori'}{$strand};
+  ## Draw unstranded features last !! So they go below stranded features!
+  $self->_draw_features( 0, $features, $render_flags ) if $features->{'ori'}{0} && $strand == -1;
 
-  if( $features->{'ori'}{1} || $features->{'ori'}{-1} ) { ## We have stranded features...
-    if( $features->{'ori'}{$strand} ) { ## No features on this strand...
-      $self->_draw_features( $strand, $features, $render_flags );
-    } else {
-      $self->errorTrack( 'There are no features on this strand', undef, $y_offset+=12 );
-    }
-  }
-  if( $features->{'ori'}{0} && $strand == -1 ) { ## We have unstranded features so draw them on reverse strand
-    $self->_draw_features( 0, $features, $render_flags );
-  }
   return;
 }
 ## Which strand to render on!
+
+1;
+
+## Two sorts of renderer! - composite renderers - work on every element in the collection!
+
+sub extent_histogram {
+  my($self,$g,$st) = @_;
+}
+
+sub composite_histogram {
+  my($self,$g,$f_ref,$st) = @_; ## These have passed in the group + all the features in the group!
+}
+
+sub extent_gradient {
+  my($self,$g,$st) = @_;
+  return ($g->{start},$g->{end});
+}
+
+sub composite_gradient {
+  my($self,$g,$f_ref,$st) = @_;
+}
+
+sub extent_lineplot {
+  my($self,$g,$st) = @_;
+  return $self->extent_histogram($g,$st);
+}
+
+sub composite_lineplot {
+  my($self,$g,$f_ref,$st) = @_;
+
+}
+
+sub extent_signalmap {
+  my($self,$g,$st) = @_;
+  return $self->extent_histogram($g,$st);
+}
+
+sub composite_signalmap {
+  my($self,$g,$f_ref,$st) = @_;
+
+}
+
+## - glyph renderers - work on individual elements
+
+sub extent_anchored_arrow {
+  my($self,$f,$st)= @_;
+  return $self->extent_box($f,$st);
+}
+
+sub glyph_anchored_arrow {
+  my($self,$g,$f,$st)= @_;
+}
+
+sub extent_arrow {
+  my($self,$f,$st)= @_;
+
+}
+
+sub glyph_arrow {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_box {
+  my($self,$f,$st)= @_;
+  return ($f->start,$f->end);
+}
+
+sub glyph_box {
+  my($self,$g,$f,$st)= @_;
+  
+}
+
+sub extent_cross {
+  my($self,$f,$st)= @_;
+}
+
+sub glyph_cross {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_dot {
+  my($self,$f,$st)= @_;
+}
+
+sub glyph_dot {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_ex {
+  my($self,$f,$st)= @_;
+
+}
+
+sub glyph_ex {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_hidden {
+  my($self,$f,$st)= @_;
+
+}
+
+sub glyph_hidden {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_line {
+  my($self,$f,$st)= @_;
+
+}
+
+sub glyph_line {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_primers {
+  my($self,$f,$st)= @_;
+  return $self->extent_box($f,$st);
+}
+
+sub glyph_primers {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_span {
+  my($self,$f,$st)= @_;
+  return $self->extent_box($f,$st);
+}
+
+sub glyph_span {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_text {
+  my($self,$f,$st)= @_;
+
+}
+
+sub glyph_text {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_toomany {
+  my($self,$f,$st)= @_;
+  return $self->extent_box($f,$st);
+}
+
+sub glyph_toomany {
+  my($self,$g,$f,$st)= @_;
+
+}
+
+sub extent_triangle {
+  my($self,$f,$st)= @_;
+
+}
+
+sub glyph_triangle {
+  my($self,$f,$st)= @_;
+
+}
+
+__END__
 
 sub _x {
   my $self = shift;
