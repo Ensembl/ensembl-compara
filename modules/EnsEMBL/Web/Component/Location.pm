@@ -64,12 +64,11 @@ sub name {
 }
 
 sub create_userdata_pointers {
-  my ($self, $image, $userdata) = @_;
+  my ($self, $image, $userdata, $defaults) = @_;
   my $object = $self->object;
 
   my $file = new EnsEMBL::Web::File::Text($object->species_defs);
   my $data = $file->retrieve($userdata->{'filename'});
-warn Dumper( $data );
   my $format  = $userdata->{'format'};
 
   my $parser = EnsEMBL::Web::Text::FeatureParser->new();
@@ -85,8 +84,8 @@ warn Dumper( $data );
     'config_name'   => 'Vkar2view',
     'parser'        => $parser,
     'zmenu_config'  => $zmenu_config,
-    'color'         => $object->param("col")   || 'red',
-    'style'         => $object->param("style") || 'lharrow',
+    'color'         => $object->param("col")   || $defaults->[0],
+    'style'         => $object->param("style") || $defaults->[1],
   });
 
   return $pointer_set;
