@@ -74,10 +74,6 @@ sub new_from_hashref {
     }
   }
   
-  # TODO: process manual stylesheet parameters (e.g. gradients)
-  
-  # TODO: process linkurls???
-  
   return $self;
 }
 
@@ -120,8 +116,7 @@ sub new_from_URL {
     $das_data{linkurl} =~ s/\$26/\&/g;
   }
   
-  # TODO: are we still going to have a 'dasconfview'?
-  push @{$das_data{enable}}, $ENV{'ENSEMBL_SCRIPT'} unless $ENV{'ENSEMBL_SCRIPT'} eq 'dasconfview';
+  push @{$das_data{enable}}, $ENV{'ENSEMBL_SCRIPT'};
   
   # TODO: not sure about these, we're handling coordinate systems differently
   #push @{$das_data{mapping}} , split(/\,/, $das_data{type});
@@ -172,6 +167,21 @@ sub enable {
   return $self->{'enable'};
 }
 
+=head2 is_enabled_on
+
+  Arg [1]    : $view (string)
+  Description: whether the source is available on the given view
+  Returntype : boolean
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+sub is_enabled_on {
+  my ( $self, $view ) = @_;
+  return grep { $_ eq $view } @{ $self->enable || [] }
+}
+
 =head2 category
 
   Arg [1]    : $category (scalar)
@@ -205,14 +215,9 @@ sub caption {
   if ( defined $caption ) {
     $self->{'caption'} = $caption;
   }
-  return $self->{'caption'};
+  return $self->{'caption'} || $self->label;
 }
 
-sub internal {
-  my $self = shift;
-  $self->{'internal'} = shift if @_;
-  return $self->{'internal'};
-}
 
 sub is_session {
   my $self = shift;
