@@ -74,8 +74,8 @@ sub karyotype {
   # set some dimensions based on number and size of chromosomes    
   if( $wuc->get_parameter('all_chromosomes') eq 'yes' ) {
     $chr_name = 'ALL';
-    #$wuc->container_width( $object->species_defs->MAX_CHR_LENGTH );
-    $wuc->container_width( 300000000 );
+    $wuc->container_width( $object->species_defs->MAX_CHR_LENGTH );
+    #$wuc->container_width( 300000000 );
     my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
 	  $wuc->{'_rows'} = $object->param('rows') || ceil($total_chrs / 13 );
   } 
@@ -250,19 +250,19 @@ sub add_pointers {
   my ($data, @data, $max_label, %chrs);
   my $parser = $extra->{'parser'};
 
-  warn           "Parser:     $parser";
+  #warn           "Parser:     $parser";
   if ($parser) { # use parsed userdata
     my $max_label = 0;
     foreach my $track ($parser->{'tracks'}) {
-      warn         "  Track:    $track ",keys %$track;
+      #warn         "  Track:    $track ",keys %$track;
       foreach my $type (keys %{$track}) {
-        warn       "    Type:   $type";
+        #warn       "    Type:   $type";
         my @features = $parser->fetch_features_by_tracktype($type);
         foreach my $row (@features) {
-          warn     "      Row:  $row";
+          #warn     "      Row:  $row";
           my @array = @$row;
           foreach my $feature (@array) {
-            warn   "        F:  $feature";
+            #warn   "        F:  $feature";
             my $data_row = {
                            'chr'   => $feature->seqname(),
                            'start' => $feature->rawstart(),
@@ -283,7 +283,7 @@ sub add_pointers {
     }
   }
   else { # get features for this object
-    $data = $object->retrieve_features($extra->{'features'}) unless $extra->{'feature_type'} eq 'Xref';
+    $data = $extra->{'features'};
     foreach my $set (@$data) {
       foreach my $row (
         map { $_->[0] }
