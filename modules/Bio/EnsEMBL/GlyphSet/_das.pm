@@ -5,9 +5,8 @@ use base qw(Bio::EnsEMBL::GlyphSet_generic);
 
 use Bio::EnsEMBL::ExternalData::DAS::Stylesheet;
 
+use POSIX qw(floor ceil);
 use Data::Dumper;
-
-sub _das_type {  return 'das'; }
 
 sub features       { 
   my $self = shift;
@@ -38,22 +37,25 @@ sub features       {
   for my $logic_name ( @logic_names ) {
     local $Data::Dumper::Indent = 1;    
 
-    my $stylesheet = $data->{ $logic_name }{ 'stylesheet' } || Bio::EnsEMBL::ExternalData::DAS::Stylesheet->new();
+    my $stylesheet = $data->{ $logic_name }{ 'stylesheet' } || $Bio::EnsEMBL::ExternalData::DAS::Stylesheet::DEFAULT_STYLESHEET;
+warn Data::Dumper::Dumper( $stylesheet );
     push @urls, @{ $data->{ $logic_name }{ 'features_urls' } };
     push @errors, @{ $data->{ $logic_name }{ 'errors'   } };
 
-    $c_f += @{$data->{ $logic_name }{ 'features' }};
 
     foreach my $f ( @{$data->{ $logic_name }{ 'features' }} ) {
-      unless( exists $feature_styles{$logic_name}{ $f->type_category}{ $f->type } ) {
-        my $st = $stylesheet->find_feature_glyph( $f->type_category, $f->type, 'default' );
-        $feature_styles{$logic_name}{$f->type_category}{$f->type} = {
+      my $style_key = $f->type_category."\t".$f->type_id;
+      unless( exists $feature_styles{$logic_name}{ $style_key } ) {
+        my $st = $stylesheet->find_feature_glyph( $f->type_category, $f->type_id, 'default' );
+        $feature_styles{$logic_name}{$style_key} = {
           'style'      => $st,
           'use_score'  => ($st->{'symbol'} =~ /^(histogram|tiling|lineplot|gradient)/i ? 1 : 0)
         };
         $max_height = $st->{height} if $st->{height} > $max_height;
       };
-      my $fs = $feature_styles{$logic_name}{ $f->type_category}{ $f->type };
+      my $fs = $feature_styles{$logic_name}{$style_key};
+      next if $fs->{'style'}{'symbol'} eq 'hidden';  ## STYLE MEANS NOT DRAWN!
+      $c_f ++;
       if( $fs->{'use_score'} ) { ## These are the score based symbols
         $min_score = $f->score if $f->score < $min_score;
         $max_score = $f->score if $f->score > $max_score;
@@ -68,7 +70,7 @@ sub features       {
           my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
           if( exists $groups{$logic_name}{$g}{$st} ) {
             my $t = $groups{$logic_name}{$g}{$st};
-            push @{ $t->{'features'}{$f->type_category}{$f->type } }, $f;
+            push @{ $t->{'features'}{$style_key} }, $f;
             $t->{'start'} = $f->start if $f->start < $t->{'start'};
             $t->{'end'}   = $f->end   if $f->end   > $t->{'end'};
             $t->{'count'} ++;
@@ -82,19 +84,19 @@ sub features       {
               'notes'   => $_->{'notes'},
               'links'   => $_->{'links'},
               'targets' => $_->{'target'},
-              'features'=>{$f->type_category=>{$f->type=>[$f]}},'start'=>$f->start,'end'=>$f->end
+              'features'=>{$style_key=>[$f]},'start'=>$f->start,'end'=>$f->end
             };
           }
         }
       } else { ## Feature doesn't have groups so fake it with the feature id as group id!
-        my $g     = $fs->{'use_score'} ? 'default' : $f->display_id;
-        my $label = $fs->{'use_score'} ? ''        : $f->display_label;
-        my $ty = $f->type;       # & the feature type
+        my $g     = ( $fs->{'use_score'} || $fs->{'style'}{'bump'} eq '0' ) ? 'default' : $f->display_id;      ## If histogram/un-bumped
+        my $label = ( $fs->{'use_score'} || $fs->{'style'}{'bump'} eq '0' ) ? ''        : $f->display_label;   ## If histogram/un-bumped
+        my $ty = $f->type_id;       # & the feature type
         my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
         if( exists $groups{$logic_name}{$g}{$st} ) {
 ## Ignore all subsequent notes, links and targets, probably should merge arrays somehow....
           my $t = $groups{$logic_name}{$g}{$st};
-          push @{ $t->{'features'}{$f->type_category}{$f->type } }, $f;
+          push @{ $t->{'features'}{$style_key} }, $f;
           $t->{'start'} = $f->start if $f->start < $t->{'start'};
           $t->{'end'}   = $f->end   if $f->end   > $t->{'end'};
           $t->{'count'} ++;
@@ -108,23 +110,38 @@ sub features       {
             'notes'   => $f->{'note'},   ## Push the features notes/links and targets on!
             'links'   => $f->{'link'},
             'targets' => $f->{'target'},
-            'features'=>{$f->type_category=>{$f->type=>[$f]}},'start'=>$f->start,'end'=>$f->end
+            'features'=>{$style_key=>[$f]},'start'=>$f->start,'end'=>$f->end
           };
         }
       }
     }
+## If we used a guessed max/min make it significant to two figures!!
+    if( $max_score == $min_score ) { ## If we have all "0" data adjust so we have a range
+      $max_score =  0.1;
+      $min_score = -0.1;
+    } else {
+      my $base = 10**POSIX::ceil(log($max_score-$min_score)/log(10))/100;
+      $min_score = POSIX::floor( $min_score / $base ) * $base;
+      $max_score = POSIX::ceil(  $max_score / $base ) * $base;
+    }
     foreach my $logic_name (keys %feature_styles) {
-      foreach my $cat (keys %{$feature_styles{$logic_name}}) {
-        foreach my $type (keys %{$feature_styles{$logic_name}{$cat}}) {
-          my $fs = $feature_styles{$logic_name}{$cat}{$type};
-          if( $fs->{use_score} ) {
-            $fs->{style}{min} = $min_score unless exists $fs->{style}{min};
-            $fs->{style}{max} = $max_score unless exists $fs->{style}{max};
-         }
+      foreach my $style_key (keys %{$feature_styles{$logic_name}}) {
+        my $fs = $feature_styles{$logic_name}{$style_key};
+        if( $fs->{use_score} ) {
+          $fs->{style}{min} = $min_score unless exists $fs->{style}{min};
+          $fs->{style}{max} = $max_score unless exists $fs->{style}{max};
+          if( $fs->{style}{min} == $fs->{style}{max} ) { ## Fudge if max=min add .1 to each so we can display it!
+            $fs->{style}{max} = $fs->{style}{max} + 0.1;
+            $fs->{style}{min} = $fs->{style}{min} - 0.1;
+          } elsif( $fs->{style}{min} > $fs->{style}{max} ) { ## Fudge if min>max swap them... only possible in user supplied data!
+            ($fs->{style}{max},$fs->{style}{min}) =
+            ($fs->{style}{min},$fs->{style}{max});
+          }
         }
       }
     }
   }  
+if(0) { 
   warn sprintf "%d features returned in %d groups", $c_f, $c_g;
   warn "Logic name           Type                 Group ID            Ori Count     Start       End Label\n";
   foreach my $l (keys %groups) {
@@ -140,7 +157,8 @@ sub features       {
   local $Data::Dumper::Indent = 1;
   warn Dumper( \%feature_styles );
   warn Dumper( \%group_styles );
-warn "MH: $max_height";
+  warn "MH: $max_height";
+}
   return {
     'f_count'    => $c_f,
     'g_count'    => $c_g,
@@ -149,6 +167,7 @@ warn "MH: $max_height";
     'f_styles'   => \%feature_styles,
     'g_styles'   => \%group_styles,
     'errors'     => \@errors,
+    'ss_errors'  => [],
     'urls'       => \@urls,
     'ori'        => \%orientations,
     'max_height' => $max_height
