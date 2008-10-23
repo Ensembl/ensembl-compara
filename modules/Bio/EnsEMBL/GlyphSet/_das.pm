@@ -37,13 +37,21 @@ sub features       {
   for my $logic_name ( @logic_names ) {
     local $Data::Dumper::Indent = 1;    
 
-    my $stylesheet = $data->{ $logic_name }{ 'stylesheet' } || $Bio::EnsEMBL::ExternalData::DAS::Stylesheet::DEFAULT_STYLESHEET;
-warn Data::Dumper::Dumper( $stylesheet );
-    push @urls, @{ $data->{ $logic_name }{ 'features_urls' } };
-    push @errors, @{ $data->{ $logic_name }{ 'errors'   } };
-
-
-    foreach my $f ( @{$data->{ $logic_name }{ 'features' }} ) {
+    my $stylesheet = $data->{ $logic_name }{ 'stylesheet' }{ 'object' }
+      || $Bio::EnsEMBL::ExternalData::DAS::Stylesheet::DEFAULT_STYLESHEET;
+    warn Data::Dumper::Dumper( $stylesheet );
+    
+    for my $segment ( keys %{ $data->{ $logic_name }{ 'features' } } ) {
+      
+      my $f_data = $data->{ $logic_name }{ 'features' }{ $segment };
+      push @urls,   $f_data->{ 'url' };
+      push @errors, $f_data->{'error'};
+      
+      for my $f ( @{ $f_data->{'objects'} } ) {
+        
+        # Skip nonpositional features
+        $f->start || $f->end || next;
+        
       my $style_key = $f->type_category."\t".$f->type_id;
       unless( exists $feature_styles{$logic_name}{ $style_key } ) {
         my $st = $stylesheet->find_feature_glyph( $f->type_category, $f->type_id, 'default' );
@@ -114,6 +122,8 @@ warn Data::Dumper::Dumper( $stylesheet );
           };
         }
       }
+    }
+    
     }
 ## If we used a guessed max/min make it significant to two figures!!
     if( $max_score == $min_score ) { ## If we have all "0" data adjust so we have a range
