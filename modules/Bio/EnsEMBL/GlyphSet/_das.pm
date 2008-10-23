@@ -52,31 +52,57 @@ sub features       {
         # Skip nonpositional features
         $f->start || $f->end || next;
         
-      my $style_key = $f->type_category."\t".$f->type_id;
-      unless( exists $feature_styles{$logic_name}{ $style_key } ) {
-        my $st = $stylesheet->find_feature_glyph( $f->type_category, $f->type_id, 'default' );
-        $feature_styles{$logic_name}{$style_key} = {
-          'style'      => $st,
-          'use_score'  => ($st->{'symbol'} =~ /^(histogram|tiling|lineplot|gradient)/i ? 1 : 0)
+        my $style_key = $f->type_category."\t".$f->type_id;
+        unless( exists $feature_styles{$logic_name}{ $style_key } ) {
+          my $st = $stylesheet->find_feature_glyph( $f->type_category, $f->type_id, 'default' );
+          $feature_styles{$logic_name}{$style_key} = {
+            'style'      => $st,
+            'use_score'  => ($st->{'symbol'} =~ /^(histogram|tiling|lineplot|gradient)/i ? 1 : 0)
+          };
+          $max_height = $st->{height} if $st->{height} > $max_height;
         };
-        $max_height = $st->{height} if $st->{height} > $max_height;
-      };
-      my $fs = $feature_styles{$logic_name}{$style_key};
-      next if $fs->{'style'}{'symbol'} eq 'hidden';  ## STYLE MEANS NOT DRAWN!
-      $c_f ++;
-      if( $fs->{'use_score'} ) { ## These are the score based symbols
-        $min_score = $f->score if $f->score < $min_score;
-        $max_score = $f->score if $f->score > $max_score;
-      }
-## Loop through each group so we can merge this into "group-based clusters"
-      my $st = $f->seq_region_strand || 0;
-      $orientations{ $st }++;
-      if( @{$f->groups} ) { ## Feature has groups so use them...
-        foreach( @{$f->groups} ) {
-          my $g  = $_->{'group_id'};
-          my $ty = $_->{'group_type'};
+        my $fs = $feature_styles{$logic_name}{$style_key};
+        next if $fs->{'style'}{'symbol'} eq 'hidden';  ## STYLE MEANS NOT DRAWN!
+        $c_f ++;
+        if( $fs->{'use_score'} ) { ## These are the score based symbols
+          $min_score = $f->score if $f->score < $min_score;
+          $max_score = $f->score if $f->score > $max_score;
+        }
+  ## Loop through each group so we can merge this into "group-based clusters"
+        my $st = $f->seq_region_strand || 0;
+        $orientations{ $st }++;
+        if( @{$f->groups} ) { ## Feature has groups so use them...
+          foreach( @{$f->groups} ) {
+            my $g  = $_->{'group_id'};
+            my $ty = $_->{'group_type'};
+            my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
+            if( exists $groups{$logic_name}{$g}{$st} ) {
+              my $t = $groups{$logic_name}{$g}{$st};
+              push @{ $t->{'features'}{$style_key} }, $f;
+              $t->{'start'} = $f->start if $f->start < $t->{'start'};
+              $t->{'end'}   = $f->end   if $f->end   > $t->{'end'};
+              $t->{'count'} ++;
+            } else {
+              $c_g++;
+              $groups{$logic_name}{$g}{$st} = {
+                'count'   => 1,
+                'type'    => $ty,
+                'id'      => $g,
+                'label'   => $_->{'group_label'},
+                'notes'   => $_->{'notes'},
+                'links'   => $_->{'links'},
+                'targets' => $_->{'target'},
+                'features'=>{$style_key=>[$f]},'start'=>$f->start,'end'=>$f->end
+              };
+            }
+          }
+        } else { ## Feature doesn't have groups so fake it with the feature id as group id!
+          my $g     = ( $fs->{'use_score'} || $fs->{'style'}{'bump'} eq '0' ) ? 'default' : $f->display_id;      ## If histogram/un-bumped
+          my $label = ( $fs->{'use_score'} || $fs->{'style'}{'bump'} eq '0' ) ? ''        : $f->display_label;   ## If histogram/un-bumped
+          my $ty = $f->type_id;       # & the feature type
           my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
           if( exists $groups{$logic_name}{$g}{$st} ) {
+  ## Ignore all subsequent notes, links and targets, probably should merge arrays somehow....
             my $t = $groups{$logic_name}{$g}{$st};
             push @{ $t->{'features'}{$style_key} }, $f;
             $t->{'start'} = $f->start if $f->start < $t->{'start'};
@@ -88,41 +114,15 @@ sub features       {
               'count'   => 1,
               'type'    => $ty,
               'id'      => $g,
-              'label'   => $_->{'group_label'},
-              'notes'   => $_->{'notes'},
-              'links'   => $_->{'links'},
-              'targets' => $_->{'target'},
+              'label'   => $label,
+              'notes'   => $f->{'note'},   ## Push the features notes/links and targets on!
+              'links'   => $f->{'link'},
+              'targets' => $f->{'target'},
               'features'=>{$style_key=>[$f]},'start'=>$f->start,'end'=>$f->end
             };
           }
         }
-      } else { ## Feature doesn't have groups so fake it with the feature id as group id!
-        my $g     = ( $fs->{'use_score'} || $fs->{'style'}{'bump'} eq '0' ) ? 'default' : $f->display_id;      ## If histogram/un-bumped
-        my $label = ( $fs->{'use_score'} || $fs->{'style'}{'bump'} eq '0' ) ? ''        : $f->display_label;   ## If histogram/un-bumped
-        my $ty = $f->type_id;       # & the feature type
-        my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
-        if( exists $groups{$logic_name}{$g}{$st} ) {
-## Ignore all subsequent notes, links and targets, probably should merge arrays somehow....
-          my $t = $groups{$logic_name}{$g}{$st};
-          push @{ $t->{'features'}{$style_key} }, $f;
-          $t->{'start'} = $f->start if $f->start < $t->{'start'};
-          $t->{'end'}   = $f->end   if $f->end   > $t->{'end'};
-          $t->{'count'} ++;
-        } else {
-          $c_g++;
-          $groups{$logic_name}{$g}{$st} = {
-            'count'   => 1,
-            'type'    => $ty,
-            'id'      => $g,
-            'label'   => $label,
-            'notes'   => $f->{'note'},   ## Push the features notes/links and targets on!
-            'links'   => $f->{'link'},
-            'targets' => $f->{'target'},
-            'features'=>{$style_key=>[$f]},'start'=>$f->start,'end'=>$f->end
-          };
-        }
       }
-    }
     
     }
 ## If we used a guessed max/min make it significant to two figures!!
