@@ -18,6 +18,7 @@ sub init {
   $self->create_menus(
     'domain'         => 'Protein domains',
     'feature'        => 'Protein features',
+    'alignment'      => 'Protein alignments',
     'p_variation'    => 'Variation',
 #    'user_data'      => 'User data',
     'decorations'    => 'Decorations',
