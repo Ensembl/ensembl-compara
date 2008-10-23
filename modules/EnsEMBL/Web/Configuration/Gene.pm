@@ -180,7 +180,7 @@ sub populate_tree {
   my $format = { fasta => 'FASTA' };
   foreach (keys %$format) {
     $export_menu->append($self->create_subnode( "Export/$_", "Export gene data as $format->{$_}",
-      [qw(sequence       EnsEMBL::Web::Component::Gene::GeneExport/$_)],
+      [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/$_" ],
       { 'availability' => 'gene', 'no_menu_entry' => 1 }
     ));
   }
