@@ -38,7 +38,7 @@ sub content {
   );
   
   my $table = EnsEMBL::Web::Document::HTML::TwoCol->new();
-  $table->add_row( 'Description', $source->description );
+  $table->add_row( 'Description', $source->description, 1 );
   if ( my $homepage = $source->homepage ) {
     $table->add_row( 'Homepage', qq(<a href="$homepage">$homepage</a>) );
   }
@@ -92,8 +92,6 @@ sub content {
     }
     $html .= "</table>\n";
   }
-
-$html.= $source->category;
 
   # Only unescape content served from "preconfigured" DAS sources
   # TODO: convert this to a detainting process
