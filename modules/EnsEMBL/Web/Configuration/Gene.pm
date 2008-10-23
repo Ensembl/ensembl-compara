@@ -683,13 +683,13 @@ sub _ajax_zmenu_id_history_tree_branch {
 sub _archive_link {
   my ($OBJ, $obj) = @_;
   
-  my $type =  $obj->type eq 'Translation' ? 'protein' : lc($obj->type);
+  my $type =  $obj->type eq 'Translation' ? 'peptide' : lc($obj->type);
   my $name = $obj->stable_id . "." . $obj->version;
   my $url; 
   my $current =  $OBJ->species_defs->ENSEMBL_VERSION;
    
   my $view = $type."view";
-  if ($type eq 'protein') {
+  if ($type eq 'peptide') {
     $view = 'protview';
   } elsif ($type eq 'transcript') {
     $view = 'transview';
