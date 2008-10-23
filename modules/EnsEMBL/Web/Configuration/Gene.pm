@@ -172,6 +172,19 @@ sub populate_tree {
         { 'availability' => 'history', 'concise' => 'ID History' }
   ));
 
+  my $export_menu = $self->create_node( 'Export', "Export gene data",
+     [qw(sequence       EnsEMBL::Web::Component::Gene::GeneExport)],
+     { 'availability' => 'gene' }
+  );
+  
+  my $format = { fasta => 'FASTA' };
+  foreach (keys %$format) {
+    $export_menu->append($self->create_subnode( "Export/$_", "Export gene data as $format->{$_}",
+      [qw(sequence       EnsEMBL::Web::Component::Gene::GeneExport/$_)],
+      { 'availability' => 'gene', 'no_menu_entry' => 1 }
+    ));
+  }
+
 }
 
 sub global_context { return $_[0]->_global_context; }
