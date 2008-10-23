@@ -195,6 +195,9 @@ sub ajax_zmenu      {
   if( $action =~ 'Idhistory_Branch'){
     return $self->_ajax_zmenu_id_history_tree_branch();
   }
+   if( $action =~ 'Idhistory_Label'){
+    return $self->_ajax_zmenu_id_history_tree_label();
+  }
   if( $action =~ 'Regulation'){
     return $self->_ajax_zmenu_regulation($panel, $obj);
   }
@@ -679,6 +682,40 @@ sub _ajax_zmenu_id_history_tree_branch {
 
   return
 }
+
+sub _ajax_zmenu_id_history_tree_label {
+  # Specific zmenu for idhistory tree feature labels
+  my $self = shift; warn $self;
+  my $panel = $self->_ajax_zmenu; warn $panel;
+  my $obj = $self->object;
+  my $id = $obj->param('label') || die( "No label  value in params" );
+  my $type = ucfirst($obj->param('feat_type'));
+  my ($action, $p);
+ 
+  if ($type eq 'Gene') {
+      $p = 'g';
+      $action = 'Idhistory';
+    } elsif ($type eq 'Transcript'){
+      $p = 't';
+      $action = 'Idhistory';
+    } else {
+      $type = 'Transcript';
+      $p = 'p';
+      $action = 'Idhistory/Protein';
+    }
+
+  my $url = $obj->_url({'type' => $type, 'action' => $action, $p => $id });
+ 
+  $panel->add_entry({
+    'label_html'  => $id,
+    'link'        => $url,
+    'priority'    => 1,
+  });
+  
+ 
+ return 
+}
+
 
 sub _archive_link {
   my ($OBJ, $obj) = @_;
