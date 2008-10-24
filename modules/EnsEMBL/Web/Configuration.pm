@@ -491,8 +491,13 @@ sub _local_tools {
                                 'config' => $config, '_referer' => $referer })
     );
     if( $vc->can_upload ) {
+      my $userdata = $obj->get_session->get_tmp_data;
+      my $caption = 'Add custom data to page';
+      if ($userdata || $ENV{'ENSEMBL_USER_ID'}) {
+        $caption = 'Add/manage custom data';
+      }
       $self->{'page'}->local_tools->add_entry(
-        'caption' => 'Add custom data to page',
+        'caption' => $caption,
         'class'   => 'modal_link',
         'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => 'Summary',
                                  '_referer' => $referer, '__clear' => 1 })
