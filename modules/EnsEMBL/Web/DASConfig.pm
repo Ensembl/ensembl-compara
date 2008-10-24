@@ -11,22 +11,6 @@ use Time::HiRes qw(time);
 use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
 
-# TODO: do these need to exist, and if so is this the best place for them?
-our %DAS_DEFAULTS = (
-  'LABELFLAG'      => 'u',
-  'STRAND'         => 'b',
-  'DEPTH'          => '4',
-  'GROUP'          => '1',
-  'DEFAULT_COLOUR' => 'grey50',
-  'STYLESHEET'     => 'Y',
-  'SCORE'          => 'N',
-  'FG_MERGE'       => 'A',
-  'FG_GRADES'      => 20,
-  'FG_DATA'        => 'O',
-  'FG_MIN'         => 0,
-  'FG_MAX'         => 100,
-);
-
 # Create a new SourceConfig using a hash reference for parameters.
 # Can also use an existing Bio::EnsEMBL::ExternalData::DAS::Source or
 # EnsEMBL::Web::DASConfig object.
@@ -40,14 +24,14 @@ our %DAS_DEFAULTS = (
 #   description   (optional)
 #   homepage      (optional)
 #   maintainer    (optional)
-#   active        (optional)
 #   enable        (optional)
 #   category      (menu location)
 sub new_from_hashref {
   my ( $class, $hash ) = @_;
   
   $hash->{'coords'} = [ map {
-    Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_hashref($_)
+    ref $_ ? Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_hashref($_)
+           : Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_string($_)
   } @{$hash->{'coords'}||[]} ];
 
   # Convert old-style type & assembly parameters to single coords
@@ -68,7 +52,7 @@ sub new_from_hashref {
   
   bless $self, $class;
   
-  for my $var ( qw( active enable category caption )  ) {
+  for my $var ( qw( enable category caption )  ) {
     if ( exists $hash->{$var} ) {
       $self->$var( $hash->{$var} );
     }
@@ -130,24 +114,6 @@ sub new_from_URL {
 #================================#
 #  Web-specific get/set methods  #
 #================================#
-
-=head2 active
-
-  Arg [1]    : $is_active (scalar)
-  Description: get/set for whether the source is turned on (true/false)
-  Returntype : scalar
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-sub active {
-  my ( $self, $is_active ) = @_;
-  if ( defined $is_active ) {
-    $self->{'active'} = $is_active;
-  }
-  return $self->{'active'};
-}
 
 =head2 enable
 
@@ -268,16 +234,6 @@ sub mark_altered {
 sub is_altered {
   my $self = shift;
   return $self->{'_altered'};
-}
-
-sub equals {
-  my ( $self, $cmp ) = @_;
-  if ($self->full_url eq $cmp->full_url) {
-    my $c1 = join '*', sort { $a cmp $b } map { $_->name.':'.$_->version } @{ $self->coord_systems };
-    my $c2 = join '*', sort { $a cmp $b } map { $_->name.':'.$_->version } @{ $cmp ->coord_systems };
-    return $c1 eq $c2;
-  }
-  return 0;
 }
 
 1;
