@@ -27,11 +27,10 @@ sub configurator   { return $_[0]->_configurator;   }
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Genome', "Whole Genome",
-    [qw(
-      genome   EnsEMBL::Web::Component::Location::Genome
-    )],
-    { 'availability' => '1'}
+  $self->create_node( 'Karyotype', "Karyotype",
+    [qw(image EnsEMBL::Web::Component::Location::KaryotypeImage)],
+    { 'availability' => 'karyotype',
+      'disabled' => 'This genome is not assembled into chromosomes'}
   );
 
   $self->create_node( 'Chromosome', 'Chromosome summary',
@@ -94,6 +93,27 @@ sub populate_tree {
 	align   EnsEMBL::Web::Component::Location::SequenceAlignment)],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
+  
+  my $export_menu = $self->create_node( 'Export', "Export location data",
+     [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/location" ],
+     { 'availability' => 'slice' }
+  );
+  
+  my $format = { 
+    fasta => 'FASTA',
+    csv => 'CSV (Comma separated values)',
+    gff => 'GFF Format',
+    tab => 'Tab separated values',
+    embl => 'EMBL',
+    genbank => 'GenBank'
+  };
+  
+  foreach (keys %$format) {
+    $export_menu->append($self->create_subnode( "Export/$_", "Export location data as $format->{$_}",
+      [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/location_$_" ], # TODO: UNHACK!
+      { 'availability' => 'slice', 'no_menu_entry' => 1 }
+    ));
+  }
 }
 
 

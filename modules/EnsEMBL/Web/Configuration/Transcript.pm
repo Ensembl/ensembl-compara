@@ -468,6 +468,20 @@ sub populate_tree {
       map         EnsEMBL::Web::Component::Gene::HistoryMap/protein)],
       { 'availability' => 'history', 'concise' => 'ID History' }
   ));
+  
+  my $export_menu = $self->create_node( 'Export', "Export transcript data",
+     [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/transcript" ],
+     { 'availability' => 'transcript' }
+  );
+  
+  my $format = { fasta => 'FASTA' };
+  
+  foreach (keys %$format) {
+    $export_menu->append($self->create_subnode( "Export/$_", "Export transcript data as $format->{$_}",
+      [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/transcript_$_" ], # TODO: UNHACK!
+      { 'availability' => 'transcript', 'no_menu_entry' => 1 }
+    ));
+  }
 }
 
 # Transcript: BRCA2_HUMAN
