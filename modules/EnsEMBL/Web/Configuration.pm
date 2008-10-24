@@ -134,6 +134,8 @@ sub _ajax_zmenu {
 
 sub _global_context {
   my $self = shift;
+  return unless $self->{'page'}->can('global_context');
+  
   my $type = $self->type;
   my $co = $self->{object}->core_objects;
   return unless $co;
@@ -439,6 +441,8 @@ sub _configurator {
 
 sub _local_context {
   my $self = shift;
+  return unless $self->{'page'}->can('local_context');
+  
   my $hash = {}; #  $self->obj->get_summary_counts;
   $self->{'page'}->local_context->tree(    $self->{_data}{'tree'}    );
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} );
@@ -450,6 +454,8 @@ sub _local_context {
 
 sub _local_tools {
   my $self = shift;
+  return unless $self->{'page'}->can('local_tools');
+  
   my $obj = $self->{object};
 
   my $referer = $self->trim_referer( $ENV{'REQUEST_URI'} );
@@ -485,13 +491,8 @@ sub _local_tools {
                                 'config' => $config, '_referer' => $referer })
     );
     if( $vc->can_upload ) {
-      my $userdata = $obj->get_session->get_tmp_data;
-      my $caption = 'Add custom data to page';
-      if ($userdata || $ENV{'ENSEMBL_USER_ID'}) {
-        $caption = 'Add/manage custom data';
-      }
       $self->{'page'}->local_tools->add_entry(
-        'caption' => $caption,
+        'caption' => 'Add custom data to page',
         'class'   => 'modal_link',
         'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => 'Summary',
                                  '_referer' => $referer, '__clear' => 1 })
@@ -562,15 +563,16 @@ sub _context_panel {
 
 sub _content_panel {
   my $self   = shift;
+  
+  
   my $obj    = $self->{'object'};
-
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} );
   my $node          = $self->get_node( $action );
   return unless $node;
   my $title = $node->data->{'concise'}||$node->data->{'caption'};
      $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
      $title = join ' - ', '', $title, ( $obj ? $obj->caption : () );
-  $self->set_title( $title );
+  $self->set_title( $title ) if $self->can('title');
 
   my $previous_node = $node->previous;
   ## don't show tabs for 'no_menu' nodes
