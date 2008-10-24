@@ -1,13 +1,13 @@
 #transcripts_link { cursor: pointer; font-weight: bold; background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; padding: 0 0.5em; display: inline }
 #transcripts { width:42em; border-collapse: collapse; margin: 0.5em 0 0.5em 4em;  cursor: pointer; }
 #transcripts td { border: 1px solid black; margin: 0; text-align: center; width: 14em }
-#transcripts th { border: 1px solid black; margin: 0; text-align: center; width: 10em }
+#transcripts th { border: 1px solid black; margin: 0; text-align: center; width: 10em; white-space: nowrap }
 #transcripts .active { background-color:  [[TINT_BG]] }
 
 #locations_link { cursor: pointer; font-weight: bold; background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; padding: 0 0.5em; display: inline }
 #locations { width:30em; border-collapse: collapse; margin: 0.5em 0 0.5em 4em;  cursor: pointer;  }
 #locations td { border: 1px solid [[TINT_BORDER]]; margin: 0; text-align: center; width: 15em }
-#locations th { border: 1px solid [[TINT_BORDER]]; margin: 0; text-align: center; width: 15em }
+#locations th { border: 1px solid [[TINT_BORDER]]; margin: 0; text-align: center; width: 15em; white-space: nowrap }
 #locations .active { background-color:  [[TINT_BG]] }
 
 
