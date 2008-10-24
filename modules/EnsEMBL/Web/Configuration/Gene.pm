@@ -167,7 +167,7 @@ sub populate_tree {
 
   # External Data tree, including non-positional DAS sources
   my $all_das  = $ENSEMBL_WEB_REGISTRY->get_all_das( $self->{'object'}->species );
-  my @active_das = qw(DS_549);
+  my @active_das;# = qw(DS_549);
   my $ext_node = $self->create_node( 'External', 'External Data',
     [qw(external EnsEMBL::Web::Component::Gene::ExternalData)],
     { 'availability' => 'gene' }
