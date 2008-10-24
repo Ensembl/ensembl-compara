@@ -106,7 +106,6 @@ $pad    </dd>";
           foreach my $param (@cgi_params) {
             next if $param =~ /^time=/;
             next if $param =~ /^wizard/;
-            warn "OK parameter $param";
             push @ok_params, $param;  
           }
           $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.join(';', @ok_params);
