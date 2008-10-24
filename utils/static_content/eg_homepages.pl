@@ -193,9 +193,9 @@ sub generate_index_pages {
 	my @sp_list = @{$group_info{$sp_group}->{'species'}||[]};
 
 	foreach my $spp (@sp_list) {
-	    my $spdir = "$spgdir/$spp";
-	    my $sppdir = "$spgdir/".$species_info{$spp}->{'filename'};
-	    $sppdir or (warn "No filename for $spp" and next);
+	    $species_info{$spp}->{'filename'} or (warn "NO FN for $spp" && next);
+	    my $spdir = "$spgdir/".$species_info{$spp}->{'filename'};
+
 	    if( ! -e $spdir ){
 		warn "[INFO]: Creating species directory $spdir\n";
 		eval { mkpath($spdir) };
@@ -249,6 +249,12 @@ sub generate_entry_points {
 
 	my @sp_list = @{$group_info{$sp_group}->{'species'}||[]};
 	foreach my $spp (@sp_list) {
+	    if ( ! $species_info{$spp}->{'filename'}) {
+		warn "NO FN for $spp";
+		next;
+	    }
+#	    my $spdir = "$spgdir/".$species_info{$spp}->{'filename'};
+
 	    my $dbname = $species_info{$spp}->{db}->{NAME};
 	    if (! exists $entry_info{$dbname}) {
 		my $dbh = db_connect($species_info{$spp}->{db});
@@ -268,11 +274,11 @@ sub generate_entry_points {
 	    my @entries = @{$entry_info{$dbname}->{$sp_index}->{entries}||[]};
 	    push @{$species_info{$spp}->{toplevel}}, @entries;
 #	    warn Dumper \%entry_info;
-#	    warn "$spp : @entries \n";
+#	    warn "$spp : $sp_index : $dbname : @entries \n";
 
 	    my $sp_path = "$sp_group/$spp";
-	    my $spdir = sprintf("$spgdir/%s/ssi"), $species_info{$spp}->{'filename'};
-
+	    my $spdir = sprintf("%s/%s/ssi", $spgdir, $species_info{$spp}->{'filename'});
+	    warn "$spp ENTRIES to $spdir";
 	    if( ! -e $spdir ){
 		warn "[INFO]: Creating species directory $spdir\n";
 		eval { mkpath($spdir) };
@@ -341,7 +347,7 @@ sub generate_karyomaps {
 	my @sp_list = @{$group_info{$sp_group}->{'species'}||[]};
 	foreach my $spp (@sp_list) {
 	    my $sp_path = "$spgdir/$spp";
-	    my $spdir = sprintf("$spgdir/%s/ssi"), $species_info{$spp}->{'filename'};
+	    my $spdir = sprintf("$spgdir/%s/ssi", $spp); #$species_info{$spp}->{'filename'};
 #	    my $spdir = "$spgdir/$spp/ssi";
 
 	    if( ! -e $spdir ){
@@ -351,6 +357,9 @@ sub generate_karyomaps {
 		    print "Couldn't create $spdir: $@";
 		}
 	    }
+
+	    warn "$spp OUT to $spdir/karyomap.html";
+
 	    open SEARCH, ">$spdir/karyomap.html";
 
 	    # Output page
@@ -366,22 +375,21 @@ sub generate_karyomaps {
 
 <div class="karyomap">
 <map id="karyotypes" name="karyotypes">
-   <area shape="circle" coords="150, 150, 150" href="/$sp_group/Location/View?r=Chromosome:180000-200000"  alt="chromosome"  title="chromosome" /> 
+   <area shape="circle" coords="150, 150, 150" href="/$sp_group/$spp/Location/View?r=Chromosome:180000-200000"  alt="chromosome"  title="chromosome" /> 
 </map>
-<!--
-<img src="/img/species/karyotype_${spp}_Chromosome.png" usemap="#karyotypes" alt="Karyotype selector" />
--->
-
-
 		    );
 	
 	    my @toplevel_entries = @{$species_info{$spp}->{toplevel} || []};
+
+	    warn "$spp => @toplevel_entries";
+
 	    foreach my $e (@toplevel_entries) {
 		my ($t, $n) = split /:/, $e;
 
 		my $fname = "karyotype_${spp}_${n}";
-		$fname =~ s/[^\w|\_]/_/g;
+		$fname =~ s/[^\w]/_/g;
 
+warn "image : $fname";
 		print SEARCH qq{
 <table style="display:inline">
 <tr><td><b>$e</b></td></tr>
