@@ -7,14 +7,17 @@ sub get_block_features {
   ### block_features
 
   my ( $self, $db ) = @_;
-  unless ( $self->{'block_features'} ) {
-    my $feature_adaptor = $db->get_DataSetAdaptor();
-    if (!$feature_adaptor) {
-      warn ("Cannot get get adaptors: $feature_adaptor");
+  unless ( $self->{'block_features'} ) { warn $db->species; 
+    my $data_set_adaptor = $db->get_DataSetAdaptor(); 
+    if (!$data_set_adaptor) {
+      warn ("Cannot get get adaptors: $data_set_adaptor");
       return [];
     }
-     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('HISTONE') || [] ;
-    $self->{'block_features'} = $features;
+    #my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('HISTONE') || [] ;
+    ### Hack to display features for release 51
+    my $features = $data_set_adaptor->fetch_by_name('Vienna MEFf H3K4me3');
+    my @feat = ($features);
+    $self->{'block_features'} = \@feat;
   }
 
   my $colour = "blue";
@@ -28,43 +31,53 @@ sub draw_features {
   ### Draws wiggles if wiggle flag is 1
   ### Returns 1 if draws blocks. Returns 0 if no blocks drawn
 
-  my ($self, $db, $wiggle)= @_;
+  my ($self, $wiggle)= @_;
+  my $db =  $self->dbadaptor( 'mus_musculus', 'FUNCGEN' );
+  warn $db->_get_schema_build($db->dnadb());
+  warn $db->species;
   my ($block_features, $colour) = $self->get_block_features($db);
   my $drawn_flag = 0;
   my $drawn_wiggle_flag = $wiggle ? 0: "wiggle";
   my $slice = $self->{'container'};
   my $wiggle_colour = "contigblue1";
   foreach my $feature ( @$block_features ) {
-
+    warn $feature;        
     # render wiggle if wiggle
     if ($wiggle) {
-      foreach my $result_set  (  @{ $feature->get_displayable_supporting_sets() } ){
-		
-		next if $result_set->set_type ne 'result';
+      #foreach my $result_set  (  @{ $feature->get_displayable_supporting_sets() } ){
+	    foreach my $result_set  (  @{ $feature->get_supporting_sets() } ){
 
+		    next if $result_set->set_type ne 'result';
+        
+	      #get features for slice and experimtenal chip set
+	     # my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) };
+        my @features = @{ $result_set->get_ResultFeatures_by_Slice($slice) };
 
-	#get features for slice and experimtenal chip set
-	my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) };
-	next unless @features;
-	
-	$drawn_wiggle_flag = "wiggle";
-	@features   = sort { $a->score <=> $b->score  } @features;
-	my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0);
-	$self->draw_wiggle_plot(\@features, $wiggle_colour, $min_score, $max_score, $result_set->display_label);
+	      next unless @features;
+	      $drawn_wiggle_flag = "wiggle";
+	      @features   = sort { $a->score <=> $b->score  } @features;
+	      my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0);
+        #	$self->render_wiggle_plot(\@features, $wiggle_colour, $min_score, $max_score, $result_set->display_label);
+        $self->draw_wiggle_plot(
+          \@features,                      ## Features array
+          { 'min_score' => $min_score, 'max_score' => $max_score }
+        );
       }
       $self->draw_space_glyph() if $drawn_wiggle_flag;
     }
 
     # Block features
-    foreach my $fset ( @{ $feature->get_displayable_FeatureSets() }){
+  # foreach my $fset ( @{ $feature->get_displayable_product_FeatureSet() }){
+      my $fset = $feature->get_displayable_product_FeatureSet;
       my $display_label = $fset->display_label();
-      my $features = $fset->get_AnnotatedFeatures_by_Slice($slice ) ;
+      #my $features = $fset->get_AnnotatedFeatures_by_Slice($slice ) ;
+      my $features = $fset->get_Features_by_Slice($slice ) ;
       next unless @$features;
       $drawn_flag = "block_features";
       $self->draw_block_features( $features, $colour );
       $self->draw_track_name($display_label, $colour);
-    }
-  }
+   # }
+   }
 
   $self->draw_space_glyph() if $drawn_flag;
   my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
