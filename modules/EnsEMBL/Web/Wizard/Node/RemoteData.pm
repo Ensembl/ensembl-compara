@@ -137,7 +137,7 @@ sub validate_das {
   
   for my $source (@{ $sources }) {
     # If one or more source has missing details, need to fill them in and resubmit
-    unless ($source->coord_systems || $self->object->param('coords')) {
+    unless (@{ $source->coord_systems } || $self->object->param('coords')) {
       if ($self->object->param('has_species')) {
         $parameter->{'wizard_next'} = 'select_das_coords';
         return $parameter;
