@@ -414,59 +414,27 @@ sub _get_unique_source_name {
 sub add_das {
   my ( $self, $das ) = @_;
   
+  # If source is different to any thing added so far, add it
   if ( my $new_name = $self->_get_unique_source_name($das) ) {
     $das->logic_name( $new_name );
     $das->category  ( 'session' );
     $das->mark_altered;
-    # Attach the DAS source..
     $Das_sources_of{ ident $self }{ $new_name } = $das;
-    $self->update_configs_for_das( $das, qw(contigview geneview cytoview protview) );
-  } else {
-    return 0;
+    # Turn it on...
+    $self->update_configs_for_das( $das );
+    return  1;
   }
   
-  return 1;
+  # Otherwise skip it
+  return 0;
 }
 
 # TODO: rework interface with drawing code
 sub update_configs_for_das {
-  my( $self, $DAS, @configs ) = @_;
-
-  warn "....    @configs   .... DAS!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-  my %map = qw(
-    enable    enable
-    labelflag lflag
-    depth     dep
-    color     col
-  );
-  my $N = $DAS->logic_name;
-  my %scripts  = map {($_=>1)} @{$DAS->enable||[]};
-  foreach my $sc_name (@configs) {
-    my $sc = $self->getViewConfig( $sc_name, 1 );
-    foreach my $ic_name ( keys %{$sc->{'_image_config_names'}} ) {
-      next  unless $sc->{'_image_config_names'}{$ic_name} eq 'das';
-      $self->attachImageConfig( $sc_name, $ic_name );
-      my $T = $self->getImageConfig( $ic_name, $ic_name );
-      if( $scripts{ $sc_name } ) {
-        $T->set( "managed_extdas_$N", 'on' ,      'on' , 1);
-        $T->set( "managed_extdas_$N", 'manager' , 'das', 1);
-        foreach my $K (keys %map) {
-          $T->set( "managed_extdas_$N", $map{$K}, $DAS->$K, 1 );
-        }
-      } elsif( exists( $T->{'user'}->{$ic_name}->{$N} ) ) {
-        $T->reset( "managed_extdas_$N" );
-      }
-    }
-    my @das_tracks = $sc->get('das_sources');
-    my %das_tracks = map {$_=>1} @das_tracks;
-    ## NOW GENEVIEW / PROTVIEW saving
-    if( $scripts{$sc_name} && !$das_tracks{$N} ) {
-      $sc->set('das_sources',[@das_tracks,$N],1);
-    } elsif( ! $scripts{$sc_name} && $das_tracks{$N} ) {
-      delete $das_tracks{$N};
-      $sc->set('das_sources',[keys %das_tracks],1);
-    }
-  }
+  my( $self, $das ) = @_;
+  # activate the source in the display...
+  #    @scripts = @{ $das->enabled };
+  # OR $bool = $das->is_enabled_on( $script );
 }
 
 sub deepcopy {
