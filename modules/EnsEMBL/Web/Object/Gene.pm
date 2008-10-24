@@ -848,7 +848,7 @@ sub store_TransformedTranscripts {
 
 sub store_TransformedSNPS {
   my $self = shift;
-  my $valids = $self->valids;
+  my $valids = $self->valids; warn $valids;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
     my $T = $trans_obj->stable_id;
     my $snps = {};
@@ -1056,7 +1056,6 @@ sub get_fg_db {
       return [];
     }
   }
-
 return $fg_db;
 }
 
@@ -1092,7 +1091,6 @@ sub reg_factors {
   my $fg_db= $self->get_fg_db; 
   my $ext_feat_adaptor = $fg_db->get_ExternalFeatureAdaptor; 
   my $factors = $ext_feat_adaptor->fetch_all_by_Gene_FeatureSets($gene, $fsets, 1);
-   
  
  return $factors;   
 }
@@ -1100,69 +1098,15 @@ sub reg_factors {
 sub reg_features {
   my $self = shift; 
   my $gene = $self->gene;
-  my $fsets = $self->feature_sets; 
   my $fg_db= $self->get_fg_db; 
   my $slice = $self->get_Slice( @_ );
 
   my $reg_feat_adaptor = $fg_db->get_RegulatoryFeatureAdaptor; 
   my $feats = $reg_feat_adaptor->fetch_all_by_Slice($slice);
+  warn $feats;
   return $feats;
 
 }
-
-sub features {
-  my $self = shift;
-  my $gene_id = $self->stable_id; 
-
-  my $slice = $self->get_Slice( @_ ); 
-    my $fg_db = undef;
-    my $db_type  = 'funcgen';
-    unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      $fg_db = $slice->adaptor->db->get_db_adaptor($db_type);
-      if(!$fg_db) {
-        warn("Cannot connect to $db_type db");
-        return [];
-      }
-    }
-  
-  my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
-  my $external_Feature_adaptor = $fg_db->get_ExternalFeatureAdaptor;
-  my $f;
-  my $species = $ENV{'ENSEMBL_SPECIES'}; 
-     if ($species =~/Homo_sapiens/){
-         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-         my $cis_fset = $feature_set_adaptor->fetch_by_name('cisRED search regions');
-         my $miranda_fset = $feature_set_adaptor->fetch_by_name('miRanda miRNA');
-         my $vista_fset = $feature_set_adaptor->fetch_by_name('VISTA enhancer set');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, [$cisred_fset, $cis_fset, $miranda_fset, $vista_fset]);
-      } elsif ($species=~/Mus_musculus/){
-         my $cisred_fset = $feature_set_adaptor->fetch_by_name('cisRED group motifs');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, [$cisred_fset]);
-     } elsif ($species=~/Drosophila/){
-         my $tiffin_fset = $feature_set_adaptor->fetch_by_name('BioTIFFIN motifs');
-         my $crm_fset = $feature_set_adaptor->fetch_by_name('REDfly CRMs');
-         my $tfbs_fset = $feature_set_adaptor->fetch_by_name('REDfly TFBSs');
-         $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, [$tiffin_fset, $crm_fset, $tfbs_fset]);
-     }
-
-  my @features;
-  my $offset =  $slice->start -1 ;
-  my %seen_feat;
-   
-  foreach my $feat (@$f){
-    my $db_ent = $feat->get_all_DBEntries;
-    my $feat_id = $feat->display_label;
-     foreach my $dbe (@{$db_ent}){
-       if ($dbe->primary_id eq $gene_id ) {  
-        push (@features, $feat); 
-        }
-     }
-  }
-  my $feats = \@features;
-  return $feats || [];
-
-}
-
 
 =head2 vega_projection
 

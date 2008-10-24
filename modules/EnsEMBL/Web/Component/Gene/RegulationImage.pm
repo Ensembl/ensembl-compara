@@ -66,8 +66,6 @@ sub content {
   my $gene_track_name =$trans->[0]->default_track_by_gene;
 
   my $wuc = $object->get_imageconfig( 'generegview' );
- #    $wuc->{'geneid'} = $object->Obj->stable_id;
- #    $wuc->{'_draw_single_Gene'} = $object->Obj;
  
  $wuc->set_parameters({
        'container_width'   => $extended_slice->length,
@@ -83,19 +81,6 @@ sub content {
   $wuc->cache( 'feature_sets', $fsets);  
   $wuc->cache('gene', $object);
   
- 
-#     $wuc->set_parameters({ 
-#       'width',       900,
-#       'show_labels', 'yes',
-#     );
-#     $wuc->set( 'ruler',              'str',         $object->Obj->strand > 0 ? 'f' : 'r' );
-#     $wuc->set( $gene_track_name,     'on',          'on');
-#     $wuc->set( 'regulatory_regions', 'on',          'on');
-#     $wuc->set( 'regulatory_search_regions', 'on',   'on');
-#     $wuc->set( 'ctcf', 'on', 'on');
-#     $wuc->set( 'fg_regulatory_features', 'on',       'on');
-#     $wuc->set( 'fg_regulatory_features_legend', 'on', 'on');
-
   my $image    = $object->new_image( $extended_slice, $wuc, [] );
       $image->imagemap           = 'yes';
       $image->{'panel_number'} = 'top';
