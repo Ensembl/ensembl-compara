@@ -7,7 +7,7 @@ sub get_block_features {
   ### block_features
 
   my ( $self, $db ) = @_;
-  unless ( $self->{'block_features'} ) { warn $db->species; 
+  unless ( $self->{'block_features'} ) {  
     my $data_set_adaptor = $db->get_DataSetAdaptor(); 
     if (!$data_set_adaptor) {
       warn ("Cannot get get adaptors: $data_set_adaptor");
@@ -33,15 +33,12 @@ sub draw_features {
 
   my ($self, $wiggle)= @_;
   my $db =  $self->dbadaptor( 'mus_musculus', 'FUNCGEN' );
-  warn $db->_get_schema_build($db->dnadb());
-  warn $db->species;
   my ($block_features, $colour) = $self->get_block_features($db);
   my $drawn_flag = 0;
   my $drawn_wiggle_flag = $wiggle ? 0: "wiggle";
   my $slice = $self->{'container'};
   my $wiggle_colour = "contigblue1";
   foreach my $feature ( @$block_features ) {
-    warn $feature;        
     # render wiggle if wiggle
     if ($wiggle) {
       #foreach my $result_set  (  @{ $feature->get_displayable_supporting_sets() } ){
