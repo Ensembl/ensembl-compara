@@ -119,6 +119,7 @@ sub set {
   my $self = shift;
   my ($key, $value, $exptime, @tags) = @_;
   return unless $value;
+  
   #warn "EnsEMBL::Web::Cache->set($self->{namespace}$key)";
   
   ## TODO: kill the hack
