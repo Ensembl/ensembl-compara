@@ -99,9 +99,17 @@ $pad    </dd>";
       $name = CGI::escapeHTML( $name );
       if( $node->data->{'availability'} && $self->is_available( $node->data->{'availability'} )) {
         my $url = $node->data->{'url'};
-        $ENV{'QUERY_STRING'} =~ s/[\?;]time=\d+\.\d+//g;
         if (!$url) {
-          $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.$ENV{'QUERY_STRING'};
+          ## Strip out timestamps and any wizard parameters
+          my @ok_params;
+          my @cgi_params = split(';|&', $ENV{'QUERY_STRING'});
+          foreach my $param (@cgi_params) {
+            next if $param =~ /^time=/;
+            next if $param =~ /^wizard/;
+            warn "OK parameter $param";
+            push @ok_params, $param;  
+          }
+          $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.join(';', @ok_params);
         }
       	$name = sprintf '<a href="%s" title="%s">%s</a>', $url, $name, $name;
       } else {
