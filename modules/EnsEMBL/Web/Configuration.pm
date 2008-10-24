@@ -577,7 +577,7 @@ sub _content_panel {
   my $title = $node->data->{'concise'}||$node->data->{'caption'};
      $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
      $title = join ' - ', '', $title, ( $obj ? $obj->caption : () );
-  $self->set_title( $title ) if $self->can('title');
+  $self->set_title( $title );
 
   my $previous_node = $node->previous;
   ## don't show tabs for 'no_menu' nodes
