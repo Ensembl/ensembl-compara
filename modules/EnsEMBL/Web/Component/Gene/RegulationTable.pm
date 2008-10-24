@@ -25,7 +25,9 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my @factors =  @{$object->reg_factors};
-  my @reg_feats = @{$object->reg_features};
+  my $species = $object->species;
+  my @reg_feats;
+  if ($species eq 'Homo_sapiens' ){ @reg_feats = @{$object->reg_features};}
   my $object_slice = $object->Obj->feature_Slice;
   my $offset = $object_slice->start -1;
   my $object_strand = $object_slice->strand;
@@ -34,7 +36,7 @@ sub content {
  
   ## return if no regulatory factors ##
   my $size = @factors;
-  my $size2 = @reg_feats; 
+  my $size2 = @reg_feats; # warn $size2;
   
   if ($size < 1 && $size2 <1) {
     my $html = "<p><strong>There are no regulatory factors linked to this gene</strong></p>";
@@ -52,6 +54,7 @@ sub content {
    {'key' => 'seq', 'title' => 'Sequence ('. $str .' strand)', 'width' => '20%', 'align' => 'left'},
   ); 
 
+  my $data = 0;
   ## First process Ensembl Funcgen Reg. Factors ##
   foreach my $feature_obj (@reg_feats){
    my $row = {};
@@ -83,7 +86,7 @@ sub content {
      'type'   => $type,
      'analysis'  => $analysis
    };
-
+   $data = 1;
    $table->add_row($row);
   }
 
@@ -103,7 +106,8 @@ sub content {
    $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/featureview?r=$region;id=$feature_name;type=RegulatoryFactor;name=$feature">$feature_name</a>) : "unknown";
 
    $desc = $feature_obj->analysis->description;
-   if ($feature  =~/cisRED\sSearch\sRegion/){$desc =~s/cisRED\smotif\ssearch/cisRED Search Region/;}
+  # if ($feature  =~/cisRED\sSearch\sRegion/){$desc =~s/cisRED\smotif\ssearch/cisRED Search Region/;}
+  next if $feature =~/cisRED\sSearch\sRegion/; 
     # hack to get around problem with source data file for release 50
    if ($feature_name  =~/cra.*/){
          $desc =~s/cisRED\smotif\ssearch/cisRED atomic motifs/;
@@ -129,12 +133,16 @@ sub content {
      'type'      => $feature,
      'analysis'  => $description
    };
-
+   $data = 1;
    $table->add_row($row);
  }
 
- 
-return $table->render;
+  if ($data ==1) {
+     return $table->render;
+   } else {  
+    my $html = "<p><strong>There are no regulatory factors linked to this gene</strong></p>";
+    return $html;
+  } 
 }
 
 1;
