@@ -382,7 +382,7 @@ sub render {
     CGI::header( -type => "application/octet-stream", -attachment => "ensembl.txt.gz" );
     $self->page->render_TextGz;
   } else {
-    CGI::header;
+    CGI::header( -type=>"text/html",-charset=>'utf-8' );
     $self->static_links;
     $self->timer_push('Static links generated');
     $self->page->render;
