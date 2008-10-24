@@ -227,7 +227,7 @@ warn "SETTING MODAL DIALOG TO ". $webpage->page->{'_modal_dialog_'};
     ##  3) Content of panel (expansion of tree)
   $webpage->render;
   my $content = $webpage->page->renderer->content;
-  CGI::header( -type=>"text/html",-charset=>'utf-8' );;
+  #CGI::header( -type=>"text/html",-charset=>'utf-8' );
   print $content;
   return "Generated configuration panel ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'})";
 }
@@ -291,7 +291,7 @@ sub ingredient {
     timer_push( 'Rendered content cached' );
   }
 
-  CGI::header( -type=>"text/html",-charset=>'utf-8' );;
+  #CGI::header( -type=>"text/html",-charset=>'utf-8' );
   print $content;
   timer_push( 'Rendered content printed' );
   return "Generated magic ingredient ($ENV{'ENSEMBL_COMPONENT'})";
@@ -429,7 +429,7 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
       if $MEMD && !$webpage->has_a_problem && $ENSEMBL_WEB_REGISTRY->check_ajax;
   }
   
-  CGI::header( -type=>"text/html",-charset=>'utf-8' );;
+  #CGI::header( -type=>"text/html",-charset=>'utf-8' );
   print $content;
   return "Completing action";
 }
