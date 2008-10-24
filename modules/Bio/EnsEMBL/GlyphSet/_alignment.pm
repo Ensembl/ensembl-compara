@@ -20,8 +20,9 @@ sub feature_group {
 }
 
 sub feature_title {
-  my( $self, $f ) = @_;
-  return "External DB: ".$f->hseqname;
+  my( $self, $f,$db_name ) = @_;
+  $db_name ||= 'External Feature';
+  return "$db_name ".$f->hseqname;
 }
 
 sub features {
@@ -36,14 +37,14 @@ sub features {
 }
 
 sub href {
-### Links to /Location/Feature with type of 'OligoProbe'
+### Links to /Location/Genome
   my( $self, $f ) = @_;
+  my $r = $f->seq_region_name.':'.$f->seq_region_start.':'.$f->seq_region_end;
   return $self->_url({
-    'object' => 'Location',
-    'action' => 'Feature',
-    'fdb'    => $self->my_config('db'),
+    'action' => 'Genome',
     'ftype'  => $self->my_config('object_type') || 'DnaAlignFeature',
-    'fname'  => $f->seqname
+    'r'      => $r,
+    'id'     => $f->display_id,
   });
 }
 
@@ -94,9 +95,10 @@ sub render_normal {
 ## Get array of features and push them into the id hash...
   my @f = $self->features;
 
-  my $db           = $self->my_config('db');
-  my $external_dbs = $self->species_defs('databases')->{$db}{'external_dbs'}||{};
-
+  #get details of external_db - currently only retrieved from core since they should be all the same
+  my $db = 'DATABASE_CORE';
+#  my $db = 'DATABASE_'.uc($self->my_config('db'));
+  my $extdbs = $self->species_defs->databases->{$db}{'tables'}{'external_db'}{'entries'};
   foreach my $features ( @f ) {
     foreach my $f (
       map { $_->[2] }
@@ -108,8 +110,9 @@ sub render_normal {
       my $fgroup_name = $self->feature_group( $f );
       my $s =$f->start;
       my $e =$f->end;
+      my $db_name = $extdbs->{$f->external_db_id}{'db_name'};
       next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $e < 1 || $s > $length ;
-      push @{$id{$fgroup_name}}, [$s,$e,$f,int($s*$pix_per_bp),int($e*$pix_per_bp)];
+      push @{$id{$fgroup_name}}, [$s,$e,$f,int($s*$pix_per_bp),int($e*$pix_per_bp),$db_name];
     }
   }
 ## Now go through each feature in turn, drawing them
@@ -128,6 +131,7 @@ sub render_normal {
     my @F          = @{$id{$i}}; # sort { $a->[0] <=> $b->[0] } @{$id{$i}};
     my $START      = $F[0][0] < 1 ? 1 : $F[0][0];
     my $END        = $F[-1][1] > $length ? $length : $F[-1][1];
+    my $db_name    = $F[0][5];
     my $bump_start = int($START * $pix_per_bp) - 1;
     my $bump_end   = int($END * $pix_per_bp);
     my $row        = $self->bump_row( $bump_start, $bump_end );
@@ -142,7 +146,7 @@ sub render_normal {
       'x'     => $F[0][0]> 1 ? $F[0][0]-1 : 0,
       'width' => 0,
       'y'     => 0,
-      'title' => $self->feature_title($F[0][2])
+      'title' => $self->feature_title($F[0][2],$db_name)
     });
     my $X = -1e8;
     foreach my $f ( @F ){ ## Loop through each feature for this ID!
