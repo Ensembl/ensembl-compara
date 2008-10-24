@@ -301,7 +301,7 @@ sub load_tracks {
     next unless exists $dbs_hash->{$db};
     my $key = lc(substr($db,9));
     ## Configure 
-    $self->add_regulation_feature(    $key,$dbs_hash->{$db}{'tables'} ); # Add to regulation_feature tree
+    $self->add_regulation_feature(    $key,$dbs_hash->{$db}{'tables'}, $species ); # Add to regulation_feature tree
   }
   foreach my $db ( @{$self->species_defs->variation_like_databases||[]} ) {
     next unless exists $dbs_hash->{$db};
@@ -316,7 +316,7 @@ sub load_configured_das {
   ## Now we do the das stuff - to append to menus (if the menu exists!!)
   my $internal_das_sources = $self->species_defs->get_all_das;
   foreach my $source ( sort { ($a->caption||$a->label) cmp ($b->caption||$b->label) } values %$internal_das_sources ) {
-    warn "D: ", $source->caption||$source->label;
+    #warn "D: ", $source->caption||$source->label;
     $self->add_das_track( $source->category,  $source );
   }
 }
@@ -1007,66 +1007,116 @@ sub add_tracks {
 #----------------------------------------------------------------------#
 
 sub add_regulation_feature { ## needs configuring so tracks only display if data in species fg_database
-  my( $self, $key, $hashref ) = @_;
+  my( $self, $key, $hashref, $species ) = @_;
   return unless $self->get_node( 'functional' );
   my ( $keys, $data) = $self->_merge( $hashref->{'result_set'}); foreach ( keys %$data) {warn $_;}
-  return  unless $hashref->{'result_set'}{'rows'} > 0;
+  return  unless $hashref->{'feature_set'}{'rows'} > 0;
   my $menu = $self->get_node( 'functional' );
-  $menu->append( $self->create_track('fg_regulatory_features_'.$key, sprintf("Reg. Features"),{
-    'db'          => $key,
-    'glyphset'    => 'fg_regulatory_features',
-    'sources'     => undef,
-    'strand'      => 'r',
-    'labels'      => 'on',
-    'depth'       => 10,
-    'colourset'   => 'fg_regulatory_features', 
-    'description' => 'Features from Ensembl Regulatory build',
-    'display'     => 'default'
-  }));
-  $menu->append( $self->create_track('regulatory_search_regions_'.$key, sprintf("cisRED Search Regions"),{
-    'db'          => $key,
-    'glyphset'    => 'regulatory_search_regions',
-    'sources'     => undef,
-    'strand'      => 'r',
-    'labels'      => 'on',
-    'depth'       => 0.5,
-    'colourset'   => 'regulatory_search_regions',
-    'description' => 'cisRED Search regions',
-    'display'     => 'off'
-  }));
-  $menu->append( $self->create_track('regulatory_regions_'.$key, sprintf("cisRED/miRANDA"),{
-    'db'          => $key,
-    'glyphset'    => 'regulatory_regions',
-    'sources'     => undef,
-    'strand'      => 'r',
-    'labels'      => 'on',
-    'depth'       => 1.5,
-    'colourset'   => 'synteny',
-    'description' => 'cisRED/miRANDA',
-    'display'     => 'off'
-  }));
-  $menu->append( $self->create_track('ctcf_'.$key, sprintf("ctcf"),{
-    'db'          => $key,
-    'glyphset'    => 'ctcf',
-    'sources'     => undef,
-    'strand'      => 'r',
-    'labels'      => 'on',
-    'colourset'   => 'ctcf',
-    'description' => 'ctcf',
-    'display'     => 'off'
-  }));
-  $menu->append( $self->create_track('histone_modifications_'.$key, sprintf("histone_modifications"),{
-    'db'          => $key,
-    'glyphset'    => 'histone_modifications',
-    'sources'     => undef,
-    'strand'      => 'r',
-    'labels'      => 'on',
-    'colourset'   => 'ctcf',
-    'description' => 'histone_modifications',
-#    'display'     => 'off'
-  }));
+  if ($species eq 'Homo_sapiens') {
+    $menu->append($self->create_track('fg_regulatory_features_'.$key, sprintf("Reg. Features"),{
+      'db'          => $key,
+      'glyphset'    => 'fg_regulatory_features',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'depth'       => 10,
+      'colourset'   => 'fg_regulatory_features',
+      'description' => 'Features from Ensembl Regulatory build',
+      'display'     => 'normal'
+    }));
+    $menu->append($self->create_track('regulatory_search_regions_'.$key, sprintf("cisRED Search Regions"),{
+      'db'          => $key,
+      'glyphset'    => 'regulatory_search_regions',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'depth'       =>  0.5,
+      'colourset'   => 'regulatory_search_regions',
+      'description' => 'cisRED Search regions',
+      'display'     => 'off'
+    }));
+    $menu->append( $self->create_track('regulatory_regions_'.$key, sprintf("cisRED/miRanda/VISTA"),{
+      'db'          => $key,
+      'glyphset'    => 'regulatory_regions',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'depth'       =>  0.5,
+      'colourset'   => 'synteny',
+      'description' => ' cisRED motifs; VISTA enhancer set; miRanda miRNA',
+      'display'     => 'off'
+    }));
+    $menu->append($self->create_track('ctcf_wiggle_'.$key, sprintf("CTCF signal map"),{
+      'db'          => $key,
+      'glyphset'    => 'ctcf',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'colourset'   => 'ctcf',
+      'description' => 'Nessie_NG_STD_2_ctcf_ren_BR1',
+      'renderers'      => ['off'=>'Off','signal_map'=>'Signal map'],
+     'display'     => 'off'
+    }));
+    $menu->append( $self->create_track('ctcf_blocks_'.$key, sprintf("CTCF blocks"),{
+      'db'          => $key,
+      'glyphset'    => 'ctcf',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'colourset'   => 'ctcf',
+      'description' => 'CTCF',
+      'display'     => 'off',
+      'renderers'   => [qw(off Off compact Normal)]
+    }));
+    $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', {'strand' => 'r'});
+  } elsif ($species eq 'Mus_musculus'){
+    $menu->append($self->create_track('regulatory_search_regions_'.$key, sprintf("cisRED Search Regions"),{
+      'db'          => $key,
+      'glyphset'    => 'regulatory_search_regions',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'depth'       =>  0.5,
+      'colourset'   => 'regulatory_search_regions',
+      'description' => 'cisRED search regions',
+      'display'     => 'off'
+    }));
+    $menu->append( $self->create_track('regulatory_regions_'.$key, sprintf("cisRED Motifs"),{
+      'db'          => $key,
+      'glyphset'    => 'regulatory_regions',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'depth'       =>  0.5,
+      'colourset'   => 'synteny',
+      'description' => 'cisRED motifs',
+      'display'     => 'off'
+    }));
+    $menu->append($self->create_track('histone_modifications_'.$key, sprintf("Histone modifications"),{
+      'db'          => $key,
+      'glyphset'    => 'histone_modifications',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'colourset'   => 'ctcf',
+      'description' => 'Histone modifications - Vienna MEFf H3K4me3',
+      'renderers'      => ['off'=>'Off','signal_map'=>'Signal map'],
+      'display'     => 'off'
+    }));
+  }elsif ($species eq 'Drosophila_melanogaster'){
+    $menu->append( $self->create_track('regulatory_regions_'.$key, sprintf("'REDfly/BioTIFFIN"),{
+      'db'          => $key,
+      'glyphset'    => 'regulatory_regions',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'depth'       =>  0.5,
+      'colourset'   => 'synteny',
+      'description' => 'REDfly CRMs, REDfly TFBSs and BioTIFFIN motifs.',
+      'display'     => 'off'
+    }));
 
-  $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', {'strand' => 'r'});
+  }
 return;
 }
 
