@@ -6,13 +6,9 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::File::Text;
-use EnsEMBL::Web::Wizard::Node;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::DASConfig;
-require Bio::EnsEMBL::ExternalData::DAS::Coordinator;
-use Data::Dumper;
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(@NON_GENOMIC_COORDS);
 use base qw(EnsEMBL::Web::Wizard::Node);
 
 my $DAS_DESC_WIDTH = 120;
@@ -223,19 +219,19 @@ sub select_das_coords {
       ! $_->is_top_level
     } @{ $csa->fetch_all };
     for my $cs (@coords) {
+      $cs = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_hashref($cs);
       $self->add_element( 'type'    => 'CheckBox',
                           'name'    => 'coords',
-                          'value'   => (join ':', $cs->name, $cs->version, $species),
-                          'label'   => (join ' ', ucfirst $cs->name, $cs->version) );
+                          'value'   => $cs->to_string,
+                          'label'   => $cs->label );
     }
   }
   
   $self->add_element( 'type' => 'SubHeader', 'value' => "Gene & Protein" );
-  for my $cs (values %Bio::EnsEMBL::ExternalData::DAS::Coordinator::NON_GENOMIC_COORDS) {
-    my ($auth, $type) = split '_', $cs->name;
+  for my $cs (@NON_GENOMIC_COORDS) {
     $self->add_element( 'type'    => 'CheckBox',
                         'name'    => 'coords',
-                        'value'   => (join ':', $cs->name, $cs->version, $cs->species, $cs->label),
+                        'value'   => $cs->to_string,
                         'label'   => $cs->label );
   }
   
