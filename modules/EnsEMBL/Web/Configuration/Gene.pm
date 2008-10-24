@@ -189,18 +189,18 @@ sub populate_tree {
   ));
 
   my $export_menu = $self->create_node( 'Export', "Export gene data",
-     [qw(sequence       EnsEMBL::Web::Component::Gene::GeneExport)],
+     [qw(sequence EnsEMBL::Web::Component::Gene::GeneExport)],
      { 'availability' => 'gene' }
   );
   
   my $format = { fasta => 'FASTA' };
+  
   foreach (keys %$format) {
     $export_menu->append($self->create_subnode( "Export/$_", "Export gene data as $format->{$_}",
-      [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/$_" ],
+      [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/gene_$_" ],
       { 'availability' => 'gene', 'no_menu_entry' => 1 }
     ));
   }
-
 }
 
 sub global_context { return $_[0]->_global_context; }
