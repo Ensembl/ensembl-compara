@@ -43,15 +43,25 @@ sub init {
   }
 
   $self->modify_configs(
-    [qw(regulation_feature)],
-    {qw(display on)}
+    [qw(regulatory_search_regions_funcgen)],
+    {qw(display normal)}
   );
-
   $self->modify_configs(
-    [qw(histone_modifications)],
-    {qw(display off)}
+    [qw(regulatory_regions_funcgen)],
+    {qw(display normal)}
   );
-
+  $self->modify_configs(
+    [qw(ctcf_wiggle_funcgen)],
+    {qw(display signal_map)}
+  );
+  $self->modify_configs(
+    [qw(ctcf_blocks_funcgen)],
+    {qw(display compact)}
+  );
+  $self->modify_configs(
+    [qw(histone_modifications_funcgen)],
+    {qw(display signal_map)}
+  );
   $self->modify_configs(
     [qw(gene_legend)],
     {qw(display off)}
