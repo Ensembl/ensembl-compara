@@ -1,13 +1,26 @@
 package Bio::EnsEMBL::GlyphSet_generic;
 
 use strict;
+use warnings;
+no warnings 'uninitialized';
 use base qw(Bio::EnsEMBL::GlyphSet);
 
-use Sanger::Graphics::Bump;
-
+use Data::Dumper;
 
 sub features {
-  return [];
+  return {
+    'f_count'    => 0,
+    'g_count'    => 0,
+    'merge'      => 0, ## Merge all logic names into one track! note different from other systems!!
+    'groups'     => {},
+    'f_styles'   => {},
+    'g_styles'   => {},
+    'errors'     => [],
+    'ss_errors'  => [],
+    'urls'       => [],
+    'ori'        => {},
+    'max_height' => 0
+  };
 } 
 
 use Bio::EnsEMBL::Feature;
@@ -16,14 +29,57 @@ sub _draw_features {
   my( $self, $ori, $features, $render_flags ) = @_;
 
   $self->_init_bump();
-  my $ppbp    = $self->scalex;
-  my $seq_len = $self->{'container'}->length;
-  my $h       = $features->{'max_height'} || 8;
+
+  my $strand = $self->strand;
+  my %can_hash;
+  my $ppbp    = $self->{ppbp} = $self->scalex;
+  $self->{bppp} = 1 / $ppbp; 
+  my $seq_len = $self->{'seq_len'} = $self->{'container'}->length;
+#  my $h       = $self->{'h'}       = $features->{'max_height'} || 8; ## We may need to hack this to make it specific to orientation later! needs hacking in _das.pm
+
+  $self->{'h'} = 0;
   my $colour = $ori ? 'blue' : 'green';
-  foreach my $lname    ( sort keys %{$features->{'groups'}} ) {
+
+  foreach my $lname   ( sort keys %{$features->{'groups'}} ) {
     foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
       my $group = $features->{'groups'}{$lname}{$gkey}{$ori};
-      next unless $group;
+      next unless $group;                                          ## No features from this group on this strand!
+      next if $group->{'end'} < 1 || $group->{'start'} > $seq_len; ## All features in group exist outside region!
+
+## Now loop through all features and get the extents of features - we will need this later for bumping! and joining!
+
+      my $g_s = $features->{'g_styles'}{$lname}{$gkey};             ## Get the group style...
+      my $to_join = lc( $g_s->{'symbol'} ) ne 'hidden';
+
+      foreach my $style_key ( keys %{$group->{'features'}} ) {
+        my $f_s  = $features->{'f_styles'}{$lname}{$style_key};
+        my $to_bump = $f_s->{'style'}{'bump'} eq 'yes';             ## Bump if style bump is set!
+        my $fn_c = "composite_extent_".$f_s->{'style'}{'symbol'};
+        my $fn_g = "extent_".$f_s->{'style'}{'symbol'};
+        $can_hash{$fn_c} ||= $self->can($fn_c);
+        $can_hash{$fn_g} ||= $self->can($fn_g) || '-';
+        $fn_g = 'extent_box' if $can_hash{$fn_g} eq '-'; ## default to drawing a box!!
+        if( $can_hash{$fn_c} ) { ## This is one of the histogram style displays and the render fn has been defined!
+          $self->$fn_c( $group, $f_s->{style} );
+        } else {
+          foreach my $f ( @{$group->{'features'}{$style_key}} ) { # Compute the extent of each glyph - and add to extent of group if not bumped!
+## Only pass the glyph if we are going to put this glyph in a composite
+            $self->$fn_g( $to_join && !$to_bump ? $group : undef, $f, $f_s->{style} );
+          }
+        }
+        $group->{height} = $g_s->{style}{height} if $g_s->{style}{height} > $group->{height} && $group->{extent_start};
+        $self->{h} = $g_s->{style}{height} if $g_s->{style}{height} > $self->{h} && $group->{extent_start};
+      }
+    }
+  }
+  $self->{h} ||= 12;
+## All groups and features now have two additional values...
+## -> extent_start and extent_end so we know where to draw the boxes....
+
+  foreach my $lname   ( sort keys %{$features->{'groups'}} ) {
+    foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
+      my $group = $features->{'groups'}{$lname}{$gkey}{$ori};
+      next unless $group; ### May not have group on this strand!!
 ## We now have a feature....
 ## Now let us grab all the features in the group as we need to work out the width of the "group"
 ## which may be wider than the feature if
@@ -33,43 +89,156 @@ sub _draw_features {
 
 ## Start with looking for special "aggregator glyphs"
 #       foreach my $style_key ( keys %{ $group->{'features'} } ) {
-#         if( $features->{'f_styles'}{$style_key}{'symbol'} =~ /^(histogram|tiling)$/ ) { ## We need to prepend width with of label!
-#
-#         }
-#       }
+      my $g_s = $features->{'g_styles'}{$lname}{$gkey};             ## Get the group style...
+      my @boxes;
+      my $to_join = lc( $g_s->{'symbol'} ) ne 'hidden';
+      my $composite_flag   = 0;
+      my $score_based_flag = 0;
+      $group->{height} ||= $self->{h};
+      foreach ( keys %{$group->{'features'}} ) {
+        $score_based_flag = 1        if $features->{'f_styles'}{$lname}{$_}{'use_score'};               ## Composite if it is a graph!
+        $composite_flag ||= $to_join if $features->{'f_styles'}{$lname}{$_}{'style'}{'bump'} ne 'yes'; ## Composite if the features are to be bumped && linked!
+      }
+      my($s,$e) = ($group->{extent_start}, $group->{extent_end});
+      my $composite;
+      if( $composite_flag || $score_based_flag ) {
+        my $row = $self->bump_row( $group->{'start'}*$ppbp, $group->{'end'}*$ppbp );
+        $group->{'y'} = - $strand * $row * ($self->{h}+2);
+        $composite =  $self->Space({ ## Just draw a composite at the moment!
+          'absolutey' => 1,
+          'x'         => $s-1,
+          'width'     => $e-$s+1,
+          'y'         => $group->{y},
+          'height'    => $self->{h},
+          'colour'    => 'darkkhaki',
+          'bordercolour' => 'green',
+          'title'     => $group->{label}.' : '.$group->{id}
+        }); ## Create a composite for the group and bump it!
+      }
 
-      next if $group->{'end'} < 1 || $group->{'start'} > $seq_len; ## Can't draw group!
-      my $s = $group->{'start'}<1?1:$group->{'start'};
-      my $e = $group->{'end'}  >$seq_len?$seq_len:$group->{'end'};
-      my $row = $self->bump_row( $group->{'start'}*$ppbp, $group->{'end'}*$ppbp );
-      $self->push($self->Rect({
-        'absolutey' => 1,
-        'x'         => $s,
-        'width'     => $e-$s+1,
-        'y'         => $row * ($h+2),
-        'height'    => $h,
-        'colour'    => 'papayawhip',
-        'title'     => $group->{label}.' : '.$group->{id}
-      }));
-      foreach my $style_key ( sort { $features->{'f_style'}{$a}{'style'}{'zindex'} <=> $features->{'f_style'}{$b}{'style'}{'zindex'} }  keys %{$group->{'features'}} ) {
-        foreach my $f ( @{$group->{'features'}{$style_key}} ) {
-          my $fs = $f->start;
-          my $fe = $f->end;
-          next if $fe < 1;
-          next if $fs > $seq_len;
-          $fs = 1        if $fs < 1;
-          $fe = $seq_len if $fs < 1;
-
-          $self->push($self->Rect({
-           'absolutey' => 1,
-           'x'         => $fs,
-           'width'     => $fe-$fs+1,
-           'y'         => $row * ($h+2),
-           'height'    => $h,
-           'bordercolour' => 'red',
-          }));
+      foreach my $style_key (
+        map  { $_->[2]                                    }
+        sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] }
+        map  {[
+          $features->{'f_styles'}{$lname}{$_}{'style'}{'zindex'}||0, ## Render in z-index order!
+          $features->{'f_styles'}{$lname}{$_}{'use_score'}      ||0, ## Render non-"group features" first!
+          $_                                                 ## What we want the key!!
+        ]}
+        keys %{$group->{'features'}}
+      ) {
+## Grab the style for the group of features!
+        my $f_s     = $features->{'f_styles'}{$lname}{$style_key};
+        $f_s->{style}{height}||=$self->{h};
+        my $to_bump = lc($f_s->{'style'}{'bump'}) eq 'yes';
+       
+        my $fn_c = "composite_".lc($f_s->{'style'}{'symbol'});
+        my $fn_g = "glyph_".lc($f_s->{'style'}{'symbol'});
+        $can_hash{$fn_c} ||= $self->can($fn_c);
+        $can_hash{$fn_g} ||= $self->can($fn_g) || '-' ; ## Default to drawing a box!!
+        $fn_g = 'glyph_box' if $can_hash{$fn_g} eq '-';
+        if( $can_hash{$fn_c} ) { ## This is one of the histogram style displays and the render fn has been defined!
+          $self->$fn_c( $group, $group->{'features'}{$style_key}, $f_s->{style} );
+        } else {
+          if( $to_bump || !$to_join ) { ## We are bumping this feature so do not group it!
+            foreach my $f ( ## Draw the features in order!
+              sort { $a->start <=> $b->start }
+              @{$group->{'features'}{$style_key}}
+            ) { ## Draw in order!!
+              ## Create glyph and bump it!!
+              next unless defined $f->{'extent_start'};
+              $f->{'y'} = 0;
+              if( $to_bump ) {
+                my $row = $self->bump_row( $f->{'extent_start'}*$ppbp, $f->{'extent_end'}*$ppbp );
+                $f->{'y'} = - $strand * $row * ($self->{h}+2);
+                ## reposition!
+              }
+              $self->push( $self->Space({
+                'x'     => $f->{extent_start}-1,
+                'width' => $f->{extent_end}-$f->{extent_start}+1,
+                'y'     => $f->{'y'},
+                'height' => $self->{'h'},
+                'absolutey' => 1
+              }));
+              $self->$fn_g( undef, $f, $f_s->{'style'});
+            }
+         } else {
+            ## We are grouping these features!!
+            foreach my $f ( ## Draw the features in order!
+              sort { $a->start <=> $b->start }
+              @{$group->{'features'}{$style_key}}
+            ) { ## Draw in order!!
+              next unless $f->{extent_start};
+              $self->$fn_g( $group, $f, $f_s->{'style'});
+              my($s,$e) = ($f->{extent_start},$f->{extent_end});
+              if( @boxes && ( $s >= $boxes[-1][0] && $s <= $boxes[-1][1]+1 ) ) { ## If it overlaps of buts! [int based!]
+                $boxes[-1][1] = $e if $e > $boxes[-1][1];
+              } else {
+                push @boxes, [ $s,$e ];
+              }
+            }
+          }
         }
       }
+      my @boxes_2;
+      if( @boxes ) {
+        @boxes = sort { $a->[0] <=> $b->[0] } @boxes;
+        my $t = shift @boxes;
+        @boxes_2 = ($t);
+        foreach (@boxes) {
+          if( $_->[0] >= $boxes_2[-1][0] && $_->[1] <= $boxes_2[-1][1]+1 ) { ## If it overlaps or buts! [int based!]
+            $boxes_2[-1][1] = $_->[1];
+          } else {
+            push @boxes_2, $_;
+          }
+        }
+      }
+      if( $composite_flag && ! $score_based_flag ) {
+        my $y_pos = $group->{y} + $self->{h}/2;
+        if( $boxes_2[0][0] > 1 && $group->{'start'} <= 1 ) {
+## Draw a glyph to the left! ( 1 -> $boxes_2[0][0] );
+          $self->push($self->Line({
+            'x'         => 0,
+            'width'     => $boxes_2[0][0]-1,
+            'y'         => $y_pos,
+            'height'    => 0,
+            'absolutey' => 1,
+            'dotted'    => 1,
+            'colour'    => $g_s->{style}{'fgcolor'}
+          }));
+        }
+        if( $boxes_2[-1][1] < $seq_len && $group->{'end'} >= $seq_len ) {
+## Draw a glyph to the right! ( $boxes_2[-1][1] -> $seq_len );
+          $self->push($self->Line({
+            'x'         => $boxes_2[-1][1],
+            'width'     => $seq_len - $boxes_2[-1][1]-1,
+            'y'         => $y_pos,
+            'height'    => 0,
+            'absolutey' => 1,
+            'dotted'    => 1,
+            'colour'     => $g_s->{style}{'fgcolor'}
+          }));
+        }
+## Draw a glyph between pairs!
+        my $t = shift @boxes_2;
+#warn Data::Dumper::Dumper( $g_s )," ";
+        foreach(@boxes_2) {
+## Draw a glyph from ( $t->[-1] - $_->[0] );
+          my $f = $self->gen_feature({
+            'start'  => $t->[1]+1,
+            'end'    => $_->[0]-1,
+            'strand' => $ori 
+          });
+          $f->{'y'}            = $group->{'y'};
+          $f->{'extent_start'} = $t->[1]+1;
+          $f->{'extent_end'}   = $_->[0]-1;
+          my $method = "glyph_".$g_s->{'style'}{'symbol'};
+          $method = "glyph_box" unless $self->can($method);
+          $self->$method( undef, $f, $g_s->{'style'} );
+
+          $t = $_;
+        }
+      } 
+      $self->push($composite) if $composite;
     }
   }
 }
@@ -105,7 +274,7 @@ sub render_normal {
 
   if( @{$features->{'errors'}} ) { ## If we have errors then we will uniquify and sort!
     my %saw = map { ($_,1) } @{$features->{'errors'}};
-    $self->errorTrack( $_, undef, $self->{'y_offset'}+=12 ) foreach sort keys %saw;
+    $self->errorTrack( $_, undef, $self->{'y_offset'}+=12 ) foreach grep {$_} sort keys %saw;
   }
 
   ## Draw stranded features first!!
@@ -121,811 +290,726 @@ sub render_normal {
 
 ## Two sorts of renderer! - composite renderers - work on every element in the collection!
 
-sub extent_histogram {
+sub composite_extent_histogram {
   my($self,$g,$st) = @_;
+  $self->composite_extent_gradient($g,$st);
 }
 
 sub composite_histogram {
   my($self,$g,$f_ref,$st) = @_; ## These have passed in the group + all the features in the group!
+
+  my $cp = $self->_colour_points($st);
+
+  my $strand = $self->strand;
+  my $l = $self->{seq_len};
+  my $min   = $st->{'min'};
+  my $max   = $st->{'max'};
+  my $range = $max-$min;
+  my $y     = $g->{'y'}+($self->{'h'}-$st->{'height'})/2;
+  my $sf    = $st->{'height'}/$range;
+
+  foreach my $f ( sort { $a->start <=> $b->start } @{ $f_ref } ) {
+    my($s,$e) = ($f->start,$f->end);
+    next if $e < 1;
+    last if $s > $l;
+    $s = 1 if $s < 1;
+    $e = $l if $e >$l;
+    my $v = ($f->score-$min)/$range;
+    my $c = $self->{'config'}{_colourmap}->hex_by_rgb( $self->_colour( $v, $cp ) );
+    my( $o, $h ) = $f->score < $min ? (0,              -$min)
+                 : $f->score > $max ? (-$min,           $max)
+                 : $f->score < 0    ? (-$min+$f->score,-$f->score)
+                 :                    (-$min,           $f->score)
+                 ;
+    
+    my $y_x = $y + ( $strand>0 ? $o : ($range-$o-$h) )*$sf;
+    $self->push($self->Rect({
+      'height' => $sf*$h,
+      'x'      => $s-1,
+      'width'  => $e-$s+1,
+      'y'      => $y_x,
+      'colour'  => $c,
+      'absolutey' => 1
+    }));
+  }
+  return ();
+  
 }
 
-sub extent_gradient {
+sub composite_extent_gradient {
   my($self,$g,$st) = @_;
-  return ($g->{start},$g->{end});
+  $g->{'extent_start'} ||= $g->{'start'} < 1                  ? 1           : $g->{'start'};
+  $g->{'extent_end'}   ||= $g->{'end'}   < $self->{'seq_len'} ? $g->{'end'} : $self->{'seq_len'};
+  $g->{'height'}       = $st->{height}   if $st->{height} > $g->{height};
+  $self->{h}           = $st->{height}   if $st->{height} > $self->{h};
+}
+
+sub _colour_points {
+  my($self,$st) = @_;
+
+  my @colour_points ;
+  foreach(1..3) {
+    my @c = $self->{'config'}{_colourmap}->rgb_by_name( $st->{"color$_"}, 1 );
+    push @colour_points, \@c if @c;
+  }
+  push @colour_points, [0,255,0]  unless @colour_points;
+  return \@colour_points;
+}
+
+sub _colour {
+  my( $self, $val, $cps ) = @_;
+  my $divisions = @$cps - 1;
+  return $cps->[0]  unless $divisions;
+  return $cps->[0]  if $val <= 0;
+  return $cps->[-1] if $val >= 1;
+  my $division = int($val * $divisions);
+  my $o        = $val - $division/$divisions;
+  return [ map { $cps->[$division][$_]*(1-$o) + $cps->[$division+1][$_] * $o } (0..2) ];
 }
 
 sub composite_gradient {
   my($self,$g,$f_ref,$st) = @_;
+
+  my $cp = $self->_colour_points($st);
+
+  my $l = $self->{seq_len};
+  my $min = $st->{'min'};
+  my $range = $st->{'max'}-$min;
+  my $y     = $g->{'y'}+($self->{'h'}-$st->{'height'})/2;
+
+  foreach my $f ( sort { $a->start <=> $b->start } @{ $f_ref } ) {
+    my($s,$e) = ($f->start,$f->end);
+    next if $e < 1;
+    last if $s > $l;
+    $s = 1 if $s < 1;
+    $e = $l if $e >$l;
+    my $c = $self->{'config'}{_colourmap}->hex_by_rgb( $self->_colour( ($f->score-$min)/$range, $cp ) );
+    $self->push($self->Rect({
+      'height' => $st->{'height'},
+      'x'      => $s-1,
+      'width'  => $e-$s+1,
+      'y'      => $y,
+      'colour'  => $c,
+      'absolutey' => 1
+    }));
+  }
+  return ();
 }
 
-sub extent_lineplot {
+sub composite_extent_lineplot {
   my($self,$g,$st) = @_;
-  return $self->extent_histogram($g,$st);
+  return $self->composite_extent_histogram($g,$st);
 }
 
 sub composite_lineplot {
   my($self,$g,$f_ref,$st) = @_;
+  my $cp = $self->_colour_points($st);
 
+  my $strand = $self->strand;
+  my $l = $self->{seq_len};
+  my $min   = $st->{'min'};
+  my $max   = $st->{'max'};
+  my $range = $max-$min;
+  my $y     = $g->{'y'}+($self->{'h'}-$st->{'height'})/2;
+  my $sf    = $st->{'height'};
+  my @q = @{$f_ref};
+  my $t = shift @q;
+  my $start_x = ($t->start+$t->end-1)/2;
+  my $start_y = ($t->score-$min)/$range;
+
+  foreach my $f ( @{ $f_ref } ) {
+    my $end_x = ($f->start+$f->end-1)/2;
+    my $end_y = ($f->score-$min)/$range;
+
+    next if $end_x   < 0;
+    last if $start_x >= $l;
+    my $co = $self->{'config'}{_colourmap}->hex_by_rgb( $self->_colour( ($end_y+$start_y)/2, $cp ) );
+    my( $a,$b,$c,$d) = ($start_x,$start_y,$end_x,$end_y);
+    if( $a < 0 ) {
+      $b -= - $a * ( $d - $b ) / ( $c - $a );
+      $a  = 0;
+    }
+    if( $d > $l ) {
+      $d = $b + ( $l - $a ) * ( $d - $b ) / ( $c - $a );
+      $c = $l;
+    } 
+    unless( $start_y < 0 && $end_y < 0 ||
+        $start_y > 1 && $end_y > 1 ) {
+      if( $b < 0 ) {
+        $a += (-$b)*($c-$a);
+        $b  = 0;
+      } elsif( $b > 1 ) {
+        $a += ($b-1)*($c-$a);
+        $b  = 1;
+      }
+      if( $d < 0 ) {
+        $c += $d*($c-$a);
+        $d  = 0;
+      } elsif( $d > 1 ) {
+        $c -= ($d-1)*($c-$a);
+        $d  = 1;
+      }
+      $self->push($self->Line({
+        'x'      => $a,
+        'width'  => $c-$a,
+        'y'      => $y+($strand > 0 ? $b*$sf : $st->{'height'}-$b*$sf),
+        'height' => $strand * ($d-$b)*$sf,
+        'colour' => $co,
+        'absolute' => 1
+      }));
+    }
+    $start_x = $end_x;
+    $start_y = $end_y;
+  }
+  return ();
 }
 
-sub extent_signalmap {
+sub composite_extent_tiling {
   my($self,$g,$st) = @_;
-  return $self->extent_histogram($g,$st);
+  return $self->composite_extent_histogram($g,$st);
 }
 
-sub composite_signalmap {
+sub composite_tiling {
   my($self,$g,$f_ref,$st) = @_;
-
+  return $self->composite_histogram($g,$f_ref,$st);
 }
 
-## - glyph renderers - work on individual elements
+#----------------------------------------------------------------------#
+# Some helper functions for the renderer..                             #
+#----------------------------------------------------------------------#
+# _extent    - computes the extent of a glyph - and ats it to its      #
+#              parent's extent if there is one...                      #
+# _symbol_bg - draws the background box behind a feature! not          #
+#              really part of the specification - but a nice to have!  #
+#----------------------------------------------------------------------#
 
-sub extent_anchored_arrow {
-  my($self,$f,$st)= @_;
-  return $self->extent_box($f,$st);
+sub _extent {
+  my($self,$g,$f,$s,$e,$h)= @_;
+  my $l = $self->{seq_len};
+## If we have a group
+  if( $e < 1 || $s > $l ) {
+    return unless $g;
+    $g->{extent_start} = 1   if $s < 1;  ## Always change start extent if glyph to the left of the region!
+    $g->{extent_end}   = $l  if $e > $l; ## Always change end   extent if glyph to the right of the region!
+    return;
+  }
+  $f->{extent_start} = $s < 1                  ? 1                  : $s;
+  $f->{extent_end}   = $e > $self->{'seq_len'} ? $self->{'seq_len'} : $e;
+  $self->{h}         = $h if $h > $self->{h};
+  return unless $g;
+## Now let us modify the containing group!
+  $g->{extent_start} = $f->{extent_start} if !defined $g->{extent_start} || $f->{extent_start} < $g->{extent_start};
+  $g->{extent_end}   = $f->{extent_end}   if !defined $g->{extent_end}   || $f->{extent_end}   > $g->{extent_end};
+  $g->{height}       = $h                 if !defined $g->{height}       || $h                 > $g->{height};
+  return;
 }
+
+sub _symbol_bg {
+  my($self,$g,$f,$s_g,$e_g,$st)=@_;
+  my $h = $st->{height}||$self->{'h'};
+  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+
+  my $s = $f->start; 
+     $s = $s_g if $s_g < $s;
+  my $e = $f->end;
+     $e = $e_g if $e_g > $e;
+  my $l = $self->{seq_len};
+  return if $e<1 || $s>$l;
+  $e = $l if $e>$l;
+  $s = 1  if $s<1;
+  $self->push($self->Rect({
+    'x'            => $s-1,
+    'width'        => $e-$s+1,
+    'y'            => $y,
+    'height'       => $h,
+    'absolutey'    => 1,
+    'colour'       => $st->{'bgcolor'},
+  }));
+}
+
+#----------------------------------------------------------------------#
+# glyph renderers - work on individual elements from the specification #
+# foreach glyph type there are up to two functions -                   #
+# extent_{glyph_type} - computes the extent of the glyph from the      #
+#                       feature and the glyph type                     #
+# glyph_{glyph_type} - the actual code to render the particular glyph  #
+#                      types                                           #
+#----------------------------------------------------------------------#
+
+#----------------------------------------------------------------------#
+# Anchored Arrow <---| or |--->                                        #
+# Haven't implemented parallel=no can't work out whether it is useful  #
+# will do so after implementing the vertical arrows...                 #
+#----------------------------------------------------------------------#
+# The anchored arrow exists purely within its bounds so                #
+# the box extent code will work!                                       #
+#----------------------------------------------------------------------#
 
 sub glyph_anchored_arrow {
   my($self,$g,$f,$st)= @_;
-}
-
-sub extent_arrow {
-  my($self,$f,$st)= @_;
-
-}
-
-sub glyph_arrow {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_box {
-  my($self,$f,$st)= @_;
-  return ($f->start,$f->end);
-}
-
-sub glyph_box {
-  my($self,$g,$f,$st)= @_;
-  
-}
-
-sub extent_cross {
-  my($self,$f,$st)= @_;
-}
-
-sub glyph_cross {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_dot {
-  my($self,$f,$st)= @_;
-}
-
-sub glyph_dot {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_ex {
-  my($self,$f,$st)= @_;
-
-}
-
-sub glyph_ex {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_hidden {
-  my($self,$f,$st)= @_;
-
-}
-
-sub glyph_hidden {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_line {
-  my($self,$f,$st)= @_;
-
-}
-
-sub glyph_line {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_primers {
-  my($self,$f,$st)= @_;
-  return $self->extent_box($f,$st);
-}
-
-sub glyph_primers {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_span {
-  my($self,$f,$st)= @_;
-  return $self->extent_box($f,$st);
-}
-
-sub glyph_span {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_text {
-  my($self,$f,$st)= @_;
-
-}
-
-sub glyph_text {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_toomany {
-  my($self,$f,$st)= @_;
-  return $self->extent_box($f,$st);
-}
-
-sub glyph_toomany {
-  my($self,$g,$f,$st)= @_;
-
-}
-
-sub extent_triangle {
-  my($self,$f,$st)= @_;
-
-}
-
-sub glyph_triangle {
-  my($self,$f,$st)= @_;
-
-}
-
-__END__
-
-sub _x {
-  my $self = shift;
-  my $strand_flag     = $self->my_config( 'strand' );
-  my $strand          = $self->strand();
-
-  my $features = [];
-  my $slice = $self->{'container'};
-  my($FONT,$FONTSIZE) = $self->get_font_details( $self->my_config('font') || 'innertext' );
-  my $BUMP_WIDTH      = $self->my_config( 'bump_width');
-  $BUMP_WIDTH         = 1 unless defined $BUMP_WIDTH;
-  
-  ## If only displaying on one strand skip IF not on right strand....
-  return if $strand_flag eq 'r' && $strand != -1;
-  return if $strand_flag eq 'f' && $strand != 1;
-
-  # Get information about the VC - length, and whether or not to
-  # display track/navigation               
-  my $slice_length   = $slice->length( );
-  my $max_length     = $self->my_config( 'threshold' )            || 200000000;
-  my $navigation     = $self->my_config( 'navigation' )           || 'on';
-  my $max_length_nav = $self->my_config( 'navigation_threshold' ) || 15000000;
-  
-  if( $slice_length > $max_length *1010 ) {
-    $self->errorTrack( $self->my_config('caption')." only displayed for less than $max_length Kb.");
+  my($s,$e,$o) = ($f->start,$f->end,$f->strand);
+  my $h  = $st->{height}||$self->{'h'};
+  my $y  = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+  my $tw = $h * $self->{'bppp'}/2;
+## If the width of the glyph is less than the width of the arrow section
+## we draw it slightly differently!
+  if( $e-$s+1 < $tw ) { ## This is a small arrow!
+    $s = $f->{extent_start};
+    $e = $f->{extent_end};
+    $self->push($self->Poly({
+      'points'    => [ $o>0?$s-1:$e,$y,$o>0?$e:$s-1,$y+$h/2,$o>0?$s-1:$e,$y+$h ],
+      'colour'    => $st->{'fgcolor'},
+      'absolutey' => 1,
+    }));
     return;
   }
-
-  ## Decide whether we are going to include navigation (independent of switch) 
-  $navigation = ($navigation eq 'on') && ($slice_length <= $max_length_nav *1010);
-
-  ## Set up bumping bitmap    
-
-  ## Get information about bp/pixels    
-  my $pix_per_bp     = $self->scalex;
-  my $bitmap_length  = int($slice->length * $pix_per_bp);
-  ## And the colours
-  my $dep            = $self->my_config('depth')||100000;
-  $self->_init_bump( undef, $dep );
-
-  my $flag           = 1;
-  my($temp1,$temp2,$temp3,$H) = $self->get_text_width(0,'X','','font'=>$FONT,'ptsize' => $FONTSIZE );
-  my $th = $H;
-  my $tw = $temp3;
-  my $h  = $self->my_config('height') || $H+2;
-  if(
-    $dep>0 &&
-    $self->get_parameter(  'squishable_features' ) eq 'yes' &&
-    $self->my_config('squish')
-  ) {
-    $h = 4;
-  }
-  if( $self->{'extras'} && $self->{'extras'}{'height'} ) {
-    #warn 
-    $h = $self->{'extras'}{'height'};
-  }
-  my $previous_start = $slice_length + 1e9;
-  my $previous_end   = -1e9 ;
-  my ($T,$C,$C1) = 0;
-  my $optimizable = $self->my_config('optimizable') && $dep<1 ; #at the moment can only optimize repeats...
-  
-
-#  my $features = $self->features(); 
-
-  unless(ref($features)eq'ARRAY') {
-    # warn( ref($self), ' features not array ref ',ref($features) );
-    return; 
-  }
-
-  my $aggregate = '';
-  
-  if( $aggregate ) {
-    ## We need to set max depth to 0.1
-    ## We need to remove labels (Zmenu becomes density score)
-    ## We need to produce new features for each bin
-    my $aggregate_function = "aggregate_$aggregate";
-    $features = $self->$aggregate_function( $features ); 
-  }
-
-  foreach my $f ( @{$features} ) { 
-    #print STDERR "Added feature ", $f->id(), " for drawing.\n";
-    ## Check strand for display ##
-    my $fstrand = $f->strand || -1;
-    next if( $strand_flag eq 'b' && $strand != $fstrand );
-
-    ## Check start are not outside VC.... ##
-    my $start = $f->start();
-    next if $start>$slice_length; ## Skip if totally outside VC
-    $start = 1 if $start < 1;  
-    ## Check end are not outside VC.... ##
-    my $end   = $f->end();   
-    next if $end<1;            ## Skip if totally outside VC
-    $end   = $slice_length if $end>$slice_length;
-    $T++;
-    next if $optimizable && ( $slice->strand() < 0 ?
-                                $previous_start-$start < 0.5/$pix_per_bp : 
-                                $end-$previous_end     < 0.5/$pix_per_bp );
-    $C ++;
-    $previous_end   = $end;
-    $previous_start = $end;
-    $flag = 0;
-    my $img_start = $start;
-    my $img_end   = $end;
-    my( $label,      $style ) = $self->feature_label( $f, $tw );
-    my( $txt, $part, $W, $H ) = $self->get_text_width( 0, $label, '', 'font' => $FONT, 'ptsize' => $FONTSIZE );
-    my $bp_textwidth = $W / $pix_per_bp;
-    
-    my( $tag_start ,$tag_end) = ($start, $end);
-    if( $label && $style ne 'overlaid' ) {
-      $tag_start = ( $start + $end - 1 - $bp_textwidth ) /2;
-      $tag_start = 1 if $tag_start < 1;
-      $tag_end   = $tag_start + $bp_textwidth;
-    }
-    $img_start = $tag_start if $tag_start < $img_start; 
-    $img_end   = $tag_end   if $tag_end   > $img_end; 
-    my @tags = $self->tag($f);
-    foreach my $tag (@tags) { 
-      next unless ref($tag) eq 'HASH';
-      $tag_start = $start; 
-      $tag_end = $end;    
-      if($tag->{'style'} eq 'snp' ) {
-        $tag_start = $start - 1/2 - 4/$pix_per_bp;
-        $tag_end   = $start - 1/2 + 4/$pix_per_bp;
-      } elsif( $tag->{'style'} eq 'left-snp' || $tag->{'style'} eq 'delta' || $tag->{'style'} eq 'box' ) {
-        $tag_start = $start - 1 - 4/$pix_per_bp;
-        $tag_end   = $start - 1 + 4/$pix_per_bp;
-      } elsif($tag->{'style'} eq 'right-snp') {
-        $tag_start = $end - 4/$pix_per_bp;
-        $tag_end   = $end + 4/$pix_per_bp;
-      } elsif($tag->{'style'} eq 'underline') {
-        $tag_start = $tag->{'start'} if defined $tag->{'start'};
-        $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
-      } elsif($tag->{'style'} eq 'fg_ends') {
-        $tag_start = $tag->{'start'} if defined $tag->{'start'};
-        $tag_end   = $tag->{'end'}   if defined $tag->{'end'};
-      }
-      $img_start = $tag_start if $tag_start < $img_start; 
-      $img_end   = $tag_end   if $tag_end   > $img_end;  
-    } 
-    ## This is the bit we compute the width.... 
-        
-    my $row = 0;
-    if ($dep > 0){ # we bump
-      $img_start = int($img_start * $pix_per_bp);
-      $img_end   = $BUMP_WIDTH + int( $img_end * $pix_per_bp );
-      $img_end   = $img_start if $img_end < $img_start;
-      $row = $self->bump_row( $img_start, $img_end );
-      next if $row > $dep;
-    }
-    my @tag_glyphs = ();
-
-    my $colours        = $self->get_colours($f);
-    # warn "$colour_key - $colours->{'feature'}, $colours->{'label'}";
-    
-    ## Lets see about placing labels on objects...        
-    my $composite = $self->Composite();
-    if($colours->{'part'} eq 'line') {
-      #    print STDERR "PUSHING LINE\n"; 
-      $composite->push( $self->Space({
-        'x'          => $start-1,
-        'y'          => 0,
-        'width'      => $end - $start + 1,
-        'height'     => $h,
-        "colour"     => $colours->{'feature'},
-        'absolutey'  => 1
-                               }));
-      $composite->push( $self->Rect({
-        'x'          => $start-1,
-        'y'          => $h/2+1,
-        'width'      => $end - $start + 1,
-        'height'     => 0,
-        "colour"     => $colours->{'feature'},
-        'absolutey'  => 1
-      }));
-    } elsif( $colours->{'part'} eq 'invisible' ) {
-      $composite->push( $self->Space({
-        'x'          => $start-1,
-        'y'          => 0,
-        'width'      => $end - $start + 1,
-        'height'     => $h,
-        'absolutey'  => 1
-      }) );
-    } elsif( $colours->{'part'} eq 'align' ) {
-      $composite->push( $self->Rect({
-          'x'          => $start-1,
-          'y'          => 0,
-          'z' => 20,
-          'width'      => $end - $start + 1,
-          'height'     => $h+2,
-          "colour"     => $colours->{'feature'},
-          'absolutey'  => 1,
-          'absolutez'  => 1,
-      }) );
-    } else {
-      $composite->push( $self->Rect({
-        'x'          => $start-1,
-        'y'          => 0,
-        'width'      => $end - $start + 1,
-        'height'     => $h,
-        $colours->{'part'}."colour" => $colours->{'feature'},
-        'absolutey'  => 1
-      }) );
-    }
-    my $rowheight = int($h * 1.5);
-
-    foreach my $tag ( @tags ) {
-      next unless ref($tag) eq 'HASH';
-      if($tag->{'style'} eq 'left-end' && $start == $f->start) {
-        ## Draw a line on the left hand end....
-        $composite->push($self->Rect({
-          'x'          => $start-1,
-          'y'          => 0,
-          'width'      => 0,
-          'height'     => $h,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-      } elsif($tag->{'style'} eq 'right-end' && $end == $f->end) {
-        ## Draw a line on the right hand end....
-        $composite->push($self->Rect({
-          'x'          => $end,
-          'y'          => 0,
-          'width'      => 0,
-          'height'     => $h,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-      } elsif($tag->{'style'} eq 'insertion') {
-        my $triangle_end   =  $start-1 - 2/$pix_per_bp;
-        my $triangle_start =  $start-1 + 2/$pix_per_bp;
-        push @tag_glyphs, $self->Rect({
-          'x'          => $start-1,
-          'y'          => 0,
-          'width'      => 0,
-          'height'     => $h,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }),$self->Poly({
-          'points'    => [ $triangle_start, $h+2,
-                           $start-1, $h-1,
-                           $triangle_end, $h+2  ],
-          'colour'    => $tag->{'colour'},
-          'absolutey' => 1,
-        });
-      } elsif($tag->{'style'} eq 'left-triangle') {
-         my $triangle_end = $start -1 + 3/$pix_per_bp;
-            $triangle_end = $end if( $triangle_end > $end);
-         push @tag_glyphs, $self->Poly({
-           'points'    => [ $start-1, 0,
-                            $start-1, 3,
-                            $triangle_end, 0  ],
-           'colour'    => $tag->{'colour'},
-           'absolutey' => 1,
-         });
-      } elsif($tag->{'style'} eq 'right-snp') {
-        next if($end < $f->end());
-        my $triangle_start =  $end - 1/2 + 4/$pix_per_bp;
-        my $triangle_end   =  $end - 1/2 + 4/$pix_per_bp;
-        $composite->push($self->Space({
-          'x'          => $triangle_start,
-          'y'          => $h,
-          'width'      => 8/$pix_per_bp,
-          'height'     => 0,
-          'colour'     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-        push @tag_glyphs, $self->Poly({
-           'points'    => [ $triangle_start, $h,
-                            $end - 1/2,      0,
-                            $triangle_end,   $h  ],
-           'colour'    => $tag->{'colour'},
-           'absolutey' => 1,
-        });
-      } elsif($tag->{'style'} eq 'snp') {
-        next if( $tag->{'start'} < 1) ;
-        next if( $tag->{'start'} > $slice_length );
-        my $triangle_start =  $tag->{'start'} - 1/2 - 4/$pix_per_bp;
-        my $triangle_end   =  $tag->{'start'} - 1/2 + 4/$pix_per_bp;
-        $composite->push($self->Space({
-          'x'          => $triangle_start,
-          'y'          => $h,
-          'width'      => 8/$pix_per_bp,
-          'height'     => 0,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-        push @tag_glyphs, $self->Poly({
-          'points'    => [ $triangle_start, $h,
-                           $tag->{'start'} - 1/2 , 0,
-                           $triangle_end,   $h  ],
-          'colour'    => $tag->{'colour'},
-          'absolutey' => 1,
-        });
-      } elsif($tag->{'style'} eq 'rect') {
-        next if $tag->{'start'} > $slice_length;
-        next if $tag->{'end'}   < 0;
-        my $s = $tag->{'start'} < 1 ? 1 : $tag->{'start'};
-        my $e = $tag->{'end'}   > $slice_length ? $slice_length : $tag->{'end'}; 
-        $composite->push($self->Rect({
-          'x'          => $s-1,
-          'y'          => 0,
-          'width'      => $e-$s+1,
-          'height'     => $h,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-      } elsif($tag->{'style'} eq 'box') {
-        next if($start > $f->start());
-        my $triangle_start =  $start - 1/2 - 4/$pix_per_bp;
-        my $triangle_end   =  $start - 1/2 + 4/$pix_per_bp;
-        $composite->push($self->Rect({
-          'x'          => $triangle_start,
-          'y'          => 1,
-          'width'      => 8/$pix_per_bp,
-          'height'     => $h,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-        my @res = $self->get_text_width( 0, $tag->{'letter'},'', 'font'=>$FONT, 'ptsize' => $FONTSIZE );
-        my $tmp_width = $res[2]/$pix_per_bp;
-        $composite->push($self->Text({
-          'x'          => ($end + $start - 1/4 - $tmp_width)/2,
-          'y'          => ($h-$H)/2,
-          'width'      => $tmp_width,
-          'textwidth'  => $res[2],
-          'height'     => $H,
-          'font'       => $FONT,
-          'ptsize'     => $FONTSIZE,
-          'halign'     => 'center',
-          'colour'     => $tag->{'label_colour'},
-          'text'       => $tag->{'letter'},
-          'absolutey'  => 1,
-        }));
-      } elsif($tag->{'style'} eq 'delta') {
-        next if($start > $f->start());
-        my $triangle_start =  $start - 1/2 - 4/$pix_per_bp;
-        my $triangle_end   =  $start - 1/2 + 4/$pix_per_bp;
-        $composite->push($self->Space({
-          'x'          => $triangle_start,
-          'y'          => $h,
-          'width'      => 8/$pix_per_bp,
-          'height'     => 0,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-        push @tag_glyphs, $self->Poly({
-          'points'    => [ $triangle_start, 0,
-                           $start - 1/2   , $h,
-                           $triangle_end  , 0  ],
-          'colour'    => $tag->{'colour'},
-          'absolutey' => 1,
-        });
-      } elsif($tag->{'style'} eq 'left-snp') {
-        next if($start > $f->start());
-        my $triangle_start =  $start - 1/2 - 4/$pix_per_bp;
-        my $triangle_end   =  $start - 1/2 + 4/$pix_per_bp;
-        $composite->push($self->Space({
-          'x'          => $triangle_start,
-          'y'          => $h,
-          'width'      => 8/$pix_per_bp,
-          'height'     => 0,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-        push @tag_glyphs, $self->Poly({
-          'points'    => [ $triangle_start, $h,
-                           $start - 1/2   , 0,
-                           $triangle_end  , $h  ],
-          'colour'    => $tag->{'colour'},
-          'absolutey' => 1,
-        });
-      } elsif($tag->{'style'} eq 'right-triangle') {
-        my $triangle_start =  $end - 3/$pix_per_bp;
-        $triangle_start = $start if( $triangle_start < $start);
-        push @tag_glyphs, $self->Poly({
-          'points'    => [ $end, 0,
-                           $end, 3,
-                           $triangle_start, 0  ],
-          'colour'    => $tag->{'colour'},
-          'absolutey' => 1,
-        });
-      } elsif($tag->{'style'} eq 'underline') {
-        my $underline_start = $tag->{'start'} || $start ;
-        my $underline_end   = $tag->{'end'}   || $end ;
-        $underline_start = 1          if $underline_start < 1;
-        $underline_end   = $slice_length if $underline_end   > $slice_length;
-        $composite->push($self->Rect({
-          'x'          => $underline_start -1 ,
-          'y'          => $h,
-          'width'      => $underline_end - $underline_start + 1,
-          'height'     => 0,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-      } elsif($tag->{'style'} eq 'fg_ends') {
-        my $f_start = $tag->{'start'} || $start ;
-        my $f_end   = $tag->{'end'}   || $end ;
-        $f_start = 1          if $f_start < 1;
-        $f_end   = $slice_length if $f_end   > $slice_length;
-        $composite->push( $self->Rect({
-          'x'          => $f_start -1 ,
-          'y'          => ($h/2),
-          'width'      => $f_end - $f_start + 1,
-          'height'     => 0,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1,
-          'zindex'     => 0  
-        }),$self->Rect({
-          'x'          => $f_start -1 ,
-          'y'          => 0,
-          'width'      => 0,
-          'height'     => $h,
-          "colour"     => $tag->{'colour'},
-          'zindex'  => 1
-        }),$self->Rect({
-          'x'          => $f_end,
-          'y'          => 0,
-          'width'      => 0,
-          'height'     => $h,
-          "colour"     => $tag->{'colour'},
-          'zindex'  => 1
-        }) );
-      } elsif($tag->{'style'} eq 'line') {
-        my $underline_start = $tag->{'start'} || $start ;
-        my $underline_end   = $tag->{'end'}   || $end ;
-        $underline_start = 1          if $underline_start < 1;
-        $underline_end   = $slice_length if $underline_end   > $slice_length;
-        $composite->push($self->Rect({
-          'x'          => $underline_start -1 ,
-          'y'          => $h/2,
-          'width'      => $underline_end - $underline_start + 1,
-          'height'     => 0,
-          "colour"     => $tag->{'colour'},
-          'absolutey'  => 1
-        }));
-      } elsif($tag->{'style'} eq 'join') { 
-        my $A = $strand > 0 ? 1 : 0;
-        $self->join_tag( $composite, $tag->{'tag'}, $A, $A , $tag->{'colour'}, 'fill', $tag->{'zindex'} || -10 ),
-        $self->join_tag( $composite, $tag->{'tag'}, 1-$A, $A , $tag->{'colour'}, 'fill', $tag->{'zindex'} || -10 )
-      }
-    }
-
-    if( $style =~ /^mark_/ ) {
-      my $bcol = 'red';
-      if( $style =~ /_exonstart/ ) {
-        $composite->push($self->Rect({
-          'x'          => $start-1,
-          'y'          => 0,
-          'z'          => 10,
-          'width'      => 1,
-          'height'     => 0,
-          "colour"     => $bcol,
-          'absolutey'  => 1,
-          'absolutez'  => 1
-        }),$self->Rect({
-          'x'          => $start-1,
-          'y'          => 0,
-          'z'          => 10,
-          'width'      => 0,
-          'height'     => $th,
-          "colour"     => $bcol,
-          'absolutey'  => 1,
-          'absolutez'  => 1
-        }));
-      } elsif( $style =~ /_exonend/ ) {
-        $composite->push( $self->Rect({
-          'x'          => $start-1,
-          'y'          => 0,
-          'z'          => 10,
-          'width'      => 1,
-          'height'     => 0,
-          "colour" => $bcol,
-          'absolutey'  => 1,
-          'absolutez' => 1
-        }),$self->Rect({
-          'x'          => ($start-1/$pix_per_bp),
-          'y'          => 1,
-          'z'          => 10,
-          'width'      => 1/(2*$pix_per_bp),
-          'height'     => $th,
-          "colour" => $bcol,
-          'absolutey'  => 1,
-          'absolutez' => 1
-        }));
-      } elsif( $style =~ /_rexonstart/ ) {
-        $composite->push( $self->Rect({
-          'x'          => $start-1,
-          'y'          => $th+1,
-          'z'          => 10,
-          'width'      => 1,
-          'height'     => 0,
-          "colour" => $bcol,
-          'absolutey'  => 1,
-          'absolutez' => 1
-        }),$self->Rect({
-          'x'          => $start-1,
-          'y'          => 1,
-          'z'          => 10,
-          'width'      => 0,
-          'height'     => $th,
-          "colour" => $bcol,
-          'absolutey'  => 1,
-          'absolutez' => 1
-        }) );
-      } elsif( $style =~ /_rexonend/ ) {
-        $composite->push( $self->Rect({
-          'x'          => $start-1,
-          'y'          => $th+1,
-          'z'          => 10,
-          'width'      => 1,
-          'height'     => 0,
-          "colour" => $bcol,
-          'absolutey'  => 1,
-          'absolutez' => 1
-        }),$self->Rect({
-          'x'          => ($start-1/$pix_per_bp),
-          'y'          => 1,
-          'z'          => 10,
-          'width'      => 1/($pix_per_bp*2),
-          'height'     => $th,
-          "colour" => $bcol,
-          'absolutey'  => 1,
-          'absolutez' => 1
-        }) );
-      }
-      if( $style =~ /_snpA/ ) {
-        $composite->push ($self->Poly({
-          'points'    => [ $start-1, 0,
-                           $end+1, 0,
-                           $end+1, $th  ],
-          'colour'    => 'brown',
-          'bordercolour'=>'red',
-          'absolutey' => 1,
-        }));
-      }
-
-      if($bp_textwidth < ($end - $start+1)){
-        # print STDERR "X: $label - $colours->{'label'}\n";
-        my $tglyph = $self->Text({
-          'x'          => $start - 1,
-          'y'          => ($h-$H)/2,
-          'z' => 5,
-          'width'      => $end-$start+1,
-          'height'     => $H,
-          'font'       => $FONT,
-          'ptsize'     => $FONTSIZE,
-          'halign'     => 'center',
-          'colour'     => $colours->{'label'},
-          'text'       => $label,
-          'textwidth'  => $bp_textwidth*$pix_per_bp,
-          'absolutey'  => 1,
-          'absolutez'  => 1,
-        });
-        $composite->push($tglyph);
-      }
-    } elsif( $style && $label ) {
-      if( $style eq 'overlaid' ) {
-        if($bp_textwidth < ($end - $start+1)){
-          # print STDERR "X: $label - $colours->{'label'}\n";
-          $composite->push($self->Text({
-            'x'          => $start-1,
-            'y'          => ($h-$H)/2-1,
-            'width'      => $end-$start+1,
-            'textwidth'  => $bp_textwidth*$pix_per_bp,
-            'font'       => $FONT,
-            'ptsize'     => $FONTSIZE,
-            'halign'     => 'center',
-            'height'     => $H,
-            'colour'     => $colours->{'label'},
-            'text'       => $label,
-            'absolutey'  => 1,
-          }));
-        }
-      } else {
-        my $label_strand = $self->my_config('label_strand');
-        unless( $label_strand eq 'r' && $strand != -1 || $label_strand eq 'f' && $strand != 1 ) {
-          $rowheight += $H+2;
-          my $t = $self->Composite();
-          $t->push($composite,$self->Text({
-            'x'          => $start - 1,
-            'y'          => $strand < 0 ? $h+3 : 3+$h,
-            'width'      => $bp_textwidth,
-            'height'     => $H,
-            'font'       => $FONT,
-            'ptsize'     => $FONTSIZE,
-            'halign'     => 'left',
-            'colour'     => $colours->{'label'},
-            'text'       => $label,
-            'absolutey'  => 1,
-          }));
-          $composite = $t;
-	}
-      }
-    }
-
-    ## Lets see if we can Show navigation ?...
-    if($navigation) {
-      $composite->{'title'} = $self->title( $f ) if $self->can('title');
-      $composite->{'href'}  = $self->href(  $f ) if $self->can('href');
-    }
-    
-    ## Are we going to bump ?
-    if($row>0) {
-      $composite->y( $composite->y() - $row * $rowheight * $strand );
-      foreach(@tag_glyphs) {
-        $_->y_transform( - $row * $rowheight * $strand );
-      }
-    }
-    $C1++;
-    $self->push( $composite );
-    $self->push(@tag_glyphs);
-
-    $self->highlight($f, $composite, $pix_per_bp, $h, 'highlight1');
-  }
-  # warn( ref($self)," $C1 out of $C out of $T features drawn\n" );
-  ## No features show "empty track line" if option set....  ##
-  $self->no_features() if $flag; 
-}
-
-sub highlight {
-  my $self = shift;
-  my ($f, $composite, $pix_per_bp, $h) = @_;
-
-  ## Get highlights...
-  my %highlights;
-  @highlights{$self->highlights()} = ();
-
-  ## Are we going to highlight this item...
-  if($f->can('display_name') && exists $highlights{$f->display_name()}) {
-    $self->unshift($self->Rect({
-      'x'         => $composite->x() - 1/$pix_per_bp,
-      'y'         => $composite->y() - 1,
-      'width'     => $composite->width() + 2/$pix_per_bp,
-      'height'    => $h + 2,
-      'colour'    => 'highlight1',
+## Otherwise we draw the arrow in three parts...
+## Firstly the arrow head - if we are going to draw it!
+  if( $o>0 && $e  == $f->{extent_end} ||
+      $o<=0 && $s == $f->{extent_start} ) {
+    $self->push($self->Poly({
+      'points'    => [ $o>0?$e-$tw:$s-1+$tw,$y,$o>0?$e:$s-1,$y+$h/2,$o>0?$e-$tw:$s-1+$tw,$y+$h ],
+      'colour'    => $st->{'fgcolor'},
       'absolutey' => 1,
+    }));
+  } else {
+## Reset the width of the triangle as we don't have the triangle to the left/right
+    $tw = 0; # No triangle!
+  }
+## Now draw the main bar!
+  my $n = int($h/4);
+  $self->push($self->Rect({
+    'x'         => $o > 0 ? $f->{extent_start}-1 : $f->{extent_start}+$tw-1,
+    'width'     => $f->{extent_end}-$f->{extent_start}+1-$tw,
+    'height'    => $h-2*$n,
+    'absolutey' => 1,
+    'colour'    => $st->{'fgcolor'},
+    'y'         => $y+$n
+  }));
+## Are we going to draw the back! if we haven't missed it out!
+  if( $o<=0 && $e == $f->{extent_end} || $o>0 && $s == $f->{extent_start} ) {
+    $self->push($self->Line({
+      'x'         => $o > 0 ? $s-1 : $e,
+      'width'     => 0,
+      'height'    => $h,
+      'absolutey' => 1,
+      'colour'    => $st->{'fgcolor'},
+      'y'         => $y
     }));
   }
 }
 
+#----------------------------------------------------------------------#
+# Arrow <-> --> <-- or the same vertically!                            #
+#----------------------------------------------------------------------#
+# Currently to do.....                                                 #
+#----------------------------------------------------------------------#
+
+sub extent_arrow {
+  my($self,$g,$f,$st)= @_;
+}
+
+sub glyph_arrow {
+  my($self,$g,$f,$st)= @_;
+}
+
+#----------------------------------------------------------------------#
+# Box.....                                                             #
+#----------------------------------------------------------------------#
+# Probably the simplest of all the symbols - just a filled box!        #
+#----------------------------------------------------------------------#
+
+sub extent_box {
+  my($self,$g,$f,$st)= @_;
+  my $s = $f->start;
+  my $e = $f->end;
+  my $w = $st->{'width'}*$self->{bppp};
+  if( $e - $s + 1 < $w ) {
+    $s = $e+$s-1-$w/2;
+    $e = $s+$w/2;
+  }
+  return $self->_extent( $g, $f, $s, $e,$st->{height} );
+}
+
+sub glyph_box {
+  my($self,$g,$f,$st)= @_;
+  return () unless $f->{extent_start}; ## Not in region!!
+  my $h = $st->{height}||$self->{'h'};
+  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+
+  $self->push($self->Rect({
+    'x'            => $f->{extent_start}-1,
+    'width'        => $f->{extent_end} - $f->{extent_start} + 1,
+    'y'            => $y,
+    'height'       => $h,
+    'absolutey'    => 1,
+    $st->{'bgcolor'} ? ( 'colour'       => $st->{'bgcolor'} ) : (),
+    $st->{'fgcolor'} ? ( 'bordercolour' => $st->{'fgcolor'} ) : ()
+  }));
+}
+
+#----------------------------------------------------------------------#
+# Cross/dot/ex.....                                                    #
+#----------------------------------------------------------------------#
+
+sub extent_cross {
+  my($self,$g,$f,$st)= @_;
+  my( $s,$e ) = ($f->start,$f->end);
+  my $mp      = ($s+$e-1)/2;
+### If the mid point isn't in the region we only draw the background if it has a colour!
+  if( $mp < 0 || $mp > $self->{seq_len} ) {
+    return $self->extent_box($g,$f,$st) if $st->{bgcolor}; 
+    return;
+  }
+  my $w       = ($st->{'linewidth'}||$st->{'height'}||$self->{'h'}) * $self->{'bppp'};
+  my $l = $mp - $w/2;
+  my $r = $mp + $w/2;
+  if( $st->{bgcolor} ) { ## We have it on box
+    $l = $s-1 < $l ? $s-1 : $l;
+    $r = $e   > $r ? $e   : $r;
+  }
+  $self->_extent( $g,$f,$l,$r,$st->{'height'}||$self->{'h'});
+}
+
+sub extent_dot { my $self = shift; return $self->extent_cross( @_ ); }
+sub extent_ex  { my $self = shift; return $self->extent_cross( @_ ); }
+
+sub _symbol_init {
+  my($self,$g,$f,$st)= @_;
+  my $mp = ($f->start+$f->end-1)/2;
+  if( $mp < 0 || $mp > $self->{'seq_len'} ) {
+    $self->_symbol_bg( $g,$f,$f->start,$f->end,$st) if $st->{bgcolor};
+    return;
+  }
+  my $h = $st->{height}||$self->{'h'};
+  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+  my $w = ($st->{'linewidth'}||$h) * $self->{'bppp'};
+#  $self->_symbol_bg( $g,$f,$mp-$w/2,$mp+$w/2,$st ) if $st->{bgcolor};
+  $self->_symbol_bg( $g,$f,$f->start,$f->end,$st ) if $st->{bgcolor};
+  return ($mp,$h,$y,$w);
+}
+sub glyph_cross {
+  my($self,$g,$f,$st)= @_;
+  my( $mp, $h, $y, $w ) = $self->_symbol_init( $g,$f,$st);
+  return unless $mp;
+  $self->push( $self->Line({
+    'x'     => $mp,
+    'width' => 0,
+    'y'     => $y,
+    'height' => $h,
+    'absolutey' => 1,
+    'colour' => $st->{'fgcolor'}
+  }));
+  $self->push( $self->Line({
+    'x'     => $mp - $w/2,
+    'width' => $w,
+    'y'     => ($g?$g->{'y'}:$f->{'y'})+$self->{'h'}/2,
+    'height' => 0,
+    'absolutey' => 1,
+    'colour' => $st->{'fgcolor'}
+  }));
+}
+
+sub glyph_dot {
+  my($self,$g,$f,$st)= @_;
+  my( $mp, $h, $y, $w ) = $self->_symbol_init( $g,$f,$st);
+  return unless $mp;
+
+  $self->push( $self->Ellipse({
+    'x'        => $mp,
+    'width'    => $w,
+    'y'        => $y+$h/2,
+    'height'   => $h,
+    'filled'   => 1,
+    'absolutey' => 1,
+    'colour' => $st->{'fgcolor'}
+  }));
+}
+
+
+sub glyph_ex {
+  my($self,$g,$f,$st)= @_;
+  my( $mp, $h, $y, $w ) = $self->_symbol_init( $g,$f,$st);
+  return unless $mp;
+
+  $self->push( $self->Line({
+    'x'     => $mp-$w/2,
+    'width' => $w,
+    'y'     => $y,
+    'height' => $h,
+    'absolutey' => 1,
+    'colour' => $st->{'fgcolor'}
+  }));
+  $self->push( $self->Line({
+    'x'     => $mp - $w/2,
+    'width' => $w,
+    'y'     => $y+$h,
+    'height' => -$h,
+    'absolutey' => 1,
+    'colour' => $st->{'fgcolor'}
+  }));
+
+}
+
+sub extent_hidden {
+  return;
+}
+
+sub glyph_hidden {
+  return ();
+}
+
+sub extent_line {
+  my($self,$g,$f,$st)= @_;
+  if( $st->{'parallel'} ne 'no' || $st->{bgcolor} ) {
+    return $self->extent_box($g,$f,$st);
+  } else {
+    my $mp = ($f->start + $f->end - 1)/2;
+    return $self->_extent( $g, $f, $mp, $mp,$st->{height} )
+  }
+}
+
+sub glyph_line {
+  my($self,$g,$f,$st)= @_;
+  $self->_symbol_bg( $g,$f,$st ) if $st->{bgcolor};
+  if( $st->{'parallel'} eq 'no' ) {
+    my $h = $st->{height}||$self->{'h'};
+    my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+    my $mp = ( $f->start + $f->end -1 )/2;
+    if( $mp > 0 && $mp < $self->{seq_len} ) {
+      $self->push( $self->Line({
+        'x' => $mp,
+        'y' => $y,
+        'height' => $h,
+        'colour' => $st->{'fgcolor'},
+        'width'  => 0,
+        'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
+        'absolutey' => 1
+      }));
+    }
+    return;
+  } 
+  if( $st->{'style'} eq 'hat' || $st->{'style'} eq 'intron' ) {
+    my $h = $st->{height}||$self->{'h'};
+    my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+    $self->push( $self->Intron({
+      'x'         => $f->{extent_start}-1,
+      'y'         => $y,
+      'height'    => $h,
+      'strand'    => $f->{'strand'},
+      'colour'    => $st->{'fgcolor'},
+      'width'     => $f->{extent_end}-$f->{extent_start}+1,
+      'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
+      'absolutey' => 1
+    }));
+  } else {
+    my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + $self->{'h'} /2;
+    $self->push( $self->Line({
+      'x'         => $f->{extent_start}-1,
+      'y'         => $y,
+      'height'    => 0,
+      'colour'    => $st->{'fgcolor'},
+      'width'     => $f->{extent_end}-$f->{extent_start}+1,
+      'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
+      'absolutey' => 1
+    }));
+  }
+}
+
+# sub extent_primers - drop to default!
+
+sub glyph_primers {
+  my($self,$g,$f,$st)= @_;
+  my $s = $f->start;
+  my $e = $f->end;
+  my $o = $f->strand;
+  my $h = $st->{height}||$self->{'h'};
+  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+  my $tw = $h * $self->{'bppp'}/2;
+
+  $self->push( $self->Line({ ## Draw the spanning line!
+    'x'         => $f->{extent_start}-1,
+    'y'         => $y + $h/2,
+    'height'    => 0,
+    'colour'    => $st->{'bgcolor'},
+    'width'     => $f->{extent_end}-$f->{extent_start}+1,
+    'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
+    'absolutey' => 1
+  }));
+  $tw = ($e-$s+1)/2 if $e-$s+1 < 2*$tw;
+  if( $s == $f->{extent_start} ){
+    $self->push( $self->Poly({
+      'points' => [ $s-1, $y, $s-1+$tw, $y+$h/2, $s-1, $y+$h ],
+      'colour' => $st->{'fgcolor'},
+      'absolutey' => 1,
+    }));
+  }  
+  if( $e == $f->{extent_end} ){
+    $self->push( $self->Poly({
+      'points' => [ $e, $y, $e-$tw, $y+$h/2, $e, $y+$h ],
+      'colour' => $st->{'fgcolor'},
+      'absolutey' => 1,
+    }));
+  }  
+}
+
+# sub extent_span - drop to default!
+
+sub glyph_span {
+  my($self,$g,$f,$st)= @_;
+  my $h = $st->{height}||$self->{'h'};
+  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+  if( $f->start == $f->{extent_start} ) { ## Draw left hand end!
+    $self->push( $self->Line({
+      'x' => $f->start-1,
+      'y' => $y,
+      'height' => $h,
+      'colour' => $st->{'fgcolor'},
+      'width'  => 0,
+      'absolutey' => 1
+    }));
+  } 
+  if( $f->end == $f->{extent_end} ) { ## Draw left hand end!
+    $self->push( $self->Line({
+      'x' => $f->end,
+      'y' => $y,
+      'height' => $h,
+      'colour' => $st->{'fgcolor'},
+      'width'  => 0,
+      'absolutey' => 1
+    }));
+  }
+  $self->push( $self->Line({
+    'x'         => $f->{extent_start}-1,
+    'y'         => $y + $h/2,
+    'height'    => 0,
+    'colour'    => $st->{'fgcolor'},
+    'width'     => $f->{extent_end}-$f->{extent_start}+1,
+    'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
+    'absolutey' => 1
+  }));
+}
+
+sub extent_text {
+  my($self,$g,$f,$st)= @_;
+  my $h   = $st->{height}||$self->{'h'};
+  my $fh  = $st->{fontsize}||$h;
+  my $fn  = $st->{font}||'arial';
+  my $str = $st->{string};
+  my $l   = $self->{seq_len};
+## @res contains - text, 'full', $w, $h
+  my ($t,$flag,$tw,$th) = $self->get_text_width( 0, $str, '', 'font'=>$fn, 'ptsize' => $fh );
+
+  my $bp_tw = $tw * $self->{bppp};
+  $h ||= $th; ## Make sure the box has a big enough height!!
+  my( $s, $e ) = ($f->start,$f->end);
+  my $mp = $s+$e-1;
+  $s = 1 if $s < 1;
+  $e = $l if $e > $l; 
+
+  if( $bp_tw < $e-$s+1 ) { # Can we fit the text in the box! If so we will draw it centred to the mid-point as much as possible....
+## If not if we centre the text on tddhe midpoint - will it fit in the range - if so draw it at the midpoint and
+    my $ts = $mp-$bp_tw/2;
+    $ts = 1 if $ts < 1;
+    $ts = $l - $bp_tw if $ts > $l-$bp_tw;
+    $f->{tinfo} = { 'ts' => $ts, 'tw' => $tw, 'th' => $th, 'fs' => $fh, 'fn' => $fn, 'st'=>$str, 'extra' => 'ff' };
+    return $self->_extent($g,$f,$ts,$ts+$bp_tw,$st);
+  } elsif( $mp < 0 || $mp > $l ) { ## Out of range don't draw!!
+## If midpoint not in range don't draw the text at all - and just make space for the box if a background colour is set!
+    return $self->_extent($g,$f,$f->start,$f->end,$st) if $st->{bgcolor};
+  } else {
+    my $ts = $mp-$bp_tw/2;
+    if( $ts < - 4 * $self->{bppp} || $ts + $bp_tw > $l + 4 * $self->{bppp} ) {
+      return $self->_extent($g,$f,$f->start,$f->end,$st) if $st->{bgcolor};
+    } else {
+      $f->{tinfo} = { 'ts' => $ts, 'tw' => $tw, 'th' => $th, 'fs' => $fh, 'fn' => $fn,'st'=>$str, 'extra' => 'pf' };
+      return $self->_extent($g,$f,$ts,$ts+$bp_tw,$st);
+    }
+  }
+  return;
+}
+
+sub glyph_text {
+  my($self,$g,$f,$st)= @_;
+return;
+# local $Data::Dumper::Indent=1; warn Dumper($f->{tinfo});
+# warn $f->start,':',$f->end,' ',$f->{extent_start},':',$f->{extent_end}."#";
+  if( $st->{bgcolor}) {
+    $self->_symbol_init( $g,$f,$st );
+  }
+  if( $f->{tinfo} ) { ## We are drawing text between ts and ts+tw (height = th);
+    my $h = $st->{height}||$self->{'h'};
+    my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+    $self->push($self->Text({
+      'text'   => $st->{string},
+      'valign' => 'center',
+      'x'      => $f->{tinfo}{ts},
+      'width'  => $f->{tinfo}{tw},
+      'absolutewidth' => 1,
+      'halign' => 'center',
+      'y'      => $y,
+      'colour' => $st->{fgcolor},
+      'font'   => $f->{tinfo}{fn},
+      'ptsize' => $f->{tinfo}{fs},
+      'height' => $h,
+      'absolutey' => 1
+    }));
+  }
+}
+
+# sub extent_toomany - drop to default!
+
+sub glyph_toomany {
+  my($self,$g,$f,$st)= @_;
+  return () unless $f->{extent_start}; ## Not in region!!
+  my $h = $st->{height}||$self->{'h'};
+  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+
+  $self->push($self->Rect({
+    'x'            => $f->{extent_start}-1,
+    'width'        => $f->{extent_end} - $f->{extent_start} + 1,
+    'y'            => $y,
+    'height'       => $h,
+    'absolutey'    => 1,
+    $st->{'bgcolor'} ? ( 'colour'       => $st->{'bgcolor'} ) : (),
+    $st->{'fgcolor'} ? ( 'bordercolour' => $st->{'fgcolor'} ) : ()
+  }));
+  for( my $y1 = $y; $y1 < $y + $h ; $y1+=2 ) {
+    $self->push($self->Rect({
+      'x'            => $f->{extent_start}-1,
+      'width'        => $f->{extent_end} - $f->{extent_start} + 1,
+      'y'            => $y1,
+      'height'       => 0,
+      'absolutey'    => 1,
+      $st->{'fgcolor'} ? ( 'colour' => $st->{'fgcolor'} ) : ()
+    }));
+  }
+}
+
+
+sub extent_triangle { my $self = shift; return $self->extent_cross( @_ ); }
+
+sub glyph_triangle {
+  my($self,$g,$f,$st)= @_;
+  my( $mp, $h, $y, $w ) = $self->_symbol_init( $g,$f,$st);
+  return unless $mp;
+
+  my $direction = lc( $st->{'direction'} );
+  my ($t,$m,$b) = ($y,$y+$h/2,$y+$h);
+
+  my $points = $direction eq 's' ? [ $mp - $w/2, $t, $mp,        $b, $mp + $w/2, $t ] #v
+             : $direction eq 'e' ? [ $mp - $w/2, $m, $mp + $w/2, $t, $mp + $w/2, $b ] #>
+             : $direction eq 'w' ? [ $mp - $w/2, $b, $mp - $w/2, $t, $mp + $w/2, $m ] #<
+             :                     [ $mp - $w/2, $b, $mp,        $t, $mp + $w/2, $b ] #^
+             ;
+
+  $self->push( $self->Poly({
+    'points' => $points,
+    'colour' => $st->{fgcolor},
+    'absolutey' => 1,
+  }));
+}
+
+
 1;
+

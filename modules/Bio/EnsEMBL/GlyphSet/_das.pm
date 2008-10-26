@@ -4,9 +4,15 @@ use strict;
 use base qw(Bio::EnsEMBL::GlyphSet_generic);
 
 use Bio::EnsEMBL::ExternalData::DAS::Stylesheet;
+use Bio::EnsEMBL::ExternalData::DAS::Feature;
 
 use POSIX qw(floor ceil);
 use Data::Dumper;
+
+sub gen_feature {
+  my $self = shift;
+  return Bio::EnsEMBL::ExternalData::DAS::Feature->new(shift);
+}
 
 sub features       { 
   my $self = shift;
@@ -16,7 +22,7 @@ sub features       {
     # Query by slice:
     $self->cache('das_features', $self->cache('das_coord')->fetch_Features( $self->{'container'}, 'maxbins' => $self->image_width )||{} );
   }
-  
+  $self->timer_push( 'Raw fetch of DAS features',undef,'fetch');  
   my $data = $self->cache('das_features');
   
   my @logic_names =  @{ $self->my_config('logicnames') };
@@ -34,13 +40,11 @@ sub features       {
 
   my $c_f=0;
   my $c_g=0;
+  local $Data::Dumper::Indent = 1;    
   for my $logic_name ( @logic_names ) {
-    local $Data::Dumper::Indent = 1;    
 
     my $stylesheet = $data->{ $logic_name }{ 'stylesheet' }{ 'object' }
       || $Bio::EnsEMBL::ExternalData::DAS::Stylesheet::DEFAULT_STYLESHEET;
-    warn Data::Dumper::Dumper( $stylesheet );
-    
     for my $segment ( keys %{ $data->{ $logic_name }{ 'features' } } ) {
       
       my $f_data = $data->{ $logic_name }{ 'features' }{ $segment };
@@ -48,7 +52,7 @@ sub features       {
       push @errors, $f_data->{'error'};
       
       for my $f ( @{ $f_data->{'objects'} } ) {
-        
+        warn "FEATURE $logic_name ",$self->my_config('caption'),": ", $f->start," -> ",$f->end," # ",$f->strand;
         # Skip nonpositional features
         $f->start || $f->end || next;
         
@@ -149,8 +153,13 @@ sub features       {
           }
         }
       }
+      warn "DAS: source: $logic_name\n";
     }
   }  
+  warn join "\n", map( { "DAS:URL $_" } @urls ),'';
+  warn join "\n", map( { "DAS:ERR $_" } @errors ),'';
+
+
 if(0) { 
   warn sprintf "%d features returned in %d groups", $c_f, $c_g;
   warn "Logic name           Type                 Group ID            Ori Count     Start       End Label\n";
@@ -163,10 +172,8 @@ if(0) {
     }
   }
   warn join "\t", "Orientations: ", sort {$a<=>$b} keys %orientations;
-  warn join "\n", @urls;
   local $Data::Dumper::Indent = 1;
   warn Dumper( \%feature_styles );
-  warn Dumper( \%group_styles );
   warn "MH: $max_height";
 }
   return {
