@@ -14,7 +14,6 @@ use Sanger::Graphics::Glyph::Space;
 use Sanger::Graphics::Glyph::Sprite;
 use Sanger::Graphics::Glyph::Text;
 
-use Bio::EnsEMBL::Glyph::Symbol::line;
 use Bio::EnsEMBL::Registry;
 
 use GD;
@@ -572,20 +571,6 @@ sub get_featuredata {
     'orientation'   => $orientation,
   };
   return $featuredata;
-}
-
-
-sub get_symbol {
-  my ($self, $style, $featuredata, $y_offset) = @_;
-  my $styleattrs = $style->{'attrs'};
-  my $glyph_symbol = $style->{'glyph'} || 'box';
-
-  # Load the glyph symbol module that we need to draw this style
-  $glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::'.$glyph_symbol;
-  unless ($self->dynamic_use($glyph_symbol)){
-    $glyph_symbol = 'Bio::EnsEMBL::Glyph::Symbol::box';
-  }
-  return $glyph_symbol->new($featuredata, $styleattrs);
 }
 
 # Function will display DAS features with variable y-offset depending on SCORE attribute
