@@ -4,6 +4,15 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+sub HOMOLOGY_TYPES {
+  return {
+    'BRH'  => 'Best Reciprocal Hit',
+    'UBRH' => 'Unique Best Reciprocal Hit',
+    'RHS'  => 'Reciprocal Hit based on Synteny around BRH',
+    'DWGA' => 'Derived from Whole Genome Alignment'
+  };
+}
+
 sub ALIGNMENT_FORMATS {
   return (
   'fasta'  => 'FASTA',
@@ -17,6 +26,7 @@ sub ALIGNMENT_FORMATS {
   'psi'    => 'PSI',
   );
 }
+sub SIMPLEALIGN_DEFAULT { return 'clustalw'; }
 
 sub TREE_FORMATS {
   return (
