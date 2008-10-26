@@ -166,19 +166,10 @@ sub populate_tree {
 
 
   # External Data tree, including non-positional DAS sources
-  my $all_das  = $ENSEMBL_WEB_REGISTRY->get_all_das( $self->{'object'}->species );
-  my @active_das = qw(DS_549);
-  my $ext_node = $self->create_node( 'External', 'External Data',
+  $self->create_node( 'External', 'External Data',
     [qw(external EnsEMBL::Web::Component::Gene::ExternalData)],
     { 'availability' => 'gene' }
   );
-  for my $logic_name ( @active_das ) {
-    my $source = $all_das->{$logic_name} || next;
-    $ext_node->append($self->create_subnode( "External/$logic_name", $source->label, 
-      [qw(textdas EnsEMBL::Web::Component::Gene::TextDAS)],
-      { 'availability' => 'gene', 'concise' => $source->caption }
-    ));
-  }
 
   my $history_menu = $self->create_submenu( 'History', 'ID History' );
   $history_menu->append($self->create_node( 'Idhistory', 'Gene history',
@@ -197,10 +188,11 @@ sub populate_tree {
   
   foreach (keys %$format) {
     $export_menu->append($self->create_subnode( "Export/$_", "Export gene data as $format->{$_}",
-      [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/gene_$_" ],
+      [ "sequence" => "EnsEMBL::Web::Component::Gene::GeneExport/$_" ],
       { 'availability' => 'gene', 'no_menu_entry' => 1 }
     ));
   }
+  $self->user_populate_tree;
 }
 
 sub global_context { return $_[0]->_global_context; }
