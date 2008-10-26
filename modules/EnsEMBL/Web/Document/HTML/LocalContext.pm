@@ -97,6 +97,13 @@ $pad    </dd>";
       my $name = $node->data->{caption};
       $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
       $name = CGI::escapeHTML( $name );
+      my $title = $node->data->{long_caption};
+      if( $title ) {
+        $title =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
+        $title = CGI::escapeHTML( $title );
+      } else {
+        $title = $name;
+      }
       if( $node->data->{'availability'} && $self->is_available( $node->data->{'availability'} )) {
         my $url = $node->data->{'url'};
         if (!$url) {
@@ -110,7 +117,7 @@ $pad    </dd>";
           }
           $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.join(';', @ok_params);
         }
-      	$name = sprintf '<a href="%s" title="%s">%s</a>', $url, $name, $name;
+      	$name = sprintf '<a href="%s" title="%s">%s</a>', $url, $title, $name;
       } else {
       	$name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
       }
