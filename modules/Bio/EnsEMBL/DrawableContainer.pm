@@ -191,7 +191,7 @@ sub new {
 	if( $@ ){ warn( $@ ) }
 #        $glyphset->_dump('rendered' => 'no');
 	$self->timer_push("track finished",3);
-        $self->timer_push("INIT: [ ] $NAME",2);
+        $self->timer_push("INIT: [ ] $NAME '".$glyphset->{'my_config'}->get('name'),2)."'";
         next;
       };
       ## remove any whitespace at the top of this row
@@ -237,7 +237,7 @@ sub new {
       $yoffset += $glyphset->height() + $trackspacing;
       $iteration ++;
       $self->timer_push("track finished",3);
-      $self->timer_push("INIT: [X] $NAME",2);
+      $self->timer_push("INIT: [X] $NAME '".$glyphset->{'my_config'}->get('name'),2)."'";
     }
     $self->timer_push( 'End of creating glyphs for '.ref($Config), 1);
     push @{$self->{'glyphsets'}}, @glyphsets;
