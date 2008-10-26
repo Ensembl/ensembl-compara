@@ -199,19 +199,34 @@ sub render_Circle {
   my $filled         = $glyph->filled();
   my ($cx, $cy)      = $glyph->pixelcentre();
 
-  $canvas->arc(
-	       $cx,
-	       $cy,
-	       $glyph->{'pixelwidth'},
-	       $glyph->{'pixelheight'},
-	       0,
-	       360,
-	       $colour
-	      );
-  $canvas->fillToBorder($cx, $cy, $colour, $colour) if ($filled && $cx <= $self->{'im_width'});
+  my $method = $filled ? 'filledEllipse' : 'ellipse';
+  $canvas->$method( 
+    $cx-$glyph->{'pixelwidth'}/2,
+    $cy-$glyph->{'pixelheight'}/2,
+    $glyph->{'pixelwidth'},
+    $glyph->{'pixelheight'},
+    $colour
+   );
+#  $canvas->fillToBorder($cx, $cy, $colour, $colour) if ($filled && $cx <= $self->{'im_width'});
 }
 
 sub render_Ellipse {
+  my ($self, $glyph) = @_;
+
+  my $canvas         = $self->{'canvas'};
+  my $gcolour        = $glyph->{'colour'};
+  my $colour         = $self->colour($gcolour);
+  my $filled         = $glyph->filled();
+  my ($cx, $cy)      = $glyph->pixelcentre();
+
+  my $method = $filled ? 'filledEllipse' : 'ellipse';
+  $canvas->$method( 
+    $cx-$glyph->{'pixelwidth'}/2,
+    $cy-$glyph->{'pixelheight'}/2,
+    $glyph->{'pixelwidth'},
+    $glyph->{'pixelheight'},
+    $colour
+   );
 }
 
 sub render_Intron {
@@ -241,7 +256,7 @@ sub render_Line {
   my $x2     = $x1 + $glyph->{'pixelwidth'};
   my $y2     = $y1 + $glyph->{'pixelheight'};
 
-  if(defined $glyph->dotted()) {
+  if(defined $glyph->dotted() && $glyph->dotted ) {
     $self->{'canvas'}->setStyle(gdTransparent,gdTransparent,gdTransparent,$colour,$colour,$colour);
     $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdStyled);
   } else {
