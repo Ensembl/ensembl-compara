@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
-use EnsEMBL::Web::Form;
+use EnsEMBL::Web::Document::SpreadSheet;
 
 sub _init {
   my $self = shift;
