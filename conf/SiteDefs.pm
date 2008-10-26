@@ -256,8 +256,6 @@ my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ ) || "5.8.0
   $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-functgenomics/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-mart/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-genename/modules',
   $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
   $ENSEMBL_SERVERROOT.'/bioperl-live',
   $ENSEMBL_SERVERROOT.'/modules',
@@ -454,7 +452,7 @@ $ENSEMBL_BASE_URL      = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME".
 
 $MART_ENSEMBL_LINKS    = $ENSEMBL_BASE_URL;
 $MART_HELP_DESK        = "$ENSEMBL_BASE_URL/default/helpview";
-$ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-web/conf';
+$ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
 
 ####################
 # Export by default
