@@ -35,6 +35,10 @@ $$('.ajax').each(function(panel) {
 	}
         var t_node = Builder.node( node_type, {className:'spinner'}, 'Loading component');
         p_node.appendChild(t_node);
+        if( component.match(/\?/) ) {
+          var d = new Date();
+          component += ';time='+( d.getTime()+d.getMilliseconds()/1000 )
+        }
         new Ajax.Request( component, {
 	  method: 'get',
           onSuccess: function(resp){

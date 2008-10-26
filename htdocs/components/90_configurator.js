@@ -236,6 +236,8 @@ function change_img_value(e) {
   if( Prototype.Browser.Gecko ) {
     var x2 = i_node.cumulativeScrollOffset();
     x[1]-= x2[1];
+    var x3 = $$('body')[0].cumulativeScrollOffset();
+    x[1]+= x3[1];
   } __info( x[1]+'::'+x[0] );
   var select_menu = Builder.node('dl',{
     id:       's_menu',
