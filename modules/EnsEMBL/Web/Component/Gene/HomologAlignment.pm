@@ -6,7 +6,7 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Gene);
 use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::Document::HTML::TwoCol;
-
+use EnsEMBL::Web::Constants;
 use POSIX;
 
 
@@ -21,6 +21,13 @@ sub _init {
 
 sub caption {
   return undef;
+}
+
+sub renderer_type {
+  my $self = shift;
+  my $K = shift;
+  my $T = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+  return $T->{$K} ? $K : EnsEMBL::Web::Constants::SIMPLEALIGN_DEFAULT;
 }
 
 sub content {
@@ -86,7 +93,7 @@ sub content {
         }
       }
       next unless $FLAG;
-      my $homology_types = $self->HOMOLOGY_TYPES;
+      my $homology_types = EnsEMBL::Web::Constants::HOMOLOGY_TYPES;
 
       my $homology_desc= $homology_types->{$homology->{_description}} || $homology->{_description};
 
