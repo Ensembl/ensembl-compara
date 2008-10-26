@@ -7,6 +7,8 @@ no warnings "uninitialized";
 use EnsEMBL::Web::RegObj; # exports web registry
 use EnsEMBL::Web::Document::HTML::TwoCol;
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use CGI qw(unescapeHTML);
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -27,9 +29,19 @@ sub content {
   my $object = $self->object;
   
   # The DAS source this page represents:
-  my $logic_name = $ENV{'ENSEMBL_FUNCTION'}|| 'DS_409' || die "Bad configuration: unknown DAS source";
+  my $logic_name = $object->parent->{'ENSEMBL_FUNCTION'} ||
+                   $ENV{'ENSEMBL_FUNCTION'};
+
+  return $self->_error( 'No DAS source specified',
+    'No parameter passed!' 
+  ) unless $logic_name;
   
   my $source = $ENSEMBL_WEB_REGISTRY->get_das_by_logic_name( $logic_name );
+  
+  return $self->_error( sprintf( 'DAS source "%s" specified does not exist', $logic_name ),
+    'Cannot find the specified DAS source key supplied' 
+  ) unless $source;
+
   my $engine = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
     -sources => [ $source ],
     -proxy   => $object->species_defs->ENSEMBL_WWW_PROXY,
@@ -38,7 +50,7 @@ sub content {
   );
   
   my $table = EnsEMBL::Web::Document::HTML::TwoCol->new();
-  $table->add_row( 'Description', $source->description, 1 );
+  $table->add_row( 'Description', $source->description );#, 1 );
   if ( my $homepage = $source->homepage ) {
     $table->add_row( 'Homepage', qq(<a href="$homepage">$homepage</a>) );
   }
@@ -83,14 +95,20 @@ sub content {
     }
     
     # TODO: do this in an OO way?
-    $html .= "<table>\n";
-    $html .= "<tr><th>Type</th><th>Label</th><th>Notes</th></tr>\n";
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px','triangle'=>1} );
+    $table->add_columns(
+      { 'key' => 'type',  'title' => 'Type',  'width' => '15%' },
+      { 'key' => 'label', 'title' => 'Label', 'width' => '15%' },
+      { 'key' => 'notes', 'title' => 'Notes', 'width' => '70%' }
+    );
     for my $f ( sort { $a->type_label cmp $b->type_label } @features ) {
       my $note = join '<br/>', @{ $f->notes };
-      $html .= sprintf "<tr><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-        $f->type_label, $f->display_label, $note;
+      (my $lh = ucfirst($f->type_label)) =~ s/_/ /g;
+      $table->add_row({
+        'type' => $lh, 'label' => $f->display_label, 'notes' => $note
+      });
     }
-    $html .= "</table>\n";
+    $html .= $table->render;
   }
 
   # Only unescape content served from "preconfigured" DAS sources
