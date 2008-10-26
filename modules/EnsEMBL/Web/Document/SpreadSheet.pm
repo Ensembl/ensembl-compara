@@ -76,12 +76,13 @@ sub render {
       my $extra = ( $cell->{'class'} ? qq( class="$cell->{class}") : '' ).
                   ( $cell->{'style'} ? qq( style="$cell->{style}") : '' ).
                   ( $cell->{'colspan'} ? qq( colspan="$cell->{colspan}") : '' );
-      $output .= qq(\n    <$tag$extra>@{[ (defined($cell->{'value'}) && $cell->{'value'}ne'' ) ? $cell->{'value'}:'&nbsp;']}</$tag>);
+      $output .= qq(\n    <$tag$extra>@{[ (defined($cell->{'value'}) && $cell->{'value'} ne '' ) ? $cell->{'value'}: '<span style="display:none">-</span>' ]}</$tag>);
     }
 
     $output .= qq(\n  </tr>);
   }
   $output .= qq(\n</table>);
+warn $output;
   return $output;
 }
 
