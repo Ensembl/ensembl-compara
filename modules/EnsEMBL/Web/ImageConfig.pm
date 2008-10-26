@@ -329,6 +329,7 @@ sub add_das_track {
   $node->append( $self->create_track( "das_".$source->logic_name,'[DAS] '.$source->label, {
     'glyphset'    => '_das',
     'display'     => 'off',
+#    'renderers'   => ('off' => 'Off', 'nolabels' => 'No labels', 'labels' => 'With labels'),
     'logicnames'  => [ $source->logic_name ],
     'caption'     => '[DAS] '.( $source->caption||$source->label),
     'description' => $source->description
