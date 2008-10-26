@@ -700,20 +700,20 @@ sub rgb_by_id {
 }
 
 sub hex_by_name {
-    my ($self, $name) = @_;
-    return $self->{$name} || ( $name =~ /^#?([0-9a-fA-F]{6})$/ ? $1 : 'ff0000' ); 
+  my ($self, $name) = @_;
+  return $self->{$name} || ( $name =~ /^#?([0-9a-fA-F]{6})$/ ? $1 : 'ff0000' ); 
 }
 
 sub rgb_by_name {
-  my ($self, $name) = @_;
+  my ($self, $name, $flag) = @_;
   $name = lc($name);
-  my $hex=$self->{$name};
-  $hex=$name if (! $hex) and $name=~/^[0-9a-f]{6}$/;
+  my $hex = $self->{$name};
+     $hex = $1 if !$hex && $name=~/^#?([0-9a-f]{6})$/;
   unless( $hex ) {
     warn "Unknown colour name $name";
-    return (hex(0), hex(0), hex(0));
+    return $flag ? () : (0,0,0);
   }
-  return $self->rgb_by_hex($hex);
+  return $self->rgb_by_hex($hex) if $hex;
 }
 
 sub names {
