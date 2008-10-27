@@ -265,6 +265,7 @@ sub has_many {
     *{$class."::$accessor"} =
       sub {
         my $self = shift;
+        unshift @_, $self->get_primary_key if @_ == 1;
         return $self->$real_accessor(@_, type => $relation_class->__type);
       };
     *{$class."::add_to_$accessor"} =
