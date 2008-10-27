@@ -2,8 +2,11 @@ package EnsEMBL::Web::Data;
 
 use strict;
 use warnings;
-use EnsEMBL::Web::Cache;
+no warnings 'uninitialized';
+
 use base qw/EnsEMBL::Web::DBSQL::MySQLAdaptor/;
+
+use EnsEMBL::Web::Cache;
 use Data::Dumper qw//;
 
 
@@ -363,7 +366,9 @@ sub propagate_cache_tags {
   }
   
   ## TODO: Kill this warn:
+if(0){
   warn ' + + + + +  Propagate tags for '. $ENV{CACHE_KEY} ." \n ".Data::Dumper::Dumper($ENV{CACHE_TAGS});
+}
 }
 
 ###################################################################################################
