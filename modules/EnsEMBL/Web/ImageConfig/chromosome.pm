@@ -45,8 +45,5 @@ sub init {
   $self->add_tracks( 'decorations', 
     [ 'draggable', '', 'draggable', { 'display' => 'normal' } ]
   );
-
-  $self->tree->dump("Chromosome configuration", '([[glyphset]] -> [[caption]])');
-
 }
 1;
