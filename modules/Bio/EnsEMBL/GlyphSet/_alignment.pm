@@ -39,7 +39,7 @@ sub features {
 sub href {
 ### Links to /Location/Genome
   my( $self, $f ) = @_;
-  my $r = $f->seq_region_name.':'.$f->seq_region_start.':'.$f->seq_region_end;
+  my $r = $f->seq_region_name.':'.$f->seq_region_start.'-'.$f->seq_region_end;
   return $self->_url({
     'action' => 'Genome',
     'ftype'  => $self->my_config('object_type') || 'DnaAlignFeature',
