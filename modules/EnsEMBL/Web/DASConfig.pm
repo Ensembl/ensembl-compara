@@ -10,6 +10,7 @@ use Data::Dumper;
 use Time::HiRes qw(time);
 use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(%GENE_COORDS %PROT_COORDS);
 
 # Create a new SourceConfig using a hash reference for parameters.
 # Can also use an existing Bio::EnsEMBL::ExternalData::DAS::Source or
@@ -35,14 +36,18 @@ sub new_from_hashref {
   } @{$hash->{'coords'}||[]} ];
 
   # Convert old-style type & assembly parameters to single coords
-
   if (my $type = $hash->{type}) {
-    $type =~ s/^ensembl_location//;
-    push @{ $hash->{coords} }, Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
-      -name    => $type,
-      -version => $hash->{assembly},
-      -species => $ENV{ENSEMBL_SPECIES},
-    );
+    my $c = $GENE_COORDS{$type} || $PROT_COORDS{$type};
+    if ( $c ) {
+      push @{ $hash->{coords} }, $c;
+    } else {
+      $type =~ s/^ensembl_location_//;
+      push @{ $hash->{coords} }, Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new(
+        -name    => $type,
+        -version => $hash->{assembly},
+        -species => $ENV{ENSEMBL_SPECIES},
+      );
+    }
   }
   
   # Create a Bio::EnsEMBL::ExternalData::DAS::Source object to wrap

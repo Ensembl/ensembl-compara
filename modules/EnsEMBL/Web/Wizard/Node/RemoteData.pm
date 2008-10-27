@@ -8,7 +8,7 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::DASConfig;
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(@NON_GENOMIC_COORDS);
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(@GENE_COORDS @PROT_COORDS);
 use base qw(EnsEMBL::Web::Wizard::Node);
 
 my $DAS_DESC_WIDTH = 120;
@@ -227,8 +227,16 @@ sub select_das_coords {
     }
   }
   
-  $self->add_element( 'type' => 'SubHeader', 'value' => "Gene & Protein" );
-  for my $cs (@NON_GENOMIC_COORDS) {
+  $self->add_element( 'type' => 'SubHeader', 'value' => "Gene" );
+  for my $cs (@GENE_COORDS) {
+    $self->add_element( 'type'    => 'CheckBox',
+                        'name'    => 'coords',
+                        'value'   => $cs->to_string,
+                        'label'   => $cs->label );
+  }
+  
+  $self->add_element( 'type' => 'SubHeader', 'value' => "Protein" );
+  for my $cs (@PROT_COORDS) {
     $self->add_element( 'type'    => 'CheckBox',
                         'name'    => 'coords',
                         'value'   => $cs->to_string,
