@@ -40,6 +40,7 @@ sub _draw_features {
   $self->{'h'} = 0;
   my $colour = $ori ? 'blue' : 'green';
 
+  my $has_labels = 0;
   foreach my $lname   ( sort keys %{$features->{'groups'}} ) {
     foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
       my $group = $features->{'groups'}{$lname}{$gkey}{$ori};
@@ -49,10 +50,12 @@ sub _draw_features {
 ## Now loop through all features and get the extents of features - we will need this later for bumping! and joining!
 
       my $g_s = $features->{'g_styles'}{$lname}{$gkey};             ## Get the group style...
-      my $to_join = lc( $g_s->{'symbol'} ) ne 'hidden';
+      my $to_join = lc( $g_s->{'style'}{'symbol'} ) ne 'hidden';
+      $has_labels = 1 if $g_s->{'style'}{'label'} eq 'yes';
 
       foreach my $style_key ( keys %{$group->{'features'}} ) {
         my $f_s  = $features->{'f_styles'}{$lname}{$style_key};
+        $has_labels = 1 if $f_s->{'style'}{'label'} eq 'yes' && $f_s->{'style'}{'bump'} ne 'no';
         my $to_bump = $f_s->{'style'}{'bump'} eq 'yes';             ## Bump if style bump is set!
         my $fn_c = "composite_extent_".$f_s->{'style'}{'symbol'};
         my $fn_g = "extent_".$f_s->{'style'}{'symbol'};
@@ -61,7 +64,16 @@ sub _draw_features {
         $fn_g = 'extent_box' if $can_hash{$fn_g} eq '-'; ## default to drawing a box!!
         if( $can_hash{$fn_c} ) { ## This is one of the histogram style displays and the render fn has been defined!
           $self->$fn_c( $group, $f_s->{style} );
+          if($f_s->{style}{label} eq 'yes') {
+            $g_s->{'style'}{'label'} = 'yes';
+            $g_s->{'style'}{'fgcolor'} ||= $f_s->{style}{fgcolor};
+          }
         } else {
+          if( $f_s->{style}{label} eq 'yes' && $to_join && !$to_bump ) {
+            $g_s->{'style'}{'label'} = 'yes';
+            warn "$gkey -> ",$g_s->{'style'}{'fgcolor'}," ||= ",$f_s->{style}{fgcolor};
+            $g_s->{'style'}{'fgcolor'} ||= $f_s->{style}{fgcolor};
+          } 
           foreach my $f ( @{$group->{'features'}{$style_key}} ) { # Compute the extent of each glyph - and add to extent of group if not bumped!
 ## Only pass the glyph if we are going to put this glyph in a composite
             $self->$fn_g( $to_join && !$to_bump ? $group : undef, $f, $f_s->{style} );
@@ -75,6 +87,12 @@ sub _draw_features {
   $self->{h} ||= 12;
 ## All groups and features now have two additional values...
 ## -> extent_start and extent_end so we know where to draw the boxes....
+
+  $has_labels = 0 unless $render_flags eq 'label_under';
+  my( $fontname, $fontsize ) = ( undef, -2 );
+  if( $has_labels ) {
+    ( $fontname, $fontsize )  = $self->get_font_details( 'outertext' );
+  }
 
   foreach my $lname   ( sort keys %{$features->{'groups'}} ) {
     foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
@@ -91,7 +109,7 @@ sub _draw_features {
 #       foreach my $style_key ( keys %{ $group->{'features'} } ) {
       my $g_s = $features->{'g_styles'}{$lname}{$gkey};             ## Get the group style...
       my @boxes;
-      my $to_join = lc( $g_s->{'symbol'} ) ne 'hidden';
+      my $to_join = lc( $g_s->{'style'}{'symbol'} ) ne 'hidden';
       my $composite_flag   = 0;
       my $score_based_flag = 0;
       $group->{height} ||= $self->{h};
@@ -102,8 +120,16 @@ sub _draw_features {
       my($s,$e) = ($group->{extent_start}, $group->{extent_end});
       my $composite;
       if( $composite_flag || $score_based_flag ) {
+        my $end;
+        my($T,$TF,$tw,$h);
+        if( $has_labels && $group->{'label'} && $g_s->{'style'}{'label'} eq 'yes' ) {
+          ($T,$TF,$tw,$h) = $self->get_text_width( 0, $group->{'label'}, '', {'font'=>$fontname,'ptsize'=>$fontsize} );
+          $end = $group->{'start'} + $tw * $self->{bppp};
+        }
+        $end = $group->{'end'} if $group->{'end'} > $end;
+
         my $row = $self->bump_row( $group->{'start'}*$ppbp, $group->{'end'}*$ppbp );
-        $group->{'y'} = - $strand * $row * ($self->{h}+2);
+        $group->{'y'} = - $strand * $row * ( $self->{h}+ $fontsize + 4);
         $composite =  $self->Space({ ## Just draw a composite at the moment!
           'absolutey' => 1,
           'x'         => $s-1,
@@ -114,6 +140,21 @@ sub _draw_features {
           'bordercolour' => 'green',
           'title'     => $group->{label}.' : '.$group->{id}
         }); ## Create a composite for the group and bump it!
+warn "GLABEL: $has_labels $group->{id} $group->{label} {$g_s->{'style'}{'label'}} $group->{y} $group->{extent_start} $group->{extent_end} [$s,$e]";
+        $self->push($self->Text({
+          'absolutey' => 1,
+          'x'         => $s-1,
+          'width'     => $e-$s+1,
+          'y'         => $group->{y}+$self->{h}+2,
+          'textwidth' => $tw,
+          'height'    => $fontsize,
+          'halign'    => 'left',
+          'valign'    => 'center',
+          'ptsize'    => $fontsize,
+          'font'      => $fontname,
+          'colour'    => $g_s->{'style'}{'fgcolor'}||'black',
+          'text'      => $group->{'label'}
+        })) if $has_labels && $group->{'label'} && $g_s->{'style'}{'label'} eq 'yes';
       }
 
       foreach my $style_key (
@@ -147,9 +188,16 @@ sub _draw_features {
               ## Create glyph and bump it!!
               next unless defined $f->{'extent_start'};
               $f->{'y'} = 0;
+              my($T,$TF,$tw,$h);
               if( $to_bump ) {
-                my $row = $self->bump_row( $f->{'extent_start'}*$ppbp, $f->{'extent_end'}*$ppbp );
-                $f->{'y'} = - $strand * $row * ($self->{h}+2);
+                my $end;
+                if( $has_labels && $f->display_label && $f_s->{style}{'label'} eq 'yes' ) {
+                  ($T,$TF,$tw,$h) = $self->get_text_width( 0, $f->display_label, '', {'font'=>$fontname,'ptsize'=>$fontsize} );
+                  $end = $f->{'extent_start'} + $tw * $self->{bppp};
+                }
+                $end = $f->{'extent_end'} if $f->{'extent_end'} > $end;
+                my $row = $self->bump_row( $f->{'extent_start'}*$ppbp, $end*$ppbp );
+                $f->{'y'} = - $strand * $row * ($self->{h}+$fontsize+4);
                 ## reposition!
               }
               $self->push( $self->Space({
@@ -160,6 +208,21 @@ sub _draw_features {
                 'absolutey' => 1,
                 'title' => $f->display_label.' : '.$f->display_id
               }));
+#warn "DRAWING TEXT: ",$f->display_label," - ",$has_labels," - $fontsize $fontname ",( $f_s->{'style'}{'fgcolor'}||'black' );
+              $self->push($self->Text({
+                'absolutey' => 1,
+                'x'         => $f->{extent_start}-1,
+                'width'     => $f->{extent_end}-$f->{extent_start}+1,
+                'y'         => $f->{y} + $self->{h} + 2,
+                'halign'    => 'left',
+                'valign'    => 'center',
+                'textwidth' => $tw,
+                'colour'    => $f_s->{'style'}{'fgcolor'}||'black',
+                'height'    => $fontsize,
+                'ptsize'    => $fontsize,
+                'font'      => $fontname,
+                'text'     => $f->display_label
+              })) if $has_labels && $f->display_label && $f_s->{style}{'label'} eq 'yes';
               $self->$fn_g( undef, $f, $f_s->{'style'});
             }
          } else {
@@ -261,6 +324,7 @@ sub render_label_under {
 
 sub render_normal {
   my ($self, $render_flags ) = @_;
+  $render_flags ||= 'label_under';
   $self->{'y_offset'} = 0;
 
   ## Grab and cache features as we need to find out which strands to draw them on!
@@ -349,8 +413,8 @@ sub _colour_points {
   my($self,$st) = @_;
 
   my @colour_points ;
-  foreach(1..3) {
-    my @c = $self->{'config'}{_colourmap}->rgb_by_name( $st->{"color$_"}, 1 );
+  foreach(1..9) {
+    my @c = $self->{'config'}{_colourmap}->rgb_by_name( $st->{"color$_"}, 1 ) if $st->{"color$_"};
     push @colour_points, \@c if @c;
   }
   push @colour_points, [0,255,0]  unless @colour_points;
@@ -841,7 +905,9 @@ sub glyph_box {
     'height'       => $h,
     'absolutey'    => 1,
     $st->{'bgcolor'} ? ( 'colour'       => $st->{'bgcolor'} ) : (),
-    $st->{'fgcolor'} ? ( 'bordercolour' => $st->{'fgcolor'} ) : ()
+    'bordercolour' => $st->{'fgcolor'}||$st->{'bgcolor'},
+    $st->{'pattern'} ? ( 'patterncolour' => $st->{'fgcolor'}, 'pattern' => $st->{'pattern'} ) : ()
+
   }));
 }
 

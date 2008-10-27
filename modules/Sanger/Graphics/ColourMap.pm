@@ -704,13 +704,14 @@ sub hex_by_name {
   return $self->{$name} || ( $name =~ /^#?([0-9a-fA-F]{6})$/ ? $1 : 'ff0000' ); 
 }
 
+use Carp qw(cluck);
 sub rgb_by_name {
   my ($self, $name, $flag) = @_;
   $name = lc($name);
   my $hex = $self->{$name};
      $hex = $1 if !$hex && $name=~/^#?([0-9a-f]{6})$/;
   unless( $hex ) {
-    warn "Unknown colour name $name";
+    warn "Unknown colour name {$name}";
     return $flag ? () : (0,0,0);
   }
   return $self->rgb_by_hex($hex) if $hex;
