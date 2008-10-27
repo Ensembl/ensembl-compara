@@ -46,6 +46,7 @@ sub _parse_referer {
     $value = CGI::unescape($value);
     push @{$params->{$param}}, $value unless $param eq 'time'; ## don't copy time!
   }
+if( $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAS & $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_REFERER ){
   warn "\n";
   warn "------------------------------------------------------------------------------\n";
   warn "\n";
@@ -63,7 +64,7 @@ sub _parse_referer {
   warn "  URI:     $uri\n";
   warn "\n";
   warn "------------------------------------------------------------------------------\n";
-
+}
   return {
     'ENSEMBL_SPECIES'  => $sp,
     'ENSEMBL_TYPE'     => $ot,
