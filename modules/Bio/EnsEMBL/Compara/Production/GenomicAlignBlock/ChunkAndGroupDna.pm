@@ -62,7 +62,8 @@ use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use Bio::EnsEMBL::Analysis::RunnableDB;
-our @ISA = qw(Bio::EnsEMBL::Analysis::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Analysis::RunnableDB);
 
 
 =head2 fetch_input
