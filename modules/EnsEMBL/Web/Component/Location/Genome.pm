@@ -39,10 +39,10 @@ sub content {
 
   my $pointers = [];
   my %pointer_defaults = (
-    'DnaAlignFeature'     => ['blue', 'lharrow'],
-    'ProteinAlignFeature' => ['blue', 'lharrow'],
-    'RegulatoryFactor'    => ['blue', 'lharrow'],
-    'Gene'                => ['blue', 'lharrow'],
+    'DnaAlignFeature'     => ['red', 'rharrow'],
+    'ProteinAlignFeature' => ['red', 'rharrow'],
+    'RegulatoryFactor'    => ['red', 'rharrow'],
+    'Gene'                => ['blue','lharrow'],
     'OligoProbe'          => ['red', 'rharrow'],
     'XRef'                => ['red', 'rharrow'],
     'UserData'            => ['darkgreen', 'lharrow'],
@@ -84,16 +84,16 @@ sub content {
     my $i = 0;
     my $zmenu_config;
     foreach my $ftype  (@f_hashes) {
-      my $pointer_ref = $image->add_pointers( $object, {
-        'config_name'  => 'Vkaryotype',
-        'features'      => \@f_hashes,
-        'zmenu_config'  => $zmenu_config,
-        'feature_type'  => $ftype,
-        'color'         => $object->param("col_$i")   || $pointer_defaults{$ftype}[0],
-        'style'         => $object->param("style_$i") || $pointer_defaults{$ftype}[1]}
-      );
-      push(@$pointers, $pointer_ref);
-      $i++;
+	my $pointer_ref = $image->add_pointers( $object, {
+	    'config_name'  => 'Vkaryotype',
+	    'features'      => \@f_hashes,
+	    'zmenu_config'  => $zmenu_config,
+	    'feature_type'  => $ftype,
+	    'color'         => $object->param("col_$i")   || $pointer_defaults{$ftype->[2]}[0],
+	    'style'         => $object->param("style_$i") || $pointer_defaults{$ftype->[2]}[1]}
+					    );
+	push(@$pointers, $pointer_ref);
+	$i++;
     }
   } 
   if (!@$pointers) { ## Ordinary "KaryoView"
@@ -126,28 +126,26 @@ sub feature_tables {
     my $html;
     my @tables;
     foreach my $feature_set (@{$feature_dets}) {
-#	warn "1",Dumper($feature_set);
 	my $features = $feature_set->[0];
-#	warn "2",Dumper($features);
 	my $extra_columns = $feature_set->[1];
 	my $feat_type = $feature_set->[2];
-#	warn "TYPE = $feat_type";
-	my $data_type = ($feat_type eq 'Gene') ? 'Gene Information'
-	    : 'Feature Information';
+##
+	#could show only gene liks for xrefs, but probably not what is wanted:
+#	next SET if ($feat_type eq 'Gene' && $data_type =~ /Xref/);
+##
+	my $data_type = ($feat_type eq 'Gene') ? 'Gene Information:'
+	    : 'Feature Information:';
 
 	my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
-	$table->add_columns({'key'=>'loc','title'=>'Genomic location','width' =>'15%','align'=>'left' });
-	if ($data_type eq 'Gene') {
-	    $table->add_columns({'key'=>'extname','title'=>'External names','width'=>'25%','align'=>'left' });
+	if ($feat_type eq 'Gene') {
+	    $table->add_columns({'key'=>'names',  'title'=>'Ensembl ID',      'width'=>'25%','align'=>'left' });
+	    $table->add_columns({'key'=>'extname','title'=>'External names',  'width'=>'25%','align'=>'left' });
+
 	}
 	else {
-	    $table->add_columns({'key'=>'length','title'=>'Genomic length','width'=>'10%','align'=>'center' });
-	}
-	if ( grep {$_ eq 'Alignment length'} @{$extra_columns}) {
-	    $table->add_columns({'key'=>'names','title'=>'Feature Location','width'=>'25%','align'=>'left' });
-	}
-	else {
-	    $table->add_columns({'key'=>'names','title'=>'Names(s)','width'=>'25%','align'=>'left' });
+	    $table->add_columns({'key'=>'loc',   'title'=>'Genomic location','width' =>'15%','align'=>'left' });
+	    $table->add_columns({'key'=>'length','title'=>'Genomic length',  'width'=>'10%','align'=>'left' });
+	    $table->add_columns({'key'=>'names', 'title'=>'Names(s)',        'width'=>'25%','align'=>'left' });
 	}
 	
 	my $c = 1;
@@ -170,17 +168,25 @@ sub feature_tables {
 				       $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'label'},
 				       $row->{'region'}, $row->{'start'}, $row->{'end'},
 				       $row->{'strand'});
-		if ($data_type eq 'Gene' && $row->{'label'}) {
+		if ($feat_type eq 'Gene' && $row->{'label'}) {
 		    $names = sprintf('<a href="/%s/Gene/Summary?g=%s;r=%s:%d-%d">%s</a>',
 				     $object->species, $row->{'label'},
 				     $row->{'region'}, $row->{'start'}, $row->{'end'},
 				     $row->{'label'});
 		    my $extname = $row->{'extname'};
 		    my $desc =  $row->{'extra'}[0];
-		    $data_row = { 'loc' => $contig_link, 'extname' => $extname, 'names' => $names};
+		    $data_row = { 'extname' => $extname, 'names' => $names};
 		}
 		else {
-		    $names  = $row->{'label'} if $row->{'label'};
+		    if ($feat_type !~ /align/i && $row->{'label'}) {
+			$names = sprintf('<a href="/%s/Gene/Summary?g=%s;r=%s:%d-%d">%s</a>',
+					 $object->species, $row->{'label'},
+					 $row->{'region'}, $row->{'start'}, $row->{'end'},
+					 $row->{'label'});
+		    }
+		    else {
+			$names  = $row->{'label'} if $row->{'label'};
+		    }
 		    my $length = $row->{'length'};
 		    $data_row = { 'loc'  => $contig_link, 'length' => $length, 'names' => $names, };
 		}
@@ -195,11 +201,16 @@ sub feature_tables {
 		$data_row->{"initial$c"} = $_;
 		$c++;
 	    }
-	    #	warn "data to print = ",Dumper($data_row);
 	    $table->add_row($data_row);
 	}
 	$html .= qq(<strong>$data_type</strong>);
-	$html .= $table->render;
+	if (@data) {
+	    $html .= $table->render;
+	}
+	else {
+	    my $id = $object->param('id');
+	    $html .= qq(<br /><br />No mapping of $feat_type $id found<br /><br />);
+	}
     }
     return $html;
 }
