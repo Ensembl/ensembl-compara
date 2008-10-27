@@ -20,9 +20,12 @@ sub init {
     'all_chromosomes' => 'yes'
   });
 
-  $self->create_menus( 'features' => 'Features' );
+  $self->create_menus( 
+    'ideogram' => 'Ideogram', # N.B. Karyotype not currently configurable
+    'user_data'   => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
+   );
 
-  $self->add_tracks( 'features',
+  $self->add_tracks( 'ideogram',
     [ 'Videogram', 'Ideogram', 'Videogram', {
       'display'    => 'normal',
       'renderers'  => [qw(normal normal)],
