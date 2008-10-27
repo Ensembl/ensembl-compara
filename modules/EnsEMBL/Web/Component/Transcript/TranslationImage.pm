@@ -32,7 +32,8 @@ sub content {
      $wuc->cache( 'image_splice', $object->pep_splice_site( $object->Obj ) );
   $transcript->timer_push( 'Cacheing dumping tree', 5);
 
-  $wuc->tree->dump("Tree", '[[caption]]' );
+  $wuc->tree->dump("Tree", '[[caption]]' )
+    if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
 
   my $image    = $transcript->new_image( $object->Obj, $wuc, [] );
      $image->imagemap = 'yes';

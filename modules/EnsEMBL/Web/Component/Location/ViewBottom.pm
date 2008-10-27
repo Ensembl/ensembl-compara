@@ -33,7 +33,8 @@ sub content {
   my $T = time;
   my $wuc = $object->image_config_hash( 'contigviewbottom' );
   $T = sprintf "%0.3f", time - $T;
-  $wuc->tree->dump("View Bottom configuration [ time to generate $T sec ]", '([[caption]])');
+  $wuc->tree->dump("View Bottom configuration [ time to generate $T sec ]", '([[caption]])')
+    if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
 
   $wuc->set_parameters({
     'container_width' => $length,
