@@ -52,7 +52,6 @@ sub features       {
       push @errors, $f_data->{'error'};
       
       for my $f ( @{ $f_data->{'objects'} } ) {
-        warn "FEATURE $logic_name ",$self->my_config('caption'),": ", $f->start," -> ",$f->end," # ",$f->strand;
         # Skip nonpositional features
         $f->start || $f->end || next;
         
@@ -157,7 +156,8 @@ sub features       {
     }
   }  
   warn join "\n", map( { "DAS:URL $_" } @urls ),'';
-  warn join "\n", map( { "DAS:ERR $_" } @errors ),'';
+  @errors = grep {$_} @errors;
+  warn join "\n", map( { "DAS:ERR $_" } @errors ),'' if @errors;
 
 
 if(0) { 
