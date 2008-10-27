@@ -287,7 +287,7 @@ sub ingredient {
       $content,
       60*60*24*7,
       'AJAX', keys %{ $ENV{CACHE_TAGS}||{} }
-    ) if $MEMD;
+    ) if $MEMD && $webpage->format eq $webpage->DEFAULT_FORMAT;
     timer_push( 'Rendered content cached' );
   }
 
@@ -426,7 +426,10 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
     my @tags = qw(DYNAMIC);
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
     $MEMD->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags)
-      if $MEMD && !$webpage->has_a_problem && $ENSEMBL_WEB_REGISTRY->check_ajax;
+      if $MEMD &&
+         !$webpage->has_a_problem &&
+         $ENSEMBL_WEB_REGISTRY->check_ajax &&
+         $webpage->format eq $webpage->DEFAULT_FORMAT;
   }
   
   print $content;
