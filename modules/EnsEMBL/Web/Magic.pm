@@ -416,8 +416,8 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
         $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
         $webpage->render;
         warn $webpage->timer->render if
-        $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
-        $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
+          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
         #return "Completing action";
       }
     }
