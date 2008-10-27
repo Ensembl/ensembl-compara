@@ -6,6 +6,7 @@ use Storable qw( nfreeze freeze thaw);
 use Sanger::Graphics::TextHelper;
 use Bio::EnsEMBL::Registry;
 use EnsEMBL::Web::OrderedTree;
+use EnsEMBL::Web::RegObj;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
@@ -114,8 +115,27 @@ sub load_user_tracks {
       'strand'      => 'b',
     }));
   }
+  my $user = EnsEMBL::Web::Data::User->new($ENV{'ENSEMBL_USER_ID'});
+  my $i = 0;
+  foreach my $upload ($user->uploads) {
+    if ($upload->species eq $self->{'species'}) {
+      my @logic_names = split(', ', $upload->analyses);
+      $menu->append($self->create_track( "user_upload_$i", '[USER] Saved user data', {
+        'glyphset'    => '_tmp_user_data',
+        'url'         => 'tmp',
+        'caption'     => $upload->name,
+        'logic_names' => \@logic_names,
+        'description' => 'Saved user upload',
+        'display'     => 'normal',
+        'renderers'   => [qw(off Off normal Normal)],
+        'strand'      => 'b',
+      }));
+      $i++;
+    }
+  }
   return;
 }
+
 sub update_from_input {
   my( $self, $input ) = @_;
   
@@ -290,6 +310,7 @@ sub load_tracks {
     $self->add_assemblies(            $key,$dbs_hash->{$db}{'tables'} ); # To sequence tree!                             ## 2 do ##
     $self->add_decorations(           $key,$dbs_hash->{$db}{'tables'} );
   }
+
   foreach my $db ( @{$self->species_defs->compara_like_databases||[]} ) {
     next unless exists $multi_hash->{$db};
     my $key = lc(substr($db,9));
@@ -359,9 +380,9 @@ sub _merge {
   foreach my $analysis (keys %$tree) {
     my $sub_tree = $tree->{$analysis};
     next unless $sub_tree->{'disp'}; ## Don't include non-displayable tracks
-#local $Data::Dumper::Indent=0;
-#    warn Data::Dumper::Dumper($sub_tree->{'web'});
-#    warn ".... $sub_type {",$sub_tree->{'web'}{ $sub_type },"}";
+local $Data::Dumper::Indent=0;
+    #warn Data::Dumper::Dumper($sub_tree->{'web'});
+    #warn ".... $sub_type {",$sub_tree->{'web'}{ $sub_type },"}";
     next if exists $sub_tree->{'web'}{ $sub_type }{'do_not_display'};
     my $key = $sub_tree->{'web'}{'key'} || $analysis;
     foreach ( keys %{$sub_tree->{'web'}||{}} ) {
@@ -1316,20 +1337,25 @@ sub save {
 
 sub reset {
   my ($self) = @_;
-  my $script = $self->script();
-  $self->{'user'}->{$script} = {}; 
+  $self->{'user'}->{$self->{'type'}} = {}; 
   $self->altered = 1;
   return;
 }
 
 sub reset_subsection {
   my ($self, $subsection) = @_;
-  my $script = $self->script();
   return unless(defined $subsection);
 
-  $self->{'user'}->{$script}->{$subsection} = {}; 
+  $self->{'user'}->{$self->{'type'}}->{$subsection} = {}; 
   $self->altered = 1;
   return;
+}
+
+sub subsections {
+  my ($self,$flag) = @_;
+  my @keys;
+  @keys = grep { /^managed_/ } keys %{$self->{'user'}} if $flag==1;
+  return @{$self->{'general'}->{$self->{'type'}}->{'_artefacts'}},@keys;
 }
 
 sub species_defs {
