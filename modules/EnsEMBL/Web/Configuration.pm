@@ -11,6 +11,7 @@ use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Cache;
+use EnsEMBL::Web::RegObj;
 
 
 our $MEMD = new EnsEMBL::Web::Cache;
@@ -290,8 +291,8 @@ sub _reset_config_panel {
   my $url = $obj->_url({'type'=>'Config','action'=>$action,'reset'=>1,'config'=>$config,'time'=>time});
   $panel->set_content( sprintf '
 <p>
-  To update the configuration of the view make the changes above and close
-  the configuration panel, your view will then be automatically updated.
+  To update this configuration, select your tracks and other options in the box above and close
+  this popup window. Your view will then be updated automatically.
 </p>
 <p>
   <a class="modal_link reset-button" href="%s">Reset configuration for %s to default settings</a>.
@@ -491,15 +492,25 @@ sub _local_tools {
                                 'config' => $config, '_referer' => $referer })
     );
     if( $vc->can_upload ) {
-      my $userdata = $obj->get_session->get_tmp_data;
       my $caption = 'Add custom data to page';
-      if ($userdata || $ENV{'ENSEMBL_USER_ID'}) {
+      my $action = 'Upload';
+      my $userdata = $obj->get_session->get_tmp_data;
+      my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+=pod
+      if ($userdata || $user) {
         $caption = 'Add/manage custom data';
+        if ($user) {
+          $action = 'SaveUpload';
+        }
+        else {
+          $action = 'ShareUpload';
+        }
       }
+=cut
       $self->{'page'}->local_tools->add_entry(
         'caption' => $caption,
         'class'   => 'modal_link',
-        'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => 'Summary',
+        'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => $action,
                                  '_referer' => $referer, '__clear' => 1 })
       );
       $disabled_upload = 0;
