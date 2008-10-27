@@ -227,7 +227,6 @@ warn "SETTING MODAL DIALOG TO ". $webpage->page->{'_modal_dialog_'};
     ##  3) Content of panel (expansion of tree)
   $webpage->render;
   my $content = $webpage->page->renderer->content;
-  #CGI::header( -type=>"text/html",-charset=>'utf-8' );
   print $content;
   return "Generated configuration panel ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'})";
 }
@@ -238,6 +237,7 @@ sub ingredient {
 ### Wrapper around a list of components to produce a panel or
 ### part thereof - for inclusion via AJAX
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
+  my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
 
   my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
@@ -250,11 +250,11 @@ sub ingredient {
   timer_push( 'Retrieved content from cache' ); 	 
   $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_COMPONENT'}" );
 
-  my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   if ($content) {
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
+    $r->content_type('text/html');
   } else {
-#    warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}";
+    # warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}";
     # my $referer_hash = _parse_referer;
 
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
@@ -291,7 +291,6 @@ sub ingredient {
     timer_push( 'Rendered content cached' );
   }
 
-  #CGI::header( -type=>"text/html",-charset=>'utf-8' );
   print $content;
   timer_push( 'Rendered content printed' );
   return "Generated magic ingredient ($ENV{'ENSEMBL_COMPONENT'})";
@@ -330,8 +329,9 @@ sub stuff {
 
   if ($content) {
     warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}";
+    $r->content_type('text/html');
   } else {
-    warn "DYNAMIC CONTENT CACHE MISS $ENV{CACHE_KEY}";
+    # warn "DYNAMIC CONTENT CACHE MISS $ENV{CACHE_KEY}";
 
     my $webpage = EnsEMBL::Web::Document::WebPage->new( 
       'objecttype' => $object_type, 
@@ -429,7 +429,6 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
       if $MEMD && !$webpage->has_a_problem && $ENSEMBL_WEB_REGISTRY->check_ajax;
   }
   
-  #CGI::header( -type=>"text/html",-charset=>'utf-8' );
   print $content;
   return "Completing action";
 }

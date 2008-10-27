@@ -27,7 +27,8 @@ our @EXPORT_OK = qw(redirect simple_self simple_with_redirect wrapper_self);
 our @EXPORT    = @EXPORT_OK;
 
 sub timer_push { my $self = shift; $self->timer->push( @_ ); }
-sub timer { return $_[0]{'timer'}; }
+sub timer      { return $_[0]{'timer'}; }
+sub format     { return $_[0]->{'format'}; }
 
 sub _parse_referer {
   my( $self, $uri ) = @_;
@@ -368,17 +369,17 @@ sub redirect {
 
 sub render {
   my $self = shift;
-  if( $self->{'format'} eq 'Text' ) { 
+  if( $self->format eq 'Text' ) { 
     CGI::header("text/plain"); $self->page->render_Text;
-  } elsif( $self->{'format'} eq 'DAS' ) { 
-    $self->page->{'subtype'} = $self->{'subtype'};
+  } elsif( $self->format eq 'DAS' ) { 
+    $self->page->subtype = $self->{'subtype'};
     CGI::header("text/xml"); $self->page->render_DAS;
-  } elsif( $self->{'format'} eq 'XML' ) { 
+  } elsif( $self->format eq 'XML' ) { 
     CGI::header("text/xml"); $self->page->render_XML;
-  } elsif( $self->{'format'} eq 'Excel' ) { 
+  } elsif( $self->format eq 'Excel' ) { 
     CGI::header( -type => "application/x-msexcel", -attachment => "ensembl.xls" );
     $self->page->render_Excel;
-  } elsif( $self->{'format'} eq 'TextGz' ) { 
+  } elsif( $self->format eq 'TextGz' ) { 
     CGI::header( -type => "application/octet-stream", -attachment => "ensembl.txt.gz" );
     $self->page->render_TextGz;
   } else {
@@ -391,7 +392,7 @@ sub render {
 
 sub render_popup {
   my $self = shift;
-  if( $self->{'format'} eq 'Text' ) { 
+  if( $self->format eq 'Text' ) { 
     CGI::header("text/plain");
     $self->page->render_Text;
   } else { 
