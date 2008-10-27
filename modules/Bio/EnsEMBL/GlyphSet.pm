@@ -17,6 +17,7 @@ use Sanger::Graphics::Glyph::Text;
 use Bio::EnsEMBL::Registry;
 
 use GD;
+use GD::Simple;
 use GD::Text;
 use CGI qw(escapeHTML escape);
 
@@ -185,19 +186,16 @@ sub get_text_width {
   return @{$cache{$KEY}} if exists $cache{$KEY};
 
   # Get the GD::Text object for this font/size
-  my $gd_text = $self->get_gd_text($parameters{'font'},$parameters{'ptsize'})
-      || return(); # Ensure we have the text obj
-
+  my $gd = $self->get_gd_simple($parameters{'font'},$parameters{'ptsize'})      || return(); # Ensure we have the text obj
+#use Data::Dumper; warn Dumper( $gd->fontMetrics($parameters{'font'},$parameters{'ptsize'},$text) );
   # Use the text object to determine height/width of the given text;
-  $gd_text->set_text($text);
   $width ||= 1e6; # Make initial width very big by default
-  my($w,$h) = $gd_text->get('width','height');
+  my($w,$h) = $gd->stringBounds($text); 
   my @res;
   if($w<$width) { 
     @res = ($text,      'full', $w,$h);
   } elsif($short_text) {
-    $gd_text->set_text($short_text);
-    ($w,$h) = $gd_text->get('width','height');
+    ($w,$h) = $gd->stringBounds($text);
     if($w<$width) { 
       @res = ($short_text,'short',$w,$h);
     } else {
@@ -209,6 +207,41 @@ sub get_text_width {
   return @res;
 }
 
+sub get_gd_simple {
+### Returns the GD::Text object appropriate for the given fontname
+### and fontsize. GD::Text objects are cached against fontname and fontsize.
+  my $self   = shift;
+  my $font   = shift || 'arial';
+  my $ptsize = shift || 10;
+
+  my $FONT_KEY = "${font}--${ptsize}"; 
+  return $cache{"2:".$FONT_KEY} if exists( $cache{"2:".$FONT_KEY} );
+  
+  my $fontpath = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}."/$font.ttf";
+  my $gd = GD::Simple->new( 400,400 );
+  eval {
+    if( -e $fontpath ) {
+      $gd->font( $fontpath, $ptsize );
+    } elsif( $font eq 'Tiny' ) {
+      $gd->font( gdTinyFont );
+    } elsif( $font eq 'MediumBold' ) {
+      $gd->font( gdMediumBoldFont );
+    } elsif( $font eq 'Large' ) {
+      $gd->font( gdLargeFont );
+    } elsif( $font eq 'Giant' ) {
+      $gd->font( gdGiantFont );
+    } else {
+      $font = 'Small';
+      $gd->font( gdSmallFont );
+    }
+  };
+  warn $@ if $@;
+
+  $cache{"2:".$FONT_KEY} = $gd; # Update font cache
+  
+  return $cache{"2:".$FONT_KEY};
+}
+
 sub get_gd_text {
 ### Returns the GD::Text object appropriate for the given fontname
 ### and fontsize. GD::Text objects are cached against fontname and fontsize.
@@ -217,6 +250,7 @@ sub get_gd_text {
   my $ptsize = shift || 10;
 
   my $FONT_KEY = "${font}--${ptsize}"; 
+warn "FONT... $FONT_KEY ...";
   return $cache{$FONT_KEY} if exists( $cache{$FONT_KEY} );
   
   my $fontpath 
