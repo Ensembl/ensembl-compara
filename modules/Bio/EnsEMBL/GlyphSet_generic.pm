@@ -527,6 +527,20 @@ sub _symbol_bg {
   }));
 }
 
+sub _symbol_init {
+  my($self,$g,$f,$st)= @_;
+  my $mp = ($f->start+$f->end-1)/2;
+  if( $mp < 0 || $mp > $self->{'seq_len'} ) {
+    $self->_symbol_bg( $g,$f,$f->start,$f->end,$st) if $st->{bgcolor};
+    return;
+  }
+  my $h = $st->{height}||$self->{'h'};
+  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+  my $w = ($st->{'linewidth'}||$h) * $self->{'bppp'};
+  $self->_symbol_bg( $g,$f,$f->start,$f->end,$st ) if $st->{bgcolor};
+  return ($mp,$h,$y,$w);
+}
+
 #----------------------------------------------------------------------#
 # glyph renderers - work on individual elements from the specification #
 # foreach glyph type there are up to two functions -                   #
@@ -607,11 +621,66 @@ sub glyph_anchored_arrow {
 
 sub extent_arrow {
   my($self,$g,$f,$st)= @_;
+
+  if( $st->{northeast} eq 'no' && $st->{soutwest} eq 'no' ) { #Not an arrow at all !liar!
+    return $self->extent_line($g,$f,$st);
+  }
+  if( $st->{'parallel'} eq 'no' ) {
+## Vertical arrow! get the width - if the midpoint is in the region 
+## then make space for the arrow!
+    my $h = $st->{height}||$self->{h};
+    my $w = ($st->{linewidth}||$h)*$self->{bppp}/2;
+    my $mp = ($f->start+$f->end-1)/2;
+    if( $mp >= 0 || $mp <= $self->{seq_len} ) {
+      return $self->_extent( $g,$f,$mp-$w,$mp+$w,$st->{height} );
+    }
+  }
+  return $self->extent_box($g,$f,$st);
 }
 
+=pod
 sub glyph_arrow {
   my($self,$g,$f,$st)= @_;
+  if( $st->{northeast} eq 'no' && $st->{soutwest} eq 'no' ) { #Not an arrow at all !liar!
+    return $self->glyph_line($g,$f,$st);
+  }
+  my $s = $f->start;
+  my $e = $f->end;
+  my $h = $st->{height}||$self->{'h'};
+  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+  if( $st->{'parallel'} eq 'no' ) { ## This is now like one of the X glyphs!
+
+  } else { ## More like a span glyph...
+    my $ends = ($st->{northeast} eq 'no' || $st->{southwest} eq 'no') ? 1 : 2;
+    if( $f->{extent_start}+$f->{extent_end}-1 > $ends*$h*$self->{bppp}/2 ) { ## We have room to draw all bits!
+      ## lets draw the arrow or attempt to at least...
+      if( $st->{northeast} eq 'no' ) { # This is a right left arrow
+        if( $s == $f->{extent_start} ) { ## Draw left hand end...
+          $self->push($self->Poly({
+            
+          }));
+        }
+      } elsif( $st->{southwest eq 'no') {
+
+      } else {
+
+      }
+    } elsif( $st->{northeast} eq 'no' ) { ## This is a right-left arrow
+      $self->push($self->Poly({
+        'colour' => $st->{fgcolor},
+        'bordercolour' => $st->{fgcolor},
+        'absolutey' => 1,
+        'points' => [ $s,$y+$h/2
+
+      }));
+    } elsif( $st->{southwest} eq 'no' ) { ## This is a left-right arrow
+
+    } else { ## This is a double-ended arrow...
+
+    }
+  }
 }
+=cut
 
 #----------------------------------------------------------------------#
 # Box.....                                                             #
@@ -674,20 +743,6 @@ sub extent_cross {
 sub extent_dot { my $self = shift; return $self->extent_cross( @_ ); }
 sub extent_ex  { my $self = shift; return $self->extent_cross( @_ ); }
 
-sub _symbol_init {
-  my($self,$g,$f,$st)= @_;
-  my $mp = ($f->start+$f->end-1)/2;
-  if( $mp < 0 || $mp > $self->{'seq_len'} ) {
-    $self->_symbol_bg( $g,$f,$f->start,$f->end,$st) if $st->{bgcolor};
-    return;
-  }
-  my $h = $st->{height}||$self->{'h'};
-  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
-  my $w = ($st->{'linewidth'}||$h) * $self->{'bppp'};
-#  $self->_symbol_bg( $g,$f,$mp-$w/2,$mp+$w/2,$st ) if $st->{bgcolor};
-  $self->_symbol_bg( $g,$f,$f->start,$f->end,$st ) if $st->{bgcolor};
-  return ($mp,$h,$y,$w);
-}
 sub glyph_cross {
   my($self,$g,$f,$st)= @_;
   my( $mp, $h, $y, $w ) = $self->_symbol_init( $g,$f,$st);
@@ -893,8 +948,9 @@ sub glyph_span {
 sub extent_text {
   my($self,$g,$f,$st)= @_;
   my $h   = $st->{height}||$self->{'h'};
-  my $fh  = $st->{fontsize}||$h;
+  my $fh  = $st->{fontsize}||($h*0.6); ## Fit inside box!
   my $fn  = $st->{font}||'arial';
+warn "TEXTFONT... $fn $fh $st->{font} $st->{fontsize} $st->{height}";
   my $str = $st->{string};
   my $l   = $self->{seq_len};
 ## @res contains - text, 'full', $w, $h
@@ -903,27 +959,33 @@ sub extent_text {
   my $bp_tw = $tw * $self->{bppp};
   $h ||= $th; ## Make sure the box has a big enough height!!
   my( $s, $e ) = ($f->start,$f->end);
-  my $mp = $s+$e-1;
+  my $mp = ($s+$e-1)/2;
   $s = 1 if $s < 1;
   $e = $l if $e > $l; 
+
+warn "$h $fn $fh|$t $flag $tw $th $bp_tw|$str $l $s $e $mp";
 
   if( $bp_tw < $e-$s+1 ) { # Can we fit the text in the box! If so we will draw it centred to the mid-point as much as possible....
 ## If not if we centre the text on tddhe midpoint - will it fit in the range - if so draw it at the midpoint and
     my $ts = $mp-$bp_tw/2;
     $ts = 1 if $ts < 1;
     $ts = $l - $bp_tw if $ts > $l-$bp_tw;
-    $f->{tinfo} = { 'ts' => $ts, 'tw' => $tw, 'th' => $th, 'fs' => $fh, 'fn' => $fn, 'st'=>$str, 'extra' => 'ff' };
-    return $self->_extent($g,$f,$ts,$ts+$bp_tw,$st);
+    $f->{tinfo} = { 'ts' => $ts, 'tw'=> $tw, 'bp_tw' => $bp_tw, 'th' => $th, 'fs' => $fh, 'fn' => $fn, 'st'=>$str, 'extra' => 'ff' };
+warn "1> $ts $bp_tw, $tw $th $fh $fn $str";
+    return $self->_extent($g,$f,$ts,$ts+$bp_tw,$h);
   } elsif( $mp < 0 || $mp > $l ) { ## Out of range don't draw!!
 ## If midpoint not in range don't draw the text at all - and just make space for the box if a background colour is set!
-    return $self->_extent($g,$f,$f->start,$f->end,$st) if $st->{bgcolor};
+warn "2> xx $bp_tw, $tw $th $fh $fn $str";
+    return $self->_extent($g,$f,$f->start,$f->end,$h) if $st->{bgcolor};
   } else {
     my $ts = $mp-$bp_tw/2;
     if( $ts < - 4 * $self->{bppp} || $ts + $bp_tw > $l + 4 * $self->{bppp} ) {
-      return $self->_extent($g,$f,$f->start,$f->end,$st) if $st->{bgcolor};
+warn "3> $ts $bp_tw, $tw $th $fh $fn $str";
+      return $self->_extent($g,$f,$f->start,$f->end,$h) if $st->{bgcolor};
     } else {
-      $f->{tinfo} = { 'ts' => $ts, 'tw' => $tw, 'th' => $th, 'fs' => $fh, 'fn' => $fn,'st'=>$str, 'extra' => 'pf' };
-      return $self->_extent($g,$f,$ts,$ts+$bp_tw,$st);
+      $f->{tinfo} = { 'ts' => $ts, 'tw' => $tw, 'bp_tw' => $bp_tw, 'th' => $th, 'fs' => $fh, 'fn' => $fn,'st'=>$str, 'extra' => 'pf' };
+warn "4> $ts $bp_tw, $tw $th $fh $fn $str";
+      return $self->_extent($g,$f,$ts,$ts+$bp_tw,$h);
     }
   }
   return;
@@ -931,7 +993,7 @@ sub extent_text {
 
 sub glyph_text {
   my($self,$g,$f,$st)= @_;
-return;
+#return $self->glyph_box($g,$f,$st);
 # local $Data::Dumper::Indent=1; warn Dumper($f->{tinfo});
 # warn $f->start,':',$f->end,' ',$f->{extent_start},':',$f->{extent_end}."#";
   if( $st->{bgcolor}) {
@@ -943,9 +1005,9 @@ return;
     $self->push($self->Text({
       'text'   => $st->{string},
       'valign' => 'center',
+      'textwidth' => $f->{tinfo}{tw},
       'x'      => $f->{tinfo}{ts},
-      'width'  => $f->{tinfo}{tw},
-      'absolutewidth' => 1,
+      'width'  => $f->{tinfo}{bp_tw},
       'halign' => 'center',
       'y'      => $y,
       'colour' => $st->{fgcolor},
