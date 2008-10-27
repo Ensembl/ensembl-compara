@@ -222,6 +222,9 @@ sub _create_ProteinAlignFeature {
 
 sub _create_Gene {
   my ($self, $db) = @_;
+
+  warn "looking for a gene";
+
   if ($self->param('id') =~ /^ENS/) {
     return {'Gene' => $self->_generic_create( 'Gene', 'fetch_by_stable_id', $db ) };
   }
@@ -414,13 +417,13 @@ sub retrieve_features {
  
   while (my ($type, $data) = each (%$features)) {
     $method = 'retrieve_'.$type;
-    push @$results, [$self->$method($data)] if defined &$method;
+    push @$results, [$self->$method($data,$type)] if defined &$method;
   }
   return $results;
 }
 
 sub retrieve_Gene {
-  my ($self, $data) = @_;
+  my ($self, $data, $type) = @_;
 
   my $results = [];
   foreach my $g (@$data) {
@@ -443,11 +446,11 @@ sub retrieve_Gene {
     }
   }
 
-  return ( $results, ['Description'] );
+  return ( $results, ['Description'], $type );
 }
 
 sub retrieve_Xref {
-  my ($self, $data) = @_;
+  my ($self, $data, $type) = @_;
 
   my $results = [];
   foreach my $array (@$data) {
@@ -474,11 +477,11 @@ sub retrieve_Xref {
     }
   }
 
-  return ( $results, ['Description'] );
+  return ( $results, ['Description'], $type );
 }
 
 sub retrieve_OligoProbe {
-  my ($self, $data) = @_;
+  my ($self, $data, $type) = @_;
 
   my $results = [];
   foreach my $probe (@$data) {
@@ -502,11 +505,11 @@ sub retrieve_OligoProbe {
       }
     }
   }
-  return ( $results, ['Mismatches'] );
+  return ( $results, ['Mismatches'], $type );
 }
 
 sub retrieve_DnaAlignFeature {
-  my ($self, $data) = @_;
+  my ($self, $data, $type) = @_;
   my $results = [];
 
   foreach my $f ( @$data ) {
@@ -543,20 +546,20 @@ sub retrieve_DnaAlignFeature {
   }
   my $feature_mapped = 1; ## TODO - replace with $self->feature_mapped call once unmapped feature display is added
   if ($feature_mapped) {
-    return $results, [ 'Alignment length', 'Rel ori', '%id', 'score', 'p-value' ];
+    return $results, [ 'Alignment length', 'Rel ori', '%id', 'score', 'p-value' ], $type;
   }
   else {
-    return $results;
+    return $results, [], $type;
   }
 }
 
 sub retrieve_ProteinAlignFeature {
-  my ($self, $data) = @_;
-  return $self->retrieve_DnaAlignFeature($data);
+  my ($self, $data, $type) = @_;
+  return $self->retrieve_DnaAlignFeature($data,$type);
 }
 
 sub retrieve_RegulatoryFactor {
-  my ($self, $data) = @_;
+  my ($self, $data, $type) = @_;
   my $results = [];
   my $flag = 0;
 
@@ -589,7 +592,7 @@ sub retrieve_RegulatoryFactor {
   my $extras = ["Feature analysis"];
   unshift @$extras, "Associated gene";# if $flag;
 
-  return ( $results, $extras );
+  return ( $results, $extras, $type );
 }
 
 sub unmapped_object {
