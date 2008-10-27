@@ -287,7 +287,7 @@ sub ingredient {
       $content,
       60*60*24*7,
       'AJAX', keys %{ $ENV{CACHE_TAGS}||{} }
-    ) if $MEMD && $webpage->format eq &EnsEMBL::Web::Document::WebPage::DEFAULT_FORMAT;
+    ) if $MEMD && $webpage->format eq 'HTML';
     timer_push( 'Rendered content cached' );
   }
 
@@ -429,7 +429,7 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
       if $MEMD &&
          !$webpage->has_a_problem &&
          $ENSEMBL_WEB_REGISTRY->check_ajax &&
-         $webpage->format eq &EnsEMBL::Web::Document::WebPage::DEFAULT_FORMAT;
+         $webpage->format eq 'HTML';
   }
   
   print $content;
