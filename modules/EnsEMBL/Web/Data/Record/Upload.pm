@@ -8,10 +8,12 @@ __PACKAGE__->_type('upload');
 
 __PACKAGE__->add_fields(
   filename => 'text',
+  name     => 'text',
   format   => 'text',
   species  => 'text',
-  share_id => 'int',
   assembly => 'text',
+  share_id => 'int',
+  analyses => 'text',
 );
 
 1;
