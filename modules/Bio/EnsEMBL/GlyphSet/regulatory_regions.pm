@@ -83,88 +83,30 @@ sub features {
 
 sub href {
   my ($self, $f) = @_;
-  return $self->_url($self->zmenu($f));
+  my $id = $f->display_label;
+  my $type = lc($f->feature_type->name);
+  my ($start,$end) = $self->slice2sr( $f->start, $f->end );
+  my $bp = $start ."-".$end;
+  $type=~s/^\s*//;
+  $type =~s/\s+/_/g;
+
+  if ($f->analysis->logic_name =~/miRanda/){
+    $type = $f->analysis->logic_name; 
+  }elsif ($f->analysis->logic_name =~/NestedMICA/){
+    $type = 'BioTIFFIN'; 
+  } 
+
+  my $href = $self->_url
+  ({'action'   => 'Regulation',
+    'fid'      => $id,
+    'ftype'    => $type,
+    'bp'       => $bp,
+  });
+
+  return $href;
 }
 
-sub zmenu {
-    my ($self, $f ) = @_;
-    my $db_ent = $f->get_all_DBEntries; 
-    my $name = $f->display_label;
-      
-    my $type = $f->feature_type->name;     
-    my $analysis = $f->analysis->logic_name;   
-    my $feature_link;
-  
-    my $species = $self->{'config'}->{'species'};
-    my $seq_region = $f->slice->seq_region_name;
-    my ($start,$end) = $self->slice2sr( $f->start, $f->end );
-    my ($factor, $feature);
 
-    my $return = {
-        caption                    => 'regulatory_regions',
-        "100:Location:"            => $seq_region.":".$start."-".$end,
-        "80:Analysis:"             => $analysis 
-    };
-    if ($analysis =~/cisRED/){
-      $name =~/\D+(\d+)/;
-       my $i = $name;
-       $i=~s/\D*//;
-       if ($species =~/Homo_sapiens/){
-        $feature_link = "http://www.cisred.org/human9/siteseq?fid=$i";
-       } elsif ($species =~/Mus_musculus/) {
-        $feature_link = "http://www.cisred.org/mouse4/siteseq?fid=$i"; 
-       }        
-       $factor = $name;
-       my $feat_name = $name;
-       $name .= "  [CisRed]";
-     #  $return->{"01:Feature: $name"} = $feature_link;
-       $factor=~s/\D*//; 
-       
-    } elsif ($analysis =~/miRanda/){
-       $name =~/\D+(\d+)/;
-       my $temp_factor = $name;
-       my @temp = split (/\:/, $temp_factor);
-       $factor = $temp[1];    
-       
-      # $return->{"01:Feature: $name"} = "";
-    } elsif ($analysis =~/VISTA/){
-       $name =~/\D+(\d+)/;
-       my $temp_factor = $name;
-       my @temp = split (/\:/, $temp_factor);
-       $factor = $temp[1];
-
-       #$return->{"01:Feature: $name"} = "";
-    }elsif ($analysis =~/MICA/){
-       $name =~/\D+(\d+)/;
-       $factor = $name;
-       my $feature_link = "http://servlet.sanger.ac.uk/tiffin/motif.jsp?acc=$name";
-       #$return->{"01:Feature: $name"} = $feature_link;
-    }else {
-       if ($analysis!~/\w+/){
-        $factor = "Unknown";  
-        #$return->{"01:Feature: $name"} = "";
-       } else {
-        $factor = $name; 
-        #$return->{"01:Feature: $name"} = "";
-      }
-    }
-
-    $return->{"90:Feature:"} = $name;
-    if ($factor) { $return->{"70:Factor:"} = $factor;}
-
-    my ($assoc, $type);
-    foreach my $dbe (@{$db_ent}){
-       $assoc = $dbe->primary_id;
-       my $dbname = $dbe->dbname;
-       if ($dbname =~/gene/i) {$type = "gene";}
-       elsif ($dbname =~/transcript/i){$type = "transcript";}
-       elsif ($dbname =~/translation/i){$type = "peptide"; }
-    }
-
-    $return->{"80:Associated $type:"} = $assoc;
-   
-    return $return;
-}
 
 sub colour_key {
   my ($self, $f) = @_;
@@ -174,32 +116,5 @@ sub colour_key {
 }
 
 
-# Features associated with the same factor should be in the same colour
-# Choose a colour from the pool
-#sub colour_key {
-#  my ($self, $f) = @_;
-#  my $name = $f->display_label; warn $name;
 
-
-#}
-
-=pod
-sub colour {
-  my ($self, $f) = @_;
-  my $name = $f->display_label; warn $name;
-#  my $name = $f->factor->name;
-  unless ( exists $self->{'config'}{'pool'} ) {
-    $self->{'config'}{'pool'} = $self->{'config'}->colourmap->{'colour_sets'}{'synteny'};
-    $self->{'config'}{'ptr'}  = 0;
-  }
-  $self->{'config'}{'_factor_colours'}||={};
-  my $return = $self->{'config'}{'_factor_colours'}{ "$name" };
-
-  unless( $return ) {
-    $return = $self->{'config'}{'_factor_colours'}{"$name"} = $self->{'config'}{'pool'}[ ($self->{'config'}{'ptr'}++)  %@{$self->{'config'}{'pool'}} ];
-  } 
-  return $return, $return;
-}
-
-=cut
 1;

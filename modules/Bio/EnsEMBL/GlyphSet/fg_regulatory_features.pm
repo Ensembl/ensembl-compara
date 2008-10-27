@@ -102,48 +102,16 @@ sub tag {
 
 sub href {
   my ($self, $f) = @_;
-  return $self->_url($self->zmenu($f));
+  my $id = $f->stable_id;
+  my $href = $self->_url
+  ({'action'  => 'Regulation',
+    'fid'   => $id,
+    'ftype'    =>  'ensembl_reg_feat',
+  });
+
+  return $href; 
 }
 
-sub zmenu {
-  my ($self, $f) = @_; 
-  my $stable_id = $f->stable_id;
-  my @atts = @{$f->regulatory_attributes()}; 
-  my $display_label = "Regulatory Feature"; 
-  my @temp = map $_->feature_type->name(), @atts;
-  my %att_label;
-  my $c = 1;
-  foreach my $k (@temp){
-   if (exists  $att_label{$k}) { 
-    my $old = $att_label{$k};
-    $old++;
-    $att_label{$k} = $old;
-   }  else { $att_label{$k} = $c; }
-  }
-  my @keys = keys %att_label;  
-  my $label = "";
-  foreach my $k (keys %att_label){
-    my $v = $att_label{$k};
-    $label .= "$k($v), ";
-  }
-
-  $label =~s/\,\s$//;
-
-  
-  my $type = $f->feature_type->name();
-  my ($start, $end) = $self->slice2sr($f->start, $f->end);
-  my $seq_region = $f->slice->seq_region_name; 
-  my $zmenu = {
-         caption       		 =>  $display_label,
-         "100:Stable ID:"  =>  $stable_id,
-         "90:Type:"        =>  $type,
-         "80:Location:"    =>  $seq_region.":".$start."-".$end,    
-         "70:Attributes:"  =>  $label,
-  };	
- 
- 
-  return $zmenu;
-}
 
 1;
 ### Contact: Beth Pritchard bp1@sanger.ac.uk
