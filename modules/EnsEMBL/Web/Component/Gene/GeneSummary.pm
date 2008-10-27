@@ -90,7 +90,7 @@ sub content {
     my $syn = $syns{$k};
     my $syn_entry;
     if( $disp_syn ==1 ) {
-      my $url = qq(/@{[$object->species]}/Location/Karyotype?db=core;g=$gene_id;$location;id=$display_name;type=Gene);
+      my $url = qq(/@{[$object->species]}/Location/Genome?db=core;g=$gene_id;$location;id=$display_name;ftype=Gene);
       $syns  .= qq(<p>$syn [<span class="small">To view all $site_type genes linked to the name <a href="$url">click here</a>.</span>]</p></dd>);
     }
   }
