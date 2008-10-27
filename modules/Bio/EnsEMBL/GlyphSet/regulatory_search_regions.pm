@@ -46,60 +46,36 @@ sub features {
 
 sub href {
   my ($self, $f) = @_;
-  return $self->_url($self->zmenu($f));
+  my $id = $f->display_label;
+  my $type = lc($f->feature_type->name);  
+  my ($start,$end) = $self->slice2sr( $f->start, $f->end );
+  my $bp = $start ."-".$end;
+  my $seq_region = $f->slice->seq_region_name;
+  my $location = $seq_region.":".$start."-".$end;
+
+  $type=~s/^\s*//;
+  $type =~s/\s+/_/g;
+  my $analysis = $f->analysis->logic_name;
+  if ($analysis =~/cisRED/){$analysis = "cisred_search";}
+
+
+  if ($f->analysis->logic_name =~/miRanda/){
+    $type = $f->analysis->logic_name;
+  }elsif ($f->analysis->logic_name =~/NestedMICA/){
+    $type = 'BioTIFFIN';
+  }
+
+  my $href = $self->_url
+  ({'action'    => 'Regulation',
+    'fid'       => $id,
+    'ftype'     => $analysis,
+    'bp'        => $bp,
+    'flocation' => $location  
+  });
+
+  return $href;
 }
 
-sub zmenu {
-    my ($self, $f ) = @_;
-    my $name = $f->display_id;
-    if (length($name) >24) { $name = "<br />$name"; }
-    my $species = $self->{'config'}->{'species'};
-    my $seq_region = $f->slice->seq_region_name;
-    my ($start,$end) = $self->slice2sr( $f->start, $f->end );
-    my $analysis = $f->analysis->logic_name;
-    if ($analysis =~/cisRED/){$analysis = "cisred_search";}
-    my $location = $seq_region.":".$start."-".$end;
-     
-   
-    my $return = {
-        caption   => "regulatory_search_regions",
-        "100:Location:"    =>  $location,    
-		 };
-
-    my ($id, $type);
-    my $db_ent = $f->get_all_DBEntries;
-    foreach my $dbe (@{$db_ent}){
-      $id = $dbe->primary_id;
-      my $dbname = $dbe->dbname; 
-      if ($dbname =~/gene/i) {$type = "gene";}
-      elsif ($dbname =~/transcript/i){$type = "transcript";}
-      elsif ($dbname =~/translation/i){$type = "peptide"; } 
-    }
-      
-     if ( $type =~/^\w*/){
-      my $link;
-      if ($type eq 'translation') {
-	$link = "protview";
-	$type = "peptide";
-      }
-      elsif ($type eq 'transcript') {
-	$link = "transview";
-      }
-      else {
-	$link = "geneview";
-
-      }
-      if ($analysis) { my $cis_link;
-      if ($species=~/Homo_sapiens/){ $cis_link = "http://www.cisred.org/human9/gene_view?ensembl_id=";}
-      elsif ( $species =~/Mus_musculus/) { $cis_link = "http://www.cisred.org/mouse4/gene_view?ensembl_id=";}
-     my $cisred = $analysis =~/cisred/i ? "$cis_link" . "$id" : "";
-      $return->{"90:Analysis:"} = 'cisred_search';
-      }
-      
-      $return->{"80:Associated $type:"} = $id;
-    }
-    return $return;
-}
 
 # Search regions with similar analyses should be in the same colour
 
