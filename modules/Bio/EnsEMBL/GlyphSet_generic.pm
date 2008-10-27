@@ -556,18 +556,80 @@ sub _symbol_init {
 # Haven't implemented parallel=no can't work out whether it is useful  #
 # will do so after implementing the vertical arrows...                 #
 #----------------------------------------------------------------------#
-# The anchored arrow exists purely within its bounds so                #
-# the box extent code will work!                                       #
-#----------------------------------------------------------------------#
+
+sub extent_anchored_arrow {
+  my($self,$g,$f,$st)= @_;
+
+  if( $st->{northeast} eq 'no' && $st->{soutwest} eq 'no' ) { #Not an arrow at all !liar!
+    return $self->extent_line($g,$f,$st);
+  }
+  if( $st->{'parallel'} eq 'no' ) {
+## Vertical arrow! get the width - if the midpoint is in the region
+## then make space for the arrow!
+    my $h = $st->{height}||$self->{h};
+    my $w = ($st->{linewidth}||$h)*$self->{bppp}/2;
+    my $mp = ($f->start+$f->end-1)/2;
+    if( $mp >= 0 || $mp <= $self->{seq_len} ) {
+      return $self->_extent( $g,$f,$mp-$w,$mp+$w,$st->{height} );
+    }
+  }
+  return $self->extent_box($g,$f,$st);
+}
 
 sub glyph_anchored_arrow {
   my($self,$g,$f,$st)= @_;
   my($s,$e,$o) = ($f->start,$f->end,$f->strand);
-  my $h  = $st->{height}||$self->{'h'};
-  my $y  = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+  my $cucutth  = $st->{height}||$self->{'h'};
+  my( $mp, $h, $y, $w ) = $self->_symbol_init( $g,$f,$st);
   my $tw = $h * $self->{'bppp'}/2;
+  my $l = $self->{seq_len};
 ## If the width of the glyph is less than the width of the arrow section
 ## we draw it slightly differently!
+  if( $st->{'parallel'} eq 'no' ) { ## This is now like one of the X glyphs!
+    return if $mp < 0 || $mp > $l; ## Don't draw upwards arrow if mid point out of region...
+    $w = ( $st->{'linewidth'}||$h ) * $self->{'bppp'};
+    my $ah = $h < $st->{linewidth} ? $h/2 : $st->{linewidth}/2;
+    my $top = $y + $h;
+    my $bottom = $y;
+    my $bar = 0;
+    if( $f->strand > 0 ) {
+      $self->push($self->Poly({
+        'points'       => [ $mp-$w/2, $bottom+$ah, $mp, $bottom, $mp+$w/2, $bottom+$ah ],
+        'absolutey'    => 1,
+        'colour'       => $st->{fgcolor},
+        'bordercolour' => $st->{fgcolor}
+      }));
+      $bottom += $ah;
+      $bar    = $top;
+    } else {
+      $self->push($self->Poly({
+        'points'    => [ $mp-$w/2, $top-$ah, $mp, $top, $mp+$w/2, $top-$ah ],
+        'absolutey' => 1,
+        'colour'    => $st->{fgcolor},
+        'bordercolour' => $st->{fgcolor}
+      }));
+      $top -= $ah;
+      $bar  = $bottom;
+    }
+    my $w2 = int($w/$self->{bppp}/4)*$self->{bppp};
+    $self->push($self->Rect({
+      'x'      => $mp-$w2,
+      'width'  => $w2*2,
+      'y'      => $bottom,
+      'height' => $top-$bottom,
+      'absolutey' => 1,
+      'colour' => $st->{fgcolor}
+    }));
+    $self->push($self->Line({
+      'x'      => $mp-$w/2,
+      'width'  => $w,
+      'y'      => $bar,
+      'height' => 0,
+      'absolutey' => 1,
+      'colour' => $st->{fgcolor}
+    }));
+    return;
+  }
   if( $e-$s+1 < $tw ) { ## This is a small arrow!
     $s = $f->{extent_start};
     $e = $f->{extent_end};
@@ -630,7 +692,7 @@ sub extent_arrow {
 ## Vertical arrow! get the width - if the midpoint is in the region 
 ## then make space for the arrow!
     my $h = $st->{height}||$self->{h};
-    my $w = ($st->{linewidth}||$h)*$self->{bppp}/2;
+    my $w = ($st->{linewidth}||(2*$h/3))*$self->{bppp}/2;
     my $mp = ($f->start+$f->end-1)/2;
     if( $mp >= 0 || $mp <= $self->{seq_len} ) {
       return $self->_extent( $g,$f,$mp-$w,$mp+$w,$st->{height} );
@@ -639,7 +701,7 @@ sub extent_arrow {
   return $self->extent_box($g,$f,$st);
 }
 
-=pod
+
 sub glyph_arrow {
   my($self,$g,$f,$st)= @_;
   if( $st->{northeast} eq 'no' && $st->{soutwest} eq 'no' ) { #Not an arrow at all !liar!
@@ -647,41 +709,106 @@ sub glyph_arrow {
   }
   my $s = $f->start;
   my $e = $f->end;
-  my $h = $st->{height}||$self->{'h'};
-  my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+  my( $mp, $h, $y, $w ) = $self->_symbol_init( $g,$f,$st);
+  my $l = $self->{seq_len};
+
   if( $st->{'parallel'} eq 'no' ) { ## This is now like one of the X glyphs!
-
-  } else { ## More like a span glyph...
-    my $ends = ($st->{northeast} eq 'no' || $st->{southwest} eq 'no') ? 1 : 2;
-    if( $f->{extent_start}+$f->{extent_end}-1 > $ends*$h*$self->{bppp}/2 ) { ## We have room to draw all bits!
-      ## lets draw the arrow or attempt to at least...
-      if( $st->{northeast} eq 'no' ) { # This is a right left arrow
-        if( $s == $f->{extent_start} ) { ## Draw left hand end...
-          $self->push($self->Poly({
-            
-          }));
-        }
-      } elsif( $st->{southwest eq 'no') {
-
-      } else {
-
-      }
-    } elsif( $st->{northeast} eq 'no' ) { ## This is a right-left arrow
+    return if $mp < 0 || $mp > $l; ## Don't draw upwards arrow if mid point out of region...
+    $w = int(( $st->{'linewidth'}||(2*$h/3) )/2 )*2 * $self->{'bppp'};
+    my $ah = int($h/3 < $st->{linewidth}/2 ? $st->{linewidth}/2 : $h/3);
+    my $top = $y + $h;
+    my $bottom = $y;
+    unless( $st->{northeast} eq 'no' ) {
       $self->push($self->Poly({
-        'colour' => $st->{fgcolor},
-        'bordercolour' => $st->{fgcolor},
+        'points'    => [ $mp-$w/2, $top-$ah, $mp, $top, $mp+$w/2, $top-$ah ],
         'absolutey' => 1,
-        'points' => [ $s,$y+$h/2
-
+        'colour'    => $st->{fgcolor},
+        'bordercolour' => $st->{fgcolor}
       }));
-    } elsif( $st->{southwest} eq 'no' ) { ## This is a left-right arrow
-
-    } else { ## This is a double-ended arrow...
-
+      $top -= $ah;
     }
+    unless( $st->{southwest} eq 'no' ) {
+      $self->push($self->Poly({
+        'points'       => [ $mp-$w/2, $bottom+$ah, $mp, $bottom, $mp+$w/2, $bottom+$ah ],
+        'absolutey'    => 1,
+        'colour'       => $st->{fgcolor},
+        'bordercolour' => $st->{fgcolor}
+      }));
+      $bottom += $ah;
+    }
+    my $w2 = int($w/$self->{bppp}/4)*$self->{bppp};
+    $self->push($self->Rect({
+      'x'      => $mp-$w2,
+      'width'  => $w2*2,
+      'y'      => $bottom,
+      'height' => $top-$bottom,
+      'absolutey' => 1,
+      'colour' => $st->{fgcolor}
+    }));
+    return;
+  }
+   ## More like a span glyph...
+  my $ends = ($st->{northeast} eq 'no' || $st->{southwest} eq 'no') ? 1 : 2;
+  if( $f->{extent_end}-$f->{extent_start}+1 > $ends*$h*$self->{bppp}/2 ) { ## We have room to draw all bits!
+    my $h = $st->{height}||$self->{'h'};
+    my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
+    my $box_s = $f->{extent_start};
+    my $box_e = $f->{extent_end};
+    my $aw = $h*$self->{bppp}/2;
+    if( $f->{extent_start} == $f->start && ! ($st->{southwest} eq 'no') ) {
+      $self->push($self->Poly({
+        'colour'       => $st->{fgcolor},
+        'bordercolour' => $st->{fgcolor},
+        'absolutey'    => 1,
+        'points'       => [ $box_s, $y+$h/2, $box_s + $aw, $y, $box_s + $aw, $y+$h ]
+      }));
+      $box_s += $aw;
+    }
+    if( $f->{extent_end} == $f->end && ! ($st->{northeast} eq 'no') ) {
+      $self->push($self->Poly({
+        'colour'       => $st->{fgcolor},
+        'bordercolour' => $st->{fgcolor},
+        'absolutey'    => 1,
+        'points'       => [ $box_e, $y+$h/2, $box_e - $aw, $y +$h, $box_e - $aw, $y ]
+      }));
+      $box_e -= $aw;
+    }
+    $self->push($self->Line({
+      'x'      => $box_s-1,
+      'width'  => $box_e - $box_s + 1,
+      'y'      => $y+$h/2,
+      'height' => 0,
+      'colour' => $st->{fgcolor},
+      'absolutey' => 1
+    }));
+    return;
+  }
+## This is a narrow featured arrow!
+  $s = $f->{extent_start};
+  $e = $f->{extent_end};
+  if( $mp > $l || $st->{northeast} eq 'no' ) { ## This is a right-left arrow
+    $self->push($self->Poly({
+      'colour' => $st->{fgcolor},
+      'bordercolour' => $st->{fgcolor},
+      'absolutey' => 1,
+      'points' => [ $s,$y+$h/2,$e,$y+$h,$e,$y ]
+    }));
+  } elsif( $mp < 0 || $st->{southwest} eq 'no' ) { ## This is a left-right arrow
+    $self->push($self->Poly({
+      'colour' => $st->{fgcolor},
+      'bordercolour' => $st->{fgcolor},
+      'absolutey' => 1,
+      'points' => [ $s,$y,$s,$y+$h,$e,$y+$h/2 ]
+    }));
+  } else { ## This is a double-ended arrow...
+    $self->push($self->Poly({
+      'colour' => $st->{fgcolor},
+      'bordercolour' => $st->{fgcolor},
+      'absolutey' => 1,
+      'points' => [ $s,$y+$h/2,$mp,$y+$h,$e,$y+$h/2,$mp,$y ]
+    }));
   }
 }
-=cut
 
 #----------------------------------------------------------------------#
 # Box.....                                                             #
