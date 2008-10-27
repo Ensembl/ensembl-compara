@@ -14,38 +14,46 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $url = $object->_url({}, 1 );
+  my $url = $self->object->_url({}, 1 );
   my $extra_inputs;
   foreach(sort keys %{$url->[1]||{}}) {
     $extra_inputs .= sprintf '
       <input type="hidden" name="%s" value="%s" />', escapeHTML($_),escapeHTML($url->[1]{$_});
   }
 
-  $options = {};
+  my $options = '';
+  my $species = $ENV{'ENSEMBL_SPECIES'};
   my $align = $self->object->param('align');
 ## Get the compara database hash!
 
   my $h = $self->object->species_defs->multi_hash->{'DATABASE_COMPARA'};
+  my %a = %{$h->{'ALIGNMENTS'}||{}};
+  my %x = ();
+  foreach my $aa ( keys %a ) {
+    next unless $a{$aa}{'species'}{$species};
+    my $T = keys %{$a{$aa}{'species'}||{}};
+    $x{$aa} = [ $a{$aa}{'name'}, $T ];
+  }
 
-## Get the species in the alignment and turn on the approriate Synteny tracks!
-  if( $h && exists $h->{'ALIGNMENTS'} && exists $h->{'ALIGNMENTS'}{$align} ) {
-    foreach( keys %{ $h->{'ALIGNMENTS'}{$align}{'species'} } ) {
-      $wuc->modify_configs(
-        ["synteny_$_"],
-        {'display'=>'normal'}
-      );
-    }
+  foreach ( sort { $x{$b}[1]<=>$x{$a}[1] || $x{$a}[0] cmp $x{$a}[0] } keys %x ) {
+    $options .= sprintf '
+        <option name="align" value="%d" %s>%s</option>',
+      escapeHTML($_),
+      $_ eq $align ? ' selected="selected"' :'',
+      escapeHTML( $x{$_}[0] );
   }
   
+## Get the species in the alignment and turn on the approriate Synteny tracks!
+  
   return sprintf qq(
-  <div class="autocenter navbar" style="width:%spx">
-    <form action="%s" method="get"><div class="relocate">
-      <label for="align">Alignment:<select name="align" id="align">%s
+  <div class="autocenter navbar" style="width:%spx; text-align:left" >
+    <form action="%s" method="get"><div stlye="padding:2px;">
+      <label for="align">Alignment:</label> <select name="align" id="align">%s
       </select>%s
       <input value="Go&gt;" type="submit" class="go-button" />
     </div></form>
   </div>),
-    $image_width, 
+    $self->image_width, 
     $url->[0],
     $options,
     $extra_inputs;
