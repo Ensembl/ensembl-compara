@@ -157,7 +157,8 @@ sub _draw_features {
                 'width' => $f->{extent_end}-$f->{extent_start}+1,
                 'y'     => $f->{'y'},
                 'height' => $self->{'h'},
-                'absolutey' => 1
+                'absolutey' => 1,
+                'title' => $f->display_label.' : '.$f->display_id
               }));
               $self->$fn_g( undef, $f, $f_s->{'style'});
             }
