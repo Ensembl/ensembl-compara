@@ -9,6 +9,7 @@ use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::Data::Record::Upload;
 use Bio::EnsEMBL::Utils::Exception qw(try catch);
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser; # for contacting DAS servers
+use Data::Dumper;
                                                                                    
 use base qw(EnsEMBL::Web::Object);
 
@@ -93,12 +94,20 @@ sub copy_to_user {
 }
 
 sub delete_userdata {
-  my ($self, $id) = shift;
+  my ($self, $id) = @_;
  
-  my $upload = EnsEMBL::Web::Data::Record::Upload->new($id);
-  my $species = $upload->species;
-  my @analyses = split(', ', $upload->analyses);
-  warn "@@@ DELETING ANALYSES @analyses";
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user) {
+    my ($upload) = $user->uploads('user_record_id' => $id);
+    if ($upload) {
+      my $species = $upload->species;
+      my @analyses = split(', ', $upload->analyses);
+      foreach my $logic_name (@analyses) {
+        $self->_delete_datasource($species, $logic_name);
+      }
+      $upload->delete;
+    }
+  }
 }
 
 sub _store_user_track {
