@@ -442,7 +442,7 @@ sub _configurator {
 
 sub _local_context {
   my $self = shift;
-  return unless $self->{'page'}->can('local_context');
+  return unless $self->{'page'}->can('local_context') && $self->{'page'}->local_context;
   
   my $hash = {}; #  $self->obj->get_summary_counts;
   $self->{'page'}->local_context->tree(    $self->{_data}{'tree'}    );
