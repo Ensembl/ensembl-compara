@@ -71,13 +71,16 @@ sub content {
     my $pointer_set = $self->create_userdata_pointers($image, $userdata, $pointer_defaults{'UserData'});
     $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]); ## Userdata setting overrides any other tracks
     push(@$pointers, $pointer_set);
-  } 
+  }
+  my $table;
   if ($object->param('id')) { ## "FeatureView"
     $image->image_name = "feature-$species";
     $image->imagemap = 'yes';
+    my $data_type = $object->param('type');
     my $features = $object->create_features; ## Now that there's no Feature factory, we create these on the fly
     ## TODO: Should there be some generic object->hash functionality for use with drawing code?
     my @f_hashes = @{$object->retrieve_features($features)};
+    $table = $self->feature_tables(\@f_hashes);;
     my $i = 0;
     my $zmenu_config;
     foreach my $ftype  (@f_hashes) {
@@ -102,12 +105,10 @@ sub content {
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
   $image->karyotype( $object, $pointers, 'Vkaryotype' );
   my $html = $image->render;
+  $html .= $table;
 
-  if ($object->param('id')) { ## FeatureView
-    $html .= $self->feature_table;
-  }
-  elsif (@$pointers) {
-    ## User data - do nothing at the moment
+  if (@$pointers) {
+      ## User data - do nothing at the moment
   }
   else {
     my $file = '/ssi/species/stats_'.$object->species.'.html';
@@ -117,12 +118,90 @@ sub content {
   return $html;
 }
 
-sub feature_table {
-  my $self = shift;
-  my $object = $self->object;
-  my $table;
-  return $table;
-}
+sub feature_tables {
+    my $self = shift;
+    my $feature_dets = shift;
+    my $object = $self->object;
+    my $data_type = $object->param('ftype');
+    my $html;
+    my @tables;
+    foreach my $feature_set (@{$feature_dets}) {
+#	warn "1",Dumper($feature_set);
+	my $features = $feature_set->[0];
+#	warn "2",Dumper($features);
+	my $extra_columns = $feature_set->[1];
+	my $feat_type = $feature_set->[2];
+#	warn "TYPE = $feat_type";
+	my $data_type = ($feat_type eq 'Gene') ? 'Gene Information'
+	    : 'Feature Information';
 
+	my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+	$table->add_columns({'key'=>'loc','title'=>'Genomic location','width' =>'15%','align'=>'left' });
+	if ($data_type eq 'Gene') {
+	    $table->add_columns({'key'=>'extname','title'=>'External names','width'=>'25%','align'=>'left' });
+	}
+	else {
+	    $table->add_columns({'key'=>'length','title'=>'Genomic length','width'=>'10%','align'=>'center' });
+	}
+	if ( grep {$_ eq 'Alignment length'} @{$extra_columns}) {
+	    $table->add_columns({'key'=>'names','title'=>'Feature Location','width'=>'25%','align'=>'left' });
+	}
+	else {
+	    $table->add_columns({'key'=>'names','title'=>'Names(s)','width'=>'25%','align'=>'left' });
+	}
+	
+	my $c = 1;
+	for( @{$extra_columns||[]} ) {
+	    $table->add_columns({'key'=>"extra_$c",'title'=>$_,'width'=>'10%','align'=>'left' });
+	    $c++;
+	}
+	
+	my @data = map { $_->[0] }
+	    sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
+		map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'}, $_->{'start'}] }
+		    @{$features};
+	foreach my $row ( @data ) {
+	    my $contig_link = 'Unmapped';
+	    my $names = '';
+	    my $data_row;
+	    if ($row->{'region'}) {
+		$contig_link = sprintf('<a href="/%s/Location/View?r=%s:%d-%d;h=%s">%s:%d-%d(%d)</a>',
+				       $object->species,
+				       $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'label'},
+				       $row->{'region'}, $row->{'start'}, $row->{'end'},
+				       $row->{'strand'});
+		if ($data_type eq 'Gene' && $row->{'label'}) {
+		    $names = sprintf('<a href="/%s/Gene/Summary?g=%s;r=%s:%d-%d">%s</a>',
+				     $object->species, $row->{'label'},
+				     $row->{'region'}, $row->{'start'}, $row->{'end'},
+				     $row->{'label'});
+		    my $extname = $row->{'extname'};
+		    my $desc =  $row->{'extra'}[0];
+		    $data_row = { 'loc' => $contig_link, 'extname' => $extname, 'names' => $names};
+		}
+		else {
+		    $names  = $row->{'label'} if $row->{'label'};
+		    my $length = $row->{'length'};
+		    $data_row = { 'loc'  => $contig_link, 'length' => $length, 'names' => $names, };
+		}
+	    }
+	    my $c = 1;
+	    for( @{$row->{'extra'}||[]} ) {
+		$data_row->{"extra_$c"} = $_;
+		$c++;
+	    }
+	    $c = 0;
+	    for( @{$row->{'initial'}||[]} ) {
+		$data_row->{"initial$c"} = $_;
+		$c++;
+	    }
+	    #	warn "data to print = ",Dumper($data_row);
+	    $table->add_row($data_row);
+	}
+	$html .= qq(<strong>$data_type</strong>);
+	$html .= $table->render;
+    }
+    return $html;
+}
 
 1;
