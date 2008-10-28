@@ -36,6 +36,7 @@ sub _url {
   delete $pars{'t'}  if $params->{'pt'};
   delete $pars{'pt'} if $params->{'t'};
   delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
+  delete $pars{'time'};
 
   foreach( keys %$params ) {
     next if $_ =~ /^(species|type|action|function)$/;
