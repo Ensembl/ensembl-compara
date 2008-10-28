@@ -5,7 +5,6 @@ use warnings;
 
 use Class::Std;
 use EnsEMBL::Web::Document::Wizard;
-
 use base 'EnsEMBL::Web::Controller::Command::UserData';
 
 {
