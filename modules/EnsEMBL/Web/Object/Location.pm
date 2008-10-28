@@ -180,7 +180,7 @@ sub create_features {
     $features = $self->search_Xref($db, \@exdb, $self->param('xref_term'));
   }
   else {
-    my $feature_type  = $self->param('ftype') || 'OligoProbe';
+    my $feature_type  = $self->param('ftype') || 'OligoProbe'; 
     $feature_type = 'OligoProbe' if $feature_type eq 'AffyProbe'; ## catch old links
     ## deal with xrefs
     my $subtype;
@@ -190,7 +190,7 @@ sub create_features {
       $feature_type = 'Xref';
     }
 
-    my $create_method = "_create_$feature_type";
+    my $create_method = "_create_$feature_type"; warn $create_method;
     $features    = defined &$create_method ? $self->$create_method($db, $subtype) : undef;
   }
 
@@ -236,52 +236,91 @@ sub _create_Gene {
 # For a Regulatory Factor ID display all the RegulatoryFeatures
 sub _create_RegulatoryFactor {
   my ( $self, $db, $id, $name ) = @_;
-
-  if (!$id ) {
-    my @ids = $self->param( 'id' );
-    $id = join(' ', @ids);
-  }
-  elsif (ref($id) eq 'ARRAY') {
-    $id = join(' ', @$id);
-  }
-  if (!$name ) {
-    my @names = $self->param( 'name' );
-    $name = join(' ', @names);
-  }
-  elsif (ref($name) eq 'ARRAY') {
-    $name = join(' ', @$name);
-  }
-
-  my $objs = $self->DataObjects();
-  my $features = [];
-
+  
+  if (!$id ) {$id = $self->param('id'); }
+  my $analysis = $self->param('analysis');
+  
   my $db_type  = 'funcgen';
   my $efg_db = $self->database(lc($db_type));
   if(!$efg_db) {
      warn("Cannot connect to $db_type db");
      return [];
   }
+  my $features;
+  my $feats = (); 
 
   my %fset_types = (
    "cisRED group motif" => "cisRED group motifs",
    "miRanda miRNA_target" => "miRanda miRNA",
-   "BioTIFFIN motif" => "BioTIFFIN motifs"
+   "BioTIFFIN motif" => "BioTIFFIN motifs",
+   "VISTA" => 'VISTA enhancer set'
   );
 
-  my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
-  my $feature_type_adaptor = $efg_db->get_FeatureTypeAdaptor;
-  my $ftype =  $feature_type_adaptor->fetch_by_name($name);
-  my $type = $ftype->description;
-  my $fstype = $fset_types{$type};
-  my $fset = $feature_set_adaptor->fetch_by_name($fstype);
-  $features = $fset->get_Features_by_FeatureType($ftype);
 
-  my $feature_set = {'RegulatoryFactor' => $features};
-  return $feature_set;
 
-  return $features if $features && @$features; # Return if we have at least one feature
-  # We have no features so return an error....
-  $self->problem( 'no_match', 'Invalid Identifier', "Regulatory Factor $id was not found" );
+  if ($analysis eq 'RegulatoryRegion'){
+    my $regfeat_adaptor = $efg_db->get_RegulatoryFeatureAdaptor;
+    my $feature = $regfeat_adaptor->fetch_by_stable_id($id);
+    push (@$feats, $feature);
+    $features = {'RegulatoryFactor'=> $feats};
+
+  } else { 
+    if ($self->param('dbid')){
+      my $ext_feat_adaptor = $efg_db->get_ExternalFeatureAdaptor;
+      my $feature = $ext_feat_adaptor->fetch_by_dbID($self->param('dbid'));     
+      my @assoc_ftypes = @{$feature->associated_feature_types}; 
+      my @assoc_features;
+        
+     #my @assoc_features = @{$set_feature_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
+     my @assoc_features = @{$ext_feat_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
+ 
+      #foreach my $assoc_ftype(@assoc_ftypes){
+      #  push @assoc_features, $feature->adaptor->fetch_all_by_FeatureType_FeatureSets($assoc_ftype, [$feature->feature_set]);
+      #}
+      
+      if (scalar @assoc_features ==0) {
+         push @assoc_features, $feature;
+      } 
+
+      $features= {'RegulatoryFactor' => \@assoc_features};  
+     
+    } else {   
+      my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
+      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor;
+      my $ftype = $feat_type_adaptor->fetch_by_name($id);
+      my @ftypes = ($ftype); 
+      my $type = $ftype->description; warn $type;
+      my $fstype = $fset_types{$type}; warn $fstype;
+      my $fset = $feature_set_adaptor->fetch_by_name($fstype); warn $fset;
+      my @fsets = ($fstype);
+      my $feats = $fset->get_Features_by_FeatureType($ftype);
+      $features = {'RegulatoryFactor'=> $feats};
+    }
+  }
+
+
+
+#  my %fset_types = (
+#   "cisRED group motif" => "cisRED group motifs",
+#   "miRanda miRNA_target" => "miRanda miRNA",
+#   "BioTIFFIN motif" => "BioTIFFIN motifs"
+#  );
+
+#  my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
+#  my $feature_type_adaptor = $efg_db->get_FeatureTypeAdaptor;
+#  warn $feature_type_adaptor;
+#  my $ftype =  $feature_type_adaptor->fetch_by_name($name);
+#  my $type = $ftype->description;
+#  my $fstype = $fset_types{$type};
+#  my $fset = $feature_set_adaptor->fetch_by_name($fstype);
+#  $features = $fset->get_Features_by_FeatureType($ftype);
+
+ # my $feature_set = {'RegulatoryFactor' => $features};
+#  return $feature_set;
+
+  return $features if $features && keys %$features; # Return if we have at least one feature
+#  # We have no features so return an error....
+#  $self->problem( 'no_match', 'Invalid Identifier', "Regulatory Factor $id was not found" );
   return undef;
 }
 
@@ -415,7 +454,7 @@ sub retrieve_features {
   my $method;
   my $results = [];
  
-  while (my ($type, $data) = each (%$features)) {
+  while (my ($type, $data) = each (%$features)) { 
     $method = 'retrieve_'.$type;
     push @$results, [$self->$method($data,$type)] if defined &$method;
   }
@@ -569,8 +608,8 @@ sub retrieve_RegulatoryFactor {
     my $db_ent = $reg->get_all_DBEntries;
     foreach ( @{ $db_ent} ) {
       push @stable_ids, $_->primary_id;
-      $gene_links .= qq(<a href="geneview?gene=$stable_ids[-1]">$stable_ids[-1]</a>);
-    #  $flag = 1;
+      my $url = $self->_url({'type' => 'Gene', 'action' => 'Summary', 'g' => $stable_ids[-1] }); 
+      $gene_links  .= qq(<a href="$url">$stable_ids[-1]</a>);  
     }
 
     my @extra_results = $reg->analysis->description;
