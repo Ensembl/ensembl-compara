@@ -74,7 +74,7 @@ sub process_node {
     } else {
       ## do redirect
       my $T = $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'};
-      $URL .= ($URL =~ /\?/?';':'?').$T if $T;
+      $URL .= ($URL =~ /\?/?';':'?').'x_requested_with='.CGI::escape($T) if $T;
       $r->headers_out->add( "Location" => $URL );
       $r->err_headers_out->add( "Location" => $URL );
       $r->status( Apache2::Const::REDIRECT );
