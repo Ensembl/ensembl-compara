@@ -13,7 +13,7 @@ sub set_default_action {
   } elsif( $x->{'chromosome'} ) {
     $self->{_data}{default} = 'Chromosome';
   } else {
-    $self->{_data}{default} = 'Karyotype';
+    $self->{_data}{default} = 'Genome';
   }
 }
 
