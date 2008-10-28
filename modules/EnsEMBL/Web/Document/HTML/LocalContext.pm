@@ -115,6 +115,8 @@ $pad    </dd>";
             next if $param =~ /^wizard/;
             push @ok_params, $param;  
           }
+          ## This is a tmp hack since we do not have and object here
+          ## TODO: propagate object here and use object->_url method
           $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.join(';', @ok_params);
         }
       	$name = sprintf '<a href="%s" title="%s">%s</a>', $url, $title, $name;
