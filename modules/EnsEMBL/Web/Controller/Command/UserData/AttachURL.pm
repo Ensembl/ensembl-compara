@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Controller::Command::UserData::Attach;
+package EnsEMBL::Web::Controller::Command::UserData::AttachURL;
 
 use strict;
 use warnings;
@@ -16,7 +16,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'attach', $self);
+  EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'attach_url', $self);
 }
 
 }
