@@ -57,7 +57,9 @@ sub new_from_hashref {
   
   bless $self, $class;
   
-  for my $var ( qw( enable category caption )  ) {
+  $hash->{on} = [@{$hash->{on}||[]},@{$hash->{enable}||[]}];
+  
+  for my $var ( qw( on category caption )  ) {
     if ( exists $hash->{$var} ) {
       $self->$var( $hash->{$var} );
     }
@@ -89,6 +91,7 @@ sub new_from_URL {
   delete $das_data{category};
   
   # Expand multi-value parameters
+  $das_data{on}     = [split /,/, $das_data{on}];
   $das_data{enable} = [split /,/, $das_data{enable}];
   $das_data{coords} = [split /,/, $das_data{coords}];
   
@@ -106,6 +109,7 @@ sub new_from_URL {
   }
   
   push @{$das_data{enable}}, $ENV{'ENSEMBL_SCRIPT'};
+  push @{$das_data{on}    }, @{$das_data{enable}};
   
   # TODO: not sure about these, we're handling coordinate systems differently
   #push @{$das_data{mapping}} , split(/\,/, $das_data{type});
@@ -120,9 +124,9 @@ sub new_from_URL {
 #  Web-specific get/set methods  #
 #================================#
 
-=head2 enable
+=head2 on
 
-  Arg [1]    : $enabled_on (arrayref)
+  Arg [1]    : $views (arrayref)
   Description: get/set for the views the source is available on (arrayref)
   Returntype : arrayref
   Exceptions : none
@@ -130,15 +134,15 @@ sub new_from_URL {
   Status     : Stable
 
 =cut
-sub enable {
-  my ( $self, $enabled_on ) = @_;
-  if ( defined $enabled_on ) {
-    $self->{'enable'} = $enabled_on;
+sub on {
+  my $self = shift;
+  if ( @_ ) {
+    $self->{'on'} = shift;
   }
-  return $self->{'enable'};
+  return $self->{'on'};
 }
 
-=head2 is_enabled_on
+=head2 is_on_view
 
   Arg [1]    : $view (string)
   Description: whether the source is available on the given view
@@ -148,9 +152,9 @@ sub enable {
   Status     : Stable
 
 =cut
-sub is_enabled_on {
+sub is_on {
   my ( $self, $view ) = @_;
-  return grep { $_ eq $view } @{ $self->enable || [] }
+  return grep { $_ eq $view } @{ $self->on || [] }
 }
 
 =head2 category
