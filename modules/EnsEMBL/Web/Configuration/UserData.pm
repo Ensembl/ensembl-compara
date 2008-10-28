@@ -126,23 +126,6 @@ sub save_upload {
   $wizard->add_connection( from => $save, to => $end);
 }
 
-=pod
-sub manage_upload {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  my $wizard = $self->wizard;
-
-  ## CREATE NODES
-  my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
-  my $start = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'list_userdata');
-  my $end   = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'ok_userdata');
-
-  ## SET UP CONNECTION BUTTONS
-  $wizard->add_connection( from => $start, to => $end);
-}
-=cut
-
 sub attach_das {
   my $self   = shift;
   my $object = $self->{'object'};
@@ -184,18 +167,7 @@ sub attach_das {
 
 }
 
-sub attach_url {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  my $wizard = $self->wizard;
-  my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
-  
-  my $select_url    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_url');
-  my $attach_url    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'attach_url');
-}
-
-sub save_remote {
+sub save_das {
   my $self   = shift;
   my $object = $self->{'object'};
 
@@ -211,4 +183,22 @@ sub save_remote {
   $wizard->add_connection( from => $start, to => $save);
   $wizard->add_connection( from => $save, to => $end);
 }
+
+sub attach_url {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  my $wizard = $self->wizard;
+  my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
+  
+  my $session = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_session');
+  my $warning = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'overwrite_warning' );
+  my $select  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'select_url');
+  my $attach  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'attach_url');
+
+  ## SET UP CONNECTION BUTTONS
+  $wizard->add_connection( from => $warning,  to => $select);
+  $wizard->add_connection( from => $select,   to => $attach);
+}
+
 1;
