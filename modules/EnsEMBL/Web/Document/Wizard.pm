@@ -73,8 +73,10 @@ sub process_node {
 </head><body><p>UP</p></body></html>), CGI::escapeHTML($URL);
     } else {
       ## do redirect
-      my $T = $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'};
-      $URL .= ($URL =~ /\?/?';':'?').'x_requested_with='.CGI::escape($T) if $T;
+      unless( $URL =~ /x_requested_with=/ ) {
+        my $T = $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'};
+        $URL .= ($URL =~ /\?/?';':'?').'x_requested_with='.CGI::escape($T) if $T;
+      }
       $r->headers_out->add( "Location" => $URL );
       $r->err_headers_out->add( "Location" => $URL );
       $r->status( Apache2::Const::REDIRECT );
