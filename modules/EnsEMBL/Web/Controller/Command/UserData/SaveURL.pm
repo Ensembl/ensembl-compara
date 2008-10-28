@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Controller::Command::UserData::SaveRemote;
+package EnsEMBL::Web::Controller::Command::UserData::SaveURL;
 
 use strict;
 use warnings;
@@ -19,7 +19,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'save_remote', $self);
+  EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'save_url', $self);
 }
 
 }
