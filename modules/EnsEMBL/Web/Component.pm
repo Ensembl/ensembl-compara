@@ -226,7 +226,7 @@ sub _sort_similarity_links {
     # this is an internal link anyway.
     if( $externalDB =~ /^AFFY_/i) {
       next if ($affy{$display_id} && $exdb{$type->db_display_name}); ## remove duplicates
-      $text = "\n".'  <div class="multicol"><a href="' .$urls->get_url('AFFY_FASTAVIEW', $display_id) .'">'. $display_id. '</a>';
+      $text = "\n".'  <div class="multicol"> '.$display_id;
       $affy{$display_id}++;
       $exdb{$type->db_display_name}++;
     }
