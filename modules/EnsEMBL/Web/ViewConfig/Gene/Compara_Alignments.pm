@@ -21,6 +21,12 @@ sub init {
     title_display           off
   ));
   $view_config->storable = 1;
+  
+  my $hash = $view_config->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
+  
+  foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
+    $view_config->_set_defaults( map { ( lc("species_$row_key"."_$_"), 'yes') } keys %{ $hash->{$row_key}{'species'} } );
+  }
 }
 
 sub form {
@@ -56,55 +62,29 @@ sub form {
   my $species = $view_config->species;
   my $hash = $view_config->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
 
-#  $object->param("RGselect",'171'); #hack to get script working
-  $object->param("RGselect",'NONE'); #hack to get script working
-
-
-# From release to release the alignment ids change so we need to check that the passed id is still valid.
-
-# Need to collapse these panels
-
-
-  foreach my $row_key (
-#    sort { scalar(@{$hash->{$a}{'species'}})<=> scalar(@{$hash->{$b}{'species'}}) }
-    grep { $hash->{$_}{'class'} !~ /pairwise/ }
-    keys %$hash
-  ) {
+  # From release to release the alignment ids change so we need to check that the passed id is still valid.
+  
+  foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
     my $row = $hash->{$row_key};
     next unless $row->{'species'}{$species};
+    
     $view_config->add_fieldset( "Options for ".$row->{'name'} );
-    foreach( sort keys %{$row->{'species'}} ) {
+    
+    foreach (sort keys %{$row->{'species'}}) {
       my $name = 'species_'.$row_key.'_'.lc($_);
-      if( $_ eq $species ) {
+      
+      if ($_ eq $species) {
         $view_config->add_form_element({
-          'type'     => 'Hidden',   'name' => $name
+          'type' => 'Hidden',
+          'name' => $name
         });
       } else {
         $view_config->add_form_element({
-          'type'     => 'CheckBox', 'label' => $view_config->_species_label($_),
-          'name'     => $name,
-          'value'    => 'yes', 'raw' => 1
-        });
-      }
-    }
-  }
-
-  $view_config->add_fieldset( "Options for pairwise alignments" );
-  foreach my $row_key (
-#    sort { scalar(@{$hash->{$a}{'species'}})<=> scalar(@{$hash->{$b}{'species'}}) }
-    grep { $hash->{$_}{'class'} =~ /pairwise/ }
-    keys %$hash
-  ) {
-    my $row = $hash->{$row_key};
-    next unless $row->{'species'}{$species};
-    foreach( sort keys %{$row->{'species'}} ) {
-      my $name = 'species_'.$row_key.'_'.lc($_);
- #     warn $name;
-      if( $_ ne $species ) {
-        $view_config->add_form_element({
-          'type'     => 'CheckBox', 'label' => $view_config->_species_label($_),
-          'name'     => $name,
-          'value'    => 'yes', 'raw' => 1
+          'type'    => 'CheckBox', 
+          'label'   => $view_config->_species_label($_),
+          'name'    => $name,
+          'value'   => 'yes',
+          'raw'     => 1
         });
       }
     }
