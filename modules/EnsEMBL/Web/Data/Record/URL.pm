@@ -7,7 +7,7 @@ use base qw(EnsEMBL::Web::Data::Record);
 __PACKAGE__->_type('url');
 
 __PACKAGE__->add_fields(
-  address     => 'text',
+  url     => 'text',
 );
 
 1;
