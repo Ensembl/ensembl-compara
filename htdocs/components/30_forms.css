@@ -36,6 +36,7 @@ legend { border: #f00 solid 1px; background-color: #fcc; color: #f00; padding: 2
 form.std { margin: 0; padding:3px;}
 form.std dl { margin: 0; position: relative }
 form.std dl dt { clear: left; width: 50%; float: left; margin: 0; padding: 0; padding-bottom: 0.5em }
+form.std dl dt.h3 { font-size: 1.2em; font-weight: bold }
 form.std dl dd { width: 45%; float: left; margin: 0; padding: 0.1em 0 0.5em 0 }
 form.std dl.narrow-labels dt { width: 30% }
 form.std dl.narrow-labels dd { width: 65% }
@@ -48,3 +49,5 @@ form.std input.short  { width: 10em }
 form.std input.narrow { width: 20em }
 form.std input.vshort { width: 4em }
 
+
+.hi { border: solid 1px red; padding: 0 1px; font-weight: bold }
