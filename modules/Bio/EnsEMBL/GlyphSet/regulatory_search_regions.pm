@@ -47,30 +47,17 @@ sub features {
 sub href {
   my ($self, $f) = @_;
   my $id = $f->display_label;
-  my $type = lc($f->feature_type->name);  
   my ($start,$end) = $self->slice2sr( $f->start, $f->end );
-  my $bp = $start ."-".$end;
-  my $seq_region = $f->slice->seq_region_name;
-  my $location = $seq_region.":".$start."-".$end;
 
-  $type=~s/^\s*//;
-  $type =~s/\s+/_/g;
   my $analysis = $f->analysis->logic_name;
   if ($analysis =~/cisRED/){$analysis = "cisred_search";}
-
-
-  if ($f->analysis->logic_name =~/miRanda/){
-    $type = $f->analysis->logic_name;
-  }elsif ($f->analysis->logic_name =~/NestedMICA/){
-    $type = 'BioTIFFIN';
-  }
+  my $dbid = $f->dbID;
 
   my $href = $self->_url
   ({'action'    => 'Regulation',
     'fid'       => $id,
     'ftype'     => $analysis,
-    'bp'        => $bp,
-    'flocation' => $location  
+    'dbid'      => $dbid,
   });
 
   return $href;

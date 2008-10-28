@@ -84,23 +84,14 @@ sub features {
 sub href {
   my ($self, $f) = @_;
   my $id = $f->display_label;
-  my $type = lc($f->feature_type->name);
-  my ($start,$end) = $self->slice2sr( $f->start, $f->end );
-  my $bp = $start ."-".$end;
-  $type=~s/^\s*//;
-  $type =~s/\s+/_/g;
-
-  if ($f->analysis->logic_name =~/miRanda/){
-    $type = $f->analysis->logic_name; 
-  }elsif ($f->analysis->logic_name =~/NestedMICA/){
-    $type = 'BioTIFFIN'; 
-  } 
+  my $dbid = $f->dbID;
+  my $analysis =  $f->analysis->logic_name;
 
   my $href = $self->_url
   ({'action'   => 'Regulation',
     'fid'      => $id,
-    'ftype'    => $type,
-    'bp'       => $bp,
+    'ftype'    => $analysis,
+    'dbid'     => $dbid, 
   });
 
   return $href;
