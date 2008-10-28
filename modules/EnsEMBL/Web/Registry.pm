@@ -29,7 +29,12 @@ my %Action_of         :ATTR( :set<action>   :get<action>   );
 # modifications are added from the User and Session.
 # Returns a hashref, indexed by logic_name.
 sub get_all_das {
-  my ( $self, $species ) = @_;
+  my $self    = shift;
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'};
+  
+  if ( $species eq 'common' ) {
+    $species = '';
+  }
   
   my $spec_das = $self->species_defs->get_all_das( $species );
   my $sess_das = $self->get_session ->get_all_das( $species );

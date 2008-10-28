@@ -318,7 +318,12 @@ sub get_shared_data {
 # those either added or modified externally.
 # Returns a hashref, indexed by logic_name.
 sub get_all_das {
-  my( $self, $species ) = @_;
+  my $self    = shift;
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'};
+  
+  if ( $species eq 'common' ) {
+    $species = '';
+  }
   
   # If there is no session, there are no configs
   return {} unless $self->get_session_id;
@@ -343,13 +348,11 @@ sub get_all_das {
     }
   }
   
-  if ( $species ) {
-    return { map {
-      $_->logic_name => $_
-    } grep {
-      $_->matches_species( $species )
-    } values %{ $Das_sources_of{ ident $self } }};
-  }
+  return { map {
+    $_->logic_name => $_
+  } grep {
+    $_->matches_species( $species )
+  } values %{ $Das_sources_of{ ident $self } }};
   
   return $Das_sources_of{ ident $self };
 }
@@ -433,8 +436,8 @@ sub add_das {
 sub update_configs_for_das {
   my( $self, $das ) = @_;
   # activate the source in the display...
-  #    @scripts = @{ $das->enabled };
-  # OR $bool = $das->is_enabled_on( $script );
+  #    @scripts = @{ $das->on };
+  # OR $bool = $das->is_on( $script );
 }
 
 sub deepcopy {

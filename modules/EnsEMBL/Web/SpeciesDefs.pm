@@ -99,9 +99,14 @@ sub new {
 }
 
 sub get_all_das {
-  my $self = shift;
-  my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
+  my $self    = shift;
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'};
   my $sources_hash = $self->get_config( $species, 'ENSEMBL_INTERNAL_DAS_CONFIGS' )||{};
+  
+  if ( $species eq 'common' ) {
+    $species = '';
+  }
+  
   return { 
     map {
       my $t = EnsEMBL::Web::DASConfig->new_from_hashref( $sources_hash->{$_} );

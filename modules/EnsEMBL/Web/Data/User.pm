@@ -68,13 +68,18 @@ sub is_member_of {
 
 
 sub get_all_das {
-  my ( $self, $species ) = @_;
+  my $self    = shift;
+  my $species = shift || $ENV{'ENSEMBL_SPECIES'};
+  
+  if ( $species eq 'common' ) {
+    $species = '';
+  }
   
   my $sources = {};
   for my $data ( $self->dases ) {
     # Create new DAS source from value in database...
     my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
-    $species && !$das->matches_species( $species ) && next;
+    $das->matches_species( $species ) || next;
     $das->category( 'user' );
     $sources->{ $das->logic_name } = $das;
   }
@@ -82,6 +87,16 @@ sub get_all_das {
   return $sources;
 }
 
+
+sub add_das {
+  my ( $self, $das ) = @_;
+  if ($das && ref $das && ref $das eq 'EnsEMBL::Web::DASConfig') { ## Sanity check
+    $das->category( 'user ');
+    $das->mark_altered();
+    return $self->add_to_dases($das);
+  }
+  return;
+}
 
 
 ###################################################################################################
