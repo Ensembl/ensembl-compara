@@ -72,8 +72,9 @@ sub content {
     $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]); ## Userdata setting overrides any other tracks
     push(@$pointers, $pointer_set);
   }
-  my $table;
-  if ($object->param('id')) { ## "FeatureView"
+  my ($html, $table);
+  if (my $id = $object->param('id')) { ## "FeatureView"
+    $html = qq(<strong>Location(s) of feature $id</strong>);
     $image->image_name = "feature-$species";
     $image->imagemap = 'yes';
     my $data_type = $object->param('type');
@@ -104,7 +105,7 @@ sub content {
   
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
   $image->karyotype( $object, $pointers, 'Vkaryotype' );
-  my $html = $image->render;
+  $html .= $image->render;
   $html .= $table;
 
   if (@$pointers) {
@@ -130,7 +131,7 @@ sub feature_tables {
 	my $extra_columns = $feature_set->[1];
 	my $feat_type = $feature_set->[2];
 ##
-	#could show only gene liks for xrefs, but probably not what is wanted:
+	#could show only gene links for xrefs, but probably not what is wanted:
 #	next SET if ($feat_type eq 'Gene' && $data_type =~ /Xref/);
 ##
 	my $data_type = ($feat_type eq 'Gene') ? 'Gene Information:'
@@ -203,14 +204,14 @@ sub feature_tables {
 	    }
 	    $table->add_row($data_row);
 	}
-	$html .= qq(<strong>$data_type</strong>);
 	if (@data) {
+	    $html .= qq(<strong>$data_type</strong>);
 	    $html .= $table->render;
 	}
-	else {
-	    my $id = $object->param('id');
-	    $html .= qq(<br /><br />No mapping of $feat_type $id found<br /><br />);
-	}
+    }
+    if (! $html) {
+	my $id = $object->param('id');
+	$html .= qq(<br /><br />No mapping of $id found<br /><br />);
     }
     return $html;
 }
