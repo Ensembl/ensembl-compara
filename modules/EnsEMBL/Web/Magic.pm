@@ -12,6 +12,7 @@ use Apache2::RequestUtil;
 
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::RegObj;
+use CGI qw(escape);
 
 use base qw(Exporter);
 use CGI qw(header redirect); # only need the redirect header stuff!
@@ -145,7 +146,7 @@ use CGI;
     'renderer'   => 'String',
     'cache'      => $MEMD,
   );
-  $webpage->page->{'_modal_dialog_'} = $ajax_flag;#$webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  $webpage->page->{'_modal_dialog_'} = $ajax_flag;
 
   if(
     $input->param('submit') ||
@@ -355,7 +356,7 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
         warn $p->name;
         my $u = $p->name;
         if( $r->headers_in->{'X-Requested-With'} ) {
-          $u.= ($p->name=~/\?/?';':'?').'x_requested_with='.$r->headers_in->{'X-Requested-With'};
+          $u.= ($p->name=~/\?/?';':'?').'x_requested_with='.escape($r->headers_in->{'X-Requested-With'});
         }
         $webpage->redirect( $p->name );
         return;
@@ -407,7 +408,7 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
         my($p) = $webpage->dataObjects->[0]->get_problem_type('redirect');
         my $u = $p->name;
         if( $r->headers_in->{'X-Requested-With'} ) {
-          $u.= ($u=~/\?/?';':'?').'x_requested_with='.$r->headers_in->{'X-Requested-With'};
+          $u.= ($u=~/\?/?';':'?').'x_requested_with='.escape($r->headers_in->{'X-Requested-With'});
         }
         $webpage->redirect( $u );
       } else {
