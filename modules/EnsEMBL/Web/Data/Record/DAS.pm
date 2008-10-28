@@ -18,6 +18,7 @@ __PACKAGE__->add_fields(
   label       => 'text',
   category    => 'text',
   coords      => 'text',
+  _altered    => 'text',
 );
 
 1;
