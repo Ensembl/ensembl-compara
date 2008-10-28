@@ -18,6 +18,7 @@ $controller->add_connections({qw(
   SaveUpload   EnsEMBL::Web::Controller::Command::UserData::SaveUpload
   ManageUpload EnsEMBL::Web::Controller::Command::UserData::ManageUpload
   DeleteUpload EnsEMBL::Web::Controller::Command::UserData::DeleteUpload
+
   AttachDAS    EnsEMBL::Web::Controller::Command::UserData::AttachDAS
   AttachURL    EnsEMBL::Web::Controller::Command::UserData::AttachURL
   SaveRemote   EnsEMBL::Web::Controller::Command::UserData::SaveRemote
