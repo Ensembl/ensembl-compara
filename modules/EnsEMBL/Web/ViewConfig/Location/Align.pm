@@ -25,7 +25,7 @@ sub init {
   }
   $view_config->storable = 1;
   $view_config->add_image_configs({qw(
-    alignsliceviewtop    nodas
+    contigviewtop        nodas
     alignsliceviewbottom nodas
   )});
 }
