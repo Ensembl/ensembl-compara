@@ -53,19 +53,13 @@ sub save {
     };
   }
 
-  my $result = $self->memd->set(
+  ## TODO: error exception
+  return $self->memd->set(
     $key,
     $data,
     $args->{exptime},
     ( 'TMP', $args->{format}, keys %{ $ENV{CACHE_TAGS}||{} } ),
   );
-
-  unless ($result eq "OK\r?\n") {
-    warn $result;
-    return undef;
-  }
-  
-  return 1;
 }
 
 sub imgsize {
