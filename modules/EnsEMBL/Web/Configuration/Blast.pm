@@ -25,7 +25,7 @@ sub populate_tree {
     { 'availability' => 1}
   );
 
-  $self->create_node( 'Ticket', "Retrieve Ticket",
+  $self->create_node( 'Retrieve', "Retrieve Ticket",
     [qw(
       retrieve    EnsEMBL::Web::Component::Blast::Retrieve
     )],

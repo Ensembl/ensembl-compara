@@ -28,7 +28,7 @@ sub populate_tree {
   my $uploaded_menu = $self->create_submenu( 'Uploaded', 'Uploaded data' );
   $uploaded_menu->append($self->create_node( 'Upload', "Upload Data",
    [], { 'availability' => 1 }
-    ));
+  ));
   $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Data",
     [], { 'availability' => 1 }
   ));
@@ -36,16 +36,17 @@ sub populate_tree {
     [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
   ));
   $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Saved Data",
-    [], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
+    [qw(manage_upload   EnsEMBL::Web::Component::UserData::ManageUpload)
+    ], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
   ));
 
   my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
   $attached_menu->append($self->create_node( 'AttachDAS', "Attach DAS",
    [], { 'availability' => 1 }
-    ));
+  ));
   $attached_menu->append($self->create_node( 'AttachURL', "Attach URL Data",
    [], { 'availability' => 1 }
-    ));
+  ));
   $attached_menu->append($self->create_node( 'SaveRemote', "Save to Account",
     [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
   ));
@@ -55,7 +56,7 @@ sub populate_tree {
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'Message', '',
-    [qw(message EnsEMBL::Web::Component::UserData::Message
+    [qw(message EnsEMBL::Web::Component::CommandMessage
         )],
       { 'no_menu_entry' => 1 }
   );
@@ -74,18 +75,18 @@ sub upload {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
-  #my $session  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'check_session'));
-  #my $warning  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'overwrite_warning' ));
-  my $select  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_file' ));
-  my $upload  = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'upload'));
-  my $more    = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'more_input'));
-  my $feedback = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'upload_feedback'));
+  my $session  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_session');
+  my $warning  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'overwrite_warning' );
+  my $select  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'select_file' );
+  my $upload  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'upload');
+  my $more    = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'more_input');
+  my $feedback = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'upload_feedback');
 
   ## SET UP CONNECTION BUTTONS
-  #$wizard->add_connection(( from => $warning,  to => $select));
-  $wizard->add_connection(( from => $select,   to => $upload));
-  $wizard->add_connection(( from => $upload,   to => $more));
-  $wizard->add_connection(( from => $more,     to => $feedback));
+  $wizard->add_connection( from => $warning,  to => $select);
+  $wizard->add_connection( from => $select,   to => $upload);
+  $wizard->add_connection( from => $upload,   to => $more);
+  $wizard->add_connection( from => $more,     to => $feedback);
 }
 
 sub share_upload {
@@ -96,16 +97,16 @@ sub share_upload {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
-  my $shareable = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'check_shareable', backtrack => 0));
-  my $warning   = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'no_shareable' ));
-  my $select    = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'select_upload' ));
-  my $check     = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'check_save'));
-  my $save      = $wizard->create_node(( object => $object, module => $node, type => 'logic', name => 'save_upload'));
-  my $share  = $wizard->create_node(( object => $object, module => $node, type => 'page', name => 'share_url' ));
+  my $shareable = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_shareable', backtrack => 0);
+  my $warning   = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'no_shareable' );
+  my $select    = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'select_upload' );
+  my $check     = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_save');
+  my $save      = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'save_upload');
+  my $share  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'share_url' );
 
   ## SET UP CONNECTION BUTTONS
-  $wizard->add_connection(( from => $select, to => $check));
-  $wizard->add_connection(( from => $save,   to => $share));
+  $wizard->add_connection( from => $select, to => $check);
+  $wizard->add_connection( from => $save,   to => $share);
 }
 
 sub save_upload {
@@ -116,7 +117,31 @@ sub save_upload {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
+  my $start = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'show_tempdata');
+  my $save  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'save_tempdata');
+  my $end   = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'ok_tempdata');
+
+  ## SET UP CONNECTION BUTTONS
+  $wizard->add_connection( from => $start, to => $save);
+  $wizard->add_connection( from => $save, to => $end);
 }
+
+=pod
+sub manage_upload {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  my $wizard = $self->wizard;
+
+  ## CREATE NODES
+  my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
+  my $start = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'list_userdata');
+  my $end   = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'ok_userdata');
+
+  ## SET UP CONNECTION BUTTONS
+  $wizard->add_connection( from => $start, to => $end);
+}
+=cut
 
 sub attach_das {
   my $self   = shift;
@@ -170,4 +195,20 @@ sub attach_url {
   my $attach_url    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'attach_url');
 }
 
+sub save_remote {
+  my $self   = shift;
+  my $object = $self->{'object'};
+
+  my $wizard = $self->wizard;
+  my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
+  
+  ## CREATE NODES
+  my $start = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'show_tempdas');
+  my $save  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'save_tempdas');
+  my $end   = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'ok_tempdas');
+
+  ## SET UP CONNECTION BUTTONS
+  $wizard->add_connection( from => $start, to => $save);
+  $wizard->add_connection( from => $save, to => $end);
+}
 1;
