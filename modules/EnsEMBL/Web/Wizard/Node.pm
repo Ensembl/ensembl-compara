@@ -14,6 +14,7 @@ my %Title :ATTR(:set<title> :get<title>);
 my %Name :ATTR(:set<name> :get<name> :init_arg<name>);
 my %Object :ATTR(:set<object> :get<object> :init_arg<object>);
 my %Elements :ATTR(:set<elements> :get<elements> :init_arg<elements>);
+my %Parameter :ATTR(:set<parameter> :get<parameter> :init_arg<parameter>);
 my %Notes :ATTR(:set<notes> :get<notes>);
 my %Backtrack :ATTR(:set<backtrack> :get<backtrack> :init_arg<backtrack>);
 
@@ -32,6 +33,7 @@ sub BUILD {
   $self->set_object($args->{object});
   $self->set_backtrack($args->{backtrack});
   $self->set_elements([]);
+  $self->set_parameter({});
 }
 
 sub type {
@@ -68,6 +70,25 @@ sub elements {
   my $self = shift;
   $self->set_elements(shift) if @_;
   return $self->get_elements;
+}
+
+sub parameter {
+  ### Accessor for individual values in the 'parameter' hashref
+  my ($self, $key, $value) = @_;
+  my $hash = $self->get_parameter;
+  $hash->{$key} = $value if $key;
+  $self->set_parameter($hash);
+  if (wantarray) {
+    if (ref($hash->{$key}) eq 'ARRAY') {
+      return @{$hash->{$key}};
+    }
+    else {
+      return ($hash->{$key});
+    }
+  }
+  else {
+    return $hash->{$key};
+  }
 }
 
 sub notes {
