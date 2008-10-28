@@ -27,7 +27,7 @@ sub select_server {
   $self->add_element('type'   => 'DropDown',
                      'name'   => 'preconf_das',
                      'select' => 'select',
-                     'label'  => "$sitename DAS server",
+                     'label'  => "$sitename DAS sources",
                      'values' => \@preconf_das,
                      'value'  => $object->param('preconf_das'));
   $self->add_element('type'   => 'String',
@@ -93,7 +93,14 @@ sub select_url {
   my $self = shift;
   my $object = $self->object;
 
+  my $current_species = $ENV{'ENSEMBL_SPECIES'};
+  if (!$current_species || $current_species eq 'common') {
+    $current_species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES;
+  }
+
   # URL-based section
+  $self->notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but it has the advantage of ensuring that the data you see is always the same as the file on your server. For faster access, you can <a href="/$current_species/UserData/Upload">upload files to Ensembl</a> (only suitable for small, single-species datasets).)});
+
   $self->add_element('type'  => 'String',
                      'name'  => 'url',
                      'label' => 'File URL',
@@ -104,7 +111,8 @@ sub select_url {
   if ($user && $user->id) {
     $self->add_element('type'    => 'CheckBox',
                        'name'    => 'save',
-                       'label'   => 'Attach source/url to my account',
+                       'label'   => 'Save URL to my account',
+                       'notes'   => 'N.B. Only the file address will be saved, not the data itself',
                        'checked' => 'checked');
   }
 }
@@ -335,6 +343,61 @@ sub attach_das {
     }
   }
 }
+
+
+sub show_tempdas {
+  my $self = shift;
+  $self->title('Attach Data to Your Account');
+
+  my $das = $self->object->get_session->get_all_das;
+  if ($das && keys %$das) {
+    $self->add_element('type'=>'Information', 'value' => "You have the following DAS sources configured:", 'style' => 'spaced');
+    my @values;
+    foreach my $source (sort values %$das) {
+      my $info  = 'Source: '.$source->label.' ('.$source->description.')';
+      push @values, {'value' => $source->logic_name, 'name' => $info};
+    }
+    $self->add_element('type' => 'MultiSelect', 'name' => 'source', 'values' => \@values);
+  }
+  else {
+    $self->add_element('type'=>'Information', 'value' => "You have no DAS sources configured. Click on 'Attach DAS' in the left-hand menu to add sources.");
+  }
+}
+
+sub save_tempdas {
+  my $self = shift;
+
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user && $self->object->param('source')) {
+    my @sources = $self->object->param('source');
+    my $das = $self->object->get_session->get_all_das;
+    foreach my $source  (@sources) {
+      my $record = $das->{$source};
+      $record->category('user');
+      my $record_id = $user->add_to_dases($record);
+      if ($record_id) {
+        $record->mark_altered;
+        $self->object->get_session->save_das;
+        $self->parameter('wizard_next', 'ok_tempdas');
+      }
+      else {
+        $self->parameter('wizard_next', 'show_tempdas');
+        #$self->parameter('error_message', 'Unable to save to user account');
+      }
+    }
+  }
+  else {
+    $self->parameter('wizard_next', 'show_tempdas');
+    #$self->parameter('error_message', 'Unable to save to user account');
+  }
+}
+
+sub ok_tempdas {
+  my $self = shift;
+  $self->title('DAS Source Saved');
+  $self->add_element('type'=>'Information', 'value' => 'The DAS source details were saved to your user account.');
+}
+
 
 
 1;
