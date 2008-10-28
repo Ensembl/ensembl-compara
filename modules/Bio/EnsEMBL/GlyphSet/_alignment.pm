@@ -45,6 +45,7 @@ sub href {
     'ftype'  => $self->my_config('object_type') || 'DnaAlignFeature',
     'r'      => $r,
     'id'     => $f->display_id,
+    'db'     => $self->my_config('db'),
   });
 }
 
