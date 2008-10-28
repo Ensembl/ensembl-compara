@@ -3,6 +3,7 @@ package EnsEMBL::Web::Configuration::Location;
 use strict;
 
 use base qw( EnsEMBL::Web::Configuration );
+use CGI;
 
 sub set_default_action {
   my $self = shift;
@@ -126,8 +127,54 @@ sub ajax_zmenu      {
   if( $action =~ 'Regulation'){
     return $self->_ajax_zmenu_regulation($panel, $obj);
   }
+  elsif( $action =~ /Genome/) {
+    return $self->_ajax_zmenu_alignment($panel,$obj);
+  }
+}
 
-  return;
+#zmenu for aligments (directed to /Location/Genome)
+sub _ajax_zmenu_alignment {
+    my $self = shift;
+    my $panel = shift;
+    my $obj  = shift;
+    my $id = $obj->param('id');
+    my $obj_type  = $obj->param('ftype');
+    my $db     = $obj->param('db')  || 'core';
+    my $db_adaptor = $obj->database(lc($db));
+    my $adaptor_name = "get_${obj_type}Adaptor";
+    my $feat_adap =  $db_adaptor->$adaptor_name;
+    my $fs = $feat_adap->fetch_all_by_hit_name($id);
+    my $external_db_id = $fs->[0]->external_db_id;
+    my $extdbs = $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'};
+    my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
+    my $species= $obj->species;
+
+    $panel->{'caption'} = "$id ($hit_db_name)";
+
+    my @seq = [];
+    @seq = split "\n", $obj->get_ext_seq($id,$hit_db_name) if ($hit_db_name !~ /CCDS/); #don't show EMBL desc for CCDS
+    my $desc = $seq[0];
+    if ($desc) {
+	if ($desc =~ s/^>//) {
+	    $panel->add_entry({
+		'label' => $desc,
+		'priority' => 150,
+	    });
+	}
+    }
+    my $URL = CGI::escapeHTML( $obj->get_ExtURL($hit_db_name, $id) );
+    $panel->add_entry({
+	'label' => $id,
+	'link'  => $URL,
+	'priority' => 100,
+    });
+    my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
+    $panel->add_entry({ 
+	'label' => 'View all hits',
+	'link'   => $fv_url,
+	'priority' => 50,
+    });
+    return;
 }
 
 sub _ajax_zmenu_regulation {
