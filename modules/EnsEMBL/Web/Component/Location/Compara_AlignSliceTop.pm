@@ -26,10 +26,8 @@ sub _extra {
   if( $h && exists $h->{'ALIGNMENTS'} && exists $h->{'ALIGNMENTS'}{$align} ) {
     foreach( keys %{ $h->{'ALIGNMENTS'}{$align}{'species'} } ) {
       my $key = sprintf 'species_%d_%s', $align, lc($_);
-      $wuc->modify_configs(
-        ["synteny_$_"],
-        {'display'=>'normal'}
-      ) unless $self->object->param($key) eq 'no';
+      next if $self->object->param($key) eq 'no';
+      $wuc->modify_configs( ["synteny_$_"], {'display'=>'normal'} );
     }
   }
 }
