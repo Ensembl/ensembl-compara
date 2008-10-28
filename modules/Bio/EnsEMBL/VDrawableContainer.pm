@@ -131,13 +131,11 @@ sub new {
     my $gw  = length( length($label_2) > length($label_1) ? $label_2 : $label_1 );
     if($gw>0) {
       ########## and convert it to pels
-      warn $gw;
       $gw = $Config->texthelper->width('Small');
       ########## If the '_label' position is not 'above' move the labels below the image
       my $label_x = $Config->get_parameter('label') eq 'above' ? 0 : $Config->get_parameter('image_height');
         $label_x   += 4 - $Config->get_parameter('top_margin');
       my $label_y = ($glyphset->maxy() + $glyphset->miny() - $gw ) / 2;
-      warn $gw;
       my $colour_1 = $glyphset->my_config('colour') ||
                      ( $feature_type_1 ? $glyphset->my_colour( $feature_type_1, 'label' ) : undef );
       my $colour_2 = $glyphset->my_config('colour_2') ||
