@@ -25,10 +25,11 @@ sub _extra {
 ## Get the species in the alignment and turn on the approriate Synteny tracks!
   if( $h && exists $h->{'ALIGNMENTS'} && exists $h->{'ALIGNMENTS'}{$align} ) {
     foreach( keys %{ $h->{'ALIGNMENTS'}{$align}{'species'} } ) {
+      my $key = sprintf 'species_%d_%s', $align, lc($_);
       $wuc->modify_configs(
         ["synteny_$_"],
         {'display'=>'normal'}
-      );
+      ) unless $self->object->param($key) eq 'no';
     }
   }
 }
