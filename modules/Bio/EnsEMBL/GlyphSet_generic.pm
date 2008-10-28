@@ -708,7 +708,7 @@ sub glyph_anchored_arrow {
       $o<=0 && $s == $f->{extent_start} ) {
     $self->push($self->Poly({
       'points'    => [ $o>0?$e-$tw:$s-1+$tw,$y,$o>0?$e:$s-1,$y+$h/2,$o>0?$e-$tw:$s-1+$tw,$y+$h ],
-      'colour'    => 'orange',# $st->{'fgcolor'},
+      'colour'    => $st->{'fgcolor'},
       'absolutey' => 1,
     }));
   } else {
