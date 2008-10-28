@@ -152,7 +152,7 @@ paralogues with BioMart to see more.)</p>%s),
       $html .= $self->_warning( 'Orthologues hidden by configuration', sprintf '
   <p>
     %d orthologues not shown in the table above from the following species: %s. Use the "<strong>Configure this page</strong>" on the left to show them.
-  </p>%s', $orthologues_skipped_count, join (', ', map { "<i>$_</i>" } sort @orthologues_skipped_species )
+  </p>%s', $orthologues_skipped_count, join (', ', sort map { "<i>$_</i>" } @orthologues_skipped_species )
       )
     }
   } else {
