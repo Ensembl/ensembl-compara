@@ -128,13 +128,13 @@ sub add_connection {
   $self->set_connections(\@connections);
 }
 
-sub redirect_current_node {
-### Redirects to next node based on incoming parameters
+sub update_parameters {
+### Updates node with new parameters, then cleans them up so they can be used to redirect the wizard
   my $self = shift;
   my $node = $self->current_node;
   my $init_method = $node->name;
-  my $parameter = $node->$init_method || {};
-  $parameter = {} if ref($parameter) ne 'HASH'; ## sanity check
+  $node->$init_method; ## Call the method with the same name as the current node
+  my $parameter = $node->get_parameter;
 
   ## Add in any unpassed parameters
   foreach my $param ($self->get_object->param) {
