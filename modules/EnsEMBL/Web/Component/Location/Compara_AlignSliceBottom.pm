@@ -37,7 +37,7 @@ sub content {
   </p>' );
 
   }
-  my $h = $object->species_defs->nulti_hash->{DATABASE_COMPARA};
+  my $h = $object->species_defs->multi_hash->{DATABASE_COMPARA};
   my %c = exists $h->{'ALIGNMENTS'} ? %{$h->{'ALIGNMENTS'}} : ();
   if( !exists $c{$align} ) {
     return $self->_error( 'Unknown alignment',sprintf '
