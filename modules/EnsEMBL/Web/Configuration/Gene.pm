@@ -7,13 +7,6 @@ use EnsEMBL::Web::Data::Release;
 
 use base qw( EnsEMBL::Web::Configuration );
 
-## Function to configure gene snp view
-
-sub set_default_action {
-  my $self = shift;
-  $self->{_data}{default} = 'Summary';
-}
-
 sub set_default_action {
   my $self = shift;
   my $x = $self->object->availability || {};
@@ -568,44 +561,163 @@ sub _compara_tree_jalview_html{
 }
 
 sub _ajax_zmenu_regulation {
-  my ($self, $panel ) = @_;
+ # Specific zmenu for functional genomics features
+
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
   my $obj = $self->object;
-  my $params = $obj->[1]->{'_input'}; warn $params->{'caption'}[0];
-  $panel->{'caption'} = $params->{'caption'}[0];
-  my $link = $params->{$obj->type}[0];
-  my $species = $obj->species_defs->species;
+  my $fid = $obj->param('fid') || die( "No feature ID value in params" );
+  my $ftype = $obj->param('ftype')  || die( "No feature type value in params" );
+  my $db_adaptor = $obj->database('funcgen');
+  my $ext_adaptor =  $db_adaptor->get_ExternalFeatureAdaptor();
+  my $species= $obj->species;
 
-  foreach my $p (keys %{$params}){
-    if ($p =~/^\d+/){
-      my $value = $params->{$p}[0];
-      my ($priority, $type) = split(/:/, $p);
-      my $link;
-      if ($type =~/location/i){
-        $link = $obj->_url({'type'=>'Location','action'=>'View','r'=>$value});
-      } elsif ($type =~/Analysis/i && $value =~/cisred/i){
-          my $cis_red;
-          if ($species=~/Homo_sapiens/){ $cis_red = "http://www.cisred.org/human9/gene_view?ensembl_id=";}
-          elsif ( $species =~/Mus_musculus/) { $cis_red = "http://www.cisred.org/mouse4/gene_view?ensembl_id=";}
-          $link = $cis_red . $obj->stable_id;
-      } elsif ($type =~ /Associated/i){
-          if ($type =~/gene/i){ $link = $obj->_url({'type'=>'Gene','action'=>'Summary','g'=>$value});}
-          elsif ($type =~/transcript/i) {$link = $obj->_url({'type'=>'Transcript','action'=>'Summary','t'=>$value}); }        } elsif ( $type =~/factor/i){
-          $link = $link = $obj->_url({'type'=>'Location','View'=>'Karyotype','feat_type'=>'RegulatoryFeature','id'=>$value}); 
+  if ($ftype eq 'ensembl_reg_feat'){
+    my $rf_adaptor = $db_adaptor->get_RegulatoryFeatureAdaptor();
+    my $reg_feat = $rf_adaptor->fetch_by_stable_id($fid);
+    my $location = $reg_feat->slice->seq_region_name .":". $reg_feat->start ."-" . $reg_feat->end;
+    my $location_link = $obj->_url({'type' => 'Location', 'action' => 'View', 'r' => $location});
+
+    my @atts  = @{$reg_feat->regulatory_attributes()};
+    my @temp = map $_->feature_type->name(), @atts;
+    my %att_label;
+    my $c = 1;
+    foreach my $k (@temp){
+      if (exists  $att_label{$k}) {
+        my $old = $att_label{$k};
+        $old++;
+        $att_label{$k} = $old;
+      } else {
+        $att_label{$k} = $c;
       }
-       
-
-      $panel->add_entry({
-        'type'     =>  $type,
-        'label'    =>  $value,
-        'priority' =>  $priority,
-        'link'     =>  $link,
-      });
-
     }
+    my @keys = keys %att_label;
+    my $label = "";
+    foreach my $k (keys %att_label){
+      my $v = $att_label{$k};
+      $label .= "$k($v), ";
+    }
+    $label =~s/\,\s$//;
+
+    $panel->{'caption'} = "Regulatory Feature";
+    $panel->add_entry({
+        'type'     =>  'Stable ID:',
+        'label'    =>  $reg_feat->stable_id,
+        'priority' =>  10,
+    });
+    $panel->add_entry({
+        'type'     =>  'Type:',
+        'label'    =>  $reg_feat->feature_type->name,
+        'priority' =>  9,
+    });
+    $panel->add_entry({
+        'type'        =>  'bp:',
+        'label_html'  =>  $location,
+        'link'        =>  $location_link,
+        'priority'    =>  8,
+    });
+    $panel->add_entry({
+        'type'     =>  'Attributes:',
+        'label'    =>  $label,
+        'priority' =>  7,
+    });
+  } else {
+    my $feature = $ext_adaptor->fetch_by_dbID($obj->param('dbid'));
+    my $location = $feature->slice->seq_region_name .":". $feature->start ."-" . $feature->end;
+    my $location_link = $obj->_url({'type' => 'Location', 'action' => 'View', 'r' => $location});
+    my ($feature_link, $factor_link);
+    my $factor = $obj->param('fid');
+    $panel->{'caption'} = "Regulatory Region";
+
+
+    if ($ftype eq 'cisRED'){
+      $factor =~s/\D*//g;
+      $feature_link = $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'CISRED'};
+      $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;dbid=".$obj->param('dbid').";id=" . $obj->param('fid');
+      $feature_link =~s/###ID###/$factor/;
+    } elsif($ftype eq 'miRanda'){
+      my $name = $obj->param('fid');
+      $name =~/\D+(\d+)/;
+      my $temp_factor = $name;
+      my @temp = split (/\:/, $temp_factor);
+    $factor = $temp[1];
+      $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
+
+    } elsif($ftype eq 'vista_enhancer'){
+      $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
+
+    }elsif($ftype eq 'NestedMICA'){
+       $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
+       $feature_link = "http://servlet.sanger.ac.uk/tiffin/motif.jsp?acc=".$obj->param('fid');
+
+    } elsif($ftype eq 'cisred_search'){
+      my ($id, $type, $analysis_link, $associated_link, $gene_reg_link);
+      my $db_ent = $feature->get_all_DBEntries;
+      foreach my $dbe (@$db_ent){
+        $id = $dbe->primary_id;
+        my $dbname = $dbe->dbname;
+        if ($dbname =~/gene/i){
+          $associated_link = $obj->_url({'type' => 'Gene', 'action'=> 'Summary', 'g' => $id });
+          $gene_reg_link = $obj->_url({'type' => 'Gene', 'action'=> 'Regulation', 'g' => $id });
+          $analysis_link = $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'CISRED'};
+          $analysis_link =~s/siteseq\?fid=###ID###/gene_view?ensembl_id=$id/;
+        } elsif ($dbname =~/transcript/i){
+          $associated_link = $obj->_url({'type' => 'Transcript', 'action'=> 'Summary', 't' => $id });
+        } elsif ($dbname =~/transcript/i){
+          $associated_link = $obj->_url({'type' => 'Transcript', 'action'=> 'Summary', 'p' => $id });
+        }
+      }
+
+        
+      $panel->{'caption'} = "Regulatory Search Region";
+      $panel->add_entry({
+        'type'        =>  'Analysis:',
+        'label_html'  =>  $obj->param('ftype'),
+        'link'        =>  $analysis_link,
+        'priority'    =>  7,
+      });
+      $panel->add_entry({
+        'type'        =>  'Associated Gene:',
+        'label_html'  =>  $id,
+        'link'        =>  $associated_link,
+        'priority' =>  6,
+      });
+      unless ($obj->referer =~/Regulation/){
+        $panel->add_entry({
+          'label_html'  =>  'View Gene Regulation',
+          'link'        =>  $gene_reg_link,
+          'priority' =>  4,
+        });
+      }   
+     
+    }
+
+    ## add zmenu items that apply to all external regulatory features
+    unless ($ftype eq 'cisred_search'){
+      $panel->add_entry({
+        'type'        =>  'Feature:',
+        'label_html'  =>  $obj->param('fid'),
+        'link'        =>  $feature_link,
+        'priority'    =>  10,
+      });
+      $panel->add_entry({
+        'type'        =>  'Factor:',
+        'label_html'  =>  $factor,
+        'link'        =>  $factor_link,
+        'priority'    =>  9,
+      }) ;
+    }
+    $panel->add_entry({
+      'type'        =>  'bp:',
+      'label_html'  =>  $location,
+      'link'        =>  $location_link,
+      'priority'    =>  8,
+    });
+
   }
+
   return;
 }
-
 
 sub _ajax_zmenu_id_history_tree_node {
   # Specific zmenu for idhistory tree nodes
