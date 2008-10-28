@@ -281,8 +281,14 @@ sub has_many {
   *{$class."::add_to_$accessor"} =
     sub {
       my $self = shift;
+      my $args = ref $_[0] shift : {@_};
+      
+      ## Force hash ref, in case if blessed hash was passed (or die)
+      my %args = %{ $args };
+      die "add_to_$accessor needs data" unless %args;
+
       my $add_to_real_accessor = 'add_to_' . $real_accessor;
-      return $self->$add_to_real_accessor(@_);
+      return $self->$add_to_real_accessor(\%args);
     };
 
   #  } else {
