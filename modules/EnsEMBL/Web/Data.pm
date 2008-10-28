@@ -250,51 +250,53 @@ sub has_many {
   my ($relation_class) = @_;
   no strict 'refs';
 
-  if (!ref($relation_class) && $relation_class =~ /^EnsEMBL::Web::Data::Record/) {
-    my ($owner) = $class =~ /::(\w+)$/;
-    $class->_require_class($relation_class);
-    $relation_class = $relation_class->add_owner($owner);
+  if (ref($relation_class)) {
+    return $class->SUPER::has_many($accessor => @_);
   } else {
-    $class->_require_class($relation_class);
+
+    if ($relation_class =~ /^EnsEMBL::Web::Data::Record/) {
+      my ($owner) = $class =~ /::(\w+)$/;
+      $class->_require_class($relation_class);
+      $relation_class = $relation_class->add_owner($owner);
+    } else {
+      $class->_require_class($relation_class);
+    }
+  
+    $class->relations({
+      %{ $class->relations },
+      $accessor => $relation_class,
+    });
+  
+    my $real_accessor = '_'. $accessor;
+    $class->SUPER::has_many($real_accessor => $relation_class);
+  
+    *{$class."::$accessor"} =
+      sub {
+        my $self = shift;
+  
+        ## Retrieve by primary field ...(id => $id) // short version
+        $_[0] = $relation_class->get_primary_key if @_ == 2 && $_[0] eq 'id';
+  
+        ## Retrieve by primary field ...($id) // shorter version
+        unshift @_, $relation_class->get_primary_key if @_ == 1 && !ref($_[0]);
+  
+        return $self->$real_accessor(@_, type => $relation_class->__type);
+      };
+  
+    *{$class."::add_to_$accessor"} =
+      sub {
+        my $self = shift;
+        my $args = ref $_[0] ? shift : {@_};
+        
+        ## Force hash ref, in case if blessed hash was passed (or die)
+        my %args = %{ $args };
+        die "add_to_$accessor needs data" unless %args;
+  
+        my $add_to_real_accessor = 'add_to_' . $real_accessor;
+        return $self->$add_to_real_accessor(\%args);
+      };
+  
   }
-
-  $class->relations({
-    %{ $class->relations },
-    $accessor => $relation_class,
-  });
-
-  my $real_accessor = '_'. $accessor;
-  $class->SUPER::has_many($real_accessor => $relation_class);
-
-  *{$class."::$accessor"} =
-    sub {
-      my $self = shift;
-
-      ## Retrieve by primary field ...(id => $id) // short version
-      $_[0] = $relation_class->get_primary_key if @_ == 2 && $_[0] eq 'id';
-
-      ## Retrieve by primary field ...($id) // shorter version
-      unshift @_, $relation_class->get_primary_key if @_ == 1;
-
-      return $self->$real_accessor(@_, type => $relation_class->__type);
-    };
-
-  *{$class."::add_to_$accessor"} =
-    sub {
-      my $self = shift;
-      my $args = ref $_[0] ? shift : {@_};
-      
-      ## Force hash ref, in case if blessed hash was passed (or die)
-      my %args = %{ $args };
-      die "add_to_$accessor needs data" unless %args;
-
-      my $add_to_real_accessor = 'add_to_' . $real_accessor;
-      return $self->$add_to_real_accessor(\%args);
-    };
-
-  #  } else {
-  #    return $class->SUPER::has_many($accessor => @_);
-  #  }
 
 }
 
