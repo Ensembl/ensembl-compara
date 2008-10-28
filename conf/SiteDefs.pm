@@ -189,7 +189,7 @@ our $ENSEMBL_DEBUG_LONG_PROCESS     =   16;
 our $ENSEMBL_DEBUG_HANDLER_ERRORS   =    8;
 our $ENSEMBL_DEBUG_SD_AUTOLOADER    =    4;
 our $ENSEMBL_DEBUG_DRAWING_CODE     =    2;
-our $ENSEMBL_DEBUG_GENRAL_ERRORS    =    1;
+our $ENSEMBL_DEBUG_GENERAL_ERRORS   =    1;
 #####################
 # Apache files
 $ENSEMBL_PIDFILE = undef;
