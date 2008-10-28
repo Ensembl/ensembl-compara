@@ -19,7 +19,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'manage_remote', $self);
+  modal_stuff 'UserData', 'ManageRemote', $self, 'Popup';
 }
 
 }
