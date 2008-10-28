@@ -122,7 +122,7 @@ sub _parse_referer {
 sub configurator {
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
   my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
-  warn "MY SESSION $session_id";
+  warn "MY SESSION $session_id" if(1);
 #  my $referer_hash = _parse_referer;
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $session = $ENSEMBL_WEB_REGISTRY->get_session;
@@ -146,8 +146,6 @@ use CGI;
     'cache'      => $MEMD,
   );
   $webpage->page->{'_modal_dialog_'} = $ajax_flag;#$webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
-warn "SETTING MODAL DIALOG TO ". $webpage->page->{'_modal_dialog_'};
-
 
   if(
     $input->param('submit') ||

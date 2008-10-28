@@ -32,7 +32,6 @@ sub content {
     $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
       $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
     );
-    warn "... ".$object->seq_region_length.' ...';
   } else {
     my $c = int($object->centrepoint);
     my $s = $c - $threshold/2;
@@ -42,7 +41,6 @@ sub content {
       $e = $object->seq_region_length;
       $s = $e - $threshold + 1;
     }
-    warn "$s - $e..";
     $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
       $object->seq_region_type, $object->seq_region_name, $s, $e, 1
     );

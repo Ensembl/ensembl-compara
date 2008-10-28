@@ -633,11 +633,8 @@ warn "FROM TRANSCRIPT";
 #      $location = $newloc if $newloc;
 #    }
     if( $location ) {
-warn "PART 1";
-warn @$location;
       $self->DataObjects( $location );
     } elsif( $self->core_objects->location ) {
-warn "PART 2";
       $self->_create_object_from_core;
     }
 =pod 
