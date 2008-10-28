@@ -21,8 +21,11 @@ $controller->add_connections({qw(
 
   AttachDAS    EnsEMBL::Web::Controller::Command::UserData::AttachDAS
   AttachURL    EnsEMBL::Web::Controller::Command::UserData::AttachURL
-  SaveRemote   EnsEMBL::Web::Controller::Command::UserData::SaveRemote
+  SaveDAS      EnsEMBL::Web::Controller::Command::UserData::SaveDAS
+  SaveURL      EnsEMBL::Web::Controller::Command::UserData::SaveURL
   ManageRemote EnsEMBL::Web::Controller::Command::UserData::ManageRemote
+  DeleteDAS    EnsEMBL::Web::Controller::Command::UserData::DeleteDAS
+  DeleteURL    EnsEMBL::Web::Controller::Command::UserData::DeleteURL
 )});
 
 $controller->dispatch($ENV{REQUEST_URI});
