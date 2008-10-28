@@ -183,10 +183,12 @@ sub fetch_root_by_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
+  my $alias = $self->tables->[0]->[1];
+
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
 
-  my $constraint = "WHERE t.left_index <= $left_index AND t.right_index >= $right_index";
+  my $constraint = "WHERE $alias.left_index <= $left_index AND $alias.right_index >= $right_index";
   my $nodes = $self->_generic_fetch($constraint);
   my $root = $self->_build_tree_from_nodes($nodes);
 
