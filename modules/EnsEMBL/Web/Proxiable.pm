@@ -53,11 +53,17 @@ sub _url {
   } 
   foreach ( sort keys %pars ) {
     next unless defined $pars{$_};
-    $URL .= sprintf '%s%s=%s', $join, escape($_), escape($pars{$_}) ;
+    $URL .= sprintf '%s%s=%s', $join, escape($_), $self->hack_escape($pars{$_}) ;
     $join = ';';
   }
 
   return $URL;
+}
+
+sub hack_escape {
+  my( $self, $s ) = @_;
+  (my $t = escape($s)) =~ s/%3A/:/;
+  return $t;
 }
 
 sub new {
