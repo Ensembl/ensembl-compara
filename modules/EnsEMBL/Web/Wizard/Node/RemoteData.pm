@@ -63,21 +63,26 @@ sub select_das {
   
   # Otherwise add a checkbox element for each DAS source
   else {
+    my @already_added = ();
+    my $all_das = $ENSEMBL_WEB_REGISTRY->get_all_das(  );
     for my $source (@{ $sources }) {
       
-      # If the description is long, shorten it and pretty it up
-      my $desc  = $source->description;
-      if (length $desc > $DAS_DESC_WIDTH) {
-        $desc = substr $desc, 0, $DAS_DESC_WIDTH;
-        $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
+      # If the source is already in the speciesdefs/session/user, skip it
+      if ( $all_das->{$source->logic_name} ) {
+        push @already_added, $source;
       }
-      
-      $self->add_element( 'type'  => 'CheckBox',
-                          'name'  => 'dsns',
-                          'value' => $source->logic_name,
-                          'label' => $source->label,
-                          'notes' => $desc );
+      # Otherwise add a checkbox...
+      else {
+        $self->_output_das_checkbox($source);
+      }
     } # end DAS source loop
+    
+    if ( scalar @already_added ) {
+      my $note = sprintf 'There are %d DAS sources that are already configured within %s.',
+                         scalar @already_added,
+                         $self->object->species_defs->ENSEMBL_SITETYPE;
+      $self->notes( {'heading'=>'Tip', 'text'=> $note } );
+    }
 =pod
     $self->add_element( 'type'    => 'MultiCheckTable',
                         'name'    => 'dsns',
@@ -128,7 +133,7 @@ sub validate_das {
   my $self      = shift;
   
   # Get a list of DAS sources (only those selected):
-  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsns') );
+  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
   warn "SOURCES $sources";
   
   # Process any errors
@@ -183,7 +188,7 @@ sub select_das_species {
                      'value'  => 'no');
   
   # Get a list of DAS sources (only those selected):
-  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsns') );
+  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
   
   # Process any errors
   if (!ref $sources) {
@@ -194,14 +199,7 @@ sub select_das_species {
   }
   else {
     $self->add_element( 'type' => 'Header',   'value' => 'DAS Sources' );
-    
-    for my $source (@{ $sources }) {
-      # Need to fill in missing coordinate systems and resubmit
-      $self->add_element( 'type' => 'Information', 'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
-                                                              $source->label,
-                                                              $source->description,
-                                                              $source->homepage );
-    }
+    $self->_output_das_text(@{ $sources });
   }
 }
 
@@ -247,7 +245,7 @@ sub select_das_coords {
   }
   
   # Get a list of DAS sources (only those selected):
-  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsns') );
+  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
   
   # Process any errors
   if (!ref $sources) {
@@ -281,7 +279,7 @@ sub attach_das {
   }
   
   # Get a list of DAS sources (only those selected):
-  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsns') );
+  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
   
   # Process any errors
   if (!ref $sources) {
@@ -342,20 +340,18 @@ sub attach_das {
 
 sub show_tempdas {
   my $self = shift;
-  $self->title('Attach Data to Your Account');
+  $self->title('Save DAS Sources');
 
   my $das = $self->object->get_session->get_all_das;
   if ($das && keys %$das) {
-    $self->add_element('type'=>'Information', 'value' => "You have the following DAS sources configured:", 'style' => 'spaced');
+    $self->add_element('type'=>'Information', 'value' => 'Choose the DAS sources you wish to save to your account', 'style' => 'spaced');
     my @values;
-    foreach my $source (sort values %$das) {
-      my $info  = 'Source: '.$source->label.' ('.$source->description.')';
-      push @values, {'value' => $source->logic_name, 'name' => $info};
+    foreach my $source (sort { lc $a->label cmp lc $b->label } values %$das) {
+      $self->_output_das_checkbox($source);
     }
-    $self->add_element('type' => 'MultiSelect', 'name' => 'source', 'values' => \@values);
   }
   else {
-    $self->add_element('type'=>'Information', 'value' => "You have no DAS sources configured. Click on 'Attach DAS' in the left-hand menu to add sources.");
+    $self->add_element('type'=>'Information', 'value' => "You have no temporary DAS sources to save. Click on 'Attach DAS' in the left-hand menu to add sources.");
   }
 }
 
@@ -363,35 +359,73 @@ sub save_tempdas {
   my $self = shift;
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my @sources = $self->object->param('source');
-  if ($user && @sources) {
-    my $das = $self->object->get_session->get_all_das;
-    foreach my $source  (@sources) {
-      my $record = $das->{$source};
-      if ($record && ref($record) && ref($record) =~ 'DASConfig') { ## Sanity check
-        $record->category('user');
-        my $record_id = $user->add_to_dases($record);
-        if ($record_id) {
-          $record->mark_altered;
-          $self->object->get_session->save_das;
-        }
+  my @sources = grep {$_} $self->object->param('dsn');
+  
+  if ($user && scalar @sources) {
+    my $all_das = $self->object->get_session->get_all_das;
+    foreach my $logic_name  (@sources) {
+      my $das = $all_das->{$logic_name} || warn "*** $logic_name";
+      use Data::Dumper;
+      warn Dumper($das);
+      if ( $user->add_das( $das ) ) {
+        $self->parameter('wizard_next', 'ok_tempdas');
+      }
+      else {
+        $self->parameter('wizard_next', 'show_tempdas');
+        $self->parameter('error_message', 'Unable to save to user account');
       }
     }
-    $self->parameter('wizard_next', 'ok_tempdas');
+    # Just need to save the session to remove the source - it knows it has changed
+    $self->object->get_session->save_das;
   }
   else {
     $self->parameter('wizard_next', 'show_tempdas');
-    $self->parameter('error_message', 'Unable to save DAS information to user account');
+    $self->parameter('error_message', 'Unable to save to user account');
   }
 }
 
 sub ok_tempdas {
   my $self = shift;
   $self->title('DAS Source Saved');
+  
   $self->add_element('type'=>'Information', 'value' => 'The DAS source details were saved to your user account.');
+  $self->add_element('type'=>'SubHeader', 'value' => 'Saved DAS sources');
+  my @das = sort { lc $a->label cmp lc $b->label } values %{ $ENSEMBL_WEB_REGISTRY->get_user->get_all_das };
+  $self->_output_das_text(@das);
 }
 
+# If the description is long, shorten it and pretty it up
+sub _short_das_desc {
+  my ( $self, $desc ) = @_;
+  if (length $desc > $DAS_DESC_WIDTH) {
+    $desc = substr $desc, 0, $DAS_DESC_WIDTH;
+    $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
+  }
+  return $desc;
+}
 
+sub _output_das_checkbox {
+  my ( $self, @sources ) = @_;
+  map {
+    $self->add_element( 'type'       => 'CheckBox',
+                        'long_label' => 1,
+                        'name'       => 'dsn',
+                        'value'      => $_->logic_name,
+                        'label'      => $_->label,
+                        'notes'      => $self->_short_das_desc( $_->description ) );
+  } @sources;
+}
+
+sub _output_das_text {
+  my ( $self, @sources ) = @_;
+  map {
+    $self->add_element( 'type' => 'Information',
+                        'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
+                                           $_->label,
+                                           $_->description,
+                                           $_->homepage );
+  } @sources;
+}
 
 1;
 
