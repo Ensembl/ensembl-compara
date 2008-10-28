@@ -30,7 +30,14 @@ sub content {
   }
   my $align = $object->param( 'align' );
   ## Check that it exists!
-  my $h = $object->species_defs->multi_hash->{DATABASE_COMPARA};
+  unless($align) {
+    return $self->_info( 'No alignment specified',sprintf '
+  <p>
+    Select the alignment you wish to display from the box above.
+  </p>' );
+
+  }
+  my $h = $object->species_defs->nulti_hash->{DATABASE_COMPARA};
   my %c = exists $h->{'ALIGNMENTS'} ? %{$h->{'ALIGNMENTS'}} : ();
   if( !exists $c{$align} ) {
     return $self->_error( 'Unknown alignment',sprintf '
