@@ -250,37 +250,45 @@ sub has_many {
   my ($relation_class) = @_;
   no strict 'refs';
 
-  my ($owner) = $class =~ /::(\w+)$/;
-    
+  $class->_require_class($relation_class);
+
   if (!ref($relation_class) && $relation_class =~ /^EnsEMBL::Web::Data::Record/) {
-
-    $class->_require_class($relation_class);
+    my ($owner) = $class =~ /::(\w+)$/;
     $relation_class = $relation_class->add_owner($owner);
-    
-    $class->relations({
-      %{ $class->relations },
-      $accessor => $relation_class,
-    });
+  }    
 
-    my $real_accessor = '_'. $accessor;
-    $class->SUPER::has_many($real_accessor => $relation_class);
+  $class->relations({
+    %{ $class->relations },
+    $accessor => $relation_class,
+  });
 
-    *{$class."::$accessor"} =
-      sub {
-        my $self = shift;
-        unshift @_, $relation_class->get_primary_key if @_ == 1;
-        return $self->$real_accessor(@_, type => $relation_class->__type);
-      };
-    *{$class."::add_to_$accessor"} =
-      sub {
-        my $self = shift;
-        my $add_to_real_accessor = 'add_to_' . $real_accessor;
-        return $self->$add_to_real_accessor(@_);
-      };
+  my $real_accessor = '_'. $accessor;
+  $class->SUPER::has_many($real_accessor => $relation_class);
 
-  } else {
-    return $class->SUPER::has_many($accessor => @_);
-  }
+  *{$class."::$accessor"} =
+    sub {
+      my $self = shift;
+
+      ## Retrieve by primary field ...(id => $id) // short version
+      $_[0] = $relation_class->get_primary_key if @_ == 2 && $_[0] eq 'id';
+
+      ## Retrieve by primary field ...($id) // shorter version
+      unshift @_, $relation_class->get_primary_key if @_ == 1;
+
+      return $self->$real_accessor(@_, type => $relation_class->__type);
+    };
+
+  *{$class."::add_to_$accessor"} =
+    sub {
+      my $self = shift;
+      my $add_to_real_accessor = 'add_to_' . $real_accessor;
+      return $self->$add_to_real_accessor(@_);
+    };
+
+  #  } else {
+  #    return $class->SUPER::has_many($accessor => @_);
+  #  }
+
 }
 
 
