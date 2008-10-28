@@ -28,7 +28,7 @@ our @formats = (
 
 sub check_session {
   my $self = shift;
-  my $temp_data = $self->object->get_session->get_tmp_data;
+  my $temp_data = $self->object->get_session->get_tmp_data('upload');
   if (keys %$temp_data) {
     $self->parameter('wizard_next', 'overwrite_warning');
   }
@@ -59,9 +59,8 @@ sub select_file {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($self->object->param('save') && $user) {
     ## Save current temporary data upload to user account
-    # TODO - save data to userdata DB + add analysis ID to tmp_data
-    $user->add_to_uploads($self->object->get_session->get_tmp_data);
-    $self->object->get_session->purge_tmp_data;
+    $user->add_to_uploads($self->object->get_session->get_tmp_data('upload'));
+    $self->object->get_session->purge_tmp_data('upload');
   }
 
   my $current_species = $ENV{'ENSEMBL_SPECIES'};
@@ -122,13 +121,13 @@ sub upload {
     $self->parameter('parser', $parser);
     $self->parameter('species', $self->object->param('species'));
     ## Attach data species to session
-    $self->object->get_session->set_tmp_data(
+    $self->object->get_session->set_tmp_data('upload' => {
       'filename'  => $file->filename, 
       'name'      => $orig_path[-1],
       'species'   => $self->object->param('species'),
       'format'    => $format,
       'assembly'  => $self->object->param('assembly'),
-    );
+    });
 
     if (!$format) {
       ## Get more input from user
@@ -162,7 +161,7 @@ sub upload_feedback {
 
   ## Set format if coming via more_input
   if ($self->object->param('format')) {
-    $self->object->get_session->set_tmp_data('format'  => $self->object->param('format'));
+    $self->object->get_session->set_tmp_data('upload' => {'format'  => $self->object->param('format')});
   }
 
   my $link = $self->object->param('_referer');
@@ -179,7 +178,7 @@ sub check_shareable {
 ## Checks if the user actually has any shareable data
   my $self = shift;
 
-  my $upload = $self->object->get_session->get_tmp_data;
+  my $upload = $self->object->get_session->get_tmp_data('upload');
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $user_tracks; 
@@ -213,7 +212,7 @@ sub select_upload {
   my ($name, $value);
 
   ## Temporary data
-  my $upload = $self->object->get_session->get_tmp_data;
+  my $upload = $self->object->get_session->get_tmp_data('upload');
   if ($upload && keys %$upload) {
     $name  = 'Unsaved upload: '.$upload->{'format'}.' file for '.$upload->{'species'};
     $value = 'session';
@@ -221,7 +220,7 @@ sub select_upload {
   }
   my @user_records = $user->uploads;
   foreach my $record (@user_records) {
-    $name = $record->name;
+    $name = 'Saved upload: '.$record->name;
     $value = $record->id;
     push @values, {'name' => $name, 'value' => $value};
   }
@@ -255,16 +254,16 @@ sub save_upload {
   my $report = $self->object->save_to_userdata;
   my $success = $report->{'errors'} ? 0 : 1;
   if ($success) {
-    my $temp_data = $self->object->get_session->get_tmp_data;
+    my $temp_data = $self->object->get_session->get_tmp_data('upload');
     ## Delete cached file
     my $file = new EnsEMBL::Web::File::Text($self->object->species_defs, $temp_data->{'filename'});
     $file->delete;
     ## Delete file name in session_record, but keep session record as we need it later
-    $self->object->get_session->set_tmp_data('filename' => '');
+    $self->object->get_session->set_tmp_data('upload' => {'filename' => ''});
     ## Save logic names to session record
     my $analyses = $report->{'analyses'};
     my @logic_names = ref($analyses) eq 'ARRAY' ? @$analyses : ($analyses);
-    $self->object->get_session->set_tmp_data('analyses' => join(', ', @logic_names));
+    $self->object->get_session->set_tmp_data('upload' => {'analyses' => join(', ', @logic_names)});
     ## If the user is logged in, automatically save this record so that the data will "survive" 
     ## any purging of session records or overwriting of the temporary session data 
     ## As long as the analysis IDs are the same, identical session_record and user_record
@@ -290,7 +289,7 @@ sub share_url {
   my $self = shift;
   $self->title('Shareable URL');
 
-  my $share_data  = $self->object->get_session->share_tmp_data;
+  my $share_data  = $self->object->get_session->share_tmp_data('upload');
   my @ids = split(', ', $share_data->{analyses});
   my @share_refs;
   foreach my $id (@ids) {
@@ -314,7 +313,7 @@ sub show_tempdata {
   my $self = shift;
   $self->title('Save Data to Your Account');
 
-  my $upload = $self->object->get_session->get_tmp_data;
+  my $upload = $self->object->get_session->get_tmp_data('upload');
   if ($upload && keys %$upload) {
     $self->add_element('type'=>'Information', 'value' => "You have the following temporary data uploaded:", 'style' => 'spaced');
     (my $species = $upload->{'species'}) =~ s/_/ /g; 
@@ -330,9 +329,9 @@ sub show_tempdata {
 sub save_tempdata {
   my $self = shift;
 
-  my $temp_data = $self->object->get_session->get_tmp_data;
+  my $temp_data = $self->object->get_session->get_tmp_data('upload');
   my $name = $self->object->param('name') || 'uploaded file';
-  $self->object->get_session->set_tmp_data('name' => $name);
+  $self->object->get_session->set_tmp_data('upload' => {'name' => $name});
 
   ## Has this data already been parsed and saved?
   my $parsed;
@@ -340,11 +339,11 @@ sub save_tempdata {
     my $report = $self->object->save_to_userdata;
     unless ($report->{'errors'}) {
       ## Delete file name in session_record
-      $self->object->get_session->set_tmp_data('filename' => '');
+      $self->object->get_session->set_tmp_data('upload' => {'filename' => ''});
       ## Save logic names to session record
       my $analyses = $report->{'analyses'};
       my @logic_names = ref($analyses) eq 'ARRAY' ? @$analyses : ($analyses);
-      $self->object->get_session->set_tmp_data('analyses' => join(', ', @logic_names));
+      $self->object->get_session->set_tmp_data('upload' => {'analyses' => join(', ', @logic_names)});
     }
   }
 
@@ -356,7 +355,7 @@ sub save_tempdata {
       my $file = new EnsEMBL::Web::File::Text($self->object->species_defs, $temp_data->{'filename'});
       $file->delete;
       ## Delete temporary session data
-      $self->object->get_session->purge_tmp_data;
+      $self->object->get_session->purge_tmp_data('upload');
       $self->parameter('wizard_next', 'ok_tempdata');
     }
     else {
