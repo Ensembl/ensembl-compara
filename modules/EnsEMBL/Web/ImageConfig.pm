@@ -337,7 +337,6 @@ sub load_configured_das {
   ## Now we do the das stuff - to append to menus (if the menu exists!!)
   my $internal_das_sources = $self->species_defs->get_all_das;
   foreach my $source ( sort { ($a->caption||$a->label) cmp ($b->caption||$b->label) } values %$internal_das_sources ) {
-    #warn "D: ", $source->caption||$source->label;
     $self->add_das_track( $source->category,  $source );
   }
 }
