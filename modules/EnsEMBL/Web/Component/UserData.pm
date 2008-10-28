@@ -1,18 +1,14 @@
 package EnsEMBL::Web::Component::UserData;
 
-use EnsEMBL::Web::Component;
-use EnsEMBL::Web::Proxy::Object;
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Form;
+## Placeholder - no generic methods needed as yet
 
-use CGI;
+use EnsEMBL::Web::Proxy::Object;
+use EnsEMBL::Web::Form;
+use base qw( EnsEMBL::Web::Component);
 
 use strict;
 use warnings;
 no warnings "uninitialized";
-
-our @ISA = qw( EnsEMBL::Web::Component);
-
 
 
 1;
