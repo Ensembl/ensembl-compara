@@ -46,7 +46,7 @@ sub wizard {
 sub process_node {
   my $self = shift;
   if ($self->wizard->current_node && $self->wizard->current_node->type eq 'logic') {
-    my %parameter = %{$self->wizard->redirect_current_node};
+    my %parameter = %{$self->wizard->update_parameters};
 
     ## unpack returned parameters into a URL
     my $URL = $self->wizard->get_scriptname.'?';
