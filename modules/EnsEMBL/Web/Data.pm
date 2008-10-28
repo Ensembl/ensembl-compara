@@ -250,8 +250,6 @@ sub has_many {
   my ($relation_class) = @_;
   no strict 'refs';
 
-  $class->_require_class($relation_class);
-
   if (!ref($relation_class) && $relation_class =~ /^EnsEMBL::Web::Data::Record/) {
     my ($owner) = $class =~ /::(\w+)$/;
     $class->_require_class($relation_class);
