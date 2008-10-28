@@ -43,7 +43,7 @@ sub content {
   $wuc->set_parameter( 'single_Gene'       => $transcript->gene->stable_id ) if $transcript->gene;
 
   $wuc->tree->dump("Tree", '[[caption]]' )
-    if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
+    if $self->object->species_defs->ENSEMBL_DEBUG_FLAGS & $self->object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
 
   my $image    = $transcript->new_image( $transcript_slice, $wuc, [] );
      $image->imagemap = 'yes';
