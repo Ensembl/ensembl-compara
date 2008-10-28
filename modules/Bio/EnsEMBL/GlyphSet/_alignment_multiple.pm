@@ -253,18 +253,14 @@ sub wiggle_plot {
   $self->timer_push( 'got score features',undef,'fetch');
   return 0 unless scalar @$features;
 
-warn "GOT FEATURES";
   $self->draw_space_glyph();
-warn "DRAWN SPACER";
   my $min_score = 0;
   my $max_score = 0;
-warn "DRAWING FEATURES...";
   foreach (@$features) {
     my $s = $_->score;
     $min_score = $s if $s < $min_score;
     $max_score = $s if $s > $max_score;
   }
-warn "YAY $min_score $max_score";
   $self->draw_wiggle_plot(
     $features,                      ## Features array
     { 'min_score' => $min_score, 'max_score' => $max_score }
