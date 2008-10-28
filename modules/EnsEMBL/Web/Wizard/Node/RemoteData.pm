@@ -126,37 +126,32 @@ sub attach_url {
 # Logic method, used for checking a DAS source before adding it
 sub validate_das {
   my $self      = shift;
-  my $parameter = {};
   
   # Get a list of DAS sources (only those selected):
   my $sources = $self->object->get_das_server_dsns( $self->object->param('dsns') );
+  warn "SOURCES $sources";
   
   # Process any errors
   if (!ref $sources) {
-    $parameter->{'error_message'} = $sources;
-    $parameter->{'wizard_next'}   = 'select_das';
-    return $parameter;
+    $self->parameter('error_message', $sources);
+    $self->parameter('wizard_next', 'select_das');
   }
   elsif (!scalar @{ $sources }) {
-    $parameter->{'error_message'} = 'No sources selected';
-    $parameter->{'wizard_next'}   = 'select_das';
-    return $parameter;
+    $self->parameter('error_message', 'No sources selected');
+    $self->parameter('wizard_next', 'select_das');
   }
   
   for my $source (@{ $sources }) {
     # If one or more source has missing details, need to fill them in and resubmit
     unless (@{ $source->coord_systems } || $self->object->param('coords')) {
       if ($self->object->param('has_species')) {
-        $parameter->{'wizard_next'} = 'select_das_coords';
-        return $parameter;
+        $self->parameter('wizard_next', 'select_das_coords');
       }
-      $parameter->{'wizard_next'} = 'select_das_species';
-      return $parameter;
+      $self->parameter('wizard_next', 'select_das_species');
     }
   }
   
-  $parameter->{'wizard_next'} = 'attach_das';
-  return $parameter;
+  $self->parameter('wizard_next', 'attach_das');
 }
 
 # Page method for filling in missing DAS source details
@@ -368,27 +363,25 @@ sub save_tempdas {
   my $self = shift;
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user && $self->object->param('source')) {
-    my @sources = $self->object->param('source');
+  my @sources = $self->object->param('source');
+  if ($user && @sources) {
     my $das = $self->object->get_session->get_all_das;
     foreach my $source  (@sources) {
       my $record = $das->{$source};
-      $record->category('user');
-      my $record_id = $user->add_to_dases($record);
-      if ($record_id) {
-        $record->mark_altered;
-        $self->object->get_session->save_das;
-        $self->parameter('wizard_next', 'ok_tempdas');
-      }
-      else {
-        $self->parameter('wizard_next', 'show_tempdas');
-        #$self->parameter('error_message', 'Unable to save to user account');
+      if ($record && ref($record) && ref($record) =~ 'DASConfig') { ## Sanity check
+        $record->category('user');
+        my $record_id = $user->add_to_dases($record);
+        if ($record_id) {
+          $record->mark_altered;
+          $self->object->get_session->save_das;
+        }
       }
     }
+    $self->parameter('wizard_next', 'ok_tempdas');
   }
   else {
     $self->parameter('wizard_next', 'show_tempdas');
-    #$self->parameter('error_message', 'Unable to save to user account');
+    $self->parameter('error_message', 'Unable to save DAS information to user account');
   }
 }
 
