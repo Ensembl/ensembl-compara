@@ -281,7 +281,7 @@ sub has_many {
   *{$class."::add_to_$accessor"} =
     sub {
       my $self = shift;
-      my $args = ref $_[0] shift : {@_};
+      my $args = ref $_[0] ? shift : {@_};
       
       ## Force hash ref, in case if blessed hash was passed (or die)
       my %args = %{ $args };
