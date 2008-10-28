@@ -131,6 +131,7 @@ function modal_dialog_close_2() {
     page_needs_to_uploaded = false;
     var t = window.location.href;
     var d = new Date();
+    t = t.replace(/\&/g,';').replace(/#.*$/g,'').replace(/\?time=[^;]+;?/g,'\?').replace(/;time=[^;]+;?/g,';').replace(/[\?;]$/g,'');
     t = t + ( t.match(/\?/)?';':'?' )+'time='+( d.getTime()+d.getMilliseconds()/1000 );
     window.location.href = t;
   }

@@ -36,8 +36,10 @@ $$('.ajax').each(function(panel) {
         var t_node = Builder.node( node_type, {className:'spinner'}, 'Loading component');
         p_node.appendChild(t_node);
         if( component.match(/\?/) ) {
+// Remove the old time stamp and replace with a new one! 
+          component = component.replace(/\&/g,';').replace(/#.*$/g,'').replace(/\?time=[^;]+;?/g,'\?').replace(/;time=[^;]+;?/g,';').replace(/[\?;]$/g,'');
           var d = new Date();
-          component += ';time='+( d.getTime()+d.getMilliseconds()/1000 )
+          component += ( component.match(/\?/)?';':'?' )+'time='+( d.getTime()+d.getMilliseconds()/1000 )
         }
         new Ajax.Request( component, {
 	  method: 'get',

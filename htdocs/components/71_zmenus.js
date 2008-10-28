@@ -94,7 +94,7 @@ function _new_url( s, e ) {
    __seq_region.name, s and e
 */
   var Z = location.href;
-  Z = Z.replace(/#.*$/,'').replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
+  Z = Z.replace(/\&/g,';').replace(/#.*$/g,'').replace(/\?r=[^;]+;?/g,'\?').replace(/;r=[^;]+;?/g,';').replace(/[\?;]$/g,'');
   Z+= Z.match(/\?/) ? ';' : '?';
   return Z+"r="+__seq_region.name+':'+s+'-'+e;
 }
