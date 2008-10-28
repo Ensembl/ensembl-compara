@@ -7,6 +7,7 @@ use base qw( EnsEMBL::Web::Root );
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::ExtURL;
+use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use CGI qw(escape escapeHTML);
@@ -237,6 +238,7 @@ sub attach_image_config {
 
 # Handling ExtURLs
 sub ExtURL { return $_[0]{'data'}{'_ext_url_'} ||= EnsEMBL::Web::ExtURL->new( $_[0]->species, $_[0]->species_defs ); }
+
 sub get_ExtURL      {
   my $self = shift;
   my $new_url = $self->ExtURL || return;
@@ -249,6 +251,30 @@ sub get_ExtURL_link {
   my $URL = CGI::escapeHTML( $self->get_ExtURL(@_) );
   return $URL ? qq(<a href="$URL">$text</a>) : $text;
 }
+
+#use PFETCH etc to get description and sequence of an external record
+sub get_ext_seq{
+    my ($self, $id, $ext_db) = @_;
+    my $indexer = EnsEMBL::Web::ExtIndex->new( $self->species_defs );
+    return unless $indexer;
+    my $seq_ary;
+    my %args;
+    $args{'ID'} = $id;
+    $args{'DB'} = $ext_db ? $ext_db : 'DEFAULT';
+
+    eval{
+	$seq_ary = $indexer->get_seq_by_id(\%args);
+    };
+    if ( ! $seq_ary) {
+	$self->problem( 'fatal', "Unable to fetch sequence",  "The $ext_db server is unavailable $@");
+	return;
+    }
+    else {
+	my $list = join " ", @$seq_ary;
+	return $list =~ /no match/i ? '' : $list ;
+    }
+}
+
 
 1;
 
