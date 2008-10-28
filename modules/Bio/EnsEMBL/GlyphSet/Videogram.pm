@@ -90,7 +90,7 @@ sub _init {
 
       my $HREF;
       if($self->get_parameter('band_links')) {
-        $HREF = "/@{[$self->{container}{web_species}]}/contigview?chr=$chr;vc_start=$vc_band_start;vc_end=$vc_band_end";
+        $HREF = "/@{[$self->{container}{web_species}]}/Location/View?r=$chr:$vc_band_start-$vc_band_end";
       }
 
       my $colour = $self->my_colour($stain);
@@ -256,7 +256,7 @@ sub _init {
           'points'         => [ $x, $y, $x + $width * (1 - ($i % 2)),$y + $height * ($i % 2), $x + $width, $y + $height, ],
           'colour'         => $bg,
           'absolutey'      => 1,
-              'absoluteheight' => 1,
+          'absoluteheight' => 1,
         }));
     
         ########## the actual jagged line
