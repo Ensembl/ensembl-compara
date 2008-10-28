@@ -145,7 +145,9 @@ sub _ajax_zmenu_regulation {
   if ($ftype eq 'ensembl_reg_feat'){
     my $rf_adaptor = $db_adaptor->get_RegulatoryFeatureAdaptor();
     my $reg_feat = $rf_adaptor->fetch_by_stable_id($fid);
-    warn $reg_feat;
+    my $location = $reg_feat->slice->seq_region_name .":". $reg_feat->start ."-" . $reg_feat->end;
+    my $location_link = $obj->_url({'type' => 'Location', 'action' => 'View', 'r' => $location});
+
     my @atts  = @{$reg_feat->regulatory_attributes()};
     my @temp = map $_->feature_type->name(), @atts;
     my %att_label;
@@ -165,7 +167,6 @@ sub _ajax_zmenu_regulation {
       my $v = $att_label{$k};
       $label .= "$k($v), ";
     }
-
     $label =~s/\,\s$//;
 
     $panel->{'caption'} = "Regulatory Feature";
@@ -180,9 +181,10 @@ sub _ajax_zmenu_regulation {
         'priority' =>  9,
     });
     $panel->add_entry({
-        'type'     =>  'bp:',
-        'label'    =>  $reg_feat->start ."-". $reg_feat->end,
-        'priority' =>  8,
+        'type'        =>  'bp:',
+        'label_html'  =>  $location,
+        'link'        =>  $location_link,
+        'priority'    =>  8,
     });
     $panel->add_entry({
         'type'     =>  'Attributes:',
@@ -190,91 +192,93 @@ sub _ajax_zmenu_regulation {
         'priority' =>  7,
     });
   } else { 
-      my $feature = $ext_adaptor->fetch_by_dbID($obj->param('dbid'));
-      my $location = $feature->slice->seq_region_name .":". $feature->start ."-" . $feature->end;
-      my $location_link = $obj->_url({'type' => 'Location', 'action' => 'View', 'r' => $location});
-      my $feature_link;
+    my $feature = $ext_adaptor->fetch_by_dbID($obj->param('dbid'));
+    my $location = $feature->slice->seq_region_name .":". $feature->start ."-" . $feature->end;
+    my $location_link = $obj->_url({'type' => 'Location', 'action' => 'View', 'r' => $location});
+    my ($feature_link, $factor_link);
+    my $factor = $obj->param('fid'); 
+    $panel->{'caption'} = "Regulatory Region";
+ 
 
     if ($ftype eq 'cisRED'){
-      my $factor = $obj->param('fid');
       $factor =~s/\D*//g;
       $feature_link = $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'CISRED'};
-      my $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;dbid=".$obj->param('dbid').";id=" . $obj->param('fid');
+      $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;dbid=".$obj->param('dbid').";id=" . $obj->param('fid');
       $feature_link =~s/###ID###/$factor/;
-
-
-      $panel->{'caption'} = "Regulatory Region";
-      $panel->add_entry({
-        'type'        =>  'Factor:',
-        'label_html'  =>  $factor,
-        'link'        =>  $factor_link,
-        'priority'    =>  9,
-      });
     } elsif($ftype eq 'miRanda'){
       my $name = $obj->param('fid');
       $name =~/\D+(\d+)/;
       my $temp_factor = $name;
       my @temp = split (/\:/, $temp_factor);
-      my $factor = $temp[1];  
-      my $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
+      $factor = $temp[1];  
+      $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
 
-      $panel->{'caption'} = "Regulatory Region";
+    } elsif($ftype eq 'vista_enhancer'){
+      $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
+
+    }elsif($ftype eq 'NestedMICA'){
+       $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
+       $feature_link = "http://servlet.sanger.ac.uk/tiffin/motif.jsp?acc=".$obj->param('fid');
+
+    } elsif($ftype eq 'cisred_search'){
+      my ($id, $type, $analysis_link, $associated_link, $gene_reg_link);
+      my $db_ent = $feature->get_all_DBEntries;
+      foreach my $dbe (@$db_ent){
+        $id = $dbe->primary_id;
+        my $dbname = $dbe->dbname;
+        if ($dbname =~/gene/i){
+          $associated_link = $obj->_url({'type' => 'Gene', 'action'=> 'Summary', 'g' => $id });
+          $gene_reg_link = $obj->_url({'type' => 'Gene', 'action'=> 'Regulation', 'g' => $id });
+          $analysis_link = $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'CISRED'};
+          $analysis_link =~s/siteseq\?fid=###ID###/gene_view?ensembl_id=$id/;
+        } elsif ($dbname =~/transcript/i){
+          $associated_link = $obj->_url({'type' => 'Transcript', 'action'=> 'Summary', 't' => $id });
+        } elsif ($dbname =~/transcript/i){
+          $associated_link = $obj->_url({'type' => 'Transcript', 'action'=> 'Summary', 'p' => $id });
+        } 
+      }
+     
+      $panel->{'caption'} = "Regulatory Search Region";
+      $panel->add_entry({
+        'type'        =>  'Analysis:',
+        'label_html'  =>  $obj->param('ftype'),
+        'link'        =>  $analysis_link,
+        'priority'    =>  7,
+      });
+      $panel->add_entry({
+        'type'        =>  'Associated Gene:',
+        'label_html'  =>  $id,
+        'link'        =>  $associated_link,          
+        'priority' =>  6,
+      });
+      $panel->add_entry({
+        'label_html'  =>  'View Gene Regulation',
+        'link'        =>  $gene_reg_link,
+        'priority' =>  4,
+      });
+
+    }
+      
+    ## add zmenu items that apply to all external regulatory features
+    unless ($ftype eq 'cisred_search'){
+      $panel->add_entry({
+        'type'        =>  'Feature:',
+        'label_html'  =>  $obj->param('fid'),
+        'link'        =>  $feature_link,
+        'priority'    =>  10,
+      });
       $panel->add_entry({
         'type'        =>  'Factor:',
         'label_html'  =>  $factor,
         'link'        =>  $factor_link,
         'priority'    =>  9,
-      });
-    } elsif($ftype eq 'vista_enhancer'){
-      my $factor = $obj->param('fid');
-      my $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
-
-      $panel->{'caption'} = "Regulatory Region";
-      $panel->add_entry({
-        'type'        =>  'Factor:',
-        'label_html'  =>  $obj->param('fid'),
-        'link'        =>  $factor_link,
-        'priority'    =>  9,
-      });
-    }elsif($ftype eq 'BioTIFFIN'){
-      my $factor = $obj->param('fid');
-      my $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
-      my $feature_link = "http://servlet.sanger.ac.uk/tiffin/motif.jsp?acc=".$obj->param('fid');
-
-      $panel->{'caption'} = "Regulatory Region";
-      $panel->add_entry({
-        'type'        =>  'Factor:',
-        'label_html'  =>  $obj->param('fid'),
-        'link'        =>  $factor_link,
-        'priority'    =>  9,
-      });
-    } elsif($ftype eq 'cisred_search'){
-      my $location_link = $obj->_url({'type'=> 'Location', 'action' =>'View', 'r' => $obj->param('flocation')});
-      $panel->{'caption'} = "Regulatory Search Region";
-      $panel->add_entry({
-        'type'        =>  'bp:',
-        'label_html'  =>  $obj->param('bp'),
-        'link'        => $location_link,
-        'priority'    =>  8,
-      });
-      $panel->add_entry({
-        'type'     =>  'Analysis:',
-        'label'    =>  $obj->param('ftype'),
-        'priority' =>  7,
-      });
+      }) ;
     }
     $panel->add_entry({
-      'type'        =>  'Feature:',
-      'label_html'  =>  $obj->param('fid'),
-      'link'        =>  $feature_link,
-      'priority'    =>  10,
-    });
-
-    $panel->add_entry({
-        'type'          =>  'bp:',
-        'label_html'    =>  $location,
-        'link' =>  $location_link,
-        'priority'      =>  8,
+      'type'        =>  'bp:',
+      'label_html'  =>  $location,
+      'link'        =>  $location_link,
+      'priority'    =>  8,
     });
 
   }
