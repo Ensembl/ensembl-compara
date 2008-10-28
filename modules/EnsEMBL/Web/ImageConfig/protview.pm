@@ -21,12 +21,12 @@ sub init {
     'alignment'      => 'Protein alignments',
     'p_variation'    => 'Variation',
 #    'user_data'      => 'User data',
-    'decorations'    => 'Decorations',
+    'p_decorations'    => 'Decorations',
 #    'legends'        => 'Legends'
   );
   $self->load_tracks();
 
-  $self->add_tracks( 'decorations',
+  $self->add_tracks( 'p_decorations',
     [ 'variation','Variations','P_variation',{ 'display' => 'normal', 'colourset' => 'protein_feature', 'strand' => 'r', 'depth' => 1e5 } ],
     [ 'scalebar', 'Scale bar', 'P_scalebar', { 'display' => 'normal', 'strand' => 'r' } ],
     [ 'protein',  'Protein',   'P_protein',  { 'display' => 'normal', 'colourset' => 'protein_feature', 'strand' => 'f' } ],
