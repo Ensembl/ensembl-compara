@@ -9,6 +9,7 @@ use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Tools::Encryption;
 use EnsEMBL::Web::RegObj;
 use Apache2::RequestUtil;
+use CGI qw(header);
 
 use base 'EnsEMBL::Web::Controller::Command::Account';
 
@@ -68,7 +69,19 @@ sub process {
     if ($cgi->param('updated')) {
       $new_param->{'updated'} = $cgi->param('updated');
     }
-    $cgi->redirect($self->url('/Account/Links', $new_param));
+### We need to close down the popup window if using AJAX and refresh the page!
+### we know how to do this from the configurator!
+    my $r = Apache2::RequestUtil->request();
+    my $ajax_flag = $r && (
+      $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'||
+      $cgi->param('x_requested_with') eq 'XMLHttpRequest'
+    );
+    if( $ajax_flag ) { 
+      header( 'text/plain' );
+      print "SUCCESS";
+    } else {
+      $cgi->redirect($self->url('/Account/Links', $new_param));
+    }
   }
 }
 
