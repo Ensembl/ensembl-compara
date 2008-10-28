@@ -212,7 +212,7 @@ qq{
       <COORDINATES uri="ensembl_location_chromosome" taxid="%d" source="Chromosome" authority="%s" version="%s" test_range="%s">$assembly,Chromosome,$vsp</COORDINATES>
       <CAPABILITY type="das1:features" query_uri="http://$SiteDefs::ENSEMBL_SERVERNAME/das/%s/features" />
       $capability
-      <PROPERTY name="label" value="ENSEMBL" />
+      <PROP name="label" value="ENSEMBL" />
     </VERSION>
   </SOURCE>
 }, $id, $dsn, $sources->{$dsn}{description}, $today, $ta->fetch_node_by_name($vsp)->taxon_id, $assembly, $assembly, $sources->{$dsn}->{'test_range'}, $dsn, $dsn, $dsn;

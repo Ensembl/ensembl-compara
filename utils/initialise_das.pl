@@ -284,7 +284,7 @@ sub sources {
     <MAINTAINER    email="$email" />
     <VERSION       uri="latest"
                    created="$today">
-      <PROPERTY    name="label"
+      <PROP        name="label"
                    value="ENSEMBL" />
       <COORDINATES uri="ensembl_location_toplevel" 
                    taxid="$taxon_ids{$vsp}"
