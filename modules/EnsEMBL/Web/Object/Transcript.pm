@@ -8,7 +8,6 @@ use Bio::EnsEMBL::Utils::TranscriptAlleles;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Proxy::Object;
-use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::Cache;
 
 use POSIX qw(floor ceil);
@@ -1799,28 +1798,6 @@ sub get_hit {
 	}
     }
     return;
-}
-
-sub get_ext_seq{
-    my ($self, $id, $ext_db) = @_;
-    my $indexer = EnsEMBL::Web::ExtIndex->new( $self->species_defs );
-    return unless $indexer;
-    my $seq_ary;
-    my %args;
-    $args{'ID'} = $id;
-    $args{'DB'} = $ext_db ? $ext_db : 'DEFAULT';
-
-    eval{
-	$seq_ary = $indexer->get_seq_by_id(\%args);
-    };
-    if ( ! $seq_ary) {
-	$self->problem( 'fatal', "Unable to fetch sequence",  "The $ext_db server is unavailable $@");
-	return;
-    }
-    else {
-	my $list = join " ", @$seq_ary;
-	return $list =~ /no match/i ? '' : $list ;
-    }
 }
 
 sub determine_sequence_type{
