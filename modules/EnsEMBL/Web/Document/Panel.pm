@@ -399,7 +399,7 @@ sub _caption_with_helplink {
   my $id = $self->{'help'};
   my $html = '<h2>';
   if ( $id ) {
-    $html .= sprintf(' <a href="/Help/View?id=%s" class="modal_link help-header" title="Click for Help">', CGI::escapeHTML($id) );
+    $html .= sprintf(' <a href="/Help/View?id=%s" style="display:none" class="modal_link help-header" title="Click for Help">', CGI::escapeHTML($id) );
   }
   $html .= $self->{'raw_caption'} ? $self->{'caption'} : CGI::escapeHTML($self->{caption});
   if ( $id ) {

@@ -42,6 +42,7 @@ sub render {
       $class .= 'external';
     }
     $class = qq( class="$class") if $class;
+    $class .= ' style="display:none"' if $class =~ /modal_link/;
     $self->print( $class );
     if ($link->{'type'} eq 'external') {
       $self->print(' rel="external"');
