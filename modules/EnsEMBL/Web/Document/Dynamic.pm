@@ -12,7 +12,7 @@ sub set_title {
   my $title = shift;
   
   return unless $self->can('title');
-  return unless $self->title->('set');
+  return unless $self->title;
   $self->title->set( $self->species_defs->ENSEMBL_SITE_NAME.' release '.$self->species_defs->ENSEMBL_VERSION.': '.$self->species_defs->SPECIES_BIO_SHORT.' '.$title );
 }
 
