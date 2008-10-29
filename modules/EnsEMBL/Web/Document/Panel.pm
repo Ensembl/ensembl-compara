@@ -671,7 +671,7 @@ if ($component eq 'das_features') {
               } else {
                 $self->printf( qq(<div class="ajax" title="['%s']"></div>), CGI::escapeHTML($URL) );
               }
-            } else {
+            } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
                   ## if ajax disabled - we get all content by parallel requests to ourself
               $self->print(
                 HTTP::Request->new('GET', $self->{'object'}->species_defs->ENSEMBL_BASE_URL.$URL)
