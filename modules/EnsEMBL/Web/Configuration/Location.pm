@@ -297,7 +297,7 @@ sub _ajax_zmenu_regulation {
         'priority'    =>  7,
       });
       $panel->add_entry({
-        'type'        =>  'Associated Gene:',
+        'type'        =>  'Target Gene:',
         'label_html'  =>  $id,
         'link'        =>  $associated_link,          
         'priority' =>  6,
