@@ -136,6 +136,7 @@ sub _ajax_zmenu {
 sub _global_context {
   my $self = shift;
   return unless $self->{'page'}->can('global_context');
+  return unless $self->{'page'}->global_context->can('add_entry');
   
   my $type = $self->type;
   my $co = $self->{object}->core_objects;
@@ -456,6 +457,7 @@ sub _local_context {
 sub _local_tools {
   my $self = shift;
   return unless $self->{'page'}->can('local_tools');
+  return unless $self->{'page'}->local_tools->can('add_entry');
   
   my $obj = $self->{object};
 
