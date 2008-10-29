@@ -128,8 +128,10 @@ sub _init {
     if( $GL_FLAG ) {
       my $START_ROW = $self->_max_bump_row+1;
       $self->_init_bump;
+my($a,$b,$c,$H) = $self->get_text_width( 0,'X_y','','font'=>$FONT,'ptsize'=>$FONTSIZE);
+
       foreach my $gr ( @GENES_TO_LABEL ) {
-        my( $txt, $part, $W, $H ) = $self->get_text_width( 0, "$gr->{'label'} ", '', 'font' => $FONT, 'ptsize' => $FONTSIZE );
+        my( $txt, $part, $W, $H2 ) = $self->get_text_width( 0, "$gr->{'label'} ", '', 'font' => $FONT, 'ptsize' => $FONTSIZE );
         my $tglyph = $self->Text({
           'x'         => $gr->{'start'}-1 + 4/$pix_per_bp,
           'y'         => 0,
