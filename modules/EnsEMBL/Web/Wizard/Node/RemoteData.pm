@@ -92,42 +92,6 @@ sub select_das {
   } # end if-else
   
 }
-
-# Page method for attaching from URL
-sub select_url {
-  my $self = shift;
-  my $object = $self->object;
-
-  my $current_species = $ENV{'ENSEMBL_SPECIES'};
-  if (!$current_species || $current_species eq 'common') {
-    $current_species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES;
-  }
-
-  # URL-based section
-  $self->notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but it has the advantage of ensuring that the data you see is always the same as the file on your server. For faster access, you can <a href="/$current_species/UserData/Upload">upload files to Ensembl</a> (only suitable for small, single-species datasets).)});
-
-  $self->add_element('type'  => 'String',
-                     'name'  => 'url',
-                     'label' => 'File URL',
-                     'value' => $object->param('url'),
-                     'notes' => '( e.g. http://www.example.com/MyProject/mydata.gff )');
-
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user && $user->id) {
-    $self->add_element('type'    => 'CheckBox',
-                       'name'    => 'save',
-                       'label'   => 'Save URL to my account',
-                       'notes'   => 'N.B. Only the file address will be saved, not the data itself',
-                       'checked' => 'checked');
-  }
-}
-
-sub attach_url {
-  my $self = shift;
-
-  my $url = $self->object->param('url');
-}
-
 # Logic method, used for checking a DAS source before adding it
 sub validate_das {
   my $self      = shift;
@@ -340,18 +304,28 @@ sub attach_das {
 
 sub show_tempdas {
   my $self = shift;
-  $self->title('Save DAS Sources');
+  $self->title('Save source information to your account');
 
+  my $has_data = 0;
   my $das = $self->object->get_session->get_all_das;
   if ($das && keys %$das) {
+    $has_data = 1;
     $self->add_element('type'=>'Information', 'value' => 'Choose the DAS sources you wish to save to your account', 'style' => 'spaced');
     my @values;
     foreach my $source (sort { lc $a->label cmp lc $b->label } values %$das) {
       $self->_output_das_checkbox($source);
     }
   }
-  else {
-    $self->add_element('type'=>'Information', 'value' => "You have no temporary DAS sources to save. Click on 'Attach DAS' in the left-hand menu to add sources.");
+
+  my $url = $self->object->get_session->get_tmp_data('url');
+  if ($url) {
+    $has_data = 1;
+    $self->add_element('type'=>'Information', 'value' => "You have the following URL attached:", 'style' => 'spaced');
+    $self->add_element('type'=>'CheckBox', 'name' => 'url', 'value' => 'yes', 'label' => $url->{'url'});
+  }
+
+  unless ($has_data) {
+    $self->add_element('type'=>'Information', 'value' => "You have no temporary data sources to save. Click on 'Attach DAS' or 'Attach URL' in the left-hand menu to add sources.");
   }
 }
 
@@ -375,8 +349,23 @@ sub save_tempdas {
         $self->parameter('error_message', 'Unable to save to user account');
       }
     }
+    $self->parameter('wizard_next', 'ok_tempdas');
+    $self->parameter('source', 'ok');
     # Just need to save the session to remove the source - it knows it has changed
     $self->object->get_session->save_das;
+  }
+  else {
+    $self->parameter('wizard_next', 'show_tempdas');
+    $self->parameter('error_message', 'Unable to save to user account');
+  }
+
+  ## Save any URL data
+  if ($self->object->param('url')) {
+    my $url = $self->object->get_session->get_tmp_data('url');
+    my $record_id = $user->add_to_urls($url);
+    $self->object->get_session->purge_tmp_data('url');
+    $self->parameter('wizard_next', 'ok_tempdas');
+    $self->parameter('url', 'ok');
   }
   else {
     $self->parameter('wizard_next', 'show_tempdas');
@@ -386,13 +375,110 @@ sub save_tempdas {
 
 sub ok_tempdas {
   my $self = shift;
-  $self->title('DAS Source Saved');
   
-  $self->add_element('type'=>'Information', 'value' => 'The DAS source details were saved to your user account.');
-  $self->add_element('type'=>'SubHeader', 'value' => 'Saved DAS sources');
-  my @das = sort { lc $a->label cmp lc $b->label } values %{ $ENSEMBL_WEB_REGISTRY->get_user->get_all_das };
-  $self->_output_das_text(@das);
+  $self->title('Sources Saved');
+
+  if ($self->object->param('source')) {
+    $self->add_element('type'=>'Information', 'value' => 'The DAS source details were saved to your user account.');
+    $self->add_element('type'=>'SubHeader', 'value' => 'Saved DAS sources');
+    my @das = sort { lc $a->label cmp lc $b->label } values %{ $ENSEMBL_WEB_REGISTRY->get_user->get_all_das };
+    $self->_output_das_text(@das);
+  }
+
+  if ($self->object->param('url')) {
+    $self->add_element('type'=>'Information', 'value' => 'The data URL was saved to your user account.');
+  }
 }
+
+#------------------------------ URL-based data --------------------------------------
+
+sub check_session {
+  my $self = shift;
+  my $temp_data = $self->object->get_session->get_tmp_data('url');
+  if (keys %$temp_data) {
+    $self->parameter('wizard_next', 'overwrite_warning');
+  }
+  else {
+    $self->parameter('wizard_next', 'select_url');
+  }
+}
+
+sub overwrite_warning {
+  my $self = shift;
+
+  $self->notes({'heading'=>'Note', 'text'=>qq(We do not save the data on your server to our database, only the address of the file you wish to view.)});
+
+  $self->add_element(('type'=>'Information', 'value'=>'You already attached a URL source. The address will be overwritten unless it is first saved to your user account.'));
+
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user) {
+    $self->add_element(( type => 'CheckBox', name => 'save', label => 'Save current URL to my account', 'checked'=>'checked' ));
+  }
+  else {
+    $self->add_element(('type'=>'Information', 'value'=>'<a href="/Account/Login" class="modal_link">Log into your user account</a> to save the current URL.'));
+  }
+}
+
+
+# Page method for attaching from URL
+sub select_url {
+  my $self = shift;
+  my $object = $self->object;
+
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($self->object->param('save') && $user) {
+    ## Save current temporary url to user account
+    $user->add_to_urls($self->object->get_session->get_tmp_data('url'));
+    $self->object->get_session->purge_tmp_data('url');
+  }
+
+  # URL-based section
+  $self->notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can upload files to Ensembl (only suitable for small, single-species datasets).)});
+
+  $self->add_element('type'  => 'String',
+                     'name'  => 'url',
+                     'label' => 'File URL',
+                     'value' => $object->param('url'),
+                     'notes' => '( e.g. http://www.example.com/MyProject/mydata.gff )');
+
+  if ($user && $user->id) {
+    $self->add_element('type'    => 'CheckBox',
+                       'name'    => 'save',
+                       'label'   => 'Save URL to my account',
+                       'notes'   => 'N.B. Only the file address will be saved, not the data itself',
+                       'checked' => 'checked');
+  }
+}
+
+
+sub attach_url {
+  my $self = shift;
+
+  my $url = $self->object->param('url');
+  if ($url) {
+    $self->object->get_session->set_tmp_data('url' => {
+          'url'         => $self->object->param('url'), 
+    });
+    $self->parameter('wizard_next', 'url_feedback');
+  }
+  else {
+    $self->parameter('wizard_next', 'select_url');
+    $self->parameter('error_message', 'No URL was entered. Please try again.');
+  }
+}
+
+sub url_feedback {
+  my $self = shift;
+  $self->title('URL attached');
+
+  $self->add_element(
+    type  => 'Information',
+    value => qq(Thank you - your file was successfully uploaded. Close this Control Panel to view your data),
+  );
+}
+
+
+#---------------------- HELPER FUNCTIONS USED BY NODES --------------------------------------
 
 # If the description is long, shorten it and pretty it up
 sub _short_das_desc {
