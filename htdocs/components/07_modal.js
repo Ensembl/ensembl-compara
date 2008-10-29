@@ -128,7 +128,7 @@ function modal_dialog_close_2() {
   $('modal_bg').hide();
   $('modal_panel').hide();
   if( page_needs_to_be_reloaded ) { // If a config has been updated reload the page!
-    page_needs_to_uploaded = false;
+    page_needs_to_be_reloaded = false;
     var t = window.location.href;
     var d = new Date();
     t = t.replace(/\&/g,';').replace(/#.*$/g,'').replace(/\?time=[^;]+;?/g,'\?').replace(/;time=[^;]+;?/g,';').replace(/[\?;]$/g,'');
@@ -200,6 +200,11 @@ function modal_form_change_submit(event) {
 
 function modal_success( transport ) {
   var x = transport.responseText;
+  if( x == 'SUCCESS' ) { // This is the login response!
+    page_needs_to_be_reloaded = true;
+    modal_dialog_close_2();
+    return; 
+  }
   var M = x.split('</div>');
   if( M.length > 1 && M[0].match(/<div id="modal_tabs">/) ) {
     var a = M.shift();
@@ -253,6 +258,7 @@ function modal_form_submit( event ) {
 function __modal_onload() { 
   $$('.modal_link').each(function(s) {
     s.observe( 'click',  __modal_dialog_link_open );
+    s.show();
     s.removeClassName( 'modal_link' );  // Make sure that this only gets run once per link... we will need to re-run this once AJAX has finished loading!!
   });
   if( ENSEMBL_AJAX!='enabled' || $('modal_bg') ) return;
