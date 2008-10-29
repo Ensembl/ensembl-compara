@@ -580,6 +580,8 @@ sub _munge_meta {
 
 sub _munge_variation {
   my $self = shift;
+  my $dbh     = $self->db_connect('DATABASE_VARIATION');
+  return unless $dbh;
   return unless $self->db_details('DATABASE_VARIATION');
   $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'}  = $self->_meta_info('DATABASE_VARIATION','individual.display_strain');
   $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'}  = $self->_meta_info('DATABASE_VARIATION','individual.default_strain');
