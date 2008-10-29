@@ -263,7 +263,7 @@ sub _user_context {
 
   ## Now the user account link if the user is logged in!
   $active = $type eq 'Account';
-  if( $obj->species_defs->ENSEMBL_LOGINS && $ENV{'ENSEMBL_USER_ID'} ) {
+  if( $obj->species_defs->ENSEMBL_LOGINS) {
     $self->{'page'}->global_context->add_entry( 
       'type'      => 'Account',
       'id'        => 'account',
@@ -668,7 +668,9 @@ sub create_node {
     $details->{$_} = $options->{$_};
   }
   
-  return $self->tree->create_node( $code, $details );
+  if ($self->tree) {
+    return $self->tree->create_node( $code, $details );
+  }
 }
 
 sub create_subnode {
@@ -683,8 +685,9 @@ sub create_subnode {
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
   }
-  return $self->tree->create_node( $code, $details );
-
+  if ($self->tree) {
+    return $self->tree->create_node( $code, $details );
+  }
 }
 sub create_submenu {
   my ($self, $code, $caption, $options ) = @_;
@@ -692,7 +695,9 @@ sub create_submenu {
   foreach ( keys %{$options||{}} ) {
     $details->{$_} = $options->{$_};
   }
-  return $self->tree->create_node( $code, $details );
+  if ($self->tree) {
+    return $self->tree->create_node( $code, $details );
+  }
 }
 
 sub update_configs_from_parameter {
