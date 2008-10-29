@@ -101,10 +101,10 @@ sub initialize_user {
 sub initialize_session {
 ###
   my($self,$arg_ref)=@_;
-  $self->set_species( $arg_ref->{'species'} ) if exists $arg_ref->{'species'};
-  $self->set_script(  $arg_ref->{'script'}  ) if exists $arg_ref->{'script'};
-  $self->set_action(  $arg_ref->{'action'}  ) if exists $arg_ref->{'action'};
-  $self->set_type(    $arg_ref->{'type'}    ) if exists $arg_ref->{'type'};
+  $self->set_species( $arg_ref->{'species'} );# if exists $arg_ref->{'species'};
+  $self->set_script(  $arg_ref->{'script'}  );# if exists $arg_ref->{'script'};
+  $self->set_action(  $arg_ref->{'action'}  );# if exists $arg_ref->{'action'};
+  $self->set_type(    $arg_ref->{'type'}    );# if exists $arg_ref->{'type'};
   $arg_ref->{'cookie'}->retrieve($arg_ref->{'r'});
 
   $self->set_session(
