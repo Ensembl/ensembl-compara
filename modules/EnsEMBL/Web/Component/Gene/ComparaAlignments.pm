@@ -5,6 +5,7 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Gene);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
+use CGI qw(escapeHTML);
 
 our ($exon_On, $cs_On, $snp_On, $snp_Del, $ins_On, $codon_On, $reseq_On) = (1, 16, 32, 64, 128, 256, 512);
 
@@ -19,24 +20,32 @@ sub caption {
 }
 
 sub content {
-  my $self   = shift;
-  my $object = $self->object;
-  my $slice  = $object->get_slice_object->Obj;
+  my $self    = shift;
+  my $object  = $self->object;
+  my $species = $object->species;
+  my $slice   = $object->get_slice_object->Obj;
+  
   my @sliceArray;
 
-  # Get the alignment configuration
-
   # First get the selected alignment
-  my $selectedAlignment = $object->param("RGselect") || 'NONE';
+  my $selectedAlignment = $object->param('align') || 'NONE';
+  
+  my ($error, $warnings);
 
   # If 'No alignment' selected then we just display the original sequence as in geneseqview
   if ($selectedAlignment eq 'NONE') {
     push @sliceArray, $slice;
+    
+    $warnings .= $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>');
   } else {
+    ($error, $warnings) = $self->check_for_errors($object, $selectedAlignment, $species);
+    
+    return $error if $error;
+    
     my $compara_db = $object->database('compara');
     my $mlss_adaptor = $compara_db->get_adaptor("MethodLinkSpeciesSet");
     my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($selectedAlignment); 
-    my $as_adaptor = $compara_db->get_adaptor("AlignSlice" );
+    my $as_adaptor = $compara_db->get_adaptor("AlignSlice");
     my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, undef, "restrict");
 
     my @selected_species = grep {$_ } $object->param("ms_${selectedAlignment}");
@@ -49,7 +58,7 @@ sub content {
     # of all available species in the alignment
 
     if ( scalar (@{$method_link_species_set->species_set}) > 2) {
-      unshift @selected_species, $object->species;
+      unshift @selected_species, $species;
     }
 
     push @sliceArray, @{$align_slice->get_all_Slices(@selected_species)};
@@ -62,7 +71,77 @@ sub content {
       }
     }
   }
-  return markup_and_render( $object, \@sliceArray);
+  
+  return markup_and_render($object, \@sliceArray) . $warnings;
+}
+
+#-----------------------------------------------------------------------------------------
+sub check_for_errors {
+  my $self = shift;
+  my ($object, $align, $species) = @_;
+  
+  # Check for errors
+  my $h = $object->species_defs->multi_hash->{DATABASE_COMPARA};
+  my %c = exists $h->{'ALIGNMENTS'} ? %{$h->{'ALIGNMENTS'}} : ();
+  
+  if (!exists $c{$align}) {
+    return $self->_error(
+      'Unknown alignment', 
+      sprintf (
+        '<p>The alignment you have select "%s" does not exist in the current database.</p>', 
+        escapeHTML($align)
+      )
+    );
+  }
+
+  my $align_details = $c{$align};
+  
+  if (!exists $align_details->{'species'}{$species}) {
+    return $self->_error(
+      'Unknown alignment', 
+      sprintf (
+        '<p>%s is not part of the %s alignment in the database.</p>', 
+        $object->species_defs->species_label($species), 
+        escapeHTML($align_details->{'name'})
+      )
+    );
+  }
+  
+  my @species = ();
+  my @skipped = ();
+  my $warnings = '';
+  
+  if ($align_details->{'class'} =~ /pairwise/) { ## This is a pairwise alignment
+    foreach (keys %{$align_details->{species}}) {
+      push @species, $_ unless $species eq $_;
+    }
+  } else { ## This is a multiway alignment
+    foreach (keys %{$align_details->{species}}) {
+      my $key = sprintf 'species_%d_%s', $align, lc($_);
+      
+      next if $species eq $_;
+      
+      if ($object->param($key) eq 'no') {
+        push @skipped, $_;
+      } else {
+        push @species, $_;
+      }
+    }
+  }
+
+  if (@skipped) {
+    $warnings .= $self->_info(
+      'Species hidden by configuration', 
+      sprintf (
+        '<p>The following %d species in the alignment are not shown in the image: %s. Use the "<strong>Configure this page</strong>" on the left to show them.</p>%s', 
+        scalar(@skipped), 
+        join (', ', sort map { $object->species_defs->species_label($_) } @skipped)
+      )
+    );
+  }
+  
+  return (undef, $warnings);
+  
 }
 
 #-----------------------------------------------------------------------------------------
@@ -92,7 +171,7 @@ sub markup_and_render {
     $KEY .= sprintf( $key_tmpl, 'ns', "THIS STYLE:", "Location of SNPs" );
     $KEY .= sprintf( $key_tmpl, 'nd', "THIS STYLE:", "Location of deletions" );
   }
-  if ($object->param('line_numbering') eq 'slice' &&  $object->param("RGselect") ) {
+  if ($object->param('line_numbering') eq 'slice' &&  $object->param("align") ) {
     $KEY .= qq{ NOTE:     For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line };
   }
   if ($object->param('individuals')) {
