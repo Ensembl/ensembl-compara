@@ -11,8 +11,6 @@ use EnsEMBL::Web::DASConfig;
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(@GENE_COORDS @PROT_COORDS);
 use base qw(EnsEMBL::Web::Wizard::Node);
 
-my $DAS_DESC_WIDTH = 120;
-
 
 sub select_server {
   my $self = shift;
@@ -73,7 +71,7 @@ sub select_das {
       }
       # Otherwise add a checkbox...
       else {
-        $self->_output_das_checkbox($source);
+        $self->add_element( 'type' => 'DASCheckBox', 'das'  => $source );
       }
     } # end DAS source loop
     
@@ -313,7 +311,7 @@ sub show_tempdas {
     $self->add_element('type'=>'Information', 'value' => 'Choose the DAS sources you wish to save to your account', 'style' => 'spaced');
     my @values;
     foreach my $source (sort { lc $a->label cmp lc $b->label } values %$das) {
-      $self->_output_das_checkbox($source);
+      $self->add_element( 'type' => 'DASCheckBox', 'das'  => $source );
     }
   }
 
@@ -403,6 +401,7 @@ sub check_session {
   }
 }
 
+
 sub overwrite_warning {
   my $self = shift;
 
@@ -479,28 +478,6 @@ sub url_feedback {
 
 
 #---------------------- HELPER FUNCTIONS USED BY NODES --------------------------------------
-
-# If the description is long, shorten it and pretty it up
-sub _short_das_desc {
-  my ( $self, $desc ) = @_;
-  if (length $desc > $DAS_DESC_WIDTH) {
-    $desc = substr $desc, 0, $DAS_DESC_WIDTH;
-    $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
-  }
-  return $desc;
-}
-
-sub _output_das_checkbox {
-  my ( $self, @sources ) = @_;
-  map {
-    $self->add_element( 'type'       => 'CheckBox',
-                        'long_label' => 1,
-                        'name'       => 'dsn',
-                        'value'      => $_->logic_name,
-                        'label'      => $_->label,
-                        'notes'      => $self->_short_das_desc( $_->description ) );
-  } @sources;
-}
 
 sub _output_das_text {
   my ( $self, @sources ) = @_;
