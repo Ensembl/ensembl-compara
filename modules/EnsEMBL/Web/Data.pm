@@ -280,7 +280,10 @@ sub has_many {
         ## Retrieve by primary field ...($id) // shorter version
         unshift @_, $relation_class->get_primary_key if @_ == 1 && !ref($_[0]);
   
-        return $self->$real_accessor(@_, type => $relation_class->__type);
+        return $self->$real_accessor(
+          @_,
+          #type => $relation_class->__type,
+        );
       };
   
     *{$class."::add_to_$accessor"} =
