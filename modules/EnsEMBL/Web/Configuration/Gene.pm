@@ -143,6 +143,12 @@ sub populate_tree {
     { 'availability'  => 'family database:compara',
       'no_menu_entry' => 1 }
   ));
+  $fam_node->append($self->create_subnode(
+    'Family/Alignments', 'Multiple alignments in this family',
+    [qw(jalview EnsEMBL::Web::Component::Gene::FamilyAlignments)],
+    { 'availability'  => 'family database:compara',
+      'no_menu_entry' => 1 }
+  ));
 
 =pod
   my $user_menu = $self->create_submenu( 'User', 'User data' );

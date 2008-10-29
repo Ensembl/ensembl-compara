@@ -9,7 +9,7 @@ use base qw(EnsEMBL::Web::Component::Transcript);
 use CGI qw(escapeHTML);
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
+  $self->cacheable( 1 );
   $self->ajaxable(  1 );
 }
 
@@ -67,8 +67,8 @@ sub content {
     push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SPTREMBL')};
     push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SWISSPROT')};
 
-    my $jalview = _jalview_link( 'Ensembl', $ensembl_members, $object ) .
-               _jalview_link( '', \@all_pep_members, $object );
+    my $jalview = $self->_jalview_link( $family_id, 'Ensembl', $ensembl_members ) .
+               $self->_jalview_link( $family_id, '', \@all_pep_members );
     $jalview = 'No alignment has been produced for this family.' unless $jalview;
     $row->{'jalview'} = $jalview;  
 
@@ -79,45 +79,12 @@ sub content {
 }
 
 sub _jalview_link {
-  my( $type, $refs, $object ) = @_;
+  my( $self, $family, $type, $refs ) = @_;
   my $count     = @$refs;
-  my $outcount = 0;
-  return unless $count;
-  my $BASE      = $object->species_defs->ENSEMBL_BASE_URL;
-  my $FN        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
-  my $file      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN";
-  $object->make_directory( $file );
-  my $URL       = $object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN";
-  if( open FASTA,   ">$file" ) {;
-    foreach my $member_attribute (@$refs){
-      my ($member, $attribute) = @$member_attribute;
-      my $align;
-      eval { $align = $attribute->alignment_string($member); };
-      unless ($@) {
-        if($attribute->alignment_string($member)) {
-          print FASTA ">".$member->stable_id."\n";
-          print FASTA $attribute->alignment_string($member)."\n";
-          $outcount++;
-        }
-      }
-    }
-    close FASTA;
-  }
-  return unless $outcount;
-
+  my $url = '/'.$self->object->species.$self->url('/Gene/Family/Alignments');
+  $url .= "?family=$family;".join(';', @{$self->object->core_params});
   return qq(
-  <p class="space-below">$count $type members of this family:
-    <applet archive="$BASE/jalview/jalview.jar"
-        code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
-        alt = "[Java must be enabled to view alignments]">
-      <param name="input" value="$BASE/$URL" />
-      <param name="type" value="URL" />
-      <param name=format value="FASTA" />
-      <param name="fontsize" value="10" />
-      <param name="Consensus" value="*" />
-      <strong>Java must be enabled to view alignments</strong>
-    </applet>
-  </p>
+  <p class="space-below">$count $type members of this family <a href="$url">JalView</a></p>
 );
 }
 
