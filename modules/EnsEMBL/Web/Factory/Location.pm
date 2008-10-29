@@ -11,6 +11,35 @@ use Bio::EnsEMBL::Feature;
 our @ISA = qw(  EnsEMBL::Web::Factory );
 use POSIX qw(floor ceil);
   
+sub _help {
+  my( $self, $string ) = @_;
+  my %sample = %{$self->species_defs->SAMPLE_DATA ||{}};
+  my $assembly_level = scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES ||[]}) ? 'chromosomal' : 'scaffold';
+  my $help_text = $string ? '' : sprintf '
+  <p>
+    %s
+  </p>', CGI::escapeHTML( $string );
+  my $url = $self->_url({ '__clear' => 1, 'action' => 'View', 'r' => $sample{'LOCATION_PARAM'} });
+  $help_text .= sprintf( '
+  <p>
+    A location is required to build this page. For example, %s coordinates:
+  </p>
+  <blockquote class="space-below">
+    <a href="%s">%s</a>
+  </blockquote>',
+    $assembly_level,
+    CGI::escapeHTML( $url ),
+    CGI::escapeHTML( $self->species_defs->ENSEMBL_BASE_URL. $url )
+  );
+  if( scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES}) ) {
+    my $url = $self->_url({ '__clear' => 1, 'action' => 'Genome' });
+    $help_text .= sprintf( '
+  <p class="space-below">
+    You can also browse this genome via its <a href="%s">karyotype</a>
+  </p>', CGI::escapeHTML($url) )
+  }
+}
+
 sub new {
   my $class = shift;
   my $self = $class->SUPER::new( @_ );
@@ -76,7 +105,7 @@ sub __gene_databases {
 
 sub _location_from_RegFeature {
   my( $self, $ID ) = @_;
-  $self->problem( "fatal", "Unknown regulatory", "Could not find regulatory feature $ID" );
+  $self->problem( "fatal", "Unknown regulatory", $self->_help( "Could not find regulatory feature $ID" ) );
   return undef; 
 }
 sub _location_from_Gene {
@@ -103,7 +132,7 @@ sub _location_from_Gene {
       }
     }
   }
-  $self->problem( "fatal", "Unknown gene", "Could not find gene $ID" );
+  $self->problem( "fatal", "Unknown gene", $self->_help( "Could not find gene $ID") );
   return undef;
 }
 
@@ -142,7 +171,7 @@ sub _location_from_Transcript {
     }
   }
 
-  $self->problem( "fatal", "Unknown transcript", "Could not find transcript $ID" );
+  $self->problem( "fatal", "Unknown transcript", $self->_help( "Could not find transcript $ID" ) );
   return undef;
 }
 
@@ -160,7 +189,7 @@ sub _location_from_Exon {
       return $self->_create_from_slice( 'Exon', $ID, $self->expand($TS), $ID );
     }
   }
-  $self->problem( "fatal", "Unknown exon", "Could not find exon $ID" );
+  $self->problem( "fatal", "Unknown exon", $self->_help( "Could not find exon $ID" ) );
   return undef;
 }
 
@@ -190,7 +219,7 @@ sub _location_from_Peptide {
       }
     }
   }
-  $self->problem( "fatal", "Unknown peptide", "Could not find peptide $ID" );
+  $self->problem( "fatal", "Unknown peptide", $self->_help( "Could not find peptide $ID" ) );
   return undef;
 }
 
@@ -201,7 +230,7 @@ sub _location_from_MiscFeature {
     eval { $TS = $self->_slice_adaptor->fetch_by_misc_feature_attribute( $type, $ID ); };
     return $self->_create_from_slice( "MiscFeature", $ID, $self->expand($TS) ) if $TS;
   }
-  $self->problem( "fatal", "Unknown misc feature", "Could not find misc feature $ID" );
+  $self->problem( "fatal", "Unknown misc feature", $self->_help( "Could not find misc feature $ID" ) );
   return undef;
 
 }
@@ -210,7 +239,7 @@ sub _location_from_Band {
   my( $self, $ID, $chr ) = @_;
   my $TS;
   eval { $TS= $self->_slice_adaptor->fetch_by_chr_band( $chr, $ID ); };
-  $self->problem( "fatal", "Unknown band", "Could not find karyotype band $ID on chromosome $chr" ) if $@;
+  $self->problem( "fatal", "Unknown band", $self->_help( "Could not find karyotype band $ID on chromosome $chr" ) ) if $@;
   return $self->_create_from_slice( 'Band', $ID, $self->expand($TS), "$chr $ID" );
 
 }
@@ -222,7 +251,7 @@ sub _location_from_Variation {
     $v = $self->_variation_adaptor->fetch_by_name( $ID );
   };
   if($@ || !$v ) {
-    $self->problem( "fatal", "Invalid SNP ID", "SNP $ID cannot be located within Ensembl" );
+    $self->problem( "fatal", "Invalid SNP ID", $self->_help( "SNP $ID cannot be located within Ensembl" ) );
     return;
   }
   foreach my $vf (@{$self->_variation_feature_adaptor->fetch_all_by_Variation( $v )}) {
@@ -232,7 +261,7 @@ sub _location_from_Variation {
       return $self->_create_from_slice( 'SNP', $ID, $self->expand($TS) ) if $TS;
     }
   }
-  $self->problem( "fatal", "Non-mapped SNP", "SNP $ID is in Ensembl, but not mapped to the current assembly" );
+  $self->problem( "fatal", "Non-mapped SNP", $self->_help( "SNP $ID is in Ensembl, but not mapped to the current assembly" ) );
 }
 
 sub _location_from_Marker {
@@ -242,7 +271,7 @@ sub _location_from_Marker {
     $mr = $self->_marker_adaptor->fetch_all_by_synonym($ID);
   };
   if($@){
-    $self->problem( "fatal", "Invalid Marker ID", "Marker $ID cannot be located within Ensembl" );
+    $self->problem( "fatal", "Invalid Marker ID", $self->_help( "Marker $ID cannot be located within Ensembl" ) );
     return;
   }
   my $region;
@@ -262,10 +291,10 @@ sub _location_from_Marker {
     }
   }
   if( $region ) {
-    $self->problem( "fatal", "Marker not found on Chromosome", "Marker $ID is not mapped to chromosome $chr" );
+    $self->problem( "fatal", "Marker not found on Chromosome", $self->_help( "Marker $ID is not mapped to chromosome $chr" ) );
     return undef;
   } else {
-    $self->problem(  "fatal", "Marker not found on assembly", "Marker $ID is not mapped to the current assembly" );
+    $self->problem(  "fatal", "Marker not found on assembly", $self->_help( "Marker $ID is not mapped to the current assembly" ) );
     return undef;
   }
 }
@@ -298,7 +327,7 @@ sub _location_from_SeqRegion {
         return $self->_create_from_slice( $system->name, "$chr $start-$end ($strand)", $slice, undef, undef, $keep_slice );
       }
     }
-    $self->problem( "fatal", "Locate error","Cannot locate region $chr: $start - $end on the current assembly." );
+    $self->problem( "fatal", "Locate error", $self->_help( "Cannot locate region $chr: $start - $end on the current assembly." ));
     return undef;
   } else {
     foreach my $system ( @{$self->__coord_systems} ) {
@@ -310,10 +339,9 @@ sub _location_from_SeqRegion {
       }
     }
     my $action = $ENV{'ENSEMBL_ACTION'};
-    if ($chr) {
-      $self->problem( "fatal", "Locate error","Cannot locate region $chr on the current assembly." );
-    }
-    elsif ($action && $action eq 'Karyotype' && $self->species_defs->ENSEMBL_CHROMOSOMES) {
+    if( $chr ) {
+      $self->problem( "fatal", "Locate error", $self->_help( "Cannot locate region $chr on the current assembly." ) );
+    } elsif ($action && $action eq 'Karyotype' && $self->species_defs->ENSEMBL_CHROMOSOMES) {
       ## Create a slice of the first chromosome to force this page to work!
       my @chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};
       my $TS;
@@ -323,28 +351,9 @@ sub _location_from_SeqRegion {
       if ($TS) {
         return $self->_create_from_slice( 'chromosome', $chrs[0], $self->expand($TS), '', $chrs[0], $keep_slice );
       }
-    }
-    else {
-      my %sample = %{$self->species_defs->SAMPLE_DATA ||{}};
-      my $assembly_level;
-      if (scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES ||[]})) {
-        $assembly_level = 'chromosomal';
-      }
-      else {
-        $assembly_level = 'scaffold';
-      }
+    } else {
       ## Might need factoring out if we use other methods to get a location (e.g. marker)
-      my $help_text = sprintf(
-qq(<p>A location is required to build this page. For example, %s coordinates:</p>
-<p class="space-below"><a href="/%s/Location/%s?r=%s">/%s/Location/%s?r=%s</a></p>),
-        $assembly_level,
-        $ENV{'ENSEMBL_SPECIES'}, $action, $sample{'LOCATION_PARAM'},
-        $ENV{'ENSEMBL_SPECIES'}, $action, $sample{'LOCATION_PARAM'},
-      );
-      if (scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES})) {
-        $help_text .= '<p class="space-below">You can also browse this genome via its <a href="/'.$ENV{'ENSEMBL_SPECIES'}.'/Location/Karyotype">karyotype</a></p>';
-      }
-      $self->problem( "fatal", "Please enter a location",$help_text );
+      $self->problem( "fatal", "Please enter a location", $self->_help('A location is required to build this page') );
     }
     return undef;
   }
