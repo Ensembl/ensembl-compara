@@ -36,6 +36,7 @@ var performedSave = 0;
 function toggle_reorder() {
   $('reorder_species').toggle();
   $('full_species').toggle();
+  
 }
 
 function update_species(element) {
@@ -46,7 +47,16 @@ function update_species(element) {
     new Ajax.Request( '/Account/SaveFavourites', {
       method    : 'get',
       parameters: { favourites: serialized_data },
-      onSuccess: function(response){ $('full_species').innerHTML = response.responseText; performedSave = 0; },
+      onSuccess: function(response){ 
+        $('full_species').innerHTML = response.responseText; performedSave = 0;
+        $$('.toggle_link').each(function(n){
+          if( ENSEMBL_AJAX == 'enabled' ) {
+            Event.observe(n,'click',toggle_reorder);
+          } else {
+            n.hide();
+          }
+        });
+      }, 
       onFailure: function(response){ performedSave = 0; }
     });
   } 
