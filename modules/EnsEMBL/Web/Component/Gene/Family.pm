@@ -16,15 +16,16 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
+  my $sp = $object->species_defs->SPECIES_COMMON_NAME;
   my $families = $object->get_all_families;
 
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
 
   $table->add_columns(
-      { 'key' => 'id',          'title' => 'Family ID',                             'width' => '20%', 'align' => 'left' },
-      { 'key' => 'annot',       'title' => 'Consensus annotation',                  'width' => '30%', 'align' => 'left' },
-      { 'key' => 'transcripts', 'title' => $object->gene_name.' transcripts in this family',  'width' => '30%', 'align' => 'left' },
-      { 'key' => 'jalview', 'title' => 'Multiple alignments',  'width' => '20%', 'align' => 'left' },
+      { 'key' => 'id',         'title' => 'Family ID',                'width' => '20%', 'align' => 'left' },
+      { 'key' => 'annot',      'title' => 'Consensus annotation',     'width' => '30%', 'align' => 'left' },
+      { 'key' => 'transcripts', 'title' => "Other $sp transcripts in this family", 'width' => '30%', 'align' => 'left' },
+      { 'key' => 'jalview',    'title' => 'Multiple alignments',      'width' => '20%', 'align' => 'left' },
   );
 
   foreach my $family_id (sort keys %$families) {
@@ -53,8 +54,8 @@ sub content {
     $row->{'transcripts'} = '<ul>';
     foreach my $transcript (@{$family->{'transcripts'}}) {
       my $label = $transcript->display_xref;
-      $row->{'transcripts'} .= sprintf(qq(<li><a href="/%s/Transcript/Families?g=%s;t=%s">%s</a> (%s)</li>),
-                        $object->species, $object->Obj->stable_id, 
+      $row->{'transcripts'} .= sprintf(qq(<li><a href="/%s/Gene/Family/Genes?g=%s;family=%s">%s</a> (%s)</li>),
+                        $object->species, $object->Obj->stable_id, $family_id,
                         $transcript->stable_id, $label, $transcript->stable_id);
     }
     $row->{'transcripts'} .= '</ul>';
