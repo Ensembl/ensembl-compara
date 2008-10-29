@@ -198,7 +198,6 @@ sub populate_tree {
       { 'availability' => 'gene', 'no_menu_entry' => 1 }
     ));
   }
-  $self->user_populate_tree;
 }
 
 sub user_populate_tree {

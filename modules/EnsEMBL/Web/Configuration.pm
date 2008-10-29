@@ -40,6 +40,9 @@ sub new {
   };
   bless $self, $class;
 
+  my $we_can_have_a_user_tree = $self->can('user_populate_tree');
+
+
   my $tree = $MEMD ? $MEMD->get($class->tree_key) : undef;
   if ($tree) {
     $self->{_data}{tree} = $tree;
@@ -47,6 +50,8 @@ sub new {
     $self->populate_tree;
     $MEMD->set($class->tree_key, $self->{_data}{tree}, undef, 'TREE') if $MEMD;
   }
+
+  $self->user_populate_tree if $we_can_have_a_user_tree;
 
   $self->set_default_action;
   return $self;
