@@ -243,7 +243,9 @@ sub ajax_zmenu      {
   if( $action =~ 'Regulation'){
     return $self->_ajax_zmenu_regulation($panel, $obj);
   }
-
+    if( $action =~ 'Variation'){
+    return $self->_ajax_zmenu_variation($panel, $obj);
+  }
   if( $action =~ 'Compara_Tree_Node' ){
     return $self->_ajax_zmenu_compara_tree_node();
   }
@@ -731,6 +733,83 @@ sub _ajax_zmenu_regulation {
   }
 
   return;
+}
+
+sub _ajax_zmenu_variation {
+ # Specific zmenu for variation features
+
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj = $self->object;
+  my $db_adaptor = $obj->database('variation');
+  my $var_adaptor = $db_adaptor->get_VariationAdaptor();
+  my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor();
+  my $v_id = $obj->param('vid');
+  my $var = $var_adaptor->fetch_by_name($v_id);
+  my @vf = @{$var_feat_adaptor->fetch_all_by_Variation($var)};
+  my $feature;
+  if ( scalar @vf == 1) { $feature = $vf[0];}
+  else {}
+ 
+  warn $feature;
+  my $tvar_adaptor = $db_adaptor->get_TranscriptVariationAdaptor();
+  my $trans_variation = $tvar_adaptor->fetch_by_dbID($obj->param('dbid'));
+  my $type =  join ", ", @{$trans_variation->consequence_type || [] };
+  my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name });
+ 
+  my $chr_start = $feature->start();  warn $chr_start;
+  my $chr_end   = $feature->end();
+  my $bp = $chr_start;
+  if( $chr_end < $chr_start ) {
+      $bp = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
+  } elsif($chr_end > $chr_start ) {
+      $bp = "$chr_start&nbsp;-&nbsp;$chr_end";
+  }
+  my $source = (join ", ", @{$feature->get_all_sources ||[] });
+  my $allele =  $feature->allele_string;
+  my $alleles = (length($allele)<16 ? $allele : substr($allele,0,14).'..');
+ 
+  $panel->{'caption'} = 'Variation ' . $feature->variation_name;
+  $panel->add_entry({
+    'label_html'  =>  'Variation Properties',
+    'link'        =>  $var_link,
+    'priority'    =>  15,
+  });
+  $panel->add_entry({
+    'type'        =>  'bp:',
+    'label'       =>  $bp,
+    'priority'    =>  13,
+  });
+  $panel->add_entry({
+    'type'        =>  'class:',
+    'label'       =>  $feature->var_class,
+    'priority'    =>  11,
+  });
+  $panel->add_entry({
+    'type'        =>  'ambiguity code:',
+    'label'       =>  $feature->ambig_code,
+    'priority'    =>  9,
+  });
+  $panel->add_entry({
+    'type'        =>  'alleles:',
+    'label'       =>  $alleles,
+    'priority'    =>  7,
+  });
+  $panel->add_entry({
+    'type'        =>  'source:',
+    'label'       =>  $source,
+    'priority'    =>  5,
+  });
+  $panel->add_entry({
+    'type'        =>  'type:',
+    'label'        =>  $type,
+    'priority'    =>  2,
+  });
+ 
+    
+
+
+ return;
 }
 
 sub _ajax_zmenu_id_history_tree_node {
