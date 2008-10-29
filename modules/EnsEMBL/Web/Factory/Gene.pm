@@ -4,11 +4,36 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Factory;
+use base qw(EnsEMBL::Web::Factory);
+
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::RegObj;
+use CGI qw(escapeHTML);
 
-our @ISA = qw(  EnsEMBL::Web::Factory );
+sub _help {
+  my( $self, $string ) = @_;
+
+  my %sample = %{$self->species_defs->SAMPLE_DATA ||{}};
+
+  my $help_text = $string ? sprintf( '
+  <p>
+    %s
+  </p>', CGI::escapeHTML( $string ) ) : '';
+  my $url = $self->_url({ '__clear' => 1, 'action' => 'View', 'g' => $sample{'GENE_PARAM'} });
+
+
+  $help_text .= sprintf( '
+  <p>
+    This view requires a gene, transcript or protein identifier in the URL. For example:
+  </p>
+  <blockquote class="space-below"><a href="%s">%s</a></blockquote>',
+    CGI::escapeHTML( $url ),
+    CGI::escapeHTML( $self->species_defs->ENSEMBL_BASE_URL. $url )
+  );
+
+  return $help_text;
+}
+
 
 sub createObjects { 
   my $self = shift;
@@ -28,7 +53,7 @@ sub createObjects {
   unless ($db_adaptor){
     $self->problem( 'Fatal', 
 		    'Database Error', 
-		    "Could not connect to the $db database." ); 
+		    $self->_help("Could not connect to the $db database.") ); 
     return ;
   }
 	
@@ -67,15 +92,7 @@ sub createObjects {
     $KEY = 'anchor1' unless $self->param('gene') || $self->param('g');
     @fetch_calls = qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_translation_stable_id); 
   } else {
-    my %sample = %{$self->species_defs->SAMPLE_DATA};
-    my $help_text = sprintf(
-qq(<p>This view requires a gene, transcript or protein identifier in the URL. For example:</p>
-<p class="space-below"><a href="/%s/Gene/%s?g=%s">/%s/Gene/%s?g=%s</a></p>),
-        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'GENE_PARAM'},
-        $ENV{'ENSEMBL_SPECIES'}, $ENV{'ENSEMBL_ACTION'}, $sample{'GENE_PARAM'},
-      );
-
-    $self->problem('fatal', 'Please enter a valid identifier', $help_text)  ;
+    $self->problem('fatal', 'Please enter a valid identifier', $self->_help())  ;
     return;
   }
 

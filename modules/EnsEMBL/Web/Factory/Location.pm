@@ -4,21 +4,21 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Factory;
+use base qw(EnsEMBL::Web::Factory);
+
 use EnsEMBL::Web::Proxy::Object;
 use Bio::EnsEMBL::Feature;
-
-our @ISA = qw(  EnsEMBL::Web::Factory );
+use CGI qw(escapeHTML);
 use POSIX qw(floor ceil);
   
 sub _help {
   my( $self, $string ) = @_;
   my %sample = %{$self->species_defs->SAMPLE_DATA ||{}};
   my $assembly_level = scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES ||[]}) ? 'chromosomal' : 'scaffold';
-  my $help_text = $string ? '' : sprintf '
+  my $help_text = $string ? sprintf( '
   <p>
     %s
-  </p>', CGI::escapeHTML( $string );
+  </p>', CGI::escapeHTML( $string ) ) : '';
   my $url = $self->_url({ '__clear' => 1, 'action' => 'View', 'r' => $sample{'LOCATION_PARAM'} });
   $help_text .= sprintf( '
   <p>
@@ -38,6 +38,7 @@ sub _help {
     You can also browse this genome via its <a href="%s">karyotype</a>
   </p>', CGI::escapeHTML($url) )
   }
+  return $help_text;
 }
 
 sub new {

@@ -3,9 +3,10 @@ package EnsEMBL::Web::Factory;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use EnsEMBL::Web::CoreObjects;
-
 use base qw(EnsEMBL::Web::Proxiable);
+
+use EnsEMBL::Web::CoreObjects;
+use CGI qw(escapeHTML);
 
 ## Additional Factory functionality
 
@@ -121,10 +122,18 @@ sub _archive {
   return undef ;
 }
 
+sub _help {
+  my( $self, $string ) = @_;
+  return sprintf '
+  <p>
+    %s
+  </p>', CGI::escapeHTML($string);
+}
+
 sub _known_feature {
   my( $self, $type, $parameter ) = @_;
   my $db        = $self->param('db')||'core';
-  my $name      = $self->param($parameter)||$self->param(lc(substr($parameter,0,1)))||$self->param('peptide') || $self->param('transcript') || $self->param('gene');
+  my $name      = $self->param($parameter)||$self->param(lc(substr($parameter,0,1)))||$self->param('peptide') || $self->param('transcript') || $self->param('gene') || $self->param('t') ||$self->param('g');
   my $sitetype = $self->species_defs->ENSEMBL_SITETYPE || 'Ensembl';
   my @features  = ();
   my $adaptor;
@@ -141,7 +150,7 @@ sub _known_feature {
     };
   }
   if( $@ ) {
-    $self->problem('fatal', "Error retrieving $type from database", "An error occured while trying to retrieve the $type $name. ");
+    $self->problem('fatal', "Error retrieving $type from database", $self->_help("An error occured while trying to retrieve the $type $name. "));
     return;
   } elsif( @features ) {
     $self->__data->{'objects'} = [ map { { 'db' => $db, lc($type) => $_->stable_id } } @features ];
@@ -158,7 +167,7 @@ sub _known_feature {
       $self->problem('unmapped');
     }
     else {
-      $self->problem('fatal', "$type '$name' not found", "The identifier '$name' is not present in the current release of the $sitetype database. ")  ;
+      $self->problem('fatal', "$type '$name' not found", $self->_help("The identifier '$name' is not present in the current release of the $sitetype database. ") )  ;
     }
   }
   return;
