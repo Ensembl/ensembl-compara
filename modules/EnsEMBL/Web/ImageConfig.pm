@@ -1067,7 +1067,7 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
       'description' => ' cisRED motifs; VISTA enhancer set; miRanda miRNA',
       'display'     => 'off'
     }));
-    $menu->append($self->create_track('ctcf_wiggle_'.$key, sprintf("CTCF signal map"),{
+    $menu->append($self->create_track('ctcf_wiggle_'.$key, sprintf("CTCF chip"),{
       'db'          => $key,
       'glyphset'    => 'ctcf',
       'sources'     => undef,
@@ -1078,7 +1078,7 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
       'renderers'      => ['off'=>'Off','signal_map'=>'Signal map'],
      'display'     => 'off'
     }));
-    $menu->append( $self->create_track('ctcf_blocks_'.$key, sprintf("CTCF blocks"),{
+    $menu->append( $self->create_track('ctcf_blocks_'.$key, sprintf("CTCF peaks"),{
       'db'          => $key,
       'glyphset'    => 'ctcf',
       'sources'     => undef,
