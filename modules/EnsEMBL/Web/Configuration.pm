@@ -90,10 +90,10 @@ sub _get_valid_action {
   my $action = shift;
   my $func   = shift;
   # my %hash = map { $_ => 1 } $self->{_data}{tree}->get_node(';
-
+  return undef unless ref $self->{'object'};
   my $node;
   $node = $self->tree->get_node( $action."/".$func ) if $func;
-  $self->{'availability'} = $self->object->availability;
+  $self->{'availability'} = ref($self->object) ? $self->object->availability : {};
 
   return $action."/".$func if $node && $node->get('type') =~ /view/ &&
                               $self->is_available( $node->get('availability') );
@@ -448,9 +448,9 @@ sub _local_context {
   $self->{'page'}->local_context->tree(    $self->{_data}{'tree'}    );
   my $action = $self->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} );
   $self->{'page'}->local_context->active(  $action );#$self->{_data}{'action'}  );
-  $self->{'page'}->local_context->caption( $self->{object}->short_caption  );
-  $self->{'page'}->local_context->counts(  $self->{object}->counts   );
-  $self->{'page'}->local_context->availability( $self->{object}->availability );
+  $self->{'page'}->local_context->caption(      ref($self->{object})  ? $self->{object}->short_caption : $self->{object} );
+  $self->{'page'}->local_context->counts(       ref( $self->{object}) ? $self->{object}->counts        : {}   );
+  $self->{'page'}->local_context->availability( ref($self->{object})  ? $self->{object}->availability  : {}   );
 }
 
 sub _local_tools {
