@@ -806,7 +806,19 @@ sub _ajax_zmenu_variation {
     'priority'    =>  2,
   });
  
-    
+  if ($obj->param('snp_fake')){
+    my $status = join(', ', @{$feature->get_all_validation_states||[]} );  
+    $panel->add_entry({
+      'type'        =>  'status:',
+      'label'       =>  $status,
+      'priority'    =>  12,
+    });
+    $panel->add_entry({
+      'type'        =>  'mapweight:',
+      'label'       =>  $feature->map_weight,
+      'priority'    =>  8,
+    });
+  }  
 
 
  return;
