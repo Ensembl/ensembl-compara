@@ -85,7 +85,6 @@ sub _init {
       'bordercolour' => $colour,
       'absolutey' => 1,
       'href' => $self->href($snp),
-      'zmenu' => $self->zmenu($snp),
       'height' => $h,
       'width'  => $end-$start+1,
     });
@@ -103,42 +102,13 @@ sub _init {
   push @{ $Config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{"sara"}->[1],   $colours->{"sara"}->[0] if  $ENV{'ENSEMBL_SCRIPT'} eq 'transcriptsnpview';
 }
 
-sub zmenu {
-    my ($self, $f ) = @_;
-    my $start = $f->start() + $self->{'container'}->start() - 1;
-    my $end   = $f->end() + $self->{'container'}->start() - 1;
-
-    my $allele = $f->allele_string;
-    my $pos =  $start;
-    if($f->{'range_type'} eq 'between' ) {
-       $pos = "between&nbsp;$start&nbsp;&amp;&nbsp;$end";
-    } elsif($f->{'range_type'} ne 'exact' ) {
-       $pos = "$start&nbsp;-&nbsp;$end";
-   }
-
-    my %zmenu = ( 
-        'caption'           => "SNP: ".$f->variation_name(),
-        '01:SNP properties' => $self->href( $f ),
-        "02:bp: $pos" => '',
-        "04:class: ".$f->var_class() => '',
-        "03:status: ".join(', ', @{$f->get_all_validation_states||[]} ) => '',
-        "06:mapweight: ".$f->map_weight => '',
-        "05:ambiguity code: ".$f->ambig_code => '',
-        "08:alleles: ".(length($allele)<16 ? $allele : substr($allele,0,14).'..') => '',
-        "09:source: ".(join ", ", @{$f->get_all_sources      || [] }) => '',
-        "57:type:   ".(join ", ", @{$f->get_consequence_type || [] }) => "",
-	       );
-    return \%zmenu;
-}
-
 sub href {
-    my ($self, $f ) = @_;
-    my $start = $self->{'container'}->start()+$f->start;
-    my $snp_id = $f->variation_name;
-    my $source = $f->source;
-    my $seq_region_name = $self->{'container'}->seq_region_name();
+  my ($self, $f ) = @_;
+  my $variation_id = $f->variation_name;
+  my $dbid = $f->dbID;
+  my $href = $self->_url({'action'  => 'Variation', 'vid'     => $variation_id, 'dbid'    => $dbid, 'snp_fake' => 1});
 
-    return "/@{[$self->{container}{web_species}]}/snpview?snp=$snp_id;source=$source;chr=$seq_region_name;vc_start=$start";
+  return $href;
 }
 
 1;
