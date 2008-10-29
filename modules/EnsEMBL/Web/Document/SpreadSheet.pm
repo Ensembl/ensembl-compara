@@ -82,14 +82,14 @@ sub render {
     $output .= qq(\n  </tr>);
   }
   $output .= qq(\n</table>);
-warn $output;
+#warn $output;
   return $output;
 }
 
 sub render_Text {
   my $self    = shift;
-  use Data::Dumper;
-  warn Data::Dumper::Dumper( $self );
+#  use Data::Dumper;
+#  warn Data::Dumper::Dumper( $self );
   return unless @{$self->{_columns} || []};
   my $options = $self->{_options} || {};
   my $align = $options->{align} ? $options->{align} : 'autocenter';
