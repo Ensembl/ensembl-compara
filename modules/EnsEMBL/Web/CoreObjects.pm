@@ -107,7 +107,7 @@ sub _centre_point {
 sub location_short_caption {
   my $self = shift;
   return '-' unless $self->location;
-  return 'Karyotype' if $self->location->isa('EnsEMBL::Web::Fake');
+  return 'Genome' if $self->location->isa('EnsEMBL::Web::Fake');
   my $label = $self->location->seq_region_name.':'.$self->thousandify($self->location->start).'-'.$self->thousandify($self->location->end);
   #return $label;
   return "Location: $label";
@@ -116,7 +116,7 @@ sub location_short_caption {
 sub location_long_caption {
   my $self = shift;
   return '-' unless $self->location;
-  return 'Karyotype' if $self->location->isa('EnsEMBL::Web::Fake');
+  return 'Genome' if $self->location->isa('EnsEMBL::Web::Fake');
   return $self->location->seq_region_name.':'.$self->thousandify($self->_centre_point);
 }
 
@@ -320,7 +320,7 @@ sub _generate_objects {
     }
   }
   if( !$self->location ) {
-    $self->location( new EnsEMBL::Web::Fake({ 'view' => 'Karyotype', 'type'=>'Karyotype' } ) );
+    $self->location( new EnsEMBL::Web::Fake({ 'view' => 'Genome', 'type'=>'Genome' } ) );
   }
 
   if( $self->transcript ) {
