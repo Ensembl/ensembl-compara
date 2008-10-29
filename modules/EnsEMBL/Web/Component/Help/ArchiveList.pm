@@ -59,7 +59,7 @@ sub content {
       else {
         my ($old_view, $initial_release) = EnsEMBL::Web::OldLinks::get_archive_redirect($type, $action);
 
-        foreach my $release (sort keys %archive) {
+        foreach my $release (reverse sort keys %archive) {
           next if $release == $object->species_defs->ENSEMBL_VERSION;
           if ($release < 51) {
             if ($release >= $initial_release) {
