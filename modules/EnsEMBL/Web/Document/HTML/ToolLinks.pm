@@ -15,20 +15,21 @@ sub referer   :lvalue { $_[0]{'referer'};   } ## Needed by CloseCP
 
 sub render   {
   my $self    = shift;
-  my $species = $ENV{'ENSEMBL_SPECIES'} || 'common';
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' if $dir !~ /_/;
   my $url     = CGI::escape($ENV{'REQUEST_URI'});
   my $html;
-## TO DO - once config tab is working, make this the default view
+  
   if( $self->logins ) {
     if ($ENV{'ENSEMBL_USER_ID'}) {
       $html .= qq(
-      <a style="display:none" href="/Account/Links?_referer=$url" class="modal_link">Account</a> &nbsp;|&nbsp;
-      <a href="/Account/Logout?_referer=$url">Logout</a> &nbsp;|&nbsp;);
+      <a style="display:none" href="$dir/Account/Links?_referer=$url" class="modal_link">Account</a> &nbsp;|&nbsp;
+      <a href="$dir/Account/Logout?_referer=$url">Logout</a> &nbsp;|&nbsp;);
     }
     else {
       $html .= qq(
-      <a style="display:none" href="/Homo_sapiens/Account/Login?_referer=$url" class="modal_link">Login</a> / 
-      <a style="display:none" href="/Homo_sapiens/Account/Register?_referer=$url" class="modal_link">Register</a> &nbsp;|&nbsp;);
+      <a style="display:none" href="$dir/Account/Login?_referer=$url" class="modal_link">Login</a> / 
+      <a style="display:none" href="$dir/Account/Register?_referer=$url" class="modal_link">Register</a> &nbsp;|&nbsp;);
     }
   }
   $html .= qq(
