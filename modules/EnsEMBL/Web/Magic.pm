@@ -389,6 +389,7 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
         $webpage->redirect( $URL );
         return "Redirecting to $URL (archived object)";
       } else {
+        $webpage->configure( $ENV{ENSEMBL_TYPE}, 'local_context' );
         $webpage->render_error_page;
         #return "Rendering Error page";
       }
