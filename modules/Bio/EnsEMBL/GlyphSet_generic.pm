@@ -369,6 +369,34 @@ sub composite_histogram {
   my $y     = $g->{'y'}+($self->{'h'}-$st->{'height'})/2;
   my $sf    = $st->{'height'}/$range;
 
+  $self->push( $self->Line({
+    'x'      => $g->{extent_start}-1,
+    'width'  => $g->{extent_end}-$g->{extent_start}+1,
+    'height' => 0,
+    'colour'  => 'red',
+    'absolutey' => 1,
+    'dotted' => 1,
+    'y'      => $y + ( $strand>0 ? -$min : $range + $min ) *$sf
+  })) if $min <=0 && $max >= 0;
+  $self->push( $self->Line({
+    'x'      => $g->{extent_start}-1,
+    'width'  => 0,
+    'height' => $st->{'height'},
+    'colour'  => 'red',
+    'absolutey' => 1,
+    'dotted' => 1,
+    'y'      => $y
+  }));
+  $self->unshift($self->Rect({
+    'x'      => $g->{extent_start}-1,
+    'width'  => $g->{extent_end}-$g->{extent_start}+1,
+    'height' => $st->{'height'},
+    'colour'  => '#f8f8f8',
+    'absolutey' => 1,
+    'dotted' => 1,
+    'y'      => $y
+  }));
+
   foreach my $f ( sort { $a->start <=> $b->start } @{ $f_ref } ) {
     my($s,$e) = ($f->start,$f->end);
     next if $e < 1;
@@ -399,10 +427,16 @@ sub composite_histogram {
 
 sub composite_extent_gradient {
   my($self,$g,$st) = @_;
-  $g->{'extent_start'} ||= $g->{'start'} < 1                  ? 1           : $g->{'start'};
-  $g->{'extent_end'}   ||= $g->{'end'}   < $self->{'seq_len'} ? $g->{'end'} : $self->{'seq_len'};
-  $g->{'height'}       = $st->{height}   if $st->{height} > $g->{height};
-  $self->{h}           = $st->{height}   if $st->{height} > $self->{h};
+  return if $g->{'start'} > $self->{'seq_len'} || $g->{'end'} < 1;
+
+  my $gs = $g->{'start'} < 1 ? 1 : $g->{'start'};
+  my $ge = $g->{'end'}   < $self->{'seq_len'} ? $g->{'end'} : $self->{'seq_len'};
+
+  my $p  = 2 * $self->{bppp};
+  $g->{'extent_start'} = $gs - $p      if !defined($g->{extent_start}) || $g->{'start'} < $g->{'extent_start'};
+  $g->{'extent_end'}   = $ge + $p      if !defined($g->{extent_end}  ) || $g->{'end'}   > $g->{'extent_start'};
+  $g->{'height'}       = $st->{height} if !defined($g->{height}      ) || $st->{height} > $g->{height};
+  $self->{h}           = $st->{height} if !defined($self->{h}        ) || $st->{height} > $self->{h};
 }
 
 sub _colour_points {
@@ -437,6 +471,17 @@ sub composite_gradient {
   my $min = $st->{'min'};
   my $range = $st->{'max'}-$min;
   my $y     = $g->{'y'}+($self->{'h'}-$st->{'height'})/2;
+
+  $self->unshift($self->Rect({
+    'x'      => $g->{extent_start}-1,
+    'width'  => $g->{extent_end}-$g->{extent_start}+1,
+    'height' => $st->{'height'},
+    'colour'  => '#f8f8f8',
+    'absolutey' => 1,
+    'dotted' => 1,
+    'y'      => $y
+  }));
+
 
   foreach my $f ( sort { $a->start <=> $b->start } @{ $f_ref } ) {
     my($s,$e) = ($f->start,$f->end);
@@ -477,6 +522,35 @@ sub composite_lineplot {
   my $t = shift @q;
   my $start_x = ($t->start+$t->end-1)/2;
   my $start_y = ($t->score-$min)/$range;
+
+  $self->push( $self->Line({
+    'x'      => $g->{extent_start}-1,
+    'width'  => $g->{extent_end}-$g->{extent_start}+1,
+    'height' => 0,
+    'colour'  => 'red',
+    'absolutey' => 1,
+    'dotted' => 1,
+    'y'      => $y + ( $strand>0 ? -$min : $range + $min ) *$sf/$range
+  })) if $min <=0 && $max >= 0;
+
+  $self->push( $self->Line({
+    'x'      => $g->{extent_start}-1,
+    'width'  => 0,
+    'height' => $st->{'height'},
+    'colour'  => 'red',
+    'absolutey' => 1,
+    'dotted' => 1,
+    'y'      => $y
+  }));
+  $self->unshift($self->Rect({
+    'x'      => $g->{extent_start}-1,
+    'width'  => $g->{extent_end}-$g->{extent_start}+1,
+    'height' => $st->{'height'},
+    'colour'  => '#f8f8f8',
+    'absolutey' => 1,
+    'dotted' => 1,
+    'y'      => $y
+  }));
 
   foreach my $f ( @{ $f_ref } ) {
     my $end_x = ($f->start+$f->end-1)/2;
@@ -890,7 +964,7 @@ sub extent_box {
   my $e = $f->end;
   my $w = $st->{'width'}*$self->{bppp};
   if( $e - $s + 1 < $w ) {
-    $s = $e+$s-1-$w/2;
+    $s = ($e+$s-1-$w)/2;
     $e = $s+$w/2;
   }
   return $self->_extent( $g, $f, $s, $e,$st->{height} );
