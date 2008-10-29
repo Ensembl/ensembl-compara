@@ -228,7 +228,8 @@ sub _render_ajax_reorder_list {
 
   my %sp_to_sort = %$species_info;
   foreach my $fave (@favourites) {
-    delete $sp_to_sort{$fave};
+    (my $dir = $fave) =~ s/ /_/;
+    delete $sp_to_sort{$dir};
   }
   my @sorted_by_common = sort {
                           $species_defs->get_config($a, "SPECIES_COMMON_NAME")
