@@ -19,13 +19,13 @@ use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(%GENE_COORDS %PROT_COORDS);
 #   url
 #   dsn
 #   coords
-#   logic_name    (optional)
+#   logic_name    (optional, defaults to dsn)
 #   label         (optional)
 #   caption       (optinal short label)
 #   description   (optional)
 #   homepage      (optional)
 #   maintainer    (optional)
-#   enable        (optional)
+#   on            (views enabled on)
 #   category      (menu location)
 sub new_from_hashref {
   my ( $class, $hash ) = @_;
@@ -109,7 +109,6 @@ sub new_from_URL {
   }
   
   push @{$das_data{enable}}, $ENV{'ENSEMBL_SCRIPT'};
-  push @{$das_data{on}    }, @{$das_data{enable}};
   
   # TODO: not sure about these, we're handling coordinate systems differently
   #push @{$das_data{mapping}} , split(/\,/, $das_data{type});
@@ -142,7 +141,7 @@ sub on {
   return $self->{'on'};
 }
 
-=head2 is_on_view
+=head2 is_on
 
   Arg [1]    : $view (string)
   Description: whether the source is available on the given view
