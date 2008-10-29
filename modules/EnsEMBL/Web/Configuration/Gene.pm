@@ -74,7 +74,7 @@ sub populate_tree {
       selector   EnsEMBL::Web::Component::Gene::Compara_AlignSliceSelector
       alignments EnsEMBL::Web::Component::Gene::ComparaAlignments
     )],
-    { 'availability' => 'gene database:compara', 'concise' => 'Genomic alignments' }
+    { 'availability' => 'gene database:compara core', 'concise' => 'Genomic alignments' }
   ));
 
 ## Compara tree
