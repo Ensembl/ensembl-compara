@@ -269,14 +269,8 @@ sub _create_RegulatoryFactor {
     if ($self->param('dbid')){
       my $ext_feat_adaptor = $efg_db->get_ExternalFeatureAdaptor;
       my $feature = $ext_feat_adaptor->fetch_by_dbID($self->param('dbid'));     
-      my @assoc_ftypes = @{$feature->associated_feature_types}; 
         
-     #my @assoc_features = @{$set_feature_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
-     my @assoc_features = @{$ext_feat_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
- 
-      #foreach my $assoc_ftype(@assoc_ftypes){
-      #  push @assoc_features, $feature->adaptor->fetch_all_by_FeatureType_FeatureSets($assoc_ftype, [$feature->feature_set]);
-      #}
+      my @assoc_features = @{$ext_feat_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
       
       if (scalar @assoc_features ==0) {
          push @assoc_features, $feature;
@@ -289,9 +283,9 @@ sub _create_RegulatoryFactor {
       my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor;
       my $ftype = $feat_type_adaptor->fetch_by_name($id);
       my @ftypes = ($ftype); 
-      my $type = $ftype->description; warn $type;
-      my $fstype = $fset_types{$type}; warn $fstype;
-      my $fset = $feature_set_adaptor->fetch_by_name($fstype); warn $fset;
+      my $type = $ftype->description; 
+      my $fstype = $fset_types{$type}; 
+      my $fset = $feature_set_adaptor->fetch_by_name($fstype); 
       my @fsets = ($fstype);
       my $feats = $fset->get_Features_by_FeatureType($ftype);
       $features = {'RegulatoryFactor'=> $feats};
@@ -299,28 +293,9 @@ sub _create_RegulatoryFactor {
   }
 
 
-
-#  my %fset_types = (
-#   "cisRED group motif" => "cisRED group motifs",
-#   "miRanda miRNA_target" => "miRanda miRNA",
-#   "BioTIFFIN motif" => "BioTIFFIN motifs"
-#  );
-
-#  my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
-#  my $feature_type_adaptor = $efg_db->get_FeatureTypeAdaptor;
-#  warn $feature_type_adaptor;
-#  my $ftype =  $feature_type_adaptor->fetch_by_name($name);
-#  my $type = $ftype->description;
-#  my $fstype = $fset_types{$type};
-#  my $fset = $feature_set_adaptor->fetch_by_name($fstype);
-#  $features = $fset->get_Features_by_FeatureType($ftype);
-
- # my $feature_set = {'RegulatoryFactor' => $features};
-#  return $feature_set;
-
   return $features if $features && keys %$features; # Return if we have at least one feature
-#  # We have no features so return an error....
-#  $self->problem( 'no_match', 'Invalid Identifier', "Regulatory Factor $id was not found" );
+  # We have no features so return an error....
+  $self->problem( 'no_match', 'Invalid Identifier', "Regulatory Factor $id was not found" );
   return undef;
 }
 
