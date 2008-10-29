@@ -76,7 +76,7 @@ sub process {
           );
         }
         if ($url) {
-          $self->redirect($url);
+          $self->page->ajax_redirect($url);
         }
         else {
           $self->render;

@@ -68,9 +68,18 @@ sub set_doc_type {
   $self->{'doc_type_version'} = $V;
 }
 
-sub access_restrictions {
-  my $self = shift;
-  return $self->{'access'};
+sub ajax_redirect {
+### AJAX-friendly redirect, for use in control panel
+  my ($self, $URL) = @_;
+
+  my $r = $self->renderer->{'r'};
+  unless( $URL =~ /x_requested_with=/ ) {
+    my $T = $self->renderer->{'r'}->headers_in->{'X-Requested-With'};
+    $URL .= ($URL =~ /\?/?';':'?').'x_requested_with='.CGI::escape($T) if $T;
+  }
+  $r->headers_out->add( "Location" => $URL );
+  $r->err_headers_out->add( "Location" => $URL );
+  $r->status( Apache2::Const::REDIRECT );
 }
 
 sub new {
