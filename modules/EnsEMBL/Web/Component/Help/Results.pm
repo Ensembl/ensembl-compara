@@ -88,7 +88,7 @@ sub content {
   else {
     $html = qq(<p>Sorry, no results were found in the help database matching your query.</p>
 <ul>
-<li><a href="/Help/Search" class="cp-internal">Search again</a></li>
+<li><a href="/Help/Search" class="modal_link">Search again</a></li>
 <li><a href="/info/" class="cp-external">Browse non-searchable pages</a></li>
 </ul>);
   }

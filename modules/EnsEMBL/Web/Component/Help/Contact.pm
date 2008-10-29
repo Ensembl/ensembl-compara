@@ -63,7 +63,7 @@ sub content {
     'type'    => 'Submit',
     'name'    => 'submit',
     'value'   => 'Send Email',
-    'class'   => 'cp-internal',
+    'class'   => 'modal_link',
   );
 
   return $form->render;

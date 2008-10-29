@@ -39,7 +39,7 @@ sub content {
     'type'    => 'Submit',
     'name'    => 'submit',
     'value'   => 'Go',
-    'class'   => 'cp-internal',
+    'class'   => 'modal_link',
   );
 
   $html .= $form->render;

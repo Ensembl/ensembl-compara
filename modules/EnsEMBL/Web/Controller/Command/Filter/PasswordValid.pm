@@ -32,7 +32,7 @@ sub allow {
 
 sub message {
   my $self = shift;
-  return qq(Sorry, your username or password was entered incorrectly and could not be validated.<br /><br /><a href="/Account/Login" class="cp-internal">Try again</a>.);
+  return qq(Sorry, your username or password was entered incorrectly and could not be validated.<br /><br /><a href="/Account/Login" class="modal_link">Try again</a>.);
 }
 
 }

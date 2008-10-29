@@ -117,7 +117,7 @@ sub content {
 
       my @group_links;
       foreach my $group (@{$group_bookmarks{$bookmark_id}{'groups'}}) {
-        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s" class="cp-internal">%s</a>), $group->id, $group->name);
+        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s" class="modal_link">%s</a>), $group->id, $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);
@@ -135,7 +135,7 @@ sub content {
 
 sub _add_bookmark {
   my $self = shift;
-  return qq(<p><a href="/Account/Bookmark?dataview=add" class="cp-internal"><strong>Add a new bookmark </strong>&rarr;</a></p>);
+  return qq(<p><a href="/Account/Bookmark?dataview=add" class="modal_link"><strong>Add a new bookmark </strong>&rarr;</a></p>);
 }
 
 1;

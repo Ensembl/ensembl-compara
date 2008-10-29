@@ -49,13 +49,13 @@ sub content {
       $row->{'name'} = $group->name;
       $row->{'desc'} = $group->blurb || '&nbsp;';
       if ($self->object->param('id') && $self->object->param('id') == $group->id) {
-        $row->{'details'} = '<a href="/Account/AdminGroups?_referer='.CGI::escape($self->object->param('_referer')).'" class="cp-internal">Hide Details</a>';
+        $row->{'details'} = '<a href="/Account/AdminGroups?_referer='.CGI::escape($self->object->param('_referer')).'" class="modal_link">Hide Details</a>';
       }
       else {
-        $row->{'details'} = '<a href="/Account/AdminGroups?id='.$group->id.';_referer='.$self->object->param('_referer').'" class="cp-internal">Show Details</a>';
+        $row->{'details'} = '<a href="/Account/AdminGroups?id='.$group->id.';_referer='.$self->object->param('_referer').'" class="modal_link">Show Details</a>';
       }
 
-#      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit;_referer='.CGI::escape($self->object->param('_referer')).'" class="cp-internal">Manage Group</a>';
+#      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit;_referer='.CGI::escape($self->object->param('_referer')).'" class="modal_link">Manage Group</a>';
       $table->add_row($row);
     }
     $html .= $table->render;
@@ -63,7 +63,7 @@ sub content {
   else {
     $html .= qq(<p class="center">You are not an administrator of any $sitename groups.</p>);
   }
- # $html .= '<p><a href="/Account/Group?dataview=add;_referer='.CGI::escape($self->object->param('_referer')).'" class="cp-internal">Create a new group &rarr;</a></p>';
+ # $html .= '<p><a href="/Account/Group?dataview=add;_referer='.CGI::escape($self->object->param('_referer')).'" class="modal_link">Create a new group &rarr;</a></p>';
 
   return $html;
 }

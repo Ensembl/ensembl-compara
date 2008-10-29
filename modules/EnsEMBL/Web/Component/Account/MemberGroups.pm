@@ -51,10 +51,10 @@ sub content {
       my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
       $row->{'admin'} = $creator->name;
       if ($self->object->param('id') && $self->object->param('id') == $group->id) {
-        $row->{'details'} = '<a href="/Account/MemberGroups?_referer='.CGI::escape($self->object->param('_referer')).'" class="cp-internal">Hide Details</a>';
+        $row->{'details'} = '<a href="/Account/MemberGroups?_referer='.CGI::escape($self->object->param('_referer')).'" class="modal_link">Hide Details</a>';
       }
       else {
-        $row->{'details'} = '<a href="/Account/MemberGroups?id='.$group->id.';_referer='.$self->object->param('_referer').'" class="cp-internal">Show Details</a>';
+        $row->{'details'} = '<a href="/Account/MemberGroups?id='.$group->id.';_referer='.$self->object->param('_referer').'" class="modal_link">Show Details</a>';
       }
       $row->{'leave'} = $self->delete_link('Membership', $group->id, 'Unsubscribe');
       $table->add_row($row);

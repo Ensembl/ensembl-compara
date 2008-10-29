@@ -37,7 +37,7 @@ sub content {
                 <dt>Last updated</dt>
                   <dd>%s</dd>
               </dl>
-      <p style="margin-top:10px"><a href="/Account/Update?_referer=%s" class="cp-internal">Update these details &rarr;</a></p>),
+      <p style="margin-top:10px"><a href="/Account/Update?_referer=%s" class="modal_link">Update these details &rarr;</a></p>),
       $user->name, $user->email, $user->organisation, 
       $self->pretty_date($user->created_at), $self->pretty_date($user->modified_at),
       CGI::escape($self->object->param('_referer')),

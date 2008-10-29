@@ -52,7 +52,7 @@ sub content {
       foreach my $bookmark ($group->bookmarks) {
         my $row = {};
 
-        $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" title="%s" class="cp-internal">%s</a>),
+        $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" title="%s" class="modal_link">%s</a>),
                         $bookmark->id, $bookmark->url, $bookmark->name);
 
         $row->{'desc'} = $bookmark->description || '&nbsp;';
@@ -78,7 +78,7 @@ sub content {
       foreach my $config ($group->configurations) {
         my $row = {};
         
-        $row->{'name'} = sprintf(qq(<a href="/Account/UseConfig?id=%s" class="cp-internal">%s</a>),
+        $row->{'name'} = sprintf(qq(<a href="/Account/UseConfig?id=%s" class="modal_link">%s</a>),
                         $config->id, $config->name);
 
         $row->{'desc'} = $config->description || '&nbsp;';

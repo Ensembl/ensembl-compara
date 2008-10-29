@@ -146,7 +146,7 @@ sub _output_bookmark {
 
 sub _output_config {
   my ($self, $config) = @_;
-  my $html .= '<dt>'.$config->name.'</dt><dd><a href="" class="cp-internal"';
+  my $html .= '<dt>'.$config->name.'</dt><dd><a href="" class="modal_link"';
   if ($config->description) {
     $html .= ' title="'.$config->description.'"';
   }

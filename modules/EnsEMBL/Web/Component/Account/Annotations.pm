@@ -114,7 +114,7 @@ sub content {
       my @group_links;
       foreach my $group (@{$group_notes{$note_id}{'groups'}}) {
         push @group_links, 
-          sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s" class="cp-internal">%s</a>), 
+          sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s" class="modal_link">%s</a>), 
             $group->id, CGI::escape($self->object->param('_referer')), $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
