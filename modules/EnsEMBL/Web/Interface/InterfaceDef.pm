@@ -29,6 +29,7 @@ my %ShowHistory_of;
 my %PanelStyle_of;
 my %Caption_of;
 my %PanelHeader_of;
+my %PanelContent_of;
 my %PanelFooter_of;
 
 my %OnSuccess_of;
@@ -56,6 +57,7 @@ sub new {
   $PanelStyle_of{$self}   = defined $params{panel_style} ? $params{panel_style} : '';
   $Caption_of{$self}      = defined $params{caption} ? $params{caption} : {};
   $PanelHeader_of{$self}  = defined $params{panel_header} ? $params{panel_header} : {};
+  $PanelContent_of{$self} = defined $params{panel_content} ? $params{panel_content} : {};
   $PanelFooter_of{$self}  = defined $params{panel_footer} ? $params{panel_footer} : {};
 
   $OnSuccess_of{$self}    = defined $params{on_success} ? $params{on_success} : '';
@@ -216,6 +218,24 @@ sub panel_header {
     }
     else {
       return $PanelHeader_of{$self}{$input};
+    }
+  }
+}
+
+sub panel_content {
+  ### a
+  ### Optional configuration of panel content (normally only needed for success/failure
+  ### Returns: hash - keys should correspond to available interface methods, e.g. 'on_success'
+  my ($self, $input) = @_;
+  if ($input) {
+    if (ref($input) eq 'HASH') {
+      while (my ($view, $content) = each (%$input)) {
+        warn "VIEW $view = $content";
+        $PanelContent_of{$self}{$view} = $content;
+      }
+    }
+    else {
+      return $PanelContent_of{$self}{$input};
     }
   }
 }
@@ -542,6 +562,7 @@ sub edit_fields {
   my $dataview = $object->param('dataview');
   my $elements = $self->elements;
   my $element_order = $self->element_order;
+  warn "URL = ".$object->param('url');
   ## populate widgets from Data_of{$self}
   foreach my $field (@$element_order) {
     my $element = $elements->{$field};
@@ -791,6 +812,7 @@ sub DESTROY {
   delete $PanelStyle_of{$self};
   delete $Caption_of{$self};
   delete $PanelHeader_of{$self};
+  delete $PanelContent_of{$self};
   delete $PanelFooter_of{$self};
 
   delete $OnSuccess_of{$self};
