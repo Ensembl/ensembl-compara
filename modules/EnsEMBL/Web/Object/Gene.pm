@@ -20,7 +20,8 @@ sub availability {
   if( $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ) {
     $hash->{'history'}    = 1;
   } elsif( $self->Obj->isa('Bio::EnsEMBL::Gene') ) {
-    $hash->{'history'}    = 1;
+    my $rows = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'};
+    $hash->{'history'}    = $rows ? 1 : 0;
     $hash->{'gene'}       = 1;
     $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
     my $compara_db  = $self->database('compara');
@@ -31,7 +32,6 @@ sub availability {
     );
     $hash->{'family'}     = $res ? 1 : 0;
   } elsif( $self->Obj->isa('Bio::EnsEMBL::Compara::Family' ) ) {
-warn "FAMILY............";
     $hash->{'family'}     = 1;
   }
   return $hash;
