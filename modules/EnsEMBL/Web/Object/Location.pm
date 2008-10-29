@@ -16,6 +16,7 @@ sub availability {
   my %chrs = map { $_,1 } @{$self->species_defs->ENSEMBL_CHROMOSOMES || []};
   $hash->{'karyotype'}   = 1;
   $hash->{'chromosome'}  = $chrs{ $self->Obj->{'seq_region_name'} } ? 1 : 0;
+  $hash->{'has_chromosomes'} = @{$self->species_defs->ENSEMBL_CHROMOSOMES || []} ? 1 : 0;
   $hash->{'has_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} ? 1 : 0;
   $hash->{'slice'}       = $self->Obj->{'seq_region_name'} && 
                            $self->Obj->{'seq_region_name'} ne $self->core_objects->{'parameters'}{'r'} ? 1 : 0;
@@ -269,7 +270,6 @@ sub _create_RegulatoryFactor {
       my $ext_feat_adaptor = $efg_db->get_ExternalFeatureAdaptor;
       my $feature = $ext_feat_adaptor->fetch_by_dbID($self->param('dbid'));     
       my @assoc_ftypes = @{$feature->associated_feature_types}; 
-      my @assoc_features;
         
      #my @assoc_features = @{$set_feature_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
      my @assoc_features = @{$ext_feat_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
