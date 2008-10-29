@@ -22,7 +22,7 @@ sub init {
 
   $self->create_menus( 
     'ideogram' => 'Ideogram', # N.B. Karyotype not currently configurable
-    'user_data'   => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
+    #'user_data'   => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
    );
 
   $self->add_tracks( 'ideogram',
