@@ -21,7 +21,7 @@ sub home_url { return $_[0]{'_home_url'};  }
 sub default_search_code { return $_[0]{'_default'}; }
 
 sub search_url {
-    my $species = $_[0]->home_url.$ENSEMBL_WEB_REGISTRY->get_species;
+    my $species = $_[0]->home_url.$ENV{'ENSEMBL_SPECIES'};
     return $species ? "$species/psychic" : '/common/psychic';
 }
 
