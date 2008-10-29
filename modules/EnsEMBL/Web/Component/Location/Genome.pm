@@ -23,7 +23,14 @@ sub content {
   my $object = $self->object;
   my $species = $object->species;
 
-  return unless $object->species_defs->ENSEMBL_CHROMOSOMES;
+  
+  unless( $object->species_defs->MAX_CHR_LENGTH ) {
+    return $self->_info( 'Unassembled genome',
+    '
+  <p>
+    This genome has yet to be assembled into chromosomes
+  </p>' );
+  }
 
   ## Form with hidden elements for click-through
   my $config = $object->image_config_hash('Vkaryotype');
