@@ -9,6 +9,10 @@ use base qw( EnsEMBL::Web::Configuration );
 
 sub set_default_action {
   my $self = shift;
+  unless( ref $self->object ) {
+    $self->{_data}{default} = 'Summary';
+    return;
+  }
   my $x = $self->object->availability || {};
   if( $x->{'gene'} ) {
     $self->{_data}{default} = 'Summary';
@@ -124,9 +128,10 @@ sub populate_tree {
     { 'availability' => 'gene' , 'concise' => 'Protein families' }
   );
   $compara_menu->append($fam_node);
-  my $sd = my $obj  = $self->{'object'}->species_defs;
+  my $sd = ref($self->{'object'}) ? $self->{'object'}->species_defs : undef;
+  my $name = $sd ? $sd->SPECIES_COMMON_NAME : '';
   $fam_node->append($self->create_subnode(
-    'Family/Genes', 'Other '.$sd->SPECIES_COMMON_NAME.' genes in this family',
+    'Family/Genes', 'Other '.$name.' genes in this family',
     [qw(genes    EnsEMBL::Web::Component::Gene::FamilyGenes)],
     { 'availability'  => 'family database:compara',
       'no_menu_entry' => 1 }
@@ -192,6 +197,7 @@ sub populate_tree {
 
 sub user_populate_tree {
   my $self = shift;
+  return unless ref $self->{'object'};
   my $all_das  = $ENSEMBL_WEB_REGISTRY->get_all_das( $self->{'object'}->species );
   my @active_das = qw(DS_549);
   my $ext_node = $self->tree->get_node( 'External' );

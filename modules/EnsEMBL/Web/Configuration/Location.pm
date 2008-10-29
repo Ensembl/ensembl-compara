@@ -7,6 +7,10 @@ use CGI;
 
 sub set_default_action {
   my $self = shift;
+  unless( ref $self->object ) {
+    $self->{_data}{default} = 'Genome';
+    return;
+  }
   my $x = $self->object->availability || {};
   if( $x->{'slice'} ) {
     $self->{_data}{default} = 'View';
@@ -30,7 +34,7 @@ sub populate_tree {
 
   $self->create_node( 'Genome', "Whole Genome",
     [qw(genome EnsEMBL::Web::Component::Location::Genome)],
-    { 'availability' => '1'},
+    { 'availability' => 'karyotype'},
   );
 
   $self->create_node( 'Chromosome', 'Chromosome summary',

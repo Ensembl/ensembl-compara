@@ -207,15 +207,16 @@ sub new {
 
 sub configure {
   my( $self, $object, @functions ) = @_;
-  $object->get_viewconfig->form( $object );
+  $object->get_viewconfig->form( $object ) if ref($object);
   my $objecttype;
-  if (ref($object)) { ## Actual object
+  if( ref($object) ) { ## Actual object
     $objecttype = $object->__objecttype;
   } elsif ($object =~ /^\w+$/) { ## String (type of E::W object)
     $objecttype = $object;
   } else {
     $objecttype = 'Static';
   }
+
   $objecttype = 'DAS' if ($objecttype =~ /^DAS::.+/);
 
   my $flag = 0;

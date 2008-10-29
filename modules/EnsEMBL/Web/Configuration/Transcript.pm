@@ -11,6 +11,11 @@ use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
+  unless( ref $self->object ) {
+    $self->{_data}{default} = 'Summary';
+    return;
+  }
+
   my $x = $self->object->availability || {};
   if( $x->{'either'} ) {
     $self->{_data}{default} = 'Summary';
