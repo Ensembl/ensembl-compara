@@ -26,8 +26,8 @@ sub caption {
 sub renderer_type {
   my $self = shift;
   my $K = shift;
-  my $T = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
-  return $T->{$K} ? $K : EnsEMBL::Web::Constants::SIMPLEALIGN_DEFAULT;
+  my %T = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+  return $T{$K} ? $K : EnsEMBL::Web::Constants::SIMPLEALIGN_DEFAULT;
 }
 
 sub content {
