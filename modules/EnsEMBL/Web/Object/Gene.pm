@@ -22,6 +22,7 @@ sub availability {
   } elsif( $self->Obj->isa('Bio::EnsEMBL::Gene') ) {
     $hash->{'history'}    = 1;
     $hash->{'gene'}       = 1;
+    $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
     my $compara_db  = $self->database('compara');
     my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
     my ($res) = $compara_dbh->selectrow_array(
@@ -53,7 +54,7 @@ sub counts {
   my $counts;
 
   $counts = $MEMD->get($key) if $MEMD;
-  
+
   unless ($counts) {
     $counts = {};
     $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
@@ -85,6 +86,20 @@ sub counts {
         );
         $counts->{'families'}    = $res;
       }
+      
+      my $species = $self->species;
+      my %alignments = $self->species_defs->multi('DATABASE_COMPARA','ALIGNMENTS');
+      my $c_align;
+      
+      if ($self->get_db eq 'core') {
+        foreach( values %alignments ) {
+          $c_align++ if $_->{'species'}{$species} && $_->{'type'} !~ /TRANSLATED_BLAT/;
+          next unless $_->{'species'}{$species} && ( keys %{$_->{'species'}} == 2 );
+          my ($other_species) = grep { $_ ne $species } keys %{$_->{'species'}};
+        }
+      }
+      
+      $counts->{'alignments'} = $c_align;
     }
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
