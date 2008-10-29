@@ -39,7 +39,7 @@ sub content {
     'select'   => 'select',
     'style'    => 'narrow',
     'on_change' => 'submit',
-    'name'     => 'chr',
+    'name'     => 'r',
     'label'    => $label,
     'values'   => \@chrs,
     'value'    => $chr_name,

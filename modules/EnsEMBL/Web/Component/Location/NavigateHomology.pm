@@ -19,9 +19,14 @@ sub content {
   my $object = $self->object;
 
   ## Don't show this component if the slice covers or exceeds the whole chromosome!
-  if ($object->seq_region_start < 2 && $object->seq_region_end > ($object->chromosome->end - 1)) {
+  if( 
+    $object->param('r') =~ /:/ &&
+    $object->seq_region_start < 2 && 
+    $object->seq_region_end > ($object->chromosome->end - 1)) {
     return;
   } 
+
+  my $seq_region_end = $object->param('r')=~/:/ ? $object->seq_region_end : 1e6;
 
   my $chr     = $object->seq_region_name; 
   my $html;
@@ -31,13 +36,13 @@ sub content {
   my $max_minus = -15;
 
   my $start = $object->seq_region_start || 100;
-  my $end   = $object->seq_region_end || ($object->chromosome->end - 100);
+  my $end   = $seq_region_end || ($object->chromosome->end - 100);
 
   my $upstream    = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $object->seq_region_start - 1 );
-  my $downstream  = $sliceAdaptor->fetch_by_region('chromosome', $chr, $object->seq_region_end + 1, $object->chromosome->end );
+  my $downstream  = $sliceAdaptor->fetch_by_region('chromosome', $chr, $seq_region_end + 1, $object->chromosome->end );
 
-  my @up_genes    = reverse @{$object->get_synteny_local_genes($upstream)};
-  my @down_genes  = @{$object->get_synteny_local_genes($downstream)};
+  my @up_genes    = $upstream ?   reverse @{$object->get_synteny_local_genes($upstream)} : ();
+  my @down_genes  = $downstream ? @{$object->get_synteny_local_genes($downstream)}       : ();
 
   my ($up_link, $down_link, $gene_text);
   my $up_count = @up_genes;
@@ -69,9 +74,9 @@ sub content {
     }
     $down_count = @down_sample;
     $gene_text = $down_count > 1 ? 'genes' : 'gene';
-    my $down_start  = @down_sample ? $down_sample[0]->start + $object->seq_region_end : 0;
+    my $down_start  = @down_sample ? $down_sample[0]->start + $seq_region_end : 0;
     $down_start = -$down_start if $down_start < 0;
-    my $down_end    = @down_sample ? $down_sample[-1]->end + $object->seq_region_end : 0;
+    my $down_end    = @down_sample ? $down_sample[-1]->end + $seq_region_end : 0;
 
     $down_link = sprintf(qq(
 <a href="/%s/Location/Synteny?otherspecies=%s;r=%s:%s-%s">%s downstream %s <img src="/i/nav-r2.gif" class="zoom" alt=">>"/></a> ),

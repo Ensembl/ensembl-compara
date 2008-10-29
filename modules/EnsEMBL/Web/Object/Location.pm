@@ -693,7 +693,11 @@ sub get_synteny_matches {
 sub get_synteny_local_genes {
   my $self = shift ;
 
+  my $flag = @_ ? 1 : 0;
   my $slice = shift || $self->core_objects->location;
+  unless( $flag || $self->param('r') =~ /:/) {
+    $slice = $slice->sub_Slice(1,1e6);
+  }
   my $localgenes = [];
 
   ## Ensures that only protein coding genes are included in syntenyview
