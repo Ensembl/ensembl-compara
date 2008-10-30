@@ -29,21 +29,19 @@ sub draw_features {
   ### Draws wiggles if wiggle flag is 1
   ### Returns 1 if draws blocks. Returns 0 if no blocks drawn
 
-  my ($self, $wiggle)= @_; 
-  my $db =  $self->dbadaptor( 'homo sapiens', 'FUNCGEN' ); warn $db; 
+  my ($self, $wiggle)= @_;  
+  my $db =  $self->dbadaptor( 'homo sapiens', 'FUNCGEN' );  
   my ($block_features, $colour) = $self->get_block_features($db);
   my $drawn_flag = 0;
-  my $drawn_wiggle_flag = $wiggle ? 0: "wiggle"; warn $wiggle;
+  my $drawn_wiggle_flag = $wiggle ? 0: "wiggle"; 
   my $slice = $self->{'container'};
   my $wiggle_colour = "steelblue";
   foreach my $feature ( @$block_features ) {
-    warn $feature; 
     # render wiggle if wiggle
     if( $wiggle ) { 
       foreach my $result_set  ( @{ $feature->get_displayable_supporting_sets() } ){ 
-        warn $result_set;
      #get features for slice and experimental chip set
-        my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; warn scalar @features;
+        my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; 
         next unless @features;     
         $drawn_wiggle_flag = "wiggle";
         @features   = sort { $a->score <=> $b->score  } @features;
@@ -58,7 +56,7 @@ sub draw_features {
     }
 
     # Block feature 
-    if( !$wiggle || $wiggle eq 'both' ) {
+    if( !$wiggle || $wiggle eq 'both' ) { 
        my $fset = $feature->get_displayable_product_FeatureSet();   
        my $display_label = $fset->display_label();
        my $features = $fset->get_Features_by_Slice($slice ) ;
