@@ -24,9 +24,5 @@ sub content {
   my $strain = $object->species_defs->translate("strain")."s";
   my $html = qq(<p>These $strain are displayed by default:<b> $samples.</b> Select the 'Configure this page' link in the left hand menu to customise which $strain and types of variation are displayed in the tables below.</p><br>);
   return $html;
-
-
-  return;
 }
-
 1;
