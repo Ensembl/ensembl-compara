@@ -1,4 +1,45 @@
 /***********************************************************************
+** Simplified cookie class - used to set standard Ensembl cookies for
+** later retrieval - path is always set to "/" and expiry date is set
+** to january 2038 (end of 32bit time)
+***********************************************************************/
+
+__info( document.cookie );
+var Cookie = {
+  set: function(name, value, expiry) {
+    return ( document.cookie =
+      escape(name) + '=' + escape(value || '') +
+      '; expires='+ ( expiry == -1 ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038' ) +
+      ' 00:00:00 GMT; path=/'
+    );
+  },
+  get: function(name) {
+    var cookie = document.cookie.match(new RegExp('(^|;)\\s*' + escape(name) + '=([^;\\s]*)'));
+    return cookie ? unescape(cookie[2]) : null;
+  },
+  unset: function(name) {
+    var cookie = Cookie.get(name) || true;
+    Cookie.set(name, '', -1);
+    return cookie;
+  }
+};
+
+// Check for a value of the ENSEMBL_AJAX cookie and set if not already set!
+// either enabled/disabled...
+
+var ENSEMBL_AJAX = Cookie.get('ENSEMBL_AJAX');
+if( ENSEMBL_AJAX != 'enabled' && ENSEMBL_AJAX != 'disabled' && ENSEMBL_AJAX != 'none' ) {
+  ENSEMBL_AJAX = Ajax.getTransport()?'enabled':'none';
+  Cookie.set('ENSEMBL_AJAX',ENSEMBL_AJAX);
+}
+var ENSEMBL_WIDTH = Cookie.get('ENSEMBL_WIDTH');
+if( ! ENSEMBL_WIDTH ) {
+  ENSEMBL_WIDTH = Math.floor( ( document.viewport.getWidth() - 250 ) /100 ) * 100;
+  if(ENSEMBL_WIDTH < 500) ENSEMBL_WIDTH = 500;
+  Cookie.set( 'ENSEMBL_WIDTH',ENSEMBL_WIDTH );
+}
+
+/***********************************************************************
   Debugging code - this code displays the debug box at the top of the
   webpage 
   
@@ -74,7 +115,7 @@ function _debug_end_time( key ) {
 }
 
 function __debug( s,l ) {
-  if($('debug')) {
+  if($('debug_list')) {
     if(!l) l = 'info';
     var cl = "debug_"+l;
     var X = Builder.node('li',{className:cl}, "["+l+":"+_time_diff(ENSEMBL_START_TIME)+"s] "+s+"\n");
@@ -86,7 +127,7 @@ function __debug( s,l ) {
 }
 
 function __debug_raw( s,l ) {
-  if($('debug')) {
+  if($('debug_list')) {
     if(!l) l = 'info'
     var cl = "debug_"+l;
     var X = Builder.node('li',{className:cl}, "["+l+":"+_time_diff(ENSEMBL_START_TIME)+"s] ");
@@ -168,7 +209,7 @@ function __init_ensembl_debug() {
       Event.observe( but, 'click', _debug_press );
     });
   }
-  __info( 'AJAX is '+ENSEMBL_AJAX+ '; load time is '+ENSEMBL_LOAD_TIME+'s' );
+  __info( 'AJAX is '+ENSEMBL_AJAX+ '; load time is '+ENSEMBL_START_TIME+'s' );
 }
 
 // Call initialisation function on page load

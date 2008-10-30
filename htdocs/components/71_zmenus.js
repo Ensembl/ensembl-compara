@@ -80,6 +80,7 @@ function _show_zmenu( x ) {
       var t = transport.responseText;
       if( t ) {
         Q.getElementsBySelector('tbody.real')[0].replace( transport.responseText );
+        __init_ensembl_rel_external();
         __zmenu_close_button(Q);
       }
     }

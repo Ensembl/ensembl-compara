@@ -45,36 +45,9 @@ addLoadEvent( __init_ensembl_rel_external );
 ** to january 2038 (end of 32bit time)
 ***********************************************************************/
 
-var Cookie = {
-  set: function(name, value, expiry) {
-    return ( document.cookie =
-      escape(name) + '=' + escape(value || '') +
-      '; expires='+ ( expiry == -1 ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038' ) +
-      ' 00:00:00 GMT; path=/'
-    );
-  },
-  get: function(name) {
-    var cookie = document.cookie.match(new RegExp('(^|;)\\s*' + escape(name) + '=([^;\\s]*)'));
-    return cookie ? unescape(cookie[2]) : null;
-  },
-  unset: function(name) {
-    var cookie = Cookie.get(name) || true;
-    Cookie.set(name, '', -1);
-    return cookie;
-  }
-};
-
-// Check for a value of the ENSEMBL_AJAX cookie and set if not already set!
-// either enabled/disabled...
-
-var ENSEMBL_AJAX = Cookie.get('ENSEMBL_AJAX');
-if( ENSEMBL_AJAX != 'enabled' && ENSEMBL_AJAX != 'disabled' && ENSEMBL_AJAX != 'none' ) {
-  ENSEMBL_AJAX = Ajax.getTransport()?'enabled':'none';
-  Cookie.set('ENSEMBL_AJAX',ENSEMBL_AJAX);
+function _cookie_print() {
+  __info( "DOC "+ document.cookie );
 }
-var ENSEMBL_WIDTH = Cookie.get('ENSEMBL_WIDTH');
-if( ! ENSEMBL_WIDTH ) {
-  ENSEMBL_WIDTH = Math.floor( ( document.viewport.getWidth() - 250 ) /100 ) * 100;
-  if(ENSEMBL_WIDTH < 500) ENSEMBL_WIDTH = 500;
-  Cookie.set( 'ENSEMBL_WIDTH',ENSEMBL_WIDTH );
-}
+
+addLoadEvent( _cookie_print );
+ 
