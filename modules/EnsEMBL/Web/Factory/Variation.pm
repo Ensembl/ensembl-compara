@@ -35,7 +35,10 @@ sub _help {
 
 sub createObjects {
   my $self      = shift;
-  if( $self->core_objects->variation ) {
+  my $dbh     = $self->species_defs->databases->{'DATABASE_VARIATION'};
+  return $self->problem ('Fatal', 'Database Error', "There is no variation database for this species.") unless $dbh;
+   
+  if( $self->core_objects->variation ) { 
     $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Variation', $self->core_objects->variation, $self->__data ));
     return;
   }
