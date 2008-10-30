@@ -750,13 +750,24 @@ sub _ajax_zmenu_variation {
   if ( scalar @vf == 1) { $feature = $vf[0];}
   else {}
  
-  warn $feature;
   my $tvar_adaptor = $db_adaptor->get_TranscriptVariationAdaptor();
   my $trans_variation = $tvar_adaptor->fetch_by_dbID($obj->param('dbid'));
+  ## alternate way to retrieve transcript_variation_feature if there are more than one with the same variation_feature id;
+  unless ($trans_variation){
+   my $trans_id = $obj->param('vt');
+   my $trans_adaptor = $obj->database('core')->get_TranscriptAdaptor;
+   my $transcript = $trans_adaptor->fetch_by_stable_id($trans_id);
+    foreach my $trv (@{$tvar_adaptor->fetch_all_by_Transcripts([$transcript])}) {
+     if ($trv->variation_feature->variation_name() eq $feature->variation_name){
+       $trans_variation = $trv;   
+     } 
+    }
+  }
+
   my $type =  join ", ", @{$trans_variation->consequence_type || [] };
   my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name });
  
-  my $chr_start = $feature->start();  warn $chr_start;
+  my $chr_start = $feature->start();  
   my $chr_end   = $feature->end();
   my $bp = $chr_start;
   if( $chr_end < $chr_start ) {
@@ -817,8 +828,13 @@ sub _ajax_zmenu_variation {
       'label'       =>  $feature->map_weight,
       'priority'    =>  8,
     });
-  }  
-
+  } elsif ($obj->param('var_box') ){ 
+    $panel->add_entry({
+      'type'        =>  'amino acid:',
+      'label'       =>  $trans_variation->pep_allele_string,
+      'priority'    =>  8,
+    });
+  }
 
  return;
 }
