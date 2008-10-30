@@ -295,15 +295,37 @@ sub _reset_config_panel {
     'object' => $obj
   );
   my $url = $obj->_url({'type'=>'Config','action'=>$action,'reset'=>1,'config'=>$config,'time'=>time});
-  $panel->set_content( sprintf '
+  my $c = sprintf '
 <p>
   To update this configuration, select your tracks and other options in the box above and close
   this popup window. Your view will then be updated automatically.
 </p>
 <p>
   <a class="modal_link reset-button" href="%s">Reset configuration for %s to default settings</a>.
-</p>', $url, CGI::escapeHTML( $title ) || 'this page'
-  );
+</p>', $url, CGI::escapeHTML( $title ) || 'this page';
+  if( $title ) {
+    $c .= '
+<p>
+  Notes:
+</p>
+<ul>
+  <li>
+    To change whether a track is drawn OR how it is drawn, click on the icon by the track name and
+    then select the way the track is to be rendered.
+  </li>
+  <li>
+    On the left hand side of the page the number of tracks in a menu, and the number of tracks
+    currently turned on from that menu are shown by the two numbers in parentheses <span style="white-space:nowrap">(tracks on/total tracks)</span>.
+  </li>
+  <li>
+    Certain tracks displayed come from user supplied or external data sources, these are clearly
+    marked as <strong>DAS</strong> (Distributed Annotation Sources), 
+    <strong>URL</strong> (UCSC style web resources) or <strong>User</strong> data uploaded by
+    yourself or another user.
+  </li>
+</ul>';
+  }
+  $panel->set_content( $c );
   $self->add_panel( $panel );
 }
 
