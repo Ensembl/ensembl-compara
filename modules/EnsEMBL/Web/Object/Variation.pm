@@ -23,6 +23,17 @@ use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
 
 
+sub availability {
+  my $self = shift;
+  my $hash = $self->_availability;
+  warn $self->Obj;
+  if ($self->Obj->isa('Bio::EnsEMBL::Variation::Variation')){
+    $hash->{'variation'} = 1;
+  }
+
+  return $hash;
+}
+
 sub short_caption {
   my $self = shift;
   my $label = $self->name;
@@ -900,7 +911,7 @@ sub ld_pops_for_snp {
 
   my @pops;
   foreach ( @vari_mappings ) { warn $_;
-    my $ldcontainer = $_->get_all_LD_values; warn scalar @{$ldcontainer->get_all_populations};
+    my $ldcontainer = $_->get_all_LD_values; #warn scalar @{$ldcontainer->get_all_populations};
     push @pops, @{$ldcontainer->get_all_populations};
 
   }
