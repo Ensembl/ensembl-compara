@@ -470,6 +470,7 @@ sub restrict_between_alignment_positions {
   my ($self, $start, $end, $skip_empty_GenomicAligns, $reference_genomic_align) = @_;
   my $genomic_align_tree;
   $genomic_align_tree = $self->copy();
+  $genomic_align_tree->adaptor($self->adaptor);
 
   foreach my $this_node (@{$genomic_align_tree->get_all_nodes}) {
     my $genomic_align_group = $this_node->genomic_align_group;
