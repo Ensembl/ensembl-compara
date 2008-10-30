@@ -15,7 +15,7 @@ use EnsEMBL::Web::RegObj;
 sub _init {
   my $self = shift;
   $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->ajaxable(  1 );
   $self->configurable( 1 );
 }
 
@@ -215,7 +215,7 @@ sub feature_tables {
 		    $data_row = { 'extname' => $extname, 'names' => $names};
 		}
 		else {
-		    if ($feat_type !~ /align/i && $row->{'label'}) {
+		    if ($feat_type !~ /align|RegulatoryFactor/i && $row->{'label'}) {
 			$names = sprintf('<a href="/%s/Gene/Summary?g=%s;r=%s:%d-%d">%s</a>',
 					 $object->species, $row->{'label'},
 					 $row->{'region'}, $row->{'start'}, $row->{'end'},
