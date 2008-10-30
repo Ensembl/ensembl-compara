@@ -64,6 +64,7 @@ sub karyotype {
   
   if( $self->cacheable eq 'yes' ) {
     my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
+    $image->{'border'} = 1;
     $image->set_cache_filename( $self->image_type, $self->image_name );
     return if -e $image->filename."png" && -f $image->filename."png";
   }
@@ -509,6 +510,7 @@ sub render {
     $image->{'text'}  = $self->{'button_title'};
     $image->{'name'}  = $self->{'button_name'};
     $image->{'id'}    = $self->{'button_id'};
+    $image->{'border'} = 1;
     my $image_html = $image->render_image_button();
     $self->{'hidden'}{'total_height'} = $image->{'height'};
        $image_html .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
