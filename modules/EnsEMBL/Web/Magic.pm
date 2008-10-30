@@ -45,7 +45,10 @@ sub magic      {
 ###
 ### In this case we use it as a way to warn lines to the error log
 ### to show what the script has just done!
-  warn sprintf "MAGIC < %-60.60s > %s\n",$ENV{'REQUEST_URI'},shift;
+  my $t = shift;
+  warn sprintf "MAGIC < %-60.60s > %s\n",$ENV{'REQUEST_URI'},$t if 
+    $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+    $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MAGIC_MESSAGES;
 }
 
 sub carpet { 
