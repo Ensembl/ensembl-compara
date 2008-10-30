@@ -25,7 +25,7 @@ sub content {
   ## Check this is genuinely from the web code, not injection of arbitrary HTML
   my $checksum = $self->object->param('checksum');
   my $message = $self->object->param('command_message');
-  if (EnsEMBL::Web::Tools::Encryption::validate_checksum($message, $checksum)) {
+  if (EnsEMBL::Web::Tools::Encryption::checksum($message) eq $checksum) {
     $html = $message;
   }
   return $html;
