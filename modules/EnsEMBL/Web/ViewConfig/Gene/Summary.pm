@@ -15,4 +15,6 @@ sub init {
   $view_config->default_config = 'gene_summary';
   $view_config->storable = 1;
 }
+
+sub form {}
 1;

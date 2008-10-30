@@ -13,6 +13,9 @@ sub init {
   $view_config->add_image_configs({qw(
     cytoview das
   )});
+  $view_config->default_config = 'cytoview';
   $view_config->storable = 1;
 }
+
+sub form {}
 1;

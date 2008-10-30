@@ -25,4 +25,6 @@ sub init {
   ));
   $view_config->storable = 1;
 }
+
+sub form {}
 1;
