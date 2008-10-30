@@ -30,10 +30,13 @@ sub process {
     my $content;
 
     if ($self->cache) {
-    ## Check the cache
+      ## Check the cache
       my $key = $request->uri->path_query;
-      $key   .= '::SESSION['.$self->{session}->get_session_id.']'
-        if $self->{session} && $self->{session}->get_session_id;
+      $key .= '::SESSION['.$self->session->get_session_id.']'
+                if $self->session && $self->session->get_session_id;
+      $key .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]"
+                if $ENV{'ENSEMBL_IMAGE_WIDTH'};
+
       $content = $self->cache->get($key);
     }
 

@@ -18,8 +18,9 @@ sub new {
   return $self;
 }
 
-sub r     :lvalue { $_[0]->{r} }
-sub cache :lvalue { $_[0]->{cache} }
+sub r       :lvalue { $_[0]->{r} }
+sub cache   :lvalue { $_[0]->{cache} }
+sub session :lvalue { $_[0]->{session} }
 
 sub valid   {1}
 sub fh      {}
