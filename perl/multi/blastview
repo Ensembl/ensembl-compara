@@ -1399,8 +1399,8 @@ sub get_main_panel{
         $main_panel->add_block();
         $main_panel->add_block_header({ LABEL => $toggle.$label });
         if( $CGI->param($toggleparam) ){
-          &draw_hsp_vs_query( $main_panel, $runnable, $result, 
-                              $alignments, );
+          #&draw_hsp_vs_query( $main_panel, $runnable, $result, 
+          #                    $alignments, );
         }
       }
 
@@ -1818,19 +1818,16 @@ sub populate_karyotype{
   my $site_type= $SPECIES_DEFS->get_config( $sp, 'ENSEMBL_SITETYPE'    );
 
   my $session      = $ENSEMBL_WEB_REGISTRY->get_session;
-  my $web_config   = $session->getImageConfig('Vkaryotype');
+  my $web_config   = $session->getImageConfig('Vkaryoblast');
 
   my $num_chrs = scalar( @$chrs_ref );
   $web_config->set_parameter('rows',  int( ($num_chrs-1)/12 ) + 1);
   $web_config->set_parameter('chromosomes', $chrs_ref);
   $web_config->set_parameter('all_chromosomes', 'yes');
   $web_config->set_parameter('container_width', $chr_maxln );
-  warn "MAX ".$web_config->container_width;
-  warn "WIDTH  ".$web_config->get_parameter('image_width');
-  warn "HEIGHT ".$web_config->get_parameter('image_height');
   
   my $karyo_dc = Bio::EnsEMBL::VDrawableContainer->new(
-    { '_config_file_name_' => $sp, ka=>$ka, sa=>$sa, 'chr' => 'ALL' }, $web_config, [ \%highlights, \%highlights2 ] 
+    { 'web_species' => $sp, ka=>$ka, sa=>$sa, 'chr' => 'ALL' }, $web_config, [ \%highlights, \%highlights2 ] 
   );
   
   my $fi = new EnsEMBL::Web::File::Image( $SPECIES_DEFS );
@@ -1839,10 +1836,10 @@ sub populate_karyotype{
      $fi->{'img_map'} = 1;
 
   $main_panel->add_entry();
-  my $html = qq(<TABLE align="center" border="0" cellspacing="0" cellpadding="2">
-   <TR valign="top">
-     <TD nowrap align="center" colspan="2"
-       >).$fi->render_image_tag().qq(</TD></TR></TABLE>).$fi->render_image_map();
+  my $html = qq(<table align="center" border="0" cellspacing="0" cellpadding="2">
+   <tr valign="top">
+     <td nowrap align="center" colspan="2"
+       >).$fi->render_image_tag().qq(</td></td></table>).$fi->render_image_map();
   $main_panel->add_form( $main_panel->get_form_label( $html ) );
   return 1;
 }
@@ -1883,7 +1880,7 @@ sub draw_hsp_vs_query{
 <td width="8"><small>&nbsp;</small></td>);
 
   my $bucket = EnsEMBL::Web::Container::HSPContainer->new($result, $aligns);
-  my $uconf  = $ENSEMBL_WEB_REGISTRY->get_session->getUserConfig('hsp_query_plot');
+  my $uconf  = $ENSEMBL_WEB_REGISTRY->get_session->getImageConfig('hsp_query_plot');
   my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket, $uconf);
 
   my $fi = new EnsEMBL::Web::File::Image( $SPECIES_DEFS );
