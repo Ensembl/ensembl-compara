@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Component::Interface::OnSuccess;
+package EnsEMBL::Web::Component::Interface::OnFailure;
 
 ### Module to create generic database feedback for Document::Interface and its associated modules
 
@@ -20,7 +20,11 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $html = qq(<p>Sorry, there was a problem saving your changes.</p>);
+  my $html;
+  my $content = $self->object->interface->panel_content('on_failure');
+  unless ($html = $content) {
+    $html = qq(<p>Sorry, there was a problem saving your changes.</p>);
+  }
   return $html;
 }
 
