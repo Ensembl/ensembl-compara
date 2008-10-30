@@ -37,10 +37,9 @@ sub process {
   $interface->panel_header({'preview'=>qq(<p>Please check that you have entered your details correctly, then click on the button to save them to our database and send your activation email.</p>)});
   $interface->caption({
       'add' => 'Register for '.$sitetype, 
-      'on_failure'=>'Registration Failed'
   });
   $interface->on_success($self->url('/Account/SendActivation'));
-  $interface->on_failure('EnsEMBL::Web::Component::Interface::Account::failed_registration');
+  $interface->on_failure($self->url('/Account/RegistrationFailed'));
   $interface->script_name($self->get_action->script_name);
 
 ## Form elements
