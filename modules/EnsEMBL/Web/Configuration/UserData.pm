@@ -51,7 +51,8 @@ sub populate_tree {
     [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
   ));
   $attached_menu->append($self->create_node( 'ManageRemote', "Manage Data",
-    [], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
+    [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageRemote)
+    ], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
   ));
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
@@ -167,7 +168,7 @@ sub attach_das {
 
 }
 
-sub save_das {
+sub save_remote {
   my $self   = shift;
   my $object = $self->{'object'};
 
@@ -191,10 +192,11 @@ sub attach_url {
   my $wizard = $self->wizard;
   my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
   
-  my $session = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_session');
-  my $warning = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'overwrite_warning' );
-  my $select  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'select_url');
-  my $attach  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'attach_url');
+  my $session   = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_session');
+  my $warning   = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'overwrite_warning' );
+  my $select    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_url');
+  my $attach    = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'attach_url');
+  my $feedback  = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'url_feedback');
 
   ## SET UP CONNECTION BUTTONS
   $wizard->add_connection( from => $warning,  to => $select);
