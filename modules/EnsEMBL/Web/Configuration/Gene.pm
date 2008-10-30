@@ -246,7 +246,7 @@ sub ajax_zmenu      {
     return $self->_ajax_zmenu_variation($panel, $obj);
   }
   if( $action =~ 'Compara_Tree_Node' ){
-    return $self->_ajax_zmenu_compara_tree_node();
+    return $self->_ajax_zmenu_compara_tree_node($panel);
   }
 
   my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
@@ -286,7 +286,7 @@ sub ajax_zmenu      {
     # Link to TreeFam
     # Currently broken!
     warn( "==> @$obj" );
-    if( my $treefam_link = $obj->get_ExtUrl($obj->stable_id, 'TREEFAM') ){
+    if( my $treefam_link = $obj->get_ExtURL( 'TREEFAM', $obj->stable_id ) ){
       $panel->add_entry({
         'type'     => 'TreeFam',
         'label'    => 'TreeFam',
@@ -336,7 +336,7 @@ sub ajax_zmenu      {
 sub _ajax_zmenu_compara_tree_node{
   # Specific zmenu for compara tree nodes
   my $self = shift;
-  my $panel = $self->_ajax_zmenu;
+  my $panel = shift;
   my $obj = $self->object;
 
   my $collapse = $obj->param('collapse');
