@@ -39,8 +39,8 @@ sub _init {
       $h = 8 + $th*2;
       my $tmp_width = ($w*2+$res[2]) / $pix_per_bp;
       if ( ($end - $start + 1) > $tmp_width ) {
-	$start = ( $end + $start-$tmp_width )/2;
-	$end =  $start+$tmp_width ;
+	      $start = ( $end + $start-$tmp_width )/2;
+	      $end =  $start+$tmp_width ;
       }
       if( $res[0] ne $label ) {
         @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $label,'', 'font'=>$fontname, 'ptsize' => $fontsize );
@@ -62,19 +62,19 @@ sub _init {
       for (my $i = 0; $i < 3; $i ++ ) {
         my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, $alleles[$i],'', 'font'=>$fontname, 'ptsize' => $fontsize );
         my $tmp_width = $res[2]/$pix_per_bp;
-	my $textglyph = $self->Text({
+	      my $textglyph = $self->Text({
           'x'          => ( $end + $start  - 1 - $tmp_width)/2,
           'y'          => 3 + ($th+2) * $i,
           'width'      => $tmp_width,
           'textwidth'  => $res[2],
           'height'     => $th,
-        'font'       => $fontname,
-        'ptsize'     => $fontsize,
+          'font'       => $fontname,
+          'ptsize'     => $fontsize,
           'colour'     => 'black',
           'text'       => $alleles[$i],
           'absolutey'  => 1,
-							  });
-	$self->push( $textglyph );
+				});
+	      $self->push( $textglyph );
       }
     }
     my $type = lc($snp->display_consequence); 
@@ -105,8 +105,12 @@ sub _init {
 sub href {
   my ($self, $f ) = @_;
   my $variation_id = $f->variation_name;
-  my $dbid = $f->dbID;
-  my $href = $self->_url({'action'  => 'Variation', 'vid'     => $variation_id, 'dbid'    => $dbid, 'snp_fake' => 1});
+  my $transcript;
+  foreach my $tvf (@{$f->{'transcriptVariations'}}){
+   $transcript = $tvf->transcript->stable_id;
+  } 
+  my $dbid = $f->dbID; 
+  my $href = $self->_url({'action'  => 'Variation', 'vid'     => $variation_id, 'dbid'    => $dbid, 'vt' => $transcript, 'snp_fake' => 1});
 
   return $href;
 }
