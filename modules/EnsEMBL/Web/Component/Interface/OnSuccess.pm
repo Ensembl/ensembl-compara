@@ -20,18 +20,22 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $script = $self->script_name($self->object);
-  my $html = qq(<p>Your changes were saved to the database.
+  my $html;
+
+  my %content = $self->object->interface->panel_content;
+  unless ($html = $content{'on_success'}) {
+    my $script = $self->script_name($self->object);
+    $html = qq(<p>Your changes were saved to the database.
 <ul>
 <li><a href="/$script?dataview=add">Add another record</a></li>
 <li><a href="/$script?dataview=select_to_edit">Select a record to edit</a></li>
 );
-  if ($self->object->interface->permit_delete) {
-    $html .= qq(<li><a href="/$script?dataview=select_to_delete">Select a record to delete</a></li>
+    if ($self->object->interface->permit_delete) {
+      $html .= qq(<li><a href="/$script?dataview=select_to_delete">Select a record to delete</a></li>
 );
+    }
+    $html .= '</ul>';
   }
-  $html .= '</ul>';
-
   return $html;
 }
 
