@@ -10,6 +10,7 @@ use CGI qw(escapeHTML);
 use Data::Dumper;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::Text;
+use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -52,14 +53,9 @@ sub content {
     'Gene'                => ['blue','lharrow'],
     'OligoProbe'          => ['red', 'rharrow'],
     'XRef'                => ['red', 'rharrow'],
-    'UserData'            => ['darkgreen', 'lharrow'],
+    'UserData'            => ['purple', 'lharrow'],
   );
   
-  ## Check if there is userdata in session
-  my $userdata = $object->get_session->get_tmp_data;
-
-  #warn keys %$userdata; 
-  ## Do we have feature "tracks" to display?
   my $hidden = {
     'karyotype'   => 'yes',
     'max_chr'     => $ideo_height,
@@ -69,12 +65,45 @@ sub content {
     'end'         => $object->seq_region_end,
   };
 
-  if( $userdata && $userdata->{'filename'} ) {
+  ## Check if there is userdata
+  ## TODO: this needs to come from control panel
+  my $userdata = $object->get_session->get_tmp_data;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $has_userdata;
+  my @uploads;
+  if ($user) {
+    @uploads = $user->uploads;
+  }
+  if( $userdata || @uploads ) {
+    $has_userdata = 1;
     ## Set some basic image parameters
     $image->imagemap = 'no';
     $image->caption = 'Click on the image above to jump to an overview of the chromosome';
    
     ## Create pointers from user data
+    if ($userdata->{'filename'}) {
+      my $temp_pointers = $self->create_userdata_pointers($image, $userdata, $pointer_defaults{'UserData'});
+      $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]); ## Userdata setting overrides any other tracks
+      push(@$pointers, $temp_pointers);
+    }
+    foreach my $upload (@uploads) {
+      my @logic_names = split(', ', $upload->analyses);
+      foreach my $logic_name (@logic_names) {
+        my $upload_features = $object->retrieve_userdata;
+        my $upload_pointers = $image->add_pointers( $object, {
+          'config_name'  => 'Vkaryotype',
+          'features'      => $upload_features,
+          'color'         => $pointer_defaults{'UserData'}[0],
+          'style'         => $pointer_defaults{'UserData'}[1]
+        });
+        $object->param('aggregate_colour', $pointer_defaults{'UserData'}[0]); 
+        push(@$pointers, $upload_pointers);
+      }
+    }
+  } 
+
+  my $table;
+  if ($object->param('id')) { ## "FeatureView"
     my $pointer_set = $self->create_userdata_pointers($image, $userdata, $pointer_defaults{'UserData'});
     $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]); ## Userdata setting overrides any other tracks
     push(@$pointers, $pointer_set);
@@ -92,16 +121,16 @@ sub content {
     my $i = 0;
     my $zmenu_config;
     foreach my $ftype  (@f_hashes) {
-	my $pointer_ref = $image->add_pointers( $object, {
-	    'config_name'  => 'Vkaryotype',
-	    'features'      => \@f_hashes,
-	    'zmenu_config'  => $zmenu_config,
-	    'feature_type'  => $ftype,
-	    'color'         => $object->param("col_$i")   || $pointer_defaults{$ftype->[2]}[0],
-	    'style'         => $object->param("style_$i") || $pointer_defaults{$ftype->[2]}[1]}
-					    );
-	push(@$pointers, $pointer_ref);
-	$i++;
+	    my $pointer_ref = $image->add_pointers( $object, {
+	      'config_name'  => 'Vkaryotype',
+	      'features'      => \@f_hashes,
+	      'zmenu_config'  => $zmenu_config,
+	      'feature_type'  => $ftype,
+	      'color'         => $object->param("col_$i")   || $pointer_defaults{$ftype->[2]}[0],
+	      'style'         => $object->param("style_$i") || $pointer_defaults{$ftype->[2]}[1]}
+			);
+	    push(@$pointers, $pointer_ref);
+	    $i++;
     }
   } 
   if (!@$pointers) { ## Ordinary "KaryoView"
@@ -115,8 +144,8 @@ sub content {
   $html .= $image->render;
   $html .= $table;
 
-  if (@$pointers) {
-      ## User data - do nothing at the moment
+  if (@$pointers && $has_userdata) {
+    $html .= '<br /><p>Your uploaded data is displayed on the karyotype above, using '.$pointer_defaults{'UserData'}[0].' arrow pointers</p>';
   }
   else {
     my $file = '/ssi/species/stats_'.$object->species.'.html';
