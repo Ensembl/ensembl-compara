@@ -459,16 +459,15 @@ sub get_Slice {
 sub get_transcript_Slice {
 
   ### TSV
-
-  my( $self, $context, $ori ) = @_;
-
+  my $count = 0;
+  my( $self, $context, $ori ) = @_; 
   my $db  = $self->get_db ;
-  my $slice = $self->Obj->feature_Slice;
+  my $slice = $self->Obj->feature_Slice; 
   if( $context =~ /(\d+)%/ ) {
     $context = $slice->length * $1 / 100;
   }
   if( $ori && $slice->strand != $ori ) {
-    $slice = $slice->invert();
+    $slice = $slice->invert(); 
   }
   return $slice->expand( $context, $context );
 }
@@ -611,17 +610,17 @@ sub getFakeMungedVariationsOnSlice {
 
 sub getAllelesConsequencesOnSlice {
   my( $self, $sample, $key, $sample_slice ) = @_;
-
+ 
   # If data already calculated, return
-  my $allele_info = $self->__data->{'sample'}{$sample}->{'allele_info'};
-  my $consequences = $self->__data->{'sample'}{$sample}->{'consequences'};
+  my $allele_info = $self->__data->{'sample'}{$sample}->{'allele_info'};  
+  my $consequences = $self->__data->{'sample'}{$sample}->{'consequences'};    
   return ($allele_info, $consequences) if $allele_info && $consequences;
 
   # Else
-  my $valids = $self->valids;
+  my $valids = $self->valids; 
 
   # Get all features on slice
-  my $allele_features = $sample_slice->get_all_AlleleFeatures_Slice || [];
+  my $allele_features = $sample_slice->get_all_AlleleFeatures_Slice || []; 
   return ([], []) unless @$allele_features;
 
   my @filtered_af =
@@ -642,7 +641,6 @@ sub getAllelesConsequencesOnSlice {
        # [ AF, offset ]   Map to fake coords.   Create a munged version AF
        map  { [$_, $self->munge_gaps( $key, $_->start, $_->end)] }
 	 @$allele_features;
-
   return ([], []) unless @filtered_af;
 
   # consequences of AlleleFeatures on the transcript
@@ -721,12 +719,12 @@ sub get_samples {
   }
 
   my $individual_adaptor = $vari_adaptor->get_IndividualAdaptor;
-
+ 
   if ($options eq 'default') {
     return sort  @{$individual_adaptor->get_default_strains};
   }
 
-  my %default_pops;
+  my %default_pops; 
   map {$default_pops{$_} = 1 } @{$individual_adaptor->get_default_strains};
   my %db_pops;
   foreach ( sort  @{$individual_adaptor->get_display_strains} ) {
@@ -749,12 +747,11 @@ sub get_samples {
     return sort @pops;
   }
   else { #get configured samples 
-    my %configured_pops = (%default_pops, %db_pops); 
-    my @pops; warn $view_config;
-    foreach my $k (keys %$view_config){ warn $k;}
-    foreach my $sample (sort $view_config->options) { warn $sample;
-      next unless $sample =~ s/opt_pop_//; 
-      next unless $view_config->get("opt_pop_$sample") eq 'on';
+    my %configured_pops = (%default_pops, %db_pops);  
+    my @pops; 
+    foreach my $sample (sort $view_config->options) { 
+      next unless $sample =~ s/opt_pop_//;  
+      next unless $view_config->get("opt_pop_$sample") eq 'on'; 
       push @pops, $sample if $configured_pops{$sample};
     }
     return sort @pops;
@@ -840,13 +837,13 @@ sub read_coverage {
 
   my ( $self, $sample, $sample_slice) = @_;
 
-  my $individual_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
+  my $individual_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor; 
   my $sample_objs = $individual_adaptor->fetch_all_by_name($sample);
   return ([],[]) unless @$sample_objs; 
-  my $sample_obj = $sample_objs->[0];
+  my $sample_obj = $sample_objs->[0]; 
 
-  my $rc_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_ReadCoverageAdaptor;
-  my $coverage_level = $rc_adaptor->get_coverage_levels;
+  my $rc_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_ReadCoverageAdaptor; 
+  my $coverage_level = $rc_adaptor->get_coverage_levels; 
   my $coverage_obj = $rc_adaptor->fetch_all_by_Slice_Sample_depth($sample_slice, $sample_obj); 
   return ($coverage_level, $coverage_obj);
 }
@@ -858,7 +855,7 @@ sub munge_read_coverage {
    my ($self, $coverage_obj ) = @_;
   my @filtered_obj =
     sort { $a->[2]->start <=> $b->[2]->start }
-    map  { $self->munge_gaps_split( "TSV_transcript", $_->start, $_->end, $_ ) }
+    map  { $self->munge_gaps_split( "tsv_transcript", $_->start, $_->end, $_ ) }
     @$coverage_obj;
   return  \@filtered_obj;
 }
@@ -929,7 +926,7 @@ sub gene{
 =cut
 
 sub translation_object {
-  my $self = shift;
+  my $self = shift;  
   unless( exists( $self->{'data'}{'_translation'} ) ){
     my $translation = $self->transcript->translation;
     if( $translation ) {
