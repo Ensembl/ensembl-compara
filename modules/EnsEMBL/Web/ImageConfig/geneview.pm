@@ -19,7 +19,7 @@ sub init {
   });
 
   $self->create_menus(
-    'transcript' => 'Genes',
+    'transcript' => 'Other genes',
     'prediction' => 'Prediction transcripts',
     'other'      => 'Decorations',
   );

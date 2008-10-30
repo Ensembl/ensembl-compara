@@ -16,7 +16,7 @@ sub init {
 
   $self->create_menus(
     'sequence'   => 'Sequence',
-    'transcript' => 'Genes',
+    'transcript' => 'Other genes',
     'prediction' => 'Prediction transcripts',
     'variation'  => 'Variaton features',
     'functional' => 'Functional genomics',
