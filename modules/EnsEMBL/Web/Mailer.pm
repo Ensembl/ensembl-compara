@@ -85,7 +85,8 @@ sub send {
   });
   
   print $mailer $self->get_message;
-  $mailer->close();
+  $mailer->close()
+    or die "couldn't send whole message: $!\n";
 }
 
 }
