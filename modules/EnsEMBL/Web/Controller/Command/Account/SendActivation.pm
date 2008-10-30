@@ -24,10 +24,11 @@ sub process {
 
   my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   if ($cgi->param('record_id')) {
-      $cgi->redirect(
+      $self->ajax_redirect(
 		     $self->url('/Account/Activate', 
 				{'email' => $user->email, 'code' => $user->salt, 'url' => '/Account/Details;record_id='.CGI::escape($cgi->param('record_id'))}));
-  } else {
+  } 
+  else {
     if ($user && $user->email) {
       my $mailer = EnsEMBL::Web::Mailer::User->new;
       $mailer->set_to($user->email);
@@ -38,6 +39,8 @@ sub process {
       );
       $self->set_message(qq(<p>An email has been sent for each account associated with this address and should arrive shortly.</p><p>If you do not receive a message from us within a few hours, please check any spam filters on your email account, and <a href="mailto:helpdesk\@ensembl.org">contact Helpdesk</a> if you still cannot find the message.</p>));
     }
+    ## Force this to use AJAX
+    $cgi->param('x_requested_with', 'XMLHttpRequest');
     $self->render_message;
   }
 }
