@@ -98,7 +98,7 @@ sub delete_userdata {
  
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($user) {
-    my ($upload) = $user->uploads('user_record_id' => $id);
+    my ($upload) = $user->uploads($id);
     if ($upload) {
       my $species = $upload->species;
       my @analyses = split(', ', $upload->analyses);
