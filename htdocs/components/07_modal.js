@@ -261,6 +261,7 @@ function __modal_onload() {
     s.show();
     s.removeClassName( 'modal_link' );  // Make sure that this only gets run once per link... we will need to re-run this once AJAX has finished loading!!
   });
+  $('local-tools').show();
   if( ENSEMBL_AJAX!='enabled' || $('modal_bg') ) return;
   $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_disable',style: 'display:none;' + ( Prototype.Browser.IE ? 'filter:alpha(opacity=25)':'opacity:0.25') }));
   $$('body')[0].appendChild(Builder.node( 'div', { id:'modal_bg',     style: 'display:none;' + ( Prototype.Browser.IE ? 'filter:alpha(opacity=25)':'opacity:0.25') }));
