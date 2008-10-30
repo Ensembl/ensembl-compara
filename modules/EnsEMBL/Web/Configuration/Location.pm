@@ -32,7 +32,7 @@ sub configurator   { return $_[0]->_configurator;   }
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Genome', "Whole Genome",
+  $self->create_node( 'Genome', "Whole genome",
     [qw(genome EnsEMBL::Web::Component::Location::Genome)],
     { 'availability' => 'karyotype'},
   );
@@ -98,12 +98,18 @@ sub populate_tree {
 	align   EnsEMBL::Web::Component::Location::SequenceAlignment)],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
-  
+
+  $self->create_node( 'Marker', "Markers",
+     [ qw(botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
+	  marker EnsEMBL::Web::Component::Location::MarkerDetails) ],
+     { 'availability' => 'slice' }
+  );
+
   my $export_menu = $self->create_node( 'Export', "Export location data",
      [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/location" ],
      { 'availability' => 'slice' }
   );
-  
+
   my $format = { 
     fasta => 'FASTA',
     csv => 'CSV (Comma separated values)',
@@ -112,7 +118,7 @@ sub populate_tree {
     embl => 'EMBL',
     genbank => 'GenBank'
   };
-  
+
   foreach (keys %$format) {
     $export_menu->append($self->create_subnode( "Export/$_", "Export location data as $format->{$_}",
       [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/location_$_" ], # TODO: UNHACK!
