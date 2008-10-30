@@ -48,7 +48,6 @@ sub _init {
     my $colour = $colour_map->{$snp_type}->{'default'};
     my $aa_change = $cod_snp->pep_allele_string;
     
-    my @tmp = $aa_change ? ("10:amino acid: $aa_change", '' ) : ();
 
     my $S =  ( $snpref->[0]+$snpref->[1] )/2;
     my @res = $self->get_text_width( 0, $aa_change, '', 'font'=>$fontname, 'ptsize' => $fontsize );
@@ -66,23 +65,14 @@ sub _init {
       'absolutey' => 1,
     });
     $W += 4/$pix_per_bp;
-    my $allele =  $snp->allele_string;
-    my $chr_start = $snp->start() + $offset;
-    my $chr_end   = $snp->end() + $offset;
-    my $pos =  $chr_start;
-    if( $chr_end < $chr_start ) {
-      $pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
-    } elsif($chr_end > $chr_start ) {
-      $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
-    }
-#    my $href = "/@{[$self->{container}{web_species}]}/snpview?snp=@{[$snp->variation_name]};source=@{[$snp->source]};chr=$seq_region_name;vc_start=$chr_start";
 
-    my $dbid = $snp->dbID;  
+    my $dbid = $cod_snp->dbID;  
     my $variation_id = $snp->variation_name; 
     my $href = $self->_url
     ({'action'  => 'Variation',
-      'vid'     => $variation_id,
+      'v'     => $variation_id,
       'dbid'    => $dbid,
+      'var_box' => 1,
     });
 
     my $type      = join ", ", @{$cod_snp->consequence_type || [] }; 
