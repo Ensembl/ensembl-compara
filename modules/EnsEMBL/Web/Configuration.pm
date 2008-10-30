@@ -3,19 +3,20 @@ package EnsEMBL::Web::Configuration;
 use strict;
 use warnings;
 no warnings qw(uninitialized);
-use base qw(EnsEMBL::Web::Root);
 
 use POSIX qw(floor ceil);
 use CGI qw(escape);
+use Time::HiRes qw(time);
+
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::RegObj;
 
+use base qw(EnsEMBL::Web::Root);
 
 our $MEMD = new EnsEMBL::Web::Cache;
-use Time::HiRes qw(time);
 
 sub object { 
   return $_[0]->{'object'};
@@ -40,26 +41,55 @@ sub new {
   };
   bless $self, $class;
 
-  my $we_can_have_a_user_tree = $self->can('user_populate_tree');
+  my $user    = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $we_can_have_a_user_tree = $self->can('user_populate_tree') && $user && $session;
 
+  ## Trying to get user+session version of the tree from cache
+  my $tree = ($we_can_have_a_user_tree && $MEMD)
+           ? $MEMD->get($class->tree_key($user, $session))
+           : undef;
+  
+  ## If no user+session tree found, build one
+  unless ($tree) {
+    ## Trying to get default tree from cache
+    $tree = $MEMD->get($class->tree_key) if $MEMD;
 
-  my $tree = $MEMD ? $MEMD->get($class->tree_key) : undef;
-  if ($tree) {
-    $self->{_data}{tree} = $tree;
-  } else {
-    $self->populate_tree;
-    $MEMD->set($class->tree_key, $self->{_data}{tree}, undef, 'TREE') if $MEMD;
+    if ($tree) {
+      $self->{_data}{tree} = $tree;
+    } else {
+      $self->populate_tree;
+      ## Cache default tree
+      $MEMD->set($class->tree_key, $self->{_data}{tree}, undef, 'TREE') if $MEMD;
+    }
+
+    if ($we_can_have_a_user_tree) {
+      $self->user_populate_tree if $we_can_have_a_user_tree;
+      ## Cache user+session tree version
+      $MEMD->set(
+        $class->tree_key($user, $session),
+        $self->{_data}{tree},
+        undef,
+        'TREE', keys %{ $ENV{CACHE_TAGS}||{} }
+      ) if $MEMD;
+      
+    }
   }
-
-  $self->user_populate_tree if $we_can_have_a_user_tree;
 
   $self->set_default_action;
   return $self;
 }
 
 sub tree_key {
-  my $class = shift;
-  return "::${class}::$ENV{ENSEMBL_SPECIES}::TREE";
+  my ($class, $user, $session) = @_;
+  my $key = "::${class}::$ENV{ENSEMBL_SPECIES}::TREE";
+
+  if ($user && $session) {
+    $key .= '::USER['    . $user->id                . ']';
+    $key .= '::SESSION[' . $session->get_session_id . ']';
+  }
+  
+  return $key;
 }
 
 sub tree {
