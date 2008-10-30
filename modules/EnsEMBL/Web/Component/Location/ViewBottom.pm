@@ -31,7 +31,7 @@ sub content {
   my $slice = $object->slice;
   my $length = $slice->end - $slice->start + 1;
   my $T = time;
-  my $wuc = $object->image_config_hash( 'contigviewbottom' );
+  my $wuc    = $object->image_config_hash( 'contigviewbottom' );
   $T = sprintf "%0.3f", time - $T;
   $wuc->tree->dump("View Bottom configuration [ time to generate $T sec ]", '([[caption]])')
     if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
@@ -43,30 +43,33 @@ sub content {
   });
 
 ## Lets see if we have any das sources....
-  my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{ $_->get('logicnames')||[] } : () }  $wuc->tree->nodes;
-  if( @das_nodes ) {
-    my %T         = %{ $ENSEMBL_WEB_REGISTRY->get_all_das( $object->species ) || {}  };
-    my @das_sources = @T{ @das_nodes };
-    if( @das_sources ) {
-      my $das_co = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
-        -sources => \@das_sources,
-        -proxy   => $object->species_defs->ENSEMBL_WWW_PROXY,
-        -noproxy => $object->species_defs->ENSEMBL_NO_PROXY,
-        -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT
-      );
-      $wuc->cache( 'das_coord', $das_co );
-    }
-  } 
+  $self->_attach_das( $wuc );
   
-#  warn "DAS SOURCES @das_sources";
-  
-  $wuc->_update_missing( $object );
+  my $info = $wuc->_update_missing( $object );
+  my $wuc_2  = $object->image_config_hash( 'contigviewtop' );
+  my $info_2 = $wuc_2->_update_missing( $object );
+
+  my $extra_message = '';
+  if( $object->param( 'panel_top' ) eq 'yes' ) {
+    $extra_message .= sprintf 'You currently have the %d tracks in the overview panel and %d tracks in the main panel turned off', $info_2->{'count'}, $info->{'count'};
+  } else {
+    $extra_message .= sprintf 'You currently have the overview panel and %d tracks on the main panel turned off', $info->{'count'};
+  }
+
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->{'panel_number'} = 'bottom';
      $image->imagemap = 'yes';
 
      $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
-  return $image->render;
+  my $html = $image->render;
+  $html .= $self->_info(
+    'Configuring the display',
+    sprintf '
+  <p>
+    %s, to change the tracks you are displaying use the "<strong>Configure this page</strong>" link on the left to change the tracks you wish to see.
+  </p>', $extra_message
+  );
+  return $html;
 }
 
 

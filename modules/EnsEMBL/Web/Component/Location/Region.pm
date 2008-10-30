@@ -27,12 +27,19 @@ sub content {
     'slice_number'    => '1|2'
   });
 
-  $wuc->_update_missing( $object );
+  $self->_attach_das( $wuc );
+
+  my $info = $wuc->_update_missing( $object );
+
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'top';
      $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
-  return $image->render;
+
+  my $html = $image->render;
+  $html .= $self->_configure_display( $info->{'count'} );
+  return $html;
+
 }
 
 1;

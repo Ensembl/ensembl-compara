@@ -14,6 +14,36 @@ no warnings "uninitialized";
 
 use POSIX qw(floor ceil);
 
+sub _attach_das {
+  my( $self, $wuc ) = @_;
+  my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{ $_->get('logicnames')||[] } : () }  $wuc->tree->nodes;
+  if( @das_nodes ) {
+    my %T         = %{ $ENSEMBL_WEB_REGISTRY->get_all_das( $self->object->species ) || {}  };
+    my @das_sources = @T{ @das_nodes };
+    if( @das_sources ) {
+      my $das_co = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
+        -sources => \@das_sources,
+        -proxy   => $self->object->species_defs->ENSEMBL_WWW_PROXY,
+        -noproxy => $self->object->species_defs->ENSEMBL_NO_PROXY,
+        -timeout => $self->object->species_defs->ENSEMBL_DAS_TIMEOUT
+      );
+      $wuc->cache( 'das_coord', $das_co );
+    }
+  }
+}
+
+sub _configure_display {
+  my( $self, $message ) = @_;
+  $message = sprintf 'You currently have %d tracks on the display turned off', $message if $message =~ /^\d+$/;
+  return $self->_info(
+    'Configuring the display',
+    sprintf '
+  <p>
+    %s, to change the tracks you are displaying use the "<strong>Configure this page</strong>" link on the left to change the tracks you wish to see.
+  </p>', $message
+  );
+}
+
 sub default_otherspecies {
   ## Needs moving to viewconfig so we don't have to work it out each time
   my $self = shift;
