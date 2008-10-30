@@ -863,7 +863,7 @@ sub store_TransformedTranscripts {
 
 sub store_TransformedSNPS {
   my $self = shift;
-  my $valids = $self->valids; warn $valids;
+  my $valids = $self->valids; 
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
     my $T = $trans_obj->stable_id;
     my $snps = {};
