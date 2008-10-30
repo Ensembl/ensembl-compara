@@ -727,10 +727,10 @@ sub add_protein_feature {
   my( $self, $key, $hashref ) = @_;
 
   my %menus = (
-    'domain'     => [ 'domain',  'P_domain', 'normal' ],
-    'feature'    => [ 'feature', 'P_feature', 'normal' ],
-    'alignment'  => [ 'alignment', 'P_domain', 'off' ],
-    'gsv_domain' => [ 'domain',  'gsv_domain']
+    'domain'     => [ 'domain',    'P_domain',   'normal' ],
+    'feature'    => [ 'feature',   'P_feature',  'normal' ],
+    'alignment'  => [ 'alignment', 'P_domain',   'off'    ],
+    'gsv_domain' => [ 'domain',    'gsv_domain', 'normal' ]
   );
   ## We have two separate glyphsets in this in this case
   ## P_feature and P_domain - plus domains get copied onto gsv_generic_domain as well...
@@ -745,12 +745,10 @@ sub add_protein_feature {
     my $type = $menus{$menu_code}[0];
     my $gset = $menus{$menu_code}[1];
     my $renderer =  $menus{$menu_code}[2];
-    next if ($renderer eq 'off');
     foreach my $key_2 ( @$keys ) {
       next if $self->tree->get_node( $type.'_'.$key_2 );
       next if $type ne $data->{$key_2}{'type'}; ## Don't separate by db in this case!
       $menu->append( $self->create_track( $type.'_'.$key_2, $data->{$key_2}{'name'}, {
-#        'db'          => $key,
         'strand'      => $gset =~ /P_/ ? 'f' : 'b',
         'depth'       => 1e6,
         'glyphset'    => $gset,
@@ -759,7 +757,7 @@ sub add_protein_feature {
         'caption'     => $data->{$key_2}{'caption'},
         'colourset'   => 'protein_feature',
         'description' => $data->{$key_2}{'description'},
-        'display'     => 'normal', ## Default to on at the moment - change to off by default!
+        'display'     => $renderer, ## Default to on at the moment - change to off by default!
         'renderers'   => [qw(off Off normal Normal)],
       }));
     }
