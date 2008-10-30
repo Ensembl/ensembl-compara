@@ -38,7 +38,7 @@ sub content {
       { 'key' => 'type',          'title' =>'Type'},     
       { 'key' => 'trans_pos',     'title' =>'Relative position in transcript', 'align' =>'center'},
       { 'key' => 'prot_pos',      'title' =>'Relative position in protein',    'align' => 'center'},
-      { 'key' => 'aa',            'title' =>'AA'},
+      { 'key' => 'aa',            'title' =>'Amino acid'},
   );
 
   
