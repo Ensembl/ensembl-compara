@@ -27,7 +27,7 @@ sub entries {
 sub render {
   my $self = shift;
   return unless @{$self->entries};
-  $self->print( q(<div id="local-tools">
+  $self->print( q(<div id="local-tools" style="display:none">
       <ul>) );
 
   foreach my $link ( @{$self->entries} ) {
