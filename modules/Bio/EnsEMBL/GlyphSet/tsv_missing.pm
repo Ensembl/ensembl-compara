@@ -12,7 +12,7 @@ sub _init {
   return unless ($self->strand() == -1);
 
 
-  my $configure_text = "The Configure this page' link in the menu on the left hand side of this page can be used to customise the exon context and types of variations displayed above.";
+  my $configure_text = "The 'Configure this page' link in the menu on the left hand side of this page can be used to customise the exon context and types of variations displayed above.";
   $self->errorTrack( $configure_text);
 
   my $counts = $self->{'config'}->{'snp_counts'};
