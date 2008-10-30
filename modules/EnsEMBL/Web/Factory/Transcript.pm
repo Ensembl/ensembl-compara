@@ -18,7 +18,7 @@ sub _help {
   <p>
     %s
   </p>', CGI::escapeHTML( $string ) ) : '';
-  my $url = $self->_url({ '__clear' => 1, 'action' => 'View', 't' => $sample{'TRANSCRIPT_PARAM'} });
+  my $url = $self->_url({ '__clear' => 1, 'action' => 'Transcript', 't' => $sample{'TRANSCRIPT_PARAM'} });
 
 
   $help_text .= sprintf( '
