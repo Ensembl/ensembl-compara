@@ -135,6 +135,11 @@ sub populate_tree {
     [],
       { 'no_menu_entry' => 1 }
   );
+  $self->create_node( 'RegistrationFailed', '',
+    [qw(reg_failed EnsEMBL::Web::Component::Account::RegistrationFailed
+        )],
+      { 'no_menu_entry' => 1 }
+  );
   $self->create_node( 'UpdateFailed', '',
     [qw(update_failed EnsEMBL::Web::Component::Account::UpdateFailed
         )],
