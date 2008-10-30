@@ -86,6 +86,7 @@ sub save {
       $url = "$script?dataview=failure";
     }
   }
+  $url .= ';_referer='.$object->param('_referer');
   
   return $url;
 }
