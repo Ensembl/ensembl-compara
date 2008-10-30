@@ -129,30 +129,32 @@ sub _draw_features {
 
         my $row = $self->bump_row( $group->{'start'}*$ppbp, $group->{'end'}*$ppbp );
         $group->{'y'} = - $strand * $row * ( $self->{h}+ $fontsize + 4);
-        $composite =  $self->Space({ ## Just draw a composite at the moment!
-          'absolutey' => 1,
-          'x'         => $s-1,
-          'width'     => $e-$s+1,
-          'y'         => $group->{y},
-          'height'    => $self->{h},
-          'colour'    => 'darkkhaki',
-          'bordercolour' => 'green',
-          'title'     => $group->{label}.' : '.$group->{id}
-        }); ## Create a composite for the group and bump it!
-        $self->push($self->Text({
-          'absolutey' => 1,
-          'x'         => $s-1+2*$self->{bppp},
-          'width'     => $e-$s+1,
-          'y'         => $group->{y}+$self->{h}+2,
-          'textwidth' => $tw,
-          'height'    => $fontsize,
-          'halign'    => 'left',
-          'valign'    => 'center',
-          'ptsize'    => $fontsize,
-          'font'      => $fontname,
-          'colour'    => $g_s->{'style'}{'fgcolor'}||'black',
-          'text'      => $group->{'label'}
-        })) if $has_labels && $group->{'label'} && $g_s->{'style'}{'label'} eq 'yes';
+        if( $group->{extent_end} >0 &&  $group->{extent_start} < $seq_len ) {
+          $composite =  $self->Space({ ## Just draw a composite at the moment!
+            'absolutey' => 1,
+            'x'         => $s-1,
+            'width'     => $e-$s+1,
+            'y'         => $group->{y},
+            'height'    => $self->{h},
+            'colour'    => 'darkkhaki',
+            'bordercolour' => 'green',
+            'title'     => $group->{label}.' : '.$group->{id}
+          }); ## Create a composite for the group and bump it!
+          $self->push($self->Text({
+            'absolutey' => 1,
+            'x'         => $s-1+2*$self->{bppp},
+            'width'     => $e-$s+1,
+            'y'         => $group->{y}+$self->{h}+2,
+            'textwidth' => $tw,
+            'height'    => $fontsize,
+            'halign'    => 'left',
+            'valign'    => 'center',
+            'ptsize'    => $fontsize,
+            'font'      => $fontname,
+            'colour'    => $g_s->{'style'}{'fgcolor'}||'black',
+            'text'      => $group->{'label'}
+          })) if $has_labels && $group->{'label'} && $g_s->{'style'}{'label'} eq 'yes';
+        }
       }
 
       foreach my $style_key (
@@ -358,6 +360,7 @@ sub composite_extent_histogram {
 
 sub composite_histogram {
   my($self,$g,$f_ref,$st) = @_; ## These have passed in the group + all the features in the group!
+  return if $g->{extent_end} <= 0;
 
   my $cp = $self->_colour_points($st);
 
@@ -464,6 +467,7 @@ sub _colour {
 
 sub composite_gradient {
   my($self,$g,$f_ref,$st) = @_;
+  return if $g->{extent_end} <= 0;
 
   my $cp = $self->_colour_points($st);
 
@@ -509,6 +513,7 @@ sub composite_extent_lineplot {
 
 sub composite_lineplot {
   my($self,$g,$f_ref,$st) = @_;
+  return if $g->{extent_end} <= 0;
   my $cp = $self->_colour_points($st);
 
   my $strand = $self->strand;
