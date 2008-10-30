@@ -110,7 +110,7 @@ sub href {
    $transcript = $tvf->transcript->stable_id;
   } 
   my $dbid = $f->dbID; 
-  my $href = $self->_url({'action'  => 'Variation', 'vid'     => $variation_id, 'dbid'    => $dbid, 'vt' => $transcript, 'snp_fake' => 1});
+  my $href = $self->_url({'action'  => 'Variation', 'v'  => $variation_id, 'dbid' => $dbid, 'vt' => $transcript, 'snp_fake' => 1});
 
   return $href;
 }
