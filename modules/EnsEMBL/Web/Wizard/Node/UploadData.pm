@@ -207,7 +207,6 @@ sub select_upload {
   my $self = shift;
   $self->title('Share Your Data');
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my @values = ();
   my ($name, $value);
 
@@ -218,11 +217,14 @@ sub select_upload {
     $value = 'session';
     push @values, {'name' => $name, 'value' => $value};
   }
-  my @user_records = $user->uploads;
-  foreach my $record (@user_records) {
-    $name = 'Saved upload: '.$record->name;
-    $value = $record->id;
-    push @values, {'name' => $name, 'value' => $value};
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user) {
+    my @user_records = $user->uploads;
+    foreach my $record (@user_records) {
+      $name = 'Saved upload: '.$record->name;
+      $value = $record->id;
+      push @values, {'name' => $name, 'value' => $value};
+    }
   }
   ## If only one record, have the checkbox automatically checked
   my $autoselect = scalar(@values) == 1 ? [$values[0]->{'value'}] : '';
