@@ -3,17 +3,10 @@ package EnsEMBL::Web::Configuration::Interface;
 ### Module to create generic panels for Document::Interface and its associated modules
 
 use strict;
-use EnsEMBL::Web::Configuration;
+use base qw( EnsEMBL::Web::Configuration );
 
-our @ISA = qw( EnsEMBL::Web::Configuration );
-
-sub populate_tree {
-### Not needed - interface gets its tree for the object being manipulated
-}
-
-sub set_default_action {
-  my $self = shift;
-}
+#sub populate_tree {}
+#sub set_default_action {}
 
 sub select_to_edit {
   ### Creates a panel containing a record selection form
@@ -167,7 +160,11 @@ sub failure {
   my $method;
   if ($option) {
     if ($option->{'type'} eq 'url') {
-      return $option->{'action'};
+      my $url = $option->{'action'};
+      if ($object->param('x_requested_with')) {
+        $url .= ($url =~ /\?/?';':'?').'x_requested_with=XMLHttpRequest';
+      }
+      return $url;
     }
     else {
       $method = $option->{'action'};
