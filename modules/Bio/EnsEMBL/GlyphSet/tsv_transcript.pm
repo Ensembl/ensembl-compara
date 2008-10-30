@@ -134,11 +134,18 @@ sub colour {
 }
 
 sub href {
-    my ($self, $transcript, $exon, %highlights ) = @_;
+    my ($self, $transcript, $exon,) = @_;
 
     my $tid = $transcript->stable_id();
+    my $eid =  $exon->stable_id;
+    my $href = $self->_url({
+      'type'   => 'Gene',
+      'action' => 'Variation_transcript',
+      'vt'      => $tid,
+      'e'      => $eid,
+    });
 
-    return "#$tid" ;
+  return $href;
 }
 
 sub zmenu {
