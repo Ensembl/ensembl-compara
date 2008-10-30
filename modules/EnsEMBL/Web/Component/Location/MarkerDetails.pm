@@ -50,20 +50,45 @@ sub render_marker_features {
     my ($found_mf)  = @_;
     my $object   = $self->object;
     my $species  = $object->species;
+    my %mfs;
+    foreach my $mf (@$found_mf) {
+	my $name = $mf->marker->display_MarkerSynonym->name;
+	my $sr_name = $mf->seq_region_name;
+	my $cs = $mf->coord_system_name;
+	push @{$mfs{$name}->{$sr_name}}, {
+	    'cs' => $cs,
+	    'mf' => $mf,
+	    'start'   => $mf->seq_region_start,
+	    'end'     => $mf->seq_region_end, };
+    }
     my $html;
-    if ( scalar(@$found_mf) > 2 ) {
-	my $c = 0;
-	my $link;
-	foreach my $mf (@$found_mf) {
-	    $c++;
-	    my $name = $mf->marker->display_MarkerSynonym->name;
-	    my $loc  = $self->get_mf_location($mf);
-	    $link .= sprintf(qq(<p><a href = "/%s/Location/Marker?m=%s;r=%s">%s</a> (%s)</p>%s),$species,$name,$loc,$name,$loc);
+    my $c =  keys %mfs;
+    #print a list if we have more than one marker
+    if ($c > 1 ) {
+	$html = qq(<h3>$c mapped markers found:</h3>);
+	$html .= "<table>";
+	foreach my $name (sort keys %mfs) {
+	    my ($link,$r);
+	    foreach my $chr (keys %{$mfs{$name}}) {
+		my $cs = $mfs{$name}->{$chr}[0]{'cs'};
+		$link .= qq(<td><strong>$cs $chr:</strong></td>);
+		foreach my $det (@{$mfs{$name}->{$chr}}) {
+		    $link .= "<td>".$det->{'start'}.'-'.$det->{'end'}."</td>";
+		    $r = "$chr:".$det->{'start'}.'-'.$det->{'end'};
+		}
+	    }
+	    $html .= sprintf(qq(<tr><td><a href="/%s/Location/Marker?m=%s;r=%s">%s</a></td>%s</tr>),
+			     $species,
+			     $name,
+			     $r,
+			     $name,
+			     $link,
+			 );
 	}
-	$html= qq(<h3>$c mapped markers found:</h3>);
-	$html .= $link;
+	$html .= "</table>";
 	return $html;
     }
+    #otherwise print details
     else {
 	my $markers = [];
 	foreach my $mf (@$found_mf) {
@@ -74,16 +99,24 @@ sub render_marker_features {
 }
 
 sub render_marker_details {
-#    use Data::Dumper;
     my $self = shift;
     my ($markers)  = @_;
     my $object   = $self->object;
     my $species  = $object->species;
     my $html;
+    if (! @$markers) {
+	return qq(<h3>No markers found</h3>);
+    }
     foreach my $m (@$markers) {
 	my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
 	my $m_name = $m->display_MarkerSynonym->name;
 	$html .= qq(<h3>Marker $m_name</h3>);
+
+	#location of marker features
+	my $loc_text = $self->render_location($m);
+	$table->add_row('Location',
+			$loc_text,
+			1);
 
 	#synonyms
 	if (my @important_syns = @{$self->markerSynonyms($m,1)}) {
@@ -99,12 +132,6 @@ sub render_marker_details {
 			    $syn_text,
 			    1);
 	}
-	
-	#location of marker features
-	my $loc_text = $self->render_location($m);
-	$table->add_row('Location',
-			$loc_text,
-			1);
 	
 	#other synonyms (rows of $max_cols entries)
 	if (my @other_syns = @{$self->markerSynonyms($m,0)}) {
@@ -248,16 +275,6 @@ sub render_location {
     }
     $loc_text .= qq(</table>);
     return $loc_text;
-}
-
-
-sub get_mf_location {
-    my $self = shift;
-    my $mf = shift;
-    my $sr_name = $mf->seq_region_name;
-    my $start   = $mf->seq_region_start;
-    my $end     = $mf->seq_region_end;
-    return "$sr_name:$start-$end";
 }
 
 1;
