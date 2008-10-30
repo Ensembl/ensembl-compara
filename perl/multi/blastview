@@ -1834,6 +1834,7 @@ sub populate_karyotype{
      $fi->set_tmp_filename();
      $fi->dc = $karyo_dc;
      $fi->{'img_map'} = 1;
+     $fi->{'border'} = 1;
 
   $main_panel->add_entry();
   my $html = qq(<table align="center" border="0" cellspacing="0" cellpadding="2">
