@@ -69,9 +69,10 @@ sub colour_key {
 sub href {
   my ($self, $f)  = @_;
   my $vid = $f->variation_name;
-  my $source = $f->source;  
+  my $dbid = $f->dbID;
 
-  return $self->_url({'type'=>'Variation','action'=>'Summary','v'=>$vid, 'source'=>$source});
+  my $href = $self->_url({'type' => 'Variation', 'action'=>'Variation','v'=>$vid, 'dbid'=>$dbid, 'var_box' => 1,});
+  return $href;
 }
 
 
