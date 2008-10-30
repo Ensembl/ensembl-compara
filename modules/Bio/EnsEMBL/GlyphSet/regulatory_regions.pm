@@ -12,7 +12,7 @@ sub get_feature_sets {
   my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
 
   my @sources;
-  my $spp = $ENV{'ENSEMBL_SPECIES'}; warn $spp;
+  my $spp = $ENV{'ENSEMBL_SPECIES'};
   if ($spp eq 'Homo_sapiens'){
    @sources = ('miRanda miRNA', 'cisRED motifs', 'VISTA enhancer set');
   } elsif ($spp eq 'Mus_musculus'){
