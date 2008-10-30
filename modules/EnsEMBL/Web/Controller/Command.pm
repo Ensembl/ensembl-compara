@@ -10,6 +10,7 @@ use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Magic;
+use EnsEMBL::Web::Tools::Encryption;
 use Class::Std;
 use CGI qw(escape escapeHTML);
 
@@ -49,9 +50,31 @@ sub render {
 }
 
 sub render_message {
+### Redirects to a generic message module
   my $self = shift;
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' unless $dir =~ /_/;  
   my $type = $ENV{'ENSEMBL_TYPE'} || 'Account';
-  my $url = "/$type/Message?command_message=".$self->get_message;
+  ## Add a checksum to URL so user can't insert arbitrary HTML, etc.
+  my $message = $self->get_message;
+  my $checksum = EnsEMBL::Web::Tools::Encryption::checksum($message); 
+  my $url = "$dir/$type/Message?command_message=".$self->get_message.";checksum=$checksum";
+  my $ajax = $self->action->cgi->param('x_requested_with');
+  if ($ajax) {
+    $url .= ';x_requested_with='.$ajax if $ajax;
+    $self->ajax_redirect($url);
+  }
+  else {
+    $self->action->cgi->redirect($url);
+  }
+}
+
+sub ajax_redirect {
+### AJAX-friendly redirect for use with Control Panel modules
+  my ($self, $url) = @_;
+  unless( $url =~ /x_requested_with=/ ) {
+    $url .= ($url =~ /\?/?';':'?').'x_requested_with=XMLHttpRequest';
+  }
   $self->action->cgi->redirect($url);
 }
 
