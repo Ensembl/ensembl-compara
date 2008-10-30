@@ -52,9 +52,7 @@ sub check_input {
 sub save {
   my ($self, $object, $interface) = @_;
 
-  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
-  $dir = '' unless $dir =~ /_/;
-  my $script = $dir.'/'.$interface->script_name;
+  my $script = $interface->script_name;
   
   $interface->cgi_populate($object);
   
