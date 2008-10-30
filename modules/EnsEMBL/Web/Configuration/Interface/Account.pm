@@ -7,8 +7,14 @@ use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Configuration::Interface;
 use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Configuration::Account;
 
-our @ISA = qw( EnsEMBL::Web::Configuration::Interface );
+our @ISA = qw( EnsEMBL::Web::Configuration::Interface);
+
+sub populate_tree {
+  my $self = shift;
+  &EnsEMBL::Web::Configuration::Account::populate_tree($self);
+}
 
 =pod
 sub add {
@@ -46,7 +52,10 @@ sub check_input {
 sub save {
   my ($self, $object, $interface) = @_;
 
-  my $script = $interface->script_name;
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' unless $dir =~ /_/;
+  my $script = $dir.'/'.$interface->script_name;
+  
   $interface->cgi_populate($object);
   
   if ($ENV{'ENSEMBL_USER_ID'}) {
@@ -58,12 +67,24 @@ sub save {
   }
 
   my $url;
-  if ($interface->data->save) {
-    ## redirect to confirmation page 
-    $url = "/$script?dataview=success;email=" . $object->param('email');
-    $url .= ';record_id='.$object->param('record_id') if $object->param('record_id');
-  } else {
-    $url = "/$script?dataview=failure";
+  ## Check for duplicate users
+  my $exists = 0;
+  if ($script =~ /Register/) {
+    $exists = EnsEMBL::Web::Data::User->find(email => $interface->data->email);
+  }
+
+  if ($exists) {
+    $url = "$script?dataview=failure;error=duplicate_record";
+  }
+  else{
+    if ($interface->data->save) {
+      ## redirect to confirmation page 
+      $url = "$script?dataview=success;email=" . $object->param('email');
+      $url .= ';record_id='.$object->param('record_id') if $object->param('record_id');
+    } 
+    else {
+      $url = "$script?dataview=failure";
+    }
   }
   
   return $url;
