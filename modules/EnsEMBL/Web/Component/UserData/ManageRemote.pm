@@ -47,14 +47,14 @@ sub content {
 
       my $table = EnsEMBL::Web::Document::SpreadSheet->new();
       $table->add_columns(
-        {'key' => "name", 'title' => 'Datasource name', 'width' => '60%', 'align' => 'left' },
+        {'key' => "url", 'title' => 'Datasource URL', 'width' => '80%', 'align' => 'left' },
         {'key' => "date", 'title' => 'Last updated', 'width' => '20%', 'align' => 'left' },
         {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
       );
       foreach my $source (@urls) {
         my $date = $source->modified_at || $source->created_at;
         my $link = sprintf('<a href="/common/UserData/DeleteURL?id=%s">Delete</a>', $source->id);
-        $table->add_row( { 'name'  => $source->name, 'date' => $self->pretty_date($date), 'delete' => $link } );
+        $table->add_row( { 'url'  => $source->url, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
       $html .= $table->render;
     }
