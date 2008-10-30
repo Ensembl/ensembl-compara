@@ -69,7 +69,8 @@ sub content {
  
    my $feature_name = $feature_obj->stable_id;
     $type = $feature_obj->feature_type->name;
-   $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/featureview?id=$feature_name;type=RegulatoryFactor;name=$type">$feature_name</a>) : "unknown";
+    my $analysis = $feature_obj->analysis->logic_name;
+   $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/Location/Genome?id=$feature_name;ftype=RegulatoryFactor;analysis=$analysis;name=$type">$feature_name</a>) : "unknown";
  
    $type = $feature_obj->feature_type->name;
 
@@ -102,11 +103,14 @@ sub content {
 
    my $region = $seq_name .":" .$feature_obj->start ."-".$feature_obj->end;
    my $feature_name = $feature_obj->display_label;
-   #my $analysis = $feature_obj->analysis->logic_name;
-   $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/featureview?r=$region;id=$feature_name;type=RegulatoryFactor;name=$feature">$feature_name</a>) : "unknown";
-
+   my $logic_name= $feature_obj->analysis->logic_name;
+   my $dbid = $feature_obj->dbID;
+   if ($logic_name =~/cisRED/){
+    $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/Location/Genome?r=$region;id=$feature_name;dbid=$dbid;ftype=RegulatoryFactor">$feature_name</a>) : "unknown";
+   } else {
+    $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/Location/Genome?r=$region;id=$feature;ftype=RegulatoryFactor;name=$feature_name">$feature_name</a>) : "unknown";
+   }
    $desc = $feature_obj->analysis->description;
-  # if ($feature  =~/cisRED\sSearch\sRegion/){$desc =~s/cisRED\smotif\ssearch/cisRED Search Region/;}
   next if $feature =~/cisRED\sSearch\sRegion/; 
     # hack to get around problem with source data file for release 50
    if ($feature_name  =~/cra.*/){
