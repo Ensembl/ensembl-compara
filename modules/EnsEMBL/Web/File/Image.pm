@@ -142,7 +142,7 @@ sub render_image_button {
   my ($width, $height) = $self->imgsize($IF->{'file'});
   $self->{'width'}  = $width;
   $self->{'height'} = $height;
-  my $HTML = sprintf '<input style="width: %dpx; height: %dpx; display: block" type="image" name="%s" id="%s" src="%s" alt="%s" title="%s" />', $width, $height, $self->{'name'}, $self->{'id'}||$self->{'name'}, $IF->{'URL'}, $self->{'text'}, $self->{'text'};
+  my $HTML = sprintf '<input style="width: %dpx; height: %dpx; %s display: block" type="image" name="%s" id="%s" src="%s" alt="%s" title="%s" %s />', $width, $height, $self->extraStyle, $self->{'name'}, $self->{'id'}||$self->{'name'}, $IF->{'URL'}, $self->{'text'}, $self->{'text'};
   return $HTML;
 } 
 
@@ -179,7 +179,6 @@ sub render {
   }
   
   my $image;
-  # warn ".... $format ....";
   eval { $image = $self->dc->render($format); };
   if ($image) {
     if ($format eq 'imagemap') {
