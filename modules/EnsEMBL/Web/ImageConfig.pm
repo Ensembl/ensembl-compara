@@ -243,24 +243,26 @@ sub modify_configs {
 
 sub _update_missing {
   my( $self,$object ) = @_;
+  my $count_missing = grep { $_->get('display') eq 'off' || !$_->get('display') } $self->glyphset_configs; 
   my $missing = $self->get_node( 'missing' );
   if( $missing ) {
-    my $count_missing = grep { $_->get('display') eq 'off' || !$_->get('display') } $self->glyphset_configs; 
     $missing->set( 'text' => $count_missing > 0 ? "There are currently $count_missing tracks turned off." : "All tracks are turned on" );
   }
-  my $information = $self->get_node( 'info' );
-  if( $information ) {
-    $information->set( 'text' => sprintf "%s %s version %s.%s (%s) %s: %s - %s",
+  my $info = sprintf "%s %s version %s.%s (%s) %s: %s - %s",
       $self->species_defs->ENSEMBL_SITETYPE,
       $self->species_defs->SPECIES_BIO_NAME,
       $self->species_defs->ENSEMBL_VERSION,
       $self->species_defs->SPECIES_RELEASE_VERSION,
-      $self->species_defs->ASSEMBLY_ID,
+      $self->species_defs->ASSEMBLY_NAME,
       $object->seq_region_type_and_name,
       $object->thousandify($object->seq_region_start),
-      $object->thousandify($object->seq_region_end)
-    );
+      $object->thousandify($object->seq_region_end) ;
+
+  my $information = $self->get_node( 'info' );
+  if( $information ) {
+    $information->set( 'text' => $info );
   }
+  return { 'count' => $count_missing, 'information' => $info };
 }
 #=============================================================================
 # General setting tree stuff...
@@ -745,9 +747,10 @@ sub add_protein_feature {
     my $renderer =  $menus{$menu_code}[2];
     next if ($renderer eq 'off');
     foreach my $key_2 ( @$keys ) {
-      next if $type ne $data->{$key_2}{'type'};
-      $menu->append( $self->create_track( $type.'_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
-        'db'          => $key,
+      next if $self->tree->get_node( $type.'_'.$key_2 );
+      next if $type ne $data->{$key_2}{'type'}; ## Don't separate by db in this case!
+      $menu->append( $self->create_track( $type.'_'.$key_2, $data->{$key_2}{'name'}, {
+#        'db'          => $key,
         'strand'      => $gset =~ /P_/ ? 'f' : 'b',
         'depth'       => 1e6,
         'glyphset'    => $gset,
