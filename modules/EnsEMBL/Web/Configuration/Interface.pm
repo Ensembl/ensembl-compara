@@ -77,12 +77,12 @@ sub save {
   my $script = $interface->script_name;
   my $url;
   if ($success) {
-    $url = "/$script?dataview=success;_referer=".CGI::escape($object->param('_referer'));
+    $url = "/$script?dataview=success";
   }
   else {
-    $url = "/$script?dataview=failure;_referer=".CGI::escape($object->param('_referer'));
+    $url = "/$script?dataview=failure";
   }
-warn "SAVING $url";
+  $url .= ';_referer='.CGI::escape($object->param('_referer'));
   return $url;
 }
 
@@ -113,7 +113,9 @@ sub success {
   my $method;
   if ($option) {
     if ($option->{'type'} eq 'url') {
-      my $url = $option->{'action'};
+      my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+      $dir = '' if $dir !~ /_/; 
+      my $url = $dir.$option->{'action'};
 
       ## pass any additional CGI parameters
       my @parameters = $object->param();
@@ -160,9 +162,33 @@ sub failure {
   my $method;
   if ($option) {
     if ($option->{'type'} eq 'url') {
-      my $url = $option->{'action'};
-      if ($object->param('x_requested_with')) {
-        $url .= ($url =~ /\?/?';':'?').'x_requested_with=XMLHttpRequest';
+      my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+      $dir = '' if $dir !~ /_/; 
+      my $url = $dir.$option->{'action'};
+      ## pass any additional CGI parameters
+      my @parameters = $object->param();
+      if (scalar(@parameters) > 0) {
+        $url .= '?';
+        my @params;
+        foreach my $key (@parameters) {
+          next if $key eq 'dataview'; ## skip this, or it will break the destination script!
+          ## deal with multiple-value parameters!
+          my @param_check = $object->param($key);
+          my $value;
+          if (scalar(@param_check) > 1) {
+            foreach my $p (@param_check) {
+              push(@params, $key.'='.$p);
+            }
+          }
+          else {
+            my $param = $object->param($key);
+            if ($key eq 'url') {
+              $param = CGI::escape($param);
+            }
+            push(@params, "$key=$param");
+          }
+        }
+        $url .= join(';', @params);
       }
       return $url;
     }
