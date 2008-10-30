@@ -77,7 +77,8 @@ sub _init {
            'width'     => $filled_end - $filled_start + 1,
            'height'    => $h,
            'colour'    => $colour,
-           'absolutey' => 1
+           'absolutey' => 1,
+           'href'     => $self->href( $transcript, $exon->[2] ),
          }));
       }
     }
@@ -95,9 +96,8 @@ sub _init {
         'bordercolour' => $colour,
         'absolutey' => 1,
         'title'     => $exon->[2]->stable_id,
-       'href'     => $self->href( $gene, $transcript, $exon->[2], %highlights ),
+        'href'     => $self->href( $transcript, $exon->[2] ),
       });
-      $G->{'zmenu'} = $self->zmenu( $gene, $transcript, $exon->[2] ) unless $Config->{'_href_only'};
       $self->push( $G );
      } 
   } #we are finished if there is no other exon defined
@@ -138,61 +138,22 @@ sub colour {
   
   return $trans_col; 
 }
-#sub colour {
-#  my ($self, $gene, $transcript, $colours, %highlights) = @_; 
-#  warn lc($transcript->biotype."_".$transcript->status); 
-#  my $genecol = $colours->{ lc($transcript->biotype."_".$transcript->status) }; 
-#  warn $transcript->stable_id,' ',$transcript->analysis->logic_name."_".$transcript->biotype."_".$transcript->status;
-#  if(exists $highlights{lc($transcript->stable_id)}) {
-#    return (@$genecol, $colours->{'superhi'}[0]);
-#  } elsif(exists $highlights{lc($transcript->external_name)}) {
-#    return (@$genecol, $colours->{'superhi'}[0]);
-#  } elsif(exists $highlights{lc($gene->stable_id)}) {
-#    return (@$genecol, $colours->{'hi'}[0]);
-#  }
-#  return (@$genecol, undef);
-
-#}
 
 sub gene_href { return undef; }
 
 sub href {
-    my ($self, $gene, $transcript, $exon, %highlights ) = @_;
+    my ($self, $transcript, $exon,) = @_;
 
-    my $gid = $gene->stable_id();
     my $tid = $transcript->stable_id();
-    
-    #return ( $self->{'config'}->get('transcript_lite','_href_only') eq '#tid' ) ?
-    #    "#$tid" : 
-    #    qq(/@{[$self->{container}{web_species}]}/geneview?gene=$gid);
-
-   return;
-}
-
-sub zmenu {
-  my ($self, $gene, $transcript, $exon, %highlights) = @_;
-  my $eid = $exon->stable_id();
-  my $tid = $transcript->stable_id();
-  my $pid = $transcript->translation ? $transcript->translation->stable_id() : '';
-  my $gid = $gene->stable_id();
-  my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-  my $zmenu = {
-    'caption'                       => $self->species_defs->AUTHORITY." Gene",
-    "00:$id"			=> "",
-	"01:Gene:$gid"                  => "/@{[$self->{container}{web_species}]}/geneview?gene=$gid;db=core",
-        "02:Transcr:$tid"    	        => "/@{[$self->{container}{web_species}]}/transview?transcript=$tid;db=core",                	
-        "04:Exon:$eid"    	        => "",
-        '11:Export cDNA'                => "/@{[$self->{container}{web_species}]}/exportview?options=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
-        
-    };
-    
-    if($pid) {
-    $zmenu->{"03:Peptide:$pid"}=
-    	qq(/@{[$self->{container}{web_species}]}/protview?peptide=$pid;db=core);
-    $zmenu->{'12:Export Peptide'}=
-    	qq(/@{[$self->{container}{web_species}]}/exportview?options=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid);	
-    }
-    return $zmenu;
+    my $eid =  $exon->stable_id; 
+    my $href = $self->_url({
+      'type'   => 'Gene',
+      'action' => 'Variation_transcript',
+      'vt'      => $tid,
+      'e'      => $eid, 
+    });
+  
+  return $href;
 }
 
 sub error_track_name { return $_[0]->species_defs->AUTHORITY.' transcripts'; }
