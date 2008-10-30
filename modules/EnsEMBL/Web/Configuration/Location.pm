@@ -125,15 +125,17 @@ sub ajax_zmenu      {
   my $self = shift;
   my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
-
   my $action = $obj->[1]{'_action'} || 'Summary';
-
   if( $action =~ 'Regulation'){
     return $self->_ajax_zmenu_regulation($panel, $obj);
+  }
+  if( $action =~/Variation/){
+    return $self->ajax_zmenu_variation($panel, $obj);
   }
   elsif( $action =~ /Genome/) {
     return $self->_ajax_zmenu_alignment($panel,$obj);
   }
+
 }
 
 #zmenu for aligments (directed to /Location/Genome)
