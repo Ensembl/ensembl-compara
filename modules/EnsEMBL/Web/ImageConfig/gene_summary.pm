@@ -35,6 +35,10 @@ sub init {
   $self->load_tracks;
 
   $self->modify_configs(
+    [qw(fg_regulatory_features_funcgen)],
+    {qw(display off)}
+  );
+  $self->modify_configs(
     [qw(transcript prediction variation)],
     {qw(display off)} 
   );
