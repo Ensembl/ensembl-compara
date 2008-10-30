@@ -115,17 +115,6 @@ dt { font-weight:bold; }
 
 dd { margin-bottom:1em; }
 
-/***********************************************************************
-**
-** Basic printer styles 
-**
-***********************************************************************/
-
-@media print {
-  body, h1, h2, h4 { color:#000; }
-  .print_hide { display: none }
-}
-
 .syntax-error { color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]] }
 
 .error { margin: 0.2em auto; border:1px solid [[ALERT_BORDER]]; color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]]; padding: 0; }
@@ -135,3 +124,15 @@ dd { margin-bottom:1em; }
 .warning h3 { padding: 2px 0.5em 2px 20px; background-color:#ffb90f;color:black;margin: 0; background-image:url(/i/warning.gif); background-position: top left; background-repeat: no-repeat }
 .info { margin: 0.2em auto; border:1px solid #90ee90;background-color: white; padding: 0; }
 .info h3 { padding: 2px 0.5em 2px 20px; background-color:#90ee90;color:black;margin: 0; background-image:url(/i/info.gif); background-position: top left; background-repeat: no-repeat }
+
+/***********************************************************************
+**
+** Basic printer styles 
+**
+***********************************************************************/
+
+@media print {
+  body, h1, h2, h4 { color:#000; }
+  .print_hide, .error, .warning, .info { display: none }
+}
+
