@@ -14,6 +14,7 @@ sub clear {
   return unless $r;
   $self->set_value( 0 );
   my $cookie = CGI::Cookie->new(
+    -httponly => 1,
     -name    => $self->get_name,
     -value   => $self->encrypt_value(),
     -domain  => $self->get_host,
@@ -31,6 +32,7 @@ sub create {
   return unless $r;
   $self->set_value( $value );
   my $cookie = CGI::Cookie->new(
+    -httponly => 1,
     -name    => $self->get_name,
     -value   => $self->encrypt_value($self->get_value),
     -domain  => $self->get_host,
