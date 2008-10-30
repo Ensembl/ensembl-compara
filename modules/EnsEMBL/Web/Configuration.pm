@@ -880,4 +880,367 @@ sub mapview_possible {
   return 1 if exists $chrs{$coords[0]};
 }
 
+sub ajax_zmenu_variation {
+ # Specific zmenu for variation features
+
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj = $self->object;
+  my $db_adaptor = $obj->database('variation');
+  my $var_adaptor = $db_adaptor->get_VariationAdaptor();
+  my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor();
+  my $v_id = $obj->param('v');
+  my $var = $var_adaptor->fetch_by_name($v_id);
+  my @vf = @{$var_feat_adaptor->fetch_all_by_Variation($var)};
+  my $feature;
+  if ( scalar @vf == 1) { $feature = $vf[0];}
+  else {}
+
+  my $tvar_adaptor = $db_adaptor->get_TranscriptVariationAdaptor();
+  my $trans_variation = $tvar_adaptor->fetch_by_dbID($obj->param('dbid'));
+  ## alternate way to retrieve transcript_variation_feature if there are more than one with the same variation_feature id;
+  unless ($trans_variation){
+   my $trans_id = $obj->param('vt');
+   my $trans_adaptor = $obj->database('core')->get_TranscriptAdaptor;
+   my $transcript = $trans_adaptor->fetch_by_stable_id($trans_id);
+    foreach my $trv (@{$tvar_adaptor->fetch_all_by_Transcripts([$transcript])}) {
+     if ($trv->variation_feature->variation_name() eq $feature->variation_name){
+       $trans_variation = $trv;
+     }
+    }
+  }
+
+  my $type =  join ", ", @{$trans_variation->consequence_type || [] };
+  my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name });
+
+  my $chr_start = $feature->start();
+  my $chr_end   = $feature->end();
+  my $bp = $chr_start;
+  if( $chr_end < $chr_start ) {
+      $bp = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
+  } elsif($chr_end > $chr_start ) {
+      $bp = "$chr_start&nbsp;-&nbsp;$chr_end";
+  }
+  my $source = (join ", ", @{$feature->get_all_sources ||[] });
+  my $allele =  $feature->allele_string;
+  my $alleles = (length($allele)<16 ? $allele : substr($allele,0,14).'..');
+
+  $panel->{'caption'} = 'Variation ' . $feature->variation_name;
+  $panel->add_entry({
+    'label_html'  =>  'Variation Properties',
+    'link'        =>  $var_link,
+    'priority'    =>  15,
+  });
+  $panel->add_entry({
+    'type'        =>  'bp:',
+    'label'       =>  $bp,
+    'priority'    =>  13,
+  });
+  $panel->add_entry({
+    'type'        =>  'class:',
+    'label'       =>  $feature->var_class,
+    'priority'    =>  11,
+  });
+  $panel->add_entry({
+    'type'        =>  'ambiguity code:',
+    'label'       =>  $feature->ambig_code,
+    'priority'    =>  9,
+  });
+  $panel->add_entry({
+    'type'        =>  'alleles:',
+    'label'       =>  $alleles,
+    'priority'    =>  7,
+  });
+  $panel->add_entry({
+    'type'        =>  'source:',
+    'label'       =>  $source,
+    'priority'    =>  5,
+  });
+  $panel->add_entry({
+    'type'        =>  'type:',
+    'label'        =>  $type,
+    'priority'    =>  2,
+  });
+
+  if ($obj->param('snp_fake')){
+    my $status = join(', ', @{$feature->get_all_validation_states||[]} );
+    $panel->add_entry({
+      'type'        =>  'status:',
+      'label'       =>  $status || '-',
+      'priority'    =>  12,
+    });
+    $panel->add_entry({
+      'type'        =>  'mapweight:',
+      'label'       =>  $feature->map_weight,
+      'priority'    =>  8,
+    });
+
+  } elsif ($obj->param('var_box') && $trans_variation->pep_allele_string){
+    $panel->add_entry({
+      'type'        =>  'amino acid:',
+      'label'       =>  $trans_variation->pep_allele_string,
+      'priority'    =>  8,
+    });
+  }
+
+ return;
+}
+
+sub ajax_zmenu_variation_transcript {
+ # Specific zmenu for transcripts on variation image
+
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj = $self->object;
+  my $trans_id = $obj->param('vt') || die( "No transcript stable ID value in params" );
+  my $exon_id =  $obj->param('e') || die( "No exon stable ID value in params" );
+
+  my $trans_adaptor = $obj->database('core')->get_TranscriptAdaptor;
+  my $transcript = $trans_adaptor->fetch_by_stable_id($trans_id);
+  my $protein_id = $transcript->translation ? $transcript->translation->stable_id() : '';
+  my $id = $transcript->external_name() eq '' ? $trans_id : ( $transcript->external_db.": ".$transcript->external_name() );
+
+
+  $panel->{'caption'} = $obj->species_defs->AUTHORITY." Gene";
+  $panel->add_entry({
+    'label'  => $id,
+    'priority'    => 15,
+  });
+  $panel->add_entry({
+    'type'        => 'Gene:',
+    'label_html'  => $obj->stable_id,
+    'link'        => $obj->_url({'type' => 'Gene', 'action' => 'Summary', 'g' =>$obj->stable_id }),
+    'priority'    => 10,
+  });
+  $panel->add_entry({
+    'type'        => 'Transcript:',
+    'label_html'  => $trans_id,
+    'link'        => $obj->_url({'type' => 'Transcript', 'action' => 'Summary', 't' => $trans_id }),
+    'priority'    => 9,
+  });
+  if ($protein_id ){
+    $panel->add_entry({
+      'type'        => 'Protein product:',
+      'label_html'  => $protein_id,
+      'link'        => $obj->_url({'type' => 'Transcript', 'action' => 'ProteinSummary', 't' => $trans_id }),
+      'priority'    => 8,
+    });
+    $panel->add_entry({
+      'label_html'  => 'Export Protein',
+      'link'        => $obj->_url({'type' => 'Transcript', 'action' => 'Export/fasta', 't' => $trans_id, 'st' => 'peptide', '_format' =>'Text' }),
+      'priority'    => 5,
+    });
+  }
+
+  $panel->add_entry({
+    'type'        => 'Exon:',
+    'label'       => $exon_id,
+    'priority'    => 7,
+  });
+  $panel->add_entry({
+    'label_html'  => 'Export cDNA',
+    'link'        => $obj->_url({'type' => 'Transcript', 'action' => 'Export/fasta', 't' => $trans_id, 'st' => 'cdna', '_format' =>'Text' }),
+    'priority'    => 6,
+  });
+
+  return;
+}
+
+sub ajax_zmenu_id_history_tree_node {
+  # Specific zmenu for idhistory tree nodes
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj = $self->object;
+  my $a_id = $obj->param('node') || die( "No node value in params" );
+
+  my $db    = $obj->param('db')  || 'core';
+  my $db_adaptor = $obj->database($db);
+  my $arch_adaptor = $db_adaptor->get_ArchiveStableIdAdaptor;
+  my $db_name = $obj->param('db_name');
+  my $arch_obj = $arch_adaptor->fetch_by_stable_id_dbname( $a_id, $db_name);
+  my $id = $arch_obj->stable_id .".". $arch_obj->version;
+  my $type = $arch_obj->type eq 'Translation' ? 'Protein' : $arch_obj->type;
+  my $url = $id;
+  my $link;
+  unless ($arch_obj->release <= $obj->species_defs->EARLIEST_ARCHIVE){ $link = _archive_link($obj, $arch_obj, $obj->species_defs->ENSEMBL_ARCHIVES, $obj->species_defs->ENSEMBL_VERSION); }
+
+  $panel->{'caption'} = $id;
+
+  $panel->add_entry({
+    'type'        => $type,
+    'label_html'  => $id,
+    'link'        => $link,
+    'priority'    => 10,
+  });
+  $panel->add_entry({
+    'type'      => 'Release',
+    'label'     => $arch_obj->release,
+    'priority'  => 9,
+  });
+  $panel->add_entry({
+    'type'      => 'Assembly',
+    'label'     => $arch_obj->assembly,
+    'priority'  => 8,
+  });
+  $panel->add_entry({
+    'type'      => 'Database',
+    'label'     => $arch_obj->db_name,
+    'priority'  => 7,
+  });
+
+  return;
+}
+
+sub ajax_zmenu_id_history_tree_branch {
+  # Specific zmenu for idhistory tree branch lines
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj = $self->object;
+  my $old_id = $obj->param('old') || die( "No old id  value in params" );
+  my $new_id = $obj->param('new') || die( "No new id  value in params" );
+
+  my $db    = $obj->param('db')  || 'core';
+  my $db_adaptor = $obj->database($db);
+  my $arch_adaptor = $db_adaptor->get_ArchiveStableIdAdaptor;
+
+  my $old_arch_obj = $arch_adaptor->fetch_by_stable_id_dbname( $old_id, $obj->param('old_db'));
+  my $new_arch_obj = $arch_adaptor->fetch_by_stable_id_dbname( $new_id, $obj->param('new_db') );
+
+  my %types = ( 'Old' => $old_arch_obj, 'New' => $new_arch_obj);
+  my $priority = 15;
+
+
+  $panel->{'caption'} = 'Similarity Match';
+
+  foreach ( sort { $types{$a} <=> $types{$b} } keys %types) {
+    my $version = $_;
+    my $object = $types{$_};
+    my $id = $object->stable_id .".".$object->version;
+    my $url = $id;
+    my $link;
+    unless ($old_arch_obj->release <= $obj->species_defs->EARLIEST_ARCHIVE){ $link = _archive_link($obj, $object); }
+
+    $panel->add_entry({
+      'type'        => $version." ".$object->type,
+      'label_html'  => $object->stable_id .".".$object->version,
+      'link'        => $link,
+      'priority'    => $priority,
+    });
+    $panel->add_entry({
+      'type'      => $version." ".'Release',
+      'label'     => $object->release,
+      'priority'  => $priority--,
+    });
+    $panel->add_entry({
+      'type'      => $version." ".'Assembly',
+      'label'     => $object->assembly,
+      'priority'  => $priority--,
+    });
+    $panel->add_entry({
+      'type'      => $version." ".'Database',
+      'label'     => $object->db_name,
+      'priority'  => $priority--,
+    });
+    $priority--;
+  }
+
+  my $score = $obj->param('score');
+  if ($score ==0 ){$score = 'Unknown';}
+  else { $score = sprintf("%.2f", $score);}
+
+  $panel->add_entry({
+      'type'      => 'Score',
+      'label'     => $score,
+      'priority'  => $priority--,
+  });
+
+  return
+}
+
+sub ajax_zmenu_id_history_tree_label {
+  # Specific zmenu for idhistory tree feature labels
+  my $self = shift; warn $self;
+  my $panel = $self->_ajax_zmenu; warn $panel;
+  my $obj = $self->object;
+  my $id = $obj->param('label') || die( "No label  value in params" );
+  my $type = ucfirst($obj->param('feat_type'));
+  my ($action, $p);
+
+  if ($type eq 'Gene') {
+      $p = 'g';
+      $action = 'Idhistory';
+    } elsif ($type eq 'Transcript'){
+      $p = 't';
+      $action = 'Idhistory';
+    } else {
+      $type = 'Transcript';
+      $p = 'p';
+      $action = 'Idhistory/Protein';
+    }
+
+  my $url = $obj->_url({'type' => $type, 'action' => $action, $p => $id });
+
+  $panel->add_entry({
+    'label_html'  => $id,
+    'link'        => $url,
+    'priority'    => 1,
+  });
+
+
+ return
+}
+
+sub _archive_link {
+  my ($OBJ, $obj) = @_;
+
+  my $type =  $obj->type eq 'Translation' ? 'peptide' : lc($obj->type);
+  my $name = $obj->stable_id . "." . $obj->version;
+  my $url;
+  my $current =  $OBJ->species_defs->ENSEMBL_VERSION;
+
+  my $view = $type."view";
+  if ($type eq 'peptide') {
+    $view = 'protview';
+  } elsif ($type eq 'transcript') {
+    $view = 'transview';
+  }
+
+  my ($action, $p);
+  ### Set parameters for new style URLs post release 50
+  if ($obj->release >= 51 ){
+    if ($type eq 'gene') {
+      $type = 'Gene';
+      $p = 'g';
+      $action = 'Summary';
+    } elsif ($type eq 'transcript'){
+      $type = 'Transcript';
+      $p = 't';
+      $action = 'Summary';
+    } else {
+      $type = 'Transcript';
+      $p = 'p';
+      $action = 'ProteinSummary';
+    }
+  }
+
+  if ($obj->release == $current){
+     $url = $OBJ->_url({'type' => $type, 'action' => $action, $p => $name });
+     return $url;
+  } else {
+    my $release_info = EnsEMBL::Web::Data::Release->new($obj->release);
+    my $archive_site = $release_info->archive;
+    $url = "http://$archive_site.archive.ensembl.org";
+    if ($obj->release >=51){
+      $url .= $OBJ->_url({'type' => $type, 'action' => $action, $p => $name });
+    } else {
+      $url .= "/".$ENV{'ENSEMBL_SPECIES'};
+      $url .= "/$view?$type=$name";
+    }
+  }
+
+  return $url;
+}
+
+
+
 1;
