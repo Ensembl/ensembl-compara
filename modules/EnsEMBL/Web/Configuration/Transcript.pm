@@ -36,15 +36,24 @@ sub ajax_zmenu      {
     my $panel = $self->_ajax_zmenu;
     my $obj  = $self->object;
     my $dest = $obj->action().'/'.$obj->function();
+    my $action = $obj->action;
     if ($dest eq 'SupportingEvidence/Alignment') {
-	$self->do_SE_align_menu($panel,$obj);
-    } elsif ($dest =~ 'Idhistory_Node'){
+	    $self->do_SE_align_menu($panel,$obj);
+    } elsif ($action eq 'Idhistory_Node'){
       return $self->ajax_zmenu_id_history_tree_node();
-    } elsif ($dest =~ 'Idhistory_Branch'){
+    } elsif ($action eq 'Idhistory_Branch'){
       return $self->ajax_zmenu_id_history_tree_branch();
-   } elsif ($dest =~ 'Idhistory_Label'){
+    } elsif ($action eq 'Idhistory_Label'){
       return $self->ajax_zmenu_id_history_tree_label();
-    } else {
+    } elsif( $action eq 'Variation'){
+      return $self->ajax_zmenu_variation($panel, $obj);
+    } elsif( $action eq 'Variation_transcript'){
+      return $self->ajax_zmenu_variation_transcript($panel, $obj);
+    } elsif( $action eq 'ref'){
+      return $self->_ajax_zmenu_change_reference($panel, $obj);  
+    } elsif( $action eq 'coverage'){
+      return $self->_ajax_zmenu_transcript_coverage($panel, $obj);
+    }   else {
 	my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
 	$panel->{'caption'} = $disp_id ? "$db_label: $disp_id"
                               : (! $obj->gene ) ? $obj->Obj->stable_id
@@ -112,6 +121,48 @@ sub ajax_zmenu      {
         }
     }
     return;
+}
+
+sub _ajax_zmenu_change_reference {
+  my $self = shift;
+  my $panel = shift;
+  my $obj  = $self->object;
+  return unless $obj->param('reference');
+
+  
+  $panel->add_entry({
+    'type'        => 'Click to compare to ', 
+    'label_html'  => $obj->param('reference'),
+    'link'        => $obj->_url({'action' =>'Population/Image', 'reference' => $obj->param('reference') }), 
+    'priority'    => 12,
+  });
+
+  return;
+}
+
+sub _ajax_zmenu_transcript_coverage {
+  my $self = shift;
+  my $panel = shift;
+  my $obj  = $self->object;
+  return unless $obj->param('disp_level');
+  $panel->{'caption'} = "Resequencing read coverage: ". $obj->param('disp_level');
+  $panel->add_entry({
+      'type'     => 'bp:',
+      'label'    => $obj->param('pos'),
+      'priority' => 12,
+  });
+  $panel->add_entry({
+      'type'     => 'Sample:',
+      'label'    => $obj->param('sp'),
+      'priority' => 8,
+  });
+  $panel->add_entry({
+      'type'     => 'Source:',
+      'label'    => "Sanger",
+      'priority' => 4,
+  });
+
+  return; 
 }
 
 sub do_SE_align_menu {
