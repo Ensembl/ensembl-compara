@@ -22,7 +22,7 @@ sub _init {
   my $individual_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
   my $golden_path =  $individual_adaptor->get_reference_strain_name();
   my $reference_name = $Config->{'reference'};
-
+  
   # Put allele and coverage data from config into hashes -----------------------
   my %strain_alleles;   # $strain_alleles{strain}{id::start} = allele
   my %coverage;         # $coverage{strain} = [ [start, end, level], [start, end, level]   ];
@@ -52,7 +52,6 @@ sub _init {
 
   # Default to Ensembl golden path ref strain if chosen "ref" strain isn't selected on the display
   $reference_name = $golden_path unless $strain_alleles{$reference_name};
-
 
   # Info text 
   my $info_text = "Comparison to $reference_name alleles";
@@ -141,8 +140,7 @@ sub _init {
       my $golden_colour = undef;
 
       if ($reference_base) { # determine colours for golden path row dp on reference colours
-        warn $self; #->bases_match($golden_path_base, $reference_base);          
-      	$conf_colours->{$self->bases_match($golden_path_base, $reference_base) }[0];
+      	$conf_colours->{$self->bases_match($golden_path_base, $reference_base) }->{'default'};
       }
       push @golden_path, {
 			  label   => $label,
@@ -255,8 +253,7 @@ sub _init {
 sub strain_name_text {
   my ($self, $th, $fontname, $fontsize, $offset, $name, $Config, $fully_inbred) = @_;
   (my $url_name = $name) =~ s/Compare to |^\s+//;
-  my $URL = $Config->{'URL'}."reference=$url_name;";
-  my @link = $fully_inbred ? ( 'title' => "Click to compare to $url_name", 'href' => $URL ) : "";
+  my $URL = $self->_url({'action' => 'ref',  'reference' => $url_name});
   my $textglyph = $self->Text({
       'x'          => -115,
       'y'          => $offset+1,
@@ -270,7 +267,7 @@ sub strain_name_text {
       'absolutex'  => 1,
       'absolutey'  => 1,
       'absolutewidth'  => 1,
-      @link,
+      'href'      => $URL,
   });
   $self->push( $textglyph );
   return 1;
