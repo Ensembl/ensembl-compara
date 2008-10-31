@@ -113,6 +113,7 @@ $pad    </dd>";
           foreach my $param (@cgi_params) {
             next if $param =~ /^time=/;
             next if $param =~ /^wizard/;
+            next if $param =~ /^id=/;
             push @ok_params, $param;  
           }
           ## This is a tmp hack since we do not have and object here
