@@ -594,15 +594,15 @@ sub add_text {
   my $max_position_length = $max_values->{'max_position_length'};
 
   my $sequence     = ($object->param('match_display') eq 'dot') ? $hRef->{$display_name}->{'dotted_sequence'} : $hRef->{$display_name}->{'sequence'};
-  my $slice        = $hRef->{$display_name}->{slice};
-  my $slice_length = $hRef->{$display_name}->{slice_length};
-  my $abbr         = $hRef->{$display_name}->{abbreviation};
+  my $slice        = $hRef->{$display_name}->{'slice'};
+  my $slice_length = $hRef->{$display_name}->{'slice_length'};
+  my $abbr         = $hRef->{$display_name}->{'abbreviation'};
 
   my $linenumbers;
 
-  if ($object->param('line_numbering') eq 'slice' && $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-    my ($sl, $st) = $slice->get_original_seq_region_position;
-    $linenumbers = [ $st, $sl->end ];
+  if ($object->param('line_numbering') eq 'slice' && $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {  
+    my $slices = $slice->get_all_underlying_Slices;
+    $linenumbers = [ $slices->[0]->start, $slices->[-1]->end ];
   } else {
     $linenumbers = [ $object->get_slice_object->line_numbering ];
     $linenumbers->[0]-- if $linenumbers;
@@ -614,7 +614,7 @@ sub add_text {
   my $smask = 0; # Current span mask
   my @title; # Array of span notes
   my $notes; # Line notes - at the moment info on SNPs present on the line
-  my @markup = sort { $a->{pos} <=> $b->{pos} || $a->{mark} <=> $b->{mark}  } @{$hRef->{$display_name}->{markup}};
+  my @markup = sort { $a->{'pos'} <=> $b->{'pos'} || $a->{'mark'} <=> $b->{'mark'}  } @{$hRef->{$display_name}->{'markup'}};
 
   for (my $i = 1; $i < (@markup); $i++) {
     # First take the preceeding bin ------------------------
@@ -625,19 +625,19 @@ sub add_text {
     # -> add the bin text to the span notes if it is not there already
     # Otherwise it is the end of a highlighted region - remove the bin text from the span notes
 
-    if ($previous->{mask}) {
-      $smask += $previous->{mask};
+    if ($previous->{'mask'}) {
+      $smask += $previous->{'mask'};
       
-      if ($previous->{mask} > 0) { # start of highlighted region
-        push @title, $previous->{text} if ($previous->{text} ne $title[-1]);
+      if ($previous->{'mask'} > 0) { # start of highlighted region
+        push @title, $previous->{'text'} if ($previous->{'text'} && $previous->{'text'} ne $title[-1]);
       } else {
-        @title = grep { $_ ne $previous->{text}} @title;
+        @title = grep { $_ && $_ ne $previous->{'text'}} @title;
       }
     }
 
     # Display SNP info at the end of the line if bin has snpID 
-    if ($previous->{snpID}) {
-      my $pos = $previous->{pos};
+    if ($previous->{'snpID'}) {
+      my $pos = $previous->{'pos'};
       
       if ($line_numbering eq 'slice') {
         if ($slice->strand > 0) {
@@ -666,28 +666,28 @@ sub add_text {
     # we need to take into account which ones start in the position and which ones end. To 
     # do this we process the mask field of all the bins located in the position
     # before adding the actual sequence.
-    next if ($previous->{pos} == $current->{pos} && (! $current->{mark}));
+    next if ($previous->{'pos'} == $current->{'pos'} && !$current->{'mark'});
 
     # Get the width of the sequence region to display
-    my $w = $current->{pos} - $previous->{pos};
+    my $w = $current->{'pos'} - $previous->{'pos'};
 
     # If it is the EOL/BOL defining bin, increment the width to get the right region length
-    $w++ if ($current->{mark} && (!defined($current->{mask})));
+    $w++ if ($current->{'mark'} && !defined $current->{'mask'});
 
     # If the previous bin was EOL need to add the line break BR to signal a new line
     # Then add species abbreviation and line numbering
-    if ($previous->{mark} && ! defined($current->{mark})) {
+    if ($previous->{'mark'} && !defined $current->{'mark'}) {
       $species_html .= "$BR";
       $species_html .= add_display_name($sequence, $slice, $slice_length, $abbr, $line_numbering, $width, $max_values, $linenumbers, $sindex);
     }
 
     # Otherwise it is EOL symbol and need to get the region sequence; the region starts from the previous bin position 
-    my $sq = $previous->{mark} ? '' : substr($sequence, $previous->{pos}-1, $w);
+    my $sq = $previous->{'mark'} ? '' : substr($sequence, $previous->{'pos'}-1, $w);
 
     # Are we about to display some sequence ? 
     # Then check whether the region should be highlighted and if it the case  put it into <span> tag
-    if (length($sq)) {
-      my $tag_title = $object->param('title_display') ne 'off' ? ($previous->{textSNP} || join(':', @title)) : '';   # add title to span if 'show title' is on and there is a span note
+    if (length $sq) {
+      my $tag_title = $object->param('title_display') ne 'off' ? ($previous->{'textSNP'} || join(':', @title)) : ''; # add title to span if 'show title' is on and there is a span note
 
       # Now analyze the state of the global span mask and choose appropriate 
       # span class from ensembl.css
@@ -717,7 +717,7 @@ sub add_text {
         my $base = $sq;
         
         if ($sclass =~ /s/) { # if it is a SNP
-          my $ambiguity = $previous->{ambiguity};
+          my $ambiguity = $previous->{'ambiguity'};
           $base = $ambiguity if $ambiguity;
         }
         
@@ -731,10 +731,10 @@ sub add_text {
       }
     }
 
-    $sindex += length($sq);
+    $sindex += length $sq;
 
     # The seq is displayed.  Now add the line numbering and the line notes if any
-    if ($sindex % $width == 0 && length($sq) != 0) {
+    if ($sindex % $width == 0 && length $sq != 0) {
       my $seq_name_space = 0;
       my $seq_name = "";
       my $pos = undef;
