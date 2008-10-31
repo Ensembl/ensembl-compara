@@ -37,7 +37,7 @@ sub content {
 
   foreach ( sort { $x{$b}[1]<=>$x{$a}[1] || $x{$a}[0] cmp $x{$a}[0] } keys %x ) {
     $options .= sprintf '
-        <option name="align" value="%d" %s>%s</option>',
+        <option value="%d" %s>%s</option>',
       escapeHTML($_),
       $_ eq $align ? ' selected="selected"' :'',
       escapeHTML( $x{$_}[0] );
@@ -47,8 +47,9 @@ sub content {
   
   return sprintf qq(
   <div class="autocenter navbar" style="width:%spx; text-align:left" >
-    <form action="%s" method="get"><div style="padding:2px;">
-      <label for="align">Alignment:</label> <select name="align" id="align">%s
+    <form action="%s" method="get"><div stlye="padding:2px">
+      <label for="align">Alignment:</label> <select name="align" id="align">
+        <option value="">== select an alignment ==</option>%s
       </select>%s
       <input value="Go&gt;" type="submit" class="go-button" />
     </div></form>
