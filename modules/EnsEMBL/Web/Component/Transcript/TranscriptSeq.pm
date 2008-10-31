@@ -75,7 +75,7 @@ sub content {
   my $html = $self->build_sequence($sequence, $config);
   
   if ($config->{'codons'} || $config->{'variation'} || $config->{'translation'}  || $config->{'coding_seq'}) {
-    $html .= qq(<img src="/img/help/transview_key3.gif" alt="[Key]" border="0" />);
+    $html .= qq(<img src="/i/help/transview_key3.gif" alt="[Key]" border="0" />);
   }
   
   return $html;

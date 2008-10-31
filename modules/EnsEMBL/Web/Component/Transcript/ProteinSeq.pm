@@ -46,7 +46,7 @@ sub content {
   
   my $html = $self->build_sequence(\@sequence, $config);
   
-  $html .= qq(<img src="/img/help/protview_key1.gif" alt="[Key]" border="0" />) if ($config->{'exons'} || $config->{'variation'});
+  $html .= qq(<img src="/i/help/protview_key1.gif" alt="[Key]" border="0" />) if ($config->{'exons'} || $config->{'variation'});
 
   return $html;
 }
