@@ -28,11 +28,10 @@ sub content {
 
 ## Now we need to turn on the transcript we wish to draw...
 
-
-  $wuc->modify_configs( ## Turn on track associated with this db/logic name
-    [$wuc->get_track_key( 'transcript', $transcript )],
-    {qw(display on show_labels off)}  ## also turn off the transcript labels...
-  );
+  my $key = $wuc->get_track_key( 'transcript', $transcript );
+  my $n = $wuc->get_node($key);
+  $n->set('display','transcript_label') if $n->get('display') eq 'off';
+  $n->set('show_labels','off');
 
   $wuc->modify_configs( ## Show the ruler only on the same strand as the transcript...
     ['ruler'],
