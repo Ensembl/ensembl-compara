@@ -450,7 +450,8 @@ sub gene_type {
   my $db = $self->get_db;
   my $type = '';
   if( $db eq 'core' ){
-    $type = $self->logic_name;
+    $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
+    $type =~ s/_/ /;
     $type ||= $self->db_type;
   } elsif ($db eq 'vega') {
     my $biotype = ($self->Obj->biotype eq 'tec') ? uc($self->Obj->biotype) : ucfirst(lc($self->Obj->biotype));
@@ -459,8 +460,7 @@ sub gene_type {
     $type =~ s/unknown //i;
     return $type;
   } else {
-    $type = $self->db_type;
-    $type ||= $self->logic_name;
+    $type = $self->logic_name;
   }
   $type ||= $db;
   if( $type !~ /[A-Z]/ ){ $type = ucfirst($type) } #All lc, so format
