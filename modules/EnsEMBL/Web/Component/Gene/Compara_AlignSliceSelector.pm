@@ -49,7 +49,7 @@ sub content {
       next if $_ eq $species;       
       
       $options .= sprintf '
-          <option name="align" value="%d" %s>%s</option>',
+          <option value="%d" %s>%s</option>',
         $row_key,
         $row_key eq $align ? ' selected="selected"' : '',
         $object->species_defs->species_label($_);
