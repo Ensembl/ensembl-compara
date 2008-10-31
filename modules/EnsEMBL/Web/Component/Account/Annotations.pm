@@ -27,6 +27,11 @@ sub content {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $sitename = $self->site_name;
 
+  ## Control panel fixes
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' if $dir !~ /_/;
+  my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+
   my @notes = $user->annotations;
   my $has_notes = 0;
 
@@ -62,11 +67,11 @@ sub content {
                         $note->stable_id, $note->stable_id);
 
       $row->{'title'}   = $note->title;
-      $row->{'edit'}    = $self->edit_link('Annotation', $note->id);
+      $row->{'edit'}    = $self->edit_link($dir, 'Annotation', $note->id);
       if ($has_groups) {
-        $row->{'share'}   = $self->share_link('Bookmark', $note->id);
+        $row->{'share'}   = $self->share_link($dir, 'annotation', $note->id);
       }
-      $row->{'delete'}  = $self->delete_link('Annotation', $note->id);
+      $row->{'delete'}  = $self->delete_link($dir, 'Annotation', $note->id);
       $table->add_row($row);
       $has_notes = 1;
     }
@@ -114,8 +119,8 @@ sub content {
       my @group_links;
       foreach my $group (@{$group_notes{$note_id}{'groups'}}) {
         push @group_links, 
-          sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s" class="modal_link">%s</a>), 
-            $group->id, CGI::escape($self->object->param('_referer')), $group->name);
+          sprintf(qq(<a href="%s/Account/MemberGroups?id=%s%s" class="modal_link">%s</a>), 
+            $dir, $group->id, $referer, $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);

@@ -31,9 +31,13 @@ sub content {
   my $group = EnsEMBL::Web::Data::Group->new($self->object->param('id')); 
 
   if ($group) {
-    my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 
-    #$html .= '<p class="right"><a href="/Account/MemberGroups">&larr; Hide details</a></p>';
+    ## Control panel fixes
+    my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+    $dir = '' if $dir !~ /_/;
+    my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+
+    my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 
     $html .= '<div class="plain-box" style="padding:1em;margin:1em">';
     $html .= '<p><strong>Group created by</strong>: '.$creator->name;
@@ -52,8 +56,8 @@ sub content {
       foreach my $bookmark ($group->bookmarks) {
         my $row = {};
 
-        $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" title="%s" class="modal_link">%s</a>),
-                        $bookmark->id, $bookmark->url, $bookmark->name);
+        $row->{'name'} = sprintf(qq(<a href="%s/Account/UseBookmark?owner_type=group;id=%s%s" title="%s">%s</a>),
+                        $dir, $bookmark->id, $referer, $bookmark->url, $bookmark->name);
 
         $row->{'desc'} = $bookmark->description || '&nbsp;';
 
@@ -78,8 +82,8 @@ sub content {
       foreach my $config ($group->configurations) {
         my $row = {};
         
-        $row->{'name'} = sprintf(qq(<a href="/Account/UseConfig?id=%s" class="modal_link">%s</a>),
-                        $config->id, $config->name);
+        $row->{'name'} = sprintf(qq(<a href="%s/Account/UseConfig?owner_type=group;id=%s%s" class="modal_link">%s</a>),
+                        $dir, $config->id, $referer, $config->name);
 
         $row->{'desc'} = $config->description || '&nbsp;';
 
@@ -104,8 +108,8 @@ sub content {
       foreach my $note ($group->annotations) {
         my $row = {};
 
-        $row->{'name'} = sprintf(qq(<a href="/Gene/Summary?g=%s" class="cp-external">%s</a>),
-                        $note->stable_id, $note->stable_id);
+        $row->{'name'} = sprintf(qq(<a href="/Gene/Summary?g=%s%s">%s</a>),
+                        $note->stable_id, $referer, $note->stable_id);
 
         $row->{'title'} = $note->title || '&nbsp;';
 

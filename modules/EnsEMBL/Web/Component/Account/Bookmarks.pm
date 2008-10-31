@@ -31,6 +31,11 @@ sub content {
   my @bookmarks = $user->bookmarks;
   my $has_bookmarks = 0;
 
+  ## Control panel fixes
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' if $dir !~ /_/;
+  my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+
   my @admin_groups = $user->find_administratable_groups;
   my $has_groups = $#admin_groups > -1 ? 1 : 0;
 
@@ -60,20 +65,20 @@ sub content {
       my $row = {};
 
       my $description = $bookmark->description || '&nbsp;';
-      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" title="%s" class="cp-external">%s</a>),
-                        $bookmark->id, $description, $bookmark->name);
+      $row->{'name'} = sprintf(qq(<a href="%s/Account/UseBookmark?id=%s%s" title="%s" class="cp-external">%s</a>),
+                        $dir, $bookmark->id, $referer, $description, $bookmark->name);
 
       $row->{'desc'}    = $description;
-      $row->{'edit'}    = $self->edit_link('Bookmark', $bookmark->id);
+      $row->{'edit'}    = $self->edit_link($dir, 'Bookmark', $bookmark->id);
       if ($has_groups) {
-        $row->{'share'}   = $self->share_link('bookmark', $bookmark->id);
+        $row->{'share'}   = $self->share_link($dir, 'bookmark', $bookmark->id, $bookmark->id);
       }
-      $row->{'delete'}  = $self->delete_link('Bookmark', $bookmark->id);
+      $row->{'delete'}  = $self->delete_link($dir, 'Bookmark', $bookmark->id, $bookmark->id);
       $table->add_row($row);
       $has_bookmarks = 1;
     }
     $html .= $table->render;
-    $html .= $self->_add_bookmark;
+    $html .= $self->_add_bookmark($dir, $referer);
   }
 
 
@@ -110,14 +115,14 @@ sub content {
       my $row = {};
       my $bookmark = $group_bookmarks{$bookmark_id}{'bookmark'};
 
-      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" class="cp-external">%s</a>),
-                        $bookmark->id, $bookmark->name);
+      $row->{'name'} = sprintf(qq(<a href="%s/Account/UseBookmark?id=%s%s" class="cp-external">%s</a>),
+                        $dir, $bookmark->id, $referer, $bookmark->name);
 
       $row->{'desc'} = $bookmark->description || '&nbsp;';
 
       my @group_links;
       foreach my $group (@{$group_bookmarks{$bookmark_id}{'groups'}}) {
-        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s" class="modal_link">%s</a>), $group->id, $group->name);
+        push @group_links, sprintf(qq(<a href="%s/Account/MemberGroups?id=%s%s" class="modal_link">%s</a>), $dir, $group->id, $referer, $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);
@@ -127,15 +132,15 @@ sub content {
 
   if (!$has_bookmarks) {
     $html .= qq(<p class="center"><img src="/i/help/bookmark_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
-    $html .= $self->_add_bookmark;
+    $html .= $self->_add_bookmark($dir, $referer);
   }
 
   return $html;
 }
 
 sub _add_bookmark {
-  my $self = shift;
-  return qq(<p><a href="/Account/Bookmark?dataview=add" class="modal_link"><strong>Add a new bookmark </strong>&rarr;</a></p>);
+  my ($self, $dir, $referer) = @_;
+  return qq(<p><a href="$dir/Account/Bookmark?dataview=add$referer" class="modal_link"><strong>Add a new bookmark </strong>&rarr;</a></p>);
 }
 
 1;

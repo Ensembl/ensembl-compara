@@ -26,6 +26,11 @@ sub content {
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $sitename = $self->site_name;
+
+  ## Control panel fixes
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' if $dir !~ /_/;
+  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
   
   my @groups = $user->find_administratable_groups;
 
@@ -49,10 +54,10 @@ sub content {
       $row->{'name'} = $group->name;
       $row->{'desc'} = $group->blurb || '&nbsp;';
       if ($self->object->param('id') && $self->object->param('id') == $group->id) {
-        $row->{'details'} = '<a href="/Account/AdminGroups?_referer='.CGI::escape($self->object->param('_referer')).'" class="modal_link">Hide Details</a>';
+        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups?$referer" class="modal_link">Hide Details</a>);
       }
       else {
-        $row->{'details'} = '<a href="/Account/AdminGroups?id='.$group->id.';_referer='.$self->object->param('_referer').'" class="modal_link">Show Details</a>';
+        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups?id=).$group->id.qq(;$referer" class="modal_link">Show Details</a>);
       }
 
 #      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit;_referer='.CGI::escape($self->object->param('_referer')).'" class="modal_link">Manage Group</a>';

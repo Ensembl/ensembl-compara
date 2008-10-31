@@ -26,6 +26,11 @@ sub content {
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $sitename = $self->site_name;
+
+  ## Control panel fixes
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' if $dir !~ /_/;
+  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
   
   my @groups = $user->find_nonadmin_groups;
 
@@ -51,12 +56,12 @@ sub content {
       my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
       $row->{'admin'} = $creator->name;
       if ($self->object->param('id') && $self->object->param('id') == $group->id) {
-        $row->{'details'} = '<a href="/Account/MemberGroups?_referer='.CGI::escape($self->object->param('_referer')).'" class="modal_link">Hide Details</a>';
+        $row->{'details'} = qq(<a href="$dir/Account/MemberGroups?$referer" class="modal_link">Hide Details</a>);
       }
       else {
-        $row->{'details'} = '<a href="/Account/MemberGroups?id='.$group->id.';_referer='.$self->object->param('_referer').'" class="modal_link">Show Details</a>';
+        $row->{'details'} = qq(<a href="$dir/Account/MemberGroups?id=).$group->id.qq(;$referer" class="modal_link">Show Details</a>);
       }
-      $row->{'leave'} = $self->delete_link('Membership', $group->id, 'Unsubscribe');
+      $row->{'leave'} = $self->delete_link($dir, 'Membership', $group->id, 'Unsubscribe');
       $table->add_row($row);
     }
     $html .= $table->render;
