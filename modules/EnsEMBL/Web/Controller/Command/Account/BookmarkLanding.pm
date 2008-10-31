@@ -30,7 +30,7 @@ sub process {
       $url .= '?_referer='.CGI::escape($cgi->param('_referer'));
     }
   }
-  $cgi->redirect($url);
+  $self->ajax_redirect($url);
 }
 
 }
