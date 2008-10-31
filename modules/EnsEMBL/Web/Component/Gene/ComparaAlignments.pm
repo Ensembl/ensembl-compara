@@ -48,7 +48,14 @@ sub content {
     my $as_adaptor = $compara_db->get_adaptor("AlignSlice");
     my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, undef, "restrict");
 
-    my @selected_species = grep {$_ } $object->param("ms_${selectedAlignment}");
+    my @selected_species;
+    
+    foreach (grep { /species_$selectedAlignment/ } $object->param) {
+      if ($object->param($_) eq 'yes') {
+        /species_${selectedAlignment}_(.+)/; 
+        push (@selected_species, ucfirst $1) unless $1 =~ /$species/i;
+      }
+    }
 
     # I could not find a better way to distinguish between pairwise and multiple alignments. 
     # The difference is that in case of multiple alignments
@@ -62,6 +69,7 @@ sub content {
     }
 
     push @sliceArray, @{$align_slice->get_all_Slices(@selected_species)};
+    
     if ($method_link_species_set->method_link_class =~ /GenomicAlignTree/) {
       ## Slices built from GenomicAlignTrees (EPO alignments) are returned in a specific order
       ## This tag will allow us to keep that order
@@ -71,7 +79,7 @@ sub content {
       }
     }
   }
-  
+ 
   return markup_and_render($object, \@sliceArray) . $warnings;
 }
 
@@ -579,21 +587,28 @@ sub markupExons {
 }
 
 sub add_text {
-  my ($object, $hRef, $line_numbering, $width, $max_values, $linenumbers, $display_name, $BR) = @_;
+  my ($object, $hRef, $line_numbering, $width, $max_values, $display_name, $BR) = @_;
 
   my $sindex = 0;
   my $max_label = $max_values->{'max_label'};
   my $max_position_length = $max_values->{'max_position_length'};
 
- my $sequence     = ($object->param('match_display') eq 'dot') ? $hRef->{$display_name}->{dotted_sequence} : $hRef->{$display_name}->{sequence};
-#  my $sequence     = $hRef->{$display_name}->{sequence};
+  my $sequence     = ($object->param('match_display') eq 'dot') ? $hRef->{$display_name}->{'dotted_sequence'} : $hRef->{$display_name}->{'sequence'};
   my $slice        = $hRef->{$display_name}->{slice};
   my $slice_length = $hRef->{$display_name}->{slice_length};
   my $abbr         = $hRef->{$display_name}->{abbreviation};
 
+  my $linenumbers;
+
+  if ($object->param('line_numbering') eq 'slice' && $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
+    my ($sl, $st) = $slice->get_original_seq_region_position;
+    $linenumbers = [ $st, $sl->end ];
+  } else {
+    $linenumbers = [ $object->get_slice_object->line_numbering ];
+    $linenumbers->[0]-- if $linenumbers;
+  }
+  
   my $species_html = add_display_name($sequence, $slice, $slice_length, $abbr, $line_numbering, $width, $max_values, $linenumbers);
-
-
 
   # And now the hard bit 
   my $smask = 0; # Current span mask
@@ -602,9 +617,8 @@ sub add_text {
   my @markup = sort { $a->{pos} <=> $b->{pos} || $a->{mark} <=> $b->{mark}  } @{$hRef->{$display_name}->{markup}};
 
   for (my $i = 1; $i < (@markup); $i++) {
-
     # First take the preceeding bin ------------------------
-    my $previous = $markup[$i -1];
+    my $previous = $markup[$i-1];
 
     # If the bin has a mask apply it to the global mask
     # If the bin mask positive then it is the start of a highlighted region
@@ -613,30 +627,36 @@ sub add_text {
 
     if ($previous->{mask}) {
       $smask += $previous->{mask};
+      
       if ($previous->{mask} > 0) { # start of highlighted region
-	push @title, $previous->{text} if ($previous->{text} ne $title[-1]);
+        push @title, $previous->{text} if ($previous->{text} ne $title[-1]);
       } else {
-	@title = grep { $_ ne $previous->{text}} @title;
+        @title = grep { $_ ne $previous->{text}} @title;
       }
     }
 
     # Display SNP info at the end of the line if bin has snpID 
     if ($previous->{snpID}) {
       my $pos = $previous->{pos};
+      
       if ($line_numbering eq 'slice') {
-	if ($slice->strand > 0 ) {
-	  $pos += $slice->start -1;
-	}
-	else {
-	  $pos = $slice->end +1 - $pos;
-	}
+        if ($slice->strand > 0) {
+          $pos += $slice->start - 1;
+          
+        } else {
+          $pos = $slice->end + 1 - $pos;
+        }
+        
+        $pos += $linenumbers->[0] - 1;
       }
 
       # If $display name is a strain, need to replace with the species instead for SNPview URL
-      my $link_species = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") ? $display_name : $object->species();
-      push @$notes, sprintf("<a href=\"/%s/Variation/Summary?v=%s;vdb=variation\">%u:%s</a>", $link_species, $previous->{snpID}, $pos, $previous->{textSNP})  if ($object->param('snp_display') eq 'snp_link');
+      my $link_species = $object->species_defs->get_config($display_name, "SPECIES_ABBREVIATION") ? $display_name : $object->species;
+      
+      if ($object->param('snp_display') eq 'snp_link') {
+        push @$notes, qq{<a href="/$link_species/Variation/Summary?v=$previous->{'snpID'};vdb=variation">$pos:$previous->{'textSNP'}</a>};
+      }
     }
-
 
     # And now onto the current bin ----------------------------------
     my $current = $markup[$i];
@@ -664,7 +684,6 @@ sub add_text {
     # Otherwise it is EOL symbol and need to get the region sequence; the region starts from the previous bin position 
     my $sq = $previous->{mark} ? '' : substr($sequence, $previous->{pos}-1, $w);
 
-
     # Are we about to display some sequence ? 
     # Then check whether the region should be highlighted and if it the case  put it into <span> tag
     if (length($sq)) {
@@ -679,142 +698,154 @@ sub add_text {
       my $sclass = $NBP;
 
       if ($smask & 0x0F) {
-	$sclass = 'e';
+        $sclass = 'e';
       }
 
       if ($smask & 0x40) {
-	$sclass .= 'd';
+        $sclass .= 'd';
       } elsif ($smask & 0x20) {
-	$sclass .= 's';
+        $sclass .= 's';
       } elsif ($smask & 0x100) {
-	$sclass .= 'o';
+        $sclass .= 'o';
       } elsif ($smask & 0x10) {
-	$sclass .= 'c';
+        $sclass .= 'c';
       } elsif ($smask & 0x200) {
-	$sclass .= 't';
+        $sclass .= 't';
       }
 
       if (($sclass ne $NBP) || $tag_title) {
-	my $base = $sq;
-	if ($sclass =~ /s/) { # if it is a SNP
-	  my $ambiguity = $previous->{ambiguity};
-	  $base = $ambiguity if $ambiguity;
-	}
-	$species_html .= sprintf (qq{<span%s%s>%s</span>},
-				  $sclass ne 'mn' ? qq{ class="$sclass"} : '',
-				  $tag_title ? qq{ title="$tag_title"} : '', $base);
+        my $base = $sq;
+        
+        if ($sclass =~ /s/) { # if it is a SNP
+          my $ambiguity = $previous->{ambiguity};
+          $base = $ambiguity if $ambiguity;
+        }
+        
+        $species_html .= sprintf (qq{<span%s%s>%s</span>},
+          $sclass ne 'mn' ? qq{ class="$sclass"} : '',
+          $tag_title ? qq{ title="$tag_title"} : '', 
+          $base
+        );
       } else {
-	$species_html .= $sq;
+        $species_html .= $sq;
       }
-    }  # end if length ($sq)
+    }
 
     $sindex += length($sq);
 
     # The seq is displayed.  Now add the line numbering and the line notes if any
     if ($sindex % $width == 0 && length($sq) != 0) {
       my $seq_name_space = 0;
-      my $seq_name      = "";
-      my $pos           = undef;
+      my $seq_name = "";
+      my $pos = undef;
 
       if ($line_numbering eq 'slice') {
-	$seq_name_space = $max_label;
+        $seq_name_space = $max_label;
 
-	# For AlignSlice display the position of the last meaningful bp
-	if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-	  my $segment = substr($sequence, $sindex-$width, $width);
-
-	  my $last_bp_pos = -1;
-	  while ($segment =~ m/[AGCT]/g) {
-	    $last_bp_pos = pos($segment);
-	  }
-	
-	  if ($last_bp_pos > 0) {
-	    my ($oslice, $position) = $slice->get_original_seq_region_position( $sindex + $last_bp_pos - $width);
-	    $seq_name      = $oslice->seq_region_name;
-	    $pos           = $position;
-	  }
-	} else {
-	  $pos = $slice->strand > 0 ? ($sindex + $linenumbers->[0]) : ($linenumbers->[0] - $sindex + 2);
-	  $seq_name = $slice->seq_region_name;
-	}
-      } elsif( $line_numbering eq 'sequence') {
-	$pos = $sindex + $linenumbers->[0];
+        # For AlignSlice display the position of the last meaningful bp
+        if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
+          my $segment = substr($sequence, $sindex-$width, $width);
+      
+          my $last_bp_pos = -1;
+          
+          while ($segment =~ m/[AGCT]/g) {
+            $last_bp_pos = pos($segment);
+          }
+        
+          if ($last_bp_pos > 0) {
+            my ($oslice, $position) = $slice->get_original_seq_region_position($sindex + $last_bp_pos - $width);
+            
+            $seq_name = $oslice->seq_region_name;
+            $pos = $position;
+          }
+        } else {
+          $pos = $slice->strand > 0 ? ($sindex + $linenumbers->[0]) : ($linenumbers->[0] - $sindex + 2);
+          $seq_name = $slice->seq_region_name;
+        }
+      } elsif ($line_numbering eq 'sequence') {
+        $pos = $sindex + $linenumbers->[0];
       }
 
-      if ($seq_name && $pos && (($pos - $linenumbers->[0]) < $slice_length)) {
-	$seq_name_space++;
-	$seq_name .= ":";
-	$species_html .= sprintf(" %*s", $seq_name_space, $seq_name);
+      if ($seq_name && $pos && $pos < $linenumbers->[1]) {
+        $seq_name_space++;
+        $seq_name .= ":";
+        $species_html .= sprintf(" %*s", $seq_name_space, $seq_name);
       }
 
       if ($pos) {
-        if (($pos - $linenumbers->[0]) < $slice_length) {
+        if ($pos < $linenumbers->[1]) {
           $species_html .= sprintf("%*u", $max_position_length, $pos);
-          if( $notes ) {
-	    $species_html .= ' '.join('; ', @$notes);
-	    $notes = undef;
-	  }
-	  $species_html .= "\n";
+          
+          if ($notes) {
+            $species_html .= ' ' . join('; ', @$notes);
+            $notes = undef;
+          }
         }
       } else {
         if ($notes) {
-	  $species_html .= ' '.join('; ', @$notes);
-	  $notes = undef;
+          $species_html .= ' ' . join('; ', @$notes);
+          $notes = undef;
         }
-        $species_html .= "\n";
       }
-    } # end if ($sindex % $width == 0 && length($sq) != 0) 
-  } # end for my $i
+      
+      $species_html .= "\n";
+    }
+  }
 
   $sindex--; # correction factor for last line
 
   # Last line, seq region name and position markup if there are leftovers
-#  if (($sindex % $width)  != 0) {
-  if (($sindex % $width)  != 0 && (($sindex % $width)  != ($width -1))) {
+  if (($sindex % $width) != 0 && (($sindex % $width) != ($width - 1))) {
     my $seq_name_space = 0;
-    my $seq_name      = "";
-    my $pos           = 0;
+    my $seq_name = "";
+    my $pos = 0;
     my $padding_width = 0;
     if ($line_numbering eq 'slice') {
       $seq_name_space = $max_label;
+      
       if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-	my $wd = $sindex % $width;
-	my $segment = substr($sequence, -$wd);
-	my $last_bp_pos = -1;
-	while ($segment =~ m/[AGCT]/g) {
-	  $last_bp_pos = pos($segment);
-	}
+        my $wd = $sindex % $width;
+        my $segment = substr($sequence, -$wd);
+        my $last_bp_pos = -1;
+  
+        while ($segment =~ m/[AGCT]/g) {
+          $last_bp_pos = pos($segment);
+        }
 
-	if ($last_bp_pos > 0) {
-	  my ($oslice, $position) = $slice->get_original_seq_region_position( $sindex + $last_bp_pos - $wd);
-	  $padding_width = $width - $wd;
-	  $seq_name      = $oslice->seq_region_name;
-	  $pos           = $position;
-	}
+        if ($last_bp_pos > 0) {
+          my ($oslice, $position) = $slice->get_original_seq_region_position($sindex + $last_bp_pos - $wd);
+          $padding_width = $width - $wd;
+          $seq_name = $oslice->seq_region_name;
+          $pos = $linenumbers->[1];
+        }
       } else {
-	$padding_width = $width - ($sindex % $width) -1;
-	$pos = $slice->strand > 0 ? ($sindex + $linenumbers->[0]) : ($linenumbers->[0] - $sindex + 2); 
-	$seq_name = $slice->seq_region_name;
+        $padding_width = $width - ($sindex % $width);
+        $pos = $slice->strand > 0 ? ($sindex + $linenumbers->[0]) : ($linenumbers->[0] - $sindex + 2); 
+        $seq_name = $slice->seq_region_name;
       }
-    } elsif($line_numbering eq 'sequence') {
+    } elsif ($line_numbering eq 'sequence') {
       $pos = $sindex + $linenumbers->[0];
-      $max_position_length += $width - ($sindex % $width) -1;
+      $max_position_length += $width - ($sindex % $width) - 1;
     }
+    
     if ($seq_name) {
       $seq_name_space++;
       $seq_name .= ":";
-      $species_html .= sprintf(" %*s%*s", $padding_width, " ", $seq_name_space, $seq_name);
+      $species_html .= sprintf("%*s%*s", $padding_width, " ", $seq_name_space, $seq_name);
     }
+    
     $species_html .= sprintf("%*u", $max_position_length, $pos) if $pos;
   }
 
-  $species_html .= join('|', " ", @$notes) if $notes;
+  $species_html .= ' ' . join('; ', @$notes) if $notes;
   $species_html .= "\n" unless ($species_html =~ /\n$/);
+  
   return $species_html;
 }
 
 sub add_display_name {
   my ($sequence, $slice, $slice_length, $abbr, $line_numbering, $width, $max_values, $linenumbers, $sindex) = @_;
+  
   $sindex ||= 0;
 
   #sprintf("%.*s", 3, $_ )  # word padded to 3 characters
@@ -823,8 +854,8 @@ sub add_display_name {
 
   # Number markup
   my $seq_name_space = 0;
-  my $seq_name      = "";
-  my $pos           = undef;
+  my $seq_name = "";
+  my $pos = undef;
 
   # If the line numbering is on - then add the index of the first position
   if ($line_numbering eq 'slice') {
@@ -835,35 +866,36 @@ sub add_display_name {
       my $segment = substr($sequence, $sindex, $width);
 
       # max_label is the longest seq_region_name
-      if ($segment =~ m/[ATGCN]/g) {  # if there is sequence
-	my ($oslice, $position) = $slice->get_original_seq_region_position( $sindex + pos($segment) );
-	$seq_name      = $oslice->seq_region_name;
-	$pos           = $position;
+      if ($segment =~ m/[ATGCN]/g) { # if there is sequence
+        my ($oslice, $position) = $slice->get_original_seq_region_position($sindex + pos($segment));
+        
+        $seq_name = $oslice->seq_region_name;
+        $pos = $position;
+      } else {
+        $seq_name_space += $max_position_length + 2;
       }
-      else {
-	$seq_name_space += $max_position_length + 2;
-      }
-    } 
-    else {
+    } else {
       if ($sindex < $slice_length) {
-	my $pos1 = $slice->strand > 0 ? ($sindex + $linenumbers->[0] + 1) : ($linenumbers->[0] + 1 - $sindex); 
-	$pos = $pos1;
-	$seq_name = $slice->seq_region_name;
+        my $pos1 = $slice->strand > 0 ? ($sindex + $linenumbers->[0] + 1) : ($linenumbers->[0] + 1 - $sindex);
+        
+        $pos = $pos1;
+        $seq_name = $slice->seq_region_name;
       }
     }
-  } 
-
-  elsif ($line_numbering eq 'sequence') {
+  } elsif ($line_numbering eq 'sequence') {
     if ($sindex < $slice_length) {
-     	$pos = $sindex + $linenumbers->[0] +1;
+       $pos = $sindex + $linenumbers->[0] + 1;
     }
   }
+  
   if ($seq_name) {
     $seq_name_space++;
     $seq_name .= ":";
   }
+  
   $html .= sprintf("%*s", $seq_name_space, $seq_name) if $seq_name_space;
   $html .= sprintf("%*u %s", $max_position_length, $pos) if $pos;
+  
   return $html;
 }
 
@@ -894,49 +926,54 @@ sub _sort_slices {
 sub generateHTML {
   my ($object, $hRef, $max_values) = @_;
 
-  my @linenumbers = $object->get_slice_object->line_numbering;
-  $linenumbers[0] -- if @linenumbers;
-
   my $BR = '###';
   my $width = $object->param("display_width") || 60;
   my $line_numbering = $object->param('line_numbering');
   my $reference_name = $object->get_slice_object->get_individuals('reference');
   my $flag_done_reference = 0;
-#   foreach my $display_name ($reference_name, (sort keys %$hRef)) {
+
   foreach my $display_name ($reference_name, (sort keys %$hRef)) {
     next unless $hRef->{$display_name};
+    
     if ($display_name eq $reference_name) {
       next if $flag_done_reference;
+      
       $flag_done_reference = 1 ;
     }
 
-    my $species_html = add_text($object, $hRef, $line_numbering, $width, $max_values, \@linenumbers, $display_name, $BR);
+    my $species_html = add_text($object, $hRef, $line_numbering, $width, $max_values, $display_name, $BR);
 
     # Now $species_html holds ready html for the $species
     # To display multiple species aligned line by line here we split the species html on $BR symbol
     # so later we can pick the html line by line from each species in turn
     @{$hRef->{$display_name}->{html}} = split /$BR/, $species_html;
-  }  # end foreach display name
+  }
 
   my $html = '';
+  
   if (scalar(keys %$hRef) > 1) {
     while (1) {
       my $line_html = '';
+      
       if ($hRef->{$reference_name}) {
-	$line_html .= shift @{$hRef->{$reference_name}->{html} || [] };
+        $line_html .= shift @{$hRef->{$reference_name}->{html} || [] };
       }
+      
       foreach my $display_name (_sort_slices $hRef) {
-	next if $display_name eq $reference_name;
+        next if $display_name eq $reference_name;
         $line_html .= shift @{$hRef->{$display_name}->{html}};
       }
+      
       $html .= "$line_html\n";
+      
       last if (!$line_html);
     }
   } else {
-    foreach  (keys %{$hRef}) {
+    foreach (keys %{$hRef}) {
       $html .= join '', @{$hRef->{ $_ }->{html}};
     }
   }
+  
   return $html;
 }
 
