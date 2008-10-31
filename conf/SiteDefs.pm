@@ -180,6 +180,7 @@ $ENSEMBL_ERRORS_TO      = 'webmaster&#064;mydomain.org';    # ...and to whom?
 
 $ENSEMBL_DEBUG_FLAGS = 1;
 
+our $ENSEMBL_DEBUG_MEMCACHED        = 2048;
 our $ENSEMBL_DEBUG_JAVASCRIPT_DEBUG = 1024;
 our $ENSEMBL_DEBUG_MAGIC_MESSAGES   =  512;
 our $ENSEMBL_DEBUG_REFERER          =  256;
@@ -191,6 +192,7 @@ our $ENSEMBL_DEBUG_HANDLER_ERRORS   =    8;
 our $ENSEMBL_DEBUG_SD_AUTOLOADER    =    4;
 our $ENSEMBL_DEBUG_DRAWING_CODE     =    2;
 our $ENSEMBL_DEBUG_GENERAL_ERRORS   =    1;
+
 #####################
 # Apache files
 $ENSEMBL_PIDFILE = undef;
