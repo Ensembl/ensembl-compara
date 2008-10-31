@@ -111,11 +111,12 @@ sub _render_hit {
   my $script = $URL =~ /(\w+)\?/ ? $1 : '';
   my $mapped_script = $hit_maps->{$script};
   my $extra = '';
+  $URL =~ s{Location/View\?marker}{Location/Marker\?m}; #cope with incorrect marker URLs
   if( $mapped_script ) {
     $script = $URL;
-    $script =~s/(\w+)\?/$mapped_script\?/g;
+    $script = ~s/(\w+)\?/$mapped_script\?/g;
     $mapped_script = ucfirst($mapped_script);
-    $mapped_script =~s/view/View/;
+    $mapped_script = ~s/view/View/;
     $extra = sprintf( ' [<a href="%s">%s</a>]' , $script, $mapped_script );
   }
   return sprintf qq(
@@ -125,7 +126,7 @@ sub _render_hit {
 <blockquote>%s</blockquote>
 
 ),
-    CGI::escapeHTML( $hit->URL ), 
+    CGI::escapeHTML( $URL ), 
     $hit->field('title')->getHighlighted, $extra,
     $hit->field('description') ? $hit->field('description')->getHighlighted : '--',
     join( '&nbsp;&nbsp; ',
