@@ -65,6 +65,11 @@ sub content {
 
   }
 
+## type for core genes
+  else {
+    my $type = $object->transcript_type;
+    $table->add_row('Type',$type) if $type;
+  }
 ## add prediction method
   my $label = ( ($db eq 'vega' or $object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
   my $text  = "No $label defined in database";
