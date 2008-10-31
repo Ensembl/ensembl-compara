@@ -151,7 +151,8 @@ sub content {
         # atm, it can only be 'ins' or 'del' to indicate the type of a variation
         # in case of deletion we highlight flanked bases, and actual region where some bases are missing located at the right flank
         my $ind = ($type eq 'ins') ? $i+$j : $i+$j+1;
-        push @var_list, qq(<a href="/@{[$object->species]}/snpview?panel_individual=on;snp=$snp_id">$ind:$title</a>);
+        $ind += $linenumbers[0]-1 if $object->param('line_numbering') eq 'slice';
+        push @var_list, qq(<a href="/@{[$object->species]}/Variation/Summary?v=$snp_id;vdb=variation">$ind:$title</a>);
       }
       if( ! $n ){ next }
       if( $n > $linelength-$j ){ # Markup extends over line end. Trim for next
