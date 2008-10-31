@@ -38,7 +38,6 @@ sub process {
   my $type = lc($cgi->param('type')).'s';
 
   my ($records_accessor) = grep { $_ eq $type } keys %{ $user->relations };
-warn keys %{ $user->relations };
   ## TODO: this should use abstraction limiting facility rather then grep
 
   my ($user_record)      = grep { $_->id == $cgi->param('id') } $user->$records_accessor;
@@ -53,7 +52,7 @@ warn keys %{ $user->relations };
     ## TODO: error exception
   }
   
-  $cgi->redirect($self->url('/Account/Details'));
+  $self->ajax_redirect($self->url('/Account/Details'));
 }
 
 }
