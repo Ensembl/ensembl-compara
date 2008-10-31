@@ -269,7 +269,8 @@ sub _save_protein_features {
           'link' => $f->link,
       };
 
-      my $feat = new Bio::EnsEMBL::ProteinFeature(
+      eval {
+	  my $feat = new Bio::EnsEMBL::ProteinFeature(
               -translation_id => $object_id,
               -start    => $f->rawstart,
               -end      => $f->rawend,
@@ -281,9 +282,14 @@ sub _save_protein_features {
               -score => $f->score,
               -analysis => $datasource,
               -extra_data => $extra_data,
-      );
+						      );
 
-      push @feat_array, $feat;
+	  push @feat_array, $feat;
+      };
+
+      if ($@) {
+	  push @$errors, "Invalid feature: $@.";
+      }
     }
     else {
       push @$errors, "Invalid segment: $seqname.";
@@ -329,7 +335,8 @@ sub _save_genomic_features {
         'link' => $f->link,
       };
 
-      my $feat = new Bio::EnsEMBL::DnaDnaAlignFeature(
+      eval {
+	  my $feat = new Bio::EnsEMBL::DnaDnaAlignFeature(
                   -slice    => $slice,
                   -start    => $f->rawstart,
                   -end      => $f->rawend,
@@ -342,9 +349,14 @@ sub _save_genomic_features {
                   -analysis => $datasource,
                   -cigar_string => $f->{_attrs} || '1M',
                   -extra_data => $extra_data,
-      );
+							  );
 
-      push @feat_array, $feat;
+	  push @feat_array, $feat;
+
+      };
+      if ($@) {
+	  push @$errors, "Invalid feature: $@.";
+      }
     }
     else {
       push @$errors, "Invalid segment: $seqname.";
