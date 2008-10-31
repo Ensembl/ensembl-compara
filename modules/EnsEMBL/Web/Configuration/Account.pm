@@ -57,12 +57,16 @@ sub populate_tree {
       { 'availability' => 1 }
     );
 
+    #my $T = $self->tree->get_node('Settings');
     my $settings_menu = $self->create_submenu( 'Settings', 'Manage Saved Settings' );
+    #use Carp qw(cluck);
+    #cluck ">>> $T MENU $settings_menu";
     $settings_menu->append($self->create_node( 'Bookmarks', "Bookmarks ([[counts::bookmarks]])",
     [qw(bookmarks EnsEMBL::Web::Component::Account::Bookmarks
         )],
       { 'availability' => 1, 'concise' => 'Bookmarks' }
     ));
+=pod
     $settings_menu->append($self->create_node( 'Configurations', "Configurations ([[counts::configurations]])",
     [qw(configs EnsEMBL::Web::Component::Account::Configurations
         )],
@@ -73,6 +77,7 @@ sub populate_tree {
         )],
       { 'availability' => 1, 'concise' => 'Annotations' }
     ));
+=cut
     $settings_menu->append($self->create_node( 'NewsFilters', "News Filters ([[counts::news_filters]])",
     [qw(news EnsEMBL::Web::Component::Account::NewsFilters
         )],
@@ -137,6 +142,11 @@ sub populate_tree {
   );
   $self->create_node( 'RegistrationFailed', '',
     [qw(reg_failed EnsEMBL::Web::Component::Account::RegistrationFailed
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'Update', '',
+    [qw(update EnsEMBL::Web::Component::Account::Update
         )],
       { 'no_menu_entry' => 1 }
   );
