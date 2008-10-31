@@ -1399,8 +1399,8 @@ sub get_main_panel{
         $main_panel->add_block();
         $main_panel->add_block_header({ LABEL => $toggle.$label });
         if( $CGI->param($toggleparam) ){
-          #&draw_hsp_vs_query( $main_panel, $runnable, $result, 
-          #                    $alignments, );
+          &draw_hsp_vs_query( $main_panel, $runnable, $result, 
+                              $alignments, );
         }
       }
 
@@ -1853,57 +1853,28 @@ sub draw_hsp_vs_query{
   my $result     = shift;
   my $aligns     = shift;
 
-  my $image_tmpl = qq(
-<TABLE align="center" border="0" cellspacing="0" cellpadding="2">
- <TR valign="top">
-  <TD nowrap align="center" colspan=2
-  ><IMG SRC="%s" BORDER="0" usemap="#hsp_query_plot"></TD>
- </TR>
- <TR><TD colspan="2" height="5"><img src="/img/blank.gif" height="5" /></TD></TR>
- <TR>
-  <TD colspan="2" align="center">%s</TD>
- </TR>
-</TABLE>
-<MAP name="hsp_query_plot">
-%s</<MAP>);
-
-  my $colours_tmpl = qq(
-<table align="center" border="0" cellspacing="0" cellpadding="2"><tr>
-<td><small>Key (%%ID): &nbsp; </small></td>
-%s
-</tr></table>);
-
-  my $colour_row_tmpl = qq(
-<td align="center" nowrap="nowrap" width="50" bgcolor="%s"
-><b><font color="white"><small>&nbsp;%.0f&nbsp;-&nbsp;%.0f&nbsp;</small></b></font></td>);
-
-  my $colour_row_spacer = qq(
-<td width="8"><small>&nbsp;</small></td>);
-
   my $bucket = EnsEMBL::Web::Container::HSPContainer->new($result, $aligns);
-  my $uconf  = $ENSEMBL_WEB_REGISTRY->get_session->getImageConfig('hsp_query_plot');
-  my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket, $uconf);
+  my $web_config  = $ENSEMBL_WEB_REGISTRY->get_session->getImageConfig('hsp_query_plot');
+  $web_config->set_parameter( 'container_width', $bucket->length );
+  $web_config->set_parameter( 'image_width',     640 );
+
+  my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket,$web_config);
 
   my $fi = new EnsEMBL::Web::File::Image( $SPECIES_DEFS );
      $fi->set_tmp_filename();
      $fi->dc = $hsp_dc;
      $fi->{'img_map'} = 1;
+     $fi->{'border'} = 1;
 
-  my @colours = qw( gold orange chocolate firebrick darkred );
-  my @col_tds;
-  for( my $i=0; $i<@colours; $i++ ){
-    push( @col_tds,  sprintf( $colour_row_tmpl, $colours[$i], 
-                              $i * 20, ($i+1) * 20 ) );
-  }
-  my $colour_key_str = sprintf( $colours_tmpl,
-                                join( $colour_row_spacer, @col_tds ) );
-  my $html = qq(<TABLE align="center" border="0" cellspacing="0" cellpadding="2">
-   <TR valign="top">
-     <TD nowrap align="center" colspan="2"
-       >).$fi->render_image_tag().qq(</TD></TR></TABLE>).$fi->render_image_map();
+warn "... ",$bucket->length;
 
   $main_panel->add_entry();
+  my $html = qq(<table align="center" border="0" cellspacing="0" cellpadding="2">
+   <tr valign="top">
+     <td nowrap align="center" colspan="2"
+       >).$fi->render_image_tag().qq(</td></td></table>).$fi->render_image_map();
   $main_panel->add_form( $main_panel->get_form_label( $html ) );
+
   return 1;
 
 #  my $sp = $result->database_species;
