@@ -53,10 +53,16 @@ sub render_message {
 ### Redirects to a generic message module
   my $self = shift;
   my $type = $ENV{'ENSEMBL_TYPE'} || 'Account';
+  my $species = $self->action->cgi->param('cp_species') || $ENV{'ENSEMBL_SPECIES'};
+  my $dir = '/'.$species;
+  $dir = '' if $dir !~ /_/;
   ## Add a checksum to URL so user can't insert arbitrary HTML, etc.
   my $message = $self->get_message;
   my $checksum = EnsEMBL::Web::Tools::Encryption::checksum($message); 
-  my $url = "/$type/Message?command_message=".$self->get_message.";checksum=$checksum";
+  my $url = "$dir/$type/Message?command_message=".CGI::escape($message).";checksum=$checksum";
+  ## Pass referer, to ensure we get control panel tabs
+  $url .= ';_referer='.$self->action->cgi->param('_referer');
+  ## Do appropriate type of redirect
   my $ajax = $self->action->cgi->param('x_requested_with');
   if ($ajax) {
     $url .= ';x_requested_with='.$ajax if $ajax;
@@ -73,6 +79,7 @@ sub ajax_redirect {
   unless( $url =~ /x_requested_with=/ ) {
     $url .= ($url =~ /\?/?';':'?').'x_requested_with=XMLHttpRequest';
   }
+  warn "REDIRECTING AJAX $url";
   $self->action->cgi->redirect($url);
 }
 

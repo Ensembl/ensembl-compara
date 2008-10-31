@@ -42,6 +42,10 @@ sub content {
     $form->add_element('type'  => 'Hidden', 'name'  => 'email', 'value' => $email);
     $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Old password',
                       'required' => 'yes');
+    $form->add_element('type'  => 'Hidden', 'name'  => 'x_requested_with', 'value' => 'XMLHttpRequest');
+    my $species = $ENV{'ENSEMBL_SPECIES'};
+    $species = '' if $species !~ /_/;
+    $form->add_element('type'  => 'Hidden', 'name'  => 'cp_species', 'value' => $species);
   } else {
     ## Setting new/forgotten password
     $form->add_element('type' => 'Hidden', 'name' => 'user_id', 'value' => $object->param('user_id'));

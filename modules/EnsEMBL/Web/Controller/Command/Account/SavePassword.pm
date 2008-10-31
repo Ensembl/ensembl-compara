@@ -45,12 +45,13 @@ sub process {
       if $group->add_user($user);
   }
 
-
   my $param = {
     'email'     => $user->email,
     'password'  => $cgi->param('new_password_1'),
     'url'       => $cgi->param('url'),
     'updated'   => 'yes',
+    '_referer'  => $cgi->param('_referer'),
+    'x_requested_with'  => $cgi->param('x_requested_with'),
   };
   if ($cgi->param('record_id')) {
     $param->{'record_id'} = $cgi->param('record_id');
@@ -60,7 +61,7 @@ sub process {
     $param->{'activated'} = 'yes';
   } 
 
-  $cgi->redirect($self->url('Account/SetCookie', $param));
+  $self->ajax_redirect($self->url('Account/SetCookie', $param));
 }
 
 }
