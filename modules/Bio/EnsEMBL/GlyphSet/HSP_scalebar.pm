@@ -105,7 +105,7 @@ sub _init {
             'colour'    => 'black',
             'absolutey' => 1,
         }));
-        my $LABEL = $minor_unit < 250 ? $self->commify($box_start): $self->bp_to_nearest_unit( $box_start, 2 );
+        my $LABEL = $box_start;#$minor_unit < 250 ? $self->commify($box_start): $self->bp_to_nearest_unit( $box_start, 2 );
         my @res = $self->get_text_width( 0, $LABEL, '', 'font'=>$fontname, 'ptsize' => $fontsize );
         if( $last_text_X + $res[2] * 1.5 / $pix_per_bp < $box_start ) {
           $self->push($self->Text({
