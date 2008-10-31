@@ -58,9 +58,13 @@ sub handler {
   my $pageContent = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
     
   if ($pageContent) {
-    warn "STATIC CONTENT CACHE HIT $ENV{CACHE_KEY}";
+    warn "STATIC CONTENT CACHE HIT $ENV{CACHE_KEY}"
+      if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+         $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
   } else {
-    warn "STATIC CONTENT CACHE MISS $ENV{CACHE_KEY}";
+    warn "STATIC CONTENT CACHE MISS $ENV{CACHE_KEY}"
+      if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+         $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
 
     unless (-e $r->filename) {
       $r->log->error("File does not exist: ", $r->filename);
