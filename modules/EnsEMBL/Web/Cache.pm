@@ -71,7 +71,7 @@ sub add_tags {
   my $key  = shift;
   my @tags = @_;
 
-  _warn "MEMCACHED->add_tags( $key, ".join(', ', @tags).')';
+  _warn("MEMCACHED->add_tags( $key, ".join(', ', @tags).')');
 
   my $sock = $self->get_sock($key);
   foreach my $tag (@tags) {
@@ -92,7 +92,7 @@ sub delete_by_tags {
   my $self = shift;
   my @tags = (@_, $self->{namespace});
 
-  _warn 'MEMCACHED->tags_delete( '.join(', ', @tags).')';
+  _warn('MEMCACHED->tags_delete( '.join(', ', @tags).')');
 
   my $cmd = 'tags_delete '.join(' ', @tags)."\r\n";
   my $items_deleted = 0;
@@ -106,7 +106,7 @@ sub delete_by_tags {
       }
   }
 
-  _warn "MEMCACHED: $items_deleted items deleted";
+  _warn("MEMCACHED: $items_deleted items deleted");
   
   return $items_deleted;
 
@@ -122,7 +122,7 @@ sub set {
   my ($key, $value, $exptime, @tags) = @_;
   return unless $value;
   
-  _warn "MEMCACHED->set($self->{namespace}$key)";
+  _warn("MEMCACHED->set($self->{namespace}$key)");
   
   ## TODO: kill the hack
   ## HACK: add extra tag for everything except user upload data
@@ -137,7 +137,7 @@ sub get {
   my $self = shift;
   my $key  = shift;
 
-  _warn "MEMCACHED->get($key)";
+  _warn("MEMCACHED->get($key)");
   
   return $self->SUPER::get($key);
 }
@@ -146,7 +146,7 @@ sub delete {
   my $self = shift;
   my $key  = shift;
 
-  _warn "MEMCACHED->delete($key)";
+  _warn("MEMCACHED->delete($key)");
 
   return $self->SUPER::remove($key, @_);
 }
