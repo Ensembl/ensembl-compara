@@ -296,9 +296,10 @@ sub _user_context {
     );
   }
 
-  ## Now the user account link if the user is logged in!
+  ## Now the user account link - varies depending on whether the user is logged in or not!
   $active = $type eq 'Account';
   if( $obj->species_defs->ENSEMBL_LOGINS) {
+    my $user_action = $ENSEMBL_WEB_REGISTRY->get_user ? 'Links' : 'Login';
     $self->{'page'}->global_context->add_entry( 
       'type'      => 'Account',
       'id'        => 'account',
@@ -308,7 +309,7 @@ sub _user_context {
         'time' => time, 
         '__clear' => 1,
         'type'   => 'Account',
-	'action' => 'Summary'
+	      'action' => $user_action,
       }))
     );
   }
