@@ -598,17 +598,16 @@ sub add_text {
   my $slice_length = $hRef->{$display_name}->{'slice_length'};
   my $abbr         = $hRef->{$display_name}->{'abbreviation'};
 
-  my $linenumbers;
+  my $start_number;
 
   if ($object->param('line_numbering') eq 'slice' && $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {  
-    my $slices = $slice->get_all_underlying_Slices;
-    $linenumbers = [ $slices->[0]->start, $slices->[-1]->end ];
+    (undef, $start_number) = $slice->get_original_seq_region_position;
   } else {
-    $linenumbers = [ $object->get_slice_object->line_numbering ];
-    $linenumbers->[0]-- if $linenumbers;
+    $start_number = [ $object->get_slice_object->line_numbering ]->[0];
+    $start_number-- if $start_number;
   }
   
-  my $species_html = add_display_name($sequence, $slice, $slice_length, $abbr, $line_numbering, $width, $max_values, $linenumbers);
+  my $species_html = add_display_name($sequence, $slice, $slice_length, $abbr, $line_numbering, $width, $max_values, $start_number);
 
   # And now the hard bit 
   my $smask = 0; # Current span mask
@@ -647,7 +646,7 @@ sub add_text {
           $pos = $slice->end + 1 - $pos;
         }
         
-        $pos += $linenumbers->[0] - 1;
+        $pos += $start_number - 1;
       }
 
       # If $display name is a strain, need to replace with the species instead for SNPview URL
@@ -678,7 +677,7 @@ sub add_text {
     # Then add species abbreviation and line numbering
     if ($previous->{'mark'} && !defined $current->{'mark'}) {
       $species_html .= "$BR";
-      $species_html .= add_display_name($sequence, $slice, $slice_length, $abbr, $line_numbering, $width, $max_values, $linenumbers, $sindex);
+      $species_html .= add_display_name($sequence, $slice, $slice_length, $abbr, $line_numbering, $width, $max_values, $start_number, $sindex);
     }
 
     # Otherwise it is EOL symbol and need to get the region sequence; the region starts from the previous bin position 
@@ -759,33 +758,24 @@ sub add_text {
             $pos = $position;
           }
         } else {
-          $pos = $slice->strand > 0 ? ($sindex + $linenumbers->[0]) : ($linenumbers->[0] - $sindex + 2);
+          $pos = $slice->strand > 0 ? ($sindex + $start_number) : ($start_number - $sindex + 2);
           $seq_name = $slice->seq_region_name;
         }
       } elsif ($line_numbering eq 'sequence') {
-        $pos = $sindex + $linenumbers->[0];
+        $pos = $sindex + $start_number;
       }
 
-      if ($seq_name && $pos && $pos < $linenumbers->[1]) {
+      if ($seq_name && $pos) {
         $seq_name_space++;
         $seq_name .= ":";
         $species_html .= sprintf(" %*s", $seq_name_space, $seq_name);
       }
 
-      if ($pos) {
-        if ($pos < $linenumbers->[1]) {
-          $species_html .= sprintf("%*u", $max_position_length, $pos);
-          
-          if ($notes) {
-            $species_html .= ' ' . join('; ', @$notes);
-            $notes = undef;
-          }
-        }
-      } else {
-        if ($notes) {
-          $species_html .= ' ' . join('; ', @$notes);
-          $notes = undef;
-        }
+      $species_html .= sprintf("%*u", $max_position_length, $pos) if $pos; # Add the end line number
+      
+      if ($notes) {
+        $species_html .= ' ' . join('; ', @$notes);
+        $notes = undef;
       }
       
       $species_html .= "\n";
@@ -813,18 +803,18 @@ sub add_text {
         }
 
         if ($last_bp_pos > 0) {
-          my ($oslice, $position) = $slice->get_original_seq_region_position($sindex + $last_bp_pos - $wd);
+          my ($oslice, $position) = $slice->get_original_seq_region_position($sindex+1 + $last_bp_pos - $wd);
           $padding_width = $width - $wd;
           $seq_name = $oslice->seq_region_name;
-          $pos = $linenumbers->[1];
+          $pos = $position;
         }
       } else {
         $padding_width = $width - ($sindex % $width);
-        $pos = $slice->strand > 0 ? ($sindex + $linenumbers->[0]) : ($linenumbers->[0] - $sindex + 2); 
+        $pos = $slice->strand > 0 ? ($sindex + $start_number) : ($start_number - $sindex + 2); 
         $seq_name = $slice->seq_region_name;
       }
     } elsif ($line_numbering eq 'sequence') {
-      $pos = $sindex + $linenumbers->[0];
+      $pos = $sindex + $start_number;
       $max_position_length += $width - ($sindex % $width) - 1;
     }
     
@@ -844,7 +834,7 @@ sub add_text {
 }
 
 sub add_display_name {
-  my ($sequence, $slice, $slice_length, $abbr, $line_numbering, $width, $max_values, $linenumbers, $sindex) = @_;
+  my ($sequence, $slice, $slice_length, $abbr, $line_numbering, $width, $max_values, $start_number, $sindex) = @_;
   
   $sindex ||= 0;
 
@@ -876,7 +866,7 @@ sub add_display_name {
       }
     } else {
       if ($sindex < $slice_length) {
-        my $pos1 = $slice->strand > 0 ? ($sindex + $linenumbers->[0] + 1) : ($linenumbers->[0] + 1 - $sindex);
+        my $pos1 = $slice->strand > 0 ? ($sindex + $start_number + 1) : ($start_number + 1 - $sindex);
         
         $pos = $pos1;
         $seq_name = $slice->seq_region_name;
@@ -884,7 +874,7 @@ sub add_display_name {
     }
   } elsif ($line_numbering eq 'sequence') {
     if ($sindex < $slice_length) {
-       $pos = $sindex + $linenumbers->[0] + 1;
+       $pos = $sindex + $start_number + 1;
     }
   }
   
