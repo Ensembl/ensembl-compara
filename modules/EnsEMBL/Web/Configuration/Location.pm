@@ -141,8 +141,35 @@ sub ajax_zmenu      {
   elsif( $action =~ /Genome/) {
     return $self->_ajax_zmenu_alignment($panel,$obj);
   }
-
+  elsif ( $action =~ /Marker/) {
+    return $self->_ajax_zmenu_marker($panel,$obj);
+  }
+#  elsif ($action eq 'View') { #for genomic alignment at present
+#    return $self->_ajax_zmenu_ga($panel,$obj);
+#  }
 }
+
+sub _ajax_zmenu_ga {
+    my $self = shift;
+    my $panel = shift;
+    my $obj  = shift;
+    return;
+}
+
+sub _ajax_zmenu_marker {
+    my $self = shift;
+    my $panel = shift;
+    my $obj  = shift;
+    my $caption = $obj->param('m');
+    $panel->{'caption'} = $caption;
+    my $url = $obj->_url({'type'=>'Location','action'=>'Marker','m'=>$caption});
+    $panel->add_entry({
+	'label' => 'Marker info.',
+	'link'  => $url,
+    });
+    return;
+}
+
 
 #zmenu for aligments (directed to /Location/Genome)
 sub _ajax_zmenu_alignment {
