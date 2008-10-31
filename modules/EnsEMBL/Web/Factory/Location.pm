@@ -474,7 +474,7 @@ sub createObjects {
   my $end        = $self->param( 'vc_end'  )   || $self->param( 'chr_end' )    ||
                    $self->param( 'wvc_end' )   || $self->param( 'fpos_end' )   ||
                    $self->param( 'end' );
-  if( defined $self->param('r') && ! $self->core_objects->gene ) {
+  if( defined $self->param('r') && ! $self->core_objects->gene && ! $self->core_objects->variation ) {
     ($seq_region,$start,$end) = $self->param('r') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
@@ -570,42 +570,39 @@ sub createObjects {
 =cut
   } else {
     ## Gene (completed)
+warn "START $start ", $self->param('r');;
     if(!defined($start) && (
-      $temp_id = $self->param('geneid') || $self->param('gene') ||
-      ( $self->core_objects->gene ? undef : $self->param('g') )
+      $temp_id = $self->param('geneid') || $self->param('gene') 
+#      || ( $self->core_objects->gene ? undef : $self->param('g') )
     )) {
       $location = $self->_location_from_Gene( $temp_id );
 warn "FROM GENE";
     ## Transcript (completed)
-    } 
-    elsif( $temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript')||
-      ( $self->core_objects->transcript ? undef : $self->param('t' ) ) ) {
+    } elsif( $temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript')
+#      || ( $self->core_objects->transcript ? undef : $self->param('t' ) )
+    ) {
 warn "FROM TRANSCRIPT";
       $location = $self->_location_from_Transcript( $temp_id );
-    }
-    elsif( $temp_id = $self->param('exonid') || $self->param('exon') ) {  
+    } elsif( $temp_id = $self->param('exonid') || $self->param('exon') ) {  
       $location = $self->_location_from_Exon( $temp_id );
     ## Translation (completed)
-    } 
-    elsif( $temp_id = $self->param('peptide') || $self->param('pepid') || $self->param('peptideid') || $self->param('translation') ) {
+    } elsif( $temp_id = $self->param('peptide') || $self->param('pepid') || $self->param('peptideid') || $self->param('translation') ) {
       $location = $self->_location_from_Peptide( $temp_id );
     ## MiscFeature (completed)
-    } 
-    elsif( $temp_id = $self->param('mapfrag') || $self->param('miscfeature') || $self->param('misc_feature') ) {
+    } elsif( $temp_id = $self->param('mapfrag') || $self->param('miscfeature') || $self->param('misc_feature') ) {
         $location = $self->_location_from_MiscFeature( $temp_id );
     ## Marker (completed)
-    } 
-    elsif( $temp_id = $self->param('marker') ) { 
+    } elsif( $temp_id = $self->param('marker') ) { 
         $location = $self->_location_from_Marker( $temp_id, $seq_region );
     ## Band (completed)
-    } 
-    elsif( $temp_id = $self->param('band') ) { 
+    } elsif( $temp_id = $self->param('band') ) { 
         $location = $self->_location_from_Band( $temp_id, $seq_region );
-    } 
-    elsif( !$start && ($temp_id = $self->param('snp')||$self->param('variation') || $self->param('v') ) ) { 
+    } elsif( !$start && ($temp_id = $self->param('snp')||$self->param('variation') 
+      # || $self->param('v')
+    ) ) { 
+warn "FROM VARIATION $start $temp_id";
         $location = $self->_location_from_Variation( $temp_id, $seq_region );
-    } 
-    else {
+    } else {
       if( $self->param( 'click_to_move_window.x' ) ) {
         $location = $self->_location_from_SeqRegion( $seq_region, $start, $end );
         if( $location ) {
@@ -643,8 +640,10 @@ warn "FROM TRANSCRIPT";
 #      $location = $newloc if $newloc;
 #    }
     if( $location ) {
+warn ">>> DO";
       $self->DataObjects( $location );
     } elsif( $self->core_objects->location ) {
+warn ">> COFC";
       $self->_create_object_from_core;
     }
 =pod 
