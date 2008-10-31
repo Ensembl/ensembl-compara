@@ -46,8 +46,10 @@ sub ajax_zmenu      {
       return $self->ajax_zmenu_id_history_tree_label();
     } else {
 	my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
-	$panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
-	$panel->add_entry({ 
+	$panel->{'caption'} = $disp_id ? "$db_label: $disp_id"
+                              : (! $obj->gene ) ? $obj->Obj->stable_id
+                              : 'Novel transcript';
+	$panel->add_entry({
 	    'type'     => 'Transcript',
 	    'label'    => $obj->stable_id, 
 	    'link'     => $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}),
@@ -88,7 +90,7 @@ sub ajax_zmenu      {
 	    $panel->add_entry({
 		'type'     => 'Protein product',
 		'label'    => $obj->Obj->translation->stable_id || $obj->Obj->stable_id,
-		'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'Peptide'}),
+		'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'ProteinSummary'}),
 		'priority' => 180
 	    });
 	    $panel->add_entry({
