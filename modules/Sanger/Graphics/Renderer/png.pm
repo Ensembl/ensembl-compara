@@ -9,8 +9,8 @@ use base qw(Sanger::Graphics::Renderer::gif);
 
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
-  $self->{'im_width'}  = $im_width;
-  $self->{'im_height'} = $im_height;
+  $self->{'im_width'}  = $im_width  ||= 10;
+  $self->{'im_height'} = $im_height ||= 10;
   my $canvas = GD::Image->newTrueColor($im_width, $im_height);
 
   if( $self->{'config'}->can('species_defs') ) {
