@@ -900,17 +900,22 @@ sub ajax_zmenu_variation {
   my $trans_variation = $tvar_adaptor->fetch_by_dbID($obj->param('dbid'));
   ## alternate way to retrieve transcript_variation_feature if there are more than one with the same variation_feature id;
   unless ($trans_variation){
-   my $trans_id = $obj->param('vt');
-   my $trans_adaptor = $obj->database('core')->get_TranscriptAdaptor;
-   my $transcript = $trans_adaptor->fetch_by_stable_id($trans_id);
-    foreach my $trv (@{$tvar_adaptor->fetch_all_by_Transcripts([$transcript])}) {
-     if ($trv->variation_feature->variation_name() eq $feature->variation_name){
-       $trans_variation = $trv;
-     }
+    my $trans_id = $obj->param('vt');
+    if ($trans_id){
+      my $trans_adaptor = $obj->database('core')->get_TranscriptAdaptor;
+      my $transcript = $trans_adaptor->fetch_by_stable_id($trans_id);
+      foreach my $trv (@{$tvar_adaptor->fetch_all_by_Transcripts([$transcript])}) {
+        if ($trv->variation_feature->variation_name() eq $feature->variation_name){
+          $trans_variation = $trv;
+        }
+      }
     }
   }
 
-  my $type =  join ", ", @{$trans_variation->consequence_type || [] };
+  my $type;
+  if ($trans_variation){ $type =  join ", ", @{$trans_variation->consequence_type || [] };}
+  else {$type = $obj->param('consequence') || '';}
+
   my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name });
 
   my $chr_start = $feature->start();
