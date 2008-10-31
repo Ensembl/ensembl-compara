@@ -259,10 +259,15 @@ sub ingredient {
   $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_COMPONENT'}" );
 
   if ($content) {
-    warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}";
+    warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}"
+      if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+         $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
     $r->content_type('text/html');
   } else {
-    # warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}";
+    warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}"
+      if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+         $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
+
     # my $referer_hash = _parse_referer;
 
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
@@ -336,10 +341,16 @@ sub stuff {
   my $content = ($MEMD && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $MEMD->get($ENV{CACHE_KEY}) : undef;
 
   if ($content) {
-    warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}";
+    warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}"
+      if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+         $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
+    
+    $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_MEMCACHED;
     $r->content_type('text/html');
   } else {
-    # warn "DYNAMIC CONTENT CACHE MISS $ENV{CACHE_KEY}";
+    warn "DYNAMIC CONTENT CACHE MISS $ENV{CACHE_KEY}"
+      if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+         $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;    
 
     my $webpage = EnsEMBL::Web::Document::WebPage->new( 
       'objecttype' => $object_type, 
