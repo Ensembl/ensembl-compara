@@ -93,7 +93,7 @@ sub content {
       my $url = qq(/@{[$object->species]}/Location/Genome?db=core;g=$gene_id;$location;id=$display_name;ftype=Gene);
       $syns  .= qq(<p>$syn [<span class="small">To view all $site_type genes linked to the name <a href="$url">click here</a>.</span>]</p></dd>);
     }
-  }
+}
   if ($syns) {
     $table->add_row(
       'Synonyms',
@@ -102,19 +102,18 @@ sub content {
     );
   }
 
-    ##add CCDS info
-    if( my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
+  ##add CCDS info
+  if( my @CCDS = grep { $_->dbname eq 'CCDS' } @{$object->Obj->get_all_DBLinks} ) {
       my %T = map { $_->primary_id,1 } @CCDS;
       @CCDS = sort keys %T;
       $table->add_row('CCDS',
                   "<p>This gene is a member of the $sp CCDS set: @{[join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS] }</p>",
                   1);
-    }
+  }
 
-    my $db = $object->get_db;
-
-    ## add some Vega info
-    if( $db eq 'vega' ) {
+  my $db = $object->get_db;
+  ## add some Vega info
+  if( $db eq 'vega' ) {
       # class
       my $type = $object->gene_type;
       $table->add_row('Gene type',
@@ -131,9 +130,14 @@ sub content {
       my $auth  = $object->get_author_name;
       $table->add_row('Author',
                   "This transcript was annotated by $auth");
-    }
+  }
+  else {
+    #add gene type
+    my $type = $object->gene_type;
+    $table->add_row('Gene type',$type) if $type;
+  }
 
-    ## add prediction method
+  ## add prediction method
     my $label = ( ($db eq 'vega' or $object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
     my $text = "<p>No $label defined in database</p>";
     my $o = $object->Obj;
