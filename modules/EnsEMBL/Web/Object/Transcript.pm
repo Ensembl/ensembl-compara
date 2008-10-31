@@ -957,6 +957,7 @@ sub translation_object {
 sub get_db {
   my $self = shift;
   my $db = $self->core_objects->{'parameters'}{'db'} || $self->param('db') || 'core';
+  return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
 =head2 db_type
@@ -1079,6 +1080,23 @@ sub get_author_email {
         return $attribs->[0]->value;
     } else {
         return undef;
+    }
+}
+
+sub transcript_type {
+    my $self = shift;
+    my $db = $self->get_db;
+    my $type = '';
+    if (ref($self->Obj) eq 'Bio::EnsEMBL::PredictionTranscript') {
+	return '';
+    }
+    elsif( $db ne 'core' ){
+	return '';
+    }
+    else {
+	$type = ucfirst(lc($self->Obj->status)).' '.(lc($self->Obj->biotype));
+	$type =~ s/_/ /g;
+	return $type;
     }
 }
 
