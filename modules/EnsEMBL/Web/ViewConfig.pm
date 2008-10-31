@@ -228,7 +228,7 @@ sub form {
     ## TODO: proper error exception
     warn $@ if $@;
   }
-  if( $self->has_images ||
+  if( $self->has_images || $self->has_form ) {
 #       $ENV{'ENSEMBL_AJAX_VALUE'} =~ /^(en|dis)abled$/ && $self->has_form ) {
     $self->add_fieldset( 'General view configurations' );
     if( $self->has_images ) {
@@ -255,7 +255,7 @@ sub form {
 #        'label'    => "Enable/disable use of AJAX in rendering"
 #      });
 #    }
-#  }
+  }
   $self->add_form_element({
    'type' => 'Submit', 'value' => 'Update configuration'
   }) if $self->has_form;
