@@ -52,14 +52,14 @@ sub content {
           <option name="align" value="%d" %s>%s</option>',
         $row_key,
         $row_key eq $align ? ' selected="selected"' : '',
-        escapeHTML($_);
+        $object->species_defs->species_label($_);
     }
   }
   
   ## Get the species in the alignment and turn on the approriate Synteny tracks!
   return sprintf qq(
   <div class="autocenter navbar" style="width:%spx; text-align:left" >
-    <form action="%s" method="get"><div stlye="padding:2px;">
+    <form action="%s" method="get"><div style="padding:2px;">
       <label for="align">Alignment:</label> <select name="align" id="align">%s
       </select>%s
       %s

@@ -47,7 +47,7 @@ sub content {
   
   return sprintf qq(
   <div class="autocenter navbar" style="width:%spx; text-align:left" >
-    <form action="%s" method="get"><div stlye="padding:2px;">
+    <form action="%s" method="get"><div style="padding:2px;">
       <label for="align">Alignment:</label> <select name="align" id="align">%s
       </select>%s
       <input value="Go&gt;" type="submit" class="go-button" />
