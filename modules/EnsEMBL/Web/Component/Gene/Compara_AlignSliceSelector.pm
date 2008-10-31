@@ -23,37 +23,63 @@ sub content {
       <input type="hidden" name="%s" value="%s" />', escapeHTML($_), escapeHTML($url->[1]{$_});
   }
 
-  my $options = '';
   my $align = $object->param('align');
   
   ## Get the compara database hash!   
   my $hash = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
   my $species = $object->species;
+
+  my $options = qq{
+        <option value="">== Please select an alignment ==</option>};
   
   foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
     my $row = $hash->{$row_key};
     
     $options .= sprintf '
-        <option name="align" value="%d" %s>%s</option>',
+        <option value="%d" %s>%s</option>',
       $row_key,
       $row_key eq $align ? ' selected="selected"' : '',
       escapeHTML($row->{'name'});
   }
   
-  foreach my $row_key (grep { $hash->{$_}{'class'} =~ /pairwise/ } keys %$hash) {
-    my $row = $hash->{$row_key};
+ $options .= qq{
+        <option value="">== Pairwise alignments ==</option>};
+
+  my $species_hash = {};
+  
+  foreach my $i (keys %$hash) {
+    foreach (keys %{$hash->{$i}->{'species'}}) {
+      if ($hash->{$i}->{'class'} =~ /pairwise/ && $hash->{$i}->{'species'}->{$species} && $_ ne $species) {
+        if (defined $species_hash->{$_}) {
+          my $type1 = $hash->{$species_hash->{$_}}->{'type'};
+          my $type2 = $hash->{$i}->{'type'};
+          
+          $species_hash->{"$_#$type1"} = $species_hash->{$_};
+          $species_hash->{"$_#$type2"} = $i;
+          
+          delete $species_hash->{$_};
+        } else {
+          $species_hash->{$_} = $i;
+        }
+      }
+    } 
+  } 
+  
+  foreach (sort { $a cmp $b } keys %$species_hash) {
+    my ($name, $type) = split (/#/, $_);
     
-    next unless $row->{'species'}{$species};
-    
-    foreach (sort keys %{$row->{'species'}}) {
-      next if $_ eq $species;       
+    if ($type) {
+      $type =~ s/_net//i;
+      $type =~ s/_/ /g;
       
-      $options .= sprintf '
-          <option value="%d" %s>%s</option>',
-        $row_key,
-        $row_key eq $align ? ' selected="selected"' : '',
-        $object->species_defs->species_label($_);
+      $type = " - $type";
     }
+    
+    $options .= sprintf '
+        <option value="%d" %s>%s</option>',
+      $species_hash->{$_},
+      $species_hash->{$_} eq $align ? ' selected="selected"' : '',
+      $object->species_defs->species_label($name) . $type;
   }
   
   ## Get the species in the alignment and turn on the approriate Synteny tracks!
@@ -71,6 +97,5 @@ sub content {
     $options,
     $extra_inputs;
 }
-
 
 1;
