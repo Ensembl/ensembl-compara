@@ -223,7 +223,7 @@ sub store {
   ### Returns: boolean 
   ### Caller: perl.startup, on first (validation) pass of httpd.conf
   my $self = shift;
-  die "[CONF]    [FATAL] Could not write to $self->{'_filename'}: $!" unless
+  die "[FATAL] Could not write to $self->{'_filename'}: $!" unless
     lock_nstore( $CONF->{'_storage'}, $self->{_filename} );
   return 1;
 }
@@ -240,12 +240,8 @@ sub parse {
   $self->{_start_time} = time;
   $self->{_last_time } = $self->{_start_time};
   if( ! $SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{_filename} ){
-    warn( ( '-' x 78 ) ."\n",
-          "[CONF]    \033[0;32m[INFO] Retrieving conf from $self->{_filename}\033[0;39m\n",
-          ( '-' x 78 ) ."\n" );
+    warn " Retrieving conf from $self->{_filename}\n";
     $self->retrieve();
-    warn "$self->{_filename}";
-    warn "XXXXXXXXXX - @{[ keys %{$CONF->{_storage}} ]}";
     $reg_conf->configure();
     return 1;
   }
