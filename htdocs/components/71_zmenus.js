@@ -28,6 +28,7 @@ function _show_zmenu( x ) {
 **/
 
 // If the zmenu is cached just reload it... [ get id out of zmenus hash ]
+__info(x.key);
   if( zmenus[ x.key ] && $(zmenus[x.key])) {
     $(zmenus[x.key]).show();
     moveto( $(zmenus[x.key]), x.x, x.y );
@@ -55,13 +56,14 @@ function _show_zmenu( x ) {
       __zmenu_add( Q, '', T[0] );
     }
   });
-  __zmenu_add( Q, 'Link', ttl, x.h );
+  if(x.h) __zmenu_add( Q, 'Link', ttl, x.h );
   if( window.location.pathname.match(/\/Location/) && loc.cp ) {
     __zmenu_add( Q, ' ', 'Centre on feature', _new_url_cp( loc.cp, __seq_region.width + 1 ) );
     __zmenu_add( Q, ' ', 'Zoom to feature',   _new_url(    loc.s,  loc.e                  ) );
   }
   __zmenu_show( Q, x.x, x.y );
 // If AJAX isn't enabled return....
+  if(!x.h) return;
   if( ENSEMBL_AJAX != 'enabled' ) return;
 /* Rewrite the href URL to a zmenu URL....
  A link of the form: https?://{domain}/{species}/{type}/{view}?{params}

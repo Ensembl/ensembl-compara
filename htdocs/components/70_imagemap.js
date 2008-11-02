@@ -195,6 +195,7 @@ function select_stop( evt ) {
       var drag_start = 0;
       var drag_end   = 0;
       $A(image_map.areas).each(function(Ax){
+        if(flag==0) { return; }
         var KEY = dragging_image.id+':'+Ax.shape+':'+Ax.coords;
         if(Ax.href) {
           T = Ax.href.split(/#/);
@@ -202,11 +203,11 @@ function select_stop( evt ) {
           Ax.removeAttribute('href');
         }
         var link = stored_hrefs[KEY];
-        if( link ) {
-          pts = Ax.coords.split(/\D+/);
-          if( Ax.shape=='poly'   ? in_poly(   pts, X, Y ) : (
-              Ax.shape=='circle' ? in_circle( pts, X, Y ) :
+        pts = Ax.coords.split(/\D+/);
+        if( Ax.shape=='poly'   ? in_poly(   pts, X, Y ) : (
+            Ax.shape=='circle' ? in_circle( pts, X, Y ) :
                                   in_rect(   pts, X, Y ) ) ) {
+          if( link ) {
             if( link.substring(0,6)=='#drag|') {
               drag_href  = link;
               drag_start = 1*pts[0];
@@ -215,6 +216,9 @@ function select_stop( evt ) {
               _show_zmenu( { x: end_x, y: end_y, key: KEY, h: link, title: Ax.title } );
               flag = 0;
             }
+          } else {
+            _show_zmenu( { x: end_x, y: end_y, key: KEY, title: Ax.title } );
+            flag = 0;
           }
         }
       });
