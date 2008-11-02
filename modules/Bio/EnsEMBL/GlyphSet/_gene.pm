@@ -142,7 +142,7 @@ my($a,$b,$c,$H) = $self->get_text_width( 0,'X_y','','font'=>$FONT,'ptsize'=>$FON
           'ptsize'    => $FONTSIZE,
           'colour'    => $gr->{'col'},
           'text'      => "$gr->{'label'}",
-          'zmenu'     => $gr->{'zmenu'},
+          'title'     => $gr->{'title'},
           'href'      => $gr->{'href'},
           'absolutey' => 1,
         });
