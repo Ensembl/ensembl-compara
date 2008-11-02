@@ -16,7 +16,11 @@ sub create {
     }
     close I;
   }
-warn "CREATING CVSIGNORE $root";
+warn "------------------------------------------------------------------------------
+ Placing .cvsignore and robots.txt into $root
+------------------------------------------------------------------------------
+";
+
   open O, ">$root/.cvsignore";
   print O join "\n", sort keys %ignore;
   close O;
