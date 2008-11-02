@@ -317,7 +317,6 @@ sub _summarise_website_db {
 
 sub _summarise_compara_db {
   my($self,$code,$db_name) = @_;
-  my $db_name = 'DATABASE_COMPARA';
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   push @{ $self->db_tree->{'compara_like_databases'} }, $db_name;
