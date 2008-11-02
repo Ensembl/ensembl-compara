@@ -811,12 +811,14 @@ sub add_repeat_feature {
     if( keys %$d2 > 1 ) {
       foreach my $key_3 ( sort keys %$d2 ) {
         (my $key_3a = $key_3) =~ s/\W/_/g;
-        $menu->append( $self->create_track( 'repeat_'.$key.'_'.$key_2.'_'.$key_3a, "$key_3 (".$data->{$key_2}{'name'}.")",{
+        my $n = $key_3;
+           $n.= " (".$data->{$key_2}{'name'}.")" unless $data->{$key_2}{'name'} eq 'Repeats';
+        $menu->append( $self->create_track( 'repeat_'.$key.'_'.$key_2.'_'.$key_3a, $n,{
           'db'          => $key,
           'glyphset'    => '_repeat',
           'logicnames'  => [ $key_2 ],
           'types'       => [ $key_3 ],
-          'name'        => "$key_3 (".$data->{$key_2}{'name'}.")",
+          'name'        => $n,
           'description' => $data->{$key_2}{'desc'}." ($key_3)",
           'colours'     => $self->species_defs->colour( 'repeat' ),
           'display'     => 'off', ## Default to on at the moment - change to off by default!
