@@ -23,7 +23,6 @@ our $PERFORM_PACK = 0;
 
 sub merge_all {
   my( $ini_file, $species_defs ) = @_;
-  warn $ini_file;
   my $current_files = {'type'=>'minified','css'=>undef,'js'=>undef};
   if( -e $ini_file && open I, $ini_file ) {
     while(<I>) {

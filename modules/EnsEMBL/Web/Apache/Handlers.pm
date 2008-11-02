@@ -86,7 +86,7 @@ BEGIN {
         warn "ENSEMBL_PERL_DIR $dir is not readable\n";
       }
     } else{
-      warn "ENSEMBL_PERL_DIR $dir does not exist\n";
+#      warn "ENSEMBL_PERL_DIR $dir does not exist\n";
     }
   }
 
@@ -98,11 +98,10 @@ BEGIN {
         warn "ENSEMBL_HTDOCS_DIR $dir is not readable\n";
       }
     } else {
-      warn "ENSEMBL_HTDOCS_DIR $dir does not exist\n";
+#      warn "ENSEMBL_HTDOCS_DIR $dir does not exist\n";
     }
   }
 
-warn join "\n",@PERL_TRANS_DIRS;
   %SPECIES_MAP = (
 ##      BioMart biomart  biomart biomart
     qw(
