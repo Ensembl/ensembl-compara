@@ -41,20 +41,26 @@ use File::Basename qw( dirname );
 use Sys::Hostname::Long;
 use Getopt::Long;
 
-my ($help, $rmconfig, $single);
+my ($help, $rmconfig, $single, $flush);
 
 my $confdir = 'conf';
 &GetOptions(
-    "confdir=s"       => \$confdir,
-    "rmconfig"      => \$rmconfig,
-    "r"             => \$rmconfig,
-    "X"             => \$single,
-    "single"        => \$single,
-    "help"          => \$help,
-    "h"             => \$help,
+  "confdir=s"       => \$confdir,
+  "rmconfig"      => \$rmconfig,
+  "r"             => \$rmconfig,
+  "flush"         => \$flush,
+  "f"             => \$flush,
+  "X"             => \$single,
+  "single"        => \$single,
+  "help"          => \$help,
+  "h"             => \$help,
 );
 
-warn "USING $confdir";
+warn "
+==============================================================================
+ Starting server with configurations from $confdir
+";
+
 if ($help) {
     print qq(Usage:
     ctrl_scripts/start_server
@@ -75,29 +81,29 @@ my $hostname = hostname_long();
 
 # start the server
 if ($rmconfig) {
-    warn "Removing config.packed...\n";
-    my $ok = unlink "$serverroot/$confdir/config.packed";
-    if ($ok) {
-        warn "Done.\n";
-    } else {
-        warn "Could not delete $serverroot/$confdir/config.packed: $!\n" .
-            "[WARN] Starting with old config.packed!\n";
-    }
+  warn " Removing config.packed...\n";
+  my $ok = unlink "$serverroot/$confdir/config.packed";
+  if ($ok) {
+    warn " Removed config.packed....\n";
+  } else {
+    warn " Could not delete $serverroot/$confdir/config.packed: $!\n[WARN] Starting with old config.packed!\n";
+  }
+}
 
-	# Flush memcached
+if( $flush || $rmconfig ) {
+  # Flush memcached
   ## TODO: kill the hack
   ## HACK: add extra tag for everything except user upload data	
-	my $cmd = "perl $serverroot/utils/memd.pl delete no_user_upload";
-	system($cmd);
-
+  my $cmd = "perl $serverroot/utils/memd.pl delete no_user_upload";
+  my @res = `$cmd`; chomp @res;
+  warn " Flushed memcached entries for this server (@res)\n";
 }
+warn "==============================================================================\n";
 
 # LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST
 my $cmd = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
 
 $cmd .= "$serverroot/apache2/bin/httpd -d $serverroot -f $serverroot/$confdir/httpd.conf" . ($single ? " -X &" : "");
 
-exec($cmd) or die
-    "Could not start server: $!.\n" .
-    "[FATAL] Server start failed.\n";
+exec($cmd) or die " Could not start server: $!.\n[FATAL] Server start failed.\n";
 
