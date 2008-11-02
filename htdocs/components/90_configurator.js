@@ -30,6 +30,17 @@ var current_link_id = '';
 var current_selected_node = '';
 var initial_configuration = false;
 
+function __close_config(event) {
+  configurator_submit_form($('cp_close').href,'close');
+  Event.stop(event);
+}
+
+function __config_tab_link( event ) {
+  n = Event.findElement( event, 'A' );
+  configurator_submit_form(n.href,n.innerHTML);
+  Event.stop(event);
+}
+
 function __init_config_menu() {
 /*
   Section 1)
@@ -37,7 +48,6 @@ function __init_config_menu() {
   configuration box, remove the link (so the href doesn't get fired (yuk!)
   add an onclick event to show the appropriate menu and hide the menu
 */
-  __info( 'start of fn' );
   if( ! initial_configuration ) {
      initial_configuration = $('configuration') ? $('configuration').serialize(true) : false;
   }
@@ -49,11 +59,10 @@ function __init_config_menu() {
       $('modal_close').innerHTML = 'SAVE and close';
     } else if($('cp_close') ) {
       $('cp_close').innerHTML = 'SAVE and close';
-      Element.observe( $('cp_close'),'click', function(){ configurator_submit_form($('cp_close').href,'close');}  );
-      $$('#tabs dd').each(function(n){ Element.observe( n,'click',function(n){ configurator_submit_form(n.href,n.innerHTML);}) });
+      Element.observe( $('cp_close'),'click', __close_config );
+      $$('#tabs dd a').each(function(n){ Element.observe( n,'click',__config_tab_link ); });
     }
   }
-  __info( 'end of loop1' );
 
   $$('.track_configuration dd').each(function(n) {
     var link_id = n.id;
@@ -85,7 +94,6 @@ function __init_config_menu() {
       current_link_id=link_id;
     });
   });
-  __info( 'end of loop2' );
 /*
   Section 2)
   Add a hide/show link to each of the menu items on the right handside...
@@ -128,9 +136,7 @@ function __init_config_menu() {
     });
     if( current_node ) $('mn_'+current_node).remove();
   });
-  __info( 'end of loop3' );
   $$('#configuration dt.submit').each(function(n){ n.hide(); });
-  __info( 'end of loop4' );
 /* deprecated!!  
   if( $('config') ) {
     Event.observe( $('config'), 'submit', function(f){
@@ -162,7 +168,9 @@ function configurator_submit_form( url, title ) {
   initial_configuration = false;
   if( $H(diff_configuration).keys().size() == 0 ) {
     if( title == 'close' ) {
-      window.opener.location.href = _referer;
+      if( window.opener != window ) {
+        window.opener.location.href = _referer; 
+      }
       window.close();
     } else {
       __modal_dialog_link_open_2( url, title );
@@ -194,16 +202,21 @@ function configurator_submit_form( url, title ) {
       diff_configuration._ = 'close';
       diff_configuration._referer = _referer;
       var url_2 = $('configuration').action+"?"+$H(diff_configuration).toQueryString();
-      window.opener.location.href = url_2;
-      window.close();
+      if( window.opener == window ) {
+        window.location.href = url_2+';force_close=1';
+        return 1;
+      } else {
+        window.opener.location.href = url_2;
+        window.close();
+      }
     } else {
       diff_configuration._ = url;
       diff_configuration._referer = _referer;
       var url_2 = $('configuration').action+"?"+$H(diff_configuration).toQueryString();
-      var url_2 = $('configuration').action+"?"+$H(diff_configuration).toQueryString();
       window.location.href = url_2; // Jump to the configuration changing code!
     } 
   }
+  return 0;
 }
 
 function configurator_success( transport ) {
@@ -238,7 +251,7 @@ function change_img_value(e) {
     x[1]-= x2[1];
     var x3 = $$('body')[0].cumulativeScrollOffset();
     x[1]+= x3[1];
-  } __info( x[1]+'::'+x[0] );
+  } 
   var select_menu = Builder.node('dl',{
     id:       's_menu',
     className:'popup_menu',

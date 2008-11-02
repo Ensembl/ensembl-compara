@@ -116,9 +116,13 @@ function modal_dialog_close() {
     PUBLIC: modal_dialog_close();
 **/
   if($('configuration')) {
-    configurator_submit_form( 'close' );
+    T =  configurator_submit_form( 'close' );
+    if( !T ) {
+      modal_dialog_close_2();
+    }
+  } else {
+    modal_dialog_close_2();
   }
-  modal_dialog_close_2();
 }
 
 var page_needs_to_be_reloaded = false;

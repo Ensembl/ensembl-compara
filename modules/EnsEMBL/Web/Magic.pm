@@ -173,10 +173,23 @@ my $root = $session->get_species_defs->ENSEMBL_BASE_URL;
           return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config)";
         }
         if( $input->param('_') eq 'close' ) {
-          CGI::redirect( $root.$input->param('_referer') );
-          return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config Redirect (closing form)";
+          if( $input->param('force_close') ) {
+            CGI::header();
+            print '<html>
+<head>
+  <title>Please close this window</title>
+</head>
+<body onload="window.close()">
+  <p>Your configuration has been updated, please close this window and reload you main Ensembl view page</p> 
+</body>
+</html>';
+            return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config Redirect (closing form nasty hack)";
+          } else {
+            CGI::redirect( $root.$input->param('_referer') );
+            return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config Redirect (closing form)";
+          }
         }
-        CGI::redirect( $root.$input->param('_') );
+        CGI::redirect( $input->param('_') );
         return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config Redirect (new form page)";
       }
       ## If not AJAX - refresh page!
@@ -195,7 +208,6 @@ my $root = $session->get_species_defs->ENSEMBL_BASE_URL;
         );
         $r->headers_out->add(  'Set-cookie' => $cookie );
         $r->err_headers_out->add( 'Set-cookie' => $cookie );
-warn "SET COOKIE WIDTH to ". $input->param( 'cookie_width' );
       }
       if( $input->param( 'cookie_ajax' ) && $input->param( 'cookie_ajax' ) ne $ENV{'ENSEMBL_AJAX_VALUE'} ) {  ## Set ajax cookie!
         my $cookie = CGI::Cookie->new(
@@ -207,7 +219,6 @@ warn "SET COOKIE WIDTH to ". $input->param( 'cookie_width' );
         );
         $r->headers_out->add(  'Set-cookie' => $cookie );
         $r->err_headers_out->add( 'Set-cookie' => $cookie );
-warn "SET COOKIE AJAX to ". $input->param( 'cookie_width' );
       }
       if( $input->param('submit') ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
         if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
@@ -217,12 +228,23 @@ warn "SET COOKIE AJAX to ". $input->param( 'cookie_width' );
           return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} AJAX";
         }
         if( $input->param('_') eq 'close' ) {
-          CGI::redirect( $root.$input->param('_referer') );
-warn ">>> $root".$input->param('_referer');
-          return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} Redirect (closing form)";
+          if( $input->param('force_close') ) {
+            CGI::header();
+            print '<html>
+<head>
+  <title>Please close this window</title>
+</head>
+<body onload="window.close()">
+  <p>Your configuration has been updated, please close this window and reload you main Ensembl view page</p> 
+</body>
+</html>';
+            return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} Redirect (closing form nasty hack)";
+          } else {
+            CGI::redirect( $root.$input->param('_referer') );
+            return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} Redirect (closing form)";
+          }
         }
-        CGI::redirect( $root.$input->param('_') );
-warn ">:> $root".$input->param('_');
+        CGI::redirect( $input->param('_') );
         return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} Redirect (new form page)";
       }
     }
@@ -235,7 +257,6 @@ warn ">:> $root".$input->param('_');
   $webpage->render;
   my $content = $webpage->page->renderer->content;
   print $content;
-warn $content if $ENV{'ENSEMBL_ACTION'} eq 'undefined';
   return "Generated configuration panel ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'})";
 }
 
