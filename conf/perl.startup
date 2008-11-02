@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-warn "Loading perl startup file...\n\n";
+warn " Executing perl startup file\n";
 
 # for things in the /perl directory
 use ModPerl::Registry;
@@ -119,7 +119,6 @@ use CGI qw(-compile :cgi);
 
 
 if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first pass
-  warn( "\n" . ('=' x 78) . "\n" );
   $conf->store;
 #--- dynamically build mart registry file...
   EnsEMBL::Web::Document::DHTMLmerge::merge_all( ${SiteDefs::ENSEMBL_SERVERROOT}.'/conf/packed/dhtml.ini', $conf );
@@ -141,19 +140,51 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
   $icount and warn( "[CONF]    [INFO] Removed $icount cached image files\n" );
   $icount == @cached_images 
     or warn( "[CONF]    [WARN] Some cached image files not removed: $!" );
-  warn( ('=' x 78) . "\n\n" );
 
-  warn "Server information:\n";
-  warn "Name: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVERNAME.":".$conf->ENSEMBL_PROXY_PORT,"\n";
-  warn "Real: ".$conf->ENSEMBL_PROTOCOL."://".$conf->ENSEMBL_SERVER.":".$conf->ENSEMBL_PORT,"\n";
-  warn "\n";
-  warn "Cache namespace: ".$conf->ENSEMBL_BASE_URL, "\n";
-  warn "\n";
+  my @plugins;
+  my @T = @{$conf->ENSEMBL_PLUGINS||[]};
+  do{ push @plugins, $T[0] if @T } while splice(@T,0,2);
+  
+  warn sprintf '
+==============================================================================
+ Server information:
+==============================================================================
+
+ External address:   %s/
+ Real address:       %s://%s:%s
+
+ Cache namespace:    %s
+
+ Server root:        %s
+
+ PID file:           %s
+ Access logs:        %s
+ Error logs:         %s
+
+ CSS file:           %s/%s/%s.css
+ JavaScript file:    %s/%s/%s.js
+
+ Plugins installed:  %s
+
+==============================================================================
+
+',
+  $conf->ENSEMBL_BASE_URL,
+  $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER,     $conf->ENSEMBL_PORT,
+
+  $conf->ENSEMBL_BASE_URL,
+
+  $conf->ENSEMBL_SERVERROOT,
+
+  $conf->ENSEMBL_PIDFILE,
+  $conf->ENSEMBL_CUSTOMLOG,
+  $conf->ENSEMBL_ERRORLOG,
+
+  $conf->ENSEMBL_BASE_URL,$conf->ENSEMBL_JSCSS_TYPE,$conf->ENSEMBL_CSS_NAME,
+  $conf->ENSEMBL_BASE_URL,$conf->ENSEMBL_JSCSS_TYPE,$conf->ENSEMBL_JS_NAME,
+  join "\n                     ", @plugins
+  ;
   require EnsEMBL::Web::BlastView::MetaDataBlast;
-} else{
-#  warn( "\n" . ('=' x 78) . "\n" );
-#  require EnsEMBL::Web::BlastView::MetaData; # Require at startup due to time taken to compile
-#  warn( ('=' x 78) . "\n\n" );
 }
 
 1;

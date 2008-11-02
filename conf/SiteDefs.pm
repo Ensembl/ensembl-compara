@@ -346,9 +346,9 @@ $ENSEMBL_LONGPROCESS_MINTIME    = 10;
 sub error {
   my $message = join "\n", @_;
   $message =~ s/\s+$//sm;
-  warn "=" x 78, "\n",
-       wrap("= ","= ", $message ),
-       "\n", "=" x 78, "\n";
+  warn "#" x 78, "\n",
+       wrap("# ","# ", $message ),
+       "\n", "#" x 78, "\n";
 }
 
 my @T = reverse @{$ENSEMBL_PLUGINS||[]};
