@@ -24,130 +24,126 @@ sub content {
   my $object = $self->object;
   my $species = $object->species;
 
-  
-  unless( $object->species_defs->MAX_CHR_LENGTH ) {
-    return $self->_info( 'Unassembled genome',
-    '
-  <p>
-    This genome has yet to be assembled into chromosomes
-  </p>' );
-  }
-
-  ## Form with hidden elements for click-through
-  my $config = $object->image_config_hash('Vkaryotype');
-     $config->set_parameter(
-       'container_width',
-       $object->species_defs->MAX_CHR_LENGTH
-     );
-
-  my $ideo_height = $config->get_parameter('image_height');
-  my $top_margin  = $config->get_parameter('top_margin');
-
-  my $image    = $object->new_karyotype_image();
-
-  my $pointers = [];
-  my %pointer_defaults = (
-    'DnaAlignFeature'     => ['red', 'rharrow'],
-    'ProteinAlignFeature' => ['red', 'rharrow'],
-    'RegulatoryFactor'    => ['red', 'rharrow'],
-    'Gene'                => ['blue','lharrow'],
-    'OligoProbe'          => ['red', 'rharrow'],
-    'XRef'                => ['red', 'rharrow'],
-    'UserData'            => ['purple', 'lharrow'],
-  );
-  
-  my $hidden = {
-    'karyotype'   => 'yes',
-    'max_chr'     => $ideo_height,
-    'margin'      => $top_margin,
-    'chr'         => $object->seq_region_name,
-    'start'       => $object->seq_region_start,
-    'end'         => $object->seq_region_end,
-  };
-
-  ## Check if there is userdata
-  ## TODO: this needs to come from control panel
-  my $userdata = $object->get_session->get_tmp_data;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $has_userdata;
-  my @uploads;
-  if ($user) {
-    @uploads = $user->uploads;
-  }
-  if( $userdata || @uploads ) {
-    $has_userdata = 1;
-    ## Set some basic image parameters
-    $image->imagemap = 'no';
-    $image->caption = 'Click on the image above to jump to an overview of the chromosome';
-   
-    ## Create pointers from user data
-    if ($userdata->{'filename'}) {
-      my $temp_pointers = $self->create_userdata_pointers($image, $userdata, $pointer_defaults{'UserData'});
-      $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]); ## Userdata setting overrides any other tracks
-      push(@$pointers, $temp_pointers);
-    }
-    foreach my $upload (@uploads) {
-      my @logic_names = split(', ', $upload->analyses);
-      foreach my $logic_name (@logic_names) {
-        my $upload_features = $object->retrieve_userdata;
-        my $upload_pointers = $image->add_pointers( $object, {
-          'config_name'  => 'Vkaryotype',
-          'features'      => $upload_features,
-          'color'         => $pointer_defaults{'UserData'}[0],
-          'style'         => $pointer_defaults{'UserData'}[1]
-        });
-        $object->param('aggregate_colour', $pointer_defaults{'UserData'}[0]); 
-        push(@$pointers, $upload_pointers);
-      }
-    }
-  } 
-
-  my $table;
-  if ($object->param('id')) { ## "FeatureView"
-    my $pointer_set = $self->create_userdata_pointers($image, $userdata, $pointer_defaults{'UserData'});
-    $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]); ## Userdata setting overrides any other tracks
-    push(@$pointers, $pointer_set);
-  }
   my ($html, $table);
-  if (my $id = $object->param('id')) { ## "FeatureView"
-    $html = qq(<strong>Location(s) of feature $id</strong>);
-    $image->image_name = "feature-$species";
-    $image->imagemap = 'yes';
-    my $data_type = $object->param('type');
-    my $features = $object->create_features; ## Now that there's no Feature factory, we create these on the fly
-    ## TODO: Should there be some generic object->hash functionality for use with drawing code?
-    my @f_hashes = @{$object->retrieve_features($features)};
-    $table = $self->feature_tables(\@f_hashes);;
-    my $i = 0;
-    my $zmenu_config;
-    foreach my $ftype  (@f_hashes) {
-	    my $pointer_ref = $image->add_pointers( $object, {
-	      'config_name'  => 'Vkaryotype',
-	      'features'      => \@f_hashes,
-	      'zmenu_config'  => $zmenu_config,
-	      'feature_type'  => $ftype,
-	      'color'         => $object->param("col_$i")   || $pointer_defaults{$ftype->[2]}[0],
-	      'style'         => $object->param("style_$i") || $pointer_defaults{$ftype->[2]}[1]}
-			);
-	    push(@$pointers, $pointer_ref);
-	    $i++;
-    }
-  } 
-  if (!@$pointers) { ## Ordinary "KaryoView"
-    $image->image_name = "karyotype-$species";
-    $image->imagemap = 'no';
-    $image->caption = 'Click on the image above to jump to an overview of the chromosome';
-  }
   
-  $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
-  $image->karyotype( $object, $pointers, 'Vkaryotype' );
-  $html .= $image->render;
-  $html .= $table;
+  my @features;
+  if (my $id = $object->param('id')) { ## "FeatureView"
+    my $f_objects = $object->create_features; ## Now that there's no Feature factory, we create these on the fly
+    ## TODO: Should there be some generic object->hash functionality for use with drawing code?
+    @features = @{$object->retrieve_features($f_objects)};
+  }
 
-  if (@$pointers && $has_userdata) {
-    $html .= '<br /><p>Your uploaded data is displayed on the karyotype above, using '.$pointer_defaults{'UserData'}[0].' arrow pointers</p>';
+  if ($object->species_defs->MAX_CHR_LENGTH) {
+
+    ## Form with hidden elements for click-through
+    my $config = $object->image_config_hash('Vkaryotype');
+      $config->set_parameter(
+        'container_width',
+        $object->species_defs->MAX_CHR_LENGTH
+      );
+
+    my $ideo_height = $config->get_parameter('image_height');
+    my $top_margin  = $config->get_parameter('top_margin');
+
+    my $image    = $object->new_karyotype_image();
+
+    my $pointers = [];
+    my %pointer_defaults = (
+      'DnaAlignFeature'     => ['red', 'rharrow'],
+      'ProteinAlignFeature' => ['red', 'rharrow'],
+      'RegulatoryFactor'    => ['red', 'rharrow'],
+      'Gene'                => ['blue','lharrow'],
+      'OligoProbe'          => ['red', 'rharrow'],
+      'XRef'                => ['red', 'rharrow'],
+      'UserData'            => ['purple', 'lharrow'],
+    );
+  
+    my $hidden = {
+      'karyotype'   => 'yes',
+      'max_chr'     => $ideo_height,
+      'margin'      => $top_margin,
+      'chr'         => $object->seq_region_name,
+      'start'       => $object->seq_region_start,
+      'end'         => $object->seq_region_end,
+    };
+
+    ## Check if there is userdata
+    ## TODO: this needs to come from control panel
+    my $userdata = $object->get_session->get_tmp_data;
+    my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+    my $has_userdata;
+    my @uploads;
+    if ($user) {
+      @uploads = $user->uploads;
+    }
+    if( $userdata || @uploads ) {
+      $has_userdata = 1;
+      ## Set some basic image parameters
+      $image->imagemap = 'no';
+      $image->caption = 'Click on the image above to jump to an overview of the chromosome';
+   
+      ## Create pointers from user data
+      if ($userdata->{'filename'}) {
+        my $temp_pointers = $self->create_userdata_pointers($image, $userdata, $pointer_defaults{'UserData'});
+        $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]); ## Userdata setting overrides any other tracks
+        push(@$pointers, $temp_pointers);
+      }
+      foreach my $upload (@uploads) {
+        my @logic_names = split(', ', $upload->analyses);
+        foreach my $logic_name (@logic_names) {
+          my $upload_features = $object->retrieve_userdata;
+          my $upload_pointers = $image->add_pointers( $object, {
+            'config_name'  => 'Vkaryotype',
+            'features'      => $upload_features,
+            'color'         => $pointer_defaults{'UserData'}[0],
+            'style'         => $pointer_defaults{'UserData'}[1]
+          });
+          $object->param('aggregate_colour', $pointer_defaults{'UserData'}[0]); 
+          push(@$pointers, $upload_pointers);
+        }
+      }
+    } 
+
+    if (@features) { ## "FeatureView"
+      $html = qq(<strong>Location(s) of feature $id</strong>);
+      $image->image_name = "feature-$species";
+      $image->imagemap = 'yes';
+      my $data_type = $object->param('type');
+      $table = $self->feature_tables(\@features);;
+      my $i = 0;
+      my $zmenu_config;
+      foreach my $ftype  (@f_hashes) {
+	      my $pointer_ref = $image->add_pointers( $object, {
+	        'config_name'  => 'Vkaryotype',
+	        'features'      => \@features,
+	        'zmenu_config'  => $zmenu_config,
+	        'feature_type'  => $ftype,
+	        'color'         => $object->param("col_$i")   || $pointer_defaults{$ftype->[2]}[0],
+	        'style'         => $object->param("style_$i") || $pointer_defaults{$ftype->[2]}[1]}
+			  );
+	      push(@$pointers, $pointer_ref);
+	      $i++;
+      }
+    } 
+    if (!@$pointers) { ## Ordinary "KaryoView"
+      $image->image_name = "karyotype-$species";
+      $image->imagemap = 'no';
+      $image->caption = 'Click on the image above to jump to an overview of the chromosome';
+    }
+  
+    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
+    $image->karyotype( $object, $pointers, 'Vkaryotype' );
+    $html .= $image->render;
+    if ($has_userdata) {
+      $html .= '<br /><p>Your uploaded data is displayed on the karyotype above, using '.$pointer_defaults{'UserData'}[0].' arrow pointers</p>';
+    }
   }
   else {
+    $html .= $self->_info( 'Unassembled genome', '<p>This genome has yet to be assembled into chromosomes</p>' );
+  }
+
+  $html .= $table;
+  if (!$table) {
     my $file = '/ssi/species/stats_'.$object->species.'.html';
     $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file);
   }
