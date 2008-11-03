@@ -857,21 +857,18 @@ sub table_info {
 }
 
 sub species_label {
-  my( $self, $key ) = @_;
+  my( $self, $key, $no_formatting ) = @_;
   return "Ancestral sequence" unless $self->other_species( $key, 'SPECIES_BIO_NAME' );
   my $common = $self->other_species( $key, 'SPECIES_COMMON_NAME' );
+
+  my $rtn = $self->other_species( $key, 'SPECIES_BIO_NAME' );  
+  $rtn = sprintf('<i>%s</i>', $rtn) unless $no_formatting;
+  
   if ($common =~ /\./) {
-    return sprintf(
-      '<i>%s</i>',
-      $self->other_species( $key, 'SPECIES_BIO_NAME' )
-    );
-  }
-  else {
-    return sprintf(
-      '%s (<i>%s</i>)',
-      $common, $self->other_species( $key, 'SPECIES_BIO_NAME' )
-    );
-  }
+    return $rtn;
+  } else {
+    return "$common ($rtn)";
+  }  
 }
 
 sub species_dropdown {
