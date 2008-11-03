@@ -562,7 +562,6 @@ sub edit_fields {
   my $dataview = $object->param('dataview');
   my $elements = $self->elements;
   my $element_order = $self->element_order;
-  warn "URL = ".$object->param('url');
   ## populate widgets from Data_of{$self}
   foreach my $field (@$element_order) {
     my $element = $elements->{$field};
