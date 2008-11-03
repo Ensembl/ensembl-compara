@@ -29,7 +29,6 @@ sub draw_glyphs {
     foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
 	my $hit_name = $hit_details->{'hit_name'};
 	my $hit_type = $hit_details->{'hit_type'};
-	my $hit_db   = $hit_details->{'hit_db'};
 	my $start_x  = 1000000;
 	my $finish_x = 0;
 	my $last_end = 0; #true/false (prevents drawing of line from first exon)
@@ -94,6 +93,7 @@ sub draw_glyphs {
 	    my $width = $block->{'munged_end'} - $block->{'munged_start'};
 	    $start_x  = $start_x  > $block->{'munged_start'} ? $block->{'munged_start'} : $start_x;
 	    $finish_x = $finish_x < $block->{'munged_end'}   ? $block->{'munged_end'}   : $finish_x;
+
 
 	    #draw an I line for a lh extension
 	    if ($lh_ext) {
@@ -161,8 +161,7 @@ sub draw_glyphs {
 		'type'        => 'Transcript',
 		'action'      => 'SupportingEvidence/Alignment',
 		't'           => $wuc->cache('trans_object')->{'transcript'}->stable_id,
-		'sequence'    => $hit_name,
-		'hit_db'      => $hit_db,
+		'id'          => $hit_name,
 		'hit_length'  => $block->{'hit_length'},
 		'exon'        => $exon->stable_id,
 		'exon_length' => $block->{'exon_length'},
