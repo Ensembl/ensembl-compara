@@ -22,7 +22,7 @@ sub BUILD {
   my ($url, $params) = split(/\?/, $self->get_url);
   my @path_bits = split /\//, $url;
   my $species = $ENV{'ENSEMBL_SPECIES'};
-  $species = '' if $species !~ /_/;
+  $species = undef if $species !~ /_/;
 
   $self->set_controller($ENV{'ENSEMBL_TYPE'});
   $self->set_species($species);
@@ -36,7 +36,8 @@ sub cgi {
 
 sub script_name {
   my $self = shift;
-  return $self->get_species . '/' . $self->get_controller . '/' . $self->get_action;
+  my $path = $self->get_species . '/' if $self->get_species;
+  return $path . $self->get_controller . '/' . $self->get_action;
 }
 
 }
