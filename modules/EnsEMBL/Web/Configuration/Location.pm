@@ -82,6 +82,10 @@ sub populate_tree {
     [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
   ));
+  $align_menu->append( $self->create_node( 'ComparaGenomicAlignment', '',
+    [qw(gen_alignment      EnsEMBL::Web::Component::Location::ComparaGenomicAlignment)],
+    {'no_menu_entry' => 'location' }
+  ));
   $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]])",
     [qw(
       image      EnsEMBL::Web::Component::Location::SyntenyImage
@@ -144,15 +148,63 @@ sub ajax_zmenu      {
   elsif ( $action =~ /Marker/) {
     return $self->_ajax_zmenu_marker($panel,$obj);
   }
-#  elsif ($action eq 'View') { #for genomic alignment at present
-#    return $self->_ajax_zmenu_ga($panel,$obj);
-#  }
+  elsif ($action eq 'ComparaGenomicAlignment') {
+    return $self->_ajax_zmenu_ga($panel,$obj);
+  }
 }
 
 sub _ajax_zmenu_ga {
-    my $self = shift;
-    my $panel = shift;
-    my $obj  = shift;
+    my $self   = shift;
+    my $panel  = shift;
+    my $obj    = shift;
+    my $sp1    = $obj->param('s1');
+    my $orient = $obj->param('orient');
+    my $disp_method = $obj->param('method');
+    $disp_method =~ s/BLASTZ_NET/BLASTz net/g;
+    $disp_method =~ s/TRANSLATED_BLAT_NET/Trans. BLAT net/g;
+    $panel->{'caption'} = "$sp1 $disp_method";
+
+    my $r1 = $obj->param('r1');
+    $panel->add_entry({
+	'type'     => $r1,
+	'priority' => 250,
+    });
+    $panel->add_entry({
+	'type'     => 'Orientation',
+	'label'    => $orient,
+	'priority' => 200,
+    });
+    my $url = $obj->_url({'type'    => 'Location',
+			  'action'  => 'View',
+			  'species' => $sp1,
+			  'r'       => $r1} );
+    $panel->add_entry({
+	'label'    => "Jump to $sp1",
+	'link'     => $url,
+	'priority' => 150,
+    });
+
+    if ($obj->param('method')) {
+	$url = $obj->_url({'type'  =>'Location',
+			   'action'=>'ComparaGenomicAlignment',
+			   's1'    =>$sp1,
+			   'r1'    =>$obj->param('r1'),
+			   'method'=>$obj->param('method')} );
+	$panel->add_entry({
+	    'label'    => 'View alignment',
+	    'link'     => $url,
+	    'priority' => 100,
+	});
+
+	$url = $obj->_url({'type'  =>'Location',
+			   'action'=>'View',
+			   'r'     =>$obj->param('r')} );
+	$panel->add_entry({
+	    'label'    => 'Center on this location',
+	    'link'     => $url,
+	    'priority' => 50,
+	});
+    }
     return;
 }
 
