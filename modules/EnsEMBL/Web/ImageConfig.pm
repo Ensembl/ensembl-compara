@@ -102,6 +102,13 @@ sub load_user_tracks {
   my( $self, $adaptor ) = @_;
   my $menu = $self->get_node('user_data');
   return unless $menu;
+  my $DAS = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_all_das();
+  foreach my $source ( sort { ($a->caption||$a->label) cmp ($b->caption||$b->label) } values %$DAS ) {
+    next if $self->get_node('das_'.$source->logic_name);
+    my $category = $source->category;
+    $self->add_das_track( 'user_data', $source );
+  }
+
   my %T = %{$adaptor->get_tmp_data||{}};
   if( $T{'species'} eq $self->{'species'} ) {
     $menu->append($self->create_track( 'temporary_user_data', '[USER] Temporary user data', {
@@ -115,22 +122,26 @@ sub load_user_tracks {
       'strand'      => 'b',
     }));
   }
-  my $user = EnsEMBL::Web::Data::User->new($ENV{'ENSEMBL_USER_ID'});
+  
+  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user(); #  #EnsEMBL::Web::Data::User->new($ENV{'ENSEMBL_USER_ID'});
   my $i = 0;
-  foreach my $upload ($user->uploads) {
-    if ($upload->species eq $self->{'species'}) {
-      my @logic_names = split(', ', $upload->analyses);
-      $menu->append($self->create_track( "user_upload_$i", '[USER] '.$upload->name, {
-        'glyphset'    => '_tmp_user_data',
-        'url'         => 'tmp',
-        'caption'     => $upload->name,
-        'logic_names' => \@logic_names,
-        'description' => $upload->format.' file saved in your user account',
-        'display'     => 'normal',
-        'renderers'   => [qw(off Off normal Normal)],
-        'strand'      => 'b',
-      }));
-      $i++;
+  
+  if( $user ) {
+    foreach my $upload ($user->uploads) {
+      if ($upload->species eq $self->{'species'}) {
+        my @logic_names = split(', ', $upload->analyses);
+        $menu->append($self->create_track( "user_upload_$i", '[USER] '.$upload->name, {
+          'glyphset'    => '_tmp_user_data',
+          'url'         => 'tmp',
+          'caption'     => $upload->name,
+          'logic_names' => \@logic_names,
+          'description' => $upload->format.' file saved in your user account',
+          'display'     => 'normal',
+          'renderers'   => [qw(off Off normal Normal)],
+          'strand'      => 'b',
+        }));
+        $i++;
+      }
     }
   }
   return;
@@ -348,14 +359,15 @@ sub add_das_track {
   my $node = $self->get_node($menu);
      $node = $self->get_node('external_data') unless $node; 
   return unless $node;
-  $node->append( $self->create_track( "das_".$source->logic_name,'[DAS] '.$source->label, {
+  my $t = $self->create_track( "das_".$source->logic_name,'[DAS] '.$source->label, {
     'glyphset'    => '_das',
     'display'     => 'off',
 #    'renderers'   => ('off' => 'Off', 'nolabels' => 'No labels', 'labels' => 'With labels'),
     'logicnames'  => [ $source->logic_name ],
     'caption'     => '[DAS] '.( $source->caption||$source->label),
     'description' => $source->description
-  }));
+  });
+  $node->append($t) if $t;
 }
 
 #-----------------------------------------------------------------------------
@@ -1001,7 +1013,7 @@ sub create_track {
   $details->{'colours'}  ||= $self->species_defs->colour( $options->{'colourset'} ) if exists $options->{'colourset'};
   $details->{'glyphset'} ||= $code;
   $details->{'caption'}  ||= $caption;
-  $self->tree->create_node( $code, $details );
+  return $self->tree->create_node( $code, $details );
 }
 
 sub add_track {
