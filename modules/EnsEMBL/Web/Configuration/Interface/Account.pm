@@ -7,14 +7,9 @@ use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Configuration::Interface;
 use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Configuration::Account;
+use EnsEMBL::Web::OrderedTree;
 
 our @ISA = qw( EnsEMBL::Web::Configuration::Interface);
-
-sub populate_tree {
-  my $self = shift;
-  &EnsEMBL::Web::Configuration::Account::populate_tree($self);
-}
 
 =pod
 sub add {
