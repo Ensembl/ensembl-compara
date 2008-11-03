@@ -278,7 +278,8 @@ sub has_ancestor {
 sub root {
   my $self = shift;
 
-  if (!defined($self->{'_parent_link'}) and $self->adaptor) {
+  if (!defined($self->{'_parent_link'}) and $self->adaptor 
+     and ($self->right_index-$self->left_index)>1) {
     return $self->adaptor->fetch_root_by_node($self);
   }
 
