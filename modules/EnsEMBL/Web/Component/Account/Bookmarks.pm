@@ -71,9 +71,9 @@ sub content {
       $row->{'desc'}    = $description;
       $row->{'edit'}    = $self->edit_link($dir, 'Bookmark', $bookmark->id);
       if ($has_groups) {
-        $row->{'share'}   = $self->share_link($dir, 'bookmark', $bookmark->id, $bookmark->id);
+        $row->{'share'}   = $self->share_link($dir, 'bookmark', $bookmark->id);
       }
-      $row->{'delete'}  = $self->delete_link($dir, 'Bookmark', $bookmark->id, $bookmark->id);
+      $row->{'delete'}  = $self->delete_link($dir, 'Bookmark', $bookmark->id);
       $table->add_row($row);
       $has_bookmarks = 1;
     }
