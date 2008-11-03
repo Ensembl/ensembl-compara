@@ -229,13 +229,23 @@ sub _summarise_core_tables {
 #---------------
 #
 # * Assemblies...
+# This is a bit ugly, because there's no easy way to sort the assemblies via MySQL
   $t_aref = $dbh->selectall_arrayref(
-    'select distinct version from coord_system where version is not null' 
+    'select version, attrib from coord_system where version is not null' 
   );
-  my @assemblies;
+  my (%default, %not_default);
   foreach my $row (@$t_aref) {
-    push @assemblies, $row->[0];
+    my $version = $row->[0];
+    my $attrib = $row->[1];
+    if ($attrib =~ /default_version/) {
+      $default{$version}++;
+    }
+    else {
+      $not_default{$version}++;
+    }
   }
+  my @assemblies = keys %default;
+  push @assemblies, sort keys %not_default;
   $self->db_tree->{'CURRENT_ASSEMBLIES'} = join(',', @assemblies);
 
 #----------
