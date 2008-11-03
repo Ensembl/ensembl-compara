@@ -49,8 +49,9 @@ sub content {
       [ 'embl', 'EMBL' ],
       [ 'genbank', 'GenBank' ]
     ];
-    
-    $html .= qq{<p><a href="/@{[$object->species]}/$type/Export/$_->[0]?$ENV{'QUERY_STRING'};_format=Text" target="_blank">$_->[1]</a></p>} for (@$links);
+    $html .= '<ul>'; 
+    $html .= qq{<li><a href="/@{[$object->species]}/$type/Export/$_->[0]?$ENV{'QUERY_STRING'};_format=Text" target="_blank">$_->[1]</a></li>} for (@$links);
+    $html .= '</ul>'; 
   } else {
     if ($type eq 'Transcript') {
       $translation = 1 if $object->Obj->translation;
@@ -76,7 +77,9 @@ sub content {
     ];
     
     for (@$links) {
+      $html .= '<ul>'; 
       $html .= qq{<p><a href="/@{[$object->species]}/$type/Export/fasta?$ENV{'QUERY_STRING'};st=$_->[0];_format=Text" target="_blank">$_->[1]</a></p>} if $_->[2];
+      $html .= '</ul>'; 
     }
   }
   
