@@ -116,13 +116,9 @@ function modal_dialog_close() {
     PUBLIC: modal_dialog_close();
 **/
   if($('configuration')) {
-    T =  configurator_submit_form( 'close' );
-    if( !T ) {
-      modal_dialog_close_2();
-    }
-  } else {
-    modal_dialog_close_2();
+    configurator_submit_form( 'close' );
   }
+  modal_dialog_close_2();
 }
 
 var page_needs_to_be_reloaded = false;
@@ -170,7 +166,10 @@ function __modal_dialog_link_open_2( url, title ) {
     return;
   }
   if( ENSEMBL_AJAX != 'enabled' ) {
-    window.open(url,'control_panel','width=950,height=500,resizable,scrollbars');
+    var cp_window_name = 'cp_'+window.name;
+    cp_window_name = cp_window_name.replace(/cp_cp_/,'cp_');
+    var x= window.open(url,cp_window_name,'width=950,height=500,resizable,scrollbars');
+    x.focus();
   } else { 
     __success( 'modal dialog open '+title+':'+url );
 

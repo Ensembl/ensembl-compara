@@ -41,6 +41,15 @@ function __config_tab_link( event ) {
   Event.stop(event);
 }
 
+function __load_into_new_page(event) {
+  url = Event.findElement(event,'A').href;
+  d = new Date();
+  var main_window_name = window.name;
+  main_window_name = main_window_name.replace(/^cp_/,'');
+  window.open( url+(url.match(/\?/)?';':'?')+'time='+d.getTime(), main_window_name );
+  window.close();
+  Event.stop(event);
+}
 function __init_config_menu() {
 /*
   Section 1)
@@ -62,6 +71,8 @@ function __init_config_menu() {
       Element.observe( $('cp_close'),'click', __close_config );
       $$('#tabs dd a').each(function(n){ Element.observe( n,'click',__config_tab_link ); });
     }
+  } else if($('cp_close')) {
+    Event.observe( $('cp_close'), 'click', __load_into_new_page );
   }
 
   $$('.track_configuration dd').each(function(n) {
@@ -168,9 +179,9 @@ function configurator_submit_form( url, title ) {
   initial_configuration = false;
   if( $H(diff_configuration).keys().size() == 0 ) {
     if( title == 'close' ) {
-      if( window.opener != window ) {
-        window.opener.location.href = _referer; 
-      }
+      var main_window_name = window.name;
+      main_window_name = main_window_name.replace(/^cp_/,'');
+      window.open( _referer, main_window_name );
       window.close();
     } else {
       __modal_dialog_link_open_2( url, title );
@@ -202,13 +213,10 @@ function configurator_submit_form( url, title ) {
       diff_configuration._ = 'close';
       diff_configuration._referer = _referer;
       var url_2 = $('configuration').action+"?"+$H(diff_configuration).toQueryString();
-      if( window.opener == window ) {
-        window.location.href = url_2+';force_close=1';
-        return 1;
-      } else {
-        window.opener.location.href = url_2;
-        window.close();
-      }
+      var main_window_name = window.name;
+      main_window_name = main_window_name.replace(/^cp_/,'');
+      window.open( url_2, main_window_name );
+      window.close();
     } else {
       diff_configuration._ = url;
       diff_configuration._referer = _referer;
