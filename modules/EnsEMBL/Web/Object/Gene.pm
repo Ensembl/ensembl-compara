@@ -7,6 +7,7 @@ no warnings "uninitialized";
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Cache;
+use Bio::EnsEMBL::Compara::GenomeDB;
 
 use Time::HiRes qw(time);
 
@@ -374,14 +375,35 @@ sub get_all_transcripts{
 sub get_all_families {
   my $self = shift;
   my $families;
-  foreach my $transcript (@{$self->get_all_transcripts}) {
-    my $trans_families = $transcript->get_families;
-    while (my ($id, $info) = each (%$trans_families)) {
-      if (exists $families->{$id}) {
-        push @{$families->{$id}{'transcripts'}}, $transcript;
-      }
-      else {
-        $families->{$id} = {'info' => $info, 'transcripts' => [$transcript]};
+  if (ref($self->gene) =~ /Family/) { ## No gene in URL, so CoreObjects fetches a family instead
+    ## Explicitly set db connection, as registry is buggy!
+    my $family = $self->gene;
+    my $dba = $self->database('core', $self->species);
+    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new($dba);
+    my $members = $family->get_all_Members;
+    my $info = {'description' => $family->description};
+    my $genes = [];
+    foreach my $member (@$members) {
+      $member->genome_db($genome_db);
+      my $gene = $member->gene;
+      push @$genes, $gene if $gene;
+    }
+    $info->{'genes'} = $genes;
+    $info->{'count'} = @$genes;
+    $families->{$self->param('family')} = {'info' => $info};
+  }
+  else {
+    foreach my $transcript (@{$self->get_all_transcripts}) {
+      my $trans_families = $transcript->get_families;
+      while (my ($id, $info) = each (%$trans_families)) {
+        if (exists $families->{$id}) {
+          push @{$families->{$id}{'transcripts'}}, $transcript;
+        }
+        else {
+          my @A = keys %$info;
+          warn "INFO @A";
+          $families->{$id} = {'info' => $info, 'transcripts' => [$transcript]};
+        }
       }
     }
   }
@@ -401,6 +423,7 @@ sub member_by_source {
   my ($self, $family, $source) = @_;
   return $family->get_Member_Attribute_by_source($source) || [];
 }
+
 
 sub chromosome {
   my $self = shift;
