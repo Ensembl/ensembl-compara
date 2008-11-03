@@ -112,6 +112,7 @@ sub _render_hit {
   my $mapped_script = $hit_maps->{$script};
   my $extra = '';
   $URL =~ s{Location/View\?marker}{Location/Marker\?m}; #cope with incorrect marker URLs
+  $URL =~ s{Karyotype\?type=}{Genome\?ftype=}; #cope with incorrect feature URLs
   if( $mapped_script ) {
     $script = $URL;
     $script = ~s/(\w+)\?/$mapped_script\?/g;
