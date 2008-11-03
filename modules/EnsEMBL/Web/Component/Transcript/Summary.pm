@@ -125,6 +125,7 @@ if( $gene ) {
     ) {
       my $url = $self->object->_url({
         'type'   => 'Transcript',
+        'function' => undef,
         't'      => $_->stable_id
       });
       my $protein = 'No protein product';
