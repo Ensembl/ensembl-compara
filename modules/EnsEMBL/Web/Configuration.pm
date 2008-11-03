@@ -258,7 +258,7 @@ sub _user_context {
         'type'   => 'Config',
         'action' => $action,
         'config' => '_page',
-        '_referer' => $referer
+        '_referer' => $referer,
       }))
     );
     $flag = 0;
@@ -275,7 +275,7 @@ sub _user_context {
         'type'   => 'Config',
 	'action' => $action,
 	'config' => $ic_code,
-        '_referer' => $referer
+        '_referer' => $referer,
       }))
     );
     $flag = 0;
@@ -291,7 +291,7 @@ sub _user_context {
         '_referer' => $referer,
         '__clear' => 1,
         'type'   => 'UserData',
-        'action' => 'Summary'
+        'action' => 'Summary',
       }))
     );
   }
@@ -309,7 +309,7 @@ sub _user_context {
         'time' => time, 
         '__clear' => 1,
         'type'   => 'Account',
-	      'action' => $user_action,
+        'action' => $user_action,
       }))
     );
   }
@@ -726,7 +726,7 @@ sub create_node {
     $details->{$_} = $options->{$_};
   }
   
-  if ($self->tree) {
+  if( $self->tree ) {
     return $self->tree->create_node( $code, $details );
   }
 }
