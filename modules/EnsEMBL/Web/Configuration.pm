@@ -885,7 +885,8 @@ sub ajax_zmenu_variation {
  # Specific zmenu for variation features
 
   my $self = shift;
-  my $panel = $self->_ajax_zmenu;
+#  my $panel = $self->_ajax_zmenu;
+  my $panel = shift;
   my $obj = $self->object;
   my $db_adaptor = $obj->database('variation');
   my $var_adaptor = $db_adaptor->get_VariationAdaptor();
@@ -923,15 +924,15 @@ sub ajax_zmenu_variation {
   my $chr_end   = $feature->end();
   my $bp = $chr_start;
   if( $chr_end < $chr_start ) {
-      $bp = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
+      $bp = "between $chr_end & $chr_start";
   } elsif($chr_end > $chr_start ) {
-      $bp = "$chr_start&nbsp;-&nbsp;$chr_end";
+      $bp = "$chr_start - $chr_end";
   }
   my $source = (join ", ", @{$feature->get_all_sources ||[] });
   my $allele =  $feature->allele_string;
   my $alleles = (length($allele)<16 ? $allele : substr($allele,0,14).'..');
 
-  $panel->{'caption'} = 'Variation ' . $feature->variation_name;
+  $panel->{'caption'} = 'Variation: ' . $feature->variation_name;
   $panel->add_entry({
     'label_html'  =>  'Variation Properties',
     'link'        =>  $var_link,
