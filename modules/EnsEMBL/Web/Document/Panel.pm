@@ -593,7 +593,6 @@ sub content {
     $self->print( $self->{'content'} );
   }
   foreach my $component ($self->components) {
-warn "Starting component $component";
 if ($component eq 'das_features') {
     foreach my $function_name ( @{$self->{'components'}{$component}} ) {
 	my $result;

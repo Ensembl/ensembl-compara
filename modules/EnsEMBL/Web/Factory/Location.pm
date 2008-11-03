@@ -570,18 +570,15 @@ sub createObjects {
 =cut
   } else {
     ## Gene (completed)
-warn "START $start ", $self->param('r');;
     if(!defined($start) && (
       $temp_id = $self->param('geneid') || $self->param('gene') 
 #      || ( $self->core_objects->gene ? undef : $self->param('g') )
     )) {
       $location = $self->_location_from_Gene( $temp_id );
-warn "FROM GENE";
     ## Transcript (completed)
     } elsif( $temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript')
 #      || ( $self->core_objects->transcript ? undef : $self->param('t' ) )
     ) {
-warn "FROM TRANSCRIPT";
       $location = $self->_location_from_Transcript( $temp_id );
     } elsif( $temp_id = $self->param('exonid') || $self->param('exon') ) {  
       $location = $self->_location_from_Exon( $temp_id );
@@ -600,7 +597,6 @@ warn "FROM TRANSCRIPT";
     } elsif( !$start && ($temp_id = $self->param('snp')||$self->param('variation') 
       # || $self->param('v')
     ) ) { 
-warn "FROM VARIATION $start $temp_id";
         $location = $self->_location_from_Variation( $temp_id, $seq_region );
     } else {
       if( $self->param( 'click_to_move_window.x' ) ) {
@@ -640,10 +636,8 @@ warn "FROM VARIATION $start $temp_id";
 #      $location = $newloc if $newloc;
 #    }
     if( $location ) {
-warn ">>> DO";
       $self->DataObjects( $location );
     } elsif( $self->core_objects->location ) {
-warn ">> COFC";
       $self->_create_object_from_core;
     }
 =pod 
