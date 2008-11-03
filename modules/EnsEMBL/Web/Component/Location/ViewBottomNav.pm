@@ -83,7 +83,7 @@ sub content {
    $self->_nav_url( $cp - int($wd/4)+1,              $cp + int($wd/4) ),
    $extra_html,
    $self->_nav_url( $cp - $wd+1,                     $cp + $wd ),
-   $self->_nav_url( $object->seq_region_start - $wd, $object->seq_region_end - $wd ),
+   $self->_nav_url( $object->seq_region_start + $wd, $object->seq_region_end + $wd ),
    $self->_nav_url( $object->seq_region_start + 1e6, $object->seq_region_end + 1e6 ),
 }
 
