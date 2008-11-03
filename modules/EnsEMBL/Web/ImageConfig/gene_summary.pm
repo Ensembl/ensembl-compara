@@ -18,7 +18,7 @@ sub init {
     'sequence'   => 'Sequence',
     'transcript' => 'Other genes',
     'prediction' => 'Prediction transcripts',
-    'variation'  => 'Variaton features',
+    'variation'  => 'Variation features',
     'functional' => 'Functional genomics',
     'other'      => 'Decorations',
   );
