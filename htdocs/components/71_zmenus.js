@@ -56,12 +56,13 @@ __info(x.key);
       __zmenu_add( Q, '', T[0] );
     }
   });
-  if(x.h) __zmenu_add( Q, 'Link', ttl, x.h );
+  if(x.h && x.h!='#') __zmenu_add( Q, 'Link', ttl, x.h );
   if( window.location.pathname.match(/\/Location/) && loc.cp ) {
     __zmenu_add( Q, ' ', 'Centre on feature', _new_url_cp( loc.cp, __seq_region.width + 1 ) );
     __zmenu_add( Q, ' ', 'Zoom to feature',   _new_url(    loc.s,  loc.e                  ) );
   }
   __zmenu_show( Q, x.x, x.y );
+  __init_ensembl_rel_external();
 // If AJAX isn't enabled return....
   if(!x.h) return;
   if( ENSEMBL_AJAX != 'enabled' ) return;
@@ -75,13 +76,14 @@ __info(x.key);
   var link_url     = a[0];
   var query_string = a[1];
   var arr = link_url.match(/^(https?:\/\/[^\/]+\/[^\/]+\/)(.+)/);
+  if(!arr) return;
   var URL = arr[1]+'Zmenu/'+arr[2]+'?'+query_string;
   new Ajax.Request( URL, {
     method: 'get',
     onSuccess: function(transport){
       var t = transport.responseText;
-      if( t ) {
-        Q.getElementsBySelector('tbody.real')[0].replace( transport.responseText );
+      if( t && t.match( /<tbody class="real">/ ) ) {
+        Q.getElementsBySelector('tbody.real')[0].replace( t );
         __init_ensembl_rel_external();
         __zmenu_close_button(Q);
       }
@@ -161,12 +163,28 @@ function __zmenu_init( z_id, z_cap ) {
   return $(z_id);
 }
 
+var xhtml_obj;
 function __zmenu_add( Q, ll, text, link ) {
-  var X = link ?  Builder.node('a',{href:link},[text]) : text;
+  var X;
+  var use_innerHTML = 0;
+  if( link && link!='#') {
+    X = Builder.node('a',{href:link},[text]);
+  } else {
+    if(!xhtml_obj) xhtml_obj = new XhtmlValidator();
+    error = xhtml_obj.validate( text );
+    use_innerHTML = error ? 0 : 1;
+  }
+  var X = (link && link!='#')?  Builder.node('a',{href:link},[text]) : text;
   if( ll == '' ) {
-    Q.getElementsBySelector('tbody.real')[0].appendChild(Builder.node('tr',[
-      Builder.node('td',{colSpan:2},[X])
-    ]));
+    if( use_innerHTML ) {
+      var A = Builder.node('td',{colSpan:2});
+      A.innerHTML = X;
+      Q.getElementsBySelector('tbody.real')[0].appendChild(Builder.node('tr',[A]));
+    } else {
+      Q.getElementsBySelector('tbody.real')[0].appendChild(Builder.node('tr',[
+        Builder.node('td',{colSpan:2},[X])
+      ]));
+    }
   } else {
     Q.getElementsBySelector('tbody.real')[0].appendChild(Builder.node('tr',[
       Builder.node('th',[ll]),
