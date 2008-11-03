@@ -105,14 +105,15 @@ sub content {
     } 
 
     if (@features) { ## "FeatureView"
-      $html = qq(<strong>Location(s) of feature $id</strong>);
+      my $text = @features > 1 ? 'Locations of features' : 'Location of feature';
+      $html = qq(<strong>$text</strong>);
       $image->image_name = "feature-$species";
       $image->imagemap = 'yes';
       my $data_type = $object->param('type');
       $table = $self->feature_tables(\@features);;
       my $i = 0;
       my $zmenu_config;
-      foreach my $ftype  (@f_hashes) {
+      foreach my $ftype  (@features) {
 	      my $pointer_ref = $image->add_pointers( $object, {
 	        'config_name'  => 'Vkaryotype',
 	        'features'      => \@features,
