@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+
+use strict;
+use CGI qw(unescape);
+
+use FindBin qw($Bin);
+
+BEGIN{
+  unshift @INC, "$Bin/../conf";
+  unshift @INC, "$Bin/../modules";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+}
+
+my( $log, $type ) = split / /, $SiteDefs::ENSEMBL_CUSTOMLOG;
+open I, "tail -f $log|";
+
+while(<I>) { 
+  next unless /"(GET|POST) (\S+) HTTP\/1\.[01]" (\d+) (-|\d+)/;
+  my ($method, $url, $status, $bytes ) = ($1,$2,$3,$4);
+  my $parsed = parse( $url );
+ 
+  printf "%5d %8d %s\n", $status, $bytes, $parsed->{'url'};
+  foreach ( sort keys %{$parsed->{'params'}} ) {
+    printf " %25s = %s\n",
+      $_, join( "; ",@{$parsed->{'params'}{$_}});
+  }
+}
+
+sub parse {
+  my $request = shift;
+  my ($url,$query_string) = split /\?/, $request;
+  $url = $1 if $url =~ /^https?:\/\/.*?(\/.*)$/;
+  my(@pairs) = split(/[&;]/,$query_string);
+  my $params = {};
+  foreach (@pairs) {
+    my($param,$value) = split('=',$_,2);
+    next unless defined $param;
+    $value = '' unless defined $value;
+    $param = CGI::unescape($param);
+    $value = CGI::unescape($value);
+    push @{$params->{$param}}, $value;
+  }
+  return {
+    'url'    => $url,
+    'params' => $params
+  };
+}
