@@ -106,10 +106,11 @@ sub neat_sr_name {
 }
 
 sub pretty_date {
-### Converts a MySQL datestamp into something human-readable
+### Converts a MySQL datetime field into something human-readable
   my ($self, $datetime) = @_;
   my ($date, $time) = split(' ', $datetime);
   my ($year, $mon, $day) = split('-', $date);
+  return '-' unless ($year > 0);
   my ($hour, $min, $sec) = split(':', $date);
 
   my @months = ('', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
