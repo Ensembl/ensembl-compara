@@ -29,7 +29,7 @@ sub content {
 	  <strong>Transcript length:</strong> $basepairs bps";
      $HTML .= "
           <strong>Translation length:</strong> $residues residues" if $residues;
-  $table->add_row('Statitics',
+  $table->add_row('Statistics',
 		  "<p>$HTML</p>",
 		  1 );
 
