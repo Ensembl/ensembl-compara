@@ -37,7 +37,7 @@ sub get_all_das {
   }
   
   my $spec_das = $self->species_defs->get_all_das( $species );
-  my $sess_das = $self->get_session ->get_all_das( $species );
+  my $sess_das =  $self->get_session->get_all_das( $species );
   my $user_das = $self->get_user ? $self->get_user->get_all_das( $species ) : {};
   
   # TODO: group data??
