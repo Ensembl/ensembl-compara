@@ -32,6 +32,11 @@ sub content {
 
   if ($#filters > -1) {
 
+    ## Control panel fixes
+    my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+    $dir = '' if $dir !~ /_/;
+    my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+
     $html .= qq(<h3>Your news filters</h3>);
     ## Sort user filters by name if required
 
@@ -51,8 +56,8 @@ sub content {
       $row->{'species'} = sprintf(qq(<a href="/News" title="View News" class="cp-external">%s</a>),
                         $species);
 
-      $row->{'edit'} = $self->rename_link('NewsFilter', $filter->id);
-      $row->{'delete'} = $self->delete_link('NewsFilter', $filter->id);
+      $row->{'edit'} = $self->edit_link($dir, 'NewsFilter', $filter->id);
+      $row->{'delete'} = $self->delete_link($dir, 'NewsFilter', $filter->id);
       $table->add_row($row);
       $has_filters = 1;
     }
