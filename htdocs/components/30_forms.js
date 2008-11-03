@@ -54,7 +54,8 @@ var FormCheck = Class.create({
       if( V == '' ) { // If required then check to see it isn't blank...
         if( req ) tmpl = "You must enter a value for '####'";
       } else if( type == 'html' ) { // Check HTML - need to error out of validator...
-      	err = XhtmlValidator().validate( V );
+        if(!xhtml_obj) xhtml_obj = new XhtmlValidator();
+      	var err = xhtml_obj.validate( V );
 	if( err ) tmpl = "The value of '####' is invalid ("+err+")";
       } else {        // Now check the types of parameters - currently only email but could add URL...
         if( !this.valid(type,V) ) tmpl = "The value of '####' is invalid.";
