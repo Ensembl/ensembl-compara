@@ -731,7 +731,7 @@ sub Stylesheet {
     'ensembl'                    => 'rust',
     'flybase'                    => 'rust',
     'wornbase'                   => 'rust',
-    'ensembl_havana_transcript'  => 'goldendrod3',
+    'ensembl_havana_transcript'  => 'goldenrod3',
     'estgene'                    => 'purple1',
     'otter'                      => 'dodgerblue4',
 	'otter_external'             => 'orangered2',
