@@ -120,12 +120,12 @@ sub load_user_tracks {
   foreach my $upload ($user->uploads) {
     if ($upload->species eq $self->{'species'}) {
       my @logic_names = split(', ', $upload->analyses);
-      $menu->append($self->create_track( "user_upload_$i", '[USER] Saved user data', {
+      $menu->append($self->create_track( "user_upload_$i", '[USER] '.$upload->name, {
         'glyphset'    => '_tmp_user_data',
         'url'         => 'tmp',
         'caption'     => $upload->name,
         'logic_names' => \@logic_names,
-        'description' => 'Saved user upload',
+        'description' => $upload->format.' file saved in your user account',
         'display'     => 'normal',
         'renderers'   => [qw(off Off normal Normal)],
         'strand'      => 'b',
