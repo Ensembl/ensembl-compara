@@ -33,7 +33,7 @@ sub content {
       $object->param('aggregate_colour', 'red'); ## Fake CGI param - easiest way to pass this parameter
       my $karyotype = undef;
       my $gene = $object->gene;
-      my $stable_id = '';
+      my $current_gene = '';
       if ($gene) {
         $current_gene = $gene->stable_id;
       }
