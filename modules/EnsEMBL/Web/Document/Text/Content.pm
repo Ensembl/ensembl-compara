@@ -26,6 +26,7 @@ sub form  :lvalue { $_[0]->{'form'}; }
 sub render {
   my $self = shift;
   foreach my $panel ( @{$self->{'panels'}} ) {
+    next if $panel->{'code'} eq 'summary_panel';
     $panel->{_renderer} = $self->renderer;
     $panel->render_Text( 0 );
   }

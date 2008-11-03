@@ -372,7 +372,8 @@ sub redirect {
 sub render {
   my $self = shift;
   if( $self->format eq 'Text' ) { 
-    CGI::header("text/plain"); $self->page->render_Text;
+    CGI::header("text/plain"); 
+    $self->page->render_Text;
   } elsif( $self->format eq 'DAS' ) { 
     $self->page->subtype = $self->{'subtype'};
     CGI::header("text/xml"); $self->page->render_DAS;
