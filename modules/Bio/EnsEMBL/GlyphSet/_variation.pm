@@ -66,6 +66,18 @@ sub colour_key {
   return lc($f->display_consequence);
 }
 
+sub title {
+  my($self,$f) = @_;
+  my $vid = $f->variation_name;
+  my $type = $f->display_consequence;
+  my $dbid = $f->dbID;
+  my ($s,$e) = $self->slice2sr( $f->start, $f->end );
+  my $loc = $s == $e ? $s
+          : $s <  $e ? $s.'-'.$e
+          :           "Between $s and $e"
+          ;
+  return "Variation: $vid; Location: $loc; Consequence: $type; Ambiguity code: ".$f->ambig_code;
+}
 sub href {
   my ($self, $f)  = @_;
   my $vid = $f->variation_name;
@@ -113,10 +125,6 @@ sub href {
   return $self->_url( );
 }
 =cut
-
-sub title {
-
-}
 
 sub feature_label {
   my ($self, $f) = @_;
