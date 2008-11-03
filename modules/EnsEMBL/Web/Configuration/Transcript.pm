@@ -38,7 +38,7 @@ sub ajax_zmenu      {
     my $dest = $obj->action().'/'.$obj->function();
     my $action = $obj->action;
     if ($dest eq 'SupportingEvidence/Alignment') {
-	    $self->do_SE_align_menu($panel,$obj);
+      return $self->do_SE_align_menu($panel,$obj);
     } elsif ($action eq 'Idhistory_Node'){
       return $self->ajax_zmenu_id_history_tree_node();
     } elsif ($action eq 'Idhistory_Branch'){
@@ -53,7 +53,7 @@ sub ajax_zmenu      {
       return $self->_ajax_zmenu_change_reference($panel, $obj);  
     } elsif( $action eq 'coverage'){
       return $self->_ajax_zmenu_transcript_coverage($panel, $obj);
-    }   else {
+    } else {
 	my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
 	$panel->{'caption'} = $disp_id ? "$db_label: $disp_id"
                               : (! $obj->gene ) ? $obj->Obj->stable_id
@@ -169,15 +169,13 @@ sub do_SE_align_menu {
     my $self = shift;
     my $panel = shift;
     my $obj  = $self->object;
-    my $params   = $obj->[1]->{'_input'};
-    my $hit_name = $params->{'sequence'}[0];
-    my $hit_db   = $params->{'hit_db'}[0];
-    my $hit_length = $params->{'hit_length'}[0];
-    my $hit_url  = $obj->get_ExtURL_link( $hit_name, $hit_db, $hit_name );
-
-    my $tsid     = $params->{'t'}->[0];
-    if (my $esid     = $params->{'exon'}->[0] ) {
-	my $exon_length = $params->{'exon_length'}[0];
+    my $hit_name   = $obj->param('id');
+    my $hit_db = $obj->get_sf_hit_db_name($hit_name);
+    my $hit_length = $obj->param('hit_length');
+    my $hit_url    = $obj->get_ExtURL_link( $hit_name, $hit_db, $hit_name );
+    my $tsid       = $obj->param('t');
+    if (my $esid = $obj->param('exon')) {
+	my $exon_length = $obj->param('exon_length');
 	#this is drawn for exons
 	my $align_url = $obj->_url({'type'=>'Transcript', 'action' => 'SupportingEvidence', 'function' => 'Alignment'}).";sequence=$hit_name;exon=$esid";	
 	$panel->{'caption'} = "$hit_name ($hit_db)";
@@ -199,14 +197,14 @@ sub do_SE_align_menu {
 	    'label'    => $exon_length.' bp',
 	    'priority' => 50,
 	});
-	if (my $gap = $params->{'five_end_mismatch'}[0]) {
+	if (my $gap = $obj->param('five_end_mismatch')) {
 	    $panel->add_entry({
 		'type'     => '5\' mismatch',
 		'label'    => $gap.' bp',
 		'priority' => 40,
 	    });
 	}
-	if (my $gap = $params->{'three_end_mismatch'}[0]) {
+	if (my $gap = $obj->param('three_end_mismatch')) {
 	    $panel->add_entry({
 		'type'     => '3\' mismatch',
 		'label'    => $gap.' bp',
