@@ -51,7 +51,7 @@ sub render_normal {
   my $C = 0; ## Diagnostic counters....
   my $K = 0;
 
-#  warn ">>>>> $other_species $METHOD in expanded init<<<<<";
+  warn ">>>>> $other_species $METHOD in expanded init<<<<<";
   foreach my $f ( @{$self->features||[]} ){
     next if $strand_flag eq 'b' && $strand != $f->hstrand || $f->end < 1 || $f->start > $length ;
     push @{$id{$f->hseqname().':'. ($f->group_id||("00".$K++)) }}, [$f->start,$f];
@@ -146,10 +146,15 @@ sub render_normal {
     }
     $Composite->href(  "$HREF?$ZZ" );
 
+    my $orient = ($F[0][1]->hstrand * $F[0][1]->strand > 0) ? 'Forward' : 'Reverse';
+    my $chr_2   = $F[0][1]->hseqname;
     my $zmenu = {
-      'caption' => $caption,
-      "01:$seqregion: $start-$end" => '',
-      "99:Orientation: @{[ $F[0][1]->hstrand * $F[0][1]->strand>0 ? 'Forward' : 'Reverse' ]}"         => '',
+      'type'     => 'Location',
+      'action'   => 'ComparaGenomicAlignment',
+#      'r'        => "$chr:$start-$end",
+      'r1'       => "$chr_2:$start-$end",
+      's1'       => $other_species,
+      'orient'   => $orient,
     };
 
     if(exists $highlights{$i}) {
@@ -172,41 +177,15 @@ sub render_normal {
       my $START  =$F[0][0];
       ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
       my( $rs, $re ) = $self->slice2sr( $START, $END );
-      my $jump_type;
-      if( my %vega_config = $self->species_defs->multiX('VEGA_COMPARA_CONF')) {
-        if( $self_species eq $species_2 ) {
-          my $regions = $chr.':'.$chr_2;
-          my $coords = $vega_config{$METHOD}->{$self_species}{$species_2}{$regions}{'coord_systems'};
-          my ($source,$link_type) = split ':',$coords;
-          $jump_type = "$link_type $chr_2";
-          if( $compara ) {
-            $CONTIGVIEW_TEXT_LINK = "Go to $link_type $chr";
-          }
-        } else {    
-          $jump_type = "$other_species chr $chr_2";
-          if( $compara) {            
-            $CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
-          }
-        }
-      } else {
-        $jump_type = $species_2;
-      }
-
+      my $jump_type = $species_2;
       my $short_self    = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
       my $short_other   = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
       my $HREF_TEMPLATE = "/$short_self/dotterview?c=$chr:%d;s1=$other_species;c1=%s:%d";
       my $COMPARA_HTML_EXTRA = '';
 #      my $MCV_TEMPLATE  = "/$short_self/multicontigview?c=%s:%d;w=%d;s1=$short_other;c1=%s:%d;w1=%d$COMPARA_HTML_EXTRA";
-      $zmenu->{"02:Jump to $jump_type"}    = "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2";
-      $zmenu->{"03:$CONTIGVIEW_TEXT_LINK"} = "/$short_self/contigview?l=$chr:$rs-$re";
-
+      $zmenu->{'method'} = $self->my_config('type');
       my $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
-      $zmenu->{ '04:Dotter' }  = $href;
-      $zmenu->{'05:Alignment'} = "alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
-
-#      my $MULTICONTIGVIEW_TEXT_LINK = 'MultiContigView'; 
       my $METHOD         = $self->my_config('method' );
-
       my $link = 0;
       my $TAG_PREFIX;
       if( $compara) {
@@ -223,22 +202,8 @@ sub render_normal {
         }
 #        $MULTICONTIGVIEW_TEXT_LINK = 'Centre on this match';
       }
-#      $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
-    #more code for vega self compara links (zfish chained alignments)
-    } elsif ( my %vega_config = $self->species_defs->multiX('VEGA_COMPARA_CONF')) {
-      my $chr_2 = $F[0][1]->hseqname;
-      if( $self_species eq $species_2 ) {
-        my $regions = $chr.':'.$chr_2;
-        my $coords = $vega_config{$METHOD}->{$self_species}{$species_2}{$regions}{'coord_systems'};
-        my ($source,$link_type) = split ':',$coords;
-        $zmenu->{"02:Jump to $link_type $chr_2"} = "$HREF?$ZZ";
-      } else {
-        $zmenu->{"02:Jump to $species_2 chr $chr_2"} = "$HREF?$ZZ";
-      }
-    } else {
-      $zmenu->{"02:Jump to $species_2"} = "$HREF?$ZZ";
     }
-    $Composite->zmenu($zmenu);
+    $Composite->href($self->_url($zmenu));
     $self->push( $Composite );
   }
 ## No features show "empty track line" if option set....
@@ -340,42 +305,22 @@ sub render_compact {
     my $e_2   = $f->hend;
     my $href  = '';
     #z menu links depend on whether jumping within or between species;
-    my $jump_type;
-    if (my %vega_config = $self->{'config'}->{'species_defs'}->multiX('VEGA_COMPARA_CONF')) {
-        if( $self_species eq $species_2 ) {
-            my $regions = $chr.':'.$chr_2;
-            my $coords = $vega_config{$METHOD}->{$self_species}{$species_2}{$regions}{'coord_systems'};
-            my ($source,$link_type) = split ':',$coords;
-            $jump_type = "$link_type $chr_2";
-            if( $compara ) {
-                $CONTIGVIEW_TEXT_LINK = "Go to $link_type $chr";            
-            }
-        } else {    
-            $jump_type = "$other_species chr $chr_2";
-            if( $compara) {            
-                $CONTIGVIEW_TEXT_LINK = "Go to $self_species chr $chr";
-            }
-        }
-    } else {
-      $jump_type = $species_2;
-    }
+    my $jump_type = $species_2;
 
+    my $orient = ($f->hstrand * $f->strand > 0) ? 'Forward' : 'Reverse';
     my $zmenu = {
-      'caption'              => $caption,
-      "01:$chr_2:$s_2-$e_2"     => '',
-      "02:Jump to $jump_type"   => "$domain/$short_other/contigview?l=$chr_2:$s_2-$e_2",
-      "03:$CONTIGVIEW_TEXT_LINK"  => "/$short_self/contigview?l=$chr:$rs-$re" };
-
+      'type'     => 'Location',
+      'action'   => 'ComparaGenomicAlignment',
+      'r'        => "$chr:$rs-$re",
+      'r1'       => "$chr_2:$s_2-$e_2",
+      's1'       => $other_species,
+      'method'   => $self->my_config('type'),
+      'orient'   => $orient,
+    };
     $href = sprintf $HREF_TEMPLATE, ($rs+$re)/2, $chr_2, ($s_2 + $e_2)/2;
-    $zmenu->{ '04:Dotter' }    = $href;
-    $zmenu->{ '05:Alignment' } = "/$self_species/alignview?class=DnaDnaAlignFeature;l=$chr:$rs-$re;s1=$other_species;l1=$chr_2:$s_2-$e_2;type=$METHOD";
-#    $zmenu->{ "06:$MULTICONTIGVIEW_TEXT_LINK" } = sprintf( $MCV_TEMPLATE, $chr, ($rs+$re)/2, $WIDTH/2, $chr_2, ($s_2+$e_2)/2, $WIDTH/2 );
-    $zmenu->{ '99:Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ) } = undef;
     if($DRAW_CIGAR) {
       $TO_PUSH = $self->Composite({
-        'href'  => $href,
-        'zmenu' => $zmenu,
-#        'zmenu' => $self->unbumped_zmenu( @X , 'Orientation: '.($f->hstrand * $f->strand>0?'Forward' : 'Reverse' ), $f->{'alignment_type'} ) ,
+        'href'  => $self->_url($zmenu),
         'x'     => $START-1,
         'width' => 0,
         'y'     => 0
@@ -391,8 +336,7 @@ sub render_compact {
         'colour'     => $feature_colour,
         'absolutey'  => 1,
         '_feature'   => $f, 
-        'href'  => $href,
-        'zmenu' => $zmenu,
+        'href'  => $self->_url($zmenu),
       });
     }
     if( ($compara eq 'primary' || $compara eq 'secondary') && $link ) {
