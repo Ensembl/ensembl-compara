@@ -49,7 +49,7 @@ sub _draw_features {
 
 ## Now loop through all features and get the extents of features - we will need this later for bumping! and joining!
 
-      my $g_s = $features->{'g_styles'}{$lname}{$gkey};             ## Get the group style...
+      my $g_s = $features->{'g_styles'}{$lname}{$group->{'type'}};             ## Get the group style...
       my $to_join = lc( $g_s->{'style'}{'symbol'} ) ne 'hidden';
       $has_labels = 1 if $g_s->{'style'}{'label'} eq 'yes';
 
@@ -106,7 +106,7 @@ sub _draw_features {
 
 ## Start with looking for special "aggregator glyphs"
 #       foreach my $style_key ( keys %{ $group->{'features'} } ) {
-      my $g_s = $features->{'g_styles'}{$lname}{$gkey};             ## Get the group style...
+      my $g_s = $features->{'g_styles'}{$lname}{$group->{'type'}};             ## Get the group style...
       my @boxes;
       my $to_join = lc( $g_s->{'style'}{'symbol'} ) ne 'hidden';
       my $composite_flag   = 0;
