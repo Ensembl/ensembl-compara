@@ -15,9 +15,12 @@ BEGIN{
 my( $log, $type ) = split / /, $SiteDefs::ENSEMBL_CUSTOMLOG;
 open I, "tail -f $log|";
 
+my $regexp = @ARGV ? '('.join( '|', map { quotemeta $_ } @ARGV ).')' : '';
+
 while(<I>) { 
   next unless /"(GET|POST) (\S+) HTTP\/1\.[01]" (\d+) (-|\d+)/;
   my ($method, $url, $status, $bytes ) = ($1,$2,$3,$4);
+  next if $regexp && $url !~/$regexp/o;
   my $parsed = parse( $url );
  
   printf "%5d %8d %s\n", $status, $bytes, $parsed->{'url'};
