@@ -588,7 +588,7 @@ sub _local_tools {
       'caption' => 'Add custom data to page',
       'class'   => 'disabled',
       'url'     => undef,
-      'title'   => 'You cannot add custom data to thie page'
+      'title'   => 'You cannot add custom data to this page'
     );
   }
 
