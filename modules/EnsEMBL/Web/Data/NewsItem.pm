@@ -16,6 +16,7 @@ __PACKAGE__->add_queriable_fields(
   notes       => 'text',
   priority    => 'int',
   status      => "enum('declared','handed_over','postponed')",
+  news_done   => "enum('N','Y')",
   news_category_id => 'int',
 );
 
