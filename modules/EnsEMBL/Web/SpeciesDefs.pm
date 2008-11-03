@@ -874,5 +874,23 @@ sub species_label {
   }
 }
 
+sub species_dropdown {
+  my ($self, $group) = @_;
+  my @options;
+  ## TODO - implement grouping by taxon
+  
+  my @sorted_by_common = sort { $a->{'common'} cmp $b->{'common'} }
+                          map  { { 'name'=> $_, 'common' => $self->get_config($_, "SPECIES_COMMON_NAME")} }
+                          $self->valid_species;
+
+
+  foreach my $sp (@sorted_by_common) {
+    my $name = $sp->{'name'};
+    push @options, {'value' => $sp->{'name'}, 'name' => $sp->{'common'} };
+  }
+
+  return @options;
+}
+
 1;
 
