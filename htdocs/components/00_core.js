@@ -31,3 +31,11 @@ function addLoadEvent(func) {
   }
 }
 
+function _name_window() {
+  if(!window.name) {
+    var d = new Date();
+    window.name = 'ensembl_'+d.getTime()+'_'+Math.floor(Math.random()*10000);
+  }
+}
+
+addLoadEvent(_name_window);
