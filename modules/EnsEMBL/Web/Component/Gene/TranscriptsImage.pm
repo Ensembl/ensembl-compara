@@ -44,7 +44,13 @@ sub content {
       $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
 
-  return $image->render;
+  my $html = $image->render;
+  $html .= $self->_info(
+    'Configuring the display',
+    '<p>Tip: use the "<strong>Configure this page</strong>" link on the left to show additional data in this region.</p>'
+  );
+
+  return $html;
 }
 
 1;
