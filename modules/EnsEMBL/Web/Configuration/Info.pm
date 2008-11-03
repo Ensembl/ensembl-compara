@@ -11,7 +11,7 @@ sub set_default_action {
 sub global_context { return undef; }
 sub ajax_content   { return undef;   }
 sub local_context  { return $_[0]->_local_context;  }
-sub local_tools    { return undef;  }
+sub local_tools    { return $_[0]->_local_tools;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel(1);  } ## RAW AS CONTAINS <i> tags
 
