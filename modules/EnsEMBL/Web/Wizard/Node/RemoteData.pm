@@ -134,19 +134,15 @@ sub select_das_species {
   $self->add_element( 'type' => 'Information', 'value' => "Which species' do the DAS sources below have data for? If they contain data for all species' (e.g. gene or protein-based sources) choose 'all'. If the DAS sources do not use the same coordinate system, go back and add them individually." );
   $self->add_element( 'type' => 'SubHeader',   'value' => 'Species' );
   
+  $self->add_element('name',  => 'species',
+                     'type'   => 'Hidden',
+                     'value'  => $ENV{ENSEMBL_SPECIES});
+  
   $self->add_element('name'   => 'has_species',
                      'type'   => 'RadioButton',
-                     'label'  => "Species-specific (e.g. genomic sources)",
+                     'label'  => $ENV{ENSEMBL_SPECIES},
                      'checked'=> 1,
                      'value'  => 'yes');
-  my @values = map {
-    { 'name' => $_, 'value' => $_, }
-  } @{ $self->object->species_defs->ENSEMBL_SPECIES };
-  $self->add_element('name'   => 'species',
-                     'type'   => 'MultiSelect',
-                     'select' => 1,
-                     'value'  => [$self->object->species_defs->ENSEMBL_PRIMARY_SPECIES], # default species
-                     'values' => \@values);
   
   $self->add_element('name'   => 'has_species',
                      'type'   => 'RadioButton',
@@ -196,6 +192,7 @@ sub select_das_coords {
   
   $self->add_element( 'type' => 'SubHeader', 'value' => "Gene" );
   for my $cs (@GENE_COORDS) {
+    $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
     $self->add_element( 'type'    => 'CheckBox',
                         'name'    => 'coords',
                         'value'   => $cs->to_string,
@@ -204,6 +201,7 @@ sub select_das_coords {
   
   $self->add_element( 'type' => 'SubHeader', 'value' => "Protein" );
   for my $cs (@PROT_COORDS) {
+    $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
     $self->add_element( 'type'    => 'CheckBox',
                         'name'    => 'coords',
                         'value'   => $cs->to_string,
@@ -221,14 +219,10 @@ sub select_das_coords {
     $self->add_element( 'type' => 'Information', 'value' => 'No sources found' );
   }
   else {
-    $self->add_element( 'type' => 'Header',   'value' => 'DAS Sources' );
+    $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
     
     for my $source (@{ $sources }) {
-      # Need to fill in missing coordinate systems and resubmit
-      $self->add_element( 'type' => 'Information', 'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
-                                                              $source->label,
-                                                              $source->description,
-                                                              $source->homepage );
+      $self->_output_das_text(@{ $sources });
     }
   }
 }
