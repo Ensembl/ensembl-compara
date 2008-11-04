@@ -29,14 +29,12 @@ sub image_label {
 
 sub title {
   my( $self, $f ) = @_;
-  return sprintf "%s; Type: %s; Analysis: %s",
+  my($start,$end) = $self->slice2sr( $f->start(), $f->end() );
+  my $len   = $end - $start + 1;
+  return sprintf "%s; bp: %s; length: %s",
     $f->repeat_consensus()->name(),
-    $f->repeat_consensus->repeat_type,
-    $f->analysis->logic_name;
-}
-
-sub href {
-  return;
+    "$start-$end",
+    $len;
 }
 
 sub tag {
