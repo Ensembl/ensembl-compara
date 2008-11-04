@@ -76,11 +76,18 @@ sub render_message {
 sub ajax_redirect {
 ### AJAX-friendly redirect for use with Control Panel modules
   my ($self, $url) = @_;
-  unless( $url =~ /x_requested_with=/ ) {
+  unless( $url =~ /x_requested_with=/ ) { ## Needed by other modules using this method
     $url .= ($url =~ /\?/?';':'?').'x_requested_with=XMLHttpRequest';
   }
   warn "REDIRECTING AJAX $url";
   $self->action->cgi->redirect($url);
+}
+
+sub ajax_url {
+  my ($self, $object, $script) = @_;
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' if $dir !~ /_/;
+  return $self->url($dir.$script, {'_referer' => $object->param('_referer'), 'x_requested_with' => $object->param('x_requested_with')} )
 }
 
 sub add_filter {
