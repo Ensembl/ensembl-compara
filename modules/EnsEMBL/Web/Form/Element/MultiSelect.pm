@@ -38,16 +38,17 @@ sub render {
 			   $V->{'value'}, $checked eq 'yes' ? ' selected="selected"' : '', $V->{'name'}
       );
     }
+    my $label = $self->label ? CGI::escapeHTML( $self->label ).': ' : '';
     return sprintf( qq(
     <dl>
-      <dt><label for="%s">%s: </label></dt>
+      <dt><label for="%s">%s</label></dt>
       <dd>%s<select multiple="multiple" name="%s" id="%s" class="normal" size="%s">
       %s
       </select>
       %s</dd>
     </dl>),
       CGI::escapeHTML( $self->id ),
-      CGI::escapeHTML( $self->label ), 
+      $label, 
       $self->introduction,
       CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
       $self->size,
