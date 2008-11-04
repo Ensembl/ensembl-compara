@@ -37,7 +37,7 @@ sub new { ## All now configured by the component!!
   bless $self, $class ;
 }
 
-sub strip_HTML { my($self,$string) = @_; $string =~ s/<[>]+>//g; return $string; }
+sub strip_HTML { my($self,$string) = @_; $string =~ s/<[^>]+>//g; return $string; }
  
 sub render {
   my $self    = shift;
