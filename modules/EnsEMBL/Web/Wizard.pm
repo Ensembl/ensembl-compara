@@ -244,6 +244,8 @@ sub add_incoming_parameters {
   ## Add in valid CGI parameters as hidden fields
   foreach my $name (keys %parameter) {
     next if $name =~ /^wizard_/ && $name ne 'wizard_steps';
+    next if $name eq 'fatal_error';
+    next if $name eq 'error_message';
     my $value = $parameter{$name};
     ## Deal with step array
     if ($name eq 'wizard_steps') {
