@@ -5,6 +5,7 @@ use EnsEMBL::Web::Document::Panel::SpreadSheet;
 use EnsEMBL::Web::Document::Panel::Information;
 use EnsEMBL::Web::Document::Panel::Image;
 use EnsEMBL::Web::Data::Release;
+use EnsEMBL::Web::RegObj;
 use Data::Dumper;
 
 use base qw(EnsEMBL::Web::Configuration);
@@ -315,6 +316,13 @@ sub populate_tree {
     [qw(protvars     EnsEMBL::Web::Component::Transcript::ProteinVariations)],
     { 'availability' => 'either database:variation', 'concise' => 'Variations'}
   ));
+  
+  # External Data tree, including non-positional DAS sources
+  $self->create_node( 'ExternalData', 'External Data',
+    [qw(external EnsEMBL::Web::Component::Transcript::ExternalData)],
+    { 'availability' => 'transcript' }
+  );
+  
   my $history_menu = $self->create_submenu('History', "ID History");
   $history_menu->append($self->create_node( 'Idhistory', "Transcript history",
     [qw(
@@ -343,6 +351,20 @@ sub populate_tree {
       [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/transcript_$_" ], # TODO: UNHACK!
       { 'availability' => 'transcript', 'no_menu_entry' => 1 }
     ));
+  }
+}
+
+sub user_populate_tree {
+  my $self = shift;
+  my $all_das  = $ENSEMBL_WEB_REGISTRY->get_all_das();
+  my @active_das = qw(DS_549);
+  my $ext_node = $self->tree->get_node( 'ExternalData' );
+  for my $logic_name ( @active_das ) {
+    my $source = $all_das->{$logic_name} || next;
+    $ext_node->append($self->create_subnode( "ExternalData/$logic_name", $source->label,
+      [qw(textdas EnsEMBL::Web::Component::Transcript::TextDAS)],
+      { 'availability' => 'translation', 'concise' => $source->caption }
+    ));	 
   }
 }
 
