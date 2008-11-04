@@ -73,7 +73,14 @@ sub draw_wiggle_plot {
   ### Returns 1
 
   my( $self, $features, $parameters ) = @_;
-  
+
+  my $METHOD_ID      = $self->my_config( 'method_link_species_set_id' );
+  my $zmenu = {
+      'type'   => 'Location',
+      'action' => 'Align',
+      'align'  => $METHOD_ID,
+  };
+
   my $slice           = $self->{'container'};
   my $row_height      = $self->my_config('height') || 60;
   my $offset          = $self->_offset();
@@ -167,7 +174,6 @@ sub draw_wiggle_plot {
     my $score = $f->score || 0;
     # warn(join('*', $f, $START, $END, $score));
     my $y = $score < 0 ? 0 : -$score * $pix_per_score;
-
     $self->push($self->Rect({
       'y'         => $offset + $red_line_offset + $y,
       'height'    => abs( $score * $pix_per_score ),

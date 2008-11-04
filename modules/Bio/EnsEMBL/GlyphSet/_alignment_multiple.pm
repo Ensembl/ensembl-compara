@@ -40,7 +40,6 @@ sub draw_features {
   ### Returns error message to print if there are features missing (string)
 
   my( $self, $wiggle ) = @_;
-
   my $strand = $self->strand;
   my $strand_flag    = $self->my_config( 'strand' );
   my $drawn_block    = 0;
@@ -58,99 +57,87 @@ sub draw_features {
      $feature_text   =~ s/\[\[name\]\]/$name/;
   my $h              = $self->get_parameter( 'opt_halfheight') ? 4 : 8;
   my $chr            = $self->{'container'}->seq_region_name;
+  my $chr_start      = $self->{'container'}->start;
   my $other_species  = $self->my_config( 'species' );
   my $short_other    = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $other_species };
   my $self_species   = $self->species;
   my $short_self     = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
   my $jump_to_alignslice = $self->my_config( 'jump_to_alignslice');
-
   my $METHOD_ID      = $self->my_config( 'method_link_species_set_id' );
 
-  my $ALIGNSLICEVIEW_TEXT_LINK = 'Jump to AlignSliceView';
+  my $zmenu = {
+      'type'   => 'Location',
+      'action' => 'Align',
+      'align'  => $METHOD_ID,
+  };
 
   my $C = 0;
   my $X = -1e8;
 
   $self->timer_push('setup');
-unless( $wiggle eq 'wiggle' ) {
-  my $els = $self->element_features;
-  $self->timer_push('got features',undef,'fetch');
-  my @T = 
-    sort { $a->[0] <=> $b->[0] }
-    map {
-      ( $strand_flag ne 'b' || $strand == $_->{strand} ) && $_->{start} <= $length && $_->{end}>=1 ?
-      [ $_->{start}, $_ ] : ()
-    } @$els;
-  $self->timer_push('sorted features');
+  unless( $wiggle eq 'wiggle' ) {
+    my $els = $self->element_features;
+    $self->timer_push('got features',undef,'fetch');
+    my @T = 
+      sort { $a->[0] <=> $b->[0] }
+      map {
+        ( $strand_flag ne 'b' || $strand == $_->{strand} ) && $_->{start} <= $length && $_->{end}>=1 ?
+        [ $_->{start}, $_ ] : ()
+      } @$els;
+    $self->timer_push('sorted features');
 
-  foreach (@T) {
-    my($START,$f) = @$_;
-    my $END       = $f->{end};
-    ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
-    my( $rs,$re ) = ($f->{hstart}, $f->{hend});
-    $START        = 1 if $START < 1;
-    $END          = $length if $END > $length;
+    foreach (@T) {
+      my($START,$f) = @$_;
+      my $END       = $f->{end};
+      ($START,$END) = ($END, $START) if $END<$START; # Flip start end YUK!
+      my( $rs,$re ) = ($f->{hstart}, $f->{hend});
+      $START        = 1 if $START < 1;
+      $END          = $length if $END > $length;
 
-    next if int( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
-    $drawn_block = 1;
-    $X = $START;
+      next if int( $END * $pix_per_bp ) == int( $X * $pix_per_bp );
+      $drawn_block = 1;
+      $X = $START;
 
-    my $href  = "/$short_self/alignsliceview?l=$chr:$rs-$re;align=opt_align_$METHOD_ID";
+      # Don't link to AlignSliceView from constrained elements! - doesn't work in 51
+      if ($jump_to_alignslice) {
+	$zmenu->{'align'}  => $METHOD_ID,
+      }
+      $zmenu->{'score'} = $f->{'score'} if $f->{'score'};
 
-    my $zmenu = { 'caption'              => $caption};
+      my $block_start = $START+$chr_start-1;
+      my $block_end = $END+$chr_start-1;
+      $zmenu->{'r'}     = "$chr:$block_start-$block_end";
 
-    # Don't link to AlignSliceView from constrained elements!
-    if ($jump_to_alignslice) {
-      $zmenu->{"45:"} = '';
-      $zmenu->{"50:$ALIGNSLICEVIEW_TEXT_LINK"} = $href;
-    }
-    $zmenu->{"01:Score = ".$f->{score}} = '' if $f->{score};
+      my $id = 10; 
+      my $max_contig = 250000;
 
-    my $id = 10; 
-    my $max_contig = 250000;
-if(0){
-    foreach my $species_name (sort keys %{$f->{fragments}}) {
-      $zmenu->{"$id:$species_name"} = '';
-      $id++;
-      foreach my $fr (@{$f->{fragments}->{$species_name}}) {
-        my $flength = abs($fr->[2] - $fr->[1]);
-        (my $species = $species_name) =~ s/\s/\_/g;
-        my $flink = sprintf("/%s/%s?l=%s:%d-%d", $species, $flength > $max_contig ? 'cytoview' : 'contigview', @$fr);
-        my $key = sprintf("%d:&nbsp;%s: %d-%d", $id++, @$fr);
-        $zmenu->{"$key"} = $flink;
-        $C++;
+      if($DRAW_CIGAR) {
+        my $TO_PUSH = $self->Composite({
+          'href'  => $self->_url($zmenu),
+          'x'     => $START-1,
+          'width' => 0,
+          'y'     => 0,
+	  'bordercolour' => $feature_colour
+        });
+        $self->draw_cigar_feature( $TO_PUSH, $f, $h, $feature_colour, 'black', $pix_per_bp, 1 );
+        $self->push( $TO_PUSH );
+      } else {
+        $self->push( $self->Rect({
+          'x'         => $START-1,
+          'y'         => 0,
+          'width'     => $END-$START+1,
+          'height'    => $h,
+          'colour'    => $feature_colour,
+          'absolutey' => 1,
+          '_feature'  => $f, 
+          'href'      => $self->_url($zmenu),
+        }));
       }
     }
-}
-    if($DRAW_CIGAR) {
-      my $TO_PUSH = $self->Composite({
-        'href'  => $href,
-        'zmenu' => $zmenu,
-        'x'     => $START-1,
-        'width' => 0,
-        'y'     => 0,
-	'bordercolour' => $feature_colour
-      });
-      $self->draw_cigar_feature( $TO_PUSH, $f, $h, $feature_colour, 'black', $pix_per_bp, 1 );
-      $self->push( $TO_PUSH );
-    } else {
-      $self->push( $self->Rect({
-        'x'         => $START-1,
-        'y'         => 0,
-        'width'     => $END-$START+1,
-        'height'    => $h,
-        'colour'    => $feature_colour,
-        'absolutey' => 1,
-        '_feature'  => $f, 
-        'href'      => $href,
-        'zmenu'     => $zmenu,
-      }));
-    }
+    $self->timer_push( 'drawn features' );
+    $self->_offset($h);
+    $self->draw_track_name($feature_text, $feature_colour) if $drawn_block;
   }
-  $self->timer_push( 'drawn features' );
-  $self->_offset($h);
-  $self->draw_track_name($feature_text, $feature_colour) if $drawn_block;
-}
   my $drawn_wiggle = $wiggle ? $self->wiggle_plot : 1;
   return 0 if $drawn_block && $drawn_wiggle;
 
@@ -202,7 +189,6 @@ if(0){
     }
 }
     my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split(':',$block->reference_slice->name);
- 
     push @$T, Bio::EnsEMBL::DnaDnaAlignFeature->new_fast ({
       'seqname'   => $block->reference_slice->name,
       'start'     => $block->reference_slice_start,
