@@ -118,11 +118,6 @@ sub initialize_session {
   );
 }
 
-sub user_db_handler {
-###
-  return EnsEMBL::Web::Data::User->db_Main;
-}
-
 }
 
 1;
