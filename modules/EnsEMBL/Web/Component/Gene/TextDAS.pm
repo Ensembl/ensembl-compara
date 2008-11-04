@@ -22,6 +22,11 @@ sub caption {
   return undef;
 }
 
+sub _das_query_object {
+  my $self = shift;
+  return $self->object->Obj;
+}
+
 sub content {
   my $self = shift;
   
@@ -41,13 +46,6 @@ sub content {
   return $self->_error( sprintf( 'DAS source "%s" specified does not exist', $logic_name ),
     'Cannot find the specified DAS source key supplied' 
   ) unless $source;
-
-  my $engine = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
-    -sources => [ $source ],
-    -proxy   => $object->species_defs->ENSEMBL_WWW_PROXY,
-    -noproxy => $object->species_defs->ENSEMBL_NO_PROXY,
-    -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT
-  );
   
   my $table = EnsEMBL::Web::Document::HTML::TwoCol->new();
   $table->add_row( 'Description', $source->description );#, 1 );
@@ -56,9 +54,16 @@ sub content {
   }
   
   my $html = $table->render;
+  my $query_object = $self->_das_query_object;
   
+  my $engine = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
+    -sources => [ $source ],
+    -proxy   => $object->species_defs->ENSEMBL_WWW_PROXY,
+    -noproxy => $object->species_defs->ENSEMBL_NO_PROXY,
+    -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT
+  );
   # Perform DAS requests...
-  my $data = $engine->fetch_Features( $object->Obj )->{$logic_name};
+  my $data = $engine->fetch_Features( $query_object )->{$logic_name};
   
   # Check for source errors (bad configs)
   my $source_err = $data->{'source'}->{'error'};
@@ -94,7 +99,7 @@ sub content {
       next;
     }
     
-    # TODO: do this in an OO way?
+    # TODO: convert Spreadsheet html stripping to a detainting process
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px','triangle'=>1} );
     $table->add_columns(
       { 'key' => 'type',  'title' => 'Type',  'width' => '15%' },
@@ -102,7 +107,7 @@ sub content {
       { 'key' => 'notes', 'title' => 'Notes', 'width' => '70%' }
     );
     for my $f ( sort { $a->type_label cmp $b->type_label } @features ) {
-      my $note = join '<br/>', @{ $f->notes };
+      my $note = CGI::unescapeHTML( join '<br/>', @{ $f->notes } );
       (my $lh = ucfirst($f->type_label)) =~ s/_/ /g;
       $table->add_row({
         'type' => $lh, 'label' => $f->display_label, 'notes' => $note
@@ -110,10 +115,8 @@ sub content {
     }
     $html .= $table->render;
   }
-
-  # Only unescape content served from "preconfigured" DAS sources
-  # TODO: convert this to a detainting process
-  return $source->is_external ? $html : CGI::unescapeHTML( $html );
+  
+  return $html;
 }
 
 1;
