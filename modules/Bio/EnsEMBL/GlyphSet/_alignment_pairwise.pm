@@ -28,7 +28,7 @@ sub render_normal {
   my $feature_colour = $self->my_colour($feature_key);
   my $join_col       = $self->my_colour($feature_key,'join'  ) || 'gold'; 
   my $join_z         = $self->my_colour($feature_key,'join_z') || 100;
-  warn "... $feature_key [$feature_colour / $join_col / $join_z] ....";
+#  warn "... $feature_key [$feature_colour / $join_col / $join_z] ....";
   my %id             = ();
   my $small_contig   = 0;
   my $h              = $self->get_parameter( 'opt_halfheight') ? 4 : 8;
@@ -51,7 +51,7 @@ sub render_normal {
   my $C = 0; ## Diagnostic counters....
   my $K = 0;
 
-  warn ">>>>> $other_species $METHOD in expanded init<<<<<";
+#  warn ">>>>> $other_species $METHOD in expanded init<<<<<";
   foreach my $f ( @{$self->features||[]} ){
     next if $strand_flag eq 'b' && $strand != $f->hstrand || $f->end < 1 || $f->start > $length ;
     push @{$id{$f->hseqname().':'. ($f->group_id||("00".$K++)) }}, [$f->start,$f];
@@ -151,7 +151,6 @@ sub render_normal {
     my $zmenu = {
       'type'     => 'Location',
       'action'   => 'ComparaGenomicAlignment',
-#      'r'        => "$chr:$start-$end",
       'r1'       => "$chr_2:$start-$end",
       's1'       => $other_species,
       'orient'   => $orient,
@@ -229,7 +228,7 @@ sub render_compact {
   my $pix_per_bp     = $self->scalex;
   my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
   my $feature_key    = lc( $self->my_config('type') );
-  warn ".... $feature_key ....";
+#  warn ".... $feature_key ....";
   my $feature_colour = $self->my_colour($feature_key);
   my $join_col       = $self->my_colour($feature_key,'join'  ) || 'gold'; 
   my $join_z         = $self->my_colour($feature_key,'join_z') || 100;
