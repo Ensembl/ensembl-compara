@@ -195,7 +195,7 @@ sub render_connection_form {
   if ($node->name ne $self->get_default_node && $node->get_backtrack) {
     $self->form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back');
   }
-  if ($forward_connection) {
+  if ($forward_connection && !$self->get_object->param('fatal_error')) {
     my $label = $forward_connection->label || 'Next >';
     $self->form->add_element('type' => 'Hidden', 'name' => 'wizard_next', 'value' => $forward_connection->to->name);
     $self->form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => $label);
