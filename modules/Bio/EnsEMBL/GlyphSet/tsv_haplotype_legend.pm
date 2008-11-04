@@ -62,7 +62,7 @@ sub _init {
 	      @stripes,
       }));
       $self->push($self->Text({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
+        'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH + 3,
         'y'         => $y * ( $th + 3 ),
         'height'    => $th,
         'valign'    => 'center',
