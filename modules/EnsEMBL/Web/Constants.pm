@@ -168,5 +168,46 @@ sub OTHER_MARKUP_OPTIONS {
   );
 }
 
+#shared by transcript and gene snp views
+sub VARIATION_OPTIONS {
+  return (
+    'variation' =>  {
+      'opt_freq'      =>  ['on', 'By frequency'],
+      'opt_cluster'   =>  ['on', 'By Cluster'],
+      'opt_doublehit' =>  ['on', 'By doublehit'],
+      'opt_submitter' =>  ['on', 'By submitter'],
+      'opt_hapmap'    =>  ['on', 'Hapmap'],
+      'opt_noinfo'    =>  ['on', 'No information'],
+    }, 
+    'class' =>  {
+      'opt_in-del'    =>  ['on', 'In-dels'],
+      'opt_snp'       =>  ['on', 'SNPs'],
+      'opt_mixed'     =>  ['on', 'Mixed variations'],
+      'opt_microsat'  =>  ['on', 'Micro-satellite repeats'],
+      'opt_named'     =>  ['on', 'Named variations'],
+      'opt_mnp'       =>  ['on', 'MNPs'],
+      'opt_het'       =>  ['on', 'Hetrozygous variations'],
+      'opt_'          =>  ['on', 'Unclassified']
+    }, 
+    'type' => {
+      'opt_non_synonymous_coding' =>  ['on', 'Non-synonymous'],
+      'opt_frameshift_coding'     =>  ['on', 'Frameshift'],
+      'opt_synonymous_coding'     =>  ['on', 'Synonymous'],
+      'opt_5prime_utr'            =>  ['on', "5' UTR"],
+      'opt_3prime_utr'            =>  ['on', "3' UTR"],
+      'opt_intronic'              =>  ['on', 'Intronic'],
+      'opt_downstream'            =>  ['on', 'Downstream'],
+      'opt_upstream'              =>  ['on', 'Upstream'],
+      'opt_intergenic'            =>  ['on', 'Intergenic'],
+      'opt_essential_splice_site' =>  ['on', 'Essential splice site'],
+      'opt_splice_site'           =>  ['on', 'Splice site'],
+      'opt_regulatory_region'     =>  ['on', 'Regulatory region'],
+      'opt_stop_gained'           =>  ['on', 'Stop gained'],
+      'opt_stop_lost'             =>  ['on', 'Stop lost'],
+      'opt_sara'                  =>  ['on', 'SARA (same as ref.assembly)']
+    },
+  );
+}
+
 
 1;
