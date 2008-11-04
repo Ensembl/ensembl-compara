@@ -30,6 +30,7 @@ sub availability {
     $hash->{'history'}    = $rows ? 1 : 0;
     $hash->{'either'}     = 1;
     $hash->{'transcript'} = 1;
+    $hash->{'translation'}= $self->Obj->translation ? 1 : 0;
   }
   return $hash;
 }
