@@ -15,15 +15,19 @@ sub init {
   } values %{ $ENSEMBL_WEB_REGISTRY->get_all_das() } );
 }
 
+sub _view {
+  return 'Gene/ExternalData';
+}
+
 sub form {
   my ( $view_config, $object ) = @_;
-
+  
   $view_config->add_form_element({ 'type' => 'SubHeader',
                                    'value' => 'DAS Sources' });
   my @all_das = sort {
     $a->label cmp $b->label
   } grep {
-    $_->is_on( 'geneview' )
+    $_->is_on( &_view )
   } values %{ $ENSEMBL_WEB_REGISTRY->get_all_das() };
 
   for my $das ( @all_das ) {
