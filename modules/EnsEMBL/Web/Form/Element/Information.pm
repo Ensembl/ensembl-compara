@@ -10,10 +10,11 @@ sub new {
 
 sub render {
   my $self = shift;
-  my $extra_class = $self->class || '';
+  my $extra_classes = join(' ', @{$self->styles});
+  $extra_classes = ' '.$extra_classes if $extra_classes;
   return sprintf '
-    <dl><dt class="wide %s">%s</dt></dl>
-  ', $extra_class, $self->value;
+    <dl><dt class="wide%s">%s</dt></dl>
+  ', $extra_classes, $self->value;
 }
 
 1;
