@@ -11,12 +11,12 @@ sub _init {
   my ($self) = @_;
   my $type = $self->check();
   return unless defined $type; 
+   warn $type;
   
-  return unless $self->strand() == -1;  
+  return unless $self->strand() == -1;  warn $self->strand;
   #my $key = lc($self->my_config('logic_name')).'_hits'; 
   my $key = lc($type).'_hits';
-  $key =~s/domain_core_//;
- 
+  $key =~s/domain_//;
 
 
   my $Config        = $self->{'config'};
