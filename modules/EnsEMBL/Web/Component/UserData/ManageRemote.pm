@@ -18,49 +18,85 @@ sub content {
 
   my $html;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+
+  ## Control panel fixes
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' if $dir !~ /_/;
+  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+
+  ## List DAS sources
+  $html .= "<h4>DAS sources</h4>";
+
+  my @sources = values %{$self->object->get_session->get_all_das};
+
   if ($user) {
-    my @sources = $user->dases;
+    push @sources, $user->dases;
+  }
 
-    if (@sources) {
-      $html .= "<h4>DAS sources</h4>";
+  if (@sources) {
 
-      my $table = EnsEMBL::Web::Document::SpreadSheet->new();
+    my $table = EnsEMBL::Web::Document::SpreadSheet->new();
       $table->add_columns(
         {'key' => "name", 'title' => 'Datasource name', 'width' => '60%', 'align' => 'left' },
         {'key' => "date", 'title' => 'Last updated', 'width' => '20%', 'align' => 'left' },
         {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
       );
-      foreach my $source (@sources) {
+    
+    foreach my $source (sort { lc $a->label cmp lc $b->label } @sources) {
+
+      if (ref($source) =~ /Record/) { ## from user account
         my $date = $source->modified_at || $source->created_at;
-        my $link = sprintf('<a href="/common/UserData/DeleteDAS?id=%s">Delete</a>', $source->id);
+        my $link = sprintf('<a href="%s/UserData/DeleteDAS?id=%s;%s">Delete</a>', $dir, $source->id, $referer);
         $table->add_row( { 'name'  => $source->label, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
-      $html .= $table->render;
-    }
-    else {
-      $html .= qq(<p class="space-below">You have no DAS source information saved in our databases.</p>);
-    }
-    my @urls = $user->urls;
+      else { ## temporary
+        my $link = 'Temporary data';
+        #my $link = sprintf('a href="%s/UserData/DetachDAS?id=%s;%s">Detach</a>', $dir, $source->id, $referer);
+        $table->add_row( { 'name'  => $source->label, 'date' => 'N/A', 'delete' => $link } );
+      }
 
-    if (@urls) {
-      $html .= "<h4>URL-based data</h4>";
+    }
+    $html .= $table->render;
+  }
+  else {
+    $html .= qq(<p class="space-below">You have no DAS sources attached.</p>);
+  }
 
-      my $table = EnsEMBL::Web::Document::SpreadSheet->new();
-      $table->add_columns(
-        {'key' => "url", 'title' => 'Datasource URL', 'width' => '80%', 'align' => 'left' },
-        {'key' => "date", 'title' => 'Last updated', 'width' => '20%', 'align' => 'left' },
-        {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
-      );
-      foreach my $source (@urls) {
+  ## List URL data
+  $html .= "<h4>URL-based data</h4>";
+
+  my @urls;
+  my $temp_url = $self->object->get_session->get_tmp_data('url');
+  if ($temp_url && $temp_url->{'url'}) {
+    @urls = ($temp_url);
+  }
+
+  if ($user) {
+    push @urls, $user->urls;
+  }
+
+  if (@urls) {
+    my $table = EnsEMBL::Web::Document::SpreadSheet->new();
+    $table->add_columns(
+      {'key' => "url", 'title' => 'Datasource URL', 'width' => '60%', 'align' => 'left' },
+      {'key' => "date", 'title' => 'Last updated', 'width' => '20%', 'align' => 'left' },
+      {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
+    );
+    foreach my $source (@urls) {
+      if (ref($source) =~ /Record/) { ## from user account
         my $date = $source->modified_at || $source->created_at;
-        my $link = sprintf('<a href="/common/UserData/DeleteURL?id=%s">Delete</a>', $source->id);
+        my $link = sprintf('<a href="%s/UserData/DeleteURL?id=%s;%s">Delete</a>', $dir, $source->id, $referer);
         $table->add_row( { 'url'  => $source->url, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
-      $html .= $table->render;
+      else { ## temporary
+        my $link = sprintf('<a href="%s/UserData/DetachURL?%s">Detach</a>', $dir, $referer);
+        $table->add_row( { 'url'  => $source->{'url'}, 'date' => 'N/A', 'delete' => $link } );
+      }
     }
-    else {
-      $html .= qq(<p class="space-below">You have no DAS source information saved in our databases.</p>);
-    }
+    $html .= $table->render;
+  }
+  else {
+    $html .= qq(<p class="space-below">You have no URL data attached.</p>);
   }
   return $html;
 }
