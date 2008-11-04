@@ -478,4 +478,31 @@ sub _das_server_param {
   return undef;
 }
 
+#----------------------------------- URL functionality
+
+sub delete_userurl {
+  my ($self, $id) = @_;
+ 
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user) {
+    my ($upload) = $user->uploads($id);
+    if ($upload) {
+      $upload->delete;
+    }
+  }
+}
+
+sub delete_userdas {
+  my ($self, $id) = @_;
+ 
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  if ($user) {
+    my ($das) = $user->dases($id);
+    if ($das) {
+      $das->delete;
+    }
+  }
+}
+
+
 1;
