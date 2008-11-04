@@ -24,7 +24,8 @@ sub feature_label {
 
 sub title {
   my( $self, $f ) = @_;
-  return $f->analysis->logic_name.': '.$f->display_label.'; Score: '.$f->score;
+  my($start,$end) = $self->slice2sr( $f->start(), $f->end() );
+  return $f->analysis->logic_name.': '.$f->display_label.'; score: '.$f->score. "; bp: $start-$end";
 }
 
 sub href {
