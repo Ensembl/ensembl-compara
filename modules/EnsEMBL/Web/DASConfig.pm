@@ -57,7 +57,15 @@ sub new_from_hashref {
   
   bless $self, $class;
   
-  $hash->{on} = [@{$hash->{on}||[]},@{$hash->{enable}||[]}];
+  my %views = ( geneview   => 'Gene/ExternalData',
+                protview   => 'Transcript/ExternalData',
+                contigview => 'Location/View/ViewBottom',
+                cytoview   => 'Location/View/ViewTop');
+  if ($hash->{enable} || $hash->{on}) {
+    $hash->{on} = [ map { $views{$_} } @{$hash->{on}||[]},@{$hash->{enable}||[]} ];
+  } else {
+    $hash->{on} = $self->_guess_views();
+  }
   
   for my $var ( qw( on category caption )  ) {
     if ( exists $hash->{$var} ) {
@@ -242,6 +250,37 @@ sub mark_altered {
 sub is_altered {
   my $self = shift;
   return $self->{'_altered'};
+}
+
+sub _guess_views {
+  my ( $self ) = @_;
+  
+  my $positional    = 0;
+  my $nonpositional = 0;
+  
+  for my $cs (@{ $self->coord_systems() }) {
+    # assume genomic coordinate systems are always positional
+    if ( $cs->name =~ /^chromosome|clone|contig|scaffold|supercontig|toplevel$/ ) {
+      $positional = 1;
+    }
+    # assume gene coordinate systems are always non-positional
+    elsif ( $GENE_COORDS{ $cs->name } ) {
+      $nonpositional = 1;
+    } else {
+      $positional = 1;
+      $nonpositional = 1;
+    }
+  }
+  
+  my @views = ();
+  if ( $positional ) {
+    push @views, 'Location/View/ViewTop', 'Location/View/ViewBottom';
+  }
+  if ( $nonpositional ) {
+    push @views, 'Gene/ExternalData', 'Transcript/ExternalData';
+  }
+  
+  return \@views;
 }
 
 1;
