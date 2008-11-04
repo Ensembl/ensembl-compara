@@ -768,9 +768,9 @@ sub _create_underlying_Slices {
     } else {
 	#need to check that the block is still overlapping the slice - it may
 	#have already been restricted by the options above.
-	if ($this_genomic_align_block->reference_genomic_align->dnafrag_start > $self->reference_Slice->end || $this_genomic_align_block->reference_genomic_align->dnafrag_end < $self->reference_Slice->start) {
-	    next;
-	}
+        if ($this_genomic_align_block->reference_genomic_align->dnafrag_start > $self->reference_Slice->end || $this_genomic_align_block->reference_genomic_align->dnafrag_end < $self->reference_Slice->start) {
+            next;
+        }
 
       ($this_genomic_align_block, $from, $to) = $this_genomic_align_block->restrict_between_reference_positions(
           $self->reference_Slice->start, $self->reference_Slice->end);
@@ -987,16 +987,18 @@ sub _add_GenomicAlign_to_a_Slice {
     }
   }
 
+  my $this_mapper = $this_genomic_align->get_Mapper(0, !$expanded);
   # Fix block start and block end for composite segments (2X genomes)
-  if ($this_genomic_align->cigar_line =~ /^(\d*)X/) {
-    my $length = $1;
-    $length = 1 if ($length eq "");
-    $this_block_start += $length;
-  }
-  if ($this_genomic_align->cigar_line =~ /(\d*)X$/) {
-    my $length = $1;
-    $length = 1 if (!defined($length));
-    $this_block_end -= $length;
+  if ($this_genomic_align->cigar_line =~ /^(\d*)X/ or $this_genomic_align->cigar_line =~ /(\d*)X$/) {
+    $this_block_start = undef;
+    $this_block_end = undef;
+    my @blocks = $this_mapper->map_coordinates("sequence", $this_genomic_align->dnafrag_start,
+          $this_genomic_align->dnafrag_end, $this_genomic_align->dnafrag_strand, "sequence");
+    foreach my $this_block (@blocks) {
+      next if ($this_block->isa("Bio::EnsEMBL::Mapper::Gap"));
+      $this_block_start = $this_block->start if (!defined($this_block_start) or $this_block->start < $this_block_start);
+      $this_block_end = $this_block->end if (!defined($this_block_end) or $this_block->end > $this_block_end);
+    }
   }
 
   # Choose the appropriate AS::Slice for adding this bit of the alignment
@@ -1006,7 +1008,7 @@ sub _add_GenomicAlign_to_a_Slice {
   # Add a Slice, Mapper, and start-end-strand coordinates to an underlying AS::Slice
   $this_underlying_slice->add_Slice_Mapper_pair(
           $this_core_slice,
-          $this_genomic_align->get_Mapper(0, !$expanded),
+          $this_mapper,
           $this_block_start,
           $this_block_end,
           $this_genomic_align->dnafrag_strand
