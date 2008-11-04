@@ -83,12 +83,6 @@ sub select_das {
                          $self->object->species_defs->ENSEMBL_SITETYPE;
       $self->notes( {'heading'=>'Tip', 'text'=> $note } );
     }
-=pod
-    $self->add_element( 'type'    => 'MultiCheckTable',
-                        'name'    => 'dsns',
-                        'values'  => \@checkboxes,
-                      );
-=cut
   } # end if-else
   
 }
@@ -98,29 +92,37 @@ sub validate_das {
   
   # Get a list of DAS sources (only those selected):
   my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
-  warn "SOURCES $sources";
   
   # Process any errors
   if (!ref $sources) {
     $self->parameter('error_message', $sources);
     $self->parameter('wizard_next', 'select_das');
+    return;
   }
   elsif (!scalar @{ $sources }) {
     $self->parameter('error_message', 'No sources selected');
     $self->parameter('wizard_next', 'select_das');
+    return;
   }
+  
+  my $no_species = 0;
+  my $no_coords  = 0;
   
   for my $source (@{ $sources }) {
     # If one or more source has missing details, need to fill them in and resubmit
     unless (@{ $source->coord_systems } || $self->object->param('coords')) {
-      if ($self->object->param('has_species')) {
-        $self->parameter('wizard_next', 'select_das_coords');
+      $no_coords = 1;
+      if (!$self->object->param('has_species')) {
+        $no_species = 1;
       }
-      $self->parameter('wizard_next', 'select_das_species');
     }
   }
   
-  $self->parameter('wizard_next', 'attach_das');
+  my $next = $no_species ? 'select_das_species'
+           : $no_coords  ? 'select_das_coords'
+           : 'attach_das';
+  $self->parameter('wizard_next', $next);
+  return;
 }
 
 # Page method for filling in missing DAS source details
@@ -162,7 +164,7 @@ sub select_das_species {
     $self->add_element( 'type' => 'Information', 'value' => 'No sources found' );
   }
   else {
-    $self->add_element( 'type' => 'Header',   'value' => 'DAS Sources' );
+    $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
     $self->_output_das_text(@{ $sources });
   }
 }
