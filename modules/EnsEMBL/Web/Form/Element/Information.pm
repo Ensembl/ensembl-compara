@@ -10,9 +10,10 @@ sub new {
 
 sub render {
   my $self = shift;
+  my $extra_class = $self->class || '';
   return sprintf '
-    <dl><dt class="wide">%s</dt></dl>
-  ', $self->value;
+    <dl><dt class="wide %s">%s</dt></dl>
+  ', $extra_class, $self->value;
 }
 
 1;
