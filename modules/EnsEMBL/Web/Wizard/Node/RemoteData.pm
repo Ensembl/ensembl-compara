@@ -31,11 +31,13 @@ sub select_server {
   $self->add_element('type'   => 'String',
                      'name'   => 'other_das',
                      'label'  => 'or other DAS server',
+                     'size'   => '30',
                      'value'  => $object->param('other_das'),
                      'notes'  => '( e.g. http://www.example.com/MyProject/das )');
   $self->add_element('type'   => 'String',
                      'name'   => 'das_name_filter',
                      'label'  => 'Filter sources',
+                     'size'   => '30',
                      'value'  => $object->param('das_name_filter'),
                      'notes'  => 'by name, description or URL');
   
@@ -437,6 +439,7 @@ sub select_url {
   $self->add_element('type'  => 'String',
                      'name'  => 'url',
                      'label' => 'File URL',
+                     'size'   => '30',
                      'value' => $object->param('url'),
                      'notes' => '( e.g. http://www.example.com/MyProject/mydata.gff )');
 
