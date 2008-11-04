@@ -2,6 +2,7 @@ package EnsEMBL::Web::Controller::Command::UserData;
 
 use strict;
 use warnings;
+use EnsEMBL::Web::RegObj;
 
 use base 'EnsEMBL::Web::Controller::Command';
 
