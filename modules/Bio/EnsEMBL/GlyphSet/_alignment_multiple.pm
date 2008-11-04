@@ -102,10 +102,17 @@ sub draw_features {
       if ($jump_to_alignslice) {
 	$zmenu->{'align'}  => $METHOD_ID,
       }
-      $zmenu->{'score'} = $f->{'score'} if $f->{'score'};
 
-      my $block_start = $START+$chr_start-1;
-      my $block_end = $END+$chr_start-1;
+      my $block_start = $rs;
+      my $block_end   = $re;
+
+      #use 'score' param to identify constrained elements track - 
+      #in which case we show coordinates just for the block
+      if ($f->{'score'}) {
+	  $zmenu->{'score'} = $f->{'score'};
+	  $block_start = $START+$chr_start-1;
+	  $block_end   = $END  +$chr_start-1;
+      }
       $zmenu->{'r'}     = "$chr:$block_start-$block_end";
 
       my $id = 10; 
