@@ -16,7 +16,7 @@ sub render {
   return sprintf( '
   <dl>
     <dt><label for="%s">%s: </label></dt>
-    <dd><input type="%s" name="%s" value="%s" id="%s" class="input-text %s %s" />
+    <dd><input type="%s" name="%s" value="%s" id="%s" class="input-text %s %s" size="%s" />
     %s
     %s
     </dd>
@@ -28,6 +28,7 @@ sub render {
     CGI::escapeHTML( $self->value ), CGI::escapeHTML( $self->id ),
     $self->_class,
     $self->required eq 'yes' ? 'required' : 'optional',
+    $self->size || 20,
     $self->required eq 'yes' ? $self->required_string : '',
     $self->notes ? "<br />".$self->notes : '',
   );
