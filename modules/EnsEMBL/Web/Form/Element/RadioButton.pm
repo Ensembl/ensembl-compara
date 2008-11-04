@@ -23,8 +23,10 @@ sub checked  :lvalue { $_[0]->{'checked'};  }
 sub render {
   my $self = shift;
   return sprintf(
-   qq(<label class="label-radio">
-<input type="radio" name="%s" id="%s" value="%s" class="input-radio" %s/> %s %s</label>),
+   qq(<dl>
+  <dt><label class="label-radio"></dt>
+  <dd><input type="radio" name="%s" id="%s" value="%s" class="input-radio" %s/> %s %s</label></dd>
+  </dl>),
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->id ),
     $self->value || 'yes', 
