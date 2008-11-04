@@ -151,7 +151,61 @@ sub ajax_zmenu      {
   elsif ($action eq 'ComparaGenomicAlignment') {
     return $self->_ajax_zmenu_ga($panel,$obj);
   }
+  elsif ($action eq 'Align') {
+    return $self->_ajax_zmenu_av($panel,$obj);
+  }
+  elsif ($action eq 'View') {
+    return $self->_ajax_zmenu_view($panel,$obj);
+  }
+  return;
 }
+
+sub _ajax_zmenu_view {
+    my $self  = shift;
+    my $panel = shift;
+    my $obj   = shift;
+    if ($obj->param('misc_feature')) {
+	return $self->_ajax_zmenu_misc_feature($panel,$obj);
+    }
+    else { return;}
+}
+
+sub _ajax_zmenu_misc_feature {
+    my $self = shift;
+    my $panel = shift;
+    my $obj  = shift;
+    my $name = $obj->param('misc_feature');
+    warn "name = $name";
+    $panel->{'caption'} = $name;
+}
+
+sub _ajax_zmenu_av {
+    my $self = shift;
+    my $panel = shift;
+    my $obj  = shift;
+    my $align = $obj->param('align');
+    my $hash = $obj->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'};
+    my $caption = $hash->{$align}{'name'};;
+    my $url = $obj->_url({'type'=>'Location','action'=>'Align','align'=>$align});
+    #if there's a score than show it and also change the name of the track (hacky)
+    if (my $score = $obj->param('score')) {
+	$panel->add_entry({
+	    'type'  => 'Score',
+	    'label' => sprintf("%.2f", $score),
+	});
+	if ($caption =~ /^(\d+)/) {
+	    $caption = "Constrained el. $1 way";
+	}
+    }
+    $panel->{'caption'} = $caption;
+    $panel->add_entry({
+	'label' => 'View alignments',
+	'link'  => $url,
+    });
+    return;
+}
+
+
 
 sub _ajax_zmenu_ga {
     my $self   = shift;
