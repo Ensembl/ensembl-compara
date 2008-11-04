@@ -202,8 +202,7 @@ sub populate_tree {
 
 sub user_populate_tree {
   my $self = shift;
-  return unless ref $self->{'object'};
-  my $all_das  = $ENSEMBL_WEB_REGISTRY->get_all_das( $self->{'object'}->species );
+  my $all_das  = $ENSEMBL_WEB_REGISTRY->get_all_das();
   my @active_das = qw(DS_549);
   my $ext_node = $self->tree->get_node( 'ExternalData' );
   for my $logic_name ( @active_das ) {
