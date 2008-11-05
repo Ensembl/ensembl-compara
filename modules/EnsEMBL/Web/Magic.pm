@@ -12,10 +12,9 @@ use Apache2::RequestUtil;
 
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::RegObj;
-use CGI qw(escape);
+use CGI;
 
 use base qw(Exporter);
-use CGI qw(header redirect); # only need the redirect header stuff!
 our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff Variation Server configurator);
 
 our $MEMD = EnsEMBL::Web::Cache->new(
@@ -64,7 +63,7 @@ sub carpet {
     shift,  # object_type
     shift,  # action
     $ENV{'QUERY_STRING'}?'?':'',  $ENV{'QUERY_STRING'};
-  redirect( -uri => $URL );
+  CGI::redirect( -uri => $URL );
   return "Redirecting to $URL (taken away on the magic carpet!)";
 }
 
@@ -126,11 +125,15 @@ sub _parse_referer {
 sub configurator {
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
   my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
-  warn "MY SESSION $session_id" if(1);
+
+  warn "MY SESSION $session_id" if 
+    $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+    $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MAGIC_MESSAGES;
+    
 #  my $referer_hash = _parse_referer;
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $session = $ENSEMBL_WEB_REGISTRY->get_session;
-use CGI;
+
   my $input  = new CGI;
   $session->set_input( $input );
   my $ajax_flag = $r && (
@@ -397,7 +400,7 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
         warn $p->name;
         my $u = $p->name;
         if( $r->headers_in->{'X-Requested-With'} ) {
-          $u.= ($p->name=~/\?/?';':'?').'x_requested_with='.escape($r->headers_in->{'X-Requested-With'});
+          $u.= ($p->name=~/\?/?';':'?').'x_requested_with='.CGI::escape($r->headers_in->{'X-Requested-With'});
         }
         $webpage->redirect( $p->name );
         return;
@@ -450,7 +453,7 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
         my($p) = $webpage->dataObjects->[0]->get_problem_type('redirect');
         my $u = $p->name;
         if( $r->headers_in->{'X-Requested-With'} ) {
-          $u.= ($u=~/\?/?';':'?').'x_requested_with='.escape($r->headers_in->{'X-Requested-With'});
+          $u.= ($u=~/\?/?';':'?').'x_requested_with='.CGI::escape($r->headers_in->{'X-Requested-With'});
         }
         $webpage->redirect( $u );
       } else {
