@@ -203,7 +203,7 @@ sub populate_tree {
 sub user_populate_tree {
   my $self = shift;
   my $all_das  = $ENSEMBL_WEB_REGISTRY->get_all_das();
-  my @active_das = qw(DS_549);
+  my @active_das = qw(DS_549 Emage);
   my $ext_node = $self->tree->get_node( 'ExternalData' );
   for my $logic_name ( @active_das ) {
     my $source = $all_das->{$logic_name} || next;
