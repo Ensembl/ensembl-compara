@@ -1,45 +1,7 @@
 package EnsEMBL::Web::ViewConfig::Transcript::Population;
 
 use strict;
-
-
-my %validation = (
-  'opt_freq'      =>  ['on', 'By frequency'],
-  'opt_cluster'   =>  ['on', 'By Cluster'],
-  'opt_doublehit' =>  ['on', 'By doublehit'],
-  'opt_submitter' =>  ['on', 'By submitter'],
-  'opt_hapmap'    =>  ['on', 'Hapmap'],
-  'opt_noinfo'    =>  ['on', 'No information'],
-);
-
-my %class = (
-  'opt_in-del'    =>  ['on', 'In-dels'],
-  'opt_snp'       =>  ['on', 'SNPs'],
-  'opt_mixed'     =>  ['on', 'Mixed variations'],
-  'opt_microsat'  =>  ['on', 'Micro-satellite repeats'], 
-  'opt_named'     =>  ['on', 'Named variations'],
-  'opt_mnp'       =>  ['on', 'MNPs'],
-  'opt_het'       =>  ['on', 'Hetrozygous variations'],
-  'opt_'          =>  ['on', 'Unclassified']
-);
-
-my %type = (
-  'opt_non_synonymous_coding' =>  ['on', 'Non-synonymous'],
-  'opt_frameshift_coding'     =>  ['on', 'Frameshift'],
-  'opt_synonymous_coding'     =>  ['on', 'Synonymous'],
-  'opt_5prime_utr'            =>  ['on', "5' UTR"],
-  'opt_3prime_utr'            =>  ['on', "3' UTR"],
-  'opt_intronic'              =>  ['on', 'Intronic'],
-  'opt_downstream'            =>  ['on', 'Downstream'],
-  'opt_upstream'              =>  ['on', 'Upstream'],
-  'opt_intergenic'            =>  ['on', 'Intergenic'],
-  'opt_essential_splice_site' =>  ['on', 'Essential splice site'],
-  'opt_splice_site'           =>  ['on', 'Splice site'],
-  'opt_regulatory_region'     =>  ['on', 'Regulatory region'],
-  'opt_stop_gained'           =>  ['on', 'Stop gained'],
-  'opt_stop_lost'             =>  ['on', 'Stop lost'],
-  'opt_sara'                  =>  ['on', 'SARA (same as ref.assembly)']
-);
+use EnsEMBL::Web::Constants;
 
 sub init {
   my ($view_config) = @_;
@@ -74,25 +36,26 @@ sub init {
   }
 
   ## Add other options 
-  my @options = (\%validation, \%class, \%type); 
+  my %options = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
 
-  foreach (@options){
-    my %hash = %$_;
+  foreach (keys %options){
+    my %hash = %{$options{$_}};
     foreach my $key (keys %hash){
      $view_config->_set_defaults(lc($key) =>  $hash{$key}[0]);
     }
   }
 
-  $view_config->add_image_configs({qw(
-    tsv_context          nodas
-    tsv_transcript       nodas
-    tsv_sampletranscript nodas
-  )});
+  $view_config->has_images(1);
   $view_config->storable = 1;
 }
 
 sub form {
   my( $view_config, $object ) = @_;
+
+  my %options = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
+  my %validation = %{$options{'variation'}};
+  my  %class  = %{$options{'class'}};
+  my  %type = %{$options{'type'}};
  
   ### Add source selection
   $view_config->add_fieldset('Select Variation Source');
@@ -147,6 +110,7 @@ sub form {
       'value'    => 'on', 'raw' => 1
   });
   ### Add context selection
+  $view_config->add_fieldset('Context');
   $view_config->add_form_element({
     'type'     => 'DropDown', 'select'   => 'select',
     'required' => 'yes',      'name'     => 'context',
