@@ -24,8 +24,8 @@ sub init {
   );
 
   $self->add_tracks( 'other',
-    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal', 'src' => 'all', 'colours' => 'bisque', 'tag' => 2, 'strand' => 'f', 'menu' => 'no'  } ],
-    [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'f', 'colours' => $self->species_defs->colour('variation'), 'tag' => 2, 'context' => 50, 'menu' => 'no'         } ],
+    [ 'geneexon_bgtrack', '',     'geneexon_bgtrack',  { 'display' => 'normal', 'src' => 'all', 'colours' => 'bisque', 'tag' => 1, 'strand' => 'f', 'menu' => 'no'  } ],
+    [ 'snp_join',         '',     'snp_join',          { 'display' => 'normal',  'strand' => 'f', 'colours' => $self->species_defs->colour('variation'), 'tag' => 1, 'context' => 50, 'menu' => 'no'         } ],
     [ 'draggable',        '',     'draggable',         { 'display' => 'normal',  'strand' => 'f', 'menu' => 'no'         } ],
   );
 }
