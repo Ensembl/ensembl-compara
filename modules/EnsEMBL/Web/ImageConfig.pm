@@ -745,7 +745,7 @@ sub add_protein_feature {
     'gsv_domain' => [ 'domain',    'gsv_domain', 'normal' ]
   );
   ## We have two separate glyphsets in this in this case
-  ## P_feature and P_domain - plus domains get copied onto gsv_generic_domain as well...
+  ## P_feature and P_domain - plus domains get copied onto gsv_domain as well...
 
   return unless $self->_check_menus( keys %menus );
 
@@ -1090,7 +1090,7 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
       'labels'      => 'on',
       'colourset'   => 'ctcf',
       'description' => 'Nessie_NG_STD_2_ctcf_ren_BR1',
-      'renderers'      => ['off'=>'Off','signal_map'=>'Signal map'],
+      'renderers'      => ['off'=>'Off','signal_map'=>'normal'],
      'display'     => 'off'
     }));
     $menu->append( $self->create_track('ctcf_blocks_'.$key, sprintf("CTCF peaks"),{
