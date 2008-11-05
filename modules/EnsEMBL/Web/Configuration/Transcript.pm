@@ -50,6 +50,8 @@ sub ajax_zmenu      {
       return $self->ajax_zmenu_variation($panel, $obj);
     } elsif( $action eq 'Variation_transcript'){
       return $self->ajax_zmenu_variation_transcript($panel, $obj);
+    } elsif( $action eq 'Transcript_Variation'){
+      return $self->_ajax_zmenu_transcript_variation($panel, $obj);
     } elsif( $action eq 'ref'){
       return $self->_ajax_zmenu_change_reference($panel, $obj);  
     } elsif( $action eq 'coverage'){
@@ -137,6 +139,14 @@ sub _ajax_zmenu_change_reference {
     'link'        => $obj->_url({'action' =>'Population/Image', 'reference' => $obj->param('reference') }), 
     'priority'    => 12,
   });
+
+  return;
+}
+
+sub _ajax_zmenu_transcript_variation {
+  my $self = shift;
+  my $panel = shift;
+  my $obj  = $self->object;
 
   return;
 }
