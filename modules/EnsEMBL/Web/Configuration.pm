@@ -43,7 +43,7 @@ sub new {
 
   my $user    = $ENSEMBL_WEB_REGISTRY->get_user;
   my $session = $ENSEMBL_WEB_REGISTRY->get_session;
-  my $we_can_have_a_user_tree = $self->can('user_populate_tree') && $user && $session;
+  my $we_can_have_a_user_tree = $self->can('user_populate_tree') && ($user || $session);
 
   ## Trying to get user+session version of the tree from cache
   my $tree = ($we_can_have_a_user_tree && $MEMD)
