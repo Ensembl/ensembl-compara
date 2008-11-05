@@ -4,8 +4,7 @@ use Bio::EnsEMBL::Registry;
 
 Bio::EnsEMBL::Registry->load_registry_from_db
     (-host=>"ensembldb.ensembl.org", 
-     -user=>"anonymous",
-     -db_version=>'45');
+     -user=>"anonymous");
 my $human_gene_adaptor =
     Bio::EnsEMBL::Registry->get_adaptor
     ("Homo sapiens", "core", "Gene");
