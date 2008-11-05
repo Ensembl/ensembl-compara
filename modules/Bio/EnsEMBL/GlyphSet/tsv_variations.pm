@@ -150,6 +150,13 @@ sub _init {
       'absolutey' => 1,
     });
 
+
+    my $allele_id = $allele->variation_name;
+    my $href = $self->_url
+    ({'action'  => 'Transcript_Variation',
+      'allele'     => $allele_id,
+    });
+
     my $bglyph = $self->Rect({
       'x'         => $S - $W / 2,
       'y'         => $height + 2,
@@ -157,7 +164,8 @@ sub _init {
       'width'     => $W,
       'colour'    => $colour,
       'absolutey' => 1,
-      'zmenu'     => $self->zmenu($allele, $type, $ref_allele, $conseq_alleles[0], \@tmp),
+      'href'      => $href,
+#      'zmenu'     => $self->zmenu($allele, $type, $ref_allele, $conseq_alleles[0], \@tmp),
     });
 
     my $bump_start = int($bglyph->{'x'} * $pix_per_bp);

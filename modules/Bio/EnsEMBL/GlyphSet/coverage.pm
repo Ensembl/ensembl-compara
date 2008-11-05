@@ -68,6 +68,7 @@ sub _init {
       'width'     => $E-$S+1,
       'colour'    => $draw_coverage{$level}->[1],
       'absolutey' => 1,
+      'href'      => $self->_url({'action' => 'coverage', 'pos' => $pos, 'sp' => $sample, 'disp_level' => $display_level}),
       'zmenu' => {
         'caption' => 'Resequencing read coverage: '.$display_level,
         "12:bp $pos" => '',
