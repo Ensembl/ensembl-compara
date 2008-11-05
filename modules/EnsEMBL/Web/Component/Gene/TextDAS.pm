@@ -9,7 +9,7 @@ use EnsEMBL::Web::Document::HTML::TwoCol;
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 use EnsEMBL::Web::Document::SpreadSheet;
 
-use CGI qw(unescapeHTML);
+use HTML::Entities;
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -107,7 +107,13 @@ sub content {
       { 'key' => 'notes', 'title' => 'Notes', 'width' => '70%' }
     );
     for my $f ( sort { $a->type_label cmp $b->type_label } @features ) {
-      my $note = CGI::unescapeHTML( join '<br/>', @{ $f->notes } );
+      my @links = map {
+        sprintf '<a href="%s">%s</a>', $_->{'href'}, $_->{'txt'}
+      } @{ $f->links };
+      my @notes = map {
+        $source->is_external ? $_ : decode_entities($_)
+      } @{ $f->notes };
+      my $note = join '<br/>', @notes, @links;
       (my $lh = ucfirst($f->type_label)) =~ s/_/ /g;
       $table->add_row({
         'type' => $lh, 'label' => $f->display_label, 'notes' => $note
