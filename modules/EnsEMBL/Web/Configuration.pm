@@ -227,13 +227,13 @@ sub _user_context {
 
   my $vc  = $obj->get_viewconfig;
   my $action = $type.'/'.$ENV{'ENSEMBL_ACTION'};
-     $action .= $ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
+     $action .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
 
   if( !$vc->real && $obj->parent->{'ENSEMBL_TYPE'} ) {
     $vc = $obj->get_viewconfig( $obj->parent->{'ENSEMBL_TYPE'}, $obj->parent->{'ENSEMBL_ACTION'} );
     $vc->form($obj);
     $action  = $obj->parent->{'ENSEMBL_TYPE'}.'/'.$obj->parent->{'ENSEMBL_ACTION'};
-    $action .= $obj->parent->{'ENSEMBL_FUNCTION'} if $obj->parent->{'ENSEMBL_FUNCTION'};
+    $action .= '/'.$obj->parent->{'ENSEMBL_FUNCTION'} if $obj->parent->{'ENSEMBL_FUNCTION'};
   }
 
   ## Do we have a View Config for this display?
