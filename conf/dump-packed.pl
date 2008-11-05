@@ -1,4 +1,4 @@
-#!/software/bin/perl
+#!/localsw/bin/perl
 
 use Data::Dumper;
 use strict;

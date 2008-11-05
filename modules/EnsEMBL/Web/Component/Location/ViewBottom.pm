@@ -6,7 +6,6 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 use Time::HiRes qw(time);
 use EnsEMBL::Web::RegObj;
-use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 
 sub _init {
   my $self = shift;

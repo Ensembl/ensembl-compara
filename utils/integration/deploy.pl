@@ -1,4 +1,4 @@
-#!/software/perl-5.8.8/bin/perl
+#!/localsw/perl-5.8.8/bin/perl
 
 #use strict;
 #use warnings;

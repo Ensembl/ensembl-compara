@@ -102,6 +102,7 @@ BEGIN {
     }
   }
 
+warn join "\n", @PERL_TRANS_DIRS;
   %SPECIES_MAP = (
 ##      BioMart biomart  biomart biomart
     qw(
@@ -504,6 +505,9 @@ sub transHandler {
   }
 
 # Search the htdocs dirs for a file to return
+  if( $species eq 'biomart' && $script =~ /^mart(service|results|view)/ ) {
+    return DECLINED;
+  }
   my $path = join( "/", $species || (), $script || (), $path_info || () );
   $r->uri( "/$path" );
   my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';

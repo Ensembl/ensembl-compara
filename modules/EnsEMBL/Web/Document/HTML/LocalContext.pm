@@ -61,6 +61,7 @@ sub render {
 sub _content {
   my $self = shift;
   my $t = $self->tree;
+return unless $t;
   my $caption = $self->caption;
   $caption =~ s/<\\\w+>//g;
   $caption =~ s/<[^>]+>/ /g;

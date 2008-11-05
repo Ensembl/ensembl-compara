@@ -5,6 +5,7 @@ use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::File::Text;
+use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 use CGI qw(escape);
 use Data::Dumper;
 our @ISA = qw( EnsEMBL::Web::Component);
