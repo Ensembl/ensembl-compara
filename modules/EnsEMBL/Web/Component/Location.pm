@@ -40,7 +40,7 @@ sub _configure_display {
     'Configuring the display',
     sprintf '
   <p>
-    %s, to change the tracks you are displaying use the "<strong>Configure this page</strong>" link on the left to change the tracks you wish to see.
+    %s. To change the tracks you are displaying, use the "<strong>Configure this page</strong>" link on the left.
   </p>', $message
   );
 }

@@ -50,7 +50,7 @@ sub content {
 
   my $extra_message = '';
   if( $object->param( 'panel_top' ) eq 'yes' ) {
-    $extra_message .= sprintf 'You currently have the %d tracks in the overview panel and %d tracks in the main panel turned off', $info_2->{'count'}, $info->{'count'};
+    $extra_message .= sprintf 'You currently have %d tracks in the overview panel and %d tracks in the main panel turned off', $info_2->{'count'}, $info->{'count'};
   } else {
     $extra_message .= sprintf 'You currently have the overview panel and %d tracks on the main panel turned off', $info->{'count'};
   }
@@ -65,7 +65,7 @@ sub content {
     'Configuring the display',
     sprintf '
   <p>
-    %s, to change the tracks you are displaying use the "<strong>Configure this page</strong>" link on the left to change the tracks you wish to see.
+    %s. To change the tracks you are displaying, use the "<strong>Configure this page</strong>" link on the left.
   </p>', $extra_message
   );
   return $html;
