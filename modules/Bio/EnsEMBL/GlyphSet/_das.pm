@@ -155,7 +155,7 @@ sub features       {
 #      warn "DAS: source: $logic_name\n";
     }
   }  
-#  warn join "\n", map( { "DAS:URL $_" } @urls ),'';
+  warn join "\n", map( { "DAS:URL $_" } @urls ),'';
 #  @errors = grep {$_} @errors;
 #  warn join "\n", map( { "DAS:ERR $_" } @errors ),'' if @errors;
 
