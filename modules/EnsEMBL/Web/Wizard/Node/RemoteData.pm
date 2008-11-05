@@ -40,6 +40,8 @@ sub select_server {
                      'size'   => '30',
                      'value'  => $object->param('das_name_filter'),
                      'notes'  => 'by name, description or URL');
+  $self->add_element('type'   => 'Information',
+                     'value'  => 'Please note that the next page will take a few moments to load.');
   
 }
 
@@ -78,10 +80,11 @@ sub select_das {
     } # end DAS source loop
     
     if ( scalar @already_added ) {
-      my $note = sprintf 'There are %d DAS sources not shown here that are already configured within %s.',
-                         scalar @already_added,
+      my $noun = scalar @already_added > 1 ? 'sources' : 'source';
+      my $note = sprintf 'You have %d DAS %s not shown here that are already configured within %s.',
+                         scalar @already_added, $noun,
                          $self->object->species_defs->ENSEMBL_SITETYPE;
-      $self->notes( {'heading'=>'Tip', 'text'=> $note } );
+      $self->notes( {'heading'=>'Note', 'text'=> $note } );
     }
   } # end if-else
   
@@ -298,7 +301,8 @@ sub attach_das {
     if (scalar @success) {
       $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources have now been attached:' );
       for my $source (@success) {
-        $self->add_element( 'type' => 'Information', 'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
+        $self->add_element( 'type' => 'Information', 'styles' => ['no-bold'],
+                            'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
                                                                 $source->label,
                                                                 $source->description,
                                                                 $source->homepage );
@@ -308,7 +312,8 @@ sub attach_das {
     if (scalar @skipped) {
       $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources were already attached:' );
       for my $source (@skipped) {
-        $self->add_element( 'type' => 'Information', 'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
+        $self->add_element( 'type' => 'Information', 'styles' => ['no-bold'], 
+                            'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
                                                                 $source->label,
                                                                 $source->description,
                                                                 $source->homepage );
@@ -334,7 +339,7 @@ sub show_tempdas {
   }
 
   my $url = $self->object->get_session->get_tmp_data('url');
-  if ($url) {
+  if ($url && $url->{'url'}) {
     $has_data = 1;
     $self->add_element('type'=>'Information', 'value' => "You have the following URL attached:", 'style' => 'spaced');
     $self->add_element('type'=>'CheckBox', 'name' => 'url', 'value' => 'yes', 'label' => $url->{'url'});
@@ -355,14 +360,13 @@ sub save_tempdas {
     my $all_das = $self->object->get_session->get_all_das;
     foreach my $logic_name  (@sources) {
       my $das = $all_das->{$logic_name} || warn "*** $logic_name";
-      use Data::Dumper;
-      warn Dumper($das);
-      if ( $user->add_das( $das ) ) {
+      my $result = $user->add_das( $das );
+      if ( $result ) {
         $self->parameter('wizard_next', 'ok_tempdas');
       }
       else {
         $self->parameter('wizard_next', 'show_tempdas');
-        $self->parameter('error_message', 'Unable to save to user account');
+        $self->parameter('error_message', 'Unable to save DAS details to user account');
       }
     }
     $self->parameter('wizard_next', 'ok_tempdas');
@@ -372,20 +376,22 @@ sub save_tempdas {
   }
   else {
     $self->parameter('wizard_next', 'show_tempdas');
-    $self->parameter('error_message', 'Unable to save to user account');
+    $self->parameter('error_message', 'Unable to save DAS details to user account');
   }
 
   ## Save any URL data
   if ($self->object->param('url')) {
     my $url = $self->object->get_session->get_tmp_data('url');
     my $record_id = $user->add_to_urls($url);
-    $self->object->get_session->purge_tmp_data('url');
-    $self->parameter('wizard_next', 'ok_tempdas');
-    $self->parameter('url', 'ok');
-  }
-  else {
-    $self->parameter('wizard_next', 'show_tempdas');
-    $self->parameter('error_message', 'Unable to save to user account');
+    if ($record_id) {
+      $self->object->get_session->purge_tmp_data('url');
+      $self->parameter('wizard_next', 'ok_tempdas');
+      $self->parameter('url', 'ok');
+    }
+    else {
+      $self->parameter('wizard_next', 'show_tempdas');
+      $self->parameter('error_message', 'Unable to save URL to user account');
+    }
   }
 }
 
@@ -432,7 +438,7 @@ sub overwrite_warning {
     $self->add_element(( type => 'CheckBox', name => 'save', label => 'Save current URL to my account', 'checked'=>'checked' ));
   }
   else {
-    $self->add_element(('type'=>'Information', 'value'=>'<a href="/Account/Login" class="modal_link">Log into your user account</a> to save the current URL.'));
+    $self->add_element(('type'=>'Information', 'styles' => ['no-bold'], 'value'=>'<a href="/Account/Login" class="modal_link">Log into your user account</a> to save the current URL.'));
   }
 }
 
