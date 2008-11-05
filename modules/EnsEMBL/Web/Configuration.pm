@@ -988,6 +988,13 @@ sub ajax_zmenu_variation {
       'label'       =>  $trans_variation->pep_allele_string,
       'priority'    =>  8,
     });
+  }elsif ($obj->type eq 'Variation'){
+    my $status = join(', ', @{$feature->get_all_validation_states||[]} );
+    $panel->add_entry({
+      'type'        =>  'status:',
+      'label'       =>  $status || '-',
+      'priority'    =>  12,
+    });
   }
 
  return;
@@ -996,7 +1003,7 @@ sub ajax_zmenu_variation {
 sub ajax_zmenu_variation_transcript {
  # Specific zmenu for transcripts on variation image
 
-  my $self = shift;
+  my $self = shift; warn $self;
   my $panel = $self->_ajax_zmenu;
   my $obj = $self->object;
   my $trans_id = $obj->param('vt') || die( "No transcript stable ID value in params" );
@@ -1013,12 +1020,14 @@ sub ajax_zmenu_variation_transcript {
     'label'  => $id,
     'priority'    => 15,
   });
-  $panel->add_entry({
-    'type'        => 'Gene:',
-    'label_html'  => $obj->stable_id,
-    'link'        => $obj->_url({'type' => 'Gene', 'action' => 'Summary', 'g' =>$obj->stable_id }),
-    'priority'    => 10,
-  });
+  unless ($obj->type eq 'Transcript'){
+    $panel->add_entry({
+      'type'        => 'Gene:',
+      'label_html'  => $obj->stable_id,
+      'link'        => $obj->_url({'type' => 'Gene', 'action' => 'Summary', 'g' =>$obj->stable_id }),
+      'priority'    => 10,
+    });
+  }
   $panel->add_entry({
     'type'        => 'Transcript:',
     'label_html'  => $trans_id,
