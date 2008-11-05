@@ -78,7 +78,7 @@ sub select_das {
     } # end DAS source loop
     
     if ( scalar @already_added ) {
-      my $note = sprintf 'There are %d DAS sources that are already configured within %s.',
+      my $note = sprintf 'There are %d DAS sources not shown here that are already configured within %s.',
                          scalar @already_added,
                          $self->object->species_defs->ENSEMBL_SITETYPE;
       $self->notes( {'heading'=>'Tip', 'text'=> $note } );
@@ -89,6 +89,12 @@ sub select_das {
 # Logic method, used for checking a DAS source before adding it
 sub validate_das {
   my $self      = shift;
+  
+  if (! $self->object->param('dsn') ) {
+    $self->parameter('error_message', 'No source selected');
+    $self->parameter('wizard_next', 'select_das');
+    return;
+  }
   
   # Get a list of DAS sources (only those selected):
   my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
@@ -112,7 +118,7 @@ sub validate_das {
     # If one or more source has missing details, need to fill them in and resubmit
     unless (@{ $source->coord_systems } || $self->object->param('coords')) {
       $no_coords = 1;
-      if (!$self->object->param('has_species')) {
+      if (!$self->object->param('species')) {
         $no_species = 1;
       }
     }
@@ -131,49 +137,70 @@ sub select_das_species {
   
   $self->title('Choose a species');
   
+  # Get a list of DAS sources (only those selected):
+  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
+  
+  # Process any errors
+  if (!ref $sources) {
+    $self->object->param('error_message', $sources);
+    $self->object->param('fatal_error', 1);
+    return;
+  }
+  elsif (!scalar @{ $sources }) {
+    $self->object->param('error_message', 'No sources found on server');
+    $self->object->param('fatal_error', 1);
+    return;
+  }
+  
   $self->add_element( 'type' => 'Information', 'value' => "Which species' do the DAS sources below have data for? If they contain data for all species' (e.g. gene or protein-based sources) choose 'all'. If the DAS sources do not use the same coordinate system, go back and add them individually." );
-  $self->add_element( 'type' => 'SubHeader',   'value' => 'Species' );
   
-  $self->add_element('name',  => 'species',
-                     'type'   => 'Hidden',
-                     'value'  => $ENV{ENSEMBL_SPECIES});
+  my @values = map {
+    { 'name' => $_, 'value' => $_, }
+  } @{ $self->object->species_defs->ENSEMBL_SPECIES };
+  unshift @values, { 'name' => 'Not species-specific', 'value' => 'NONE' };
   
-  $self->add_element('name'   => 'has_species',
-                     'type'   => 'RadioButton',
-                     'label'  => $ENV{ENSEMBL_SPECIES},
-                     'checked'=> 1,
-                     'value'  => 'yes');
+  $self->add_element('name'   => 'species',
+                     'label'  => 'Species',
+                     'type'   => 'MultiSelect',
+                     'select' => 1,
+                     'value'  => [$self->object->species_defs->ENSEMBL_PRIMARY_SPECIES], # default species
+                     'values' => \@values);
   
-  $self->add_element('name'   => 'has_species',
-                     'type'   => 'RadioButton',
-                     'label'  => "All species' (e.g. protein-based sources)",
-                     'value'  => 'no');
+  $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
+  $self->_output_das_text(@{ $sources });
+}
+
+sub select_das_coords {
+  my $self = shift;
   
   # Get a list of DAS sources (only those selected):
   my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
   
   # Process any errors
   if (!ref $sources) {
-    $self->add_element( 'type' => 'Information', 'value' => $sources );
+    $self->parameter('error_message', $sources);
+    $self->parameter('fatal_error', 1);
+    return;
   }
   elsif (!scalar @{ $sources }) {
-    $self->add_element( 'type' => 'Information', 'value' => 'No sources found' );
+    $self->parameter('error_message', 'No sources found on server');
+    $self->parameter('fatal_error', 1);
+    return;
   }
-  else {
-    $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
-    $self->_output_das_text(@{ $sources });
+  
+  my @species = $self->object->param('species');
+  if (grep /NONE/, @species) {
+    @species = ();
   }
-}
-
-sub select_das_coords {
-  my $self = shift;
-  my @species = $self->object->param('has_species') eq 'yes' ? $self->object->param('species') : ();
   
   $self->title('Choose a coordinate system');
   $self->add_element( 'type' => 'Header', 'value' => 'Coordinate Systems' );
   
   for my $species (@species) {
-    $self->add_element( 'type' => 'SubHeader', 'value' => "Genomic ($species)" );
+    
+    my $fieldset =$self->create_fieldset();
+    $self->add_fieldset($fieldset);
+    $fieldset->legend("Genomic ($species)");
     
     my $csa =  Bio::EnsEMBL::Registry->get_adaptor($species, "core", "CoordSystem");
     my @coords = sort {
@@ -183,47 +210,40 @@ sub select_das_coords {
     } @{ $csa->fetch_all };
     for my $cs (@coords) {
       $cs = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_hashref($cs);
-      $self->add_element( 'type'    => 'CheckBox',
-                          'name'    => 'coords',
-                          'value'   => $cs->to_string,
-                          'label'   => $cs->label );
+      $fieldset->add_element( 'type'    => 'CheckBox',
+                             'name'    => 'coords',
+                             'value'   => $cs->to_string,
+                             'label'   => $cs->label );
     }
   }
   
-  $self->add_element( 'type' => 'SubHeader', 'value' => "Gene" );
+  my $fieldset =$self->create_fieldset();
+  $self->add_fieldset($fieldset);
+  $fieldset->legend('Gene');
+  
   for my $cs (@GENE_COORDS) {
     $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
-    $self->add_element( 'type'    => 'CheckBox',
-                        'name'    => 'coords',
-                        'value'   => $cs->to_string,
-                        'label'   => $cs->label );
+    $fieldset->add_element( 'type'    => 'CheckBox',
+                           'name'    => 'coords',
+                           'value'   => $cs->to_string,
+                           'label'   => $cs->label );
   }
   
-  $self->add_element( 'type' => 'SubHeader', 'value' => "Protein" );
+  $fieldset =$self->create_fieldset();
+  $self->add_fieldset($fieldset);
+  
   for my $cs (@PROT_COORDS) {
     $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
-    $self->add_element( 'type'    => 'CheckBox',
-                        'name'    => 'coords',
-                        'value'   => $cs->to_string,
-                        'label'   => $cs->label );
+    $fieldset->add_element( 'type'    => 'CheckBox',
+                           'name'    => 'coords',
+                           'value'   => $cs->to_string,
+                           'label'   => $cs->label );
   }
   
-  # Get a list of DAS sources (only those selected):
-  my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
+  $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
   
-  # Process any errors
-  if (!ref $sources) {
-    $self->add_element( 'type' => 'Information', 'value' => $sources );
-  }
-  elsif (!scalar @{ $sources }) {
-    $self->add_element( 'type' => 'Information', 'value' => 'No sources found' );
-  }
-  else {
-    $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
-    
-    for my $source (@{ $sources }) {
-      $self->_output_das_text(@{ $sources });
-    }
+  for my $source (@{ $sources }) {
+    $self->_output_das_text(@{ $sources });
   }
 }
 

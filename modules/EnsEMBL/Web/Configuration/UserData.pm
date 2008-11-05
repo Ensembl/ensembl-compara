@@ -154,8 +154,8 @@ sub attach_das {
   my $server        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_server' );
   my $source        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das' );
   my $validate_das  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'validate_das');
-  my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species');
-  my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords');
+  my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species', 'backtrack' => 1);
+  my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords', 'backtrack' => 1);
   
   # END POINTS:
   my $attach_das    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'attach_das');
