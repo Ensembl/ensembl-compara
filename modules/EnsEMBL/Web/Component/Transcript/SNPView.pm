@@ -24,10 +24,9 @@ sub content {
   my $db = $object->get_db();
   my $transcript = $object->stable_id;
 
-  # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
+  # Get two slices -  gene (4/3x) transcripts (+-EXTENT)
   my $extent = tsv_extent($object); 
   foreach my $slice_type (
-    [ 'context',           'normal', '100%'  ],
     [ 'transcript',        'normal', '20%'  ],
     [ 'tsv_transcript',    'munged', $extent ],
   ) { 
@@ -67,7 +66,7 @@ sub content {
   my $image_width  = $self->image_width || 800;
   my $context      = $object->param( 'context' ) || 100;
 
-  foreach (qw(context transcript transcripts_bottom transcripts_top)) {
+  foreach (qw( transcript transcripts_bottom transcripts_top)) {
     $Configs->{$_} = $object->get_imageconfig( "tsv_$_" );
     $Configs->{$_}->set_parameters({
       'image_width',  $image_width, 
@@ -102,11 +101,7 @@ sub content {
       'context'      =>$context
   });
   $Configs->{'snps'}->{'snp_counts'} = [$count_sample_snps, scalar @$sample_snps, $context_count];
-  $Configs->{'context'}->set_parameters({'container_width' => $object->__data->{'slices'}{'context'}[1]->length() });
-  $Configs->{'context'}->get_node('scalebar')->set('label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}"); 
-  #$Configs->{'context'}->get_node( 'est_transcript')->set('display','off');
-  #$Configs->{'context'}->set( '_settings', 'URL', $base_URL."bottom=%7Cbump_", 1);
-  #$Configs->{'context'}->{'filtered_fake_snps'} = $context_snps;
+  $Configs->{'transcript'}->get_node('scalebar')->set('label', "Chr. @{[$object->__data->{'slices'}{'transcript'}[1]->seq_region_name]}"); 
   $Configs->{'transcript'}->modify_configs( ## Turn on track associated with this db/logic name
     [$Configs->{'transcript'}->get_track_key( 'transcript', $object )],
     {qw(display on show_labels off)}  ## also turn off the transcript labels...
@@ -116,6 +111,8 @@ sub content {
 
   # SNP stuff ------------------------------------------------------------
   my ($containers_and_configs, $haplotype);
+
+
 
  # Foreach sample ...
   ($containers_and_configs, $haplotype) = _sample_configs($object, $transcript_slice, $sub_slices, $fake_length);
@@ -152,9 +149,9 @@ sub content {
 
   ## -- Render image ----------------------------------------------------- ##
   # Send the image pairs of slices and configurations
+
   my $image    = $object->new_image(
     [
-     $object->__data->{'slices'}{'context'}[1],     $Configs->{'context'},
      $object->__data->{'slices'}{'transcript'}[1],  $Configs->{'transcript'},
      $transcript_slice, $Configs->{'transcripts_top'},
      @$containers_and_configs,
@@ -169,7 +166,13 @@ sub content {
   $image->{'panel_number'} = 'top';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
-  return $image->render;
+  my $html =  $image->render;
+  my $config_text = variations_missing($Configs->{'snps'});
+  $html .= $self->_info(
+    'Configuring the display',
+    '<p>Tip: use the "<strong>Configure this page</strong>" link on the left to customise the exon context and types of variations displayed above.<br />' .$config_text.'</p>' 
+ );
+
 }
 
 
@@ -262,4 +265,42 @@ sub _sample_configs {
   return (\@containers_and_configs, \@haplotype);
 }
 
+sub variations_missing {
+  my ($self) = @_; 
+  my $configure_text, 
+
+  my $counts = $self->{'snp_counts'}; 
+  return unless ref $counts eq 'ARRAY';
+
+  my $text;
+  if ($counts->[0]==0 ) {
+    $text .= "There are no SNPs within the context selected for this transcript.";
+  } elsif ($counts->[1] ==0 ) {
+    $text .= "The options set in the page configuration have filtered out all $counts->[0] variations in this region.";
+  } elsif ($counts->[0] == $counts->[1] ) {
+    $text .= "None of the variations are filtered out by the Source, Class and Type filters.";
+  } else {
+    $text .= ($counts->[0]-$counts->[1])." of the $counts->[0] variations in this region have been filtered out by the Source, Class and Type filters.";
+  }
+  
+  $configure_text .= $text;
+
+# Context filter
+  return $configure_text unless defined $counts->[2];
+
+  my $context_text;
+  if ($counts->[2]==0) {
+    $context_text = "None of the intronic variations are removed by the Context filter.";
+  }
+  elsif ($counts->[2]==1) {
+    $context_text = $counts->[2]." intronic variation has been removed by the Context filter.";
+  }
+ else {
+    $context_text = $counts->[2]." intronic variations are removed by the Context filter.";
+  }
+#  $self->errorTrack( $context_text, 0, 28 );
+
+  $configure_text .= '<br />' .$context_text;
+  return $configure_text;
+}
 1;
