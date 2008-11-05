@@ -21,8 +21,8 @@ sub init {
   });
 
   $self->create_menus(
-    'other'           => 'Decorations',
-    'gsv_domain'      => 'Protein Domains'    
+   'other'           => 'Decorations',
+   'gsv_domain'      => 'Protein Domains',
  );
 
 
@@ -34,20 +34,24 @@ sub init {
   $self->load_tracks();
 
  
- $self->add_tracks( 'other',
+  $self->add_tracks( 'other',
     [ 'spacer',           '',     'spacer',            { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ],
   );
 
-
+  $self->modify_configs(
+    [qw(gsv_transcript)],
+    {qw(display no_labels) }
+  );
  
   #switch off all transcript unwanted transcript tracks
   foreach my $child ( $self->get_node('gsv_transcript')->descendants ) {
     $child->set( 'display' => 'off' );
+    $child->set( 'menu' => 'no' );
   }
 
   $self->modify_configs(
     [qw(gsv_domain)],
-    {qw(display on) }
+    {qw(display normal) }
   );
 
   $self->modify_configs(
