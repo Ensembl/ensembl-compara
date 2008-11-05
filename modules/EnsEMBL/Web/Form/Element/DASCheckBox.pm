@@ -39,6 +39,9 @@ sub render {
     $notes .= sprintf(' (<span title="%s">Mouseover&#160;for&#160;full&#160;text</span>)', CGI::escapeHTML($self->comment)) if $self->comment;
     $notes .= '</div>';
   }
+  else {
+    $notes = ' <div style="font-weight:normal">&#160;</div>'; ## Empty div to avoid uneven rendering
+  }
   return sprintf(
     qq(
   <dl>
