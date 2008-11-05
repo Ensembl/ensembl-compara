@@ -335,6 +335,9 @@ sub transHandler_species {
   my $function = '';
   my $real_script_name = $OBJECT_TO_SCRIPT{ $script };
 
+  $r->custom_response($_, "/$species/Info/Error/$_")
+    for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
+
   if( $flag && $real_script_name ) {
     $r->subprocess_env->{'ENSEMBL_TYPE'}     = $script;
     if( $real_script_name eq 'action' ) {

@@ -9,7 +9,7 @@ use EnsEMBL::Web::Document::Static;
 use EnsEMBL::Web::SpeciesDefs;
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 
-my %error_messages = (
+our %error_messages = (
   404 => [
     'Page not found' ,
     'Sorry, the page you requested was not found on this server.',

@@ -1,6 +1,7 @@
 package EnsEMBL::Web::Configuration::Info;
 
 use strict;
+use EnsEMBL::Web::Apache::Error;
 use base qw( EnsEMBL::Web::Configuration );
 
 sub set_default_action {
@@ -16,13 +17,31 @@ sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel(1);  } ## RAW AS CONTAINS <i> tags
 
 sub populate_tree {
-  my $self = shift;
-  my $sd = $self->{object}->species_defs;
+  my $self   = shift;
+  my $object = $self->object;
+  my $sd     = $object->species_defs;
 
-  $self->create_node( 'Index', "Description",
+  my $index = $self->create_node( 'Index', "Description",
     [qw(blurb    EnsEMBL::Web::Component::Info::SpeciesBlurb)],
     { 'availability' => 1}
   );
+
+  my $error_messages = \%EnsEMBL::Web::Apache::Error::error_messages;
+  $index->append($self->create_subnode( "Error", "Unknown error",
+    [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
+    { availability  => 1, no_menu_entry => 1, }
+  ));
+
+  while (my ($code,$message) = each %$error_messages) {
+    warn "Creating subnode Error/$code, $message->[0]";
+    $index->append($self->create_subnode( "Error/$code", "$code error: $message->[0]",
+      [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
+      {
+        availability  => 1,
+        no_menu_entry => 1,
+      }
+    ));
+  }
 
   my $stats_menu = $self->create_submenu( 'Stats', 'Genome Statistics' );
   $stats_menu->append( $self->create_node( 'StatsTable', 'Assembly and Genebuild',
