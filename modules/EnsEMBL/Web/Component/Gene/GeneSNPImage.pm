@@ -34,10 +34,10 @@ sub _content {
 
 
   # Padding-----------------------------------------------------------
-  # Get 5 configs - and set width to width of context config
-  # Get three slice - context (5x) gene (4/3x) transcripts (+-EXTENT)
+  # Get 4 configs - and set width to width of context config
+  # Get two slice -  gene (4/3x) transcripts (+-EXTENT)
   my $Configs;
-  my @confs = qw(context gene transcripts_top transcripts_bottom);
+  my @confs = qw(gene transcripts_top transcripts_bottom);
   push @confs, 'snps' unless $no_snps;  
 
   foreach( @confs ){ 
@@ -47,7 +47,6 @@ sub _content {
   
    $object->get_gene_slices( ## Written...
     $master_config,
-    [ 'context',     'normal', '100%'  ],
     [ 'gene',        'normal', '33%'  ],
     [ 'transcripts', 'munged', $extent ]
   );
@@ -147,21 +146,13 @@ sub _content {
 ## -- Tweak the configurations for the five sub images ------------------ ##
 ## Gene context block;
   my $gene_stable_id = $object->stable_id;
-  $Configs->{'context'}->{'geneid2'} = $gene_stable_id; ## Only skip background stripes...
-  $Configs->{'context'}->set_parameters({ 'container_width' =>  $object->__data->{'slices'}{'context'}[1]->length() });  
-  $Configs->{'context'}->get_node( 'scalebar')->set('label', "Chr. @{[$object->__data->{'slices'}{'context'}[1]->seq_region_name]}");
-  $Configs->{'context'}->modify_configs( ## Turn on track associated with this db/logic name
-    ['variation'],
-    {qw(display off show_labels off)}
-  ) if $no_snps;
-  $Configs->{'context'}->get_node('snp_join')->set('display','off') if $no_snps; 
 
 ## Transcript block
-  $Configs->{'gene'}->{'geneid'}      = $gene_stable_id;
-  $Configs->{'gene'}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'gene'}[1]->length(), 'single_Gene' => $object->stable_id }); 
+  $Configs->{'gene'}->{'geneid'}      = $gene_stable_id; warn $object;
+  $Configs->{'gene'}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'gene'}[1]->length() }); 
   $Configs->{'gene'}->modify_configs( ## Turn on track associated with this db/logic name
     [$Configs->{'gene'}->get_track_key( 'transcript', $object )],
-    {qw(display on show_labels off),"caption" => $object->stable_id}  
+    {'display'=> 'transcript_nolabel', 'caption' => $object->stable_id,}  
   );
 
  
@@ -177,7 +168,7 @@ sub _content {
     $Configs->{$_}->{'fakeslice'}   = 1;
     $Configs->{$_}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'transcripts'}[3] }); 
   }
-  $Configs->{'transcripts_bottom'}->get_node('spacer')->set('on','off') if $no_snps;
+ # $Configs->{'transcripts_bottom'}->get_node('spacer')->set('on','off') if $no_snps;
 ## SNP box track...
   unless( $no_snps ) {
     $Configs->{'snps'}->{'fakeslice'}   = 1;
@@ -185,12 +176,6 @@ sub _content {
     $Configs->{'snps'}->set_parameters({ 'container_width' => $fake_length }); 
     $Configs->{'snps'}->{'snp_counts'} = [$count_snps, scalar @$snps, $context_count];
   } 
-
-  #$master_config->tree->dump("Tree", '[[caption]]' );
-  $master_config->modify_configs( ## Turn on track associated with this db/logic name
-    [$master_config->get_track_key( 'gene', $object )],
-    {qw(on on show_labels off)}  ## also turn off the transcript labels...
-  );
 
   $master_config->modify_configs( ## Turn on track associated with this db/logic name
     [$master_config->get_track_key( 'gsv_transcript', $object )],
@@ -200,7 +185,6 @@ sub _content {
 #  return if $do_not_render;
 ## -- Render image ------------------------------------------------------ ##
   my $image    = $object->new_image([
-    $object->__data->{'slices'}{'context'}[1],     $Configs->{'context'},
     $object->__data->{'slices'}{'gene'}[1],        $Configs->{'gene'},
     $transcript_slice, $Configs->{'transcripts_top'},
     @containers_and_configs,
@@ -216,7 +200,53 @@ sub _content {
   $image->{'panel_number'} = 'top';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
-  return $image->render;
+  my $html = $image->render;
+  my $info_text = config_info($Configs->{'snps'});
+  $html .= $self->_info(
+    'Configuring the display',
+    "<p>Tip: use the '<strong>Configure this page</strong>' link on the left to customise the protein domains and types of variations displayed above.<br />Please note the default 'Context' settings will probably filter out some intronic SNPs.<br />" .$info_text.'</p>'
+ );
+
+  return $html;
+}
+
+sub config_info {
+  my ($self) = @_;
+  my $configure_text,
+
+  my $counts = $self->{'snp_counts'};
+  return unless ref $counts eq 'ARRAY';
+
+  my $text;
+  if ($counts->[0]==0 ) {
+    $text .= "There are no SNPs within the context selected for this transcript.";
+  } elsif ($counts->[1] ==0 ) {
+    $text .= "The options set in the page configuration have filtered out all $counts->[0] variations in this region.";
+  } elsif ($counts->[0] == $counts->[1] ) {
+    $text .= "None of the variations are filtered out by the Source, Class and Type filters.";
+  } else {
+    $text .= ($counts->[0]-$counts->[1])." of the $counts->[0] variations in this region have been filtered out by the Source, Class and Type filters.";
+  }
+
+  $configure_text .= $text;
+
+# Context filter
+  return $configure_text unless defined $counts->[2];
+
+  my $context_text;
+  if ($counts->[2]==0) {
+    $context_text = "None of the intronic variations are removed by the Context filter.";
+  }
+  elsif ($counts->[2]==1) {
+    $context_text = $counts->[2]." intronic variation has been removed by the Context filter.";
+  }
+ else {
+    $context_text = $counts->[2]." intronic variations are removed by the Context filter.";
+  }
+#  $self->errorTrack( $context_text, 0, 28 );
+
+  $configure_text .= '<br />' .$context_text;
+  return $configure_text;
 }
 
 sub content {
