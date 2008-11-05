@@ -22,9 +22,9 @@ sub init {
   );
 
   $self->add_tracks( 'other',
-    [ 'transcriptexon_bgtrack', '',     'geneexon_bgtrack',   { 'display' => 'normal', 'src' => 'all', 'colours' => 'bisque', 'tag' => 2, 'strand' => 'r', 'menu' => 'no'  } ],
-    [ 'snp_join',               '',     'snp_join',           { 'display' => 'on',  'strand' => 'r', 'context' =>50, 'tag' => 2, 'colours' => $self->species_defs->colour('variation'), 'menu' => 'no'         } ],
-    [ 'ruler',                  '',     'ruler',              { 'display' => 'normal',  'strand' => 'r', 'name' => 'Ruler' } ],
+    [ 'transcriptexon_bgtrack', '',     'geneexon_bgtrack',   { 'display' => 'normal', 'src' => 'all', 'colours' => 'bisque', 'tag' => 1, 'strand' => 'r', 'menu' => 'no'  } ],
+    [ 'snp_join',               '',     'snp_join',           { 'display' => 'on',  'strand' => 'r', 'context' =>50, 'tag' => 1, 'colours' => $self->species_defs->colour('variation'), 'menu' => 'no'         } ],
+    [ 'ruler',                  '',     'ruler',              { 'display' => 'normal',  'strand' => 'r','notext' => 1, 'name' => 'Ruler' } ],
     [ 'spacer',                 '',     'spacer',             { 'display' => 'normal', 'height' => 50,   'strand' => 'r', 'menu' => 'no'         } ],
   );
 }

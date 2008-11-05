@@ -23,8 +23,8 @@ sub init {
   );
 
   $self->add_tracks( 'other',
-    [ 'transcriptexon_bgtrack', '',     'geneexon_bgtrack',   { 'display' => 'normal', 'src' => 'all', 'colours' => 'bisque', 'tag' => 2, 'strand' => 'f', 'menu' => 'no'  } ],
-    [ 'snp_join',               '',     'snp_join',           { 'display' => 'on',  'strand' => 'f', 'context' => 50, 'tag' => 2, 'colours' => $self->species_defs->colour('variation'), 'menu' => 'no'         } ],
+    [ 'transcriptexon_bgtrack', '',     'geneexon_bgtrack',   { 'display' => 'normal', 'src' => 'all', 'colours' => 'bisque', 'tag' => 1, 'strand' => 'f', 'menu' => 'no'  } ],
+    [ 'snp_join',               '',     'snp_join',           { 'display' => 'on',  'strand' => 'f', 'context' => 50, 'tag' => 1, 'colours' => $self->species_defs->colour('variation'), 'menu' => 'no'         } ],
     [ 'draggable',              '',     'draggable',          { 'display' => 'normal',  'strand' => 'f', 'menu' => 'no'         } ],
   );
 }
