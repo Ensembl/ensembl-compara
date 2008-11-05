@@ -24,24 +24,33 @@ sub init {
 
   $self->create_menus(
     'transcript'    => 'Genes',
+    'variation'       => 'Variations',
     'prediction'    => 'Prediction transcripts',
     'other'         => 'Decorations',
  );
 
-
   $self->load_tracks();
-
-
- $self->add_tracks( 'other',
-    [ 'transcriptexon_bgtrack', '',     'transcriptexon_bgtrack',   { 'display' => 'normal',  'src' => 'all', 'colours' => 'bisque', 'tag' => 1,'strand' => 'b', 'menu' => 'no'         } ],
-    [ 'spacer',                 '',     'spacer',                   { 'display' => 'normal', 'height' =>20,  'strand' => 'r', 'menu' => 'no'         } ],
-    [ 'snp_join',               '',     'snp_join',                 { 'display' => 'on',  'strand' => 'b','tag' => 1, 'colours' => $self->species_defs->colour('variation'), 'menu' => 'no'         } ],
-  );
 
   $self->modify_configs(
     [qw(transcript)],
     {'display' => 'off'}
   );
+ $self->add_tracks( 'transcript',
+    [ 'snp_join',               '',     'snp_join',               { 'display' => 'on',  'strand' => 'b','tag' => 0, 'colours' => $self->species_defs->colour('variation'), 'menu' => 'no'         } ],
+ );
+ $self->add_tracks( 'other',
+    [ 'transcriptexon_bgtrack', '',     'transcriptexon_bgtrack', { 'display' => 'normal',  'src' => 'all', 'colours' => 'bisque', 'tag' => 0,'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'scalebar',               '',     'scalebar',               { 'display' => 'normal', 'strand' => 'f', 'name' => 'Scale bar' } ],
+    [ 'ruler',                  '',     'ruler',                  { 'display' => 'normal',  'strand' => 'f','notext' => 1, 'name' => 'Ruler'  } ],
+    [ 'spacer',                 '',     'spacer',                 { 'display' => 'normal', 'height' =>20,  'strand' => 'r', 'menu' => 'no'         } ],
+  );
+
+  $self->modify_configs(
+    [qw(variation_feature_variation)],
+    {qw(display normal), 'caption' => 'Variations', 'strand' => 'f'}
+  );
+
+
 
 }
 1;
