@@ -16,7 +16,7 @@ sub caption {
 }
 
 sub _content {
-  my $self    = shift; 
+  my $self    = shift;
   my $no_snps = shift; 
   my $object  = $self->object;
   my $image_width  = $self->image_width || 800;  
@@ -154,7 +154,10 @@ sub _content {
     [$Configs->{'gene'}->get_track_key( 'transcript', $object )],
     {'display'=> 'transcript_nolabel', 'caption' => $object->stable_id,}  
   );
-
+  $Configs->{'gene'}->modify_configs( ## Turn on track associated with this db/logic name
+    ['variation_feature_variation'],
+    {'display'=> 'off'}
+  ) if $no_snps;
  
   $Configs->{'gene'}->get_node('snp_join')->set('display','off') if $no_snps;
 ## Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
@@ -168,7 +171,7 @@ sub _content {
     $Configs->{$_}->{'fakeslice'}   = 1;
     $Configs->{$_}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'transcripts'}[3] }); 
   }
- # $Configs->{'transcripts_bottom'}->get_node('spacer')->set('on','off') if $no_snps;
+  $Configs->{'transcripts_bottom'}->get_node('spacer')->set('display','off') if $no_snps;
 ## SNP box track...
   unless( $no_snps ) {
     $Configs->{'snps'}->{'fakeslice'}   = 1;
@@ -182,7 +185,6 @@ sub _content {
     {qw(display off show_labels off)}  ## also turn off the transcript labels...
   );
 
-#  return if $do_not_render;
 ## -- Render image ------------------------------------------------------ ##
   my $image    = $object->new_image([
     $object->__data->{'slices'}{'gene'}[1],        $Configs->{'gene'},
@@ -193,14 +195,20 @@ sub _content {
   ],
   [ $object->stable_id ]
   );
-  #$image->set_extra( $object );
 
   $image->imagemap = 'yes';
   $image->set_extra( $object );
   $image->{'panel_number'} = 'top';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
-  my $html = $image->render;
+  my $html = $image->render; 
+  if ($no_snps){
+    $html .= $self->_info(
+      'Configuring the display',
+      "<p>Tip: use the '<strong>Configure this page</strong>' link on the left to customise the protein domains  displayed above.</p>"
+    );
+    return $html;
+  }
   my $info_text = config_info($Configs->{'snps'});
   $html .= $self->_info(
     'Configuring the display',
