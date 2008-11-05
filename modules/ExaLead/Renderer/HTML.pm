@@ -8,11 +8,8 @@ use CGI;
 
 @ExaLead::Renderer::HTML::ISA = qw(ExaLead::Renderer);
 
-our $hit_maps = {
- qw(geneview   contigview
-    transview  contigview
-    protview   contigview
-    contigview cytoview)
+our $hit_maps = { 'Gene'     => ['Gene/Summary',  'Location/View',     'Region in detail'],
+		  'Sequence' => ['Location/View', 'Location/Overview', 'Region overview'],
 };
 
 sub render_spelling {
@@ -108,18 +105,29 @@ sub _render_category {
 sub _render_hit {
   my( $self,  $hit ) = @_;
   my $URL = $hit->URL;
-  my $script = $URL =~ /(\w+)\?/ ? $1 : '';
-  my $mapped_script = $hit_maps->{$script};
-  my $extra = '';
+
   $URL =~ s{Location/View\?marker}{Location/Marker\?m}; #cope with incorrect marker URLs
   $URL =~ s{Karyotype\?type=}{Genome\?ftype=}; #cope with incorrect feature URLs
-  if( $mapped_script ) {
-    $script = $URL;
-    $script = ~s/(\w+)\?/$mapped_script\?/g;
-    $mapped_script = ucfirst($mapped_script);
-    $mapped_script = ~s/view/View/;
-    $extra = sprintf( ' [<a href="%s">%s</a>]' , $script, $mapped_script );
+
+  #add extra location link only for index types defined in hit_maps above
+  my $add_location_link = 0;
+  foreach my $g ($hit->groups) {
+      if ($g->name eq 'answergroup.Feature type') {
+	  foreach my $c ($g->children) {
+	      $add_location_link = $c->name if ( grep {$c->name eq $_ } keys %$hit_maps );
+	  }
+      }
   }
+  my $extra = '';
+  if ($add_location_link) {
+      my $mappings = $hit_maps->{$add_location_link};
+      my $old_dest = $mappings->[0];
+      my $new_dest = $mappings->[1];
+      my $desc     = $mappings->[2];
+      my $new_URL  = $URL;
+      $new_URL =~ s/$old_dest/$new_dest/;
+      $extra = sprintf( ' [<a href="%s">%s</a>]' , $new_URL, $desc );
+      }
   return sprintf qq(
 <p><strong><a href="%s">%s</a></strong>%s<br />
   %s
