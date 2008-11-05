@@ -1090,7 +1090,7 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
       'labels'      => 'on',
       'colourset'   => 'ctcf',
       'description' => 'Nessie_NG_STD_2_ctcf_ren_BR1',
-      'renderers'      => ['off'=>'Off','signal_map'=>'normal'],
+      'renderers'      => ['off'=>'Off','signal_map'=>'Normal'],
      'display'     => 'off'
     }));
     $menu->append( $self->create_track('ctcf_blocks_'.$key, sprintf("CTCF peaks"),{
