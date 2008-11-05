@@ -51,8 +51,8 @@ sub init {
     'pairwise_blastz' => 'BLASTZ alignments',
     'pairwise_tblat'  => 'Translated blat alignments',
     'pairwise_other'  => 'Pairwise alignment',
-    'user_data'       => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
     'external_data'   => 'External data',
+    'user_data'       => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
     'decorations'     => 'Additional decorations',
     'information'     => 'Information',
     'options'         => 'Options'
