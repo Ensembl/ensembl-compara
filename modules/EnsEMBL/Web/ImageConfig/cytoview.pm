@@ -34,7 +34,8 @@ sub init {
     'gene'          => 'Genes',
     'misc_feature'  => 'Misc. regions',
     'synteny'       => 'Synteny',
-    'user_data'     => 'User uploaded data',
+    'external_data'   => 'External data',
+    'user_data'     => 'User attached data',
     'other'         => 'Additional features',
     'information'   => 'Information',
     'options'       => 'Options'
@@ -45,6 +46,7 @@ sub init {
     [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information'  } ],
   );
   $self->load_tracks();
+  $self->load_configured_das;
 
   $self->modify_configs(
     ['marker'],
