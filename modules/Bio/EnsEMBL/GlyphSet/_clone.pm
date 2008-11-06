@@ -58,8 +58,16 @@ sub feature_label {
 sub href {
   my ($self, $f ) = @_;
   my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc));
+  my $mfid = $f->dbID;
   my $r = $f->seq_region_name.':'.$f->seq_region_start.'-'.$f->seq_region_end;
-  return $self->_url({'misc_feature' => $name, 'type'=>'Location', 'action'=>'View', r => $r});
+  my $zmenu = {
+      'type'        =>'Location',
+      'action'      =>'View',
+      'r'           =>$r,
+      'misc_feature'=>$name,
+      'mfid'        =>$mfid,
+  };
+  return $self->_url($zmenu);
 }
 
 sub tag {
