@@ -9,7 +9,9 @@ sub new {
   my %params = @_;
   my $self = $class->SUPER::new( %params );
   $self->checked = $params{'checked'};
-  $self->{'class'} = $params{'long_label'} ? 'checkbox-long' : '';
+  if ($params{'long_label'}) {
+    $self->add_class('checkbox-long');
+  }
   return $self;
 }
 
@@ -27,10 +29,10 @@ sub render {
       <input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox" %s/>
     </dd>
   </dl>),
-    $self->{'class'} ? ' class="'.$self->{'class'}.'"' : '',
+    $self->class_attrib,
     $self->{'raw'} ? $self->label : CGI::escapeHTML( $self->label ), 
     $self->notes ? '<div style="font-weight:normal">'.CGI::escapeHTML($self->notes).'</div>':'',
-    $self->{'class'} ? ' class="'.$self->{'class'}.'"' : '',
+    $self->class_attrib,
     CGI::escapeHTML( $self->name ), 
     CGI::escapeHTML( $self->id ),
     $self->value || 'yes', $self->checked ? 'checked="checked" ' : '',

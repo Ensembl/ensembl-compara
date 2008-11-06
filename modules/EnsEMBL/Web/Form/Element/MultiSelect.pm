@@ -9,8 +9,6 @@ sub new {
   my %params = @_;
 
   my $self = $class->SUPER::new( %params, 'render_as' => $params{'select'} ? 'select' : 'radiobutton', 'values' => $params{'values'} );
-  $self->{'class'} = $params{'class'} || 'radiocheck';
-
   return $self;
 }
 

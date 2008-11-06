@@ -15,7 +15,9 @@ sub new {
   $params{'label'}      ||= $params{'das'}->label;
   my $self = $class->SUPER::new( %params );
   $self->checked = $params{'checked'};
-  $self->{'class'} = $params{'long_label'} ? 'checkbox-long' : '';
+  if ($params{'long_label'}) {
+    $self->add_class('checkbox-long');
+  }
   $self->_short_das_desc( $params{'das'} );
   return $self;
 }
@@ -45,17 +47,17 @@ sub render {
   return sprintf(
     qq(
   <dl>
-    <dt%s>
+    <dt%s%s>
       <label>%s%s</label>
     </dt>
-    <dd%s>
+    <dd%s%s>
       <input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox" %s/>
     </dd>
   </dl>),
-    $self->{'class'} ? ' class="'.$self->{'class'}.'"' : '',
+    $self->class_attrib, $style_attrib,
     $self->{'raw'} ? $self->label : CGI::escapeHTML( $self->label ),
     $notes,
-    $self->{'class'} ? ' class="'.$self->{'class'}.'"' : '',
+    $self->class_attrib, $style_attrib,
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->id ),
     $self->value || 'yes', $self->checked ? 'checked="checked" ' : '',
