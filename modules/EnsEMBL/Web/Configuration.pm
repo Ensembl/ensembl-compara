@@ -425,6 +425,7 @@ sub _configurator {
         </div>', $obj->param('config') ;
   my $active = '';
   foreach my $node ($conf->tree->top_level) {
+    next unless $node->get('caption');
     next if $node->is_leaf;
     my $count = 0;
     my $link_key = 'link_'.$node->key;
@@ -653,17 +654,13 @@ sub _content_panel {
   ## don't show tabs for 'no_menu' nodes
   $self->{'availability'} = $obj->availability;
   while(
-    defined($previous_node) &&
-    ( $previous_node->get('type') ne 'view' ||
-      ! $self->is_available( $previous_node->get('availability') ) )
+    defined($previous_node) && ( $previous_node->get('type') ne 'view' || ! $self->is_available( $previous_node->get('availability') ) )
   ) {
     $previous_node = $previous_node->previous;
   }
   my $next_node     = $node->next;
   while(
-    defined($next_node) &&
-    ( $next_node->get('type') ne 'view' ||
-      ! $self->is_available( $next_node->get('availability') ) )
+    defined($next_node) && ( $next_node->get('type') ne 'view' || ! $self->is_available( $next_node->get('availability') ) )
   ) {
     $next_node = $next_node->next;
   }
