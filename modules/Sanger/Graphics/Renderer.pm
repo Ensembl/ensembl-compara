@@ -143,6 +143,8 @@ sub render {
 	   $_->{'glyph'}->pixelx + $_->{'x'} * $_->{'glyph'}->pixelwidth,
 	   $_->{'glyph'}->pixely + $_->{'y'} * $_->{'glyph'}->pixelheight
 	  ) } (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}});
+#     warn Data::Dumper::Dumper($tags{$_});
+#	warn Data::Dumper::Dumper(\@points);
 	my $first = $glyphset->{'tags'}{$_}[0];
         my $PAR = { 
           'bordercolour' => $COL,

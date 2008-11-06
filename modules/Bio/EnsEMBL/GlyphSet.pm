@@ -364,6 +364,7 @@ sub my_config {
 
 use Data::Dumper;
 our $CC = 0;
+
 sub my_colour {
   my( $self, $colour, $part, $default ) = @_;
   $self->{'colours'} ||= $self->my_config('colours')||{};

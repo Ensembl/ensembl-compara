@@ -33,8 +33,6 @@ sub get_colours {
   my $T = $self->SUPER::get_colours( $f );
   $T->{'part'} = 'border' if $f->get_scalar_attribute('inner_start');
   $T->{'part'} = 'border' if $f->length > $self->my_config('outline_threshold');
-
-  $Data::Dumper::Indent = 0;
   return $T;
 }
 
@@ -57,17 +55,11 @@ sub feature_label {
 }
 
 ## Link back to this page centred on the map fragment
-
-sub title {
-  my ($self, $f ) = @_;
-  my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc));
-  return $name;
-}
-
 sub href {
   my ($self, $f ) = @_;
   my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc));
-  $self->_url({'misc_feature' => $name, 'r' => undef});
+  my $r = $f->seq_region_name.':'.$f->seq_region_start.'-'.$f->seq_region_end;
+  return $self->_url({'misc_feature' => $name, 'type'=>'Location', 'action'=>'View', r => $r});
 }
 
 sub tag {
