@@ -70,8 +70,10 @@ sub init {
   $self->add_tracks( 'decorations',
     [ 'gc_plot',   '%GC',                  'gcplot',          { 'display' => 'normal',  'strand' => 'r', 'description' => 'Shows %age of Gs & Cs in region'  } ],
   );
- $self->add_tracks( 'misc_feature',
-   [ 'vega_assembly', 'Vega assembly', 'alternative_assembly', { 'display' => 'off',  'strand' => 'r',  'colourset' => 'alternative_assembly' ,  'description' => 'Track indicating Vega assembly'  } ]);
+  if ($self->species_defs->ALTERNATIVE_ASSEMBLY) {
+    $self->add_tracks( 'misc_feature',
+      [ 'vega_assembly', 'Vega assembly', 'alternative_assembly', { 'display' => 'off',  'strand' => 'r',  'colourset' => 'alternative_assembly' ,  'description' => 'Track indicating Vega assembly'  } ]);
+  }
 
 ## Add in additional
   $self->load_tracks;
