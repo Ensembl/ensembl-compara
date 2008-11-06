@@ -49,6 +49,7 @@ sub default      :lvalue { $_[0]{'default'}; }
 sub values       :lvalue { $_[0]{'values'}; }
 sub style        :lvalue { $_[0]{'style'}; }
 sub styles       :lvalue { $_[0]{'styles'}; }
+sub classes      :lvalue { $_[0]{'classes'}; }
 sub widget_type  :lvalue { $_[0]{'widget_type'}; }
 sub _validate    :lvalue { $_[0]{'_validate'}; }
 sub layout       :lvalue { $_[0]{'layout'}; }
