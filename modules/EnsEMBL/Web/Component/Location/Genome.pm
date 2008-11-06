@@ -37,10 +37,10 @@ sub content {
 
     ## Form with hidden elements for click-through
     my $config = $object->image_config_hash('Vkaryotype');
-      $config->set_parameter(
-        'container_width',
-        $object->species_defs->MAX_CHR_LENGTH
-      );
+      $config->set_parameters({
+        'container_width' => $object->species_defs->MAX_CHR_LENGTH,
+        'slice_number'    => '0|1'
+      });
 
     my $ideo_height = $config->get_parameter('image_height');
     my $top_margin  = $config->get_parameter('top_margin');
