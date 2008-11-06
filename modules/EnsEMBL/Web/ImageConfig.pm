@@ -393,7 +393,7 @@ sub _merge {
   foreach my $analysis (keys %$tree) {
     my $sub_tree = $tree->{$analysis};
     next unless $sub_tree->{'disp'}; ## Don't include non-displayable tracks
-local $Data::Dumper::Indent=0;
+#local $Data::Dumper::Indent=0;
     #warn Data::Dumper::Dumper($sub_tree->{'web'});
     #warn ".... $sub_type {",$sub_tree->{'web'}{ $sub_type },"}";
     next if exists $sub_tree->{'web'}{ $sub_type }{'do_not_display'};
@@ -686,6 +686,7 @@ sub add_misc_feature {
   ## Different loop - no analyses - just misc_sets... 
   my $data = $hashref->{'misc_feature'}{'sets'};
   foreach my $key_2 ( sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data ) {
+#      warn $key_2;
     $menu->append( $self->create_track( 'misc_feature_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
       'glyphset'    => '_clone',
       'db'          => $key,

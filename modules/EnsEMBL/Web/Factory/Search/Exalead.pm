@@ -28,6 +28,7 @@ sub _search_all {
     if (@$species) {
 	$q->param('species',@$species);
     }
+#    else { $q->param('species', ( $ENV{'ENSEMBL_SPECIES'} ) ); }
     if( $not_fresh ) {
 	if( $q->param('q') ) {
 	    $q->param('_q',$q->param('q'));

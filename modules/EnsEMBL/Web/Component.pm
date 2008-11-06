@@ -2,7 +2,6 @@ package EnsEMBL::Web::Component;
 
 use strict;
 use Data::Dumper;
-$Data::Dumper::Indent = 3;
 use EnsEMBL::Web::File::Text;
 use Exporter;
 use CGI qw(escape);

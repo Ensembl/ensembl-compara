@@ -89,6 +89,7 @@ sub push {
 sub render {
 ### Render both diagnostic tables if any data - tree timings from Push and diagnostic repeats from start/end
   my $self = shift;
+
   #$self->push("Page rendered");
   my $base_time = shift @{$Times_of{ ident $self }};
 
@@ -118,8 +119,8 @@ Flag      Cumulative     Section
       }
     }
     $diagnostics .= ("  | " x $_->[2]).$_->[1];
-  }
 
+  }
   my %X = %{$Totals_of{ ident $self }};
   $diagnostics .='
 --------------------------------------------------------------------------------
@@ -137,7 +138,6 @@ Flag      Cumulative     Section
 '.sprintf( '%10.5f',$T ),'           TOTAL
 --------------------------------------------------------------------------------';
     
-  
   my $benchmarks = '';
   foreach (keys %{$Benchmarks_of{ ident $self}} ) {
     my $T = $Benchmarks_of{ ident $self }{$_};

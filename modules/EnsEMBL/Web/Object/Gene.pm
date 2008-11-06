@@ -911,7 +911,7 @@ sub store_TransformedDomains {
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
     my $transcript = $trans_obj->Obj;
     next unless $transcript->translation; 
-    foreach my $pf ( @{$transcript->translation->get_all_ProteinFeatures($key)} ) { 
+    foreach my $pf ( @{$transcript->translation->get_all_ProteinFeatures($key)} ) {
 ## rach entry is an arry containing the actual pfam hit, and mapped start and end co-ordinates
       my @A = ($pf);
       foreach( $transcript->pep2genomic( $pf->start, $pf->end ) ) {

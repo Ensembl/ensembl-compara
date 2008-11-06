@@ -3,7 +3,7 @@
 ***********************************************************************/
 
 table.ss { width: 100%; }
-table.ss th, table.ss tr.ss_header { background-color:[[NEUTRAL_BORDER]]; border: 0px solid [[NEUTRAL_BORDER]]; border-top-width:1px; }
+table.ss th, table.ss tr.ss_header td.ss_header { background-color:[[NEUTRAL_BORDER]]; border: 0px solid [[NEUTRAL_BORDER]]; border-top-width:1px; text-align: left;}
 table.ss td { padding:0.2em; }
 
 table.ss .left-border {    border-left:  1px [[NEUTRAL_BORDER]] solid; }

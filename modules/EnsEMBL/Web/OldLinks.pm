@@ -5,7 +5,8 @@ our @linking_scripts = qw(
 jump_to_contig jump_to_location_view martlink psychic r);
 
 our %mapping = (
-  'alignview'             => { 'type' => '',           'action' => '',              'initial_release' => 1 },
+  'alignview'             => { 'seq_type' =>  { type => 'transcript', 'action' => 'SupportingEvidenceAlignment', 'initial_release' => 1 },
+			   },
   'alignsliceview'        => { 'type' => 'Location',   'action' => 'Alignslice',    'initial_release' => 34 },
   'colourmap'             => { 'type' => 'Server',     'action' => 'Colourmap',     'initial_release' => 1 },
   'contigview'            => { 'type' => 'Location',   'action' => 'View',          'initial_release' => 1 },
@@ -43,14 +44,25 @@ our %mapping = (
   'transview'             => { 'type' => 'Transcript', 'action' => 'Summary',       'initial_release' => 1 }
 );
 
-sub new { 
+sub new {
+#    use Carp qw(cluck);
+#    cluck 'ere';
   my $self = shift;
 }
 
 sub get_redirect {
   my( $self, $old_name ) = @_;
   return undef unless exists $mapping{ $old_name };
-  return $mapping{ $old_name }{ 'type' }.'/'.$mapping{ $old_name }{ 'action' }
+  if ($mapping{$old_name}{'type'}) {
+    return $mapping{ $old_name }{ 'type' }.'/'.$mapping{ $old_name }{ 'action' };
+  }
+  else {
+    foreach my $k (keys %{$mapping{$old_name}}) {
+      if ($k eq 'seq_type') {
+        return $mapping{$old_name}->{$k}{'type'}.'/'.$mapping{$old_name}->{$k}{'action'};
+      }
+    }
+  }
 }
 
 sub get_archive_redirect {

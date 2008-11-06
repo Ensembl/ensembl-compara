@@ -67,10 +67,12 @@ sub init {
     [ 'codon_seq', 'Translated sequence',  'codonseq',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.5, 'colourset' => 'codonseq', 'description' => 'Track showing 6-frame translation of sequence'  } ],
     [ 'codons',    'Start/stop codons',    'codons',          { 'display' => 'off',  'strand' => 'b', 'threshold' => 50,  'colourset' => 'codons' ,  'description' => 'Track indicating locations of start and stop codons in region'  } ],
   );
-  $self->add_tracks( 'decorations', 
+  $self->add_tracks( 'decorations',
     [ 'gc_plot',   '%GC',                  'gcplot',          { 'display' => 'normal',  'strand' => 'r', 'description' => 'Shows %age of Gs & Cs in region'  } ],
   );
-  
+ $self->add_tracks( 'misc_feature',
+   [ 'vega_assembly', 'Vega assembly', 'alternative_assembly', { 'display' => 'off',  'strand' => 'r',  'colourset' => 'alternative_assembly' ,  'description' => 'Track indicating Vega assembly'  } ]);
+
 ## Add in additional
   $self->load_tracks;
   $self->load_configured_das;
@@ -78,6 +80,7 @@ sub init {
 #  foreach ( $self->get_node('variation')->descendants ) { $_->set('style','box'); $_->set('depth',2000); $_->set('bump_Width',1); }
 
 ## These tracks get added after the "auto-loaded tracks get addded...
+
   if( $self->species_defs->ENSEMBL_MOD ) {
     $self->add_track( 'information', 'mod', '', 'text', {
       'name' => 'Message of the day',
@@ -87,6 +90,7 @@ sub init {
       'text' => $self->species_defs->ENSEMBL_MOD
     } )
   }
+
   $self->add_tracks( 'information',
     [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary', 'description' => 'Show counts of number of tracks turned off by the user' } ],
     [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information',            'description' => 'Details of the region shown in the image'               } ],
