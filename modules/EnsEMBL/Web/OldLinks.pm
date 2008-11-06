@@ -5,7 +5,7 @@ our @linking_scripts = qw(
 jump_to_contig jump_to_location_view martlink psychic r);
 
 our %mapping = (
-  'alignview'             => { 'type' => '',           'action' => '',              'initial_release' => 1 },			   },
+  'alignview'             => { 'type' => '',           'action' => '',              'initial_release' => 1 },
   'alignsliceview'        => { 'type' => 'Location',   'action' => 'Alignslice',    'initial_release' => 34 },
   'colourmap'             => { 'type' => 'Server',     'action' => 'Colourmap',     'initial_release' => 1 },
   'contigview'            => { 'type' => 'Location',   'action' => 'View',          'initial_release' => 1 },
