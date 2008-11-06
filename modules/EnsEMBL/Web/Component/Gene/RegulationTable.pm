@@ -16,7 +16,7 @@ sub caption {
   my $self = shift;
   my $object = $self->object; 
   my $gene_id = $object->Obj->stable_id;
-  my $cap = 'Regulatory Regions linked to '. $gene_id;
+  my $cap = 'Regulatory elements located in the region of '. $gene_id;
 
  return $cap;
 }
