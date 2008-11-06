@@ -81,11 +81,11 @@ sub content {
   }
   
   my $validator = XHTML::Validator->new();
-  my $errored = 0;
   
   # Request could be for several segments
   for my $coord_key ( keys %{ $data->{'features'} } ) {
     
+    my $errored = 0;
     my $err = $data->{'features'}->{$coord_key}->{'error'};
     my $url = $data->{'features'}->{$coord_key}->{'url'};
     my $cs  = $data->{'features'}->{$coord_key}->{'coord_system'};
