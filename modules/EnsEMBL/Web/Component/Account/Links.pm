@@ -27,7 +27,7 @@ sub content {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   
   $html .= qq(
-<div class="twocol-left unpadded">
+<!--<div class="twocol-left unpadded">-->
 <h3>Bookmarks:</h3>
 );
 
@@ -78,6 +78,7 @@ sub content {
     $html .= 'You have no saved bookmarks.'
   }
 
+=pod
   $html .= qq(</div>
 
 <div class="twocol-right unpadded">
@@ -126,10 +127,10 @@ sub content {
   if (!$has_configs) {
     $html .= 'You have no saved configurations.'
   }
-
   $html .= qq(</div>
 );
 
+=cut
 
   return $html;
 }
