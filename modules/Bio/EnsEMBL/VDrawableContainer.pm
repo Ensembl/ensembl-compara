@@ -22,8 +22,9 @@ sub new {
     'config'    => $Config,
     'timer'     => $Config->{'species_defs'}->timer,
     'prefix'    => 'Bio::EnsEMBL',
-    'spacing'   => $spacing || $Config->get_parameter('spacing') || 20,
+    'spacing'   => $spacing || $Config->get_parameter('spacing') || 0,
   };
+#warn "self->{'spacing'} $self->{'spacing'}";
   bless($self, $class);
 
   ########## loop over all the glyphsets the user wants:
@@ -46,6 +47,7 @@ sub new {
 
   my @glyphsets;
   my @configs = $Config->glyphset_configs;
+  my %chr_glyphset_counts = ();
   foreach my $chr ( @chromosomes ) {
     $Container->{'chr'} = $chr;
     for my $row_config (@configs) {
@@ -72,8 +74,9 @@ sub new {
         warn "GLYPHSET: glyphset $classname failed (@{[$self->{container}{web_species}]}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason";
 	next;
       }
-      $EW_Glyphset->_init();
+      $EW_Glyphset->render_normal();
       push @glyphsets,  $EW_Glyphset;
+      $chr_glyphset_counts{$chr}++;
     }
   }
 
@@ -88,10 +91,13 @@ sub new {
 ## We then shift up all these points up by that many base 
 ## pairs to close up any gaps
 
+  my( $max_gs_chr ) = sort { $b<=>$a } values %chr_glyphset_counts;
   my $glyphsets = @glyphsets;
-  my $GS = $Config->get_parameter( 'group_size' ) || 1;
+  my $GS = $Config->get_parameter( 'group_size' ) || $max_gs_chr;
   my $entries_per_row = $Config->get_parameter( 'columns' ) || ( int( ($glyphsets/$GS - 1) / ($Config->get_parameter('rows') || 1) + 1 ) * $GS );
+  $entries_per_row = $max_gs_chr if $max_gs_chr > $entries_per_row;
 
+  warn ".... $max_gs_chr .... $GS, $entries_per_row ...";
   my $entry_no = 0;
   $Config->set_parameter('max_height', 0);
   $Config->set_parameter('max_width', 0);
@@ -100,12 +106,18 @@ sub new {
   my @max   = ();
   my $row_count = 0;
   my $row_index = 0;
+  my $current_chr = undef;
   for my $glyphset (@glyphsets) {
-    $min[$row_index] = $glyphset->minx() if(!defined $min[$row_index] || $min[$row_index] > $glyphset->minx() );
-    unless(++$row_count < $entries_per_row) {
-      $row_count = 0;
-      $row_index++;
+    if( $current_chr ne $glyphset->{'chr'} ) { ## Can we fit all the chr stuff in!
+      $row_count += $chr_glyphset_counts{$glyphset->{'chr'}};
+      if( $row_count > $entries_per_row ) {
+        $row_index++;
+        $row_count = 0;
+      }
+      $current_chr = $glyphset->{'chr'};
     }
+    $glyphset->{'row_index'} = $row_index;
+    $min[$row_index] = $glyphset->minx() if(!defined $min[$row_index] || $min[$row_index] > $glyphset->minx() );
   }
   ## Close up gap!
 #  my $translateX = shift @row_min;
@@ -113,18 +125,24 @@ sub new {
   $Config->{'transform'}->{'translatex'} -= $translateX * $scalex; #$xoffset;
   my $xoffset = -$translateX * $scalex;
 
+  my $row_index = 0;
+
   for my $glyphset (@glyphsets) {
+    if( $row_index != $glyphset->{'row_index'} ) {  ## We are on a new row - so reset the yoffset [horizontal] to 0 
+      $row_index = $glyphset->{'row_index'};
+      $yoffset = 0;
+      my $translateX = shift @min;
+      $xoffset += $Config->image_width() - $translateX * $scalex;
+      ## Shift down - and then close up gap!
+      $Config->{'transform'}->{'translatex'} += $Config->image_width() - $translateX * $scalex; #$xoffset;
+    }
     $Config->set_parameter( 'max_width',  $xoffset + $Config->get_parameter('image_width') );
     ########## set up the label for this strip 
     ########## first we get the max width of label in characters
-    my $feature_type_1 = $glyphset->my_config('feature_type') ||
-                         ( $glyphset->my_config('keys') ? $glyphset->my_config('keys')->[0] : undef );
-    my $feature_type_2 = $glyphset->my_config('feature_type_2') ||
-                         ( $glyphset->my_config('keys') ? $glyphset->my_config('keys')->[1] : undef );
-    my $label_1 = $glyphset->my_config('label') ||
-                  ( $feature_type_1 ? $glyphset->my_colour( $feature_type_1, 'text' ) : undef );
-    my $label_2 = $glyphset->my_config('label_2') ||
-                  ( $feature_type_2 ? $glyphset->my_colour( $feature_type_2, 'text' ) : undef );
+    my $feature_type_1 = $glyphset->my_config('feature_type')   || ( $glyphset->my_config('keys') ? $glyphset->my_config('keys')->[0] : undef );
+    my $feature_type_2 = $glyphset->my_config('feature_type_2') || ( $glyphset->my_config('keys') ? $glyphset->my_config('keys')->[1] : undef );
+    my $label_1 = $glyphset->my_config('label')   || ( $feature_type_1 ? $glyphset->my_colour( $feature_type_1, 'text' ) : undef );
+    my $label_2 = $glyphset->my_config('label_2') || ( $feature_type_2 ? $glyphset->my_colour( $feature_type_2, 'text' ) : undef );
     if( $glyphset->{'my_config'}->key eq 'Videogram' && $flag ) {
       $label_1 = $glyphset->{'chr'};
     }
@@ -165,14 +183,6 @@ sub new {
     ########## translate the top of the next row to the bottom of this one
     $yoffset += $glyphset->height() + $spacing;
     $Config->set_parameter('max_height',  $yoffset + $spacing ) if( $yoffset + $spacing > $Config->get_parameter('max_height') );
-    unless( ++$entry_no < $entries_per_row ) {
-      $entry_no = 0;
-      $yoffset = 0;
-      my $translateX = shift @min;
-      $xoffset += $Config->image_width() - $translateX * $scalex;
-      ## Shift down - and then close up gap!
-        $Config->{'transform'}->{'translatex'} += $Config->image_width() - $translateX * $scalex; #$xoffset;
-    }
   }
   $self->{'glyphsets'} = \@glyphsets;
   ########## Store the maximum "width of the image"

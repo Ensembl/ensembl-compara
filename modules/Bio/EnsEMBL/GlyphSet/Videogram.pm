@@ -64,7 +64,7 @@ sub _init {
     $self->push($self->Space({
       'x'         => 0,
       'y'         => $h_offset - $padding,
-      'width'     => 10_000,
+      'width'     => 10000,
       'height'    => $padding * 2 + $wid,
       'absolutey' => 1,
     }));
@@ -88,10 +88,7 @@ sub _init {
         next;
       }
 
-      my $HREF;
-      if($self->get_parameter('band_links')) {
-        $HREF = "/@{[$self->{container}{web_species}]}/Location/View?r=$chr:$vc_band_start-$vc_band_end";
-      }
+      my $HREF = $self->get_parameter('band_links') ? $self->_url({'type' => 'Location', 'action' => 'View', '__clear' => 1, 'r' => "$chr:$vc_band_start-$vc_band_end"}) : '';
 
       my $colour = $self->my_colour($stain);
       if( $stain eq 'acen' ) {
@@ -100,6 +97,7 @@ sub _init {
             'points'    => [ $vc_band_start, $h_offset + $h_wid, $vc_band_end,   $h_offset, $vc_band_end,   $h_offset + $wid, ],
             'colour'    => $colour,
             'absolutey' => 1,
+            'title'     => "Band: Centromere",
             'href'      => $HREF,
           });
         } else {
@@ -107,6 +105,7 @@ sub _init {
             'points'    => [ $vc_band_start, $h_offset, $vc_band_end,   $h_offset + $h_wid, $vc_band_start, $h_offset + $wid, ],
             'colour'    => $colour,
             'absolutey' => 1,
+            'title'     => "Band: centromere",
             'href'      => $HREF,
           });
           $done_1_acen = 1;
@@ -116,6 +115,7 @@ sub _init {
           'points'    => [ $vc_band_start, $h_offset, $vc_band_end,   $h_offset + $wid, $vc_band_end,   $h_offset, $vc_band_start, $h_offset + $wid, ],
           'colour'    => $colour,
           'absolutey' => 1,
+          'title'     => "Band: $bandname",
           'href'      => $HREF,
         });
 	CORE::push @decorations, $self->Rect({
@@ -125,6 +125,7 @@ sub _init {
           'height'    => $h_wid,
           'colour'    => $colour,
           'absolutey' => 1,
+          'title'     => "Band: $bandname",
           'href'      => $HREF,
         });
       } else {
@@ -141,6 +142,7 @@ sub _init {
           'height'           => $wid,
           'colour'           => $colour,
           'absolutey'        => 1,
+          'title'            => "Band: $bandname",
           'href'             => $HREF,
         }));
         $self->push($self->Line({
@@ -234,6 +236,17 @@ sub _init {
   }
 
   ############################################### Draw the ends of the ideogram
+#  $self->unshift($self->Rect({
+#    'x'      => $v_offset,
+#    'width'  => $chr_length,
+#    'y'      => $h_offset - $wid / 2,
+#    'height' => 2 * $wid,
+#    'colour' => 'blue',
+#    'absolutey' => 1,
+#    'absoluteheight' => 1,
+#    'href'   => $self->_url({ 'type' => 'Location', 'action' => 'Chromosome', '__clear' => 1, 'r' => $chr }),
+#    'title'  => "Chromosome: $chr"
+#  }));
   for my $end (
      ( @bands && $bands[ 0]->stain() eq 'tip' ? () : 0 ),
      ( @bands && $bands[-1]->stain() eq 'tip' ? () : 1 )

@@ -52,42 +52,70 @@ sub render {
         # my @points = ( @{$tags{$_}}, @{$glyphset->{'tags'}{$_}} );
         my $COL   = undef;
         my $FILL  = undef;
-        my $Z   = undef;
-        my @points = map { 
+        my $Z     = undef;
+        my @points = map {
           $COL  = defined($COL)  ? $COL  : $_->{'col'};
-          $FILL = defined($FILL) ? $FILL : ($_->{'style'} && $_->{'style'} eq 'fill'); 
-          $Z  = defined($Z)  ? $Z  : $_->{'z'};
+          $FILL = defined($FILL) ? $FILL : ($_->{'style'} && $_->{'style'} eq 'fill');
+          $Z    = defined($Z)    ? $Z    : $_->{'z'};
           (
-            $_->{'glyph'}->pixelx + $_->{'x'} * $_->{'glyph'}->pixelwidth,
-            $_->{'glyph'}->pixely + $_->{'y'} * $_->{'glyph'}->pixelheight
-          )
-        } (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}});
+           $_->{'glyph'}->pixelx + $_->{'x'} * $_->{'glyph'}->pixelwidth,
+           $_->{'glyph'}->pixely + $_->{'y'} * $_->{'glyph'}->pixelheight
+          ) } (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}});
         my $first = $glyphset->{'tags'}{$_}[0];
-        my $PAR = { 
-          'pixelpoints'  => [ @points ],
-          'bordercolour' => $COL,
+        my $PAR = {
           'absolutex'    => 1,
+          'absolutewidth'=> 1,
           'absolutey'    => 1,
         };
+        my $glyph;
+        $PAR->{'bordercolour'} = $COL if defined $COL;
+        $PAR->{'href'}   = $tags{$_}[0]->{'href'};
+        $PAR->{'alt'}    = $tags{$_}[0]->{'alt'};
+        $PAR->{'id'}     = $tags{$_}[0]->{'id'};
         $PAR->{'colour'} = $COL if($FILL);
-        my $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
+# 794 5 123 5 123 421 794 421
+        if( @points == 4 &&
+          ($points[0] == $points[2] || $points[1] == $points[3])
+        ) {
+          $PAR->{'pixelx'}      = $points[0] < $points[2] ? $points[0] : $points[2];
+          $PAR->{'pixely'}      = $points[1] < $points[3] ? $points[1] : $points[3];
+          $PAR->{'pixelwidth'}  = $points[0] + $points[2] - 2 * $PAR->{'pixelx'};
+          $PAR->{'pixelheight'} = $points[1] + $points[3] - 2 * $PAR->{'pixely'};
+          $glyph = $COL ? Sanger::Graphics::Glyph::Rect->new($PAR) : Sanger::Graphics::Glyph::Space->new($PAR);
+        } elsif( @points == 8 &&
+            $points[0] == $points[6] &&
+            $points[1] == $points[3] &&
+            $points[2] == $points[4] &&
+            $points[5] == $points[7]
+        ) {
+          $PAR->{'pixelx'}      = $points[0] < $points[2] ? $points[0] : $points[2];
+          $PAR->{'pixely'}      = $points[1] < $points[5] ? $points[1] : $points[5];
+          $PAR->{'pixelwidth'}  = $points[0] + $points[2] - 2 * $PAR->{'pixelx'};
+          $PAR->{'pixelheight'} = $points[1] + $points[5] - 2 * $PAR->{'pixely'};
+          $glyph = $COL ? Sanger::Graphics::Glyph::Rect->new($PAR) : Sanger::Graphics::Glyph::Space->new($PAR);
+        } else {
+          $PAR->{'pixelpoints'}  = [ @points ];
+          $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
+        }
+
         push @{$layers{defined $Z ? $Z : -1 }}, $glyph;
         delete $tags{$_};
       } else {
         $tags{$_} = $glyphset->{'tags'}{$_}
-      }     
+      }
     }
     foreach( @{$glyphset->{'glyphs'}} ) {
       push @{$layers{$_->{'z'}||0}}, $_;
     }
   }
-  
+
+my %M;
   for my $layer ( sort { $a<=>$b } keys %layers ) {
     #########
     # loop through everything and draw it
     #
     for ( @{$layers{$layer}} ) {
-      my $method = $self->method($_);
+      my $method = $M{$_} ||= $self->method($_);
       if($self->can($method)) {
         $self->$method($_);
       } else {
