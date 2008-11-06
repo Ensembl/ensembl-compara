@@ -344,7 +344,7 @@ sub render {
         }
         $HTML .= q(</div>
           <div class="right-button">);
-        if (exists $self->{'next'}) {
+        if( exists $self->{'next'} ) {
           $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
           my $url = $self->{'next'}{'url'};
           if (!$url) {
