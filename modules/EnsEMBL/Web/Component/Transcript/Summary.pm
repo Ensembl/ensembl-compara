@@ -133,7 +133,7 @@ if( $gene ) {
         $protein = sprintf '<a href="%s">%s</a>',
           $self->object->_url({
             'type'   => 'Transcript',
-            'action' => 'Protein',
+            'action' => 'ProteinSummary',
             't'      => $_->stable_id
           }),
           $_->translation->stable_id ;
