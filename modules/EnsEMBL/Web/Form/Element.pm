@@ -80,6 +80,7 @@ sub add_class {
   my ($self, $class) = @_;
   return unless $class;
   my $aref = $self->classes; 
+  return if grep(/^$class$/, @$aref); 
   push @$aref, $class;
   $self->classes($aref);
 }
@@ -88,6 +89,7 @@ sub add_style {
   my ($self, $style) = @_;
   return unless $style;
   my $aref = $self->styles; 
+  return if grep(/^$style$/, @$aref); 
   push @$aref, $style;
   $self->styles($aref);
 }
@@ -96,7 +98,7 @@ sub class_attrib {
   my $self = shift;
   my $attrib = '';
   if (scalar(@{$self->classes})) {
-    $attrib = ' class="'.join('', @{$self->classes}).'"';
+    $attrib = ' class="'.join(' ', @{$self->classes}).'"';
   }
   return $attrib;
 }
