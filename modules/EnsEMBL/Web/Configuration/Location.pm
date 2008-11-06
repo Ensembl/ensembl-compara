@@ -84,7 +84,7 @@ sub populate_tree {
   ));
   $align_menu->append( $self->create_node( 'ComparaGenomicAlignment', '',
     [qw(gen_alignment      EnsEMBL::Web::Component::Location::ComparaGenomicAlignment)],
-    {'no_menu_entry' => 'location' }
+    {'no_menu_entry' => 'location', 'availability' => 'slice database:compara' }
   ));
   $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]])",
     [qw(
