@@ -1,8 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::restrict;
 use strict;
-use vars qw(@ISA);
 
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
