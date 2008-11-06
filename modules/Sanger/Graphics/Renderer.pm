@@ -147,12 +147,12 @@ sub render {
 #	warn Data::Dumper::Dumper(\@points);
 	my $first = $glyphset->{'tags'}{$_}[0];
         my $PAR = { 
-          'bordercolour' => $COL,
           'absolutex'    => 1,
           'absolutewidth'=> 1,
           'absolutey'    => 1,
         };
 	my $glyph;
+        $PAR->{'bordercolour'} = $COL if defined $COL;
 	$PAR->{'href'}   = $tags{$_}[0]->{'href'};
 	$PAR->{'alt'}    = $tags{$_}[0]->{'alt'};
 	$PAR->{'id'}     = $tags{$_}[0]->{'id'};
@@ -165,7 +165,7 @@ sub render {
           $PAR->{'pixely'}      = $points[1] < $points[3] ? $points[1] : $points[3];
           $PAR->{'pixelwidth'}  = $points[0] + $points[2] - 2 * $PAR->{'pixelx'};
           $PAR->{'pixelheight'} = $points[1] + $points[3] - 2 * $PAR->{'pixely'};
-          $glyph = Sanger::Graphics::Glyph::Rect->new($PAR);
+	  $glyph = $COL ? Sanger::Graphics::Glyph::Rect->new($PAR) : Sanger::Graphics::Glyph::Space->new($PAR);
         } elsif( @points == 8 &&
 	    $points[0] == $points[6] &&
 	    $points[1] == $points[3] &&
@@ -176,7 +176,7 @@ sub render {
 	  $PAR->{'pixely'}      = $points[1] < $points[5] ? $points[1] : $points[5];
 	  $PAR->{'pixelwidth'}  = $points[0] + $points[2] - 2 * $PAR->{'pixelx'};
 	  $PAR->{'pixelheight'} = $points[1] + $points[5] - 2 * $PAR->{'pixely'};
-	  $glyph = Sanger::Graphics::Glyph::Rect->new($PAR);
+	  $glyph = $COL ? Sanger::Graphics::Glyph::Rect->new($PAR) : Sanger::Graphics::Glyph::Space->new($PAR);
 	} else {
 	  $PAR->{'pixelpoints'}  = [ @points ];
 	  $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
