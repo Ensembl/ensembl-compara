@@ -73,9 +73,6 @@ sub _content {
   # Make fake transcripts ----------------------------------------------
  $object->store_TransformedTranscripts();        ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
 
-  use Data::Dumper;
-  $Data::Dumper::Maxdepth=1;
-
   my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles Tigrfam Superfamily Smart PIRSF);
   foreach( @domain_logic_names ) { 
     $object->store_TransformedDomains( $_ );    ## Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'}
