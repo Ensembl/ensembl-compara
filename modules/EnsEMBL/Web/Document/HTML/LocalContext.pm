@@ -108,18 +108,28 @@ $pad    </dd>";
       if( $node->data->{'availability'} && $self->is_available( $node->data->{'availability'} )) {
         my $url = $node->data->{'url'};
         if (!$url) {
-          ## Strip out timestamps and any wizard parameters
-          my @ok_params;
-          my @cgi_params = split(';|&', $ENV{'QUERY_STRING'});
-          foreach my $param (@cgi_params) {
-            next if $param =~ /^time=/;
-            next if $param =~ /^wizard/;
-            next if $param =~ /^id=/;
-            push @ok_params, $param;  
-          }
           ## This is a tmp hack since we do not have and object here
           ## TODO: propagate object here and use object->_url method
-          $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'}.'?'.join(';', @ok_params);
+          $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'};
+          my @ok_params;
+          my @cgi_params = split(';|&', $ENV{'QUERY_STRING'});
+          if ($ENV{'ENSEMBL_TYPE'} eq 'UserData' || $ENV{'ENSEMBL_TYPE'} eq 'Account') { 
+            foreach my $param (@cgi_params) {
+              ## Minimal parameters, or it screws up the wizards!
+              next unless ($param =~ /^_referer/ || $param =~ /^x_requested_with/);
+              push @ok_params, $param;
+            }
+            warn "OK parameters: @ok_params";
+          }
+          else {
+            foreach my $param (@cgi_params) {
+              next if $param =~ /^time=/;
+              push @ok_params, $param;
+            }
+          }
+          if (scalar(@ok_params)) {
+            $url .= '?'.join(';', @ok_params);  
+          }
         }
       	$name = sprintf '<a href="%s" title="%s">%s</a>', $url, $title, $name;
       } else {
