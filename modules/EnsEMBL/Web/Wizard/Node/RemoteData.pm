@@ -225,30 +225,34 @@ sub select_das_coords {
     $self->add_fieldset($fieldset);
   }
   
-  my $gene_fieldset = {'legend' => 'Gene'};
-  my $g_elements = [];
-  for my $cs (@GENE_COORDS) {
-    $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
-    push @$g_elements, { 'type'    => 'CheckBox',
+  if (scalar(@GENE_COORDS)) {
+    my $gene_fieldset = {'legend' => 'Gene'};
+    my $g_elements = [];
+    for my $cs (@GENE_COORDS) {
+      $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
+      push @$g_elements, { 'type'    => 'CheckBox',
                            'name'    => 'coords',
                            'value'   => $cs->to_string,
                            'label'   => $cs->label };
+    }
+    $gene_fieldset->{'elements'} = $g_elements;
+    $self->add_fieldset($gene_fieldset);
   }
-  $gene_fieldset->{'elements'} = $g_elements;
-  $self->add_fieldset($gene_fieldset);
-  
-  my $prot_fieldset = {'legend' => 'Protein'};
-  my $p_elements = [];
-  for my $cs (@PROT_COORDS) {
-    $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
-    push @$p_elements, { 'type'    => 'CheckBox',
+
+  if (scalar(@PROT_COORDS)) {
+    my $prot_fieldset = {'legend' => 'Protein'};
+    my $p_elements = [];
+    for my $cs (@PROT_COORDS) {
+      $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
+      push @$p_elements, { 'type'    => 'CheckBox',
                            'name'    => 'coords',
                            'value'   => $cs->to_string,
                            'label'   => $cs->label };
+    }
+    $prot_fieldset->{'elements'} = $p_elements;
+    $self->add_fieldset($prot_fieldset);
   }
-  $prot_fieldset->{'elements'} = $p_elements;
-  $self->add_fieldset($prot_fieldset);
-  
+
   $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
   
   for my $source (@{ $sources }) {
@@ -515,7 +519,7 @@ sub _output_das_text {
   map {
     $self->add_element( 'type'    => 'Information',
                         'classes'  => ['no-bold'],
-                        'value'   => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
+                        'value'   => sprintf '<strong>%s</strong><br />%s<br /><a href="%s">%3$s</a>',
                                            $_->label,
                                            $_->description,
                                            $_->homepage );
