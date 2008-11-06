@@ -138,13 +138,11 @@ function _show_zmenu_location_other( x ) {
   Z = Z.replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
   Z+= Z.match(/\?/) ? ';' : '?';
   var Q = __zmenu_init( 'zmenu_nav', 'Location: '+Math.floor(x.bp) );
-  if( __seq_region.name ) {
-    var w = __seq_region.end - __seq_region.start +1;
-    var s = Math.floor(x.bp-w/2);
-    __zmenu_add( Q, '', 'Jump to location view',
-      '/'+x.species+'/Location/View'+Z+'r='+x.region+':'+s+'-'+(w+s)
-    );
-  }
+  var w = __seq_region ? (__seq_region.end - __seq_region.start +1) : 100000;
+  var s = Math.floor(x.bp-w/2);
+  __zmenu_add( Q, '', 'Jump to location view',
+    '/'+x.species+'/Location/View'+Z+'r='+x.region+':'+s+'-'+(w+s)
+  );
   __zmenu_show( Q, x.x, x.y );
 }
 
