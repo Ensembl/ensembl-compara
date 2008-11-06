@@ -102,7 +102,13 @@ sub render {
       $output .= '<p>'.$self->notes->{'text'}.'</p>';
     }
     $output .= "</div>\n";
-  } 
+  }
+  
+  if (scalar(@{$self->{'_wizard_elements'}})) {
+    foreach my $wizard_element (@{$self->{'_wizard_elements'}}) {
+      $self->add_element(%$wizard_element);
+    }
+  }
   
   if ($self->{'_layout'} eq 'table') {
     ## Used for complex forms like DAS and healthchecks
@@ -111,11 +117,6 @@ sub render {
       {'key' => 'label', 'title' => '', 'width' => '90%', 'align' => 'left' },
       {'key' => 'widget', 'title' => '', 'width' => '5%', 'align' => 'left' },
     );
-    if (scalar(@{$self->{'_wizard_elements'}})) {
-      foreach my $wizard_element (@{$self->{'_wizard_elements'}}) {
-        $self->add_element(%$wizard_element);
-      }
-    }
     my $hidden_output;
     foreach my $element ( @{$self->{'_elements'}} ) {
       if ($element->type eq 'Hidden') {
