@@ -20,7 +20,10 @@ sub content {
   my $self = shift;
 
   ### Adds text to Genetic variation nodes
-  my $html = "<p>The 'Configure this page' link in the menu on the left hand side of this page can be used to customise the exon context and types of SNPs displayed in both the tables below and the variation image. Please note the default 'Context' settings will probably filter out some intronic SNPs.</p><br />";
+  my $html = $self->_info(
+    'Configuring the display',
+    "<p>The <strong>'Configure this page'</strong> link in the menu on the left hand side of this page can be used to customise the exon context and types of SNPs displayed in both the tables below and the variation image.<br /> Please note the default 'Context' settings will probably filter out some intronic SNPs.</p><br />"
+  );
  
 
   return $html;
