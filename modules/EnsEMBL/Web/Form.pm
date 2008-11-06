@@ -71,11 +71,15 @@ sub _next_id {
 
 sub _render_buttons {
   my $self = shift;
-  my $output = '<div class="submit">';
+  my $output = qq(<div class="submit">
+<dl>
+<dt class="submit wide center">);
   foreach my $button ( @{$self->{'_buttons'}}) {
-    $output .= $button->render;
+    $output .= $button->render(1); ## Pass flag to omit DL from rendered widget
   }
-  $output .= '</div>';
+  $output .= qq(</dt>
+</dl>
+</div>);
 
   return $output;
 }

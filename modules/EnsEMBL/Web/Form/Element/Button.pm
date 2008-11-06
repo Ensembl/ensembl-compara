@@ -11,11 +11,21 @@ sub new {
 }
 
 sub render { 
-  return sprintf(
-    '<input type="button" name="%s" id="%s" value="%s" class="red-button" />', 
+  my ($self, $multi) = @_; ## Optional boolean parameter 'multi' passed by e.g. Form::_render_buttons
+  my $html;
+  my $extra = $multi ? 'style="margin-left:0.5em;margin-right:0.5em" ' : '';
+  unless ($multi) {
+    $html .= '<dl><dt class="submit wide center">';
+  }
+  $html .= sprintf(
+    '<input type="button" name="%s" value="%s" class="submit" %s/>', 
     CGI::escapeHTML($_[0]->name) || 'submit', 
-    CGI::escapeHTML($_[0]->id) || 'button_'.CGI::escapeHTML($_[0]->name),
-    CGI::escapeHTML($_[0]->value), 
+    CGI::escapeHTML($_[0]->value), $extra, 
   );
+  unless ($multi) {
+    $html .= '</dt></dl>';
+  }
+  return $html;
+
 }  
 1;
