@@ -104,12 +104,21 @@ sub _content {
       'gene'         => $object->Obj,
       $no_snps ? (): ('snps' => $TS->{'snps'})
     }; 
+    
+    $CONFIG->modify_configs( ## Turn on track associated with this db/logic name
+      [$CONFIG->get_track_key( 'gsv_transcript', $object )],
+      {qw(display normal show_labels off),'caption' => ''}  ## also turn off the transcript labels...
+    );
+
     foreach ( @domain_logic_names ) { 
       $CONFIG->{'transcript'}{lc($_).'_hits'} = $TS->{lc($_).'_hits'};
     }  
 
    # $CONFIG->container_width( $object->__data->{'slices'}{'transcripts'}[3] ); 
    $CONFIG->set_parameters({'container_width' => $object->__data->{'slices'}{'transcripts'}[3],   });  
+  $CONFIG->tree->dump("Transcript configuration", '([[caption]])')
+    if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
+
    if( $object->seq_region_strand < 0 ) {
       push @containers_and_configs, $transcript_slice, $CONFIG;
     } else {
@@ -182,7 +191,7 @@ sub _content {
 
   $master_config->modify_configs( ## Turn on track associated with this db/logic name
     [$master_config->get_track_key( 'gsv_transcript', $object )],
-    {qw(display off show_labels off)}  ## also turn off the transcript labels...
+    {qw(display normal show_labels off)}  ## also turn off the transcript labels...
   );
 
 ## -- Render image ------------------------------------------------------ ##

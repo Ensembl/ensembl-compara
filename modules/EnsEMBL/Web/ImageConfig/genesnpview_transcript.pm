@@ -21,21 +21,22 @@ sub init {
   });
 
   $self->create_menus(
-   'other'           => 'Decorations',
-   'gsv_domain'      => 'Protein Domains',
- );
+    'other'           => '',
+    'gsv_transcript'  => '',
+    'spacers'          => '',
+    'gsv_domain'      => 'Protein Domains'    
+  );
 
 
    $self->add_tracks( 'other',
-    [ 'gsv_transcript',   '',     'gsv_transcript',   { 'display' => 'on', 'add_labels' => 1, 'colours' => $self->species_defs->colour('gene'), 'src' => 'all',  'strand' => 'b', 'menu' => 'no'  } ],
-    [ 'gsv_variations',   '',   'gsv_variations',     { 'display' => 'on', 'colours' => $self->species_defs->colour('variation'),  'strand' => 'r', 'menu' => 'no' } ],
+     [ 'gsv_variations',   '',   'gsv_variations',     { 'display' => 'on', 'colours' => $self->species_defs->colour('variation'),  'strand' => 'r', 'menu' => 'no' } ],
    );
 
   $self->load_tracks();
 
  
-  $self->add_tracks( 'other',
-    [ 'spacer',           '',     'spacer',            { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no'         } ],
+  $self->add_tracks( 'spacers',
+    [ 'spacer',           '',     'spacer',            { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no' , 'height' => 10         } ],
   );
 
   $self->modify_configs(
