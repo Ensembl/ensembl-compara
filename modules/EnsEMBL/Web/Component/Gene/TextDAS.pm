@@ -8,9 +8,17 @@ use EnsEMBL::Web::RegObj; # exports web registry
 use EnsEMBL::Web::Document::HTML::TwoCol;
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 use EnsEMBL::Web::Document::SpreadSheet;
-
+use CGI qw(escapeHTML);
 use HTML::Entities;
+use XHTML::Validator;
 use base qw(EnsEMBL::Web::Component::Gene);
+
+our $LINK_ERROR = 'A link provided by this DAS source contains HTML markup, '.
+                  'but it contains errors or has dangerous content. As a '.
+                  'security precaution it has not been processed. ';
+our $NOTE_ERROR = 'A note provided by this DAS source contains HTML markup, '.
+                  'but it contains errors or has dangerous content. As a '.
+                  'security precaution it has not been processed. ';
 
 sub _init {
   my $self = shift;
@@ -50,7 +58,7 @@ sub content {
   my $table = EnsEMBL::Web::Document::HTML::TwoCol->new();
   $table->add_row( 'Description', $source->description );#, 1 );
   if ( my $homepage = $source->homepage ) {
-    $table->add_row( 'Homepage', qq(<a href="$homepage">$homepage</a>) );
+    $table->add_row( 'Homepage', qq(<a href="$homepage">$homepage</a>), 1 );
   }
   
   my $html = $table->render;
@@ -71,6 +79,9 @@ sub content {
     $html .= $self->_error('Error', $source_err);
     return $html;
   }
+  
+  my $validator = XHTML::Validator->new();
+  my $errored = 0;
   
   # Request could be for several segments
   for my $coord_key ( keys %{ $data->{'features'} } ) {
@@ -107,16 +118,46 @@ sub content {
       { 'key' => 'notes', 'title' => 'Notes', 'width' => '70%' }
     );
     for my $f ( sort { $a->type_label cmp $b->type_label } @features ) {
-      my @links = map {
-        sprintf '<a href="%s">%s</a>', $_->{'href'}, $_->{'txt'}
-      } @{ $f->links };
-      my @notes = map {
-        $source->is_external ? $_ : decode_entities($_)
-      } @{ $f->notes };
-      my $note = join '<br/>', @notes, @links;
+      
+      my @notes = ();
+      my @links = ();
+      
+      for my $note ( @{ $f->notes } ) {
+        # OK, we apparently need to support non-spec HTML embedded in notes,
+        # so let's decode it.
+        $note = decode_entities($note);
+        # Check for naughty people trying to do XSS...
+        if ( my $error = $validator->validate( $note ) ) {
+          $note = CGI::escapeHTML($note);
+          # Show the error, but only show one at a time as it could get spammy
+          if (!$errored) {
+            $html .= $self->_error('Error parsing note', "$NOTE_ERROR$error");
+            $errored = 1;
+          }
+        }
+        push @notes, $note;
+      }
+      
+      for my $link ( @{ $f->links } ) {
+        my $href  = $link->{'href'};
+        my $cdata = $link->{'txt'}; # We don't support embedded HTML here...
+        # Check for naughty people trying to do XSS...
+        if ( my $error = $validator->validate( $href ) ) {
+          $href = CGI::escapeHTML($href);
+          # Show the error, but only show one at a time as it could get spammy
+          if (!$errored) {
+            $html .= $self->_error('Error parsing link', "$LINK_ERROR$error");
+            $errored = 1;
+          }
+        }
+        push @links, sprintf '<a href="%s">%s</a>', $href, $cdata;
+      }
+      
+      my $text = join '<br/>', @notes, @links;
+      
       (my $lh = ucfirst($f->type_label)) =~ s/_/ /g;
       $table->add_row({
-        'type' => $lh, 'label' => $f->display_label, 'notes' => $note
+        'type' => $lh, 'label' => $f->display_label, 'notes' => $text
       });
     }
     $html .= $table->render;
