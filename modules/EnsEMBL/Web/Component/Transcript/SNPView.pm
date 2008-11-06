@@ -79,7 +79,7 @@ sub content {
   $Configs->{'transcript'}->set_parameters({'container_width' => $object->__data->{'slices'}{'transcript'}[1]->length(), 'single_Transcript' => $object->stable_id });
   $Configs->{'transcript'}->modify_configs(
   [$Configs->{'transcript'}->get_track_key('transcript', $object)],
-  {qw(display on showlabels on ), "caption" => $object->stable_id} 
+  {qw(display normal showlabels off ), "caption" => $object->stable_id} 
   );
   $Configs->{'transcript'}->{'filtered_fake_snps'} = \@transcript_snps;
  
