@@ -21,7 +21,7 @@ sub _init {
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
-  my $colours       = $self->colours(); ;
+  #my $colours       = $self->colours(); ;
   my $pix_per_bp    = $Config->transform->{'scalex'}; 
   my $bitmap_length = int($Config->container_width() * $pix_per_bp); ;
 
@@ -33,13 +33,13 @@ sub _init {
   my $sample = $Config->{'transcript'}->{'sample'};
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my $strand = $trans_ref->{'exons'}[0][2]->strand;
-  my $gene = $trans_ref->{'gene'};
   my $transcript = $trans_ref->{'transcript'};
+  my $gene = $self->{'config'}->core_objects->gene;
   my @exons = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
   # If stranded diagram skip if on wrong strand
   # For exon_structure diagram only given transcript
   my $Composite = $self->Composite({'y'=>0,'height'=>$h});
-  my($colour, $label, $hilight) = $self->colour( $transcript, $colours, %highlights );
+  my $colour = $self->my_colour($self->transcript_key( $transcript, $gene));
   my $coding_start = $trans_ref->{'coding_start'};
   my $coding_end   = $trans_ref->{'coding_end'  };
 
@@ -113,24 +113,6 @@ sub _init {
     });
     $self->push($tglyph);
   }
-}
-
-sub colours {
-  my $self = shift;
-  return $self->my_config('colours');
-}
-
-sub colour {
-  my ($self,  $transcript, $colours, %highlights) = @_;
-  my %genecol = %{$colours->{ lc($transcript->biotype."_".$transcript->status) }};
-  my @colours = ($genecol{'default'}, $genecol{'text'});
-  if(exists $highlights{lc($transcript->stable_id)}) { 
-    return (@colours, $colours->{'hi'}); 
- } elsif(exists $highlights{lc($transcript->external_name)}) { 
-    return (@colours, $colours->{'hi'});
- }
- return (@colours, undef);
-
 }
 
 sub href {
