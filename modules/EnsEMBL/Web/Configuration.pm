@@ -41,17 +41,20 @@ sub new {
   };
   bless $self, $class;
 
-  my $user    = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
-  my $we_can_have_a_user_tree = $self->can('user_populate_tree') && ($user || $session);
+  my $user       = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $session    = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $session_id = $session->get_session_id;
+  my $we_can_have_a_user_tree = $self->can('user_populate_tree') && ($user || $session_id);
 
   ## Trying to get user+session version of the tree from cache
   my $tree = ($we_can_have_a_user_tree && $MEMD && $class->tree_cache_key($user, $session))
            ? $MEMD->get($class->tree_cache_key($user, $session))
            : undef;
-  
-  ## If no user+session tree found, build one
-  unless ($tree) {
+
+  if ($tree) {
+    $self->{_data}{tree} = $tree;
+  } else {
+    ## If no user+session tree found, build one
     ## Trying to get default tree from cache
     $tree = $MEMD->get($class->tree_cache_key) if $MEMD && $class->tree_cache_key;
 
@@ -91,7 +94,7 @@ sub tree_cache_key {
     if $user;
 
   $key .= '::SESSION['. $session->get_session_id .']'
-    if $session;
+    if $session && $session->get_session_id;
   
   return $key;
 }
