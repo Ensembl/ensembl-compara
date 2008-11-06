@@ -210,24 +210,18 @@ sub _global_context {
   $self->{'page'}->global_context->active( lc($type) );
 }
 
-sub trim_referer {
-  my( $self, $referer ) = @_;
-  $referer =~ s/;time=\d+\.\d+//g;   # remove all references to time...
-  $referer =~ s/\?time=\d+\.\d+;/?/;
-  $referer =~ s/\?time=\d+\.\d+//g;
-#  $referer .= ($referer =~ /\?/ ? ';' : '?')."time=".time();
-  return $referer;
-}
-
 sub _user_context {
   my $self = shift;
   my $type = $self->type;
   my $obj  = $self->{'object'};
   my $qs = $self->query_string;
 
-  my $referer = $self->trim_referer(
-    $obj->param('_referer')||$obj->_url({'type'=>$type,'action'=>$ENV{'ENSEMBL_ACTION'},'time'=>undef})
-  );
+  my $referer = $obj->param('_referer') || 
+                $obj->_url({
+                  type   => $type,
+                  action => $ENV{'ENSEMBL_ACTION'},
+                  time   => undef
+                });
 
   my $vc  = $obj->get_viewconfig;
   my $action = $type.'/'.$ENV{'ENSEMBL_ACTION'};
@@ -376,7 +370,7 @@ sub _configurator {
   };
   my $action = $ENV{'ENSEMBL_TYPE'}.'/'.$ENV{'ENSEMBL_ACTION'};
      $action .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
-  my $referer = $self->trim_referer( $obj->param('_referer'), $ENV{'REQUEST_URI'} );
+  my $referer = $obj->param('_referer') || $ENV{'REQUEST_URI'};
   my $url = $obj->_url({'type'=>'Config','action'=>$action,'_referer'=>$referer},1);
   unless( $conf ) {
 ## This must be the view config....
@@ -523,7 +517,7 @@ sub _local_tools {
   
   my $obj = $self->{object};
 
-  my $referer = $self->trim_referer( $ENV{'REQUEST_URI'} );
+  my $referer = $ENV{'REQUEST_URI'};
 
   if( $ENV{'ENSEMBL_USER_ID'} ) {
     $self->{'page'}->local_tools->add_entry(
