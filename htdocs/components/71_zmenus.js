@@ -109,9 +109,10 @@ function _show_zmenu_range_other( x ) {
   var Z = location.search;
   Z = Z.replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
   Z+= Z.match(/\?/) ? ';' : '?';
+  var view = x.bp_end - x.bp_start > 1e6 ? 'Overview' : 'View';
   var Q = __zmenu_init('zmenu_nav','Region: '+x.bp_start+'-'+x.bp_end);
-  __zmenu_add( Q, '', 'Jump to location view',
-    '/'+x.species+'/Location/Summary?'+Z+'r='+x.region+':'+x.bp_start+'-'+x.bp_end 
+  __zmenu_add( Q, '', 'Jump to location '+view,
+    '/'+x.species+'/Location/'+view+Z+'r='+x.region+':'+x.bp_start+'-'+x.bp_end 
   );
   __zmenu_show(Q, x.x, x.y);
 
@@ -126,14 +127,24 @@ function _show_zmenu_range( x ) {
 */
   __zmenu_remove();
   var Q = __zmenu_init('zmenu_nav','Region: '+x.bp_start+'-'+x.bp_end);
-  __zmenu_add( Q, '', 'Jump to region', _new_url( x.bp_start, x.bp_end ) );
+  __zmenu_add( Q, '', 'Jump to region',   _new_url( x.bp_start, x.bp_end ) );
   __zmenu_add( Q, '', 'Centre here',      _new_url_cp( (x.bp_start+x.bp_end)/2, __seq_region.width-1 ) );
   __zmenu_show(Q, x.x, x.y);
 }
 
 function _show_zmenu_location_other( x ) {
   __zmenu_remove();
+  var Z = location.search;
+  Z = Z.replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
+  Z+= Z.match(/\?/) ? ';' : '?';
   var Q = __zmenu_init( 'zmenu_nav', 'Location: '+Math.floor(x.bp) );
+  if( __seq_region.name ) {
+    var w = __seq_region.end - __seq_region.start +1;
+    var s = Math.floor(x.bp-w/2);
+    __zmenu_add( Q, '', 'Jump to location view',
+      '/'+x.species+'/Location/View'+Z+'r='+x.region+':'+s+'-'+(w+s)
+    );
+  }
   __zmenu_show( Q, x.x, x.y );
 }
 

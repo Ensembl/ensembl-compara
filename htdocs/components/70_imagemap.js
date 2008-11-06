@@ -82,6 +82,7 @@ function select_start( evt ) {
   var pX = Event.pointerX(evt) - y[0] -fudge_x;
   var pY = Event.pointerY(evt) - y[1] -fudge_y;
   var map = $(dragging_image.id+'_map');
+  drag_bounds = { lnk: '' };
   $A(map.areas).each(function(Ax){
     var KEY = dragging_image.id+':'+Ax.shape+':'+Ax.coords;
     var link = '';
@@ -91,9 +92,9 @@ function select_start( evt ) {
       Ax.removeAttribute('href');
     }
     link = stored_hrefs[KEY];
-    drag_bounds = { lnk: '' };
 // See if we have a selectable region and it is draggable...
-    if( link && link.substring(0,6) == '#drag|' ) {
+
+    if( link && ( (link.substring(0,6)=='#drag|')||(link.substring(0,7)=='#vdrag|') ) ) {
       pts = Ax.coords.split(/\D+/);
       if( in_rect( pts, pX, pY ) ) { // we have the start of a selectable area....
                                      // so we draw a "red ants" box!
@@ -166,11 +167,20 @@ function select_stop( evt ) {
     });
     var A = drag_bounds.lnk.split(/\|/);
     var _start = parseFloat( A[5] );
-    var _scale_factor = ( parseFloat( A[6] ) - parseFloat( A[5] ) + 1 ) / ( drag_bounds.r-drag_bounds.l );
-    var s = start_x - tl_x;
-    var e = box_end_x - tl_x;
+    var _scale_factor = ( parseFloat( A[6] ) - parseFloat( A[5] ) + 1 ) / ( 
+      A[0] == '#drag' ? drag_bounds.r-drag_bounds.l : drag_bounds.b-drag_bounds.t
+    );
+    var s;
+    var e;
+    if( A[0] == '#drag' ) {
+      var s = start_x - tl_x;
+      var e = box_end_x - tl_x;
+    } else {
+      var s = start_y - tl_y;
+      var e = box_end_y - tl_y;
+    }
     if( e < s ) { var t = e; e = s; s = t; }
-    if( window.location.pathname.match(/\/Location/) ) {
+    if( window.location.pathname.match(/\/Location/) && A[0] == '#drag') {
       _show_zmenu_range( { 
         bp_start: Math.floor(s * _scale_factor + _start),
         bp_end:   Math.floor(e * _scale_factor + _start),
@@ -206,12 +216,16 @@ function select_stop( evt ) {
         pts = Ax.coords.split(/\D+/);
         if( Ax.shape=='poly'   ? in_poly(   pts, X, Y ) : (
             Ax.shape=='circle' ? in_circle( pts, X, Y ) :
-                                  in_rect(   pts, X, Y ) ) ) {
+                                 in_rect(   pts, X, Y ) ) ) {
           if( link ) {
             if( link.substring(0,6)=='#drag|') {
               drag_href  = link;
               drag_start = 1*pts[0];
               drag_end   = 1*pts[2];
+            } else if( link.substring(0,7)=='#vdrag|') {
+              drag_href  = link;
+              drag_start = 1*pts[3];
+              drag_end   = 1*pts[1];
             } else {
               _show_zmenu( { x: end_x, y: end_y, key: KEY, h: link, title: Ax.title } );
               flag = 0;
@@ -224,15 +238,18 @@ function select_stop( evt ) {
       });
       if( flag==1 && drag_href ){
         A = drag_href.split(/\|/);
-        if( window.location.pathname.match(/\/Location/) ) {
+        var Z    = A[0] == '#drag' ? (X-drag_start) : (drag_end-Y); 
+        if( window.location.pathname.match(/\/Location/) && A[0] == '#drag' ) {
           _show_zmenu_location( {
             x: end_x, y: end_y,
-            bp: 1*A[5] + (1*A[6]-1*A[5]+1)/(drag_end-drag_start) * (X - drag_start)
+            bp: 1*A[5] + (1*A[6]-1*A[5]+1)/(drag_end-drag_start) * Z
           } );
 	} else {
           _show_zmenu_location_other( {
             x: end_x, y: end_y,
-            bp: 1*A[5] + (1*A[6]-1*A[5]+1)/(drag_end-drag_start) * (X - drag_start)
+            species:    A[3],
+            region:     A[4],
+            bp: 1*A[5] + (1*A[6]-1*A[5]+1)/(drag_end-drag_start) * Z
           } );
 
 	}
