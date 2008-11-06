@@ -16,36 +16,39 @@ sub init {
     'image_width'   => 500,
     'top_margin'    => 40,
     'band_links'    => 'yes',
+    'spacing'       => 10
   });
 
   $self->create_menus( 'features' => 'Features' );
 
   $self->add_tracks( 'features',
+    [ 'drag_left', '', 'Vdraggable', { 'display' => 'normal', 'part' => 0, 'menu' => 'no' } ],
     [ 'Videogram', 'Ideogram', 'Videogram', {
       'display'   => 'normal',
-      'renderers' => [qw(normal normal)],
+      'renderers' => [qw(off Off compact On)],
       'colourset' => 'ideogram'
     } ],
     [ 'Vgenes',    'Genes',    'Vdensity', {
       'same_scale' => 1,
       'display'   => 'normal',
-      'renderers' => [qw(normal normal)],
-      'colourset' => 'densities',
-      'keys'      => [qw(knownGeneDensity geneDensity)]
+      'renderers' => [qw(off Off histogram Histogram)],
+      'keys'      => [qw(knownGeneDensity geneDensity)],
+      'colourset' => 'densities'
     }],
     [ 'Vpercents',  'Percent GC/Repeats',    'Vdensity', {
       'same_scale' => 1,
       'display'   => 'normal',
-      'renderers' => [qw(normal normal)],
       'colourset' => 'densities',
+      'renderers' => [qw(off Off histogram Histogram)],
       'keys'      => [qw(PercentGC PercentageRepeat)]
     }],
     [ 'Vsnps',      'Variations',    'Vdensity', {
       'display'   => 'normal',
-      'renderers' => [qw(normal normal)],
       'colourset' => 'densities',
+      'renderers' => [qw(off Off histogram Histogram)],
       'keys'      => [qw(snpDensity)]
     }],
+    [ 'drag_right', '', 'Vdraggable', { 'display' => 'normal', 'part' => 1, 'menu' => 'no' } ],
   );
 }
 

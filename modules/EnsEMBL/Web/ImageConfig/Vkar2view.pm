@@ -41,9 +41,7 @@ sub init {
        'col_ctgs2'    => 'darkgreen',
        'lab'         => 'black',
        'available'   => 'features MAPSET_SUPERCTGS',
-
     }
-
   };
 }
 1;
