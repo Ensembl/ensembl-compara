@@ -81,45 +81,45 @@ sub populate_tree {
   my $tree_node = $self->create_node(
     'Compara_Tree', "Gene Tree",
     [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
-    { 'availability' => 'gene database:compara' }
+    { 'availability' => 'gene database:compara core' }
   );
   $tree_node->append( $self->create_subnode(
     'Compara_Tree/Text', "Gene Tree (text)",
     [qw(treetext        EnsEMBL::Web::Component::Gene::ComparaTree/text)],
-    { 'availability' => 'gene database:compara' }
+    { 'availability' => 'gene database:compara core' }
   ));
 
   $tree_node->append( $self->create_subnode(
     'Compara_Tree/Align',       "Gene Tree (alignment)",
     [qw(treealign      EnsEMBL::Web::Component::Gene::ComparaTree/align)],
-    { 'availability' => 'gene database:compara' }
+    { 'availability' => 'gene database:compara core' }
   ));
   $compara_menu->append( $tree_node );
 
   my $ol_node = $self->create_node(
     'Compara_Ortholog',   "Orthologues ([[counts::orthologs]])",
     [qw(orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs)],
-    { 'availability' => 'gene database:compara', 
+    { 'availability' => 'gene database:compara core', 
       'concise'      => 'Orthologues' }
   );
   $compara_menu->append( $ol_node );
   $ol_node->append( $self->create_subnode(
     'Compara_Ortholog/Alignment', 'Ortholog Alignment',
     [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
-    { 'availability'  => 'gene database:compara',
+    { 'availability'  => 'gene database:compara core',
       'no_menu_entry' => 1 }
   ));
   my $pl_node = $self->create_node(
     'Compara_Paralog',    "Paralogues ([[counts::paralogs]])",
     [qw(paralogues  EnsEMBL::Web::Component::Gene::ComparaParalogs)],
-    { 'availability' => 'gene database:compara', 
+    { 'availability' => 'gene database:compara core', 
            'concise' => 'Paralogues' }
   );
   $compara_menu->append( $pl_node );
   $pl_node->append( $self->create_subnode(
     'Compara_Paralog/Alignment', 'Paralog Alignment',
     [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
-    { 'availability'  => 'gene database:compara',
+    { 'availability'  => 'gene database:compara core',
       'no_menu_entry' => 1 }
   ));
   my $fam_node = $self->create_node(
@@ -133,20 +133,20 @@ sub populate_tree {
   $fam_node->append($self->create_subnode(
     'Family/Genes', 'Other '.$name.' genes in this family',
     [qw(genes    EnsEMBL::Web::Component::Gene::FamilyGenes)],
-    { 'availability'  => 'family database:compara',
+    { 'availability'  => 'family database:compara core',
       'no_menu_entry' => 1 }
   ));
   $fam_node->append($self->create_subnode(
     'Family/Proteins', 'Other proteins in this family',
     [qw(ensembl EnsEMBL::Web::Component::Gene::FamilyProteins/ensembl
         other   EnsEMBL::Web::Component::Gene::FamilyProteins/other)],
-    { 'availability'  => 'family database:compara',
+    { 'availability'  => 'family database:compara core',
       'no_menu_entry' => 1 }
   ));
   $fam_node->append($self->create_subnode(
     'Family/Alignments', 'Multiple alignments in this family',
     [qw(jalview EnsEMBL::Web::Component::Gene::FamilyAlignments)],
-    { 'availability'  => 'family database:compara',
+    { 'availability'  => 'family database:compara core',
       'no_menu_entry' => 1 }
   ));
 
@@ -160,12 +160,13 @@ sub populate_tree {
 
 ## Variation tree
   my $var_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
-  $var_menu->append($self->create_node( 'Variation_Gene',  'Variation Table',
+
+  $var_menu->append($self->create_node( 'Variation_Gene/Table',  'Variation Table',
     [qw(snptable       EnsEMBL::Web::Component::Gene::GeneSNPTable
         snpinfo       EnsEMBL::Web::Component::Gene::GeneSNPInfo)],
     { 'availability' => 'gene database:variation' }
   ));
-  $var_menu->append($self->create_node( 'Variation_Gene/Image',  'Variation Image',
+  $var_menu->append($self->create_node( 'Variation_Gene',  'Variation Image',
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSNPImage)],
     { 'availability' => 'gene database:variation' }
   ));
