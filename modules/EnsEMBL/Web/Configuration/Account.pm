@@ -163,16 +163,22 @@ sub populate_tree {
 
 }
 
+sub tree_cache_key {
+  my ($class, $user, $session) = @_;
 
-sub tree_key {
-  my $class = shift;
-  if ($ENSEMBL_WEB_REGISTRY->get_user) {
-    return "::${class}::TREE::USER";
-  } else {
-    return "::${class}::TREE";
-  }
+  ## Default trees for logged-in users and 
+  ## for non logged-in are defferent
+  ## but we cache both:
+  my $key = ($ENSEMBL_WEB_REGISTRY->get_user)
+             ? "::${class}::TREE::USER"
+             : "::${class}::TREE";
+
+  ## If $user was passed this is for
+  ## user_populate_tree (this user specific tree)
+  $key .= '['. $user->id .']'
+    if $user;
+
+  return $key;
 }
 
 1;
-
-

@@ -46,32 +46,33 @@ sub new {
   my $we_can_have_a_user_tree = $self->can('user_populate_tree') && ($user || $session);
 
   ## Trying to get user+session version of the tree from cache
-  my $tree = ($we_can_have_a_user_tree && $MEMD)
-           ? $MEMD->get($class->tree_key($user, $session))
+  my $tree = ($we_can_have_a_user_tree && $MEMD && $class->tree_cache_key($user, $session))
+           ? $MEMD->get($class->tree_cache_key($user, $session))
            : undef;
   
   ## If no user+session tree found, build one
   unless ($tree) {
     ## Trying to get default tree from cache
-    $tree = $MEMD->get($class->tree_key) if $MEMD;
+    $tree = $MEMD->get($class->tree_cache_key) if $MEMD && $class->tree_cache_key;
 
     if ($tree) {
       $self->{_data}{tree} = $tree;
     } else {
       $self->populate_tree;
       ## Cache default tree
-      $MEMD->set($class->tree_key, $self->{_data}{tree}, undef, 'TREE') if $MEMD;
+      $MEMD->set($class->tree_cache_key, $self->{_data}{tree}, undef, 'TREE')
+        if $MEMD && $class->tree_cache_key;
     }
 
     if ($we_can_have_a_user_tree) {
       $self->user_populate_tree if $we_can_have_a_user_tree;
       ## Cache user+session tree version
       $MEMD->set(
-        $class->tree_key($user, $session),
+        $class->tree_cache_key($user, $session),
         $self->{_data}{tree},
         undef,
         'TREE', keys %{ $ENV{CACHE_TAGS}||{} }
-      ) if $MEMD;
+      ) if $MEMD && $class->tree_cache_key($user, $session);
       
     }
   }
@@ -80,14 +81,17 @@ sub new {
   return $self;
 }
 
-sub tree_key {
+## Each class might have different tree caching dependences 
+## See Configuration::Account and Configuration::Search for more examples
+sub tree_cache_key {
   my ($class, $user, $session) = @_;
   my $key = "::${class}::$ENV{ENSEMBL_SPECIES}::TREE";
 
-  if ($user && $session) {
-    $key .= '::USER['    . $user->id                . ']';
-    $key .= '::SESSION[' . $session->get_session_id . ']';
-  }
+  $key .= '::USER['. $user->id .']'
+    if $user;
+
+  $key .= '::SESSION['. $session->get_session_id .']'
+    if $session;
   
   return $key;
 }
@@ -739,23 +743,25 @@ sub create_subnode {
     components => $components,
     code       => $code,
     type       => 'subview',
+    %{ $options || {} },
   };
-  foreach ( keys %{$options||{}} ) {
-    $details->{$_} = $options->{$_};
-  }
-  if ($self->tree) {
-    return $self->tree->create_node( $code, $details );
-  }
+
+  return $self->tree->create_node( $code, $details )
+    if $self->tree;
 }
+
 sub create_submenu {
   my ($self, $code, $caption, $options ) = @_;
-  my $details = { 'caption'    => $caption, 'url' => '', 'type' => 'menu' };
-  foreach ( keys %{$options||{}} ) {
-    $details->{$_} = $options->{$_};
-  }
-  if ($self->tree) {
-    return $self->tree->create_node( $code, $details );
-  }
+
+  my $details = {
+    caption => $caption,
+    url     => '',
+    type    => 'menu',
+    %{ $options || {} },
+  };
+  
+  return $self->tree->create_node( $code, $details )
+    if $self->tree;
 }
 
 sub update_configs_from_parameter {
