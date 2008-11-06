@@ -30,7 +30,6 @@ sub availability {
   if ($self->Obj->isa('Bio::EnsEMBL::Variation::Variation')){
     $hash->{'variation'} = 1;
   }
-
   return $hash;
 }
 

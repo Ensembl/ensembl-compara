@@ -730,8 +730,6 @@ sub pep_snps{
 
   my $rtn = $rtn_structure eq 'hash' ? {} : [];
 
-  use Time::HiRes qw(time);
-  my $T = time;
   unless ($self->species_defs->databases->{'DATABASE_VARIATION'} || $self->species_defs->databases->{'ENSEMBL_GLOVAR'}) {
     return $rtn;
   }
@@ -805,7 +803,6 @@ sub pep_snps{
       }
     }  #end $residue
   }  #end $snp    
-  warn time - $T," munged data"; $T = time;
   $self->{'pep_snps'} = \@aas;
   
   if ($rtn_structure eq 'hash') {
