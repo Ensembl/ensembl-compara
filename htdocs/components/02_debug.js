@@ -4,7 +4,6 @@
 ** to january 2038 (end of 32bit time)
 ***********************************************************************/
 
-__info( document.cookie );
 var Cookie = {
   set: function(name, value, expiry) {
     return ( document.cookie =
@@ -28,17 +27,25 @@ var Cookie = {
 // either enabled/disabled...
 
 var ENSEMBL_AJAX = Cookie.get('ENSEMBL_AJAX');
-if( ENSEMBL_AJAX != 'enabled' && ENSEMBL_AJAX != 'disabled' && ENSEMBL_AJAX != 'none' ) {
-  ENSEMBL_AJAX = Ajax.getTransport()?'enabled':'none';
-  Cookie.set('ENSEMBL_AJAX',ENSEMBL_AJAX);
-}
 var ENSEMBL_WIDTH = Cookie.get('ENSEMBL_WIDTH');
-if( ! ENSEMBL_WIDTH ) {
-  ENSEMBL_WIDTH = Math.floor( ( document.viewport.getWidth() - 250 ) /100 ) * 100;
-  if(ENSEMBL_WIDTH < 500) ENSEMBL_WIDTH = 500;
-  Cookie.set( 'ENSEMBL_WIDTH',ENSEMBL_WIDTH );
+var RESIZE_BAR  = 1;
+
+function __set_cookies( ) {
+  if( ENSEMBL_AJAX != 'enabled' && ENSEMBL_AJAX != 'disabled' && ENSEMBL_AJAX != 'none' ) {
+    ENSEMBL_AJAX = Ajax.getTransport()?'enabled':'none';
+    if( ENSEMBL_AJAX == 'enabled' ) {
+      RESIZE_BAR = 0;
+    }
+    Cookie.set( 'ENSEMBL_AJAX',ENSEMBL_AJAX );
+  }
+  if( ! ENSEMBL_WIDTH ) {
+    ENSEMBL_WIDTH = Math.floor( ( document.viewport.getWidth() - 250 ) /100 ) * 100;
+    if(ENSEMBL_WIDTH < 500) ENSEMBL_WIDTH = 500;
+    Cookie.set( 'ENSEMBL_WIDTH',ENSEMBL_WIDTH );
+  }
 }
 
+addLoadEvent( __set_cookies );
 /***********************************************************************
   Debugging code - this code displays the debug box at the top of the
   webpage 
@@ -210,6 +217,7 @@ function __init_ensembl_debug() {
     });
   }
   __info( 'AJAX is '+ENSEMBL_AJAX+ '; load time is '+ENSEMBL_START_TIME+'s' );
+  __info( "COOKIE: "+document.cookie );
 }
 
 // Call initialisation function on page load

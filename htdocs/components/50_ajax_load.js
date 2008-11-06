@@ -43,6 +43,7 @@ $$('.ajax').each(function(panel) {
         }
         new Ajax.Request( component, {
 	  method: 'get',
+          requestHeaders: { Cookie: document.cookie },
           onSuccess: function(resp){
 	    $(t_node).replace(resp.responseText);
             __debug_raw( 'Loaded ('+_debug_end_time(__key)+'s) <a href="'+component+'">'+component+'</a>', 'success' );

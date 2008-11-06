@@ -430,9 +430,11 @@ addLoadEvent(__get_location_info);
 
 
 function __resize_nav() {
-  $$('.navbar').each(function(n){
-    n.setStyle({width:ENSEMBL_WIDTH+'px'});
-  });
+  if( RESIZE_BAR ) {
+    $$('.navbar').each(function(n){
+      n.setStyle({width:ENSEMBL_WIDTH+'px'});
+    });
+  }
 }
 
 addLoadEvent(__resize_nav);
