@@ -28,19 +28,20 @@ sub _init {
   my $length  = $Config->container_width();
   my $transcript_drawn = 0;
     
-  my $voffset = 0;
-  my $trans_ref = $Config->{'transcript'};
-  my $strand = $trans_ref->{'exons'}[0][2]->strand;
-  my $gene = $trans_ref->{'gene'};
-  my $transcript = $trans_ref->{'transcript'};
-  my @exons = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
+  my $voffset      = 0;
+  my $trans_ref    = $Config->{'transcript'};
+  my $strand       = $trans_ref->{'exons'}[0][2]->strand;
+  my $gene         = $trans_ref->{'gene'};
+  my $transcript   = $trans_ref->{'transcript'};
+  my @exons        = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
   # If stranded diagram skip if on wrong strand
   # For exon_structure diagram only given transcript
-  my $Composite = $self->Composite({'y'=>0,'height'=>$h});
-  #my($colour, $label, $hilight) = $self->colour( $gene, $transcript, $colours, %highlights );
-  my $colour = $self->colour($transcript);
+  my $Composite    = $self->Composite({'y'=>0,'height'=>$h});
+
+  my $colour       = $self->my_colour($self->transcript_key( $transcript, $gene ));
   my $coding_start = $trans_ref->{'coding_start'};
   my $coding_end   = $trans_ref->{'coding_end'  };
+
   my( $fontname, $fontsize ) = $self->get_font_details( 'caption' );
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $th = $res[3];
@@ -128,15 +129,6 @@ sub _init {
       $self->push($tglyph);
     }
   }
-}
-
-
-sub colour {
-  my ($self, $transcript ) = @_;
-  my $trans_type = lc($transcript->biotype."_".$transcript->status);
-  my $trans_col =  $self->my_colour($trans_type);
-  
-  return $trans_col; 
 }
 
 sub gene_href { return undef; }
