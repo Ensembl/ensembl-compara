@@ -111,7 +111,7 @@ sub render_normal {
       my $fgroup_name = $self->feature_group( $f );
       my $s =$f->start;
       my $e =$f->end;
-      my $db_name = $extdbs->{$f->external_db_id}{'db_name'};
+      my $db_name = $f->can('external_db_id') ? $extdbs->{$f->external_db_id}{'db_name'} : 'OLIGO';
       next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $e < 1 || $s > $length ;
       push @{$id{$fgroup_name}}, [$s,$e,$f,int($s*$pix_per_bp),int($e*$pix_per_bp),$db_name];
     }
