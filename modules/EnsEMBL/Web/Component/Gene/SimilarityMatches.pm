@@ -17,10 +17,14 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $html = qq(<p><strong>These are external records attached specifically to the gene; please see the transcript panel for those attached to the transcript and translation.</strong><br /><br /></p>);
-  $html .= $self->_matches( 'similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC' );
-
-  return $html;
+  return $self->_matches( 
+           'similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC'
+         ).$self->_info( 'Transcript and protein references','
+  <p>
+These are external records attached specifically to the gene; please see the transcript panel for those attached to the transcript(s) and protein(s).
+  </p>
+'
+         );
 }
 
 1;
