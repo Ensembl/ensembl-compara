@@ -22,7 +22,11 @@ sub content {
 
   my $samples = join ", ", ($object->get_samples("default"));
   my $strain = $object->species_defs->translate("strain")."s";
-  my $html = qq(<p>These $strain are displayed by default:<b> $samples.</b> Select the 'Configure this page' link in the left hand menu to customise which $strain and types of variation are displayed in the tables below.</p><br>);
-  return $html;
+  my $html = qq(<p>These $strain are displayed by default:<b> $samples.</b> <br /> Select the 'Configure this page' link in the left hand menu to customise which $strain and types of variation are displayed in the tables above.</p>);
+  my $info_html = $self->_info(
+  'Configuring the display',
+   $html
+  );
+  return $info_html;
 }
 1;
