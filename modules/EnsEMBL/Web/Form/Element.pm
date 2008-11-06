@@ -15,7 +15,6 @@ sub new {
     'widget_type'  => $array{ 'widget_type'} || 'text',
     '_validate'    => 0,
     'layout'       => $array{ 'layout'}    || 'normal',
-    'multibutton'  => $array{ 'multibutton' },
     'name'         => $array{ 'name' },
     'size'         => $array{ 'size' },
     'rows'         => $array{ 'rows' },
@@ -23,6 +22,7 @@ sub new {
     'required'     => $array{ 'required' },
     'notes'        => $array{ 'notes' },
     'style'        => $array{ 'style' } || 'normal',
+    'classes'      => $array{ 'classes' } || [],
     'styles'       => $array{ 'styles' } || [],
     'introduction' => $array{ 'introduction' },
     'label'        => $array{ 'label' },
@@ -52,7 +52,6 @@ sub styles       :lvalue { $_[0]{'styles'}; }
 sub widget_type  :lvalue { $_[0]{'widget_type'}; }
 sub _validate    :lvalue { $_[0]{'_validate'}; }
 sub layout       :lvalue { $_[0]{'layout'}; }
-sub multibutton  :lvalue { $_[0]{'multibutton'}; }
 sub name         :lvalue { $_[0]{'name'}; }
 sub size         :lvalue { $_[0]{'size'}; }
 sub rows         :lvalue { $_[0]{'rows'}; }
@@ -75,6 +74,40 @@ sub noescape     :lvalue { $_[0]{'noescape'};   }
 sub _is_valid    { return 1; }
 sub validate     { return $_[0]->required eq 'yes'; }
 sub _extra       { return ''; }
+
+sub add_class {
+  my ($self, $class) = @_;
+  return unless $class;
+  my $aref = $self->classes; 
+  push @$aref, $class;
+  $self->classes($aref);
+}
+
+sub add_style {
+  my ($self, $style) = @_;
+  return unless $style;
+  my $aref = $self->styles; 
+  push @$aref, $style;
+  $self->styles($aref);
+}
+
+sub class_attrib {
+  my $self = shift;
+  my $attrib = '';
+  if (scalar(@{$self->classes})) {
+    $attrib = ' class="'.join('', @{$self->classes}).'"';
+  }
+  return $attrib;
+}
+
+sub style_attrib {
+  my $self = shift;
+  my $attrib = '';
+  if (scalar(@{$self->styles})) {
+    $attrib = ' style="'.join(';', @{$self->styles}).'"';
+  }
+  return $attrib;
+}
 
 1;
 
