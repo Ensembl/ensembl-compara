@@ -88,7 +88,13 @@ sub _init {
         next;
       }
 
-      my $HREF = $self->get_parameter('band_links') ? $self->_url({'type' => 'Location', 'action' => 'View', '__clear' => 1, 'r' => "$chr:$vc_band_start-$vc_band_end"}) : '';
+      my @extra = ();
+      if( $self->get_parameter('band_links') eq 'yes' ) {
+        @extra = (
+          'href' =>  $self->_url({'type' => 'Location', 'action' => 'View', '__clear' => 1, 'r' => "$chr:$vc_band_start-$vc_band_end"}),
+          'title' => "Band: ".( $stain eq 'acen' ? 'Centromere' : $bandname )
+        );
+      }
 
       my $colour = $self->my_colour($stain);
       if( $stain eq 'acen' ) {
@@ -97,16 +103,14 @@ sub _init {
             'points'    => [ $vc_band_start, $h_offset + $h_wid, $vc_band_end,   $h_offset, $vc_band_end,   $h_offset + $wid, ],
             'colour'    => $colour,
             'absolutey' => 1,
-            'title'     => "Band: Centromere",
-            'href'      => $HREF,
+            @extra
           });
         } else {
 	  CORE::push @decorations, $self->Poly({
             'points'    => [ $vc_band_start, $h_offset, $vc_band_end,   $h_offset + $h_wid, $vc_band_start, $h_offset + $wid, ],
             'colour'    => $colour,
             'absolutey' => 1,
-            'title'     => "Band: centromere",
-            'href'      => $HREF,
+            @extra
           });
           $done_1_acen = 1;
         }
@@ -115,8 +119,7 @@ sub _init {
           'points'    => [ $vc_band_start, $h_offset, $vc_band_end,   $h_offset + $wid, $vc_band_end,   $h_offset, $vc_band_start, $h_offset + $wid, ],
           'colour'    => $colour,
           'absolutey' => 1,
-          'title'     => "Band: $bandname",
-          'href'      => $HREF,
+          @extra
         });
 	CORE::push @decorations, $self->Rect({
           'x'         => $vc_band_start,
@@ -125,8 +128,7 @@ sub _init {
           'height'    => $h_wid,
           'colour'    => $colour,
           'absolutey' => 1,
-          'title'     => "Band: $bandname",
-          'href'      => $HREF,
+          @extra
         });
       } else {
         if (($self->get_parameter('hide_bands') || 'no') eq 'yes') {
@@ -142,8 +144,7 @@ sub _init {
           'height'           => $wid,
           'colour'           => $colour,
           'absolutey'        => 1,
-          'title'            => "Band: $bandname",
-          'href'             => $HREF,
+          @extra
         }));
         $self->push($self->Line({
           'x'                => $R,
@@ -176,7 +177,6 @@ sub _init {
           'colour'           => $black,
           'text'             => $bandname,
           'absolutey'        => 1,
-          'href'             => $HREF,
         }));
       }
     }
