@@ -201,7 +201,6 @@ sub select_das_coords {
   }
   
   $self->title('Choose a coordinate system');
-  $self->add_element( 'type' => 'Header', 'value' => 'Coordinate Systems' );
   
   for my $species (@species) {
     
