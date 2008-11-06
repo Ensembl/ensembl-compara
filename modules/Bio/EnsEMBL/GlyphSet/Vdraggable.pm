@@ -10,12 +10,11 @@ sub render_normal {
   my $slice = $slice_adaptor->fetch_by_region(undef, $chr);
   my $len   = $slice->length;
   my $c_w   = $self->get_parameter('container_width');
-  my $glyph = $self->Rect({
+  my $glyph = $self->Space({
     'x'         => $c_w - $len,
     'y'         => 0,
     'width'     => $len,
     'height'    => 1,
-    'colour'    => 'green',
     'absolutey' => 1,
   });
 
