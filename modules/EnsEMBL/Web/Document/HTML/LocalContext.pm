@@ -119,7 +119,6 @@ $pad    </dd>";
               next unless ($param =~ /^_referer/ || $param =~ /^x_requested_with/);
               push @ok_params, $param;
             }
-            warn "OK parameters: @ok_params";
           }
           else {
             foreach my $param (@cgi_params) {
