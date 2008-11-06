@@ -132,7 +132,9 @@ sub content {
       $image->caption = 'Click on the image above to jump to an overview of the chromosome';
     }
   
-    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
+#    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
+    $image->set_button('drag', 'title' => 'Click on a chromosome' );
+    $image->imagemap = 'yes';
     $image->karyotype( $object, $pointers, 'Vkaryotype' );
     $html .= $image->render;
     if ($has_userdata) {

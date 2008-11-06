@@ -24,10 +24,10 @@ sub content {
   my $chr_name  = $object->seq_region_name;
 
   my $config = $object->image_config_hash($config_name);
-     $config->set_parameter(
-       'container_width',
-       $object->Obj->{'slice'}->seq_region_length
-     );
+     $config->set_parameters({
+       'container_width', $object->Obj->{'slice'}->seq_region_length,
+       'slice_number'    => '2|1'
+     });
   warn $config->get_parameter( 'container_width' );
   my $ideo_height = $config->get_parameter('image_height');
   my $top_margin  = $config->get_parameter('top_margin');
@@ -46,7 +46,9 @@ sub content {
     $image->cacheable          = 'no';
     $image->image_type         = 'chromosome';
     $image->image_name         = $species.'-'.$chr_name;
-    $image->imagemap           = 'no';
+    $image->set_button('drag', 'title' => 'Click or drag to jump to a region' );
+    $image->imagemap         = 'yes';
+    $image->{'panel_number'} = 'chrom';
 
   ## Check if there is userdata in session
   my $userdata = $object->get_session->get_tmp_data;
@@ -55,9 +57,8 @@ sub content {
 
   if ($userdata && $userdata->{'filename'}) {
     ## Set some basic image parameters
-    $image->imagemap = 'no';
-    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
-    $image->caption = 'Click on the image above to jump to an overview of the chromosome';
+#    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
+#    $image->caption = 'Click on the image above to jump to an overview of the chromosome';
 
     ## Create pointers from user data
     my $pointer_set = $self->create_userdata_pointers($image, $userdata);
@@ -65,7 +66,6 @@ sub content {
   }
 
   my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
-  $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
   $image->add_tracks($object, $config_name);
   $image->karyotype($object, $pointers, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
