@@ -117,17 +117,14 @@ sub _content {
     my $subslice_start = $subslice->[0]+$subslice->[2];
     my $subslice_end   = $subslice->[1]+$subslice->[2];
     my ($exon_start,$exon_end);
-    for ($e_counter; $e_counter < $e_count; $e_counter++) {
+    for (; $e_counter < $e_count; $e_counter++) {
       my $exon  = $exons[$e_counter];
       $exon_start = $exon->[0];
       $exon_end   = $exon->[1];
-      my $exon_id = $exon->[2]->stable_id;
 
       #if the exon is still within the subslice then work with it
       if ( ($subslice_end > $exon_end) ){
-        my $start = $subslice_start;
-        my $end   = $exon_start;
-        push @{$intron_exon_slices}, [$start, $end] if $intron_exon_slices; #don't add the first one
+        push @{$intron_exon_slices}, [$subslice_start, $exon_start] if $intron_exon_slices; #don't add the first one
         push @{$intron_exon_slices}, $exon;
 
         #set subslice to the end of the ready for the next exon iteration
@@ -135,8 +132,6 @@ sub _content {
       }
       else {
         #otherwise draw a line to the end of the subslice and move on
-        my $start = $ens_exons->[$e_counter-1]->[1];
-        my $end = $subslice_end;
         push @{$intron_exon_slices}, [$exons[$e_counter-1]->[1], $subslice_end];
         next SUBSLICE;
       }
