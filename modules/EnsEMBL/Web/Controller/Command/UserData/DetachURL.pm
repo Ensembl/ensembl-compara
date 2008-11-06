@@ -14,13 +14,12 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  my $cgi = $self->action->cgi;
 
   my $object = $self->create_object;
   if ($object) {
     $object->get_session->purge_tmp_data('url');
   }
-  $self->ajax_redirect($self->url('/UserData/ManageRemote'));
+  $self->ajax_redirect($self->ajax_url('/UserData/ManageRemote'));
 }
 
 }
