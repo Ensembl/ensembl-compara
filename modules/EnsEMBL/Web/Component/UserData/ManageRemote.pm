@@ -16,13 +16,14 @@ sub _init {
 sub content {
   my $self = shift;
 
-  my $html;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-
   ## Control panel fixes
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
   $dir = '' if $dir !~ /_/;
   my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+
+  my $html;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $save = sprintf('<a href="%s/Account/Login?%s" class="modal_link">Log in to save</a>', $dir, $referer);
 
   ## List DAS sources
   $html .= "<h4>DAS sources</h4>";
@@ -36,11 +37,12 @@ sub content {
   if (@sources) {
 
     my $table = EnsEMBL::Web::Document::SpreadSheet->new();
-      $table->add_columns(
-        {'key' => "name", 'title' => 'Datasource name', 'width' => '60%', 'align' => 'left' },
-        {'key' => "date", 'title' => 'Last updated', 'width' => '20%', 'align' => 'left' },
-        {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
-      );
+    $table->add_columns(
+      {'key' => "name", 'title' => 'Datasource name', 'width' => '50%', 'align' => 'left' },
+      {'key' => "date", 'title' => 'Last updated', 'width' => '20%', 'align' => 'left' },
+      {'key' => "save", 'title' => '', 'width' => '15%', 'align' => 'left' },
+      {'key' => "delete", 'title' => '', 'width' => '15%', 'align' => 'left' },
+    );
     
     foreach my $source (sort { lc $a->label cmp lc $b->label } @sources) {
 
@@ -50,9 +52,11 @@ sub content {
         $table->add_row( { 'name'  => $source->label, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
       else { ## temporary
-        my $link = 'Temporary data';
-        #my $link = sprintf('a href="%s/UserData/DetachDAS?id=%s;%s">Detach</a>', $dir, $source->id, $referer);
-        $table->add_row( { 'name'  => $source->label, 'date' => 'N/A', 'delete' => $link } );
+        if ($user) {
+          $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;dsn=%s;%s">Save to account</a>', $dir, $source->logic_name, $referer);
+        }
+        my $detach = sprintf('<a href="%s/UserData/DetachDAS?logic_name=%s;%s">Detach</a>', $dir, $source->logic_name, $referer);
+        $table->add_row( { 'name'  => $source->label, 'date' => 'N/A', 'save' => $save, 'delete' => $detach } );
       }
 
     }
@@ -78,9 +82,10 @@ sub content {
   if (@urls) {
     my $table = EnsEMBL::Web::Document::SpreadSheet->new();
     $table->add_columns(
-      {'key' => "url", 'title' => 'Datasource URL', 'width' => '60%', 'align' => 'left' },
+      {'key' => "url", 'title' => 'Datasource URL', 'width' => '50%', 'align' => 'left' },
       {'key' => "date", 'title' => 'Last updated', 'width' => '20%', 'align' => 'left' },
-      {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
+      {'key' => "save", 'title' => '', 'width' => '15%', 'align' => 'left' },
+      {'key' => "delete", 'title' => '', 'width' => '15%', 'align' => 'left' },
     );
     foreach my $source (@urls) {
       if (ref($source) =~ /Record/) { ## from user account
@@ -89,8 +94,11 @@ sub content {
         $table->add_row( { 'url'  => $source->url, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
       else { ## temporary
-        my $link = sprintf('<a href="%s/UserData/DetachURL?%s">Detach</a>', $dir, $referer);
-        $table->add_row( { 'url'  => $source->{'url'}, 'date' => 'N/A', 'delete' => $link } );
+        if ($user) {
+          $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;url=%s;%s">Save to account</a>', $dir, $source->{'url'}, $referer);
+        }
+        my $detach = sprintf('<a href="%s/UserData/DetachURL?%s">Detach</a>', $dir, $referer);
+        $table->add_row( { 'url'  => $source->{'url'}, 'date' => 'N/A', 'save' => $save, 'delete' => $detach } );
       }
     }
     $html .= $table->render;
