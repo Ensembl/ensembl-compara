@@ -8,7 +8,6 @@ use strict;
 use warnings;
 
 use Class::Std;
-use Data::Dumper;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Wizard::Connection;
@@ -160,14 +159,10 @@ sub render_current_node {
     $self->set_form($form);
     my $init_method = $node->name;
     $node->$init_method; 
-    my $fieldset = $form->add_fieldset;
-    $fieldset->notes($node->notes);
     $html .= "<h2>".$node->title."</h2>\n";
-
     if ($object->param('error_message')) {
       $html .= '<div class="alert-box">'.$object->param('error_message').'</div>';
     }
-
     $html .= $node->text_above."\n" if $node->text_above;
     $html .= $self->render_connection_form($node);
     $html .= "\n".$node->text_below."\n" if $node->text_below;
@@ -182,9 +177,30 @@ sub render_connection_form {
   my ($self, $node) = @_;
   my $html = '';
 
-  ## Main form widgets
-  foreach my $element (@{ $node->get_elements }) {
-    $self->form->add_element(%$element);
+  my $form = $self->get_form;
+  my $notes_done = 0;
+
+  ## Optional fieldsets (only needed if wizard form is long and complex, e.g. DAS
+  if ($node->get_fieldsets) {
+    foreach my $hashref (@{$node->get_fieldsets}) {
+      my $extra_fieldset = $form->add_fieldset(%$hashref);
+      if ($node->notes && !$notes_done) {
+        $extra_fieldset->notes($node->notes);
+        $notes_done = 1;
+      }
+    }
+  }
+
+  ## Standard form widgets
+  if ($node->get_elements) {
+    my $fieldset = $form->add_fieldset;
+    if ($node->notes && !$notes_done) {
+      $fieldset->notes($node->notes);
+      $notes_done = 1;
+    }
+    foreach my $element (@{ $node->get_elements }) {
+      $self->form->add_element(%$element);
+    }
   }
 
   ## Passed parameters

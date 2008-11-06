@@ -51,20 +51,22 @@ sub select_das {
   my $self = shift;
 
   $self->title('Select a DAS source');
+  my $fieldset = {};
+  my $elements = [];
   
   # Get a list of DAS sources (filtered if specified)
   my $sources = $self->object->get_das_server_dsns();
   
   # Process any errors
   if (!ref $sources) {
-    $self->add_element( 'type' => 'Information', 'value' => $sources );
+    push @$elements, {'type' => 'Information', 'value' => $sources };
   }
   elsif (!scalar @{ $sources }) {
-    $self->add_element( 'type' => 'Information', 'value' => 'No sources found' );
+    push @$elements, {'type' => 'Information', 'value' => 'No sources found' };
   }
-  
-  # Otherwise add a checkbox element for each DAS source
+  ## Otherwise add a checkbox element for each DAS source
   else {
+    $fieldset->{'layout'} = 'table';
     my @already_added = ();
     my $all_das = $ENSEMBL_WEB_REGISTRY->get_all_das(  );
     for my $source (@{ $sources }) {
@@ -75,7 +77,7 @@ sub select_das {
       }
       # Otherwise add a checkbox...
       else {
-        $self->add_element( 'type' => 'DASCheckBox', 'das'  => $source );
+        push @$elements, {'type' => 'DASCheckBox', 'das'  => $source};
       }
     } # end DAS source loop
     
@@ -88,6 +90,8 @@ sub select_das {
     }
   } # end if-else
   
+  $fieldset->{'elements'} = $elements;
+  $self->add_fieldset($fieldset);
 }
 # Logic method, used for checking a DAS source before adding it
 sub validate_das {
@@ -201,9 +205,8 @@ sub select_das_coords {
   
   for my $species (@species) {
     
-    my $fieldset =$self->create_fieldset();
-    $self->add_fieldset($fieldset);
-    $fieldset->legend("Genomic ($species)");
+    my $fieldset = {'legend' => "Genomic ($species)"};
+    my $f_elements = [];
     
     my $csa =  Bio::EnsEMBL::Registry->get_adaptor($species, "core", "CoordSystem");
     my @coords = sort {
@@ -213,35 +216,38 @@ sub select_das_coords {
     } @{ $csa->fetch_all };
     for my $cs (@coords) {
       $cs = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_hashref($cs);
-      $fieldset->add_element( 'type'    => 'CheckBox',
+      push @$f_elements, {'type'    => 'CheckBox',
                              'name'    => 'coords',
                              'value'   => $cs->to_string,
-                             'label'   => $cs->label );
+                             'label'   => $cs->label };
     }
+    $fieldset->{'elements'} = $f_elements;
+    $self->add_fieldset($fieldset);
   }
   
-  my $fieldset =$self->create_fieldset();
-  $self->add_fieldset($fieldset);
-  $fieldset->legend('Gene');
-  
+  my $gene_fieldset = {'legend' => 'Gene'};
+  my $g_elements = [];
   for my $cs (@GENE_COORDS) {
     $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
-    $fieldset->add_element( 'type'    => 'CheckBox',
+    push @$g_elements, { 'type'    => 'CheckBox',
                            'name'    => 'coords',
                            'value'   => $cs->to_string,
-                           'label'   => $cs->label );
+                           'label'   => $cs->label };
   }
+  $gene_fieldset->{'elements'} = $g_elements;
+  $self->add_fieldset($gene_fieldset);
   
-  $fieldset =$self->create_fieldset();
-  $self->add_fieldset($fieldset);
-  
+  my $prot_fieldset = {'legend' => 'Protein'};
+  my $p_elements = [];
   for my $cs (@PROT_COORDS) {
     $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
-    $fieldset->add_element( 'type'    => 'CheckBox',
+    push @$p_elements, { 'type'    => 'CheckBox',
                            'name'    => 'coords',
                            'value'   => $cs->to_string,
-                           'label'   => $cs->label );
+                           'label'   => $cs->label };
   }
+  $prot_fieldset->{'elements'} = $p_elements;
+  $self->add_fieldset($prot_fieldset);
   
   $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
   
@@ -301,7 +307,7 @@ sub attach_das {
     if (scalar @success) {
       $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources have now been attached:' );
       for my $source (@success) {
-        $self->add_element( 'type' => 'Information', 'styles' => ['no-bold'],
+        $self->add_element( 'type' => 'Information', 'classes' => ['no-bold'],
                             'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
                                                                 $source->label,
                                                                 $source->description,
@@ -312,7 +318,7 @@ sub attach_das {
     if (scalar @skipped) {
       $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources were already attached:' );
       for my $source (@skipped) {
-        $self->add_element( 'type' => 'Information', 'styles' => ['no-bold'], 
+        $self->add_element( 'type' => 'Information', 'classes' => ['no-bold'], 
                             'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
                                                                 $source->label,
                                                                 $source->description,
@@ -438,7 +444,7 @@ sub overwrite_warning {
     $self->add_element(( type => 'CheckBox', name => 'save', label => 'Save current URL to my account', 'checked'=>'checked' ));
   }
   else {
-    $self->add_element(('type'=>'Information', 'styles' => ['no-bold'], 'value'=>'<a href="/Account/Login" class="modal_link">Log into your user account</a> to save the current URL.'));
+    $self->add_element(('type'=>'Information', 'classes' => ['no-bold'], 'value'=>'<a href="/Account/Login" class="modal_link">Log into your user account</a> to save the current URL.'));
   }
 }
 
@@ -507,8 +513,9 @@ sub url_feedback {
 sub _output_das_text {
   my ( $self, @sources ) = @_;
   map {
-    $self->add_element( 'type' => 'Information',
-                        'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
+    $self->add_element( 'type'    => 'Information',
+                        'classes'  => ['no-bold'],
+                        'value'   => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
                                            $_->label,
                                            $_->description,
                                            $_->homepage );

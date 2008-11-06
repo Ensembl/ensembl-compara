@@ -21,6 +21,7 @@ sub new {
     'cols'         => $array{ 'cols' },
     'required'     => $array{ 'required' },
     'notes'        => $array{ 'notes' },
+    'bg'           => $array{ 'bg' },
     'style'        => $array{ 'style' } || 'normal',
     'classes'      => $array{ 'classes' } || [],
     'styles'       => $array{ 'styles' } || [],

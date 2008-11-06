@@ -13,11 +13,9 @@ sub new {
   $params{'name'}       ||= 'dsn';
   $params{'value'}      ||= $params{'das'}->logic_name;
   $params{'label'}      ||= $params{'das'}->label;
+  $params{'bg'}         ||= 'bg1';
   my $self = $class->SUPER::new( %params );
   $self->checked = $params{'checked'};
-  if ($params{'long_label'}) {
-    $self->add_class('checkbox-long');
-  }
   $self->_short_das_desc( $params{'das'} );
   return $self;
 }
@@ -37,31 +35,18 @@ sub render {
   my $self = shift;
   my $notes = '';
   if ($self->notes) {
-    $notes = ' <div style="font-weight:normal">'.CGI::escapeHTML($self->notes);
+    $notes = CGI::escapeHTML($self->notes);
     $notes .= sprintf(' (<span title="%s">Mouseover&#160;for&#160;full&#160;text</span>)', CGI::escapeHTML($self->comment)) if $self->comment;
-    $notes .= '</div>';
   }
-  else {
-    $notes = ' <div style="font-weight:normal">&#160;</div>'; ## Empty div to avoid uneven rendering
-  }
-  return sprintf(
-    qq(
-  <dl>
-    <dt%s%s>
-      <label>%s%s</label>
-    </dt>
-    <dd%s%s>
-      <input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox" %s/>
-    </dd>
-  </dl>),
-    $self->class_attrib, $style_attrib,
-    $self->{'raw'} ? $self->label : CGI::escapeHTML( $self->label ),
-    $notes,
-    $self->class_attrib, $style_attrib,
-    CGI::escapeHTML( $self->name ),
-    CGI::escapeHTML( $self->id ),
-    $self->value || 'yes', $self->checked ? 'checked="checked" ' : '',
+  ## This assumes that DASCheckBox layout uses the 'table' option!
+  my $label = $self->{'raw'} ? $self->label : '<strong>'.CGI::escapeHTML( $self->label ).'</strong>';
+  $label .= '<br />'.$notes if $notes;
+  my $widget = sprintf('<input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox" %s/>',
+      CGI::escapeHTML( $self->name ), 
+      CGI::escapeHTML( $self->id ),
+      $self->value || 'yes', $self->checked ? 'checked="checked" ' : '',
   );
+  return {'label' => $label, 'widget' => $widget};
 }
 
 

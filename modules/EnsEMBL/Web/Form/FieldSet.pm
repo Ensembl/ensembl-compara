@@ -3,19 +3,22 @@ package EnsEMBL::Web::Form::FieldSet;
 use strict;
 use base qw( EnsEMBL::Web::Root );
 
+use EnsEMBL::Web::Document::SpreadSheet;
 use CGI qw(escapeHTML);
 
 sub new {
   my ($class, %option) = @_;
   my $self = {
-    '_id'         => $option{'form'},
-    '_elements'   => [],
+    '_id'               => $option{'form'},
+    '_layout'           => $option{'layout'} || 'normal',
+    '_legend'           => $option{'legend'} || '',
+    '_wizard_elements'  => $option{'elements'} || [],
+    '_elements'         => [],
     '_set_id'     => 1,
     '_required'   => 0,
     '_file'       => 0,
     '_extra'      => '',
     '_notes'      => '',
-    '_legend'     => ''
   };
   bless $self, $class;
   return $self;
@@ -72,12 +75,10 @@ sub _next_id {
 }
 
 sub _render_element {
-  my( $self, $element ) = @_;
+  my( $self, $element, $layout ) = @_;
   my $output;
   return $element->render() if $element->type eq 'Hidden';
-
-  #my $style = $element->required ? 'required' : 'optional';
-  return $element->render();
+  return $element->render($layout);
 }
 
 
@@ -103,8 +104,34 @@ sub render {
     $output .= "</div>\n";
   } 
   
-  foreach my $element ( @{$self->{'_elements'}} ) {
-    $output .= $self->_render_element( $element );
+  if ($self->{'_layout'} eq 'table') {
+    ## Used for complex forms like DAS and healthchecks
+    my $table = EnsEMBL::Web::Document::SpreadSheet->new();
+    $table->add_columns(
+      {'key' => 'label', 'title' => '', 'width' => '90%', 'align' => 'left' },
+      {'key' => 'widget', 'title' => '', 'width' => '5%', 'align' => 'left' },
+    );
+    if (scalar(@{$self->{'_wizard_elements'}})) {
+      foreach my $wizard_element (@{$self->{'_wizard_elements'}}) {
+        $self->add_element(%$wizard_element);
+      }
+    }
+    my $hidden_output;
+    foreach my $element ( @{$self->{'_elements'}} ) {
+      if ($element->type eq 'Hidden') {
+        $hidden_output .= $self->_render_element( $element );
+      }
+      else {
+        $table->add_row($self->_render_element( $element, 'table') );
+      }
+    }
+    $output .= $table->render;
+    $output .= $hidden_output;
+  }
+  else {
+    foreach my $element ( @{$self->{'_elements'}} ) {
+      $output .= $self->_render_element( $element );
+    }
   }
   $output .= "\n</fieldset>\n";
   return $output;

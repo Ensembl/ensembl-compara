@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use Class::Std;
+use EnsEMBL::Web::Form::FieldSet;
 
 {
 
@@ -14,6 +15,7 @@ my %Title :ATTR(:set<title> :get<title>);
 my %Name :ATTR(:set<name> :get<name> :init_arg<name>);
 my %Object :ATTR(:set<object> :get<object> :init_arg<object>);
 my %Elements :ATTR(:set<elements> :get<elements> :init_arg<elements>);
+my %FieldSets :ATTR(:set<fieldsets> :get<fieldsets>);
 my %Parameter :ATTR(:set<parameter> :get<parameter> :init_arg<parameter>);
 my %Notes :ATTR(:set<notes> :get<notes>);
 my %Backtrack :ATTR(:set<backtrack> :get<backtrack> :init_arg<backtrack>);
@@ -33,6 +35,7 @@ sub BUILD {
   $self->set_object($args->{object});
   $self->set_backtrack($args->{backtrack});
   $self->set_elements([]);
+  $self->set_fieldsets([]);
   $self->set_parameter({});
 }
 
@@ -70,6 +73,13 @@ sub elements {
   my $self = shift;
   $self->set_elements(shift) if @_;
   return $self->get_elements;
+}
+
+sub fieldsets {
+  ### a
+  my $self = shift;
+  $self->set_fieldsets(shift) if @_;
+  return $self->get_fieldsets;
 }
 
 sub parameter {
@@ -116,6 +126,14 @@ sub add_element {
 ### Adds a form element consisting of a hash of parameters
   my( $self, %options ) = @_;
   push @{ $self->elements }, \%options;
+}
+
+sub add_fieldset {
+### Adds a hashref to store separate fieldsets
+### Hashref should be in the format {'legend' => '', 'elements' => [], 'layout' => ''}
+### (but with values included, obviously!)
+  my( $self, $fieldset ) = @_;
+  push @{ $self->fieldsets }, $fieldset;
 }
 
 sub add_notes {
