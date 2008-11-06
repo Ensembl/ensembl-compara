@@ -287,13 +287,20 @@ sub ajax_zmenu      {
     }
 
     # Link to TreeFam
-    # Currently broken!
-    warn( "==> @$obj" );
     if( my $treefam_link = $obj->get_ExtURL( 'TREEFAM', $obj->stable_id ) ){
       $panel->add_entry({
         'type'     => 'TreeFam',
         'label'    => 'TreeFam',
         'link'     => $treefam_link,
+        'priority' => 195,
+        'extra'     => {'external' => 1}, 
+      });
+    }
+    if( my $phy_link = $obj->get_ExtURL( 'PHYLOMEDB', $obj->stable_id ) ){
+      $panel->add_entry({
+        'type'     => 'PhylomeDB',
+        'label'    => 'PhylomeDB',
+        'link'     => $phy_link,
         'priority' => 195,
         'extra'     => {'external' => 1}, 
       });
