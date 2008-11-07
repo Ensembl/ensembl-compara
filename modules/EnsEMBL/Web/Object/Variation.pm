@@ -26,7 +26,7 @@ our @ISA = qw(EnsEMBL::Web::Object);
 sub availability {
   my $self = shift;
   my $hash = $self->_availability;
-  warn $self->Obj;
+#  warn $self->Obj;
   if ($self->Obj->isa('Bio::EnsEMBL::Variation::Variation')){
     $hash->{'variation'} = 1;
   }
