@@ -27,6 +27,7 @@ sub init {
    );
 
   $self->add_tracks( 'ideogram',
+    [ 'drag_left', '', 'Vdraggable', { 'display' => 'normal', 'part' => 0, 'menu' => 'no' } ],
     [ 'Videogram', 'Ideogram', 'Videogram', {
       'display'    => 'normal',
       'renderers'  => [qw(normal normal)],
@@ -34,8 +35,10 @@ sub init {
       'totalwidth' => 18,
       'padding'    => 6,
       'colourset'  => 'ideogram'
-    } ]
+    } ],
+    [ 'drag_right', '', 'Vdraggable', { 'display' => 'normal', 'part' => 1, 'menu' => 'no' } ],
   );
+
 }
 
 1;
