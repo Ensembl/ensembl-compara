@@ -7,7 +7,7 @@ sub init {
 
   $self->set_parameters({
     'title'         => 'Context slice',
-    'show_buttons'  => 'yes',   # show +/- buttons
+    'show_buttons'  => 'no',    # show +/- buttons
     'button_width'  => 8,       # width of red "+/-" buttons
     'show_labels'   => 'yes',   # show track names on left-hand side
     'label_width'   => 100,     # width of labels on left-hand side

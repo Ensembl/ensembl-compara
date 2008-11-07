@@ -6,7 +6,7 @@ sub init {
   my ($self) = @_;
   $self->set_parameters({
     'title'         => 'Sample Transcript slice', 
-    'show_buttons'  => 'yes',   # show +/- buttons
+    'show_buttons'  => 'no',    # show +/- buttons
     'button_width'  => 8,       # width of red "+/-" buttons
     'show_labels'   => 'yes',   # show track names on left-hand side
     'label_width'   => 100,     # width of labels on left-hand side
@@ -18,13 +18,13 @@ sub init {
   });
 
   $self->create_menus(
+    'tsv_transcript'  => '',
     'other'           => 'Other'
   );
 
   $self->load_tracks();
 
   $self->add_tracks( 'other',
-    [ 'tsv_transcript',     '',     'tsv_transcript',         { 'display' => 'normal',  'strand' => 'b', 'src' => 'all', 'colours' => $self->species_defs->colour('gene'), 'menu' => 'yes'  } ],
     [ 'coverage_top',       '',     'coverage',               { 'display' => 'on',  'strand' => 'r', 'type' => 'top', 'caption' => 'Resequence coverage', 'menu' => 'no', } ],
     [ 'tsv_variations',     '',     'tsv_variations',         { 'display' => 'normal',  'strand' => 'r', 'colours' => $self->species_defs->colour('variation'), 'menu' => 'no'  } ],
  );
