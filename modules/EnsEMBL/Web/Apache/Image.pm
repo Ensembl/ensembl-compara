@@ -13,6 +13,7 @@ use EnsEMBL::Web::Root;
 use Apache2::Const qw(:common :methods :http);
 use Apache2::Util ();
 
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Cache;
 
 our $MEMD = EnsEMBL::Web::Cache->new;
@@ -36,7 +37,7 @@ sub handler {
     
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
       $r->headers_out->set('Content-Length' => $data->{'size'});
-      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 86400*30*12) );
+      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 60*60*24*30*12) );
       $r->set_last_modified($data->{'mtime'});
       
       $r->content_type('image/png');
@@ -47,12 +48,22 @@ sub handler {
   } elsif( -e $path ) {
 
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
-      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 86400*30*12) );
+      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 60*60*24*30*12) );
       my $rc = $r->sendfile($path);
       return OK;
       
   }
 
+
+  ## Nothing found: delete all related content if MEMD 
+  if ($MEMD) {
+      my $session_id = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+      $MEMD->delete_by_tags(
+        $ENV{'HTTP_REFERER'},
+        $session_id ? "session_id[$session_id]" : (),
+      );
+  }
+  
   return NOT_FOUND;
 } # end of handler
 

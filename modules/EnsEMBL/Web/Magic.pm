@@ -271,12 +271,13 @@ sub ingredient {
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
 
-  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
-  $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
+  my $session_id   = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+  $ENV{CACHE_KEY}  = $ENV{REQUEST_URI};
+  $ENV{CACHE_TAGS} = {$ENV{'HTTP_REFERER'} => 1};
   ## Ajax request
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
   $ENV{CACHE_KEY} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
-
+  
   my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
 
   timer_push( 'Retrieved content from cache' ); 	 
@@ -323,7 +324,7 @@ sub ingredient {
       $ENV{CACHE_KEY},
       $content,
       60*60*24*7,
-      'AJAX', keys %{ $ENV{CACHE_TAGS}||{} }
+      ( 'AJAX', keys %{ $ENV{CACHE_TAGS}||{} } ) ## TAGS
     ) if $MEMD && $webpage->format eq 'HTML';
     timer_push( 'Rendered content cached' );
   }

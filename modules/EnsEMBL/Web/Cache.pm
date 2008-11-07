@@ -92,7 +92,7 @@ sub delete_by_tags {
   my $self = shift;
   my @tags = (@_, $self->{namespace});
 
-  _warn('MEMCACHED->tags_delete( '.join(', ', @tags).')');
+  _warn('MEMCACHED->delete_by_tags( '.join(', ', @tags).')');
 
   my $cmd = 'tags_delete '.join(' ', @tags)."\r\n";
   my $items_deleted = 0;
