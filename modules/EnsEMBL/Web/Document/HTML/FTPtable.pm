@@ -41,7 +41,7 @@ sub render {
     }
     $class = $row % 2 == 0 ? 'bg1' : 'bg2';
 
-    $html .= qq#
+    $html .= qq(
 <tr class="$class">
 <td><strong><i>$sp_name</i></strong> ($common)</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/dna/">FASTA</a> (DNA)</td>
@@ -53,7 +53,7 @@ sub render {
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_gtf/">GTF</a></td>
 <td>$emf</td>
 </tr>
-      #;
+      );
     $row++;
   }
   my $rev = $class eq 'bg2' ? 'bg2' : 'bg1';
