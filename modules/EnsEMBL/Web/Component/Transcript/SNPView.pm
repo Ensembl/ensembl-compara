@@ -95,10 +95,10 @@ sub content {
 
   $Configs->{'snps'} = $object->get_imageconfig( "genesnpview_snps" );
   $Configs->{'snps'}->set_parameters({
-      'image_width',  $image_width,
-      'container_width' => 100,
-      'slice_number' => '1|1',
-      'context'      =>$context
+    'image_width',  $image_width,
+    'container_width' => 100,
+    'slice_number' => '1|1',
+    'context'      =>$context
   });
   $Configs->{'snps'}->{'snp_counts'} = [$count_sample_snps, scalar @$sample_snps, $context_count];
   $Configs->{'transcript'}->get_node('scalebar')->set('label', "Chr. @{[$object->__data->{'slices'}{'transcript'}[1]->seq_region_name]}"); 
@@ -245,10 +245,10 @@ sub _sample_configs {
       'coverage_obj'    => $munged_coverage,
     };
     unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
-  $sample_config->modify_configs(
-    [$sample_config->get_track_key('tsv_transcript', $object)],
-    {"caption" => $sample}
-  );
+    $sample_config->modify_configs(
+      [$sample_config->get_track_key('tsv_transcript', $object)],
+      {"caption" => $sample,'display' => 'normal' },
+    );
 
     $sample_config->{'_add_labels'} = 1;
 #warn "#### $sample\n";
@@ -259,6 +259,9 @@ sub _sample_configs {
     ## Finally the variation features (and associated transcript_variation_features )...  Not sure exactly which call to make on here to get
 
     ## Now push onto config hash...
+$sample_config->tree->dump("Transcript configuration", '([[caption]])')
+    if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
+
     push @containers_and_configs,    $sample_slice, $sample_config;
   } #end foreach sample
 
