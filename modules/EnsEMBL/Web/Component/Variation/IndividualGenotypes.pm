@@ -51,7 +51,7 @@ sub content {
     my @populations = map {_pop_url( $object, $_->{Name}, $_->{Link} ) } @{ $ind_data{$ind_id}{Population} };
 
     my $pop_string = join ", ", @populations;
-    my %tmp_row = {};
+    my %tmp_row = ();
 
      $tmp_row{'Individual'}  = "<small>".$ind_data{$ind_id}{Name}."<br />(".$ind_data{$ind_id}{Gender}.")</small>";
      $tmp_row{'Genotype'}    = "<small>$genotype</small>";
