@@ -82,7 +82,7 @@ sub content {
     return $html;
   }
   
-  my $validator = XHTML::Validator->new();
+  my $validator = XHTML::Validator->new('extended');
   
   # Request could be for several segments
   for my $coord_key ( keys %{ $data->{'features'} } ) {
@@ -133,7 +133,7 @@ sub content {
           $note = CGI::escapeHTML($note);
           # Show the error, but only show one at a time as it could get spammy
           if (!$errored) {
-            $html .= $self->_warn('Error parsing note', "$NOTE_ERROR$error");
+            $html .= $self->_warning('Error parsing note', "$NOTE_ERROR$error");
             $errored = 1;
           }
         }
@@ -148,7 +148,7 @@ sub content {
           $href = CGI::escapeHTML($href);
           # Show the error, but only show one at a time as it could get spammy
           if (!$errored) {
-            $html .= $self->_warn('Error parsing link', "$LINK_ERROR$error");
+            $html .= $self->_warning('Error parsing link', "$LINK_ERROR$error");
             $errored = 1;
           }
         }
