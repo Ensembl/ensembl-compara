@@ -661,14 +661,6 @@ sub hits2html {
 
   my @domids = sort { $domain->{$b}{genes} <=> $domain->{$a}{genes}} keys %$domain;
 
-  print(qq(<html>
-<head>
-<title>Top $number InterPro Domains in the Ensembl Database</title>
-</head>
-<body>
-
-));
-
   print qq(<p><table class="ss tint">\n);
   print qq(<tr
             <th>No.</th>
@@ -727,11 +719,6 @@ sub hits2html {
     # >top40  page
     print qq(<p class="center"><a href="$interpro_path/IPtop40">View</a> top 40 InterPro hits</p>);
   }
-
-  print(qq(
-</body>
-</html>
-));
 
   close(HTML);
 }
