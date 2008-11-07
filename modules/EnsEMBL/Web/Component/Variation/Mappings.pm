@@ -18,10 +18,13 @@ sub content {
   my $object = $self->object;
   my $html = '';
 
-  ## first check we have a location
-  unless ($object->core_objects->location ){
+  ## first check we have uniquely determined variation
+  unless ($object->param('vf') ){
    $html = "<p>You must select a location from the panel above to see this information</p>";
-   return $html;
+   return $self->_info(
+   'A unique location can not be determined for this Variation',
+   $html
+   );
   }
 
   my %mappings = %{ $object->variation_feature_mapping };
@@ -43,18 +46,14 @@ sub content {
 
   
   my $tsv_species =  ($object->species_defs->VARIATION_STRAIN &&  $object->species_defs->get_db eq 'core') ? 1 : 0;
-  my $location = $object->core_objects->{'parameters'}{'r'};
+  my $location = $object->core_objects->{'parameters'}{'r'}; 
 
   my $gene_adaptor = $object->database('core')->get_GeneAdaptor();
   my %genes;
 
   foreach my $varif_id (keys %mappings) {
-    ## Check vari feature matches the location we are intrested in
-    my $region = $mappings{$varif_id}{Chr};
-    my $start  = $mappings{$varif_id}{start};
-    my $end    = $mappings{$varif_id}{end};
-    my $v_loc  = $region.":".$start . "-" . $end;
-    next unless ($v_loc eq $location);
+    ## Check vari feature s the one we are intrested in
+    next unless ($varif_id  eq $object->param('vf'));
    
     my @transcript_variation_data = @{ $mappings{$varif_id}{transcript_vari} };
     unless( scalar @transcript_variation_data ) {      
