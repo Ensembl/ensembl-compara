@@ -24,17 +24,17 @@ sub counts {
   my $counts = {};
 
   if ($user && $user->id) {
-    $counts->{'bookmarks'}      = $user->bookmarks;
-    $counts->{'configurations'} = $user->configurations;
-    $counts->{'annotations'}    = $user->annotations;
+    $counts->{'bookmarks'}      = $user->bookmarks->count;
+    $counts->{'configurations'} = $user->configurations->count;
+    $counts->{'annotations'}    = $user->annotations->count;
     my @groups = $user->find_nonadmin_groups;
     foreach my $group (@groups) {
-      $counts->{'bookmarks'}      += $group->bookmarks;
-      $counts->{'configurations'} += $group->configurations;
-      $counts->{'annotations'}    += $group->annotations;
+      $counts->{'bookmarks'}      += $group->bookmarks->count;
+      $counts->{'configurations'} += $group->configurations->count;
+      $counts->{'annotations'}    += $group->annotations->count;
     }
 
-    $counts->{'news_filters'}   = $user->newsfilters;
+    $counts->{'news_filters'}   = $user->newsfilters->count;
     
     $counts->{'admin'}          = $user->find_administratable_groups;
     $counts->{'member'}         = scalar(@groups);

@@ -35,130 +35,128 @@ sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
 
 
+sub user_populate_tree {
+  my $self = shift;
+
+  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
+
+    my $settings_menu = $self->create_submenu( 'Settings', 'Manage Saved Settings' );
+
+    $settings_menu->append(
+      $self->create_node( 'Bookmarks', "Bookmarks ([[counts::bookmarks]])",
+        [qw(bookmarks EnsEMBL::Web::Component::Account::Bookmarks)],
+        { 'availability' => 1, 'concise' => 'Bookmarks' },
+      )
+    );
+
+    #$settings_menu->append($self->create_node( 'Configurations', "Configurations ([[counts::configurations]])",
+    #[qw(configs EnsEMBL::Web::Component::Account::Configurations
+    #    )],
+    #  { 'availability' => 1, 'concise' => 'Configurations' }
+    #));
+    #$settings_menu->append($self->create_node( 'Annotations', "Gene Annotations ([[counts::annotations]])",
+    #[qw(notes EnsEMBL::Web::Component::Account::Annotations
+    #    )],
+    #  { 'availability' => 1, 'concise' => 'Annotations' }
+    #));
+
+    $settings_menu->append(
+      $self->create_node( 'NewsFilters', "News Filters ([[counts::news_filters]])",
+        [qw(news EnsEMBL::Web::Component::Account::NewsFilters)],
+        { 'availability' => 1, 'concise' => 'News Filters' },
+      )
+    );
+
+    my $groups_menu = $self->create_submenu( 'Groups', 'Groups' );
+    
+    $groups_menu->append(
+      $self->create_node( 'MemberGroups', "Subscriptions ([[counts::member]])",
+        [qw(
+          groups   EnsEMBL::Web::Component::Account::MemberGroups
+          details  EnsEMBL::Web::Component::Account::MemberDetails
+        )],
+        { 'availability' => 1, 'concise' => 'Subscriptions' }
+      )
+    );
+    
+    $groups_menu->append(
+      $self->create_node( 'AdminGroups', "Administrator ([[counts::admin]])",
+        [qw(
+          admingroups   EnsEMBL::Web::Component::Account::AdminGroups
+          admindetails  EnsEMBL::Web::Component::Account::MemberDetails
+        )],
+        { 'availability' => 1, 'concise' => 'Administrator' },
+      )
+    );
+  }
+   
+}
+
 sub populate_tree {
   my $self = shift;
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user) {
+  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
 
-    $self->create_node( 'Links', "Quick Links",
-    [qw(links EnsEMBL::Web::Component::Account::Links
-        )],
+    $self->create_node( 'Links', 'Quick Links',
+      [qw(links EnsEMBL::Web::Component::Account::Links)],
+      { 'availability' => 1 },
+    );
+    $self->create_node( 'Details', 'Your Details',
+      [qw(account EnsEMBL::Web::Component::Account::Details)],
       { 'availability' => 1 }
     );
-    $self->create_node( 'Details', "Your Details",
-    [qw(account EnsEMBL::Web::Component::Account::Details
-        )],
-      { 'availability' => 1 }
-    );
-    $self->create_node( 'ChangePassword', "Change Password",
-    [qw(password EnsEMBL::Web::Component::Account::Password
-      )], 
+    $self->create_node( 'ChangePassword', 'Change Password',
+      [qw(password EnsEMBL::Web::Component::Account::Password)], 
       { 'availability' => 1 }
     );
 
-    #my $T = $self->tree->get_node('Settings');
-    my $settings_menu = $self->create_submenu( 'Settings', 'Manage Saved Settings' );
-    #use Carp qw(cluck);
-    #cluck ">>> $T MENU $settings_menu";
-    $settings_menu->append($self->create_node( 'Bookmarks', "Bookmarks ([[counts::bookmarks]])",
-    [qw(bookmarks EnsEMBL::Web::Component::Account::Bookmarks
-        )],
-      { 'availability' => 1, 'concise' => 'Bookmarks' }
-    ));
-=pod
-    $settings_menu->append($self->create_node( 'Configurations', "Configurations ([[counts::configurations]])",
-    [qw(configs EnsEMBL::Web::Component::Account::Configurations
-        )],
-      { 'availability' => 1, 'concise' => 'Configurations' }
-    ));
-    $settings_menu->append($self->create_node( 'Annotations', "Gene Annotations ([[counts::annotations]])",
-    [qw(notes EnsEMBL::Web::Component::Account::Annotations
-        )],
-      { 'availability' => 1, 'concise' => 'Annotations' }
-    ));
-=cut
-    $settings_menu->append($self->create_node( 'NewsFilters', "News Filters ([[counts::news_filters]])",
-    [qw(news EnsEMBL::Web::Component::Account::NewsFilters
-        )],
-      { 'availability' => 1, 'concise' => 'News Filters' }
-    ));
-
-    my $groups_menu = $self->create_submenu( 'Groups', 'Groups' );
-    $groups_menu->append($self->create_node( 'MemberGroups', "Subscriptions ([[counts::member]])",
-    [qw(
-        groups    EnsEMBL::Web::Component::Account::MemberGroups
-        details   EnsEMBL::Web::Component::Account::MemberDetails
-        )],
-      { 'availability' => 1, 'concise' => 'Subscriptions' }
-    ));
-    $groups_menu->append($self->create_node( 'AdminGroups', "Administrator ([[counts::admin]])",
-    [qw(admingroups EnsEMBL::Web::Component::Account::AdminGroups
-        admindetails   EnsEMBL::Web::Component::Account::MemberDetails
-        )],
-      { 'availability' => 1, 'concise' => 'Administrator' }
-    ));
-
-
-  }
-  else {
+  } else {
     $self->create_node( 'Login', "Log in",
-    [qw(account EnsEMBL::Web::Component::Account::Login
-        )],
+      [qw(account EnsEMBL::Web::Component::Account::Login)],
       { 'availability' => 1 }
     );
     $self->create_node( 'Register', "Register",
-    [qw(account EnsEMBL::Web::Component::Account::Register
-        )],
-      { 'availability' => 1 }
+      [qw(account EnsEMBL::Web::Component::Account::Register)],
+      { 'availability' => 1 },
     );
     $self->create_node( 'LostPassword', "Lost Password",
-    [qw(account EnsEMBL::Web::Component::Account::LostPassword
-        )],
+      [qw(account EnsEMBL::Web::Component::Account::LostPassword)],
       { 'availability' => 1 }
     );
     $self->create_node( 'Activate', "",
-    [qw(password EnsEMBL::Web::Component::Account::Password
-      )], 
+      [qw(password EnsEMBL::Web::Component::Account::Password)], 
       { 'no_menu_entry' => 1 }
     );
-
   }
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'Message', '',
-    [qw(message EnsEMBL::Web::Component::CommandMessage
-        )],
-      { 'no_menu_entry' => 1 }
+    [qw(message EnsEMBL::Web::Component::CommandMessage)],
+    { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'LoggedIn', '',
-    [qw(logged_in EnsEMBL::Web::Component::Account::LoggedIn
-        )],
-      { 'no_menu_entry' => 1 }
+    [qw(logged_in EnsEMBL::Web::Component::Account::LoggedIn)],
+    { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'Logout', "Log Out",
     [],
-      { 'no_menu_entry' => 1 }
+    { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'RegistrationFailed', '',
-    [qw(reg_failed EnsEMBL::Web::Component::Account::RegistrationFailed
-        )],
-      { 'no_menu_entry' => 1 }
+    [qw(reg_failed EnsEMBL::Web::Component::Account::RegistrationFailed)],
+    { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'Update', '',
-    [qw(update EnsEMBL::Web::Component::Account::Update
-        )],
-      { 'no_menu_entry' => 1 }
+    [qw(update EnsEMBL::Web::Component::Account::Update)],
+    { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'UpdateFailed', '',
-    [qw(update_failed EnsEMBL::Web::Component::Account::UpdateFailed
-        )],
-      { 'no_menu_entry' => 1 }
+    [qw(update_failed EnsEMBL::Web::Component::Account::UpdateFailed)],
+    { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'SelectGroup', '',
-    [qw(select_group EnsEMBL::Web::Component::Account::SelectGroup
-        )],
-      { 'no_menu_entry' => 1 }
+    [qw(select_group EnsEMBL::Web::Component::Account::SelectGroup)],
+    { 'no_menu_entry' => 1 }
   );
 
 }
