@@ -15,6 +15,7 @@ sub _init {
 
 sub content {
   my $self = shift;
+  my $object = $self->object;
 
   ## Do any 'deletes'
   my $type = $object->param('record') || '';
