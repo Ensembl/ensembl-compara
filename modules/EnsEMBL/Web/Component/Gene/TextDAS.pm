@@ -133,7 +133,7 @@ sub content {
           $note = CGI::escapeHTML($note);
           # Show the error, but only show one at a time as it could get spammy
           if (!$errored) {
-            $html .= $self->_error('Error parsing note', "$NOTE_ERROR$error");
+            $html .= $self->_warn('Error parsing note', "$NOTE_ERROR$error");
             $errored = 1;
           }
         }
@@ -148,7 +148,7 @@ sub content {
           $href = CGI::escapeHTML($href);
           # Show the error, but only show one at a time as it could get spammy
           if (!$errored) {
-            $html .= $self->_error('Error parsing link', "$LINK_ERROR$error");
+            $html .= $self->_warn('Error parsing link', "$LINK_ERROR$error");
             $errored = 1;
           }
         }
