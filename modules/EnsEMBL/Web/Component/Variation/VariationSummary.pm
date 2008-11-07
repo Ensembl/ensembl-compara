@@ -18,7 +18,17 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $html = '';
-  
+ 
+  ## first check we have a location
+  unless ($object->param('vf') ){
+   $html = "<p>You must select a location from the panel above to see this information</p>";
+   return $self->_info(
+   'A unique location can not be determined for this Variation',
+   $html
+   );
+  }
+
+ 
   ## set path information for LD calculations
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $object->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $object->species_defs->ENSEMBL_TMP_DIR;
@@ -69,7 +79,6 @@ sub content {
    ## First check that a location has been selected:
   if  ($object->core_objects->location ){ 
     if  ($object->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}) {
-      warn $object->species_defs->databases->{'DATABASE_VARIATION'}{'VARIATION_SOURCES'};
       my %pop_names = %{_ld_populations($object) ||{} };
       my %tag_data  = %{$object->tagged_snp ||{} };
       my %ld = (%pop_names, %tag_data);
