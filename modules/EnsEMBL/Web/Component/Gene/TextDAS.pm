@@ -19,6 +19,8 @@ our $LINK_ERROR = 'A link provided by this DAS source contains HTML markup, '.
 our $NOTE_ERROR = 'A note provided by this DAS source contains HTML markup, '.
                   'but it contains errors or has dangerous content. As a '.
                   'security precaution it has not been processed. ';
+# temporary solution to arrayexpress being so slow...
+our $TIMEOUT_MULTIPLIER = 3;
 
 sub _init {
   my $self = shift;
@@ -68,7 +70,7 @@ sub content {
     -sources => [ $source ],
     -proxy   => $object->species_defs->ENSEMBL_WWW_PROXY,
     -noproxy => $object->species_defs->ENSEMBL_NO_PROXY,
-    -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT
+    -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT * $TIMEOUT_MULTIPLIER
   );
   # Perform DAS requests...
   my $data = $engine->fetch_Features( $query_object )->{$logic_name};
