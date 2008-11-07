@@ -104,8 +104,10 @@ sub _url {
   my $join = '?';
 ## Sort the keys so that the URL is the same for a given set of parameters...
   foreach ( sort keys %pars ) {
-    $URL .= sprintf '%s%s=%s', $join, escapeHTML($_), escapeHTML($pars{$_}) if defined $pars{$_};
-    $join = ';';
+    if (defined $pars{$_}) {
+      $URL .= sprintf '%s%s=%s', $join, escapeHTML($_), escapeHTML($pars{$_});
+      $join = ';';
+    }
   }
   return $URL;
 }
