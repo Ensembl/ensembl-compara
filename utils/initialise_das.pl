@@ -25,11 +25,6 @@ BEGIN{
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-my ($sources_page);
-&GetOptions(
-  's'  => \$sources_page
-);
-
 my $sources = {
   'karyotype' => {
     'master_table' => 'karyotype',
@@ -277,7 +272,7 @@ sub sources {
     my $description = $sources->{$dsn}{'description'};
     my $test_range  = $sources->{$dsn}{'test_range' };
     $taxon_ids{$vsp} ||= $ta->fetch_node_by_name($vsp)->taxon_id;
-	$assembly =~ s/-clone//;
+    $assembly = join '_', $authority, $version;
     
     print FH qq( 
   <SOURCE uri="$id" title="$dsn" description="$description">
