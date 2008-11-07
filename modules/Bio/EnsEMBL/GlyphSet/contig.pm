@@ -179,6 +179,7 @@ sub _init_non_assembled_contig {
     my $rend   = $tile->{'end'};
     my $rstart = $tile->{'start'};
 
+
 # AlignSlice segments can be on different strands - hence need to check if start & end need a swap
 
     ($rstart, $rend) = ($rend, $rstart) if $rstart > $rend ;
@@ -193,22 +194,31 @@ sub _init_non_assembled_contig {
       $i = $tile->{'haplotype_contig'} ? 1 : 0;
     }
 
-    my $glyph = $self->Rect({
+    my $action = $ENV{'ENSEMBL_ACTION'};
+    my $region = $tile->{'name'};
+    my $dets = {
       'x'         => $rstart - 1,
       'y'         => 0,
       'width'     => $rend - $rstart+1,
       'height'    => $box_h,
       'colour'    => $colours[$i]->[0],
-      'absolutey' => 1, 
-    });
+      'absolutey' => 1,
+    };
+    if ($show_navigation) {
+	my $url = $self->_url({
+	    'type'=>'Location',
+	    'action'=>$action,
+	    'region_n'=>$region,
+	    'r'=>undef,
+	});
+	$dets->{'href'} = $url;
+    }
+    my $glyph = $self->Rect($dets);
+
     push @{$colours[$i]}, shift @{@colours[$i]};
-    my $script = $ENV{'ENSEMBL_SCRIPT'};
-    my $caption = 'Centre on';
-    if(  $script eq 'multicontigview' ) { 
-      $script = 'contigview';
-      $caption = 'Jump to contigview';
-    } 
+    my $caption = 'contigview';
     my $label = $tile->{'name'};
+    my $script;
     foreach( qw(chunk supercontig scaffold clone contig) ) {
       if( my $Q = $tile->{'locations'}->{$_} ) {
         if($show_href eq 'on') {
