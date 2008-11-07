@@ -17,31 +17,34 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   
-  ## first check we have a location
-  unless ($object->core_objects->location ){
-   my  $html = "<p>You must select a location from the panel above to see this information</p>";
-   return $html;
+  ## first check we have uniquely determined variation
+  unless ($object->param('vf') ){
+  my  $html = "<p>You must select a location from the panel above to see this information</p>";
+   return $self->_info(
+   'A unique location can not be determined for this Variation',
+   $html
+   );
   }
-
 
   my $width = $object->param('w') || "30000";
 
   # first determine correct SNP location 
-  my %mappings = %{ $object->variation_feature_mapping };
-  my $location = $object->core_objects->{'parameters'}{'r'}; 
+  my %mappings = %{ $object->variation_feature_mapping }; 
   my $v;
   if( keys %mappings == 1 ) {
     ($v) = values %mappings;
-  } else {
-    foreach my $t (values %mappings) { 
-      ## Check vari feature matches the location we are intrested in
-      next unless $location eq "$t->{Chr}:$t->{start}-$t->{end}";
-      $v = $t;
+  } else { 
+    foreach my $t (keys %mappings) { 
+      next unless $t eq $object->param('vf');
+      $v = $mappings{$t};
       last;
     }
   }
   unless ($v) { 
-    return "<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the SNP's location</p>";
+    return $self->_info(
+      '',
+      "<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the SNP's location</p>"
+    );
   }
 
   my $seq_region = $v->{Chr};  

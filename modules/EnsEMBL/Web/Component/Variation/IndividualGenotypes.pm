@@ -18,12 +18,14 @@ sub content {
   my $object = $self->object;
   my $html = '';
 
-  ## first check we have a location
-  unless ($object->core_objects->location ){
+  ## first check we have uniquely determined variation
+  unless ($object->param('vf') ){
    $html = "<p>You must select a location from the panel above to see this information</p>";
-   return $html;
+   return $self->_info(
+   'A unique location can not be determined for this Variation',
+   $html
+   );
   }
-
 
   ## return if no data
   my %ind_data = %{ $object->individual_table };
