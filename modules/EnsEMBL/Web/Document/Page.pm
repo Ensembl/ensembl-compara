@@ -355,13 +355,14 @@ sub render {
     return;
   }
   ## This is now a full page...
-  $self->_render_head_and_body_tag unless $flag eq 'end';
-  #  my $X = $self->{'page_template'};
   my $X = '';
-  if( $self->species_defs->ENSEMBL_DEBUG_FLAGS & 1024 && $flag ne 'end' ) {
-    $X .= '  <div id="debug"></div>';  ## UNTIL WE GO LIVE PLEASE LEAVE THIS IN !
-  }
-  $X .= '
+  unless( $flag eq 'end' ) {
+    $self->_render_head_and_body_tag;
+  #  my $X = $self->{'page_template'};
+    if( $self->species_defs->ENSEMBL_DEBUG_FLAGS & 1024 && $flag ne 'end' ) {
+      $X .= '  <div id="debug"></div>';  ## UNTIL WE GO LIVE PLEASE LEAVE THIS IN !
+    }
+    $X .= '
   <table class="mh" summary="layout table">
     <tr>
       <td id="mh_lo">[[logo]]</td>
@@ -381,33 +382,32 @@ sub render {
       <td>[[global_context]]</td>
     </tr>
   </table>
-  <div style="position: relative">
-  ' unless $flag eq 'end';
-  if( $self->include_navigation ) {
-    $X .= '
+  <div style="position: relative">';
+    if( $self->include_navigation ) {
+      $X .= '
       <div id="nav">[[local_context]][[local_tools]]<p class="invisible">.</p></div>';
-  }
-  $X .= '
+    }
+    $X .= '
       <div id="main">
 <!-- Start of real content --> ';
-
+  }
   $X .= '
       [[content]]' unless $flag;
-  $X .= '
+  unless( $flag eq 'start' ) {
+    $X .= '
 <!-- End of real content -->
-      </div>' unless $flag eq 'start';
-  unless ($flag eq 'start') {
+      </div>';
     if( $self->include_navigation ) {
       $X .= '   <div id="footer">[[copyright]][[footerlinks]]</div>';
     }
     else {
       $X .= '   <div id="wide-footer">[[copyright]][[footerlinks]]</div>';
     }
-  }
-  $X .= '
+    $X .= '
   </div>
 [[body_javascript]]';
 
+  }
   $self->timer_push( 'template generated' );
   while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {
     my($start,$page_element) = ($1,$2);
