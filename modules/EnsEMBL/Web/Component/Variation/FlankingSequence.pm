@@ -16,6 +16,9 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $html = '';
+  ## first check we have a location
+ return  unless ($object->param('vf') );
+
 
   ## Add flanking sequence
   my $f_label = "Flanking Sequence";
