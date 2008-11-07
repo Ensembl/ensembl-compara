@@ -281,7 +281,7 @@ sub _user_context {
     );
     $flag = 0;
   }
-  if( $vc->can_upload ) {
+  if( $vc->can_upload || $type eq 'UserData') {
     $active = $type eq 'UserData';
     $self->{'page'}->global_context->add_entry(
       'type'      => 'UserData',

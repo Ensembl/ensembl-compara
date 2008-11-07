@@ -21,38 +21,43 @@ sub context_panel  { return undef;  }
 sub populate_tree {
   my $self = shift;
 
+  my $vc  = $self->object->get_viewconfig;
+  my $is_configurable;
+  $is_configurable = 1 if $vc && $vc->can_upload;
+
   ## N.B. Most of these will be empty, as content is created using 
   ## wizard methods (below) and Wizard::Node::UserData
   my $has_logins = $self->{object}->species_defs->ENSEMBL_LOGINS;
+  $has_logins = 0 unless $is_configurable;
 
   my $uploaded_menu = $self->create_submenu( 'Uploaded', 'Uploaded data' );
   $uploaded_menu->append($self->create_node( 'Upload', "Upload Data",
-   [], { 'availability' => 1 }
+   [], { 'availability' => $is_configurable }
   ));
   $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Data",
-    [], { 'availability' => 1 }
+    [], { 'availability' => $is_configurable }
   ));
   $uploaded_menu->append($self->create_node( 'SaveUpload', "Save to Account",
     [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
   ));
   $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Uploads",
     [qw(manage_upload   EnsEMBL::Web::Component::UserData::ManageUpload)
-    ], { 'availability' => $has_logins, 'concise' => 'Manage Uploads' }
+    ], { 'availability' => 1, 'concise' => 'Manage Uploads' }
   ));
 
   my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
   $attached_menu->append($self->create_node( 'AttachDAS', "Attach DAS",
-   [], { 'availability' => 1 }
+   [], { 'availability' => $is_configurable }
   ));
   $attached_menu->append($self->create_node( 'AttachURL', "Attach URL Data",
-   [], { 'availability' => 1 }
+   [], { 'availability' => $is_configurable }
   ));
   $attached_menu->append($self->create_node( 'SaveRemote', "Save to Account",
     [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
   ));
   $attached_menu->append($self->create_node( 'ManageRemote', "Manage Data",
     [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageRemote)
-    ], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
+    ], { 'availability' => 1, 'concise' => 'Manage Data' }
   ));
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
