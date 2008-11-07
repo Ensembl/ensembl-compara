@@ -28,7 +28,8 @@ sub _short_das_desc {
     $desc = substr $desc, 0, $DAS_DESC_WIDTH;
     $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
   }
-  $self->{'notes'} = $desc;
+  $self->{'notes'} = CGI::escapeHTML($desc);
+  $self->{'notes'} .= sprintf ' [<a href="%s">Homepage</a>]', $source->homepage if $source->homepage;
 }
 
 sub render {
@@ -36,11 +37,9 @@ sub render {
   my $layout = shift;
   $layout eq 'table' || die 'DASCheckbox can only be rendered in table layout';
   
-  my $notes = '';
-  if ($self->notes) {
-    $notes = CGI::escapeHTML($self->notes);
-    $notes .= sprintf(' (<span title="%s">Mouseover&#160;for&#160;full&#160;text</span>)', CGI::escapeHTML($self->comment)) if $self->comment;
-  }
+  my $notes = $self->notes;
+  $notes .= sprintf(' (<span title="%s">Mouseover&#160;for&#160;full&#160;text</span>)', CGI::escapeHTML($self->comment)) if $self->comment;
+  
   ## This assumes that DASCheckBox layout uses the 'table' option!
   my $label = $self->{'raw'} ? $self->label : '<strong>'.CGI::escapeHTML( $self->label ).'</strong>';
   $label .= '<br />'.$notes if $notes;
