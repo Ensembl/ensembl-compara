@@ -15,6 +15,16 @@ sub _init {
 
 sub content {
   my $self = shift;
+  my $object = $self->object;
+
+  ## Do any 'deletes'
+  my $type = $object->param('record') || '';
+  if ($type eq 'session') {
+    $object->get_session->purge_tmp_data('upload');
+  }
+  elsif ($type eq 'user') {
+    $object->delete_userdata($object->param('id'));
+  }
 
   ## Control panel fixes
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
@@ -36,7 +46,7 @@ sub content {
     else {
       $html .= qq(<a href="$dir/Account/Login?$referer" class="modal_link">Log in to save</a> | );
     }
-    $html .= qq(<a href="$dir/UserData/DetachUpload?$referer" class="modal_link">Delete</a></p>);
+    $html .= qq(<a href="$dir/UserData/ManageUpload?record=session;$referer" class="modal_link">Delete</a></p>);
   }
   else {
     $html .= qq(<p>You have no temporary data uploaded to this website.</p>);
@@ -57,7 +67,7 @@ sub content {
       );
       foreach my $upload (@uploads) {
         my $date = $upload->modified_at || $upload->created_at;
-        my $link = sprintf('<a href="%s/UserData/DeleteUpload?id=%s;%s" class="modal_link">Delete</a>', $dir, $upload->id, $referer);
+        my $link = sprintf('<a href="%s/UserData/ManageUpload?record=user;id=%s;%s" class="modal_link">Delete</a>', $dir, $upload->id, $referer);
         $table->add_row( { 'name'  => $upload->name, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
       $html .= $table->render;
