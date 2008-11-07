@@ -661,7 +661,7 @@ sub hits2html {
 
   my @domids = sort { $domain->{$b}{genes} <=> $domain->{$a}{genes}} keys %$domain;
 
-  print qq(<p><table class="ss tint">\n);
+  print qq(<table class="ss tint">\n);
   print qq(<tr
             <th>No.</th>
             <th>Interpro name</th>
@@ -708,7 +708,7 @@ sub hits2html {
 );
   }
 
-  print("</table></p>");
+  print("</table>");
 
   my $interpro_path = "/$species/Info";
   if($isbig == 0){
