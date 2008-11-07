@@ -72,7 +72,7 @@ sub _init {
 
   my $offset = $track_height;
   my $textglyph = $self->Text({
-    'x'          => - 115,
+    'x'          => -$self->get_parameter('__left_hand_margin'),
     'y'          => 2+$offset,
     'width'      => 0,
     'height'     => $th_c,
@@ -255,7 +255,7 @@ sub strain_name_text {
   (my $url_name = $name) =~ s/Compare to |^\s+//;
   my $URL = $self->_url({'action' => 'ref',  'reference' => $url_name});
   my $textglyph = $self->Text({
-      'x'          => -115,
+      'x'          => -$self->get_parameter('__left_hand_margin'),
       'y'          => $offset+1,
       'height'     => $th,
       'font'       => $fontname,
@@ -263,7 +263,7 @@ sub strain_name_text {
       'colour'     => 'black',
       'text'       => $name,
       'halign'     => 'left',
-      'width'      => 205,
+      'width'      => 105,
       'absolutex'  => 1,
       'absolutey'  => 1,
       'absolutewidth'  => 1,

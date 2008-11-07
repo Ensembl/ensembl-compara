@@ -83,7 +83,10 @@ sub new {
 #
   foreach my $CC ( @{$self->{'contents'}} ) {
     my( $Container,$Config) = @$CC;
-    $Config->set_parameter('panel_width', $panel_width );
+    $Config->set_parameters({
+      'panel_width', $panel_width,
+      '__left_hand_margin', $panel_start - $label_start
+    });
 
 ## If either Container or Config not present skip!!
     unless(defined $Container) {
