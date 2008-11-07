@@ -37,7 +37,7 @@ sub populate_tree {
   ));
   $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Saved Data",
     [qw(manage_upload   EnsEMBL::Web::Component::UserData::ManageUpload)
-    ], { 'availability' => $has_logins, 'concise' => 'Manage Data' }
+    ], { 'availability' => $has_logins, 'concise' => 'Manage Uploads' }
   ));
 
   my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
@@ -152,10 +152,10 @@ sub attach_das {
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
   my $server        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_server' );
-  my $source        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das', backtrack => 1 );
+  my $source        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das', backtrack => 0 );
   my $validate_das  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'validate_das');
-  my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species', 'backtrack' => 1);
-  my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords', 'backtrack' => 1);
+  my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species', 'backtrack' => 0);
+  my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords', 'backtrack' => 0);
   
   # END POINTS:
   my $attach_das    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'attach_das');
