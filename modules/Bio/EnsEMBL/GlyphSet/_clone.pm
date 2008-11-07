@@ -25,14 +25,13 @@ sub features {
 }
 
 ## If bac map clones are very long then we draw them as "outlines" as
-## we aren't convinced on their quality...
+## we aren't convinced on their quality... However draw ENCODE filled
 
-use Data::Dumper;
 sub get_colours {
   my( $self, $f ) = @_;
   my $T = $self->SUPER::get_colours( $f );
   $T->{'part'} = 'border' if $f->get_scalar_attribute('inner_start');
-  $T->{'part'} = 'border' if $f->length > $self->my_config('outline_threshold');
+  $T->{'part'} = 'border' if ($self->my_config('outline_threshold') && ($f->length > $self->my_config('outline_threshold')) );
   return $T;
 }
 
@@ -64,7 +63,7 @@ sub href {
       'type'        =>'Location',
       'action'      =>'View',
       'r'           =>$r,
-      'misc_feature'=>$name,
+      'misc_feature_n'=>$name,
       'mfid'        =>$mfid,
   };
   return $self->_url($zmenu);
@@ -79,7 +78,7 @@ sub tag {
   if( $s && $e ){
     push @result, {
       'style'  => 'rect',
-      'colour' => $f->{'_colour_flag'} || $self->{'colours'}{"col_$state"},
+      'colour' => $f->{'_colour_flag'} || $self->my_colour($state),
       'start'  => $s,
       'end'    => $e
     };
@@ -87,16 +86,16 @@ sub tag {
   if( $f->get_scalar_attribute('fish') ) {
     push @result, {
       'style' => 'left-triangle',
-      'colour' => $self->{'colours'}{"fish_tag"},
+      'colour' => $self->my_colour('fish_tag'),
     };
   }
   push @result, {
     'style'  => 'right-end',
-    'colour' => $self->{'colours'}{"bacend"}
+    'colour' => $self->my_colour('bacend'),
   } if ( $bef == 2 || $bef == 3 );
   push @result, { 
     'style'=>'left-end',  
-    'colour' => $self->{'colours'}{"bacend"}
+    'colour' => $self->my_colour('bacend'),
   } if ( $bef == 1 || $bef == 3 );
 
   my $fp_size = $f->get_scalar_attribute('fp_size');
@@ -105,7 +104,7 @@ sub tag {
     my $end   = $start + $fp_size - 1 ;
     push @result, {
       'style' => 'underline',
-      'colour' => $self->{'colours'}{"seq_len"},
+      'colour' => $self->my_colour('seq_len'),
       'start'  => $start,
       'end'    => $end
     };
