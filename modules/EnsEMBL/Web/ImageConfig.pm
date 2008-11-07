@@ -386,8 +386,6 @@ sub _merge {
   my( $self, $_sub_tree, $sub_type ) = @_;
   my $data = {};
   my $tree = $_sub_tree->{'analyses'};
- 
-
   my $config_name = $self->{'type'};
 
   foreach my $analysis (keys %$tree) {
@@ -681,26 +679,38 @@ sub add_qtl_feature {
 
 sub add_misc_feature {
   my( $self, $key, $hashref ) = @_;
+  #set some defaults and available tracks
+  my $default_tracks = {
+      'cytoview'   => {'tilepath' => {'default'   => 'normal'},
+		       'encode'   => {'threshold' => 'no'},
+		   },
+      'contigviewbottom' => {'ntctgs' => {'available' => 'no'},
+			     'encode'   => {'threshold' => 'no'},}
+  };
   return unless $self->get_node( 'misc_feature' );
+  my $config_name = $self->{'type'};
   my $menu = $self->get_node('misc_feature');
   ## Different loop - no analyses - just misc_sets... 
   my $data = $hashref->{'misc_feature'}{'sets'};
   foreach my $key_2 ( sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data ) {
-#      warn $key_2;
-    $menu->append( $self->create_track( 'misc_feature_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
-      'glyphset'    => '_clone',
-      'db'          => $key,
-      'set'         => $key_2,
-      'colourset'   => 'clone',
-      'caption'     => $data->{$key_2}{'name'},
-      'description' => $data->{$key_2}{'desc'},
-      'max_length'  => $data->{$key_2}{'max_length'},
-      'strand'      => 'r',
-      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
-      'renderers'   => [qw(off Off normal Normal)],
-    }));
+    next if ($default_tracks->{$config_name}{$key_2}{'available'} eq 'no');
+    my $dets =  {
+        'glyphset'    => '_clone',
+        'db'          => $key,
+        'set'         => $key_2,
+        'colourset'   => 'clone',
+        'caption'     => $data->{$key_2}{'name'},
+        'description' => $data->{$key_2}{'desc'},
+        'max_length'  => $data->{$key_2}{'max_length'},
+        'strand'      => 'r',
+        'display'     => $default_tracks->{$config_name}{$key_2}{'default'}||$data->{$key_2}{'display'}||'off',
+        'renderers'   => [qw(off Off normal Normal)],
+    };
+    unless ($default_tracks->{$config_name}{$key_2}{'threshold'} eq 'no') {
+	$dets->{'outline_threshold'} = 350000;
+    }
+    $menu->append( $self->create_track( 'misc_feature_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, $dets));
   }
-
 }
 
 sub add_oligo_probe {
