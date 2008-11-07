@@ -101,12 +101,13 @@ sub content {
      my $region = $mappings{$varif_id}{Chr}; 
      my $start  = $mappings{$varif_id}{start};
      my $end    = $mappings{$varif_id}{end};
-     my $link   = "/@{[$object->species]}/Location/View?db=core;r=$region:" .($start - 10) ."-" . ($end+10);
+     my $display_region = $region .':' . ($start -10) .'-'. ($end +10);
+     my $link = $object->_url({ 'type' => 'Location', 'action' => 'View', 'v' => $id, 'r' => $display_region, 'source' => $source});
      my $str = $mappings{$varif_id}{strand};
-      
      if ($str < 0 ) {$strand ="(reverse strand)";} 
- 
-     my $location_string = $region.":".$start."-".$end;
+     my $location_string;
+     if ($start == $end ) { $location_string =  $region.":".$start;}
+     else { $location_string = $region.":".$start."-".$end; } 
      my $location_html = qq(<a href="$link">$location_string</a> $strand) ;
      $html .= qq(<dt>Location</dt><dd>$location_html</dd></dl>);
    }
@@ -121,13 +122,15 @@ sub content {
      my $region = $mappings{$varif_id}{Chr}; 
      my $start  = $mappings{$varif_id}{start};
      my $end    = $mappings{$varif_id}{end};
-     my $link   = "/@{[$object->species]}/Variation/$action?db=variation;r=$region:$start-$end;v=$id;source=$source";
-  #   my $link   = "/@{[$object->species]}/Variation/$action?db=variation;v=$id;source=$source";
+     my $display_region = $region .':' . ($start -10) .'-'. ($end +10); 
+     my $link = $object->_url({ 'type' => 'Location', 'action' => 'View', 'v' => $id, 'r' => $display_region, 'source' => $source});  
      my $str = $mappings{$varif_id}{strand};
-
-     if ($str < 0 ) {$strand ="(reverse strand)";}
-
-     my $location_string = $region.":".$start."-".$end;
+     warn $str; warn $strand;
+     if ($str <= 0 ) {$strand ="(reverse strand)";}
+     else {$strand = "(forward strand)"; }
+     my $location_string; 
+     if ($start == $end ) { $location_string =  $region.":".$start;}
+     else { $location_string = $region.":".$start."-".$end; }
      my $location_html = qq(<a href="$link">$location_string</a> $strand) ;
 
       $html.= qq(<tr><td>$location_html</td></tr>);
