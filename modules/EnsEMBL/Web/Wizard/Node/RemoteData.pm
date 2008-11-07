@@ -83,7 +83,7 @@ sub select_das {
     
     if ( scalar @already_added ) {
       my $noun = scalar @already_added > 1 ? 'sources' : 'source';
-      my $note = sprintf 'You have %d DAS %s not shown here that are already configured within %s.',
+      my $note = sprintf 'There are %d DAS %s not shown here that are already configured within %s.',
                          scalar @already_added, $noun,
                          $self->object->species_defs->ENSEMBL_SITETYPE;
       $self->notes( {'heading'=>'Note', 'text'=> $note } );
@@ -340,11 +340,18 @@ sub show_tempdas {
   my $das = $self->object->get_session->get_all_das;
   if ($das && keys %$das) {
     $has_data = 1;
-    $self->add_element('type'=>'Information', 'value' => 'Choose the DAS sources you wish to save to your account', 'style' => 'spaced');
+    my $fieldset = { 'elements' => [ { 'type'=>'Information',
+                                       'value' => 'Choose the DAS sources you wish to save to your account',
+                                       'style' => 'spaced' } ] };
+    $self->add_fieldset($fieldset);
+    
+    $fieldset = { 'layout' => 'table', 'elements' => [] };
     my @values;
     foreach my $source (sort { lc $a->label cmp lc $b->label } values %$das) {
-      $self->add_element( 'type' => 'DASCheckBox', 'das'  => $source );
+      push @{ $fieldset->{'elements'} }, { 'type' => 'DASCheckBox', 'das'  => $source };
     }
+    
+    $self->add_fieldset($fieldset);
   }
 
   my $url = $self->object->get_session->get_tmp_data('url');

@@ -32,7 +32,10 @@ sub _short_das_desc {
 }
 
 sub render {
-  my $self = shift;
+  my $self   = shift;
+  my $layout = shift;
+  $layout eq 'table' || die 'DASCheckbox can only be rendered in table layout';
+  
   my $notes = '';
   if ($self->notes) {
     $notes = CGI::escapeHTML($self->notes);
