@@ -51,9 +51,15 @@ sub content {
 
     foreach my $filter (@filters) {
       my $row = {};
-      my $species = join(', ', @{$filter->species});
+      my $species;
+      if (ref($filter->species) eq 'ARRAY') {
+        $species = join(', ', @{$filter->species});
+      }
+      else {
+        $species = $filter->species;
+      }
 
-      $row->{'species'} = sprintf(qq(<a href="/News" title="View News" class="cp-external">%s</a>),
+      $row->{'species'} = sprintf(qq(<a href="/info/website/news/index.html" title="View News" class="cp-external">%s</a>),
                         $species);
 
       $row->{'edit'} = $self->edit_link($dir, 'NewsFilter', $filter->id);
