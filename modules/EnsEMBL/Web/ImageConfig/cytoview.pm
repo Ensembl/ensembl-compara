@@ -41,6 +41,9 @@ sub init {
     'options'       => 'Options'
   );
 
+  $self->add_tracks( 'sequence',
+    [ 'contig', 'Contigs', 'stranded_contig', { 'display' => 'normal',  'strand' => 'r', 'description' => 'Track showing underlying assembly contigs' } ],
+  );
   $self->add_tracks( 'information',
     [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary' } ],
     [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information'  } ],
