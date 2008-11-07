@@ -17,6 +17,7 @@ $controller->add_connections({qw(
   ShareUpload  EnsEMBL::Web::Controller::Command::UserData::ShareUpload
   SaveUpload   EnsEMBL::Web::Controller::Command::UserData::SaveUpload
   ManageUpload EnsEMBL::Web::Controller::Command::UserData::ManageUpload
+  DetachUpload EnsEMBL::Web::Controller::Command::UserData::DetachUpload
   DeleteUpload EnsEMBL::Web::Controller::Command::UserData::DeleteUpload
 
   AttachDAS    EnsEMBL::Web::Controller::Command::UserData::AttachDAS
