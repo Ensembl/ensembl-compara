@@ -13,17 +13,21 @@ our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
 
 sub _error {
-  my($self,$caption,$desc) = @_;
-  return sprintf '<div style="width:%dpx" class="error"><h3>%s</h3><div class="error-pad">%s</div></div>', $self->image_width, $caption, $desc;
+  my($self,$caption,$desc,$width) = @_;
+  return sprintf '<div style="width:%s" class="error"><h3>%s</h3><div class="error-pad">%s</div></div>', 
+    $width || $self->image_width.'px', $caption, $desc;
 }
 sub _warning {
-  my($self,$caption,$desc) = @_;
-  return sprintf '<div style="width:%dpx" class="warning"><h3>%s</h3><div class="error-pad">%s</div></div>', $self->image_width, $caption, $desc;
+  my($self,$caption,$desc,$width) = @_;
+  return sprintf '<div style="width:%s" class="warning"><h3>%s</h3><div class="error-pad">%s</div></div>', 
+    $width || $self->image_width.'px', $caption, $desc;
 }
 sub _info {
-  my($self,$caption,$desc) = @_;
-  return sprintf '<div style="width:%dpx" class="info"><h3>%s</h3><div class="error-pad">%s</div></div>', $self->image_width, $caption, $desc;
+  my($self,$caption,$desc,$width) = @_;
+  return sprintf '<div style="width:%s" class="info"><h3>%s</h3><div class="error-pad">%s</div></div>', 
+    $width || $self->image_width.'px', $caption, $desc;
 }
+
 sub image_width {
   my $self = shift;
 
