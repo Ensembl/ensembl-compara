@@ -431,10 +431,16 @@ sub cleanURI {
   $r->subprocess_env;
   
   ## Clean out the uri
-  my $uri = $r->unparsed_uri;
-  if ($uri =~ s/;?time=\d+\.\d+//g) {
+  my $uri = $ENV{'REQUEST_URI'};
+  if ($uri =~ s/time=\d+\.\d+;?//g) {
     $r->parse_uri($uri);
     $r->subprocess_env('REQUEST_URI' => $uri);
+  }
+
+  ## Clean out the referrer
+  my $referer = $ENV{'HTTP_REFERER'};
+  if ($referer =~ s/time=\d+\.\d+;?//g) {
+    $r->subprocess_env('HTTP_REFERER' => $uri);
   }
 
   return Apache2::Const::DECLINED;
