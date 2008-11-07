@@ -51,6 +51,28 @@ $sets->{'normal'} = {
     'dl' => { 'rt' => 1, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(dd dt)} },
   }
 };
+$sets->{'extended'} = {
+  'ent' => $sets->{'no-tags'}{'ent'},
+  'ats' => $sets->{'in-line'}{'ats'},
+  'nts' => {
+    %{ $sets->{'normal'}{'nts'} },
+    'a'      => { 'rt' => 1, 'tx' => 1, 'at' => {map {($_,1)} qw(href name rel)}, 'tg' => {map {($_,1)} qw(img span em strong map)} },
+    'img'    => { 'rt' => 1, 'tx' => 0, 'at' => {map {($_,1)} qw(src alt title usemap ismap)}, 'tg' => {} },
+    'div'   => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map)} },
+    'li'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map)} },
+    'dt'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map)} },
+    'dd'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map)} },
+    'table' => { 'rt' => 1, 'tx' => 0, 'at' => {}, 'tg' => {map{($_,1)} qw(thead tbody tfoot tr) }},
+    'thead' => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(tr) }},
+    'tbody' => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(tr) }},
+    'tfoot' => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(tr) }},
+    'tr'    => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(td th) }},
+    'td'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map) }},
+    'th'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map) }},
+    'map'   => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(area) }},
+    'area'  => { 'rt' => 0, 'tx' => 0, 'at' => {qw(shape coords href alt)}, 'tg' => {} }
+  }
+};
 
 sub new {
   my $class = shift;
