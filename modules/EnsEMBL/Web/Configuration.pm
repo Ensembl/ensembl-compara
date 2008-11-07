@@ -350,7 +350,7 @@ sub _reset_config_panel {
     currently turned on from that menu are shown by the two numbers in parentheses <span style="white-space:nowrap">(tracks on/total tracks)</span>.
   </li>
   <li>
-    Certain tracks displayed come from user supplied or external data sources, these are clearly
+    Certain tracks displayed come from user-supplied or external data sources, these are clearly
     marked as <strong>DAS</strong> (Distributed Annotation Sources), 
     <strong>URL</strong> (UCSC style web resources) or <strong>User</strong> data uploaded by
     yourself or another user.
