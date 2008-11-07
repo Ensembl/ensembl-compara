@@ -154,7 +154,7 @@ sub ajax_zmenu      {
   elsif ($action eq 'Align') {
     return $self->_ajax_zmenu_av($panel,$obj);
   }
-  elsif ($action eq 'View') {
+  elsif ($action =~ /View|Overview/) {
     return $self->_ajax_zmenu_view($panel,$obj);
   }
   return;
@@ -167,7 +167,78 @@ sub _ajax_zmenu_view {
     if ($obj->param('mfid')) {
 	return $self->_ajax_zmenu_misc_feature($panel,$obj);
     }
-    else { return;}
+    elsif ($obj->param('region_n')) {
+	return $self->_ajax_zmenu_region($panel,$obj);
+    }
+    else { return; }
+}
+
+sub _ajax_zmenu_region {
+    my $self = shift;
+    my $panel= shift;
+    my $obj  = shift; 
+    my $action     = $obj->[1]{'_action'};
+    my $slice_name = $obj->param('region_n');
+    my $db_adaptor = $obj->database('core');
+    my $sa         = $db_adaptor->get_SliceAdaptor();
+    my $slice      = $sa->fetch_by_region('seqlevel',$slice_name);
+    my $slice_type = $slice->coord_system_name;
+    my $priority = 200;
+    $panel->{'caption'} = $slice_name;
+    my $url = $obj->_url({'type' => 'Location', 'action' => $action, 'region' => $slice_name});
+    $priority--;
+    $panel->add_entry({
+	'type' => "Center on $slice_type",
+	'label' => $slice_name,
+	'link'  => $url,
+	'priority' => $priority,
+    });
+    foreach my $cs (@{$db_adaptor->get_CoordSystemAdaptor->fetch_all() || []}) {
+	$priority--;
+	next if $cs->name eq $slice_type;
+	next if $cs->name eq 'chromosome';
+	my $path;
+	eval { $path = $slice->project($cs->name); };
+	next unless $path;
+	next unless(@$path == 1);
+	my $new_slice = $path->[0]->to_Slice;
+	my $new_slice_type = $new_slice->coord_system_name;
+	my $new_slice_name = $new_slice->seq_region_name;
+	my $new_slice_URL = $obj->_url({'type' => 'Location', 'action' => $action, 'region' => $new_slice_name});
+	$priority--;
+	$panel->add_entry({
+	    'type'  => "Center on $new_slice_type",
+	    'label'  => $new_slice_name,
+	    'link'  => $new_slice_URL,
+	    'priority' => $priority,
+	});
+	if ($cs->name eq 'clone') {
+	    (my $short_name = $new_slice_name) =~ s/\.\d+$//;
+	    $priority--;
+	    $panel->add_entry({
+		'type'     => 'EMBL',
+		'label'    => $new_slice_name,
+		'link'     => $obj->get_ExtURL('EMBL',$new_slice_name),
+		'priority' => $priority,
+	    });
+	    $priority--;
+	    $panel->add_entry({
+		'type'     => 'EMBL (latest version)',
+		'label'    => $short_name,
+		'link'     => $obj->get_ExtURL('EMBL',$short_name),
+		'priority' => $priority,
+	    });
+	    # get clone id out of seq_region_attrib for link to webFPC
+	    if (my ($fpc_name) = @{$new_slice->get_all_Attributes('fpc_clone_id')}) {
+		my $fpc_URL = $obj->get_ExtURL('FPC',$fpc_name);
+		$panel->add_entry({
+		    'type'  => 'View in WebFPC',
+		    'label' => $fpc_name,
+		    'link'  => $fpc_URL,
+		});
+	    }
+	}
+    }
 }
 
 sub _ajax_zmenu_misc_feature {
