@@ -19,7 +19,7 @@ sub content {
 
   ## Do any 'deletes'
   my $type = $object->param('record') || '';
-  my $data = $object->param('user') || '';
+  my $data = $object->param('data') || '';
   if ($type eq 'session') {
     if ($data eq 'url') {
       $object->get_session->purge_tmp_data('url');
@@ -28,7 +28,7 @@ sub content {
       my $temp_das = $object->get_session->get_all_das;
       if ($temp_das) {
         my $das = $temp_das->{$object->param('logic_name')};
-        $das->mark_deleted();
+        $das->mark_deleted() if $das;
         $object->get_session->save_das();
       }
     }
@@ -81,7 +81,7 @@ sub content {
         if ($user) {
           $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;dsn=%s;%s" class="modal_link">Save to account</a>', $dir, $source->logic_name, $referer);
         }
-        my $detach = sprintf('<a href="%s/UserData/ManageRemote?record=session;data=das;logic_name=%s;%s">Detach</a>', $dir, $source->logic_name, $referer);
+        my $detach = sprintf('<a href="%s/UserData/ManageRemote?record=session;data=das;logic_name=%s;%s" class="modal_link">Detach</a>', $dir, $source->logic_name, $referer);
         $table->add_row( { 'name'  => $source->label, 'date' => 'N/A', 'save' => $save, 'delete' => $detach } );
       }
 
@@ -106,7 +106,7 @@ sub content {
   }
 
   if (@urls) {
-    my $table = EnsEMBL::Web::Document::SpreadSheet->new();
+    my $table = EnsEMBL::Web::Document::SpreadSheet->new( [], [], {'margin' => '0 0 1em 0'} );
     $table->add_columns(
       {'key' => "url", 'title' => 'Datasource URL', 'width' => '50%', 'align' => 'left' },
       {'key' => "date", 'title' => 'Last updated', 'width' => '20%', 'align' => 'left' },
@@ -132,6 +132,13 @@ sub content {
   else {
     $html .= qq(<p class="space-below">You have no URL data attached.</p>);
   }
+
+  $html .= $self->_info(
+    'Adding tracks',
+    qq(<p>Please note that custom data can only be added on pages that allow these tracks to be configured, for example 'Region in detail' images</p>),
+    '100%',
+  );
+
   return $html;
 }
 
