@@ -10,7 +10,7 @@ use EnsEMBL::Web::RegObj;
 
 sub render {
 
-  my ($class, $request) = @_;
+  my $class = shift;
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 
@@ -32,20 +32,15 @@ sub render {
   my %species_description = _setup_species_descriptions(\%species_info);
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-
   my $html = '';
 
-  if ($request && $request eq 'fragment') {
-    $html .= _render_species_list(\%species_info, \%species_description); 
-  } else {
-    $html .= qq(<div id="reorder_species" style="display: none;">);
-    $html .= _render_ajax_reorder_list(\%species_info); 
-    $html .= qq(</div>\n<div id="full_species">);
-    $html .= _render_species_list(\%species_info, \%species_description); 
-    $html .= qq(</div>
+  $html .= qq(<div id="reorder_species" style="display: none;">);
+  $html .= _render_ajax_reorder_list(\%species_info); 
+  $html .= qq(</div>\n<div id="full_species">);
+  $html .= _render_species_list(\%species_info, \%species_description); 
+  $html .= qq(</div>
 <p>Other pre-build species are available in <a href="http://pre.ensembl.org" rel="external">Ensembl <em>Pre<span class="red">!</span></em> &rarr;</a></p>
 );
-  }
 
   return $html;
 
@@ -93,7 +88,20 @@ sub _render_species_list {
     }
   }
   $html .= '</p>';
-  $html .= _render_with_images(\@ok_faves, $species_defs, $description);
+
+  my $count = @ok_faves;
+  if ($count > 3) {
+    my $breakpoint = int($count / 2) + ($count % 2);
+    my @first_half = splice(@ok_faves, 0, $breakpoint);
+    $html .= qq(<table style="width:100%"><tr><td style="width:50%">);
+    $html .= _render_with_images(\@first_half, $species_defs, $description);
+    $html .= qq(</td><td style="width:50%">);
+    $html .= _render_with_images(\@ok_faves, $species_defs, $description);
+    $html .= qq(</td></tr></table>);
+  }
+  else {
+    $html .= _render_with_images(\@ok_faves, $species_defs, $description);
+  }
 
   $html .= "</div>\n";
 
