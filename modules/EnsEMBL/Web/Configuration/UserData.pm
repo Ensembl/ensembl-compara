@@ -8,7 +8,14 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 
 sub set_default_action {
   my $self = shift;
-  $self->{_data}{default} = 'Upload';
+  my $vc  = $self->object->get_viewconfig;
+  my $is_configurable;
+  if ($vc && $vc->can_upload) {
+    $self->{_data}{default} = 'Upload';
+  }
+  else {
+    $self->{_data}{default} = 'ManageUpload';
+  }
 }
 
 sub global_context { return $_[0]->_user_context; }

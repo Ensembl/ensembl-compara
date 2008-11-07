@@ -281,8 +281,9 @@ sub _user_context {
     );
     $flag = 0;
   }
-  if( $vc->can_upload || $type eq 'UserData') {
+  if( $vc->can_upload || $type eq 'UserData' || $type eq 'Account') {
     $active = $type eq 'UserData';
+    my $module = $vc->can_upload ? 'Upload' : 'ManageUpload';
     $self->{'page'}->global_context->add_entry(
       'type'      => 'UserData',
       'id'        => 'user_data',
@@ -292,7 +293,7 @@ sub _user_context {
         '_referer' => $referer,
         '__clear' => 1,
         'type'   => 'UserData',
-        'action' => 'Summary',
+        'action' => $module,
       }))
     );
   }
