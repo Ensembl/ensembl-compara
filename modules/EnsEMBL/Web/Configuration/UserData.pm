@@ -35,7 +35,7 @@ sub populate_tree {
   $uploaded_menu->append($self->create_node( 'SaveUpload', "Save to Account",
     [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
   ));
-  $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Saved Data",
+  $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Uploads",
     [qw(manage_upload   EnsEMBL::Web::Component::UserData::ManageUpload)
     ], { 'availability' => $has_logins, 'concise' => 'Manage Uploads' }
   ));
