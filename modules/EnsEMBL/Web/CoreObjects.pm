@@ -198,11 +198,12 @@ sub _generate_objects_Gene {
 }
 
 sub _generate_objects_Variation {
-  my $self = shift;
+  my $self = shift; 
   $self->{'parameters'}{'vdb'} ||= 'variation';
   my $db_adaptor = $self->database($self->{'parameters'}{'vdb'});
   my $t = $db_adaptor->getVariationAdaptor->fetch_by_name( $self->{'parameters'}{'v'}, $self->{'parameters'}{'source'} );
   $self->timer_push( 'Gene fetched', undef, 'fetch' );
+  warn $t;
   $self->variation( $t );
   $self->timer_push( 'Fetching location', undef );
   $self->_generate_objects_Location;
@@ -216,11 +217,12 @@ sub _generate_objects {
 #  if( $self->param('variation')) {
 #    $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('variation'), $self->param('source')));
 #    unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
-  if( $self->param('v')) {
+  if( $self->param('v')) { 
     my $vardb = $self->{'parameters'}{'vdb'} = $self->param('vdb') || 'variation';
     my $vardb_adaptor = $self->database('variation');
     $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('v'), $self->param('source')));
     unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
+    $self->_give_snp_unique_identifier($self->param('vf'));
   }  
   if( $self->param('t') ) {
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
@@ -370,20 +372,51 @@ sub _get_gene_transcript_from_location {
 }
 
 sub _check_if_snp_unique_location {
-  my ( $self ) = @_;
+  my ( $self, $vf ) = @_;
   return unless $self->variation;
   my $db_adaptor = $self->database('core');
   my $vardb =  $self->database('variation') ; 
   my $vf_adaptor = $vardb->get_VariationFeatureAdaptor; 
   my @features = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
 
-  my $context = $self->param('vw')||5000;
+  my $context = $self->param('vw')||500;
   unless (scalar @features > 1){
    my $s =  $features[0]->start; 
    my $e = $features[0]->end;
    my $r = $features[0]->seq_region_name;
    $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s-$context, $e+$context ) );
+  } elsif (scalar @features > 1 && $vf){
+    foreach my $var_feat( @features){
+      if ($var_feat->dbID eq $vf ) {
+        my $s =  $features[0]->start;
+        my $e = $features[0]->end;
+        my $r = $features[0]->seq_region_name;
+        $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s-$context, $e+$context ) );
+      }
+    }
   } 
- 
+}
+
+sub _give_snp_unique_identifier {
+  my ( $self, $vf ) = @_;
+  return unless $self->variation;
+  my $db_adaptor = $self->database('core');
+  my $vardb =  $self->database('variation') ;
+  my $vf_adaptor = $vardb->get_VariationFeatureAdaptor;
+  my @features = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
+  if (scalar @features == 1){
+    $self->{'parameters'}{'vf'} = $features[0]->dbID; 
+    return;
+  }elsif (scalar @features > 1 && $vf){
+    my $flag =0;
+    foreach my $var_feat( @features){
+      if ($var_feat->dbID eq $vf ) { 
+        $self->{'parameters'}{'vf'} = $var_feat->dbID;
+        unless ($self->param('r')){ $self->_check_if_snp_unique_location($var_feat->dbID); }
+        $flag =1;    
+      }
+    }
+    if ($flag == 0) { $self->{'parameters'}{'vf'};}
+  }
 }
 1;
