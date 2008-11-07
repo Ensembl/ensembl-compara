@@ -885,8 +885,7 @@ sub ajax_zmenu_variation {
  # Specific zmenu for variation features
 
   my $self = shift;
-#  my $panel = $self->_ajax_zmenu;
-  my $panel = shift;
+  my $panel = $self->_ajax_zmenu;
   my $obj = $self->object;
   my $db_adaptor = $obj->database('variation');
   my $var_adaptor = $db_adaptor->get_VariationAdaptor();
@@ -897,7 +896,7 @@ sub ajax_zmenu_variation {
   my $feature;
   if ( scalar @vf == 1) { $feature = $vf[0];}
   else {}
-
+  
   my $tvar_adaptor = $db_adaptor->get_TranscriptVariationAdaptor();
   my $trans_variation = $tvar_adaptor->fetch_by_dbID($obj->param('dbid'));
   ## alternate way to retrieve transcript_variation_feature if there are more than one with the same variation_feature id;
@@ -915,7 +914,8 @@ sub ajax_zmenu_variation {
   }
 
   my $type;
-  if ($trans_variation){ $type =  join ", ", @{$trans_variation->consequence_type || [] };}
+  if ($obj->param('snp_fake') && $feature) { $type = $feature->display_consequence; }
+  elsif ($trans_variation){ $type =  join ", ", @{$trans_variation->consequence_type || [] };}
   else {$type = $obj->param('consequence') || '';}
 
   my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name });
@@ -981,7 +981,6 @@ sub ajax_zmenu_variation {
       'label'       =>  $feature->map_weight,
       'priority'    =>  8,
     });
-
   } elsif ($obj->param('var_box') && $trans_variation->pep_allele_string){
     $panel->add_entry({
       'type'        =>  'amino acid:',
@@ -1176,7 +1175,7 @@ sub ajax_zmenu_id_history_tree_branch {
 sub ajax_zmenu_id_history_tree_label {
   # Specific zmenu for idhistory tree feature labels
   my $self = shift; warn $self;
-  my $panel = $self->_ajax_zmenu; warn $panel;
+  my $panel = $self->_ajax_zmenu; 
   my $obj = $self->object;
   my $id = $obj->param('label') || die( "No label  value in params" );
   my $type = ucfirst($obj->param('feat_type'));
