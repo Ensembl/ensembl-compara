@@ -116,7 +116,7 @@ sub content {
     foreach my $source (@urls) {
       if (ref($source) =~ /Record/) { ## from user account
         my $date = $source->modified_at || $source->created_at;
-        my $link = sprintf('<a href="%s/UserData/ManageRemote?record=user;data=url;id=%s;%s">Delete</a> class="modal_link"', $dir, $source->id, $referer);
+        my $link = sprintf('<a href="%s/UserData/ManageRemote?record=user;data=url;id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
         $table->add_row( { 'url'  => $source->url, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
       else { ## temporary
