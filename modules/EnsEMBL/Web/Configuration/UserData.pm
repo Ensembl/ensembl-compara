@@ -98,7 +98,7 @@ sub share_upload {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
-  my $shareable = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_shareable', backtrack => 0);
+  my $shareable = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_shareable', backtrack => 1);
   my $warning   = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'no_shareable' );
   my $select    = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'select_upload' );
   my $check     = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_save');
@@ -152,10 +152,10 @@ sub attach_das {
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
   my $server        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_server' );
-  my $source        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das', backtrack => 0 );
+  my $source        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das', backtrack => 1 );
   my $validate_das  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'validate_das');
-  my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species', 'backtrack' => 0);
-  my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords', 'backtrack' => 0);
+  my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species', 'backtrack' => 1);
+  my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords', 'backtrack' => 1);
   
   # END POINTS:
   my $attach_das    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'attach_das');
