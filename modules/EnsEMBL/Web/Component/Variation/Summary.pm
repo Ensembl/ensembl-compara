@@ -102,7 +102,7 @@ sub content {
      my $start  = $mappings{$varif_id}{start};
      my $end    = $mappings{$varif_id}{end};
      my $display_region = $region .':' . ($start -10) .'-'. ($end +10);
-     my $link = $object->_url({ 'type' => 'Location', 'action' => 'View', 'v' => $id, 'r' => $display_region, 'source' => $source});
+     my $link = $object->_url({ 'v' => $id,'source' => $source, 'vf' => $varif_id});
      my $str = $mappings{$varif_id}{strand};
      if ($str < 0 ) {$strand ="(reverse strand)";} 
      my $location_string;
@@ -123,9 +123,8 @@ sub content {
      my $start  = $mappings{$varif_id}{start};
      my $end    = $mappings{$varif_id}{end};
      my $display_region = $region .':' . ($start -10) .'-'. ($end +10); 
-     my $link = $object->_url({ 'type' => 'Location', 'action' => 'View', 'v' => $id, 'r' => $display_region, 'source' => $source});  
+     my $link = $object->_url({ 'v' => $id, 'source' => $source, 'vf' => $varif_id});  
      my $str = $mappings{$varif_id}{strand};
-     warn $str; warn $strand;
      if ($str <= 0 ) {$strand ="(reverse strand)";}
      else {$strand = "(forward strand)"; }
      my $location_string; 
