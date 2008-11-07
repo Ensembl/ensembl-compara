@@ -48,6 +48,29 @@ sub user_populate_tree {
         { 'availability' => 1, 'concise' => 'Bookmarks' },
       )
     );
+    ## Control panel fixes
+    my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+    $dir = '' if $dir !~ /_/;
+    my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+
+    my $upload_link = $dir.'/UserData/ManageUpload?'.$referer;
+    my $das_link = $dir.'/UserData/ManageRemote?'.$referer;
+    my $url_link = $dir.'/UserData/ManageRemote?'.$referer;
+    $settings_menu->append(
+      $self->create_node( 'Uploads', "Uploads ([[counts::uploads]])",
+        [], { 'availability' => 1, 'url' => $upload_link, 'raw' => 1 },
+      )
+    );
+    $settings_menu->append(
+      $self->create_node( 'DAS', "DAS sources ([[counts::dases]])",
+        [], { 'availability' => 1, 'url' => $das_link, 'raw' => 1 },
+      )
+    );
+    $settings_menu->append(
+      $self->create_node( 'URLs', "URL data ([[counts::urls]])",
+        [], { 'availability' => 1, 'url' => $url_link, 'raw' => 1 },
+      )
+    );
 
     #$settings_menu->append($self->create_node( 'Configurations', "Configurations ([[counts::configurations]])",
     #[qw(configs EnsEMBL::Web::Component::Account::Configurations
