@@ -59,7 +59,7 @@ sub content {
     if (@uploads) {
       $html .= "You have the following data saved in our databases:";
 
-      my $table = EnsEMBL::Web::Document::SpreadSheet->new();
+      my $table = EnsEMBL::Web::Document::SpreadSheet->new( [], [], {'margin' => '0 0 1em 0'} );
       $table->add_columns(
         {'key' => "name", 'title' => 'Upload name', 'width' => '60%', 'align' => 'left' },
         {'key' => "date", 'title' => 'Last updated', 'width' => '20%', 'align' => 'left' },
@@ -79,6 +79,13 @@ sub content {
   else {
     $html .= qq(<p>Log in to see your saved uploads.</p>);
   }
+  $html .= $self->_info(
+    'Adding tracks',
+    qq(<p>Please note that custom data can only be added on pages that allow these tracks to be configured, for example 'Region in detail' images</p>),
+    '100%',
+  );
+
+
   return $html;
 }
 
