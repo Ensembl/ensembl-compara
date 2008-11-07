@@ -92,10 +92,15 @@ var FormCheck = Class.create({
     f.getElements().each(function(el){ warnings += X.simple( el ); });
     if( warnings != "") {                     // If any warnings display them
       alert(warnings+"Correct these and try again");
-      return Event.stop(e);
+      Event.stop(e);
+      return false;
     } else {                                 // If conf is ZERO do nothing else call up confirm box..
-      if( f.hasClassName( 'confirm' ) && !confirm("Check the values you entered are correct before continuing")) return Event.stop(e);
+      if( f.hasClassName( 'confirm' ) && !confirm("Check the values you entered are correct before continuing")) {
+        Event.stop(e);
+        return false;
+      }
     }
+    return true;
   },
   add_label: function( code, name ) {
     this.labels[code]=name;
@@ -109,7 +114,9 @@ function FormCheck_on_load() {
       el.observe( 'change', function (e) { fc.check(Event.element(e)); } );
       el.observe( 'keyup',  function (e) { fc.check(Event.element(e)); } );
     });
-    f.observe('submit', function (e) { fc.on_submit(e); } );
+    if( ! f.up('#modal_content') ) {
+      f.observe('submit', function (e) { fc.on_submit(e); } );
+    }
   });
 };
 addLoadEvent(FormCheck_on_load);

@@ -194,11 +194,12 @@ function __modal_dialog_link_open_2( url, title ) {
 
 function modal_form_change_submit(event) {
   var el = Event.element(event);
-  var val = event.value;
-  var f  = el.up('form');
-  f.getInputs('hidden','__submit').each(function(n){
-    n.value = val;
-  });
+  var val = el.value;
+  var f = el.up('form');
+  if(!f)  return;
+  var fs = f['wizard_ajax_submit'];
+  if(!fs) return;
+  fs.value = val; 
 }
 
 function modal_success( transport ) {
@@ -221,9 +222,13 @@ function modal_success( transport ) {
 // Make the main tab links go back to this window!
   $$('#modal_caption a').each(function(n){n.addClassName('modal_link')});
   $$('#modal_content form').each(function(n){
-    Event.observe( n, 'submit', modal_form_submit );
+    n.observe( 'submit', modal_form_submit );
+    var x = n['wizard_ajax_submit'];
+    if(x) {
+      x.value = 'Next';
+    }
     n.select('input[type="submit"]').each(function(b){
-      Event.observe( b, 'mousedown', modal_form_change_submit );
+      Event.observe( b, 'click', modal_form_change_submit );
     });
   });
   $$('#modal_content form.upload').each(function(n){
@@ -237,6 +242,7 @@ function modal_success( transport ) {
 
 function modal_form_submit( event ) {
   var el = Event.element( event );
+
   if(el.id == 'configuration') {
     Event.stop( event );
     return;
@@ -244,6 +250,13 @@ function modal_form_submit( event ) {
   if( el.hasClassName('upload') ) {
     return;
   }
+
+  var x = true;
+  if( el.hasClassName('check') ) {
+    var fc = new FormCheck();
+    x = fc.on_submit(event);
+  }
+  if(x){
   new Ajax.Request( el.action, {
     method: el.method,
     parameters: el.serialize(true),
@@ -254,6 +267,7 @@ function modal_form_submit( event ) {
       $('modal_content').innerHTML = '<p>Failure: the resource failed to load</p>';
     }
   });
+  }
   Event.stop( event );
   return;
 }
