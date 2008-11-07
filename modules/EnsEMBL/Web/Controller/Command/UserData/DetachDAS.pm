@@ -20,7 +20,7 @@ sub process {
   if ($object) {
     my $temp_das = $object->get_session->get_all_das;
     if ($temp_das) {
-      my $das = $temp_das->{$cgi->param('logic_name')}
+      my $das = $temp_das->{$cgi->param('logic_name')};
       $das->mark_deleted();
       $object->get_session->save_das();
     }
