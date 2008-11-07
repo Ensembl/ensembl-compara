@@ -81,50 +81,10 @@ sub title {
 sub href {
   my ($self, $f)  = @_;
   my $vid = $f->variation_name;
-  my $type = $f->display_consequence;
   my $dbid = $f->dbID;
-  my $href = $self->_url({'type' => 'Variation', 'action'=>'Variation','v'=>$vid, 'dbid' => $dbid, 'consequence' => $type, });
+  my $href = $self->_url({'type' => 'Variation', 'action'=>'Variation','v'=>$vid, 'dbid' => $dbid, 'snp_fake' => '1' });
   return $href;
 }
-
-
-=pod
-sub href {
-  my $self = shift;
-  my $f    = shift;
-  my $view = shift || 'snpview';
-  my $pops;
-
-  if ($view eq 'ldview') {
-    my $Config   = $self->{'config'};
-    my $config_pop = $Config->{'_ld_population'};
-    
-    return unless $config_pop;
-    foreach ( @$config_pop ) {
-      $pops .= "pop=$_;";
-    }
-  }
-
-  my $id     = $f->variation_name;
-  my $source = $f->source;
-  my ($species, $start, $region, $oslice);
-
-  if( $self->{'container'}->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-      ($oslice, $start)  = $self->{'container'}->get_original_seq_region_position( $f->{start} );
-      $region = $oslice->seq_region_name();
-      ($species = $self->{container}->genome_db->name) =~ s/ /_/g;
-      
-  } else {
-      $start  = $self->slice2sr( $f->start, $f->end );
-      $region = $self->{'container'}->seq_region_name();
-      $species = "@{[$self->{container}{web_species}]}";
-  }
-
-  return "/$species/$view?snp=$id;source=$source;c=$region:$start;w=20000;$pops";
-
-  return $self->_url( );
-}
-=cut
 
 sub feature_label {
   my ($self, $f) = @_;
