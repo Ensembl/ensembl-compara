@@ -16,8 +16,33 @@ sub _init {
 sub content {
   my $self = shift;
 
+  ## Control panel fixes
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' if $dir !~ /_/;
+  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+
   my $html;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+
+  ## Temporary upload
+  $html .= "<h4>Temporary upload</h4>";
+
+  my $temp_data = $self->object->get_session->get_tmp_data('upload');
+  if ($temp_data && keys %$temp_data) {
+    $html .= '<p>'.$temp_data->{'format'}.' file for '.$temp_data->{'species'}.': ';
+    if ($user) {
+      $html .= qq(<a href="$dir/UserData/SaveUpload?wizard_next=save_tempdata;$referer" class="modal_link">Save to account</a> | );
+    }
+    else {
+      $html .= qq(<a href="$dir/Account/Login?$referer" class="modal_link">Log in to save</a> | );
+    }
+    $html .= qq(<a href="$dir/UserData/DetachUpload?$referer" class="modal_link">Delete</a></p>);
+  }
+  else {
+    $html .= qq(<p>You have no temporary data uploaded to this website.</p>);
+  }
+
+  $html .= qq(<h4>Saved uploads</h4>);
   if ($user) {
     my @uploads = $user->uploads;
 
@@ -32,7 +57,7 @@ sub content {
       );
       foreach my $upload (@uploads) {
         my $date = $upload->modified_at || $upload->created_at;
-        my $link = sprintf('<a href="/common/UserData/DeleteUpload?id=%s">Delete</a>', $upload->id);
+        my $link = sprintf('<a href="%s/UserData/DeleteUpload?id=%s;%s" class="modal_link">Delete</a>', $dir, $upload->id, $referer);
         $table->add_row( { 'name'  => $upload->name, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
       $html .= $table->render;
@@ -40,6 +65,9 @@ sub content {
     else {
       $html .= qq(<p class="space-below">You have no data saved in our databases.</p>);
     }
+  }
+  else {
+    $html .= qq(<p>Log in to see your saved uploads.</p>);
   }
   return $html;
 }
