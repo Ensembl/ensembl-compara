@@ -12,7 +12,6 @@ use EnsEMBL::Web::Controller;
 my $controller = EnsEMBL::Web::Controller->new;
 
 $controller->add_connections({qw(
-  Summary      EnsEMBL::Web::Controller::Command::UserData::Upload
   Upload       EnsEMBL::Web::Controller::Command::UserData::Upload
   ShareUpload  EnsEMBL::Web::Controller::Command::UserData::ShareUpload
   SaveUpload   EnsEMBL::Web::Controller::Command::UserData::SaveUpload
