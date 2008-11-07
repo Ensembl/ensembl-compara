@@ -102,7 +102,6 @@ BEGIN {
     }
   }
 
-warn join "\n", @PERL_TRANS_DIRS;
   %SPECIES_MAP = (
 ##      BioMart biomart  biomart biomart
     qw(
