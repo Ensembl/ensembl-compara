@@ -164,126 +164,107 @@ sub _ajax_zmenu_view {
     my $self  = shift;
     my $panel = shift;
     my $obj   = shift;
-    if ($obj->param('misc_feature')) {
+    if ($obj->param('mfid')) {
 	return $self->_ajax_zmenu_misc_feature($panel,$obj);
     }
     else { return;}
 }
 
 sub _ajax_zmenu_misc_feature {
-    use Data::Dumper;
     my $self = shift;
-    my $panel = shift;
+    my $panel= shift;
     my $obj  = shift;
-    my $name = $obj->param('misc_feature');
-    $panel->{'caption'} = $name;
-
-    my @names = ( 
-	[ 'name'           => 'Name' ] ,
-	[ 'well_name'      => 'Well name' ],
-	[ 'sanger_project' => 'Sanger project' ],
-	[ 'clone_name'     => 'Library name' ],
-	[ 'synonym'        => 'Synonym' ],
-	[ 'embl_acc'       => 'EMBL accession', 'EMBL' ],
-	[ 'bacend'         => 'BAC end acc', 'EMBL' ],
-	[ 'alt_well_name'   => 'Well name' ],
-	[ 'bacend_well_nam' => 'BAC end well' ],
-    );
-
+    my $name = $obj->param('misc_feature_n');
+    my $id   = $obj->param('mfid');
+    my $url  = $obj->_url({'type' => 'Location', 'action' => 'View', 'misc_feature' => $name});
     my $db         = $obj->param('db')  || 'core';
     my $db_adaptor = $obj->database(lc($db));
     my $mfa        = $db_adaptor->get_MiscFeatureAdaptor();
-    my $f_dets;
-    foreach my $attrib (@names) {
-	my $mf = $mfa->fetch_all_by_attribute_type_value($attrib->[0],$name);
-	if (@{$mf}) {
-	    $f_dets = [ $mf->[0],$name ];
-	    last if @{$mf};
-	}
-    } 
-    warn Dumper($f_dets);
+    my $mf         = $mfa->fetch_by_dbID($id);
+    my $type       = $mf->get_all_MiscSets->[0]->code;
+    my $caption = $type eq 'encode' ? 'Encode region'
+	        : $type eq 'ntctgs' ? 'NT Contig'
+		: 'Clone';
+    $panel->{'caption'} = "$caption: $name";
 
-    #if more than one can I use the dbID ?
-}
+    $panel->add_entry({
+	'type' => 'bp',
+	'label' => $mf->seq_region_start.'-'.$mf->seq_region_end,
+	'priority' => 190,
+    });
 
+    $panel->add_entry({
+	'type' => 'length',
+	'label' => $mf->length.' bps',
+	'priority' => 180,
+    });
 
-
-sub zzzzmenu {
-    my ($self, $f ) = @_;
-    return if $self->my_config('navigation') ne 'on';
-    my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc alt_well_name bacend_well_nam));
-    my $feature_type = 'Clone';
-    my $position = 'bp';
-    my $link_text = 'Centre on clone:';
-    my $href =  $self->href($f);
-    
-    #change stuff for vega zfish haplotype scaffolds
-    if ($self->my_config('FEATURES') eq 'hclone') {
-	$feature_type = 'Haplotype Scaffold';
-	$position = 'location',
-	    $link_text = 'View this scaffold';
-	$href =~ s/misc_feature/l/;
-	$href =~ s/:(\d+)$/-$1/;
-    }
-    
-    my $zmenu = {
-        qq(caption)                                                         => qq($feature_type: $name),
-        qq(01:$position: @{[$f->seq_region_start]}-@{[$f->seq_region_end]}) => '',
-        qq(02:length: @{[$f->length]} bps)                                  => '',
-        qq(03:$link_text)                                                   => $href,
-    };
+    #add entries for each of the following attributes
     my @names = ( 
-	[ 'name'           => '20:Name' ] ,
-	[ 'well_name'      => '21:Well name' ],
-	[ 'sanger_project' => '32:Sanger project' ],
-	[ 'clone_name'     => '33:Library name' ],
-	[ 'synonym'        => '34:Synonym' ],
-	[ 'embl_acc'       => '35:EMBL accession', 'EMBL' ],
-	[ 'bacend'         => '39:BAC end acc', 'EMBL' ],
-	[ 'alt_well_name'    => '22:Well name' ],
-	[ 'bacend_well_nam' => '31:BAC end well' ],
+	['name',           'Name'                   ],
+	['well_name',      'Well name'              ],
+	['sanger_project', 'Sanger project'         ],
+	['clone_name',     'Library name'           ],
+	['synonym',        'Synonym'                ],
+	['embl_acc',       'EMBL accession', 'EMBL' ],
+	['bacend',         'BAC end acc',    'EMBL' ],
+	['alt_well_name',  'Well name'              ],
+	['bacend_well_nam','BAC end well'           ],
+	['state',          'State'                  ],
+	['htg',            'HTGS_phase'             ],
+	['remark',         'Remark'                 ],
+	['organisation',   'Organisation'           ],
+	['seq_len',        'Seq length'             ],
+	['fp_size',        'FP length'              ],
+	['supercontig',    'Super contig'           ],
+	['fish',           'FISH'                   ],
+	['description',    'Description'            ],
     );
-    foreach my $ref (@names ) {
-	foreach(@{$f->get_all_attribute_values($ref->[0])||[]}) {
-	    $zmenu->{"$ref->[1] $_" } = $ref->[2] ? $self->ID_URL( $ref->[2], $_ ) : '';
+
+    my $priority = 170;
+    foreach my $name (@names) {
+	my $value = $mf->get_scalar_attribute($name->[0]);
+	my $entry;
+	
+	#hacks for these type of entries
+	if ($name->[0] eq 'BACend_flag') {
+	    $value = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$value]; 
+	}
+	if ($name->[0] eq 'synonym') {
+	    $value = "http://www.sanger.ac.uk/cgi-bin/humace/clone_status?clone_name=$value" if $mf->get_scalar_attribute('organisation') eq 'SC';
+	}
+	if ($value) {
+	    $entry = {
+		'type'     => $name->[1],
+		'label'    => $value,
+		'priority' => $priority,};
+	    if ($name->[2]) {
+		$entry->{'link'} = $obj->get_ExtURL($name->[2],$value);
+	    }
+	    $panel->add_entry($entry);
+	    $priority--;
 	}
     }
-    (my $state = $f->get_scalar_attribute('state'))=~s/^\d\d://;
-    my $bac_info = $f->get_scalar_attribute('BACend_flag');
-    if($bac_info != '' ) {
-	$bac_info = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$bac_info];
-    }
-    
-    $zmenu->{"41:HTGS_phase: @{[$f->get_scalar_attribute('htg')]}"}            = '' if $f->get_scalar_attribute('htg');
-    $zmenu->{"42:Remark: @{[$f->get_scalar_attribute('remark')]}"}             = '' if $f->get_scalar_attribute('remark');
-    
-    $zmenu->{"43:Organisation: @{[$f->get_scalar_attribute('organisation')]}"} = '' if $f->get_scalar_attribute('organisation');
-    
-    my $state_link = '';
-    $state_link = qq(http://www.sanger.ac.uk/cgi-bin/humace/clone_status?clone_name=).$f->get_scalar_attribute('synonym')
-	if $state =~ /Committed|FinishAc|Accessioned/ &&
-	    $f->get_scalar_attribute('synonym') &&
-		$f->get_scalar_attribute('organisation') eq 'SC';
-    $zmenu->{"44:State: $state"                                         } = $state_link if $state;
-    
-    $zmenu->{"50:Seq length: @{[$f->get_scalar_attribute('seq_len')]}"  } = '' if $f->get_scalar_attribute('seq_len');
-    $zmenu->{"50:FP length:  @{[$f->get_scalar_attribute('fp_size')]}"  } = '' if $f->get_scalar_attribute('fp_size');
-    $zmenu->{"60:Super contig:  @{[$f->get_scalar_attribute('supercontig')]}" } = '' if $f->get_scalar_attribute('supercontig');
-    $zmenu->{"70:BAC flags:  $bac_info"                          } = '' if $bac_info;
-    $zmenu->{"75:FISH:  @{[$f->get_scalar_attribute('fish')]}"       } = '' if $f->get_scalar_attribute('fish');
-    
-    my $links = $self->my_config('LINKS');
-    if( $links ) {
-	my $Z = 80;
-	foreach ( @$links ) {
-	    my $val = $f->get_scalar_attribute($_->[1]);
-        next unless $val;
-	    (my $href = $_->[2]) =~ s/###ID###/$val/g;
-	    $zmenu->{"$Z:$_->[0]: $val"} = $href;
-	    $Z++;
-	}
-    }
-    return $zmenu;
+
+    $panel->add_entry({
+	'label' => "Center on $caption",
+	'link'   => $url,
+	'priority' => $priority,
+    });
+
+    #this is all for pre so can be sorted for that when the time comes
+    #my $links = $self->my_config('LINKS');
+    #if( $links ) {
+    #	my $Z = 80;
+    #	foreach ( @$links ) {
+    #	    my $val = $f->get_scalar_attribute($_->[1]);
+    #   next unless $val;
+    #	    (my $href = $_->[2]) =~ s/###ID###/$val/g;
+    #	    $zmenu->{"$Z:$_->[0]: $val"} = $href;
+    #	    $Z++;
+    #	}
+    #}
+
 }
 
 sub _ajax_zmenu_av {
