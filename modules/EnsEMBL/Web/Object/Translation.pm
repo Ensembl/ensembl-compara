@@ -719,6 +719,7 @@ sub pep_splice_site {
                   'allele'     => 'Alternative alleles',
                   'pep_snp'    =>'Alternative peptide residue',
                   'type'       => 'snp_type',
+                  'vdbid'      => 'Variation feature_id',
                 ]
 
 =cut
@@ -772,6 +773,8 @@ sub pep_snps{
       }
       $snpclass = $snp->var_class;
       $alleles  = $snp->allele_string;
+      my $snp_dbid = $snp->dbID;
+      $aas[$aa-1]{'vdbid'} = $snp_dbid; 
 
       if($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') {
     # gets all changes to pep by snp
