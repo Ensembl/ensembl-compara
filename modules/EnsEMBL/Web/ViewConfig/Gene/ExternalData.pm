@@ -22,12 +22,11 @@ sub _view {
 sub form {
   my ( $view_config, $object ) = @_;
   
-  $view_config->add_fieldset('Das sources', 'table');
-# 'type' => 'SubHeader', 'value' => 'DAS Sources' });
+  $view_config->add_fieldset('DAS sources', 'table');
   my @all_das = sort {
-    $a->label cmp $b->label
+    lc $a->label cmp lc $b->label
   } grep {
-    1#  ;$_->is_on( _view )
+    $_->is_on( _view )
   } values %{ $ENSEMBL_WEB_REGISTRY->get_all_das() };
 
   for my $das ( @all_das ) {
