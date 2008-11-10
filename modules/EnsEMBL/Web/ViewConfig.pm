@@ -136,8 +136,8 @@ sub get_form {
 }
 
 sub add_fieldset {
-  my( $self, $legend ) = @_;
-  my $fieldset = $self->get_form->add_fieldset('form'=>'configuration');
+  my( $self, $legend, $layout ) = @_;
+  my $fieldset = $self->get_form->add_fieldset('form'=>'configuration', 'layout' => $layout );
   $fieldset->legend($legend);
 }
 
@@ -145,7 +145,7 @@ sub add_form_element {
   my($self,$hashref) = @_;
   my @extra;
   my $value = $self->get($hashref->{'name'});
-  if( $hashref->{'type'} eq 'CheckBox' ) {
+  if( $hashref->{'type'} =~ /CheckBox/ ) {
     push @extra, 'checked' => $value eq $hashref->{'value'} ? 1 : 0;
   } elsif( !exists $hashref->{'value'} ) {
     push @extra, 'value' => $value;

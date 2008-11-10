@@ -22,19 +22,21 @@ sub _view {
 sub form {
   my ( $view_config, $object ) = @_;
   
-  $view_config->add_form_element({ 'type' => 'SubHeader',
-                                   'value' => 'DAS Sources' });
+  $view_config->add_fieldset('Das sources', 'table');
+# 'type' => 'SubHeader', 'value' => 'DAS Sources' });
   my @all_das = sort {
     $a->label cmp $b->label
   } grep {
-    $_->is_on( &_view )
+    1#  ;$_->is_on( _view )
   } values %{ $ENSEMBL_WEB_REGISTRY->get_all_das() };
 
   for my $das ( @all_das ) {
-    $view_config->add_form_element({ 'type' => 'DASCheckBox',
-                                     'das'  => $das,
-                                     'name' => $das->logic_name,
-                                     'value'=> 'yes'});
+    $view_config->add_form_element({
+      'type' => 'DASCheckBox',
+      'das'  => $das,
+      'name' => $das->logic_name,
+      'value'=> 'yes'
+    });
   }
 }
 
