@@ -71,7 +71,7 @@ sub _init {
     my $href = $self->_url
     ({'action'  => 'Variation',
       'v'     => $variation_id,
-      'dbid'    => $dbid,
+      'vf'    => $dbid,
       'var_box' => 1,
     });
 
