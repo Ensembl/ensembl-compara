@@ -99,17 +99,22 @@ sub new {
 }
 
 sub load_user_tracks {
-  my( $self, $adaptor ) = @_;
+  my( $self, $session ) = @_;
   my $menu = $self->get_node('user_data');
   return unless $menu;
   my $DAS = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_all_das();
+
   foreach my $source ( sort { ($a->caption||$a->label) cmp ($b->caption||$b->label) } values %$DAS ) {
     next if $self->get_node('das_'.$source->logic_name);
     my $category = $source->category;
     $self->add_das_track( 'user_data', $source );
   }
 
-  my %T = %{$adaptor->get_tmp_data||{}};
+### Get the tracks that are temporarily stored - as "files" not in the DB....
+## Firstly "upload data" not yet committed to the database...
+## Then those attached as URLs to either the session or the User
+  my %T = %{$session->get_tmp_data('upload') || {}};
+
   if( $T{'species'} eq $self->{'species'} ) {
     $menu->append($self->create_track( 'temporary_user_data', '[USER] Temporary user data', {
       %T,
@@ -123,6 +128,12 @@ sub load_user_tracks {
     }));
   }
   
+## Do we have a user?!
+
+### Now get the tracks that have been stored in the database...
+## Firstly those shared (and attached to the session)
+
+## Then those attached to the user account
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user(); #  #EnsEMBL::Web::Data::User->new($ENV{'ENSEMBL_USER_ID'});
   my $i = 0;
   
@@ -144,6 +155,8 @@ sub load_user_tracks {
       }
     }
   }
+
+## 
   return;
 }
 
