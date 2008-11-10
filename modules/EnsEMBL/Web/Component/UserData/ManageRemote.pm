@@ -20,26 +20,11 @@ sub content {
   ## Do any 'deletes'
   my $type = $object->param('record') || '';
   my $data = $object->param('data') || '';
-  if ($type eq 'session') {
-    if ($data eq 'url') {
-      $object->get_session->purge_tmp_data('url');
-    }
-    elsif ($data eq 'das') {
-      my $temp_das = $object->get_session->get_all_das;
-      if ($temp_das) {
-        my $das = $temp_das->{$object->param('logic_name')};
-        $das->mark_deleted() if $das;
-        $object->get_session->save_das();
-      }
-    }
+  if ($type eq 'session' && $data eq 'url') {
+    $object->get_session->purge_tmp_data('url');
   }
-  elsif ($type eq 'user') {
-    if ($data eq 'url') {
-      $object->delete_userurl($object->param('id'));
-    }
-    elsif ($data eq 'das') {
-      $object->delete_userdas($object->param('id'));
-    }
+  elsif ($type eq 'user' && $data eq 'url') {
+    $object->delete_userurl($object->param('id'));
   }
 
   ## Control panel fixes
@@ -74,14 +59,14 @@ sub content {
 
       if (ref($source) =~ /Record/) { ## from user account
         my $date = $source->modified_at || $source->created_at;
-        my $link = sprintf('<a href="%s/UserData/ManageRemote?record=user;data=das;id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
+        my $link = sprintf('<a href="%s/UserData/DeleteDAS?id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
         $table->add_row( { 'name'  => $source->label, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
       else { ## temporary
         if ($user) {
           $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;dsn=%s;%s" class="modal_link">Save to account</a>', $dir, $source->logic_name, $referer);
         }
-        my $detach = sprintf('<a href="%s/UserData/ManageRemote?record=session;data=das;logic_name=%s;%s" class="modal_link">Detach</a>', $dir, $source->logic_name, $referer);
+        my $detach = sprintf('<a href="%s/UserData/DeleteDAS?logic_name=%s;%s" class="modal_link">Detach</a>', $dir, $source->logic_name, $referer);
         $table->add_row( { 'name'  => $source->label, 'date' => 'N/A', 'save' => $save, 'delete' => $detach } );
       }
 
