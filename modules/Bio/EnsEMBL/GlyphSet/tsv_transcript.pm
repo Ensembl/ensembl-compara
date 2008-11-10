@@ -96,23 +96,6 @@ sub _init {
     } 
   } #we are finished if there is no other exon defined
 
-  if( $Config->{'_add_labels'} ){
-    my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $sample, '', 'ptsize' => $fontsize, 'font' => $fontname );
-    my $tglyph = $self->Text({
-      'x'         => -105,
-      'y'         => -($th/2), 
-      'height'    => $th,
-      'width'     => $w / $pix_per_bp,
-      'font'      => $fontname,
-      'ptsize'    => $fontsize,
-      'colour'    => $colour,
-      'text'      => $sample,
-      'halign'     => 'left',
-      'absolutey' => 1,
-      'absolutex' => 1,
-    });
-    $self->push($tglyph);
-  }
 }
 
 sub href {
