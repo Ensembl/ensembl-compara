@@ -161,24 +161,19 @@ sub ajax_zmenu      {
 }
 
 sub _ajax_zmenu_view {
-    my $self  = shift;
-    my $panel = shift;
-    my $obj   = shift;
-    if ($obj->param('mfid')) {
-	return $self->_ajax_zmenu_misc_feature($panel,$obj);
-    }
-    elsif ($obj->param('region_n')) {
-	return $self->_ajax_zmenu_region($panel,$obj);
-    }
-    else {
-	my $r = $self->param('r');
-	$panel->{'caption'} = $r;
-	my $url = $obj->_url({'type' => 'Location', 'action' => 'View'});
-	$panel->add_entry({
-	    'label' => $r,
-	    'link'  => $url,
-	});
-    }
+  my $self  = shift;
+  my $panel = shift;
+  my $obj   = shift;
+  if( $obj->param('mfid')) {
+    return $self->_ajax_zmenu_misc_feature($panel,$obj);
+  } elsif ($obj->param('region_n')) {
+    return $self->_ajax_zmenu_region($panel,$obj);
+  } else {
+    my $r = $obj->param('r');
+    $panel->{'caption'} = $r;
+    my $url = $obj->_url({'type' => 'Location', 'action' => 'View'});
+    $panel->add_entry({ 'label' => $r, 'link'  => $url });
+  }
 }
 
 sub _ajax_zmenu_region {
