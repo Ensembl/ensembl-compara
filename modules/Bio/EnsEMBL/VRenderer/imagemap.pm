@@ -75,31 +75,50 @@ sub render_Space {
 
 sub _getHref {
   my( $self, $glyph ) = @_;
-  my %actions = ();
-  my @X = qw( title onmouseover onmouseout alt href );
-  foreach(@X) {
-    my $X = $glyph->$_;
-    $actions{$_} = $X if defined $X;
-  }
-  $actions{'title'} = $glyph->alt if defined $glyph->alt;
 
-  if($self->{'show_zmenus'}==1) {
-    my $zmenu = $glyph->zmenu();
-    if(defined $zmenu && (ref($zmenu) eq '' || ref($zmenu) eq 'HASH' && keys(%$zmenu)>0) ) {
-      if($self->{'zmenu_zclick'} || ($self->{'zmenu_behaviour'} =~ /onClick/i)) {
-        #$actions{'ondoubleclick'} = $actions{'href'}        if exists $actions{'href'};
-        $actions{'onclick'}       = &Sanger::Graphics::JSTools::js_menu($zmenu).";return false;";
-        delete $actions{'onmouseover'};
-        delete $actions{'onmouseout'};
-        $actions{'alt'} = "Click for Menu";
-      } else {
-        delete $actions{'alt'};
-        $actions{'onmouseover'} = &Sanger::Graphics::JSTools::js_menu($zmenu);
+  my %actions = ();
+
+  foreach (qw(title onmouseover onmouseout onclick alt href target)) {
+    my $X = $glyph->$_;
+    if(defined $X) {
+      $actions{$_} = $X;
+
+      if($_ eq 'alt' || $_ eq 'title') {
+        $actions{'title'} = CGI::escapeHTML($X);
+        $actions{'alt'}   = CGI::escapeHTML($X);
       }
-      $actions{'href'} ||= 'javascript:void(0)';
     }
   }
-  return join '', map { qq( $_="$actions{$_}") } keys %actions;
+
+  if($self->{'show_zmenus'} == 1) {
+    my $zmenu = undef; # $glyph->zmenu();
+    if(defined $zmenu && ((ref $zmenu  eq q()) ||
+                          (ref $zmenu eq 'HASH')
+                          && scalar keys(%{$zmenu}) > 0)) {
+
+      if($self->{'zmenu_zclick'} || ($self->{'zmenu_behaviour'} =~ /onClick/mix)) {
+#        $actions{'alt'}     = 'Click for Menu';
+        $actions{'onclick'} = Sanger::Graphics::JSTools::js_menu($zmenu).q(;return false;);
+        delete $actions{'onmouseover'};
+        delete $actions{'onmouseout'};
+
+      } else {
+        delete $actions{'alt'};
+        $actions{'onmouseover'} = Sanger::Graphics::JSTools::js_menu($zmenu);
+      }
+      $actions{'href'} ||= 'javascript:void(0);';
+    }
+  }
+
+  if(keys %actions && !$actions{'href'}) {
+    $actions{'nohref'} = 'nohref';
+    delete $actions{'href'};
+  }
+
+  return unless $actions{'title'} || $actions{'href'};
+  $actions{'alt'} ||= '';
+
+  return join q(), map { qq( $_="$actions{$_}") } keys %actions;
 }
 
 1;
