@@ -6,6 +6,7 @@ use EnsEMBL::Web::Document::Panel::Information;
 use EnsEMBL::Web::Document::Panel::Image;
 use EnsEMBL::Web::Data::Release;
 use EnsEMBL::Web::RegObj;
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 use Data::Dumper;
 
 use base qw(EnsEMBL::Web::Configuration);
@@ -50,7 +51,7 @@ sub ajax_zmenu      {
       return $self->ajax_zmenu_variation($panel, $obj);
     } elsif( $action eq 'Variation_transcript'){
       return $self->ajax_zmenu_variation_transcript($panel, $obj);
-    } elsif( $action eq 'Transcript_Variation'){
+    } elsif( $action eq 'Transcript_Variation'){ 
       return $self->_ajax_zmenu_transcript_variation($panel, $obj);
     } elsif( $action eq 'ref'){
       return $self->_ajax_zmenu_change_reference($panel, $obj);  
@@ -147,8 +148,102 @@ sub _ajax_zmenu_transcript_variation {
   my $self = shift;
   my $panel = shift;
   my $obj  = $self->object;
+  my $db_adaptor = $obj->database('variation');
+  my $var_adaptor = $db_adaptor->get_VariationAdaptor();
+  my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor();
+  my $v_id = $obj->param('v');
+  my $var = $var_adaptor->fetch_by_name($v_id);
+  my @vf = @{$var_feat_adaptor->fetch_all_by_Variation($var)};
+  my $feature;
+  if ( scalar @vf == 1) { $feature = $vf[0];}
+  else {
+    foreach (@vf) {
+      if ($_->dbID eq $obj->param('vf') ) {$feature = $_;}
+    }
+  }
+
+  my $var_link = my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name, 'vf' => $feature->dbID, 'source' => $feature->source });
+  my $chr_start = $feature->start();
+  my $chr_end   = $feature->end();
+  my $bp = $chr_start;
+  if( $chr_end < $chr_start ) {
+      $bp = "between $chr_end & $chr_start";
+  } elsif($chr_end > $chr_start ) {
+      $bp = "$chr_start - $chr_end";
+  }
+  my $ref_allele = $feature->ref_allele_string;
+  $ref_allele = length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..';
+  my $strain = $obj->species_defs->translate("strain");
+  my $type = $feature->display_consequence;
+  my $tc;
+  if ($obj->param('sara')) {$type = 'SARA';} 
+  if ($obj->param('tc') ){
+    $tc = $obj->param('tc');
+    if ($tc =~/0|-1/) {$tc=~s/0|-1/-/;}
+    elsif ($tc =~/1/) {$tc=~s/1/+/;} 
+  }
+  my $ambig_code = &ambiguity_code(join "|", $ref_allele, $obj->param('alt_allele') ) unless $type eq 'SARA';
+  my $class = &variation_class(join "|", $ref_allele, $obj->param('alt_allele'));
+
+  $panel->{'caption'} = $feature->variation_name;
+  $panel->add_entry({
+    'label_html'  =>  'Variation properties',
+    'link'        =>  $var_link,
+    'priority'    =>  20,
+  });
+  $panel->add_entry({
+    'type'        =>  'bp:',
+    'label'       =>  $bp,
+    'priority'    =>  18,
+  });
+  $panel->add_entry({
+    'type'        =>  'class:',
+    'label'       =>  $class,
+    'priority'    =>  16,
+  });
+  $panel->add_entry({
+    'type'        =>  'reference allele:',
+    'label'       =>  $ref_allele,
+    'priority'    =>  14,
+  });
+  $panel->add_entry({
+    'type'        =>  $strain . ' genotype:',
+    'label'       =>  $obj->param('alt_allele'),
+    'priority'    =>  12,
+  });
+  $panel->add_entry({
+    'type'        =>  'ambiguity code:',
+    'label'       =>  $ambig_code,
+    'priority'    =>  10,
+  }) unless $obj->param('sara');
+  $panel->add_entry({
+    'label'       =>  $tc,
+    'priority'    =>  8,
+  })if $obj->param('tc');
+  $panel->add_entry({
+    'type'        =>  'amino acid:',
+    'label'       =>  $obj->param('aa_change'),
+    'priority'    =>  6,
+  }) if $obj->param('aa_change');
+  $panel->add_entry({
+    'type'        =>  'resequencing coverage:',
+    'label'       =>  $obj->param('cov'),
+    'priority'    =>  5,
+  }) if $obj->param('cov');
+  $panel->add_entry({
+    'type'        =>  'source:',
+    'label'       =>  (join ", ", @{$feature->get_all_sources ||[]}),
+    'priority'    =>  4,
+  }); 
+  $panel->add_entry({
+    'label'       =>  $type,
+    'priority'    =>  2,
+  });
+
+
 
   return;
+
 }
 
 sub _ajax_zmenu_transcript_coverage {
