@@ -43,7 +43,7 @@ sub _init {
         });
         $prsave ||= $pr;
       }
-      my $title =  sprintf '%s domain: %s; Positions: %d-%d', $label, $key, $minx, $maxx;
+      my $title =  sprintf '%s %s; Positions: %d-%d', $label, $key, $minx, $maxx;
          $title .= '; Interpro: '. $prsave->interpro_ac if $prsave->interpro_ac;
          $title .= '; '.$prsave->idesc                  if $prsave->idesc;
       my $Composite = $self->Composite({

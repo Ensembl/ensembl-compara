@@ -20,7 +20,7 @@ sub _init {
         'y'       => $y,
         'width'   => $w,
         'height'  => $h,
-	'title'   => "$text feature; Position: ".$pf->start.'-'.$pf->end,
+	'title'   => "$caption; Position: ".$pf->start.'-'.$pf->end,
         'colour'  => $colour,
       }));
     }
