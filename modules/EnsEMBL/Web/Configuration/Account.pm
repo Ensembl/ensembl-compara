@@ -49,13 +49,14 @@ sub user_populate_tree {
       )
     );
     ## Control panel fixes
-    my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
-    $dir = '' if $dir !~ /_/;
+    my $species = '/'.$ENV{'ENSEMBL_SPECIES'};
+    $species = '' if $species !~ /_/;
+    $species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES unless $species;
     my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
 
-    my $upload_link = $dir.'/UserData/ManageUpload?'.$referer;
-    my $das_link = $dir.'/UserData/ManageRemote?'.$referer;
-    my $url_link = $dir.'/UserData/ManageRemote?'.$referer;
+    my $upload_link = $species.'/UserData/ManageUpload?'.$referer;
+    my $das_link = $species.'/UserData/ManageRemote?'.$referer;
+    my $url_link = $species.'/UserData/ManageRemote?'.$referer;
     $settings_menu->append(
       $self->create_node( 'Uploads', "Uploads ([[counts::uploads]])",
         [], { 'availability' => 1, 'url' => $upload_link, 'raw' => 1 },
