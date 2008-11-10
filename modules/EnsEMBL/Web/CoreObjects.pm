@@ -343,6 +343,7 @@ sub _generate_objects {
   unless( keys %{$self->{'parameters'}} ) {
     $self->{'parameters'}{'_referer'} = $self->param('_referer') if $self->param('_referer');
   }
+  $self->{'parameters'}{'h'} = $self->param('h') if $self->param('h');
 }
 
 sub _get_gene_location_from_transcript {
