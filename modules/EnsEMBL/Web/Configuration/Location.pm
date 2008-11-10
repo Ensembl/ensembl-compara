@@ -201,6 +201,14 @@ sub _ajax_zmenu_region {
 	'link'  => $url,
 	'priority' => $priority,
     });
+    my $export_URL = $obj->_url({'type' => 'Location', 'action' => 'Export', 'region' => $slice_name});
+    $priority--;
+    $panel->add_entry({
+	'type'    => "Export $slice_type",
+	'label'   => 'Export',
+	'link'    => $export_URL,
+	'priority'=> $priority,
+    });
     foreach my $cs (@{$db_adaptor->get_CoordSystemAdaptor->fetch_all() || []}) {
 	$priority--;
 	next if $cs->name eq $slice_type;
@@ -244,15 +252,6 @@ sub _ajax_zmenu_region {
 		'link'     => $obj->get_ExtURL('EMBL',$short_name),
 		'priority' => $priority,
 	    });
-	    # get clone id out of seq_region_attrib for link to webFPC
-	    if (my ($fpc_name) = @{$new_slice->get_all_Attributes('fpc_clone_id')}) {
-		my $fpc_URL = $obj->get_ExtURL('FPC',$fpc_name);
-		$panel->add_entry({
-		    'type'  => 'View in WebFPC',
-		    'label' => $fpc_name,
-		    'link'  => $fpc_URL,
-		});
-	    }
 	}
     }
 }
