@@ -186,7 +186,11 @@ MAIN:{
   $| = 1;
   CGI::header;
   $page->render_start;
+print "
 
+<!- THIS IS A HACK ->
+
+";
   if( my $disp_type = $CGI->param('_display') ){
 
     my @errs = ();
@@ -1187,7 +1191,7 @@ sub get_main_panel{
         my $run_token = $runnable->token =~ /(\w+)$/ ? $1 : '';
         if( -e $runnable->reportfile ){
           my $raw_href = ("/Multi/$VIEW_SCRIPT?".
-                          join( '&',
+                          join( ';',
                                 'format=raw',
                                 "ticket=$TICKET",
                                 "runnable=$run_token",
@@ -1211,12 +1215,12 @@ sub get_main_panel{
           else{ $status_label = 'No Hits' }
 
           my $exp_href = ('/biomart/martview?'. 
-                          join( '&',
+                          join( ';',
                                 "_blast_ticket=$TICKET",
                                 "_blast_result=$res_id" ) );
 
 #          my $exp_href_tmpl = ('/Multi/martview?'. 
-#                               join( '&',
+#                               join( ';',
 #                                     'stage=output',
 #                                     'stage_initialised=start',
 #                                     'stage_initialised=filter',
@@ -1723,19 +1727,17 @@ sub populate_karyotype{
 <td width="8"><small>&nbsp;</small></td>);
 
   my $link_href_tmpl    = ("/Multi/$VIEW_SCRIPT?".
-                           join( '&',
+                           join( ';',
                                  "ticket=$TICKET",
                                  "run_id=$run_id",
                                  'hit_id=%s',
                                  'hsp_id=%s', 
                                  '_display=%s' ) );
 
-  my $ctgview_href_tmpl = ('/%s/contigview?'.
-                           join( '&',
-                                 'chr=%s',
-                                 'vc_start=%s',
-                                 'vc_end=%s',
-                                 'highlights=BLAST_NEW:%s!!%s' ) );
+  my $ctgview_href_tmpl = ('/%s/Location/View?'.
+                           join( ';',
+                                 'r=%s:%s-%s',
+                                 'h=BLAST_NEW:%s!!%s' ) );
 
   # Determine colour bands for highlighting hits
   #my $max_score = $alignments->[0]->[1]->score;
@@ -1779,12 +1781,13 @@ sub populate_karyotype{
         end   => $chr_end,
         score => $score,
         col   => $colour,
+        href  => $ctgview_href,
         zmenu => 
         { caption => $caption,
-          "00:Alignment..."        => "\@".sprintf($link_href,'ALIGN'),
-          "01:Query Sequence..."   => "\@".sprintf($link_href,'SEQUENCE'),
-          "02:Genomic Sequence..." => "\@".sprintf($link_href,'GSEQUENCE'),
-          "03:ContigView..."       => "\@".$ctgview_href,
+          "00:Alignment..."        => '@'.sprintf($link_href,'ALIGN'),
+          "01:Query Sequence..."   => '@'.sprintf($link_href,'SEQUENCE'),
+          "02:Genomic Sequence..." => '@'.sprintf($link_href,'GSEQUENCE'),
+          "03:ContigView..."       => '@'.$ctgview_href,
           "04:Raw Score: ". $hsp->score            => '',
           "05:PercentID: ". $hsp->percent_identity => '',
           "06:Length:    ". $hsp->length           => '', }
@@ -1821,11 +1824,13 @@ sub populate_karyotype{
   my $web_config   = $session->getImageConfig('Vkaryoblast');
 
   my $num_chrs = scalar( @$chrs_ref );
-  $web_config->set_parameter('rows',  int( ($num_chrs-1)/12 ) + 1);
-  $web_config->set_parameter('chromosomes', $chrs_ref);
-  $web_config->set_parameter('all_chromosomes', 'yes');
-  $web_config->set_parameter('container_width', $chr_maxln );
-  
+  $web_config->set_parameters({
+    'rows'            => int( ($num_chrs-1)/12 ) + 1,
+    'chromosomes'     => $chrs_ref,
+    'all_chromosomes' => 'yes',
+    'container_width' => $chr_maxln,
+    'slice_number'    => '0|1'
+  });
   my $karyo_dc = Bio::EnsEMBL::VDrawableContainer->new(
     { 'web_species' => $sp, ka=>$ka, sa=>$sa, 'chr' => 'ALL' }, $web_config, [ \%highlights, \%highlights2 ] 
   );
@@ -1834,13 +1839,21 @@ sub populate_karyotype{
      $fi->set_tmp_filename();
      $fi->dc = $karyo_dc;
      $fi->{'img_map'} = 1;
-     $fi->{'border'} = 1;
+     $fi->{'border'}  = 1;
+     $fi->{'id'}      = 'blast_karyo_i';
 
   $main_panel->add_entry();
-  my $html = qq(<table align="center" border="0" cellspacing="0" cellpadding="2">
-   <tr valign="top">
-     <td nowrap align="center" colspan="2"
-       >).$fi->render_image_tag().qq(</td></td></table>).$fi->render_image_map();
+  my $img_tag = $fi->render_image_tag;
+  my $html = sprintf '
+    <table align="center" border="0" cellspacing="0" cellpadding="2">
+      <tr valign="top">
+        <td nowrap align="center"><div class="drag_select" id="blast_karyo"
+	  style="margin: 0px auto; border: solid 1px black; position: relative; width:%dpx">%s</div></td>
+      </tr>
+    </table>',
+    $fi->{'width'},
+    $img_tag.$fi->render_image_map();
+
   $main_panel->add_form( $main_panel->get_form_label( $html ) );
   return 1;
 }
@@ -2057,7 +2070,7 @@ sub populate_result_summary{
 
   # Define templates
   my $ahref_t = ("/Multi/$VIEW_SCRIPT?".
-                 join( '&',
+                 join( ';',
                        "ticket=$TICKET",
                        "run_id=$run_id",
                        "result_id=$result_id",
@@ -2065,12 +2078,10 @@ sub populate_result_summary{
                        'hsp_id=%s', 
                        '_display=%s' ) );
 
-  my $chref_t = ("/$species/contigview?".
-                 join( '&',
-                       'chr=%s',
-                       'vc_start=%s',
-                       'vc_end=%s',
-                       "highlights=BLAST_NEW:$TICKET!!$use_date" ) );
+  my $chref_t = ("/$species/Location/View?".
+                 join( ';',
+                       'r=%s:%s-%s',
+                       "h=BLAST_NEW:$TICKET!!$use_date" ) );
 
   my $sort_t  = qq(<A href="/Multi/$VIEW_SCRIPT?ticket=$TICKET&sort=%s" title="Sort Descending"><IMG src="/img/blastview/sort_descending.gif" border=0 height=11 width="1"1></A>);
   my $rsort_t = qq(<A href="/Multi/$VIEW_SCRIPT?ticket=$TICKET&sort=%s" title="Sort Ascending"><IMG src="/img/blastview/sort_ascending.gif" border=0 height=11 width="1"1></A>);
@@ -2089,23 +2100,23 @@ sub populate_result_summary{
                                 "BV_N_", "mapview", "Chr:%s" );
 
   my $ctgview_link_t = sprintf
-    ( $link_t, "/$species/contigview?".
-      join( '&', "region=%s",
-            "highlights=BLAST_NEW:$TICKET!!$use_date"), 
-      "BV_N_", "contigview", "%s" );
+    ( $link_t, "/$species/Location/View?".
+      join( ';', "r=%s",
+            "h=BLAST_NEW:$TICKET!!$use_date"), 
+      "BV_N_", "Location/View", "%s" );
 
   my $cytoview_link_t = sprintf
-    ( $link_t, "/$species/cytoview?".
-      join( '&', "region=%s",
+    ( $link_t, "/$species/Location/Overview?".
+      join( ';', "r=%s",
             "highlights=BLAST_NEW:$TICKET!!$use_date"), 
-      "BV_N_", "cytoview", "%s" );
+      "BV_N_", "Location/Overview", "%s" );
 
   if( $database =~ /LATESTGP/i ){
     $db_name_link_t = $ctgview_link_t;
   }
   elsif( $database =~ /(CDNA)|(RNA)/i ){
-    my $nhref_t = ("/$species/transview?".
-                   join( '&',
+    my $nhref_t = ("/$species/Transcript/Summary?".
+                   join( ';',
                          'transcript=%s',
                          #"highlights=BLAST_NEW:$TICKET" 
                        ) );     
@@ -2114,8 +2125,8 @@ sub populate_result_summary{
   elsif( $database =~ /PEP/i ){
     my $id_type = 'peptide';
     if(  $database =~ /(ABINITIO)|(PREDICTION)/io ){ $id_type = 'transcript' }
-    my $nhref_t = ("/$species/protview?".
-                   join( '&',
+    my $nhref_t = ("/$species/Transcript/ProteinSummary?".
+                   join( ';',
                          "$id_type=%s",
                          #"highlights=BLAST_NEW:$TICKET" 
                        ) );         
@@ -2330,7 +2341,7 @@ sub populate_result_summary{
 
   # Used for mapview link
   my %chrs  = map{$_,1} @{$SPECIES_DEFS->ENSEMBL_CHROMOSOMES($species) || []};
-  # Used to toggle between contigview/cytoview
+  # Used to toggle between Location/View/Location/Overview
   my $gsize = 800000 * $SPECIES_DEFS->ENSEMBL_GENOME_SIZE($species) || 1;
   foreach my $csname( @coord_systems ){
     $code{$csname.'_name'} = sub{
@@ -2474,7 +2485,7 @@ sub populate_hit_summary{
       $hit_name = sprintf( $link_tmpl, 
                            $ENV{ENSEMBL_SPECIES},
                            $ENV{ENSEMBL_SCRIPT},
-                           join( '&', ( map{$_."=".$link_args{$_}} 
+                           join( ';', ( map{$_."=".$link_args{$_}} 
                                     keys %link_args ) ),
                            $hit_name );
     }                           
