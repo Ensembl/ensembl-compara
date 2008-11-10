@@ -160,9 +160,13 @@ sub get_page_data {
       my $cds_coord = $conseq_type->cds_start;
       $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
       my $sources = join ", " , @{$allele->get_all_sources || [] };
-
+      my $vid = $allele->variation_name;
+      my $source = $allele->source;
+      my $vf = $allele->variation->dbID; 
+      my $url = $object->_url({'type' => 'Variation', 'action' => 'Summary',  'v' => $vid , 'vf' => $vf, 'source' => $source });       
+ 
       my $row = {
-        'ID'          =>  qq(<a href="/@{[$object->species]}/Variation/Summary?v=@{[$allele->variation_name]};source=@{[$allele->source]};">@{[$allele->variation_name]}</a>),
+        'ID'          =>  qq(<a href = $url>@{[$allele->variation_name]}</a>),
         'Class'       => $class || "-",
         'Source'      => $sources || "-",
         'ref_alleles' => $allele->ref_allele_string || "-",
