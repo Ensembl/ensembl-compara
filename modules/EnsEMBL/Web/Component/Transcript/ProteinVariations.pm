@@ -40,9 +40,11 @@ sub content {
     my $type = $residue->{'type'} eq 'snp' ? "Non-synonymous" : ($residue->{'type'} eq 'syn' ? 'Synonymous': ucfirst($residue->{'type'}));
     my $snp_id = $residue->{'snp_id'};
     my $source = $residue->{'snp_source'} ? ";source=".$residue->{'snp_source'} : "";
+    my $vf = $residue->{'vdbid'}; 
+    my $url = $object->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $snp_id, 'vf' => $vf, 'vdb' => 'variation'});
     $table->add_row({
      'res'     => $counter,
-     'id'      => qq(<a href="/@{[$object->species]}/Variation/Summary?v=$snp_id$source">$snp_id</a>),
+     'id'      => qq(<a href = $url>$snp_id</a>),
      'type'    => $type,
      'allele'  => $residue->{'allele'},
      'ambig'   => join('', @{$residue->{'ambigcode'}||[]}),
