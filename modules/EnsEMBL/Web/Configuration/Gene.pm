@@ -125,7 +125,7 @@ sub populate_tree {
   my $fam_node = $self->create_node(
     'Family', 'Protein families ([[counts::families]])',
     [qw(family EnsEMBL::Web::Component::Gene::Family)],
-    { 'availability' => 'gene' , 'concise' => 'Protein families' }
+    { 'availability' => 'gene database:compara core' , 'concise' => 'Protein families' }
   );
   $compara_menu->append($fam_node);
   my $sd = ref($self->{'object'}) ? $self->{'object'}->species_defs : undef;
@@ -164,7 +164,7 @@ sub populate_tree {
   $var_menu->append($self->create_node( 'Variation_Gene/Table',  'Variation Table',
     [qw(snptable       EnsEMBL::Web::Component::Gene::GeneSNPTable
         snpinfo       EnsEMBL::Web::Component::Gene::GeneSNPInfo)],
-    { 'availability' => 'gene database:variation' }
+    { 'availability' => 'gene database:variation core' }
   ));
   $var_menu->append($self->create_node( 'Variation_Gene',  'Variation Image',
     [qw(image       EnsEMBL::Web::Component::Gene::GeneSNPImage)],
