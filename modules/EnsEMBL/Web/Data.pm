@@ -378,13 +378,8 @@ sub propagate_cache_tags {
   my $self = shift;
   my @tags = (@_, $self->table);
   
-  if ($ENV{CACHE_KEY}) {
-    $ENV{CACHE_TAGS} ||= {};
-  
-    foreach my $tag (@tags) {
-      $ENV{CACHE_TAGS}->{$tag} = 1;
-    }
-  }
+  $ENV{CACHE_TAGS} ||= {};
+  $ENV{CACHE_TAGS}->{$_} = 1 for @tags;
   
   ## TODO: Kill this warn:
   #warn ' + + + + +  Propagate tags for '. $ENV{CACHE_KEY} ." \n ".Data::Dumper::Dumper($ENV{CACHE_TAGS});
