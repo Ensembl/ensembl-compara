@@ -16,7 +16,7 @@ sub _init {
 
   my $Config        = $self->{'config'};  
   my $transcript = $Config->{'transcript'}->{'transcript'}; 
-  my $consequences_ref = $Config->{'transcript'}->{'consequences'}; warn $consequences_ref;
+  my $consequences_ref = $Config->{'transcript'}->{'consequences'}; 
   my $alleles      = $Config->{'transcript'}->{'allele_info'};
   return unless $alleles && $consequences_ref;
 
@@ -138,10 +138,9 @@ sub _init {
     if ( $codon ) {
       my $pos = ($conseq_type->cds_start % 3 || 3) - 1;
       $codon =~ s/(\w{$pos})(\w)(.*)/$1<b>$2<\/b>$3/;
-      my $strand = $transcript->strand > 0 ? "+" : "-";
-      $tc = "transcript codon ($strand strand) ".$codon;
+      my $strand = $transcript->strand; # > 0 ? "+" : "-";
+      $tc = "transcript codon (". $strand." strand) ".$codon;
     }
-
 
     # Draw ------------------------------------------------
     my @res = $self->get_text_width( 0, $label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
