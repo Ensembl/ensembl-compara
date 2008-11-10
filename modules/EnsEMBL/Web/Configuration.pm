@@ -898,12 +898,12 @@ sub ajax_zmenu_variation {
   if ( scalar @vf == 1) { $feature = $vf[0];}
   else { 
     foreach (@vf) { 
-      if ($_->dbID eq $obj->param('dbid') ) {$feature = $_;}
+      if ($_->dbID eq $obj->param('vf') ) {$feature = $_;}
     } 
   }
   
   my $tvar_adaptor = $db_adaptor->get_TranscriptVariationAdaptor();
-  my $trans_variation = $tvar_adaptor->fetch_by_dbID($obj->param('dbid'));
+  my $trans_variation = $tvar_adaptor->fetch_by_dbID($obj->param('vf'));
   ## alternate way to retrieve transcript_variation_feature if there are more than one with the same variation_feature id;
   unless ($trans_variation){
     my $trans_id = $obj->param('vt');
