@@ -85,7 +85,7 @@ sub content {
         $row->{'id'} = sprintf '<a href="/%s/Gene/Summary?g=%s" title="More about this gene">%s</a><br /><a href="/%s/Location/View?r=%s:%s-%s" title="View this location on the genome" class="small" style="text-decoration:none">%s: %s</a>',
                 $object->species, $gene->stable_id, $gene->stable_id,
                 $object->species, $gene->slice->seq_region_name, $gene->start, $gene->end,
-                $self->neat_sr_name($gene->slice->coord_system, $gene->slice->seq_region_name), 
+                $self->neat_sr_name($gene->slice->coord_system->name, $gene->slice->seq_region_name), 
                 $object->round_bp( $gene->start );
         my $xref = $gene->display_xref;
         if( $xref ) {
