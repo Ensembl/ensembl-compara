@@ -73,7 +73,7 @@ sub variationTable {
     my $transcript_variation  = $snps{$raw_id};
     my @validation =  @{ $gs->[2]->get_all_validation_states || [] };
     if( $transcript_variation && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
-      my $url = $object->_url({'type' => 'Variation', 'action' =>'Summary', 'v' => @{[$gs->[2]->variation_name]}, 'source' => @{[$gs->[2]->source]} });   
+      my $url = $object->_url({'type' => 'Variation', 'action' =>'Summary', 'v' => @{[$gs->[2]->variation_name]}, 'vf' => @{[$gs->[2]->dbID]}, 'source' => @{[$gs->[2]->source]} });   
       my $row = {
         'ID'        => qq(<a href="$url">@{[$gs->[2]->variation_name]}</a>),
         'class'     => $gs->[2]->var_class() eq 'in-del' ? ( $gs->[4] > $gs->[5] ? 'insertion' : 'deletion' ) : $gs->[2]->var_class(),
