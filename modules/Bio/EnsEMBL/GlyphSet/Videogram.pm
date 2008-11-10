@@ -62,10 +62,10 @@ sub _init {
   if($padding) {
     ########## make sure that there is a blank image behind the chromosome so that the glyphset doesn't get "horizontally" squashed.
     $self->push($self->Space({
-      'x'         => 0,
-      'y'         => $h_offset - $padding,
-      'width'     => 10000,
-      'height'    => $padding * 2 + $wid,
+      'x'         => $c_w - $chr_length/2,
+      'y'         => $h_offset - $padding*1.5,
+      'width'     => 1,
+      'height'    => $padding * 3 + $wid,
       'absolutey' => 1,
     }));
   }
