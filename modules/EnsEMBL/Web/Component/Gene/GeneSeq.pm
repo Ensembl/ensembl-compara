@@ -123,7 +123,7 @@ sub content {
   # Let's do the markup!
   my $markedup_seq = '';
   my $seq     = $slice->Obj->seq;
-  my $linelength  = 60; # TODO: retrieve with method?
+  my $linelength  = $object->param('display_width') || 60; 
   my $length = length( $seq );
   my @linenumbers = $slice->line_numbering();
   my $numdir = ($linenumbers[0]||0)<($linenumbers[1]||0)?1:-1;
