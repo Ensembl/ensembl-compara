@@ -6,7 +6,6 @@ no warnings 'uninitialized';
 
 use base qw(Bio::EnsEMBL::ExternalData::DAS::Source);
 
-use Data::Dumper;
 use Time::HiRes qw(time);
 use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
@@ -62,8 +61,10 @@ sub new_from_hashref {
                 contigview => 'Location/View/ViewBottom',
                 cytoview   => 'Location/View/ViewTop');
   if ($hash->{enable} || $hash->{on}) {
-    $hash->{on} = [ map { $views{$_} } @{$hash->{on}||[]},@{$hash->{enable}||[]} ];
-  } else {
+    $hash->{on} = [ map { $views{$_} || $_ } @{$hash->{on}||[]},@{$hash->{enable}||[]} ] ;
+  }
+  
+  if (!$hash->{on} || !scalar @{ $hash->{on} }) {
     $hash->{on} = $self->_guess_views();
   }
   
