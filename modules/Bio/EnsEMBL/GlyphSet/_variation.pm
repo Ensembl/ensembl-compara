@@ -82,7 +82,7 @@ sub href {
   my ($self, $f)  = @_;
   my $vid = $f->variation_name;
   my $dbid = $f->dbID;
-  my $href = $self->_url({'type' => 'Variation', 'action'=>'Variation','v'=>$vid, 'dbid' => $dbid, 'snp_fake' => '1' });
+  my $href = $self->_url({'type' => 'Variation', 'action'=>'Variation','v'=>$vid, 'vf' => $dbid, 'snp_fake' => '1' });
   return $href;
 }
 
