@@ -117,15 +117,26 @@ sub count_xrefs {
     #xrefs on the gene
     my $xrefs_c = 0;
     my $sql = qq(
-                SELECT distinct(x.display_label)
-                  FROM object_xref ox, xref x, external_db edb
-                 WHERE ox.xref_id = x.xref_id
+                SELECT x.display_label, edb.db_name, edb.status
+                  FROM gene g, object_xref ox, xref x, external_db edb
+                 WHERE g.gene_id = ox.ensembl_id
+                   AND ox.xref_id = x.xref_id
                    AND x.external_db_id = edb.external_db_id
                    AND ox.ensembl_object_type = 'Gene'
-                   AND ox.ensembl_id = ?);
+                   AND g.gene_id = ?);
     my $sth = $dbc->prepare($sql);
     $sth->execute($self->Obj->dbID);
-    while (my ($label) = $sth->fetchrow_array) {
+    while (my ($label,$db_name,$status) = $sth->fetchrow_array) {
+	#these filters are taken directly from Component::_sort_similarity_links
+	#code duplication needs removing, and some of these may well not be needed any more
+	next if ($status eq 'ORTH');                        # remove all orthologs
+	next if (lc($db_name) eq 'medline');                # ditch medline entries - redundant as we also have pubmed
+	next if ($db_name =~ /^flybase/i && $type =~ /^CG/ ); # Ditch celera genes from FlyBase
+	next if ($db_name eq 'Vega_gene');                  # remove internal links to self and transcripts
+	next if ($db_name eq 'Vega_transcript');
+	next if ($db_name eq 'Vega_translation');
+	next if ($db_name eq 'GO');
+	warn "$label,$db_name,$status";
 	$xrefs_c++;
     }
     return $xrefs_c;
