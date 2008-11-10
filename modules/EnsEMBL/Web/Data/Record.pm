@@ -66,10 +66,7 @@ sub clone {
 sub propagate_cache_tags {
   my $proto = shift;
 
-  my $owner_type = $proto->owner_type;
-  my $owner = $proto->$owner_type;
-
-  $proto->SUPER::propagate_cache_tags($proto->__type, "${owner_type}[$owner]");
+  $proto->SUPER::propagate_cache_tags($proto->__type);
 }
 
 
