@@ -440,7 +440,7 @@ sub cleanURI {
   ## Clean out the referrer
   my $referer = $ENV{'HTTP_REFERER'};
   if ($referer =~ s/time=\d+\.\d+;?//g) {
-    $r->subprocess_env('HTTP_REFERER' => $uri);
+    $r->subprocess_env('HTTP_REFERER' => $referer);
   }
 
   return Apache2::Const::DECLINED;
