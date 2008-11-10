@@ -16,7 +16,7 @@ sub _init {
 
   my $Config        = $self->{'config'};  
   my $transcript = $Config->{'transcript'}->{'transcript'}; 
-  my $consequences_ref = $Config->{'transcript'}->{'consequences'};
+  my $consequences_ref = $Config->{'transcript'}->{'consequences'}; warn $consequences_ref;
   my $alleles      = $Config->{'transcript'}->{'allele_info'};
   return unless $alleles && $consequences_ref;
 
@@ -50,7 +50,7 @@ sub _init {
   my $index = 0;
   foreach my $allele_ref (  @$alleles ) {
     my $allele = $allele_ref->[2]; 
-    my $conseq_type = $consequences_ref->[$index];  
+    my $conseq_type = $consequences_ref->[$index];
     $index++;
     next unless $conseq_type && $allele;
     next if $allele->end < $transcript->start - $EXTENT;
@@ -81,8 +81,7 @@ sub _init {
       $colour = $colour_map->{$type}->{'default'}; 
     }
 
-    my @tmp;
-
+    my $c;
     # Coverage -------------------------------------------------
     if ( grep { $_ eq "Sanger"}  @{$allele->get_all_sources() || []}  ) {
       my $coverage = 0;
@@ -93,10 +92,20 @@ sub _init {
       }
       if ($coverage) {
 	$coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
-	push @tmp, ("17:resequencing coverage: $coverage" => '');
+      $c= $coverage;
       }
     }
 
+    my $allele_id = $allele->variation_name;
+    my $dbid = $allele->variation->dbID;
+    my $href_sara = $self->_url
+    ({'type'   => 'Transcript',
+      'action'  => 'Transcript_Variation',
+      'v'     => $allele_id,
+      'vf'    => $dbid,
+      'alt_allele' => $conseq_alleles[0],
+      'sara'  => 1,
+    });
 
     # SARA snps ----------------------------------------------------
     if ($ref_allele eq $conseq_alleles[0]) { # if 'negative snp'
@@ -107,8 +116,7 @@ sub _init {
       'width'     => $width + $font_w_bp +4,
       'bordercolour' => 'grey70',
       'absolutey' => 1,
-      'zmenu'     => $self->zmenu($allele, $type, $ref_allele, $conseq_alleles[0], \@tmp),
-      'zindex'    => -4,
+      'href'     => $href_sara,
      });
       my $bump_start = int($bglyph->{'x'} * $pix_per_bp);
       $bump_start = 0 if ($bump_start < 0);
@@ -121,21 +129,34 @@ sub _init {
     }
 
     # Normal SNPs
-    push @tmp, ("13:amino acid: $aa_change->[0] to $aa_change->[1]", '' ) if $aa_change->[1];
+    my $aa;
+    $aa = "$aa_change->[0] to $aa_change->[1]"  if $aa_change->[1];
 
     # Codon - make the letter for the SNP position in the codon bold
     my $codon = $conseq_type->codon;
+    my $tc;
     if ( $codon ) {
       my $pos = ($conseq_type->cds_start % 3 || 3) - 1;
       $codon =~ s/(\w{$pos})(\w)(.*)/$1<b>$2<\/b>$3/;
       my $strand = $transcript->strand > 0 ? "+" : "-";
-      push @tmp, ("11:transcript codon ($strand strand) ".$codon => '');
+      $tc = "transcript codon ($strand strand) ".$codon;
     }
 
 
     # Draw ------------------------------------------------
     my @res = $self->get_text_width( 0, $label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $W = ($res[2]+4)/$pix_per_bp;
+
+    my $href = $self->_url
+    ({'type'   => 'Transcript',
+      'action'  => 'Transcript_Variation',
+      'v'     => $allele_id,
+      'vf'    => $dbid,
+      'alt_allele' => $conseq_alleles[0],
+      'aa_change' => $aa,
+      'tc'        => $tc,
+      'cov'       => $c,
+    });
 
     my $tglyph = $self->Text({
       'x'         => $S-$res[2]/$pix_per_bp/2,
@@ -150,13 +171,6 @@ sub _init {
       'absolutey' => 1,
     });
 
-
-    my $allele_id = $allele->variation_name;
-    my $href = $self->_url
-    ({'action'  => 'Transcript_Variation',
-      'allele'     => $allele_id,
-    });
-
     my $bglyph = $self->Rect({
       'x'         => $S - $W / 2,
       'y'         => $height + 2,
@@ -165,7 +179,6 @@ sub _init {
       'colour'    => $colour,
       'absolutey' => 1,
       'href'      => $href,
-#      'zmenu'     => $self->zmenu($allele, $type, $ref_allele, $conseq_alleles[0], \@tmp),
     });
 
     my $bump_start = int($bglyph->{'x'} * $pix_per_bp);
@@ -180,44 +193,18 @@ sub _init {
   }
 }
 
-sub error_track_name { return $_[0]->species_defs->AUTHORITY.' transcripts'; }
-
-sub zmenu {
-  my ($self, $allele, $type, $ref_allele, $alt_allele, $tmp)  = @_;
-  # Href
-  my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
-  my $chr_start = $allele->start() + $offset;
-  my $chr_end   = $allele->end() + $offset;
-  my $pos =  $chr_start;
-  if( $chr_end < $chr_start ) {
-    $pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
-    } elsif($chr_end > $chr_start ) {
-      $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
-    }
-  my $seq_region_name = $self->{'container'}->seq_region_name();
-  my $href = "/@{[$self->{container}{web_species}]}/snpview?snp=@{[$allele->variation_name]};source=@{[$allele->source]};chr=$seq_region_name;vc_start=$chr_start";
-	
-  my $strain = $self->species_defs->translate("strain");
-  my $zmenu = {
-	       'caption'               => 'SNP '.$allele->variation_name,
-	       "19:".$type             => '',
-	       @$tmp,
-               "09:reference allele: ".( length($ref_allele) <16 ? $ref_allele : substr($ref_allele,0,14).'..') 
-                                       => '',
-	       "10:$strain genotype: ".(length($alt_allele)<16 ? $alt_allele : substr($alt_allele,0,14).'..')
-                                       => '',
-	       '01:SNP properties'     => $href,
-	       "03:bp $pos"            => '',
-	       "05:class: ".&variation_class(join "|", $ref_allele, $alt_allele) 
-                                       => '',
-	       "15:source: ". (join ", ", @{$allele->get_all_sources ||[]}) 
-	                               => '',
-	      };
-
- $zmenu->{"11:ambiguity code: ".&ambiguity_code(join "|", $ref_allele, $alt_allele)} = "" unless $type eq 'SARA';
-
-  return ($zmenu || {});
+sub title {
+  my($self,$f) = @_;
+  my $vid = $f->variation_name;
+  my $type = $f->display_consequence;
+  my $dbid = $f->dbID;
+  my ($s,$e) = $self->slice2sr( $f->start, $f->end );
+  my $loc = $s == $e ? $s
+          : $s <  $e ? $s.'-'.$e
+          :           "Between $s and $e"
+          ;
+  return "Variation: $vid; Location: $loc; Consequence: $type; Ambiguity code: ".$f->ambig_code;
 }
 
-
+sub error_track_name { return $_[0]->species_defs->AUTHORITY.' transcripts'; }
 1;
