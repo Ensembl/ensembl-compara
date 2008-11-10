@@ -21,7 +21,6 @@ sub _init {
   my %highlights;
   @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
-  #my $colours       = $self->colours(); ;
   my $pix_per_bp    = $Config->transform->{'scalex'}; 
   my $bitmap_length = int($Config->container_width() * $pix_per_bp); ;
 
@@ -72,6 +71,8 @@ sub _init {
         'width'     => $filled_end - $filled_start + 1,
         'height'    => $h,
         'colour'    => $colour,
+        'title'     => $exon->[2]->stable_id,
+        'href'     => $self->href(  $transcript, $exon->[2], %highlights ),
         'absolutey' => 1
       }));
     }
@@ -91,28 +92,27 @@ sub _init {
         'title'     => $exon->[2]->stable_id,
         'href'     => $self->href(  $transcript, $exon->[2], %highlights ),
       });
-      $G->{'zmenu'} = $self->zmenu( $transcript, $exon->[2] ) unless $Config->{'_href_only'};
       $self->push( $G );
     } 
   } #we are finished if there is no other exon defined
 
-#  if( $Config->{'_add_labels'} ){
-#    my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $sample, '', 'ptsize' => $fontsize, 'font' => $fontname );
-#    my $tglyph = $self->Text({
-#      'x'         => -105,
-#      'y'         => -($th/2), 
-#      'height'    => $th,
-#      'width'     => $w / $pix_per_bp,
-#      'font'      => $fontname,
-#      'ptsize'    => $fontsize,
-#      'colour'    => $colour,
-#      'text'      => $sample,
-#      'halign'     => 'left',
-#      'absolutey' => 1,
-#      'absolutex' => 1,
-#    });
-#    $self->push($tglyph);
-#  }
+  if( $Config->{'_add_labels'} ){
+    my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $sample, '', 'ptsize' => $fontsize, 'font' => $fontname );
+    my $tglyph = $self->Text({
+      'x'         => -105,
+      'y'         => -($th/2), 
+      'height'    => $th,
+      'width'     => $w / $pix_per_bp,
+      'font'      => $fontname,
+      'ptsize'    => $fontsize,
+      'colour'    => $colour,
+      'text'      => $sample,
+      'halign'     => 'left',
+      'absolutey' => 1,
+      'absolutex' => 1,
+    });
+    $self->push($tglyph);
+  }
 }
 
 sub href {
@@ -128,32 +128,6 @@ sub href {
     });
 
   return $href;
-}
-
-sub zmenu {
-  my ($self, $transcript, $exon, %highlights) = @_;
-  my $eid = $exon->stable_id();
-  my $tid = $transcript->stable_id();
-  my $pid = $transcript->translation ? $transcript->translation->stable_id() : '';
-  #my $gid = $gene->stable_id();
-  my $id   = $transcript->external_name() eq '' ? $tid : ( $transcript->external_db.": ".$transcript->external_name() );
-  my $zmenu = {
-    'caption'                       => $self->species_defs->AUTHORITY." Gene",
-    "00:$id"			=> "",
-#	"01:Gene:$gid"                  => "/@{[$self->{container}{web_species}]}/geneview?gene=$gid;db=core",
-        "02:Transcr:$tid"    	        => "/@{[$self->{container}{web_species}]}/transview?transcript=$tid;db=core",                	
-        "04:Exon:$eid"    	        => "",
-        '11:Export cDNA'                => "/@{[$self->{container}{web_species}]}/exportview?options=cdna;action=select;format=fasta;type1=transcript;anchor1=$tid",
-        
-    };
-    
-    if($pid) {
-    $zmenu->{"03:Peptide:$pid"}=
-    	qq(/@{[$self->{container}{web_species}]}/protview?peptide=$pid;db=core);
-    $zmenu->{'12:Export Peptide'}=
-    	qq(/@{[$self->{container}{web_species}]}/exportview?options=peptide;action=select;format=fasta;type1=peptide;anchor1=$pid);	
-    }
-    return $zmenu;
 }
 
 sub error_track_name { return $_[0]->species_defs->AUTHORITY.' transcripts'; }
