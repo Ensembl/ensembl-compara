@@ -76,11 +76,12 @@ sub render_message {
 sub ajax_redirect {
 ### AJAX-friendly redirect for use with Control Panel modules
   my ($self, $url) = @_;
+  ## Create basic page object, so we can access apache redirects properly
+  my $webpage = EnsEMBL::Web::Document::Interface->new();
   unless( $url =~ /x_requested_with=/ ) { ## Needed by other modules using this method
     $url .= ($url =~ /\?/?';':'?').'x_requested_with=XMLHttpRequest';
   }
-  warn "REDIRECTING AJAX $url";
-  $self->action->cgi->redirect($url);
+  $webpage->page->ajax_redirect($url);
 }
 
 sub ajax_url {
