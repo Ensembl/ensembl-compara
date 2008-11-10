@@ -13,12 +13,9 @@ use HTML::Entities;
 use XHTML::Validator;
 use base qw(EnsEMBL::Web::Component::Gene);
 
-our $LINK_ERROR = 'A link provided by this DAS source contains HTML markup, '.
-                  'but it contains errors or has dangerous content. As a '.
-                  'security precaution it has not been processed. ';
-our $NOTE_ERROR = 'A note provided by this DAS source contains HTML markup, '.
-                  'but it contains errors or has dangerous content. As a '.
-                  'security precaution it has not been processed. ';
+our $VALIDATE_ERROR = 'Data provided by this DAS source contains HTML markup, '.
+                      'but it contains errors or has dangerous content. As a '.
+                      'security precaution it has not been processed. ';
 # temporary solution to arrayexpress being so slow...
 our $TIMEOUT_MULTIPLIER = 3;
 
@@ -26,6 +23,7 @@ sub _init {
   my $self = shift;
   $self->cacheable( 1 );
   $self->ajaxable(  1 );
+  $self->{'validator'} = XHTML::Validator->new('extended');
 }
 
 sub caption {
@@ -47,23 +45,33 @@ sub content {
   my $logic_name = $object->parent->{'ENSEMBL_FUNCTION'} ||
                    $ENV{'ENSEMBL_FUNCTION'};
 
-  return $self->_error( 'No DAS source specified',
-    'No parameter passed!' 
-  ) unless $logic_name;
+  if (! $logic_name ) {
+    return $self->_error( 'No DAS source specified',
+                          'No parameter passed!',
+                          '100%' );
+  }
   
   my $source = $ENSEMBL_WEB_REGISTRY->get_das_by_logic_name( $logic_name );
   
-  return $self->_error( sprintf( 'DAS source "%s" specified does not exist', $logic_name ),
-    'Cannot find the specified DAS source key supplied' 
-  ) unless $source;
+  if (! $source ) {
+    return $self->_error( sprintf( 'DAS source "%s" specified does not exist', $logic_name ),
+                                   'Cannot find the specified DAS source key supplied',
+                                   '100%' );
+  }
+  
+  my $html = '';
+  
+  # Some sources (e.g. UniProt) have taken to using HTML descriptions...
+  my ($desc, $warning) = $self->_decode_and_validate( $source->description );
+  $html .= $warning;
   
   my $table = EnsEMBL::Web::Document::HTML::TwoCol->new();
-  $table->add_row( 'Description', $source->description );#, 1 );
+  $table->add_row( 'Description', $desc, 1 );
   if ( my $homepage = $source->homepage ) {
     $table->add_row( 'Homepage', qq(<a href="$homepage">$homepage</a>), 1 );
   }
   
-  my $html = $table->render;
+  $html .= $table->render;
   my $query_object = $self->_das_query_object;
   
   my $engine = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
@@ -78,11 +86,9 @@ sub content {
   # Check for source errors (bad configs)
   my $source_err = $data->{'source'}->{'error'};
   if ( $source_err ) {
-    $html .= $self->_error('Error', $source_err);
+    $html .= $self->_error('Error', $source_err, '100%');
     return $html;
   }
-  
-  my $validator = XHTML::Validator->new('extended');
   
   # Request could be for several segments
   for my $coord_key ( keys %{ $data->{'features'} } ) {
@@ -97,7 +103,7 @@ sub content {
                      $cs->label, $url;
     
     if ( $err ) {
-      $html .= $self->_error('Error', $err);
+      $html .= $self->_error('Error', $err, '100%');
       next;
     }
     
@@ -127,31 +133,18 @@ sub content {
       for my $note ( @{ $f->notes } ) {
         # OK, we apparently need to support non-spec HTML embedded in notes,
         # so let's decode it.
-        $note = decode_entities($note);
-        # Check for naughty people trying to do XSS...
-        if ( my $error = $validator->validate( $note ) ) {
-          $note = CGI::escapeHTML($note);
-          # Show the error, but only show one at a time as it could get spammy
-          if (!$errored) {
-            $html .= $self->_warning('Error parsing note', "$NOTE_ERROR$error");
-            $errored = 1;
-          }
-        }
+        ( $note, $warning ) = $self->_decode_and_validate( $note );
+        $html .= $warning;
         push @notes, $note;
       }
       
       for my $link ( @{ $f->links } ) {
         my $href  = $link->{'href'};
-        my $cdata = $link->{'txt'}; # We don't support embedded HTML here...
-        # Check for naughty people trying to do XSS...
-        if ( my $error = $validator->validate( $href ) ) {
-          $href = CGI::escapeHTML($href);
-          # Show the error, but only show one at a time as it could get spammy
-          if (!$errored) {
-            $html .= $self->_warning('Error parsing link', "$LINK_ERROR$error");
-            $errored = 1;
-          }
-        }
+        my $cdata = $link->{'txt'};
+        # We don't expect embedded HTML here so don't need to decode, but still
+        # need to validate to protect against XSS...
+        ( $href, $warning ) = $self->_validate( $href );
+        $html .= $warning;
         push @links, sprintf '<a href="%s">%s</a>', $href, $cdata;
       }
       
@@ -166,6 +159,30 @@ sub content {
   }
   
   return $html;
+}
+
+sub _decode_and_validate {
+  my ( $self, $text ) = @_;
+  return $self->_validate( decode_entities( $text ) );
+}
+
+sub _validate {
+  my ( $self, $text ) = @_;
+  
+  my $warning = '';
+  # Check for naughty people trying to do XSS...
+  if ( my $error = $self->{'validator'}->validate( $text ) ) {
+    $text = CGI::escapeHTML( $text );
+    # Show the error, but only show one at a time as it could get spammy
+    if (!$self->{'errored'}) {
+      $self->{'errored'} = 1;
+      $warning = $self->_warning('Problem parsing note',
+                                 "$VALIDATE_ERROR$error",
+                                 '100%');
+    }
+  }
+  
+  return ( $text, $warning );
 }
 
 1;
