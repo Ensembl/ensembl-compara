@@ -54,77 +54,112 @@ sub ajax_zmenu      {
     } elsif( $action eq 'Transcript_Variation'){ 
       return $self->_ajax_zmenu_transcript_variation($panel, $obj);
     } elsif( $action eq 'ref'){
-      return $self->_ajax_zmenu_change_reference($panel, $obj);  
+      return $self->_ajax_zmenu_change_reference($panel, $obj);
     } elsif( $action eq 'coverage'){
       return $self->_ajax_zmenu_transcript_coverage($panel, $obj);
+    } elsif( $action eq 'ProteinSummary') {
+     return $self->_ajax_zmenu_protein_feature($panel, $obj);
     } else {
-	my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
-	$panel->{'caption'} = $disp_id ? "$db_label: $disp_id"
-                              : (! $obj->gene ) ? $obj->Obj->stable_id
-                              : 'Novel transcript';
+      my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
+      $panel->{'caption'} = $disp_id ? "$db_label: $disp_id"
+	  : (! $obj->gene ) ? $obj->Obj->stable_id
+	  : 'Novel transcript';
+      $panel->add_entry({
+	  'type'     => 'Transcript',
+	  'label'    => $obj->stable_id, 
+	  'link'     => $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}),
+	  'priority' => 195 
+      });
+      ## Only if there is a gene (not Prediction transcripts)
+      if( $obj->gene ) {
 	$panel->add_entry({
-	    'type'     => 'Transcript',
-	    'label'    => $obj->stable_id, 
-	    'link'     => $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}),
-	    'priority' => 195 
+	    'type'     => 'Gene',
+	    'label'    => $obj->gene->stable_id,
+	    'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
+	    'priority' => 190 
 	});
-	## Only if there is a gene (not Prediction transcripts)
-	if( $obj->gene ) {
-	    $panel->add_entry({
-		'type'     => 'Gene',
-		'label'    => $obj->gene->stable_id,
-		'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
-		'priority' => 190 
-	    });
-	}
-	$panel->add_entry({
-	    'type'     => 'Location',
-	    'label'    => sprintf( "%s: %s-%s",
-				   $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
-				   $obj->thousandify( $obj->seq_region_start ),
-				   $obj->thousandify( $obj->seq_region_end )
-			       ),
-	    'link'     => $obj->_url({'type'=>'Location', 'action'=>'View', 'r' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end })
-	});
-	$panel->add_entry({
-	    'type'     => 'Strand',
-	    'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'
-	});
+      }
+      $panel->add_entry({
+	  'type'     => 'Location',
+	  'label'    => sprintf( "%s: %s-%s",
+				 $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
+				 $obj->thousandify( $obj->seq_region_start ),
+				 $obj->thousandify( $obj->seq_region_end )
+			     ),
+	  'link'     => $obj->_url({'type'=>'Location', 'action'=>'View', 'r' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end })
+      });
+      $panel->add_entry({
+	  'type'     => 'Strand',
+	  'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'
+      });
 	
+      $panel->add_entry({
+	  'type'     => 'Base pairs',
+	  'label'    => $obj->thousandify( $obj->Obj->seq->length ),
+	  'priority' => 50
+      });
+
+      ## Protein coding transcripts only....
+      if( $obj->Obj->translation ) {
 	$panel->add_entry({
-	    'type'     => 'Base pairs',
-	    'label'    => $obj->thousandify( $obj->Obj->seq->length ),
-	    'priority' => 50
+	    'type'     => 'Protein product',
+	    'label'    => $obj->Obj->translation->stable_id || $obj->Obj->stable_id,
+	    'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'ProteinSummary'}),
+	    'priority' => 180
 	});
-
-
-	## Protein coding transcripts only....
-	if( $obj->Obj->translation ) {
-	    $panel->add_entry({
-		'type'     => 'Protein product',
-		'label'    => $obj->Obj->translation->stable_id || $obj->Obj->stable_id,
-		'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'ProteinSummary'}),
-		'priority' => 180
-	    });
-	    $panel->add_entry({
-		'type'     => 'Amino acids',
-		'label'    => $obj->thousandify( $obj->Obj->translation->length ),
-		'priority' => 40 
-	    });
-	}
-        if( $obj->analysis ) {
-          $panel->add_entry({
+	$panel->add_entry({
+	    'type'     => 'Amino acids',
+	    'label'    => $obj->thousandify( $obj->Obj->translation->length ),
+	    'priority' => 40 
+	});
+      }
+      if( $obj->analysis ) {
+        $panel->add_entry({
             'type'     => 'Analysis',
             'label'    => $obj->analysis->display_label,
 	    'priority' => 2
-          });
-          $panel->add_entry({
+	});
+	$panel->add_entry({
             'label_html'    => $obj->analysis->description,
 	    'priority' => 1
-          });
-        }
+	});
+      }
     }
     return;
+}
+
+sub _ajax_zmenu_protein_feature {
+  my $self = shift;
+  my $panel = shift;
+  my $obj   = $self->object;
+  my $id    = $obj->param('pf_id');
+  my $db    = $obj->param('db')  || 'core';
+  my $pfa   = $obj->database(lc($db))->get_ProteinFeatureAdaptor();
+  my $pf    = $pfa->fetch_by_dbID($id);
+  my $hit_db = $pf->analysis->db;
+  my $hit_name = $pf->display_id;
+  $panel->{'caption'} = "$hit_name ($hit_db)";
+  $panel->add_entry({
+      'type'  => "View record",
+      'label' => $hit_name,
+      'link'  => $obj->get_ExtURL($hit_db, $hit_name),
+      'priority' => 200});
+  if (my $interpro_ac = $pf->interpro_ac) {
+      $panel->add_entry({
+	  'type'  => 'View Interpro',
+	  'label' => 'Interpro',
+	  'link'  => $obj->get_ExtURL('interpro', $interpro_ac),
+	  'priority' => 150});
+  }
+  $panel->add_entry({
+      'type' => 'Description',
+      'label' => $pf->idesc,
+      'priority' => 100});
+  $panel->add_entry({
+      'type' => 'Position',
+      'label' => $pf->start.'-'.$pf->end.' aa',
+      'priority' => 50});
+  return;
 }
 
 sub _ajax_zmenu_change_reference {
@@ -133,7 +168,6 @@ sub _ajax_zmenu_change_reference {
   my $obj  = $self->object;
   return unless $obj->param('reference');
 
-  
   $panel->add_entry({
     'type'        => 'Click to compare to ', 
     'label_html'  => $obj->param('reference'),
@@ -276,7 +310,7 @@ sub do_SE_align_menu {
     my $panel = shift;
     my $obj  = $self->object;
     my $hit_name   = $obj->param('id');
-    my $hit_db = $obj->get_sf_hit_db_name($hit_name);
+    my $hit_db     = $obj->get_sf_hit_db_name($hit_name);
     my $hit_length = $obj->param('hit_length');
     my $hit_url    = $obj->get_ExtURL_link( $hit_name, $hit_db, $hit_name );
     my $tsid       = $obj->param('t');
