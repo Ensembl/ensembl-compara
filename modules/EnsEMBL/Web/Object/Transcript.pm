@@ -28,6 +28,7 @@ sub availability {
   } else {
     my $rows = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'};
     $hash->{'history'}    = $rows ? 1 : 0;
+    $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
     $hash->{'either'}     = 1;
     $hash->{'transcript'} = 1;
     $hash->{'translation'}= $self->Obj->translation ? 1 : 0;
@@ -49,24 +50,14 @@ sub counts {
   $counts = $MEMD->get($key) if $MEMD;
 
   unless ($counts) {
-    #$sd->timer_push( 'Counting all', 1, 'Fetching' );
     return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
     $counts->{'exons'} = @{$self->Obj()->get_all_Exons};
-    #$sd->timer_push( 'Counted exons', 2, 'Fetching' );
     $counts->{'evidence'}           = $self->count_supporting_evidence;
-    #$sd->timer_push( 'Counted evidence', 2, 'Fetching' );
     $counts->{'similarity_matches'} = $self->count_similarity_matches;
-    #$sd->timer_push( 'Counted xrefs', 2, 'Fetching' );
     $counts->{'oligos'}             = $self->count_oligos;
-    #$sd->timer_push( 'Counted oligos', 2, 'Fetching' );
     $counts->{'prot_domains'}       = $self->count_prot_domains;
-    #$sd->timer_push( 'Counted prot domains ', 2, 'Fetching' );
     $counts->{'prot_variations'}    = $self->count_prot_variations;
-    #$sd->timer_push( 'Counted prot variations', 2, 'Fetching' );
     $counts->{'go'}                 = $self->count_go;
-    #$sd->timer_push( 'Counted go', 2, 'Fetching' );
-    #$sd->timer_push( 'Finished counting for transcript menu', 1, 'Fetching' );
-
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
 
