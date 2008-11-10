@@ -12,6 +12,7 @@ sub init {
   $view_config->_set_defaults(qw(
     flank5_display          600
     flank3_display          600
+    display_width           60
     exon_display            core
     exon_ori                all
     snp_display             off
@@ -25,10 +26,12 @@ sub form {
   my( $view_config, $object ) = @_;
   my %gene_markup_options    =  EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
   my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
+  my %other_markup_options = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;
 
   #options shared with marked-up sequence
   $view_config->add_form_element($gene_markup_options{'flank5_display'});
   $view_config->add_form_element($gene_markup_options{'flank3_display'});
+  $view_config->add_form_element($other_markup_options{'display_width'});
 
   if ($object->species_defs->databases->{'DATABASE_VEGA'}) {
       push @{$gene_markup_options{'exon_display'}{'values'}}, { 'value' => 'vega', 'name' => 'Vega exons' };
