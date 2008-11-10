@@ -174,7 +174,8 @@ sub select_das_species {
                      'values' => \@values);
   
   $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
-  $self->_output_das_text(@{ $sources });
+  my @coord_unknown = grep { !scalar @{$_->coord_systems} } @{ $sources };
+  $self->_output_das_text(@coord_unknown);
 }
 
 sub select_das_coords {
@@ -253,10 +254,8 @@ sub select_das_coords {
   }
 
   $self->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
-  
-  for my $source (@{ $sources }) {
-    $self->_output_das_text(@{ $sources });
-  }
+  my @coord_unknown = grep { !scalar @{$_->coord_systems} } @{ $sources };
+  $self->_output_das_text(@coord_unknown);
 }
 
 # Page method for attaching a DAS source (saving to the session)
