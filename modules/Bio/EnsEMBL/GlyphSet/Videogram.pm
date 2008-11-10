@@ -384,8 +384,7 @@ sub _init {
 
           if($highlight_set->{'merge'} && $highlight_set->{'merge'} eq 'no') {
             @highlights = @temp_highlights;
-          } 
-        else {
+          } else {
             my @bin_flag;
             my $bin_length = $padding * ( $highlight_style eq 'arrow' ? 1.5 : 1 ) * $bpperpx;
 
@@ -473,7 +472,7 @@ sub _init {
                               'wid'       => $wid,
                               'padding'   => $padding,
                               'padding2'  => $padding * $bpperpx * sqrt(3)/2,
-                              'zmenu'     => $zmenu,
+                              'href'      => $_->{'href'},
                               'col'       => $col,
                               'id'        => $_->{'id'},
                               'strand'    => $_->{'strand'},

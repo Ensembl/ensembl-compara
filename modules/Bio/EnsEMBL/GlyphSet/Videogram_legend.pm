@@ -28,7 +28,7 @@ sub highlight_box {
     'height'    => $details->{'wid'},
     'colour'    => $details->{'col'},
     'absolutey' => 1,
-    'zmenu'     => $details->{'zmenu'}
+    'href'=>$details->{'href'},'zmenu'     => $details->{'zmenu'}
   });
 }
 
@@ -42,7 +42,7 @@ sub highlight_filledwidebox {
     'height'        => $details->{'wid'}+$details->{'padding'}*2,
     'colour'        => $details->{'col'},
     'absolutey'     => 1,
-    'zmenu'         => $details->{'zmenu'}
+    'href'=>$details->{'href'},'zmenu'         => $details->{'zmenu'}
   });
 }
 
@@ -56,7 +56,7 @@ sub highlight_widebox {
     'height'        => $details->{'wid'}+$details->{'padding'}*2,
     'bordercolour'  => $details->{'col'},
     'absolutey'     => 1,
-    'zmenu'         => $details->{'zmenu'}
+    'href'=>$details->{'href'},'zmenu'         => $details->{'zmenu'}
   });
 }
 
@@ -70,7 +70,7 @@ sub highlight_outbox {
     'height'        => $details->{'wid'}+$details->{'padding'}*3,
     'bordercolour'  => $details->{'col'},
     'absolutey'     => 1,
-    'zmenu'         => $details->{'zmenu'}
+    'href'=>$details->{'href'},'zmenu'         => $details->{'zmenu'}
   });
 }
 
@@ -162,7 +162,7 @@ sub highlight_lharrow {
     ],
     'colour' => $details->{'col'},
     'absolutey' => 1,
-    'zmenu'  => $details->{'zmenu'}
+    'href'=>$details->{'href'},'zmenu'  => $details->{'zmenu'}
   });
 }
 
@@ -177,7 +177,7 @@ sub highlight_rharrow {
     ],
     'colour' => $details->{'col'},
     'absolutey' => 1,
-    'zmenu'  => $details->{'zmenu'}
+    'href'=>$details->{'href'},'zmenu'  => $details->{'zmenu'}
   });
 }
 
@@ -211,7 +211,7 @@ sub highlight_strandedbox {
     'height'       => $details->{'padding'},
     'colour'       => $details->{'col'},
     'absolutey'    => 1,
-    'zmenu'        => $details->{'zmenu'}
+    'href'=>$details->{'href'},'zmenu'        => $details->{'zmenu'}
   }) : ();
 }
 
