@@ -9,13 +9,27 @@ our @ISA = qw( EnsEMBL::Web::Configuration );
 sub set_default_action {
   my $self = shift;
   my $vc  = $self->object->get_viewconfig;
-  my $is_configurable;
-  if ($vc && $vc->can_upload) {
+  if ($self->is_configurable) {
     $self->{_data}{default} = 'Upload';
   }
   else {
     $self->{_data}{default} = 'ManageUpload';
   }
+}
+
+sub is_configurable {
+  my $self = shift;
+  ## Can we do upload/DAS on this page?
+  my $flag = 0;
+  my $referer = $self->object->param('_referer');
+  my @path = split(/\//, $referer);
+  my $type = $path[2];
+  if ($type eq 'Location' || $type eq 'Gene' || $type eq 'Transcript') {
+    (my $action = $path[3]) =~ s/\?(.)+//;
+    my $vc = $self->object->session->getViewConfig( $type, $action);
+    $flag = 1 if $vc && $vc->can_upload;
+  }
+  return $flag;
 }
 
 sub global_context { return $_[0]->_user_context; }
@@ -28,13 +42,10 @@ sub context_panel  { return undef;  }
 sub populate_tree {
   my $self = shift;
 
-  my $vc  = $self->object->get_viewconfig;
-  my $is_configurable;
-  $is_configurable = 1 if $vc && $vc->can_upload;
-
   ## N.B. Most of these will be empty, as content is created using 
   ## wizard methods (below) and Wizard::Node::UserData
   my $has_logins = $self->{object}->species_defs->ENSEMBL_LOGINS;
+  my $is_configurable = $self->is_configurable;
   $has_logins = 0 unless $is_configurable;
 
   my $uploaded_menu = $self->create_submenu( 'Uploaded', 'Uploaded data' );
