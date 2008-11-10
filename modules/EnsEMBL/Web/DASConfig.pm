@@ -56,6 +56,7 @@ sub new_from_hashref {
   
   bless $self, $class;
   
+  # Map "old style" view names to the new:
   my %views = ( geneview   => 'Gene/ExternalData',
                 protview   => 'Transcript/ExternalData',
                 contigview => 'Location/View/ViewBottom',
