@@ -16,7 +16,7 @@ sub init {
     snp_display             off
     line_numbering          off
     display_width           120
-    conservation            all
+    conservation_display    all
     codons_display          off
     title_display           off
   ));
@@ -52,10 +52,29 @@ sub form {
   $view_config->add_form_element($gene_markup_options{'exon_display'});
 
   $view_config->add_form_element($general_markup_options{'exon_ori'});
-  if( $object->species_defs->databases->{'DATABASE_VARIATION'} ) {
-    $view_config->add_form_element( $general_markup_options{'snp_display'} );
+  
+  if ($object->species_defs->databases->{'DATABASE_VARIATION'}) {
+    $view_config->add_form_element($general_markup_options{'snp_display'});
   }
-  $view_config->add_form_element($general_markup_options{'line_numbering'} );
+  
+  $view_config->add_form_element($general_markup_options{'line_numbering'});
+  $view_config->add_form_element({
+    'required' => 'yes',
+    'name' => 'conservation_display',
+    'values' => [
+      {
+        'value' => 'all',
+        'name' => 'All conserved regions'
+      },
+      {
+        'value' => 'off',
+        'name' => 'None'
+      }
+    ],
+    'label' => 'Conservation regions',
+    'type' => 'DropDown',
+    'select' => 'select'
+  });
   $view_config->add_form_element($other_markup_options{'codons_display'});
   $view_config->add_form_element($other_markup_options{'title_display'});
 

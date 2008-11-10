@@ -163,7 +163,7 @@ sub markup_and_render {
   my $key_tmpl = qq(<p><code><span class="%s">%s</span></code> %s</p>\n);
   my $KEY = '';
 
-  if( ($object->param( 'conservation' ) ne 'off') && markupConservation($object, \%sliceHash, $consArray)){
+  if( ($object->param( 'conservation_display' ) ne 'off') && markupConservation($object, \%sliceHash, $consArray)){
       $KEY .= sprintf( $key_tmpl, 'nc', "THIS STYLE:", "Location of conserved regions (where >50% of bases in alignments match) ");
   }
   if(  $object->param( 'codons_display' ) ne 'off' ){
@@ -380,7 +380,7 @@ sub markupInit {
     # And in case the conservation markup is switched on - get conservation scores for each 
     # basepair in the alignment.
     # In future the conservation scores will come out of a database and this will be removed
-    if ( $object->param("conservation") ne 'off') {
+    if ( $object->param("conservation_display") ne 'off') {
       my $idx = 0;
       foreach my $s (split(//, $sequence)) {
         $conservation[$idx++]->{uc($s)} ++;
