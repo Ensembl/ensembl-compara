@@ -23,7 +23,7 @@ sub render_normal {
 
   my $href = join '|',
     '#vdrag', $self->get_parameter('slice_number')||1,
-    $self->{'config'}->{'species'}, $chr,
+    $self->{'container'}->{'web_species'}, $chr,
     1, $len, 1;
 
   my @common = ( 'y' => $A, 'style' => 'fill', 'z' => -10, 'href' => $href );
