@@ -26,7 +26,6 @@ sub _init {
 
     my $colour = $self->my_colour( lc($logic_name) );
     foreach my $key (keys %hash) {
-      my $href = $self->ID_URL( $logic_name, $key );
       my( @rect, $prsave, $minx, $maxx );
       foreach my $pr (@{$hash{$key}}) {
         my $x  = $pr->start();
@@ -46,10 +45,11 @@ sub _init {
       my $title =  sprintf '%s %s; Positions: %d-%d', $label, $key, $minx, $maxx;
          $title .= '; Interpro: '. $prsave->interpro_ac if $prsave->interpro_ac;
          $title .= '; '.$prsave->idesc                  if $prsave->idesc;
+      my $dbID = $prsave->dbID;
       my $Composite = $self->Composite({
         'x'     => $minx,
         'y'     => 0,
-        'href'  => $href,
+        'href'  => $self->_url({'Type'=>'Transcript','Action'=>'ProteinSummary','pf_id'=>$dbID}),
         'title' => $title
       });
       $Composite->push(@rect,
