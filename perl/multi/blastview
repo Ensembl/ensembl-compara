@@ -1825,7 +1825,7 @@ sub populate_karyotype{
 
   my $num_chrs = scalar( @$chrs_ref );
   $web_config->set_parameters({
-    'rows'            => int( ($num_chrs-1)/12 ) + 1,
+    'rows'            => int( ($num_chrs-1)/18 ) + 1,
     'chromosomes'     => $chrs_ref,
     'all_chromosomes' => 'yes',
     'container_width' => $chr_maxln,
