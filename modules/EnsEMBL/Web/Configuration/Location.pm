@@ -170,7 +170,15 @@ sub _ajax_zmenu_view {
     elsif ($obj->param('region_n')) {
 	return $self->_ajax_zmenu_region($panel,$obj);
     }
-    else { return; }
+    else {
+	my $r = $self->param('r');
+	$panel->{'caption'} = $r;
+	my $url = $obj->_url({'type' => 'Location', 'action' => 'View'});
+	$panel->add_entry({
+	    'label' => $r,
+	    'link'  => $url,
+	});
+    }
 }
 
 sub _ajax_zmenu_region {
@@ -207,10 +215,18 @@ sub _ajax_zmenu_region {
 	my $new_slice_URL = $obj->_url({'type' => 'Location', 'action' => $action, 'region' => $new_slice_name});
 	$priority--;
 	$panel->add_entry({
-	    'type'  => "Center on $new_slice_type",
-	    'label'  => $new_slice_name,
-	    'link'  => $new_slice_URL,
-	    'priority' => $priority,
+	    'type'    => "Center on $new_slice_type",
+	    'label'   => $new_slice_name,
+	    'link'    => $new_slice_URL,
+	    'priority'=> $priority,
+	});
+	my $export_URL = $obj->_url({'type' => 'Location', 'action' => 'Export', 'region' => $new_slice_name});
+	$priority--;
+	$panel->add_entry({
+	    'type'    => "Export $new_slice_type",
+	    'label'   => 'Export',
+	    'link'    => $export_URL,
+	    'priority'=> $priority,
 	});
 	if ($cs->name eq 'clone') {
 	    (my $short_name = $new_slice_name) =~ s/\.\d+$//;
