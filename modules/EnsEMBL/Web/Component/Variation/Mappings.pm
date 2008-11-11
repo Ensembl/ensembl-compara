@@ -31,6 +31,7 @@ sub content {
 
   return [] unless keys %mappings;
 
+
   my $source = $object->source;
   my $name = $object->name;
  
@@ -50,11 +51,12 @@ sub content {
 
   my $gene_adaptor = $object->database('core')->get_GeneAdaptor();
   my %genes;
+  my $flag;
 
   foreach my $varif_id (keys %mappings) {
     ## Check vari feature s the one we are intrested in
     next unless ($varif_id  eq $object->param('vf'));
-   
+    $flag =1;
     my @transcript_variation_data = @{ $mappings{$varif_id}{transcript_vari} };
     unless( scalar @transcript_variation_data ) {      
       next;
@@ -104,8 +106,15 @@ sub content {
    
   }
 
+ if ($flag ){ return $table->render; }
+ else { 
+   my $html = "<p>This variation has not been mapped any Ensembl genes or transcripts</p>";
+   return $self->_info(
+   '',
+   $html
+   );
 
- return $table->render;
+ } 
 }
 
 sub _sort_start_end {
