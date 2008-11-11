@@ -25,6 +25,8 @@ sub availability {
   my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
   
   $hash->{'has_synteny'} = scalar( keys %{ $synteny_hash{$self->species}||{} } ) ? 1 : 0;
+  $hash->{'has_LD'} =   exists $self->species_defs->databases->{'DATABASE_VARIATION'} &&
+    $self->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'} ? 1 : 0;
   return $hash;
 }
 
