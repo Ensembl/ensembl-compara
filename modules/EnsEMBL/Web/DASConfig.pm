@@ -59,8 +59,7 @@ sub new_from_hashref {
   # Map "old style" view names to the new:
   my %views = ( geneview   => 'Gene/ExternalData',
                 protview   => 'Transcript/ExternalData',
-                contigview => 'Location/View/ViewBottom',
-                cytoview   => 'Location/View/ViewTop');
+                contigview => 'contigviewbottom');
   if ($hash->{enable} || $hash->{on}) {
     $hash->{on} = [ map { $views{$_} || $_ } @{$hash->{on}||[]},@{$hash->{enable}||[]} ] ;
   }
