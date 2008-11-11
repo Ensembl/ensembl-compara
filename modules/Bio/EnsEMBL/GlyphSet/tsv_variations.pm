@@ -137,7 +137,7 @@ sub _init {
     my $tc;
     if ( $codon ) {
       my $pos = ($conseq_type->cds_start % 3 || 3) - 1;
-      $codon =~ s/(\w{$pos})(\w)(.*)/$1<b>$2<\/b>$3/;
+      $codon =~ s/(\w{$pos})(\w)(.*)/$1<strong>$2<\/strong>$3/;
       my $strand = $transcript->strand; # > 0 ? "+" : "-";
       $tc = "transcript codon (". $strand." strand) ".$codon;
     }
