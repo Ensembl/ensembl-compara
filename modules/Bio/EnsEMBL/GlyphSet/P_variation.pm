@@ -23,6 +23,7 @@ sub _init {
     my $id     = $int->{'type'}; 
     if( $int->{'type'} eq 'insert' || $int->{'type'} eq 'delete' ) {
       my( $in,$out,$end ) = $int->{'type'} eq 'insert' ? ($h,0,1) : (0,$h, length $int->{'allele'});
+      my $pos = $x ."-". ($x + $end); 
       my $glyph = $self->Poly({
         'x'             => $x-$t_width,
         'y'        => 0,
@@ -30,7 +31,7 @@ sub _init {
         'points'        => [ $x-$t_width, $out, $x, $in, $x+$t_width, $out  ],
         'colour'        => $self->my_colour( 'insert' ),
         'absolutey'     => 1,
-        'href'          => $self->_url({ 'type' => 'Variation', 'action' => 'Variation', 'v' => $int->{'snp_id'}, 'vf' => $int->{'vdbid'}, 'snp_fake' => 1 }),
+        'href'          => $self->_url({ 'type' => 'Variation', 'action' => 'Variation_protein', 'v' => $int->{'snp_id'}, 'vf' => $int->{'vdbid'}, 'vtype' => uc($int->{'type'}), 'pos' => $pos, 'len' => length( $int->{'allele'}), 'indel' => $int->{'allele'}  }),
         'title'         => sprintf( '%sion %s; %s: %s; Position: %d-%d; Length: %d',
           uc($int->{'type'}), $int->{'snp_id'},
           uc($int->{'type'}), $int->{'allele'}, $x, $x+$end, length( $int->{'allele'} )
@@ -51,8 +52,10 @@ sub _init {
         $snp  = "Alternative Residues: ". $int->{'pep_snp'}."; ";
       }
       $snp .= "Codon: ";
+      my $codon;  
       for my $letter ( 0..2 ){
         $snp .= $int->{'ambigcode'}[$letter]  ? '['.$int->{'ambigcode'}[$letter].']' : $int->{'nt'}[$letter];   
+        $codon .= $int->{'ambigcode'}[$letter]  ? '['.$int->{'ambigcode'}[$letter].']' : $int->{'nt'}[$letter]; 
       }
       my $glyph = $self->Rect({
         'x'        => $x-$h/2,
@@ -62,7 +65,7 @@ sub _init {
         'colour'   => $self->my_colour( $int->{'type'} ),
         'absolutey' => 1,
         'absolutewidth' => 1,
-        'href'          => $self->_url({ 'type' => 'Variation', 'action' => 'Variation', 'v' => $int->{'snp_id'}, 'vf' => $int->{'vdbid'}, 'snp_fake' => 1 }),
+        'href'          => $self->_url({ 'type' => 'Variation', 'action' => 'Variation_protein', 'v' => $int->{'snp_id'}, 'vf' => $int->{'vdbid'}, 'res' => $x ,'cod'=> $codon, 'ar' => $int->{'pep_snp'},  'al' => $int->{'allele'}}),
         'title'         => sprintf( '%s SNP %s; Type: %s; Residue: %d; %s; Alleles: %s',
           $type, $int->{'snp_id'}, $int->{'allele'}, $x, $snp, $int->{'allele'}
         )
