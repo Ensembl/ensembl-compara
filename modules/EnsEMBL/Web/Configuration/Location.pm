@@ -459,10 +459,14 @@ sub _ajax_zmenu_alignment {
     my $external_db_id = $fs->[0]->external_db_id;
     my $extdbs = $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'};
     my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
+
+    #hack to link sheep bac ends to trace archive
+    if ($fs->[0]->analysis->logic_name eq 'sheep_bac_ends') {
+	$hit_db_name = 'TRACE';
+    }
+
     my $species= $obj->species;
-
     $panel->{'caption'} = "$id ($hit_db_name)";
-
     my @seq = [];
     @seq = split "\n", $obj->get_ext_seq($id,$hit_db_name) if ($hit_db_name !~ /CCDS/); #don't show EMBL desc for CCDS
     my $desc = $seq[0];
