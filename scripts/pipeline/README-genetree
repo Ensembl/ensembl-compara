@@ -578,8 +578,39 @@ It has happened before that the farm node on which an OrthoTree job is
 running dies in the middle of the storing of homologies, and this gives
 inconsistent homologies. This script is to check this kind of cases.
 
+10 - Adding the ensembl aliases
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-10 - Generate basic statistics
+The Ensembl species have aliases that are used in the webcode. In the
+EnsemblCompara GeneTrees, aliases can also be defined for the internal
+nodes in the species tree that relates the species set.
+
+The aliases are mapped to the common names in NCBI taxonomy or added
+ad-hoc when not existing, and stored in this file:
+
+ensembl-compara/scripts/taxonomy/ensembl_aliases.sql
+
+For example, the internal node for the puffer fishes:
+
+http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=31031
+
+Tetraodontidae
+Taxonomy ID: 31031
+Genbank common name: puffers
+Other names:
+common name: 	puffer fishes
+
+With this SQL, we map the taxon_ids to "taxon_alias", so that the
+aliases can be used in GeneTreeView (v51ss):
+
+  $ mysql -N $COMPARA_DBNAME -e \
+    "INSERT INTO protein_tree_tag SELECT p1.node_id, 'taxon_alias', n.name \
+     FROM protein_tree_tag p1, protein_tree_tag p2, ncbi_taxa_name n \
+     WHERE n.taxon_id=p2.value and p1.node_id=p2.node_id and \
+     p2.tag=\"taxon_id\" and p1.tag=\"taxon_name\" \
+     and n.name_class=\"ensembl alias name\"
+
+11 - Generate basic statistics
      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A basic set of gene tree stats can be generated using the following
@@ -596,7 +627,7 @@ For a more detailed analysis of the gene tree data, look at;
  $ perl ${BASEDIR}/ensembl-compara/scripts/tree/geneTreeTool.pl -help
 
 
-11 - Creating the Release Database
+12 - Creating the Release Database
      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *** What to do about the protein_feature_<species> tables? ***
