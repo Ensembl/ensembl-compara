@@ -51,11 +51,8 @@ sub overwrite_warning {
   }
 }
 
-sub select_file {
+sub overwrite_save {
   my $self = shift;
-
-  $self->title('Select File to Upload');
-
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($self->object->param('save') && $user) {
     ## Save current temporary data upload to user account
@@ -67,6 +64,13 @@ sub select_file {
   if (!$current_species || $current_species eq 'common') {
     $current_species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES;
   }
+  $self->parameter('wizard_next', 'select_file');
+}
+
+sub select_file {
+  my $self = shift;
+
+  $self->title('Select File to Upload');
 
   $self->notes({'heading'=>'IMPORTANT NOTE:', 'text'=>qq(We are only able to store single-species datasets, containing data on Ensembl coordinate systems. There is also a 5Mb limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL">attach it to Ensembl</a> without uploading.)});
 
