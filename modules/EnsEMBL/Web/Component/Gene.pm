@@ -233,7 +233,11 @@ sub get_sequence_data {
       }
       
       my @all_exons = map {[ $config->{'comparison'} ? 'compara_other' : 'other', $_ ]} @exons;
-      push (@all_exons, [ 'gene', $_ ]) for @{$config->{'exon_features'}};
+      
+      if ($config->{'exon_features'}) {
+        push (@all_exons, [ 'gene', $_ ]) for @{$config->{'exon_features'}};
+        $config->{'gene_exon_type'} = $config->{'exon_features'}->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
+      }
   
       foreach (@all_exons) {
         my $type = $_->[0];
@@ -255,10 +259,6 @@ sub get_sequence_data {
           push (@{$mk->{$_}->{'exon_type'}}, $type);          
           $mk->{$_}->{'exons'} .= ($mk->{$_}->{'exons'} ? '; ' : '') . $exon->stable_id if ($exon->can('stable_id'));
         }
-      }
-      
-      if ($config->{'exon_features'}) {
-        $config->{'gene_exon_type'} = $config->{'exon_features'}->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
       }
     }
     
