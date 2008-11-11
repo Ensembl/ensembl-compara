@@ -18,6 +18,7 @@ my %Elements :ATTR(:set<elements> :get<elements> :init_arg<elements>);
 my %FieldSets :ATTR(:set<fieldsets> :get<fieldsets>);
 my %Parameter :ATTR(:set<parameter> :get<parameter> :init_arg<parameter>);
 my %Notes :ATTR(:set<notes> :get<notes>);
+my %Layout :ATTR(:set<layout> :get<layout>);
 my %Backtrack :ATTR(:set<backtrack> :get<backtrack> :init_arg<backtrack>);
 
 ## Deprecated

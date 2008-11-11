@@ -207,6 +207,9 @@ sub select_upload {
   my $self = shift;
   $self->title('Share Your Data');
 
+  $self->notes({'heading' => 'How it works', 'text' => qq(You can share your uploaded data with anyone, even if they don't have an Ensembl account. Just select one or more of your uploads and click on 'Next' to get a shareable URL. Please note that these URLs expire after 72 hours, but if you save the upload to your account, you can create a new shareable URL at any time.)});
+  $self->set_layout('narrow-labels');
+
   my @values = ();
   my ($name, $value);
 
@@ -229,7 +232,8 @@ sub select_upload {
   ## If only one record, have the checkbox automatically checked
   my $autoselect = scalar(@values) == 1 ? [$values[0]->{'value'}] : '';
 
-  $self->add_element('type' => 'MultiSelect', 'name' => 'share_id', 'value' => $autoselect, 'values' => \@values);
+  $self->add_element('type' => 'MultiSelect', 'name' => 'share_id', 'label' => 'Uploaded files',
+                      'value' => $autoselect, 'values' => \@values);
 
   $self->parameter('wizard_next', 'check_save');
 }

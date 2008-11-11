@@ -159,6 +159,7 @@ sub render_current_node {
     $self->set_form($form);
     my $init_method = $node->name;
     $node->$init_method; 
+    $form->add_attribute('class', $node->get_layout);
     $html .= "<h2>".$node->title."</h2>\n";
     if ($object->param('error_message')) {
       $html .= '<div class="alert-box">'.$object->param('error_message').'</div>';
