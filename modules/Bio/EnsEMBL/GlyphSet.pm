@@ -31,6 +31,11 @@ our %cache;
 # constructor
 #
 
+sub error_track_name {
+  my $self = shift;
+  return $self->my_config('caption');
+}
+
 sub render_normal {
   my $self = shift;
   $self->_init(@_);
