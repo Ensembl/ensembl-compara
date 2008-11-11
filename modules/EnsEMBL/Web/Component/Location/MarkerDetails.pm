@@ -10,6 +10,8 @@ use warnings;
 no warnings "uninitialized";
 
 my $MAX_MAP_WEIGHT = 15;
+my $MAP_WEIGHT = 2;
+my $PRIORITY   = 50;
 
 sub _init {
   my $self = shift;
@@ -261,13 +263,25 @@ sub render_location {
 	    my $sr_name = $mf->seq_region_name;
 	    my $start   = $mf->start;
 	    my $end     = $mf->end;
-	    $loc_text .= sprintf (qq(<tr><td>%s%s <a href="%s">%s:%d-%d</a></td></tr>),
+	    my $url = sprintf(qq(<a href="%s">%s:%d-%d</a>),
+			      "/$species/Location/View?r=$sr_name:$start-$end;h=$m_name",
+			      $sr_name,
+			      $start,
+			      $end,
+			  );
+	    my $extra;
+	    if ($mf->map_weight > $MAP_WEIGHT) {
+		$extra = qq([This marker is not shown on 'Region in detail' since it has been mapped to the genome multiple times]);
+	    }
+	    if ($m->priority < $PRIORITY) {
+		$extra = qq([Note that for reasons of clarity this marker is not shown on 'Region in detail']);
+	    }
+
+	    $loc_text .= sprintf (qq(<tr><td>%s%s %s %s</td></tr>),
 				  ($c > 1) ? '&nbsp;' : '',
 				  $mf->coord_system_name,
-				  "/$species/Location/View?r=$sr_name:$start-$end;h=$m_name",
-				  $sr_name,
-				  $start,
-				  $end);
+				  $url,
+			          $extra);
 	}
     }
     else {
