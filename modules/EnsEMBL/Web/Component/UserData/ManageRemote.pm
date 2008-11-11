@@ -17,27 +17,6 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  ## Do any 'deletes'
-  my $type = $object->param('record') || '';
-  my $data = $object->param('data') || '';
-  if ($type eq 'session' && $data eq 'url') {
-    my $temp = $self->object->get_session->get_tmp_data('url');
-    my $urls = $temp->{'urls'} || [];
-    if (scalar(@$urls) && $object->param('url')) {
-      for my $i ( 0 ..  $#{@$urls}) { 
-        if ( $urls->[$i]{'url'} eq $object->param('url') ) { 
-          splice @$urls, $i, 1; 
-        } 
-      } 
-    }
-    if (scalar(@$urls) < 1) {
-      $object->get_session->purge_tmp_data('url');
-    }
-  }
-  elsif ($type eq 'user' && $data eq 'url') {
-    $object->delete_userurl($object->param('id'));
-  }
-
   ## Control panel fixes
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
   $dir = '' if $dir !~ /_/;
@@ -48,7 +27,7 @@ sub content {
   my $save = sprintf('<a href="%s/Account/Login?%s" class="modal_link">Log in to save</a>', $dir, $referer);
 
   ## List DAS sources
-  $html .= "<h4>DAS sources</h4>";
+  $html .= "<h3>DAS sources</h3>";
 
   my @sources = values %{$self->object->get_session->get_all_das};
 
@@ -70,14 +49,14 @@ sub content {
 
       if (ref($source) =~ /Record/) { ## from user account
         my $date = $source->modified_at || $source->created_at;
-        my $link = sprintf('<a href="%s/UserData/DeleteDAS?id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
-        $table->add_row( { 'name'  => $source->label, 'date' => $self->pretty_date($date), 'delete' => $link } );
+        my $link = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
+        $table->add_row( { 'name'  => $source->label, 'date' => $self->pretty_date($date), 'save' => 'Saved', 'delete' => $link } );
       }
       else { ## temporary
         if ($user) {
           $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;dsn=%s;%s" class="modal_link">Save to account</a>', $dir, $source->logic_name, $referer);
         }
-        my $detach = sprintf('<a href="%s/UserData/DeleteDAS?logic_name=%s;%s" class="modal_link">Remove</a>', $dir, $source->logic_name, $referer);
+        my $detach = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s;%s" class="modal_link">Remove</a>', $dir, $source->logic_name, $referer);
         $table->add_row( { 'name'  => $source->label, 'date' => 'N/A', 'save' => $save, 'delete' => $detach } );
       }
 
@@ -89,7 +68,7 @@ sub content {
   }
 
   ## List URL data
-  $html .= "<h4>URL-based data</h4>";
+  $html .= "<h3>URL-based data</h3>";
 
   my $temp = $self->object->get_session->get_tmp_data('url');
   my $urls = $temp->{'urls'} || [];
@@ -109,15 +88,15 @@ sub content {
     foreach my $source (@$urls) {
       if (ref($source) =~ /Record/) { ## from user account
         my $date = $source->modified_at || $source->created_at;
-        my $link = sprintf('<a href="%s/UserData/ManageRemote?record=user;data=url;id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
-        $table->add_row( { 'url'  => $source->url, 'date' => $self->pretty_date($date), 'delete' => $link } );
+        my $link = sprintf('<a href="%s/UserData/DeleteRemote?record=user;data=url;id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
+        $table->add_row( { 'url'  => $source->url.' ('.$source->species.')', 'date' => $self->pretty_date($date), 'save' => 'Saved', 'delete' => $link } );
       }
       else { ## temporary
         if ($user) {
           $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;url=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $source->{'url'}, $source->{'url'}, $referer);
         }
-        my $detach = sprintf('<a href="%s/UserData/ManageRemote?record=session;data=url;url=%s;%s" class="modal_link">Remove</a>', $dir, $source->{'url'}, $referer);
-        $table->add_row( { 'url'  => $source->{'url'}.'<br />('.$source->{'species'}.')', 'date' => 'N/A', 'save' => $save, 'delete' => $detach } );
+        my $detach = sprintf('<a href="%s/UserData/DeleteRemote?record=session;data=url;url=%s;%s" class="modal_link">Remove</a>', $dir, $source->{'url'}, $referer);
+        $table->add_row( { 'url'  => $source->{'url'}.' ('.$source->{'species'}.')', 'date' => 'N/A', 'save' => $save, 'delete' => $detach } );
       }
     }
     $html .= $table->render;

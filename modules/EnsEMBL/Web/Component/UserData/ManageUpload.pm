@@ -17,15 +17,6 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  ## Do any 'deletes'
-  my $type = $object->param('record') || '';
-  if ($type eq 'session') {
-    $object->get_session->purge_tmp_data('upload');
-  }
-  elsif ($type eq 'user') {
-    $object->delete_userdata($object->param('id'));
-  }
-
   ## Control panel fixes
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
   $dir = '' if $dir !~ /_/;
@@ -35,7 +26,7 @@ sub content {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
   ## Temporary upload
-  $html .= "<h4>Temporary upload</h4>";
+  $html .= "<h3>Temporary upload</h3>";
 
   my $temp_data = $self->object->get_session->get_tmp_data('upload');
   if ($temp_data && keys %$temp_data) {
@@ -46,13 +37,13 @@ sub content {
     else {
       $html .= qq(<a href="$dir/Account/Login?$referer" class="modal_link">Log in to save</a> | );
     }
-    $html .= qq(<a href="$dir/UserData/ManageUpload?record=session;$referer" class="modal_link">Delete</a></p>);
+    $html .= qq(<a href="$dir/UserData/DeleteUpload?record=session;$referer" class="modal_link">Remove</a></p>);
   }
   else {
     $html .= qq(<p>You have no temporary data uploaded to this website.</p>);
   }
 
-  $html .= qq(<h4>Saved uploads</h4>);
+  $html .= qq(<h3>Saved uploads</h3>);
   if ($user) {
     my @uploads = $user->uploads;
 
@@ -67,7 +58,7 @@ sub content {
       );
       foreach my $upload (@uploads) {
         my $date = $upload->modified_at || $upload->created_at;
-        my $link = sprintf('<a href="%s/UserData/ManageUpload?record=user;id=%s;%s" class="modal_link">Delete</a>', $dir, $upload->id, $referer);
+        my $link = sprintf('<a href="%s/UserData/DeleteUpload?record=user;id=%s;%s" class="modal_link">Delete</a>', $dir, $upload->id, $referer);
         $table->add_row( { 'name'  => $upload->name, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
       $html .= $table->render;

@@ -170,7 +170,10 @@ sub attach_das {
   #           |    |           V           
   # Page:     |    +-->select_das_coords   
   #           V                            
-  # Page:    attach_das                
+  # Logic:  attach_das
+  #           |
+  #           V
+  # Page:   das_feedback                
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
@@ -179,16 +182,16 @@ sub attach_das {
   my $validate_das  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'validate_das');
   my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species', 'backtrack' => 1);
   my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords', 'backtrack' => 1);
+  my $attach_das    = $wizard->create_node( object => $object, module => $node, type => 'logic',  name => 'attach_das');
   
   # END POINTS:
-  my $attach_das    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'attach_das');
+  my $feedback    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'das_feedback');
 
   ## LINK PAGE NODES TOGETHER
   $wizard->add_connection( from => $server,  to => $source);
   $wizard->add_connection( from => $source,  to => $validate_das);
   $wizard->add_connection( from => $species, to => $coords);
   $wizard->add_connection( from => $coords,  to => $validate_das);
-
 }
 
 sub save_remote {
