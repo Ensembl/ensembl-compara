@@ -26,7 +26,7 @@ sub markup_variation {
         $data->{$_}->{'ambigcode'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
       }
       
-      $sequence->[$_]->{'background-color'} = $config->{'translation'} ?  $config->{'colours'}->{"$data->{$_}->{'snp'}$data->{$_}->{'bg'}"} : $config->{'colours'}->{'default'};
+      $sequence->[$_]->{'background-color'} = $config->{'translation'} ?  $config->{'colours'}->{"$data->{$_}->{'snp'}$data->{$_}->{'bg'}"} : $config->{'colours'}->{'snp_default'};
       $sequence->[$_]->{'title'} = "Alleles: $data->{$_}->{'alleles'}";
       $sequence->[$_]->{'ambigcode'} = $data->{$_}->{'url_params'} ? qq{<a href="../snpview?$data->{$_}->{'url_params'}">$data->{$_}->{'ambigcode'}</a>} : $data->{$_}->{'ambigcode'};
     } else {
