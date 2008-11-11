@@ -69,6 +69,7 @@ sub content {
       $html .= '<p>No shared bookmarks</p>';
     }
 
+=pod
     $html .= '<h3>Configurations</h3>';
     if ($group->configurations) {
 
@@ -120,7 +121,7 @@ sub content {
     else {
       $html .= '<p>No shared annotations</p>';
     }
-
+=cut
     $html .= '</div>';
   }
 
