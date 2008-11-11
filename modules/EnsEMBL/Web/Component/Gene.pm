@@ -231,43 +231,33 @@ sub get_sequence_data {
       } elsif ($config->{'exon_ori'} eq 'rev') {
         @exons = grep { $_->seq_region_strand < 0 } @exons; # Only rev exons
       }
+      
+      my @all_exons = map {[ $config->{'comparison'} ? 'compara_other' : 'other', $_ ]} @exons;
+      push (@all_exons, [ 'gene', $_ ]) for @{$config->{'exon_features'}};
   
-      for my $exon (@exons) {
-        # skip the features that were cut off by applying flanking sequence parameters
-        next if $exon->seq_region_end < $slice_start || $exon->seq_region_start > $slice_end;
+      foreach (@all_exons) {
+        my $type = $_->[0];
+        my $exon = $_->[1];
         
-        my ($start, $end) = ($exon->start, $exon->end);
-  
-        $start = 1 if ($start < 1);
-        $end = $slice_length - 1 if ($end > $slice_length);
-  
+        # skip the features that were cut off by applying flanking sequence parameters
+        next if $exon->seq_region_start < $slice_start || $exon->seq_region_end > $slice_end;
+        
+        my $start = $exon->start - ($type eq 'gene' ? $slice_start : 1);
+        my $end = $exon->end - ($type eq 'gene' ? $slice_start : 1);
+        
         if ($exon->strand < 0) {
-          ($start, $end) = ($slice_length - $end + 1, $slice_length - $start + 1);
+          ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1);
         }
-          
-        for ($start-1..$end-1) {
+        
+        for ($start..$end) {
           last if $_ >= $config->{'length'};
           
-          push (@{$mk->{$_}->{'exon_type'}}, $config->{'comparison'} ? 'compara_other' : 'other');
+          push (@{$mk->{$_}->{'exon_type'}}, $type);          
           $mk->{$_}->{'exons'} .= ($mk->{$_}->{'exons'} ? '; ' : '') . $exon->stable_id if ($exon->can('stable_id'));
         }
       }
       
       if ($config->{'exon_features'}) {
-        for my $exon (@{$config->{'exon_features'}}) {
-          # skip the features that were cut off by applying flanking sequence parameters
-          next if $exon->end < $slice_start || $exon->start > $slice_end;
-          
-          my ($start, $end) = ($exon->start - $slice_start, $exon->end - $slice_start);
-          
-          for ($start..$end) {
-            last if $_ >= $config->{'length'};
-            
-            push (@{$mk->{$_}->{'exon_type'}}, 'gene');          
-            $mk->{$_}->{'exons'} .= ($mk->{$_}->{'exons'} ? '; ' : '') . $exon->stable_id if ($exon->can('stable_id'));
-          }
-        }
-        
         $config->{'gene_exon_type'} = $config->{'exon_features'}->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
       }
     }
