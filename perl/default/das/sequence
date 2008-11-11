@@ -1,7 +1,2 @@
-#!/usr/local/bin/perl
-
-package das::sequence;
-use EnsEMBL::Web::Document::WebPage;
-wrapper_webpage( "DAS", 'outputtype' => 'DAS', 'subtype' => 'das' );
-
-1;
+use EnsEMBL::Web::Magic;
+magic ingredient
