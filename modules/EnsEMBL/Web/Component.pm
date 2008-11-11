@@ -177,6 +177,7 @@ sub _sort_similarity_links {
     next if $externalDB eq "Vega_gene";                # remove internal links to self and transcripts
     next if $externalDB eq "Vega_transcript";
     next if $externalDB eq "Vega_translation";
+    next if ($externalDB eq 'OTTP') && $display_id =~ /^\d+$/; #don't show vega translation internal IDs
     if( $externalDB eq "GO" ){
       push @{$object->__data->{'links'}{'go'}} , $display_id;
       next;
