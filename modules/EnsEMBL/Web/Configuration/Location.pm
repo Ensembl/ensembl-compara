@@ -179,7 +179,8 @@ sub _ajax_zmenu_view {
   } else {
     my $r = $obj->param('r');
     $panel->{'caption'} = $r;
-    my $url = $obj->_url({'type' => 'Location', 'action' => 'View'});
+    my $action = $obj->[1]{'_action'} || 'View';
+    my $url = $obj->_url({'type' => 'Location', 'action' => $action});
     $panel->add_entry({ 'label' => $r, 'link'  => $url });
   }
 }
