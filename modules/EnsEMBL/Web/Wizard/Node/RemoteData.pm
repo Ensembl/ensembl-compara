@@ -83,8 +83,9 @@ sub select_das {
     
     if ( scalar @already_added ) {
       my $noun = scalar @already_added > 1 ? 'sources' : 'source';
-      my $note = sprintf 'There are %d DAS %s not shown here that are already configured within %s.',
-                         scalar @already_added, $noun,
+      my $verb = scalar @already_added > 1 ? 'are' : 'is';
+      my $note = sprintf 'There %s %d DAS %s not shown here that are already configured within %s.',
+                         $verb, scalar @already_added, $noun,
                          $self->object->species_defs->ENSEMBL_SITETYPE;
       $self->notes( {'heading'=>'Note', 'text'=> $note } );
     }
@@ -135,6 +136,7 @@ sub validate_das {
            : $no_coords  ? 'select_das_coords'
            : 'attach_das';
   $self->parameter('wizard_next', $next);
+  warn ">>> NEXT $next";
   return;
 }
 
@@ -258,7 +260,7 @@ sub select_das_coords {
   $self->_output_das_text(@coord_unknown);
 }
 
-# Page method for attaching a DAS source (saving to the session)
+# Logic method for attaching a DAS source (saving to the session)
 sub attach_das {
   my $self = shift;
   
@@ -274,21 +276,22 @@ sub attach_das {
   
   # Process any errors
   if (!ref $sources) {
-    $self->add_element( 'type' => 'Information', 'value' => $sources );
+    $sources = [$sources];
   }
   elsif (!scalar @{ $sources }) {
-    $self->add_element( 'type' => 'Information', 'value' => 'No sources found' );
+    $self->parameter( 'error_message', 'No sources found' );
+    $self->parameter( 'wizard_next', 'select_das' );
   }
   else {
-    $self->title('Attached DAS sources');
     
     my @success = ();
     my @skipped = ();
     
-    for my $source (@{ $sources }) {
+    foreach my $source (@{ $sources }) {
       
       $source = EnsEMBL::Web::DASConfig->new_from_hashref( $source );
-      
+      next unless $source && ref $source;
+
       # Fill in missing coordinate systems
       if (!scalar @{ $source->coord_systems }) {
         if ( !scalar @expand_coords ) {
@@ -298,38 +301,57 @@ sub attach_das {
       }
       
       if ($self->object->get_session->add_das($source)) {
-        push @success, $source;
-      } else {
-        push @skipped, $source;
+        push @success, $source->logic_name;
+      }
+      else {
+        push @skipped, $source->logic_name;
       }
 
     }
     $self->object->get_session->save_das;
-    
-    if (scalar @success) {
-      $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources have now been attached:' );
-      for my $source (@success) {
+    $self->parameter('added', \@success);
+    $self->parameter('skipped', \@skipped);
+    $self->parameter( 'wizard_next', 'das_feedback' );
+  }
+}
+
+sub das_feedback {
+  my $self = shift;
+  $self->title('Attached DAS sources');
+  my $das = $self->object->get_session->get_all_das;
+  if (my @added = $self->object->param('added')) {
+    $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources have now been attached:' );
+    foreach my $logic_name (@added) {
+      my $source = $das->{$logic_name};
+      if ($source) {
         $self->add_element( 'type' => 'Information', 'classes' => ['no-bold'],
                             'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
                                                                 $source->label,
                                                                 $source->description,
                                                                 $source->homepage );
       }
+      else {
+        $self->add_element( 'type' => 'Information', 'value' => $logic_name);
+      }
     }
-    
-    if (scalar @skipped) {
-      $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources were already attached:' );
-      for my $source (@skipped) {
-        $self->add_element( 'type' => 'Information', 'classes' => ['no-bold'], 
+  }
+  if (my @skipped = $self->object->param('skipped')) {
+    $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources were already attached:' );
+    foreach my $logic_name (@skipped) {
+      my $source = $das->{$logic_name};
+      if ($source) {
+        $self->add_element( 'type' => 'Information', 'classes' => ['no-bold'],
                             'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
                                                                 $source->label,
                                                                 $source->description,
                                                                 $source->homepage );
       }
+      else {
+        $self->add_element( 'type' => 'Information', 'value' => $logic_name);
+      }
     }
   }
 }
-
 
 sub show_tempdas {
   my $self = shift;
