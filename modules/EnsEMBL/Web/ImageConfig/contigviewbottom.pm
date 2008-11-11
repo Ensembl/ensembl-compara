@@ -22,7 +22,7 @@ sub init {
 
 ## Now let us set some of the optional parameters....
     'opt_halfheight'    => 0,    # glyphs are half-height [ probably removed when this becomes a track config ]
-    'opt_empty_tracks'  => 0,    # include empty tracks..
+#    'opt_empty_tracks'  => 0,    # include empty tracks..
     'opt_lines'         => 1,    # draw registry lines
     'opt_restrict_zoom' => 1,   # when we get "zoom" working draw restriction enzyme info on it!!
 ## Finally some colours... background image colors;
@@ -57,7 +57,6 @@ sub init {
     'information'     => 'Information',
     'options'         => 'Options'
   );
-
 
 ## Note these tracks get added before the "auto-loaded tracks" get added...
   $self->add_tracks( 'sequence', 
@@ -106,7 +105,7 @@ sub init {
 
 ## Finally add details of the options to the options menu...
   $self->add_options(
-    [ 'opt_empty_tracks',  'Show empty tracks?'           ],
+#    [ 'opt_empty_tracks',  'Show empty tracks?'           ],
     [ 'opt_lines',         'Show registry lines?'         ],
 #    [ 'opt_restrict_zoom', 'Restriction enzymes on zoom?' ],
   );
