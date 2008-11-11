@@ -27,7 +27,12 @@ sub content {
   }
  
   my $freq_data = $object->freqs; 
-  unless (%$freq_data ){ my $html = "<p>No informtaion available for this feature</p>"; return $html; }
+  unless (%$freq_data ){
+    my $html = "<p>No genotypes for this variation</p>"; 
+    return $self->_info(
+    '',
+    $html );
+  }
 
   my $table = format_frequencies($object, $freq_data);
  
