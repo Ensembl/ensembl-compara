@@ -78,7 +78,7 @@ sub content {
     
     for (@$links) {
       $html .= '<ul>'; 
-      $html .= qq{<p><a href="/@{[$object->species]}/$type/Export/fasta?$ENV{'QUERY_STRING'};st=$_->[0];_format=Text" target="_blank">$_->[1]</a></p>} if $_->[2];
+      $html .= qq{<li><a href="/@{[$object->species]}/$type/Export/fasta?$ENV{'QUERY_STRING'};st=$_->[0];_format=Text" target="_blank">$_->[1]</a></li>} if $_->[2];
       $html .= '</ul>'; 
     }
   }
@@ -118,7 +118,7 @@ sub fasta_trans {
   
   my $transcript = $trans_obj->Obj;
   my $id_type = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->status . '_' . $transcript->biotype;
-  my $id = $obj_id ? "$obj_id:" : "" . $transcript->stable_id;
+  my $id = ($obj_id ? "$obj_id:" : "") . $transcript->stable_id;
   
   my $output = {
     'cdna'    => [ "$id cdna:$id_type", $transcript->spliced_seq ],
@@ -127,6 +127,8 @@ sub fasta_trans {
     'utr3'    => eval { [ "$id utr3:$id_type", $transcript->three_prime_utr->seq ] },
     'utr5'    => eval { [ "$id utr5:$id_type", $transcript->five_prime_utr->seq ] }
   };
+  
+  return unless ref $output->{$type} eq 'ARRAY';
   
   $output->{$type}->[1] =~ s/(.{60})/$1\n/g;
   
