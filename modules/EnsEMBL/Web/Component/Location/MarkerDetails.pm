@@ -253,11 +253,14 @@ sub render_location {
     my $loc_text = qq(<table>);
     if ($c) {
 	if ($c > 1) {
-	    $loc_text .= sprintf (qq(<tr><td>%s is currently mapped to %d different %s locations%s</td></tr>),
+	    my $extra = ($c > $MAP_WEIGHT) ? ' (note that for clarity markers mapped more than twice are not shown on location based views)' : '';
+	    $loc_text .= sprintf (qq(<tr><td>%s is currently mapped to %d different %s locations%s%s%s</td></tr>),
 				  $m_name,
 				  $c,
 				  $sitetype,
-				  ( $c > $MAX_MAP_WEIGHT ? '.' : ':' ) );
+			          $extra,
+				  ( $c > $MAX_MAP_WEIGHT ? '.' : ':' ),
+			      );
 	}
 	foreach my $mf (@$mfs){
 	    my $sr_name = $mf->seq_region_name;
@@ -270,9 +273,6 @@ sub render_location {
 			      $end,
 			  );
 	    my $extra;
-	    if ($mf->map_weight > $MAP_WEIGHT) {
-		$extra = qq([This marker is not shown on 'Region in detail' since it has been mapped to the genome multiple times]);
-	    }
 	    if ($m->priority < $PRIORITY) {
 		$extra = qq([Note that for reasons of clarity this marker is not shown on 'Region in detail']);
 	    }
