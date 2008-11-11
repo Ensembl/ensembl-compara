@@ -19,7 +19,7 @@ sub content {
 
   my $html = qq(<div class="tinted-box center">
 <h3>UNDER CONSTRUCTION</h3>
-<p>This page has not yet been ported to the new code. Thank you for your patience.</p>
+<p>This page has not yet been enabled for the new webcode. Thank you for your patience.</p>
 </div>);
 
   return $html;
