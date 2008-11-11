@@ -8,6 +8,7 @@ use EnsEMBL::Web::Configuration::Interface;
 use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::OrderedTree;
+use EnsEMBL::Web::Mailer;
 
 our @ISA = qw( EnsEMBL::Web::Configuration::Interface);
 
@@ -69,14 +70,21 @@ sub save {
   if ($exists) {
     $url = "$script?dataview=failure;error=duplicate_record";
   }
-  else{
-    if ($interface->data->save) {
-      ## redirect to confirmation page 
-      $url = "$script?dataview=success;email=" . $object->param('email');
-      $url .= ';record_id='.$object->param('record_id') if $object->param('record_id');
-    } 
+  else {
+    ## Check for spam
+    my $spam = EnsEMBL::Web::Mailer::spam_check(undef, $interface->data->organisation, 1);
+    if ($spam) {
+      $url = "$script?dataview=failure;error=spam";
+    }
     else {
-      $url = "$script?dataview=failure";
+      if ($interface->data->save) {
+        ## redirect to confirmation page 
+        $url = "$script?dataview=success;email=" . $object->param('email');
+        $url .= ';record_id='.$object->param('record_id') if $object->param('record_id');
+      } 
+      else {
+        $url = "$script?dataview=failure";
+      }
     }
   }
   $url .= ';_referer='.$object->param('_referer');
