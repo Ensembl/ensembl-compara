@@ -129,11 +129,13 @@ sub title {
 ## In this case jump to cytoview on the other species...
 sub href { 
   my ($self, $f ) = @_;
+  my $ori = $f->{'rel_ori'}<0 ? 'reverse' : 'same';
   return $self->_url({
     'action'  => 'Overview',
     'species' => $self->my_config('species'),
     't'       => undef,
-    'r'       => "$f->{'hit_chr_name'}:$f->{'hit_chr_start'}-$f->{'hit_chr_end'}"
+    'r'       => "$f->{'hit_chr_name'}:$f->{'hit_chr_start'}-$f->{'hit_chr_end'}",
+    'ori'     => $ori,
   });
 }
 
