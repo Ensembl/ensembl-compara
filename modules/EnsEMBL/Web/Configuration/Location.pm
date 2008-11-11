@@ -67,24 +67,25 @@ sub populate_tree {
   );
 
   my $align_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );
-  $align_menu->append( $self->create_node( 'Align', "Genomic alignments ([[counts::align_slice]])",
-    [qw(
-      selector EnsEMBL::Web::Component::Location::Compara_AlignSliceSelector
-      top      EnsEMBL::Web::Component::Location::Compara_AlignSliceTop
-      nav      EnsEMBL::Web::Component::Location::ViewBottomNav
-      bottom   EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom
-    )],
-#      zoomnav EnsEMBL::Web::Component::Location::Compara_AlignSliceZoomNav
-#      zoom    EnsEMBL::Web::Component::Location::Compara_AlignSliceZoom
+  $align_menu->append( $self->create_node( 'Align', 'Genomic alignments',
+    [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
     { 'availability' => 'slice database:compara', 'concise' => 'Genomic alignments' }
   ));
-  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comp. ([[counts::align_contig]])",
-    [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
-    { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
-  ));
-  $align_menu->append( $self->create_node( 'ComparaGenomicAlignment', '',
+#      top      EnsEMBL::Web::Component::Location::Compara_AlignSliceTop
+#      selector EnsEMBL::Web::Component::Location::Compara_AlignSliceSelector
+#      nav      EnsEMBL::Web::Component::Location::ViewBottomNav
+#      bottom   EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom
+
+#      zoomnav EnsEMBL::Web::Component::Location::Compara_AlignSliceZoomNav
+#      zoom    EnsEMBL::Web::Component::Location::Compara_AlignSliceZoom
+
+#  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comp. ([[counts::align_contig]])",
+#    [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
+#    { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
+#  ));
+  $align_menu->append( $self->create_subnode( 'ComparaGenomicAlignment', '',
     [qw(gen_alignment      EnsEMBL::Web::Component::Location::ComparaGenomicAlignment)],
-    {'no_menu_entry' => 'location', 'availability' => 'slice database:compara' }
+    {'no_menu_entry' => 1 }
   ));
   $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]])",
     [qw(
@@ -102,10 +103,10 @@ sub populate_tree {
 	      align   EnsEMBL::Web::Component::Location::SequenceAlignment)],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
-  $variation_menu->append( $self->create_node( 'LD', "Linkage Data ",
-    [qw(ld  EnsEMBL::Web::Component::Location::LD)],
-    { 'availability' => 'slice has_LD', 'concise' => 'Linkage Disequilibrium Data' }
-  ));
+#  $variation_menu->append( $self->create_node( 'LD', "Linkage Data ",
+#    [qw(ld  EnsEMBL::Web::Component::Location::LD)],
+#    { 'availability' => 'slice has_LD', 'concise' => 'Linkage Disequilibrium Data' }
+#  ));
 
   $self->create_node( 'Marker', "Markers",
      [ qw(botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
