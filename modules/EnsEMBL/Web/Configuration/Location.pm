@@ -103,10 +103,11 @@ sub populate_tree {
 	      align   EnsEMBL::Web::Component::Location::SequenceAlignment)],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
-#  $variation_menu->append( $self->create_node( 'LD', "Linkage Data ",
-#    [qw(ld  EnsEMBL::Web::Component::Location::LD)],
-#    { 'availability' => 'slice has_LD', 'concise' => 'Linkage Disequilibrium Data' }
-#  ));
+  $variation_menu->append( $self->create_node( 'LD', "Linkage Data ",
+    [qw(ld  EnsEMBL::Web::Component::Location::UnderConstruction)],
+    { 'availability' => 'slice has_LD', 'concise' => 'Linkage Disequilibrium Data' }
+  ));
+#EnsEMBL::Web::Component::Location::LD)],
 
   $self->create_node( 'Marker', "Markers",
      [ qw(botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
