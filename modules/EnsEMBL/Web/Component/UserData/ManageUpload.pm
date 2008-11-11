@@ -40,7 +40,7 @@ sub content {
     $html .= qq(<a href="$dir/UserData/DeleteUpload?record=session;$referer" class="modal_link">Remove</a></p>);
   }
   else {
-    $html .= qq(<p>You have no temporary data uploaded to this website.</p>);
+    $html .= qq(<p class="space-below">You have no temporary data uploaded to this website.</p>);
   }
 
   $html .= qq(<h3>Saved uploads</h3>);
@@ -48,7 +48,7 @@ sub content {
     my @uploads = $user->uploads;
 
     if (@uploads) {
-      $html .= "You have the following data saved in our databases:";
+      $html .= qq(<p class="space-below">You have the following data saved in our databases:</p>);
 
       my $table = EnsEMBL::Web::Document::SpreadSheet->new( [], [], {'margin' => '0 0 1em 0'} );
       $table->add_columns(
