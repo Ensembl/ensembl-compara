@@ -490,11 +490,13 @@ sub _summarise_dasregistry {
     
     $cfg->{'logic_name'}      = $key;
     $cfg->{'category'}        = $val;
+    $cfg->{'homepage'}      ||= $cfg->{'authority'};
 
     # Make sure 'coords' is an array
     if( $cfg->{'coords'} && !ref $cfg->{'coords'} ) {
       $cfg->{'coords'} = [ $cfg->{'coords'} ];
     }
+    
     
     # Check using the url/dsn if the source is registered
     my $src = $sources{$key};
