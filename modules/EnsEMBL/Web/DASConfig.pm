@@ -275,7 +275,7 @@ sub _guess_views {
   
   my @views = ();
   if ( $positional ) {
-    push @views, 'Location/View/ViewTop', 'Location/View/ViewBottom';
+    push @views, 'cytoview', 'contigviewbottom';
   }
   if ( $nonpositional ) {
     push @views, 'Gene/ExternalData', 'Transcript/ExternalData';
