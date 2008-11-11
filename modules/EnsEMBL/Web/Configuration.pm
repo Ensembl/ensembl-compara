@@ -274,29 +274,27 @@ sub _user_context {
       $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
         'time' => time, 
         'type'   => 'Config',
-	'action' => $action,
-	'config' => $ic_code,
+	      'action' => $action,
+	      'config' => $ic_code,
         '_referer' => $referer,
       }))
     );
     $flag = 0;
   }
-  if( $vc->can_upload || $type eq 'UserData' || $type eq 'Account') {
-    $active = $type eq 'UserData';
-    my $module = $vc->can_upload ? 'Upload' : 'ManageUpload';
-    $self->{'page'}->global_context->add_entry(
-      'type'      => 'UserData',
-      'id'        => 'user_data',
-      'caption'   => 'Custom Data',
-      $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
+  $active = $type eq 'UserData';
+  my $module = $vc->can_upload ? 'Upload' : 'ManageUpload';
+  $self->{'page'}->global_context->add_entry(
+    'type'      => 'UserData',
+    'id'        => 'user_data',
+    'caption'   => 'Custom Data',
+     $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
         'time' => time,
         '_referer' => $referer,
         '__clear' => 1,
         'type'   => 'UserData',
         'action' => $module,
-      }))
-    );
-  }
+     }))
+  );
 
   ## Now the user account link - varies depending on whether the user is logged in or not!
   $active = $type eq 'Account';
