@@ -291,16 +291,13 @@ sub share_url {
   my $self = shift;
   $self->title('Shareable URL');
 
-  my $share_data  = $self->object->get_session->share_tmp_data('upload');
-  my @ids = split(', ', $share_data->{analyses});
-  my @share_refs;
-  foreach my $id (@ids) {
-    push @share_refs, 'share_ref=ss-000000'. $id .'-'.EnsEMBL::Web::Tools::Encryption::checksum($id);
-  }
+  my $share_data  = $self->object->get_session->share_tmp_data;
+  my $share_ref   = 'ss-000000'. $share_data->{share_id} .'-'.
+                    EnsEMBL::Web::Tools::Encryption::checksum($share_data->{share_id});
                     
-  my $url = $self->object->species_defs->ENSEMBL_BASE_URL .$self->object->param('_referer');
+  my $url = $self->object->species_defs->ENSEMBL_BASE_URL . $self->object->param('_referer');
   $url .= $self->object->param('_referer') =~ /\?/ ? ';' : '?';
-  $url .= join(';', @share_refs);
+  $url .= "share_ref=$share_ref";
 
   $self->add_element('type'=>'Information', 'value' => $self->object->param('feedback'), 'style' => 'spaced');
   $self->add_element('type'=>'Information', 'value' => "To share this data, use the URL:", 'style' => 'spaced');
