@@ -727,7 +727,7 @@ sub pep_splice_site {
 sub pep_snps{
   my $self  = shift;
   my $rtn_structure = shift;
-  return $self->{'pep_snps'} if $self->{'pep_snps'};
+  return $self->{'pep_snps'} if $self->{'pep_snps'}; 
 
   my $rtn = $rtn_structure eq 'hash' ? {} : [];
 
@@ -763,7 +763,8 @@ sub pep_snps{
       my $snpclass;
       my $alleles;
       my $id;
-      $id = $snp->dbID;
+      $id = $snp->dbID; 
+      $aas[$aa-1]{'vdbid'} = $id;
       $aas[$aa-1]{'snp_id'} = $snp->variation_name();
       if ( $snp->variation ) {
        $aas[$aa-1]{'snp_source'} = $snp->variation->source();
@@ -773,8 +774,6 @@ sub pep_snps{
       }
       $snpclass = $snp->var_class;
       $alleles  = $snp->allele_string;
-      my $snp_dbid = $snp->dbID;
-      $aas[$aa-1]{'vdbid'} = $snp_dbid; 
 
       if($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') {
     # gets all changes to pep by snp
