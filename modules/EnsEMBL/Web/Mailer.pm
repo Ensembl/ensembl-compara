@@ -34,18 +34,19 @@ sub BUILD {
 }
 
 sub spam_check {
-  my ($self, $content) = @_;
+  my ($self, $content, $threshold) = @_;
   (my $check = $content) =~ s/<a\s+href=.*?>.*?<\/a>//smg;
   $check =~ s/\[url=.*?\].*?\[\/url\]//smg;
   $check =~ s/\[link=.*?\].*?\[\/link\]//smg;
   $check =~ s/https?:\/\/\S+//smg;
-  if( length($check)<length($content)/$self->get_spam_threshold ) {
-    warn "MAIL FILTERED DUE TO BLOG SPAM.....";
+  $threshold = $self->get_spam_threshold unless $threshold;
+  if( length($check)<length($content)/$threshold ) {
+    warn "@@@ MAIL FILTERED DUE TO BLOG SPAM.....";
     return 1;
   }
   $check =~ s/\s+//gsm;
   if( $check eq '' ) {
-    warn "MAIL FILTERED DUE TO ZERO CONTENT!";
+    warn "@@@ MAIL FILTERED DUE TO ZERO CONTENT!";
     return 1;
   }
   return 0;
