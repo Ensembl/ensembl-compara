@@ -39,7 +39,6 @@ sub content {
 
     my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 
-    $html .= '<div class="plain-box" style="padding:1em;margin:1em">';
     $html .= '<p><strong>Group created by</strong>: '.$creator->name;
     $html .= ' <strong>on</strong> '.$self->pretty_date($group->created_at).'</p>';
 
@@ -122,7 +121,6 @@ sub content {
       $html .= '<p>No shared annotations</p>';
     }
 =cut
-    $html .= '</div>';
   }
 
   return $html;
