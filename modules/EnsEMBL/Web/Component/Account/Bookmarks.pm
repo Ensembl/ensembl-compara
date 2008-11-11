@@ -52,11 +52,11 @@ sub content {
         { 'key' => 'desc',      'title' => 'Description',   'width' => '50%', 'align' => 'left' },
         { 'key' => 'edit',      'title' => '',              'width' => '10%', 'align' => 'left' },
     );
-    if ($has_groups) {
-      $table->add_columns(
-        { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
-      );
-    }
+    #if ($has_groups) {
+    #  $table->add_columns(
+    #    { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
+    #  );
+    #}
     $table->add_columns(
         { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
     );
@@ -70,9 +70,9 @@ sub content {
 
       $row->{'desc'}    = $description;
       $row->{'edit'}    = $self->edit_link($dir, 'Bookmark', $bookmark->id);
-      if ($has_groups) {
-        $row->{'share'}   = $self->share_link($dir, 'bookmark', $bookmark->id);
-      }
+      #if ($has_groups) {
+      #  $row->{'share'}   = $self->share_link($dir, 'bookmark', $bookmark->id);
+      #}
       $row->{'delete'}  = $self->delete_link($dir, 'Bookmark', $bookmark->id);
       $table->add_row($row);
       $has_bookmarks = 1;
