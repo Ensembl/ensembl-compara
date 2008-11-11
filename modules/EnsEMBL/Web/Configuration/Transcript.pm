@@ -78,6 +78,11 @@ sub ajax_zmenu      {
 	    'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
 	    'priority' => 190 
 	});
+	$panel->add_entry({
+	    'type'     => 'Gene type',
+	    'label'    => $obj->gene_stat_and_biotype,
+	    'priority' => 70, 
+	});
       }
       $panel->add_entry({
 	  'type'     => 'Location',
@@ -90,7 +95,8 @@ sub ajax_zmenu      {
       });
       $panel->add_entry({
 	  'type'     => 'Strand',
-	  'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward'
+	  'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward',
+	  'priority' => 60
       });
 	
       $panel->add_entry({
@@ -98,6 +104,14 @@ sub ajax_zmenu      {
 	  'label'    => $obj->thousandify( $obj->Obj->seq->length ),
 	  'priority' => 50
       });
+
+      if ($obj->get_db eq 'vega') {
+	  $panel->add_entry({
+	    'type'     => 'Transcript class',
+	    'label'    => $obj->transcript_class,
+	    'priority' => 65
+	});
+      }
 
       ## Protein coding transcripts only....
       if( $obj->Obj->translation ) {
