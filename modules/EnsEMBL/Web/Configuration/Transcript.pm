@@ -423,7 +423,7 @@ sub populate_tree {
 
   my $record_menu = $self->create_submenu( 'ExternalRecords', 'External References' );
 
-  my $sim_node = $self->create_node( 'Similarity', "Similarity matches  ([[counts::similarity_matches]])",
+  my $sim_node = $self->create_node( 'Similarity', "General identifiers  ([[counts::similarity_matches]])",
     [qw(similarity  EnsEMBL::Web::Component::Transcript::SimilarityMatches)],
     { 'availability' => 'transcript', 'concise' => 'Similarity matches'}
   );
