@@ -926,7 +926,7 @@ sub ajax_zmenu_variation {
   else {$type = $obj->param('consequence') || '';}
 
 
-  my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name }); 
+  my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name, 'vf' => $feature->dbID, 'source' => $feature->source }); 
 
   my $chr_start = $feature->start();
   my $chr_end   = $feature->end();
@@ -1006,11 +1006,91 @@ sub ajax_zmenu_variation {
 
  return;
 }
+sub ajax_zmenu_variation_protein {
+ # Specific zmenu for variation features
 
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj = $self->object;
+  my $db_adaptor = $obj->database('variation');
+  my $var_adaptor = $db_adaptor->get_VariationAdaptor();
+  my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor();
+  my $v_id = $obj->param('v');
+  my $var = $var_adaptor->fetch_by_name($v_id);
+  my @vf = @{$var_feat_adaptor->fetch_all_by_Variation($var)};
+  my $feature;
+  if ( scalar @vf == 1) { $feature = $vf[0];}
+  else {
+    foreach (@vf) {
+      if ($_->dbID eq $obj->param('vf') ) {$feature = $_;}
+    }
+  }
+
+  my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name, 'vf' => $feature->dbID, 'source' => $feature->source });
+
+  $panel->{'caption'} = 'Variation Information ' ;
+  $panel->add_entry({
+    'type'  =>  'Variation ID:',
+    'label_html'  => $feature->variation_name,
+    'link'        =>  $var_link,
+    'priority'    =>  15,
+  });
+  if ($obj->param('vtype')){ 
+    my $type = lc($obj->param('vtype'));
+    $type =~s/e$//;
+    $type .= 'ion'; 
+    $panel->add_entry({
+      'type'  =>  ucfirst($type),
+      'label'  => $obj->param('indel'),
+      'priority'    =>  13,
+    });
+    $panel->add_entry({
+      'type'  =>  'Position:',
+      'label'  => $obj->param('pos'),
+      'priority'    =>  11,
+    });
+    $panel->add_entry({
+      'type'  =>  'Length:',
+      'label'  => $obj->param('len'),
+      'priority'    =>  11,
+    });
+  } else {
+    $panel->add_entry({
+      'type'  =>  'Variation type:',
+      'label'  => $feature->display_consequence,
+      'priority'    =>  13,
+    });
+  }
+  $panel->add_entry({
+    'type'  =>  'Residue:',
+    'label'  => $obj->param('res'),
+    'priority'    =>  11,
+  }) if $obj->param('res');
+  $panel->add_entry({
+    'type'  =>  'Alternative Residues:',
+    'label'  => $obj->param('ar'),
+    'priority'    =>  11,
+  }) if $obj->param('ar');
+  $panel->add_entry({
+    'type'  =>  'Codon:',
+    'label'  => $obj->param('cod'),
+    'priority'    =>  9,
+  }) if $obj->param('cod');
+  $panel->add_entry({
+    'type'  =>  'Alleles:',
+    'label'  => $obj->param('al'),
+    'priority'    =>  7,
+  }) if $obj->param('al') ;
+
+
+  
+ 
+ return;
+}
 sub ajax_zmenu_variation_transcript {
  # Specific zmenu for transcripts on variation image
 
-  my $self = shift; warn $self;
+  my $self = shift; 
   my $panel = $self->_ajax_zmenu;
   my $obj = $self->object;
   my $trans_id = $obj->param('vt') || die( "No transcript stable ID value in params" );
@@ -1182,7 +1262,7 @@ sub ajax_zmenu_id_history_tree_branch {
 
 sub ajax_zmenu_id_history_tree_label {
   # Specific zmenu for idhistory tree feature labels
-  my $self = shift; warn $self;
+  my $self = shift;
   my $panel = $self->_ajax_zmenu; 
   my $obj = $self->object;
   my $id = $obj->param('label') || die( "No label  value in params" );
