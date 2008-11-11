@@ -91,16 +91,16 @@ sub content {
   }
   
   # Request could be for several segments
-  for my $coord_key ( keys %{ $data->{'features'} } ) {
+  for my $segment ( keys %{ $data->{'features'} } ) {
     
     my $errored = 0;
-    my $err = $data->{'features'}->{$coord_key}->{'error'};
-    my $url = $data->{'features'}->{$coord_key}->{'url'};
-    my $cs  = $data->{'features'}->{$coord_key}->{'coord_system'};
+    my $err = $data->{'features'}->{$segment}->{'error'};
+    my $url = $data->{'features'}->{$segment}->{'url'};
+    my $cs  = $data->{'features'}->{$segment}->{'coord_system'};
     
     # Start of a new section
-    $html .= sprintf qq(<h3>%s [<a href="%s">view DAS response</a>]</h3>\n),
-                     $cs->label, $url;
+    $html .= sprintf qq(<h3>%s %s [<a href="%s">view DAS response</a>]</h3>\n),
+                     $cs->label, $segment, $url;
     
     if ( $err ) {
       $html .= $self->_error('Error', $err, '100%');
@@ -110,7 +110,7 @@ sub content {
     # We only want nonpositional features
     my @features = grep {
       !$_->start && !$_->end
-    } @{ $data->{'features'}->{$coord_key}->{'objects'} };
+    } @{ $data->{'features'}->{$segment}->{'objects'} };
     
     # Did we get anything useful?
     if (! scalar @features ) {
