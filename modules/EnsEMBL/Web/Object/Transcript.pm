@@ -1003,6 +1003,29 @@ sub gene_type {
   return $type;
 }
 
+sub gene_stat_and_biotype {
+  my $self = shift;
+  my $db = $self->get_db;
+  my $type = '';
+  if( $db eq 'core' ){
+    $type = ucfirst(lc($self->gene->status))." ".$self->gene->biotype;
+    $type =~ s/_/ /;
+    $type ||= $self->db_type;
+  } elsif ($db eq 'vega') {
+    my $biotype = ($self->gene->biotype eq 'tec') ? uc($self->gene->biotype) : ucfirst(lc($self->gene->biotype));
+    $type = ucfirst(lc($self->gene->status))." $biotype";
+    $type =~ s/_/ /g;
+    $type =~ s/unknown //i;
+    return $type;
+  } else {
+    $type = $self->logic_name;
+  }
+  $type ||= $db;
+  if( $type !~ /[A-Z]/ ){ $type = ucfirst($type) } #All lc, so format
+  $type =~ s/^Est/EST/;
+  return $type;
+}
+
 #----------------------------------------------------------------------
 
 =head2 analysis
