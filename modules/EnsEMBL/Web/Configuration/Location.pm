@@ -174,6 +174,8 @@ sub _ajax_zmenu_view {
     return $self->_ajax_zmenu_misc_feature($panel,$obj);
   } elsif ($obj->param('region_n')) {
     return $self->_ajax_zmenu_region($panel,$obj);
+  } elsif ($obj->param('ori')) {
+    return $self->_ajax_zmenu_synteny($panel,$obj);
   } else {
     my $r = $obj->param('r');
     $panel->{'caption'} = $r;
@@ -181,6 +183,34 @@ sub _ajax_zmenu_view {
     $panel->add_entry({ 'label' => $r, 'link'  => $url });
   }
 }
+
+sub _ajax_zmenu_synteny {
+    my $self = shift;
+    my $panel= shift;
+    my $obj  = shift; 
+    my $action     = $obj->[1]{'_action'};
+    my $r   = $obj->param('r');
+    my $sp  = $obj->[1]{'_species'};
+    my $ori = $obj->param('ori');
+    my ($chr, $loc) = split ':', $r;
+    $panel->{'caption'} = "$chr $loc";
+    my $url = $obj->_url({'type' => 'Location', 'action' => $action, 'r' => $r});
+    $panel->add_entry({
+	'label'    => "Jump to $sp",
+	'link'    => $url,
+	'priority'=> 100,
+    });
+    $panel->add_entry({
+	'label'    => "bp: $loc",
+	'priority'=> 90,
+    });
+    $panel->add_entry({
+	'label'    => "orientation: $ori",
+	'priority'=> 80,
+    });
+    return;
+}
+
 
 sub _ajax_zmenu_region {
     my $self = shift;
