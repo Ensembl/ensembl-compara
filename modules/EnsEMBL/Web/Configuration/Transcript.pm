@@ -251,7 +251,7 @@ sub _ajax_zmenu_transcript_variation {
     'priority'    =>  10,
   }) unless $obj->param('sara');
   $panel->add_entry({
-    'label'       =>  $tc,
+    'label_html'       =>  $tc,
     'priority'    =>  8,
   })if $obj->param('tc');
   $panel->add_entry({
