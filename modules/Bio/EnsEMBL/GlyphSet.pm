@@ -208,6 +208,18 @@ sub get_text_width {
     } else {
       @res = ('',         'none', 0, 0 );
     }
+  } elsif( $parameters{'ellipsis'} ) {
+    my $string = $text;
+    while( $string ) {
+      chop $string;
+      ($w,$h) = $gd->stringBounds("$string...");
+      if($w<$width) { 
+        @res = ("$string...",'truncated',$w,$h);
+        last;
+      }
+    }
+  } else {
+    @res = ('',         'none', 0, 0 );
   }
   $self->{'_cache_'}{$KEY} = \@res; # Update the cache
   $cache{$KEY} = \@res;

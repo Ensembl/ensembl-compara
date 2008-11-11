@@ -9,7 +9,6 @@ package Bio::EnsEMBL::DrawableContainer;
 use strict;
 no warnings "uninitialized";
 use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Text;
 use Time::HiRes qw(time);
 
 use base qw(Sanger::Graphics::Root);
@@ -56,8 +55,6 @@ sub new {
 ## Get configuration details off the image configuration...
 
   my $primary_config = $self->{'config'};
-  my $button_width   = $primary_config->get_parameter( 'button_width')   || 7;
-  my $show_buttons   = $primary_config->get_parameter( 'show_buttons')   || 'no' ;
   my $show_labels    = $primary_config->get_parameter( 'show_labels')    || 'yes';
   my $label_width    = $primary_config->get_parameter( 'label_width')    || 100;
   my $margin         = $primary_config->get_parameter( 'margin')         || 5;
@@ -65,10 +62,10 @@ sub new {
   my $inter_space    = $primary_config->get_parameter( 'intercontainer');
      $inter_space    = 2 * $margin unless defined( $inter_space );
   my $image_width    = $primary_config->get_parameter( 'image_width')    || 700;
-  my $label_start    = $margin      + ( $show_buttons eq 'yes' ? $button_width + $margin : 0 );
+  my $label_start    = $margin;
   my $panel_start    = $label_start + ( $show_labels  eq 'yes' ? $label_width  + $margin : 0 );
   my $panel_width    = $image_width - $panel_start - $margin;
-  
+  my $colours        = $primary_config->species_defs->colour( 'classes' ) || {};  
 
   $self->{'__extra_block_spacing__'} -= $inter_space;
   ## loop over all turned on & tuned in glyphsets
@@ -171,7 +168,14 @@ sub new {
       $glyphset->label->{'absolutex'}    = 1;
       $glyphset->label->{'absolutewidth'}= 1;
       $glyphset->label->{'pixperbp'}     = $x_scale;
+      $glyphset->label->{'colour'}       = $colours->{ lc($glyphset->{'my_config'}->get('_class')) }{'default'} || 'black';
       $glyphset->label->x(-$label_width-$margin) if defined $glyphset->label;
+      $glyphset->label->width( $label_width );
+      $glyphset->label->{'ellipsis'}     = 1;
+      my @res = $glyphset->get_text_width( $label_width, $glyphset->label->{'text'}, '',
+        'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'}
+      );
+      $glyphset->label->{'text'} = $res[0];
     }
 
     ## pull out alternating background colours for this script
@@ -228,13 +232,6 @@ sub new {
       } else {
 #        $glyphset->_dump('rendered' => 'No label' );
       }
-      if( $show_buttons eq 'yes' && defined $glyphset->bumpbutton()) {
-        my $T = int(($glyphset->maxy() - $glyphset->miny() - 8) / 2 + $gminy );
-        $glyphset->bumpbutton->[0]->y( $T     );
-        $glyphset->bumpbutton->[1]->y( $T + 2 );
-        $glyphset->push(@{$glyphset->bumpbutton()});
-      }
-
       $glyphset->transform();
       ## translate the top of the next row to the bottom of this one
       $yoffset += $glyphset->height() + $trackspacing;
