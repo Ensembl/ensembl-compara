@@ -795,15 +795,26 @@ sub glyph_anchored_arrow {
     $tw = 0; # No triangle!
   }
 ## Now draw the main bar!
-  my $n = int($h/4);
-  $self->push($self->Rect({
-    'x'         => $o > 0 ? $f->{extent_start}-1 : $f->{extent_start}+$tw-1,
-    'width'     => $f->{extent_end}-$f->{extent_start}+1-$tw,
-    'height'    => $h-2*$n,
-    'absolutey' => 1,
-    'colour'    => $st->{'fgcolor'},
-    'y'         => $y+$n
-  }));
+  if( lc($st->{'bar_style'}) eq 'line' ) {
+    $self->push($self->Line({
+      'x'         => $o > 0 ? $f->{extent_start}-1 : $f->{extent_start}+$tw-1,
+      'width'     => $f->{extent_end}-$f->{extent_start}+1-$tw,
+      'height'    => 0,
+      'absolutey' => 1,
+      'colour'    => $st->{'fgcolor'},
+      'y'         => $y+$h/2
+    }));
+  } else {
+    my $n = int($h/4);
+    $self->push($self->Rect({
+      'x'         => $o > 0 ? $f->{extent_start}-1 : $f->{extent_start}+$tw-1,
+      'width'     => $f->{extent_end}-$f->{extent_start}+1-$tw,
+      'height'    => $h-2*$n,
+      'absolutey' => 1,
+      'colour'    => $st->{'fgcolor'},
+      'y'         => $y+$n
+    }));
+  }
 ## Are we going to draw the back! if we haven't missed it out!
   if( $o<=0 && $e == $f->{extent_end} || $o>0 && $s == $f->{extent_start} ) {
     $self->push($self->Line({
