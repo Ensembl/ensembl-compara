@@ -104,12 +104,13 @@ sub content {
   else {
     $html .= qq(<p class="space-below">You have no URL data attached.</p>);
   }
-
-  $html .= $self->_info(
-    'Adding tracks',
-    qq(<p>Please note that custom data can only be added on pages that allow these tracks to be configured, for example 'Region in detail' images</p>),
-    '100%',
-  );
+  unless ($self->is_configurable) {
+    $html .= $self->_info(
+      'Adding tracks',
+      qq(<p>Please note that custom data can only be added on pages that allow these tracks to be configured, for example 'Region in detail' images</p>),
+      '100%',
+    );
+  }
 
   return $html;
 }
