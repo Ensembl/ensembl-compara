@@ -106,7 +106,7 @@ sub load_user_tracks {
 
   foreach my $source ( sort { ($a->caption||$a->label) cmp ($b->caption||$b->label) } values %$DAS ) {
     next if $self->get_node('das_'.$source->logic_name);
-    my $category = $source->category;
+    $source->is_on($self->{'type'}) || next;
     $self->add_das_track( 'user_data', $source );
   }
 
@@ -367,7 +367,8 @@ sub load_configured_das {
   my $self=shift;
   ## Now we do the das stuff - to append to menus (if the menu exists!!)
   my $internal_das_sources = $self->species_defs->get_all_das;
-  foreach my $source ( sort { ($a->caption||$a->label) cmp ($b->caption||$b->label) } values %$internal_das_sources ) {
+  foreach my $source ( sort { $a->caption cmp $b->caption } values %$internal_das_sources ) {
+    $source->is_on($self->{'type'}) || next;
     $self->add_das_track( $source->category,  $source );
   }
 }
@@ -377,7 +378,12 @@ sub add_das_track {
   my $node = $self->get_node($menu);
      $node = $self->get_node('external_data') unless $node; 
   return unless $node;
-  my $caption =  $source->caption||$source->label;
+  my $caption =  $source->caption || $source->label;
+  my $desc    =  $source->description;
+  my $homepage = $source->homepage;
+  if ($homepage) {
+    $desc .= sprintf ' [<a href="%s">Homepage</a>]', $homepage;
+  }
   my $t = $self->create_track( "das_".$source->logic_name,$source->label, {
     '_class'      => 'DAS',
     'glyphset'    => '_das',
@@ -385,7 +391,7 @@ sub add_das_track {
 #    'renderers'   => ('off' => 'Off', 'nolabels' => 'No labels', 'labels' => 'With labels'),
     'logicnames'  => [ $source->logic_name ],
     'caption'     => $caption,
-    'description' => $source->description
+    'description' => $desc,
   });
   $node->append($t) if $t;
 }
