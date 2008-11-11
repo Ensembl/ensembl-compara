@@ -53,7 +53,7 @@ sub populate_tree {
    [], { 'availability' => $is_configurable }
   ));
   $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Data",
-    [], { 'availability' => $is_configurable }
+    [], { 'availability' => 1 }
   ));
   $uploaded_menu->append($self->create_node( 'SaveUpload', "Save to Account",
     [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
