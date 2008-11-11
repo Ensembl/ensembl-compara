@@ -457,7 +457,10 @@ sub _configurator {
       $count ++;
       $on    ++ if $display ne 'off';
       my $t = CGI::escapeHTML( $track_node->get('name') );
-      $t =~ s/\[(\w+)\]/sprintf( '<img src="\/i\/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" \/>', lc($1), $1, $1 )/e;
+      if( $track_node->get('_class') ) { 
+        my $class = $track_node->get('_class');
+        $t = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc($class), $class, $class, $t;
+      }
       $rhs_content .= sprintf '
         </select> %s</dt>', $t;
       my $desc =  $track_node->get('description');
