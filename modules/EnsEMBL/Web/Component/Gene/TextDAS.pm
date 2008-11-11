@@ -62,8 +62,10 @@ sub content {
   my $html = '';
   
   # Some sources (e.g. UniProt) have taken to using HTML descriptions...
-  my ($desc, $warning) = $self->_decode_and_validate( $source->description );
-  $html .= $warning;
+  # my ($desc, $warning) = $self->_decode_and_validate( $source->description );
+  # $html .= $warning;
+  # But we don't really want to support this everywhere on the site...
+  my $desc = $source->description;
   
   my $table = EnsEMBL::Web::Document::HTML::TwoCol->new();
   $table->add_row( 'Description', $desc, 1 );
@@ -118,7 +120,6 @@ sub content {
       next;
     }
     
-    # TODO: convert Spreadsheet html stripping to a detainting process
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px','triangle'=>1} );
     $table->add_columns(
       { 'key' => 'type',  'title' => 'Type',  'width' => '15%' },
