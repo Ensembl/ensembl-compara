@@ -17,13 +17,12 @@ sub process {
   my $cgi = $self->action->cgi;
   my $object = $self->create_object;
 
-
   if ($object) {
     my $type = $cgi->param('record') || '';
     my $data = $cgi->param('data') || '';
     ## TEMPORARY URL
     if ($data eq 'url' && $type eq 'session') {
-      my $temp = $self->object->get_session->get_tmp_data('url');
+      my $temp = $object->get_session->get_tmp_data('url');
       my $urls = $temp->{'urls'} || [];
       if (scalar(@$urls) && $object->param('url')) {
         for my $i ( 0 ..  $#{@$urls}) {
