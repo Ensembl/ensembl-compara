@@ -59,11 +59,6 @@ sub overwrite_save {
     $user->add_to_uploads($self->object->get_session->get_tmp_data('upload'));
     $self->object->get_session->purge_tmp_data('upload');
   }
-
-  my $current_species = $ENV{'ENSEMBL_SPECIES'};
-  if (!$current_species || $current_species eq 'common') {
-    $current_species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES;
-  }
   $self->parameter('wizard_next', 'select_file');
 }
 
@@ -72,6 +67,10 @@ sub select_file {
 
   $self->title('Select File to Upload');
 
+  my $current_species = $ENV{'ENSEMBL_SPECIES'};
+  if (!$current_species || $current_species eq 'common') {
+    $current_species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES;
+  }
   $self->notes({'heading'=>'IMPORTANT NOTE:', 'text'=>qq(We are only able to store single-species datasets, containing data on Ensembl coordinate systems. There is also a 5Mb limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL">attach it to Ensembl</a> without uploading.)});
 
   ## Species now set automatically for the page you are on
