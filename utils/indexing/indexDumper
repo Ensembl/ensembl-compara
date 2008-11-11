@@ -269,7 +269,7 @@ sub markerLine {
   return join "\t",
     (INC_SPECIES?"$species\t":"").qq(Ensembl Marker),    ## Type
     qq($key),               ## ID
-    qq(/$species/Location/View?marker=$key;r=$r),
+    qq(/$species/Location/Marker?m=$key;r=$r),
     qq($IDS),     ## Index locations,
     qq(A marker with $counter synonyms ($IDS)\n);
 }
@@ -281,7 +281,7 @@ sub dumpGenomicAlignment {
     open D, ">$conf->{'directory'}/GenomicAlignment.txt";
 
     my $species = $conf->{'species'};
-    my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};    
+    my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
     my $ESTDB  = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
     my $CDNADB = $conf->{'dbs'}->{'DATABASE_CDNA'};
     my %dbs    = ( 'core' => $COREDB );
@@ -312,7 +312,7 @@ sub dumpGenomicAlignment {
 		print D join "\t",
 		    (INC_SPECIES?"$species\t":"")."$type: ".($label||$logic_name),
 			$hid,
-			    "/$species/Location/Karyotype?type=$source;id=$hid;r=$r",
+			    "/$species/Location/Genome?ftype=$source;id=$hid;r=$r",
 				$hid,
 				    qq($logic_name $hid hits the genome in $count locations.\n);
 	    }
@@ -329,7 +329,7 @@ sub dumpGenomicAlignment {
 		print D join "\t",
 		    (INC_SPECIES?"$species\t":"")."$type: ",
 			"$ln $name",
-			    "/$species/Location/Karyotype?type=UnmappedObject;id=$name;db=$db",
+			    "/$species/Location/Genome?ftype=UnmappedObject;id=$name;db=$db",
 				$name,
 				    "Reason: $desc\n";
 	    }
@@ -355,7 +355,7 @@ sub dumpOligoProbe {
   while( my( $hid, $count, $type, $sr_name, $sr_start, $sr_end ) = $sth->fetchrow_array ) {
     my $r = "$sr_name:$sr_start-$sr_end";
     print A join "\t", (INC_SPECIES?"$species\t":"")."$type Oligo Probe set",
-      $hid, "/$species/Location/Karyotype?type=OligoProbe;id=$hid;r=$r",
+      $hid, "/$species/Location/Genome?ftype=OligoProbe;id=$hid;r=$r",
       $hid, qq($type oligo probeset $hid hits the genome in $count locations.\n);
   }
   close A;
@@ -781,7 +781,7 @@ warn "Gene query...";
       print O join "\t",
         (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
         "$T->[1] $T->[2]",
-        "/$conf->{'species'}/Location/Karyotype?Type=Gene;id=$T->[2]",
+        "/$conf->{'species'}/Location/Genome?ftype=Gene;id=$T->[2]",
         "$T->[2] $T->[4]",
         "$T->[3]; $T->[4]\n";
     }
