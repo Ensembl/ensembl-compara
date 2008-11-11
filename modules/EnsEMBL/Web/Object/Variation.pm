@@ -21,16 +21,55 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
+our $MEMD = new EnsEMBL::Web::Cache;
 
 
 sub availability {
   my $self = shift;
   my $hash = $self->_availability;
-#  warn $self->Obj;
   if ($self->Obj->isa('Bio::EnsEMBL::Variation::Variation')){
     $hash->{'variation'} = 1;
   }
   return $hash;
+}
+
+sub counts {
+  my $self = shift;
+  my $obj = $self->Obj;
+
+  return {} unless $obj->isa('Bio::EnsEMBL::Variation::Variation');
+  my $key = '::Counts::Variation::'.
+            $ENV{ENSEMBL_SPECIES}                 .'::'.
+            $self->core_objects->{parameters}{vdb} .'::'.
+            $self->core_objects->{parameters}{v}  .'::';
+
+  my $counts;
+
+  $counts = $MEMD->get($key) if $MEMD;
+
+  unless ($counts) {
+    $counts = {};
+    $counts->{'transcripts'} = $self->count_transcripts;
+    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+  }
+
+  return $counts;
+
+   
+}
+
+sub count_transcripts {
+  my $self = shift;
+  my %mappings = %{ $self->variation_feature_mapping };
+  my $counts = 0;
+
+  foreach my $varif_id (keys %mappings) {
+    next unless ($varif_id  eq $self->param('vf'));
+    my @transcript_variation_data = @{ $mappings{$varif_id}{transcript_vari} };
+    $counts = scalar @transcript_variation_data;
+  } 
+
+  return $counts;
 }
 
 sub short_caption {
@@ -43,13 +82,6 @@ sub short_caption {
   }
 }
 
-sub counts {
- my $self = shift;
- my @vari_mappings = @{ $self->get_variation_features };
- my $counts = @vari_mappings;
- 
-return $counts;
-}
 
 sub caption {
  my $self = shift; 
@@ -409,7 +441,7 @@ sub freqs {
   foreach my $allele_obj ( @{ $allele_list } ) {
     my $pop_obj = $allele_obj->population;
     next unless $pop_obj;
-    my $pop_id  = $self->pop_id($pop_obj);
+    my $pop_id  = $self->pop_id($pop_obj);  
     push (@{ $data{$pop_id}{AlleleFrequency} }, $allele_obj->frequency || "");
     push (@{ $data{$pop_id}{Alleles} },   $allele_obj->allele);
     next if $data{$pop_id}{pop_info};
@@ -736,9 +768,9 @@ sub variation_feature_mapping { ## used for snpview
   ### Returns Arrayref of Bio::EnsEMBL::Variation::VariationFeatures
 
   my $self = shift;
-
+ 
   my %data;
-  foreach my $vari_feature_obj (@{ $self->get_variation_features }) {
+  foreach my $vari_feature_obj (@{ $self->get_variation_features }) { 
      my $varif_id = $vari_feature_obj->dbID;
      $data{$varif_id}{Chr}            = $self->region_name($vari_feature_obj);
      $data{$varif_id}{start}          = $self->start($vari_feature_obj);
@@ -909,7 +941,7 @@ sub ld_pops_for_snp {
   return [] unless @vari_mappings;
 
   my @pops;
-  foreach ( @vari_mappings ) { warn $_;
+  foreach ( @vari_mappings ) {
     my $ldcontainer = $_->get_all_LD_values; #warn scalar @{$ldcontainer->get_all_populations};
     push @pops, @{$ldcontainer->get_all_populations};
 
