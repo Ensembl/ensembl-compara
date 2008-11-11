@@ -134,7 +134,7 @@ sub _init {
 	    'species' => $self->{container}{web_species},
 	    't'       => undef,
 	    'r'       => "$chr:".$main_dfr->dnafrag_start.'-'.$main_dfr->dnafrag_end,
-	    'r1'      => "$other_chr".$other_dfr->dnafrag_start.'-'.$other_dfr->dnafrag_end,
+	    'r1'      => "$other_chr:".$other_dfr->dnafrag_start.'-'.$other_dfr->dnafrag_end,
 	    'sp1'     => $OTHER,
 	    'ori'     => '',
 	});
@@ -160,7 +160,8 @@ sub _init {
 		't'       => undef,
 		'r1'      => "$chr:".$main_dfr->dnafrag_start.'-'.$main_dfr->dnafrag_end,
 		'r'       => "$other_chr:".$other_dfr->dnafrag_start.'-'.$other_dfr->dnafrag_end,
-		'ori'     => '',#'ori'     => $ori,
+		'ori'     => $ori,
+		'sp1'      => $self->{container}{web_species},
 	    });
             push @{$highlights_secondary->{$other_chr}}, {
                 'rel_ori' => $main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand,
