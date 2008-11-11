@@ -26,4 +26,5 @@ sub init {
 }
 
 sub form {}
+
 1;

@@ -83,7 +83,7 @@ sub send {
     'X-URL'   => $self->get_baseurl,
     'Date'    => $time_string,
   });
-  
+ 
   print $mailer $self->get_message;
   $mailer->close()
     or die "couldn't send whole message: $!\n";

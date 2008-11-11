@@ -354,6 +354,7 @@ sub stuff {
   my $command = shift;
   my $doctype = shift;
   my $modal_dialog = shift;
+  warn "MODAL $modal_dialog";
 
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};

@@ -426,6 +426,9 @@ sub _generic_create {
 
 ## The following are used to convert full objects into simple data hashes, for use by drawing code
 
+sub retrieve_userdata {
+}
+
 sub retrieve_features {
   my ($self, $features) = @_;
   my $method;

@@ -192,6 +192,7 @@ sub _generate_objects_Gene {
   my $self = shift;
   $self->{'parameters'}{'db'} ||= 'core';
   my $db_adaptor = $self->database($self->{'parameters'}{'db'});
+  warn "G = ".$self->{'parameters'}{'g'};
   my $t = $db_adaptor->get_GeneAdaptor->fetch_by_stable_id( $self->{'parameters'}{'g'} );
   $self->timer_push( 'Gene fetched', undef, 'fetch' );
   $self->gene( $t );

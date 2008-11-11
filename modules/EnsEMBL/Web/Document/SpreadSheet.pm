@@ -86,7 +86,6 @@ sub render {
     $output .= qq(\n  </tr>);
   }
   $output .= qq(\n</table>);
-#warn $output;
   return $output;
 }
 

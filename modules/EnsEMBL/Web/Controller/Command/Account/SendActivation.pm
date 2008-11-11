@@ -23,7 +23,7 @@ sub process {
   my $cgi = $self->action->cgi;
 
   my $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
-  if ($cgi->param('record_id')) {
+  if ($cgi->param('record_id')) { ## Invited user
       $self->ajax_redirect(
 		     $self->url('/Account/Activate', 
 				{'email' => $user->email, 'code' => $user->salt, 'url' => '/Account/Details;record_id='.CGI::escape($cgi->param('record_id'))}));

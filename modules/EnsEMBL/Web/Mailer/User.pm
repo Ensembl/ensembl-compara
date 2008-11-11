@@ -110,6 +110,8 @@ Many thanks,
 The $sitename web team
 
 $sitename Privacy Statement: ) . $self->get_baseurl . qq(/info/about/legal/privacy.html
+
+
 );
   return $footer;
 }

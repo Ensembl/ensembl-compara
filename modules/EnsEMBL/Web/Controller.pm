@@ -7,7 +7,6 @@ use Class::Std;
 
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Controller::Action;
-use Data::Dumper;
 
 {
 
@@ -66,9 +65,7 @@ sub process {
 
   #warn "ACTION: $action -> ",$action->get_action;
   my $action_key = $action->get_action;
-  warn "ACTION KEY = $action_key";
   my $connections = $self->get_connections;
-  warn Dumper($connections);
   if( $self->get_connections->{$action_key} ) {
     $self->command( $action );
   } else {

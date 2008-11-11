@@ -8,6 +8,7 @@ __PACKAGE__->_type('url');
 
 __PACKAGE__->add_fields(
   url     => 'text',
+  species => 'text',
 );
 
 1;

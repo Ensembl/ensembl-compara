@@ -322,13 +322,13 @@ sub get_user_settings {
 
 sub load {
   my ($self) = @_;
-  warn "ViewConfig load - Deprecated call - now written by session";
+  #warn "ViewConfig load - Deprecated call - now written by session";
   return;
 }
 
 sub save {
   my ($self) = @_;
-  warn "ViewConfig load - Deprecated call - now written by session";
+  #warn "ViewConfig load - Deprecated call - now written by session";
   return;
 }
 

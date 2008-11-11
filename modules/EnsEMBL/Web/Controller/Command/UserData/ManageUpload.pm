@@ -11,7 +11,6 @@ use EnsEMBL::Web::Magic qw(modal_stuff);
 
 sub BUILD {
   my ($self, $ident, $args) = @_; 
-  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
 }
 
 sub process {

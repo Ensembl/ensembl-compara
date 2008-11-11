@@ -50,6 +50,7 @@ sub _common_HTML {
   $self->_basic_HTML;
 
   my $style = $self->species_defs->ENSEMBL_STYLE;
+ 
   $self->logo->image              = $style->{'SITE_LOGO'};             
   $self->logo->width              = $style->{'SITE_LOGO_WIDTH'};             
   $self->logo->height             = $style->{'SITE_LOGO_HEIGHT'};             
@@ -59,7 +60,7 @@ sub _common_HTML {
   $self->tools->logins            = $self->species_defs->ENSEMBL_LOGINS;
   if ($self->{'input'}) {
     $self->tools->referer           = $self->{'input'}->param('_referer');
-    #warn "REFERER ".$self->{'input'}->param('_referer');
+   # warn "REFERER ".$self->{'input'}->param('_referer');
   }
   else {
     $self->tools->referer = undef;

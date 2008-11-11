@@ -30,8 +30,9 @@ sub simple {
     ));
   $self->page->{'_modal_dialog_'} = $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
   if( $self->has_a_problem ) {
-     $self->render_error_page;
-  } else {
+    $self->render_error_page;
+  } 
+  else {
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure($object, 'global_context', 'local_context'); 
     }

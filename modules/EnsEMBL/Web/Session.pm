@@ -219,6 +219,7 @@ sub set_tmp_data {
   my $self = shift; 
   my %args = ref $_[1] ? %{ $_[1] } : @_; 
   my $code = ref $_[1] ? $_[0] : 'common'; 
+  warn "^^^ SETTING $code";
 
   $self->get_tmp_data($code)
     unless $TmpData_of{ ident $self }{$code};
@@ -246,6 +247,7 @@ sub save_tmp_data {
 ### Save all temporary data back to the database
   my ($self, $code) = @_;
   $self->create_session_id;
+  warn "@@@ SAVING $code";
   
   if ($code) {
       EnsEMBL::Web::Data::Session->set_config(
