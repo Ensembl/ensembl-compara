@@ -215,14 +215,11 @@ sub attach_url {
   my $wizard = $self->wizard;
   my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
   
-  my $session   = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_session');
-  my $warning   = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'overwrite_warning' );
   my $select    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_url');
   my $attach    = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'attach_url');
   my $feedback  = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'url_feedback');
 
   ## SET UP CONNECTION BUTTONS
-  $wizard->add_connection( from => $warning,  to => $select);
   $wizard->add_connection( from => $select,   to => $attach);
 }
 

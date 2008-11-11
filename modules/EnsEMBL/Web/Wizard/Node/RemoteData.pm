@@ -389,23 +389,33 @@ sub save_tempdas {
     # Just need to save the session to remove the source - it knows it has changed
     $self->object->get_session->save_das;
   }
-  else {
-    $self->parameter('wizard_next', 'show_tempdas');
-    $self->parameter('error_message', 'Unable to save DAS details to user account');
-  }
 
   ## Save any URL data
   if ($self->object->param('url')) {
-    my $url = $self->object->get_session->get_tmp_data('url');
-    my $record_id = $user->add_to_urls($url);
-    if ($record_id) {
-      $self->object->get_session->purge_tmp_data('url');
+    my $temp = $self->object->get_session->get_tmp_data('url');
+    my $urls = $temp->{'urls'} || [];
+    my ($id, @unsaved_urls);
+    foreach my $source (@$urls) {
+      if ($source->{'url'} eq $self->object->param('url')) {
+        $id = $user->add_to_urls($source);
+      }
+      else {
+        push @unsaved_urls, $source;
+      }
+    }
+    if ($id) {
       $self->parameter('wizard_next', 'ok_tempdas');
       $self->parameter('url', 'ok');
     }
     else {
       $self->parameter('wizard_next', 'show_tempdas');
       $self->parameter('error_message', 'Unable to save URL to user account');
+    }
+    if (scalar(@unsaved_urls)) {
+      $self->object->get_session->set_tmp_data('url' => {'urls' => \@unsaved_urls});
+    }
+    else {
+      $self->object->get_session->purge_tmp_data('url');
     }
   }
 }
@@ -428,46 +438,12 @@ sub ok_tempdas {
 
 #------------------------------ URL-based data --------------------------------------
 
-sub check_session {
-  my $self = shift;
-  my $temp_data = $self->object->get_session->get_tmp_data('url');
-  if (keys %$temp_data) {
-    $self->parameter('wizard_next', 'overwrite_warning');
-  }
-  else {
-    $self->parameter('wizard_next', 'select_url');
-  }
-}
-
-
-sub overwrite_warning {
-  my $self = shift;
-
-  $self->notes({'heading'=>'Note', 'text'=>qq(We do not save the data on your server to our database, only the address of the file you wish to view.)});
-
-  $self->add_element(('type'=>'Information', 'value'=>'You already attached a URL source. The address will be overwritten unless it is first saved to your user account.'));
-
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user) {
-    $self->add_element(( type => 'CheckBox', name => 'save', label => 'Save current URL to my account', 'checked'=>'checked' ));
-  }
-  else {
-    $self->add_element(('type'=>'Information', 'classes' => ['no-bold'], 'value'=>'<a href="/Account/Login" class="modal_link">Log into your user account</a> to save the current URL.'));
-  }
-}
-
-
 # Page method for attaching from URL
 sub select_url {
   my $self = shift;
   my $object = $self->object;
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($self->object->param('save') && $user) {
-    ## Save current temporary url to user account
-    $user->add_to_urls($self->object->get_session->get_tmp_data('url'));
-    $self->object->get_session->purge_tmp_data('url');
-  }
 
   # URL-based section
   $self->notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can upload files to Ensembl (only suitable for small, single-species datasets).)});
@@ -484,7 +460,7 @@ sub select_url {
                        'name'    => 'save',
                        'label'   => 'Save URL to my account',
                        'notes'   => 'N.B. Only the file address will be saved, not the data itself',
-                       'checked' => 'checked');
+                       );
   }
 }
 
@@ -494,9 +470,10 @@ sub attach_url {
 
   my $url = $self->object->param('url');
   if ($url) {
-    $self->object->get_session->set_tmp_data('url' => {
-          'url'         => $self->object->param('url'), 
-    });
+    my $temp = $self->object->get_session->get_tmp_data('url');
+    my $urls = $temp->{'urls'} || [];
+    push @$urls, {'url' => $self->object->param('url'), 'species' => $self->object->species};
+    $self->object->get_session->set_tmp_data('url' => {'urls' => $urls});
     $self->parameter('wizard_next', 'url_feedback');
   }
   else {
@@ -511,7 +488,7 @@ sub url_feedback {
 
   $self->add_element(
     type  => 'Information',
-    value => qq(Thank you - your file was successfully uploaded. Close this Control Panel to view your data),
+    value => qq(Thank you - your url was successfully attached. Close this Control Panel to view your data),
   );
 }
 

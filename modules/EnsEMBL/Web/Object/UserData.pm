@@ -489,9 +489,9 @@ sub delete_userurl {
  
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($user) {
-    my ($upload) = $user->uploads($id);
-    if ($upload) {
-      $upload->delete;
+    my ($url) = $user->urls($id);
+    if ($url) {
+      $url->delete;
     }
   }
 }
