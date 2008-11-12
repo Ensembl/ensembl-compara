@@ -80,11 +80,37 @@ sub save_tmp_to_database {
   return $report;
 }
 
+sub move_to_user {
+  my $self = shift;
+  my %args = (
+    type => 'tmp',
+    @_,
+  );
+
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $data = $self->get_session->get_data(%args);
+  my $record;
+  
+  $record = $user->add_to_uploads($data)
+    if $args{type} eq 'upload';
+
+  $record = $user->add_to_urls($data)
+    if $args{type} eq 'url';
+
+  if ($record)
+    $self->get_session->purge_data(%args);
+    return $record;
+  }
+  
+  return undef;
+}
+
 sub store_tmp_data {
   ## Parse file and save to genus_species_userdata
   my $self     = shift;
   my $tmp_data = $self->get_session->get_tmp_data;
   my $report   = $self->save_tmp_to_database;
+
   unless ($report->{'errors'}) {
 
     ## Delete cached file
@@ -92,7 +118,6 @@ sub store_tmp_data {
       $self->species_defs,
       $tmp_data->{'filename'},
     );
-
     $file->delete;
 
     ## logic names
@@ -113,7 +138,8 @@ sub store_tmp_data {
         type     => 'upload',
         filename => '',
         analyses => join(', ', @logic_names),
-      );
+      );  
+
       return $upload->{code} if $upload;
     }
     
