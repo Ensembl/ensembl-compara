@@ -58,11 +58,16 @@ sub select_das {
   
   # Process any errors
   if (!ref $sources) {
-    push @$elements, {'type' => 'Information', 'value' => $sources };
+    $self->object->param('error_message', $sources);
+    $self->object->param('fatal_error', 1);
+    return;
   }
   elsif (!scalar @{ $sources }) {
-    push @$elements, {'type' => 'Information', 'value' => 'No sources found' };
+    $self->object->param('error_message', 'No sources found on server');
+    $self->object->param('fatal_error', 1);
+    return;
   }
+  
   ## Otherwise add a checkbox element for each DAS source
   else {
     $fieldset->{'layout'} = 'table';
@@ -93,6 +98,7 @@ sub select_das {
   $fieldset->{'elements'} = $elements;
   $self->add_fieldset($fieldset);
 }
+
 # Logic method, used for checking a DAS source before adding it
 sub validate_das {
   my $self      = shift;
