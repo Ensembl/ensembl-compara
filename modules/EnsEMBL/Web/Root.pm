@@ -20,6 +20,52 @@ sub new {
   return $class;
 }
 
+sub _parse_referer {
+  my( $self, $uri ) = @_;
+  my ($url,$query_string) = split /\?/, $uri;
+  $url =~ s/^(https?:\/\/.*?)?\///i;
+  my($sp,$ot,$view,$subview) = split /\//, $url;
+
+  my(@pairs) = split(/[&;]/,$query_string);
+  my $params = {};
+  foreach (@pairs) {
+    my($param,$value) = split('=',$_,2);
+    next unless defined $param;
+    $value = '' unless defined $value;
+    $param = CGI::unescape($param);
+    $value = CGI::unescape($value);
+    push @{$params->{$param}}, $value unless $param eq 'time'; ## don't copy time!
+  }
+
+  if( $self->can('species_defs') && $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_REFERER ){
+    warn "\n";
+    warn "------------------------------------------------------------------------------\n";
+    warn "\n";
+    warn "  SPECIES: $sp\n";
+    warn "  OBJECT:  $ot\n";
+    warn "  VIEW:    $view\n";
+    warn "  SUBVIEW: $subview\n";
+    warn "  QS:      $query_string\n";
+    foreach my $param( sort keys %$params ) {
+      foreach my $value ( sort @{$params->{$param}} ) {
+        warn sprintf( "%20s = %s\n", $param, $value );
+      }
+    }
+    warn "\n";
+    warn "  URI:     $uri\n";
+    warn "\n";
+    warn "------------------------------------------------------------------------------\n";
+  }
+  return {
+    'ENSEMBL_SPECIES'  => $sp,
+    'ENSEMBL_TYPE'     => $ot,
+    'ENSEMBL_ACTION'   => $view,
+    'ENSEMBL_FUNCTION' => $subview,
+    'params'           => $params,
+    'uri'              => $uri
+  };
+}
+
 sub url { 
   ### Assembles a valid URL, adding the site's base URL
   ### and CGI-escaping any parameters
