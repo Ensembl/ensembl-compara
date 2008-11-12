@@ -186,7 +186,7 @@ sub check_shareable {
   my @session_uploads = $self->object->get_session->get_data(type => 'upload');
   my @user_uploads    = $user ? $user->uploads : ();
 
-  if ($tmp_data || @session_uploads || @user_uploads) { 
+  if ($tmp_upload || @session_uploads || @user_uploads) { 
     $self->parameter('wizard_next', 'select_upload');
   } else {
     $self->parameter('wizard_next', 'no_shareable');
@@ -289,14 +289,14 @@ sub save_upload {
         %$temp_data,
         type     => 'upload',
         filename => '',
-        analyses => join(', ', @logic_names)},
+        analyses => join(', ', @logic_names),
       )
     } else {
       $self->object->get_session->add_data(
         %$temp_data,
         type     => 'upload',
         filename => '',
-        analyses => join(', ', @logic_names)},
+        analyses => join(', ', @logic_names),
       );
     }
 
