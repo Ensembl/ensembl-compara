@@ -312,9 +312,9 @@ sub save_data {
 
 }
 
-sub get_tmp_data { get_data(type => 'tmp', code => 'tmp') }
-sub set_tmp_data { set_data(type => 'tmp', code => 'tmp', @_) }
-sub purge_tmp_data { purge_data(type => 'tmp', code => 'tmp', @_) }
+sub get_tmp_data { shift->get_data(type => 'tmp', code => 'tmp') }
+sub set_tmp_data { shift->set_data(type => 'tmp', code => 'tmp', @_) }
+sub purge_tmp_data { shift->purge_data(type => 'tmp', code => 'tmp', @_) }
 
 ###################################################################################################
 ##
