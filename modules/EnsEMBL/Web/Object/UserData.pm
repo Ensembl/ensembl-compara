@@ -83,14 +83,29 @@ sub save_to_userdata {
   return $report;
 }
 
-sub copy_to_user {
+sub move_to_user {
   my $self = shift;
-  my $tmpdata = $self->get_session->get_tmp_data;
+  my %args = (
+    type => 'tmp',
+    @_,
+  );
 
-  ## Copy contents of session record to user record
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $record_id = $user->add_to_uploads($tmpdata);
-  return $record_id;
+  my $data = $self->get_session->get_data(%args);
+  my $record;
+  
+  $record = $user->add_to_uploads($data)
+    if $args{type} eq 'tmp' or $args{type} eq 'upload';
+
+  $record = $user->add_to_urls($data)
+    if $args{type} eq 'url';
+
+  if ($record)
+    $self->get_session->purge_data(%args);
+    return $record;
+  }
+  
+  return undef;
 }
 
 sub delete_userdata {
