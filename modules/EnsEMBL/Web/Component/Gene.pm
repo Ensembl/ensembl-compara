@@ -647,8 +647,7 @@ sub markup_line_numbers {
       push (@{$config->{'line_numbers'}->{$config->{'species_order'}->{$species}}}, [ "$ch$start", "$ch$end" ]);
       
       # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
-      # ($end||0) used to shut up the warning that 'Argument "" isn't numeric in addition' 
-      $row_start = ($end||0) + $data->{'dir'};
+      $row_start = $end + $data->{'dir'} if $end;
       
       # Increase padding amount if required
       $config->{'max_number_length'} = length "$ch$start" if length "$ch$start" > $config->{'max_number_length'};
