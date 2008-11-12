@@ -63,7 +63,7 @@ sub _embed_jalview {
 
   return qq(
   <p class="space-below">$count $type members of this family:
-    <applet archive="$BASE/jalview/jalview.jar"
+    <applet archive="$BASE/jalview/jalviewApplet.jar"
         code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
         alt = "[Java must be enabled to view alignments]">
       <param name="input" value="$BASE/$URL" />
