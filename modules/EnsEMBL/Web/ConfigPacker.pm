@@ -482,7 +482,7 @@ sub _summarise_dasregistry {
   while (my ($key, $val) = each %{ $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'} }) {
     # Skip disabled sources
     $val || next;
-    # Skip sources without any config
+    # Start with an empty config
     my $cfg = $self->tree->{$key};
     if (!defined $cfg || !ref($cfg)) {
       $cfg = {};
@@ -498,7 +498,7 @@ sub _summarise_dasregistry {
     }
     
     
-    # Check using the url/dsn if the source is registered
+    # Check using the logic_name if the source is registered
     my $src = $sources{$key};
     # Doesn't have to be in the registry... unfortunately
     # But if it is, fill in the blanks
