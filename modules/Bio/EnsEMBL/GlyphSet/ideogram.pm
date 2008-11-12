@@ -48,12 +48,15 @@ sub _init {
   my $pix_per_bp = $self->scalex;
 
   my @bands =  sort{$a->start <=> $b->start } @$bands;
+  my @t_stains = qw(gpos25 gpos75);
   if(@bands) {
+    $done_one_acen = 1 if @bands>1 && lc($bands[0]->stain) eq 'acen' && lc($bands[1]->stain) ne 'acen';
     foreach my $band (@bands){
       my $bandname       = $band->name();
       my $vc_band_start  = $band->start();
       my $vc_band_end    = $band->end();
-      my $stain          = $band->stain();
+      my $stain          = lc($band->stain());
+      push @t_stains, $stain = shift @t_stains unless $stain;
 
 #  print STDERR "$chr band:$bandname stain:$stain start:$vc_band_start end:$vc_band_end\n";    
       my $colour = $self->my_colour( $stain );
