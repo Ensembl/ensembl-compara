@@ -3,7 +3,8 @@ package EnsEMBL::Web::ViewConfig::Transcript::ExternalData;
 use strict;
 use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Gene::ExternalData);
+use EnsEMBL::Web::ViewConfig::Gene::ExternalData qw(form init);
+
 
 ## SEE SUPERCLASS FOR PRIMARY FUNCTIONALITY ##
 

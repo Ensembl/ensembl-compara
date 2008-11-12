@@ -4,6 +4,11 @@ use strict;
 use warnings;
 use EnsEMBL::Web::RegObj;
 
+use base qw(Exporter);
+
+our @EXPORT_OK = qw(init form);
+our @EXPORT    = @EXPORT_OK;
+
 sub init {
   my ($view_config) = @_;
 
