@@ -10,6 +10,8 @@ sub init {
     'show_buttons'  => 'no',  # do not show +/- buttons
     'show_labels'   => 'yes', # show track names on left-hand side
     'label_width'   => 113,   # width of labels on left-hand side
+    'opt_lines'         => 1,    # draw registry lines
+
     'margin'        => 5,     # margin
     'spacing'       => 2,     # spacing
   });
