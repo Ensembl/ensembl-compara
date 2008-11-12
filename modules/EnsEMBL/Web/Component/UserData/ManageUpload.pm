@@ -28,15 +28,30 @@ sub content {
   ## Temporary upload
   $html .= "<h3>Temporary upload</h3>";
 
-  my $temp_data = $self->object->get_session->get_tmp_data;
-  if (%$temp_data) {
-    $html .= '<p>'.$temp_data->{'format'}.' file for '.$temp_data->{'species'}.': ';
-    if ($user) {
-      $html .= qq(<a href="$dir/UserData/SaveUpload?wizard_next=save_tempdata;$referer" class="modal_link">Save to account</a> | );
-    } else {
-      $html .= qq(<a href="$dir/Account/Login?$referer" class="modal_link">Log in to save</a> | );
+  my @data = ($self->object->get_session->get_tmp_data);
+  push @data, $self->object->get_session->get_data('type'=>'upload');
+  warn "DATA @data";
+  use Data::Dumper;
+  warn Dumper($data[0]); 
+  if (@data) {
+    my $table = EnsEMBL::Web::Document::SpreadSheet->new();
+    $table->add_columns(
+      {'key' => "name", 'title' => 'File', 'width' => '60%', 'align' => 'left' },
+      {'key' => "save", 'title' => '', 'width' => '20%', 'align' => 'left' },
+      {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
+    );
+    foreach my $file (@data) {
+      my $row = {'name' => '<p>'.$file->{'format'}.' file for '.$file->{'species'}};
+      my $extra = 'type='.$file->{'type'}.';code='.$file->{'code'};
+      if ($user) {
+        $row->{'save'} = qq(<a href="$dir/UserData/SaveUpload?wizard_next=save_tempdata;$extra;$referer" class="modal_link">Save to account</a>);
+      } else {
+        $row->{'save'} = qq(<a href="$dir/Account/Login?$referer" class="modal_link">Log in to save</a>);
+      }
+      $row->{'delete'} = qq(<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="modal_link">Remove</a></p>);
+      $table->add_row($row);
     }
-    $html .= qq(<a href="$dir/UserData/DeleteUpload?record=session;$referer" class="modal_link">Remove</a></p>);
+    $html .= $table->render;
   } else {
     $html .= qq(<p class="space-below">You have no temporary data uploaded to this website.</p>);
   }
@@ -56,7 +71,7 @@ sub content {
       );
       foreach my $upload (@uploads) {
         my $date = $upload->modified_at || $upload->created_at;
-        my $link = sprintf('<a href="%s/UserData/DeleteUpload?record=user;id=%s;%s" class="modal_link">Delete</a>', $dir, $upload->id, $referer);
+        my $link = sprintf('<a href="%s/UserData/DeleteUpload?type=user;id=%s;%s" class="modal_link">Delete</a>', $dir, $upload->id, $referer);
         $table->add_row( { 'name'  => $upload->name, 'date' => $self->pretty_date($date), 'delete' => $link } );
       }
       $html .= $table->render;
