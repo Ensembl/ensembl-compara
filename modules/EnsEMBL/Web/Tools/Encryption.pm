@@ -2,7 +2,10 @@ package EnsEMBL::Web::Tools::Encryption;
 
 use strict;
 use warnings;
+use Exporter 'import';
 use Digest::MD5 qw(md5 md5_hex md5_base64);
+
+our @EXPORT_OK = qw(checksum validate_checksum);
 
 {
 

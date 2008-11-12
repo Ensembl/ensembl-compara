@@ -89,8 +89,8 @@ sub store_tmp_data {
 
     ## Delete cached file
     my $file = new EnsEMBL::Web::File::Text(
-      $self->object->species_defs,
-      $tmp_data->{'filename'}
+      $self->species_defs,
+      $tmp_data->{'filename'},
     );
 
     $file->delete;
@@ -108,7 +108,7 @@ sub store_tmp_data {
       );
       return $upload->id if $upload;
     } else {
-      my $upload = $self->object->get_session->add_data(
+      my $upload = $self->get_session->add_data(
         %$tmp_data,
         type     => 'upload',
         filename => '',
