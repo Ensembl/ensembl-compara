@@ -56,21 +56,27 @@ $sets->{'extended'} = {
   'ats' => $sets->{'in-line'}{'ats'},
   'nts' => {
     %{ $sets->{'normal'}{'nts'} },
-    'a'      => { 'rt' => 1, 'tx' => 1, 'at' => {map {($_,1)} qw(href name rel)}, 'tg' => {map {($_,1)} qw(img span em strong map)} },
     'img'    => { 'rt' => 1, 'tx' => 0, 'at' => {map {($_,1)} qw(src alt title usemap ismap width height)}, 'tg' => {} },
-    'div'   => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map)} },
-    'li'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map)} },
-    'dt'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map)} },
-    'dd'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map)} },
-    'table' => { 'rt' => 1, 'tx' => 0, 'at' => {}, 'tg' => {map{($_,1)} qw(thead tbody tfoot tr) }},
-    'thead' => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(tr) }},
-    'tbody' => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(tr) }},
-    'tfoot' => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(tr) }},
-    'tr'    => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(td th) }},
-    'td'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map) }},
-    'th'    => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map) }},
-    'map'   => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(area) }},
-    'area'  => { 'rt' => 0, 'tx' => 0, 'at' => {map{($_,1)} qw(shape coords href alt)}, 'tg' => {} }
+    'a'      => { 'rt' => 1, 'tx' => 1, 'at' => {map {($_,1)} qw(href name rel)}, 'tg' => {map {($_,1)} qw(img span em strong map b i)} },
+    'b'      => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em b i)       } },
+    'i'      => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a    strong b i)} },
+    'br'     => { 'rt' => 1, 'tx' => 0, 'at' => {}, 'tg' => {} },
+    'strong' => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em b i)       } },
+    'em'     => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a    strong b i)} },
+    'span'   => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong b i)} }
+    'div'    => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map b i br)} },
+    'li'     => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map b i br)} },
+    'dt'     => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map b i br)} },
+    'dd'     => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong ul ol dl p table div map b i br)} },
+    'table'  => { 'rt' => 1, 'tx' => 0, 'at' => {}, 'tg' => {map{($_,1)} qw(thead tbody tfoot tr) }},
+    'thead'  => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(tr) }},
+    'tbody'  => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(tr) }},
+    'tfoot'  => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(tr) }},
+    'tr'     => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(td th) }},
+    'td'     => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map b i br) }},
+    'th'     => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map b i br) }},
+    'map'    => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(area) }},
+    'area'   => { 'rt' => 0, 'tx' => 0, 'at' => {map{($_,1)} qw(shape coords href alt)}, 'tg' => {} }
   }
 };
 
