@@ -33,7 +33,6 @@ sub populate_tree {
   ));
 
   while (my ($code,$message) = each %$error_messages) {
-    warn "Creating subnode Error/$code, $message->[0]";
     $index->append($self->create_subnode( "Error/$code", "$code error: $message->[0]",
       [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
       {
