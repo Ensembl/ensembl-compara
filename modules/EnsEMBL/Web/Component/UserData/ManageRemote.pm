@@ -83,7 +83,7 @@ sub content {
       {'key' => "save", 'title' => '', 'width' => '15%', 'align' => 'left' },
       {'key' => "delete", 'title' => '', 'width' => '15%', 'align' => 'left' },
     );
-    foreach my $source (@$urls) {
+    foreach my $source (@urls) {
       if (ref($source) =~ /Record/) { ## from user account
         my $date = $source->modified_at || $source->created_at;
         my $link = sprintf('<a href="%s/UserData/DeleteRemote?record=user;data=url;id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);

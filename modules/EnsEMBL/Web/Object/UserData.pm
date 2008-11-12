@@ -100,7 +100,7 @@ sub move_to_user {
   $record = $user->add_to_urls($data)
     if $args{type} eq 'url';
 
-  if ($record)
+  if ($record) {
     $self->get_session->purge_data(%args);
     return $record;
   }
