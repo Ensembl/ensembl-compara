@@ -11,7 +11,8 @@ sub init {
     panel_alleles    on
     panel_locations  on
     panel_individual off
-    image_width      800
+    image_width      900
+    context          30000   
 
     opt_non_synonymous_coding  on
     opt_frameshift_coding      on
@@ -52,5 +53,22 @@ sub init {
   $view_config->storable = 1;
 }
 
-sub form {}
+sub form {
+  my( $view_config, $object ) = @_;
+
+### Add context selection
+  $view_config->add_fieldset('Context');
+  $view_config->add_form_element({
+    'type'     => 'DropDown', 'select'   => 'select',
+    'required' => 'yes',      'name'     => 'context',
+    'label'    => 'Context',
+    'values'   => [
+      { 'value' => '1000',   'name' => '1kb' },
+      { 'value' => '5000',   'name' => '5kb' },
+      { 'value' => '10000',  'name' => '10kb' },
+      { 'value' => '20000',  'name' => '20kb' },
+      { 'value' => '30000',  'name' => '30kb' },
+    ]
+  });
+}
 1;
