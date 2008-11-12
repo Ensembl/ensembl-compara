@@ -26,7 +26,7 @@ sub content {
    );
   }
 
-  my $width = $object->param('w') || "30000";
+  my $width = $object->param('context') || "30000";
 
   # first determine correct SNP location 
   my %mappings = %{ $object->variation_feature_mapping }; 
@@ -67,7 +67,7 @@ sub content {
   my $wuc = $object->image_config_hash( 'snpview' ); 
  # $wuc->tree->dump("View Bottom configuration", '([[caption]])');
   $wuc->set_parameters( {
-    'image_width' =>  $self->image_width || 800,
+    'image_width' =>  $self->image_width || 900,
     'container_width' => $slice->length,
     'slice_number' => '1|1',
   });
