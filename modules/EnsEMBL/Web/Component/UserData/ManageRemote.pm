@@ -86,14 +86,14 @@ sub content {
     foreach my $source (@urls) {
       if (ref($source) =~ /Record/) { ## from user account
         my $date = $source->modified_at || $source->created_at;
-        my $link = sprintf('<a href="%s/UserData/DeleteRemote?record=user;data=url;id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
+        my $link = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
         $table->add_row( { 'url'  => $source->url.' ('.$source->species.')', 'date' => $self->pretty_date($date), 'save' => 'Saved', 'delete' => $link } );
       }
       else { ## temporary
         if ($user) {
-          $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;url=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $source->{'url'}, $source->{'url'}, $referer);
+          $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $source->{'code'}, $source->{'species'}, $referer);
         }
-        my $detach = sprintf('<a href="%s/UserData/DeleteRemote?record=session;data=url;url=%s;%s" class="modal_link">Remove</a>', $dir, $source->{'url'}, $referer);
+        my $detach = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="modal_link">Remove</a>', $dir, $source->{'code'}, $referer);
         $table->add_row( { 'url'  => $source->{'url'}.' ('.$source->{'species'}.')', 'date' => 'N/A', 'save' => $save, 'delete' => $detach } );
       }
     }

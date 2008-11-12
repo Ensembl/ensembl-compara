@@ -9,6 +9,7 @@ __PACKAGE__->_type('upload');
 __PACKAGE__->add_fields(
   filename => 'text',
   name     => 'text',
+  code     => 'text',
   format   => 'text',
   species  => 'text',
   assembly => 'text',

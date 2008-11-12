@@ -150,6 +150,41 @@ sub delete_upload {
   }
 }
 
+sub delete_remote {
+  my $self = shift;
+
+  my $type = $self->param('type');
+  my $code = $self->param('code');
+  my $id   = $self->param('id');
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  
+  if ($type eq 'url') { 
+    $self->get_session->purge_data(type => $type, code => $code);
+  }
+  elsif ($self->param('logic_name')) {
+    my $temp_das = $self->get_session->get_all_das;
+    if ($temp_das) {
+      my $das = $temp_das->{$self->param('logic_name')};
+      $das->mark_deleted() if $das;
+      $self->get_session->save_das();
+    }
+  } 
+  elsif ($id && $user) {
+    if ($type eq 'das') {
+      my ($das) = $user->dases($id);
+      if ($das) {
+        $das->delete;
+      }
+    }
+    else { 
+      my ($url) = $user->urls($id);
+      if ($url) {
+        $url->delete;
+      }
+    }
+  }
+}
+
 sub _store_user_track {
   my ($self, $config, $track) = @_;
   my $report;
@@ -520,32 +555,6 @@ sub _das_server_param {
   }
   
   return undef;
-}
-
-#----------------------------------- URL functionality
-
-sub delete_userurl {
-  my ($self, $id) = @_;
- 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user) {
-    my ($url) = $user->urls($id);
-    if ($url) {
-      $url->delete;
-    }
-  }
-}
-
-sub delete_userdas {
-  my ($self, $id) = @_;
- 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user) {
-    my ($das) = $user->dases($id);
-    if ($das) {
-      $das->delete;
-    }
-  }
 }
 
 
