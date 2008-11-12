@@ -11,7 +11,6 @@ use EnsEMBL::Web::DASConfig;
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(@GENE_COORDS @PROT_COORDS);
 use base qw(EnsEMBL::Web::Wizard::Node);
 
-
 sub select_server {
   my $self = shift;
   my $object = $self->object;
@@ -300,11 +299,13 @@ sub attach_das {
         $source->coord_systems(\@expand_coords);
       }
       
-      if ($self->object->get_session->add_das($source)) {
+      if( $self->object->get_session->add_das(
+        $source,
+        $self->object->_parse_referer( $self->object->param('_referer') )
+      )) {
         push @success, $source->logic_name;
-      }
-      else {
-        push @skipped, $source->logic_name;
+      } else {
+        push @skipped, $source->locic_name;
       }
 
     }
