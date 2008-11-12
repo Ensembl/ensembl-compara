@@ -28,11 +28,14 @@ sub content {
   ## Temporary upload
   $html .= "<h3>Temporary upload</h3>";
 
-  my @data = ($self->object->get_session->get_tmp_data);
-  push @data, $self->object->get_session->get_data('type'=>'upload');
-  warn "DATA @data";
+  my @data = $self->object->get_session->get_data('type'=>'upload');
+  if (my $tmp_data = $self->object->get_session->get_tmp_data) {
+    push @data, $tmp_data;
+  }
+
   use Data::Dumper;
-  warn Dumper($data[0]); 
+  warn 'DATA: '. Dumper(\@data); 
+
   if (@data) {
     my $table = EnsEMBL::Web::Document::SpreadSheet->new();
     $table->add_columns(

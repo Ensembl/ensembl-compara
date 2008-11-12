@@ -4,8 +4,7 @@ use strict;
 use Storable qw(nfreeze thaw);
 use Bio::EnsEMBL::ColourMap;
 use Apache2::RequestUtil;
-#use Data::Dumper qw(Dumper);
-use Data::Dumper;
+use Data::Dumper qw(Dumper);
 use Time::HiRes qw(time);
 use Class::Std;
 
@@ -234,11 +233,11 @@ sub get_data {
   
   $Data_of{ ident $self }{$args{type}}{$_->code} = $_->data for @entries;
 
+  use Data::Dumper;
+  warn Dumper($Data_of{ ident $self });
+
   ## Make empty {} if none found
-  $Data_of{ ident $self }{$args{type}}{$args{code}} ||= {
-    type => $args{type},
-    code => $args{code},
-  } if $args{code};
+  #$Data_of{ ident $self }{$args{type}}{$args{code}} ||= {} if $args{code};
 
   return $self->get_cached_data(%args);
 }
@@ -256,11 +255,13 @@ sub set_data {
     type => $args{type},
     code => $args{code},
   );
-  
-  %$data = (
+
+  $Data_of{ ident $self }{$args{type}}{$args{code}} = {
     %{ $data || {} },
+    type => $args{type},
+    code => $args{code},
     %args,
-  );
+  };
   
   $self->save_data(
     type => $args{type},
@@ -276,9 +277,11 @@ sub purge_data {
     @_,
   );
 
-  ## Get data and purge
-  my $data = $self->get_data(%args);
-  %$data = ();
+  if ($args{code}) {
+    delete $Data_of{ ident $self }{$args{type}}{$args{code}};
+  } else {
+    $Data_of{ ident $self }{$args{type}} = {};
+  }
   
   $self->save_data(%args);
 }
@@ -308,8 +311,9 @@ sub save_data {
   $self->create_session_id;
   
   EnsEMBL::Web::Data::Session->reset_config(%args);
-  
+
   foreach my $data ($self->get_data(%args)) {
+    next unless $data && %$data;
     EnsEMBL::Web::Data::Session->set_config(
       session_id => $self->get_session_id,
       type       => $args{type},

@@ -22,7 +22,7 @@ sub process {
     if ($type eq 'tmp') {
       $object->get_session->purge_tmp_data;
     } elsif ($type eq 'upload') {
-      $object->get_session->purge_data(type => 'upload', $code = $object->param('code'));
+      $object->get_session->purge_data(type => 'upload', code => $object->param('code'));
     } elsif ($type eq 'user') {
       $object->delete_userdata($object->param('id'));
     }
