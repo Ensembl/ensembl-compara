@@ -425,7 +425,7 @@ sub populate_tree {
 
   my $sim_node = $self->create_node( 'Similarity', "General identifiers  ([[counts::similarity_matches]])",
     [qw(similarity  EnsEMBL::Web::Component::Transcript::SimilarityMatches)],
-    { 'availability' => 'transcript', 'concise' => 'Similarity matches'}
+    { 'availability' => 'transcript', 'concise' => 'General identifiers'}
   );
   $record_menu->append( $sim_node );
   $sim_node->append($self->create_subnode( 'Similarity/Align', '',
