@@ -203,6 +203,7 @@ sub populate_tree {
 
 sub user_populate_tree {
   my $self = shift;
+  return unless $self->object && ref($self->object);
   my $all_das  = $ENSEMBL_WEB_REGISTRY->get_all_das();
 #  my @active_das = qw(DS_549 Emage);
   my $vc = $self->object->get_viewconfig( undef, 'ExternalData' );
