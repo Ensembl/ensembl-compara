@@ -110,15 +110,10 @@ sub content {
     }
     
     # We only want nonpositional features
-    my @features = grep {
-      !$_->start && !$_->end
-    } @{ $data->{'features'}->{$segment}->{'objects'} };
+    my @features = @{ $data->{'features'}->{$segment}->{'objects'} };
     
-    # Did we get anything useful?
-    if (! scalar @features ) {
-      $html .= qq(<p>No annotations.</p>\n);
-      next;
-    }
+    my $num_positional_features = 0;
+    my $num_nonpositional_features = 0;
     
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px','triangle'=>1} );
     $table->add_columns(
@@ -126,7 +121,15 @@ sub content {
       { 'key' => 'label', 'title' => 'Label', 'width' => '15%' },
       { 'key' => 'notes', 'title' => 'Notes', 'width' => '70%' }
     );
+    
     for my $f ( sort { $a->type_label cmp $b->type_label } @features ) {
+      
+      if ($f->start || $f->end) {
+        $num_positional_features++;
+        next;
+      }
+      
+      $num_nonpositional_features++;
       
       my @notes = ();
       my @links = ();
@@ -156,7 +159,21 @@ sub content {
         'type' => $lh, 'label' => $f->display_label, 'notes' => $text
       });
     }
-    $html .= $table->render;
+    
+    # Did we get anything useful?
+    if ($num_positional_features == 0 && $num_nonpositional_features == 0) {
+      $html .= qq(<p>No annotations.</p>\n);
+    } else {
+      if ($num_positional_features == 1) {
+        $html .= qq(<p>There was 1 non-text annotation. To view it, enable the DAS source on a graphical view.</p>\n);
+      }
+      elsif ($num_positional_features > 1) {
+        $html .= qq(<p>There were $num_positional_features non-text annotations. To view these, enable the DAS source on a graphical view.</p>\n);
+      }
+      if ($num_nonpositional_features > 0) {
+        $html .= $table->render;
+      }
+    }
   }
   
   return $html;
