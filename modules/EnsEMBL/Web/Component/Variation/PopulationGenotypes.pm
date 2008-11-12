@@ -30,7 +30,7 @@ sub content {
   unless (%$freq_data ){
     my $html = "<p>No genotypes for this variation</p>"; 
     return $self->_info(
-    '',
+    'Variation: '. $object->name,
     $html );
   }
 
