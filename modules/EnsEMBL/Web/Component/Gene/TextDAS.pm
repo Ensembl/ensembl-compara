@@ -169,7 +169,7 @@ sub _decode_and_validate {
 
 sub _validate {
   my ( $self, $text ) = @_;
-  warn "VALIDATING $text";
+  
   my $warning = '';
   # Check for naughty people trying to do XSS...
   if ( my $error = $self->{'validator'}->validate( $text ) ) {
