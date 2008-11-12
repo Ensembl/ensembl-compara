@@ -123,17 +123,28 @@ sub store_tmp_data {
   return undef;
 }
   
-sub delete_userdata {
-  my ($self, $id) = @_;
- 
-  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
+sub delete_upload {
+  my $self = shift;
+
+  my $type = $self->param('type');
+  my $code = $self->param('code');
+  my $id   = $self->param('id');
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  
+  if ($type eq 'upload') { 
+    my $upload = $self->get_session->get_data(type => $type, code => $code);
+    if ($code eq 'tmp') {
+      EnsEMBL::Web::File::Text->new($self->species_defs, $upload->{'filename'})->delete;
+    } else {
+      my @analyses = split(', ', $upload->{analyses});
+      $self->_delete_datasource($upload->{species}, $_) for @analyses;
+    }    
+    $self->get_session->purge_data(type => $type, code => $code);
+  } elsif($id && $user) {
     my ($upload) = $user->uploads($id);
     if ($upload) {
-      my $species = $upload->species;
       my @analyses = split(', ', $upload->analyses);
-      foreach my $logic_name (@analyses) {
-        $self->_delete_datasource($species, $logic_name);
-      }
+      $self->_delete_datasource($upload->species, $_) for @analyses;
       $upload->delete;
     }
   }

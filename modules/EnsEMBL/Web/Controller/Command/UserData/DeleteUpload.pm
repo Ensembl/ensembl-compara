@@ -17,18 +17,10 @@ sub process {
   my $cgi = $self->action->cgi;
   my $object = $self->create_object;
 
-  if ($object) {
-    my $type = $object->param('type') || '';
-    if ($type eq 'tmp') {
-      $object->get_session->purge_tmp_data;
-    } elsif ($type eq 'upload') {
-      $object->get_session->purge_data(type => 'upload', code => $object->param('code'));
-    } elsif ($type eq 'user') {
-      $object->delete_userdata($object->param('id'));
-    }
-  }
-  $self->ajax_redirect($self->ajax_url('/UserData/ManageUpload'));
+  $object->delete_upload
+    if $object;
 
+  $self->ajax_redirect($self->ajax_url('/UserData/ManageUpload'));
 }
 
 }
