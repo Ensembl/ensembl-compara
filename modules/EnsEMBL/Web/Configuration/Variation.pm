@@ -55,11 +55,11 @@ sub populate_tree {
     [qw(summary EnsEMBL::Web::Component::Variation::Mappings)],
     { 'availability' => 'variation', 'concise' => 'Gene/Transcript' }
   );
-  $self->create_node( 'Population', "Population genetics",
+  $self->create_node( 'Population', "Population genetics ([[counts::populations]])",
     [qw(summary EnsEMBL::Web::Component::Variation::PopulationGenotypes)],
     { 'availability' => 'variation', 'concise' => 'Population genotypes and allele frequencies' }
   );
-  $self->create_node( 'Individual', "Individual genotypes",
+  $self->create_node( 'Individual', "Individual genotypes ([[counts::individuals]])",
     [qw(summary EnsEMBL::Web::Component::Variation::IndividualGenotypes)],
     { 'availability' => 'variation', 'concise' => 'Individual genotypes' }
   );

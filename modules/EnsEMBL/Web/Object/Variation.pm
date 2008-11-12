@@ -50,6 +50,8 @@ sub counts {
   unless ($counts) {
     $counts = {};
     $counts->{'transcripts'} = $self->count_transcripts;
+    $counts->{'populations'} = $self->count_populations;
+    $counts->{'individuals'} = $self->count_individuals;
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
 
@@ -69,6 +71,18 @@ sub count_transcripts {
     $counts = scalar @transcript_variation_data;
   } 
 
+  return $counts;
+}
+
+sub count_populations {
+  my $self = shift;
+  my $counts = scalar(keys %{$self->freqs}) || 0;
+  return $counts;
+}
+
+sub count_individuals {
+  my $self = shift;
+  my $counts = scalar (keys %{ $self->individual_table }) || 0; 
   return $counts;
 }
 
