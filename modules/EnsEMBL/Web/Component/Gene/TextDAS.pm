@@ -134,7 +134,7 @@ sub content {
       for my $note ( @{ $f->notes } ) {
         # OK, we apparently need to support non-spec HTML embedded in notes,
         # so let's decode it.
-        ( $note, $warning ) = $self->_decode_and_validate( $note );
+        my ( $note, $warning ) = $self->_decode_and_validate( $note );
         $html .= $warning;
         push @notes, $note;
       }
@@ -144,7 +144,7 @@ sub content {
         my $cdata = $link->{'txt'};
         # We don't expect embedded HTML here so don't need to decode, but still
         # need to validate to protect against XSS...
-        ( $href, $warning ) = $self->_validate( $href );
+        my ( $href, $warning ) = $self->_validate( $href );
         $html .= $warning;
         push @links, sprintf '<a href="%s">%s</a>', $href, $cdata;
       }
