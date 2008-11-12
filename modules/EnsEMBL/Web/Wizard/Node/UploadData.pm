@@ -29,7 +29,7 @@ our @formats = (
 sub check_session {
   my $self = shift;
   my $temp_data = $self->object->get_session->get_tmp_data;
-  if (%$temp_data) {
+  if ($temp_data && %$temp_data) {
     $self->parameter('wizard_next', 'overwrite_warning');
   } else {
     $self->parameter('wizard_next', 'select_file');
