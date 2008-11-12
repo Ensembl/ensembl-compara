@@ -254,7 +254,7 @@ function change_img_value(e) {
   var value     = i_node.src;
   if($('s_menu')) $('s_menu').remove();
   var x = Position.cumulativeOffset(i_node);
-  if( Prototype.Browser.Gecko ) {
+  if( ! Prototype.Browser.Opera ) {
     var x2 = i_node.cumulativeScrollOffset();
     x[1]-= x2[1];
     var x3 = $$('body')[0].cumulativeScrollOffset();
