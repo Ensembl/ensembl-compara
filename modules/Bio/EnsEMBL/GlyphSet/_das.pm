@@ -155,7 +155,7 @@ sub features       {
 #      warn "DAS: source: $logic_name\n";
     }
   }  
-  warn join "\n", map( { "DAS:URL $_" } @urls ),'';
+  warn join "\n", map( { "DAS:URL $_" } @urls ),'' if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_DRAWING_CODE;
 #  @errors = grep {$_} @errors;
 #  warn join "\n", map( { "DAS:ERR $_" } @errors ),'' if @errors;
 
