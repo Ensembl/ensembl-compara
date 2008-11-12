@@ -177,10 +177,13 @@ sub _ajax_zmenu_view {
   } elsif ($obj->param('r1') || $obj->param('ori')) {
     return $self->_ajax_zmenu_synteny($panel,$obj);
   } else {
-    my $r = $obj->param('r');
+    #otherwise simply show a link to View/Overview
+    my $r               = $obj->param('r');
     $panel->{'caption'} = $r;
-    my $action = $obj->[1]{'_action'} || 'View';
-    my $url = $obj->_url({'type' => 'Location', 'action' => $action});
+    my $action          = $obj->[1]{'_action'} || 'View';
+    my $url             = $obj->_url({
+	'type' => 'Location',
+	'action' => $action});
     $panel->add_entry({ 'label' => $r, 'link'  => $url });
   }
 }
@@ -189,34 +192,44 @@ sub _ajax_zmenu_synteny {
     my $self = shift;
     my $panel= shift;
     my $obj  = shift; 
-    my $action     = $obj->[1]{'_action'};
-    my $sp  = $obj->[1]{'_species'};
-    my $ori = $obj->param('ori');
-    my $r   = $obj->param('r');
-    my ($chr, $loc) = split ':', $r;
+    my $action = $obj->[1]{'_action'};
+    my $sp     = $obj->[1]{'_species'};
+    my $ori    = $obj->param('ori');
+    my $r      = $obj->param('r');
+    my ($chr, $loc)   = split ':', $r;
     my ($start,$stop) = split '-', $loc;
-    my $url = $obj->_url({'type' => 'Location', 'action' => $action, 'r' => $r });
+    my $url = $obj->_url({
+	'type'   => 'Location',
+	'action' => $action,
+	'r' => $r });
     $panel->{'caption'} = "$sp $chr:$loc";
     if (my $r1  = $obj->param('r1')) {
 	my $sp1 = $obj->param('sp1');
 	$panel->add_entry({
-	    'label'    => sprintf("%s Chr %s:%0.1fM-%0.1fM",$sp,$chr,$start/1e6,$stop/1e6),
+	    'label'   => sprintf("%s Chr %s:%0.1fM-%0.1fM",$sp,$chr,$start/1e6,$stop/1e6),
 	    'link'    => $url,
 	    'priority'=> 100,
 	});
-	my ($chr1, $loc1) = split ':', $r1;
+	my ($chr1, $loc1)   = split ':', $r1;
 	my ($start1,$stop1) = split '-', $loc1;
-	my $url1 = $obj->_url({'type' => 'Location', 'action' => $action, 'r' => $r1, 'species' => $sp1 });
+	my $url1 = $obj->_url({
+	    'type' => 'Location',
+	    'action' => $action,
+	    'r' => $r1,
+	    'species' => $sp1 });
 	$panel->add_entry({
-	    'label'    => sprintf("%s Chr %s:%0.1fM-%0.1fM",$sp1,$chr1,$start1/1e6,$stop1/1e6),
+	    'label'   => sprintf("%s Chr %s:%0.1fM-%0.1fM",$sp1,$chr1,$start1/1e6,$stop1/1e6),
 	    'link'    => $url1,
 	    'priority'=> 90,
 	});
+	my $new_start = int(($stop+$start)/2) - 5e5;
+	my $new_end   = $new_start + 1e6 - 1;
+	my $synt_url  = $obj->_url({
+	    'type'         => 'Location',
+	    'action'       => 'Synteny',
+	    'otherspecies' => $sp1,
+	    'r'            => "$chr:$new_start-$new_end"});
 	if (my $ori = $obj->param('ori')) {
-	    my $synt_url = $obj->_url({'type' => 'Location',
-				   'action' => 'Synteny',
-				   'otherspecies' => $sp1,
-				   'r' => $r});
 	    $panel->add_entry({
 		'label'   => 'Center display on this chr',
 		'link'    => $synt_url,
@@ -228,10 +241,6 @@ sub _ajax_zmenu_synteny {
 	    });
 	}
 	else {
-	    my $synt_url = $obj->_url({'type' => 'Location',
-				   'action' => 'Synteny',
-				   'otherspecies' => $sp1,
-				   'r' => $r});
 	     $panel->add_entry({
 		'label'   => 'Center gene list',
 		'link'    => $synt_url,
@@ -241,7 +250,10 @@ sub _ajax_zmenu_synteny {
     }
     else {
 	my ($chr, $loc) = split ':', $r;
-	my $url = $obj->_url({'type' => 'Location', 'action' => $action, 'r' => $r});
+	my $url = $obj->_url({
+	    'type' => 'Location',
+	    'action' => $action,
+	    'r' => $r});
 	$panel->add_entry({
 	    'label'    => "Jump to $sp",
 	    'link'    => $url,
