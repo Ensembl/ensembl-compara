@@ -25,8 +25,9 @@ sub content {
     my @similarity_links = @{$object->get_similarity_hash($object->Obj)};
     return unless (@similarity_links);
     $self->_sort_similarity_links(@similarity_links);
-  } 
-  return unless $object->__data->{'links'}{'go'}; 
+  }
+  my $no_data = "<p>No GO terms have been mapped to this entry via UniProt and/or RefSeq.</p>"; 
+  return $no_data unless $object->__data->{'links'}{'go'}; 
   my $databases = $object->DBConnection;
   my $goview    = $object->database('go') ? 1 : 0;
 
@@ -35,7 +36,7 @@ sub content {
   #my $QUERYURL = "http://amigo.geneontology.org/cgi-bin/amigo/search.cgi?query=";
   my $URLS     = $object->ExtURL;
 
-  return unless ($go_hash);
+ return unless ($go_hash);
   my $html =  "<p><strong>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</strong></p>";
 
   #$html .= qq(<dl>);
