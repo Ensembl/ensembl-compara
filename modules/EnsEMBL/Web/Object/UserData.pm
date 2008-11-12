@@ -38,8 +38,8 @@ sub counts {
 
 #---------------------------------- userdata DB functionality ----------------------------------
 
-sub save_to_userdata {
-  my $self = shift;
+sub save_tmp_to_database {
+  my $self     = shift;
   my $tmpdata  = $self->get_session->get_tmp_data;
   my $assembly = $tmpdata->{assembly};
 
@@ -52,19 +52,16 @@ sub save_to_userdata {
   $parser->init($data);
   $parser->parse($data, $format);
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-
   my $config = {
-      'action' => 'overwrite', # or append
-      'species' => $tmpdata->{species},
-      'assembly' => $tmpdata->{assembly},
+    action   => 'overwrite', # or append
+    species  => $tmpdata->{species},
+    assembly => $tmpdata->{assembly},
   };
 
-  if ($user) {
+  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
     $config->{id} = $user->id;
     $config->{track_type} = 'user';
-  }
-  else {
+  } else {
     $config->{id} = $self->session->get_session_id;
     $config->{track_type} = 'session';
   }
@@ -79,40 +76,57 @@ sub save_to_userdata {
   }
   $report->{'analyses'} = \@analyses if @analyses;
   $report->{'feedback'} = \@messages if @messages;
-  $report->{'errors'} = \@errors if @errors;
+  $report->{'errors'}   = \@errors   if @errors;
   return $report;
 }
 
-sub move_to_user {
-  my $self = shift;
-  my %args = (
-    type => 'tmp',
-    @_,
-  );
+sub store_tmp_data {
+  ## Parse file and save to genus_species_userdata
+  my $self     = shift;
+  my $tmp_data = $self->get_session->get_tmp_data;
+  my $report   = $self->save_tmp_to_database;
+  unless ($report->{'errors'}) {
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $data = $self->get_session->get_data(%args);
-  my $record;
-  
-  $record = $user->add_to_uploads($data)
-    if $args{type} eq 'tmp' or $args{type} eq 'upload';
+    ## Delete cached file
+    my $file = new EnsEMBL::Web::File::Text(
+      $self->object->species_defs,
+      $tmp_data->{'filename'}
+    );
 
-  $record = $user->add_to_urls($data)
-    if $args{type} eq 'url';
+    $file->delete;
 
-  if ($record) {
-    $self->get_session->purge_data(%args);
-    return $record;
+    ## logic names
+    my $analyses = $report->{'analyses'};
+    my @logic_names = ref($analyses) eq 'ARRAY' ? @$analyses : ($analyses);
+
+    if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
+      my $upload = $user->add_to_uploads(
+        %$tmp_data,
+        type     => 'upload',
+        filename => '',
+        analyses => join(', ', @logic_names),
+      );
+      return $upload->id if $upload;
+    } else {
+      my $upload = $self->object->get_session->add_data(
+        %$tmp_data,
+        type     => 'upload',
+        filename => '',
+        analyses => join(', ', @logic_names),
+      );
+      return $upload->{code} if $upload;
+    }
+    
+    $self->get_session->purge_tmp_data;
   }
-  
+
   return undef;
 }
-
+  
 sub delete_userdata {
   my ($self, $id) = @_;
  
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user) {
+  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
     my ($upload) = $user->uploads($id);
     if ($upload) {
       my $species = $upload->species;

@@ -6,6 +6,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::Tools::Encryption qw(checksum);
 use EnsEMBL::Web::File::Text;
 use EnsEMBL::Web::RegObj;
 use Data::Dumper;
@@ -206,33 +207,33 @@ sub select_upload {
   my $self = shift;
   $self->title('Share Your Data');
 
-  $self->notes({'heading' => 'How it works', 'text' => qq(You can share your uploaded data with anyone, even if they don't have an Ensembl account. Just select one or more of your uploads and click on 'Next' to get a shareable URL. Please note that these URLs expire after 72 hours, but if you save the upload to your account, you can create a new shareable URL at any time.)});
+  $self->notes({
+    heading => 'How it works',
+    text    => qq(You can share your uploaded data with anyone, even if they don't have an
+                  Ensembl account. Just select one or more of your uploads and click on 'Next'
+                  to get a shareable URL.
+                  Please note that these URLs expire after 72 hours, but if you save the upload
+                  to your account, you can create a new shareable URL at any time.)
+  });
+  
   $self->set_layout('narrow-labels');
 
   my @values = ();
-  my ($name, $value);
 
-  ## Temporary data
-  my $tmp_data = $self->object->get_session->get_tmp_data;
-  push @values, {
-      name  => 'Unsaved upload: '.$tmp_data->{'format'}.' file for '.$tmp_data->{'species'},
-      value => 'tmp',
-  } if %$tmp_data;
-
-  ## Previously shared tmp data, saved to the session
-  #  my @session_uploads = $self->object->get_session->get_data(type => 'upload');
-  #  foreach my $upload (@session_uploads) {
-  #    push @values, {
-  #      name  => 'Shared upload: ' . $upload->{name},
-  #      value => $upload->id,
-  #    };
-  #  }
+  ## Session data
+  my @session_uploads = $self->object->get_session->get_data(type => 'upload');
+  foreach my $upload (@session_uploads) {
+    push @values, {
+      name  => 'Shared upload: ' . $upload->{name},
+      value => $upload->{code},
+    };
+  }
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($user) {
     foreach my $record ($user->uploads) {
       push @values, {
-        name  => 'Saved upload: '.$record->name,
+        name  => 'Saved upload: '. $record->name,
         value => $record->id,
       };
     }
@@ -241,8 +242,13 @@ sub select_upload {
   ## If only one record, have the checkbox automatically checked
   my $autoselect = (@values == 1) ? [$values[0]->{'value'}] : '';
 
-  $self->add_element('type' => 'MultiSelect', 'name' => 'share_id', 'label' => 'Uploaded files',
-                      'value' => $autoselect, 'values' => \@values);
+  $self->add_element(
+    type   => 'MultiSelect',
+    name   => 'share_id',
+    label  => 'Uploaded files',
+    value  => $autoselect,
+    values => \@values
+  );
 
   $self->parameter('wizard_next', 'check_save');
 }
@@ -252,79 +258,40 @@ sub check_save {
   my $self = shift;
 
   my @shares = ($self->object->param('share_id'));
-  $self->parameter('share_id', \@shares);
   if (grep /^tmp/, @shares) {
-    $self->parameter('wizard_next', 'save_upload');
-  } else {
-    $self->parameter('wizard_next', 'share_url');
-  }
-}
-
-sub save_upload {
-## Save uploaded data to a genus_species_userdata database
-  my $self = shift;
-
-  ## Parse file and save to genus_species_userdata
-  my $report = $self->object->save_to_userdata;
-  my $success = $report->{'errors'} ? 0 : 1;
-  if ($success) {
-    my $temp_data = $self->object->get_session->get_tmp_data;
-    ## Delete cached file
-    my $file = new EnsEMBL::Web::File::Text($self->object->species_defs, $temp_data->{'filename'});
-    $file->delete;
-
-    ## ???
-    ## logic names
-    my $analyses = $report->{'analyses'};
-    my @logic_names = ref($analyses) eq 'ARRAY' ? @$analyses : ($analyses);
-    $self->object->get_session->set_tmp_data('analyses' => join(', ', @logic_names));
-
-    ## If the user is logged in, automatically save this record so that the data will "survive" 
-    ## any purging of session records or overwriting of the temporary session data 
-    ## As long as the analysis IDs are the same, identical session_record and user_record
-    ## will only generate one track in the web display
-    my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-    if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
-      $user->add_to_uploads(
-        %$temp_data,
-        type     => 'upload',
-        filename => '',
-        analyses => join(', ', @logic_names),
-      )
+    ## User wants to save TMP data, we need to store it first
+    if (my $id = $self->object->store_tmp_data) {
+      $self->parameter(wizard_next => 'show_shareable');
+      $self->parameter(share_id    => [ @shares, $id ] );
     } else {
-      $self->object->get_session->add_data(
-        %$temp_data,
-        type     => 'upload',
-        filename => '',
-        analyses => join(', ', @logic_names),
-      );
+      $self->parameter(wizard_next   => 'database_error');
+      $self->parameter(error_message => 'Sorry, we were unable to save your file to our temporary storage area.');
     }
-
-    $self->object->get_session->purge_tmp_data;
-    $self->parameter('wizard_next', 'share_url');
-  }
-  else {
-    $self->parameter('wizard_next', 'database_error');
-    $self->parameter('error_message', 'Sorry, we were unable to save your file to our temporary storage area.');
+  } else {
+    $self->parameter(wizard_next => 'show_shareable');
+    $self->parameter(share_id    => [ @shares ]);
   }
 }
+
 
 sub database_error {
   my $self = shift;
   $self->title('Database Error');
 }
 
-sub share_url {
+
+sub show_shareable {
   my $self = shift;
   $self->title('Shareable URL');
 
-  my $share_data  = $self->object->get_session->share_tmp_data;
-  my $share_ref   = 'ss-000000'. $share_data->{share_id} .'-'.
-                    EnsEMBL::Web::Tools::Encryption::checksum($share_data->{share_id});
-                    
+  my @shares    = ($self->object->param('share_id'));
+  my $share_ref = join ';', (
+    map { "share_ref=000000$_-". checksum($_) } @shares
+  );
+
   my $url = $self->object->species_defs->ENSEMBL_BASE_URL . $self->object->param('_referer');
   $url .= $self->object->param('_referer') =~ /\?/ ? ';' : '?';
-  $url .= "share_ref=$share_ref";
+  $url .= $share_ref;
 
   $self->add_element('type'=>'Information', 'value' => $self->object->param('feedback'), 'style' => 'spaced');
   $self->add_element('type'=>'Information', 'value' => "To share this data, use the URL:", 'style' => 'spaced');
@@ -356,44 +323,14 @@ sub show_tempdata {
 sub save_tempdata {
   my $self = shift;
 
-  my $temp_data = $self->object->get_session->get_tmp_data;
-  my $name = $self->object->param('name') || 'uploaded file';
-  $self->object->get_session->set_tmp_data(name => $name);
-
-  ## Has this data already been parsed and saved?
-  my $parsed;
-  if (!$temp_data->{'analyses'}) {
-    my $report = $self->object->save_to_userdata;
-    unless ($report->{'errors'}) {
-      ## Delete file name in session_record
-      $self->object->get_session->set_tmp_data(filename => '');
-      ## Save logic names to session record
-      my $analyses = $report->{'analyses'};
-      my @logic_names = ref($analyses) eq 'ARRAY' ? @$analyses : ($analyses);
-      $self->object->get_session->set_tmp_data(analyses => join(', ', @logic_names));
-    }
-  }
-
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user && !$self->parameter('error_message')) {
-    my $copied = $self->object->copy_to_user;
-    if ($copied) { 
-      ## Delete cached file
-      my $file = new EnsEMBL::Web::File::Text($self->object->species_defs, $temp_data->{'filename'});
-      $file->delete;
-      ## Delete temporary session data
-      $self->object->get_session->purge_tmp_data('upload');
-      $self->parameter('wizard_next', 'ok_tempdata');
-    }
-    else {
-      $self->parameter('wizard_next', 'show_tempdata');
-      #$self->parameter('error_message', 'Unable to save to user account');
-    }
-  }
-  else {
+  ## Parse file and save to genus_species_userdata
+  ## Move data reference from tmp to user or permanent session record if not logged in
+  if ($self->object->store_tmp_data) {
+    $self->parameter('wizard_next', 'ok_tempdata');
+  } else {
     $self->parameter('wizard_next', 'show_tempdata');
-    #$self->parameter('error_message', 'Unable to save to user account');
-  }  
+    $self->parameter('error_message', 'Unable to save to user account');
+  }
 }
 
 sub ok_tempdata {

@@ -100,12 +100,12 @@ sub upload {
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
   my $session  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_session');
-  my $warning  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'overwrite_warning' );
-  my $save    = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'overwrite_save' );
-  my $select  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'select_file' );
-  my $upload  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'upload');
-  my $more    = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'more_input');
-  my $feedback = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'upload_feedback');
+  my $warning  = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'overwrite_warning' );
+  my $save     = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'overwrite_save' );
+  my $select   = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_file' );
+  my $upload   = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'upload');
+  my $more     = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'more_input');
+  my $feedback = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'upload_feedback');
 
   ## SET UP CONNECTION BUTTONS
   $wizard->add_connection( from => $warning,  to => $save);
@@ -123,15 +123,13 @@ sub share_upload {
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
   my $shareable = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_shareable', backtrack => 1);
-  my $warning   = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'no_shareable' );
-  my $select    = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'select_upload' );
-  my $check     = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_save');
-  my $save      = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'save_upload');
-  my $share  = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'share_url' );
+  my $warning   = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'no_shareable' );
+  my $select    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_upload' );
+  my $check     = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_save' );
+  my $share     = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'show_shareable' );
 
   ## SET UP CONNECTION BUTTONS
   $wizard->add_connection( from => $select, to => $check);
-  $wizard->add_connection( from => $save,   to => $share);
 }
 
 sub save_upload {
@@ -142,9 +140,9 @@ sub save_upload {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
-  my $start = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'show_tempdata');
+  my $start = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'show_tempdata');
   my $save  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'save_tempdata');
-  my $end   = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'ok_tempdata');
+  my $end   = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'ok_tempdata');
 
   ## SET UP CONNECTION BUTTONS
   $wizard->add_connection( from => $start, to => $save);
@@ -183,7 +181,7 @@ sub attach_das {
   my $validate_das  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'validate_das');
   my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species', 'backtrack' => 1);
   my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords', 'backtrack' => 1);
-  my $attach_das    = $wizard->create_node( object => $object, module => $node, type => 'logic',  name => 'attach_das');
+  my $attach_das    = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'attach_das');
   
   # END POINTS:
   my $feedback    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'das_feedback');
