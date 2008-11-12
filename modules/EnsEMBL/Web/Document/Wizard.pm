@@ -18,7 +18,6 @@ sub simple_wizard {
   $self->page->{'_modal_dialog_'} =
     $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
     $self->factory->param( 'x_requested_with' ) eq 'XMLHttpRequest';
-#warn "SETTING MODAL DIALOG TO ". $self->page->{'_modal_dialog_'};
 
   if( $self->has_a_problem ) {
      $self->render_error_page;
@@ -81,6 +80,8 @@ sub process_node {
     ));
     $self->render;
   }
+warn "SESSION STORE...........";
+  $self->factory->session->store();
 }
 
 
