@@ -60,6 +60,12 @@ sub render {
       $species_lookup{$sp->species_id} = $sp->name;
     }
 
+    if (scalar(@headlines) < 5 && $filtered) {
+      delete($criteria->{'species'});
+      my $attr = {'limit' => 5 - @headlines, 'order_by' => ' n.priority DESC '};
+      push @headlines, EnsEMBL::Web::Data::NewsItem->fetch_news_items($criteria, $attr);
+    }
+
     if (scalar(@headlines) > 0) {
 
       $html .= "<ul>\n";
@@ -98,13 +104,7 @@ sub render {
 <p><a href="$news_url">More news</a>...</p>\n);
     }
     else {
-      if ($filtered) {
-        $html .= qq(<p>No news could be found for your selected species/topics.</p>
-<p><a href="$news_url">Other news</a>...</p>\n);
-      }
-      else {
-        $html .= qq(<p>No news is currently available for release $release_id.</p>\n);
-      }
+      $html .= qq(<p>No news is currently available for release $release_id.</p>\n);
     }
   }
   else {
