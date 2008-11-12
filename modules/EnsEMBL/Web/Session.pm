@@ -294,6 +294,7 @@ sub add_data {
   $args{code} = time;
 
   $self->set_data(%args);
+  return $args{code};
 }
 
 sub save_data {
