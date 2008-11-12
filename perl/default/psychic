@@ -19,8 +19,7 @@ my $q = $ENSEMBL_WEB_REGISTRY->get_session->get_input;
 my $species;
 if ($q->param('species')) {
     $species = $q->param('species');
-}
-elsif ($ENV{'ENSEMBL_SPECIES'} ne 'common') {
+} elsif ($ENV{'ENSEMBL_SPECIES'} ne 'common') {
     $species = $ENV{'ENSEMBL_SPECIES'};
 }
 my $site = $q->param('site') || undef;
@@ -39,7 +38,9 @@ if ($site eq 'ebi') {
 } elsif ($site eq 'vega') {
   $URL = "http://vega.sanger.ac.uk/Homo_sapiens/searchview?species=all&idx=All&q=$query";
 } else {
-
+  if($site eq 'ensembl_all' ) {
+    $species = undef;
+  }
 ## Let us parse the first string to see if it is the name of a species or one
 ## of its aliases... (should we do this if we specify a species in the drop
 ## down!
