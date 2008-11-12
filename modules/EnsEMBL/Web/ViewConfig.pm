@@ -100,7 +100,8 @@ sub image_configs {
 
 sub _set_defaults {
   my $self = shift;
-  my %defs = (@_, map( { ("format_$_", 'off')} qw(svg postscript pdf) ) );
+  my %defs = @_;# map( { ("format_$_", 'off')} qw(svg postscript pdf) ) );
+
   foreach my $key (keys %defs) {
     $self->{_options}{$key}{'default'} = $defs{$key};
   }
@@ -264,11 +265,8 @@ sub form {
 sub set {
 ### Set a key for user settings
   my( $self, $key, $value, $force ) = @_;
-#warn caller(1);
-#warn "SETTING: $self - $key $value $force";
   return unless $force || exists $self->{'_options'}{$key};
   return if $self->{'_options'}{$key}{'user'}  eq $value;
-#warn "setting $key to $value";
   $self->altered = 1;
   $self->{'_options'}{$key}{'user'}  = $value;
 }
@@ -322,13 +320,11 @@ sub get_user_settings {
 
 sub load {
   my ($self) = @_;
-  #warn "ViewConfig load - Deprecated call - now written by session";
   return;
 }
 
 sub save {
   my ($self) = @_;
-  #warn "ViewConfig load - Deprecated call - now written by session";
   return;
 }
 
