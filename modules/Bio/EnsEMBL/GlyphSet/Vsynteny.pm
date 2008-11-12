@@ -585,6 +585,14 @@ sub draw_chromosome {
         }
     }
     if($params{'line'}) {
+	my $start = $params{'line'}-5e5;
+	my $stop = $start+1e6-1;
+	my $r = $params{'chr'} . ":$start-$stop";
+	my $url = $self->_url({
+	    'type'    => 'Location',
+	    'action'  => 'View',
+	    'r'       =>$r,
+	    'species' => $self->{container}{web_species}});
         $self->push($self->Rect({
             'x'          => $v_offset + $params{'line'} * $scale - 1,
             'y'          => $h_offset - 2,
@@ -593,12 +601,7 @@ sub draw_chromosome {
             'bordercolour' => $params{'red'},
             'absolutey'  => 1,
             'absolutex'  => 1,'absolutewidth'=>1,
-            'href'       => "/@{[$self->{container}{web_species}]}/contigview?chr=$params{'chr'};vc_start=".($params{'line'}-5e5).";vc_end=".($params{'line'}+5e5),
-            'zmenu'       => {
-                'caption' => "Entry point",
-                "Jump to ContigView" =>
-                "/@{[$self->{container}{web_species}]}/contigview?chr=$params{'chr'};vc_start=".($params{'line'}-5e5).";vc_end=".($params{'line'}+5e5)
-            }
+            'href'       => $url,
         }));
     }
     return %coords;
