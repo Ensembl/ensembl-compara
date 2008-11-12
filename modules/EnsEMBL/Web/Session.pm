@@ -136,10 +136,7 @@ sub store {
 ### to be stored as well
   my ($self, $r) = @_;
   my @storables = @{ $self->storable_data($r) };
-warn ".... calling store ....";
   foreach my $storable (@storables) {
-local $Data::Dumper::Indent = 1;
-warn ".... -> storable $storable... $storable->{config_key} ",Dumper($storable->{data}),"\n";
     EnsEMBL::Web::Data::Session->set_config(
       session_id => $self->create_session_id($r),
       type       => 'script',
@@ -172,8 +169,6 @@ sub storable_data {
       next          unless $image_config->storable; ## Cannot store unless told to do so by image config
       $to_store = 1 if     $image_config->altered;  ## Only store if image config has changed...
       $data->{'image_configs'}{$image_config_key}  = $image_config->get_user_settings();
-warn "storable_data: ",$image_config->storable," - ",$image_config->altered," - ",$to_store;
-warn "storable_data: USER_CONFIG HASH: $config_key $image_config_key" if $data->{'image_configs'}{$image_config_key} =~ /HASH\(/;
     }
     push @{ $return_data }, { config_key => $config_key, data => $data } if $to_store;
   }
