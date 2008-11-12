@@ -49,7 +49,7 @@ sub _get_input_parameters {
   my %pars = map { ($self->_alt_names()->{$_} || $_) => $cgi->param( $_ ) } $cgi->param();
   $pars{'page_type'} 	= ($cgi->param( 'db' ) || 'core' );	### hack to get page type passed down  will be added to analysis table soon
   $pars{'species'} 		= $ENV{'ENSEMBL_SPECIES'} ;
-  $pars{'session'} 		= $ENV{'ENSEMBL_FIRSTSESSION'}  ;	# change to get sessions (for submission and contigview) at later date
+  $pars{'session'} 		= $ENV{'ENSEMBL_SESSION'}  ;	# change to get sessions (for submission and contigview) at later date
   $pars{'script_name'}  = $ENV{'ENSEMBL_SCRIPT'};
 
   return \%pars;

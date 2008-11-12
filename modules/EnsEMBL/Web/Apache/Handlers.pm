@@ -165,7 +165,7 @@ sub postReadRequestHandler {
 #warn "         $$ PTH....";
 #  $r->push_handlers( PerlCleanupHandler => \&cleanupHandler );
 #warn "         $$ PCH....";
-## Retrieve the firstsession_ID and User ID from the cookie (ENSEMBL_FIRSTSESSION and ENSEMBL_USER_ID)
+## Retrieve the firstsession_ID and User ID from the cookie (ENSEMBL_SESSION and ENSEMBL_USER_ID)
 ##   Setup User...
 ##  $ENSEMBL_WEB_REGISTRY->initialize_session( $session_cookie ); ## Initialize the session information
   my $user_cookie = EnsEMBL::Web::Cookie->new({
@@ -454,9 +454,9 @@ sub transHandler {
   my $querystring = $u->query;
   my $session_cookie = EnsEMBL::Web::Cookie->new({
     'host'    => $ENSEMBL_COOKIEHOST,
-    'name'    => $ENSEMBL_FIRSTSESSION_COOKIE,
+    'name'    => $ENSEMBL_SESSION_COOKIE,
     'value'   => '',
-    'env'     => 'ENSEMBL_FIRSTSESSION_ID',
+    'env'     => 'ENSEMBL_SESSION_ID',
     'hash'    => {
       'offset'  => $ENSEMBL_ENCRYPT_0,
       'key1'    => $ENSEMBL_ENCRYPT_1,
