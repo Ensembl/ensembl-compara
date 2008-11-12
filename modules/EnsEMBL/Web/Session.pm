@@ -4,7 +4,8 @@ use strict;
 use Storable qw(nfreeze thaw);
 use Bio::EnsEMBL::ColourMap;
 use Apache2::RequestUtil;
-use Data::Dumper qw(Dumper);
+#use Data::Dumper qw(Dumper);
+use Data::Dumper;
 use Time::HiRes qw(time);
 use Class::Std;
 
@@ -234,7 +235,10 @@ sub get_data {
   $Data_of{ ident $self }{$args{type}}{$_->code} = $_->data for @entries;
 
   ## Make empty {} if none found
-  $Data_of{ ident $self }{$args{type}}{$args{code}} ||= {} if $args{code};
+  $Data_of{ ident $self }{$args{type}}{$args{code}} ||= {
+    type => $args{type},
+    code => $args{code},
+  } if $args{code};
 
   return $self->get_cached_data(%args);
 }
