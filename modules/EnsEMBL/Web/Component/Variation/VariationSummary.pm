@@ -20,7 +20,7 @@ sub content {
   my $html = '';
  
   ## first check we have a location
-  unless ($object->param('vf') ){
+  unless ($object->core_objects->{'parameters'}{'vf'} ){
    $html = "<p>You must select a location from the panel above to see this information</p>";
    return $self->_info(
    'A unique location can not be determined for this Variation',

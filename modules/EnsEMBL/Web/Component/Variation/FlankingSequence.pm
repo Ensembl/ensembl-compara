@@ -17,7 +17,7 @@ sub content {
   my $object = $self->object;
   my $html = '';
   ## first check we have a location
- return  unless ($object->param('vf') );
+ return  unless ($object->core_objects->{'parameters'}{'vf'} );
 
 
   ## Add flanking sequence
