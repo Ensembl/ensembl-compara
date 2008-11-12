@@ -511,10 +511,9 @@ sub user_populate_tree {
   my $self = shift;
   return unless $self->object && ref($self->object);
   my $all_das  = $ENSEMBL_WEB_REGISTRY->get_all_das();
-#  my @active_das = qw(DS_549 Emage);
+  
   my $vc = $self->object->get_viewconfig( undef, 'ExternalData' );
 
-#use Data::Dumper; warn Dumper($vc);
   my @active_das = grep { $vc->get($_) eq 'yes' && $all_das->{$_} } $vc->options;
 
   my $ext_node = $self->tree->get_node( 'ExternalData' );
@@ -526,7 +525,10 @@ sub user_populate_tree {
     my $source = $all_das->{$logic_name};
     $ext_node->append($self->create_subnode( "ExternalData/$logic_name", $source->caption,
       [qw(textdas EnsEMBL::Web::Component::Transcript::TextDAS)],
-      { 'availability' => 'translation', 'long_caption' => $source->label }
+      { 'availability' => 'gene',
+        'concise'      => $source->caption,
+        'caption'      => $source->caption,
+        'long_caption' => $source->label }
     ));
   }
 }
