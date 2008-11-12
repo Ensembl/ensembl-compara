@@ -482,11 +482,14 @@ sub attach_url {
   my $self = shift;
 
   if (my $url = $self->object->param('url')) {
-    $self->object->get_session->add_data(
+    my $code = $self->object->get_session->add_data(
       type    => 'url',
       url     => $url,
       species => $self->object->species,
     );
+    if ($self->object->param('save')) {
+      $self->object->move_to_user('type'=>'url', 'code'=>$code);
+    }
     $self->parameter('wizard_next', 'url_feedback');
   } else {
     $self->parameter('wizard_next', 'select_url');
