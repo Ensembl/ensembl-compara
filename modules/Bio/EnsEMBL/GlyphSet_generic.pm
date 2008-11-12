@@ -40,6 +40,7 @@ sub _draw_features {
   $self->{'h'} = 0;
   my $colour = $ori ? 'blue' : 'green';
 
+my $offset = $self->{'container'}->start - 1;
   my $has_labels = 0;
   foreach my $lname   ( sort keys %{$features->{'groups'}} ) {
     foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
@@ -127,9 +128,20 @@ sub _draw_features {
         }
         $end = $group->{'end'} if $group->{'end'} > $end;
 
+        my $href = undef;
+        my $title = sprintf "%s; Start: %s; End: %s; Strand: %s",
+          $group->{'label'}||$group->{'id'},
+          $group->{'start'} + $offset,
+          $group->{'end'}   + $offset,
+          $ori > 0 ? 'Forward' : $ori < 0 ? 'Reverse' : '-';
+        $title .= '; Features: '.$group->{'count'} if $group->{'count'} > 1;
+#        $title .= $group->{'notes'};
+        $href = $group->{'links'}[0]{'href'} if @{$group->{'links'}||[]};
+        $title .= "; Type: ".$group->{'type'} if $group->{'type'};
+
+        if( $group->{extent_end} >0 &&  $group->{extent_start} < $seq_len ) {
         my $row = $self->bump_row( $group->{'start'}*$ppbp, $group->{'end'}*$ppbp );
         $group->{'y'} = - $strand * $row * ( $self->{h}+ $fontsize + 4);
-        if( $group->{extent_end} >0 &&  $group->{extent_start} < $seq_len ) {
           $composite =  $self->Space({ ## Just draw a composite at the moment!
             'absolutey' => 1,
             'x'         => $s-1,
@@ -138,7 +150,8 @@ sub _draw_features {
             'height'    => $self->{h},
             'colour'    => 'darkkhaki',
             'bordercolour' => 'green',
-            'title'     => $group->{label}.' : '.$group->{id}
+            'href'      => $href,
+            'title'     => $title
           }); ## Create a composite for the group and bump it!
           $self->push($self->Text({
             'absolutey' => 1,
@@ -200,13 +213,24 @@ sub _draw_features {
                 $f->{'y'} = - $strand * $row * ($self->{h}+$fontsize+4);
                 ## reposition!
               }
+        my $href = undef;
+        my $title = sprintf "%s; Start: %s; End: %s; Strand: %s",
+          $f->display_label||$f->display_id,
+          $f->seq_region_start,
+          $f->seq_region_end,
+          $ori > 0 ? 'Forward' : $ori < 0 ? 'Reverse' : '-';
+#        $title .= $f->{'notes'};
+        $href = $f->{'link'}->[0]{'href'} if @{$f->{'link'}||[]};
+        $title .= "; Type: ".$f->type_id if $f->type_id;
+
               $self->push( $self->Space({
                 'x'     => $f->{extent_start}-1,
                 'width' => $f->{extent_end}-$f->{extent_start}+1,
                 'y'     => $f->{'y'},
                 'height' => $self->{'h'},
                 'absolutey' => 1,
-                'title' => $f->display_label.' : '.$f->display_id
+                'href'  => $href,
+                'title' => $title
               }));
               $self->push($self->Text({
                 'absolutey' => 1,
@@ -305,17 +329,12 @@ sub _draw_features {
   }
 }
 
-sub render_nolabel {
+sub render_nolabels {
   my $self = shift;
   $self->render_normal( 'nolabel' );
 }
 
-sub render_label_on {
-  my $self = shift;
-  $self->render_normal( 'label_on' );
-}
-
-sub render_label_under {
+sub render_labels {
   my $self = shift;
   $self->render_normal( 'label_under' );
 }

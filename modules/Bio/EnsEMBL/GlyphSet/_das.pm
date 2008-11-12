@@ -92,8 +92,8 @@ sub features       {
                 'type'    => $ty,
                 'id'      => $g,
                 'label'   => $_->{'group_label'},
-                'notes'   => $_->{'notes'},
-                'links'   => $_->{'links'},
+                'notes'   => $_->{'note'},
+                'links'   => $_->{'link'},
                 'targets' => $_->{'target'},
                 'features'=>{$style_key=>[$f]},'start'=>$f->start,'end'=>$f->end
               };
