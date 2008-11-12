@@ -690,13 +690,13 @@ sub _symbol_init {
   my($self,$g,$f,$st)= @_;
   my $mp = ($f->start+$f->end-1)/2;
   if( $mp < 0 || $mp > $self->{'seq_len'} ) {
-    $self->_symbol_bg( $g,$f,$f->start,$f->end,$st) if $st->{bgcolor};
+    $self->_symbol_bg( $g,$f,$f->start,$f->end,$st) if $st->{bgcolor} && $st->{bgcolor} ne $st->{fgcolor};
     return;
   }
   my $h = $st->{height}||$self->{'h'};
   my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
   my $w = ($st->{'linewidth'}||$h) * $self->{'bppp'};
-  $self->_symbol_bg( $g,$f,$f->start,$f->end,$st ) if $st->{bgcolor};
+  $self->_symbol_bg( $g,$f,$f->start,$f->end,$st ) if $st->{bgcolor} && $st->{bgcolor} ne $st->{fgcolor};
   return ($mp,$h,$y,$w);
 }
 
@@ -1133,7 +1133,7 @@ sub extent_line {
 
 sub glyph_line {
   my($self,$g,$f,$st)= @_;
-  $self->_symbol_bg( $g,$f,$st ) if $st->{bgcolor};
+  $self->_symbol_bg( $g,$f,$st ) if $st->{bgcolor} && $st->{bgcolor} ne $st->{fgcolor};
   if( $st->{'parallel'} eq 'no' ) {
     my $h = $st->{height}||$self->{'h'};
     my $y = ( $g ? $g->{'y'} : $f->{'y'} ) + ( $self->{'h'}-$h ) /2;
