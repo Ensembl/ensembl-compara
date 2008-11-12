@@ -408,8 +408,9 @@ sub _give_snp_unique_identifier {
   my @features = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
   if (scalar @features == 1){
     $self->{'parameters'}{'vf'} = $features[0]->dbID; 
+    $self->param( 'vf', $features[0]->dbID );
     return;
-  }elsif (scalar @features > 1 && $vf){
+  } elsif (scalar @features > 1 && $vf){
     my $flag =0;
     foreach my $var_feat( @features){
       if ($var_feat->dbID eq $vf ) { 
