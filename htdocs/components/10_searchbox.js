@@ -47,6 +47,7 @@
       $('se_im').src  = '/i/search/'+name+'.gif';
       $('se_mn').hide();
       $('se_si').value = name;
+      Cookie.set( 'ENSEMBL_SEARCH',name );
     });
   }
 
@@ -71,10 +72,20 @@
         menu.toggle();
       });
 // Create the search list!
-      add_search_index( 'ensembl', 'Ensembl search' );
+      add_search_index( 'ensembl_all', 'Ensembl search all species' );
+      if( $('se_but').up('form').action.match(/\/common\/psychic/) ) {
+        add_search_index( 'ensembl',     'Ensembl search' );
+      } else {
+        add_search_index( 'ensembl',     'Ensembl search this species' );
+      }
       add_search_index( 'vega',    'Vega search'    );
       add_search_index( 'ebi',     'EBI search'     );
       add_search_index( 'sanger',  'Sanger search'  );
+    }
+    var name = Cookie.get( 'ENSEMBL_SEARCH' );
+    if( name ) {
+      $('se_im').src = '/i/search/'+name+'.gif';
+      $('se_si').value = name;
     }
   }
 
