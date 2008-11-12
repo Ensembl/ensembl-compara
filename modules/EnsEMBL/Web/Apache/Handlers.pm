@@ -142,7 +142,7 @@ sub childInitHandler {
   $ENSEMBL_WEB_REGISTRY = EnsEMBL::Web::Registry->new();
   $ENSEMBL_WEB_REGISTRY->timer->set_process_child_count( 0    );
   $ENSEMBL_WEB_REGISTRY->timer->set_process_start_time(  time );
-  if( $ENSEMBL_DEBUG_FLAGS & 8 ){
+  if( $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS ){
     printf STDERR "Child %9d: - initialised at %30s\n", $$,''.gmtime();
   }
 #  use BioMart::Initializer;
@@ -241,7 +241,7 @@ sub transHandler_das {
     next unless -r $filename;
     $r->filename( $filename );
     $r->uri( "/perl/das/$DSN/$command" );
-    if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
+    if( $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS ) {
       my @X = localtime();
       $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
         substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
@@ -259,7 +259,7 @@ sub transHandler_das {
     $r->subprocess_env->{'ENSEMBL_DAS_ERROR'}  = 'unknown-command';
     $r->filename( $error_filename );
     $r->uri( "/perl/das/$DSN/$command" );
-    if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
+    if( $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS ) {
       my @X = localtime();
       $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
         substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
@@ -309,7 +309,7 @@ sub transHandler_no_species {
     $r->filename( $to_execute );
     $r->uri( "/perl/common/$script" );
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
-    if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
+    if( $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS && $script ne 'ladist' && $script ne 'la' ) {
       my @X = localtime();
       $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
         substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
@@ -408,7 +408,7 @@ sub transHandler_species {
     $r->filename( $to_execute );
     $r->uri( "/perl/$species/$script" );
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
-    if( $ENSEMBL_DEBUG_FLAGS & 8 && $script ne 'ladist' && $script ne 'la' ) {
+    if( $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS && $script ne 'ladist' && $script ne 'la' ) {
       my @X = localtime();
       $LOG_INFO = sprintf( "SCRIPT:%8s:%-10d %04d-%02d-%02d %02d:%02d:%02d /%s/%s?%s\n",
         substr($THIS_HOST,0,8), $$, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0],
@@ -572,7 +572,7 @@ sub cleanupHandler {
     my $query       = $u->query.$r->subprocess_env->{'ENSEMBL_REQUEST'};
     my $size        = &$Apache2::SizeLimit::HOW_BIG_IS_IT();
     $r->subprocess_env->{'ENSEMBL_ENDTIME'} = $end_time;
-    if( $ENSEMBL_DEBUG_FLAGS & 8 ) {
+    if( $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS ) {
       print STDERR sprintf "LONG PROCESS %10s DT: %24s Time: %10s Size: %10s
 LONG PROCESS %10s REQ: %s
 LONG PROCESS %10s IP:  %s  UA: %s
@@ -617,7 +617,7 @@ sub cleanupHandler_script {
 
   my ($A,$B) = $LOG_INFO =~ /SCRIPT:(.{8}:\d+) +\d{4}-\d\d-\d\d \d\d:\d\d:\d\d (.*)$/;
   warn sprintf( "ENDSCR:%-19s %04d-%02d-%02d %02d:%02d:%02d %10.3f %s\n",
-    $A, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0], time()-$LOG_TIME, $B );
+    $A, $X[5]+1900, $X[4]+1, $X[3], $X[2],$X[1],$X[0], time()-$LOG_TIME, $B ) if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
   if( $ENSEMBL_BLASTSCRIPT ) {
     cleanupHandler_blast( $r );
   }
@@ -626,7 +626,7 @@ sub cleanupHandler_script {
 sub childExitHandler {
   my $r = shift;
   $ENSEMBL_WEB_REGISTRY->tidy_up if $ENSEMBL_WEB_REGISTRY; ## Disconnect from the DB
-  if( $ENSEMBL_DEBUG_FLAGS & 8 ){
+  if( $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS ){
     printf STDERR "Child %9d: - reaped at      %30s;  Time: %11.6f;  Req:  %4d;  Size: %8dK\n",
       $$, ''.gmtime(), time-$ENSEMBL_WEB_REGISTRY->timer->get_process_start_time,
       $ENSEMBL_WEB_REGISTRY->timer->get_process_child_count,
