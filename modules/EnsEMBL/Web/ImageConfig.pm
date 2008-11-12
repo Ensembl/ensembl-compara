@@ -116,7 +116,7 @@ sub load_user_tracks {
 ## Firstly "upload data" not yet committed to the database...
 ## Then those attached as URLs to either the session or the User
 
-  my %T = %{$session->get_tmp_data('upload') || {}};
+  my %T = %{ $session->get_tmp_data || {} };
 
   if( $T{'species'} eq $self->{'species'} ) {
     $menu->append($self->create_track( 'temporary_user_data', 'Temporary user data', {

@@ -40,11 +40,11 @@ sub counts {
 
 sub save_to_userdata {
   my $self = shift;
-  my $tmpdata = $self->get_session->get_tmp_data;
+  my $tmpdata  = $self->get_session->get_tmp_data;
   my $assembly = $tmpdata->{assembly};
 
-  my $file = new EnsEMBL::Web::File::Text($self->species_defs);
-  my $data = $file->retrieve($tmpdata->{'filename'});
+  my $file    = new EnsEMBL::Web::File::Text($self->species_defs, $tmpdata->{'filename'});
+  my $data    = $file->retrieve;
   my $format  = $tmpdata->{'format'};
   my $report;
 

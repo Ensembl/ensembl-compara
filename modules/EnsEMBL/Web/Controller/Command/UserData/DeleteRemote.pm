@@ -21,19 +21,8 @@ sub process {
     my $type = $cgi->param('record') || '';
     my $data = $cgi->param('data') || '';
     ## TEMPORARY URL
-    if ($data eq 'url' && $type eq 'session') {
-      my $temp = $object->get_session->get_tmp_data('url');
-      my $urls = $temp->{'urls'} || [];
-      if (scalar(@$urls) && $object->param('url')) {
-        for my $i ( 0 ..  $#{@$urls}) {
-          if ( $urls->[$i]{'url'} eq $object->param('url') ) {
-            splice @$urls, $i, 1;
-          }
-        }
-      }
-      if (scalar(@$urls) < 1) {
-        $object->get_session->purge_tmp_data('url');
-      }
+    if ($data eq 'url' && $type eq 'session' && $object->param('code')) {
+      $self->object->get_session->purge_data(type => 'url', code => $object->param('code')); 
     }
     ## SAVED URL
     elsif ($data eq 'url' && $type eq 'user') {

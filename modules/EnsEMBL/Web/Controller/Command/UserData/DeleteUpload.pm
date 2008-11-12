@@ -19,10 +19,11 @@ sub process {
 
   if ($object) {
     my $type = $object->param('record') || '';
-    if ($type eq 'session') {
-      $object->get_session->purge_tmp_data('upload');
-    }
-    elsif ($type eq 'user') {
+    if ($type eq 'tmp') {
+      $object->get_session->purge_tmp_data;
+    } elsif ($type eq 'session') {
+      $object->get_session->purge_data(type => 'upload');
+    } elsif ($type eq 'user') {
       $object->delete_userdata($object->param('id'));
     }
   }

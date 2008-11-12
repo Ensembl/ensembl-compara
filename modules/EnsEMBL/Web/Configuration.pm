@@ -558,19 +558,19 @@ sub _local_tools {
     if( $vc->can_upload ) {
       my $caption = 'Add custom data to page';
       my $action = 'Upload';
-      my $userdata = $obj->get_session->get_tmp_data;
-      my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-=pod
-      if ($userdata || $user) {
-        $caption = 'Add/manage custom data';
-        if ($user) {
-          $action = 'SaveUpload';
-        }
-        else {
-          $action = 'ShareUpload';
-        }
-      }
-=cut
+
+      #my $userdata = $obj->get_session->get_tmp_data;
+      #my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+      #if ($userdata || $user) {
+      #  $caption = 'Add/manage custom data';
+      #  if ($user) {
+      #    $action = 'SaveUpload';
+      #  }
+      #  else {
+      #    $action = 'ShareUpload';
+      #  }
+      #}
+
       $self->{'page'}->local_tools->add_entry(
         'caption' => $caption,
         'class'   => 'modal_link',

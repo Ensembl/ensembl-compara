@@ -28,18 +28,16 @@ sub content {
   ## Temporary upload
   $html .= "<h3>Temporary upload</h3>";
 
-  my $temp_data = $self->object->get_session->get_tmp_data('upload');
-  if ($temp_data && keys %$temp_data) {
+  my $temp_data = $self->object->get_session->get_tmp_data;
+  if (%$temp_data) {
     $html .= '<p>'.$temp_data->{'format'}.' file for '.$temp_data->{'species'}.': ';
     if ($user) {
       $html .= qq(<a href="$dir/UserData/SaveUpload?wizard_next=save_tempdata;$referer" class="modal_link">Save to account</a> | );
-    }
-    else {
+    } else {
       $html .= qq(<a href="$dir/Account/Login?$referer" class="modal_link">Log in to save</a> | );
     }
     $html .= qq(<a href="$dir/UserData/DeleteUpload?record=session;$referer" class="modal_link">Remove</a></p>);
-  }
-  else {
+  } else {
     $html .= qq(<p class="space-below">You have no temporary data uploaded to this website.</p>);
   }
 

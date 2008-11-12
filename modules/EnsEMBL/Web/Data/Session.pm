@@ -43,19 +43,6 @@ __PACKAGE__->add_trigger(select => sub {$_[0]->withdraw_data});
 __PACKAGE__->add_trigger(before_create => \&fertilize_data);
 __PACKAGE__->add_trigger(before_update => \&fertilize_data);
 
-sub withdraw_data {
-  my $self = shift;
-
-  $self->as_string($self->data);
-  $self->_attribute_store(data => $self->SUPER::withdraw_data);
-}
-
-sub fertilize_data {
-  my $self = shift;
-  
-  $self->_attribute_set(data => $self->dump_data($self->data));
-}
-
 sub set_config {
   my $class = shift;
   my %args  = @_;
@@ -109,6 +96,11 @@ sub create_session_id {
   return $session_id;
 }
 
+
+
+##
+## Share session record
+##
 sub share {
   my $self = shift;
   my %args = @_;
@@ -125,6 +117,25 @@ sub share {
   $share->save;
 
   return $share;
+}
+
+###################################################################################################
+##
+## Data fields stuff
+##
+###################################################################################################
+
+sub withdraw_data {
+  my $self = shift;
+
+  $self->as_string($self->data);
+  $self->_attribute_store(data => $self->SUPER::withdraw_data);
+}
+
+sub fertilize_data {
+  my $self = shift;
+  
+  $self->_attribute_set(data => $self->dump_data($self->data));
 }
 
 

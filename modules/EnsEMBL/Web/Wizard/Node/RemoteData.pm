@@ -375,7 +375,7 @@ sub show_tempdas {
     $self->add_fieldset($fieldset);
   }
 
-  my $url = $self->object->get_session->get_tmp_data('url');
+  my $url = $self->object->get_session->get_data(type => 'url');
   if ($url && $url->{'url'}) {
     $has_data = 1;
     $self->add_element('type'=>'Information', 'value' => "You have the following URL attached:", 'style' => 'spaced');
@@ -413,31 +413,15 @@ sub save_tempdas {
   }
 
   ## Save any URL data
-  if ($self->object->param('url')) {
-    my $temp = $self->object->get_session->get_tmp_data('url');
-    my $urls = $temp->{'urls'} || [];
-    my ($id, @unsaved_urls);
-    foreach my $source (@$urls) {
-      if ($source->{'url'} eq $self->object->param('url')) {
-        $id = $user->add_to_urls($source);
-      }
-      else {
-        push @unsaved_urls, $source;
-      }
-    }
-    if ($id) {
+  if (my $code = $self->object->param('code')) {
+    my $url = $self->object->get_session->get_data(type => 'url', code => $code);
+    if ($user->add_to_urls($url)) {
+      $self->object->get_session->purge_data(type => 'url', code => $code);
       $self->parameter('wizard_next', 'ok_tempdas');
       $self->parameter('url', 'ok');
-    }
-    else {
+    } else {
       $self->parameter('wizard_next', 'show_tempdas');
       $self->parameter('error_message', 'Unable to save URL to user account');
-    }
-    if (scalar(@unsaved_urls)) {
-      $self->object->get_session->set_tmp_data('url' => {'urls' => \@unsaved_urls});
-    }
-    else {
-      $self->object->get_session->purge_tmp_data('url');
     }
   }
 }
@@ -490,15 +474,14 @@ sub select_url {
 sub attach_url {
   my $self = shift;
 
-  my $url = $self->object->param('url');
-  if ($url) {
-    my $temp = $self->object->get_session->get_tmp_data('url');
-    my $urls = $temp->{'urls'} || [];
-    push @$urls, {'url' => $self->object->param('url'), 'species' => $self->object->species};
-    $self->object->get_session->set_tmp_data('url' => {'urls' => $urls});
+  if (my $url = $self->object->param('url')) {
+    $self->object->get_session->add_data(
+      type    => 'url',
+      url     => $url,
+      species => $self->object->species,
+    );
     $self->parameter('wizard_next', 'url_feedback');
-  }
-  else {
+  } else {
     $self->parameter('wizard_next', 'select_url');
     $self->parameter('error_message', 'No URL was entered. Please try again.');
   }

@@ -657,31 +657,36 @@ if ($component eq 'das_features') {
           
           my $caption = $comp_obj->caption;
           if( $comp_obj->ajaxable() && !$self->_is_ajax_request ) {
-            my( $ensembl, $plugin, $component, $type, $module ) = split '::', $module_name;
-            my $URL = join '/',
-              '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,$module;
- 	      $URL .= "/$function_name" if $function_name && $comp_obj->can( "content_$function_name" );
-              $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
 
-              ## Check if ajax enabled
+            my( $ensembl, $plugin, $component, $type, $module ) = split '::', $module_name;
+            my $URL = join '/', '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,$module;
+    	      $URL .= "/$function_name" if $function_name && $comp_obj->can( "content_$function_name" );
+            $URL .= "?$ENV{'QUERY_STRING'}"; # $self->renderer->{'r'}->parsed_uri->query;
+
+            ## Check if ajax enabled
             if( $ENSEMBL_WEB_REGISTRY->check_ajax ) {
+
               if( $caption ) {
                 $self->printf( qq(<div class="ajax" title="['%s','%s']"></div>), CGI::escapeHTML($caption),CGI::escapeHTML($URL) );
               } else {
                 $self->printf( qq(<div class="ajax" title="['%s']"></div>), CGI::escapeHTML($URL) );
               }
+
             } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
-                  ## if ajax disabled - we get all content by parallel requests to ourself
+
+              ## if ajax disabled - we get all content by parallel requests to ourself
               $self->print(
                 HTTP::Request->new('GET', $self->{'object'}->species_defs->ENSEMBL_BASE_URL.$URL)
               );
+
             }
+
           } else {
             my $content;
             eval {
               my $FN = $self->_is_ajax_request ? lc($ENV{'ENSEMBL_FUNCTION'}) : $function_name;
               $FN = $FN ? "content_$FN" : $FN;
-	      $content = $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
+      	      $content = $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
             };
             if ($@) {
               warn $@;

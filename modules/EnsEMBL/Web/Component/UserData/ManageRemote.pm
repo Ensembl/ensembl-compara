@@ -70,14 +70,12 @@ sub content {
   ## List URL data
   $html .= "<h3>URL-based data</h3>";
 
-  my $temp = $self->object->get_session->get_tmp_data('url');
-  my $urls = $temp->{'urls'} || [];
+  my @urls = $self->object->get_session->get_data(type => 'url');
 
-  if ($user) {
-    push @$urls, $user->urls;
-  }
+  push @urls, $user->urls
+    if $user;
 
-  if (@$urls) {
+  if (@urls) {
     my $table = EnsEMBL::Web::Document::SpreadSheet->new( [], [], {'margin' => '0 0 1em 0'} );
     $table->add_columns(
       {'key' => "url", 'title' => 'Datasource URL', 'width' => '50%', 'align' => 'left' },

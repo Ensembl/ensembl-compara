@@ -5,6 +5,7 @@ use Storable qw(nfreeze thaw);
 use Bio::EnsEMBL::ColourMap;
 use Apache2::RequestUtil;
 use Data::Dumper qw(Dumper);
+use Time::HiRes qw(time);
 use Class::Std;
 
 use EnsEMBL::Web::Tools::Encryption;
@@ -35,10 +36,9 @@ our @ISA = qw(EnsEMBL::Web::Root);
   my %ExtURL_of        :ATTR( :get<exturl> :set<exturl>  );
   my %Species_of       :ATTR( :name<species>      );
   my %ColourMap_of     :ATTR;
-## User temporary data...
-  my %TmpData_of       :ATTR( :get<tmp> :set<tmp>  );
-## User shared data...
-  my %SharedData_of    :ATTR( :get<shared> :set<sharedp>  );
+
+## Common data (tmp upload, upload, url, etc) ...
+  my %Data_of       :ATTR( :get<tmp> :set<tmp>  );
 
 
 ### New Session object - passed around inside the data object to handle storage of
@@ -74,7 +74,7 @@ sub BUILD {
 ### are the path and Cookie object..
   $Configs_of{      $ident } = {}; # Initialize empty hash!
   $ImageConfigs_of{ $ident } = {}; # Initialize emtpy hash!
-  $TmpData_of{      $ident } = {}; # Initialize empty hash!
+  $Data_of{         $ident } = {}; # Initialize empty hash!
   $Path_of{         $ident } = ['EnsEMBL::Web', reverse @{$arg_ref->{'path'}||[]}];
 }
 
@@ -183,118 +183,144 @@ warn "storable_data: USER_CONFIG HASH: $config_key $image_config_key" if $data->
 ##
 ###################################################################################################
 
-sub get_tmp_data {
-### TMP
-### Retrieve all temporary data
-  my ($self, $code) = @_; 
+sub get_cached_data {
+### Retrieve the data from cache
+  my $self = shift;
+  my %args = (
+    type => 'tmp',
+    @_,
+  );
 
-  $code ||= 'common';
+  if ($args{code}) {
+    ## Code is spcified
+    return $Data_of{ ident $self }{$args{type}}{$args{code}}
+      if $Data_of{ ident $self }{$args{type}}{$args{code}};
+  } elsif ($Data_of{ ident $self }{$args{type}}) {
+    ## Code is not spcified // wantarray or not?
+    my ($code) = keys %{ $Data_of{ ident $self }{$args{type}} };
+    return wantarray ? values %{ $Data_of{ ident $self }{$args{type}} }
+                     : $Data_of{ ident $self }{$args{type}}{$code};
+  }
+
+}
+
+sub get_data {
+### Retrieve the data
+  my $self = shift;
+  my %args = (
+    type => 'tmp',
+    @_,
+  );
 
   ## No session so cannot have anything configured!
   return unless $self->get_session_id;
 
-  ## This is cached
-  return $TmpData_of{ ident $self }{$code} if $TmpData_of{ ident $self }{$code};
+  ## Have a look in the cache
+  return $self->get_cached_data(%args)
+      if $self->get_cached_data(%args);
 
-  ## Get all TMP data from database!
+  $Data_of{ ident $self }{$args{type}} ||= {};
+
+  ## Get all data of the given type from the database!
   my @entries = EnsEMBL::Web::Data::Session->get_config(
     session_id => $self->get_session_id,
-    type       => 'tmp',
+    %args,
   );
   
-  foreach my $entry (@entries) {
-    $TmpData_of{ ident $self }{$entry->code} = {
-      %{ $TmpData_of{ ident $self }{$entry->code} || {} },
-      %{ $entry->data || {} },
-    };
-  }
+  $Data_of{ ident $self }{$args{type}}{$_->code} = $_->data for @entries;
 
-  return $TmpData_of{ ident $self }{$code};
+  ## Make empty {} if none found
+  $Data_of{ ident $self }{$args{type}}{$args{code}} ||= {} if $args{code};
+
+  return $self->get_cached_data(%args);
 }
 
-sub set_tmp_data {
-### TMP
-### $object->get_session->set_tmp_data( $key => $value, ... ); - which will use 'common' for `code`
-### or $object->get_session->set_tmp_data( $code => { $key => $value, ... } );
+sub set_data {
   my $self = shift; 
-  my %args = ref $_[1] ? %{ $_[1] } : @_; 
-  my $code = ref $_[1] ? $_[0] : 'common'; 
-  warn "^^^ SETTING $code";
+  my %args = (
+    type => 'tmp',
+    @_,
+  );
 
-  $self->get_tmp_data($code)
-    unless $TmpData_of{ ident $self }{$code};
+  return unless $args{type} && $args{code};
 
-  $TmpData_of{ ident $self }{$code} = {
-    %{ $TmpData_of{ ident $self }{$code} || {} },
+  my $data = $self->get_data(
+    type => $args{type},
+    code => $args{code},
+  );
+  
+  %$data = (
+    %{ $data || {} },
     %args,
-  };
+  );
   
-  $self->save_tmp_data($code);
+  $self->save_data(
+    type => $args{type},
+    code => $args{code},
+  );
 }
 
-sub purge_tmp_data {
-### TMP
-### $object->get_session->purge_tmp_data
+sub purge_data {
+### $object->get_session->purge_data()
   my $self = shift; 
-  my $code = shift || 'common'; 
+  my %args = (
+    type => 'tmp',
+    @_,
+  );
 
-  $TmpData_of{ ident $self }{$code} = {};
-  $self->save_tmp_data($code);
-}
-
-sub save_tmp_data {
-### TMP Data
-### Save all temporary data back to the database
-  my ($self, $code) = @_;
-  $self->create_session_id;
-  warn "@@@ SAVING $code";
+  ## Get data and purge
+  my $data = $self->get_data(%args);
+  %$data = ();
   
-  if ($code) {
-      EnsEMBL::Web::Data::Session->set_config(
-        session_id => $self->get_session_id,
-        type       => 'tmp',
-        code       => $code,
-        data       => $TmpData_of{ ident $self }{$code},
-      );    
-  } else {
-    
-    while (my ($key, $value) = each %{$TmpData_of{ ident $self }}) {
-      EnsEMBL::Web::Data::Session->set_config(
-        session_id => $self->get_session_id,
-        type       => 'tmp',
-        code       => $key,
-        data       => $value,
-      );    
-    }
-    
-  }
+  $self->save_data(%args);
 }
 
+## For multiple objects, such as upload or urls
+sub add_data {
+### $object->get_session->purge_data()
+  my $self = shift; 
+  my %args = @_;
+  
+  die "add_data needs type"
+    unless $args{type};
+
+  ## Unique code
+  $args{code} = time;
+
+  $self->set_data(%args);
+}
+
+sub save_data {
+### Save all data back to the database
+  my $self = shift;
+  my %args = (
+    type => 'tmp',
+    @_,
+  );
+  $self->create_session_id;
+  
+  EnsEMBL::Web::Data::Session->reset_config(%args);
+  
+  foreach my $data ($self->get_data(%args)) {
+    EnsEMBL::Web::Data::Session->set_config(
+      session_id => $self->get_session_id,
+      type       => $args{type},
+      code       => $data->{code},
+      data       => $data,
+    );    
+  }
+
+}
+
+sub get_tmp_data { get_data(type => 'tmp', code => 'tmp') }
+sub set_tmp_data { set_data(type => 'tmp', code => 'tmp', @_) }
+sub purge_tmp_data { purge_data(type => 'tmp', code => 'tmp', @_) }
 
 ###################################################################################################
 ##
 ## Share tmp and other data stuff
 ##
 ###################################################################################################
-
-## TODO: whar about sharing non-tmp data?
-sub share_tmp_data {
-### Share
-  my ($self, $code) = @_; 
-
-  $code ||= 'common';
-  return unless $self->get_session_id;
-
-  ## Get TMP data from the database
-  my $entry = EnsEMBL::Web::Data::Session->get_config(
-    session_id => $self->get_session_id,
-    type       => 'tmp',
-    code       => $code,
-  );
-
-  my $share = $entry->share if $entry;
-  return $share->data;
-}
 
 sub get_shared_data {
 ### Share
@@ -305,15 +331,12 @@ sub get_shared_data {
   die "Share violation."
     unless EnsEMBL::Web::Tools::Encryption::validate_checksum($id, $checksum);
 
-  my $share = EnsEMBL::Web::Data::Session->new($id);
-
-  ## Type??? (e.g. {type}{code} ) ???
-  $SharedData_of{ ident $self }{$share->code} = {
-    %{ $SharedData_of{ ident $self }{$share->code} || {} },
-    $share->data,
-  };
-  
-  return $share->data if $share;
+  if (my $share = EnsEMBL::Web::Data::Session->new($id)) {
+    $self->set_data($share->data);
+    return $share->data;
+  } else {
+    die "No data found for sharing";
+  }
 }
 
 # This method gets all configured DAS sources for the current session, i.e. all
