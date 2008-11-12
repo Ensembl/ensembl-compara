@@ -809,6 +809,7 @@ sub _run_query_from_method_link_id_genome_db_ids {
     my ($dbID) = $sth->fetchrow_array();
 
     $method_link_species_set = $self->fetch_by_dbID($dbID);
+    $sth->finish;
   }
 
   return $method_link_species_set;
