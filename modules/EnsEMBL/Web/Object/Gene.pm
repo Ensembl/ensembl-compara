@@ -136,7 +136,7 @@ sub count_xrefs {
 	next if ($db_name eq 'Vega_transcript');
 	next if ($db_name eq 'Vega_translation');
 	next if ($db_name eq 'GO');
-	warn "$label,$db_name,$status";
+	next if ($db_name eq 'OTTP') && $label =~ /^\d+$/; #ignore xrefs to vega translation_ids
 	$xrefs_c++;
     }
     return $xrefs_c;

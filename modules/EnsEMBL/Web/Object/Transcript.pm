@@ -181,7 +181,7 @@ sub count_similarity_matches {
     $sth = $dbc->prepare($sql2);
     $sth->execute($self->Obj->dbID);
     while (my ($label,$db_name,$type,$status) = $sth->fetchrow_array) {
-	$all_xrefs{'translation'}{$label} = {'db_name'=>$db_name, 'type'=>$type, 'status'=>$status};
+	$all_xrefs{'translation'}{$label} = {'db_name'=>$db_name, 'type'=>$type, 'status'=>$status, 'display_label'=>$label};
     }
 
     #filter out what isn't shown on the 'External References' page
@@ -200,6 +200,7 @@ sub count_similarity_matches {
 	    next if ($det->{'db_name'} eq 'Vega_transcript');
 	    next if ($det->{'db_name'} eq 'Vega_translation');
 	    next if ($det->{'db_name'} eq 'GO');
+	    next if ($det->{'db_name'} eq 'OTTP') && ($det->{'display_label'} =~ /^\d+$/); #ignore xrefs to vega translation_ids
 	    push @counted_xrefs, $id;
 	}
     }
