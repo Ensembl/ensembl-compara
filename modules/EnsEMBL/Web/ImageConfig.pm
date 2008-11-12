@@ -388,7 +388,7 @@ sub add_das_track {
     '_class'      => 'DAS',
     'glyphset'    => '_das',
     'display'     => 'off',
-#    'renderers'   => ('off' => 'Off', 'nolabels' => 'No labels', 'labels' => 'With labels'),
+    'renderers'   => ['off' => 'Off', 'nolabels' => 'No labels', 'labels' => 'With labels'],
     'logicnames'  => [ $source->logic_name ],
     'caption'     => $caption,
     'description' => $desc,
