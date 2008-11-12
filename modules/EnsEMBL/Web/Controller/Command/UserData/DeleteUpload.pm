@@ -18,11 +18,11 @@ sub process {
   my $object = $self->create_object;
 
   if ($object) {
-    my $type = $object->param('record') || '';
+    my $type = $object->param('type') || '';
     if ($type eq 'tmp') {
       $object->get_session->purge_tmp_data;
-    } elsif ($type eq 'session') {
-      $object->get_session->purge_data(type => 'upload');
+    } elsif ($type eq 'upload') {
+      $object->get_session->purge_data(type => 'upload', $code = $object->param('code'));
     } elsif ($type eq 'user') {
       $object->delete_userdata($object->param('id'));
     }
