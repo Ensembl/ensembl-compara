@@ -131,25 +131,25 @@ sub content {
       my @notes = ();
       my @links = ();
       
-      for my $note ( @{ $f->notes } ) {
+      for my $raw ( @{ $f->notes } ) {
         # OK, we apparently need to support non-spec HTML embedded in notes,
         # so let's decode it.
-        my ( $note, $warning ) = $self->_decode_and_validate( $note );
+        my ( $note, $warning ) = $self->_decode_and_validate( $raw );
         $html .= $warning;
-        push @notes, $note;
+        push @notes, "<div>$note</div>";
       }
       
       for my $link ( @{ $f->links } ) {
-        my $href  = $link->{'href'};
+        my $raw  = $link->{'href'};
         my $cdata = $link->{'txt'};
         # We don't expect embedded HTML here so don't need to decode, but still
         # need to validate to protect against XSS...
-        my ( $href, $warning ) = $self->_validate( $href );
+        my ( $href, $warning ) = $self->_validate( $raw );
         $html .= $warning;
-        push @links, sprintf '<a href="%s">%s</a>', $href, $cdata;
+        push @links, sprintf '<div><a href="%s">%s</a></div>', $href, $cdata;
       }
       
-      my $text = join '<br/>', @notes, @links;
+      my $text = join "\n", @notes, @links;
       
       (my $lh = ucfirst($f->type_label)) =~ s/_/ /g;
       $table->add_row({
@@ -169,7 +169,7 @@ sub _decode_and_validate {
 
 sub _validate {
   my ( $self, $text ) = @_;
-  
+  warn "VALIDATING $text";
   my $warning = '';
   # Check for naughty people trying to do XSS...
   if ( my $error = $self->{'validator'}->validate( $text ) ) {
