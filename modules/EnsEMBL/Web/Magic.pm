@@ -82,46 +82,6 @@ sub menu {
   return "Generated magic menu ($ENV{'ENSEMBL_ACTION'})";
 }
 
-sub _parse_referer {
-  my $referer = shift || $ENV{'HTTP_REFERER'};
-  my ($url,$query_string) = split /\?/, $ENV{'HTTP_REFERER'};
-  $url =~ /^https?:\/\/.*?\/(.*)$/;
-  my($sp,$ot,$view) = split /\//, $1;
-
-  my(@pairs) = split(/[&;]/,$query_string);
-  my $params = {};
-  foreach (@pairs) {
-    my($param,$value) = split('=',$_,2);
-    next unless defined $param;
-    $value = '' unless defined $value;
-    $param = CGI::unescape($param);
-    $value = CGI::unescape($value);
-    push @{$params->{$param}}, $value;
-  }
-  warn "\n";
-  warn "------------------------------------------------------------------------------\n";
-  warn "AJAX request (ingredient)\n";
-  warn "\n";
-  warn "  SPECIES: $sp\n";
-  warn "  OBJECT:  $ot\n";
-  warn "  VIEW:    $view\n";
-  warn "  QS:      $query_string\n";
-  foreach my $param( sort keys %$params ) {
-    foreach my $value ( sort @{$params->{$param}} ) {
-      warn sprintf( "%20s = %s\n", $param, $value );
-    }
-  }
-  warn "------------------------------------------------------------------------------\n";
-
-  return {
-    'ENSEMBL_SPECIES' => $sp,
-    'ENSEMBL_TYPE'    => $ot,
-    'ENSEMBL_ACTION'  => $view,
-    'params'          => $params
-  };
-}
-
-
 sub configurator {
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
   my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
@@ -130,7 +90,6 @@ sub configurator {
     $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
     $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MAGIC_MESSAGES;
     
-#  my $referer_hash = _parse_referer;
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $session = $ENSEMBL_WEB_REGISTRY->get_session;
 
@@ -293,8 +252,6 @@ sub ingredient {
       if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
 
-    # my $referer_hash = _parse_referer;
-
     my $webpage     = EnsEMBL::Web::Document::WebPage->new(
       'objecttype' => $objecttype,
       'doctype'    => 'Component',
@@ -354,7 +311,6 @@ sub stuff {
   my $command = shift;
   my $doctype = shift;
   my $modal_dialog = shift;
-  warn "MODAL $modal_dialog";
 
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
@@ -389,7 +345,6 @@ sub stuff {
     if( $modal_dialog ) {
       $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
                                            $webpage->factory->param('x_requested_with') eq 'XMLHttpRequest';
-warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
     }
     # The whole problem handling code possibly needs re-factoring 
     # Especially the stuff that may end up cyclic! (History/UnMapped)
@@ -397,9 +352,7 @@ warn "SETTING ....".$webpage->page->{'_modal_dialog_'};
     # for them.
     if( $webpage->has_a_problem ) {
       if( $webpage->has_problem_type( 'redirect' ) ) {
-        warn "####################### REDIRECTING ##########################";
         my($p) = $webpage->factory->get_problem_type('redirect');
-        warn $p->name;
         my $u = $p->name;
         if( $r->headers_in->{'X-Requested-With'} ) {
           $u.= ($p->name=~/\?/?';':'?').'x_requested_with='.CGI::escape($r->headers_in->{'X-Requested-With'});
