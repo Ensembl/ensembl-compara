@@ -1555,7 +1555,7 @@ sub get_Mapper {
           $mapper->add_Mapper($this_mapper);
           $aln_pos += $cig_count;
         }
-        my $gaps = $this_piece_of_seq =~ tr/\-/\-/;
+        my $gaps = $this_piece_of_seq =~ tr/\-./\-./;
         $seq_pos -= $gaps;
         $seq_pos += $cig_count;
         $aln_seq_pos += $cig_count;
