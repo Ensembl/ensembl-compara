@@ -47,7 +47,7 @@ sub content {
       my $row = {'name' => '<p>'.$file->{'format'}.' file for '.$file->{'species'}};
       my $extra = 'type='.$file->{'type'}.';code='.$file->{'code'};
       if ($user) {
-        $row->{'save'} = qq(<a href="$dir/UserData/SaveUpload?wizard_next=save_tempdata;$extra;$referer" class="modal_link">Save to account</a>);
+        $row->{'save'} = qq(<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>);
       } else {
         $row->{'save'} = qq(<a href="$dir/Account/Login?$referer" class="modal_link">Log in to save</a>);
       }
