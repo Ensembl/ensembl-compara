@@ -76,6 +76,8 @@ sub select_file {
   }
   $self->notes({'heading'=>'IMPORTANT NOTE:', 'text'=>qq(We are only able to store single-species datasets, containing data on Ensembl coordinate systems. There is also a 5Mb limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL">attach it to Ensembl</a> without uploading.)});
 
+  $self->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
+
   ## Species now set automatically for the page you are on
   $self->add_element( type => 'NoEdit', name => 'show_species', label => 'Species', 'value' => $self->object->species_defs->species_label($current_species));
   $self->add_element( type => 'Hidden', name => 'species', 'value' => $current_species);
@@ -111,7 +113,11 @@ sub upload {
   if ($self->object->param($method)) {
    
     ## Get original path, so can save file name as default name for upload
-    my @orig_path = split('/', $self->object->param($method));
+    my $name = $self->object->param('name');
+    unless ($name) {
+      my @orig_path = split('/', $self->object->param($method));
+      $name = $orig_path[-1];
+    }
 
     ## Cache data (File::Text knows whether to use memcached or temp file)
     my $file = new EnsEMBL::Web::File::Text($self->object->species_defs);
@@ -129,7 +135,7 @@ sub upload {
     ## Attach data species to session
     $self->object->get_session->set_tmp_data(
       filename  => $file->filename, 
-      name      => $orig_path[-1],
+      name      => $name,
       species   => $self->object->param('species'),
       format    => $format,
       assembly  => $self->object->param('assembly'),
