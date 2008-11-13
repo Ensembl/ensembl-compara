@@ -9,6 +9,7 @@ use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::Data::Record::Upload;
 use Bio::EnsEMBL::Utils::Exception qw(try catch);
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser; # for contacting DAS servers
+use EnsEMBL::Web::File::Text;
 use Data::Dumper;
                                                                                    
 use base qw(EnsEMBL::Web::Object);
@@ -43,8 +44,10 @@ sub save_tmp_to_database {
   my $tmpdata  = $self->get_session->get_tmp_data;
   my $assembly = $tmpdata->{assembly};
 
+  ## TODO: proper error exceptions !!!!!
   my $file    = new EnsEMBL::Web::File::Text($self->species_defs, $tmpdata->{'filename'});
-  my $data    = $file->retrieve;
+  my $data    = $file->retrieve
+    or die "Can't get data out of the file $tmpdata->{'filename'}";
   my $format  = $tmpdata->{'format'};
   my $report;
 
@@ -65,8 +68,13 @@ sub save_tmp_to_database {
     $config->{id} = $self->session->get_session_id;
     $config->{track_type} = 'session';
   }
+  
   my (@analyses, @messages, @errors);
-  foreach my $track ($parser->get_all_tracks) {
+  my @tracks = $parser->get_all_tracks;
+  push @errors, 'Sorry, we couldn\'t parse your data.' unless @tracks;
+  
+  foreach my $track (@tracks) {
+    push @errors, 'Sorry, we couldn\'t parse your data.' unless keys %$track;
     foreach my $key (keys %$track) {
       my $track_report = $self->_store_user_track($config, $track->{$key});
       push @analyses, $track_report->{'logic_name'} if $track_report->{'logic_name'};
@@ -74,6 +82,8 @@ sub save_tmp_to_database {
       push @errors, $track_report->{'error'} if $track_report->{'error'};
     }
   }
+
+
   $report->{'analyses'} = \@analyses if @analyses;
   $report->{'feedback'} = \@messages if @messages;
   $report->{'errors'}   = \@errors   if @errors;
@@ -125,27 +135,33 @@ sub store_tmp_data {
     my @logic_names = ref($analyses) eq 'ARRAY' ? @$analyses : ($analyses);
 
     if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
-      my $upload = $user->add_to_uploads(
-        %$tmp_data,
-        type     => 'upload',
-        filename => '',
-        analyses => join(', ', @logic_names),
-      );
-      return $upload->id if $upload;
+      if (my $upload = $user->add_to_uploads(
+                        %$tmp_data,
+                        type     => 'upload',
+                        filename => '',
+                        analyses => join(', ', @logic_names),
+                      ))  {
+                            $self->get_session->purge_tmp_data;
+                            return $upload->id;
+                      }
+      warn 'ERROR: Can not save user record.';
+      return undef;
     } else {
-      my $upload = $self->get_session->add_data(
-        %$tmp_data,
-        type     => 'upload',
-        filename => '',
-        analyses => join(', ', @logic_names),
-      );
-      
-      return $upload->{code} if $upload;
+      if (my $upload = $self->get_session->add_data(
+                         %$tmp_data,
+                         type     => 'upload',
+                         filename => '',
+                         analyses => join(', ', @logic_names),
+                       )) {
+                            $self->get_session->purge_tmp_data;
+                            return $upload->{code};
+                       }
+      warn 'ERROR: Can not save session record.';
+      return undef;
     }
-    
-    $self->get_session->purge_tmp_data;
   }
 
+  warn Dumper($report->{'errors'});
   return undef;
 }
   
