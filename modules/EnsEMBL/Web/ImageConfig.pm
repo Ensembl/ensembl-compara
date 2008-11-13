@@ -376,6 +376,7 @@ sub load_configured_das {
 sub add_das_track {
   my( $self, $menu, $source ) = @_;
   my $node = $self->get_node($menu);
+     $node = $self->get_node('gene') if !$node && $menu eq 'transcript';
      $node = $self->get_node('external_data') unless $node; 
   return unless $node;
   my $caption =  $source->caption || $source->label;
