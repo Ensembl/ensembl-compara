@@ -28,7 +28,8 @@ sub get {
 
   my $content = '';
   if ($args->{compress}) {
-    my $gz      = gzopen( $file, 'rb' );
+    my $gz = gzopen( $file, 'rb' )
+         or die "GZ Cannot open $file: $gzerrno\n";
     if ($gz) {
       my $buffer  = 0;
       $content   .= $buffer while $gz->gzread( $buffer ) > 0;
@@ -50,8 +51,10 @@ sub save {
 
   eval {
     if ($args->{compress}) {
-      my $gz = gzopen($file, 'wb');
-      $gz->gzwrite($content);
+      my $gz = gzopen($file, 'wb')
+           or die "GZ Cannot open $file: $gzerrno\n";
+      $gz->gzwrite($content)
+           or die "GZ Cannot srite content: $gzerrno\n";
       $gz->gzclose();
     } else {
       open(FILE, ">$file") || warn qq(Cannot open temporary image file $file: $!);

@@ -258,13 +258,13 @@ sub check_save {
   my $self = shift;
 
   my @shares = ($self->object->param('share_id'));
-  if (grep /^tmp/, @shares) {
+  if (grep { $_ eq 'tmp' } @shares) {
     ## User wants to save TMP data, we need to store it first
     if (my $id = $self->object->store_tmp_data) {
       $self->parameter(wizard_next => 'show_shareable');
       $self->parameter(share_id    => [ @shares, $id ] );
     } else {
-      $self->parameter(wizard_next   => 'database_error');
+      $self->parameter(wizard_next   => 'select_upload');
       $self->parameter(error_message => 'Sorry, we were unable to save your file to our temporary storage area.');
     }
   } else {
@@ -273,20 +273,14 @@ sub check_save {
   }
 }
 
-
-sub database_error {
-  my $self = shift;
-  $self->title('Database Error');
-}
-
-
 sub show_shareable {
   my $self = shift;
   $self->title('Shareable URL');
 
-  my @shares    = ($self->object->param('share_id'));
+  my @shares = grep { $_ && $_ ne 'tmp' } ($self->object->param('share_id'));
+
   my $share_ref = join ';', (
-    map { "share_ref=000000$_-". checksum($_) } @shares
+    map { ($_ =~ /\./) ? "share_ref=$_" : "share_ref=000000$_-". checksum($_) } @shares
   );
 
   my $url = $self->object->species_defs->ENSEMBL_BASE_URL . $self->object->param('_referer');

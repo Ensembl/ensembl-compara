@@ -207,7 +207,7 @@ sub get_data {
 ### Retrieve the data
   my $self = shift;
   my %args = (
-    type => 'tmp',
+    type => 'upload',
     @_,
   );
 
@@ -228,9 +228,6 @@ sub get_data {
   
   $Data_of{ ident $self }{$args{type}}{$_->code} = $_->data for @entries;
 
-  use Data::Dumper;
-  warn Dumper($Data_of{ ident $self });
-
   ## Make empty {} if none found
   #$Data_of{ ident $self }{$args{type}}{$args{code}} ||= {} if $args{code};
 
@@ -240,7 +237,7 @@ sub get_data {
 sub set_data {
   my $self = shift; 
   my %args = (
-    type => 'tmp',
+    type => 'upload',
     @_,
   );
 
@@ -268,7 +265,7 @@ sub purge_data {
 ### $object->get_session->purge_data()
   my $self = shift; 
   my %args = (
-    type => 'tmp',
+    type => 'upload',
     @_,
   );
 
@@ -293,7 +290,8 @@ sub add_data {
   ## Unique code
   $args{code} = time;
   $self->set_data(%args);
-  return \%args;
+
+  return $self->get_data(type => $args{type}, code => $args{code});
 }
 
 sub save_data {

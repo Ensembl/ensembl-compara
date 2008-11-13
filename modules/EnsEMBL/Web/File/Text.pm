@@ -50,14 +50,14 @@ sub set_cache_filename {
   my $c2  = $EnsEMBL::Web::Root::random_ticket_chars[$MD5&31];
   
   $self->{'token'}      = "$prefix:$c1$c2$filename";
-  $self->{'filename'}   = "$prefix/$c1/$c2/$filename";
   $self->{'file_root' } = $self->{'species_defs'}->ENSEMBL_TMP_DIR_CACHE;
+  $self->{'filename'}   = $self->{'file_root'} ."/$prefix/$c1/$c2/$filename". '.gz';
 }
 
 
 sub filename { 
   my $self = shift;
-  return $self->{'file_root'}.'/'.$self->{'filename'}.'.gz';
+  return $self->{'filename'};
 }
 
 sub print {
