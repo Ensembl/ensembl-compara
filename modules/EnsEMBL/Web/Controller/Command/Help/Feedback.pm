@@ -34,7 +34,8 @@ sub process {
   $help->save;
 
   my $param_hash = {'feedback' => $cgi->param('record_id') };
-  $cgi->redirect($self->url($cgi->param('return_url'), $param_hash));
+  my $url = $self->url($cgi->param('return_url'), $param_hash);
+  $self->ajax_redirect($self->ajax_url($url));
 }
 
 }
