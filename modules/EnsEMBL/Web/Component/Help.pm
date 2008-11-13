@@ -12,7 +12,7 @@ sub kw_hilite {
   my $kw = $self->object->param('string');
   return $content unless $kw;
 
-  $content =~ s/($kw)(?!(\w|\s|[-\.\/;:#\?"])*>)/<span class="hilite">$1<\/span>/img;
+  $content =~ s/($kw)(?![^<]*?>)/<span class="hilite">$1<\/span>/img;
   return $content;
 }
 
