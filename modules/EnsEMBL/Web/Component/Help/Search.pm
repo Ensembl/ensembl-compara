@@ -36,6 +36,12 @@ sub content {
   );
 
   $form->add_element(
+    'type'    => 'Hidden',
+    'name'    => '_referer',
+    'value'   => $object->param('_referer'),
+  );
+
+  $form->add_element(
     'type'    => 'Submit',
     'name'    => 'submit',
     'value'   => 'Go',
