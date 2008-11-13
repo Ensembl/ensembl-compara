@@ -171,12 +171,14 @@ if ($site eq 'ebi') {
       $URL = '/Search/Summary?species=;idx=;q=';
   }
 
-
   unless( $flag ) {
       $URL = $query =~ /^BLA_\w+$/            ? URL( '/Multi/blastview/%s', $query  )        ## Blast ticket
 	  : $query =~ /[ACGT]{20,}/i         ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $query )         ## BLAST seq search
 	  : $query =~ /[A-Z]{20,}/i          ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $query )         ## BLAST seq search
-	  :                                    URL( '/%s/%s?species=%s;idx=%s;q=%s', ( $species eq 'ALL'|| !$species ? 'default' : $species ), $webpage->{'species_defs'}->ENSEMBL_SEARCH, $species ? $species : 'all', $index, $query )
+	  : URL( 
+              '/%s/'.$webpage->{'species_defs'}->ENSEMBL_SEARCH.'?species=%s;idx=%s;q=%s',
+              ( $species eq 'ALL'|| !$species ? 'default' : $species ),
+              $species ? $species : 'all', $index, $query )
 	      ;
   }
 }
