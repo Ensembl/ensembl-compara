@@ -61,7 +61,7 @@ sub render {
 sub _content {
   my $self = shift;
   my $t = $self->tree;
-return unless $t;
+  return unless $t;
   my $caption = $self->caption;
   $caption =~ s/<\\\w+>//g;
   $caption =~ s/<[^>]+>/ /g;
@@ -113,9 +113,9 @@ $pad    </dd>";
           $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'};
           my @ok_params;
           my @cgi_params = split(';|&', $ENV{'QUERY_STRING'});
-          if ($ENV{'ENSEMBL_TYPE'} eq 'UserData' || $ENV{'ENSEMBL_TYPE'} eq 'Account') { 
+          if ($ENV{'ENSEMBL_TYPE'} eq 'UserData' || $ENV{'ENSEMBL_TYPE'} eq 'Account' || $ENV{'ENSEMBL_TYPE'} eq 'Help') { 
             foreach my $param (@cgi_params) {
-              ## Minimal parameters, or it screws up the wizards!
+              ## Minimal parameters, or it screws up the non-genomic pages!
               next unless ($param =~ /^_referer/ || $param =~ /^x_requested_with/);
               push @ok_params, $param;
             }
