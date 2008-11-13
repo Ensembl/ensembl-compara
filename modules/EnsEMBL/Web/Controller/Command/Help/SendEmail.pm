@@ -35,11 +35,11 @@ sub process {
     my @mail_attributes = ();
     my @T = localtime();
     my $date = sprintf "%04d-%02d-%02d %02d:%02d:%02d", $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
-    my $url = CGI::unescape($cgi->param('ref'));
+    my $url = CGI::unescape($cgi->param('_referer'));
     push @mail_attributes, (
       [ 'Date',         $date ],
       [ 'Name',         $cgi->param('name') ],
-      [ 'Referrer',     $url || '-none-' ],
+      [ 'Referer',     $url || '-none-' ],
       [ 'Last Search',  $cgi->param('string')||'-none-' ],
       [ 'User agent',   $ENV{'HTTP_USER_AGENT'}],
     );
