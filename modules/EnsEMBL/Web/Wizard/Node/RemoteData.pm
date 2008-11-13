@@ -382,11 +382,13 @@ sub show_tempdas {
     $self->add_fieldset($fieldset);
   }
 
-  my $url = $self->object->get_session->get_data(type => 'url');
-  if ($url && $url->{'url'}) {
+  my @urls = $self->object->get_session->get_data(type => 'url');
+  if (@urls) {
     $has_data = 1;
-    $self->add_element('type'=>'Information', 'value' => "You have the following URL attached:", 'style' => 'spaced');
-    $self->add_element('type'=>'CheckBox', 'name' => 'url', 'value' => 'yes', 'label' => $url->{'url'});
+    $self->add_element('type'=>'Information', 'value' => "You have the following URL data attached:", 'style' => 'spaced');
+    foreach my $url (@urls) {
+      $self->add_element('type'=>'CheckBox', 'name' => 'code', 'value' => $url->{'code'}, 'label' => $url->{'name'}, 'notes' => $url->{'url'});
+    }
   }
 
   unless ($has_data) {
@@ -397,6 +399,7 @@ sub show_tempdas {
 sub save_tempdas {
   my $self = shift;
 
+  warn ">>> Saving remote data";
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my @sources = grep {$_} $self->object->param('dsn');
   
@@ -420,15 +423,23 @@ sub save_tempdas {
   }
 
   ## Save any URL data
-  if (my $code = $self->object->param('code')) {
-    my $url = $self->object->get_session->get_data(type => 'url', code => $code);
-    if ($user->add_to_urls($url)) {
-      $self->object->get_session->purge_data(type => 'url', code => $code);
+  if (my @codes = $self->object->param('code')) {
+    my $error = 0;
+    foreach my $code (@codes) { 
+      my $url = $self->object->get_session->get_data(type => 'url', code => $code);
+      if ($user->add_to_urls($url)) {
+        $self->object->get_session->purge_data(type => 'url', code => $code);
+      } else {
+        $error = 1;
+      }
+    }
+    if ($error) {
+        $self->parameter('wizard_next', 'show_tempdas');
+        $self->parameter('error_message', 'Unable to save URL to user account');
+    }
+    else {
       $self->parameter('wizard_next', 'ok_tempdas');
       $self->parameter('url', 'ok');
-    } else {
-      $self->parameter('wizard_next', 'show_tempdas');
-      $self->parameter('error_message', 'Unable to save URL to user account');
     }
   }
 }
@@ -468,6 +479,12 @@ sub select_url {
                      'value' => $object->param('url'),
                      'notes' => '( e.g. http://www.example.com/MyProject/mydata.gff )');
 
+  $self->add_element('type'  => 'String',
+                     'name'  => 'name',
+                     'label' => 'Name for this track',
+                     'size'   => '30',
+                     );
+
   if ($user && $user->id) {
     $self->add_element('type'    => 'CheckBox',
                        'name'    => 'save',
@@ -481,14 +498,21 @@ sub select_url {
 sub attach_url {
   my $self = shift;
 
+  my $name = $self->object->param('name');
+  unless ($name) {
+    my @path = split('/', $self->object->param('url'));
+    $name = $path[-1];
+  }
+
   if (my $url = $self->object->param('url')) {
-    my $code = $self->object->get_session->add_data(
+    my $data = $self->object->get_session->add_data(
       type    => 'url',
       url     => $url,
+      name    => $name,
       species => $self->object->species,
     );
     if ($self->object->param('save')) {
-      $self->object->move_to_user('type'=>'url', 'code'=>$code);
+      $self->object->move_to_user('type'=>'url', 'code'=>$data->{'code'});
     }
     $self->parameter('wizard_next', 'url_feedback');
   } else {

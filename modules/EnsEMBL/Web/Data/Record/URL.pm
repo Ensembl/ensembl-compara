@@ -10,6 +10,7 @@ __PACKAGE__->add_fields(
   url     => 'text',
   species => 'text',
   code    => 'text',
+  name    => 'text',
 );
 
 1;
