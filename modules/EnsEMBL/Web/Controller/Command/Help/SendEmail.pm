@@ -57,7 +57,8 @@ sub process {
   }
 
   my $new_param = {};
-  $cgi->redirect($self->url('/Help/EmailSent', $new_param));
+  my $url = $self->url('/Help/EmailSent', $new_param);
+  $self->ajax_redirect($url);
 }
 
 }
