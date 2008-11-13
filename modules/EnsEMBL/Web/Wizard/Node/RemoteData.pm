@@ -468,9 +468,14 @@ sub select_url {
   my $object = $self->object;
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $current_species = $ENV{'ENSEMBL_SPECIES'};
+  if (!$current_species || $current_species eq 'common') {
+    $current_species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES;
+  }
 
   # URL-based section
-  $self->notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can upload files to Ensembl (only suitable for small, single-species datasets).)});
+  $self->notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can <a href="/$current_species/UserData/Upload?$referer" class="modal_link">upload files</a> to Ensembl (only suitable for small, single-species datasets).)});
 
   $self->add_element('type'  => 'String',
                      'name'  => 'url',
