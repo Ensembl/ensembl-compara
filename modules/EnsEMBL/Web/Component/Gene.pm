@@ -321,31 +321,29 @@ sub markup_comparisons {
 
   my $length_species = length $config->{'species'};
   my $max_length = $length_species;
+  my $padding = '';
 
-  my $sp = 0;
-  
   foreach (@{$config->{'slices'}}) {
     my $slice = $_->{'slice'};
     my $species = $_->{'species'};
 
-    $config->{'species_order'}->{$species} = $sp++;
+    push (@{$config->{'seq_order'}}, $species);
     
     next if $species eq $config->{'species'};
     
     my $length = length $species;
     my $length_diff = $length - $length_species;
-    my $padded_species = $species;
 
     if ($length > $max_length) {
       $max_length = $length;
-      $config->{'species_padding'} = ' ' x $length_diff;
-    } elsif ($length < $max_length) {
-      $padded_species .= ' ' x ($max_length - $length);
+      $padding = ' ' x $length_diff;
     }
-    $config->{'padded_species'}->{$species} = $padded_species;
   }
-  
-  $config->{'padded_species'}->{$config->{'species'}} = "$config->{'species'}$config->{'species_padding'}";
+    
+  foreach (@{$config->{'seq_order'}}) {
+    my $pad = ' ' x ($max_length - length $_);
+    $config->{'padded_species'}->{$_} = $_ . $pad;
+  }
   
   $config->{'v_space'} = "\n";
 }
@@ -530,16 +528,25 @@ sub markup_variation {
 sub markup_line_numbers {
   my $self = shift;
   my ($sequence, $config) = @_;
-  
-  $config->{'species_order'}->{$config->{'species'}} = 0 unless $config->{'species_order'};
-  
+ 
+  # Incremented when species changes 
+  my $sp = 0;
+
+  # If we only have only one species, $config->{'seq_order'} won't exist yet (it's created in markup_comparisons)
+  $config->{'seq_order'} = [ $config->{'species'} ] unless $config->{'seq_order'};
+ 
   foreach my $sl (@{$config->{'slices'}}) {
     my $slice = $sl->{'slice'};
     my $species = $sl->{'species'};
     
     my @numbering;
     my $align_slice = 0;
-    my $species_seq = $sequence->[$config->{'species_order'}->{$species}];
+
+    # DANGER, WILL ROBINSON! This assumes that the order of the slices is the same as the order
+    # of the species when displayed on the page. Which it is...for now.
+    $sp++ if $species ne $config->{'seq_order'}->[$sp];
+
+    my $species_seq = $sequence->[$sp];
     
     if ($config->{'line_numbering'} eq 'slice') {
       my $start_pos = 0;
@@ -559,6 +566,8 @@ sub markup_line_numbers {
               end => $ostrand > 0 ? $_->end : $_->start,
               chromosome => $_->seq_region_name . ':'
             });
+            
+            $config->{'padding'}->{'pre_number'} = length $_->seq_region_name if length $_->seq_region_name > $config->{'padding'}->{'pre_number'};
           }
           
           $start_pos += length $_->seq;
@@ -600,7 +609,7 @@ sub markup_line_numbers {
       $end = '';
       
       # Comparison species
-      if ($align_slice && $species ne $config->{'species'}) {
+      if ($align_slice) {
         my $seq_length;
         my $segment;
         
@@ -613,10 +622,12 @@ sub markup_line_numbers {
           }
         }
     
+        my $first_bp_pos = 0;
         my $last_bp_pos = 0;
-        
-        while ($segment =~ m/[AGCT]/g) {
+
+        while ($segment =~ /\w/g) {
           $last_bp_pos = pos $segment;
+          $first_bp_pos ||= $last_bp_pos; # Set the first position on the first match only
         }
         
         # Get the data from the next slice if we have passed the end of the current one
@@ -628,34 +639,39 @@ sub markup_line_numbers {
           $row_start = $data->{'start'} if $segment =~ /^\./;
         }
         
-        $s = $e + 1;
-        
-        if ($seq_length) {
-          # For AlignSlice display the position of the last meaningful bp
-          (undef, $end) = $slice->get_original_seq_region_position($s + $last_bp_pos - $config->{'wrap'});
-          
+        if ($seq_length && $last_bp_pos) {
+          # This is NOT necessarily the same as $end + $data->{'dir'}, as bits of sequence could be hidden
+          (undef, $row_start) = $slice->get_original_seq_region_position($s + $first_bp_pos);
+
           $start = $row_start;
+
+          # For AlignSlice display the position of the last meaningful bp
+          (undef, $end) = $slice->get_original_seq_region_position($e + 1 + $last_bp_pos - $config->{'wrap'});
         }
-      } else { # Single species, or the reference species for a comparison
+
+        $s = $e + 1;
+      } else { # Single species
         $end = $e < scalar @{$sequence->[0]} ? $row_start + ($data->{'dir'} * $config->{'wrap'}) - $data->{'dir'} : $data->{'end'};
         
         $start = $row_start;
+
+        # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
+        $row_start = $end + $data->{'dir'} if $end;
       }
       
-      my $ch = $start ? ($config->{'comparison'} && $data->{'chromosome'}) : '';
-      
-      push (@{$config->{'line_numbers'}->{$config->{'species_order'}->{$species}}}, [ "$ch$start", "$ch$end" ]);
-      
-      # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
-      $row_start = $end + $data->{'dir'} if $end;
-      
+      my $ch = $start ? ($config->{'comparison'} && $data->{'chromosome'}) : '';   
+
+      push (@{$config->{'line_numbers'}->{$sp}}, { start => $start, end => $end, pre => $ch });
+
       # Increase padding amount if required
-      $config->{'max_number_length'} = length "$ch$start" if length "$ch$start" > $config->{'max_number_length'};
+      $config->{'padding'}->{'number'} = length $start if length $start > $config->{'padding'}->{'number'};
       
       $e += $config->{'wrap'};
     }
   }
-  
+ 
+  $config->{'padding'}->{'pre_number'}++ if $config->{'padding'}->{'pre_number'}; # Compensate for the : for blank lines
+ 
   if ($config->{'line_numbering'} eq 'slice' && $config->{'align'}) {
     $config->{'key'} .= qq{ NOTE: For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line};
   }
@@ -669,7 +685,7 @@ sub build_sequence {
   my $html; 
   my @output;
   my $s = 0;
-
+  
   foreach my $lines (@$sequence) {
     my ($row, $title, $previous_title, $new_line_title, $style, $previous_style, $new_line_style, $pre, $post);
     my ($count, $i);
@@ -720,7 +736,13 @@ sub build_sequence {
         }
         
         if ($config->{'comparison'}) {
-          $pre = ($config->{'padded_species'}->{scalar {reverse %{$config->{'species_order'}}}->{$s}} || $config->{'species'}) . '  ';
+          if (scalar keys %{$config->{'padded_species'}}) {
+            $pre = $config->{'padded_species'}->{$config->{'seq_order'}->[$s]} || $config->{'species'};
+          } else {
+            $pre = $config->{'species'};
+          }
+
+          $pre .= '  ';
         }
          
         push (@{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post });
@@ -747,8 +769,10 @@ sub build_sequence {
       my $num = shift @{$line_numbers->{$y}};
       
       if ($config->{'number'}) {
-        my $padding = ' ' x ($config->{'max_number_length'} - length $num->[0]);
-        $line = $config->{'h_space'} . sprintf("%6s ", "$padding$num->[0]") . $line;
+        my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'pre'});
+        my $pad2 = ' ' x ($config->{'padding'}->{'number'} - length $num->{'start'});
+
+        $line = $config->{'h_space'} . sprintf("%6s ", "$pad1$num->{'pre'}$pad2$num->{'start'}") . $line;
       }
       
       if ($x == $length && ($config->{'end_number'} || $_->[$x]->{'post'})) {
@@ -756,8 +780,10 @@ sub build_sequence {
       }
       
       if ($config->{'end_number'}) {
-        my $padding = ' ' x ($config->{'max_number_length'} - length $num->[1]);
-        $line .= $config->{'h_space'} . sprintf(" %6s", "$padding$num->[1]");
+        my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'pre'});
+        my $pad2 = ' ' x ($config->{'padding'}->{'number'} - length $num->{'end'});
+
+        $line .= $config->{'h_space'} . sprintf(" %6s", "$pad1$num->{'pre'}$pad2$num->{'end'}");
       }
       
       $line = "$_->[$x]->{'pre'}$line" if $_->[$x]->{'pre'};
