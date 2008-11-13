@@ -380,7 +380,7 @@ sub transHandler_species {
   my $t = $OL->get_redirect( $script );
   if( $t ) {
     my $newfile = join '/', '',$species, $t;
-    warn "OLD LINK REDIRECT.....";
+    warn "OLD LINK REDIRECT..... $script $newfile" if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
     $r->headers_out->add( 'Location' => join( '?', $newfile, $querystring || () ) );
     $r->child_terminate;
     return HTTP_TEMPORARY_REDIRECT;

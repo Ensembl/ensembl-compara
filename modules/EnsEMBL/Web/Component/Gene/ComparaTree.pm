@@ -242,7 +242,7 @@ sub content_text {
   my $string = $tree->$fn(@params);
   if( $formats{$mode}{'split'} ) {
     my $reg = '(['.quotemeta($formats{$mode}{'split'}).'])';
-    $string =~ s/$reg/\1\n/g;
+    $string =~ s/$reg/$1\n/g;
   }
 
   return sprintf( $htmlt, $fmt_caption, $string );

@@ -7,6 +7,7 @@ use Class::Std;
 
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Controller::Action;
+use EnsEMBL::Web::RegObj;
 
 {
 
@@ -77,7 +78,9 @@ sub command {
   my ($self, $action) = @_;
   my $class = $self->get_connection($action->get_action);
   if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    warn "Dispatching to: " . $class . " (" . $action->get_action . ")";
+    warn "Dispatching to: " . $class . " (" . $action->get_action . ")" if 
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_WIZARD_MESSAGES;
     my $command = $class->new({'action'=>$action});
     $command->render;
   } else {
