@@ -56,8 +56,8 @@ my $offset = $self->{'container'}->start - 1;
 
       foreach my $style_key ( keys %{$group->{'features'}} ) {
         my $f_s  = $features->{'f_styles'}{$lname}{$style_key};
-        $has_labels = 1 if $f_s->{'style'}{'label'} eq 'yes' && $f_s->{'style'}{'bump'} ne 'no';
-        my $to_bump = $f_s->{'style'}{'bump'} eq 'yes';             ## Bump if style bump is set!
+        $has_labels = 1 if $f_s->{'style'}{'label'} eq 'yes' && $f_s->{'style'}{'bump'} ne 'no'; ##WHY!
+        my $to_bump = lc($f_s->{'style'}{'bump'}) eq 'yes' || $f_s->{'style'}{'bump'} eq '1';             ## Bump if style bump is set!
         my $fn_c = "composite_extent_".$f_s->{'style'}{'symbol'};
         my $fn_g = "extent_".$f_s->{'style'}{'symbol'};
         $can_hash{$fn_c} ||= $self->can($fn_c);
@@ -114,8 +114,9 @@ my $offset = $self->{'container'}->start - 1;
       my $score_based_flag = 0;
       $group->{height} ||= $self->{h};
       foreach ( keys %{$group->{'features'}} ) {
-        $score_based_flag = 1        if $features->{'f_styles'}{$lname}{$_}{'use_score'};               ## Composite if it is a graph!
-        $composite_flag ||= $to_join if $features->{'f_styles'}{$lname}{$_}{'style'}{'bump'} ne 'yes'; ## Composite if the features are to be bumped && linked!
+        $score_based_flag = 1        if $features->{'f_styles'}{$lname}{$_}{'use_score'};              ## Composite if it is a graph!
+        $composite_flag ||= $to_join if lc($features->{'f_styles'}{$lname}{$_}{'style'}{'bump'} ne 'yes') &&
+                                        $features->{'f_styles'}{$lname}{$_}{'style'}{'bump'} ne '1'; ## Composite if the features are to be bumped && linked!
       }
       my($s,$e) = ($group->{extent_start}, $group->{extent_end});
       my $composite;
@@ -136,7 +137,16 @@ my $offset = $self->{'container'}->start - 1;
           $ori > 0 ? 'Forward' : $ori < 0 ? 'Reverse' : '-';
         $title .= '; Features: '.$group->{'count'} if $group->{'count'} > 1;
 #        $title .= $group->{'notes'};
-        $href = $group->{'links'}[0]{'href'} if @{$group->{'links'}||[]};
+        if( @{$group->{'links'}||[]} ) {
+          $href = $group->{'links'}[0]{'href'};
+        } elsif( @{$group->{'flinks'}||[]} ) {
+          $href = $group->{'flinks'}[0]{'href'};
+        }
+        if( @{$group->{'notes'}||[]} ) {
+          $title .= join '', map { '; '.CGI::escapeHTML($_)} @{ $group->{'notes'}};
+        } elsif( @{$group->{'fnotes'}||[]} ) {
+          $title .= join '', map { '; '.CGI::escapeHTML($_)} @{$group->{'fnotes'}};
+        }
         $title .= "; Type: ".$group->{'type'} if $group->{'type'};
 
         if( $group->{extent_end} >0 &&  $group->{extent_start} < $seq_len ) {
@@ -183,7 +193,7 @@ my $offset = $self->{'container'}->start - 1;
 ## Grab the style for the group of features!
         my $f_s     = $features->{'f_styles'}{$lname}{$style_key};
         $f_s->{style}{height}||=$self->{h};
-        my $to_bump = lc($f_s->{'style'}{'bump'}) eq 'yes';
+        my $to_bump = lc($f_s->{'style'}{'bump'}) eq 'yes' || $f_s->{'style'}{'bump'} eq '1';
        
         my $fn_c = "composite_".lc($f_s->{'style'}{'symbol'});
         my $fn_g = "glyph_".lc($f_s->{'style'}{'symbol'});

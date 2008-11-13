@@ -95,7 +95,9 @@ sub features       {
                 'notes'   => $_->{'note'},
                 'links'   => $_->{'link'},
                 'targets' => $_->{'target'},
-                'features'=>{$style_key=>[$f]},'start'=>$f->start,'end'=>$f->end
+                'features'=>{$style_key=>[$f]},'start'=>$f->start,'end'=>$f->end,
+                'fnotes'  => $f->{'note'},
+                'flinks'  => $f->{'link'}
               };
             }
           }
