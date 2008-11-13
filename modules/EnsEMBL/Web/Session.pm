@@ -292,9 +292,8 @@ sub add_data {
 
   ## Unique code
   $args{code} = time;
-
   $self->set_data(%args);
-  return $args{code};
+  return \%args;
 }
 
 sub save_data {
