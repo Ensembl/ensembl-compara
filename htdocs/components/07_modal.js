@@ -160,7 +160,10 @@ function __modal_dialog_link_open( event ) {
   Event.stop(event);
 }
 
-function __modal_dialog_link_open_2( url, title ) {
+var __max_retries = 3;
+var __retry_delay = 2;
+
+function __modal_dialog_link_open_2( url, title, failures ) {
   if( url == 'close' ) {
     modal_dialog_close_2();
     return;
@@ -181,12 +184,23 @@ function __modal_dialog_link_open_2( url, title ) {
 
     modal_dialog_open(); // Resize and open the modal dialog box
 
+if(!failures) failures = 0;
   // Now make the AJAX request
     new Ajax.Request( url, {
       method: 'get',
-      onSuccess: function( transport ) { modal_success(transport) },
+      onSuccess: function( transport ) { __success( 'LOADED'); modal_success(transport) },
       onFailure: function( transport ) {
-        $('modal_content').innerHTML = '<p class="ajax-error">Failure: the resource failed to load</p>';
+        if( failures < __max_retries ) {
+          __error( "Trying again "+failures );
+          url   = url.replace(/"/,'\"');
+          title = title.replace(/"/,'\"');
+          $('modal_content').update(Builder.node('div',
+            {className:'spinner'}, 'Resource failed to load trying again....')
+          );
+          setTimeout( '__modal_dialog_link_open_2("'+ url+'","'+ title+'",'+(failures + 1)+' );', 1000*__retry_delay );
+        } else {
+          $('modal_content').innerHTML = '<p class="ajax_error">Failure: the resource failed to load the resource</p>';
+        }
       }
     });
   }
@@ -264,7 +278,7 @@ function modal_form_submit( event ) {
       modal_success(transport) 
     },
     onFailure: function( transport ) {
-      $('modal_content').innerHTML = '<p>Failure: the resource failed to load</p>';
+      $('modal_content').innerHTML = '<p class="ajax_error">Failure: the resource failed to load</p>';
     }
   });
   }
