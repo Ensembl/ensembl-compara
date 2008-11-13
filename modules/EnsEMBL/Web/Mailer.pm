@@ -26,7 +26,7 @@ sub BUILD {
   my ($self, $ident, $args) = @_;
   my $sd = $ENSEMBL_WEB_REGISTRY->species_defs;
   $From{$ident}           = $args->{from}           || $sd->ENSEMBL_HELPDESK_EMAIL;
-  $Reply{$ident}          = $args->{reply}          || $sd->ENSEMBL_HELPDESK_EMAIL;
+  $Reply{$ident}          = $args->{reply};#          || $args->{from} || $sd->ENSEMBL_HELPDESK_EMAIL;
   $MailServer{$ident}     = $args->{mail_server}    || $sd->ENSEMBL_MAIL_SERVER;
   $SpamThreshold{$ident}  = $args->{spam_threshold} || 60;
   $SiteName{$ident}       = $sd->ENSEMBL_SITETYPE;
