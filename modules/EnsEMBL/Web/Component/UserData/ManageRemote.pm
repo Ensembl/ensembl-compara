@@ -49,7 +49,7 @@ sub content {
 
       if (ref($source) =~ /Record/) { ## from user account
         my $date = $source->modified_at || $source->created_at;
-        my $link = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
+        my $link = sprintf('<a href="%s/UserData/DeleteRemote?type=das;id=%s;%s" class="modal_link">Delete</a>', $dir, $source->id, $referer);
         $table->add_row( { 'name'  => $source->label, 'date' => $self->pretty_date($date), 'save' => 'Saved', 'delete' => $link } );
       }
       else { ## temporary
