@@ -20,6 +20,7 @@ sub content {
   my $object = $self->object;
 
   my $html;
+  my $referer = '_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
 
   my @movies;
   my @ids = $object->param('id') || $object->param('feedback');
@@ -32,7 +33,7 @@ sub content {
     @movies = sort {$a->title cmp $b->title} EnsEMBL::Web::Data::Movie->find_all;
   }
 
-  if (scalar(@movies) == 1) {
+  if (scalar(@movies) == 1 && $movies[0]) {
     my $movie = $movies[0];
     $html .= '<h3>'.$movie->title."</h3>";
 
@@ -55,7 +56,7 @@ sub content {
       $html .= $self->help_feedback('/Help/Movie', 'Movie', $movie->id, '"margin-top:2em');
     }
   }
-  elsif (scalar(@movies) > 0) {
+  elsif (scalar(@movies) > 0 && $movies[0]) {
 
     $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly (the list will also be included in the Release Email, which is sent to the <a href="/info/about/contact/mailing.html">ensembl-announce mailing list</a>).</p>
 <p class="space-below">Except where noted, there is no audio - popup text is used in place of a soundtrack.</p>
@@ -70,12 +71,15 @@ sub content {
 
     foreach my $movie (@movies) {
 
-      my $title_link = sprintf(qq(<a href="/Help/Movie?id=%s" class="cp_internal">%s</a>\n), $movie->help_record_id, $movie->title);
+      my $title_link = sprintf(qq(<a href="/Help/Movie?id=%s;%s" class="modal_link">%s</a>\n), $movie->help_record_id, $referer, $movie->title);
       $table->add_row( { 'title'  => $title_link, 'mins' => $movie->length } );
 
     }
     $html .= $table->render;
 
+  }
+  else {
+    $html .= qq(<p>Sorry, we have no video tutorials at the moment, as they are being updated for the new site design. Please try again after the next release.</p>);
   }
 
   return $html;
