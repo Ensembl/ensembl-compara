@@ -47,7 +47,7 @@ sub content {
   $html .=  qq(<dl class="summary">
       <dt>$f_label</dt>
       <dd><pre>$f_html</pre>
-      <blockquote><em>(Variation feature highlighted)</em></blockquote></dd></dl>);
+      <blockquote><em>(Variant highlighted)</em></blockquote></dd></dl>);
 
 
   return $html;
