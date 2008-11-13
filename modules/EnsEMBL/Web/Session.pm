@@ -8,7 +8,8 @@ use Data::Dumper qw(Dumper);
 use Time::HiRes qw(time);
 use Class::Std;
 
-use EnsEMBL::Web::Tools::Encryption;
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Tools::Encryption 'checksum';
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::ViewConfig;
@@ -298,7 +299,7 @@ sub save_data {
 ### Save all data back to the database
   my $self = shift;
   my %args = (
-    type => 'tmp',
+    type => 'upload',
     @_,
   );
   $self->create_session_id;
@@ -323,26 +324,32 @@ sub purge_tmp_data { shift->purge_data(type => 'upload', code => 'tmp', @_) }
 
 ###################################################################################################
 ##
-## Share tmp and other data stuff
+## Share upload data
 ##
 ###################################################################################################
 
-sub get_shared_data {
+sub receive_shared_data {
 ### Share
-  my ($self, $id, $checksum) = @_; 
-  return unless $self->get_session_id;
+  my ($self, @share_refs) = @_; 
 
-  ## TODO: error excemption
-  die "Share violation."
-    unless EnsEMBL::Web::Tools::Encryption::validate_checksum($id, $checksum);
-
-  if (my $share = EnsEMBL::Web::Data::Session->new($id)) {
-    $self->set_data($share->data);
-    return $share->data;
-  } else {
-    die "No data found for sharing";
+  foreach my $share_ref (@share_refs) {
+    if ($share_ref =~ /\./) {
+    ## Session record:
+      my $record = EnsEMBL::Web::Data::Session->retrieve(code => $share_ref);
+      $self->add_data(%{ $record->data }) if $record;
+    } else {
+    ## User record, security check first:
+      my ($id, $checksum) = $share_ref =~ /^(\d+)-(\w+)$/;
+      die 'Sharing violation'
+        unless checksum($id) ne $checksum;
+      my $record = EnsEMBL::Web::Data::Record::Upload::User->new($id);
+      $self->add_data(%{ $record->data }) if $record;
+    }
   }
 }
+
+###################################################################################################
+
 
 # This method gets all configured DAS sources for the current session, i.e. all
 # those either added or modified externally.
