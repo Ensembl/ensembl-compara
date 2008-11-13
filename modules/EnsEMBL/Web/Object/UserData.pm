@@ -119,6 +119,7 @@ sub store_tmp_data {
   ## Parse file and save to genus_species_userdata
   my $self     = shift;
   my $tmp_data = $self->get_session->get_tmp_data;
+  $tmp_data->{'name'} = $self->param('name') if $self->param('name');
   my $report   = $self->save_tmp_to_database;
 
   unless ($report->{'errors'}) {
