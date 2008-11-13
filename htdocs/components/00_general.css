@@ -4,7 +4,7 @@
 .hidden { display:none }
 .hide   { display:none } /* need to remove this if we can */
 
-.ajax_error { font-weight: bold; color:[[ALERT_TEXT]]; background-color:[[ALERT_BG]] }
+.ajax_error { font-weight: bold; color:[[ALERT_TEXT]]; background-color:[[ALERT_BG]]; margin: 1em; padding: 1em; border: solid 1px [[ALERT_TEXT]] }
 .spinner { 
   height: 100px;width:100%;border:0; margin: 0 auto;
   vertical-align: bottom;
