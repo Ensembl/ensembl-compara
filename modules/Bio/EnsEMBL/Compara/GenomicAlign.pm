@@ -1268,7 +1268,7 @@ sub _get_cigar_line_from_aligned_sequence {
   my ($aligned_sequence) = @_;
   my $cigar_line = "";
   
-  my @pieces = split(/(\-+)/, $aligned_sequence);
+  my @pieces = grep {$_} split(/(\-+)|(\.+)/, $aligned_sequence);
   foreach my $piece (@pieces) {
     my $mode;
     if ($piece =~ /\-/) {
