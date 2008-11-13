@@ -11,10 +11,10 @@ sub init {
   $view_config->_set_defaults(qw(
     display_width           120
     exon_ori                all
-    snp_display             off
+    snp_display             on
     line_numbering          off
     codons_display          off
-    title_display           off
+    title_display           on
   ));
   $view_config->storable = 1;
 }
