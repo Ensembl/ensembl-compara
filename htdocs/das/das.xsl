@@ -13,22 +13,56 @@
 </xsl:if>
 </xsl:if>
   <title><xsl:apply-templates select="*" mode="title" /></title>
+  <style type="text/css">
+body { font-family: Luxi Sans, Geneva, Helvetica, Arial, sans-serif; color:#000; background-color:#fff; font-size: 80%; margin: 0}
+
+.mh { width: 100%; border: 0px; padding: 0px; margin: 0px; border-collapse: collapse; background-color: #333366 }
+#mh_lo     { width:50%; vertical-align:middle; white-space: nowrap; padding-left:3px }
+#mh_lo img { border: 0 }
+td#mh_bc { color: #cccccc; font-weight: bold; padding-left:4px; } 
+#mh_bc a { color: #ccddff; text-decoration: none }
+#mh_bc a:hover { color: #cc0000;}
+
+#wide-footer { clear: both; text-align: center; font-size: 0.9em; padding: 2px 0; margin: 0.5em 0 0 0; }
+#wide-footer img { vertical-align: middle; height: 20px }
+#wide-footer p { margin: 0 0 1em 0 }
+
+.twocol-left { float:left; width:47%; margin:0 0 1% 0; padding:1%; clear:left; }
+.twocol-right { float:right; width:47%; margin:0 0 1% 0; padding:1%; }
+.left  { text-align:left; }
+.right { text-align:right; }
+.unpadded { margin:0 1%; padding:0; }
+h3.boxed { margin: 0 0 0.5em 0; padding: 0.5em; background-color: #8fa0c4 }
+  </style>
   </head>
-  <body>
+<body id="ensembl-webpage">
+  <table class="mh" summary="layout table">
+    <tr>
+      <td id="mh_lo"><a href="/"><img src="/i/e-ensembl.gif" alt="Ensembl" title="Ensembl" style="width:150px;height:40px" /></a></td>
+    </tr>
+  </table>
+  <table class="mh" summary="layout table">
+    <tr>
+      <td id="mh_bc"><strong id="title"></strong></td>
+      <td id="mh_lnk"></td>
+    </tr>
+  </table>
 
-<div id="masthead">
-  <h1><a href="/"><img src="/img/e-bang.gif" style="width: 46px; height: 40px; vertical-align:bottom; border:0px; padding-bottom:2px" alt="" title="Home" /></a><a href="/" class="home serif">Ensembl</a>
-  <xsl:apply-templates select="*" mode="masthead" />
-  </h1>
-</div>
-
-<xsl:call-template name="release_and_links" />
-<div id="page">
-<div class="sptop">&#160;</div>
+  
 <xsl:apply-templates select="*" />
-<xsl:call-template name="disclaimer"        />
-</div>
-  </body>
+
+  <div id="wide-footer">
+    <div class="twocol-left left unpadded">Ensembl
+      &#169; <a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> /
+      <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a>
+      </div>
+    <div class="twocol-right right unpadded">
+      <a href="http://www.ensembl.org/info/about/intro.html">About Ensembl</a> | 
+      <a href="http://www.ensembl.org/info/about/contact/">Contact Us</a> | 
+      <a href="/info/website/help/">Help</a> 
+    </div>
+  </div>
+</body>
 </html>
 </xsl:template>
 
@@ -96,8 +130,6 @@ function addLoadEvent(func) {
 //]]>
   </script>
   <style type="text/css" media="all">
-    @import url(/css/ensembl.css);
-    @import url(/css/content.css);
 div.das { text-align: center }
 table.das { border-collapse: collapse; border: 1px solid #ccc; width: 98%; margin: 0px auto; text-align: left }
 table.das tr    { background:#fff; vertical-align: top }
@@ -108,41 +140,11 @@ table.das tr td.c { text-align: center }
 table.das tr td.l { text-align: left  }
 table.das tr td.r { text-align: right }
 table.das tr td ul     { margin: 0px; padding: 0px }
-#page div.das table.das tr td ul li  { margin: 0px; list-style-type: none; list-style-image: none; }
-#page div.das table.das tr dt ul li span.nb, #page table.das tr td ul li a { white-space: nowrap; font-weight: bold; text-decoration: none }
+div.das table.das tr td ul li  { margin: 0px; list-style-type: none; list-style-image: none; }
+div.das table.das tr dt ul li span.nb, #page table.das tr td ul li a { white-space: nowrap; font-weight: bold; text-decoration: none }
 table.das tr.alt_bg td { background-color:#eee }
 table.das tr.ref_bg td { background-color:#fed }
   </style>
-  <style type="text/css" media="print">
-    @import url(/css/printer-styles.css);
-  </style>
-  <style type="text/css" media="screen">
-    @import url(/css/screen-styles.css);
-  </style>
-  <style type="text/css" media="all">
-body { background-image: none }
-  </style>
-</xsl:template>
-
-<xsl:template name="release_and_links">
-<div id="release-t">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</div>
-<div id="release"><div>Ensembl release 49 - <a href="/Multi/newsview?rel=49" title="What's New">Mar 2008</a></div></div>
-<div id="help"><strong>
-  <a href="/">HOME</a> &#183;
-  <a href="/das/sources">DAS&#160;SOURCES</a> &#183;
-  <a href="/multi/blastview">BLAST</a> &#183;
-  <a href="/biomart/martview/">BIOMART</a> &#183;
-  <a href="/sitemap.html">SITEMAP</a>
-  <a href="javascript:void(window.open('/perl/helpview','helpview','width=700,height=550,resizable,scrollbars'))" class="blue-button">HELP</a>
-</strong></div>
-</xsl:template>
-
-<xsl:template name="disclaimer">
-<p class="center">
-  &#169; 2007 <a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> /
-  <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a>.
-  Ensembl is available to <a href="/info/data/download.html">download for public use</a> - please see the <a href="/info/about/code_licence.html">code licence</a> for details.
-</p>
 </xsl:template>
 
 <!-- support functions to split up the name... -->
@@ -247,10 +249,12 @@ body { background-image: none }
     <td class="c"><xsl:element name="a"><xsl:attribute name="href" >/das/<xsl:value-of select="SOURCE/@id" />/entry_points</xsl:attribute>Entry points</xsl:element></td>
       </xsl:when>
       <xsl:otherwise>
+<!--
     <td class="l"><ul>
       <li><xsl:element name="a"><xsl:attribute name="href" >/das/<xsl:value-of select="SOURCE/@id" />/entry_points</xsl:attribute>Add to ContigView</xsl:element></li>
       <li><xsl:element name="a"><xsl:attribute name="href" >/das/<xsl:value-of select="SOURCE/@id" />/entry_points</xsl:attribute>Add to CytoView</xsl:element></li>
     </ul></td>
+-->
       </xsl:otherwise>
     </xsl:choose>
   </xsl:element>
