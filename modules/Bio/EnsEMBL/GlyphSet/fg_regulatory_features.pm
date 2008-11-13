@@ -112,6 +112,20 @@ sub href {
   return $href; 
 }
 
+sub title {
+  my ($self, $f) = @_;
+  my $id = $f->stable_id;
+  my $type =$f->feature_type->name();
+  if ($type =~/Promoter/){$type = 'Promoter_associated';}
+  elsif ($type =~/Gene/){$type = 'Genic';}
+  elsif ($type =~/Unclassified/){$type = 'Unclassified';}
+  if ($type =~/Non/){$type = 'Non-genic';}
+  my $pos = 'Chr ' .$f->seq_region_name .":". $f->start ."-" . $f->end;
+
+
+ return "Regulatory Feature: $id; Type: $type; Location: $pos" ; 
+
+}
 
 1;
 ### Contact: Beth Pritchard bp1@sanger.ac.uk
