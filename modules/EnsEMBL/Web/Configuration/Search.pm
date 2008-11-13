@@ -9,6 +9,7 @@ sub ajax_content   { return $_[0]->_ajax_content;   }
 sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;  }
 sub context_panel  { return $_[0]->_context_panel;  }
+sub content_panel  { return undef; }
 
 #TO DO
 # - check active flags work on child1
