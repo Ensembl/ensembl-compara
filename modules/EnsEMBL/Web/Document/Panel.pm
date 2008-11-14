@@ -105,9 +105,9 @@ sub option        { return $_[0]{_options}{$_[1]};   }
 sub options       { return keys %{$_[0]{_options}};  }
 
 sub caption {
-    my $self = shift;
-    $self->{'caption'} = shift if (@_);
-    return $self->{'caption'};
+  my $self = shift;
+  $self->{'caption'} = shift if (@_);
+  return $self->{'caption'};
 }
 
 =head2 Panel components.
@@ -609,8 +609,8 @@ if ($component eq 'das_features') {
 			       qq(<p>Function <strong>$function_name</strong> fails to execute due to the following error:</p>$error)
 			       );
 		warn( "Component $function_name (runtime failure)" );
-	    } else {
-		warn( "Component $function_name succeeded" );
+#	    } else {
+#		warn( "Component $function_name succeeded" );
 	    }
 	} else {
 	    $self->_error( qq(Compile error in component "<b>$component</b>"),
