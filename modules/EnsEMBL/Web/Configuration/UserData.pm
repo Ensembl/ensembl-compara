@@ -55,9 +55,6 @@ sub populate_tree {
   $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Data",
     [], { 'availability' => 1 }
   ));
-  $uploaded_menu->append($self->create_node( 'SaveUpload', "Save to Account",
-    [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
-  ));
   $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Uploads",
     [qw(manage_upload   EnsEMBL::Web::Component::UserData::ManageUpload)
     ], { 'availability' => 1, 'concise' => 'Manage Uploads' }
@@ -70,9 +67,6 @@ sub populate_tree {
   $attached_menu->append($self->create_node( 'AttachURL', "Attach URL Data",
    [], { 'availability' => $is_configurable }
   ));
-  $attached_menu->append($self->create_node( 'SaveRemote', "Save to Account",
-    [], { 'availability' => $has_logins, 'concise' => 'Save Data' }
-  ));
   $attached_menu->append($self->create_node( 'ManageRemote', "Manage Data",
     [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageRemote)
     ], { 'availability' => 1, 'concise' => 'Manage Data' }
@@ -81,6 +75,16 @@ sub populate_tree {
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'Message', '',
     [qw(message EnsEMBL::Web::Component::CommandMessage
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'Message', '',
+    [qw(save_upload EnsEMBL::Web::Component::UserData::SaveUpload
+        )],
+      { 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'Message', '',
+    [qw(save_remote EnsEMBL::Web::Component::UserData::SaveRemote
         )],
       { 'no_menu_entry' => 1 }
   );
