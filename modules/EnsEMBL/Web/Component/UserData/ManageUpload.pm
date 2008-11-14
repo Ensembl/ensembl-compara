@@ -41,7 +41,7 @@ sub content {
       {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
     );
     foreach my $file (@data) {
-      my $name = '<p>'.
+      my $name = '<p>';
       $name .= '<strong>'.$file->{'name'}.'</strong><br />' if $file->{'name'};
       $name .= $file->{'format'}.' file for '.$file->{'species'};
       my $row = {'name' => $name};
