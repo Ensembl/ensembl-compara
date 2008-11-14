@@ -39,7 +39,6 @@ sub render {
   $html .= qq(</div>\n<div id="full_species">);
   $html .= _render_species_list(\%species_info, \%species_description); 
   $html .= qq(</div>
-<p>Other pre-build species are available in <a href="http://pre.ensembl.org" rel="external">Ensembl <em>Pre<span class="red">!</span></em> &rarr;</a></p>
 );
 
   return $html;
@@ -64,12 +63,6 @@ sub _render_species_list {
  
   ## output list
   $html .= qq(<div id="static_favourite_species">
-<h2 class="first">Browse a Genome</h2>
-<p>The Ensembl project produces genome databases
-  for vertebrates and other eukaryotic species, and makes this information
-  freely available online.</p>
-<p>Click on a link below to go to the species' home page.</p>
-
 <p>);
 
   if ($species_defs->ENSEMBL_LOGINS && $user && scalar(@ok_faves)) {
