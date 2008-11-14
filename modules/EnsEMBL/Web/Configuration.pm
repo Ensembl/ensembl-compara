@@ -559,17 +559,15 @@ sub _local_tools {
       my $caption = 'Add custom data to page';
       my $action = 'Upload';
 
-      #my $userdata = $obj->get_session->get_tmp_data;
-      #my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-      #if ($userdata || $user) {
-      #  $caption = 'Add/manage custom data';
-      #  if ($user) {
-      #    $action = 'SaveUpload';
-      #  }
-      #  else {
-      #    $action = 'ShareUpload';
-      #  }
-      #}
+      my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+    
+      my @temp_uploads = $self->object->get_session->get_data(type => 'upload');
+      my @user_uploads = $user ? $user->uploads : ();
+
+      if (@temp_uploads || @user_uploads) { 
+        $caption = 'Add/manage custom data';
+        $action = 'ManageUpload';
+      }
 
       $self->{'page'}->local_tools->add_entry(
         'caption' => $caption,

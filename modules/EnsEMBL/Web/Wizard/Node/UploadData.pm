@@ -302,7 +302,7 @@ sub show_shareable {
   my @shares = grep { $_ } ($self->object->param('share_id'));
 
   my $share_ref = join ';', (
-    map { ($_ =~ /^d+$/) ? "share_ref=000000$_-". checksum($_) : "share_ref=$_" } @shares
+    map { ($_ =~ /^\d+$/) ? "share_ref=000000$_-". checksum($_) : "share_ref=$_" } @shares
   );
 
   my $url = $self->object->species_defs->ENSEMBL_BASE_URL . $self->object->param('_referer');
