@@ -19,10 +19,13 @@ sub caption {
 sub content {
   my $self = shift;
   my $msg1 = 'In the near future this page will display personal annotations '.
-             'that you provide for a gene or transcript. This feature is currently in development.';
+             'that you provide for a gene. This feature is currently in '.
+             'development.';
   my $msg2 = "Click 'configure this page' to change the sources of external ".
              "annotations that are available in the External Data menu.";
-  my $html = $self->_info('Coming soon', $msg1, '100%') . $self->_info('Info', $msg2, '100%');
+  return $self->_info('Coming soon', $msg1, '100%') .
+         $self->_info('Info',        $msg2, '100%');
+  
 }
 
 1;

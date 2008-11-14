@@ -18,10 +18,21 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $transcript = $self->object;
-  my $object     = $transcript->translation_object;
-  return $self->_error( 'No protein product', '<p>This transcript does not have a protein product. External data is only supported for proteins.</p>' ) unless $object;
-  return "<p>This is the page that will be configured to turn DAS sources on/off</p>";
+  
+  my $translation = $self->object->translation_object;
+  if ( !$translation ) {
+    my $msg = 'This transcript does not have a protein product. External data '.
+              'is only supported for proteins.';
+    return $self->_error( 'No protein product', $msg, '100%' );
+  }
+  
+  my $msg1 = 'In the near future this page will display personal annotations '.
+             'that you provide for a protein. This feature is currently in '.
+             'development.';
+  my $msg2 = "Click 'configure this page' to change the sources of external ".
+             "annotations that are available in the External Data menu.";
+  return $self->_info('Coming soon', $msg1, '100%') .
+         $self->_info('Info',        $msg2, '100%');
 }
 
 1;
