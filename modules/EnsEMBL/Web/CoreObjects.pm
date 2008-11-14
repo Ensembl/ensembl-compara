@@ -221,13 +221,16 @@ sub _generate_objects {
   if( $self->param('v')) { 
     my $vardb = $self->{'parameters'}{'vdb'} = $self->param('vdb') || 'variation';
     my $vardb_adaptor = $self->database('variation');
+    if( $vardb_adaptor ) {
     $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('v'), $self->param('source')));
     unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
     $self->_give_snp_unique_identifier($self->param('vf'));
+    }
   }  
   if( $self->param('t') ) {
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
     my $tdb_adaptor = $self->database($tdb);
+    if( $tdb_adaptor ) {
     my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('t'));
     if( $t ) {
       $self->transcript( $t );
@@ -237,10 +240,12 @@ sub _generate_objects {
       $t = $a->fetch_by_stable_id( $self->param('t') ); 
       $self->transcript( $t ) if $t;
     }
+    }
   }
   if( $self->param('pt') ) {
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
     my $tdb_adaptor = $self->database($tdb);
+    if( $tdb_adaptor ) {
     my $t = $tdb_adaptor->get_PredictionTranscriptAdaptor->fetch_by_stable_id( $self->param('pt') );
     if( $t ) {
       $self->transcript( $t );
@@ -248,10 +253,12 @@ sub _generate_objects {
          $slice = $slice->invert() if $slice->strand < 0;
       $self->location( $slice );
     }
+    }
   }
   if( !$self->transcript &&  $self->param('domain') ) {
     my $tdb         = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
     my $tdb_adaptor = $self->database($tdb);
+    if( $tdb_adaptor ) {
     my $sth = $tdb_adaptor->dbc()->db_handle()->prepare( 'select i.interpro_ac,x.display_label, x.description from interpro as i left join xref as x on i.interpro_ac=x.dbprimary_acc where i.interpro_ac = ?' );
     $sth->execute( $self->param('domain') ); 
     my ($t,$n,$d) = $sth->fetchrow();
@@ -259,10 +266,12 @@ sub _generate_objects {
       $self->transcript( new EnsEMBL::Web::Fake({ 'view' => 'Domains/Genes', 'type'=>'Interpro Domain', 'id' => $t, 'name' => $n, 'description' => $d, 'adaptor' => $tdb_adaptor->get_GeneAdaptor }) );
       $self->{'parameters'}{'domain'} = $self->param('domain');
     }
+    }
   }
   if( !$self->transcript && $self->param('g') ) {
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
     my $tdb_adaptor = $self->database($tdb);
+    if( $tdb_adaptor ) {
     my $g = $tdb_adaptor->get_GeneAdaptor->fetch_by_stable_id(       $self->param('g') );
     if( $g ) {
       $self->gene( $g );
@@ -276,6 +285,7 @@ sub _generate_objects {
       my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
       $g = $a->fetch_by_stable_id( $self->param('g') ); 
       $self->gene( $g ) if $g;
+    }
     }
   }
   if( !$self->gene && $self->param('family') ) {
@@ -296,6 +306,7 @@ sub _generate_objects {
     if( $r ) {
       if( ($s||$e) ) {
         my $db_adaptor= $self->database('core');
+        if($db_adaptor){
         my $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
         if( $t ) {
           my @attrib = @{ $t->get_all_Attributes( 'toplevel' )||[] }; ## Check to see if top-level as "toplevel" above is b*ll*cks
@@ -309,8 +320,10 @@ sub _generate_objects {
             $self->{'parameters'}{'r'} = $t->seq_region_name.':'.$t->start.'-'.$t->end;
           }
         }
+        }
       } else {
         my $db_adaptor= $self->database('core');
+        if($db_adaptor){
         my $slice = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r );
         if( $slice ) {
           my @attrib = @{ $slice->get_all_Attributes( 'toplevel' )||[] };  ## Check to see if top-level as "toplevel" above is b*ll*cks
@@ -318,6 +331,7 @@ sub _generate_objects {
             $self->location( $slice );
             $self->{'parameters'}{'r'} = $slice->seq_region_name;
           }
+        }
         }
       }
     }
