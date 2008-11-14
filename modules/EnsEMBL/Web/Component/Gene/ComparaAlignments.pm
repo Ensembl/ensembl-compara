@@ -68,13 +68,13 @@ sub content {
     push (@{$config->{'slices'}}, {
       slice => $_,
       underlying_slices => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [$_],
-      species => $species
+      name => $species
     });
   }
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
   
-  # markup_comparisons must be called first to get the comparison sequences
+  # markup_comparisons must be called first to get the order of the comparison sequences
   # The order these functions are called in is also important because it determines the order in which things are added to $config->{'key'}
   $self->markup_comparisons($sequence, $markup, $config) if $config->{'align'};
   $self->markup_conservation($sequence, $markup, $config) if $config->{'conservation_display'};
@@ -88,7 +88,7 @@ sub content {
 #    $config->{'key'} .= qq{ ~&nbsp;&nbsp; No resequencing coverage at this position };
 #  }
   
-
+  
   my $table = $self->get_slice_table($config);
   
   $config->{'html_template'} = qq{<p>$config->{'key'}</p>$table<pre>%s</pre>};
@@ -216,7 +216,7 @@ sub get_slice_table {
   my $table_rows;
 
   foreach (@{$config->{'slices'}}) {
-    my $species = $_->{'species'};
+    my $species = $_->{'name'};
     
     $table_rows .= qq{
     <tr>

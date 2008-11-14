@@ -41,7 +41,7 @@ sub content {
   }
 
   $config->{'exon_features'} = $object->get_slice_object->highlight_display($object->Obj->get_all_Exons);
-  $config->{'slices'} = [{ slice => $slice, species => $config->{'species'} }];
+  $config->{'slices'} = [{ slice => $slice, name => $config->{'species'} }];
 
   if ($config->{'line_numbering'}) {
     $config->{'end_number'} = 1;
