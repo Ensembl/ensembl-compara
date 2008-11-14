@@ -114,6 +114,7 @@ sub _render_species_list {
 sub _render_species_dropdown {
   my ($species_info, $description) = @_; 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $sitename = $species_defs->ENSEMBL_SITETYPE;
 
   my $html = qq(<form action="#">
 <h3>All genomes</h3>
@@ -196,13 +197,14 @@ sub _render_species_dropdown {
   }
 
   $html .= qq(
-  <option value="/info/about/species.html">-- Full list of Ensembl species --</option>);
+  <option value="/info/about/species.html">-- Full list of $sitename species --</option>);
   $html .= '
   </optgroup>'."\n" if $optgroup == 1;
   $html .= qq(
 </select>
 </div>
 </form>
+<p><a href="/info/about/species.html">View full list of all $sitename species</a></p>
 );
   return $html;
 
