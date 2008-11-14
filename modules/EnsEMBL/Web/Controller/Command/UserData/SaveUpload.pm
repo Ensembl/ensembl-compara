@@ -16,7 +16,13 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  EnsEMBL::Web::Document::Wizard::simple_wizard('UserData', 'save_upload', $self);
+
+  my $object = $self->create_object;
+
+  $object->param(error_message => 'Error occured while saving your data')
+    unless $object && $object->store_data(type => 'upload', code => $object->param('code'));
+
+  $self->ajax_redirect($self->ajax_url('/UserData/ManageUpload'));
 }
 
 }

@@ -64,8 +64,6 @@ sub content {
     my @uploads = $user->uploads;
 
     if (@uploads) {
-      $html .= qq(<p class="space-below">You have the following data saved in our databases:</p>);
-
       my $table = EnsEMBL::Web::Document::SpreadSheet->new( [], [], {'margin' => '0 0 1em 0'} );
       $table->add_columns(
         {'key' => "name", 'title' => 'Upload name', 'width' => '60%', 'align' => 'left' },

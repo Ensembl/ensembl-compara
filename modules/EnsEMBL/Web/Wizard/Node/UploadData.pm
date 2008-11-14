@@ -316,50 +316,6 @@ sub show_shareable {
 
 }
 
-#------------------------------ USER ELECTS TO SAVE DATA --------------------------------------
-
-sub show_tempdata {
-  my $self = shift;
-  $self->title('Save Data to Your Account');
-
-## TODO: Anne, this must display all session->get_data(type => 'upload'); data to save
-##
-#  my @uploads = $self->object->get_session->get_data(type => 'upload');
-#  if (@uploads) {
-#    $self->add_element('type'=>'Information', 'value' => "You have the following temporary data uploaded:", 'style' => 'spaced');
-#    (my $species = $upload->{'species'}) =~ s/_/ /g; 
-#    my $info  = 'Unsaved upload: '.$upload->{'format'}.' file for '.$upload->{'species'};
-#    $self->add_element('type'=>'Information', 'value' => $info, 'style' => 'spaced');
-#    $self->add_element('type'=>'String', 'name' => 'name', 'label' => 'Name of this upload', 'value' => $upload->{'name'});
-#  } else {
-#    $self->add_element('type'=>'Information', 'value' => "You have no temporary data uploaded. Click on 'Upload Data' in the left-hand menu to upload your file(s) to our server.");
-#  }
-
-}
-
-
-## TODO: get rid of this function, it's duplicates save_upload, and does it wrong
-sub save_tempdata {
-  my $self = shift;
-
-## TODO: Anne, this must save with session->store_tmp_data(type => 'upload', code => param('code'));
-##
-## Parse file and save to genus_species_userdata
-## Move data reference from tmp to user or permanent session record if not logged in
-#  if ($self->object->store_tmp_data) {
-#    $self->parameter('wizard_next', 'ok_tempdata');
-#  } else {
-#    $self->parameter('wizard_next', 'show_tempdata');
-#    $self->parameter('error_message', 'Unable to save to user account');
-#  }
-}
-
-sub ok_tempdata {
-  my $self = shift;
-  $self->title('Data Saved');
-  $self->add_element('type'=>'Information', 'value' => 'Your file was saved to your user account.');
-}
-
 #------------------------ PRIVATE METHODS -----------------------
 
 sub _get_assemblies {

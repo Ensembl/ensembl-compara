@@ -136,23 +136,6 @@ sub share_upload {
   $wizard->add_connection( from => $select, to => $check);
 }
 
-sub save_upload {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  my $wizard = $self->wizard;
-
-  ## CREATE NODES
-  my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
-  my $start = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'show_tempdata');
-  my $save  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'save_tempdata');
-  my $end   = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'ok_tempdata');
-
-  ## SET UP CONNECTION BUTTONS
-  $wizard->add_connection( from => $start, to => $save);
-  $wizard->add_connection( from => $save, to => $end);
-}
-
 sub attach_das {
   my $self   = shift;
   my $object = $self->{'object'};
