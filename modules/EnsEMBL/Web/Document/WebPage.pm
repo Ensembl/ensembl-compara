@@ -334,7 +334,7 @@ sub render {
     CGI::header("text/plain"); 
     $self->page->render_Text;
   } elsif( $self->format eq 'DAS' ) { 
-    $self->page->subtype = $self->{'subtype'};
+    $self->page->{'subtype'} = $self->{'subtype'};
     CGI::header("text/xml"); $self->page->render_DAS;
   } elsif( $self->format eq 'XML' ) { 
     CGI::header("text/xml"); $self->page->render_XML;
