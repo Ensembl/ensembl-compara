@@ -39,9 +39,11 @@ sub counts {
 
 #---------------------------------- userdata DB functionality ----------------------------------
 
-sub save_tmp_to_database {
-  my $self     = shift;
-  my $tmpdata  = $self->get_session->get_tmp_data;
+sub save_to_db {
+  my $self = shift;
+  my %args = @_;
+
+  my $tmpdata  = $self->get_session->get_data(%args);
   my $assembly = $tmpdata->{assembly};
 
   ## TODO: proper error exceptions !!!!!
@@ -115,13 +117,15 @@ sub move_to_user {
   return undef;
 }
 
-sub store_tmp_data {
+sub store_data {
   ## Parse file and save to genus_species_userdata
-  my $self     = shift;
-  my $tmp_data = $self->get_session->get_tmp_data;
-  $tmp_data->{'name'} = $self->param('name') if $self->param('name');
-  my $report   = $self->save_tmp_to_database;
+  my $self = shift;
+  my %args = @_;
 
+  my $tmp_data = $self->get_session->get_data(%args);
+  $tmp_data->{'name'} = $self->param('name') if $self->param('name');
+
+  my $report = $self->save_to_db(%args);
   unless ($report->{'errors'}) {
 
     ## Delete cached file
@@ -142,7 +146,7 @@ sub store_tmp_data {
                         filename => '',
                         analyses => join(', ', @logic_names),
                       ))  {
-                            $self->get_session->purge_tmp_data;
+                            $self->get_session->purge_data(%args);
                             return $upload->id;
                       }
       warn 'ERROR: Can not save user record.';
@@ -154,7 +158,7 @@ sub store_tmp_data {
                          filename => '',
                          analyses => join(', ', @logic_names),
                        )) {
-                            $self->get_session->purge_tmp_data;
+                            $self->get_session->purge_data(%args);
                             return $upload->{code};
                        }
       warn 'ERROR: Can not save session record.';

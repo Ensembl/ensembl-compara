@@ -99,16 +99,16 @@ sub upload {
 
   ## CREATE NODES
   my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
-  my $session  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_session');
-  my $warning  = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'overwrite_warning' );
-  my $save     = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'overwrite_save' );
+#  my $session  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_session');
+#  my $warning  = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'overwrite_warning' );
+#  my $save     = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'overwrite_save' );
   my $select   = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_file' );
   my $upload   = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'upload');
   my $more     = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'more_input');
   my $feedback = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'upload_feedback');
 
   ## SET UP CONNECTION BUTTONS
-  $wizard->add_connection( from => $warning,  to => $save);
+#  $wizard->add_connection( from => $warning,  to => $save);
   $wizard->add_connection( from => $select,   to => $upload);
   $wizard->add_connection( from => $upload,   to => $more);
   $wizard->add_connection( from => $more,     to => $feedback);

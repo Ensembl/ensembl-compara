@@ -10,6 +10,7 @@ __PACKAGE__->add_fields(
   filename => 'text',
   name     => 'text',
   code     => 'text',
+  md5      => 'text',
   format   => 'text',
   species  => 'text',
   assembly => 'text',

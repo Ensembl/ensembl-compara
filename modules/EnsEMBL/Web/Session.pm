@@ -283,13 +283,13 @@ sub purge_data {
 sub add_data {
 ### $object->get_session->purge_data()
   my $self = shift; 
-  my %args = @_;
+  my %args = (
+    type => 'upload',
+    @_,
+  );
   
-  die "add_data needs type"
-    unless $args{type};
-
   ## Unique code
-  $args{code} = time;
+  $args{code} ||= time;
   $self->set_data(%args);
 
   return $self->get_data(type => $args{type}, code => $args{code});
@@ -318,9 +318,9 @@ sub save_data {
 
 }
 
-sub get_tmp_data { shift->get_data(type => 'upload', code => 'tmp') }
-sub set_tmp_data { shift->set_data(@_, type => 'upload', code => 'tmp') }
-sub purge_tmp_data { shift->purge_data(type => 'upload', code => 'tmp', @_) }
+#sub get_tmp_data { shift->get_data(type => 'upload', code => 'tmp') }
+#sub set_tmp_data { shift->set_data(@_, type => 'upload', code => 'tmp') }
+#sub purge_tmp_data { shift->purge_data(type => 'upload', code => 'tmp', @_) }
 
 ###################################################################################################
 ##

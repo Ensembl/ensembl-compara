@@ -27,6 +27,7 @@ sub new {
     filename     => shift,
     file_root    => '',
     URL_root     => '',
+    md5          => '',
     driver       => undef,
   };
   bless $self, $class;
@@ -60,6 +61,13 @@ sub filename {
   return $self->{'filename'};
 }
 
+sub md5 { 
+  my $self = shift;
+
+  $self->{md5} ||= md5_hex($self->retrieve);
+  return $self->{md5};
+}
+
 sub print {
   my ($self, $string) = @_;
   return $self->save($string);
@@ -77,7 +85,7 @@ sub get_url_content {
   my $response = $useragent->request($request);
   if( $response->is_success && $response->content) {
     $content = $response->content;
-  }    
+  }   
   return $content;
 }
 

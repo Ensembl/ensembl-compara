@@ -100,9 +100,11 @@ sub select_file {
     $assembly_element{'type'} = 'Hidden';
   }
   $self->add_element(%assembly_element);
-
   $self->add_element( type => 'File', name => 'file', label => 'Upload file' );
   $self->add_element( type => 'String', name => 'url', label => 'or provide file URL' );
+  
+  
+  
   
 }
 
@@ -134,8 +136,11 @@ sub upload {
     $self->parameter('parser', $parser);
     $self->parameter('species', $self->object->param('species'));
     ## Attach data species to session
-    $self->object->get_session->set_tmp_data(
+    $self->object->get_session->add_data(
+      type      => 'upload', 
       filename  => $file->filename, 
+      code      => $file->md5, 
+      md5       => $file->md5, 
       name      => $name,
       species   => $self->object->param('species'),
       format    => $format,
@@ -144,12 +149,14 @@ sub upload {
 
     if (!$format) {
       ## Get more input from user
-      $self->parameter('format', 'none');
-      $self->parameter('wizard_next', 'more_input');
+      $self->parameter(format      => 'none');
+      $self->parameter(md5         => $file->md5);
+      $self->parameter(wizard_next => 'more_input');
     }
     else {
-      $self->parameter('format', $format);
-      $self->parameter('wizard_next', 'upload_feedback');
+      $self->parameter(format      => $format);
+      $self->parameter(md5         => $file->md5);
+      $self->parameter(wizard_next => 'upload_feedback');
     }
   }
   else {
@@ -163,8 +170,9 @@ sub more_input {
   $self->title('File Details');
 
   ## Format selector
-  $self->add_element(( type => 'Information', value => 'Your file format could not be identified - please select an option:'));
-  $self->add_element(( type => 'DropDown', name => 'format', label => 'File format', select => 'select', values => \@formats));
+  $self->add_element(type => 'Hidden', name => 'md5', value => $self->object->param('md5'));
+  $self->add_element(type => 'Information', value => 'Your file format could not be identified - please select an option:');
+  $self->add_element(type => 'DropDown', name => 'format', label => 'File format', select => 'select', values => \@formats);
 }
 
 sub upload_feedback {
@@ -174,15 +182,17 @@ sub upload_feedback {
 
   ## Set format if coming via more_input
   if ($self->object->param('format')) {
-    $self->object->get_session->set_tmp_data(format => $self->object->param('format'));
+    $self->object->get_session->set_data(
+      type   => 'upload',
+      code   => $self->object->param('md5'),
+      format => $self->object->param('format'),
+    );
   }
 
   my $link = $self->object->param('_referer');
 
-  $self->add_element( 
-    type  => 'Information',
-    value => qq(Thank you - your file was successfully uploaded. Close this Control Panel to view your data),
-  );
+  $self->add_element(type => 'Information', value => qq(Thank you - your file was successfully uploaded. Close this Control Panel to view your data));
+  $self->add_element(type => 'Hidden', name => 'md5', value => $self->object->param('md5'));
 }
 
 #-------------------- DATA-SHARING NODES ---------------------------------
@@ -193,11 +203,10 @@ sub check_shareable {
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
-  my $tmp_upload      = $self->object->get_session->get_tmp_data(type => 'upload');
-  my @session_uploads = $self->object->get_session->get_data(type => 'upload');
-  my @user_uploads    = $user ? $user->uploads : ();
+  my @temp_uploads = $self->object->get_session->get_data(type => 'upload');
+  my @user_uploads = $user ? $user->uploads : ();
 
-  if ($tmp_upload || @session_uploads || @user_uploads) { 
+  if (@temp_uploads || @user_uploads) { 
     $self->parameter('wizard_next', 'select_upload');
   } else {
     $self->parameter('wizard_next', 'no_shareable');
@@ -208,8 +217,10 @@ sub no_shareable {
 ## Feedback page directing user to data upload
   my $self = shift;
   $self->title('No Shareable Data');
-
-  $self->add_element('type'=>'Information', 'value'=>"You have no shareable data. Please click on the 'Upload Data' if you wish to share data with colleagues or collaborators.");
+  $self->add_element(
+    type  => 'Information',
+    value => "You have no shareable data. Please click on the 'Upload Data' if you wish to share data with colleagues or collaborators.",
+  );
 }
 
 sub select_upload {
@@ -234,7 +245,7 @@ sub select_upload {
   my @session_uploads = $self->object->get_session->get_data(type => 'upload');
   foreach my $upload (@session_uploads) {
     push @values, {
-      name  => 'Shared upload: ' . $upload->{name},
+      name  => 'Temporary upload: ' . $upload->{name},
       value => $upload->{code},
     };
   }
@@ -268,29 +279,30 @@ sub check_save {
   my $self = shift;
 
   my @shares = ($self->object->param('share_id'));
-  if (grep { $_ eq 'tmp' } @shares) {
-    ## User wants to save TMP data, we need to store it first
-    if (my $id = $self->object->store_tmp_data) {
-      $self->parameter(wizard_next => 'show_shareable');
-      $self->parameter(share_id    => [ @shares, $id ] );
-    } else {
-      $self->parameter(wizard_next   => 'select_upload');
-      $self->parameter(error_message => 'Sorry, we were unable to save your file to our temporary storage area.');
+
+  foreach my $code (@shares) {
+    if ($code !~ /^d+$/) {
+      my $data = $self->object->get_session->get_data(type => 'upload', code => $code);
+      if ($data->{filename} && !$self->object->store_data(type => 'upload', code => $code)) {
+        $self->parameter(wizard_next   => 'select_upload');
+        $self->parameter(error_message => "Sorry, we were unable to save your file <i>$data->{name}</i> to our temporary storage area.");
+        return undef;
+      }
     }
-  } else {
-    $self->parameter(wizard_next => 'show_shareable');
-    $self->parameter(share_id    => [ @shares ]);
   }
+  
+  $self->parameter(wizard_next => 'show_shareable');
+  $self->parameter(share_id    => \@shares);
 }
 
 sub show_shareable {
   my $self = shift;
   $self->title('Shareable URL');
 
-  my @shares = grep { $_ && $_ ne 'tmp' } ($self->object->param('share_id'));
+  my @shares = grep { $_ } ($self->object->param('share_id'));
 
   my $share_ref = join ';', (
-    map { ($_ =~ /\./) ? "share_ref=$_" : "share_ref=000000$_-". checksum($_) } @shares
+    map { ($_ =~ /^d+$/) ? "share_ref=000000$_-". checksum($_) : "share_ref=$_" } @shares
   );
 
   my $url = $self->object->species_defs->ENSEMBL_BASE_URL . $self->object->param('_referer');
@@ -310,16 +322,19 @@ sub show_tempdata {
   my $self = shift;
   $self->title('Save Data to Your Account');
 
-  my $upload = $self->object->get_session->get_tmp_data;
-  if (%$upload) {
-    $self->add_element('type'=>'Information', 'value' => "You have the following temporary data uploaded:", 'style' => 'spaced');
-    (my $species = $upload->{'species'}) =~ s/_/ /g; 
-    my $info  = 'Unsaved upload: '.$upload->{'format'}.' file for '.$upload->{'species'};
-    $self->add_element('type'=>'Information', 'value' => $info, 'style' => 'spaced');
-    $self->add_element('type'=>'String', 'name' => 'name', 'label' => 'Name of this upload', 'value' => $upload->{'name'});
-  } else {
-    $self->add_element('type'=>'Information', 'value' => "You have no temporary data uploaded. Click on 'Upload Data' in the left-hand menu to upload your file(s) to our server.");
-  }
+## TODO: Anne, this must display all session->get_data(type => 'upload'); data to save
+##
+#  my @uploads = $self->object->get_session->get_data(type => 'upload');
+#  if (@uploads) {
+#    $self->add_element('type'=>'Information', 'value' => "You have the following temporary data uploaded:", 'style' => 'spaced');
+#    (my $species = $upload->{'species'}) =~ s/_/ /g; 
+#    my $info  = 'Unsaved upload: '.$upload->{'format'}.' file for '.$upload->{'species'};
+#    $self->add_element('type'=>'Information', 'value' => $info, 'style' => 'spaced');
+#    $self->add_element('type'=>'String', 'name' => 'name', 'label' => 'Name of this upload', 'value' => $upload->{'name'});
+#  } else {
+#    $self->add_element('type'=>'Information', 'value' => "You have no temporary data uploaded. Click on 'Upload Data' in the left-hand menu to upload your file(s) to our server.");
+#  }
+
 }
 
 
@@ -327,14 +342,16 @@ sub show_tempdata {
 sub save_tempdata {
   my $self = shift;
 
-  ## Parse file and save to genus_species_userdata
-  ## Move data reference from tmp to user or permanent session record if not logged in
-  if ($self->object->store_tmp_data) {
-    $self->parameter('wizard_next', 'ok_tempdata');
-  } else {
-    $self->parameter('wizard_next', 'show_tempdata');
-    $self->parameter('error_message', 'Unable to save to user account');
-  }
+## TODO: Anne, this must save with session->store_tmp_data(type => 'upload', code => param('code'));
+##
+## Parse file and save to genus_species_userdata
+## Move data reference from tmp to user or permanent session record if not logged in
+#  if ($self->object->store_tmp_data) {
+#    $self->parameter('wizard_next', 'ok_tempdata');
+#  } else {
+#    $self->parameter('wizard_next', 'show_tempdata');
+#    $self->parameter('error_message', 'Unable to save to user account');
+#  }
 }
 
 sub ok_tempdata {
