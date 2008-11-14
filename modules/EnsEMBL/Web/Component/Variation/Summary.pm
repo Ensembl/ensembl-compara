@@ -34,6 +34,7 @@ sub content {
     my @ids =  @{ $synonyms{$db} } ;
     my @urls;
 
+    
     if ($db =~ /dbsnp rs/i) {  # Glovar stuff
       @urls  = map {  $object->get_ExtURL_link( $_, 'SNP', $_)  } @ids;
     }
@@ -43,7 +44,9 @@ sub content {
   push @urls , $object->get_ExtURL_link( $_, 'DBSNPSS', $_ );
       }
       next unless @urls;
-    } else {
+    } elsif( $db =~/HGVbase|TSC/){
+      next;
+    }  else {
       @urls = @ids;
     }
 
