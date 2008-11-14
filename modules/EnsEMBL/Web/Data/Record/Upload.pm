@@ -16,6 +16,7 @@ __PACKAGE__->add_fields(
   assembly => 'text',
   share_id => 'int',
   analyses => 'text',
+  browser_switches => 'text',
 );
 
 1;
