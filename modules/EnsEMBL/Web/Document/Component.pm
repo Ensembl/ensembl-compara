@@ -39,8 +39,9 @@ sub _initialize_Excel {
 
 sub _initialize_DAS {
   my $self = shift;
-  $self->_initialize_XML(@_);
+  $self->_initialize_XML( 'DASGFF' );
 }
+
 sub _initialize_XML {
   my $self = shift;
   my $doctype_version = shift;
