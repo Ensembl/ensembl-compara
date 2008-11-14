@@ -49,14 +49,15 @@ sub feature_title {
 
 sub features {
   my ($self) = @_;
-  my @T = ();
+  my %results;
   my $ba = $self->_blast_adaptor;
   return unless $ba;
   my $offset = $self->{'container'}->start-1;
   foreach my $T ( $self->highlights ) {
     next unless $T =~ /BLAST_NEW:(.*)/;
+    my $ticket_id = $1;
     eval { 
-      my $f_arrayref = $self->{'container'}{'blast_adaptor'}->get_all_SearchFeatures($1,
+      my $f_arrayref = $self->{'container'}{'blast_adaptor'}->get_all_SearchFeatures($ticket_id,
         $self->{'container'}->seq_region_name,
         $self->{'container'}->start,
         $self->{'container'}->end,
@@ -65,11 +66,11 @@ sub features {
         $_->start( $_->start - $offset );
         $_->end(   $_->end   - $offset );
       }
-      push @T, $f_arrayref;
+      $results{"Ticket: $ticket_id"} = [$f_arrayref];
     }; 
     warn $@ if $@;
   }
-  return @T;
+  return %results;
 }
 
 sub href {

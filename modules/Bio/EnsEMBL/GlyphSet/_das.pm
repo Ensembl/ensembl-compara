@@ -157,7 +157,14 @@ sub features       {
 #      warn "DAS: source: $logic_name\n";
     }
   }  
-  warn join "\n", map( { "DAS:URL $_" } @urls ),'' if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_DRAWING_CODE;
+  if( $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_DRAWING_CODE ) {
+    warn "[DAS:@logic_names]\n";
+    if( @urls ) {
+      warn join "\n", map( { "  $_" } @urls ),''
+    } else {
+      warn "  NO DAS feature requests made for this source....\n";
+    }
+  }
 #  @errors = grep {$_} @errors;
 #  warn join "\n", map( { "DAS:ERR $_" } @errors ),'' if @errors;
 
