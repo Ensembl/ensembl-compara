@@ -36,6 +36,7 @@ sub init {
     'transcript'      => 'Genes',
     'prediction'      => 'Prediction Transcripts',
     'protein_align'   => 'Protein alignments',
+    'protein_feature' => 'Protein features',
     'dna_align_cdna'  => 'cDNA/mRNA alignments', # Separate menus for different cDNAs/ESTs...
     'dna_align_est'   => 'EST alignments',
     'dna_align_rna'   => 'RNA alignments',
