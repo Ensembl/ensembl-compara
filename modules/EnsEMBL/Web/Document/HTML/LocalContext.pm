@@ -98,7 +98,7 @@ $pad    </dd>";
       my $name = $node->data->{caption};
       $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
       $name = CGI::escapeHTML( $name );
-      my $title = $node->data->{long_caption};
+      my $title = $node->data->{full_caption};
       if( $title ) {
         $title =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
         $title = CGI::escapeHTML( $title );

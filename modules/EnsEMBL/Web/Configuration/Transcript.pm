@@ -528,7 +528,7 @@ sub user_populate_tree {
       { 'availability' => 'gene',
         'concise'      => $source->caption,
         'caption'      => $source->caption,
-        'long_caption' => $source->label }
+        'full_caption' => $source->label }
     ));
   }
 }

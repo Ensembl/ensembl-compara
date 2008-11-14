@@ -217,13 +217,12 @@ sub user_populate_tree {
     @active_das
   ) {
     my $source = $all_das->{$logic_name};
-        warn "CAPTION ".$source->caption;
     $ext_node->append($self->create_subnode( "ExternalData/$logic_name", $source->caption,
       [qw(textdas EnsEMBL::Web::Component::Gene::TextDAS)],
       { 'availability' => 'gene',
         'concise'      => $source->caption,
         'caption'      => $source->caption,
-        'long_caption' => $source->label }
+        'full_caption' => $source->label }
     ));	 
   }
 }

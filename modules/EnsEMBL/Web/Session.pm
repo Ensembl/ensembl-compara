@@ -229,6 +229,8 @@ sub get_data {
   
   $Data_of{ ident $self }{$args{type}}{$_->code} = $_->data for @entries;
 
+###  use Data::Dumper; warn Dumper($Data_of{ ident $self });
+
   ## Make empty {} if none found
   #$Data_of{ ident $self }{$args{type}}{$args{code}} ||= {} if $args{code};
 
@@ -457,32 +459,24 @@ sub add_das {
   
   # If source is different to any thing added so far, add it
   if ( my $new_name = $self->_get_unique_source_name($das) ) {
-warn "... $new_name ...";
     $das->logic_name( $new_name );
     $das->category  ( 'session' );
     $das->mark_altered;
     $Das_sources_of{ ident $self }{ $new_name } = $das;
     # Turn it on...
     ## Here we have to turn on the track for the current config...
-use Data::Dumper; local $Data::Dumper::Indent = 1;
-warn Dumper($referer_hash);
     my $type   = $referer_hash->{'ENSEMBL_TYPE'  } || $ENV{'ENSEMBL_TYPE'};
     my $action = $referer_hash->{'ENSEMBL_ACTION'} || $ENV{'ENSEMBL_ACTION'};
-warn "... $type ... $action ....";
     my $vc     = $self->getViewConfig( $type, $action );
-warn "... $vc ....";
     if( $vc ) {
       my %ICs = $vc->image_configs;
       foreach my $name ( keys %ICs ) {
-warn "...... $name ...";
         if( $vc->{_image_config_names}{$name} eq 'das' ) { ## Can have das sources on this image config...
           my $ic = $self->getImageConfig( $name, $name );
-warn "SETTING $new_name to labels";
           my $n = $ic->get_node("das_$new_name");
           if( !$n ) { $n = $ic->tree->create_node( "das_$new_name", { 'display' => 'off' } ); }
           $n->set_user( 'display', 'labels' );
           $ic->altered = 1;
-warn "SET TO ".$ic->get_node("das_$new_name")->get( 'display' );
         }
       }
     }
