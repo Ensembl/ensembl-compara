@@ -230,10 +230,9 @@ sub form {
     warn $@ if $@;
   }
   return if $no_extra_bits;
-  if( $self->has_images || $self->has_form ) {
+  if( $self->has_images ) {
 #       $ENV{'ENSEMBL_AJAX_VALUE'} =~ /^(en|dis)abled$/ && $self->has_form ) {
-    $self->add_fieldset( 'General view configurations' );
-    if( $self->has_images ) {
+    $self->add_fieldset( 'Image width configurations' );
       $self->add_form_element({
         'type'     => 'DropDown', 'select' => 'select',
         'required' => 'yes',      'name'   => 'cookie_width',
@@ -257,7 +256,6 @@ sub form {
 #        'label'    => "Enable/disable use of AJAX in rendering"
 #      });
 #    }
-  }
   $self->add_form_element({
    'type' => 'Submit', 'value' => 'Update configuration'
   }) if $self->has_form;
