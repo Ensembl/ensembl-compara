@@ -78,12 +78,12 @@ sub populate_tree {
         )],
       { 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'Message', '',
+  $self->create_node( 'SaveUpload', '',
     [qw(save_upload EnsEMBL::Web::Component::UserData::SaveUpload
         )],
       { 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'Message', '',
+  $self->create_node( 'SaveRemote', '',
     [qw(save_remote EnsEMBL::Web::Component::UserData::SaveRemote
         )],
       { 'no_menu_entry' => 1 }
