@@ -113,7 +113,7 @@ sub configurator {
   );
   $webpage->page->{'_modal_dialog_'} = $ajax_flag;
 
-my $root = $session->get_species_defs->ENSEMBL_BASE_URL;
+  my $root = $session->get_species_defs->ENSEMBL_BASE_URL;
   if(
     $input->param('submit') ||
     $input->param('reset')
@@ -158,6 +158,10 @@ my $root = $session->get_species_defs->ENSEMBL_BASE_URL;
       # redirect( to this page )
     } else { ### We are updating a view config!
       $vc->update_from_input( $input );
+      if( $ENV{'ENSEMBL_ACTION'} ne 'ExternalData' ) {
+        my $vc_2 = $session->getViewConfig( undef, 'ExternalData' );
+        $vc_2->update_from_input( $input ) if $vc_2;
+      }
       $session->store;
       my $cookie_host = $session->get_species_defs->ENSEMBL_COOKIEHOST;
       if( $input->param( 'cookie_width' ) && $input->param( 'cookie_width' ) != $ENV{'ENSEMBL_IMAGE_WIDTH'} ) { ## Set width!

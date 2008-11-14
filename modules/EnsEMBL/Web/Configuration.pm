@@ -378,6 +378,13 @@ sub _configurator {
 ## This must be the view config....
     if( $vc->has_form ) {
       $vc->get_form->{'_attributes'}{'action'} = $url->[0];
+      if( $ENV{'ENSEMBL_ACTION'} ne 'ExternalData' ) {
+        my $vc_2 = $obj->get_viewconfig( undef, 'ExternalData' );
+        if( $vc_2 ) {
+          $vc_2->{'_form'} = $vc->{'_form'};
+          $vc_2->form( undef, 1 );
+        }
+      }
       foreach( keys %{$url->[1]}) {
         $vc->add_form_element({'type'=>'Hidden','name'=>$_,'value' => $url->[1]{$_}});
       }
@@ -671,7 +678,7 @@ sub _content_panel {
   my %params = (
     'object'   => $obj,
     'code'     => 'main',
-    'caption'  => $node->data->{'concise'} || $node->data->{'caption'}
+    'caption'  => $node->data->{'full_caption'} || $node->data->{'concise'} || $node->data->{'caption'}
   );
   $params{'previous'} = $previous_node->data if $previous_node;
   $params{'next'    } = $next_node->data     if $next_node;
