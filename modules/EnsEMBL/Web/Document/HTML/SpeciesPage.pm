@@ -25,7 +25,6 @@ sub render {
 
   my %species;
   foreach my $species (@valid_species) {
-    next if $species eq 'Saccharomyces_cerevisiae';
     my $common = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
     my $info = {
           'dir'     => $species,
@@ -55,7 +54,7 @@ sub render {
 
   my $i = 1;
   my $html = qq(
-<h2>Animals</h2>
+<h2>Ensembl Species</h2>
 <div class="threecol-left">
   <ul>);
   foreach my $common (sort keys %species) {
@@ -84,26 +83,6 @@ sub render {
   }
   $html .= qq(
   </ul>
-</div>
-<div class="threecol-left">
-<h2>Other Metazoa</h2>
-<p>Additional metazoan genomes (initially insect vectors and nematodes) will shortly be available from
-<a href="http://metazoa.ensemblgenomes.org" rel="external">EnsemblMetazoa</a>
-</div>
-<div class="threecol-middle">
-<h2>Plants and Fungi</h2>
-<ul>
-<li style="list-style: url(/img/species/thumb_Saccharomyces_cerevisiae.png)"><a href="/Saccharomyces_cerevisiae/Info/Index/" style="$link_style">Brewer's Yeast</a></li>
-</ul>
-<p>Plant and fungal genomes will soon be available from 
-<a href="http://plants.ensemblgenomes.org" rel="external">EnsemblPlants</a> and
-<a href="http://fungi.ensemblgenomes.org" rel="external">EnsemblFungi</a></p>
-</div>
-<div class="threecol-right">
-<h2>Protists, Bacteria and Archaea</h2>
-<p>Non-eukaryote genomes will soon be available from 
-<a href="http://protists.ensemblgenomes.org" rel="external">EnsemblProtists</a> and
-<a href="http://bacteria.ensemblgenomes.org" rel="external">EnsemblBacteria</a></p>
 </div>);
   return $html;
 
