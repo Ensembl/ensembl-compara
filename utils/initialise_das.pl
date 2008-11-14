@@ -93,7 +93,7 @@ require EnsEMBL::Web::SpeciesDefs;
 my $species_info;
 my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
 my $sitetype = ucfirst(lc($species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
-my $cdb_info = $species_defs->{_storage}->{Multi}->{databases}->{DATABASE_COMPARA};
+my $cdb_info = $species_defs->{_storage}->{MULTI}->{databases}->{DATABASE_COMPARA};
 my $cdb = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
   -dbname => $cdb_info->{'NAME'},
   -host   => $cdb_info->{'HOST'},
@@ -141,9 +141,9 @@ warn "Parsing species $sp ".gmtime();
   ));
   my $toplevel_example  = $toplevel_slices->[0];
 
-  my $mapmaster = sprintf("%s.%s.reference", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'));
+  my $mapmaster = sprintf("%s.%s.reference", $sp, $species_defs->get_config($sp,'ASSEMBLY_NAME'));
   $shash->{$mapmaster}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
-  $shash->{$mapmaster}->{description} = sprintf("%s Reference server based on %s assembly. Contains %d top level entries.", $sp, $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH'), @$toplevel_slices );
+  $shash->{$mapmaster}->{description} = sprintf("%s Reference server based on %s assembly. Contains %d top level entries.", $sp, $species_defs->get_config($sp,'ASSEMBLY_NAME'), 0 + @$toplevel_slices );
 # my $sl = $thash{$search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'}} || $toplevel_slices[0];
     #warn Data::Dumper::Dumper(\%thash);
 
@@ -165,7 +165,7 @@ warn "Parsing species $sp ".gmtime();
 #   print STDERR "\t $sp : $feature : $table => ", $rv || 'Off',  "\n";
 #   print STDERR "\t\t\tTEST REGION : ", join('*', @r), "\n";
     next unless @r;
-	my $type = $species_defs->get_config($sp,'ENSEMBL_GOLDEN_PATH');
+    my $type = $species_defs->get_config($sp,'ASSEMBLY_NAME');
     my $dsn = sprintf("%s.%s.%s", $sp, $type, $feature);
     $shash->{$dsn}->{'test_range'} = sprintf("%s:%s,%s",@r); 
     $shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
