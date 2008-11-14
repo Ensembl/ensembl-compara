@@ -15,6 +15,7 @@ sub render {
   my ($class, $request) = @_;
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $sitename = $species_defs->ENSEMBL_SITETYPE;
 
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
@@ -54,7 +55,7 @@ sub render {
 
   my $i = 1;
   my $html = qq(
-<h2>Ensembl Species</h2>
+<h2>$sitename Species</h2>
 <div class="threecol-left">
   <ul>);
   foreach my $common (sort keys %species) {
