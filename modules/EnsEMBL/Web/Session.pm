@@ -485,20 +485,11 @@ warn "SET TO ".$ic->get_node("das_$new_name")->get( 'display' );
         }
       }
     }
-#    $self->update_configs_for_das( $das );
     return  1;
   }
   
   # Otherwise skip it
   return 0;
-}
-
-# TODO: rework interface with drawing code
-sub update_configs_for_das {
-  my( $self, $das ) = @_;
-  # activate the source in the display...
-  #    @scripts = @{ $das->on };
-  # OR $bool = $das->is_on( $script );
 }
 
 sub deepcopy {
