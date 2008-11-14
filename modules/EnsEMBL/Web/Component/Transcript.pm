@@ -785,269 +785,38 @@ sub EC_URL {
   return $self->object->get_ExtURL_link( "EC $string", 'EC_PATHWAY', $URL_string );
 }
 
-sub markup_exons {
-  my $self = shift;
-  my ($sequence, $data, $config) = @_;
-
-  my $flip = 0;
-  
-  foreach (sort {$a <=> $b} keys %$data) {
-    $flip = 1 - $flip if ($data->{$_}->{'exon'});
-    
-    $sequence->[$_]->{'color'} = $data->{$_}->{'overlap'} ? $config->{'colours'}->{'exon2'} : $config->{'colours'}->{"exon$flip"};
-  }
-
-  # Set the initial color if it hasn't been done yet
-  $sequence->[0]->{'color'} = $config->{'colours'}->{'exon0'} unless $data->{0}->{'exon'};
-}
-
-sub markup_codons {
-  my $self = shift;
-  my ($sequence, $data, $config) = @_;
-  
-  foreach (sort {$a <=> $b} keys %$data) {
-    $sequence->[$_]->{'background-color'} = $config->{'colours'}->{"codon$data->{$_}->{'bg'}"};
-  }
-}
-
 sub markup_variation {
   my $self = shift;
-  my ($sequence, $data, $config) = @_;
+  my ($sequence, $markup, $config) = @_;
+  
+  my $i = 0;
   
   my $title = {
     'delete' => sub { return "Deletion: $_[0]->{'allele'}" },
     'insert' => sub { shift; $_{'alleles'} = join '', @{$_->{'nt'}}; $_->{'alleles'} = Bio::Perl::translate_as_string($_->{'alleles'}); return "Insert: $_->{'allele'}" },
     'frameshift' => sub { return "Frame-shift" },
     'snp' => sub { return "Residues: $_[0]->{'pep_snp'}" },
-    'syn' => sub { my $p = shift; my $t = ''; $t .= $p->{'ambigcode'}[$_]  ? '('.$p->{'ambigcode'}[$_].')' : $p->{'nt'}[$_] for (0..2); return "Codon: $t" }
+    'syn' => sub { my $p = shift; my $t = ''; $t .= $p->{'ambigcode'}[$_]  ? '('.$p->{'ambigcode'}[$_].')' : $p->{'nt'}[$_] for (0..2); return "Codon: $t" },
+    'transcript' => sub { return "Alleles: $_[0]->{'alleles'}" } # All transcript variations have the same title format
   };
 
-  foreach (sort {$a <=> $b} keys %$data) {
-    $sequence->[$_]->{'title'} = &{$title->{$data->{$_}->{'type'}}}($data->{$_}) if $title->{$data->{$_}->{'type'}};
-    $sequence->[$_]->{'background-color'} = $config->{'colours'}->{$data->{$_}->{'type'}} if $data->{$_}->{'type'};
-  }
-
-  $config->{'v_space'} = "\n";
-}
-
-sub markup_translation {
-  my $self = shift;
-  my ($sequence, $data, $config) = @_;
-  
-  my ($number, $check, $previous_check, $previous_number, $add);
-  my @post_number;
-  
-  my $wrap = $config->{'wrap'}/3;
-  
-  for (sort {$a <=> $b} keys %$data) {
-    $sequence->[$_]->{'peptide'} = $data->{$_}->{'peptide'};
-    
-    if ($config->{'number'}) {      
-      $check = int ($_/$config->{'wrap'});
+  foreach my $data (@$markup) {
+    foreach (sort {$a <=> $b} keys %$data) {
+      my $type = $data->{$_}->{'variation'};
       
-      $number++ if $data->{$_}->{'peptide'} =~ /\w|\*/;
+      $sequence->[$i]->[$_]->{'title'} = &{$title->{$type}}($data->{$_}) if $title->{$type};
       
-      if ($check > $previous_check) {
-        if (!$previous_check) { # Add number for the first line if needed
-          $add = $data->{0}->{'peptide'} ? 1 : 0;
-          $number += $add;
-          
-          push (@post_number, $add);
-        } elsif (!$add && !$previous_number && $data->{$_}->{'peptide'} =~ /-|=/ && $data->{$_+1}->{'peptide'} =~ /\w|\*/) {
-          $number++; # Add one for the first line with translation if it is at the start of the codon
-        }
-        
-        # If the translation has ended, set the line number to 0 (will not be displayed)
-        my $num = $data->{$_}->{'peptide'} ? $number : 0;
-        
-        push (@post_number, $num);
-        
-        $previous_number = $number;
-        $previous_check = $check;
-      }
-    }
-     
-    if ($config->{'variation'} && $data->{$_}->{'aminoacids'} ne '') {
-      $sequence->[$_]->{'peptide'} = qq{<span style="color: $config->{'colours'}->{'aminoacids'}" title="$data->{$_}->{'aminoacids'}">$data->{$_}->{'peptide'}</span>};
-    }
-  }
-  
-  push (@{$config->{'post_number'}}, \@post_number) if scalar @post_number;
-  
-  $config->{'v_space'} = "\n";
-}
-
-sub markup_coding_seq {
-  my $self = shift;
-  my ($sequence, $data, $config) = @_;
-  
-  my ($number, $check, $previous);
-  my @post_number;
-    
-  for (sort {$a <=> $b} keys %$data) {
-    $sequence->[$_]->{'coding_seq'} = $data->{$_}->{'coding_seq'};
-    
-    if ($config->{'number'}) {
-      $check = int ($_/$config->{'wrap'});
-
-      $number++ if $data->{$_}->{'coding_seq'};
-      
-      if ($check > $previous) {
-        if (!$previous) { # Add number for the first line if needed    
-          push (@post_number, $data->{0}->{'coding_seq'} ? 1 : 0);
-        }
-        
-        # If the coding sequence has ended, set the line number to 0 (will not be displayed)
-        my $num = $data->{$_}->{'coding_seq'} ? $number : 0;
-        
-        push (@post_number, $num);
-        
-        $previous = $check;
-      }
-    }
-  }
-  
-  push (@{$config->{'post_number'}}, \@post_number) if scalar @post_number;
-  
-  $config->{'v_space'} = "\n";
-}
-
-sub markup_rna {
-  my $self = shift;
-  my ($sequence, $rna_notation, $config) = @_;
-  
-  my $i = 0;
-  
-  $sequence->[$i++]->{'rna'} = $_ for (split (//, $rna_notation));
-}
-
-sub build_sequence {
-  my $self = shift;
-  my ($sequence, $config) = @_;
-  
-  my ($html, $row, $style, $previous_style, $new_line_style);
-  my ($count, $i, $j);
-  my @output;
-  my $post = [];
-  my $pre = [];
-  
-  foreach my $seq (@$sequence) {    
-    my $title = $seq->{'title'} ? qq(title="$seq->{'title'}") : '';
-    
-    my $new_style = '';    
-    $previous_style = $style;
-    
-    if ($seq->{'background-color'}) {
-      $new_style .= "background-color:$seq->{'background-color'};";
-    } elsif ($style =~ /background-color/) {
-      $new_style .= "background-color:auto;";
-    }
-
-    if ($seq->{'color'}) {
-      $new_style .= "color:$seq->{'color'};";
-    } elsif ($style =~ /(?<!background-)color:(.+);/) {
-      $new_style .= "color:$1;";
-    }
-    
-    $style = qq(style="$new_style") if ($new_style);
-    
-    if ($config->{'pre'}) {
-      for (my $p = 0; $p < scalar @{$config->{'pre'}}; $p++) {
-        $pre->[$p] .= $seq->{$config->{'pre'}->[$p]->{'key'}} || $config->{'pre'}->[$p]->{'default'};
-      }
-    }
-    
-    if ($config->{'post'}) {
-      for (my $p = 0; $p < scalar @{$config->{'post'}}; $p++) {
-        $post->[$p] .= $seq->{$config->{'post'}->[$p]->{'key'}} || $config->{'post'}->[$p]->{'default'};
-      }
-    }
-    
-    if ($i == 0) {
-      $row .= "<span $style $title>";
-    } elsif ($style ne $previous_style) {      
-      $row .= "</span><span $style $title>";
-    }
-    
-    $row .= $seq->{'letter'};
-    
-    $count++; 
-    $i++;
-    
-    if ($count == $config->{'wrap'} || $i == scalar @$sequence) {
-      my $r;
-      
-      if ($i == $config->{'wrap'}) {
-        $r = "$row</span>";
+      if ($type eq 'transcript') {
+        $sequence->[$i]->[$_]->{'background-color'} = $config->{'translation'} ?  $config->{'colours'}->{"$data->{$_}->{'snp'}$data->{$_}->{'bg'}"} : $config->{'colours'}->{'snp_default'};
       } else {
-        $r = "<span $new_line_style $title>$row</span>";
+        $sequence->[$i]->[$_]->{'background-color'} = $config->{'colours'}->{$type} if $type;
       }
-      
-      push (@output, { pre => $pre, row => $r, post => $post });
+    }
+    
+    $i++;
+  }
 
-      $new_line_style = $style || $previous_style;
-      $count = 0; 
-      $row = '';
-      $pre = [];
-      $post = [];
-    }
-  }
-  
-  for (@output) {
-    if ($config->{'number'}) {
-      my $num = '       ';
-      
-      $_->{'row'} = $config->{'h_space'} . sprintf("%6d ", $config->{'number'}) . $_->{'row'};
-      
-      if ($_->{'pre'}) {
-        for (my $p = 0; $p < scalar @{$_->{'pre'}}; $p++) {
-          if ($config->{'pre_number'}) {
-            $num = shift @{$config->{'pre_number'}->[$p]};
-            $num = $num ? sprintf("%6d ", $num) : '       ';
-          }
-          
-          $_->{'pre'}->[$p] = "$config->{'h_space'}$num$_->{'pre'}->[$p]";
-        }
-      }
-      
-      if ($_->{'post'}) {
-        $num = '       ';
-  
-        for (my $p = 0; $p < scalar @{$_->{'post'}}; $p++) {
-          if ($config->{'post_number'}) {
-            $num = shift @{$config->{'post_number'}->[$p]};
-            $num = $num ? sprintf("%6d ", $num) : '       ';
-          }
-          
-          $_->{'post'}->[$p] = "$config->{'h_space'}$num$_->{'post'}->[$p]";
-        }
-      }
-      
-      $config->{'number'} += $config->{'wrap'};
-    }
-    
-    $j++;
-    
-    if ($config->{'pre'}) {
-      for (my $p = 0; $p < scalar @{$config->{'pre'}}; $p++) {
-        $html .= "$_->{'pre'}->[$p]\n" if $_->{'pre'}->[$p] && ($j > 1 || $_->{'pre'}->[$p] =~ /\w/); # Ignore blank first lines
-      }
-    }
-    
-    $html .= "$_->{'row'}\n";
-    
-    if ($config->{'post'}) {
-      for (my $p = 0; $p < scalar @{$config->{'post'}}; $p++) {
-        $html .= "$_->{'post'}->[$p]\n" if $_->{'post'}->[$p] && ($j != scalar @output || $_->{'post'}->[$p] =~ /\w/); # Ignore blank last lines
-      }
-    }
-    
-    $html .= $config->{'v_space'};
-  }
-  
-  $html = "<pre>$html</pre>";
-   
-  return $html;
+  $config->{'v_space'} = "\n";
 }
 
 1;
