@@ -29,9 +29,6 @@ sub content {
   $html .= "<h3>Temporary upload</h3>";
 
   my @data = $self->object->get_session->get_data('type'=>'upload');
-  if (my $tmp_data = $self->object->get_session->get_tmp_data) {
-    push @data, $tmp_data;
-  }
 
   if (@data) {
     my $table = EnsEMBL::Web::Document::SpreadSheet->new();

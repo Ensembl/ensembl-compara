@@ -333,16 +333,17 @@ sub receive_shared_data {
   my ($self, @share_refs) = @_; 
 
   foreach my $share_ref (@share_refs) {
-    if ($share_ref =~ /\./) {
-    ## Session record:
-      my $record = EnsEMBL::Web::Data::Session->retrieve(code => $share_ref);
-      $self->add_data(%{ $record->data }) if $record;
-    } else {
-    ## User record, security check first:
-      my ($id, $checksum) = $share_ref =~ /^(\d+)-(\w+)$/;
+    if ($share_ref =~ /^(\d+)-(\w+)$/) {
+    ## User record:
+      my $id = $1;
+      my $checksum = $2;
       die 'Sharing violation'
         unless checksum($id) ne $checksum;
       my $record = EnsEMBL::Web::Data::Record::Upload::User->new($id);
+      $self->add_data(%{ $record->data }) if $record;
+    } else {
+    ## Session record:
+      my $record = EnsEMBL::Web::Data::Session->retrieve(code => $share_ref);
       $self->add_data(%{ $record->data }) if $record;
     }
   }
