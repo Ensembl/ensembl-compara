@@ -222,13 +222,14 @@ sub has_images {
 }
 
 sub form {
-  my( $self, $object ) = @_;
+  my( $self, $object, $no_extra_bits ) = @_;
   foreach my $classname (@{$self->{'_classes'}}) {
     my $method = $classname.'::form';
     eval { no strict 'refs'; &$method( $self, $object ); };
     ## TODO: proper error exception
     warn $@ if $@;
   }
+  return if $no_extra_bits;
   if( $self->has_images || $self->has_form ) {
 #       $ENV{'ENSEMBL_AJAX_VALUE'} =~ /^(en|dis)abled$/ && $self->has_form ) {
     $self->add_fieldset( 'General view configurations' );
