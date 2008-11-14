@@ -219,9 +219,8 @@ sub dsn {
     my $source = $sources->{$dsn};
     print FH qq(
   <DSN href="$SiteDefs::ENSEMBL_BASE_URL/das/dsn">
-    <SOURCE id="$dsn"
-                >$source->{'name'}</SOURCE>
-    <MAPMASTER  >$source->{'mapmaster'}</MAPMASTER>
+    <SOURCE id="$dsn">$source->{'name'}</SOURCE>
+    <MAPMASTER>$source->{'mapmaster'}</MAPMASTER>
     <DESCRIPTION>$source->{'description'}</DESCRIPTION>
   </DSN>);
   }
