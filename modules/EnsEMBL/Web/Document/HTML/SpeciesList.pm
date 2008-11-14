@@ -196,7 +196,7 @@ sub _render_species_dropdown {
   }
 
   $html .= qq(
-  <option value="/species.html">-- Find a species --</option>);
+  <option value="/info/about/species.html">-- Full list of Ensembl species --</option>);
   $html .= '
   </optgroup>'."\n" if $optgroup == 1;
   $html .= qq(
