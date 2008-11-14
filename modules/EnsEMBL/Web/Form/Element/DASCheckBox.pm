@@ -15,7 +15,8 @@ sub new {
   $params{'label'}      ||= $params{'das'}->label;
   $params{'bg'}         ||= 'bg1';
   my $self = $class->SUPER::new( %params );
-  $self->checked = $params{'checked'};
+  $self->checked  = $params{'checked'};
+  $self->disabled = $params{'disabled'};
   $self->_short_das_desc( $params{'das'} );
   return $self;
 }
@@ -43,10 +44,12 @@ sub render {
   ## This assumes that DASCheckBox layout uses the 'table' option!
   my $label = $self->{'raw'} ? $self->label : '<strong>'.CGI::escapeHTML( $self->label ).'</strong>';
   $label .= '<br />'.$notes if $notes;
-  my $widget = sprintf('<input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox" %s/>',
+  my $widget = sprintf('<input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox"%s%s/>',
       CGI::escapeHTML( $self->name ), 
       CGI::escapeHTML( $self->id ),
-      $self->value || 'yes', $self->checked ? 'checked="checked" ' : '',
+      $self->value || 'yes',
+      $self->checked ? ' checked="checked" ' : '',
+      $self->disabled ? ' disabled="disabled" ' : '',
   );
   return {'label' => $label, 'widget' => $widget};
 }

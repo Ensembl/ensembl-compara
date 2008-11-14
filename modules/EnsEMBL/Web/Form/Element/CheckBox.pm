@@ -16,6 +16,7 @@ sub new {
 }
 
 sub checked  :lvalue { $_[0]->{'checked'};  }
+sub disabled :lvalue { $_[0]->{'disabled'}; }
 
 sub render {
   my $self = shift;
@@ -26,7 +27,7 @@ sub render {
       <label>%s %s</label>
     </dt>
     <dd%s>
-      <input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox" %s/>
+      <input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox"%s%s/>
     </dd>
   </dl>),
     $self->class_attrib,
@@ -35,7 +36,9 @@ sub render {
     $self->class_attrib,
     CGI::escapeHTML( $self->name ), 
     CGI::escapeHTML( $self->id ),
-    $self->value || 'yes', $self->checked ? 'checked="checked" ' : '',
+    $self->value || 'yes',
+    $self->checked ? ' checked="checked" ' : '',
+    $self->disabled ? ' disabled="disabled" ' : '',
   );
 }
                                                                                 

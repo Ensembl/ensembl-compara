@@ -15,22 +15,26 @@ sub new {
   my $self = $class->SUPER::new(
     %params,
   );
-  $self->checked = $params{'checked'};
+  $self->checked  = $params{'checked'};
+  $self->disabled = $params{'disabled'};
   return $self;
 }
+
 sub checked  :lvalue { $_[0]->{'checked'};  }
+sub disabled :lvalue { $_[0]->{'disabled'}; }
 
 sub render {
   my $self = shift;
   return sprintf(
    qq(<dl>
   <dt><label class="label-radio"></dt>
-  <dd><input type="radio" name="%s" id="%s" value="%s" class="input-radio" %s/> %s %s</label></dd>
+  <dd><input type="radio" name="%s" id="%s" value="%s" class="input-radio"%s%s/> %s %s</label></dd>
   </dl>),
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->id ),
     $self->value || 'yes', 
-    $self->checked ? 'checked="checked" ' : '',
+    $self->checked ? ' checked="checked" ' : '',
+    $self->disabled ? ' disabled="disabled" ' : '',
     CGI::escapeHTML( $self->label ),
     $self->notes
   );
