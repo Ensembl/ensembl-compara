@@ -66,7 +66,7 @@ sub populate_tree {
   my $sample_data = $sd->SAMPLE_DATA;
   my $species_path = $self->species;
   if($sample_data && keys %$sample_data) {
-    my $location_url    = "/$species_path/Location/View?r=".$sample_data{'LOCATION_PARAM'};
+    my $location_url    = "/$species_path/Location/View?r=".$sample_data->{'LOCATION_PARAM'};
     my $location_text   = $sample_data->{'LOCATION_TEXT'};
     my $gene_url        = "/$species_path/Gene/Summary?g=".$sample_data->{'GENE_PARAM'};
     my $gene_text       = $sample_data->{'GENE_TEXT'};
