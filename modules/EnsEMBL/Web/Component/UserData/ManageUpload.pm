@@ -44,7 +44,7 @@ sub content {
       {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
     );
     foreach my $file (@data) {
-      my $row = {'name' => '<p>'.$file->{'name'}.' file for '.$file->{'species'}};
+      my $row = {'name' => '<p><i>'.$file->{'name'}.'</i> for '.$file->{'species'}};
       my $extra = 'type='.$file->{'type'}.';code='.$file->{'code'};
       if ($user) {
         $row->{'save'} = qq(<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>);
