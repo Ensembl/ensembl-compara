@@ -277,7 +277,7 @@ sub sources {
     print FH qq( 
   <SOURCE uri="$id" title="$dsn" description="$description">
     <MAINTAINER    email="$email" />
-    <VERSION       uri="latest"
+    <VERSION       uri="$id"
                    created="$today">
       <PROP        name="label"
                    value="ENSEMBL" />
