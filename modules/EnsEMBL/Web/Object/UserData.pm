@@ -4,6 +4,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use base qw(EnsEMBL::Web::Object);
+
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::Data::Record::Upload;
@@ -11,8 +13,8 @@ use Bio::EnsEMBL::Utils::Exception qw(try catch);
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser; # for contacting DAS servers
 use EnsEMBL::Web::File::Text;
 use Data::Dumper;
+use Digest::MD5 qw(md5_hex);
                                                                                    
-use base qw(EnsEMBL::Web::Object);
 
 my $DEFAULT_CS = 'DnaAlignFeature';
 
@@ -58,7 +60,7 @@ sub save_to_db {
   $parser->parse($data, $format);
 
   my $config = {
-    action   => 'overwrite', # or append
+    action   => 'new', # or append
     species  => $tmpdata->{species},
     assembly => $tmpdata->{assembly},
   };
@@ -86,6 +88,7 @@ sub save_to_db {
   }
 
 
+  $report->{'browser_switches'} = $parser->{'browser_switches'};
   $report->{'analyses'} = \@analyses if @analyses;
   $report->{'feedback'} = \@messages if @messages;
   $report->{'errors'}   = \@errors   if @errors;
@@ -145,6 +148,7 @@ sub store_data {
                         type     => 'upload',
                         filename => '',
                         analyses => join(', ', @logic_names),
+                        browser_switches => $report->{'browser_switches'}||{}
                       ))  {
                             $self->get_session->purge_data(%args);
                             return $upload->id;
@@ -157,6 +161,7 @@ sub store_data {
                          type     => 'upload',
                          filename => '',
                          analyses => join(', ', @logic_names),
+                         browser_switches => $report->{'browser_switches'}||{}
                        )) {
                             $self->get_session->purge_data(%args);
                             return $upload->{code};
@@ -232,84 +237,104 @@ sub delete_remote {
   }
 }
 
+
 sub _store_user_track {
   my ($self, $config, $track) = @_;
   my $report;
 
   if (my $current_species = $config->{'species'}) {
     my $action = $config->{action} || 'error';
-    if (my $track_name = $track->{config}->{name} || 'default') {
-      $config->{web_data}->{styles} = $track->{styles};
-      my $logic_name = join ':', $config->{track_type}, $config->{id}, $track_name;
-      my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species );
-      my $dba = $dbs->get_DBAdaptor('userdata');
+    if( my $track_name = $track->{config}->{name} || 'Default' ) {
+
+      my $logic_name = join '_', $config->{track_type}, $config->{id}, md5_hex($track_name);
+  
+      my $dbs         = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species );
+      my $dba         = $dbs->get_DBAdaptor('userdata');
+      unless($dba) {
+        $report->{'error'} = 'No user upload database for this species';
+        return $report;
+      }
       my $ud_adaptor  = $dba->get_adaptor( 'Analysis' );
 
       my $datasource = $ud_adaptor->fetch_by_logic_name($logic_name);
+
+## Populate the $config object.....
+      my %web_data = %{$track->{'config'}||{}};
+      delete $web_data{ 'description' };
+      delete $web_data{ 'name' };
+      $web_data{'styles'} = $track->{styles};
+      $config->{source_adaptor} = $ud_adaptor;
+      $config->{track_name}     = $logic_name;
+      $config->{track_label}    = $track_name;
+      $config->{description}    = $track->{'config'}{'description'};
+      $config->{web_data}       = \%web_data;
+
       if ($datasource) {
         if ($action eq 'error') {
           $report->{'error'} = "$track_name : This track already exists";
-        }
-
-        if ($action eq 'overwrite') {
+        } elsif ($action eq 'overwrite') {
           $self->_delete_datasource_features($datasource);
           $self->_update_datasource($datasource, $config);
-        }
-        else { #append
+        } elsif( $action eq 'new' ) {
+          my $extra = 0;
+          while( 1 ) {
+            $datasource = $ud_adaptor->fetch_by_logic_name(sprintf "%s_%06x", $logic_name, $extra );
+            last if ! $datasource; ## This one doesn't exist so we are going to create it!
+            $extra++; 
+            if( $extra > 1e4 ) { # Tried 10,000 times this guy is keen!
+              $report->{'error'} = "$track_name: Cannot create two many entries in analysis table with this user and name";
+              return $report;
+            }
+          }
+          $logic_name = sprintf "%s_%06x", $logic_name, $extra; 
+          $config->{track_name}     = $logic_name;
+          $datasource = $self->_create_datasource($config, $ud_adaptor);   
+          unless ($datasource) {
+            $report->{'error'} = "$track_name: Could not create datasource!";
+          }
+        } else { #action is append [default]....
           if ($datasource->module_version ne $config->{assembly}) {
             $report->{'error'} = sprintf "$track_name : Cannot add %s features to %s datasource",
               $config->{assembly} , $datasource->module_version;
           }
         }
-      }
-      else {
-        $config->{source_adaptor} = $ud_adaptor;
-        $config->{track_name} = $logic_name;
-        $config->{track_label} = $track_name;
-        $datasource = $self->_create_datasource($config);
+      } else {
+        $datasource = $self->_create_datasource($config, $ud_adaptor);
 
         unless ($datasource) {
           $report->{'error'} = "$track_name: Could not create datasource!";
         }
       }
 
-      if ($track->{config}->{coordinate_system} eq 'ProteinFeature') {
+      return $report unless $datasource;
+      if( $track->{config}->{coordinate_system} eq 'ProteinFeature' ) {
         $self->_save_protein_features($datasource, $track->{features});
-      }
-      else {
+      } else {
         $self->_save_genomic_features($datasource, $track->{features});
       }
       ## Prepend track name to feedback parameter
       $report->{'feedback'} = $track_name;
       $report->{'logic_name'} = $datasource->logic_name;
-
-    }
-    else {
+    } else {
       $report->{'error_message'} = "Need a trackname!";
     }
-  }
-  else {
+  } else {
     $report->{'error_message'} = "Need species name";
   }
   return $report;
 }
 
 sub _create_datasource {
-  my ($self, $config) = @_;
-
-  my $ds_name = $config->{track_name};
-  my $ds_label = $config->{track_label} || $ds_name;
-
-  my $ds_desc = $config->{description};
-  my $adaptor = $config->{source_adaptor};
+  my ($self, $config, $adaptor) = @_;
 
   my $datasource = new Bio::EnsEMBL::Analysis(
-            -logic_name => $ds_name,
-            -description => $ds_desc,
-            -display_label => $ds_label,
-            -displayable => 1,
-            -module => $config->{coordinate_system} || $DEFAULT_CS,
-            -module_version => $config->{assembly},
+    -logic_name     => $config->{track_name},
+    -description    => $config->{description},
+    -web_data       => $config->{web_data}||{},
+    -display_label  => $config->{track_label} || $config->{track_name},
+    -displayable    => 1,
+    -module         => $config->{coordinate_system} || $DEFAULT_CS,
+    -module_version => $config->{assembly},
   );
 
   $adaptor->store($datasource);
@@ -321,12 +346,12 @@ sub _update_datasource {
 
   my $adaptor = $datasource->adaptor;
 
-  $datasource->logic_name($config->{track_name});
-  $datasource->display_label($config->{track_label});
-  $datasource->description($config->{description});
-  $datasource->module($config->{coordinate_system} || $DEFAULT_CS);
-  $datasource->module_version($config->{assembly});
-  $datasource->web_data($config->{web_data});
+  $datasource->logic_name(      $config->{track_name}                          );
+  $datasource->display_label(   $config->{track_label}||$config->{track_name}  );
+  $datasource->description(     $config->{description}                         );
+  $datasource->module(          $config->{coordinate_system} || $DEFAULT_CS    );
+  $datasource->module_version(  $config->{assembly}                            );
+  $datasource->web_data(        $config->{web_data}||{}                        );
 
   $adaptor->update($datasource);
   return $datasource;
@@ -398,17 +423,17 @@ sub _save_protein_features {
       eval {
 	  my $feat = new Bio::EnsEMBL::ProteinFeature(
               -translation_id => $object_id,
-              -start    => $f->rawstart,
-              -end      => $f->rawend,
-              -strand   => $f->strand,
-              -hseqname => $f->id,
-              -hstart   => $f->rawstart,
-              -hend     => $f->rawend,
-              -hstrand  => $f->strand,
-              -score => $f->score,
-              -analysis => $datasource,
+              -start      => $f->rawstart,
+              -end        => $f->rawend,
+              -strand     => $f->strand,
+              -hseqname   => $f->id,
+              -hstart     => $f->hstart,
+              -hend       => $f->hend,
+              -hstrand    => $f->hstrand,
+              -score      => $f->score,
+              -analysis   => $datasource,
               -extra_data => $extra_data,
-						      );
+        );
 
 	  push @feat_array, $feat;
       };

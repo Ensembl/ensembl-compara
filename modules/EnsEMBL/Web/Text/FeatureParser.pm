@@ -106,6 +106,12 @@ sub current_key {
 
 =cut
 
+sub format {
+  my $self = shift;
+  $self->{_info}{format} = shift if @_;
+  return $self->{'_info'}->{'format'};
+}
+
 sub get_format {
   my $self = shift;
   return $self->{'_info'}->{'format'};
@@ -151,7 +157,7 @@ sub analyse {
   my ($self, $data) = @_;
   return unless $data;
   my %info;
-  foreach my $row ( split '\n', $data ) {
+  foreach my $row ( split /\n/, $data ) {
   my @analysis = $self->analyse_row($row);
   if ($analysis[2]) {
     $info{$analysis[0]}{$analysis[1]} = $analysis[2];
@@ -270,8 +276,8 @@ sub analyse_row {
 sub parse {
   my ($self, $data, $format) = @_;
   return unless $data;
-  foreach my $row ( split '\n', $data ) {
-   $self->parse_row($row, $format);
+  foreach my $row ( split /\n/, $data ) {
+    $self->parse_row($row, $format);
   }
 
 }
@@ -280,10 +286,10 @@ sub parse_old {
   my ($self, $data, $format) = @_;
   return unless $data;
   if (!$format) {
-  my $info = $self->analyse($data);
-  $format = $info->{'format'};
+    my $info = $self->analyse($data);
+    $format = $info->{'format'};
   }
-  foreach my $row ( split '\n', $data ) {
+  foreach my $row ( split /\n/, $data ) {
    $self->parse_row($row, $format);
   }
 }
@@ -308,7 +314,7 @@ sub parse_file {
   if (!$format) {
   while( <$file> ) {
     my @analysis = $self->analyse_row( $_ );
-    if ($analysis[0] eq 'format') {
+    if( $analysis[0] eq 'format') {
     $format = $analysis[1];
     last;
     }
@@ -338,19 +344,19 @@ sub parse_URL {
   my $useragent = LWP::UserAgent->new();  
   $useragent->proxy( 'http', $self->species_defs->ENSEMBL_WWW_PROXY ) if( $self->species_defs->ENSEMBL_WWW_PROXY );   
   foreach my $URL ( $url ) {  
-  my $request = new HTTP::Request( 'GET', $URL );
-  $request->header( 'Pragma'       => 'no-cache' );
-  $request->header( 'Cache-control' => 'no-cache' );
-  my $response = $useragent->request($request); 
-  if( $response->is_success ) {
-    if (!$format) {
-    my $info = $self->analyse( $response->content );
-    $format = $info->{'format'};
+    my $request = new HTTP::Request( 'GET', $URL );
+    $request->header( 'Pragma'       => 'no-cache' );
+    $request->header( 'Cache-control' => 'no-cache' );
+    my $response = $useragent->request($request); 
+    if( $response->is_success ) {
+      if (!$format) {
+        my $info = $self->analyse( $response->content );
+        $format = $info->{'format'};
+      }
+      $self->parse( $response->content, $format );
+    } else {
+       warn( "Failed to parse: $URL" );
     }
-    $self->parse( $response->content );
-  } else {
-     warn( "Failed to parse: $URL" );
-  }
   }   
 }
 
@@ -374,37 +380,34 @@ sub parse_row {
 
 
   if( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
-  $self->{'browser_switches'}{$1}=$2;   
-  } 
-  elsif ($row =~ s/^track\s+(.*)$/$1/i) {
-  my %config;
-  while( $row ne '' ) {
-    if( $row =~ s/^(\w+)\s*=\s*"([^"]+)"// ) {  
-    my $key   = $1;
-    my $value = $2;
-    while( $value =~ s/\\$// && $row ne '') {
-      if( $row =~ s/^([^"]+)"\s*// ) {
-       $value .= "\"$1";
+    $self->{'browser_switches'}{$1}=$2;   
+  } elsif ($row =~ s/^track\s+(.*)$/$1/i) {
+    my %config;
+    while( $row ne '' ) {
+      if( $row =~ s/^(\w+)\s*=\s*"([^"]+)"// ) {  
+        my $key   = $1;
+        my $value = $2;
+        while( $value =~ s/\\$// && $row ne '') {
+          if( $row =~ s/^([^"]+)"\s*// ) {
+            $value .= "\"$1";
+          } else {
+            $value .= "\"$row"; 
+            $row = '';
+          }
+        }
+        $row =~ s/^\s*//;
+        $config{$key} = $value;
+      } elsif( $row =~ s/(\w+)\s*=\s*(\S+)\s*// ) {
+        $config{$1} = $2;
       } else {
-      $value .= "\"$row"; 
-      $row = '';
+        $row ='';
       }
     }
-    $row =~ s/^\s*//;
-    $config{$key} = $value;
-    } 
-    elsif( $row =~ s/(\w+)\s*=\s*(\S+)\s*// ) {
-    $config{$1} = $2;
-    } 
-    else {
-    $row ='';
-    }
-  }
-
-  $config{'name'} = 'default';
-  my $current_key = $config{'name'};# || 'default';
-  $self->{'tracks'}{ $current_key } = { 'features' => [], 'config' => \%config };
-  $self->{'_current_key'} = $current_key;
+ 
+    $config{'name'} ||= 'default';
+    my $current_key = $config{'name'};# || 'default';
+    $self->{'tracks'}{ $current_key } ||= { 'features' => [], 'config' => \%config };
+    $self->{'_current_key'} = $current_key;
   } 
   else {
   return unless $row =~ /\d+/g ;
