@@ -150,12 +150,12 @@ sub upload {
     if (!$format) {
       ## Get more input from user
       $self->parameter(format      => 'none');
-      $self->parameter(md5         => $file->md5);
+      $self->parameter(code        => $file->md5);
       $self->parameter(wizard_next => 'more_input');
     }
     else {
       $self->parameter(format      => $format);
-      $self->parameter(md5         => $file->md5);
+      $self->parameter(code        => $file->md5);
       $self->parameter(wizard_next => 'upload_feedback');
     }
   }
@@ -170,7 +170,7 @@ sub more_input {
   $self->title('File Details');
 
   ## Format selector
-  $self->add_element(type => 'Hidden', name => 'md5', value => $self->object->param('md5'));
+  $self->add_element(type => 'Hidden', name => 'code', value => $self->object->param('code'));
   $self->add_element(type => 'Information', value => 'Your file format could not be identified - please select an option:');
   $self->add_element(type => 'DropDown', name => 'format', label => 'File format', select => 'select', values => \@formats);
 }
@@ -184,7 +184,7 @@ sub upload_feedback {
   if ($self->object->param('format')) {
     $self->object->get_session->set_data(
       type   => 'upload',
-      code   => $self->object->param('md5'),
+      code   => $self->object->param('code'),
       format => $self->object->param('format'),
     );
   }
