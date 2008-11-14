@@ -360,6 +360,14 @@ if (my $cache = new EnsEMBL::Web::Cache) {
       $proto->propagate_cache_tags;
       $proto->SUPER::search(@_);
   }
+
+  ## Some calls use direct sql query so
+  ## ->sth_to_objects must propogate tags
+  sub sth_to_objects {  
+      my $proto = shift;
+      $proto->propagate_cache_tags;
+      $proto->SUPER::sth_to_objects(@_);
+  }
   
 }
 
