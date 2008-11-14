@@ -7,9 +7,11 @@ use Sanger::Graphics::TextHelper;
 use Bio::EnsEMBL::Registry;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::RegObj;
+use Digest::MD5 qw(md5_hex);
 
 my $reg = "Bio::EnsEMBL::Registry";
-my @TRANSCRIPT_TYPES = qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene);
+
+our @TRANSCRIPT_TYPES = qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene);
 
 our $MEMD = EnsEMBL::Web::Cache->new;
 
@@ -117,20 +119,123 @@ sub load_user_tracks {
 ## Firstly "upload data" not yet committed to the database...
 ## Then those attached as URLs to either the session or the User
 
-  my %T = %{ $session->get_tmp_data || {} };
+## Now we deal with the url sources... again flat file!
+  my $renderers = [
+    'off'         => 'Off',
+    'normal'      => 'Normal',
+    'half_height' => 'Half height',
+    'stack'       => 'Stacked',
+    'unlimited'   => 'Stacked unlimited',
+    'ungrouped'   => 'Ungrouped'
+  ];
 
-  if( $T{'species'} eq $self->{'species'} ) {
-    $menu->append($self->create_track( 'temporary_user_data', 'Temporary user data', {
-      %T,
-      '_class'      => 'user',
-      'glyphset'    => '_tmp_user_data',
-      'url'         => 'tmp',
-      'caption'     => 'Temporary data',
-      'description' => 'Temporary uploaded user data',
+  my %url_sources = ();
+  my %user_sources = ();
+  my @t = $session->get_data( 'type' => 'url' );
+  foreach my $entry (@t) {
+    next unless $entry->{'species'} eq $self->{'species'};
+    $url_sources{$entry->{'url'}} = {
+      'source_name'        => $entry->{'name'}||$entry->{'url'},
+      'source_type' => 'session'
+    };
+  }
+  @t = $session->get_data( 'type' => 'upload' );
+  foreach my $entry (@t) {
+    next unless $entry->{'species'} eq $self->{'species'};
+    if( $entry->{'analyses'} ) {
+      my @analyses = split /, /, $entry->{'analyses'};
+      foreach my $analysis (@analyses) {
+        $user_sources{$analysis} = {
+          'source_name' => $entry->{'name'},
+          'source_type' => 'session',
+          'assembly'    => $entry->{'assembly'}
+        };
+      }
+    } else {
+      $menu->append( $self->create_track( 'tmp_'.$entry->{'code'}, $entry->{'name'}, {
+        '_class'      => 'tmp',
+        'glyphset'    => '_flat_file',
+        'subtype'     => 'tmp_file',
+        'file'        => $entry->{'filename'},
+        'format'      => $entry->{'format'},
+        'caption'     => $entry->{'name'},
+        'renderers'   => $renderers,
+        'description' => '
+  Data that has been temporarily uploaded to the web server.',
+        'display'     => 'normal',
+        'strand'      => 'b'
+      })) if $entry->{'species'} eq $self->{'species'};
+    }
+  }
+  if( $user ) {
+    my @t = $user->urls;
+    foreach my $entry (@t) {
+      next unless  $entry->species eq $self->{'species'};
+      $url_sources{$entry->url} = {
+        'source_name' => $entry->name||$entry->url,
+        'source_type' => 'user' 
+      };
+    }
+    my @t = $user->uploads;
+    foreach my $entry (@t) {
+      next unless  $entry->species eq $self->{'species'};
+      my @analyses = split /, /, $entry->analyses;
+      foreach my $analysis (@analyses) {
+        $user_sources{$analysis} = {
+          'source_name' => $entry->name,
+          'source_type' => 'user',
+          'assembly'    => $entry->assembly
+        };
+      }
+    }
+  }
+
+  foreach (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources  ) {
+    $menu->append($self->create_track( 'url_'.md5_hex( $_ ), $url_sources{$_}{'source_name'}, {
+      '_class'      => 'url',
+      'glyphset'    => '_flat_file',
+      'caption'     => $url_sources{$_}{'source_name'},
+      'subtype'     => 'url',
+      'url'         => $_,
+      'renderers'   => $renderers,
+      'description' => sprintf ( '
+  Data retrieved from an external webserver.
+  This data is attached to the %s, and comes from URL: %s', CGI::escapeHTML( $url_sources{$_}{'source_type'}), CGI::escapeHTML( $_ ) ),
       'display'     => 'normal',
-      'renderers'   => [qw(off Off normal Normal)],
-      'strand'      => 'b',
+      'strand'      => 'b'
     }));
+  }
+  if( keys %user_sources ) { ## We now need to get a userdata adaptor to get the analysis info!
+    my $dbs         = EnsEMBL::Web::DBSQL::DBConnection->new( $self->{'species'} );
+    my $dba         = $dbs->get_DBAdaptor('userdata');
+    my $an_adaptor  = $dba->get_adaptor( 'Analysis' );
+
+    my @tracks;
+    foreach my $logic_name ( keys %user_sources ) {
+      my $analysis = $an_adaptor->fetch_by_logic_name($logic_name);
+      next unless $analysis;
+      push @tracks, ['user_'.$logic_name, $analysis->display_label, {
+        '_class'      => 'user',
+        'glyphset'    => '_user_data',
+        'renderers'   => $renderers,
+        'source_name' => $user_sources{$logic_name}{'source_name'},
+        'logic_name'  => $logic_name,
+        'caption'     => $analysis->display_label,
+        'data_type'   => $analysis->module,
+        'description' => sprintf ( '
+  Data uploaded by a user, in data set %s.
+  %s', CGI::escapeHTML($user_sources{$logic_name}{'source_name'}), CGI::escapeHTML($analysis->description) ),
+        'display'     => 'normal',
+        'style'       => $analysis->web_data,
+        'strand'      => 'b'
+      }];
+    }
+    foreach( sort {
+      lc($a->[2]{'source_name'}) cmp lc($b->[2]{'source_name'}) ||
+      lc($a->[1]               ) cmp lc($b->[1]               ) 
+    } @tracks ) {
+      $menu->append($self->create_track(@$_));
+    }
   }
   
 ## Do we have a user?!
@@ -139,9 +244,10 @@ sub load_user_tracks {
 ## Firstly those shared (and attached to the session)
 
 ## Then those attached to the user account
-  my $i = 0;
+=pod  
+    foreach my $u ( 
   
-  if( $user ) {
+  warn "USER: ",Dumper( $t );
     foreach my $upload ($user->uploads) {
       if ($upload->species eq $self->{'species'}) {
         foreach my $logic_name( split ', ', $upload->analyses ) {
@@ -161,6 +267,7 @@ sub load_user_tracks {
       }
     }
   }
+=cut
 
 ## 
   return;
@@ -377,17 +484,16 @@ sub load_configured_das {
 sub add_das_track {
   my( $self, $menu, $source ) = @_;
   my $node = $self->get_node($menu);
-  if (!$node) {
-    if (grep { $menu eq $_ } @TRANSCRIPT_TYPES) {
-      for (@TRANSCRIPT_TYPES) {
-        $node = $self->get_node($_);
-        last if $node;
-      }
+  if( !$node && grep { $menu eq $_ } @TRANSCRIPT_TYPES) {
+    for (@TRANSCRIPT_TYPES) {
+      $node = $self->get_node($_);
+      last if $node;
     }
-    $node ||= $self->get_node('external_data');
   }
+  $node ||= $self->get_node('external_data');
   
   return unless $node;
+
   my $caption =  $source->caption || $source->label;
   my $desc    =  $source->description;
   my $homepage = $source->homepage;
@@ -1030,6 +1136,7 @@ sub add_alignments {
 
 sub add_option {
   my( $self, $key, $caption, $values ) = @_;
+  return;
   my $menu = $self->get_node( 'options' );
   return unless $menu;
   $menu->append( $self->create_option( $key, $caption, $values ) );
@@ -1037,6 +1144,7 @@ sub add_option {
 
 sub add_options {
   my $self = shift;
+  return;
   my $menu = $self->get_node( 'options' );
   return unless $menu;
   foreach my $row (@_) {
