@@ -389,7 +389,14 @@ sub transHandler_species {
   # Mess with the environment
   $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
   $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
-  $ENSEMBL_WEB_REGISTRY->initialize_session({ 'r' => $r, 'cookie'  => $session_cookie, 'species' => $species, 'script'  => $script, 'type' => $type, 'action' => $action });
+  $ENSEMBL_WEB_REGISTRY->initialize_session({
+    r       => $r,
+    cookie  => $session_cookie,
+    species => $species,
+    script  => $script,
+    type    => $type,
+    action  => $action,
+  });
 
   # Search the mod-perl dirs for a script to run
   my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';

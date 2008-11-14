@@ -181,6 +181,8 @@ sub withdraw_data {
       if $self->can($field) && ref $data;
   }
 
+  $self->_attribute_store(data => $data);
+  
   return $data;
 }
 
