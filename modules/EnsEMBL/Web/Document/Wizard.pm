@@ -2,6 +2,7 @@ package EnsEMBL::Web::Document::Wizard;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use EnsEMBL::Web::Wizard;
 use Apache2::Const qw(REDIRECT);
