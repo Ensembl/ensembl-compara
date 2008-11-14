@@ -9,12 +9,9 @@ our @ISA = qw(EnsEMBL::Web::Object::DAS);
 sub base_align_features {
 ### Return das features...
   my( $self, $feature_type, $feature_label ) = @_;
-  $self->{'featureview_url'} = sprintf( '%s/%s/featureview?type=%s;id=%%s',
+  $self->{'featureview_url'} = sprintf( '%s/%s/Location/Genome?ftype=%s;id=%%s', # what about db???
     $self->species_defs->ENSEMBL_BASE_URL, $self->real_species, $feature_type
   );
-#  $self->{'r_url'} = sprintf( '%s/%s/r?d=%%s;id=%%s',
-#    $self->species_defs->ENSEMBL_BASE_URL, $self->real_species
-#  );
   $self->base_features( $feature_type, $feature_label );
 }
 
@@ -26,7 +23,7 @@ sub _feature {
   my $type          = $feature->analysis->logic_name;
   my $display_label = $feature->analysis->display_label;
   my $links =  [
-    { 'href' => sprintf( $self->{'featureview_url'}, $feature_id ), 'text' => "e! FeatureView $feature_id" },
+    { 'href' => sprintf( $self->{'featureview_url'}, $feature_id ), 'text' => "View $feature_id on genome" },
     { 'href' => sprintf( $self->{'r_url'}, $type, $feature_id ),    'text' => "$display_label $feature_id" }
   ];
 

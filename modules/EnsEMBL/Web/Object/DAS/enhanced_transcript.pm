@@ -22,12 +22,12 @@ sub _group_info {
       "Description: ".$gene->description,
       "Analysis: ".   $transcript->analysis->description,
     ],
-    'LINK' => [ { 'text' => 'e! TransView '.$transcript->stable_id ,
+    'LINK' => [ { 'text' => 'Transcript Summary '.$transcript->stable_id ,
                   'href' => sprintf( $self->{'templates'}{transview_URL}, $transcript->stable_id, $db ) },
-                { 'text' => 'e! GeneView '. $gene->stable_id,
+                { 'text' => 'Gene Summary '. $gene->stable_id,
                   'href' => sprintf( $self->{'templates'}{geneview_URL},  $gene->stable_id,       $db ) },
   $transcript->translation ?
-                { 'text' => 'e! ProtView '.$transcript->translation->stable_id,
+                { 'text' => 'Protein Summary '.$transcript->translation->stable_id,
                   'href' => sprintf( $self->{'templates'}{protview_URL}, $transcript->translation->stable_id, $db ) } : (),
                 @link_array
     ];

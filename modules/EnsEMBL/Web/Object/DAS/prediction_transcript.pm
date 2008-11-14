@@ -87,7 +87,7 @@ sub Features {
   }
 
 ## Transview template...
-  my $transview_url = sprintf( '%s/%s/transview?transcript=%%s',
+  my $transview_url = sprintf( '%s/%s/Transcript/Summary?t=%%s',
     $self->species_defs->ENSEMBL_BASE_URL, $self->real_species
   );
 
@@ -143,7 +143,7 @@ sub Features {
           'LABEL'     => $display_label,
           'LINK'      => [{
             'href'    => sprintf( $transview_url, $display_label ),
-            'text'    => 'View feature in e! TransView'
+            'text'    => 'View Transcript Summary'
           }]
         }]
       };

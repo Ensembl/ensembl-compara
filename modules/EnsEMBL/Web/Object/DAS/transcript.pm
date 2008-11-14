@@ -351,10 +351,10 @@ sub Features {
 
 	#View templates
 	$self->{'templates'} ||= {};
-	$self->{'templates'}{'transview_URL'} = sprintf( '%s/%s/transview?transcript=%%s;db=%%s', $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
-	$self->{'templates'}{'geneview_URL'}  = sprintf( '%s/%s/geneview?gene=%%s;db=%%s',        $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
-	$self->{'templates'}{'protview_URL'}  = sprintf( '%s/%s/protview?peptide=%%s;db=%%s',     $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
-	$self->{'templates'}{'r_URL'}         = sprintf( '%s/%s/r?d=%%s;ID=%%s',                  $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
+	$self->{'templates'}{'transview_URL'} = sprintf( '%s/%s/Transcript/Summary?t=%%s;db=%%s', $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
+	$self->{'templates'}{'geneview_URL'}  = sprintf( '%s/%s/Gene/Summary?g=%%s;db=%%s',       $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
+	$self->{'templates'}{'protview_URL'}  = sprintf( '%s/%s/Transcript/ProteinSummary?p=%%s;db=%%s', $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
+	#$self->{'templates'}{'r_URL'}         = sprintf( '%s/%s/r?d=%%s;ID=%%s',                  $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
 	
 ### Part 6: Grab and return features
 ### Now we do all the nasty stuff of retrieving features and creating DAS objects for them...

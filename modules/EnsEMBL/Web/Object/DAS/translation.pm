@@ -137,7 +137,7 @@ sub Features {
 							'TYPE' => 'translation:'.$transcript->analysis->logic_name,
 							'LABEL' =>  sprintf( '%s (%s)', $transl_id, $transcript->external_name || 'Novel' ),
 							'LINK' => [
-									{ 'text' => 'ProtView '.$transl_id ,
+									{ 'text' => 'Protein Summary '.$transl_id ,
 									  'href' => sprintf( $self->{'templates'}{'protview_URL'}, $transl_id, $db_key ),
 								  }
 								],
@@ -342,7 +342,7 @@ sub Features {
 							'TYPE' => 'translation:'.$transcript->analysis->logic_name,
 							'LABEL' => sprintf( '%s (%s)', $transl_id, $transcript->external_name || 'Novel' ),
 							'LINK' => [
-									{ 'text' => 'ProtView '.$transl_id ,
+									{ 'text' => 'Protein Summary '.$transl_id ,
 									  'href' => sprintf( $self->{'templates'}{'protview_URL'}, $transl_id, $self->{'db'} ),
 								  }
 								],

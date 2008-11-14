@@ -236,7 +236,7 @@ sub Features {
 
 	#View templates
 	$self->{'templates'} ||= {};
-	$self->{'templates'}{'geneview_URL'}  = sprintf( '%s/%s/geneview?gene=%%s;db=%%s',        $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
+	$self->{'templates'}{'geneview_URL'}  = sprintf( '%s/%s/Gene/Summary?g=%%s;db=%%s',        $self->species_defs->ENSEMBL_BASE_URL, $self->real_species );
 
 	### Part 6: Grab and return features
 	### Now we do all the nasty stuff of retrieving features and creating DAS objects for them...
