@@ -251,8 +251,8 @@ table.das tr.ref_bg td { background-color:#fed }
       <xsl:otherwise>
 <!--
     <td class="l"><ul>
-      <li><xsl:element name="a"><xsl:attribute name="href" >/das/<xsl:value-of select="SOURCE/@id" />/entry_points</xsl:attribute>Add to ContigView</xsl:element></li>
-      <li><xsl:element name="a"><xsl:attribute name="href" >/das/<xsl:value-of select="SOURCE/@id" />/entry_points</xsl:attribute>Add to CytoView</xsl:element></li>
+      <li><xsl:element name="a"><xsl:attribute name="href" >/das/<xsl:value-of select="SOURCE/@id" />/entry_points</xsl:attribute>Add to Location View</xsl:element></li>
+      <li><xsl:element name="a"><xsl:attribute name="href" >/das/<xsl:value-of select="SOURCE/@id" />/entry_points</xsl:attribute>Add to Location Overview</xsl:element></li>
     </ul></td>
 -->
       </xsl:otherwise>
@@ -639,11 +639,11 @@ table.das tr.ref_bg td { background-color:#fed }
   <tr>
     <th colspan="6">Segment: <xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
     [<xsl:element name="a"><xsl:attribute name="href">
-       /<xsl:value-of select="$species" />/contigview?l=<xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
-     </xsl:attribute>ContigView</xsl:element>]
+       /<xsl:value-of select="$species" />/Location/View?l=<xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
+     </xsl:attribute>Location View</xsl:element>]
     [<xsl:element name="a"><xsl:attribute name="href">
-       /<xsl:value-of select="$species" />/cytoview?l=<xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
-     </xsl:attribute>CytoView</xsl:element>]
+       /<xsl:value-of select="$species" />/Location/Overview?l=<xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
+     </xsl:attribute>Location Overview</xsl:element>]
     </th>
   </tr>
   </xsl:if>
@@ -705,11 +705,11 @@ table.das tr.ref_bg td { background-color:#fed }
   <tr>
     <th colspan="11">Segment: <xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
     [<xsl:element name="a"><xsl:attribute name="href">
-       /<xsl:value-of select="$species" />/contigview?l=<xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
-     </xsl:attribute>ContigView</xsl:element>]
+       /<xsl:value-of select="$species" />/Location/View?l=<xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
+     </xsl:attribute>Location View</xsl:element>]
     [<xsl:element name="a"><xsl:attribute name="href">
-       /<xsl:value-of select="$species" />/cytoview?l=<xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
-     </xsl:attribute>CytoView</xsl:element>]
+       /<xsl:value-of select="$species" />/Location/Overview?l=<xsl:value-of select="@id" />:<xsl:value-of select="@start" />-<xsl:value-of select="@stop" />
+     </xsl:attribute>Location Overview</xsl:element>]
     </th>
   </tr>
   <xsl:choose>
@@ -822,12 +822,12 @@ table.das tr.ref_bg td { background-color:#fed }
         </xsl:element></li>
       </xsl:if>
       <li><xsl:element name="a">
-        <xsl:attribute name="href"><xsl:value-of select="$base_URL" />/dna?segment=<xsl:value-of select="@id" /></xsl:attribute>
+        <xsl:attribute name="href"><xsl:value-of select="$base_URL" />/sequence?segment=<xsl:value-of select="@id" /></xsl:attribute>
           <em>DAS</em> Sequence
       </xsl:element></li>
     </xsl:if>
       <li><xsl:element name="a">
-      <xsl:attribute name="href">/<xsl:value-of select="$species" />/contigview?l=<xsl:value-of select="../@id" />:<xsl:value-of select="START" />-<xsl:value-of select="END" /></xsl:attribute>Contigview
+      <xsl:attribute name="href">/<xsl:value-of select="$species" />/Location/View?l=<xsl:value-of select="../@id" />:<xsl:value-of select="START" />-<xsl:value-of select="END" /></xsl:attribute>Location View
     </xsl:element></li>
     <xsl:apply-templates select="LINK"/>
     <xsl:apply-templates select="GROUP/LINK"/>
