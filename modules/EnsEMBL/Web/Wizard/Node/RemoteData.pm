@@ -76,20 +76,24 @@ sub select_das {
     for my $source (@{ $sources }) {
       
       # If the source is already in the speciesdefs/session/user, skip it
+      my $already_added = 0;
       if ( $all_das->{$source->logic_name} ) {
         push @already_added, $source;
+        $already_added = 1;
       }
-      # Otherwise add a checkbox...
-      else {
-        push @$elements, {'type' => 'DASCheckBox', 'das'  => $source};
-      }
+      
+      push @$elements, { 'type'     => 'DASCheckBox',
+                         'das'      => $source,
+                         'disabled' => $already_added,
+                         'checked'  => $already_added  };
     } # end DAS source loop
     
     if ( scalar @already_added ) {
-      my $noun = scalar @already_added > 1 ? 'sources' : 'source';
-      my $verb = scalar @already_added > 1 ? 'are' : 'is';
-      my $note = sprintf 'There %s %d DAS %s not shown here that are already configured within %s.',
-                         $verb, scalar @already_added, $noun,
+      my $noun    = scalar @already_added > 1 ? 'sources' : 'source';
+      my $verb    = scalar @already_added > 1 ? 'are' : 'is';
+      my $subject = scalar @already_added > 1 ? 'they' : 'it';
+      my $note = sprintf '%d DAS %s %s cannot be selected here because %s %3$s already configured within %s.',
+                         scalar @already_added, $noun, $verb, $subject,
                          $self->object->species_defs->ENSEMBL_SITETYPE;
       $self->notes( {'heading'=>'Note', 'text'=> $note } );
     }
@@ -325,8 +329,11 @@ sub attach_das {
 sub das_feedback {
   my $self = shift;
   $self->title('Attached DAS sources');
-  my $das = $self->object->get_session->get_all_das;
-  if (my @added = $self->object->param('added')) {
+  my $das     = $self->object->get_session->get_all_das;
+  my @added   = grep {$_} $self->object->param('added');
+  my @skipped = grep {$_} $self->object->param('skipped');
+  
+  if (@added > 0) {
     $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources have now been attached:' );
     foreach my $logic_name (@added) {
       my $source = $das->{$logic_name};
@@ -342,8 +349,8 @@ sub das_feedback {
       }
     }
   }
-  if (my @skipped = $self->object->param('skipped')) {
-    $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources were already attached:' );
+  if (@skipped > 0) {
+    $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources could not be attached:' );
     foreach my $logic_name (@skipped) {
       my $source = $das->{$logic_name};
       if ($source) {
