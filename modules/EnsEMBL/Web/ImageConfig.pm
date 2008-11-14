@@ -9,6 +9,7 @@ use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::RegObj;
 
 my $reg = "Bio::EnsEMBL::Registry";
+my @TRANSCRIPT_TYPES = qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene);
 
 our $MEMD = EnsEMBL::Web::Cache->new;
 
@@ -376,8 +377,16 @@ sub load_configured_das {
 sub add_das_track {
   my( $self, $menu, $source ) = @_;
   my $node = $self->get_node($menu);
-     $node = $self->get_node('gene') if !$node && $menu eq 'transcript';
-     $node = $self->get_node('external_data') unless $node; 
+  if (!$node) {
+    if (grep { $menu eq $_ } @TRANSCRIPT_TYPES) {
+      for (@TRANSCRIPT_TYPES) {
+        $node = $self->get_node($_);
+        last if $node;
+      }
+    }
+    $node ||= $self->get_node('external_data');
+  }
+  
   return unless $node;
   my $caption =  $source->caption || $source->label;
   my $desc    =  $source->description;
@@ -623,15 +632,12 @@ sub add_gene {
   my( $self, $key, $hashref ) = @_;
 ## Gene features end up in each of these menus..
 
-  my @types = qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene);
-
-  return unless $self->_check_menus( @types );
+  return unless $self->_check_menus( @TRANSCRIPT_TYPES );
 
   my( $keys, $data )   = $self->_merge( $hashref->{'gene'}, 'gene' );
 
   my $flag = 0;
-  foreach my $type ( @types ) {
-#      warn "looking for type $type-$key";
+  foreach my $type ( @TRANSCRIPT_TYPES ) {
     my $menu = $self->get_node( $type );
     next unless $menu;
     foreach my $key_2 ( @$keys ) {
