@@ -27,44 +27,6 @@ our @formats = (
 
 #----------------------------- FILE UPLOAD NODES -----------------------
 
-sub check_session {
-  my $self = shift;
-  my $temp_data = $self->object->get_session->get_tmp_data;
-  if ($temp_data && %$temp_data) {
-    $self->parameter('wizard_next', 'overwrite_warning');
-  } else {
-    $self->parameter('wizard_next', 'select_file');
-  }
-}
-
-sub overwrite_warning {
-  my $self = shift;
-  
-  $self->add_element('type'=>'Information', 'value'=>'You have unsaved data uploaded. Uploading a new file will overwrite this data, unless it is first saved to your user account.');
-  
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user) {
-    $self->add_element( type => 'CheckBox', name => 'save', label => 'Save current data to my account', 'checked'=>'checked' );
-    $self->add_element( type => 'String', name => 'name', label => 'Name' );
-  }
-  else {
-    $self->add_element('type'=>'Information', 'classes' => ['no-bold'], 'value'=>'<a href="/Account/Login" class="modal_link">Log into your user account</a> to save this data.');
-  }
-}
-
-sub overwrite_save {
-  my $self = shift;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($self->object->param('save') && $user) {
-    ## Save current temporary data upload to user account
-    my $data = $self->object->get_session->get_tmp_data;
-    $data->{'name'} = $self->object->param('name') if $self->object->param('name');
-    $user->add_to_uploads($data);
-    $self->object->get_session->purge_tmp_data;
-  }
-  $self->parameter('wizard_next', 'select_file');
-}
-
 sub select_file {
   my $self = shift;
 
