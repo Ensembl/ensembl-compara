@@ -33,9 +33,6 @@ sub content {
     push @data, $tmp_data;
   }
 
-  use Data::Dumper;
-  warn 'DATA: '. Dumper(\@data); 
-
   if (@data) {
     my $table = EnsEMBL::Web::Document::SpreadSheet->new();
     $table->add_columns(
@@ -44,7 +41,10 @@ sub content {
       {'key' => "delete", 'title' => '', 'width' => '20%', 'align' => 'left' },
     );
     foreach my $file (@data) {
-      my $row = {'name' => '<p><i>'.$file->{'name'}.'</i> for '.$file->{'species'}};
+      my $name = '<p>'.
+      $name .= '<strong>'.$file->{'name'}.'</strong><br />' if $file->{'name'};
+      $name .= $file->{'format'}.' file for '.$file->{'species'};
+      my $row = {'name' => $name};
       my $extra = 'type='.$file->{'type'}.';code='.$file->{'code'};
       if ($user) {
         $row->{'save'} = qq(<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>);
