@@ -63,15 +63,15 @@ sub populate_tree {
 
   ## SAMPLE DATA
   my $data_menu = $self->create_submenu( 'Data', 'Sample entry points' );
-  my %sample_data = %{$sd->SAMPLE_DATA};
+  my $sample_data = $sd->SAMPLE_DATA;
   my $species_path = $self->species;
-  if(keys %sample_data) {
-    my $location_url    = "/$species_path/Location/View?r=$sample_data{'LOCATION_PARAM'}";
-    my $location_text   = $sample_data{'LOCATION_TEXT'};
-    my $gene_url        = "/$species_path/Gene/Summary?g=$sample_data{'GENE_PARAM'}";
-    my $gene_text       = $sample_data{'GENE_TEXT'};
-    my $transcript_url  = "/$species_path/Transcript/Summary?t=$sample_data{'TRANSCRIPT_PARAM'}";
-    my $transcript_text = $sample_data{'TRANSCRIPT_TEXT'};
+  if($sample_data && keys %$sample_data) {
+    my $location_url    = "/$species_path/Location/View?r=".$sample_data{'LOCATION_PARAM'};
+    my $location_text   = $sample_data->{'LOCATION_TEXT'};
+    my $gene_url        = "/$species_path/Gene/Summary?g=".$sample_data->{'GENE_PARAM'};
+    my $gene_text       = $sample_data->{'GENE_TEXT'};
+    my $transcript_url  = "/$species_path/Transcript/Summary?t=".$sample_data->{'TRANSCRIPT_PARAM'};
+    my $transcript_text = $sample_data->{'TRANSCRIPT_TEXT'};
     my $karyotype = scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}) ? 'Karyotype' : 'Karyotype (not available)';
     $data_menu->append( $self->create_node( 'Karyotype', $karyotype,
       [qw(location      EnsEMBL::Web::Component::Location::Genome)],
