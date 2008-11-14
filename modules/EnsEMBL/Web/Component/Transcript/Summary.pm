@@ -124,6 +124,7 @@ if( $gene ) {
       @$transcripts
     ) {
       my $url = $self->object->_url({
+        'action' => $ENV{'ENSEMBL_ACTION'} eq 'ProteinSummary' ? 'Summary' : $ENV{'ENSEMBL_ACTION'},
         'type'   => 'Transcript',
         'function' => undef,
         't'      => $_->stable_id
