@@ -85,11 +85,11 @@ sub ajax_redirect {
 }
 
 sub ajax_url {
-  my ($self, $script) = @_;
+  my ($self, $script,%extra) = @_;
   my $cgi = $self->action->cgi;
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
   $dir = '' if $dir !~ /_/;
-  return $self->url($dir.$script, {'_referer' => $cgi->param('_referer'), 'x_requested_with' => $cgi->param('x_requested_with')} )
+  return $self->url($dir.$script, {%extra,'_referer' => $cgi->param('_referer'), 'x_requested_with' => $cgi->param('x_requested_with')} )
 }
 
 sub add_filter {
