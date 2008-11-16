@@ -43,3 +43,4 @@ dl#local_modal ul {margin: 0 0 0.5em 0; border:1px solid #ccc;padding:0.2em 0 0 
 dl#local_modal ul li { margin-bottom:0; list-style-image:none; color:#933; }
 dl#local_modal span.fake_link , dl#local_modal a {color:#369;text-decoration:none;}
 
+#modal_reload { display: none }

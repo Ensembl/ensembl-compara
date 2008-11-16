@@ -232,6 +232,9 @@ function modal_success( transport ) {
   var b = M.join('</div>');
   $('modal_close').innerHTML = configuration_updated ? 'SAVE and close' : 'Close';
   $('modal_content').update( b );
+  if( $('modal_reload') ) {
+    page_needs_to_be_reloaded = true;
+  }
 //  $('modal_content').appendChild(document.createTextNode(b));
 // Make the main tab links go back to this window!
   $$('#modal_caption a').each(function(n){n.addClassName('modal_link')});
