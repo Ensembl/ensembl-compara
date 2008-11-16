@@ -155,6 +155,7 @@ sub upload_feedback {
 
   $self->add_element(type => 'Information', value => qq(Thank you - your file was successfully uploaded. Close this Control Panel to view your data));
   $self->add_element(type => 'Hidden', name => 'md5', value => $self->object->param('md5'));
+  $self->add_element(type => 'ForceReload' );
 }
 
 #-------------------- DATA-SHARING NODES ---------------------------------

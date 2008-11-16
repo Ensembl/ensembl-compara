@@ -333,34 +333,37 @@ sub das_feedback {
   my @added   = grep {$_} $self->object->param('added');
   my @skipped = grep {$_} $self->object->param('skipped');
   
-  if (@added > 0) {
+  if( @added > 0 ) {
     $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources have now been attached:' );
     foreach my $logic_name (@added) {
       my $source = $das->{$logic_name};
-      if ($source) {
-        $self->add_element( 'type' => 'Information', 'classes' => ['no-bold'],
-                            'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
-                                                                $source->label,
-                                                                $source->description,
-                                                                $source->homepage );
-      }
-      else {
+      if( $source ) {
+        $self->add_element(
+          'type' => 'Information', 'classes' => ['no-bold'],
+          'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
+            $source->label,
+            $source->description,
+            $source->homepage
+        );
+      } else {
         $self->add_element( 'type' => 'Information', 'value' => $logic_name);
       }
     }
+    $self->add_element( 'type' => 'ForceReload' );
   }
-  if (@skipped > 0) {
+  if( @skipped > 0 ) {
     $self->add_element( 'type' => 'SubHeader', 'value' => 'The following DAS sources could not be attached:' );
     foreach my $logic_name (@skipped) {
       my $source = $das->{$logic_name};
       if ($source) {
-        $self->add_element( 'type' => 'Information', 'classes' => ['no-bold'],
-                            'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
-                                                                $source->label,
-                                                                $source->description,
-                                                                $source->homepage );
-      }
-      else {
+        $self->add_element(
+          'type' => 'Information', 'classes' => ['no-bold'],
+          'value' => sprintf '<strong>%s</strong><br/>%s<br/><a href="%s">%3$s</a>',
+            $source->label,
+            $source->description,
+            $source->homepage
+        );
+      } else {
         $self->add_element( 'type' => 'Information', 'value' => $logic_name);
       }
     }
@@ -541,6 +544,7 @@ sub url_feedback {
     type  => 'Information',
     value => qq(Thank you - your url was successfully attached. Close this Control Panel to view your data),
   );
+  $self->add_element( 'type' => 'ForceReload' );
 }
 
 
