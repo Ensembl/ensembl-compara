@@ -42,6 +42,7 @@ sub form {
       'value'=> 'yes'
     });
   }
+  $view_config->add_fieldset('');
 }
 
 
