@@ -5,6 +5,8 @@ use warnings;
 no warnings "uninitialized";
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::RegObj;
+use Apache2::RequestUtil;
+
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
@@ -20,9 +22,15 @@ sub content {
   ## Control panel fixes
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
   $dir = '' if $dir !~ /_/;
-  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $r = Apache2::RequestUtil->request();
+
+  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.
+     ( $self->object->param('x_requested_with')||$r->headers_in->{'X-Requested-With'} );
 
   my $html;
+  if( $self->object->param('reload') ) {
+    $html .= '<div id="modal_reload">.</div>';
+  }
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
   ## Temporary upload
