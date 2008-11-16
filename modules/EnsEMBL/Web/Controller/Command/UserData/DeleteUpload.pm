@@ -20,7 +20,7 @@ sub process {
   $object->delete_upload
     if $object;
 
-  $self->ajax_redirect($self->ajax_url('/UserData/ManageUpload'));
+  $self->ajax_redirect($self->ajax_url('/UserData/ManageUpload', 'reload' => 1));
 }
 
 }
