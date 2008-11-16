@@ -226,32 +226,32 @@ sub analyse_row {
   if ($row =~ /^reference(\s+)?=(\s+)?(.+)/) {
     return ('format', 'GBrowse');
   }   
-  my @tab_delimited = split /(\t|  +)/, $row;
+  my @tab_del = split /(\t|  +)/, $row;
 
   my $current_key = $self->{'_current_key'} ;
-  if( $tab_delimited[12] eq '.' || $tab_delimited[12] eq '+' || $tab_delimited[12] eq '-' ) {
-    if( $tab_delimited[16] =~ /\;/ ) { ## GTF format
-    return ('format', 'GTF');   
-    } 
-    else {     ## GFF format
+  if( $tab_del[12] eq '.' || $tab_del[12] eq '+' || $tab_del[12] eq '-' ) {
+#    if( $tab_del[16] =~ /\;/ ) { ## GTF format
+#    return ('format', 'GTF');   
+#    } 
+#    else {     ## GFF format
     return ('format', 'GFF');   
-    }
+#    }
   }
-  elsif ( $tab_delimited[14] eq '+' || $tab_delimited[14] eq '-' || $tab_delimited[14] eq '.') { # DAS format accepted by Ensembl
+  elsif ( $tab_del[14] eq '+' || $tab_del[14] eq '-' || $tab_del[14] eq '.') { # DAS format accepted by Ensembl
     return ('format', 'DAS');   
   } 
   else {
-    my @ws_delimited = split /\s+/, $row;
-    if( $ws_delimited[8] =~/^[-+][-+]?$/  ) { ## PSL format
+    my @ws_delim = split /\s+/, $row;
+    if( $ws_delim[8] =~/^[-+][-+]?$/  ) { ## PSL format
     return ('format', 'PSL');   
     } 
-    elsif ($ws_delimited[0] =~/^>/ ) {  ## Simple format (chr/start/end/type
+    elsif ($ws_delim[0] =~/^>/ ) {  ## Simple format (chr/start/end/type
     return ('format', 'generic');   
     } 
     else { 
-      my $fcount = scalar(@ws_delimited);
+      my $fcount = scalar(@ws_delim);
       if ($fcount > 2 and $fcount < 13) {
-        if ($ws_delimited[1] =~ /\d+/ && $ws_delimited[2] =~ /\d+/) {
+        if ($ws_delim[1] =~ /\d+/ && $ws_delim[2] =~ /\d+/) {
           return ('format', 'BED');   
         }
       }
@@ -408,40 +408,35 @@ sub parse_row {
     my $current_key = $config{'name'};# || 'default';
     $self->{'tracks'}{ $current_key } ||= { 'features' => [], 'config' => \%config };
     $self->{'_current_key'} = $current_key;
-  } 
-  else {
-  return unless $row =~ /\d+/g ;
-  my @tab_delimited = split /(\t|  +)/, $row;
-  my $current_key = $self->{'_current_key'} ;
-  if( $format eq 'GFF' ) {
-    $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GFF->new( \@tab_delimited ) ) 
-    if $self->filter($tab_delimited[0],$tab_delimited[6],$tab_delimited[8]);
-  } 
-  elsif ($format eq 'GTF')  { 
-    $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GTF->new( \@tab_delimited ) ) 
-    if $self->filter($tab_delimited[0],$tab_delimited[6],$tab_delimited[8]);
-  }
-  elsif ($format eq 'DAS' ) { 
-    $current_key = $tab_delimited[2] if $current_key eq 'default';
-    $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::DAS->new( \@tab_delimited ) ) 
-    if $self->filter($tab_delimited[4],$tab_delimited[5],$tab_delimited[6]);
-  } 
-  else {
-    my @ws_delimited = split /\s+/, $row; 
-    if ($format eq 'PSL' ) {
-    $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::PSL->new( \@ws_delimited ) ) 
-    if $self->filter($ws_delimited[13],$ws_delimited[15],$ws_delimited[16]);
+  } else {
+    return unless $row =~ /\d+/g ;
+    my @tab_del = split /(\t|  +)/, $row;
+    my $current_key = $self->{'_current_key'} ;
+    if( $format =~ /^G[TF]F/ ) { ## Hack can't distinguish GFF from GTF cleanly
+      $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GFF->new( \@tab_del ) ) 
+        if $self->filter($tab_del[0],$tab_del[6],$tab_del[8]);
+#    } 
+#  elsif ($format eq 'GTF')  { 
+#    $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GTF->new( \@tab_del ) ) 
+#    if $self->filter($tab_del[0],$tab_del[6],$tab_del[8]);
+    } elsif( $format eq 'DAS' ) { 
+      $current_key = $tab_del[2] if $current_key eq 'default';
+      $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::DAS->new( \@tab_del ) ) 
+        if $self->filter($tab_del[4],$tab_del[5],$tab_del[6]);
+    } else {
+      my @ws_delim = split /\s+/, $row; 
+      if( $format eq 'PSL' ) {
+        $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::PSL->new( \@ws_delim ) ) 
+          if $self->filter($ws_delim[13],$ws_delim[15],$ws_delim[16]);
+      } elsif( $format eq 'BED' ) {
+        $current_key = $ws_delim[3] if $current_key eq 'default';
+        $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::BED->new( \@ws_delim ) )
+          if $self->filter($ws_delim[0],$ws_delim[1],$ws_delim[2]);
+      } else {
+        $self->store_feature( $ws_delim[4], EnsEMBL::Web::Text::Feature::generic->new( \@ws_delim ) ) 
+          if $self->filter($ws_delim[1],$ws_delim[2],$ws_delim[3]);
+      } 
     } 
-    elsif ($format eq 'BED') {               
-    $current_key = $ws_delimited[3] if $current_key eq 'default';
-    $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::BED->new( \@ws_delimited ) ) if
-    $self->filter($ws_delimited[0],$ws_delimited[1],$ws_delimited[2]);
-    }
-    else {
-    $self->store_feature( $ws_delimited[4], EnsEMBL::Web::Text::Feature::generic->new( \@ws_delimited ) ) 
-      if $self->filter($ws_delimited[1],$ws_delimited[2],$ws_delimited[3]);
-    } 
-  } 
   }
 }
 
