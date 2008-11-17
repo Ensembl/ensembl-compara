@@ -225,6 +225,28 @@ sub _create_ProteinAlignFeature {
   return $features;
 }
 
+sub create_UserDataFeature {
+  my ($self, $logic_name) = @_;
+  my $dbs      = EnsEMBL::Web::DBSQL::DBConnection->new( $self->species );
+  my $dba      = $dbs->get_DBAdaptor('userdata');
+  my $features = [];
+  return [] unless $dba;
+
+  $dba->dnadb($self->database('core'));
+
+  ## Have to do the fetch per-chromosome, since API doesn't have suitable call
+  my $chrs = $self->species_defs->ENSEMBL_CHROMOSOMES;
+  foreach my $chr (@$chrs) {
+    my $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region(undef, $chr);
+    if ($slice) {
+      my $dafa     = $dba->get_adaptor( 'DnaAlignFeature' );
+      my $F = $dafa->fetch_all_by_Slice($slice, $logic_name );
+      push @$features, @$F;
+    }
+  }
+  return $features;
+}
+
 sub _create_Gene {
   my ($self, $db) = @_;
 
@@ -429,6 +451,46 @@ sub _generic_create {
 ## The following are used to convert full objects into simple data hashes, for use by drawing code
 
 sub retrieve_userdata {
+  ## Based on DnaAlignFeature, below
+  my ($self, $data) = @_;
+  my $type = 'DnaAlignFeature';
+  my $results = [];
+
+  foreach my $f ( @$data ) {
+#     next unless ($f->score > 80);
+    my $coord_systems = $self->coord_systems();
+    my( $region, $start, $end, $strand ) = ( $f->seq_region_name, $f->start, $f->end, $f->strand );
+    if( $f->coord_system_name ne $coord_systems->[0] ) {
+      foreach my $system ( @{$coord_systems} ) {
+        # warn "Projecting feature to $system";
+        my $slice = $f->project( $system );
+        # warn @$slice;
+        if( @$slice == 1 ) {
+          ($region,$start,$end,$strand) = ($slice->[0][2]->seq_region_name, $slice->[0][2]->start, $slice->[0][2]->end, $slice->[0][2]->strand );
+          last;
+        }
+      }
+    }
+    push @$results, {
+        'region'   => $region,
+        'start'    => $start,
+        'end'      => $end,
+        'strand'   => $strand,
+        'length'   => $f->end-$f->start+1,
+        'label'    => $f->display_id." (@{[$f->hstart]}-@{[$f->hend]})",
+        'gene_id'  => '',
+        'extra' => [ $f->alignment_length, $f->strand, $f->hstart, $f->hend, $f->hstrand, $f->score ]
+    };
+  }
+  
+  my $feature_mapped = 1; ## TODO - replace with $self->feature_mapped call once unmapped feature display is added
+  if ($feature_mapped) {
+    return $results, [ 'Alignment length', 'Rel ori', 'Hit start', 'Hit end', 'Hit Strand', 'Score' ], $type;
+  }
+  else {
+    return $results, [], $type;
+  }
+
 }
 
 sub retrieve_features {

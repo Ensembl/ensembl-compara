@@ -94,32 +94,65 @@ sub name {
   return 1;
 }
 
-sub create_userdata_pointers {
-  my ($self, $image, $userdata, $defaults) = @_;
+sub create_tempdata_pointers {
+  ## Creates sets of pointers from session data
+  my ($self, $image, $temp_data, $config, $defaults) = @_;
   my $object = $self->object;
+  my $pointers = [];
 
-  my $file = new EnsEMBL::Web::File::Text($object->species_defs);
-  my $data = $file->retrieve($userdata->{'filename'});
-  my $format  = $userdata->{'format'};
+  foreach my $stuff (@$temp_data) {
 
-  my $parser = EnsEMBL::Web::Text::FeatureParser->new();
-  $parser->parse($data, $format);
+    if ($stuff->{'filename'}) { ## upload
+      my $file = new EnsEMBL::Web::File::Text($object->species_defs);
+      my $data = $file->retrieve($stuff->{'filename'});
+      my $format  = $stuff->{'format'};
 
-  my $zmenu_config = {
-    'caption' => 'features',
-    'entries' => ['userdata'],
-  };
+      my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+      $parser->parse($data, $format);
 
-  ## create image with parsed data
-  my $pointer_set = $image->add_pointers( $object, {
-    'config_name'   => 'Vkar2view',
-    'parser'        => $parser,
-    'zmenu_config'  => $zmenu_config,
-    'color'         => $object->param("col")   || $defaults->[0],
-    'style'         => $object->param("style") || $defaults->[1],
-  });
+      ## create image with parsed data
+      my $pointer_set = $image->add_pointers( $object, {
+        'config_name'   => $config,
+        'parser'        => $parser,
+        'color'         => $object->param("col")   || $defaults->[0],
+        'style'         => $object->param("style") || $defaults->[1],
+      });
+      push @$pointers, $pointer_set;
+    }
+    else { ## url
+    }
+  }
 
-  return $pointer_set;
+  return $pointers;
+}
+
+sub create_userdata_pointers {
+  ## Creates sets of pointers from user records
+  my ($self, $image, $user_data, $config, $defaults) = @_;
+  my $object = $self->object;
+  my $pointers = [];
+
+  foreach my $record (@$user_data) {
+    if (ref($record) =~ /Upload/) {
+      my @logic_names = split(', ', $record->analyses);
+      foreach my $logic_name (@logic_names) {
+        my $features = $object->create_UserDataFeature($logic_name);
+        my ($upload_features, $headers) = $object->retrieve_userdata($features);
+        my $upload_pointers = $image->add_pointers( $object, {
+            'config_name' => $config,
+            'features'    => [$upload_features],
+            'color'       => $object->param("col")   || $defaults->[0],
+            'style'       => $object->param("style") || $defaults->[1],
+        });
+        push(@$pointers, $upload_pointers);
+      }
+    }
+    elsif (ref($record) =~ /URL/) {
+      warn "DOING URL";
+    }
+  }
+
+  return $pointers;
 }
 
 sub multi_ideogram {

@@ -69,41 +69,44 @@ sub content {
 
     ## Check if there is userdata
     ## TODO: this needs to come from control panel
-    my $userdata = $object->get_session->get_tmp_data;
-    my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-    my $has_userdata;
-    my @uploads;
-    if ($user) {
-      @uploads = $user->uploads;
+    my $pointers = [];
+
+    ## Check if there is userdata in session
+    my (@temp_data, @saved_data);
+    my %types = (upload => 'uploads', url => 'urls');
+    foreach my $data_type (keys %types) {
+      push @temp_data, $object->get_session->get_data('type' => $data_type);
     }
-    if( $userdata || @uploads ) {
-      $has_userdata = 1;
+    if (scalar @temp_data) {
+      ## Create pointers from user data
+      my $pointer_set = $self->create_tempdata_pointers($image, \@temp_data, 'Vkaryotype', $pointer_defaults{'UserData'});
+      push(@$pointers, @$pointer_set);
+    }
+
+    ## Also check for saved user data
+    if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
+      while (my ($type, $method) = each (%types)) {
+        push @saved_data, $user->$method;
+      }
+    }
+    if (scalar @saved_data) {
+      ## Create pointers from user data
+      my $pointer_set = $self->create_userdata_pointers($image, \@saved_data, 'Vkaryotype', $pointer_defaults{'UserData'});
+      push(@$pointers, @$pointer_set);
+    }
+
+    ## Add some settings, if there is any user data
+    my $has_data;
+    if( @temp_data || @saved_data ) {
+      $has_data = 1;
       ## Set some basic image parameters
       $image->imagemap = 'no';
       $image->caption = 'Click on the image above to jump to an overview of the chromosome';
-   
-      ## Create pointers from user data
-      if ($userdata->{'filename'}) {
-        my $temp_pointers = $self->create_userdata_pointers($image, $userdata, $pointer_defaults{'UserData'});
-        $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]); ## Userdata setting overrides any other tracks
-        push(@$pointers, $temp_pointers);
-      }
-      foreach my $upload (@uploads) {
-        my @logic_names = split(', ', $upload->analyses);
-        foreach my $logic_name (@logic_names) {
-          my $upload_features = $object->retrieve_userdata;
-          my $upload_pointers = $image->add_pointers( $object, {
-            'config_name'  => 'Vkaryotype',
-            'features'      => $upload_features,
-            'color'         => $pointer_defaults{'UserData'}[0],
-            'style'         => $pointer_defaults{'UserData'}[1]
-          });
-          $object->param('aggregate_colour', $pointer_defaults{'UserData'}[0]); 
-          push(@$pointers, $upload_pointers);
-        }
-      }
+      ## Userdata setting overrides any other tracks
+      $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]);
     } 
 
+    ## Now do internal Ensembl data
     if (@features) { ## "FeatureView"
       my $text = @features > 1 ? 'Locations of features' : 'Location of feature';
       $html = qq(<strong>$text</strong>);
@@ -137,7 +140,7 @@ sub content {
     $image->imagemap = 'yes';
     $image->karyotype( $object, $pointers, 'Vkaryotype' );
     $html .= $image->render;
-    if ($has_userdata) {
+    if ($has_data) {
       $html .= '<br /><p>Your uploaded data is displayed on the karyotype above, using '.$pointer_defaults{'UserData'}[0].' arrow pointers</p>';
     }
   }
