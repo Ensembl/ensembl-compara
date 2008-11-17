@@ -481,18 +481,18 @@ sub _save_genomic_features {
       eval {
           my($s,$e) = $f->rawstart<$f->rawend?($f->rawstart,$f->rawend):($f->rawend,$f->rawstart);
 	  my $feat = new Bio::EnsEMBL::DnaDnaAlignFeature(
-                  -slice    => $slice,
-                  -start    => $s,
-                  -end      => $e,
-                  -strand   => $f->strand,
-                  -hseqname => $f->id,
-                  -hstart   => $f->hstart,
-                  -hend     => $f->hend,
-                  -hstrand  => $f->hstrand,
-                  -score => $f->score,
-                  -analysis => $datasource,
-                  -cigar_string => $f->{_attrs} || '1M',
-                  -extra_data => $f->extra_data,
+                  -slice        => $slice,
+                  -start        => $s,
+                  -end          => $e,
+                  -strand       => $f->strand,
+                  -hseqname     => $f->id,
+                  -hstart       => $f->hstart,
+                  -hend         => $f->hend,
+                  -hstrand      => $f->hstrand,
+                  -score        => $f->score,
+                  -analysis     => $datasource,
+                  -cigar_string => $f->cigar_string || ($e-$s+1).'M';#$f->{_attrs} || '1M',
+                  -extra_data   => $f->extra_data,
 	  );
 	  push @feat_array, $feat;
 
