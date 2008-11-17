@@ -104,7 +104,8 @@ sub populate_tree {
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
   $variation_menu->append( $self->create_node( 'LD', "Linkage Data ",
-    [qw(ld  EnsEMBL::Web::Component::Location::UnderConstruction)],
+    [qw(ld  EnsEMBL::Web::Component::Location::LD
+        ldimage  EnsEMBL::Web::Component::Location::LDImage)],
     { 'availability' => 'slice has_LD', 'concise' => 'Linkage Disequilibrium Data' }
   ));
 #EnsEMBL::Web::Component::Location::LD)],
