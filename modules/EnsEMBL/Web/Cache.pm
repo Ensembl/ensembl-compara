@@ -124,8 +124,7 @@ sub set {
   
   _warn("MEMCACHED->set($self->{namespace}$key)");
   
-  ## TODO: kill the hack
-  ## HACK: add extra tag for everything except user upload data
+  ## TMP workaround: add extra tag for everything except user upload data
   push @tags, 'no_user_upload'
     unless 'EnsEMBL::Web::File::Driver::Memcached' eq caller;
   
