@@ -64,7 +64,7 @@ our %template = (
 
 sub test_url {
   ($uri, $server) = @_;
-  my @ban = qw/exportview         haplotag            multicontigview equencealignview
+  my @ban = qw(exportview         haplotag            multicontigview equencealignview
                ajax-pfetch        familyview          haploview       newsview                sequencealignview snpview
                alignsliceview     fastaview                           populate_fragment       status
                alignview          featureview         historyview     populate_info_fragment  syntenyview
@@ -76,10 +76,13 @@ sub test_url {
                dasconfview        genetreeview        mapview         r                       transview
                domainview         geneview            markerview      unisearch               dotterview
                glossaryview       martlink            search          urlsource
-               exonview           goview              miscsetview     searchview/;
+               exonview           goview              miscsetview     searchview
+
+               Account Alignment ArchiveStableId Blast DAS Feature Gene Interface Location Marker MultipleLocation
+               Search Sequence Server SNP Transcript Translation UniSearch UserData Variation Oct2008 Help/http);
 
   foreach my $ban (@ban) {
-    return 0 if $uri =~ m!/$ban!;
+    return 0 if $uri eq "" || $uri =~ m!/$ban! || $uri =~ m/\.archive\.ensembl\.org/;
   }
   return 1;
 }
@@ -88,8 +91,10 @@ sub test_response {
   ($uri, $server, $response, $parent) = @_;
   print $response->code.' ('.$response->message.') '.$uri."\n";
   if ($response->code >= 400) {
-    print ERROR_PAGES "                $parent : \n";
-    print ERROR_PAGES $response->code.' ('.$response->message.') '.$uri."\n";
+#    print ERROR_PAGES "                $parent : \n";
+#    print ERROR_PAGES $response->code.' ('.$response->message.') '.$uri."\n";
+
+    print ERROR_PAGES $response->code.": $uri from $parent\n";
   }
   return 1;
 }
