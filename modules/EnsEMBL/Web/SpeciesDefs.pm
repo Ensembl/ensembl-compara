@@ -644,7 +644,7 @@ sub get_table_size{
 ###                      -table =>'table name' (e.g. 'feature' ) }
 ###            species name (string)
 ### Returns: Number of rows in the table
-  warn "DEPRECATED............. use table_info_other ";
+  cluck "DEPRECATED............. use table_info_other ";
   return undef;
 } 
 
