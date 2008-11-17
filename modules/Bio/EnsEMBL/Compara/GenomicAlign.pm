@@ -163,10 +163,6 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Mapper;
 
-# Object preamble
-
-my $warn_message = "Deprecated use of GenomicAlign object. Consensus and Query DnaFrag are no longer used.\n";
-
 
 =head2 new (CONSTRUCTOR)
 
@@ -234,26 +230,14 @@ sub new {
     my $self = {};
     bless $self,$class;
 
-    ## First lines are for backward compatibility, middle one is for both versions and
-    ## last ones are for the new schema
-    my ($consensus_dnafrag, $consensus_start, $consensus_end,
-        $query_dnafrag, $query_start, $query_end, $query_strand, $alignment_type,
-        $score, $perc_id,
-
-        $cigar_line, $adaptor,
-
+    my ($cigar_line, $adaptor,
         $dbID, $genomic_align_block, $genomic_align_block_id, $method_link_species_set,
         $method_link_species_set_id, $dnafrag, $dnafrag_id,
         $dnafrag_start, $dnafrag_end, $dnafrag_strand,
         $aligned_sequence, $level_id ) = 
       
       rearrange([qw(
-          CONSENSUS_DNAFRAG CONSENSUS_START CONSENSUS_END
-          QUERY_DNAFRAG QUERY_START QUERY_END QUERY_STRAND ALIGNMENT_TYPE
-          SCORE PERC_ID
-                            
           CIGAR_LINE ADAPTOR
-                            
           DBID GENOMIC_ALIGN_BLOCK GENOMIC_ALIGN_BLOCK_ID METHOD_LINK_SPECIES_SET
           METHOD_LINK_SPECIES_SET_ID DNAFRAG DNAFRAG_ID
           DNAFRAG_START DNAFRAG_END DNAFRAG_STRAND
@@ -261,36 +245,6 @@ sub new {
 
     $self->adaptor( $adaptor ) if defined $adaptor;
     $self->cigar_line( $cigar_line ) if defined $cigar_line;
-    
-    ## Support for backward compatibility
-    if (defined($consensus_dnafrag) or defined($consensus_start) or defined($consensus_end)
-        or defined($query_dnafrag) or defined($query_start) or defined($query_end)
-        or defined($query_strand) or defined($alignment_type) or defined($score)
-        or defined($perc_id)) {
-      
-      if (defined($dbID) or defined($genomic_align_block) or defined($genomic_align_block_id)
-          or defined($method_link_species_set) or defined($method_link_species_set_id)
-          or defined($dnafrag) or defined($dnafrag_id) or defined($dnafrag_start)
-          or defined($dnafrag_end) or defined($dnafrag_strand) or defined($aligned_sequence)
-          or defined($level_id)) {
-        throw("Mixing new and old parameters.\n");
-      }
-      
-      deprecate($warn_message);
-
-      $self->consensus_dnafrag( $consensus_dnafrag ) if defined $consensus_dnafrag;
-      $self->consensus_start( $consensus_start ) if defined $consensus_start;
-      $self->consensus_end( $consensus_end ) if defined $consensus_end;
-      $self->query_dnafrag( $query_dnafrag ) if defined $query_dnafrag;
-      $self->query_start( $query_start ) if defined $query_start;
-      $self->query_end( $query_end ) if defined $query_end;
-      $self->query_strand( $query_strand ) if defined $query_strand;
-      $self->alignment_type( $alignment_type ) if defined $alignment_type;
-      $self->score( $score ) if defined $score;
-      $self->perc_id( $perc_id ) if defined $perc_id;
-
-      return $self;
-    }
     
     $self->dbID($dbID) if (defined($dbID));
     $self->genomic_align_block($genomic_align_block) if (defined($genomic_align_block));
@@ -448,9 +402,9 @@ sub genomic_align_block {
       $self->{'genomic_align_block'} = $genomic_align_block_adaptor->fetch_by_dbID(
               $self->{'genomic_align_block_id'});
     } else {
-      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block".
-          " You either have to specify more information (see perldoc for".
-          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+#      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block".
+#          " You either have to specify more information (see perldoc for".
+#          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -498,9 +452,9 @@ sub genomic_align_block_id {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block_id".
-          " You either have to specify more information (see perldoc for".
-          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+#      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_block_id".
+#          " You either have to specify more information (see perldoc for".
+#          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
@@ -686,6 +640,7 @@ sub dnafrag {
     }
   
   } elsif (!defined($self->{'dnafrag'})) {
+
     # Try to get data from other sources...
     if (defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
       # ...from the dnafrag_id. Use dnafrag_id function and not the attribute in the <if>
@@ -966,12 +921,12 @@ sub length {
   } elsif ($self->{cigar_line}) {
     my $length = 0;
     my $cigar_line = $self->{cigar_line};
-    my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
+    my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
     for my $cigElem ( @cig ) {
       my $cigType = substr( $cigElem, -1, 1 );
       my $cigCount = substr( $cigElem, 0 ,-1 );
       $cigCount = 1 unless ($cigCount =~ /^\d+$/);
-      $length += $cigCount;
+      $length += $cigCount unless ($cigType eq "I");
     }
     return $length;
   }
@@ -1032,63 +987,6 @@ sub cigar_line {
   }
 
   return $self->{'cigar_line'};
-}
-
-
-=head2 get_fixed_cigar_line
-
-  Arg [1]    : -none-
-  Example    : $cigar_line = $genomic_align->get_fixed_cigar_line;
-  Description: get the cigar_line for this alignment when projected
-               on the reference sequence.
-  Returntype : string
-  Exceptions : throws if there is no reference genomic_align.
-  Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
-
-=cut
-
-
-sub get_fixed_cigar_line {
-  my ($self) = @_;
-
-  throw("No reference GenomicAlign") if (!$self->genomic_align_block or !$self->genomic_align_block->reference_genomic_align);
-  my @fixed_cigar_pieces = ();
-  my $this_cigar_line = $self->cigar_line;
-  my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
-
-  my @this_cigar_pieces = $this_cigar_line =~ /(\d*[GMDX])/g;
-  my @ref_cigar_pieces = $ref_cigar_line =~ /(\d*[GMDX])/g;
-
-  my $length = 0;
-  foreach my $ref_cigar_bit (@ref_cigar_pieces) {
-    my ($ref_num, $ref_mode) = $ref_cigar_bit =~ /(\d*)(\w)/;
-    $ref_num = 1 if ($ref_num eq "");
-    $length += $ref_num;
-    my $this_length = 0;
-    while ($this_length < $ref_num) {
-      my $this_cigar_bit = shift(@this_cigar_pieces);
-      my ($this_num, $this_mode) = $this_cigar_bit =~ /(\d*)(\w)/;
-      $this_num = 1 if ($this_num eq "");
-      $this_length += $this_num;
-      if ($this_length > $ref_num) {
-        my $diff = $this_length - $ref_num;
-        $this_num -= $diff;
-        unshift(@this_cigar_pieces, "$diff$this_mode");
-        $this_length = $ref_num;
-      }
-      if ($ref_mode eq "M") {
-        if ($fixed_cigar_pieces[-1] eq $this_mode) {
-          pop(@fixed_cigar_pieces);
-          my $extra_num = pop(@fixed_cigar_pieces);
-          $this_num += $extra_num;
-        }
-        push(@fixed_cigar_pieces, $this_num, $this_mode);
-      }
-    }
-  }
-
-  return join("", grep {$_ ne "1"} @fixed_cigar_pieces);
 }
 
 
@@ -1284,7 +1182,7 @@ sub original_sequence {
   } elsif (!defined($self->{'original_sequence'})) {
     # Try to get the data from other sources...
     
-    if ($self->{'aligned_sequence'}) {
+    if ($self->{'aligned_sequence'} and $self->{'cigar_line'} !~ /I/) {
       # ...from the aligned sequence
       $self->{'original_sequence'} = $self->{'aligned_sequence'};
       $self->{'original_sequence'} =~ s/\-//g;
@@ -1330,6 +1228,8 @@ sub _get_cigar_line_from_aligned_sequence {
     my $mode;
     if ($piece =~ /\-/) {
       $mode = "D"; # D for gaps (deletions)
+    } elsif ($piece =~ /\./) {
+      $mode = "X"; # X for pads (in 2X genomes)
     } else {
       $mode = "M"; # M for matches/mismatches
     }
@@ -1365,7 +1265,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
 
   my $seq_pos = 0;
   
-  my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
+  my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1374,8 +1274,10 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
     if( $cigType eq "M" ) {
       $aligned_sequence .= substr($original_sequence, $seq_pos, $cigCount);
       $seq_pos += $cigCount;
+    } elsif( $cigType eq "I") {
+      $seq_pos += $cigCount;
     } elsif( $cigType eq "X") {
-        $aligned_sequence .=  "." x $cigCount;
+      $aligned_sequence .=  "." x $cigCount;
     } elsif( $cigType eq "G" || $cigType eq "D") {
       if ($fix_seq) {
         $seq_pos += $cigCount;
@@ -1411,7 +1313,7 @@ sub _get_fake_aligned_sequence_from_cigar_line {
 
   my $seq_pos = 0;
 
-  my @cig = ( $cigar_line =~ /(\d*[GMDX])/g );
+  my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1420,8 +1322,10 @@ sub _get_fake_aligned_sequence_from_cigar_line {
     if( $cigType eq "M" ) {
       $fake_aligned_sequence .= "N" x $cigCount;
       $seq_pos += $cigCount;
+    } elsif( $cigType eq "I") {
+      $seq_pos += $cigCount;
     } elsif( $cigType eq "X") {
-        $fake_aligned_sequence .=  "." x $cigCount;
+      $fake_aligned_sequence .=  "." x $cigCount;
     } elsif( $cigType eq "G" || $cigType eq "D") {
       if ($fix_seq) {
         $seq_pos += $cigCount;
@@ -1544,7 +1448,7 @@ sub reverse_complement {
   
   # reverse cigar_string as consequence
   my $cigar_line = $self->cigar_line;
-  $cigar_line = join("", reverse grep {$_} split(/(\d*[GDMI])/, $cigar_line));
+  $cigar_line = join("", reverse grep {$_} split(/(\d*[GDMIX])/, $cigar_line));
 
   $self->cigar_line($cigar_line);
 }
@@ -1585,8 +1489,41 @@ sub get_Mapper {
   }
 
   if (!defined($self->{$mode.'_mapper'})) {
+    if ($mode eq "condensed") {
+      $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
+      my $rel_strand = $self->dnafrag_strand;
+      my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
+      my $this_aligned_seq = $self->aligned_sequence("+FAKE_SEQ");
+
+      my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+      my $aln_seq_pos = 0;
+      my $seq_pos = 0;
+      foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMDX])/g) {
+        my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMDX])/;
+        $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
+
+        my $this_piece_of_seq = substr($this_aligned_seq, $aln_seq_pos, $cig_count);
+        if ($cig_mode eq "M") {
+          my $this_piece_of_cigar_line = _get_cigar_line_from_aligned_sequence($this_piece_of_seq);
+          my $this_mapper;
+          if ($rel_strand == 1) {
+            $this_mapper = _get_Mapper_from_cigar_line($this_piece_of_cigar_line, $aln_pos,
+                $seq_pos + $self->dnafrag_start, 1);
+          } else {
+            $this_mapper = _get_Mapper_from_cigar_line($this_piece_of_cigar_line, $aln_pos,
+                $self->dnafrag_end - $seq_pos, -1);
+          }
+          $mapper->add_Mapper($this_mapper);
+          $aln_pos += $cig_count;
+        }
+        my $gaps = $this_piece_of_seq =~ tr/\-./\-./;
+        $seq_pos -= $gaps;
+        $seq_pos += $cig_count;
+        $aln_seq_pos += $cig_count;
+      }
+
+    } else {
     my $cigar_line = $self->cigar_line;
-    $cigar_line = $self->get_fixed_cigar_line if ($mode eq "condensed");
     if (!$cigar_line) {
       throw("[$self] has no cigar_line and cannot be retrieved by any means");
     }
@@ -1599,6 +1536,7 @@ sub get_Mapper {
       $sequence_position = $self->dnafrag_end;
     }
     $mapper = _get_Mapper_from_cigar_line($cigar_line, $alignment_position, $sequence_position, $rel_strand);
+    }
 
     return $mapper if (!$cache);
 
@@ -1720,14 +1658,29 @@ sub restrict {
   delete($restricted_genomic_align->{cigar_line});
   $restricted_genomic_align->{original_dbID} = $self->dbID if ($self->dbID);
 
+  my $aligned_seq_length = 0;
+
+  #unable to retrieve $self->genomic_align_block->length 
+  if ((!$self->{'genomic_align_block_id'}) or (!$self->genomic_align_block->length)) {
+      my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);
+      while (my $cigar = shift(@cigar)) {
+          my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
+          $num = 1 if ($num eq "");
+          $aligned_seq_length += $num;
+      }
+  } else {
+    $aligned_seq_length = $self->genomic_align_block->length;
+  }
+
   my $final_aligned_length = $end - $start + 1;
   my $length_of_truncated_seq_at_the_start = $start - 1;
-  my $length_of_truncated_seq_at_the_end = $self->genomic_align_block->length - $end;
+  my $length_of_truncated_seq_at_the_end = $aligned_seq_length - $end;
+  
+  my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);  
 
-  my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);
   ## Trim start of cigar_line if needed
   if ($length_of_truncated_seq_at_the_start >= 0) {
-    my $aligned_seq_length = 0;
+    $aligned_seq_length = 0;
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@cigar)) {
@@ -1761,7 +1714,7 @@ sub restrict {
   ## Trim end of cigar_line if needed
   if ($length_of_truncated_seq_at_the_end >= 0) {
     ## Truncate all the GenomicAligns
-    my $aligned_seq_length = 0;
+    $aligned_seq_length = 0;
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@cigar)) {
@@ -1801,465 +1754,5 @@ sub restrict {
   return $restricted_genomic_align;
 }
 
-#####################################################################
-#####################################################################
-
-=head1 DEPRECATED METHODS
-
-Consensus and Query DnaFrag are no longer used. Please refer to
-Bio::EnsEMBL::Compara::GenomicAlignBlock for further details.
-
-For backwards compatibility, consensus_dnafrag correponds to the lower genome_db_id by convention.
-This convention works for pairwise alignment only! Trying to use the old API methods for multiple
-alignments will throw an exception.
-
-=cut
-
-#####################################################################
-#####################################################################
-
-=head2 consensus_dnafrag (DEPRECATED)
- 
-  Arg [1]    : Bio::EnsEMBL::Compara::DnaFrag $consensus_dnafrag
-  Example    : none
-  Description: get/set for attribute consensus_dnafrag_id
-  Returntype : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
-  Exceptions : trying to get the consensus_dnafrag attribute for a multiple alignment throws
-  Caller     : general
-
-=cut
-
-sub consensus_dnafrag {
-  my ($self, $consensus_dnafrag) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  return $self->{'_consensus_genomic_align'}->dnafrag($consensus_dnafrag);
-}
-
-
-=head2 consensus_start (DEPRECATED)
- 
-  Arg [1]    : int $consensus_start
-  Example    : none
-  Description: get/set for attribute consensus_start
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub consensus_start {
-  my ($self, $consensus_dnafrag_start) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  return $self->{'_consensus_genomic_align'}->dnafrag_start($consensus_dnafrag_start);
-}
-
-
-=head2 consensus_end (DEPRECATED)
- 
-  Arg [1]    : int $consensus_end
-  Example    : none
-  Description: get/set for attribute consensus_end
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub consensus_end {
-  my ($self, $consensus_dnafrag_end) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  return $self->{'_consensus_genomic_align'}->dnafrag_end($consensus_dnafrag_end);
-}
-
-
-=head2 query_dnafrag (DEPRECATED)
- 
-  Arg [1]    : Bio::EnsEMBL::Compara::DnaFrag $query_dnafrag
-  Example    : none
-  Description: get/set for attribute query_dnafrag
-  Returntype : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub query_dnafrag {
-  my ($self, $query_dnafrag) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  return $self->{'_query_genomic_align'}->dnafrag($query_dnafrag);
-}
-
-
-=head2 query_start (DEPRECATED)
- 
-  Arg [1]    : int $query_start
-  Example    : none
-  Description: get/set for attribute query_start
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub query_start {
-  my ($self, $query_dnafrag_start) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  return $self->{'_query_genomic_align'}->dnafrag_start($query_dnafrag_start);
-}
-
-
-=head2 query_end (DEPRECATED)
- 
-  Arg [1]    : int $query_end
-  Example    : none
-  Description: get/set for attribute query_end
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub query_end {
-  my ($self, $query_dnafrag_end) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  return $self->{'_query_genomic_align'}->dnafrag_end($query_dnafrag_end);
-}
-
-
-=head2 query_strand (DEPRECATED)
- 
-  Arg [1]    : int $query_strand
-  Example    : none
-  Description: get/set for attribute query_strand
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub query_strand {
-  my ($self, $query_dnafrag_strand) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  if (defined($query_dnafrag_strand) and defined($self->{'_strands_reversed'})) {
-    ## strands_reversed has been defined before query_strand...
-    if ($self->{'_strands_reversed'}) {
-      $self->{'_consensus_genomic_align'}->dnafrag_strand(-$query_dnafrag_strand)
-    } else {
-      $self->{'_consensus_genomic_align'}->dnafrag_strand($query_dnafrag_strand)
-    }
-    $self->{'_strands_reversed'} = undef;
-  }
-
-  return $self->{'_query_genomic_align'}->dnafrag_strand($query_dnafrag_strand);
-}
-
-
-=head2 alignment_type (DEPRECATED)
- 
-  Arg [1]    : string $alignment_type
-  Example    : 'WGA' or 'WGA_HCR'
-  Description: get/set for attribute alignment_type
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub alignment_type {
-  my ($self, $alignment_type) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  return $self->genomic_align_block->method_link_species_set->method_link_type($alignment_type);
-}
-
-
-=head2 score (DEPRECATED)
-
-  Arg [1]    : double $score
-  Example    : none
-  Description: get/set for attribute score  
-  Returntype : double
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub score {
-  my ($self, $score) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  return $self->genomic_align_block->score($score);
-}
-
-
-=head2 perc_id (DEPRECATED)
- 
-  Arg [1]    : int $perc_id
-  Example    : none
-  Description: get/set for attribute perc_id  
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub perc_id {
-  my ($self, $perc_id) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  return $self->genomic_align_block->perc_id($perc_id);
-}
-
-
-=head2 group_id (DEPRECATED)
- 
-  Arg [1]    : int $perc_id
-  Example    : none
-  Description: get/set for attribute group_id
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub group_id {
-  my ($self, $group_id) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  $self->{'_consensus_genomic_align'}->genomic_align_group_id_by_type("default", $group_id);
-  return $self->{'_query_genomic_align'}->genomic_align_group_id_by_type("default", $group_id);
-}
-
-
-=head2 strands_reversed (DEPRECATED)
- 
-  Arg [1]    : int $strands_reversed
-  Example    : none
-  Description: get/set for attribute strands_reversed
-               0 means that strand and hstrand are the original strands obtained
-                 from the alignment program used
-               1 means that strand and hstrand have been flipped as compared to
-                 the original result provided by the alignment program used.
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub strands_reversed {
-  my ($self, $strands_reversed) = @_;
-
-  deprecate($warn_message);
-  $self->_start_object_from_old_attributes();
-
-  my $query_strand = $self->{'_query_genomic_align'}->{'dnafrag_strand'};
-  if (!defined($query_strand)) {
-    ## No comparison is possible. Save result in an internal variable
-    $self->{'_strands_reversed'} = $strands_reversed if (defined($strands_reversed));
-    return $self->{'_strands_reversed'};
-  }
-  
-  if (defined($strands_reversed)) {
-    ## Set $self->{'_consensus_genomic_align'}->dnafrag_strand according to strands_reversed
-    $self->{'_consensus_genomic_align'}->dnafrag_strand(
-          (($strands_reversed)?-$query_strand:$query_strand)
-        );
-  } elsif (!defined($self->{'_strands_reversed'})) {
-    $strands_reversed = ($self->{'_consensus_genomic_align'}->dnafrag_strand ==
-        $self->{'_query_genomic_align'}->dnafrag_strand)?0:1;
-  } else {
-    $strands_reversed = $self->{'_strands_reversed'};
-  }
-  
-  return $strands_reversed;
-}
-
-
-=head2 alignment_strings (DEPRECATED)
-
-NEW API: Use Bio::EnsEMBL::Compara::GenomicAlignBlock to retrieve sequences. For
-backwards compatibility, we will assume that the genome with a smaller genome_db_id is
-the consensus genome. We will also assume that there are only two sequences in this
-alignment. Please, use the new API for multiple alignments.
-  
-  Arg [1]    : list of string $flags
-               FIX_SEQ = does not introduce gaps (dashes) in seq (consensus) aligned sequence
-                         and delete the corresponding insertions in hseq aligned sequence
-               FIX_HSEQ = does not introduce gaps (dashes) in hseq (query) aligned sequence
-                         and delete the corresponding insertions in seq aligned sequence
-               NO_SEQ = return the seq (consensus) aligned sequence as an empty string
-               NO_HSEQ = return the hseq (query) aligned sequence as an empty string
-               This 2 last flags would save a bit of time as doing so no querying to the core
-               database in done to get the sequence.
-  Example    : $ga->alignment_strings or
-               $ga->alignment_strings("FIX_HSEQ") or
-               $ga->alignment_strings("NO_SEQ","FIX_SEQ")
-  Description: Allows to rebuild the alignment string of both the seq (consensus) and 
-               hseq (query) sequence using the cigar_string information and the slice 
-               and hslice objects
-  Returntype : array reference containing 2 strings
-               the first corresponds to seq (consensus)
-               the second corresponds to hseq (query)
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub alignment_strings {
-  my ( $self, @flags ) = @_;
-
-  deprecate($warn_message);
-  
-  throw("NOT IMPLEMENTED!");
-  # set the flags
-  my $seq_flag = 1;
-  my $hseq_flag = 1;
-  my $fix_seq_flag = 0;
-  my $fix_hseq_flag = 0;
-
-  for my $flag ( @flags ) {
-    $seq_flag = 0 if ($flag eq "NO_SEQ");
-    $hseq_flag = 0 if ($flag eq "NO_HSEQ");
-    $fix_seq_flag = 1 if ($flag eq "FIX_SEQ");
-    $fix_hseq_flag = 1 if ($flag eq "FIX_HSEQ");
-  } 
-
-  deprecate($warn_message);
-   
-  my ($seq, $hseq);
-  $seq = $self->consensus_dnafrag->slice->subseq($self->consensus_start, $self->consensus_end) if ($seq_flag || $fix_seq_flag);
-  $hseq = $self->query_dnafrag->slice->subseq($self->query_start, $self->query_end, $self->query_strand) if ($hseq_flag || $fix_hseq_flag);
-
-  my $rseq= "";
-  # rseq - result sequence
-  my $rhseq= "";
-  # rhseq - result hsequence
-
-  my $seq_pos = 0;
-  my $hseq_pos = 0;
-
-  my @cig = ( $self->cigar_line =~ /(\d*[DIM])/g );
-
-  for my $cigElem ( @cig ) {
-    my $cigType = substr( $cigElem, -1, 1 );
-    my $cigCount = substr( $cigElem, 0 ,-1 );
-    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
-
-    if( $cigType eq "M" ) {
-        $rseq .= substr( $seq, $seq_pos, $cigCount ) if ($seq_flag);
-        $rhseq .= substr( $hseq, $hseq_pos, $cigCount ) if ($hseq_flag);
-      $seq_pos += $cigCount;
-      $hseq_pos += $cigCount;
-    } elsif( $cigType eq "D" ) {
-      if( ! $fix_seq_flag ) {
-        $rseq .=  "-" x $cigCount if ($seq_flag);
-        $rhseq .= substr( $hseq, $hseq_pos, $cigCount ) if ($hseq_flag);
-      }
-      $hseq_pos += $cigCount;
-    } elsif( $cigType eq "I" ) {
-      if( ! $fix_hseq_flag ) {
-        $rseq .= substr( $seq, $seq_pos, $cigCount ) if ($seq_flag);
-        $rhseq .= "-" x $cigCount if ($hseq_flag);
-      }
-      $seq_pos += $cigCount;
-    }
-  }
-  return [ $rseq,$rhseq ];
-}
-
-sub _select_genomic_aligns_index {
-  my ($genomic_align_block, $which) = @_;
-  my $index;
-
-  throw "ayayay" if (!$genomic_align_block);
-  my $genomic_aligns = $genomic_align_block->get_all_GenomicAligns;
-  throw "Using old API (query_danfrag method) for multiple alignments" if (scalar(@{$genomic_aligns}) != 2);
-
-  if ($genomic_aligns->[0]->dnafrag->genomedb->dbID > $genomic_aligns->[1]->dnafrag->genomedb->dbID) {
-    $index = ($which eq "consensus")?1:0;
-
-  } elsif ($genomic_aligns->[0]->dnafrag->genomedb->dbID < $genomic_aligns->[1]->dnafrag->genomedb->dbID) {
-    $index = ($which eq "consensus")?0:1;
-
-  ## If they belongs to the same genome_db, use the dnafrag_id instead
-  } elsif ($genomic_aligns->[0]->dnafrag->dbID > $genomic_aligns->[1]->dnafrag->dbID) {
-    $index = ($which eq "consensus")?1:0;
-
-  } elsif ($genomic_aligns->[0]->dnafrag->dbID < $genomic_aligns->[1]->dnafrag->dbID) {
-    $index = ($which eq "consensus")?0:1;
-
-  ## If they belongs to the same genome_db and dnafrag, use the dnafrag_start instead
-  } elsif ($genomic_aligns->[0]->dnafrag_start > $genomic_aligns->[1]->dnafrag_start) {
-    $index = ($which eq "consensus")?1:0;
-
-  } elsif ($genomic_aligns->[0]->dnafrag_start < $genomic_aligns->[1]->dnafrag_start) {
-    $index = ($which eq "consensus")?0:1;
-
-  ## If they belongs to the same genome_db and dnafrag and have the same danfrag_start, use the dnafrag_end instead
-  } elsif ($genomic_aligns->[0]->dnafrag_end > $genomic_aligns->[1]->dnafrag_end) {
-    $index = ($which eq "consensus")?1:0;
-
-  } elsif ($genomic_aligns->[0]->dnafrag_end < $genomic_aligns->[1]->dnafrag_end) {
-    $index = ($which eq "consensus")?0:1;
-
-  ## If everithing else fails, use the dnafrag_strand
-  } elsif ($genomic_aligns->[0]->dnafrag_strand > $genomic_aligns->[1]->dnafrag_strand) {
-    $index = ($which eq "consensus")?1:0;
-
-  } elsif ($genomic_aligns->[0]->dnafrag_strand < $genomic_aligns->[1]->dnafrag_strand) {
-    $index = ($which eq "consensus")?0:1;
-
-  } else {
-    # Whatever, they are the same. Use 0 for consensus and 1 for query
-    $index = ($which eq "consensus")?0:1;
-  }
-
-  return $index;  
-}
-
-sub _start_object_from_old_attributes {
-  my ($self) = @_;
-
-  if (!defined($self->{'genomic_align_block'})) {
-    $self->{'_consensus_genomic_align'} = new Bio::EnsEMBL::Compara::GenomicAlign();
-    $self->{'_query_genomic_align'} = new Bio::EnsEMBL::Compara::GenomicAlign();
-    $self->{'genomic_align_block'} = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-            -genomic_align_array => [
-                    $self->{'_consensus_genomic_align'},
-                    $self->{'_query_genomic_align'}
-                ],
-            -method_link_species_set => new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet()
-        );
-  }
-}
 
 1;
