@@ -99,7 +99,6 @@ sub createObjects {
   (my $T = $identifier) =~ s/^(\S+)\.\d*/$1/g ; # Strip versions
   (my $T2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; # Strip versions
   foreach my $fetch_call(@fetch_calls) {  
-    warn "FETCH($fetch_call) BY ID $identifier $T2 $T";
     eval { $geneobj = $adaptor->$fetch_call($identifier) } unless $geneobj; 
     eval { $geneobj = $adaptor->$fetch_call($T2) } unless $geneobj;
     eval { $geneobj = $adaptor->$fetch_call($T) } unless $geneobj;
@@ -107,9 +106,7 @@ sub createObjects {
 
   if(!$geneobj || $@) {
     $self->_archive( 'Gene', $KEY );
-warn "ARCHIVE..";
     return if( $self->has_a_problem );
-warn "KNOWN..";
     $self->_known_feature( 'Gene', $KEY );
     $self->clear_problems if $KEY eq 'anchor1';
     return ;    
