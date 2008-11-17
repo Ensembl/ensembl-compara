@@ -256,7 +256,7 @@ $ENSEMBL_PRIVATE_AUTH   = undef;
 
 my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ ) || "5.8.0";
 @ENSEMBL_LIB_DIRS     = (
-  $ENSEMBL_SERVERROOT."/apache2/lib/site_perl/5.8.8/x86_64-linux-thread-multi/",
+  $ENSEMBL_SERVERROOT."/apache2/lib/perl5/site_perl/$perl_version/",
   $ENSEMBL_SERVERROOT.'/ensembl/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
