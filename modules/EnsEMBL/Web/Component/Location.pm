@@ -102,12 +102,22 @@ sub create_tempdata_pointers {
 
   foreach my $stuff (@$temp_data) {
 
+    my ($data, $format);
+    my $file = new EnsEMBL::Web::File::Text($object->species_defs);
     if ($stuff->{'filename'}) { ## upload
-      my $file = new EnsEMBL::Web::File::Text($object->species_defs);
-      my $data = $file->retrieve($stuff->{'filename'});
-      my $format  = $stuff->{'format'};
+      $data = $file->retrieve($stuff->{'filename'});
+      $format  = $stuff->{'format'};
+    }
+    elsif ($stuff->{'url'}) {
+      $data = $file->get_url_content($object, $stuff->{'url'});
+    }
 
+    if ($data) {
       my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+      unless ($format) {
+        my $info = $parser->analyse($data);
+        $format = $info->{'format'};
+      }
       $parser->parse($data, $format);
 
       ## create image with parsed data
@@ -118,8 +128,6 @@ sub create_tempdata_pointers {
         'style'         => $object->param("style") || $defaults->[1],
       });
       push @$pointers, $pointer_set;
-    }
-    else { ## url
     }
   }
 
@@ -147,8 +155,21 @@ sub create_userdata_pointers {
         push(@$pointers, $upload_pointers);
       }
     }
-    elsif (ref($record) =~ /URL/) {
-      warn "DOING URL";
+    elsif (ref($record) =~ /URL/ && $record->url) {
+      my $file = new EnsEMBL::Web::File::Text($object->species_defs);
+      my $data = $file->get_url_content($object, $record->url);
+      my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+      my $info = $parser->analyse($data);
+      $parser->parse($data, $info->{'format'});
+
+      ## create image with parsed data
+      my $pointer_set = $image->add_pointers( $object, {
+        'config_name'   => $config,
+        'parser'        => $parser,
+        'color'         => $object->param("col")   || $defaults->[0],
+        'style'         => $object->param("style") || $defaults->[1],
+      });
+      push @$pointers, $pointer_set;
     }
   }
 
