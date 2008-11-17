@@ -19,6 +19,11 @@ sub content {
   my $self   = shift;
   my $object = $self->object;
   my $file = $object->param('file');
+
+  $file =~ s/\s+//g;
+  $file =~ s/^[\.\/\\]*//;
+  $file =~ s/\/\.+/\//g;
+  $file =~ s/\/+/\//g;
   my $html; 
 
   my $file = $object->species.'/'.$file;
