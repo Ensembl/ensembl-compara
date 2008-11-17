@@ -19,7 +19,7 @@ sub content {
   my $object = $self->object;
 
   my $url = $object->_url({'otherspecies'=>undef},1);
-use Data::Dumper;warn Dumper($url);
+#use Data::Dumper;warn Dumper($url);
   my $form = EnsEMBL::Web::Form->new( 'change_sp', $url->[0], 'get', 'nonstd check' );
   $form->add_hidden( $url->[1] );
 

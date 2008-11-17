@@ -28,7 +28,6 @@ sub content {
        'container_width', $object->Obj->{'slice'}->seq_region_length,
        'slice_number'    => '2|1'
      });
-  warn $config->get_parameter( 'container_width' );
   my $ideo_height = $config->get_parameter('image_height');
   my $top_margin  = $config->get_parameter('top_margin');
   my $hidden = {
