@@ -79,8 +79,7 @@ sub parse_row {
 	return unless $row =~ /\d+/g ;
 	my @ws_delimited = split /\s+/, $row;
 	my $current_key = $self->{'_current_key'} ;
-	use Data::Dumper;
-	warn Dumper \@ws_delimited;
+#	use Data::Dumper; warn Dumper \@ws_delimited;
 #	$current_key = $ws_delimited[3] if $current_key eq 'default';
         $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::BED->new( \@ws_delimited ) ) if
 	    $self->filter($ws_delimited[0],$ws_delimited[1],$ws_delimited[2]);
