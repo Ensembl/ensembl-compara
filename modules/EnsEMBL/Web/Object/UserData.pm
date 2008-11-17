@@ -98,7 +98,7 @@ sub save_to_db {
 sub move_to_user {
   my $self = shift;
   my %args = (
-    type => 'tmp',
+    type => 'upload',
     @_,
   );
 
@@ -156,18 +156,14 @@ sub store_data {
       warn 'ERROR: Can not save user record.';
       return undef;
     } else {
-      if (my $upload = $self->get_session->add_data(
+      $self->get_session->set_data(
                          %$tmp_data,
-                         type     => 'upload',
+                         %args,
                          filename => '',
                          analyses => join(', ', @logic_names),
-                         browser_switches => $report->{'browser_switches'}||{}
-                       )) {
-                            $self->get_session->purge_data(%args);
-                            return $upload->{code};
-                       }
-      warn 'ERROR: Can not save session record.';
-      return undef;
+                         browser_switches => $report->{'browser_switches'}||{},
+      );
+      return $args{code};
     }
   }
 

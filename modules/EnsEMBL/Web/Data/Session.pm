@@ -52,15 +52,13 @@ sub set_config {
 
   if ($config) {
     $config->data($data);
-    $config->save;
+    return $config->save;
   } else {
-    $config = $class->insert({
+    return $class->insert({
       %args,
       data  => $data,
     });
   }
-  
-  return $config;
 }
 
 sub get_config {

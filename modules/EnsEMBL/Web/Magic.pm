@@ -310,19 +310,27 @@ sub stuff {
 ### transmogrifies the URL and separates it into 'species', 'type' 
 ### and 'action' - giving nice, clean, systematic URLs for handling
 ### heirarchical object navigation
-  my $object_type = shift || $ENV{'ENSEMBL_TYPE'};
-  my $action = shift;
-  my $command = shift;
-  my $doctype = shift;
+  my $object_type  = shift || $ENV{'ENSEMBL_TYPE'};
+  my $action       = shift;
+  my $command      = shift;
+  my $doctype      = shift;
   my $modal_dialog = shift;
+  my $session      = $ENSEMBL_WEB_REGISTRY->get_session;
 
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
   ## If user logged in, some content depends on user
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
 
-  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+  my $session_id  = $session->get_session_id;
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
+
+  my $input = new CGI;
+  if (my @share_ref = $input->param('share_ref')) {
+    use Data::Dumper;
+    warn Dumper(\@share_ref);
+    $session->receive_shared_data(@share_ref);
+  }
 
   my $content = ($MEMD && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $MEMD->get($ENV{CACHE_KEY}) : undef;
 
@@ -331,7 +339,6 @@ sub stuff {
       if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
     
-    $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_MEMCACHED;
     $r->content_type('text/html');
   } else {
     warn "DYNAMIC CONTENT CACHE MISS $ENV{CACHE_KEY}"
@@ -345,6 +352,7 @@ sub stuff {
       'renderer'   => 'String',
       'command'    => $command, 
       'cache'      => $MEMD,
+      'cgi'        => $input,
     );
     if( $modal_dialog ) {
       $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
