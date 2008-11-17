@@ -1,8 +1,18 @@
 package EnsEMBL::Web::Text::Feature::DAS;
+
 use strict;
-use EnsEMBL::Web::Text::Feature;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::Text::Feature);
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::Text::Feature);
+
+sub new {
+  my( $class, $hash_ref ) = @_;
+
+  my $extra      = {};
+
+  return bless { '__raw__' => $hash_ref, '__extra__' => $extra }, $class;
+}
 
 sub id      { my $self = shift; return $self->{'__raw__'}[2]; }
 sub _seqname { my $self = shift; return $self->{'__raw__'}[8]; }

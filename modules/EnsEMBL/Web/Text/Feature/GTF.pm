@@ -1,5 +1,8 @@
 package EnsEMBL::Web::Text::Feature::GTF;
+
 use strict;
+use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Text::Feature::GFF);
 

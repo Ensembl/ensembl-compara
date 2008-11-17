@@ -1,14 +1,16 @@
 package EnsEMBL::Web::Text::Feature::GFF;
 
 use strict;
+use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Text::Feature);
 
-use Data::Dumper;
-
 sub new {
   my( $class, $hash_ref ) = @_;
+
   my $extra = {};
+
   if( $hash_ref->[16] =~ /=/ ) {
     my @T = split /;\s*/, $hash_ref->[16];
     foreach (@T) {
@@ -28,12 +30,10 @@ sub new {
       }
     }
   }
-  
-  return bless {
-    '__raw__'   => $hash_ref,
-    '__extra__' => $extra
-  },
-  $_[0];
+  $extra->{'source'}       = [ $hash_ref->[2] ];
+  $extra->{'feature_type'} = [ $hash_ref->[4] ];
+  $extra->{'frame'}        = [ $hash_ref->[14]];
+  return bless { '__raw__' => $hash_ref, '__extra__' => $extra }, $class;
 }
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }
@@ -43,7 +43,8 @@ sub rawend   { my $self = shift; return $self->{'__raw__'}[8]; }
 
 sub id       {
   my $self = shift;
-#  local $Data::Dumper::Indent = 0; warn Dumper($self->{'__extra__'});
+
+# use Data::Dumper; local $Data::Dumper::Indent = 0; warn Dumper($self->{'__extra__'});
   return $self->{'__extra__'}{'transcript_id'} ? $self->{'__extra__'}{'transcript_id'}[0]
        : $self->{'__extra__'}{'genscan'      } ? $self->{'__extra__'}{'genscan'}[0]
        : $self->{'__extra__'}{'hid'          } ? $self->{'__extra__'}{'hid'}[0]

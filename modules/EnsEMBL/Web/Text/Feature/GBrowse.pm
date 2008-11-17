@@ -1,8 +1,22 @@
 package EnsEMBL::Web::Text::Feature::GBrowse;
+
 use strict;
-use EnsEMBL::Web::Text::Feature;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::Text::Feature);
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::Text::Feature);
+
+sub new {
+  my( $class, $hash_ref ) = @_;
+
+  my $extra      = {};
+  $extra->{'type'} = [$hash_ref->[6]] if defined $hash_ref->[6];
+  $extra->{'note'} = [$hash_ref->[7]] if defined $hash_ref->[7];
+  $extra->{'link'} = [$hash_ref->[8]] if defined $hash_ref->[8];
+
+  return bless { '__raw__' => $hash_ref, '__extra__' => $extra }, $class;
+}
+
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }
 sub rawstart { my $self = shift; return $self->{'__raw__'}[1]; }
@@ -14,12 +28,4 @@ sub type { my $self = shift; return $self->{'__raw__'}[6]; }
 sub note { my $self = shift; return $self->{'__raw__'}[7]; }
 sub link { my $self = shift; return $self->{'__raw__'}[8]; }
 
-sub extra_data {
-  my $self = shift;
-  my %extra = ();
-  $extra{'type'} = [$self->{'__raw__'}[6]] if defined $self->{'__raw__'}[6];
-  $extra{'note'} = [$self->{'__raw__'}[7]] if defined $self->{'__raw__'}[7];
-  $extra{'link'} = [$self->{'__raw__'}[8]] if defined $self->{'__raw__'}[8];
-  return \%extra;
-}
 1;

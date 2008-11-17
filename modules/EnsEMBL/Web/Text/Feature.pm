@@ -5,7 +5,7 @@ use warnings;
 no warnings "uninitialized";
 
 sub new {
-  return bless {'__raw__'=>$_[1]},$_[0];
+  return bless {'__raw__'=>$_[1],'__extra__'=>{} },$_[0];
 }
 
 sub seqname { my $self = shift; (my $T = $self->_seqname) =~s/^chr//; return $T; }
@@ -50,5 +50,5 @@ sub score { return undef; }
 
 sub link { return undef; }  
 
-sub extra_data { return (); }
+sub extra_data { return $_[0]{__extra__}; }
 1;

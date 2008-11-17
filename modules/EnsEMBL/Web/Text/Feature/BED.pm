@@ -1,8 +1,25 @@
 package EnsEMBL::Web::Text::Feature::BED;
+
 use strict;
-use EnsEMBL::Web::Text::Feature;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::Text::Feature);
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::Text::Feature);
+
+sub new {
+  my( $class, $hash_ref ) = @_;
+  
+  my $extra     = {
+    'think_start' => [ $hash_ref->[6] ],
+    'think_end'   => [ $hash_ref->[7] ],
+    'item_colour' => [ $hash_ref->[8] ],
+    'expCount'    => [ $hash_ref->[12] ],
+    'expIds'      => [ split ',', $hash_ref->[13] ],
+    'expScores'   => [ split ',', $hash_ref->[14] ]
+  };
+
+  return bless { '__raw__' => $hash_ref, '__extra__' => $extra }, $class;
+}
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }
 sub strand   { my $self = shift; return @{$self->{'__raw__'}}>5 ? -1 : $self->_strand( $self->{'__raw__'}[5] ); }
