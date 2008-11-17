@@ -726,10 +726,28 @@ sub names {
 }
 
 sub hex_by_rgb {
-    my ($self, $triple_ref) = @_;
-    return sprintf("%02x%02x%02x", @{$triple_ref});
+  my ($self, $triple_ref) = @_;
+  return sprintf("%02x%02x%02x", @{$triple_ref});
 }
 
+sub mix {
+  my( $self, $colour1, $colour2, $ratio ) = @_;
+  my @c1 = $self->rgb_by_name( $colour1, 1 );
+  my @c2 = $self->rgb_by_name( $colour2, 1 );
+  if( @c1 && @c2 ) {
+    return $self->hex_by_rgb([
+      $c1[0] + $ratio * ($c2[0]-$c1[0]),
+      $c1[1] + $ratio * ($c2[1]-$c1[1]),
+      $c1[2] + $ratio * ($c2[2]-$c1[2])
+    ]);
+  } elsif( @c1 ) {
+    return $colour1;
+  } elsif( @c2 ) {
+    return $colour2;
+  } else {
+    return 'red';
+  }
+}
 sub rgb_by_hex {
     my ($self, $hex) = @_;
 
@@ -744,9 +762,7 @@ sub rgb_by_hex {
 sub tint_by_hex {
     my ($self, $hex, $rtone, $gtone, $btone) = @_;
     return $self->hex_by_rgb([
-        $self->tint_by_rgb([
-            $self->rgb_by_hex($hex)
-        ], $rtone, $gtone, $btone)
+        $self->tint_by_rgb([ $self->rgb_by_hex($hex) ], $rtone, $gtone, $btone)
     ]);
 }
 
