@@ -831,10 +831,11 @@ sub glyph_anchored_arrow {
       'height'    => 0,
       'absolutey' => 1,
       'colour'    => $st->{'fgcolor'},
+      'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
       'y'         => $y+$h/2
     }));
   } else {
-    my $n = int($h/4);
+    my $n = lc($st->{'bar_style'}) eq 'full' ? 0 : int($h/4);
     $self->push($self->Rect({
       'x'         => $o > 0 ? $f->{extent_start}-1 : $f->{extent_start}+$tw-1,
       'width'     => $f->{extent_end}-$f->{extent_start}+1-$tw,
@@ -960,14 +961,27 @@ sub glyph_arrow {
       'y'      => $y,
       'height' => $h,
     }));
-    $self->push($self->Line({
-      'x'      => $box_s-1,
-      'width'  => $box_e - $box_s + 1,
-      'y'      => $y+$h/2,
-      'height' => 0,
-      'colour' => $st->{fgcolor},
-      'absolutey' => 1
-    }));
+    if( lc($st->{'bar_style'}) eq 'full' || lc($st->{'bar_style'}) eq 'indent' ) {
+      my $n = lc($st->{'bar_style'}) eq 'full' ? 0 : int($h/4);
+      $self->push($self->Rect({
+        'x'         => $box_s-1,
+        'width'     => $box_e - $box_s + 1,
+        'height'    => $h-2*$n,
+        'absolutey' => 1,
+        'colour'    => $st->{'fgcolor'},
+        'y'         => $y+$n
+      }));
+    } else {
+      $self->push($self->Line({
+        'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
+        'x'         => $box_s-1,
+        'width'     => $box_e - $box_s + 1,
+        'y'         => $y+$h/2,
+        'height'    => 0,
+        'colour'    => $st->{fgcolor},
+        'absolutey' => 1
+      }));
+    }
     return;
   }
 ## This is a narrow featured arrow!
@@ -1251,15 +1265,28 @@ sub glyph_span {
       'absolutey' => 1
     }));
   }
-  $self->push( $self->Line({
-    'x'         => $f->{extent_start}-1,
-    'y'         => $y + $h/2,
-    'height'    => 0,
-    'colour'    => $st->{'fgcolor'},
-    'width'     => $f->{extent_end}-$f->{extent_start}+1,
-    'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
-    'absolutey' => 1
-  }));
+  if( lc($st->{'bar_style'}) eq 'full' || lc($st->{'bar_style'}) eq 'indent' ) {
+    my $n = lc($st->{'bar_style'}) eq 'full' ? 0 : int($h/4);
+    $self->push($self->Rect({
+      'x'         => $f->{extent_start}-1,
+      'width'     => $f->{extent_end}-$f->{extent_start}+1,
+      'height'    => $h-2*$n,
+      'absolutey' => 1,
+      'colour'    => $st->{'fgcolor'},
+      'y'         => $y+$n
+    }));
+  } else {
+    $self->push($self->Line({
+      'x'         => $f->{extent_start}-1,
+      'width'     => $f->{extent_end}-$f->{extent_start}+1,
+      'y'         => $y+$h/2,
+      'height'    => 0,
+      'colour'    => $st->{fgcolor},
+      'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
+      'absolutey' => 1
+    }));
+  }
+
 }
 
 sub extent_text {
