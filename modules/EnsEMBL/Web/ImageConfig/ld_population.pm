@@ -23,8 +23,8 @@ sub init {
     $self->add_tracks( 'other',
     [ 'text',         '',     'text',         { 'display' => 'normal', 'strand' => 'r', 'menu' => 'no' } ],
     [ 'tagged_snp',   '',     'tagged_snp',   { 'display' => 'normal',  'strand' => 'r', 'colours' => $self->species_defs->colour('variation'),  'depth' => '10000',  'style' => 'box', 'caption' => 'Tagged SNPs', 'name' => 'Tagged SNPs'  } ],
-    [ 'ld_r2',        '',     'ld',      { 'display' => 'normal',  'strand' => 'r', 'key' => 'r2', 'caption' => 'LD (r2)', 'name' => 'LD (r2)'      } ],
-    [ 'ld_d_prime',   '',     'ld',      { 'display' => 'normal',  'strand' => 'r', 'key' => 'd_prime', 'caption' => "LD (d_prime)", 'name' => "LD (d')" } ],
+    [ 'ld_r2',        '',     'ld',      { 'display' => 'normal',  'strand' => 'r', 'key' => 'r2', 'colours' => $self->species_defs->colour('variation'),  'caption' => 'LD (r2)', 'name' => 'LD (r2)'      } ],
+    [ 'ld_d_prime',   '',     'ld',      { 'display' => 'normal',  'strand' => 'r', 'key' => 'd_prime', 'colours' => $self->species_defs->colour('variation'), 'caption' => "LD (d_prime)", 'name' => "LD (d')" } ],
  );
 
   $self->load_tracks();
