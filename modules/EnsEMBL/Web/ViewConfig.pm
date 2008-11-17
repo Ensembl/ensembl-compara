@@ -329,7 +329,9 @@ sub save {
 
 sub dump {
   my ($self) = @_;
-  print STDERR Dumper($self);
+  local $Data::Dumper::Indent = 1;
+  local $Data::Dumper::Terse  = 1;
+  print STDERR Dumper($self)," ";;
 }
 
 sub _species_label {
