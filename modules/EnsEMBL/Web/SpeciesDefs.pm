@@ -73,10 +73,13 @@ our @ISA = qw(EnsEMBL::Web::Root);
 our $AUTOLOAD;
 our $CONF;
 
+use Bio::EnsEMBL::Utils::Exception qw(verbose);
+
 sub new {
   ### c
   my $class = shift;
 
+  verbose($SiteDefs::ENSEMBL_API_VERBOSITY); 
   my $self = bless( {'_start_time' => undef , '_last_time' => undef, 'timer' => undef }, $class );
   my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/'.$ENSEMBL_CONFIG_FILENAME;
   $self->{'_filename'} = $conffile;
