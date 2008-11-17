@@ -61,6 +61,11 @@ sub populate_tree {
     { 'availability' => 1}
   );
 
+  $self->create_node( 'Content', "",
+    [qw(content    EnsEMBL::Web::Component::Info::Content)],
+    { 'no_menu_entry' => 1}
+  );
+
   ## SAMPLE DATA
   my $sample_data = $sd->SAMPLE_DATA;
   my $species_path = $self->species;
