@@ -74,12 +74,13 @@ sub print {
 }
 
 sub get_url_content {
-  my ($self, $object) = @_;
+  my ($self, $object, $url) = @_;
   my $content;
+  $url = $object->param('url') unless $url;
 
   my $useragent = LWP::UserAgent->new();
   $useragent->proxy( 'http', $object->species_defs->ENSEMBL_WWW_PROXY ) if( $object->species_defs->ENSEMBL_WWW_PROXY );
-  my $request = new HTTP::Request( 'GET', $object->param('url') );
+  my $request = new HTTP::Request( 'GET', $url );
   $request->header( 'Pragma'           => 'no-cache' );
   $request->header( 'Cache-control' => 'no-cache' );
   my $response = $useragent->request($request);
