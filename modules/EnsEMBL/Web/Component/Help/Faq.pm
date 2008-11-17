@@ -6,6 +6,7 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
 use CGI qw(escapeHTML);
 use EnsEMBL::Web::Data::Faq;
+use Apache2::RequestUtil;
 
 sub _init {
   my $self = shift;
@@ -18,7 +19,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $id = $object->param('id') || $object->param('feedback');
-
+  $id+=0;
   my $html = qq(<h2>FAQs</h2>);
   
   my @faqs;
@@ -29,6 +30,7 @@ sub content {
     @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted;
   }
 
+  my $r = Apache2::RequestUtil->request();
   if (scalar(@faqs) > 0) {
   
     my $style = 'text-align:right;margin-right:2em';
@@ -38,10 +40,12 @@ sub content {
       $html .= sprintf(qq(<h3 id="faq%s">%s</h3>\n<p>%s</p>), $faq->help_record_id, $faq->question, $faq->answer);
       if ($object->param('feedback') && $object->param('feedback') == $faq->help_record_id) {
         $html .= qq(<div style="$style">Thank you for your feedback</div>);
-      }
-      else {
-        $html .= $self->help_feedback($style, $faq->help_record_id, return_url => '/Help/Faq', type => 'Faq', 
-                    '_referer' => $object->param('_referer'), 'x_requested_with' => $object->param('x_requested_with'));
+      } else {
+        $html .= $self->help_feedback(
+          $style, $faq->help_record_id, return_url => '/Help/Faq', type => 'Faq', 
+          '_referer' => $object->param('_referer'),
+          'x_requested_with' => $object->param('x_requested_with')||$r->headers_in->{'X-Requested-With'}
+        );
       }
 
     }
