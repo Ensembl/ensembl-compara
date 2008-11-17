@@ -178,9 +178,8 @@ sub _get_databases_common {
   my %databases = map {($_,1)} @_;
 
   # find out if core is an annotation DB (like in Vega)
-  my $is_annot_db = $self->{'species_defs'}->get_table_size(
-    { -db =>'DATABASE_CORE', -table => 'gene_remark'}
-  ); 
+  my $t = $self->{'species_defs'}->table_info( 'core', 'gene_remark' );
+  my $is_annot_db = $t && $t->{'rows'};
     ## Get core DB first
   if( $databases{'core'} ) {
     eval{ $default_species_db->{'core'} =  $self->_get_core_database($species); };
