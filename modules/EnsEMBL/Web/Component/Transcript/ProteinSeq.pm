@@ -57,6 +57,10 @@ sub get_sequence_data {
       last if $_ >= $config->{'length'};
       
       $markup->{$_}->{'variation'} = $variations->{$_}->{'type'};
+      $markup->{$_}->{'alleles'} = $variations->{$_}->{'allele'};
+      $markup->{$_}->{'ambigcode'} = $variations->{$_}->{'ambigcode'};
+      $markup->{$_}->{'pep_snp'} = $variations->{$_}->{'pep_snp'};
+      $markup->{$_}->{'nt'} = $variations->{$_}->{'nt'};
     }
   }
   
