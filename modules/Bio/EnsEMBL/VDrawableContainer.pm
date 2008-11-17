@@ -97,7 +97,7 @@ sub new {
   my $entries_per_row = $Config->get_parameter( 'columns' ) || ( int( ($glyphsets/$GS - 1) / ($Config->get_parameter('rows') || 1) + 1 ) * $GS );
   $entries_per_row = $max_gs_chr if $max_gs_chr > $entries_per_row;
 
-  warn ".... $max_gs_chr .... $GS, $entries_per_row ...";
+##  warn ".... $max_gs_chr .... $GS, $entries_per_row ...";
   my $entry_no = 0;
   $Config->set_parameter('max_height', 0);
   $Config->set_parameter('max_width', 0);
