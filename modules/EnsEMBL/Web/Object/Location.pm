@@ -6,6 +6,7 @@ no warnings "uninitialized";
 use Data::Dumper;
 use POSIX qw(floor ceil);
 use EnsEMBL::Web::Proxy::Factory;
+use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Object);
@@ -1188,5 +1189,36 @@ sub get_all_genotypes{
     }
     return $genotypes_hash;
 }
+
+### Calls for LD view ##########################################################
+
+sub focus {
+  ### Information_panel
+  ### Purpose : outputs focus of page e.g.. gene, SNP (rs5050)or slice
+  ### Description : adds pair of values (type of focus e.g gene or snp and the ID) to panel if the paramater "gene" or "snp" is defined
+
+  my ( $obj ) = @_; 
+  my ( $info, $focus );
+  if ( $obj->param('v') ) {
+    $focus = "Variant";
+    my $snp = $obj->core_objects->variation;
+    my $name = $snp->name;
+    my $source = $snp->source;
+    my $link_name  = $obj->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP'; warn $link_name;
+    $info .= "$link_name ($source ". $snp->adaptor->get_source_version($source).")";
+  }
+  elsif ( $obj->core_objects->{'parameters'}{'g'} ) {
+    $focus = "Gene";
+    my $gene_id = $obj->name;
+    $info = ("Gene ". $gene_id);
+    my $url = $obj->_url({ 'type' => 'Gene', 'action' => 'Summary', 'g' => $obj->param('g') });
+    $info .= "  [<a href=$url>View Gene</a>]";
+  }
+  else {
+    return 1;
+  }
+  return $info;
+}
+
 
 1;
