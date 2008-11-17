@@ -116,14 +116,14 @@ sub content {
       $table = $self->feature_tables(\@features);;
       my $i = 0;
       my $zmenu_config;
-      foreach my $ftype  (@features) {
+      foreach my $set  (@features) {
 	      my $pointer_ref = $image->add_pointers( $object, {
 	        'config_name'  => 'Vkaryotype',
-	        'features'      => \@features,
+	        'features'      => $set->[0],
 	        'zmenu_config'  => $zmenu_config,
-	        'feature_type'  => $ftype,
-	        'color'         => $object->param("col_$i")   || $pointer_defaults{$ftype->[2]}[0],
-	        'style'         => $object->param("style_$i") || $pointer_defaults{$ftype->[2]}[1]}
+	        'feature_type'  => $set->[2],
+	        'color'         => $object->param("col_$i")   || $pointer_defaults{$set->[2]}[0],
+	        'style'         => $object->param("style_$i") || $pointer_defaults{$set->[2]}[1]}
 			  );
 	      push(@$pointers, $pointer_ref);
 	      $i++;

@@ -148,7 +148,7 @@ sub create_userdata_pointers {
         my ($upload_features, $headers) = $object->retrieve_userdata($features);
         my $upload_pointers = $image->add_pointers( $object, {
             'config_name' => $config,
-            'features'    => [$upload_features],
+            'features'    => $upload_features,
             'color'       => $object->param("col")   || $defaults->[0],
             'style'       => $object->param("style") || $defaults->[1],
         });
