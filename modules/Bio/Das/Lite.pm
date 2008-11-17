@@ -264,6 +264,7 @@ our $ATTR     = {
 												    },
 										'span'           => {
 												     'bar_style'    => [], # WTSI extension
+												     'style'        => [],
 												     %COMMON_STYLE_ATTRS,
 												    },
 										'text'           => {
