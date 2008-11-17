@@ -213,24 +213,28 @@ sub get_slice_table {
   my $config = shift;
   
   my $table_rows;
-
+  
   foreach (@{$config->{'slices'}}) {
     my $species = $_->{'name'};
     
     $table_rows .= qq{
     <tr>
       <th>$species &gt;&nbsp;</th>
-      <td>};
+      <td>}; 
     
     foreach my $slice (@{$_->{'underlying_slices'}}) {
       next if $slice->seq_region_name eq 'GAP';
       
-      my $slice_name = $slice->name;
-      
-      my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $slice_name);
-      
-      $table_rows .= qq{
-        <a href="/$species/Location/View?r=$region:$start-$end">$slice_name</a><br />};
+      if ($species eq 'Ancestral_sequences') {
+        $table_rows .= $slice->{'_tree'};
+      } else {
+        my $slice_name = $slice->name;
+        
+        my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $slice_name);
+        
+        $table_rows .= qq{
+          <a href="/$species/Location/View?r=$region:$start-$end">$slice_name</a><br />};
+      }
     }
     
     $table_rows .= qq{
