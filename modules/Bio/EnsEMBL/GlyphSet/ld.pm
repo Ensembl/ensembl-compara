@@ -56,6 +56,7 @@ sub _init {
     $yoffset += $TAG_LENGTH + $h;
     # Print GlyphSet::variation type bars above ld triangle
     foreach my $snp ( @snps ) {
+       my $type =  lc ($snp->[1]->display_consequence);
       $self->push( Sanger::Graphics::Glyph::Rect->new({
         'title'     => $snp->[1]->variation_name,
         'height'    => $TAG_LENGTH,
@@ -63,7 +64,7 @@ sub _init {
         'y'         => $yoffset - $TAG_LENGTH,
         'width'     => 1,
         'absolutey' => 1,
-        'colour'    => $colours->{$snp->[1]->display_consequence}->[0],
+        'colour'    => $colours->{$type}->{'default'},
       })); 
     }
 
