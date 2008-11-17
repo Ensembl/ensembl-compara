@@ -19,7 +19,7 @@ sub process {
 
   $object->delete_remote if $object;
   
-  $self->ajax_redirect($self->ajax_url('/UserData/ManageUpload', 'reload' => 1));
+  $self->ajax_redirect($self->ajax_url('/UserData/ManageRemote', 'reload' => 1));
 
 }
 

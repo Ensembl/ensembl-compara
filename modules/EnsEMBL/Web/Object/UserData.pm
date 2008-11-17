@@ -171,7 +171,7 @@ sub store_data {
     }
   }
 
-  warn Dumper($report->{'errors'});
+  warn Dumper($report->{'errors'}) if $report->{'errors'};
   return undef;
 }
   
@@ -491,7 +491,7 @@ sub _save_genomic_features {
                   -hstrand      => $f->hstrand,
                   -score        => $f->score,
                   -analysis     => $datasource,
-                  -cigar_string => $f->cigar_string || ($e-$s+1).'M';#$f->{_attrs} || '1M',
+                  -cigar_string => $f->cigar_string || ($e-$s+1).'M', #$f->{_attrs} || '1M',
                   -extra_data   => $f->extra_data,
 	  );
 	  push @feat_array, $feat;
