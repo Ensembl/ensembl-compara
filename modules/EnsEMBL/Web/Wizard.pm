@@ -6,6 +6,7 @@ package EnsEMBL::Web::Wizard;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use Class::Std;
 use EnsEMBL::Web::Root;

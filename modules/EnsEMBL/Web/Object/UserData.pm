@@ -368,7 +368,6 @@ sub _delete_datasource {
   my $ud_adaptor  = $dba->get_adaptor( 'Analysis' );
   my $datasource = $ud_adaptor->fetch_by_logic_name($ds_name);
   my $error;
-  warn "SOURCE $datasource";
   if ($datasource && ref($datasource) =~ /Analysis/) {
     $error = $self->_delete_datasource_features($datasource);
     $ud_adaptor->remove($datasource); ## TODO: Check errors here as well?

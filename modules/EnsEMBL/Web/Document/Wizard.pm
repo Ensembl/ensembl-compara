@@ -81,7 +81,6 @@ sub process_node {
     ));
     $self->render;
   }
-warn "SESSION STORE...........";
   $self->factory->session->store();
 }
 

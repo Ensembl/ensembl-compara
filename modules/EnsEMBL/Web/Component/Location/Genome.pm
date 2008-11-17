@@ -69,7 +69,7 @@ sub content {
 
     ## Check if there is userdata
     ## TODO: this needs to come from control panel
-    my $pointers = [];
+#    my $pointers = [];
 
     ## Check if there is userdata in session
     my (@temp_data, @saved_data);
