@@ -50,4 +50,5 @@ sub score { return undef; }
 
 sub link { return undef; }  
 
+sub extra_data { return (); }
 1;
