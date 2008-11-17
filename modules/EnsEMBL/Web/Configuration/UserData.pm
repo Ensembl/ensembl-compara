@@ -25,7 +25,7 @@ sub is_configurable {
   my @path = split(/\//, $referer);
   my $type = $path[2];
   if ($type eq 'Location' || $type eq 'Gene' || $type eq 'Transcript') {
-    (my $action = $path[3]) =~ s/\?(.)+//;
+    (my $action = $path[3]) =~ s/\?.*//;
     my $vc = $self->object->session->getViewConfig( $type, $action);
     $flag = 1 if $vc && $vc->can_upload;
   }
