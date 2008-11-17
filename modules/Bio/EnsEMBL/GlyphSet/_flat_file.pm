@@ -22,12 +22,23 @@ our @strand_name = qw(- Forward Reverse);
 
 sub feature_title {
   my( $self, $f, $db_name ) = @_;
-  return sprintf "%s: %s; Start: %d; End: %d; Strand: %s",
+  my $title = sprintf "%s: %s; Start: %d; End: %d; Strand: %s",
     $self->{'track_key'},
     $f->id,
     $f->seq_region_start,
     $f->seq_region_end,
-    $strand_name[$f->seq_region_strand]
+    $strand_name[$f->seq_region_strand];
+
+  $title .= '; Hit start: '.$f->hstart if $f->hstart;
+  $title .= '; Hit end: '.$f->hend if $f->hend;
+  $title .= '; Hit strand: '.$f->hstrand if $f->hstrand;
+  $title .= '; Score: '.$f->score if $f->score;
+  my %extra = $f->extra_data && ref($f->extra_data) eq 'HASH' ? %{$f->extra_data||{}} : ();
+  foreach my $k ( sort keys %extra ) {
+    next if $k eq '_type';
+    $title .= "; $k: ".join( ', ', @{$extra{$k}} );
+  }
+  return $title;
 }
 
 sub features {
@@ -77,9 +88,11 @@ sub colour_key {
   my( $self, $k ) = @_;
   return $k;
 }
+
 sub my_colour {
   my( $self, $k, $v ) = @_;
-  return $v eq 'join' ? 'yellow' : $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'color'}||'red';
+  my $c = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'color'};
+  return $v eq 'join' ?  $self->{'config'}->colourmap->mix( $c, 'white', 0.8 ) : $c;
 }
 
 1;
