@@ -644,33 +644,8 @@ sub get_table_size{
 ###                      -table =>'table name' (e.g. 'feature' ) }
 ###            species name (string)
 ### Returns: Number of rows in the table
-
-## Get/check args
-  my $self    = shift;
-  my $hashref = shift;
-  my $species = shift;
-
-  if( ref( $hashref ) ne 'HASH' ){
-    warn( "Argument must be a hashref!" );
-    return undef();
-  }
-  my $database = $hashref->{-db};
-  unless( $database ){
-    warn( "Usage: { -db=>'database', -table=>'table name' }" );
-    return undef();
-  }
-  my $table = $hashref->{-table};
-  unless( $table ){
-    warn( "Usage: { -db=>'database', -table=>'table name' }" );
-    return undef();    
-  }
-
-## Got the correct args, send back what we find in the configuration
-  my $table_size = $self->other_species( $species||$ENV{'ENSEMBL_SPECIES'}, 'TABLE_SIZE' );
-
-  return undef unless $table_size;
-  return undef unless exists( $table_size->{$database} );
-  return $table_size->{$database}->{$table};
+  warn "DEPRECATED............. use table_info_other ";
+  return undef;
 } 
 
 sub set_write_access {
@@ -858,6 +833,15 @@ sub table_info {
   return {} unless $self->databases->{$db};
   return $self->databases->{$db}{'tables'}{$table}||{};
 }
+
+sub table_info_other {
+  my( $self, $sp, $db, $table ) =@_;
+  $db = "DATABASE_".uc($db) unless $db =~ /^DATABASE_/;
+  my $db_hash = $self->other_species( $sp, 'databases');
+  return {} unless $db_hash && exists $db_hash->{$db} && exists $db_hash->{$db}{'tables'};
+  return $db_hash->{$db}{'tables'}{$table}||{};
+}
+
 
 sub species_label {
   my( $self, $key, $no_formatting ) = @_;
