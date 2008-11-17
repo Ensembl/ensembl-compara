@@ -155,8 +155,9 @@ warn "Parsing species $sp ".gmtime();
   foreach my $feature (@feature_types) {
     my $dbn = 'DATABASE_CORE';
     my $table = $featuresMasterTable{$feature};
-    my $rv = $species_defs->get_table_size( { -db => $dbn, -table=> $table }, $sp);
-    next unless $rv;
+    my $rv = $species_defs->table_info_other( $sp, $dbn, $table );
+    my $rows = $rv ? $rv->{'rows'} : 0;
+    next unless $rows;
     my $sql = $featuresQuery{$feature};
     my $sth = $dbh->prepare($sql);
     $sth->execute();
