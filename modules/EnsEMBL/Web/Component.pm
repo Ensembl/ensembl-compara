@@ -350,7 +350,7 @@ sub markup_exons {
     $i++;
   }
 
-  if ($config->{'key'}) {
+  if ($config->{'key_template'}) {
     if ($exon_types->{'gene'}) {
       $config->{'key'} .= sprintf (
         $config->{'key_template'},
@@ -359,8 +359,9 @@ sub markup_exons {
   
     for my $type ('other', 'compara_other') {
       if ($exon_types->{$type}) {
-        my $selected = ucfirst $config->{'exon_display'};
+        my $selected = ucfirst $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
         $selected = $config->{'site_type'} if $selected eq 'Core';
+        $selected ||= 'selected';
     
         $config->{'key'} .= sprintf(
           $config->{'key_template'},
@@ -389,7 +390,7 @@ sub markup_codons {
     $i++;
   }
 
-  $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$config->{'colours'}->{'codonutr'};", "Location of START/STOP codons") if ($codons && $config->{'key'});
+  $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$config->{'colours'}->{'codonutr'};", "Location of START/STOP codons") if ($codons && $config->{'key_template'});
 }
 
 sub markup_line_numbers {
@@ -545,7 +546,7 @@ sub markup_line_numbers {
         
         $s = $e + 1;
       } else { # Single species
-        $end = $e < $data->{'end'} ? $row_start + ($data->{'dir'} * $config->{'wrap'}) - $data->{'dir'} : $data->{'end'};
+        $end = $e < $config->{'length'} ? $row_start + ($data->{'dir'} * $config->{'wrap'}) - $data->{'dir'} : $data->{'end'};
         
         $start = $row_start;
 
@@ -655,7 +656,7 @@ sub build_sequence {
     $s++;
   }
 
-  my $length = scalar @{$output[0]} - 1;
+  my $length = $output[0] ? scalar @{$output[0]} - 1 : 0;
 
   for my $x (0..$length) {
     my $y = 0;
