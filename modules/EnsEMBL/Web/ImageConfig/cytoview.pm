@@ -34,9 +34,9 @@ sub init {
     'gene'          => 'Genes',
     'misc_feature'  => 'Misc. regions',
     'synteny'       => 'Synteny',
-    'external_data'   => 'External data',
+    'external_data' => 'External data',
     'user_data'     => 'User attached data',
-    'other'         => 'Additional features',
+    'decorations'   => 'Additional decorations',
     'information'   => 'Information',
     'options'       => 'Options'
   );
@@ -60,7 +60,7 @@ sub init {
     {qw(labels off)}
   );
 
-  $self->add_tracks( 'other',
+  $self->add_tracks( 'decorations',
     [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar'  } ],
     [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler'      } ],
     [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
