@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Gene);
-use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 use CGI qw(escapeHTML);
 
 sub _init {
@@ -31,13 +30,13 @@ sub content {
     wrap => $object->param('display_width') || 60,
     colours => \%c,
     site_type => ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl',
-    slice_name => $slice->name,
     species => $object->species,
     key_template => qq{<p><code><span style="%s">THIS STYLE:</span></code> %s</p>},
     key => '',
     comparison => 1,
     db => $object->get_db
   };
+  
   for ('exon_display', 'exon_ori', 'snp_display', 'line_numbering', 'conservation_display', 'codons_display', 'title_display', 'align') {
     $config->{$_} = $object->param($_) unless $object->param($_) eq "off";
   }
