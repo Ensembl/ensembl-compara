@@ -1035,6 +1035,63 @@ sub cigar_line {
 }
 
 
+=head2 get_fixed_cigar_line
+
+  Arg [1]    : -none-
+  Example    : $cigar_line = $genomic_align->get_fixed_cigar_line;
+  Description: get the cigar_line for this alignment when projected
+               on the reference sequence.
+  Returntype : string
+  Exceptions : throws if there is no reference genomic_align.
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
+
+=cut
+
+
+sub get_fixed_cigar_line {
+  my ($self) = @_;
+
+  throw("No reference GenomicAlign") if (!$self->genomic_align_block or !$self->genomic_align_block->reference_genomic_align);
+  my @fixed_cigar_pieces = ();
+  my $this_cigar_line = $self->cigar_line;
+  my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
+
+  my @this_cigar_pieces = $this_cigar_line =~ /(\d*[GMDX])/g;
+  my @ref_cigar_pieces = $ref_cigar_line =~ /(\d*[GMDX])/g;
+
+  my $length = 0;
+  foreach my $ref_cigar_bit (@ref_cigar_pieces) {
+    my ($ref_num, $ref_mode) = $ref_cigar_bit =~ /(\d*)(\w)/;
+    $ref_num = 1 if ($ref_num eq "");
+    $length += $ref_num;
+    my $this_length = 0;
+    while ($this_length < $ref_num) {
+      my $this_cigar_bit = shift(@this_cigar_pieces);
+      my ($this_num, $this_mode) = $this_cigar_bit =~ /(\d*)(\w)/;
+      $this_num = 1 if ($this_num eq "");
+      $this_length += $this_num;
+      if ($this_length > $ref_num) {
+        my $diff = $this_length - $ref_num;
+        $this_num -= $diff;
+        unshift(@this_cigar_pieces, "$diff$this_mode");
+        $this_length = $ref_num;
+      }
+      if ($ref_mode eq "M") {
+        if ($fixed_cigar_pieces[-1] eq $this_mode) {
+          pop(@fixed_cigar_pieces);
+          my $extra_num = pop(@fixed_cigar_pieces);
+          $this_num += $extra_num;
+        }
+        push(@fixed_cigar_pieces, $this_num, $this_mode);
+      }
+    }
+  }
+
+  return join("", grep {$_ ne "1"} @fixed_cigar_pieces);
+}
+
+
 =head2 level_id
  
   Arg [1]    : int $level_id
@@ -1528,54 +1585,20 @@ sub get_Mapper {
   }
 
   if (!defined($self->{$mode.'_mapper'})) {
-    if ($mode eq "condensed") {
-      $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
-      my $rel_strand = $self->dnafrag_strand;
-      my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
-      my $this_aligned_seq = $self->aligned_sequence("+FAKE_SEQ");
-
-      my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
-      my $aln_seq_pos = 0;
-      my $seq_pos = 0;
-      foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMDX])/g) {
-        my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMDX])/;
-        $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
-
-        my $this_piece_of_seq = substr($this_aligned_seq, $aln_seq_pos, $cig_count);
-        if ($cig_mode eq "M") {
-          my $this_piece_of_cigar_line = _get_cigar_line_from_aligned_sequence($this_piece_of_seq);
-          my $this_mapper;
-          if ($rel_strand == 1) {
-            $this_mapper = _get_Mapper_from_cigar_line($this_piece_of_cigar_line, $aln_pos,
-                $seq_pos + $self->dnafrag_start, 1);
-          } else {
-            $this_mapper = _get_Mapper_from_cigar_line($this_piece_of_cigar_line, $aln_pos,
-                $self->dnafrag_end - $seq_pos, -1);
-          }
-          $mapper->add_Mapper($this_mapper);
-          $aln_pos += $cig_count;
-        }
-        my $gaps = $this_piece_of_seq =~ tr/\-./\-./;
-        $seq_pos -= $gaps;
-        $seq_pos += $cig_count;
-        $aln_seq_pos += $cig_count;
-      }
-
-    } else {
-      my $cigar_line = $self->cigar_line;
-      if (!$cigar_line) {
-        throw("[$self] has no cigar_line and cannot be retrieved by any means");
-      }
-      my $alignment_position = (eval{$self->genomic_align_block->reference_slice_start} or 1);
-      my $sequence_position = $self->dnafrag_start;
-      my $rel_strand = $self->dnafrag_strand;
-      if ($rel_strand == 1) {
-        $sequence_position = $self->dnafrag_start;
-      } else {
-        $sequence_position = $self->dnafrag_end;
-      }
-      $mapper = _get_Mapper_from_cigar_line($cigar_line, $alignment_position, $sequence_position, $rel_strand);
+    my $cigar_line = $self->cigar_line;
+    $cigar_line = $self->get_fixed_cigar_line if ($mode eq "condensed");
+    if (!$cigar_line) {
+      throw("[$self] has no cigar_line and cannot be retrieved by any means");
     }
+    my $alignment_position = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+    my $sequence_position = $self->dnafrag_start;
+    my $rel_strand = $self->dnafrag_strand;
+    if ($rel_strand == 1) {
+      $sequence_position = $self->dnafrag_start;
+    } else {
+      $sequence_position = $self->dnafrag_end;
+    }
+    $mapper = _get_Mapper_from_cigar_line($cigar_line, $alignment_position, $sequence_position, $rel_strand);
 
     return $mapper if (!$cache);
 
