@@ -242,14 +242,18 @@ sub check_save {
   my $self = shift;
 
   my @shares = ($self->object->param('share_id'));
-
   foreach my $code (@shares) {
     if ($code !~ /^d+$/) {
       my $data = $self->object->get_session->get_data(type => 'upload', code => $code);
-      if ($data->{filename} && !$self->object->store_data(type => 'upload', code => $code)) {
-        $self->parameter(wizard_next   => 'select_upload');
-        $self->parameter(error_message => "Sorry, we were unable to save your file <i>$data->{name}</i> to our temporary storage area.");
-        return undef;
+      if ($data->{filename}) {
+        if (my $ref = $self->object->store_data(type => 'upload', code => $code)) {
+          @shares = grep {$_ ne $code} @shares;
+          push @shares, $ref;
+        } else {
+          $self->parameter(wizard_next   => 'select_upload');
+          $self->parameter(error_message => "Sorry, we were unable to save your file <i>$data->{name}</i> to our temporary storage area.");
+          return undef;
+        }
       }
     }
   }
