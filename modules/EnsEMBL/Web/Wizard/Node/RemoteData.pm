@@ -466,8 +466,9 @@ sub ok_tempdas {
   if ($self->object->param('url')) {
     $self->add_element('type'=>'Information', 'value' => 'The data URL was saved to your user account.');
   }
-    $self->add_element('type'=>'Information', 'value' => "Click on 'Manage Data' in the lefthand menu to see all your saved URLs and DAS sources");
+  $self->add_element('type'=>'Information', 'value' => "Click on 'Manage Data' in the lefthand menu to see all your saved URLs and DAS sources");
   
+  $self->add_element( 'type' => 'ForceReload' );
 }
 
 #------------------------------ URL-based data --------------------------------------
