@@ -14,4 +14,12 @@ sub type { my $self = shift; return $self->{'__raw__'}[6]; }
 sub note { my $self = shift; return $self->{'__raw__'}[7]; }
 sub link { my $self = shift; return $self->{'__raw__'}[8]; }
 
+sub extra_data {
+  my $self = shift;
+  my %extra = ();
+  $extra{'type'} = [$self->{'__raw__'}[6]] if defined $self->{'__raw__'}[6];
+  $extra{'note'} = [$self->{'__raw__'}[7]] if defined $self->{'__raw__'}[7];
+  $extra{'link'} = [$self->{'__raw__'}[8]] if defined $self->{'__raw__'}[8];
+  return \%extra;
+}
 1;

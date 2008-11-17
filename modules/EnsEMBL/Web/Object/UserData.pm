@@ -72,7 +72,7 @@ sub save_to_db {
     $config->{id} = $self->session->get_session_id;
     $config->{track_type} = 'session';
   }
-  
+  $config->{'file_format'} = $format; 
   my (@analyses, @messages, @errors);
   my @tracks = $parser->get_all_tracks;
   push @errors, 'Sorry, we couldn\'t parse your data.' unless @tracks;
@@ -268,7 +268,8 @@ sub _store_user_track {
       $config->{track_label}    = $track_name;
       $config->{description}    = $track->{'config'}{'description'};
       $config->{web_data}       = \%web_data;
-
+      $config->{method}         = 'upload';
+      $config->{method_type}    = $config->{'file_format'};
       if ($datasource) {
         if ($action eq 'error') {
           $report->{'error'} = "$track_name : This track already exists";
@@ -334,6 +335,8 @@ sub _create_datasource {
     -display_label  => $config->{track_label} || $config->{track_name},
     -displayable    => 1,
     -module         => $config->{coordinate_system} || $DEFAULT_CS,
+    -program        =>  $config->{'method'}||'upload',
+    -program_version => $config->{'method_type'},
     -module_version => $config->{assembly},
   );
 
@@ -414,17 +417,12 @@ sub _save_protein_features {
     next unless $shash->{ $seqname };
 
     if (my $object_id = $shash->{$seqname}) {
-      my $extra_data = {
-          'type' => $f->type,
-          'note' => $f->note,
-          'link' => $f->link,
-      };
-
       eval {
+          my($s,$e) = $f->rawstart<$f->rawend?($f->rawstart,$f->rawend):($f->rawend,$f->rawstart);
 	  my $feat = new Bio::EnsEMBL::ProteinFeature(
               -translation_id => $object_id,
-              -start      => $f->rawstart,
-              -end        => $f->rawend,
+              -start      => $s,
+              -end        => $e,
               -strand     => $f->strand,
               -hseqname   => $f->id,
               -hstart     => $f->hstart,
@@ -432,7 +430,7 @@ sub _save_protein_features {
               -hstrand    => $f->hstrand,
               -score      => $f->score,
               -analysis   => $datasource,
-              -extra_data => $extra_data,
+              -extra_data => $f->extra_data,
         );
 
 	  push @feat_array, $feat;
@@ -480,28 +478,22 @@ sub _save_genomic_features {
     my $seqname = $f->seqname;
     $shash->{ $seqname } ||= $slice_adaptor->fetch_by_region( undef,$seqname, undef, undef, undef, $assembly );
     if (my $slice = $shash->{$seqname}) {
-      my $extra_data = {
-        'type' => $f->type,
-        'note' => $f->note,
-        'link' => $f->link,
-      };
-
       eval {
+          my($s,$e) = $f->rawstart<$f->rawend?($f->rawstart,$f->rawend):($f->rawend,$f->rawstart);
 	  my $feat = new Bio::EnsEMBL::DnaDnaAlignFeature(
                   -slice    => $slice,
-                  -start    => $f->rawstart,
-                  -end      => $f->rawend,
+                  -start    => $s,
+                  -end      => $e,
                   -strand   => $f->strand,
                   -hseqname => $f->id,
-                  -hstart   => $f->rawstart,
-                  -hend     => $f->rawend,
-                  -hstrand  => $f->strand,
+                  -hstart   => $f->hstart,
+                  -hend     => $f->hend,
+                  -hstrand  => $f->hstrand,
                   -score => $f->score,
                   -analysis => $datasource,
                   -cigar_string => $f->{_attrs} || '1M',
-                  -extra_data => $extra_data,
-							  );
-
+                  -extra_data => $f->extra_data,
+	  );
 	  push @feat_array, $feat;
 
       };
