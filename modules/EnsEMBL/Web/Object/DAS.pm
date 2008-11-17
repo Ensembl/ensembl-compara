@@ -2,6 +2,7 @@ package EnsEMBL::Web::Object::DAS;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -60,7 +61,6 @@ sub base_features {
   my %feature_types = map { $_ ? ($_=>1) : () } @{$self->FeatureTypes  || []};
   my @group_ids     = grep { $_ }               @{$self->GroupIDs      || []};
   my @feature_ids   = grep { $_ }               @{$self->FeatureIDs    || []};
-warn "@group_ids - @feature_ids";
 
   my $dba_hashref;
   my( $db, @logic_names ) = split /-/, $ENV{'ENSEMBL_DAS_SUBTYPE'};
@@ -70,6 +70,9 @@ warn "@group_ids - @feature_ids";
     my $T = $self->{data}->{_databases}->get_DBAdaptor($_,$self->real_species);
     $dba_hashref->{$_}=$T if $T;
   }
+  if( $db eq 'userdata' && ! @logic_names ) {
+    return;
+  } 
   @logic_names = (undef) unless @logic_names;
   if(0){
     warn "Databases:   ",join ' ', sort keys %$dba_hashref;
