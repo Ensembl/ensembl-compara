@@ -2,6 +2,7 @@ package EnsEMBL::Web::Object::DAS::base_align;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use EnsEMBL::Web::Object::DAS;
 our @ISA = qw(EnsEMBL::Web::Object::DAS);
