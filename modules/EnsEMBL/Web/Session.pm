@@ -458,6 +458,7 @@ sub add_das {
   my ( $self, $das, $referer_hash ) = @_;
   
   # If source is different to any thing added so far, add it
+  my $vc_2 = undef;
   if ( my $new_name = $self->_get_unique_source_name($das) ) {
     $das->logic_name( $new_name );
     $das->category  ( 'session' );
@@ -478,6 +479,13 @@ sub add_das {
           $n->set_user( 'display', 'labels' );
           $ic->altered = 1;
         }
+      }
+    }
+    if( $das->is_on( $type.'/ExternalData' ) ) {
+      $vc_2 ||= $self->getViewConfig( $type, 'ExternalData' );
+      if( $vc_2 ) {
+        $vc_2->_set_defaults( $new_name, 'no'  );
+        $vc_2->set(           $new_name, 'yes' );
       }
     }
     return  1;
