@@ -63,7 +63,7 @@ sub select_file {
   }
   $self->add_element(%assembly_element);
   $self->add_element( type => 'File', name => 'file', label => 'Upload file' );
-  $self->add_element( type => 'String', name => 'url', label => 'or provide file URL' );
+  $self->add_element( type => 'String', name => 'url', label => 'or provide file URL', size => 30 );
   
   
   
