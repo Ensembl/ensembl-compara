@@ -8,6 +8,8 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 use CGI qw(escapeHTML);
+use EnsEMBL::Web::RegObj;
+
 sub _init {
   my $self = shift;
   $self->cacheable( 1 );
@@ -48,21 +50,6 @@ sub content {
     $image->set_button('drag', 'title' => 'Click or drag to jump to a region' );
     $image->imagemap         = 'yes';
     $image->{'panel_number'} = 'chrom';
-
-  ## Check if there is userdata in session
-  my $userdata = $object->get_session->get_tmp_data;
-  use Data::Dumper;
-  my $pointers = [];
-
-  if ($userdata && $userdata->{'filename'}) {
-    ## Set some basic image parameters
-#    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
-#    $image->caption = 'Click on the image above to jump to an overview of the chromosome';
-
-    ## Create pointers from user data
-    my $pointer_set = $self->create_userdata_pointers($image, $userdata);
-    push(@$pointers, $pointer_set);
-  }
 
   my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
   $image->add_tracks($object, $config_name);
