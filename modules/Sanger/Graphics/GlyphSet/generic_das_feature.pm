@@ -92,7 +92,7 @@ sub fetch_assembly_segments {
             }
 
             unless ($seg_start && $seg_end){
-                print STDERR "Bad segment start or end! [ignoring component: $component]\n";
+                warn "Bad segment start or end! [ignoring component: $component]\n";
                 next;
             }
 
@@ -315,7 +315,7 @@ sub get_das_features {
     
     #$self->_debug(1);
 
-    print STDERR "Fetching $type_label for segment(s): " , join(",",@{$segment}) , " from \"$dsn\"..." if $self->_debug();
+    warn "Fetching $type_label for segment(s): " , join(",",@{$segment}) , " from \"$dsn\"...\n" if $self->_debug();
     local $^W = 0;     
 
     my $dbh = Bio::Das->new(60);
