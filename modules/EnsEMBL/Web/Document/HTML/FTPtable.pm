@@ -33,11 +33,11 @@ sub render {
   foreach my $spp (sort @species) {
     (my $sp_name = $spp) =~ s/_/ /;
      my $sp_dir =lc($spp);
-     my $sp_var = lc($spp);
+     my $sp_var = lc($spp).'_variation';
      my $common = $species_defs->get_config($spp, 'SPECIES_COMMON_NAME');
      my $emf = '-';
     if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
-      $emf = qq(<a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_emf/$sp_var/">EMF</a>);
+      $emf = qq(<a rel="external" title="Variation and comparative data" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_emf/$sp_var/">EMF</a>);
     }
     $class = $row % 2 == 0 ? 'bg1' : 'bg2';
 
