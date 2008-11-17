@@ -89,7 +89,7 @@ sub _init {
   my( $max_x_offset ) = ( sort{ $b <=> $a }
                           map{$_->{_x_offset} + ($_->{_collapsed_distance}||0)}
                           @nodes );
-  my $nodes_scale = ($nodes_bitmap_width) / $max_x_offset;
+  my $nodes_scale = ($nodes_bitmap_width) / ($max_x_offset||1);
   #----------
 
   # Colours of connectors; affected by scaling
@@ -436,10 +436,8 @@ sub features {
   # Assign 'y' coordinates
   if ( @features > 0) { # Internal node
     $f->{y} = ($features[0]->{y} + $features[-1]->{y}) / 2;
-    #warn( "==> $node_id " . $tree->get_tagvalue('taxon_name') . 
-    #      ' ' . scalar(@features ) );
   } else { # Leaf node or collapsed
-    my $height = $f->{_height} || 0;
+    my $height = int( $f->{_height} || 0 ) + 1;
     if( $height < $MIN_ROW_HEIGHT ){ $height = $MIN_ROW_HEIGHT }
     #$f->{y} = ($CURRENT_ROW++) * 20;
     $f->{y} = $CURRENT_Y + ($height/2);
