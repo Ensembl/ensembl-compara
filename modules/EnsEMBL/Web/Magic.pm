@@ -327,8 +327,6 @@ sub stuff {
 
   my $input = new CGI;
   if (my @share_ref = $input->param('share_ref')) {
-    use Data::Dumper;
-    warn Dumper(\@share_ref);
     $session->receive_shared_data(@share_ref);
   }
 

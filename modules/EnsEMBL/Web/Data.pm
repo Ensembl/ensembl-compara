@@ -18,7 +18,6 @@ __PACKAGE__->mk_classdata(queriable_fields => {});
 __PACKAGE__->mk_classdata(relations        => {});
 __PACKAGE__->mk_classdata(cache_tags       => {});
 __PACKAGE__->mk_classdata('__type');
-__PACKAGE__->mk_classdata('cache_invalidator');
 
 
 ##
