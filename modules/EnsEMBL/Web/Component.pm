@@ -738,7 +738,7 @@ sub markup_line_numbers {
   my $self = shift;
   my ($sequence, $config) = @_;
  
-  # Incremented when name changes 
+  # Keep track of which element of $sequence we are looking at
   my $n = 0;
 
   # If we only have only one species, $config->{'seq_order'} won't exist yet (it's created in markup_comparisons)
@@ -750,10 +750,6 @@ sub markup_line_numbers {
     
     my @numbering;
     my $align_slice = 0;
-
-    # DANGER, WILL ROBINSON! This assumes that the order of the slices is the same as the order
-    # of the species when displayed on the page. Which it is...for now.
-    $n++ if ($name && $name ne $config->{'seq_order'}->[$n]);
 
     my $seq = $sequence->[$n];
     
@@ -896,7 +892,7 @@ sub markup_line_numbers {
       }
       
       my $ch = $start ? ($config->{'comparison'} && $data->{'chromosome'}) : '';   
-
+      
       push (@{$config->{'line_numbers'}->{$n}}, { start => $start, end => $end, pre => $ch });
 
       # Increase padding amount if required
@@ -904,8 +900,10 @@ sub markup_line_numbers {
       
       $e += $config->{'wrap'};
     }
+    
+    $n++;
   }
- 
+  
   $config->{'padding'}->{'pre_number'}++ if $config->{'padding'}->{'pre_number'}; # Compensate for the : after the chromosome
  
   if ($config->{'line_numbering'} eq 'slice' && $config->{'align'}) {
@@ -998,7 +996,7 @@ sub build_sequence {
   }
 
   my $length = $output[0] ? scalar @{$output[0]} - 1 : 0;
-
+  
   for my $x (0..$length) {
     my $y = 0;
     
