@@ -91,7 +91,22 @@ addLoadEvent( __init_species_reorder );
 
 function autosubmit( evt ) {
 /** Function that actually does the form submission **/
-  Event.findElement(evt,'form').submit();
+  var el = Event.findElement(evt,'form');
+  var t  = el.up('div#modal_panel');
+  if( t ) {
+    new Ajax.Request( el.action, {
+      method: el.method,
+      parameters: el.serialize(true),
+      onSuccess: function( transport ) {
+        modal_success(transport)
+      },
+      onFailure: function( transport ) {
+        $('modal_content').innerHTML = '<p class="ajax_error">Failure: the resource failed to load</p>';
+      }
+    });
+  } else {
+    el.submit();
+  }
   return true;
 }
 
