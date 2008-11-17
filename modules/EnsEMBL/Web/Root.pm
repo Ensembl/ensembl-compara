@@ -230,19 +230,19 @@ sub seq_region_sort {
 }
 
 sub help_feedback {
-  my ($self, $return_url, $type, $record_id, $style) = @_;
+  my ($self, $style, $id, %args) = @_;
   my $html = sprintf(qq(
 <div style="%s">
-<form id="help_feedback_%s" action="/Help/Feedback" method="post">
+<form id="help_feedback_%s" class="std check" action="/Help/Feedback" method="get">
 <strong>Was this helpful?</strong>
 <input type="radio" class="autosubmit" name="help_feedback" value="yes" /><label>Yes</label>
 <input type="radio" class="autosubmit" name="help_feedback" value="no" /><label>No</label>
 <input type="hidden" name="record_id" value="%s" />
-<input type="hidden" name="type" value="%s" />
-<input type="hidden" name="return_url" value="%s" />
-</form>
-</div>
-), $style, $record_id, $record_id, $type, $return_url);
+), $style, $id, $id);
+  while (my ($k, $v) = each (%args)) {
+    $html .= qq(<input type="hidden" name="$k" value="$v" />\n);
+  }
+  $html .= '</form></div>';
   return $html;
 }
 

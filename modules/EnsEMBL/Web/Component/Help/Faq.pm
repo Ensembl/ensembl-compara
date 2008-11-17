@@ -40,7 +40,8 @@ sub content {
         $html .= qq(<div style="$style">Thank you for your feedback</div>);
       }
       else {
-        $html .= $self->help_feedback('/Help/Faq', 'Faq', $faq->help_record_id, $style);
+        $html .= $self->help_feedback($style, $faq->help_record_id, return_url => '/Help/Faq', type => 'Faq', 
+                    '_referer' => $object->param('_referer'), 'x_requested_with' => $object->param('x_requested_with'));
       }
 
     }
