@@ -36,8 +36,9 @@ sub configure {
     'FASTA'            => undef,
   );
 
-  for my $species ( keys %{$self->{'conf'}->{_storage}} ) {
+  for my $species ( keys %{$self->{'conf'}->{_storage}},'MULTI' ) {
     (my $sp = $species ) =~ s/_/ /g;
+    $sp = 'Ancestral sequences' if $sp eq 'MULTI';
     Bio::EnsEMBL::Registry->add_alias( $species, $sp );
     for my $type ( keys %{$self->{'conf'}->{'_storage'}{$species}{databases}}){
 ## Grab the configuration information from the SpeciesDefs object
@@ -47,6 +48,7 @@ sub configure {
       if(! $TEMP->{USER}){warn((' 'x10)."[WARN] no USER for $sp $type") && next}
       next unless $TEMP->{NAME};
       next unless $TEMP->{USER};
+     
       my %arg = ( '-species' => $species, '-dbname' => $TEMP->{NAME} );
 ## Copy through the other parameters if defined
       foreach (qw(host pass port user driver)) {
