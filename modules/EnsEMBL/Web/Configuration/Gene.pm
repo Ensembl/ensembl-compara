@@ -279,7 +279,9 @@ sub ajax_zmenu      {
     # Link to protein sequence for cannonical or longest translation
     my $ens_tran = $obj->Obj->canonical_transcript;
     my $ens_prot;
-    unless( $ens_tran ){
+    if( $ens_tran ){
+      $ens_prot = $ens_tran->translation;
+    } else {
       my ($longest) = ( sort{ $b->[1]->length <=> $a->[1]->length } 
                         map{[$_, ( $_->translation || next ) ]} 
                         @{$obj->Obj->get_all_Transcripts} );
