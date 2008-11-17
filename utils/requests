@@ -32,7 +32,7 @@ while(<I>) {
 
 sub parse {
   my $request = shift;
-  my ($url,$query_string) = split /\?/, $request;
+  my ($url,$query_string) = split /\?/, $request,2;
   $url = $1 if $url =~ /^https?:\/\/.*?(\/.*)$/;
   my(@pairs) = split(/[&;]/,$query_string);
   my $params = {};
