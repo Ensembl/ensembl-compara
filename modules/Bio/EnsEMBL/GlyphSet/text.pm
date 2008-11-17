@@ -17,6 +17,7 @@ sub _init {
   my $h = $res[3];
 
   my $text = $self->my_config('text');
+  unless ($text)  {  $text =  $self->{'config'}->{'text'}; }
   $self->push( new Sanger::Graphics::Glyph::Text({
     'x'         => 1, 
     'y'         => 2,
