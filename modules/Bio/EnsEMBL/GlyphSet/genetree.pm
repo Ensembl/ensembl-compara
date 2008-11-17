@@ -220,6 +220,7 @@ sub _init {
         my $href = $self->_url( {'species' => $species,
                                  'type'    => 'Gene',
                                  'action'  => 'Compara_Tree',
+                                 '__clear' => $stable_id != $self->{'config'}{_core}{'parameters'}{'g'}, 
                                  'g'       => $stable_id } );
         $txt->{'href'} = $href;
       }
