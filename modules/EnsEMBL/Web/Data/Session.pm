@@ -151,7 +151,7 @@ sub invalidate_cache {
     $cache,
     'session_id['.$self->session_id.']',
     'type['.$self->type.']',
-    'code['.$self->code.']',
+    ($self->type eq 'script') ? 'code['.$self->code.']' : (),
   );
 }
 

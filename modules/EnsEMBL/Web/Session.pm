@@ -212,6 +212,12 @@ sub get_data {
     @_,
   );
 
+  EnsEMBL::Web::Data::Session->propagate_cache_tags(
+    session_id => $self->get_session_id,
+    type       => $args{type},
+    code       => $args{code},
+  );
+
   ## No session so cannot have anything configured!
   return unless $self->get_session_id;
 
@@ -364,6 +370,12 @@ sub get_all_das {
     $species = '';
   }
   
+  ## TODO: get rid of session getters,
+  EnsEMBL::Web::Data::Session->propagate_cache_tags(
+    session_id => $self->get_session_id,
+    type       => 'das',
+  );  
+
   # If there is no session, there are no configs
   return {} unless $self->get_session_id;
   
@@ -535,6 +547,13 @@ sub getViewConfig {
 
   my $key = $type.'::'.$action;
 
+  ## TODO: get rid of session getters,
+  EnsEMBL::Web::Data::Session->propagate_cache_tags(
+    session_id => $self->get_session_id,
+    type       => $type,
+    code       => $key,
+  );  
+
   unless ($Configs_of{ ident $self }{$key} ) {
     my $flag = 0;
     my $view_config = EnsEMBL::Web::ViewConfig->new( $type, $action, $self );
@@ -622,6 +641,14 @@ sub getImageConfig {
 ### If passed two parameters it loads the data (and caches it against the second name - NOTE you must use the
 ### second name version IF you want the configuration to be saved by the session - otherwise it will be lost
   my( $self, $type, $key ) = @_;
+
+  ## TODO: get rid of session getters,
+  EnsEMBL::Web::Data::Session->propagate_cache_tags(
+    session_id => $self->get_session_id,
+    type       => $type,
+    code       => $key,
+  );  
+  
 ## If key is not set we aren't worried about caching it!
   if( $key && exists $ImageConfigs_of{ ident $self }{$key} ) {
     return $ImageConfigs_of{ ident $self }{$key};
