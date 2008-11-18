@@ -111,7 +111,7 @@ sub render_marker_details {
     }
     foreach my $m (@$markers) {
 	my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
-	my $m_name = $m->display_MarkerSynonym->name;
+	my $m_name = $m->display_MarkerSynonym ? $m->display_MarkerSynonym->name : '';
 	$html .= qq(<h3>Marker $m_name</h3>);
 
 	#location of marker features
@@ -244,7 +244,7 @@ sub markerSynonyms {
 sub render_location {
     my $self = shift;
     my $m = shift;
-    my $m_name   = $m->display_MarkerSynonym->name;
+    my $m_name   = $m->display_MarkerSynonym ? $m->display_MarkerSynonym->name : '';
     my $object   = $self->object;
     my $species  = $object->species;
     my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
