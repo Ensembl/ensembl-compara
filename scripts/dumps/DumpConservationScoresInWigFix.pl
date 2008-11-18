@@ -64,7 +64,9 @@ if(!$seq_region_data) {
         foreach my $seq_region(@$seq_regions) {
                 my $job_name = $seq_region->seq_region_name;
                 $seq_region_data = join("-", $seq_region->seq_region_name, $seq_region->start, $seq_region->end, $seq_region->end - $seq_region->start + 1);
-                system("bsub -qlong -J$job_name -o$out_dir/$species_dir/$seq_region_data $0 --seq_region_data $seq_region_data --db_host $db_host --db_user $db_user --species \"$species\" --conservation_scores_mlssid $conservation_scores_mlssid --chunk_size $chunk_size");
+		my $bsub_string = "bsub -qlong -J$job_name -o$out_dir/$species_dir/$seq_region_data $0 --seq_region_data $seq_region_data --db_host $db_host --db_user $db_user --species \"$species\" --conservation_scores_mlssid $conservation_scores_mlssid --chunk_size $chunk_size";
+		$bsub_string .= " --db_version $db_version" if ($db_version);
+                system($bsub_string);
         }
 }
 
