@@ -32,12 +32,12 @@ sub select_file {
 
   $self->title('Select File to Upload');
   my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
-
+  my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
   my $current_species = $ENV{'ENSEMBL_SPECIES'};
   if (!$current_species || $current_species eq 'common') {
     $current_species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES;
   }
-  $self->notes({'heading'=>'IMPORTANT NOTE:', 'text'=>qq(We are only able to store single-species datasets, containing data on Ensembl coordinate systems. There is also a 5Mb limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">attach it to Ensembl</a> without uploading.)});
+  $self->notes({'heading'=>'IMPORTANT NOTE:', 'text'=>qq(We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a 5Mb limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">attach it to $sitename</a> without uploading.)});
 
   $self->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
 
@@ -190,11 +190,13 @@ sub select_upload {
 ## Node to select which data will be shared
   my $self = shift;
   $self->title('Share Your Data');
+  
+  my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
 
   $self->notes({
     heading => 'How it works',
     text    => qq(You can share your uploaded data with anyone, even if they don't have an
-                  Ensembl account. Just select one or more of your uploads and click on 'Next'
+                  account with $sitename. Just select one or more of your uploads and click on 'Next'
                   to get a shareable URL.
                   Please note that these URLs expire after 72 hours, but if you save the upload
                   to your account, you can create a new shareable URL at any time.)

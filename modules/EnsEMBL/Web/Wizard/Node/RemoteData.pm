@@ -15,10 +15,24 @@ sub select_server {
   my $self = shift;
   my $object = $self->object;
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
+  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $current_species = $ENV{'ENSEMBL_SPECIES'};
+  if (!$current_species || $current_species eq 'common') {
+    $current_species = $object->species_defs->ENSEMBL_PRIMARY_SPECIES;
+  }
+  
+  my $das_link    = qq(<a href="/info/docs/das/index.html">Distributed Annotation System</a>);
+  my $url_link    = qq(<a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">URL</a>);
+  my $upload_link = qq(<a href="/$current_species/UserData/Upload?$referer" class="modal_link">upload</a>);
 
   $self->title('Select a DAS server or data file');
+  $self->notes({
+    'heading'=>'Tip',
+    'text'=>qq($sitename supports the $das_link, a network of data sources
+               accessible over the web. DAS combines the advantages of $url_link
+               and $upload_link data, but requires special software.)});
 
-  my @preconf_das = $self->object->get_das_servers;
+  my @preconf_das = $object->get_das_servers;
 
   # DAS server section
   $self->add_element('type'   => 'DropDown',
@@ -480,13 +494,14 @@ sub select_url {
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $current_species = $ENV{'ENSEMBL_SPECIES'};
   if (!$current_species || $current_species eq 'common') {
     $current_species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES;
   }
 
   # URL-based section
-  $self->notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can <a href="/$current_species/UserData/Upload?$referer" class="modal_link">upload files</a> to Ensembl (only suitable for small, single-species datasets).)});
+  $self->notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can <a href="/$current_species/UserData/Upload?$referer" class="modal_link">upload files</a> to $sitename (only suitable for small, single-species datasets).)});
 
   $self->add_element('type'  => 'String',
                      'name'  => 'url',
