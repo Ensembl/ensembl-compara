@@ -43,10 +43,8 @@ sub get_sequence_data {
     $seq .= $_->seq->seq;
         
     if ($config->{'exons'}) {
-      $mk->{$length}->{'exons'} = 1;
       $flip = 1 - $flip;
-    
-      push (@{$mk->{$length}->{'exon_type'}}, $mk->{$length}->{'overlap'} ? 'exon2' : "exon$flip");
+      push (@{$mk->{'exons'}->{$length}->{'type'}}, $mk->{'exons'}->{$length}->{'overlap'} ? 'exon2' : "exon$flip");
     }
     
     map {{ 'letter' => $_ }} split (//, uc($_->seq->seq)) 
@@ -56,8 +54,7 @@ sub get_sequence_data {
   
   # Used to se the initial sequence colour
   if ($config->{'exons'}) {
-    $mk->{0}->{'exons'} = 1;
-    $mk->{0}->{'exon_type'} = [ 'exon0' ];
+    $mk->{'exons'}->{0}->{'type'} = [ 'exon0' ];
   }
   
   $config->{'length'} = $length;
@@ -73,8 +70,8 @@ sub get_sequence_data {
     if ($_+1 >= $cd_start && $_+1 <= $cd_end) {         
       $coding_seq->{'seq'}->[$_]->{'letter'} = $reference_seq[$_]->{'letter'} if $config->{'coding_seq'};
     } elsif ($config->{'codons'}) {
-      $mk->{$_}->{'codons'} = 1;
-      $mk->{$_}->{'bg'} = 'utr'; # Needed to colour variations correctly in untranslated sections
+      $mk->{'codons'}->{$_} = 1;
+      $mk->{'bg'}->{$_} = 'utr'; # Needed to colour variations correctly in untranslated sections
     }
   }
   
@@ -96,16 +93,13 @@ sub get_sequence_data {
     
     for (my $i = $cd_start + $s - 1; ($i+2) <= $cd_end; $i+=3) {
       if ($config->{'codons'}) {
-        $mk->{$i}->{'codons'} = $mk->{$i+1}->{'codons'} = $mk->{$i+2}->{'codons'} = 1;
-        $mk->{$i}->{'bg'} = $mk->{$i+1}->{'bg'} = $mk->{$i+2}->{'bg'} = "c$flip";
+        $mk->{'codons'}->{$i} = $mk->{'codons'}->{$i+1} = $mk->{'codons'}->{$i+2} = 1;
+        $mk->{'bg'}->{$i} = $mk->{'bg'}->{$i+1} = $mk->{'bg'}->{$i+2} = "c$flip";
         
         $flip = 1 - $flip;
       }
       
-      if ($config->{'translation'}) {
-        $mk->{$i}->{'peptide'} = $mk->{$i+2}->{'peptide'} = '-';
-        $mk->{$i+1}->{'peptide'} = substr($peptide, int(($i+1-$cd_start)/3), 1) || ($i+1 < $cd_end ? '*' : '.');
-        
+      if ($config->{'translation'}) {        
         $protein_seq->{'seq'}->[$i]->{'letter'} = $protein_seq->{'seq'}->[$i+2]->{'letter'} = '-';
         $protein_seq->{'seq'}->[$i+1]->{'letter'} = substr($peptide, int(($i+1-$cd_start)/3), 1) || ($i+1 < $cd_end ? '*' : '.');
       }
@@ -144,9 +138,11 @@ sub get_sequence_data {
           my $snpclass = $snp->var_class;
           my $ambigcode;
                
-          $mk->{$r-1}->{'alleles'} .= $snp->allele_string;
-          $mk->{$r-1}->{'url_params'} .= "source=" . $snp->source . ";snp=" . $snp->variation_name;
-          $mk->{$r-1}->{'variation'} = 'transcript';
+          $mk->{'variations'}->{$r-1}->{'alleles'} .= $snp->allele_string;
+          $mk->{'variations'}->{$r-1}->{'url_params'} .= "source=" . $snp->source . ";snp=" . $snp->variation_name;
+          $mk->{'variations'}->{$r-1}->{'type'} = 'transcript';
+          
+          my $url_params = $mk->{'variations'}->{$r-1}->{'url_params'};
           
           if ($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') { 
             my $aa = int(($r - $cd_start + 3)/3);
@@ -154,23 +150,23 @@ sub get_sequence_data {
             my @Q = @{$protein_features{$aa}||[]};
                        
             $ambigcode = $snp->ambig_code;
-            $mk->{$r-1}->{'snp'} = ($mk->{$r-1}->{'snp'} eq 'snp' || @Q != 1) ? 'snp' : 'syn';
+            $mk->{'variations'}->{$r-1}->{'snp'} = ($mk->{'variations'}->{$r-1}->{'snp'} eq 'snp' || @Q != 1) ? 'snp' : 'syn';
             
             if ($snp->strand == -1 && $trans_strand == -1) {
               $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-              $mk->{$r-1}->{'alleles'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+              $mk->{'variations'}->{$r-1}->{'alleles'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
             }
             
             if ($config->{'translation'} && @Q > 1) {
               $protein_seq->{'seq'}->[$aa_bp-1]->{'letter'} = $protein_seq->{'seq'}->[$aa_bp+1]->{'letter'} = '=';
-              $protein_seq->{'seq'}->[$aa_bp-1]->{'color'} = 'red';
+              $protein_seq->{'seq'}->[$aa_bp-1]->{'color'} = $config->{'colours'}->{'aminoacids'};
               $protein_seq->{'seq'}->[$aa_bp+2]->{'color'} = 'auto';
             }
           } else {            
-            $mk->{$r-1}->{'snp'}= 'indel';
+            $mk->{'variations'}->{$r-1}->{'snp'}= 'indel';
           }
           
-          $variation_seq->{'seq'}->[$r-1]->{'letter'} = $mk->{$r-1}->{'url_params'} ? qq{<a href="../snpview?$mk->{$r-1}->{'url_params'}">$ambigcode</a>} : $ambigcode;
+          $variation_seq->{'seq'}->[$r-1]->{'letter'} = $url_params ? qq{<a href="../snpview?$url_params">$ambigcode</a>} : $ambigcode;
         }
       }
     }
@@ -208,7 +204,7 @@ sub content {
   my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
   
   my $config = { 
-    wrap => $object->param('seq_cols') || 60,
+    display_width => $object->param('display_width') || 60,
     colours => \%c,
     species => $object->species,
     maintain_colour => 1
