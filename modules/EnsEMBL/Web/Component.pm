@@ -322,39 +322,27 @@ sub get_sequence_data {
 
   my @sequence;
   my @markup;
-
-  my $ref_name;
-  my @ref_seq;
   
-  if ($config->{'match_display'}) {
-    $ref_name = $config->{'ref_slice'}->get_individuals('reference');
-    @ref_seq = unpack('A1' x (length($config->{'ref_slice'}->Obj->seq)), $config->{'ref_slice'}->Obj->seq); 
-  }
-
   foreach my $sl (@$slices) {
     my $mk = {};
     my $slice = $sl->{'slice'};
+    my $name = $sl->{'name'};
     my $seq = uc $slice->seq(1);
     
     $config->{'length'} ||= $slice->length;
     
-    if ($config->{'match_display'} && $sl->{'name'} ne $ref_name) {
-      my @cmpseq = unpack('A1' x (length($seq)), $seq);
-      my $idx = 0;
-      
-      foreach (@ref_seq) {
-        $cmpseq[$idx] = '.' if ($_ eq $cmpseq[$idx]);
-        $idx++;
-      }
+    if ($config->{'match_display'} && $name ne $config->{'ref_slice_name'}) {      
+      my $i = 0;
+      my @cmp_seq = map {{ 'letter' => ( $config->{'ref_slice_seq'}->[$i++] eq $_ ? '.' : $_ ) }} split (//, $seq);
 
       while ($seq =~ m/([^~]+)/g) {
         my $reseq_length = length $1;
-        my $reseq_end = pos ($seq);
-
-        $mk->{$reseq_end-$_}->{'resequencing'} = 1 for (1..$reseq_length);
+        my $reseq_end = pos $seq;
+        
+        $mk->{'comparisons'}->{$reseq_end-$_}->{'resequencing'} = 1 for (1..$reseq_length);
       }
       
-      push (@sequence, [ map {{ 'letter' => $_ }} @cmpseq ]);
+      push (@sequence, \@cmp_seq);
     } else {
       push (@sequence, [ map {{ 'letter' => $_ }} split (//, $seq) ]);
     }
@@ -365,7 +353,7 @@ sub get_sequence_data {
         my $ins_length = length $1;
         my $ins_end = pos ($seq) - 1;
         
-        $mk->{$ins_end-$_}->{'insert'} = "$ins_length bp" for (1..$ins_length);
+        $mk->{'comparisons'}->{$ins_end-$_}->{'insert'} = "$ins_length bp" for (1..$ins_length);
       }
     }
     
@@ -384,7 +372,7 @@ sub get_sequence_data {
             next if ($u_slice->seq_region_name eq 'GAP');
             
             if (!$u_slice->adaptor) {
-              my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($sl->{'name'}, $config->{'db'}, 'slice');
+              my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
               $u_slice->adaptor($slice_adaptor);
             }
            
@@ -444,14 +432,16 @@ sub get_sequence_data {
           # $sequence[-1] is the current seconday strain, as it is the last element pushed onto the array
           next if ($config->{'match_display'} && $sequence[-1]->[$_]->{'letter'} eq '.');
           
-          $mk->{$_}->{'variations'} = $snp_type;
-          $mk->{$_}->{'alleles'} .= ($mk->{$_}->{'alleles'} ? '; ' : '') . $alleles;
+          $mk->{'variations'}->{$_}->{'type'} = $snp_type;
+          $mk->{'variations'}->{$_}->{'alleles'} .= ($mk->{'variations'}->{$_}->{'alleles'} ? '; ' : '') . $alleles;
+          
+          if ($_ == $start) {
+            $mk->{'variations'}->{$_}->{'link_text'} = "$snp_start:$alleles";
+            $mk->{'variations'}->{$_}->{'v'} = $snp->variation_name;
+            $mk->{'variations'}->{$_}->{'vf'} = $snp->dbID;
+            $mk->{'variations'}->{$_}->{'species'} = $config->{'ref_slice_name'} ? $config->{'species'} : $name;
+          }
         }
-        
-        $mk->{$start}->{'link_text'} = "$snp_start:$alleles";
-        $mk->{$start}->{'v'} = $snp->variation_name;
-        $mk->{$start}->{'vf'} = $snp->dbID;
-        $mk->{$start}->{'species'} = $sl->{'name'};
       }
     }
     
@@ -504,8 +494,8 @@ sub get_sequence_data {
         for ($start..$end) {
           last if $_ >= $config->{'length'};
           
-          push (@{$mk->{$_}->{'exon_type'}}, $type);          
-          $mk->{$_}->{'exons'} .= ($mk->{$_}->{'exons'} ? '; ' : '') . $exon->stable_id if ($exon->can('stable_id'));
+          push (@{$mk->{'exons'}->{$_}->{'type'}}, $type);          
+          $mk->{'exons'}->{$_}->{'id'} .= ($mk->{'exons'}->{$_}->{'id'} ? '; ' : '') . $exon->stable_id if ($exon->can('stable_id'));
         }
       }
     }
@@ -516,7 +506,7 @@ sub get_sequence_data {
       my $slice_length = $slice->length;
       
       if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-        foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
+        foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
           next if (!defined($t->translation));
           
           my @codons = map {{ start => $_->start, end => $_->end, label => 'START' }} @{$t->translation->all_start_codon_mappings || []}; # START codons
@@ -533,7 +523,7 @@ sub get_sequence_data {
             $end = $slice_length unless $end < $slice_length;
             
             for ($start-1..$end-1) {
-              $mk->{$_}->{'codons'} .= ($mk->{$_}->{'codons'} ? '; ' : '') . sprintf("$c->{'label'}(%s)", $t->stable_id);
+              $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("$c->{'label'}(%s)", $t->stable_id);
             }
           }
         }
@@ -546,12 +536,12 @@ sub get_sequence_data {
   	      
   	      # START codons
   	      for ($start-1..$start+1) { 
-    	      $mk->{$_}->{'codons'} .= ($mk->{$_}->{'codons'} ? '; ' : '') . sprintf("START(%s)", $t->stable_id);
+    	      $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("START(%s)", $t->stable_id);
   	      }
   	      
   	      # STOP codons
   	      for ($end-3..$end-1) {
-  	        $mk->{$_}->{'codons'} .= ($mk->{$_}->{'codons'} ? '; ' : '') . sprintf("STOP(%s)", $t->stable_id);
+  	        $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("STOP(%s)", $t->stable_id);
   	      }
         }
       }
@@ -568,6 +558,7 @@ sub markup_exons {
   my ($sequence, $markup, $config) = @_;
 
   my $exon_types = {};
+  my ($exon, $type, $s);
   
   my $style = {
     exon0 => { 'color' => $config->{'colours'}->{'exon0'} },
@@ -581,17 +572,16 @@ sub markup_exons {
   my $i = 0;
   
   foreach my $data (@$markup) {
-    foreach (sort {$a <=> $b} keys %$data) {
-      if ($data->{$_}->{'exons'}) {
-        $sequence->[$i]->[$_]->{'title'} .= ($sequence->[$i]->[$_]->{'title'} ? '; ' : '') . $data->{$_}->{'exons'} if $config->{'title_display'};
-        
-        foreach my $type (@{$data->{$_}->{'exon_type'}}) {
-          foreach my $s (keys %{$style->{$type}}) {
-            $sequence->[$i]->[$_]->{$s} = $style->{$type}->{$s};
-          }
-  
-          $exon_types->{$type} = 1;
+    foreach (sort {$a <=> $b} keys %{$data->{'exons'}}) {
+      $exon = $data->{'exons'}->{$_};
+      $sequence->[$i]->[$_]->{'title'} .= ($sequence->[$i]->[$_]->{'title'} ? '; ' : '') . $exon->{'id'} if $config->{'title_display'};
+      
+      foreach $type (@{$exon->{'type'}}) {
+        foreach $s (keys %{$style->{$type}}) {
+          $sequence->[$i]->[$_]->{$s} = $style->{$type}->{$s};
         }
+
+        $exon_types->{$type} = 1;
       }
     }
     
@@ -604,10 +594,12 @@ sub markup_exons {
         $config->{'key_template'},
         join( ';', map {"$_:$style->{'gene'}->{$_}"} keys %{$style->{'gene'}} ), "Location of $config->{'gene_name'} $config->{'gene_exon_type'}" );
     }
+    
+    my $selected;
   
     for my $type ('other', 'compara_other') {
       if ($exon_types->{$type}) {
-        my $selected = ucfirst $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
+        $selected = ucfirst $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
         $selected = $config->{'site_type'} if $selected eq 'Core';
         $selected ||= 'selected';
     
@@ -623,29 +615,32 @@ sub markup_codons {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
 
-  my ($codons, $i);
+  my ($codons, $i, $bg);
 
   foreach my $data (@$markup) {
-    foreach (sort {$a <=> $b} keys %$data) {
-      if ($data->{$_}->{'codons'}) {
-        $sequence->[$i]->[$_]->{'background-color'} = $config->{'colours'}->{"codon$data->{$_}->{'bg'}"} || $config->{'colours'}->{'codonutr'};
-        $sequence->[$i]->[$_]->{'title'} .= ($sequence->[$i]->[$_]->{'title'} ? '; ' : '') . $data->{$_}->{'codons'} if $config->{'title_display'};
-      }
-  
-      $codons = 1;
+    $codons = 1 if scalar keys %{$data->{'codons'}};
+    
+    foreach (sort {$a <=> $b} keys %{$data->{'codons'}}) {
+      $bg = 'codon' . ($data->{'bg'}->{$_} || 'utr');
+      
+      $sequence->[$i]->[$_]->{'background-color'} = $config->{'colours'}->{$bg};
+      $sequence->[$i]->[$_]->{'title'} .= ($sequence->[$i]->[$_]->{'title'} ? '; ' : '') . $data->{'codons'}->{$_} if $config->{'title_display'};
     }
     
     $i++;
   }
 
-  $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$config->{'colours'}->{'codonutr'};", "Location of START/STOP codons") if ($codons && $config->{'key_template'});
+  if ($codons && $config->{'key_template'}) {
+    # Only used on Gene view, which uses just condonutr colour.
+    $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$config->{'colours'}->{'codonutr'};", "Location of START/STOP codons");
+  }
 }
 
 sub markup_variation {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
 
-  my ($snps, $deletes);
+  my ($snps, $deletes, $seq, $variation, $ambiguity);
   my $i = 0;
 
   my $style = {
@@ -655,26 +650,23 @@ sub markup_variation {
   };
 
   foreach my $data (@$markup) {
-    my $seq = $sequence->[$i];
+    $seq = $sequence->[$i];
     
-    foreach (sort {$a <=> $b} keys %$data) {
-      my $mk = $data->{$_};
+    foreach (sort {$a <=> $b} keys %{$data->{'variations'}}) {
+      $variation = $data->{'variations'}->{$_};
+      $ambiguity = ambiguity_code($variation->{'alleles'}) || undef;
+
+      $seq->[$_]->{'letter'} = $ambiguity if $ambiguity;
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
       
-      if ($mk->{'variations'}) {
-        my $ambiguity = ambiguity_code($mk->{'alleles'});
-  
-        $seq->[$_]->{'letter'} = $ambiguity if $ambiguity;
-        $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $mk->{'alleles'} if $config->{'title_display'};
-        
-        $seq->[$_]->{'background-color'} = $style->{$mk->{'variations'}};
-        
-        if ($config->{'snp_display'} eq 'snp_link' && $mk->{'link_text'}) {          
-          $seq->[$_]->{'post'} = qq{ <a href="/$mk->{'species'}/Variation/Summary?v=$mk->{'v'};vf=$mk->{'vf'};vdb=variation">$mk->{'link_text'}</a>;};
-        }
-  
-        $snps = 1 if $mk->{'variations'} eq 'snp';
-        $deletes = 1 if $mk->{'variations'} eq 'delete';
+      $seq->[$_]->{'background-color'} = $style->{$variation->{'type'}};
+      
+      if ($config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'}) {          
+        $seq->[$_]->{'post'} = qq{ <a href="/$variation->{'species'}/Variation/Summary?v=$variation->{'v'};vf=$variation->{'vf'};vdb=variation">$variation->{'link_text'}</a>;};
       }
+
+      $snps = 1 if $variation->{'type'} eq 'snp';
+      $deletes = 1 if $variation->{'type'} eq 'delete';
     }
     
     $i++;
@@ -687,22 +679,22 @@ sub markup_variation {
 sub markup_comparisons {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
-
+  
   my $name_length = length ($config->{'ref_slice_name'} || $config->{'species'});
   my $max_length = $name_length;
   my $padding = '';
   my $i = 0;
+  my ($species, $length, $length_diff, $pad, $seq, $comparison);
 
   foreach (@{$config->{'slices'}}) {
-    my $slice = $_->{'slice'};
-    my $species = $_->{'name'};
+    $species = $_->{'name'};
 
     push (@{$config->{'seq_order'}}, $species);
     
     next if $species eq $config->{'species'};
     
-    my $length = length $species;
-    my $length_diff = $length - $name_length;
+    $length = length $species;
+    $length_diff = $length - $name_length;
 
     if ($length > $max_length) {
       $max_length = $length;
@@ -711,24 +703,30 @@ sub markup_comparisons {
   }
   
   foreach (@{$config->{'seq_order'}}) {
-    my $pad = ' ' x ($max_length - length $_);
+    $pad = ' ' x ($max_length - length $_);
     $config->{'padded_species'}->{$_} = $_ . $pad;
   }
   
   foreach my $data (@$markup) {
-    my $seq = $sequence->[$i];
+    $seq = $sequence->[$i];
     
-    foreach (sort {$a <=> $b} keys %$data) {
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $data->{$_}->{'insert'} if $config->{'title_display'};
-      $seq->[$_]->{'color'} = $config->{'colours'}->{'resequencing'} if $data->{$_}->{'resequencing'};
+    foreach (sort {$a <=> $b} keys %{$data->{'comparisons'}}) {
+      $comparison = $data->{'comparisons'}->{$_};
+      
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $comparison->{'insert'} if ($comparison->{'insert'} && $config->{'title_display'});
+      
+      # For sequence alignment view, this function is callled after the exons have been marked up, 
+      # so use ||= to ensure the exon colour is not overwritten.
+      $seq->[$_]->{'color'} ||= $config->{'colours'}->{'resequencing'}; 
     }
     
     $i++;
   }
   
   if ($config->{'match_display'}) {
-    $config->{'key'} .= '<p>* Basepairs in secondary strains matching the reference strain are replaced with dots</p>';
     $config->{'key'} .= sprintf($config->{'key_template'}, "color:$config->{'colours'}->{'resequencing'}", 'Resequencing coverage');
+    # Using middle dot to make it easier to see
+    $config->{'key'} .= '<p><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary strains matching the reference strain are replaced with dots</p>';
   }
   
   $config->{'v_space'} = "\n";
@@ -745,12 +743,10 @@ sub markup_line_numbers {
   $config->{'seq_order'} = [ $config->{'species'} ] unless $config->{'seq_order'};
   
   foreach my $sl (@{$config->{'slices'}}) {
+    my @numbering;
     my $slice = $sl->{'slice'};
     my $name = $sl->{'name'};
-    
-    my @numbering;
     my $align_slice = 0;
-
     my $seq = $sequence->[$n];
     
     if ($config->{'line_numbering'} eq 'slice') {
@@ -802,13 +798,13 @@ sub markup_line_numbers {
     my $data = shift @numbering unless ($config->{'numbering'} && !$config->{'numbering'}->[$n]);
     
     my $s = 0;
-    my $e = $config->{'wrap'} - 1;
+    my $e = $config->{'display_width'} - 1;
     
     my $row_start = $data->{'start'};
     my ($start, $end);
     
     # One line longer than the sequence so we get the last line's numbers generated in the loop
-    my $loop_end = $config->{'length'} + $config->{'wrap'};
+    my $loop_end = $config->{'length'} + $config->{'display_width'};
     
     while ($e < $loop_end) {
       $start = '';
@@ -852,7 +848,7 @@ sub markup_line_numbers {
           $start = $row_start;
 
           # For AlignSlice display the position of the last meaningful bp
-          (undef, $end) = $slice->get_original_seq_region_position($e + 1 + $last_bp_pos - $config->{'wrap'});
+          (undef, $end) = $slice->get_original_seq_region_position($e + 1 + $last_bp_pos - $config->{'display_width'});
         }
 
         $s = $e + 1;
@@ -883,7 +879,7 @@ sub markup_line_numbers {
         
         $s = $e + 1;
       } else { # Single species
-        $end = $e < $config->{'length'} ? $row_start + ($data->{'dir'} * $config->{'wrap'}) - $data->{'dir'} : $data->{'end'};
+        $end = $e < $config->{'length'} ? $row_start + ($data->{'dir'} * $config->{'display_width'}) - $data->{'dir'} : $data->{'end'};
         
         $start = $row_start;
 
@@ -898,7 +894,7 @@ sub markup_line_numbers {
       # Increase padding amount if required
       $config->{'padding'}->{'number'} = length $start if length $start > $config->{'padding'}->{'number'};
       
-      $e += $config->{'wrap'};
+      $e += $config->{'display_width'};
     }
     
     $n++;
@@ -964,8 +960,8 @@ sub build_sequence {
       $count++;
       $i++;
   
-      if ($count == $config->{'wrap'} || $i == scalar @$lines) {        
-        if ($i == $config->{'wrap'}) {
+      if ($count == $config->{'display_width'} || $i == scalar @$lines) {        
+        if ($i == $config->{'display_width'}) {
           $row = "$row</span>";
         } else {
           $row = "<span $new_line_style $new_line_title>$row</span>";
@@ -1012,7 +1008,7 @@ sub build_sequence {
       }
       
       if ($x == $length && ($config->{'end_number'} || $_->[$x]->{'post'})) {
-        $line .= ' ' x ($config->{'wrap'} - $_->[$x]->{'length'});
+        $line .= ' ' x ($config->{'display_width'} - $_->[$x]->{'length'});
       }
       
       if ($config->{'end_number'}) {
@@ -1037,7 +1033,7 @@ sub build_sequence {
   # Can't use sprintf because it throws the error 'Argument isn't numeric' for compara alignments when 
   # conservation is turned on, even though IT'S NOT MEANT TO BE NUMERIC. Stupid sprintf.
   $config->{'html_template'} =~ s/%s/$html/;
-
+  
   return $config->{'html_template'};
 }
 
