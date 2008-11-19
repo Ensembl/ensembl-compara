@@ -37,17 +37,13 @@ sub get_sequence_data {
       
       if ($exons->{$_}->{'exon'}) {
         $flip = 1 - $flip;
-        $markup->{$_}->{'exons'} = 1;
-        
-        push (@{$markup->{$_}->{'exon_type'}}, "exon$flip");
+        push (@{$markup->{'exons'}->{$_}->{'type'}}, "exon$flip");
       } elsif ($exons->{$_}->{'overlap'}) {
-        $markup->{$_}->{'exons'} = 1;
-        push (@{$markup->{$_}->{'exon_type'}}, 'exon2');
+        push (@{$markup->{'exons'}->{$_}->{'type'}}, 'exon2');
       }
     }
     
-    $markup->{0}->{'exons'} = 1;
-    $markup->{0}->{'exon_type'} = [ 'exon0' ];
+    $markup->{'exons'}->{0}->{'type'} = [ 'exon0' ];
   }
   
   if ($config->{'variation'}) {
@@ -56,11 +52,11 @@ sub get_sequence_data {
     foreach (sort {$a <=> $b} keys %$variations) {
       last if $_ >= $config->{'length'};
       
-      $markup->{$_}->{'variation'} = $variations->{$_}->{'type'};
-      $markup->{$_}->{'alleles'} = $variations->{$_}->{'allele'};
-      $markup->{$_}->{'ambigcode'} = $variations->{$_}->{'ambigcode'};
-      $markup->{$_}->{'pep_snp'} = $variations->{$_}->{'pep_snp'};
-      $markup->{$_}->{'nt'} = $variations->{$_}->{'nt'};
+      $markup->{'variations'}->{$_}->{'type'} = $variations->{$_}->{'type'};
+      $markup->{'variations'}->{$_}->{'alleles'} = $variations->{$_}->{'allele'};
+      $markup->{'variations'}->{$_}->{'ambigcode'} = $variations->{$_}->{'ambigcode'};
+      $markup->{'variations'}->{$_}->{'pep_snp'} = $variations->{$_}->{'pep_snp'};
+      $markup->{'variations'}->{$_}->{'nt'} = $variations->{$_}->{'nt'};
     }
   }
   
@@ -78,7 +74,7 @@ sub content {
   my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
   
   my $config = { 
-    wrap => $object->param('seq_cols') || 60,
+    display_width => $object->param('display_width') || 60,
     colours => \%c,
     species => $object->species,
     maintain_colour => 1

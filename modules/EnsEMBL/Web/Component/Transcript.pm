@@ -801,17 +801,18 @@ sub markup_variation {
   };
 
   foreach my $data (@$markup) {
-    foreach (sort {$a <=> $b} keys %$data) {
-      my $type = $data->{$_}->{'variation'};
+    foreach (sort {$a <=> $b} keys %{$data->{'variations'}}) {
+      my $variation = $data->{'variations'}->{$_};
+      my $type = $variation->{'type'};
       
       next unless $type;
       
-      $sequence->[$i]->[$_]->{'title'} = &{$title->{$type}}($data->{$_}) if $title->{$type};
+      $sequence->[$i]->[$_]->{'title'} = &{$title->{$type}}($variation) if $title->{$type};
       
       if ($type eq 'transcript') {
-        $sequence->[$i]->[$_]->{'background-color'} = $config->{'translation'} ?  $config->{'colours'}->{"$data->{$_}->{'snp'}$data->{$_}->{'bg'}"} : $config->{'colours'}->{'snp_default'};
+        $sequence->[$i]->[$_]->{'background-color'} = $config->{'translation'} ? $config->{'colours'}->{"$variation->{'snp'}$data->{'bg'}->{$_}"} : $config->{'colours'}->{'snp_default'};
       } else {
-        $sequence->[$i]->[$_]->{'background-color'} = $config->{'colours'}->{$type} if $type;
+        $sequence->[$i]->[$_]->{'background-color'} = $config->{'colours'}->{$type};
       }
     }
     
