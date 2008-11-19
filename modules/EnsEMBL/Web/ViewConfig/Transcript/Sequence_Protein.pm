@@ -6,10 +6,10 @@ sub init {
   my ($view_config) = @_;
 
   $view_config->_set_defaults(qw(
-    exons        yes
-    seq_cols     60
-    variation    yes
-    number       yes
+    exons         yes
+    display_width 60
+    variation     yes
+    number        yes
   ));
   $view_config->storable = 1;
 }
@@ -19,7 +19,7 @@ sub form {
 
   $view_config->add_form_element({
     'type'     => 'DropDown', 'select' => 'select',
-    'required' => 'yes',      'name'   => 'seq_cols',
+    'required' => 'yes',      'name'   => 'display_width',
     'values'   => [
       map { {'value' => $_, 'name' => "$_ aa"} } map { 10 * $_ } (3..20)
     ],
