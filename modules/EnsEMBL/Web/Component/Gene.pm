@@ -111,7 +111,7 @@ sub EC_URL {
 
 sub markup_conservation {
   my $self = shift;
-  my ($sequence, $data, $config) = @_;
+  my ($sequence, $config) = @_;
 
   # Regions where more than 50% of bps match considered `conserved`
   my $cons_threshold = int((scalar(@{$config->{'slices'}}) + 1) / 2);

@@ -24,10 +24,10 @@ sub content {
   my $colours = $object->species_defs->colour('sequence_markup');
   my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
   
-  my @sliceArray;
+  my @slice_array;
 
   my $config = {
-    wrap => $object->param('display_width') || 60,
+    display_width => $object->param('display_width') || 60,
     colours => \%c,
     site_type => ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl',
     species => $object->species,
@@ -53,15 +53,15 @@ sub content {
 
     return $error if $error;
 
-    push @sliceArray, @{$self->get_alignments($object, $slice, $config->{'align'}, $config->{'species'})};
+    push @slice_array, @{$self->get_alignments($object, $slice, $config->{'align'}, $config->{'species'})};
   } else {
     # If 'No alignment' selected then we just display the original sequence as in geneseqview
-    push @sliceArray, $slice;
+    push @slice_array, $slice;
 
     $warnings .= $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>');
   }
     
-  foreach (@sliceArray) {
+  foreach (@slice_array) {
     my $species = $_->can('display_Slice_name') ? $_->display_Slice_name : $config->{'species'};
     
     push (@{$config->{'slices'}}, {
@@ -76,7 +76,7 @@ sub content {
   # markup_comparisons must be called first to get the order of the comparison sequences
   # The order these functions are called in is also important because it determines the order in which things are added to $config->{'key'}
   $self->markup_comparisons($sequence, $markup, $config) if $config->{'align'};
-  $self->markup_conservation($sequence, $markup, $config) if $config->{'conservation_display'};
+  $self->markup_conservation($sequence, $config) if $config->{'conservation_display'};
   $self->markup_codons($sequence, $markup, $config) if $config->{'codons_display'};
   $self->markup_exons($sequence, $markup, $config) if $config->{'exon_display'};
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
