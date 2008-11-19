@@ -26,11 +26,10 @@ sub content {
   my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
 
   my $config = {
-    wrap => $object->param('display_width') || 60,
+    display_width => $object->param('display_width') || 60,
     colours => \%c,
     site_type => ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl',
     gene_name => $object->Obj->stable_id,
-    slice_name => $slice->name,
     species => $object->species,
     key_template => qq{<p><code><span style="%s">THIS STYLE:</span></code> %s</p>},
     key => ''
@@ -49,12 +48,12 @@ sub content {
   }
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
-
+  
   $self->markup_exons($sequence, $markup, $config) if $config->{'exon_display'};
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
   $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
   
-  $config->{'html_template'} = qq{<p>$config->{'key'}</p><pre>&gt;$config->{'slice_name'}\n%s</pre>};
+  $config->{'html_template'} = qq{<p>$config->{'key'}</p><pre>&gt;} . $slice->name . qq{\n%s</pre>};
   
   return $self->build_sequence($sequence, $config);
 }
