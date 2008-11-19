@@ -717,7 +717,7 @@ sub markup_comparisons {
       
       # For sequence alignment view, this function is callled after the exons have been marked up, 
       # so use ||= to ensure the exon colour is not overwritten.
-      $seq->[$_]->{'color'} ||= $config->{'colours'}->{'resequencing'}; 
+      $seq->[$_]->{'color'} ||= $config->{'colours'}->{'resequencing'} if $comparison->{'resequencing'}; 
     }
     
     $i++;
