@@ -240,11 +240,12 @@ sub select_das_coords {
       ! $_->is_top_level
     } @{ $csa->fetch_all };
     for my $cs (@coords) {
+      $cs->{'species'} = $species;
       $cs = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_hashref($cs);
       push @$f_elements, {'type'    => 'CheckBox',
-                             'name'    => 'coords',
-                             'value'   => $cs->to_string,
-                             'label'   => $cs->label };
+                          'name'    => 'coords',
+                          'value'   => $cs->to_string,
+                          'label'   => $cs->label };
     }
     $fieldset->{'elements'} = $f_elements;
     $self->add_fieldset($fieldset);
