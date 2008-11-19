@@ -37,14 +37,16 @@ sub content {
     $dir = '' if $dir !~ /_/;
     my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
 
-    $html .= qq(<h3>Your news filters</h3>);
+    $html .= qq(<h3>Your news filters</h3>
+    <p>N.B. Currently we only offer the option to filter news by species.</p>);
     ## Sort user filters by name if required
 
     ## Display user filters
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
 
     $table->add_columns(
-        { 'key' => 'species',   'title' => 'Species',       'width' => '60%', 'align' => 'left' },
+        { 'key' => 'type',      'title' => 'Type',          'width' => '20%', 'align' => 'left' },
+        { 'key' => 'options',   'title' => 'Options',       'width' => '40%', 'align' => 'left' },
         { 'key' => 'edit',      'title' => '',              'width' => '20%', 'align' => 'left' },
         { 'key' => 'delete',    'title' => '',              'width' => '20%', 'align' => 'left' },
     );
@@ -58,8 +60,8 @@ sub content {
       else {
         $species = $filter->species;
       }
-
-      $row->{'species'} = sprintf(qq(<a href="/info/website/news/index.html" title="View News" class="cp-external">%s</a>),
+      $row->{'type'} = 'Species';
+      $row->{'options'} = sprintf(qq(<a href="/info/website/news/index.html" title="View News" class="cp-external">%s</a>),
                         $species);
 
       $row->{'edit'} = $self->edit_link($dir, 'NewsFilter', $filter->id);
