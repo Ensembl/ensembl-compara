@@ -218,6 +218,19 @@ with the -repair option:
 
 ...and correct mismatches if any!
 
+NOTE about Vicugna which may raise an error, but no need to worry about it:
+Ok, so then because the classification in the meta table in core is flat, there is no "Vicugna pacos" entry, but a "Vicugna" genus, and a "pacos" that combined gives "Vicugna pacos".
+In which case, we should keep the "Lama" genus in NCBI taxonomy, and only change the "Lama pacos" to "Vicugna pacos" as we have done.
+This means that I wouldn't worry about this anymore, knowing that is going to raise a warning in the healthchecks, and leave it as it is.
+
+
+13.5. Run ANALYZE TABLE and OPTIMIZE TABLE commands
+
+eg
+mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases kb3_ensembl_compara_52
+
+mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases kb3_ensembl_compara_52
+
 14. Ask the release coordinator to point the test web server to the compara DB.
 
 15. Create a patch to convert a compara DB from the previous release to the new
@@ -238,21 +251,41 @@ Recompile the test database.
 
 Don't forget to commit these changes into the repository!
 
-18. Update files in ensembl-webcode/htdocs/info/data/compara
+18. Update files in public-plugins/ensembl/htdocs/info/docs/compara
 
-You might need to update the create_mlss_table.conf file with new species added.
+You might need to update the create_mlss_table.conf file with new species added. Or you can use the order of species given in the species tree
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
     --reg_conf ~/.ensembl_init --dbname Compara48 --method_link PECAN \
     --list > pecan.inc
 
+or
+  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link PECAN \
+    --list --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh > pecan.inc
+
+  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link ORTHEUS \
+    --list --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh > epo.inc
+
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
     --reg_conf ~/.ensembl_init --dbname Compara48 --method_link TRANSLATED_BLAT \
-    --trim > tblat.inc
+    --trim --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh > tblat.inc
+
+  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link TRANSLATED_BLAT_NET \
+    --trim --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh > tblat_net.inc
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
     --reg_conf ~/.ensembl_init --dbname Compara48 --method_link BLASTZ_NET \
     --trim > blastz_net.inc
+
+or to produce a simple list because the table is getting too big
+
+  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link BLASTZ_NET \
+    --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh --blastz_list > blastz_net.inc
+
 
   perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
     --reg_conf ~/.ensembl_init --dbname Compara48 --method_link SYNTENY \
