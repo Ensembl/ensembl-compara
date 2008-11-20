@@ -76,10 +76,11 @@ sub get_SimpleAlign {
   my $stop2x = 0;
   my $append_taxon_id = 0;
   my $append_sp_short_name = 0;
+  my $append_genomedb_id = 0;
   my $exon_cased = 0;
   if (scalar @args) {
-    ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $exon_cased) = 
-       rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME EXON_CASED)], @args);
+    ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased) =
+       rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED)], @args);
   }
   $id_type = 'STABLE' unless(defined($id_type));
 
@@ -109,6 +110,7 @@ sub get_SimpleAlign {
     $seqID = $member->sequence_id if($id_type eq "SEQ");
     $seqID = $member->member_id if($id_type eq "MEMBER");
     $seqID .= "_" . $member->taxon_id if($append_taxon_id);
+    $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
 
     ## Append $seqID with Speciae short name, if required
     if ($append_sp_short_name) {
