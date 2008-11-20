@@ -152,10 +152,11 @@ foreach my $spp (@valid_spp) {
     my $b_latest  = $SD->get_config($spp, 'GENEBUILD_LATEST') || '';
     $b_latest || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_LATEST!";
     my $b_id    = $SD->get_config($spp, 'GENEBUILD_BY') || '';
-    $b_id   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_BY!";
+    $b_id   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_BY!" unless $pre;
 
     my $data_version = $SD->get_config($spp, 'SPECIES_RELEASE_VERSION');
-    my $db_id = $release_id.'.'.$data_version;
+    my $db_id = $release_id;
+		$db_id .= '.'.$data_version unless $pre;
     #print "Version $data_version\n";
 
 ##----------------------- NASTY RAW SQL STUFF! ------------------------------
