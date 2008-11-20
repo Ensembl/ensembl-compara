@@ -125,10 +125,11 @@ sub create_analysis_jobs {
   my $aa = $self->db->get_AnalysisAdaptor;
   my $Homology_dNdS_analysis = $aa->fetch_by_logic_name('Homology_dNdS');
 
-  my $sql = "insert ignore into analysis_job (analysis_id,input_id,status) select " .
-    $Homology_dNdS_analysis->dbID .
-      ",homology_id,'READY' from homology where method_link_species_set_id = ?";
+#   my $sql = "insert ignore into analysis_job (analysis_id,input_id,status) select " .
+#     $Homology_dNdS_analysis->dbID .
+#       ",homology_id,'READY' from homology where method_link_species_set_id = ?";
 
+  my $sql = "select homology_id from homology where method_link_species_set_id = ?";
   my $sth = $self->db->dbc->prepare($sql);
 
   my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
@@ -154,6 +155,7 @@ sub create_analysis_jobs {
   $job_size = 1 if ($job_size < 1);
   $job_size = 25 if ($job_size > 20); # limit of 255 chars in input_id
 
+  my $analysis_id = $Homology_dNdS_analysis->dbID;
   while (@homologies) {
     my @job_array = splice(@homologies,0,$job_size);
     my $input_id = "[" . join(',',@job_array) . "]";
