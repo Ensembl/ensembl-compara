@@ -230,6 +230,13 @@ sub build_GeneTreeSystem
 
   $dataflowRuleDBA->create_rule($blastSubsetStaging, $submitpep_analysis);
 
+  # GenomeDumpFasta does not use the normal eval method of parameter loading so this is why
+  # our hash lookie-like structure is not a real evallable hash
+  my @dump_fasta_params = ("fasta_dir => $analysis_template{fasta_dir}");
+  my $blast_hive_capacity = $hive_params{'blast_hive_capacity'};
+  push(@dump_fasta_params, "blast_hive_capacity => ${blast_hive_capacity}") if defined $blast_hive_capacity;
+  my $dump_fasta_params_str = join(',', @dump_fasta_params);
+
   #
   # GenomeDumpFasta
   #
@@ -238,7 +245,7 @@ sub build_GeneTreeSystem
       -logic_name      => 'GenomeDumpFasta',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta',
-      -parameters      => 'fasta_dir=>'.$analysis_template{fasta_dir}.',',
+      -parameters      => $dump_fasta_params_str,
     );
   $analysisDBA->store($dumpfasta_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($dumpfasta_analysis->dbID);
@@ -392,9 +399,12 @@ sub build_GeneTreeSystem
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
   $parameters .= "}";
+  
+  my $muscle_exe = $genetree_params{'muscle'} || '/usr/local/ensembl/bin/muscle';
+  
   my $muscle = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Muscle',
-      -program_file    => '/software/ensembl/compara/bin/muscle',
+      -program_file    => $muscle_exe,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Muscle',
       -parameters      => $parameters
     );
@@ -421,21 +431,27 @@ sub build_GeneTreeSystem
   if (defined $genetree_params{'honeycomb_dir'}) {
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
+
+  $parameters .= ", 'use_genomedb_id'=>1" if defined $genetree_params{use_genomedb_id};
+  
   $parameters .= "}";
   my $njtree_phyml_analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
   if (defined $njtree_phyml_analysis_data_id) {
     $parameters = "{'njtree_phyml_analysis_data_id'=>'$njtree_phyml_analysis_data_id'}";
   }
+  my $tree_best_program = $genetree_params{'treebest'} || '/lustre/work1/ensembl/avilella/bin/i386/njtree';
   my $njtree_phyml = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NJTREE_PHYML',
-      -program_file    => '/lustre/work1/ensembl/avilella/bin/i386/njtree',
+      -program_file    => $tree_best_program,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NJTREE_PHYML',
       -parameters      => $parameters
     );
   $analysisDBA->store($njtree_phyml);
   $stats = $njtree_phyml->stats;
   $stats->batch_size(1);
-  $stats->hive_capacity(400);
+  my $njtree_hive_capacity = $hive_params{'njtree_hive_capacity'};
+  $njtree_hive_capacity = 400 unless defined $njtree_hive_capacity;
+  $stats->hive_capacity($njtree_hive_capacity);
   $stats->update();
 
   #
@@ -486,6 +502,8 @@ sub build_GeneTreeSystem
     $with_options_orthotree = 1;
   }
 
+  $ortho_params .= ", 'use_genomedb_id'=>1" if defined $genetree_params{use_genomedb_id};
+
   #EDIT Originally created a anon hash which caused problems with OrthoTree when using eval
   if($with_options_orthotree) {
     $parameters =~ s/\A{//;
@@ -506,7 +524,10 @@ sub build_GeneTreeSystem
   $analysisDBA->store($orthotree);
   $stats = $orthotree->stats;
   $stats->batch_size(1);
-  $stats->hive_capacity(200);
+  my $ortho_tree_hive_capacity = $hive_params{'ortho_tree_hive_capacity'};
+  $ortho_tree_hive_capacity = 200 unless defined $ortho_tree_hive_capacity;
+  $stats->hive_capacity($ortho_tree_hive_capacity);
+  
   $stats->update();
 
   # turn these two on if you need dnds from the old homology system
@@ -540,7 +561,7 @@ sub build_GeneTreeSystem
                               . $dnds_params{'method_link_types'}
                               . '}' ),
          -analysis       => $CreateHomology_dNdSJob,
-         );
+        );
   }
 
   #
@@ -614,6 +635,7 @@ sub build_GeneTreeSystem
       -db_version      => '1',
       -logic_name      => 'Sitewise_dNdS',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Sitewise_dNdS',
+      -program_file    => $sitewise_dnds_params{'program_file'} || '',
       -parameters      => $parameters
   );
   $analysisDBA->store($Sitewise_dNdS);
