@@ -747,4 +747,4 @@ CREATE TABLE sitewise_aln (
 ) COLLATE=latin1_swedish_ci;
 
 # Auto add schema version to database
-INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "50");
+INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "52");
