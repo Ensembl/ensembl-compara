@@ -180,7 +180,8 @@ sub fetch_by_registry_name {
     throw("Cannot connect to core database for $name!");
   }
 
-  my $species_name = $species_db_adaptor->get_MetaContainer->get_Species->binomial;
+  my $meta_container = $species_db_adaptor->get_MetaContainer;
+  my $species_name = $self->get_species_name_from_core_MetaContainer($meta_container);
   my $species_assembly = $species_db_adaptor->get_CoordSystemAdaptor->fetch_all->[0]->version;
    
   return $self->fetch_by_name_assembly($species_name, $species_assembly);
@@ -208,12 +209,36 @@ sub fetch_by_Slice {
     throw("[$slice] must have an adaptor");
   }
 
-  my $species_name = 
-      $slice->adaptor->db->get_MetaContainer->get_Species->binomial;
+	my $meta_container = $slice->adaptor->db->get_MetaContainer;
+	my $species_name = $self->get_species_name_from_core_MetaContainer($meta_container);
   my ($highest_cs) = @{$slice->adaptor->db->get_CoordSystemAdaptor->fetch_all()};
   my $species_assembly = $highest_cs->version();
 
   return $self->fetch_by_name_assembly($species_name, $species_assembly);
+}
+
+=head2 get_species_name_from_core_MetaContainer
+
+  Arg [1]     : Bio::EnsEMBL::MetaContainer
+  Example     : $gdba->_get_species_name_from_core_MetaContainer($slice->adaptor->db->get_MetaContainer);
+  Description : Returns the name of a species which was used to
+                name the GenomeDB from a meta container. Can be
+                the species binomial name or the value of the
+                meta item species.sql_name
+  Returntype  : Scalar string
+  Exceptions  : thrown if no name is found
+  Caller      : general
+
+=cut
+
+sub get_species_name_from_core_MetaContainer {
+	my ($self, $meta_container) = @_;
+  my ($species_name) = @{$meta_container->list_value_by_key('species.sql_name')};
+  unless(defined $species_name) {
+    $species_name = $meta_container->get_Species->binomial;
+	}
+  throw('Species name was still empty/undefined after looking for species.sql_name and binomial name') unless $species_name;
+  return $species_name;
 }
 
 =head2 store
