@@ -87,6 +87,8 @@ standard output
 
 =cut
 
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
+
 our $species;
 our $top_methods;
 our $diagonal_methods;
@@ -142,10 +144,12 @@ my $reg_url;
 my $dbname = "compara";
 my $method_link_type = undef;
 my $list = undef;
+my $blastz_net_list = undef;
 my $trim = undef;
 my $use_names = undef;
 my $per_genome = undef;
 my $output_file = undef;
+my $species_tree_file = undef;
 my $help;
 
 GetOptions(
@@ -155,10 +159,12 @@ GetOptions(
     "dbname=s" => \$dbname,
     "method_link_type=s@" => \$method_link_type,
     "list" => \$list,
+    "blastz_list" => \$blastz_net_list,
     "trim" => \$trim,
     "use_names" => \$use_names,
     "per_genome" => \$per_genome,
     "output_file=s" => \$output_file,
+    "species_tree_file=s" => \$species_tree_file,
   );
 
 # Print Help and exit
@@ -215,9 +221,12 @@ else {
 }
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
-
 ## Get the adaptor from the Registry
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');
+
+my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
+
+my $ncbi_taxon_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'NCBITaxon');
 
 ## fetch all the method_link_species_sets
 my $all_method_link_species_sets = [];
@@ -230,12 +239,48 @@ if ($method_link_type) {
   $all_method_link_species_sets = $method_link_species_set_adaptor->fetch_all();
 }
 
+#if defined species_tree_file, overwrite the species order given by the config
+#file and use the species tree instead
+if (defined $species_tree_file) {
+    open(TREE_FILE, $species_tree_file) or throw("Cannot open file ".$species_tree_file);
+    my $newick_species_tree = join("", <TREE_FILE>);
+    close(TREE_FILE);
+    $newick_species_tree =~ s/^\s*//;
+    $newick_species_tree =~ s/\s*$//;
+    $newick_species_tree =~ s/[\r\n]//g;
+    my $species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
+
+    my $all_leaves = $species_tree->get_all_leaves;
+    $species = undef;
+    foreach my $this_leaf (@$all_leaves) {
+	my $name = $this_leaf->name;
+	$name =~ tr/_/ /d;
+	my $spp;
+	$spp->{long_name} = $name;
+	my $genome_db;
+
+	#not all species in the species tree are in the compara database so
+	#need to check
+	eval {
+	    $genome_db = $genome_db_adaptor->fetch_by_name_assembly($name);
+	};
+	unless ($@) {
+	    my $short_name = substr($genome_db->short_name, 0, 1) . "." . substr($genome_db->short_name, 1);
+	    $spp->{short_name} = $short_name;
+	}
+	push @$species, $spp;
+    }
+}
+
+
 foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
   foreach my $this_species (@{$this_method_link_species_set->species_set}) {
     next if ($this_species->{_found});
+
     foreach my $this_known_species (@$species) {
       if ($this_known_species->{long_name} eq $this_species->name) {
         $this_species->{_found} = 1;
+	#print $this_species->name . "\n";
         last;
       }
     }
@@ -252,6 +297,8 @@ if ($list and $per_genome) {
   print_html_table_per_genome($all_method_link_species_sets);
 } elsif ($list) {
   print_html_list($all_method_link_species_sets);
+} elsif ($blastz_net_list) {
+  print_blastz_net_list($all_method_link_species_sets);
 } elsif ($method_link_type) {
   print_half_html_table($all_method_link_species_sets);
 } else {
@@ -261,6 +308,98 @@ if ($list and $per_genome) {
 exit(0);
 
 
+#To be used instead for large BlastZ-net tables
+my $ref_species;
+sub print_blastz_net_list {
+    my ($all_method_link_species_sets) = @_;
+
+    #find reference species by parsing name field of mlss table
+    foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
+	
+	if ($this_method_link_species_set->method_link_type ne "BLASTZ_NET") {
+	    print "only to be used for BLASTZ_NET not " . $this_method_link_species_set->method_link_type . "\n";
+	    next;
+	}
+
+	my ($short_ref_name) = $this_method_link_species_set->name =~ /\(on (.+)\)/;
+	my $ref_genome_db = findGenomeDBFromShortName($short_ref_name); 
+
+	#store the other species which also have this reference
+	foreach my $this_species (@{$this_method_link_species_set->species_set}) {
+	    if ($this_species->dbID != $ref_genome_db->dbID) {
+		push @{$ref_species->{$ref_genome_db->dbID}}, $this_species->dbID;
+	    }
+	}
+    }
+
+    #In order of which species has most mlss entries, write the species and
+    #then the other species in the order given in the species array which will 
+    #be the species_tree if defined
+    foreach my $ref_id (sort order_count_tree keys(%$ref_species)) {
+	print "<h4>" . getNameString($ref_id) . "</h4>" . "\r\n";
+	foreach my $other_id (sort order_tree @{$ref_species->{$ref_id}}) {
+	    print getNameString($other_id) . "<br />" . "\r\n";
+	}
+    }
+}
+
+#order by firstly the number of mlss entries and then by the species_tree
+sub order_count_tree {
+    
+    #$ref_species{$b}<=>$ref_species{$a};
+    @{$ref_species->{$b}}<=>@{$ref_species->{$a}};
+
+    return order_tree();
+}
+
+#order on species tree
+sub order_tree {
+    my $genome_db_a = $genome_db_adaptor->fetch_by_dbID($a);
+    my $genome_db_b = $genome_db_adaptor->fetch_by_dbID($b);
+    my $cnt = 0;
+    my ($a_idx, $b_idx);
+    foreach my $spp (@$species) {
+	if ($spp->{long_name} eq $genome_db_a->name) {
+	    $a_idx = $cnt;
+	}
+	if ($spp->{long_name} eq $genome_db_b->name) {
+	    $b_idx = $cnt;
+	}
+	$cnt++;
+    }
+    return $a_idx <=> $b_idx;
+}
+
+#find the genome_db from the short name
+sub findGenomeDBFromShortName {
+    my ($short_name) = @_;
+
+    my $all_genome_dbs = $genome_db_adaptor->fetch_all;
+    $short_name =~ tr/\.//d;
+    foreach my $genome_db (@$all_genome_dbs) {
+	if ($genome_db->short_name eq $short_name) {
+	    return $genome_db;
+	}
+    }
+}
+
+#Creates a string of the form ncbi ensembl alias name (genome_db->name)
+#If the ncbi ensembl alias name does not exist, return the genome_db->name
+sub getNameString {
+    my ($genome_db_id) = @_;
+
+    my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
+    my $ncbi_taxon = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($genome_db->taxon_id);
+    
+    my $name;
+    if ($ncbi_taxon->ensembl_alias_name) {
+       $name = $ncbi_taxon->ensembl_alias_name . " (" . $genome_db->name . ")";
+    } else {
+	$name = $genome_db->name;
+    }
+    return $name;
+}
+
 sub print_html_list {
   my ($all_method_link_species_sets) = @_;
 
@@ -269,18 +408,21 @@ sub print_html_list {
       } @$all_method_link_species_sets;
 
   my $these_method_link_species_sets = [];
-  foreach my $this_method_link_species_set (sort {scalar @{$a->species_set} <=> scalar @{$b->species_set}} @$all_method_link_species_sets) {
-    if (defined($all_methods->{$this_method_link_species_set->method_link_type})) {
-      push(@$these_method_link_species_sets, $this_method_link_species_set);
-    }
-  }
 
-  foreach my $this_method_link_species_set (@$these_method_link_species_sets) {
-    print "<h4>",
-        $this_method_link_species_set->name,
-        "</h4>\r\n",
-        join("\r\n",map {$_->{name} . "<br />"} @{$this_method_link_species_set->species_set()}),
-          "\r\n";
+  foreach my $this_method_link_species_set (sort {scalar @{$a->species_set} <=> scalar @{$b->species_set}} @$all_method_link_species_sets) {
+      print "<h4>",
+	$this_method_link_species_set->name,
+	  "</h4>\r\n";
+
+      my $genome_ids;
+      #store the other species which also have this reference
+      foreach my $this_species (@{$this_method_link_species_set->species_set}) {
+	  push @$genome_ids, $this_species->dbID;
+      }
+      foreach my $genome_id (sort order_tree @$genome_ids) {
+	  print getNameString($genome_id) . "<br />" . "\n";
+      }
+      print "\r\n";
   }
 }
 
