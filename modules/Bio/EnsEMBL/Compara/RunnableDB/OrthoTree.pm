@@ -63,6 +63,7 @@ use Getopt::Long;
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -100,7 +101,7 @@ sub fetch_input {
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the pipeline DBAdaptor that is based into this runnable
+  #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
     (
      -DBCONN=>$self->db->dbc
@@ -108,6 +109,13 @@ sub fetch_input {
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
+
+  if($self->{analysis_data_id}) {
+    my $analysis_data_id = $self->{analysis_data_id};
+    my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
+    $self->get_params($analysis_data_params);
+  }
+
   $self->print_params if($self->debug);
 
   my $starttime = time();
@@ -118,7 +126,6 @@ sub fetch_input {
     $self->{'protein_tree'}->print_tree($self->{'tree_scale'});
     printf("time to fetch tree : %1.3f secs\n" , time()-$starttime);
   }
-
   unless($self->{'protein_tree'}) {
     throw("undefined ProteinTree as input\n");
   }
@@ -206,10 +213,10 @@ sub get_params {
     }
   }
 
-  if(defined($params->{'protein_tree_id'})) {
-    $self->{'protein_tree_id'} = $params->{'protein_tree_id'};
+  foreach my $key (qw[cdna species_tree_file protein_tree_id use_genomedb_id analysis_data_id]) {
+    my $value = $params->{$key};
+    $self->{$key} = $value if defined $value;
   }
-  $self->{'cdna'} = $params->{'cdna'} if(defined($params->{'cdna'}));
 
   return;
 }
@@ -426,34 +433,77 @@ sub display_link_analysis
   return undef;
 }
 
+sub load_species_tree {
+  my $self = shift @_;
 
-sub load_species_tree
+  my $starttime = time();
+  my $tree = (exists $self->{'species_tree_file'})
+    ? $self->load_species_tree_from_file
+      : $self->load_species_tree_from_tax
+	;
+  $self->{taxon_tree} = $tree;
+  
+  if($self->debug) {
+    $tree->print_tree(10);
+    printf("%1.3f secs for load species tree\n", time()-$starttime);
+  }
+}
+
+sub load_species_tree_from_tax
 {
   my $self = shift;
 
-  printf("load_species_tree\n") if($self->debug);
+  printf("load_species_tree_from_tax\n") if($self->debug);
   my $starttime = time();
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
 
   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
   my $root=undef;
   foreach my $gdb (@$gdb_list) {
+    next if ($gdb->name =~ /Ancestral/);
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
     $taxon->no_autoload_children;
-
+    $taxon->add_tag("taxon_id") = $taxon->taxon_id; # homogenize with load_species_tree_from_file
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
   $root = $root->minimize_tree;
-
-  $self->{'taxon_tree'} = $root;
-  if($self->debug) {
-    $root->print_tree(10);
-    printf("%1.3f secs for load species tree\n", time()-$starttime);
-  }
-  return undef;
+  return $root;
 }
 
+sub load_species_tree_from_file {
+  my $self = shift @_;
+
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  print "load_species_tree_from_file\n" if $self->debug;
+  my $newick = $self->_slurp($self->{species_tree_file});
+  my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+  foreach my $node (@{$tree->all_nodes_in_graph}) {
+    my ($id) = split('-',$node->name);
+    $id =~ s/\*//; # internal nodes have asterisk
+    if (looks_like_number($id)) {
+      $node->node_id($id);
+      my $ncbi_node = $taxonDBA->fetch_node_by_taxon_id($id);
+      $node->name($ncbi_node->name) if (defined $ncbi_node);
+    } else { # doesnt look like number
+      $node->name($id);
+    }
+    $node->add_tag('taxon_id', $id);
+  }
+  return $tree;
+}
+
+sub _slurp {
+  my ($self, $file_name) = @_;
+  my $slurped;
+  {
+    local $/ = undef;
+    open(my $fh, '<', $file_name);
+    $slurped = <$fh>;
+    close($fh);
+  }
+  return $slurped;
+}
 
 sub get_ancestor_species_hash
 {
@@ -498,7 +548,7 @@ sub get_ancestor_species_hash
   if($is_dup && !($self->{'_treefam'})) {
     my $original_duplication_value = $node->get_tagvalue("Duplication");
     $original_duplication_value = 0 
-      unless (defined $original_duplication_value);
+      unless (defined $original_duplication_value && $original_duplication_value ne '');
 
     if ($original_duplication_value == 0) {
       # RAP did not predict a duplication here
@@ -538,7 +588,10 @@ sub get_ancestor_taxon_level
     my $gdb = 
       $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
     my $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
-    throw("oops missing taxon " . $gdb->taxon_id ."\n") unless($taxon);
+
+    unless($taxon) {
+      throw("oops missing taxon " . $gdb->taxon_id ."\n");
+    }
 
     if($taxon_level) {
       $taxon_level = $taxon_level->find_first_shared_ancestor($taxon);
@@ -546,8 +599,9 @@ sub get_ancestor_taxon_level
       $taxon_level = $taxon;
     }
   }
+  my $taxon_id = $taxon_level->get_tagvalue("taxon_id");
   $ancestor->add_tag("taxon_level", $taxon_level);
-  $ancestor->store_tag("taxon_id", $taxon_level->taxon_id) 
+  $ancestor->store_tag("taxon_id", $taxon_id) 
     unless ($self->{'_readonly'});
   $ancestor->store_tag("taxon_name", $taxon_level->name) 
     unless ($self->{'_readonly'});
@@ -769,6 +823,8 @@ sub genepairlink_check_dups
     my $dup_value = $tnode->get_tagvalue("Duplication");
 #    my $sis_value = $tnode->get_tagvalue("species_intersection_score");
     my $sis_value = $tnode->get_tagvalue("duplication_confidence_score");
+    $dup_value = 0 unless (defined($dup_value) && $dup_value ne '');
+    $sis_value = 0 unless (defined($sis_value) && $sis_value ne '');
     unless ($sis_value eq '0') {
       if($dup_value > 0) {
         $has_dup = 1;
@@ -783,6 +839,8 @@ sub genepairlink_check_dups
     my $dup_value = $tnode->get_tagvalue("Duplication");
 #    my $sis_value = $tnode->get_tagvalue("species_intersection_score");
     my $sis_value = $tnode->get_tagvalue("duplication_confidence_score");
+    $dup_value = 0 unless (defined($dup_value) && $dup_value ne '');
+    $sis_value = 0 unless (defined($sis_value) && $sis_value ne '');
     unless ($sis_value eq '0') {
       if($dup_value > 0) {
         $has_dup = 1;
