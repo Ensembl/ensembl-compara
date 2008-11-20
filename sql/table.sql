@@ -477,7 +477,6 @@ CREATE TABLE homology (
   homology_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
   stable_id                   varchar(40),
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-#  description                 varchar(40), # UBRH, MBRH, RHS
   description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','between_species_paralog'),
   subtype                     varchar(40) NOT NULL DEFAULT '',
   dn                          float(10,5),
@@ -735,14 +734,15 @@ CREATE TABLE sitewise_aln (
   omega_lower                 float(10,5),
   omega_upper                 float(10,5),
   optimal                     float(10,5),
+  ncod                        int(10),
   threshold_on_branch_ds      float(10,5),
-#  type                        varchar(10) NOT NULL,
   type                        ENUM('all_gaps','constant','default','negative1','negative2','negative3','negative4','positive1','positive2','positive3','positive4','synonymous') NOT NULL,
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
 
   UNIQUE aln_position_node_id_ds (aln_position,node_id,threshold_on_branch_ds),
   PRIMARY KEY (sitewise_id),
+  KEY (tree_node_id),
   KEY (node_id)
 ) COLLATE=latin1_swedish_ci;
 
