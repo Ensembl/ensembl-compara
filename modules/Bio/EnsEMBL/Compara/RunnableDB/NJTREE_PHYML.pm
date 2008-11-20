@@ -215,12 +215,9 @@ sub get_params {
   $self->{'max_gene_count'} = 
     $params->{'max_gene_count'} if(defined($params->{'max_gene_count'}));
 
-  if(defined($params->{'species_tree_file'})) {
-    $self->{'species_tree_file'} = $params->{'species_tree_file'};
-  }
-
-  if(defined($params->{'honeycomb_dir'})) {
-    $self->{'honeycomb_dir'} = $params->{'honeycomb_dir'};
+  foreach my $key (qw[cdna max_gene_count species_tree_file honeycomb_dir use_genomedb_id]) {
+    my $value = $params->{$key};
+    $self->{$key} = $value if defined $value;
   }
 
   return;
@@ -251,8 +248,9 @@ sub run_njtree_phyml
   return unless($self->{'input_aln'});
 
   $self->{'newick_file'} = $self->{'input_aln'} . "_njtree_phyml_tree.txt ";
-
-  my $njtree_phyml_executable = '';
+  
+  my $njtree_phyml_executable = $self->analysis->program_file || '';
+  
   unless (-e $njtree_phyml_executable) {
     if (-e "/proc/version") {
       # it is a linux machine
@@ -399,12 +397,15 @@ sub dumpTreeMultipleAlignmentToWorkdir
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
+  my %sa_params = ($self->{use_genomedb_id}) ?	('-APPEND_GENOMEDB_ID', 1) :
+    ('-APPEND_TAXON_ID', 1);
+
   my $sa = $tree->get_SimpleAlign
     (
      -id_type => 'MEMBER',
      -cdna=>$self->{'cdna'},
      -stop2x => 1,
-     -append_taxon_id => 1
+     %sa_params
     );
   $sa->set_displayname_flat(1);
   my $alignIO = Bio::AlignIO->newFh
