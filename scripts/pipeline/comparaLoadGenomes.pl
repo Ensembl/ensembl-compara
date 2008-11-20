@@ -164,6 +164,7 @@ sub submitGenome
     $species->{pass}   && ($locator .= ";pass=".$species->{pass});
     $species->{dbname} && ($locator .= ";dbname=".$species->{dbname});
     $species->{species} && ($locator .= ";species=".$species->{species});
+    $species->{species_id} && ($locator .=";species_id=".$species->{species_id});
   }
   $locator .= ";disconnect_when_inactive=1";
   print("    locator = $locator\n")  if($verbose);
