@@ -1,6 +1,7 @@
 #! /bin/sh
 
 ./ctrl_scripts/stop_server
+rm ./conf/config.packed
 
 sleep 2
 
