@@ -168,7 +168,6 @@ sub fetch_input {
           $self->_writeMultiFastaAlignment($gab);
       }
 
-
       #if param_file defined, assume use GERP.pl else assume use gerpcol
       if ($self->program_version == 1 && (defined $self->param_file)) {
 	  #calculate neutral rate if not given in the parameter file
@@ -251,6 +250,8 @@ sub write_output {
     if (!$self->{'run_gerp'}) { 
 	return 1;
     }
+
+    print STDERR "Write Output\n";
 
     #parse results and store constraints and conserved elements in database
     if ($self->program_version == 1) {
@@ -436,6 +437,7 @@ sub _writeMultiFastaAlignment {
         } else {
           $seq_name = _get_name_from_GenomicAlign($this_segment);
         }
+
         my $aligned_sequence = $this_segment->aligned_sequence;
         $aligned_sequence =~ s/(.{80})/$1\n/g;
         $aligned_sequence =~ s/\./\-/g;
@@ -503,19 +505,19 @@ sub run_gerp_v2 {
     #run gerpcol
     my $command = $gerpcol_path;
     $command .= " -t " . $self->{'modified_tree_file'} . " -f " . $self->{'mfa_file'};
-    #print STDERR "command $command\n";
+    print STDERR "command $command\n";
 
     unless (system($command) == 0) {
-	throw("gerp execution failed\n");
+	throw("gerpcol execution failed\n");
     }
 
     #run gerpelem
     $command = $gerpelem_path;
 
     $command .= " -f " . $self->{'mfa_file'}.$RATES_FILE_SUFFIX;
-    #print STDERR "command $command\n";
+    print STDERR "command $command\n";
     unless (system($command) == 0) {
-	throw("gerp execution failed\n");
+	throw("gerpelem execution failed\n");
     }
 }
 
@@ -973,5 +975,6 @@ sub _get_name_from_GenomicAlign {
 
   return $name;
 }
+
 
 1;
