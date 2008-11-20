@@ -56,6 +56,7 @@ perl create_mlss.pl
     [--f] force
     [--pw] pairwise
     [--sg] singleton
+    [--use_genomedb_ids] use GenomeDB IDs in MLSS name than truncated GenomeDB names
 
 =head1 OPTIONS
 
@@ -117,6 +118,11 @@ i.e. [1,2] [1,3] [1,4] [2,3] [2,4] [3,4] for a given  method link.
 From a list of genome_db_id 1,2,3,4, it will create a mlss for each single genome_db_id 
 in the list i.e. [1] [2] [3] [4] for a given  method link.
 
+=head2 --use_genomedb_ids
+
+Force the names of the create MLSS to use the Genome DB ID rather than the truncated form
+of its name (which is normally of the form H.sap).
+
 =head2 Examples
 
 perl create_mlss.pl
@@ -151,6 +157,7 @@ my $url;
 my $force = 0;
 my $pairwise = 0;
 my $singleton = 0;
+my $use_genomedb_ids = 0;
 
 GetOptions(
     "help" => \$help,
@@ -163,7 +170,8 @@ GetOptions(
     "url=s" => \$url,
     "f" => \$force,
     "pw" => \$pairwise,
-    "sg" => \$singleton
+    "sg" => \$singleton,
+    "use_genomedb_ids" => \$use_genomedb_ids
   );
 
 if ($pairwise && $singleton) {
@@ -227,13 +235,18 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     } elsif ($method_link_type eq "MLAGAN") {
       $name = scalar(@{$genome_db_ids})." species MLAGAN";
     } else {
-      foreach my $this_genome_db_id (@{$genome_db_ids}) {
-        my $gdb = $gdba->fetch_by_dbID($this_genome_db_id)
+      if($use_genomedb_ids) {
+        $name = join('-',@{$genome_db_ids});
+      }
+      else {
+        foreach my $this_genome_db_id (@{$genome_db_ids}) {
+          my $gdb = $gdba->fetch_by_dbID($this_genome_db_id)
             || die( "Cannot fetch_by_dbID genome_db $this_genome_db_id" );
-        my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
-        $species_name =~ s/(\S)\S+ /$1\./;
-        $species_name = substr($species_name, 0, 5);
-        $name .= $species_name."-";
+          my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
+          $species_name =~ s/(\S)\S+ /$1\./;
+          $species_name = substr($species_name, 0, 5);
+          $name .= $species_name."-";
+        }
       }
       $name =~ s/\-$//;
       my $type = lc($method_link_type);
