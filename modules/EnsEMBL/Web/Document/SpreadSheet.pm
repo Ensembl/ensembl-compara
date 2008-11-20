@@ -128,8 +128,9 @@ sub _process {
     $counter = 0;
     my $border;
     my $row = { 'style' => 'header', 'cols' => [] };
+    my $average = int(100/scalar($columns));
     foreach( @$columns ) {
-      push @{$row->{'cols'}}, { 'class' => 'text-align:'.( $options->{alignheader}||'center'), 'value' => defined $_->{title} ? $_->{title} : $_->{key}, 'class' => 'bottom-border' } 
+      push @{$row->{'cols'}}, { 'style' => 'text-align:'.( $options->{alignheader}||$_->{'align'}||'center').';width:'.($_->{'width'}||$average.'%'), 'value' => defined $_->{title} ? $_->{title} : $_->{key}, 'class' => 'bottom-border' } 
     }
     push @$return, $row;
   }
