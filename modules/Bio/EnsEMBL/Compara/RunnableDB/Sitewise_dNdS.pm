@@ -94,10 +94,10 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->check_job_fail_options;
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the pipeline DBAdaptor that is based into this runnable
+  #with the Pipeline::DBAdaptor that is based into this runnable
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
     (
      -DBCONN=>$self->db->dbc
@@ -112,11 +112,12 @@ sub fetch_input {
     throw("undefined ProteinTree as input\n");
   }
   my $num_leaves = $self->{'protein_tree'}->num_leaves;
+  $self->{'protein_tree'}->print_tree(10) if ($self->debug);
   if ($num_leaves < 4) {
-    $self->input_job->update_status('FAILED');
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
-    throw("Sitewise_dNdS : cluster size under 4 threshold and FAIL it");
+    return undef;
+    # throw("Sitewise_dNdS : cluster size under 4 threshold and FAIL it");
   }
   $self->{'cds_aln'} = $self->{'protein_tree'}->get_SimpleAlign(-cdna => 1);
   $self->{'tree'} = $self->{'protein_tree'}->newick_format("int_node_id");
@@ -157,6 +158,10 @@ sub run {
 sub write_output {
   my $self = shift;
 
+  unless (defined($self->{results})) {
+    $self->input_job->update_status('FAILED');
+    return undef;
+  }
   $self->check_if_exit_cleanly;
   if (defined($self->{'results'}{saturated})) {
     $self->{'protein_tree'}->store_tag('Sitewise_dNdS_saturated', $self->{'results'}{saturated});
@@ -195,10 +200,11 @@ sub write_output {
     $self->input_job->update_status('FAILED');
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
-    throw("Sitewise_dNdS : cluster saturated, creating jobs for subtrees and FAIL it");
+    warn("Sitewise_dNdS : cluster saturated, creating jobs for subtrees and FAIL it");
+    return undef;
+    #throw("Sitewise_dNdS : cluster saturated, creating jobs for subtrees and FAIL it");
 
   } elsif (defined($self->{'results'}{sites})) {
-    # $self->run_gblocks(0.5);
     $self->store_sitewise_dNdS;
   } else {
     # something wrong went on
@@ -260,9 +266,10 @@ sub run_sitewise_dNdS
 {
   my $self = shift;
 
+  return undef unless (defined($self->{protein_tree}));
   $self->{starttime} = time()*1000;
 
-  my $slrexe = $self->{'slr_executable'};
+  my $slrexe = $self->analysis->program_file;
   unless (-e $slrexe) {
     $slrexe = "/software/ensembl/compara/bin/Slr_ensembl";
   }
@@ -301,6 +308,29 @@ sub run_sitewise_dNdS
     $sorted_aln->add_seq($_);
   }
 
+  # Mask the aligment
+  $self->run_gblocks(0.5,$sorted_aln);
+  my $mask;
+  my $aln_length = $sorted_aln->length;
+  foreach my $seq ($sorted_aln->each_seq) {
+    my $seqstring = $seq->seq;
+    my $start = 1;
+    foreach my $segment ($self->{flanks} =~ /(\[\d+  \d+\])/g) {
+      my ($segm_start,$segm_end) = $segment =~ /\[(\d+)  (\d+)\]/;
+      my $mask = 'N' x ($segm_start-$start);
+      if (0 != $segm_start-$start) {
+        substr($seqstring,($start-1),($segm_start-$start),$mask);
+      }
+      $start = $segm_end + 1;
+    }
+    if ($start < $aln_length) { # last segment to mask
+      my $mask = 'N' x ($aln_length-$start+1); substr($seqstring,($start-1),($aln_length-$start+1),$mask);
+    }
+    $seq->seq($seqstring);
+  }
+  throw("malformed masked alignment of the wrong length") unless ($aln_length == $sorted_aln->length);
+  ####
+
   my $tmpdir = $self->worker_temp_directory;
   my $alnout = Bio::AlignIO->new
     ('-format'      => 'phylip',
@@ -324,7 +354,7 @@ sub run_sitewise_dNdS
   # many of the these programs are finicky about what the filename is 
   # and won't even run without the properly named file.
   my $slr_ctl = "$tmpdir/slr.ctl";
-  open(SLR, ">$slr_ctl") or $self->throw("cannot open $slr_ctl for writing");
+  open(SLR, ">$slr_ctl") or throw("cannot open $slr_ctl for writing");
   print SLR "seqfile\: aln\n";
   print SLR "treefile\: tree\n";
   my $outfile = "slr.res";
@@ -335,6 +365,7 @@ sub run_sitewise_dNdS
   if (defined($self->{'gencode'})) {
     print SLR "gencode\: ". $self->{'gencode'} . "\n";
   }
+  print SLR "aminof\: 1\n"; # aminof
   close(SLR);
 
   my ($rc,$results) = (1);
@@ -345,7 +376,7 @@ sub run_sitewise_dNdS
     my $run;
     my $quiet = ''; $quiet = ' 2>/dev/null' unless ($self->debug);
     $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
-    open($run, "$slrexe $quiet |") or $self->throw("Cannot open exe $slrexe");
+    open($run, "$slrexe $quiet |") or throw("Cannot open exe $slrexe");
     my @output = <$run>;
     $exit_status = close($run);
     $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
@@ -386,7 +417,8 @@ sub run_sitewise_dNdS
       }
     }
     if ( (grep { /\berr(or)?: /io } @output)  || !$exit_status) {
-      $self->warn("There was an error - see error_string for the program output");
+      warn("There was an error - see error_string for the program output");
+      warn('Error string: '.$self->{error_string}) if $self->debug;
       $rc = 0;
     }
     eval {
@@ -432,14 +464,14 @@ sub run_sitewise_dNdS
         if ( /^\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/ ) {
           push @{$sites->{$type}}, [$1,$2,$3,$4,$5,$6,$7,$8,$9];
         } else {
-          $self->warn("error parsing the results: $_\n");
+          warn("error parsing the results: $_\n");
         }
       }
       $results->{sites} = $sites;
       close RESULTS;
     };
     if ( $@ ) {
-      $self->warn($self->{error_string});
+      warn($self->{error_string});
     }
     chdir($cwd);
   }
@@ -468,42 +500,44 @@ sub check_job_fail_options
   }
 
 
-# sub run_gblocks
-#   {
-#     my $self = shift;
-#     my $gmin = shift;
+sub run_gblocks
+  {
+    my $self = shift;
+    my $gmin = shift;
+    my $aln  = shift;
 
-#     printf("Sitewise_dNdS::run_gblocks\n") if($self->debug);
+    printf("Sitewise_dNdS::run_gblocks\n") if($self->debug);
 
-#     my $aln = $self->{'protein_tree'}->get_SimpleAlign;
-#     throw("Sitewise_dNdS : error getting Peptide SimpleAlign") unless (defined($aln));
+    throw("Sitewise_dNdS : error getting Peptide SimpleAlign") unless (defined($aln));
 
-#     my $aln_length = $aln->length;
-#     my $tree_id = $self->{'protein_tree'}->node_id;
-#     my $tmpdir = $self->worker_temp_directory;
-#     my $filename = "$tmpdir". "$tree_id.fasta";
-#     my $tmpfile = Bio::AlignIO->new
-#       (-file => ">$filename",
-#        -format => 'fasta');
-#     $tmpfile->write_aln($aln);
-#     $tmpfile->close;
-#     my $min_leaves_gblocks = int(($self->{'protein_tree'}->num_leaves+1) * $gmin + 0.5);
-#     my $cmd = "echo -e \"o\n$filename\nb\n2\n$min_leaves_gblocks\n5\n5\ng\nm\nq\n\" | /software/ensembl/compara/bin/Gblocks 2>/dev/null 1>/dev/null";
-#     my $ret = system("$cmd");
-#     open FLANKS, "$filename-gb.htm" or die "$!\n";
-#     my $segments_string;
-#     while (<FLANKS>) {
-#       chomp $_;
-#       next unless ($_ =~ /Flanks/);
-#       $segments_string = $_;
-#       last;
-#     }
-#     close FLANKS;
-#     $segments_string =~ s/Flanks\: //g;
-#     $segments_string =~ s/\s+$//g;
+    my $aln_length = $aln->length;
+    my $tree_id = $self->{'protein_tree'}->node_id;
+    my $tmpdir = $self->worker_temp_directory;
+    my $filename = "$tmpdir". "$tree_id.fasta";
+    my $tmpfile = Bio::AlignIO->new
+      (-file => ">$filename",
+       -format => 'fasta');
+    $tmpfile->write_aln($aln);
+    $tmpfile->close;
+    my $min_leaves_gblocks = int(($self->{'protein_tree'}->num_leaves+1) * $gmin + 0.5);
+    my $cmd = "echo -e \"o\n$filename\nt\nb\n2\n$min_leaves_gblocks\n5\n5\ng\nm\nq\n\" | /software/ensembl/compara/bin/Gblocks 2>/dev/null 1>/dev/null";
+    $DB::single=1;1;#??
+    my $ret = system("$cmd");
+    open FLANKS, "$filename-gb.htm" or die "$!\n";
+    my $segments_string;
+    while (<FLANKS>) {
+      chomp $_;
+      next unless ($_ =~ /Flanks/);
+      $segments_string = $_;
+      last;
+    }
+    close FLANKS;
+    $segments_string =~ s/Flanks\: //g;
+    $segments_string =~ s/\s+$//g;
 
-#     $self->{'protein_tree'}->store_tag('Gblocks_flanks', $segments_string);
-#   }
+    $self->{flanks} = $segments_string;
+    $self->{'protein_tree'}->store_tag('Gblocks_flanks', $segments_string);
+  }
 
 
 sub store_sitewise_dNdS
@@ -516,7 +550,8 @@ sub store_sitewise_dNdS
   $self->{'protein_tree'}->store_tag('Sitewise_dNdS_runtime_msec', $runtime);
 
   my $results = $self->{'results'};
-  my $aln = $self->{'cds_aln'};
+  my $aa_aln = $self->{'protein_tree'}->get_SimpleAlign;
+  my @gap_col_matrix = @{$aa_aln->gap_col_matrix};
   $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
   my $root_id = $self->{'protein_tree'}->node_id;
 
@@ -528,11 +563,14 @@ sub store_sitewise_dNdS
 
   my $sth;
   foreach my $type (keys %{$results->{sites}}) {
+    # next if ($type =~ /all_gaps/);
     foreach my $position (@{$results->{sites}{$type}}) {
       # Site  Neutral  Optimal   Omega    lower    upper LRT_Stat    Pval     Adj.Pval    Q-value Result Note
       # 1     4.77     3.44   0.0000   0.0000   1.4655   2.6626 1.0273e-01 8.6803e-01 1.7835e-02        Constant;
       # 0     1        2      3        4        5        6      7          8          9
       my ($site, $neutral, $optimal, $omega, $lower, $upper, $lrt_stat, $pval, $adj_pval, $q_value) = @$position;
+      my $nseq_ngaps = 0; foreach my $val (values %{$gap_col_matrix[$site-1]}) {$nseq_ngaps++ unless (1 == $val)};
+      my $optimalc; if (0 != $nseq_ngaps) {$optimalc = $optimal / $nseq_ngaps;} else {$optimalc = $optimal;}
       $sth = $self->{'comparaDBA'}->dbc->prepare
         ("INSERT INTO sitewise_aln 
                            (aln_position,
@@ -541,14 +579,18 @@ sub store_sitewise_dNdS
                             omega,
                             omega_lower,
                             omega_upper,
+                            optimal,
+                            ncod,
                             threshold_on_branch_ds,
-                            type) VALUES (?,?,?,?,?,?,?,?)");
+                            type) VALUES (?,?,?,?,?,?,?,?,?,?)");
       $sth->execute($site,
                     $root_id,
                     $subroot_id,
                     $omega,
                     $lower,
                     $upper,
+                    $optimalc,
+                    $nseq_ngaps,
                     $threshold_on_branch_ds,
                     $type);
 # This stuff is disabled right now
