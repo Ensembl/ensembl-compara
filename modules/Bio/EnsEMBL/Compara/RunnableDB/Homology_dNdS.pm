@@ -163,6 +163,12 @@ sub calc_genetic_distance
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
   
   my $codeml = new Bio::Tools::Run::Phylo::PAML::Codeml();
+  my $possible_exe = $self->analysis->program_file;
+  if(defined $possible_exe) {
+    print("Using executable at ${possible_exe}\n") if $self->debug;
+    $codeml->executable($possible_exe);
+  }
+  #$codeml->save_tempfiles(1);
   if (defined $self->{'codeml_parameters_href'}) {
     my %params = %{$self->{'codeml_parameters_href'}};
     foreach my $key (keys %params) {
@@ -191,10 +197,19 @@ sub calc_genetic_distance
   my $result;
   eval{ $result = $parser->next_result };
   unless( $result ){
-    if( $@ ){ 
-      warn( "$@\n" );
+    #If there is an error check if it was something which is produced
+    #by strange alignments (where identity/similarity is very very low)
+    my $error = $@;
+    if( $error ){ 
+      warn( "${error}\n" );
+      warn( "Parser failed" );
+      if($error->isa('Bio::Root::NotImplemented')) {
+        warn("Caught a NotImplemented error. Ignoring as this can be generated from bad alignments \n");
+      }
+      else {
+        die;
+      }
     }
-    warn( "Parser failed" );
     return $homology;
   }
   my $MLmatrix = $result->get_MLmatrix();
@@ -221,20 +236,22 @@ sub calc_genetic_distance
     eval {require Bio::Align::DNAStatistics;};
     unless ($@) {
       my $stats = new Bio::Align::DNAStatistics;
-      my ($seq1id,$seq2id) = map { $_->display_id } $aln->each_seq;
-      my $results = $stats->calc_KaKs_pair($aln, $seq1id, $seq2id);
-      my $counting_method_dn = $results->[0]{D_n};
-      my $counting_method_ds = $results->[0]{D_s};
+      if($stats->can('calc_KaKs_pair')) {
+        my ($seq1id,$seq2id) = map { $_->display_id } $aln->each_seq;
+        my $results = $stats->calc_KaKs_pair($aln, $seq1id, $seq2id);
+        my $counting_method_dn = $results->[0]{D_n};
+        my $counting_method_ds = $results->[0]{D_s};
 
-      # We want to be strict in the counting of dS, because sometimes
-      # the counting method gives half a (dS*S) where codeml doesn't. So
-      # we only change to dS=0 when strictly 0 in the counting method
-      if (0 == abs($counting_method_ds) && (1 > ((($homology->{_ds})*$homology->{_s})+0.1))) {
-        $homology->ds(0);       # dS strictly 0
-      }
-      # Also for dN, although this happens very very rarely (seen once so far)
-      if (0 == abs($counting_method_dn) && (1 > ((($homology->{_dn})*$homology->{_n})+0.1))) {
-        $homology->dn(0);       # dN strictly 0
+        # We want to be strict in the counting of dS, because sometimes
+        # the counting method gives half a (dS*S) where codeml doesn't. So
+        # we only change to dS=0 when strictly 0 in the counting method
+        if (0 == abs($counting_method_ds) && (1 > ((($homology->{_ds})*$homology->{_s})+0.1))) {
+          $homology->ds(0);       # dS strictly 0
+        }
+        # Also for dN, although this happens very very rarely (seen once so far)
+        if (0 == abs($counting_method_dn) && (1 > ((($homology->{_dn})*$homology->{_n})+0.1))) {
+          $homology->dn(0);       # dN strictly 0
+        }
       }
     }
   }
