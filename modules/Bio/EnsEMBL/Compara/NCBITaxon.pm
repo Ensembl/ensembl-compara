@@ -265,6 +265,28 @@ sub common_name {
   }
 }
 
+=head2 ensembl_alias_name
+
+  Example    : $ncbi->ensembl_alias_name;
+  Description: The comon name as defined by ensembl alias
+  Returntype : string
+  Exceptions : returns undef if no ensembl alias name exists.
+  Caller     : general
+
+=cut
+
+sub ensembl_alias_name {
+  my $self = shift;
+
+  #Not checking for rank as we do above, because we do not get dog since the
+  #rank for dog is subspecies (ensembl-51).
+  if ($self->has_tag('ensembl alias name')) {
+    return $self->get_tagvalue('ensembl alias name');
+  } else {
+    return undef;
+  }
+}
+
 
 =head2 binomial
 
