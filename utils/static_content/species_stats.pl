@@ -65,6 +65,8 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::SpeciesDefs;
 
 my $SD = EnsEMBL::Web::SpeciesDefs->new();
+my $pre = $PLUGIN_ROOT =~ m#sanger-plugins/pre# ? 1 : 0;
+$NOINTERPRO = 1 if $pre;
 
 # get a list of valid species for this release
 my $release_id = $SD->ENSEMBL_VERSION;
@@ -168,8 +170,9 @@ foreach my $spp (@valid_spp) {
       $genetypes .= sprintf(", '%s'",$authority);
     }
 
-    my ($known, $novel, $proj, $pseudo, $rna);  
+    my ($known, $novel, $proj, $pseudo, $rna, $ig_segments, $exons, $transcripts, $snps);  
 
+=pod
     ## HACK TO ALLOW US TO DO DIFFERENT TOTALS FOR HUMAN
     if ($spp eq 'Homo_sapiens' && $FUDGE) { ## get gene counts from attrib table
     
@@ -224,7 +227,9 @@ foreach my $spp (@valid_spp) {
       }
 
     }
-    else { ## straight gene query
+=cut
+
+    unless ($pre) { 
       ($known) = &query( $db,
         "select count(*)
         from gene
@@ -263,15 +268,16 @@ foreach my $spp (@valid_spp) {
         where biotype regexp "[\w]*RNA$" 
         ');    
       print "RNA genes:$rna\n" if $DEBUG;
-    }
-    my( $ig_segments )= &query( $db,
-    "select count(distinct g.gene_id)
-      from gene g, analysis a
-      where g.analysis_id = a.analysis_id
-      and a.logic_name = 'ensembl_IG_gene'
-      ");
-    print "Segments:$ig_segments\n" if $DEBUG;
 
+      ( $ig_segments )= &query( $db,
+        "select count(distinct g.gene_id)
+        from gene g, analysis a
+        where g.analysis_id = a.analysis_id
+        and a.logic_name = 'ensembl_IG_gene'
+        ");
+      print "Segments:$ig_segments\n" if $DEBUG;
+
+    }
 
     ## DO OTHER RAW QUERIES
     my( $genpept ) = &query( $db,
@@ -292,31 +298,33 @@ foreach my $spp (@valid_spp) {
       where p.analysis_id = a.analysis_id and a.logic_name like '%fgenesh%'");
     print "Fgenesh:$fgenpept\n" if $DEBUG;
 
-    my( $transcripts )= &query( $db,
-    "select count(distinct t.transcript_id)
-      from transcript t, gene g, analysis a
-      where t.gene_id = g.gene_id
-      and g.analysis_id = a.analysis_id
-      and a.logic_name in ($genetypes)
-      ");
-    print "Transcripts:$transcripts\n" if $DEBUG;
+    unless ($pre) {
+      ( $transcripts )= &query( $db,
+      "select count(distinct t.transcript_id)
+        from transcript t, gene g, analysis a
+        where t.gene_id = g.gene_id
+        and g.analysis_id = a.analysis_id
+        and a.logic_name in ($genetypes)
+        ");
+      print "Transcripts:$transcripts\n" if $DEBUG;
 
-    my( $exons )= &query( $db,
-    "select count(distinct et.exon_id)
+      ( $exons )= &query( $db,
+      "select count(distinct et.exon_id)
       from exon_transcript et, transcript t, gene g, analysis a
       where et.transcript_id = t.transcript_id
       and  t.gene_id = g.gene_id
       and g.analysis_id = a.analysis_id
       and a.logic_name in ($genetypes)
       ");
-    print "Exons:$exons\n" if $DEBUG;
+      print "Exons:$exons\n" if $DEBUG;
 
-    my $snps = 0;
-    if ($var_db) {
-      ($snps) = &query ( $var_db,
-        "SELECT COUNT(DISTINCT variation_id) FROM variation_feature",
-        );
-      print "SNPs:$snps\n" if $DEBUG;
+      $snps = 0;
+      if ($var_db) {
+        ($snps) = &query ( $var_db,
+          "SELECT COUNT(DISTINCT variation_id) FROM variation_feature",
+          );
+        print "SNPs:$snps\n" if $DEBUG;
+      }
     }
 
   ## Total number of base pairs
@@ -378,9 +386,11 @@ foreach my $spp (@valid_spp) {
           <td class="data">Golden Path Length:</td>
           <td class="value">$gpl</td>
       </tr>
+    );
 
+    unless ($pre) {
 
-      <tr class="bg2">
+      print STATS qq(<tr class="bg2">
           <td class="data">Genebuild by:</td>
           <td class="value">$b_id</td>
       </tr>
@@ -399,96 +409,97 @@ foreach my $spp (@valid_spp) {
   </table>
   );
   
-    print STATS qq(
+      print STATS qq(
   <h3>Gene counts</h3>
   <table class="ss tint species-stats">
   );
-    $rowcount = 0;
+      $rowcount = 0;
 
-    if ($known) {
-      $known = thousandify($known);
-      $rowcount++;
-      $row = stripe_row($rowcount);
-      print STATS qq($row
+      if ($known) {
+        $known = thousandify($known);
+        $rowcount++;
+        $row = stripe_row($rowcount);
+        print STATS qq($row
           <td class="data">Known protein-coding genes:</td>
           <td class="value">$known</td>
       </tr>
       );
-    }
+      }
 
-    if ($proj) {
-      $proj = thousandify($proj);
-      $rowcount++;
-      $row = stripe_row($rowcount);
-      print STATS qq($row
+      if ($proj) {
+        $proj = thousandify($proj);
+        $rowcount++;
+        $row = stripe_row($rowcount);
+        print STATS qq($row
           <td class="data">Projected protein-coding genes:</td>
           <td class="value">$proj</td>
       </tr>
       );
-    }
+      }
 
 
-    if ($novel) {
-      $novel = thousandify($novel);
-      $rowcount++;
-      $row = stripe_row($rowcount);
-      print STATS qq($row
+      if ($novel) {
+        $novel = thousandify($novel);
+        $rowcount++;
+        $row = stripe_row($rowcount);
+        print STATS qq($row
           <td class="data">Novel protein-coding genes:</td>
           <td class="value">$novel</td>
       </tr>
       );
-    }
+      }
 
-    if ($pseudo) {
-      $pseudo = thousandify($pseudo);
-      $rowcount++;
-      $row = stripe_row($rowcount);
-      print STATS qq($row
+      if ($pseudo) {
+        $pseudo = thousandify($pseudo);
+        $rowcount++;
+        $row = stripe_row($rowcount);
+        print STATS qq($row
           <td class="data">Pseudogenes:</td>
           <td class="value">$pseudo</td>
       </tr>
       );
-    }
+      }
 
-    if ($rna) {
-      $rna = thousandify($rna);
-      $rowcount++;
-      $row = stripe_row($rowcount);
-      print STATS qq($row
+      if ($rna) {
+        $rna = thousandify($rna);
+        $rowcount++;
+        $row = stripe_row($rowcount);
+        print STATS qq($row
           <td class="data">RNA genes:</td>
           <td class="value">$rna</td>
       </tr>
       );
-    }
+      }
 
-    if ($ig_segments) {
-      $ig_segments = thousandify($ig_segments);
-      $rowcount++;
-      $row = stripe_row($rowcount);
-      print STATS qq($row
+      if ($ig_segments) {
+        $ig_segments = thousandify($ig_segments);
+        $rowcount++;
+        $row = stripe_row($rowcount);
+        print STATS qq($row
           <td class="data">Immunoglobulin/T-cell receptor gene segments:</td>
           <td class="value">$ig_segments</td>
       </tr>
       );
-    }
+      }
 
-    $rowcount++;
-    $exons = thousandify($exons);
-    $row = stripe_row($rowcount);
-    print STATS qq($row
+      $rowcount++;
+      $exons = thousandify($exons);
+      $row = stripe_row($rowcount);
+      print STATS qq($row
           <td class="data">Gene exons:</td>
           <td class="value">$exons</td>
       </tr>);
 
-    $rowcount++;
-    $transcripts = thousandify($transcripts);
-    $row = stripe_row($rowcount);
-    print STATS qq($row
+      $rowcount++;
+      $transcripts = thousandify($transcripts);
+      $row = stripe_row($rowcount);
+      print STATS qq($row
           <td class="data">Gene transcripts:</td>
           <td class="value">$transcripts</td>
       </tr>
   </table>
-    );
+      );
+    }
 
     print STATS qq(
   <h3>Other</h3>
