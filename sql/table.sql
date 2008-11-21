@@ -71,7 +71,7 @@ CREATE TABLE genome_db (
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   assembly_default            tinyint(1) DEFAULT 1,
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
-  locator                     varchar(255),
+  locator                     varchar(400),
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
