@@ -49,27 +49,25 @@ sub user_populate_tree {
       )
     );
     ## Control panel fixes
-    my $species = '/'.$ENV{'ENSEMBL_SPECIES'};
+    my $species = $ENV{'ENSEMBL_SPECIES'};
     $species = '' if $species !~ /_/;
     $species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES unless $species;
     my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
 
-    my $upload_link = $species.'/UserData/ManageUpload?'.$referer;
-    my $das_link = $species.'/UserData/ManageRemote?'.$referer;
-    my $url_link = $species.'/UserData/ManageRemote?'.$referer;
+    my $data_link = '/'.$species.'/UserData/ManageData?'.$referer;
     $settings_menu->append(
       $self->create_node( 'Uploads', "Uploads ([[counts::uploads]])",
-        [], { 'availability' => 1, 'url' => $upload_link, 'raw' => 1 },
+        [], { 'availability' => 1, 'url' => $data_link, 'raw' => 1 },
       )
     );
     $settings_menu->append(
       $self->create_node( 'DAS', "DAS sources ([[counts::dases]])",
-        [], { 'availability' => 1, 'url' => $das_link, 'raw' => 1 },
+        [], { 'availability' => 1, 'url' => $data_link, 'raw' => 1 },
       )
     );
     $settings_menu->append(
       $self->create_node( 'URLs', "URL data ([[counts::urls]])",
-        [], { 'availability' => 1, 'url' => $url_link, 'raw' => 1 },
+        [], { 'availability' => 1, 'url' => $data_link, 'raw' => 1 },
       )
     );
 

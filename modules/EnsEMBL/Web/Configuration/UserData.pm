@@ -13,7 +13,7 @@ sub set_default_action {
     $self->{_data}{default} = 'Upload';
   }
   else {
-    $self->{_data}{default} = 'ManageUpload';
+    $self->{_data}{default} = 'ManageData';
   }
 }
 
@@ -55,10 +55,6 @@ sub populate_tree {
   $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Data",
     [], { 'availability' => 1 }
   ));
-  $uploaded_menu->append($self->create_node( 'ManageUpload', "Manage Uploads",
-    [qw(manage_upload   EnsEMBL::Web::Component::UserData::ManageUpload)
-    ], { 'availability' => 1, 'concise' => 'Manage Uploads' }
-  ));
 
   my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
   $attached_menu->append($self->create_node( 'AttachDAS', "Attach DAS",
@@ -67,10 +63,11 @@ sub populate_tree {
   $attached_menu->append($self->create_node( 'AttachURL', "Attach URL Data",
    [], { 'availability' => $is_configurable }
   ));
-  $attached_menu->append($self->create_node( 'ManageRemote', "Manage Data",
-    [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageRemote)
+
+  $self->create_node( 'ManageData', "Manage Data",
+    [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)
     ], { 'availability' => 1, 'concise' => 'Manage Data' }
-  ));
+  );
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'Message', '',
