@@ -73,7 +73,7 @@ if(!$seq_region_data) {
 else {
         my($seq_region_name, $seq_region_start, $seq_region_end, $seq_region_length) = split("-", $seq_region_data);
         my @chunk_regions;
-	        my $chunk_number = int($seq_region_length / $chunk_size);
+	my $chunk_number = int($seq_region_length / $chunk_size);
         $chunk_number += $seq_region_length % $chunk_size ? 1 : 0;
         my $chunk_start = $seq_region_start;
         for(my$j=1;$j<$chunk_number;$j++) {
@@ -83,6 +83,7 @@ else {
         }
         push(@chunk_regions, [ $chunk_start, $seq_region_end ]);
         my $first_score_seen = 1;
+	my $previous_position = 0;
         foreach my $chunk_region(@chunk_regions) {
                 my $cs_adaptor = $reg->get_adaptor("Multi", 'compara', 'ConservationScore');
                 my $display_size = $chunk_region->[1] - $chunk_region->[0] + 1;
@@ -90,6 +91,15 @@ else {
                 my $scores = $cs_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $chunk_slice, $display_size, "MAX");
                 for(my$i=0;$i<@$scores;$i++) {
                         if (defined $scores->[$i]->diff_score) {
+#				print join(":", $display_size, $i, $scores->[$i]->position, $previous_position), "  *  ";
+				#the following if-elsif-else should prevent the printing of scores from overlapping genomic_align_blocks
+				if ($chunk_region->[0] + $scores->[$i]->position > $previous_position && $i > 0) { 
+					$previous_position = $chunk_region->[0] + $scores->[$i]->position;
+				}
+				elsif ($chunk_region->[0] + $scores->[$i]->position >= $previous_position && $i == 0) {}
+				else { 
+					next;
+				}
 				if ($first_score_seen) {
 					print_header($seq_region_name, $chunk_region->[0] + $scores->[$i]->position,
 						$scores->[$i]->window_size);
@@ -112,16 +122,10 @@ else {
 					}
 					else {
 						if ($scores->[$i]->position > $scores->[$i-1]->position + 1) {
-							if ($scores->[$i]->position == $display_size) {
-								print_header($seq_region_name, $chunk_region->[0] + $scores->[$i]->position,
-									$scores->[$i]->window_size);
-								last;
-							}
-							else {
-								print_header($seq_region_name, $chunk_region->[0] + $scores->[$i]->position,
-									$scores->[$i]->window_size);
-							}	
+							print_header($seq_region_name, $chunk_region->[0] + $scores->[$i]->position,
+								$scores->[$i]->window_size);
 						}
+						last if ($scores->[$i]->position == $display_size);
 					}
 				}
                                 printf ("%.4f\n", $scores->[$i]->diff_score);
