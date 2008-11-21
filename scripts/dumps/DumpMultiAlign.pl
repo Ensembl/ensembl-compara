@@ -309,6 +309,7 @@ use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Getopt::Long;
+use Devel::Size qw (size total_size);
 
 my $reg_conf;
 my $db = 'mysql://anonymous@ensembldb.ensembl.org';
@@ -320,6 +321,7 @@ my $seq_region;
 my $seq_region_start;
 my $seq_region_end;
 my $alignment_type;
+my $method_link_species_set_id;
 my $set_of_species;
 my $original_seq = undef;
 my $masked_seq = 0;
@@ -341,6 +343,7 @@ GetOptions(
     "seq_region_start=i" => \$seq_region_start,
     "seq_region_end=i" => \$seq_region_end,
     "alignment_type=s" => \$alignment_type,
+    "mlss_id|method_link_species_set_id=i" => \$method_link_species_set_id,
     "set_of_species=s" => \$set_of_species,
     "original_seq" => \$original_seq,
     "masked_seq=i" => \$masked_seq,
@@ -385,10 +388,17 @@ foreach my $this_species (split(":", $set_of_species)) {
 # Getting Bio::EnsEMBL::Compara::MethodLinkSpeciesSet obejct
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'MethodLinkSpeciesSet');
-my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
-        $alignment_type, $genome_dbs);
-throw("The database do not contain any $alignment_type data for $set_of_species!")
-    if (!$method_link_species_set);
+my $method_link_species_set;
+if ($method_link_species_set_id) {
+  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
+  throw("The database do not contain any alignments with a MLSS id = $method_link_species_set_id!")
+      if (!$method_link_species_set);
+} else {
+  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
+          $alignment_type, $genome_dbs);
+  throw("The database do not contain any $alignment_type data for $set_of_species!")
+      if (!$method_link_species_set);
+}
 
 my $conservation_score_mlss;
 if ($method_link_species_set->method_link_class eq "ConservationScore.conservation_score") {
@@ -400,6 +410,8 @@ if ($method_link_species_set->method_link_class eq "ConservationScore.conservati
   throw("I cannot find the link from the conservation scores to the original alignments!")
       if (!$method_link_species_set);
 }
+
+print STDERR "Dumping ", $method_link_species_set->name, "\n";
 
 # Fetching the query Slices:
 my @query_slices;
@@ -457,7 +469,7 @@ if (!$use_several_files) {
 }
 
 ## Get the full list of alignments with no $skip_species in $skip_species mode
-my $skip_genomic_align_blocks;
+my $skip_genomic_align_blocks = [];
 if ($skip_species) {
   my $this_meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
       $skip_species, 'core', 'MetaContainer');
@@ -536,10 +548,15 @@ do {
     ## Dump these alignments
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
       if ($method_link_species_set->method_link_class =~ /tree_alignment/) {
+        $DB::single = 1;
         my $this_genomic_align_tree = $genomic_align_tree_adaptor->
             fetch_by_GenomicAlignBlock($this_genomic_align_block);
+	if (!$this_genomic_align_tree) {
+	  print STDERR "SKIP genomic_align_block ", $this_genomic_align_block->dbID, "\n";
+	  next;
+	}
         write_genomic_align_block($output_format, $this_genomic_align_tree);
-        $this_genomic_align_tree = undef;
+        deep_clean($this_genomic_align_tree);
       } else {
         write_genomic_align_block($output_format, $this_genomic_align_block);
       }
@@ -556,7 +573,7 @@ do {
     ## No more genomic_align_blocks to dump: set split_size to 0 in orer to exit the main loop
     $split_size = 0;
   }
-} while ($split_size or $slice_counter < @query_slices);
+} while (($split_size and $slice_counter < @query_slices) or @$skip_genomic_align_blocks);
 
 exit(0);
 
@@ -688,21 +705,59 @@ sub write_genomic_align_block {
 
 sub print_my_emf {
   my ($genomic_align_block) = @_;
+  return if (!$genomic_align_block);
 
+
+# print STDERR "1. ", qx"ps v $$ | cut -c 1-80";
   print "\n";
   my $aligned_seqs;
-  foreach my $this_genomic_align (@{$genomic_align_block->get_all_GenomicAligns()}) {
+  my $all_genomic_aligns;
+  if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+# $DB::single = 1;
+    foreach my $this_genomic_align_tree (@{$genomic_align_block->get_all_sorted_genomic_align_nodes()}) {
+      push(@{$all_genomic_aligns}, $this_genomic_align_tree->genomic_align_group);
+    }
+  } else {
+    $all_genomic_aligns = $genomic_align_block->get_all_GenomicAligns()
+  }
+  my $reverse = 1 - $genomic_align_block->get_original_strand;
+  foreach my $this_genomic_align (@{$all_genomic_aligns}) {
     my $species_name = $this_genomic_align->genome_db->name;
     $species_name =~ s/ /_/g;
-    print join(" ", "SEQ", $species_name, $this_genomic_align->dnafrag->name,
-        $this_genomic_align->dnafrag_start, $this_genomic_align->dnafrag_end,
-        $this_genomic_align->dnafrag_strand, "(chr_length=".$this_genomic_align->dnafrag->length.")"), "\n";
+    if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup") and
+        @{$this_genomic_align->get_all_GenomicAligns} > 1) {
+      my $length = 0;
+      my @names;
+      foreach my $this_sub_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
+        push(@names, $this_sub_genomic_align->get_Slice->name);
+        $length += $this_sub_genomic_align->dnafrag_end - $this_sub_genomic_align->dnafrag_start + 1;
+      }
+      print join(" ", "SEQ", $species_name, "Composite_".$this_genomic_align->dbID,
+          1, $length, ($reverse?-1:1), "(chr_length=".$length.")"), "\n";
+      print "### $species_name Composite_",$this_genomic_align->dbID, " is: ", join(" + ", @names), "\n";
+    } else {
+      print join(" ", "SEQ", $species_name, $this_genomic_align->dnafrag->name,
+          $this_genomic_align->dnafrag_start, $this_genomic_align->dnafrag_end,
+          $this_genomic_align->dnafrag_strand,
+          "(chr_length=".$this_genomic_align->dnafrag->length.")"), "\n";
+    }
     my $aligned_sequence;
-    if ($masked_seq == 1) {
-      next if (!$this_genomic_align->get_Slice);
-      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
-    } elsif ($masked_seq == 2) {
-      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+    if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
+      foreach my $this_sub_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
+        if ($masked_seq == 1) {
+          next if (!$this_sub_genomic_align->get_Slice);
+          $this_sub_genomic_align->original_sequence($this_sub_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+        } elsif ($masked_seq == 2) {
+          $this_sub_genomic_align->original_sequence($this_sub_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+        }
+      }
+    } else {
+      if ($masked_seq == 1) {
+        next if (!$this_genomic_align->get_Slice);
+        $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+      } elsif ($masked_seq == 2) {
+        $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+      }
     }
     if ($original_seq) {
       $aligned_sequence = $this_genomic_align->original_sequence;
@@ -712,23 +767,47 @@ sub print_my_emf {
     for (my $i = 0; $i<length($aligned_sequence); $i++) {
       $aligned_seqs->[$i] .= substr($aligned_sequence, $i, 1);
     }
+    $aligned_sequence = undef;
   }
   if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
-    foreach my $this_genomic_align_tree (@{$genomic_align_block->get_all_nodes()}) {
-      my $genomic_align = $this_genomic_align_tree->genomic_align;
-      $genomic_align->dnafrag->genome_db->name =~ /(.)[^ ]+ (.{3})/;
-      my $name = "${1}${2}_".$genomic_align->dnafrag->name."_".
-          $genomic_align->dnafrag_start."_".$genomic_align->dnafrag_end."[".
-          (($genomic_align->dnafrag_strand eq "-1")?"-":"+")."]";
+    foreach my $this_genomic_align_tree (@{$genomic_align_block->get_all_sorted_genomic_align_nodes()}) {
+      my $genomic_aligns = $this_genomic_align_tree->genomic_align_group->get_all_GenomicAligns();
+      my $this_genomic_align = $genomic_aligns->[0];
+      $this_genomic_align->dnafrag->genome_db->name =~ /(.)[^ ]+ (.{3})/;
+      my $name = "${1}${2}_";
+      if (@$genomic_aligns > 1) {
+        $name .= "Composite_".$this_genomic_align_tree->genomic_align_group->dbID;
+        my $length = 0;
+        foreach my $this_genomic_align (@{$genomic_aligns}) {
+          $length += $this_genomic_align->dnafrag_end - $this_genomic_align->dnafrag_start + 1;
+        }
+        $name .= "_1_${length}";
+        if ($reverse) {
+          $name .= "[-]";
+        } else {
+          $name .= "[+]";
+        }
+      } else {
+        $this_genomic_align->dnafrag->genome_db->name =~ /(.)[^ ]+ (.{3})/;
+        $name .= $this_genomic_align->dnafrag->name."_".
+            $this_genomic_align->dnafrag_start."_".$this_genomic_align->dnafrag_end."[".
+            (($this_genomic_align->dnafrag_strand eq "-1")?"-":"+")."]";
+      }
       $this_genomic_align_tree->name($name);
     }
     print "TREE ", $genomic_align_block->newick_format, "\n";
   }
+# # print STDERR "After tree:     ", total_size($genomic_align_block), "\n";
   if ($conservation_score_mlss) {
     print "SCORE ", $conservation_score_mlss->name, "\n";
-    my $conservation_scores = $genomic_align_block->adaptor->db->get_ConservationScoreAdaptor->
-        fetch_all_by_GenomicAlignBlock($genomic_align_block, undef, undef, undef,
-            $genomic_align_block->length, undef, 1);
+    my $new_genomic_align_block = $genomic_align_block;
+    if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+      $new_genomic_align_block = $genomic_align_block->get_all_leaves->[0]->genomic_align_group->get_all_GenomicAligns->[0]->genomic_align_block;
+      $new_genomic_align_block->reverse_complement if ($reverse);
+    }
+    my $conservation_scores = $new_genomic_align_block->adaptor->db->get_ConservationScoreAdaptor->
+        fetch_all_by_GenomicAlignBlock($new_genomic_align_block, undef, undef, undef,
+            $new_genomic_align_block->length, undef, 1);
     my $this_conservation_score = shift @$conservation_scores;
     for (my $i = 0; $i<@$aligned_seqs; $i++) {
       if ($this_conservation_score and $this_conservation_score->position == $i + 1) {
@@ -738,10 +817,13 @@ sub print_my_emf {
         $aligned_seqs->[$i] .= " .";
       }
     }
+    $new_genomic_align_block = undef;
   }
+
   print "DATA\n";
   print join("\n", @$aligned_seqs);
   print "\n//\n";
+  $aligned_seqs = undef;
 }
 
 
@@ -799,3 +881,25 @@ sub print_my_maf {
 }
 
 exit;
+
+sub deep_clean {
+  my ($genomic_align_tree) = @_;
+
+  my $all_nodes = $genomic_align_tree->get_all_nodes;
+  foreach my $this_genomic_align_node (@$all_nodes) {
+    my $this_genomic_align_group = $this_genomic_align_node->genomic_align_group;
+    foreach my $this_genomic_align (@{$this_genomic_align_group->get_all_GenomicAligns}) {
+      foreach my $key (keys %$this_genomic_align) {
+        if ($key eq "genomic_align_block") {
+          foreach my $this_ga (@{$this_genomic_align->{$key}->get_all_GenomicAligns}) {
+            $this_ga = undef;
+          }
+        }
+        $this_genomic_align->{$key} = undef;
+      }
+      $this_genomic_align = undef;
+    }
+    $this_genomic_align_group = undef;
+    $this_genomic_align_node = undef;
+  }
+}
