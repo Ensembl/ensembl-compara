@@ -76,6 +76,9 @@ sub get_params {
   if (defined $params->{'method_link_species_set_id'}) {
     $self->METHOD_LINK_SPECIES_SET_ID($params->{'method_link_species_set_id'});
   }
+	if (defined($params->{'bin_dir'})) {
+		$self->BIN_DIR($params->{'bin_dir'});
+	}
 
   return 1;
 }
@@ -185,7 +188,7 @@ sub fetch_input {
                     -target_lengths       => \%target_lengths,
                     -chains               => [ map {$features_by_group{$_}} sort {$group_score{$b} <=> $group_score{$a}} keys %group_score ],
                     -chains_sorted => 1,
-                    -chainNet             =>  $BIN_DIR . "/" . "chainNet",
+                    -chainNet             =>  $self->BIN_DIR . "/" . "chainNet",
                     -workdir              => $WORKDIR,
 		    -min_chain_score      => $self->MIN_CHAIN_SCORE);
   
@@ -316,6 +319,12 @@ sub METHOD_LINK_SPECIES_SET_ID {
   }
 
   return $self->{_method_link_species_set_id}
+}
+
+sub BIN_DIR {
+	my ($self, $val) = @_;
+	$self->{_bin_dir} = $val if defined $val;
+	return $self->{_bin_dir} || $BIN_DIR;
 }
 
 1;

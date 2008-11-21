@@ -77,6 +77,9 @@ sub get_params {
   if(defined($params->{'target_nib_dir'})) {
     $self->TARGET_NIB_DIR($params->{'target_nib_dir'});
   }
+	if(defined($params->{'bin_dir'})) {
+		$self->BIN_DIR($params->{'bin_dir'});
+	}
 
   return 1;
 }
@@ -216,7 +219,7 @@ sub fetch_input {
 
 
   foreach my $program (qw(faToNib lavToAxt axtChain)) {
-    $parameters{'-' . $program} = $BIN_DIR . "/" . $program;
+    $parameters{'-' . $program} = $self->BIN_DIR . "/" . $program;
   }
   
   my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentChains->new(%parameters);
@@ -274,5 +277,10 @@ sub TARGET_NIB_DIR {
   return $self->{_target_nib_dir};
 }
 
+sub BIN_DIR {
+	my ($self, $val) = @_;
+	$self->{_bin_dir} = $val if defined $val;
+	return $self->{_bin_dir} || $BIN_DIR;
+}
 
 1;

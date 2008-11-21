@@ -47,7 +47,7 @@ $self->parse_conf($conf_file);
 
 unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and defined($compara_conf{'-dbname'})) {
   print "\nERROR : must specify host, user, and database to connect to compara in the configuration file\n\n";
-  usage(); 
+  usage();
 }
 
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
@@ -245,7 +245,16 @@ sub prepareChainSystem
   my $max_gap = $chainConf->{'max_gap'};
   my $group_type = $chainConf->{'output_group_type'};
   $group_type = "chain" unless (defined $group_type);
-  $parameters = "{\'input_method_link\'=>\'$input_method_link_type\',\'output_method_link\'=>\'$output_method_link_type\',\'max_gap\'=>\'$max_gap\','output_group_type\'=>\'$group_type\'}";
+
+	my @parameters_array = (
+		'input_method_link', $input_method_link_type,
+		'output_method_link', $output_method_link_type,
+		'max_gap', $max_gap,
+		'output_group_type', $group_type
+	);
+	push(@parameters_array, ('bin_dir', $chainConf->{'bin_dir'})) if defined $chainConf->{'bin_dir'};
+	$parameters = generate_paramaters_string(@parameters_array);
+
   my $alignmentChainsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'AlignmentChains-'.$hexkey,
@@ -257,7 +266,9 @@ sub prepareChainSystem
   $stats->batch_size(1);
   $stats->hive_capacity(10);
   $stats->update();
-  $self->{'alignmentChainsAnalysis'} = $alignmentChainsAnalysis;
+
+  $self->{'alignmentChainsAnalysis'} = [] unless defined $self->{'alignmentChainsAnalysis'};
+  push(@{$self->{'alignmentChainsAnalysis'}}, $alignmentChainsAnalysis);
 
   $ctrlRuleDBA->create_rule($createAlignmentChainsJobsAnalysis, $alignmentChainsAnalysis);
 
@@ -337,7 +348,10 @@ sub prepareNetSystem {
   $stats->update();
   $self->{'createAlignmentNetsJobsAnalysis'} = $createAlignmentNetsJobsAnalysis;
 
-  $ctrlRuleDBA->create_rule($self->{'alignmentChainsAnalysis'}, $createAlignmentNetsJobsAnalysis);
+	#Iterate through all of the created chain jobs & add them as a blocker
+	foreach my $alignmentChainsAnalysis (@{$self->{'alignmentChainsAnalysis'}}) {
+  	$ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $createAlignmentNetsJobsAnalysis);
+	}
 
   my $hexkey = sprintf("%x", rand(time()));
   print("hexkey = $hexkey\n");
@@ -350,7 +364,17 @@ sub prepareNetSystem {
   $input_group_type = "chain" unless (defined $input_group_type);
   my $output_group_type = $netConf->{'output_group_type'};
   $output_group_type = "default" unless (defined $output_group_type);
-  my $parameters = "{\'input_method_link\'=>\'$input_method_link_type\',\'output_method_link\'=>\'$output_method_link_type\',\'max_gap\'=>\'$max_gap\','input_group_type\'=>\'$input_group_type\','output_group_type\'=>\'$output_group_type\'}";
+
+	my @parameters_array = (
+		'input_method_link', $input_method_link_type,
+		'output_method_link', $output_method_link_type,
+		'max_gap', $max_gap,
+		'input_group_type', $input_group_type,
+		'output_group_type', $output_group_type
+	);
+	push(@parameters_array, ('bin_dir', $netConf->{'bin_dir'})) if defined $netConf->{'bin_dir'};
+	my $parameters = generate_paramaters_string(@parameters_array);
+
   my $alignmentNetsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'AlignmentNets-'.$hexkey,
@@ -688,6 +712,20 @@ sub createUpdateMaxAlignmentLengthAfterStackJob {
         -analysis       => $self->{'updateMaxAlignmentLengthAfterStackAnalysis'},
         -input_job_id   => 0
         );
+}
+
+sub generate_paramaters_string {
+	my @raw_params = @_;
+	my $length = scalar(@raw_params);
+	if($length%2 != 0) {
+		die("Expected an even number of parameters but was given ${length}");
+	}
+	my @params;
+	for(my $i=0; $i<$length; $i=$i+2) {
+		my @vals = map {"'${_}'"} @raw_params[$i,$i+1];
+		push(@params, join('=>', @vals));
+	}
+	return '{'.join(',',@params).'}';
 }
 
 1;
