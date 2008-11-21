@@ -237,19 +237,20 @@ sub update_genome_db {
   my ($species_dba, $compara_dba, $force) = @_;
   
   my $slice_adaptor = $species_dba->get_adaptor("Slice");
+	my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
+  my $meta_container = $species_dba->get_MetaContainer;
+
   my $primary_species_binomial_name;
   if (defined($species_name)) {
     $primary_species_binomial_name = $species_name;
   } else {
-    my $primary_species = $slice_adaptor->db->get_MetaContainer->get_Species;
-    if (!$primary_species) {
+    if (!$meta_container->get_Species()) {
       throw "Cannot get the species name from the database. Use the --species_name option";
     }
-    $primary_species_binomial_name = $primary_species->binomial;
+    $primary_species_binomial_name = $genome_db_adaptor->get_species_name_from_core_MetaContainer($meta_container);
   }
   my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
   my $primary_species_assembly = $highest_cs->version();
-  my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
   my $genome_db = eval {$genome_db_adaptor->fetch_by_name_assembly(
           $primary_species_binomial_name,
           $primary_species_assembly
@@ -267,21 +268,23 @@ sub update_genome_db {
     <STDIN>;
   }
 
-  my $sql = "SELECT meta_value FROM meta where meta_key= ?";
-  my $sth = $species_dba->dbc->prepare($sql);
-  $sth->execute("assembly.default");
-  my ($assembly) = $sth->fetchrow_array();
-  if (!defined($assembly)) {
+	my ($assembly) = @{$meta_container->list_value_by_key('assembly.default')};
+	if (!defined($assembly)) {
     warning "Cannot find assembly.default in meta table for $primary_species_binomial_name";
     $assembly = $primary_species_assembly;
-  }
-  $sth->execute("genebuild.version");
-  my ($genebuild) = $sth->fetchrow_array();
-  if (!defined($genebuild)) {
-    warning "Cannot find genebuild.version in meta table for $primary_species_binomial_name";
-    $genebuild = "";
-  }
+	}
+	my ($genebuild) = @{$meta_container->list_value_by_key('genebuild.version')};
+	if (!defined($genebuild)) {
+			warning "Cannot find genebuild.version in meta table for $primary_species_binomial_name";
+			$genebuild = '';
+	}
+
   print "New assembly and genebuild: ", join(" -- ", $assembly, $genebuild),"\n\n";
+
+	#Have to define these since they were removed from the above meta queries
+	#and the rest of the code expects them to be defined
+  my $sql;
+  my $sth;
 
   $genome_db = eval{$genome_db_adaptor->fetch_by_name_assembly(
           $primary_species_binomial_name, $assembly
@@ -289,7 +292,7 @@ sub update_genome_db {
   if ($genome_db) { ## New genebuild!
     $sql = "UPDATE genome_db SET assembly = \"$assembly\", genebuild = \"$genebuild\" WHERE genome_db_id = ".
         $genome_db->dbID;
-    $sth = $compara_dba->dbc->do($sql); 
+    $sth = $compara_dba->dbc->do($sql);
     $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
             $primary_species_binomial_name,
             $assembly
@@ -297,8 +300,7 @@ sub update_genome_db {
 
   } else { ## New genome or new assembly!!
     if (!defined($taxon_id)) {
-      $sth->execute("species.taxonomy_id");
-      ($taxon_id) = $sth->fetchrow_array();
+      ($taxon_id) = @{$meta_container->list_value_by_key('species.taxonomy_id')};
     }
     if (!defined($taxon_id)) {
       throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name.\n".
@@ -436,9 +438,10 @@ sub update_dnafrags {
         AND at.code = 'toplevel'
         AND sr.seq_region_id = sra.seq_region_id
         AND sr.coord_system_id = cs.coord_system_id
+        AND cs.species_id =?
     };
   my $sth1 = $species_dba->dbc->prepare($sql1);
-  $sth1->execute();
+  $sth1->execute($species_dba->species_id());
   my $current_verbose = verbose();
   verbose('EXCEPTION');
   while (my ($coordinate_system_name, $name, $length) = $sth1->fetchrow_array) {

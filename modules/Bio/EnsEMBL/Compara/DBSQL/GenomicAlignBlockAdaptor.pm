@@ -445,13 +445,15 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     warning("Slice has no attached adaptor. Cannot get Compara alignments.");
     return $all_genomic_align_blocks;
   }
-  my $primary_species_binomial_name = 
-      $slice_adaptor->db->get_MetaContainer->get_Species->binomial;
+
+  my $gdb_a = $self->db->get_GenomeDBAdaptor();
+	my $meta_container = $reference_slice->adaptor->db->get_MetaContainer();
+	my $primary_species_name = $gdb_a->get_species_name_from_core_MetaContainer($meta_container);
   my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
   my $primary_species_assembly = $highest_cs->version();
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
   my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-          $primary_species_binomial_name,
+          $primary_species_name,
           $primary_species_assembly
       );
 

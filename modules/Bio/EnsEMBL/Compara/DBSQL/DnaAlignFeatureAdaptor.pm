@@ -216,8 +216,7 @@ sub fetch_all_by_Slice {
   $limit = 0 unless (defined $limit);
 
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor();
-  my $cs_genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-      $orig_slice->adaptor->db->get_MetaContainer->get_Species->binomial);
+  my $cs_genome_db = $genome_db_adaptor->fetch_by_Slice($orig_slice);
   my $qy_genome_db = $genome_db_adaptor->fetch_by_name_assembly(
       $qy_species, $qy_assembly);
   return [] if (!$cs_genome_db or !$qy_genome_db);
