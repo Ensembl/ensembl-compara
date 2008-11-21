@@ -462,7 +462,7 @@ sub store {
 
   my $genomic_align_block = $cs->genomic_align_block;
   my $window_size = $cs->window_size;
-  my $position = $cs->position;
+  my $position = $cs->{position};
 
   #check to see if gab, window_size and position have been defined (should be unique)
   unless($genomic_align_block && $window_size && $position) {
@@ -643,20 +643,21 @@ sub _find_score_index {
     my $length;
 
     #special case for first window size 
-    if ($pos < $scores->[0]->position && $pos > ($scores->[0]->position - $win_size)) {
+    if ($pos < $scores->[0]->{position} && $pos > ($scores->[0]->{position} - $win_size)) {
 	return 0;
     }
     
     for ($i = $_score_index; $i < $num_scores; $i++) {
+      my $this_position = $scores->[$i]->{position};
 	$length = ($score_lengths->[$i] - 1) * $win_size;
 
-	if ($pos >= $scores->[$i]->position && $pos <= $scores->[$i]->position + $length) {
+	if ($pos >= $this_position && $pos <= $this_position + $length) {
 	    $_score_index = $i;
 	    return ($i);
 	}
 
 	#smaller than end so there is no score for this position
-	if ($pos < ($scores->[$i]->position + $length)) {
+	if ($pos < ($this_position + $length)) {
 	    $_score_index = $i;
 	    return -1;
 	}
@@ -835,7 +836,7 @@ sub _get_aligned_scores_from_cigar_line {
 	#if a score has been found, find the score in the score string and 
 	#unpack it.
 	unless ($cs_index == -1) {
-	    $csBlockCnt = int(($current_pos - $scores->[$cs_index]->position)/$win_size);
+	    $csBlockCnt = int(($current_pos - $scores->[$cs_index]->{position})/$win_size);
 
 	    my $value;
 	    if ($PACKED) {
@@ -1014,7 +1015,7 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	#if a score has been found, find the score in the score string and 
 	#unpack it.
 	unless ($cs_index == -1) {
-	    $csBlockCnt = int(($current_pos - $scores->[$cs_index]->position)/$win_size);
+	    $csBlockCnt = int(($current_pos - $scores->[$cs_index]->{position})/$win_size);
 
 	    my $value;
 	    if ($PACKED) {
@@ -1139,34 +1140,34 @@ sub _get_alignment_scores {
 	
 	#special case for align_start before the first score position eg when
 	#have window sizes > 1
-	if ($start == -1 && $align_start < $conservation_scores->[0]->position) {
+	if ($start == -1 && $align_start < $conservation_scores->[0]->{position}) {
 	    $start = 0;
 	    $start_offset = 0;
 	}
 
 	#align_start within a called region
-	if ($start == -1 && $align_start >= $conservation_scores->[$j]->position && $align_start <= $conservation_scores->[$j]->position + $length) {
+	if ($start == -1 && $align_start >= $conservation_scores->[$j]->{position} && $align_start <= $conservation_scores->[$j]->{position} + $length) {
 	    $start= $j;
-	    $start_offset= ($align_start - $conservation_scores->[$j]->position)/$window_size;
+	    $start_offset= ($align_start - $conservation_scores->[$j]->{position})/$window_size;
 	}
 
 
 	#align_start in an uncalled region
-	if ($start == -1 && $align_start < ($conservation_scores->[$j]->position)) {
+	if ($start == -1 && $align_start < ($conservation_scores->[$j]->{position})) {
 	    $start= $j;
 	    $start_offset = 0;
 	    $start_uncalled_region = 1;
  	}
 
          #align_end within a called region. And can stop
-	if ($align_end >= $conservation_scores->[$j]->position && $align_end <= $conservation_scores->[$j]->position + $length) {
+	if ($align_end >= $conservation_scores->[$j]->{position} && $align_end <= $conservation_scores->[$j]->{position} + $length) {
 	    $end= $j;
-	    $end_offset= int(($align_end - $conservation_scores->[$j]->position)/$window_size);
+	    $end_offset= int(($align_end - $conservation_scores->[$j]->{position})/$window_size);
 	    last;
 	}
 
          #align_end within an uncalled region. And can stop
-	if ($align_end < ($conservation_scores->[$j]->position)) {
+	if ($align_end < ($conservation_scores->[$j]->{position})) {
 	    $end= $j-1;
 	    $end_offset = 0;
 	    $end_uncalled_region = 1;
@@ -1178,7 +1179,7 @@ sub _get_alignment_scores {
     #conservation_scores which can happen for window_sizes > 1
     if ($end == -1) {
 	$end = $num_rows-1;
-	$end_offset = int(($align_end - $conservation_scores->[$end]->position)/$window_size);
+	$end_offset = int(($align_end - $conservation_scores->[$end]->{position})/$window_size);
     }
 
     my $genomic_align_block_id = $genomic_align_block->dbID;
@@ -1205,7 +1206,7 @@ sub _get_alignment_scores {
 	    }
 	}
 	
-	$pos = $conservation_scores->[$i]->position;
+	$pos = $conservation_scores->[$i]->{position};
 
 	#first time round start at offset if align_start is within a called 
 	#region
@@ -1240,7 +1241,7 @@ sub _get_alignment_scores {
 	#add uncalled scores for regions between called blocks
 	my $next_pos;
 	if ($i < $end) {
-	    $next_pos = $conservation_scores->[$i+1]->position;
+	    $next_pos = $conservation_scores->[$i+1]->{position};
 	} else {
 	    $next_pos = $align_end+1;
 	}
@@ -1278,7 +1279,7 @@ sub _get_alignment_scores {
     #need to add the uncalled positions up to the start of the next called 
     #block
     for (my $i = 0; $i < scalar(@$aligned_scores); $i++) {
-	$aligned_scores->[$i]->position($aligned_scores->[$i]->position-$align_start+1);  
+	$aligned_scores->[$i]->{position}($aligned_scores->[$i]->{position}-$align_start+1);  
       }
 
     return $aligned_scores;
