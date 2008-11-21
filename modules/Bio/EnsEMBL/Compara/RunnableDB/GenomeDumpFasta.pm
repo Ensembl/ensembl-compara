@@ -247,6 +247,8 @@ sub createBlastAnalysis
 
   my $blast_template = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('blast_template');
 
+  my %fasta_dump_parameters = $self->parameter_hash($self->analysis->parameters());
+
   my $params = "{subset_id=>" . $self->{'pepSubset'}->dbID;
   $params .= ",genome_db_id=>" . $self->{'genome_db'}->dbID if($self->{'genome_db'});
 
@@ -303,7 +305,9 @@ sub createBlastAnalysis
 
   my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($analysis->dbID);
   $stats->batch_size(40);
-  $stats->hive_capacity(450);
+  my $hive_capacity = $fasta_dump_parameters{'blast_hive_capacity'};
+  $hive_capacity = 450 unless defined $hive_capacity; #Set it to the default 450 unless something was given
+  $stats->hive_capacity($hive_capacity);
   $stats->update();
   
   return $analysis;
