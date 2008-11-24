@@ -71,30 +71,39 @@ sub populate_tree {
   my $species_path = $self->species;
   if($sample_data && keys %$sample_data) {
     my $data_menu = $self->create_submenu( 'Data', 'Sample entry points' );
+
     my $location_url    = "/$species_path/Location/View?r=".$sample_data->{'LOCATION_PARAM'};
-    my $location_text   = $sample_data->{'LOCATION_TEXT'};
+    my $location_text   = $sample_data->{'LOCATION_TEXT'} || 'not available';
+    my $loc_available   = $location_text eq 'not available' ? 0 : 1;
+
     my $gene_url        = "/$species_path/Gene/Summary?g=".$sample_data->{'GENE_PARAM'};
-    my $gene_text       = $sample_data->{'GENE_TEXT'};
+    my $gene_text       = $sample_data->{'GENE_TEXT'} || 'not available';
+    my $gene_available  = $gene_text eq 'not available' ? 0 : 1;
+
     my $transcript_url  = "/$species_path/Transcript/Summary?t=".$sample_data->{'TRANSCRIPT_PARAM'};
-    my $transcript_text = $sample_data->{'TRANSCRIPT_TEXT'};
+    my $transcript_text = $sample_data->{'TRANSCRIPT_TEXT'} || 'not available';
+    my $trans_available = $transcript_text eq 'not available' ? 0 : 1;
+
     my $karyotype = scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}) ? 'Karyotype' : 'Karyotype (not available)';
+
     $data_menu->append( $self->create_node( 'Karyotype', $karyotype,
       [qw(location      EnsEMBL::Web::Component::Location::Genome)],
-      { 'availability' => scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}), 
+      { 'availability' => scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}),
         'url' => '/'.$self->species.'/Location/Genome' }
     ));
     $data_menu->append( $self->create_node( 'Location', "Location ($location_text)",
       [qw(location      EnsEMBL::Web::Component::Location::Summary)],
-      { 'availability' => 1, 'url' => $location_url, 'raw' => 1 }
+      { 'availability' => $loc_available, 'url' => $location_url, 'raw' => 1 }
     ));
     $data_menu->append( $self->create_node( 'Gene', "Gene ($gene_text)",
       [],
-      { 'availability' => 1, 'url' => $gene_url, 'raw' => 1 }
+      { 'availability' => $gene_available, 'url' => $gene_url, 'raw' => 1 }
     ));
     $data_menu->append( $self->create_node( 'Transcript', "Transcript ($transcript_text)",
       [qw(location      EnsEMBL::Web::Component::Transcript::Summary)],
-      { 'availability' => 1, 'url' => $transcript_url, 'raw' => 1 }
+      { 'availability' => $trans_available, 'url' => $transcript_url, 'raw' => 1 }
     ));
+
   }
 }
 
