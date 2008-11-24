@@ -46,6 +46,10 @@ sub content {
     $config->{$_} = $object->param($_) unless $object->param($_) eq 'off';
   }
   
+  # FIXME: Nasty hack to allow the parameter to be defined, but false. Used when getting variations.
+  # Can be deleted once we get the correct set of variations from the API 
+  # (there are currently variations returned when the resequenced individuals match the reference)
+  $config->{'match_display'} ||= 0;  
   $config->{'exon_display'} = 'selected' if $config->{'exon_ori'};
   
   if ($config->{'line_numbering'}) {

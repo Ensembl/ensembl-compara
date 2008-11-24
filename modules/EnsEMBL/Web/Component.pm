@@ -428,9 +428,11 @@ sub get_sequence_data {
         $snp_start = $u_snps->{$snp->variation_name}->seq_region_name . ":$snp_start" if scalar keys %$u_snps;
         
         for ($start..$end) {
+          # FIXME: API currently returns variations when the resequenced individuals match the reference
+          # This line can be deleted once we get the correct set.
           # Don't mark up variations when the secondary strain is the same as the sequence.
-          # $sequence[-1] is the current seconday strain, as it is the last element pushed onto the array
-          next if ($config->{'match_display'} && $sequence[-1]->[$_]->{'letter'} eq '.');
+          # $sequence[-1] is the current secondary strain, as it is the last element pushed onto the array
+          next if (defined $config->{'match_display'} && $sequence[-1]->[$_]->{'letter'} =~ /\.|$sequence[0]->[$_]->{'letter'}/);
           
           $mk->{'variations'}->{$_}->{'type'} = $snp_type;
           $mk->{'variations'}->{$_}->{'alleles'} .= ($mk->{'variations'}->{$_}->{'alleles'} ? '; ' : '') . $alleles;
