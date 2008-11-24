@@ -25,15 +25,17 @@ sub content {
 
   my $align = $object->param('align');
   
-  ## Get the compara database hash!   
+  ## Get the compara database hash!
   my $hash = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
   my $species = $object->species;
-
+  
   my $options = qq{
         <option value="">-- Select an alignment --</option>};
   
   foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
     my $row = $hash->{$row_key};
+    
+    next unless $row->{'species'}->{$species};
     
     $options .= sprintf '
         <option value="%d"%s>%s</option>',
