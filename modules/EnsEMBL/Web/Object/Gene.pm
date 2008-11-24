@@ -621,7 +621,9 @@ sub fetch_homology_species_hash {
   my %classification;
   while ($node){
     $node->get_tagvalue('scientific name');
-    $classification{$node->get_tagvalue('scientific name')} = $node->right_index - $node->left_index;
+    # Found a speed boost with nytprof -- avilella
+    # $classification{$node->get_tagvalue('scientific name')} = $node->right_index - $node->left_index;
+    $classification{$node->{_tags}{'scientific name'}} = $node->{_right_index} - $node->{_left_index};
     $node = $node->children->[0];
   }
  
