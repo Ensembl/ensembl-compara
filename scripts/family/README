@@ -22,8 +22,8 @@ mcl (source can be obtained from http://micans.org/mcl/src/)
 
 # The family pipeline takes several GB of space (5GB should be sufficient). (df -k)
 
-mkdir -p /lustre/scratch1/ensembl/avilella/families/family_49
-cd /lustre/scratch1/ensembl/avilella/families/family_49
+mkdir -p /lustre/scratch1/ensembl/lg4/families/family_52
+cd /lustre/scratch1/ensembl/lg4/families/family_52
 mkdir tmp fasta blast_in blast_out blast_raw mcl muscle clustalw_mpi
 
 3- Loading in and dumping from compara the peptides
@@ -37,15 +37,15 @@ mkdir tmp fasta blast_in blast_out blast_raw mcl muscle clustalw_mpi
 # a) stable ids are in (look in tables 'exon_stable_id', 'translation_stable_id', 'transcript_stable_id' 
 #    and 'gene_stable_id')
 
-mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_49" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from exon_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from translation_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from transcript_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from gene_stable_id limit 10"; echo "---"; done | less
+mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_52" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from exon_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from translation_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from transcript_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from gene_stable_id limit 10"; echo "---"; done | less
 
 # b) species data in 'meta' table up to date
 
-mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_49" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from meta" | grep species; echo "---"; done | less
+mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_52" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from meta" | grep species; echo "---"; done | less
 
 # c) check the gene type e.g. pseudogene or RNA that you don't want to load and update the filter out condition if necessary
 
-mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_49" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select count(*) as number, biotype from gene group by biotype order by number desc"; echo "---"; done | less
+mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_52" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select count(*) as number, biotype from gene group by biotype order by number desc"; echo "---"; done | less
 
 # NB: need to add something here on how to load or a reference to homology documentation
 
@@ -54,49 +54,57 @@ mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_49" | 
 # so no redundancy is expected in the fasta file.
 
 # Go to the fasta dir
-cd fasta
+# Make it faster for big files in lsf
+# lfs setstripe fasta 0 -1 -1
+# cd fasta
+
+# Or move it to (depending on the blast filesystem services you've got)
+mkdir -p /data/blastdb/Ensembl/family_52/fasta
+cd /data/blastdb/Ensembl/family_52/fasta
 
 # Takes about 2 minutes
-perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl -conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_49/genetree_all.conf --noredundancy -fasta metazoa_49.pep > metazoa_49.pep.err 2>&1 &
+perl ~avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl -conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_52/genetree_all.conf --noredundancy -fasta metazoa_52.pep > metazoa_52.pep.err 2>&1 &
 
 # or if you don't have the hive conf file
+perl ~avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 3306 --dbuser ensro --dbname avilella_compara_homology_52 --noredundancy --fasta metazoa_52.pep > metazoa_52.pep.err 2>&1 &
 
-perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 3306 --dbuser ensro --dbname avilella_compara_homology_49 --noredundancy --fasta metazoa_49.pep > metazoa_49.pep.err 2>&1 &
-
-grep '>' metazoa_49.pep | wc -l
-# 1632277
+grep '>' metazoa_52.pep | wc -l
+2023775
+#v51 1811409
+#v50 1695699
+#v49 1653108
 #v48 1520968
 
 4- Format file for blast
    ~~~~~~~~~~~~~~~~~~~~~
 
 # Takes about 10 seconds
-fastaindex metazoa_49.pep metazoa_49.index
+fastaindex metazoa_52.pep metazoa_52.index
 
 # Takes about 5 minutes
-formatdb -p T -l metazoa_49.pep.formatdb.log -i metazoa_49.pep
+bsub -o /dev/null -q yesterday 'formatdb -p T -l metazoa_52.pep.formatdb.log -i metazoa_52.pep'
 
-# check metazoa_49.pep.formatdb.log if it is ok delete it
+# check metazoa_52.pep.formatdb.log if it is ok delete it
 
-# Formatted 1632277 sequences in volume 0
+# Formatted 2023775 sequences in volume 0
 
-rm -f metazoa_49.pep.formatdb.log
+rm -f metazoa_52.pep.formatdb.log
 
 # Create the index file for future run of mcl
 
 # Takes about 10 seconds
-awk 'BEGIN {idx=0} {print idx,$1;idx++}' metazoa_49.index > metazoa_49.tab
+awk 'BEGIN {idx=0} {print idx,$1;idx++}' metazoa_52.index > metazoa_52.tab
 
 5- Prepare files to run blastp
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-cd ../blast_in
+cd /lustre/scratch1/ensembl/lg4/families/family_52/blast_in
 
 # Distribute peptide ids in several files. Each of them will contain 100 ids,
 # and would correspond to one blastp job.
 
 # Takes about 1 minute
-perl ~/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl -maxids 250 ../fasta/metazoa_49.index
+perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl -maxids 250 /data/blastdb/Ensembl/family_52/fasta/metazoa_52.index
 
 #   The created files are named: PeptideSet.1, PeptideSet.2, ..., PeptideSet.n
 #   so that they are suitable for LSF job array creation. 
@@ -121,9 +129,11 @@ perl ~/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl -maxids 
 # my $fastafetch_executable
 # my $blast_parser_executable
 
-
 ls|wc -l
-# 6530
+8032
+# v51 7246
+# v50 6783
+# v49 6613
 # v48 6084
 
 # will tell you how many jobs have to be run. Just have a try with one to make sure everything is ok.
@@ -131,13 +141,18 @@ ls|wc -l
 # It is better to place the output files in a different directory to reduce the burden on the filesystem.
 # (The fewer files per directory the better).
 
+# BDir /data/blastdb/Ensembl/family_52/fasta
+# Ldir /lustre/scratch1/ensembl/lg4/families/family_52/fasta
+
 # LaunchBlast will run like this: system("/usr/local/ensembl/bin/blastall -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
 # where:
 #   -e  Expectation value (E) [Real]
 #   -v  Number of database sequences to show one-line descriptions for (V) [Integer]
 #   -b  Number of database sequence to show alignments for (B) [Integer]
 
-echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/avilella/families/family_49/fasta/metazoa_49.pep -fastaindex /lustre/scratch1/ensembl/avilella/families/family_49/fasta/metazoa_49.index -tab /lustre/scratch1/ensembl/avilella/families/family_49/fasta/metazoa_49.tab -dir /lustre/scratch1/ensembl/avilella/families/family_49/blast_raw/' | bsub -q long -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
+# This will run the first one to check if everything is working properly -- you can use "strace -p pid" to inspect your job in the cluster node
+
+echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.index -tab /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.tab -dir /lustre/scratch1/ensembl/lg4/families/family_52/blast_raw/' | bsub -q long -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
 
 # Check that the BLASTMAT points to /usr/local/ensembl/data/blastmat
 
@@ -163,10 +178,9 @@ ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was exec
 # Look for the last PeptideSet.NNNN
 ls | awk -F\. '{print $2}' | sort -n | tail
 
-# 6530
-
+# This will run the rest of the jobs up to 8032
 cd ../blast_in
-echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/avilella/families/family_49/fasta/metazoa_49.pep -fastaindex /lustre/scratch1/ensembl/avilella/families/family_49/fasta/metazoa_49.index -tab /lustre/scratch1/ensembl/avilella/families/family_49/fasta/metazoa_49.tab -dir /lustre/scratch1/ensembl/avilella/families/family_49/blast_raw/' | bsub -q long -JFamilyBlastp"[2-6530]" -o ../blast_out/PeptideSet.%I.out
+echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.index -tab /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.tab -dir /lustre/scratch1/ensembl/lg4/families/family_52/blast_raw/' | bsub -q long -JFamilyBlastp"[2-8032]" -o ../blast_out/PeptideSet.%I.out
 
 # Rerun the failed jobs in ../blast_out.
 
@@ -178,11 +192,20 @@ grep Exited ../job_status|sed "s/\./ /g"|awk '{print $2}'|sort -n > ../job_statu
 
 awk 'BEGIN {s=0;e=0;i=0} i==15 {print;i=0} s==0 {s=$1;e=$1;next} $1==e+1 {e=$1;next} $1>e+1 && e==s {printf s",";s=$1;e=$1;i++;next} $1>e+1 && e!=s {printf s"-"e",";s=$1;e=$1;i++;next} END {print s"-"e}' ../job_status.ids > ../job_status.ids.collapse
 
+# awk 'BEGIN {s=0;e=0;i=0} i==15 {print;i=0} s==0 {s=$1;e=$1;next} $1==e+1 {e=$1;next} $1>e+1 && e==s {printf s",";s=$1;e=$1;i++;next} $1>e+1 && e!=s {printf s"-"e",";s=$1;e=$1;i++;next} END {print s"-"e}' undone_blasts.txt
+
+# e.g.
+# 3805,3827,3891,3905,3961-3961
+# echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.index -tab /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.tab -dir /lustre/scratch1/ensembl/lg4/families/family_52/blast_raw/' | bsub -q long -JFamilyBlastp"[3805,3827,3891,3905,3961-3961]" -o ../blast_out/PeptideSet.%I.out
+
 cd ..
 
+# Because this only checks the out files, you can resubmit safely even if you still have running jobs, that haven't produced an out file yet:
 grep Exited job_status |awk '{print $1}'|while read i;do rm -f blast_out/$i;done
 
-cat job_status.ids.collapse|while read i;do echo "echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/avilella/families/family_49/fasta/metazoa_49.pep -fastaindex /lustre/scratch1/ensembl/avilella/families/family_49/fasta/metazoa_49.index -tab /lustre/scratch1/ensembl/avilella/families/family_49/fasta/metazoa_49.tab -dir /lustre/scratch1/ensembl/avilella/families/family_49/blast_raw/' | bsub -q long -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub
+cd blast_in
+
+cat job_status.ids.collapse|while read i;do echo "echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.index -tab /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.tab -dir /lustre/scratch1/ensembl/lg4/families/family_52/blast_raw/' | bsub -q long -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub
 
 # Then move to blast_in and resubmit the failed jobs
 
@@ -196,100 +219,87 @@ bash rebsub
 cd ../blast_raw
 
 # Takes about 8-10 minutes, do on a farm node
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -o $TIMESTAMP.out -e $TIMESTAMP.err 'ls|xargs gunzip -c > ../mcl/family_49.raw'
+# Took 25 seconds with stijn parameters
+export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -o $TIMESTAMP.out -e $TIMESTAMP.err 'find -name "*.raw.gz"|xargs gunzip -c > ../mcl/family_52.raw'
 
 cd ../mcl
 
-# create a symlink to ../fasta/metazoa_49.tab
+# create a symlink to /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.tab
 
-ln -s ../fasta/metazoa_49.tab family_49.tab
+ln -s /lustre/scratch1/ensembl/lg4/families/family_52/fasta/metazoa_52.tab family_52.tab
 
-# create a family_49.hdr header file,
+# create a family_52.hdr header file,
 # The dimensions should be the number of peptides. That can be obtained by
 
-wc -l family_49.tab
+# wc -l family_52.raw
+# 2007943 family_52.raw
+# lg4@bc-9-1-03:/lustre/scratch1/ensembl/lg4/families/family_52/mcl$ wc -l family_52.tab
+# 2023775 family_52.tab
 
-# 1632277 family_49.tab
+wc -l family_52.tab
+2023775 family_52.tab
+# 1811409 family_52.tab
+# v50 1695699 family_51.raw
+# v49 1653108 family_49.tab
 # v48 1520968 family_48.tab
 
 
-cat > family_49.hdr
+cat > family_52.hdr
 (mclheader
 mcltype matrix
-dimensions 1632277x1632277
+dimensions 2023775x2023775
 )
 
 # This takes not 30 min but about 8-10 minutes now that we have bigmem
-# fast nodes, and will generate a family_49.bin matrix file.
+# fast nodes, and will generate a family_52.bin matrix file.
 export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err '~/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh family_49'
+bsub -o $TIMESTAMP.out -e $TIMESTAMP.err '~avilella/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh family_52'
 
+# 50 min -- tcx file using lots of memory in turing -- bin is machine-dependent -- tcx is cross-machine compatible
 export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err '~/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh.test family_49'
+bsub -o $TIMESTAMP.out -e $TIMESTAMP.err '~avilella/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh.tcx family_52'
 
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[mem>=15000] rusage[mem=15000] -M15000000' '/nfs/acari/abel/bin/mcxassemble -b family_49 -r max -xo bin --binary'
+cd /lustre/scratch1/ensembl/lg4/families/family_52/mcl
+# The home directory is visible to turing, so it's more convenient and doesn't take that much space
+mkdir ~/family_52/
+cp -f family_52.hdr ~/family_52/
+cp -f family_52.tab ~/family_52/
+cp -f family_52.raw ~/family_52/
+cd  ~/family_52/
 
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[mem>=15000] rusage[mem=15000] -M15000000' '/lustre/work1/ensembl/avilella/families/x86-64/mcl-06-058/src/shmx/mcxassemble -b family_49 -r max -xo bin --binary'
-
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[mem>=15000] rusage[mem=15000] -M15000000' '/nfs/acari/avilella/bin/turing/mcl-06-058/src/shmx/mcxassemble -b family_49 -r max -xo bin --binary'
-
-bsub -q hugemem -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[mem>=15000] rusage[mem=15000] -M15000000' 'cd /tmp && /tmp/mcl-06-058/src/shmx/mcxassemble -b family_49 -r max -xo bin2 --binary'
-
-# Check that everything is all right in family_49.mcxassemble.err
+# Check that everything is all right in family_52.mcxassemble.err
 
 # We don't need the raw file anymore and as it takes quite a lot of space, delete it.
 
-rm -f family_49.raw
+rm -f family_52.raw
 
 9- Run mcl
    ~~~~~~~
 
 This step uses turing which has 192Gb of memory :))) and 16 CPUs. As mcl can be multi-threaded, it is very useful.
 
-# Takes about 5 hours
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -C0 -R 'select[ncpus>=8 && mem>14000 && type==IA64] rusage[mem=14000] span[hosts=1]' -q hugemem -n 8 -f "family_49.bin > /tmp/family_49.bin" -f "family_49.mcl < /tmp/family_49.mcl" /nfs/acari/avilella/bin/arch-ia64/mcl /tmp/family_49.bin -I 2.1 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_49.mcl
+Try to use 12 cpus, less if available in the hugemem queue, try to use lots of RAM, less if available:
 
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=8 && mem>14000 && type==IA64] rusage[mem=14000] span[hosts=1]' -q hugemem -n 8 /tmp/mcl-06-058/src/shmcl/mcl /tmp/family_49.bin -I 2.1 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_49.mcl
+for n in `seq 12 -1 1`
+do
+        for mem in `seq 95000 -20000 35000`
+        do
+                sleep 1
+                hmem=$(($mem * 1000))
+                # old method
+                # export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -C0 -R "select[ncpus>=$n && mem>$mem] rusage[mem=$mem] span[hosts=1]" -M$hmem -q hugemem -n $n "/nfs/acari/avilella/src/mcl-08-152/src/shmcl/mcl ~/family_52/family_52.tcx -I 2.1 -t $n -P 10000 -S 1000 -R 1260 -pct 90 -o ~/family_52/family_52.mcl.turing.pct90.$n.$mem.$TIMESTAMP"
+                # new method
+                export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -C0 -R "select[ncpus>=$n && mem>$mem] rusage[mem=$mem] span[hosts=1]" -M$hmem -q hugemem -n $n "/nfs/acari/avilella/src/mcl-08-152/src/shmcl/mcl ~/family_52/family_52.tcx -I 2.1 -t $n -tf 'gq(50)' -scheme 6 -o ~/family_52/family_52.mcl.turing.gq50.6.$n.$mem.$TIMESTAMP"
+                done
+done
 
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=6 && mem>20000 && type==IA64] rusage[mem=20000] span[hosts=1]' -q hugemem -n 6 /tmp/mcl-06-058/src/shmcl/mcl /tmp/family_49.tcx -I 2.1 -t 6 -P 999999 -S 999999 -R 2000 -pct 90 -pp 1500 -o /tmp/family_49.mcl.f
+# Once you have one of the jobs running, kill the remaining pending jobs with "bkill jobid".
 
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=6 && mem>20000 && type==IA64] rusage[mem=20000] span[hosts=1]' -q hugemem -n 6 /tmp/mcl-06-058/src/shmcl/mcl /tmp/family_49.tcx -I 2.1 -t 6 -P 10000 -S 900 -R 1000 -pct 80 -o /tmp/family_49.mcl.f
-
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=8 && mem>14000 && type==IA64] rusage[mem=14000] span[hosts=1]' -q hugemem -n 8 /nfs/acari/avilella/bin/arch-ia64/mcl ~/delete_soon/family_49.mci -I 2.1 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o ~/delete_soon/family_49.mcl
-
-
-/tmp/mcl-06-058/src/shmcl/mcl
-
-bsub -J64n4 -q long -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=4 && mem>15000] rusage[mem=15000] span[hosts=1]' -M15000000 -n4 /lustre/work1/ensembl/avilella/families/x86-64/mcl-06-058/src/shmcl/mcl /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.tcx -I 2.1 -t 4 -P 10000 -S 1000 -R 1260 -pct 90 -o /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.mcl.64n4
-
-bsub -J64n4f -q long -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=4 && mem>15000] rusage[mem=15000] span[hosts=1]' -M15000000 -n4 /lustre/work1/ensembl/avilella/families/x86-64/mcl-06-058/src/shmcl/mcl /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.tcx -I 2.1 -t 4 -P 50000 -S 1500 -R 2000 -pct 90 -o /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.mcl.64n4f
-
-bsub -J64n4fpp -q long -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=4 && mem>15000] rusage[mem=15000] span[hosts=1]' -M15000000 -n4 /lustre/work1/ensembl/avilella/families/x86-64/mcl-06-058/src/shmcl/mcl /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.tcx -I 2.1 -t 4 -P 50000 -S 1500 -R 2000 -pct 90 -pp 2500 -o /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.mcl.64n4fpp
-
-bsub -J64n4fff -q basement -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=4 && mem>15000] rusage[mem=15000] span[hosts=1]' -M15000000 -n4 /lustre/work1/ensembl/avilella/families/x86-64/mcl-06-058/src/shmcl/mcl /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.tcx -I 2.1 -t 4 -P 999999 -S 999999 -R 2000 -pct 90 -pp 1500 -o /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.mcl.64n4fff
-
-bsub -J64n4fff -q basement -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=4 && mem>15000] rusage[mem=15000] span[hosts=1]' -M15000000 -n4 /lustre/work1/ensembl/avilella/families/x86-64/mcl-06-058/src/shmcl/mcl /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.tcx -I 2.1 -t 4 -P 999999 -S 999999 -R 2000 -pct 90 -pp 1500 -o /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.mcl.64n4fff
-
-########################################
-
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -Ja64n4 -q basement -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=4 && mem>15000] rusage[mem=15000] span[hosts=1]' -M15000000 -n4 /lustre/work1/ensembl/avilella/families/x86-64/mcl-06-058/src/shmcl/mcl /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.tcx -I 2.1 -t 4 -P 10000 -S 900 -R 1000 -pct 80 -o /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.mcl.a64n4
-
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -Jb64n4 -q basement -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=4 && mem>15000] rusage[mem=15000] span[hosts=1]' -M15000000 -n4 /lustre/work1/ensembl/avilella/families/x86-64/mcl-06-058/src/shmcl/mcl /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.tcx -I 2.1 -t 4 -P 10000 -S 700 -R 800 -pct 60 -o /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.mcl.b64n4
-
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -Jc64n4 -q basement -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=4 && mem>15000] rusage[mem=15000] span[hosts=1]' -M15000000 -n4 /lustre/work1/ensembl/avilella/families/x86-64/mcl-06-058/src/shmcl/mcl /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.tcx -I 2.1 -t 4 -P 10000 -S 600 -R 700 -pct 50 -o /lustre/scratch1/ensembl/avilella/families/family_49/mcl/family_49.mcl.c64n4
-
-
-
-
-/nfs/acari/avilella/bin/arch-ia64/mcl /tmp/_family_49.bin -I 2.1 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_49.mcl
-
-
-bsub -Jia64n8 -q hugemem -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=8 && mem>14000 && type==IA64] rusage[mem=14000] span[hosts=1]' -n 8 /nfs/acari/avilella/bin/arch-ia64/mcl /tmp/_family_49.bin -I 2.1 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_49.mcl
+# turing old method (v48 and before)
+# export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -C0 -R 'select[ncpus>=8 && mem>10000 && type==LINUX64] rusage[mem=10000] span[hosts=1]' -q hugemem -n 8 -f "family_52.bin > /tmp/family_52.bin" -f "family_52.mcl < /tmp/family_52.mcl" -o mcl.out /nfs/acari/abel/bin/arch-ia64/mcl /tmp/family_52.bin -I 2.1 -t 8 -P 10000 -S 1000 -R 1260 -pct 90 -o /tmp/family_52.mcl
 
 # NB: whenever you have finished running mcl (maybe with different parameters), don't forget 
-# to delete /tmp/family_49.* from aristotle /tmp (a shell script having the flavour of 
+# to delete /tmp/family_50.* from aristotle /tmp (a shell script having the flavour of 
 # mcxassemble.sh or mcx.sh could do it automatically...not very useful though if several mcl run have to be tested)
 
 10- Load into compara database
@@ -297,8 +307,8 @@ bsub -Jia64n8 -q hugemem -o $TIMESTAMP.out -e $TIMESTAMP.err -R 'select[ncpus>=8
 
 # You'll need a compara database set up, with genome_db, taxon, and method_link tables prefilled.
 
-# Edit the reg_conf.49.pl to point to the compara_homology db
-/lustre/scratch1/ensembl/avilella/families/family_49/mcl/reg_conf.49.pl
+# Edit the reg_conf.50.pl to point to the compara_homology db
+/lustre/scratch1/ensembl/lg4/families/family_52/mcl/reg_conf.52.pl
 
 # Your reg_conf.pl should be something like
 
@@ -307,134 +317,52 @@ use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'compara2',
-                                            -user => 'xxxxx',
-                                            -pass => 'xxxxxx',
+                                            -user => 'ensadmin',
+                                            -pass => 'ensembl',
                                             -port => 3306,
-                                            -species => 'compara49',
-                                            -dbname => 'avilella_compara_homology_49');
+                                            -species => 'compara52',
+                                            -dbname => 'avilella_compara_homology_52');
 1;
 
 # This takes around an hour, and you can not do anything else before the loading is completed.
 
-nohup ~/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname compara49 --reg_conf /lustre/scratch1/ensembl/avilella/families/family_49/mcl/reg_conf.49.pl family_49.tab family_49.mcl > family_49.description 2> family_49.description.err &
+nohup ~avilella/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname compara52 --reg_conf /lustre/scratch1/ensembl/lg4/families/family_52/mcl/reg_conf.52.pl family_52.tab family_52.mcl -prefix fam52v > family_52.description 2> family_52.description.err &
 
 # To save space,
 
-bsub 'gzip family_49.mcl'
+bsub 'gzip family_52.mcl'
 
 11- Run muscle or clustalw over all the families
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # !!!Step 13 should be run also at the same time. It is not dependant on multiple alignments.
 
-# Scratch is better than work here
-mkdir -p /lustre/scratch1/ensembl/avilella/families/family_49/muscle
-cd /lustre/scratch1/ensembl/avilella/families/family_49/muscle
-
-The old way of doing this was to create a job per alignment, with the
-small ones being in the short queue and the longer ones going to the
-normal queue. This system was always painful for the farm, and systems
-asked us to do better.
-
-In the middle of v49 production I created a
-LaunchMuscleOnFamilies_batch.pl script which will run 'num_families'
-in the same job, starting from 'starting_family_id':
-
-mysql -hcompara2 -uensro avilella_compara_homology_49 -e "select count(*), family_id from family_member group by family_id having count(*)>1" | wc -l
-6413
-# 44852
+mysql -hcompara2 -uensro avilella_compara_homology_52 -e "select count(*), family_id from family_member where cigar_line IS NULL group by family_id having count(*)>1" | wc -l
+80681
+# v51 74656
+# v50 72676
+# v49 6413
+# v48 44852
 # v47 43834
 
-bsub -q normal -o ../6413.out -e ../6413.err 'perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies_batch.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -starting_family_id 6413 -num_families 413' 
+cd /lustre/scratch1/ensembl/lg4/families/family_52/
 
-We put the logs for this in the scratch1 directory instead of the work1 directory,
+# Get a list of all the family ids with more than one member. If you get it in random order, then the size of each id will be randomly spread in the list, and the jobs
+# will be more randomly distributed in terms of CPU time
+mysql -hcompara2 -uensro avilella_compara_homology_52 -N -e "select family_id from family_member group by family_id having count(*)>1 order by RAND()" > family_ids_rand.txt
 
-/lustre/scratch1/ensembl/avilella/families/family_49/muscle
+# I use a generic hive database for uploading the jobs. Each job is a LaunchMafft_batch.pl iwth a family id in the list
+perl /nfs/acari/avilella/src/ensembl_main/ensembl-personal/avilella/hive/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -input_id 'perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchMafftOnFamilies_batch.pl -h compara2 -db avilella_compara_homology_52 -u ensadmin -ps ensembl -f $inputfile -n 1 -s' -inputfile /lustre/scratch1/ensembl/lg4/families/family_52/family_ids_rand.txt -hive_capacity 200 -batch_size 5 -logic_name family_mafft_52_1
 
-Right now we allocate the alignments manually, and keep the logs in subdirectories.
+export PATH=$PATH:/nfs/acari/avilella/src/ensembl_main/ensembl-hive/scripts/
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -sync
 
-So for the ~20000 smallest alignments, do something like:
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -lsf_options '-R"select[mycompara2<500] rusage[mycompara2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_mafft_52_1
 
-export range=20
-perl ~/src/ensembl_main/ensembl-compara/scripts/family/get_nums.pl -start 5000 -end 6413 -range $range
+# The last ~1000 should be done with lots of memory:
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -lsf_options '-R"select[mycompara2<500 && mem>15000] rusage[mycompara2=10:duration=10:decay=1:mem=15000]" -M15000000' -lifespan 1200 -loop -logic_name family_mafft_52_1
 
-which gives the starting_family_id from 20000 to 44852 in batches of 100. Then apply (change dbpass!):
-
-starts="5001 5021 5041 5061 5081 5101 5121 5141 5161 5181 5201 5221 5241 5261 5281 5301 5321 5341 5361 5381 5401 5421 5441 5461 5481 5501 5521 5541 5561 5581 5601 5621 5641 5661 5681 5701 5721 5741 5761 5781 5801 5821 5841 5861 5881 5901 5921 5941 5961 5981 6001 6021 6041 6061 6081 6101 6121 6141 6161 6181 6201 6221 6241 6261 6281 6301 6321 6341 6361 6381 6401 6413"
-for start in $starts
-do
-        mkdir $start
-        cd $start
-        bsub -o $start.out -e $start.err -q normal "perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies_batch.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -starting_family_id $start -num_families $range -store"
-        cd ..
-        sleep 0.1
-done
-
-Once the previous batch is in the final stages in terms of mysql query
-load in the db, then proceed with the next batch is 2000 to 5000 in
-batches of 100:
-
-export range=5
-echo 'perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies_batch.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -starting_family_id ${LSF_JOBINDEX} -num_families 5 -store' | bsub -q normal -Jmscfm"[1000-3000:5]" -o %I.out -e %I.err
-
-using more memory
-
-echo 'perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies_batch.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -starting_family_id ${LSF_JOBINDEX} -num_families 5 -store' | bsub -q normal -Jmscfm"[500-1000:5]" -R 'select[mem>3500] rusage[mem=3500]' -M3500000 -o %I.out -e %I.err
-
-echo 'perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies_batch.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -starting_family_id ${LSF_JOBINDEX} -num_families 5 -store' | bsub -q normal -Jmscfm"[100-500:5]" -R 'select[mem>7000] rusage[mem=7000]' -M7000000 -o %I.out -e %I.err
-
-echo 'perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies_batch.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -starting_family_id ${LSF_JOBINDEX} -num_families 2 -store' | bsub -q normal -Jmscfm"[1-100:2]" -R 'select[mem>15000] rusage[mem=15000]' -M15000000 -o %I.out -e %I.err
-
-echo 'perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies_batch.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -starting_family_id ${LSF_JOBINDEX} -num_families 2 -store' | bsub -q normal -Jmscfm"[1-100:2]" -R 'select[mem>15000] rusage[mem=15000]' -M15000000 -o %I.out -e %I.err
-
--R 'select[mem>1500] rusage[mem=1500]'
-
-Then the next with a batch size of 10:
-
-export range=10
-perl ~/src/ensembl_main/ensembl-compara/scripts/family/get_nums.pl -start 500 -end 1000 -range $range
-
-using even more memory
-
--R 'select[mem>3500] rusage[mem=3500]'
-
-Then the next with a batch size of 5:
-
-export range=5
-perl ~/src/ensembl_main/ensembl-compara/scripts/family/get_nums.pl -start 50 -end 500 -range $range
-
--R 'select[mem>7000] rusage[mem=7000]'
-
-Then all the rest but the two biggest with a batch size of 2:
-
-perl ~/src/ensembl_main/ensembl-compara/scripts/family/get_nums.pl -start 2 -end 50 -range 2
-
-in the long queue and 7000 memory
-
--q long -R 'select[mem>7000] rusage[mem=7000]'
-
-The two biggest families tend to be too big, so try with muscle then with clustalw:
-
-bsub -q long -o 2.out -e 2.err  -R 'select[mem>15000] rusage[mem=15000]' -M3000000 'perl /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -family_id 2 -store -fast'
-
-bsub -q long -o 1.out -e 1.err  -R 'select[mem>15000] rusage[mem=15000]' -M3000000 'perl /nfs/acari/abel/src/ensembl_main/ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -family_id 1 -store -fast'
-
-At any point one can check what is undone, what is ongoing, and hence what is missing by looking at the NULLs in the cigar_lines for family_member:
-
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bjobs -l | grep family_id | awk -Fd '{print $2}' | awk '{print $1}' | sort -n | uniq > ongoing.$TIMESTAMP; mysql -hcompara2 -uensro avilella_compara_homology_49 -N -e "select distinct(family_id) from family_member where cigar_line IS NULL and family_id<6413" > undone.families.$TIMESTAMP && join -v 1 undone.families.$TIMESTAMP ongoing.$TIMESTAMP; echo "="; wc -l undone.families.$TIMESTAMP
-
-Making a head or a tail of the undon.families.$TIMESTAMP, we can resubmit them to Muscle with the -fast option, or to clustalw instead:
-
-cd failed
-
-head -n 100 undone.families.$TIMESTAMP > big.undone.list
-tail -n 100 undone.families.$TIMESTAMP > small.undone.list
-
-cat big.undone.list | while read i; do bsub -o $i.out -e $i.err -q long  -R 'select[mem>3500] rusage[mem=3500]' -M3500000 "perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_49 -dbuser ensadmin -dbpass xxxx -family_id $i -store"; sleep 0.1; done
-
-**
-
-When the alignments fail with muscle, we resort to clustalw:
+# When the alignments fail with mafft, you can resort to clustalw:
 
 The same kind of script but running CLUSTALW also exists, ensembl-compara/scripts/family/LaunchMuscleOnFamilies.pl
 
@@ -460,9 +388,9 @@ cd ../clustalw_mpi
 
 mysql -h compara2 -P3306 -N -u ensro -e "select m.stable_id from member m, family_member fm where m.member_id=fm.member_id and fm.family_id=1" avilella_compara_homology_47 > 1.ids
 
-fastafetch /lustre/scratch1/ensembl/avilella/families/family_47/fasta/metazoa_47.pep /lustre/scratch1/ensembl/avilella/families/family_47/fasta/metazoa_47.index -F true 1.ids > 1.ids.pep
+fastafetch /lustre/scratch1/ensembl/lg4/families/family_47/fasta/metazoa_47.pep /lustre/scratch1/ensembl/lg4/families/family_47/fasta/metazoa_47.index -F true 1.ids > 1.ids.pep
 
-bsub  -o 1.out -n10 -R"linux span[ptile=2]" ~/src/ensembl_main/ensembl-compara/scripts/family/run_clustalw_mpi.sh 1.ids.pep
+bsub  -o 1.out -n10 -R"linux span[ptile=2]" ~avilella/src/ensembl_main/ensembl-compara/scripts/family/run_clustalw_mpi.sh 1.ids.pep
 
 NB: span[ptile=2] tells NFS to use 2CPU's per machine 
 -n10 tells NFS that you will use 10 CPUs. There is no clear algorithm to choose the right number of CPUs to be used depending on the number of sequences. The more sequences you have the less efficient the mpi implementation is. Guy Coates did some testing
@@ -488,7 +416,7 @@ If everything worked fine, you should get 3 additional files, 1.out (the busb ou
 
 To Load the clustalw alignment, first check that the  muscle/single-cpu clustal job did not finish properly (if so
 you're done with this family), if not bkill it before loading.
-/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_45 -dbuser ensadmin -dbpass xxxx -family_id 1 -clustal_file 1.ids.pep.clw -store > 1.ids.pep.clw.load 2>&1 &
+/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchClustalwOnFamilies.pl -host compara2 -port 3306 -dbname avilella_compara_homology_45 -dbuser ensadmin -dbpass ensembl -family_id 1 -clustal_file 1.ids.pep.clw -store > 1.ids.pep.clw.load 2>&1 &
 
 12- Insert the redundant proteins in the compara db
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -497,27 +425,27 @@ cd ../fasta
 
 First, set all singletons cigar_line to the length(m.sequence) + "M", because some singletons will disappear with the addition of redundant sequences.
 
-mysql -h compara2 -u ensro -P3306 -N -e "select family_id,count(*) as count from family_member group by family_id having count=1" avilella_compara_homology_49 | awk '{print "select family_id, length(s.sequence) from member m,family_member fm, sequence s where fm.member_id=m.member_id and fm.family_id="$1" and s.sequence_id = m.sequence_id;"}'|mysql -h compara2 -u ensro -P3306 -N avilella_compara_homology_49 |awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}'|sort -u > update_singletons_cigar_line.sql
+mysql -h compara2 -u ensro -P3306 -N -e "select family_id,count(*) as count from family_member group by family_id having count=1" avilella_compara_homology_52 | awk '{print "select family_id, length(s.sequence) from member m,family_member fm, sequence s where fm.member_id=m.member_id and fm.family_id="$1" and s.sequence_id = m.sequence_id;"}'|mysql -h compara2 -u ensro -P3306 -N avilella_compara_homology_52 |awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}'|sort -u > /tmp/update_singletons_cigar_line.sql
 
-mysql -h compara2 -u ensadmin -p xxxx -P3306 avilella_compara_homology_49 < update_singletons_cigar_line.sql
+mysql -h compara2 -uensadmin -pensembl -P3306 avilella_compara_homology_52 < update_singletons_cigar_line.sql
 
-perl ~/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf /lustre/scratch1/ensembl/avilella/families/family_49/mcl/reg_conf.49.pl --dbname compara49 > Redundancy_and_Genes_load.err 2>&1 &
+perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf /lustre/scratch1/ensembl/lg4/families/_family_52/mcl/reg_conf.52.pl --dbname compara52 > Redundancy_and_Genes_load.err 2>&1 &
 
 IMPORTANT: add healthcheck about NULL cigar_line
-mysql -hcompara2 -uensro avilella_compara_homology_49 -e "select m.source_name,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL group by m.source_name"
+mysql -hcompara2 -uensro avilella_compara_homology_52 -e "select m.source_name,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL group by m.source_name"
 
-This should return count 0;
+This should return count for ENSEMBLGENE;
 
-mysql -hcompara2 -uensro avilella_compara_homology_49 -e "select fm.family_id,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL and m.source_name!='ENSEMBLGENE' group by fm.family_id"
+mysql -hcompara2 -uensro avilella_compara_homology_52 -e "select fm.family_id,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL and m.source_name!='ENSEMBLGENE' group by fm.family_id"
 
 This should only list the families for which multiple alignment could not be run.
-+-----------+----------+
-| family_id | count(*) |
-+-----------+----------+
-|         1 |    15115 |
-|        29 |     1714 |
-|       176 |      769 |
-+-----------+----------+
+
+# E.g.:
+# +-----------+----------+
+# | family_id | count(*) |
+# +-----------+----------+
+# |       178 |      691 | 
+# +-----------+----------+
 
 13- Generates the family descriptions
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -528,17 +456,17 @@ This should only list the families for which multiple alignment could not be run
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
        # This step takes approx 2 hours total
        cd mcl
-       perl ~/src/ensembl_main/ensembl-compara/scripts/family/consensifier.pl -d "Uniprot/SWISSPROT" family_49.description > family_49.description.SWISSPROT-consensus 2> family_49.description.SWISSPROT-consensus.err
-       perl ~/src/ensembl_main/ensembl-compara/scripts/family/consensifier.pl -d "Uniprot/SPTREMBL" family_49.description > family_49.description.SPTREMBL-consensus 2> family_49.description.SPTREMBL-consensus.err
+       perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/consensifier.pl -d "Uniprot/SWISSPROT" family_52.description > family_52.description.SWISSPROT-consensus 2> family_52.description.SWISSPROT-consensus.err
+       perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/consensifier.pl -d "Uniprot/SPTREMBL" family_52.description > family_52.description.SPTREMBL-consensus 2> family_52.description.SPTREMBL-consensus.err
 
        ensembl-compara/scripts/family/assemble-consensus.pl
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-       perl ~/src/ensembl_main/ensembl-compara/scripts/family/assemble-consensus.pl family_49.description family_49.description.SWISSPROT-consensus family_49.description.SPTREMBL-consensus  > family_49.description-consensus 2> family_49.description-consensus.err
+       perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/assemble-consensus.pl family_52.description family_52.description.SWISSPROT-consensus family_52.description.SPTREMBL-consensus  > family_52.description-consensus 2> family_52.description-consensus.err
 
 
-update the family description in ensembl_family_49 with the data in family_49.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
+update the family description in ensembl_family_52 with the data in family_52.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
 Use the same reg_cong.pl as in step 11
 
-perl ~/src/ensembl_main/ensembl-compara/scripts/family/LoadDescriptionInFamily.pl --reg_conf /lustre/scratch1/ensembl/avilella/families/family_49/mcl/reg_conf.49.pl --dbname compara49 family_49.description-consensus
+perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/LoadDescriptionInFamily.pl --reg_conf /lustre/scratch1/ensembl/lg4/families/family_52/mcl/reg_conf.52.pl --dbname compara52 family_52.description-consensus
 
 
