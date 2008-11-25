@@ -48,8 +48,13 @@ sub content {
     $table->add_columns(
       {'key' => "type",   'title' => 'Type',          'width' => '10%', 'align' => 'left' },
       {'key' => "name",   'title' => 'File',          'width' => '45%', 'align' => 'left' },
-      {'key' => "date",   'title' => 'Last updated',  'width' => '15%', 'align' => 'left' },
-      {'key' => "save",   'title' => '',              'width' => '15%', 'align' => 'left' },
+    );
+    if ($ENV{'ENSEMBL_LOGINS'}) {
+      $table->add_columns(
+        {'key' => "date",   'title' => 'Last updated',  'width' => '15%', 'align' => 'left' },
+        {'key' => "save",   'title' => '',              'width' => '15%', 'align' => 'left' },
+      );
+    $table->add_columns(
       {'key' => "delete", 'title' => '',              'width' => '15%', 'align' => 'left' },
     );
     foreach my $file (@data) {
@@ -75,7 +80,12 @@ sub content {
           $date = '-';
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
         }
-        $row = {'type' => $type, 'name' => $name, 'date' => $date, 'save' => 'Saved', 'delete' => $delete };
+        if ($ENV{'ENSEMBL_LOGINS'}) {
+          $row = {'type' => $type, 'name' => $name, 'date' => $date, 'save' => 'Saved', 'delete' => $delete };
+        }
+        else {
+          $row = {'type' => $type, 'name' => $name, 'delete' => $delete };
+        }
       }
       else {
         my $save = sprintf('<a href="%s/Account/Login?%s" class="modal_link">Log in to save</a>', $dir, $referer);
@@ -83,7 +93,7 @@ sub content {
         if (ref($file) =~ /DasConfig/) {
           $type = 'DAS';
           $name = $file->label;
-          if ($user) {
+          if ($ENV{'ENSEMBL_LOGINS'} && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;dsn=%s;%s" class="modal_link">Save to account</a>', $dir, $file->logic_name, $referer);
           }
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s;%s" class="modal_link">Remove</a>', $dir, $file->logic_name, $referer);
@@ -93,7 +103,7 @@ sub content {
           $type = 'URL';
           $name = '<strong>'.$file->{'name'}.'</strong><br />' if $file->{'name'};
           $name .= $file->{'url'}.' ('.$file->{'species'}.')';
-          if ($user) {
+          if ($ENV{'ENSEMBL_LOGINS'} && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
           }
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="modal_link">Remove</a>', $dir, $file->{'code'}, $referer);
@@ -104,12 +114,17 @@ sub content {
           $name .= '<strong>'.$file->{'name'}.'</strong><br />' if $file->{'name'};
           $name .= $file->{'format'}.' file for '.$file->{'species'};
           my $extra = 'type='.$file->{'type'}.';code='.$file->{'code'};
-          if ($user) {
+          if ($ENV{'ENSEMBL_LOGINS'} && $user) {
             $save = qq(<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>);
           }
           $delete = qq(<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="modal_link">Remove</a></p>);
         }
-        $row = {'type' => $type, 'name' => $name, 'date' => '-', 'save' => $save, 'delete' => $delete };
+        if ($ENV{'ENSEMBL_LOGINS'}) {
+          $row = {'type' => $type, 'name' => $name, 'date' => '-', 'save' => $save, 'delete' => $delete };
+        }
+        else {
+          $row = {'type' => $type, 'name' => $name, 'delete' => $delete };
+        }
       }
       $table->add_row($row);
     }
