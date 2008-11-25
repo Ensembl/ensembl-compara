@@ -101,7 +101,6 @@ sub content {
       $has_data = 1;
       ## Set some basic image parameters
       $image->imagemap = 'no';
-      $image->caption = 'Click on the image above to jump to an overview of the chromosome';
       ## Userdata setting overrides any other tracks
       $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]);
     } 
@@ -132,11 +131,11 @@ sub content {
     if (!@$pointers) { ## Ordinary "KaryoView"
       $image->image_name = "karyotype-$species";
       $image->imagemap = 'no';
-      $image->caption = 'Click on the image above to jump to an overview of the chromosome';
     }
   
 #    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
     $image->set_button('drag', 'title' => 'Click on a chromosome' );
+    $image->caption = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
     $image->imagemap = 'yes';
     $image->karyotype( $object, $pointers, 'Vkaryotype' );
     $html .= $image->render;
