@@ -1,8 +1,8 @@
 ABOUT
 ~~~~~
 
-This document describes how to run the ensembl-compara homology
-pipeline.
+This document describes how to run the ensembl-compara BRH/RS-based
+homology pipeline.
 
 - Loads the longest peptide for each gene loci in each configured
   species database into the compara DB's member table.
@@ -15,8 +15,10 @@ pipeline.
   the DB, and loads the processed results into the homology_member
   table.
 
-- Run this pipeline in preparation for running the family or gene-tree
-  pipelines.
+- Run this pipeline in preparation for running the family
+  pipeline. This pipeline roughly corresponds to the first part of the
+  genetree pipeline, for which there is a README-genetree explanatory
+  file.
 
 
 1- code API needed and executable
