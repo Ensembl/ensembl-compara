@@ -27,9 +27,12 @@ sub counts {
     $counts->{'bookmarks'}      = $user->bookmarks->count;
     $counts->{'configurations'} = $user->configurations->count;
     $counts->{'annotations'}    = $user->annotations->count;
-    $counts->{'uploads'}        = $user->uploads->count;
-    $counts->{'dases'}          = $user->dases->count;
-    $counts->{'urls'}           = $user->urls->count;
+
+    $counts->{'userdata'} = $user->uploads->count + $user->dases->count + $user->urls->count;
+    $counts->{'userdata'} += $self->get_session->get_data('type'=>'upload');
+    $counts->{'userdata'} += $self->get_session->get_data(type => 'url');
+    $counts->{'userdata'} += scalar(keys %{$self->get_session->get_all_das});
+
     my @groups = $user->find_nonadmin_groups;
     foreach my $group (@groups) {
       $counts->{'bookmarks'}      += $group->bookmarks->count;
