@@ -122,9 +122,9 @@ sub fetch_by_source_stable_id {
 =head2 fetch_all
 
   Arg        : None
-  Example    : 
-  Description: 
-  Returntype : 
+  Example    : my $members = $ma->fetch_all;
+  Description: Fetch all the members in the db
+  Returntype : listref of Bio::EnsEMBL::Compara::Member objects
   Exceptions : 
   Caller     : 
 
@@ -151,10 +151,11 @@ sub fetch_by_source {
 =head2 fetch_all_by_source
 
   Arg [1]    : string $source_name
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
+  Example    : my $members = $ma->fetch_all_by_source(
+                   "Uniprot/SWISSPROT");
+  Description: Fetches the member corresponding to a source_name.
+  Returntype : listref of Bio::EnsEMBL::Compara::Member objects
+  Exceptions : throws if $source_name is undef
   Caller     : 
 
 =cut
@@ -185,11 +186,13 @@ sub fetch_by_source_taxon {
 
 =head2 fetch_all_by_source_taxon
 
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
+  Arg [1]    : string $source_name
+  Arg [2]    : int $taxon_id
+  Example    : my $members = $ma->fetch_all_by_source_taxon(
+                   "Uniprot/SWISSPROT", 9606);
+  Description: Fetches the member corresponding to a source_name and a taxon_id.
+  Returntype : listref of Bio::EnsEMBL::Compara::Member objects
+  Exceptions : throws if $source_name or $taxon_id is undef
   Caller     : 
 
 =cut
@@ -209,10 +212,11 @@ sub fetch_all_by_source_taxon {
 
 =head2 get_source_taxon_count
 
-  Arg [1]    : 
+  Arg [1]    : string $source_name
+  Arg [2]    : int $taxon_id
   Example    : my $sp_gene_count = $memberDBA->get_source_taxon_count('ENSEMBLGENE',$taxon_id);
   Description: 
-  Returntype : int
+  Returntype : int $sp_gene_count is the number of members for this source_name and taxon_id
   Exceptions : 
   Caller     : 
 
