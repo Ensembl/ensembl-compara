@@ -42,8 +42,8 @@ sub find_administratable_groups {
   my $self = shift;
 
   my @admin_groups = (
-    $self->groups(level => 'administrator'),
-    $self->groups(level => 'superuser'),
+    $self->groups(level => 'administrator', member_status => 'active'),
+    $self->groups(level => 'superuser', member_status => 'active'),
   );
 
   return @admin_groups;
@@ -51,7 +51,7 @@ sub find_administratable_groups {
 
 sub find_nonadmin_groups {
   my $self = shift;
-  return $self->groups(level => 'member');
+  return $self->groups(level => 'member', member_status => 'active');
 }
 
 sub is_administrator_of {
