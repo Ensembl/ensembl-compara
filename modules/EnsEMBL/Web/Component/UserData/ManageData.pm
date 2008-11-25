@@ -91,7 +91,7 @@ sub content {
       else {
         my $save = sprintf('<a href="%s/Account/Login?%s" class="modal_link">Log in to save</a>', $dir, $referer);
         my ($type, $name, $delete);
-        if (ref($file) =~ /DasConfig/) {
+        if (ref($file) =~ /DASConfig/i) {
           $type = 'DAS';
           $name = $file->label;
           if ($ENV{'ENSEMBL_LOGINS'} && $user) {
