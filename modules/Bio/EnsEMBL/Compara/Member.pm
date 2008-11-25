@@ -10,6 +10,37 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::NestedSet;
 our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
+=head2 new (CONSTRUCTOR)
+
+    Arg [-DBID] : (opt) 
+        : int $dbID (the database internal ID for this object)
+    Arg [-ADAPTOR] 
+        : Bio::EnsEMBL::Compara::DBSQL::Member $adaptor
+                (the adaptor for connecting to the database)
+    Arg [-DESCRIPTION] (opt) 
+         : string $description
+    Arg [-SOURCE_NAME] (opt) 
+         : string $source_name 
+         (e.g., "ENSEMBLGENE", "ENSEMBLPEP", "Uniprot/SWISSPROT", "Uniprot/SPTREMBL")
+    Arg [-TAXON_ID] (opt)
+         : int $taxon_id
+         (NCBI taxonomy id for the member)
+    Arg [-GENOME_DB_ID] (opt)
+        : int $genome_db_id
+        (the $genome_db->dbID for a species in the database)
+    Arg [-SEQUENCE_ID] (opt)
+        : int $sequence_id
+        (the $sequence_id for the sequence table in the database)
+    Example :
+	my $member = new Bio::EnsEMBL::Compara::Member;
+       Description: Creates a new Member object
+       Returntype : Bio::EnsEMBL::Compara::Member
+       Exceptions : none
+       Caller     : general
+       Status     : Stable
+
+=cut
+
 sub new {
   my ($class, @args) = @_;
 
@@ -624,6 +655,16 @@ sub sequence_id {
   return $self->{'_sequence_id'};
 }
 
+=head2 gene_member_id
+
+  Arg [1]    : int $gene_member_id
+  Example    : my $gene_member_id = $member->gene_member_id;
+  Description: Gene_member_id of this protein member
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub gene_member_id {
   my $self = shift;
@@ -667,8 +708,8 @@ sub bioseq {
 =head2 gene_member
 
   Arg[1]     : Bio::EnsEMBL::Compara::Member $geneMember (optional)
-  Example    : my $primaryseq = $member->primaryseq;
-  Description: returns sequence this member as a Bio::Seq object
+  Example    : my $gene_member = $member->gene_member;
+  Description: returns gene member object for this protein member
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions : if arg[0] is not a Bio::EnsEMBL::Compara::Member object
   Caller     : MemberAdaptor(set), general
