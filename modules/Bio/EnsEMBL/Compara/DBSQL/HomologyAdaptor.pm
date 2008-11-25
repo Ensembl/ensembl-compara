@@ -155,6 +155,18 @@ sub fetch_all_by_Member_method_link_type {
   return $self->generic_fetch($constraint, $join);
 }
 
+=head2 fetch_all_by_Member_MethodLinkSpeciesSet
+
+  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
+  Arg [2]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
+  Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member_MethodLinkSpeciesSet($member, $mlsss);
+  Description: fetch the homology relationships for a given $member and $mlss.
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Exceptions : none
+  Caller     : 
+
+=cut
+
 sub fetch_all_by_Member_MethodLinkSpeciesSet {
   my ($self, $member, $method_link_species_set) = @_;
 
@@ -241,6 +253,19 @@ sub fetch_by_Member_Member_method_link_type {
   return $self->generic_fetch($constraint, $join);
 }
 
+=head2 fetch_by_Member_id_Member_id
+
+  Arg [1]    : int $member_id1
+  Arg [2]    : int $member_id2
+  Example    : $homologies = $HomologyAdaptor->fetch_by_Member_id_Member_id(
+                   $member_id1, $member_id2);
+  Description: fetch the homology relationships for a given member_id pair
+  Returntype : a Bio::EnsEMBL::Compara::Homology object
+  Exceptions : none
+  Caller     : 
+
+=cut
+
 sub fetch_by_Member_id_Member_id {
   my ($self, $member_id1, $member_id2) = @_;
 
@@ -257,7 +282,6 @@ sub fetch_by_Member_id_Member_id {
 
   return $self->generic_fetch($constraint, $join);
 }
-
 
 
 =head2 fetch_all_by_MethodLinkSpeciesSet
@@ -377,6 +401,25 @@ sub fetch_all_by_MethodLinkSpeciesSet_orthology_type {
 
   return $self->generic_fetch($constraint);
 }
+
+=head2 fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype
+
+  Arg [1]    : method_link_species_set
+  Arg [2]    : orthology type
+  Arg [3]    : orthology subtype
+  Example    : $homologies = $HomologyAdaptor->
+                  fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype(
+                  $mlss, 'ortholog_one2one','Mammalia');
+  Description: fetch all the homology relationships for the given
+               orthology type, mlss (corresponding to one or
+               a pair of genomes) and subtype (taxonomy level). This method can be
+               used to grab all the orthologues for one genome paralogues or a species
+               pair and an orthology type and taxonomy level.
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Exceptions : none
+  Caller     :
+
+=cut
 
 
 sub fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype {
