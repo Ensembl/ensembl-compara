@@ -87,7 +87,9 @@ sub populate_tree {
     [qw(gen_alignment      EnsEMBL::Web::Component::Location::ComparaGenomicAlignment)],
     {'no_menu_entry' => 1 }
   ));
-  $align_menu->append( $self->create_node( 'Synteny', "Synteny ([[counts::synteny]])",
+  my $availability = $self->object->availability;
+  my $caption = $availability->{'chromosome'} ? 'Synteny ([[counts::synteny]])' : 'Synteny';
+  $align_menu->append( $self->create_node( 'Synteny', $caption,
     [qw(
       image      EnsEMBL::Web::Component::Location::SyntenyImage
       species    EnsEMBL::Web::Component::Location::ChangeSpecies
@@ -98,7 +100,8 @@ sub populate_tree {
     { 'availability' => 'chromosome has_synteny', 'concise' => 'Synteny'}
   ));
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
-  $variation_menu->append( $self->create_node( 'SequenceAlignment', "Resequencing ([[counts::reseq_strains]])",
+  $caption = $availability->{'slice'} ? 'Resequencing ([[counts::reseq_strains]])' : 'Resequencing';
+  $variation_menu->append( $self->create_node( 'SequenceAlignment', $caption,
     [qw(botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
 	      align   EnsEMBL::Web::Component::Location::SequenceAlignment)],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
