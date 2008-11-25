@@ -17,7 +17,7 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
-
+  my $sd = $object->species_defs;
   
   ## Control panel fixes
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
@@ -49,7 +49,7 @@ sub content {
       {'key' => "type",   'title' => 'Type',          'width' => '10%', 'align' => 'left' },
       {'key' => "name",   'title' => 'File',          'width' => '45%', 'align' => 'left' },
     );
-    if ($ENV{'ENSEMBL_LOGINS'}) {
+    if ($sd->ENSEMBL_LOGINS) {
       $table->add_columns(
         {'key' => "date",   'title' => 'Last updated',  'width' => '15%', 'align' => 'left' },
         {'key' => "save",   'title' => '',              'width' => '15%', 'align' => 'left' },
@@ -81,7 +81,7 @@ sub content {
           $date = '-';
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
         }
-        if ($ENV{'ENSEMBL_LOGINS'}) {
+        if ($sd->ENSEMBL_LOGINS) {
           $row = {'type' => $type, 'name' => $name, 'date' => $date, 'save' => 'Saved', 'delete' => $delete };
         }
         else {
@@ -94,7 +94,7 @@ sub content {
         if (ref($file) =~ /DASConfig/i) {
           $type = 'DAS';
           $name = $file->label;
-          if ($ENV{'ENSEMBL_LOGINS'} && $user) {
+          if ($sd->ENSEMBL_LOGINS && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;dsn=%s;%s" class="modal_link">Save to account</a>', $dir, $file->logic_name, $referer);
           }
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s;%s" class="modal_link">Remove</a>', $dir, $file->logic_name, $referer);
@@ -104,7 +104,7 @@ sub content {
           $type = 'URL';
           $name = '<strong>'.$file->{'name'}.'</strong><br />' if $file->{'name'};
           $name .= $file->{'url'}.' ('.$file->{'species'}.')';
-          if ($ENV{'ENSEMBL_LOGINS'} && $user) {
+          if ($sd->ENSEMBL_LOGINS && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
           }
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="modal_link">Remove</a>', $dir, $file->{'code'}, $referer);
@@ -115,12 +115,12 @@ sub content {
           $name .= '<strong>'.$file->{'name'}.'</strong><br />' if $file->{'name'};
           $name .= $file->{'format'}.' file for '.$file->{'species'};
           my $extra = 'type='.$file->{'type'}.';code='.$file->{'code'};
-          if ($ENV{'ENSEMBL_LOGINS'} && $user) {
+          if ($sd->ENSEMBL_LOGINS && $user) {
             $save = qq(<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>);
           }
           $delete = qq(<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="modal_link">Remove</a></p>);
         }
-        if ($ENV{'ENSEMBL_LOGINS'}) {
+        if ($sd->ENSEMBL_LOGINS) {
           $row = {'type' => $type, 'name' => $name, 'date' => '-', 'save' => $save, 'delete' => $delete };
         }
         else {
