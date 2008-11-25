@@ -54,6 +54,7 @@ sub content {
         {'key' => "date",   'title' => 'Last updated',  'width' => '15%', 'align' => 'left' },
         {'key' => "save",   'title' => '',              'width' => '15%', 'align' => 'left' },
       );
+    }
     $table->add_columns(
       {'key' => "delete", 'title' => '',              'width' => '15%', 'align' => 'left' },
     );
