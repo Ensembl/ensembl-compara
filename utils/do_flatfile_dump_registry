@@ -29,10 +29,11 @@ my $general_options;
 my ($help, $info, $email);
 
 my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region, $listonly, $batch_total, $batch_index);
+$hugemem = undef;
 
 &GetOptions( 'maxsize:s'    => \$MAX_SIZE,
              'format:s'	    => \@user_formats,
-             'species:s'    => \@species,
+             'species:s{,}'    => \@species,
              'logfile:s'    => \$logfile,
 	     'email:s'      => \$email,
 	     'no_log'       => \$no_log,
@@ -55,7 +56,7 @@ my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region, $listonly, $batch_to
              'seq_region=s' => \$seq_region,
              'listonly'     => \$listonly,
 	     'batch_total:s' => \$batch_total,
-             'batch_index:s' => \$batch_index,
+             'batch_index:s' => \$batch_index,	     
            ) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
@@ -129,15 +130,19 @@ if(defined($farm)){
       #create job file
       my $sp = $species[$index];
       my $main_job = job_file($lsf_dir,$species[$index]);
-      my $main_bsub = 'bsub -Rselect[linux]  -E"test -x '.$exe.' && test -d '.$dump_directory.'"';
- #        $main_bsub .=  ' -E"test -d '.$dump_directory.'"';
+      my $main_bsub;	
+
+         $main_bsub = 'bsub -R"select[linux] select[mem>5500] rusage[mem=5500]" -M5500000 -E"test -x '.$exe.' && test -d '.$dump_directory.'"';
          $main_bsub .=  ' -q long  ';
+ 
          $main_bsub .=  ' -J '.$sp.' ';
          $main_bsub .=  ' -e"'.$dump_directory.'/lsf_scripts/'.$sp.'.err"';
          $main_bsub .=  ' -o"'.$dump_directory.'/lsf_scripts/'.$sp.'.out"';
+
       if($jobid){
 	$main_bsub .= ' -w "ended('.$jobid.')"';
       }
+      print $main_bsub, "\n";
       
       eval {
 	my $pid;
