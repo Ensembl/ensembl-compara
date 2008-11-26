@@ -67,9 +67,10 @@ sub populate_tree {
     [qw(summary EnsEMBL::Web::Component::Variation::Context)],
     { 'availability' => 'variation', 'concise' => 'Context' }
   );
-
-
-
+  $self->create_node( 'External', "External Data",
+    [qw(summary EnsEMBL::Web::Component::Variation::ExternalData)],
+    { 'availability' => 'variation', 'concise' => 'External Data' }
+  );
 }
 
 1;
