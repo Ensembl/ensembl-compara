@@ -53,6 +53,11 @@ GET VALUES
   my $genomic_align_block_is_on_the_original_strand =
       $genomic_align_block->get_original_strand;
 
+=head1 DESCRIPTION
+
+The GenomicAlignBlock object stores information about an alignment comprising of two or more pieces of genomic DNA.
+
+
 =head1 OBJECT ATTRIBUTES
 
 =over
@@ -205,6 +210,7 @@ use Bio::SimpleAlign;
   Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlock
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -248,6 +254,18 @@ sub new {
   return $self;
 }
 
+=head2 new_fast
+
+  Arg [1]    : hash reference $hashref
+  Example    : none
+  Description: This is an ultra fast constructor which requires knowledge of
+               the objects internals to be used.
+  Returntype :
+  Exceptions : none
+  Caller     :
+  Status     : Stable
+
+=cut
 
 sub new_fast {
   my $class = shift;
@@ -268,6 +286,7 @@ sub new_fast {
   Exceptions : thrown if $adaptor is not a
                Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -293,6 +312,7 @@ sub adaptor {
   Returntype : integer
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -320,6 +340,7 @@ sub dbID {
   Exceptions : thrown if $method_link_species_set is not a
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -367,6 +388,7 @@ sub method_link_species_set {
   Exceptions : thrown if $method_link_species_set_id does not match a previously defined
                method_link_species_set
   Caller     : object::methodname
+  Status     : Stable
 
 =cut
 
@@ -418,6 +440,7 @@ sub method_link_species_set_id {
   Returntype : integer
   Exceptions : throw if $reference_genomic_align_id id not a postive number
   Caller     : $genomic_align_block->reference_genomic_align_id(int)
+  Status     : Stable
 
 =cut
 
@@ -479,7 +502,7 @@ sub starting_genomic_align_id {
 
 
 =head2 reference_genomic_align
- 
+
   Arg [1]    : (optional) Bio::EnsEMBL::Compara::GenomicAlign $reference_genomic_align
   Example    : $genomic_align_block->reference_genomic_align($reference_genomic_align);
   Example    : $genomic_align = $genomic_align_block->reference_genomic_align();
@@ -498,6 +521,7 @@ sub starting_genomic_align_id {
   Exceptions : throw if reference_genomic_align_id does not match any of the
                Bio::EnsEMBL::Compara::GenomicAlign objects in the genomic_align_array
   Caller     : $genomic_align_block->reference_genomic_align()
+  Status     : Stable
 
 =cut
 
@@ -568,7 +592,7 @@ sub starting_genomic_align {
 
 
 =head2 resulting_genomic_aligns
- 
+
   DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_non_reference_genomic_align()
   method instead
  
@@ -599,7 +623,7 @@ sub resulting_genomic_aligns {
 
 
 =head2 get_all_non_reference_genomic_aligns
- 
+
   Arg [1]    : (none)
   Example    : $genomic_aligns = $genomic_align_block->get_all_non_reference_genomic_aligns();
   Description: get the non_reference_genomic_aligns. When looking for genomic alignments in
@@ -615,7 +639,8 @@ sub resulting_genomic_aligns {
   Exceptions : warns if no genomic_align_array has been set and returns a ref.
                to an empty array
   Caller     : $genomic_align_block->non_reference_genomic_aligns()
- 
+  Status     : Stable
+
 =cut
 
 sub get_all_non_reference_genomic_aligns {
@@ -648,7 +673,7 @@ sub get_all_non_reference_genomic_aligns {
 
 
 =head2 genomic_align_array
- 
+
   Arg [1]    : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Example    : $genomic_aligns = $genomic_align_block->genomic_align_array();
                $genomic_align_block->genomic_align_array([$genomic_align1, $genomic_align2]);
@@ -661,6 +686,7 @@ sub get_all_non_reference_genomic_aligns {
   Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -698,7 +724,7 @@ sub genomic_align_array {
 
 
 =head2 add_GenomicAlign
- 
+
   Arg [1]    : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
   Example    : $genomic_align_block->add_GenomicAlign($genomic_align);
   Description: adds another Bio::EnsEMBL::Compara::GenomicAlign object to the set of
@@ -707,6 +733,7 @@ sub genomic_align_array {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : thrown if wrong argument
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -725,7 +752,7 @@ sub add_GenomicAlign {
 
 
 =head2 get_all_GenomicAligns
- 
+
   Arg [1]    : none
   Example    : $genomic_aligns = $genomic_align_block->get_all_GenomicAligns();
   Description: returns the set of Bio::EnsEMBL::Compara::GenomicAlign objects in
@@ -733,6 +760,7 @@ sub add_GenomicAlign {
   Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -744,7 +772,7 @@ sub get_all_GenomicAligns {
 
 
 =head2 score
- 
+
   Arg [1]    : double $score
   Example    : my $score = $genomic_align_block->score();
                $genomic_align_block->score(56.2);
@@ -755,6 +783,7 @@ sub get_all_GenomicAligns {
   Returntype : double
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -776,7 +805,7 @@ sub score {
 
 
 =head2 perc_id
- 
+
   Arg [1]    : double $perc_id
   Example    : my $perc_id = $genomic_align_block->perc_id;
   Example    : $genomic_align_block->perc_id(95.4);
@@ -787,6 +816,7 @@ sub score {
   Returntype : double
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -808,7 +838,7 @@ sub perc_id {
 
 
 =head2 length
- 
+
   Arg [1]    : integer $length
   Example    : my $length = $genomic_align_block->length;
   Example    : $genomic_align_block->length(562);
@@ -819,6 +849,7 @@ sub perc_id {
   Returntype : integer
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -844,11 +875,12 @@ sub length {
 
   Arg [1]    : integer $group_id
   Example    : my $group_id = $genomic_align_block->group_id;
-  Example    : $genomic_align_block(1234);
+  Example    : $genomic_align_block->group_id(1234);
   Description: get/set for attribute group_id. 
   Returntype : integer
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -890,7 +922,7 @@ sub requesting_slice {
 
 
 =head2 reference_slice
- 
+
   Arg [1]    : Bio::EnsEMBL::Slice $reference_slice
   Example    : my $reference_slice = $genomic_align_block->reference_slice;
   Example    : $genomic_align_block->reference_slice($reference_slice);
@@ -898,6 +930,7 @@ sub requesting_slice {
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : 
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -937,7 +970,7 @@ sub requesting_slice_start {
 
 
 =head2 reference_slice_start
- 
+
   Arg [1]    : integer $reference_slice_start
   Example    : my $reference_slice_start = $genomic_align_block->reference_slice_start;
   Example    : $genomic_align_block->reference_slice_start(1035);
@@ -946,6 +979,7 @@ sub requesting_slice_start {
   Returntype : integer
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -983,7 +1017,7 @@ sub requesting_slice_end {
 
 
 =head2 reference_slice_end
- 
+
   Arg [1]    : integer $reference_slice_end
   Example    : my $reference_slice_end = $genomic_align_block->reference_slice_end;
   Example    : $genomic_align_block->reference_slice_end(1283);
@@ -992,6 +1026,7 @@ sub requesting_slice_end {
   Returntype : integer
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -1007,7 +1042,7 @@ sub reference_slice_end {
 
 
 =head2 reference_slice_strand
- 
+
   Arg [1]    : integer $reference_slice_strand
   Example    : my $reference_slice_strand = $genomic_align_block->reference_slice_strand;
   Example    : $genomic_align_block->reference_slice_strand(-1);
@@ -1016,6 +1051,7 @@ sub reference_slice_end {
   Returntype : integer
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -1038,7 +1074,8 @@ sub reference_slice_strand {
                alignment
   Returntype : array reference containing several strings
   Exceptions : none
-  Caller     : 
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -1072,7 +1109,8 @@ sub alignment_strings {
                and access to the core database slice objects
   Returntype : a Bio::SimpleAlign object
   Exceptions :
-  Caller     :
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -1138,6 +1176,7 @@ sub get_SimpleAlign {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Exceptions : lots...
   Caller     : new()
+  Status     : At risk
 
 =cut
 
@@ -1311,6 +1350,7 @@ sub _create_from_a_list_of_ungapped_genomic_align_blocks {
   Returntype : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks objects
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -1412,6 +1452,7 @@ sub get_all_ungapped_GenomicAlignBlocks {
   Returntype : none
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -1441,6 +1482,7 @@ sub reverse_complement {
   Returntype : none
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -1489,7 +1531,7 @@ sub get_original_strand {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Exceptions : none
   Caller     : general
-
+  Status     : At risk
 
 =cut
 
@@ -1574,7 +1616,7 @@ sub restrict_between_alignment_positions {
                alignment_length)
   Exceptions : return undef if reference positions lie outside of the alignment
   Caller     : general
-
+  Status     : At risk
 
 =cut
 
@@ -1715,6 +1757,7 @@ sub restrict_between_reference_positions {
   Returntype : none
   Exceptions : 
   Caller     : object::methodname
+  Status     : At risk
 
 =cut
 
