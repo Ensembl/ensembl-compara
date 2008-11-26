@@ -1395,7 +1395,7 @@ sub _get_alignment_scores {
     #need to add the uncalled positions up to the start of the next called 
     #block
     for (my $i = 0; $i < scalar(@$aligned_scores); $i++) {
-	$aligned_scores->[$i]->{position}($aligned_scores->[$i]->{position}-$align_start+1);  
+	$aligned_scores->[$i]->{position} = $aligned_scores->[$i]->{position}-$align_start+1;  
       }
 
     return $aligned_scores;
