@@ -15,12 +15,35 @@
 Bio::EnsEMBL::Compara::GenomeDB - DESCRIPTION of Object
 
 =head1 SYNOPSIS
+  use Bio::EnsEMBL::Compara::DnaFrag; 
+  my $genome_db = new Bio::EnsEMBL::Compara::GenomeDB();
 
-Give standard usage here
+SET VALUES
+  $genome_db->dbID(22);
+  $genome_db->dba($dba);
+  $genome_db->name("Homo sapiens");
+  $genome_db->assembly("NCBI36");
+  $genome_db->taxon_id(9606);
+  $genome_db->taxon($taxon);
+  $genome_db->genebuild("2006-12-Ensembl");
+  $genome_db->assembly_default(1);
+  $genome_db->locator("Bio::EnsEMBL::DBSQL::DBAdaptor/host=???;port=???;user=???;dbname=homo_sapiens_core_51_36m;species=Homo sapiens;disconnect_when_inactive=1");
+
+GET VALUES
+  $dbID = $genome_db->dbID;
+  $genome_db_adaptor = $genome_db->adaptor;
+  $name = $genome_db->name;
+  $assembly = $genome_db->assembly;
+  $taxon_id = $genome_db->taxon_id;
+  $taxon = $genome_db->taxon;
+  $genebuild = $genome_db->genebuild;
+  $assembly_default = $genome_db->assembly_default;
+  $locator = $genome_db->locator;
+
 
 =head1 DESCRIPTION
 
-Describe the object here
+The GenomeDB object stores information about each species including the taxon_id, species name, assembly, genebuild and the location of the core database.
 
 =head1 AUTHOR - Ewan Birney
 
@@ -46,6 +69,25 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::DBLoader;
+
+=head2 new
+
+  Example :
+    my $genome_db = new Bio::EnsEMBL::Compara::GenomeDB();
+    $genome_db->dba($dba);
+    $genome_db->name("Homo sapiens");
+    $genome_db->assembly("NCBI36");
+    $genome_db->taxon_id(9606);
+    $genome_db->dbID(22);
+    $genome_db->genebuild("2006-12-Ensembl");
+
+  Description: Creates a new GenomeDB object
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
 
 sub new {
   my($caller, $dba, $name, $assembly, $taxon_id, $dbID, $genebuild) = @_;
@@ -77,6 +119,7 @@ sub new {
   Exceptions : thrown if the argument is not a
                Bio::EnsEMBL::DBSQL::DBAdaptor
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -108,6 +151,7 @@ sub db_adaptor {
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -130,6 +174,7 @@ sub name{
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -146,6 +191,18 @@ sub short_name {
   return $name;
 }
 
+=head2 get_short_name
+
+  Example    : $gdb->get_short_name;
+  Description: The name of this genome in the Gspe ('G'enera
+               'spe'cies) format. Can also handle 'G'enera 's'pecies
+               's'ub 's'pecies (Gsss)
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
 
 sub get_short_name {
   my $self = shift;
@@ -162,6 +219,7 @@ sub get_short_name {
   Returntype : int
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -183,6 +241,7 @@ sub dbID{
   Returntype : Bio::EnsEMBL::Compara::GenomeDBAdaptor
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -198,11 +257,12 @@ sub adaptor{
 =head2 assembly
 
   Arg [1]    : (optional) string
-  Example    : $gdb->assembly('NCBI_31');
+  Example    : $gdb->assembly('NCBI36');
   Description: Getter/Setter for the assembly type of this genome db.
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -224,6 +284,7 @@ sub assembly {
   Returntype : int
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -241,11 +302,12 @@ sub assembly_default {
 =head2 genebuild
 
   Arg [1]    : (optional) string
-  Example    : $gdb->genebuild('1');
+  Example    : $gdb->genebuild('2006-12-Ensembl');
   Description: Getter/Setter for the genebuild type of this genome db.
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -260,11 +322,12 @@ sub genebuild {
 =head2 taxon_id
 
   Arg [1]    : (optional) int
-  Example    : $gdb->taxon_id('9606');
+  Example    : $gdb->taxon_id(9606);
   Description: Getter/Setter for the taxon id of the contained genome db
   Returntype : int
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -284,6 +347,7 @@ sub taxon_id {
   Returntype : Bio::EnsEMBL::Compara::NCBITaxon object 
   Exceptions : if taxon_id or adaptor not defined
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -310,6 +374,7 @@ sub taxon {
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -329,6 +394,7 @@ sub locator {
               return undef if locator undefined or unable to connect
   Exceptions : none
   Caller     : internal private method 
+  Status     : Stable
 
 =cut
 
@@ -351,8 +417,10 @@ sub connect_to_genome_locator
   Example    : none
   Description: none
   Returntype : int
-  Exceptions : none
+  Exceptions : throw if no $con_gdb passed in or $con_gdb is not a 
+               Bio::EnsEMBL::Compara::GenomeDB or $con_gdb is the same as $self
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -382,8 +450,11 @@ sub has_consensus {
   Example    : none
   Description: none
   Returntype : int
-  Exceptions : none
+  Exceptions : throw if no $query_gdb passed in or $query_gdb is not a 
+               Bio::EnsEMBL::Compara::GenomeDB or $query_gdb is the same as 
+               $self
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -415,6 +486,7 @@ sub has_query {
   Returntype : int
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
