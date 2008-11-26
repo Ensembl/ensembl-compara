@@ -38,6 +38,7 @@ sub content {
     my $url = $object->species_defs->ENSEMBL_EXTERNAL_URLS->{'EGA'};
     my $ext_id = $va->local_stable_id(); 
     $url =~s/###ID###/$ext_id/;
+    $url =~s/###D###/$code/;
     my $source = $va->source_name();
     my $link = "<a href=" .$url .">[$source]</a>";
     my $text = $object->name . " had a significant p-value in Genome Wide Association Study (" .$va->study_type() . ") " . $link; 
