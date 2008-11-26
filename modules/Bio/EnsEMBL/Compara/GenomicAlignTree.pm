@@ -135,6 +135,7 @@ sub right_node {
   Returntype : none
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
@@ -400,6 +401,18 @@ sub name {
 
 =head2 get_all_sorted_genomic_align_nodes
 
+  Arg [1]     : (optional) Bio::EnsEMBL::Compara::GenomicAlignTree $reference_genomic_align_node
+  Example     : $object->get_all_sorted_genomic_align_nodes($ref_genomic_align_node);
+  Example     : $nodes = $object->get_all_sorted_genomic_align_nodes();
+  Description : If ref_genomic_align_node is set, sorts the tree based on the
+                reference_genomic_align_node
+                If ref_genomic_align_node is not set, sorts the tree based on
+                the species name
+  Returntype  : Bio::EnsEMBL::Compara::GenomicAlignTree
+  Exceptions  : none
+  Caller      : general
+  Status      : At risk
+
 =cut
 
 sub get_all_sorted_genomic_align_nodes {
@@ -462,7 +475,7 @@ sub get_all_sorted_genomic_align_nodes {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Exceptions : none
   Caller     : general
-
+  Status     : At risk
 
 =cut
 
@@ -539,7 +552,7 @@ sub restrict_between_alignment_positions {
                alignment_length)
   Exceptions : return undef if reference positions lie outside of the alignment
   Caller     : general
-  Status      : At risk
+  Status     : At risk
 
 =cut
 
@@ -562,6 +575,13 @@ sub restrict_between_reference_positions {
 
 =head2 copy
 
+  Arg         : none
+  Example     : my $new_tree = $this_tree->copy()
+  Description : Create a copy of this Bio::EnsEMBL::Compara::GenomicAlignTree
+                object
+  Returntype  : Bio::EnsEMBL::Compara::GenomicAlignTree
+  Exceptions  : none
+  Caller      : general
   Status      : At risk
 
 =cut
@@ -579,6 +599,12 @@ sub copy {
 
 =head2 print
 
+  Arg         : none
+  Example     : print()
+  Description : Print the fields in a Bio::EnsEMBL::Compara::GenomicAlignTree 
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
   Status      : At risk
 
 =cut
@@ -621,6 +647,12 @@ sub print {
 
 =head2 get_all_nodes_from_leaves_to_this
 
+  Arg[1]      : Bio::EnsEMBL::Compara::GenomicAlignTree $all_nodes
+  Example     : my $all_nodes = get_all_nodes_from_leaves_to_this()
+  Description : 
+  Returntype  : Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Exceptions  : none
+  Caller      : general
   Status      : At risk
 
 =cut
@@ -651,6 +683,7 @@ sub get_all_nodes_from_leaves_to_this {
  Example :
  Returns : reference to list of NestedSet objects (all leaves)
  Args    : none
+ Status  : At risk
 
 =cut
 
@@ -666,11 +699,20 @@ sub get_all_leaves {
 
 =head2 _sort_children
 
+  Arg         : none
+  Example     : sort _sort_children @$children
+  Description : sort function for sorting the nodes of a Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Returntype  : int (-1,0,1)
+  Exceptions  : none
+  Caller      : general
+  Status      : At risk
+
 =cut
 
 sub _sort_children {
   my $reference_genomic_align;
-  if ($a->root eq $b->root and $a->root->reference_genomic_align) {
+
+  if (defined ($a->root) && defined($b->root) && $a->root eq $b->root and $a->root->reference_genomic_align) {
     $reference_genomic_align = $a->root->reference_genomic_align;
   }
 
@@ -691,6 +733,21 @@ sub _sort_children {
 
   return $species_a cmp $species_b;
 }
+
+=head2 _name_for_sorting
+
+  Arg         : none
+  Example     : my $species_a = $a->_name_for_sorting;
+  Description : if the node is a leaf, create a name based on the species
+                name, dnafrag name, group_id and the start position. If the 
+                node is an internal node, create a name based on the species 
+                name, dnafrag name and the start position
+  Returntype  : string 
+  Exceptions  : none
+  Caller      : _sort_children
+  Status      : At risk
+
+=cut
 
 sub _name_for_sorting {
   my ($self) = @_;
@@ -722,6 +779,7 @@ sub _name_for_sorting {
   Returntype : none
   Exceptions : none
   Caller     : general
+  Status     : At risk
 
 =cut
 
