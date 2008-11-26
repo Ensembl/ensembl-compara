@@ -450,6 +450,7 @@ sub fetch_all_by_GenomicAlignBlock {
   Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:ConservationScore
   Caller     : general
   Status     : At risk
+
 =cut
 
 sub store {
@@ -504,16 +505,20 @@ sub store {
 
 #Internal methods
 
-#  Arg  1     : integer $genomic_align_block_id 
-#  Arg  2     : integer $window_size
-#  Arg  3     : (opt) boolean $packed (default 0)
-#  Example    : my $conservation_scores =
-#                    $conservation_score_adaptor->fetch_all_by_GenomicAlignBlockId(23134);
-#  Description: Retrieve the corresponding
-#               Bio::EnsEMBL::Compara::ConservationScore objects. 
-#  Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore objects. If $packed is true, return the scores in a packed format given by $_pack_size and $_pack_type.
+=head2 _fetch_all_by_GenomicAlignBlockId_WindowSize
 
-#  Caller     : object::methodname
+  Arg  1     : integer $genomic_align_block_id 
+  Arg  2     : integer $window_size
+  Arg  3     : (opt) boolean $packed (default 0)
+  Example    : my $conservation_scores =
+                    $conservation_score_adaptor->_fetch_all_by_GenomicAlignBlockId(23134);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::ConservationScore objects. 
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore objects. If $packed is true, return the scores in a packed format given by $_pack_size and $_pack_type.
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub _fetch_all_by_GenomicAlignBlockId_WindowSize {
     my ($self, $genomic_align_block_id, $window_size, $packed) = @_;
@@ -572,7 +577,19 @@ sub _fetch_all_by_GenomicAlignBlockId_WindowSize {
   return \@sorted_scores;
 }
 
-#find the min and max scores for y axis scaling
+
+=head2 _find_min_max_score
+
+  Arg  1     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Example    : my ($min, $max) =  _find_min_max_score($scores);
+  Description: find the min and max scores used for y axis scaling
+  Returntype : (float, float)
+  Exceptions :
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _find_min_max_score {
     my ($scores) = @_;
     my $min; 
@@ -598,7 +615,19 @@ sub _find_min_max_score {
     return ($min, $max);
 }
 
-#reverse the conservation scores for complemented sequences
+=head2 _reverse
+
+  Arg  1     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Arg  2     : int $genomic_align_block_length (number of scores)
+  Example    : $conservation_scores = _reverse($conservation_scores);
+  Description: reverse the conservation scores for complemented sequences
+  Returntype : listref of Bio::EnsEMBL::Compara::ConservationScore objects
+  Exceptions : 
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _reverse {
     my ($scores, $genomic_align_block_length) = @_;
 
@@ -612,7 +641,18 @@ sub _reverse {
     return \@rev;
 }
 
-#unpack scores.
+=head2 _unpack_scores
+
+  Arg  1     : string $scores
+  Example    : $exp_scores = _unpack_scores($scores);
+  Description: unpack score values retrieved from a database
+  Returntype : space delimited string of floats
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _unpack_scores {
     my ($scores) = @_;
     if (!defined $scores) {
@@ -629,18 +669,30 @@ sub _unpack_scores {
 }
 
 
-#find the score index (row) that contains $pos in alignment coords
-#use global variable $_score_index to keep track of where I am in the scores 
-#array
-#$scores : array of conservation scores
-#$num_scores : number of scores in the array
-#$score_lengths : number of scores in each row of the array
-#$pos : position to find
-#$win_size : window size used from the database
+=head2 _find_score_index
+
+  Arg  1     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Arg  2     : int $num_scores (number of scores in the array)
+  Arg  3     : int $score_lengths number of scores in each row of the array
+  Arg  4     : int $pos (position to find)
+  Arg  5     : int $win_size (window size)
+  Example    : $exp_scores = _unpack_scores($scores);
+  Description: find the score index (row) that contains $pos in alignment coords  Returntype : int 
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _find_score_index {
     my ($scores, $num_scores, $score_lengths, $pos, $win_size) = @_;
     my $i;
     my $length;
+
+    #find the score index (row) that contains $pos in alignment coords
+    #use global variable $_score_index to keep track of where I am in the scores 
+    #array
+
 
     #special case for first window size 
     if ($pos < $scores->[0]->{position} && $pos > ($scores->[0]->{position} - $win_size)) {
@@ -665,7 +717,20 @@ sub _find_score_index {
     return -1;
 }
 
-#print scores (unpack first if necessary)
+
+=head2 _print_scores
+
+  Arg  1     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Arg  2     : boolean $packed (0 if not packed, 1 if packed)
+  Example    : $conservation_scores = _reverse($conservation_scores);
+  Description: print scores (unpack first if necessary)
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _print_scores {
     my ($scores, $packed) = @_;
     my $num_scores = scalar(@$scores);
@@ -700,20 +765,29 @@ sub _print_scores {
 
 }
 
-#Convert conservation scores from alignment coordinates into species specific
-#chromosome coordinates for an alignment genomic_align_block
-#
-#cigar_line: cigar string from current alignment block
-#start_region: start of genomic_align_block (chr coords)
-#end_region: end of genomic_align_block (chr coords)
-#start_slice: start of slice (chr coords)
-#end_slice: end of slice (chr coords)
-#scores: array of conservation_score objects in alignment coords
-#genomic_align_block_id: genomic align block id of current alignment block
-#genomic_align_block_length: length of current alignment block
-#display_type: either AVERAGE or MAX (plot average or max value)
-#win_size: window size used from database
-#aligned_scores:array of new conservation_scores in chromosome coords
+=head2 _get_aligned_scores_from_cigar_line
+
+  Arg  1     : string $cigar_line (cigar string from current alignment block)
+  Arg  2     : int $start_region (start of genomic_align_block (chr coords))
+  Arg  3     : int $end_region (end of genomic_align_block (chr coords))
+  Arg  4     : int $start_slice (start of slice (chr coords)
+  Arg  5     : int $end_slice (end of slice (chr coords))
+  Arg  6     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Arg  7     : int $genomic_align_block_id (genomic align block id of current alignment block)
+  Arg  8     : int $genomic_align_block_length (length of current alignment block)
+  Arg  9     : string $display_type (either AVERAGE or MAX (plot average or max value))
+  Arg 10     : int $win_size (window size used)
+  Arg 11     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores in slice coords
+
+  Example    : $scores = $self->_get_aligned_scores_from_cigar_line($genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
+  Description: Convert conservation scores from alignment coordinates into species specific chromosome (slice) coordinates for an alignment genomic_align_block
+  Returntype : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _get_aligned_scores_from_cigar_line {
     my ($self, $cigar_line, $start_region, $end_region, $start_slice, $end_slice, $scores, $genomic_align_block_id, $genomic_align_block_length, $display_type, $win_size, $aligned_scores) = @_;
 
@@ -912,6 +986,31 @@ sub _get_aligned_scores_from_cigar_line {
     return $aligned_scores;
 }
 
+=head2 _get_aligned_scores_from_cigar_line_fast
+
+  Arg  1     : string $cigar_line (cigar string from current alignment block)
+  Arg  2     : int $start_region (start of genomic_align_block (chr coords))
+  Arg  3     : int $end_region (end of genomic_align_block (chr coords))
+  Arg  4     : int $start_slice (start of slice (chr coords)
+  Arg  5     : int $end_slice (end of slice (chr coords))
+  Arg  6     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Arg  7     : int $genomic_align_block_id (genomic align block id of current alignment block)
+  Arg  8     : int $genomic_align_block_length (length of current alignment block)
+  Arg  9     : string $display_type (either AVERAGE or MAX (plot average or max value))
+  Arg 10     : int $win_size (window size used)
+  Arg 11     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores in slice coords
+
+  Example    : $scores = $self->_get_aligned_scores_from_cigar_line_fast($genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
+  Description: Faster method to than _get_aligned_scores_from_cigar_line. This
+               method does not bin the scores and can be used if only require
+               one score per base in the alignment
+  Returntype : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _get_aligned_scores_from_cigar_line_fast {
     my ($self, $cigar_line, $start_region, $end_region, $start_slice, $end_slice, $scores, $genomic_align_block_id, $genomic_align_block_length, $display_type, $win_size, $aligned_scores) = @_;
 
@@ -1098,7 +1197,24 @@ sub _get_aligned_scores_from_cigar_line_fast {
     return $aligned_scores;
 }
 
-#get alignment scores within $genomic_align_block
+=head2 _get_alignment_scores
+
+  Arg  1     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Arg  2     : int $align_start (start position in alignment coords)
+  Arg  3     : int $align_end (end position in alignment coords)
+  Arg  4     : string $display_type (either AVERAGE or MAX (plot average or max value))
+  Arg  5     : int $win_size (window size used)
+  Arg  6     : ref to Bio::EnsEMBL::Compara::GenomicAlignBlock object
+  Example    : $scores = $self->_get_alignment_scores($conservation_scores, 
+               1, 100000, "AVERAGE", 10, $genomic_align_block);
+  Description: get scores for an alignment in alignment coordinates
+  Returntype : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores in alignment coordinates
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _get_alignment_scores {
     my ($self, $conservation_scores, $align_start, $align_end, $display_type, $window_size, $genomic_align_block) = @_;
 
@@ -1285,30 +1401,40 @@ sub _get_alignment_scores {
     return $aligned_scores;
 }
 
-#Add scores to bucket until it is full (given by size) and then average the 
-#called scores or take the maximum (given by display_type). Once the bucket is
-#full, create a new conservation score object
-#Return the conservation score object if the bucket is full or 0 if it isn't
-#full yet
-#
-#display_type : either "AVERAGE" or "MAX"
-#exp_score : expected score to be added to bucket
-#diff_score : difference score to be added to bucket
-#chr_pos : position in slice reference species chromosome coords
-#start_slice : start position of slice in chromosome coords
-#num_buckets : number of buckets used so far
-#genomic_align_block_id : genomic_align_block_id of alignment block
-#win_size : window size used from database
-#
-#bucket structure:
-#cnt: keep track of number of scores been added
-#start_pos: position of first score in slice coords
-#start_seq_region_pos: position of first score in chr coords
-#exp_score: sum or max of expected scores
-#diff_score: sum or max of difference scores
-#called: number of called scores (used to average)
-#size: number of bases/bucket
+=head2 _
+
+  Arg  1     : string $display_type (either AVERAGE or MAX (plot average or max value))
+  Arg  2     : float $exp_score (expected score to be added to bucket)
+  Arg  3     : float $diff_score (difference score to be added to bucket)
+  Arg  4     : int $chr_pos (position in slice of reference species)
+  Arg  5     : int $start_slice (start position of slice)
+  Arg  6     : int $num_buckets (number of buckets used so far)
+  Arg  7     : int $genomic_align_block_id (genomic_align_block_id of 
+               alignment block)
+  Arg  8     : int $win_size window size used
+  Example    : $aligned_score = _add_to_bucket($self, "AVERAGE", $exp_score, $diff_score, $chr_pos, $start_slice, scalar(@$aligned_scores), $genomic_align_block_id, $win_size);
+  Description: Add scores to bucket until it is full (given by size) and then 
+               average the called scores or take the maximum (given by 
+               display_type). Once the bucket is full, create a new 
+               conservation score object
+  Returntype : ref to Bio::EnsEMBL::Compara::ConservationScore object if the
+               bucket if full or 0 if it isn't full yet
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _add_to_bucket {
+    #bucket structure:
+    #cnt: keep track of number of scores been added
+    #start_pos: position of first score in slice coords
+    #start_seq_region_pos: position of first score in chr coords
+    #exp_score: sum or max of expected scores
+    #diff_score: sum or max of difference scores
+    #called: number of called scores (used to average)
+    #size: number of bases/bucket
+
     my ($self, $display_type, $exp_score, $diff_score, $chr_pos, $start_slice, $num_buckets, $genomic_align_block_id, $win_size) = @_;
     my $p = 0;
     my $s;
