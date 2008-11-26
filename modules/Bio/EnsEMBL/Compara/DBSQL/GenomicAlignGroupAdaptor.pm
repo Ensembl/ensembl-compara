@@ -67,6 +67,20 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
+=head2 new
+
+  Arg [1]    : list of args to super class constructor
+  Example    : $gag_a = new Bio::EnsEMBL::Compara::GenomicAlignGroupAdaptor($dbobj);
+  Description: Creates a new GenomicAlignGroupAdaptor. This
+               class should be instantiated through the get method on the 
+               DBAdaptor rather than calling this method directly.
+  Returntype : none
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::DBSQL::DBConnection
+  Status     : Stable
+
+=cut
+
 sub new {
   my $class = shift;
 
@@ -87,6 +101,7 @@ sub new {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignGroup object
   Exceptions : not stored linked Bio::EnsEMBL::Compara::GenomicAlign objects throw.
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -179,6 +194,7 @@ sub store {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignGroup
   Exceptions : none
   Caller     : object::methodname
+  Status     : Stable
 
 =cut
 
@@ -250,6 +266,7 @@ sub fetch_by_dbID {
                objects.
   Exceptions : none
   Caller     : object::methodname
+  Status     : Stable
 
 =cut
 
@@ -310,6 +327,7 @@ sub fetch_all_by_GenomicAlign {
                objects.
   Exceptions : none
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -372,6 +390,13 @@ sub fetch_all_by_genomic_align_id {
 # # 
 # # =cut
 
+
+=head2 fetch_by_GenomicAlign_and_type
+
+DEPRECATED: Use the fetch_by_GenomicAlign_type method instead
+
+=cut
+
 sub fetch_by_GenomicAlign_and_type {
   my ($self, $genomic_align, $type) = @_;
   my $genomic_align_group;
@@ -401,6 +426,7 @@ sub fetch_by_GenomicAlign_and_type {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignGroup
   Exceptions : none
   Caller     : object::methodname
+  Status     : Stable
 
 =cut
 
@@ -483,6 +509,7 @@ sub fetch_by_GenomicAlign_type {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignGroup
   Exceptions : none
   Caller     : object::methodname
+  Status     : Stable
 
 =cut
 
@@ -513,6 +540,7 @@ sub fetch_by_genomic_align_id_type {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : 
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -556,6 +584,7 @@ sub retrieve_all_direct_attributes {
   Returntype : integer
   Exceptions : 
   Caller     : none
+  Status     : Stable
 
 =cut
 
