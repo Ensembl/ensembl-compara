@@ -15,11 +15,24 @@ Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor - DESCRIPTION of Object
 
 =head1 SYNOPSIS
 
-Give standard usage here
+  use Bio::EnsEMBL::Registry;
+
+  my $reg = "Bio::EnsEMBL::Registry";
+
+  $reg->load_registry_from_db(-host=>"ensembldb.ensembl.org", -user=>"anonymous");
+  my $genome_db_adaptor = $reg->get_adaptor("Multi", "compara", "GenomeDB");
+
+  $genome_db_adaptor->store($genome_db);
+
+  $genome_db = $genome_db_adaptor->fetch_by_dbID(22);
+  $all_genome_dbs = $genome_db_adaptor->fetch_all();
+  $genome_db = $genome_db_adaptor->fetch_by_name_assembly("Homo sapiens", 'NCBI36');
+  $genome_db = $genome_db_adaptor->fetch_by_registry_name("human");
+  $genome_db = $genome_db_adaptor->fetch_by_Slice($slice);
 
 =head1 DESCRIPTION
 
-Describe the object here
+This module is intended to access data in the genome_db table. The genome_db table stores information about each species including the taxon_id, species name, assembly, genebuild and the location of the core database
 
 =head1 AUTHOR - Ewan Birney
 
@@ -65,6 +78,7 @@ my %genome_query_xreflist;
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -93,11 +107,12 @@ sub fetch_by_dbID {
 =head2 fetch_all
 
   Args       : none
-  Example    : none
+  Example    : my $all_genome_dbs = $genome_db_adaptor->fetch_all();
   Description: gets all GenomeDBs for this compara database
   Returntype : listref Bio::EnsEMBL::Compara::GenomeDB
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -117,12 +132,13 @@ sub fetch_all {
 
   Arg [1]    : string $name
   Arg [2]    : string $assembly
-  Example    : $gdb = $gdba->fetch_by_name_assembly("Homo sapiens", 'NCBI_31');
+  Example    : $gdb = $gdba->fetch_by_name_assembly("Homo sapiens", 'NCBI36');
   Description: Retrieves a genome db using the name of the species and
                the assembly version.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
   Exceptions : thrown if GenomeDB of name $name and $assembly cannot be found
   Caller     : general
+  Status      : Stable
 
 =cut
 
@@ -165,6 +181,7 @@ sub fetch_by_name_assembly {
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
   Exceptions : thrown if $name is not found in the Registry configuration
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -196,6 +213,7 @@ sub fetch_by_registry_name {
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
   Exceptions : thrown if $slice is not a Bio::EnsEMBL::Slice
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -228,6 +246,7 @@ sub fetch_by_Slice {
   Returntype  : Scalar string
   Exceptions  : thrown if no name is found
   Caller      : general
+  Status      : Stable
 
 =cut
 
@@ -251,6 +270,7 @@ sub get_species_name_from_core_MetaContainer {
   Returntype : int
   Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -335,8 +355,6 @@ sub store{
   return $dbID;
 }
 
-
-
 =head2 create_GenomeDBs
 
   Arg [1]    : none
@@ -346,6 +364,7 @@ sub store{
   Returntype : none
   Exceptions : none
   Caller     : internal
+  Status      : Stable
 
 =cut
 
@@ -503,6 +522,7 @@ sub check_for_query_db {
   Returntype : listref of Bio::EnsEMBL::Compara::GenomeDBs 
   Exceptions : none
   Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
+  Status     : At risk
 
 =cut
 
@@ -531,6 +551,7 @@ sub get_all_db_links {
 
 
 =head2 sync_with_registry
+
   Example    :
   Description: Synchronize all the cached genome_db objects
                db_adaptor (connections to core databases)
@@ -539,7 +560,10 @@ sub get_all_db_links {
   Returntype : none
   Exceptions : none
   Caller     : Bio::EnsEMBL::DBSQL::DBAdaptor
+  Status     : At risk
+
 =cut
+
 sub sync_with_registry {
   my $self = shift;
 
@@ -582,6 +606,18 @@ sub sync_with_registry {
   }
 }
 
+=head2 deleteObj
+
+  Arg         : none
+  Example     : none
+  Description : Called automatically by DBConnection during object destruction
+                phase. Clears the cache to avoid memory leaks.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub deleteObj {
   my $self = shift;
