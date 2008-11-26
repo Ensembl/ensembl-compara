@@ -476,6 +476,14 @@ sub freqs {
   return \%data;
 }
 
+sub get_external_data {
+  my $self = shift;
+  my $v = $self->vari;
+  my $vdb = $self->DBConnection->get_DBAdaptor('variation');
+  my $vaa = $vdb->get_VariationAnnotationAdaptor(); 
+  my @data = @{$vaa->fetch_all_by_Variation($v)}; 
+  return \@data;
+}
 
 # Population genotype and allele frequency table calls ----------------
 
