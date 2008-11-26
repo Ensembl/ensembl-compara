@@ -104,6 +104,20 @@ use Bio::EnsEMBL::Utils::Exception;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
+=head2 new
+
+  Arg [1]    : list of args to super class constructor
+  Example    : $ga_a = new Bio::EnsEMBL::Compara::GenomicAlignAdaptor($dbobj);
+  Description: Creates a new GenomicAlignAdaptor. This
+               class should be instantiated through the get method on the 
+               DBAdaptor rather than calling this method directly.
+  Returntype : none
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::DBSQL::DBConnection
+  Status     : Stable
+
+=cut
+
 sub new {
   my $class = shift;
 
@@ -120,11 +134,15 @@ sub new {
   Arg  1     : listref  Bio::EnsEMBL::Compara::GenomicAlign $ga 
                The things you want to store
   Example    : none
-  Description: It stores the give GA in the database. Attached
+  Description: It stores the given GA in the database. Attached
                objects are not stored. Make sure you store them first.
   Returntype : none
-  Exceptions : not stored linked dnafrag objects throw.
+  Exceptions : throw if the linked Bio::EnsEMBL::Compara::DnaFrag object or
+               the linked Bio::EnsEMBL::Compara::GenomicAlignBlock or
+               the linked Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+               are not in the database
   Caller     : $object->methodname
+  Status     : Stable
 
 =cut
 
@@ -213,10 +231,11 @@ sub store {
 
   Arg  1     : integer $genomic_align_block_id
   Example    : $gen_ali_blk_adaptor->delete_by_genomic_align_block_id(352158763);
-  Description: It removes the mathing GenomicAlign objects from the database
+  Description: It removes the matching GenomicAlign objects from the database
   Returntype : none
-  Exceptions : 
+  Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -241,6 +260,7 @@ sub delete_by_genomic_align_block_id {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : Returns undef if no matching entry is found in the database.
   Caller     : object::methodname
+  Status     : Stable
 
 =cut
 
@@ -294,9 +314,10 @@ sub fetch_by_dbID {
                Bio::EnsEMBL::Compara::GenomicAlign objects
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : Returns a ref. to an empty array if there are no matching entries
-  Exceptions : Thrown if $genomic_align_block is neither a number or a
+  Exceptions : Thrown if $genomic_align_block is not a
                Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Caller     : object::methodname
+  Status     : Stable
 
 =cut
 
@@ -321,9 +342,9 @@ sub fetch_all_by_GenomicAlignBlock {
                Bio::EnsEMBL::Compara::GenomicAlign objects
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : Returns a ref. to an empty array if there are no matching entries
-  Exceptions : Thrown if $genomic_align_block is neither a number or a
-               Bio::EnsEMBL::Compara::GenomicAlignBlock object
+  Exceptions : Thrown if $genomic_align_block is neither a number 
   Caller     : object::methodname
+  Status     : Stable
 
 =cut
 
@@ -416,6 +437,7 @@ sub store_daf {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : 
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -472,6 +494,7 @@ sub retrieve_all_direct_attributes {
   Returntype : integer
   Exceptions : 
   Caller     : none
+  Status     : Stable
 
 =cut
 

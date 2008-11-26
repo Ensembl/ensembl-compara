@@ -120,6 +120,21 @@ use Bio::EnsEMBL::Utils::Exception;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
+=head2 new
+
+  Arg [1]    : list of args to super class constructor
+  Example    : $ga_a = new Bio::EnsEMBL::Compara::GenomicAlignBlockAdaptor($dbobj);
+  Description: Creates a new GenomicAlignBlockAdaptor.  The superclass 
+               constructor is extended to initialise an internal cache.  This
+               class should be instantiated through the get method on the 
+               DBAdaptor rather than calling this method directly.
+  Returntype : none
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::DBSQL::DBConnection
+  Status     : Stable
+
+=cut
+
 sub new {
   my $class = shift;
 
@@ -139,14 +154,15 @@ sub new {
   Description: It stores the given GenomicAlginBlock in the database as well
                as the GenomicAlign objects it contains
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
-  Exceptions : - method_link_species_set_id not stored in the DB
+  Exceptions : - no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet is linked
                - no Bio::EnsEMBL::Compara::GenomicAlign object is linked
-               - not stored linked dnafrag objects throw.
+               - no Bio::EnsEMBL::Compara::DnaFrag object is linked 
                - unknown method link
                - cannot lock tables
                - cannot store GenomicAlignBlock object
                - cannot store corresponding GenomicAlign objects
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -251,6 +267,7 @@ sub store {
   Returntype : none
   Exceptions : 
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -280,6 +297,7 @@ sub delete_by_dbID {
   Exceptions : Returns undef if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -333,15 +351,16 @@ sub fetch_by_dbID {
   Arg  3     : integer $limit_index_start [optional]
   Example    : my $genomic_align_blocks =
                   $genomic_align_block_adaptor->
-                      fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss);
+                      fetch_all_by_MethodLinkSpeciesSet($mlss);
   Description: Retrieve the corresponding
                Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Objects 
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
                Corresponding Bio::EnsEMBL::Compara::GenomicAlign are only retrieved
-               when requiered.
+               when required.
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -415,6 +434,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : $object->method_name
+  Status     : Stable
 
 =cut
 
@@ -562,13 +582,14 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
                   $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
                       $mlss, $dnafrag, 50000000, 50250000);
   Description: Retrieve the corresponding
-               Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Objects 
+               Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
                adaptor and method_link_species_set are actually stored in the objects. The remaining
                attributes are only retrieved when requiered.
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -713,6 +734,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : fetch_all_by_MethodLinkSpeciesSet_DnaFrag
+  Status     : Stable
 
 =cut
 
@@ -793,6 +815,7 @@ sub _fetch_all_by_MethodLinkSpeciesSet_DnaFrag_with_limit {
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -916,6 +939,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -1024,6 +1048,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType {
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -1087,6 +1112,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_GroupID {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Exceptions : 
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -1133,6 +1159,7 @@ sub retrieve_all_direct_attributes {
   Exceptions : - cannot lock tables
                - cannot update GenomicAlignBlock object
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -1168,6 +1195,7 @@ sub store_group_id {
   Returntype : integer
   Exceptions :
   Caller     : none
+  Status     : Stable
 
 =cut
 
@@ -1196,6 +1224,7 @@ sub lazy_loading {
   Returntype : integer
   Exceptions : 
   Caller     : none
+  Status     : Stable
 
 =cut
 
