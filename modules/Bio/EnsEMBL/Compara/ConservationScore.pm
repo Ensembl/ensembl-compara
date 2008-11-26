@@ -89,6 +89,7 @@ my $pack_size = 4;
 my $pack_type = "f";
 
 =head2 new (CONSTRUCTOR)
+
     Arg [-ADAPTOR] 
         : Bio::EnsEMBL::Compara::DBSQL::ConservationScore $adaptor
                 (the adaptor for connecting to the database)
@@ -186,6 +187,7 @@ sub new {
   Returntype :
   Exceptions : none
   Caller     :
+  Status     : At risk
 
 =cut
 
@@ -618,11 +620,21 @@ sub reverse {
     $self->diff_score(_reverse_score($self->diff_score, $num_scores, $self->packed));
 }
 
-#internal method used by reverse to reverse the score strings
-#arguments:
-#score_str : string, score string
-#num_scores : integer, number of scores in the string
-#packed : boolean, whether the scores are packed or not
+=head2 _reverse_score
+
+  Arg [1]    : string $score_str (string of scores)
+  Arg [2]    : int $num_scores (number of scores in the string)
+  Arg [3]    : boolean $packed (whether the scores are packed or not)
+
+  Example    : _reverse_score($self->expected_score, $num_scores, $self->packed)
+  Description: internal method used by reverse to reverse the score strings
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _reverse_score {
     my ($score_str, $num_scores, $packed) = @_;
 
@@ -642,7 +654,17 @@ sub _reverse_score {
     return $rev_str;
 }
 
-#print the contents of the ConservationScore object
+=head2 _print
+
+  Example    : $conservation_score->_print;
+  Description: print the contents of the ConservationScore object
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _print {
   my ($self, $FILEH) = @_;
 
