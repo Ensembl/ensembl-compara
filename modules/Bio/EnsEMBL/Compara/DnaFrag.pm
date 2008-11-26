@@ -45,6 +45,8 @@ GET VALUES
   $coord_system_name = $dnafrag->coord_system_name;
   $name = $dnafrag->name;
 
+=head1 DESCRIPTION
+The DnaFrag object stores information on the toplevel sequences such as the name, coordinate system, length and species.
 
 =head1 OBJECT ATTRIBUTES
 
@@ -107,6 +109,42 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use Bio::EnsEMBL::Utils::Argument;
 
+=head2 new
+
+  Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
+  Arg [-ADAPTOR]
+              : (opt.) Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor $adaptor
+                (the adaptor for connecting to the database)
+  Arg [-LENGTH]:(opt.) int $length (the length of this dnafrag)
+  Arg [-NAME]:  (opt.) string $name (the name of this dnafrag)
+  Arg [-GENOME_DB]
+               :(opt.) Bio::EnsEMBL::Compara::GenomeDB $genome_db (the 
+                genome_db object representing the species of this dnafrag)
+  Arg [-GENOME_DB_ID]
+               :(opt.) int $genome_db_id (the database internal for the 
+                 genome_db)
+  Arg [-COORD_SYSTEM_NAME]
+               :(opt.) string $coord_system_name (the name of the toplevel
+                 coordinate system of the dnafrag eg 'chromosome', 'scaffold')
+  Example : my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
+                      -length 247249719,
+                      -name "1",
+                      -genome_db $genome_db,
+                      -coord_system_name "chromosome");
+  Example : my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
+                      -length 247249719,
+                      -name "1",
+                      -genome_db_id 22,
+                      -coord_system_name "chromosome");
+  Description: Creates a new DnaFrag object
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+
 sub new {
   my($class,@args) = @_;
 
@@ -147,6 +185,19 @@ sub new {
   return $self;
 }
 
+=head2 new_fast
+
+  Arg [1]    : hash reference $hashref
+  Example    : none
+  Description: This is an ultra fast constructor which requires knowledge of
+               the objects internals to be used.
+  Returntype :
+  Exceptions : none
+  Caller     :
+  Status     : Stable
+
+=cut
+
 sub new_fast {
   my $class = shift;
   my $hashref = shift;
@@ -163,6 +214,7 @@ sub new_fast {
  Returns   : integer
  Exeption  : none
  Caller    : $object->dbID
+ Status    : Stable
 
 =cut
 
@@ -187,6 +239,7 @@ sub dbID {
  Exeption  : thrown if argument is not a Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
              object
  Caller    : $object->adaptor
+ Status    : Stable
 
 =cut
 
@@ -212,6 +265,7 @@ sub adaptor {
  Returns   : integer
  Exeption  : none
  Caller    : $object->length
+ Status    : Stable
 
 =cut
 
@@ -235,6 +289,7 @@ sub length {
  Returns   : string
  Exeption  : none
  Caller    : $object->name
+ Status    : Stable
 
 =cut
 
@@ -261,6 +316,7 @@ sub name {
  Exeption  : thrown if argument is not a Bio::EnsEMBL::Compara::GenomeDB
              object
  Caller    : $object->genome_db
+ Status    : Stable
 
 =cut
 
@@ -303,6 +359,7 @@ sub genome_db {
  Returns   : integer
  Exeption  : none
  Caller    : $object->genome_db_id
+ Status    : Stable
 
 =cut
 
@@ -343,7 +400,7 @@ sub genome_db_id {
  Returns   : string
  Exeption  : none
  Caller    : $object->coord_system_name
-
+ Status    : Stable
 
 =cut
 
@@ -369,6 +426,7 @@ sub coord_system_name {
               coord_system_name, name or Bio::EnsEMBL::DBSQL::DBAdaptor
               cannot be retrieved and returns undef.
  Caller     : $object->methodname
+ Status     : Stable
 
 =cut
 
@@ -402,6 +460,7 @@ sub slice {
 
 
 =head2 display_id
+
   Args       : none
   Example    : my $id = $dnafrag->display_id;
   Description: returns string describing this chunk which can be used
@@ -410,6 +469,8 @@ sub slice {
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : Stable
+
 =cut
 
 sub display_id {
