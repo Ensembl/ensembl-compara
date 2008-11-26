@@ -64,6 +64,9 @@ GET VALUES
   $level_id = $genomic_align->level_id;
   $slice = $genomic_align->get_Slice();
 
+=head1 DESCRIPTION
+
+The GenomicAlign object stores information about a single sequence within an alignment.
 
 =head1 OBJECT ATTRIBUTES
 
@@ -221,6 +224,7 @@ use Bio::EnsEMBL::Mapper;
   Returntype  : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions  : none
   Caller      : general
+  Status      : Stable
 
 =cut
 
@@ -262,6 +266,18 @@ sub new {
     return $self;
 }
 
+=head2 new_fast
+
+  Arg [1]    : hash reference $hashref
+  Example    : none
+  Description: This is an ultra fast constructor which requires knowledge of
+               the objects internals to be used.
+  Returntype :
+  Exceptions : none
+  Caller     :
+  Status     : Stable
+
+=cut
 
 sub new_fast {
   my $class = shift;
@@ -307,6 +323,7 @@ sub copy {
   Exceptions : thrown if $adaptor is not a
                Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -332,6 +349,7 @@ sub adaptor {
   Returntype : integer
   Exceptions : none
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -362,6 +380,7 @@ sub dbID {
                genomic_align_block_id
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -428,6 +447,7 @@ sub genomic_align_block {
                genomic_align_block
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -479,6 +499,7 @@ sub genomic_align_block_id {
                method_link_species_set_id
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -540,6 +561,7 @@ sub method_link_species_set {
                method_link_species_set
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -583,6 +605,7 @@ sub method_link_species_set_id {
                defined and cannot be fetched from other
                sources.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -618,6 +641,7 @@ sub genome_db {
                dnafrag_id
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -673,6 +697,7 @@ sub dnafrag {
                dnafrag
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -719,6 +744,7 @@ sub dnafrag_id {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -756,6 +782,7 @@ sub dnafrag_start {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -793,6 +820,7 @@ sub dnafrag_end {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -834,6 +862,7 @@ sub dnafrag_strand {
   Exceptions : thrown if sequence contains unknown symbols
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -910,6 +939,7 @@ sub aligned_sequence {
   Exceptions : none
   Warning    : 
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -954,6 +984,7 @@ sub length {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -991,7 +1022,7 @@ sub cigar_line {
 
 
 =head2 level_id
- 
+
   Arg [1]    : int $level_id
   Example    : $level_id = $genomic_align->level_id;
   Example    : $genomic_align->level_id(1);
@@ -1003,6 +1034,7 @@ sub cigar_line {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -1028,7 +1060,7 @@ sub level_id {
 
 
 =head2 genomic_align_groups
- 
+
   Arg [1]    : a ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignGroup $genomic_align_groups
   Example    : $genomic_align_groups = $genomic_align->genomic_align_groups;
   Example    : $genomic_align->genomic_align_groups($genomic_align_groups);
@@ -1040,6 +1072,7 @@ sub level_id {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -1074,7 +1107,7 @@ sub genomic_align_groups {
 
 
 =head2 genomic_align_group_by_type
- 
+
   Arg [1]    : [mandatory] string $type (genomic_align_group.type)
   Arg [2]    : [optional] Bio::EnsEMBL::Compara::GenomicAlignGroup $genomic_align_group
   Example    : $genomic_align_group = $genomic_align->genomic_align_group_by_type("default");
@@ -1086,6 +1119,7 @@ sub genomic_align_groups {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -1113,7 +1147,7 @@ sub genomic_align_group_by_type {
 
 
 =head2 genomic_align_group_id_by_type
- 
+
   Arg [1]    : [mandatory] string $type (genomic_align_group.type)
   Arg [2]    : [optional] int $genomic_align_group_id
   Example    : $genomic_align_group_id = $genomic_align->genomic_align_group_by_type("default");
@@ -1124,6 +1158,7 @@ sub genomic_align_group_by_type {
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -1166,6 +1201,7 @@ sub genomic_align_group_id_by_type {
   Returntype : string $original_sequence
   Exceptions : 
   Caller     : object->methodname
+  Status     : Stable
 
 =cut
 
@@ -1216,6 +1252,7 @@ sub original_sequence {
   Returntype : string $cigar_line
   Exceptions : 
   Caller     : methodname
+  Status     : Stable
 
 =cut
 
@@ -1254,6 +1291,7 @@ sub _get_cigar_line_from_aligned_sequence {
   Returntype : string $aligned_sequence
   Exceptions : thrown if cigar_line does not match sequence length
   Caller     : methodname
+  Status     : Stable
 
 =cut
 
@@ -1299,9 +1337,10 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
   Example    : $aligned_sequence = _get_fake_aligned_sequence_from_cigar_line(
                    "3MD8M2D3M")
   Description: get gapped sequence of N\'s from the cigar line
-  Returntype : string $fake_aligned_sequence
+  Returntype : string $fake_aligned_sequence or undef if no $cigar_line
   Exceptions : 
   Caller     : methodname
+  Status     : Stable
 
 =cut
 
@@ -1348,6 +1387,7 @@ sub _get_fake_aligned_sequence_from_cigar_line {
   Returntype : none
   Exceptions : 
   Caller     : object->methodname
+  Status     : At risk
 
 =cut
 
@@ -1383,7 +1423,7 @@ sub _print {
 }
 
 =head2 display_id
-  
+
   Args       : none
   Example    : my $id = $genomic_align->display_id;
   Description: returns string describing this genomic_align which can be used
@@ -1396,6 +1436,7 @@ sub _print {
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -1423,6 +1464,7 @@ sub display_id {
   Returntype : none
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -1471,11 +1513,12 @@ sub reverse_complement {
                the other Bio::EnsEMBL::Compara::GenomicAlign coordinates using the
                corresponding Bio::EnsEMBL::Mapper.
                The coordinates of the "alignment" starts with the reference_slice_start
-               position of the GenomicAlingBlock if available or 1 otherwise.
+               position of the GenomicAlignBlock if available or 1 otherwise.
                With the $cache argument you can decide whether you want to cache the
                result or not. Result is *not* cached by default.
   Returntype : Bio::EnsEMBL::Mapper object
   Exceptions : throw if no cigar_line can be found
+  Status     : Stable
 
 =cut
 
@@ -1546,6 +1589,23 @@ sub get_Mapper {
   return $self->{$mode.'_mapper'};
 }
 
+=head2 _get_Mapper_from_cigar_line
+
+  Arg[1]     : $cigar_line
+  Arg[2]     : $alignment_position
+  Arg[3]     : $sequence_position
+  Arg[4]     : $relative_strand
+  Example    : $this_mapper = _get_Mapper_from_cigar_line($cigar_line, 
+                $aln_pos, $seq_pos, 1);
+  Description: creates a new Bio::EnsEMBL::Mapper object for mapping between
+               sequence and alignment coordinate systems using the cigar_line
+               and starting from the $alignment_position and sequence_position.
+  Returntype : Bio::EnsEMBL::Mapper object
+  Exceptions : None
+  Status     : Stable
+
+=cut
+
 sub _get_Mapper_from_cigar_line {
   my ($cigar_line, $alignment_position, $sequence_position, $rel_strand) = @_;
 
@@ -1613,6 +1673,7 @@ sub _get_Mapper_from_cigar_line {
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : return -undef- if slice cannot be created (this is likely to
                happen if the Registry is misconfigured)
+  Status     : Stable
 
 =cut
 
