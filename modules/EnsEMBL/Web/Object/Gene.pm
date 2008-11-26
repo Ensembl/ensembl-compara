@@ -533,12 +533,13 @@ sub get_alternative_locations {
 }
 
 sub get_homology_matches{
-  my( $self,$homology_source,$homology_description ) = @_;
+  my( $self,$homology_source,$homology_description,$compara_db ) = @_;
   $homology_source      = "ENSEMBL_HOMOLOGUES" unless defined $homology_source;
   $homology_description = "ortholog"           unless defined $homology_description;
+  $compara_db ||= 'compara';
 
   unless( $self->{'homology_matches'}{$homology_source.'::'.$homology_description} ) { 
-    my %homologues = %{$self->fetch_homology_species_hash($homology_source, $homology_description)};
+    my %homologues = %{$self->fetch_homology_species_hash($homology_source, $homology_description, $compara_db)};
     unless( keys %homologues ) {
       $self->{'homology_matches'}{$homology_source.'::'.$homology_description} = {};
       return {};
@@ -592,13 +593,13 @@ sub fetch_homology_species_hash {
   my $self = shift;
   my $homology_source = shift;
   my $homology_description = shift;
-  
+  my $compara_db = shift || 'compara';
   
   $homology_source = "ENSEMBL_HOMOLOGUES" unless (defined $homology_source);
   $homology_description= "ortholog" unless (defined $homology_description);
   
   my $geneid = $self->stable_id;
-  my $database = $self->database('compara') ;
+  my $database = $self->database($compara_db) ;
   my %homologues;
 
   return {} unless $database;
@@ -617,8 +618,12 @@ sub fetch_homology_species_hash {
 
   # Strategy: get the root node (this method gets the whole lineage without getting sister nodes)
   # We use right - left indexes to get the order in the hierarchy.
-  my $node = $query_member->taxon->root();
+  
   my %classification;
+
+  if (my $taxon = $query_member->taxon) {
+      my $node = $taxon->root();
+ 
   while ($node){
     $node->get_tagvalue('scientific name');
     # Found a speed boost with nytprof -- avilella
@@ -626,7 +631,7 @@ sub fetch_homology_species_hash {
     $classification{$node->{_tags}{'scientific name'}} = $node->{_right_index} - $node->{_left_index};
     $node = $node->children->[0];
   }
- 
+} 
   $self->timer_push( 'classification' , 6 );
  
  foreach my $homology (@{$homologies_array}){
@@ -674,43 +679,45 @@ sub get_disease_matches{
   return \%omim_disease ;
 }
 
-
 sub get_compara_Member{
   # Returns the Bio::EnsEMBL::Compara::Member object
   # corresponding to this gene 
   my $self = shift;
+  my $compara_db = shift || 'compara';
 
   # Catch coderef
-  my $error = sub{ warn($_[0]); $self->{_compara_member}=0; return 0};
+  my $cachekey = "_compara_member_$compara_db";
+  my $error = sub{ warn($_[0]); $self->{$cachekey}=0; return 0};
 
-  unless( defined( $self->{_compara_member} ) ){ # Look in cache
+  unless( defined( $self->{$cachekey} ) ){ # Look in cache
     # Prepare the adaptors
-    my $compara_dba = $self->database( 'compara' )           || &$error( "No compara db" );
+    my $compara_dba = $self->database( $compara_db )           || &$error( "No compara db" );
     my $member_adaptor = $compara_dba->get_adaptor('Member') || &$error( "Cannot COMPARA->get_adaptor('Member')" );
     # Fetch the object
     my $id = $self->stable_id;
     my $member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE',$id) || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
     # Update the cache
-    $self->{_compara_member} = $member;
+    $self->{$cachekey} = $member;
   }
   # Return cached value
-  return $self->{_compara_member};
+  return $self->{$cachekey};
 }
 
 sub get_ProteinTree{
   # Returns the Bio::EnsEMBL::Compara::ProteinTree object
   # corresponding to this gene
   my $self = shift;
+  my $compara_db = shift || 'compara';
 
   # Where to keep the cached data
-  my $cachekey = '_protein_tree';
+  my $cachekey = "_protein_tree_$compara_db";
 
   # Catch coderef
   my $error = sub{ warn($_[0]); $self->{$cachekey}=0; return 0};
 
   unless( defined( $self->{$cachekey} ) ){ # Look in cache
     # Fetch the objects
-    my $member = $self->get_compara_Member
+    my $member = $self->get_compara_Member($compara_db)
         || &$error( "No compara member for this gene" );
     my $tree_adaptor = $member->adaptor->db->get_adaptor('ProteinTree')
         || &$error( "Cannot COMPARA->get_adaptor('ProteinTree')" );
