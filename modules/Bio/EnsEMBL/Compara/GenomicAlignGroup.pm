@@ -30,6 +30,10 @@ GET VALUES
   my $dbID = $genomic_align_group->dbID();
   my $genomic_aligns = $genomic_align_group->genomic_align_array();
 
+=head1 DESCRIPTION
+
+The GenomicAlignGroup object defines groups of alignments.
+
 =head1 OBJECT ATTRIBUTES
 
 =over
@@ -99,6 +103,7 @@ use Scalar::Util qw(weaken);
   Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroup
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -120,6 +125,18 @@ sub new {
   return $self;
 }
 
+=head2 new_fast
+
+  Arg [1]    : hash reference $hashref
+  Example    : none
+  Description: This is an ultra fast constructor which requires knowledge of
+               the objects internals to be used.
+  Returntype :
+  Exceptions : none
+  Caller     :
+  Status     : Stable
+
+=cut
 
 sub new_fast {
   my $class = shift;
@@ -128,6 +145,18 @@ sub new_fast {
   return bless $hashref, $class;
 }
 
+=head2 copy
+
+  Arg         : none
+  Example     : my $new_gag = $gag->copy()
+  Description : Create a copy of this Bio::EnsEMBL::Compara::GenomicAlignGroup
+                object
+  Returntype  : Bio::EnsEMBL::Compara::GenomicAlignGroup
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub copy {
   my $self = shift;
@@ -151,6 +180,7 @@ sub copy {
   Exceptions : thrown if $adaptor is not a
                Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor object
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -176,6 +206,7 @@ sub adaptor {
   Returntype : integer
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -199,6 +230,7 @@ sub dbID {
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -221,7 +253,7 @@ sub type {
 
 
 =head2 genomic_align_array
- 
+
   Arg [1]    : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Example    : $genomic_aligns = $genomic_align_group->genomic_align_array();
                $genomic_align_group->genomic_align_array([$genomic_align1, $genomic_align2]);
@@ -229,7 +261,8 @@ sub type {
   Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : none
   Caller     : general
- 
+  Status     : Stable
+
 =cut
 
 sub genomic_align_array {
@@ -303,6 +336,7 @@ sub genomic_align_array {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : thrown if wrong argument
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -327,6 +361,7 @@ sub add_GenomicAlign {
   Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : none
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -480,7 +515,7 @@ sub dnafrag_strand {
   Returntype  : string
   Exceptions  : none
   Caller      : general
-  Status      : Stable
+  Status      : At risk
 
 =cut
 
