@@ -11,15 +11,31 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor 
 
 =head1 SYNOPSIS
 
-Give standard usage here
+  use Bio::EnsEMBL::Registry;
+
+  my $reg = "Bio::EnsEMBL::Registry";
+
+  $reg->load_registry_from_db(-host=>"ensembldb.ensembl.org", -user=>"anonymous");
+
+  my $dnafrag_adaptor = $reg->get_adaptor("Multi", "compara", "DnaFrag");
+
+  $dnafrag_adaptor->store($dnafrag);
+  
+  $dnafrag = $dnafrag_adaptor->fetch_by_dbID(905406);
+  $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($human_genome_db, 'X');
+  $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
+                                $human_genome_db, 'chromosome')
+
+  $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
+  $all_dnafrags = $dnafrag_adaptor->fetch_all();
 
 =head1 DESCRIPTION
 
-Describe the object here
+This module is intended to access data in the dnafrag table. The dnafrag table stores information on the toplevel sequences such as the name, coordinate system, length and species.
 
 =head1 AUTHOR - Ewan Birney
 
@@ -53,12 +69,13 @@ use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 
 =head2 fetch_by_dbID
 
- Title   : fetch_by_dbID
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
+  Arg [1]    : integer $db_id
+  Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_dbID(905406);
+  Description: Returns the Bio::EnsEMBL::Compara::DnaFrag object corresponding to the database internal identifier
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag
+  Exceptions : throw if $dbid is not supplied. 
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -109,14 +126,17 @@ sub fetch_by_dbID {
   Arg [2]    : string $name
   Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($human_genome_db, 'X');
   Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(1, 'X');
-  Description: Returns the Bio::EnsEMBL::Compara::DnaFrag obejct corresponding to the
-               Bio::EnsEMBL::Compara::GenomeDB and name given.
+  Description: Returns the Bio::EnsEMBL::Compara::DnaFrag object corresponding to the
+               Bio::EnsEMBL::Compara::GenomeDB and name given. $genome_db can
+               be a valid $genome_db_id instead.
   Returntype : Bio::EnsEMBL::Compara::DnaFrag
   Exceptions : throw when genome_db_id cannot be retrieved
   Exceptions : warns and returns undef when no DnaFrag matches the query
   Caller     : $dnafrag_adaptor->fetch_by_GenomeDB_and_name
+  Status     : Stable
 
 =cut
+
 
 sub fetch_by_GenomeDB_and_name {
   my ($self, $genome_db, $name) = @_;
@@ -169,10 +189,12 @@ sub fetch_by_GenomeDB_and_name {
   Example    : my $human_chr_dnafrags = $dnafrag_adaptor->
                    fetch_all_by_GenomeDB_region(
                      $human_genome_db, 'chromosome')
-  Description: 
+  Description: Returns the Bio::EnsEMBL::Compara::DnaFrag object corresponding to the
+               Bio::EnsEMBL::Compara::GenomeDB and region given.
   Returntype : listref of Bio::EnsEMBL::Compara::DnaFrag objects
-  Exceptions : 
+  Exceptions : throw unless $genome_db is a Bio::EnsEMBL::Compara::GenomeDB
   Caller     : 
+  Status     : Stable
 
 =cut
 
@@ -236,6 +258,7 @@ sub fetch_all_by_GenomeDB_region {
   Returntype : Bio::EnsEMBL::Compara::DnaFrag
   Exceptions : thrown if $slice is not a Bio::EnsEMBL::Slice
   Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -250,12 +273,14 @@ sub fetch_by_Slice {
 
 =head2 fetch_all
 
- Title   : fetch_all
- Usage   :
- Function:
- Example :
- Returns : 
- Args    :
+  Arg         : none
+  Example     : my $all_dnafrags = $dnafrag_adaptor->fetch_all();
+  Description : fetches all Bio::EnsEMBL::Compara::DnaFrag objects for this
+                compara database
+  Returntype  : listref of all Bio::EnsEMBL::Compara::DnaFrag objects
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
 
 =cut
 
@@ -277,11 +302,35 @@ sub fetch_all {
    return $self->_objs_from_sth( $sth );
 }
 
+=head2 _tables
+
+  Args       : none
+  Example    : $tables = $self->_tables()
+  Description: a list of [tablename, alias] pairs for use with generic_fetch
+  Returntype : list of [tablename, alias] pairs
+  Exceptions : none
+  Caller     : BaseAdaptor::generic_fetch
+  Status     : Stable
+
+=cut
+
 sub _tables {
   return (
       ['dnafrag', 'df']
       );
 }
+
+=head2 _columns
+
+  Args       : none
+  Example    : $columns = $self->_columns()
+  Description: a list of [tablename, alias] pairs for use with generic_fetch
+  Returntype : list of [tablename, alias] pairs
+  Exceptions : none
+  Caller     : BaseAdaptor::generic_fetch
+  Status     : Stable
+
+=cut
 
 sub _columns {
   return ('df.dnafrag_id',
@@ -292,6 +341,18 @@ sub _columns {
           );
 }
 
+=head2 _objs_from_sth
+
+  Args[1]    : DBI::row_hashref $hashref containing key-value pairs
+  Example    : my $dna_frags = $self->_objs_from_sth($sth);
+  Description: convert DBI row hash reference into a 
+               Bio::EnsEMBL::Compara::DnaFrag object
+  Returntype : listref of Bio::EnsEMBL::Compara::DnaFrag objects
+  Exceptions : throw if $sth is not supplied
+  Caller     : general
+  Status     : Stable
+
+=cut
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -346,6 +407,7 @@ sub _objs_from_sth {
                no dbID.
  Exceptions  : throw if $new_dnafrag has no name
  Caller      : $object->methodname
+  Status     : Stable
 
 =cut
 
@@ -423,7 +485,7 @@ sub store {
  Example :
  Returns : $dnafrag->dbID if stored and 0 if not stored
  Args    : Bio::EnsEMBL::Compara::DnaFrag object
-
+ Status  : Stable
 
 =cut
 
@@ -491,6 +553,7 @@ sub is_already_stored {
  Example :
  Returns : $dnafrag->dbID
  Args    : Bio::EnsEMBL::Compara::DnaFrag object
+ Status  : Stable
 
 
 =cut
@@ -518,6 +581,7 @@ sub store_if_needed {
  Example :
  Returns : int $dnafrag->dbID
  Args    : Bio::EnsEMBL::Compara::DnaFrag object
+ Status  : Stable
 
 =cut
 
