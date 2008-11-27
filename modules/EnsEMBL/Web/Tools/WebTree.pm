@@ -50,7 +50,7 @@ sub read_tree {
         $branch->{_nav}   = $nav;
         $branch->{_order} = $order;
         $branch->{_index} = $index;
-        return;
+        $branch->{_no_follow} = 1;
       } elsif ($index =~ /NO INDEX/) {
         $include = 0;
       }
@@ -76,7 +76,7 @@ sub read_tree {
       $branch->{_nolink} = 1 if $filename eq 'index.none';
     }
     else {
-      unless ($index =~ /NO INDEX/) {
+      unless ($index =~ /NO INDEX/ || $branch->{'_no_follow'}) {
         $branch->{$filename}->{_title} = $title;
         $branch->{$filename}->{_nav}   = $nav;
         $branch->{$filename}->{_order} = $order;
@@ -86,6 +86,7 @@ sub read_tree {
   }
 
   ## Descend into directories recursively
+  return if $branch->{'_no_follow'};
   foreach my $dirname (@$sub_dirs) {
     ## omit CVS directories and directories beginning with . or _
     next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/ 
