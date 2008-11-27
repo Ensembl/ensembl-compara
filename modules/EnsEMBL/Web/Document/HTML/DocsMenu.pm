@@ -15,14 +15,7 @@ sub render {
   (my $location = $you_are_here) =~ s/index\.html$//;
 
   my $tree = $sd->STATIC_INFO;
-
-  my $html = qq(
-<dl id="local">
-<dt>Help &amp; Documentation</dt>
-<dd><a href="/info/">Alphabetical List of Pages</a></dd>
-);
-
-  my ($title, $class);
+  my ($title, $class, $toc, $page_count);
 
   my @sortable_sections;
   foreach my $section (keys %$tree) {
@@ -45,13 +38,14 @@ sub render {
       $class = ' class="active"';
     }
     if ($subsection->{'_nolink'}) {
-      $html .= qq(<dd class="open"><strong>$title</strong>);
+      $toc .= qq(<dd class="open"><strong>$title</strong>);
     }
     else {
-      $html .= sprintf(qq(<dd class="open"><strong><a href="%s" title="%s"%s>%s</a></strong>),
+      $toc .= sprintf(qq(<dd class="open"><strong><a href="%s" title="%s"%s>%s</a></strong>),
         $subsection->{'_path'}, $title, $class, $title
       );
     }
+    $page_count++;
     next if $subsection->{'_no_follow'};
     my @sortable_subsections;
     foreach my $sub (keys %$subsection) {
@@ -65,7 +59,7 @@ sub render {
         || $subsection->{$a} cmp $subsection->{$b}
         } 
          @sortable_subsections;
-      $html .= sprintf(qq(
+      $toc .= sprintf(qq(
         <dl>
       ), );
       foreach my $sub (@sub_order) {
@@ -78,17 +72,27 @@ sub render {
         if ($location eq $path) {
           $class = ' class="active"';
         }
-        $html .= sprintf(qq(<dd><a href="%s" title="%s"%s>%s</a></dd>),
+        $toc .= sprintf(qq(<dd><a href="%s" title="%s"%s>%s</a></dd>),
             $path, $title, $class, $title
         );
-        
+        $page_count++;
       }
-      $html .= qq(</dl>\n);
+      $toc .= qq(</dl>\n);
     }
-    $html .= '</dd>';
+    $toc .= '</dd>';
   }
-  
-  $html .= '</dl>';
+ 
+  my $html = qq(
+<dl id="local">
+<dt>Help &amp; Documentation</dt>
+);
+  if ($page_count > 5) {
+    $html .= qq(
+<dd><a href="/info/">Alphabetical List of Pages</a></dd>
+  );
+  }
+  $html .= $toc;
+  $html .= '</dl>'; 
   $self->print($html);
 }
 
