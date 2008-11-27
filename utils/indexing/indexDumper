@@ -139,8 +139,8 @@ sub dumpSNP {
   my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
   return unless $SNPDB;
 
-  `/usr/local/ensembl/mysql/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation order by variation_id' > v.txt`;
-  `/usr/local/ensembl/mysql/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation_synonym order by variation_id' > vs.txt`;
+  `/usr/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation order by variation_id' > v.txt`;
+  `/usr/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation_synonym order by variation_id' > vs.txt`;
 
   return unless $SNPDB;
   my $SOURCES = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )} };
@@ -277,65 +277,64 @@ sub markerLine {
 ########################################################################## Similarity features
 
 sub dumpGenomicAlignment {
-    my  $conf = shift;
-    open D, ">$conf->{'directory'}/GenomicAlignment.txt";
+  my  $conf = shift;
+  open D, ">$conf->{'directory'}/GenomicAlignment.txt";
 
-    my $species = $conf->{'species'};
-    my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
-    my $ESTDB  = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
-    my $CDNADB = $conf->{'dbs'}->{'DATABASE_CDNA'};
-    my %dbs    = ( 'core' => $COREDB );
-    $dbs{'otherfeatures'}  =  $ESTDB  if $ESTDB;
-    $dbs{'cdna'} = $CDNADB if $CDNADB;
-    my %tables = (
-	'dna_align_feature'     => [ 'DnaAlignFeature',     'DNA alignment feature' ],
-	'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
-    );
-    my %errors = ();
-    my $core_features;
-    foreach my $db ( sort { $b cmp $a } keys %dbs) {
-	my $DB_NAME = $dbs{$db};
-	foreach my $table ( keys %tables ) {
-	    my $source = $tables{ $table }[0];
-	    $source .= ";db=$db" unless $db eq 'core';
-	    my $type   = $tables{ $table }[1];
-	    my $sth    = $conf->{'dbh'}->prepare(
-             "select a.logic_name, ad.display_label, t.hit_name, sr.name, t.seq_region_start, t.seq_region_end, count(*) as hits
+  my $species = $conf->{'species'};
+  my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my $ESTDB  = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
+  my $CDNADB = $conf->{'dbs'}->{'DATABASE_CDNA'};
+  my %dbs    = ( 'core' => $COREDB );
+  $dbs{'otherfeatures'}  =  $ESTDB  if $ESTDB;
+  $dbs{'cdna'} = $CDNADB if $CDNADB;
+  my %tables = (
+    'dna_align_feature'     => [ 'DnaAlignFeature',     'DNA alignment feature' ],
+    'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
+  );
+  my %errors = ();
+  my $core_features;
+  foreach my $db ( sort { $b cmp $a } keys %dbs) {
+    my $DB_NAME = $dbs{$db};
+    foreach my $table ( keys %tables ) {
+      my $source = $tables{ $table }[0];
+      $source .= ";db=$db" unless $db eq 'core';
+      my $type   = $tables{ $table }[1];
+      my $sth    = $conf->{'dbh'}->prepare(
+	"select a.logic_name, ad.display_label, t.hit_name, sr.name, t.seq_region_start, t.seq_region_end, count(*) as hits
                 from ($DB_NAME.analysis as a, $DB_NAME.$table as t, seq_region as sr) left join
                      $DB_NAME.analysis_description as ad on ad.analysis_id = a.analysis_id
                where a.analysis_id = t.analysis_id
                  and t.seq_region_id = sr.seq_region_id
                group by a.logic_name, t.hit_name");
-	    $sth->execute();
-	    while( my( $logic_name, $label, $hid, $sr_name, $sr_start, $sr_end, $count  ) = $sth->fetchrow_array ) {
-		my $r = "$sr_name:$sr_start-$sr_end";
-		print D join "\t",
-		    (INC_SPECIES?"$species\t":"")."$type: ".($label||$logic_name),
-			$hid,
-			    "/$species/Location/Genome?ftype=$source;id=$hid;r=$r",
-				$hid,
-				    qq($logic_name $hid hits the genome in $count locations.\n);
-	    }
-	}
-	if (0) {#$db eq 'cdna') { #don't do these for now
-	    my $sth    = $conf->{'dbh'}->prepare(
-	     "select uo.identifier, a.logic_name, ur.summary_description, 'Unmapped feature'
+      $sth->execute();
+      while( my( $logic_name, $label, $hid, $sr_name, $sr_start, $sr_end, $count  ) = $sth->fetchrow_array ) {
+	print D join "\t",
+	  (INC_SPECIES?"$species\t":"")."$type: ".($label||$logic_name),
+	    $hid,
+	      "/$species/Location/Genome?ftype=$source;id=$hid",
+		$hid,
+		  qq($logic_name $hid hits the genome in $count locations.\n);
+      }
+    }
+    if (0) {#$db eq 'cdna') { #don't do these for now
+      my $sth    = $conf->{'dbh'}->prepare(
+	"select uo.identifier, a.logic_name, ur.summary_description, 'Unmapped feature'
                 from $DB_NAME.analysis a, $DB_NAME.unmapped_object uo, $DB_NAME.unmapped_reason ur 
                where a.analysis_id = uo.analysis_id
                  and uo.unmapped_reason_id = ur.unmapped_reason_id");
-	    $sth->execute();
-	    while (my ($name, $ln, $desc, $type) = $sth->fetchrow_array ) {
-		$ln =~ s/_/ /;
-		print D join "\t",
-		    (INC_SPECIES?"$species\t":"")."$type: ",
-			"$ln $name",
-			    "/$species/Location/Genome?ftype=UnmappedObject;id=$name;db=$db",
-				$name,
-				    "Reason: $desc\n";
-	    }
-	}
+      $sth->execute();
+      while (my ($name, $ln, $desc, $type) = $sth->fetchrow_array ) {
+	$ln =~ s/_/ /;
+	print D join "\t",
+	  (INC_SPECIES?"$species\t":"")."$type: ",
+	    "$ln $name",
+	      "/$species/Location/Genome?ftype=UnmappedObject;id=$name;db=$db",
+		$name,
+		  "Reason: $desc\n";
+      }
     }
-    close D;
+  }
+  close D;
 }
 
 sub dumpOligoProbe {
@@ -353,9 +352,9 @@ sub dumpOligoProbe {
   );
   $sth->execute();
   while( my( $hid, $count, $type, $sr_name, $sr_start, $sr_end ) = $sth->fetchrow_array ) {
-    my $r = "$sr_name:$sr_start-$sr_end";
+    next unless $hid;
     print A join "\t", (INC_SPECIES?"$species\t":"")."$type Oligo Probe set",
-      $hid, "/$species/Location/Genome?ftype=OligoProbe;id=$hid;r=$r",
+      $hid, "/$species/Location/Genome?ftype=OligoProbe;id=$hid",
       $hid, qq($type oligo probeset $hid hits the genome in $count locations.\n);
   }
   close A;
@@ -474,7 +473,7 @@ sub domainLine {
   return join "\t",
     (INC_SPECIES?"$species\t":"").qq(Interpro domain),    ## Type
     qq($did),               ## ID
-    qq(/$species/Transcript/Domain?t=$example;domain=$did), ## URL
+    qq(/$species/Transcript/Domains/Genes?domain=$did), ## URL
     qq($did $IDS $desc),     ## Index locations
     qq(InterPro domain $did [$desc] has $counter associated external database identifiers: $description.\n);   ## Description text
 
@@ -684,7 +683,7 @@ warn "Gene query...";
   foreach my $type ( keys %mapping ) {
     my $url = $type eq 'gene' ? 'Gene/Idhistory?g'
 	    : $type eq 'transcript' ? 'Transcript/Idhistory?t'
-	    : 'Transcript/Idhistory?peptide';
+	    : 'Transcript/Idhistory/Protein?protein';
     foreach my $osi ( keys %{$mapping{$type}} ) {
       my @current_sis = ();
       my @deprecated_sis = ();
@@ -823,30 +822,29 @@ sub geneLine {
 ########################################################################## Sequences
 
 sub dumpSequence {
-    my $conf = shift;
-
-    my $sanger = sanger_project_names( $conf );
-    my %config = (
-      "Homo_sapiens" => [
-        [ 'Clone',      'tilepath,cloneset_1mb,cloneset_30k,cloneset_32k', 'name,well_name,clone_name,synonym,embl_acc,sanger_project,alt_well_name,bacend_well_name' ],
-        [ 'NT Contig',  'ntctgs',                  'name' ],
-        [ 'Encode region', 'encode', 'name,synonym,description' ],
-      ],
-      "Mus_musculus" => [
-        [ 'BAC',        'cloneset_0_5mb,cloneset_1mb,bac_map,tilingpath_cloneset', 'embl_acc,name,clone_name,well_name,synonym,alt_embl_acc' ],
-        [ 'Fosmid',     'fosmid_map', 'name,clone_name' ],
-        [ 'Supercontig','superctgs', 'name' ],
-      ],
-      "Anopheles_gambiae" => [
-        [ 'BAC' ,       'bacs',        'name,synonym,clone_name' ],
-        [ 'BAC band' ,  'bacs_bands',  'name,synonym,clone_name' ],
-      ],
-      "Gallus_gallus" => [
-        [ 'BAC', 'bac_map', 'name,synonym,clone_name' ],
-        [ 'BAC ends', 'bacends', 'name,synonym,clone_name', 'otherfeatures' ]
-      ]
-    );
-
+  my $conf = shift;
+  my $sanger = sanger_project_names( $conf );
+  my %config = (
+    "Homo_sapiens" => [
+      [ 'Clone',      'tilepath,cloneset_1mb,cloneset_30k,cloneset_32k', 'name,well_name,clone_name,synonym,embl_acc,sanger_project,alt_well_name,bacend_well_name' ],
+      [ 'NT Contig',  'ntctgs',                  'name' ],
+      [ 'Encode region', 'encode', 'name,synonym,description' ],
+    ],
+    "Mus_musculus" => [
+      [ 'BAC',        'cloneset_0_5mb,cloneset_1mb,bac_map,tilingpath_cloneset', 'embl_acc,name,clone_name,well_name,synonym,alt_embl_acc' ],
+      [ 'Fosmid',     'fosmid_map', 'name,clone_name' ],
+      [ 'Supercontig','superctgs', 'name' ],
+    ],
+    "Anopheles_gambiae" => [
+      [ 'BAC' ,       'bacs',        'name,synonym,clone_name' ],
+      [ 'BAC band' ,  'bacs_bands',  'name,synonym,clone_name' ],
+    ],
+    "Gallus_gallus" => [
+      [ 'BAC', 'bac_map', 'name,synonym,clone_name' ],
+      [ 'BAC ends', 'bacends', 'name,synonym,clone_name', 'otherfeatures' ]
+    ]
+  );
+  
   my $COREDB   = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $ESTDB    = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
   open O, ">$conf->{'directory'}/Sequence.txt";
@@ -861,7 +859,7 @@ sub dumpSequence {
       push @mapsets, $ID if($ID);
     }
     next unless @mapsets;
-    @temp = split (',',$annotationtypes);        
+    @temp = split (',',$annotationtypes);
     my @mapannotationtypes;
     foreach my $X ( @temp ) {
       my $ID = $conf->{'dbh'}->selectrow_array( "select attrib_type_id from $DB.attrib_type where code = ?", {}, $X );
