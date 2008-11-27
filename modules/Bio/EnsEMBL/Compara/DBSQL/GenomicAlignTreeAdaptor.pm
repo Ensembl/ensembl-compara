@@ -32,7 +32,20 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 # FETCH methods
 ###########################
 
-=head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag
+=head2 fetch_all_by_MethodLinkSpeciesSet
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg  2     : integer $limit_number [optional]
+  Arg  3     : integer $limit_index_start [optional]
+  Example    : my $genomic_align_trees =
+                  $genomic_align_tree_adaptor->
+                      fetch_all_by_MethodLinkSpeciesSet($mlss);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlignTree objects. Objects 
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignTree objects.
+  Exceptions : Returns ref. to an empty array if no matching
+               Bio::EnsEMBL::Compara::GenomicAlignTree object can be retrieved
+  Caller     : none
+  Status     : At risk
 
 =cut
 
@@ -59,6 +72,26 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
 
 =head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg  2     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+  Arg  3     : integer $start [optional, default = 1]
+  Arg  4     : integer $end [optional, default = dnafrag_length]
+  Arg  5     : integer $limit_number [optional, default = no limit]
+  Arg  6     : integer $limit_index_start [optional, default = 0]
+  Arg  7     : boolean $restrict_resulting_blocks [optional, default = no restriction]
+  Example    : my $genomic_align_trees =
+                  $genomic_align_tree_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
+                      $mlss, $dnafrag, 50000000, 50250000);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlignTree objects. 
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignTree objects. Only dbID,
+               adaptor and method_link_species_set are actually stored in the objects. The remaining
+               attributes are only retrieved when requiered.
+  Exceptions : Returns ref. to an empty array if no matching
+               Bio::EnsEMBL::Compara::GenomicAlignTree object can be retrieved
+  Caller     : none
+  Status     : At risk
 
 =cut
 
@@ -144,7 +177,24 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 
 =head2 fetch_all_by_MethodLinkSpeciesSet_Slice
 
-  Status:     At risk
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg  2     : Bio::EnsEMBL::Slice $original_slice
+  Arg  3     : integer $limit_number [optional]
+  Arg  4     : integer $limit_index_start [optional]
+  Arg  5     : boolean $restrict_resulting_blocks [optional]
+  Example    : my $genomic_align_trees =
+                  $genomic_align_tree_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+                      $method_link_species_set, $original_slice);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlignTree objects. The alignments may be
+               reverse-complemented in order to match the strand of the original slice.
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignTree objects. Only dbID,
+               adaptor and method_link_species_set are actually stored in the objects. The remaining
+               attributes are only retrieved when required.
+  Exceptions : Returns ref. to an empty array if no matching
+               Bio::EnsEMBL::Compara::GenomicAlignTree object can be retrieved
+  Caller     : $object->method_name
+  Status     : At risk
 
 =cut
 
@@ -226,6 +276,17 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
 =head2 fetch_by_GenomicAlignBlock
 
+  Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock $genomic_align_block
+  Example    : my $genomic_align_tree =
+                  $genomic_align_tree_adaptor->fetch_by_GenomicAlignBlock($gab_id);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlignTree object. 
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignTree object. 
+  Exceptions : Returns ref. to an empty array if no matching
+               Bio::EnsEMBL::Compara::GenomicAlignTree object can be retrieved
+  Caller     : $object->method_name
+  Status     : At risk
+
 =cut
 
 sub fetch_by_GenomicAlignBlock {
@@ -233,13 +294,45 @@ sub fetch_by_GenomicAlignBlock {
 
   my $genomic_align_block_id = $genomic_align_block->dbID;
 
-  my $join = [
-      [["genomic_align_tree","gat2"], "gat2.root_id = gat.node_id", undef],
-      [["genomic_align_group","gag2"], "gag2.group_id = gat2.node_id", undef],
-      [["genomic_align","ga2"], "ga2.genomic_align_id = gag2.genomic_align_id", undef],
-    ];
-  my $constraint = "WHERE ga2.genomic_align_block_id = $genomic_align_block_id";
-  my $genomic_align_trees = $self->_generic_fetch($constraint, $join);
+#  my $join = [
+#      [["genomic_align_tree","gat2"], "gat2.root_id = gat.node_id", undef],
+#      [["genomic_align_group","gag2"], "gag2.group_id = gat2.node_id", undef],
+#      [["genomic_align","ga2"], "ga2.genomic_align_id = gag2.genomic_align_id", undef],
+#    ];
+#  my $constraint = "WHERE ga2.genomic_align_block_id = $genomic_align_block_id";
+#  my $genomic_align_trees = $self->_generic_fetch($constraint, $join);
+
+  my $sql = "SELECT root_id FROM genomic_align
+    LEFT JOIN genomic_align_group USING (genomic_align_id)
+    LEFT JOIN genomic_align_tree ON (group_id = node_id)
+    WHERE genomic_align_block_id = $genomic_align_block_id";
+
+  my $sth = $self->prepare($sql);
+  $sth->execute;
+  my ($root_id) = $sth->fetchrow_array();
+  $sth->finish();
+
+  #print "root_id $root_id\n";
+
+  #whole tree
+  $sql = "SELECT " . join(",", @{$self->columns}) .  
+    " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.root_id = $root_id";
+
+  #root only
+  #$sql = "SELECT " . join(",", @{$self->columns}) .
+  #  " FROM genomic_align_tree gat LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = $root_id";
+
+  $sth = $self->prepare($sql);
+  $sth->execute;
+  my $genomic_align_trees = $self->_objs_from_sth($sth);
+  $sth->finish;
+
+  my $root = $self->_build_tree_from_nodes($genomic_align_trees);
+
+  $genomic_align_trees = [$root];
+
+ #my $constraint = "WHERE gat.node_id = $root_id";
+ # my $genomic_align_trees = $self->_generic_fetch($constraint);
 
   if (@$genomic_align_trees > 1) {
     warning("Found more than 1 tree. This shouldn't happen. Returning the first one only");
@@ -248,6 +341,8 @@ sub fetch_by_GenomicAlignBlock {
     return;
   }
   my $genomic_align_tree = $genomic_align_trees->[0];
+
+
   if ($genomic_align_block->reference_genomic_align) {
     my $ref_genomic_align = $genomic_align_block->reference_genomic_align;
     LEAF: foreach my $this_leaf (@{$genomic_align_tree->get_all_leaves}) {
@@ -292,7 +387,7 @@ sub fetch_by_GenomicAlignBlock {
                 the GenomicAlignTree nodes in this tree. If you set
                 the $skip_left_right_indexes flag to any true value,
                 the left and right indexes in the tree won't be build
-                at this point. This may be usefull for production
+                at this point. This may be useful for production
                 purposes as building the indexes requires to lock the
                 table and can hamper other processes storing data at
                 that time.
@@ -324,6 +419,7 @@ sub fetch_by_GenomicAlignBlock {
                 GenomicAlign object or this one misses its
                 GenomicAlignBlock objects.
   Caller      : general
+  Status      : At risk
 
 =cut
 
@@ -335,26 +431,30 @@ sub store {
   }
 
   ## Check the tree
-  foreach my $this_node (@{$node->get_all_nodes}) {
-    throw "[$this_node] has no GenomicAlignGroup" if (!$this_node->genomic_align_group);
-    throw "[$this_node] has no GenomicAligns" if (!$this_node->get_all_GenomicAligns);
-    throw "[$this_node] does not belong to this tree" if ($this_node->root ne $node);
-  }
+   foreach my $this_node (@{$node->get_all_nodes}) {
+#     throw "[$this_node] has no GenomicAlignGroup" if (!$this_node->genomic_align_group);
+#     throw "[$this_node] has no GenomicAligns" if (!$this_node->get_all_GenomicAligns);
+     throw "[$this_node] does not belong to this tree" if ($this_node->root ne $node);
+   }
+
+  my $leaves = $node->get_all_leaves;
+  my $method_link_species_set = $leaves->[0]->get_all_GenomicAligns->[0]->method_link_species_set;
+
 
   ## Create and store all the GenomicAlignBlock objects (this stores the GenomicAlign objects as well)
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor();
   my $ancestral_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-      -method_link_species_set => $node->get_all_GenomicAligns->[0]->method_link_species_set,
+      -method_link_species_set => $method_link_species_set,
       -group_id => $node->group_id);
   my $modern_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-      -method_link_species_set => $node->get_all_GenomicAligns->[0]->method_link_species_set,
+      -method_link_species_set => $method_link_species_set,
       -group_id => $node->group_id);
   foreach my $genomic_align_node (@{$node->get_all_nodes}) {
     if ($genomic_align_node->is_leaf()) {
       foreach my $this_genomic_align (@{$genomic_align_node->get_all_GenomicAligns}) {
         $modern_genomic_align_block->add_GenomicAlign($this_genomic_align);
       }
-    } else {
+    } elsif ($genomic_align_node->genomic_align_group) {
       foreach my $this_genomic_align (@{$genomic_align_node->get_all_GenomicAligns}) {
         $ancestral_genomic_align_block->add_GenomicAlign($this_genomic_align);
       }
@@ -367,17 +467,33 @@ sub store {
   $node->ancestral_genomic_align_block_id($ancestral_genomic_align_block->dbID);
   $node->modern_genomic_align_block_id($modern_genomic_align_block->dbID);
 
-  ## Store this node and, recursivelly, all the sub nodes
+  ## Store this node and, recursively, all the sub nodes
   $self->store_node($node);
 
   ## Set and store the left and right indexes unless otherwise stated
   if (!$skip_left_right_indexes) {
-    $self->sync_tree_leftright_index($node);
-    $self->update_subtree($node);
+      $self->sync_tree_leftright_index($node);
+      $self->update_subtree($node);
   }
 
   return $node->node_id;
 }
+
+
+=head2 store_group
+
+  Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Example    : $genomic_align_tree_adaptor->store_group($genomic_align_tree);
+  Description: Method for storing the group_id for a genomic_align_tree. The
+               group_id is set as the genomic_align_block_id of the first
+               genomic_align object
+  Returntype : none
+  Exceptions : - cannot lock tables
+               - cannot update GenomicAlignBlock object
+  Caller     : none
+  Status     : At risk
+
+=cut
 
 sub store_group {
     my ($self, $nodes) = @_;
@@ -419,6 +535,17 @@ sub store_group {
     }
 }
 
+=head2 store_node
+
+  Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Example    : $genomic_align_tree_adaptor->store_node($genomic_align_tree);
+  Description: Method for storing a single node. Called recursively.
+  Returntype : none
+  Exceptions : throw if no genomic_align_group ID has been set
+  Caller     : none
+  Status     : At risk
+
+=cut
 
 sub store_node {
   my ($self, $node) = @_;
@@ -433,15 +560,9 @@ sub store_node {
     $parent_id = $node->parent->node_id ;
     $root_id = $node->root->node_id;
   }
+
   #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
 
-  my $genomic_align_group_adaptor = $self->db->get_GenomicAlignGroupAdaptor();
-  $genomic_align_group_adaptor->store($node->genomic_align_group);
-
-  if (!$node->genomic_align_group or !$node->genomic_align_group->dbID) {
-    throw("Cannot store before setting the genomic_align_group ID");
-  }
-  $node->node_id($node->genomic_align_group->dbID);
   my $sth = $self->prepare("INSERT INTO genomic_align_tree 
                              (node_id,
                               parent_id,
@@ -449,10 +570,35 @@ sub store_node {
                               left_index,
                               right_index,
                               distance_to_parent)  VALUES (?,?,?,?,?,?)");
-  $sth->execute($node->node_id, $parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
+  $sth->execute("NULL", $parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
+  #print STDERR "LAST ID: ", $sth->{'mysql_insertid'}, "\n";
+  $node->node_id($sth->{'mysql_insertid'});
+  $sth->finish;
+
+  #set root_id to be node_id for the root node.
+  if ($root_id == 0) {
+      my $sql = "UPDATE genomic_align_tree SET root_id = node_id WHERE node_id=?";
+      my $sth = $self->prepare($sql);
+      $sth->execute($node->node_id);
+      $sth->finish;
+  }
 
   $node->adaptor($self);
-  $sth->finish;
+
+  if ($node->genomic_align_group) {
+    my $genomic_align_group_adaptor = $self->db->get_GenomicAlignGroupAdaptor();
+    $node->genomic_align_group->dbID($node->node_id);
+    $genomic_align_group_adaptor->store($node->genomic_align_group);
+
+    if (!$node->genomic_align_group or !$node->genomic_align_group->dbID) {
+      throw("Cannot store before setting the genomic_align_group ID");
+    }
+    #print STDERR "NODE ", $node->node_id, " ", $node->name, " -- GROUP: ",
+      $node->genomic_align_group->dbID, "\n";
+  } else {
+    #print STDERR "NODE ", $node->node_id, " ", $node->name, " -- NO GROUP\n";
+  }
+
 
   foreach my $this_child (@{$node->children}) {
     $self->store_node($this_child);
@@ -461,6 +607,96 @@ sub store_node {
   return $node->node_id;
 }
 
+=head2 fetch_parent_for_node
+
+  Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Example    : my $parent = $self->adaptor->fetch_parent_for_node($self);
+  Description: Over-ride NestedSetAdaptor method for getting the parent of a node
+  Returntype : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Exceptions : throw if not Bio::EnsEMBL::Compara::NestedSet
+  Caller     : 
+  Status     : At risk
+
+=cut
+
+ sub fetch_parent_for_node {
+   my ($self, $node) = @_;
+
+   unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+   }
+
+   #my $table= $self->tables->[0]->[1];
+   #my $constraint = "WHERE $table.node_id = " . $node->_parent_id;
+   #my ($parent) = @{$self->_generic_fetch($constraint)};
+
+   my $sql = "SELECT " . join(",", @{$self->columns}) .  
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = " . $node->_parent_id;
+
+   my $sth = $self->prepare($sql);
+   $sth->execute;
+   my ($parent) = @{$self->_objs_from_sth($sth)};
+   $sth->finish;
+
+   return $parent;
+ }
+
+=head2 fetch_root_by_node
+
+  Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Example    : my $root = $self->adaptor->fetch_root_by_node($self);
+  Description: Over-ride NestedSetAdaptor method for getting the root of a node
+  Returntype : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Exceptions : throw if not Bio::EnsEMBL::Compara::NestedSet
+  Caller     : 
+  Status     : At risk
+
+=cut
+
+ sub fetch_root_by_node {
+   my ($self, $node) = @_;
+
+   unless(UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
+     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+   }
+
+   my $alias = $self->tables->[0]->[1];
+
+   my $left_index = $node->left_index;
+   my $right_index = $node->right_index;
+
+#   my $constraint = "WHERE $alias.left_index <= $left_index AND $alias.right_index >= $right_index";
+
+
+#   my $nodes = $self->_generic_fetch($constraint);
+
+
+   my $sql = "SELECT " . join(",", @{$self->columns}) .  
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.left_index <= $left_index AND gat.right_index >= $right_index";
+
+   my $sth = $self->prepare($sql);
+   $sth->execute;
+   my $nodes = $self->_objs_from_sth($sth);
+   $sth->finish;
+
+   my $root = $self->_build_tree_from_nodes($nodes);
+
+   return $root;
+}
+
+=head2 delete
+
+  Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Example    : $genomic_align_tree_adaptor->delete($root);
+  Description: Method for deleting a Bio::EnsEMBL::Compara::GenomicAlignTree
+               from a database. Must give the root ie does not delete
+               sub-trees.
+  Returntype : none
+  Exceptions : none
+  Caller     : none
+  Status     : At risk
+
+=cut
 
 sub delete {
   my ($self, $root) = @_;
@@ -490,6 +726,20 @@ sub delete {
 }
 
 
+=head2 update_neighbourhood_data
+
+  Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Arg  2     : boolean $no_recursivity
+  Example    : $self->update_neighbourhood_data($node);
+  Description: Update the left and right node_ids of a genomic_align_tree
+               table in a database
+  Returntype : none
+  Exceptions : none
+  Caller     : none
+  Status     : At risk
+
+=cut
+
 sub update_neighbourhood_data {
   my ($self, $node, $no_recursivity) = @_;
 
@@ -506,6 +756,21 @@ sub update_neighbourhood_data {
 
   return $node;
 }
+
+
+=head2 set_neighbour_nodes_for_leaf
+
+  Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Arg  2     : int $flanking
+  Example    : $self->update_neighbourhood_data($node);
+  Description: Update the left and right node_ids of a genomic_align_tree
+               table in a database
+  Returntype : none
+  Exceptions : none
+  Caller     : none
+  Status     : At risk
+
+=cut
 
 sub set_neighbour_nodes_for_leaf {
   my ($self, $node, $flanking) = @_;
@@ -604,6 +869,18 @@ sub set_neighbour_nodes_for_leaf {
   return $node;
 }
 
+=head2 columns
+
+  Args       : none
+  Example    : $columns = $self->columns()
+  Description: a list of [tablename, alias] pairs for use with generic_fetch
+  Returntype : list of [tablename, alias] pairs
+  Exceptions : none
+  Caller     : NestedSetAdaptor::generic_fetch
+  Status     : At risk
+
+=cut
+
 sub columns {
   my $self = shift;
   return ['gat.node_id',
@@ -628,6 +905,18 @@ sub columns {
           ];
 }
 
+=head2 tables
+
+  Args       : none
+  Example    : $tables = $self->_tables()
+  Description: a list of [tablename, alias] pairs for use with generic_fetch
+  Returntype : list of [tablename, alias] pairs
+  Exceptions : none
+  Caller     : NestedSetAdaptor::generic_fetch
+  Status     : At risk
+
+=cut
+
 sub tables {
   my $self = shift;
   return [
@@ -637,13 +926,53 @@ sub tables {
       ];
 }
 
+=head2 left_join_clause
+
+  Args       : none
+  Example    : none
+  Description: a left join clause for use with generic_fetch
+  Returntype : none
+  Exceptions : none
+  Caller     : NestedSetAdaptor::generic_fetch
+  Status     : At risk
+
+=cut
+
 sub left_join_clause {
+#  return "LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id)".
+#      " LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id)";
   return "";
 }
 
+=head2 default_where_clause
+
+  Args       : none
+  Example    : none
+  Description: a where clause for use with generic_fetch
+  Returntype : none
+  Exceptions : none
+  Caller     : NestedSetAdaptor::generic_fetch
+  Status     : At risk
+
+=cut
+
 sub default_where_clause {
   return "gat.node_id = gag.group_id AND gag.genomic_align_id = ga.genomic_align_id";
+#  return "";
 }
+
+=head2 _objs_from_sth
+
+  Args[1]    : DBI::row_hashref $hashref containing key-value pairs
+  Example    :   my $genomic_align_trees = $self->_objs_from_sth($sth);
+  Description: convert DBI row hash reference into a 
+               Bio::EnsEMBL::Compara::GenomicAlignTreeAdaptor object
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomicAlignTree objects
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -652,23 +981,40 @@ sub _objs_from_sth {
   my $genomic_align_groups = {};
   my $genomic_aligns = {};
   while(my $rowhash = $sth->fetchrow_hashref) {
-    my $genomic_align_group = $genomic_align_groups->{$rowhash->{group_id}};
-    if (!defined($genomic_align_group)) {
-      ## This is a new node
-      my $node = $self->create_instance_from_rowhash($rowhash);
-      $genomic_align_group = $node->genomic_align_group;
-      $genomic_align_groups->{$rowhash->{group_id}} = $genomic_align_group;
-      push @$node_list, $node;
-    }
-    if (!defined($genomic_aligns->{$rowhash->{genomic_align_id}})) {
-      my $genomic_align = $self->_create_GenomicAlign_object_from_rowhash($rowhash);
-      $genomic_align_group->add_GenomicAlign($genomic_align);
-      $genomic_aligns->{$rowhash->{genomic_align_id}} = 1;
-    }
+    if (!defined($rowhash->{group_id})) {
+       my $node = $self->create_instance_from_rowhash($rowhash);
+       push @$node_list, $node;
+    } else {
+       my $genomic_align_group = $genomic_align_groups->{$rowhash->{group_id}};
+       if (!defined($genomic_align_group)) {
+	  ## This is a new node
+	  my $node = $self->create_instance_from_rowhash($rowhash);
+	  $genomic_align_group = $node->genomic_align_group;
+	  $genomic_align_groups->{$rowhash->{group_id}} = $genomic_align_group;
+	  push @$node_list, $node;
+       }
+       if (!defined($genomic_aligns->{$rowhash->{genomic_align_id}})) {
+	 my $genomic_align = $self->_create_GenomicAlign_object_from_rowhash($rowhash);
+	 $genomic_align_group->add_GenomicAlign($genomic_align);
+	 $genomic_aligns->{$rowhash->{genomic_align_id}} = 1;
+       }
+     }
   }
-
   return $node_list;
 }
+
+=head2 create_instance_from_rowhash
+
+  Args[1]    : DBI::row_hashref $hashref containing key-value pairs
+  Example    : my $node = $self->create_instance_from_rowhash($rowhash);
+  Description: convert DBI row hash reference into a 
+               Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
 
 sub create_instance_from_rowhash {
   my $self = shift;
@@ -678,11 +1024,24 @@ sub create_instance_from_rowhash {
 
   $self->init_instance_from_rowhash($node, $rowhash);
   my $genomic_align_group = $self->_create_GenomicAlignGroup_object_from_rowhash($rowhash);
-  $node->genomic_align_group($genomic_align_group);
+  $node->genomic_align_group($genomic_align_group) if ($genomic_align_group);
 
   return $node;
 }
 
+=head2 init_instance_from_rowhash
+
+  Args[1]    : Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Args[2]    : DBI::row_hashref $hashref containing key-value pairs
+  Example    : $self->init_instance_from_rowhash($node, $rowhash);
+  Description: convert DBI row hash reference into a 
+               Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
 
 sub init_instance_from_rowhash {
   my $self = shift;
@@ -700,8 +1059,23 @@ sub init_instance_from_rowhash {
 }
 
 
+=head2 _create_GenomicAlignGroup_object_from_rowhash
+
+  Args[1]    : DBI::row_hashref $hashref containing key-value pairs
+  Example    :  my $genomic_align_group = $self->_create_GenomicAlignGroup_object_from_rowhash($rowhash);
+  Description: convert DBI row hash reference into a 
+               Bio::EnsEMBL::Compara::GenomicAlignGroup object
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignGroup object
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
 sub _create_GenomicAlignGroup_object_from_rowhash {
   my ($self, $rowhash) = @_;
+
+  return undef if (!$rowhash->{group_id});
 
   my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
   $genomic_align_group->dbID($rowhash->{group_id});
@@ -711,6 +1085,18 @@ sub _create_GenomicAlignGroup_object_from_rowhash {
   return $genomic_align_group;
 }
 
+=head2 _create_GenomicAlign_object_from_rowhash
+
+  Args[1]    : DBI::row_hashref $hashref containing key-value pairs
+  Example    : my $genomic_align = $self->_create_GenomicAlign_object_from_rowhash($rowhash);
+  Description: convert DBI row hash reference into a 
+               Bio::EnsEMBL::Compara::GenomicAlign object
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
 
 sub _create_GenomicAlign_object_from_rowhash {
   my ($self, $rowhash) = @_;
