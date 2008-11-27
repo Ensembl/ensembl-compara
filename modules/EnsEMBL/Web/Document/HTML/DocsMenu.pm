@@ -52,6 +52,7 @@ sub render {
         $subsection->{'_path'}, $title, $class, $title
       );
     }
+    next if $subsection->{'_no_follow'};
     my @sortable_subsections;
     foreach my $sub (keys %$subsection) {
       push (@sortable_subsections, $sub) if ref($subsection->{$sub}) eq 'HASH';  
