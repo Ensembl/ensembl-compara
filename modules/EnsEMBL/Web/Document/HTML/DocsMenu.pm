@@ -15,7 +15,7 @@ sub render {
   (my $location = $you_are_here) =~ s/index\.html$//;
 
   my $tree = $sd->STATIC_INFO;
-  my ($title, $class, $toc, $page_count);
+  my ($title, $class, $menu, $page_count);
 
   my @sortable_sections;
   foreach my $section (keys %$tree) {
@@ -38,10 +38,10 @@ sub render {
       $class = ' class="active"';
     }
     if ($subsection->{'_nolink'}) {
-      $toc .= qq(<dd class="open"><strong>$title</strong>);
+      $menu .= qq(<dd class="open"><strong>$title</strong>);
     }
     else {
-      $toc .= sprintf(qq(<dd class="open"><strong><a href="%s" title="%s"%s>%s</a></strong>),
+      $menu .= sprintf(qq(<dd class="open"><strong><a href="%s" title="%s"%s>%s</a></strong>),
         $subsection->{'_path'}, $title, $class, $title
       );
     }
@@ -59,7 +59,7 @@ sub render {
         || $subsection->{$a} cmp $subsection->{$b}
         } 
          @sortable_subsections;
-      $toc .= sprintf(qq(
+      $menu .= sprintf(qq(
         <dl>
       ), );
       foreach my $sub (@sub_order) {
@@ -72,14 +72,14 @@ sub render {
         if ($location eq $path) {
           $class = ' class="active"';
         }
-        $toc .= sprintf(qq(<dd><a href="%s" title="%s"%s>%s</a></dd>),
+        $menu .= sprintf(qq(<dd><a href="%s" title="%s"%s>%s</a></dd>),
             $path, $title, $class, $title
         );
         $page_count++;
       }
-      $toc .= qq(</dl>\n);
+      $menu .= qq(</dl>\n);
     }
-    $toc .= '</dd>';
+    $menu .= '</dd>';
   }
  
   my $html = qq(
@@ -91,7 +91,7 @@ sub render {
 <dd><a href="/info/">Alphabetical List of Pages</a></dd>
   );
   }
-  $html .= $toc;
+  $html .= $menu;
   $html .= '</dl>'; 
   $self->print($html);
 }
