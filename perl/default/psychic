@@ -16,6 +16,7 @@ use CGI qw(escape);
 my $webpage = new EnsEMBL::Web::Document::WebPage;
 my $q = $ENSEMBL_WEB_REGISTRY->get_session->get_input;
 
+my $script = $webpage->{'species_defs'}->ENSEMBL_SEARCH;
 my $species;
 if ($q->param('species')) {
     $species = $q->param('species');
@@ -114,7 +115,7 @@ if ($site eq 'ebi') {
 
   if($species) {
       if(!$query) { ## nothing to search for
-	  $URL = "Search/Summary?species=$species;idx=;q=";
+	  $URL = "/$script?species=$species;idx=;q=";
 	  $flag = 1;
       }
       elsif( $index eq 'Sequence' || $index eq 'Chromosome' || ! $index ) {
@@ -168,7 +169,7 @@ if ($site eq 'ebi') {
   }
 
   else {
-      $URL = '/Search/Summary?species=;idx=;q=';
+      $URL = "/$cript?species=;idx=;q=";
   }
 
   unless( $flag ) {
@@ -176,7 +177,7 @@ if ($site eq 'ebi') {
 	  : $query =~ /[ACGT]{20,}/i         ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $query )         ## BLAST seq search
 	  : $query =~ /[A-Z]{20,}/i          ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $query )         ## BLAST seq search
 	  : URL( 
-              '/%s/'.$webpage->{'species_defs'}->ENSEMBL_SEARCH.'?species=%s;idx=%s;q=%s',
+              '/%s/'.$cript.'?species=%s;idx=%s;q=%s',
               ( $species eq 'ALL'|| !$species ? 'default' : $species ),
               $species ? $species : 'all', $index, $query )
 	      ;
