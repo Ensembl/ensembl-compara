@@ -1,8 +1,0 @@
-#!/usr/local/bin/perl
-package unisearch;
-
-use EnsEMBL::Web::Document::WebPage;
-                                                                                
-EnsEMBL::Web::Document::WebPage::simple( 'UniSearch' );
-
-1;
