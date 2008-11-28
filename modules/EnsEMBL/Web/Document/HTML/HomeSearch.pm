@@ -82,7 +82,7 @@ sub render {
     @examples = ('human gene BRCA2', 'rat X:100000..200000', 'insulin');
   }
   else {
-    @examples = ('gene '.$sample_data{'GENE_TEXT'}, $sample_data{'LOCATION_PARAM'}, $sample_data{'SEARCH_TEXT'});
+    @examples = ('gene '.$sample_data{'GENE_TEXT'}, $sample_data{'LOCATION_TEXT'}, $sample_data{'SEARCH_TEXT'});
   }
   $html .= '
     <p>e.g. ' . join(' or ', map {'<strong>'.$_.'</strong>'} @examples) . '</p>';
