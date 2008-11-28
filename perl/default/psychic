@@ -169,7 +169,7 @@ if ($site eq 'ebi') {
   }
 
   else {
-      $URL = "/$cript?species=;idx=;q=";
+      $URL = "/$script?species=;idx=;q=";
   }
 
   unless( $flag ) {
