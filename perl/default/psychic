@@ -177,7 +177,7 @@ if ($site eq 'ebi') {
 	  : $query =~ /[ACGT]{20,}/i         ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $query )         ## BLAST seq search
 	  : $query =~ /[A-Z]{20,}/i          ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $query )         ## BLAST seq search
 	  : URL( 
-              '/%s/'.$cript.'?species=%s;idx=%s;q=%s',
+              '/%s/'.$script.'?species=%s;idx=%s;q=%s',
               ( $species eq 'ALL'|| !$species ? 'default' : $species ),
               $species ? $species : 'all', $index, $query )
 	      ;
