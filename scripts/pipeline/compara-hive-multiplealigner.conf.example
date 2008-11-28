@@ -1,16 +1,16 @@
 [
  { # information to connect to compara/hive database
   TYPE => COMPARA,
-  '-host'     => "ia64f",
+  '-host'     => "compara1",
   '-port'     => "3306",
   '-user'     => "xxxxx",
   '-pass'     => "xxxxx",
-  '-dbname'   => "abel_mlagan_final_test",
+  '-dbname'   => "jh7_pecan_42",
   '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
  },
 
  { TYPE => HIVE,
-   'hive_output_dir' => "/ecs2/work3/abel/hive/abel_mlagan_final_test/workers",
+   'hive_output_dir' => "/lustre/scratch1/ensembl/jh7/release47/pecan/workers",
    'name'            => "pecan",
    # name is used to make this pipeline independent from other ones
  },
@@ -29,7 +29,7 @@
    '-module_version'  => undef,
    '-gff_source'      => undef,
    '-gff_feature'     => undef,
-   'fasta_dir'        => "/ecs2/work3/abel/hive/abel_mlagan_final_test/blastDB",
+   'fasta_dir'        => "/lustre/scratch1/ensembl/jh7/release47/pecan/blastDB",
  },
 
  { TYPE => SYNTENY_MAP_BUILDER,
@@ -48,7 +48,7 @@
    # 'module' => "My::Own::Module", # module: By default, the module will be
           # "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name"
    'species_set' => [1,2,3],
-   'tree_file' => '/ecs2/work3/abel/hive/abel_mlagan_final/hmr.tree',
+   'tree_file' => '/lustre/work1/ensembl/jh7/release47/pecan/hmr.tree',
    'method_link' => [10, 'PECAN'],
  },
 
@@ -59,7 +59,7 @@
    # 'module' => "My::Own::Module", # module: By default, the module will be
           # "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name"
 
-   'tree_file' => '/ecs2/work3/abel/hive/abel_mlagan_final/hmr.tree',
+   'tree_file' => '/lustre/work1/ensembl/jh7/release47/pecan/hmr.tree',
    'method_links' => [[11, 'GERP_CONSTRAINED_ELEMENT'],
                       [501, 'GERP_CONSERVATION_SCORE']],
    'window_sizes' => '[1,10,100,500]',
