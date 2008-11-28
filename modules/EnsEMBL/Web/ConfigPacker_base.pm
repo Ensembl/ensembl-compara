@@ -6,9 +6,9 @@ use DBI;
 sub new {
   my( $class, $tree, $db_tree, $das_tree ) =@_;
   my $self = {
-    _tree     => $tree,
-    _db_tree  => $db_tree,
-    _das_tree => $das_tree,
+    _tree     => $tree     || {},
+    _db_tree  => $db_tree  || {},
+    _das_tree => $das_tree || {},
     _species  => undef
   };
   bless $self, $class;

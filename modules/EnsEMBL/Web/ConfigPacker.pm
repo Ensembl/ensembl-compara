@@ -479,7 +479,11 @@ sub _summarise_dasregistry {
   
   # The ENSEMBL_INTERNAL_DAS_SOURCES section is a list of enabled DAS sources
   # Then there is a section for each DAS source containing the config
-  while (my ($key, $val) = each %{ $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'} }) {
+  $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}     ||= {};
+  $self->das_tree->{'ENSEMBL_INTERNAL_DAS_CONFIGS'} ||= {};
+  while (my ($key, $val) 
+         = each %{ $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'} }) {
+
     # Skip disabled sources
     $val || next;
     # Start with an empty config
