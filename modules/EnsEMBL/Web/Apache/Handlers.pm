@@ -39,11 +39,12 @@ our %OBJECT_TO_SCRIPT = qw(
 
   Gene        action
   Transcript  action
-  Search      action
   Location    action
   Variation   action
   Server      action
   Info        action
+  Search      action
+  UniSearch   action
 
   Account     account
   UserData    user_data

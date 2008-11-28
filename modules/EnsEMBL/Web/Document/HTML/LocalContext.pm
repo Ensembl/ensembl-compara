@@ -113,7 +113,7 @@ $pad    </dd>";
           $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'};
           my @ok_params;
           my @cgi_params = split(';|&', $ENV{'QUERY_STRING'});
-          if ($ENV{'ENSEMBL_TYPE'} eq 'UserData' || $ENV{'ENSEMBL_TYPE'} eq 'Account' || $ENV{'ENSEMBL_TYPE'} eq 'Help') { 
+          if ($ENV{'ENSEMBL_TYPE'} eq 'UserData' || $ENV{'ENSEMBL_TYPE'} eq 'Account' || $ENV{'ENSEMBL_TYPE'} eq 'Help'  || $ENV{'ENSEMBL_TYPE'} eq 'UniSearch' ) { 
             foreach my $param (@cgi_params) {
               ## Minimal parameters, or it screws up the non-genomic pages!
               next unless ($param =~ /^_referer/ || $param =~ /^x_requested_with/);
