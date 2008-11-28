@@ -91,7 +91,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@ens-staging/47');
 
 3- Choose a working directory with some disk space
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* The multiple aligner pipeline tries to minize the amount of output data for workers.
+* The multiple aligner pipeline tries to minimize the amount of output data for workers.
 But if debug options is on this can take some space. So be careful.
 
 mkdir -p /lustre/scratch1/ensembl/jh7/release47/pecan/blastDB
@@ -112,9 +112,9 @@ cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/hmr.tree.example hmr.tree
 <editor> hive.conf.pl
 <editor> hmr.tree
 
-you may need to change the database names, port, dbnames, and the
+You may need to change the database names, port, dbnames, and the
 paths to the 'hive_output_dir' to
-/acari/work7a/abel/hive/abel_compara_mlagan/workers
+/lustre/scratch1/ensembl/jh7/release47/pecan/workers
 'fasta_dir' and 'tree_file' will need to be updated as well.
 The species names should correspond to the genome_db_id of the species used (and defined in the 
 hive configuration file). You can get a newick species tree using the geneTreeTool.pl script:
@@ -122,6 +122,17 @@ hive configuration file). You can get a newick species tree using the geneTreeTo
 perl ~/src/ensembl_main/ensembl-compara/scripts/tree/geneTreeTool.pl --file \
   ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_rap.nh --newick \
   --keep_leaves "Homo sapiens,Mus musculus,Rattus norvegicus"
+
+Species trees in other formats can be found in the same directory
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree*
+
+The species tree for the Pecan pipeline requires the species to be identified using the genome_db_id. To convert the species names to genome_db_ids, run the
+script:
+
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/tree_name_to_ids.pl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh 'mysql://ensro@compara1/jh7_pecan_47' > tree.nw
+
+<editor> tree.nw
+
 
 You can have several multiple alignment pipelines working in the same HIVE. To do this, add an extra
 MULTIPLE_ALIGNER block in the configuration file and change the corresponding list of species and the
@@ -131,7 +142,7 @@ multiple alignment pipeline. The resulting syntenies will be used to feed the mu
 You can also have a CONSERVATION_SCORE block if you want to run Gerp or any other similar software
 to get constrained elements and conservation scores from the resulting multiple alignments.
 
-To run Gerp you will also need to create a parameter file (tab-delimited), for example:
+The default version of Gerp is version 2.1 and for this version, no parameter files are required. To run Gerp version 1 you will also need to create a parameter file (tab-delimited), for example:
 
 -----------------------------------
 alignment	gerp_alignment.mfa
@@ -153,10 +164,9 @@ where alignment: alignment file used in multi-fasta format
       rej_sub_min: threshold score to define candidate constrained element as significant
       no_ABC_files: no ABC files produced
 
-You will also need to add the paths for gerp and semphy if you want to run Gerp. At the time of
-writing these can be found in:
+You will also need to add the paths for gerp and semphy if you want to run Gerp. At the time of writing these can be found in:
 /software/ensembl/compara/semphy
-/software/ensembl/compara/gerp/GERP_03292006/
+/software/ensembl/compara/gerp/GERPv2.1
 
 For the SYNTENY_MAP_BUILDER, the MULTIPLE_ALIGNER and the CONSERVATION_SCORE blocks you can specify
 the logic_name for the method. You can also specify the module name. If none is given, the hive will
@@ -173,7 +183,7 @@ The order of execution is important
 comparaLoadGenomes.pl -conf hive.conf.pl
 loadMultipleAlignerSystem.pl -conf hive.conf.pl
 
-The comparaLoadGenomes script use the information in the conf file to connect to
+The comparaLoadGenomes script uses the information in the conf file to connect to
 the core databases, queries for things like taxon_id, assembly, gene_build, and names
 to create entries in the genome_db table.  It also sets the genome_db.locator column to
 allow the system to know where the respective core databases are located. This script 
@@ -203,10 +213,8 @@ NB: Although this feature has not been extensivelly tested, it should be
 6- Run the beekeeper
    ~~~~~~~~~~~~~~~~~
 
-Run it on i386 (32-bits) machines (The mercator part works only on these machines).
-
 The following scripts are in ensembl-hive/scripts (should be in your PATH)
-beekeeper.pl -lsf_options "-R\"type==LINUX86\"" -url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_mlagan -loop
+beekeeper.pl -url mysql://ensadmin:xxxx@compara1:3306/jh7_pecan_47 -loop
 
 where xxxx is the password for write access to the database
 
