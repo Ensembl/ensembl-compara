@@ -75,16 +75,18 @@ sub get_all_das {
     $species = '';
   }
   
-  my $sources = {};
+  my %by_name = ();
+  my %by_url  = ();
   for my $data ( $self->dases ) {
     # Create new DAS source from value in database...
     my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $data );
     $das->matches_species( $species ) || next;
     $das->category( 'user' );
-    $sources->{ $das->logic_name } = $das;
+    $by_name{ $das->logic_name } = $das;
+    $by_url { $das->full_url   } = $das;
   }
   
-  return $sources;
+  return wantarray ? ( \%by_name, \%by_url ) : \%by_name;
 }
 
 

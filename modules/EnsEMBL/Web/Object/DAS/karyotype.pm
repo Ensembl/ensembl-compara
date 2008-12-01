@@ -73,6 +73,12 @@ sub Features {
     }
     my $slice = $s->slice;
     my @segment_features;
+    my $group = {
+      'ID'    => $s->seq_region_name,
+      'TYPE'  => 'chromosome:'.$s->seq_region_name,
+      'LABEL' => 'Chromosome '.$s->seq_region_name,
+    };
+
     foreach my $ft (@{$slice->get_all_KaryotypeBands() || [] }){
       next if $filter && !$fts{'band:'.$ft->stain};
       my $f = {
@@ -82,7 +88,8 @@ sub Features {
         'CATEGORY'    => 'structural',
         'START'       => $ft->seq_region_start,
         'END'         => $ft->seq_region_end,
-        'ORIENTATION' => $ft->seq_region_strand+0
+        'ORIENTATION' => 0,
+        'GROUP'       => [$group]
       };
       push @segment_features, $f;
     }
@@ -100,14 +107,17 @@ sub Features {
 sub Stylesheet {
   my $self = shift;
 
-  my %COL = $self->session->colourmap->colourSet( 'ideogram' );
-  my @default = ( 'FGCOLOR'=>'grey50','HEIGHT'=> 10, 'LABEL' => 'yes', 'BUMP' => 'no' );
+  my $COL = $self->species_defs->colour('ideogram');
+  my @default = ( 'FGCOLOR'=>'black','HEIGHT'=> 10, 'LABEL' => 'yes', 'BUMP' => 'no' );
   my $stylesheet_structure = {'structural' => {}};
-  foreach ( keys %COL ) {
-    $stylesheet_structure->{'structural'}{'band:'.$_} = [{'type'=>'box','attrs' => {@default,'BGCOLOR'=>$COL{$_}}}];
+  foreach ( keys %$COL ) {
+    $stylesheet_structure->{'structural'}{'band:'.$_} = [{
+      'type'=>'box',
+      'attrs' => { @default,'BGCOLOR'=>$self->species_defs->colour('ideogram',lc($_)) }
+    }];
   }
-  $stylesheet_structure->{'structural'}{'default'} = [{'type'=>'box','attrs' => {@default, 'BGCOLOR'=>'red'}}];
-  $stylesheet_structure->{'default'}{'default'} = [{'type'=>'box','attrs' => { @default,'BGCOLOR'=>'red'}}];
+  $stylesheet_structure->{'structural'}{'default'} = [{'type'=>'box','attrs' => {@default, 'BGCOLOR'=>'grey50'}}];
+  $stylesheet_structure->{'default'}{'default'} = [{'type'=>'box','attrs' => { @default,'BGCOLOR'=>'grey50'}}];
   return $self->_Stylesheet( $stylesheet_structure );
 }
 

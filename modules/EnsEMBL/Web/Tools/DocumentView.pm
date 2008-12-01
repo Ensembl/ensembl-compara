@@ -91,7 +91,7 @@ sub write_info_page {
   <a href="base.html">&larr; Home</a>
   <br /><br />
   </div>',
-  self->html_footer;
+  $self->html_footer;
 }
 
 sub write_package_frame {

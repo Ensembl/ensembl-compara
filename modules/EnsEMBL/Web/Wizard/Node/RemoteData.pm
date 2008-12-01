@@ -84,14 +84,15 @@ sub select_das {
   
   ## Otherwise add a checkbox element for each DAS source
   else {
+    $self->set_extra_buttons('top'); ## Repeat buttons at top, as this is often a long form
     $fieldset->{'layout'} = 'table';
     my @already_added = ();
-    my $all_das = $ENSEMBL_WEB_REGISTRY->get_all_das(  );
+    my @all_das = $ENSEMBL_WEB_REGISTRY->get_all_das();
     for my $source (@{ $sources }) {
       
       # If the source is already in the speciesdefs/session/user, skip it
       my $already_added = 0;
-      if ( $all_das->{$source->logic_name} ) {
+      if ( $all_das[1]->{ $source->full_url } ) {
         push @already_added, $source;
         $already_added = 1;
       }
@@ -159,7 +160,6 @@ sub validate_das {
            : $no_coords  ? 'select_das_coords'
            : 'attach_das';
   $self->parameter('wizard_next', $next);
-  warn ">>> NEXT $next";
   return;
 }
 
@@ -167,7 +167,9 @@ sub validate_das {
 sub select_das_species {
   my $self = shift;
   
+  my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
   $self->title('Choose a species');
+  $self->notes( {'heading' => 'Info', 'text' => "$sitename is not able to automatically configure one or more DAS sources. Please select the species' the sources below have data for. If they contain data for all species' (e.g. gene or protein-based sources) choose 'None species-specific'. If the sources do not use the same coordinate system, go back and add them individually."} );
   
   # Get a list of DAS sources (only those selected):
   my $sources = $self->object->get_das_server_dsns( $self->object->param('dsn') );
@@ -183,8 +185,6 @@ sub select_das_species {
     $self->object->param('fatal_error', 1);
     return;
   }
-  
-  $self->add_element( 'type' => 'Information', 'value' => "Which species' do the DAS sources below have data for? If they contain data for all species' (e.g. gene or protein-based sources) choose 'all'. If the DAS sources do not use the same coordinate system, go back and add them individually." );
   
   my @values = map {
     { 'name' => $_, 'value' => $_, }
@@ -226,7 +226,13 @@ sub select_das_coords {
     @species = ();
   }
   
+  my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
   $self->title('Choose a coordinate system');
+  # Hack to stop the note going into the next fieldset. Why $self->add_element
+  # etc can't just add real objects to the "last added" fieldset (creating one
+  # if necessary) I don't know - this would be much simpler and more intuitive.
+  $self->add_fieldset({});
+  $self->notes( {'heading' => 'Info', 'text' => "$sitename is not able to automatically configure one or more DAS sources. Please select the coordinate system(s) the sources below have data for. If the DAS sources shown below do not use the same coordinate system, go back and add them individually."} );
   
   for my $species (@species) {
     
@@ -324,15 +330,19 @@ sub attach_das {
         $source->coord_systems(\@expand_coords);
       }
       
-      if( $self->object->get_session->add_das(
-        $source,
-        $self->object->_parse_referer( $self->object->param('_referer') )
-      )) {
+      # NOTE: at present the interface only allows adding a source that has not
+      # already been added (by disabling their checkboxes). Thus this call
+      # should always evaluate true at present.
+      if( $self->object->get_session->add_das( $source ) ) {
         push @success, $source->logic_name;
       } else {
         push @skipped, $source->locic_name;
       }
-
+      #  Either way, turn the source on...
+      $self->object->get_session->configure_das_views(
+        $source,
+        $self->object->_parse_referer( $self->object->param('_referer') )
+      );
     }
     $self->object->get_session->save_das;
     $self->parameter('added', \@success);
@@ -424,7 +434,6 @@ sub show_tempdas {
 sub save_tempdas {
   my $self = shift;
 
-  warn ">>> Saving remote data";
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my @sources = grep {$_} $self->object->param('dsn');
   

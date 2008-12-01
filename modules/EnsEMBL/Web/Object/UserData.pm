@@ -549,34 +549,30 @@ sub get_das_servers {
 
 # Returns an arrayref of DAS sources for the selected server and species
 sub get_das_server_dsns {
-  my ($self, @logic) = @_;
+  my $self = shift;
   
-  my $server  = $self->_das_server_param();
+  my $server = $self->_das_server_param();
   my $species = $ENV{ENSEMBL_SPECIES};
   if ($species eq 'common') {
     $species = $self->species_defs->ENSEMBL_PRIMARY_SPECIES;
   }
 
-  my $name    = $self->param('das_name_filter');
-  @logic      = grep { $_ } @logic;
+  my @name  = grep { $_ } $self->param('das_name_filter');
+  my @logic = grep { $_ } @_;
   my $sources;
   
   try {
-    my $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
-      -location => $server,
-      -timeout  => $self->species_defs->ENSEMBL_DAS_TIMEOUT,
-      -proxy    => $self->species_defs->ENSEMBL_WWW_PROXY,
-      -noproxy  => $self->species_defs->ENSEMBL_NO_PROXY,
-    );
-    
+    my $parser = $self->get_session->get_das_parser();
     $sources = $parser->fetch_Sources(
+      -location   => $server,
       -species    => $species || undef,
-      -name       => $name    || undef,
-      -logic_name => scalar @logic ? \@logic : undef,
+      -name       => scalar @name  ? \@name  : undef, # label or DSN
+      -logic_name => scalar @logic ? \@logic : undef, # the URI
     );
     
     if (!$sources || !scalar @{ $sources }) {
-      $sources = "No DAS sources found for $server";
+      my $filters = @name ? ' named ' . join ' or ', @name : '';
+      $sources = "No $species DAS sources$filters found for $server";
     }
     
   } catch {
@@ -597,19 +593,8 @@ sub _das_server_param {
   for my $key ( 'other_das', 'preconf_das' ) {
     
     # Get and "fix" the server URL
-    my $server = $self->param( $key ) || next;
-    
-    if ($server !~ /^\w+\:/) {
-      $server = "http://$server";
-    }
-    if ($server =~ /^http/) {
-      $server =~ s|/*$||;
-      if ($server !~ m{/das1?$}) {
-        $server = "$server/das";
-      }
-    }
-    $self->param( $key, $server );
-    return $server;
+    my $raw = $self->param( $key ) || next;
+    return $raw;
     
   }
   

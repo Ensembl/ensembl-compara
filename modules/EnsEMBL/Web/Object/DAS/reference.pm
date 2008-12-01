@@ -269,6 +269,37 @@ sub DNA {
   return \@features;
 }
 
+sub Stylesheet { 
+  my $self = shift;
+  $self->_Stylesheet({
+    'component'=> {
+                 'chromosome'  => [{
+                                    'type'  => 'hidden',
+                                  }],
+                 'scaffold'    => [{
+                                    'type'  => 'box',
+                                    'attrs' => { 'fgcolor' => 'darkgreen', 'bgcolor' => 'darkgreen' }
+                                  }],
+                 'supercontig' => [{
+                                    'type'  => 'box',
+                                    'attrs' => { 'fgcolor' => 'green', 'bgcolor' => 'green' }
+                                  }],
+                 'contig'      => [{
+                                    'type'  => 'box',
+                                    'attrs' => { 'fgcolor' => 'contigblue1', 'bgcolor' => 'contigblue1' }
+                                  }],
+                 'clone'       => [{
+                                    'type'  => 'box',
+                                    'attrs' => { 'fgcolor' => 'orange', 'bgcolor' => 'orange' }
+                                  }],
+                 'default'     => [{
+                                    'type'  => 'box',
+                                    'attrs' => { 'fgcolor' => 'black', 'bgcolor' => 'black' }
+                                  }]
+                }
+  });
+}
+
 sub subslice {
   my( $self, $sr, $start, $end ) = @_;
 
