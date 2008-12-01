@@ -56,6 +56,7 @@ sub feature_label {
 ## Link back to this page centred on the map fragment
 sub href {
   my ($self, $f ) = @_;
+  my $db = $self->my_config('db');
   my $name = $f->get_first_scalar_attribute(qw(name well_name clone_name sanger_project synonym embl_acc));
   my $mfid = $f->dbID;
   my $r = $f->seq_region_name.':'.$f->seq_region_start.'-'.$f->seq_region_end;
@@ -65,6 +66,7 @@ sub href {
       'r'           =>$r,
       'misc_feature_n'=>$name,
       'mfid'        =>$mfid,
+      'db'          => $db,
   };
   return $self->_url($zmenu);
 }
