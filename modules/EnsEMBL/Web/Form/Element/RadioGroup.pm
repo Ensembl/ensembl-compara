@@ -31,8 +31,11 @@ sub render {
 	    $checked = 'yes';
     }
     $output .= sprintf(qq(    
-<label class="label-radio">
-<input type="radio" name="%s" id="%s_%d" value="%s" class="input-radio" %s/> %s </label>),
+<tr>
+<td></td>
+<td><label class="label-radio">
+<input type="radio" name="%s" id="%s_%d" value="%s" class="input-radio" %s/> %s </label></td>
+</tr>),
         CGI::escapeHTML($self->name),
         CGI::escapeHTML($self->name), $K,
 			  CGI::escapeHTML($V->{'value'}),

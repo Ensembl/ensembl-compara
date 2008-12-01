@@ -22,14 +22,14 @@ sub render {
   my $self = shift;
   return sprintf(
     qq(
-  <dl>
-    <dt%s>
+  <tr>
+    <td%s>
       <label>%s %s</label>
-    </dt>
-    <dd%s>
+    </th>
+    <td%s>
       <input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox"%s%s/>
-    </dd>
-  </dl>),
+    </td>
+  </tr>),
     $self->class_attrib,
     $self->{'raw'} ? $self->label : CGI::escapeHTML( $self->label ), 
     $self->notes ? '<div style="font-weight:normal">'.CGI::escapeHTML($self->notes).'</div>':'',

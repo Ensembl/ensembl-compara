@@ -48,6 +48,7 @@ sub type         :lvalue { $_[0]{'type'}; }
 sub value        :lvalue { $_[0]{'value'}; }
 sub default      :lvalue { $_[0]{'default'}; }
 sub values       :lvalue { $_[0]{'values'}; }
+sub bg           :lvalue { $_[0]{'bg'}; }
 sub style        :lvalue { $_[0]{'style'}; }
 sub styles       :lvalue { $_[0]{'styles'}; }
 sub classes      :lvalue { $_[0]{'classes'}; }

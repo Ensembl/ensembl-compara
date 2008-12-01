@@ -57,9 +57,9 @@ sub render {
         $v_hash{'value'}, $selected ? ' selected="selected"' : '', $v_hash{'name'}
       );
     }
-    return sprintf( qq(%s<select name="%s" id="%s" class="normal" onChange="os_check('%s',this,%s)">\n%s</select>
-      <input type="text" name="%s" value="%s" id="%s" class="%s" onKeyUp="os_check('String',this,%s)" onChange="os_check('String',this,%s)" />%s
-    %s),
+    return sprintf( qq(<tr><td>%s<select name="%s" id="%s">\n%s</select><td>
+      <input type="text" name="%s" value="%s" id="%s" class="%s" />%s
+    %s</td></tr>),
       $self->introduction,
       CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
       $self->type, $self->required eq 'yes'?1:0,
@@ -70,10 +70,10 @@ sub render {
       $self->notes
     );
   } else {
-    $output = '';
+    $output = '<tr><td></td><td>';
     my $K = 0;
     foreach my $V ( @{$self->values} ) {
-      $output .= sprintf( qq(    <div class="radiocheck"><input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label></div>\n),
+      $output .= sprintf( qq(<input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label>\n),
         CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V['value']),
         $self->value eq $V['value'] ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
         CGI::escapeHTML($V['name'])
@@ -82,8 +82,8 @@ sub render {
     }
     return $self->introduction.$output.
       sprintf( 
-        qq(<input type="text" name="%s" value="%s" id="%s" class="%s" onKeyUp="os_check('String',this,%s)" onChange="os_check('String',this,%s)" />%s
-        $s),
+        qq(</td><td><input type="text" name="%s" value="%s" id="%s" class="%s" />%s
+        $s</td></tr>),
         CGI::escapeHTML( $self->string_name ), CGI::escapeHTML( $self->string_value ), CGI::escapeHTML( $self->id.'_string' ),
         $self->style, $self->required eq 'yes' ? 1 : 0, $self->required eq 'yes' ? 1 : 0,
         $self->required eq 'yes' ? $self->required_string : '', 

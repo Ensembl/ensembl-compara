@@ -70,10 +70,10 @@ sub render {
     }
 #       sprintf( "document.forms[%s].submit()", $self->form ) :
     return sprintf( qq(
-  <dl>
-    <dt><label for="%s">%s: </label></dt>
-    <dd><select name="%s" id="%s" %s%s>\n%s</select>%s</dd>
-  </dl>),
+  <tr>
+    <th><label for="%s">%s: </label></th>
+    <td><select name="%s" id="%s" %s%s>\n%s</select>%s</td>
+  </tr>),
       CGI::escapeHTML( $self->name ), 
       CGI::escapeHTML( $self->label ),
       CGI::escapeHTML( $self->name ), 
@@ -87,7 +87,7 @@ sub render {
     my $output = '';
     my $K = 0;
     foreach my $V ( @{$self->values} ) {
-      $output .= sprintf( qq(    <div%s%s><input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label></div>\n),
+      $output .= sprintf( qq(    <tr><td></td><td%s%s><input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label></td></tr>\n),
         $self->class_attrib, $self->style_attrib, CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V->{'value'}),
         $self->value eq $V->{'value'} ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
         CGI::escapeHTML($V->{'name'})

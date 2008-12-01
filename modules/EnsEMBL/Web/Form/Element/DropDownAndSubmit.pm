@@ -40,9 +40,9 @@ sub render {
         $v_hash{'value'}, $self->value eq $v_hash{'value'} ? ' selected="selected"' : '', $v_hash{'name'}
       );
     }
-    return sprintf( qq(<label for="%s">%s</label> <select name="%s" id="%s" class="%s %s autosubmit">\n%s</select>
+    return sprintf( qq(<tr><th><label for="%s">%s</label></th><td><select name="%s" id="%s" class="%s %s autosubmit">\n%s</select>
       <input type="submit" value="%s" class="input-submit" />%s
-    %s),
+    %s</td></tr>),
       CGI::escapeHTML( $self->id ),
       $self->label,
       CGI::escapeHTML( $self->name ), 
@@ -55,10 +55,10 @@ sub render {
       $self->notes
     );
   } else {
-    $output = '';
+    $output = '<tr><th></th><td>';
     my $K = 0;
     foreach my $V ( @{$self->values} ) {
-      $output .= sprintf( qq(    <div class="radiocheck"><input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label></div>\n),
+      $output .= sprintf( qq(<input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label>\n),
         CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V['value']),
         $self->value eq $V['value'] ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
         CGI::escapeHTML($V['name'])
@@ -66,7 +66,7 @@ sub render {
       $K++;
     }
     return sprintf( 
-      qq(%s%s<input type="submit" class="input-submit" value="%s" />%s\n  %s),
+      qq(</td><td>%s%s<input type="submit" class="input-submit" value="%s" />%s\n  %s</td></tr>),
       $self->label, $output,
       CGI::escapeHTML( $self->button_value ),
       $self->required eq 'yes' ? $self->required_string : '',

@@ -24,7 +24,7 @@ sub new {
 }
 
 sub add_button {
-### Add a button element to the form
+### Add a button element to the form - used particularly for adding multiple buttons, e.g. on wizards
   my( $self, %options ) = @_;
   my $type = $options{'type'};
   if ($type eq 'Submit' || $type eq 'Button') {
@@ -71,15 +71,14 @@ sub _next_id {
 
 sub _render_buttons {
   my $self = shift;
-  my $output = qq(<div class="submit">
-<dl>
-<dt class="submit wide center">);
+  my $output = qq(<table style="width:100%"><tbody>
+<tr>
+<td style="width:50%">&nbsp;</td><td style="width:50%">);
   foreach my $button ( @{$self->{'_buttons'}}) {
-    $output .= $button->render(1); ## Pass flag to omit DL from rendered widget
+    $output .= $button->render;
   }
-  $output .= qq(</dt>
-</dl>
-</div>);
+  $output .= qq(</td>
+</tbody></table>);
 
   return $output;
 }

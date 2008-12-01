@@ -14,13 +14,13 @@ sub validate { return 1; }
 sub render {
   my $self = shift;
   return sprintf( '
-  <dl>
-    <dt><label for="%s">%s: </label></dt>
-    <dd><input type="%s" name="%s" value="%s" id="%s" class="input-text %s %s" size="%s" />
+  <tr>
+    <th><label for="%s">%s: </label></th>
+    <td><input type="%s" name="%s" value="%s" id="%s" class="input-text %s %s" size="%s" />
     %s
     %s
-    </dd>
-  </dl>',
+    </td>
+  </tr>',
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->label ),
     $self->widget_type,

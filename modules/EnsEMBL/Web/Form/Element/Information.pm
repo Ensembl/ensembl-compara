@@ -12,7 +12,7 @@ sub render {
   my $self = shift;
   $self->add_class('wide');
   return sprintf '
-    <dl><dt%s%s>%s</dt></dl>
+    <tr><td colspan="2"%s%s>%s</td></tr>
   ', $self->class_attrib, $self->style_attrib, $self->value;
 }
 

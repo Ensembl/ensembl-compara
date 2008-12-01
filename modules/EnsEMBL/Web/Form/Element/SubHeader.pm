@@ -8,7 +8,6 @@ sub new {
   return $class->SUPER::new( @_, 'layout' => 'spanning' );
 }
 
-# TODO: make sure "h3" class is implemented in css
-sub render { return '<dl><dt class="wide h3"><strong>'.$_[0]->value.'</strong></dt></dl>'; }
+sub render { return '<tr><td colspan="2" style="text-align:left"><strong>'.$_[0]->value.'</strong></td></tr>'; }
 
 1;

@@ -38,13 +38,13 @@ sub render {
     }
     my $label = $self->label ? CGI::escapeHTML( $self->label ).': ' : '';
     return sprintf( qq(
-    <dl>
-      <dt><label for="%s">%s</label></dt>
-      <dd>%s<select multiple="multiple" name="%s" id="%s" class="normal" size="%s">
+    <tr>
+      <th><label for="%s">%s</label></th>
+      <td>%s<select multiple="multiple" name="%s" id="%s" class="normal" size="%s">
       %s
       </select>
-      %s</dd>
-    </dl>),
+      %s</td>
+    </tr>),
       CGI::escapeHTML( $self->id ),
       $label, 
       $self->introduction,
@@ -55,9 +55,9 @@ sub render {
     );
   } else {
     my $output = sprintf(qq(
-    <dl>
-    <dt><label class="label" for="%s">%s</label></dt>
-    <dd>),
+    <tr>
+    <th><label class="label" for="%s">%s</label></th>
+    <td>),
         CGI::escapeHTML($self->id), CGI::escapeHTML( $self->label ));
     my $K = 0;
 
@@ -92,8 +92,8 @@ sub render {
 	    CGI::escapeHTML($self->name), 
 			
     );
-    $output .= qq(</dd>
-    </dl>);
+    $output .= qq(</td>
+    </tr>);
 
     return $self->introduction.$output.$self->notes;
   }

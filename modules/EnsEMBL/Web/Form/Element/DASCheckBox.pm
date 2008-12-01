@@ -35,23 +35,26 @@ sub _short_das_desc {
 
 sub render {
   my $self   = shift;
-  my $layout = shift;
-  $layout eq 'table' || die 'DASCheckbox can only be rendered in table layout';
   
   my $notes = $self->notes;
   $notes .= sprintf(' (<span title="%s">Mouseover&#160;for&#160;full&#160;text</span>)', CGI::escapeHTML($self->comment)) if $self->comment;
   
-  ## This assumes that DASCheckBox layout uses the 'table' option!
   my $label = $self->{'raw'} ? $self->label : '<strong>'.CGI::escapeHTML( $self->label ).'</strong>';
   $label .= '<br />'.$notes if $notes;
-  my $widget = sprintf('<input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox"%s%s/>',
+  return sprintf(qq(<tr class="%s">
+<td style="width:5%">
+<input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox"%s%s/>
+</td>
+<td style="width:90%">%s</td>
+</tr>),
+      $self->bg,
       CGI::escapeHTML( $self->name ), 
       CGI::escapeHTML( $self->id ),
       $self->value || 'yes',
       $self->checked ? ' checked="checked" ' : '',
       $self->disabled ? ' disabled="disabled" ' : '',
+      $label,
   );
-  return {'label' => $label, 'widget' => $widget};
 }
 
 

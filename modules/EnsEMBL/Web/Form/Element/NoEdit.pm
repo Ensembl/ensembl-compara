@@ -12,11 +12,10 @@ sub render {
   my $self = shift;
   my $value = $self->value || '&nbsp;';
   return sprintf(qq(
-    <dl>
-      <dt><label for="%s">%s: </label></dt>
-      <dd><div id="%s">%s</div></dd>
-      </dt>
-    </dl>),
+    <tr>
+      <th><label for="%s">%s: </label></th>
+      <td><div id="%s">%s</div></td>
+    </tr>),
     $self->name, $self->label, $self->name, $value
   ); 
 }

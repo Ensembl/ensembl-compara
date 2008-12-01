@@ -26,10 +26,10 @@ sub disabled :lvalue { $_[0]->{'disabled'}; }
 sub render {
   my $self = shift;
   return sprintf(
-   qq(<dl>
-  <dt><label class="label-radio"></dt>
-  <dd><input type="radio" name="%s" id="%s" value="%s" class="input-radio"%s%s/> %s %s</label></dd>
-  </dl>),
+   qq(<tr>
+  <th><label class="label-radio"></th>
+  <td><input type="radio" name="%s" id="%s" value="%s" class="input-radio"%s%s/> %s %s</label></td>
+  </tr>),
     CGI::escapeHTML( $self->name ),
     CGI::escapeHTML( $self->id ),
     $self->value || 'yes', 

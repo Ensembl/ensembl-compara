@@ -4,6 +4,8 @@ use EnsEMBL::Web::Form::Element;
 use CGI qq(escapeHTML);
 our @ISA = qw( EnsEMBL::Web::Form::Element );
 
+## TODO -  Needs updating - probably doesn't work with current JavaScript
+
 sub render {
   my $self = shift;
   my( $min, $max ) = $self->value ? ( 1, $self->value ) : ( '','' );
