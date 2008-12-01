@@ -10,9 +10,9 @@ sub new {
   my ($class, %option) = @_;
   my $self = {
     '_id'               => $option{'form'},
-    '_layout'           => $option{'layout'} || 'normal',
     '_legend'           => $option{'legend'} || '',
     '_wizard_elements'  => $option{'elements'} || [],
+    '_stripes'          => $option{'stripes'} || 0,
     '_elements'         => [],
     '_set_id'     => 1,
     '_required'   => 0,
@@ -75,10 +75,17 @@ sub _next_id {
 }
 
 sub _render_element {
-  my( $self, $element, $layout ) = @_;
+  my( $self, $element, $tint) = @_;
   my $output;
-  return $element->render() if $element->type eq 'Hidden';
-  return $element->render($layout);
+  if ($element->type eq 'Submit' || $element->type eq 'Button') {
+    my $html = '<tr><td></td><td>';
+    $html .= $element->render($tint);
+    $html .= '</td></tr>';
+    return $html;
+  }
+  else {
+    return $element->render;
+  }
 }
 
 
@@ -110,30 +117,24 @@ sub render {
     }
   }
   
-  if ($self->{'_layout'} eq 'table') {
-    ## Used for complex forms like DAS and healthchecks
-    my $table = EnsEMBL::Web::Document::SpreadSheet->new();
-    $table->add_columns(
-      {'key' => 'label', 'title' => '', 'width' => '90%', 'align' => 'left' },
-      {'key' => 'widget', 'title' => '', 'width' => '5%', 'align' => 'left' },
-    );
-    my $hidden_output;
-    foreach my $element ( @{$self->{'_elements'}} ) {
-      if ($element->type eq 'Hidden') {
-        $hidden_output .= $self->_render_element( $element );
-      }
-      else {
-        $table->add_row($self->_render_element( $element, 'table') );
-      }
+  $output .= qq(\n<table style="width:100%"><tbody>\n);
+  my $hidden_output;
+  my $i;
+  foreach my $element ( @{$self->{'_elements'}} ) {
+    if ($element->type eq 'Hidden') {
+      $hidden_output .= $self->_render_element( $element );
     }
-    $output .= $table->render;
-    $output .= $hidden_output;
-  }
-  else {
-    foreach my $element ( @{$self->{'_elements'}} ) {
+    else {
+      if ($self->{'_stripes'}) {
+        $element->bg = $i % 2 == 0 ? 'bg2' : 'bg1';
+      }
       $output .= $self->_render_element( $element );
     }
+    $i++;
   }
+  $output .= "\n</tbody></table>\n";
+  $output .= $hidden_output;
+
   $output .= "\n</fieldset>\n";
   return $output;
 }
