@@ -84,8 +84,8 @@ sub select_das {
   
   ## Otherwise add a checkbox element for each DAS source
   else {
+    $fieldset->{'stripes'} = 1;
     $self->set_extra_buttons('top'); ## Repeat buttons at top, as this is often a long form
-    $fieldset->{'layout'} = 'table';
     my @already_added = ();
     my @all_das = $ENSEMBL_WEB_REGISTRY->get_all_das();
     for my $source (@{ $sources }) {
