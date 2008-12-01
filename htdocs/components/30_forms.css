@@ -24,16 +24,16 @@ input.submit {
   color:#fff; font-weight:bold;
 }
 
-form.std div.submit {
-
-}
-
 form.std fieldset { padding: 0 0.5em; text-align: left; margin: 0; }
 form.nonstd fieldset { padding: 0.5em; margin: 0; }
 
 legend { border: #f00 solid 1px; background-color: #fcc; color: #f00; padding: 2px 4px; font-weight: bold; margin: 0 }
 
 form.std { margin: 0; padding:3px;}
+form.std table { width:100% }
+form.std fieldset th, form.std fieldset td { padding:4px; width: 50%; }
+
+/*
 form.std dl { margin: 0; position: relative }
 form.std dl dt { clear: left; width: 50%; float: left; margin: 0; padding: 0; padding-bottom: 0.5em }
 form.std dl dt.h3 { font-size: 1.2em; font-weight: bold }
@@ -49,5 +49,5 @@ form.std input.normal { width: 90% }
 form.std input.short  { width: 10em }
 form.std input.narrow { width: 20em }
 form.std input.vshort { width: 4em }
-
+*/
 .hi { border: solid 1px red; padding: 0 1px; font-weight: bold }
