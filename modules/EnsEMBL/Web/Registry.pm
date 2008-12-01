@@ -36,14 +36,16 @@ sub get_all_das {
     $species = '';
   }
   
-  my $spec_das = $self->species_defs->get_all_das( $species );
-  my $sess_das =  $self->get_session->get_all_das( $species );
-  my $user_das = $self->get_user ? $self->get_user->get_all_das( $species ) : {};
+  my @spec_das = $self->species_defs->get_all_das( $species );
+  my @sess_das = $self->get_session ->get_all_das( $species );
+  my @user_das = $self->get_user ? $self->get_user->get_all_das( $species ) : ({},{});
   
   # TODO: group data??
   
-  my %merged = ( %{ $spec_das }, %{ $user_das }, %{ $sess_das } );
-  return \%merged;
+  # First hash is keyed by logic_name, second is keyed by full_url
+  my %by_name = ( %{ $spec_das[0] }, %{ $user_das[0] }, %{ $sess_das[0] } );
+  my %by_url  = ( %{ $spec_das[1] }, %{ $user_das[1] }, %{ $sess_das[1] } );
+  return wantarray ? ( \%by_name, \%by_url ) : \%by_name;
 }
 
 # This method gets a single named DAS source for the current species.

@@ -64,10 +64,6 @@ sub new_from_hashref {
     $hash->{on} = [ map { $views{$_} || $_ } @{$hash->{on}||[]},@{$hash->{enable}||[]} ] ;
   }
   
-  if (!$hash->{on} || !scalar @{ $hash->{on} }) {
-    $hash->{on} = $self->_guess_views();
-  }
-  
   for my $var ( qw( on category caption )  ) {
     if ( exists $hash->{$var} ) {
       $self->$var( $hash->{$var} );
@@ -147,7 +143,7 @@ sub on {
   if ( @_ ) {
     $self->{'on'} = shift;
   }
-  return $self->{'on'};
+  return $self->{'on'} && scalar @{$self->{'on'}} ? $self->{'on'} : $self->_guess_views();
 }
 
 =head2 is_on

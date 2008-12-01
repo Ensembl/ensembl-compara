@@ -5,6 +5,7 @@ sub create {
   ### time on server startup and gets placed in the first directory in the htdocs
   ### tree.
   ### Returns: none
+	my $species = shift;
   my $root = $SiteDefs::ENSEMBL_HTDOCS_DIRS[0];
   my %allowed = map { ($_,1) } @{$SiteDefs::ENSEMBL_EXTERNAL_SEARCHABLE||[]};
 
@@ -31,7 +32,7 @@ User-agent: *
 Disallow: /Multi/
 Disallow: /BioMart/
 );
-    foreach( @$ENSEMBL_SPECIES ) {
+    foreach( @{$species||[]} ) {
       print FH qq(Disallow: /$_/\n);
       print FH qq(Allow: /$_/geneview\n) if $allowed{'gene'};
       print FH qq(Allow: /$_/sitemap.xml.gz\n);

@@ -458,24 +458,12 @@ sub _summarise_dasregistry {
   my $self = shift;
   
   # Registry parsing is lazy so re-use the parser between species'
-  my $parser = $self->{'_das_parser'};
-
-  if (!$parser) {
-    my $das_reg = $self->tree->{'DAS_REGISTRY_URL'}
-      || ( warn( "No DAS_REGISTRY_URL in config tree" ) && return );
-    $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
-      -location => $das_reg,
-      -timeout  => $self->tree->{'ENSEMBL_DAS_TIMEOUT'},
-      -proxy    => $self->tree->{'ENSEMBL_WWW_PROXY'},
-      -noproxy  => $self->tree->{'ENSEMBL_NO_PROXY'},
-    );
-    $self->{'_das_parser'} = $parser;
-  }
+  my $das_reg = $self->tree->{'DAS_REGISTRY_URL'} || ( warn "No DAS_REGISTRY_URL in config tree" && return );
   
+  my @reg_sources = @{ $self->_parse_das_server($das_reg) };
   # Fetch the sources for the current species
-  my %sources = map {
-    $_->logic_name => $_
-  } @{ $parser->fetch_Sources(-species => $self->species) };
+  my %reg_logic = map { $_->logic_name => $_ } @reg_sources;
+  my %reg_url   = map { $_->full_url   => $_ } @reg_sources;
   
   # The ENSEMBL_INTERNAL_DAS_SOURCES section is a list of enabled DAS sources
   # Then there is a section for each DAS source containing the config
@@ -501,9 +489,23 @@ sub _summarise_dasregistry {
       $cfg->{'coords'} = [ $cfg->{'coords'} ];
     }
     
-    
-    # Check using the logic_name if the source is registered
-    my $src = $sources{$key};
+    # Check if the source is registered
+    my $src = $reg_logic{$key};
+    # Try the actual server URL if it's provided but the registry URI isn't
+    if (!$src && $cfg->{'url'} && $cfg->{'dsn'}) {
+      my $full_url = $cfg->{'url'} . '/' . $cfg->{'dsn'};
+      $src = $reg_url{$full_url};
+      # Try parsing from the server itself
+      if (!$src) {
+        eval {
+          my %server_url = map {$_->full_url => $_} @{ $self->_parse_das_server($full_url) };
+          $src = $server_url{$full_url};
+        };
+        if ($@) {
+          warn "Unable to parse details for $key - problems contacting server";
+        }
+      }
+    }
     # Doesn't have to be in the registry... unfortunately
     # But if it is, fill in the blanks
     if ($src) {
@@ -528,6 +530,24 @@ sub _summarise_dasregistry {
     # Add the final config hash to the das packed tree
     $self->das_tree->{'ENSEMBL_INTERNAL_DAS_CONFIGS'}{$key} = $cfg;
   }
+}
+
+sub _parse_das_server {
+  my ( $self, $location ) = @_;
+  
+  my $parser = $self->{'_das_parser'};
+  if (!$parser) {
+    $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
+      -timeout  => $self->tree->{'ENSEMBL_DAS_TIMEOUT'},
+      -proxy    => $self->tree->{'ENSEMBL_WWW_PROXY'},
+      -noproxy  => $self->tree->{'ENSEMBL_NO_PROXY'},
+    );
+    $self->{'_das_parser'} = $parser;
+  }
+  
+  my $sources = $parser->fetch_Sources( -location => $location,
+                                        -species => $self->species );
+  return $sources;
 }
 
 sub _meta_info {
