@@ -419,7 +419,7 @@ sub parse_row {
 #    $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GTF->new( \@tab_del ) ) 
 #    if $self->filter($tab_del[0],$tab_del[6],$tab_del[8]);
     } elsif( $format eq 'DAS' ) { 
-      $current_key = $tab_del[2] if $current_key eq 'default';
+#      $current_key = $tab_del[2] if $current_key eq 'default';
       $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::DAS->new( \@tab_del ) ) 
         if $self->filter($tab_del[4],$tab_del[5],$tab_del[6]);
     } else {
@@ -428,7 +428,7 @@ sub parse_row {
         $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::PSL->new( \@ws_delim ) ) 
           if $self->filter($ws_delim[13],$ws_delim[15],$ws_delim[16]);
       } elsif( $format eq 'BED' ) {
-        $current_key = $ws_delim[3] if $current_key eq 'default';
+#        $current_key = $ws_delim[3] if $current_key eq 'default';
         $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::BED->new( \@ws_delim ) )
           if $self->filter($ws_delim[0],$ws_delim[1],$ws_delim[2]);
       } else {
