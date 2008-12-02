@@ -27,6 +27,10 @@ sub content {
     'slice_number'    => '1|2'
   });
 
+  $wuc->modify_configs(
+    ['user_data'],
+    {'strand'=>'r'}
+  );
   $self->_attach_das( $wuc );
 
   my $info = $wuc->_update_missing( $object );
