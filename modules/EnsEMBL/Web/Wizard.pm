@@ -180,6 +180,7 @@ sub render_connection_form {
   my $html = '';
 
   my $form = $self->get_form;
+  $form->extra_buttons($node->get_extra_buttons);
   my $notes_done = 0;
 
   ## Optional fieldsets (only needed if wizard form is long and complex, e.g. DAS

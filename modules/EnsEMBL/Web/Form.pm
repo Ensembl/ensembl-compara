@@ -16,6 +16,7 @@ sub new {
         'class'    => $style || 'std check',
     },
     '_buttons'     => [],
+    '_extra_buttons'  => '',
     '_fieldsets'   => [],
     '_form_id'     => 1
   };
@@ -41,6 +42,14 @@ sub add_button {
     warn "Not a button module!";
   }
 } 
+
+sub extra_buttons {
+  my ($self, $buttons) = @_;
+  if ($buttons) {
+    $self->{'_extra_buttons'} = $buttons;
+  }
+  return $self->{'_extra_buttons'};
+}
 
 sub add_attribute {
 ### Add an attribute to the FORM tag
@@ -118,6 +127,10 @@ sub render {
     $output .= sprintf ' %s="%s"', CGI::escapeHTML($k), CGI::escapeHTML($v);
   }
   $output .= '>';
+
+  if ($self->{'_extra_buttons'} eq 'top') {
+    $output .= $self->_render_buttons;
+  }
 
   $output .= $widgets;
   
