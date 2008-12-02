@@ -31,8 +31,8 @@ sub content {
              'development.';
   my $msg2 = "Click 'configure this page' to change the sources of external ".
              "annotations that are available in the External Data menu.";
-  return $self->_info('Coming soon', $msg1, '100%') .
-         $self->_info('Info',        $msg2, '100%');
+  return $self->_info('Info',        $msg2, '100%') .
+         $self->_info('Coming soon', $msg1, '100%');
 }
 
 1;
