@@ -159,7 +159,7 @@ sub configurator {
     } else { ### We are updating a view config!
       $vc->update_from_input( $input );
       if( $ENV{'ENSEMBL_ACTION'} ne 'ExternalData' ) {
-        my $vc_2 = $session->getViewConfig( undef, 'ExternalData' );
+        my $vc_2 = $session->getViewConfig( $ENV{'ENSEMBL_TYPE'}, 'ExternalData' );
         $vc_2->update_from_input( $input ) if $vc_2;
       }
       $session->store;
@@ -236,7 +236,9 @@ sub ingredient {
 
   my $session_id   = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
   $ENV{CACHE_KEY}  = $ENV{REQUEST_URI};
-  $ENV{CACHE_TAGS} = {$ENV{'HTTP_REFERER'} => 1};
+  $ENV{CACHE_TAGS} ||= {};
+  $ENV{CACHE_TAGS}->{$ENV{'HTTP_REFERER'}} = 1;
+
   ## Ajax request
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
   $ENV{CACHE_KEY} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
@@ -322,12 +324,34 @@ sub stuff {
   ## If user logged in, some content depends on user
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
 
+
+  my $input = new CGI;
+  my $url = undef;
+  $session->set_input( $input );
+  if (my @share_ref = $input->param('share_ref')) {
+    $session->receive_shared_data(@share_ref);
+    $input->delete('share_ref');
+    $url = $input->self_url;
+  }
+  my $vc = $session->getViewConfig( $ENV{'ENSEMBL_TYPE'}, $ENV{'ENSEMBL_ACTION'} );
+  my $url2 = $vc->update_from_config_strings( $session, $r );
+  $url = $url2 if $url2;
+  if( $url ) {
+    CGI::redirect( $url );
+    return 'Jumping back in without parameter!';
+  }
+
   my $session_id  = $session->get_session_id;
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
 
-  my $input = new CGI;
-  if (my @share_ref = $input->param('share_ref')) {
-    $session->receive_shared_data(@share_ref);
+  if (
+      $MEMD && 
+      ($r->headers_in->{'Cache-Control'} eq 'max-age=0' || $r->headers_in->{'Pragma'} eq 'no-cache')
+     ) {
+      $MEMD->delete_by_tags(
+        $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'},
+        $session_id ? "session_id[$session_id]" : (),
+      );
   }
 
   my $content = ($MEMD && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $MEMD->get($ENV{CACHE_KEY}) : undef;
@@ -432,7 +456,11 @@ sub stuff {
     }
 
     $content = $webpage->page->renderer->content;
-    my @tags = qw(DYNAMIC);
+
+    my @tags = (
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL . $ENV{'REQUEST_URI'},
+      'DYNAMIC'
+    );
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
     $MEMD->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags)
       if $MEMD &&
