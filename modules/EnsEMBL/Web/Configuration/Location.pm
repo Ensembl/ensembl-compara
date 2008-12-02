@@ -555,9 +555,12 @@ sub _ajax_zmenu_alignment {
     my $db_adaptor = $obj->database(lc($db));
     my $adaptor_name = "get_${obj_type}Adaptor";
     my $feat_adap =  $db_adaptor->$adaptor_name;
-    my $fs = $feat_adap->fetch_all_by_hit_name($id);
-    my $external_db_id = $fs->[0]->external_db_id;
-    my $extdbs = $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'};
+    my $fs = $feat_adap->can( 'fetch_all_by_hit_name' ) ? $feat_adap->fetch_all_by_hit_name($id)
+           : $feat_adap->can( 'fetch_all_by_probeset' ) ? $feat_adap->fetch_all_by_probeset($id)
+           :                                              []
+           ;
+    my $external_db_id = ($fs->[0] && $fs->[0]->can('external_db_id')) ? $fs->[0]->external_db_id : '';
+    my $extdbs = $external_db_id ? $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
     my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
 
     #hack to link sheep bac ends to trace archive
