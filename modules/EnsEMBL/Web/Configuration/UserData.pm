@@ -6,6 +6,11 @@ use EnsEMBL::Web::RegObj;
 
 our @ISA = qw( EnsEMBL::Web::Configuration );
 
+## Don't cache tree for user data
+sub tree_cache_key {
+  return undef;
+}
+
 sub set_default_action {
   my $self = shift;
   my $vc  = $self->object->get_viewconfig;
