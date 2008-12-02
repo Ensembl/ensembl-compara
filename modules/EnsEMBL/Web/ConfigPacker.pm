@@ -571,8 +571,9 @@ sub _munge_meta {
 
   ## Quick and easy access to species info
   my %keys = qw(
-    SPECIES_COMMON_NAME species.ensembl_alias_name
-    ASSEMBLY_NAME       assembly.default
+    SPECIES_COMMON_NAME     species.ensembl_alias_name
+    ASSEMBLY_NAME           assembly.default
+    ASSEMBLY_DISPLAY_NAME   assembly.name
   );
 
   foreach my $key ( keys %keys ) {
