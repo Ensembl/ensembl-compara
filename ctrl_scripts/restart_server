@@ -42,10 +42,11 @@ no warnings 'uninitialized';
 use FindBin qw($Bin);
 use Getopt::Long;
 
-my ($help, $rmconfig, $delay, $single, $tail);
+my ($help, $rmconfig, $delay, $single, $tail, $flush);
 &GetOptions(
     "rmconfig"      => \$rmconfig,
     "r"             => \$rmconfig,
+    "f"             => \$flush,
     "delay=i"       => \$delay,
     "d=i"           => \$delay,
     "X"             => \$single,
@@ -75,7 +76,7 @@ Options:
 }
 
 my $stop_args = $delay ? "-d $delay" : "";
-my $start_args = join(" ", $rmconfig ? "-r" : "", $single ? "-X" : "");
+my $start_args = join(" ", $rmconfig ? "-r" : "", $single ? "-X" : "", $flush ? "-f" : "");
 
 # stop and start the server
 system("$Bin/stop_server $stop_args") == 0 or exit;
