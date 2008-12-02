@@ -1,5 +1,5 @@
 #!/bin/sh
-
+#
 #
 # This script generates a shell script and linking config files which are used
 # to generate the 'pdoc' perl documentation.
@@ -31,12 +31,12 @@
 #
 # fc1 2005-10-21 edits
 
-. /etc/profile
+#. /etc/profile
 
-PERLMOD_LOC="/ensemblweb/www/www_49"   # current server root
+PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
-PDOC_LOC="$PERLMOD_LOC/public-plugins/ensembl/htdocs/info/using/api/Pdoc"    # where you want Pdocs created
+PDOC_LOC="$PERLMOD_LOC/public-plugins/ensembl/htdocs/info/docs/api/Pdoc"    # where you want Pdocs created
 HTTP="/info/using/api/Pdoc"
 P2WDOC_LOC="/ensemblweb/shared/bin/pdoc-live"  # Pdoc code location
 P2WDOCER="/ensemblweb/shared/bin/pdoc-live/scripts/perlmod2www.pl"
