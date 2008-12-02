@@ -18,12 +18,12 @@ open I, "tail -f $log|";
 my $regexp = shift @ARGV ;#? '('.join( '|', map { quotemeta $_ } @ARGV ).')' : '';
 
 while(<I>) { 
-  next unless /"(GET|POST) (\S+) HTTP\/1\.[01]" (\d+) (-|\d+)/;
-  my ($method, $url, $status, $bytes ) = ($1,$2,$3,$4);
+  next unless /^\[\d+ (\d+\.\d+).*?"(GET|POST) (\S+) HTTP\/1\.[01]" (\d+) (-|\d+)/;
+  my ($time, $method, $url, $status, $bytes ) = ($1,$2,$3,$4,$5);
   next if $regexp && ($regexp ne '\?' || $method ne 'POST' ) && ($url!~/$regexp/o);
   my $parsed = parse( $url );
  
-  printf "%5d %8d %s\n", $status, $bytes, $parsed->{'url'};
+  printf "%10.6f %5d %8d %s\n", $time, $status, $bytes, $parsed->{'url'};
   foreach ( sort keys %{$parsed->{'params'}} ) {
     printf " %25s = %s\n",
       $_, join( "; ",@{$parsed->{'params'}{$_}});
