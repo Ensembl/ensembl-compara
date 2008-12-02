@@ -334,7 +334,8 @@ sub ajax_zmenu      {
                     $obj->thousandify( $obj->seq_region_start ),
                     $obj->thousandify( $obj->seq_region_end )
                   ),
-    'link' => $obj->_url({'type'=>'Location',   'action'=>'View'   })
+    'link' => $obj->_url({'type'=>'Location',   'action'=>'View',
+		  'l' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end   })
   });
   $panel->add_entry({
     'type'     => 'Strand',
