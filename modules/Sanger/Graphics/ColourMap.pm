@@ -713,6 +713,7 @@ sub rgb_by_name {
   my $hex = $self->{$name};
      $hex = $1 if !$hex && $name=~/^#?([0-9a-f]{6})$/;
   unless( $hex ) {
+cluck( $hex );
     warn "Unknown colour name {$name}" unless $errors->{$name};
     $errors->{$name} = 1;
     return $flag ? () : (0,0,0);
