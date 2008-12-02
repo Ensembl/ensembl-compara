@@ -158,8 +158,7 @@ sub new {
     $self->timer_push("Object creation failed");
   } else {
     $self->timer_push("Objects created");
-    my $sc = $self->factory->get_viewconfig( );
-#       $sc->update_from_input( $input, $rend->{'r'} ) if $sc;        $self->timer_push("Script config updated from input");
+    $self->timer_push("Script config updated from input");
   }
   return $self;
 }

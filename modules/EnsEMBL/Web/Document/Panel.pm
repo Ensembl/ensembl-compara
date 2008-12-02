@@ -403,7 +403,7 @@ sub _caption_with_helplink {
   }
   $html .= $self->{'raw_caption'} ? $self->{'caption'} : CGI::escapeHTML($self->{caption});
   if ( $id ) {
-    $html .= ' <img src="/i/e-quest.gif" style="width:20px;height:19px;padding-left:4px;" alt="(e?)" /></a>';
+    $html .= ' <img src="/i/help-button.png" style="width:40px;height:20px;padding-left:4px;vertical-align:middle" alt="(e?)" /></a>';
   }
   $html .= '</h2>';
   return $html; 

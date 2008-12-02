@@ -58,6 +58,8 @@ sub _common_HTML {
   $self->logo->href               = $style->{'SITE_LOGO_HREF'};             
 
   $self->tools->logins            = $self->species_defs->ENSEMBL_LOGINS;
+  $self->tools->blast             = $self->species_defs->ENSEMBL_BLAST_ENABLED;
+  $self->tools->biomart           = $self->species_defs->ENSEMBL_MART_ENABLED;
   if ($self->{'input'}) {
     $self->tools->referer           = $self->{'input'}->param('_referer');
    # warn "REFERER ".$self->{'input'}->param('_referer');

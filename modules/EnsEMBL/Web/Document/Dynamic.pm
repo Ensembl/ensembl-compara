@@ -13,7 +13,7 @@ sub set_title {
   
   return unless $self->can('title');
   return unless $self->title;
-  $self->title->set( $self->species_defs->ENSEMBL_SITE_NAME.' release '.$self->species_defs->ENSEMBL_VERSION.': '.$self->species_defs->SPECIES_BIO_SHORT.' '.$title );
+  $self->title->set( $self->species_defs->ENSEMBL_SITE_NAME.' '.$self->species_defs->ENSEMBL_VERSION.': '.$self->species_defs->SPECIES_BIO_SHORT.' '.$title );
 }
 
 sub _initialize_TextGz {
