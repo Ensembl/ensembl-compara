@@ -9,7 +9,7 @@ sub features { ## Hack in db in the future!!
   $self->timer_push( 'Preped');
   my $T = $self->{'container'}->get_all_OligoFeatures( $self->my_config('array') );
   $self->timer_push( 'Retrieved oligos', undef, 'fetch' );
-  return $T;
+  return ( $self->my_config('array') => [$T] );
 }
 
 sub feature_group {
@@ -27,16 +27,11 @@ sub href {
   my ($self, $f ) = @_;
   return $self->_url({
     'object' => 'Location',
-    'action' => 'Feature',
-    'fdb'    => $self->my_config('db'),
-    'ftype'  => 'OligoProbe',
-    'fname'  => $f->probeset
+    'action' => 'Genome',
+    'db'     => $self->my_config('db'),
+    'ftype'  => 'OligoFeature',
+    'id'     => $f->probeset
   });
-}
-
-sub feature_group{
-  my( $self, $f ) = @_;
-  return $f->probeset();
 }
 
 1;
