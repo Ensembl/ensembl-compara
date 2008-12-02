@@ -23,27 +23,28 @@ BEGIN{
   pod2usage(1) if $help;
   
   $SERVERROOT = dirname( $Bin );
+  $SERVERROOT =~ s#/utils##;
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use EnsEMBL::Web::SpeciesDefs;                  
 use EnsEMBL::Web::Data::Release;
+use EnsEMBL::Web::Data::Species;
+use EnsEMBL::Web::Data::ReleaseSpecies;
 
-my $SD = EnsEMBL::Web::SpeciesDefs->new;
-my $release_id = $SiteDefs::VERSION;
 print "\n\n";
 
 # Connect to web database and get news adaptor
 use EnsEMBL::Web::RegObj;
 
 $ENSEMBL_WEB_REGISTRY = EnsEMBL::Web::Registry->new();
-my $wa = $ENSEMBL_WEB_REGISTRY->newsAdaptor;
+my $SD = $ENSEMBL_WEB_REGISTRY->species_defs;
 
 # Check database to see if this release is included already, then
 # give the user the option to update the release date
+my $release_id = $SD->ENSEMBL_VERSION;
 my $release = EnsEMBL::Web::Data::Release->new($release_id);
 
 if ($release) {
@@ -94,8 +95,11 @@ if ($release) {
 }
 
 # get the hash of all species in the database
-my $all_spp = $wa->fetch_species;
-my %rev_hash = reverse %$all_spp;
+my @db_spp = EnsEMBL::Web::Data::Species->find_all;
+my %lookup;
+foreach my $sp (@db_spp) {
+  $lookup{$sp->name} = $sp->id;
+}
 
 # get a list of valid (configured) species
 my @species = $SD->valid_species();
@@ -103,35 +107,41 @@ my ($record, $result, $species_id);
 
 foreach my $sp (sort @species) {
 
-    # check if this species is in the database yet
-    if (!$rev_hash{$sp}) {
-        my $record = {
-            'name'          => $SD->get_config($sp, 'SPECIES_BIO_NAME'),
-            'common_name'   => $SD->get_config($sp, 'SPECIES_COMMON_NAME'),
-            'code'          => $SD->get_config($sp, 'SPECIES_CODE'),
-            };
-        $species_id = $wa->add_species($record);
-        print "Adding new species $sp to database, with ID $species_id\n";
-    }
-    else {
-        $species_id = $rev_hash{$sp};
-    }
+  # check if this species is in the database yet
+  if (!$lookup{$sp}) {
+    my $record = {
+      'name'          => $SD->get_config($sp, 'SPECIES_BIO_NAME'),
+      'common_name'   => $SD->get_config($sp, 'SPECIES_COMMON_NAME'),
+      'code'          => $SD->get_config($sp, 'SPECIES_CODE'),
+    };
+    my $new_sp = EnsEMBL::Web::Data::Species->new($record);
+    $species_id = $new_sp->save;
+    print "Adding new species $sp to database, with ID $species_id\n";
+  }
+  else {
+    $species_id = $lookup{$sp};
+  }
 
-    if ($species_id) {
-        my $a_code = $SD->get_config($sp, 'ENSEMBL_GOLDEN_PATH');
-        my $a_name = $SD->get_config($sp, 'ASSEMBLY_ID');
-        my $record = { 
-            'release_id' => $release_id,
-            'species_id' => $species_id,
-            'assembly_code' => $a_code,
-            'assembly_name' => $a_name,
-            };
-        $result = $wa->add_release_species($record);
-        print "$sp - $result\n";
+  if ($species_id) {
+    my $rs = EnsEMBL::Web::Data::ReleaseSpecies->find('release_id' => $release_id, 'species_id' => $species_id);
+    my $rs_id = $rs->id;
+    unless ($rs_id) {
+      my $a_code = $SD->get_config($sp, 'ASSEMBLY_NAME');
+      my $a_name = $SD->get_config($sp, 'ASSEMBLY_DISPLAY_NAME');
+      my $record = { 
+        'release_id' => $release_id,
+        'species_id' => $species_id,
+        'assembly_code' => $a_code || '',
+        'assembly_name' => $a_name || '',
+      };
+      $rs = EnsEMBL::Web::Data::ReleaseSpecies->new($record);
+      $rs_id = $rs->save;
+      print "ADDED $sp to release $release_id \n";
     }
-    else {
-        print "Sorry, unable to add record for $sp as no species ID found\n";
-    }
+  }
+  else {
+    print "Sorry, unable to add record for $sp as no species ID found\n";
+  }
 }
 
 =head1 NAME
@@ -178,6 +188,6 @@ The database location is specified in Ensembl web config file:
 
 Anne Parker, Ensembl Web Team
 
-Enquiries about this script should be addressed to helpdesk@ensembl.org
+Enquiries about this script should be addressed to ensembl-webteam@sanger.ac.uk
 
 =cut
