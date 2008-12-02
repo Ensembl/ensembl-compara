@@ -140,6 +140,9 @@ function _show_zmenu_location_other( x ) {
   var Q = __zmenu_init( 'zmenu_nav', 'Location: '+Math.floor(x.bp) );
   var w = __seq_region ? (__seq_region.end - __seq_region.start +1) : 100000;
   var s = Math.floor(x.bp-w/2);
+  __zmenu_add( Q, '', 'Chromosome summary',
+    '/'+x.species+'/Location/Chromosome'+Z+'r='+x.region+':'+s+'-'+(w+s) 
+  );
   __zmenu_add( Q, '', 'Jump to location view',
     '/'+x.species+'/Location/View'+Z+'r='+x.region+':'+s+'-'+(w+s)
   );
