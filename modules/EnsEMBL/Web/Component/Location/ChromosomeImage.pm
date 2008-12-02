@@ -53,7 +53,7 @@ sub content {
 
   my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
   $image->add_tracks($object, $config_name);
-  $image->karyotype($object, $pointers, $config_name);
+  $image->karyotype($object, undef, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
   return $image->render;
 }

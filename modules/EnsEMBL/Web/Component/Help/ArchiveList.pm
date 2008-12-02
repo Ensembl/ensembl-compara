@@ -79,6 +79,9 @@ sub content {
               elsif ($type eq 'Gene') {
                 @new_params = ('gene='.$parameter{'g'});
               }
+              elsif ($type eq 'Variation') {
+                @new_params = ('snp='.$parameter{'v'});
+						  }
               elsif ($type eq 'Transcript') {
                 @new_params = ('transcript='.$parameter{'t'});
               }
