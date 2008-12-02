@@ -158,7 +158,7 @@ sub handler {
     $page->render;
     $pageContent = $renderer->value;
 
-    my @tags = qw(STATIC);
+    my @tags = ('STATIC' , $ENV{REQUEST_URI});
     push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
     $MEMD->set($ENV{CACHE_KEY}, $pageContent, $ENV{CACHE_TIMEOUT}, @tags) if $MEMD;
 
