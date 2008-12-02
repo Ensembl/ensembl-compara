@@ -4,6 +4,7 @@ use strict;
 use Data::Dumper;
 use EnsEMBL::Web::Form;
 
+use CGI qw(escape unescape);
 sub new {
   my($class,$type,$action,$adaptor) = @_;
 
@@ -188,6 +189,95 @@ sub update_from_input {
     $self->altered = 1;
   }
   return;
+}
+
+sub update_from_config_strings {
+### Loop through the parameters and update the config based on the parameters passed!
+  my( $self, $session, $r ) = @_;
+  my $input = $session->input;
+  my $flag = 0;
+  my $params_removed;
+  if( $input->param('config') ) {
+    foreach my $v ( split /,/, $input->param('config') ) {
+      my( $k,$t ) = split /=/, $v,2;
+      $self->set($k,$t);
+    }
+    $params_removed = 1;
+    $input->delete('config');
+  }
+
+  my $flag = 0;
+  foreach my $name ( $self->image_configs ) {
+    my $string = $input->param($name);
+    my @values = split /,/, $input->param( $name );
+    if(@values) {
+      $input->delete($name); 
+      $params_removed = 1;
+    }
+    if( ($name eq 'contigviewbottom'|| $name eq 'cytoview' ) ) {
+      foreach my $v ( $input->param('data_URL') ) {
+        push @values, "url.".escape($v).'=normal';
+        $params_removed = 1; 
+      }
+      $input->delete('data_URL');
+      foreach my $v ( $input->param('add_das_source') ) {
+        my $server = $v =~ /url=(https?:[^ +]+)/  ? $1 : '';
+        my $dsn    = $v =~ /dsn=(\w+)/       ? $1 : '';
+# warn "$v > $server/$dsn";
+        push @values, 'das.'.escape("$server/$dsn").'=labels' if $r;
+        $params_removed = 1;
+      }
+      $input->delete('add_das_source');
+    }
+
+    if( @values ) {
+      my $ic = $session->getImageConfig( $name,$name );
+      next unless $ic;
+      foreach my $v ( @values ) {
+        my( $key,$render ) = split /=/,$v,2;
+# warn ">> $v >> $key -- $render";
+## Now we have to get the image_config... and modify it...
+        if( $key =~ /^(\w+)[\.:](.*)$/ ) {
+          my( $type, $p ) = ($1,$2);
+# warn ".. $type - $p ..";
+          if( $type eq 'url' ) {
+            $p = unescape( $p );
+## We have to create a URL upload entry in the session...
+            use Digest::MD5 qw(md5_hex);
+            my $code = md5_hex($ENV{'ENSEMBL_SPECIES'}.":".$p);
+            my $n    =  $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
+            $session->set_data(
+              'type'    => 'url',
+              'url'     => $p,
+              'species' => $ENV{'ENSEMBL_SPECIES'},
+              'code'    => $code, 
+              'name'    => $n
+            );
+## We then have to create a node in the user_config...
+            $ic->_add_flat_file_track( undef, 'url', "url_$code", $n, 
+              sprintf ( '
+  Data retrieved from an external webserver.
+  This data is attached to the %s, and comes from URL: %s', CGI::escapeHTML( $n ), CGI::escapeHTML( $p ) ),
+              'url' => $p
+            );
+            my $nd = $ic->get_node( "url_$code" );
+## Then we have to set the renderer...
+            $flag += $nd->set_user( 'display', $render ) if $nd;
+          } elsif( $type eq 'das' ) {
+# warn "ADDING DAS FROM STRING..... $name $p $render";
+            $p = unescape($p);
+            $flag ++ unless $session->add_das_from_string( $p, {'ENSEMBL_IMAGE'=>$name}, {'display'=>$render} );
+          }
+        } else {
+          my $nd = $ic->get_node($key);
+          $flag += $nd->set_user( 'display', $render ) if $nd;
+        }
+      }
+    }
+  }
+  $self->altered = 1 if $flag;
+  $session->store;
+  return $params_removed ? $input->self_url : undef;
 }
 
 sub delete {
