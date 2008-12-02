@@ -176,7 +176,7 @@ if( $gene ) {
     <dt>Protein</dt>
     <dd>);
     if (my $translation = $object->translation_object) {
-      my $protein = sprintf ('<a href="%s">%s</a>', $self->object->_url({ 'action' => 'Protein'}), $translation->stable_id );
+      my $protein = sprintf ('<a href="%s">%s</a>', $self->object->_url({ 'action' => 'ProteinSummary'}), $translation->stable_id );
         $html .= qq(<p id="prot_text">$protein is the protein product of this transcript</p>);
       } else {
         $html .= qq(<p id="prot_text">This transcript has no translation</p>);
