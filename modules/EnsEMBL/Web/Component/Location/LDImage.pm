@@ -31,7 +31,7 @@ sub content {
 
   ## set path information for LD calculations
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $object->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $object->species_defs->ENSEMBL_TMP_DIR;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $object->species_defs->ENSEMBL_TMP_TMP;
 
   my $wuc_ldview = $object->get_imageconfig( 'ldview' );
   my $context = $wuc_ldview->get_parameter('context');
