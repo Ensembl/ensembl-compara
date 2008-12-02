@@ -19,7 +19,7 @@ sub _attach_das {
   my( $self, $wuc ) = @_;
   my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{ $_->get('logicnames')||[] } : () }  $wuc->tree->nodes;
   if( @das_nodes ) {
-    my %T         = %{ $ENSEMBL_WEB_REGISTRY->get_all_das( $self->object->species ) || {}  };
+    my %T         = %{ $ENSEMBL_WEB_REGISTRY->get_all_das( $self->object->species ) };
     my @das_sources = @T{ @das_nodes };
     if( @das_sources ) {
       my $das_co = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
