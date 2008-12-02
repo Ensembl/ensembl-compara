@@ -584,16 +584,17 @@ sub edit_fields {
       }
     }
     ## deal with multi-value fields
-    if ($param{'value'} && ref($param{'value'}) eq 'ARRAY') {
-      foreach my $v (@{$param{'value'}}) {
-        my %multi_param = %param;
-        $multi_param{'value'} = $v;
-        push @$parameters, \%multi_param;
-      }
-    }
-    else {
+    #if ($param{'value'} && ref($param{'value'}) eq 'ARRAY') {
+    #  foreach my $v (@{$param{'value'}}) {
+    #    warn "VALUE $v";
+    #    my %multi_param = %param;
+    #    $multi_param{'value'} = $v;
+    #    push @$parameters, \%multi_param;
+    #  }
+    #}
+    #else {
       push @$parameters, \%param;
-    }
+    #}
     ## pass non-editable elements as additional hidden fields
     if ($element->type eq 'NoEdit') {
       my %hidden = %{$element->hide};

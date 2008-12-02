@@ -21,8 +21,13 @@ sub allow {
   } else {
     $user = EnsEMBL::Web::Data::User->find(email => $cgi->param('email'));
   }
+
+  ## Strip all the non \w chars
+  my $code = $cgi->param('code');
+  $code =~ s/[^\w]//g;
+
   ## TO DO: Add email address to validation, once new link is standard
-  if ($user->salt eq $cgi->param('code')) {
+  if ($user->salt eq $code) {
     return 1;
   } else {
     return 0;
