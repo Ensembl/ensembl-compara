@@ -75,7 +75,7 @@ $sets->{'extended'} = {
     'tr'     => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(td th) }},
     'td'     => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map b i br) }},
     'th'     => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map b i br) }},
-    'map'    => { 'rt' => 0, 'tx' => 0, 'at' => {}, 'tg' => {map {($_,1)} qw(area) }},
+    'map'    => { 'rt' => 0, 'tx' => 0, 'at' => {map{($_,1)} qw(name)}, 'tg' => {map {($_,1)} qw(area) }},
     'area'   => { 'rt' => 0, 'tx' => 0, 'at' => {map{($_,1)} qw(shape coords href alt)}, 'tg' => {} }
   }
 };
