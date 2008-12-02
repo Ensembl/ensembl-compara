@@ -128,8 +128,10 @@ sub set {
   push @tags, 'no_user_upload'
     unless 'EnsEMBL::Web::File::Driver::Memcached' eq caller;
   
-  $self->SUPER::set($key, $value, $exptime || $self->{default_exptime});
+  my $result = $self->SUPER::set($key, $value, $exptime || $self->{default_exptime});
   $self->add_tags($key, $self->{namespace}, @tags);
+  
+  return $result;
 }
 
 sub get {
