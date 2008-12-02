@@ -197,20 +197,20 @@ sub create_features {
       $feature_type = 'Xref';
     }
 
-    my $create_method = "_create_$feature_type"; warn $create_method;
+    my $create_method = "_create_$feature_type"; 
     $features    = defined &$create_method ? $self->$create_method($db, $subtype) : undef;
   }
 
   return $features;
 }
 
-sub _create_OligoProbe {
-    # get Oligo hits plus corresponding genes
-    my $probe = $_[0]->_generic_create( 'OligoProbe', 'fetch_all_by_probeset', $_[1] );
-    my $probe_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
-    my %features = ('OligoProbe' => $probe);
-    $features{'Gene'} = $probe_genes if $probe_genes;
-    return \%features;
+sub _create_OligoFeature {
+  # get Oligo hits plus corresponding genes
+  my $probe = $_[0]->_generic_create( 'OligoProbe', 'fetch_all_by_probeset', $_[1] );
+  my $probe_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
+  my %features = ('OligoProbe' => $probe);
+  $features{'Gene'} = $probe_genes if $probe_genes;
+  return \%features;
 }
 
 sub _create_DnaAlignFeature {
