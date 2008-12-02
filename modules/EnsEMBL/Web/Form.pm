@@ -15,10 +15,10 @@ sub new {
         'id'       => $name,
         'class'    => $style || 'std check',
     },
-    '_buttons'     => [],
+    '_buttons'        => [],
     '_extra_buttons'  => '',
-    '_fieldsets'   => [],
-    '_form_id'     => 1
+    '_fieldsets'      => [],
+    '_form_id'        => 1
   };
   bless $self, $class;
   return $self;
@@ -99,6 +99,7 @@ sub add_hidden {
     $self->add_element('type'=>'Hidden','name'=>$_,'value'=>$hash_ref->{$_});
   }
 }
+
 sub render {
 ### Render the FORM tag and its contents
   my $self = shift;

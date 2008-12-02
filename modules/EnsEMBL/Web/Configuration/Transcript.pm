@@ -525,7 +525,7 @@ sub user_populate_tree {
     my $source = $all_das->{$logic_name};
     $ext_node->append($self->create_subnode( "ExternalData/$logic_name", $source->caption,
       [qw(textdas EnsEMBL::Web::Component::Transcript::TextDAS)],
-      { 'availability' => 'gene',
+      { 'availability' => 'transcript',
         'concise'      => $source->caption,
         'caption'      => $source->caption,
         'full_caption' => $source->label }

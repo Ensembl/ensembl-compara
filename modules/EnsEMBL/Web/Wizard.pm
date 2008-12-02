@@ -219,6 +219,7 @@ sub render_connection_form {
     $self->form->add_element('type' => 'Hidden', 'name' => 'wizard_next', 'value' => $forward_connection->to->name);
     $self->form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => $label);
   }
+
   $self->form->add_element('type' => 'Hidden', 'name' => 'wizard_ajax_submit', 'value' => '' );
   $html .= $self->form->render;
   return $html;
