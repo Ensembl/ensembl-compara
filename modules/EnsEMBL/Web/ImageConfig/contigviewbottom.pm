@@ -43,6 +43,8 @@ sub init {
     'dna_align_other' => 'Other DNA alignments', 
     'oligo'           => 'Oligo features',
     'ditag'           => 'Ditag features',
+    'external_data'   => 'External data',
+    'user_data'       => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
     'simple'          => 'Simple features',
     'misc_feature'    => 'Misc. regions',
     'repeat'          => 'Repeats',
@@ -52,8 +54,6 @@ sub init {
     'pairwise_blastz' => 'BLASTZ alignments',
     'pairwise_tblat'  => 'Translated blat alignments',
     'pairwise_other'  => 'Pairwise alignment',
-    'external_data'   => 'External data',
-    'user_data'       => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
     'decorations'     => 'Additional decorations',
     'information'     => 'Information',
     'options'         => 'Options'
