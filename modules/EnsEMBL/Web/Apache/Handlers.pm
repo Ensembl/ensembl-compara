@@ -440,14 +440,14 @@ sub cleanURI {
   
   ## Clean out the uri
   my $uri = $ENV{'REQUEST_URI'};
-  if ($uri =~ s/time=\d+\.\d+;?//g) {
+  if ($uri =~ s/time=\d+\.\d+;?//g + $uri =~ s!([^:])/{2,}!$1/!g) {
     $r->parse_uri($uri);
     $r->subprocess_env('REQUEST_URI' => $uri);
   }
 
   ## Clean out the referrer
   my $referer = $ENV{'HTTP_REFERER'};
-  if ($referer =~ s/time=\d+\.\d+;?//g) {
+  if ($referer =~ s/time=\d+\.\d+;?//g + $referer =~ s!([^:])/{2,}!$1/!g) {
     $r->subprocess_env('HTTP_REFERER' => $referer);
   }
 
