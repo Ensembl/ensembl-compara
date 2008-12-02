@@ -274,7 +274,6 @@ sub get_gd_text {
   my $ptsize = shift || 10;
 
   my $FONT_KEY = "${font}--${ptsize}"; 
-warn "FONT... $FONT_KEY ...";
   return $cache{$FONT_KEY} if exists( $cache{$FONT_KEY} );
   
   my $fontpath 
@@ -310,7 +309,7 @@ sub commify {
   return $val if $val < 1000;
   $val = reverse $val;
   $val =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
-  return reverse $_;
+  return reverse $val;
 }
 
 sub slice2sr {
