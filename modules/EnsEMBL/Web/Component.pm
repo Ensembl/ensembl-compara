@@ -158,7 +158,7 @@ sub _sort_similarity_links {
   my @links ;
 
   #default link to featureview is to retrieve an Xref
-  my $fv_type = $object->action eq 'Oligos' ? 'OligoProbe' : 'Xref';
+  my $fv_type = $object->action eq 'Oligos' ? 'OligoFeature' : 'Xref';
 
   my (%affy, %exdb);
   # @ice names
@@ -237,8 +237,8 @@ sub _sort_similarity_links {
     }
 
     #add link to featureview
-    my $link_name = ($fv_type eq 'OligoProbe') ? $display_id : $primary_id;
-    my $link_type = ($fv_type eq 'OligoProbe') ? $fv_type : $fv_type . "_$externalDB";
+    my $link_name = ($fv_type eq 'OligoFeature') ? $display_id : $primary_id;
+    my $link_type = ($fv_type eq 'OligoFeature') ? $fv_type : $fv_type . "_$externalDB";
     my $k_url = $object->_url({
 	'type'   => 'Location',
 	'action' => 'Genome',
