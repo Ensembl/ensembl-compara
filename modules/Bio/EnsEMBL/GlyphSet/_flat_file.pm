@@ -44,7 +44,8 @@ sub feature_title {
 sub features {
   my ($self) = @_;
 ## Get the features from the URL or from the database...
-  my $sub_type = $self->my_config('subtype');
+  my $sub_type = $self->my_config('sub_type');
+  $self->{_default_colour} = $self->SUPER::my_colour( $sub_type );
 ## Initialise the parser and set the region!
   my $parser = EnsEMBL::Web::Text::FeatureParser->new();
   my $features = [];
@@ -91,7 +92,7 @@ sub colour_key {
 
 sub my_colour {
   my( $self, $k, $v ) = @_;
-  my $c = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'color'};
+  my $c = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'color'} || $self->{_default_colour};
   return $v eq 'join' ?  $self->{'config'}->colourmap->mix( $c, 'white', 0.8 ) : $c;
 }
 

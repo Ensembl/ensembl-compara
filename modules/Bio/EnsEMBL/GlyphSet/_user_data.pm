@@ -45,8 +45,10 @@ sub features {
   my ($self) = @_;
 ## Get the features from the URL or from the database...
   return unless $self->my_config('data_type') eq 'DnaAlignFeature';
-
-  my $sub_type   = $self->my_config('subtype');
+  my $sub_type   = $self->my_config('sub_type');
+warn ">>> $sub_type...";
+  $self->{_default_colour} = $self->SUPER::my_colour( $sub_type );
+warn ">>> $self->{_default_colour}";
   my $logic_name = $self->my_config('logic_name');
 
 ## Initialise the parser and set the region!
@@ -76,7 +78,8 @@ sub colour_key {
 
 sub my_colour {
   my( $self, $k, $v ) = @_;
-  my $c = $self->my_config('style')->{'color'};
+
+  my $c = $self->my_config('style')->{'color'} || $self->{_default_colour};
   return $v eq 'join' ?  $self->{'config'}->colourmap->mix( $c, 'white', 0 ) : $c;
 }
 

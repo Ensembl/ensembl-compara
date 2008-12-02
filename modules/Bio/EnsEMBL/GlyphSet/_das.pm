@@ -38,6 +38,8 @@ sub features       {
   my @urls           = ();
   my @errors         = ();
 
+  my $strand_flag = $self->my_config('strand');
+
   my $c_f=0;
   my $c_g=0;
   local $Data::Dumper::Indent = 1;    
@@ -73,21 +75,25 @@ sub features       {
         }
   ## Loop through each group so we can merge this into "group-based clusters"
         my $st = $f->seq_region_strand || 0;
-        $orientations{ $st }++;
+        my $st_x = $strand_flag eq 'r' ? -1
+                 : $strand_flag eq 'f' ?  1
+                 :                       $st;
+        $orientations{ $st_x }++;
         if( @{$f->groups} ) { ## Feature has groups so use them...
           foreach( @{$f->groups} ) {
             my $g  = $_->{'group_id'};
             my $ty = $_->{'group_type'};
             my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
-            if( exists $groups{$logic_name}{$g}{$st} ) {
-              my $t = $groups{$logic_name}{$g}{$st};
+            if( exists $groups{$logic_name}{$g}{$st_x} ) {
+              my $t = $groups{$logic_name}{$g}{$st_x};
               push @{ $t->{'features'}{$style_key} }, $f;
               $t->{'start'} = $f->start if $f->start < $t->{'start'};
               $t->{'end'}   = $f->end   if $f->end   > $t->{'end'};
               $t->{'count'} ++;
             } else {
               $c_g++;
-              $groups{$logic_name}{$g}{$st} = {
+              $groups{$logic_name}{$g}{$st_x} = {
+                'strand'  => $st,
                 'count'   => 1,
                 'type'    => $ty,
                 'id'      => $g,
@@ -115,7 +121,9 @@ sub features       {
             $t->{'count'} ++;
           } else {
             $c_g++;
-            $groups{$logic_name}{$g}{$st} = {
+            $groups{$logic_name}{$g}{$st_x} = {
+              'fake'    => 1,
+              'strand'  => $st,
               'count'   => 1,
               'type'    => $ty,
               'id'      => $g,

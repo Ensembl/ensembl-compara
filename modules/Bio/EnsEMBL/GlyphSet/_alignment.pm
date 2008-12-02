@@ -124,7 +124,7 @@ sub render_normal {
         my $s =$f->start;
         my $e =$f->end;
         my $db_name = $f->can('external_db_id') ? $extdbs->{$f->external_db_id}{'db_name'} : 'OLIGO';
-        next if $strand_flag eq 'b' && $strand != ( $hstrand*$f->strand || -1 ) || $e < 1 || $s > $length ;
+        next if $strand_flag eq 'b' && $strand != ( ($hstrand||1)*$f->strand || -1 ) || $e < 1 || $s > $length ;
         push @{$id{$fgroup_name}}, [$s,$e,$f,int($s*$pix_per_bp),int($e*$pix_per_bp),$db_name];
       }
     }
@@ -246,7 +246,7 @@ sub render_ungrouped {
   my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
   my $features_drawn = 0;
   my $X             = -1e8; ## used to optimize drawing!
-  my $feature_colour = $self->my_colour( $self->my_config( 'sub_type') );
+  my %features = $self->features;
 
 ## Grab all the features;
 ## Remove those not on this display strand
@@ -255,9 +255,11 @@ sub render_ungrouped {
 
   my $y_offset = 0;
 
-  my %features  = $self->features;
   foreach my $feature_key ( $strand < 0 ? sort keys %features : reverse sort keys %features ) {
     $self->{'track_key'} = $feature_key;
+    my $colour_key     = $self->colour_key( $feature_key );
+    my $feature_colour = $self->my_colour( $self->my_config( 'sub_type' ), undef  );
+
     foreach my $f (
       sort { $a->[0] <=> $b->[0]      }
       map  { [$_->start, $_->end,$_ ] }

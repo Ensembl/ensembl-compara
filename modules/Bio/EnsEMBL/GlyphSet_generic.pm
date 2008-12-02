@@ -134,7 +134,7 @@ my $offset = $self->{'container'}->start - 1;
           $group->{'label'}||$group->{'id'},
           $group->{'start'} + $offset,
           $group->{'end'}   + $offset,
-          $ori > 0 ? 'Forward' : $ori < 0 ? 'Reverse' : '-';
+          $group->{'strand'} > 0 ? 'Forward' : $group->{'strand'} < 0 ? 'Reverse' : '-';
         $title .= '; Features: '.$group->{'count'} if $group->{'count'} > 1;
 #        $title .= $group->{'notes'};
         if( @{$group->{'links'}||[]} ) {
@@ -228,7 +228,7 @@ my $offset = $self->{'container'}->start - 1;
           $f->display_label||$f->display_id,
           $f->seq_region_start,
           $f->seq_region_end,
-          $ori > 0 ? 'Forward' : $ori < 0 ? 'Reverse' : '-';
+          $ori > $f->seq_region_strand ? 'Forward' : $f->seq_region_strand < 0 ? 'Reverse' : '-';
 #        $title .= $f->{'notes'};
         $href = $f->{'link'}->[0]{'href'} if @{$f->{'link'}||[]};
         $title .= "; Type: ".$f->type_id if $f->type_id;
@@ -322,7 +322,7 @@ my $offset = $self->{'container'}->start - 1;
           my $f = $self->gen_feature({
             'start'  => $t->[1]+1,
             'end'    => $_->[0]-1,
-            'strand' => $ori 
+            'strand' => $group->{'strand'} 
           });
           $f->{'y'}            = $group->{'y'};
           $f->{'extent_start'} = $t->[1]+1;
@@ -419,13 +419,11 @@ sub composite_histogram {
     'dotted' => 1,
     'y'      => $y
   }));
-  $self->unshift($self->Rect({
+  $self->unshift($self->Space({
     'x'      => $g->{extent_start}-1,
     'width'  => $g->{extent_end}-$g->{extent_start}+1,
     'height' => $st->{'height'},
-    'colour'  => '#f8f8f8',
     'absolutey' => 1,
-    'dotted' => 1,
     'y'      => $y
   }));
 
@@ -461,12 +459,16 @@ sub composite_extent_gradient {
   my($self,$g,$st) = @_;
   return if $g->{'start'} > $self->{'seq_len'} || $g->{'end'} < 1;
 
-  my $gs = $g->{'start'} < 1 ? 1 : $g->{'start'};
-  my $ge = $g->{'end'}   < $self->{'seq_len'} ? $g->{'end'} : $self->{'seq_len'};
-
-  my $p  = 2 * $self->{bppp};
-  $g->{'extent_start'} = $gs - $p      if !defined($g->{extent_start}) || $g->{'start'} < $g->{'extent_start'};
-  $g->{'extent_end'}   = $ge + $p      if !defined($g->{extent_end}  ) || $g->{'end'}   > $g->{'extent_start'};
+  if( $g->{'fake'} ) {
+    $g->{'extent_start'} = 1;
+    $g->{'extent_end'}   = $self->{'seq_len'};
+  } else {
+    my $gs = $g->{'start'} < 1 ? 1 : $g->{'start'};
+    my $ge = $g->{'end'}   < $self->{'seq_len'} ? $g->{'end'} : $self->{'seq_len'};
+    my $p  = 2 * $self->{bppp};
+    $g->{'extent_start'} = $gs - $p      if !defined($g->{extent_start}) || $g->{'start'} < $g->{'extent_start'};
+    $g->{'extent_end'}   = $ge + $p      if !defined($g->{extent_end}  ) || $g->{'end'}   > $g->{'extent_start'};
+  }
   $g->{'height'}       = $st->{height} if !defined($g->{height}      ) || $st->{height} > $g->{height};
   $self->{h}           = $st->{height} if !defined($self->{h}        ) || $st->{height} > $self->{h};
 }
@@ -908,8 +910,7 @@ sub glyph_arrow {
         'bordercolour' => $st->{fgcolor}
       }));
       $top -= $ah;
-    }
-    unless( $st->{southwest} eq 'no' ) {
+    } unless( $st->{southwest} eq 'no' ) {
       $self->push($self->Poly({
         'points'       => [ $mp-$w/2, $bottom+$ah, $mp, $bottom, $mp+$w/2, $bottom+$ah ],
         'absolutey'    => 1,
@@ -942,7 +943,7 @@ sub glyph_arrow {
         'colour'       => $st->{fgcolor},
         'bordercolour' => $st->{fgcolor},
         'absolutey'    => 1,
-        'points'       => [ $box_s, $y+$h/2, $box_s + $aw, $y, $box_s + $aw, $y+$h ]
+        'points'       => [ $box_s-1, $y+$h/2, $box_s-1 + $aw, $y, $box_s-1 + $aw, $y+$h ]
       }));
       $box_s += $aw;
     }
