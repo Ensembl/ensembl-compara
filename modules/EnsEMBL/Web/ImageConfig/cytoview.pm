@@ -53,7 +53,7 @@ sub init {
     [ 'vega_assembly', 'Vega assembly', 'alternative_assembly', { 'display' => 'off',  'strand' => 'f',  'colourset' => 'alternative_assembly' ,  'description' => 'Track indicating Vega assembly'  } ]);
   }
   $self->load_tracks();
-  $self->load_configured_das;
+  $self->load_configured_das( 'strand' => 'r' );
 
   $self->modify_configs(
     ['marker'],
