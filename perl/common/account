@@ -59,7 +59,7 @@ $controller->add_connections({qw(
   ConfigLanding      EnsEMBL::Web::Controller::Command::Account::ConfigLanding
 
   Annotation         EnsEMBL::Web::Controller::Command::Account::Annotation 
-  News               EnsEMBL::Web::Controller::Command::Account::FilterNews 
+  NewsFilter         EnsEMBL::Web::Controller::Command::Account::FilterNews 
 )});
 
 ## Group records & group management
