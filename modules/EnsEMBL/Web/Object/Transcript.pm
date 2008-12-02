@@ -31,6 +31,7 @@ sub availability {
     $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
     $hash->{'either'}     = 1;
     $hash->{'transcript'} = 1;
+    $hash->{'domain'}     = 1;
     $hash->{'translation'}= $self->Obj->translation ? 1 : 0;
   }
   return $hash;
@@ -43,7 +44,7 @@ sub counts {
   my $key = '::COUNTS::TRANSCRIPT::'.
             $ENV{ENSEMBL_SPECIES}                 .'::'.
             $self->core_objects->{parameters}{db} .'::'.
-            $self->core_objects->{parameters}{g}  .'::';
+            $self->core_objects->{parameters}{t}  .'::';
 
   my $counts;
 
@@ -1739,13 +1740,13 @@ sub get_int_seq {
 }
 
 sub save_seq {
-    my $self = shift;
-    my $content = shift ;
-    my $seq_file = $self->species_defs->ENSEMBL_TMP_DIR.'/'."SEQ_".time().int(rand()*100000000).$$;
-    open (TMP,">$seq_file") or die("Cannot create working file.$!");
-    print TMP $content;
-    close TMP;
-    return ($seq_file)
+  my $self = shift;
+  my $content = shift ;
+  my $seq_file = $self->species_defs->ENSEMBL_TMP_TMP.'/'."SEQ_".time().int(rand()*100000000).$$;
+  open (TMP,">$seq_file") or die("Cannot create working file.$!");
+  print TMP $content;
+  close TMP;
+  return ($seq_file)
 }
 
 
@@ -1792,11 +1793,11 @@ sub get_alignment{
     my $command;
     if( $seq_type eq 'DNA' ){
 	$command = sprintf( $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file, '-aformat3 pairln' );
-     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->specie_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
+     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
 	`$command`;
 	unless (open( OUT, "<$out_file" )) {
 	    $command = sprintf( $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file );
-     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->specie_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
+     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
 	    `$command`;
 	}
 	unless (open( OUT, "<$out_file" )) {
@@ -1806,7 +1807,7 @@ sub get_alignment{
     
     elsif( $seq_type eq 'PEP' ){
 	$command = sprintf( $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $label_width, $output_width, $out_file );
-     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->specie_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
+     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
 	`$command`;
 	unless (open( OUT, "<$out_file" )) {
 	    $self->problem('fatal', "Cannot open alignment file.", $!);
