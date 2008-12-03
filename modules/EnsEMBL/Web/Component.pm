@@ -6,6 +6,7 @@ use EnsEMBL::Web::File::Text;
 use Exporter;
 use CGI qw(escape);
 use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Component::Export;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 use Text::Wrap qw(wrap);
 
@@ -252,6 +253,7 @@ sub _sort_similarity_links {
   }
 }
 
+sub _export { return EnsEMBL::Web::Component::Export::export(@_); }
 
 sub remove_redundant_xrefs {
   my ($self,@links) = @_;
