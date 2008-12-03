@@ -11,6 +11,10 @@ use constant DEFAULT_LANGUAGE        => 'en-gb';
 
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Tools::PluginLocator;
+
+use EnsEMBL::Web::Document::Renderer::Excel;
+use EnsEMBL::Web::Document::Renderer::GzFile;
+
 our @ISA = qw(EnsEMBL::Web::Root);
 
 our %DOCUMENT_TYPES = (
@@ -472,7 +476,8 @@ sub render_Text {
 
 sub render_TextGz {
   my $self = shift;
-  my $renderer =  new EnsEMBL::Web::Document::Renderer::GzFile( );
+  
+  my $renderer = new EnsEMBL::Web::Document::Renderer::GzFile;
   foreach my $R ( @{$self->{'body_order'}} ) {
     my $attr = $R->[0];
     $self->$attr->{_renderer} = $renderer;
