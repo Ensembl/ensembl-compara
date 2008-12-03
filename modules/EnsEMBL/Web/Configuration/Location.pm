@@ -28,6 +28,7 @@ sub local_tools    { return $_[0]->_local_tools;    }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
 sub configurator   { return $_[0]->_configurator;   }
+sub export_configurator { return $_[0]->_export_configurator; }
 
 sub populate_tree {
   my $self = shift;
@@ -119,26 +120,11 @@ sub populate_tree {
      { 'availability' => 'slice' }
   );
 
-  my $export_menu = $self->create_node( 'Export', "Export location data",
-     [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/location" ],
-     { 'availability' => 'slice' }
+  $self->create_node(
+    'Export', "Export location data",
+    [ qw( sequence EnsEMBL::Web::Component::Location/export ) ],
+    { 'availability' => 'slice', 'no_menu_entry' => 1 }
   );
-
-  my $format = { 
-    fasta => 'FASTA',
-    csv => 'CSV (Comma separated values)',
-    gff => 'GFF Format',
-    tab => 'Tab separated values',
-    embl => 'EMBL',
-    genbank => 'GenBank'
-  };
-
-  foreach (keys %$format) {
-    $export_menu->append($self->create_subnode( "Export/$_", "Export location data as $format->{$_}",
-      [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/location_$_" ], # TODO: UNHACK!
-      { 'availability' => 'slice', 'no_menu_entry' => 1 }
-    ));
-  }
 }
 
 sub ajax_zmenu      {

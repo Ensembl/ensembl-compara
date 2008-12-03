@@ -32,6 +32,7 @@ sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
+sub export_configurator { return $_[0]->_export_configurator; }
 
 sub ajax_zmenu      {
     my $self = shift;
@@ -492,19 +493,11 @@ sub populate_tree {
       { 'availability' => 'history', 'concise' => 'ID History' }
   ));
   
-  my $export_menu = $self->create_node( 'Export', "Export transcript data",
-     [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/transcript" ],
-     { 'availability' => 'transcript' }
+  $self->create_node(
+    'Export', "Export transcript data",
+    [ qw( sequence EnsEMBL::Web::Component::Transcript/export ) ],
+    { 'availability' => 'transcript', 'no_menu_entry' => 1 }
   );
-  
-  my $format = { fasta => 'FASTA' };
-  
-  foreach (keys %$format) {
-    $export_menu->append($self->create_subnode( "Export/$_", "Export transcript data as $format->{$_}",
-      [ "sequence", "EnsEMBL::Web::Component::Gene::GeneExport/transcript_$_" ], # TODO: UNHACK!
-      { 'availability' => 'transcript', 'no_menu_entry' => 1 }
-    ));
-  }
 }
 
 sub user_populate_tree {

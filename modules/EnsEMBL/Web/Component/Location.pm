@@ -520,9 +520,9 @@ sub multi_species_list {
 	if ( %self_config ) {
 		my @details = $object->species_and_seq_region_list;
 		my $C = 1;
-		my ($type,$srname) = split / / , $object->seq_region_type_and_name;
+		my ($type,$srname) = split (/ / , $object->seq_region_type_and_name);
 		foreach my $assoc (@details) {
-			my ($sp,$sr) = split /:/, $assoc;
+			my ($sp,$sr) = split (/:/, $assoc);
 			$species_hash{ 's'.$C } = $object->species_defs->ENSEMBL_SHORTEST_ALIAS->{$sp};
 			$species_hash{ 'sr'.$C++ } = $sr;
 		}
@@ -1044,5 +1044,8 @@ sub alignsliceviewtop {
     return 1;
  }
 
+sub content_export {  
+  return $_[0]->_export;
+}
 
-1;    
+1;

@@ -822,4 +822,10 @@ sub markup_variation {
   $config->{'v_space'} = "\n";
 }
 
+sub content_export {
+  my $self = shift;
+  
+  return $self->_export([ $self->object ]);
+}
+
 1;

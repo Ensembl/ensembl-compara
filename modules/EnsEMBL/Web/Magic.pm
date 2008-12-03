@@ -15,7 +15,7 @@ use EnsEMBL::Web::RegObj;
 use CGI;
 
 use base qw(Exporter);
-our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff Variation Server configurator);
+our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff Variation Server configurator spell);
 
 our $MEMD = EnsEMBL::Web::Cache->new(
   enable_compress    => 1,
@@ -475,6 +475,60 @@ sub stuff {
 
 sub modal_stuff {
   return stuff( @_, 1 );
+}
+
+# Exports data. Function name by order of js5
+sub spell {
+  my $objecttype = shift || $ENV{'ENSEMBL_TYPE'};
+  my $session_id = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+
+  warn "MY SESSION $session_id" if 
+    $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+    $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MAGIC_MESSAGES;
+    
+  my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+
+  my $input = new CGI;
+  $session->set_input($input);
+  
+  my $ajax_flag = $r && (
+    $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
+    $input->param('x_requested_with') eq 'XMLHttpRequest'
+  );
+  
+  if ($input->param('save')) {
+    my $conf = $session->getViewConfig($ENV{'ENSEMBL_TYPE'}, 'Export');
+    $conf->update_from_input($input);
+    $session->store;
+  }
+
+  my $webpage = EnsEMBL::Web::Document::WebPage->new(
+    'objecttype' => $ENV{'ENSEMBL_TYPE'},
+    'doctype'    => 'Export',
+    'scriptname' => 'export',
+    'r'          => $r,
+    'ajax_flag'  => $ajax_flag,
+    'cgi'        => $input,
+    'renderer'   => 'String',
+    'cache'      => $MEMD,
+  );
+  
+  $webpage->page->{'_modal_dialog_'} = $ajax_flag;
+  
+  $webpage->configure($webpage->dataObjects->[0], qw(export_configurator));
+  
+  # Now we need to setup the content of the page -- need to set-up 
+  # 1) Global context entries
+  # 2) Local context entries [ hacked versions with # links / and flags ]
+  # 3) Content of panel (expansion of tree)
+  $webpage->render;
+  
+  my $content = $webpage->page->renderer->content;
+  
+  print $content;
+  
+  return "Generated export panel ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'})";
 }
 
 1;

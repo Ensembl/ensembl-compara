@@ -172,4 +172,11 @@ sub markup_conservation {
   }
 }
 
+sub content_export {
+  my $self = shift;
+  my $object = $self->object;
+  
+  return $self->_export($object->get_all_transcripts, $object->stable_id);
+}
+
 1;

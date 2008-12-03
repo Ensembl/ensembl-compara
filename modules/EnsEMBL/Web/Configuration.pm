@@ -281,6 +281,7 @@ sub _user_context {
     );
     $flag = 0;
   }
+  
   $active = $type eq 'UserData';
   my $module = $vc->can_upload ? 'Upload' : 'ManageUpload';
   $self->{'page'}->global_context->add_entry(
@@ -358,6 +359,141 @@ sub _reset_config_panel {
   }
   $panel->set_content( $c );
   $self->add_panel( $panel );
+}
+
+sub _export_configurator {
+  my ($self, $options) = @_;
+  
+  my $object = $self->{'object'};
+  my $type = $object->type;
+  
+  $self->tree->_flush_tree;
+  
+  my $vc = $object->get_viewconfig($type, 'Export');
+  
+  my $config = {
+    'fasta' => {
+      'label' => 'FASTA sequence',
+      'formats' => [ [ 'fasta', 'FASTA sequence' ] ],
+      'params' => [
+        [ 'genomic', 'Genomic' ],
+        [ 'cdna', 'cDNA' ],
+        [ 'coding', 'Coding sequence', $options->{'translation'} ],
+        [ 'peptide', 'Peptide sequence', $options->{'translation'} ],
+        [ 'utr5', "5' UTR", $options->{'five'} ],
+        [ 'utr3', "3' UTR", $options->{'three'} ]
+      ]
+    },
+    'features' => {
+      'label' => 'Feature File',
+      'formats' => [
+        [ 'csv', 'CSV (Comma separated values)' ],
+        [ 'gff', 'GFF Format' ],
+        [ 'tab', 'Tab separated values' ]
+      ],
+      'params' => [
+        [ 'similarity', 'Similarity features' ],
+        [ 'repeat', 'Repeat features' ],
+        [ 'genscan', 'Prediction features (genscan)' ],
+        [ 'variation', 'Variation features' ],
+        [ 'gene', 'Gene Information' ]
+      ]
+    },
+    'flat' => {
+      'label' => 'FASTA sequence',
+      'formats' => [
+        [ 'embl', 'EMBL' ],
+        [ 'genbank', 'GenBank' ]
+      ],
+      'params' => [
+        [ 'similarity', 'Similarity features' ],
+        [ 'repeat', 'Repeat features' ],
+        [ 'genscan', 'Prediction features (genscan)' ],
+        [ 'contig', 'Contig Information' ],
+        [ 'variation', 'Variation features' ],
+        [ 'marker', 'Marker features' ],
+        [ 'gene', 'Gene Information' ],
+        [ 'vegagene', 'Vega Gene Information' ],
+        [ 'estgene', 'EST Gene Information' ]
+      ]
+    }
+  };
+  
+  my $content;
+  
+  # Second page
+  if ($object->param('save')) {
+    my $output = $object->param('output');
+    
+    my $href = $object->_url({ 
+      'time' => time, 
+      'action' => 'Export', 
+      'strand' => $object->param('strand'), 
+      'output' => $output 
+    });
+    
+    my @formats = (
+      [ 'HTML', 'HTML', ' rel="external"' ],
+      [ 'Text', 'Text', ' rel="external"' ],
+      [ 'Compressed text (.gz)', 'TextGz' ]
+    );
+    
+    my $map = { 
+      'csv' => 'features',
+      'gff' => 'features',
+      'tab' => 'features',
+      'embl' => 'flat',
+      'genbank' => 'flat'
+    };
+    
+    my $key = $map->{$output} || $output;
+    
+    foreach (@{$config->{$key}->{'params'}}) {      
+      $href .= ";st=$_->[0]" if $object->param("${output}_$_->[0]") eq 'yes';
+    }
+    
+     # How confusing!
+    my $form_action = $object->_url({ 
+      'action' => $type, 
+      'type' => 'Export', 
+      'function' => $object->action 
+    });
+    
+    $content = qq{
+      <h2>Export Configuration - Output Format</h2>
+      <form id="export_output_configuration" class="std check" method="get" action="$form_action">
+        <fieldset>
+          <ul>};
+        
+    for (@formats) {
+      $content .= qq{
+            <li><a class="modal_close" href="$href;_format=$_->[1]"$_->[2]>$_->[0]</a></li>};
+    }
+    
+    $content .= qq{
+        </ul>
+        <input type="submit" value="&lt; Back" class="submit" />
+      </form>};
+  } else { # First page
+    $vc->{'_temp'} = { config => $config, options => $options }; # Hack to get it through to ViewConfig
+    $vc->form($object, 1);
+    delete $vc->{'_temp'};
+    
+    $content = qq{
+    <h2>Export Configuration - Feature List</h2>};
+    
+    $content .= $vc->get_form->render;
+  }
+  
+  my $panel = $self->new_panel(
+    'Configurator',
+    'code' => 'configurator',
+    'object'=> $object
+  );
+  
+  $panel->set_content($content);
+
+  $self->add_panel($panel);
 }
 
 sub _configurator {
@@ -601,11 +737,15 @@ sub _local_tools {
     );
   }
 
-  if( 0 ) {
+  # TODO: Correct if condition - currently always available of Location, Gene and Transcript
+  if (1) {
+    my $action = $obj->type.'/'.$obj->action;
+       $action .= '/'.$obj->function if $obj->function;
+       
     $self->{'page'}->local_tools->add_entry(
       'caption' => 'Export data',
       'class'   => 'modal_link',
-      'url'     => '/sorry.html'
+      'url'     => $obj->_url({ 'time' => time, 'type' => 'Export', 'action' => $action, '_referer' => $referer })
     );
   }
 }
