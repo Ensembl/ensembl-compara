@@ -87,12 +87,22 @@ function __init_config_menu() {
 
   closeEls = null;
 
+
   if ($('export_configuration')) {
     $$('#export_configuration input.submit').each(function (el) {
-      Element.observe(el, 'click', function () {
+      el.observe('click', function () {
         $$('#export_configuration input.input-checkbox').each(function (checkbox) {
           if (checkbox.checked === false) {
-            $('export_configuration').action += ';' + checkbox.name + '=no;'
+            // overwrite the checkbox with a hidden input with the value of "no"
+            // so that we know which boxes have been deselected
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = checkbox.name;
+            input.value = 'no';
+            
+            $('export_configuration').appendChild(input);
+            
+            input = null;
           }
         });
       });
