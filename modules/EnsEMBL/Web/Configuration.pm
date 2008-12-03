@@ -453,19 +453,21 @@ sub _export_configurator {
     }
     
      # How confusing!
-    my $form_action = $object->_url({ 
-      'action' => $type, 
-      'type' => 'Export', 
-      'function' => $object->action 
-    });
+    my $form_action = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }, 1);
+    my $hidden_params;
+    
+    foreach (keys %{$form_action->[1]||{}}) {
+      $hidden_params .= qq{
+        <input type="hidden" name="$_" value="$form_action->[1]->{$_}" />};
+    }
     
     $content = qq{
       <h2>Export Configuration - Output Format</h2>
-      <form id="export_output_configuration" class="std check" method="get" action="$form_action">
+      <form id="export_output_configuration" class="std check" method="get" action="$form_action->[0]">
         <fieldset>
           <ul>};
         
-    for (@formats) {
+    foreach (@formats) {
       $content .= qq{
             <li><a class="modal_close" href="$href;_format=$_->[1]"$_->[2]>$_->[0]</a></li>};
     }
@@ -473,6 +475,7 @@ sub _export_configurator {
     $content .= qq{
         </ul>
         <input type="submit" value="&lt; Back" class="submit" />
+        $hidden_params
       </form>};
   } else { # First page
     $vc->{'_temp'} = { config => $config, options => $options }; # Hack to get it through to ViewConfig

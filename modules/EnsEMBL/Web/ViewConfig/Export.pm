@@ -51,9 +51,12 @@ sub form {
   
   return unless $config; # Gets called twice on an Export page itself - first time is from the wrong place
   
+   # How confusing!
+  my $form_action = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }, 1);
+  
+  $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
   $view_config->get_form->{'_attributes'}{'id'} = "export_configuration";
   $view_config->get_form->{'_attributes'}{'method'} = "get";
-  $view_config->get_form->{'_attributes'}{'action'} = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }); # How confusing!
   
   $view_config->add_fieldset;
     
@@ -93,10 +96,13 @@ sub form {
   $view_config->add_form_element({
     'type' => 'Submit',
     'class' => 'submit',
+    'name' => 'next_top',
     'value' => 'Next >'
   });
   
   foreach my $c (sort keys %$config) {
+    next unless scalar @{$config->{$c}->{'params'}};
+    
     foreach my $f (@{$config->{$c}->{'formats'}}) {      
       $view_config->add_fieldset("Options for $f->[1]");
       
@@ -132,6 +138,7 @@ sub form {
   $view_config->add_form_element({
     'type' => 'Submit',
     'class' => 'submit',
+    'name' => 'next_bottom',
     'value' => 'Next >'
   });
   
@@ -140,6 +147,14 @@ sub form {
     'name' => 'save',
     'value' => 'yes'
   });
+  
+  foreach (keys %{$form_action->[1]||{}}) {
+    $view_config->add_form_element({
+      'type' => 'Hidden',
+      'name' => $_,
+      'value' => $form_action->[1]->{$_}
+    });
+  }
 }
 
 1;
