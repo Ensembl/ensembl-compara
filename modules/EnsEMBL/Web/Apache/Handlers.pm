@@ -35,6 +35,7 @@ our %LOOKUP_HASH;
 our %OBJECT_TO_SCRIPT = qw(
   Config      config
   Component   component
+  Export      export
   Zmenu       zmenu
 
   Gene        action
@@ -214,12 +215,12 @@ sub transHandler_das {
     return undef;
   }
 
-  my @dsn_fields  = split /\./, $DSN;
+  my @dsn_fields  = split (/\./, $DSN);
   my $das_species = shift @dsn_fields;
   my $type        = pop @dsn_fields;
   my $assembly    = join ('.', @dsn_fields);
   my $subtype;
-  ( $type, $subtype ) = split /-/,$type,2;
+  ( $type, $subtype ) = split (/-/,$type,2);
   $command = $path_segments->[1];
   my $FN = $SiteDefs::ENSEMBL_SERVERROOT."/perl/das/$command";
   $das_species = $SPECIES_MAP{lc($das_species)} || '';
@@ -337,14 +338,14 @@ sub transHandler_species {
 
   $r->custom_response($_, "/$species/Info/Error/$_")
     for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
-
+    
   if( $flag && $real_script_name ) {
     $r->subprocess_env->{'ENSEMBL_TYPE'}     = $script;
     if( $real_script_name eq 'action' ) {
       $r->subprocess_env->{'ENSEMBL_ACTION'}   = shift @$path_segments;
       $r->subprocess_env->{'ENSEMBL_FUNCTION'} = shift @$path_segments;
 #      $path_segments                         = [];
-    } elsif( $real_script_name eq 'zmenu' || $real_script_name eq 'config' ) {
+    } elsif( $real_script_name eq 'zmenu' || $real_script_name eq 'config' || $real_script_name eq 'export' ) {
       $type   = shift @$path_segments;
       $action = shift @$path_segments;
       $function = shift @$path_segments;
