@@ -38,8 +38,7 @@ sub process {
   $new_param->{'result'} = \@results;
   $new_param->{'_referer'} = $cgi->param('_referer');
 
-  my $url = $self->url('/Help/Results', $new_param);
-  $self->ajax_redirect($self->ajax_url($url));
+  $self->ajax_redirect($self->ajax_url('/Help/Results', %$new_param));
 }
 
 }
