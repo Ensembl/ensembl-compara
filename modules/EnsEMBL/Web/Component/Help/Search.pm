@@ -55,7 +55,6 @@ sub content {
 <p>Ensembl Help now uses MySQL full text searching. This performs a case-insensitive natural language search
 on the content of the help database. This gives better results than a simple string search, with some caveats:</p>
 <ul>
-<li>Words shorter than 4 characters in length (eg SNP) are ignored.</li>
 <li>Words that occur in more than 50% of the records are ignored.</li>
 <li>Wildcards such as '%' (zero or one occurences of any character) and '_' (exactly one character) are no longer available.</li>
 </ul>
