@@ -56,6 +56,18 @@ sub select_to_delete {
   return undef;
 }
 
+sub confirm_delete {
+  ### Creates a panel asking the user to confirm deletion
+  my ($self, $object, $interface) = @_;
+  if (my $panel = $self->interface_panel($interface, 'confirm_delete')) {
+    $panel->add_components(qw(select   EnsEMBL::Web::Component::Interface::ConfirmDelete));
+    $self->{page}->content->add_panel($panel);
+    my $type = $object->__objecttype;
+    $self->{page}->set_title("Ensembl $type Database: Confirm Deletion");
+  }
+  return undef;
+}
+
 sub preview {
   ### Creates a panel showing a non-editable record
   my ($self, $object, $interface) = @_;
