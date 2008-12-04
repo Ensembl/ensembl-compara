@@ -13,6 +13,7 @@ use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Component::Export qw(pip_file);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -416,6 +417,14 @@ sub _export_configurator {
         [ 'vegagene', 'Vega Gene Information' ],
         [ 'estgene', 'EST Gene Information' ]
       ]
+    },
+    'pip' => {
+      'label' => 'PIP (%age identity plot)',
+      'formats' => [
+        [ 'pipmaker', 'Pipmaker / zPicture format' ],
+        [ 'vista', 'Vista Format' ]
+      ],
+      'params' => []
     }
   };
   
@@ -432,21 +441,48 @@ sub _export_configurator {
       'output' => $output 
     });
     
-    my @formats = (
-      [ 'HTML', 'HTML', ' rel="external"' ],
-      [ 'Text', 'Text', ' rel="external"' ],
-      [ 'Compressed text (.gz)', 'TextGz' ]
-    );
-    
     my $map = { 
       'csv' => 'features',
       'gff' => 'features',
       'tab' => 'features',
       'embl' => 'flat',
-      'genbank' => 'flat'
+      'genbank' => 'flat',
+      'pipmaker' => 'pip',
+      'vista' => 'pip'
     };
     
     my $key = $map->{$output} || $output;
+    
+    my @formats;
+    
+    if ($key eq 'pip') {
+      my $file_name = $object->temp_file_name;
+      my ($path, $file) = $object->make_directory($object->species_defs->ENSEMBL_TMP_DIR . "/$file_name");
+      
+      my $seq_file  = $object->species_defs->ENSEMBL_TMP_DIR . "/$file_name.fa";
+      my $anno_file = $object->species_defs->ENSEMBL_TMP_DIR . "/$file_name.txt";
+      
+      my $seq_url   = $object->species_defs->ENSEMBL_TMP_URL . "/$file_name.fa";
+      my $anno_url  = $object->species_defs->ENSEMBL_TMP_URL . "/$file_name.txt";
+      my $arc_url   = $object->species_defs->ENSEMBL_TMP_URL . "/$file_name.tar.gz";
+      
+      pip_file($seq_file, $object, 'seq');
+      pip_file($anno_file, $object, $output);
+      
+      system("cd $path; tar cf - $file.fa $file.txt | gzip -9 > $file.tar.gz");
+      
+      @formats = (
+        [ 'Sequence data', '', ' rel="external"', ' [FASTA format]', $seq_url ],
+        [ 'Annotation data', '', ' rel="external"', ' [pipmaker format]', $anno_url ],
+        [ 'Combined file', '', '', '', $arc_url ]
+      );
+    } else {
+      @formats = (
+        [ 'HTML', 'HTML', ' rel="external"' ],
+        [ 'Text', 'Text', ' rel="external"' ],
+        [ 'Compressed text (.gz)', 'TextGz' ]
+      );
+    }
     
     foreach (@{$config->{$key}->{'params'}}) {      
       $href .= ";st=$_->[0]" if $object->param("${output}_$_->[0]") eq 'yes';
@@ -468,8 +504,11 @@ sub _export_configurator {
           <ul>};
         
     foreach (@formats) {
+      my $format = ";_format=$_->[1]" if $_->[1];
+      $href = $_->[4] if $_->[4];
+      
       $content .= qq{
-            <li><a class="modal_close" href="$href;_format=$_->[1]"$_->[2]>$_->[0]</a></li>};
+            <li><a class="modal_close" href="$href$format"$_->[2]>$_->[0]</a>$_->[3]</li>};
     }
     
     $content .= qq{

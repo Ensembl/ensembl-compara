@@ -3,7 +3,7 @@ package EnsEMBL::Web::Component::Export;
 use strict;
 
 use base qw(Exporter);
-our @EXPORT = our @EXPORT_OK = qw(export);
+our @EXPORT = our @EXPORT_OK = qw(export pip_file);
 
 use EnsEMBL::Web::SeqDumper;
 
@@ -26,12 +26,12 @@ sub export {
   map { $params->{$_} = 1 } $object->param('st');
   
   my $outputs = {
-    'fasta' =>   sub { return fasta($object, $slice, $params, @inputs); },
-    'csv' =>     sub { return features($object, $slice, $params, 'csv'); },
-    'gff' =>     sub { return features($object, $slice, $params, 'gff'); },
-    'tab' =>     sub { return features($object, $slice, $params, 'tab'); },
-    'embl' =>    sub { return flat($object, $slice, $params, 'embl'); },
-    'genbank' => sub { return flat($object, $slice, $params, 'genbank'); }
+    'fasta'    => sub { return fasta($object, $slice, $params, @inputs); },
+    'csv'      => sub { return features($object, $slice, $params, 'csv'); },
+    'gff'      => sub { return features($object, $slice, $params, 'gff'); },
+    'tab'      => sub { return features($object, $slice, $params, 'tab'); },
+    'embl'     => sub { return flat($object, $slice, $params, 'embl'); },
+    'genbank'  => sub { return flat($object, $slice, $params, 'genbank'); },
   };
   
   my $html = $outputs->{$o}() if $outputs->{$o};
@@ -215,6 +215,125 @@ sub flat {
   }
   
   return $seq_dumper->dump($slice, $format);
+}
+
+
+sub pip_file {
+  my ($file_name, $object, $o) = @_;
+  
+  my $slice = $object->can('slice') ? $object->slice : $object->get_Slice;
+  
+  my $outputs = {
+    'seq'      => sub { pip_seq_file($file_name, $object, $slice);  },
+    'pipmaker' => sub { pip_anno_file($file_name, $object, $slice, $o); },
+    'vista'    => sub { pip_anno_file($file_name, $object, $slice, $o); }
+  };
+  
+  if (!$outputs->{$o}) {
+    warn "Invalid file format $o";
+    return;
+  }
+  
+  $outputs->{$o}();
+}
+
+sub pip_seq_file {
+  my ($file_name, $object, $slice) = @_;
+  
+  (my $seq = $slice->seq) =~ s/(.{60})/$1\n/g;
+  
+  open  O, ">$file_name";
+  print O ">@{[$slice->name]}\n$seq";
+  close O;
+}
+
+sub pip_anno_file {
+  my ($file_name, $object, $slice, $o) = @_;
+  
+  my $slice_length = $slice->length;
+  
+  my $outputs = {
+    'pipmaker' => sub { return pip_anno_file_pipmaker(@_); },
+    'vista'    => sub { return pip_anno_file_vista(@_); }
+  };
+  
+  open O, ">$file_name";
+  
+  foreach my $gene (@{$slice->get_all_Genes(undef, undef, 1) || []}) {
+    # only include genes that don't overlap slice boundaries
+    next if ($gene->start < 1 or $gene->end > $slice_length);
+    
+    my $gene_header = join(" ", ($gene->strand == 1 ? ">" : "<"), $gene->start, $gene->end, $gene->external_name || $gene->stable_id);
+    $gene_header .= "\n";
+    
+    foreach my $transcript (@{$gene->get_all_Transcripts}) {
+      # get UTR/exon lines
+      my @exons = @{$transcript->get_all_Exons};
+      @exons = reverse @exons if ($gene->strand == -1);
+      
+      my $out = $outputs->{$o}($transcript, \@exons);
+      
+      # write output to file if there are exons in the exported region
+      print O $gene_header, $out if $out;
+    }
+  }
+  
+  close O;
+}
+
+
+sub pip_anno_file_vista {
+  my ($transcript, $exons) = @_;
+  
+  my $coding_start = $transcript->coding_region_start;
+  my $coding_end = $transcript->coding_region_end;
+  my $out;
+  
+  foreach my $exon (@$exons) {
+    if (!$coding_start) {                                    # no coding region at all
+      $out .= join(" ", $exon->start, $exon->end, "UTR\n");
+    } elsif ($exon->start < $coding_start) {                 # we begin with an UTR
+      if ($coding_start < $exon->end) {                      # coding region begins in this exon
+        $out .= join(" ", $exon->start, $coding_start - 1, "UTR\n");
+        $out .= join(" ", $coding_start, $exon->end, "exon\n");
+      } else {                                               # UTR until end of exon
+        $out .= join(" ", $exon->start, $exon->end, "UTR\n");
+      }
+    } elsif ($coding_end < $exon->end) {                     # we begin with an exon
+      if ($exon->start < $coding_end) {                      # coding region ends in this exon
+        $out .= join(" ", $exon->start, $coding_end, "exon\n");
+        $out .= join(" ", $coding_end + 1, $exon->end, "UTR\n");
+      } else {                                               # UTR (coding region has ended in previous exon)
+        $out .= join(" ", $exon->start, $exon->end, "UTR\n");
+      }
+    } else {                                                 # coding exon
+      $out .= join(" ", $exon->start, $exon->end, "exon\n");
+    }
+  }
+  return $out;
+}
+
+sub pip_anno_file_pipmaker {
+  my ($transcript, $exons) = @_;
+  
+  my $coding_start = $transcript->coding_region_start;
+  my $coding_end = $transcript->coding_region_end;
+  my $out;
+  
+  # do nothing for non-coding transcripts
+  return unless ($coding_start);
+
+  # add UTR line
+  if ($transcript->start < $coding_start or $transcript->end > $coding_end) {
+    $out .= join(" ", "+", $coding_start, $coding_end, "\n");
+  }
+  
+  # add exon lines
+  foreach my $exon (@$exons) {
+    $out .= join(" ", $exon->start, $exon->end, "\n");
+  }
+  
+  return $out;
 }
 
 1;
