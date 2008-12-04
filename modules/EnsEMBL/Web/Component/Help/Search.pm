@@ -21,7 +21,9 @@ sub content {
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $html = qq(<h3>Search $sitename Help</h3>);
 
-  my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/DoSearch", 'get' );
+  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $dir = '' if $dir !~ /_/;
+  my $form = EnsEMBL::Web::Form->new( 'help_search', "$dir/Help/DoSearch", 'get' );
 
   $form->add_element(
     'type'    => 'String',
@@ -40,6 +42,12 @@ sub content {
     'name'    => '_referer',
     'value'   => $object->param('_referer'),
   );
+  $form->add_element(
+    'type'    => 'Hidden',
+    'name'    => 'x_requested_with',
+    'value'   => $object->param('x_requested_with'),
+  );
+
 
   $form->add_element(
     'type'    => 'Submit',
