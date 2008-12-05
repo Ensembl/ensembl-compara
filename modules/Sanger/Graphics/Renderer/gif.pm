@@ -17,8 +17,8 @@ use GD;
 
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
-  $self->{'im_width'}  = $im_width;
-  $self->{'im_height'} = $im_height;
+  $self->{'im_width'}     = $im_width;
+  $self->{'im_height'}    = $im_height;
 
   if( $self->{'config'}->can('species_defs') ) {
     my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE || {};
@@ -26,7 +26,10 @@ sub init_canvas {
   }
   $self->{'ttf_path'}   ||= '/usr/local/share/fonts/ttfonts/';
 
-  my $canvas           = GD::Image->new($im_width, $im_height);
+  my $canvas           = GD::Image->new(
+	  $im_width  * $self->{'sf'},
+		$im_height * $self->{'sf'}
+  );
 
   $canvas->colorAllocate($config->colourmap->rgb_by_name($config->bgcolor()));
   $self->canvas($canvas);
@@ -44,10 +47,12 @@ sub add_canvas_frame {
 
   # for contigview bottom box we need an extra thick border...
   if ($config->script() eq 'contigviewbottom'){		
-    $self->{'canvas'}->rectangle(1, 1, $im_width-2, $im_height-2, $framecolour);		
+    $self->{'canvas'}->rectangle(1, 1, $im_width * $self->{sf} -2, $im_height * $self->{sf}-2, $framecolour);		
   }
 	
-  $self->{'canvas'}->rectangle(0, 0, $im_width-1, $im_height-1, $framecolour);
+  $self->{'canvas'}->rectangle(
+	  0, 0, $im_width * $self->{sf} -1, $im_height * $self->{sf} -1, $framecolour
+  );
 }
 
 sub canvas {
@@ -95,7 +100,7 @@ sub tile {
       foreach my $poly_def ( @{$pattern_def->{'polys'}||[]} ) {
         my $poly = new GD::Polygon;
         foreach( @$poly_def ) {
-          $poly->addPt( @$_ );
+          $poly->addPt( map { $_ } @$_ );
         } 
         $tile->filledPolygon($poly,$fg);
       }
@@ -123,10 +128,10 @@ sub render_Rect {
   my $bordercolour  = $self->colour($gbordercolour);
   my $colour        = $self->colour($gcolour);
 
-  my $x1 = $glyph->{'pixelx'};
-  my $x2 = $glyph->{'pixelx'} + $glyph->{'pixelwidth'};
-  my $y1 = $glyph->{'pixely'};
-  my $y2 = $glyph->{'pixely'} + $glyph->{'pixelheight'};
+  my $x1 = $self->{sf} *   $glyph->{'pixelx'};
+  my $x2 = $self->{sf} * ( $glyph->{'pixelx'} + $glyph->{'pixelwidth'} );
+  my $y1 = $self->{sf} *   $glyph->{'pixely'};
+  my $y2 = $self->{sf} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
 
   $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
   if($glyph->{'pattern'}) {
@@ -145,17 +150,17 @@ sub render_Text {
   my $colour = $self->colour($glyph->{'colour'});
 
   ########## Stock GD fonts
-  my $left      = $glyph->{'pixelx'}    || 0;
-  my $textwidth = $glyph->{'textwidth'} || 0;
-  my $top       = $glyph->{'pixely'}    || 0;
-  my $textheight = $glyph->{'pixelheight'} || 0;
-  my $halign    = $glyph->{'halign'}    || '';
+  my $left       = $self->{sf} * $glyph->{'pixelx'}    || 0;
+  my $textwidth  = $self->{sf} * $glyph->{'textwidth'} || 0;
+  my $top        = $self->{sf} * $glyph->{'pixely'}    || 0;
+  my $textheight = $self->{sf} * $glyph->{'pixelheight'} || 0;
+  my $halign     = $glyph->{'halign'}    || '';
 
   if($halign eq 'right' ) {
-    $left += $glyph->{'pixelwidth'} - $textwidth;
+    $left += $glyph->{'pixelwidth'} * $self->{sf} - $textwidth;
 
   } elsif($halign ne 'left' ) {
-    $left += ($glyph->{'pixelwidth'} - $textwidth)/2;
+    $left += ($glyph->{'pixelwidth'} * $self->{sf} - $textwidth)/2;
   }
 
   if($font eq 'Tiny') {
@@ -176,7 +181,7 @@ sub render_Text {
   } elsif($font) {
     #########
     # If we didn't recognise it already, assume it's a TrueType font
-    $self->{'canvas'}->stringTTF( $colour, $self->{'ttf_path'}.$font.'.ttf', $glyph->ptsize, 0, $left, $top+$textheight, $glyph->{'text'} );
+    $self->{'canvas'}->stringTTF( $colour, $self->{'ttf_path'}.$font.'.ttf', $self->{sf} * $glyph->ptsize, 0, $left, $top+$textheight, $glyph->{'text'} );
 
 ###  my ($cx, $cy)      = $glyph->pixelcentre();
 ###  my $xpt = $glyph->{'pixelx'} + 
@@ -201,10 +206,10 @@ sub render_Circle {
 
   my $method = $filled ? 'filledEllipse' : 'ellipse';
   $canvas->$method( 
-    $cx-$glyph->{'pixelwidth'}/2,
-    $cy-$glyph->{'pixelheight'}/2,
-    $glyph->{'pixelwidth'},
-    $glyph->{'pixelheight'},
+    $self->{sf} * ($cx-$glyph->{'pixelwidth'}/2),
+    $self->{sf} * ($cy-$glyph->{'pixelheight'}/2),
+    $self->{sf} *  $glyph->{'pixelwidth'},
+    $self->{sf} *  $glyph->{'pixelheight'},
     $colour
    );
 #  $canvas->fillToBorder($cx, $cy, $colour, $colour) if ($filled && $cx <= $self->{'im_width'});
@@ -221,10 +226,10 @@ sub render_Ellipse {
 
   my $method = $filled ? 'filledEllipse' : 'ellipse';
   $canvas->$method( 
-    $cx-$glyph->{'pixelwidth'}/2,
-    $cy-$glyph->{'pixelheight'}/2,
-    $glyph->{'pixelwidth'},
-    $glyph->{'pixelheight'},
+    $self->{sf} * ($cx-$glyph->{'pixelwidth'}/2),
+    $self->{sf} * ($cy-$glyph->{'pixelheight'}/2),
+    $self->{sf} *  $glyph->{'pixelwidth'},
+    $self->{sf} *  $glyph->{'pixelheight'},
     $colour
    );
 }
@@ -234,14 +239,14 @@ sub render_Intron {
 
   my ($colour, $xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend, $strand, $gy);
   $colour  = $self->colour($glyph->{'colour'});
-  $gy      = $glyph->{'pixely'};
+  $gy      = $self->{sf} * $glyph->{'pixely'};
   $strand  = $glyph->{'strand'};
-  $xstart  = $glyph->{'pixelx'};
-  $xend    = $xstart + $glyph->{'pixelwidth'};
-  $xmiddle = $xstart + $glyph->{'pixelwidth'} / 2;
-  $ystart  = $gy + $glyph->{'pixelheight'}/2;
+  $xstart  = $self->{sf} * $glyph->{'pixelx'};
+  $xend    = $xstart + $self->{sf} * $glyph->{'pixelwidth'};
+  $xmiddle = $xstart + $self->{sf} * $glyph->{'pixelwidth'} / 2;
+  $ystart  = $gy + $self->{sf} * $glyph->{'pixelheight'}/2;
   $yend    = $ystart;
-  $ymiddle = $ystart + ( $strand == 1 ? -1 : 1 ) * $glyph->{'pixelheight'} * 3/8;
+  $ymiddle = $ystart + $self->{sf} * ( $strand == 1 ? -1 : 1 ) * $glyph->{'pixelheight'} * 3/8;
 
   $self->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, $colour);
   $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
@@ -251,10 +256,10 @@ sub render_Line {
   my ($self, $glyph) = @_;
 
   my $colour = $self->colour($glyph->{'colour'});
-  my $x1     = $glyph->{'pixelx'} + 0;
-  my $y1     = $glyph->{'pixely'} + 0;
-  my $x2     = $x1 + $glyph->{'pixelwidth'};
-  my $y2     = $y1 + $glyph->{'pixelheight'};
+  my $x1     = $self->{sf} * $glyph->{'pixelx'} + 0;
+  my $y1     = $self->{sf} * $glyph->{'pixely'} + 0;
+  my $x2     = $x1 + $self->{sf} * $glyph->{'pixelwidth'};
+  my $y2     = $y1 + $self->{sf} * $glyph->{'pixelheight'};
 
   if(defined $glyph->dotted() && $glyph->dotted ) {
     $self->{'canvas'}->setStyle(gdTransparent,gdTransparent,gdTransparent,$colour,$colour,$colour);
@@ -266,9 +271,9 @@ sub render_Line {
   if($glyph->chevron()) {
     my $flip = ($glyph->{'strand'}<0);
     my $len  = $glyph->chevron(); $len=4 if $len<4;
-    my $n    = int(($glyph->{'pixelwidth'} + $glyph->{'pixelheight'})/$len);
-    my $dx   = $glyph->{'pixelwidth'}  / $n; $dx*=-1 if $flip;
-    my $dy   = $glyph->{'pixelheight'} / $n; $dy*=-1 if $flip;
+    my $n    = int($self->{sf} * ($glyph->{'pixelwidth'} + $glyph->{'pixelheight'})/$len);
+    my $dx   = $self->{sf} * $glyph->{'pixelwidth'}  / $n; $dx*=-1 if $flip;
+    my $dy   = $self->{sf} * $glyph->{'pixelheight'} / $n; $dy*=-1 if $flip;
     my $ix   = int($dx);
     my $iy   = int($dy);
     my $i1x  = int(-0.5*($ix-$iy));
@@ -301,7 +306,7 @@ sub render_Poly {
   for(my $i=0;$i<$pairs_of_points;$i++) {
     my $x = shift @points;
     my $y = shift @points;
-    $poly->addPt($x,$y);
+    $poly->addPt($self->{sf} * $x,$self->{sf} * $y);
   }
 
   if($glyph->{colour}) {
@@ -387,12 +392,12 @@ sub render_Sprite {
 
   my $METHOD = $self->{'canvas'}->can('copyRescaled') ? 'copyRescaled' : 'copyResized' ;
   $self->{'canvas'}->$METHOD($sprite,
-			     $glyph->{'pixelx'},
-			     $glyph->{'pixely'},
+			     $self->{sf} * $glyph->{'pixelx'},
+			     $self->{sf} * $glyph->{'pixely'},
 			     0,
 			     0,
-			     $glyph->{'pixelwidth'}  || 1,
-			     $glyph->{'pixelheight'} || 1,
+			     $self->{sf} * $glyph->{'pixelwidth'}  || 1,
+			     $self->{sf} * $glyph->{'pixelheight'} || 1,
 			     $width,
 			     $height);
 }

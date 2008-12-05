@@ -68,14 +68,15 @@ sub new {
   my ($class, $config, $extra_spacing, $glyphsets_ref) = @_;
   
   my $self = {
-	      'glyphsets' => $glyphsets_ref,
-	      'canvas'    => undef,
-	      'colourmap' => $config->colourmap(),
-	      'config'    => $config,
-	      'extra_spacing' => $extra_spacing,
-	      'spacing'   => $config->get_parameter( 'spacing')||2,
-	      'margin'    => $config->get_parameter( 'margin')||5,
-	     };
+    'glyphsets' => $glyphsets_ref,
+    'canvas'    => undef,
+    'colourmap' => $config->colourmap(),
+    'config'    => $config,
+    'extra_spacing' => $extra_spacing,
+    'spacing'   => $config->get_parameter( 'spacing')||2,
+    'margin'    => $config->get_parameter( 'margin')||5,
+		'sf'        => $config->get_parameter( 'sf' )||1
+  };
   
   bless($self, $class);
   

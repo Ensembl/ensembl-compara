@@ -12,20 +12,18 @@ use vars qw(%classes);
 use base qw(Sanger::Graphics::Renderer);
 
 sub init_canvas {
-    my ($self, $config, $im_width, $im_height) = @_;
-    # we separate out postscript commands from header so that we can
-    # do EPS at some future time.
+  my ($self, $config, $im_width, $im_height) = @_;
+  # we separate out postscript commands from header so that we can
+  # do EPS at some future time.
+  $im_height = int($im_height * $self->{sf});
+  $im_width  = int($im_width  * $self->{sf});
 
-    $im_height = int($im_height);
-    $im_width  = int($im_width);
-
-    my @colours = keys %{$self->{'colourmap'}};
-
-    $self->{'image_width'} = $im_width;
-    $self->{'image_height'} = $im_height;
-    $self->{'style_cache'} = {};
-    $self->{'next_style'} = 'aa';
-    $self->canvas('');
+  my @colours = keys %{$self->{'colourmap'}};
+  $self->{'image_width'}  = $im_width;
+  $self->{'image_height'} = $im_height;
+  $self->{'style_cache'}  = {};
+  $self->{'next_style'}   = 'aa';
+  $self->canvas('');
 }
 
 sub add_canvas_frame {
@@ -120,10 +118,10 @@ sub render_Rect {
     my $y = $glyph->pixely();
     my $h = $glyph->pixelheight();
 
-    $x = sprintf("%0.3f",$x);
-    $w = sprintf("%0.3f",$w);
-    $y = sprintf("%0.3f",$y);
-    $h = sprintf("%0.3f",$h);
+    $x = sprintf("%0.3f",$x*$self->{sf});
+    $w = sprintf("%0.3f",$w*$self->{sf});
+    $y = sprintf("%0.3f",$y*$self->{sf});
+    $h = sprintf("%0.3f",$h*$self->{sf});
     $self->add_string(qq(<rect x="$x" y="$y" width="$w" height="$h" $style />\n)); 
 }
 
@@ -132,16 +130,16 @@ sub render_Text {
     my $font = $glyph->font();
 
     my $style   = $self->textstyle( $glyph );
-    my $x       = $glyph->pixelx();
-    my $y       = $glyph->pixely()+6;
+    my $x       = $glyph->pixelx()*$self->{sf};
+    my $y       = $glyph->pixely()*$self->{sf}+6*$self->{sf};
     my $text    = $glyph->text();
 
     $text =~ s/&/&amp;/g;
     $text =~ s/</&lt;/g;
     $text =~ s/>/&gt;/g;
     $text =~ s/"/&amp;/g;
-
-    $self->add_string( qq(<text x="$x" y="$y" $style>$text</text>\n) );
+    my $sz = ($self->{sf}*100).'%';
+    $self->add_string( qq(<text x="$x" y="$y" text-size="$sz" $style>$text</text>\n) );
 }
 
 sub render_Circle {
@@ -156,10 +154,10 @@ sub render_Intron {
     my ($self, $glyph) = @_;
     my $style   = $self->linestyle( $glyph );
 
-    my $x1 = $glyph->pixelx();
-    my $w1 = $glyph->pixelwidth() / 2;
-    my $h1 = $glyph->pixelheight() / 2;
-    my $y1 = $glyph->pixely() + $h1;
+    my $x1 = $glyph->pixelx() *$self->{sf};
+    my $w1 = $glyph->pixelwidth() / 2 * $self->{sf};
+    my $h1 = $glyph->pixelheight() / 2 * $self->{sf};
+    my $y1 = $glyph->pixely() * $self->{sf} + $h1;
 
     $h1 = -$h1 if($glyph->strand() == -1);
 
@@ -175,10 +173,10 @@ sub render_Line {
 
     $glyph->transform($self->{'transform'});
 
-    my $x = $glyph->pixelx();
-    my $w = $glyph->pixelwidth();
-    my $y = $glyph->pixely();
-    my $h = $glyph->pixelheight();
+    my $x = $glyph->pixelx() * $self->{sf};
+    my $w = $glyph->pixelwidth() * $self->{sf};
+    my $y = $glyph->pixely() * $self->{sf};
+    my $h = $glyph->pixelheight() * $self->{sf};
 
     $self->add_string(qq(<path d="M$x,$y l$w,$h" $style />\n));
 }
@@ -190,10 +188,12 @@ sub render_Poly {
     my @points = @{$glyph->pixelpoints()};
     my $x = shift @points;
     my $y = shift @points;
+		$x*=$self->{sf};$y*=$self->{sf};
     my $poly = qq(<path d="M$x,$y);
     while(@points) {
 	$x = shift @points;
 	$y = shift @points;
+		$x*=$self->{sf};$y*=$self->{sf};
 	$poly .= " L$x,$y";
     }
 

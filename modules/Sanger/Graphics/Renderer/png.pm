@@ -11,7 +11,7 @@ sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
   $self->{'im_width'}  = $im_width  ||= 10;
   $self->{'im_height'} = $im_height ||= 10;
-  my $canvas = GD::Image->newTrueColor($im_width, $im_height);
+  my $canvas = GD::Image->newTrueColor($self->{sf} * $im_width, $self->{sf} * $im_height);
 
   if( $self->{'config'}->can('species_defs') ) {
     my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE || {};
@@ -21,7 +21,7 @@ sub init_canvas {
 
   $self->canvas($canvas);
   my $bgcolor = $self->colour($config->bgcolor);
-  $self->{'canvas'}->filledRectangle(0,0, $im_width, $im_height, $bgcolor );
+  $self->{'canvas'}->filledRectangle(0,0, $self->{sf} * $im_width, $self->{sf} * $im_height, $bgcolor );
 }
 
 sub canvas {
