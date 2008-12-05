@@ -79,7 +79,9 @@ sub content_sub_slice {
     key_template => qq{<p><code><span style="%s">THIS STYLE:</span></code> %s</p>},
     key => '',
     comparison => 1,
-    db => $object->get_db
+    db => $object->get_db,
+    sub_slice_start => $start,
+    sub_slice_end => $end
   };
 
   for ('exon_display', 'exon_ori', 'snp_display', 'line_numbering', 'conservation_display', 'codons_display', 'title_display', 'align') {
@@ -288,7 +290,7 @@ sub get_key {
   $exon_label = $site_type if $exon_label eq 'Core';
   
   my @map = (
-    [ 'align', 'conservation' ],
+    [ 'conservation_display', 'conservation' ],
     [ 'codons_display', 'codonutr' ],
     [ 'exon_display', 'exon2' ],
     [ 'snp_display', 'snp_default,snp_gene_delete' ]
@@ -305,7 +307,7 @@ sub get_key {
   my $rtn = '';
   
   foreach my $param (@map) {
-    next if (!$object->param($param->[0]) || $object->param($param->[0]) eq "off");
+    next if $object->param($param->[0]) eq "off";
     
     foreach (split (/,/, $param->[1])) {
       my $attr = $_ eq 'exon2' ? 'color' : 'background-color';
