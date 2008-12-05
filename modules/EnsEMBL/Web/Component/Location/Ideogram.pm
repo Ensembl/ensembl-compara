@@ -23,6 +23,7 @@ sub content {
      $wuc->set_width( $object->param('image_width') );
 
   my $image    = $object->new_image( $slice, $wuc );
+  return if $self->_export_image( $image );
      $image->{'panel_number'} = 'ideogram';
      $image->imagemap = 'yes';
      $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );

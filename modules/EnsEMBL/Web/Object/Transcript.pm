@@ -16,6 +16,17 @@ our @ISA = qw(EnsEMBL::Web::Object);
 
 our $MEMD = new EnsEMBL::Web::Cache;
 
+sub _filename {
+  my $self = shift;
+  my $name = sprintf '%s-transcript-%d-%s-%s',
+    $self->species,
+    $self->species_defs->ENSEMBL_VERSION,
+    $self->get_db,
+    $self->Obj->stable_id;
+  $name =~ s/[^-\w\.]/_/g;
+  return $name;
+}
+
 sub availability {
   my $self = shift;
   my $hash = $self->_availability;

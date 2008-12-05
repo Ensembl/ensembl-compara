@@ -36,6 +36,7 @@ sub content {
   my $info = $wuc->_update_missing( $object );
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
+  return if $self->_export_image( $image );
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'top';
      $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );

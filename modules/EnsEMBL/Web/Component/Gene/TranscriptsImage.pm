@@ -39,6 +39,7 @@ sub content {
   $n->set('display','transcript_label') if $n->get('display') eq 'off';
 
   my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
+  return if $self->_export_image( $image );
       $image->imagemap         = 'yes';
       $image->{'panel_number'} = 'top';
       $image->set_button( 'drag', 'title' => 'Drag to select region' );

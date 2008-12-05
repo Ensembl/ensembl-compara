@@ -38,13 +38,13 @@ sub content {
   $wuc->set_parameters({
     'container_width' => $length,
     'image_width'     => $image_width || 800, ## hack at the moment....
-    'slice_number'    => '1|3',
+    'slice_number'    => '1|3'
   });
 
 ## Lets see if we have any das sources....
   $self->_attach_das( $wuc );
   
-  my $info = $wuc->_update_missing( $object );
+  my $info   = $wuc->_update_missing( $object );
   my $wuc_2  = $object->image_config_hash( 'contigviewtop' );
   my $info_2 = $wuc_2->_update_missing( $object );
 
@@ -56,10 +56,13 @@ sub content {
   }
 
   my $image    = $object->new_image( $slice, $wuc, $object->highlights );
-     $image->{'panel_number'} = 'bottom';
-     $image->imagemap = 'yes';
 
-     $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
+	return if $self->_export_image( $image );
+
+  $image->{'panel_number'} = 'bottom';
+  $image->imagemap = 'yes';
+
+  $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
   my $html = $image->render;
   $html .= $self->_info(
     'Configuring the display',

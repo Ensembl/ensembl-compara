@@ -138,6 +138,8 @@ sub content {
     $image->caption = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
     $image->imagemap = 'yes';
     $image->karyotype( $object, $pointers, 'Vkaryotype' );
+#		return if $self->_export_image( $image );
+
     $html .= $image->render;
     if ($has_data) {
       $html .= '<br /><p>Your uploaded data is displayed on the karyotype above, using '.$pointer_defaults{'UserData'}[0].' arrow pointers</p>';

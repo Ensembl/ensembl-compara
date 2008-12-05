@@ -78,6 +78,7 @@ sub content {
 
   ## If you want to resize this image
   my $image    = $object->new_image( $slice, $wuc, [$object->name] );
+  return if $self->_export_image( $image );
   $image->imagemap = 'yes';
   $image->{'panel_number'} = 'transcript';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );

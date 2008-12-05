@@ -23,6 +23,16 @@ use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
 our $MEMD = new EnsEMBL::Web::Cache;
 
+sub _filename {
+  my $self = shift;
+  my $name = sprintf '%s-variation-%d-%s-%s',
+    $self->species,
+    $self->species_defs->ENSEMBL_VERSION,
+    'variation',
+    $self->name;
+  $name =~ s/[^-\w\.]/_/g;
+  return $name;
+}     
 
 sub availability {
   my $self = shift;
@@ -732,8 +742,8 @@ sub parent {
 
   # Gender is obvious, not calling their parents
   return  { Name        => $parent->name,
-	    ### Description=> $self->individual_description($ind_obj),
-	  };
+      ### Description=> $self->individual_description($ind_obj),
+    };
 }
 
 
@@ -751,7 +761,7 @@ sub child {
   foreach my $individual ( @{ $individual_obj->get_all_child_Individuals} ) {
     my $gender = $individual->gender;
     $children{$individual->name} = [$gender, 
-				   $self->individual_description($individual)];
+           $self->individual_description($individual)];
   }
   return \%children;
 }
@@ -771,7 +781,7 @@ sub get_individuals_pops {
 
   foreach (@populations) {
     push (@pop_string,  {Name => $self->pop_name($_), 
-			 Link => $self->pop_links($_)});
+       Link => $self->pop_links($_)});
   }
   return \@pop_string;
 }

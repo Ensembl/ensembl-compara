@@ -11,6 +11,20 @@ use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Object);
 
+sub _filename {
+  my $self = shift;
+  my $name = sprintf '%s-%d-%s_%s_%s_%s',
+    $self->species,
+    $self->species_defs->ENSEMBL_VERSION,
+    $self->Obj->{seq_region_name},
+    $self->Obj->{seq_region_start},
+    $self->Obj->{seq_region_end},
+    $self->Obj->{seq_region_strand};
+
+	$name =~ s/[^-\w\.]/_/g;
+	return $name;
+}
+
 sub availability {
   my $self = shift;
   my $hash = $self->_availability;

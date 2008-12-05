@@ -160,6 +160,7 @@ sub content {
     ],
     [ $object->stable_id ]
   );
+  return if $self->_export_image( $image );
 
   $image->imagemap = 'yes';
   $image->set_extra( $object );

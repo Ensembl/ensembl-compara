@@ -440,6 +440,7 @@ sub _content {
     $transcript_slice,$wuc,
     [ $object->stable_id ]
   );
+  return if $self->_export_image( $image );
   $image->imagemap = 'yes';
   $image->{'panel_number'} = 'top';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );

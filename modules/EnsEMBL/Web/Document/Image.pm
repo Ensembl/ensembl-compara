@@ -498,11 +498,16 @@ sub exists {
 }
 
 sub render {
-  my $self = shift;
-  my $HTML = $self->introduction;
+  my( $self, $format ) = @_;
   ## Here we have to do the next bit which is to draw the image itself;
   my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
   $image->dc = $self->drawable_container;
+	if( $format ) {
+    print $image->dc->render($format);
+		return;
+	}
+	
+  my $HTML = $self->introduction;
   if( $self->imagemap eq 'yes' ) {
     $image->{'img_map'} = 1;
   }
@@ -543,6 +548,10 @@ sub render {
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
+		my $URL = $ENV{'REQUEST_URI'};
+		   $URL =~ s/;$//;
+		   $URL .= $URL =~ /\?/ ? ';' : '?';
+			 $URL .= 'export=pdf';
     $HTML .= '<div style="text-align:center">'.
              '<div style="text-align:center;margin:auto;border:0px;padding:0px">'.
              sprintf( qq(<div class="drag_select" id="%s_%s" style="margin: 0px auto; border: solid 1px black; position: relative; width:%dpx">),
@@ -551,6 +560,7 @@ sub render {
              $tag.
              ($self->imagemap eq 'yes' ? $image->render_image_map : '' ).
              '</div>'.
+						 ( $self->{'export'} ? '<div class="iexport" style="width:'.$image->{'width'}.'px"><a href="'.$URL.'">Export</a></div>' : '' ).
              ($self->caption ? sprintf( qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption  ) : '' ).
              '</div>'.
              '</div>';
@@ -565,10 +575,11 @@ sub render {
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
-    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding:0px"><div style="text-align: center">%s</div>%s%s</div>',
+    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding:0px"><div style="text-align: center">%s</div>%s%s%s</div>',
                $tag,
                $self->imagemap eq 'yes' ? $image->render_image_map : '',
-	       $self->caption ? sprintf( '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption ) : '';
+				 $self->{'export'} ? '<div style="text-align:right; background-color; red;">EXPORT</div>' : '',
+	       $self->caption ? sprintf( '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption ) : '',
   }
   if( @{$self->{'image_formats'}} ) {
     my %URLS;

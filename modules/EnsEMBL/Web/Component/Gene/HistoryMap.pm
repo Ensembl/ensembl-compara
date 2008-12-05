@@ -87,6 +87,7 @@ sub _create_idhistory_tree {
 
   
   my $image = $OBJ->new_image($tree, $wuc, [$object->stable_id], $OBJ );
+  return if $self->_export_image( $image );
   $image->image_type = 'idhistorytree';
   $image->image_name = $OBJ->param('image_width').'-'.$object->stable_id;
   $image->imagemap = 'yes';

@@ -85,6 +85,7 @@ sub content {
 
   my $image    = $object->new_image([ @containers_and_configs, ],
              $object->highlights, );
+  return if $self->_export_image( $image );
   $image->{'panel_number'} = 'top';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 

@@ -14,6 +14,14 @@ use base qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
 
+our %FORMATS = (
+  'png'  => { 'name' => 'PNG', 'longname' => 'Portable Network Graphics',   'extn' => 'png', 'mime' => 'image/png' },
+  'gif'  => { 'name' => 'GIF', 'longname' => 'Graphics Interchange Format', 'extn' => 'gif', 'mime' => 'image/gif' },
+  'svg'  => { 'name' => 'SVG', 'longname' => 'Scalable Vector Graphics',    'extn' => 'svg', 'mime' => 'image/svg+xml' },
+	'eps'  => { 'name' => 'EPS', 'longname' => 'Encapsulated Postscript',     'extn' => 'eps', 'mime' => 'application/postscript' },
+	'pdf'  => { 'name' => 'PDF', 'longname' => 'Portable Document Format',    'extn' => 'pdf', 'mime' => 'application/pdf' }
+);
+
 sub _error {
   my($self,$caption,$desc,$width) = @_;
   return sprintf '<div style="width:%s" class="error"><h3>%s</h3><div class="error-pad">%s</div></div>', 
@@ -30,6 +38,31 @@ sub _info {
     $width || $self->image_width.'px', $caption, $desc;
 }
 
+sub _hint {
+  my($self,$caption,$desc,$width) = @_;
+  return sprintf '<div style="width:%s" class="info"><h3>%s</h3><div class="error-pad">%s</div></div>', 
+    $width || $self->image_width.'px', $caption, $desc;
+}
+
+sub _export_image {
+  my( $self, $image ) = @_;
+	$image->{export} = 1;
+	my( $format,$scale ) = $self->object->param('export' ) ? split( /-/, $self->object->param('export'),2) : ('',1);
+	$scale eq 1 if $scale <= 0;
+	if( $FORMATS{ $format } ) {
+  	$image->drawable_container->{'config'}->set_parameter('sf',$scale);
+		( my $comp = ref($self) ) =~ s/[^\w\.]+/_/g;
+		my $filename = "$comp-".$self->object->_filename().'-'.$scale.'.'.$FORMATS{$format}{'extn'};
+		if( $self->object->param( 'download' ) ) {
+  		$self->object->input->header( -type => $FORMATS{$format}{'mime'}, -attachment => $filename );
+		} else {
+  		$self->object->input->header( -type => $FORMATS{$format}{'mime'}, -inline => $filename );
+		}
+  	$image->render( $format );
+    return 1;
+  }
+	return 0;
+}
 sub image_width {
   my $self = shift;
 

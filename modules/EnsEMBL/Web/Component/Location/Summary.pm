@@ -29,6 +29,7 @@ sub content {
 
   $wuc->get_node('ideogram')->set('caption', $object->seq_region_type.' '.$object->seq_region_name );
   my $image    = $object->new_image( $slice, $wuc );
+  return if $self->_export_image( $image );
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'context';
      $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );

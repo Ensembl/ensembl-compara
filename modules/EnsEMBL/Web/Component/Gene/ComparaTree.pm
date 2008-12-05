@@ -54,7 +54,7 @@ sub content {
   return $tree if !defined $member;
 
   my $wuc          = $object->image_config_hash( 'genetreeview' );
-  my $image_width  = $object->param( 'image_width' ) || 800;
+  my $image_width  = $self->image_width || 800;
   my $collapsability = $object->param('collapsability') || 'gene';
 
   $wuc->set_parameters({
@@ -87,7 +87,10 @@ sub content {
 
   my $image  = $object->new_image
       ( $tree, $wuc, [@highlights] );
+  return if $self->_export_image( $image );
+
 #  $image->cacheable   = 'yes';
+
   $image->image_type  = 'genetree';
   $image->image_name  = ($object->param('image_width')).'-'.$object->stable_id;
   $image->imagemap    = 'yes';

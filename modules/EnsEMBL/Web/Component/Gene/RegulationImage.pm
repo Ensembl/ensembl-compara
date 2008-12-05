@@ -85,6 +85,7 @@ sub content {
       $image->imagemap           = 'yes';
       $image->{'panel_number'} = 'top';
       $image->set_button( 'drag', 'title' => 'Drag to select region' );
+  return if $self->_export_image( $image );
 
 return $image->render;
 }
