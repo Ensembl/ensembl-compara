@@ -8,3 +8,13 @@ img.float-right { float:right; margin-left:10px; }
 img.screenshot { text-align:center; margin:10px auto; }
 img.karyomap { text-align:center; margin:auto; }
 img.flash { margin:20px auto; }
+
+/* Below is the image export CSS code */
+
+div.iexport { text-align:right; margin: 0px auto }
+div.iexport span, div.iexport a { background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; padding: 1px 5em; text-decoration: none; font-size: 0.8em; font-weight: bold; width: 12em }
+
+dl.iexport_mn { z-index:100;width: 12em; margin: 2px; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; }
+dl.iexport_mn dt { border: 1px solid [[MH_BORDER]] ; border-top: 0; font-size: 0.8em;  padding: 0; background-color: [[TINT_BG]];text-align: left; padding: 2px }
+dl.iexport_mn dt a { text-decoration: none ; font-weight: bold; }
+
