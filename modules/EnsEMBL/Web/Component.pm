@@ -816,24 +816,18 @@ sub markup_line_numbers {
       
       # Comparison species
       if ($align_slice) {
-        my $seq_length;
-        my $segment;
-        
         # Build a segment containing the current line of sequence
-        for ($s..$e) {
-          # Check the array element exists - must be done so we don't create new elements and mess up the padding at the end of the last line
-          if ($seq->[$_]) {
-            $seq_length++ if $seq->[$_]->{'letter'} ne '.';
-            $segment .= $seq->[$_]->{'letter'};
-          }
-        }
+        my $segment = substr ($slice->{'seq'}, $s, $config->{'display_width'});
+        (my $seq_length_seg = $segment) =~ s/\.//g;
+        my $seq_length = length $seq_length_seg; # The length of the sequence which does not consist of a .
     
-        my $first_bp_pos = 0;
-        my $last_bp_pos = 0;
+        my $first_bp_pos = 0; # Position of first letter character
+        my $last_bp_pos = 0;  # Position of last letter character
 
-        while ($segment =~ /\w/g) {
-          $last_bp_pos = pos $segment;
-          $first_bp_pos ||= $last_bp_pos; # Set the first position on the first match only
+        if ($segment =~ /\w/) {
+          $segment =~ /(^\W*).*\b(\W*$)/;
+          $first_bp_pos = 1 + length $1 unless length ($1) == length ($segment);
+          $last_bp_pos = $2 ? length ($segment) - length ($2) : length $segment;
         }
         
         # Get the data from the next slice if we have passed the end of the current one
@@ -848,7 +842,7 @@ sub markup_line_numbers {
         if ($seq_length && $last_bp_pos) {
           # This is NOT necessarily the same as $end + $data->{'dir'}, as bits of sequence could be hidden
           (undef, $row_start) = $slice->get_original_seq_region_position($s + $first_bp_pos);
-
+          
           $start = $row_start;
 
           # For AlignSlice display the position of the last meaningful bp
@@ -860,11 +854,12 @@ sub markup_line_numbers {
         my $seq_length = 0;
         my $segment = '';
         
+        # Build a segment containing the current line of sequence        
         for ($s..$e) {
           # Check the array element exists - must be done so we don't create new elements and mess up the padding at the end of the last line
-          if ($sequence->[$n]->[$_]) {
-            $seq_length++ if $sequence->[$n]->[$_]->{'letter'} =~ /\w/;
-            $segment .= $sequence->[$n]->[$_]->{'letter'};
+          if ($seq->[$_]) {
+            $seq_length++ if $seq->[$_]->{'letter'} =~ /\w/;
+            $segment .= $seq->[$_]->{'letter'};
           }
         }
         
