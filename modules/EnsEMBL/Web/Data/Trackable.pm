@@ -20,14 +20,14 @@ __PACKAGE__->add_queriable_fields(
 __PACKAGE__->add_trigger(
   before_create => sub {
                      $_[0]->created_at(time2iso());
-                     $_[0]->created_by($ENV{'ENSEMBL_USER_ID'});
+                     $_[0]->created_by($ENV{'ENSEMBL_USER_ID'} || 0);
                    }
 );
 
 __PACKAGE__->add_trigger(
   before_update => sub {
                      $_[0]->modified_at(time2iso());
-                     $_[0]->modified_by($ENV{'ENSEMBL_USER_ID'});
+                     $_[0]->modified_by($ENV{'ENSEMBL_USER_ID'} || 0);
                    }
 );
 
