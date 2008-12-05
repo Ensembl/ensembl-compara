@@ -506,12 +506,12 @@ sub get_sequence_data {
     
     # Get codons
     if ($config->{'codons_display'}) {
-      my @transcripts = map { @{$_->get_all_Transcripts } } @{$slice->get_all_Genes};
+      my @transcripts = map { @{$_->get_all_Transcripts} } @{$slice->get_all_Genes};
       my $slice_length = $slice->length;
       
       if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
         foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-          next if (!defined($t->translation));
+          next if (!defined $t->translation);
           
           my @codons = map {{ start => $_->start, end => $_->end, label => 'START' }} @{$t->translation->all_start_codon_mappings || []}; # START codons
           push (@codons, map {{ start => $_->start, end => $_->end, label => 'STOP' }} @{$t->translation->all_end_codon_mappings || []}); # STOP codons
@@ -793,8 +793,8 @@ sub markup_line_numbers {
       # Line numbers are relative to the sequence (start at 1)
       @numbering = ({ 
         dir => 1,  
-        start => 1,
-        end => $config->{'length'},
+        start => $config->{'sub_slice_start'} || 1,
+        end => $config->{'sub_slice_end'} || $config->{'length'},
         chromosome => ''
       });
     }
