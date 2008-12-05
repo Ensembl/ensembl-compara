@@ -11,8 +11,6 @@ use base 'EnsEMBL::Web::Controller::Command::Account';
 {
 
 sub BUILD {
-  my ($self, $ident, $args) = @_; 
-  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
 }
 
 sub process {
