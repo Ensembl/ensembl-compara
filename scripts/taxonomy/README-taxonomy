@@ -63,15 +63,15 @@ exit
 
 # This should take about 60 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+#ncbi_taxonomy.ncbi_taxa_node: Records: 465379  Deleted: 0  Skipped: 0  Warnings: 1396137
+# v51
 #ncbi_taxonomy.ncbi_taxa_node: Records: 445534  Deleted: 0  Skipped: 0  Warnings: 1336602
-# v50
-#ncbi_taxonomy.ncbi_taxa_node: Records: 429754  Deleted: 0  Skipped: 0  Warnings: 1289262
 
 # This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
+#ncbi_taxonomy.ncbi_taxa_name: Records: 653542  Deleted: 0  Skipped: 0  Warnings: 0
+# v51
 #ncbi_taxonomy.ncbi_taxa_name: Records: 622867  Deleted: 0  Skipped: 0  Warnings: 0
-# v50
-#ncbi_taxonomy.ncbi_taxa_name: Records: 600389  Deleted: 0  Skipped: 0  Warnings: 0
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
@@ -85,7 +85,8 @@ mysql -hens-livemirror -uensadmin -pensembl -N -e "insert into ncbi_taxa_name (t
 # Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrieval if needed.
 
 # This takes about 40 minutes
-/usr/local/ensembl/bin/perl ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ens-livemirror:3306/ncbi_taxonomy -index > leftright_indexing.err 2>&1 &
+# /usr/local/ensembl/bin/perl ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ens-livemirror:3306/ncbi_taxonomy -index > leftright_indexing.err 2>&1 &
+bsub -q yesterday -o leftright_indexing.out -e leftright_indexing.err -R"select[mem>15000] rusage[mem=15000]" -M15000000 '/usr/local/ensembl/bin/perl ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ens-livemirror:3306/ncbi_taxonomy -index'
 
 # Import 'ensembl common name' and 'ensembl alias name' for Ensembl web team use.
 
