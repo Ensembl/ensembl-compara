@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Mailer);
 
 {
@@ -43,6 +44,9 @@ You just need to activate your account, using the link below:
   if ($params{'group_id'}) {
     $message .= ";group_id=" . $params{'group_id'};
   }
+  if ($params{'record_id'}) {
+    $message .= ";record_id=" . $params{'record_id'};
+  }
 
   $message .= $self->email_footer;
   $self->set_message($message);
@@ -70,31 +74,34 @@ sub send_welcome_email {
   $self->send();
 }
 
-sub send_invite_email {
-  my ($self, $user, $group, $invite, $email) = @_;
+sub send_invitation_email {
+  my ($self, $group, $invite) = @_;
   my $sitename = $self->get_site_name;
   my $article = 'a';
   if ($sitename =~ /^(a|e|i|o|u)/i) {
     $article = 'an';
   }
 
-  my $message = qq(Hello,
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $message = sprintf(qq(Hello,
 
- You have been invited by ) . $user->name . qq( to join a group
- on the $sitename Genome Browser.
+ You have been invited by %s to join the %s group
+ on the %s Genome Browser.
 
  To accept this invitation, click on the following link:
 
- ) . $group->name . qq( 
- ) . $self->get_baseurl . qq(/Account/Accept?id=) . $invite->id . qq(;code=) . $invite->code . qq(;email=$email
+ %s/Account/Accept?id=%s;code=%s;email=%s
 
  If you do not wish to accept, please just disregard this email.
 
- If you have any problems please don't hesitate to contact ) . $user->name . qq( 
- or the $sitename help desk, at ) . $self->get_reply;
+ If you have any problems please don't hesitate to contact %s (%s) or the %s HelpDesk (%s)
+), 
+  $user->name, $group->name, $sitename,
+  $self->get_baseurl, $invite->id, $invite->code, $invite->email,
+  $user->name, $user->email, $sitename, $self->get_from);
 
   $message .= $self->email_footer;
-  $self->set_email($email);
+  $self->set_to($invite->email);
   $self->set_subject("Invitation to join $article $sitename group");
   $self->set_message($message);
   $self->send();
