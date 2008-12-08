@@ -114,12 +114,14 @@ $pad    </dd>";
           my @ok_params;
           my @cgi_params = split(';|&', $ENV{'QUERY_STRING'});
           if ($ENV{'ENSEMBL_TYPE'} eq 'UserData' || $ENV{'ENSEMBL_TYPE'} eq 'Account' || $ENV{'ENSEMBL_TYPE'} eq 'Help'  || $ENV{'ENSEMBL_TYPE'} eq 'UniSearch' ) { 
+            my $no_popup = 0;
             foreach my $param (@cgi_params) {
               ## Minimal parameters, or it screws up the non-genomic pages!
+              $no_popup = 1 if $param =~ /^no_popup/;
               next unless ($param =~ /^_referer/ || $param =~ /^x_requested_with/);
               push @ok_params, $param;
             }
-            unless (scalar(@ok_params) == 2) {
+            if (scalar(@ok_params) < 2 && !$no_popup) {
               @ok_params = ('_referer='.CGI::escape($ENV{'HTTP_REFERER'}), 'x_requested_with=XMLHttpRequest');
             }
           }
