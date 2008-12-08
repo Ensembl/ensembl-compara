@@ -8,8 +8,7 @@ use Class::Std;
 use EnsEMBL::Web::Document::Interface;
 use EnsEMBL::Web::Interface::InterfaceDef;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Data::Invite;
-use EnsEMBL::Web::Data::Membership;
+use EnsEMBL::Web::Data::Record::Invite;
 use EnsEMBL::Web::RegObj;
 
 use base 'EnsEMBL::Web::Controller::Command::Account';
@@ -24,7 +23,7 @@ sub BUILD {
 sub process {
   my $self = shift;
   my $cgi = $self->action->cgi;
-  my $invitation = EnsEMBL::Web::Data::Invite->new($cgi->param('id'));
+  my $invitation = EnsEMBL::Web::Data::Record::Invite::Group->new($cgi->param('id'));
   my $url; 
   if ($invitation->status eq 'pending') {
     ## Is this an existing user?
@@ -33,16 +32,17 @@ sub process {
       ## Create membership link between user and group
       my $success = $self->add_member_from_invitation($existing_user, $invitation);
       if ($ENV{'ENSEMBL_USER_ID'}) {
+        my $group_id = $invitation->webgroup_id;
         if ($success) {
           $invitation->destroy;
         }
-        $url = $self->url('/Account/Group', {'id' => $invitation->webgroup_id} );
+        $url = $self->url('/Account/MemberGroups', {'id' => $group_id, no_popup => 1} );
       }
       else {
         ## Set invitation status to 'accepted' (don't delete in case login fails!)
         $invitation->status('accepted');
         $invitation->save;
-        $url = $self->url('/Account/Login', {'url' => $url, 'record_id' => $invitation->id} );
+        $url = $self->url('/Account/Login', {'url' => $url, 'record_id' => $invitation->id, no_popup => 1} );
       }
     }
     else {
@@ -50,29 +50,9 @@ sub process {
       $invitation->status('accepted');
       $invitation->save;
       $url = $self->url('/Account/Register', 
-          {'email' => $invitation->email, 'status' => 'active', 'record_id' => $invitation->id} );
+          {'email' => $invitation->email, 'status' => 'active', 'record_id' => $invitation->id, no_popup => 1} );
     }
     $cgi->redirect($url);
-  }
-  else {
-     my $webpage= new EnsEMBL::Web::Document::WebPage(
-    'renderer'   => 'Apache',
-    'outputtype' => 'HTML',
-    'scriptname' => 'Account/Accept',
-    'objecttype' => 'Account',
-    'doctype'    => 'Popup',
-      );
-
-    if( $webpage->has_a_problem() ) {
-      $webpage->render_error_page( $webpage->problem->[0] );
-    } 
-    else {
-      foreach my $object( @{$webpage->dataObjects} ) {
-        $object->param('status', $invitation->status);
-        $webpage->configure( $object, 'invitation_nonpending' );
-      }
-      $webpage->action();
-    }
   }
 }
 
