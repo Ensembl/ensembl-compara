@@ -61,7 +61,7 @@ sub content {
       else {
         $row->{'details'} = qq(<a href="$dir/Account/MemberGroups?id=).$group->id.qq(;$referer" class="modal_link">Show Details</a>);
       }
-      $row->{'leave'} = $self->delete_link($dir, 'Membership', $group->id, 'Unsubscribe');
+      $row->{'leave'} = qq(<a href="$dir/Account/Unsubscribe?id=).$group->id.qq(;$referer" class="modal_link">Unsubscribe</a>);;
       $table->add_row($row);
     }
     $html .= $table->render;
