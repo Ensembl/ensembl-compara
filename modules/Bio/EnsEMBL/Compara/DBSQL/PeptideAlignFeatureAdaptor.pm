@@ -560,6 +560,7 @@ sub _store_PAFS {
         $analysis_id=$paf->analysis()->dbID();
       }
 
+      # print STDERR "== ", $paf->query_member_id, " - ", $paf->hit_member_id, "\n";
       my $qgenome_db_id = $paf->query_genome_db_id;
       $qgenome_db_id = 0 unless($qgenome_db_id);
       my $hgenome_db_id = $paf->hit_genome_db_id;
@@ -630,7 +631,12 @@ sub _create_PAF_from_BaseAlignFeature {
   } else {
     my ($source_name, $stable_id) = split(/:/, $feature->hseqname);
     #printf("hseq: %s %s\n", $source_name, $stable_id);
-    $paf->hit_member($memberDBA->fetch_by_source_stable_id($source_name, $stable_id));
+    my $hit_member = $memberDBA->fetch_by_source_stable_id($source_name, $stable_id);
+    if (defined($hit_member)) {
+      $paf->hit_member($hit_member);
+    } else {
+      die "couldnt find $stable_id\n";
+    }
   }
 
   $paf->analysis($feature->analysis);
