@@ -87,38 +87,51 @@ sub upload {
     ## Cache data (File::Text knows whether to use memcached or temp file)
     my $file = new EnsEMBL::Web::File::Text($self->object->species_defs);
     $file->set_cache_filename('user_'.$method);
-    $file->save($self->object, $method);
+    my $success = $file->save($self->object, $method);
 
-    ## Identify format
-    my $data = $file->retrieve;
-    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
-    $parser = $parser->init($data);
-    my $format = $parser->{'_info'}->{'format'};
+    if ($success) {
+      ## Identify format
+      my $data = $file->retrieve;
+      warn "DATA $data";
+      my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+      $parser = $parser->init($data);
+      if ($parser->{'_info'}->{'count'} > 0) {
+        my $format = $parser->{'_info'}->{'format'};
 
-    $self->parameter('parser', $parser);
-    $self->parameter('species', $self->object->param('species'));
-    ## Attach data species to session
-    $self->object->get_session->add_data(
-      type      => 'upload', 
-      filename  => $file->filename, 
-      code      => $file->md5, 
-      md5       => $file->md5, 
-      name      => $name,
-      species   => $self->object->param('species'),
-      format    => $format,
-      assembly  => $self->object->param('assembly'),
-    );
+        $self->parameter('parser', $parser);
+        $self->parameter('species', $self->object->param('species'));
+        ## Attach data species to session
+        $self->object->get_session->add_data(
+          type      => 'upload', 
+          filename  => $file->filename, 
+          code      => $file->md5, 
+          md5       => $file->md5, 
+          name      => $name,
+          species   => $self->object->param('species'),
+          format    => $format,
+          assembly  => $self->object->param('assembly'),
+        );
 
-    if (!$format) {
-      ## Get more input from user
-      $self->parameter(format      => 'none');
-      $self->parameter(code        => $file->md5);
-      $self->parameter(wizard_next => 'more_input');
+        if (!$format) {
+          ## Get more input from user
+          $self->parameter(format      => 'none');
+          $self->parameter(code        => $file->md5);
+          $self->parameter(wizard_next => 'more_input');
+        }
+        else {
+          $self->parameter(format      => $format);
+          $self->parameter(code        => $file->md5);
+          $self->parameter(wizard_next => 'upload_feedback');
+        }
+      }
+      else {
+        $self->parameter('wizard_next', 'select_file');
+        $self->parameter('error_message', 'Your file appears to be empty. Please check that it contains correctly-formatted data.');
+      }
     }
     else {
-      $self->parameter(format      => $format);
-      $self->parameter(code        => $file->md5);
-      $self->parameter(wizard_next => 'upload_feedback');
+      $self->parameter('wizard_next', 'select_file');
+      $self->parameter('error_message', 'Your file could not be saved. Please check the contents and try again.');
     }
   }
   else {

@@ -538,7 +538,10 @@ sub init {
   return unless $data;
 
   my %info;
+  my $has_data = 0;
   foreach my $row ( split '\n', $data ) {
+    next unless $row;
+    $has_data++;
     my @analysis = $self->analyse_row($row);
     if( $analysis[2] ) {
       $info{$analysis[0]}{$analysis[1]} = $analysis[2];
@@ -549,7 +552,7 @@ sub init {
     last if $analysis[0] eq 'format';
     ## Yes it will all to do with what is in the file! but we can leave this for the moment!
   }
-
+  $info{'count'} = $has_data;
   if (my $format = $info{'format'}) {
 #     my $p =  __PACKAGE__."::$format";
 #     $self = $p->new();
