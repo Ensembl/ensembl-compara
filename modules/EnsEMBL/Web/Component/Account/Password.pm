@@ -60,6 +60,13 @@ sub content {
       'value' => $object->param('record_id')
     );
   }
+  if ($object->param('no_popup')) {
+    $form->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'no_popup',
+      'value' => $object->param('no_popup')
+    );
+  }
 
   $form->add_element('type'  => 'Password', 'name'  => 'new_password_1', 'label' => 'New password',
                       'required' => 'yes');
