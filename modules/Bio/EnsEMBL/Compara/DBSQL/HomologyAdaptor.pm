@@ -34,7 +34,7 @@ sub fetch_all_by_Member {
   my ($self, $member) = @_;
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint = "hm.member_id = " .$member->dbID;;
+  my $constraint = "hm.member_id = " .$member->dbID;
 
   # This internal variable is used by add_Member_Attribute method 
   # in Bio::EnsEMBL::Compara::BaseRelation to make sure that the first element
