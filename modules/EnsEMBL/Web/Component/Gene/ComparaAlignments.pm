@@ -30,7 +30,8 @@ sub content {
   
   return $error if $error;
   
-  if ($length > $increment) {
+  # TODO: make this work!
+  if (0) { #$length > $increment) {
     my $i = 1;
     my $j = $increment;
     my $end = (int ($length / $increment)) * $increment;
@@ -44,8 +45,8 @@ sub content {
       $html .= qq{<div class="ajax" title="['$title']"></div>};
 
       $i = $j + 1;
-      $j += $increment;
-
+      $j += $increment unless $j == $end;
+      
       $j = $length if $j == $end;
     }
     
@@ -165,7 +166,7 @@ sub get_alignments {
   }
 
   my $alignments = $align_slice->get_all_Slices(@selected_species);
-
+  
   return $alignments;
 }
 
