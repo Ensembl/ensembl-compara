@@ -28,7 +28,8 @@ sub simple {
       'interface' => undef,
       'doctype'   => $doc_type
     ));
-  $self->page->{'_modal_dialog_'} = $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  $self->page->{'_modal_dialog_'} = $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'  ||
+    $self->factory->param( 'x_requested_with' ) eq 'XMLHttpRequest';
   if( $self->has_a_problem ) {
     $self->render_error_page;
   } 
