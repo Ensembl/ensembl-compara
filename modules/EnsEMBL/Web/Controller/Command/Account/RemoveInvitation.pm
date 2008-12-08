@@ -23,7 +23,12 @@ sub process {
   my $cgi = $self->action->cgi;
   my $invitation = EnsEMBL::Web::Data::Record::Invite::Group->new($cgi->param('id'));
   $invitation->destroy;
-  $cgi->redirect($self->url('/Account/Group', {'id' => $cgi->param('group_id')}) );
+  my %params = (
+    'id'   => $cgi->param('group_id'),
+    '_referer'  => $cgi->param('_referer'),
+    'x_requested_with'  => $cgi->param('x_requested_with'),
+  );
+  $self->ajax_redirect($self->url('/Account/ManageGroup', \%params) );
 }
 
 }
