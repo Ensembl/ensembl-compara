@@ -21,7 +21,7 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  stuff 'Account', 'Activate', $self, 'Popup';
+  stuff 'Account', 'Activate', $self;
 }
 
 }
