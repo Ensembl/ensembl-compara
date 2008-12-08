@@ -795,17 +795,19 @@ sub markup_line_numbers {
         # Get the data for all underlying slices
         foreach (@{$sl->{'underlying_slices'}}) {
           my $ostrand = $_->strand;
+          my $end_pos = $start_pos + length ($_->seq) - 1;
           
           if ($_->seq_region_name ne 'GAP') {
             push (@numbering, {
               dir => $ostrand,
               start_pos => $start_pos,
+              end_pos  => $end_pos,
               start => $ostrand > 0 ? $_->start : $_->end,
               end => $ostrand > 0 ? $_->end : $_->start,
-              chromosome => $_->seq_region_name . ':'
+              label => $_->seq_region_name . ':'
             });
             
-            # Padding to go before the chromosome
+            # Padding to go before the label
             $config->{'padding'}->{'pre_number'} = length $_->seq_region_name if length $_->seq_region_name > $config->{'padding'}->{'pre_number'};
           }
           
@@ -816,10 +818,10 @@ sub markup_line_numbers {
         my $ostrand = $slice->strand;
         
         @numbering = ({ 
-          dir => $ostrand,  
+          dir => $ostrand,
           start => $ostrand > 0 ? $slice->start : $slice->end,
           end => $ostrand > 0 ? $slice->end : $slice->start,
-          chromosome => $slice->seq_region_name . ':'
+          label => $slice->seq_region_name . ':'
         });
       }
     } else {
@@ -828,10 +830,10 @@ sub markup_line_numbers {
         dir => 1,  
         start => $config->{'sub_slice_start'} || 1,
         end => $config->{'sub_slice_end'} || $config->{'length'},
-        chromosome => ''
+        label => ''
       });
     }
-    
+      
     my $data = shift @numbering unless ($config->{'numbering'} && !$config->{'numbering'}->[$n]);
     
     my $s = 0;
@@ -844,6 +846,8 @@ sub markup_line_numbers {
     my $loop_end = $config->{'length'} + $config->{'display_width'};
     
     while ($e < $loop_end) {
+      my $shift = 0; # To check if we've got a new element from @numbering
+      
       $start = '';
       $end = '';
       
@@ -863,9 +867,15 @@ sub markup_line_numbers {
           $last_bp_pos = $2 ? length ($segment) - length ($2) : length $segment;
         }
         
+        my $old_label = '';
+        
         # Get the data from the next slice if we have passed the end of the current one
-        if (scalar @numbering && $e >= $numbering[0]->{'start_pos'}) {
+        while (scalar @numbering && $e >= $numbering[0]->{'start_pos'}) {          
+          $old_label ||= $data->{'label'} if ($data->{'end_pos'} > $s); # Only get the old label for the first new slice - the one at the start of the line
+          $shift = 1;
+
           $data = shift @numbering;
+          $data->{'old_label'} = $old_label;
           
           # Only set $row_start if the line begins with a .
           # If it does not, the previous slice ends mid-line, so we just carry on with it's start number
@@ -919,9 +929,11 @@ sub markup_line_numbers {
         $row_start = $end + $data->{'dir'} if $end;
       }
       
-      my $ch = $start ? ($config->{'comparison'} && $data->{'chromosome'}) : '';   
+      my $label = ($start && $config->{'comparison'}) ? $data->{'label'} : '';
+      my $post_label = ($shift && $label && $data->{'old_label'}) ? $label : '';
+      $label = $data->{'old_label'} if $post_label;
       
-      push (@{$config->{'line_numbers'}->{$n}}, { start => $start, end => $end, pre => $ch });
+      push (@{$config->{'line_numbers'}->{$n}}, { start => $start, end => $end, label => $label, post_label => $post_label });
 
       # Increase padding amount if required
       $config->{'padding'}->{'number'} = length $start if length $start > $config->{'padding'}->{'number'};
@@ -932,7 +944,7 @@ sub markup_line_numbers {
     $n++;
   }
   
-  $config->{'padding'}->{'pre_number'}++ if $config->{'padding'}->{'pre_number'}; # Compensate for the : after the chromosome
+  $config->{'padding'}->{'pre_number'}++ if $config->{'padding'}->{'pre_number'}; # Compensate for the : after the label
  
   if ($config->{'line_numbering'} eq 'slice' && $config->{'align'}) {
     $config->{'key'} .= qq{ NOTE: For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line};
@@ -1033,10 +1045,10 @@ sub build_sequence {
       my $num = shift @{$line_numbers->{$y}};
       
       if ($config->{'number'}) {
-        my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'pre'});
+        my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'label'});
         my $pad2 = ' ' x ($config->{'padding'}->{'number'} - length $num->{'start'});
 
-        $line = $config->{'h_space'} . sprintf("%6s ", "$pad1$num->{'pre'}$pad2$num->{'start'}") . $line;
+        $line = $config->{'h_space'} . sprintf("%6s ", "$pad1$num->{'label'}$pad2$num->{'start'}") . $line;
       }
       
       if ($x == $length && ($config->{'end_number'} || $_->[$x]->{'post'})) {
@@ -1044,10 +1056,11 @@ sub build_sequence {
       }
       
       if ($config->{'end_number'}) {
-        my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'pre'});
+        my $n = $num->{'post_label'} || $num->{'label'};
+        my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $n);
         my $pad2 = ' ' x ($config->{'padding'}->{'number'} - length $num->{'end'});
 
-        $line .= $config->{'h_space'} . sprintf(" %6s", "$pad1$num->{'pre'}$pad2$num->{'end'}");
+        $line .= $config->{'h_space'} . sprintf(" %6s", "$pad1$n$pad2$num->{'end'}");
       }
       
       $line = "$_->[$x]->{'pre'}$line" if $_->[$x]->{'pre'};
