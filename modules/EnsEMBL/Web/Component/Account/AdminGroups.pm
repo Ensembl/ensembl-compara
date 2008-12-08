@@ -37,30 +37,35 @@ sub content {
   if (@groups) {
 
     $html .= qq(<h3>Your groups</h3>);
-    $html .= '<p>Sorry, group administration has been temporarily suspended whilst we test that user accounts are working correctly.</p>';
 
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
 
     $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'desc',      'title' => 'Description',   'width' => '50%', 'align' => 'left' },
-        { 'key' => 'details',   'title' => '',              'width' => '10%', 'align' => 'left' },
-        { 'key' => 'manage',    'title' => '',              'width' => '20%', 'align' => 'left' },
+        { 'key' => 'name',      'title' => 'Name',  'width' => '25%', 'align' => 'left' },
+        { 'key' => 'edit',      'title' => '',      'width' => '20%', 'align' => 'left' },
+        { 'key' => 'details',   'title' => '',      'width' => '20%', 'align' => 'left' },
+        { 'key' => 'members',   'title' => '',      'width' => '20%', 'align' => 'left' },
+        { 'key' => 'delete',    'title' => '',      'width' => '15%', 'align' => 'left' },
     );
 
     foreach my $group (@groups) {
       my $row = {};
 
-      $row->{'name'} = $group->name;
-      $row->{'desc'} = $group->blurb || '&nbsp;';
+      my $info = '<strong>'.$group->name.'</strong>';
+      $info .= '<br />'.$group->blurb if $group->blurb;
+      $row->{'name'} = $info;
+      $row->{'edit'} = qq(<a href="$dir/Account/Group?id=).$group->id.qq(;dataview=edit;$referer" class="modal_link">Edit Name/Description</a>);
+
+      $row->{'members'} = qq(<a href="$dir/Account/ManageGroup?id=).$group->id.qq(;$referer" class="modal_link">Manage Member List</a>);
+  
       if ($self->object->param('id') && $self->object->param('id') == $group->id) {
-        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups?$referer" class="modal_link">Hide Details</a>);
+        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups?$referer" class="modal_link">Hide Shared Settings</a>);
       }
       else {
-        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups?id=).$group->id.qq(;$referer" class="modal_link">Show Details</a>);
+        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups?id=).$group->id.qq(;$referer" class="modal_link">Show Shared Settings</a>);
       }
 
-#      $row->{'manage'} = '<a href="/Account/Group?id='.$group->id.';dataview=edit;_referer='.CGI::escape($self->object->param('_referer')).'" class="modal_link">Manage Group</a>';
+      $row->{'delete'} = qq(<a href="$dir/Account/Group?id=).$group->id.qq(;dataview=confirm_delete;$referer" class="modal_link">Delete Group</a>);
       $table->add_row($row);
     }
     $html .= $table->render;
@@ -68,7 +73,6 @@ sub content {
   else {
     $html .= qq(<p class="center">You are not an administrator of any $sitename groups.</p>);
   }
- # $html .= '<p><a href="/Account/Group?dataview=add;_referer='.CGI::escape($self->object->param('_referer')).'" class="modal_link">Create a new group &rarr;</a></p>';
 
   return $html;
 }
