@@ -284,7 +284,7 @@ sub _user_context {
   }
   
   $active = $type eq 'UserData';
-  my $module = $vc->can_upload ? 'Upload' : 'ManageUpload';
+  my $module = $vc->can_upload ? 'Upload' : 'ManageData';
   $self->{'page'}->global_context->add_entry(
     'type'      => 'UserData',
     'id'        => 'user_data',
@@ -751,7 +751,7 @@ sub _local_tools {
 
       if (@temp_uploads || @user_uploads) { 
         $caption = 'Add/manage custom data';
-        $action = 'ManageUpload';
+        $action = 'ManageData';
       }
 
       $self->{'page'}->local_tools->add_entry(

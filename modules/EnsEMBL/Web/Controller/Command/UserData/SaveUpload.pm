@@ -22,7 +22,7 @@ sub process {
   $object->param(error_message => 'Error occured while saving your data')
     unless $object && $object->store_data(type => 'upload', code => $object->param('code'));
 
-  $self->ajax_redirect($self->ajax_url('/UserData/ManageUpload', 'reload' => 1));
+  $self->ajax_redirect($self->ajax_url('/UserData/ManageData', 'reload' => 1));
 }
 
 }
