@@ -25,7 +25,8 @@ sub process {
   my $group = EnsEMBL::Web::Data::Group->new($cgi->param('id'));
   $group->assign_status_to_user($ENV{'ENSEMBL_USER_ID'}, 'inactive');
 
-  $cgi->redirect($self->url('/Account/Details'));
+  $self->ajax_redirect($self->ajax_url('/Account/MemberGroups', 'reload' => 1));
+
 }
 
 }
