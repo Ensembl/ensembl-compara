@@ -64,21 +64,22 @@ $controller->add_connections({qw(
 
 ## Group records & group management
 $controller->add_connections({qw(
-  MemberGroups       EnsEMBL::Web::Controller::Command::Account::MemberGroups 
-  _accept            EnsEMBL::Web::Controller::Command::Account::AcceptInvitation 
-  _unsubscribe       EnsEMBL::Web::Controller::Command::Account::Unsubscribe 
+  MemberGroups      EnsEMBL::Web::Controller::Command::Account::MemberGroups 
+  Accept            EnsEMBL::Web::Controller::Command::Account::AcceptInvitation 
+  Unsubscribe       EnsEMBL::Web::Controller::Command::Account::Unsubscribe 
 
   AdminGroups        EnsEMBL::Web::Controller::Command::Account::AdminGroups 
   Group              EnsEMBL::Web::Controller::Command::Account::Group 
-  _remove_group      EnsEMBL::Web::Controller::Command::Account::RemoveGroup 
-  _change_status     EnsEMBL::Web::Controller::Command::Account::ChangeStatus 
-  _change_level      EnsEMBL::Web::Controller::Command::Account::ChangeLevel 
+  ManageGroup        EnsEMBL::Web::Controller::Command::Account::ManageGroup 
+  ChangeStatus       EnsEMBL::Web::Controller::Command::Account::ChangeStatus 
+  ChangeLevel        EnsEMBL::Web::Controller::Command::Account::ChangeLevel 
+  RemoveMember       EnsEMBL::Web::Controller::Command::Account::RemoveMember
 
   SelectGroup        EnsEMBL::Web::Controller::Command::Account::SelectGroup 
   ShareRecord        EnsEMBL::Web::Controller::Command::Account::ShareRecord 
 
-  Invite             EnsEMBL::Web::Controller::Command::Account::Invite 
-  _remove_invitation EnsEMBL::Web::Controller::Command::Account::RemoveInvitation 
+  SendInvitation     EnsEMBL::Web::Controller::Command::Account::SendInvitation 
+  RemoveInvitation   EnsEMBL::Web::Controller::Command::Account::RemoveInvitation 
 )});
 
 $controller->dispatch($ENV{'REQUEST_URI'});
