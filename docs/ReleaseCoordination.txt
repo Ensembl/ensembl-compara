@@ -20,7 +20,7 @@ send the DOI after the Genebuilders
 3bis. For v50 The new compara_master database is now kb3_ensembl_compara_master on compara1 
 
 4. Add in the master compara database
-(compara1:3306/jh7_ensembl_compara_master) the new entries in the
+(compara1:3306/kb3_ensembl_compara_master) the new entries in the
 genome_db and dnafrag tables. You can set up your registry and use the
 ~ensembl-compara/scripts/pipeline/update_genome.pl script. This script
 sets the new genome_dbs as the default assemblies.
@@ -47,11 +47,11 @@ This is usually done by the person who runs the orthologs/paralogs.
 For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
 
 mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress --delayed-insert ncbi_taxonomy \
-ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -pxxxx -h compara1 jh7_ensembl_compara_master
+ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -pxxxx -h compara1 kb3_ensembl_compara_master
 
-mysql -hcompara1 -uensadmin -pxxxx jh7_ensembl_compara_master -e \
+mysql -hcompara1 -uensadmin -pxxxx kb3_ensembl_compara_master -e \
  "update ncbi_taxa_name set name = \"Canis familiaris\" where taxon_id = 9615 and name_class = \"scientific name\" and name = \"Canis lupus familiaris\""
-mysql -hcompara1 -uensadmin -pxxxx jh7_ensembl_compara_master -e \
+mysql -hcompara1 -uensadmin -pxxxx kb3_ensembl_compara_master -e \
  "update ncbi_taxa_name set name = \"Canis lupus familiaris\" where taxon_id = 9615 and name_class = \"synonym\" and name = \"Canis familiaris\""
 
 eg.
