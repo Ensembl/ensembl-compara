@@ -80,6 +80,8 @@ if ($doit) {
 # Check data consistency between gene_count and number of homology entries
 ##########################################################################
 
+  print STDERR "# Check data consistency between gene_count and number of homology entries\n";
+
   $sql = "select node_id,value,(value*(value-1))/2 from protein_tree_tag where tag='gene_count'";
   
   $sth = $dba->dbc->prepare($sql);
