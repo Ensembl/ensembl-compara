@@ -61,7 +61,13 @@ sub process {
     $param->{'activated'} = 'yes';
   } 
 
-  $self->ajax_redirect($self->url('Account/SetCookie', $param));
+  my $url = $self->url('Account/SetCookie', $param);
+  if ($cgi->param('no_popup')) {
+    $cgi->redirect($url);
+  }
+  else {
+    $self->ajax_redirect($url);
+  }
 }
 
 }
