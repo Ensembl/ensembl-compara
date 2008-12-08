@@ -28,7 +28,7 @@ sub content {
   }
 
   my @data = @{$object->get_external_data};
-  unless (scalar @data >= 1) { return "We do not have any external data about this variation";}
+  unless (scalar @data >= 1) { return "We do not have any external data for this variation";}
   
   $html .=  qq(<dl class="summary">);
 
