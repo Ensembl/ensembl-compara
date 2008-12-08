@@ -955,6 +955,14 @@ sub delete_node {
   }
 }
 
+sub delete_submenu {
+  my ($self, $code) = @_;
+  if ($code && $self->tree) {
+    my $node = $self->tree->get_node($code);
+		$node->remove_subtree;
+  }
+}
+
 sub update_configs_from_parameter {
   my( $self, $parameter_name, @imageconfigs ) = @_;
   my $val = $self->{object}->param( $parameter_name );
