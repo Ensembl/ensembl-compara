@@ -39,10 +39,8 @@ sub content {
 
     my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 
-    #$html .= '<p class="right"><a href="/Account/MemberGroups">&larr; Hide details</a></p>';
-
-    $html .= '<p><strong>Group created by</strong>: '.$creator->name;
-    $html .= ' <strong>on</strong> '.$self->pretty_date($group->created_at).'</p>';
+    $html .= '<p>Group created by '.$creator->name;
+    $html .= ' on '.$self->pretty_date($group->created_at).'</p>';
 
     $html .= '<h3>Bookmarks</h3>';
     if ($group->bookmarks) {
