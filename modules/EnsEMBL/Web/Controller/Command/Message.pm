@@ -8,7 +8,7 @@ use Class::Std;
 use EnsEMBL::Web::RegObj;
 use base 'EnsEMBL::Web::Controller::Command';
 
-use EnsEMBL::Web::Magic qw(modal_stuff);
+use EnsEMBL::Web::Magic qw(stuff modal_stuff);
 {
 
 sub BUILD {
@@ -17,7 +17,13 @@ sub BUILD {
 
 sub process {
   my $self = shift;
-  modal_stuff $ENV{'ENSEMBL_TYPE'}, 'Message', $self, 'Popup';
+    my $cgi = $self->action->cgi;
+  if ($cgi->param('no_popup')) {
+    stuff $ENV{'ENSEMBL_TYPE'}, 'Message', $self;
+  }
+  else {
+    modal_stuff $ENV{'ENSEMBL_TYPE'}, 'Message', $self, 'Popup';
+  }
 }
 
 }
