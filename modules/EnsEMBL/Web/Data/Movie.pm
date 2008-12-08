@@ -15,8 +15,6 @@ __PACKAGE__->add_fields(
   height        => 'int',
   filesize      => 'float(3,1)',
   length        => 'string',
-  frame_count   => 'int',
-  frame_rate    => 'int',
   list_position => 'int',
 );
 
