@@ -60,6 +60,7 @@ sub render_message {
   my $message = $self->get_message;
   my $checksum = EnsEMBL::Web::Tools::Encryption::checksum($message); 
   my $url = "$dir/$type/Message?command_message=".CGI::escape($message).";checksum=$checksum";
+  $url .= ';no_popup=1' if $self->action->cgi->param('no_popup');
   ## Pass referer, to ensure we get control panel tabs
   $url .= ';_referer='.$self->action->cgi->param('_referer');
   ## Do appropriate type of redirect
