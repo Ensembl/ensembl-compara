@@ -10,9 +10,10 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 sub new { return shift->SUPER::new(); }
 
 sub referer   :lvalue { $_[0]{'referer'};   }
-sub logins    :lvalue { $_[0]{'logins'};   } ## Needed to avoid problems in Document::Common
-sub blast :lvalue { $_[0]{'blast'};}
-sub biomart  :lvalue { $_[0]{'biomart'};}
+## Needed to avoid problems in Document::Common
+sub logins    :lvalue { $_[0]{'logins'};   }
+sub blast     :lvalue { $_[0]{'blast'};   }
+sub biomart   :lvalue { $_[0]{'biomart'};   }
 
 sub render   {
   my $self = shift;
