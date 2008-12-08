@@ -1226,6 +1226,18 @@ sub merge_node_via_shared_ancestor {
 #
 ##################################
 
+
+=head2 flatten_tree
+
+  Overview   : Removes all internal nodes and attaches leaves to the tree root, creating
+               a "flattened" star tree structure.
+  Example    : $node->flatten_tree();
+  Returntype : undef or Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub flatten_tree {
   my $self = shift;
   
@@ -1506,6 +1518,22 @@ sub get_all_leaves_indexed {
 
   return \@leaf_list;
 }
+
+# # Returns a TreeI-compliant object based on this NestedSet.
+# sub get_TreeI {
+#     use Bio::TreeIO;
+
+#     my $self = shift;
+#     my $newick = $self->newick_format();
+
+#     open(my $fake_fh, "+<", \$newick);
+#     my $treein = new Bio::TreeIO
+#         (-fh => $fake_fh,
+#          -format => 'newick');
+#     my $treeI = $treein->next_tree;
+#     $treein->close;
+#     return $treeI;
+# }
 
 =head2 max_distance
 
