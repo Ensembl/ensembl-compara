@@ -338,86 +338,86 @@ sub _ajax_zmenu_region {
 }
 
 sub _ajax_zmenu_misc_feature {
-    my $self = shift;
-    my $panel= shift;
-    my $obj  = shift;
-    my $name = $obj->param('misc_feature_n');
-    my $id   = $obj->param('mfid');
-    my $url  = $obj->_url({'type' => 'Location', 'action' => 'View', 'misc_feature' => $name});
-    my $db         = $obj->param('db')  || 'core';
-    my $db_adaptor = $obj->database(lc($db));
-    my $mfa        = $db_adaptor->get_MiscFeatureAdaptor();
-    my $mf         = $mfa->fetch_by_dbID($id);
-    my $type       = $mf->get_all_MiscSets->[0]->code;
-    my $caption = $type eq 'encode' ? 'Encode region'
-	        : $type eq 'ntctgs' ? 'NT Contig'
-		: 'Clone';
-    $panel->{'caption'} = "$caption: $name";
+  my $self = shift;
+  my $panel= shift;
+  my $obj  = shift;
+  my $name = $obj->param('misc_feature_n');
+  my $id   = $obj->param('mfid');
+  my $url  = $obj->_url({'type' => 'Location', 'action' => 'View', 'misc_feature' => $name});
+  my $db         = $obj->param('db')  || 'core';
+  my $db_adaptor = $obj->database(lc($db));
+  my $mfa        = $db_adaptor->get_MiscFeatureAdaptor();
+  my $mf         = $mfa->fetch_by_dbID($id);
+  my $type       = $mf->get_all_MiscSets->[0]->code;
+  my $caption = $type eq 'encode' ? 'Encode region'
+    : $type eq 'ntctgs' ? 'NT Contig'
+      : 'Clone';
+  $panel->{'caption'} = "$caption: $name";
 
-    $panel->add_entry({
-	'type' => 'bp',
-	'label' => $mf->seq_region_start.'-'.$mf->seq_region_end,
-	'priority' => 190,
-    });
+  $panel->add_entry({
+    'type' => 'bp',
+    'label' => $mf->seq_region_start.'-'.$mf->seq_region_end,
+    'priority' => 190,
+  });
+  
+  $panel->add_entry({
+    'type' => 'length',
+    'label' => $mf->length.' bps',
+    'priority' => 180,
+  });
 
-    $panel->add_entry({
-	'type' => 'length',
-	'label' => $mf->length.' bps',
-	'priority' => 180,
-    });
+  #add entries for each of the following attributes
+  my @names = ( 
+    ['name',           'Name'                   ],
+    ['well_name',      'Well name'              ],
+    ['sanger_project', 'Sanger project'         ],
+    ['clone_name',     'Library name'           ],
+    ['synonym',        'Synonym'                ],
+    ['embl_acc',       'EMBL accession', 'EMBL' ],
+    ['bacend',         'BAC end acc',    'EMBL' ],
+    ['alt_well_name',  'Well name'              ],
+    ['bacend_well_nam','BAC end well'           ],
+    ['state',          'State'                  ],
+    ['htg',            'HTGS_phase'             ],
+    ['remark',         'Remark'                 ],
+    ['organisation',   'Organisation'           ],
+    ['seq_len',        'Seq length'             ],
+    ['fp_size',        'FP length'              ],
+    ['supercontig',    'Super contig'           ],
+    ['fish',           'FISH'                   ],
+    ['description',    'Description'            ],
+  );
 
-    #add entries for each of the following attributes
-    my @names = ( 
-	['name',           'Name'                   ],
-	['well_name',      'Well name'              ],
-	['sanger_project', 'Sanger project'         ],
-	['clone_name',     'Library name'           ],
-	['synonym',        'Synonym'                ],
-	['embl_acc',       'EMBL accession', 'EMBL' ],
-	['bacend',         'BAC end acc',    'EMBL' ],
-	['alt_well_name',  'Well name'              ],
-	['bacend_well_nam','BAC end well'           ],
-	['state',          'State'                  ],
-	['htg',            'HTGS_phase'             ],
-	['remark',         'Remark'                 ],
-	['organisation',   'Organisation'           ],
-	['seq_len',        'Seq length'             ],
-	['fp_size',        'FP length'              ],
-	['supercontig',    'Super contig'           ],
-	['fish',           'FISH'                   ],
-	['description',    'Description'            ],
-    );
-
-    my $priority = 170;
-    foreach my $name (@names) {
-	my $value = $mf->get_scalar_attribute($name->[0]);
-	my $entry;
-	
-	#hacks for these type of entries
-	if ($name->[0] eq 'BACend_flag') {
-	    $value = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$value]; 
-	}
-	if ($name->[0] eq 'synonym') {
-	    $value = "http://www.sanger.ac.uk/cgi-bin/humace/clone_status?clone_name=$value" if $mf->get_scalar_attribute('organisation') eq 'SC';
-	}
-	if ($value) {
-	    $entry = {
-		'type'     => $name->[1],
-		'label'    => $value,
-		'priority' => $priority,};
-	    if ($name->[2]) {
-		$entry->{'link'} = $obj->get_ExtURL($name->[2],$value);
-	    }
-	    $panel->add_entry($entry);
-	    $priority--;
-	}
+  my $priority = 170;
+  foreach my $name (@names) {
+    my $value = $mf->get_scalar_attribute($name->[0]);
+    my $entry;
+    
+    #hacks for these type of entries
+    if ($name->[0] eq 'BACend_flag') {
+      $value = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$value]; 
     }
+    if ($name->[0] eq 'synonym') {
+      $value = "http://www.sanger.ac.uk/cgi-bin/humace/clone_status?clone_name=$value" if $mf->get_scalar_attribute('organisation') eq 'SC';
+    }
+    if ($value) {
+      $entry = {
+	'type'     => $name->[1],
+	'label'    => $value,
+	'priority' => $priority,};
+      if ($name->[2]) {
+	$entry->{'link'} = $obj->get_ExtURL($name->[2],$value);
+      }
+      $panel->add_entry($entry);
+      $priority--;
+    }
+  }
 
-    $panel->add_entry({
-	'label' => "Center on $caption",
-	'link'   => $url,
-	'priority' => $priority,
-    });
+  $panel->add_entry({
+    'label' => "Center on $caption",
+    'link'   => $url,
+    'priority' => $priority,
+  });
 
     #this is all for pre so can be sorted for that when the time comes
     #my $links = $self->my_config('LINKS');
@@ -435,151 +435,152 @@ sub _ajax_zmenu_misc_feature {
 }
 
 sub _ajax_zmenu_av {
-    my $self = shift;
-    my $panel = shift;
-    my $obj  = shift;
-    my $align = $obj->param('align');
-    my $hash = $obj->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'};
-    my $caption = $hash->{$align}{'name'};;
-    my $url = $obj->_url({'type'=>'Location','action'=>'Align','align'=>$align});
-    #if there's a score than show it and also change the name of the track (hacky)
-    if (my $score = $obj->param('score')) {
-	$panel->add_entry({
-	    'type'  => 'Score',
-	    'label' => sprintf("%.2f", $score),
-	});
-	if ($caption =~ /^(\d+)/) {
-	    $caption = "Constrained el. $1 way";
-	}
-    }
-    $panel->{'caption'} = $caption;
+  my $self = shift;
+  my $panel = shift;
+  my $obj  = shift;
+  my $align = $obj->param('align');
+  my $hash = $obj->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'};
+  my $caption = $hash->{$align}{'name'};;
+  my $url = $obj->_url({'type'=>'Location','action'=>'Align','align'=>$align});
+  #if there's a score than show it and also change the name of the track (hacky)
+  if (my $score = $obj->param('score')) {
     $panel->add_entry({
-	'label' => 'View alignments',
-	'link'  => $url,
+      'type'  => 'Score',
+      'label' => sprintf("%.2f", $score),
     });
-    return;
+    if ($caption =~ /^(\d+)/) {
+      $caption = "Constrained el. $1 way";
+    }
+  }
+  $panel->{'caption'} = $caption;
+  $panel->add_entry({
+    'label' => 'View alignments',
+    'link'  => $url,
+  });
+  return;
 }
 
 sub _ajax_zmenu_ga {
-    my $self   = shift;
-    my $panel  = shift;
-    my $obj    = shift;
-    my $sp1    = $obj->param('s1');
-    my $orient = $obj->param('orient');
-    my $disp_method = $obj->param('method');
-    $disp_method =~ s/BLASTZ_NET/BLASTz net/g;
-    $disp_method =~ s/TRANSLATED_BLAT_NET/Trans. BLAT net/g;
-    $panel->{'caption'} = "$sp1 $disp_method";
-
-    my $r1 = $obj->param('r1');
+  my $self   = shift;
+  my $panel  = shift;
+  my $obj    = shift;
+  my $sp1    = $obj->param('s1');
+  my $orient = $obj->param('orient');
+  my $disp_method = $obj->param('method');
+  $disp_method =~ s/BLASTZ_NET/BLASTz net/g;
+  $disp_method =~ s/TRANSLATED_BLAT_NET/Trans. BLAT net/g;
+  $panel->{'caption'} = "$sp1 $disp_method";
+  
+  my $r1 = $obj->param('r1');
+  $panel->add_entry({
+    'type'     => $r1,
+    'priority' => 250,
+  });
+  $panel->add_entry({
+    'type'     => 'Orientation',
+    'label'    => $orient,
+    'priority' => 200,
+  });
+  my $url = $obj->_url({'type'    => 'Location',
+			'action'  => 'View',
+			'species' => $sp1,
+			'r'       => $r1} );
+  $panel->add_entry({
+    'label'    => "Jump to $sp1",
+    'link'     => $url,
+    'priority' => 150,
+  });
+  
+  if ($obj->param('method')) {
+    $url = $obj->_url({'type'  =>'Location',
+		       'action'=>'ComparaGenomicAlignment',
+		       's1'    =>$sp1,
+		       'r1'    =>$obj->param('r1'),
+		       'method'=>$obj->param('method')} );
     $panel->add_entry({
-	'type'     => $r1,
-	'priority' => 250,
+      'label'    => 'View alignment',
+      'link'     => $url,
+      'priority' => 100,
     });
+    
+    $url = $obj->_url({'type'  =>'Location',
+		       'action'=>'View',
+		       'r'     =>$obj->param('r')} );
     $panel->add_entry({
-	'type'     => 'Orientation',
-	'label'    => $orient,
-	'priority' => 200,
-    });
-    my $url = $obj->_url({'type'    => 'Location',
-			  'action'  => 'View',
-			  'species' => $sp1,
-			  'r'       => $r1} );
-    $panel->add_entry({
-	'label'    => "Jump to $sp1",
-	'link'     => $url,
-	'priority' => 150,
-    });
-
-    if ($obj->param('method')) {
-	$url = $obj->_url({'type'  =>'Location',
-			   'action'=>'ComparaGenomicAlignment',
-			   's1'    =>$sp1,
-			   'r1'    =>$obj->param('r1'),
-			   'method'=>$obj->param('method')} );
-	$panel->add_entry({
-	    'label'    => 'View alignment',
-	    'link'     => $url,
-	    'priority' => 100,
+      'label'    => 'Center on this location',
+      'link'     => $url,
+      'priority' => 50,
 	});
-
-	$url = $obj->_url({'type'  =>'Location',
-			   'action'=>'View',
-			   'r'     =>$obj->param('r')} );
-	$panel->add_entry({
-	    'label'    => 'Center on this location',
-	    'link'     => $url,
-	    'priority' => 50,
-	});
-    }
-    return;
+  }
+  return;
 }
 
 sub _ajax_zmenu_marker {
-    my $self = shift;
-    my $panel = shift;
-    my $obj  = shift;
-    my $caption = $obj->param('m');
-    $panel->{'caption'} = $caption;
-    my $url = $obj->_url({'type'=>'Location','action'=>'Marker','m'=>$caption});
-    $panel->add_entry({
-	'label' => 'Marker info.',
-	'link'  => $url,
-    });
-    return;
+  my $self = shift;
+  my $panel = shift;
+  my $obj  = shift;
+  my $caption = $obj->param('m');
+  $panel->{'caption'} = $caption;
+  my $url = $obj->_url({'type'=>'Location','action'=>'Marker','m'=>$caption});
+  $panel->add_entry({
+    'label' => 'Marker info.',
+    'link'  => $url,
+  });
+  return;
 }
 
 
 #zmenu for aligments (directed to /Location/Genome)
 sub _ajax_zmenu_alignment {
-    my $self = shift;
-    my $panel = shift;
-    my $obj  = shift;
-    my $id = $obj->param('id');
-    my $obj_type  = $obj->param('ftype');
-    my $db     = $obj->param('db')  || 'core';
-    my $db_adaptor = $obj->database(lc($db));
-    my $adaptor_name = "get_${obj_type}Adaptor";
-    my $feat_adap =  $db_adaptor->$adaptor_name;
-    my $fs = $feat_adap->can( 'fetch_all_by_hit_name' ) ? $feat_adap->fetch_all_by_hit_name($id)
-           : $feat_adap->can( 'fetch_all_by_probeset' ) ? $feat_adap->fetch_all_by_probeset($id)
-           :                                              []
-           ;
-    my $external_db_id = ($fs->[0] && $fs->[0]->can('external_db_id')) ? $fs->[0]->external_db_id : '';
-    my $extdbs = $external_db_id ? $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
-    my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
+  my $self = shift;
+  my $panel = shift;
+  my $obj  = shift;
+  my $id = $obj->param('id');
+  my $obj_type  = $obj->param('ftype');
+  my $db     = $obj->param('db')  || 'core';
+  my $db_adaptor = $obj->database(lc($db));
+  my $adaptor_name = "get_${obj_type}Adaptor";
+  my $feat_adap =  $db_adaptor->$adaptor_name;
+  my $fs = $feat_adap->can( 'fetch_all_by_hit_name' ) ? $feat_adap->fetch_all_by_hit_name($id)
+    : $feat_adap->can( 'fetch_all_by_probeset' ) ? $feat_adap->fetch_all_by_probeset($id)
+    :                                              []
+    ;
+  my $external_db_id = ($fs->[0] && $fs->[0]->can('external_db_id')) ? $fs->[0]->external_db_id : '';
+  my $extdbs = $external_db_id ? $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
+  my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
 
-    #hack to link sheep bac ends to trace archive
-    if ($fs->[0]->analysis->logic_name eq 'sheep_bac_ends') {
-	$hit_db_name = 'TRACE';
-    }
+  #hack to link sheep bac ends to trace archive
+  if ($fs->[0]->analysis->logic_name eq 'sheep_bac_ends') {
+    $hit_db_name = 'TRACE';
+  }
 
-    my $species= $obj->species;
-    $panel->{'caption'} = "$id ($hit_db_name)";
-    my @seq = [];
-    @seq = split "\n", $obj->get_ext_seq($id,$hit_db_name) if ($hit_db_name !~ /CCDS/); #don't show EMBL desc for CCDS
-    my $desc = $seq[0];
-    if ($desc) {
-	if ($desc =~ s/^>//) {
-	    $panel->add_entry({
-		'label' => $desc,
-		'priority' => 150,
-	    });
-	}
+  my $species= $obj->species;
+  $panel->{'caption'} = "$id ($hit_db_name)";
+  my @seq = [];
+  @seq = split "\n", $obj->get_ext_seq($id,$hit_db_name) if ($hit_db_name !~ /CCDS/); #don't show EMBL desc for CCDS
+  my $desc = $seq[0];
+  if ($desc) {
+    if ($desc =~ s/^>//) {
+      $panel->add_entry({
+	'label' => $desc,
+	'priority' => 150,
+      });
     }
-    my $URL = CGI::escapeHTML( $obj->get_ExtURL($hit_db_name, $id) );
-    $panel->add_entry({
-	'label' => $id,
-	'link'  => $URL,
-	'priority' => 100,
-    });
-    my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
-    $panel->add_entry({ 
-	'label' => 'View all hits',
-	'link'   => $fv_url,
-	'priority' => 50,
-    });
-    return;
+  }
+
+  my $URL = CGI::escapeHTML( $obj->get_ExtURL($hit_db_name, $id) );
+  $panel->add_entry({
+    'label' => $id,
+    'link'  => $URL,
+    'priority' => 100,
+  });
+  my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
+  $panel->add_entry({ 
+    'label' => 'View all hits',
+    'link'   => $fv_url,
+    'priority' => 50,
+  });
+  return;
 }
 
 sub _ajax_zmenu_regulation {
@@ -737,8 +738,6 @@ sub _ajax_zmenu_regulation {
  
   return;
 }
-
-
 
 ############################ OLD CODE! ###############################################################
 
