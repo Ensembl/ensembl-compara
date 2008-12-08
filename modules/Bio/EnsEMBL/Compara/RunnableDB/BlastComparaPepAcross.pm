@@ -119,11 +119,14 @@ sub fetch_input {
   $self->{null_cigar} = $p->{null_cigar} if (defined($p->{null_cigar}));
 
   # We get the list of genome_dbs to execute, then go one by one with this member
-  # Hacky, the list is from the PAFCluster analysis
-  my $pafcluster_analysis = $self->analysis->adaptor->fetch_by_logic_name('PAFCluster');
-  my $pafcluster_parameters = eval($pafcluster_analysis->parameters);
+  # Hacky, the list is from the Cluster analysis
+  my $cluster_analysis;
+  $cluster_analysis = $self->analysis->adaptor->fetch_by_logic_name('PAFCluster');
+  $cluster_analysis = $self->analysis->adaptor->fetch_by_logic_name('HclusterPrepare') unless (defined($cluster_analysis));
+  $DB::single=1;1;
+  my $cluster_parameters = eval($cluster_analysis->parameters);
   my @gdbs;
-  foreach my $gdb_id (@{$pafcluster_parameters->{species_set}}) {
+  foreach my $gdb_id (@{$cluster_parameters->{species_set}}) {
     my $genomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
     push @gdbs, $genomeDB;
   }
@@ -171,7 +174,7 @@ sub run {
   my $member = $self->{member};
   my $query = $self->{query};
 
-  my @cross_pafs;
+  my $cross_pafs;
 
   foreach my $gdb (@{$self->{cross_gdbs}}) {
     my $fastafile .= $gdb->name() . "_" . $gdb->assembly() . ".fasta";
@@ -185,7 +188,9 @@ sub run {
     # results for this query peptide against this hit genome
     my $reusable_pafs = $self->try_reuse_blast($p,$gdb->dbID,$member) if (defined $p->{reuse_db});
     if (defined($reusable_pafs)) {
-      push @cross_pafs, @$reusable_pafs;
+      foreach my $reusable_paf (@$reusable_pafs) {
+        push @{$cross_pafs->{$gdb->dbID}}, $reusable_paf;
+      }
     } else {
 
       ## Define the filter from the parameters
@@ -260,11 +265,11 @@ sub run {
           $feature->analysis($self->analysis);
           $feature->{null_cigar} = 1 if (defined($self->{null_cigar}));
         }
-        push @cross_pafs, $feature;
+        push @{$cross_pafs->{$gdb->dbID}}, $feature;
       }
     }
   }
-  $self->{cross_pafs} = \@cross_pafs;
+  $self->{cross_pafs} = $cross_pafs;
   return 1;
 }
 
@@ -272,8 +277,10 @@ sub run {
 sub write_output {
   my( $self) = @_;
 
-  print STDERR "Inserting ", scalar @{$self->{cross_pafs}}," PAFs...\n" if ($self->debug);
-  $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store(@{$self->{cross_pafs}});
+  print STDERR "Inserting PAFs...\n" if ($self->debug);
+  foreach my $gdb_id (keys %{$self->{cross_pafs}}) {
+    $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store(@{$self->{cross_pafs}{$gdb_id}});
+  }
 }
 
 
