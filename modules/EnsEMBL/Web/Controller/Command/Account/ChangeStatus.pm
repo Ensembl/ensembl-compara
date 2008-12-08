@@ -13,19 +13,18 @@ use base 'EnsEMBL::Web::Controller::Command::Account';
 
 sub BUILD {
   my ($self, $ident, $args) = @_; 
-  warn "*** Building status change";
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   my $cgi = $self->action->cgi;
-  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::Admin', {'group_id' => $cgi->param('group_id')});
+  $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::Admin', {'group_id' => $cgi->param('id')});
 }
 
 sub process {
   my $self = shift;
   my $cgi = $self->action->cgi;
-  my $group = EnsEMBL::Web::Data::Group->new($cgi->param('group_id'));
+  my $group = EnsEMBL::Web::Data::Group->new($cgi->param('id'));
   $group->assign_status_to_user($cgi->param('user_id'), $cgi->param('new_status'));
 
-  $cgi->redirect( $self->url('/Account/Group', {'id' => $cgi->param('group_id')}) );
+  $self->ajax_redirect($self->ajax_url('/Account/ManageGroup', 'id' => $cgi->param('id'), 'reload' => 1));
 }
 
 }
