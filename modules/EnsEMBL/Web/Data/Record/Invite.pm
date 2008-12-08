@@ -10,6 +10,7 @@ __PACKAGE__->add_fields(
   email  => 'text',
   status => 'text',
   code   => 'text',
+  registered => "enum('N','Y')",
 );
 
 1;
