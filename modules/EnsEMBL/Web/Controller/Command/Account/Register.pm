@@ -16,8 +16,10 @@ sub BUILD {
 sub process {
   my $self = shift;
 
-  ## Create basic page object, so we can access CGI parameters
-  my $webpage = EnsEMBL::Web::Document::Interface::simple('Account', 'Popup');
+  ## Create basic page object
+  my $cgi = $self->action->cgi;
+  my $page_type = $cgi->param('no_popup') ? undef : 'Popup'; 
+  my $webpage = EnsEMBL::Web::Document::Interface::simple('Account', $page_type);
 
   my $sd = EnsEMBL::Web::SpeciesDefs->new();
   my $help_email = $sd->ENSEMBL_HELPDESK_EMAIL;
@@ -51,6 +53,7 @@ sub process {
   $interface->customize_element('organisation', 'label', 'Organisation');
   $interface->element('status', {'type'=>'Hidden'});
   $interface->extra_data('record_id');
+  $interface->extra_data('no_popup');
   $interface->element_order('name', 'email', 'organisation', 'status');
 
   ## Render page or munge data, as appropriate
