@@ -194,11 +194,45 @@ sub updatepafids {
 
     my $second_offset_hash = $sth->fetchrow_hashref;
     my $second_offset = $second_offset_hash->{max};
-    my $sql2 = "UPDATE $tbl_name".
-               " SET peptide_align_feature_id=peptide_align_feature_id+$first_offset";
+
+#     my $sql2 = "UPDATE $tbl_name".
+#                " SET peptide_align_feature_id=peptide_align_feature_id+$first_offset";
+#     my $sth2 = $self->dbc->prepare($sql2);
+#     print STDERR "Executing [", $sth2->sql, "].\n";
+#     $sth2->execute();
+    #####
+    my $temp_tbl_name = $tbl_name . "_temp";
+    my $sql2 = "CREATE TABLE $temp_tbl_name LIKE $tbl_name";
     my $sth2 = $self->dbc->prepare($sql2);
     print STDERR "Executing [", $sth2->sql, "].\n";
     $sth2->execute();
+
+    $sql2 = "ALTER TABLE $temp_tbl_name AUTO_INCREMENT=$first_offset";
+    $sth2 = $self->dbc->prepare($sql2);
+    print STDERR "Executing [", $sth2->sql, "].\n";
+    $sth2->execute();
+
+    $sql2 = "ALTER TABLE $temp_tbl_name DISABLE KEYS";
+    $sth2 = $self->dbc->prepare($sql2);
+    print STDERR "Executing [", $sth2->sql, "].\n";
+    $sth2->execute();
+
+    $sql2 = "INSERT INTO $temp_tbl_name (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, analysis_id, qstart, qend, hstart, hend, score, evalue, align_length, identical_matches, perc_ident, positive_matches, perc_pos, hit_rank, cigar_line) select qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, analysis_id, qstart, qend, hstart, hend, score, evalue, align_length, identical_matches, perc_ident, positive_matches, perc_pos, hit_rank, cigar_line FROM $tbl_name";
+    $sth2 = $self->dbc->prepare($sql2);
+    print STDERR "Executing [", $sth2->sql, "].\n";
+    $sth2->execute();
+
+    $sql2 = "DROP TABLE $tbl_name";
+    $sth2 = $self->dbc->prepare($sql2);
+    print STDERR "Executing [", $sth2->sql, "].\n";
+    $sth2->execute();
+
+    $sql2 = "RENAME TABLE $temp_tbl_name TO $tbl_name";
+    $sth2 = $self->dbc->prepare($sql2);
+    print STDERR "Executing [", $sth2->sql, "].\n";
+    $sth2->execute();
+    #####
+
     $first_offset += $second_offset;
   }
 
