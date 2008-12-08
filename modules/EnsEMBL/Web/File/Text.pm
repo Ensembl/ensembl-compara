@@ -6,7 +6,7 @@ use EnsEMBL::Web::Root;
 use LWP::UserAgent;
 use HTTP::Request;
 use HTTP::Response;
-use Compress::Zlib;
+use EnsEMBL::Web::CompressionSupport;
 
 use EnsEMBL::Web::File::Driver::Disk;
 use EnsEMBL::Web::File::Driver::Memcached;
@@ -86,6 +86,7 @@ sub get_url_content {
   my $response = $useragent->request($request);
   if( $response->is_success && $response->content) {
     $content = $response->content;
+    EnsEMBL::Web::CompressionSupport::uncomp( \$content );
   }   
   return $content;
 }
@@ -98,9 +99,9 @@ sub get_file_content {
   my $in = $cgi->tmpFileName($object->param('file'));
   my $open = open (IN, '<', $in) || warn qq(Cannot open CGI temp file for caching: $!);
   if( $open ) {
-    while (<IN>) {
-      $content .= $_;
-    }
+    local $/ = undef;
+    $content = <IN>;
+    EnsEMBL::Web::CompressionSupport::uncomp( \$content );
   }
   return $content;
 }

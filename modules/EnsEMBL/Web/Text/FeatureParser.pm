@@ -40,6 +40,7 @@ use EnsEMBL::Web::Text::FeatureParser::WIG;
 use EnsEMBL::Web::Text::FeatureParser::GBrowse;
 use EnsEMBL::Web::Text::Feature::generic;
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::CompressionSupport;
 
 
 #----------------------------------------------------------------------
@@ -158,15 +159,14 @@ sub analyse {
   return unless $data;
   my %info;
   foreach my $row ( split /\n/, $data ) {
-  my @analysis = $self->analyse_row($row);
-  if ($analysis[2]) {
-    $info{$analysis[0]}{$analysis[1]} = $analysis[2];
-  }
-  else {
-    $info{$analysis[0]} = $analysis[1];
-  }
+    my @analysis = $self->analyse_row($row);
+    if( $analysis[2] ) {
+      $info{$analysis[0]}{$analysis[1]} = $analysis[2];
+    } else {
+      $info{$analysis[0]} = $analysis[1];
+    }
   ## Should we halt the analysis once we have a file format? Will any other useful info appear later in the file?
-  last if $analysis[0] eq 'format';
+    last if $analysis[0] eq 'format';
   }
 
   $self->format($info{'format'});
@@ -188,12 +188,12 @@ sub analyse {
 
 sub analyse_row {
   my( $self, $row ) = @_;
+  chomp;
   $row =~ s/[\t\r\s]+$//g;
   
   if( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
     return ('browser_switches', $1, $2);
-  }
-  elsif ($row =~ s/^track\s+(.*)$/$1/i) {
+  } elsif ($row =~ s/^track\s+(.*)$/$1/i) {
     my %config;
     while( $row ne '' ) {
       if( $row =~ s/^(\w+)\s*=\s*\"([^\"]+)\"// ) {  
@@ -220,42 +220,37 @@ sub analyse_row {
     if (my $ttype = $config{type}) {
       return ('format', 'WIG') if ($ttype =~ /wiggle_0/i);
     }
-  }
-  else {
-  return unless $row =~ /\d+/g ;
-  if ($row =~ /^reference(\s+)?=(\s+)?(.+)/) {
-    return ('format', 'GBrowse');
-  }   
-  my @tab_del = split /(\t|  +)/, $row;
+  } else {
+    return unless $row =~ /\d+/g ;
+    if( $row =~ /^reference(\s+)?=(\s+)?(.+)/ ) {
+      return ('format', 'GBrowse');
+    }   
+    my @tab_del = split /(\t|  +)/, $row;
 
-  my $current_key = $self->{'_current_key'} ;
-  if( $tab_del[12] eq '.' || $tab_del[12] eq '+' || $tab_del[12] eq '-' ) {
-    if( $tab_del[16] =~ /^(gene_id|transcript_id) [^;]+(\; (gene_id|transcript_id) [^;]+)?/ ) { ## GTF format
-      return ('format', 'GTF');   
-    } else {     ## GFF format
-      return ('format', 'GFF');   
-    }
-  }
-  elsif ( $tab_del[14] eq '+' || $tab_del[14] eq '-' || $tab_del[14] eq '.') { # DAS format accepted by Ensembl
-    return ('format', 'DAS');   
-  } 
-  else {
-    my @ws_delim = split /\s+/, $row;
-    if( $ws_delim[8] =~/^[-+][-+]?$/  ) { ## PSL format
-    return ('format', 'PSL');   
-    } 
-    elsif ($ws_delim[0] =~/^>/ ) {  ## Simple format (chr/start/end/type
-    return ('format', 'generic');   
-    } 
-    else { 
-      my $fcount = scalar(@ws_delim);
-      if ($fcount > 2 and $fcount < 13) {
-        if ($ws_delim[1] =~ /\d+/ && $ws_delim[2] =~ /\d+/) {
-          return ('format', 'BED');   
+    my $current_key = $self->{'_current_key'} ;
+    if( $tab_del[12] eq '.' || $tab_del[12] eq '+' || $tab_del[12] eq '-' ) {
+      if( $tab_del[16] =~ /^(gene_id|transcript_id) [^;]+(\; (gene_id|transcript_id) [^;]+)?/ ) { ## GTF format
+        return ('format', 'GTF');   
+      } else {     ## GFF format
+        return ('format', 'GFF');   
+      }
+    } elsif ( $tab_del[14] eq '+' || $tab_del[14] eq '-' || $tab_del[14] eq '.') { # DAS format accepted by Ensembl
+      return ('format', 'DAS');   
+    } else {
+      my @ws_delim = split /\s+/, $row;
+      if( $ws_delim[8] =~/^[-+][-+]?$/  ) { ## PSL format
+        return ('format', 'PSL');   
+      } elsif ($ws_delim[0] =~/^>/ ) {  ## Simple format (chr/start/end/type
+        return ('format', 'generic');   
+      } else { 
+        my $fcount = scalar(@ws_delim);
+        if ($fcount > 2 and $fcount < 13) {
+          if ($ws_delim[1] =~ /\d+/ && $ws_delim[2] =~ /\d+/) {
+            return ('format', 'BED');   
+          }
         }
       }
-    }
-  } 
+    } 
   }
 }
  
@@ -310,18 +305,18 @@ sub parse_file {
   my( $self, $file, $format ) = @_;
   return unless $file;
 
-  if (!$format) {
-  while( <$file> ) {
-    my @analysis = $self->analyse_row( $_ );
-    if( $analysis[0] eq 'format') {
-    $format = $analysis[1];
-    last;
-    }
-  }   
+  if( !$format ) {
+    while( <$file> ) {
+      my @analysis = $self->analyse_row( $_ );
+      if( $analysis[0] eq 'format') {
+        $format = $analysis[1];
+        last;
+      }
+    }   
   }
 
   while( <$file> ) {
-  $self->parse_row( $_, $format );
+    $self->parse_row( $_, $format );
   }   
 }
 
@@ -348,11 +343,13 @@ sub parse_URL {
     $request->header( 'Cache-control' => 'no-cache' );
     my $response = $useragent->request($request); 
     if( $response->is_success ) {
+      my $content = $response->content;
+      EnsEMBL::Web::CompressionSupport::uncomp( \$content ); 
       if (!$format) {
-        my $info = $self->analyse( $response->content );
+        my $info = $self->analyse( $content );
         $format = $info->{'format'};
       }
-      $self->parse( $response->content, $format );
+      $self->parse( $content, $format );
     } else {
        warn( "Failed to parse: $URL" );
     }
