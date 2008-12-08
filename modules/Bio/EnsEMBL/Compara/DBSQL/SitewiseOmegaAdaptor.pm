@@ -49,8 +49,6 @@ use Bio::EnsEMBL::Utils::Exception;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-# my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID, $window_size, $PACKED);
-
 sub fetch_all_by_ProteinTreeId {
     my ($self, $protein_tree_id) = @_;
     my $sitewise_dnds_values = [];
@@ -60,9 +58,12 @@ sub fetch_all_by_ProteinTreeId {
 	    sitewise_id,
 	    aln_position,
 	    node_id,
+	    tree_node_id,
 	    omega,
 	    omega_lower,
 	    omega_upper,
+	    optimal,
+	    threshold_on_branch_ds,
 	    type
 	FROM
 	    sitewise_aln
@@ -74,17 +75,20 @@ sub fetch_all_by_ProteinTreeId {
     $sth->execute($protein_tree_id);
 
     my $sitewise_dnds;
-    while (my ($sitewise_id,$aln_position,$node_id,
-               $omega,$omega_lower,$omega_upper,
-               $type) = $sth->fetchrow_array()) {
+    while (my ($sitewise_id,$aln_position,$node_id,$tree_node_id,
+               $omega,$omega_lower,$omega_upper,$optimal,
+               $threshold_on_branch_ds,$type) = $sth->fetchrow_array()) {
 	$sitewise_dnds = Bio::EnsEMBL::Compara::SitewiseOmega->new_fast(
 				       {'adaptor' => $self,
 					'_dbID' => $sitewise_id,
 					'aln_position' => $aln_position,
 					'node_id' => $node_id,
+					'tree_node_id' => $tree_node_id,
 					'omega' => $omega,
 					'omega_lower' => $omega_lower,
 					'omega_upper' => $omega_upper,
+					'optimal' => $optimal,
+					'threshold_on_branch_ds' => $threshold_on_branch_ds,
 					'type' => $type});
 	push(@$sitewise_dnds_values, $sitewise_dnds);
     }
