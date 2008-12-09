@@ -328,16 +328,21 @@ sub render {
     my $counts = {};
     if( !$self->{omit_header}) {
       if (exists $self->{'previous'} || exists $self->{'next'} ) {
-        $HTML .= q(
-          <div class="nav-heading">
-          <div class="left-button">);
         if (exists $self->{'previous'}) {
           $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
-          my $url = $self->{'previous'}{'url'};
-          if (!$url) {
-            $url = $self->{'object'}->_url({'action'=>$self->{'previous'}{'code'},'function'=>undef});
+          if ($button_text) {
+            $HTML .= q(
+          <div class="nav-heading">
+          <div class="left-button">);
+            my $url = $self->{'previous'}{'url'};
+            if (!$url) {
+              $url = $self->{'object'}->_url({'action'=>$self->{'previous'}{'code'},'function'=>undef});
+            }
+            $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>),CGI::escapeHTML($url),CGI::escapeHTML($button_text);
           }
-          $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>),CGI::escapeHTML($url),CGI::escapeHTML($button_text);
+          else {
+            $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
+          }
         } 
         else {
           $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
@@ -346,13 +351,18 @@ sub render {
           <div class="right-button">);
         if( exists $self->{'next'} ) {
           $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
-          my $url = $self->{'next'}{'url'};
-          if (!$url) {
-            $url = $self->{'object'}->_url({'action'=>$self->{'next'}{'code'},'function'=>undef});
+          if ($button_text) {
+            my $url = $self->{'next'}{'url'};
+            if (!$url) {
+              $url = $self->{'object'}->_url({'action'=>$self->{'next'}{'code'},'function'=>undef});
+            }
+            $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>),CGI::escapeHTML($url),CGI::escapeHTML($button_text);
           }
-          $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>),CGI::escapeHTML($url),CGI::escapeHTML($button_text);
+          else {
+            $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
+          }
         } else {
-          $HTML .= q(<span>&nbsp;</span>);
+          $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
         }
         $HTML .= q(</div>);
         if( exists $self->{'caption'} ) {
