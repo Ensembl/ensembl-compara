@@ -145,6 +145,16 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
   my @T = @{$conf->ENSEMBL_PLUGINS||[]};
   do{ push @plugins, $T[0] if @T } while splice(@T,0,2);
   
+	my $extra = '';
+	if(
+	  $conf->ENSEMBL_MEMCACHED &&
+	  @{ $conf->ENSEMBL_MEMCACHED->{'servers'} }
+  ) {
+    $extra .= sprintf '
+ Memcached enabled:  %s',
+    join "\n                     ", @{ $conf->ENSEMBL_MEMCACHED->{'servers'} };
+
+	}
   warn sprintf '
 ==============================================================================
  Server information:
@@ -182,7 +192,8 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
 
   $conf->ENSEMBL_BASE_URL,$conf->ENSEMBL_JSCSS_TYPE,$conf->ENSEMBL_CSS_NAME,
   $conf->ENSEMBL_BASE_URL,$conf->ENSEMBL_JSCSS_TYPE,$conf->ENSEMBL_JS_NAME,
-  join "\n                     ", @plugins
+  join "\n                     ", @plugins,
+	$extra
   ;
   require EnsEMBL::Web::BlastView::MetaDataBlast;
 }
