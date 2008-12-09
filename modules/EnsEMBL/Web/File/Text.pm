@@ -28,18 +28,20 @@ sub new {
     file_root    => '',
     URL_root     => '',
     md5          => '',
-    driver       => undef,
   };
   bless $self, $class;
 
-  $self->driver = EnsEMBL::Web::File::Driver::Memcached->new ||
-                  EnsEMBL::Web::File::Driver::Disk->new;
+  ## Drivers by priority order (if one fails to do operation, another)
+  $self->drivers = [
+    EnsEMBL::Web::File::Driver::Memcached->new,
+    EnsEMBL::Web::File::Driver::Disk->new,
+  ];
 
   return $self;
 }
 
-sub driver :lvalue { $_[0]->{'driver'}; }
-sub cache  :lvalue { $_[0]->{'cache'}; }
+sub drivers :lvalue { $_[0]->{'drivers'}; }
+sub cache   :lvalue { $_[0]->{'cache'}; }
 
 sub set_cache_filename {
   my ($self, $prefix, $filename) = @_;
@@ -118,23 +120,42 @@ sub save {
     }
   }
 
-  return $self->driver->save($content, $self->filename, {compress => 1});
+  for my $driver (@{ $self->drivers }) {
+    return 1 
+      if $driver && $driver->save($content, $self->filename, {compress => 1});
+  }
+  
+  warn 'Can`t save file with current drivers';
+  return undef;
 }
 
 sub exists {
   my $self = shift;
-  return $self->driver->exists($self->filename);
+
+  for my $driver (@{ $self->drivers }) {
+    return 1
+      if $driver && $driver->exists($self->filename);
+  }
 }
 
 sub delete {
   my $self = shift;
-  return $self->driver->delete($self->filename);
+
+  for my $driver (@{ $self->drivers }) {
+    return 1
+      if $driver && $driver->delete($self->filename);
+  }
 }
 
 sub retrieve {
   my ($self, $cache) = @_;
   $cache ||= $self->filename;
-  return $self->driver->get($cache, {compress => 1});
+
+  for my $driver (@{ $self->drivers }) {
+    if ($driver && (my $result = $driver->get($cache, {compress => 1}))) {
+      return $result;
+    }
+  }
 }
 
 __END__

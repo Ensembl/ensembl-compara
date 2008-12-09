@@ -268,6 +268,7 @@ sub save {
   }
   
   warn 'Can`t save with current drivers';
+  return undef;
 }
 
 
