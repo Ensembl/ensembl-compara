@@ -148,11 +148,12 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
 	my $extra = '';
 	if(
 	  $conf->ENSEMBL_MEMCACHED &&
-	  @{ $conf->ENSEMBL_MEMCACHED->{'servers'} }
+		$conf->ENSEMBL_MEMCACHED->{'servers'} &&
+	  @{ $conf->ENSEMBL_MEMCACHED->{'servers'}||[] }
   ) {
     $extra .= sprintf '
  Memcached enabled:  %s',
-    join "\n                     ", @{ $conf->ENSEMBL_MEMCACHED->{'servers'} };
+    join "\n                     ", @{ $conf->ENSEMBL_MEMCACHED->{'servers'}||[] };
 
 	}
   warn sprintf '
