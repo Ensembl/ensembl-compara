@@ -988,8 +988,13 @@ sub build_sequence {
       if ($seq->{'font-weight'}) {
         $new_style .= "font-weight:$seq->{'font-weight'};";
       }
-  
-      $style = qq(style="$new_style") if ($new_style);
+      
+      if ($new_style) {
+        # Remove placeholder styles - auto is not a valid colour
+        $new_style =~ s/background-color:auto;//;
+        $new_style =~ s/color:auto;//;
+        $style = qq(style="$new_style");
+      }
   
       $post .= $seq->{'post'};
   
