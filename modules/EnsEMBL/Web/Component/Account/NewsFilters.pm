@@ -76,7 +76,7 @@ sub content {
   if (!$has_filters) {
     $html .= qq(<p class="center"><img src="/img/help/filter_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
     $html .= qq(<p class="center">You do not have any filters set, so you will see general headlines.</p>
-<p><a href="/Account/News?_referer=).CGI::escape($self->object->param('_referer')).'" class="modal_link">Add a news filter &rarr;</a></p>';
+<p><a href="/Account/NewsFilter?_referer=).CGI::escape($self->object->param('_referer')).'" class="modal_link">Add a news filter &rarr;</a></p>';
   }
 
   return $html;
