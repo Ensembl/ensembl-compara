@@ -203,15 +203,18 @@ sub flat {
   foreach (qw( genscan similarity gene repeat variation contig marker )) {
     $seq_dumper->disable_feature_type($_) unless $params->{$_};
   }
+  
+  my $vega_db = $object->database('vega');
+  my $estgene_db = $object->database('otherfeatures');
 
-  if ($params->{'vegagene'}) {
+  if ($params->{'vegagene'} && $vega_db) {
     $seq_dumper->enable_feature_type('vegagene');
-    $seq_dumper->attach_database('vega', $object->database('vega'));
+    $seq_dumper->attach_database('vega', $vega_db);
   }
   
-  if ($params->{'estgene'}) {
+  if ($params->{'estgene'} && $estgene_db) {
     $seq_dumper->enable_feature_type('estgene');
-    $seq_dumper->attach_database('estgene', $object->database('otherfeatures'));
+    $seq_dumper->attach_database('estgene', $estgene_db);
   }
   
   return $seq_dumper->dump($slice, $format);
