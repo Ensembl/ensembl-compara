@@ -1235,5 +1235,8 @@ sub focus {
   return $info;
 }
 
+sub can_export {
+  return 1;
+}
 
 1;

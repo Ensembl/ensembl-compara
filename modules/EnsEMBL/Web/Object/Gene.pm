@@ -1216,6 +1216,9 @@ sub get_similarity_hash{
   return $DBLINKS  || [];
 }
 
+sub can_export {
+  return 1;
+}
 
 1;
 

@@ -409,5 +409,8 @@ sub command {
     return $self->{'command'};
 }
 
+sub can_export {
+  return 0;
+}
 
 1;
