@@ -778,9 +778,8 @@ sub _local_tools {
       'title'   => 'You cannot add custom data to this page'
     );
   }
-
-  # TODO: Correct if condition - currently always available of Location, Gene and Transcript
-  if (1) {
+  
+  if ($obj->can_export) {
     my $action = $obj->type.'/'.$obj->action;
        $action .= '/'.$obj->function if $obj->function;
        
@@ -788,6 +787,13 @@ sub _local_tools {
       'caption' => 'Export data',
       'class'   => 'modal_link',
       'url'     => $obj->_url({ 'time' => time, 'type' => 'Export', 'action' => $action, '_referer' => $referer })
+    );
+  } else {
+    $self->{'page'}->local_tools->add_entry(
+      'caption' => 'Export data',
+      'class'   => 'disabled',
+      'url'     => undef,
+      'title'   => 'You cannot export data from this page'
     );
   }
 }
@@ -952,14 +958,6 @@ sub delete_node {
   if ($code && $self->tree) {
     my $node = $self->tree->get_node($code);
     $node->remove_node;
-  }
-}
-
-sub delete_submenu {
-  my ($self, $code) = @_;
-  if ($code && $self->tree) {
-    my $node = $self->tree->get_node($code);
-		$node->remove_subtree;
   }
 }
 
