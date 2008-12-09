@@ -10,8 +10,8 @@ sub new {
   my( $class, $hash_ref ) = @_;
   
   my $extra     = {
-    'think_start' => [ $hash_ref->[6] ],
-    'think_end'   => [ $hash_ref->[7] ],
+    'thick_start' => [ $hash_ref->[6] ],
+    'thick_end'   => [ $hash_ref->[7] ],
     'item_colour' => [ $hash_ref->[8] ],
     'expCount'    => [ $hash_ref->[12] ],
     'expIds'      => [ split ',', $hash_ref->[13] ],
