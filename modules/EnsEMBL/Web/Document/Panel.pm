@@ -328,12 +328,11 @@ sub render {
     my $counts = {};
     if( !$self->{omit_header}) {
       if (exists $self->{'previous'} || exists $self->{'next'} ) {
+        $HTML .= qq(<div class="nav-heading">
+          <div class="left-button">);
         if (exists $self->{'previous'}) {
           $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
           if ($button_text) {
-            $HTML .= q(
-          <div class="nav-heading">
-          <div class="left-button">);
             my $url = $self->{'previous'}{'url'};
             if (!$url) {
               $url = $self->{'object'}->_url({'action'=>$self->{'previous'}{'code'},'function'=>undef});
