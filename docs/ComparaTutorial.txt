@@ -1,10 +1,10 @@
-﻿EnsEMBL Compara Perl API Tutorial
+EnsEMBL Compara Perl API Tutorial
 By Cara Woodwark, Abel Ureta-Vidal and Javier Herrero
 Revisions: CW Jun 04, AUV Aug 04, Nov 04, JH Nov 04, Apr 05, BB Jan 07, LG Nov 08
 NB: this tutorial has been tested to work with branch-ensembl-51, and with EnsEMBL databases release 51. However you may find still errors in it. Please email ensembl-dev@ebi.ac.uk, so that we can correct them.
 Introduction
 This tutorial is an introduction to the EnsEMBL Compara API. A knowledge of the EnsEMBL core API is presumed, it is assumed that concepts and conventions presented in the EnsEMBL core API tutorial have been assimilated by the user. The EnsEMBL core API tutorial can be found at
-http://www.ensembl.org/info/docs/api/core/core_tutorial.html (and in Nov'2008 a slightly outdated CVS version in ensembl/docs/tutorial/ensembl_tutorial.pdf) and should be read first as it provides a comprehensive guide to the EnsEMBL environment. 
+http://www.ensembl.org/info/docs/api/core/core_tutorial.html  (and in Nov'2008 a slightly outdated CVS version in ensembl/docs/tutorial/ensembl_tutorial.pdf) and should be read first as it provides a comprehensive guide to the EnsEMBL environment. 
 A documentation about the Compara database schema is available at  http://www.ensembl.org/info/docs/api/compara/compara_schema.html and while not absolutely necessary for this tutorial, an understanding of the database tables may help, as many of the Adaptor modules are table-specific.
 Obtaining the code
 To use the EnsEMBL Compara API you have the same requirement that when using the EnsEMBL core API i.e. perl 5.6 or later, bioperl 1.2 or later, DBI, DBD::mysql and EnsEMBL core code. Please refer to the EnsEMBL core API tutorial that will tell you everything about these modules, how and where to get them.
@@ -36,8 +36,8 @@ Connecting to an EnsEMBL Compara database
 Connection parameters
 Starting from release 48 EnsEMBL is running two public MySQL servers on host=ensembldb.ensembl.org with two different port numbers. The server on port=3306 hosts all databases prior to rel.48 and the server on port=5306 hosts all newer databases starting from rel.48.
 There are two API ways to connect to the EnsEMBL Compara database:
-In most cases you will prefer the implicit way - using Bio::EnsEMBL::Registry module, which can read either a global or a specific configuration file or auto-configure itself.
-However there are cases where you might want more flexibility provided by the explicit creation of a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor.
+	In most cases you will prefer the implicit way - using Bio::EnsEMBL::Registry module, which can read either a global or a specific configuration file or auto-configure itself.
+	However there are cases where you might want more flexibility provided by the explicit creation of a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor.
 Implicitly, using the Bio::EnsEMBL::Registry auto-configuration feature (recommended)
 For using the auto-configuration feature, you will first need to supply the connection parameters to the Registry loader. For instance, if you want to connect to the the public EnsEMBL databases you can use the following command in your scripts:
 
@@ -354,10 +354,10 @@ All the homologies and families refer to Members. Homology objects store ortholo
 Member objects
 A Member represent either a gene or a protein. Most of them are defined in the corresponding EnsEMBL core database. For instance, the sequence for the human gene ENSG00000004059 is stored in the human core database.
 The fetch_by_source_stable_id method of the MemberAdaptor takes two arguments. The first one is the source of the Member and can be:
-ENSEMBLPEP, derived from an EnsEMBL translation
-ENSEMBLGENE, derived from an EnsEMBL gene
-Uniprot/SWISSPROT, derived from a Uniprot/Swissprot entry
-Uniprot/SPTREMBL, derived from a Uniprot/SP-TrEMBL entry
+	ENSEMBLPEP, derived from an EnsEMBL translation
+	ENSEMBLGENE, derived from an EnsEMBL gene
+	Uniprot/SWISSPROT, derived from a Uniprot/Swissprot entry
+	Uniprot/SPTREMBL, derived from a Uniprot/SP-TrEMBL entry
 The second argument is the identifier for the Member. Here is a simple example:
 
 	# get the MemberAdaptor
@@ -376,10 +376,10 @@ print $member->chr_name, " ( ", $member->chr_start, " - ", $member->chr_end,
 
 
 The Member object has several attributes:
-source_name and stable_id define this Member.
-chr_name, chr_start, chr_end, chr_strand locate this Member on the genome but are only available for ENSEMBLGENE and ENSEMBLPEP.
-taxon_id corresponds to the NCBI taxonomy identifier (see http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/ for more details).
-taxon returns a Bio::EnsEMBL::Compara::NCBITaxon object. From this object you can get additional information about the species.
+	source_name and stable_id define this Member.
+	chr_name, chr_start, chr_end, chr_strand locate this Member on the genome but are only available for ENSEMBLGENE and ENSEMBLPEP.
+	taxon_id corresponds to the NCBI taxonomy identifier (see http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/ for more details).
+	taxon returns a Bio::EnsEMBL::Compara::NCBITaxon object. From this object you can get additional information about the species.
 
 
 	my $taxon = $member->taxon;
