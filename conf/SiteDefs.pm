@@ -452,6 +452,7 @@ unless( $__species_aliases{$ENSEMBL_SECONDARY_SPECIES} ) {
 }
 $ENSEMBL_SECONDARY_SPECIES = shift @temp_species if $ENSEMBL_SECONDARY_SPECIES eq $ENSEMBL_PRIMARY_SPECIES;
 
+$ENSEMBL_SERVERNAME ||= $ENSEMBL_SERVER;
 ## here we try and do the dynamic use stuff;
 $BIOMART_URL = 'Multi';
 $ENSEMBL_BASE_URL      = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME".
