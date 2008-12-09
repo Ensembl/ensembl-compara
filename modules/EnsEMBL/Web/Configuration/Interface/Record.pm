@@ -40,7 +40,6 @@ sub save {
   my $success = $interface->data->save;
 
   my $script = $interface->script_name;
-warn "SCRIPT NAME $script";
   my $url;
   if ($success) {
     if ($object->param('owner_type') eq 'group') {
