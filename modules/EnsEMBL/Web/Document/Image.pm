@@ -605,7 +605,13 @@ sub render_image_map {
 }
 
 sub render {
-  my $self = shift;
+  my( $self, $format ) = @_;
+
+  if ($format) {
+    print $self->drawable_container->render($format);
+    return;
+  }
+
   my $HTML = $self->introduction;
 
   ## Here we have to do the next bit which is to draw the image itself;
@@ -661,6 +667,11 @@ sub render {
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
+    my $URL = $ENV{'REQUEST_URI'};
+       $URL =~ s/;$//;
+       $URL .= $URL =~ /\?/ ? ';' : '?';
+       $URL .= 'export=pdf';
+           
     $HTML .= '<div style="text-align:center">' .
              '<div style="text-align:center;margin:auto;border:0px;padding:0px">' .
              sprintf( qq(<div class="drag_select" id="%s_%s" style="margin: 0px auto; border: solid 1px black; position: relative; width:%dpx">),
@@ -671,6 +682,9 @@ sub render {
              $tag .
              ($self->imagemap eq 'yes' ? $self->render_image_map($image) : '' ) .
              '</div>' .
+             ( $self->{'export'}
+               ? '<div class="iexport" style="width:' . $image->{'width'} . 'px"><a href="' . $URL . '">Export</a></div>'
+               : '' ) .
              ( $self->caption
                ? sprintf( qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption  )
                : '' ) .
@@ -687,10 +701,13 @@ sub render {
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
-    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding:0px"><div style="text-align: center">%s</div>%s%s</div>',
+    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding:0px"><div style="text-align: center">%s</div>%s%s%s</div>',
                $tag,
                $self->imagemap eq 'yes'
                  ? $self->render_image_map($image)
+                 : '',
+               $self->{'export'}
+                 ? '<div style="text-align:right; background-color; red;">EXPORT</div>'
                  : '',
                $self->caption
                  ? sprintf('<div style="text-align: center; font-weight: bold">%s</div>', $self->caption)
