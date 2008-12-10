@@ -279,7 +279,7 @@ sub _sort_similarity_links {
 	'id'     => $link_name,
 	'ftype'  => $link_type,
     });
-    $text .= "  [<a href=$k_url>view all locations</a>]";
+    $text .= qq(  [<a href="$k_url">view all locations</a>]);
 
     $text .= '</div>';
     push @{$object->__data->{'links'}{$type->type}}, [ $type->db_display_name || $externalDB, $text ] ;
@@ -991,11 +991,11 @@ sub build_sequence {
       
       if ($new_style) {
         # Remove placeholder styles - auto is not a valid colour
-        $new_style =~ s/background-color:auto;//;
-        $new_style =~ s/color:auto;//;
-        $style = qq(style="$new_style");
+				$new_style =~ s/background-color:auto;//;
+				$new_style =~ s/color:auto;//;
+				$style = qq(style="$new_style");
       }
-  
+
       $post .= $seq->{'post'};
   
       if ($i == 0) {

@@ -280,6 +280,7 @@ sub temp_file_name {
 sub make_directory {
 ### Creates a writeable directory - making sure all parents exist!
   my( $self, $path ) = @_;
+
   my ($volume, $dir_path, $file) = splitpath( $path );
   mkpath( $dir_path, 0, 0777 );
   return ($dir_path,$file);

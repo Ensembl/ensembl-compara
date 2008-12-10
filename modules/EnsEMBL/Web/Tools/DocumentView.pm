@@ -312,7 +312,7 @@ sub methods_html {
         $complete = $method->package->name . "::" . $method->name;
         $html .= qq(Inherited from <a href=") . $self->link_for_package($method->package->name) . qq(">) . $method->package->name . "</a><br />";
       }
-      $html .= qq(<a href="#" onClick="toggle_method('$complete')" id=') . $complete . qq(_link'>View source</a>\n);
+      $html .= qq(<a href="#" onClick="toggle_method('$complete');return void(0);" id=') . $complete . qq(_link'>View source</a>\n);
       $html .= "<div id='" . $complete . "' style='display: none;'>" . $complete . "</div>";
       $html .= qq(<br /><br />\n);
     } 
@@ -452,6 +452,7 @@ sub link_for_method {
 sub copy_support_files {
   ### Copies support files (stylesheets etc) to the export location (set by {{support}}.
   my $self = shift;
+	return;
   my $source = $self->support;
   my $destination = $self->location;
   if ($source) {
@@ -473,39 +474,26 @@ sub html_header {
     $class = "";
   }
   my $html = "";
-  $html = qq(
-    <!--#set var="decor" value="none"-->
-    <html>
-    <head>
-      <title>e! doc</title>);
-   $html .= $self->include_javascript($package, 'protopacked.js');
-   $html .= $self->include_javascript($package, 'display.js');
-   $html .= $self->include_stylesheet($package, 'styles.css');
-   $html .= qq(
-    </head>
-    <body $class>
-  );
+  $html = qq(<!--#set var="decor" value="none"-->
+<html>
+  <head>
+    <title>e! doc</title>
+    <script type="text/javascript" src="/components/01_prototype_plus_bits_of_scriptaculous.js"></script>
+	  <script type="text/javascript" src="/edoc.js"></script>
+    <link href="/edoc.css" rel="stylesheet" type="text/css" media="all" />
+  </head>
+  <body $class>);
   return $html;
 }
 
 sub include_stylesheet {
   ### Returns the HTML to include a CSS stylesheet.
-  my ($self, $package, $stylesheet) = @_;
-  my $html .= qq(<link href=");
-  $html .= $self->package_prefix($package);
-  $html .=
-    qq(styles.css" rel="stylesheet" type="text/css" media="all" />);
-  return $html;
+	return;
 }
 
 sub include_javascript {
   ### Returns HTML to include a javascript file.
-  my ($self, $package, $script) = @_;
-  my $html = qq(
-      <script type="text/javascript" src=");
-  $html .= $self->package_prefix($package);
-  $html .= qq($script"></script>\n);
-  return $html;
+	return;
 }
 
 sub package_prefix {

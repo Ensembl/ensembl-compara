@@ -12,17 +12,16 @@ sub uncomp {
     $$content_ref = $t;
   } elsif( ord($$content_ref) == 31 && ord(substr($$content_ref,1)) == 139 ) { ## GZIP...
     my $t = Compress::Zlib::memGunzip($$content_ref);
-		warn substr($t,0,100);
     $$content_ref = $t;
   } elsif( $$content_ref =~ /^BZh([1-9])1AY&SY/ ) {                            ## GZIP2
     my $t = Compress::Bzip2::decompress($content_ref); ## Try to uncompress a 1.02 stream!
-		unless($t) {
-		  my $T = $$content_ref;
+    unless($t) {
+      my $T = $$content_ref;
       my $status = IO::Uncompress::Bunzip2::bunzip2 \$T,\$t;            ## If this fails try a 1.03 stream!
-		}
-	  $$content_ref = $t;
+    }
+    $$content_ref = $t;
   }
-	return;
+  return;
 }
 
 1;

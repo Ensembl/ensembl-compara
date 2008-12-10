@@ -1,6 +1,6 @@
 package EnsEMBL::Web::Document::Image;
 
-use EnsEMBL::Web::File::Image;
+use EnsEMBL::Web::TmpFile::Image;
 use POSIX qw(floor ceil);
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
@@ -62,12 +62,14 @@ sub karyotype {
   my( $self, $object, $highs, $config ) = @_;
   my @highlights = ref($highs) eq 'ARRAY' ? @$highs : ($highs);
   
-  if( $self->cacheable eq 'yes' ) {
-    my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
-    $image->{'border'} = 1;
-    $image->set_cache_filename( $self->image_type, $self->image_name );
-    return if -e $image->filename."png" && -f $image->filename."png";
-  }
+  ## Obsolete code, remove
+  #  if( $self->cacheable eq 'yes' ) {
+  #    my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
+  #    $image->{'border'} = 1;
+  #    $image->set_cache_filename( $self->image_type, $self->image_name );
+  #    return if -e $image->filename."png" && -f $image->filename."png";
+  #  }
+  
   $config ||= 'Vkaryotype';
   my $chr_name;
   my $wuc = $object->image_config_hash( $config );
@@ -489,83 +491,193 @@ sub panel              : lvalue { $_[0]->{'panel'}; }
 
 sub add_image_format  { push @{$_[0]->{'image_formats'}}, $_[1]; }
 
-sub exists { 
+## TODO: Obsolete code, remove
+#sub exists { 
+#  my $self = shift;
+#  return 0 unless $self->cacheable eq 'yes';
+#  my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
+#  $image->set_cache_filename( $self->image_type, $self->image_name );
+#  return $image->exists;
+#}
+
+####################################################################################################
+##
+## Renderers
+##
+####################################################################################################
+
+sub extraHTML {
   my $self = shift;
-  return 0 unless $self->cacheable eq 'yes';
-  my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
-  $image->set_cache_filename( $self->image_type, $self->image_name );
-  return $image->exists;
+  my $extra = '';
+
+  if( $self->{'image_id'} ) {
+    $extra .= qq(id="$self->{'image_id'}" )
+  }
+
+  if( $self->{'img_map'} ) {
+    if( $self->{'id'} ) {
+      $extra .= qq(usemap="#$self->{'id'}_map" );
+    } else {
+      $extra .= qq(usemap="#$self->{'token'}" );
+    }
+  }
+  return $extra;
+}
+
+sub extraStyle {
+  my $self = shift;
+  my $extra = '';
+  if( $self->{'border'} ) {
+    $extra .= sprintf qq(border: %s %dpx %s;),
+              $self->{'border_colour'} || '#000', $self->{'border'},
+              $self->{'border_style'}||'solid'; 
+  }
+  return $extra;
+}
+
+sub render_image_tag {
+  my $self  = shift;
+  my $image = shift;
+
+  my $HTML;
+
+  if ($image->width > 5000) {
+    my $url = $image->URL;
+    $HTML = qq(
+               <p style="text-align:left">
+                 The image produced was $width pixels wide,
+                 which may be too large for some web browsers to display.
+                 If you would like to see the image, please right-click (MAC: Ctrl-click)
+                 on the link below and choose the 'Save Image' option from the pop-up menu.
+                 Alternatively, try reconfiguring KaryoView, either merging the features
+                 into a single track (step 1) or selecting one chromosome at a time (Step 3).</p>
+               <p><a href="$url">Image download</a></p>
+            );
+  } else {
+    $HTML = sprintf '<img src="%s" alt="%s" title="%s" style="width: %dpx; height: %dpx; %s display: block" %s />',
+                       $image->URL,
+                       $self->{'button_title'},
+                       $self->{'button_title'},
+                       $image->width,
+                       $image->height,
+                       $self->extraStyle,
+                       $self->extraHTML;
+
+    $self->{'width'}  = $image->width;
+    $self->{'height'} = $image->height;
+  }
+
+  return $HTML;
+} 
+
+sub render_image_button {
+  my $self = shift;
+  my $image = shift;
+
+  my $HTML = sprintf
+    '<input style="width: %dpx; height: %dpx; %s display: block" type="image" name="%s" id="%s" src="%s" alt="%s" title="%s" %s />',
+             $image->width,
+             $image->height,
+             $self->extraStyle,
+             $self->{'button_name'},
+             $self->{'image_id'} || $self->{'button_name'},
+             $image->URL,
+             $self->{'button_title'},
+             $self->{'button_title'};
+
+  return $HTML;
+} 
+
+sub render_image_map {
+  my $self  = shift;
+  my $image = shift;
+
+  my $imagemap = $self->drawable_container->render('imagemap');
+
+  my $map_name = $self->{'image_id'} ? "$self->{'image_id'}_map" : $image->token;
+
+  return sprintf(
+            qq(<map name="%s" id="%s">\n%s\n</map>),
+            $map_name,
+            $map_name,
+            $imagemap
+  );
 }
 
 sub render {
-  my( $self, $format ) = @_;
-  ## Here we have to do the next bit which is to draw the image itself;
-  my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
-  $image->dc = $self->drawable_container;
-	if( $format ) {
-    print $image->dc->render($format);
-		return;
-	}
-	
+  my $self = shift;
   my $HTML = $self->introduction;
-  if( $self->imagemap eq 'yes' ) {
-    $image->{'img_map'} = 1;
-  }
-  if( $self->cacheable eq 'yes' ) {
-    $image->set_cache_filename( $self->image_type, $self->image_name );
-  } else {
-    $image->set_tmp_filename( );
-  }
+
+  ## Here we have to do the next bit which is to draw the image itself;
+  my $image   = new EnsEMBL::Web::TmpFile::Image;
+  my $content = $self->drawable_container->render('png');
+
+  $image->content($content);
+  $image->save;
+  
   if ($self->button eq 'form') {
-    $image->{'text'}  = $self->{'button_title'};
-    $image->{'name'}  = $self->{'button_name'};
-    $image->{'id'}    = $self->{'button_id'};
-    $image->{'border'} = 1;
-    my $image_html = $image->render_image_button();
-    $self->{'hidden'}{'total_height'} = $image->{'height'};
-       $image_html .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
+
+    $self->{'image_id'} = $self->{'button_id'};
+    my $image_html      = $self->render_image_button($image);
+    
+    $self->{'hidden'}{'total_height'} = $image->height;
+    $image_html .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>),
+                   $self->caption
+                     if $self->caption;
+
     $HTML .= sprintf '<form style="width: %spx" class="autocenter" action="%s" method="get"><div>%s</div><div class="autocenter">%s</div></form>',
-      $image->{'width'},
+      $image->width,
       $self->{'URL'},
       join(
-        '', map { sprintf '<input type="hidden" name="%s" id="%s%s" value="%s" />', $_, $_, $self->{'hidden_extra'}||$self->{'counter'},$self->{'hidden'}{$_} } 
-        keys %{$self->{'hidden'}}
+        '', map {
+              sprintf '<input type="hidden" name="%s" id="%s%s" value="%s" />',
+                      $_,
+                      $_,
+                      $self->{'hidden_extra'} || $self->{'counter'},
+                      $self->{'hidden'}{$_}
+            } keys %{$self->{'hidden'}},
       ),
       $image_html;
     $self->{'counter'}++;
+
   } elsif ($self->button eq 'yes') {
-    $image->{'text'} = $self->{'button_title'};
-    $image->{'name'} = $self->{'button_name'};
-    $image->{'id'}   = $self->{'button_id'};
-    $HTML .= $image->render_image_button();
-    $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption if $self->caption;
+
+      $self->{'image_id'} = $self->{'button_id'};
+      $HTML .= $self->render_image_button($image);
+      $HTML .= sprintf qq(<div style="text-align: center; font-weight: bold">%s</div>),
+                       $self->caption
+                         if $self->caption;
+
   } elsif( $self->button eq 'drag' ) {
-    $image->{'id'} = $self->{'prefix'} . "_$self->{'panel_number'}_i";
-    my $tag = $image->render_image_tag();
+
+    $self->{'image_id'} = $self->{'prefix'} . "_$self->{'panel_number'}_i";
+
+    my $tag = $self->render_image_tag($image);
     ## Now we have the image dimensions, we can set the correct DIV width
-    $HTML .= $self->menu_container->render_html.$self->menu_container->render_js if $self->menu_container;
+    $HTML .= $self->menu_container->render_html . $self->menu_container->render_js
+               if $self->menu_container;
+
     ## continue with tag HTML
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
-		my $URL = $ENV{'REQUEST_URI'};
-		   $URL =~ s/;$//;
-		   $URL .= $URL =~ /\?/ ? ';' : '?';
-			 $URL .= 'export=pdf';
-    $HTML .= '<div style="text-align:center">'.
-             '<div style="text-align:center;margin:auto;border:0px;padding:0px">'.
+    $HTML .= '<div style="text-align:center">' .
+             '<div style="text-align:center;margin:auto;border:0px;padding:0px">' .
              sprintf( qq(<div class="drag_select" id="%s_%s" style="margin: 0px auto; border: solid 1px black; position: relative; width:%dpx">),
-	       $self->{'prefix'},$self->{'panel_number'}, $image->{'width'}
-	     ).
-             $tag.
-             ($self->imagemap eq 'yes' ? $image->render_image_map : '' ).
-             '</div>'.
-						 ( $self->{'export'} ? '<div class="iexport" style="width:'.$image->{'width'}.'px"><a href="'.$URL.'">Export</a></div>' : '' ).
-             ($self->caption ? sprintf( qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption  ) : '' ).
-             '</div>'.
-             '</div>';
+      	       $self->{'prefix'},
+      	       $self->{'panel_number'},
+      	       $image->width
+      	     ) .
+             $tag .
+             ($self->imagemap eq 'yes' ? $self->render_image_map($image) : '' ) .
+             '</div>' .
+             ( $self->caption
+               ? sprintf( qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption  )
+               : '' ) .
+             '</div></div>';
   } else {
-    my $tag = $image->render_image_tag();
+    
+    my $tag = $self->render_image_tag($image);
     ## Now we have the image dimensions, we can set the correct DIV width 
     if( $self->menu_container ) { 
       $HTML .= $self->menu_container->render_html;
@@ -575,28 +687,21 @@ sub render {
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
-    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding:0px"><div style="text-align: center">%s</div>%s%s%s</div>',
+    $HTML .= sprintf '<div class="center" style="border:0px;margin:0px;padding:0px"><div style="text-align: center">%s</div>%s%s</div>',
                $tag,
-               $self->imagemap eq 'yes' ? $image->render_image_map : '',
-				 $self->{'export'} ? '<div style="text-align:right; background-color; red;">EXPORT</div>' : '',
-	       $self->caption ? sprintf( '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption ) : '',
+               $self->imagemap eq 'yes'
+                 ? $self->render_image_map($image)
+                 : '',
+               $self->caption
+                 ? sprintf('<div style="text-align: center; font-weight: bold">%s</div>', $self->caption)
+                 : '';
   }
-  if( @{$self->{'image_formats'}} ) {
-    my %URLS;
-    foreach( sort @{$self->{'image_formats'}} ) {
-      my $T = $image->render($_);
-      $URLS{$_} = $T->{'URL'};
-      $URLS{$_}.='.eps' if lc($_) eq 'postscript';
-    }
-    ## Add links for other image formats (right aligned in div)
-     $HTML .= '<div style="text-align:right">'.join( '; ', map {
-       qq(<a href="$URLS{$_}">View as $formats{$_}</a>)
-     } @{$self->{'image_formats'}}).'.</div>';
-  }
+
   $HTML .= $self->tailnote;
     
-  $self->{'width'} = $image->{'width'};
-  $self->{'species_defs'}->timer_push('Image->render ending',undef,'draw');
+  $self->{'width'} = $image->width;
+  $self->{'species_defs'}->timer_push('Image->render ending', undef, 'draw');
+
   return $HTML
 }
 
