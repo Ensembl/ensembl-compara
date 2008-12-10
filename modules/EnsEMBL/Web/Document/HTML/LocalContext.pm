@@ -105,6 +105,7 @@ $pad    </dd>";
       } else {
         $title = $name;
       }
+			my $referer = ''; #CGI::param('_referer')|| $ENV{'REQUEST_URI'};
       if( $node->data->{'availability'} && $self->is_available( $node->data->{'availability'} )) {
         my $url = $node->data->{'url'};
         if (!$url) {
@@ -118,11 +119,12 @@ $pad    </dd>";
             foreach my $param (@cgi_params) {
               ## Minimal parameters, or it screws up the non-genomic pages!
               $no_popup = 1 if $param =~ /^no_popup/;
+							$referer = $1 if $param =~ /^_referer=(.*)/;
               next unless ($param =~ /^_referer/ || $param =~ /^x_requested_with/);
               push @ok_params, $param;
             }
             if (scalar(@ok_params) < 2 && !$no_popup) {
-              @ok_params = ('_referer='.CGI::escape($ENV{'HTTP_REFERER'}), 'x_requested_with=XMLHttpRequest');
+              @ok_params = ('_referer='.($referer||$ENV{'REQUEST_URI'}), 'x_requested_with=XMLHttpRequest');
             }
           }
           else {

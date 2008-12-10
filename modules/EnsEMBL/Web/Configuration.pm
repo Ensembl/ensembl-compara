@@ -221,11 +221,7 @@ sub _user_context {
   my $qs = $self->query_string;
 
   my $referer = $obj->param('_referer') || 
-                $obj->_url({
-                  type   => $type,
-                  action => $ENV{'ENSEMBL_ACTION'},
-                  time   => undef
-                });
+                $obj->_url({ type   => $type, action => $ENV{'ENSEMBL_ACTION'}, time   => undef });
 
   my $vc  = $obj->get_viewconfig;
   my $action = $type.'/'.$ENV{'ENSEMBL_ACTION'};
@@ -710,23 +706,6 @@ sub _local_tools {
 
   my $referer = $ENV{'REQUEST_URI'};
 
-  if( $ENV{'ENSEMBL_USER_ID'} ) {
-    $self->{'page'}->local_tools->add_entry(
-      'caption' => 'Bookmark this page',
-      'class'   => 'modal_link',
-      'url'     => $obj->_url({ 'type'     => 'Account', 'action'   => 'Bookmark',
-                                '_referer' => $ENV{'REQUEST_URI'}, '__clear'  =>1,
-                                'name'     => $self->{'page'}->title->get,
-                                'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'} })
-    );
-  } else {
-    $self->{'page'}->local_tools->add_entry(
-      'caption' => 'Bookmark this page',
-      'class'   => 'disabled',
-      'url'     => undef,
-      'title'   => 'You must be logged in to bookmark pages'
-    );
-  }
   my $vc = $obj->get_viewconfig;
   my $config = $vc->default_config;
 
@@ -794,6 +773,23 @@ sub _local_tools {
       'class'   => 'disabled',
       'url'     => undef,
       'title'   => 'You cannot export data from this page'
+    );
+  }
+  if( $ENV{'ENSEMBL_USER_ID'} ) {
+    $self->{'page'}->local_tools->add_entry(
+      'caption' => 'Bookmark this page',
+      'class'   => 'modal_link',
+      'url'     => $obj->_url({ 'type'     => 'Account', 'action'   => 'Bookmark',
+                                '_referer' => $ENV{'REQUEST_URI'}, '__clear'  =>1,
+                                'name'     => $self->{'page'}->title->get,
+                                'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'} })
+    );
+  } else {
+    $self->{'page'}->local_tools->add_entry(
+      'caption' => 'Bookmark this page',
+      'class'   => 'disabled',
+      'url'     => undef,
+      'title'   => 'You must be logged in to bookmark pages'
     );
   }
 }
@@ -957,7 +953,15 @@ sub delete_node {
   my ($self, $code) = @_;
   if ($code && $self->tree) {
     my $node = $self->tree->get_node($code);
-    $node->remove_node;
+    $node->remove_node if $node;
+  }
+}
+
+sub delete_submenu {
+  my ($self, $code) = @_;
+  if ($code && $self->tree) {
+    my $node = $self->tree->get_node($code);
+    $node->remove_subtree if $node;
   }
 }
 

@@ -40,7 +40,7 @@ sub render {
   my $self = shift;
   ## Set _referer so we can return to calling page
   unless ($self->action->cgi->param('_referer')) {
-    $self->action->cgi->param('_referer', CGI::escape($ENV{'HTTP_REFERER'}));
+    $self->action->cgi->param('_referer', CGI::escape($ENV{'REQUEST_URI'}));
   }
   if ($self->not_allowed) {
     $self->render_message;
