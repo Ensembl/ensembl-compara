@@ -1,8 +1,11 @@
 package EnsEMBL::Web::Tools::Misc;
 
+## Just a bunch of useful tools
+use LWP::UserAgent;
+
 use base qw(Exporter);
-our @EXPORT = qw(pretty_date);
-our @EXPORT_OK = qw(pretty_date);
+our @EXPORT = qw(pretty_date get_url_content);
+our @EXPORT_OK = qw(pretty_date get_url_content);
 
 sub pretty_date {
   my $timestamp = shift;
@@ -10,6 +13,22 @@ sub pretty_date {
   my @days = ('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
   my @months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
   return $days[$date[6]].' '.$date[3].' '.$months[$date[4]].', '.($date[5] + 1900);
+}
+
+sub get_url_content {
+  my $url   = shift;
+  my $proxy = shift;
+  my $content;
+
+  my $ua = new LWP::UserAgent;
+  $ua->proxy('http', $proxy) if $proxy;
+
+  my $request = new HTTP::Request( 'GET', $url );
+  $request->header('Cache-control' => 'no-cache');
+  $request->header('Pragma'        => 'no-cache');
+  my $response = $ua->request($request);
+
+  return $response->is_success && $response->content;
 }
 
 1;
