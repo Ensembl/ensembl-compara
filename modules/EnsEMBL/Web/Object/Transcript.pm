@@ -1856,7 +1856,7 @@ sub get_alignment{
 #end of alignview support features
 
 sub can_export {
-  return 1;
+  return $_[0]->availability->{'transcript'};
 }
 
 1;
