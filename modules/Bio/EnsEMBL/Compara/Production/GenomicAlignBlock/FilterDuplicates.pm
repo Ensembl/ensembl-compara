@@ -62,8 +62,9 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Analysis::RunnableDB;
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 
 =head2 fetch_input
@@ -219,26 +220,43 @@ sub filter_duplicates {
 
   my @del_list = values(%{$self->{'delete_hash'}});
 
-  my $sql_genomic_align_group = "delete from genomic_align_group where genomic_align_id = ?";
-  my $sql_genomic_align = "delete from genomic_align where genomic_align_id = ?";
-  my $sql_genomic_align_block = "delete from genomic_align_block where genomic_align_block_id = ?";
+  my $sql_gag = "delete from genomic_align_group where genomic_align_id in ";
+  my $sql_ga = "delete from genomic_align where genomic_align_id in ";
+  my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
 
-  my $sth_genomic_align_group = $self->{'comparaDBA'}->prepare($sql_genomic_align_group);
-  my $sth_genomic_align = $self->{'comparaDBA'}->prepare($sql_genomic_align);
-  my $sth_genomic_align_block = $self->{'comparaDBA'}->prepare($sql_genomic_align_block);
+  for (my $i=0; $i < scalar @del_list; $i=$i+10000) {
+      my (@gab_ids, @ga_ids, @gag_ids);
+      for (my $j = $i; ($j < scalar @del_list && $j < $i+10000); $j++) {
+	  my $gab = $del_list[$j];
+	  push @gab_ids, $gab->dbID;
+	  foreach my $ga (@{$gab->genomic_align_array}) {
+	      push @ga_ids, $ga->dbID;
+	      push @gag_ids, $ga->dbID;
+	  }
+      }
+      my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
+      my $sql_ga_to_exec = $sql_ga . "(" . join(",", @ga_ids) . ")";
+      my $sql_gag_to_exec = $sql_ga . "(" . join(",", @gag_ids) . ")";
 
-  foreach my $gab (@del_list) {
-    #print("DELETE "); print_gab($gab);
-    foreach my $ga (@{$gab->genomic_align_array}) {
-      $sth_genomic_align_group->execute($ga->dbID);
-      $sth_genomic_align->execute($ga->dbID);
-    }
-    $sth_genomic_align_block->execute($gab->dbID);
+       foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec,$sql_gag_to_exec) {
+ 	  my $sth = $self->{'comparaDBA'}->prepare($sql);
+ 	  $sth->execute;
+ 	  $sth->finish;
+       }
   }
 
-  $sth_genomic_align_group->finish;
-  $sth_genomic_align->finish;
-  $sth_genomic_align_block->finish;
+#   foreach my $gab (@del_list) {
+#     #print("DELETE "); print_gab($gab);
+#     foreach my $ga (@{$gab->genomic_align_array}) {
+#       $sth_genomic_align_group->execute($ga->dbID);
+#       $sth_genomic_align->execute($ga->dbID);
+#     }
+#     $sth_genomic_align_block->execute($gab->dbID);
+#   }
+
+#   $sth_genomic_align_group->finish;
+#   $sth_genomic_align->finish;
+#   $sth_genomic_align_block->finish;
 
   printf("%d gabs to delete\n", scalar(keys(%{$self->{'delete_hash'}})));
   printf("found %d equal GAB pairs\n", $self->{'identical_count'});
