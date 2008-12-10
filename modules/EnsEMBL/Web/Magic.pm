@@ -354,7 +354,7 @@ sub stuff {
       );
   }
 
-  my $content = ($MEMD && $ENSEMBL_WEB_REGISTRY->check_ajax) ? $MEMD->get($ENV{CACHE_KEY}) : undef;
+  my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
 
   if ($content) {
     warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}"
@@ -465,7 +465,6 @@ sub stuff {
     $MEMD->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags)
       if $MEMD &&
          !$webpage->has_a_problem &&
-         $ENSEMBL_WEB_REGISTRY->check_ajax &&
          $webpage->format eq 'HTML';
   }
   
