@@ -54,14 +54,12 @@ sub save {
   }
 
   ## TODO: error exception
-  $self->memd->set(
+  return $self->memd->set(
     $key,
     $data,
     $args->{exptime},
     ( 'TMP', $args->{format}, keys %{ $ENV{CACHE_TAGS}||{} } ),
   );
-  
-  return 1;
 }
 
 sub imgsize {

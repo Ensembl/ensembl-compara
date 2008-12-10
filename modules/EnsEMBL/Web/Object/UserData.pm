@@ -181,7 +181,7 @@ sub delete_upload {
   
   if ($type eq 'upload') { 
     my $upload = $self->get_session->get_data(type => $type, code => $code);
-    if ($code eq 'tmp') {
+    if ($upload->{filename}) {
       EnsEMBL::Web::File::Text->new($self->species_defs, $upload->{'filename'})->delete;
     } else {
       my @analyses = split(', ', $upload->{analyses});

@@ -5,7 +5,6 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Blast);
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::File::Image;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Container::HSPContainer;
 use Bio::EnsEMBL::DrawableContainer;
