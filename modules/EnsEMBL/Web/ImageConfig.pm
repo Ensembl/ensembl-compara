@@ -619,7 +619,7 @@ sub add_dna_align_feature {
 sub add_protein_align_feature {
   my( $self, $key, $hashref ) = @_;
   return unless $self->_check_menus( 'protein_align' );
-  my( $keys, $data ) = $self->_merge( $hashref->{'protein_align_feature'} );
+  my( $keys, $data ) = $self->_merge( $hashref->{'protein_align_feature'}, 'protein_align_feature' );
   
   my $menu = $self->tree->get_node( "protein_align" );
   foreach my $key_2 ( @$keys ) {
