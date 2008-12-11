@@ -9,7 +9,7 @@ use File::Copy qw(move);
 use base 'EnsEMBL::Web::TmpFile';
 
 ## Accessor for the filename for just uploaded file
-__PACKAGE__->mk_accessor('tmp_filename');
+__PACKAGE__->mk_accessors('tmp_filename');
 
 sub new {
   my $class = shift;

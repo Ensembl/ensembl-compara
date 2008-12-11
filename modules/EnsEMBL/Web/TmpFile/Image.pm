@@ -4,6 +4,7 @@ package EnsEMBL::Web::TmpFile::Image;
 ## see base module for more information
 
 use strict;
+use Image::Size;
 use EnsEMBL::Web::SpeciesDefs;
 use base 'EnsEMBL::Web::TmpFile';
 
