@@ -1723,11 +1723,11 @@ sub restrict {
 
   #unable to retrieve $self->genomic_align_block->length 
   if ((!$self->{'genomic_align_block_id'}) or (!$self->genomic_align_block->length)) {
-      my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);
+      my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);
       while (my $cigar = shift(@cigar)) {
-	  my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
+	  my ($num, $type) = ($cigar =~ /^(\d*)([GDMXI])/);
 	  $num = 1 if ($num eq "");
-	  $aligned_seq_length += $num;
+	  $aligned_seq_length += $num unless ($type eq "I");
       }
   } else {
     $aligned_seq_length = $self->genomic_align_block->length;
