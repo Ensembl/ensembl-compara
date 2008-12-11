@@ -9,18 +9,11 @@ use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Component::Export;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 use Text::Wrap qw(wrap);
+use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
-
-our %FORMATS = (
-  'png'  => { 'name' => 'PNG', 'longname' => 'Portable Network Graphics',   'extn' => 'png', 'mime' => 'image/png' },
-  'gif'  => { 'name' => 'GIF', 'longname' => 'Graphics Interchange Format', 'extn' => 'gif', 'mime' => 'image/gif' },
-  'svg'  => { 'name' => 'SVG', 'longname' => 'Scalable Vector Graphics',    'extn' => 'svg', 'mime' => 'image/svg+xml' },
-	'eps'  => { 'name' => 'EPS', 'longname' => 'Encapsulated Postscript',     'extn' => 'eps', 'mime' => 'application/postscript' },
-	'pdf'  => { 'name' => 'PDF', 'longname' => 'Portable Document Format',    'extn' => 'pdf', 'mime' => 'application/pdf' }
-);
 
 sub _error {
   my($self,$caption,$desc,$width) = @_;
@@ -49,6 +42,7 @@ sub _export_image {
 	$image->{export} = 1;
 	my( $format,$scale ) = $self->object->param('export' ) ? split( /-/, $self->object->param('export'),2) : ('',1);
 	$scale eq 1 if $scale <= 0;
+	my %FORMATS = EnsEMBL::Web::Constants::FORMATS;
 	if( $FORMATS{ $format } ) {
   	$image->drawable_container->{'config'}->set_parameter('sf',$scale);
 		( my $comp = ref($self) ) =~ s/[^\w\.]+/_/g;
