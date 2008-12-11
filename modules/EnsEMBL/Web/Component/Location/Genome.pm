@@ -9,7 +9,6 @@ use base qw(EnsEMBL::Web::Component::Location);
 use CGI qw(escapeHTML);
 use Data::Dumper;
 use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::File::Text;
 use EnsEMBL::Web::RegObj;
 
 sub _init {

@@ -7,7 +7,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Tools::Encryption qw(checksum);
-use EnsEMBL::Web::File::Text;
+use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::RegObj;
 use Data::Dumper;
 use base qw(EnsEMBL::Web::Wizard::Node);
@@ -84,15 +84,18 @@ sub upload {
       $name = $orig_path[-1];
     }
 
-    ## Cache data (File::Text knows whether to use memcached or temp file)
-    my $file = new EnsEMBL::Web::File::Text($self->object->species_defs);
-    $file->set_cache_filename('user_'.$method);
-    my $success = $file->save($self->object, $method);
+    ## Cache data (TmpFile::Text knows whether to use memcached or temp file)
+    my $file = new EnsEMBL::Web::TmpFile::Text(
+      prefix => 'user_upload',
+      ($method eq 'url') ?
+      (content      => get_url_content($self->object->param('url'))) :
+      (tmp_filename => $self->object->[1]->{'_input'}->tmpFileName($self->object->param('file'))),
+    );
 
-    if ($success) {
+
+    if ($file->save) {
       ## Identify format
-      my $data = $file->retrieve;
-      warn "DATA $data";
+      my $data = $file->content;
       my $parser = EnsEMBL::Web::Text::FeatureParser->new();
       $parser = $parser->init($data);
       if ($parser->{'_info'}->{'count'} > 0) {
@@ -133,8 +136,7 @@ sub upload {
       $self->parameter('wizard_next', 'select_file');
       $self->parameter('error_message', 'Your file could not be saved. Please check the contents and try again.');
     }
-  }
-  else {
+  } else {
     $self->parameter('wizard_next', 'select_file');
     $self->parameter('error_message', 'No data was uploaded. Please try again.');
   }

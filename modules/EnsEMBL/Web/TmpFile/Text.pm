@@ -17,13 +17,14 @@ sub new {
 
   my $self = $class->SUPER::new(
     compress     => 1,
+    prefix       => 'user_upload',
     extension    => 'txt',
     content_type => 'plain/text',
     %args,
   );
   
   if ($args{tmp_filename}) {
-    move($args{tmp_filename}, $self->filename) or die "Move failed: $!";
+    move($args{tmp_filename}, $self->full_path) or die "Move failed $args{tmp_filename} $!";
     $self->retrieve;
   }
 

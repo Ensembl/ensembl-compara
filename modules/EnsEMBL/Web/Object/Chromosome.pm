@@ -11,7 +11,7 @@ our @ISA = qw(EnsEMBL::Web::Object);
 
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
-use EnsEMBL::Web::File::Text;
+use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Text::DensityFeatureParser;
 use Digest::MD5 ;
 
@@ -283,11 +283,12 @@ sub parse_user_data {
   my ($self, $parser, $track_id) = @_;
   my $data;
   if (my $data_file = $self->param("cache_file_$track_id")) {
-    my $cache = new EnsEMBL::Web::File::Text($self->{'_species_defs'}); 
-    $data = $cache->retrieve($data_file);
+    my $file = new EnsEMBL::Web::TmpFile::Text(
+      filename => $data_file,
+    ); 
+    $data = $cache->retrieve;
     $parser->parse($data);
-  }
-  elsif ($data = $self->param("url_file_$track_id")) {
+  } elsif ($data = $self->param("url_file_$track_id")) {
     $parser->parse_URL($data);
   }
   else {

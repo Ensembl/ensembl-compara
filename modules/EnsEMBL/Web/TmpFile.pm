@@ -18,12 +18,8 @@ use EnsEMBL::Web::TmpFile::Driver::Memcached;
 
 use base qw(Class::Accessor EnsEMBL::Web::Root);
 
-__PACKAGE__->mk_accessors(qw(
-  species_defs prefix extension content_type path_format format
-  compress file_root URL_root drivers
-));
-
-__PACKAGE__->mk_ro_accessors(qw(full_path URL));
+__PACKAGE__->mk_accessors(qw(species_defs content_type format compress drivers));
+__PACKAGE__->mk_ro_accessors(qw(full_path prefix extension file_root path_format URL_root URL));
 
 sub new {
   my $class = shift;
@@ -53,7 +49,7 @@ sub new {
     %args,    
   };
   bless $self, $class;
-  
+
   if ($args{filename}) {
     $self->filename($args{filename});
   } else {
@@ -77,9 +73,23 @@ sub filename {
     $self->{filename} .= ".$self->{extension}"
       if $self->{extension} && $self->{filename} !~ /\.$self->{extension}$/;
 
-    ## SET RO accessors
-    $self->{URL}       = "$self->{URL_root}/$self->{filename}";
+    ## Fix file root
+    $self->{file_root} .= "/$self->{prefix}"
+      if $self->{prefix} && $self->{file_root} !~ m!/$self->{prefix}$!;
+
+    ## Fix URL root
+    $self->{URL_root} .= "/$self->{prefix}"
+      if $self->{prefix} && $self->{URL_root} !~ m!/$self->{prefix}$!;
+
+    ## Split filename if full path given
+    if ($self->{filename} =~ m!^$self->{file_root}/(.*)!) {
+      $self->{filename}   = $1;
+    }
+
     $self->{full_path} = "$self->{file_root}/$self->{filename}";
+    $self->{URL}       = "$self->{URL_root}/$self->{filename}";
+
+    $self->make_directory($self->{full_path});
   }
   
   return $self->{filename};

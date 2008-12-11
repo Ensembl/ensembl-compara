@@ -3,7 +3,7 @@ package EnsEMBL::Web::Configuration::ArchiveStableId;
 use strict;
 use EnsEMBL::Web::Configuration;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::File::Text;
+use EnsEMBL::Web::TmpFile::Text;
 use Bio::EnsEMBL::DBSQL::ArchiveStableIdAdaptor;
 use Data::Dumper;
 
@@ -123,11 +123,15 @@ sub historyview {
       } 
       
       my @ids;
-      if ($param) {
-        my $cache = EnsEMBL::Web::File::Text->new($object->[1]->{'_species_defs'});
-        $cache->set_cache_filename('hv', $fh);
-        $result = $cache->save($object, $param);
-        $data = $cache->retrieve;  
+      if ($param eq 'url') {
+        $data = get_url_content($object->param('url'));
+      } else {
+        my $file = EnsEMBL::Web::TmpFile::Text->new(
+          tmp_filename => $object->[1]->{'_input'}->tmpFileName($object->param('file')),
+          prefix       => 'hv',
+          filename     => $fh,
+        );
+        $data = $file->retrieve;  
       }
       
       my @ids = split(/\s+/, $data);

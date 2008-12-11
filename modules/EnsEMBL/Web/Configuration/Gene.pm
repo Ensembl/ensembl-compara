@@ -1,7 +1,9 @@
 package EnsEMBL::Web::Configuration::Gene;
 
 use strict;
+use IO::String;
 use Bio::AlignIO; # Needed for tree alignments
+use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Release;
 
@@ -564,31 +566,21 @@ sub _dump_tree_as_text{
   my $tree = shift || die( "Need a ProteinTree object!" );
 
   # Establish some URL/file paths
-  my $object = $self->object;
-  my $defs   = $object->species_defs;
-  my $temp_name = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
-  my $file_base = $defs->ENSEMBL_TMP_DIR_IMG . "/$temp_name";
-  my $file_fa   = $file_base . '.fa.png'; # .png suffix until httpd.conf fixed
-  my $file_nh   = $file_base . '.nh.png';
-  my $url_site  = $defs->ENSEMBL_BASE_URL;
-  my $url_base  = $url_site . $defs->ENSEMBL_TMP_URL_IMG . "/$temp_name";
-  my $url_fa    = $url_base . '.fa.png';
-  my $url_nh    = $url_base . '.nh.png';
-  $object->make_directory( $file_base );
+  my $object  = $self->object;
+  my $file_fa = new EnsEMBL::Web::TmpFile::Text(extension => 'fa', prefix => 'gene_tree');
+  my $file_nh = new EnsEMBL::Web::TmpFile::Text(extension => 'nh', prefix => 'gene_tree');
 
   # Write the fasta alignment using BioPerl
   my $format = 'fasta';
   my $align = $tree->get_SimpleAlign('','','','','',1);
-  my $aio = Bio::AlignIO->new( -format => $format, -file => ">$file_fa" );
+  my $aio = Bio::AlignIO->new( -format => $format, -fh => IO::String->new(my $var) );
   $aio->write_aln( $align );
+  $file_fa->print($var);
 
   #and nh files
-  open( NH, ">$file_nh" ) or die( "Cannot open $file_nh for write: $!" );
-  print( NH $tree->newick_format("full_web") );
-  close NH; 
+  $file_nh->print($tree->newick_format("full_web"));
 
-  return( $url_fa, $url_nh );
-
+  return( $file_fa->URL, $file_nh->URL );
 }
 
 our $_JALVIEW_HTML_TMPL = qq(

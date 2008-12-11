@@ -5,9 +5,13 @@ package EnsEMBL::Web::Component::Gene::FamilyAlignments;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Gene);
+
 use CGI qw(escapeHTML);
+
 use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::TmpFile::Text;
+
+use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
@@ -35,30 +39,28 @@ sub content {
 
 sub _embed_jalview {
   my( $self, $type, $refs ) = @_;
-  my $object = $self->object;
-  my $count     = @$refs;
+  my $object   = $self->object;
+  my $count    = @$refs;
   my $outcount = 0;
   return unless $count;
-  my $BASE      = $object->species_defs->ENSEMBL_BASE_URL;
-  my $FN        = $object->temp_file_name( undef, 'XXX/X/X/XXXXXXXXXXXXXXX' );
-  my $file      = $object->species_defs->ENSEMBL_TMP_DIR_IMG."/$FN.fa.png";
-  $object->make_directory( $file );
-  my $URL       = $object->species_defs->ENSEMBL_TMP_URL_IMG."/$FN.fa.png";
-  if( open FASTA,   ">$file" ) {;
-    foreach my $member_attribute (@$refs){
-      my ($member, $attribute) = @$member_attribute;
-      my $align;
-      eval { $align = $attribute->alignment_string($member); };
-      unless ($@) {
-        if($attribute->alignment_string($member)) {
-          print FASTA ">".$member->stable_id."\n";
-          print FASTA $attribute->alignment_string($member)."\n";
-          $outcount++;
-        }
+  
+  my $BASE = $object->species_defs->ENSEMBL_BASE_URL;
+  my $file = new EnsEMBL::Web::TmpFile::Text(extension => 'fa', prefix => 'family_alignment');
+  my $URL  = $file->URL;
+
+  foreach my $member_attribute (@$refs) {
+    my ($member, $attribute) = @$member_attribute;
+    my $align;
+    eval { $align = $attribute->alignment_string($member); };
+    unless ($@) {
+      if($attribute->alignment_string($member)) {
+        $file->print(">".$member->stable_id."\n");
+        $file->print($attribute->alignment_string($member)."\n");;
+        $outcount++;
       }
     }
-    close FASTA;
   }
+  
   return unless $outcount;
 
   return qq(
@@ -66,7 +68,7 @@ sub _embed_jalview {
     <applet archive="$BASE/jalview/jalview.jar"
         code="jalview.ButtonAlignApplet.class" width="100" height="35" style="border:0"
         alt = "[Java must be enabled to view alignments]">
-      <param name="input" value="$BASE$URL" />
+      <param name="input" value="$URL" />
       <param name="type" value="URL" />
       <param name=format value="FASTA" />
       <param name="fontsize" value="10" />

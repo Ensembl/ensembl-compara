@@ -11,7 +11,7 @@ use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::Data::Record::Upload;
 use Bio::EnsEMBL::Utils::Exception qw(try catch);
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser; # for contacting DAS servers
-use EnsEMBL::Web::File::Text;
+use EnsEMBL::Web::TmpFile::Text;
 use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
                                                                                    
@@ -49,7 +49,11 @@ sub save_to_db {
   my $assembly = $tmpdata->{assembly};
 
   ## TODO: proper error exceptions !!!!!
-  my $file    = new EnsEMBL::Web::File::Text($self->species_defs, $tmpdata->{'filename'});
+  warn 'FILENAME: '.$tmpdata->{'filename'};
+  my $file    = new EnsEMBL::Web::TmpFile::Text(
+    filename => $tmpdata->{'filename'},
+  );
+  
   my $data    = $file->retrieve
     or die "Can't get data out of the file $tmpdata->{'filename'}";
   my $format  = $tmpdata->{'format'};
@@ -132,9 +136,8 @@ sub store_data {
   unless ($report->{'errors'}) {
 
     ## Delete cached file
-    my $file = new EnsEMBL::Web::File::Text(
-      $self->species_defs,
-      $tmp_data->{'filename'},
+    my $file = new EnsEMBL::Web::TmpFile::Text(
+      filename => $tmp_data->{'filename'},
     );
     $file->delete;
 
@@ -182,7 +185,9 @@ sub delete_upload {
   if ($type eq 'upload') { 
     my $upload = $self->get_session->get_data(type => $type, code => $code);
     if ($upload->{filename}) {
-      EnsEMBL::Web::File::Text->new($self->species_defs, $upload->{'filename'})->delete;
+      EnsEMBL::Web::TmpFile::Text->new(
+        filename => $upload->{'filename'},
+      )->delete;
     } else {
       my @analyses = split(', ', $upload->{analyses});
       $self->_delete_datasource($upload->{species}, $_) for @analyses;

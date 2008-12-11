@@ -2,7 +2,7 @@ package EnsEMBL::Web::Component;
 
 use strict;
 use Data::Dumper;
-use EnsEMBL::Web::File::Text;
+use EnsEMBL::Web::TmpFile::Text;
 use Exporter;
 use CGI qw(escape);
 use EnsEMBL::Web::Document::SpreadSheet;
@@ -113,10 +113,13 @@ sub _init {
 sub caption {
   return undef;
 }
+
 sub cache {
   my( $panel, $obj, $type, $name ) = @_;
-  my $cache = new EnsEMBL::Web::File::Text( $obj->species_defs );
-  $cache->set_cache_filename( $type, $name );
+  my $cache = new EnsEMBL::Web::TmpFile::Text(
+    prefix   => $type,
+    filename => $name,
+  );
   return $cache;
 }
 

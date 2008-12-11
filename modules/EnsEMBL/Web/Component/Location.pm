@@ -1,19 +1,20 @@
 package EnsEMBL::Web::Component::Location;
 
-use EnsEMBL::Web::Component;
-use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::File::Text;
-use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
-use CGI qw(escape);
-use Data::Dumper;
-our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
 use warnings;
 no warnings "uninitialized";
 
 use POSIX qw(floor ceil);
+
+use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
+
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Form;
+use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Tools::Misc qw(get_url_content);
+
+use base 'EnsEMBL::Web::Component';
 
 sub _attach_das {
   my( $self, $wuc ) = @_;
@@ -103,13 +104,12 @@ sub create_tempdata_pointers {
   foreach my $stuff (@$temp_data) {
 
     my ($data, $format);
-    my $file = new EnsEMBL::Web::File::Text($object->species_defs);
     if ($stuff->{'filename'}) { ## upload
-      $data = $file->retrieve($stuff->{'filename'});
+      my $file = new EnsEMBL::Web::TmpFile::Text(filename => $stuff->{'filename'});
+      $data    = $file->retrieve;
       $format  = $stuff->{'format'};
-    }
-    elsif ($stuff->{'url'}) {
-      $data = $file->get_url_content($object, $stuff->{'url'});
+    } elsif ($stuff->{'url'}) {
+      $data = get_url_content($stuff->{'url'});
     }
 
     if ($data) {
@@ -156,8 +156,7 @@ sub create_userdata_pointers {
       }
     }
     elsif (ref($record) =~ /URL/ && $record->url) {
-      my $file = new EnsEMBL::Web::File::Text($object->species_defs);
-      my $data = $file->get_url_content($object, $record->url);
+      my $data = get_url_content($record->url);
       my $parser = EnsEMBL::Web::Text::FeatureParser->new();
       my $info = $parser->analyse($data);
       $parser->parse($data, $info->{'format'});
