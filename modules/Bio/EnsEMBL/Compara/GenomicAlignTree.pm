@@ -802,5 +802,29 @@ sub reverse_complement {
     }
 }
 
+sub length {
+  my ($self, $length) = @_;
+ 
+  if (defined($length)) {
+      $self->{'length'} = $length;
+  } elsif (!defined($self->{'length'})) {
+      # Try to get the ID from other sources...
+      if (defined($self->{'adaptor'}) and defined($self->dbID)) {
+	  # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
+	  $self->adaptor->retrieve_all_direct_attributes($self);
+      } elsif (@{$self->get_all_GenomicAligns} and $self->get_all_GenomicAligns->[0]->aligned_sequence("+FAKE_SEQ")) {
+	  $self->{'length'} = CORE::length($self->get_all_GenomicAligns->[0]->aligned_sequence("+FAKE_SEQ"));
+      } else {
+	  foreach my $this_node (@{$self->get_all_nodes}) {
+	      my $genomic_align_group = $this_node->genomic_align_group;
+	      next if (!$genomic_align_group);
+	      $self->{'length'} = CORE::length($genomic_align_group->get_all_GenomicAligns->[0]->aligned_sequence("+FAKE_SEQ"));
+	      last;
+	  }
+      }
+  }
+  return $self->{'length'};
+}
+
 
 1;

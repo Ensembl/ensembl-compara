@@ -1723,11 +1723,11 @@ sub restrict {
 
   #unable to retrieve $self->genomic_align_block->length 
   if ((!$self->{'genomic_align_block_id'}) or (!$self->genomic_align_block->length)) {
-      my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);
+      my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);
       while (my $cigar = shift(@cigar)) {
-	  my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
+	  my ($num, $type) = ($cigar =~ /^(\d*)([GDMXI])/);
 	  $num = 1 if ($num eq "");
-	  $aligned_seq_length += $num;
+	  $aligned_seq_length += $num unless ($type eq "I");
       }
   } else {
     $aligned_seq_length = $self->genomic_align_block->length;
@@ -1737,7 +1737,7 @@ sub restrict {
   my $length_of_truncated_seq_at_the_start = $start - 1;
   my $length_of_truncated_seq_at_the_end = $aligned_seq_length - $end;
   
-  my @cigar = grep {$_} split(/(\d*[GDMX])/, $self->cigar_line);  
+  my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);  
 
   ## Trim start of cigar_line if needed
   if ($length_of_truncated_seq_at_the_start >= 0) {
@@ -1745,9 +1745,11 @@ sub restrict {
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@cigar)) {
-      my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDMXI])/);
       $num = 1 if ($num eq "");
-      $aligned_seq_length += $num;
+      if ($type ne "I") {
+	  $aligned_seq_length += $num;
+      }
       if ($aligned_seq_length >= $length_of_truncated_seq_at_the_start) {
         my $length = $aligned_seq_length - $length_of_truncated_seq_at_the_start;
         if ($length > 1) {
@@ -1756,12 +1758,12 @@ sub restrict {
           $new_cigar_piece = $type;
         }
         unshift(@cigar, $new_cigar_piece) if ($new_cigar_piece);
-        if ($type eq "M") {
+        if ($type eq "M" || $type eq "I") {
           $original_seq_length += $length_of_truncated_seq_at_the_start - ($aligned_seq_length - $num);
         }
         last;
       }
-      $original_seq_length += $num if ($type eq "M");
+      $original_seq_length += $num if ($type eq "M" || $type eq "I");
     }
     if ($self->dnafrag_strand == 1) {
       $restricted_genomic_align->dnafrag_start($self->dnafrag_start + $original_seq_length);
@@ -1779,9 +1781,11 @@ sub restrict {
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@cigar)) {
-      my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDMIX])/);
       $num = 1 if ($num eq "");
-      $aligned_seq_length += $num;
+      if ($type ne "I") {
+	  $aligned_seq_length += $num;
+      }
       if ($aligned_seq_length >= $final_aligned_length) {
         my $length = $num - $aligned_seq_length + $final_aligned_length;
         if ($length > 1) {
@@ -1790,14 +1794,14 @@ sub restrict {
           $new_cigar_piece = $type;
         }
         push(@final_cigar, $new_cigar_piece) if ($new_cigar_piece);
-        if ($type eq "M") {
+        if ($type eq "M" || $type eq "I") {
           $original_seq_length += $length;
         }
         last;
       } else {
         push(@final_cigar, $cigar);
       }
-      $original_seq_length += $num if ($type eq "M");
+      $original_seq_length += $num if ($type eq "M" || $type eq "I");
     }
     if ($self->dnafrag_strand == 1) {
       $restricted_genomic_align->dnafrag_end($restricted_genomic_align->dnafrag_start + $original_seq_length - 1);
@@ -1814,6 +1818,5 @@ sub restrict {
 
   return $restricted_genomic_align;
 }
-
 
 1;
