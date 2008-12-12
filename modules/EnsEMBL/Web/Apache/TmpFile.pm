@@ -18,52 +18,51 @@ use EnsEMBL::Web::Cache;
 
 our $MEMD = EnsEMBL::Web::Cache->new;
 
+
 #############################################################
-# Mod_perl request handler all /img-tmp and /img-cache images
+# Mod_perl request handler for tmp files
 #############################################################
 sub handler {
   my $r = shift;
 
-  $r->err_headers_out->{ 'Ensembl-Error' => 'Problem in module EnsEMBL::Web::Apache::Image' };
+  $r->err_headers_out->{ 'Ensembl-Error' => 'Problem in module EnsEMBL::Web::Apache::TmpFile' };
   $r->custom_response(SERVER_ERROR, '/Crash');
 
-  my $path = $ENSEMBL_SERVERROOT . $r->parsed_uri->path;
-  my $replace = $ENSEMBL_SERVERROOT . $ENSEMBL_TMP_URL_IMG;
-  $path =~ s/$replace/$ENSEMBL_TMP_DIR_IMG/g;
-  ##return DECLINED if $path !~ /png$/;
-  return DECLINED if $path =~ /\.\./;
+  my $uri = $r->uri;
+  return FORBIDDEN if $uri =~ /\.\./;
+  $uri =~ s/^$ENSEMBL_TMP_URL_IMG/$ENSEMBL_TMP_DIR_IMG/g;
+  $uri =~ s/^$ENSEMBL_TMP_URL/$ENSEMBL_TMP_DIR/g;
 
-  if( $MEMD && (my $data = $MEMD->get($path)) ) {
-    
-      $r->headers_out->set('Accept-Ranges'  => 'bytes');
-      $r->headers_out->set('Content-Length' => $data->{'size'});
-      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 60*60*24*30*12) );
-      $r->set_last_modified($data->{'mtime'});
-      
-      $r->content_type('image/png');
-
-      my $rc = $r->print($data->{'image'});
-      return OK;
-
-  } elsif( -e $path ) {
+  if( $MEMD && (my $data = $MEMD->get($uri)) ) {
 
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
+      $r->headers_out->set('Content-Length' => $data->{'size'}) if $data->{'size'};
       $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 60*60*24*30*12) );
-      my $rc = $r->sendfile($path);
-      return OK;
+      $r->set_last_modified($data->{'mtime'}) if $data->{'mtime'};
       
+      $r->content_type($data->{'content_type'});
+
+      my $rc = $r->print($data->{'content'});
+      return OK;
+
+  } elsif( -e $uri ) {
+
+      $r->headers_out->set('Accept-Ranges'  => 'bytes');
+      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 60*60*24*30*12) );
+      my $rc = $r->sendfile($uri);
+      return OK;
+
+  } elsif( $MEMD && $ENV{'HTTP_REFERER'} ) {
+    ## Nothing found: delete all related content if MEMD (unless direct request without referer)
+    my $session_id = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+    $MEMD->delete_by_tags(
+      $ENV{'HTTP_REFERER'},
+      $session_id ? "session_id[$session_id]" : (),
+    );
+
+    return NOT_FOUND;
   }
 
-
-  ## Nothing found: delete all related content if MEMD 
-  if ($MEMD) {
-      my $session_id = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
-      $MEMD->delete_by_tags(
-        $ENV{'HTTP_REFERER'},
-        $session_id ? "session_id[$session_id]" : (),
-      );
-  }
-  
   return NOT_FOUND;
 } # end of handler
 

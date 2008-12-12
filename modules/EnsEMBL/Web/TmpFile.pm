@@ -148,14 +148,17 @@ sub save {
   my $self    = shift;
   my $content = $self->content(shift);
   my $params  = shift || {};
-
+  
   foreach my $driver ($self->drivers) {
     return 1 
       if $driver
       && $driver->save(
             $self->full_path,
             $content,
-            $params,
+            {
+              content_type => $self->content_type,
+              %$params,
+            },
          );    
   }
 
