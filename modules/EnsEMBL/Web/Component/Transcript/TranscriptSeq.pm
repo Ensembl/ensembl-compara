@@ -160,7 +160,8 @@ sub get_sequence_data {
             if ($config->{'translation'} && @Q > 1) {
               $protein_seq->{'seq'}->[$aa_bp-1]->{'letter'} = $protein_seq->{'seq'}->[$aa_bp+1]->{'letter'} = '=';
               $protein_seq->{'seq'}->[$aa_bp-1]->{'color'} = $config->{'colours'}->{'aminoacids'};
-              $protein_seq->{'seq'}->[$aa_bp+2]->{'color'} = 'auto';
+              $protein_seq->{'seq'}->[$aa_bp+2]->{'color'} = 'auto';              
+              $protein_seq->{'seq'}->[$_]->{'title'} = join (', ', @Q) for ($aa_bp-1..$aa_bp+1);
             }
           } else {            
             $mk->{'variations'}->{$r-1}->{'snp'}= 'indel';
