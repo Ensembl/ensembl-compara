@@ -45,7 +45,7 @@ my $point_1 = time();
 $document->find_modules;
 
 my $point_2 = time();
-$document->generate_html( $EXPORT, '/info/webcode/docs/', $SUPPORT );
+$document->generate_html( $EXPORT, '/info/docs/webcode/edoc', $SUPPORT );
 my $end = time();
 
 print "Directories documented:\n";

@@ -33,13 +33,13 @@
 
 #. /etc/profile
 
-PERLMOD_LOC="/ensemblweb/www/server"   # current server root
+PERLMOD_LOC="/ensemblweb/www/www_52"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
 PDOC_LOC="$PERLMOD_LOC/public-plugins/ensembl/htdocs/info/docs/api/Pdoc"    # where you want Pdocs created
-HTTP="/info/using/api/Pdoc"
-P2WDOC_LOC="/ensemblweb/shared/bin/pdoc-live"  # Pdoc code location
-P2WDOCER="/ensemblweb/shared/bin/pdoc-live/scripts/perlmod2www.pl"
+HTTP="/info/docs/api/Pdoc"
+P2WDOC_LOC="/localsw/ensembl_web/pdoc-live"  # Pdoc code location
+P2WDOCER="/localsw/ensembl_web/pdoc-live/scripts/perlmod2www.pl"
 
 
 F1=bioperl-live
@@ -121,8 +121,11 @@ cd $PERLMOD_LOC
 
 # generate e! docs:
 echo "Generating e! docs:";
-rm -r $PERLMOD_LOC/public-plugins/ensembl/htdocs/info/webcode/docs 
+rm -Rf $PERLMOD_LOC/public-plugins/ensembl/htdocs/info/docs/webcode/edoc
 perl $PERLMOD_LOC/utils/edoc/update_docs.pl
-cp -r $PERLMOD_LOC/utils/edoc/temp $PERLMOD_LOC/public-plugins/ensembl/htdocs/info/webcode/docs
+echo "Copying temp files to live directory"
+cp -r $PERLMOD_LOC/utils/edoc/temp public-plugins/ensembl/htdocs/info/docs/webcode/edoc
+echo "Clearing up e! docs temp files:";
+rm -Rf $PERLMOD_LOC/utils/edoc/temp
 
 exit 0
