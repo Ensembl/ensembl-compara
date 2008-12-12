@@ -1,0 +1,31 @@
+body{margin:0;background:#efefef;font-family:Helvetica,Arial,sans-serif;font-size:13px}
+body.list{font-size:13px;background:#9bb9dd}
+body.list a,body.list a:link,body.list{color:#333;;text-decoration:none}
+body.list a:visited{color:#000088} 
+body.list a:hover{color:#fff;background:#000088}
+body.list ul{padding:4px;margin:3px;list-style:circle inside}
+div.heading{background:#000088;color:fff;padding:5px;font-weight:bold}
+div.title{background:#FFFF99;border-bottom:2px solid #FFCC00;color:#880000;padding:8px;font-size:12px;font-weight:bold}
+div.title h1{padding:0;margin:0;font-size:26px} 
+div.footer{background:#FFFF99;border-top:2px solid #FFCC00;color:#880000;padding:4px}
+div.title a,div.title a:link,div.title a:visited,div.footer a,div.footer a:link,div.footer a:visited{color:#880000;text-decoration:none} 
+div.title a:hover,div.footer a:hover{color:#880000;text-decoration:underline} 
+div.content{margin:5px;padding:10px} 
+div.hier h3{padding:0;margin:0}
+div.hier{width:45%;float:left;border:1px solid #ccc;padding:5px;margin:10px;background:#fff}
+div.content a,div.content a:link{text-decoration:none;color:#0000ff} 
+div.content a:visited{color:#000088} 
+div.content a:hover{color:#000088;text-decoration:underline}
+div.methods{padding:15px}
+div.definitions h3{margin:0;padding:5px}
+div.definitions{border:1px solid #ccc;background:#fff}
+div.front{text-align:center} 
+div.front h1{font-size:28px} 
+div.coverage{padding-top:20px;font-size:18px}
+div.date{padding-top:20px} 
+table{font-size:13px} 
+div.methods td{border:1px solid #d0d0d0} 
+div.methods td.filled{border:1px solid #d0d0d0;background:#fff} 
+div.definitions td{border:1px solid #efefef} 
+div.definitions td.filled{border:1px solid #efefef;background:#eeeeff}
+div.indent{margin:0;padding:10px}

@@ -42,6 +42,14 @@ use Sys::Hostname::Long;
 use Getopt::Long;
 
 my ($help, $rmconfig, $single, $flush);
+my $serverroot;
+
+BEGIN {
+  $serverroot = dirname($Bin);
+  unshift @INC, "$serverroot/conf";
+};
+
+use SiteDefs;
 
 my $confdir = 'conf';
 &GetOptions(
@@ -62,21 +70,23 @@ warn "
 ";
 
 if ($help) {
-    print qq(Usage:
+  print qq(
+	Usage:
     ctrl_scripts/start_server
-        [-r|--rmconfig]
-        [-X|--single]
-        [-h|--help]
+      [-r|--rmconfig]
+      [-f|--flush]
+      [-X|--single]
+      [-h|--help]
         
 Options:
-    -r, --rmconfig  : remove conf/config.packed before restarting the server
-    -X, --single    : start Apache in single server mode
-    -h, --help      : print this help message
+  -r, --rmconfig  : remove conf/config.packed before restarting the server and flush memcached
+	-f, --flush     : flush memcached storage!
+  -X, --single    : start Apache in single server mode
+  -h, --help      : print this help message
 );
     exit;
 }
 
-my $serverroot = dirname($Bin);
 my $hostname = hostname_long();
 
 # start the server
@@ -103,7 +113,7 @@ warn "==========================================================================
 # LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST
 my $cmd = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
 
-$cmd .= "$serverroot/apache2/bin/httpd -d $serverroot -f $serverroot/$confdir/httpd.conf" . ($single ? " -X &" : "");
+$cmd .= $SiteDefs::APACHE_DIR."/bin/httpd -d ".$SiteDefs::APACHE_DIR." -f $serverroot/$confdir/httpd.conf" . ($single ? " -X &" : "");
 
 exec($cmd) or die " Could not start server: $!.\n[FATAL] Server start failed.\n";
 

@@ -27,6 +27,7 @@
 
   function __init_image_export() {
     $$('.iexport a').each(function(n){
+			if( n.hasClassName('munged') ) return;
       var url = n.href;
       n.innerHTML = 'Export image';
       var mn = Builder.node( 'dl', {className:'iexport_mn', id: 'menu_'+n.identify(), style: 'display:none' } );
@@ -36,7 +37,7 @@
         var menu = $('menu_'+nd.id);
         Position.clone(nd,menu,{setWidth:false,offsetTop:nd.getHeight()-4});
         menu.toggle();
-				event.stop();
+  			event.stop();
       });
       add_image_format( mn, url, 'pdf',      'PDF' );
       add_image_format( mn, url, 'svg',      'SVG' );
@@ -45,7 +46,8 @@
       add_image_format( mn, url, 'png-5',    'PNG (x5)' );
       add_image_format( mn, url, 'png-2',    'PNG (x2)' );
       add_image_format( mn, url, 'png',      'PNG' );
-      add_image_format( mn, url, 'png-0.5',  'PNG (/2)' );
+      add_image_format( mn, url, 'png-0.5',  'PNG (x0.5)' );
+	    n.addClassName('munged');
     });
 // Create the search list!
   }

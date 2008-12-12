@@ -5,12 +5,6 @@ use POSIX qw(floor ceil);
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
 
-our %formats = (qw(
-  svg        SVG
-  postscript PostScript
-  pdf        PDF
-));
-
 sub new {
   my( $class, $species_defs, $panel_name ) = @_;
   my $self = {
@@ -32,7 +26,6 @@ sub new {
     'format'             => 'png',
     'prefix'             => 'p',
 
-    'image_formats'      => []
   };
   bless $self, $class;
   return $self;
@@ -48,9 +41,6 @@ sub prefix {
 }
 sub set_extra {
   my( $self, $object ) = @_;
-  foreach( keys %formats ) {
-    $self->add_image_format( $_ ) if $object->param( "format_$_" ) eq 'on';
-  }
 }
 
 #----------------------------------------------------------------------------
@@ -489,7 +479,6 @@ sub caption            : lvalue { $_[0]->{'caption'}; }
 sub format             : lvalue { $_[0]->{'format'}; }
 sub panel              : lvalue { $_[0]->{'panel'}; }
 
-sub add_image_format  { push @{$_[0]->{'image_formats'}}, $_[1]; }
 
 ## TODO: Obsolete code, remove
 #sub exists { 

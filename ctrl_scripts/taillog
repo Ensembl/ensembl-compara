@@ -30,49 +30,42 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use FindBin qw($Bin);
-use File::Basename qw(dirname);
-use Sys::Hostname::Long;
 use Getopt::Long;
+use FindBin qw($Bin);
+use File::Basename qw( dirname );
+use Sys::Hostname::Long;
 
-my ($help, $hostname, $do_access);
+my $serverroot;
+
+BEGIN {
+  $serverroot = dirname($Bin);
+  unshift @INC, "$serverroot/conf";
+};
+
+use SiteDefs;
+
+
+my ($help, $do_access);
 &GetOptions(
-    "host=s"	=> \$hostname,
-    "H=s"	=> \$hostname,
-    "access"    => \$do_access,
-    "a"		=> \$do_access,
-    "help"      => \$help,
-    "h"         => \$help,
+  "access"  => \$do_access,
+  "h"       => \$help,
 );
-if ($help) {
-    print qq(Usage:
-    ctrl_scripts/taillog
-        [-a|--access]
-        [--host]
-        [-h|--help]
+die '
+------------------------------------------------------------------------
+Usage:
+  ctrl_scripts/taillog
+    [-a|--access]
+    [-h|--help]
         
 Options:
-    -a, --access    : Tails access log instead of error log
-        --host	    : Tail log for a different host to current host
-    -h, --help      : print this help message
-);
-    exit;
-}
-my $serverroot = dirname($Bin);
-my $logname = $do_access ? "access_log" : "error_log";
-$hostname ||= hostname_long();
+  -a, --access    : Tails access log instead of error log
+  -h, --help      : print this help message
+	
+------------------------------------------------------------------------
+' if $help;
 
-# get all matching logfiles and sort by mtime
-my @logs =  map { $_->[0] }
-            sort { $a->[1] <=> $b->[1] }
-            map { [ $_, (stat $_)[9] ] }
-            glob "$serverroot/logs/$hostname*$logname";
+(my $logname = $do_access ? $SiteDefs::ENSEMBL_CUSTOMLOG : $SiteDefs::ENSEMBL_ERRORLOG) =~ s/\s.*//;
 
-# get the newest logfile
-my $latestlog = pop @logs;
-die "No matching logfile to tail\n" unless $latestlog;
-
-my $cmd = "tail -f $latestlog";
-warn "$cmd\n";
+my $cmd = "tail -f $logname";
 exec($cmd) or die "Could not tail log: $!.\n";
 

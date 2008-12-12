@@ -27,7 +27,7 @@ print "Content-type: text/html\n\n";
 
 ### Split the method name from the module;
 (my $path_info = $ENV{'PATH_INFO'}) =~ s/^\///;
-my( $module, $method ) = $path_info =~ /^(.*)::(.+)/;
+my( $module, $method ) = $path_info =~ /^(.*)::(.*)/;
 unless( $module ) {
   printf "<p>String supplied in URL is invalid</p>", $path_info;
   exit;
@@ -59,17 +59,18 @@ unless( $fullfile ) {
 }
 
 ### Open the file
-my $flag = 0;
+my $flag = !$method;
 my $out = '';
 open I, "<$fullfile";
 while(<I>) {
-  if(/^\s*sub\s*(\w+)/) {
+  if(/^\s*sub\s*(\w+)/ && $method) {
     $flag = $1 eq $method;
   }
   if( $flag ) {
-    $out .= $formatter->format_string($_) unless /^\s*###/;
+    $out .= $formatter->format_string($_) unless /^\s*###/ && $method;
   }
 }
+$out =~ s/\n\s+\n/\n/g;
 unless( $out ) {
   printf "<p>Unable to find method %s in module %s</p>", escapeHTML( $method ), escapeHTML( $module );
   exit;

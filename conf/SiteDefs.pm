@@ -13,6 +13,8 @@ use Text::Wrap;
 $Text::Wrap::columns = 75;
 
 use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
+  $APACHE_DIR
+	$BIOPERL_DIR
   $ENSEMBL_RELEASE_DATE $ENSEMBL_MIN_SPARE_SERVERS $ENSEMBL_MAX_SPARE_SERVERS $ENSEMBL_START_SERVERS
   $ENSEMBL_HELPDESK_EMAIL
   $ENSEMBL_MAIL_SERVER
@@ -140,6 +142,8 @@ while( ($CONF_DIR = pop @clean_directory) !~ /^conf/) { 1; }     ## Remove up to
 
 $ENSEMBL_SERVERROOT = File::Spec->catpath( $volume, File::Spec->catdir( @clean_directory ) );
 $ENSEMBL_SERVERROOT = '.' unless $ENSEMBL_SERVERROOT;
+$APACHE_DIR         = "$ENSEMBL_SERVERROOT/apache2";
+$BIOPERL_DIR        = "$ENSEMBL_SERVERROOT/bioperl-live";
 #warn "$ENSEMBL_SERVERROOT";
 ## Define Plugin directories....
 eval qq(require '$ENSEMBL_SERVERROOT/$CONF_DIR/Plugins.pm');
@@ -257,18 +261,6 @@ $ENSEMBL_PRIVATE_AUTH   = undef;
 );
 
 my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ ) || "5.8.0";
-@ENSEMBL_LIB_DIRS     = (
-  $ENSEMBL_SERVERROOT."/apache2/lib/perl5/site_perl/$perl_version/",
-  $ENSEMBL_SERVERROOT.'/ensembl/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-functgenomics/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
-  $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
-  $ENSEMBL_SERVERROOT.'/bioperl-live',
-  $ENSEMBL_SERVERROOT.'/modules',
-);
 
 # Add perl-version specific lib from /ensemblweb/shared/lib for e.g. Storable.pm
 my @vers = split( /[\.0]+/, $] );
@@ -381,6 +373,19 @@ while( my( $dir, $name ) = splice(@T,0,2)  ) {
 # You should not change anything below here
 ###############################################################################
 
+@ENSEMBL_LIB_DIRS     = (
+  $ENSEMBL_SERVERROOT."/apache2/lib/perl5/site_perl/$perl_version/",
+  $ENSEMBL_SERVERROOT.'/ensembl/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-functgenomics/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
+  $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
+  $BIOPERL_DIR,
+  $ENSEMBL_SERVERROOT.'/modules',
+);
+
 @T = reverse @{$ENSEMBL_PLUGINS||[]}; ## These have to go on in reverse order...
 $ENSEMBL_PLUGIN_ROOTS = ();
 while( my( $dir, $name ) = splice(@T,0,2)  ) {
@@ -467,6 +472,8 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
 # Export by default
 ####################
 @EXPORT = qw(
+  $APACHE_DIR
+  $BIOPERL_DIR
   $ENSEMBL_PLUGIN_ROOTS
   $ENSEMBL_TMPL_CSS 
   $ENSEMBL_PAGE_CSS 
@@ -514,6 +521,8 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
 # Export anything asked for
 ############################
 @EXPORT_OK = qw(
+  $APACHE_DIR
+	$BIOPERL_DIR
   $ENSEMBL_HELPDESK_EMAIL
   $ENSEMBL_MAIL_SERVER
   $ENSEMBL_VERSION
@@ -602,6 +611,8 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
 ###################################
 %EXPORT_TAGS = (
   ALL => [qw(
+    $APACHE_DIR
+    $BIOPERL_DIR
   $ENSEMBL_SHORTEST_ALIAS
     $ENSEMBL_PLUGINS $ENSEMBL_PLUGIN_ROOTS
     $ENSEMBL_TMPL_CSS 
@@ -682,6 +693,8 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
   $ENSEMBL_BLAST_ENABLED
   )],
   WEB => [qw(
+    $APACHE_DIR
+    $BIOPERL_DIR
   $ENSEMBL_PLUGIN_ROOTS
   $ENSEMBL_HELPDESK_EMAIL
     $ENSEMBL_MAIL_SERVER
@@ -732,6 +745,8 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
   $ENSEMBL_BLAST_ENABLED
   )],
   APACHE => [qw(
+    $APACHE_DIR
+    $BIOPERL_DIR
     $ENSEMBL_PLUGIN_ROOTS
   $ENSEMBL_HELPDESK_EMAIL
   $ENSEMBL_MAIL_SERVER

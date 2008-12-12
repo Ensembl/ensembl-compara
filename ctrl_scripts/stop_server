@@ -40,6 +40,18 @@ no warnings 'uninitialized';
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
 use Sys::Hostname::Long;
+
+my $serverroot;
+
+BEGIN {
+  $serverroot = dirname($Bin);
+  unshift @INC, "$serverroot/conf";
+};
+
+use SiteDefs;
+
+my $PID = $SiteDefs::ENSEMBL_PIDFILE;
+
 use Getopt::Long;
 
 my ($help, $delay);
@@ -62,13 +74,12 @@ Options:
     exit;
 }
 
-my $serverroot = dirname($Bin);
 my $hostname = hostname_long();
 
 # stop the server
 warn "Stopping httpd daemon...\n";
 
-open (P, "<$serverroot/logs/$hostname.httpd.pid") or die
+open (P, "<$PID") or die
     "Could not open PID file $serverroot/logs/$hostname.httpd.pid: $!\n" .
     "[FATAL] Restart failed.\n";
 my $pid = <P>;
