@@ -150,7 +150,7 @@ my $offset = $self->{'container'}->start - 1;
         $title .= "; Type: ".$group->{'type'} if $group->{'type'};
 
         if( $group->{extent_end} >0 &&  $group->{extent_start} < $seq_len ) {
-        my $row = $self->bump_row( $group->{'start'}*$ppbp, $group->{'end'}*$ppbp );
+        my $row = $self->bump_row( $group->{'start'}*$ppbp, $end*$ppbp );
         $group->{'y'} = - $strand * $row * ( $self->{h}+ $fontsize + 4);
           $composite =  $self->Space({ ## Just draw a composite at the moment!
             'absolutey' => 1,

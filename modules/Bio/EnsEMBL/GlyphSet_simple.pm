@@ -33,9 +33,10 @@ use Bio::EnsEMBL::Feature;
 
 sub get_colours {
   my( $self, $f ) = @_;
-  my $colour_key     = $self->colour_key( $f );
+  my( $colour_key, $flag ) = $self->colour_key( $f );
   return {
-    'feature' => $self->my_colour( $colour_key ),
+    'key'     => $colour_key,
+    'feature' => $self->my_colour( $colour_key, $flag   ),
     'label'   => $self->my_colour( $colour_key, 'label' ),
     'part'    => $self->my_colour( $colour_key, 'style' )
   };
