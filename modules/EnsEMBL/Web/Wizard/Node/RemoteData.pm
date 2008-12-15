@@ -460,8 +460,9 @@ sub save_tempdas {
   if (my @codes = $self->object->param('code')) {
     my $error = 0;
     foreach my $code (@codes) { 
+      next unless $code;
       my $url = $self->object->get_session->get_data(type => 'url', code => $code);
-      if ($user->add_to_urls($url)) {
+      if ($url && $user->add_to_urls($url)) {
         $self->object->get_session->purge_data(type => 'url', code => $code);
       } else {
         $error = 1;
