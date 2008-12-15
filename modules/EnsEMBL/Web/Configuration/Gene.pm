@@ -381,8 +381,9 @@ sub _ajax_zmenu_compara_tree_node{
   my $node = $tree->find_node_by_node_id($node_id) 
       || die( "No node_id $node_id in ProteinTree" );
   
-  # my $tagvalues = $node->get_tagvalue_hash; # Speed up below
-  my $tagvalues = $node->{_tags};
+  my $tagvalues = $node->get_tagvalue_hash;
+  # Possible speed up below
+  # my $tagvalues = $node->{_tags};
   my $is_leaf = $node->is_leaf;
   # my $leaf_count = scalar @{$node->get_all_leaves}; # Speed up below
   my $leaf_count  = $node->num_leaves;
