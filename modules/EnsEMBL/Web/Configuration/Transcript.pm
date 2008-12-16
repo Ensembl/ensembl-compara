@@ -492,12 +492,6 @@ sub populate_tree {
       map         EnsEMBL::Web::Component::Gene::HistoryMap/protein)],
       { 'availability' => 'history', 'concise' => 'ID History' }
   ));
-  
-  $self->create_node(
-    'Export', "Export transcript data",
-    [ qw( sequence EnsEMBL::Web::Component::Transcript/export ) ],
-    { 'availability' => 'transcript', 'no_menu_entry' => 1 }
-  );
 }
 
 sub user_populate_tree {

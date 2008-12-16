@@ -119,12 +119,6 @@ sub populate_tree {
 	  marker EnsEMBL::Web::Component::Location::MarkerDetails) ],
      { 'availability' => 'slice' }
   );
-
-  $self->create_node(
-    'Export', "Export location data",
-    [ qw( sequence EnsEMBL::Web::Component::Location/export ) ],
-    { 'availability' => 'slice', 'no_menu_entry' => 1 }
-  );
 }
 
 sub ajax_zmenu      {
