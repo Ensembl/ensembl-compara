@@ -703,7 +703,10 @@ sub rgb_by_id {
 
 sub hex_by_name {
   my ($self, $name) = @_;
-  return $self->{$name} || ( $name =~ /^#?([0-9a-fA-F]{6})$/ ? $1 : 'ff0000' ); 
+  return $self->{$name} || (
+         $name =~ /^#?([0-9a-fA-F]{6})$/ ? $1 : 
+         $name =~ /^(\d+),(\d+),(\d+)$/ ? sprintf( '%02x%02x%02x', $1,$2,$3 ) : 'ff0000'
+  ); 
 }
 
 use Carp qw(cluck);
