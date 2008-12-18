@@ -1541,13 +1541,21 @@ sub get_Mapper {
       my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
       my $aln_seq_pos = 0;
       my $seq_pos = 0;
+
+      my $target_cigar_pieces;
+      @$target_cigar_pieces = $self->cigar_line =~ /(\d*[GMDXI])/g;
+
+      my $insertions = 0;
       foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMDX])/g) {
         my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMDX])/;
         $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
 
-        my $this_piece_of_seq = substr($this_aligned_seq, $aln_seq_pos, $cig_count);
+	#because of 2X genomes, need different method for extracting the
+	#cigar_line
+	my $this_piece_of_cigar_line = _get_sub_cigar_line($target_cigar_pieces, $aln_seq_pos, $cig_count);
+
         if ($cig_mode eq "M") {
-          my $this_piece_of_cigar_line = _get_cigar_line_from_aligned_sequence($this_piece_of_seq);
+
           my $this_mapper;
           if ($rel_strand == 1) {
             $this_mapper = _get_Mapper_from_cigar_line($this_piece_of_cigar_line, $aln_pos,
@@ -1558,8 +1566,13 @@ sub get_Mapper {
           }
           $mapper->add_Mapper($this_mapper);
           $aln_pos += $cig_count;
+
+	  $insertions = _count_cigar_elements($this_piece_of_cigar_line, "I");
+	  $seq_pos += $insertions;
         }
-        my $gaps = $this_piece_of_seq =~ tr/\-./\-./;
+	my $gaps = _count_cigar_elements($this_piece_of_cigar_line, "D");
+	$gaps += _count_cigar_elements($this_piece_of_cigar_line, "X");
+
         $seq_pos -= $gaps;
         $seq_pos += $cig_count;
         $aln_seq_pos += $cig_count;
@@ -1589,6 +1602,135 @@ sub get_Mapper {
   return $self->{$mode.'_mapper'};
 }
 
+=head2 _count_cigar_elements
+
+  Arg[1]     : string $cigar_line 
+  Arg[2]     : char $this_mode (should be valid cigar_line mode)
+  Example    : $num_elements = _count_cigar_elements("5M3D2M5D, "D")
+  Description: Counts the number of a given cigar_line mode in a cigar_line
+               This would be 8 for the above example (3D+5D)
+  Returntype : integer
+  Exceptions : None
+  Status     : At risk
+
+=cut
+sub _count_cigar_elements {
+    my ($cigar_line, $this_mode) = @_;
+
+    my $this_count = 0;
+    foreach my $cigar_piece ($cigar_line =~ /(\d*[GMDXI])/g) {
+        my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMDXI])/;
+        $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
+
+	if ($cig_mode eq $this_mode) {
+	    $this_count += $cig_count;
+	}
+    }
+    return $this_count;
+}
+
+=head2 _get_sub_cigar_line
+
+  Arg[1]     : ref to array of target cigar_line elements
+  Arg[2]     : int $offset start position
+  Arg[3]     : int $length amount to extract
+  Example    : my $new_cigar_line = _get_sub_cigar_line($target_cigar_pieces, $pos, $count);
+  Description: Extracts a cigar_line of size $length starting at $offset
+  Returntype : string
+  Exceptions : None
+  Status     : At risk
+
+=cut
+sub _get_sub_cigar_line {
+    my ($target_cigar_pieces, $offset, $length) = @_;
+    my $i = 0;
+    my $ref_pos = $offset + $length;
+    my ($target_cig_count, $target_cig_mode);
+    my $target_pos = 0;
+
+    #skip through target_cigar_line until get to correct position
+    while ($target_pos < $offset && $i < @$target_cigar_pieces) {
+	($target_cig_count, $target_cig_mode) = $target_cigar_pieces->[$i++] =~ /(\d*)([GMDXI])/;
+	$target_cig_count = 1 if (!defined($target_cig_count) or $target_cig_count eq "");
+
+	$target_pos += $target_cig_count unless $target_cig_mode eq "I";
+    }
+
+    my $new_cigar_line = "";
+    #check to see if previous target overlaps this ref_pos
+    if ($offset) {
+	if ($target_pos > $offset) {
+
+	    #need to only add on cig_count amount
+	    my $new_count;
+	    if ($target_pos - $offset < $length) {
+		$new_count = ($target_pos - $offset);
+	    } else {
+		$new_count = $length;
+	    }
+	    $new_cigar_line .= $new_count . $target_cig_mode;
+	}
+    }
+
+    while ($target_pos < $ref_pos && $i < @$target_cigar_pieces) {
+	($target_cig_count, $target_cig_mode) = $target_cigar_pieces->[$i++] =~ /(\d*)([GMDXI])/;
+	$target_cig_count = 1 if (!defined($target_cig_count) or $target_cig_count eq "");
+
+	#first piece
+	if (!$target_pos) {
+	    if ($target_cig_count >= $length) {
+		$new_cigar_line .= _cigar_element($target_cig_mode,$length);
+	    } else {
+		$new_cigar_line .= _cigar_element($target_cig_mode,$target_cig_count);
+	    }
+	} else {
+	    if ($target_cig_mode ne "I" && 
+		$target_cig_count + $target_pos > $ref_pos) {
+		#if new target piece extends beyond ref_piece but is not I 
+		#(since this doesn't count to target_pos) need to shorten it
+		my $count = $ref_pos - $target_pos;
+		$new_cigar_line .= _cigar_element($target_cig_mode,$count);
+	    } else {
+		$new_cigar_line .= _cigar_element($target_cig_mode,$target_cig_count);
+	    }
+	}
+	$target_pos += $target_cig_count unless $target_cig_mode eq "I";
+    }
+    #need to check if the next element is an I which doesn't count to 
+    #target_pos but need to add it to cigar_line
+    if ($i < @$target_cigar_pieces) {
+	($target_cig_count, $target_cig_mode) = $target_cigar_pieces->[$i++] =~ /(\d*)([GMDXI])/;
+	$target_cig_count = 1 if (!defined($target_cig_count) or $target_cig_count eq "");
+	if ($target_cig_mode eq "I") {
+	    $new_cigar_line .= _cigar_element($target_cig_mode,$target_cig_count);
+	}
+    }
+    return $new_cigar_line;
+}
+
+=head2 _cigar_element
+
+  Arg[1]     : char $mode valid cigar_line mode
+  Arg[2]     : int $length size of element
+  Example    : $elem = _cigar_element("M", 5);
+  Description: Creates a valid cigar element
+  Returntype : integer
+  Exceptions : None
+  Status     : At risk
+
+=cut
+sub _cigar_element {
+    my ($mode, $len) = @_;
+    my $elem;
+    if ($len == 1) {
+	$elem = $mode;
+    #} elsif ($len > 1) { #length can be 0 if the sequence starts with a gap
+    } else { #length can be 0 if the sequence starts with a gap
+	$elem = $len.$mode;
+    }
+    return $elem;
+}
+
 =head2 _get_Mapper_from_cigar_line
 
   Arg[1]     : $cigar_line
@@ -1611,7 +1753,7 @@ sub _get_Mapper_from_cigar_line {
 
   my $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
 
-  my @cigar_pieces = ($cigar_line =~ /(\d*[GMDX])/g);
+  my @cigar_pieces = ($cigar_line =~ /(\d*[GMDXI])/g);
   if ($rel_strand == 1) {
     foreach my $cigar_piece (@cigar_pieces) {
       my $cigar_type = substr($cigar_piece, -1, 1 );
@@ -1631,6 +1773,9 @@ sub _get_Mapper_from_cigar_line {
             );
         $sequence_position += $cigar_count;
         $alignment_position += $cigar_count;
+      } elsif( $cigar_type eq "I") {
+	#add to sequence_position but not alignment_position
+	$sequence_position += $cigar_count;
       } elsif( $cigar_type eq "G" || $cigar_type eq "D" || $cigar_type eq "X") {
         $alignment_position += $cigar_count;
       }
@@ -1654,6 +1799,9 @@ sub _get_Mapper_from_cigar_line {
             );
         $sequence_position -= $cigar_count;
         $alignment_position += $cigar_count;
+      } elsif( $cigar_type eq "I") {
+	#add to sequence_position but not alignment_position
+	$sequence_position -= $cigar_count;
       } elsif( $cigar_type eq "G" || $cigar_type eq "D" || $cigar_type eq "X") {
         $alignment_position += $cigar_count;
       }
