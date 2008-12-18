@@ -108,6 +108,7 @@ sub _render_hit {
 
   $URL =~ s{Location/View\?marker}{Location/Marker\?m}; #cope with incorrect marker URLs
   $URL =~ s{Karyotype\?type=}{Genome\?ftype=}; #cope with incorrect feature URLs
+  $URL =~ s{Genome\?ftype=OligoProbe}{Genome\?ftype=OligoFeature}; #cope with incorrect oligoprobe feature URLs
 
   #add extra location link only for index types defined in hit_maps above
   my $add_location_link = 0;
