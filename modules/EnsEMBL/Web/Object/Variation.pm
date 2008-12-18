@@ -945,7 +945,7 @@ sub transcript_variation {
     push (@data, {
             conseq =>           $type,
             transcriptname =>   $tvari_obj->transcript->stable_id,
-            proteinname  =>     $tvari_obj->transcript->translation->stable_id,
+            proteinname  =>     $tvari_obj->transcript->translation ? $tvari_obj->transcript->translation->stable_id : '-',
             cdna_start =>       $tvari_obj->cdna_start,
             cdna_end =>         $tvari_obj->cdna_end,
             translation_start =>$tvari_obj->translation_start,
