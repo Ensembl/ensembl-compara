@@ -39,9 +39,14 @@ use strict;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;;
 use Bio::EnsEMBL::Utils::Exception;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Pipeline::Runnable::Blat;
+use Bio::EnsEMBL::Analysis::Runnable::Blat;
 
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+#use Bio::EnsEMBL::Pipeline::Runnable::Blat;
+#our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+
+use Bio::EnsEMBL::Analysis::RunnableDB;
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 
@@ -276,7 +281,7 @@ sub create_ooc_file {
         or throw("Directory $dir/$seq_region cannot be created");
   }
 
-  my $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat (
+  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Blat (
 							     -database => "$dir/$seq_region.fa",
 							     -query_type => "dnax",
 							     -target_type => "dnax",
