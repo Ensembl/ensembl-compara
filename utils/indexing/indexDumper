@@ -354,7 +354,7 @@ sub dumpOligoProbe {
   while( my( $hid, $count, $type, $sr_name, $sr_start, $sr_end ) = $sth->fetchrow_array ) {
     next unless $hid;
     print A join "\t", (INC_SPECIES?"$species\t":"")."$type Oligo Probe set",
-      $hid, "/$species/Location/Genome?ftype=OligoProbe;id=$hid",
+      $hid, "/$species/Location/Genome?ftype=OligoFeature;id=$hid",
       $hid, qq($type oligo probeset $hid hits the genome in $count locations.\n);
   }
   close A;
@@ -473,12 +473,11 @@ sub domainLine {
   return join "\t",
     (INC_SPECIES?"$species\t":"").qq(Interpro domain),    ## Type
     qq($did),               ## ID
-    qq(/$species/Transcript/Domains/Genes?domain=$did), ## URL
+    qq(/$species/Transcript/Domains/Genes?domain=$did;t=$example), ## URL
     qq($did $IDS $desc),     ## Index locations
     qq(InterPro domain $did [$desc] has $counter associated external database identifiers: $description.\n);   ## Description text
 
 }
-
 ########################################################################## Families
 
 sub dumpFamily {
