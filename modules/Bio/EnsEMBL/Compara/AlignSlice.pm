@@ -771,7 +771,6 @@ sub _create_underlying_Slices {
         if ($this_genomic_align_block->reference_genomic_align->dnafrag_start > $self->reference_Slice->end || $this_genomic_align_block->reference_genomic_align->dnafrag_end < $self->reference_Slice->start) {
             next;
         }
-
       ($this_genomic_align_block, $from, $to) = $this_genomic_align_block->restrict_between_reference_positions(
           $self->reference_Slice->start, $self->reference_Slice->end);
     }
@@ -779,6 +778,12 @@ sub _create_underlying_Slices {
     $original_genomic_align_block->{_alignslice_to} = $to;
 
     my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align;
+
+    #If I haven't needed to restrict, I don't gain this link so add it here
+    if (!defined $reference_genomic_align->genomic_align_block->reference_genomic_align) {
+	$reference_genomic_align->genomic_align_block($this_genomic_align_block);
+    }
+
     my ($this_pos, $this_gap_between_genomic_align_blocks);
     if ($strand == 1) {
       $this_pos = $reference_genomic_align->dnafrag_start;
@@ -1062,6 +1067,9 @@ sub _choose_underlying_Slice {
       foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
         my $block_start = $slice_mapper_pair->{start};
         my $block_end = $slice_mapper_pair->{end};
+	#a block may not have a start and end if there is no sequence
+	#eg the cigar_line looks like 139D17186X
+	next if (!defined $this_block_start || !defined $this_block_end);
         if ($this_block_start <= $block_end and $this_block_end >= $block_start) {
           $overlap = 1;
           last;
