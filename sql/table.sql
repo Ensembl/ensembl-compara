@@ -677,6 +677,33 @@ CREATE TABLE protein_tree_member (
   KEY (member_id)
 ) COLLATE=latin1_swedish_ci;
 
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'protein_tree_member_score'
+--
+-- overview:
+--   to allow certain nodes (leaves) to have aligned protein member_scores attached to them   
+-- semantics:
+--    node_id                  -- the id of node associated with this name
+--    member_id                -- link to member.member_id in many-1 relation (single member per node)
+--    method_link_species_set_id -- foreign key from method_link_species_set table
+--    cigar_line               -- compressed alignment information 
+--    cigar_start              -- protein start (0 if the whole protein is in the alignment)
+--    cigar_end                -- protein end (0 if the whole protein is in the alignment)
+
+CREATE TABLE protein_tree_member_score (
+  node_id                     int(10) unsigned NOT NULL,
+  member_id                   int(10) unsigned NOT NULL, 
+  method_link_species_set_id  int(10) unsigned NOT NULL,
+  cigar_line                  mediumtext,
+  cigar_start                 int(10),
+  cigar_end                   int(10),
+
+  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+
+  UNIQUE (node_id),
+  KEY (member_id)
+) COLLATE=latin1_swedish_ci;
 
 
 ------------------------------------------------------------------------------------
@@ -736,7 +763,7 @@ CREATE TABLE sitewise_aln (
   optimal                     float(10,5),
   ncod                        int(10),
   threshold_on_branch_ds      float(10,5),
-  type                        ENUM('all_gaps','constant','default','negative1','negative2','negative3','negative4','positive1','positive2','positive3','positive4','synonymous') NOT NULL,
+  type                        ENUM('single_character','random','all_gaps','constant','default','negative1','negative2','negative3','negative4','positive1','positive2','positive3','positive4','synonymous') NOT NULL,
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
 
