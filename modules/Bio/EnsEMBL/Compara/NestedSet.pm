@@ -279,7 +279,8 @@ sub root {
   my $self = shift;
 
   if (!defined($self->{'_parent_link'}) and $self->adaptor 
-     and ($self->right_index-$self->left_index)>1) {
+     and ($self->right_index-$self->left_index)>1
+     and $self->{_parent_id} != 0) {
     return $self->adaptor->fetch_root_by_node($self);
   }
 
