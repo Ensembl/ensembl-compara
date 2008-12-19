@@ -150,7 +150,7 @@ my $offset = $self->{'container'}->start - 1;
         $title .= "; Type: ".$group->{'type'} if $group->{'type'};
 
         if( $group->{extent_end} >0 &&  $group->{extent_start} < $seq_len ) {
-        my $row = $self->bump_row( $group->{'start'}*$ppbp, $end*$ppbp );
+        my $row = $self->bump_row( $group->{'start'}*$ppbp, $end*$ppbp ) + $self->{'_row_offset'};
         $group->{'y'} = - $strand * $row * ( $self->{h}+ $fontsize + 4);
           $composite =  $self->Space({ ## Just draw a composite at the moment!
             'absolutey' => 1,
@@ -219,7 +219,7 @@ my $offset = $self->{'container'}->start - 1;
                   $end = $f->{'extent_start'} + ( $tw + 4 ) * $self->{bppp};
                 }
                 $end = $f->{'extent_end'} if $f->{'extent_end'} > $end;
-                my $row = $self->bump_row( $f->{'extent_start'}*$ppbp, $end*$ppbp );
+                my $row = $self->bump_row( $f->{'extent_start'}*$ppbp, $end*$ppbp ) + $self->{'_row_offset'};
                 $f->{'y'} = - $strand * $row * ($self->{h}+$fontsize+4);
                 ## reposition!
               }
@@ -337,6 +337,7 @@ my $offset = $self->{'container'}->start - 1;
       $self->push($composite) if $composite;
     }
   }
+	$self->{'_row_offset'} = $self->_max_bump_row;
 }
 
 sub render_nolabels {
@@ -370,6 +371,7 @@ sub render_normal {
   }
 
   ## Draw stranded features first!!
+	$self->{_row_offset} = 0;
   $self->_draw_features( $strand, $features, $render_flags ) if $features->{'ori'}{$strand};
   ## Draw unstranded features last !! So they go below stranded features!
   $self->_draw_features( 0, $features, $render_flags ) if $features->{'ori'}{0} && $strand == -1;
