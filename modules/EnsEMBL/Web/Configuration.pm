@@ -12,6 +12,8 @@ use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Cache;
+use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::TmpFile::Tar;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Component::Export qw(pip_file);
 
@@ -452,25 +454,34 @@ sub _export_configurator {
     my @formats;
     
     if ($key eq 'pip') {
-      my $file_name = $object->temp_file_name;
-      my ($path, $file) = $object->make_directory($object->species_defs->ENSEMBL_TMP_DIR . "/$file_name");
-      
-      my $seq_file  = $object->species_defs->ENSEMBL_TMP_DIR . "/$file_name.fa";
-      my $anno_file = $object->species_defs->ENSEMBL_TMP_DIR . "/$file_name.txt";
-      
-      my $seq_url   = $object->species_defs->ENSEMBL_TMP_URL . "/$file_name.fa";
-      my $anno_url  = $object->species_defs->ENSEMBL_TMP_URL . "/$file_name.txt";
-      my $arc_url   = $object->species_defs->ENSEMBL_TMP_URL . "/$file_name.tar.gz";
+      my $seq_file  = EnsEMBL::Web::TmpFile::Text->new(extension => 'fa', prefix => '');
+      my $anno_file = EnsEMBL::Web::TmpFile::Text->new(
+        filename  => $seq_file->filename,
+        extension => 'txt',
+        prefix    => '',
+      );
       
       pip_file($seq_file, $object, 'seq');
       pip_file($anno_file, $object, $output);
+
+      $seq_file->save;
+      $anno_file->save;
+
+      my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
+        filename        => $seq_file->filename,
+        prefix          => '',
+        use_short_names => 1,
+      );
+      $tar_file->add_file($seq_file);
+      $tar_file->add_file($anno_file);
+      $tar_file->save;
       
-      system("cd $path; tar cf - $file.fa $file.txt | gzip -9 > $file.tar.gz");
+      ##system("cd ".$object->species_defs->ENSEMBL_TMP_DIR."; tar cf - $file.fa $file.txt | gzip -9 > $file.tar.gz");
       
       @formats = (
-        [ 'Sequence data', '', ' rel="external"', ' [FASTA format]', $seq_url ],
-        [ 'Annotation data', '', ' rel="external"', ' [pipmaker format]', $anno_url ],
-        [ 'Combined file', '', '', '', $arc_url ]
+        [ 'Sequence data', '', ' rel="external"', ' [FASTA format]', $seq_file->URL ],
+        [ 'Annotation data', '', ' rel="external"', ' [pipmaker format]', $anno_file->URL ],
+        [ 'Combined file', '', '', '', $tar_file->URL ]
       );
     } else {
       @formats = (

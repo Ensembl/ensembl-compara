@@ -222,14 +222,14 @@ sub flat {
 
 
 sub pip_file {
-  my ($file_name, $object, $o) = @_;
+  my ($file, $object, $o) = @_;
   
   my $slice = $object->can('slice') ? $object->slice : $object->get_Slice;
   
   my $outputs = {
-    'seq'      => sub { pip_seq_file($file_name, $object, $slice);  },
-    'pipmaker' => sub { pip_anno_file($file_name, $object, $slice, $o); },
-    'vista'    => sub { pip_anno_file($file_name, $object, $slice, $o); }
+    'seq'      => sub { pip_seq_file($file, $object, $slice);  },
+    'pipmaker' => sub { pip_anno_file($file, $object, $slice, $o); },
+    'vista'    => sub { pip_anno_file($file, $object, $slice, $o); }
   };
   
   if (!$outputs->{$o}) {
@@ -241,17 +241,24 @@ sub pip_file {
 }
 
 sub pip_seq_file {
-  my ($file_name, $object, $slice) = @_;
+  my ($file, $object, $slice) = @_;
   
   (my $seq = $slice->seq) =~ s/(.{60})/$1\n/g;
   
-  open  O, ">$file_name";
-  print O ">@{[$slice->name]}\n$seq";
-  close O;
+  my $fh;
+  if (ref $file) {
+    $fh = $file;
+  } else {
+    open $fh, ">$file";
+  }
+
+  print $fh ">@{[$slice->name]}\n$seq";
+
+  close $fh unless ref $file;
 }
 
 sub pip_anno_file {
-  my ($file_name, $object, $slice, $o) = @_;
+  my ($file, $object, $slice, $o) = @_;
   
   my $slice_length = $slice->length;
   
@@ -260,7 +267,12 @@ sub pip_anno_file {
     'vista'    => sub { return pip_anno_file_vista(@_); }
   };
   
-  open O, ">$file_name";
+  my $fh;
+  if (ref $file) {
+    $fh = $file;
+  } else {
+    open $fh, ">$file";
+  }
   
   foreach my $gene (@{$slice->get_all_Genes(undef, undef, 1) || []}) {
     # only include genes that don't overlap slice boundaries
@@ -277,11 +289,11 @@ sub pip_anno_file {
       my $out = $outputs->{$o}($transcript, \@exons);
       
       # write output to file if there are exons in the exported region
-      print O $gene_header, $out if $out;
+      print $fh $gene_header, $out if $out;
     }
   }
   
-  close O;
+  close $fh unless ref $file;
 }
 
 

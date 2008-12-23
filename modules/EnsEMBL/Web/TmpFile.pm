@@ -5,12 +5,11 @@ package EnsEMBL::Web::TmpFile;
 ## see EnsEMBL::Web::TmpFile::* and EnsEMBL::Web::TmpFile::Drivers::* for more info
 
 use strict;
-use Digest::MD5 qw(md5_hex);
-use EnsEMBL::Web::Root;
-use LWP::UserAgent;
+use IO::String;
 use HTTP::Request;
 use HTTP::Response;
-use Compress::Zlib;
+use LWP::UserAgent;
+use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::TmpFile::Driver::Disk;
@@ -18,8 +17,12 @@ use EnsEMBL::Web::TmpFile::Driver::Memcached;
 
 use base qw(Class::Accessor EnsEMBL::Web::Root);
 
+use overload (
+  '*{}' => '_glob', 
+);
+
 __PACKAGE__->mk_accessors(qw(species_defs content_type format compress drivers));
-__PACKAGE__->mk_ro_accessors(qw(full_path prefix extension file_root path_format URL_root URL));
+__PACKAGE__->mk_ro_accessors(qw(full_path prefix extension file_root path_format URL_root URL shortname));
 
 sub new {
   my $class = shift;
@@ -30,6 +33,7 @@ sub new {
     species_defs => $species_defs,
     prefix       => undef,
     filename     => undef,
+    shortname    => undef,
     extension    => undef,
     content_type => undef,
     content      => '',
@@ -59,6 +63,10 @@ sub new {
   return $self;
 }
 
+sub _glob {
+  my $self = shift;
+  return IO::String->new($self->{content});
+}
 
 ## Get/Set filename
 ## -> list of drivers to set - optional
@@ -67,28 +75,35 @@ sub filename {
   my $self = shift;
 
   if (my $filename = shift) {
-    $self->{filename}  = $filename;
+    my $extension = $self->{extension};
+    my $prefix    = $self->{prefix};
+    my $file_root = $self->{file_root};
+    my $URL_root  = $self->{URL_root};
 
     ## SET extension
-    $self->{filename} .= ".$self->{extension}"
-      if $self->{extension} && $self->{filename} !~ /\.$self->{extension}$/;
+    $filename .= ".$extension"
+      if $extension && $filename !~ /\.$extension$/;
 
     ## Fix file root
-    $self->{file_root} .= "/$self->{prefix}"
-      if $self->{prefix} && $self->{file_root} !~ m!/$self->{prefix}$!;
+    $file_root .= "/$prefix"
+      if $prefix && $file_root !~ m!/$prefix$!;
 
     ## Fix URL root
-    $self->{URL_root} .= "/$self->{prefix}"
-      if $self->{prefix} && $self->{URL_root} !~ m!/$self->{prefix}$!;
+    $URL_root .= "/$prefix"
+      if $prefix && $URL_root !~ m!/$prefix$!;
 
     ## Split filename if full path given
-    if ($self->{filename} =~ m!^$self->{file_root}/(.*)!) {
-      $self->{filename}   = $1;
+    if ($filename =~ m!^$file_root/(.*)!) {
+      $filename   = $1;
     }
 
-    $self->{full_path} = "$self->{file_root}/$self->{filename}";
-    $self->{URL}       = "$self->{URL_root}/$self->{filename}";
+    $self->{full_path} = "$file_root/$filename";
+    $self->{URL}       = "$URL_root/$filename";
+    $self->{filename}  = $filename;
 
+    $self->{shortname} = $filename;
+    $self->{shortname} =~ s!^.*/([^/]+)$!$1!g;
+    
     $self->make_directory($self->{full_path});
   }
   
