@@ -24,6 +24,7 @@ sub read_tree {
     $branch,    ## hashref to be populated, branch of the tree
                 ## by default its { path => '/path/..' }
     $doc_root,  ## this could be different because of the plugins
+    $parent,    ## this is link to parent in case we need to delete ourselves
   ) = @_;
 
   my $path = $branch->{_path};
@@ -33,8 +34,12 @@ sub read_tree {
 
   ## Get the list of files for directory of the current path.
   opendir(DIR, $doc_root . $path) || die "Can't open $doc_root$path";
-  my @files = readdir(DIR);
+  my @files = grep { /^[^\.]/ && $_ ne 'CVS' } readdir(DIR);
   closedir(DIR);
+  unless (@files) {
+    delete $parent->{$branch->{'_name'}};
+    return;
+  }
 
   ## separate directories from other files
   my ($html_files, $sub_dirs) = sortnames(\@files, $doc_root . $path);
@@ -92,7 +97,8 @@ sub read_tree {
     next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/ 
         || $dirname eq 'private' || $dirname eq 'ssi';
     $branch->{$dirname}->{_path} = "$path$dirname/";
-    read_tree( $branch->{$dirname}, $doc_root );
+    $branch->{$dirname}->{_name} = $dirname;
+    read_tree( $branch->{$dirname}, $doc_root, $branch );
   }
 }
 
