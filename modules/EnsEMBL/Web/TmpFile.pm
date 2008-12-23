@@ -81,8 +81,10 @@ sub filename {
     my $URL_root  = $self->{URL_root};
 
     ## SET extension
-    $filename =~ s/\.\w{1,4}$//g;
-    $filename .= ".$extension" if $extension;
+    if ($extension) {
+      $filename =~ s/\.\w{1,4}$//g;
+      $filename .= ".$extension";
+    }
 
     ## Fix file root
     $file_root .= "/$prefix"
@@ -250,79 +252,5 @@ sub retrieve {
 
   return undef; 
 }
-
-
-1;
-
-__END__
-
-=head1 Ensembl::Web::File::Text
-
-=head2 SYNOPSIS
-
-Simple caching and retrieval of uploaded text files.
-
-Caching:
-
-  my $tmpfilename = $cgi->tmpFileName($filename);
-  my $cache = new EnsEMBL::Web::File::Data($species_defs);
-  $cache->set_cache_filename('tmp',$tmpfilename);
-  $cache->save($tmpfilename);
-  my $cachename = $cache->filename;
-
-Retrieval:
-
-  my $cache = new EnsEMBL::Web::File::Data($species_defs);
-  $data = $cache->retrieve($cachename);
-
-
-=head2 DESCRIPTION
-
-Some wizards, e.g. Karyoview, need to be able to able to upload a file at one step and then use it at a later point in the wizard process. Unfortunately CGI throws away temporary files when a script exits, so the upload needs to be cached elsewhere.
-
-Note: this module is designed to handle only simple text-based genomic files such as GTF format.
-
-=head2 METHOD
-
-=head3 B<new>
-
-Description: Simple constructor method
-
-=head3 B<set_cache_filename>
-
-Assigns a random output directory in the Ensembl tmp directory - at the moment, the CGI-assigned tmp filename is retained.
- 
-=head3 B<filename>
-
-Retrieves the path assigned by set_cache_filename
- 
-=head3 B<save>
-
-Reads the text file in and writes it out to the assigned location
- 
-=head3 B<retrieve>
-
-Reads the cached file and returns it as a string
- 
-=head2 BUGS AND LIMITATIONS
-
-=head3 Bugs
-
-None known
-
-=head3 Limitations
-
-Currently assumes that CGI.pm stores its temporary files in /usr/tmp
-
-=head2 AUTHOR
-
-Anne Parker, Ensembl Web Team
-Support enquiries: helpdesk\@ensembl.org
-
-=head2 COPYRIGHT
-
-See http://www.ensembl.org/info/about/code_licence.html
-
-=cut
 
 1;
