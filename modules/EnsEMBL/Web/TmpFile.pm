@@ -81,8 +81,8 @@ sub filename {
     my $URL_root  = $self->{URL_root};
 
     ## SET extension
-    $filename .= ".$extension"
-      if $extension && $filename !~ /\.$extension$/;
+    $filename =~ s/\.\w{1,4}$//g;
+    $filename .= ".$extension" if $extension;
 
     ## Fix file root
     $file_root .= "/$prefix"
