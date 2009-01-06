@@ -395,7 +395,8 @@ sub _export_configurator {
         [ 'repeat', 'Repeat features' ],
         [ 'genscan', 'Prediction features (genscan)' ],
         [ 'variation', 'Variation features' ],
-        [ 'gene', 'Gene Information' ]
+        [ 'gene', 'Gene Information' ],
+        [ 'cytoview', 'CytoView', $options->{'cytoview'} ]
       ]
     },
     'flat' => {
@@ -438,7 +439,7 @@ sub _export_configurator {
       'strand' => $object->param('strand'), 
       'output' => $output 
     });
-    
+
     my $map = { 
       'csv' => 'features',
       'gff' => 'features',
@@ -476,8 +477,6 @@ sub _export_configurator {
       $tar_file->add_file($anno_file);
       $tar_file->save;
       
-      ##system("cd ".$object->species_defs->ENSEMBL_TMP_DIR."; tar cf - $file.fa $file.txt | gzip -9 > $file.tar.gz");
-      
       @formats = (
         [ 'Sequence data', '', ' rel="external"', ' [FASTA format]', $seq_file->URL ],
         [ 'Annotation data', '', ' rel="external"', ' [pipmaker format]', $anno_file->URL ],
@@ -492,10 +491,14 @@ sub _export_configurator {
     }
     
     foreach (@{$config->{$key}->{'params'}}) {      
-      $href .= ";st=$_->[0]" if $object->param("${output}_$_->[0]") eq 'yes';
+      $href .= ";st=$_->[0]" if ($object->param("${output}_$_->[0]") eq 'yes');
+      
+      if ($_->[0] eq 'cytoview') {
+          $href .= ";cytoview_$_=" . $object->param("cytoview_$_") for ('dump', 'misc_set');
+      }
     }
     
-     # How confusing!
+    # How confusing!
     my $form_action = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }, 1);
     my $hidden_params;
     
