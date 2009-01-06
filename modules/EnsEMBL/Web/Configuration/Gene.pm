@@ -231,7 +231,7 @@ sub configurator {
 sub export_configurator {
   my $self = shift;
   
-  my $options = { 'translation' => 0, 'three' => 0, 'five' => 0 };
+  my $options = { 'translation' => 0, 'three' => 0, 'five' => 0, 'cytoview' => 0 };
   
   for (@{$self->object->get_all_transcripts}) {
     $options->{'translation'} = 1 if $_->Obj->translation;

@@ -32,7 +32,7 @@ sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
-sub export_configurator { return $_[0]->_export_configurator; }
+sub export_configurator { return $_[0]->_export_configurator({ 'cytoview' => 0 }); }
 
 sub ajax_zmenu      {
     my $self = shift;

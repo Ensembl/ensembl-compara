@@ -15,6 +15,9 @@ sub init {
   $defaults{'output'} = 'fasta';
   $defaults{'strand'} = $ENV{'ENSEMBL_TYPE'} eq 'Location' ? 'forward' : 'feature';
   
+  $defaults{'cytoview_misc_set'} = 'tilepath';
+  $defaults{'cytoview_dump'} = 'set';
+  
   foreach (qw(flank5_display flank3_display)) {
     $defaults{$_} = 0;
   }
@@ -24,7 +27,7 @@ sub init {
   }
   
   foreach my $f(qw(csv gff tab)) {
-    foreach (qw(similarity repeat genscan variation gene)) {
+    foreach (qw(similarity repeat genscan variation gene cytoview)) {
       $defaults{$f . '_' . $_} = 'yes';
     }
   }
@@ -51,7 +54,7 @@ sub form {
   
   return unless $config; # Gets called twice on an Export page itself - first time is from the wrong place
   
-   # How confusing!
+  # How confusing!
   my $form_action = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }, 1);
   
   $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
@@ -100,6 +103,38 @@ sub form {
     'value' => 'Next >'
   });
   
+  #TODO put in right place
+  if ($type eq 'Location') {
+    $view_config->add_fieldset('Options for CytoView');
+    
+    $view_config->add_form_element({
+      'type'     => 'DropDown', 
+      'select'   => 'select',
+      'required' => 'yes',
+      'name'     => 'cytoview_misc_set',
+      'label'    => 'Select set of features to render',
+      'values'   => [
+        { value => 'tilepath', name => 'Tilepath' },
+        { value => 'cloneset_1mb', name => '1MB clone set' },
+        { value => 'cloneset_32k', name => '32k clone set' },
+        { value => 'cloneset_30k', name => '30k clone set' }
+      ]
+    });
+    
+    $view_config->add_form_element({
+      'type'     => 'DropDown', 
+      'select'   => 'select',
+      'required' => 'yes',
+      'name'     => 'cytoview_dump',
+      'label'    => 'Select type to export',
+      'values'   => [
+        { value => 'set', name => 'Features on this chromosome' },
+        { value => 'slice', name => 'Features in this region' },
+        { value => 'all', name => 'All features in set' }
+      ]
+    });
+  }
+  
   foreach my $c (sort keys %$config) {
     next unless scalar @{$config->{$c}->{'params'}};
     
@@ -123,8 +158,8 @@ sub form {
       }
       
       foreach (@{$config->{$c}->{'params'}}) {
-        next if $_->[2] eq "0"; # Next if 0, but not if undef. Where is my === operator, perl?
-        
+        next if $_->[2] eq '0'; # Next if 0, but not if undef. Where is my === operator, perl?
+
         $view_config->add_form_element({
           'type' => 'CheckBox',
           'label' => $_->[1],
