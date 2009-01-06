@@ -70,8 +70,8 @@ sub populate_tree {
 
 ##----------------------------------------------------------------------
 ## Compara menu: alignments/orthologs/paralogs/trees
-  my $compara_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );  
-  $compara_menu->append($self->create_node('Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
+  my $compara_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );
+  $compara_menu->append($self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
     [qw(
       selector   EnsEMBL::Web::Component::Gene::Compara_AlignSliceSelector
       alignments EnsEMBL::Web::Component::Gene::ComparaAlignments
@@ -187,6 +187,12 @@ sub populate_tree {
         map         EnsEMBL::Web::Component::Gene::HistoryMap)],
         { 'availability' => 'history', 'concise' => 'ID History' }
   ));
+  
+  $self->create_node(
+    'Export', "Export gene data",
+    [ qw( sequence EnsEMBL::Web::Component::Gene/export ) ],
+    { 'availability' => 'gene', 'no_menu_entry' => 1 }
+  );
 }
 
 sub user_populate_tree {
