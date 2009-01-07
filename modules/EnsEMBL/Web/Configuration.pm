@@ -429,13 +429,17 @@ sub _export_configurator {
     }
   };
   
-  if ($options->{'config_overwrite'}) {
-    $config = $options->{'config_overwrite'};
-  } elsif ($options->{'config_merge'}) {
+  if ($options->{'config_merge'}) {
     for (keys %{$options->{'config_merge'}}) {
       $config->{$_} = { %{$config->{$_}}, %{$options->{'config_merge'}->{$_}} };
     }
   }
+  
+  $options->{'strand_values'} ||= [
+    { value => 'feature', name => 'Feature strand' },
+    { value => '1', name => 'Forward strand' },
+    { value => '-1', name => 'Reverse strand' }
+  ];
   
   # Second page
   if ($object->param('save')) {
@@ -526,10 +530,10 @@ sub _export_configurator {
         
     foreach (@formats) {
       my $format = ";_format=$_->[1]" if $_->[1];
-      $href = $_->[4] if $_->[4];
+      my $link = $_->[4] || $href;
       
       $content .= qq{
-            <li><a class="modal_close" href="$href$format"$_->[2]>$_->[0]</a>$_->[3]</li>};
+            <li><a class="modal_close" href="$link$format"$_->[2]>$_->[0]</a>$_->[3]</li>};
     }
     
     $content .= qq{

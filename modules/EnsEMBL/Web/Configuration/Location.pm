@@ -28,7 +28,152 @@ sub local_tools    { return $_[0]->_local_tools;    }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
 sub configurator   { return $_[0]->_configurator;   }
-sub export_configurator { return $_[0]->_export_configurator; }
+
+sub export_configurator {
+  my $self = shift;
+  
+  return $self->ld_export_configurator if ($self->object->action eq 'LD');
+  
+  my $options = {
+    'strand_values' => [
+      { value => '1', name => 'Forward strand' },
+      { value => '-1', name => 'Reverse strand' }
+    ],
+    'config_merge' => {
+      'fasta' => {
+        'type' => 'Hidden',
+        'params' => [
+          [ 'genomic', 'Genomic' ]
+        ]
+      }
+    },
+    'custom_fields' => [
+      [ 'add_fieldset', 'Options for CytoView' ],
+      [ 'add_form_element', {
+        'type'     => 'DropDown', 
+        'select'   => 'select',
+        'required' => 'yes',
+        'name'     => 'cytoview_misc_set',
+        'label'    => 'Select set of features to render',
+        'values'   => [
+          { value => 'tilepath', name => 'Tilepath' },
+          { value => 'cloneset_1mb', name => '1MB clone set' },
+          { value => 'cloneset_32k', name => '32k clone set' },
+          { value => 'cloneset_30k', name => '30k clone set' }
+        ]
+      }],
+      [ 'add_form_element', {
+        'type'     => 'DropDown', 
+        'select'   => 'select',
+        'required' => 'yes',
+        'name'     => 'cytoview_dump',
+        'label'    => 'Select type to export',
+        'values'   => [
+          { value => 'set', name => 'Features on this chromosome' },
+          { value => 'slice', name => 'Features in this region' },
+          { value => 'all', name => 'All features in set' }
+        ]
+      }]
+    ]
+  };
+  
+  return $self->_export_configurator($options);
+}
+
+sub ld_export_configurator {
+  my $self = shift;
+  my $object = $self->{'object'};
+  my $content;
+  my $haploview_form;
+  my @formats;
+  
+  my $href = $object->_url({ 
+    'time' => time, 
+    'action' => 'Export'
+  });
+  
+  # How confusing!
+  my $form_action = $object->_url({ 'action' => $object->type, 'type' => 'Export', 'function' => $object->action }, 1);
+  my $params;
+  
+  foreach (keys %{$form_action->[1]||{}}) {
+    $params .= qq{
+      <input type="hidden" name="$_" value="$form_action->[1]->{$_}" />};
+  }
+  
+  if ($object->param('haploview')) {
+    my $gen_file  = EnsEMBL::Web::TmpFile::Text->new(extension => 'ped', prefix => '');
+    my $locus_file = EnsEMBL::Web::TmpFile::Text->new(
+      filename => $gen_file->filename,
+      extension => 'txt',
+      prefix => '',
+    );
+    
+    #TODO
+    #MAKE FILES($gen_file, $object);
+    #MAKE FILES($locus_file, $object);
+    
+    $gen_file->save;
+    $locus_file->save;
+    
+    my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
+      filename => $gen_file->filename,
+      prefix => '',
+      use_short_names => 1,
+    );
+    
+    $tar_file->add_file($gen_file);
+    $tar_file->add_file($locus_file);
+    $tar_file->save;
+    
+    @formats = (
+      [ 'Genotype file', '', ' rel="external"', ' [Genotypes in linkage format]', $gen_file->URL ],
+      [ 'Locus information', '', ' rel="external"', ' [Locus information file]', $locus_file->URL ],
+      [ 'Combined file', '', '', '', $tar_file->URL ]
+    );
+    
+    $params .= qq{<input type="submit" class="submit" value="&lt; Back" />};
+  } else {
+    @formats = (
+      [ 'HTML', 'HTML', ' rel="external"' ],
+      [ 'Text', 'Text', ' rel="external"' ],
+      [ 'Excel', 'Excel' ],
+      [ 'For upload into Haploview software', '', '', ' (may take a while)', "$form_action->[0]?haploview=1", 'modal_link' ]
+    );
+    
+    $params .= qq{<input type="hidden" name="haploview" value="1" />};
+  }
+  
+  $content = qq{
+    <h2>Export Configuration - LDView</h2>
+    <form id="export_output_configuration" class="std check" method="get" action="$form_action->[0]">
+      <fieldset>
+        <ul>};
+        
+    foreach (@formats) {
+      my $format = ";_format=$_->[1]" if $_->[1];
+      my $link = $_->[4] || $href;
+      my $class = $_->[5] || 'modal_close';
+      
+      $content .= qq{
+          <li><a class="$class" href="$link$format"$_->[2]>$_->[0]</a>$_->[3]</li>};
+    }
+    
+    $content .= qq{
+        </ul>
+        $params
+      </form>};
+      
+  my $panel = $self->new_panel(
+    'Configurator',
+    'code' => 'configurator',
+    'object'=> $object
+  );
+  
+  $panel->set_content($content);
+
+  $self->add_panel($panel);
+}
 
 sub populate_tree {
   my $self = shift;
