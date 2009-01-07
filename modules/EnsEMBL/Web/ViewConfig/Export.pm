@@ -103,7 +103,6 @@ sub form {
     'value' => 'Next >'
   });
   
-  #TODO put in right place
   if ($type eq 'Location') {
     $view_config->add_fieldset('Options for CytoView');
     
