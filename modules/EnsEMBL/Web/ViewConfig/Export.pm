@@ -69,34 +69,31 @@ sub form {
   
   foreach my $c (sort keys %$config) {
     foreach (@{$config->{$c}->{'formats'}}) {
-     push (@output_values, { group => $config->{$c}->{'label'}, value => $_->[0], name => $_->[1] });
+      push (@output_values, { group => $config->{$c}->{'label'}, value => $_->[0], name => $_->[1] });
     }
   }
   
-  my @strand_values = (
-    { value => '1', name => 'Forward strand' },
-    { value => '-1', name => 'Reverse strand' }
-  );
+  if (scalar @output_values) {
+    $view_config->add_form_element({
+      'type'     => 'DropDown', 
+      'select'   => 'select',
+      'required' => 'yes',
+      'name'     => 'output',
+      'label'    => 'Output',
+      'values'   => \@output_values
+    });
+  }
   
-  unshift (@strand_values, { value => 'feature', name => 'Feature strand' }) unless $type eq 'Location';
-  
-  $view_config->add_form_element({
-    'type'     => 'DropDown', 
-    'select'   => 'select',
-    'required' => 'yes',
-    'name'     => 'output',
-    'label'    => 'Output',
-    'values'   => \@output_values
-  });
-  
-  $view_config->add_form_element({
-    'type'     => 'DropDown', 
-    'select'   => 'select',
-    'required' => 'yes',
-    'name'     => 'strand',
-    'label'    => 'Strand',
-    'values'   => \@strand_values
-  });
+  if (scalar @{$options->{'strand_values'}}) {
+    $view_config->add_form_element({
+      'type'     => 'DropDown', 
+      'select'   => 'select',
+      'required' => 'yes',
+      'name'     => 'strand',
+      'label'    => 'Strand',
+      'values'   => $options->{'strand_values'}
+    });
+  }
   
   $view_config->add_form_element({
     'type' => 'Submit',
