@@ -43,7 +43,7 @@ sub init {
 }
 
 sub form {
-  my ($view_config, $object) = @_;
+  my ($view_config, $object, $custom_fields) = @_;
   
   my $type = $object->type;
   
@@ -53,6 +53,8 @@ sub form {
   my $options = $view_config->{'_temp'}->{'options'};
   
   return unless $config; # Gets called twice on an Export page itself - first time is from the wrong place
+  
+  $custom_fields ||= [];
   
   # How confusing!
   my $form_action = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }, 1);
@@ -102,40 +104,15 @@ sub form {
     'name' => 'next_top',
     'value' => 'Next >'
   });
-  
-  if ($type eq 'Location') {
-    $view_config->add_fieldset('Options for CytoView');
     
-    $view_config->add_form_element({
-      'type'     => 'DropDown', 
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'cytoview_misc_set',
-      'label'    => 'Select set of features to render',
-      'values'   => [
-        { value => 'tilepath', name => 'Tilepath' },
-        { value => 'cloneset_1mb', name => '1MB clone set' },
-        { value => 'cloneset_32k', name => '32k clone set' },
-        { value => 'cloneset_30k', name => '30k clone set' }
-      ]
-    });
+  foreach (@{$options->{'custom_fields'}||[]}) {
+    my $func = $_->[0];
     
-    $view_config->add_form_element({
-      'type'     => 'DropDown', 
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'cytoview_dump',
-      'label'    => 'Select type to export',
-      'values'   => [
-        { value => 'set', name => 'Features on this chromosome' },
-        { value => 'slice', name => 'Features in this region' },
-        { value => 'all', name => 'All features in set' }
-      ]
-    });
+    $view_config->$func($_->[1]);
   }
   
   foreach my $c (sort keys %$config) {
-    next unless scalar @{$config->{$c}->{'params'}};
+    next unless $config->{$c}->{'params'};
     
     foreach my $f (@{$config->{$c}->{'formats'}}) {      
       $view_config->add_fieldset("Options for $f->[1]");
@@ -143,24 +120,13 @@ sub form {
       if ($f->[0] eq 'fasta') { 
         $view_config->add_form_element($gene_markup_options{'flank5_display'});
         $view_config->add_form_element($gene_markup_options{'flank3_display'});
-        
-        # Does only genomic, so no configuration is necessary
-        if ($type eq 'Location') {
-          $view_config->add_form_element({
-            'type' => 'Hidden',
-            'name' => 'fasta_genomic',
-            'value' => 'yes'
-          });
-          
-          next;
-        }
       }
       
       foreach (@{$config->{$c}->{'params'}}) {
         next if $_->[2] eq '0'; # Next if 0, but not if undef. Where is my === operator, perl?
-
+        
         $view_config->add_form_element({
-          'type' => 'CheckBox',
+          'type' => $config->{$c}->{'type'} || 'CheckBox',
           'label' => $_->[1],
           'name' => "$f->[0]_$_->[0]",
           'value' => 'yes'
