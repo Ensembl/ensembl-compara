@@ -1546,14 +1546,23 @@ sub get_Mapper {
       @$target_cigar_pieces = $self->cigar_line =~ /(\d*[GMDXI])/g;
 
       my $insertions = 0;
+      my $array_index = 0;
+      my $this_target_pos = 0;
       foreach my $cigar_piece ($ref_cigar_line =~ /(\d*[GMDX])/g) {
         my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMDX])/;
         $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
 
 	#because of 2X genomes, need different method for extracting the
 	#cigar_line
-	my $this_piece_of_cigar_line = _get_sub_cigar_line($target_cigar_pieces, $aln_seq_pos, $cig_count);
+	#my $this_piece_of_cigar_line = _get_sub_cigar_line_slow($target_cigar_pieces, $aln_seq_pos, $cig_count);
 
+	#quicker method which keeps track of how far through the 
+	#target_cigar_pieces array we are
+	my $this_piece_of_cigar_line;
+	($this_piece_of_cigar_line,$array_index, $this_target_pos) = _get_sub_cigar_line($target_cigar_pieces, $aln_seq_pos, $cig_count, $array_index, $this_target_pos);
+
+	#find number of each cigar_line mode in cigar_line
+	my $num_cigar_elements = _count_cigar_elements($this_piece_of_cigar_line);
         if ($cig_mode eq "M") {
 
           my $this_mapper;
@@ -1567,11 +1576,12 @@ sub get_Mapper {
           $mapper->add_Mapper($this_mapper);
           $aln_pos += $cig_count;
 
-	  $insertions = _count_cigar_elements($this_piece_of_cigar_line, "I");
+	  $insertions = $num_cigar_elements->{"I"};
+
 	  $seq_pos += $insertions;
         }
-	my $gaps = _count_cigar_elements($this_piece_of_cigar_line, "D");
-	$gaps += _count_cigar_elements($this_piece_of_cigar_line, "X");
+	my $gaps = $num_cigar_elements->{"D"};
+	$gaps += $num_cigar_elements->{"X"};
 
         $seq_pos -= $gaps;
         $seq_pos += $cig_count;
@@ -1605,28 +1615,32 @@ sub get_Mapper {
 =head2 _count_cigar_elements
 
   Arg[1]     : string $cigar_line 
-  Arg[2]     : char $this_mode (should be valid cigar_line mode)
-  Example    : $num_elements = _count_cigar_elements("5M3D2M5D, "D")
-  Description: Counts the number of a given cigar_line mode in a cigar_line
-               This would be 8 for the above example (3D+5D)
-  Returntype : integer
+  Example    : $num_elements = _count_cigar_elements("5M3D2M5D")
+  Description: Counts the number of each cigar_line mode in a cigar_line
+               and stores them in a hash reference. In the above example
+               $num_elements->{"M"} is 7, $num_elements->{"D"} is 8
+  Returntype : hash reference
   Exceptions : None
   Status     : At risk
 
 =cut
 sub _count_cigar_elements {
-    my ($cigar_line, $this_mode) = @_;
+    my ($cigar_line) = @_;
 
     my $this_count = 0;
+    my $num_elements;
+
+    #initialise each element to 0
+    foreach my $mode (qw(G M D X I)) {
+	$num_elements->{$mode} = 0;
+    }
+
     foreach my $cigar_piece ($cigar_line =~ /(\d*[GMDXI])/g) {
         my ($cig_count, $cig_mode) = $cigar_piece =~ /(\d*)([GMDXI])/;
         $cig_count = 1 if (!defined($cig_count) or $cig_count eq "");
-
-	if ($cig_mode eq $this_mode) {
-	    $this_count += $cig_count;
-	}
+	$num_elements->{$cig_mode} += $cig_count;
     }
-    return $this_count;
+    return $num_elements;
 }
 
 =head2 _get_sub_cigar_line
@@ -1634,6 +1648,8 @@ sub _count_cigar_elements {
   Arg[1]     : ref to array of target cigar_line elements
   Arg[2]     : int $offset start position
   Arg[3]     : int $length amount to extract
+  Arg[4]     : int $start_array_index current element in target array
+  Arg[5]     : int $start_target_pos current position in target coords
   Example    : my $new_cigar_line = _get_sub_cigar_line($target_cigar_pieces, $pos, $count);
   Description: Extracts a cigar_line of size $length starting at $offset
   Returntype : string
@@ -1642,6 +1658,77 @@ sub _count_cigar_elements {
 
 =cut
 sub _get_sub_cigar_line {
+    my ($target_cigar_pieces, $offset, $length, $start_array_index, $start_target_pos) = @_;
+    my $ref_pos = $offset + $length;
+
+    my $i = $start_array_index;
+    my $target_pos = $start_target_pos;
+
+    #current target element
+    my ($target_cig_count, $target_cig_mode) = $target_cigar_pieces->[$i] =~ /(\d*)([GMDXI])/;
+    $target_cig_count = 1 if (!defined($target_cig_count) or $target_cig_count eq "");
+
+    my $new_cigar_line = "";
+    #check to see if previous target overlaps this ref_pos
+    if ($offset) {
+	if ($target_pos > $offset) {
+
+	    #need to only add on cig_count amount
+	    my $new_count;
+	    if ($target_pos - $offset < $length) {
+		$new_count = ($target_pos - $offset);
+	    } else {
+		$new_count = $length;
+	    }
+	    #$new_cigar_line .= $new_count . $target_cig_mode;
+	    $new_cigar_line .= _cigar_element($target_cig_mode,$new_count);
+	    #print "here1 $target_cig_mode $new_count\n";
+	}
+	#increment to next target element
+	$i++;
+    }
+    while ($target_pos < $ref_pos && $i < @$target_cigar_pieces) {
+	($target_cig_count, $target_cig_mode) = $target_cigar_pieces->[$i++] =~ /(\d*)([GMDXI])/;
+	$target_cig_count = 1 if (!defined($target_cig_count) or $target_cig_count eq "");
+
+	#first piece
+	if (!$target_pos) {
+	    if ($target_cig_count >= $length) {
+		$new_cigar_line .= _cigar_element($target_cig_mode,$length);
+	    } else {
+		$new_cigar_line .= _cigar_element($target_cig_mode,$target_cig_count);
+	    }
+	} else {
+	    if ($target_cig_mode ne "I" && 
+		$target_cig_count + $target_pos > $ref_pos) {
+		#if new target piece extends beyond ref_piece but is not I 
+		#(since this doesn't count to target_pos) need to shorten it
+		my $count = $ref_pos - $target_pos;
+		$new_cigar_line .= _cigar_element($target_cig_mode,$count);
+	    } else {
+		$new_cigar_line .= _cigar_element($target_cig_mode,$target_cig_count);
+	    }
+	}
+	$target_pos += $target_cig_count unless $target_cig_mode eq "I";
+    }
+    #need to check if the next element is an I which doesn't count to 
+    #target_pos but need to add it to cigar_line
+    if ($i < @$target_cigar_pieces) {
+	($target_cig_count, $target_cig_mode) = $target_cigar_pieces->[$i] =~ /(\d*)([GMDXI])/;
+	$target_cig_count = 1 if (!defined($target_cig_count) or $target_cig_count eq "");
+	if ($target_cig_mode eq "I") {
+	    $new_cigar_line .= _cigar_element($target_cig_mode,$target_cig_count);
+	}
+    }
+
+    #decrement to return current target element 
+    if ( $i > 0) {
+	$i--;
+    }
+    return ($new_cigar_line, $i, $target_pos);
+}
+
+sub _get_sub_cigar_line_slow {
     my ($target_cigar_pieces, $offset, $length) = @_;
     my $i = 0;
     my $ref_pos = $offset + $length;
@@ -1668,7 +1755,8 @@ sub _get_sub_cigar_line {
 	    } else {
 		$new_count = $length;
 	    }
-	    $new_cigar_line .= $new_count . $target_cig_mode;
+	    #$new_cigar_line .= $new_count . $target_cig_mode;
+	    $new_cigar_line .= _cigar_element($target_cig_mode,$new_count);
 	}
     }
 
