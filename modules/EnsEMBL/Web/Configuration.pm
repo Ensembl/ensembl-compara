@@ -457,9 +457,9 @@ sub _export_configurator {
     if ($key eq 'pip') {
       my $seq_file  = EnsEMBL::Web::TmpFile::Text->new(extension => 'fa', prefix => '');
       my $anno_file = EnsEMBL::Web::TmpFile::Text->new(
-        filename  => $seq_file->filename,
+        filename => $seq_file->filename,
         extension => 'txt',
-        prefix    => '',
+        prefix => '',
       );
       
       pip_file($seq_file, $object, 'seq');
@@ -469,10 +469,11 @@ sub _export_configurator {
       $anno_file->save;
 
       my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
-        filename        => $seq_file->filename,
-        prefix          => '',
+        filename => $seq_file->filename,
+        prefix => '',
         use_short_names => 1,
       );
+      
       $tar_file->add_file($seq_file);
       $tar_file->add_file($anno_file);
       $tar_file->save;
@@ -491,10 +492,12 @@ sub _export_configurator {
     }
     
     foreach (@{$config->{$key}->{'params'}}) {      
-      $href .= ";st=$_->[0]" if ($object->param("${output}_$_->[0]") eq 'yes');
-      
-      if ($_->[0] eq 'cytoview') {
-          $href .= ";cytoview_$_=" . $object->param("cytoview_$_") for ('dump', 'misc_set');
+      if ($object->param("${output}_$_->[0]") eq 'yes') {
+        $href .= ";st=$_->[0]";
+        
+        if ($_->[0] eq 'cytoview') {
+            $href .= ";cytoview_$_=" . $object->param("cytoview_$_") for ('dump', 'misc_set');
+        }
       }
     }
     
