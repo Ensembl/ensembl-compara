@@ -365,6 +365,7 @@ sub _export_configurator {
   
   my $object = $self->{'object'};
   my $type = $object->type;
+  my $content;
   
   $self->tree->_flush_tree;
   
@@ -373,7 +374,9 @@ sub _export_configurator {
   my $config = {
     'fasta' => {
       'label' => 'FASTA sequence',
-      'formats' => [ [ 'fasta', 'FASTA sequence' ] ],
+      'formats' => [
+        [ 'fasta', 'FASTA sequence' ]
+      ],
       'params' => [
         [ 'genomic', 'Genomic' ],
         [ 'cdna', 'cDNA' ],
@@ -400,7 +403,7 @@ sub _export_configurator {
       ]
     },
     'flat' => {
-      'label' => 'FASTA sequence',
+      'label' => 'Flat File',
       'formats' => [
         [ 'embl', 'EMBL' ],
         [ 'genbank', 'GenBank' ]
@@ -422,12 +425,17 @@ sub _export_configurator {
       'formats' => [
         [ 'pipmaker', 'Pipmaker / zPicture format' ],
         [ 'vista', 'Vista Format' ]
-      ],
-      'params' => []
+      ]
     }
   };
   
-  my $content;
+  if ($options->{'config_overwrite'}) {
+    $config = $options->{'config_overwrite'};
+  } elsif ($options->{'config_merge'}) {
+    for (keys %{$options->{'config_merge'}}) {
+      $config->{$_} = { %{$config->{$_}}, %{$options->{'config_merge'}->{$_}} };
+    }
+  }
   
   # Second page
   if ($object->param('save')) {
