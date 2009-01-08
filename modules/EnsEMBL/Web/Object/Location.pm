@@ -1015,14 +1015,21 @@ sub slice_cache {
 
 
 sub current_pop_name {
-  my $self = shift;
+  my $self = shift; 
   my %pops_on;
   my %pops_off;
   my $view_config = $self->get_viewconfig();
 
+  ## Hack to work with population passed through via url , ability to add more than one population to be added back at a later date. 
+  my $pop =  $self->param('opt_pop');
+  $pop =~s/\:on//;
+  $pops_on{$pop} = 1; 
+
+
   # Read in all in viewconfig stuff
   foreach ($view_config->options) {
     next unless $_ =~ s/opt_pop_//;
+    warn $_;
     $pops_on{$_}  = 1 if $view_config->get("opt_pop_$_") eq 'on';
     $pops_off{$_} = 1 if $view_config->get("opt_pop_$_") eq 'off';
   }
