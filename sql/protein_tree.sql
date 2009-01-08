@@ -83,3 +83,23 @@ CREATE TABLE protein_tree_tag (
 
 
 
+--------------------------------------------------------------------------------------
+--
+-- Table structure for table 'protein_tree_stable_id'
+--
+-- overview:
+--     to allow protein trees have trackable stable_ids.
+--
+-- semantics:
+--    node_id           - node_id of the root of the tree
+--    stable_id         - the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10) )
+--    version           - numeric version of the stable_id (changes only when members move to/from existing trees)
+
+CREATE TABLE protein_tree_stable_id (
+    node_id   INT(10) UNSIGNED NOT NULL,
+    stable_id VARCHAR(40)  NOT NULL, # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
+    version   INT UNSIGNED NOT NULL, # version of the stable_id (changes only when members move to/from existing trees)
+    PRIMARY KEY ( node_id ),
+    UNIQUE KEY ( stable_id )
+);
+
