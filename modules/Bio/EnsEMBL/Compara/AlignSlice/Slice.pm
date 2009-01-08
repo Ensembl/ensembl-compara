@@ -377,7 +377,7 @@ sub get_all_Genes {
       $strict_order_of_exon_pieces.":".
       $strict_order_of_exons.":".
       $return_unmapped_exons;
-  
+
   if (!defined($self->{$key})) {
     my $all_genes = [];
 
@@ -716,11 +716,11 @@ sub _compile_mapped_Genes {
                           $old_transcript->coding_region_start,
                           $old_transcript->coding_region_start + 2));
                   } else {
-                    $all_end_codon_mappings = $self->map_original_Slice(
+                    $all_start_codon_mappings = $self->map_original_Slice(
                         $this_exon->exon->slice->sub_Slice(
-                          $old_transcript->coding_region_start,
-                          $old_transcript->coding_region_start + 2));
-                  }
+                          $old_transcript->coding_region_end-2,
+                          $old_transcript->coding_region_end));
+                 }
                   $seq_start = _map_position_using_cigar_line($this_exon->cigar_line,
                       $old_transcript->translation->start, $this_exon->exon->length, 1);
                   if ($seq_start <= $this_exon->length) {
@@ -734,14 +734,12 @@ sub _compile_mapped_Genes {
               if ($old_transcript->translation->end_Exon->stable_id eq $this_exon->stable_id) {
                 if ($old_transcript->translation->end_Exon->strand == 1) {
                   $all_end_codon_mappings = $self->map_original_Slice(
-                      $this_exon->exon->slice->sub_Slice(
-                        $old_transcript->coding_region_end - 2,
-                        $old_transcript->coding_region_end));
+                      $this_exon->exon->slice->sub_Slice($old_transcript->coding_region_end - 2,$old_transcript->coding_region_end));
                 } else {
-                  $all_start_codon_mappings = $self->map_original_Slice(
+                  $all_end_codon_mappings = $self->map_original_Slice(
                       $this_exon->exon->slice->sub_Slice(
-                        $old_transcript->coding_region_end - 2,
-                        $old_transcript->coding_region_end));
+                       $old_transcript->coding_region_start,
+                        $old_transcript->coding_region_start + 2));
                 }
                 $seq_end = _map_position_using_cigar_line($this_exon->cigar_line,
                     $old_transcript->translation->end, $this_exon->exon->length, 0);
@@ -756,7 +754,7 @@ sub _compile_mapped_Genes {
                 $end_exon = $this_exon;
                 $seq_end = $end_exon->length;
               }
-            }
+	    }
             if ($old_transcript->translation->end_Exon->stable_id eq $this_exon->stable_id) {
               $coding = 0;
               last;
@@ -785,6 +783,7 @@ sub _compile_mapped_Genes {
             $new_transcript->coding_region_start(-10000000000);
             $new_transcript->coding_region_end(-10000000000);
           }
+
           $new_transcript->translation->all_start_codon_mappings($all_start_codon_mappings);
           $new_transcript->translation->all_end_codon_mappings($all_end_codon_mappings);
         }
@@ -1871,6 +1870,7 @@ sub map_original_Slice {
     my $slice_end = $pair->{end};
     next if (!$this_slice->coord_system->equals($original_slice->coord_system));
     next if ($this_slice->seq_region_name ne $original_slice->seq_region_name);
+
     next if ($this_slice->start > $original_slice->end or $this_slice->end < $original_slice->start);
 
     my @sequence_coords = $mapper->map_coordinates(
