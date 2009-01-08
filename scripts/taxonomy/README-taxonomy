@@ -63,9 +63,9 @@ exit
 
 # This should take about 60 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+#ncbi_taxonomy.ncbi_taxa_node: Records: 478491  Deleted: 0  Skipped: 0  Warnings: 1435473
+# v52
 #ncbi_taxonomy.ncbi_taxa_node: Records: 465379  Deleted: 0  Skipped: 0  Warnings: 1396137
-# v51
-#ncbi_taxonomy.ncbi_taxa_node: Records: 445534  Deleted: 0  Skipped: 0  Warnings: 1336602
 
 # This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
@@ -112,30 +112,28 @@ mysql -hens-livemirror -uensro ncbi_taxonomy -e "select * from ncbi_taxa_name wh
 +----------+---------------------+-----------------+
 | taxon_id | name                | name_class      |
 +----------+---------------------+-----------------+
-|        1 | all                 | synonym         |
-|        1 | root                | scientific name |
-|        1 | 2007-11-07 09:38:49 | import date     |
+|        1 | all                 | synonym         | 
+|        1 | root                | scientific name | 
+|        1 | 2009-01-08 10:41:20 | import date     | 
 +----------+---------------------+-----------------+
 
-Ochotona princeps
-Taxonomy ID: 9978
-Genbank common name: American pika
-Rank: species
-Genetic code: Translation table 1 (Standard)
-Mitochondrial genetic code: Translation table 2 (Vertebrate Mitochondrial)
-Other names:
-common name: 	southern American pika
+taxon_name -- Choloepus hoffmanni
+taxon_id -- 9358
+scientific name -- Choloepus hoffmanni
+genbank common name -- Hoffmann's two-fingered sloth
+common name -- Hoffmann's two-toed sloth
+name -- Choloepus hoffmanni
 
-Lineage( full )
-    cellular organisms; Eukaryota; Fungi/Metazoa group; Metazoa; Eumetazoa; Bilateria; Coelomata; Deuterostomia; Chordata; Craniata; Vertebrata; Gnathostomata; Teleostomi; Euteleostomi; Sarcopterygii; Tetrapoda; Amniota; Mammalia; Theria; Eutheria; Euarchontoglires; Glires; Lagomorpha; Ochotonidae; Ochotona 
+taxon_name -- Anolis carolinensis
+taxon_id -- 28377
+scientific name -- Anolis carolinensis
+genbank common name -- green anole
+name -- Anolis carolinensis
 
-Microcebus murinus
-Taxonomy ID: 30608
-Genbank common name: gray mouse lemur
-Rank: species
-Genetic code: Translation table 1 (Standard)
-Mitochondrial genetic code: Translation table 2 (Vertebrate Mitochondrial)
-
-Lineage( full )
-    cellular organisms; Eukaryota; Fungi/Metazoa group; Metazoa; Eumetazoa; Bilateria; Coelomata; Deuterostomia; Chordata; Craniata; Vertebrata; Gnathostomata; Teleostomi; Euteleostomi; Sarcopterygii; Tetrapoda; Amniota; Mammalia; Theria; Eutheria; Euarchontoglires; Primates; Strepsirrhini; Lemuriformes; Cheirogaleidae; Microcebus 
-
+taxon_name -- Taeniopygia guttata
+taxon_id -- 59729
+scientific name -- Taeniopygia guttata
+synonym -- ARRAY(0x18e1920)
+common name -- zebra finch
+name -- Taeniopygia guttata
+merged_taxon_id -- ARRAY(0x18e1970)
