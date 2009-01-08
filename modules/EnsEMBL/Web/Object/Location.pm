@@ -911,6 +911,10 @@ sub ld_for_slice {
   ### Returns    :  Bio::EnsEMBL::Variation::LDFeatureContainer
 
   my ($self, $pop_obj, $width) = @_;
+  ## set path information for LD calculations
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $self->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $self->species_defs->ENSEMBL_TMP_TMP;
+
   $width = $self->param('w') || "50000" unless $width;
   my ($seq_region, $start, $seq_type ) = ($self->seq_region_name, $self->seq_region_start, $self->seq_region_type);
   return [] unless $seq_region;
