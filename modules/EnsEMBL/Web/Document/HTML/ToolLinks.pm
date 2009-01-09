@@ -20,7 +20,7 @@ sub render   {
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
   $dir = '' if $dir !~ /_/;
   my $url     = CGI::escape($ENV{'REQUEST_URI'});
-  my $html;
+  my $html = '<div class="print_hide">';
   
   if( $self->logins ) {
     if( $ENV{'ENSEMBL_USER_ID'} ) {
@@ -38,6 +38,7 @@ sub render   {
   $html .= qq(<a href="/Multi/blastview">BLAST/BLAT</a> &nbsp;|&nbsp;) if $self->blast;
   $html .= qq(<a href="/biomart/martview">BioMart</a> &nbsp;|&nbsp;)   if $self->biomart;
   $html .= qq(<a href="/info/website/help/" id="help">Docs &amp; FAQs</a>);
+  $html .= '</div>';
 
   $self->print($html);
 }

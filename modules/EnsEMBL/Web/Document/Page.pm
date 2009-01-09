@@ -381,7 +381,7 @@ sub render {
       </td>
     </tr>
   </table>
-  <table class="mh" summary="layout table">
+  <table class="mh print_hide" summary="layout table">
     <tr>
       <td>[[global_context]]</td>
     </tr>

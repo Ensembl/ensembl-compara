@@ -11,22 +11,24 @@ our @ISA = qw(EnsEMBL::Web::Document::HTML);
 sub render   {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $you_are_here = $ENV{'SCRIPT_NAME'};
-  my $html;
+  my $html = '<span class="print_hide">';
 
   ## Link to home page
   if ($you_are_here eq '/index.html') {
-    $html = qq(<strong>Home</strong>);
+    $html .= qq(<strong>Home</strong>);
   }
   else {
-    $html = qq(<a href="/">Home</a>);
+    $html .= qq(<a href="/">Home</a>);
   }
+  $html .= '</span>';
 
   ## Species/static content links
   my $species = $ENV{'ENSEMBL_SPECIES'};
 
   if ($species && $species !~ /multi/i) {
+    $html .= '<span class="print_hide"> &gt; </span>';
     if ($species eq 'common') {
-      $html .= qq( &gt; <strong>Control Panel</strong>);
+      $html .= qq(<strong>Control Panel</strong>);
     }
     else {
       my $display_name = $species_defs->SPECIES_COMMON_NAME;
@@ -34,21 +36,22 @@ sub render   {
         $display_name = '<i>'.$display_name.'</i>'
       }
       if ($ENV{'ENSEMBL_TYPE'} eq 'Info') {
-        $html .= qq( &gt; <strong>$display_name</strong>);
+        $html .= qq(<strong>$display_name</strong>);
       }
       else {
-        $html .= qq( &gt; <a href="/$species/Info/Index">).$display_name.qq(</a>);
+        $html .= qq(<a href="/$species/Info/Index">).$display_name.qq(</a>);
       }
     }
   }
   elsif ($you_are_here =~ m#^/info/#) {
 
+    $html .= '<span class="print_hide"> &gt; </span>';
     ## Level 2 link
     if ($you_are_here eq '/info/' || $you_are_here eq '/info/index.html') {
-      $html .= qq( &gt; <strong>Help &amp; Documentation</strong>);
+      $html .= qq(<strong>Help &amp; Documentation</strong>);
     }
     else {
-      $html .= qq( &gt; <strong><a href="/info/">Help &amp; Documentation</a></strong>);
+      $html .= qq(<strong><a href="/info/">Help &amp; Documentation</a></strong>);
     }
 
   }
