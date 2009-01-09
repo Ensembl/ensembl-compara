@@ -35,112 +35,112 @@ sub context_panel  { return $_[0]->_context_panel;  }
 sub export_configurator { return $_[0]->_export_configurator({ 'cytoview' => 0 }); }
 
 sub ajax_zmenu      {
-    my $self = shift;
-    my $panel = $self->_ajax_zmenu;
-    my $obj  = $self->object;
-    my $dest = $obj->action().'/'.$obj->function();
-    my $action = $obj->action;
-    if ($dest eq 'SupportingEvidence/Alignment') {
-      return $self->do_SE_align_menu($panel,$obj);
-    } elsif ($action eq 'Idhistory_Node'){
-      return $self->ajax_zmenu_id_history_tree_node();
-    } elsif ($action eq 'Idhistory_Branch'){
-      return $self->ajax_zmenu_id_history_tree_branch();
-    } elsif ($action eq 'Idhistory_Label'){
-      return $self->ajax_zmenu_id_history_tree_label();
-    } elsif( $action eq 'Variation'){
-      return $self->ajax_zmenu_variation($panel, $obj);
-    } elsif( $action eq 'Variation_transcript'){
-      return $self->ajax_zmenu_variation_transcript($panel, $obj);
-    } elsif( $action eq 'Transcript_Variation'){ 
-      return $self->_ajax_zmenu_transcript_variation($panel, $obj);
-    } elsif( $action eq 'ref'){
-      return $self->_ajax_zmenu_change_reference($panel, $obj);
-    } elsif( $action eq 'coverage'){
-      return $self->_ajax_zmenu_transcript_coverage($panel, $obj);
-    } elsif( $action eq 'ProteinSummary') {
-     return $self->_ajax_zmenu_protein_feature($panel, $obj);
-    } else {
-      my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
-      $panel->{'caption'} = $disp_id ? "$db_label: $disp_id"
-	  : (! $obj->gene ) ? $obj->Obj->stable_id
-	  : 'Novel transcript';
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj  = $self->object;
+  my $dest = $obj->action().'/'.$obj->function();
+  my $action = $obj->action;
+  if ($dest eq 'SupportingEvidence/Alignment') {
+    return $self->do_SE_align_menu($panel,$obj);
+  } elsif ($action eq 'Idhistory_Node'){
+    return $self->ajax_zmenu_id_history_tree_node();
+  } elsif ($action eq 'Idhistory_Branch'){
+    return $self->ajax_zmenu_id_history_tree_branch();
+  } elsif ($action eq 'Idhistory_Label'){
+    return $self->ajax_zmenu_id_history_tree_label();
+  } elsif( $action eq 'Variation'){
+    return $self->ajax_zmenu_variation($panel, $obj);
+  } elsif( $action eq 'Variation_transcript'){
+    return $self->ajax_zmenu_variation_transcript($panel, $obj);
+  } elsif( $action eq 'Transcript_Variation'){ 
+    return $self->_ajax_zmenu_transcript_variation($panel, $obj);
+  } elsif( $action eq 'ref'){
+    return $self->_ajax_zmenu_change_reference($panel, $obj);
+  } elsif( $action eq 'coverage'){
+    return $self->_ajax_zmenu_transcript_coverage($panel, $obj);
+  } elsif( $action eq 'ProteinSummary') {
+    return $self->_ajax_zmenu_protein_feature($panel, $obj);
+  } else {
+    my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
+    $panel->{'caption'} = $disp_id ? "$db_label: $disp_id"
+      : (! $obj->gene ) ? $obj->Obj->stable_id
+	: 'Novel transcript';
+    $panel->add_entry({
+      'type'     => 'Transcript',
+      'label'    => $obj->stable_id, 
+      'link'     => $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}),
+      'priority' => 195 
+    });
+    ## Only if there is a gene (not Prediction transcripts)
+    if( $obj->gene ) {
       $panel->add_entry({
-	  'type'     => 'Transcript',
-	  'label'    => $obj->stable_id, 
-	  'link'     => $obj->_url({'type'=>'Transcript', 'action'=>'Summary'}),
-	  'priority' => 195 
-      });
-      ## Only if there is a gene (not Prediction transcripts)
-      if( $obj->gene ) {
-	$panel->add_entry({
-	    'type'     => 'Gene',
-	    'label'    => $obj->gene->stable_id,
-	    'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
-	    'priority' => 190 
-	});
-	$panel->add_entry({
-	    'type'     => 'Gene type',
-	    'label'    => $obj->gene_stat_and_biotype,
-	    'priority' => 70, 
-	});
-      }
-      $panel->add_entry({
-	  'type'     => 'Location',
-	  'label'    => sprintf( "%s: %s-%s",
-				 $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
-				 $obj->thousandify( $obj->seq_region_start ),
-				 $obj->thousandify( $obj->seq_region_end )
-			     ),
-	  'link'     => $obj->_url({'type'=>'Location', 'action'=>'View', 'r' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end })
+	'type'     => 'Gene',
+	'label'    => $obj->gene->stable_id,
+	'link'     => $obj->_url({'type'=>'Gene', 'action'=>'Summary'}),
+	'priority' => 190 
       });
       $panel->add_entry({
-	  'type'     => 'Strand',
-	  'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward',
-	  'priority' => 60
+	'type'     => 'Gene type',
+	'label'    => $obj->gene_stat_and_biotype,
+	'priority' => 70, 
       });
-	
-      $panel->add_entry({
-	  'type'     => 'Base pairs',
-	  'label'    => $obj->thousandify( $obj->Obj->seq->length ),
-	  'priority' => 50
-      });
-
-      if ($obj->get_db eq 'vega') {
-	  $panel->add_entry({
-	    'type'     => 'Transcript class',
-	    'label'    => $obj->transcript_class,
-	    'priority' => 65
-	});
-      }
-
-      ## Protein coding transcripts only....
-      if( $obj->Obj->translation ) {
-	$panel->add_entry({
-	    'type'     => 'Protein product',
-	    'label'    => $obj->Obj->translation->stable_id || $obj->Obj->stable_id,
-	    'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'ProteinSummary'}),
-	    'priority' => 180
-	});
-	$panel->add_entry({
-	    'type'     => 'Amino acids',
-	    'label'    => $obj->thousandify( $obj->Obj->translation->length ),
-	    'priority' => 40 
-	});
-      }
-      if( $obj->analysis ) {
-        $panel->add_entry({
-            'type'     => 'Analysis',
-            'label'    => $obj->analysis->display_label,
-	    'priority' => 2
-	});
-	$panel->add_entry({
-            'label_html'    => $obj->analysis->description,
-	    'priority' => 1
-	});
-      }
     }
-    return;
+    $panel->add_entry({
+      'type'     => 'Location',
+      'label'    => sprintf( "%s: %s-%s",
+			     $obj->neat_sr_name($obj->seq_region_type,$obj->seq_region_name),
+			     $obj->thousandify( $obj->seq_region_start ),
+			     $obj->thousandify( $obj->seq_region_end )
+			   ),
+      'link'     => $obj->_url({'type'=>'Location', 'action'=>'View', 'r' => $obj->seq_region_name.':'.$obj->seq_region_start.'-'.$obj->seq_region_end })
+    });
+    $panel->add_entry({
+      'type'     => 'Strand',
+      'label'    => $obj->seq_region_strand < 0 ? 'Reverse' : 'Forward',
+      'priority' => 60
+    });
+    
+    $panel->add_entry({
+      'type'     => 'Base pairs',
+      'label'    => $obj->thousandify( $obj->Obj->seq->length ),
+      'priority' => 50
+    });
+    
+    if ($obj->get_db eq 'vega') {
+      $panel->add_entry({
+	'type'     => 'Transcript class',
+	'label'    => $obj->transcript_class,
+	'priority' => 65
+      });
+    }
+    
+    ## Protein coding transcripts only....
+    if( $obj->Obj->translation ) {
+      $panel->add_entry({
+	'type'     => 'Protein product',
+	'label'    => $obj->Obj->translation->stable_id || $obj->Obj->stable_id,
+	'link'     => $obj->_url({'type'=>'Transcript', 'action' => 'ProteinSummary'}),
+	'priority' => 180
+      });
+      $panel->add_entry({
+	'type'     => 'Amino acids',
+	'label'    => $obj->thousandify( $obj->Obj->translation->length ),
+	'priority' => 40 
+      });
+    }
+    if( $obj->analysis ) {
+      $panel->add_entry({
+	'type'     => 'Analysis',
+	'label'    => $obj->analysis->display_label,
+	'priority' => 2
+      });
+      $panel->add_entry({
+	'label_html'    => $obj->analysis->description,
+	'priority' => 1
+      });
+    }
+  }
+  return;
 }
 
 sub _ajax_zmenu_protein_feature {
@@ -155,25 +155,25 @@ sub _ajax_zmenu_protein_feature {
   my $hit_name = $pf->display_id;
   $panel->{'caption'} = "$hit_name ($hit_db)";
   $panel->add_entry({
-      'type'  => "View record",
-      'label' => $hit_name,
-      'link'  => $obj->get_ExtURL($hit_db, $hit_name),
-      'priority' => 200});
+    'type'  => "View record",
+    'label' => $hit_name,
+    'link'  => $obj->get_ExtURL($hit_db, $hit_name),
+    'priority' => 200});
   if (my $interpro_ac = $pf->interpro_ac) {
-      $panel->add_entry({
-	  'type'  => 'View Interpro',
-	  'label' => 'Interpro',
-	  'link'  => $obj->get_ExtURL('interpro', $interpro_ac),
-	  'priority' => 150});
+    $panel->add_entry({
+      'type'  => 'View Interpro',
+      'label' => 'Interpro',
+      'link'  => $obj->get_ExtURL('interpro', $interpro_ac),
+      'priority' => 150});
   }
   $panel->add_entry({
-      'type' => 'Description',
-      'label' => $pf->idesc,
-      'priority' => 100});
+    'type' => 'Description',
+    'label' => $pf->idesc,
+    'priority' => 100});
   $panel->add_entry({
-      'type' => 'Position',
-      'label' => $pf->start.'-'.$pf->end.' aa',
-      'priority' => 50});
+    'type' => 'Position',
+    'label' => $pf->start.'-'.$pf->end.' aa',
+    'priority' => 50});
   return;
 }
 
@@ -302,81 +302,81 @@ sub _ajax_zmenu_transcript_coverage {
   return unless $obj->param('disp_level');
   $panel->{'caption'} = "Resequencing read coverage: ". $obj->param('disp_level');
   $panel->add_entry({
-      'type'     => 'bp:',
-      'label'    => $obj->param('pos'),
-      'priority' => 12,
+    'type'     => 'bp:',
+    'label'    => $obj->param('pos'),
+    'priority' => 12,
   });
   $panel->add_entry({
-      'type'     => 'Sample:',
-      'label'    => $obj->param('sp'),
-      'priority' => 8,
+    'type'     => 'Sample:',
+    'label'    => $obj->param('sp'),
+    'priority' => 8,
   });
   $panel->add_entry({
-      'type'     => 'Source:',
-      'label'    => "Sanger",
-      'priority' => 4,
+    'type'     => 'Source:',
+    'label'    => "Sanger",
+    'priority' => 4,
   });
 
   return; 
 }
 
 sub do_SE_align_menu {
-    my $self = shift;
-    my $panel = shift;
-    my $obj  = $self->object;
-    my $hit_name   = $obj->param('id');
-    my $hit_db     = $obj->get_sf_hit_db_name($hit_name);
-    my $hit_length = $obj->param('hit_length');
-    my $hit_url    = $obj->get_ExtURL_link( $hit_name, $hit_db, $hit_name );
-    my $tsid       = $obj->param('t');
-    if (my $esid = $obj->param('exon')) {
-	my $exon_length = $obj->param('exon_length');
-	#this is drawn for exons
-	my $align_url = $obj->_url({'type'=>'Transcript', 'action' => 'SupportingEvidence', 'function' => 'Alignment'}).";sequence=$hit_name;exon=$esid";	
-	$panel->{'caption'} = "$hit_name ($hit_db)";
-	$panel->add_entry({
-	    'type'     => 'View alignments',
-	    'label'    => "$esid ($tsid)",
-	    'link'     => $align_url,
-	    'priority' => 180,
-	});
-	$panel->add_entry({
-	    'type'     => 'View record',
-	    'label'    => $hit_name,
-	    'link'     => $hit_url,
-	    'priority' => 100,
-	    'extra'    => {'abs_url' => 1},
-	});
-	$panel->add_entry({
-	    'type'     => 'Exon length',
-	    'label'    => $exon_length.' bp',
-	    'priority' => 50,
-	});
-	if (my $gap = $obj->param('five_end_mismatch')) {
-	    $panel->add_entry({
-		'type'     => '5\' mismatch',
-		'label'    => $gap.' bp',
-		'priority' => 40,
-	    });
-	}
-	if (my $gap = $obj->param('three_end_mismatch')) {
-	    $panel->add_entry({
-		'type'     => '3\' mismatch',
-		'label'    => $gap.' bp',
-		'priority' => 35,
-	    });
-	}
+  my $self = shift;
+  my $panel = shift;
+  my $obj  = $self->object;
+  my $hit_name   = $obj->param('id');
+  my $hit_db     = $obj->get_sf_hit_db_name($hit_name);
+  my $hit_length = $obj->param('hit_length');
+  my $hit_url    = $obj->get_ExtURL_link( $hit_name, $hit_db, $hit_name );
+  my $tsid       = $obj->param('t');
+  if (my $esid = $obj->param('exon')) {
+    my $exon_length = $obj->param('exon_length');
+    #this is drawn for exons
+    my $align_url = $obj->_url({'type'=>'Transcript', 'action' => 'SupportingEvidence', 'function' => 'Alignment'}).";sequence=$hit_name;exon=$esid";	
+    $panel->{'caption'} = "$hit_name ($hit_db)";
+    $panel->add_entry({
+      'type'     => 'View alignments',
+      'label'    => "$esid ($tsid)",
+      'link'     => $align_url,
+      'priority' => 180,
+    });
+    $panel->add_entry({
+      'type'     => 'View record',
+      'label'    => $hit_name,
+      'link'     => $hit_url,
+      'priority' => 100,
+      'extra'    => {'abs_url' => 1},
+    });
+    $panel->add_entry({
+      'type'     => 'Exon length',
+      'label'    => $exon_length.' bp',
+      'priority' => 50,
+    });
+    if (my $gap = $obj->param('five_end_mismatch')) {
+      $panel->add_entry({
+	'type'     => '5\' mismatch',
+	'label'    => $gap.' bp',
+	'priority' => 40,
+      });
     }
-    else {
-	$panel->{'caption'} = "$hit_name ($hit_db)";
-	$panel->add_entry({
-	    'type'     => 'View record',
-	    'label'    => $hit_name,
-	    'link'     => $hit_url,
-	    'priority' => 100,
-	    'extra'    => {'abs_url' => 1},
-	});
+    if (my $gap = $obj->param('three_end_mismatch')) {
+      $panel->add_entry({
+	'type'     => '3\' mismatch',
+	'label'    => $gap.' bp',
+	'priority' => 35,
+      });
     }
+  }
+  else {
+    $panel->{'caption'} = "$hit_name ($hit_db)";
+    $panel->add_entry({
+      'type'     => 'View record',
+      'label'    => $hit_name,
+      'link'     => $hit_url,
+      'priority' => 100,
+      'extra'    => {'abs_url' => 1},
+    });
+  }
 }
 
 
@@ -398,11 +398,6 @@ sub populate_tree {
 #    { 'availability' => 1}
 #  );
 
-  $self->create_node( 'Exons', "Exons  ([[counts::exons]])",
-    [qw(exons       EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet)],
-    { 'availability' => 'either', 'concise' => 'Exons'}
-  );
-
   my $T = $self->create_node( 'SupportingEvidence', "Supporting evidence  ([[counts::evidence]])",
    [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidence)],
     { 'availability' => 'transcript', 'concise' => 'Supporting evidence'}
@@ -413,6 +408,10 @@ sub populate_tree {
   ));
 
   my $seq_menu = $self->create_submenu( 'Sequence', 'Sequence' );
+  $seq_menu->append($self->create_node( 'Exons', "Exons  ([[counts::exons]])",
+    [qw(exons       EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet)],
+    { 'availability' => 'either', 'concise' => 'Exons'}
+  ));
   $seq_menu->append($self->create_node( 'Sequence_cDNA',  'cDNA',
     [qw(sequence    EnsEMBL::Web::Component::Transcript::TranscriptSeq)],
     { 'availability' => 'either', 'concise' => 'cDNA sequence' }
