@@ -32,7 +32,7 @@ sub configurator   { return $_[0]->_configurator;   }
 sub export_configurator {
   my $self = shift;
   
-  return $self->ld_export_configurator if ($self->object->action eq 'LD');
+  return $self->ld_export_configurator if $self->object->action eq 'LD';
   
   my $options = {
     'strand_values' => [
@@ -83,18 +83,17 @@ sub export_configurator {
 sub ld_export_configurator {
   my $self = shift;
   my $object = $self->{'object'};
-  my $content;
-  my $haploview_form;
-  my @formats;
   
-  my $href = $object->_url({ 
-    'time' => time, 
-    'action' => 'Export'
-  });
+  my $opt_pop = $object->parent->{'params'}->{'opt_pop'}->[0];
+  
+  my $href = $object->_url({ 'time' => time, 'action' => 'Export', 'output' => 'ld' });
   
   # How confusing!
   my $form_action = $object->_url({ 'action' => $object->type, 'type' => 'Export', 'function' => $object->action }, 1);
+  
+  my $content;
   my $params;
+  my @formats;
   
   foreach (keys %{$form_action->[1]||{}}) {
     $params .= qq{
@@ -106,7 +105,7 @@ sub ld_export_configurator {
     my $locus_file = EnsEMBL::Web::TmpFile::Text->new(
       filename => $gen_file->filename,
       extension => 'txt',
-      prefix => '',
+      prefix => ''
     );
     
     #TODO
@@ -119,7 +118,7 @@ sub ld_export_configurator {
     my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
       filename => $gen_file->filename,
       prefix => '',
-      use_short_names => 1,
+      use_short_names => 1
     );
     
     $tar_file->add_file($gen_file);
@@ -152,7 +151,7 @@ sub ld_export_configurator {
         
     foreach (@formats) {
       my $format = ";_format=$_->[1]" if $_->[1];
-      my $link = $_->[4] || $href;
+      my $link = ($_->[4] || $href) . ";opt_pop=$opt_pop";
       my $class = $_->[5] || 'modal_close';
       
       $content .= qq{
@@ -160,9 +159,9 @@ sub ld_export_configurator {
     }
     
     $content .= qq{
-        </ul>
-        $params
-      </form>};
+      </ul>
+      $params
+    </form>};
       
   my $panel = $self->new_panel(
     'Configurator',
