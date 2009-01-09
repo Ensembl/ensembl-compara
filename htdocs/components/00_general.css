@@ -127,12 +127,16 @@ dd { margin-bottom:1em; }
 
 /***********************************************************************
 **
-** Basic printer styles 
+** Basic printer styles
 **
 ***********************************************************************/
+
+.screen_hide_inline, .screen_hide_block { display: none }
 
 @media print {
   body, h1, h2, h4 { color:#000; }
   .print_hide, .error, .warning, .info { display: none }
+  .screen_hide_inline { display: inline }
+  .screen_hide_block  { display: block }
 }
 
