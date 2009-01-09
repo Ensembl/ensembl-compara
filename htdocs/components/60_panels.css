@@ -1,4 +1,7 @@
 .panel { border: 1px solid [[PANEL_BORDER]]; padding: 0; margin: 0.25em 0.25em 0.25em 14.5em;}
+@media print {
+  .panel { border: 1px solid [[PANEL_BORDER]]; padding: 0; margin: 0.25em;}
+}
 .panel h2 { border-bottom: 1px solid [[PANEL_BORDER]]; padding: 2px; margin: 0; }
 .panel h2 { border-bottom: 1px solid [[PANEL_BORDER]]; padding: 2px; margin: 0; }
 .panel p  { margin: 0; padding: 0 }

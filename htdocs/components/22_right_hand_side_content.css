@@ -1,7 +1,9 @@
 /* The CSS for the panel headings */
 
 div#content { margin:0 0 0 14em; padding:0; border:none; }
-
+@media print {
+   div#content { margin:0; padding:0; border:none; }
+}
 div#content div.panel { border:1px solid #ccc; background-color:[[PANEL_BG]]; }
 
 a.help-header { color:[[CONTRAST_HEADER]];text-decoration:none; }
