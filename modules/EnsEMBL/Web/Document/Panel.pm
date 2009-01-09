@@ -590,7 +590,9 @@ sub _error {
 sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 3+$_[2] ); }
 
 sub _is_ajax_request {
-  return defined($_[0]->renderer->{'r'}) && $_[0]->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  return  ref($_[0]->renderer)
+          && defined($_[0]->renderer->{'r'})
+          && $_[0]->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 }
 
 sub content {
