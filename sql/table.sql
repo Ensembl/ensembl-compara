@@ -533,7 +533,7 @@ CREATE TABLE homology_member (
 CREATE TABLE family (
   family_id                   int(10) unsigned NOT NULL auto_increment, # unique internal id
   stable_id                   varchar(40) NOT NULL, # unique stable id, e.g. 'ENSFM'.'0053'.'1234567890'
-  version                     INT UNSIGNED NOT NULL;# version of the stable_id (changes only when members move to/from existing families)
+  version                     INT UNSIGNED NOT NULL,# version of the stable_id (changes only when members move to/from existing families)
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   description                 varchar(255),
   description_score           double,
@@ -845,4 +845,4 @@ CREATE TABLE sitewise_aln (
 ) COLLATE=latin1_swedish_ci;
 
 # Auto add schema version to database
-INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "53");
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "53");
