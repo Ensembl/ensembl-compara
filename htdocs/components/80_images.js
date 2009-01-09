@@ -48,6 +48,7 @@
       add_image_format( mn, url, 'png',      'PNG' );
       add_image_format( mn, url, 'png-0.5',  'PNG (x0.5)' );
 	    n.addClassName('munged');
+	    n.addClassName('print_hide');
     });
 // Create the search list!
   }
