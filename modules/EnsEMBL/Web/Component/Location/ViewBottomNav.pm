@@ -57,7 +57,7 @@ sub content {
         <input type="hidden" name="%s" value="%s" />', escapeHTML($_),escapeHTML($url->[1]{$_});
   }
   return sprintf qq(
-  <div class="autocenter navbar" style="width:%spx">
+  <div class="autocenter navbar print_hide" style="width:%spx">
     <form action="%s" method="get"><div class="relocate">
       Location: %s
         <label class="hidden" for="region">Region</label><input name="region" id="region" class="text" style="width:3em" value="%s" type="text" /> :
