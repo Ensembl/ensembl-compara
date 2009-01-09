@@ -389,7 +389,7 @@ sub render {
   <div style="position: relative">';
     if( $self->include_navigation ) {
       $X .= '
-      <div id="nav">[[local_context]][[local_tools]]<p class="invisible">.</p></div>';
+      <div id="nav" class="print_hide">[[local_context]][[local_tools]]<p class="invisible">.</p></div>';
     }
     $X .= '
       <div id="main">
