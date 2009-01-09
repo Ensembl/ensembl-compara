@@ -590,9 +590,7 @@ sub _error {
 sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 3+$_[2] ); }
 
 sub _is_ajax_request {
-  return  ref($_[0]->renderer)
-          && defined($_[0]->renderer->{'r'})
-          && $_[0]->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  return  $_[0]->renderer->can('r') && $_[0]->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 }
 
 sub content {
@@ -612,7 +610,7 @@ if ($component eq 'das_features') {
 	    $self->{'object'} && $self->{'object'}->prefix($self->prefix);
 	    no strict 'refs';
 	    eval {
-		$result = &$function_name( $self, $self->{'object'} );
+		    $result = &$function_name( $self, $self->{'object'} );
 	    };
 	    if( $@ ) {
 		my $error = sprintf( '<pre>%s</pre>', $self->_format_error($@) );
