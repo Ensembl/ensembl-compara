@@ -42,8 +42,8 @@ sub init {
   $self->load_tracks();
 
   $self->add_tracks( 'decorations',
-    [ 'scalebar',  '', 'scalebar',  { 'display' => 'normal'  }],
-    [ 'ruler',     '', 'ruler',     { 'display' => 'normal', 'strand' => 'f'  }],
+    [ 'scalebar',  '', 'scalebar',  { 'display' => 'normal', 'menu'=> 'no' }],
+    [ 'ruler',     '', 'ruler',     { 'display' => 'normal', 'strand' => 'f', 'menu' => 'no'}],
     [ 'draggable', '', 'draggable', { 'display' => 'normal', 'menu' => 'no' }]
   );
   
