@@ -266,7 +266,11 @@ sub update_from_config_strings {
           } elsif( $type eq 'das' ) {
 # warn "ADDING DAS FROM STRING..... $name $p $render";
             $p = unescape($p);
-            $flag ++ unless $session->add_das_from_string( $p, {'ENSEMBL_IMAGE'=>$name}, {'display'=>$render} );
+            if (my $error = $session->add_das_from_string( $p, {'ENSEMBL_IMAGE'=>$name}, {'display'=>$render} )) {
+              warn $error;
+            } else {
+              $flag ++;
+            }
           }
         } else {
           my $nd = $ic->get_node($key);
