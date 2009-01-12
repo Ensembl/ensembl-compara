@@ -5,6 +5,8 @@ use strict;
 use base qw( EnsEMBL::Web::Configuration );
 use CGI;
 
+use EnsEMBL::Web::Component::Export qw(export_file);
+
 sub set_default_action {
   my $self = shift;
   unless( ref $self->object ) {
@@ -84,12 +86,24 @@ sub ld_export_configurator {
   my $self = shift;
   my $object = $self->{'object'};
   
+  my $time = time;
   my $opt_pop = $object->parent->{'params'}->{'opt_pop'}->[0];
   
-  my $href = $object->_url({ 'time' => time, 'action' => 'Export', 'output' => 'ld' });
+  my $href = $object->_url({
+    'time' => $time, 
+    'action' => 'Export', 
+    'output' => 'ld', 
+    'opt_pop' => $opt_pop 
+  });
   
   # How confusing!
-  my $form_action = $object->_url({ 'action' => $object->type, 'type' => 'Export', 'function' => $object->action }, 1);
+  my $form_action = $object->_url({
+    'time' => $time,
+    'action' => $object->type, 
+    'type' => 'Export', 
+    'function' => $object->action, 
+    'opt_pop' => $opt_pop 
+  }, 1);
   
   my $content;
   my $params;
@@ -98,6 +112,7 @@ sub ld_export_configurator {
   foreach (keys %{$form_action->[1]||{}}) {
     $params .= qq{
       <input type="hidden" name="$_" value="$form_action->[1]->{$_}" />};
+      $form_action->[2] .= ";$_=$form_action->[1]->{$_}";
   }
   
   if ($object->param('haploview')) {
@@ -108,9 +123,7 @@ sub ld_export_configurator {
       prefix => ''
     );
     
-    #TODO
-    #MAKE FILES($gen_file, $object);
-    #MAKE FILES($locus_file, $object);
+    export_file({ geneotype => $gen_file, locus => $locus_file }, $object, 'haploview');
     
     $gen_file->save;
     $locus_file->save;
@@ -137,7 +150,7 @@ sub ld_export_configurator {
       [ 'HTML', 'HTML', ' rel="external"' ],
       [ 'Text', 'Text', ' rel="external"' ],
       [ 'Excel', 'Excel' ],
-      [ 'For upload into Haploview software', '', '', ' (may take a while)', "$form_action->[0]?haploview=1", 'modal_link' ]
+      [ 'For upload into Haploview software', '', '', ' (may take a while)', "$form_action->[0]?$form_action->[2];haploview=1", 'modal_link' ]
     );
     
     $params .= qq{<input type="hidden" name="haploview" value="1" />};
@@ -151,7 +164,7 @@ sub ld_export_configurator {
         
     foreach (@formats) {
       my $format = ";_format=$_->[1]" if $_->[1];
-      my $link = ($_->[4] || $href) . ";opt_pop=$opt_pop";
+      my $link = $_->[4] || $href;
       my $class = $_->[5] || 'modal_close';
       
       $content .= qq{
