@@ -99,6 +99,12 @@ sub _sanitize {
   return $T;
 }
 
+sub redirect {
+## Does an ordinary CGI redirect
+  my ($self, $url) = @_;
+  $self->{'data'}{'_input'}->redirect($url);
+}
+
 sub param {
   my $self = shift;
   if( @_ ){ 
