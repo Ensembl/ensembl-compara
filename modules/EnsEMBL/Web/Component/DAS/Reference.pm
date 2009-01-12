@@ -91,8 +91,6 @@ sub sequence {
   my $segment_tmp = qq{<SEQUENCE id="%s" start="%s" stop="%s" version="1.0">\n};
   my $error_tmp = qq{<ERRORSEGMENT id="%s" start="%s" stop="%s" />\n};
 
-  my $feature_tmp = qq{<DNA length=\"%d\">\n};
-
   my $features = $object->DNA();
 
   foreach my $segment (@{$features || []}) {
@@ -101,7 +99,6 @@ sub sequence {
       next;
     }
     $panel->print( sprintf ($segment_tmp, $segment->{'REGION'}, $segment->{'START'} || '', $segment->{'STOP'} || ''));
-    $panel->print( sprintf ($feature_tmp, $segment->{'STOP'}  - $segment->{'START'} + 1 ));
 
     my $block_start = $segment->{'START'};
     while($block_start <= $segment->{'STOP'} ) {
@@ -116,7 +113,7 @@ sub sequence {
       $panel->print( "\n" ) unless $seq =~ /\n$/;
       $block_start = $block_end + 1;
     }
-    $panel->print( qq{</DNA>\n</SEQUENCE>\n} );
+    $panel->print( qq{</SEQUENCE>\n} );
   }
 }
 
