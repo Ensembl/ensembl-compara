@@ -3,7 +3,7 @@ package EnsEMBL::Web::Component::Export;
 use strict;
 
 use base qw(Exporter);
-our @EXPORT = our @EXPORT_OK = qw(export pip_file);
+our @EXPORT = our @EXPORT_OK = qw(export export_file);
 
 use POSIX qw(floor ceil);
 use EnsEMBL::Web::SeqDumper;
@@ -358,16 +358,188 @@ sub flat {
   return $seq_dumper->dump($slice, $format);
 }
 
+sub ld_dump {
+  my $object = shift;
+  
+  my $pop_param = $object->param('opt_pop');
+  my $snp_param = $object->param('v');
+  my $zoom = 20000; # Currently non-configurable
+  
+  if (!$pop_param) {
+    warn "****** ERROR: No population defined";
+    return;
+  }
+  
+  my $table_format = ($object->param('_format') ne 'Text');
+  
+  my @colour_gradient = (
+    'ffffff', 
+    $object->image_config_hash('ldview')->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red')
+  );
+  
+  my $ld_values = ld_values($object, $pop_param, $snp_param, $zoom);
+  
+  my $html;
+  my $table;
+  my $text;
+  my $header_style = "background-color:#CCCCCC;font-weight:bold;";
+  
+  my $populations = {};
+  map { $populations->{$_} = 1 } map { keys %{$ld_values->{$_}} } keys %$ld_values;
+  
+  foreach my $pop_name (sort { $a cmp $b } keys %$populations) {    
+    foreach my $ld_type (keys %$ld_values) {      
+      next unless $ld_values->{$ld_type}{$pop_name}{'data'};
+      
+      my ($starts, $snps, $data) = (@{$ld_values->{$ld_type}{$pop_name}{'data'}});
+      
+      unshift (@$data, []);
+      
+      if ($table_format) {
+        $table = new EnsEMBL::Web::Document::SpreadSheet;
+        
+        $table->add_option('cellspacing', 2);
+        $table->add_option('rows', '', ''); # No row colouring
+        $table->add_columns(map {{ 'title' => $_, 'align' => 'center' }} ( 'bp&nbsp;position', 'SNP', @$snps ));
+      } else {
+        $text = join ("\t", 'bp position', 'SNP', @$snps) . "\n";
+      }
+      
+      foreach my $row (@$data) {
+        next unless ref $row eq 'ARRAY';
+        
+        my $snp = shift @$snps;
+        my $pos = shift @$starts;
+        
+        my @ld_values = map { $_ ? sprintf("%.3f", $_) : '-' } @$row;
+        my @row_style = map { 'background-color:#' . ($_ eq '-' ? 'ffffff' : $colour_gradient[floor($_*40)]) . ';' } @ld_values;
+        
+        if ($table_format) {
+          $table->add_row([ $pos, $snp, @ld_values, $snp ]);
+          $table->add_option('row_style', [ $header_style, $header_style, @row_style, $header_style ]);
+        } else {
+          $text .= join ("\t", $pos, $snp, @ld_values, $snp) . "\n";
+        }
+      }
+      
+      if ($table_format) {
+        $html .= "<h3>$ld_values->{$ld_type}{$pop_name}->{'text'}</h3>";
+        $html .= $table->render;
+      } else {
+        $html .= "$ld_values->{$ld_type}{$pop_name}->{'text'}\n";
+        $html .= ("=" x length $ld_values->{$ld_type}{$pop_name}->{'text'}) . "\n\n";
+        $html .= "$text\n";
+      }
+    }
+  }
 
-sub pip_file {
+  return $html;
+}
+
+sub ld_values {
+  my ($object, $populations, $snp, $zoom) = @_;
+  
+  my %ld_values;
+  my $display_zoom = $object->round_bp($zoom);
+
+  foreach my $pop_name (sort split (/\|/, $populations)) {
+    my $pop_obj = $object->pop_obj_from_name($pop_name);
+    
+    next unless $pop_obj;
+    
+    my $pop_id = $pop_obj->{$pop_name}{'dbID'};
+    my $data = $object->ld_for_slice($pop_obj->{$pop_name}{'PopObject'}, $zoom);
+    
+    foreach my $ld_type ('r2', 'd_prime') {
+      my $display = $ld_type eq 'r2' ? 'r2' : "D'";
+      my $no_data = "No $display linkage data in $display_zoom window for population $pop_name";
+      
+      unless (%$data && keys %$data) {
+        $ld_values{$ld_type}{$pop_name}{'text'} = $no_data;
+        next;
+      }
+
+      my @snp_list = sort { $a->[1]->start <=> $b->[1]->start } map  {[ $_ => $data->{'variationFeatures'}{$_} ]} keys %{$data->{'variationFeatures'}};
+
+      unless (scalar @snp_list) {
+        $ld_values{$ld_type}{$pop_name}{'text'} = $no_data;
+        next;
+      }
+
+      # Do each column starting from 1 because first col is empty
+      my @table;
+      my $flag = 0;
+      
+      for (my $x = 0; $x < scalar @snp_list; $x++) { 
+        # Do from left side of table row across to current snp
+        for (my $y = 0; $y < $x; $y++) {
+          my $ld_pair1 = "$snp_list[$x]->[0]" . -$snp_list[$y]->[0];
+          my $ld_pair2 = "$snp_list[$y]->[0]" . -$snp_list[$x]->[0];
+          my $cell;
+          
+          if ($data->{'ldContainer'}{$ld_pair1}) {
+            $cell = $data->{'ldContainer'}{$ld_pair1}{$pop_id}{$ld_type};
+          } elsif ($data->{'ldContainer'}{$ld_pair2}) {
+            $cell = $data->{'ldContainer'}{$ld_pair2}{$pop_id}{$ld_type};
+          }
+          
+          $flag = $cell ? 1 : 0 unless $flag;
+          $table[$x][$y] = $cell;
+        }
+      }
+      
+      unless ($flag) {
+        $ld_values{$ld_type}{$pop_name}{'text'} = $no_data;
+        next;
+      }
+
+      # Turn snp_list from an array of variation_feature IDs to SNP 'rs' names
+      # Make current SNP bold
+      my @snp_names;
+      my @starts_list;
+      
+      
+      foreach (@snp_list) {
+        my $name = $_->[1]->variation_name;
+        
+        if ($name eq $snp || $name eq "rs$snp") {
+          push (@snp_names, "*$name*");
+        } else { 
+          push (@snp_names, $name);
+        }
+
+        my ($start, $end) = ($_->[1]->start, $_->[1]->end);
+        my $pos = $start;
+        
+        if ($start > $end) {
+          $pos = "between $start & $end";
+        } elsif ($start < $end) {
+          $pos = "$start-$end";
+        }
+        
+        push (@starts_list, $pos);
+      }
+
+      my $location = $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end;
+      
+      $ld_values{$ld_type}{$pop_name}{'text'} = "Pairwise $display values for $location. Population: $pop_name";
+      $ld_values{$ld_type}{$pop_name}{'data'} = [ \@starts_list, \@snp_names, \@table ];
+    }
+  }
+  
+  return \%ld_values;
+}
+
+sub export_file {
   my ($file, $object, $o) = @_;
   
-  my $slice = $object->can('slice') ? $object->slice : $object->get_Slice;
+  my $slice = $object->can('slice') ? $object->slice : $object->get_Slice unless $o eq 'haploview';
   
   my $outputs = {
-    'seq'      => sub { pip_seq_file($file, $object, $slice);  },
-    'pipmaker' => sub { pip_anno_file($file, $object, $slice, $o); },
-    'vista'    => sub { pip_anno_file($file, $object, $slice, $o); }
+    'seq'       => sub { pip_seq_file($file, $object, $slice);  },
+    'pipmaker'  => sub { pip_anno_file($file, $object, $slice, $o); },
+    'vista'     => sub { pip_anno_file($file, $object, $slice, $o); },
+    'haploview' => sub { haploview_files($file, $object); }
   };
   
   if (!$outputs->{$o}) {
@@ -489,180 +661,66 @@ sub pip_anno_file_pipmaker {
   return $out;
 }
 
-sub ld_dump {
-  my $object = shift;
+sub haploview_files {
+  my ($files, $object) = @_;
   
-  my $return = ld_values($object);
-
-  return '' unless $return;
+  my $fhs = {};
   
-  my $table_format = ($object->param('_format') ne 'Text');
-  
-  my @colour_gradient = (
-    'ffffff', 
-    $object->image_config_hash('ldview')->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red')
-  );
-  
-  my $html;
-  my $table;
-  my $text;
-  my $header_style = "background-color:#CCCCCC;font-weight:bold;";
-  
-  my $populations = {};
-  map { $populations->{$_} = 1 } map { keys %{$return->{$_}} } keys %$return;
-  
-  foreach my $pop_name (sort { $a cmp $b } keys %$populations) {    
-    foreach my $ld_type (keys %$return) {      
-      next unless $return->{$ld_type}{$pop_name}{'data'};
-      
-      my ($starts, $snps, $data) = (@{$return->{$ld_type}{$pop_name}{'data'}});
-      
-      unshift (@$data, []);
-      
-      if ($table_format) {
-        $table = new EnsEMBL::Web::Document::SpreadSheet;
-        
-        $table->add_option('cellspacing', 2);
-        $table->add_option('rows', '', ''); # No row colouring
-        $table->add_columns(map {{ 'title' => $_, 'align' => 'center' }} ( 'bp&nbsp;position', 'SNP', @$snps ));
-      } else {
-        $text = join ("\t", 'bp position', 'SNP', @$snps) . "\n";
-      }
-      
-      foreach my $row (@$data) {
-        next unless ref $row eq 'ARRAY';
-        
-        my $snp = shift @$snps;
-        my $pos = shift @$starts;
-        
-        my @ld_values = map { $_ ? sprintf("%.3f", $_) : '-' } @$row;
-        my @row_style = map { 'background-color:#' . ($_ eq '-' ? 'ffffff' : $colour_gradient[floor($_*40)]) . ';' } @ld_values;
-        
-        if ($table_format) {
-          $table->add_row([ $pos, $snp, @ld_values, $snp ]);
-          $table->add_option('row_style', [ $header_style, $header_style, @row_style, $header_style ]);
-        } else {
-          $text .= join ("\t", $pos, $snp, @ld_values, $snp) . "\n";
-        }
-      }
-      
-      if ($table_format) {
-        $html .= "<h3>$return->{$ld_type}{$pop_name}->{'text'}</h3>";
-        $html .= $table->render;
-      } else {
-        $html .= "$return->{$ld_type}{$pop_name}->{'text'}\n";
-        $html .= ("=" x length $return->{$ld_type}{$pop_name}->{'text'}) . "\n\n";
-        $html .= "$text\n";
-      }
-    }
-  }
-
-  return $html;
-}
-
-
-
-sub ld_values {
-  my $object = shift;
-    
-  my $pops = {};
-  map { $pops->{$_} = 1 } (split (/\|/, $object->param('opt_pop')));
-
-  unless (keys %$pops) {
-    warn "****** ERROR: No population defined";
-    return;
-  }
-  
-  my $zoom = 20000;
-  my %return;
-  my $display_zoom = $object->round_bp($zoom);
-
-  foreach my $pop_name (sort keys %$pops) {
-    my $pop_obj = $object->pop_obj_from_name($pop_name);
-    
-    next unless $pop_obj;
-    
-    my $pop_id = $pop_obj->{$pop_name}{'dbID'};
-    my $data = $object->ld_for_slice($pop_obj->{$pop_name}{'PopObject'}, $zoom);
-    
-    foreach my $ld_type ('r2', 'd_prime') {
-      my $display = $ld_type eq 'r2' ? 'r2' : "D'";
-      my $no_data = "No $display linkage data in $display_zoom window for population $pop_name";
-      
-      unless (%$data && keys %$data) {
-        $return{$ld_type}{$pop_name}{'text'} = $no_data;
-        next;
-      }
-
-      my @snp_list = sort { $a->[1]->start <=> $b->[1]->start } map  {[ $_ => $data->{'variationFeatures'}{$_} ]} keys %{$data->{'variationFeatures'}};
-
-      unless (scalar @snp_list) {
-        $return{$ld_type}{$pop_name}{'text'} = $no_data;
-        next;
-      }
-
-      # Do each column starting from 1 because first col is empty
-      my @table;
-      my $flag = 0;
-      
-      for (my $x = 0; $x < scalar @snp_list; $x++) { 
-        # Do from left side of table row across to current snp
-        for (my $y = 0; $y < $x; $y++) {
-          my $ld_pair1 = "$snp_list[$x]->[0]" . -$snp_list[$y]->[0];
-          my $ld_pair2 = "$snp_list[$y]->[0]" . -$snp_list[$x]->[0];
-          my $cell;
-          
-          if ($data->{'ldContainer'}{$ld_pair1}) {
-            $cell = $data->{'ldContainer'}{$ld_pair1}{$pop_id}{$ld_type};
-          } elsif ($data->{'ldContainer'}{$ld_pair2}) {
-            $cell = $data->{'ldContainer'}{$ld_pair2}{$pop_id}{$ld_type};
-          }
-          
-          $flag = $cell ? 1 : 0 unless $flag;
-          $table[$x][$y] = $cell;
-        }
-      }
-      
-      unless ($flag) {
-        $return{$ld_type}{$pop_name}{'text'} = $no_data;
-        next;
-      }
-
-      # Turn snp_list from an array of variation_feature IDs to SNP 'rs' names
-      # Make current SNP bold
-      my @snp_names;
-      my @starts_list;
-      my $snp = $object->param('v') || '';
-      
-      foreach (@snp_list) {
-        my $name = $_->[1]->variation_name;
-        
-        if ($name eq $snp || $name eq "rs$snp") {
-          push (@snp_names, "*$name*");
-        } else { 
-          push (@snp_names, $name);
-        }
-
-        my ($start, $end) = ($_->[1]->start, $_->[1]->end);
-        my $pos = $start;
-        
-        if ($start > $end) {
-          $pos = "between $start & $end";
-        } elsif ($start < $end ) {
-          $pos = "$start-$end";
-        }
-        
-        push (@starts_list, $pos);
-      }
-
-      my $location = $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end;
-      
-      $return{$ld_type}{$pop_name}{'text'} = "Pairwise $display values for $location. Population: $pop_name";
-      $return{$ld_type}{$pop_name}{'data'} = [ \@starts_list, \@snp_names, \@table ];
+  foreach (keys %$files) {
+    if (ref $files->{$_}) {
+      $fhs->{$_} = $files->{$_};
+    } else {
+      open $fhs->{$_}, ">$files->{$_}";
     }
   }
   
-  return \%return;
+  my %ind_genotypes;
+  my %individuals;
+  my @snps;
+  my $family;
+  
+  # gets all genotypes in the Slice as a hash. where key is region_name-region_start
+  my $slice_genotypes = $object->get_all_genotypes;
+  
+  foreach my $vf (@{$object->get_variation_features}) {
+    my ($genotypes, $ind_data) =  $object->individual_genotypes($vf, $slice_genotypes);
+    
+    next unless %$genotypes;
+    
+    my $name = $vf->variation_name;
+    my $start = $vf->start;
+    
+    print { $fhs->{'geneotype'} } "$name $start\n";
+    
+    push (@snps, $name);
+    
+    map { $ind_genotypes{$_}{$name} = $genotypes->{$_} } (keys %$genotypes);
+    map { $individuals{$_} = $ind_data->{$_} } (keys %$ind_data);
+  }
+  
+  foreach my $individual (keys %ind_genotypes) {
+    my $output = join "\t", ("FAM" . $family++, 
+      $individual, 
+      $individuals{$individual}{'father'}, 
+      $individuals{$individual}{'mother'}, 
+      $individuals{$individual}{'gender'}, 
+      "0\t"
+    );
+    
+    foreach my $snp (@snps) {
+      my $genotype = $ind_genotypes{$individual}{$snp} || "00";
+      $genotype =~ tr/ACGTN/12340/;
+      
+      $output .= join " ", (split (//, $genotype));
+      $output .= "\t";
+    }
+    
+    print { $fhs->{'locus'} } "$output\n";
+  }
+  
+  foreach (keys %$files) {
+    close $fhs->{$_} unless ref $files->{$_};
+  }
 }
 
 1;
