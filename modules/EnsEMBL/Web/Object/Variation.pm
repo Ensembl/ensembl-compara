@@ -62,6 +62,7 @@ sub counts {
     $counts->{'transcripts'} = $self->count_transcripts;
     $counts->{'populations'} = $self->count_populations;
     $counts->{'individuals'} = $self->count_individuals;
+    $counts->{'ega'} = $self->count_ega;
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
 
@@ -69,7 +70,12 @@ sub counts {
 
    
 }
-
+sub count_ega {
+  my $self = shift;
+  my @ega_links = @{$self->get_external_data};
+  my $counts = scalar @ega_links || 0; 
+  return $counts;	
+}
 sub count_transcripts {
   my $self = shift;
   my %mappings = %{ $self->variation_feature_mapping };
