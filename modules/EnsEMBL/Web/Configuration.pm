@@ -15,7 +15,7 @@ use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::TmpFile::Tar;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Component::Export qw(pip_file);
+use EnsEMBL::Web::Component::Export qw(export_file);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -471,11 +471,11 @@ sub _export_configurator {
       my $anno_file = EnsEMBL::Web::TmpFile::Text->new(
         filename => $seq_file->filename,
         extension => 'txt',
-        prefix => '',
+        prefix => ''
       );
       
-      pip_file($seq_file, $object, 'seq');
-      pip_file($anno_file, $object, $output);
+      export_file($seq_file, $object, 'seq');
+      export_file($anno_file, $object, $output);
 
       $seq_file->save;
       $anno_file->save;
@@ -483,7 +483,7 @@ sub _export_configurator {
       my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
         filename => $seq_file->filename,
         prefix => '',
-        use_short_names => 1,
+        use_short_names => 1
       );
       
       $tar_file->add_file($seq_file);
