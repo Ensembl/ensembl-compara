@@ -22,13 +22,13 @@ if ($MEMD) {
 
   if ($ARGV[0] =~ /get/i) {
     print $MEMD->get($ARGV[1])."\n";
-  } elsif ($ARGV[0] =~ /(tags?)?_?delete/i) {
+  } elsif ($ARGV[0] =~ /delete/i) {
     shift @ARGV;
-    print $MEMD->delete_by_tags(@ARGV)."\n";
+    if ($MEMD->delete(@ARGV)) { print "1 item deleted \n"; } else { print "item not found \n"};
   } elsif ($ARGV[0] =~ /flush/i) {
     print "Flushing cache:\n";
-
-    print $MEMD->delete_by_tags . " cache items deleted\n";
+    shift @ARGV;
+    print $MEMD->delete_by_tags(@ARGV) . " cache items deleted\n";
 
   } elsif ($ARGV[0] =~ /stats/i) {
     shift @ARGV;
