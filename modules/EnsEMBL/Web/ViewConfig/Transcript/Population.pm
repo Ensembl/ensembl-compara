@@ -108,25 +108,17 @@ sub form {
   }
   ### Add Individual selection
   $view_config->add_fieldset('Select Individuals');
-  foreach (@{$object->species_defs->databases->{'DATABASE_VARIATION'}->{'DEFAULT_STRAINS'}}){
+  my @strains =  ( @{$object->species_defs->databases->{'DATABASE_VARIATION'}->{'DEFAULT_STRAINS'}},
+                   @{$object->species_defs->databases->{'DATABASE_VARIATION'}->{'DISPLAY_STRAINS'}},
+                   $view_config->species_defs->databases->{'DATABASE_VARIATION'}->{'REFERENCE_STRAIN'}
+  );
+  foreach (sort @strains){ 
     $view_config->add_form_element({
       'type'     => 'CheckBox', 'label' => $_,
       'name'     =>  'opt_pop_'.$_,
       'value'    => 'on', 'raw' => 1
     });
   }
-  foreach (@{$object->species_defs->databases->{'DATABASE_VARIATION'}->{'DISPLAY_STRAINS'}}){
-    $view_config->add_form_element({
-      'type'     => 'CheckBox', 'label' => $_,
-      'name'     =>  'opt_pop_'.$_,
-      'value'    => 'on', 'raw' => 1
-    });
-  }
-  $view_config->add_form_element({
-      'type'     => 'CheckBox', 'label' => $view_config->species_defs->databases->{'DATABASE_VARIATION'}->{'REFERENCE_STRAIN'},
-      'name'     =>  'opt_pop_'.$view_config->species_defs->databases->{'DATABASE_VARIATION'}->{'REFERENCE_STRAIN'},
-      'value'    => 'on', 'raw' => 1
-  });
 }
 
 
