@@ -82,7 +82,7 @@ use Class::Std;
     } else {
       $format = $self->new_cell_format();
     }
-warn "PRINTING to row ",$self->get_row,": (",$self->get_width,")", join '',@_;
+
     $worksheet->merge_range(
       $self->get_row,0,$self->get_row,$self->get_width-1,join('',@_),$format->evaluate
     );
@@ -146,8 +146,6 @@ warn "PRINTING to row ",$self->get_row,": (",$self->get_width,")", join '',@_;
     my $format = shift;
     my $worksheet = $self->get_workbook->sheets($self->get_sheet);
     return unless $worksheet;
-warn "WRITING to $row,$col : $text";
-    warn $worksheet->write($row, $col, $text, $format->evaluate);
   }
 }
 
