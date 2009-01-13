@@ -16,6 +16,11 @@ sub _das_link {
 
 sub feature_group {
   my( $self, $f ) = @_;
+  #this regexp will remove the differences in names between the ends of BACs.
+  #Only a start in getting the display accurate however - (i) seperate glyph, (ii) only one strand,
+  #(iii) distinguish between multiple mappings of the same end and the different ends
+#  (my $name = $f->hseqname) =~ s/(\.?[xyz][abc]|T7|SP6)$//;;
+#   return $name;
   return $f->hseqname;    ## For core features this is what the sequence name is...
 }
 
@@ -133,9 +138,9 @@ sub render_normal {
     my $colour_key     = $self->colour_key( $feature_key );
     my $feature_colour = $self->my_colour( $self->my_config( 'sub_type' ), undef  );
     my $join_colour    = $self->my_colour( $self->my_config( 'sub_type' ), 'join' );
-  
+
     my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
-  
+
     foreach my $i ( sort {
       $id{$a}[0][3] <=> $id{$b}[0][3]  ||
       $id{$b}[-1][4] <=> $id{$a}[-1][4]
@@ -152,7 +157,7 @@ sub render_normal {
         next;
       }
       $y_pos = $y_offset - $row * int( $h + $gap ) * $strand;
-  
+
       my $Composite = $self->Composite({
         'href'  => $self->href( $F[0][2] ),
         'x'     => $F[0][0]> 1 ? $F[0][0]-1 : 0,
