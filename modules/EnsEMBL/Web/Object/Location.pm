@@ -21,8 +21,8 @@ sub _filename {
     $self->Obj->{seq_region_end},
     $self->Obj->{seq_region_strand};
 
-	$name =~ s/[^-\w\.]/_/g;
-	return $name;
+  $name =~ s/[^-\w\.]/_/g;
+  return $name;
 }
 
 sub availability {
@@ -83,10 +83,9 @@ sub counts {
     };
     if( $self->species_defs->databases->{'DATABASE_VARIATION'} ) {
       my $reseq = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'};
-                  
+
       $counts->{'reseq_strains'} = $reseq;
     }
-    
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
   return $counts;
@@ -145,7 +144,6 @@ sub align_species {
     return $self->Obj->{'align_species'};
 }
 
-
 sub coord_systems {
   ## Needed by Location/Karyotype to display DnaAlignFeatures
   my $self = shift;
@@ -154,8 +152,7 @@ sub coord_systems {
   return [ map { $_->name } @{ $self->database('core',$self->real_species)->get_CoordSystemAdaptor()->fetch_all() } ];
 }
 
- 
-sub misc_set_code { 
+sub misc_set_code {
   my $self = shift;
   if( @_ ) { 
     $self->Obj->{'misc_set_code'} = shift;
@@ -221,9 +218,9 @@ sub create_features {
 sub _create_OligoFeature {
   # get Oligo hits plus corresponding genes
   my $probe = $_[0]->_generic_create( 'OligoProbe', 'fetch_all_by_probeset', $_[1] );
-  my $probe_genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
+  my $probe_trans = $_[0]->_generic_create( 'Transcript', 'fetch_all_by_external_name', $_[1], undef, 'no_errors' );
   my %features = ('OligoProbe' => $probe);
-  $features{'Gene'} = $probe_genes if $probe_genes;
+  $features{'Transcript'} = $probe_trans if $probe_trans;
   return \%features;
 }
 
@@ -265,9 +262,6 @@ sub create_UserDataFeature {
 
 sub _create_Gene {
   my ($self, $db) = @_;
-
-  warn "looking for a gene";
-
   if ($self->param('id') =~ /^ENS/) {
     return {'Gene' => $self->_generic_create( 'Gene', 'fetch_by_stable_id', $db ) };
   }
@@ -279,10 +273,10 @@ sub _create_Gene {
 # For a Regulatory Factor ID display all the RegulatoryFeatures
 sub _create_RegulatoryFactor {
   my ( $self, $db, $id, $name ) = @_;
-  
+
   if (!$id ) {$id = $self->param('id'); }
   my $analysis = $self->param('analysis');
-  
+
   my $db_type  = 'funcgen';
   my $efg_db = $self->database(lc($db_type));
   if(!$efg_db) {
@@ -299,28 +293,23 @@ sub _create_RegulatoryFactor {
    "VISTA" => 'VISTA enhancer set'
   );
 
-
-
   if ($analysis eq 'RegulatoryRegion'){
     my $regfeat_adaptor = $efg_db->get_RegulatoryFeatureAdaptor;
     my $feature = $regfeat_adaptor->fetch_by_stable_id($id);
     push (@$feats, $feature);
     $features = {'RegulatoryFactor'=> $feats};
 
-  } else { 
+  } else {
     if ($self->param('dbid')){
       my $ext_feat_adaptor = $efg_db->get_ExternalFeatureAdaptor;
-      my $feature = $ext_feat_adaptor->fetch_by_dbID($self->param('dbid'));     
-        
+      my $feature = $ext_feat_adaptor->fetch_by_dbID($self->param('dbid'));
       my @assoc_features = @{$ext_feat_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
-      
+
       if (scalar @assoc_features ==0) {
          push @assoc_features, $feature;
-      } 
-
-      $features= {'RegulatoryFactor' => \@assoc_features};  
-     
-    } else {   
+      }
+      $features= {'RegulatoryFactor' => \@assoc_features};
+    } else {
       my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
       my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor;
       my $ftype = $feat_type_adaptor->fetch_by_name($id);
@@ -333,7 +322,6 @@ sub _create_RegulatoryFactor {
       $features = {'RegulatoryFactor'=> $feats};
     }
   }
-
 
   return $features if $features && keys %$features; # Return if we have at least one feature
   # We have no features so return an error....
@@ -388,7 +376,6 @@ sub _create_XrefArray {
 sub _generic_create {
   my( $self, $object_type, $accessor, $db, $id, $flag ) = @_;
   $db ||= 'core';
-
   if (!$id ) {
     my @ids = $self->param( 'id' );
     $id = join(' ', @ids);
@@ -513,7 +500,6 @@ sub retrieve_features {
   my ($self, $features) = @_;
   my $method;
   my $results = [];
- 
   while (my ($type, $data) = each (%$features)) { 
     $method = 'retrieve_'.$type;
     push @$results, [$self->$method($data,$type)] if defined &$method;
@@ -523,7 +509,6 @@ sub retrieve_features {
 
 sub retrieve_Gene {
   my ($self, $data, $type) = @_;
-
   my $results = [];
   foreach my $g (@$data) {
     if (ref($g) =~ /UnmappedObject/) {
@@ -548,9 +533,35 @@ sub retrieve_Gene {
   return ( $results, ['Description'], $type );
 }
 
+sub retrieve_Transcript {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  foreach my $t (@$data) {
+    if (ref($t) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($t);
+      push(@$results, $unmapped);
+    }
+    else {
+      my $trans = EnsEMBL::Web::Proxy::Object->new('Transcript',$t, $self->__data);
+      my $desc = $trans->trans_description();
+      push @$results, {
+        'region'   => $t->seq_region_name,
+        'start'    => $t->start,
+        'end'      => $t->end,
+        'strand'   => $t->strand,
+        'length'   => $t->end-$t->start+1,
+        'extname'  => $t->external_name,
+        'label'    => $t->stable_id,
+        'trans_id' => [ $t->stable_id ],
+        'extra'    => [ $desc ]
+      }
+    }
+  }
+  return ( $results, ['Description'], $type );
+}
+
 sub retrieve_Xref {
   my ($self, $data, $type) = @_;
-
   my $results = [];
   foreach my $array (@$data) {
     my $xref = shift @$array;
@@ -575,13 +586,11 @@ sub retrieve_Xref {
       }
     }
   }
-
   return ( $results, ['Description'], $type );
 }
 
 sub retrieve_OligoProbe {
   my ($self, $data, $type) = @_;
-
   my $results = [];
   foreach my $probe (@$data) {
     if (ref($probe) =~ /UnmappedObject/) {
@@ -610,7 +619,6 @@ sub retrieve_OligoProbe {
 sub retrieve_DnaAlignFeature {
   my ($self, $data, $type) = @_;
   my $results = [];
-
   foreach my $f ( @$data ) {
     if (ref($f) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($f);
@@ -661,7 +669,6 @@ sub retrieve_RegulatoryFactor {
   my ($self, $data, $type) = @_;
   my $results = [];
   my $flag = 0;
-
   foreach my $reg (@$data) {
     my @stable_ids;
     my $gene_links;
@@ -675,7 +682,7 @@ sub retrieve_RegulatoryFactor {
     my @extra_results = $reg->analysis->description;
     $extra_results[0] =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
 
-  unshift (@extra_results, $gene_links);# if $gene_links;
+    unshift (@extra_results, $gene_links);# if $gene_links;
 
     push @$results, {
       'region'   => $reg->seq_region_name,
@@ -690,7 +697,6 @@ sub retrieve_RegulatoryFactor {
   }
   my $extras = ["Feature analysis"];
   unshift @$extras, "Associated gene";# if $flag;
-
   return ( $results, $extras, $type );
 }
 
@@ -950,7 +956,6 @@ sub pop_size {
   return $pop_obj->size;
 }
 
-
 sub pop_description {
 
   ### Arg1 : Bio::EnsEMBL::Variation::Population object
@@ -961,8 +966,6 @@ sub pop_description {
   my ($self, $pop_obj)  = @_;
   return $pop_obj->description;
 }
-
-
 
 sub location { 
 
@@ -983,8 +986,6 @@ sub generate_query_hash {
     'pop'   => $self->param('pop'),
  };
 }
-
-
 
 sub get_variation_features {
 
@@ -1202,18 +1203,18 @@ sub parent {
 
 
 sub get_all_genotypes{
-    my $self = shift;
+  my $self = shift;
 
-    my $slice = $self->slice_cache;
-    my $variation_db = $self->database('variation')->get_db_adaptor('variation');
-    my $iga = $variation_db->get_IndividualGenotypeAdaptor;
-    my $genotypes = $iga->fetch_all_by_Slice($slice);
-    #will return genotypes as a hash, having the region_name-start as key for rapid acces
-    my $genotypes_hash = {};
-    foreach my $genotype (@{$genotypes}){
-	push @{$genotypes_hash->{$genotype->seq_region_name.'-'.$genotype->seq_region_start}},$genotype;
-    }
-    return $genotypes_hash;
+  my $slice = $self->slice_cache;
+  my $variation_db = $self->database('variation')->get_db_adaptor('variation');
+  my $iga = $variation_db->get_IndividualGenotypeAdaptor;
+  my $genotypes = $iga->fetch_all_by_Slice($slice);
+  #will return genotypes as a hash, having the region_name-start as key for rapid acces
+  my $genotypes_hash = {};
+  foreach my $genotype (@{$genotypes}){
+    push @{$genotypes_hash->{$genotype->seq_region_name.'-'.$genotype->seq_region_start}},$genotype;
+  }
+  return $genotypes_hash;
 }
 
 ### Calls for LD view ##########################################################
