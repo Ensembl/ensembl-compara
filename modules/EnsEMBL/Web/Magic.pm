@@ -504,7 +504,6 @@ sub spell {
 
   my $webpage = EnsEMBL::Web::Document::WebPage->new(
     'objecttype' => $ENV{'ENSEMBL_TYPE'},
-    'doctype'    => 'Export',
     'scriptname' => 'export',
     'r'          => $r,
     'ajax_flag'  => $ajax_flag,
