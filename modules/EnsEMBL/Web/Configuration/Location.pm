@@ -351,162 +351,162 @@ sub _ajax_zmenu_view {
 }
 
 sub _ajax_zmenu_synteny {
-    my $self = shift;
-    my $panel= shift;
-    my $obj  = shift; 
-    my $action = $obj->[1]{'_action'};
-    my $sp     = $obj->[1]{'_species'};
-    my $ori    = $obj->param('ori');
-    my $r      = $obj->param('r');
-    my ($chr, $loc)   = split ':', $r;
-    my ($start,$stop) = split '-', $loc;
-    my $url = $obj->_url({
-	'type'   => 'Location',
-	'action' => $action,
-	'r' => $r });
-    $panel->{'caption'} = "$sp $chr:$loc";
-    if (my $r1  = $obj->param('r1')) {
-	my $sp1 = $obj->param('sp1');
-	$panel->add_entry({
-	    'label'   => sprintf("%s Chr %s:%0.1fM-%0.1fM",$sp,$chr,$start/1e6,$stop/1e6),
-	    'link'    => $url,
-	    'priority'=> 100,
-	});
-	my ($chr1, $loc1)   = split ':', $r1;
-	my ($start1,$stop1) = split '-', $loc1;
-	my $url1 = $obj->_url({
-	    'type' => 'Location',
-	    'action' => $action,
-	    'r' => $r1,
-	    'species' => $sp1 });
-	$panel->add_entry({
-	    'label'   => sprintf("%s Chr %s:%0.1fM-%0.1fM",$sp1,$chr1,$start1/1e6,$stop1/1e6),
-	    'link'    => $url1,
-	    'priority'=> 90,
-	});
-	my $new_start = int(($stop+$start)/2) - 5e5;
-	my $new_end   = $new_start + 1e6 - 1;
-	my $synt_url  = $obj->_url({
-	    'type'         => 'Location',
-	    'action'       => 'Synteny',
-	    'otherspecies' => $sp1,
-	    'r'            => "$chr:$new_start-$new_end"});
-	if (my $ori = $obj->param('ori')) {
-	    $panel->add_entry({
-		'label'   => 'Center display on this chr',
-		'link'    => $synt_url,
-		'priority'=> 80,
-	    });
-	    $panel->add_entry({
-		'label'   => "Orientation: $ori",
-		'priority'=> 70,
-	    });
-	}
-	else {
-	     $panel->add_entry({
-		'label'   => 'Center gene list',
-		'link'    => $synt_url,
-		'priority'=> 80,
-	    });
-	 }
+  my $self = shift;
+  my $panel= shift;
+  my $obj  = shift; 
+  my $action = $obj->[1]{'_action'};
+  my $sp     = $obj->[1]{'_species'};
+  my $ori    = $obj->param('ori');
+  my $r      = $obj->param('r');
+  my ($chr, $loc)   = split ':', $r;
+  my ($start,$stop) = split '-', $loc;
+  my $url = $obj->_url({
+    'type'   => 'Location',
+    'action' => $action,
+    'r' => $r });
+  $panel->{'caption'} = "$sp $chr:$loc";
+  if (my $r1  = $obj->param('r1')) {
+    my $sp1 = $obj->param('sp1');
+    $panel->add_entry({
+      'label'   => sprintf("%s Chr %s:%0.1fM-%0.1fM",$sp,$chr,$start/1e6,$stop/1e6),
+      'link'    => $url,
+      'priority'=> 100,
+    });
+    my ($chr1, $loc1)   = split ':', $r1;
+    my ($start1,$stop1) = split '-', $loc1;
+    my $url1 = $obj->_url({
+      'type' => 'Location',
+      'action' => $action,
+      'r' => $r1,
+      'species' => $sp1 });
+    $panel->add_entry({
+      'label'   => sprintf("%s Chr %s:%0.1fM-%0.1fM",$sp1,$chr1,$start1/1e6,$stop1/1e6),
+      'link'    => $url1,
+      'priority'=> 90,
+    });
+    my $new_start = int(($stop+$start)/2) - 5e5;
+    my $new_end   = $new_start + 1e6 - 1;
+    my $synt_url  = $obj->_url({
+      'type'         => 'Location',
+      'action'       => 'Synteny',
+      'otherspecies' => $sp1,
+      'r'            => "$chr:$new_start-$new_end"});
+    if (my $ori = $obj->param('ori')) {
+      $panel->add_entry({
+	'label'   => 'Center display on this chr',
+	'link'    => $synt_url,
+	'priority'=> 80,
+      });
+      $panel->add_entry({
+	'label'   => "Orientation: $ori",
+	'priority'=> 70,
+      });
     }
     else {
-	my ($chr, $loc) = split ':', $r;
-	my $url = $obj->_url({
-	    'type' => 'Location',
-	    'action' => $action,
-	    'r' => $r});
-	$panel->add_entry({
-	    'label'    => "Jump to $sp",
-	    'link'    => $url,
-	    'priority'=> 100,
-	});
-	$panel->add_entry({
-	    'label'    => "bp: $loc",
-	    'priority'=> 90,
-	});
-	$panel->add_entry({
-	    'label'    => "orientation: $ori",
-	    'priority'=> 80,
-	});
+      $panel->add_entry({
+	'label'   => 'Center gene list',
+	'link'    => $synt_url,
+	'priority'=> 80,
+      });
     }
-    return;
+  }
+  else {
+    my ($chr, $loc) = split ':', $r;
+    my $url = $obj->_url({
+      'type' => 'Location',
+      'action' => $action,
+      'r' => $r});
+    $panel->add_entry({
+      'label'    => "Jump to $sp",
+      'link'    => $url,
+      'priority'=> 100,
+    });
+    $panel->add_entry({
+      'label'    => "bp: $loc",
+      'priority'=> 90,
+    });
+    $panel->add_entry({
+      'label'    => "orientation: $ori",
+      'priority'=> 80,
+    });
+  }
+  return;
 }
 
 
 sub _ajax_zmenu_region {
-    my $self = shift;
-    my $panel= shift;
-    my $obj  = shift; 
-    my $action     = $obj->[1]{'_action'};
-    my $slice_name = $obj->param('region_n');
-    my $db_adaptor = $obj->database('core');
-    my $sa         = $db_adaptor->get_SliceAdaptor();
-    my $slice      = $sa->fetch_by_region('seqlevel',$slice_name);
-    my $slice_type = $slice->coord_system_name;
-    my $priority = 200;
-    $panel->{'caption'} = $slice_name;
-    my $url = $obj->_url({'type' => 'Location', 'action' => $action, 'region' => $slice_name});
+  my $self = shift;
+  my $panel= shift;
+  my $obj  = shift; 
+  my $action     = $obj->[1]{'_action'};
+  my $slice_name = $obj->param('region_n');
+  my $db_adaptor = $obj->database('core');
+  my $sa         = $db_adaptor->get_SliceAdaptor();
+  my $slice      = $sa->fetch_by_region('seqlevel',$slice_name);
+  my $slice_type = $slice->coord_system_name;
+  my $priority = 200;
+  $panel->{'caption'} = $slice_name;
+  my $url = $obj->_url({'type' => 'Location', 'action' => $action, 'region' => $slice_name});
+  $priority--;
+  $panel->add_entry({
+    'type' => "Center on $slice_type",
+    'label' => $slice_name,
+    'link'  => $url,
+    'priority' => $priority,
+  });
+  my $export_URL = $obj->_url({'type' => 'Location', 'action' => 'Export', 'region' => $slice_name});
+  $priority--;
+  $panel->add_entry({
+    'type'    => "Export $slice_type",
+    'label'   => 'Export',
+    'link'    => $export_URL,
+    'priority'=> $priority,
+  });
+  foreach my $cs (@{$db_adaptor->get_CoordSystemAdaptor->fetch_all() || []}) {
+    $priority--;
+    next if $cs->name eq $slice_type;
+    next if $cs->name eq 'chromosome';
+    my $path;
+    eval { $path = $slice->project($cs->name); };
+    next unless $path;
+    next unless(@$path == 1);
+    my $new_slice = $path->[0]->to_Slice;
+    my $new_slice_type = $new_slice->coord_system_name;
+    my $new_slice_name = $new_slice->seq_region_name;
+    my $new_slice_URL = $obj->_url({'type' => 'Location', 'action' => $action, 'region' => $new_slice_name});
     $priority--;
     $panel->add_entry({
-	'type' => "Center on $slice_type",
-	'label' => $slice_name,
-	'link'  => $url,
+      'type'    => "Center on $new_slice_type",
+      'label'   => $new_slice_name,
+      'link'    => $new_slice_URL,
+      'priority'=> $priority,
+    });
+    my $export_URL = $obj->_url({'type' => 'Location', 'action' => 'Export', 'region' => $new_slice_name});
+    $priority--;
+    $panel->add_entry({
+      'type'    => "Export $new_slice_type",
+      'label'   => 'Export',
+      'link'    => $export_URL,
+      'priority'=> $priority,
+    });
+    if ($cs->name eq 'clone') {
+      (my $short_name = $new_slice_name) =~ s/\.\d+$//;
+      $priority--;
+      $panel->add_entry({
+	'type'     => 'EMBL',
+	'label'    => $new_slice_name,
+	'link'     => $obj->get_ExtURL('EMBL',$new_slice_name),
 	'priority' => $priority,
-    });
-    my $export_URL = $obj->_url({'type' => 'Location', 'action' => 'Export', 'region' => $slice_name});
-    $priority--;
-    $panel->add_entry({
-	'type'    => "Export $slice_type",
-	'label'   => 'Export',
-	'link'    => $export_URL,
-	'priority'=> $priority,
-    });
-    foreach my $cs (@{$db_adaptor->get_CoordSystemAdaptor->fetch_all() || []}) {
-	$priority--;
-	next if $cs->name eq $slice_type;
-	next if $cs->name eq 'chromosome';
-	my $path;
-	eval { $path = $slice->project($cs->name); };
-	next unless $path;
-	next unless(@$path == 1);
-	my $new_slice = $path->[0]->to_Slice;
-	my $new_slice_type = $new_slice->coord_system_name;
-	my $new_slice_name = $new_slice->seq_region_name;
-	my $new_slice_URL = $obj->_url({'type' => 'Location', 'action' => $action, 'region' => $new_slice_name});
-	$priority--;
-	$panel->add_entry({
-	    'type'    => "Center on $new_slice_type",
-	    'label'   => $new_slice_name,
-	    'link'    => $new_slice_URL,
-	    'priority'=> $priority,
-	});
-	my $export_URL = $obj->_url({'type' => 'Location', 'action' => 'Export', 'region' => $new_slice_name});
-	$priority--;
-	$panel->add_entry({
-	    'type'    => "Export $new_slice_type",
-	    'label'   => 'Export',
-	    'link'    => $export_URL,
-	    'priority'=> $priority,
-	});
-	if ($cs->name eq 'clone') {
-	    (my $short_name = $new_slice_name) =~ s/\.\d+$//;
-	    $priority--;
-	    $panel->add_entry({
-		'type'     => 'EMBL',
-		'label'    => $new_slice_name,
-		'link'     => $obj->get_ExtURL('EMBL',$new_slice_name),
-		'priority' => $priority,
-	    });
-	    $priority--;
-	    $panel->add_entry({
-		'type'     => 'EMBL (latest version)',
-		'label'    => $short_name,
-		'link'     => $obj->get_ExtURL('EMBL',$short_name),
-		'priority' => $priority,
-	    });
-	}
+      });
+      $priority--;
+      $panel->add_entry({
+	'type'     => 'EMBL (latest version)',
+	'label'    => $short_name,
+	'link'     => $obj->get_ExtURL('EMBL',$short_name),
+	'priority' => $priority,
+      });
     }
+  }
 }
 
 sub _ajax_zmenu_misc_feature {
@@ -531,7 +531,7 @@ sub _ajax_zmenu_misc_feature {
     'label' => $mf->seq_region_start.'-'.$mf->seq_region_end,
     'priority' => 190,
   });
-  
+
   $panel->add_entry({
     'type' => 'length',
     'label' => $mf->length.' bps',
@@ -547,6 +547,7 @@ sub _ajax_zmenu_misc_feature {
     ['synonym',        'Synonym'                ],
     ['embl_acc',       'EMBL accession', 'EMBL' ],
     ['bacend',         'BAC end acc',    'EMBL' ],
+    ['bac',            'AGP clones'             ],
     ['alt_well_name',  'Well name'              ],
     ['bacend_well_nam','BAC end well'           ],
     ['state',          'State'                  ],
@@ -564,7 +565,7 @@ sub _ajax_zmenu_misc_feature {
   foreach my $name (@names) {
     my $value = $mf->get_scalar_attribute($name->[0]);
     my $entry;
-    
+
     #hacks for these type of entries
     if ($name->[0] eq 'BACend_flag') {
       $value = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$value]; 
@@ -642,7 +643,7 @@ sub _ajax_zmenu_ga {
   $disp_method =~ s/BLASTZ_NET/BLASTz net/g;
   $disp_method =~ s/TRANSLATED_BLAT_NET/Trans. BLAT net/g;
   $panel->{'caption'} = "$sp1 $disp_method";
-  
+
   my $r1 = $obj->param('r1');
   $panel->add_entry({
     'type'     => $r1,
@@ -662,7 +663,7 @@ sub _ajax_zmenu_ga {
     'link'     => $url,
     'priority' => 150,
   });
-  
+
   if ($obj->param('method')) {
     $url = $obj->_url({'type'  =>'Location',
 		       'action'=>'ComparaGenomicAlignment',
@@ -674,7 +675,7 @@ sub _ajax_zmenu_ga {
       'link'     => $url,
       'priority' => 100,
     });
-    
+
     $url = $obj->_url({'type'  =>'Location',
 		       'action'=>'View',
 		       'r'     =>$obj->param('r')} );
@@ -722,36 +723,83 @@ sub _ajax_zmenu_alignment {
   my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
 
   #hack to link sheep bac ends to trace archive
-  if ($fs->[0]->analysis->logic_name eq 'sheep_bac_ends') {
+  if ($fs->[0]->analysis->logic_name =~ /sheep_bac_ends|BACends/) {
     $hit_db_name = 'TRACE';
   }
 
   my $species= $obj->species;
-  $panel->{'caption'} = "$id ($hit_db_name)";
-  my @seq = [];
-  @seq = split "\n", $obj->get_ext_seq($id,$hit_db_name) if ($hit_db_name !~ /CCDS/); #don't show EMBL desc for CCDS
-  my $desc = $seq[0];
-  if ($desc) {
-    if ($desc =~ s/^>//) {
+
+  #different zmenu for oligofeatures
+  if ($obj_type eq 'OligoFeature') {
+    $panel->{'caption'} = "Probe set: $id";
+    my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
+    my $p = 50;
+    $panel->add_entry({ 
+      'label' => 'View all probe hits',
+      'link'   => $fv_url,
+      'priority' => $p,
+    });
+    #details of each probe within the probe set
+    my %probes;
+    foreach my $of (@$fs){
+      my $op = $of->probe;
+      foreach my $array (@{$op->get_all_Arrays()}) {
+	my $of_name    = $of->probe->get_probename($array->name);
+	my $of_sr_name = $of->seq_region_name;
+	my $of_start   = $of->seq_region_start;
+	my $of_end     = $of->seq_region_end;
+	my $loc = $of_sr_name.':'.$of_start.'-'.$of_end;
+	$probes{$of_name}{'chr'}   = $of_sr_name;
+	$probes{$of_name}{'start'} = $of_start;
+	$probes{$of_name}{'end'}   = $of_end;
+	$probes{$of_name}{'loc'}   = $loc;
+	$probes{$of_name}{'array'} = $array->name;
+	
+      }
+    }
+    foreach my $probe (sort {
+      $probes{$a}->{'chr'}   <=> $probes{$b}->{'chr'}
+   || $probes{$a}->{'start'} <=> $probes{$b}->{'start'}
+   || $probes{$a}->{'stop'}  <=> $probes{$b}->{'stop'}
+      } keys %probes) {
+      my $type = $p < 50 ? ' ' : 'Individual probes:';
+      $p--;
+      my $loc = $probes{$probe}->{'loc'};
       $panel->add_entry({
-	'label' => $desc,
-	'priority' => 150,
+	'type'     => $type,
+	'label'    => "$probe ($loc)",
+	'priority' => $p,
       });
     }
   }
 
-  my $URL = CGI::escapeHTML( $obj->get_ExtURL($hit_db_name, $id) );
-  $panel->add_entry({
-    'label' => $id,
-    'link'  => $URL,
-    'priority' => 100,
-  });
-  my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
-  $panel->add_entry({ 
-    'label' => 'View all hits',
-    'link'   => $fv_url,
-    'priority' => 50,
-  });
+  else {
+    $panel->{'caption'} = "$id ($hit_db_name)";
+    my @seq = [];
+    @seq = split "\n", $obj->get_ext_seq($id,$hit_db_name) if ($hit_db_name !~ /CCDS/); #don't show EMBL desc for CCDS
+    my $desc = $seq[0];
+    if ($desc) {
+      if ($desc =~ s/^>//) {
+	$panel->add_entry({
+	  'label' => $desc,
+	  'priority' => 150,
+	});
+      }
+    }
+    my $URL = CGI::escapeHTML( $obj->get_ExtURL($hit_db_name, $id) );
+    my $label = ($hit_db_name eq 'TRACE') ? 'View Trace archive' : $id;
+    $panel->add_entry({
+      'label' => $label,
+      'link'  => $URL,
+      'priority' => 100,
+    });
+    my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
+    $panel->add_entry({ 
+      'label' => "View all hits",
+      'link'   => $fv_url,
+      'priority' => 50,
+    });
+  }
   return;
 }
 
