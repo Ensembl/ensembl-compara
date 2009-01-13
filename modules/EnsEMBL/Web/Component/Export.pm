@@ -6,8 +6,10 @@ use base qw(Exporter);
 our @EXPORT = our @EXPORT_OK = qw(export export_file);
 
 use POSIX qw(floor ceil);
+use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 use EnsEMBL::Web::SeqDumper;
 use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Document::Renderer::Excel;
 
 sub export {
   my $class = shift;
@@ -359,18 +361,25 @@ sub flat {
 }
 
 sub ld_dump {
-  my $object = shift;
+  my ($object, $file, $params) = @_;
   
-  my $pop_param = $object->param('opt_pop');
-  my $snp_param = $object->param('v');
+  my ($format, $pop_param, $snp_param);
+  
+  if ($params) {
+    $format = 'Excel';
+    $pop_param = $params->{'opt_pop'}->[0];
+    $snp_param = $params->{'v'}->[0];
+  } else {
+    $format = $object->param('_format');
+    $pop_param = $object->param('opt_pop');
+    $snp_param = $object->param('v');
+  }
   my $zoom = 20000; # Currently non-configurable
   
   if (!$pop_param) {
     warn "****** ERROR: No population defined";
     return;
   }
-  
-  my $table_format = ($object->param('_format') ne 'Text');
   
   my @colour_gradient = (
     'ffffff', 
@@ -379,15 +388,17 @@ sub ld_dump {
   
   my $ld_values = ld_values($object, $pop_param, $snp_param, $zoom);
   
-  my $html;
   my $table;
   my $text;
+  my $html;
   my $header_style = "background-color:#CCCCCC;font-weight:bold;";
   
   my $populations = {};
   map { $populations->{$_} = 1 } map { keys %{$ld_values->{$_}} } keys %$ld_values;
   
-  foreach my $pop_name (sort { $a cmp $b } keys %$populations) {    
+  foreach my $pop_name (sort { $a cmp $b } keys %$populations) {
+    my $flag = 1;
+
     foreach my $ld_type (keys %$ld_values) {      
       next unless $ld_values->{$ld_type}{$pop_name}{'data'};
       
@@ -395,14 +406,38 @@ sub ld_dump {
       
       unshift (@$data, []);
       
-      if ($table_format) {
+      if ($format eq 'Excel') {
+        if (!$table) {
+          my $renderer = new EnsEMBL::Web::Document::Renderer::Excel({ fh => $file->{'full_path'} });
+          $table = $renderer->new_table_renderer;
+        }
+        
+        (my $sheet_name = $pop_name) =~ s/[^\w\s]/_/g;
+        
+        if ($flag) {
+          $table->new_sheet($sheet_name); # Start a new sheet(and new table)
+          $flag = 0;
+        } else {
+          $table->new_table; # Start a new table
+        }
+        
+        $table->set_width(2 + @$snps);
+        $table->heading($ld_values->{$ld_type}{$pop_name}{'text'});
+        $table->new_row;
+        
+        $table->write_header_cell('bp position');
+        $table->write_header_cell('SNP');
+        
+        $table->write_header_cell($_) for @$snps;
+        $table->new_row;
+      } elsif ($format eq 'Text') {
+        $text = join ("\t", 'bp position', 'SNP', @$snps) . "\n";
+      } else {
         $table = new EnsEMBL::Web::Document::SpreadSheet;
         
         $table->add_option('cellspacing', 2);
         $table->add_option('rows', '', ''); # No row colouring
         $table->add_columns(map {{ 'title' => $_, 'align' => 'center' }} ( 'bp&nbsp;position', 'SNP', @$snps ));
-      } else {
-        $text = join ("\t", 'bp position', 'SNP', @$snps) . "\n";
       }
       
       foreach my $row (@$data) {
@@ -414,21 +449,38 @@ sub ld_dump {
         my @ld_values = map { $_ ? sprintf("%.3f", $_) : '-' } @$row;
         my @row_style = map { 'background-color:#' . ($_ eq '-' ? 'ffffff' : $colour_gradient[floor($_*40)]) . ';' } @ld_values;
         
-        if ($table_format) {
+        if ($format eq 'Excel') {
+          $table->write_header_cell($pos);
+          $table->write_header_cell($snp);
+          
+          foreach my $value (@ld_values) {
+            my $format = $table->new_format({
+              'align'   => 'center',
+              'bgcolor' => $value eq '-' ? 'ffffff' : $colour_gradient[floor($value*40)]
+            });
+            
+            $table->write_cell($value, $format);
+          }
+          
+          $table->write_header_cell($snp);
+          $table->new_row;
+        } elsif ($format eq 'Text') {
+          $text .= join ("\t", $pos, $snp, @ld_values, $snp) . "\n";
+        } else {
           $table->add_row([ $pos, $snp, @ld_values, $snp ]);
           $table->add_option('row_style', [ $header_style, $header_style, @row_style, $header_style ]);
-        } else {
-          $text .= join ("\t", $pos, $snp, @ld_values, $snp) . "\n";
         }
       }
       
-      if ($table_format) {
-        $html .= "<h3>$ld_values->{$ld_type}{$pop_name}->{'text'}</h3>";
-        $html .= $table->render;
-      } else {
+      next if $format eq 'Excel'; # No html to return
+      
+      if ($format eq 'Text') {
         $html .= "$ld_values->{$ld_type}{$pop_name}->{'text'}\n";
         $html .= ("=" x length $ld_values->{$ld_type}{$pop_name}->{'text'}) . "\n\n";
         $html .= "$text\n";
+      } else {
+        $html .= "<h3>$ld_values->{$ld_type}{$pop_name}->{'text'}</h3>";
+        $html .= $table->render;
       }
     }
   }
@@ -438,6 +490,10 @@ sub ld_dump {
 
 sub ld_values {
   my ($object, $populations, $snp, $zoom) = @_;
+  
+  ## set path information for LD calculations
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $object->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $object->species_defs->ENSEMBL_TMP_TMP;
   
   my %ld_values;
   my $display_zoom = $object->round_bp($zoom);
@@ -531,15 +587,16 @@ sub ld_values {
 }
 
 sub export_file {
-  my ($file, $object, $o) = @_;
+  my ($file, $object, $o, $params) = @_;
   
-  my $slice = $object->can('slice') ? $object->slice : $object->get_Slice unless $o eq 'haploview';
+  my $slice = $object->can('slice') ? $object->slice : $object->get_Slice unless $o =~ /haploview|ld_excel/;
   
   my $outputs = {
     'seq'       => sub { pip_seq_file($file, $object, $slice);  },
     'pipmaker'  => sub { pip_anno_file($file, $object, $slice, $o); },
     'vista'     => sub { pip_anno_file($file, $object, $slice, $o); },
-    'haploview' => sub { haploview_files($file, $object); }
+    'haploview' => sub { haploview_files($file, $object); },
+    'ld_excel'  => sub { ld_dump($object, $file, $params); }
   };
   
   if (!$outputs->{$o}) {
@@ -678,19 +735,21 @@ sub haploview_files {
   my %individuals;
   my @snps;
   my $family;
-  
+ 
+  my ($locus, $genotype);
+ 
   # gets all genotypes in the Slice as a hash. where key is region_name-region_start
   my $slice_genotypes = $object->get_all_genotypes;
-  
+
   foreach my $vf (@{$object->get_variation_features}) {
     my ($genotypes, $ind_data) =  $object->individual_genotypes($vf, $slice_genotypes);
-    
+
     next unless %$genotypes;
     
     my $name = $vf->variation_name;
     my $start = $vf->start;
     
-    print { $fhs->{'geneotype'} } "$name $start\n";
+    $locus .= "$name $start\n";
     
     push (@snps, $name);
     
@@ -707,17 +766,20 @@ sub haploview_files {
       "0\t"
     );
     
-    foreach my $snp (@snps) {
-      my $genotype = $ind_genotypes{$individual}{$snp} || "00";
-      $genotype =~ tr/ACGTN/12340/;
+    foreach (@snps) {
+      my $snp = $ind_genotypes{$individual}{$_} || "00";
+      $snp =~ tr/ACGTN/12340/;
       
-      $output .= join " ", (split (//, $genotype));
+      $output .= join " ", (split (//, $snp));
       $output .= "\t";
     }
     
-    print { $fhs->{'locus'} } "$output\n";
+    $genotype .= "$output\n";
   }
   
+  print { $fhs->{'locus'} } $locus;
+  print { $fhs->{'genotype'} } $genotype;
+
   foreach (keys %$files) {
     close $fhs->{$_} unless ref $files->{$_};
   }

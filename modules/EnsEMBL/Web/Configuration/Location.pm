@@ -108,6 +108,8 @@ sub ld_export_configurator {
   my $content;
   my $params;
   my @formats;
+
+  my $text = qq{<p>Your export has been processed successfully. You can download the exported data by following the links below</p>};
   
   foreach (keys %{$form_action->[1]||{}}) {
     $params .= qq{
@@ -123,7 +125,7 @@ sub ld_export_configurator {
       prefix => ''
     );
     
-    export_file({ geneotype => $gen_file, locus => $locus_file }, $object, 'haploview');
+    export_file({ genotype => $gen_file, locus => $locus_file }, $object, 'haploview');
     
     $gen_file->save;
     $locus_file->save;
@@ -145,21 +147,34 @@ sub ld_export_configurator {
     );
     
     $params .= qq{<input type="submit" class="submit" value="&lt; Back" />};
+  } elsif ($object->param('excel')) {
+    my $excel_file  = new EnsEMBL::Web::TmpFile::Text(extension => 'xls', prefix => '');
+
+    export_file($excel_file, $object, 'ld_excel', $object->parent->{'params'});
+
+    $excel_file->save;
+
+    @formats = (
+      [ 'Excel', '', '', '', $excel_file->URL ]
+    );
+
+    $params .= qq{<input type="submit" class="submit" value="&lt; Back" />};
   } else {
     @formats = (
       [ 'HTML', 'HTML', ' rel="external"' ],
       [ 'Text', 'Text', ' rel="external"' ],
-      [ 'Excel', 'Excel' ],
+      [ 'Excel', '', '', '', "$form_action->[0]?$form_action->[2];excel=1", 'modal_link'],
       [ 'For upload into Haploview software', '', '', ' (may take a while)', "$form_action->[0]?$form_action->[2];haploview=1", 'modal_link' ]
     );
-    
-    $params .= qq{<input type="hidden" name="haploview" value="1" />};
+
+    $text = qq{<p>Please choose a format for your exported data</p>};
   }
   
   $content = qq{
     <h2>Export Configuration - LDView</h2>
     <form id="export_output_configuration" class="std check" method="get" action="$form_action->[0]">
       <fieldset>
+        $text
         <ul>};
         
     foreach (@formats) {
