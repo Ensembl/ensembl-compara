@@ -56,12 +56,7 @@ sub find_nonadmin_groups {
 
 sub is_administrator_of {
   my ($self, $group) = @_; 
-  if (ref($group) =~ /Group/) {
-    return grep {$group->id eq $_->id} $self->find_administratable_groups;
-  }
-  else {
     return grep {$group eq $_->id} $self->find_administratable_groups;
-  }
 }
 
 sub is_member_of {
