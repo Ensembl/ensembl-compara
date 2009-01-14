@@ -610,7 +610,7 @@ sub export_file {
 sub pip_seq_file {
   my ($file, $object, $slice) = @_;
   
-  (my $seq = $slice->seq) =~ s/(.{60})/$1\n/g;
+  (my $seq = $slice->seq) =~ s/(.{60})/$1\r\n/g;
   
   my $fh;
   if (ref $file) {
@@ -619,7 +619,7 @@ sub pip_seq_file {
     open $fh, ">$file";
   }
 
-  print $fh ">@{[$slice->name]}\n$seq";
+  print $fh ">@{[$slice->name]}\r\n$seq";
 
   close $fh unless ref $file;
 }
@@ -646,7 +646,7 @@ sub pip_anno_file {
     next if ($gene->start < 1 or $gene->end > $slice_length);
     
     my $gene_header = join(" ", ($gene->strand == 1 ? ">" : "<"), $gene->start, $gene->end, $gene->external_name || $gene->stable_id);
-    $gene_header .= "\n";
+    $gene_header .= "\r\n";
     
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
       # get UTR/exon lines
@@ -673,23 +673,23 @@ sub pip_anno_file_vista {
   
   foreach my $exon (@$exons) {
     if (!$coding_start) {                                    # no coding region at all
-      $out .= join(" ", $exon->start, $exon->end, "UTR\n");
+      $out .= join(" ", $exon->start, $exon->end, "UTR\r\n");
     } elsif ($exon->start < $coding_start) {                 # we begin with an UTR
       if ($coding_start < $exon->end) {                      # coding region begins in this exon
-        $out .= join(" ", $exon->start, $coding_start - 1, "UTR\n");
-        $out .= join(" ", $coding_start, $exon->end, "exon\n");
+        $out .= join(" ", $exon->start, $coding_start - 1, "UTR\r\n");
+        $out .= join(" ", $coding_start, $exon->end, "exon\r\n");
       } else {                                               # UTR until end of exon
-        $out .= join(" ", $exon->start, $exon->end, "UTR\n");
+        $out .= join(" ", $exon->start, $exon->end, "UTR\r\n");
       }
     } elsif ($coding_end < $exon->end) {                     # we begin with an exon
       if ($exon->start < $coding_end) {                      # coding region ends in this exon
-        $out .= join(" ", $exon->start, $coding_end, "exon\n");
-        $out .= join(" ", $coding_end + 1, $exon->end, "UTR\n");
+        $out .= join(" ", $exon->start, $coding_end, "exon\r\n");
+        $out .= join(" ", $coding_end + 1, $exon->end, "UTR\r\n");
       } else {                                               # UTR (coding region has ended in previous exon)
-        $out .= join(" ", $exon->start, $exon->end, "UTR\n");
+        $out .= join(" ", $exon->start, $exon->end, "UTR\r\n");
       }
     } else {                                                 # coding exon
-      $out .= join(" ", $exon->start, $exon->end, "exon\n");
+      $out .= join(" ", $exon->start, $exon->end, "exon\r\n");
     }
   }
   return $out;
@@ -707,12 +707,12 @@ sub pip_anno_file_pipmaker {
 
   # add UTR line
   if ($transcript->start < $coding_start or $transcript->end > $coding_end) {
-    $out .= join(" ", "+", $coding_start, $coding_end, "\n");
+    $out .= join(" ", "+", $coding_start, $coding_end, "\r\n");
   }
   
   # add exon lines
   foreach my $exon (@$exons) {
-    $out .= join(" ", $exon->start, $exon->end, "\n");
+    $out .= join(" ", $exon->start, $exon->end, "\r\n");
   }
   
   return $out;
@@ -749,7 +749,7 @@ sub haploview_files {
     my $name = $vf->variation_name;
     my $start = $vf->start;
     
-    $locus .= "$name $start\n";
+    $locus .= "$name $start\r\n";
     
     push (@snps, $name);
     
@@ -774,7 +774,7 @@ sub haploview_files {
       $output .= "\t";
     }
     
-    $genotype .= "$output\n";
+    $genotype .= "$output\r\n";
   }
   
   print { $fhs->{'locus'} } $locus;
