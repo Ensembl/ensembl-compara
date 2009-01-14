@@ -366,6 +366,7 @@ sub _export_configurator {
   my $object = $self->{'object'};
   my $type = $object->type;
   my $content;
+  my $text;
   
   $self->tree->_flush_tree;
   
@@ -490,6 +491,8 @@ sub _export_configurator {
       $tar_file->add_file($anno_file);
       $tar_file->save;
       
+      $text = qq{<p>Your export has been processed successfully. You can download the exported data by following the links below</p>};
+      
       @formats = (
         [ 'Sequence data', '', ' rel="external"', ' [FASTA format]', $seq_file->URL ],
         [ 'Annotation data', '', ' rel="external"', ' [pipmaker format]', $anno_file->URL ],
@@ -526,6 +529,7 @@ sub _export_configurator {
       <h2>Export Configuration - Output Format</h2>
       <form id="export_output_configuration" class="std check" method="get" action="$form_action->[0]">
         <fieldset>
+          $text
           <ul>};
         
     foreach (@formats) {
