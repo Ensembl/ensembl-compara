@@ -67,7 +67,7 @@ sub fasta {
       
       $output->{$_}->[1] =~ s/(.{60})/$1\r\n/g;
       
-      $html .= ">$output->{$_}->[0]\n$output->{$_}->[1]\r\n";
+      $html .= ">$output->{$_}->[0]\r\n$output->{$_}->[1]\r\n";
     }
   }
   
