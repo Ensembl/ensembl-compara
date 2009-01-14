@@ -159,6 +159,10 @@ sub childInitHandler {
 
 sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
+
+## Nullify tags
+  $ENV{CACHE_TAGS} = {};
+
 ## Manipulate the Registry...
   $ENSEMBL_WEB_REGISTRY->timer->set_script_start_time( time  ); ## This is the page rendering start time!
   $ENSEMBL_WEB_REGISTRY->timer->clear_times();
@@ -319,7 +323,7 @@ sub transHandler_no_species {
 
       $LOG_TIME = time();
     }
-    $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script       );
+    $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script       ); 
     $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
     return OK;
   }
@@ -328,6 +332,8 @@ sub transHandler_no_species {
 
 sub transHandler_species {
   my( $r, $session_cookie, $species, $path_segments, $querystring, $file, $flag ) = @_;
+
+  warn Dumper($path_segments);
 
   my $redirect_if_different = 1;
   my $script = shift @$path_segments;
@@ -478,6 +484,12 @@ sub transHandler {
 
   my @path_segments = split( m|/|, $file );
   shift @path_segments; # Always empty
+
+  ## Some memcached tags (mainly for statistics)
+  my $prefix = '';
+  my @tags = map { $prefix = join('/', $prefix, $_); $prefix; } @path_segments;
+  $ENV{CACHE_TAGS}{$_} = 1 for @tags;
+  
   my $species   = shift @path_segments;
   my $Tspecies  = $species;
   my $script    = undef;

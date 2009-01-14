@@ -232,18 +232,19 @@ sub ingredient {
 ### Wrapper around a list of components to produce a panel or
 ### part thereof - for inclusion via AJAX
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
+  my $session_id   = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+
+  $ENV{CACHE_TAGS}{'DYNAMIC'}            = 1;
+  $ENV{CACHE_TAGS}{'AJAX'}               = 1;
+  $ENV{CACHE_TAGS}{$ENV{'HTTP_REFERER'}} = 1;
+
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
 
-  my $session_id   = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
   $ENV{CACHE_KEY}  = $ENV{REQUEST_URI};
-  $ENV{CACHE_TAGS} ||= {};
-  $ENV{CACHE_TAGS}->{$ENV{'HTTP_REFERER'}} = 1;
-
-  ## Ajax request
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
   $ENV{CACHE_KEY} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
   
-  my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
+  my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}, keys %{$ENV{CACHE_TAGS}}) : undef;
 
   timer_push( 'Retrieved content from cache' ); 	 
   $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_COMPONENT'}" );
@@ -287,7 +288,7 @@ sub ingredient {
       $ENV{CACHE_KEY},
       $content,
       60*60*24*7,
-      ( 'AJAX', keys %{ $ENV{CACHE_TAGS}||{} } ) ## TAGS
+      keys %{ $ENV{CACHE_TAGS} },
     ) if $MEMD && $webpage->format eq 'HTML';
     timer_push( 'Rendered content cached' );
   }
@@ -320,6 +321,11 @@ sub stuff {
   my $session      = $ENSEMBL_WEB_REGISTRY->get_session;
 
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+
+  $ENV{CACHE_TAGS}{'DYNAMIC'} = 1;
+  $ENV{CACHE_TAGS}{'AJAX'}    = 1;
+  $ENV{CACHE_TAGS}{$ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL . $ENV{'REQUEST_URI'}} = 1;
+
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
   ## If user logged in, some content depends on user
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
@@ -354,7 +360,7 @@ sub stuff {
       );
   }
 
-  my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
+  my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}, keys %{$ENV{CACHE_TAGS}}) : undef;
 
   if ($content) {
     warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}"
@@ -457,15 +463,10 @@ sub stuff {
 
     $content = $webpage->page->renderer->content;
 
-    my @tags = (
-      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL . $ENV{'REQUEST_URI'},
-      'DYNAMIC'
-    );
-    push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
-    $MEMD->set($ENV{CACHE_KEY}, $content, 60*60*24*7, @tags)
-      if $MEMD &&
-         !$webpage->has_a_problem &&
-         $webpage->format eq 'HTML';
+    $MEMD->set($ENV{CACHE_KEY}, $content, 60*60*24*7, keys %{$ENV{CACHE_TAGS}})
+      if $MEMD
+        && !$webpage->has_a_problem
+        &&  $webpage->format eq 'HTML';
   }
   
   print $content;

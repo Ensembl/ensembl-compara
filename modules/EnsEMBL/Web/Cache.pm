@@ -129,18 +129,45 @@ sub set {
     unless 'EnsEMBL::Web::File::Driver::Memcached' eq caller;
   
   my $result = $self->SUPER::set($key, $value, $exptime || $self->{default_exptime});
-  $self->add_tags($key, $self->{namespace}, @tags);
-  
+
+  $self->add_tags($key, $self->{namespace}, @tags)
+    if $result;
+    
   return $result;
 }
 
 sub get {
   my $self = shift;
   my $key  = shift;
+  my @tags = @_;
 
   _warn("MEMCACHED->get($key)");
   
-  return $self->SUPER::get($key);
+  my $result = $self->SUPER::get($key);
+
+  ## Hits & Misses statistics
+  ## TODO: make config option for it
+  if (@tags) {
+    my $suffix = $result ? '::HITS' : '::MISSES';
+    $self->incr("$_$suffix") for ($self->{namespace}, @tags);
+  }
+
+  return $result;
+}
+
+sub incr {
+  my $self = shift;
+  my $key  = shift;
+
+  warn("MEMCACHED->incr($key)");
+
+  my $res = $self->SUPER::incr($key);
+  warn "incr: $res";
+  $self->set($key, 1, undef, 'STATS')
+    unless $res;
+  
+#  $self->set($key, 0, undef, 'STATS')
+#    unless $self->SUPER::incr($key);
 }
 
 sub delete {
