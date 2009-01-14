@@ -37,7 +37,7 @@ use base qw( EnsEMBL::Web::Document::Renderer::CellFormat );
         $c_hashref->{$hex} = undef;
       }
     }
-    warn "HEX> $hex - $c_hashref->{$hex}";
+
     return $c_hashref->{$hex};
   }
 }
