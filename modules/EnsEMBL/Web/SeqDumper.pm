@@ -47,7 +47,9 @@ sub dump {
     $self->$dump_handler($slice, $panel);
   }
   
-  return $self->{'string'}
+  $self->{'string'} =~ s/\n/\r\n/g;
+  
+  return $self->{'string'};
 }
 
 1;
