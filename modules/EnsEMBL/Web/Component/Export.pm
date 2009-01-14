@@ -65,17 +65,17 @@ sub fasta {
     foreach (sort keys %$params) {
       next unless ref $output->{$_} eq 'ARRAY';
       
-      $output->{$_}->[1] =~ s/(.{60})/$1\n/g;
+      $output->{$_}->[1] =~ s/(.{60})/$1\r\n/g;
       
-      $html .= ">$output->{$_}->[0]\n$output->{$_}->[1]\n";
+      $html .= ">$output->{$_}->[0]\n$output->{$_}->[1]\r\n";
     }
   }
   
   if ($params->{'genomic'}) {
     my $seq = $slice->seq;
-    $seq =~ s/(.{60})/$1\n/g;
+    $seq =~ s/(.{60})/$1\r\n/g;
     
-    $html .= ">@{[$object->seq_region_name]} dna:@{[$object->seq_region_type]} @{[$slice->name]}\n$seq\n";
+    $html .= ">@{[$object->seq_region_name]} dna:@{[$object->seq_region_type]} @{[$slice->name]}\r\n$seq\r\n";
   }
   
   return $html;
@@ -100,7 +100,7 @@ sub features {
   
   my @features = ();
   
-  my $header = join ($delim->{$format}, @common_fields, @other_fields) . "\n" if ($format ne 'gff');
+  my $header = join ($delim->{$format}, @common_fields, @other_fields) . "\r\n" if ($format ne 'gff');
   
   if ($params->{'similarity'}) {
     foreach (@{$slice->get_all_SimilarityFeatures}) {
@@ -201,7 +201,7 @@ sub feature {
     push (@results, map { $extra->{$_} } @{$options->{'other'}});
   }
   
-  return join ($options->{'delim'}, @results) . "\n";
+  return join ($options->{'delim'}, @results) . "\r\n";
 }
 
 sub cytoview {
@@ -257,7 +257,7 @@ sub cytoview {
       
       $header = "<h2>Features in set $header_keys->{$misc_set}$header</h2>";
     } else {
-      $header = join ($options->{'delim'}, @fields) . "\n";
+      $header = join ($options->{'delim'}, @fields) . "\r\n";
     }
     
     if ($seq_region) {
@@ -284,7 +284,7 @@ sub cytoview {
         if ($table_format) {
           $table->add_row($row);
         } else {
-          $results .= join ($options->{'delim'}, @$row) . "\n";
+          $results .= join ($options->{'delim'}, @$row) . "\r\n";
         }
         
         $i++;
@@ -305,7 +305,7 @@ sub cytoview {
       
       $header = "<h2>Genes in Chromosome $seq_region $start - $end</h2>";
     } else {
-      $header = join ($options->{'delim'}, @gene_fields) . "\n";
+      $header = join ($options->{'delim'}, @gene_fields) . "\r\n";
     }
     
     $i = 0;
@@ -323,7 +323,7 @@ sub cytoview {
       if ($table_format) {
         $table->add_row($row);
       } else {
-        $results .= join ($options->{'delim'}, @$row) . "\n";
+        $results .= join ($options->{'delim'}, @$row) . "\r\n";
       }
       
       $i++;
@@ -332,7 +332,7 @@ sub cytoview {
     $html .= $header . ($table_format ? $table->render : $results) if $i;
   }
   
-  return "$html\n";
+  return "$html\r\n";
 }
 
 sub flat {
