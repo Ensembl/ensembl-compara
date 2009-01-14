@@ -618,6 +618,29 @@ CREATE TABLE conservation_score (
   KEY (genomic_align_block_id, window_size)
 ) MAX_ROWS = 15000000 AVG_ROW_LENGTH = 841 COLLATE=latin1_swedish_ci;
 
+#
+# Table structure for table 'constrained_element'
+#
+
+CREATE TABLE constrained_element (
+  constrained_element_id bigint(20) unsigned NOT NULL,
+  dnafrag_id int(12) unsigned NOT NULL,
+  dnafrag_start int(12) unsigned NOT NULL,
+  dnafrag_end int(12) unsigned NOT NULL,
+  method_link_species_set_id int(10) unsigned NOT NULL,
+  p_value mediumtext,
+  taxonomic_level mediumtext,
+  score double NOT NULL default '0',
+
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+
+  KEY constrained_element_id_idx (constrained_element_id),
+  KEY mlssid_idx (method_link_species_set_id),
+  KEY mlssid_dfId_dfStart_dfEnd_idx (method_link_species_set_id,dnafrag_id,dnafrag_start,dnafrag_end),
+  KEY mlssid_dfId_idx (method_link_species_set_id,dnafrag_id)
+) COLLATE=latin1_swedish_ci;
+
 ------------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_node'
