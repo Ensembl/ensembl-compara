@@ -146,6 +146,7 @@ use Class::Std;
     my $format = shift;
     my $worksheet = $self->get_workbook->sheets($self->get_sheet);
     return unless $worksheet;
+    $worksheet->write($row, $col, $text, $format->evaluate);
   }
 }
 
