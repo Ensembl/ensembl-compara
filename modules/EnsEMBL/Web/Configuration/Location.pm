@@ -433,34 +433,40 @@ sub _ajax_zmenu_synteny {
   return;
 }
 
-
 sub _ajax_zmenu_region {
   my $self = shift;
   my $panel= shift;
-  my $obj  = shift; 
+  my $obj  = shift;
+  my $threshold   = 1000100 * ($obj->species_defs->ENSEMBL_GENOME_SIZE||1);
   my $action     = $obj->[1]{'_action'};
   my $slice_name = $obj->param('region_n');
   my $db_adaptor = $obj->database('core');
   my $sa         = $db_adaptor->get_SliceAdaptor();
   my $slice      = $sa->fetch_by_region('seqlevel',$slice_name);
   my $slice_type = $slice->coord_system_name;
+  my $top_level_proj  = $slice->project('toplevel');
+  my $top_level_slice = $top_level_proj->[0]->to_Slice;
+  my $top_level_name  = $top_level_slice->seq_region_name;
+  my $top_level_start = $top_level_slice->start;
+  my $top_level_end   = $top_level_slice->end;
+  my $new_r = "$top_level_name:$top_level_start-$top_level_end";
   my $priority = 200;
   $panel->{'caption'} = $slice_name;
-  my $url = $obj->_url({'type' => 'Location', 'action' => $action, 'region' => $slice_name});
+  my $url = $obj->_url({'type'=>'Location','action'=>$action,'region'=>$slice_name,});
   $priority--;
   $panel->add_entry({
-    'type' => "Center on $slice_type",
-    'label' => $slice_name,
-    'link'  => $url,
+    'label'     => "View $slice_type $slice_name",
+    'link'     => $url,
     'priority' => $priority,
   });
-  my $export_URL = $obj->_url({'type' => 'Location', 'action' => 'Export', 'region' => $slice_name});
+#  my $referer = $obj->_url({'type'=>'Location','action'=>"$action",'r'=>undef,'region'=>$slice_name}); # doesn't seem to be needed
+  my $export_URL = $obj->_url({'type'=>'Export','action'=>"Location/$action",'r'=>$new_r});
   $priority--;
   $panel->add_entry({
-    'type'    => "Export $slice_type",
-    'label'   => 'Export',
+    'label'    => "Export $slice_type sequence",
     'link'    => $export_URL,
     'priority'=> $priority,
+    'class'   => 'modal_link',
   });
   foreach my $cs (@{$db_adaptor->get_CoordSystemAdaptor->fetch_all() || []}) {
     $priority--;
@@ -470,24 +476,38 @@ sub _ajax_zmenu_region {
     eval { $path = $slice->project($cs->name); };
     next unless $path;
     next unless(@$path == 1);
-    my $new_slice = $path->[0]->to_Slice;
-    my $new_slice_type = $new_slice->coord_system_name;
-    my $new_slice_name = $new_slice->seq_region_name;
-    my $new_slice_URL = $obj->_url({'type' => 'Location', 'action' => $action, 'region' => $new_slice_name});
+
+    #would be nice if exportview could work with the region parameter, either in the referer or in the real URL
+    #since it doesn't we have to calculate the locations of all regions on top level and explicitly pass these to exportview
+    my $new_slice = $path->[0]->to_Slice->seq_region_Slice;
+    my $new_slice_type = $new_slice->coord_system_name();
+    my $new_slice_name = $new_slice->seq_region_name();
+    my $new_slice_length = $new_slice->seq_region_length();
+
+    $top_level_proj  = $new_slice->project('chromosome');
+    $top_level_slice = $top_level_proj->[0]->to_Slice;
+    $top_level_name  = $top_level_slice->seq_region_name;
+    $top_level_start = $top_level_slice->start;
+    $top_level_end = $top_level_slice->end;
+    $new_r = "$top_level_name:$top_level_start-$top_level_end";
+
+    $action = $new_slice_length > $threshold ? 'Overview' : 'View';
+    my $new_slice_URL = $obj->_url({'type'=>'Location','action'=>$action,'region'=>$new_slice_name});
     $priority--;
     $panel->add_entry({
-      'type'    => "Center on $new_slice_type",
-      'label'   => $new_slice_name,
+      'label'    => "View $new_slice_type $new_slice_name",
       'link'    => $new_slice_URL,
       'priority'=> $priority,
     });
-    my $export_URL = $obj->_url({'type' => 'Location', 'action' => 'Export', 'region' => $new_slice_name});
+#    $referer = $obj->_url({'type'=>'Location','action'=>"$action",'r'=>undef,'region'=>$new_slice_name});
+    $export_URL = $obj->_url({'type'=>'Export','action' =>"Location/$action",'r'=>$new_r});
+
     $priority--;
     $panel->add_entry({
-      'type'    => "Export $new_slice_type",
-      'label'   => 'Export',
+      'label'    => "Export $new_slice_type sequence",
       'link'    => $export_URL,
       'priority'=> $priority,
+      'class'   => 'modal_link',
     });
     if ($cs->name eq 'clone') {
       (my $short_name = $new_slice_name) =~ s/\.\d+$//;
@@ -708,9 +728,9 @@ sub _ajax_zmenu_alignment {
   my $self = shift;
   my $panel = shift;
   my $obj  = shift;
-  my $id = $obj->param('id');
+  my $id        = $obj->param('id');
   my $obj_type  = $obj->param('ftype');
-  my $db     = $obj->param('db')  || 'core';
+  my $db        = $obj->param('db')  || 'core';
   my $db_adaptor = $obj->database(lc($db));
   my $adaptor_name = "get_${obj_type}Adaptor";
   my $feat_adap =  $db_adaptor->$adaptor_name;
@@ -731,6 +751,7 @@ sub _ajax_zmenu_alignment {
 
   #different zmenu for oligofeatures
   if ($obj_type eq 'OligoFeature') {
+    my $array_name = $obj->param('array') || '';
     $panel->{'caption'} = "Probe set: $id";
     my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
     my $p = 50;
@@ -739,23 +760,23 @@ sub _ajax_zmenu_alignment {
       'link'   => $fv_url,
       'priority' => $p,
     });
-    #details of each probe within the probe set
+
+    #details of each probe within the probe set on the array that are found within the slice
+    my ($r_name,$r_start,$r_end) = $obj->param('r') =~ /(\w+):(\d+)-(\d+)/;
     my %probes;
     foreach my $of (@$fs){
       my $op = $of->probe;
-      foreach my $array (@{$op->get_all_Arrays()}) {
-	my $of_name    = $of->probe->get_probename($array->name);
-	my $of_sr_name = $of->seq_region_name;
-	my $of_start   = $of->seq_region_start;
-	my $of_end     = $of->seq_region_end;
-	my $loc = $of_sr_name.':'.$of_start.'-'.$of_end;
-	$probes{$of_name}{'chr'}   = $of_sr_name;
-	$probes{$of_name}{'start'} = $of_start;
-	$probes{$of_name}{'end'}   = $of_end;
-	$probes{$of_name}{'loc'}   = $loc;
-	$probes{$of_name}{'array'} = $array->name;
-	
-      }
+      my $of_name    = $of->probe->get_probename($array_name);
+      my $of_sr_name = $of->seq_region_name;
+      next if ("$of_sr_name" ne "$r_name");
+      my $of_start   = $of->seq_region_start;
+      my $of_end     = $of->seq_region_end;
+      next if ( ($of_start > $r_end) || ($of_end < $r_start));
+      my $loc = $of_start.'bp-'.$of_end.'bp';
+      $probes{$of_name}{'chr'}   = $of_sr_name;
+      $probes{$of_name}{'start'} = $of_start;
+      $probes{$of_name}{'end'}   = $of_end;
+      $probes{$of_name}{'loc'}   = $loc;
     }
     foreach my $probe (sort {
       $probes{$a}->{'chr'}   <=> $probes{$b}->{'chr'}
