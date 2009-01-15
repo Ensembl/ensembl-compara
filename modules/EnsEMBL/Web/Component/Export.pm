@@ -78,7 +78,7 @@ sub fasta {
     $html .= ">@{[$object->seq_region_name]} dna:@{[$object->seq_region_type]} @{[$slice->name]}\r\n$seq\r\n";
   }
   
-  return $html;
+  return "<pre>$html</pre>";
 }
 
 sub features {
@@ -357,7 +357,7 @@ sub flat {
     $seq_dumper->attach_database('estgene', $estgene_db);
   }
   
-  return $seq_dumper->dump($slice, $format);
+  return "<pre>" . $seq_dumper->dump($slice, $format) . "</pre>";
 }
 
 sub ld_dump {
