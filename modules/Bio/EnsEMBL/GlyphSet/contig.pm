@@ -179,22 +179,20 @@ sub _init_non_assembled_contig {
     my $rend   = $tile->{'end'};
     my $rstart = $tile->{'start'};
 
-
 # AlignSlice segments can be on different strands - hence need to check if start & end need a swap
 
     ($rstart, $rend) = ($rend, $rstart) if $rstart > $rend ;
     my $rid    = $tile->{'name'};
-    
     $rstart = 1 if $rstart < 1;
     $rend   = $length if $rend > $length;
 
-      #if this is a haplotype contig then need a different pair of colours for the contigs
+    #if this is a haplotype contig then need a different pair of colours for the contigs
     my $i = 0;
     if( exists($tile->{'haplotype_contig'}) ) {
       $i = $tile->{'haplotype_contig'} ? 1 : 0;
     }
 
-    my $action = $ENV{'ENSEMBL_ACTION'};
+    my $action = 'View';#$ENV{'ENSEMBL_ACTION'};
     my $region = $tile->{'name'};
     my $dets = {
       'x'         => $rstart - 1,
@@ -205,72 +203,42 @@ sub _init_non_assembled_contig {
       'absolutey' => 1,
     };
     if ($show_navigation) {
-	my $url = $self->_url({
-	    'type'=>'Location',
-	    'action'=>$action,
-	    'region_n'=>$region,
-	    'r'=>undef,
-	});
-	$dets->{'href'} = $url;
+      my $url = $self->_url({
+	'type'     => 'Location',
+	'action'   => $action,
+	'region_n' => $region,
+	'r'        => undef,
+      });
+      $dets->{'href'} = $url;
     }
     my $glyph = $self->Rect($dets);
 
     push @{$colours[$i]}, shift @{@colours[$i]};
-    my $caption = 'contigview';
     my $label = $tile->{'name'};
-    my $script;
-    foreach( qw(chunk supercontig scaffold clone contig) ) {
-      if( my $Q = $tile->{'locations'}->{$_} ) {
-        if($show_href eq 'on') {
-          $glyph->{'href'} = qq(/@{[$self->{container}{web_species}]}/$script?ch=$ch;region=$Q->[0]);
-        }
-        $label = $Q->[0];
-      }
-    }
-    if($show_navigation) {
-      $glyph->{'zmenu'} = {
-        'caption' => $rid,
-      };
-      my $POS = 10;
-      foreach( qw( contig clone supercontig scaffold chunk) ) {
-        if( my $Q = $tile->{'locations'}->{$_} ) {
-          my $name =$Q->[0];
-          my $full_name = $name;
-          $name =~ s/\.\d+$// if $_ eq 'clone';
-          $label ||= $tile->{'locations'}->{$_}->[0];
-          my $species_sr7= $self->species_defs->SPECIES_COMMON_NAME;
-          if($species_sr7 eq 'Zebrafish'){
-            if($label=~/(.+\.\d+)\.\d+\.\d+/){
-              $label= $1;
-            }
-          }
-          (my $T=ucfirst($_))=~s/contig/Contig/g;
-          $glyph->{'zmenu'}{"$POS:$T $name"} ='' unless $_ eq 'contig';
-          $POS++;
+
+##This section will be usefull when we come to put vega on new web code, when the
+##time comes put it in vega plugin and remove from here
+#          my $species_sr7= $self->species_defs->SPECIES_COMMON_NAME;
+#          if($species_sr7 eq 'Zebrafish'){
+#            if($label=~/(.+\.\d+)\.\d+\.\d+/){
+#              $label= $1;
+#            }
+#          }
+#          (my $T=ucfirst($_))=~s/contig/Contig/g;
 #add links to Ensembl and FPC (vega danio)
-          if( /clone/) {
-            my $ens_URL = $self->ID_URL('EGB_ENSEMBL', $name);
-            $glyph->{'zmenu'}{"$POS:View in Ensembl"} = $ens_URL if $ens_URL;
-            $POS++;
-            my $internal_clone_name = $tile->{'internal_name'};
-            my $fpc_URL = $self->ID_URL('FPC',$internal_clone_name); 
-            $glyph->{'zmenu'}{"$POS:View in WebFPC"} = $fpc_URL if $fpc_URL && $internal_clone_name;
-            $POS++;
-          }
-          $glyph->{'zmenu'}{"$POS:EMBL source (this version)"} = $self->ID_URL( 'EMBL', $full_name) if /clone/;    
-          $POS++;
-          $glyph->{'zmenu'}{"$POS:EMBL source (latest version)"} = $self->ID_URL( 'EMBL', $name) if /clone/;    
-          $POS++;
-          $glyph->{'zmenu'}{"$POS:$caption $T"} = qq(/@{[$self->{container}{web_species}]}/$script?ch=$ch;region=$name);
-          $POS++;
-          $glyph->{'zmenu'}{"$POS:Export this $T"} = qq(/@{[$self->{container}{web_species}]}/exportview?action=select;option=fasta;type1=region;anchor1=$name);
-          $POS++;
-        }
-      }
-    }
+#          if( /clone/) {
+#            my $ens_URL = $self->ID_URL('EGB_ENSEMBL', $name);
+#            $glyph->{'zmenu'}{"$POS:View in Ensembl"} = $ens_URL if $ens_URL;
+#            $POS++;
+#            my $internal_clone_name = $tile->{'internal_name'};
+#            my $fpc_URL = $self->ID_URL('FPC',$internal_clone_name); 
+#            $glyph->{'zmenu'}{"$POS:View in WebFPC"} = $fpc_URL if $fpc_URL && $internal_clone_name;
+#            $POS++;
+#          }
+
     $self->push($glyph);
 
-    if( $h ) { 
+    if( $h ) {
       my @res = $self->get_text_width(
         ($rend-$rstart)*$pix_per_bp,
         $strand > 0 ? "$label >" : "< $label",
@@ -292,7 +260,7 @@ sub _init_non_assembled_contig {
         }));
       }
     }
-  } 
+  }
 }
 
 
