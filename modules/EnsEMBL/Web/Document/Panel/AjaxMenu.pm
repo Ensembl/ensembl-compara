@@ -27,7 +27,8 @@ sub add_entry {
     'label_html' => $hashref->{'label_html'},
     'link'       => $hashref->{'link'}      || undef,
     'priority'   => $hashref->{'priority'}  || 100,
-    'extra'      => $hashref->{'extra'}     || {}
+    'class'      => $hashref->{'class'}     || '',
+    'extra'      => $hashref->{'extra'}     || {},
   };
 }
 
@@ -47,9 +48,10 @@ sub content {
 	$txt = $entry->{'link'};
       }
       else {
-	$txt = sprintf( '<a href="%s"%s>%s</a>',
+	$txt = sprintf( '<a href="%s"%s %s>%s</a>',
           escapeHTML($entry->{'link'}),
 	  $entry->{'extra'}{'external'} ? ' rel="external"' : '',
+	  $entry->{'class'} ? sprintf(' class="%s"',$entry->{'class'} ) : '',
 	  $txt
         );
       }
