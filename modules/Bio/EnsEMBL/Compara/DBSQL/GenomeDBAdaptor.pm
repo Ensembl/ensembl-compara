@@ -257,7 +257,7 @@ sub fetch_by_taxon_id {
 
   my $sth;
 
-  my $sql = "SELECT genome_db_id FROM genome_db WHERE taxon_id = ?";
+  my $sql = "SELECT genome_db_id FROM genome_db WHERE taxon_id = ? AND assembly_default = 1";
   $sth = $self->prepare($sql);
   $sth->execute($taxon_id);
 
