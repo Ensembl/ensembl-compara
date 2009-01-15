@@ -235,6 +235,41 @@ sub fetch_by_Slice {
   return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
+=head2 fetch_by_taxon_id
+
+  Arg [1]    : string $name
+  Arg [2]    : string $assembly
+  Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
+  Description: Retrieves a genome db using the NCBI taxon_id of the species.
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if GenomeDB of taxon_id $taxon_id cannot be found
+  Caller     : general
+  Status      : Stable
+
+=cut
+
+sub fetch_by_taxon_id {
+  my ($self, $taxon_id) = @_;
+
+  unless($taxon_id) {
+    throw('taxon_id argument is required');
+  }
+
+  my $sth;
+
+  my $sql = "SELECT genome_db_id FROM genome_db WHERE taxon_id = ?";
+  $sth = $self->prepare($sql);
+  $sth->execute($taxon_id);
+
+  my ($id) = $sth->fetchrow_array();
+
+  if (!defined $id) {
+    throw("No GenomeDB with this taxon_id [$taxon_id]");
+  }
+  $sth->finish;
+  return $self->fetch_by_dbID($id);
+}
+
 =head2 get_species_name_from_core_MetaContainer
 
   Arg [1]     : Bio::EnsEMBL::MetaContainer
