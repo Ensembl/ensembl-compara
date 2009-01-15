@@ -30,7 +30,8 @@ sub href {
     'action' => 'Genome',
     'db'     => $self->my_config('db'),
     'ftype'  => 'OligoFeature',
-    'id'     => $f->probeset
+    'id'     => $f->probeset,
+    'array'  => $self->my_config( 'caption' ),
   });
 }
 
