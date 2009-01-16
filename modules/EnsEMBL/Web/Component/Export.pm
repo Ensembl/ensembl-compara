@@ -28,6 +28,7 @@ sub export {
   
   my $params = {};
   map { $params->{$_} = 1 } $object->param('st');
+  map { $params->{'misc_set'}->{$_} = 1 } $object->param('miscset');
   
   my $outputs = {
     'fasta'   => sub { return fasta($object, $slice, $params, @inputs); },
@@ -78,7 +79,7 @@ sub fasta {
     $html .= ">@{[$object->seq_region_name]} dna:@{[$object->seq_region_type]} @{[$slice->name]}\r\n$seq\r\n";
   }
   
-  return "<pre>$html</pre>";
+  return $html;
 }
 
 sub features {
@@ -149,15 +150,34 @@ sub features {
     }
   }
   
-  if ($params->{'cytoview'}) {
-    $html = "<pre>$header$html</pre>" if $html; # Only add header and formatting if we have export data so far
+  $html = "<pre>$header$html</pre>" if $html;
+  
+  if ($params->{'misc_set'}) {    
+    my $misc_sets = $object->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'misc_feature'}{'sets'};
+    my $f = $object->param('_format');
+    my $table;
     
-    $html .= cytoview($object, $options);
+    $options->{'seq_region'} = $object->seq_region_name;
+    $options->{'start'} = $object->seq_region_start;
+    $options->{'end'} = $object->seq_region_end;
     
-    return $html;
-  } else {
-    return "<pre>$header$html</pre>";
+    foreach (sort { $misc_sets->{$a}->{'name'} cmp $misc_sets->{$b}->{'name'} } keys %{$params->{'misc_set'}}) {
+      my $tmp = { 
+        'misc_set' => $_, 
+        'name' => $misc_sets->{$_}->{'name'}
+      };
+      
+      $table = $f eq 'Text' ? undef : new EnsEMBL::Web::Document::SpreadSheet;
+      
+      $html .= misc_set($object, $slice, { %$options, %$tmp }, $table);
+    }
+    
+    $table = $f eq 'Text' ? undef : new EnsEMBL::Web::Document::SpreadSheet;
+    
+    $html .= misc_set_genes($object, $slice, $options, $table);
   }
+  
+  return $html || "No data available";
 }
 
 sub feature {
@@ -204,67 +224,30 @@ sub feature {
   return join ($options->{'delim'}, @results) . "\r\n";
 }
 
-sub cytoview {
-  my ($object, $options) = @_;
+sub misc_set {
+  my ($object, $slice, $options, $table) = @_;
   
-  my @fields = ( 'SeqRegion', 'Start', 'End', 'Name', 'Well name', 'Sanger', 'EMBL Acc', 'FISH', 'Centre', 'State' );  
+  my @fields = ( 'SeqRegion', 'Start', 'End', 'Name', 'Well name', 'Sanger', 'EMBL Acc', 'FISH', 'Centre', 'State' ); 
+  my $header = "<h2>Features in set $options->{'name'} in Chromosome $options->{'seq_region'} $options->{'start'} - $options->{'end'}</h2>"; 
   my $db = $object->database('core');
-  my $table_format = ($object->param('_format') eq 'HTML');
-  my $dump = $object->param('cytoview_dump');
-  my $misc_set = $object->param('cytoview_misc_set');
-  my $i = 0;
-  
-  my ($seq_region, $start, $end);
-  
-  if ($dump eq 'set') {
-    $seq_region = $object->seq_region_name;
-  } elsif ($dump eq 'slice') {
-    $seq_region = $object->seq_region_name;
-    $start = $object->seq_region_start;
-    $end = $object->seq_region_end;
-  }
-  
-  my $slice = $db->get_SliceAdaptor->fetch_by_region(undef, $seq_region, $start, $end) if $seq_region;
-  
   my @regions;
-  my $results;
-  my $html;
-  my $table;
   my $adaptor;
   my $row;
-  my $header;
-  
+  my $results;
+  my $i = 0;
+
   eval {
-    $adaptor = $db->get_MiscSetAdaptor->fetch_by_code($misc_set);
+    $adaptor = $db->get_MiscSetAdaptor->fetch_by_code($options->{'misc_set'});
   };
   
   if ($adaptor) {
-    if ($table_format) {
-      $table = new EnsEMBL::Web::Document::SpreadSheet;
+    if ($table) {
       $table->add_columns(map {{ 'title' => $_, 'align' => 'left' }} @fields);
-      
-      my $header_keys = {
-        tilepath => 'Tilepath',
-        cloneset_1mb => '1MB clone set',
-        cloneset_32k => '32k clone set',
-        cloneset_30k => '30k clone set'
-      };
-      
-      if ($seq_region) {
-        $header = "Chromosome $seq_region";
-        $header = $start ? " in $header $start - $end" : " on $header";
-      }
-      
-      $header = "<h2>Features in set $header_keys->{$misc_set}$header</h2>";
     } else {
-      $header = join ($options->{'delim'}, @fields) . "\r\n";
+      $header .= "\r\n" . join ($options->{'delim'}, @fields) . "\r\n";
     }
     
-    if ($seq_region) {
-      push (@regions, $slice);
-    } else {
-      push (@regions, $db->get_SliceAdaptor->fetch_by_region(undef, $_)) for (@{$object->species_defs->ENSEMBL_CHROMOSOMES});
-    }
+    push (@regions, $slice);
     
     foreach my $r (@regions) {
       foreach (sort { $a->start <=> $b->start } @{$db->get_MiscFeatureAdaptor->fetch_all_by_Slice_and_set_code($r, $adaptor->code)}) {
@@ -281,7 +264,7 @@ sub cytoview {
           $_->get_scalar_attribute('state')
         ];
         
-        if ($table_format) {
+        if ($table) {
           $table->add_row($row);
         } else {
           $results .= join ($options->{'delim'}, @$row) . "\r\n";
@@ -290,49 +273,46 @@ sub cytoview {
         $i++;
       }
     }
-    
-    $html .= $header . ($table_format ? $table->render : $results) if $i;
-  }  
-  
-  if ($start) {
-    my @gene_fields = ( 'SeqRegion', 'Start', 'End', 'Ensembl ID', 'DB', 'Name' );
-    
-    $results = '';
-    
-    if ($table_format) {
-      $table = new EnsEMBL::Web::Document::SpreadSheet;
-      $table->add_columns(map {{ 'title' => $_, 'align' => 'left' }} @gene_fields);
-      
-      $header = "<h2>Genes in Chromosome $seq_region $start - $end</h2>";
-    } else {
-      $header = join ($options->{'delim'}, @gene_fields) . "\r\n";
-    }
-    
-    $i = 0;
-    
-    foreach (sort { $a->seq_region_start <=> $b->seq_region_start } map { @{$slice->get_all_Genes($_)||[]} } qw( ensembl havana ensembl_havana_gene )) {
-      $row = [
-        $_->seq_region_name,
-        $_->seq_region_start,
-        $_->seq_region_end,
-        $_->stable_id,
-        $_->external_db || '-',
-        $_->external_name || '-novel-'
-      ];
-      
-      if ($table_format) {
-        $table->add_row($row);
-      } else {
-        $results .= join ($options->{'delim'}, @$row) . "\r\n";
-      }
-      
-      $i++;
-    }
-    
-    $html .= $header . ($table_format ? $table->render : $results) if $i;
   }
   
-  return "$html\r\n";
+  return $header . ($i ? ($table ? $table->render : $results) : "No data available\r\n") . ($table ? "<br /><br />" : "\r\n");
+}
+
+sub misc_set_genes {
+  my ($object, $slice, $options, $table) = @_;
+  
+  my @gene_fields = ( 'SeqRegion', 'Start', 'End', 'Ensembl ID', 'DB', 'Name' );
+  my $header = "<h2>Genes in Chromosome $options->{'seq_region'} $options->{'start'} - $options->{'end'}</h2>";
+  my $row;
+  my $results;
+  my $i = 0;
+  
+  if ($table) {
+    $table->add_columns(map {{ 'title' => $_, 'align' => 'left' }} @gene_fields);
+  } else {
+    $header .= "\r\n" . join ($options->{'delim'}, @gene_fields) . "\r\n";
+  }
+  
+  foreach (sort { $a->seq_region_start <=> $b->seq_region_start } map { @{$slice->get_all_Genes($_)||[]} } qw( ensembl havana ensembl_havana_gene )) {
+    $row = [
+      $_->seq_region_name,
+      $_->seq_region_start,
+      $_->seq_region_end,
+      $_->stable_id,
+      $_->external_db || '-',
+      $_->external_name || '-novel-'
+    ];
+    
+    if ($table) {
+      $table->add_row($row);
+    } else {
+      $results .= join ($options->{'delim'}, @$row) . "\r\n";
+    }
+    
+    $i++;
+  }
+  
+  return $header . ($i ? ($table ? $table->render : $results) : "No data available");
 }
 
 sub flat {
@@ -357,7 +337,7 @@ sub flat {
     $seq_dumper->attach_database('estgene', $estgene_db);
   }
   
-  return "<pre>" . $seq_dumper->dump($slice, $format) . "</pre>";
+  return $seq_dumper->dump($slice, $format);
 }
 
 sub ld_dump {
