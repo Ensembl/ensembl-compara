@@ -416,7 +416,7 @@ sub render {
   while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {
     my($start,$page_element) = ($1,$2);
     $self->print( $start );
-    eval{ $self->$page_element->render; };
+    eval{ $self->$page_element->render if $self->can($page_element); };
     $self->printf( '%s - %s', $page_element, $@ ) if $@;
   }
   $self->print( $X );
