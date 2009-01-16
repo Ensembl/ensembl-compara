@@ -47,6 +47,8 @@ sub handler {
   return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
   return DECLINED                if -d $r->filename;
 
+  $ENV{CACHE_TAGS}{'STATIC'}            = 1;
+  $ENV{CACHE_TAGS}{$ENV{'REQUEST_URI'}} = 1;
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
 
   ## User logged in, some content depends on user
@@ -55,7 +57,17 @@ sub handler {
   ## Ajax disabled
   $ENV{CACHE_KEY} .= '::NO_AJAX'  unless $ENSEMBL_WEB_REGISTRY->check_ajax;
   
-  my $pageContent = $MEMD ? $MEMD->get($ENV{CACHE_KEY}) : undef;
+  if (
+      $MEMD && 
+      ($r->headers_in->{'Cache-Control'} eq 'max-age=0' || $r->headers_in->{'Pragma'} eq 'no-cache')
+     ) {
+      $MEMD->delete_by_tags(
+        $ENV{'REQUEST_URI'},
+        $ENV{ENSEMBL_USER_ID} ? 'user['.$ENV{ENSEMBL_USER_ID}.']' : (),
+      );
+  }
+
+  my $pageContent = $MEMD ? $MEMD->get($ENV{CACHE_KEY}, keys %{$ENV{CACHE_TAGS}}) : undef;
     
   if ($pageContent) {
     warn "STATIC CONTENT CACHE HIT $ENV{CACHE_KEY}"
@@ -158,10 +170,7 @@ sub handler {
     $page->render;
     $pageContent = $renderer->value;
 
-    my @tags = ('STATIC' , $ENV{REQUEST_URI});
-    push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
-    $MEMD->set($ENV{CACHE_KEY}, $pageContent, $ENV{CACHE_TIMEOUT}, @tags) if $MEMD;
-
+    $MEMD->set($ENV{CACHE_KEY}, $pageContent, $ENV{CACHE_TIMEOUT}, keys %{$ENV{CACHE_TAGS}}) if $MEMD;
   }
 
   if($ENV{PERL_SEND_HEADER}) {
