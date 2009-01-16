@@ -33,8 +33,12 @@ sub configurator   { return $_[0]->_configurator;   }
 
 sub export_configurator {
   my $self = shift;
+  my $object = $self->object;
   
-  return $self->ld_export_configurator if $self->object->action eq 'LD';
+  return $self->ld_export_configurator if $object->action eq 'LD';
+  
+  my $misc_sets = $object->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'misc_feature'}{'sets'};
+  my @misc_set_params = map { [ "miscset_$_", $misc_sets->{$_}->{'name'} ] } keys %$misc_sets;
   
   my $options = {
     'strand_values' => [
@@ -47,36 +51,18 @@ sub export_configurator {
         'params' => [
           [ 'genomic', 'Genomic' ]
         ]
+      },
+      'features' => {
+        'params' => [
+          [ 'similarity', 'Similarity features' ],
+          [ 'repeat', 'Repeat features' ],
+          [ 'genscan', 'Prediction features (genscan)' ],
+          [ 'variation', 'Variation features' ],
+          [ 'gene', 'Gene Information' ],
+          @misc_set_params
+        ]
       }
-    },
-    'custom_fields' => [
-      [ 'add_fieldset', 'Options for CytoView' ],
-      [ 'add_form_element', {
-        'type'     => 'DropDown', 
-        'select'   => 'select',
-        'required' => 'yes',
-        'name'     => 'cytoview_misc_set',
-        'label'    => 'Select set of features to render',
-        'values'   => [
-          { value => 'tilepath', name => 'Tilepath' },
-          { value => 'cloneset_1mb', name => '1MB clone set' },
-          { value => 'cloneset_32k', name => '32k clone set' },
-          { value => 'cloneset_30k', name => '30k clone set' }
-        ]
-      }],
-      [ 'add_form_element', {
-        'type'     => 'DropDown', 
-        'select'   => 'select',
-        'required' => 'yes',
-        'name'     => 'cytoview_dump',
-        'label'    => 'Select type to export',
-        'values'   => [
-          { value => 'set', name => 'Features on this chromosome' },
-          { value => 'slice', name => 'Features in this region' },
-          { value => 'all', name => 'All features in set' }
-        ]
-      }]
-    ]
+    }
   };
   
   return $self->_export_configurator($options);
