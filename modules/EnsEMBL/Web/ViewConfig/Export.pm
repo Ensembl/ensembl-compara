@@ -15,9 +15,6 @@ sub init {
   $defaults{'output'} = 'fasta';
   $defaults{'strand'} = $ENV{'ENSEMBL_TYPE'} eq 'Location' ? 'forward' : 'feature';
   
-  $defaults{'cytoview_misc_set'} = 'tilepath';
-  $defaults{'cytoview_dump'} = 'set';
-  
   foreach (qw(flank5_display flank3_display)) {
     $defaults{$_} = 0;
   }
@@ -27,8 +24,12 @@ sub init {
   }
   
   foreach my $f(qw(csv gff tab)) {
-    foreach (qw(similarity repeat genscan variation gene cytoview)) {
+    foreach (qw(similarity repeat genscan variation gene)) {
       $defaults{$f . '_' . $_} = 'yes';
+    }
+    
+    foreach (keys %{$view_config->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'misc_feature'}{'sets'}}) {
+      $defaults{$f . '_miscset_' . $_} = 'yes';
     }
   }
   
