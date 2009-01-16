@@ -333,8 +333,6 @@ sub transHandler_no_species {
 sub transHandler_species {
   my( $r, $session_cookie, $species, $path_segments, $querystring, $file, $flag ) = @_;
 
-  warn Dumper($path_segments);
-
   my $redirect_if_different = 1;
   my $script = shift @$path_segments;
   my $action = '';
