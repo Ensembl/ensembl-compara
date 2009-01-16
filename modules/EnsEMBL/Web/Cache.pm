@@ -8,7 +8,7 @@ use strict;
 use Data::Dumper;
 use SiteDefs;
 use base 'Cache::Memcached';
-use fields qw(default_exptime flags);
+use fields qw(default_exptime flags hm_stats);
 
 no warnings;
 
@@ -48,6 +48,7 @@ sub new {
   my %args = (
     servers         => $memcached->{servers},
     debug           => $memcached->{debug},
+    hm_stats        => $memcached->{hm_stats},
     default_exptime => $memcached->{default_exptime},
     namespace       => $SiteDefs::ENSEMBL_BASE_URL,
     @,
@@ -59,7 +60,8 @@ sub new {
   $self->enable_compress(0) unless $args{enable_compress};
 
   $self->{default_exptime} = $default_exptime;
-  $self->{flags}          = \%flags;
+  $self->{flags}           = \%flags;
+  $self->{hm_stats}        = delete $args{hm_stats};
   
   return $self;
 }
@@ -146,8 +148,7 @@ sub get {
   my $result = $self->SUPER::get($key);
 
   ## Hits & Misses statistics
-  ## TODO: make config option for it
-  if (@tags) {
+  if ($self->{hm_stats} && @tags) {
     my $suffix = $result ? '::HITS' : '::MISSES';
     $self->incr("$_$suffix") for ($self->{namespace}, @tags);
   }
@@ -161,10 +162,8 @@ sub incr {
 
   warn("MEMCACHED->incr($key)");
 
-  my $res = $self->SUPER::incr($key);
-  warn "incr: $res";
   $self->set($key, 1, undef, 'STATS')
-    unless $res;
+    unless $self->SUPER::incr($key);
   
 #  $self->set($key, 0, undef, 'STATS')
 #    unless $self->SUPER::incr($key);
