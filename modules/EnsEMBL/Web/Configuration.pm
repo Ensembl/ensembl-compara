@@ -399,8 +399,7 @@ sub _export_configurator {
         [ 'repeat', 'Repeat features' ],
         [ 'genscan', 'Prediction features (genscan)' ],
         [ 'variation', 'Variation features' ],
-        [ 'gene', 'Gene Information' ],
-        [ 'cytoview', 'CytoView', $options->{'cytoview'} ]
+        [ 'gene', 'Gene Information' ]
       ]
     },
     'flat' => {
@@ -508,11 +507,9 @@ sub _export_configurator {
     
     foreach (@{$config->{$key}->{'params'}}) {      
       if ($object->param("${output}_$_->[0]") eq 'yes') {
-        $href .= ";st=$_->[0]";
+        $_->[0] =~ s/(miscset_)//;
         
-        if ($_->[0] eq 'cytoview') {
-            $href .= ";cytoview_$_=" . $object->param("cytoview_$_") for ('dump', 'misc_set');
-        }
+        $href .= $1 ? ";miscset=$_->[0]" : ";st=$_->[0]";
       }
     }
     
