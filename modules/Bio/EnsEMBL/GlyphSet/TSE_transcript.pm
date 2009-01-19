@@ -8,30 +8,30 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
 use Data::Dumper;
 
 sub _init {
-    my ($self) = @_;
-    my $wuc  = $self->{'config'};
-    my $h       = 8;   #Increasing this increases glyph height
+  my ($self) = @_;
+  my $wuc  = $self->{'config'};
+  my $h       = 8;   #Increasing this increases glyph height
 
-    my $pix_per_bp  = $wuc->transform->{'scalex'};
-    my $length      = $wuc->container_width();
+  my $pix_per_bp  = $wuc->transform->{'scalex'};
+  my $length      = $wuc->container_width();
 
-    my $trans_obj    = $self->cache('trans_object');
-    my $coding_start = $trans_obj->{'coding_start'};
-    my $coding_end   = $trans_obj->{'coding_end'  };
+  my $trans_obj    = $self->cache('trans_object');
+  my $coding_start = $trans_obj->{'coding_start'};
+  my $coding_end   = $trans_obj->{'coding_end'  };
 
-    #need both gene and transcript to get the colour
-    my $transcript   = $trans_obj->{'transcript'};
-    my $gene         = $trans_obj->{'web_transcript'}->core_objects->gene;
-    my $colour_key   = $self->transcript_key($transcript,$gene);
-    my $colour       = $self->my_colour($colour_key);
+  #need both gene and transcript to get the colour
+  my $transcript   = $trans_obj->{'transcript'};
+  my $gene         = $trans_obj->{'web_transcript'}->core_objects->gene;
+  my $colour_key   = $self->transcript_key($transcript,$gene);
+  my $colour       = $self->my_colour($colour_key);
 
-    my $strand       = $transcript->strand;
-    my $tsi          = $transcript->stable_id;
+  my $strand       = $transcript->strand;
+  my $tsi          = $transcript->stable_id;
 
-    my @introns_and_exons = @{$trans_obj->{'introns_and_exons'}};
+  my @introns_and_exons = @{$trans_obj->{'introns_and_exons'}};
 
-    my $tags;
-    foreach my $obj (@introns_and_exons) {
+  my $tags;
+  foreach my $obj (@introns_and_exons) {
 	#if we're working with an exon then draw a box
 	if ( $obj->[2] ) {
 	    my $exon_start = $obj->[0];
