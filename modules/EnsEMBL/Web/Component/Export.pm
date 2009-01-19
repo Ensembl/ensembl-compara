@@ -28,7 +28,7 @@ sub export {
   
   my $params = {};
   map { $params->{$_} = 1 } $object->param('st');
-  map { $params->{'misc_set'}->{$_} = 1 } $object->param('miscset');
+  map { $params->{'misc_set'}->{$_} = 1 if $_ } $object->param('miscset');
   
   my $outputs = {
     'fasta'   => sub { return fasta($object, $slice, $params, @inputs); },
