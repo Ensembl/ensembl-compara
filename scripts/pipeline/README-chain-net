@@ -59,13 +59,13 @@ The following script is in ensembl-compara/scripts/pipeline (should be in your P
 
 loadChainNetSystem.pl -conf hive.conf
 
-The loadPairAlignerSystem script creates the analysis entries for the processing
+The loadChainNetSystem script creates the analysis entries for the processing
 system, and creates both the dataflow rule and the analysis control rules.
 It also initializes the analysis_stats row for each analysis.  These row hold
 information like batch_size, hive_capacity, and run-time stats that the Hive's
 Queen will update.
 
-These scripts may give you warnings if the output directories are not available or if
+This script may give you warnings if the output directories are not available or if
 it's unable to connect to core databases.
 
 At this point the system is ready to run
