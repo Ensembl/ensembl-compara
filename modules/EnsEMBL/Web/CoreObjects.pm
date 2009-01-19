@@ -53,7 +53,7 @@ sub transcript {
 }
 
 sub transcript_short_caption {
-  my $self = shift;
+  my $self = shift;  
   return '-' unless $self->transcript;
   return ucfirst($self->transcript->type).': '.$self->transcript->stable_id if $self->transcript->isa('EnsEMBL::Web::Fake');
   my $dxr = $self->transcript->can('display_xref') ? $self->transcript->display_xref : undef;
@@ -160,7 +160,7 @@ sub _generate_objects_lw {
 }
 
 sub _generate_objects_Location {
-  my $self = shift;
+  my $self = shift; ;
   my($r,$s,$e) = $self->{'parameters'}{'r'} =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
   my $db_adaptor= $self->database('core');
   my $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
@@ -175,7 +175,7 @@ sub _generate_objects_Location {
 
 sub _generate_objects_Transcript {
   my $self = shift;
-  $self->{'parameters'}{'db'} ||= 'core';
+  $self->{'parameters'}{'db'} ||= 'core'; 
   my $db_adaptor = $self->database($self->{'parameters'}{'db'});
   if( $self->{'parameters'}{'t'} ) {
     my $t = $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->{'parameters'}{'t'} );
@@ -254,6 +254,26 @@ sub _generate_objects {
       $self->location( $slice );
     }
     }
+  }
+  if ($self->param('protein') ) {
+    my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
+    my $tdb_adaptor = $self->database($tdb);
+    if( $tdb_adaptor ) { 
+    my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
+    return unless $a;
+
+    my $p = $a->fetch_by_stable_id($self->param('protein') );
+    my $archive_t = shift @{$p->get_all_transcript_archive_ids};
+ 
+    my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $archive_t->stable_id);
+    if( $t ) {
+      $self->transcript( $t );
+      $self->_get_gene_location_from_transcript;
+    } else {
+      $t = $a->fetch_by_stable_id( $archive_t->stable_id );
+      $self->transcript( $t ) if $t;
+    }
+    }   
   }
   if( !$self->transcript &&  $self->param('domain') ) {
     my $tdb         = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
