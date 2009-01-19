@@ -126,15 +126,13 @@ sub get_assoc {
 sub _idhistoryview_link {
   my ($OBJ, $type, $param, $stable_id) = @_;
   return undef unless ($stable_id);
-
-  warn $param;  
+ 
   my $url = $OBJ->_url({'type' => $type, 'action' => 'Idhistory', $param => $stable_id});
   if ($param eq 'p') { $url = $OBJ->_url({'type' => $type, 'action' => 'Idhistory/Protein', $param => $stable_id}); }
   else {$url=~s/\/Protein//; } 
   my $link = sprintf( '<a href="%s">%s</a>',
   $url,
   $stable_id); ;
-  warn $link;
   return $link;                          
 }
 
