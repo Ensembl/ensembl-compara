@@ -1502,21 +1502,24 @@ sub ajax_zmenu_id_history_tree_label {
   my $obj = $self->object;
   my $id = $obj->param('label') || die( "No label  value in params" );
   my $type = ucfirst($obj->param('feat_type'));
-  my ($action, $p);
+  my ($action, $p, $url);
 
   if ($type eq 'Gene') {
       $p = 'g';
       $action = 'Idhistory';
+      $url = $obj->_url({'type' => $type, 'action' => $action, $p => $id, 't' => undef, 'protein' => undef, 'p' => undef, 'r' => undef });
     } elsif ($type eq 'Transcript'){
       $p = 't';
       $action = 'Idhistory';
+      $url = $obj->_url({'type' => $type, 'action' => $action, $p => $id, 'protein' => undef, 'p' => undef, 'g' => undef, 'r' => undef });
     } else {
       $type = 'Transcript';
-      $p = 'p';
+      $p = 'protein';
       $action = 'Idhistory/Protein';
+      $url = $obj->_url({'type' => $type, 'action' => $action, $p => $id, 't' => undef, 'g' => undef, 'r' => undef });
     }
 
-  my $url = $obj->_url({'type' => $type, 'action' => $action, $p => $id });
+  #Âmy $url = $obj->_url({'type' => $type, 'action' => $action, $p => $id });
 
   $panel->add_entry({
     'label_html'  => $id,
