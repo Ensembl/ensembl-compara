@@ -27,11 +27,12 @@ sub content {
   my $protein = shift; 
   my $OBJ = $self->object;  
   my $object;
- 
+  
+   
   if ($protein == 1){ 
     my $translation_object;
     if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId')){ 
-       my $protein = $self->object->param('p');
+       my $protein = $self->object->param('p') || $self->object->param('protein');
        my $db    = $self->{'parameters'}{'db'}  = $self->object->param('db')  || 'core';
        my $db_adaptor = $self->object->database($db);
        my $a = $db_adaptor->get_ArchiveStableIdAdaptor;
