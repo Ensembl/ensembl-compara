@@ -157,7 +157,7 @@ Now you can run the compara-compara_external_foreign_keys healthchecks:
   The LoadBLATAlignment.pl script creates tab-delimited files which can be
   imported directly into the release database.
 
-- BlastZ-Net, Pecan, Gerp
+- TRANSLATED_BLAT_NET, BlastZ-Net, Pecan, Gerp
 
   These data should be in a production database. You can copy them using the
   copy_data.pl script in ensembl-compara/scripts/pipeline. This script requires
