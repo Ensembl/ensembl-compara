@@ -30,7 +30,8 @@ sub features {
 ## Hacked url for prediction transcripts pt=xxx
 sub href {
   my ($self, $gene, $transcript) = @_;
-  return $self->_url({'type'=>'Transcript','action'=>'Summary','pt'=>$transcript->stable_id});
+  my $db_alias = $self->my_config('db');
+  return $self->_url({'type'=>'Transcript','action'=>'Summary','pt'=>$transcript->stable_id,'g'=>undef,'db'=>$db_alias});
 }
 
 1;
