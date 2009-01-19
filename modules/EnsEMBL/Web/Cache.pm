@@ -160,13 +160,10 @@ sub incr {
   my $self = shift;
   my $key  = shift;
 
-  warn("MEMCACHED->incr($key)");
+  _warn("MEMCACHED->incr($key)");
 
   $self->set($key, 1, undef, 'STATS')
     unless $self->SUPER::incr($key);
-  
-#  $self->set($key, 0, undef, 'STATS')
-#    unless $self->SUPER::incr($key);
 }
 
 sub delete {
