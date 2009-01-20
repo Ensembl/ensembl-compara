@@ -93,7 +93,6 @@ sub features {
   my $delim = { 'gff' => "\t", 'csv' => ",", 'tab' => "\t" };
   
   my $options = {
-    'common' => \@common_fields,
     'other'  => \@other_fields,
     'format' => $format,
     'delim'  => $delim->{$format}
