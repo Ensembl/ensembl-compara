@@ -121,27 +121,27 @@ sub count_supporting_evidence {
   my $type = $self->get_db;
   my $dbc = $self->database($type)->dbc;
   my %all_evidence;
-  if( $self->db_type ne 'Vega' ){
-    my $sql = qq(
+  my $sql = qq(
       SELECT feature_type, feature_id
         FROM transcript_supporting_feature
        WHERE transcript_id = ?);
-    my $sth = $dbc->prepare($sql);
-    $sth->execute($self->Obj->dbID);
-    while ( my ($type,$feature_id) = $sth->fetchrow_array ) {
-      $all_evidence{$type}{$feature_id}++;
-    }
+  my $sth = $dbc->prepare($sql);
+  $sth->execute($self->Obj->dbID);
+  while ( my ($type,$feature_id) = $sth->fetchrow_array ) {
+    $all_evidence{$type}{$feature_id}++;
   }
-  my $sql = qq(
+  if( $self->db_type ne 'Vega' ){
+    my $sql = qq(
     SELECT feature_type, feature_id
       FROM supporting_feature sf, exon_transcript et
      WHERE et.exon_id = sf.exon_id
        AND et.transcript_id = ?);
-  my $sth = $dbc->prepare($sql);
-  $sth->execute($self->Obj->dbID);
-  while (my ($type,$feature_id) = $sth->fetchrow_array) {
-    $all_evidence{$type}{$feature_id}++;
-  };
+    my $sth = $dbc->prepare($sql);
+    $sth->execute($self->Obj->dbID);
+    while (my ($type,$feature_id) = $sth->fetchrow_array) {
+      $all_evidence{$type}{$feature_id}++;
+    };
+  }
   my %names = (
     'dna_align_feature'     => 'dna_align_feature_id',
     'protein_align_feature' => 'protein_align_feature_id'
