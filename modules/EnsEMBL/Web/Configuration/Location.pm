@@ -111,7 +111,7 @@ sub ld_export_configurator {
       prefix => ''
     );
     
-    export_file({ genotype => $gen_file, locus => $locus_file }, $object, 'haploview');
+    EnsEMBL::Web::Component::Location::haploview_files({ genotype => $gen_file, locus => $locus_file }, $object);
     
     $gen_file->save;
     $locus_file->save;
@@ -136,7 +136,7 @@ sub ld_export_configurator {
   } elsif ($object->param('excel')) {
     my $excel_file  = new EnsEMBL::Web::TmpFile::Text(extension => 'xls', prefix => '');
 
-    export_file($excel_file, $object, 'ld_excel', $object->parent->{'params'});
+    EnsEMBL::Web::Component::Location::ld_dump($object, $excel_file, $object->parent->{'params'});
 
     $excel_file->save;
 
