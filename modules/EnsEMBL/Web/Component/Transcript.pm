@@ -96,7 +96,7 @@ sub genetic_variation {
   my $params;
   map { /opt_pop_(.+)/; $params->{$1} = 1 if $object->param($_) ne 'off' } grep { /opt_pop_/ } $object->param;
   
-  my @samples = get_samples($object, $params);
+  my @samples = $object->get_samples(undef, $params);
   
   my $snp_data = genetic_variation_values($object, \@samples);
   
@@ -158,38 +158,6 @@ sub genetic_variation {
   $html ||= "No data available";
   
   return $header . $html;
-}
-
-sub get_samples {
-  my ($object, $params) = @_;
-
-  my $vari_adaptor = $object->Obj->adaptor->db->get_db_adaptor('variation');
-  
-  if (!$vari_adaptor) {
-    warn "ERROR: Can't get variation adaptor";
-    return ();
-  }
-
-  my $individual_adaptor = $vari_adaptor->get_IndividualAdaptor;
-
-  my @pops;
-  
-  if ($object->param('strain')) {    
-    foreach my $sample ($object->param('strain')) {
-      next unless $sample =~ /(.*):(\w+)/;
-      
-      push @pops, $1 if $2 eq 'on';
-    }
-  } else {
-    my $configured_pops; 
-    map { $configured_pops->{$_} = 1 } (@{$individual_adaptor->get_default_strains}, @{$individual_adaptor->get_display_strains});
-    
-    foreach my $sample (sort keys %$params) {      
-      push @pops, $sample if $configured_pops->{$sample};
-    }
-  }
-  
-  return sort @pops;
 }
 
 sub genetic_variation_values {
