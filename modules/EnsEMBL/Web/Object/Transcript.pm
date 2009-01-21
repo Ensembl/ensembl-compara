@@ -706,7 +706,6 @@ sub ambig_code {
 
 
 sub get_samples {
-
   ### TSV
   ### Arg (optional) : type string
   ###  -"default": returns samples checked by default
@@ -716,8 +715,10 @@ sub get_samples {
 
   my $self    = shift;
   my $options = shift;
+  my $params  = shift;
 
   my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
+  
   unless ($vari_adaptor) {
     warn "ERROR: Can't get variation adaptor";
     return ();
@@ -726,41 +727,48 @@ sub get_samples {
   my $individual_adaptor = $vari_adaptor->get_IndividualAdaptor;
  
   if ($options eq 'default') {
-    return sort  @{$individual_adaptor->get_default_strains};
+    return sort @{$individual_adaptor->get_default_strains};
   }
 
   my %default_pops; 
   map {$default_pops{$_} = 1 } @{$individual_adaptor->get_default_strains};
+  
   my %db_pops;
-  foreach ( sort  @{$individual_adaptor->get_display_strains} ) {
+  
+  foreach (sort @{$individual_adaptor->get_display_strains}) {
     next if $default_pops{$_}; 
     $db_pops{$_} = 1;
   }
 
-  my $view_config = $self->get_viewconfig();
+  my %configured_pops = (%default_pops, %db_pops);
+
+  my $view_config = $self->get_viewconfig;
+  
+  my @pops;
+  
   if ($options eq 'display') { # return list of pops with default first
-    return (sort keys %default_pops), (sort keys %db_pops);
-  }
-  # This elsif allows a user to manually add in an optional strain. Use format strain=xxx:on
-  elsif ( $self->param('strain') ) { # only occurs when tweak URL
-    my @pops;
-    foreach my $sample ( $self->param('strain') ) {
+    return (sort keys %default_pops), (sort keys %db_pops); 
+  } elsif ($self->param('strain')) { # This elsif allows a user to manually add in an optional strain. Use format strain=xxx:on. Only occurs when tweak URL
+    foreach my $sample ($self->param('strain')) {
       next unless $sample =~ /(.*):(\w+)/;
+      
       $view_config->set("opt_pop_$1", $2, 1);
       push @pops, $1 if $2 eq 'on';
     }
-    return sort @pops;
-  }
-  else { #get configured samples 
-    my %configured_pops = (%default_pops, %db_pops);  
-    my @pops; 
+  } elsif ($params) {
+    foreach my $sample (sort keys %$params) {      
+      push @pops, $sample if $configured_pops{$sample};
+    }
+  } else { # get configured samples 
     foreach my $sample (sort $view_config->options) { 
       next unless $sample =~ s/opt_pop_//;  
       next unless $view_config->get("opt_pop_$sample") eq 'on'; 
+      
       push @pops, $sample if $configured_pops{$sample};
     }
-    return sort @pops;
   }
+  
+  return sort @pops;
 }
 
 
