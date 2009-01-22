@@ -5,10 +5,8 @@ use strict;
 use base qw(Exporter);
 our @EXPORT = our @EXPORT_OK = qw(export export_file);
 
-use POSIX qw(floor ceil);
 use EnsEMBL::Web::SeqDumper;
 use EnsEMBL::Web::Document::SpreadSheet;
-use EnsEMBL::Web::Document::Renderer::Excel;
 
 sub export {
   my $class = shift;
