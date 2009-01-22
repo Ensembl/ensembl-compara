@@ -208,6 +208,42 @@ sub delete_by_MethodLinkSpeciesSet {
   $sth->execute($mlss_obj->dbID);
 }
 
+
+=head2 fetch_by_dbID
+
+  Arg  1     : int constrained_element_ids
+  Example    : my $constrained_element = $constrained_element_adaptor->
+               fetch_by_dbID($constrained_element_id);
+  Description: Retrieve the corresponding constrained_element.
+  Returntype : Bio::EnsEMBL::Compara::ConstrainedElement object
+  Exceptions : -none-
+  Caller     : object::methodname
+
+=cut
+
+sub fetch_by_dbID {
+  my ($self, $constrained_element_id) = @_;
+  return ($self->fetch_all_by_dbIDs([$constrained_element_id]))->[0];
+}
+
+
+=head2 fetch_all_by_dbIDs
+
+ Arg  1     : listref of constrained_element_ids
+ Example    : my $listref_of_constrained_elements = $constrained_element_adaptor->fetch_all_by_dbIDs($list_ref_of_constrained_element_ids);
+ Description: Retrieve the corresponding constrained_elements from a given list of constrained_element_ids 
+ Returntype : listref of Bio::EnsEMBL::Compara::ConstrainedElement constrained_elements 
+ Exceptions : Returns empty listref if no matching entries are found in the database.
+ Caller     : object::methodname
+
+=cut
+
+sub fetch_all_by_dbIDs {
+  my ($self, $constrained_element_ids) = @_;
+  return $self->fetch_all_by_ConstrainedElementID($constrained_element_ids);
+}
+
+
 #=head2 fetch_all_by_MethodLinkSpeciesSet_Dnafrag
 #
 #  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet mlss_obj
@@ -329,7 +365,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 		throw("undefined Bio::EnsEMBL::Slice object");
 	}
 
-	my $dnafrag_adp = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "DnaFrag");
+	my $dnafrag_adp = $self->db->get_DnaFragAdaptor;
 	my $dnafrag = $dnafrag_adp->fetch_by_Slice($slice_obj);
 	my @constrained_elements;
 	
@@ -486,6 +522,7 @@ sub _fetch_all_ConstrainedElements {
 	}
 }	
 
+
 #=head2 fetch_all_by_ConstrainedElementID
 #
 #  Arg  1     : listref of constrained_element_ids
@@ -507,5 +544,7 @@ sub fetch_all_by_ConstrainedElementID {
 	$self->_fetch_all_ConstrainedElements_by_ConstrainedElementID($sql, \@constrained_elements, $constrained_element_ids);
 	return \@constrained_elements;
 }
+
+
 
 1;
