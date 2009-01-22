@@ -326,9 +326,15 @@ sub _ajax_zmenu_view {
     return $self->_ajax_zmenu_synteny($panel,$obj);
   } else {
     #otherwise simply show a link to View/Overview
-    my $r               = $obj->param('r');
+    my $r             = $obj->param('r');
+    my ($chr, $loc)   = split ':', $r;
+    my ($start,$stop) = split '-', $loc;
+    my $action        = $obj->[1]{'_action'} || 'View';
+    my $threshold     = 1000100 * ($obj->species_defs->ENSEMBL_GENOME_SIZE||1);
+
+    #go to Overview if region too large for View
+    $action = 'Overview' if ( ($stop-$start+1 > $threshold) && $action eq 'View') ;
     $panel->{'caption'} = $r;
-    my $action          = $obj->[1]{'_action'} || 'View';
     my $url             = $obj->_url({
 	'type' => 'Location',
 	'action' => $action});
