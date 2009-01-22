@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use POSIX qw(floor ceil);
+use POSIX qw(floor);
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
@@ -14,6 +14,8 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
+use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Document::Renderer::Excel;
 
 use base 'EnsEMBL::Web::Component';
 
