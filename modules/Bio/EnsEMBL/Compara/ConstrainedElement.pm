@@ -156,7 +156,8 @@ sub new {
 	$score, $p_value, $taxonomic_level, $method_link_species_set) = 
     rearrange([qw(
         ADAPTOR CONSTRAINED_ELEMENT_ID DNAFRAGS
-	METHOD_LINK_SPECIES_SET_ID SCORE P_VALUE TAXONOMIC_LEVEL
+  METHOD_LINK_SPECIES_SET_ID SCORE P_VALUE TAXONOMIC_LEVEL
+  SLICE START END
 	)],
             @args);
 
@@ -170,6 +171,9 @@ sub new {
   $self->p_value($p_value) if (defined ($p_value));
   $self->taxonomic_level($taxonomic_level)
       if (defined($taxonomic_level));
+  $self->slice($slice) if (defined ($slice));
+  $self->start($start) if (defined ($start));
+  $self->end($end) if (defined ($end));
   return $self;
 }
 
@@ -338,5 +342,75 @@ sub dnafrags {
 
   return $self->{'dnafrags'};
 }
+
+
+=head2 slice
+
+  Arg [1]    : Bio::EnsEMBL::Slice $slice
+  Example    : $slice = $constrained_element->slice;
+  Example    : $constrained_element->slice($slice);
+  Description: Getter/Setter for the attribute slice.
+  Returntype : Bio::EnsEMBL::Slice object
+  Exceptions : returns undef if no ref. slice
+  Caller     : object::methodname
+
+=cut
+
+sub slice {
+  my ($self, $slice) = @_;
+
+  if (defined($slice)) {
+    $self->{'slice'} = $slice;
+  } 
+
+  return $self->{'slice'};
+}
+
+=head2 start
+
+  Arg [1]    : (optional) int $start
+  Example    : $start = $constrained_element->start;
+  Example    : $constrained_element->start($start);
+  Description: Getter/Setter for the attribute start.
+  Returntype : int
+  Exceptions : returns undef if no ref. slice
+  Caller     : object::methodname
+
+=cut
+
+
+sub start {
+  my ($self, $start) = @_;
+
+  if (defined($start)) {
+    $self->{'start'} = $start;
+  }
+
+  return $self->{'start'};
+}
+
+=head2 end
+
+  Arg [1]    : (optional) int $end
+  Example    : $end = $constrained_element->end;
+  Example    : $constrained_element->start($end);
+  Description: Getter/Setter for the attribute end.
+  Returntype : int
+  Exceptions : returns undef if no ref. slice
+  Caller     : object::methodname
+
+=cut
+
+sub end {
+  my ($self, $end) = @_;
+
+  if (defined($end)) {
+    $self->{'end'} = $end;
+  }
+
+  return $self->{'end'};
+}
+
+
 
 1;
