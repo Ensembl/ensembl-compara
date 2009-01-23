@@ -9,7 +9,7 @@ use base qw(Bio::EnsEMBL::ExternalData::DAS::Source);
 use Time::HiRes qw(time);
 use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(%GENE_COORDS %PROT_COORDS);
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(%GENE_COORDS %PROT_COORDS is_genomic);
 
 # Create a new SourceConfig using a hash reference for parameters.
 # Can also use an existing Bio::EnsEMBL::ExternalData::DAS::Source or
@@ -257,7 +257,7 @@ sub _guess_views {
   
   for my $cs (@{ $self->coord_systems() }) {
     # assume genomic coordinate systems are always positional
-    if ( $cs->name =~ /^chromosome|clone|contig|scaffold|supercontig|toplevel$/ ) {
+    if ( is_genomic($cs) || $cs->name eq 'toplevel' ) {
       $positional = 1;
     }
     # assume gene coordinate systems are always non-positional
