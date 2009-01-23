@@ -30,15 +30,19 @@ sub _filename {
 sub availability {
   my $self = shift;
   my $hash = $self->_availability;
-  if( $self->Obj->isa('EnsEMBL::Web::Fake') ) {
+  if( $self->Obj->isa('EnsEMBL::Web::Fake') ) { ;
     $hash->{$self->Obj->type} = 1;
-  } elsif( $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ) {
+  } elsif( $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ) { 
     $hash->{'history'}    = 1;
+    my $trans_id = $self->param('p') || $self->param('protein'); 
+    my $trans = scalar @{$self->Obj->get_all_translation_archive_ids};
+    if ( $trans_id || $trans >= 1 ){ $hash->{'history_protein'} =1; }    
   } elsif( $self->Obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
     $hash->{'either'}     = 1;
   } else {
     my $rows = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'};
     $hash->{'history'}    = $rows ? 1 : 0;
+    $hash->{'history_protein'}    = $rows ? 1 : 0;
     $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
     $hash->{'either'}     = 1;
     $hash->{'transcript'} = 1;
