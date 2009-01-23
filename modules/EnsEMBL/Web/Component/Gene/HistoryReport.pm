@@ -25,18 +25,23 @@ sub content_protein {
 sub content {
   my $self = shift; 
   my $protein = shift; 
-  my $OBJ = $self->object;  
+  my $OBJ = $self->object;   
   my $object;
   
    
   if ($protein == 1){ 
     my $translation_object;
-    if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId')){ 
-       my $protein = $self->object->param('p') || $self->object->param('protein');
+    if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId')  ||  $OBJ->transcript->isa('EnsEMBL::Web::Fake') ){ 
+       my $p;
+       $p = $self->object->param('p') || $self->object->param('protein');       
+       unless ($p) {                                                                 
+         my $p_archive = shift @{$OBJ->transcript->get_all_translation_archive_ids};
+         $p = $p_archive->stable_id;
+       }
        my $db    = $self->{'parameters'}{'db'}  = $self->object->param('db')  || 'core';
        my $db_adaptor = $self->object->database($db);
        my $a = $db_adaptor->get_ArchiveStableIdAdaptor;
-       $object = $a->fetch_by_stable_id( $protein );
+       $object = $a->fetch_by_stable_id( $p );
     } else { 
        $translation_object = $OBJ->translation_object;
        $object = $translation_object->get_archive_object();
