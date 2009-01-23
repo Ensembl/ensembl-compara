@@ -4,6 +4,9 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use base qw(Exporter);
+our @EXPORT = our @EXPORT_OK = qw(haploview_files ld_dump);
+
 use POSIX qw(floor);
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;

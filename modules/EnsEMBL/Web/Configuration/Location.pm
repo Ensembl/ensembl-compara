@@ -6,6 +6,7 @@ use base qw( EnsEMBL::Web::Configuration );
 use CGI;
 
 use EnsEMBL::Web::Component::Export qw(export_file);
+use EnsEMBL::Web::Component::Location qw(haploview_files ld_dump);
 
 sub set_default_action {
   my $self = shift;
@@ -111,7 +112,7 @@ sub ld_export_configurator {
       prefix => ''
     );
     
-    EnsEMBL::Web::Component::Location::haploview_files({ genotype => $gen_file, locus => $locus_file }, $object);
+    haploview_files({ genotype => $gen_file, locus => $locus_file }, $object);
     
     $gen_file->save;
     $locus_file->save;
@@ -136,7 +137,7 @@ sub ld_export_configurator {
   } elsif ($object->param('excel')) {
     my $excel_file  = new EnsEMBL::Web::TmpFile::Text(extension => 'xls', prefix => '');
 
-    EnsEMBL::Web::Component::Location::ld_dump($object, $excel_file, $object->parent->{'params'});
+    ld_dump($object, $excel_file, $object->parent->{'params'});
 
     $excel_file->save;
 
