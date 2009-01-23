@@ -229,6 +229,8 @@ sub _generate_objects {
   }  
   if( $self->param('t') ) {
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
+        $self->_get_gene_location_from_transcript;
+
     my $tdb_adaptor = $self->database($tdb);
     if( $tdb_adaptor ) {
     my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $self->param('t'));
@@ -255,25 +257,26 @@ sub _generate_objects {
     }
     }
   }
-  if ($self->param('protein') ) {
+  if ( !$self->transcript &&  ($self->param('protein') || $self->param('p') )) {
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
+    my $trans_id = $self->param('protein') || $self->param('p');
     my $tdb_adaptor = $self->database($tdb);
-    if( $tdb_adaptor ) { 
     my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
-    return unless $a;
-
-    my $p = $a->fetch_by_stable_id($self->param('protein') );
-    my $archive_t = shift @{$p->get_all_transcript_archive_ids};
- 
-    my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id( $archive_t->stable_id);
-    if( $t ) {
-      $self->transcript( $t );
+    my $p = $a->fetch_by_stable_id($trans_id);
+    if ($p->is_current){
+      my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_translation_stable_id($trans_id);
+      $self->transcript( $t);
       $self->_get_gene_location_from_transcript;
     } else {
-      $t = $a->fetch_by_stable_id( $archive_t->stable_id );
-      $self->transcript( $t ) if $t;
+      my $assoc_transcript = shift @{$p->get_all_transcript_archive_ids};
+      if ($assoc_transcript){
+        my $t = $a->fetch_by_stable_id($assoc_transcript->stable_id);
+        $self->transcript( $t);
+      } else { 
+        $self->transcript( new EnsEMBL::Web::Fake({ 'view' => 'Idhistory/Protein', 'type' => 'history_protein', 'id' => $trans_id ,  'adaptor' => $a  }));
+       $self->{'parameters'}{'protein'} = $trans_id; 
+      }  
     }
-    }   
   }
   if( !$self->transcript &&  $self->param('domain') ) {
     my $tdb         = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
