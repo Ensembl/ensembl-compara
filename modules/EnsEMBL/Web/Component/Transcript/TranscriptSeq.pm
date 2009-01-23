@@ -163,8 +163,9 @@ sub get_sequence_data {
               $protein_seq->{'seq'}->[$aa_bp+2]->{'color'} = 'auto';
               $protein_seq->{'seq'}->[$_]->{'title'} = join (', ', @Q) for ($aa_bp-1..$aa_bp+1);
             }
-          } else {            
+          } else {
             $mk->{'variations'}->{$r-1}->{'snp'}= 'indel';
+            $ambigcode = '*';
           }
           
           $variation_seq->{'seq'}->[$r-1]->{'letter'} = $url_params ? qq{<a href="../snpview?$url_params">$ambigcode</a>} : $ambigcode;
