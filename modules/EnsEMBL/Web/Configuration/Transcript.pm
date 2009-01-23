@@ -548,7 +548,7 @@ sub populate_tree {
       display     EnsEMBL::Web::Component::Gene::HistoryReport/protein
       associated  EnsEMBL::Web::Component::Gene::HistoryLinked/protein
       map         EnsEMBL::Web::Component::Gene::HistoryMap/protein)],
-      { 'availability' => 'history', 'concise' => 'ID History' }
+      { 'availability' => 'history_protein', 'concise' => 'ID History' }
   ));
   
   $self->create_node(
