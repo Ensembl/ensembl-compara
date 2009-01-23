@@ -1,5 +1,9 @@
 #!/usr/local/bin/perl
 
+# This script generates static content (e.g. sources document)
+# for DAS. Unfortunately lots of strange things have to happen to map between
+# Ensembl and DAS coordinate systems, so this does require some maintenance.
+
 use strict;
 use warnings;
 
@@ -23,6 +27,8 @@ BEGIN{
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+  require Bio::EnsEMBL::ExternalData::DAS::SourceParser;
+  import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic);
 }
 
 my $sources = {
@@ -89,9 +95,10 @@ my %featuresQuery       = map { ( $_ => $sources->{$_}{'query'}        ) } keys 
 my %sourcesIds          = ('reference'=>1, map { ( $_ => $sources->{$_}{'source_id'} ) } keys %$sources );
 
 # Load modules needed for reading config -------------------------------------
-require EnsEMBL::Web::SpeciesDefs; 
+require EnsEMBL::Web::SpeciesDefs;
 my $species_info;
 my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
+my $das_parser   = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new();
 my $sitetype = ucfirst(lc($species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
 my $cdb_info = $species_defs->{_storage}->{MULTI}->{databases}->{DATABASE_COMPARA};
 my $cdb = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -105,17 +112,20 @@ my $cdb = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 my $ta = $cdb->get_NCBITaxonAdaptor();
 my $hash = $species_defs;
 
+my $das_coords = _get_das_coords();
+
 my $species = $SiteDefs::ENSEMBL_SPECIES || [];
 my $shash;
 $| = 1;
-foreach my $sp (@$species) {
-warn "Parsing species $sp ".gmtime();
+SPECIES: foreach my $sp (@$species) {
+  warn "Parsing species $sp ".gmtime();
   my $search_info = $species_defs->get_config($sp, 'SEARCH_LINKS');
   (my $vsp = $sp) =~ s/\_/ /g;
   $species_info->{$sp}->{'species'}  = $vsp;
-  my $snode = $ta->fetch_node_by_name($vsp) or next;
-  $species_info->{$sp}->{'taxon_id'} = $snode->taxon_id;
+  my $type = $species_defs->get_config($sp,'ASSEMBLY_NAME');
+  my $mapmaster = sprintf("%s.%s.reference", $sp, $species_defs->get_config($sp,'ASSEMBLY_NAME'));
 
+  # Get top level slices from the database
   my $db_info = $species_defs->get_config($sp, 'databases')->{'DATABASE_CORE'};
   my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -species => $sp,
@@ -132,24 +142,53 @@ warn "Parsing species $sp ".gmtime();
          min(a.asm_start) as start,
          max(a.asm_end)   as stop,
          if(isnull(a.asm_seq_region_id),'no','yes') as subparts,
-         cs.name
-    from (coord_system as cs, seq_region as sr, seq_region_attrib as sra, attrib_type as at) left join
-         assembly as a on a.asm_seq_region_id = sr.seq_region_id 
+         cs.name,
+         cs.version
+    from (seq_region as sr, seq_region_attrib as sra, attrib_type as at)
+    left join
+         assembly as a on a.asm_seq_region_id = sr.seq_region_id
+    left join
+         coord_system as cs on cs.coord_system_id = sr.coord_system_id
    where sr.seq_region_id = sra.seq_region_id and
-         sra.attrib_type_id = at.attrib_type_id and at.code = "toplevel" and cs.coord_system_id = sr.coord_system_id
+         sra.attrib_type_id = at.attrib_type_id and at.code = "toplevel"
    group by sr.seq_region_id
   ));
+  
   my $toplevel_example  = $toplevel_slices->[0];
+  my %coords = ();
+  my $skip = 0;
+  for (@$toplevel_slices) {
+    # Set up the coordinate system details
+    $_->[6] ||= '';
+    if (!$coords{$_->[5]}{$_->[6]}) {
+      my $cs_xml = $das_coords->{$sp}{$_->[5]}{$_->[6]};
+      if (!$cs_xml) {
+        $_->[6] = $type;
+        $cs_xml = $das_coords->{$sp}{$_->[5]}{$_->[6]};
+      }
+      if (!$cs_xml) {
+        warn "Coordinate system $_->[5] $_->[6] is not in the DAS Registry!";
+        $skip = 1;
+        $cs_xml = 'bad';
+      }
+      my $start = $_->[2] || 1;
+      my $end   = $_->[3] || $_->[1];
+      my $test_range = sprintf("%s:%d,%d", $_->[0], $start, $start+99999>$end?$end:$start+99999);
+      $cs_xml =~ s/test_range=""/test_range="$test_range"/;
+      $coords{$_->[5]}{$_->[6]} = $cs_xml;
+    }
+  }
+  
+  if ($skip) {
+    warn "Skipping $sp";
+    next SPECIES;
+  }
 
-  my $mapmaster = sprintf("%s.%s.reference", $sp, $species_defs->get_config($sp,'ASSEMBLY_NAME'));
+  $shash->{$mapmaster}->{coords} = \%coords;
   $shash->{$mapmaster}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
   $shash->{$mapmaster}->{description} = sprintf("%s Reference server based on %s assembly. Contains %d top level entries.", $sp, $species_defs->get_config($sp,'ASSEMBLY_NAME'), 0 + @$toplevel_slices );
 # my $sl = $thash{$search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'}} || $toplevel_slices[0];
     #warn Data::Dumper::Dumper(\%thash);
-
-  my $start = $toplevel_example->[2] || 1;
-  my $end   = $toplevel_example->[3] || $toplevel_example->[1];
-  $shash->{$mapmaster}->{'test_range'} = sprintf("%s:%d,%d", $toplevel_example->[0], $start, $start+99999>$end?$end:$start+99999);
 
   entry_points( $toplevel_slices, "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster/entry_points", "$SERVERROOT/htdocs/das/$mapmaster" );
   foreach my $feature (@feature_types) {
@@ -166,16 +205,14 @@ warn "Parsing species $sp ".gmtime();
 #   print STDERR "\t $sp : $feature : $table => ", $rv || 'Off',  "\n";
 #   print STDERR "\t\t\tTEST REGION : ", join('*', @r), "\n";
     next unless @r;
-    my $type = $species_defs->get_config($sp,'ASSEMBLY_NAME');
     my $dsn = sprintf("%s.%s.%s", $sp, $type, $feature);
-    $shash->{$dsn}->{'test_range'} = sprintf("%s:%s,%s",@r); 
+    $shash->{$dsn}->{coords} = \%coords;
     $shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
     $shash->{$dsn}->{description} = sprintf("Annotation source for %s %s", $sp, $feature);
 	if (   ($sitetype eq 'Vega')
 	    && ($feature =~ /^trans/) ) {
 		$type .= '-clone';
 		$dsn = sprintf("%s.%s.%s", $sp, $type, $feature);
-		$shash->{$dsn}->{'test_range'} = sprintf("%s:%s,%s",@r); 
 		$shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
 		$shash->{$dsn}->{description} = sprintf("Annotation source (returns clones) for %s %s", $sp, $feature);
 	}
@@ -220,7 +257,7 @@ sub dsn {
     my $source = $sources->{$dsn};
     print FH qq(
   <DSN href="$SiteDefs::ENSEMBL_BASE_URL/das/dsn">
-    <SOURCE id="$dsn">$source->{'name'}</SOURCE>
+    <SOURCE id="$dsn">$dsn</SOURCE>
     <MAPMASTER>$source->{'mapmaster'}</MAPMASTER>
     <DESCRIPTION>$source->{'description'}</DESCRIPTION>
   </DSN>);
@@ -231,63 +268,55 @@ sub dsn {
 }
 
 sub sources {
-  my( $sources, $file,$sitetype ) = @_;
+  my( $sources, $file, $sitetype ) = @_;
+  
   open FH, ">$file";
   my ($day, $month, $year) = (localtime)[3,4,5];
   my $today = sprintf("%04d-%02d-%02d", $year + 1900, $month + 1, $day);
-  my $email = ($sitetype eq 'Vega') ? "vega-helpdesk\@sanger.ac.uk" : "helpdesk\@ensembl.org";
-  my %taxon_ids = ();
+  my $email = $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
+  
   print FH qq(<?xml version="1.0" encoding="UTF-8" ?>
 <?xml-stylesheet type="text/xsl" href="/das/das.xsl"?>
 <SOURCES>);
+
   for my $dsn (sort keys %$sources) {
-    my @n = split /\./, $dsn;
-    my $species = shift @n;
-    (my $vsp = $species) =~ s/\_/ /g;
-    my $source = pop @n;
-    my $assembly = join('.', @n);
-    # Assume the version starts with a number (if it exists)
-    # e.g. NCBI36 -> NCBI + 36, Btau_3.1 -> Btau_ + 3.1, GUINEAPIG -> GUINEAPIG + undef
-    my ($authority, $version) = $assembly =~ m/^(\D+)(.*)/;
-	my $seq_type = $assembly =~ /-clone/ ? 'Clone' : 'Chromosome';
-	my $id;
-	if ($sitetype eq 'Vega') {
-		my $sp = $species;
+    
+    my ($sp, $assembly, $sourcetype) = split /\./, $dsn;
+    
+    my $coordinates = '';  # XML string
+    my %coords = %{ $sources->{$dsn}->{coords} };
+    for my $cs_name (keys %coords) {
+      for my $cs_ver (keys %{$coords{$cs_name}}) {
+        $coordinates .= "      $coords{$cs_name}{$cs_ver}\n";
+      }
+    }
+
+    my $id;
+    if ($sitetype eq 'Vega') {
 		$sp =~ s/^(\w)[A-Za-z]*_(\w{3}).*/$1$2/;
-		$id = sprintf("VEGA_%s_%s_%s", $sourcesIds{$source} || $source, $sp, $assembly);
+		$id = sprintf("VEGA_%s_%s_%s", $sourcesIds{$sourcetype} || $sourcetype, $sp, $assembly);
 	}
 	else {
-		$id = sprintf("ENSEMBL_%s_%s", $sourcesIds{$source} || $source, $assembly);
+		$id = sprintf("%s_%s_%s", uc $sitetype, $sourcesIds{$sourcetype} || $sourcetype, $assembly);
 	}
-    my $capability = $source eq 'reference' ?  qq(
-      <CAPABILITY  type="das1:entry_points"
+    my $capability = $sourcetype eq 'reference' ?  qq(      <CAPABILITY  type="das1:entry_points"
                    query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/entry_points" />
       <CAPABILITY  type="das1:sequence"
-                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/sequence"     />) : qq(
-      <CAPABILITY  type="das1:stylesheet"  
-                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/stylesheet"   />);
-    $capability .= qq(
-      <CAPABILITY  type="das1:features"
+                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/sequence"     />
+): qq(      <CAPABILITY  type="das1:stylesheet"  
+                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/stylesheet"   />
+);
+    $capability .= qq(      <CAPABILITY  type="das1:features"
                    query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/features"     />);
     my $description = $sources->{$dsn}{'description'};
-    my $test_range  = $sources->{$dsn}{'test_range' };
-    $taxon_ids{$vsp} ||= $ta->fetch_node_by_name($vsp)->taxon_id;
-    $assembly = join '_', $authority, $version;
     
     print FH qq( 
   <SOURCE uri="$id" title="$dsn" description="$description">
     <MAINTAINER    email="$email" />
     <VERSION       uri="$id"
                    created="$today">
-      <PROP        name="label"
-                   value="ENSEMBL" />
-      <COORDINATES uri="ensembl_location_toplevel" 
-                   taxid="$taxon_ids{$vsp}"
-                   source="$seq_type"
-                   authority="$authority"
-                   version="$version"
-                   test_range="$test_range">$assembly,$seq_type,$vsp</COORDINATES>
-    $capability
+      <PROP name="label" value="ENSEMBL" />
+$coordinates$capability
     </VERSION>
   </SOURCE>);
   }
@@ -296,27 +325,59 @@ sub sources {
   close FH;
 }
 
+sub _get_das_coords {
+  my $ua = LWP::UserAgent->new(agent=>$sitetype);
+  $ua->proxy('http', $species_defs->ENSEMBL_WWW_PROXY);
+  $ua->no_proxy(@{$species_defs->ENSEMBL_NO_PROXY||[]});
+  my $resp = $ua->get('http://www.dasregistry.org/das/coordinatesystem');
+  $resp->is_success || die "Unable to retrieve coordinate system list from the DAS Registry: ".$resp->status_line;
+  my $xml = $resp->content;
+  $xml =~ s{^\s*(<\?xml.*?>)?(\s*</?DASCOORDINATESYSTEM>\s*)?}{}mix;
+  $xml =~ s/\s*$//mx;
+  
+  my %coords;
+  for (grep { /^\s*<COORDINATES/ } split m{</COORDINATES>}mx, $xml) {
+    $_ =~ s/^\s+//;
+    my $cs_xml = "$_</COORDINATES>";
+    my ($type) = m/source\s*=\s*"(.*?)"/mx;
+    my ($authority) = m/authority\s*=\s*"(.*?)"/mx;
+    my ($version) = m/version\s*=\s*"(.*?)"/mx;
+    my ($des) = m/>(.*)$/mx;
+    my (undef, undef, $species) = split /,/, $des, 3;
+    
+    $type || die "Unable to parse type from $cs_xml";
+    $authority || die "Unable to parse authority from $cs_xml";
+    
+    my $cs_ob = $das_parser->_parse_coord_system($type, $authority, $version, $species);
+    $cs_ob && is_genomic($cs_ob) || next;
+    
+    $coords{$cs_ob->species}{$cs_ob->name}{$cs_ob->version} = $cs_xml;
+  }
+  
+  return \%coords;
+}
 
 __END__
            
 =head1 NAME
                                                                                 
-create_das_dsn_page.pl
-
+initialise_das.pl
 
 =head1 DESCRIPTION
 
 A script that generates XML file that effectivly is a response to 
-/das/dsn and /das/sources commands to this server. The script just prints the XML to STDOUT.
-To create a file use redirection. e.g
+/das/dsn and /das/sources commands to this server. The script prints the XML to
+htdocs/dsn and htdocs/sources.
 
-./create_das_dsn_page.pl > ../htdocs/das/dsn
-./create_das_dsn_page.pl -s > ../htdocs/das/sources
+./initialise_das.pl
 
+If this script complains about coordinate systems, check that they actually exist
+in the DAS registry (http://www.dasregistry.org). If not, request they be added.
 
 =head1 AUTHOR
                                                                                 
 [Eugene Kulesha], Ensembl Web Team
+[Andy Jenkinson], EMBL-EBI
 Support enquiries: helpdesk@ensembl.org
                                                                                 
 =head1 COPYRIGHT
