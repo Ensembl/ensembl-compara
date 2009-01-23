@@ -607,6 +607,36 @@ sub store_node {
   return $node->node_id;
 }
 
+=head2 fetch_node_by_node_id
+
+  Arg  1     : $node_id
+  Example    : my $node = $self->adaptor->fetch_node_by_node_id($node_id);
+  Description: Over-ride NestedSetAdaptor method for getting a node from its id
+  Returntype : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Exceptions : throw if not Bio::EnsEMBL::Compara::NestedSet
+  Caller     : 
+  Status     : At risk
+
+=cut
+
+sub fetch_node_by_node_id {
+  my ($self, $node_id) = @_;
+
+  #my $table= $self->tables->[0]->[1];
+  #my $constraint = "WHERE $table.node_id = $node_id";
+  #my ($node) = @{$self->_generic_fetch($constraint)};
+
+  my $sql = "SELECT " . join(",", @{$self->columns}) .  
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = " . $node_id;
+
+   my $sth = $self->prepare($sql);
+   $sth->execute;
+   my ($node) = @{$self->_objs_from_sth($sth)};
+   $sth->finish;
+
+  return $node;
+}
+
 =head2 fetch_parent_for_node
 
   Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
@@ -683,6 +713,9 @@ sub store_node {
 
    return $root;
 }
+
+
+
 
 =head2 delete
 
