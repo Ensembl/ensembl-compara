@@ -19,9 +19,11 @@ sub init {
     $defaults{$_} = 0;
   }
   
-  foreach (qw(genomic cdna coding peptide utr5 utr3)) {
+  foreach (qw(cdna coding peptide utr5 utr3)) {
     $defaults{'fasta_' . $_} = 'yes';
   }
+  
+  $defaults{'fasta_genomic'} = 'unmasked';
   
   foreach my $f(qw(csv gff tab)) {
     foreach (qw(similarity repeat genscan variation gene)) {
@@ -96,6 +98,9 @@ sub form {
     });
   }
   
+  $view_config->add_form_element($gene_markup_options{'flank5_display'});
+  $view_config->add_form_element($gene_markup_options{'flank3_display'});
+  
   $view_config->add_form_element({
     'type' => 'Submit',
     'class' => 'submit',
@@ -115,9 +120,21 @@ sub form {
     foreach my $f (@{$config->{$c}->{'formats'}}) {      
       $view_config->add_fieldset("Options for $f->[1]");
       
-      if ($f->[0] eq 'fasta') { 
-        $view_config->add_form_element($gene_markup_options{'flank5_display'});
-        $view_config->add_form_element($gene_markup_options{'flank3_display'});
+      if ($f->[0] eq 'fasta') {
+        my $genomic = [
+          { value => 'unmasked', name => 'Unmasked' },
+          { value => 1, name => 'Soft Masked Repeats' },
+          { value => 0, name => 'Hard Masked Repeats' }
+        ];
+        
+        $view_config->add_form_element({
+          'type'     => 'DropDown', 
+          'select'   => 'select',
+          'required' => 'yes',
+          'name'     => 'fasta_genomic',
+          'label'    => 'Genomic',
+          'values'   => $genomic
+        });
       }
       
       foreach (@{$config->{$c}->{'params'}}) {
