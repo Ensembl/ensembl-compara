@@ -48,10 +48,7 @@ sub export_configurator {
     ],
     'config_merge' => {
       'fasta' => {
-        'type' => 'Hidden',
-        'params' => [
-          [ 'genomic', 'Genomic' ]
-        ]
+        'params' => []
       },
       'features' => {
         'params' => [

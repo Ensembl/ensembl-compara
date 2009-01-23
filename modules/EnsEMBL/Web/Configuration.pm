@@ -379,7 +379,6 @@ sub _export_configurator {
         [ 'fasta', 'FASTA sequence' ]
       ],
       'params' => [
-        [ 'genomic', 'Genomic' ],
         [ 'cdna', 'cDNA' ],
         [ 'coding', 'Coding sequence', $options->{'translation'} ],
         [ 'peptide', 'Peptide sequence', $options->{'translation'} ],
@@ -505,12 +504,21 @@ sub _export_configurator {
       );
     }
     
-    foreach (@{$config->{$key}->{'params'}}) {      
+    my $checked_params = {};
+    
+    foreach (@{$config->{$key}->{'params'}}) {
+      $checked_params->{"${output}_$_->[0]"} = 1;
+      
       if ($object->param("${output}_$_->[0]") eq 'yes') {
         $_->[0] =~ s/(miscset_)//;
         
         $href .= $1 ? ";miscset=$_->[0]" : ";st=$_->[0]";
       }
+    }
+    
+    foreach (grep { /${output}_/ } $object->param) {
+      (my $param = $_) =~ s/${output}_//;
+      $href .= ";$param=" . $object->param($_) unless $checked_params->{$_};
     }
     
     # How confusing!

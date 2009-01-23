@@ -68,8 +68,11 @@ sub fasta {
     }
   }
   
-  if ($params->{'genomic'}) {
-    my $seq = $slice->seq;
+  my $genomic = $object->param('genomic');
+  
+  if (defined $genomic) {
+    my $seq = $genomic eq 'unmasked' ? $slice->seq : $slice->get_repeatmasked_seq(undef, $genomic)->seq;
+    
     $seq =~ s/(.{60})/$1\r\n/g;
     
     $html .= ">@{[$object->seq_region_name]} dna:@{[$object->seq_region_type]} @{[$slice->name]}\r\n$seq\r\n";
