@@ -160,15 +160,17 @@ $gab_sth->execute($mlssid);
 while( my@gab = $gab_sth->fetchrow_array ) {
 	my($gab_id, $score) = ($gab[0], $gab[1]);
 	$ga_sth->execute($gab_id);
-	my @dnafrags;
+	my $constrained_element_block;
 	while( my@ga = $ga_sth->fetchrow_array ) {
-		push(@dnafrags, [ [ $ga[0], $ga[1], $ga[2] ] ]);
+		my $constrained_element = new Bio::EnsEMBL::Compara::ConstrainedElement(
+			-reference_dnafrag_id => $ga[0],
+			-start => $ga[1],
+			-end => $ga[2],
+			-score => $score,
+			-taxonomic_level => $taxonomic_level,
+		);  
+	push(@$constrained_element_block, $constrained_element);
 	}
-	my $constrained_element = new Bio::EnsEMBL::Compara::ConstrainedElement(
-		-dnafrags => \@dnafrags,
-		-score => $score,
-		-taxonomic_level => $taxonomic_level,
-	);  
-	$ce_adaptor->store($old_mlss, [ $constrained_element ]);	
+	$ce_adaptor->store($old_mlss, [ $constrained_element_block ]);	
 }
 
