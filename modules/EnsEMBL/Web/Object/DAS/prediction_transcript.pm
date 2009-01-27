@@ -10,14 +10,14 @@ sub Types {
   my $self = shift;
 
   my $features = [
-    { 'id' => 'exon', 'method' => 'Genscan',    'text' => "Ab initio prediction of protein coding genes by Genscan (C. Burge et. al., J. Mol. Biol. 1997 268:78-94). The splice site models used are described in more detail in C. Burge, Modelling dependencies in pre-mRNA splicing signals. 1998 In Salzberg, S., Searls, D. and Kasif, S., eds. Computational Methods in Molecular Biology, Elsevier Science, Amsterdam, 127-163." },
-    { 'id' => 'exon', 'method' => 'SNAP',       'text' => "Ab initio gene prediction by SNAP (I. Korf, BMC Bioinformatics 2004 5:59)" },
-    { 'id' => 'exon', 'method' => 'GeneFinder', 'text' => "Ab initio prediction of protein coding genes by Genefinder (C. Wilson, L. Hilyer, and P. Green, unpublished)." },
-    { 'id' => 'exon', 'method' => 'Fgenesh',    'text' => "Ab initio prediction of protein coding genes (AA Salamov et al., Genome Res. 2000 4:516-22)" },
-    { 'id' => 'exon', 'method' => 'GSC',        'text' => "Ab initio prediction of protein coding genes by Genscan (C. Burge et al., J. Mol. Biol. 1997 268:78-94), with parameters customised for accuracy in Tetraodon sequences" },
-    { 'id' => 'exon', 'method' => 'GID',        'text' => "Ab initio prediction of protein coding genes by geneid (http://www1.imim.es/software/geneid/), with parameters customised for accuracy in Tetraodon sequences." },
-    { 'id' => 'exon', 'method' => 'GWS_H',      'text' => "Alignment of a human protein to the genome by GeneWise (E. Birney et al., Genome Res. 2004 14:988-95)" },
-    { 'id' => 'exon', 'method' => 'GWS_S',      'text' => "Alignment of a mouse protein to the genome by GeneWise (E. Birney et al., Genome Res. 2004 14:988-95)" },
+    { 'id' => 'exon:Genscan',    'method' => 'Genscan',    'text' => "Ab initio prediction of protein coding genes by Genscan (C. Burge et. al., J. Mol. Biol. 1997 268:78-94). The splice site models used are described in more detail in C. Burge, Modelling dependencies in pre-mRNA splicing signals. 1998 In Salzberg, S., Searls, D. and Kasif, S., eds. Computational Methods in Molecular Biology, Elsevier Science, Amsterdam, 127-163." },
+    { 'id' => 'exon:SNAP',       'method' => 'SNAP',       'text' => "Ab initio gene prediction by SNAP (I. Korf, BMC Bioinformatics 2004 5:59)" },
+    { 'id' => 'exon:GeneFinder', 'method' => 'GeneFinder', 'text' => "Ab initio prediction of protein coding genes by Genefinder (C. Wilson, L. Hilyer, and P. Green, unpublished)." },
+    { 'id' => 'exon:Fgenesh',    'method' => 'Fgenesh',    'text' => "Ab initio prediction of protein coding genes (AA Salamov et al., Genome Res. 2000 4:516-22)" },
+    { 'id' => 'exon:GSC',        'method' => 'GSC',        'text' => "Ab initio prediction of protein coding genes by Genscan (C. Burge et al., J. Mol. Biol. 1997 268:78-94), with parameters customised for accuracy in Tetraodon sequences" },
+    { 'id' => 'exon:GID',        'method' => 'GID',        'text' => "Ab initio prediction of protein coding genes by geneid (http://www1.imim.es/software/geneid/), with parameters customised for accuracy in Tetraodon sequences." },
+    { 'id' => 'exon:GWS_H',      'method' => 'GWS_H',      'text' => "Alignment of a human protein to the genome by GeneWise (E. Birney et al., Genome Res. 2004 14:988-95)" },
+    { 'id' => 'exon:GWS_S',      'method' => 'GWS_S',      'text' => "Alignment of a mouse protein to the genome by GeneWise (E. Birney et al., Genome Res. 2004 14:988-95)" },
   ];
 
   return [
@@ -30,9 +30,28 @@ sub Types {
 
 sub Stylesheet {
   my $self = shift;
-  my $hash_ref = {};
-#  my $self->species_defs->
+  my $stylesheet_structure = {};
+  my $colour_hash = { 
+    'default'    => 'black',
+    'Genscan'    => 'lightseagreen',
+    'Fgenesh'    => 'darkkhaki',
+    'SNAP'       => 'darkseagreen4',
+    'GeneFinder' => 'black',
+    'GSC'        => 'black',
+    'GID'        => 'black',
+    'GWS_H'      => 'black',
+    'GWS_S'      => 'black',
+  };
+  foreach my $key ( keys %$colour_hash ) {
+    my $colour = $colour_hash->{$key};
+    $stylesheet_structure->{'transcription'}{$key ne 'default' ? "exon:$key" : 'default'} =
+      [{ 'type' => 'box', 'attrs' => { 'BGCOLOR' => $colour, 'FGCOLOR' => $colour, 'HEIGHT' => 10  } }];
+    $stylesheet_structure->{"group"}{$key ne 'default' ? "transcript:$key" : 'default'} =
+      [{ 'type' => 'line', 'attrs' => { 'STYLE' => 'intron', 'HEIGHT' => 10, 'FGCOLOR' => $colour, 'POINT' => 1 } }];
+  }
+  return $self->_Stylesheet( $stylesheet_structure );
 }
+
 sub Features {
 ### Return das features...
   my $self = shift;
@@ -126,8 +145,9 @@ sub Features {
 ## Push the features on to the slice specific array
       push @{$features{$slice_name}{'FEATURES'}}, {
         'ID'          => $display_label.'.'.$rank, 
-        'TYPE'        => 'exon',
+        'TYPE'        => 'exon:'.$pt->analysis->logic_name,
         'METHOD'      => $pt->analysis->logic_name,
+        'CATEGORY'    => 'transcription',
         'START'       => $exon->seq_region_start,
         'END'         => $exon->seq_region_end,
         'ORIENTATION' => $self->ori($exon->seq_region_strand),
@@ -139,7 +159,7 @@ sub Features {
         },
         'GROUP'       => [{
           'ID'        => $display_label,
-          'TYPE'      => 'prediction transcript',
+          'TYPE'      => 'transcript:'.$pt->analysis->logic_name,
           'LABEL'     => $display_label,
           'LINK'      => [{
             'href'    => sprintf( $transview_url, $display_label ),

@@ -730,7 +730,7 @@ sub Stylesheet {
     'havana'                     => 'dodgerblue4',
     'ensembl'                    => 'rust',
     'flybase'                    => 'rust',
-    'wornbase'                   => 'rust',
+    'wormbase'                   => 'rust',
     'ensembl_havana_transcript'  => 'goldenrod3',
     'estgene'                    => 'purple1',
     'otter'                      => 'dodgerblue4',
