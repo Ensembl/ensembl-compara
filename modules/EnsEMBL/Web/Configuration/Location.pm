@@ -148,7 +148,7 @@ sub ld_export_configurator {
       [ 'HTML', 'HTML', ' rel="external"' ],
       [ 'Text', 'Text', ' rel="external"' ],
       [ 'Excel', '', '', '', "$form_action->[0]?$form_action->[2];excel=1", 'modal_link'],
-      [ 'For upload into Haploview software', '', '', ' (may take a while)', "$form_action->[0]?$form_action->[2];haploview=1", 'modal_link' ]
+      [ 'For upload into Haploview software', '', '', ' [<a href="http://www.broad.mit.edu/mpg/haploview/" rel="external">Haploview website</a>]', "$form_action->[0]?$form_action->[2];haploview=1", 'modal_link' ]
     );
 
     $text = qq{<p>Please choose a format for your exported data</p>};
