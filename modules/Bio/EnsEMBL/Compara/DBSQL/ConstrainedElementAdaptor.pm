@@ -18,19 +18,19 @@ sub new {
   return $self;
 }
 
-#=head2 store
-#
-#  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object 
-#  Arg  2     : listref of Bio::EnsEMBL::Compara::ConstrainedElement ($constrained_element) objects 
-#               The things you want to store
-#  Example    : none
-#  Description: It stores the given ConstrainedElements in the database.
-#  Returntype : none
-#  Exceptions : if it's not a Bio::EnsEMBL::Compara::ConstrainedElement or if 
-#		if the first parameter is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
-#  Caller     : called by the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp module 
-#
-#=cut
+=head2 store
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object 
+  Arg  2     : listref of Bio::EnsEMBL::Compara::ConstrainedElement ($constrained_element) objects 
+               The things you want to store
+  Example    : none
+  Description: It stores the given ConstrainedElements in the database.
+  Returntype : none
+  Exceptions : throw if Arg-1 is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+	       throw if Arg-2 is not a Bio::EnsEMBL::Compara::ConstrainedElement	
+  Caller     : called by the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp module 
+
+=cut
 
 sub store {
 	my ( $self, $mlss_obj, $constrained_elements ) = @_;
@@ -236,7 +236,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Dnafrag {
 	return \@constrained_elements;
 }
 
-sub _fetch_all_ConstrainedElements {
+sub _fetch_all_ConstrainedElements {#used when getting constrained elements by slice or dnafrag
 	my ($self) = shift;
 	my ($sql, $constrained_elements, $mlss_id, $dnafrag_id, $start, $end, $lower_bound, $slice) = @_;
 	$sql = qq{
@@ -255,10 +255,10 @@ sub _fetch_all_ConstrainedElements {
 	while (my @values = $sth->fetchrow_array()) {
 		my $constrained_element = new Bio::EnsEMBL::Compara::ConstrainedElement(
 			-adaptor => $self,
-			-constrained_element_id => $values[0],
+			-dbID => $values[0],
 			-slice => $slice,
-			-start => ($values[1] - $start), 
-			-end => ($values[2] - $start),
+			-start =>  ($values[1] - $start + 1), 
+			-end => ($values[2] - $start + 1),
 			-method_link_species_set_id => $mlss_id,
 			-score => $values[3],
 			-p_value => $values[4],
@@ -312,7 +312,7 @@ sub fetch_by_dbID {
   return ($self->fetch_all_by_dbID([$constrained_element_id]))->[0];
 }
 
-sub _fetch_all_ConstrainedElements_by_dbID {
+sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained elements by constrained_element_id
 	my ($self) = shift;
 	my ($sql, $constrained_elements, $dbIDs) = @_;
         
@@ -353,7 +353,7 @@ sub _fetch_all_ConstrainedElements_by_dbID {
 		}
 		my $constrained_element = new Bio::EnsEMBL::Compara::ConstrainedElement(
 			-adaptor => $self,
-			-constrained_element_id => $general_attributes{dbID},
+			-dbID => $general_attributes{dbID},
 			-alignment_segments => \@alignment_segments,
 			-method_link_species_set_id => $general_attributes{mlssid},
 			-score => $general_attributes{score},
