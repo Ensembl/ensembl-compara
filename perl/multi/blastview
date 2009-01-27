@@ -39,6 +39,8 @@ use EnsEMBL::Web::Document::Dynamic;
 use EnsEMBL::Web::Document::Panel;
 
 use EnsEMBL::Web::Document::Image;
+use EnsEMBL::Web::TmpFile::Image;
+
 use vars qw( $SPECIES_DEFS $META_DATA $CGI $BLAST $PAGE $TICKET $DBCONNECTION );
 use vars qw( @JSCRIPT_EXTRA @ON_LOAD_EXTRA %CACHE_ON_LOAD_EXTRA); # Jscript 
 use vars qw( %ERRORS ); # Errors per-stage
@@ -1835,15 +1837,21 @@ sub populate_karyotype{
     { 'web_species' => $sp, ka=>$ka, sa=>$sa, 'chr' => 'ALL' }, $web_config, [ \%highlights, \%highlights2 ] 
   );
   
+
   my $fi = new EnsEMBL::Web::Document::Image( $SPECIES_DEFS );
      $fi->drawable_container = $karyo_dc;
      $fi->image_id           = 'blast_karyo_i';
      #$fi->{'img_map'} = 1;
      #$fi->{'border'}  = 1;
 
+  my $image   = new EnsEMBL::Web::TmpFile::Image;
+  my $content = $fi->drawable_container->render('png');
+  $image->content($content);
+  $image->save;
+
 
   $main_panel->add_entry();
-  my $img_tag = $fi->render_image_tag;
+  my $img_tag = $fi->render_image_tag($image);
   my $html = sprintf '
     <table align="center" border="0" cellspacing="0" cellpadding="2">
       <tr valign="top">
@@ -1852,7 +1860,7 @@ sub populate_karyotype{
       </tr>
     </table>',
     $fi->{'width'},
-    $img_tag.$fi->render_image_map();
+    $img_tag.$fi->render_image_map($image);
 
   $main_panel->add_form( $main_panel->get_form_label( $html ) );
   return 1;
@@ -1878,11 +1886,17 @@ sub draw_hsp_vs_query{
 
 warn "... ",$bucket->length;
 
+  my $image   = new EnsEMBL::Web::TmpFile::Image;
+  my $content = $fi->drawable_container->render('png');
+  $image->content($content);
+  $image->save;
+
+
   $main_panel->add_entry();
   my $html = qq(<table align="center" border="0" cellspacing="0" cellpadding="2">
    <tr valign="top">
      <td nowrap align="center" colspan="2"
-       >).$fi->render_image_tag().qq(</td></td></table>).$fi->render_image_map();
+       >).$fi->render_image_tag($image).qq(</td></td></table>).$fi->render_image_map($image);
   $main_panel->add_form( $main_panel->get_form_label( $html ) );
 
   return 1;
