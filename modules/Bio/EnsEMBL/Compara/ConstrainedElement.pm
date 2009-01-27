@@ -21,18 +21,19 @@ Bio::EnsEMBL::Compara::ConstrainedElement - constrained element data produced by
           -adaptor => $constrained_element_adaptor,
           -method_link_species_set_id => $method_link_species_set_id,
           -score => 56.2,
-          -p_value => 1.203e-6,
-          -dnafrags => [ [$dnafrag1_id, $dnafrag1_start, $dnafrag1_end], [$dnafrag2_id, $dnafrag2_start, $dnafrag2_end], ... ],
+          -p_value => '1.203e-6',
+          - => [ [$dnafrag1_id, $dnafrag1_start, $dnafrag1_end], [$dnafrag2_id, $dnafrag2_start, $dnafrag2_end], ... ],
 	  -taxonomic_level => "eutherian mammals",
       );
 
 GET / SET VALUES
   $constrained_element->adaptor($constrained_element_adaptor);
+  $constrained_element->dbID($constrained_element_id);
   $constrained_element->method_link_species_set_id($method_link_species_set_id);
   $constrained_element->score(56.2);
-  $constrained_element->p_value(5.62e-9);
+  $constrained_element->p_value('5.62e-9');
   $constrained_element->taxonomic_level("eutherian mammals");
-  $constrained_element->dnafrags([ [$dnafrag_id, $dnafrag_start, $dnafrag_end ], ... ]);
+  $constrained_element->alignment_segments([ [$dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], ... ]);
   $constrained_element->slice($slice);
   $constrained_element->slice_start($slice_start);
   $constrained_element->slice_end($slice_end);
@@ -77,10 +78,13 @@ corresponds to a slice.slice_start
 
 corresponds to a slice.slice_end
 
-=item dnafrags
+=item $alignment_segments
 
-listref of listrefs which contain 3 strings (dnafrag.dnafrag_id, 
-dnafrag.dnafrag_start, dnafrag.dnafrag_end) 
+listref of listrefs (each of which contain 5 strings (dnafrag.dnafrag_id, constrained_element.dnafrag_start, 
+constrained_element.dnafrag_end, genome_db.genome_db_id, dnafrag.dnafrag_name) 
+   [ [ $dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], .. ]
+Each inner listref contains information about one of the species sequences which make up the constarained 
+element block from the alignment. 
 
 =back
 
@@ -90,7 +94,7 @@ Stephen Fitzgerald (ensembl-compara@ebi.ac.uk)
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004. EnsEMBL Team
+Copyright (c) 2009. EnsEMBL Team
 
 You may distribute this module under the same terms as perl itself
 
@@ -124,8 +128,8 @@ use Data::Dumper;
 
 =head2 new (CONSTRUCTOR)
 
-  Arg [-CONSTRAINED_ELEMENT_ID] : int $constrained_element_id (the database ID for 
-					the constrained element block for this object)
+  Arg [-dbID] : int $dbID (the database ID for 
+		the constrained element block for this object)
   Arg [-ADAPTOR]
               : (opt.) Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor $adaptor
                 (the adaptor for connecting to the database)
@@ -133,10 +137,10 @@ use Data::Dumper;
               : int $mlss_id (the database internal ID for the $mlss)
   Arg [-SCORE]
               : float $score (the score of this alignment)
-  Arg [-DNAFRAGS]
-              : listref of 3 values or a listref of listrefs which each contain 3 values 
-		( $dnafrag_id, $dnafrag_start, $dnafrag_end ) ie.
-		[ [ $dnafrag_id, $dnafrag_start, $dnafrag_end ], ... ]
+  Arg [-ALIGNMENT_SEGMENTS]
+              : (opt.) listref of listrefs which each contain 5 values 
+		[ [ $dnafrag_id, $dnafrag_start, $dnafrag_end, $genome_db_id, $dnafrag_name ], ... ]
+		corresponding to the all the species in the constrained element block.
   Arg [-P_VALUE]
               : (opt.) string $p_value (the p_value of this constrained element)
   Arg [-TAXONOMIC_LEVEL]
@@ -144,21 +148,26 @@ use Data::Dumper;
 		constrained element was derived)
   Arg [-SLICE]
 	     : (opt.) Bio::EnsEMBL::Slice object
-  Arg [-SLICE_START]
+  Arg [-START]
 	     : (opt.) int Bio::EnsEMBL::Slice->start.
-  Arg [-SLICE_END]
+  Arg [-END]
 	     : (opt.) int Bio::EnsEMBL::Slice->end
+  Arg [-REFERENCE_DNAFRAG_ID]
+	     : (opt.) int $dnafrag_id of the slice or dnafrag 
+
   Example    : my $constrained_element =
                    new Bio::EnsEMBL::Compara::ConstrainedElement(
+		       -dbID => $constrained_element_id,
                        -adaptor => $adaptor,
                        -method_link_species_set_id => $method_link_species_set_id,
                        -score => 28.2,
-                       -dnafrags => [ [ 2039123, 108441, 108461 ] ],
-                       -p_value => 5.023e-6,
+                       -alignment_segments => [ [ $dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], .. ],
+                       -p_value => '5.023e-6',
                        -taxonomic_level => "eutherian mammals",
 		       -slice => $slice_obj,
-		       -slice_start => $slice_obj->start,
-		       -slice_end => $slice_obj->end,
+		       -start => $slice_obj->start,
+		       -end => $slice_obj->end,
+		       -reference_dnafrag_id => $dnafrag_id,
                    );
   Description: Creates a new ConstrainedElement object
   Returntype : Bio::EnsEMBL::Compara::DBSQL::ConstrainedElement
@@ -173,19 +182,19 @@ sub new {
   my $self = {};
   bless $self,$class;
     
-  my ($adaptor, $constrained_element_id, $alignment_segments, 
+  my ($adaptor, $dbID, $alignment_segments, 
 	$method_link_species_set_id, $score, $p_value, 
 	$taxonomic_level, $slice, $start, $end, $reference_dnafrag_id) = 
     rearrange([qw(
-        ADAPTOR CONSTRAINED_ELEMENT_ID ALIGNMENT_SEGMENTS 
+        ADAPTOR DBID ALIGNMENT_SEGMENTS 
   METHOD_LINK_SPECIES_SET_ID SCORE P_VALUE TAXONOMIC_LEVEL
   SLICE START END REFERENCE_DNAFRAG_ID
 	)],
             @args);
 
   $self->adaptor($adaptor) if (defined ($adaptor));
-  $self->constrained_element_id($constrained_element_id) 
-	if (defined ($constrained_element_id));
+  $self->dbID($dbID) 
+	if (defined ($dbID));
   $self->method_link_species_set_id($method_link_species_set_id)
       if (defined ($method_link_species_set_id));
   $self->alignment_segments($alignment_segments) 
@@ -237,34 +246,34 @@ sub adaptor {
 }
 
 
-=head2 constrained_element_id 
+=head2 dbID
 
-  Arg [1]    : integer $constrained_element_id
-  Example    : my $dbID = $constrained_element->constrained_element_id();
-  Example    : $constrained_element->constrained_element_id(2);
-  Description: Getter/Setter for the attribute constrained_element_id 
+  Arg [1]    : integer $dbID
+  Example    : my $dbID = $constrained_element->dbID();
+  Example    : $constrained_element->dbID(2);
+  Description: Getter/Setter for the attribute dbID 
   Returntype : integer
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub constrained_element_id {
-  my ($self, $constrained_element_id) = @_;
+sub dbID {
+  my ($self, $dbID) = @_;
 
-  if (defined($constrained_element_id)) {
-    $self->{'constrained_element_id'} = $constrained_element_id;
+  if (defined($dbID)) {
+    $self->{'dbID'} = $dbID;
   }
 
-  return $self->{'constrained_element_id'};
+  return $self->{'dbID'};
 }
 
 
 =head2 p_value 
 
   Arg [1]    : float $p_value
-  Example    : my $dbID = $constrained_element->p_value();
-  Example    : $constrained_element->p_value(12);
+  Example    : my $p_value = $constrained_element->p_value();
+  Example    : $constrained_element->p_value('5.35242e-105');
   Description: Getter/Setter for the attribute p_value
   Returntype : float 
   Exceptions : none
@@ -348,7 +357,7 @@ sub method_link_species_set_id {
 
 =head2 alignment_segments
  
-  Arg [1]    : listref $alignment_segments [ [ $dnafrag_id, $start, $end ], .. ]
+  Arg [1]    : listref $alignment_segments [ [ $dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], .. ]
   Example    : my $alignment_segments = $constrained_element->alignment_segments();
                $constrained_element->alignment_segments($alignment_segments);
   Description: Getter/Setter for the attribute alignment_segments 
