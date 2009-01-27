@@ -67,9 +67,9 @@ sub populate_tree {
     [qw(summary EnsEMBL::Web::Component::Variation::Context)],
     { 'availability' => 'variation', 'concise' => 'Context' }
   );
-  $self->create_node( 'External', "External Data ([[counts::ega]])",
+  $self->create_node( 'Phenotype', "Phenotype Data ([[counts::ega]])",
     [qw(summary EnsEMBL::Web::Component::Variation::ExternalData)],
-    { 'availability' => 'variation', 'concise' => 'External Data' }
+    { 'availability' => 'variation', 'concise' => 'Phenotype Data' }
   );
 }
 
