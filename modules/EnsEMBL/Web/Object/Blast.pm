@@ -21,6 +21,8 @@ use Data::Dumper;
 use IO::Scalar;
 use Bio::SeqIO;
 
+use EnsEMBL::Web::Document::Image;
+
 our $VERBOSE = 0;
 
 sub caption       { return undef; }
@@ -338,10 +340,8 @@ sub new_hsp_image {
      });
   my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket, $config);
 
-  my $image = new EnsEMBL::Web::File::Image( $self->species_defs );
-  $image->set_tmp_filename();
-  $image->dc = $hsp_dc;
-  $image->{'img_map'} = 1;
+  my $image = new EnsEMBL::Web::Document::Image( $self->species_defs );
+  $image->drawable_container = $hsp_dc;
   return $image;
 }
 

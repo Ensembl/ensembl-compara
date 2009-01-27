@@ -38,7 +38,7 @@ use EnsEMBL::Web::Document::Static;
 use EnsEMBL::Web::Document::Dynamic;
 use EnsEMBL::Web::Document::Panel;
 
-use EnsEMBL::Web::File::Image;
+use EnsEMBL::Web::Document::Image;
 use vars qw( $SPECIES_DEFS $META_DATA $CGI $BLAST $PAGE $TICKET $DBCONNECTION );
 use vars qw( @JSCRIPT_EXTRA @ON_LOAD_EXTRA %CACHE_ON_LOAD_EXTRA); # Jscript 
 use vars qw( %ERRORS ); # Errors per-stage
@@ -1835,12 +1835,12 @@ sub populate_karyotype{
     { 'web_species' => $sp, ka=>$ka, sa=>$sa, 'chr' => 'ALL' }, $web_config, [ \%highlights, \%highlights2 ] 
   );
   
-  my $fi = new EnsEMBL::Web::File::Image( $SPECIES_DEFS );
-     $fi->set_tmp_filename();
-     $fi->dc = $karyo_dc;
-     $fi->{'img_map'} = 1;
-     $fi->{'border'}  = 1;
-     $fi->{'id'}      = 'blast_karyo_i';
+  my $fi = new EnsEMBL::Web::Document::Image( $SPECIES_DEFS );
+     $fi->drawable_container = $karyo_dc;
+     $fi->image_id           = 'blast_karyo_i';
+     #$fi->{'img_map'} = 1;
+     #$fi->{'border'}  = 1;
+
 
   $main_panel->add_entry();
   my $img_tag = $fi->render_image_tag;
@@ -1873,11 +1873,8 @@ sub draw_hsp_vs_query{
 
   my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket,$web_config);
 
-  my $fi = new EnsEMBL::Web::File::Image( $SPECIES_DEFS );
-     $fi->set_tmp_filename();
-     $fi->dc = $hsp_dc;
-     $fi->{'img_map'} = 1;
-     $fi->{'border'} = 1;
+  my $fi = new EnsEMBL::Web::Document::Image( $SPECIES_DEFS );
+     $fi->drawable_container = $hsp_dc;
 
 warn "... ",$bucket->length;
 

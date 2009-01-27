@@ -15,7 +15,9 @@ sub new {
     'imagemap'           => 'no',
     'image_type'         => 'image',
     'image_name'         => undef,
-    'cacheable'          => 'no',
+
+    # Deprecated
+    # 'cacheable'          => 'no',
 
     'introduction'       => undef,
     'tailnote'           => undef,
@@ -23,6 +25,7 @@ sub new {
     'button_title'       => undef,
     'button_name'        => undef,
     'button_id'          => undef,
+    'image_id'           => undef,
     'format'             => 'png',
     'prefix'             => 'p',
 
@@ -470,7 +473,10 @@ sub button_name        : lvalue { $_[0]->{'button_name'}; }
 sub button_title       : lvalue { $_[0]->{'button_title'}; }
 sub image_type         : lvalue { $_[0]->{'image_type'}; }
 sub image_name         : lvalue { $_[0]->{'image_name'}; }
-sub cacheable          : lvalue { $_[0]->{'cacheable'}; }
+sub image_id           : lvalue { $_[0]->{'image_id'}; }
+
+# Deprecated:
+# sub cacheable          : lvalue { $_[0]->{'cacheable'}; }
 
 sub image_width        { $_[0]->drawable_container->{'config'}->get_parameter('image_width'); }
 sub introduction       : lvalue { $_[0]->{'introduction'}; }
@@ -727,7 +733,6 @@ This object creates and renders a dynamically-generated image using modules from
 
 The image's parameters can then be set using the accessor methods (see below for a full list), e.g.
 
-  $image->cacheable  = 'no';
   $image->image_name = "feature-$species";
   $image->imagemap   = 'yes';
 
@@ -823,7 +828,7 @@ Returns:        a reference to the hash of pointers
 
 =item image_name     
 
-=item cacheable     
+=item image_id
 
 =item image_width  
 
