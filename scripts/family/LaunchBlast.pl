@@ -25,6 +25,8 @@ GetOptions('idqy=s' => \$idqy,
 	   'tab=s' => \$tab_file,
 	   'dir=s' => \$dir);
 
+my $final_raw_file = $dir."/".basename($idqy).".raw";
+
 unless (-e $idqy) {
   die "$idqy does not exist\n";
 }
@@ -37,6 +39,11 @@ my $raw_file = "/tmp/raw.$rand";
 
 # We should get the sequence directly from the compara database.
 
+if (-e "$final_raw_file.gz") {
+  print STDERR "Job already finished. Exit.\n";
+  exit 0;
+}
+
 unless(system("$fastafetch_executable -F true $fastadb $fastaindex $idqy |grep -v \"^Message\" > $qy_file") == 0) {
   unlink glob("/tmp/*$rand*");
   die "error in $fastafetch_executable, $!\n";
@@ -44,6 +51,7 @@ unless(system("$fastafetch_executable -F true $fastadb $fastaindex $idqy |grep -
 
 my $status = system("$blast_executable -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
 unless ($status == 0) {
+  $DB::single=1;1;#??
   unlink glob("/tmp/*$rand*");
   die "error in $blast_executable, $!\n";
 }
@@ -53,7 +61,6 @@ unless (system("$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tab_
   die "error in $blast_parser_executable, $!\n";
 }
 
-my $final_raw_file = $dir."/".basename($idqy).".raw";
 unless (system("gzip -c $raw_file > $final_raw_file.gz") == 0) {
   unlink glob("/tmp/*$rand*");
   die "error in cp $raw_file, $!\n";
