@@ -839,9 +839,14 @@ sub get_status_panel{
                              VALUE => $CGI->param( 'stage' ),
                              SRC   => gen_button_src('refresh', 'on') },
 
-                           { HREF  => qq(javascript:void(window.open(\'http://mar2008.archive.ensembl.org/Homo_sapiens/helpview?se=1&kw=$VIEW_SCRIPT\',\'$VIEW_SCRIPT\',\'width=750,height=550,resizable,scrollbars\'));),
-                             SRC   => gen_button_src('help', 'on') }
+                            { HREF => '/Help/View?id=196', 
+                              CLASS => 'modal_link',
+                              SRC   => gen_button_src('help', 'on') }
                           );
+
+##                           { HREF  => qq(javascript:void(window.open(\'http://mar2008.archive.ensembl.org/Homo_sapiens/helpview?se=1&kw=$VIEW_SCRIPT\',\'$VIEW_SCRIPT\',\'width=750,height=550,resizable,scrollbars\'));),
+  ##                           SRC   => gen_button_src('help', 'on') }
+    ##                      );
 
   $panel->add_panel_header({ LABEL => 'Summary' });
 
