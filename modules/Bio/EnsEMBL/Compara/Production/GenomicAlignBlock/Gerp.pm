@@ -590,42 +590,44 @@ sub _parse_cons_file {
     unless ($mlss) {
 	throw("Invalid method_link_species_set\n");
     }
+    my $constrained_element_adaptor = $self->{'comparaDBA'}->get_ConstrainedElementAdaptor;
+    unless ($constrained_element_adaptor) {
+	throw("could not get a constrained_element_adaptor\n");
+    }
 
     open CONS, $cons_file || throw("Could not open $cons_file");
-
+    my @constrained_elements;
     while (<CONS>) {
 	unless (/^#/) {
-		chomp;
-		#extract info from constraints file
-		my ($start, $end, $length, $rej_subs);
-		#if ($version == 1) {
-		    #($start, $end, $length, $rej_subs) = split /\t/,$_; 
-		#} else {
-		($start, $end, $length, $rej_subs) = split /\s/,$_;
-		#}
-		#create new genomic align blocks by converting alignment 
-		#coords to chromosome coords
-		my $constrained_gab = $gab->restrict_between_alignment_positions($start, $end, "skip"); 
-
-		#if no restriction was required, it returns the original gab
-		#back but I need to reset the dbID in this case otherwise I end
-		#up trying to store the original gab again!
-		if (defined $constrained_gab->dbID && $constrained_gab->dbID == $gab->dbID) {
-		    ## This loads the underlying GenomicAlign objects before deleting the internal IDs
-		    $gab->get_all_GenomicAligns;
-		    $constrained_gab->dbID(0);
-		    foreach my $genomic_align (@{$constrained_gab->get_all_GenomicAligns}) {
-			$genomic_align->dbID(0);
-		    }
+                chomp;
+                #extract info from constraints file
+                my ($start, $end, $length, $rej_subs, $p_value);
+                ($start, $end, $length, $rej_subs, $p_value) = split /\s/,$_;
+                #create new genomic align blocks by converting alignment 
+                #coords to chromosome coords
+                my $constrained_gab = $gab->restrict_between_alignment_positions($start, $end, "skip");
+                my $constrained_element_block;
+                my ($taxonomic_level) = join(" ", $mlss->name=~/\b[a-z]+\b/g); #feeble hack to get the taxonomic level
+		foreach my $genomic_align (@{$constrained_gab->get_all_GenomicAligns}) {
+         	       my $constrained_element =  new Bio::EnsEMBL::Compara::ConstrainedElement(
+                	        -reference_dnafrag_id => $genomic_align->dnafrag_id,
+				-start => $genomic_align->dnafrag_start,
+				-end => $genomic_align->dnafrag_end,
+                        	-score => $rej_subs,
+                        	-p_value => $p_value,
+                        	-method_link_species_set => $mlss->dbID,
+                        	-taxonomic_level => $taxonomic_level,
+                	);
+                	push(@$constrained_element_block, $constrained_element);
 		}
-		$constrained_gab->score($rej_subs);
-		$constrained_gab->method_link_species_set($mlss);
-
-		$gaba->store($constrained_gab);
-	    }
+		push(@constrained_elements, $constrained_element_block);
+        }
     }
     close(CONS);
+    #store in constrained_element table
+    $constrained_element_adaptor->store($mlss, \@constrained_elements);	
 }
+
 
 #This method parses the gerp rates file and stores the multiple alignment 
 #genomic align block id, window size, position, expected scores 
