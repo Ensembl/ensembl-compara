@@ -22,7 +22,7 @@ use overload (
 );
 
 __PACKAGE__->mk_accessors(qw(species_defs content_type format compress drivers));
-__PACKAGE__->mk_ro_accessors(qw(full_path prefix extension file_root path_format URL_root URL shortname));
+__PACKAGE__->mk_ro_accessors(qw(full_path prefix extension file_root path_format URL_root URL shortname token));
 
 sub new {
   my $class = shift;
