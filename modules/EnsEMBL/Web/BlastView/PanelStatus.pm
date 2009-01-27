@@ -201,6 +201,7 @@ sub add_panel_button{
 	my $ahr_extra = '';
 	my $img_extra = '';
 	if( $meta->{TARGET} ){ $ahr_extra.=" target='$meta->{TARGET}'"}
+	if( $meta->{CLASS}  ){ $ahr_extra.=" class='$meta->{CLASS}'"}
 	if( $meta->{HEIGHT} ){ $img_extra.=" height='$meta->{HEIGHT}'"} 
 	if( $meta->{WIDTH}  ){ $img_extra.=" width ='$meta->{WIDTH}'"}
 	$button = sprintf( $tmpl, 
