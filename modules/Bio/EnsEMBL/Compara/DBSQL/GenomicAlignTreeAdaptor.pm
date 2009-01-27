@@ -671,6 +671,38 @@ sub fetch_node_by_node_id {
    return $parent;
  }
 
+=head2 fetch_all_children_for_node
+
+  Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Example    : my $node = $self->adaptor->fetch_all_children_for_node($self);
+  Description: Over-ride NestedSetAdaptor method for getting the all the children of a node
+  Returntype : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
+  Exceptions : throw if not Bio::EnsEMBL::Compara::NestedSet
+  Caller     : 
+  Status     : At risk
+
+=cut
+
+sub fetch_all_children_for_node {
+  my ($self, $node) = @_;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+  }
+
+  my $sql = "SELECT " . join(",", @{$self->columns}) .  
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.parent_id = " . $node->node_id;
+
+   my $sth = $self->prepare($sql);
+   $sth->execute;
+   my $kids = $self->_objs_from_sth($sth);
+   $sth->finish;
+
+  foreach my $child (@{$kids}) { $node->add_child($child); }
+
+  return $node;
+}
+
 =head2 fetch_root_by_node
 
   Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
@@ -779,6 +811,7 @@ sub update_neighbourhood_data {
   my $sth = $self->prepare("UPDATE genomic_align_tree
       SET left_node_id = ?, right_node_id = ?
       WHERE node_id = ?");
+  #print "update_neighbourhood_data " . $node->left_node_id . " "  .$node->right_node_id . " " . $node->node_id . "\n";
   $sth->execute($node->left_node_id, $node->right_node_id, $node->node_id);
 
   if (!$no_recursivity) {
