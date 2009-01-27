@@ -393,12 +393,12 @@ sub genomic_align_block {
     weaken($self->{'genomic_align_block'} = $genomic_align_block);
 
     ## Add adaptor to genomic_align_block object if possible and needed
-    if (!defined($genomic_align_block->adaptor) and defined($self->adaptor)) {
+    if (!defined($genomic_align_block->{'adaptor'}) and defined($self->{'adaptor'})) {
       $genomic_align_block->adaptor($self->adaptor->db->get_GenomicAlignBlockAdaptor);
     }
 
     if ($self->{'genomic_align_block_id'}) {
-      if (!$self->{'genomic_align_block'}->dbID) {
+      if (!$self->{'genomic_align_block'}->{'dbID'}) {
         $self->{'genomic_align_block'}->dbID($self->{'genomic_align_block_id'});
       }
 #       warning("Defining both genomic_align_block_id and genomic_align_block");
@@ -406,9 +406,9 @@ sub genomic_align_block {
             " genomic_align_block_id. If you want to override a".
             " Bio::EnsEMBL::Compara::GenomicAlign object, you can reset the ".
             "genomic_align_block_id using \$genomic_align->genomic_align_block_id(0)")
-          if ($self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
+          if ($self->{'genomic_align_block'}->{'dbID'} != $self->{'genomic_align_block_id'});
     } else {
-      $self->{'genomic_align_block_id'} = $genomic_align_block->dbID;
+      $self->{'genomic_align_block_id'} = $genomic_align_block->{'dbID'};
     }
 
   } elsif (!defined($self->{'genomic_align_block'})) {
@@ -1472,7 +1472,8 @@ sub reverse_complement {
   my ($self) = @_;
 
   # reverse strand
-  $self->dnafrag_strand($self->dnafrag_strand * -1);
+  #$self->dnafrag_strand($self->dnafrag_strand * -1);
+  $self->dnafrag_strand($self->{'dnafrag_strand'} * -1);
 
   # reverse original and aligned sequences if cached
   my $original_sequence = $self->{'original_sequence'};
@@ -1489,9 +1490,10 @@ sub reverse_complement {
   }
   
   # reverse cigar_string as consequence
-  my $cigar_line = $self->cigar_line;
-  $cigar_line = join("", reverse grep {$_} split(/(\d*[GDMIX])/, $cigar_line));
-
+  my $cigar_line = $self->{'cigar_line'};
+  
+  #$cigar_line = join("", reverse grep {$_} split(/(\d*[GDMIX])/, $cigar_line));
+  $cigar_line = join("", reverse ($cigar_line=~(/(\d*[GDMIX])/g)));
   $self->cigar_line($cigar_line);
 }
 
