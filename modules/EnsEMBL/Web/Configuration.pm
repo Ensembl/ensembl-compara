@@ -145,7 +145,7 @@ sub _get_valid_action {
   $node = $self->tree->get_node( $action )           unless $node;
   return $action if $node && $node->get('type') =~ /view/ &&
                     $self->is_available( $node->get('availability') );
-  my @nodes = ( $self->default_action, 'Idhistory', 'Chromosome', 'Karyotype' );
+  my @nodes = ( $self->default_action, 'Idhistory', 'Chromosome', 'Genome' );
   foreach( @nodes ) {
     $node = $self->tree->get_node( $_ );
      #warn( "H: $_:",$node->get('availability').'; '.join ("\t", grep { $self->{'availability'}{$_} } keys %{$self->{'availability'}||{} } ) ) if $node;
