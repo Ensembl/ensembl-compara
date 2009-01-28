@@ -141,8 +141,8 @@ sub _content {
   $trans_obj->{'introns_and_exons'} = $intron_exon_slices;
 
   #add info on normalised coding region
-  my $raw_coding_start = defined($transcript->coding_region_start) ? $transcript->coding_region_start-$offset : $transcript->start-$offset;
-  my $raw_coding_end   = defined($transcript->coding_region_end)   ? $transcript->coding_region_end-$offset   : $transcript->end-$offset;
+  my $raw_coding_start = defined($transcript->coding_region_start) ? $transcript->coding_region_start-$offset : '';
+  my $raw_coding_end   = defined($transcript->coding_region_end)   ? $transcript->coding_region_end-$offset   : '';
   my $coding_start = $raw_coding_start + $object->munge_gaps( 'supporting_evidence_transcript', $raw_coding_start );
   my $coding_end   = $raw_coding_end   + $object->munge_gaps( 'supporting_evidence_transcript', $raw_coding_end );
   $trans_obj->{'coding_start'} = $coding_start;
@@ -200,7 +200,7 @@ sub _content {
     $t_evidence->{$hit_name}{'hit_name'} = $hit_name;
     $t_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
     $t_evidence->{$hit_name}{'hit_type'} = ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) ? 'protein' : $self->hit_type($info_summary,$evi);
-     
+
     #split evidence into ungapped features (ie parse cigar string),
     #map onto exons ie determine mismatches
     #and munge (ie account for gaps)
@@ -277,7 +277,7 @@ sub _content {
     $t_evidence->{$hit_name}{'hit_length'} = $tot_length;
   }
   $al_obj->{'transcript_evidence'} = $t_evidence;
-  
+
   #add info on additional supporting_evidence (exon level)
   my $e_evidence = {};
   my $evidence_checks;
@@ -385,7 +385,7 @@ sub _content {
   #add tags if the merged hit extends beyond the end of the transcript (but not for Vega db genes since they don't mean anything)
   if ($o_type ne 'vega') {
     while ( my ($hit_name, $coords) = each (%evidence_ends)) {
-      if ( $e_evidence->{$hit_name}{'data'}) {
+      if ( @{$e_evidence->{$hit_name}{'data'}}) {
         if ($coords->{'start'} < $transcript->start) {
           my $diff =  $transcript->start - $coords->{'start'};
           $e_evidence->{$hit_name}{'data'}[0]{'lh_ext'}  = $transcript->start - $coords->{'start'};
@@ -421,13 +421,13 @@ sub _content {
   if (! %{$al_obj->{'transcript_evidence'}}) {
       $wuc->modify_configs(
 	  [ 'TSE_generic_match_label' ],
-	  { 'caption', 'Transcript evidence (none)'}
+	  { 'caption', 'Transcript evi. (none)'}
       );
   }
   if (! %{$al_obj->{'evidence'}}) {
       $wuc->modify_configs(
 	  [ 'SE_generic_match_label' ],
-	  { 'caption', 'Exon evidence (none)'}
+	  { 'caption', 'Exon evi. (none)'}
       );
   }
 
