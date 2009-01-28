@@ -342,7 +342,7 @@ sub _location_from_SeqRegion {
     my $action = $ENV{'ENSEMBL_ACTION'};
     if( $chr ) {
       $self->problem( "fatal", "Locate error", $self->_help( "Cannot locate region $chr on the current assembly." ) );
-    } elsif ($action && $action eq 'Karyotype' && $self->species_defs->ENSEMBL_CHROMOSOMES) {
+    } elsif ($action && $action eq 'Genome' && $self->species_defs->ENSEMBL_CHROMOSOMES) {
       ## Create a slice of the first chromosome to force this page to work!
       my @chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};
       my $TS;
@@ -420,7 +420,7 @@ sub _create_object_from_core {
   my $data = undef;
   if( $l->isa( 'EnsEMBL::Web::Fake' ) ) {
     $data = EnsEMBL::Web::Proxy::Object->new( 'Location', {
-        'type' => 'Karyotype',
+        'type' => 'Genome',
         'real_species' => $self->__species
       },
       $self->__data
