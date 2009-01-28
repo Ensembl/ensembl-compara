@@ -25,7 +25,7 @@ our %mapping = (
   'geneview'              => { 'type' => 'Gene',       'action' => 'Summary',       'initial_release' => 1 },
   'helpview'              => { 'type' => 'Help',       'action' => 'Search',        'initial_release' => 34 },
   'idhistoryview'         => { 'type' => 'Gene',       'action' => 'Idhistory',     'initial_release' => 39 },
-  'karyoview'             => { 'type' => 'Location',   'action' => 'Karyotype',     'initial_release' => 1 },
+  'karyoview'             => { 'type' => 'Location',   'action' => 'Genome',        'initial_release' => 1 },
   'ldtableview'           => { 'type' => 'Location',   'action' => 'LDtable',       'initial_release' => 34 },
   'ldview'                => { 'type' => 'Location',   'action' => 'LD',            'initial_release' => 31 },
   'mapview'               => { 'type' => 'Location',   'action' => 'Chromosome',    'initial_release' => 1 },
