@@ -46,7 +46,7 @@ sub features       {
   for my $logic_name ( @logic_names ) {
 
     my $stylesheet = $data->{ $logic_name }{ 'stylesheet' }{ 'object' }
-      || $Bio::EnsEMBL::ExternalData::DAS::Stylesheet::DEFAULT_STYLESHEET;
+      || Bio::EnsEMBL::ExternalData::DAS::Stylesheet->new();
     for my $segment ( keys %{ $data->{ $logic_name }{ 'features' } } ) {
       
       my $f_data = $data->{ $logic_name }{ 'features' }{ $segment };
@@ -83,7 +83,7 @@ sub features       {
           foreach( @{$f->groups} ) {
             my $g  = $_->{'group_id'};
             my $ty = $_->{'group_type'};
-            my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
+            $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
             if( exists $groups{$logic_name}{$g}{$st_x} ) {
               my $t = $groups{$logic_name}{$g}{$st_x};
               push @{ $t->{'features'}{$style_key} }, $f;
@@ -108,10 +108,12 @@ sub features       {
             }
           }
         } else { ## Feature doesn't have groups so fake it with the feature id as group id!
-          my $g     = ( $fs->{'use_score'} || $fs->{'style'}{'bump'} eq '0' ) ? 'default' : $f->display_id;      ## If histogram/un-bumped
-          my $label = ( $fs->{'use_score'} || $fs->{'style'}{'bump'} eq '0' ) ? ''        : $f->display_label;   ## If histogram/un-bumped
-          my $ty = $f->type_id;       # & the feature type
-          my $gs = $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
+          my $bump = ( $fs->{'style'}{'bump'} ne 'no' && $fs->{'style'}{'bump'} ne '0' );
+          my $g     = ( $fs->{'use_score'} || !$bump ) ? 'default' : $f->display_id;      ## If histogram/un-bumped
+          my $label = ( $fs->{'use_score'} || !$bump ) ? ''        : $f->display_label;   ## If histogram/un-bumped
+          # Do not display any group glyphs for "logical" groups (score-based or unbumped)
+          # But do for "hacked" groups (shared feature IDs). May change this behaviour later as servers really shouldn't do this
+          $group_styles{$logic_name}{ $ty } ||= { 'style' => $fs->{'use_score'} || !$bump ? $HIDDEN_GLYPH : $stylesheet->find_group_glyph( 'default', 'default' ) };
           if( exists $groups{$logic_name}{$g}{$st} ) {
   ## Ignore all subsequent notes, links and targets, probably should merge arrays somehow....
             my $t = $groups{$logic_name}{$g}{$st};
