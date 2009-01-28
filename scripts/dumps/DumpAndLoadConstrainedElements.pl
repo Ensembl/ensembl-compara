@@ -49,37 +49,31 @@ use Data::Dumper;
 
 my ($help, $old_url, $new_url, $mlssid);
 
-eval{        
-	GetOptions(                
-		"help" => \$help,
-		"old=s" => \$old_url,                
-		"new=s" => \$new_url,
-                "mlssid=s" => \$mlssid,
-	) or die;
-};
+GetOptions(                
+	"help" => \$help,
+	"old=s" => \$old_url,                
+	"new=s" => \$new_url,
+        "mlssid=s" => \$mlssid,
+);
 
-if($@ || $help) {
-	help(), die $@;
+if($help) {
+	help();
 }
 
 sub help {        
 	print STDERR 'Args:  --old mysql://ensro@compara1:3306/ensembl_compara_52', "\n", 
 		     '       --new mysql://ensadmin:<pass>@compara1:3306/ensembl_compara_53', "\n",
 		     "       --mlssid 339\n";
+	die;
 }
 
-eval {
-	die "** no mlssid defined **\n" unless defined ($mlssid);
-	die unless $old_url =~ s/^mysql\:\/\///;
-	die unless $old_url =~ s/[\/@]/:/g;
-	die unless $new_url =~ s/^mysql\:\/\///;
-	die unless $new_url =~ s/[\/@]/:/g;
-	die unless ($old_url=~ s/:/:/g == 3 && $new_url=~ s/:/:/g == 4);
-};
+help() unless $old_url =~ s/^mysql\:\/\///;
+help() unless $old_url =~ s/[\/@]/:/g;
+help() unless $new_url =~ s/^mysql\:\/\///;
+help() unless $new_url =~ s/[\/@]/:/g;
+help() unless ($old_url=~ s/:/:/g == 3 && $new_url=~ s/:/:/g == 4);
+die "** no mlssid defined **\n" unless defined ($mlssid);
 
-if($@) {
-	help(), die $@;
-}
 
 my ($old_user,$old_host,$old_port,$old_db) = split(":", $old_url);
 my ($new_user,$pass,$new_host,$new_port,$new_db) = split(":", $new_url);
@@ -108,7 +102,8 @@ my $new_dbh = DBI->connect("DBI:mysql:host=$new_host;port=$new_port;database=$ne
 
 my $old_mlss_adaptor = $old_dba->get_adaptor("MethodLinkSpeciesSet");
 my $old_mlss = $old_mlss_adaptor->fetch_by_dbID($mlssid);
-die "$mlssid : no such mlssid in $old_url\n" unless defined($old_mlss->dbID); 
+eval { $old_mlss->dbID };
+die "$@$mlssid : no such mlssid in $old_db\@$old_host\n" if $@;
 my ($taxonomic_level) = join(" ", $old_mlss->name=~/\b[a-z]+\b/g);
 
 my $new_mlss_adaptor = $new_dba->get_adaptor("MethodLinkSpeciesSet");
