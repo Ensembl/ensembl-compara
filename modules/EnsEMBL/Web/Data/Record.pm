@@ -5,6 +5,30 @@ use warnings;
 use base qw(EnsEMBL::Web::Data::Trackable);
 use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
+###################################################################################################
+##
+## New constructor is a bit different for Record
+## It's used to access existing Record when record type is not known
+## Input parameter is hash:
+## owner => 'user'/'group'/$user/$group
+## id    => $id
+##
+###################################################################################################
+
+sub new {
+  my $class = shift; 
+  my %args  = @_;
+
+  die 'do not use new() constructor for Data::Record::* classes, call "has_many" methods from the owner instead'
+    if ref $class || $class ne 'EnsEMBL::Web::Data::Record';
+
+  die "Owner & id is necessary for the $class"
+    unless $args{owner} && $args{id};
+  
+  my $self = bless {}, $class;
+  $self->owner($args{owner});
+  return $self->retrieve($args{id});
+}
 
 ###################################################################################################
 ##
@@ -15,21 +39,22 @@ use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
 sub owner {
   my $class = shift;
-  my $owner = lc(shift);
-    no strict 'refs';
+  my $owner = shift;
+  
+  no strict 'refs';
     
-    if ($owner eq 'user') {
-      $class->table($class->species_defs->ENSEMBL_USER_DATA_TABLE);
-      $class->set_primary_key($class->species_defs->ENSEMBL_USER_DATA_TABLE.'_id');
-      $class->has_a(user => 'EnsEMBL::Web::Data::User');
-      *{ "$class\::owner_type" } = sub { return 'user' };
-    } elsif ($owner eq 'group') {
-      $class->table($class->species_defs->ENSEMBL_GROUP_DATA_TABLE);
-      $class->set_primary_key($class->species_defs->ENSEMBL_GROUP_DATA_TABLE.'_id');
-      $class->has_a(webgroup => 'EnsEMBL::Web::Data::Group');
-      *{ "$class\::owner_type" } = sub { return 'group' };
-      *{ "$class\::group" }      = sub { return shift->webgroup(@_) };
-    }
+  if ((ref $owner && $owner->isa('EnsEMBL::Web::Data::User')) || lc($owner) eq 'user') {
+    $class->table($class->species_defs->ENSEMBL_USER_DATA_TABLE);
+    $class->set_primary_key($class->species_defs->ENSEMBL_USER_DATA_TABLE.'_id');
+    $class->has_a(user => 'EnsEMBL::Web::Data::User');
+    *{ "$class\::owner_type" } = sub { return 'user' };
+  } elsif ((ref $owner && $owner->isa('EnsEMBL::Web::Data::Group')) || lc($owner) eq 'group') {
+    $class->table($class->species_defs->ENSEMBL_GROUP_DATA_TABLE);
+    $class->set_primary_key($class->species_defs->ENSEMBL_GROUP_DATA_TABLE.'_id');
+    $class->has_a(webgroup => 'EnsEMBL::Web::Data::Group');
+    *{ "$class\::owner_type" } = sub { return 'group' };
+    *{ "$class\::group" }      = sub { return shift->webgroup(@_) };
+  }
 
 }
 
