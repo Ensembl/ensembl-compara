@@ -443,9 +443,21 @@ sub _writeMultiFastaAlignment {
         $aligned_sequence =~ s/\./\-/g;
         chomp($aligned_sequence);
         print ALIGN ">$seq_name\n$aligned_sequence\n";
+	free_aligned_sequence($this_segment);
     }
     close ALIGN;
 }
+
+sub free_aligned_sequence {
+    my ($leaf) = @_;
+
+    my $genomic_align_group = $leaf->genomic_align_group;
+
+    foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+	undef($this_genomic_align->{'aligned_sequence'});
+    }
+}
+
 
 #run gerp version 1
 sub run_gerp {
