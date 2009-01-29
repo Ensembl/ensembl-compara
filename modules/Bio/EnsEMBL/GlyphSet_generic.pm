@@ -56,7 +56,7 @@ my $offset = $self->{'container'}->start - 1;
 
       foreach my $style_key ( keys %{$group->{'features'}} ) {
         my $f_s  = $features->{'f_styles'}{$lname}{$style_key};
-        $has_labels = 1 if $f_s->{'style'}{'label'} eq 'yes' && $f_s->{'style'}{'bump'} ne 'no'; ##WHY!
+        $has_labels = 1 if $f_s->{'style'}{'label'} eq 'yes';
         my $to_bump = lc($f_s->{'style'}{'bump'}) eq 'yes' || $f_s->{'style'}{'bump'} eq '1';             ## Bump if style bump is set!
         my $fn_c = "composite_extent_".$f_s->{'style'}{'symbol'};
         my $fn_g = "extent_".$f_s->{'style'}{'symbol'};
