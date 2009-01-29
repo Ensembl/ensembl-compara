@@ -100,9 +100,17 @@ if ($rmconfig) {
   }
 }
 
+## Check memcached servers version
+  warn " Checking memcached compatibility...\n";
+  my $res = system("perl $serverroot/utils/memd.pl version");
+  if ($res >> 8 > 0) {
+    die " failed\n";
+  }
+
+
 if( $flush || $rmconfig ) {
   # Flush memcached
-  ## TODO: kill the hack
+  ## TODO: kill the hack // looks like it's not a hack anymore
   ## HACK: add extra tag for everything except user upload data	
   my $cmd = "perl $serverroot/utils/memd.pl flush no_user_upload";
   my @res = `$cmd`; chomp @res;

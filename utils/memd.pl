@@ -2,7 +2,6 @@
 
 use strict;
 use FindBin qw($Bin);
-use Cache::Memcached;
 use Data::Dumper;
 
 BEGIN{
@@ -20,19 +19,26 @@ my $MEMD = new EnsEMBL::Web::Cache;
 
 if ($MEMD) {
 
-  if ($ARGV[0] =~ /get/i) {
+  if ($ARGV[0] =~ /version/i) {
+    if ($MEMD->version_check) {
+      print " all available servers are of correct version\n";
+    } else {
+      print " one or more servers are of incorrect version\n";
+      exit 2;
+    }
+  } if ($ARGV[0] =~ /get/i) {
     print $MEMD->get($ARGV[1])."\n";
   } elsif ($ARGV[0] =~ /delete/i) {
     shift @ARGV;
     if ($MEMD->delete(@ARGV)) { print "1 item deleted \n"; } else { print "item not found \n"};
   } elsif ($ARGV[0] =~ /flush/i) {
-    print "Flushing cache:\n";
+    print " Flushing cache:\n";
     shift @ARGV;
     print $MEMD->delete_by_tags(@ARGV) . " cache items deleted\n";
 
   } elsif ($ARGV[0] =~ /stats/i) {
     shift @ARGV;
-    print "Stats:\n";
+    print " Stats:\n";
     print Dumper($MEMD->stats(@ARGV))."\n";
 #  } else {
 #  
@@ -57,7 +63,7 @@ if ($MEMD) {
 #  
   }
 } else {
-   print "No memcached server configured or can't connect \n";
+   print " No memcached server configured or can't connect \n";
 }
 
 

@@ -183,4 +183,28 @@ sub _warn {
     if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_MEMCACHED;
 }
 
+## Check if all memd servers are of the right version
+## if any of them is not, return false
+sub version_check {
+  my $self = shift;
+  my $correct = 1;
+  
+  my @hosts = @{$self->{'buckets'}};
+  foreach my $host (@hosts) {
+      my $sock = $self->sock_to_host($host);
+      my $res = $self->_write_and_read($sock, "version\r\n");
+      $res =~ s/[\n|\r]//g;
+      if ($res && $res =~ /tags/) {
+        _warn("$host - $res");
+      } elsif ($res) {
+        _warn("$host - $res, Incorrect version");
+        $correct = 0;
+      } else {
+        _warn("$host - connection error, ignoring");
+      }
+  }
+
+  return $correct;
+}
+
 1;
