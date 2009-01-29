@@ -115,9 +115,9 @@ sub features       {
           # But do for "hacked" groups (shared feature IDs). May change this behaviour later as servers really shouldn't do this
           my $ty = $f->type_id;
           $group_styles{$logic_name}{ $ty } ||= { 'style' => $pseudogroup ? $HIDDEN_GLYPH : $stylesheet->find_group_glyph( 'default', 'default' ) };
-          if( exists $groups{$logic_name}{$g}{$st} ) {
+          if( exists $groups{$logic_name}{$g}{$st_x} ) {
   ## Ignore all subsequent notes, links and targets, probably should merge arrays somehow....
-            my $t = $groups{$logic_name}{$g}{$st};
+            my $t = $groups{$logic_name}{$g}{$st_x};
             push @{ $t->{'features'}{$style_key} }, $f;
             $t->{'start'} = $f->start if $f->start < $t->{'start'};
             $t->{'end'}   = $f->end   if $f->end   > $t->{'end'};
