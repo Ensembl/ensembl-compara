@@ -20,9 +20,10 @@ Bio::EnsEMBL::Compara::ConstrainedElement - constrained element data produced by
   my $constrained_element = new Bio::EnsEMBL::Compara::ConstrainedElement(
           -adaptor => $constrained_element_adaptor,
           -method_link_species_set_id => $method_link_species_set_id,
+	  -reference_dnafrag_id => $dnafrag_id,
           -score => 56.2,
           -p_value => '1.203e-6',
-          - => [ [$dnafrag1_id, $dnafrag1_start, $dnafrag1_end], [$dnafrag2_id, $dnafrag2_start, $dnafrag2_end], ... ],
+          -alignment_segments => [ [$dnafrag1_id, $start, $end, $genome_db_id, $dnafrag1_name ], [$dnafrag2_id, ... ], ... ],
 	  -taxonomic_level => "eutherian mammals",
       );
 
@@ -35,8 +36,9 @@ GET / SET VALUES
   $constrained_element->taxonomic_level("eutherian mammals");
   $constrained_element->alignment_segments([ [$dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], ... ]);
   $constrained_element->slice($slice);
-  $constrained_element->slice_start($slice_start);
-  $constrained_element->slice_end($slice_end);
+  $constrained_element->start($constrained_element_start - $slice_start + 1);
+  $constrained_element->end($constrained_element_end - $slice_start + 1);
+  $constrained_element->reference_dnafrag_id($dnafrag_id);
 
 =head1 OBJECT ATTRIBUTES
 
@@ -70,13 +72,13 @@ corresponds to constrained_element.taxonoic_level
 
 corresponds to a Bio::EnsEMBL::Slice 
 
-=item slice_start
+=item start
 
-corresponds to a slice.slice_start
+corresponds to a constrained_element.dnafrag_start (in slice coordinates)
 
-=item slice_end
+=item end
 
-corresponds to a slice.slice_end
+corresponds to a constrained_element.dnafrag_end (in slice coordinates)
 
 =item $alignment_segments
 
@@ -149,9 +151,9 @@ use Data::Dumper;
   Arg [-SLICE]
 	     : (opt.) Bio::EnsEMBL::Slice object
   Arg [-START]
-	     : (opt.) int Bio::EnsEMBL::Slice->start.
+	     : (opt.) int ($dnafrag_start - Bio::EnsEMBL::Slice->start + 1).
   Arg [-END]
-	     : (opt.) int Bio::EnsEMBL::Slice->end
+	     : (opt.) int ($dnafrag_end - Bio::EnsEMBL::Slice->start + 1).
   Arg [-REFERENCE_DNAFRAG_ID]
 	     : (opt.) int $dnafrag_id of the slice or dnafrag 
 
@@ -161,12 +163,13 @@ use Data::Dumper;
                        -adaptor => $adaptor,
                        -method_link_species_set_id => $method_link_species_set_id,
                        -score => 28.2,
-                       -alignment_segments => [ [ $dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], .. ],
+                       -alignment_segments => [ [ $dnafrag_id, $dnafrag_start, $dnafrag_end, $genome_db_id, $dnafrag_name ], .. ], 
+									#danfarg_[start|end|id] from constrained_element table
                        -p_value => '5.023e-6',
                        -taxonomic_level => "eutherian mammals",
 		       -slice => $slice_obj,
-		       -start => $slice_obj->start,
-		       -end => $slice_obj->end,
+		       -start => ( $dnafrag_start - $slice_obj->start + 1),
+		       -end => ( $dnafrag_end - $slice_obj->start + 1),
 		       -reference_dnafrag_id => $dnafrag_id,
                    );
   Description: Creates a new ConstrainedElement object
@@ -211,7 +214,6 @@ sub new {
   return $self;
 }
 
-
 sub new_fast {
   my $class = shift;
   my $hashref = shift;
@@ -253,7 +255,7 @@ sub adaptor {
   Example    : $constrained_element->dbID(2);
   Description: Getter/Setter for the attribute dbID 
   Returntype : integer
-  Exceptions : none
+  Exceptions : returns undef if no ref.dbID
   Caller     : general
 
 =cut
@@ -276,7 +278,7 @@ sub dbID {
   Example    : $constrained_element->p_value('5.35242e-105');
   Description: Getter/Setter for the attribute p_value
   Returntype : float 
-  Exceptions : none
+  Exceptions : returns undef if no ref.p_value
   Caller     : general
 
 =cut
@@ -298,7 +300,7 @@ sub p_value {
   Example    : $constrained_element->taxonomic_level("eutherian mammals");
   Description: Getter/Setter for the attribute taxonomic_level 
   Returntype : string
-  Exceptions : none
+  Exceptions : returns undef if no ref.taxonomic_level
   Caller     : general
 
 =cut
@@ -319,7 +321,7 @@ sub taxonomic_level {
   Example    : $constrained_element->score(16.8);
   Description: Getter/Setter for the attribute score 
   Returntype : float
-  Exceptions : none
+  Exceptions : returns undef if no ref.score
   Caller     : general
 
 =cut
@@ -340,7 +342,7 @@ sub score {
   Example    : $constrained_element->method_link_species_set_id(3);
   Description: Getter/Setter for the attribute method_link_species_set_id.
   Returntype : integer
-  Exceptions : none
+  Exceptions : returns undef if no ref.method_link_species_set_id
   Caller     : object::methodname
 
 =cut
@@ -362,7 +364,7 @@ sub method_link_species_set_id {
                $constrained_element->alignment_segments($alignment_segments);
   Description: Getter/Setter for the attribute alignment_segments 
   Returntype : listref  
-  Exceptions : none
+  Exceptions : returns undef if no ref.alignment_segments
   Caller     : general
 
 =cut
@@ -385,7 +387,7 @@ sub alignment_segments {
   Example    : $constrained_element->slice($slice);
   Description: Getter/Setter for the attribute slice.
   Returntype : Bio::EnsEMBL::Slice object
-  Exceptions : returns undef if no ref. slice
+  Exceptions : returns undef if no ref.slice
   Caller     : object::methodname
 
 =cut
@@ -407,11 +409,10 @@ sub slice {
   Example    : $constrained_element->start($start);
   Description: Getter/Setter for the attribute start.
   Returntype : int
-  Exceptions : returns undef if no ref. slice
+  Exceptions : returns undef if no ref.start
   Caller     : object::methodname
 
 =cut
-
 
 sub start {
   my ($self, $start) = @_;
@@ -430,7 +431,7 @@ sub start {
   Example    : $constrained_element->end($end);
   Description: Getter/Setter for the attribute end.
   Returntype : int
-  Exceptions : returns undef if no ref. slice
+  Exceptions : returns undef if no ref.end
   Caller     : object::methodname
 
 =cut
@@ -448,11 +449,11 @@ sub end {
 =head2 reference_dnafrag_id
 
   Arg [1]    : (optional) int $reference_dnafrag_id
-  Example    : $end = $constrained_element->reference_dnafrag_id;
-  Example    : $constrained_element->end($reference_dnafrag_id);
+  Example    : $dnafrag_id = $constrained_element->reference_dnafrag_id;
+  Example    : $constrained_element->reference_dnafrag_id($dnafrag_id);
   Description: Getter/Setter for the attribute end.
   Returntype : int
-  Exceptions : returns undef if no ref. slice
+  Exceptions : returns undef if no ref.reference_dnafrag_id 
   Caller     : object::methodname
 
 =cut
