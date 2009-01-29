@@ -108,12 +108,13 @@ sub features       {
             }
           }
         } else { ## Feature doesn't have groups so fake it with the feature id as group id!
-          my $bump = ( $fs->{'style'}{'bump'} ne 'no' && $fs->{'style'}{'bump'} ne '0' );
-          my $g     = ( $fs->{'use_score'} || !$bump ) ? 'default' : $f->display_id;      ## If histogram/un-bumped
-          my $label = ( $fs->{'use_score'} || !$bump ) ? ''        : $f->display_label;   ## If histogram/un-bumped
           # Do not display any group glyphs for "logical" groups (score-based or unbumped)
+          my $pseudogroup = ( $fs->{'use_score'} || $fs->{'style'}{'bump'} eq 'no' || $fs->{'style'}{'bump'} eq '0' );
+          my $g     = $pseudogroup ? 'default' : $f->display_id;
+          my $label = $pseudogroup ? ''        : $f->display_label;
           # But do for "hacked" groups (shared feature IDs). May change this behaviour later as servers really shouldn't do this
-          $group_styles{$logic_name}{ $ty } ||= { 'style' => $fs->{'use_score'} || !$bump ? $HIDDEN_GLYPH : $stylesheet->find_group_glyph( 'default', 'default' ) };
+          my $ty = $f->type_id;
+          $group_styles{$logic_name}{ $ty } ||= { 'style' => $pseudogroup ? $HIDDEN_GLYPH : $stylesheet->find_group_glyph( 'default', 'default' ) };
           if( exists $groups{$logic_name}{$g}{$st} ) {
   ## Ignore all subsequent notes, links and targets, probably should merge arrays somehow....
             my $t = $groups{$logic_name}{$g}{$st};
