@@ -322,6 +322,7 @@ if ($help) {
 
 # Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
 # if no reg_conf file is given.
+Bio::EnsEMBL::Registry->no_version_check(1);
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $primates_matrix_string = "A C G T
@@ -666,14 +667,20 @@ sub fetch_and_load_nets {
     }
     # as a chainId seems to be specific to a tName, it should be  no need to add an additional constraint
     # on tName in the sql, but for safe keeping let's add it.
+    $n_tName = "chr$n_tName" if ($n_tName !~ /^scaffold/ and $n_tName !~ /^ultracontig/);
     $sql = "
       SELECT
         c.score, c.tName, c.tSize, c.tStart, c.tEnd, c.qName, c.qSize, c.qStrand, c.qStart, c.qEnd,
         cl.tStart, cl.tEnd, cl.qStart, cl.qStart+cl.tEnd-cl.tStart as qEnd
       FROM $c_table c, $cl_table cl
-      WHERE c.id = cl.chainId and cl.chainId = ? and c.tName = cl.tName and c.tName = \"chr$n_tName\"";
+      WHERE c.id = cl.chainId and cl.chainId = ? and c.tName = cl.tName and c.tName = \"$n_tName\"";
     my $sth2 = $ucsc_dbc->prepare($sql);
-    $sth2->execute($n_chainId);
+    my $num_rows = $sth2->execute($n_chainId);
+
+    if (!$num_rows or $num_rows == 0) {
+      print STDERR "$net_index (#$n_chainId): daf not stored because there are no chains for \"$n_tName\" (X)\n";
+      next FETCH_NET;
+    }
   
     my ($c_score,     # score for this chain [saved in the FeaturePair but overwritten afterwards]
         $c_tName,     # name of the target (e.g. human) chromosome; used here to set
@@ -839,7 +846,7 @@ sub fetch_and_load_nets {
   
     my $dna_align_features = get_DnaAlignFeatures_from_FeaturePairs(
         $all_feature_pairs, $n_chainId, (($n_level+1)/2));
-  
+
     my @new_dafs;
     while (my $daf = shift @$dna_align_features) {
       my $daf = $daf->restrict_between_positions($n_tStart,$n_tEnd,"SEQ");
@@ -1378,15 +1385,9 @@ sub save_daf_as_genomic_align_block {
   $gab->perc_id($percent_id);
   $gab->length($length);
   $gab->genomic_align_array([$tga, $qga]);
-
-  # Create the GenomicAlignGroup
-  my $gag = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
-  $gag->dbID($daf->group_id);
-  $gag->type("default");
-  $gag->genomic_align_array([$tga, $qga]);
+  $gab->group_id($daf->group_id);
 
   $gaba->store($gab); # This stores the Bio::EnsEMBL::Compara::GenomicAlign objects
-  $gaga->store($gag);
 
   return 1;
 }
@@ -1488,10 +1489,10 @@ sub choose_matrix {
 #     print STDERR "\n$mammals_matrix_string\n";
   
   } elsif ( (grep(/^$tTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913, 9031)) &&
-            grep(/^$qTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))
+            grep(/^$qTaxon_id$/, (31033, 7955, 9031, 99883, 8364, 8090)))
             ||
             (grep(/^$qTaxon_id$/, (9606, 10090, 10116, 9598, 9615, 9913, 9031)) &&
-            grep(/^$tTaxon_id$/, (31033, 7955, 9031, 99883, 8364)))) {
+            grep(/^$tTaxon_id$/, (31033, 7955, 9031, 99883, 8364, 8090)))) {
     $matrix_hash = get_matrix_hash($mammals_vs_other_vertebrates_matrix_string);
     print STDERR "Using mammals_vs_other_vertebrates scoring matrix\n";
 #     print STDERR "\n$mammals_vs_other_vertebrates_matrix_string\n";
