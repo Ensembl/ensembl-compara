@@ -182,14 +182,13 @@ sub feature {
   my ($type, $options, $feature, $extra, $def_source) = @_;
   
   my $score  = $feature->can('score') ? $feature->score : '.';
-  my $frame  = $feature->can('frame') ? $feature->frame : '.';
   my $source = $feature->can('source_tag') ? $feature->source_tag : ($def_source || 'Ensembl');
   my $tag    = $feature->can('primary_tag') ? $feature->primary_tag : (ucfirst(lc $type) || '.');
   
   $source =~ s/\s/_/g;
   $tag  =~ s/\s/_/g;
   
-  my ($name, $strand, $start, $end);
+  my ($name, $strand, $start, $end, $phase);
   
   if ($feature->can('seq_region_name')) {
     $strand = $feature->seq_region_strand;
@@ -207,11 +206,19 @@ sub feature {
   $name ||= 'SEQ';
   $name =~ s/\s/_/g;
   
+  if ($strand == 1) {
+    $strand = '+';
+    $phase = $feature->can('phase') ? $feature->phase : '.';
+  } elsif ($strand == -1) {
+    $strand = '-';
+    $phase = $feature->can('end_phase') ? $feature->end_phase : '.';
+  }
+  
+  $phase = '.' if $phase == -1 || !defined $phase;
+  
   $strand ||= '.';
-  $strand = '+' if $strand eq 1;
-  $strand = '-' if $strand eq -1;
 
-  my @results = ($name, $source, $tag, $start, $end, $score, $strand, $frame);
+  my @results = ($name, $source, $tag, $start, $end, $score, $strand, $phase);
 
   if ($options->{'format'} eq 'gff') {
     push (@results, join ("; ", map { defined $extra->{$_} ? "$_=$extra->{$_}" : () } @{$options->{'other'}}));
