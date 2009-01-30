@@ -4,9 +4,7 @@ use strict;
 
 use base qw( EnsEMBL::Web::Configuration );
 use CGI;
-
-use EnsEMBL::Web::Component::Export qw(export_file);
-use EnsEMBL::Web::Component::Location qw(haploview_files ld_dump);
+use EnsEMBL::Web::TmpFile::Text;
 
 sub set_default_action {
   my $self = shift;
@@ -101,40 +99,20 @@ sub ld_export_configurator {
       $form_action->[2] .= ";$_=$form_action->[1]->{$_}";
   }
   
-  if ($object->param('haploview')) {
-    my $gen_file  = EnsEMBL::Web::TmpFile::Text->new(extension => 'ped', prefix => '');
-    my $locus_file = EnsEMBL::Web::TmpFile::Text->new(
-      filename => $gen_file->filename,
-      extension => 'txt',
-      prefix => ''
-    );
-    
-    haploview_files({ genotype => $gen_file, locus => $locus_file }, $object);
-    
-    $gen_file->save;
-    $locus_file->save;
-    
-    my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
-      filename => $gen_file->filename,
-      prefix => '',
-      use_short_names => 1
-    );
-    
-    $tar_file->add_file($gen_file);
-    $tar_file->add_file($locus_file);
-    $tar_file->save;
+  if ($object->param('haploview')) {    
+    my ($gen_file, $locus_file, $tar_file) = $self->haploview_files($object);
     
     @formats = (
-      [ 'Genotype file', '', ' rel="external"', ' [Genotypes in linkage format]', $gen_file->URL ],
-      [ 'Locus information', '', ' rel="external"', ' [Locus information file]', $locus_file->URL ],
-      [ 'Combined file', '', '', '', $tar_file->URL ]
+      [ 'Genotype file', '', ' rel="external"', ' [Genotypes in linkage format]', $gen_file ],
+      [ 'Locus information', '', ' rel="external"', ' [Locus information file]', $locus_file ],
+      [ 'Combined file', '', '', '', $tar_file ]
     );
     
     $params .= qq{<input type="submit" class="submit" value="&lt; Back" />};
   } elsif ($object->param('excel')) {
     my $excel_file  = new EnsEMBL::Web::TmpFile::Text(extension => 'xls', prefix => '');
 
-    ld_dump($object, $excel_file, $object->parent->{'params'});
+    EnsEMBL::Web::Component::Location->ld_dump($object, $excel_file, $object->parent->{'params'});
 
     $excel_file->save;
 
@@ -184,6 +162,81 @@ sub ld_export_configurator {
   $panel->set_content($content);
 
   $self->add_panel($panel);
+}
+
+sub haploview_files {
+  my ($self, $object) = @_;
+  
+  my $gen_file = EnsEMBL::Web::TmpFile::Text->new(extension => 'ped', prefix => '');
+  my $locus_file = EnsEMBL::Web::TmpFile::Text->new(
+    filename => $gen_file->filename,
+    extension => 'txt',
+    prefix => ''
+  );
+  
+  my %ind_genotypes;
+  my %individuals;
+  my @snps;
+  my $family;
+ 
+  my ($locus, $genotype);
+ 
+  # gets all genotypes in the Slice as a hash. where key is region_name-region_start
+  my $slice_genotypes = $object->get_all_genotypes;
+
+  foreach my $vf (@{$object->get_variation_features}) {
+    my ($genotypes, $ind_data) =  $object->individual_genotypes($vf, $slice_genotypes);
+
+    next unless %$genotypes;
+    
+    my $name = $vf->variation_name;
+    my $start = $vf->start;
+    
+    $locus .= "$name $start\r\n";
+    
+    push (@snps, $name);
+    
+    map { $ind_genotypes{$_}{$name} = $genotypes->{$_} } (keys %$genotypes);
+    map { $individuals{$_} = $ind_data->{$_} } (keys %$ind_data);
+  }
+  
+  foreach my $individual (keys %ind_genotypes) {
+    my $output = join "\t", ("FAM" . $family++, 
+      $individual, 
+      $individuals{$individual}{'father'}, 
+      $individuals{$individual}{'mother'}, 
+      $individuals{$individual}{'gender'}, 
+      "0\t"
+    );
+    
+    foreach (@snps) {
+      my $snp = $ind_genotypes{$individual}{$_} || "00";
+      $snp =~ tr/ACGTN/12340/;
+      
+      $output .= join " ", (split (//, $snp));
+      $output .= "\t";
+    }
+    
+    $genotype .= "$output\r\n";
+  }
+  
+  print $gen_file $genotype;
+  print $locus_file $locus;
+  
+  $gen_file->save;
+  $locus_file->save;
+  
+  my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
+    filename => $gen_file->filename,
+    prefix => '',
+    use_short_names => 1
+  );
+  
+  $tar_file->add_file($gen_file);
+  $tar_file->add_file($locus_file);
+  $tar_file->save;
+
+  return ($gen_file->URL, $locus_file->URL, $tar_file->URL);
 }
 
 sub populate_tree {
@@ -1358,209 +1411,6 @@ sub alignsliceview {
        $self->{page}->content->add_panel( $base );
      }
     $self->{page}->set_title( "Features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
-}
-
-
-#############################################################################
-
-sub ldview {
-  my $self = shift;
-  my $obj = $self->{object};
-
-  # Set default sources
-  my @sources = keys %{ $obj->species_defs->VARIATION_SOURCES || {} } ;
-  my $default_source = $obj->get_source("default");
-  my $view_config = $obj->get_viewconfig();
-  my $restore_default = 1;
-
-  $self->update_configs_from_parameter( 'bottom', 'ldview', 'LD_population' );
-  foreach my $source ( @sources ) {
-    $restore_default = 0 if $view_config->get(lc("opt_$source") ) eq 'on';
- }
-
-if( $restore_default && !$obj->param('bottom') ) { # if no spp sources are on
-   foreach my $source ( @sources ) {
-     my $switch;
-     if ($default_source) {
-       $switch = $source eq $default_source ? 'on' : 'off' ;
-     }
-     else {
-       $switch = 'on';
-     }
-     $view_config->set(lc("opt_$source"), $switch, 1);
-   }
- }
-
-  $self->update_configs_from_parameter( 'bottom', 'ldview', 'LD_population' );
-
-  my ($pops_on, $pops_off) = $obj->current_pop_name;
-  map { $view_config->set("opt_pop_$_", 'off', 1); } @$pops_off;
-  map { $view_config->set("opt_pop_$_", 'on', 1); } @$pops_on;
-#  $view_config->save;
-
-
- ## This should be moved to the Location::Object module I think....
-  $obj->alternative_object_from_factory( 'SNP' )  if $obj->param('snp');
-  if( $obj->param('gene') ) {
-    $obj->alternative_object_from_factory( 'Gene' );
-    if( (@{$obj->__data->{'objects'}||[]}) && !@{ $obj->__data->{'gene'}||[]} ) {
-      $obj->param('db',   $obj->__data->{'objects'}->[0]{'db'}   );
-      $obj->param('gene', $obj->__data->{'objects'}->[0]{'gene'} );
-      $obj->alternative_object_from_factory( 'Gene' );
-    }
-  }
-  $obj->clear_problems();
-  my $params= {
-    'snp'    => $obj->param('snp'),
-    'gene'   => $obj->param('gene'),
- #   'pop'    => $pops_on,
-    'w'      => $obj->length,
-    'c'      => $obj->seq_region_name.':'.$obj->centrepoint,
-    'source' => $obj->param('source'),
-    'h'      => $obj->highlights_string,
-  } ;
-
-  # Description : prints a two col table with info abou the LD ---------------
-  if (
-  my $info_panel = $self->new_panel( 'Information',
-    'code'    => "info#",
-    'caption' => 'Linkage disequilibrium report: [[object->type]] [[object->name]]'
-				   )) {
-
-    $info_panel->add_components(qw(
-    focus                EnsEMBL::Web::Component::LD::focus
-    prediction_method    EnsEMBL::Web::Component::LD::prediction_method
-    population_info      EnsEMBL::Web::Component::LD::population_info
-				  ));
-    $self->{page}->content->add_panel( $info_panel );
-  }
-
-  # Multiple mappings ------------------------------------------------------
-  my $snp = $obj->__data->{'snp'}->[0];
-  if ($snp) {
-    my $mappings = $snp->variation_feature_mapping;
-    my $multi_hits = keys %$mappings == 1 ? 0 : 1;
-
-    if ($multi_hits){
-      if (
-	  my $mapping_panel = $self->new_panel('SpreadSheet',
-     'code'    => "mappings $self->{flag}",
-     'caption' => "SNP ". $snp->name." is currently mapped to the following genomic locations:",
-     'params'  => $params,
-     'status'  => 'panel_mappings',
-     'null_data' => '<p>This SNP cannot be mapped to the current assembly.</p>'
-				       )) {
-	$mapping_panel->add_components( qw(mappings EnsEMBL::Web::Component::LD::mappings) );
-	$self->{page}->content->add_panel( $mapping_panel );
-      }
-    }
-  }
-
-  # Neighbourhood image -------------------------------------------------------
-  ## Now create the image panel
-  my $context = $obj->seq_region_type_and_name ." ".
-    $obj->thousandify( $obj->seq_region_start );
-
-  if (
-      my $image_panel = $self->new_panel( 'Image',
-     'code'    => "image_#",
-     'caption' => "Context - $context",
-     'status'  => 'panel_image',
-     'params'  => $params,
-					)) {
-
-    if ( $obj->seq_region_type ) {
-      # Store any input from Form into the 'ldview' graphic config..
-      if( $obj->param( 'bottom' ) ) {
-	my $wuc = $obj->image_config_hash( 'ldview' );
-	$wuc->update_config_from_parameter( $obj->param('bottom') );
-      }
-
-      ## Initialize the javascript for the zmenus and dropdown menus
-      $self->initialize_zmenu_javascript;
-      $self->initialize_ddmenu_javascript;
-      $image_panel->add_components(qw(
-    menu  EnsEMBL::Web::Component::LD::ldview_image_menu
-    nav   EnsEMBL::Web::Component::Location::ldview_nav
-    image EnsEMBL::Web::Component::LD::ldview_image
-				     ));
-    }
-    else {
-      $image_panel->add_components(qw(
-    EnsEMBL::Web::Component::LD::ldview_noimage
-				     ));
-    }
-    $self->{page}->content->add_panel( $image_panel );
-  }
-
-  # Form ---------------------------------------------------------------------
-  if (
-      my $form_panel = $self->new_panel("",
-    'code'    => "info$self->{flag}",
-    'caption' => "Dump data",
-    'status'  => 'panel_options',
-    'params'  => $params,
-				       )) {
-    $form_panel->add_components(qw(
-    options  EnsEMBL::Web::Component::LD::options
-				  ));
-
-
-    # finally, add the complete panel to the page object
-    $self->{page}->content->add_panel( $form_panel );
-  }
-}
-
-
-###############################################################################
-
-sub ldtableview {
-
-  ### Returns nothing
-
-  my $self = shift;
-  my $object = $self->{object};
-  $object->alternative_object_from_factory( 'SNP' )  if $object->param('snp');
-  if( $object->param('gene') ) {
-    $object->alternative_object_from_factory( 'Gene' );
-    if( (@{$object->__data->{'objects'}||[]}) && !@{ $object->__data->{'gene'}||[]} ) {
-      $object->param('db',   $object->__data->{'objects'}->[0]{'db'}   );
-      $object->param('gene', $object->__data->{'objects'}->[0]{'gene'} );
-      $object->alternative_object_from_factory( 'Gene' );
-    }
-  }
-  $object->clear_problems();
-
- # Description : HTML table of LD values ------------------------------------
-  if (
-    my $ld_panel = $self->new_panel('',
-    'code'    => "info$self->{flag}",
-    'caption' => 'Pairwise linkage disequilibrium values',
-				   )) {
-
-    if ($self->{object}->param('dump') eq 'ashtml') {
-      $ld_panel->add_components(qw(
-    html_lddata        EnsEMBL::Web::Component::LDtable::html_lddata
-				  ));
-    }
-    elsif ($self->{object}->param('dump') eq 'astext') {
-      $ld_panel->add_components(qw(
-    text_lddata        EnsEMBL::Web::Component::LDtable::text_lddata
-				  ));
-    }
-    elsif ($self->{object}->param('dump') eq 'asexcel') {
-#warn "ADDING... el_ldd";
-      $ld_panel->add_components(qw(
-    excel_lddata        EnsEMBL::Web::Component::LDtable::excel_lddata
-				  ));
-    }
-    elsif ($self->{object}->param('dump') eq 'ashaploview') {
-      $ld_panel->add_components(qw(
-    text_haploview        EnsEMBL::Web::Component::LDtable::haploview_dump
-				  ));
-    }
-    $self->{page}->content->add_panel( $ld_panel );
-  }
 }
 
 
