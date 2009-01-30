@@ -4,9 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use base qw(Exporter);
-our @EXPORT = our @EXPORT_OK = qw(haploview_files ld_dump);
-
 use POSIX qw(floor);
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
@@ -1053,13 +1050,14 @@ sub content_export {
   my $self = shift;
   
   my $custom_outputs = {
-    'ld' => sub { return ld_dump($self->object); }
+    'ld' => sub { return $self->ld_dump($self->object); }
   };
   
   return $self->_export($custom_outputs);
 }
 
 sub ld_dump {
+  my $self = shift;
   my ($object, $file, $params) = @_;
   
   my ($format, $pop_param, $snp_param);
@@ -1285,6 +1283,7 @@ sub ld_values {
 }
 
 sub haploview_files {
+  my $self = shift;
   my ($files, $object) = @_;
   
   my $fhs = {};
