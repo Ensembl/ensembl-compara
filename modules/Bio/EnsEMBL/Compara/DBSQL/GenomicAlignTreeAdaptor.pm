@@ -594,7 +594,7 @@ sub store_node {
       throw("Cannot store before setting the genomic_align_group ID");
     }
     #print STDERR "NODE ", $node->node_id, " ", $node->name, " -- GROUP: ",
-      $node->genomic_align_group->dbID, "\n";
+    #  $node->genomic_align_group->dbID, "\n";
   } else {
     #print STDERR "NODE ", $node->node_id, " ", $node->name, " -- NO GROUP\n";
   }
