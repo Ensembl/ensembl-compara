@@ -1538,6 +1538,129 @@ sub get_Mapper {
       $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
       my $rel_strand = $self->dnafrag_strand;
       my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
+
+      my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+      my $aln_seq_pos = 0;
+      my $seq_pos = 0;
+
+      my $insertions = 0;
+      my $target_cigar_pieces;
+      @$target_cigar_pieces = $self->cigar_line =~ /(\d*[GMDXI])/g;
+      my $ref_cigar_pieces;
+      @$ref_cigar_pieces = $ref_cigar_line =~ /(\d*[GMDXI])/g;
+      my $i = 0;
+      my $j = 0;
+      my ($ref_num, $ref_type) = $ref_cigar_pieces->[$i] =~ /(\d*)([GMDXI])/;
+      $ref_num = 1 if (!defined($ref_num) or $ref_num eq "");
+      my ($target_num, $target_type) = $target_cigar_pieces->[$j] =~ /(\d*)([GMDXI])/;
+      $target_num = 1 if (!defined($target_num) or $target_num eq "");
+
+      while ($i < @$ref_cigar_pieces and $j<@$target_cigar_pieces) {
+	  while ($ref_type eq "I") {
+	      $aln_pos += $ref_num;
+	      $i++;
+	      last if ($i >= @$ref_cigar_pieces);
+	      ($ref_num, $ref_type) = $ref_cigar_pieces->[$i] =~ /(\d*)([GMDXI])/;
+	      $ref_num = 1 if (!defined($ref_num) or $ref_num eq "");
+	  }
+	  while ($target_type eq "I") {
+	      $seq_pos += $target_num;
+	      $j++;
+	      last if ($j >= @$target_cigar_pieces);
+	      ($target_num, $target_type) = $target_cigar_pieces->[$j] =~ /(\d*)([GMDXI])/;
+	      $target_num = 1 if (!defined($target_num) or $target_num eq "");
+	  }
+
+        my $length;
+
+	if ($ref_num == $target_num) {
+	  $length = $ref_num;
+	} elsif ($ref_num > $target_num) {
+	  $length = $target_num;
+	} elsif ($ref_num < $target_num) {
+	  $length = $ref_num;
+        }
+	my $this_piece_of_cigar_line = $length.$target_type;
+
+	if ($ref_type eq "M") {
+          my $this_mapper;
+          if ($rel_strand == 1) {
+            _add_cigar_line_to_Mapper($this_piece_of_cigar_line, $aln_pos,
+                $seq_pos + $self->dnafrag_start, 1, $mapper);
+          } else {
+            _add_cigar_line_to_Mapper($this_piece_of_cigar_line, $aln_pos, $self->dnafrag_end - $seq_pos, -1, $mapper);
+          }
+	  $aln_pos += $length;
+        }
+	my $gaps = 0;
+	if ($target_type eq "D" || $target_type eq "X") {
+	    $gaps += $length;
+	}
+
+        $seq_pos -= $gaps;
+	$seq_pos += $length;
+
+	if ($ref_num == $target_num) {
+	  $i++;
+	  $j++;
+	  last if ($i >= @$ref_cigar_pieces);
+	  last if ($j >= @$target_cigar_pieces);
+	  ($ref_num, $ref_type) = $ref_cigar_pieces->[$i] =~ /(\d*)([GMDXI])/;
+	  $ref_num = 1 if (!defined($ref_num) or $ref_num eq "");
+	  ($target_num, $target_type) = $target_cigar_pieces->[$j] =~ /(\d*)([GMDXI])/;
+	  $target_num = 1 if (!defined($target_num) or $target_num eq "");
+	} elsif ($ref_num > $target_num) {
+	  $j++;
+	  $ref_num -= $target_num;
+	  last if ($j >= @$target_cigar_pieces);
+	  ($target_num, $target_type) = $target_cigar_pieces->[$j] =~ /(\d*)([GMDXI])/;
+	  $target_num = 1 if (!defined($target_num) or $target_num eq "");
+	} elsif ($ref_num < $target_num) {
+	  $i++;
+	  $target_num -= $ref_num;
+	  last if ($i >= @$ref_cigar_pieces);
+	  ($ref_num, $ref_type) = $ref_cigar_pieces->[$i] =~ /(\d*)([GMDXI])/;
+	  $ref_num = 1 if (!defined($ref_num) or $ref_num eq "");
+        }
+      }
+    } else {
+      my $cigar_line = $self->cigar_line;
+      if (!$cigar_line) {
+        throw("[$self] has no cigar_line and cannot be retrieved by any means");
+      }
+      my $alignment_position = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+      my $sequence_position = $self->dnafrag_start;
+      my $rel_strand = $self->dnafrag_strand;
+      if ($rel_strand == 1) {
+        $sequence_position = $self->dnafrag_start;
+      } else {
+        $sequence_position = $self->dnafrag_end;
+      }
+      $mapper = _get_Mapper_from_cigar_line($cigar_line, $alignment_position, $sequence_position, $rel_strand);
+    }
+
+    return $mapper if (!$cache);
+
+    $self->{$mode.'_mapper'} = $mapper;
+  }
+
+  return $self->{$mode.'_mapper'};
+}
+
+sub get_MapperOLD {
+  my ($self, $cache, $condensed) = @_;
+  my $mapper;
+  $cache = 0 if (!defined($cache));
+  my $mode = "expanded";
+  if (defined($condensed) and $condensed) {
+    $mode = "condensed";
+  }
+
+  if (!defined($self->{$mode.'_mapper'})) {
+    if ($mode eq "condensed") {
+      $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
+      my $rel_strand = $self->dnafrag_strand;
+      my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
       my $this_aligned_seq = $self->aligned_sequence("+FAKE_SEQ");
 
       my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
@@ -1842,6 +1965,67 @@ sub _get_Mapper_from_cigar_line {
   my ($cigar_line, $alignment_position, $sequence_position, $rel_strand) = @_;
 
   my $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
+
+  my @cigar_pieces = ($cigar_line =~ /(\d*[GMDXI])/g);
+  if ($rel_strand == 1) {
+    foreach my $cigar_piece (@cigar_pieces) {
+      my $cigar_type = substr($cigar_piece, -1, 1 );
+      my $cigar_count = substr($cigar_piece, 0 ,-1 );
+      $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
+      next if ($cigar_count < 1);
+  
+      if( $cigar_type eq "M" ) {
+        $mapper->add_map_coordinates(
+                "sequence", #$self->dbID,
+                $sequence_position,
+                $sequence_position + $cigar_count - 1,
+                $rel_strand,
+                "alignment", #$self->genomic_align_block->dbID,
+                $alignment_position,
+                $alignment_position + $cigar_count - 1
+            );
+        $sequence_position += $cigar_count;
+        $alignment_position += $cigar_count;
+      } elsif( $cigar_type eq "I") {
+	#add to sequence_position but not alignment_position
+	$sequence_position += $cigar_count;
+      } elsif( $cigar_type eq "G" || $cigar_type eq "D" || $cigar_type eq "X") {
+        $alignment_position += $cigar_count;
+      }
+    }
+  } else {
+    foreach my $cigar_piece (@cigar_pieces) {
+      my $cigar_type = substr($cigar_piece, -1, 1 );
+      my $cigar_count = substr($cigar_piece, 0 ,-1 );
+      $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
+      next if ($cigar_count < 1);
+  
+      if( $cigar_type eq "M" ) {
+        $mapper->add_map_coordinates(
+                "sequence", #$self->dbID,
+                $sequence_position - $cigar_count + 1,
+                $sequence_position,
+                $rel_strand,
+                "alignment", #$self->genomic_align_block->dbID,
+                $alignment_position,
+                $alignment_position + $cigar_count - 1
+            );
+        $sequence_position -= $cigar_count;
+        $alignment_position += $cigar_count;
+      } elsif( $cigar_type eq "I") {
+	#add to sequence_position but not alignment_position
+	$sequence_position -= $cigar_count;
+      } elsif( $cigar_type eq "G" || $cigar_type eq "D" || $cigar_type eq "X") {
+        $alignment_position += $cigar_count;
+      }
+    }
+  }
+
+  return $mapper;
+}
+
+sub _add_cigar_line_to_Mapper {
+  my ($cigar_line, $alignment_position, $sequence_position, $rel_strand, $mapper) = @_;
 
   my @cigar_pieces = ($cigar_line =~ /(\d*[GMDXI])/g);
   if ($rel_strand == 1) {
