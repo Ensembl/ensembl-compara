@@ -127,11 +127,11 @@ sub GENE_MARKUP_OPTIONS {
   return (
     'flank5_display' => {
       'type' => 'NonNegInt', 'required' => 'yes',
-      'label' => "5' Flanking sequence",  'name' => 'flank5_display',
+      'label' => "5' Flanking sequence (upstream)",  'name' => 'flank5_display',
     },
     'flank3_display' => {
       'type' => 'NonNegInt', 'required' => 'yes',
-      'label' => "3' Flanking sequence",  'name' => 'flank3_display',
+      'label' => "3' Flanking sequence (downstream)",  'name' => 'flank3_display',
     },
     'exon_display' => {
       'type'   => 'DropDown', 'select'   => 'select',
