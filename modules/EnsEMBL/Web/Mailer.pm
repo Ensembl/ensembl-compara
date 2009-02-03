@@ -35,6 +35,7 @@ sub BUILD {
 
 sub spam_check {
   my ($self, $content, $threshold) = @_;
+  return 0 if $content eq '' && $threshold == 1; ## Only way to pass empty fields as spam-free!
   (my $check = $content) =~ s/<a\s+href=.*?>.*?<\/a>//smg;
   $check =~ s/\[url=.*?\].*?\[\/url\]//smg;
   $check =~ s/\[link=.*?\].*?\[\/link\]//smg;
