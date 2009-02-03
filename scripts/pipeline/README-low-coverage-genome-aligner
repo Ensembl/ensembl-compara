@@ -1,0 +1,207 @@
+1- code API needed and executable
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  bioperl-live (bioperl-1-2-0?)
+  ensembl
+  ensembl-compara
+  ensembl-hive
+  ensembl-pipeline
+  ensembl-analysis
+
+  executables
+  ~~~~~~~~~~~
+  treebest
+      using /software/ensembl/compara/bin/treebest
+  semphy
+      using /software/ensembl/compara/semphy-1.0.b1
+  gerp
+      using /software/ensembl/compara/gerp/GERPv2.1
+
+1.2 Code checkout
+
+      cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-pipeline
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-analysis
+
+in tcsh
+    setenv BASEDIR   /some/path/to/modules
+    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive:${BASEDIR}/ensembl-analysis
+    setenv PATH $PATH:${BASEDIR}/ensembl-compara/script/pipeline:${BASEDIR}/ensembl-hive/scripts
+
+in bash
+    BASEDIR=/some/path/to/modules
+    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive:${BASEDIR}/ensembl-hive
+    PATH=$PATH:${BASEDIR}/ensembl-compara/scripts/pipeline:${BASEDIR}/ensembl-hive/scripts
+
+1.3 Configure the Pipeline:
+
+  Copy ${BASEDIR}/ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Config/Blast.pm.example to ${BASEDIR}/ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Config/Blast.pm
+
+
+2- Create a hive/compara database
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Pick a mysql instance and create a database
+
+mysql -h compara1 -uensadmin -pxxxx -e "create database kb3_epo_31way_53"
+
+cd ~/src/ensembl_main/ensembl-compara/sql
+mysql -h compara1 -uensadmin -pxxxx kb3_epo_31way_53 < table.sql
+mysql -h compara1 -uensadmin -pxxxx kb3_epo_31way_53 < pipeline-tables.sql
+
+cd ~/src/ensembl_main/ensembl-hive/sql
+mysql -h compara1 -uensadmin -pxxxx kb3_epo_31way_53 < tables.sql
+
+* Populate your database:
+
+cd /lustre/work1/ensembl/kb3/release53/kb3_epo_31way_53/
+
+* Create a registry configuration file:
+
+=======================================
+use strict;
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+    -host => 'compara1',
+    -user => 'ensro',
+    -port => 3306,
+    -species => 'compara-master',
+    -dbname => 'kb3_ensembl_compara_master');
+
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+    -host => 'compara1',
+    -user => 'ensadmin',
+    -pass => 'XXXXXXXX',
+    -port => 3306,
+    -species => 'kb3_epo_31way_53',
+    -dbname => 'kb3_epo_31way_53');
+
+Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@ens-staging/53');
+
+1;
+=======================================
+
+* Populate the database with data from the master DB:
+
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_new_database.pl \
+  --master compara-master --new kb3_epo_31way_53 --reg reg.conf  --species "Homo sapiens" --species "Macaca mulatta" --species "Pan troglodytes" --species "Mus musculus" --species "Rattus norvegicus" --species "Canis familiaris" --species "Bos taurus" --species "Equus caballus" --species "Pongo pygmaeus" --species "Tupaia belangeri" --species "Spermophilus tridecemlineatus" --species "Sorex araneus" --species "Otolemur garnettii" --species "Oryctolagus cuniculus" --species "Ochotona princeps" --species "Myotis lucifugus" --species "Cavia porcellus" --species "Echinops telfairi" --species "Erinaceus europaeus" --species "Loxodonta africana" --species "Felis catus" --species "Dasypus novemcinctus" --species "Microcebus murinus" --species "Pteropus vampyrus" --species "Tursiops truncatus" --species "Vicugna pacos" --species "Dipodomys ordii" --species "Procavia capensis" --species "Tarsius syrichta" --species "Gorilla gorilla" --species "Choloepus hoffmanni"
+
+3- Choose a working directory with some disk space
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* The multiple aligner pipeline tries to minimize the amount of output data for workers.
+But if debug options is on this can take some space. So be careful.
+
+mkdir -p /lustre/scratch1/ensembl/kb3/release53/kb3_epo_31way_53/workers
+
+* This directory needs to be set in 'hive_output_dir' variable in the compara-hive
+configuration file. See below. If not set, all STDOUT/STDERR goes to /dev/null. :)
+
+4- Copy and modify your compara-hive config file
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+cd /lustre/work1/ensembl/kb3/release53/kb3_epo_31way_53/
+
+cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/compara-low-coverage-genome-aligner.conf.example hive.conf.pl
+
+<editor> hive.conf.pl
+
+You may need to change the database names, port, dbnames, and the
+paths to the 'hive_output_dir' to
+/lustre/scratch1/ensembl/kb3/release53/kb3_epo_31way_53/workers
+'fasta_dir' and 'tree_file' will need to be updated as well.
+The species names should correspond to the genome_db_id of the species used (and defined in the hive configuration file). You can get a newick species tree using the geneTreeTool.pl script:
+
+perl ~/src/ensembl_main/ensembl-compara/scripts/tree/geneTreeTool.pl --file \
+  ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_rap.nh --newick \
+  --keep_leaves "Homo sapiens,Mus musculus,Rattus norvegicus"
+
+or by using a species tree which can be found in the same directory
+~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree*
+
+cp ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh .
+
+The species tree for the Gerp pipeline requires the species to be identified using the genome_db_id. To convert the species names to genome_db_ids, run the
+script:
+
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/tree_name_to_ids.pl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh 'mysql://ensro@compara1/kb3_epo_31way_53' > 31vert.nw
+
+<editor> 31vert.nw
+
+The parameters required to run the low coverage genome alignment pipeline are defined in the  LOW_COVERAGE_GENOME_ALIGNMENT block of the configuration file. These are the method_link_species_set_id for the new alignment, the tree string or file with genome_db_id identifiers and branch lengths to use with Gerp, the tree string using taxon_id identifiers but no branch lengths to use with treebest and a list of databases and method_link_species_set_ids for the pairwise alignments of the low coverage genomes.
+
+The low coverage genome alignment is built upon a high coverage alignment. The location of this is defined in the IMPORT_ALIGNMENT block. 
+
+You can have a CONSERVATION_SCORE block if you want to run Gerp or any other similar software
+to get constrained elements and conservation scores from the resulting multiple alignments.
+
+The default version of Gerp is version 2.1 and for this version, no parameter files are required. To run Gerp version 1 you will also need to create a parameter file (tab-delimited), for example:
+
+-----------------------------------
+alignment	gerp_alignment.mfa
+phylo_tree	gerp_tree.nw
+window_length	1
+repeats	NULL
+no_rsmin_estimate
+merge_distance	6
+rej_subs_min	8.5
+no_ABC_files
+-----------------------------------
+
+where alignment: alignment file used in multi-fasta format
+      phylo_tree: tree file
+      window_length: length of window used for sliding window rate estimation
+      repeats: either the repeat annonation file or NULL to ignore repeats
+      no_rsmin_estimate: no automatic estimation of restricted substitution rate
+      merge_distance: maximum number of unconstrained scores allowed between candiate constrained elements
+      rej_sub_min: threshold score to define candidate constrained element as significant
+      no_ABC_files: no ABC files produced
+
+You will also need to add the paths for gerp and semphy if you want to run Gerp. At the time of writing these can be found in:
+/software/ensembl/compara/semphy
+/software/ensembl/compara/gerp/GERPv2.1
+
+For the LOW_COVERAGE_GENOME_ALIGNMENT and CONSERVATION_SCORE blocks you can specify
+the logic_name for the method. You can also specify the module name. If none is given, the hive will
+use the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name module.
+
+5- Run the configure scripts
+   ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following script is in ensembl-compara/scripts/pipeline (should be in your PATH)
+
+loadLowCoverageAlignerSystem.pl -conf hive.conf.pl
+
+The loadLowCoverageAlignerSystem.pl script creates the analysis entries for the processing
+system, and creates both the dataflow rule and the analysis control rules. It adds information into the analysis_data table. It also initializes the analysis_stats row for each analysis.  These row hold
+information like batch_size, hive_capacity, and run-time stats that the Hive's
+Queen will update.
+
+This script may give you warnings if the output directories are not available or if it's unable to connect to core databases.
+
+At this point the system is ready to run
+
+6- Run the beekeeper
+   ~~~~~~~~~~~~~~~~~
+
+The following scripts are in ensembl-hive/scripts (should be in your PATH)
+beekeeper.pl -url mysql://ensadmin:xxxx@compara1:3306/kb3_epo_31way_53 -loop
+
+where xxxx is the password for write access to the database
+
+for more details on controling/monitoring the hive system see 
+beekeeper -help
+
+
+*TROUBLESHOOTING*
+
+* Gerp jobs are failing.
+
+  - Check you set up your environment so the main gerp script can find
+    the remaining gerp scripts and the semphy program.
+
+  - Check the source code for the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp
+    module. The path to the main Gerp script is hard-coded there.
+
