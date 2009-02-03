@@ -70,15 +70,41 @@ sub fasta {
   
   my $genomic = $object->param('genomic');
   
-  if (defined $genomic) {
-    my $seq = $genomic eq 'unmasked' ? $slice->seq : $slice->get_repeatmasked_seq(undef, $genomic)->seq;
+  if (defined $genomic && $genomic ne 'off') {
+    my $masking = $genomic eq 'soft_masked' ? 1 : $genomic eq 'hard_masked' ? 0 : undef;
+    my $seq;
     
-    $seq =~ s/(.{60})/$1\r\n/g;
-    
-    $html .= ">@{[$object->seq_region_name]} dna:@{[$object->seq_region_type]} @{[$slice->name]}\r\n$seq\r\n";
+    if ($genomic =~ /flanking/) {
+      if ($genomic =~ /5/) {
+        my $flank5_slice = $slice->sub_Slice(1, $object->param('flank5_display'), $slice->strand);
+        
+        if ($flank5_slice) {
+          $seq = $flank5_slice->seq;
+          $seq =~ s/(.{60})/$1\r\n/g;
+          
+          $html .= ">5' Flanking sequence @{[$flank5_slice->name]}\r\n$seq\r\n";
+        }
+      }
+      
+      if ($genomic =~ /3/) {
+        my $flank3_slice = $slice->sub_Slice($slice->length - $object->param('flank3_display'), $slice->length, $slice->strand);
+        
+        if ($flank3_slice) {
+          $seq = $flank3_slice->seq;
+          $seq =~ s/(.{60})/$1\r\n/g;
+          
+          $html .= ">3' Flanking sequence @{[$flank3_slice->name]}\r\n$seq\r\n";
+        }
+      }
+    } else {
+      $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $masking)->seq : $slice->seq;
+      $seq =~ s/(.{60})/$1\r\n/g;
+      
+      $html .= ">@{[$object->seq_region_name]} dna:@{[$object->seq_region_type]} @{[$slice->name]}\r\n$seq\r\n";
+    }
   }
   
-  return $html;
+  return $html || "No data available";
 }
 
 sub features {

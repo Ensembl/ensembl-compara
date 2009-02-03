@@ -123,8 +123,12 @@ sub form {
       if ($f->[0] eq 'fasta') {
         my $genomic = [
           { value => 'unmasked', name => 'Unmasked' },
-          { value => 1, name => 'Soft Masked Repeats' },
-          { value => 0, name => 'Hard Masked Repeats' }
+          { value => 'soft_masked', name => 'Repeat Masked (soft)' },
+          { value => 'hard_masked', name => 'Repeat Masked (hard)' },
+          { value => '5_flanking', name => "5' Flanking sequence" },
+          { value => '3_flanking', name => "3' Flanking sequence" },
+          { value => '5_3_flanking', name => "5' and 3' Flanking sequences" },
+          { value => 'off', name => 'None' }
         ];
         
         $view_config->add_form_element({
