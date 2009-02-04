@@ -104,7 +104,7 @@ if ($rmconfig) {
   warn " Checking memcached compatibility...\n";
   my $res = system("perl $serverroot/utils/memd.pl version");
   if ($res >> 8 > 0) {
-    die " failed\n";
+    die " failed\nPlease check www.ensembl.org/info/docs/webcode/memcached\n";
   }
 
 
