@@ -795,9 +795,6 @@ sub markup_line_numbers {
     my $align_slice = 0;
     my $seq = $sequence->[$n];
     
-    my $slice_start = $slice->start;
-    my $slice_end = $slice->end;
-    
     if ($config->{'line_numbering'} eq 'slice') {
       my $start_pos = 0;
       
@@ -833,6 +830,8 @@ sub markup_line_numbers {
       } else {
         # Get the data for the slice
         my $ostrand = $slice->strand;
+        my $slice_start = $slice->start;
+        my $slice_end = $slice->end;
         
         @numbering = ({ 
           dir => $ostrand,
@@ -1095,11 +1094,8 @@ sub build_sequence {
     $html .= $config->{'v_space'};
   }
   
-  $config->{'html_template'} ||= qq{<pre>%s</pre>};
-  
-  # Can't use sprintf because it throws the error 'Argument isn't numeric' for compara alignments when 
-  # conservation is turned on, even though IT'S NOT MEANT TO BE NUMERIC. Stupid sprintf.
-  $config->{'html_template'} =~ s/%s/$html/;
+  $config->{'html_template'} ||= qq{<pre>%s</pre>};  
+  $config->{'html_template'} = sprintf($config->{'html_template'}, $html);
   
   return $config->{'html_template'};
 }
