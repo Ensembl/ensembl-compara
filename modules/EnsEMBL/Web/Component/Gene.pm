@@ -167,7 +167,7 @@ sub markup_conservation {
     $config->{'key'} .= sprintf (
       $config->{'key_template'}, 
       "background-color:$config->{'colours'}->{'conservation'};", 
-      "Location of conserved regions (where >50% of bases in alignments match)"
+      "Location of conserved regions (where >50&#37; of bases in alignments match)"
     );
   }
 }
