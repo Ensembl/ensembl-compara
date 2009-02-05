@@ -361,6 +361,8 @@ sub get_sequence_data {
     my $name = $sl->{'name'};
     my $seq = uc $slice->seq(1);
     
+    my ($slice_start, $slice_end, $slice_length, $slice_strand) = ($slice->start, $slice->end, $slice->length, $slice->strand);
+    
     $config->{'length'} ||= $slice->length;
     
     if ($config->{'match_display'} && $name ne $config->{'ref_slice_name'}) {      
@@ -420,9 +422,13 @@ sub get_sequence_data {
       
       for my $snp (@ordered_snps) {
         my $alleles = $snp->allele_string;
+        my $variation_name =$snp->variation_name;
+        my $dbID = $snp->dbID;
+        my $s_start = $snp->start;
+        my $s_end = $snp->end;
       
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
-        if ($slice->strand < 0) {
+        if ($slice_strand < 0) {
           my @al = split(/\//, $alleles);
           
           $alleles = '';
@@ -433,31 +439,31 @@ sub get_sequence_data {
         # if snp is on reverse strand - flip the bases
         $alleles =~ tr/ACGTacgt/TGCAtgca/ if $snp->strand < 0;
         
-        my $start = $snp->start-1;
-        my $end = $snp->end-1;
+        my $start = $s_start-1;
+        my $end = $s_end-1;
         my $snp_type = 'snp';
         my $snp_start;
         
         if (scalar keys %$u_snps) {
           # Species comparisons with line numbering relative to slice - get the start of the variation on the underlying slice
-          $snp_start = $u_snps->{$snp->variation_name}->seq_region_start;
+          $snp_start = $u_snps->{$variation_name}->seq_region_start;
         } elsif ($config->{'line_numbering'} eq 'slice') {
           # No species comparison - get the start of the variation on the slice
           $snp_start = $snp->seq_region_start;
         } else {
           # Line numbering is relative to the sequence
-          $snp_start = $snp->start;
+          $snp_start = $s_start;
         }
         
         if ($end < $start) {
-          $start = $snp->end-1;
-          $end = $snp->start-1;
+          $start = $s_end-1;
+          $end = $s_start-1;
           $snp_type = 'delete';
           $snp_start--;
         }
         
         # Add the chromosome number for the link text if we're doing species comparisons.
-        $snp_start = $u_snps->{$snp->variation_name}->seq_region_name . ":$snp_start" if scalar keys %$u_snps;
+        $snp_start = $u_snps->{$variation_name}->seq_region_name . ":$snp_start" if scalar keys %$u_snps;
         
         for ($start..$end) {
           # FIXME: API currently returns variations when the resequenced individuals match the reference
@@ -471,8 +477,8 @@ sub get_sequence_data {
           
           if ($_ == $start) {
             $mk->{'variations'}->{$_}->{'link_text'} = "$snp_start:$alleles";
-            $mk->{'variations'}->{$_}->{'v'} = $snp->variation_name;
-            $mk->{'variations'}->{$_}->{'vf'} = $snp->dbID;
+            $mk->{'variations'}->{$_}->{'v'} = $variation_name;
+            $mk->{'variations'}->{$_}->{'vf'} = $dbID;
             $mk->{'variations'}->{$_}->{'species'} = $config->{'ref_slice_name'} ? $config->{'species'} : $name;
           }
         }
@@ -483,8 +489,6 @@ sub get_sequence_data {
     if ($config->{'exon_display'}) {
       my $exontype = $config->{'exon_display'};
       my @exons;
-      
-      my ($slice_start, $slice_end, $slice_length) = ($slice->start, $slice->end, $slice->length);
       
       if ($exontype eq 'Ab-initio') {      
         @exons = ( 
@@ -520,16 +524,17 @@ sub get_sequence_data {
         
         my $start = $exon->start - ($type eq 'gene' ? $slice_start : 1);
         my $end = $exon->end - ($type eq 'gene' ? $slice_start : 1);
+        my $id = $exon->can('stable_id') ? $exon->stable_id : '';
         
         if ($exon->strand < 0 && !$config->{'maintain_exons'}) {
           ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1);
         }
         
-        for ($start..$end) {
-          last if $_ >= $config->{'length'};
-          
+        $end = $config->{'length'} if $end > $config->{'length'};
+        
+        for ($start..$end) {          
           push (@{$mk->{'exons'}->{$_}->{'type'}}, $type);          
-          $mk->{'exons'}->{$_}->{'id'} .= ($mk->{'exons'}->{$_}->{'id'} ? '; ' : '') . $exon->stable_id if ($exon->can('stable_id'));
+          $mk->{'exons'}->{$_}->{'id'} .= ($mk->{'exons'}->{$_}->{'id'} ? '; ' : '') . $id;
         }
       }
     }
@@ -537,7 +542,6 @@ sub get_sequence_data {
     # Get codons
     if ($config->{'codons_display'}) {
       my @transcripts = map { @{$_->get_all_Transcripts} } @{$slice->get_all_Genes};
-      my $slice_length = $slice->length;
       
       if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
         foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
@@ -546,36 +550,39 @@ sub get_sequence_data {
           my @codons = map {{ start => $_->start, end => $_->end, label => 'START' }} @{$t->translation->all_start_codon_mappings || []}; # START codons
           push (@codons, map {{ start => $_->start, end => $_->end, label => 'STOP' }} @{$t->translation->all_end_codon_mappings || []}); # STOP codons
           
+          my $id = $t->stable_id;
+          my $strand_check = ($t->strand < 0);
+          
           foreach my $c (@codons) {
             my ($start, $end) = ($c->{'start'}, $c->{'end'});
-  
-            ($start, $end) = ($slice_length - $end, $slice_length - $start) if ($t->strand < 0);
-              
+            
+            ($start, $end) = ($slice_length - $end, $slice_length - $start) if $strand_check;
+            
             next if ($end < 1 || $start > $slice_length);
             
             $start = 1 unless $start > 0;
             $end = $slice_length unless $end < $slice_length;
             
             for ($start-1..$end-1) {
-              $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("$c->{'label'}(%s)", $t->stable_id);
+              $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("$c->{'label'}(%s)", $id);
             }
           }
         }
       } else { # Normal Slice
         foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-          my ($start, $end) = ($t->coding_region_start, $t->coding_region_end);
+          my ($start, $end, $id) = ($t->coding_region_start, $t->coding_region_end, $t->stable_id);
           
           $start = 1 if ($start < 1);
           $end = $slice_length if ($end > $slice_length);
   	      
   	      # START codons
   	      for ($start-1..$start+1) { 
-    	      $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("START(%s)", $t->stable_id);
+    	      $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("START(%s)", $id);
   	      }
   	      
   	      # STOP codons
   	      for ($end-3..$end-1) {
-  	        $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("STOP(%s)", $t->stable_id);
+  	        $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("STOP(%s)", $id);
   	      }
         }
       }
@@ -626,7 +633,7 @@ sub markup_exons {
     if ($exon_types->{'gene'}) {
       $config->{'key'} .= sprintf (
         $config->{'key_template'},
-        join( ';', map {"$_:$style->{'gene'}->{$_}"} keys %{$style->{'gene'}} ), "Location of $config->{'gene_name'} $config->{'gene_exon_type'}" );
+        join(';', map {"$_:$style->{'gene'}->{$_}"} keys %{$style->{'gene'}} ), "Location of $config->{'gene_name'} $config->{'gene_exon_type'}");
     }
     
     my $selected;
@@ -639,7 +646,7 @@ sub markup_exons {
     
         $config->{'key'} .= sprintf(
           $config->{'key_template'},
-          join( ';', map {"$_:$style->{$type}->{$_}"} keys %{$style->{$type}} ), "Location of $selected exons" );
+          join(';', map {"$_:$style->{$type}->{$_}"} keys %{$style->{$type}} ), "Location of $selected exons");
       }
     }
   }
@@ -783,6 +790,9 @@ sub markup_line_numbers {
     my $align_slice = 0;
     my $seq = $sequence->[$n];
     
+    my $slice_start = $slice->start;
+    my $slice_end = $slice->end;
+    
     if ($config->{'line_numbering'} eq 'slice') {
       my $start_pos = 0;
       
@@ -792,23 +802,28 @@ sub markup_line_numbers {
         # Get the data for all underlying slices
         foreach (@{$sl->{'underlying_slices'}}) {
           my $ostrand = $_->strand;
-          my $end_pos = $start_pos + length ($_->seq) - 1;
+          my $sl_start = $_->start;
+          my $sl_end = $_->end;
+          my $sl_seq_region_name = $_->seq_region_name;
+          my $sl_seq = $_->seq;
           
-          if ($_->seq_region_name ne 'GAP') {
+          my $end_pos = $start_pos + length ($sl_seq) - 1;
+          
+          if ($sl_seq_region_name ne 'GAP') {
             push (@numbering, {
               dir => $ostrand,
               start_pos => $start_pos,
               end_pos  => $end_pos,
-              start => $ostrand > 0 ? $_->start : $_->end,
-              end => $ostrand > 0 ? $_->end : $_->start,
-              label => $_->seq_region_name . ':'
+              start => $ostrand > 0 ? $sl_start : $sl_end,
+              end => $ostrand > 0 ? $sl_end : $sl_start,
+              label => $sl_seq_region_name . ':'
             });
             
             # Padding to go before the label
-            $config->{'padding'}->{'pre_number'} = length $_->seq_region_name if length $_->seq_region_name > $config->{'padding'}->{'pre_number'};
+            $config->{'padding'}->{'pre_number'} = length $sl_seq_region_name if length $sl_seq_region_name > $config->{'padding'}->{'pre_number'};
           }
           
-          $start_pos += length $_->seq;
+          $start_pos += length $sl_seq;
         }
       } else {
         # Get the data for the slice
@@ -816,8 +831,8 @@ sub markup_line_numbers {
         
         @numbering = ({ 
           dir => $ostrand,
-          start => $ostrand > 0 ? $slice->start : $slice->end,
-          end => $ostrand > 0 ? $slice->end : $slice->start,
+          start => $ostrand > 0 ? $slice_start : $slice_end,
+          end => $ostrand > 0 ? $slice_end : $slice_start,
           label => $slice->seq_region_name . ':'
         });
       }
