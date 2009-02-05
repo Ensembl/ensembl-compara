@@ -363,7 +363,7 @@ sub get_sequence_data {
     
     my ($slice_start, $slice_end, $slice_length, $slice_strand) = ($slice->start, $slice->end, $slice->length, $slice->strand);
     
-    $config->{'length'} ||= $slice->length;
+    $config->{'length'} ||= $slice_length;
     
     if ($config->{'match_display'} && $name ne $config->{'ref_slice_name'}) {      
       my $i = 0;
@@ -399,7 +399,8 @@ sub get_sequence_data {
       eval {
         $snps = $slice->get_all_VariationFeatures;
       };
-        
+      
+      #TODO Check with Javier if this actually makes the slightest bit of difference. Testing suggests not.
       if (scalar @$snps) {
         if ($config->{'line_numbering'} eq 'slice') {
           foreach my $u_slice (@{$sl->{'underlying_slices'}}) {
@@ -409,9 +410,9 @@ sub get_sequence_data {
               my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
               $u_slice->adaptor($slice_adaptor);
             }
-           
+            
             eval {
-              $u_snps->{$_->variation_name} = $_ for (@{$u_slice->get_all_VariationFeatures});
+              map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
             };
           }
         }
@@ -422,11 +423,11 @@ sub get_sequence_data {
       
       for my $snp (@ordered_snps) {
         my $alleles = $snp->allele_string;
-        my $variation_name =$snp->variation_name;
+        my $variation_name = $snp->variation_name;
         my $dbID = $snp->dbID;
         my $s_start = $snp->start;
         my $s_end = $snp->end;
-      
+        
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
         if ($slice_strand < 0) {
           my @al = split(/\//, $alleles);
@@ -599,7 +600,8 @@ sub markup_exons {
   my ($sequence, $markup, $config) = @_;
 
   my $exon_types = {};
-  my ($exon, $type, $s);
+  my ($exon, $type, $s, $seq);
+  my $i = 0;
   
   my $style = {
     exon0 => { 'color' => $config->{'colours'}->{'exon0'} },
@@ -609,17 +611,17 @@ sub markup_exons {
     gene  => { 'color' => $config->{'colours'}->{'exon_gene'}, 'font-weight' => 'bold' },
     compara_other => { 'color' => $config->{'colours'}->{'exon2'} }
   };
-
-  my $i = 0;
   
   foreach my $data (@$markup) {
+    $seq = $sequence->[$i];
+    
     foreach (sort {$a <=> $b} keys %{$data->{'exons'}}) {
       $exon = $data->{'exons'}->{$_};
-      $sequence->[$i]->[$_]->{'title'} .= ($sequence->[$i]->[$_]->{'title'} ? '; ' : '') . $exon->{'id'} if $config->{'title_display'};
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $exon->{'id'} if $config->{'title_display'};
       
       foreach $type (@{$exon->{'type'}}) {
         foreach $s (keys %{$style->{$type}}) {
-          $sequence->[$i]->[$_]->{$s} = $style->{$type}->{$s};
+          $seq->[$_]->{$s} = $style->{$type}->{$s};
         }
 
         $exon_types->{$type} = 1;
@@ -656,16 +658,18 @@ sub markup_codons {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
 
-  my ($codons, $i, $bg);
+  my ($codons, $bg, $seq);
+  my $i = 0;
 
   foreach my $data (@$markup) {
     $codons = 1 if scalar keys %{$data->{'codons'}};
+    $seq = $sequence->[$i];
     
     foreach (sort {$a <=> $b} keys %{$data->{'codons'}}) {
       $bg = 'codon' . ($data->{'bg'}->{$_} || 'utr');
       
-      $sequence->[$i]->[$_]->{'background-color'} = $config->{'colours'}->{$bg};
-      $sequence->[$i]->[$_]->{'title'} .= ($sequence->[$i]->[$_]->{'title'} ? '; ' : '') . $data->{'codons'}->{$_} if $config->{'title_display'};
+      $seq->[$_]->{'background-color'} = $config->{'colours'}->{$bg};
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $data->{'codons'}->{$_} if $config->{'title_display'};
     }
     
     $i++;
@@ -726,6 +730,7 @@ sub markup_comparisons {
   my $padding = '';
   my $i = 0;
   my ($species, $length, $length_diff, $pad, $seq, $comparison);
+  my $title_check = ($comparison->{'insert'} && $config->{'title_display'});
 
   foreach (@{$config->{'slices'}}) {
     $species = $_->{'name'};
@@ -754,7 +759,7 @@ sub markup_comparisons {
     foreach (sort {$a <=> $b} keys %{$data->{'comparisons'}}) {
       $comparison = $data->{'comparisons'}->{$_};
       
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $comparison->{'insert'} if ($comparison->{'insert'} && $config->{'title_display'});
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $comparison->{'insert'} if $title_check;
       
       # For sequence alignment view, this function is callled after the exons have been marked up, 
       # so use ||= to ensure the exon colour is not overwritten.
