@@ -541,6 +541,7 @@ sub familyLine {
 ########################################################################## Genes
 
 sub dumpGene {
+  use Data::Dumper;
   my $conf = shift;
   my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $SANGDB = $conf->{'dbs'}->{'DATABASE_VEGA'};
@@ -548,15 +549,16 @@ sub dumpGene {
   my %DBS = ( 'core' => $COREDB );
   $DBS{'vega'}          = $SANGDB    if $SANGDB;
   $DBS{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
-
   open O, ">$conf->{'directory'}/Gene.txt";
-  foreach my $DB ( keys %DBS ) {
-warn "START... $DB";
+  my $core_xrefs;
+ DB:
+  foreach my $DB ( sort keys %DBS ) {
+    my $gene_count = 0;
+    warn "STARTING... $DB";
     my $DBNAME = $DBS{$DB};
     my $extra = $DB ne 'core' ? ";db=$DB" : '';
     my %xrefs = ();
     my %xrefs_desc = ();
-    my %disp_xrefs = ();
     foreach my $type( qw(Gene Transcript Translation) ) {
       my $T = $conf->{'dbh'}->selectall_arrayref(
         "select ox.ensembl_id,
@@ -565,12 +567,12 @@ warn "START... $DB";
           where ox.ensembl_object_type = '$type' and ox.xref_id = x.xref_id and x.external_db_id = ed.external_db_id"
       );
       foreach ( @$T ) {
-        $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[1]}=1 if $_->[1];
-        $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[2]}=1 if $_->[2];
-        $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[4]}=1 if $_->[4];
-        $xrefs_desc{$type}{$_->[0]}{$_->[5]}=1     if $_->[5];
+        $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[1]} =1 if $_->[1];
+        $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[2]} =1 if $_->[2];
+        $xrefs{$type}{$_->[0]}{$_->[3]}{$_->[4]} =1 if $_->[4];
+        $xrefs_desc{$type}{$_->[0]}{$_->[5]}      =1 if $_->[5];
       }
-      warn "XREF $type query...";
+      warn "XREF $type query done";
     }
     my %exons = ();
     my $T = $conf->{'dbh'}->selectall_arrayref(
@@ -596,66 +598,125 @@ warn "START... $DB";
        where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id and g.analysis_id = ad.analysis_id
        order by gsi.stable_id, tsi.stable_id
     ");
-warn "Gene query...";
-    my %old;
+    warn "Gene info query done";
+    my $old;
     foreach my $row (@$gene_info) {
       my($g,$t,$tr,$gs,$ts,$trs,$d,$ddb,$dpa,$dn,$a,$ad,$s,$st,$bt) = @$row;
-      if( $old{'g'} != $g ) {
-        if( $old{'g'} ) {
-          print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'}, $extra, join( ' ', grep{$_}keys %{$old{'i'}}), $old{'t'},$old{'tr'},$old{'e'},
-	    $old{'d'} );
+      if ($DB eq 'core') {
+	$core_xrefs->{$dn}{'display_xref'} = $ddb;
+      }
+      if( $old->{'g'} != $g ) {
+        if( $old->{'g'} ) {
+          print O &geneLine( $conf->{'species'},
+			     $old->{'ex'},
+			     $old->{'s'}.' '.$old->{'bt'},
+			     $old->{'gs'},
+			     $old->{'alt'},
+			     $extra,
+			     join( ' ', grep{$_}keys %{$old->{'i'}}),
+			     $old->{'t'},
+			     $old->{'tr'},
+			     $old->{'e'},
+			     $old->{'d'} );
+	  $gene_count++;
+#	  next DB if ($old->{'dn'} eq 'ARSE'); 
         }
-        %old = (
-          'g' => $g,
-          'gs' => $gs,
-          'd' => $d,
-          'tr' => {$trs?($trs=>1):()},
-          't'  => {$ts ?($ts=>1) :()},
-          'ex' => {},
-          'e'  => {},
-          'i'  => {$gs=>1,$d=>1,$dpa=>1,$dn=>1,$ts=>1,$trs=>1}, 
+        $old = {
+          'g'   => $g,
+          'gs'  => $gs,
+          'd'   => $d,
+          'tr'  => {$trs?($trs=>1):()},
+          't'   => {$ts ?($ts=>1) :()},
+          'ex'  => {},
+          'e'   => {},
+          'i'   => {$gs=>1,$ts=>1,$trs=>1}, 
           'alt' => $dn ? "($ddb: $dn)" : "(novel gene)",
           'a'   => $a,
           'ad'  => $ad,
           's'   => ucfirst($s),
           'st'  => $st,
-          'bt'  => $bt
-        );
-        $old{'s'}=~s/base/Base/;
-        $old{'ex'} = $exons{$g};
-        foreach my $K (keys %{$exons{$g}}) { $old{'i'}{$K} = 1; }
+          'bt'  => $bt,
+	  'dn'  => $dn,
+        };
+	if (   ($DB ne 'vega')
+	    || ($core_xrefs->{$dn}{'display_xref'})
+            || ($core_xrefs->{$dn}{'display_xref'} !~ /'Clone_based'/) ) {
+	  $old->{'i'}->{$d}=1;
+	  $old->{'i'}->{$dpa}=1;
+	  $old->{'i'}->{$dn}=1;
+	}
+        $old->{'s'}=~s/base/Base/;
+        $old->{'ex'} = $exons{$g};
+        foreach my $K (keys %{$exons{$g}}) { $old->{'i'}{$K} = 1; }
         foreach my $db( keys %{$xrefs{'Gene'}{$g}||{}} ) {
-          foreach my $K( keys %{$xrefs{'Gene'}{$g}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+          foreach my $K( keys %{$xrefs{'Gene'}{$g}{$db}} ) {
+	    $old->{'e'}{$db}{$K}=1;	
+	    &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xrefs');
+	  }
         }
         foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
-          foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+          foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) {
+	    $old->{'e'}{$db}{$K}=1;	
+	    &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xrefs');
+	  }
         }
         foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
-          foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1;  $old{'i'}{$K}=1; }
+          foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) {
+	    $old->{'e'}{$db}{$K}=1;	
+	    &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xrefs');
+	  }
         }
-	foreach my $K( keys %{$xrefs_desc{'Translation'}{$tr}} ) { $old{'i'}{$K}=1; }
-	foreach my $K( keys %{$xrefs_desc{'Transcript' }{$t }} ) { $old{'i'}{$K}=1; }
-	foreach my $K( keys %{$xrefs_desc{'Gene'       }{$g }} ) { $old{'i'}{$K}=1; }
+	foreach my $K( keys %{$xrefs_desc{'Translation'}{$tr}} ) {
+	  &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xref_desc');
+	}
+	foreach my $K( keys %{$xrefs_desc{'Transcript' }{$t }} ) {
+	  &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xref_desc');
+	}
+	foreach my $K( keys %{$xrefs_desc{'Gene'       }{$g }} ) {
+	  &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xref_desc');
+	}
       } else {
-        $old{'t'}{$ts}=1;
-        $old{'tr'}{$trs}=1;
-        $old{'i'}{$ts}=1;
-        $old{'i'}{$trs}=1;
-        foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
-          foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+        $old->{'t'}{$ts}=1;
+        $old->{'tr'}{$trs}=1;
+        $old->{'i'}{$ts}=1;
+        $old->{'i'}{$trs}=1;
+	foreach my $db( keys %{$xrefs{'Transcript'}{$t}||{}} ) {
+          foreach my $K( keys %{$xrefs{'Transcript'}{$t}{$db}} ) {
+	    $old->{'e'}{$db}{$K}=1;	
+	    &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xrefs');
+	  }
         }
         foreach my $db( keys %{$xrefs{'Translation'}{$tr}||{}} ) {
-          foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) { $old{'e'}{$db}{$K}=1; $old{'i'}{$K}=1; }
+          foreach my $K( keys %{$xrefs{'Translation'}{$tr}{$db}} ) {
+	    $old->{'e'}{$db}{$K}=1;	
+	    &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xrefs');
+	  }
         }
-	foreach my $K( keys %{$xrefs_desc{'Translation'}{$tr}} ) { $old{'i'}{$K}=1; }
-	foreach my $K( keys %{$xrefs_desc{'Transcript' }{$t }} ) { $old{'i'}{$K}=1; }
+	foreach my $K( keys %{$xrefs_desc{'Translation'}{$tr}} ) {
+	  &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xref_desc');
+	}
+	foreach my $K( keys %{$xrefs_desc{'Transcript' }{$t }} ) {
+	  &check_and_store($DB,$dn,$K,$core_xrefs,$old,'xref_desc');
+	}
       }
     }
-    print O &geneLine( $conf->{'species'}, $old{'ex'}, $old{'s'}.' '.$old{'bt'}, $old{'gs'}, $old{'alt'},
-      $extra, join( ' ', grep{$_}keys %{$old{'i'}}), 
-      $old{'t'},$old{'tr'},$old{'e'},
-      $old{'d'} );
+    print O &geneLine( $conf->{'species'},
+		       $old->{'ex'},
+		       $old->{'s'}.' '.$old->{'bt'},
+		       $old->{'gs'},
+		       $old->{'alt'},
+		       $extra,
+		       join( ' ', grep{$_}keys %{$old->{'i'}}),
+		       $old->{'t'},
+		       $old->{'tr'},
+		       $old->{'e'},
+		       $old->{'d'} );
+    $gene_count++;
+    print STDOUT "$gene_count $DB genes indexed\n";
   }
+
+#  warn Dumper($core_xrefs->{'ARSE'});
+  my $other_count = 0;
   my %current_stable_ids =();
   foreach my $type (qw(gene transcript translation)) {
     $current_stable_ids{$type}  = {map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
@@ -667,7 +728,7 @@ warn "Gene query...";
      where ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
      order by Y desc, X desc
   ));
-   
+
   $sth->execute();
   my %mapping = ();
   while( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
@@ -695,6 +756,7 @@ warn "Gene query...";
         }
       }
       if( @current_sis ) {
+	$other_count++;
         print O join( "\t",
           (INC_SPECIES?"$species\t":"").qq(Ensembl $type),
           qq($osi),
@@ -705,6 +767,7 @@ warn "Gene query...";
           ".\n"
         );
       } elsif( @deprecated_sis ) {
+	$other_count++;
         print O join( "\t",
           (INC_SPECIES?"$species\t":"").qq(Ensembl $type),
           qq($osi),
@@ -713,6 +776,7 @@ warn "Gene query...";
           qq($type $osi is no longer in the Ensembl database but it has been mapped to the following identifiers: @deprecated_sis\n)
         );
       } else {
+	$other_count++;
         print O join( "\t",
           (INC_SPECIES?"$species\t":"").qq(Ensembl $type),
           qq($osi),
@@ -723,6 +787,8 @@ warn "Gene query...";
       }
     }
   }
+  print STDOUT "$other_count other stable IDS indexed\n";
+  $other_count = 0;
   my %unmapped_queries = (
     'None' => qq(
       select a.logic_name, e.db_display_name,
@@ -787,6 +853,34 @@ warn "Gene query...";
   close O;
 }
 
+
+sub check_and_store {
+  my ($DB,$dn,$K,$core_xrefs,$old,$rec_type) = @_;
+  if ($DB eq 'core') {
+    $old->{'i'}{$K}=1;
+#    if ($dn eq 'ARSE') {
+#      warn $K;
+#      warn Dumper($core_xrefs->{$dn}{$rec_type});
+#    }
+    push @{$core_xrefs->{$dn}{$rec_type}}, $K;
+  }
+
+  elsif ($DB eq 'vega' ) {
+    if (   ($core_xrefs->{$dn}{'display_xref'} !~ /'Clone_based'/)
+        || (! grep {$_ eq $K} @{$core_xrefs->{$dn}{$rec_type}})
+        || ($K =~ /OTT|ENS/)) {
+      $old->{'i'}{$K}=1;
+#      if ($dn eq 'ARSE') {
+#	warn $K;
+#	warn Dumper($core_xrefs->{$dn}{$rec_type});
+#	warn "not found!";
+#      }
+    }
+#    else { print STDOUT "search term $K ignored for vega gene $dn\n"; }
+  }
+  else { $old->{'i'}{$K}=1; }
+}
+
 sub geneLine {
   my ($species, $exons, $X, $gid, $altid, $extra, $IDX, $transcripts, $peptides, $external_identifiers, $description )=@_;
   return if $gid eq '';
@@ -795,6 +889,9 @@ sub geneLine {
   my $E = scalar (keys %$exons);
   my $EX = scalar (keys %$external_identifiers);
   $IDX =~ s/\n/ /g;
+#  if ($gid =~ /ENSG00000157399|OTTHUMG00000137358/) {
+#    warn "indexing $gid with ",Data::Dumper::Dumper($IDX);
+#  }
 #  $EX =~ s/\n/ /g;
   return join( "\t",
     (INC_SPECIES?"$species\t":"").qq($X Gene),
