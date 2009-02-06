@@ -400,7 +400,6 @@ sub get_sequence_data {
         $snps = $slice->get_all_VariationFeatures;
       };
       
-      #TODO Check with Javier if this actually makes the slightest bit of difference. Testing suggests not.
       if (scalar @$snps) {
         if ($config->{'line_numbering'} eq 'slice') {
           foreach my $u_slice (@{$sl->{'underlying_slices'}}) {
@@ -459,7 +458,7 @@ sub get_sequence_data {
         if ($end < $start) {
           $start = $s_end-1;
           $end = $s_start-1;
-          $snp_type = 'delete';
+          $snp_type = 'insert';
           $snp_start--;
         }
         
@@ -527,10 +526,6 @@ sub get_sequence_data {
         my $end = $exon->end - ($type eq 'gene' ? $slice_start : 1);
         my $id = $exon->can('stable_id') ? $exon->stable_id : '';
         
-        if ($exon->strand < 0 && !$config->{'maintain_exons'}) {
-          ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1);
-        }
-        
         $end = $config->{'length'} if $end > $config->{'length'};
         
         for ($start..$end) {          
@@ -552,12 +547,9 @@ sub get_sequence_data {
           push (@codons, map {{ start => $_->start, end => $_->end, label => 'STOP' }} @{$t->translation->all_end_codon_mappings || []}); # STOP codons
           
           my $id = $t->stable_id;
-          my $strand_check = ($t->strand < 0);
           
           foreach my $c (@codons) {
             my ($start, $end) = ($c->{'start'}, $c->{'end'});
-            
-            ($start, $end) = ($slice_length - $end, $slice_length - $start) if $strand_check;
             
             next if ($end < 1 || $start > $slice_length);
             
@@ -685,13 +677,13 @@ sub markup_variation {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
 
-  my ($snps, $deletes, $seq, $variation, $ambiguity);
+  my ($snps, $inserts, $seq, $variation, $ambiguity);
   my $i = 0;
-
+  
   my $style = {
     'snp'     => $config->{'colours'}->{'snp_default'},
     'snpexon' => $config->{'colours'}->{'snpexon'},
-    'delete'  => $config->{'colours'}->{'snp_gene_delete'}
+    'insert'  => $config->{'colours'}->{'snp_gene_insert'} 
   };
 
   foreach my $data (@$markup) {
@@ -711,14 +703,14 @@ sub markup_variation {
       }
 
       $snps = 1 if $variation->{'type'} eq 'snp';
-      $deletes = 1 if $variation->{'type'} eq 'delete';
+      $inserts = 1 if $variation->{'type'} eq 'insert';
     }
     
     $i++;
   }
 
   $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$style->{'snp'};", "Location of SNPs") if ($snps);
-  $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$style->{'delete'};", "Location of deletions") if ($deletes);
+  $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$style->{'insert'};", "Location of insertions") if ($inserts);
 }
 
 sub markup_comparisons {
