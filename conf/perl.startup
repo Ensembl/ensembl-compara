@@ -143,23 +143,45 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
 
   my @plugins;
   my @T = @{$conf->ENSEMBL_PLUGINS||[]};
+  my $i = 0;
   do{ push @plugins, $T[0] if @T } while splice(@T,0,2);
-  
-	my $extra = '';
-	if(
-	  $conf->ENSEMBL_MEMCACHED &&
-		$conf->ENSEMBL_MEMCACHED->{'servers'} &&
-	  @{ $conf->ENSEMBL_MEMCACHED->{'servers'}||[] }
+  my $extra = '';
+  if(
+    $conf->ENSEMBL_MEMCACHED &&
+    $conf->ENSEMBL_MEMCACHED->{'servers'} &&
+    @{ $conf->ENSEMBL_MEMCACHED->{'servers'}||[] }
   ) {
-    $extra .= sprintf '
- Memcached enabled:  %s',
+    $extra .= '
+ Memcached enabled:  '.
     join "\n                     ", @{ $conf->ENSEMBL_MEMCACHED->{'servers'}||[] };
 
-	}
+  }
+  if( $conf->ENSEMBL_DEBUG_FLAGS & $conf->ENSEMBL_DEBUG_VERBOSE_STARTUP ) {
+    $extra .= '
+
+ Species      '.join(  "\n              ", map {
+    sprintf '%4d   %-6.6s %-32.32s %s',
+      ++$i,
+      $conf->other_species($_,'SPECIES_RELEASE_VERSION'),
+      $_,
+      $conf->other_species($_,'SPECIES_COMMON_NAME')
+    } @{$conf->ENSEMBL_SPECIES}  );
+    my $i = 1;
+    my $T = $conf->ENSEMBL_DEBUG_FLAGS;
+
+
+    $extra .= '
+
+ Debug flags:        '.
+    join "\n                     ", grep { $T & ( ($i<<=1)>>1 ) } @{$conf->ENSEMBL_FLAG_NAMES_HR}
+    
+  }
   warn sprintf '
 ==============================================================================
  Server information:
 ==============================================================================
+
+ Ensembl version:    %d
 
  External address:   %s/
  Real address:       %s://%s:%s
@@ -180,6 +202,8 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
 ==============================================================================
 
 ',
+  $conf->ENSEMBL_VERSION,
+
   $conf->ENSEMBL_BASE_URL,
   $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER,     $conf->ENSEMBL_PORT,
 
@@ -193,8 +217,8 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
 
   $conf->ENSEMBL_BASE_URL,$conf->ENSEMBL_JSCSS_TYPE,$conf->ENSEMBL_CSS_NAME,
   $conf->ENSEMBL_BASE_URL,$conf->ENSEMBL_JSCSS_TYPE,$conf->ENSEMBL_JS_NAME,
-  join "\n                     ", @plugins,
-	$extra
+  join( "\n                     ", @plugins,
+	$extra )
   ;
   require EnsEMBL::Web::BlastView::MetaDataBlast;
 }

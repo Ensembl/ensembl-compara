@@ -96,6 +96,7 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $MART_ENSEMBL_LINKS
   $ENSEMBL_MART_ENABLED
   $ENSEMBL_BLAST_ENABLED
+  $ENSEMBL_FLAG_NAMES
 );
 use Sys::Hostname::Long;
 use Exporter();
@@ -183,22 +184,38 @@ $ENSEMBL_API_VERBOSITY              = 'WARNING';
 
 $ENSEMBL_DEBUG_FLAGS                = 1;
 
-our $ENSEMBL_DEBUG_WIZARD_MESSAGES  = 1<<13;
-our $ENSEMBL_DEBUG_EXTERNAL_COMMANDS= 1<<12;
-our $ENSEMBL_DEBUG_MEMCACHED        = 1<<11;
-our $ENSEMBL_DEBUG_JAVASCRIPT_DEBUG = 1<<10;
-our $ENSEMBL_DEBUG_MAGIC_MESSAGES   = 1<<9;
-our $ENSEMBL_DEBUG_REFERER          = 1<<8;
-our $ENSEMBL_DEBUG_TREE_DUMPS       = 1<<7;
-our $ENSEMBL_DEBUG_TIMESTAMPED_LOGS = 1<<6;
-our $ENSEMBL_DEBUG_PERL_PROFILER    = 1<<5;
-our $ENSEMBL_DEBUG_LONG_PROCESS     = 1<<4;
-our $ENSEMBL_DEBUG_HANDLER_ERRORS   = 1<<3;
-our $ENSEMBL_DEBUG_SD_AUTOLOADER    = 1<<2;
-our $ENSEMBL_DEBUG_DRAWING_CODE     = 1<<1;
-our $ENSEMBL_DEBUG_GENERAL_ERRORS   = 1<<0;
+our $ENSEMBL_DEBUG_VERBOSE_ERRORS = 0;
+our $ENSEMBL_FLAG_NAMES_HR = [];
 
-our $ENSEMBL_DEBUG_VERBOSE_ERRORS   = 0xffff;
+$ENSEMBL_FLAG_NAMES = [qw(
+  GENERAL_ERRORS
+  DRAWING_CODE
+  SD_AUTOLOADER
+  HANDLER_ERRORS
+  LONG_PROCESS
+  PERL_PROFILER
+  TIMESTAMPED_LOGS
+  TREE_DUMPS
+  REFERER
+  MAGIC_MESSAGES
+  JAVASCRIPT_DEBUG
+  MEMCACHED
+  EXTERNAL_COMMANDS
+  WIZARD_MESSAGES
+  VERBOSE_STARTUP
+)];
+
+my $i=0;
+
+foreach( @$ENSEMBL_FLAG_NAMES ) {
+no strict 'refs';
+  my $variable_name = 'SiteDefs::ENSEMBL_DEBUG_'.$_;
+  $$variable_name = 1<<($i++);
+  $ENSEMBL_DEBUG_VERBOSE_ERRORS <<=1;
+  $ENSEMBL_DEBUG_VERBOSE_ERRORS +=1;
+  (my $t = ucfirst(lc($_)) ) =~ s/_/ /g;
+  push @{$ENSEMBL_FLAG_NAMES_HR}, $t;
+}
 
 #####################
 # Apache files
@@ -404,7 +421,8 @@ while( my( $name, $dir ) = splice(@T,0,2)  ) {
                                               # right order
 
 my $DATESTAMP = '';
-if( $ENSEMBL_DEBUG_FLAGS & 64 ) { ##  Set to 0 - disables time stamped logs
+if( $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_TIMESTAMPED_LOGS ) { ##  Set to 0 - disables time stamped logs
+
         ##  Set to 1 -  enables time stamped logs
   my @TIME = gmtime();
   $DATESTAMP = sprintf( ".%04d-%02d-%02d-%02d-%02d-%02d", $TIME[5]+1900, $TIME[4]+1, @TIME[3,2,1,0] );
@@ -472,6 +490,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
 # Export by default
 ####################
 @EXPORT = qw(
+  $ENSEMBL_FLAG_NAMES
   $APACHE_DIR
   $BIOPERL_DIR
   $ENSEMBL_PLUGIN_ROOTS
@@ -521,6 +540,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
 # Export anything asked for
 ############################
 @EXPORT_OK = qw(
+  $ENSEMBL_FLAG_NAMES
   $APACHE_DIR
 	$BIOPERL_DIR
   $ENSEMBL_HELPDESK_EMAIL
@@ -611,6 +631,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
 ###################################
 %EXPORT_TAGS = (
   ALL => [qw(
+  $ENSEMBL_FLAG_NAMES
     $APACHE_DIR
     $BIOPERL_DIR
   $ENSEMBL_SHORTEST_ALIAS
@@ -693,6 +714,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
   $ENSEMBL_BLAST_ENABLED
   )],
   WEB => [qw(
+    $ENSEMBL_FLAG_NAMES
     $APACHE_DIR
     $BIOPERL_DIR
   $ENSEMBL_PLUGIN_ROOTS
@@ -745,6 +767,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
   $ENSEMBL_BLAST_ENABLED
   )],
   APACHE => [qw(
+    $ENSEMBL_FLAG_NAMES
     $APACHE_DIR
     $BIOPERL_DIR
     $ENSEMBL_PLUGIN_ROOTS
