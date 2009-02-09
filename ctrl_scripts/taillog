@@ -71,13 +71,13 @@ Notes:
 ------------------------------------------------------------------------
 ' if $help;
 
-my $al = split /\s+/, $SiteDefs::ENSEMBL_CUSTOMLOG;
+my ($al) = split /\s+/, ( $SiteDefs::ENSEMBL_CUSTOMLOG );
 my $el = $SiteDefs::ENSEMBL_ERRORLOG;
 
 my $cmd = '';
 if( $both ) {
-  $cmd = "multitail --merge-all -ci yellow,,bold $al $el";
-} elsif( $doaccess ) {
+  $cmd = "multitail -o check_mail:0 --mergeall -ci yellow,,bold $al $el";
+} elsif( $do_access ) {
   $cmd = "tail -f $al";
 } else {
   $cmd = "tail -f $el";
