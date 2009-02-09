@@ -45,9 +45,10 @@ BEGIN {
 use SiteDefs;
 
 
-my ($help, $do_access);
+my ($help, $do_access, $both);
 &GetOptions(
   "access"  => \$do_access,
+  "both"    => \$both,
   "h"       => \$help,
 );
 die '
@@ -55,17 +56,31 @@ die '
 Usage:
   ctrl_scripts/taillog
     [-a|--access]
+    [-b|--both]
     [-h|--help]
         
 Options:
   -a, --access    : Tails access log instead of error log
+  -b, --both      : Tails access and error log (using multitail)
   -h, --help      : print this help message
+
+Notes:
+  For -b to work must have multitail installed
+  http://www.vanheusden.com/multitail/
 	
 ------------------------------------------------------------------------
 ' if $help;
 
-(my $logname = $do_access ? $SiteDefs::ENSEMBL_CUSTOMLOG : $SiteDefs::ENSEMBL_ERRORLOG) =~ s/\s.*//;
+my $al = split /\s+/, $SiteDefs::ENSEMBL_CUSTOMLOG;
+my $el = $SiteDefs::ENSEMBL_ERRORLOG;
 
-my $cmd = "tail -f $logname";
+my $cmd = '';
+if( $both ) {
+  $cmd = "multitail --merge-all -ci yellow,,bold $al $el";
+} elsif( $doaccess ) {
+  $cmd = "tail -f $al";
+} else {
+  $cmd = "tail -f $el";
+}
 exec($cmd) or die "Could not tail log: $!.\n";
 
