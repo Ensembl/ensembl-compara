@@ -134,8 +134,6 @@ sub QTLLine {
 
 sub dumpSNP {
   my $conf = shift;
-#  next if $conf->{'species'} eq 'Homo_sapiens'; ## SKIP HUMAN SNPS....
-#  next if $conf->{'species'} eq 'Mus_musculus'; ## SKIP HUMAN SNPS....
   my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
   return unless $SNPDB;
 
@@ -143,6 +141,29 @@ sub dumpSNP {
   `/usr/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation_synonym order by variation_id' > vs.txt`;
 
   return unless $SNPDB;
+
+
+  my %SNP_EXTRA = map { ($_->[0] => $_) }
+    @{$conf->{'dbh'}->selectall_arrayref( 
+      "select va.variation_id,
+              group_concat( distinct va.local_stable_id SEPARATOR '; ') as lsi,
+              group_concat( distinct va.study           SEPARATOR '; ') as st,
+              group_concat( distinct va.associated_gene SEPARATOR '; ') as gn,
+              group_concat( distinct va.variation_names SEPARATOR '; ') as vars,
+              group_concat( distinct 
+                if(
+                  isnull(p.name),
+                  description,
+                  concat( p.description,' (',p.name,')' )
+                )
+                SEPARATOR '; '
+              ) as phen
+         from $SNPDB.variation_annotation as va left join
+              $SNPDB.phenotype as p on p.phenotype_id = va.phenotype_id
+        group by va.variation_id
+        order by va.variation_id"
+   )};
+
   my $SOURCES = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )} };
 
   open( my $fh1, 'v.txt' );
@@ -191,8 +212,31 @@ sub dumpSNP {
   while(<I>) {
     my($ID,$source,$name,@keywords) = split;
     my @K = map { (my $t=$_)=~ s/^\w+://;$t } @keywords;
-    print O "$source SNP\t$name\t/$conf->{'species'}/Variation/Summary?source=$source;v=$name\t$name @K\tA $source SNP with ".
-      (@keywords?@keywords.(" synonym".(@keywords>1?'s':'')." (@keywords)"):'no synonyms')."\n";
+    my $size = @keywords;
+    my $extra = '';
+    my $x = $SNP_EXTRA{$ID};
+    if( $x ) {
+      push @K, $x->[1], $x->[3],$x->[4];
+      $extra = '; and is associated with following phenotypes:'. $x->[4];
+      if( $x->[1] ) {
+        $extra .= sprintf ', through %s', $x->[1];
+      }
+      if( $x->[2] ) {
+        $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
+      }
+    } 
+    print O join "\t",
+      "$source SNP",
+      $name,
+      "/$conf->{'species'}/Variation/Summary?source=$source;v=$name",
+      "$name @K",
+      sprintf( "A %s SNP with %s%s\n",
+        $source, 
+          $size > 1 ? " with $size synonyms: @keywords" 
+        : $size     ? " with one synonym: @keywords"
+        :             " with no synonyms",
+        $extra
+      );
   }
   close O;
   close I;
