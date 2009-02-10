@@ -1,26 +1,34 @@
-/* SNP sequence markup */
+/* Feature colours - MUST BE FIRST */
+span.con { background-color: [[SEQ_CONSERVATION]] }
+span.res { color: [[SEQ_RESEQEUNCING]] }
 
-.alt_allele   { color: red; font-weight: bold }
+/* Exon colours */
+span.e0 { color: [[SEQ_EXON0]] }
+span.e1 { color: [[SEQ_EXON1]] }
+span.e2 { color: [[SEQ_EXON2]] }
+span.eo { background-color: [[SEQ_EXONOTHER]] }
+span.eg { color: [[SEQ_EXONGENE]]; font-weight: bold }
 
-/* Exon view */
-.exons_flank  { color: green }
-.exons_utr    { color: #9400d3 }
-.exons_exon   { color: black }
-.exons_intron { color: blue }
-.exons_flank, .exons_utr, .exons_intron, .exons_exon { font-family:Courier New, Courier, Monaco, monospace; }
+/* Codon colours */
+span.c0 { background-color: [[SEQ_CODONC0]] }
+span.c1 { background-color: [[SEQ_CODONC1]] }
+span.cu { background-color: [[SEQ_CODONUTR]] }
 
-.orthologues { width: 100% }
+/* Variation colours */
+span.sn  { background-color: [[SEQ_SNP]] }       /* SNP */
+span.si  { background: [[SEQ_SNPINSERT]] }       /* Insert (no line) */
+span.sd  { background-color: [[SEQ_SNPDELETE]] } /* Delete */
+/*span.si1 { background: [[SEQ_SNPINSERT]] url(/i/insert_line.gif) 7px no-repeat } /* Insert - 1st bp */
+/*span.si2 { background: [[SEQ_SNPINSERT]] url(/i/insert_line.gif) 0px no-repeat } /* Insert - 2nd bp */
 
-/* Mark up for geneseqview features */
-span.n   { background-color:#fefefe; color:black; } /* Normal bp */
-span.ns { background-color:#caff70; color:black; } /* SNP */
-span.nd { background-color:#12ff70; color:black; } /* Deletion */
-span.nc { background-color:#b0e2ff; color:black; } /* Conversed regions */
-span.no { background-color:#ffd700; color:black; } /* Codons */
-span.nt { background-color:#f7f7f7; color:black; } /* resequencing data*/
-span.e   { background-color:#fefefe; color:red; }   /* Exon */
-span.es { background-color:#caff70; color:red; }
-span.ed { background-color:#12ff70; color:red; }
-span.ec { background-color:#b0e2ff; color:red; }
-span.eo { background-color:#ffd700; color:red; }
-span.et { background-color:#f7f7f7; color:red; } /* resequencing data*/
+/* Variation colours - Transcripts */
+span.snt { background-color: [[SEQ_SNP_TR]] }          /* SNP */
+span.sy  { background-color: [[SEQ_SYN_TR]] }          /* SYN */
+span.sf  { background-color: [[SEQ_FS_TR]] }           /* Frameshift */
+span.sit { background-color: [[SEQ_SNPINSERT_TR]] }    /* Insert */
+span.sdt { background-color: [[SEQ_SNPDELETE_TR]] }    /* Delete */
+span.snu { background-color: [[SEQ_SNP_TR_UTR]] }      /* SNP in UTR region */
+span.syu { background-color: [[SEQ_SYN_TR_UTR]] }      /* SNY in UTR region */
+span.siu { background-color: [[SEQ_SNPINSERT_TR_UTR]] } /* Insert in UTR region */
+span.sdu { background-color: [[SEQ_SNPDELETE_TR_UTR]] } /* Insert in UTR region */
+span.aa  { color: [[SEQ_AMINOACID]] }                  /* Amino acid */
