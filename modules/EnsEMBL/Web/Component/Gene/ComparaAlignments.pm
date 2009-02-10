@@ -221,13 +221,7 @@ sub get_alignments {
   my $as_adaptor = $compara_db->get_adaptor('AlignSlice');
   my $mlss_adaptor = $compara_db->get_adaptor('MethodLinkSpeciesSet');
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($selected_alignment);
-  
-  # This call is slow for large genes and comparison sets
-  # TODO: Hassle the API team until they make it better
-  
-  my $expand = $object->param('expanded') ? 'expanded' : undef;
-  
-  my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, $expand, 'restrict');
+  my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, 'expanded', 'restrict');
   
   my @selected_species;
 
