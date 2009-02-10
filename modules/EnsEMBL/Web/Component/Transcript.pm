@@ -43,6 +43,7 @@ sub markup_variation {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
   
+  my $seq;
   my $i = 0;
   
   my $title = {
@@ -53,20 +54,47 @@ sub markup_variation {
     'syn' => sub { my $p = shift; my $t = ''; $t .= $p->{'ambigcode'}[$_] ? '('.$p->{'ambigcode'}[$_].')' : $p->{'nt'}[$_] for (0..2); return "Codon: $t" },
     'transcript' => sub { return "Alleles: $_[0]->{'alleles'}" } # All transcript variations have the same title format
   };
+  
+  my $mk = {
+    'snp' => { 
+      'class' => 'snt', 
+      'title' => sub { return "Residues: $_[0]->{'pep_snp'}" }
+    },
+    'syn' => { 
+      'class' => 'sy', 
+      'title' => sub { my $p = shift; my $t = ''; $t .= $p->{'ambigcode'}[$_] ? '('.$p->{'ambigcode'}[$_].')' : $p->{'nt'}[$_] for (0..2); return "Codon: $t" }
+    },
+    'insert' => { 
+      'class' => 'sit', 
+      'title' => sub { shift; $_->{'alleles'} = join '', @{$_->{'nt'}}; $_->{'alleles'} = Bio::Perl::translate_as_string($_->{'alleles'}); return "Insert: $_->{'alleles'}" }
+    },
+    'delete' => { 
+      'class' => 'sdt', 
+      'title' => sub { return "Deletion: $_[0]->{'alleles'}" } 
+    },
+    'frameshift' => { 
+      'class' => 'sf', 
+      'title' => sub { return "Frame-shift" }
+    },
+    'snputr'    => { 'class' => 'snu' },
+    'synutr'    => { 'class' => 'syu' },
+    'insertutr' => { 'class' => 'siu' },
+    'deleteutr' => { 'class' => 'sdu' }
+  };
 
   foreach my $data (@$markup) {
+    $seq = $sequence->[$i];
+    
     foreach (sort {$a <=> $b} keys %{$data->{'variations'}}) {
       my $variation = $data->{'variations'}->{$_};
       my $type = $variation->{'type'};
       
-      next unless $type;
-      
-      $sequence->[$i]->[$_]->{'title'} = &{$title->{$type}}($variation) if $title->{$type};
-      
-      if ($type eq 'transcript') {
-        $sequence->[$i]->[$_]->{'background-color'} = $config->{'translation'} ? $config->{'colours'}->{"$variation->{'snp'}$data->{'bg'}->{$_}"} : $config->{'colours'}->{'snp_default'};
+      if ($variation->{'transcript'}) {
+        $seq->[$_]->{'title'} = "Alleles: $variation->{'alleles'}";
+        $seq->[$_]->{'class'} .= ($config->{'translation'} ? $mk->{$variation->{'type'}}->{'class'} : 'sn') . " ";
       } else {
-        $sequence->[$i]->[$_]->{'background-color'} = $config->{'colours'}->{$type};
+        $seq->[$_]->{'title'} = &{$mk->{$type}->{'title'}}($variation);
+        $seq->[$_]->{'class'} .= "$mk->{$type}->{'class'} ";
       }
     }
     

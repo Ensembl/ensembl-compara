@@ -22,16 +22,12 @@ sub content {
   my $object = $self->object;
   my $slice  = $object->get_slice_object->Obj; # Object for this section is the slice
 
-  my $colours = $object->species_defs->colour('sequence_markup');
-  my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
-
   my $config = {
     display_width => $object->param('display_width') || 60,
-    colours => \%c,
     site_type => ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl',
     gene_name => $object->Obj->stable_id,
     species => $object->species,
-    key_template => qq{<p><code><span style="%s">THIS STYLE:</span></code> %s</p>},
+    key_template => qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>},
     key => ''
   };
 

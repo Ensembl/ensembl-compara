@@ -51,6 +51,7 @@ sub get_sequence_data {
     
     foreach (sort {$a <=> $b} keys %$variations) {
       last if $_ >= $config->{'length'};
+      next unless $variations->{$_}->{'type'}; # Weed out the rubbish returned by pep_snps
       
       $markup->{'variations'}->{$_}->{'type'} = $variations->{$_}->{'type'};
       $markup->{'variations'}->{$_}->{'alleles'} = $variations->{$_}->{'allele'};
@@ -70,12 +71,8 @@ sub content {
   
   return $self->non_coding_error unless $object;
   
-  my $colours = $object->species_defs->colour('sequence_markup');
-  my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
-  
   my $config = { 
     display_width => $object->param('display_width') || 60,
-    colours => \%c,
     species => $object->species,
     maintain_colour => 1
   };

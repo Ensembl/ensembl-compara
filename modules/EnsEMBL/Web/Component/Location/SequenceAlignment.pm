@@ -28,15 +28,11 @@ sub content {
     );
   }
   
-  my $colours = $object->species_defs->colour('sequence_markup');
-  my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
-  
   my $config = {
     display_width => $object->param('display_width') || 60,
-    colours => \%c,
     site_type => ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl',
     species => $object->species,
-    key_template => qq{<p><code><span style="%s">THIS STYLE:</span></code> %s</p>},
+    key_template => qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>},
     key => '',
     comparison => 1,
     maintain_exons => 1 # This is to stop the exons being reversed in markup_exons if the strand is -1
@@ -73,7 +69,7 @@ sub content {
   }
   
   foreach my $individual (@individuals) {
-    my $slice = $ref_slice_obj->get_by_strain($individual); # ~0.5s
+    my $slice = $ref_slice_obj->get_by_strain($individual);
     push (@individual_slices, $slice) if $slice;
   }
   
@@ -82,7 +78,7 @@ sub content {
     my $align_slice = Bio::EnsEMBL::AlignStrainSlice->new(-SLICE => $ref_slice_obj, -STRAINS => \@individual_slices);
     
     # Get aligned strain slice objects
-    my $slice_array = $align_slice->get_all_Slices; # ~1.2s
+    my $slice_array = $align_slice->get_all_Slices;
     
     my @ordered_slices = sort { $a->[0] cmp $b->[0] } map { [ ($_->can('display_Slice_name') ? $_->display_Slice_name : $config->{'species'}), $_ ] } @$slice_array;
     

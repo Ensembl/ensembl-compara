@@ -157,18 +157,14 @@ sub markup_conservation {
     }
     
     foreach my $c (@csrv) {
-      $seq->[$_]->{'background-color'} = $config->{'colours'}->{'conservation'} for ($c->[0]..$c->[1]);
+      $seq->[$_]->{'class'} .= "con " for ($c->[0]..$c->[1]);
     }
     
     $conserved = 1 if scalar @csrv;
   }
   
   if ($conserved) {
-    $config->{'key'} .= sprintf (
-      $config->{'key_template'}, 
-      "background-color:$config->{'colours'}->{'conservation'};", 
-      "Location of conserved regions (where >50&#37; of bases in alignments match)"
-    );
+    $config->{'key'} .= sprintf ($config->{'key_template'}, "con", "Location of conserved regions (where >50&#37; of bases in alignments match)");
   }
 }
 
