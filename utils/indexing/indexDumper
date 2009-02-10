@@ -663,7 +663,6 @@ sub dumpGene {
 			     $old->{'e'},
 			     $old->{'d'} );
 	  $gene_count++;
-#	  next DB if ($old->{'dn'} eq 'ARSE'); 
         }
         $old = {
           'g'   => $g,
@@ -674,7 +673,7 @@ sub dumpGene {
           'ex'  => {},
           'e'   => {},
           'i'   => {$gs=>1,$ts=>1,$trs=>1}, 
-          'alt' => $dn ? "($ddb: $dn)" : "(novel gene)",
+          'alt' => ($DB ne 'vega' && $dn) ? "($ddb: $dn)" : $dn ? "($dn)" : "(novel gene)",
           'a'   => $a,
           'ad'  => $ad,
           's'   => ucfirst($s),
@@ -902,25 +901,17 @@ sub check_and_store {
   my ($DB,$dn,$K,$core_xrefs,$old,$rec_type) = @_;
   if ($DB eq 'core') {
     $old->{'i'}{$K}=1;
-#    if ($dn eq 'ARSE') {
-#      warn $K;
-#      warn Dumper($core_xrefs->{$dn}{$rec_type});
-#    }
     push @{$core_xrefs->{$dn}{$rec_type}}, $K;
   }
 
-  elsif ($DB eq 'vega' ) {
+#enable filtering here
+  elsif (0) {
+#  elsif ($DB eq 'vega' ) {
     if (   ($core_xrefs->{$dn}{'display_xref'} !~ /'Clone_based'/)
         || (! grep {$_ eq $K} @{$core_xrefs->{$dn}{$rec_type}})
         || ($K =~ /OTT|ENS/)) {
       $old->{'i'}{$K}=1;
-#      if ($dn eq 'ARSE') {
-#	warn $K;
-#	warn Dumper($core_xrefs->{$dn}{$rec_type});
-#	warn "not found!";
-#      }
     }
-#    else { print STDOUT "search term $K ignored for vega gene $dn\n"; }
   }
   else { $old->{'i'}{$K}=1; }
 }
