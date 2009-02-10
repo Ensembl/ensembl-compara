@@ -46,15 +46,6 @@ sub markup_variation {
   my $seq;
   my $i = 0;
   
-  my $title = {
-    'delete' => sub { return "Deletion: $_[0]->{'alleles'}" },
-    'insert' => sub { shift; $_->{'alleles'} = join '', @{$_->{'nt'}}; $_->{'alleles'} = Bio::Perl::translate_as_string($_->{'alleles'}); return "Insert: $_->{'alleles'}" },
-    'frameshift' => sub { return "Frame-shift" },
-    'snp' => sub { return "Residues: $_[0]->{'pep_snp'}" },
-    'syn' => sub { my $p = shift; my $t = ''; $t .= $p->{'ambigcode'}[$_] ? '('.$p->{'ambigcode'}[$_].')' : $p->{'nt'}[$_] for (0..2); return "Codon: $t" },
-    'transcript' => sub { return "Alleles: $_[0]->{'alleles'}" } # All transcript variations have the same title format
-  };
-  
   my $mk = {
     'snp' => { 
       'class' => 'snt', 
