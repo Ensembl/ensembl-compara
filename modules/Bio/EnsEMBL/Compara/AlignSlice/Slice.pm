@@ -1903,7 +1903,8 @@ sub map_original_Slice {
       }
     }
     if (defined($mapped_start) and defined($mapped_end) and defined($mapped_strand)) {
-      push(@$mapped_slices, $self->sub_Slice($mapped_start, $mapped_end, $mapped_strand));
+      my $sub_slice = $self->sub_Slice($mapped_start, $mapped_end, $mapped_strand);
+      push(@$mapped_slices, $sub_slice) if ($sub_slice);
     }
   }
 
