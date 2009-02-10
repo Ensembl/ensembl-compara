@@ -110,79 +110,66 @@ if( $gene ) {
   my $transcripts = $gene->get_all_Transcripts;
   my $transcript = $object->stable_id;
   my $count = @$transcripts;
-  if( $count > 1 ) { 
-    $html .= qq(
+  my $plural_1 = "are";
+  my $plural_2 = "transcripts";
+  if( $count == 1 ) { 
+    $plural_1 = "is";
+    $plural_2 =~s/s$//;
+  }
+  $html .= qq(
     <dl class="summary">
-      <dt>Gene</dt>
-      <dd>
-        <p id="transcripts_text">This transcript is a product of gene <a href="$gene_url">$gene_id</a> - There are $count transcripts in this gene: </p>
-       <table id="transcripts" summary="List of transcripts for this gene - along with translation information and type">);
-    foreach(
-      map { $_->[2] }
+    <dt>Gene</dt>
+    <dd>
+      <p id="transcripts_text">This transcript is a product of gene <a href="$gene_url">$gene_id</a> - There $plural_1 $count $plural_2 in this gene: </p>
+      <table id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
+      <tr>
+        <th>Name</th>
+        <th>Transcript ID</th>
+        <th>Protein ID</th>
+        <th>Description</th> 
+      </tr>
+  );
+  foreach(
+    map { $_->[2] }
       sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] }
       map { [$_->external_name, $_->stable_id, $_] }
       @$transcripts
-    ) {
-      my $url = $self->object->_url({
-        'action' => $ENV{'ENSEMBL_ACTION'} eq 'ProteinSummary' ? 'Summary' : $ENV{'ENSEMBL_ACTION'},
+  ){
+    my $url = $self->object->_url({
+      'action' => $ENV{'ENSEMBL_ACTION'} eq 'ProteinSummary' ? 'Summary' : $ENV{'ENSEMBL_ACTION'},
+      'type'   => 'Transcript',
+      'function' => undef,
+      't'      => $_->stable_id
+    });
+    my $protein = 'No protein product';
+    if( $_->translation ) {
+      $protein = sprintf '<a href="%s">%s</a>',
+      $self->object->_url({
         'type'   => 'Transcript',
-        'function' => undef,
+        'action' => 'ProteinSummary',
         't'      => $_->stable_id
-      });
-      my $protein = 'No protein product';
-      if( $_->translation ) {
-        $protein = sprintf '<a href="%s">%s</a>',
-          $self->object->_url({
-            'type'   => 'Transcript',
-            'action' => 'ProteinSummary',
-            't'      => $_->stable_id
-          }),
-          $_->translation->stable_id ;
-      }
-      $html .= sprintf( '
-          <tr%s>
-            <th>%s</th>
-            <td><a href="%s">%s</a></td>
-            <td>%s</td>
-            <td>%s</td>
-          </tr>',
-        $_->stable_id eq $transcript ? ' class="active"' : '',
-        $_->display_xref ? $_->display_xref->display_id : 'Novel',
-        $url,
-        $_->stable_id,
-        $protein,
-        $_->biotype
-      );
+      }),
+      $_->translation->stable_id ;
     }
-    $html .= '
-       </table>
-     </dd>
-    </dl>';  
-  } else {
-    $html .= qq(
-    <dl class="summary">
-      <dt>Gene</dt>
-      <dd>
-        <p id="gene_text">This transcript is a product of gene <a href="$gene_url">$gene_id</a></p>
-      </dd>
-    </dl>);
-
+    $html .= sprintf( '
+      <tr%s>
+        <th>%s</th>
+        <td><a href="%s">%s</a></td>
+        <td>%s</td>
+        <td>%s</td>
+      </tr>',
+      $_->stable_id eq $transcript ? ' class="active"' : '',
+      $_->display_xref ? $_->display_xref->display_id : 'Novel',
+      $url,
+      $_->stable_id,
+      $protein,
+      $_->biotype
+    );
   }
-
-  if( $count == 1 ) {
-    ## Now add the protein information...
-    $html .= qq(
-    <dl class="summary">
-    <dt>Protein</dt>
-    <dd>);
-    if (my $translation = $object->translation_object) {
-      my $protein = sprintf ('<a href="%s">%s</a>', $self->object->_url({ 'action' => 'ProteinSummary'}), $translation->stable_id );
-        $html .= qq(<p id="prot_text">$protein is the protein product of this transcript</p>);
-      } else {
-        $html .= qq(<p id="prot_text">This transcript has no translation</p>);
-      }
-    $html .= qq(</dd> </dl>);
-  }
+  $html .= '
+    </table>
+   </dd>
+  </dl>';  
 }
   return  $html;
 }
