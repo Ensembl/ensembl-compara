@@ -18,17 +18,15 @@ span.cu { background-color: [[SEQ_CODONUTR]] }
 span.sn  { background-color: [[SEQ_SNP]] }       /* SNP */
 span.si  { background: [[SEQ_SNPINSERT]] }       /* Insert (no line) */
 span.sd  { background-color: [[SEQ_SNPDELETE]] } /* Delete */
-/*span.si1 { background: [[SEQ_SNPINSERT]] url(/i/insert_line.gif) 7px no-repeat } /* Insert - 1st bp */
-/*span.si2 { background: [[SEQ_SNPINSERT]] url(/i/insert_line.gif) 0px no-repeat } /* Insert - 2nd bp */
 
 /* Variation colours - Transcripts */
-span.snt { background-color: [[SEQ_SNP_TR]] }          /* SNP */
-span.sy  { background-color: [[SEQ_SYN_TR]] }          /* SYN */
-span.sf  { background-color: [[SEQ_FS_TR]] }           /* Frameshift */
-span.sit { background-color: [[SEQ_SNPINSERT_TR]] }    /* Insert */
-span.sdt { background-color: [[SEQ_SNPDELETE_TR]] }    /* Delete */
-span.snu { background-color: [[SEQ_SNP_TR_UTR]] }      /* SNP in UTR region */
-span.syu { background-color: [[SEQ_SYN_TR_UTR]] }      /* SNY in UTR region */
+span.snt { background-color: [[SEQ_SNP_TR]] }           /* SNP */
+span.sy  { background-color: [[SEQ_SYN_TR]] }           /* SYN */
+span.sf  { background-color: [[SEQ_FS_TR]] }            /* Frameshift */
+span.sit { background-color: [[SEQ_SNPINSERT_TR]] }     /* Insert */
+span.sdt { background-color: [[SEQ_SNPDELETE_TR]] }     /* Delete */
+span.snu { background-color: [[SEQ_SNP_TR_UTR]] }       /* SNP in UTR region */
+span.syu { background-color: [[SEQ_SYN_TR_UTR]] }       /* SNY in UTR region */
 span.siu { background-color: [[SEQ_SNPINSERT_TR_UTR]] } /* Insert in UTR region */
-span.sdu { background-color: [[SEQ_SNPDELETE_TR_UTR]] } /* Insert in UTR region */
-span.aa  { color: [[SEQ_AMINOACID]] }                  /* Amino acid */
+span.sdu { background-color: [[SEQ_SNPDELETE_TR_UTR]] } /* Delete in UTR region */
+span.aa  { color: [[SEQ_AMINOACID]] }                   /* Amino acid */
