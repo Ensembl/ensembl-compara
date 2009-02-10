@@ -10,52 +10,97 @@ sub _init {
   my $self = shift;
   $self->cacheable(1);
   $self->ajaxable(1);
+  
+  $self->{'subslice_length'} = $self->object->param('force') || 100 * ($self->object->param('display_width') || 60) if $self->object;
 }
 
 sub caption {
   return undef;
 }
 
-sub content {
+sub content {  
   my $self = shift;
   my $object = $self->object;
   my $slice = $object->get_slice_object->Obj;
-  my $length = $slice->length;
-
-  my $width = $object->param('display_width') || 60;
-  my $increment = 100 * $width;
   
-  # Get all slices for the gene
-  my ($slices, $warnings, $error) = $self->get_slices($object, $slice, $object->param('align'), $object->species);
+  my $align = $object->param('align');
+  
+  my ($error, $warnings) = $self->check_for_errors($object, $align, $object->species);
   
   return $error if $error;
   
-  # TODO: make this work!
-  if (0) { #$length > $increment) {
-    my $i = 1;
-    my $j = $increment;
-    my $end = (int ($length / $increment)) * $increment;
-    my $title;
+  my $html;
+  
+  # Get all slices for the gene
+  my ($slices, $slice_length) = $self->get_slices($object, $slice, $align, $object->species);
+  
+  if ($align && $slice_length >= $self->{'subslice_length'}) {    
+    my ($table, $padding) = $self->get_slice_table($slices, 1);
     
-    my $html = $self->get_key($object) . $self->get_slice_table($slices);
+    my $url = qq{/@{[$object->species]}/Component/Gene/Web/ComparaAlignments/sequence?padding=$padding;length=$slice_length};    
+    $html = $self->get_key($object) . $table;
     
-    # The display is split into a managable number of sub slices, which will be processed in parallel by AJAX calls
-    while ($j <= $length) {
-      $title = qq{/@{[$self->object->species]}/Component/Gene/Web/ComparaAlignments/sub_slice?$ENV{'QUERY_STRING'}&amp;start=${i}&amp;end=$j};
-      $html .= qq{<div class="ajax" title="['$title']"></div>};
-
-      $i = $j + 1;
-      $j += $increment unless $j == $end;
+    if ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') {
+      $html .= qq{<div class="ajax" title="['$url;$ENV{'QUERY_STRING'}']"></div>};
+    } else {
+      map { $url .= ";$_=" . $object->param($_) } $object->param;
       
-      $j = $length if $j == $end;
+      my $renderer = new EnsEMBL::Web::Document::Renderer::Assembler(session => $object->get_session);
+      $renderer->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
+      $renderer->process;
+      
+      $html .= $renderer->content;
+    }
+  } else {
+    $html = $self->content_sub_slice($slices, $warnings); # Direct call if the sequence length is short enough
+  }
+  
+  return $html;
+}
+
+sub content_sequence {
+  my $self = shift;
+  my $object = $self->object;
+  my $slice = $object->get_slice_object->Obj;
+  my $slice_length = $object->param('length') || $slice->length;
+  
+  return unless ($slice_length >= $self->{'subslice_length'}); # The sequence will have been printed already by content calling content_sub_slice directly
+  
+  my ($error, $warnings) = $self->check_for_errors($object, $object->param('align'), $object->species);
+  
+  return if $error; # The error will have been printed already by content
+  
+  my $i = 1;
+  my $j = $self->{'subslice_length'};
+  my $end = (int ($slice_length / $self->{'subslice_length'})) * $self->{'subslice_length'};
+  my $base_url = qq{/@{[$object->species]}/Component/Gene/Web/ComparaAlignments/sub_slice?$ENV{'QUERY_STRING'}};
+  
+  my $renderer = ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(session => $object->get_session);
+  
+  my ($url, $html);
+  
+  # The display is split into a managable number of sub slices, which will be processed in parallel by requests
+  while ($j <= $slice_length) {
+    $url = qq{$base_url;start=$i;end=$j};
+    
+    if ($renderer) {
+      $renderer->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
+    } else {
+      $html .= qq{<div class="ajax" title="['$url']"></div>};
     }
     
-    $html .= $warnings;
+    $i = $j + 1;
+    $j += $self->{'subslice_length'} unless $j == $end;
     
-    return $html;
-  } else {
-    return $self->content_sub_slice($slices, $warnings); # Direct call if the sequence length is short enough
+    $j = $slice_length if $j == $end;
   }
+  
+  if ($renderer) {
+    $renderer->process;
+    $html = $renderer->content;
+  }
+  
+  return $html . $warnings;
 }
 
 sub content_sub_slice {
@@ -64,20 +109,17 @@ sub content_sub_slice {
   
   my $object = $self->object;
   my $slice  = $object->get_slice_object->Obj;
-  my $slice_length = $slice->length;
-
+  
   my $start = $object->param('start');
   my $end = $object->param('end');
-  
-  my $colours = $object->species_defs->colour('sequence_markup');
-  my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
+  my $padding = $object->param('padding');
+  my $slice_length = $object->param('length') || $slice->length;
 
   my $config = {
     display_width => $object->param('display_width') || 60,
-    colours => \%c,
     site_type => ucfirst lc $object->species_defs->ENSEMBL_SITETYPE || 'Ensembl',
     species => $object->species,
-    key_template => qq{<p><code><span style="%s">THIS STYLE:</span></code> %s</p>},
+    key_template => qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>},
     key => '',
     comparison => 1,
     db => $object->get_db,
@@ -88,22 +130,15 @@ sub content_sub_slice {
   for ('exon_display', 'exon_ori', 'snp_display', 'line_numbering', 'conservation_display', 'codons_display', 'title_display', 'align') {
     $config->{$_} = $object->param($_) unless $object->param($_) eq "off";
   }
-
+  
   if ($config->{'line_numbering'}) {
     $config->{'end_number'} = 1;
     $config->{'number'} = 1;
   }
-
+  
   # Requesting data from a sub slice
   if ($start && $end) {
-    my $error;
-    my $sub_slice = $slice->sub_Slice($start, $end);
-    
-    $slice = $sub_slice;
-    
-    ($slices, undef, $error) = $self->get_slices($object, $slice, $config->{'align'}, $config->{'species'});
-    
-    return $error if $error;
+    ($slices) = $self->get_slices($object, $slice, $config->{'align'}, $config->{'species'}, $start, $end);
   }
   
   $config->{'slices'} = $slices;
@@ -119,76 +154,44 @@ sub content_sub_slice {
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
   $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
   
-  # Only if this IS NOT a sub slice
+  # Only if this IS NOT a sub slice - print the key and the slice list
   my $template = "<p>$config->{'key'}</p>" . $self->get_slice_table($config->{'slices'}) unless ($start && $end);
   
-  # Only if this IS a sub slice
+  # Only if this IS a sub slice - remove margins from <pre> elements
   my $style = ($start == 1) ? "margin-bottom:0px;" : ($end == $slice_length) ? "margin-top:0px;" : "margin-top:0px; margin-bottom:0px" if ($start && $end);
   
   $config->{'html_template'} = qq{$template<pre style="$style">%s</pre>};
-
+  
+  if ($padding) {
+    my @pad = split (/,/, $padding);
+    
+    foreach (keys %{$config->{'padded_species'}}) {
+      $config->{'padded_species'}->{$_} = $_ . (' ' x ($pad[0] - length $_));
+    }
+    
+    if ($config->{'line_numbering'} eq 'slice') {
+      $config->{'padding'}->{'pre_number'} = $pad[1];
+      $config->{'padding'}->{'number'} = $pad[2];
+    }
+  }
+  
   return $self->build_sequence($sequence, $config) . $warnings;
 }
 
-sub get_alignments {
-  my $self = shift;
-  my ($object, $slice, $selected_alignment, $species) = @_;
-
-  $selected_alignment ||= 'NONE';
-
-  my $compara_db = $object->database('compara');
-  my $mlss_adaptor = $compara_db->get_adaptor('MethodLinkSpeciesSet');
-  my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($selected_alignment);
-  my $as_adaptor = $compara_db->get_adaptor('AlignSlice');
-  
-  # This call is slow for large genes and comparison sets
-  # TODO: Hassle the API team until they make it better
-  my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, undef, 'restrict'); 
-
-  my @selected_species;
-
-  foreach (grep { /species_$selected_alignment/ } $object->param) {
-    if ($object->param($_) eq 'yes') {
-      /species_${selected_alignment}_(.+)/;
-      push (@selected_species, ucfirst $1) unless $1 =~ /$species/i;
-    }
-  }
-
-  # I could not find a better way to distinguish between pairwise and multiple alignments.
-  # The difference is that in case of multiple alignments
-  # there are checkboxes for all species from the alignment apart from the reference species:
-  # So we need to add the reference species to the list of selected species.
-  # In case of pairwise alignments the list remains empty - that will force the display
-  # of all available species in the alignment
-
-  if (scalar (@{$method_link_species_set->species_set}) > 2) {
-    unshift @selected_species, $species;
-  }
-
-  my $alignments = $align_slice->get_all_Slices(@selected_species);
-  
-  return $alignments;
-}
 
 sub get_slices {
   my $self = shift;
-  my ($object, $slice, $align, $species) = @_;
+  my ($object, $slice, $align, $species, $start, $end) = @_;
   
-  my ($error, $warnings);
   my @slices;
   my @formatted_slices;
+  my $length;
 
   if ($align) {
-    ($error, $warnings) = $self->check_for_errors($object, $align, $species);
-
-    return (undef, undef, $error) if $error;
-
-    push @slices, @{$self->get_alignments($object, $slice, $align, $species)};
+    push @slices, @{$self->get_alignments($object, $slice, $align, $species, $start, $end)};
   } else {
-    # If 'No alignment' selected then we just display the original sequence as in geneseqview
+    # If no alignment selected then we just display the original sequence as in geneseqview
     push @slices, $slice;
-
-    $warnings .= $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>');
   }
   
   foreach (@slices) {
@@ -201,20 +204,64 @@ sub get_slices {
       underlying_slices => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [$_],
       name => $name
     });
+    
+    $length ||= $_->length; # Set the slice length value for the reference slice only
   }
   
-  return (\@formatted_slices, $warnings);
+  return (\@formatted_slices, $length);
+}
+
+sub get_alignments {
+  my $self = shift;
+  my ($object, $slice, $selected_alignment, $species, $start, $end) = @_;
+  
+  $selected_alignment ||= 'NONE';
+  
+  my $compara_db = $object->database('compara');
+  my $as_adaptor = $compara_db->get_adaptor('AlignSlice');
+  my $mlss_adaptor = $compara_db->get_adaptor('MethodLinkSpeciesSet');
+  my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($selected_alignment);
+  
+  # This call is slow for large genes and comparison sets
+  # TODO: Hassle the API team until they make it better
+  
+  my $expand = $object->param('expanded') ? 'expanded' : undef;
+  
+  my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, $expand, 'restrict');
+  
+  my @selected_species;
+
+  foreach (grep { /species_$selected_alignment/ } $object->param) {
+    if ($object->param($_) eq 'yes') {
+      /species_${selected_alignment}_(.+)/;
+      push (@selected_species, ucfirst $1) unless $1 =~ /$species/i;
+    }
+  }
+  
+  # I could not find a better way to distinguish between pairwise and multiple alignments.
+  # The difference is that in case of multiple alignments
+  # there are checkboxes for all species from the alignment apart from the reference species:
+  # So we need to add the reference species to the list of selected species.
+  # In case of pairwise alignments the list remains empty - that will force the display
+  # of all available species in the alignment
+  unshift (@selected_species, $species) if scalar @selected_species;
+  
+  $align_slice = $align_slice->sub_AlignSlice($start, $end) if ($start && $end);
+  
+  return $align_slice->get_all_Slices(@selected_species);
 }
 
 sub check_for_errors {
   my $self = shift;
   my ($object, $align, $species) = @_;
 
+  return (undef, $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>')) unless $align;
+
   # Check for errors
   my $h = $object->species_defs->multi_hash->{'DATABASE_COMPARA'};
-  my %c = exists $h->{'ALIGNMENTS'} ? %{$h->{'ALIGNMENTS'}} : ();
-
-  if (!exists $c{$align}) {
+  my $align_details = $h->{'ALIGNMENTS'}{$align} if exists $h->{'ALIGNMENTS'};
+  
+  if (!$align_details) {
     return $self->_error(
       'Unknown alignment',
       sprintf (
@@ -223,8 +270,6 @@ sub check_for_errors {
       )
     );
   }
-
-  my $align_details = $c{$align};
 
   if (!exists $align_details->{'species'}{$species}) {
     return $self->_error(
@@ -237,37 +282,28 @@ sub check_for_errors {
     );
   }
 
-  my @species = ();
-  my @skipped = ();
-  my $warnings = '';
+  my @skipped;
+  my $warnings;
 
-  if ($align_details->{'class'} =~ /pairwise/) { # This is a pairwise alignment
-    foreach (keys %{$align_details->{species}}) {
-      push @species, $_ unless $species eq $_;
-    }
-  } else { # This is a multiway alignment
+  if ($align_details->{'class'} !~ /pairwise/) { # This is a multiway alignment
     foreach (keys %{$align_details->{species}}) {
       my $key = sprintf ('species_%d_%s', $align, lc $_);
 
       next if $species eq $_;
-
-      if ($object->param($key) eq 'no') {
-        push @skipped, $_;
-      } else {
-        push @species, $_;
-      }
+      
+      push (@skipped, $_) if (($object->param($key)||'no') eq 'no');
     }
-  }
 
-  if (@skipped) {
-    $warnings .= $self->_info(
-      'Species hidden by configuration',
-      sprintf (
-        '<p>The following %d species in the alignment are not shown in the image: %s. Use the "<strong>Configure this page</strong>" on the left to show them.</p>%s',
-        scalar @skipped,
-        join (', ', sort map { $object->species_defs->species_label($_) } @skipped)
-      )
-    );
+    if (scalar @skipped) {
+      $warnings = $self->_info(
+        'Species hidden by configuration',
+        sprintf (
+          '<p>The following %d species in the alignment are not shown in the image: %s. Use the "<strong>Configure this page</strong>" on the left to show them.</p>',
+          scalar @skipped,
+          join (', ', sort map { $object->species_defs->species_label($_) } @skipped)
+        )
+      );
+    }
   }
 
   return (undef, $warnings);
@@ -276,43 +312,40 @@ sub check_for_errors {
 # This function is pretty nasty because 
 # 1) Variables are declared which will be redeclare later (cannot pass them through because of parallel processing).
 # 2) The key is unconditional - i.e. if variation markup is turned on, the variation key will appear even if there are no variations.
-# 3) It smells like hack. This is similar to the smell of chicken which went off last month, only worse.
+# 3) It smells like hack. This is similar to the smell of chicken which went off last month, only slightly worse.
 sub get_key {
   my $self = shift;
   my $object = shift;
   
-  my $colours = $object->species_defs->colour('sequence_markup');
-  my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
-  
   my $site_type = ucfirst lc $object->species_defs->ENSEMBL_SITETYPE || 'Ensembl';
-  my $key_template = qq{<p><code><span style="%s">THIS STYLE:</span></code> %s</p>};
+  my $key_template = qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>};
   
   my $exon_label = ucfirst $object->param('exon_display');
   $exon_label = $site_type if $exon_label eq 'Core';
   
   my @map = (
-    [ 'conservation_display', 'conservation' ],
-    [ 'codons_display', 'codonutr' ],
-    [ 'exon_display', 'exon2' ],
-    [ 'snp_display', 'snp_default,snp_gene_delete' ]
+    [ 'conservation_display', 'con' ],
+    [ 'codons_display', 'cu' ],
+    [ 'exon_display', 'e2' ],
+    [ 'snp_display', 'sn,si,sd' ]
   );
   
   my $key = {
-    conservation    => "Location of conserved regions (where >50% of bases in alignments match)",
-    codonutr        => "Location of START/STOP codons",
-    exon2           => "Location of $exon_label exons",
-    snp_default     => "Location of SNPs",
-    snp_gene_delete => "Location of deletions"
+    con => "Location of conserved regions (where >50&#37; of bases in alignments match)",
+    cu  => "Location of START/STOP codons",
+    e2  => "Location of $exon_label exons",
+    sn  => "Location of SNPs",
+    si  => "Location of insertions",
+    sd  => "Location of deletions"
   };
   
   my $rtn = '';
   
   foreach my $param (@map) {
-    next if $object->param($param->[0]) eq "off";
+    next if (($object->param($param->[0])||'off') eq 'off');
     
     foreach (split (/,/, $param->[1])) {
-      my $attr = $_ eq 'exon2' ? 'color' : 'background-color';
-      $rtn .= sprintf ($key_template, "$attr:$c{$_};", $key->{$_});
+      $rtn .= sprintf ($key_template, $_, $key->{$_});
     }
   }
   
@@ -326,28 +359,35 @@ sub get_key {
 # Displays slices for all species above the sequence
 sub get_slice_table {
   my $self = shift;
-  my $slices = shift;
+  my ($slices, $return_padding) = @_;
 
   my $table_rows;
+  my ($species_padding, $region_padding, $number_padding);
 
   foreach (@$slices) {
     my $species = $_->{'name'};
-
+    
+    $species_padding = length $species if $return_padding && length ($species) > $species_padding;
+    
     $table_rows .= qq{
     <tr>
       <th>$species &gt;&nbsp;</th>
       <td>};
-
+    
     foreach my $slice (@{$_->{'underlying_slices'}}) {
       next if $slice->seq_region_name eq 'GAP';
+      
+      my $slice_name = $slice->name;
+      my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $slice_name);
+      
+      if ($return_padding) {
+        $region_padding = length $region if length ($region) > $region_padding;
+        $number_padding = length $end if length ($end) > $number_padding;
+      }
 
       if ($species eq 'Ancestral_sequences') {
         $table_rows .= $slice->{'_tree'};
       } else {
-        my $slice_name = $slice->name;
-
-        my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $slice_name);
-
         $table_rows .= qq{
           <a href="/$species/Location/View?r=$region:$start-$end">$slice_name</a><br />};
       }
@@ -357,11 +397,15 @@ sub get_slice_table {
       </td>
     </tr>};
   }
+  
+  $region_padding++ if $region_padding;
 
-  return qq{
+  my $rtn = qq{
   <table>$table_rows
   </table>
   };
+  
+  return $return_padding ? ($rtn, "$species_padding,$region_padding,$number_padding") : $rtn;
 }
 
 1;
