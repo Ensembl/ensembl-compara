@@ -145,7 +145,9 @@ sub consensus_cigar_line {
    my @cigars;
 
    # First get an 'expanded' cigar string for each leaf of the subtree
-   foreach my $leaf (@{$self->get_all_leaves}) {
+   my @all_leaves = @{$self->get_all_leaves};
+   my $num_leaves = scalar(@all_leaves);
+   foreach my $leaf (@all_leaves) {
      next unless( UNIVERSAL::can( $leaf, 'cigar_line' ) );
      my $cigar = $leaf->cigar_line;
      $cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
@@ -161,11 +163,16 @@ sub consensus_cigar_line {
    my $cons_cigar;
    for( my $i=0; $i<$cigar_len; $i++ ){
      my $char = 'M';
+     my $num_deletions = 0;
      foreach my $cigar( @cigars ){
        if ( substr($cigar,$i,1) eq 'D'){
-         $char='D';
-         last;
+         $num_deletions++;
        }
+     }
+     if ($num_deletions * 3 > 2 * $num_leaves) {
+       $char = "D";
+     } elsif ($num_deletions * 3 > $num_leaves) {
+       $char = "m";
      }
      $cons_cigar .= $char;
    }
