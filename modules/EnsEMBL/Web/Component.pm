@@ -427,6 +427,8 @@ sub get_sequence_data {
         my $s_start = $snp->start;
         my $s_end = $snp->end;
         
+        
+        
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
         if ($slice_strand < 0) {
           my @al = split(/\//, $alleles);
@@ -455,11 +457,15 @@ sub get_sequence_data {
           $snp_start = $s_start;
         }
         
-        if ($end < $start) {
-          $start = $s_end-1;
-          $end = $s_start-1;
-          $snp_type = 'insert';
-          $snp_start--;
+        if ($snp->can('var_class') && $snp->var_class eq 'in-del') {
+          if ($start > $end) {
+            $start = $s_end-1;
+            $end = $s_start-1;
+            $snp_type = 'insert';
+            $snp_start--;
+          } else {
+            $snp_type = 'delete';
+          }
         }
         
         # Add the chromosome number for the link text if we're doing species comparisons.
@@ -480,7 +486,7 @@ sub get_sequence_data {
             $mk->{'variations'}->{$_}->{'v'} = $variation_name;
             $mk->{'variations'}->{$_}->{'vf'} = $dbID;
             $mk->{'variations'}->{$_}->{'species'} = $config->{'ref_slice_name'} ? $config->{'species'} : $name;
-          }
+          } 
         }
       }
     }
@@ -519,14 +525,14 @@ sub get_sequence_data {
         my $type = $_->[0];
         my $exon = $_->[1];
         
-        # skip the features that were cut off by applying flanking sequence parameters
-        next if $exon->seq_region_start < $slice_start || $exon->seq_region_end > $slice_end;
+        next unless $exon->seq_region_start && $exon->seq_region_end;
         
         my $start = $exon->start - ($type eq 'gene' ? $slice_start : 1);
         my $end = $exon->end - ($type eq 'gene' ? $slice_start : 1);
         my $id = $exon->can('stable_id') ? $exon->stable_id : '';
-        
-        $end = $config->{'length'} if $end > $config->{'length'};
+
+        $start = 0 if $start < 0;
+        $end = $config->{'length'} - 1 if $end >= $config->{'length'};
         
         for ($start..$end) {          
           push (@{$mk->{'exons'}->{$_}->{'type'}}, $type);          
@@ -547,9 +553,13 @@ sub get_sequence_data {
           push (@codons, map {{ start => $_->start, end => $_->end, label => 'STOP' }} @{$t->translation->all_end_codon_mappings || []}); # STOP codons
           
           my $id = $t->stable_id;
-          
+         
           foreach my $c (@codons) {
             my ($start, $end) = ($c->{'start'}, $c->{'end'});
+            
+            #FIXME: Temporary hack until compara team can sort this out
+            $start = ($start - 2*($slice_start-1));
+            $end = ($end - 2*($slice_start-1));
             
             next if ($end < 1 || $start > $slice_length);
             
@@ -557,7 +567,7 @@ sub get_sequence_data {
             $end = $slice_length unless $end < $slice_length;
             
             for ($start-1..$end-1) {
-              $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("$c->{'label'}(%s)", $id);
+              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("$c->{'label'}(%s)", $id);
             }
           }
         }
@@ -570,12 +580,12 @@ sub get_sequence_data {
   	      
   	      # START codons
   	      for ($start-1..$start+1) { 
-    	      $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("START(%s)", $id);
+    	      $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("START(%s)", $id);
   	      }
   	      
   	      # STOP codons
   	      for ($end-3..$end-1) {
-  	        $mk->{'codons'}->{$_} .= ($mk->{'codons'}->{$_} ? '; ' : '') . sprintf("STOP(%s)", $id);
+  	        $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("STOP(%s)", $id);
   	      }
         }
       }
@@ -595,13 +605,13 @@ sub markup_exons {
   my ($exon, $type, $s, $seq);
   my $i = 0;
   
-  my $style = {
-    exon0 => { 'color' => $config->{'colours'}->{'exon0'} },
-    exon1 => { 'color' => $config->{'colours'}->{'exon1'} },
-    exon2 => { 'color' => $config->{'colours'}->{'exon2'} },
-    other => { 'background-color' => $config->{'colours'}->{'exon_other'} },
-    gene  => { 'color' => $config->{'colours'}->{'exon_gene'}, 'font-weight' => 'bold' },
-    compara_other => { 'color' => $config->{'colours'}->{'exon2'} }
+  my $class = {
+    exon0         => 'e0',
+    exon1         => 'e1',
+    exon2         => 'e2',
+    other         => 'eo',
+    gene          => 'eg',
+    compara_other => 'e2'
   };
   
   foreach my $data (@$markup) {
@@ -612,10 +622,7 @@ sub markup_exons {
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $exon->{'id'} if $config->{'title_display'};
       
       foreach $type (@{$exon->{'type'}}) {
-        foreach $s (keys %{$style->{$type}}) {
-          $seq->[$_]->{$s} = $style->{$type}->{$s};
-        }
-
+        $seq->[$_]->{'class'} .= "$class->{$type} " unless $seq->[$_]->{'class'} =~ /\b$class->{$type}\b/;
         $exon_types->{$type} = 1;
       }
     }
@@ -625,9 +632,7 @@ sub markup_exons {
 
   if ($config->{'key_template'}) {
     if ($exon_types->{'gene'}) {
-      $config->{'key'} .= sprintf (
-        $config->{'key_template'},
-        join(';', map {"$_:$style->{'gene'}->{$_}"} keys %{$style->{'gene'}} ), "Location of $config->{'gene_name'} $config->{'gene_exon_type'}");
+      $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'gene'}, "Location of $config->{'gene_name'} $config->{'gene_exon_type'}");
     }
     
     my $selected;
@@ -637,10 +642,8 @@ sub markup_exons {
         $selected = ucfirst $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
         $selected = $config->{'site_type'} if $selected eq 'Core';
         $selected ||= 'selected';
-    
-        $config->{'key'} .= sprintf(
-          $config->{'key_template'},
-          join(';', map {"$_:$style->{$type}->{$_}"} keys %{$style->{$type}} ), "Location of $selected exons");
+        
+        $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{$type}, "Location of $selected exons");
       }
     }
   }
@@ -650,18 +653,16 @@ sub markup_codons {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
 
-  my ($codons, $bg, $seq);
+  my ($codons, $class, $seq);
   my $i = 0;
 
   foreach my $data (@$markup) {
     $codons = 1 if scalar keys %{$data->{'codons'}};
     $seq = $sequence->[$i];
     
-    foreach (sort {$a <=> $b} keys %{$data->{'codons'}}) {
-      $bg = 'codon' . ($data->{'bg'}->{$_} || 'utr');
-      
-      $seq->[$_]->{'background-color'} = $config->{'colours'}->{$bg};
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $data->{'codons'}->{$_} if $config->{'title_display'};
+    foreach (sort {$a <=> $b} keys %{$data->{'codons'}}) {      
+      $seq->[$_]->{'class'} .= ($data->{'codons'}->{$_}->{'class'} || 'cu') . " ";
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $data->{'codons'}->{$_}->{'label'} if $config->{'title_display'};
     }
     
     $i++;
@@ -669,7 +670,7 @@ sub markup_codons {
 
   if ($codons && $config->{'key_template'}) {
     # Only used on Gene view, which uses just condonutr colour.
-    $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$config->{'colours'}->{'codonutr'};", "Location of START/STOP codons");
+    $config->{'key'} .= sprintf ($config->{'key_template'}, 'cu', 'Location of START/STOP codons');
   }
 }
 
@@ -677,13 +678,13 @@ sub markup_variation {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
 
-  my ($snps, $inserts, $seq, $variation, $ambiguity);
+  my ($snps, $inserts, $deletes, $seq, $variation, $ambiguity);
   my $i = 0;
   
-  my $style = {
-    'snp'     => $config->{'colours'}->{'snp_default'},
-    'snpexon' => $config->{'colours'}->{'snpexon'},
-    'insert'  => $config->{'colours'}->{'snp_gene_insert'} 
+  my $class = {
+    'snp'     => 'sn',
+    'insert'  => 'si',
+    'delete'  => 'sd'
   };
 
   foreach my $data (@$markup) {
@@ -696,21 +697,23 @@ sub markup_variation {
       $seq->[$_]->{'letter'} = $ambiguity if $ambiguity;
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
       
-      $seq->[$_]->{'background-color'} = $style->{$variation->{'type'}};
+      $seq->[$_]->{'class'} .= "$class->{$variation->{'type'}} ";
       
       if ($config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'}) {          
         $seq->[$_]->{'post'} = qq{ <a href="/$variation->{'species'}/Variation/Summary?v=$variation->{'v'};vf=$variation->{'vf'};vdb=variation">$variation->{'link_text'}</a>;};
       }
 
       $snps = 1 if $variation->{'type'} eq 'snp';
-      $inserts = 1 if $variation->{'type'} eq 'insert';
+      $inserts = 1 if $variation->{'type'} =~ /insert/;
+      $deletes = 1 if $variation->{'type'} eq 'delete';
     }
     
     $i++;
   }
 
-  $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$style->{'snp'};", "Location of SNPs") if ($snps);
-  $config->{'key'} .= sprintf ($config->{'key_template'}, "background-color:$style->{'insert'};", "Location of insertions") if ($inserts);
+  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'snp'}, 'Location of SNPs') if $snps;
+  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'insert'}, 'Location of insertions') if $inserts;
+  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'delete'}, 'Location of deletions') if $deletes;
 }
 
 sub markup_comparisons {
@@ -752,17 +755,14 @@ sub markup_comparisons {
       $comparison = $data->{'comparisons'}->{$_};
       
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $comparison->{'insert'} if $title_check;
-      
-      # For sequence alignment view, this function is callled after the exons have been marked up, 
-      # so use ||= to ensure the exon colour is not overwritten.
-      $seq->[$_]->{'color'} ||= $config->{'colours'}->{'resequencing'} if $comparison->{'resequencing'}; 
+      $seq->[$_]->{'class'} .= "res " if $comparison->{'resequencing'}; 
     }
     
     $i++;
   }
   
   if ($config->{'match_display'}) {
-    $config->{'key'} .= sprintf($config->{'key_template'}, "color:$config->{'colours'}->{'resequencing'}", 'Resequencing coverage');
+    $config->{'key'} .= sprintf($config->{'key_template'}, 'res', 'Resequencing coverage');
     # Using middle dot to make it easier to see
     $config->{'key'} .= '<p><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary strains matching the reference strain are replaced with dots</p>';
   }
@@ -969,47 +969,36 @@ sub build_sequence {
   my $s = 0;
   
   foreach my $lines (@$sequence) {
-    my ($row, $title, $previous_title, $new_line_title, $style, $previous_style, $new_line_style, $pre, $post);
+    my ($row, $title, $previous_title, $new_line_title, $class, $previous_class, $new_line_class, $pre, $post);
     my ($count, $i);
     
     foreach my $seq (@$lines) {
       $previous_title = $title;
-      $title = $seq->{'title'} ? qq(title="$seq->{'title'}") : '';
+      $title = $seq->{'title'} ? qq{title="$seq->{'title'}"} : '';
       
-      my $new_style = '';
-      $previous_style = $style;
-  
-      if ($seq->{'background-color'}) {
-        $new_style .= "background-color:$seq->{'background-color'};";
-      } elsif ($style =~ /background-color/) {
-        $new_style .= "background-color:auto;";
-      }
-  
-      if ($seq->{'color'}) {
-        $new_style .= "color:$seq->{'color'};";
-      } elsif ($config->{'maintain_colour'} && $style =~ /(?<!background-)color:(.+);/) {
-        $new_style .= "color:$1;";
-      } elsif ($style =~ /(?<!background-)color:/) {
-        $new_style .= "color:auto;";
-      }
-  
-      if ($seq->{'font-weight'}) {
-        $new_style .= "font-weight:$seq->{'font-weight'};";
-      }
+      $previous_class = $class;
       
-      if ($new_style) {
-        # Remove placeholder styles - auto is not a valid colour
-				$new_style =~ s/background-color:auto;//;
-				$new_style =~ s/color:auto;//;
-				$style = qq(style="$new_style");
+      if ($seq->{'class'}) {
+        $class = $seq->{'class'};
+        chomp $class;
+        
+        if ($config->{'maintain_colour'} && $previous_class =~ /[" ](e\w)[" ]/ && $class !~ /\s*(e\w)\s*/) {
+          $class .= " $1";
+        }
+        
+        $class = qq{class="$class"};
+      } elsif ($config->{'maintain_colour'} && $previous_class =~ /[" ](e\w)[" ]/) {
+          $class = qq{class="$1"};
+      } else {
+        $class = '';
       }
 
       $post .= $seq->{'post'};
   
       if ($i == 0) {
-        $row .= "<span $style $title>";
-      } elsif ($style ne $previous_style || $title ne $previous_title) {
-        $row .= "</span><span $style $title>";
+        $row .= "<span $class $title>";
+      } elsif ($class ne $previous_class || $title ne $previous_title) {
+        $row .= "</span><span $class $title>";
       }
   
       $row .= $seq->{'letter'};
@@ -1017,11 +1006,11 @@ sub build_sequence {
       $count++;
       $i++;
   
-      if ($count == $config->{'display_width'} || $i == scalar @$lines) {        
+      if ($count == $config->{'display_width'} || $i == scalar @$lines) {
         if ($i == $config->{'display_width'}) {
           $row = "$row</span>";
         } else {
-          $row = "<span $new_line_style $new_line_title>$row</span>";
+          $row = "<span $new_line_class $new_line_title>$row</span>";
         }
         
         if ($config->{'comparison'}) {
@@ -1030,13 +1019,13 @@ sub build_sequence {
           } else {
             $pre = $config->{'species'};
           }
-
+          
           $pre .= '  ';
         }
          
         push (@{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post });
-  
-        $new_line_style = $style || $previous_style;
+        
+        $new_line_class = $class;
         $new_line_title = $title || $previous_title;
         $count = 0;
         $row = '';
