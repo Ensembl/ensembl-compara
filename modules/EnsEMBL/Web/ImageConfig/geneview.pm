@@ -6,7 +6,7 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    'title'         => 'Transcript panel',
+    'title'         => 'Transcripts panel',
     'show_buttons'  => 'no',  # do not show +/- buttons
     'show_labels'   => 'no',  # show track names on left-hand side
     'label_width'   => 113,   # width of labels on left-hand side
