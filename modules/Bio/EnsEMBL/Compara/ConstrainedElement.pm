@@ -191,7 +191,7 @@ sub new {
     rearrange([qw(
         ADAPTOR DBID ALIGNMENT_SEGMENTS 
   METHOD_LINK_SPECIES_SET_ID SCORE P_VALUE TAXONOMIC_LEVEL
-  SLICE START END REFERENCE_DNAFRAG_ID
+  SLICE START END REFERENCE_DNAFRAG_ID 
 	)],
             @args);
 
@@ -466,6 +466,69 @@ sub reference_dnafrag_id {
   }
 
   return $self->{'reference_dnafrag_id'};
+}
+
+=head2 get_alignment
+
+  Arg [1]    : (optional) the method_link_species_set_object of the original alignment
+  Example    : my $out = Bio::AlignIO->newFh(-fh=>\*STDOUT, -format=> "clustalw");
+	       my $simple_align = $ce->get_alignment($original_mlss);
+	       print $out $simple_align;
+  Description: Rebuilds the constrained element alignment
+  Returntype : a Bio::SimpleAlign object
+  Exceptions : throw if Arg-1 is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+  Caller     : object::methodname
+
+=cut
+
+sub get_alignment {
+	my ($self, $orig_mlss) = @_;
+
+        if (defined($orig_mlss)) {
+                throw("$orig_mlss is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")  
+                unless ($orig_mlss->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+        } else {
+                throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
+        }
+
+	my $genomic_align_block_adaptor = $self->adaptor->db->get_GenomicAlignBlock;
+	my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+		$orig_mlss, $self->slice);
+	my $skip_empty_GenomicAligns = 1;
+	my @SimpleAligns;
+
+	foreach my $this_genomic_align_block(@$gabs) {
+		my $sa = Bio::SimpleAlign->new();
+		my $bio07 = 0; 
+		if(!$sa->can('add_seq')) {
+			$bio07 = 1; 
+		}
+		my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align();
+		next if (($reference_genomic_align->dnafrag_end < $self->slice->start + $self->start - 1) || 
+			 ($reference_genomic_align->dnafrag_start > $self->slice->start + $self->end -1));  
+
+		my $restricted_gab = $this_genomic_align_block->restrict_between_reference_positions(
+			($self->slice->start + $self->start - 1),
+			($self->slice->start + $self->end - 1),
+			$reference_genomic_align,
+			$skip_empty_GenomicAligns);
+		foreach my $genomic_align( @{ $restricted_gab->get_all_GenomicAligns } ) {
+			my $alignSeq = $genomic_align->aligned_sequence;
+			my $loc_seq = Bio::LocatableSeq->new(
+				-SEQ    => $alignSeq,
+				-START  => $genomic_align->dnafrag_start,
+				-END    => $genomic_align->dnafrag_end,
+				-ID     => $genomic_align->dnafrag->name,
+				-STRAND => $genomic_align->dnafrag_strand);
+			if($bio07) { 
+				$sa->addSeq($loc_seq); 
+			}else{ 
+				$sa->add_seq($loc_seq); 
+			}				
+		}
+		push(@SimpleAligns, $sa);
+	}
+	return \@SimpleAligns;
 }
 
 1;
