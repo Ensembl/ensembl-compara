@@ -70,8 +70,7 @@ sub get_sequence_data {
     if ($_+1 >= $cd_start && $_+1 <= $cd_end) {         
       $coding_seq->{'seq'}->[$_]->{'letter'} = $reference_seq[$_]->{'letter'} if $config->{'coding_seq'};
     } elsif ($config->{'codons'}) {
-      $mk->{'codons'}->{$_} = 1;
-      $mk->{'bg'}->{$_} = 'utr'; # Needed to colour variations correctly in untranslated sections
+      $mk->{'codons'}->{$_}->{'class'} = 'cu';
     }
   }
   
@@ -93,8 +92,7 @@ sub get_sequence_data {
     
     for (my $i = $cd_start + $s - 1; ($i+2) <= $cd_end; $i+=3) {
       if ($config->{'codons'}) {
-        $mk->{'codons'}->{$i} = $mk->{'codons'}->{$i+1} = $mk->{'codons'}->{$i+2} = 1;
-        $mk->{'bg'}->{$i} = $mk->{'bg'}->{$i+1} = $mk->{'bg'}->{$i+2} = "c$flip";
+        $mk->{'codons'}->{$i}->{'class'} = $mk->{'codons'}->{$i+1}->{'class'} = $mk->{'codons'}->{$i+2}->{'class'} = "c$flip";
         
         $flip = 1 - $flip;
       }
@@ -119,54 +117,64 @@ sub get_sequence_data {
     $source = 'variation' if $object->database('variation');
     
     my %snps = %{$trans->get_all_cdna_SNPs($source)};
-    my %protein_features = $can_translate == 0 ? () : %{ $trans->get_all_peptide_variations($source) };
+    my %protein_features = $can_translate == 0 ? () : %{$trans->get_all_peptide_variations($source)};
 
     foreach my $t (values %snps) {
       foreach my $snp (@$t) {
         # Due to some changes start of a variation can be greater than its end - insertion happened
         my ($st, $en);
         
+        my $snpclass = $snp->var_class;
+        my $source = $snp->source;
+        my $variation_name = $snp->variation_name;
+        my $strand = $snp->strand;
+        my $alleles = $snp->allele_string;
+        my $ambigcode = $snpclass eq 'in-del' ? '*' : $snp->ambig_code;
+        my $insert = 0;
+        
+        if ($strand == -1 && $trans_strand == -1) {
+          $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+          $alleles =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+        }
+        
         if ($snp->start > $snp->end) {
           $st = $snp->end;
           $en = $snp->start;
+          $insert = 1;
         } else {
           $en = $snp->end;
           $st = $snp->start;
         }
         
-        foreach my $r ($st..$en) {  
-          my $snpclass = $snp->var_class;
-          my $ambigcode;
-               
-          $mk->{'variations'}->{$r-1}->{'alleles'} .= $snp->allele_string;
-          $mk->{'variations'}->{$r-1}->{'url_params'} .= "source=" . $snp->source . ";snp=" . $snp->variation_name;
-          $mk->{'variations'}->{$r-1}->{'type'} = 'transcript';
+        foreach my $r ($st..$en) {               
+          $mk->{'variations'}->{$r-1}->{'alleles'} .= $alleles;
+          $mk->{'variations'}->{$r-1}->{'url_params'} .= "source=" . $source . ";snp=" . $variation_name;
+          $mk->{'variations'}->{$r-1}->{'transcript'} = 1;
           
           my $url_params = $mk->{'variations'}->{$r-1}->{'url_params'};
           
-          if ($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') { 
+          if ($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') {
             my $aa = int(($r - $cd_start + 3)/3);
             my $aa_bp = $aa * 3 + $cd_start - 3;
-            my @Q = @{$protein_features{$aa}||[]};
-                       
-            $ambigcode = $snp->ambig_code;
-            $mk->{'variations'}->{$r-1}->{'snp'} = ($mk->{'variations'}->{$r-1}->{'snp'} eq 'snp' || @Q != 1) ? 'snp' : 'syn';
+            my @feat = @{$protein_features{$aa}||[]};
+            my $f = scalar @feat;
+            my $title = join (', ', @feat);
             
-            if ($snp->strand == -1 && $trans_strand == -1) {
-              $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-              $mk->{'variations'}->{$r-1}->{'alleles'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-            }
+            $mk->{'variations'}->{$r-1}->{'type'} = ($mk->{'variations'}->{$r-1}->{'type'} eq 'snp' || $f != 1) ? 'snp' : 'syn';
             
-            if ($config->{'translation'} && @Q > 1) {
+            if ($config->{'translation'} && $f > 1) {
               $protein_seq->{'seq'}->[$aa_bp-1]->{'letter'} = $protein_seq->{'seq'}->[$aa_bp+1]->{'letter'} = '=';
-              $protein_seq->{'seq'}->[$aa_bp-1]->{'color'} = $config->{'colours'}->{'aminoacids'};
-              $protein_seq->{'seq'}->[$aa_bp+2]->{'color'} = 'auto';
-              $protein_seq->{'seq'}->[$_]->{'title'} = join (', ', @Q) for ($aa_bp-1..$aa_bp+1);
+              
+              for ($aa_bp-1..$aa_bp+1) {
+                $protein_seq->{'seq'}->[$_]->{'class'} = 'aa';
+                $protein_seq->{'seq'}->[$_]->{'title'} = $title;
+              }
             }
           } else {
-            $mk->{'variations'}->{$r-1}->{'snp'}= 'indel';
-            $ambigcode = '*';
+            $mk->{'variations'}->{$r-1}->{'type'} = $insert ? 'insert' : 'delete';
           }
+          
+          $mk->{'variations'}->{$r-1}->{'type'} .= 'utr' if $config->{'codons'} && $mk->{'codons'}->{$r-1} && $mk->{'codons'}->{$r-1}->{'class'} eq 'cu';
           
           $variation_seq->{'seq'}->[$r-1]->{'letter'} = $url_params ? qq{<a href="../snpview?$url_params">$ambigcode</a>} : $ambigcode;
         }
@@ -202,12 +210,8 @@ sub content {
   my $self   = shift;
   my $object = $self->object;
   
-  my $colours = $object->species_defs->colour('sequence_markup');
-  my %c = map { $_ => $colours->{$_}->{'default'} } keys %$colours;
-  
   my $config = { 
     display_width => $object->param('display_width') || 60,
-    colours => \%c,
     species => $object->species,
     maintain_colour => 1
   };
