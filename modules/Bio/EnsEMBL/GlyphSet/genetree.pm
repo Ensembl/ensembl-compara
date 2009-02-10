@@ -293,9 +293,9 @@ sub _init {
   my $alignment_width  = $align_bitmap_width - 20;
   my $alignment_length = 0;
 
-  my @inters = split (/([MDG])/, $alignments[0]->[1]); # Use first align
+  my @inters = split (/([MmDG])/, $alignments[0]->[1]); # Use first align
   my $ms = 0;
-  foreach my $i ( grep { $_ !~ /[MGD]/} @inters) {
+  foreach my $i ( grep { $_ !~ /[MmGD]/} @inters) {
       $ms = $i  || 1;
       $alignment_length  += $ms;
   }
@@ -322,7 +322,7 @@ sub _init {
     $self->push( $t );
 
 
-    my @inters = split (/([MDG])/, $al);
+    my @inters = split (/([MmDG])/, $al);
     my $ms = 0;
     my $ds = 0;
     my $box_start = 0;
@@ -349,7 +349,7 @@ sub _init {
           'z'         => $zc,
           'width'     => abs( $box_end - $box_start + 1 ) * $alignment_scale,
           'height'    => $font_height - 2,
-          'colour' => $colour, 
+          'colour' => ($mtype eq "m"?"yellowgreen":$colour), 
           'absolutey' => 1,
         });
         

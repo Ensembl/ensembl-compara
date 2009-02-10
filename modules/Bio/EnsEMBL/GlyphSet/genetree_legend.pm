@@ -41,7 +41,8 @@ sub render_normal {
   );
   my @boxes = (
     ['AA alignment match/mismatch',   'yellowgreen', 'yellowgreen'],
-    ['AA alignment (consensus)',      'darkgreen',   'darkgreen'],
+    ['AA consensus > 66% (mis)match',      'darkgreen',   'darkgreen'],
+    ['AA consensus > 33% (mis)match',      'yellowgreen',   'darkgreen'],
     ['AA alignment gap',              'white',       'yellowgreen'],
                );
 
@@ -112,7 +113,7 @@ sub render_normal {
         'y'         => $y * ( $th + 3 ) + 5 + $th,
         'width'     => 5,
         'height'    => 5,
-        'colour'   => $colour,
+        'colour'    => $colour,
         })
       );
     $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 20, $th, $fontsize, $fontname, $legend);
@@ -144,7 +145,7 @@ sub render_normal {
     ($legend, $colour, $border) = @$box;
     $self->push($self->Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * ( $th + 3 ) + 5 + $th,
+        'y'         => $y * ( $th + 3 ) + 1 + $th,
         'width'     => 10,
         'height'    => 0,
         'colour'    => $border,
@@ -152,7 +153,7 @@ sub render_normal {
       );
     $self->push($self->Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * ( $th + 3 ) + 6 + $th,
+        'y'         => $y * ( $th + 3 ) + 2 + $th,
         'width'     => 10,
         'height'    => 8,
         'colour'    => $colour,
@@ -160,7 +161,7 @@ sub render_normal {
       );
     $self->push($self->Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * ( $th + 3 ) + 14 + $th,
+        'y'         => $y * ( $th + 3 ) + 10 + $th,
         'width'     => 10,
         'height'    => 0,
         'colour'    => $border,
@@ -170,7 +171,6 @@ sub render_normal {
     $self->push($label);
     $y++;
   }
-
 }
 
 sub _create_label {
