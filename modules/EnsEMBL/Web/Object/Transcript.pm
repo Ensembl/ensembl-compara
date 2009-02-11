@@ -1727,6 +1727,7 @@ sub determine_sequence_type{
     my $threshold = shift || 70; # %ACGT for seq to qualify as DNA
     $sequence = uc( $sequence );
     $sequence =~ s/\s|N//;
+    $sequence =~ s/^>.*\n//; #remove header line since long headers confuse sequence type determination
     my $all_chars = length( $sequence );
     return unless $all_chars;
     my $dna_chars = ( $sequence =~ tr/ACGT// );
