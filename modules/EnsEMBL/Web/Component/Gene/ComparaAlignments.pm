@@ -37,7 +37,7 @@ sub content {
   if ($align && $slice_length >= $self->{'subslice_length'}) {    
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     
-    my $url = qq{/@{[$object->species]}/Component/Gene/Web/ComparaAlignments/sequence?padding=$padding;length=$slice_length};    
+    my $url = qq{/@{[$object->species]}/Component/Gene/Web/ComparaAlignments/sequence?padding=$padding;length=$slice_length};
     $html = $self->get_key($object) . $table;
     
     if ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') {
@@ -89,10 +89,12 @@ sub content_sequence {
       $html .= qq{<div class="ajax" title="['$url']"></div>};
     }
     
-    $i = $j + 1;
-    $j += $self->{'subslice_length'} unless $j == $end;
+    last if $j == $slice_length;
     
-    $j = $slice_length if $j == $end;
+    $i = $j + 1;
+    $j += $self->{'subslice_length'};
+    
+    $j = $slice_length if $j >= $end;
   }
   
   if ($renderer) {
