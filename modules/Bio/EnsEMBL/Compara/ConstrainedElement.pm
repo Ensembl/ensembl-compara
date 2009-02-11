@@ -468,12 +468,14 @@ sub reference_dnafrag_id {
   return $self->{'reference_dnafrag_id'};
 }
 
-=head2 get_alignment
+=head2 get_SimpleAlign
 
-  Arg [1]    : (optional) the method_link_species_set_object of the original alignment
+  Arg [1]    : The method_link_species_set_object of the original alignment
   Example    : my $out = Bio::AlignIO->newFh(-fh=>\*STDOUT, -format=> "clustalw");
-	       my $simple_align = $ce->get_alignment($original_mlss);
-	       print $out $simple_align;
+	       my$cons = $ce_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
+               foreach my $simple_align(@{ $ce->get_SimpleAlign($prev_mlss, "uc") }) {
+			print $out $simple_align;
+	       }	
   Description: Rebuilds the constrained element alignment
   Returntype : an arrayref of Bio::SimpleAlign objects
   Exceptions : throw if Arg-1 is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
@@ -481,7 +483,7 @@ sub reference_dnafrag_id {
 
 =cut
 
-sub get_alignment {
+sub get_SimpleAlign {
 	my ($self, $orig_mlss, @flags) = @_;
 
         if (defined($orig_mlss)) {
@@ -528,11 +530,11 @@ sub get_alignment {
 				-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
 				-START  => $genomic_align->dnafrag_start,
 				-END    => $genomic_align->dnafrag_end,
-				-ID     => $genomic_align->dnafrag->name,
+				-ID     => $genomic_align->dnafrag->genome_db_id . "/" . $genomic_align->dnafrag->name,
 				-STRAND => $genomic_align->dnafrag_strand);
 
-			$loc_seq->seq($uc ? uc $loc_seq->translate->seq
-			: lc $loc_seq->translate->seq) if ($translated);
+#			$loc_seq->seq($uc ? uc $loc_seq->translate->seq
+#			: lc $loc_seq->translate->seq) if ($translated);
 
 			if($bio07) { 
 				$sa->addSeq($loc_seq); 
