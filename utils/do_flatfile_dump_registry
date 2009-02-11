@@ -29,7 +29,7 @@ my $general_options;
 my ($help, $info, $email);
 
 my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region, $listonly, $batch_total, $batch_index);
-$hugemem = undef;
+
 
 &GetOptions( 'maxsize:s'    => \$MAX_SIZE,
              'format:s'	    => \@user_formats,
@@ -358,7 +358,7 @@ foreach my $spp (@species){
     undef $blocks;
 
     # dump flatfiles for the chunks
-    foreach my $chunked_slice (@$chunked_slices) {
+    while (my $chunked_slice = shift @{$chunked_slices}) {
       my $seq = $chunked_slice->seq();
       foreach my $format (sort keys %$formats_dir) {
 	dump_format($chunked_slice, $format, $formats_dir->{$format}, $seq);
