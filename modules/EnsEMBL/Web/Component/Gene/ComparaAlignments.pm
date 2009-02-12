@@ -140,8 +140,6 @@ sub get_slices {
   foreach (@slices) {
     my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
     
-    # get_all_underlying_Slices is slow for large genes and comparison sets
-    # TODO: Hassle the API team until they make it better
     push (@formatted_slices, {
       slice => $_,
       underlying_slices => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [$_],
@@ -272,8 +270,8 @@ sub get_key {
     cu  => "Location of START/STOP codons",
     e2  => "Location of $exon_label exons",
     sn  => "Location of SNPs",
-    si  => "Location of insertions",
-    sd  => "Location of deletions"
+    si  => "Location of inserts",
+    sd  => "Location of deletes"
   };
   
   my $rtn = '';

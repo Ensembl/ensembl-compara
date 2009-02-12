@@ -722,8 +722,8 @@ sub markup_variation {
   }
 
   $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'snp'}, 'Location of SNPs') if $snps;
-  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'insert'}, 'Location of insertions') if $inserts;
-  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'delete'}, 'Location of deletions') if $deletes;
+  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'insert'}, 'Location of inserts') if $inserts;
+  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'delete'}, 'Location of deletes') if $deletes;
 }
 
 sub markup_comparisons {
