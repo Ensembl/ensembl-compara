@@ -53,7 +53,7 @@ sub markup_variation {
     },
     'syn' => { 
       'class' => 'syn', 
-      'title' => sub { my $p = shift; my $t = ''; $t .= $p->{'ambigcode'}[$_] ? '('.$p->{'ambigcode'}[$_].')' : $p->{'nt'}[$_] for (0..2); return "Codon: $t" }
+      'title' => sub { my $v = shift; my $t = ''; $t .= $v->{'ambigcode'}[$_] ? '('.$v->{'ambigcode'}[$_].')' : $v->{'nt'}[$_] for (0..2); return "Codon: $t" }
     },
     'insert' => { 
       'class' => 'si', 
@@ -83,7 +83,7 @@ sub markup_variation {
       
       if ($variation->{'transcript'}) {
         $seq->[$_]->{'title'} = "Alleles: $variation->{'alleles'}";
-        $seq->[$_]->{'class'} .= ($config->{'translation'} ? $mk->{$variation->{'type'}}->{'class'} : 'sn') . " ";
+        $seq->[$_]->{'class'} .= ($config->{'translation'} ? $mk->{$type}->{'class'} : 'sn') . " ";
       } else {
         $seq->[$_]->{'title'} = &{$mk->{$type}->{'title'}}($variation);
         $seq->[$_]->{'class'} .= "$mk->{$type}->{'class'} ";
