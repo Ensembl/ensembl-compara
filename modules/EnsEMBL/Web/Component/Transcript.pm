@@ -52,23 +52,22 @@ sub markup_variation {
       'title' => sub { return "Residues: $_[0]->{'pep_snp'}" }
     },
     'syn' => { 
-      'class' => 'sy', 
+      'class' => 'syn', 
       'title' => sub { my $p = shift; my $t = ''; $t .= $p->{'ambigcode'}[$_] ? '('.$p->{'ambigcode'}[$_].')' : $p->{'nt'}[$_] for (0..2); return "Codon: $t" }
     },
     'insert' => { 
-      'class' => 'sit', 
+      'class' => 'si', 
       'title' => sub { shift; $_->{'alleles'} = join '', @{$_->{'nt'}}; $_->{'alleles'} = Bio::Perl::translate_as_string($_->{'alleles'}); return "Insert: $_->{'alleles'}" }
     },
     'delete' => { 
-      'class' => 'sdt', 
+      'class' => 'sd', 
       'title' => sub { return "Deletion: $_[0]->{'alleles'}" } 
     },
     'frameshift' => { 
-      'class' => 'sf', 
+      'class' => 'fs', 
       'title' => sub { return "Frame-shift" }
     },
     'snputr'    => { 'class' => 'snu' },
-    'synutr'    => { 'class' => 'syu' },
     'insertutr' => { 'class' => 'siu' },
     'deleteutr' => { 'class' => 'sdu' }
   };
@@ -79,6 +78,8 @@ sub markup_variation {
     foreach (sort {$a <=> $b} keys %{$data->{'variations'}}) {
       my $variation = $data->{'variations'}->{$_};
       my $type = $variation->{'type'};
+      
+      next unless $mk->{$type}; # Just in case, but shouldn't happen.
       
       if ($variation->{'transcript'}) {
         $seq->[$_]->{'title'} = "Alleles: $variation->{'alleles'}";
