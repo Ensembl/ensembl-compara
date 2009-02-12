@@ -36,73 +36,14 @@ sub content {
   
   if ($align && $slice_length >= $self->{'subslice_length'}) {    
     my ($table, $padding) = $self->get_slice_table($slices, 1);
+    my $base_url = qq{/@{[$object->species]}/Component/Gene/Web/ComparaAlignments/sub_slice?padding=$padding;length=$slice_length};
     
-    my $url = qq{/@{[$object->species]}/Component/Gene/Web/ComparaAlignments/sequence?padding=$padding;length=$slice_length};
-    $html = $self->get_key($object) . $table;
-    
-    if ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') {
-      $html .= qq{<div class="ajax" title="['$url;$ENV{'QUERY_STRING'}']"></div>};
-    } else {
-      map { $url .= ";$_=" . $object->param($_) } $object->param;
-      
-      my $renderer = new EnsEMBL::Web::Document::Renderer::Assembler(session => $object->get_session);
-      $renderer->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
-      $renderer->process;
-      
-      $html .= $renderer->content;
-    }
+    $html = $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {
     $html = $self->content_sub_slice($slices, $warnings); # Direct call if the sequence length is short enough
   }
   
   return $html;
-}
-
-sub content_sequence {
-  my $self = shift;
-  my $object = $self->object;
-  my $slice = $object->get_slice_object->Obj;
-  my $slice_length = $object->param('length') || $slice->length;
-  
-  return unless ($slice_length >= $self->{'subslice_length'}); # The sequence will have been printed already by content calling content_sub_slice directly
-  
-  my ($error, $warnings) = $self->check_for_errors($object, $object->param('align'), $object->species);
-  
-  return if $error; # The error will have been printed already by content
-  
-  my $i = 1;
-  my $j = $self->{'subslice_length'};
-  my $end = (int ($slice_length / $self->{'subslice_length'})) * $self->{'subslice_length'};
-  my $base_url = qq{/@{[$object->species]}/Component/Gene/Web/ComparaAlignments/sub_slice?$ENV{'QUERY_STRING'}};
-  
-  my $renderer = ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(session => $object->get_session);
-  
-  my ($url, $html);
-  
-  # The display is split into a managable number of sub slices, which will be processed in parallel by requests
-  while ($j <= $slice_length) {
-    $url = qq{$base_url;start=$i;end=$j};
-    
-    if ($renderer) {
-      $renderer->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
-    } else {
-      $html .= qq{<div class="ajax" title="['$url']"></div>};
-    }
-    
-    last if $j == $slice_length;
-    
-    $i = $j + 1;
-    $j += $self->{'subslice_length'};
-    
-    $j = $slice_length if $j >= $end;
-  }
-  
-  if ($renderer) {
-    $renderer->process;
-    $html = $renderer->content;
-  }
-  
-  return $html . $warnings;
 }
 
 sub content_sub_slice {
