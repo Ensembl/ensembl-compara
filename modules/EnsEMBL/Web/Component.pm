@@ -468,6 +468,10 @@ sub get_sequence_data {
           }
         }
         
+        if ($config->{'sub_slice_start'} && $config->{'line_numbering'} ne 'slice') {
+          $snp_start += $config->{'sub_slice_start'}-1;
+        }
+        
         # Add the chromosome number for the link text if we're doing species comparisons.
         $snp_start = $u_snps->{$variation_name}->seq_region_name . ":$snp_start" if scalar keys %$u_snps;
         
@@ -1085,6 +1089,48 @@ sub build_sequence {
   $config->{'html_template'} = sprintf($config->{'html_template'}, $html);
   
   return $config->{'html_template'};
+}
+
+# When displaying a very large sequence we can break it up into smaller sections and render each of them much more quickly
+sub chunked_content {
+  my $self = shift;
+  my ($total_length, $chunk_length, $base_url) = @_;
+  
+  my $object = $self->object;
+  
+  my $i = 1;
+  my $j = $chunk_length;
+  my $end = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
+  my ($url, $html);
+  
+  my $renderer = ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(session => $object->get_session);
+  
+  # The display is split into a managable number of sub slices, which will be processed in parallel by requests
+  while ($j <= $total_length) {
+    $url = qq{$base_url;start=$i;end=$j};
+    
+    if ($renderer) {
+      map { $url .= ";$_=" . $object->param($_) } $object->param;
+      
+      $renderer->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
+    } else {
+      $html .= qq{<div class="ajax" title="['$url;$ENV{'QUERY_STRING'}']"></div>};
+    }
+    
+    last if $j == $total_length;
+    
+    $i = $j + 1;
+    $j += $chunk_length;
+    
+    $j = $total_length if $j >= $end;
+  }
+  
+  if ($renderer) {
+    $renderer->process;
+    $html = $renderer->content;
+  }
+  
+  return $html;
 }
 
 1;
