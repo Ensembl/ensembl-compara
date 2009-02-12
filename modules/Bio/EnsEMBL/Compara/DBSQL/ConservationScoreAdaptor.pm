@@ -228,7 +228,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	my $gab_length = $light_genomic_align->{length};
 
 	my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block_id, $window_size, $PACKED);
-
 	if (scalar(@$conservation_scores) == 0) {
 	    next;
 	}
@@ -353,7 +352,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_SliceOLD {
 	}
     }
 
-    print "window_size $window_size bucket_size $bucket_size slice length " . ($slice->end - $slice->start + 1) . "\n";
+    #print "window_size $window_size bucket_size $bucket_size slice length " . ($slice->end - $slice->start + 1) . "\n";
 
     $_bucket = {diff_score => 0,
 		start_pos => 0,
@@ -546,8 +545,16 @@ sub fetch_all_by_GenomicAlignBlock {
     if (!$reference_genomic_align) {
 	$genomic_align_block->reference_genomic_align($genomic_align_block->get_all_GenomicAligns->[0]);
     }
+    #need this in case the dbID is not set ie if the $genomic_align_block has
+    #been restricted
+    my $gab_id;
+    if (defined $genomic_align_block->{'dbID'}) {
+	$gab_id = $genomic_align_block->{'dbID'};
+    } else {
+	$gab_id = $genomic_align_block->{'original_dbID'};
+    }
 
-    my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID, $window_size, $PACKED);
+    my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($gab_id, $window_size, $PACKED);
 
     if (scalar(@$conservation_scores) == 0) {
 	return $scores;
@@ -564,7 +571,6 @@ sub fetch_all_by_GenomicAlignBlock {
     $scores = $self->_get_alignment_scores($conservation_scores, $align_start, 
 					   $align_end, $display_type, $window_size, 
 					   $genomic_align_block);
-
 
     if (scalar(@$scores) == 0) {
 	return $scores;
@@ -1769,7 +1775,7 @@ sub _get_all_ref_genomic_aligns {
           USING
              (genomic_align_block_id)
           WHERE 
-             genomic_align_block.method_link_species_set_id = ?
+             genomic_align.method_link_species_set_id = ?
              AND dnafrag_id = ?
              AND dnafrag_start <= ?
              AND dnafrag_end >= ?
