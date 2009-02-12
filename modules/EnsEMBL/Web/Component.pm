@@ -518,7 +518,7 @@ sub get_sequence_data {
         @exons = grep { $_->seq_region_strand < 0 } @exons; # Only rev exons
       }
       
-      my @all_exons = map {[ $config->{'comparison'} ? 'compara_other' : 'other', $_ ]} @exons;
+      my @all_exons = map {[ $config->{'comparison'} ? 'compara' : 'other', $_ ]} @exons;
       
       if ($config->{'exon_features'}) {
         push (@all_exons, [ 'gene', $_ ]) for @{$config->{'exon_features'}};
@@ -582,21 +582,22 @@ sub get_sequence_data {
           }
         }
       } else { # Normal Slice
-        foreach my $t (grep {$_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-          my ($start, $end, $id) = ($t->coding_region_start, $t->coding_region_end, $t->stable_id);
+        foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
+          my ($start, $stop, $id) = ($t->coding_region_start, $t->coding_region_end, $t->stable_id);
           
-          $start = 1 if ($start < 1);
-          $end = $slice_length if ($end > $slice_length);
-  	      
-  	      # START codons
-  	      for ($start-1..$start+1) { 
-    	      $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("START(%s)", $id);
-  	      }
-  	      
-  	      # STOP codons
-  	      for ($end-3..$end-1) {
-  	        $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("STOP(%s)", $id);
-  	      }
+          # START codons
+          if ($start > 1) {
+            for ($start-1..$start+1) {
+              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("START(%s)", $id);
+            }
+          }
+          
+          # STOP codons
+          if ($stop <= $slice_length) {
+            for ($stop-3..$stop-1) {
+              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("STOP(%s)", $id);
+            }
+          }
         }
       }
     }
@@ -616,12 +617,12 @@ sub markup_exons {
   my $i = 0;
   
   my $class = {
-    exon0         => 'e0',
-    exon1         => 'e1',
-    exon2         => 'e2',
-    other         => 'eo',
-    gene          => 'eg',
-    compara_other => 'e2'
+    exon0   => 'e0',
+    exon1   => 'e1',
+    exon2   => 'e2',
+    other   => 'eo',
+    gene    => 'eg',
+    compara => 'e2'
   };
   
   foreach my $data (@$markup) {
@@ -647,7 +648,7 @@ sub markup_exons {
     
     my $selected;
   
-    for my $type ('other', 'compara_other') {
+    for my $type ('other', 'compara') {
       if ($exon_types->{$type}) {
         $selected = ucfirst $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
         $selected = $config->{'site_type'} if $selected eq 'Core';
