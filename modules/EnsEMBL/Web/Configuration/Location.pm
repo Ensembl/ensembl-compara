@@ -498,7 +498,7 @@ sub _ajax_zmenu_region {
   my $url = $obj->_url({'type'=>'Location','action'=>$action,'region'=>$slice_name,});
   $priority--;
   $panel->add_entry({
-    'label'     => "View $slice_type $slice_name",
+    'label'     => "Center on $slice_type $slice_name",
     'link'     => $url,
     'priority' => $priority,
   });
@@ -506,48 +506,49 @@ sub _ajax_zmenu_region {
   my $export_URL = $obj->_url({'type'=>'Export','action'=>"Location/$action",'r'=>$new_r});
   $priority--;
   $panel->add_entry({
-    'label'    => "Export $slice_type sequence",
+    'label'    => "Export $slice_type sequence/features",
     'link'    => $export_URL,
     'priority'=> $priority,
     'class'   => 'modal_link',
   });
   foreach my $cs (@{$db_adaptor->get_CoordSystemAdaptor->fetch_all() || []}) {
     $priority--;
-    next if $cs->name eq $slice_type;
-    next if $cs->name eq 'chromosome';
+    next if $cs->name eq $slice_type; #don't show the slice coord system twice
+    next if $cs->name eq 'chromosome'; #don't allow breaking of site by exporting all chromosome features
     my $path;
     eval { $path = $slice->project($cs->name); };
     next unless $path;
     next unless(@$path == 1);
 
-    #would be nice if exportview could work with the region parameter, either in the referer or in the real URL
-    #since it doesn't we have to calculate the locations of all regions on top level and explicitly pass these to exportview
     my $new_slice = $path->[0]->to_Slice->seq_region_Slice;
     my $new_slice_type = $new_slice->coord_system_name();
     my $new_slice_name = $new_slice->seq_region_name();
     my $new_slice_length = $new_slice->seq_region_length();
 
-    $top_level_proj  = $new_slice->project('chromosome');
-    $top_level_slice = $top_level_proj->[0]->to_Slice;
-    $top_level_name  = $top_level_slice->seq_region_name;
-    $top_level_start = $top_level_slice->start;
-    $top_level_end = $top_level_slice->end;
-    $new_r = "$top_level_name:$top_level_start-$top_level_end";
-
     $action = $new_slice_length > $threshold ? 'Overview' : 'View';
     my $new_slice_URL = $obj->_url({'type'=>'Location','action'=>$action,'region'=>$new_slice_name});
     $priority--;
     $panel->add_entry({
-      'label'    => "View $new_slice_type $new_slice_name",
+      'label'    => "Center on $new_slice_type $new_slice_name",
       'link'    => $new_slice_URL,
       'priority'=> $priority,
     });
 #    $referer = $obj->_url({'type'=>'Location','action'=>"$action",'r'=>undef,'region'=>$new_slice_name});
+
+    #would be nice if exportview could work with the region parameter, either in the referer or in the real URL
+    #since it doesn't we have to explicitly calculate the locations of all regions on top level
+    my $top_level_proj  = $new_slice->project('toplevel');
+    my $top_level_slice = $top_level_proj->[0]->to_Slice;
+    my $top_level_name  = $top_level_slice->seq_region_name;
+    my $top_level_start = $top_level_slice->start;
+    my $top_level_end = $top_level_slice->end;
+    my $new_r = "$top_level_name:$top_level_start-$top_level_end";
+
     $export_URL = $obj->_url({'type'=>'Export','action' =>"Location/$action",'r'=>$new_r});
 
     $priority--;
     $panel->add_entry({
-      'label'    => "Export $new_slice_type sequence",
+      'label'    => "Export $new_slice_type sequence/features",
       'link'    => $export_URL,
       'priority'=> $priority,
       'class'   => 'modal_link',
@@ -784,7 +785,6 @@ sub _ajax_zmenu_alignment {
   my $external_db_id = ($fs->[0] && $fs->[0]->can('external_db_id')) ? $fs->[0]->external_db_id : '';
   my $extdbs = $external_db_id ? $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
   my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
-
   #hack to link sheep bac ends to trace archive
   if ($fs->[0]->analysis->logic_name =~ /sheep_bac_ends|BACends/) {
     $hit_db_name = 'TRACE';
