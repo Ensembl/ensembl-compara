@@ -292,6 +292,20 @@ sub new {
   if ($genomic_align_trees) {
     $self->_create_underlying_Slices($genomic_align_trees, $self->{expanded},
         $self->{solve_overlapping}, $preserve_blocks, $species_order);
+
+    #Awful hack to store the _alignslice_from and _alignslice_to on the 
+    #GenomicAlignBlock for use in get_all_ConservationScores which uses 
+    #GenomicAlignBlock and not GenomicAlignTree
+    foreach my $tree (@$genomic_align_trees) {
+        foreach my $block (@$genomic_align_blocks) {
+            my $gab_id = $tree->get_all_leaves->[0]->genomic_align_group->get_all_GenomicAligns->[0]->genomic_align_block_id;
+            if ($gab_id == $block->dbID) {
+                $block->{_alignslice_from} = $tree->{_alignslice_from};
+                $block->{_alignslice_to} = $tree->{_alignslice_to};
+            }
+        }
+    }
+
   } else {
     $self->_create_underlying_Slices($genomic_align_blocks, $self->{expanded},
         $self->{solve_overlapping}, $preserve_blocks, $species_order);
@@ -774,6 +788,7 @@ sub _create_underlying_Slices {
       ($this_genomic_align_block, $from, $to) = $this_genomic_align_block->restrict_between_reference_positions(
           $self->reference_Slice->start, $self->reference_Slice->end);
     }
+
     $original_genomic_align_block->{_alignslice_from} = $from;
     $original_genomic_align_block->{_alignslice_to} = $to;
 
