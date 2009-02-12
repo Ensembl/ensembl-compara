@@ -475,7 +475,9 @@ sub reference_dnafrag_id {
 	       my$cons = $ce_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
                foreach my $simple_align(@{ $ce->get_SimpleAlign($prev_mlss, "uc") }) {
 			print $out $simple_align;
-	       }	
+	       }
+  Note       : Where constrained elements occur in overlapping genomic_align_blocks there will be ambiguities
+               in associating an alignment with the correct constrined_element_id.
   Description: Rebuilds the constrained element alignment
   Returntype : an arrayref of Bio::SimpleAlign objects
   Exceptions : throw if Arg-1 is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
@@ -504,10 +506,9 @@ sub get_SimpleAlign {
 		$translated = 1 if ($flag =~ /^translated$/i);
 	}		
 
-
 	my $genomic_align_block_adaptor = $self->adaptor->db->get_GenomicAlignBlock;
 	my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-		$orig_mlss, $self->slice);
+		$orig_mlss, $self->slice->sub_Slice($self->start, $self->end, $self->slice->strand));
 
 	foreach my $this_genomic_align_block(@$gabs) {
 		my $sa = Bio::SimpleAlign->new();
@@ -516,8 +517,6 @@ sub get_SimpleAlign {
 			$bio07 = 1; 
 		}
 		my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align();
-		next if (($reference_genomic_align->dnafrag_end < $self->slice->start + $self->start - 1) || 
-			 ($reference_genomic_align->dnafrag_start > $self->slice->start + $self->end -1));  
 
 		my $restricted_gab = $this_genomic_align_block->restrict_between_reference_positions(
 			($self->slice->start + $self->start - 1),
@@ -530,11 +529,9 @@ sub get_SimpleAlign {
 				-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
 				-START  => $genomic_align->dnafrag_start,
 				-END    => $genomic_align->dnafrag_end,
-				-ID     => $genomic_align->dnafrag->genome_db_id . "/" . $genomic_align->dnafrag->name,
+				-ID     => $this_genomic_align_block->dbID . "/" .
+				 $genomic_align->dnafrag->genome_db_id . "/" . $genomic_align->dnafrag->name,
 				-STRAND => $genomic_align->dnafrag_strand);
-
-#			$loc_seq->seq($uc ? uc $loc_seq->translate->seq
-#			: lc $loc_seq->translate->seq) if ($translated);
 
 			if($bio07) { 
 				$sa->addSeq($loc_seq); 
@@ -544,6 +541,8 @@ sub get_SimpleAlign {
 		}
 		push(@SimpleAligns, $sa);
 	}
+	warn "overlapping constrained elements for ", $self->dbID, "\n" if (@SimpleAligns > 1);	
+	
 	return \@SimpleAligns;
 }
 

@@ -9,9 +9,9 @@ use Bio::AlignIO;
 #
 
 my $spp = "Homo sapiens";
-my $chr = "6";
-my $start = 88408968;
-my $end = 88508968;
+my $chr = "1";
+my $start = 238563427;
+my $end = 238565434;
 
 #example for ensembl 49
 #my $version = 49;
@@ -86,7 +86,7 @@ Bio::EnsEMBL::Registry->load_registry_from_db(-host =>'ens-staging',
 my $alignIO = Bio::AlignIO->newFh(-interleaved => 0,
                                   -fh => \*STDOUT,
 				  -format => 'clustalw',
-                                  -idlength => 20);
+                                  );
 
 #Create slice from $spp, $chr, $start and $end
 my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($spp, "core", "Slice");
@@ -111,15 +111,13 @@ my $cons = $ce_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($ce_mlss,$query_
 print "Number of constrained elements: " . @$cons . "\n";
 
 #Print out information
+#Note: where constrained elements occur in overlapping genomic_align_blocks there will be ambiguities
+#in aassociating an alignment with the correct constrined_element_id. 
 foreach my $ce (@$cons) {
     print "dbID:" . $ce->dbID . " from:" . ($ce->slice->start + $ce->start - 1 ) . " to:" . 
 	($ce->slice->start + $ce->end - 1) . " Constrained element score:" . $ce->score . 
 	" length:" . ($ce->end - $ce->start)  . " p_value:" . $ce->p_value . " taxonomic_level:" 
 	. "\"" .  $ce->taxonomic_level . "\"" . " dnafrag_id:". $ce->reference_dnafrag_id . "\n";
-# print out the alignment (Bio::SimpleAlign object) in the requested
-# output format through the Bio::AlignIO handler
-    foreach my $simple_align(@{ $ce->get_SimpleAlign($orig_mlss, "uc") }) {
-	print $alignIO $simple_align;
-    }
+	print $alignIO $ce->get_SimpleAlign($orig_mlss, "uc")->[0];
 }
 
