@@ -169,10 +169,10 @@ sub OTHER_MARKUP_OPTIONS {
     'title_display' => {
       'type'   => 'DropDown', 'select'   => 'select',
       'required' => 'yes',    'name'   => 'title_display',
-      'label'  => 'Title display',
+      'label'  => 'Display pop-up information on mouseover',
       'values'   => [
-        { 'value' =>'all' , 'name' => 'Include `title` tags' },
-        { 'value' =>'off' , 'name' => 'None' },
+        { 'value' =>'all' , 'name' => 'Yes' },
+        { 'value' =>'off' , 'name' => 'No' },
       ],
     },
   );
