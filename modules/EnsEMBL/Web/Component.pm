@@ -401,33 +401,31 @@ sub get_sequence_data {
       };
       
       if (scalar @$snps) {
-        if ($config->{'line_numbering'} eq 'slice') {
-          foreach my $u_slice (@{$sl->{'underlying_slices'}}) {
-            next if ($u_slice->seq_region_name eq 'GAP');
-            
-            if (!$u_slice->adaptor) {
-              my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
-              $u_slice->adaptor($slice_adaptor);
-            }
-            
-            eval {
-              map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
-            };
+        foreach my $u_slice (@{$sl->{'underlying_slices'}||[]}) {
+          next if ($u_slice->seq_region_name eq 'GAP');
+          
+          if (!$u_slice->adaptor) {
+            my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
+            $u_slice->adaptor($slice_adaptor);
           }
+          
+          eval {
+            map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
+          };
         }
       }
       
       # Put deletes second, so that they will overwrite the markup of other variations in the same location
       my @ordered_snps = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ $_->end < $_->start ? 1 : 0, $_ ] } @$snps;
       
-      for my $snp (@ordered_snps) {
-        my $alleles = $snp->allele_string;
-        my $variation_name = $snp->variation_name;
-        my $dbID = $snp->dbID;
-        my $s_start = $snp->start;
-        my $s_end = $snp->end;
-        
-        
+      foreach (@ordered_snps) {
+        my $snp_type = 'snp';
+        my $variation_name = $_->variation_name;
+        my $var_class = $_->can('var_class') ? $_->var_class : '';
+        my $dbID = $_->dbID;
+        my $start = $_->start;
+        my $end = $_->end;
+        my $alleles = $_->allele_string;
         
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
         if ($slice_strand < 0) {
@@ -438,44 +436,58 @@ sub get_sequence_data {
           $alleles =~ s/\/$//;
         }
       
-        # if snp is on reverse strand - flip the bases
-        $alleles =~ tr/ACGTacgt/TGCAtgca/ if $snp->strand < 0;
+        # If the variation is on reverse strand, flip the bases
+        $alleles =~ tr/ACGTacgt/TGCAtgca/ if $_->strand < 0;
         
-        my $start = $s_start-1;
-        my $end = $s_end-1;
-        my $snp_type = 'snp';
-        my $snp_start;
+        # Use the variation from the underlying slice if we have it.
+        my $snp = scalar keys %$u_snps ? $u_snps->{$variation_name} : $_;
         
-        if (scalar keys %$u_snps) {
-          # Species comparisons with line numbering relative to slice - get the start of the variation on the underlying slice
-          $snp_start = $u_snps->{$variation_name}->seq_region_start;
-        } elsif ($config->{'line_numbering'} eq 'slice') {
-          # No species comparison - get the start of the variation on the slice
-          $snp_start = $snp->seq_region_start;
+        # Co-ordinates relative to the sequence - used to mark up the variation's position
+        my $s = $start-1;
+        my $e = $end-1;
+        
+        # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
+        my $seq_region_start = $snp->seq_region_start;
+        my $seq_region_end = $snp->seq_region_end;
+        
+        # Co-ordinates to be used in link text - will use $start or $seq_region_start depending on line numbering style
+        my ($snp_start, $snp_end);
+        
+        if ($config->{'line_numbering'} eq 'slice') {
+          $snp_start = $seq_region_start;
+          $snp_end = $seq_region_end;
         } else {
-          # Line numbering is relative to the sequence
-          $snp_start = $s_start;
+          $snp_start = $start;
+          $snp_end = $end;
         }
         
-        if ($snp->can('var_class') && $snp->var_class eq 'in-del') {
-          if ($start > $end) {
-            $start = $s_end-1;
-            $end = $s_start-1;
+        if ($var_class eq 'in-del') {
+          if ($seq_region_start > $seq_region_end) {
             $snp_type = 'insert';
-            $snp_start--;
+            
+            # Neither of the following if statements are guaranteed by $seq_region_start > $seq_region_end.
+            # It is possible to have inserts for compara alignments which fall in gaps in the sequence, where $s <= $e,
+            # and $snp_start only equals $s if $config->{'line_numbering'} is not 'slice';
+            $snp_start = $snp_end if ($snp_start > $snp_end);
+            
+            if ($s > $e) {
+              my $tmp = $s;
+              
+              $s = $e;
+              $e = $tmp;
+            }
           } else {
             $snp_type = 'delete';
           }
         }
         
-        if ($config->{'sub_slice_start'} && $config->{'line_numbering'} ne 'slice') {
-          $snp_start += $config->{'sub_slice_start'}-1;
-        }
+        # Add the sub slice start where necessary - makes the label for the variation show the correct position relative to the sequence
+        $snp_start += $config->{'sub_slice_start'}-1 if ($config->{'sub_slice_start'} && $config->{'line_numbering'} ne 'slice');
         
-        # Add the chromosome number for the link text if we're doing species comparisons.
-        $snp_start = $u_snps->{$variation_name}->seq_region_name . ":$snp_start" if scalar keys %$u_snps;
+        # Add the chromosome number for the link text if we're doing species comparisons or resequencing.
+        $snp_start = $snp->seq_region_name . ":$snp_start" if (scalar keys %$u_snps && $config->{'line_numbering'} eq 'slice');
         
-        for ($start..$end) {
+        for ($s..$e) {
           # FIXME: API currently returns variations when the resequenced individuals match the reference
           # This line can be deleted once we get the correct set.
           # Don't mark up variations when the secondary strain is the same as the sequence.
@@ -485,7 +497,7 @@ sub get_sequence_data {
           $mk->{'variations'}->{$_}->{'type'} = $snp_type;
           $mk->{'variations'}->{$_}->{'alleles'} .= ($mk->{'variations'}->{$_}->{'alleles'} ? '; ' : '') . $alleles;
           
-          if ($_ == $start) {
+          if ($_ == $s) {
             $mk->{'variations'}->{$_}->{'link_text'} = "$snp_start:$alleles";
             $mk->{'variations'}->{$_}->{'v'} = $variation_name;
             $mk->{'variations'}->{$_}->{'vf'} = $dbID;
@@ -577,7 +589,7 @@ sub get_sequence_data {
             $end = $slice_length unless $end < $slice_length;
             
             for ($start-1..$end-1) {
-              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("$c->{'label'}(%s)", $id);
+              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . "$c->{'label'}($id)";
             }
           }
         }
@@ -588,14 +600,14 @@ sub get_sequence_data {
           # START codons
           if ($start > 1) {
             for ($start-1..$start+1) {
-              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("START(%s)", $id);
+              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . "START($id)";
             }
           }
           
           # STOP codons
           if ($stop <= $slice_length) {
             for ($stop-3..$stop-1) {
-              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . sprintf("STOP(%s)", $id);
+              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . "STOP($id)";
             }
           }
         }
@@ -693,9 +705,9 @@ sub markup_variation {
   my $i = 0;
   
   my $class = {
-    'snp'     => 'sn',
-    'insert'  => 'si',
-    'delete'  => 'sd'
+    'snp'    => 'sn',
+    'insert' => 'si',
+    'delete' => 'sd'
   };
 
   foreach my $data (@$markup) {
