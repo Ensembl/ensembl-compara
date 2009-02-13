@@ -35,10 +35,6 @@ sub render {
   }
 
   ## Add in pre species (currently hard-coded)
-  $species{'Anole lizard'} = {
-        'dir'  => 'Anolis_carolinensis',
-        'status'  => 'pre',
-  };
   $species{'Lamprey'} = {
         'dir' => 'Petromyzon_marinus',
         'status'  => 'pre',
@@ -50,41 +46,44 @@ sub render {
 
   my $total = scalar(keys %species);
   my $break = int($total / 3);
-  $break++ if $total % 2;
+  $break++ if $total % 3;
   my $link_style = 'font-size:1.1em;font-weight:bold;text-decoration:none;';
 
-  my $i = 1;
   my $html = qq(
 <h2>$sitename Species</h2>
-<div class="threecol-left">
-  <ul>);
-  foreach my $common (sort keys %species) {
-    if ($i == $break + 1) {
-      $html .= qq(</ul>
-</div><div class="threecol-middle">
-  <ul>);
+<table>
+  <tr>
+  );
+  my @species = sort keys %species;
+  for (my $i=0; $i < $total; $i++) {
+    my $col = int($i % 3);
+    if ($col == 0 && $i < ($total - 1)) {
+     $html .= qq(</tr>\n<tr>);
     }
-    elsif ( $i == (2*$break)+1) {
-      $html .= qq(</ul>
-</div><div class="threecol-right">
-  <ul>);
-    }
+    my $row = int($i/3);
+    $row++ if $col;
+    my $j = $row + $break * $col;
+    my $common = $species[$j];
+    next unless $common;
     my $info = $species{$common};
-    $html .= '<li style="list-style: url(/img/species/thumb_'.$info->{'dir'}.'.png)">';
+    my $dir = $info->{'dir'};
+    (my $name = $dir) =~ s/_/ /;
+    $html .= qq(<td style="width:8%;text-align:right;padding-bottom:1em"><img src="/img/species/thumb_$dir.png" alt="$name"></td><td style="width:25%;padding:2px;padding-bottom:1em">);
     if ($info->{'status'} eq 'pre') {
-      $html .= '<a href="http://pre.ensembl.org/'.$info->{'dir'}.'/" rel="external"';
+      $html .= qq(<a href="http://pre.ensembl.org/$dir/" style="$link_style" rel="external">$common</a>);
     }
     else {
-      $html .= '<a href="/'.$info->{'dir'}.'/Info/Index/"';
+      $html .= qq(<a href="/$dir/Info/Index/"  style="$link_style">$common</a>);
     }
-    $html .= ' style="'.$link_style.'">'.$common.'</a>';
     $html .= ' (preview - assembly only)' if $info->{'status'} eq 'pre';
-    $html .= '</li>';
-    $i++;
+    unless ($common =~ /\./) {
+      $html .= "<br /><i>$name</i>";
+    }
+    $html .= '</td>';
   }
   $html .= qq(
-  </ul>
-</div>);
+  </tr>
+</table>);
   return $html;
 
 }
