@@ -54,7 +54,6 @@ sub _content {
   my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1]; 
   my $sub_slices       =  $object->__data->{'slices'}{'transcripts'}[2];  
 
-
   # Fake SNPs -----------------------------------------------------------
   # Grab the SNPs and map them to subslice co-ordinate
   # $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'}
@@ -83,8 +82,12 @@ sub _content {
   ### This is where we do the configuration of containers....
   my @transcripts            = ();
   my @containers_and_configs = (); ## array of containers and configs
+  
 
-  foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
+  foreach my $trans_obj (
+    sort { $b->Obj->external_name cmp $a->Obj->external_name || $b->[1] cmp $a->[1] } 
+    @{$object->get_all_transcripts}
+  ) {  
 ## create config and store information on it...
     $trans_obj->__data->{'transformed'}{'extent'} = $extent;
     my $CONFIG = $object->get_imageconfig( "genesnpview_transcript" );
@@ -127,6 +130,7 @@ sub _content {
     }
     push @transcripts, { 'exons' => $TS->{'exons'} };
   }
+
 ## -- Map SNPs for the last SNP display --------------------------------- ##
   my $SNP_REL     = 5; ## relative length of snp to gap in bottom display...
   my $fake_length = -1; ## end of last drawn snp on bottom display...
