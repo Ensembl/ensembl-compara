@@ -68,12 +68,13 @@ sub render {
     my $info = $species{$common};
     my $dir = $info->{'dir'};
     (my $name = $dir) =~ s/_/ /;
+    my $link_text = $common =~ /\./ ? $name : $common;
     $html .= qq(<td style="width:8%;text-align:right;padding-bottom:1em"><img src="/img/species/thumb_$dir.png" alt="$name"></td><td style="width:25%;padding:2px;padding-bottom:1em">);
     if ($info->{'status'} eq 'pre') {
-      $html .= qq(<a href="http://pre.ensembl.org/$dir/" style="$link_style" rel="external">$common</a>);
+      $html .= qq(<a href="http://pre.ensembl.org/$dir/" style="$link_style" rel="external">$link_text</a>);
     }
     else {
-      $html .= qq(<a href="/$dir/Info/Index/"  style="$link_style">$common</a>);
+      $html .= qq(<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a>);
     }
     $html .= ' (preview - assembly only)' if $info->{'status'} eq 'pre';
     unless ($common =~ /\./) {
