@@ -19,6 +19,7 @@ DROP TABLE analysis_job;
 DROP TABLE analysis_job_file;
 DROP TABLE analysis_data;
 DROP TABLE analysis_stats;
+DROP TABLE analysis_stats_monitor;
 DROP TABLE monitor;
 
 
