@@ -4,8 +4,8 @@ ABOUT
 This document describes how to run the ensembl-compara genetree
 pipeline.
 
-- Loads the longest peptide for each gene loci in each configured
-  species database into the compara DB's member table.
+- Loads the canonical or longest peptide for each gene loci in each
+  configured species database into the compara DB's member table.
 
 - Loads each UniProt protein into the member table (metazoa only for
   now). Only needed if the family pipeline is to be run subsequently.
@@ -131,20 +131,20 @@ file as of ensembl v40.
 
 Pick a mysql instance and create a database;
 
-  $ set COMPARA_DBNAME=${USER}_ensembl_compara_50
+  $ set COMPARA_DBNAME=${USER}_ensembl_compara_52
   $ mysql -e "create database $COMPARA_DBNAME"
 
 And load the schemas;
 
-  $ cat $BASEDIR/ensembl-hive/sql/tables.sql \
-        $BASEDIR/ensembl-compara/sql/table.sql \
+  $ cat $BASEDIR/ensembl-compara/sql/table.sql \
         $BASEDIR/ensembl-compara/sql/pipeline-tables.sql \
+        $BASEDIR/ensembl-hive/sql/tables.sql \
     | mysql $COMPARA_DBNAME
 
 And set an environment variable containing the connection parameters
 to the DB as used by many of the compara scripts:
 
-  $ set COMPARA_URL=mysql://user:pass@host:port/${COMPARA_DBNAME}
+  $ set COMPARA_URL=mysql://<user>:<pass>@<host>:<port>/${COMPARA_DBNAME}
 
 3- Load the NCBI taxonomy data 
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -338,7 +338,7 @@ $ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
   -extrataxon_incomplete 7175_121225  -no_previous
 
 Which in this case will create your file with the name
-"njtree.5.ensembl_compara_45.nh":
+"njtree.5.ensembl_compara_52.nh":
 
 ((((7175,7159*)53550,7165*)7157,7227*)7147,121225);
 
@@ -357,7 +357,7 @@ $ testTaxonTree.pl -url $COMPARA_URL \
   -create_species_tree -extrataxon_sequenced 9823 \
   -multifurcation_deletes_node 33316
 
-will create a tree with the species in ensembl_compara_45, deleting
+will create a tree with the species in the compara DB, deleting
 the Coelomata internal node and adding the Sus scrofa species as
 completely sequenced.
 
@@ -447,34 +447,37 @@ create_mlss.pl script as follows;
             (301,"FAMILY",             "Family.family"), \
             (401,"PROTEIN_TREES",      "ProteinTree.protein_tree_node")'
 
-7.3. Run the create_mlss.pl script. If, for example, your genome_db_ids
-   were 1, 2, 3, 4 and 5, you would need the following;
+7.3. Run the create_mlss.pl script. 
 
   $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+
+  $ # This gets a comma-separated list of all genome_db_ids in the DB
+  $ set SPECIES_LIST=`mysql $COMPARA_DBNAME -r -e \
+    'select group_concat(genome_db_id) from genome_db' | tail -n 1`
 
   $ # For orthologues
   $ ./create_mlss.pl --f --pw \
     --reg_conf ensembl.registry \
     --method_link_type ENSEMBL_ORTHOLOGUES \
-    --genome_db_id '1,2,3,4,5'
+    --genome_db_id "$SPECIES_LIST"
 
   $ # For between-species paralogues
   $ ./create_mlss.pl --f --pw \
     --reg_conf ensembl.registry \
     --method_link_type ENSEMBL_PARALOGUES \
-    --genome_db_id '1,2,3,4,5'
+    --genome_db_id "$SPECIES_LIST"
 
   $ # For same-species paralogues
   $ ./create_mlss.pl --f --sg \
     --reg_conf ensembl.registry \
     --method_link_type ENSEMBL_PARALOGUES \
-    --genome_db_id '1,2,3,4,5'
+    --genome_db_id "$SPECIES_LIST"
 
   $ # For protein trees
   $ ./create_mlss.pl --f \
     --reg_conf ensembl.registry \
     --method_link_type PROTEIN_TREES \
-    --genome_db_id '1,2,3,4,5'
+    --genome_db_id "$SPECIES_LIST"
 
 At this point the system is ready to run..
 
@@ -525,21 +528,49 @@ db for your analysis_job_id and use the runWorker.pl script like this:
 This will print the first 10 Muscle jobs, then get the analysis_job_id
 for one of them and run:
 
- $ perl ensembl-hive/scripts/runWorker.pl -bk LOCAL \
+ $ runWorker.pl -bk LOCAL \
    -url $COMPARA_URL -outdir '' -no_cleanup -debug 1 --job_id 1234567
 
 Sometimes you may need to reset a particular job (or even analysis) to
 rerun it. See the beekeeper's '-reset_job_id' and
 '-reset_all_jobs_for_analysis' flags.
-  
+
+Sometimes Muscle jobs fail due to large genetrees, but sometimes it's
+simply that the aligner gets confused somehow. The following SQL lists
+the first 10 failed Muscle jobs;
+ 
+  $ mysql $COMPARA_DBNAME -e \
+   'select a.logic_name, aj.analysis_job_id, aj.input_id \
+    from analysis a join analysis_job aj using( analysis_id ) \
+    where aj.status = "FAILED" and a.logic_name="Muscle" limit 10';
+
+For more details on the failed jobs, e.g. the gene_count, use the
+followimng SQL;
+
+  $ mysql $COMPARA_DBNAME -e \
+'SELECT * \
+ FROM(    \
+   SELECT a.logic_name, CAST( \
+     TRIM( TRAILING "\, \'clusterset_id\'\=\>1\}" \
+           FROM TRIM( LEADING "\{\'protein_tree_id\'\=\>" FROM aj.input_id)) \
+     AS UNSIGNED INT) AS root_id, aj.analysis_job_id \
+   FROM analysis_job aj JOIN analysis a using( analysis_id ) \
+   WHERE a.logic_name="Muscle" \
+   AND aj.status="Failed" ) AS aj \
+   JOIN protein_tree_tag p ON p.node_id=aj.root_id \
+   WHERE p.tag IN( "gene_count" ) \
+ LIMIT 10'
+
+
 Finally, some jobs (e.g. Sitewise_dNdS) rely on some jobs failing in
 order to trigger a resubmit on a different set. As the threshold for
 failed jobs is 0, the pipeline will seem to have failed. The following
 SQL fixes this particular example;
 
-  $ mysql -e "update analysis_stats as, analysis a \
-set as.failed_job_tolerance=98 \
-where as.analysis_id=a.analysis_id and logic_name='Sitewise_dNdS'"
+  $ mysql $COMPARA_DBNAME -e \
+"update analysis_stats ast, analysis a \
+set ast.failed_job_tolerance=98 \
+where ast.analysis_id=a.analysis_id and logic_name='Sitewise_dNdS'"
 
 for more details on controling the hive system do
   $ beekeeper.pl -help
