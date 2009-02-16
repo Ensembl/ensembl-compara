@@ -4,6 +4,10 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 our $counter;
 
+sub _colour_background {
+  return 0;
+}
+
 sub _init {
   my ($self) = @_;
 
