@@ -49,7 +49,7 @@ sub _init {
     my $stain = $band->stain();
     
     my $vc_band_start = $start;
-    $vc_band_start    = 0 if ($vc_band_start < 0);
+    $vc_band_start    = 1 if ($vc_band_start < 1);
     my $vc_band_end   = $end;
     $vc_band_end      =  $self->{'container'}->length() if ($vc_band_end > $self->{'container'}->length());
 
@@ -72,11 +72,12 @@ sub _init {
     
     my $fontcolour = $self->my_colour( $stain,'label' ) || 'black';
     if( $fontcolour ne 'invisible' ) {
-      my @res = $self->get_text_width( ($vc_band_end-$vc_band_start)*$pix_per_bp, $bandname, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+      my @res = $self->get_text_width( ($vc_band_end-$vc_band_start+1)*$pix_per_bp, $bandname, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     # only add the lable if the box is big enough to hold it...
       if( $res[0] ) {
+
         $self->push($self->Text({
-          'x'      => int(($vc_band_end + $vc_band_start-$res[2]/$pix_per_bp)/2),
+          'x'      => ($vc_band_end + $vc_band_start-1 - $res[2]/$pix_per_bp)/2,
           'y'      => 1,
           'width'  => $res[2]/$pix_per_bp,
           'textwidth' => $res[2],
