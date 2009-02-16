@@ -13,8 +13,8 @@ sub _initialize {
   $self->add_head_elements qw(
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
+    links      EnsEMBL::Web::Document::HTML::Links
     javascript EnsEMBL::Web::Document::HTML::Javascript
-    rss        EnsEMBL::Web::Document::HTML::RSS
     meta       EnsEMBL::Web::Document::HTML::Meta
   );
     #iehover    EnsEMBL::Web::Document::HTML::IEHoverHack
@@ -41,7 +41,6 @@ sub _initialize {
   $self->call_child_functions( 'common_page_elements','static_page_elements' );
   $self->_common_HTML();
 
-  $self->rss->add( '/common/rss.xml', 'Ensembl website news feed', 'rss' );
   $self->call_child_functions( 'extra_configuration' );
 }
 

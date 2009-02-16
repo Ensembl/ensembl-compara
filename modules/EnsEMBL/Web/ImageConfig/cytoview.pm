@@ -23,9 +23,6 @@ sub init {
 
 ## Finally some colours... background image colors;
 ## and alternating colours for tracks...
-    'bgcolor'       => 'background1',
-    'bgcolour1'     => 'background2',
-    'bgcolour2'     => 'background3',
   });
 
   $self->create_menus(

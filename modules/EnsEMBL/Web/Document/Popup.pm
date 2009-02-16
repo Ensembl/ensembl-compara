@@ -17,7 +17,7 @@ sub _initialize_HTML {
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
     javascript EnsEMBL::Web::Document::HTML::Javascript
-    rss        EnsEMBL::Web::Document::HTML::RSS
+    links      EnsEMBL::Web::Document::HTML::Links
     meta       EnsEMBL::Web::Document::HTML::Meta
   );
 
@@ -41,7 +41,6 @@ sub _initialize_HTML {
   $self->timer_push( "common HTML called" );
   $self->_script_HTML();
   $self->timer_push( "script HTML called" );
-  $self->rss->add( '/common/rss.xml', 'Ensembl website news feed', 'rss' );
   $self->timer_push( "page decs configured" );
 
   $self->call_child_functions( 'extra_configuration' );

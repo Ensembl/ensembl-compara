@@ -51,6 +51,33 @@ sub _common_HTML {
 
   my $style = $self->species_defs->ENSEMBL_STYLE;
  
+  if( $self->can('links') ) {
+    $self->links->add_link({ 
+      'rel'   => 'icon',
+      'type'  => 'image/png',
+      'href'  => $self->species_defs->ENSEMBL_IMAGE_ROOT.$style->{'SITE_ICON'}
+    });
+    $self->links->add_link({
+      'rel'   => 'search',
+      'type'  => 'application/opensearchdescription+xml',
+      'href'  => $self->species_defs->ENSEMBL_BASE_URL.'/opensearchdescription.xml',
+      'title' => 'Ensembl'
+    });
+    if( $ENV{'ENSEMBL_SPECIES'} ) {
+      $self->links->add_link({
+        'rel'   => 'search',
+        'type'  => 'application/opensearchdescription+xml',
+        'href'  => $self->species_defs->ENSEMBL_BASE_URL.'/opensearch_'.$ENV{'ENSEMBL_SPECIES'}.'.xml',
+       'title' => 'Ensembl '.$self->species_defs->SPECIES_COMMON_NAME
+      });
+    }
+    $self->links->add_link({
+      'rel'   => 'alternate',
+      'type'  => 'application/rss+xml',
+      'href'  => '/common/rss.xml',
+      'title' => 'Ensembl website news feed'
+    });
+  }
   $self->logo->image              = $style->{'SITE_LOGO'};             
   $self->logo->width              = $style->{'SITE_LOGO_WIDTH'};             
   $self->logo->height             = $style->{'SITE_LOGO_HEIGHT'};             
