@@ -82,12 +82,18 @@ sub _content {
   ### This is where we do the configuration of containers....
   my @transcripts            = ();
   my @containers_and_configs = (); ## array of containers and configs
-  
 
-  foreach my $trans_obj (
-    sort { $b->Obj->external_name cmp $a->Obj->external_name || $b->[1] cmp $a->[1] } 
-    @{$object->get_all_transcripts}
-  ) {  
+## sort so trancsripts are displayed in same order as in transcript selector table  
+  my $strand = $object->Obj->strand;
+  my @trans = @{$object->get_all_transcripts};
+  my @sorted_trans;
+  if ($strand ==1 ){
+    @sorted_trans = sort { $b->Obj->external_name cmp $a->Obj->external_name || $b->Obj->stable_id cmp $a->Obj->stable_id } @trans;
+  } else {
+    @sorted_trans = sort { $a->Obj->external_name cmp $b->Obj->external_name || $a->Obj->stable_id cmp $b->Obj->stable_id } @trans;
+  } 
+
+  foreach my $trans_obj (@sorted_trans ) {  
 ## create config and store information on it...
     $trans_obj->__data->{'transformed'}{'extent'} = $extent;
     my $CONFIG = $object->get_imageconfig( "genesnpview_transcript" );
