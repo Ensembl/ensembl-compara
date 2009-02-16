@@ -1248,7 +1248,9 @@ sub focus {
 }
 
 sub can_export {
-  return 1;
+  my $self = shift;
+
+  return $self->action =~ /^Chromosome$|^Genome$|^Synteny$/ ? 0 : $self->availability->{'slice'};
 }
 
 1;

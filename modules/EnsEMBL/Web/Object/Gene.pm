@@ -1217,7 +1217,7 @@ sub get_similarity_hash{
 }
 
 sub can_export {
-  return 1;
+  return return $_[0]->availability->{'gene'};
 }
 
 1;
