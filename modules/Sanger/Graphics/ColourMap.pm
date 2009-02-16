@@ -717,7 +717,7 @@ sub rgb_by_name {
      $hex = $1 if !$hex && $name=~/^#?([0-9a-f]{6})$/;
     $hex = sprintf( '%02x%02x%02x', split /,/, $1 ) if ! $hex && $name =~ /(\d+,\d+,\d+)/;
   unless( $hex ) {
-cluck( $hex );
+    #cluck "Unknown colour name {$name}" unless $errors->{$name};
     warn "Unknown colour name {$name}" unless $errors->{$name};
     $errors->{$name} = 1;
     return $flag ? () : (0,0,0);
