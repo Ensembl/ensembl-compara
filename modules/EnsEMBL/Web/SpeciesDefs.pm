@@ -60,6 +60,7 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 use EnsEMBL::Web::Tools::PluginLocator;
 use EnsEMBL::Web::Tools::WebTree;
 use EnsEMBL::Web::Tools::RobotsTxt;
+use EnsEMBL::Web::Tools::OpenSearchDescription;
 use EnsEMBL::Web::Tools::Registry;
 use EnsEMBL::Web::Tools::MartRegistry;
 use EnsEMBL::Web::DASConfig;
@@ -254,7 +255,8 @@ sub parse {
   $self->_parse();
   $self->store();
   $reg_conf->configure();
-  EnsEMBL::Web::Tools::RobotsTxt::create($self->ENSEMBL_SPECIES);
+  EnsEMBL::Web::Tools::RobotsTxt::create( $self->ENSEMBL_SPECIES );
+  EnsEMBL::Web::Tools::OpenSearchDescription::create( $self );
   $self->{'_parse_caller_array'} = [];
   my $C = 0;
   while(my @T = caller($C) ) { $self->{'_parse_caller_array'}[$C] = \@T; $C++; }
