@@ -611,6 +611,8 @@ sub _configurator {
       $self->{'page'}->local_context->caption( 'Configure view'     );
       $self->{'page'}->local_context->class(   'view_configuration' );
       $self->{'page'}->local_context->counts(  {} );
+
+
       my $panel = $self->new_panel( 'Configurator',
         'code'         => 'configurator',
         'object'       => $obj
@@ -645,6 +647,13 @@ sub _configurator {
           <input type="hidden" name="config" value="%s" />
         </div>', $obj->param('config') ;
   my $active = '';
+  $self->create_node(
+    'active_tracks',
+    'Active tracks',
+    [], # configurator EnsEMBL::Web::Component::Configurator ],
+    { 'url' => "#active_tracks", 'id' => 'active_tracks', 'availability' => 1 }
+  );
+
   foreach my $node ($conf->tree->top_level) {
     next unless $node->get('caption');
     next if $node->is_leaf;
@@ -710,6 +719,17 @@ sub _configurator {
   $self->{'page'}->local_context->class(   'track_configuration' );
   $self->{'page'}->local_context->counts(  {} );
 
+  my $search_panel = $self->new_panel(
+    'Configurator',
+    'code'         => 'configurator_search',
+    'object'       => $obj
+  );
+  $search_panel->set_content( '
+      <form id="configuration_search" action="" method="get">
+        Search display: <input id="configuration_search_text" />
+      </form>'
+  );
+  $self->add_panel( $search_panel );
   my $panel = $self->new_panel(
     'Configurator',
     'code'         => 'configurator',
