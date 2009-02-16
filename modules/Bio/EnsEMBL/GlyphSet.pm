@@ -31,6 +31,9 @@ our %cache;
 # constructor
 #
 
+sub _colour_background {
+  return 1;
+}
 sub error_track_name {
   my $self = shift;
   return $self->my_config('caption');

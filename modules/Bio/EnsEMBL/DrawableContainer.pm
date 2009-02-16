@@ -205,13 +205,13 @@ sub new {
       my $gminy = $glyphset->miny();
       $Config->{'transform'}->{'translatey'} = -$gminy + $yoffset;
 
-      if($bgcolour_flag) {
+      if($bgcolour_flag && $glyphset->_colour_background ) {
         ## colour the area behind this strip
         my $background = new Sanger::Graphics::Glyph::Rect({
-          'x'         => 0,
+          'x'         => -$label_width-$margin*3/2,
           'y'         => $gminy,
           'z'         => -100,
-          'width'     => $panel_width,
+          'width'     => $panel_width+$label_width+$margin*2,
           'height'    => $glyphset->maxy() - $gminy,
           'colour'    => $bgcolours->[$iteration % 2],
           'absolutewidth' =>1,
@@ -220,11 +220,13 @@ sub new {
       # this accidentally gets stuffed in twice (for gif & imagemap) so with
       # rounding errors and such we shouldn't track this for maxy & miny values
         unshift @{$glyphset->{'glyphs'}}, $background;
+        $iteration ++;
       }
       ## set up the "bumping button" label for this strip
       if( $glyphset->label() && $show_labels eq 'yes' ) {
         my $gh = $glyphset->label->height || $Config->texthelper->height($glyphset->label->font());
-        $glyphset->label->y( ( ($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy );
+#        $glyphset->label->y( ( ($glyphset->maxy() - $glyphset->miny() - $gh) / 2) + $gminy );
+        $glyphset->label->y( $gminy );
         $glyphset->label->height($gh);
         $glyphset->label()->pixelwidth( $label_width );
         $glyphset->push( $glyphset->label() );
@@ -235,7 +237,6 @@ sub new {
       $glyphset->transform();
       ## translate the top of the next row to the bottom of this one
       $yoffset += $glyphset->height() + $trackspacing;
-      $iteration ++;
       $self->timer_push("track finished",3);
       $self->timer_push("INIT: [X] $NAME '".$glyphset->{'my_config'}->get('name'),2)."'";
     }
