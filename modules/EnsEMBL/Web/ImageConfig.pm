@@ -787,21 +787,19 @@ sub add_marker_feature {
 sub add_qtl_feature {
   my( $self, $key, $hashref ) = @_;
   return unless $self->get_node( 'marker' );
-  my( $keys, $data ) = $self->_merge( $hashref->{'qtl'} );
+  return unless $hashref->{'qtl'};
+  return unless $hashref->{'qtl'}{'rows'} > 0;
   my $menu      = $self->get_node( 'marker' );
-  foreach my $key_2 (@$keys) {
-    $menu->append( $self->create_track( 'qtl_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
-      'db'          => $key,
-      'glyphset'    => '_qtl',
-      'logicnames'  => $data->{$key_2}{'logic_names'},
-      'caption'     => $data->{$key_2}{'caption'},
-      'colourset'   => 'qtl',
-      'description' => $data->{$key_2}{'description'},
-      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
-      'renderers'   => [qw(off Off normal Normal)],
-      'strand'      => 'r'
-    }));
-  }
+  $menu->append( $self->create_track( 'qtl_'.$key, 'QTLs', {
+    'db'          => $key,
+    'glyphset'    => '_qtl',
+    'caption'     => 'QTLs',
+    'colourset'   => 'qtl',
+    'description' => 'Quantative trait loci',
+    'display'     => 'normal', ## Default to on at the moment - change to off by default!
+    'renderers'   => [qw(off Off normal Normal)],
+    'strand'      => 'r'
+  }));
 }
 
 sub add_misc_feature {
