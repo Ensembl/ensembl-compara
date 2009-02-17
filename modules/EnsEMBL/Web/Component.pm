@@ -492,7 +492,7 @@ sub get_sequence_data {
           # This line can be deleted once we get the correct set.
           # Don't mark up variations when the secondary strain is the same as the sequence.
           # $sequence[-1] is the current secondary strain, as it is the last element pushed onto the array
-          next if (defined $config->{'match_display'} && $sequence[-1]->[$_]->{'letter'} =~ /\.|$sequence[0]->[$_]->{'letter'}/);
+          next if (defined $config->{'match_display'} && $sequence[-1]->[$_]->{'letter'} =~ /[\.~$sequence[0]->[$_]->{'letter'}]/);
           
           $mk->{'variations'}->{$_}->{'type'} = $snp_type;
           $mk->{'variations'}->{$_}->{'alleles'} .= ($mk->{'variations'}->{$_}->{'alleles'} ? '; ' : '') . $alleles;
