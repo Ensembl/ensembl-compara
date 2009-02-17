@@ -168,7 +168,7 @@ sub content {
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
   my $html =  $image->render;
-  my $config_text = variations_missing($Configs->{'snps'});
+  my $config_text = variations_missing($Configs->{'snps'}, $context);
   $html .= $self->_info(
     'Configuring the display',
     '<p>Tip: use the "<strong>Configure this page</strong>" link on the left to customise the exon context and types of variations displayed above.<br />' .$config_text.'</p>' 
@@ -196,7 +196,7 @@ sub _sample_configs {
  
   foreach my $sample ( $object->get_samples ) {  
     my $sample_slice = $transcript_slice->get_by_strain( $sample ); 
-    next unless $sample_slice;
+    next unless $sample_slice; 
 
     ## Initialize content...
     my $sample_config = $object->get_imageconfig( "tsv_sampletranscript" );
@@ -270,7 +270,7 @@ $sample_config->tree->dump("Transcript configuration", '([[caption]])')
 }
 
 sub variations_missing {
-  my ($self) = @_; 
+  my ($self, $context) = @_; 
   my $configure_text, 
 
   my $counts = $self->{'snp_counts'}; 
@@ -302,6 +302,7 @@ sub variations_missing {
  else {
     $context_text = $counts->[2]." intronic variations are removed by the Context filter.";
   }
+ $context_text .= "<br />The context is currently set to display variations within ". $context ." bp of exon boundaries."; 
 #  $self->errorTrack( $context_text, 0, 28 );
 
   $configure_text .= '<br />' .$context_text;
