@@ -21,8 +21,8 @@ sub init {
   });
 
   $self->create_menus(
-    'other'           => '',
     'gsv_transcript'  => '',
+    'other'           => '',
     'spacers'          => '',
     'gsv_domain'      => 'Protein Domains'    
   );
