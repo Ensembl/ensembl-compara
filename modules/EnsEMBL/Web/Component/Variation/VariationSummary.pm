@@ -115,7 +115,8 @@ sub link_to_ldview {
   my $count = 0; 
   for my $pop_name (sort {$a cmp $b} keys %$pops) {
     my $tag = $pops->{$pop_name} eq 1 ? "" : " (Tag SNP)";
-    my $url = $object->_url({ 'type' => 'Location', 'action' =>'LD', 'v' => $object->name, 'vf' =>$object->vari->dbID, 'opt_pop' => $pop_name  });
+    my $pop_on = $pop_name .":on";
+    my $url = $object->_url({ 'type' => 'Location', 'action' =>'LD', 'v' => $object->name, 'vf' =>$object->vari->dbID, 'opt_pop' => $pop_on  });
     $count++;
      $output .= "<td><a href=$url>$pop_name</a>$tag</td>";  
     if ($count ==3) {
