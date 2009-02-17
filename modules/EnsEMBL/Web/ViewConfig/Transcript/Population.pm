@@ -22,7 +22,7 @@ sub init {
   foreach ( @{$view_config->species_defs->databases->{'DATABASE_VARIATION'}->{'DEFAULT_STRAINS'}}){  
     $view_config->_set_defaults( 'opt_pop_'.$_  =>  'on');
   }
-  $view_config->_set_defaults('opt_pop_'.$view_config->species_defs->databases->{'DATABASE_VARIATION'}->{'REFERENCE_STRAIN'} => 'off');
+  $view_config->_set_defaults('opt_pop_'.$view_config->species_defs->databases->{'DATABASE_VARIATION'}->{'REFERENCE_STRAIN'} => 'on');
 
   ### Add source information if we have a variation database
   my $T = $view_config->species_defs->databases->{'DATABASE_VARIATION'};
@@ -109,15 +109,21 @@ sub form {
   ### Add Individual selection
   $view_config->add_fieldset('Select Individuals');
   my @strains =  ( @{$object->species_defs->databases->{'DATABASE_VARIATION'}->{'DEFAULT_STRAINS'}},
-                   @{$object->species_defs->databases->{'DATABASE_VARIATION'}->{'DISPLAY_STRAINS'}},
-                   $view_config->species_defs->databases->{'DATABASE_VARIATION'}->{'REFERENCE_STRAIN'}
+                   @{$object->species_defs->databases->{'DATABASE_VARIATION'}->{'DISPLAY_STRAINS'}}, 
+                  $view_config->species_defs->databases->{'DATABASE_VARIATION'}->{'REFERENCE_STRAIN'}
   );
+
+
+  my %seen;
   foreach (sort @strains){ 
-    $view_config->add_form_element({
-      'type'     => 'CheckBox', 'label' => $_,
-      'name'     =>  'opt_pop_'.$_,
-      'value'    => 'on', 'raw' => 1
-    });
+    unless (exists $seen{$_} ) {
+      $view_config->add_form_element({
+       'type'     => 'CheckBox', 'label' => $_,
+       'name'     =>  'opt_pop_'.$_,
+       'value'    => 'on', 'raw' => 1
+      });
+      $seen{$_} = 1; 
+    }
   }
 }
 
