@@ -97,45 +97,44 @@ sub content {
 
   if ($count < 1) {
    $html .= qq(<dt>Location</dt><dd>This feature has not been mapped.</dd>i</dl>);
-  } elsif ($count ==1){
-   $location = $object->var_location;
-   foreach my $varif_id (keys %mappings) {
-     my %chr_info;
-     my $region = $mappings{$varif_id}{Chr}; 
-     my $start  = $mappings{$varif_id}{start};
-     my $end    = $mappings{$varif_id}{end};
-     my $display_region = $region .':' . ($start -10) .'-'. ($end +10);
-     my $link = $object->_url({ 'type'=>'Location', 'action'=>'View', 'v' => $id,'source' => $source, 'vf' => $varif_id});
-     my $str = $mappings{$varif_id}{strand};
-     if ($str < 0 ) {$strand ="(reverse strand)";} 
-     my $location_string;
-     if ($start == $end ) { $location_string =  $region.":".$start;}
-     else { $location_string = $region.":".$start."-".$end; } 
-     my $location_html = qq(<a href="$link">$location_string</a> $strand) ;
-     $html .= qq(<dt>Location</dt><dd>$location_html</dd></dl>);
-   }
-  }else {
+  } else {
     my @locations;
-    $html .= qq(<dt>Location</dt><dd><p id="locations_text"> This feature maps to $count genomic locations: </p>
-    <table id="locations" style="display:none">);
- 
-     
+    my $select_html;
+    if ($count >1){ $select_html = "<br />Please select a location to display information relating to $id in that genomic region.";}
+    $html .= qq(<dt>Location</dt><dd><p id="locations_text"> This feature maps to $count genomic location(s). $select_html </p>
+    <table id="locations">);
+
     foreach my $varif_id (keys %mappings) {
      my %chr_info;
      my $region = $mappings{$varif_id}{Chr}; 
      my $start  = $mappings{$varif_id}{start};
      my $end    = $mappings{$varif_id}{end};
      my $display_region = $region .':' . ($start -10) .'-'. ($end +10); 
-     my $link = $object->_url({'type'=>'Location', 'action'=>'View', 'v' => $id, 'source' => $source, 'vf' => $varif_id});  
+     my $link = $object->_url({'type'=>'Location', 'action'=>'View', 'v' => $id, 'source' => $source, 'vf' => $varif_id, 'contigviewbottom' => 'variation_feature_variation=normal' });  
      my $str = $mappings{$varif_id}{strand};
      if ($str <= 0 ) {$strand ="(reverse strand)";}
      else {$strand = "(forward strand)"; }
      my $location_string; 
      if ($start == $end ) { $location_string =  $region.":".$start;}
      else { $location_string = $region.":".$start."-".$end; }
-     my $location_html = qq(<a href="$link">$location_string</a> $strand) ;
-
-      $html.= qq(<tr><td>$location_html</td></tr>);
+     my $location; #= qq(<a href="$link">$location_string</a> $strand) ;
+     if ($varif_id eq $object->core_objects->{'parameters'}{'vf'} ){
+       $location = $location_string;
+     } else {
+       my $link = $object->_url({'v' => $id, 'source' => $source, 'vf' => $varif_id,});
+       $location = qq(<a href="$link">$location_string</a>);
+     }
+     my $location_link_html = qq(<a href="$link">Jump to region in detail</a>);
+      $html.= sprintf( '
+        <tr%s>
+          <td><strong>%s</strong> %s</td>
+          <td>%s</td> 
+        </tr>',
+       $varif_id eq $object->core_objects->{'parameters'}{'vf'} ? ' class="active"' : '',
+       $location,
+       $strand,
+       $location_link_html,   
+      );
     }
    $html .= "</table></dd>";
   }
