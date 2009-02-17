@@ -15,6 +15,7 @@ my $db_user = "ensro";
 my $seq_region_data;
 my $out_dir = $ENV{PWD};
 my $db_version;
+my $compara_url;
 
 eval{
         GetOptions(
@@ -23,6 +24,7 @@ eval{
                 "chunk_size=s" => \$chunk_size,
                 "db_host=s" => \$db_host,
                 "db_user=s" => \$db_user,
+                "compara_url=s" => \$compara_url,
                 "seq_region_data=s" => \$seq_region_data,
                 "out_dir=s" => \$out_dir,
 		"db_version=s" => \$db_version,
@@ -51,7 +53,16 @@ else {
 	);
 }
 
-my $mlss_adaptor = $reg->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
+my $compara_dba;
+if ($compara_url) {
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url => $compara_url);
+} else {
+  $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+}
+
+my $cs_adaptor = $compara_dba->get_ConservationScoreAdaptor();
+my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 my $mlss = $mlss_adaptor->fetch_by_dbID($conservation_scores_mlssid);
 my $slice_adaptor = $reg->get_adaptor($species, 'core', 'Slice');
 throw("Registry configuration file has no data for connecting to <$species>") if (!$slice_adaptor);
@@ -85,7 +96,6 @@ else {
         my $first_score_seen = 1;
 	my $previous_position = 0;
         foreach my $chunk_region(@chunk_regions) {
-                my $cs_adaptor = $reg->get_adaptor("Multi", 'compara', 'ConservationScore');
                 my $display_size = $chunk_region->[1] - $chunk_region->[0] + 1;
                 my $chunk_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region_name, $chunk_region->[0], $chunk_region->[1]);
                 my $scores = $cs_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $chunk_slice, $display_size, "MAX");
