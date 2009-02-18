@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/local/bin/perl -w
 
 use strict;
 use Carp ();
@@ -132,7 +132,7 @@ if(defined($farm)){
       my $main_job = job_file($lsf_dir,$species[$index]);
       my $main_bsub;	
 
-         $main_bsub = 'bsub -R"select[linux] select[mem>5500] rusage[mem=5500]" -M5500000 -E"test -x '.$exe.' && test -d '.$dump_directory.'"';
+         $main_bsub = 'bsub -R"select[linux] select[mem>7500] rusage[mem=7500]" -M7500000 -E"test -x '.$exe.' && test -d '.$dump_directory.'"';
          $main_bsub .=  ' -q long  ';
  
          $main_bsub .=  ' -J '.$sp.' ';
@@ -249,28 +249,28 @@ if(defined($batch_total) and defined($batch_index)){
 
 my %chr_list;
 
-$chr_list{anopheles_gambiae} = qw(X 3R 3L 2R 2L);
-$chr_list{bos_taurus} = qw(MT X 29 28 27 26 25 24 23 22 21 20 19 18 17 
-                           16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
-$chr_list{caenorhabditis_elegans} =  qw(MtDNA X V IV III II I);
-$chr_list{canis_familiaris} = qw(MT X 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 
-                                 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
-$chr_list{ciona_intestinalis} =  qw(14q 14p 13q 13p 12q 12p 10q 10p 9q 9p 8q 7q 6q 5q 4q 3q 3p 2q 1q 1p);
-$chr_list{danio_rerio} = qw(MT 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
-$chr_list{drosophila_melanogaster} = qw(X 4 3R 3L 2R 2L) ;
-$chr_list{gallus_gallus} =  qw(MT Z W 32 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
-$chr_list{gasterosteus_aculeatus} =  qw(MT groupXXI groupXX groupXIX groupXVIII groupXVII groupXVI groupXV 
+$chr_list{anopheles_gambiae} = [qw(X 3R 3L 2R 2L)];
+$chr_list{bos_taurus} = [qw(MT X 29 28 27 26 25 24 23 22 21 20 19 18 17 
+                           16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+$chr_list{caenorhabditis_elegans} =  [qw(MtDNA X V IV III II I)];
+$chr_list{canis_familiaris} = [qw(MT X 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 
+                                 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+$chr_list{ciona_intestinalis} =  [qw(14q 14p 13q 13p 12q 12p 10q 10p 9q 9p 8q 7q 6q 5q 4q 3q 3p 2q 1q 1p)];
+$chr_list{danio_rerio} = [qw(MT 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+$chr_list{drosophila_melanogaster} = [qw(X 4 3R 3L 2R 2L)] ;
+$chr_list{gallus_gallus} =  [qw(MT Z W 32 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+$chr_list{gasterosteus_aculeatus} = [ qw(MT groupXXI groupXX groupXIX groupXVIII groupXVII groupXVI groupXV 
                                         groupXIV groupXIII groupXII groupXI groupX groupIX groupVIII groupVII 
-                                        groupVI groupV groupIV groupIII groupII groupI);
-$chr_list{homo_sapiens} =  qw(MT Y X 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
-$chr_list{macaca_mulatta} = qw(MT X 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
-$chr_list{monodelphis_domestica} = qw(MT X 8 7 6 5 4 3 2 1) ;
-$chr_list{mus_musculus} =  qw(MT Y X 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
-$chr_list{oryzias_latipes} =  qw(24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
-$chr_list{pan_troglodytes} =  qw(Y X 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2b 2a 1);
-$chr_list{rattus_norvegicus} = qw(MT X 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
-$chr_list{saccharomyces_cerevisiae} =  qw(MT XVI XV XIV XIII XII XI X IX VIII VII VI V IV III II I 2-micron);
-$chr_list{tetraodon_nigroviridis} =  qw(21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1);
+                                        groupVI groupV groupIV groupIII groupII groupI)];
+$chr_list{homo_sapiens} =  [qw(MT Y X 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+$chr_list{macaca_mulatta} = [qw(MT X 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+$chr_list{monodelphis_domestica} = [qw(MT X 8 7 6 5 4 3 2 1)] ;
+$chr_list{mus_musculus} =  [qw(MT Y X 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+$chr_list{oryzias_latipes} = [ qw(24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+$chr_list{pan_troglodytes} =  [qw(Y X 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2b 2a 1)];
+$chr_list{rattus_norvegicus} = [qw(MT X 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+$chr_list{saccharomyces_cerevisiae} = [ qw(MT XVI XV XIV XIII XII XI X IX VIII VII VI V IV III II I 2-micron)];
+$chr_list{tetraodon_nigroviridis} = [ qw(21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
 
 my $sp_release;
 my $sitedefs_release;
@@ -794,7 +794,7 @@ sub ftp_bundle{
     next if $file =~/^\.+$/;
     unlink "$spp_dumpdir/$file" or warn "Can't delete $file : $!\n";
   }
-  close DIR;
+  closedir DIR;
 
 #  utils::Tool::info(1, "Deleting the individual files and replacing with the zips");
 #  system ("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
@@ -847,7 +847,7 @@ sub create_general_options{
   if(defined($email)){
     $general_options .= " -email $email";
   }
-  if(defined(@user_formats)){
+  if(@user_formats){
     $general_options .= " -format ",join(",",@user_formats);
   }
 }	
@@ -871,7 +871,6 @@ sub mail_log {
  ### Arg2 (optional): email address
  ### Description: checks log and emails you the results
 
-  close LOG;
   my ($file, $email_address, $additional_text) = @_;
   if(  open IN, "< $file" ){
     my $content;
