@@ -1,308 +1,395 @@
 #!/usr/local/bin/perl -w
 
 use strict;
-use Carp ();
+use Carp;
 use Compress::Zlib;
 use File::Basename qw( dirname );
 use FindBin qw($Bin);
 use Getopt::Long;
 use Pod::Usage;
-use strict;
 use Time::localtime;
 use Data::Dumper;
 use FindBin qw($Bin);
 
 #$| = 1;
 
-my @user_formats ;
 our $basedir = "/dumps/";
-my @species;
-my $MAX_SIZE = 1000000;
-my $GENE_MAX = 3000000; # if gene > $GENE_MAX, skips gene and prints warning
 our $VERBOSITY;
+
+my $MAX_SIZE = 1000000;
+my $GENE_MAX = 3000000;    # if gene > $GENE_MAX,
+                           # skips gene and prints warning
+
+my @user_formats;
+my @species;
+
 my $logfile;
-my ($no_log, $start_with, $end_with, $farm);
 my $dumpdir;
 my $nobundle;
 my $readme_only;
 my $general_options;
-my ($help, $info, $email);
 
-my ($dbname,$dbversion,$host,$user,$pass,$port,$seq_region, $listonly, $batch_total, $batch_index);
+my ( $no_log, $start_with, $end_with, $farm );
+my ( $help, $info, $email );
 
+my (
+  $dbname,      $dbversion, $host,       $user,
+  $pass,        $port,      $seq_region, $listonly,
+  $batch_total, $batch_index
+);
 
-&GetOptions( 'maxsize:s'    => \$MAX_SIZE,
-             'format:s'	    => \@user_formats,
-             'species:s{,}'    => \@species,
-             'logfile:s'    => \$logfile,
-	     'email:s'      => \$email,
-	     'no_log'       => \$no_log,
-	     'farm'         => \$farm,
-             'dumpdir:s'    => \$dumpdir,
-             'nobundle'	    => \$nobundle,
-	     'start_with:s' => \$start_with,
-	     'end_with:s'   => \$end_with,
-             'readme_only'  => \$readme_only,
-             'verbose'	    => \$VERBOSITY,
-             'info'         => \$info,
-             'help|h'	    => \$help,
+&GetOptions(
+  'maxsize:s'     => \$MAX_SIZE,
+  'format:s'      => \@user_formats,
+  'species:s{,}'  => \@species,
+  'logfile:s'     => \$logfile,
+  'email:s'       => \$email,
+  'no_log'        => \$no_log,
+  'farm'          => \$farm,
+  'dumpdir:s'     => \$dumpdir,
+  'nobundle'      => \$nobundle,
+  'start_with:s'  => \$start_with,
+  'end_with:s'    => \$end_with,
+  'readme_only'   => \$readme_only,
+  'verbose'       => \$VERBOSITY,
+  'info'          => \$info,
+  'help|h'        => \$help,
+  'dbname=s'      => \$dbname,
+  'dbversion=s'   => \$dbversion,
+  'host=s'        => \$host,
+  'user=s'        => \$user,
+  'pass=s'        => \$pass,
+  'port=s'        => \$port,
+  'seq_region=s'  => \$seq_region,
+  'listonly'      => \$listonly,
+  'batch_total:s' => \$batch_total,
+  'batch_index:s' => \$batch_index,
+) || pod2usage(2);
 
-             'dbname=s'     => \$dbname,
-             'dbversion=s'  => \$dbversion,
-             'host=s'       => \$host,
-             'user=s'       => \$user,
-             'pass=s'       => \$pass,
-             'port=s'       => \$port,
-             'seq_region=s' => \$seq_region,
-             'listonly'     => \$listonly,
-	     'batch_total:s' => \$batch_total,
-             'batch_index:s' => \$batch_index,	     
-           ) || pod2usage(2);
-
-pod2usage(-verbose => 2) if $info;
-pod2usage(-verbose => 1) if $help;
-
+pod2usage( -verbose => 2 ) if $info;
+pod2usage( -verbose => 1 ) if $help;
 
 use Bio::EnsEMBL::Registry;
-my $reg = "Bio::EnsEMBL::Registry";
+my $reg = 'Bio::EnsEMBL::Registry';
 
-if(!defined($dbname)){
+if ( !defined($dbname) ) {
   $reg->load_registry_from_db(
-			      -host => $host,
-			      -port => $port,
-			      -pass => $pass,
-			      -user => $user,
-			      -db_version => $dbversion,
-			      );
-}
-else{
-  Bio::EnsEMBL::DBSQL::DBAdaptor->new(-host => $host,
-				      -user => $user,
-				      -port => $port,
-				      -pass => $pass,
-				      -species => "dump",
-				      -dbname => $dbname);
+    -host       => $host,
+    -port       => $port,
+    -pass       => $pass,
+    -user       => $user,
+    -db_version => $dbversion,
+  );
+} else {
+  Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host    => $host,
+    -user    => $user,
+    -port    => $port,
+    -pass    => $pass,
+    -species => "dump",
+    -dbname  => $dbname
+  );
 
   push @species, "dump";
 }
 
 my $exe;
-if($0 =~ /^\//){
+if ( $0 =~ /^\// ) {
   $exe = "";
+} else {
+  $exe = $Bin . "/";
 }
-else{
-  $exe = $Bin."/";
-}	
 $exe .= $0;
 
-my $dump_directory = $ENV{PWD}.$dumpdir;
-if($dumpdir =~ /^\//){
+my $dump_directory = $ENV{PWD} . $dumpdir;
+if ( $dumpdir =~ /^\// ) {
   $dump_directory = $dumpdir;
 }
-elsif($dumpdir =~ s/^.\///){
-  $dump_directory = $ENV{PWD}.$dumpdir;
-}
 
+if ( defined($farm) ) {
+  if ( !defined($batch_total) ) {
+    die "Need to set batch total in farm mode "
+      . "to know the number of concurrent dumps allowed\n";
+  }
 
-if(defined($farm)){
-  if(!defined($batch_total)){
-    die "Need to set batch total in farm mode to know the number of concurrent dumps allowed\n";
-  }	
-  my $lsf_dir = $dump_directory."/lsf_scripts";
-  if(!-d $lsf_dir){
-    system("mkdir -p $lsf_dir") ==0 or die "Can't create dir $!";
-  }	
+  my $lsf_dir = $dump_directory . "/lsf_scripts";
+  if ( !-d $lsf_dir ) {
+    system("mkdir -p $lsf_dir") == 0 or die "Can't create dir $!";
+  }
 
   create_general_options();
+
   if (@species) {
-    @species = @{ check_species(\@species) };
-  } 
-  else {
-    @species = @{all_species()};
+    @species = @{ check_species( \@species ) };
+  } else {
+    @species = @{ all_species() };
   }
-  print "there are ".scalar(@species)." species to be farmed out\n";
+
+  print "there are " . scalar(@species) . " species to be farmed out\n";
+
   my $index_2 = 0;
-  while($index_2 < $batch_total){
+
+  while ( $index_2 < $batch_total ) {
     my @new_list;
     my $index = $index_2;
     my $jobid = 0;
-    while($index < scalar(@species)){
+
+    while ( $index < scalar(@species) ) {
       #create job file
       my $sp = $species[$index];
-      my $main_job = job_file($lsf_dir,$species[$index]);
-      my $main_bsub;	
+      my $main_job = job_file( $lsf_dir, $species[$index] );
+      my $main_bsub;
 
-         $main_bsub = 'bsub -R"select[linux] select[mem>7500] rusage[mem=7500]" -M7500000 -E"test -x '.$exe.' && test -d '.$dump_directory.'"';
-         $main_bsub .=  ' -q long  ';
- 
-         $main_bsub .=  ' -J '.$sp.' ';
-         $main_bsub .=  ' -e"'.$dump_directory.'/lsf_scripts/'.$sp.'.err"';
-         $main_bsub .=  ' -o"'.$dump_directory.'/lsf_scripts/'.$sp.'.out"';
+      $main_bsub =
+          'bsub -R"select[linux] select[mem>7500] '
+        . 'rusage[mem=7500]" -M7500000 -E"test -x '
+        . $exe
+        . ' && test -d '
+        . $dump_directory . '"';
+      $main_bsub .= ' -q long  ';
+      $main_bsub .= ' -J ' . $sp . ' ';
+      $main_bsub .=
+        ' -e"' . $dump_directory . '/lsf_scripts/' . $sp . '.err"';
+      $main_bsub .=
+        ' -o"' . $dump_directory . '/lsf_scripts/' . $sp . '.out"';
 
-      if($jobid){
-	$main_bsub .= ' -w "ended('.$jobid.')"';
+      if ($jobid) {
+        $main_bsub .= ' -w "ended(' . $jobid . ')"';
       }
+
       print $main_bsub, "\n";
-      
+
       eval {
-	my $pid;
+        my $pid;
         my $reader;
-	
-	local *BSUB;
-	local *BSUB_READER;
-	
-	if (($reader = open(BSUB_READER, '-|'))) {
-	  while (<BSUB_READER>) {
-	    
-	    if (/^Job <(\d+)> is submitted/) {
-	      $jobid = $1;
-	      print "LSF job ID for $sp job: $jobid )\n"
-	    }
-	  }
-	  close(BSUB_READER);
-	} else {
-	  die("Could not fork : $!\n") unless (defined($reader));
-	  open(STDERR, ">&STDOUT");
-	  if (($pid = open(BSUB, '|-'))) {
-	    
-	    print BSUB $main_job;
-	    close BSUB;
-	    if ($? != 0) {
-	      die("bsub exited with non-zero status - job not submitted\n");
-	    }
-	  } else {
-	    if (defined($pid)) {
-	      exec($main_bsub);
-	      die("Could not exec bsub : $!\n");
-	    } else {
-	      die("Could not fork : $!\n");
-	    }
-	  }
-	  exit(0);
-	}
+
+        local *BSUB;
+        local *BSUB_READER;
+
+        if ( ( $reader = open( BSUB_READER, '-|' ) ) ) {
+          while (<BSUB_READER>) {
+
+            if (/^Job <(\d+)> is submitted/) {
+              $jobid = $1;
+              print "LSF job ID for $sp job: $jobid )\n";
+            }
+          }
+          close(BSUB_READER);
+        } else {
+          die("Could not fork : $!\n") unless ( defined($reader) );
+          open( STDERR, ">&STDOUT" );
+          if ( ( $pid = open( BSUB, '|-' ) ) ) {
+
+            print BSUB $main_job;
+            close BSUB;
+            if ( $? != 0 ) {
+              die(
+                "bsub exited with non-zero status - job not submitted\n"
+              );
+            }
+          } else {
+            if ( defined($pid) ) {
+              exec($main_bsub);
+              die("Could not exec bsub : $!\n");
+            } else {
+              die("Could not fork : $!\n");
+            }
+          }
+          exit(0);
+        }
       };
-      
+
       if ($@) {
-	# Something went wrong
-	warn("Job submission failed:\n$@\n");
-	return 0;
+        # Something went wrong
+        warn("Job submission failed:\n$@\n");
+        return 0;
       }
-      
-      
+
       $index += $batch_total;
-    }
+    } ## end while ( $index < scalar(@species...
     $index_2++;
-  }	
-  
-  
+  } ## end while ( $index_2 < $batch_total)
+
   exit;
-}
-
-
-
+} ## end if ( defined($farm) )
 
 if (@species) {
-  @species = @{ check_species(\@species) };
-} 
-else {
-  @species = @{all_species()};
+  @species = @{ check_species( \@species ) };
+} else {
+  @species = @{ all_species() };
 }
+
 my $sort_method = "alphabetic";
-if(defined($batch_total)){
+
+if ( defined($batch_total) ) {
   $sort_method = "number of toplevel slices";
 }
-@species =  @{ sort_species(\@species,$sort_method) };  
-if(defined($batch_total) and !defined($batch_index)){
-  info (2,"Need a batch_index if batch_total is set options\n");
-  print "Need a batch_index if batch_total is set options and list generated are:-\n";
+
+@species = @{ sort_species( \@species, $sort_method ) };
+if ( defined($batch_total) and !defined($batch_index) ) {
+  info( 2, "Need a batch_index if batch_total is set options\n" );
+
+  print "Need a batch_index if batch_total is set options "
+    . "and list generated are:-\n";
+
   my $start = 1;
-  while ($start <= $batch_total){
+  while ( $start <= $batch_total ) {
     print "batch $start\n";
-    my $index = $start-1;
-    while($index < scalar(@species)){
-      print "\t".$species[$index]."\n";
+    my $index = $start - 1;
+
+    while ( $index < scalar(@species) ) {
+      print "\t" . $species[$index] . "\n";
       $index += $batch_total;
     }
+
     $start++;
-  }          
+  }
   exit;
 }
 
-if(defined($batch_total) and defined($batch_index)){
-  if($batch_index < 1 or $batch_index > $batch_total){
-    die "batch_index has to be greater than 0 and not greater then batch_total ($batch_total)\n";
+if ( defined($batch_total) and defined($batch_index) ) {
+  if ( $batch_index < 1 or $batch_index > $batch_total ) {
+    die "batch_index has to be greater than 0 "
+      . "and not greater then batch_total ($batch_total)\n";
   }
-  my $index = $batch_index-1;
+
+  my $index = $batch_index - 1;
   my @new_list;
-  while($index < scalar(@species)){
+
+  while ( $index < scalar(@species) ) {
     push @new_list, $species[$index];
     $index += $batch_total;
   }
+
   @species = ();
-  foreach my $sp (@new_list){
+
+  foreach my $sp (@new_list) {
     push @species, $sp;
   }
 }
-@species  = @{ start_with_species($start_with, \@species) } if $start_with;
-@species  = @{ end_with_species($end_with, \@species) } if $end_with;
-  
 
-my %chr_list;
+if ( defined($start_with) ) {
+  @species = @{ start_with_species( $start_with, \@species ) };
+}
+if ( defined($end_with) ) {
+  @species = @{ end_with_species( $end_with, \@species ) };
+}
 
-$chr_list{anopheles_gambiae} = [qw(X 3R 3L 2R 2L)];
-$chr_list{bos_taurus} = [qw(MT X 29 28 27 26 25 24 23 22 21 20 19 18 17 
-                           16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
-$chr_list{caenorhabditis_elegans} =  [qw(MtDNA X V IV III II I)];
-$chr_list{canis_familiaris} = [qw(MT X 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 
-                                 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
-$chr_list{ciona_intestinalis} =  [qw(14q 14p 13q 13p 12q 12p 10q 10p 9q 9p 8q 7q 6q 5q 4q 3q 3p 2q 1q 1p)];
-$chr_list{danio_rerio} = [qw(MT 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
-$chr_list{drosophila_melanogaster} = [qw(X 4 3R 3L 2R 2L)] ;
-$chr_list{gallus_gallus} =  [qw(MT Z W 32 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
-$chr_list{gasterosteus_aculeatus} = [ qw(MT groupXXI groupXX groupXIX groupXVIII groupXVII groupXVI groupXV 
-                                        groupXIV groupXIII groupXII groupXI groupX groupIX groupVIII groupVII 
-                                        groupVI groupV groupIV groupIII groupII groupI)];
-$chr_list{homo_sapiens} =  [qw(MT Y X 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
-$chr_list{macaca_mulatta} = [qw(MT X 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
-$chr_list{monodelphis_domestica} = [qw(MT X 8 7 6 5 4 3 2 1)] ;
-$chr_list{mus_musculus} =  [qw(MT Y X 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
-$chr_list{oryzias_latipes} = [ qw(24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
-$chr_list{pan_troglodytes} =  [qw(Y X 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2b 2a 1)];
-$chr_list{rattus_norvegicus} = [qw(MT X 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
-$chr_list{saccharomyces_cerevisiae} = [ qw(MT XVI XV XIV XIII XII XI X IX VIII VII VI V IV III II I 2-micron)];
-$chr_list{tetraodon_nigroviridis} = [ qw(21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1)];
+my %chr_list = (
+  'anopheles_gambiae' => [qw(X 3R 3L 2R 2L)],
+  'bos_taurus'        => [
+    qw(MT X 29 28 27 26 25 24
+      23 22 21 20 19 18 17 16 15
+      14 13 12 11 10 9 8 7 6 5 4
+      3 2 1)
+  ],
+  'caenorhabditis_elegans' => [qw(MtDNA X V IV III II I)],
+  'canis_familiaris'       => [
+    qw(MT X 38 37 36 35 34 33
+      32 31 30 29 28 27 26 25 24
+      23 22 21 20 19 18 17 16 15
+      14 13 12 11 10 9 8 7 6 5 4
+      3 2 1)
+  ],
+  'ciona_intestinalis' => [
+    qw(14q 14p 13q 13p 12q 12p
+      10q 10p 9q 9p 8q 7q 6q 5q
+      4q 3q 3p 2q 1q 1p)
+  ],
+  'danio_rerio' => [
+    qw(MT 25 24 23 22 21 20 19
+      18 17 16 15 14 13 12 11 10
+      9 8 7 6 5 4 3 2 1)
+  ],
+  'drosophila_melanogaster' => [qw(X 4 3R 3L 2R 2L)],
+  'gallus_gallus'           => [
+    qw(MT Z W 32 28 27 26 25
+      24 23 22 21 20 19 18 17 16
+      15 14 13 12 11 10 9 8 7 6
+      5 4 3 2 1)
+  ],
+  'gasterosteus_aculeatus' => [
+    qw(MT groupXXI groupXX
+      groupXIX groupXVIII
+      groupXVII groupXVI groupXV
+      groupXIV groupXIII
+      groupXII groupXI groupX
+      groupIX groupVIII groupVII
+      groupVI groupV groupIV
+      groupIII groupII groupI)
+  ],
+  'homo_sapiens' => [
+    qw(MT Y X 22 21 20 19 18
+      17 16 15 14 13 12 11 10 9
+      8 7 6 5 4 3 2 1)
+  ],
+  'macaca_mulatta' => [
+    qw(MT X 20 19 18 17 16 15
+      14 13 12 11 10 9 8 7 6 5 4
+      3 2 1)
+  ],
+  'monodelphis_domestica' => [qw(MT X 8 7 6 5 4 3 2 1)],
+  'mus_musculus'          => [
+    qw(MT Y X 19 18 17 16 15
+      14 13 12 11 10 9 8 7 6 5 4
+      3 2 1)
+  ],
+  'oryzias_latipes' => [
+    qw(24 23 22 21 20 19 18 17
+      16 15 14 13 12 11 10 9 8 7
+      6 5 4 3 2 1)
+  ],
+  'pan_troglodytes' => [
+    qw(Y X 22 21 20 19 18 17
+      16 15 14 13 12 11 10 9 8 7
+      6 5 4 3 2b 2a 1)
+  ],
+  'rattus_norvegicus' => [
+    qw(MT X 20 19 18 17 16 15
+      14 13 12 11 10 9 8 7 6 5 4
+      3 2 1)
+  ],
+  'saccharomyces_cerevisiae' => [
+    qw(MT XVI XV XIV XIII XII
+      XI X IX VIII VII VI V IV
+      III II I 2-micron)
+  ],
+  'tetraodon_nigroviridis' => [
+    qw(21 20 19 18 17 16 15
+      14 13 12 11 10 9 8 7 6 5 4
+      3 2 1)
+  ],
+);
 
 my $sp_release;
 my $sitedefs_release;
 
-
 my $time1 = time;
-@user_formats = qw(embl genbank) if (!$user_formats[0]);
+@user_formats = qw(embl genbank) if ( !$user_formats[0] );
 $VERBOSITY ||= 2;
+
 require Bio::EnsEMBL::Utils::SeqDumper;
 
 unless ($no_log) {
-  (my $time = gmtime(time)) =~ s/\s+/\./g;
-  $logfile ||= "logs/flat"."_$time.log";
+  ( my $time = gmtime(time) ) =~ s/\s+/\./g;
+  $logfile ||= "logs/flat" . "_$time.log";
   print STDERR "Using logfile $logfile\n";
-  open(STDERR, "> $logfile") || die "Can't create file:$!\n";
+  open( STDERR, "> $logfile" ) || die "Can't create file:$!\n";
 }
 
-$dumpdir ||= $basedir."release-$sitedefs_release";
-
+$dumpdir ||= $basedir . "release-$sitedefs_release";
 
 print "Species to be dumped are:-\n";
-foreach my $spp (@species){
+foreach my $spp (@species) {
   print "\t$spp\n";
 }
-if($listonly){
-  exit;
-}
 
-foreach my $spp (@species){
-  info(2, "Species: $spp");
+if ($listonly) { exit }
+
+foreach my $spp (@species) {
+  info( 2, "Species: $spp" );
   my $sp_time = time;
-  my $formats_dir = setup_directories_reg($spp, \@user_formats);
+  my $formats_dir = setup_directories_reg( $spp, \@user_formats );
 
   my $batch = 0;
   my $count = 0;
@@ -310,47 +397,57 @@ foreach my $spp (@species){
   my @too_long;
 
   # loop through every non-redundant region in the DB
-  my $inc_dupes  = 1; # include duplicate regions like PARs?
-  my $inc_nonref = 1; # include non-reference regions like haplotypes?
+  my $inc_dupes  = 1;   # include duplicate regions like PARs?
+  my $inc_nonref = 1;   # include non-reference regions like haplotypes?
 
   # Get slices --------------------------------------------------
 
-
-  my $slice_adaptor = $reg->get_adaptor($spp,"core","slice");  
+  my $slice_adaptor = $reg->get_adaptor( $spp, "core", "slice" );
 
   $slice_adaptor->cache_toplevel_seq_mappings();
 
-
-  # Sort slices 
+  # Sort slices
   my %chr_sorter;
   my $i = 1;
 
-  if(defined($chr_list{lc($spp)})){
-    foreach ( $chr_list{ lc($spp)} || [] ) { 
-      $chr_sorter{$_}= $i++;
+  if ( defined( $chr_list{ lc($spp) } ) ) {
+    foreach ( $chr_list{ lc($spp) } || [] ) {
+      $chr_sorter{$_} = $i++;
     }
   }
 
   my @slices;
-  if(defined($seq_region)){
-    push @slices,$slice_adaptor->fetch_by_region(undef,$seq_region);
-  }
-  else{
-    if (keys %chr_sorter) {
-      info(1, "Using chr sorter");
-      @slices = sort {$chr_sorter{$b->seq_region_name} <=> $chr_sorter{$a->seq_region_name} || $a->seq_region_name cmp $b->seq_region_name  } @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
+  if ( defined($seq_region) ) {
+    push @slices, $slice_adaptor->fetch_by_region( undef, $seq_region );
+  } else {
+    if ( keys %chr_sorter ) {
+      info( 1, "Using chr sorter" );
+      @slices = sort {
+        $chr_sorter{ $b->seq_region_name } <=>
+          $chr_sorter{ $a->seq_region_name }
+          || $a->seq_region_name cmp $b->seq_region_name
+        } @{
+        $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
+          $inc_nonref )
+          || [] };
+    } else {
+      info( 1, "Unsorted results" );
+      @slices = @{
+        $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
+          $inc_nonref )
+          || [] };
     }
-    else {
-      info(1, "Unsorted results");
-      @slices =  @{ $slice_adaptor->fetch_all('toplevel', undef, $inc_dupes, $inc_nonref) || [] };
-    }
   }
-  print "there are ".scalar(@slices)." slices to be processed for $spp\n";
-  while (my $slice =  pop @slices) {
-    # generate list of 'unbreakable' blocks around genes
-    my ($blocks, $too_long)= generate_blocklist($slice, $spp);
 
-    push (@too_long, @$too_long);
+  print "there are "
+    . scalar(@slices)
+    . " slices to be processed for $spp\n";
+
+  while ( my $slice = pop @slices ) {
+    # generate list of 'unbreakable' blocks around genes
+    my ( $blocks, $too_long ) = generate_blocklist( $slice, $spp );
+
+    push( @too_long, @$too_long );
 
     # split up slices into reasonable chunks, and avoid breaking genes
 
@@ -358,103 +455,108 @@ foreach my $spp (@species){
     undef $blocks;
 
     # dump flatfiles for the chunks
-    while (my $chunked_slice = shift @{$chunked_slices}) {
+    while ( my $chunked_slice = shift @{$chunked_slices} ) {
       my $seq = $chunked_slice->seq();
-      foreach my $format (sort keys %$formats_dir) {
-	dump_format($chunked_slice, $format, $formats_dir->{$format}, $seq);
+      foreach my $format ( sort keys %$formats_dir ) {
+        dump_format( $chunked_slice, $format, $formats_dir->{$format},
+          $seq );
       }
-      $count++;
-      if($count >= $CHUNK){
-        foreach my $format (sort keys %$formats_dir) {
-          ftp_bundle($format, $formats_dir->{$format}, $batch, $spp, \%chr_sorter) unless $nobundle;
+
+      if ( ++$count >= $CHUNK ) {
+
+        if ( !defined($nobundle) ) {
+          foreach my $format ( sort keys %$formats_dir ) {
+            ftp_bundle( $format, $formats_dir->{$format},
+              $batch, $spp, \%chr_sorter );
+          }
         }
+
         $batch++;
         $count = 0;
       }
     }
-  } #end foreach slice
+  } ## end while ( my $slice = pop @slices)
 
-  if($count > 0){
-    foreach my $format (sort keys %$formats_dir) {
-      ftp_bundle($format, $formats_dir->{$format}, $batch, $spp) unless $nobundle;
+  if ( $count > 0 && !defined($noundle) ) {
+    foreach my $format ( sort keys %$formats_dir ) {
+      ftp_bundle( $format, $formats_dir->{$format}, $batch, $spp );
     }
   }
 
-  foreach (@too_long){
-    warn (1, "Gene skipped cos greater than $GENE_MAX: $_");
-    info (1, "Gene skipped cos greater than $GENE_MAX: $_");
+  foreach (@too_long) {
+    warn( 1, "Gene skipped because greater than $GENE_MAX: $_" );
+    info( 1, "Gene skipped because greater than $GENE_MAX: $_" );
   }
 
   my $sp_time_taken = time - $sp_time;
-  my $sp_hours      = localtime($sp_time_taken)->hour -1;
-  info (2, "Used $logfile. Time taken: $sp_hours:". localtime($sp_time_taken)->min."mins");
-} # end foreach spp
+  my $sp_hours      = localtime($sp_time_taken)->hour - 1;
 
-
+  info( 2,
+        "Used $logfile. Time taken: $sp_hours:"
+      . localtime($sp_time_taken)->min
+      . "mins" );
+} ## end foreach my $spp (@species)
 
 # Work out timings -----------------------------------------------
 my $time_taken = time - $time1;
-my $hours      = localtime($time_taken)->hour -1;
-info (2, "Used $logfile. Time taken: $hours:". localtime($time_taken)->min."mins");
+my $hours      = localtime($time_taken)->hour - 1;
+info( 2,
+      "Used $logfile. Time taken: $hours:"
+    . localtime($time_taken)->min
+    . "mins" );
 
 $email ||= 'ensembl-core@ebi.ac.uk';
-mail_log( $logfile, $email,"" ) if $logfile;
+mail_log( $logfile, $email, "" ) if $logfile;
 
 exit;
 
-
-
 sub setup_directories_reg {
-  my ($spp, $user_formats) = @_;
+  my ( $spp, $user_formats ) = @_;
 
-#
-# Also need to delete any files in these durectories for safety.
-#
+  #
+  # Also need to delete any files in these durectories for safety.
+  #
 
-
-  my $sa= $reg->get_adaptor($spp,"core","slice");
+  my $sa = $reg->get_adaptor( $spp, "core", "slice" );
   my $dbname = $sa->dbc->dbname;
 
-  if($dbname =~ /core_(\w+)_(\w+)/){
-    $sp_release = $2;
+  if ( $dbname =~ /core_(\w+)_(\w+)/ ) {
+    $sp_release       = $2;
     $sitedefs_release = $1;
   }
 
   my %formats_dir;
 
-  foreach my $format (@$user_formats){
-    unless (lc($format) eq "embl" || lc($format) eq "genbank"){
+  foreach my $format (@$user_formats) {
+    unless ( lc($format) eq "embl" || lc($format) eq "genbank" ) {
       die "[*DIE] unrecognized dump format - use embl or genbank\n";
     }
-   info(2, "species = $spp $format");
+    info( 2, "species = $spp $format" );
 
     # Make dumpdir
 
-    my $spp_dir = lc($spp);
+    my $spp_dir     = lc($spp);
     my $spp_dumpdir = "$dumpdir/$format/$spp_dir";
-    if(-d "$spp_dumpdir"){
-      info (1,"Purging dump directory: $spp_dumpdir");
+    if ( -d "$spp_dumpdir" ) {
+      info( 1, "Purging dump directory: $spp_dumpdir" );
       system("rm -f $spp_dumpdir/*");
-    }
-    else{
-      info (1,"Made dump directory: $spp_dumpdir");
-      system("mkdir -p $spp_dumpdir") ==0 or die "Can't create dir $!";
+    } else {
+      info( 1, "Made dump directory: $spp_dumpdir" );
+      system("mkdir -p $spp_dumpdir") == 0 or die "Can't create dir $!";
     }
 
     # Do README file
-    my $text = readme($format, $spp);
-    open(README, '>'."$spp_dumpdir/README")
+    my $text = readme( $format, $spp );
+    open( README, '>' . "$spp_dumpdir/README" )
       or die "Couldn't open file $spp_dumpdir/README: $!\n";
     print README $text;
     close README;
 
     next if $readme_only;
     $formats_dir{$format} = $spp_dumpdir;
-  }
+  } ## end foreach my $format (@$user_formats)
   return \%formats_dir;
-}
-
-
+} ## end sub setup_directories_reg
 
 #-----------------------------------------------------------------------------
 # Aim: create blocks (start,end) from a slice with no gene spanning two blocks.
@@ -465,68 +567,76 @@ sub setup_directories_reg {
 # is a gap in gene coverage
 # Returns an array of blocks (with start and end positions)
 
-
 sub generate_blocklist {
-  my $slice = shift;
+  my $slice   = shift;
   my $species = shift;
 
   ##### Is there a better way to do this??
-  my @genes = @{$slice->get_all_Genes};
+  my @genes = @{ $slice->get_all_Genes };
   # sort the genes by start
-  @genes = sort {$a->start() <=> $b->start()} @genes;
+  @genes = sort { $a->start() <=> $b->start() } @genes;
 
   # merge the genes into blocks, filter genes with size > genemax
   # report count blocks bigger maxsize*2
   my $big_blocks  = 0;
   my $block_start = 0;
-  my $block_end   = 0;   #  $block_end = end of current gene
+  my $block_end   = 0;    #  $block_end = end of current gene
   my @block_list;
-  my @too_long;          # skipped
+  my @too_long;           # skipped
 
-  foreach my $gene( @genes ) {
+  foreach my $gene (@genes) {
     # make the gene a bit bigger to put gene in context
     my $gen_start = $gene->start() - 1000;
-    my $gen_end   = $gene->end()   + 1000;
+    my $gen_end   = $gene->end() + 1000;
 
-    if( $gen_end - $gen_start > $GENE_MAX ) {
-      warn (1, "Gene too long -skipped ". $slice->seq_region_name().":".
-         $gene->start(). "-". $gene->end());
-      info (1, "Gene too long -skipped ". $slice->seq_region_name().":".
-         $gene->start(). "-". $gene->end());
-      push (@too_long, "Species: $species, chr:".
-	    $slice->seq_region_name." coords:".
-	    $gene->start()."-".$gene->end());
+    if ( $gen_end - $gen_start > $GENE_MAX ) {
+      warn( 1,
+            "Gene too long -skipped "
+          . $slice->seq_region_name() . ":"
+          . $gene->start() . "-"
+          . $gene->end() );
+      info( 1,
+            "Gene too long -skipped "
+          . $slice->seq_region_name() . ":"
+          . $gene->start() . "-"
+          . $gene->end() );
+      push( @too_long,
+            "Species: $species, chr:"
+          . $slice->seq_region_name
+          . " coords:"
+          . $gene->start() . "-"
+          . $gene->end() );
       next;
     }
 
     # If the current gene starts after the end of the previous one,
     # take advantage of the gap, and start a new block
-    if( $gen_start > $block_end ) {
-      if( $block_end > 0 ) {
+    if ( $gen_start > $block_end ) {
+      if ( $block_end > 0 ) {
         push( @block_list, [ $block_start, $block_end ] );
-	$big_blocks++ if ( $block_end - $block_start > 2 * $MAX_SIZE) ;
+        $big_blocks++ if ( $block_end - $block_start > 2*$MAX_SIZE );
       }
       # Reset the block start and end to match current gene
       ( $block_start, $block_end ) = ( $gen_start, $gen_end );
-    }
-    else {  # The current gene overlaps the last, so incr current block size
-      if($gen_end > $block_end){
-	$block_end = $gen_end;
+    } else { # The current gene overlaps the last, so incr current block size
+      if ( $gen_end > $block_end ) {
+        $block_end = $gen_end;
       }
     }
-  } # end foreach gene
+  }    # end foreach gene
 
   # remember to add the last block
-  if($block_end > 0) {
-    push( @block_list, [ $block_start, $block_end ]);
-    $big_blocks++ if ( $block_end - $block_start > 2 * $MAX_SIZE) ;
+  if ( $block_end > 0 ) {
+    push( @block_list, [ $block_start, $block_end ] );
+    $big_blocks++ if ( $block_end - $block_start > 2*$MAX_SIZE );
   }
 
-  if($big_blocks) {
-    print STDERR "HEADS UP: chr", $slice->seq_region_name(), " has $big_blocks big blocks due to no gaps between genes\n";
+  if ($big_blocks) {
+    print STDERR "HEADS UP: chr", $slice->seq_region_name(),
+      " has $big_blocks big blocks due to no gaps between genes\n";
   }
-  return (\@block_list, \@too_long);
-}
+  return ( \@block_list, \@too_long );
+} ## end sub generate_blocklist
 
 #-----------------------------------------------------------------------------
 # Algorithm for chunking: create sorted blocklist for each chromosome
@@ -540,45 +650,44 @@ sub generate_blocklist {
 # blocklist - for each slice a list of lists on where not to break
 
 sub chunk_seq_region {
-  my $slice = shift;
+  my $slice     = shift;
   my $blocklist = shift;
 
   my $slice_adaptor = $slice->adaptor();
-  my $cs_name = $slice->coord_system->name();
-  my $cs_ver  = $slice->coord_system->version();
-  my $seq_region = $slice->seq_region_name();
+  my $cs_name       = $slice->coord_system->name();
+  my $cs_ver        = $slice->coord_system->version();
+  my $seq_region    = $slice->seq_region_name();
 
-#  utils::Tool::info(1, "Chunking ". $slice->seq_region_name());
+  #  utils::Tool::info(1, "Chunking ". $slice->seq_region_name());
 
   # Get the first and last base of this slice that has defined sequence.
-  # We do not want to dump megabases of gaps common at the ends of chromosomes
+  # We do not want to dump megabases of gaps common at the ends of
+  # chromosomes.
 
-  ########## CAN YOU ASSUME THESE COME BACK IN ORDER??  
-  my @projection = @{$slice->project('seqlevel')};
+  ########## CAN YOU ASSUME THESE COME BACK IN ORDER??
+  my @projection = @{ $slice->project('seqlevel') };
 
-
-  if(!@projection) {
-    warn (1,"Sequence region: $seq_region doesn't have any sequence");
-    info (1,"Sequence region: $seq_region doesn't have any sequence");
+  if ( !@projection ) {
+    warn( 1, "Sequence region: $seq_region doesn't have any sequence" );
+    info( 1, "Sequence region: $seq_region doesn't have any sequence" );
     return [];
   }
 
-  my $seq_end   = $projection[-1]->from_end();
+  my $seq_end = $projection[-1]->from_end();
 
-  undef $slice;  # saves memory
-  undef @projection; # saves memory
+  undef $slice;         # saves memory
+  undef @projection;    # saves memory
 
   # Make sure the end is not more than the seqeunce end.
   # This can happen because the blocks are set at gene end +1000
 
-  if(scalar(@$blocklist)){
-    my ($final_start, $final_end) = @{pop(@$blocklist)};
-    if($final_end > $seq_end){
+  if ( scalar(@$blocklist) ) {
+    my ( $final_start, $final_end ) = @{ pop(@$blocklist) };
+    if ( $final_end > $seq_end ) {
       $final_end = $seq_end;
     }
-    push (@$blocklist, [$final_start, $final_end] );
-  }	
-
+    push( @$blocklist, [ $final_start, $final_end ] );
+  }
 
   # We need a stop block at the end to ensure algorithm gets
   # to the very end of the sequence.
@@ -590,129 +699,124 @@ sub chunk_seq_region {
   my $cur_start     = 1;
   my $cur_length    = 0;
 
-  while($cur_start + $cur_length <= $seq_end) {
-    my($cb_start, $cb_end) = @{$blocklist->[$current_block]};
+  while ( $cur_start + $cur_length <= $seq_end ) {
+    my ( $cb_start, $cb_end ) = @{ $blocklist->[$current_block] };
 
-    if( $cb_start - $cur_start > $MAX_SIZE ) {
+    if ( $cb_start - $cur_start > $MAX_SIZE ) {
       $cur_length = $MAX_SIZE;
-    }
-    elsif( $cb_end - $cur_start < $MAX_SIZE ) {
+    } elsif ( $cb_end - $cur_start < $MAX_SIZE ) {
       $cur_length = $cb_end - $cur_start + 1;
       $current_block++;
       next;
-    }
-    elsif( 2*($cb_start - $cur_start) > $MAX_SIZE ) {
+    } elsif ( 2*( $cb_start - $cur_start ) > $MAX_SIZE ) {
       $cur_length = $cb_start - $cur_start;
-    }
-    else {
+    } else {
       $cur_length = $cb_end - $cur_start;
     }
     #print "cb start: $cb_start: $cb_end - $cur_start $cur_length \n";
     #cb start: 3223196: 3280731 - 1 1,000,000  1,000,000;
 
-    if( $cur_length > 2 * $MAX_SIZE ) {
-      printf STDERR "WARNING: Generated %.2f maxsize chunk\n",($cur_length/$MAX_SIZE);
+    if ( $cur_length > 2*$MAX_SIZE ) {
+      printf STDERR "WARNING: Generated %.2f maxsize chunk\n",
+        ( $cur_length/$MAX_SIZE );
     }
     my $chunked_slice =
-      $slice_adaptor->fetch_by_region($cs_name, $seq_region, $cur_start,
-                                      $cur_start+$cur_length-1, 1,$cs_ver);
-    push( @chunked, $chunked_slice);
-    $cur_start = $cur_start + $cur_length;
+      $slice_adaptor->fetch_by_region( $cs_name, $seq_region,
+      $cur_start, $cur_start + $cur_length - 1,
+      1, $cs_ver );
+    push( @chunked, $chunked_slice );
+    $cur_start  = $cur_start + $cur_length;
     $cur_length = 0;
-  }  # end while
+  }    # end while
 
-  if( $cur_length > 0 ) {
-    my $chunked_slice = 
-      $slice_adaptor->fetch_by_region($cs_name, $seq_region, $cur_start,
-                                      $cur_start + $cur_length - 1, 1, $cs_ver);
+  if ( $cur_length > 0 ) {
+    my $chunked_slice =
+      $slice_adaptor->fetch_by_region( $cs_name, $seq_region,
+      $cur_start, $cur_start + $cur_length - 1,
+      1, $cs_ver );
     push @chunked, $chunked_slice;
   }
   return \@chunked;
-}
-
-
-
-
-
-
-
+} ## end sub chunk_seq_region
 
 #
 # use a routine in case we want to sort these by number of slices etc later on
 #
-sub sort_species{
-  my ($species, $method) = @_;
+sub sort_species {
+  my ( $species, $method ) = @_;
   my @list;
-  
-  
+
   @list = sort @$species;
 
-  if($method eq "number of toplevel slices"){
+  if ( $method eq "number of toplevel slices" ) {
     my %species_size;
-    my $sql = 'select count(*) from seq_region s, seq_region_attrib sa, attrib_type at where s.seq_region_id = sa.seq_region_id and sa.attrib_type_id = at.attrib_type_id and  at.code like "toplevel"';
+    my $sql =
+        'select count(*) '
+      . 'from seq_region s, '
+      . 'seq_region_attrib sa, '
+      . 'attrib_type at '
+      . 'where s.seq_region_id = sa.seq_region_id '
+      . 'and sa.attrib_type_id = at.attrib_type_id '
+      . 'and at.code like "toplevel"';
 
-    foreach my $spp (@list){
-      my $slice_adaptor = $reg->get_adaptor($spp,"core","slice");  
-      my $sth =  $slice_adaptor->dbc->prepare($sql);
+    foreach my $spp (@list) {
+      my $slice_adaptor = $reg->get_adaptor( $spp, "core", "slice" );
+      my $sth = $slice_adaptor->dbc->prepare($sql);
       $sth->execute();
       my ($count);
-      $sth->bind_columns(\$count);
+      $sth->bind_columns( \$count );
       $sth->fetch;
       $species_size{$spp} = $count;
       $sth->finish;
     }
-    my @new_list = sort { $species_size{$a} <=> $species_size{$b} }  @list;
+    my @new_list =
+      sort { $species_size{$a} <=> $species_size{$b} } @list;
     return \@new_list;
   }
   return \@list;
 
-}
+} ## end sub sort_species
 
-
-
-
-sub start_with_species{
-  my ($species_start, $species) = @_;
+sub start_with_species {
+  my ( $species_start, $species ) = @_;
   my @list;
-  
-  my $found = 0; 
-  foreach my $sp (@$species){
-    if($sp eq $species_start){
+
+  my $found = 0;
+  foreach my $sp (@$species) {
+    if ( $sp eq $species_start ) {
       $found = 1;
     }
-    if($found){
+    if ($found) {
       push @list, $sp;
-    }	
+    }
   }
-   
-  if($found){
+
+  if ($found) {
     return \@list;
-  }
-  else{
+  } else {
     die "Could not find species $species to start with\n";
   }
 }
 
-sub end_with_species{
-  my ($species_end, $species) = @_;
+sub end_with_species {
+  my ( $species_end, $species ) = @_;
   my @list;
-  
-  foreach my $sp (@$species){
-    if($sp eq $species_end){
+
+  foreach my $sp (@$species) {
+    if ( $sp eq $species_end ) {
       push @list, $sp;
       return \@list;
-    }
-    else{
+    } else {
       push @list, $sp;
-    }	
+    }
   }
-   
+
   die "Could not find species $species to end with\n";
 }
 
 #-----------------------------------------------------------------------------
 # dumps given piece of genomic dna into given format
-# uses static golden path adaptor to get virtual contig.. 
+# uses static golden path adaptor to get virtual contig..
 
 sub dump_format {
   my ( $slice, $format, $spp_dumpdir, $seq ) = @_;
@@ -727,18 +831,18 @@ sub dump_format {
     $seq_dumper->disable_feature_type('repeat');
 
     my $outfile;
-    my $filename =  "$spp_dumpdir/$name.$format";
-    $seq_dumper->dump($slice, $format, $filename, $seq);
+    my $filename = "$spp_dumpdir/$name.$format";
+    $seq_dumper->dump( $slice, $format, $filename, $seq );
   };
-  if( $@ ) {
-    warn (1, "ERROR: Dumping Error! Cannot dump $name\n$@");
-    info (1, "ERROR: Dumping Error! Cannot dump $name\n$@");
+  if ($@) {
+    warn( 1, "ERROR: Dumping Error! Cannot dump $name\n$@" );
+    info( 1, "ERROR: Dumping Error! Cannot dump $name\n$@" );
   }
 }
 
 #------------------------------------------------------------------------------
-sub ftp_bundle{
-  my ($format, $spp_dumpdir, $batch, $spp, $chr_sorter) = @_;
+sub ftp_bundle {
+  my ( $format, $spp_dumpdir, $batch, $spp, $chr_sorter ) = @_;
   my $count = 0;
   my $gz;
   my $CHUNK = $spp eq "mus_musculus" ? 100 : 1000;
@@ -748,50 +852,60 @@ sub ftp_bundle{
 
   # Chromosome sorter
   my @files;
-  while (defined( my $file = readdir(DIR) )) {
-    next if (-d "$file" || $file !~ /^\w/ || $file !~ /.*$format$/x) ;
+  while ( defined( my $file = readdir(DIR) ) ) {
+    next if ( -d "$file" || $file !~ /^\w/ || $file !~ /.*$format$/x );
     push @files, $file;
   }
-  closedir (DIR);
+  closedir(DIR);
 
-#  unless (-d "$spp_dumpdir/FTP"){
-#    system("mkdir -p $spp_dumpdir/FTP");
-#    utils::Tool::info (1, "Made dir $spp_dumpdir/FTP");
-#  }
+  #  unless (-d "$spp_dumpdir/FTP"){
+  #    system("mkdir -p $spp_dumpdir/FTP");
+  #    utils::Tool::info (1, "Made dir $spp_dumpdir/FTP");
+  #  }
 
-  $gz = gzopen("$spp_dumpdir/".ucfirst($spp).".".($batch*$CHUNK).".dat.gz","wb") 
-    || die "Could not open file $spp_dumpdir/".ucfirst($spp).".".($batch*$CHUNK).".dat.gz\n". $!;
-
+  $gz = gzopen(
+        "$spp_dumpdir/"
+      . ucfirst($spp) . "."
+      . ( $batch*$CHUNK )
+      . ".dat.gz", "wb"
+    )
+    || die "Could not open file $spp_dumpdir/"
+    . ucfirst($spp) . "."
+    . ( $batch*$CHUNK )
+    . ".dat.gz\n"
+    . $!;
 
   # If species has chr, use sorter
-  if (keys %$chr_sorter) {
- #   utils::Tool::info(1, "Using chr sorter");
-    @files  =   sort {$chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b  } @files ;
+  if ( keys %$chr_sorter ) {
+    #   utils::Tool::info(1, "Using chr sorter");
+    @files =
+      sort { $chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b }
+      @files;
   }
 
-  foreach my $filename ( @files ){
- #   utils::Tool::info(1, "Processing $filename...");
+  foreach my $filename (@files) {
+    #   utils::Tool::info(1, "Processing $filename...");
 
-    if (!-f "$spp_dumpdir/$filename"){
-     warn (1, "ERROR: Cannot find $filename!");
+    if ( !-f "$spp_dumpdir/$filename" ) {
+      warn( 1, "ERROR: Cannot find $filename!" );
       next;
     }
 
-    open (FILE, "$spp_dumpdir/$filename") || die $!;
-    while(<FILE>){
+    open( FILE, "$spp_dumpdir/$filename" ) || die $!;
+    while (<FILE>) {
       $gz->gzwrite($_);
-    }	
+    }
     close(FILE);
   }
 
   $gz->gzclose();
 
   # Tidy up the directories
-  opendir(DIR, $spp_dumpdir) or die " can't open dir $spp_dumpdir:$!";
-#  print "In directory $spp_dumpdir\n";
-  while (defined(my $file = readdir(DIR))) {
-    next if $file =~/\.gz$|^FTP$|README/;
-    next if $file =~/^\.+$/;
+  opendir( DIR, $spp_dumpdir ) or die " can't open dir $spp_dumpdir:$!";
+  #  print "In directory $spp_dumpdir\n";
+  while ( defined( my $file = readdir(DIR) ) ) {
+    next if $file =~ /\.gz$|^FTP$|README/;
+    next if $file =~ /^\.+$/;
     unlink "$spp_dumpdir/$file" or warn "Can't delete $file : $!\n";
   }
   closedir DIR;
@@ -800,10 +914,10 @@ sub ftp_bundle{
 #  system ("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
 #  system ("rm -r $spp_dumpdir/FTP");
   return;
-}
+} ## end sub ftp_bundle
 
 #------------------------------------------------------------------------
-sub info{
+sub info {
 
   ### Arg1      : verbosity
   ### Arg2      : message
@@ -813,75 +927,80 @@ sub info{
 
   my $v   = shift;
   my $msg = shift;
-  if( ! defined($msg) ){ $msg = $v; $v = 0 }
-  $msg || ( carp("Need a warning message" ) && return );
+  if ( !defined($msg) ) { $msg = $v; $v = 0 }
+  $msg || ( carp("Need a warning message") && return );
 
   #if( $v > $VERBOSITY ){ return 1 }
-  my @sz = () ;#sz();
-  if ($v > 1) {
-    warn( "[INFO_2] ".$msg." (@sz)\n" );
-  }
-  else {
-    warn( "[INFO] ".$msg." (@sz)\n" );
+  my @sz = ();    #sz();
+  if ( $v > 1 ) {
+    warn( "[INFO_2] " . $msg . " (@sz)\n" );
+  } else {
+    warn( "[INFO] " . $msg . " (@sz)\n" );
   }
 
   return 1;
 }
 
-sub create_general_options{
-  
+sub create_general_options {
+
   $general_options = "perl $exe";
 
-  if(defined($host)){
+  if ( defined($host) ) {
     $general_options .= " -host $host";
   }
-  if(defined($user)){
+  if ( defined($user) ) {
     $general_options .= " -user $user";
   }
-  if(defined($port)){
+  if ( defined($port) ) {
     $general_options .= " -port $port";
   }
-  if(defined($pass)){
+  if ( defined($pass) ) {
     $general_options .= " -pass $pass";
   }
-  if(defined($email)){
+  if ( defined($email) ) {
     $general_options .= " -email $email";
   }
-  if(@user_formats){
-    $general_options .= " -format ",join(",",@user_formats);
+  if (@user_formats) {
+    $general_options .= " -format ", join( ",", @user_formats );
   }
-}	
+  if ( defined($nobundle) ) {
+    $general_options .= "-nobundle";
+  }
+} ## end sub create_general_options
 
 sub job_file {
-  my $dir = shift;
-  my $specie = shift;
+  my $dir     = shift;
+  my $species = shift;
 
-  my $main_job = $general_options." -species $specie -logfile ".$dump_directory."/lsf_scripts/".$specie.".log -dumpdir $dump_directory";
-  
-  
+  my $main_job =
+      $general_options
+    . " -species $species -logfile "
+    . $dump_directory
+    . "/lsf_scripts/"
+    . $species
+    . ".log -dumpdir $dump_directory";
+
   return $main_job;
-
 }
-
 
 #------------------------------------------------------------------------
 sub mail_log {
 
- ### Arg1 (optional): log to check
- ### Arg2 (optional): email address
- ### Description: checks log and emails you the results
+  ### Arg1 (optional): log to check
+  ### Arg2 (optional): email address
+  ### Description: checks log and emails you the results
 
-  my ($file, $email_address, $additional_text) = @_;
-  if(  open IN, "< $file" ){
+  my ( $file, $email_address, $additional_text ) = @_;
+  if ( open IN, "< $file" ) {
     my $content;
     while (<IN>) {
-      $content .= $_  unless $_=~ /^\[INFO\]/;
+      $content .= $_ unless $_ =~ /^\[INFO\]/;
     }
-    
+
     my $sendmail = "/usr/sbin/sendmail -t";
     my $subject  = "Subject: Dumping report\n";
-    
-    open(SENDMAIL, "|$sendmail") or die "Cannot open $sendmail: $!";
+
+    open( SENDMAIL, "|$sendmail" ) or die "Cannot open $sendmail: $!";
     print SENDMAIL $subject;
     print SENDMAIL "To: $email_address\n";
     print SENDMAIL 'From: ensembl-core@ebi.ac.uk';
@@ -889,12 +1008,10 @@ sub mail_log {
     print SENDMAIL $content . $additional_text;
     close(SENDMAIL);
     print "[INFO] Sent report to $email_address\n";
-  }
-  else{
+  } else {
     print STDERR "problems sending email\n";
   }
-}
-
+} ## end sub mail_log
 
 #-----------------------------------------------------------------------
 sub readme {
@@ -902,17 +1019,17 @@ sub readme {
   my $species = shift;
 
   my $bundle_group = $species eq 'Mus_musculus' ? 100 : 1000;
-  my $prediction_method = 
-#    utils::Tool::get_config({"species" => $species,
-#			    "values"   => "ENSEMBL_PREDICTION_TEXT_CORE"})
-#	||
+  my $prediction_method =
+    #    utils::Tool::get_config({"species" => $species,
+    #			    "values"   => "ENSEMBL_PREDICTION_TEXT_CORE"})
+    #	||
 "Ensembl provides an automatic reannotation of $species genomic data.
 These data will be dumped in a number of forms - one of them being 
 $format flat files.  As the annotation of this form comes from Ensembl, 
 and not the original sequence entry, the two annotations are 
 likely to be different.";
 
- return "#### README ####
+  return "#### README ####
 
 IMPORTANT: Please note you can download correlation data tables, 
 supported by Ensembl, via the highly customisable BioMart and 
@@ -976,21 +1093,20 @@ access if you want to do something serious with the data.
 
 ";
 
-}
+} ## end sub readme
 #----------------------------------------------------------------------------
 
-sub check_species{
+sub check_species {
   my $species_ref = shift;
 
   my @valid;
   my $error = 0;
-  foreach my $species (@$species_ref){
-    my $adap = $reg->get_adaptor($species,"core","slice");
-    if(!defined($adap)){
+  foreach my $species (@$species_ref) {
+    my $adap = $reg->get_adaptor( $species, "core", "slice" );
+    if ( !defined($adap) ) {
       print STDERR "Unknown species $species\n";
       $error++;
-    }
-    else{
+    } else {
       push @valid, $species;
     }
   }
@@ -998,22 +1114,20 @@ sub check_species{
   return \@valid;
 }
 
-
-sub all_species{
+sub all_species {
   my @species;
   my %hash;
 
-
-  foreach my $adap (@{$reg->get_all_DBAdaptors(-group => "core")}){
-    if(!defined($hash{$adap->species})){
-      if($adap->species =~ / /){ # ignore "Ancestral sequences"
-      }
-      else{
-	push @species, $adap->species;
-	$hash{$adap->species} = 1;
+  foreach my $adap ( @{ $reg->get_all_DBAdaptors( -group => "core" ) } )
+  {
+    if ( !defined( $hash{ $adap->species } ) ) {
+      if ( $adap->species =~ / / ) {    # ignore "Ancestral sequences"
+      } else {
+        push @species, $adap->species;
+        $hash{ $adap->species } = 1;
       }
     }
-    
+
   }
   return \@species;
 }
