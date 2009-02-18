@@ -961,7 +961,7 @@ sub create_general_options {
     $general_options .= " -email $email";
   }
   if (@user_formats) {
-    $general_options .= " -format ", join( ",", @user_formats );
+    $general_options .= " -format ". join( ",", @user_formats );
   }
   if ( defined($nobundle) ) {
     $general_options .= "-nobundle";
