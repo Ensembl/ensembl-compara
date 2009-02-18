@@ -477,7 +477,7 @@ foreach my $spp (@species) {
     }
   } ## end while ( my $slice = pop @slices)
 
-  if ( $count > 0 && !defined($noundle) ) {
+  if ( $count > 0 && !defined($nobundle) ) {
     foreach my $format ( sort keys %$formats_dir ) {
       ftp_bundle( $format, $formats_dir->{$format}, $batch, $spp );
     }
