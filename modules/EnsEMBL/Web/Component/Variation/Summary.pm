@@ -109,7 +109,7 @@ sub content {
      my $region = $mappings{$varif_id}{Chr}; 
      my $start  = $mappings{$varif_id}{start};
      my $end    = $mappings{$varif_id}{end};
-     my $display_region = $region .':' . ($start -10) .'-'. ($end +10); 
+     my $display_region = $region .':' . ($start -500) .'-'. ($end +500); 
      my $link = $object->_url({'type'=>'Location', 'action'=>'View', 'v' => $id, 'source' => $source, 'vf' => $varif_id, 'contigviewbottom' => 'variation_feature_variation=normal' });  
      my $str = $mappings{$varif_id}{strand};
      if ($str <= 0 ) {$strand ="(reverse strand)";}
@@ -117,14 +117,16 @@ sub content {
      my $location_string; 
      if ($start == $end ) { $location_string =  $region.":".$start;}
      else { $location_string = $region.":".$start."-".$end; }
-     my $location; #= qq(<a href="$link">$location_string</a> $strand) ;
+     my $location; 
      if ($varif_id eq $object->core_objects->{'parameters'}{'vf'} ){
        $location = $location_string;
      } else {
        my $link = $object->_url({'v' => $id, 'source' => $source, 'vf' => $varif_id,});
        $location = qq(<a href="$link">$location_string</a>);
      }
-     my $location_link_html = qq(<a href="$link">Jump to region in detail</a>);
+     my $location_link = $object->_url({'type'=>'Location', 'action'=>'View', 'r' => $display_region, 'v' => $id, 'source' => $source, 'vf' => $varif_id, 'contigviewbotom' => 'variation_feature_variation=normal'});
+
+     my $location_link_html = qq(<a href="$location_link">Jump to region in detail</a>);
       $html.= sprintf( '
         <tr%s>
           <td><strong>%s</strong> %s</td>
