@@ -66,6 +66,7 @@ sub content {
       'end'         => $object->seq_region_end,
     };
 
+=pod
     ## Check if there is userdata
     ## TODO: this needs to come from control panel
 #    my $pointers = [];
@@ -103,6 +104,7 @@ sub content {
       ## Userdata setting overrides any other tracks
       $object->param('aggregate_colour', $pointer_defaults{'UserData'}->[0]);
     } 
+=cut
 
     ## Now do internal Ensembl data
     if (@features) { ## "FeatureView"
@@ -115,16 +117,16 @@ sub content {
       my $i = 0;
       my $zmenu_config;
       foreach my $set  (@features) {
-	my $pointer_ref = $image->add_pointers( $object, {
-	  'config_name'  => 'Vkaryotype',
-	  'features'      => $set->[0],
-	  'zmenu_config'  => $zmenu_config,
-	  'feature_type'  => $set->[2],
-	  'color'         => $object->param("col_$i")   || $pointer_defaults{$set->[2]}[0],
-	  'style'         => $object->param("style_$i") || $pointer_defaults{$set->[2]}[1]}
-					      );
-	push(@$pointers, $pointer_ref);
-	$i++;
+	      my $pointer_ref = $image->add_pointers( $object, {
+	        'config_name'  => 'Vkaryotype',
+	        'features'      => $set->[0],
+	        'zmenu_config'  => $zmenu_config,
+	        'feature_type'  => $set->[2],
+	        'color'         => $object->param("col_$i")   || $pointer_defaults{$set->[2]}[0],
+	        'style'         => $object->param("style_$i") || $pointer_defaults{$set->[2]}[1]}
+				);
+	      push(@$pointers, $pointer_ref);
+	      $i++;
       }
     }
     if (!@$pointers) { ## Ordinary "KaryoView"
@@ -140,9 +142,9 @@ sub content {
 #		return if $self->_export_image( $image );
 
     $html .= $image->render;
-    if ($has_data) {
-      $html .= '<br /><p>Your uploaded data is displayed on the karyotype above, using '.$pointer_defaults{'UserData'}[0].' arrow pointers</p>';
-    }
+    #if ($has_data) {
+    #  $html .= '<br /><p>Your uploaded data is displayed on the karyotype above, using '.$pointer_defaults{'UserData'}[0].' arrow pointers</p>';
+    #}
   }
   else {
     $html .= $self->_info( 'Unassembled genome', '<p>This genome has yet to be assembled into chromosomes</p>' );
