@@ -231,11 +231,11 @@ sub get_all_taxa_by_member_source_name {
                    fm.member_id=m.member_id";
   
   if (defined $source_name) {
-    $sql .= " AND m.source_name = '$source_name'"
+    $sql .= " AND m.source_name = ?"
   }
 
   my $sth = $self->adaptor->dbc->prepare($sql);
-  $sth->execute($self->dbID);
+  $sth->execute($self->dbID, $source_name );
 
   my @taxa;
   my $ncbi_ta = $self->adaptor->db->get_NCBITaxonAdaptor;
