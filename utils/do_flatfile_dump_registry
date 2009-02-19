@@ -2,7 +2,7 @@
 
 use strict;
 use Carp;
-use Compress::Zlib;
+#use Compress::Zlib;
 use File::Basename qw( dirname );
 use FindBin qw($Bin);
 use Getopt::Long;
@@ -847,7 +847,9 @@ sub ftp_bundle {
   my $gz;
   my $CHUNK = $spp eq "mus_musculus" ? 100 : 1000;
 
-#  utils::Tool::info(1, "Generating compressed data archives for FTP site (chunk=$CHUNK)..");
+  # utils::Tool::info( 1,
+  #   "Generating compressed data archives for FTP site (chunk=$CHUNK).."
+  # );
   opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
 
   # Chromosome sorter
@@ -858,47 +860,50 @@ sub ftp_bundle {
   }
   closedir(DIR);
 
-  #  unless (-d "$spp_dumpdir/FTP"){
-  #    system("mkdir -p $spp_dumpdir/FTP");
-  #    utils::Tool::info (1, "Made dir $spp_dumpdir/FTP");
-  #  }
-
-  $gz = gzopen(
-        "$spp_dumpdir/"
-      . ucfirst($spp) . "."
-      . ( $batch*$CHUNK )
-      . ".dat.gz", "wb"
-    )
-    || die "Could not open file $spp_dumpdir/"
-    . ucfirst($spp) . "."
-    . ( $batch*$CHUNK )
-    . ".dat.gz\n"
-    . $!;
+  # unless ( -d "$spp_dumpdir/FTP" ) {
+  #   system("mkdir -p $spp_dumpdir/FTP");
+  #   utils::Tool::info( 1, "Made dir $spp_dumpdir/FTP" );
+  # }
 
   # If species has chr, use sorter
   if ( keys %$chr_sorter ) {
-    #   utils::Tool::info(1, "Using chr sorter");
+    # utils::Tool::info(1, "Using chr sorter");
     @files =
       sort { $chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b }
       @files;
   }
 
+  my $gzfilename =
+      "$spp_dumpdir/"
+    . ucfirst($spp) . "."
+    . ( $batch*$CHUNK )
+    . ".dat";
+
+  # $gz = gzopen( $gzfilename, "wb" )
+  #   || die "Could not open file $gzfilename\n" . $!;
+
+  if ( -f $gzfilename ) { unlink($gzfilename); }
+
   foreach my $filename (@files) {
-    #   utils::Tool::info(1, "Processing $filename...");
+    # utils::Tool::info(1, "Processing $filename...");
 
     if ( !-f "$spp_dumpdir/$filename" ) {
       warn( 1, "ERROR: Cannot find $filename!" );
       next;
     }
 
-    open( FILE, "$spp_dumpdir/$filename" ) || die $!;
-    while (<FILE>) {
-      $gz->gzwrite($_);
-    }
-    close(FILE);
+    system("/bin/cat $spp_dumpdir/$filename >>$gzfilename")
+
+    # open( FILE, "$spp_dumpdir/$filename" ) || die $!;
+    # while (<FILE>) {
+    #   $gz->gzwrite($_);
+    # }
+    # close(FILE);
   }
 
-  $gz->gzclose();
+  system("/bin/gzip --best $gzfilename");
+
+  # $gz->gzclose();
 
   # Tidy up the directories
   opendir( DIR, $spp_dumpdir ) or die " can't open dir $spp_dumpdir:$!";
@@ -908,12 +913,13 @@ sub ftp_bundle {
     next if $file =~ /^\.+$/;
     unlink "$spp_dumpdir/$file" or warn "Can't delete $file : $!\n";
   }
-  closedir DIR;
+  closedir(DIR);
 
-#  utils::Tool::info(1, "Deleting the individual files and replacing with the zips");
-#  system ("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
-#  system ("rm -r $spp_dumpdir/FTP");
-  return;
+  # utils::Tool::info( 1,
+  #   "Deleting the individual files and replacing with the zips" );
+  # system("mv $spp_dumpdir/FTP/* $spp_dumpdir/");
+  # system("rm -r $spp_dumpdir/FTP");
+
 } ## end sub ftp_bundle
 
 #------------------------------------------------------------------------
@@ -961,10 +967,10 @@ sub create_general_options {
     $general_options .= " -email $email";
   }
   if (@user_formats) {
-    $general_options .= " -format ". join( ",", @user_formats );
+    $general_options .= " -format " . join( ",", @user_formats );
   }
   if ( defined($nobundle) ) {
-    $general_options .= "-nobundle";
+    $general_options .= " -nobundle";
   }
 } ## end sub create_general_options
 
