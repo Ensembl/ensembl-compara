@@ -54,9 +54,7 @@ sub features {
   if( $sub_type eq 'url' ) {
     $parser->parse_URL( $self->my_config('url') );
   } else {
-    warn "FILENAME : ".$self->my_config('file');
     my $file = new EnsEMBL::Web::TmpFile::Text( filename => $self->my_config('file') );
-    warn "FULLPATH : ".$file->full_path;
     my $data = $file->retrieve;
     return [] unless $data;
     $parser->init($data);
