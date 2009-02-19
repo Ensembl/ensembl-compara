@@ -19,8 +19,8 @@ sub new {
   my $class = shift; 
   my %args  = @_;
 
-  die 'do not use new() constructor for Data::Record::* classes, call "has_many" methods from the owner instead'
-    if ref $class || $class ne 'EnsEMBL::Web::Data::Record';
+  return $class->SUPER::new(%args)
+     unless $class eq 'EnsEMBL::Web::Data::Record';
 
   die "Owner & id is necessary for the $class"
     unless $args{owner} && $args{id};
