@@ -223,15 +223,27 @@ sub add_Member_Attribute {
   unless ($attribute->isa('Bio::EnsEMBL::Compara::Attribute')) {
     throw("Need to add a Bio::EnsEMBL::Compara::Attribute, not a $attribute\n");
   }
+  
+  my $source_name = $member->source_name();
+  my $taxon_id = $member->taxon_id();
+  my $genome_db_id = $member->genome_db_id();
 
   if (defined $self->{'_this_one_first'} && $self->{'_this_one_first'} eq $member->stable_id) {
     unshift @{$self->{'_member_array'}}, $member_attribute ;
-    unshift @{$self->{'_members_by_source'}{$member->source_name}}, $member_attribute;
-    unshift @{$self->{'_members_by_source_taxon'}{$member->source_name."_".$member->taxon_id}}, $member_attribute;
+    unshift @{$self->{'_members_by_source'}{$source_name}}, $member_attribute;
+    unshift @{$self->{'_members_by_source_taxon'}{"${source_name}_${taxon_id}"}}, $member_attribute;
+    if(defined $genome_db_id) {
+	    unshift @{$self->{_members_by_source_genome_db}{"${source_name}_${genome_db_id}"}}, $member_attribute;
+	    unshift @{$self->{_members_by_genome_db}{$genome_db_id}}, $member_attribute;
+    }
   } else {
     push @{$self->{'_member_array'}}, $member_attribute ;
-    push @{$self->{'_members_by_source'}{$member->source_name}}, $member_attribute;
-    push @{$self->{'_members_by_source_taxon'}{$member->source_name."_".$member->taxon_id}}, $member_attribute;
+    push @{$self->{'_members_by_source'}{$source_name}}, $member_attribute;
+    push @{$self->{'_members_by_source_taxon'}{"${source_name}_${taxon_id}"}}, $member_attribute;
+    if(defined $genome_db_id) {
+	    push @{$self->{_members_by_source_genome_db}{"${source_name}_${genome_db_id}"}}, $member_attribute;
+	    push @{$self->{_members_by_genome_db}{$genome_db_id}}, $member_attribute;
+    }
   }
 }
 
@@ -258,6 +270,8 @@ sub get_all_Member_Attribute {
     $self->{'_member_array'} = [];
     $self->{'_members_by_source'} = {};
     $self->{'_members_by_source_taxon'} = {};
+    $self->{'_members_by_source_genome_db'} = {};
+    $self->{'_members_by_genome_db'} = {};
     foreach my $member_attribute (@{$members}) {
       $self->add_Member_Attribute($member_attribute);
     }
@@ -273,7 +287,7 @@ sub get_all_Member_Attribute {
   Description: 
   Returntype : array reference of Bio::EnsEMBL::Compara::Member
   Exceptions : 
-  Caller     : 
+  Caller     : public
 
 =cut
 
@@ -296,23 +310,17 @@ sub get_all_Members {
                e.g. "ENSEMBLPEP"
   Example    : 
   Description: 
-  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member and attribute
   Exceptions : 
-  Caller     : 
+  Caller     : public
 
 =cut
 
 sub get_Member_Attribute_by_source {
   my ($self, $source_name) = @_;
-
   throw("Should give defined source_name as arguments\n") unless (defined $source_name);
-
-  $self->get_all_Member_Attribute;
-
-  $self->{'_members_by_source'}->{$source_name} = [] 
-    unless(defined($self->{'_members_by_source'}->{$source_name}));
-    
-  return $self->{'_members_by_source'}->{$source_name};
+  my ($attribute_scope, $key) = ('_members_by_source', $source_name);
+	return $self->_get_Member_Attribute($attribute_scope, $key);
 }
 
 =head2 get_Member_Attribute_by_source_taxon
@@ -323,20 +331,80 @@ sub get_Member_Attribute_by_source {
   Description: 
   Returntype : array reference of Bio::EnsEMBL::Compara::Member
   Exceptions : 
-  Caller     :
+  Caller     : public
 
 =cut
 
 sub get_Member_Attribute_by_source_taxon {
   my ($self, $source_name, $taxon_id) = @_;
-
   throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
-  $self->get_all_Member_Attribute;  
+  my ($attribute_scope, $key) = ('_members_by_source_taxon', "${source_name}_${taxon_id}");
+  return $self->_get_Member_Attribute($attribute_scope, $key);
+}
 
-  $self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id} = []
-    unless(defined($self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id}));
+=head2 get_Member_Attribute_by_GenomeDB
 
-  return $self->{'_members_by_source_taxon'}->{$source_name."_".$taxon_id};
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : $domain->get_Member_Attribute_by_GenomeDB($genome_db)
+  Description: Returns all [Member_Attribute] entries linked to this GenomeDB. 
+               This will only return EnsEMBL based entries since UniProtKB 
+               entries are not linked to a GenomeDB.
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Exceptions : If input is undefined & genome db is not of expected type
+  Caller     : public
+
+=cut
+
+sub get_Member_Attribute_by_GenomeDB {
+	my ($self, $genome_db) = @_;
+	throw("Should give defined genome_db as an argument\n") unless defined $genome_db;
+	throw("Param was not a GenomeDB. Was [${genome_db}]") unless $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB');
+	my ($attribute_scope, $key) = ('_members_by_genome_db', $genome_db->dbID());
+  return $self->_get_Member_Attribute($attribute_scope, $key);
+}
+
+=head2 get_Member_Attribute_by_source_GenomeDB
+
+  Arg [1]    : string $source_name
+  Arg [2]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : $domain->get_Member_by_source_taxon('ENSEMBLPEP', $genome_db)
+  Description: Returns all [Member_Attribute] entries linked to this GenomeDB
+               and the given source_name. This will only return EnsEMBL based 
+               entries since UniProtKB entries are not linked to a GenomeDB.
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Exceptions : If input is undefined & genome db is not of expected type
+  Caller     : public
+
+=cut
+
+sub get_Member_Attribute_by_source_GenomeDB {
+	my ($self, $source_name, $genome_db) = @_;
+	throw("Should give defined source_name & genome_db as arguments\n") unless defined $source_name && $genome_db;
+	throw("Param was not a GenomeDB. Was [${genome_db}]") unless $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB');
+	my ($attribute_scope, $key) = ('_members_by_source_genome_db', "${source_name}_".$genome_db->dbID());
+  return $self->_get_Member_Attribute($attribute_scope, $key);
+}
+
+=head2 _get_Member_Attribute
+
+  Arg [1]    : string $attribute_scope
+  Arg [2]    : string $key
+  Example    : $domain->_get_Member_Attribute('_members_by_source', 'ENSEMBLPEP')
+  Description: Used as the generic reference point for all 
+               get_Memeber_Attribute_by* methods. The method searches the given
+               scope & if the values cannot be found will initalize that value
+               to an empty array reference.
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Exceptions : None.
+  Caller     : internal
+
+=cut
+
+sub _get_Member_Attribute {
+	my ($self, $attribute_scope, $key) = @_;
+	$self->get_all_Member_Attribute();
+	$self->{$attribute_scope}->{$key} = [] unless defined $self->{$attribute_scope}->{$key};
+  return $self->{$attribute_scope}->{$key};
 }
 
 =head2 Member_count_by_source
@@ -347,7 +415,7 @@ sub get_Member_Attribute_by_source_taxon {
   Description: 
   Returntype : int
   Exceptions : 
-  Caller     : 
+  Caller     : public
 
 =cut
 
@@ -367,7 +435,7 @@ sub Member_count_by_source {
   Description: 
   Returntype : int
   Exceptions : 
-  Caller     : 
+  Caller     : public
 
 =cut
 
@@ -377,6 +445,42 @@ sub Member_count_by_source_taxon {
   throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
 
   return scalar @{$self->get_Member_Attribute_by_source_taxon($source_name,$taxon_id)};
+}
+
+=head2 Member_count_by_GenomeDB
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : Member_count_by_GenomeDB($genome_db);
+  Description: Convenience wrapper for member counts by a GenomeDB
+  Returntype : int
+  Exceptions : Thrown by subrountines this call. See get_Member_Attribute 
+               equivalent
+  Caller     : public
+
+=cut
+
+sub Member_count_by_GenomeDB {
+	my ($self, $genome_db) = @_;
+	return scalar @{$self->get_Member_Attribute_by_GenomeDB($genome_db)};
+}
+
+=head2 Member_count_by_source_GenomeDB
+
+  Arg [1]    : string $source_name
+  Arg [2]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : Member_count_by_source_GenomeDB('ENSEMBLPEP', $genome_db);
+  Description: Convenience wrapper for member counts by a GenomeDB
+  Returntype : int
+  Exceptions : Thrown by subrountines this call. See get_Member_Attribute 
+               equivalent
+  Caller     : public
+
+=cut
+
+
+sub Member_count_by_source_GenomeDB {
+	my ($self, $source_name, $genome_db) = @_;
+	return scalar @{$self->get_Member_Attribute_by_source_GenomeDB($source_name, $genome_db)};
 }
 
 #
