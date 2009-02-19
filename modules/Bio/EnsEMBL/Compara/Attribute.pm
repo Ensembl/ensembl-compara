@@ -64,6 +64,10 @@ sub alignment_string {
   unless (defined $self->cigar_line) {
     throw("To get an alignment_string, the cigar_line needs to be define\n");
   }
+  unless (defined $member) {
+    throw("To get an alignment_string, the peptide member needs to be passed as an option\n");
+  }
+
   unless (defined $self->{'alignment_string'}) {
     my $sequence = $member->sequence;
     if ((defined($self->cigar_start) && ($self->cigar_start != 0)) 
