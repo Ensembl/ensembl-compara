@@ -6,7 +6,6 @@ use Data::Dumper;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::File::Text;
 
 sub _das_link {
   my $self = shift;
