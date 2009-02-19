@@ -6,7 +6,7 @@ use Data::Dumper;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::File::Text;
+use EnsEMBL::Web::TmpFile::Text;
 
 sub _das_link {
   my $self = shift;
@@ -54,7 +54,7 @@ sub features {
   if( $sub_type eq 'url' ) {
     $parser->parse_URL( $self->my_config('url') );
   } else {
-    my $file = new EnsEMBL::Web::File::Text( $self->species_defs, $self->my_config('file') );
+    my $file = new EnsEMBL::Web::TmpFile::Text( filename => $self->my_config('file') );
     return [] unless $file;
     my $data = $file->retrieve;
     return [] unless $data;
