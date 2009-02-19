@@ -196,12 +196,8 @@ sub fetch_by_registry_name {
   if (!$species_db_adaptor) {
     throw("Cannot connect to core database for $name!");
   }
-
-  my $meta_container = $species_db_adaptor->get_MetaContainer;
-  my $species_name = $self->get_species_name_from_core_MetaContainer($meta_container);
-  my $species_assembly = $species_db_adaptor->get_CoordSystemAdaptor->fetch_all->[0]->version;
-   
-  return $self->fetch_by_name_assembly($species_name, $species_assembly);
+  
+  return $self->fetch_by_core_DBAdaptor($species_db_adaptor);
 }
 
 =head2 fetch_by_Slice
@@ -226,13 +222,9 @@ sub fetch_by_Slice {
   unless ($slice->adaptor) {
     throw("[$slice] must have an adaptor");
   }
-
-	my $meta_container = $slice->adaptor->db->get_MetaContainer;
-	my $species_name = $self->get_species_name_from_core_MetaContainer($meta_container);
-  my ($highest_cs) = @{$slice->adaptor->db->get_CoordSystemAdaptor->fetch_all()};
-  my $species_assembly = $highest_cs->version();
-
-  return $self->fetch_by_name_assembly($species_name, $species_assembly);
+  
+  my $core_dba = $slice->adaptor()->db();
+  return $self->fetch_by_core_DBAdaptor($core_dba);
 }
 
 =head2 fetch_by_taxon_id
@@ -242,9 +234,11 @@ sub fetch_by_Slice {
   Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
   Description: Retrieves a genome db using the NCBI taxon_id of the species.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if GenomeDB of taxon_id $taxon_id cannot be found
+  Exceptions : thrown if GenomeDB of taxon_id $taxon_id cannot be found. Will
+               warn if the taxon returns more than one GenomeDB (possible in
+               some branches of the Taxonomy)
   Caller     : general
-  Status      : Stable
+  Status     : Stable
 
 =cut
 
@@ -261,19 +255,50 @@ sub fetch_by_taxon_id {
   $sth = $self->prepare($sql);
   $sth->execute($taxon_id);
 
-  my ($id) = $sth->fetchrow_array();
-
-  if (!defined $id) {
+  my @ids = $sth->fetchrow_array();
+  $sth->finish;
+  
+  my $return_count = scalar(@ids);
+	my $id;
+  if ($return_count ==0) {
     throw("No GenomeDB with this taxon_id [$taxon_id]");
   }
-  $sth->finish;
+  else {
+    ($id) = @ids;
+    if($return_count > 1) {
+      warning("taxon_id [${taxon_id}] returned more than one row. Returning the first at ID [${id}]");
+    }
+  }
+  
   return $self->fetch_by_dbID($id);
+}
+
+=head2 fetch_by_core_DBAdaptor
+
+	Arg [1]     : Bio::EnsEMBL::DBSQL::DBAdaptor
+	Example     : my $gdb = $gdba->fetch_by_core_DBAdaptor($core_dba);
+	Description : For a given core database adaptor object; this method will
+	              return the GenomeDB instance 
+	Returntype  : Bio::EnsEMBL::Compara::GenomeDB
+	Exceptions  : thrown if no name is found for the adaptor
+	Caller      : general
+	Status      : Stable
+
+=cut
+
+sub fetch_by_core_DBAdaptor {
+	my ($self, $core_dba) = @_;
+	my $mc = $core_dba->get_MetaContainer();
+	my $species_name = $self->get_species_name_from_core_MetaContainer($mc);
+	my ($highest_cs) = @{$core_dba->get_CoordSystemAdaptor->fetch_all()};
+  my $species_assembly = $highest_cs->version();
+  return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
 =head2 get_species_name_from_core_MetaContainer
 
   Arg [1]     : Bio::EnsEMBL::MetaContainer
-  Example     : $gdba->_get_species_name_from_core_MetaContainer($slice->adaptor->db->get_MetaContainer);
+  Example     : $gdba->get_species_name_from_core_MetaContainer($slice->adaptor->db->get_MetaContainer);
   Description : Returns the name of a species which was used to
                 name the GenomeDB from a meta container. Can be
                 the species binomial name or the value of the
