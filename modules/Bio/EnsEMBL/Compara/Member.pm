@@ -613,6 +613,50 @@ sub sequence_exon_cased {
   return $seqsplice;
 }
 
+# GJ 2008-11-17
+# Returns the amino acid sequence with exon boundaries denoted as O, B, or J depending on the phase (O=0, B=1, J=2)
+sub get_exon_bounded_sequence {
+    my $self = shift;
+    my $numbers = shift;
+    my $transcript = $self->get_Transcript;
+
+    # The get_all_translateable_exons creates a list of reformatted "translateable" exon sequences.
+    # When the exon phase is 1 or 2, there will be duplicated residues at the end and start of exons.
+    # We'll deal with this during the exon loop.
+    my @exons = @{$transcript->get_all_translateable_Exons};
+    my $seq_string = "";
+    for my $ex (@exons) {
+	my $seq = $ex->peptide($transcript)->seq;
+
+	# PHASE HANDLING
+	my $phase = $ex->phase;
+	my $end_phase = $ex->end_phase;
+
+	# First, cut off repeated end residues.
+	if ($end_phase == 1) {
+	    # We only own 1/3, so drop the last residue.
+	    $seq = substr($seq,0,-1);
+	}
+
+	# Now cut off repeated start residues.
+	if ($phase == 2) {
+	    # We only own 1/3, so drop the first residue.
+	    $seq = substr($seq, 1);
+	}
+
+	if ($end_phase > -1) {
+	    $seq = $seq . 'o' if ($end_phase == 0);
+	    $seq = $seq . 'b' if ($end_phase == 1);
+	    $seq = $seq . 'j' if ($end_phase == 2);
+	}
+	#print "Start_phase: $phase   End_phase: $end_phase\t$seq\n";
+	$seq_string .= $seq;
+    }
+    if (defined $numbers) {
+      $seq_string =~ s/o/0/g; $seq_string =~ s/b/1/g; $seq_string =~ s/j/2/g;
+    }
+    return $seq_string;
+}
 
 =head2 seq_length
 
