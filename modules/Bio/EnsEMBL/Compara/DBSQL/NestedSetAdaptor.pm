@@ -161,6 +161,35 @@ sub fetch_subroot_by_left_right_index {
 }
 
 
+sub fetch_first_shared_ancestor_indexed {
+  my $self = shift;
+  my $node1 = shift;
+  my $node2 = shift;
+
+  my $left_node_id1 = $node1->left_index;
+  my $left_node_id2 = $node2->left_index;
+
+  my $right_node_id1 = $node1->right_index;
+  my $right_node_id2 = $node2->right_index;
+
+  my $min_left;
+  $min_left = $left_node_id1 if ($left_node_id1 < $left_node_id2);
+  $min_left = $left_node_id2 if ($left_node_id2 < $left_node_id1);
+
+  my $max_right;
+  $max_right = $right_node_id1 if ($right_node_id1 > $right_node_id2);
+  $max_right = $right_node_id2 if ($right_node_id2 > $right_node_id1);
+
+  my $constraint = "WHERE left_index < $min_left";
+  $constraint .= " AND right_index > $max_right";
+  $constraint .= " ORDER BY (right_index-left_index) LIMIT 1";
+
+  my $ancestor = $self->_generic_fetch($constraint)->[0];
+
+  return $ancestor;
+}
+
+
 =head2 fetch_root_by_node
 
   Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $node
