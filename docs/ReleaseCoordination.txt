@@ -10,14 +10,13 @@ to send the DOI, because we have to know which new species are added.
 
 For homologues and families, ask Albert (avilella@ebi.ac.uk).  
 For whole genome alignments and synteny ask Javier (jherrero@ebi.ac.uk). 
-For ComparaMart ask Benoit (benoit@ebi.ac.uk) or Richard (holland@ebi.ac.uk).
 
 2. Mail the compara declaration of intentions to ensembl-admin@ebi.ac.uk
 send the DOI after the Genebuilders
 
 3. Define priorities and assign jobs to the team members.
 
-3bis. For v50 The new compara_master database is now kb3_ensembl_compara_master on compara1 
+3bis. The new compara_master database is now kb3_ensembl_compara_master on compara1 
 
 4. Add in the master compara database
 (compara1:3306/kb3_ensembl_compara_master) the new entries in the
@@ -41,7 +40,7 @@ assembly_default values of genome_db in this case.
  [1] for species making it / used in the pipeline
  [0] for species not making it / or old assemblies
 
-6. Update the ncbi_taxa_nodes and ncbi_taxa_names in the master DB using the
+6. Update the ncbi_taxa_node and ncbi_taxa_name in the master DB using the
 ncbi_taxonomy database located in mysql::/ens-livemirror:3306/ncbi_taxonomy
 This is usually done by the person who runs the orthologs/paralogs.
 For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
@@ -49,15 +48,12 @@ For more information, here is the doc ensembl-compara/scripts/taxonomy/README-ta
 mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress --delayed-insert ncbi_taxonomy \
 ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -pxxxx -h compara1 kb3_ensembl_compara_master
 
-mysql -hcompara1 -uensadmin -pxxxx kb3_ensembl_compara_master -e \
+Some of the species need fixing to be webcode-compatible. This is usually done in ens-livemirror, so it's not needed anywhere else. E.g.:
+
  "update ncbi_taxa_name set name = \"Canis familiaris\" where taxon_id = 9615 and name_class = \"scientific name\" and name = \"Canis lupus familiaris\""
-mysql -hcompara1 -uensadmin -pxxxx kb3_ensembl_compara_master -e \
  "update ncbi_taxa_name set name = \"Canis lupus familiaris\" where taxon_id = 9615 and name_class = \"synonym\" and name = \"Canis familiaris\""
 
-eg.
-mysql -hcompara3 -uensadmin -pxxxx avilella_orang_homology_48 -e \
  "update ncbi_taxa_name set name = \"Pongo abelii\" where taxon_id = 9600 and name_class = \"scientific name\" and name = \"Pongo pygmaeus abelii\""
-mysql -hcompara3 -uensadmin -pxxxx avilella_orang_homology_48 -e \
  "update ncbi_taxa_name set name = \"Pongo pygmaeus abelii\" where taxon_id = 9600 and name_class = \"synonym\" and name = \"Pongo pygmaeus abelii\""
 
 7. New method_link_species_set entries might be added using the
@@ -73,20 +69,23 @@ For the homologies this is done by the homologues guys
 eg. for the pairwise alignment
  perl create_mlss.pl --method_link_type  BLASTZ_NET --genome_db_id 22,51 --source "ensembl"  --reg_conf reg_conf_v44.pl --compara compara_master
 
+# --pw stands for all pairwised genome_db_ids in the list provided
+# --sg stands for keep genome_db_id in the list alone (singleton) 
 
-# for the orthologs
-perl create_mlss.pl --method_link_type ENSEMBL_ORTHOLOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --pw --force
+#orthologues
+echo -e "201\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --pw --f --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.ENSEMBL_ORTHOLOGUES.201.out 2>create_mlss.ENSEMBL_ORTHOLOGUES.201.err
 
---pw stands for all pairwised genome_db_ids in the list provided
+# paralogues btw                              
+echo -e "202\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --pw --f --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.ENSEMBL_PARALOGUES.btw.202.out 2>create_mlss.ENSEMBL_PARALOGUES.btw.202.err
 
-#for the paralogs (between_species)
-perl create_mlss.pl --method_link_type ENSEMBL_PARALOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --pw --force
+# paralogues wth                              
+echo -e "202\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --sg --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.ENSEMBL_PARALOGUES.wth.202.out 2>create_mlss.ENSEMBL_PARALOGUES.wth.202.err
 
-#for the paralogs (within_species)
-perl create_mlss.pl --method_link_type ENSEMBL_PARALOGUES --genome_db_id 3,4,5,13,16,18,22,25,26,27,29,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,50,47,48,49,46,51,+upcomming_species --source "ensembl" --url "" --sg --force
+# proteintrees                                
+echo -e "401\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --name "protein trees" --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.PROTEIN_TREES.401.out 2>create_mlss.PROTEIN_TREES.401.err
 
---sg stands for keep genome_db_id in the list alone (singleton) 
-
+# families
+echo -e "301\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --name "families" --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.FAMILY.301.out 2>create_mlss.FAMILY.301.err
 
 8. Create the new database for the new release and add it to your
 registry configuration file. Use the ~ensembl-compara/sql/table.sql
@@ -107,8 +106,8 @@ of mysqldump.
       -e "CREATE DATABASE avilella_ensembl_compara_48"
   mysql -u USER -pPASSWD -h compara1 -P 3306 \
       avilella_ensembl_compara_48 < ~/src/ensembl-compara/sql/table.sql
-  populate_new_database.pl --master compara-master \
-      --old compara_38 --new_compara_48
+  populate_new_database.pl --master compara_master
+      --old compara_52 --new compara_53
 
 If new method_link_species_sets are added in the master after this, you use this
 script again to copy the new relevant data. In such case, you will have to skip
@@ -154,8 +153,7 @@ Now you can run the compara-compara_external_foreign_keys healthchecks:
 
 - Translated BLAT
 
-  The LoadBLATAlignment.pl script creates tab-delimited files which can be
-  imported directly into the release database.
+  It's now translated-blat-net.
 
 - TRANSLATED_BLAT_NET, BlastZ-Net, Pecan, Gerp
 
@@ -197,6 +195,28 @@ Now you can run the compara-compara_external_foreign_keys healthchecks:
     -host compara1 -user ensadmin -pass xxxx \
      -src_db avilella_compara_homology_48 \
     -dest_db avilella_ensembl_compara_48 -socket /mysql/data_3306/mysql.sock
+
+- Ancestral database
+
+  Reuse the one in previous release if it hasn't changed and apply core patches:
+
+ssh mysqlens@compara1
+emacs -nw /tmp/avilella_ensembl_ancestral_53.copy_options
+
+compara1        3306    kb3_ensembl_ancestral_52        compara1	3306    avilella_ensembl_ancestral_53
+
+bash
+perl ~kb3/src/ensembl_main/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl -noflush /tmp/avilella_ensembl_ancestral_53.copy_options > /tmp/avilella_ensembl_ancestral_53.copy.err 2>&1 &
+
+
+ssh mysqlens@ens-staging
+emacs -nw /tmp/ensembl_ancestral_53.copy_options
+
+compara1        3306    avilella_ensembl_ancestral_53        ens-staging	3306    ensembl_ancestral_53
+
+bash
+perl ~kb3/src/ensembl_main/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl -noflush /tmp/ensembl_ancestral_53.copy_options > /tmp/ensembl_ancestral_53.copy.err 2>&1 &
+
 
 11. Drop method_link_species_set entries for alignments which did not make it.
 
@@ -296,10 +316,41 @@ or to produce a simple list because the table is getting too big
    release for an example) but you'll have to do it manually as the current
    script doesn't know how to do it.
 
+The copy to ens-staging took about 1h 10 min for v53:
 
-19. Update files in ensembl-webcode/htdocs/info/software/compara
+[mysqlens@ensdb-2-10 ~]$ tail -f /tmp/avilella_ensembl_compara_53.copy.err
+//
+// rcp Copying  compara1:/mysql/data_3306/databases/avilella_ensembl_compara_53...DONE (6:54:24)
+// Checking /mysql/data_3306/tmp/ensembl_compara_53/*.MYI in progress...
+//
+myisamchk: MyISAM file conservation_score.MYI
+myisamchk: warning: 1 client is using or hasn't closed the table properly
+myisamchk: MyISAM file dnafrag.MYI
+myisamchk: warning: 1 client is using or hasn't closed the table properly
+myisamchk: MyISAM file genomic_align.MYI
+myisamchk: warning: 1 client is using or hasn't closed the table properly
+//
+// Checking /mysql/data_3306/tmp/ensembl_compara_53/*.MYI DONE
+// moving /mysql/data_3306/tmp/ensembl_compara_53 to /mysql/data_3306/databases DONE
+//
+// End of all copy processes (8:7:11)
+//
+// Processes summary
+// SUCCEEDED copy of avilella_ensembl_compara_53 on compara1 to ensembl_compara_53 on ens-staging
 
-for schema change and tutorial
+Once the copy is in ens-staging, we apply this insert that makes joins
+between core and compara dbs for the member table:
+
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_53\_%"' |awk '{print "UPDATE "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m SET m.display_label=x.display_label WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\";"}' > update_display_label.sql
+
+mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_53 < update_display_label.sql
+
+
+19. Update files in sanger-plugins/htdocs/info/software/compara
+
+This used to be ensembl-webcode but all the static content information was changed to sanger-plugins. 
+
+Update for schema change and tutorial
 
 20. Once the final compara db has been copied to ens-staging MySQL server, there
 is one last thing to do, update the display_label in member table as well as the gene
@@ -313,8 +364,65 @@ mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{ pr
 
 mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_42 < update_gene_description.sql
 
+Ensure that the indexes in all tables in ens-staging are correct. This will do it as yesterday jobs, which are limited to 10 concurrently running:
+
+mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_53 -N -e "show tables" | while read i ; do echo $i===; bsub -q yesterday -o /dev/null -Janalyze.$i mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_53 -N -e "ANALYZE TABLE $i"; done
+
 21. Don't forget to dump the EMF files to go on the FTP sites, for multiple alignment, and protein trees.
 
-For protein tree (multiple alignments and newick trees), use ensembl-compara/scripts/tree/dumpTreeMSA.pl script. It can dump both files in emf gzip format at the same time.
+For protein tree (multiple alignments and newick trees), the person in
+charge of the pipeline uses ensembl-compara/scripts/tree/dumpTreeMSA.pl script. 
+It can dump both files in emf gzip format at the same time.
+
+This is the process to dump the genetree data from Ensembl Compara:
+
+21.0 - Create a dir where to dump each file:
+
+mkdir -p /lustre/scratch1/ensembl/avilella/hive/avilella_compara_homology_52/dumps
+cd /lustre/scratch1/ensembl/avilella/hive/avilella_compara_homology_52/dumps
+
+21.1 - Create a file with the genetree ids with this sql command:
+
+mysql -hens-staging -uensro ensembl_compara_52 -N -e "select distinct ptn.node_id from protein_tree_node ptn LEFT JOIN protein_tree_tag ptt ON ptn.node_id=ptt.node_id WHERE ptn.root_id=ptn.parent_id and ptn.node_id not in (0,1) group by ptn.node_id having group_concat(ptt.tag) not like \"%cluster_had_to_be_broken_down%\"" > tree_id_list.txt
+
+21.2 - Create a hash of subdirectories to dump the data evenly:
+
+perl ~/src/ensembl_main/ensembl-personal/avilella/scripts/split_infile.pl -i tree_id_list.txt -l 1 -hashed tree_id_list.txt
+Last dir: 02:75:12
+wc -l tree_id_list.txt
+32270 tree_id_list.txt
+
+21.3 - Create a job for each genetree in a generic hive db like this:
+
+perl ~/src/ensembl_main/ensembl-personal/avilella/hive/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -input_id 'perl /nfs/acari/avilella/dumpTreeMSA_id.pl --list /lustre/scratch1/ensembl/avilella/hive/avilella_compara_homology_52/dumps/$h1/$h2/$h3/tree_id_list.txt --url mysql://ensro@ens-staging/ensembl_compara_52 --nh_out 1 -aln_out 1 -nhx_out 1' -hashed_a 00:00:00 -hashed_b 03:22:69 -hive_capacity 200 -batch_size 5 -logic_name h_emf_dumps_v52_1_1_2
+
+21.4 - Run the jobs with throttling:
+
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -loop -lsf_options '-q normal -R"select[myens_livemirror<800 && mycompara2<2000 && myens_staging<800] rusage[myens_livemirror=10:duration=10:decay=1:mycompara2=10:duration=10:decay=1:myens_staging=10:duration=10:decay=1]"' -lifespan 1200 -logic_name h_emf_dumps_v52_1_1_1
+
+21.5 - Once the jobs are finished, cat all the files into one by type:
+
+export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
+bsub -q long -o $TIMESTAMP.out -e $TIMESTAMP.err 'find /lustre/scratch1/ensembl/avilella/hive/avilella_compara_homology_52/dumps/ -name "*.aln*" | sort | xargs cat > Compara.gene_trees.52.emf'
+
+export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
+bsub -q long -o $TIMESTAMP.out -e $TIMESTAMP.err 'find /lustre/scratch1/ensembl/avilella/hive/avilella_compara_homology_52/dumps/ -name "*.nhx.*" | sort | xargs cat > Compara.nhx_trees.52.emf'
+
+export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
+bsub -q long -o $TIMESTAMP.out -e $TIMESTAMP.err 'find /lustre/scratch1/ensembl/avilella/hive/avilella_compara_homology_52/dumps/ -name "*.nh.emf" | sort | xargs cat > Compara.newick_trees.52.emf'
+
+21.6 - Compress the files
+
+bsub -o /dev/null  -q yesterday  gzip Compara.newick_trees.52.emf
+bsub -o /dev/null  -q yesterday  gzip Compara.nhx_trees.52.emf
+bsub -o /dev/null  -q yesterday  gzip Compara.gene_trees.52.emf
+
+21.7 - Create the final dump directory, copy the README.* files from the previous release and update if needed:
+
+mkdir -p /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_52/dumps/
+cp /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_51/dumps/README.* /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_52/dumps/
+mv /lustre/scratch1/ensembl/avilella/hive/avilella_compara_homology_52/dumps/*.gz /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_52/dumps/
+
+21.8 - Send an email to the release coordinator pointing to the files.
 
 22. Once the final compara db has been copied, and everyone is happy with the data, and the Compara Coordinator survived his task, well the Compara Coordinator could buy some drinks at the Red Lion after handover. Special clause for Mart related coordinator, the drinks will be after the mart release. 
