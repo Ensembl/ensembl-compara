@@ -113,13 +113,18 @@ sub _summarise_core_tables {
       'displayable' => $a_aref->[5],
       'web_data'    => $T
     };
-    ## Set last repeat mask date whilst we're at it, as needed by BLAST configuration, below
-    if ($a_aref->[1] eq 'RepeatMask') {
-      my $date = substr($a_aref->[2], 0, 10);
-      $date =~ s/-//g;
-      $self->db_tree->{'REPEAT_MASK_DATE'} = $date;
-    }
   }
+  ## Set last repeat mask date whilst we're at it, as needed by BLAST configuration, below
+  my $r_aref = $dbh->selectall_arrayref( 
+      'select max(date_format( created, "%Y%m%d"))
+      from analysis, meta
+      where logic_name = meta_value and meta_key = "repeat.analysis"' 
+  );
+  my $date;
+  foreach my $a_aref (@$r_aref){
+    $date = $a_aref->[0];     
+  } 
+  if ($date) { $self->db_tree->{'REPEAT_MASK_DATE'} = $date; }
 ## 
 ## Let us get analysis information about each feature type...
 ##
