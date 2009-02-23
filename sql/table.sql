@@ -324,7 +324,7 @@ CREATE TABLE member (
   stable_id                   varchar(40) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     int(10) DEFAULT '0', 
 #  source_name                 varchar(40) NOT NULL,
-  source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT') NOT NULL,
+  source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALCDS') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
   sequence_id                 int(10) unsigned, # FK sequence.sequence_id
