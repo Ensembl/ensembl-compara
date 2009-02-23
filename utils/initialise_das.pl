@@ -77,7 +77,7 @@ my $sources = {
   select s.name, t.seq_region_start, t.seq_region_end
     from seq_region s, ditag_feature t, analysis a
    where a.logic_name not like "%CAGE%" and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id',
-    'source_id'    => 4,
+    'source_id'    => 6,
   },
   'prediction_transcript' => {
     'master_table' => 'prediction_transcript',
@@ -86,7 +86,7 @@ my $sources = {
   select s.name, t.seq_region_start, t.seq_region_end
     from prediction_transcript t, seq_region s
    where t.seq_region_id = s.seq_region_id',
-    'source_id'    => 6,
+    'source_id'    => 7,
   },
 };
 my @feature_types       = keys %$sources;
