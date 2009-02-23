@@ -81,6 +81,13 @@ sub render_normal {
 
   my @unique_ids = @{ $history_tree->get_unique_stable_ids };
   my $species = $ENV{'ENSEMBL_SPECIES'};
+  my $type =  lc($self->{'config'}->{_object}->type);
+  my $param;
+  if ($type =~/translation/){
+    $param = 'protein'
+  } else {
+    $param = substr $type, 0, 1;
+  }
   
    ## Set Y coordinates ##
   foreach my $id (@unique_ids) {
@@ -93,7 +100,8 @@ sub render_normal {
     my $label_href = $self->_url
     ({'action'  => 'Idhistory_Label',
       'label'   => $id,
-      'feat_type'    =>  $param2, 
+      'feat_type'    =>  $param2,
+      $param    => $id, 
     });
     
     
@@ -184,7 +192,8 @@ sub render_normal {
     my $node_href = $self->_url
       ({'action'   => 'Idhistory_Node',
         'node'     => $a_id->stable_id,
-        'db_name'  => $a_id->db_name });
+        'db_name'  => $a_id->db_name,
+         $param => $a_id->stable_id  });
 
     # only draw node if the version from the next release is different or if
     # this version links to a different id      
@@ -274,6 +283,7 @@ sub render_normal {
         'old_db'  => $old_db,
         'new_db'  => $new_db,
         'score'   => $escore,
+        $param    => $old_id, 
       });
 
 
