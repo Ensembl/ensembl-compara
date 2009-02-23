@@ -385,13 +385,28 @@ sub name {
       ## Bio::EnsEMBL::Compara::GenomicAlignTree in the Ortheus pipeline
       $self->{_name} = $self->SUPER::name();
     } elsif ($self->is_leaf) {
-      $genomic_align_group->genome_db->name =~ /(.)[^ ]+ (.{3})/;
-      $self->{_name} = "${1}${2}_".$genomic_align_group->dnafrag->name."_".
+    	my $gdb_name;
+      if($genomic_align_group->genome_db->name =~ /(.)[^ ]+ (.{3})/) {
+      	$gdb_name = "${1}${2}";
+      }
+      else {
+      	$gdb_name = $genomic_align_group->genome_db->name();
+      	$gdb_name =~ tr/_//;
+      }
+      $self->{_name} = $gdb_name.'_'.$genomic_align_group->dnafrag->name."_".
           $genomic_align_group->dnafrag_start."_".$genomic_align_group->dnafrag_end."[".
           (($genomic_align_group->dnafrag_strand eq "-1")?"-":"+")."]";
     } else {
-      $self->{_name} = join("-", map {$_->genomic_align_group->genome_db->name =~ /(.)[^ ]+ (.{3})/; $_ = "$1$2"}
-          @{$self->get_all_leaves})."[".scalar(@{$self->get_all_leaves})."]";
+      $self->{_name} = join("-", map {
+      	my $name = $_->genomic_align_group->genome_db->name;
+      	if($name =~ /(.)[^ ]+ (.{3})/) {
+      		$name = "$1$2";
+      	}
+      	else {
+      		$name =~ tr/_//; 	
+      	} 
+      	$name;
+      } @{$self->get_all_leaves})."[".scalar(@{$self->get_all_leaves})."]";
     }
   }
 
