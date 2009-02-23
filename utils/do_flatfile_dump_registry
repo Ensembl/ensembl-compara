@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/ensembl64/bin/perl -w
 
 use strict;
 use Carp;
@@ -63,7 +63,7 @@ my (
   'seq_region=s'  => \$seq_region,
   'listonly'      => \$listonly,
   'batch_total:s' => \$batch_total,
-  'batch_index:s' => \$batch_index,
+  'batch_index:s' => \$batch_index
 ) || pod2usage(2);
 
 pod2usage( -verbose => 2 ) if $info;
@@ -141,18 +141,19 @@ if ( defined($farm) ) {
       my $main_bsub;
 
       my $megs = 20_000;
+      my $queue = ($megs > 15_000 ? 'hugemem' : 'long' );
+
       $main_bsub =
-          sprintf('bsub -R"select[linux] select[mem>%d] '
-        . 'rusage[mem=%d]" -M%d000 -E"test -x ', $megs, $megs, $megs)
-        . $exe
-        . ' && test -d '
-        . $dump_directory . '"';
-      $main_bsub .= ' -q hugemem  ';
-      $main_bsub .= ' -J ' . $sp . ' ';
-      $main_bsub .=
-        ' -e"' . $dump_directory . '/lsf_scripts/' . $sp . '.err"';
-      $main_bsub .=
-        ' -o"' . $dump_directory . '/lsf_scripts/' . $sp . '.out"';
+        sprintf( 'bsub '
+          . '-R"select[linux] select[mem>%d] rusage[mem=%d]" '
+          . '-M%d000 '
+          . '-E"test -x %s && test -d %s" '
+          . '-q %s '
+          . '-J %s '
+          . '-e"%s/lsf_scripts/%s.err" '
+          . '-o"%s/lsf_scripts/%s.out"',
+        $megs, $megs, $megs, $exe, $dump_directory, $queue, $sp,
+        $dump_directory, $sp, $dump_directory, $sp );
 
       if ($jobid) {
         $main_bsub .= ' -w "ended(' . $jobid . ')"';
@@ -949,8 +950,13 @@ sub info {
 }
 
 sub create_general_options {
+  $general_options = "/usr/local/ensembl64/bin/perl";
 
-  $general_options = "perl $exe";
+  # if ( defined($memprof) ) {
+  #   $general_options .= " -d:DProf";
+  # }
+
+  $general_options .= " $exe";
 
   if ( defined($host) ) {
     $general_options .= " -host $host";
