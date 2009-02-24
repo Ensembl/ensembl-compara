@@ -408,7 +408,7 @@ foreach my $spp (@species) {
 
   # Get slices --------------------------------------------------
 
-  my $slice_adaptor = $reg->get_adaptor( $spp, "core", "slice" );
+  my $slice_adaptor = $reg->get_adaptor( $spp, 'Core', 'Slice' );
 
   $slice_adaptor->cache_toplevel_seq_mappings();
 
@@ -493,6 +493,10 @@ foreach my $spp (@species) {
         $count = 0;
       }
     } ## end while ( my $chunked_slice...
+
+    my $seqa = $slice->adaptor()->db()->get_SequenceAdaptor();
+    %{ $seqa->{'seq_cache'} } = ();
+
   } ## end while ( my $slice = pop @slices)
 
   if ( $count > 0 && !defined($nobundle) ) {
