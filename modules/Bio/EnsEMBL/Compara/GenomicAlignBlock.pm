@@ -921,12 +921,12 @@ sub requesting_slice {
 }
 
 
-=head2 reference_slice
+=head2 slice
 
-  Arg [1]    : Bio::EnsEMBL::Slice $reference_slice
-  Example    : my $reference_slice = $genomic_align_block->reference_slice;
-  Example    : $genomic_align_block->reference_slice($reference_slice);
-  Description: get/set for attribute reference_slice.
+  Arg [1]    : (optional) Bio::EnsEMBL::Slice $reference_slice
+  Example    : my $slice = $genomic_align_block->slice;
+  Example    : $genomic_align_block->slice($slice);
+  Description: get/set for attribute slice.
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : 
   Caller     : general
@@ -934,9 +934,9 @@ sub requesting_slice {
 
 =cut
 
-sub reference_slice {
+sub slice {
   my ($self, $reference_slice) = @_;
- 
+
   if (defined($reference_slice)) {
 #     throw "[$reference_slice] is not a Bio::EnsEMBL::Slice"
 #         unless $reference_slice->isa("Bio::EnsEMBL::Slice");
@@ -947,13 +947,30 @@ sub reference_slice {
 }
 
 
-=head2 requesting_slice_start (DEPRECATED)
+=head2 reference_slice
 
-  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice_start() method instead
- 
-  Arg [1]    : integer $reference_slice_start
-  Example    : my $reference_slice_start = $genomic_align_block->requesting_slice_start;
-  Example    : $genomic_align_block->requesting_slice_start(1035);
+  Arg [1]    : (optional) Bio::EnsEMBL::Slice $reference_slice
+  Example    : my $reference_slice = $genomic_align_block->reference_slice;
+  Example    : $genomic_align_block->reference_slice($slice);
+  Description: Alias for slice method. TO BE DEPRECATED.
+  Returntype : Bio::EnsEMBL::Slice object
+  Exceptions : 
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub reference_slice {
+  my ($self, $reference_slice) = @_;
+
+  return $self->slice($reference_slice);
+}
+
+=head2 start
+
+  Arg [1]    : (optional) integer $start
+  Example    : my $start = $genomic_align_block->start;
+  Example    : $genomic_align_block->start(1035);
   Description: get/set for attribute reference_slice_start. A value of 0 will set
                the attribute to undefined.
   Returntype : integer
@@ -962,9 +979,8 @@ sub reference_slice {
 
 =cut
 
-sub requesting_slice_start {
+sub start {
   my $self = shift;
-  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice_start() method instead");
   return $self->reference_slice_start(@_);
 }
 
@@ -994,13 +1010,11 @@ sub reference_slice_start {
 }
 
 
-=head2 requesting_slice_end (DEPRECATED)
+=head2 end
 
-  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice_end() method instead
- 
-  Arg [1]    : integer $reference_slice_end
-  Example    : my $reference_slice_end = $genomic_align_block->requesting_slice_end;
-  Example    : $genomic_align_block->requesting_slice_end(1283);
+  Arg [1]    : (optional) integer $end
+  Example    : my $end = $genomic_align_block->end;
+  Example    : $genomic_align_block->end(1283);
   Description: get/set for attribute reference_slice_end. A value of 0 will set
                the attribute to undefined.
   Returntype : integer
@@ -1009,9 +1023,8 @@ sub reference_slice_start {
 
 =cut
 
-sub requesting_slice_end {
+sub end {
   my $self = shift;
-  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice_end() method instead");
   return $self->reference_slice_end(@_);
 }
 
