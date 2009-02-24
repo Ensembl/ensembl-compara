@@ -312,7 +312,7 @@ CREATE TABLE sequence (
 
   PRIMARY KEY (sequence_id),
   KEY sequence (sequence(18))
-) MAX_ROWS = 1000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
+) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
 
 
 #
