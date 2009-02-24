@@ -64,7 +64,6 @@ sub draw_features {
   my $short_self     = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{ $self_species };
   my $jump_to_alignslice = $self->my_config( 'jump_to_alignslice');
   my $METHOD_ID      = $self->my_config( 'method_link_species_set_id' );
-
   my $zmenu = {
       'type'   => 'Location',
       'action' => 'Align',
@@ -108,10 +107,17 @@ sub draw_features {
 
       #use 'score' param to identify constrained elements track - 
       #in which case we show coordinates just for the block
-      if ($f->{'score'}) {
+      if ($self->my_config('constrained_element')) {
 	  $zmenu->{'score'} = $f->{'score'};
+	  $zmenu->{'ftype'} = "ConstrainedElement";
+          $zmenu->{'id'} = $f->{'dbID'};
 	  $block_start = $START+$chr_start-1;
 	  $block_end   = $END  +$chr_start-1;
+      } else {
+	  my $class = $self->my_config( 'class' );
+          $zmenu->{'ftype'} = "GenomicAlignBlock";
+	  $zmenu->{'id'} = $f->{'dbID'};
+          $zmenu->{'ref_id'} = $f->{'ref_id'} if ($f->{'ref_id'});
       }
       $zmenu->{'r'}     = "$chr:$block_start-$block_end";
 
@@ -164,28 +170,34 @@ sub element_features {
   my $self = shift;
 
   my $slice = $self->{'container'};
-  my $genomic_align_blocks;
+  my $features;
   if ($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
-    $genomic_align_blocks = $slice->get_all_constrained_elements();
+    $features = $slice->get_all_constrained_elements();
   } else {
 $self->timer_push('STARTING_API_CALL',5,'fetch');
     my $db   = $self->dbadaptor( 'multi', $self->my_config('db') );
-## Get the GenomicAlignBlocks
-    $genomic_align_blocks = $db->get_adaptor("GenomicAlignBlock")->fetch_all_by_MethodLinkSpeciesSet_Slice(
-      $db->get_adaptor("MethodLinkSpeciesSet")->fetch_by_dbID(
-        $self->my_config('constrained_element')||
-	$self->my_config('method_link_species_set_id')
-      ),
-      $slice
-    )||[];
+## Get the Elements
+    if ($self->my_config('constrained_element')) {
+      $features = $db->get_adaptor("ConstrainedElement")->fetch_all_by_MethodLinkSpeciesSet_Slice(
+        $db->get_adaptor("MethodLinkSpeciesSet")->fetch_by_dbID(
+          $self->my_config('constrained_element')),
+          $slice
+        )||[];
+    } else {
+      $features = $db->get_adaptor("GenomicAlignBlock")->fetch_all_by_MethodLinkSpeciesSet_Slice(
+        $db->get_adaptor("MethodLinkSpeciesSet")->fetch_by_dbID(
+          $self->my_config('method_link_species_set_id')),
+          $slice
+        )||[];
+    }
 $self->timer_push('ENDING_API_CALL',5,'fetch');
   }
 
   my $T = [];
-  foreach my $block (@$genomic_align_blocks) {
+  foreach my $feature (@$features) {
     my $fragments;
 if(0){
-    my $all_gas = $block->get_all_GenomicAligns;
+    my $all_gas = $feature->get_all_GenomicAligns;
     foreach (@$all_gas) {
       push(@{$fragments->{$_->dnafrag->genome_db->name}}, [
         $_->dnafrag->name,
@@ -195,19 +207,22 @@ if(0){
       ]);
     }
 }
-    my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split(':',$block->reference_slice->name);
+    my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split(':',$feature->slice->name);
     push @$T, Bio::EnsEMBL::DnaDnaAlignFeature->new_fast ({
-      'seqname'   => $block->reference_slice->name,
-      'start'     => $block->reference_slice_start,
-      'end'       => $block->reference_slice_end,
-      'strand'    => $block->reference_slice_strand,
+      'dbID'      => $feature->{dbID},
+      'ref_id'    => $feature->{reference_genomic_align_id},
+
+      'seqname'   => $feature->slice->name,
+      'start'     => $feature->start,
+      'end'       => $feature->end,
+      'strand'    => 0,
 
       'hseqname'  => $rname,
       'hstart'    => $rstart,
       'hend'      => $rend,
       'hstrand'   => $rstrand,
 
-      'score'     => $block->score,
+      'score'     => $feature->score,
       'fragments' => $fragments
     });
   }
