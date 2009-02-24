@@ -15,6 +15,7 @@ sub send_activation_email {
 
   my $sitename  = $self->get_site_name;
   my $user      = $params{'user'};
+  return unless $user;
 
   my $message;
   if ($params{'lost'}) {
