@@ -112,9 +112,12 @@ function _show_zmenu_range_other( x ) {
   Z = Z.replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
   Z+= Z.match(/\?/) ? ';' : '?';
   var view = x.bp_end - x.bp_start > 1e6 ? 'Overview' : 'View';
-  var Q = __zmenu_init('zmenu_nav','Region: '+x.bp_start+'-'+x.bp_end);
+  var Q = __zmenu_init('zmenu_nav',x.region+':'+x.bp_start+'-'+x.bp_end);
   __zmenu_add( Q, '', 'Jump to location '+view,
     '/'+x.species+'/Location/'+view+Z+'r='+x.region+':'+x.bp_start+'-'+x.bp_end 
+  );
+  __zmenu_add( Q, '', 'Chromosome summary',
+    '/'+x.species+'/Location/Chromosome'+Z+'r='+x.region+':'+x.bp_start+'-'+x.bp_end 
   );
   __zmenu_show(Q, x.x, x.y);
 
@@ -139,7 +142,7 @@ function _show_zmenu_location_other( x ) {
   var Z = location.search;
   Z = Z.replace(/\?r=[^;]+;?/,'\?').replace(/;r=[^;]+;?/,';').replace(/[\?;]$/g,'');
   Z+= Z.match(/\?/) ? ';' : '?';
-  var Q = __zmenu_init( 'zmenu_nav', 'Location: '+Math.floor(x.bp) );
+  var Q = __zmenu_init( 'zmenu_nav',x.region+':'+Math.floor(x.bp) );
   var w = __seq_region ? (__seq_region.end - __seq_region.start +1) : 100000;
   var s = Math.floor(x.bp-w/2);
   __zmenu_add( Q, '', 'Chromosome summary',
