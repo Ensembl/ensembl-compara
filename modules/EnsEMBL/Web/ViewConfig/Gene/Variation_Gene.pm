@@ -113,7 +113,7 @@ sub form {
   }
   ### Add type selection
   $view_config->add_fieldset('Select Variation Type');
-  foreach( keys %type ) {
+  foreach( sort { $type{$a}->[2] <=> $type{$b}->[2] } keys %type  ) { 
     if ($_ eq 'opt_sara') { next;}
     $view_config->add_form_element({
       'type'     => 'CheckBox', 'label' => $type{$_}[1],
