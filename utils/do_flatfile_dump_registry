@@ -1,17 +1,20 @@
-#!/usr/local/ensembl64/bin/perl -w
+#!/software/perl-5.8.8/bin/perl -w
 
 use strict;
+use warnings;
+
 use Carp;
-#use Compress::Zlib;
+use Devel::Size qw( total_size );
+
+use Compress::Zlib;
 use File::Basename qw( dirname );
 use FindBin qw($Bin);
+use Time::localtime;
+
 use Getopt::Long;
 use Pod::Usage;
-use Time::localtime;
-use Data::Dumper;
-use FindBin qw($Bin);
 
-#$| = 1;
+$| = 1;
 
 our $basedir = "/dumps/";
 our $VERBOSITY;
@@ -33,9 +36,9 @@ my ( $no_log, $start_with, $end_with, $farm );
 my ( $help, $info, $email );
 
 my (
-  $dbname,      $dbversion, $host,       $user,
-  $pass,        $port,      $seq_region, $listonly,
-  $batch_total, $batch_index
+  $dbname,      $dbversion,   $host,       $user,
+  $pass,        $port,        $seq_region, $listonly,
+  $batch_total, $batch_index, $meminfo
 );
 
 &GetOptions(
@@ -63,7 +66,8 @@ my (
   'seq_region=s'  => \$seq_region,
   'listonly'      => \$listonly,
   'batch_total:s' => \$batch_total,
-  'batch_index:s' => \$batch_index
+  'batch_index:s' => \$batch_index,
+  'meminfo'       => \$meminfo
 ) || pod2usage(2);
 
 pod2usage( -verbose => 2 ) if $info;
@@ -140,7 +144,7 @@ if ( defined($farm) ) {
       my $main_job = job_file( $lsf_dir, $species[$index] );
       my $main_bsub;
 
-      my $megs = 20_000;
+      my $megs = 12_000;
       my $queue = ($megs > 15_000 ? 'hugemem' : 'long' );
 
       $main_bsub =
@@ -452,7 +456,6 @@ foreach my $spp (@species) {
     push( @too_long, @$too_long );
 
     # split up slices into reasonable chunks, and avoid breaking genes
-
     my $chunked_slices = chunk_seq_region( $slice, $blocks );
     undef $blocks;
 
@@ -466,6 +469,19 @@ foreach my $spp (@species) {
 
       if ( ++$count >= $CHUNK ) {
 
+        if ( defined($meminfo) ) {
+          printf( "MEMINFO => slice             -> %d\n",
+            total_size($slice) );
+          printf( "MEMINFO => slices            -> %d\n",
+            total_size( \@slices ) );
+          printf( "MEMINFO => chunked_slice     -> %d\n",
+            total_size($chunked_slice) );
+          printf( "MEMINFO => chunked_slices    -> %d\n",
+            total_size($chunked_slices) );
+          printf( "MEMINFO => slice_adaptor     -> %d\n",
+            total_size($slice_adaptor) );
+        }
+
         if ( !defined($nobundle) ) {
           foreach my $format ( sort keys %$formats_dir ) {
             ftp_bundle( $format, $formats_dir->{$format},
@@ -476,7 +492,7 @@ foreach my $spp (@species) {
         $batch++;
         $count = 0;
       }
-    }
+    } ## end while ( my $chunked_slice...
   } ## end while ( my $slice = pop @slices)
 
   if ( $count > 0 && !defined($nobundle) ) {
@@ -879,12 +895,12 @@ sub ftp_bundle {
       "$spp_dumpdir/"
     . ucfirst($spp) . "."
     . ( $batch*$CHUNK )
-    . ".dat";
-
-  # $gz = gzopen( $gzfilename, "wb" )
-  #   || die "Could not open file $gzfilename\n" . $!;
+    . ".dat.gz";
 
   if ( -f $gzfilename ) { unlink($gzfilename); }
+
+  $gz = gzopen( $gzfilename, "wb" )
+    || die "Could not open file $gzfilename\n" . $!;
 
   foreach my $filename (@files) {
     # utils::Tool::info(1, "Processing $filename...");
@@ -894,18 +910,16 @@ sub ftp_bundle {
       next;
     }
 
-    system("/bin/cat $spp_dumpdir/$filename >>$gzfilename")
+    ## system("/bin/cat $spp_dumpdir/$filename >>$gzfilename")
 
-    # open( FILE, "$spp_dumpdir/$filename" ) || die $!;
-    # while (<FILE>) {
-    #   $gz->gzwrite($_);
-    # }
-    # close(FILE);
+    open( FILE, "$spp_dumpdir/$filename" ) || die $!;
+    while (<FILE>) { $gz->gzwrite($_) }
+    close(FILE);
   }
 
-  system("/bin/gzip --best $gzfilename");
+  ## system("/bin/gzip --best $gzfilename");
 
-  # $gz->gzclose();
+  $gz->gzclose();
 
   # Tidy up the directories
   opendir( DIR, $spp_dumpdir ) or die " can't open dir $spp_dumpdir:$!";
@@ -950,14 +964,11 @@ sub info {
 }
 
 sub create_general_options {
-  $general_options = "/usr/local/ensembl64/bin/perl";
+  $general_options = "perl $exe";
 
-  # if ( defined($memprof) ) {
-  #   $general_options .= " -d:DProf";
-  # }
-
-  $general_options .= " $exe";
-
+  if ( defined($meminfo) ) {
+    $general_options .= " -meminfo";
+  }
   if ( defined($host) ) {
     $general_options .= " -host $host";
   }
