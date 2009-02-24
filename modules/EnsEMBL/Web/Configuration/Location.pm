@@ -675,24 +675,59 @@ sub _ajax_zmenu_av {
   my $self = shift;
   my $panel = shift;
   my $obj  = shift;
+  my $id = $obj->param('id');
+  my $obj_type  = $obj->param('ftype');
   my $align = $obj->param('align');
   my $hash = $obj->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'};
   my $caption = $hash->{$align}{'name'};;
   my $url = $obj->_url({'type'=>'Location','action'=>'Align','align'=>$align});
+  my ($chr, $start, $end) = split(/[\:\-]/, $obj->param('r'));
   #if there's a score than show it and also change the name of the track (hacky)
-  if (my $score = $obj->param('score')) {
-    $panel->add_entry({
-      'type'  => 'Score',
-      'label' => sprintf("%.2f", $score),
-    });
-    if ($caption =~ /^(\d+)/) {
-      $caption = "Constrained el. $1 way";
+  if ($obj_type and $id) {
+    my $db_adaptor   = $obj->database("compara");
+    my $adaptor_name = "get_${obj_type}Adaptor";
+    my $feat_adap =  $db_adaptor->$adaptor_name;
+    my $feature = $feat_adap->fetch_by_dbID($id);
+    if ($obj_type eq "ConstrainedElement") {
+      $panel->add_entry({
+        'type'  => 'p-value',
+        'label' => sprintf("%.2e", $feature->p_value),
+        'priority' => 107,
+      }) if ($feature->p_value);
+      $panel->add_entry({
+        'type'  => 'Score',
+        'label' => sprintf("%.2f", $feature->score),
+        'priority' => 106,
+      });
+      if ($caption =~ /^(\d+)/) {
+        $caption = "Constrained el. $1 way";
+      }
+    } elsif ($obj_type eq "GenomicAlignBlock" and $obj->param('ref_id')) {
+      $feature->{reference_genomic_align_id} = $obj->param('ref_id');
+      $start = $feature->reference_genomic_align->dnafrag_start;
+      $end = $feature->{reference_genomic_align}->dnafrag_end;
     }
   }
+  $panel->add_entry({
+    'type'  => 'start',
+    'label' => $start,
+    'priority' => 110,
+  });
+  $panel->add_entry({
+    'type'  => 'end',
+    'label' => $end,
+    'priority' => 109,
+  });
+  $panel->add_entry({
+    'type'  => 'length',
+    'label' => ($end-$start+1). " bp",
+    'priority' => 108,
+  });
   $panel->{'caption'} = $caption;
   $panel->add_entry({
     'label' => 'View alignments',
     'link'  => $url,
+    'priority' => 100, #default
   });
   return;
 }
