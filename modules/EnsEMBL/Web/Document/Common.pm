@@ -83,6 +83,7 @@ sub _common_HTML {
   $self->logo->height             = $style->{'SITE_LOGO_HEIGHT'};             
   $self->logo->alt                = $style->{'SITE_LOGO_ALT'};             
   $self->logo->href               = $style->{'SITE_LOGO_HREF'};             
+  $self->logo->print_image        = $style->{'PRINT_LOGO'};             
 
   $self->tools->logins            = $self->species_defs->ENSEMBL_LOGINS;
   $self->tools->blast             = $self->species_defs->ENSEMBL_BLAST_ENABLED;
