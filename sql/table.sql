@@ -321,7 +321,7 @@ CREATE TABLE sequence (
 
 CREATE TABLE member (
   member_id                   int(10) unsigned NOT NULL auto_increment, # unique internal id
-  stable_id                   varchar(40) NOT NULL, # e.g. ENSP000001234 or P31946
+  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     int(10) DEFAULT '0', 
 #  source_name                 varchar(40) NOT NULL,
   source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALCDS') NOT NULL,
@@ -347,7 +347,7 @@ CREATE TABLE member (
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id)
-) COLLATE=latin1_swedish_ci;
+) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci;
 
 
 ------------------------------------------------------------------------------------
