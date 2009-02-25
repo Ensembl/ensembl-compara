@@ -36,9 +36,9 @@ my ( $no_log, $start_with, $end_with, $farm );
 my ( $help, $info, $email );
 
 my (
-  $dbname,      $dbversion,   $host,       $user,
-  $pass,        $port,        $seq_region, $listonly,
-  $batch_total, $batch_index, $meminfo
+  $dbname,      $dbversion, $host,       $user,
+  $pass,        $port,      $seq_region, $listonly,
+  $batch_total, $batch_index
 );
 
 &GetOptions(
@@ -67,7 +67,6 @@ my (
   'listonly'      => \$listonly,
   'batch_total:s' => \$batch_total,
   'batch_index:s' => \$batch_index,
-  'meminfo'       => \$meminfo
 ) || pod2usage(2);
 
 pod2usage( -verbose => 2 ) if $info;
@@ -117,8 +116,8 @@ if ( defined($farm) ) {
   }
 
   my $lsf_dir = $dump_directory . "/lsf_scripts";
-  if ( !-d $lsf_dir ) {
-    system("mkdir -p $lsf_dir") == 0 or die "Can't create dir $!";
+  if ( !( -d $lsf_dir || system("mkdir -p $lsf_dir") == 0 ) ) {
+    die "Can't create dir '$lsf_dir': $!";
   }
 
   create_general_options();
@@ -144,7 +143,7 @@ if ( defined($farm) ) {
       my $main_job = job_file( $lsf_dir, $species[$index] );
       my $main_bsub;
 
-      my $megs = 12_000;
+      my $megs = 5_000;
       my $queue = ($megs > 15_000 ? 'hugemem' : 'long' );
 
       $main_bsub =
@@ -449,7 +448,7 @@ foreach my $spp (@species) {
     . scalar(@slices)
     . " slices to be processed for $spp\n";
 
-  while ( my $slice = pop @slices ) {
+  while ( my $slice = pop(@slices) ) {
     # generate list of 'unbreakable' blocks around genes
     my ( $blocks, $too_long ) = generate_blocklist( $slice, $spp );
 
@@ -469,19 +468,6 @@ foreach my $spp (@species) {
 
       if ( ++$count >= $CHUNK ) {
 
-        if ( defined($meminfo) ) {
-          printf( "MEMINFO => slice             -> %d\n",
-            total_size($slice) );
-          printf( "MEMINFO => slices            -> %d\n",
-            total_size( \@slices ) );
-          printf( "MEMINFO => chunked_slice     -> %d\n",
-            total_size($chunked_slice) );
-          printf( "MEMINFO => chunked_slices    -> %d\n",
-            total_size($chunked_slices) );
-          printf( "MEMINFO => slice_adaptor     -> %d\n",
-            total_size($slice_adaptor) );
-        }
-
         if ( !defined($nobundle) ) {
           foreach my $format ( sort keys %$formats_dir ) {
             ftp_bundle( $format, $formats_dir->{$format},
@@ -491,13 +477,21 @@ foreach my $spp (@species) {
 
         $batch++;
         $count = 0;
+
+        # Zap caches at the end of the batch.
+        %{ $slice_adaptor->{'sr_name_cache'} } = ();
+        %{ $slice_adaptor->{'sr_id_cache'} }   = ();
+
+        my $ama = $slice_adaptor->db()->get_AssemblyMapperAdaptor();
+        $ama->delete_cache();
+
+        my $seqa = $slice_adaptor->db()->get_SequenceAdaptor();
+        %{ $seqa->{'seq_cache'} } = ();
+
       }
     } ## end while ( my $chunked_slice...
 
-    my $seqa = $slice->adaptor()->db()->get_SequenceAdaptor();
-    %{ $seqa->{'seq_cache'} } = ();
-
-  } ## end while ( my $slice = pop @slices)
+  } ## end while ( my $slice = pop(@slices...
 
   if ( $count > 0 && !defined($nobundle) ) {
     foreach my $format ( sort keys %$formats_dir ) {
@@ -970,9 +964,6 @@ sub info {
 sub create_general_options {
   $general_options = "perl $exe";
 
-  if ( defined($meminfo) ) {
-    $general_options .= " -meminfo";
-  }
   if ( defined($host) ) {
     $general_options .= " -host $host";
   }
