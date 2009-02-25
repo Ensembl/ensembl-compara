@@ -109,6 +109,7 @@ sub fetch_input {
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
+  $self->check_job_fail_options;
 
   if($self->{analysis_data_id}) {
     my $analysis_data_id = $self->{analysis_data_id};
@@ -119,7 +120,8 @@ sub fetch_input {
   $self->print_params if($self->debug);
 
   my $starttime = time();
-  $self->{'protein_tree'} =  $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
+  $self->{'treeDBA'} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{'protein_tree'} =  $self->{'treeDBA'}->
          fetch_tree_at_node_id($self->{'protein_tree_id'});
 
   if($self->debug) {
@@ -172,6 +174,27 @@ sub write_output {
   $self->store_homologies;
 }
 
+
+sub check_job_fail_options
+{
+  my $self = shift;
+
+  if ($self->input_job->retry_count == 1) {
+    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 300 && !defined($self->worker->{HIGHMEM})) {
+      $self->input_job->update_status('HIGHMEM');
+      $self->DESTROY;
+      throw("OrthoTree job too big: try something else and FAIL it");
+    }
+  }
+
+  if($self->input_job->retry_count >= 6) {
+    # $self->dataflow_output_id($self->input_id, 2);
+    $self->input_job->update_status('FAILED');
+
+    $self->DESTROY;
+    throw("OrthoTree job failed >=3 times: try something else and FAIL it");
+  }
+}
 
 sub DESTROY {
   my $self = shift;
@@ -280,9 +303,13 @@ sub run_analysis
   $tmp_time = time();
   printf("build fully linked graph\n") if($self->debug);
   my @genepairlinks;
+
   while (my $protein1 = shift @all_protein_leaves) {
     foreach my $protein2 (@all_protein_leaves) {
       my $ancestor = $protein1->find_first_shared_ancestor($protein2);
+      # Line below will only become faster than above if we find a way to calculate long parent->parent journeys.
+      # This is probably doable by looking at the right1/left1 right2/left2 distances between the 2 proteins
+      # my $ancestor_indexed = $self->{'treeDBA'}->fetch_first_shared_ancestor_indexed($protein1,$protein2);
       my $taxon_level = $self->get_ancestor_taxon_level($ancestor);
       my $distance = $protein1->distance_to_ancestor($ancestor) +
                      $protein2->distance_to_ancestor($ancestor);
@@ -463,7 +490,8 @@ sub load_species_tree_from_tax
     next if ($gdb->name =~ /Ancestral/);
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
     $taxon->no_autoload_children;
-    $taxon->add_tag("taxon_id") = $taxon->taxon_id; # homogenize with load_species_tree_from_file
+    # $taxon->add_tag("taxon_id") = $taxon->taxon_id; # homogenize with load_species_tree_from_file
+    $taxon->{_tags}{taxon_id} = $taxon->taxon_id; # line above seems to fail somehow
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
@@ -1095,6 +1123,48 @@ sub store_homologies
       'OrthoTree_types_hashstr', 
       $self->encode_hash($self->{'orthotree_homology_counts'})) unless ($self->{'_readonly'});
 
+  # FIXME: this has to go to OrthoTree because we haven't stored taxon_id and taxon_name yet here
+  # Go through and calculate species sampling and count.
+    # Create our taxonomic tree.
+#   my $ta = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+#   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
+#   my $taxon_tree=undef;
+#   foreach my $gdb (@{$gdb_list}) {
+#     next if ($gdb->name =~ /Ancestral/);
+#     next if ($gdb->name =~ /ilurana/);
+#     my $taxon = $ta->fetch_node_by_taxon_id($gdb->taxon_id);
+#     $taxon->no_autoload_children;
+#     $taxon_tree = $taxon->root unless($taxon_tree);
+#     $taxon_tree->merge_node_via_shared_ancestor($taxon);
+#   }
+#   $taxon_tree = $taxon_tree->minimize_tree;
+#   my $tree_species_sampling = 0;
+#   my $tree_species_num = 0;
+#   my $num_leaves = $self->{'protein_tree'}->num_leaves;
+#   if ($num_leaves >= 4) {
+#     my $taxon_id = $self->{'protein_tree'}->get_tagvalue("taxon_id");
+#     my $taxon_name = $self->{'protein_tree'}->get_tagvalue("taxon_name");
+#     #print "ID: $taxon_id  $taxon_name\n";
+#     $DB::single=1;1;
+#     my $potential_species = scalar @{$taxon_tree->find_node_by_node_id($taxon_id)->get_all_leaves};
+#     if ($potential_species > 1) {
+#       my %species;
+#       my @species_array = map {$_->taxon->name} @{$self->{'protein_tree'}->get_all_leaves};  # Create an array of species names.
+#       @species{@species_array} = (1) x @species_array;  # Fill the hashtable with the taxon names of all represented species.
+#       my $represented_species = scalar keys %species; # Count up the number of unique represented species.
+#       my $species_sampling = $represented_species / $potential_species;
+#       # Tree species sampling.
+#       $tree_species_sampling = sprintf("%.4f",$species_sampling);  # Format the decimals.
+#       # Tree species number.
+#       $tree_species_num = $represented_species;
+#     } else {
+#       $tree_species_sampling = 1;
+#       $tree_species_num = 1;
+#     }
+#   }
+#   $self->{'protein_tree'}->store_tag("tree_species_sampling",$tree_species_sampling);
+#   $self->{'protein_tree'}->store_tag("tree_species_num",$tree_species_num);
+
   return undef;
 }
 
@@ -1144,7 +1214,7 @@ sub store_gene_link_as_homology
   # NEED TO BUILD THE Attributes (ie homology_members)
   my ($cigar_line1, $perc_id1, $perc_pos1,
       $cigar_line2, $perc_id2, $perc_pos2) = 
-        $self->generate_attribute_arguments($protein1, $protein2);
+        $self->generate_attribute_arguments($protein1, $protein2,$type);
 
   # QUERY member
   #
@@ -1329,20 +1399,29 @@ sub _treefam_genepairlink_stats
 }
 
 sub generate_attribute_arguments {
-  my ($self, $protein1, $protein2) = @_;
+  my ($self, $protein1, $protein2, $type) = @_;
+
+  my $new_aln1_cigarline = "";
+  my $new_aln2_cigarline = "";
+
+  my $perc_id1 = 0;
+  my $perc_pos1 = 0;
+  my $perc_id2 = 0;
+  my $perc_pos2 = 0;
+  # This speeds up the pipeline for this portion of the homology table
+  if ($type eq 'between_species_paralog') {
+    return ($new_aln1_cigarline, $perc_id1, $perc_pos1, $new_aln2_cigarline, $perc_id2, $perc_pos2);
+  }
 
   my $identical_matches = 0;
   my $positive_matches = 0;
   my $m_hash = $self->get_matrix_hash;
 
-  my @aln1 = split(//, $protein1->alignment_string);
-  my @aln2 = split(//, $protein2->alignment_string);
-
   my ($aln1state, $aln2state);
   my ($aln1count, $aln2count);
 
-  my $new_aln1_cigarline = "";
-  my $new_aln2_cigarline = "";
+  my @aln1 = split(//, $protein1->alignment_string);
+  my @aln2 = split(//, $protein2->alignment_string);
 
   for (my $i=0; $i <= $#aln1; $i++) {
     next if ($aln1[$i] eq "-" && $aln2[$i] eq "-");
@@ -1400,15 +1479,11 @@ sub generate_attribute_arguments {
     $new_aln2_cigarline .= $aln2count.$aln2state;
   }
   my $seq_length1 = $protein1->seq_length;
-  my $perc_id1 = 0;
-  my $perc_pos1 = 0;
   unless (0 == $seq_length1) {
     $perc_id1 = $identical_matches*100.0/$seq_length1;
     $perc_pos1 = $positive_matches*100.0/$seq_length1;
   }
   my $seq_length2 = $protein2->seq_length;
-  my $perc_id2 = 0;
-  my $perc_pos2 = 0;
   unless (0 == $seq_length2) {
     $perc_id2 = $identical_matches*100.0/$seq_length2;
     $perc_pos2 = $positive_matches*100.0/$seq_length2;
