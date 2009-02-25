@@ -37,11 +37,14 @@ sub availability {
     $hash->{'gene'}       = 1;
     $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
     my $compara_db  = $self->database('compara');
-    my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
-    my ($res) = $compara_dbh->selectrow_array(
-      'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1',
-      {}, $self->Obj->stable_id
-    );
+    my $res = 0;
+    if ($compara_db) {
+      my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
+      ($res) = $compara_dbh->selectrow_array(
+        'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1',
+        {}, $self->Obj->stable_id
+      );
+    }
     $hash->{'family'}     = $res ? 1 : 0;
   } elsif( $self->Obj->isa('Bio::EnsEMBL::Compara::Family' ) ) {
     $hash->{'family'}     = 1;
