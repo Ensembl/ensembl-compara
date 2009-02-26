@@ -1,3 +1,4 @@
+
 # Copyright EnsEMBL 2004
 #
 # Ensembl module for Bio::EnsEMBL::DBSQL::GenomicAlignBlockAdaptor
@@ -525,6 +526,29 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             $limit_index_start,
             $restrict
         );
+
+    #If the GenomicAlignBlock has been restricted, set up the correct values 
+    #for restricted_aln_start and restricted_aln_end
+    foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
+
+	#print "GAB restricted start " . $this_genomic_align_block->{'restricted_aln_start'} . " end " . $this_genomic_align_block->{'restricted_aln_end'} . " length " . $this_genomic_align_block->{'original_length'} . "\n";
+    
+    
+	if (defined $this_genomic_align_block->{'restricted_aln_start'}) {
+	    my $tmp_start = $this_genomic_align_block->{'restricted_aln_start'};
+	    #if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand) {
+
+	    #the start and end are always calculated for the forward strand
+	    if ($reference_slice->strand == 1) {
+		$this_genomic_align_block->{'restricted_aln_start'}++;
+		$this_genomic_align_block->{'restricted_aln_end'} = $this_genomic_align_block->{'original_length'} - $this_genomic_align_block->{'restricted_aln_end'};
+	    } else {
+		$this_genomic_align_block->{'restricted_aln_start'} = $this_genomic_align_block->{'restricted_aln_end'} + 1;
+		$this_genomic_align_block->{'restricted_aln_end'} = $this_genomic_align_block->{'original_length'} - $tmp_start;
+	    }
+	    #print "GAB after restricted start " . $this_genomic_align_block->{'restricted_aln_start'} . " end " . $this_genomic_align_block->{'restricted_aln_end'} . " length " . $this_genomic_align_block->{'original_length'} . "\n";
+	}
+    }
 
     my $top_slice = $slice_adaptor->fetch_by_region($dnafrag_type, 
                                                     $this_slice->seq_region_name);
