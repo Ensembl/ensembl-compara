@@ -232,15 +232,21 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	    next;
 	}
 
-	#need to reverse cigar_line and scores
-	if ($slice->strand !=  $dnafrag_strand) {
-	    $cigar_line = join("", reverse ($cigar_line=~(/(\d*[GDMIX])/g)));
-	    $conservation_scores = _reverse($conservation_scores, $gab_length);
-	    $dnafrag_strand = $slice->strand;
-	}
- 
 	#reset _score_index for new conservation_scores
 	$_score_index = 0;
+
+	#print "slice start " . $slice->start . " " . $slice->end . " " . $slice->strand . " strand $dnafrag_strand cigar " . substr($cigar_line,0, 10) . "\n";
+
+	#if dnafrag_strand is -1, reverse cigar_line, scores so that they 
+	#are always on the forward strand
+	if ($dnafrag_strand == -1) {
+
+	    $cigar_line = join("", reverse ($cigar_line=~(/(\d*[GDMIX])/g)));
+            $conservation_scores = _reverse($conservation_scores, $gab_length);
+            $dnafrag_strand = 1;
+	}
+
+	#print "after slice start " . $slice->start . " " . $slice->end . " " . $slice->strand . " strand $dnafrag_strand cigar " . substr($cigar_line,0, 10) . "\n";
 
 	#if want one score per base in the alignment, use faster method 
 	#doesn't bother with any binning
@@ -249,8 +255,20 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	} else {
 	    $scores = _get_aligned_scores_from_cigar_line($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $scores);
 	    
-	}
+	} 
     }
+    #need to reverse scores
+    if ($slice->strand == -1) {
+	#reverse scores array
+	@$scores = reverse(@$scores);
+	#reverse positions
+	my $max_pos = $scores->[0]->position;
+	foreach my $score (@$scores) {
+	    $score->position($max_pos - $score->position + 1);
+	}
+	#print "reverse scores\n";
+    }
+    
 
     if (scalar(@$scores) == 0) {
 	return $scores;
@@ -465,9 +483,11 @@ sub fetch_all_by_MethodLinkSpeciesSet_SliceOLD {
 
 =cut
 sub fetch_all_by_GenomicAlignBlock {
-    my ($self, $genomic_align_block, $align_start, $align_end, $slice_length,
+    my ($self, $genomic_align_block, $start, $end, $slice_length,
 	$display_size, $display_type, $window_size) = @_;
 
+
+    #print "fetch_all_by_GenomicAlignBlock start $start end $end\n";
     my $scores = [];
 
     #default display_size is 700
@@ -480,19 +500,35 @@ sub fetch_all_by_GenomicAlignBlock {
 	$display_type = "AVERAGE";
     }
 
-    #default align_start is 1
-    if (!defined $align_start) {
-	$align_start = 1;
+    #default start is 1
+    if (!defined $start) {
+	$start = 1;
     }
 
-    #default align_end is the genomic_align_block length    
-    if (!defined $align_end) {
-	$align_end = $genomic_align_block->length;
+    #default end is the genomic_align_block length    
+    if (!defined $end) {
+	$end = $genomic_align_block->length;
     }
 
     #default slice_length is the genomic_align_block length
     if (!defined $slice_length) {
 	$slice_length = $genomic_align_block->length;
+    }
+
+    #keep track of original start and end
+    my $align_start = $start;
+    my $align_end = $end;
+
+    #print "restricted start " . $genomic_align_block->{'restricted_aln_start'} . " end " . $genomic_align_block->{'restricted_aln_end'} . "\n";
+
+    #If the GenomicAlignBlock has been restricted, use these values in 
+    #align_start and align_end
+    if (defined $genomic_align_block->{'restricted_aln_start'}) {
+	$align_start += $genomic_align_block->{'restricted_aln_start'} - 1;
+    }
+    if (defined $genomic_align_block->{'restricted_aln_end'}) {
+	
+	$align_end = $genomic_align_block->{'restricted_aln_end'} - ($genomic_align_block->length-$align_end);
     }
 
     #set up bucket object for storing bucket_size number of scores 
@@ -563,11 +599,13 @@ sub fetch_all_by_GenomicAlignBlock {
     #need to reverse conservation scores if reference species is complemented
     if ($genomic_align_block->get_original_strand == 0) {
 	$conservation_scores = _reverse($conservation_scores);
+
     }
     
     #reset _score_index for new conservation_scores
     $_score_index = 0;
 
+    #print "align_start $align_start align_end $align_end start $start end $end\n";
     $scores = $self->_get_alignment_scores($conservation_scores, $align_start, 
 					   $align_end, $display_type, $window_size, 
 					   $genomic_align_block);
@@ -575,17 +613,23 @@ sub fetch_all_by_GenomicAlignBlock {
     if (scalar(@$scores) == 0) {
 	return $scores;
     }
-
-    #Find the min and max scores for y axis scaling. Save in first
+    
+    my $all_scores;
+    foreach my $this_conservation_score (@$scores) {
+	$this_conservation_score->position($this_conservation_score->position + $start - 1);
+	push (@$all_scores, $this_conservation_score);
+    }
+ 
+   #Find the min and max scores for y axis scaling. Save in first
     #conservation score object
-    my ($min_y_axis, $max_y_axis) =  _find_min_max_score($scores);
+    my ($min_y_axis, $max_y_axis) =  _find_min_max_score($all_scores);
 
     #add min and max scores to the first conservation score object
-    if ((scalar @$scores) > 0) {
-	$scores->[0]->y_axis_min($min_y_axis);
-	$scores->[0]->y_axis_max($max_y_axis);
+    if ((scalar @$all_scores) > 0) {
+	$all_scores->[0]->y_axis_min($min_y_axis);
+	$all_scores->[0]->y_axis_max($max_y_axis);
     }
-   return ($scores);
+   return ($all_scores);
 
 }
 
@@ -1547,9 +1591,9 @@ sub _get_alignment_scores {
     #need to shift positions if align_start is in an uncalled region because
     #need to add the uncalled positions up to the start of the next called 
     #block
-    for (my $i = 0; $i < scalar(@$aligned_scores); $i++) {
-	$aligned_scores->[$i]->{position} = $aligned_scores->[$i]->{position}-$align_start+1;  
-      }
+   # for (my $i = 0; $i < scalar(@$aligned_scores); $i++) {
+#	$aligned_scores->[$i]->{position} = $aligned_scores->[$i]->{position}-$align_start+1;  
+ #     }
 
     return $aligned_scores;
 }
