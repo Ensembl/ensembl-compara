@@ -82,15 +82,17 @@ if ( !defined($dbname) ) {
     -pass       => $pass,
     -user       => $user,
     -db_version => $dbversion,
+    -no_cache   => 1
   );
 } else {
   Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host    => $host,
-    -user    => $user,
-    -port    => $port,
-    -pass    => $pass,
-    -species => "dump",
-    -dbname  => $dbname
+    -host     => $host,
+    -user     => $user,
+    -port     => $port,
+    -pass     => $pass,
+    -species  => "dump",
+    -dbname   => $dbname,
+    -no_cache => 1
   );
 
   push @species, "dump";
@@ -398,57 +400,67 @@ foreach my $spp (@species) {
 
   my $batch = 0;
   my $count = 0;
-  my $CHUNK = $spp eq "mus_musculus" ? 100 : 1000;
+  my $CHUNK = ( $spp eq "mus_musculus" ? 100 : 1000 );
   my @too_long;
 
   # loop through every non-redundant region in the DB
   my $inc_dupes  = 1;   # include duplicate regions like PARs?
   my $inc_nonref = 1;   # include non-reference regions like haplotypes?
 
-  # Get slices --------------------------------------------------
+  my @seq_region_ids;
+  my %chr_sorter;
+  {
+    # Get slices --------------------------------------------------
+
+    my $slice_adaptor = $reg->get_adaptor( $spp, 'Core', 'Slice' );
+
+    $slice_adaptor->cache_toplevel_seq_mappings();
+
+    # Sort slices
+    my $i = 1;
+
+    if ( defined( $chr_list{ lc($spp) } ) ) {
+      foreach ( $chr_list{ lc($spp) } || [] ) {
+        $chr_sorter{$_} = $i++;
+      }
+    }
+
+    my @slices;
+    if ( defined($seq_region) ) {
+      push @slices,
+        $slice_adaptor->fetch_by_region( undef, $seq_region );
+    } else {
+      if ( keys %chr_sorter ) {
+        info( 1, "Using chr sorter" );
+        @slices = sort {
+          $chr_sorter{ $b->seq_region_name() } <=>
+            $chr_sorter{ $a->seq_region_name() }
+            || $a->seq_region_name() cmp $b->seq_region_name()
+          } @{
+          $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
+            $inc_nonref )
+            || [] };
+      } else {
+        info( 1, "Unsorted results" );
+        @slices = @{
+          $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
+            $inc_nonref )
+            || [] };
+      }
+    }
+
+    @seq_region_ids = map { $_->get_seq_region_id() } reverse(@slices);
+  }
 
   my $slice_adaptor = $reg->get_adaptor( $spp, 'Core', 'Slice' );
 
-  $slice_adaptor->cache_toplevel_seq_mappings();
+  print("There are "
+      . scalar(@seq_region_ids)
+      . " seq_regions to be processed for $spp\n" );
 
-  # Sort slices
-  my %chr_sorter;
-  my $i = 1;
+  while ( my $seq_region_id = shift(@seq_region_ids) ) {
+    my $slice = $slice_adaptor->fetch_by_seq_region_id($seq_region_id);
 
-  if ( defined( $chr_list{ lc($spp) } ) ) {
-    foreach ( $chr_list{ lc($spp) } || [] ) {
-      $chr_sorter{$_} = $i++;
-    }
-  }
-
-  my @slices;
-  if ( defined($seq_region) ) {
-    push @slices, $slice_adaptor->fetch_by_region( undef, $seq_region );
-  } else {
-    if ( keys %chr_sorter ) {
-      info( 1, "Using chr sorter" );
-      @slices = sort {
-        $chr_sorter{ $b->seq_region_name } <=>
-          $chr_sorter{ $a->seq_region_name }
-          || $a->seq_region_name cmp $b->seq_region_name
-        } @{
-        $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
-          $inc_nonref )
-          || [] };
-    } else {
-      info( 1, "Unsorted results" );
-      @slices = @{
-        $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
-          $inc_nonref )
-          || [] };
-    }
-  }
-
-  print "there are "
-    . scalar(@slices)
-    . " slices to be processed for $spp\n";
-
-  while ( my $slice = pop(@slices) ) {
     # generate list of 'unbreakable' blocks around genes
     my ( $blocks, $too_long ) = generate_blocklist( $slice, $spp );
 
@@ -461,6 +473,7 @@ foreach my $spp (@species) {
     # dump flatfiles for the chunks
     while ( my $chunked_slice = shift @{$chunked_slices} ) {
       my $seq = $chunked_slice->seq();
+
       foreach my $format ( sort keys %$formats_dir ) {
         dump_format( $chunked_slice, $format, $formats_dir->{$format},
           $seq );
@@ -478,20 +491,20 @@ foreach my $spp (@species) {
         $batch++;
         $count = 0;
 
-        # Zap caches at the end of the batch.
-        %{ $slice_adaptor->{'sr_name_cache'} } = ();
-        %{ $slice_adaptor->{'sr_id_cache'} }   = ();
-
-        my $ama = $slice_adaptor->db()->get_AssemblyMapperAdaptor();
-        $ama->delete_cache();
-
-        my $seqa = $slice_adaptor->db()->get_SequenceAdaptor();
-        %{ $seqa->{'seq_cache'} } = ();
-
       }
     } ## end while ( my $chunked_slice...
 
-  } ## end while ( my $slice = pop(@slices...
+    # Zap caches!
+    %{ $slice_adaptor->{'sr_name_cache'} } = ();
+    %{ $slice_adaptor->{'sr_id_cache'} }   = ();
+
+    my $ama = $slice_adaptor->db()->get_AssemblyMapperAdaptor();
+    $ama->delete_cache();
+
+    my $seqa = $slice_adaptor->db()->get_SequenceAdaptor();
+    %{ $seqa->{'seq_cache'} } = ();
+
+  } ## end while ( my $seq_region_id...
 
   if ( $count > 0 && !defined($nobundle) ) {
     foreach my $format ( sort keys %$formats_dir ) {
@@ -859,14 +872,15 @@ sub dump_format {
 #------------------------------------------------------------------------------
 sub ftp_bundle {
   my ( $format, $spp_dumpdir, $batch, $spp, $chr_sorter ) = @_;
+
   my $count = 0;
   my $gz;
-  my $CHUNK = $spp eq "mus_musculus" ? 100 : 1000;
+  my $CHUNK = ( $spp eq "mus_musculus" ? 100 : 1000 );
 
   # utils::Tool::info( 1,
   #   "Generating compressed data archives for FTP site (chunk=$CHUNK).."
   # );
-  opendir DIR, "$spp_dumpdir" or warn "$spp_dumpdir: $!\n";
+  opendir( DIR, "$spp_dumpdir" ) or warn("$spp_dumpdir: $!\n");
 
   # Chromosome sorter
   my @files;
@@ -874,6 +888,7 @@ sub ftp_bundle {
     next if ( -d "$file" || $file !~ /^\w/ || $file !~ /.*$format$/x );
     push @files, $file;
   }
+
   closedir(DIR);
 
   # unless ( -d "$spp_dumpdir/FTP" ) {
@@ -920,13 +935,16 @@ sub ftp_bundle {
   $gz->gzclose();
 
   # Tidy up the directories
-  opendir( DIR, $spp_dumpdir ) or die " can't open dir $spp_dumpdir:$!";
+  opendir( DIR, $spp_dumpdir )
+    or die(" can't open dir $spp_dumpdir:$!");
   #  print "In directory $spp_dumpdir\n";
+
   while ( defined( my $file = readdir(DIR) ) ) {
     next if $file =~ /\.gz$|^FTP$|README/;
     next if $file =~ /^\.+$/;
-    unlink "$spp_dumpdir/$file" or warn "Can't delete $file : $!\n";
+    unlink("$spp_dumpdir/$file") or warn("Can't delete $file : $!\n");
   }
+
   closedir(DIR);
 
   # utils::Tool::info( 1,
