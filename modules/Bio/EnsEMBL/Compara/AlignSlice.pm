@@ -571,16 +571,15 @@ sub get_SimpleAlign {
   Arg  2     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "MAX")
   Arg  3     : (opt) integer $window_size
   Example    : my $conservation_scores =
-                    $align_slice->get_all_ConservationScores(1000, "MAX", 10);
+                    $align_slice->get_all_ConservationScores(1000, "AVERAGE", 10);
   Description: Retrieve the corresponding
                Bio::EnsEMBL::Compara::ConservationScore objects for the
-               Bio::EnsEMBL::Compara::GenomicAlignBlock objects underlying
-               this Bio::EnsEMBL::Compara::AlignSlice object. This method
-               calls the Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor->
-               fetch_all_by_GenomicAlignBlock() method. It sets up the align_start,
-               align_end and slice_length and map the resulting objects onto
-               the AlignSlice. $diaplay_slize, $display_type and $window_size
-               are passed as it to the fetch_all_by_GenomicAlignBlock() method.
+               Bio::EnsEMBL::Compara::AlignSlice object. It calls either
+               _get_expanded_conservation_scores if the AlignSlice has 
+               "expanded" set or _get_condensed_conservation_scores for 
+               condensed mode.
+               It sets up the align_start, align_end and slice_length and map 
+               the resulting objects onto the AlignSlice. 
                Please refer to the documentation in
                Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor
                for more details.
@@ -598,54 +597,135 @@ sub get_all_ConservationScores {
   my $y_axis_max;
 
   my $conservation_score_adaptor = $self->adaptor->db->get_ConservationScoreAdaptor();
-  foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks()}) {
-    my $all_these_conservation_scores = $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock(
-        $this_genomic_align_block, $this_genomic_align_block->{_alignslice_from},
-        $this_genomic_align_block->{_alignslice_to}, $self->get_all_Slices()->[0]->length, 
-        $display_size, $display_type, $window_size);
-#     ## Debug
-#     print "PARAMETERS FOR fetch_all_by_GenomicAlignBlock(): ", join(", ", 
-#         $this_genomic_align_block->dbID, $this_genomic_align_block->{_alignslice_from},
-#         $this_genomic_align_block->{_alignslice_to}, $self->get_all_Slices()->[0]->length), "\n";
-
-    #initialise y axis min and max
-    if (!defined $y_axis_max) {
-	$y_axis_max = $all_these_conservation_scores->[0]->y_axis_max;
-	$y_axis_min = $all_these_conservation_scores->[0]->y_axis_min;
-    }
-    #find overall min and max 
-    if ($y_axis_min > $all_these_conservation_scores->[0]->y_axis_min) {
-	$y_axis_min = $all_these_conservation_scores->[0]->y_axis_min;
-    }
-    if ($y_axis_max < $all_these_conservation_scores->[0]->y_axis_max) {
-	$y_axis_max = $all_these_conservation_scores->[0]->y_axis_max;
-    }
-
-    foreach my $this_conservation_score (@$all_these_conservation_scores) {
-      $this_conservation_score->position($this_conservation_score->position +
-          $this_genomic_align_block->{_alignslice_from} - 1 +
-          $this_genomic_align_block->{_alignslice_start});
-      push (@$all_conservation_scores, $this_conservation_score);
-    }
+   
+  #Get scores in either expanded or condensed mode
+  if ($self->{expanded}) {
+      $all_conservation_scores = $self->_get_expanded_conservation_scores($conservation_score_adaptor, $display_size, $display_type, $window_size);
+  } else {
+      $all_conservation_scores = $self->_get_condensed_conservation_scores($conservation_score_adaptor, $display_size, $display_type, $window_size);
   }
 
-  #set overall min and max
-  $all_conservation_scores->[0]->y_axis_min($y_axis_min);
-  $all_conservation_scores->[0]->y_axis_max($y_axis_max);
-
-#   ## Debug
-#   foreach my $this_conservation_score (@$all_conservation_scores) {
-#     print "CONS_SCORE: ", join(" -- ",
-#         "gab_id=".$this_conservation_score->genomic_align_block_id,
-#         "pos=".$this_conservation_score->position,
-#         "win_size=".$this_conservation_score->window_size,
-#         "expect=".$this_conservation_score->expected_score,
-#         "observ=".$this_conservation_score->observed_score,
-#         "diff=".$this_conservation_score->diff_score,
-#         ), "\n";
-#   }
-
   return $all_conservation_scores;
+}
+
+=head2 get_expanded_conservation_scores
+
+  Arg  1     : Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor
+  Arg  2     : (opt) integer $display_size (default 700)
+  Arg  3     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "MAX")
+  Arg  4     : (opt) integer $window_size
+  Example    : my $conservation_scores =
+                    $self->_get_expanded_conservation_scores($cs_adaptor, 1000, "AVERAGE", 10);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::ConservationScore objects for the
+               Bio::EnsEMBL::Compara::GenomicAlignBlock objects underlying
+               this Bio::EnsEMBL::Compara::AlignSlice object. This method
+               calls the Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor->
+               fetch_all_by_GenomicAlignBlock() method. It sets up the align_start,
+               align_end and slice_length and map the resulting objects onto
+               the AlignSlice. $diaplay_slize, $display_type and $window_size
+               are passed to the fetch_all_by_GenomicAlignBlock() method.
+               Please refer to the documentation in
+               Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor
+               for more details.
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore 
+               objects.
+  Caller     : object::methodname
+  Status     : At risk
+
+=cut
+sub _get_expanded_conservation_scores {
+    my ($self, $conservation_score_adaptor, $display_size, $display_type, $window_size) = @_;
+    my $y_axis_min;
+    my $y_axis_max;
+
+    my $all_conservation_scores = [];
+    foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks()}) {
+	
+	$this_genomic_align_block->{restricted_aln_start} = $this_genomic_align_block->{_alignslice_from};
+	$this_genomic_align_block->{restricted_aln_end} = $this_genomic_align_block->{_alignslice_to};
+
+	my $all_these_conservation_scores = $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock(
+													$this_genomic_align_block, 1,$this_genomic_align_block->length, $self->get_all_Slices()->[0]->length, 
+													$display_size, $display_type, $window_size);
+	
+	#initialise y axis min and max
+	if (!defined $y_axis_max) {
+	    $y_axis_max = $all_these_conservation_scores->[0]->y_axis_max;
+	    $y_axis_min = $all_these_conservation_scores->[0]->y_axis_min;
+	}
+	#find overall min and max 
+	if ($y_axis_min > $all_these_conservation_scores->[0]->y_axis_min) {
+	    $y_axis_min = $all_these_conservation_scores->[0]->y_axis_min;
+	}
+	if ($y_axis_max < $all_these_conservation_scores->[0]->y_axis_max) {
+	    $y_axis_max = $all_these_conservation_scores->[0]->y_axis_max;
+	}
+	push (@$all_conservation_scores, @$all_these_conservation_scores);
+    }
+    #set overall min and max
+    $all_conservation_scores->[0]->y_axis_min($y_axis_min);
+    $all_conservation_scores->[0]->y_axis_max($y_axis_max);
+
+    return $all_conservation_scores;
+}
+
+=head2 get_condensed_conservation_scores
+
+  Arg  1     : Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor
+  Arg  2     : (opt) integer $display_size (default 700)
+  Arg  3     : (opt) string $display_type (one of "AVERAGE" or "MAX") (default "MAX")
+  Arg  4     : (opt) integer $window_size
+  Example    : my $conservation_scores =
+                    $self->_get_expanded_conservation_scores($cs_adaptor, 1000, "AVERAGE", 10);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::ConservationScore objects for the
+               reference Bio::EnsEMBL::Slice object of 
+               this Bio::EnsEMBL::Compara::AlignSlice object. This method
+               calls the Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor->
+               fetch_all_by_MethodLinkSpeciesSet_Slice() method. It sets up 
+               the align_start, align_end and slice_length and map the 
+               resulting objects onto the AlignSlice. $display_slize, 
+               $display_type and $window_size are passed to the 
+               fetch_all_by_MethodLinkSpeciesSet_Slice() method.
+               Please refer to the documentation in
+               Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor
+               for more details.
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore 
+               objects.
+  Caller     : object::methodname
+  Status     : At risk
+
+=cut
+sub _get_condensed_conservation_scores {
+    my ($self, $conservation_score_adaptor, $display_size, $display_type, $window_size) = @_;
+
+    my $all_conservation_scores = [];
+
+    throw ("Must have method_link_species_set defined to retrieve conservation scores for a condensed AlignSlice") if (!defined $self->{_method_link_species_set});
+    throw ("Must have reference slice defined to retrieve conservation scores for a condensed AlignSlice") if (!defined $self->{'reference_slice'});
+
+    #really hacky to get the mlss for the conservation score (which then uses 
+    #it to get the multiple alignment mlss, which is what I started with!
+    my $key = "gerp_%";
+    my $sql = "SELECT meta_key FROM meta WHERE meta_key like ? AND meta_value = ?";
+    my $sth = $conservation_score_adaptor->prepare($sql);
+    $sth->execute($key, $self->{_method_link_species_set}->dbID);
+    
+    my $cs_mlss_id;
+    while (my $arrRef = $sth->fetchrow_arrayref) {
+	($cs_mlss_id) = $arrRef->[0] =~ /gerp_(\d+)/;
+    }
+    $sth->finish;
+
+    throw ("Unable to find conservation score method_link_species_set for this multiple alignment " . $self->{_method_link_species_set}->dbID) if (!defined $cs_mlss_id);
+    my $mlss_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor();
+
+    my $cs_mlss = $mlss_adaptor->fetch_by_dbID($cs_mlss_id);
+
+    my $all_conservation_scores = $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($cs_mlss, $self->{'reference_slice'}, $display_size, $display_type, $window_size);
+    
+    return $all_conservation_scores;
 }
 
 
