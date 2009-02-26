@@ -177,7 +177,7 @@ sub submitGenome
     return;
   }
 
-  my $meta = $genomeDBA->get_MetaContainer;
+  my $meta = $genomeDBA->get_MetaContainer; 
   my $taxon_id = $meta->get_taxonomy_id;
 
 #   # If we are in E_G then we need to look for a taxon in meta by 'NAME.species.taxonomy_id'
@@ -210,7 +210,7 @@ sub submitGenome
     if (defined($species->{species})) {
       $genome_name = $species->{species};
     } else {
-      $genome_name = (defined $meta->get_Species) ? meta->get_Species->binomial : $species->{species};
+      $genome_name = (defined $meta->get_Species) ? $meta->get_Species->binomial : $species->{species};
     }
   }
 
