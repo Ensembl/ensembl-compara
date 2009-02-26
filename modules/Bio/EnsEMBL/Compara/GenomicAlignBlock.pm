@@ -1665,7 +1665,7 @@ sub restrict_between_reference_positions {
   ## Create a new Bio::EnsEMBL::Compara::GenomicAlignBlock object
   throw("Reference GenomicAlign not found!") if (!$reference_genomic_align);
 
-  my @reference_cigar = grep {$_} split(/(\d*[GDMX])/, $reference_genomic_align->cigar_line);
+  my @reference_cigar = grep {$_} split(/(\d*[GDMXI])/, $reference_genomic_align->cigar_line);
   if ($negative_strand) {
     @reference_cigar = reverse @reference_cigar;
   }
@@ -1677,7 +1677,7 @@ sub restrict_between_reference_positions {
     my $original_seq_length = 0;
     my $new_cigar_piece = "";
     while (my $cigar = shift(@reference_cigar)) {
-      my ($num, $type) = ($cigar =~ /^(\d*)([GDMX])/);
+      my ($num, $type) = ($cigar =~ /^(\d*)([GDMXI])/);
       $num = 1 if ($num eq "");
       $length_of_truncated_seq_at_the_start += $num;
       if ($type eq "M") {
@@ -1732,6 +1732,7 @@ sub restrict_between_reference_positions {
   if ($length_of_truncated_seq_at_the_start <= 0 and $length_of_truncated_seq_at_the_end <= 0) {
     return wantarray ? ($self, 1, $self->length) : $self;
   }
+
   my ($aln_start, $aln_end);
   if ($negative_strand) {
     $aln_start = $length_of_truncated_seq_at_the_end + 1;
@@ -1740,9 +1741,15 @@ sub restrict_between_reference_positions {
     $aln_start = $length_of_truncated_seq_at_the_start + 1;
     $aln_end = $self->length - $length_of_truncated_seq_at_the_end;
   }
-  
   $genomic_align_block = $self->restrict_between_alignment_positions($aln_start, $aln_end, $skip_empty_GenomicAligns);
   $new_reference_genomic_align = $genomic_align_block->reference_genomic_align;
+
+  $genomic_align_block->{'restricted_aln_start'} = $length_of_truncated_seq_at_the_start;
+  $genomic_align_block->{'restricted_aln_end'} = $length_of_truncated_seq_at_the_end;
+  $genomic_align_block->{'original_length'} = $self->length;
+
+  #print "length at start $length_of_truncated_seq_at_the_start end $length_of_truncated_seq_at_the_end aln_start $aln_start aln_end $aln_end \n";
+
   if (defined $self->reference_slice) {
     if ($self->reference_slice_strand == 1) {
       $genomic_align_block->reference_slice_start($new_reference_genomic_align->dnafrag_start -
