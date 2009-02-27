@@ -3,10 +3,6 @@
  border-collapse: collapse; background-color: [[MH_BG]]
 }
 
-@media print {
-  .mh {background-color:#fffff;}
-}
-
   .mh td { border: 0; padding: 0; margin: 0 }
 
 /** Cell 1 - the main e! logo - currently 40x45 **/
@@ -41,3 +37,9 @@
             white-space: nowrap; padding: 10px 10px 0 0; }
   #login-status a { color:[[MH_LINK]]; text-decoration: none }
   #login-status a:hover { color: [[MH_HOVER]];}
+
+@media print {
+  .mh {background-color:#fffff;}
+  #mh_lnk a, #login-status, #login-status a {color:#000000;}
+}
+
