@@ -6,6 +6,7 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
 use CGI qw(escapeHTML);
 use EnsEMBL::Web::Data::Movie;
+use EnsEMBL::Web::Document::HTML::MovieList;
 use EnsEMBL::Web::Document::SpreadSheet;
 
 sub _init {
@@ -58,24 +59,7 @@ sub content {
   }
   elsif (scalar(@movies) > 0 && $movies[0]) {
 
-    $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly (the list will also be included in the Release Email, which is sent to the <a href="/info/about/contact/mailing.html">ensembl-announce mailing list</a>).</p>
-<p class="space-below">Except where noted, there is no audio - popup text is used in place of a soundtrack.</p>
-<p class="space-below">Please note that files are around 3MB per minute, so if you are on a dialup connection, playback may be jerky.</p>);
- 
-    my $table = EnsEMBL::Web::Document::SpreadSheet->new();
-
-    $table->add_columns(
-      {'key' => "title", 'title' => 'Title', 'width' => '60%', 'align' => 'left' },
-      {'key' => "mins", 'title' => 'Running time (minutes)', 'width' => '20%', 'align' => 'left' },
-    );
-
-    foreach my $movie (@movies) {
-
-      my $title_link = sprintf(qq(<a href="/Help/Movie?id=%s;%s" class="modal_link">%s</a>\n), $movie->help_record_id, $referer, $movie->title);
-      $table->add_row( { 'title'  => $title_link, 'mins' => $movie->length } );
-
-    }
-    $html .= $table->render;
+    $html .= EnsEMBL::Web::Document::HTML::MovieList::render();
 
   }
   else {
