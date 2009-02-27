@@ -49,6 +49,9 @@ sub handler {
         { order_by => 'priority' },
       );
       $r->headers_out->set('Expires' => Apache2::Util::ht_time($r->pool, $r->request_time + 86400*30*12) );
+      my $helpdesk = $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
+      my $webmaster = $SiteDefs::ENSEMBL_SERVERADMIN;
+      my $url = $SiteDefs::ENSEMBL_BASEURL;
 
       my $rss = qq(
         <rss version="2.0">
@@ -58,15 +61,15 @@ sub handler {
             <category>Genomics</category>
             <category>Genome Browsers</category>
             <copyright>Copyright 2008 The Ensembl webteam</copyright>
-            <managingEditor>helpdesk\@ensembl.org</managingEditor>
-            <webMaster>webmaster\@ensembl.org</webMaster>
+            <managingEditor>$helpdesk</managingEditor>
+            <webMaster>$webmaster</webMaster>
             <title>Ensembl release $release_id</title>
-            <link>http://www.ensembl.org/</link>
+            <link>$url</link>
             <generator>Ensembl web API</generator>
             <image>
-              <url>http://www.ensembl.org/img/e-rss.png</url>
+              <url>$url/img/e-rss.png</url>
               <title>Ensembl release $release_id</title>
-              <link>http://www.ensembl.org/</link>
+              <link>$url</link>
             </image>
             <ttl>1440</ttl>
             <description>
@@ -91,7 +94,7 @@ sub handler {
           '<item>
             <title>%s</title>
             <description>%s</description>
-            <link>'.$SiteDefs::ENSEMBL_BASE_URL.'/info/website/news/index.html</link>
+            <link>'.$url.'/info/website/news/index.html</link>
           </item>',
           $item->title,
           $C,
