@@ -52,7 +52,7 @@ sub features {
   ## Remove CisRED search region feature set (drawn by another glyphset)
   my @sets; 
   foreach my $set (@fsets){
-   unless ($set->name =~/cisRED\s+search\s+regions/){ push (@sets, $set);}
+    push (@sets, $set) if ($set && $set->name !~ /cisRED\s+search\s+regions/);
   } 
      
   my $external_Feature_adaptor  = $efg_db->get_ExternalFeatureAdaptor;
