@@ -19,7 +19,7 @@ sub render {
   my $self = shift;
 
   my $html;
-  my @movies = sort {$a->title cmp $b->title} EnsEMBL::Web::Data::Movie->find_all;
+  my @movies = sort {$a->list_position <=> $b->list_position} EnsEMBL::Web::Data::Movie->find_all;
 
   $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly.</p>
 <p class="space-below">Please note that files can be large, so if you are on a dialup connection or a long way from the UK, playback may be jerky.</p>);
