@@ -198,8 +198,7 @@ sub create_features {
     $features = $self->search_Xref($db, \@exdb, $self->param('xref_term'));
   }
   else {
-    my $feature_type  = $self->param('ftype') ||$self->param('type') || 'OligoProbe'; 
-    $feature_type = 'OligoProbe' if $feature_type eq 'AffyProbe'; ## catch old links
+    my $feature_type  = $self->param('ftype') ||$self->param('type') || 'OligoFeature'; 
     ## deal with xrefs
     my $subtype;
     if ($feature_type =~ /^Xref_/) {

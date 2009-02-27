@@ -30,7 +30,7 @@ sub render {
   my $i_url = $self->img_url;
   $self->printf( '
         <form action="%s">
-          <table id="se" summary="layout table">
+          <table id="se" class="print_hide" summary="layout table">
             <tr>
               <td id="se_but"><img id="se_im" src="%ssearch/%s.gif" alt="" /><input type="hidden" id="se_si" name="site" value="%s" /><img src="%ssearch/down.gif" style="width:7px" alt="" /></td>
               <td><label class="hidden" for="se_q">Search terms</label><input id="se_q" type="text" name="q" /></td>

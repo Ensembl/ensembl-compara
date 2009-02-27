@@ -329,7 +329,7 @@ sub render {
     if( !$self->{omit_header}) {
       if (exists $self->{'previous'} || exists $self->{'next'} ) {
         $HTML .= qq(<div class="nav-heading">
-          <div class="left-button">);
+          <div class="left-button print_hide">);
         if (exists $self->{'previous'}) {
           $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
           if ($button_text) {
@@ -347,7 +347,7 @@ sub render {
           $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
         }
         $HTML .= q(</div>
-          <div class="right-button">);
+          <div class="right-button print_hide">);
         if( exists $self->{'next'} ) {
           $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
           if ($button_text) {
@@ -412,7 +412,7 @@ sub _caption_with_helplink {
   }
   $html .= $self->{'raw_caption'} ? $self->{'caption'} : CGI::escapeHTML($self->{caption});
   if ( $id ) {
-    $html .= ' <img src="/i/help-button.png" style="width:40px;height:20px;padding-left:4px;vertical-align:middle" alt="(e?)" /></a>';
+    $html .= ' <img src="/i/help-button.png" style="width:40px;height:20px;padding-left:4px;vertical-align:middle" alt="(e?)" class="print_hide" /></a>';
   }
   $html .= '</h2>';
   return $html; 
