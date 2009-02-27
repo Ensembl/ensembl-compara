@@ -137,7 +137,7 @@ sub fetch_input {
       my $method_link_class = $mlss->method_link_class;
 
       my $tree_string;
-      if ($method_link_class eq "GenomicAlignTree.tree_alignment") {
+      if ($method_link_class =~ /GenomicAlignTree/) {
 	  #use GenomicAlignTree 
 	  my $gata = $self->{'comparaDBA'}->get_GenomicAlignTreeAdaptor;
 	  my $gat = $gata->fetch_by_GenomicAlignBlock($gab);
