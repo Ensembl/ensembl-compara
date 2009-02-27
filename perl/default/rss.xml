@@ -9,6 +9,9 @@ use strict;
 
 my $SD           = $ENSEMBL_WEB_REGISTRY->species_defs;
 my $release_id   = $SiteDefs::VERSION;
+my $helpdesk     = $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
+my $webmaster    = $SiteDefs::ENSEMBL_SERVERADMIN;
+my $url          = $SiteDefs::ENSEMBL_BASEURL;
 my $species_hash = EnsEMBL::Web::Data::Species->search({order_by => 'name'});
 my $species      = { reverse %$species_hash };
 my $pars         = { 'release' => $SiteDefs::VERSION };
@@ -40,15 +43,15 @@ print qq(
     <category>Genomics</category>
     <category>Genome Browsers</category>
     <copyright>Copyright 2008 The Ensembl webteam</copyright>
-    <managingEditor>helpdesk\@ensembl.org</managingEditor>
-    <webMaster>webmaster\@ensembl.org</webMaster>
+    <managingEditor>$helpdesk</managingEditor>
+    <webMaster>$webmaster</webMaster>
     <title>Ensembl release $release_id</title>
-    <link>http://www.ensembl.org/</link>
+    <link>$url</link>
     <generator>Ensembl web API</generator>
     <image>
-      <url>http://www.ensembl.org/img/e-rss.png</url>
+      <url>$url/img/e-rss.png</url>
       <title>Ensembl release $release_id</title>
-      <link>http://www.ensembl.org/</link>
+      <link>$url</link>
     </image>
     <ttl>1440</ttl>
     <description>
@@ -72,9 +75,9 @@ foreach my $item ( @news ) {
     <item>
       <title>%s'. $item->title .'</title>
       <description>%s</description>
-      <link>http://dev.ensembl.org/%s/newsview?rel=%s#%s</link>
+      <link>%s/%s/newsview?rel=%s#%s</link>
     </item>',
-    $item->title, $C, $this_species, $release_id, $item->id; 
+    $item->title, $url, $C, $this_species, $release_id, $item->id; 
 }
 print qq(
   </channel>
