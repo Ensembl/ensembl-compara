@@ -20,6 +20,7 @@ use GD;
 use GD::Simple;
 use GD::Text;
 use CGI qw(escapeHTML escape);
+use POSIX qw(floor ceil);
 
 our $AUTOLOAD;
 
@@ -675,6 +676,8 @@ sub bump_row {
   $end   = $self->{$key}{'length'} if $end > $self->{$key}{'length'};
 
   my $row = 0;
+  $start = floor($start);
+  $end   = ceil($end);
   my $len = $end-$start + 1 ;
 
   my $element = '0' x $self->{$key}{length};
