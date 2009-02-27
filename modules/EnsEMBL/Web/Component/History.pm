@@ -30,8 +30,9 @@ sub stage1_form {
   
   if ($panel->params('error')) {
     my $error_text = $panel->params->{'error'};
+    my $helpdesk = $object->species_defs->ENSEMBL_HELPDESK_EMAIL;
     $form->add_element('type' => 'Information',
-      'value' => '<p class="error">'.$error_text.' If you continue to have a problem, please contact <a href="mailto:helpdesk@ensembl.org">helpdesk@ensembl.org</a>.</strong></p>'
+      'value' => '<p class="error">'.$error_text.' If you continue to have a problem, please contact <a href="mailto:'.$helpdesk.'">'.$helpdesk.'</a>.</strong></p>'
     );
   }
 
