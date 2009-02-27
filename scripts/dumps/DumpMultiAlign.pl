@@ -547,7 +547,7 @@ do {
 
     ## Dump these alignments
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-      if ($method_link_species_set->method_link_class =~ /tree_alignment/) {
+      if ($method_link_species_set->method_link_class =~ /GenomicAlignTree/) {
 
 	  my $this_genomic_align_tree = $genomic_align_tree_adaptor->
             fetch_by_GenomicAlignBlock($this_genomic_align_block);
