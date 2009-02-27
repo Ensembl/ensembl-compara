@@ -32,13 +32,6 @@ function __init_ensembl_web_hide_form() {
 }
 addLoadEvent(__init_ensembl_web_hide_form );
 
-function __init_ensembl_rel_external() {
-  $$('a[rel="external"]').each(function(n){
-    n.target = '__blank'
-  });
-}
-addLoadEvent( __init_ensembl_rel_external );
-
 /***********************************************************************
 ** Simplified cookie class - used to set standard Ensembl cookies for
 ** later retrieval - path is always set to "/" and expiry date is set
