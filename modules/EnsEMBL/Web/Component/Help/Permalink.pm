@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
-use CGI qw(unescape);
+use CGI qw(escapeHTML);
 
 sub _init {
   my $self = shift;
@@ -18,7 +18,7 @@ sub content {
   my $object = $self->object;
 
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-  my $url = CGI::unescape($object->param('url'));
+  my $url = CGI::escapeHTML($object->param('url'));
 
   my $html = qq(<p class="space-below">For a permanent link to this page, which will not change with the next release 
 of $sitename, use:</p>
