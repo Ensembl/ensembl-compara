@@ -817,7 +817,7 @@ table.das tr.ref_bg td { background-color:#fed }
     <xsl:if test="TYPE/@reference='yes'">
       <xsl:if test="TYPE/@subparts='yes'">
         <li><xsl:element name="a">
-        <xsl:attribute name="href"><xsl:value-of select="$base_URL" />/features?segment=<xsl:value-of select="@id" /></xsl:attribute>
+        <xsl:attribute name="href"><xsl:value-of select="$base_URL" />/features?segment=<xsl:value-of select="@id" />:<xsl:value-of select="TARGET/@start" />,<xsl:value-of select="TARGET/@stop" /></xsl:attribute>
           <em>DAS</em> Assembly
         </xsl:element></li>
       </xsl:if>
