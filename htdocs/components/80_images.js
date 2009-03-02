@@ -12,6 +12,12 @@
 ***********************************************************************/
 
 
+  var IMAGE_FORMAT_TYPES = [];
+
+  function image_format_type( format_code, format_label ) {
+    IMAGE_FORMAT_TYPES.push( { cd:format_code, lb:format_label } );
+  }
+
   function add_image_format(menu,url,code,label) {
     if(!menu) return;   // Sanity check can't add to what doesn't exist!
 		url2 = url.replace(/\?export=[^;]+/,'?export='+code).replace(/\;export=[^;]+/,';export='+code);
@@ -39,18 +45,22 @@
         menu.toggle();
   			event.stop();
       });
-      add_image_format( mn, url, 'pdf',      'PDF' );
-      add_image_format( mn, url, 'svg',      'SVG' );
-      add_image_format( mn, url, 'eps',      'PostScript' );
-      add_image_format( mn, url, 'png-10',   'PNG (x10)' );
-      add_image_format( mn, url, 'png-5',    'PNG (x5)' );
-      add_image_format( mn, url, 'png-2',    'PNG (x2)' );
-      add_image_format( mn, url, 'png',      'PNG' );
-      add_image_format( mn, url, 'png-0.5',  'PNG (x0.5)' );
-	    n.addClassName('munged');
-	    n.addClassName('print_hide');
+      IMAGE_FORMAT_TYPES.each(function(t){
+        add_image_format( mn, url, t.cd, t.lb );
+      });
+      n.addClassName('munged');
+      n.addClassName('print_hide');
     });
 // Create the search list!
   }
+
+  image_format_type( 'pdf',      'PDF' );
+  image_format_type( 'svg',      'SVG' );
+  image_format_type( 'eps',      'PostScript' );
+  image_format_type( 'png-10',   'PNG (x10)' );
+  image_format_type( 'png-5',    'PNG (x5)' );
+  image_format_type( 'png-2',    'PNG (x2)' );
+  image_format_type( 'png',      'PNG' );
+  image_format_type( 'png-0.5',  'PNG (x0.5)' );
 
   addLoadEvent( __init_image_export );
