@@ -84,10 +84,7 @@ sub features {
   </FEATURE>);
 
   my $features = $object->Features();
-  (my $url = lc($ENV{SERVER_PROTOCOL})) =~ s/\/.+//;
-  $url .= "://$ENV{SERVER_NAME}";
-#  $url .= "\:$ENV{SERVER_PORT}" unless $ENV{SERVER_PORT} == 80;
-  $url = $object->species_defs->ENSEMBL_BASE_URL. CGI->escapeHTML($ENV{REQUEST_URI});
+  my $url = $object->species_defs->ENSEMBL_BASE_URL. CGI->escapeHTML($ENV{REQUEST_URI});
   $panel->print(qq{<GFF version="1.01" href="$url">});
   foreach my $segment (@{$features || []}) {
     if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'ERROR') {
