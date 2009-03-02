@@ -140,12 +140,6 @@ sub _location_from_SeqRegion {
 
 sub _create_from_slice {
   my( $self, $type, $ID, $slice, $synonym, $real_chr, $keep_slice ) = @_;
-  #project non toplevel slices onto top level - needed to retrieve overlapping features
-  if (! $slice->coord_system->is_top_level) {
-#	  warn "projecting from ",$slice->coord_system->name," onto top level";
-	  my $proj = $slice->project('toplevel')->[0]->to_Slice();
-	  $slice = $proj;
-  }
   return
   EnsEMBL::Web::Proxy::Object->new(
     'Location',

@@ -14,184 +14,94 @@ sub Features {
     my @fts = grep { $_ } @{$self->FeatureTypes || []};
 
     foreach my $s (@segments) {
-    if (ref($s) eq 'HASH' && $s->{'TYPE'} eq 'ERROR') {
-        push @features, $s;
-        next;
-    }
-
-    my ($region_name, $region_start, $region_end) = ($s->name);
-    if ($s->name =~ /^([-\w\.]+):([\.\w]+),([\.\w]+)$/ ) {
-        ($region_name,$region_start,$region_end) = ($1,$2,$3);
-    }
-
-#    my $slice = $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region('', $region_name, $region_start, $region_end, $s->seq_region_strand); 
-
-    my $slice = $s->slice;
-
-    my $subparts = 'yes';
-    my $superparts = 'no';
-
-# Get current coordinate system
-    my $current_cs = $slice->coord_system;
-    my @coord_systems = ($current_cs);
-
-    if ( ! defined ($region_end)) {
-        my $path;
-        eval { $path = $slice->project($current_cs->name); };
-        if ($path) {
-        $path = $path->[0]->to_Slice;
-        ($region_start, $region_end) = ($path->start, $path->end);
+        if (ref($s) eq 'HASH' && $s->{'TYPE'} eq 'ERROR') {
+            push @features, $s;
+            next;
         }
-    }
-    my $current_rank = $current_cs->rank;
 
-# Check if there are super and/or sub parts
-    my $csa = $slice->coord_system->{adaptor};
-    my $higher_cs = $csa->fetch_by_rank($current_rank - 1);
-    if ($higher_cs && ! $higher_cs->is_top_level) { 
-        push @coord_systems, $higher_cs;
-        $superparts = 'yes';
-    }
-
-    my $lower_cs = $csa->fetch_by_rank($current_rank + 1);
-    if ($lower_cs) { 
-        push @coord_systems, $lower_cs;
-        if ($lower_cs->is_sequence_level) {
-        $subparts = 'no';
+        # Extract seqname, start and end from the request
+        my ($region_name, $region_start, $region_end) = ($s->name);
+        if ($s->name =~ /^([-\w\.]+):([\.\w]+),([\.\w]+)$/ ) {
+            ($region_name,$region_start,$region_end) = ($1,$2,$3);
         }
-    }
 
+        my $slice = $s->slice;
+        my $current_cs = $slice->coord_system;
+        my $current_rank = $current_cs->rank;
 
-    my @segment_features;
-    my @projected_segments = @{$slice->project("seqlevel") || []};
-    foreach my $psegment (@projected_segments) {
-        my $start      = $psegment->from_start;
-        my $end        = $psegment->from_end;
-        my $ctg_slice  = $psegment->to_Slice;
-        my $ORI        = $ctg_slice->strand;
-        my $feature = { 'start' => $start, 'end' => $end, 'name' => $ctg_slice->seq_region_name, 'strand' => $ORI };
-
-
-        foreach ( @coord_systems ) {
-        my $path;
-        eval { $path = $ctg_slice->project($_->name); };
-        next unless(@$path);
-        $path = $path->[0]->to_Slice;
-        $feature->{'locations'}{$_->rank} = [ $path->seq_region_name, $path->start, $path->end, $path->strand ];
+        if ( ! defined ($region_end)) {
+            my $path;
+            eval { $path = $slice->project($current_cs->name); };
+            if ($path) {
+                $path = $path->[0]->to_Slice;
+                ($region_start, $region_end) = ($path->start, $path->end);
+            }
         }
-        push @segment_features, $feature;
+
+        my $csa = $slice->coord_system->{adaptor};
+        my %projections_by_rank = ();
+
+        # Start by gathering slice data for coordinate systems +- 2 ranks
+        # We go 2 ranks beyond the query coordsys because we want to tell the
+        # the client if there are parts of the assembly above/below those returned
+        for (my $rank=$current_rank-2; $rank <= $current_rank+2; $rank++) {
+            $projections_by_rank{$rank} = [];
+            $rank > 0 || next;
+            my $cs = $csa->fetch_by_rank($rank);
+            # Check this level of coordinate system exists and is current
+            if ($cs && $cs->is_default) {
+                # Project the query segment to the other coordsys
+                $projections_by_rank{$rank} = $slice->project( $cs->name, $cs->version );
+            }
+        }
         
-    }
-    my ($ids, $sids);
-
-    foreach my $f (@segment_features) {
-        my $id = $f->{'locations'}{ ($current_rank + 1) }->[0] || next;
-        my $start = $f->{'locations'}{ ($current_rank) }->[1];
-        my $end = $f->{'locations'}{ ($current_rank) }->[2];
-        my $fstrand = $f->{'locations'}{ ($current_rank) }->[3];
-
-        my $target_start = $f->{'locations'}{ ($current_rank + 1) }->[1];
-        my $target_end = $f->{'locations'}{ ($current_rank + 1) }->[2];
+        my @ss = ();
         
-        if (exists($ids->{$id})) {
-        $ids->{$id}->[2] = $end;
-        $ids->{$id}->[4] = $target_end;
+        # Now for the coordinate systems +- 1 rank, make actual features
+        for (my $rank=$current_rank-1; $rank <= $current_rank+1; $rank++) {
+            for my $psegment (@{ $projections_by_rank{$rank} }) {
+                my $pslice  = $psegment->to_Slice;
+                my $feature = {
+                  'ID'     => $pslice->seq_region_name,
+                  # position/strand relative to query coordinate system
+                  'START'       => $psegment->from_start + $slice->start - 1,
+                  'END'         => $psegment->from_end   + $slice->start - 1,
+                  'ORIENTATION' => $self->ori( $pslice->strand ),
+                  # position relative to slice's coordinate system
+                  'TARGET' => {
+                    'ID'    => $pslice->seq_region_name,
+                    'START' => $pslice->start,
+                    'STOP'  => $pslice->end,
+                  },
+                  'REFERENCE' => 'yes',
+                  'TYPE'      => $pslice->coord_system->name,
+                  # Is this coordsystem at a higher level than the query?
+                  'CATEGORY'  => $rank < $current_rank ? 'supercomponent' : 'component',
+                  # Does this coordsystem have any higher-level slices?
+                  'SUPERPARTS' => scalar @{ $projections_by_rank{$rank-1} } ? 'yes' : 'no',
+                  # Does this coordsystem have any lower-level slices?
+                  'SUBPARTS'   => scalar @{ $projections_by_rank{$rank+1} } ? 'yes' : 'no',
+                };
+                push @ss, $feature;
+            }
+        }
+
+        my @rfeatures = ();
+        # Apply feature type filters if specified
+        if (@fts > 0) {
+            foreach my $ft (@ss) {
+                next unless grep {$_ eq $ft->{'TYPE'}} @fts;
+                push @rfeatures, $ft
+            }
         } else {
-        if ($lower_cs) {
-            $ids->{$id} = [ $lower_cs->name, $start, $end, $target_start, $target_end, $fstrand ];
-        }
+            @rfeatures = @ss;
         }
 
-        if ($higher_cs && ! $higher_cs->is_top_level) {
-        my $id = $f->{'locations'}{ ($current_rank-1) }->[0];
-        my $pstart = $f->{'locations'}{ ($current_rank - 1) }->[1];
-        my $pend = $f->{'locations'}{ ($current_rank - 1) }->[2];
-        my $pstrand = $f->{'locations'}{ ($current_rank - 1) }->[3];
-
-        if (exists($sids->{$id})) {
-            $sids->{$id}->[2] = $end;
-            $sids->{$id}->[4] = $pend;
-        } else {
-            $sids->{$id} = [$higher_cs->name, $start, $end, $pstart, $pend, $pstrand,
-                    $higher_cs->rank == 1 ? 'no' : 'yes'];
-        }
-
-        }
-    } 
-
-    my @ss;
-    $ids ||= {};
-    push @ss, {
-        'ID' => $slice->seq_region_name, 
-        'START' => $slice->start, 
-        'END' => $slice->end,
-        'ORIENTATION' => $self->ori( $slice->strand ),  
-        'TARGET' => {
-          'ID'    => $slice->seq_region_name, 
-          'START' => $slice->start, 
-          'STOP'   => $slice->end
-        },
-        'REFERENCE' => 'yes',
-        'TYPE' => $current_cs->name, 
-        'SUPERPARTS' => $superparts, 
-        'SUBPARTS' => %$ids ? 'yes' : 'no', 
-        'CATEGORY' => 'component',
-        };
-
-    foreach my $id ( keys %$ids ) {
-        push @ss, {
-        'ID' =>  "$id", 
-        'START' => $ids->{$id}->[1], 
-        'END' => $ids->{$id}->[2],
-        'ORIENTATION' => $self->ori($ids->{$id}->[5]),
-        'TARGET' => {
-          'ID'    => $id,
-          'START' => $ids->{$id}->[3],
-          'STOP'   => $ids->{$id}->[4]
-        },
-        'REFERENCE' => 'yes',
-        'TYPE' => $ids->{$id}->[0], 
-        'SUBPARTS' => $subparts,
-        'SUPERPARTS' => 'yes',
-        'CATEGORY' => 'component',
-        };
-    }
-
-    foreach my $id ( keys %$sids ) {
-        push @ss, {
-        'ID' =>  "$id", 
-        'START' => $sids->{$id}->[1], 
-        'END' => $sids->{$id}->[2],
-        'ORIENTATION' =>  $self->ori($ids->{$id}->[5]),
-        'TARGET' => {
-          'ID'    => $id,
-          'START' => $sids->{$id}->[3],
-          'STOP'   => $sids->{$id}->[4]
-        },
-        'REFERENCE' => 'yes',
-        'TYPE' => $sids->{$id}->[0], 
-        'SUPERPARTS' => $sids->{$id}->[6], 
-        'SUBPARTS' => 'yes',
-        'CATEGORY' => 'supercomponent',
-        };
-    }
-
-
-    my @rfeatures = ();
-    if (@fts > 0) {
-        foreach my $ft (@ss) {
-        next unless grep {$_ eq $ft->{'TYPE'}} @fts;
-        push @rfeatures, $ft
-        }
-    } else {
-        @rfeatures = @ss;
-    }
-
-    push @features, {
-        'REGION' => $region_name, 
-        'START'  => $region_start, 
-        'STOP'   => $region_end,
-        'FEATURES' => \@rfeatures
+        push @features, {
+            'REGION' => $region_name, 
+            'START'  => $region_start, 
+            'STOP'   => $region_end,
+            'FEATURES' => \@rfeatures
         };
     }
 
