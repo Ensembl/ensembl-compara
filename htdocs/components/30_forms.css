@@ -4,6 +4,8 @@ form fieldset { border:none; }
 
 form.std fieldset div { margin-top:10px; }
 
+form.std fieldset td div { margin-top:0px; }
+
 form.std div.notes {
   width:50%; padding:4px; margin-bottom:10px; 
   background-color:[[CONTRAST_BG]]; border:1px [[CONTRAST_BORDER]] solid;
