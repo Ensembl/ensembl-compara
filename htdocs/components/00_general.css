@@ -140,3 +140,7 @@ dd { margin-bottom:1em; }
   .screen_hide_block  { display: block }
 }
 
+/* external links have an extra ..... ed line under them... */
+
+a._external_link_ { border-bottom: 1px dotted [[PAGE_LINK]] }
+
