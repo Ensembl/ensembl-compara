@@ -65,9 +65,34 @@ sub form {
   $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
   $view_config->get_form->{'_attributes'}{'id'} = "export_configuration";
   $view_config->get_form->{'_attributes'}{'method'} = "get";
+    
+  $view_config->add_fieldset;
+  
+  $view_config->add_form_element({
+    'type'  => 'NoEdit',
+    'name'  => 'location_to_export',
+    'label' => 'Location to export',
+    'value' => ($object->can('slice') ? $object->slice : $object->get_Slice)->name
+  });
+    
+  if ($ENV{'ENSEMBL_TYPE'} eq 'Gene') {
+    $view_config->add_form_element({
+      'type'  => 'NoEdit',
+      'name'  => 'gene_to_export',
+      'label' => 'Gene to export',
+      'value' => $object->core_objects->gene_long_caption
+    });
+  } elsif ($ENV{'ENSEMBL_TYPE'} eq 'Transcript') {
+    $view_config->add_form_element({
+      'type'  => 'NoEdit',
+      'name'  => 'transcript_to_export',
+      'label' => 'Transcript to export',
+      'value' => $object->core_objects->transcript_long_caption
+    });
+  } 
   
   $view_config->add_fieldset;
-    
+  
   my @output_values;
   
   foreach my $c (sort keys %$config) {
