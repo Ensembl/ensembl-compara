@@ -16,3 +16,5 @@
   dl.config_menu dt.das_menu_entry { font-weight: bold }
   dl#local_modal .fake_link { color:[[PAGE_LINK]]; cursor: pointer }
 
+#configuration_search { text-align: right }
+
