@@ -9,6 +9,7 @@ use warnings;
 
 use EnsEMBL::Web::Data;
 use EnsEMBL::Web::Interface::ElementDef;
+use CGI qw(escapeHTML);
 
 {
 
@@ -682,6 +683,7 @@ sub preview_fields {
       else {
         $param{'value'} = $var;
       }
+      $param{'value'} = $self->_sanitize_value($param{'value'});
     }
     push @$parameters, \%param;
   } 
@@ -689,7 +691,7 @@ sub preview_fields {
   my %extras = %{$self->extra_data};
   if (keys %extras) {
     while (my($k, $v) = each (%extras)) {
-      my %ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$v);
+      my %ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$self->_sanitize_value($v));
       push @$parameters, \%ex;  
     }
   }
@@ -726,6 +728,7 @@ sub pass_fields {
       else {
         $param{'value'} = $var;
       }
+      $param{'value'} = $self->_sanitize_value($param{'value'});
     }
     push @$parameters, \%param;
   } 
@@ -761,13 +764,18 @@ sub history_fields {
       my %param;
       %param = %{$element->preview};
       if (ref $data) {
-        $param{'value'} = $data->$name;
+        $param{'value'} = $self->_sanitize_value($data->$name);
       }
       push @$parameters, \%param;
     }
   } 
 
   return $parameters;
+}
+
+sub _sanitize_value {
+  my ($self, $value) = @_;
+  return CGI::escapeHTML($value);
 }
 
 sub format_date {
