@@ -1175,7 +1175,6 @@ sub reg_features {
 
   my $reg_feat_adaptor = $fg_db->get_RegulatoryFeatureAdaptor; 
   my $feats = $reg_feat_adaptor->fetch_all_by_Slice($slice);
-  warn $feats;
   return $feats;
 
 }
