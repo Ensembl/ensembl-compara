@@ -4,6 +4,7 @@ package EnsEMBL::Web::Document::HTML::CloseCP;
 
 use strict;
 use EnsEMBL::Web::Document::HTML;
+use CGI qw(escapeHTML);
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
@@ -17,7 +18,7 @@ sub biomart   :lvalue { $_[0]{'biomart'};   }
 
 sub render   {
   my $self = shift;
-  $self->print('<a id="cp_close" href="'.$self->referer.'">Close</a>');
+  $self->print('<a id="cp_close" href="'.CGI::escapeHTML($self->referer).'">Close</a>');
 }
 
 1;
