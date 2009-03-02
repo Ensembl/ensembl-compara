@@ -28,7 +28,7 @@ sub init {
   $self->create_menus(
     'sequence'      => 'Sequence',
     'marker'        => 'Markers',
-    'gene'          => 'Genes',
+    'transcript'    => 'Genes',
     'misc_feature'  => 'Misc. regions',
     'synteny'       => 'Synteny',
     'external_data' => 'External data',
@@ -51,6 +51,11 @@ sub init {
   }
   $self->load_tracks();
   $self->load_configured_das( 'strand' => 'r' );
+
+  $self->modify_configs(
+    ['transcript'],
+    {qw(render gene_label strand r)}
+  );
 
   $self->modify_configs(
     ['marker'],

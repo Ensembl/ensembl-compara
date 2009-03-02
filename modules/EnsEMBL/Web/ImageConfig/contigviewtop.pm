@@ -27,7 +27,7 @@ sub init {
   $self->create_menus(
     'sequence'    => 'Sequence',
     'marker'      => 'Markers',
-    'gene'        => 'Genes',
+    'transcript'  => 'Genes',
 #    'misc_set'    => 'Misc. regions',
     'synteny'     => 'Synteny',
 #    'user_data'   => 'User uploaded data',
@@ -47,6 +47,11 @@ sub init {
     [ 'draggable', '', 'draggable', { 'display' => 'normal', 'menu' => 'no' }]
   );
   
+  $self->modify_configs(
+    ['transcript'],
+    {qw(render gene_label strand r)}
+  );
+
   $self->add_options(
     ['opt_halfheight',     'Half height glyphs',  {qw(1 Yes 0 No)} ],
     ['opt_register_lines', 'Show register lines', {qw(1 Yes 0 No)} ]
