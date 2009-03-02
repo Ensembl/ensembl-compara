@@ -1140,7 +1140,7 @@ sub feature_sets {
   my @sources;
   my $spp = $ENV{'ENSEMBL_SPECIES'};
   if ($spp eq 'Homo_sapiens'){
-   @sources = ('RegulatoryFeatures', 'miRanda miRNA', 'cisRED search regions', 'cisRED motifs', 'VISTA enhancer set'); 
+   @sources = ('RegulatoryFeatures', 'miRanda miRNA targets', 'cisRED search regions', 'cisRED motifs', 'VISTA enhancer set'); 
   } elsif ($spp eq 'Mus_musculus'){
    @sources = ('cisRED search regions', 'cisRED motifs');
   } 
