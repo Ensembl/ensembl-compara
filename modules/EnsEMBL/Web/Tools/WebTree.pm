@@ -63,7 +63,7 @@ sub read_tree {
     }
   }
   if (!$include) {
-    $branch = undef;
+    delete $parent->{$branch->{'_name'}};
     return;
   }
 
