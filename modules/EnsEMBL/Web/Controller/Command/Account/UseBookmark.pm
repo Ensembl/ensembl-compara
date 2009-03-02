@@ -16,7 +16,7 @@ sub BUILD {
   my ($self, $ident, $args) = @_; 
   $self->add_filter('EnsEMBL::Web::Controller::Command::Filter::LoggedIn');
   my $cgi = $self->action->cgi;
-  if ($cgi->param('id')) {
+  if ($cgi->param('id') && $cgi->param('id') =~ /^\d+$/) {
     $self->user_or_admin('EnsEMBL::Web::Data::Record::Bookmark', $cgi->param('id'), $cgi->param('owner_type'));
   }
 
@@ -25,7 +25,8 @@ sub BUILD {
 sub process {
   my $self = shift;
   my $cgi = $self->action->cgi;
-
+  return if $cgi->param('id') =~ /\D/;
+  
   my $bookmark;
   if ($cgi->param('owner_type') && $cgi->param('owner_type') eq 'group') {
     $bookmark = EnsEMBL::Web::Data::Record::Bookmark::Group->new($cgi->param('id'));
