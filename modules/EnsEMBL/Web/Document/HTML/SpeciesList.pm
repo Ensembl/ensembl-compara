@@ -197,7 +197,7 @@ sub _render_species_dropdown {
 </select>
 </div>
 </form>
-<p><a href="/info/about/species.html">View full list of all $sitename species</a><a href="http://www.phylowidget.org/full/index.html?tree=http://tinyurl.com/ensembltree&useBranchLengths=true&minTextSize=7">(Species tree)</a></p>
+<p><a href="/info/about/species.html">View full list of all $sitename species</a></p>
 );
   return $html;
 
