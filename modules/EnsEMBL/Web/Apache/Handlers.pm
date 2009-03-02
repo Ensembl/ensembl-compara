@@ -540,16 +540,18 @@ sub transHandler {
   my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
   unless ($filename) {
     foreach my $dir (@HTDOCS_TRANS_DIRS) {
-      $filename = sprintf( $dir, $path );
-      if( -d $filename ) {
-        $filename = '! '.$filename;
+      my $f = sprintf( $dir, $path );
+      if( -d $f ) {
+        $filename = '! '.$f;
+        $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
         last;
       }
-      if (-r $filename) {
+      if (-r $f) {
+        $filename = $f;
+        $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
         last;
       }
     }
-    $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
   }
   
   if( $filename =~ /^! (.*)$/ ) {
