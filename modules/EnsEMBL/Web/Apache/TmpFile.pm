@@ -45,25 +45,12 @@ sub handler {
       my $rc = $r->print($data->{'content'});
       return OK;
 
-  } elsif( -e $uri ) {
-
-      $r->headers_out->set('Accept-Ranges'  => 'bytes');
-      $r->headers_out->set('Expires'        => Apache2::Util::ht_time($r->pool, $r->request_time + 60*60*24*30*12) );
-      my $rc = $r->sendfile($uri);
-      return OK;
-
-  } elsif( $MEMD && $ENV{'HTTP_REFERER'} ) {
-    ## Nothing found: delete all related content if MEMD (unless direct request without referer)
-    my $session_id = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
-    $MEMD->delete_by_tags(
-      $ENV{'HTTP_REFERER'},
-      $session_id ? "session_id[$session_id]" : (),
-    );
-
-    return NOT_FOUND;
+  } else {
+      ## Not found in cache, give up (returns to apache handler)
+      return DECLINED;
   }
 
-  return NOT_FOUND;
+
 } # end of handler
 
 1;
