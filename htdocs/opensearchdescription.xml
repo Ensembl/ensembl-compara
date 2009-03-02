@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
- <ShortName>Ensembl</ShortName>
- <Description>Search Ensembl</Description>
- <Tags>Ensembl genome browser</Tags>
- <Url type="text/html"
-      template="http://www.ensembl.org/perl/psychic?query={searchTerms}"/>
-</OpenSearchDescription>
