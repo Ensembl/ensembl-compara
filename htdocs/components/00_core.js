@@ -5,6 +5,7 @@ function _time_diff(x) {
   var d = new Date();
   return ((d.getTime()-x.getTime())/1000).toFixed(3);
 }
+
 function addLoadEvent(func) {
   var oldonload = window.onload;
   if( typeof window.onload != 'function' ) {
