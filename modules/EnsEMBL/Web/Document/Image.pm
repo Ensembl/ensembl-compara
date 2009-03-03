@@ -677,12 +677,8 @@ sub render {
              $tag .
              ($self->imagemap eq 'yes' ? $self->render_image_map($image) : '' ) .
              '</div>' .
-             ( $self->{'export'}
-               ? '<div class="iexport" style="width:' . $image->{'width'} . 'px"><a href="' . $URL . '">Export</a></div>'
-               : '' ) .
-             ( $self->caption
-               ? sprintf( qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption  )
-               : '' ) .
+             ( $self->{'export'} ? qq{<div class="$self->{'export'}" style="width:$image->{'width'}px;"><a href="$URL">Export</a></div>} : '' ) .
+             ( $self->caption ? sprintf(qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption) : '' ) .
              '</div></div>';
   } else {
     
@@ -729,7 +725,7 @@ Document:Image
 
 This object creates and renders a dynamically-generated image using modules from ensembl-draw. It is called via one of the image methods in the Object module, thus:
 
-  my $image          = $object->new_karyotype_image();
+  my $image          = $self->new_karyotype_image();
 
 The image's parameters can then be set using the accessor methods (see below for a full list), e.g.
 
