@@ -174,8 +174,8 @@ if ($site eq 'ebi') {
 
   unless( $flag ) {
       $URL = $query =~ /^BLA_\w+$/            ? URL( '/Multi/blastview/%s', $query  )        ## Blast ticket
-	  : $query =~ /[ACGT]{20,}/i         ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $query )         ## BLAST seq search
-	  : $query =~ /[A-Z]{20,}/i          ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $query )         ## BLAST seq search
+	  : $query =~ /^\s*([ACGT]{20,})\s*$/i         ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $1 )         ## BLAST seq search
+	  : $query =~ /^\s*([A-Z]{20,})\s*$/i          ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $1 )         ## BLAST seq search
 	  : URL( 
               '/%s/'.$script.'?species=%s;idx=%s;q=%s',
               ( $species eq 'ALL'|| !$species ? 'default' : $species ),
