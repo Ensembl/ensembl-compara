@@ -747,8 +747,12 @@ sub add_gene {
         'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
         'renderers'   => $type eq 'transcript' ?
           [qw(off Off), 
-            'transcript_nolabel' => 'Expanded without labels',  'transcript_label' => 'Expanded with labels',
-            'collapsed_nolabel'  => 'Collapsed without labels', 'collapsed_label'  => 'Collapsed with labels',
+            'gene_nolabel'       => 'No exon structure without labels', 
+            'gene_label'         => 'No exon structure with labels',
+            'transcript_nolabel' => 'Expanded without labels',
+            'transcript_label'   => 'Expanded with labels',
+            'collapsed_nolabel'  => 'Collapsed without labels',
+            'collapsed_label'    => 'Collapsed with labels',
           ] : 
           [qw(off Off gene_nolabel), 'No labels', 'gene_label', 'With labels'],
         'strand'      => $type eq 'gene' ? 'r' : 'b'
