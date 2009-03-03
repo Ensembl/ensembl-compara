@@ -120,6 +120,18 @@ sub tag {
   }
   return @result;
 }
+
+sub export_feature {
+  my $self = shift;
+  my ($feature, $feature_type) = @_;
+  
+  return $self->_render_text($feature, $feature_type, { 
+    'headers' => [ 'id' ],
+    'values' => [ [$self->feature_label($feature)]->[0] ]
+  });
+}
+
+
 ## Create the zmenu...
 ## Include each accession id separately
 

@@ -9,6 +9,9 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
+  
+  return $self->render_text if $self->{'text_export'};
+  
   my $protein       = $self->{'container'};
 
   $self->_init_bump;
@@ -88,4 +91,30 @@ sub _init {
     }
   }
 }
+
+sub render_text {
+  my $self = shift;
+  
+  my $container = $self->{'container'};
+  my $label = $self->my_config('caption');
+  my $export;
+  
+  foreach my $logic_name (@{$self->my_config('logicnames')||[]}) {
+    my @features = map { $_->[1] } sort { $a->[0] cmp $b->[0] } map { [ $_->hseqname, $_ ] } @{$container->get_all_ProteinFeatures($logic_name)};
+    
+    foreach (@features) {
+      my $analysis = $_->analysis;
+      
+      $export .= $self->_render_text($_, $analysis->gff_feature, { 
+         'headers' => [ 'id', 'description' ],
+         'values'  => [ $_->hseqname, $_->idesc ]
+      }, {
+        'source'  => $analysis->gff_source,
+      });
+    }
+  }
+  
+  return $export;
+}
+
 1;

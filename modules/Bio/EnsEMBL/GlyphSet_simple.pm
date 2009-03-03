@@ -76,6 +76,9 @@ sub aggregate_coverage {
 
 sub _init {
   my ($self) = @_;
+  
+  return $self->render_text if $self->{'text_export'};
+  
   my $slice   = $self->{'container'};
   $self->_threshold_update();
   my $strand          = $self->strand();
@@ -709,6 +712,38 @@ sub highlight {
       'absolutey' => 1,
     }));
   }
+}
+
+
+sub render_text {
+  my $self = shift;
+  
+  $self->_threshold_update;
+          
+  my $slice_length = $self->{'container'}->length;
+  my $max_length = $self->my_config('threshold') || 200000000;
+  
+  return if $slice_length > $max_length * 1010;
+  
+  my $features = $self->features; 
+  my $feature_type = $self->my_config('caption');
+
+  return if ref $features ne 'ARRAY';
+  
+  my $method = $self->can('export_feature') ? 'export_feature' : '_render_text';
+  my $export;
+
+  foreach (@$features) {
+    my $start = $_->start;
+    next if $start > $slice_length; # Skip if totally outside slice
+    
+    my $end = $_->end;   
+    next if $end < 1;  # Skip if totally outside slice
+    
+    $export .= $self->$method($_, $feature_type);
+  }
+  
+  return $export;
 }
 
 1;

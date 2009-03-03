@@ -81,6 +81,9 @@ sub colour_key {
 }
 sub render_normal {
   my $self = shift;
+  
+  return $self->render_text if $self->{'text_export'};
+  
   my $tfh    = $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'});
   my $h      = @_ ? shift : ($self->my_config('height') || 8);
   my $dep    = @_ ? shift : ($self->my_config('dep'   ) || 6);
@@ -298,6 +301,25 @@ sub render_ungrouped {
   }
   $self->errorTrack( "No ".$self->my_config('name')." features in this region" )
     unless( $features_drawn || $self->get_parameter( 'opt_empty_tracks')==0 );
+}
+
+sub render_text {
+  my $self = shift;
+  
+  my $strand = $self->strand;
+  my %features = $self->features;
+  my $method = $self->can('export_feature') ? 'export_feature' : '_render_text';
+  my $export;
+  
+  foreach my $feature_key ($strand < 0 ? sort keys %features : reverse sort keys %features) {
+    foreach my $f (@{$features{$feature_key}}) {
+      foreach (map { $_->[2] } sort { $a->[0] <=> $b->[0] } map { [ $_->start, $_->end, $_ ] } @{$f||[]}) {
+        $export .= $self->$method($_, $feature_key, { 'headers' => [ 'id' ], 'values' => [ $_->can('hseqname') ? $_->hseqname : '' ] });
+      }
+    }
+  }
+  
+  return $export;
 }
 
 1;

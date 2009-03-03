@@ -27,7 +27,9 @@ sub _init {
     }
     $Contents = $T;
   }
+  
   my( $highlights, $strandedness, $Storage) = @_;
+  
   my $self = {
     'glyphsets'     => [],
     'config'        => $Contents->[0][1],
@@ -39,6 +41,9 @@ sub _init {
     '__extra_block_spacing__'    => 0,
     'timer'         => $Contents->[0][1]{'species_defs'}->timer
   };
+  
+  $self->{'strandedness'} = 1 if $self->{'config'}->get_parameter('text_export');
+   
   bless( $self, $class );
   return $self;
 }
@@ -72,7 +77,7 @@ sub new {
 
 ## If strandedness -show always on the same strand - o/w show forward/revers...
 
-  my @strands_to_show = $self->{'strandedness'} == 1 ? (1) : (1, -1);
+  my @strands_to_show = $self->{'strandedness'} == 1 ? (-1) : (1, -1);
   my $yoffset         = $margin;
   my $iteration       = 0;
 
@@ -111,42 +116,49 @@ sub new {
       $Config->container_width(1);
       push @glyphsets, $GlyphSet unless $@;
     } else {
-      my @configs = $Config->glyphset_configs;
+      my @configs = $Config->glyphset_configs;   
+      
       for my $strand (@strands_to_show) {
-## This is much simplified as we just get a row of configurations...
-	for my $row_config ($strand == 1 ? reverse @configs : @configs) {
-	  my $display = $row_config->get('display')||($row_config->get('on')eq'on'?'normal':'off');
-	  next if $display eq 'off';
-	  my $str_tmp = $row_config->get('strand');
-
-	  next if  defined $str_tmp && ( $str_tmp eq "r" && $strand != -1 || $str_tmp eq "f" && $strand !=  1 );
-	  
-## create a new glyphset for this row
-	  my $glyphset  = $row_config->get('glyphset')||$row_config->code;
-	  my $classname = qq($self->{'prefix'}::GlyphSet::$glyphset);
-	  next unless $self->dynamic_use( $classname );
-	  my $EW_Glyphset;
-	  eval { # Generic glyphsets need to have the type passed as a fifth parameter...
-	    $EW_Glyphset = new $classname({
-	      'container'  => $Container,
-	      'config'     => $Config,
-	      'my_config'  => $row_config,
-	      'strand'     => $strand,
-	      'extra'      => {},
-	      'highlights' => $self->{'highlights'},
-	      'display'    => $display
-	    });
-	  };
-	  if($@ || !$EW_Glyphset) {
-	    my $reason = $@ || "No reason given just returns undef";
-	    warn "GLYPHSET: glyphset $classname failed at ",gmtime(),"\n",
-	      "GLYPHSET: $reason";
-	  } else {
-	    push @glyphsets, $EW_Glyphset;
-	  }
-	}
-      }
-    }
+        ## This is much simplified as we just get a row of configurations...
+        for my $row_config ($strand == 1 ? reverse @configs : @configs) {
+          my $display = $row_config->get('display')||($row_config->get('on')eq'on'?'normal':'off');
+          next if $display eq 'off';
+          unless ($self->{'strandedness'}) { ## Don't skip if strandedness is set to 1 as we don't want to miss any tracks out!
+            my $str_tmp = $row_config->get('strand');
+            if (defined $str_tmp) { ## Is this to be shown on a particular strand?
+              next if $str_tmp eq "r" && $strand == 1 ; ## Show on reverse strand only
+              next if $str_tmp eq "f" && $strand == -1; ## Show on forward strand only
+            }              
+          }
+          
+          ## create a new glyphset for this row
+          my $glyphset  = $row_config->get('glyphset')||$row_config->code;
+          my $classname = qq($self->{'prefix'}::GlyphSet::$glyphset);
+          next unless $self->dynamic_use( $classname );
+          my $EW_Glyphset;
+          
+          eval { # Generic glyphsets need to have the type passed as a fifth parameter...
+            $EW_Glyphset = new $classname({
+              'container'   => $Container,
+              'config'      => $Config,
+              'my_config'   => $row_config,
+              'strand'      => $strand,
+              'extra'       => {},
+              'highlights'  => $self->{'highlights'},
+              'display'     => $display
+            });
+          };
+          if($@ || !$EW_Glyphset) {
+            my $reason = $@ || "No reason given just returns undef";
+            warn "GLYPHSET: glyphset $classname failed at ",gmtime(),"\n",
+              "GLYPHSET: $reason";
+          } else {
+            push @glyphsets, $EW_Glyphset;
+          }
+        }
+      } 
+    } 
+    
     
     my $w = $Config->container_width;
     $w = $Container->length if !$w && $Container->can('length');
@@ -186,18 +198,24 @@ sub new {
 
     ## go ahead and do all the database work
     $self->timer_push( 'GlyphSet list prepared for config '.ref($Config), 1 );
+    
+    my $export_cache;
+    
     for my $glyphset (@glyphsets) {
       ## load everything from the database
       my $NAME = $glyphset->{'my_config'}->key;
       my $ref_glyphset = ref($glyphset);
       eval {
-        $glyphset->render();
+        $glyphset->{'export_cache'} = $export_cache;
+        my $text_export = $glyphset->render;
+        $self->{'export'} .= $text_export;
+        $export_cache = $glyphset->{'export_cache'};
       };
       ## don't waste any more time on this row if there's nothing in it
       if( $@ || scalar @{$glyphset->{'glyphs'} } ==0 ) {
-	if( $@ ){ warn( $@ ) }
+	    if( $@ ){ warn( $@ ) }
 #        $glyphset->_dump('rendered' => 'no');
-	$self->timer_push("track finished",3);
+	      $self->timer_push("track finished",3);
         $self->timer_push("INIT: [ ] $NAME '".$glyphset->{'my_config'}->get('name'),2)."'";
         next;
       };

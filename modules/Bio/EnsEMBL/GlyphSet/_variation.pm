@@ -150,4 +150,19 @@ sub highlight {
 
 }
 
+sub export_feature {
+  my $self = shift;
+  my ($feature) = @_;
+  
+  my $variation_name = $feature->variation_name;
+  
+  return if $self->{'export_cache'}->{"variation:$variation_name"};
+  $self->{'export_cache'}->{"variation:$variation_name"} = 1;
+  
+  return $self->_render_text($feature, 'Variation', { 
+    'headers' => [ 'variation_name', 'alleles', 'class', 'type' ],
+    'values' => [ $variation_name, $feature->allele_string, $feature->var_class, $feature->display_consequence ]
+  });
+}
+
 1;

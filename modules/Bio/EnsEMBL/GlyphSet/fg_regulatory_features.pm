@@ -127,5 +127,15 @@ sub title {
 
 }
 
+sub export_feature {
+  my $self = shift;
+  my ($feature, $feature_type) = @_;
+  
+  return $self->_render_text($feature, $feature_type, { 
+    'headers' => [ 'id' ],
+    'values' => [ $feature->stable_id ]
+  });
+}
+
 1;
 ### Contact: Beth Pritchard bp1@sanger.ac.uk

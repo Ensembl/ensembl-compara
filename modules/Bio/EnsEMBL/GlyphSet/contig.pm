@@ -7,7 +7,9 @@ use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
 sub _init {
   my ($self) = @_;
   # only draw contigs once - on one strand
-   
+  
+  return $self->render_text if $self->{'text_export'};
+  
   if( $self->species_defs->NO_SEQUENCE ) {
     my $msg = "Clone map - no sequence to display";
     $self->errorTrack($msg);
@@ -261,6 +263,31 @@ sub _init_non_assembled_contig {
       }
     }
   }
+}
+
+sub render_text {
+  my $self = shift;
+  
+  return if $self->species_defs->NO_SEQUENCE;
+  
+  my $container = $self->{'container'};
+  my $sa = $container->adaptor;
+  my $export;  
+  
+  foreach (@{$container->project('seqlevel')||[]}) {
+    my $ctg_slice = $_->to_Slice;
+    my $feature_name = $ctg_slice->coord_system->name eq 'ancestralsegment' ? $ctg_slice->{'_tree'} : $ctg_slice->seq_region_name;
+    my $feature_slice = $sa->fetch_by_region('seqlevel', $feature_name)->project('toplevel')->[0]->to_Slice;
+    
+    $export .= $self->_render_text($_, 'Contig', { 'headers' => [ 'id' ], 'values' => [ $feature_name ] }, {
+      'seqname' => $feature_slice->seq_region_name,
+      'start'   => $feature_slice->start, 
+      'end'     => $feature_slice->end, 
+      'strand'  => $feature_slice->strand
+    });
+  }
+  
+  return $export;
 }
 
 

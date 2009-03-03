@@ -10,7 +10,7 @@ sub analysis_logic_name{
 sub features {
   my ($self) = @_;
   my $slice = $self->{'container'};
-
+  
   my $db_alias = $self->my_config('db');
   my $analyses = $self->my_config('logicnames');
   my @T = map { @{$slice->get_all_Genes( $_, $db_alias )||[]} } @$analyses;
@@ -61,4 +61,15 @@ sub gene_href {
   my $gid = $gene->stable_id(); 	 
   return $self->_url({'type'=>'Gene','action'=>'Summary','g'=>$gid, 'db' => $self->my_config('db') }); 	 
 }
+
+sub export_feature {
+  my $self = shift;
+  my ($feature, $transcript_id, $transcript_name, $gene_id, $gene_name, $gene_type) = @_;
+  
+  return $self->_render_text($feature, 'Exon', {
+    'headers' => [ 'gene_id', 'gene_name', 'transcript_id', 'transcript_name', 'exon_id', 'gene_type' ],
+    'values' => [ $gene_id, $gene_name, $transcript_id, $transcript_name, $feature->stable_id, $gene_type ]
+  });
+}
+
 1;

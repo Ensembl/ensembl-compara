@@ -15,33 +15,35 @@ sub features {
     my $species = $self->{'config'}->{'species'};
     my $orig_group;
     if( my $vega_dnadb = $reg->get_DNAAdaptor($species, "vega") ) {
-	$orig_group = $vega_dnadb->group;
+      $orig_group = $vega_dnadb->group;
     }
     $reg->add_DNAAdaptor($species, "vega", $species, "vega");
-					   
+    
     # get a Vega slice to do the projection
     my $vega_slice = $self->{'container'};
     if( my $vega_sa = Bio::EnsEMBL::Registry->get_adaptor($species, "vega", "Slice") ) {
-	$vega_slice = $vega_sa->fetch_by_region(
-	    ( map { $self->{'container'}->$_ } qw( coord_system_name seq_region_name start end strand) ),
-	    $self->{'container'}->coord_system->version
-	);
+      $vega_slice = $vega_sa->fetch_by_region(
+        ( map { $self->{'container'}->$_ } qw( coord_system_name seq_region_name start end strand) ),
+        $self->{'container'}->coord_system->version
+      );
     }
     my $res = [];
     my $projection = $vega_slice->project('chromosome', $self->species_defs->ALTERNATIVE_ASSEMBLY);
+    
     foreach my $seg ( @$projection ) {
-	my $slice = $seg->to_Slice;
-	my $location = $slice->seq_region_name.":".$slice->start."-".$slice->end;
-	my $f = Bio::EnsEMBL::SimpleFeature->new(
-	    -display_label  => $location,
-	    -start          => $seg->from_start,
-	    -end            => $seg->from_end,
-	    -strand         => $slice->strand,
-	);
-	push @$res, $f;
+      my $slice = $seg->to_Slice;      
+      my $location = $slice->seq_region_name.":".$slice->start."-".$slice->end;
+      my $f = Bio::EnsEMBL::SimpleFeature->new(
+          -display_label  => $location,
+          -start          => $seg->from_start,
+          -end            => $seg->from_end,
+          -strand         => $slice->strand,
+      );
+      push @$res, $f;
     }
     # set dnadb back to what it was originally
     $reg->add_DNAAdaptor($species, "vega", $species, $orig_group) if ($orig_group);
+    
     return $res;
 }
 
@@ -60,6 +62,23 @@ sub feature_label {
 sub title {
     my ($self, $f ) = @_;
     my $title = $f->display_id.'; Assembly: Vega';
+}
+
+sub export_feature {
+  my $self = shift;
+  my ($feature, $feature_type) = @_;
+  
+  my $container = $self->{'container'};
+  
+  return $self->_render_text($feature, $feature_type, { 
+    'headers' => [ 'vega' ],
+    'values' => [ [$self->feature_label($feature)]->[0] ]
+  }, {
+    'seqname' => $container->seq_region_name,
+    'start'   => $container->start + $feature->start - 1,
+    'end'     => $container->start + $feature->end - 1,
+    'source'  => 'Vega' 
+  });
 }
 
 1;

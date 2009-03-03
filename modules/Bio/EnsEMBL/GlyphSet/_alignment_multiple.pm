@@ -276,4 +276,18 @@ sub wiggle_plot {
   return 1;
   $self->timer_push( 'wiggle drawn');
 }
+
+sub export_feature {
+  my $self = shift;
+  my ($feature, $feature_type, $extra, $default) = @_;
+  
+  my $species = $self->species;
+  my $sp = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$self->my_config('method_link_species_set_id')}{'species'};
+
+  return $self->_render_text($feature, $feature_type, {
+    'headers' => [ 'species' ],
+    'values' => [ join ',', grep !/$species/, sort keys %$sp ]
+  }, $default);
+}
+
 1;

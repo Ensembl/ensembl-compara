@@ -34,4 +34,11 @@ sub href {
   return $self->_url({'type'=>'Transcript','action'=>'Summary','pt'=>$transcript->stable_id,'g'=>undef,'db'=>$db_alias});
 }
 
+sub export_feature {
+  my $self = shift;
+  my ($feature, $transcript_id) = @_;
+  
+  return $self->_render_text($feature, 'Genescan', { 'headers' => [ 'genscan' ], 'values' => [ $transcript_id ] });
+}
+
 1;

@@ -40,4 +40,17 @@ sub title {
 sub tag {
   return;
 }
+
+sub export_feature {
+  my $self = shift;
+  my ($feature) = @_;
+  
+  my $id = "repeat:$feature->{'dbID'}";
+  
+  return if $self->{'export_cache'}->{$id};
+  $self->{'export_cache'}->{$id} = 1;
+  
+  return $self->_render_text($feature, 'Repeat', undef, { 'source' => $feature->display_id });
+}
+
 1 ;

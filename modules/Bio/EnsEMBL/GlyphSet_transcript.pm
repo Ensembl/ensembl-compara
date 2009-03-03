@@ -34,6 +34,8 @@ sub render_transcript_nolabel { my $self = shift; $self->render_transcripts( 0 )
 sub render_collapsed {
   my ($self,$labels) = @_;
 
+  return $self->render_text('transcript', 'collapsed') if $self->{'text_export'};
+  
   my $Config        = $self->{'config'};
   my $strand_flag   = $self->my_config('strand');
   my $db            = $self->my_config('db');
@@ -198,6 +200,8 @@ sub render_collapsed {
 sub render_transcripts {
   my ($self,$labels) = @_;
 
+  return $self->render_text('transcript') if $self->{'text_export'};
+  
   my $Config        = $self->{'config'};
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my $strand_flag   = $self->my_config('strand') || 'b';
@@ -601,6 +605,8 @@ sub gene_title {
 sub render_genes {
   my $self = shift;
 
+  return $self->render_text('gene') if $self->{'text_export'};
+  
   my $vc             = $self->{'container'};
   my $type           = $self->check();
   my $h              = 8;
@@ -780,5 +786,63 @@ my($a,$b,$c,$H) = $self->get_text_width( 0,'X_y','','font'=>$FONT,'ptsize'=>$FON
 #  my @legend = %X;
 #  return \@legend;
 #}
+
+sub render_text {
+  my $self = shift;
+  my ($feature_type, $collapsed) = @_;
+  
+  my $strand_flag = $self->my_config('strand') || 'b';
+  my $container = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
+  my $target = $self->get_parameter('single_Transcript');
+  my $target_gene = $self->get_parameter('single_Gene');
+  my $strand = $self->strand;
+  my $length = $container->length;
+  
+  my $export;
+  
+  foreach my $gene (@{$self->features}) { # For alternate splicing diagram only draw transcripts in gene
+    my $gene_id = $gene->can('stable_id') ? $gene->stable_id : undef;
+    
+    next if $target_gene && $gene_id ne $target_gene;
+    
+    my $gene_type = $gene->status . '_' . $gene->biotype;
+    my $gene_name = $gene->can('display_xref') && $gene->display_xref ? $gene->display_xref->display_id : undef;
+    
+    if ($feature_type eq 'gene') {
+      $export .= $self->_render_text($gene, 'Gene', { 
+        'headers' => [ 'gene_id', 'gene_name', 'gene_type' ],
+        'values' => [ $gene_id, $gene_name, $gene_type ]
+      });
+    } else {
+      my $exons = {};
+      
+      foreach my $transcript (@{$gene->get_all_Transcripts}) {      
+        next if $transcript->start > $length || $transcript->end < 1;
+        
+        my $transcript_id = $transcript->stable_id;
+        
+        next if $target && ($transcript_id ne $target); # For exon_structure diagram only given transcript
+        
+        my $transcript_name = $transcript->can('display_xref') && $transcript->display_xref ? $transcript->display_xref->display_id : undef;
+        
+        foreach (sort { $a->start <=> $b->start } @{$transcript->get_all_Exons}) {
+          next if $_->start > $length || $_->end < 1;
+          
+          if ($collapsed) {
+            my $stable_id = $_->stable_id;
+            
+            next if $exons->{$stable_id};
+            
+            $exons->{$stable_id} = 1;
+          }
+          
+          $export .= $self->export_feature($_, $transcript_id, $transcript_name, $gene_id, $gene_name, $gene_type);
+        }
+      }
+    }
+  }
+  
+  return $export;
+}
 
 1;

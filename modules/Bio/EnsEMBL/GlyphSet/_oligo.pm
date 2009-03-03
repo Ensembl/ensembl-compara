@@ -35,4 +35,14 @@ sub href {
   });
 }
 
+sub export_feature {
+  my $self = shift;
+  my ($feature, $source) = @_;
+  
+  return $self->_render_text($feature, 'Oligo', {
+    'headers' => [ 'probeset' ],
+    'values' => [ $feature->can('probeset') ? $feature->probeset : '' ]
+  }, { 'source' => $source });
+}
+
 1;

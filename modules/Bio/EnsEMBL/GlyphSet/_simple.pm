@@ -37,4 +37,14 @@ sub tag {
   my ($self, $f ) = @_;
   return; 
 }
+
+sub export_feature {
+  my $self = shift;
+  my ($feature, $feature_type) = @_;
+  
+  my @label = $feature->can('display_label') ? split (/\s*=\s*/, $feature->display_label) : ();
+  
+  return $self->_render_text($feature, $feature_type, { 'headers' => [ $label[0] ], 'values' => [ $label[1] ] });
+}
+
 1;

@@ -114,5 +114,42 @@ sub block_features_zmenu {
 }
 
 
+sub render_text {
+  my $self = shift;
+  
+  my $container = $self->{'container'};
+  my $feature_type = $self->my_config('caption');
+  my ($features) = $self->get_block_features($self->dbadaptor('homo sapiens', 'FUNCGEN'));
+  my ($start, $end) = ($container->start, $container->end);
+  my $export;
+  
+  foreach (@$features) {
+    if ($feature_type =~ /peak/i) {
+      my $fset = $_->get_displayable_product_FeatureSet;
+      
+      foreach (@{$fset->get_Features_by_Slice($container)}) {
+        $export .= $self->_render_text($_, $feature_type);
+      }
+    } else {
+      foreach my $result_set (@{$_->get_displayable_supporting_sets}) { 
+        foreach (@{$result_set->get_displayable_ResultFeatures_by_Slice($container)}) {
+          my $strand = $_->strand;
+          my $add = $strand > 0 ? $start : $end;
+          
+          $export .= $self->_render_text($_->slice, $feature_type, undef, {
+            'start'  => $_->start + $add,
+            'end'    => $_->end + $add,
+            'strand' => $strand,
+            'score'  => $_->score
+          });
+        }
+      }
+    }
+  }
+  
+  return $export;
+}
+
+
 1;
 ### Contact: Bethan Pritchard bp1@sanger.ac.uk

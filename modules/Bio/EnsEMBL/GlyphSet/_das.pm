@@ -84,6 +84,7 @@ sub features       {
             my $g  = $_->{'group_id'};
             my $ty = $_->{'group_type'};
             $group_styles{$logic_name}{ $ty } ||= { 'style' => $stylesheet->find_group_glyph( $ty, 'default' ) };
+            
             if( exists $groups{$logic_name}{$g}{$st_x} ) {
               my $t = $groups{$logic_name}{$g}{$st_x};
               push @{ $t->{'features'}{$style_key} }, $f;
@@ -209,6 +210,50 @@ if(0) {
     'ori'        => \%orientations,
     'max_height' => $max_height
   };
+}
+
+sub export_feature {
+  my $self = shift;
+  my ($feature, $source) = @_;
+  
+  my $feature_id = $feature->{'feature_id'};
+  my @headers = ( 'id' );
+  my @values;
+  
+  # Split into key/value pairs on | and =
+  if ($feature_id =~ /.+:.+\|.+/) {
+    my @tmp = split(/\s*:\s*/, $feature_id);
+    my @vals = split(/\s*\|\s*/, $tmp[1]);
+    
+    push @values, $tmp[0];
+    
+    foreach (@vals) {
+      my ($header, $value) = split(/\s*=\s*/, $_);
+      push @headers, $header;
+      push @values, $value;
+    }
+  } elsif ($feature_id =~ /\d+:\d+[-,]\d+/) {
+    my $groups = $feature->groups;
+    
+    foreach (@{$groups||[$feature]}) {
+      my $display_id = $_->display_id;
+      
+      my ($header, $value) = $display_id =~ /:/ ? split(/:/, $display_id) : (undef, $display_id);
+      
+      push @headers, $header if $header;
+      push @values, $value;
+    }
+    
+    # Get rid of the 'id' entry in headers if we don't need it
+    shift @headers if scalar @headers != scalar @values;
+  } else {
+    push @values, $feature_id;
+  }
+  
+  return $self->_render_text($feature, 'DAS', {
+    'headers' => \@headers,
+    'values' => \@values
+  }, { 'source' => $source });
 }
 
 1;

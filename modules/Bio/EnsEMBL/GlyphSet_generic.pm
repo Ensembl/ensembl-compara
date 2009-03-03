@@ -27,20 +27,20 @@ use Bio::EnsEMBL::Feature;
 
 sub _draw_features {
   my( $self, $ori, $features, $render_flags ) = @_;
-
+  
   $self->_init_bump();
-
+  
   my $strand = $self->strand;
   my %can_hash;
   my $ppbp    = $self->{ppbp} = $self->scalex;
   $self->{bppp} = 1 / $ppbp; 
   my $seq_len = $self->{'seq_len'} = $self->{'container'}->length;
-#  my $h       = $self->{'h'}       = $features->{'max_height'} || 8; ## We may need to hack this to make it specific to orientation later! needs hacking in _das.pm
+  #  my $h       = $self->{'h'}       = $features->{'max_height'} || 8; ## We may need to hack this to make it specific to orientation later! needs hacking in _das.pm
 
   $self->{'h'} = 0;
   my $colour = $ori ? 'blue' : 'green';
-
-my $offset = $self->{'container'}->start - 1;
+  
+  my $offset = $self->{'container'}->start - 1;
   my $has_labels = 0;
   foreach my $lname   ( sort keys %{$features->{'groups'}} ) {
     foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
@@ -48,7 +48,7 @@ my $offset = $self->{'container'}->start - 1;
       next unless $group;                                          ## No features from this group on this strand!
       next if $group->{'end'} < 1 || $group->{'start'} > $seq_len; ## All features in group exist outside region!
 
-## Now loop through all features and get the extents of features - we will need this later for bumping! and joining!
+      # Now loop through all features and get the extents of features - we will need this later for bumping! and joining!
 
       my $g_s = $features->{'g_styles'}{$lname}{$group->{'type'}};             ## Get the group style...
       my $to_join = lc( $g_s->{'style'}{'symbol'} ) ne 'hidden';
@@ -75,7 +75,7 @@ my $offset = $self->{'container'}->start - 1;
             $g_s->{'style'}{'fgcolor'} ||= $f_s->{style}{fgcolor};
           } 
           foreach my $f ( @{$group->{'features'}{$style_key}} ) { # Compute the extent of each glyph - and add to extent of group if not bumped!
-## Only pass the glyph if we are going to put this glyph in a composite
+            # Only pass the glyph if we are going to put this glyph in a composite
             $self->$fn_g( $to_join && !$to_bump ? $group : undef, $f, $f_s->{style} );
           }
         }
@@ -84,9 +84,10 @@ my $offset = $self->{'container'}->start - 1;
       }
     }
   }
+  
   $self->{h} ||= 12;
-## All groups and features now have two additional values...
-## -> extent_start and extent_end so we know where to draw the boxes....
+  ## All groups and features now have two additional values...
+  ## -> extent_start and extent_end so we know where to draw the boxes....
 
   $has_labels = 0 unless $render_flags eq 'label_under';
   my( $fontname, $fontsize ) = ( undef, -2 );
@@ -98,15 +99,14 @@ my $offset = $self->{'container'}->start - 1;
     foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
       my $group = $features->{'groups'}{$lname}{$gkey}{$ori};
       next unless $group; ### May not have group on this strand!!
-## We now have a feature....
-## Now let us grab all the features in the group as we need to work out the width of the "group"
-## which may be wider than the feature if
-##   (a) we have labels (width of label if wider than feature)
-##   (b) have fixed width glyphs at points
-##   (c) have histogram data - has nos to left of graph..
-
-## Start with looking for special "aggregator glyphs"
-#       foreach my $style_key ( keys %{ $group->{'features'} } ) {
+      ## We now have a feature....
+      ## Now let us grab all the features in the group as we need to work out the width of the "group"
+      ## which may be wider than the feature if
+      ##   (a) we have labels (width of label if wider than feature)
+      ##   (b) have fixed width glyphs at points
+      ##   (c) have histogram data - has nos to left of graph..
+      
+      ## Start with looking for special "aggregator glyphs"
       my $g_s = $features->{'g_styles'}{$lname}{$group->{'type'}};             ## Get the group style...
       my @boxes;
       my $to_join = lc( $g_s->{'style'}{'symbol'} ) ne 'hidden';
@@ -190,7 +190,7 @@ my $offset = $self->{'container'}->start - 1;
         ]}
         keys %{$group->{'features'}}
       ) {
-## Grab the style for the group of features!
+        ## Grab the style for the group of features!
         my $f_s     = $features->{'f_styles'}{$lname}{$style_key};
         $f_s->{style}{height}||=$self->{h};
         my $to_bump = lc($f_s->{'style'}{'bump'}) eq 'yes' || $f_s->{'style'}{'bump'} eq '1';
@@ -292,7 +292,7 @@ my $offset = $self->{'container'}->start - 1;
       if( $composite_flag && ! $score_based_flag ) {
         my $y_pos = $group->{y} + $self->{h}/2;
         if( $boxes_2[0][0] > 1 && $group->{'start'} <= 1 ) {
-## Draw a glyph to the left! ( 1 -> $boxes_2[0][0] );
+          ## Draw a glyph to the left! ( 1 -> $boxes_2[0][0] );
           $self->push($self->Line({
             'x'         => 0,
             'width'     => $boxes_2[0][0]-1,
@@ -304,7 +304,7 @@ my $offset = $self->{'container'}->start - 1;
           }));
         }
         if( $boxes_2[-1][1] < $seq_len && $group->{'end'} >= $seq_len ) {
-## Draw a glyph to the right! ( $boxes_2[-1][1] -> $seq_len );
+          ## Draw a glyph to the right! ( $boxes_2[-1][1] -> $seq_len );
           $self->push($self->Line({
             'x'         => $boxes_2[-1][1],
             'width'     => $seq_len - $boxes_2[-1][1],
@@ -315,10 +315,10 @@ my $offset = $self->{'container'}->start - 1;
             'colour'    => $g_s->{style}{'fgcolor'}
           }));
         }
-## Draw a glyph between pairs!
+        ## Draw a glyph between pairs!
         my $t = shift @boxes_2;
         foreach(@boxes_2) {
-## Draw a glyph from ( $t->[-1] - $_->[0] );
+          ## Draw a glyph from ( $t->[-1] - $_->[0] );
           my $f = $self->gen_feature({
             'start'  => $t->[1]+1,
             'end'    => $_->[0]-1,
@@ -352,6 +352,9 @@ sub render_labels {
 
 sub render_normal {
   my ($self, $render_flags ) = @_;
+  
+  return $self->render_text if $self->{'text_export'};
+  
   $render_flags ||= 'label_under';
   $self->{'y_offset'} = 0;
 
@@ -360,7 +363,7 @@ sub render_normal {
   $features = $self->cache( 'generic:'.$self->{'my_config'}->key, $self->features() ) unless $features;
   
   $self->timer_push( 'Fetched DAS features', undef, 'fetch' );
-
+  
   my $strand          = $self->strand();
 
   my $y_offset = 0; ## Useful to track errors!!
@@ -378,9 +381,35 @@ sub render_normal {
 
   return;
 }
-## Which strand to render on!
 
-1;
+sub render_text {
+  my $self = shift;
+  
+  my $features = $self->features;
+  my $feature_type = $self->my_config('caption');
+  my $method = $self->can('export_feature') ? 'export_feature' : '_render_text';
+  my $export;
+  
+  foreach (sort keys %{$features->{'groups'}}) {
+    my $lnames = $features->{'groups'}->{$_};
+    
+    foreach (sort keys %$lnames) {
+      my $gkeys = $lnames->{$_};
+      
+      foreach (sort keys %$gkeys) {
+        my $group_features = $gkeys->{$_}->{'features'};
+        
+        foreach my $key (sort keys %$group_features) {
+          foreach (sort { $a->start <=> $b->start } @{$group_features->{$key}}) {
+            $export .= $self->$method($_, $feature_type);
+          }
+        }
+      }
+    }
+  }
+  
+  return $export;
+}
 
 ## Two sorts of renderer! - composite renderers - work on every element in the collection!
 

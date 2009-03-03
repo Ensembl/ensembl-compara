@@ -42,13 +42,87 @@ sub error_track_name {
 
 sub render_normal {
   my $self = shift;
-  $self->_init(@_);
+  my $rtn = $self->_init(@_);
+  
+  return $self->{'text_export'} && $self->can('render_text') ? $rtn : undef;
 }
 
 sub render {
   my $self = shift;
-  my $method = 'render_'.$self->{'display'};
-  return $self->can($method) ? $self->$method : $self->render_normal;
+  my $method = 'render_' . $self->{'display'};
+  
+  $self->{'text_export'} = $self->{'config'}->get_parameter('text_export');
+  
+  return $self->can($method) ? $self->$method(@_) : $self->render_normal;
+}
+
+sub _render_text {
+  my $self = shift;
+  my ($feature, $feature_type, $extra, $defaults) = @_;
+  
+  return unless $feature;
+  
+  $extra = { 'headers' => [], 'values' => [] } unless keys %$extra;
+  $defaults ||= {};
+  
+  my $format = $self->{'text_export'};
+  my $header;
+  
+  if (!$self->{'export_header'}) {
+    my @default_fields = qw( seqname source feature start end score strand frame );
+    
+    $header = join ("\t", @default_fields, @{$extra->{'headers'}}) . "\r\n" if ($format ne 'gff');
+    
+    $self->{'export_header'} = 1;
+  }
+  
+  my $score   = $defaults->{'score'}  || ($feature->can('score') ? $feature->score : undef) || '.';
+  my $frame   = $defaults->{'frame'}  || ($feature->can('frame') ? $feature->frame : undef) || '.';
+  my $source  = $defaults->{'source'} || ($feature->can('source') ? $feature->source : ($self->my_config('db') eq 'vega' ? 'Vega' : 'Ensembl'));
+  my $seqname = $defaults->{'seqname'};
+  my $strand  = $defaults->{'strand'};
+  my $start   = $defaults->{'start'};
+  my $end     = $defaults->{'end'};
+  
+  $feature_type ||= $feature->can('primary_tag') ? $feature->primary_tag : '.';
+  
+  $seqname ||= 
+    ($feature->can('seq_region_name') ? $feature->seq_region_name : undef) || 
+    ($feature->can('entire_seq') && $feature->entire_seq ? $feature->entire_seq->name : $feature->can('seqname') ? $feature->seqname : undef) ||
+    'SEQ';
+  
+  $strand ||= 
+    ($feature->can('seq_region_strand') ? $feature->seq_region_strand : undef) || 
+    ($feature->can('strand') ? $feature->strand : undef) ||
+    '.';
+  
+  $start ||= ($feature->can('seq_region_start') ? $feature->seq_region_start : undef) || ($feature->can('start') ? $feature->start : undef);
+  $end   ||= ($feature->can('seq_region_end')   ? $feature->seq_region_end : undef)   || ($feature->can('end')   ? $feature->end : undef);
+  
+  $feature_type =~ s/\s+/ /g;
+  $source =~ s/\s+/ /g;
+  $seqname =~ s/\s+/ /g;
+  
+  $source = ucfirst $source;
+  
+  $strand = '+' if $strand == 1;
+  $strand = '-' if $strand == -1;
+  
+  my @results = ($seqname, $source, $feature_type, $start, $end, $score, $strand, $frame);
+  
+  if ($format eq 'gff') {
+    my @ex;
+    
+    for (0..scalar @{$extra->{'headers'}}-1) {
+      push @ex, "$extra->{'headers'}->[$_]=$extra->{'values'}->[$_]" if $extra->{'values'}->[$_];
+    }
+    
+    push (@results, join ("; ", @ex));
+  } else {
+    push (@results, @{$extra->{'values'}});
+  }
+  
+  return "$header" . join ("\t", @results) . "\r\n";
 }
 
 sub dbadaptor  {

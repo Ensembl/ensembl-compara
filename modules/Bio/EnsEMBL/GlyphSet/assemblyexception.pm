@@ -73,4 +73,14 @@ sub tag {
   };
 }
 
+sub export_feature {
+  my $self = shift;
+  my ($feature, $feature_type) = @_;
+  
+  return $self->_render_text($feature, $feature_type, { 
+    'headers' => [ 'alternate_slice' ],
+    'values' => [ $feature->{'alternate_slice'}->seq_region_name ]
+  });
+}
+
 1;
