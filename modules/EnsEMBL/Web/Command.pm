@@ -1,0 +1,84 @@
+package EnsEMBL::Web::Command;
+
+### Parent module for "Command" steps, in a wizard-type process, which 
+### munge data and redirect to a new webpage rather than rendering HTML
+
+use strict;
+use warnings;
+no warnings qw(uninitialized);
+use Class::Std;
+use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Interface;
+use EnsEMBL::Web::Data::User;
+
+use base qw(EnsEMBL::Web::Root); 
+
+{
+
+my %Object       :ATTR(:get<object> :set<object> :init_arg<object>);
+my %Webpage      :ATTR(:get<webpage> :set<webpage> :init_arg<webpage>);
+my %Filters      :ATTR(:get<filters> :set<filters>);
+
+
+sub object {
+  my $self = shift;
+  return $self->get_object;
+}
+
+sub webpage {
+  my $self = shift;
+  return $self->get_webpage;
+}
+
+sub filters {
+### Override the parent method, because Root is not an inside-out object!
+  my $self = shift;
+  $self->set_filters(shift) if @_;
+  return $self->get_filters;
+}
+
+sub script_name {
+  my $self = shift;
+  my $species = $self->object->species;
+  my $path = $species . '/' if $species =~ /_/;
+  return $path . $ENV{'ENSEMBL_TYPE'} . '/' . $ENV{'ENSEMBL_ACTION'};
+}
+
+sub ajax_redirect {
+  my ($self, $url, $param) = @_;
+  $self->webpage->page->ajax_redirect($self->url($url, $self->ajax_params($param)));
+}
+
+sub ajax_params {
+  my ($self, $param) = @_;
+  $param->{'_referer'} = $self->object->param('_referer') unless $param->{'_referer'};
+  $param->{'x_requested_with'} = $self->object->param('x_requested_with') unless $param->{'x_requested_with'};
+  return $param;
+}
+
+sub message_redirect {
+### Redirects to the appropriate message module
+  my $self = shift;
+  my $type = $ENV{'ENSEMBL_TYPE'} || 'Account';
+  my $url = "/$type/Message";
+  my $param = {
+    '_message_type'     => $self->object->param('_message_type'),
+    '_referer'          => $self->object->param('_referer'),
+    'x_requested_with' => $self->object->param('x_requested_with'),
+  };
+  ## Do appropriate type of redirect
+  my $ajax = $self->object->param('x_requested_with');
+  warn "REDIRECTING TO ".$self->url($url, $param);
+  if ($ajax) {
+    warn '...VIA AJAX';
+    $self->ajax_redirect($url, $param);
+  }
+  else {
+    warn '...VIA CGI';
+    $self->object->redirect($self->url($url, $param));
+  }
+}
+
+}
+
+1;
