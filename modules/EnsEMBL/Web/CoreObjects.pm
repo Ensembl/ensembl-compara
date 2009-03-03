@@ -263,19 +263,21 @@ sub _generate_objects {
     my $tdb_adaptor = $self->database($tdb);
     my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
     my $p = $a->fetch_by_stable_id($trans_id);
-    if ($p->is_current){
-      my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_translation_stable_id($trans_id);
-      $self->transcript( $t);
-      $self->_get_gene_location_from_transcript;
-    } else {
-      my $assoc_transcript = shift @{$p->get_all_transcript_archive_ids};
-      if ($assoc_transcript){
-        my $t = $a->fetch_by_stable_id($assoc_transcript->stable_id);
+    if ($p) {
+      if ($p->is_current){
+        my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_translation_stable_id($trans_id);
         $self->transcript( $t);
-      } else { 
-        $self->transcript( new EnsEMBL::Web::Fake({ 'view' => 'Idhistory/Protein', 'type' => 'history_protein', 'id' => $trans_id ,  'adaptor' => $a  }));
-       $self->{'parameters'}{'protein'} = $trans_id; 
-      }  
+        $self->_get_gene_location_from_transcript;
+      } else {
+        my $assoc_transcript = shift @{$p->get_all_transcript_archive_ids};
+        if ($assoc_transcript){
+          my $t = $a->fetch_by_stable_id($assoc_transcript->stable_id);
+          $self->transcript( $t);
+        } else { 
+          $self->transcript( new EnsEMBL::Web::Fake({ 'view' => 'Idhistory/Protein', 'type' => 'history_protein', 'id' => $trans_id ,  'adaptor' => $a  }));
+         $self->{'parameters'}{'protein'} = $trans_id; 
+        }  
+      }
     }
   }
   if( !$self->transcript &&  $self->param('domain') ) {
