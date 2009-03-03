@@ -28,7 +28,7 @@ sub get {
   my $content = '';
   if ($params->{compress}) {
     my $gz = gzopen( $file, 'rb' )
-         or die "GZ Cannot open $file: $gzerrno\n";
+         or warn "GZ Cannot open $file: $gzerrno\n";
     if ($gz) {
       my $buffer  = 0;
       $content   .= $buffer while $gz->gzread( $buffer ) > 0;
