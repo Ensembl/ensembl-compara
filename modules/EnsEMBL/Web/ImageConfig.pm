@@ -995,12 +995,12 @@ sub add_synteny {
   my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$species}||{}};
   return unless @synteny_species;
   my $menu = $self->get_node( 'synteny' );
-  my $self_label = $self->species_defs->species_label( $species );
+  my $self_label = $self->species_defs->species_label( $species, "no_formatting" );
   foreach my $species ( @synteny_species ) {
     ( my $species_readable = $species ) =~ s/_/ /g;
     my ($a,$b) = split / /, $species_readable;
     my $caption = substr($a,0,1).".$b synteny";
-    my $label = $self->species_defs->species_label( $species );
+    my $label = $self->species_defs->species_label( $species, "no_formatting" );
     ( my $name = "Synteny with $label" ) =~ s/<.*?>//g;
     $menu->append( $self->create_track( 'synteny_'.$species, $name, {
       'db'          => $key,
@@ -1008,7 +1008,7 @@ sub add_synteny {
       'species'     => $species,
       'species_hr'  => $species_readable,
       'caption'     => $caption,
-      'description' => "Synteny regions between $self_label and $label",
+      'description' => "<a href=\"/info/docs/compara/analyses.html#synteny\" class=\"cp-external\">Synteny regions</a> between $self_label and $label",
       'colours'     => $self->species_defs->colour( 'synteny' ),
       'display'     => 'off', ## Default to on at the moment - change to off by default!
       'renderers'   => [qw(off Off normal Normal)],
@@ -1022,16 +1022,26 @@ sub add_alignments {
   my( $self, $key, $hashref,$species ) = @_;
   return unless $self->_check_menus( qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other) );
   my $alignments = {};
+  my $self_label = $self->species_defs->species_label( $species, "no_formatting" );
   my $regexp = $species =~ /^([A-Z])[a-z]*_([a-z]{3})/ ? "-?$1.$2-?" : 'xxxxxx';
   foreach my $row ( values %{$hashref->{'ALIGNMENTS'}} ) {
     next unless $row->{'species'}{$species};
     if( $row->{'class'} =~ /pairwise_alignment/ ) {
       my( $other_species ) = grep { $species ne $_ } keys %{$row->{'species'}};
+      my $other_label = $self->species_defs->species_label( $other_species, "no_formatting" );
       (my $other_species_hr = $other_species ) =~ s/_/ /g;
-      my $menu_key = $row->{'type'} =~ /BLASTZ/ ? 'pairwise_blastz' 
-                   : $row->{'type'} =~ /TRANSLATED_BLAT/  ? 'pairwise_tblat'
-           : 'pairwise_align'
-           ;
+      my $menu_key;
+      my $description;
+      if ($row->{'type'} =~ /BLASTZ/) {
+        $menu_key = 'pairwise_blastz';
+        $description = "<a href=\"/info/docs/compara/analyses.html\" class=\"cp-external\">BLASTz net pairwise alignments</a> between $self_label and $other_label.";
+      } elsif ($row->{'type'} =~ /TRANSLATED_BLAT/) {
+        $menu_key = 'pairwise_tblat';
+        $description = "<a href=\"/info/docs/compara/analyses.html\" class=\"cp-external\">Trans. BLAT net pairwise alignments</a> between $self_label and $other_label.";
+      } else {
+        $menu_key = 'pairwise_align';
+        $description = "<a href=\"/info/docs/compara/analyses.html\" class=\"cp-external\">Pairwise alignments</a> between $self_label and $other_label.";
+      }
       (my $caption = $row->{'name'}) =~s/blastz-net \(on.*?\)/BLASTz net/g;
       $caption =~ s/translated-blat-net/Trans. BLAT net/g;
       $caption =~ s/$regexp//;
@@ -1046,7 +1056,7 @@ sub add_alignments {
         'species_hr'     => $other_species_hr,
         '_assembly'      => $self->species_defs->other_species( $other_species, 'ENSEMBL_GOLDEN_PATH' ),
         'class'          => $row->{'class'},
-        'description'    => "Pairwise alignments",
+        'description'    => $description,
         'order'          => $row->{'type'}.'::'.$other_species,
         'colourset'      => 'pairwise',
         'strand'         => 'r',
@@ -1056,18 +1066,19 @@ sub add_alignments {
     } else {
       my $n_species = grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}};
       if( $row->{'conservation_score'} ) {
+        my ($program) = $hashref->{'CONSERVATION_SCORES'}{$row->{'conservation_score'}}{'type'} =~ /(.+)_CONSERVATION_SCORE/;
         $alignments->{'multiple_align'}{ $row->{'id'}.'_scores' } = {
           'db' => $key,
           'glyphset'       => '_alignment_multiple',
           'name'           => "Conservation score for ".$row->{'name'},
           'short_name'     => $row->{'name'},
-          'caption'        => "Cons. score $n_species way",
+          'caption'        => "$n_species way $program scores",
           'type'           => $row->{'type'},
           'species_set_id' => $row->{'species_set_id'},
           'method_link_species_set_id' => $row->{'id'},
           'class'          => $row->{'class'},
           'conservation_score'  => $row->{'conservation_score'},
-          'description'    => "Multiple alignments",
+          'description'    => "<a href=\"/info/docs/compara/analyses.html#conservation\" class=\"cp-external\">$program conservation scores</a> based on the ".$row->{'name'},
           'colourset'      => 'multiple',
           'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10, $row->{'type'}, $row->{'name'} ),
           'strand'         => 'f',
@@ -1079,13 +1090,13 @@ sub add_alignments {
           'glyphset'       => '_alignment_multiple',
           'name'           => "Constrained elements for ".$row->{'name'},
           'short_name'     => $row->{'name'},
-          'caption'        => "Constrained el. $n_species way",
+          'caption'        => "$n_species way $program elements",
           'type'           => $row->{'type'},
           'species_set_id' => $row->{'species_set_id'},
           'method_link_species_set_id' => $row->{'id'},
           'class'          => $row->{'class'},
           'constrained_element' => $row->{'constrained_element'},
-          'description'    => "Multiple alignments",
+          'description'    => "<a href=\"/info/docs/compara/analyses.html#conservation\" class=\"cp-external\">$program constrained elements</a> based on the ".$row->{'name'},
           'colourset'      => 'multiple',
           'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10+1, $row->{'type'}, $row->{'name'} ),
           'strand'         => 'f',
@@ -1103,7 +1114,9 @@ sub add_alignments {
         'species_set_id' => $row->{'species_set_id'},
         'method_link_species_set_id' => $row->{'id'},
         'class'          => $row->{'class'},
-        'description'    => "Multiple alignments",
+        'description'    => "<a href=\"/info/docs/compara/analyses.html#conservation\">$n_species way whole-genome multiple alignments</a>.; ".
+            join("; ", sort map {$self->species_defs->species_label( $_, "no_formatting" )}
+              grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}}),
         'colourset'      => 'multiple',
         'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10-1, $row->{'type'}, $row->{'name'} ),
         'strand'         => 'f',
