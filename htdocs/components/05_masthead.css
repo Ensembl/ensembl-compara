@@ -39,7 +39,7 @@
   #login-status a:hover { color: [[MH_HOVER]];}
 
 @media print {
-  .mh {background-color:#fffff;}
+  .mh {background-color:#ffffff;}
   #mh_lnk a, #login-status, #login-status a {color:#000000;}
 }
 
