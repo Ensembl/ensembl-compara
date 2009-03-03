@@ -375,6 +375,8 @@ sub _generate_objects {
   if( $self->gene ) {
     if( $self->gene->isa( 'Bio::EnsEMBL::Gene') ) {
       $self->{'parameters'}{'g'} = $self->gene->stable_id;
+    } elsif( $self->gene->isa('Bio::EnsEMBL::ArchiveStableId') ) {
+      $self->{'parameters'}{'g'} = $self->gene->stable_id;
     }
   }
   $self->{'parameters'}{'v'} = $self->variation->name       if $self->variation;
