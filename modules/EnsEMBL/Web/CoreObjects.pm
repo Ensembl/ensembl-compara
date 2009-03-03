@@ -259,7 +259,8 @@ sub _generate_objects {
   }
   if ( !$self->transcript &&  ($self->param('protein') || $self->param('p') )) {
     my $tdb    = $self->{'parameters'}{'db'}  = $self->param('db')  || 'core';
-    my $trans_id = $self->param('protein') || $self->param('p');
+    my $trans_id = $self->param('protein') || $self->param('p'); 
+    next if  $trans_id eq "off";
     my $tdb_adaptor = $self->database($tdb);
     my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
     my $p = $a->fetch_by_stable_id($trans_id);
