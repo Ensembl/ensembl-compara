@@ -33,7 +33,7 @@ sub ajax_zmenu {
   my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object; 
   my $action = $obj->action(); 
-  warn $obj->param('vf'); 
+   
   if( $action eq 'Variation'){
     return $self->ajax_zmenu_variation($panel, $obj);
   }  elsif( $action eq 'Variation_protein'){
