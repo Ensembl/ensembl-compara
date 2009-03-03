@@ -40,7 +40,7 @@ sub content {
       $image->image_name = "$species-".$family_id;
       $image->imagemap = 'yes';
       $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view");
-      unless( $image->exists ) {
+##      unless( $image->exists ) {
         my %high = ( 'style' => 'arrow' );
         foreach my $g (@$genes){
           my $stable_id = $g->stable_id;
@@ -66,7 +66,7 @@ sub content {
           }
         }
         $image->karyotype( $object, [ \%high ]);
-      }
+##      }
       $html .= $image->render if $image;
     }
 
