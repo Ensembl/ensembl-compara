@@ -14,19 +14,29 @@
 
   var IMAGE_FORMAT_TYPES = [];
 
-  function image_format_type( format_code, format_label ) {
-    IMAGE_FORMAT_TYPES.push( { cd:format_code, lb:format_label } );
+  function image_format_type( format_code, format_label, txt ) {
+    IMAGE_FORMAT_TYPES.push( { cd:format_code, lb:format_label, txt:txt } );
   }
 
-  function add_image_format(menu,url,code,label) {
+  function add_image_format(menu,url,code,label,txt) {
     if(!menu) return;   // Sanity check can't add to what doesn't exist!
 		url2 = url.replace(/\?export=[^;]+/,'?export='+code).replace(/\;export=[^;]+/,';export='+code);
-    var n = Builder.node( 'dt', 
-		  Builder.node( 'div', { style: 'float: right' }, [
-  			Builder.node( 'a', { href: url2 }, [ '[view]' ] )
-		  ] ),
-		  Builder.node( 'a', { href: url2+';download=1', width: '9em' }, [ 'Export as '+label ] )
-		);
+    
+    var n;
+    
+    if (txt) {
+      n = Builder.node('dt', 
+        Builder.node('div', { style: 'float: right' }),
+        Builder.node('a', { href: url2, width: '9em', rel: 'external' }, [ 'Export as '+label ] )
+      );
+    } else {
+      n = Builder.node( 'dt', 
+        Builder.node( 'div', { style: 'float: right' }, [
+          Builder.node( 'a', { href: url2, rel: 'external' }, [ '[view]' ] )
+        ] ),
+        Builder.node( 'a', { href: url2+';download=1', width: '9em' }, [ 'Export as '+label ] )
+      );
+    }
 		menu.appendChild(n);
 		Event.observe(n,'click',function(event){ Event.findElement(event,'dl').toggle(); });
   }
@@ -35,6 +45,8 @@
     $$('.iexport a').each(function(n){
 			if( n.hasClassName('munged') ) return;
       var url = n.href;
+      var no_text = n.up().hasClassName('no_text');
+
       n.innerHTML = 'Export image';
       var mn = Builder.node( 'dl', {className:'iexport_mn', id: 'menu_'+n.identify(), style: 'display:none' } );
       n.up('div').parentNode.appendChild(mn);
@@ -46,7 +58,11 @@
   			event.stop();
       });
       IMAGE_FORMAT_TYPES.each(function(t){
-        add_image_format( mn, url, t.cd, t.lb );
+        if (no_text && t.txt) {
+          return;
+        }
+        
+        add_image_format( mn, url, t.cd, t.lb, t.txt );
       });
       n.addClassName('munged');
       n.addClassName('print_hide');
@@ -62,5 +78,6 @@
   image_format_type( 'png-2',    'PNG (x2)' );
   image_format_type( 'png',      'PNG' );
   image_format_type( 'png-0.5',  'PNG (x0.5)' );
+  image_format_type( 'gff',      'GFF', 'text' );
 
   addLoadEvent( __init_image_export );
