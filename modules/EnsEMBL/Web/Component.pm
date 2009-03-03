@@ -38,12 +38,12 @@ sub _hint {
 }
 
 sub _export_image {
-  my( $self, $image ) = @_;
-	$image->{export} = 1;
+  my( $self, $image, $flag ) = @_;
+	$image->{export} = 'iexport' . ($flag ? " $flag" : '');
 	my( $format,$scale ) = $self->object->param('export' ) ? split( /-/, $self->object->param('export'),2) : ('',1);
 	$scale eq 1 if $scale <= 0;
 	my %FORMATS = EnsEMBL::Web::Constants::FORMATS;
-	if( $FORMATS{ $format } ) {
+	if( $FORMATS{ $format } ) {  	
   	$image->drawable_container->{'config'}->set_parameter('sf',$scale);
 		( my $comp = ref($self) ) =~ s/[^\w\.]+/_/g;
 		my $filename = "$comp-".$self->object->_filename().'-'.$scale.'.'.$FORMATS{$format}{'extn'};
@@ -52,9 +52,16 @@ sub _export_image {
 		} else {
   		$self->object->input->header( -type => $FORMATS{$format}{'mime'}, -inline => $filename );
 		}
+		
+		if ($FORMATS{$format}{'extn'} eq 'txt') {
+  		print $image->drawable_container->{'export'};
+  		return 1;
+		}
+		
   	$image->render( $format );
     return 1;
   }
+  
 	return 0;
 }
 sub image_width {
@@ -126,6 +133,48 @@ sub site_name {
   my $self = shift;
   our $sitename = $SiteDefs::ENSEMBL_SITETYPE eq 'EnsEMBL' ? 'Ensembl' : $SiteDefs::ENSEMBL_SITETYPE;
   return $sitename;
+}
+
+sub new_image {
+  my $self = shift;
+  my $object = $self->object;
+  
+  my %FORMATS = EnsEMBL::Web::Constants::FORMATS;
+  
+  # Set text export on image config
+  if ($FORMATS{$object->param('export')}{'extn'} eq 'txt') {
+    my $image_config = ref $_[0] eq 'ARRAY' ? $_[0][1] : $_[1];
+    
+    $image_config->set_parameter('text_export', $object->param('export'));
+  }
+  
+  my $species_defs = $object->species_defs;
+  my $timer = $species_defs->timer;
+  my $image = EnsEMBL::Web::Document::Image->new( $species_defs );
+     $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new( @_ );
+     $image->set_extra( $object );
+     if ($object->prefix) {
+       $image->prefix($object->prefix);
+     }
+  return $image;
+}
+
+sub new_vimage {
+  my $self  = shift;
+  my $object = $self->object;
+  my $image = EnsEMBL::Web::Document::Image->new( $object->species_defs );
+     $image->drawable_container = Bio::EnsEMBL::VDrawableContainer->new( @_ );
+     $image->set_extra( $object );
+  return $image;
+}
+
+sub new_karyotype_image {
+  my $self = shift;
+  my $object = $self->object;
+  my $image = EnsEMBL::Web::Document::Image->new( $object->species_defs );
+     $image->set_extra( $object );
+     $image->{'object'} = $object;
+  return $image;
 }
 
 sub _matches {
@@ -358,7 +407,7 @@ sub get_sequence_data {
   foreach my $sl (@$slices) {
     my $mk = {};
     my $slice = $sl->{'slice'};
-    my $name = $sl->{'name'};
+    my $name = $sl->{'name'};    
     my $seq = uc $slice->seq(1);
     
     my ($slice_start, $slice_end, $slice_length, $slice_strand) = ($slice->start, $slice->end, $slice->length, $slice->strand);
@@ -752,7 +801,7 @@ sub markup_comparisons {
 
   foreach (@{$config->{'slices'}}) {
     $species = $_->{'name'};
-
+    
     push (@{$config->{'seq_order'}}, $species);
     
     next if $species eq $config->{'species'};
