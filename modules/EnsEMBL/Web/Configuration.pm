@@ -714,7 +714,7 @@ sub _configurator {
     </form>';
 
   $self->{'page'}->local_context->tree(    $self->{_data}{'tree'} );
-  $self->{'page'}->local_context->active(  $active );
+  $self->{'page'}->local_context->active(  'active_tracks' );
   $self->{'page'}->local_context->caption( $conf->get_parameter('title') );
   $self->{'page'}->local_context->class(   'track_configuration' );
   $self->{'page'}->local_context->counts(  {} );

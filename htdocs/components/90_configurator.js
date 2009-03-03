@@ -102,13 +102,14 @@ function __configuration_search() {
   
 }
 function __initialize_track_configuration() {
+  var show_active_track_flag = 0;
   $$('.track_configuration dd').each(function(n) {
     var link_id = n.id;
     var menu_id = 'menu_'+link_id.substr(5);
     if( n.hasClassName('active') ) {
       current_menu_id = menu_id;
       current_link_id = link_id;
-      if( !$(menu_id) ) show_active_tracks(); // If there is no menu - then it must be the active tracks link!
+      if( !$(menu_id) ) show_active_track_flag = 1; //show_active_tracks(); // If there is no menu - then it must be the active tracks link!
     } else {
       if( $(menu_id) ) $(menu_id).hide(); // If there is a menu hide it if it isn't active....
     }
@@ -142,6 +143,8 @@ function __initialize_track_configuration() {
       current_link_id=link_id;
     });
   });
+  __hide_show_track_configuration();
+  if( show_active_track_flag ) show_active_tracks();
 }
 
 function __hide_show_track_configuration() {
@@ -251,7 +254,6 @@ function __init_config_menu() {
 /*
   Section 2) Add a hide/show link to each of the menu items on the right handside...
 */
-  __hide_show_track_configuration();   
   $$('#configuration input.submit').each(function(n){ n.hide(); });
 }
 
@@ -274,6 +276,7 @@ function show_active_tracks() {
       $(menu_id).select('dl dd').each(function(en){ en.hide(); });
       $(menu_id).select('dl dt').each(function(en){
         // Hide the individual elements...
+__info( en.firstChild.nextSibling );
         if( en.firstChild.nextSibling.title == 'Off' ) {
           en.hide();
         } else {
