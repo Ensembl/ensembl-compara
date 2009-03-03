@@ -407,7 +407,7 @@ function change_img_value(e) {
         if(on.text == value) {
           on.selected = "selected";
           $('gif_'+current_selected_index).src = '/i/render/'+on.value+'.gif';
-          $('gif_'+current_selected_index).title = on.text;s
+          $('gif_'+current_selected_index).title = on.text;
           current_selected_index = 0; return;
         }
       });
