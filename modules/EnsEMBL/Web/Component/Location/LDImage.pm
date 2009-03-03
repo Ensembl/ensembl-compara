@@ -83,7 +83,7 @@ sub content {
     push @containers_and_configs, $slice, $wuc_pop;
   }
 
-  my $image    = $object->new_image([ @containers_and_configs, ],
+  my $image    = $self->new_image([ @containers_and_configs, ],
              $object->highlights, );
   return if $self->_export_image( $image );
   $image->{'panel_number'} = 'top';

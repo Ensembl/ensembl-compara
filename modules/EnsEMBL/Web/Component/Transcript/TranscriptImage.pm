@@ -44,7 +44,7 @@ sub content {
   $wuc->tree->dump("Tree", '[[caption]]' )
     if $self->object->species_defs->ENSEMBL_DEBUG_FLAGS & $self->object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
 
-  my $image    = $transcript->new_image( $transcript_slice, $wuc, [] );
+  my $image    = $self->new_image( $transcript_slice, $wuc, [] );
   return if $self->_export_image( $image );
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'transcript';

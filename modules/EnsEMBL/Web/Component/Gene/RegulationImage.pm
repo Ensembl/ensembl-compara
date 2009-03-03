@@ -81,7 +81,7 @@ sub content {
   $wuc->cache( 'feature_sets', $fsets);  
   $wuc->cache('gene', $object);
   
-  my $image    = $object->new_image( $extended_slice, $wuc, [] );
+  my $image    = $self->new_image( $extended_slice, $wuc, [] );
       $image->imagemap           = 'yes';
       $image->{'panel_number'} = 'top';
       $image->set_button( 'drag', 'title' => 'Drag to select region' );

@@ -85,9 +85,9 @@ sub content {
 
   push @highlights, $collapsed_nodes || undef;
 
-  my $image  = $object->new_image
+  my $image  = $self->new_image
       ( $tree, $wuc, [@highlights] );
-  return if $self->_export_image( $image );
+  return if $self->_export_image($image, 'no_text');
 
 #  $image->cacheable   = 'yes';
 

@@ -150,7 +150,7 @@ sub content {
   ## -- Render image ----------------------------------------------------- ##
   # Send the image pairs of slices and configurations
 
-  my $image    = $object->new_image(
+  my $image    = $self->new_image(
     [
      $object->__data->{'slices'}{'transcript'}[1],  $Configs->{'transcript'},
      $transcript_slice, $Configs->{'transcripts_top'},
@@ -160,7 +160,7 @@ sub content {
     ],
     [ $object->stable_id ]
   );
-  return if $self->_export_image( $image );
+  return if $self->_export_image($image, 'no_text');
 
   $image->imagemap = 'yes';
   $image->set_extra( $object );

@@ -43,7 +43,7 @@ sub content {
 
   $config->get_node('Videogram')->set('label',   ucfirst($object->seq_region_type) );
   $config->get_node('Videogram')->set('label_2', $chr_name );
-  my $image    = $object->new_karyotype_image();
+  my $image    = $self->new_karyotype_image();
     $image->image_type         = 'chromosome';
     $image->image_name         = $species.'-'.$chr_name;
     $image->set_button('drag', 'title' => 'Click or drag to jump to a region' );

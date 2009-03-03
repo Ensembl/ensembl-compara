@@ -38,7 +38,7 @@ sub content {
   if( @{$object->species_defs->ENSEMBL_CHROMOSOMES} ) {
     $object->param('aggregate_colour', 'red'); ## Fake CGI param - easiest way to pass this parameter
     my $wuc   = $object->get_imageconfig( 'Vkaryotype' );
-    my $image = $object->new_karyotype_image();
+    my $image = $self->new_karyotype_image();
     $image->image_type = 'domain';
     $image->image_name = "$species-".$object->param('domain');
     $image->imagemap = 'yes';

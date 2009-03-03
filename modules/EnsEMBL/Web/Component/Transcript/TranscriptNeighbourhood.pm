@@ -35,7 +35,7 @@ sub content {
      $wuc->set( 'ruler', 'str', $object->Obj->strand > 0 ? 'f' : 'r' );
      $wuc->set( $object->default_track_by_gene,'display','on');
 
-  my $image    = $object->new_image( $transcript_slice, $wuc, [] );
+  my $image    = $self->new_image( $transcript_slice, $wuc, [] );
   return if $self->_export_image( $image );
      $image->imagemap = 'yes';
 

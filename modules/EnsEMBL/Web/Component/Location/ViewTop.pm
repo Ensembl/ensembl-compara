@@ -64,7 +64,7 @@ sub content {
   $self->_extra( $wuc, $slice );
 
   $wuc->_update_missing( $s_o  );
-  my $image    = $object->new_image( $slice, $wuc, $object->highlights );
+  my $image    = $self->new_image( $slice, $wuc, $object->highlights );
   return if $self->_export_image( $image );
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'top';

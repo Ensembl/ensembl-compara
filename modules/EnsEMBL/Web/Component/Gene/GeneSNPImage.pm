@@ -205,7 +205,7 @@ sub _content {
   );
 
 ## -- Render image ------------------------------------------------------ ##
-  my $image    = $object->new_image([
+  my $image    = $self->new_image([
     $object->__data->{'slices'}{'gene'}[1],        $Configs->{'gene'},
     $transcript_slice, $Configs->{'transcripts_top'},
     @containers_and_configs,
@@ -214,7 +214,7 @@ sub _content {
   ],
   [ $object->stable_id ]
   );
-  return if $self->_export_image( $image );
+  return if $self->_export_image($image, 'no_text');
 
   $image->imagemap = 'yes';
   $image->set_extra( $object );

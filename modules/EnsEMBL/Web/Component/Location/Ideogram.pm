@@ -22,7 +22,7 @@ sub content {
      $wuc->container_width( $object->seq_region_length );
      $wuc->set_width( $object->param('image_width') );
 
-  my $image    = $object->new_image( $slice, $wuc );
+  my $image    = $self->new_image( $slice, $wuc );
   return if $self->_export_image( $image );
      $image->{'panel_number'} = 'ideogram';
      $image->imagemap = 'yes';

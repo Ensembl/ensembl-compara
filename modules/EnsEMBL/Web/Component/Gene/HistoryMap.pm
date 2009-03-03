@@ -91,8 +91,8 @@ sub _create_idhistory_tree {
   $wuc->{_object} = $object;
 
   
-  my $image = $OBJ->new_image($tree, $wuc, [$object->stable_id], $OBJ );
-  return if $self->_export_image( $image );
+  my $image = $self->new_image($tree, $wuc, [$object->stable_id], $OBJ );
+  return if $self->_export_image($image, 'no_text');
   $image->image_type = 'idhistorytree';
   $image->image_name = $OBJ->param('image_width').'-'.$object->stable_id;
   $image->imagemap = 'yes';

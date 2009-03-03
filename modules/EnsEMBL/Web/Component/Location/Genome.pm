@@ -44,7 +44,7 @@ sub content {
     my $ideo_height = $config->get_parameter('image_height');
     my $top_margin  = $config->get_parameter('top_margin');
 
-    my $image    = $object->new_karyotype_image();
+    my $image    = $self->new_karyotype_image();
 
     my $pointers = [];
     my %pointer_defaults = (

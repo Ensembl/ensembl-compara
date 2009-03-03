@@ -436,11 +436,11 @@ sub _content {
   $wuc->cache( 'align_object', $al_obj );
 
   #draw and render image
-  my $image = $object->new_image(
+  my $image = $self->new_image(
     $transcript_slice,$wuc,
     [ $object->stable_id ]
   );
-  return if $self->_export_image( $image );
+  return if $self->_export_image($image, 'no_text');
   $image->imagemap = 'yes';
   $image->{'panel_number'} = 'top';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );

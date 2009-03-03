@@ -38,7 +38,7 @@ sub content {
   my $n = $wuc->get_node($key);
   $n->set('display','transcript_label') if $n->get('display') eq 'off';
 
-  my  $image  = $gene->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
+  my  $image  = $self->new_image( $gene_slice, $wuc, [$gene->Obj->stable_id] );
   return if $self->_export_image( $image );
       $image->imagemap         = 'yes';
       $image->{'panel_number'} = 'top';

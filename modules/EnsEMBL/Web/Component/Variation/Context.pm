@@ -77,7 +77,7 @@ sub content {
   $wuc->{'snp_counts'}     = [$count_snps+$genotyped_count, scalar @$filtered_snps+scalar @$genotyped_snps];
 
   ## If you want to resize this image
-  my $image    = $object->new_image( $slice, $wuc, [$object->name] );
+  my $image    = $self->new_image( $slice, $wuc, [$object->name] );
   return if $self->_export_image( $image );
   $image->imagemap = 'yes';
   $image->{'panel_number'} = 'transcript';

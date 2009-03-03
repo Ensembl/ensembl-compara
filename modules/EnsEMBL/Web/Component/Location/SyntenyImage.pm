@@ -50,7 +50,7 @@ sub content {
   $Config->{'other_species_installed'} = $synteny{ $other };
   $Config->container_width( $chr_length );
 
-  my $image = $object->new_vimage(
+  my $image = $self->new_vimage(
     {   'chr'           => $chr,
         'ka_main'       => $ka,
         'sa_main'       => $object->get_adaptor('get_SliceAdaptor'),

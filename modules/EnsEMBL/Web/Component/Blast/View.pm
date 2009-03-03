@@ -67,7 +67,7 @@ sub _draw_karyotype {
 
   my $config_name = 'Vkaryotype';
   my $config = $object->get_imageconfig($config_name);
-  my $image    = $object->new_karyotype_image();
+  my $image    = $self->new_karyotype_image();
 
   ## Create highlights - arrows and outline box
   my %all_hits = ('style' => 'rharrow');

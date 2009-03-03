@@ -54,10 +54,10 @@ sub content {
   } else {
     $extra_message .= sprintf 'You currently have the overview panel and %d tracks on the main panel turned off', $info->{'count'};
   }
-
-  my $image    = $object->new_image( $slice, $wuc, $object->highlights );
-
-	return if $self->_export_image( $image );
+  
+  my $image = $self->new_image($slice, $wuc, $object->highlights);
+  
+	return if $self->_export_image($image);
 
   $image->{'panel_number'} = 'bottom';
   $image->imagemap = 'yes';

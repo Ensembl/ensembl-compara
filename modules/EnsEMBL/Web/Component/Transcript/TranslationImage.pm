@@ -35,7 +35,7 @@ sub content {
   $wuc->tree->dump("Tree", '[[caption]]' )
     if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
 
-  my $image    = $transcript->new_image( $object->Obj, $wuc, [] );
+  my $image    = $self->new_image( $object->Obj, $wuc, [] );
   return if $self->_export_image( $image );
      $image->imagemap = 'yes';
      $image->{'panel_number'} = 'translation';
