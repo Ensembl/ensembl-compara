@@ -60,15 +60,17 @@ sub _common_HTML {
     $self->links->add_link({
       'rel'   => 'search',
       'type'  => 'application/opensearchdescription+xml',
-      'href'  => $self->species_defs->ENSEMBL_BASE_URL.'/opensearchdescription.xml',
-      'title' => 'Ensembl'
+      'href'  => $self->species_defs->ENSEMBL_BASE_URL.'/opensearch/all.xml',
+      'title' => $self->species_defs->ENSEMBL_SITE_NAME_SHORT.' (All)'
     });
     if( $ENV{'ENSEMBL_SPECIES'} ) {
       $self->links->add_link({
         'rel'   => 'search',
         'type'  => 'application/opensearchdescription+xml',
-        'href'  => $self->species_defs->ENSEMBL_BASE_URL.'/opensearch_'.$ENV{'ENSEMBL_SPECIES'}.'.xml',
-       'title' => 'Ensembl '.$self->species_defs->SPECIES_COMMON_NAME
+        'href'  => $self->species_defs->ENSEMBL_BASE_URL.'/opensearch/'.$ENV{'ENSEMBL_SPECIES'}.'.xml',
+        'title' => sprintf( '%s (%s)', $self->species_defs->ENSEMBL_SITE_NAME_SHORT,
+          substr( $self->species_defs->SPECIES_BIO_SHORT,0,5)
+        )
       });
     }
     $self->links->add_link({
