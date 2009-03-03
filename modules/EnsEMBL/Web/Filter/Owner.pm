@@ -31,7 +31,7 @@ sub catch {
   my $self = shift;
   my $object = $self->object;
   ## First check we have a sensible value for 'id'
-  if (!$object->param('id') || ($object->param('id') && $object->param('id') =~ /\D/) {
+  if ($object->param('id') && $object->param('id') =~ /\D/) {
     $self->set_error_code('bogus_id');
     return;
   }
