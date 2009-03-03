@@ -29,7 +29,7 @@ sub init {
   $self->add_tracks( 'p_decorations',
     [ 'variation','Variations','P_variation',{ 'display' => 'normal', 'colourset' => 'protein_feature', 'strand' => 'r', 'depth' => 1e5 } ],
     [ 'scalebar', 'Scale bar', 'P_scalebar', { 'display' => 'normal', 'strand' => 'r' } ],
-    [ 'protein',  'Protein',   'P_protein',  { 'display' => 'normal', 'colourset' => 'protein_feature', 'strand' => 'f' } ],
+    [ 'exon_structure',  'Protein',   'P_protein',  { 'display' => 'normal', 'colourset' => 'protein_feature', 'strand' => 'f' } ],
   );
   ## Psnp_legend....  'syn'	  => 'chartreuse2', 'in-del'  => 'skyblue2', 'non-syn' => 'gold',
 }
