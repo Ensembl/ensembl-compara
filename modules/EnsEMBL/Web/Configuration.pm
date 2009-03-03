@@ -466,11 +466,16 @@ sub _export_configurator {
     my @formats;
     
     if ($key eq 'pip') {
-      my $seq_file  = EnsEMBL::Web::TmpFile::Text->new(extension => 'fa', prefix => '');
+      my $seq_file  = EnsEMBL::Web::TmpFile::Text->new(
+        extension => 'fa',
+        prefix => '',
+        content_type => 'text/plain; charset=utf-8',
+      );
       my $anno_file = EnsEMBL::Web::TmpFile::Text->new(
         filename => $seq_file->filename,
         extension => 'txt',
-        prefix => ''
+        prefix => '',
+        content_type => 'text/plain; charset=utf-8',
       );
       
       export_file($seq_file, $object, 'seq');
