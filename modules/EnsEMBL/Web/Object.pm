@@ -210,6 +210,7 @@ sub generate_query_url {
   return join ';', map { "$_=$q_hash->{$_}" } keys %$q_hash;
 }
 
+# DEPRECATED - use EnsEMBL::Web::Component
 sub new_image {
   my $self = shift;
   my $species_defs = $self->species_defs;
@@ -223,6 +224,7 @@ sub new_image {
   return $image;
 }
 
+# DEPRECATED - use EnsEMBL::Web::Component
 sub new_vimage {
   my $self  = shift;
   my $image = EnsEMBL::Web::Document::Image->new( $self->species_defs );
@@ -231,6 +233,7 @@ sub new_vimage {
   return $image;
 }
 
+# DEPRECATED - use EnsEMBL::Web::Component
 sub new_karyotype_image {
   my $self = shift;
   my $image = EnsEMBL::Web::Document::Image->new( $self->species_defs );
