@@ -26,8 +26,11 @@ sub content {
   my $object = $self->object;
 
   ## Create form
-  my $script = $self->script_name($object);
-  my $form = EnsEMBL::Web::Form->new('preview', "/$script", 'post');
+  my $function = 'Save';
+  my $url = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $url = '' if $url !~ /_/;
+  $url = '/'.$object->interface->script_name.'/'.$function;
+  my $form = EnsEMBL::Web::Form->new('preview', $url, 'post');
 
   ## get data and assemble form
   my ($primary_key) = $object->interface->data->primary_columns;
@@ -43,22 +46,10 @@ sub content {
     $object->interface->cgi_populate($object);
   }
 
-  ## TODO: get rid of one of this elements
   $form->add_element(
     'type'  => 'Hidden',
     'name'  => 'id',
     'value' => $id,
-  );
-  ## add form elements
-  $form->add_element(
-    'type'  => 'Hidden',
-    'name'  => $primary_key,
-    'value' => $id,
-  );
-  $form->add_element(
-    'type'  => 'Hidden',
-    'name'  => 'mode',
-    'value' => $object->param('mode'),
   );
 
   my $preview_fields = $object->interface->preview_fields($id, $object);
@@ -73,8 +64,8 @@ sub content {
 
   ## navigation elements
   $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $object->param('_referer'));
-  $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => $db_action);
-  $form->add_element( 'type' => 'Submit', 'value' => 'OK' );
+  $form->add_element( 'type' => 'Hidden', 'name' => 'x_requested_with', 'value' => $object->param('x_requested_with'));
+  $form->add_element( 'type' => 'Submit', 'value' => $function );
 
 
   return $form->render;

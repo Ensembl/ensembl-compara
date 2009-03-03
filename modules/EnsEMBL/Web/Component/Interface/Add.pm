@@ -22,13 +22,11 @@ sub caption {
 sub content {
   my $self = shift;
 
-  my $form = $self->data_form($self->object, 'add');
+  my $form = $self->data_form('add', 'Preview');
 
   ## navigation elements
-  $form->add_element( 'type' => 'Hidden', 'name' => 'prev_action', 'value' => 'Save Record');
-  $form->add_element( 'type' => 'Hidden', 'name' => 'mode', 'value' => 'add');
-  $form->add_element( 'type' => 'Hidden', 'name' => 'db_action', 'value' => 'save');
-  $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'preview');
+  $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $self->object->param('_referer'));
+  $form->add_element( 'type' => 'Hidden', 'name' => 'x_requested_with', 'value' => $self->object->param('x_requested_with'));
   $form->add_element( 'type' => 'Submit', 'value' => 'Next');
 
   return $form->render;

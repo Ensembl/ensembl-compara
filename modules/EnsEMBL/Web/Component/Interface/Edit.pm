@@ -23,32 +23,24 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my ($primary_key) = $object->interface->data->primary_columns;
-  my $id = $object->param($primary_key) || $object->param('id');
-
-  my $form = $self->data_form($object, 'edit');
+  my $form = $self->data_form('edit', 'Preview');
   $form->add_element(
           'type'  => 'Hidden',
-          'name'  => $primary_key,
-          'value' => $id,
-        );
-  $form->add_element(
-          'type'  => 'Hidden',
-          'name'  => 'mode',
-          'value' => 'edit',
+          'name'  => 'id',
+          'value' => $object->param('id'),
         );
 
   ## Show creation/modification details?
   if ($object->interface->show_history) {
-    my $history = $object->interface->history_fields($id);
+    my $history = $object->interface->history_fields($object->param('id'));
     foreach my $field (@$history) {
       $form->add_element(%$field);
     }
   }
 
   ## navigation elements
-  $form->add_element( 'type' => 'Hidden', 'name' => 'db_action', 'value' => 'save');
-  $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'preview');
+  $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $self->object->param('_referer'));
+  $form->add_element( 'type' => 'Hidden', 'name' => 'x_requested_with', 'value' => $self->object->param('x_requested_with'));
   $form->add_element( 'type' => 'Submit', 'value' => 'Next');
 
   return $form->render;
