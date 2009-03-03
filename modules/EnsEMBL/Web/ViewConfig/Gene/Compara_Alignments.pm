@@ -16,7 +16,7 @@ sub init {
     snp_display             off
     line_numbering          off
     display_width           120
-    conservation_display    all
+    conservation_display    off
     codons_display          off
     title_display           off
   ));
