@@ -27,6 +27,7 @@ sub content {
     site_type => ucfirst(lc($object->species_defs->ENSEMBL_SITETYPE)) || 'Ensembl',
     gene_name => $object->Obj->stable_id,
     species => $object->species,
+    title_display => 'yes',
     key_template => qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>},
     key => ''
   };
