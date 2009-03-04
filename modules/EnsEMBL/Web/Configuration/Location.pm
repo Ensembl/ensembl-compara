@@ -702,6 +702,19 @@ sub _ajax_zmenu_av {
       if ($caption =~ /^(\d+)/) {
         $caption = "Constrained el. $1 way";
       }
+      my @alignment_segments = sort {$a->[3] cmp $b->[3]} @{$feature->alignment_segments};
+      for (my $i = 0; $i < @alignment_segments; $i++) {
+        my $segment = $alignment_segments[$i];
+        my ($dnafrag_id, $start, $end, $genome_db_name, $dnafrag_name) = @$segment;
+        my $seg_url = "/$genome_db_name/Location/View?r=$dnafrag_name:$start-$end";
+        $seg_url =~ s/ /_/g;
+        $panel->add_entry({
+          'type' => $genome_db_name,
+          'label' => "View region (".($end-$start+1)." bp)",
+          'link' => $seg_url,
+          'priority' => 99 - $i,
+        });
+      }
     } elsif ($obj_type eq "GenomicAlignBlock" and $obj->param('ref_id')) {
       $feature->{reference_genomic_align_id} = $obj->param('ref_id');
       $start = $feature->reference_genomic_align->dnafrag_start;
