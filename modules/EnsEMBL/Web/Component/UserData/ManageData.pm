@@ -36,7 +36,13 @@ sub content {
   ## Uploads
   $html .= "<h3>Your data</h3>";
 
-  my @data = $self->object->get_session->get_data('type'=>'upload');
+  my @data = $self->object->get_session->get_data(type => 'upload');
+  ## Extra check if file exists, if not - delete the record
+  foreach my $file (@data) {
+    $self->object->get_session->purge_data($file)
+      unless EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'})->exists;
+  }
+  
   push @data, $user->uploads if $user;
   push @data, values %{$self->object->get_session->get_all_das};
   push @data, $user->dases if $user;
