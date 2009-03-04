@@ -329,9 +329,9 @@ sub populate_tree {
      { 'availability' => 'slice' }
   );
 
-  $self->create_node(
+  $self->create_subnode(
     'Export', "Export location data",
-    [ qw( sequence EnsEMBL::Web::Component::Location/export ) ],
+    [ qw( export EnsEMBL::Web::Component::Location/export ) ],
     { 'availability' => 'slice', 'no_menu_entry' => 1 }
   );
 }
