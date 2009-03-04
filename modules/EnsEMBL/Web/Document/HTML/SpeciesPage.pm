@@ -47,6 +47,8 @@ sub render {
   my $total = scalar(keys %species);
   my $break = int($total / 3);
   $break++ if $total % 3;
+  ## Reset total to number of cells required for a complete table
+  $total = $break * 3;
   my $link_style = 'font-size:1.1em;font-weight:bold;text-decoration:none;';
 
   my $html = qq(
@@ -54,6 +56,7 @@ sub render {
 <table>
   <tr>
   );
+  my $row = -1;
   my @species = sort keys %species;
   for (my $i=0; $i < $total; $i++) {
     my $col = int($i % 3);
@@ -61,7 +64,7 @@ sub render {
      $html .= qq(</tr>\n<tr>);
     }
     my $row = int($i/3);
-    $row++ if $col;
+    $row++ if $col == 0;
     my $j = $row + $break * $col;
     my $common = $species[$j];
     next unless $common;
@@ -69,16 +72,27 @@ sub render {
     my $dir = $info->{'dir'};
     (my $name = $dir) =~ s/_/ /;
     my $link_text = $common =~ /\./ ? $name : $common;
-    $html .= qq(<td style="width:8%;text-align:right;padding-bottom:1em"><img src="/img/species/thumb_$dir.png" alt="$name"></td><td style="width:25%;padding:2px;padding-bottom:1em">);
-    if ($info->{'status'} eq 'pre') {
-      $html .= qq(<a href="http://pre.ensembl.org/$dir/" style="$link_style" rel="external">$link_text</a>);
+    $html .= qq(<td style="width:8%;text-align:right;padding-bottom:1em">);
+    if ($dir) {
+      $html .= qq(<img src="/img/species/thumb_$dir.png" alt="$name">);
     }
     else {
-      $html .= qq(<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a>);
+      $html .= '&nbsp;';
     }
-    $html .= ' (preview - assembly only)' if $info->{'status'} eq 'pre';
-    unless ($common =~ /\./) {
-      $html .= "<br /><i>$name</i>";
+    $html .= qq(</td><td style="width:25%;padding:2px;padding-bottom:1em">);
+    if ($dir) {
+      if ($info->{'status'} eq 'pre') {
+        $html .= qq(<a href="http://pre.ensembl.org/$dir/" style="$link_style" rel="external">$link_text</a> (preview - assembly only));
+      }
+      else {
+        $html .= qq(<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a>);
+      }
+      unless ($common =~ /\./) {
+        $html .= "<br /><i>$name</i>";
+      }
+    }
+    else {
+      $html .= '&nbsp;';
     }
     $html .= '</td>';
   }
