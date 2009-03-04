@@ -1869,7 +1869,9 @@ sub get_alignment{
 #end of alignview support features
 
 sub can_export {
-  return $_[0]->availability->{'transcript'};
+  my $self = shift;
+  
+  return $self->action =~ /^Export$/ ? 0 : $self->availability->{'transcript'};
 }
 
 1;

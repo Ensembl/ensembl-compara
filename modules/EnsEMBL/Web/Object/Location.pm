@@ -1249,7 +1249,7 @@ sub focus {
 sub can_export {
   my $self = shift;
 
-  return $self->action =~ /^Chromosome$|^Genome$|^Synteny$/ ? 0 : $self->availability->{'slice'};
+  return $self->action =~ /^Export$|^Chromosome$|^Genome$|^Synteny$/ ? 0 : $self->availability->{'slice'};
 }
 
 1;
