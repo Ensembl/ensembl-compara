@@ -43,6 +43,7 @@ sub init {
   
   $view_config->_set_defaults(%defaults);
   $view_config->storable = 1;
+  $view_config->default_config = 0;
 }
 
 sub form {
