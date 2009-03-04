@@ -106,8 +106,8 @@ paths to the 'hive_output_dir' to
 
 Also, the genome with the best assembly should be used as the target.
 
-5- Copy data from the master and an old database (eg. previous release) into the new database
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5- Copy data from the master into the new database
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline  
 
