@@ -104,7 +104,7 @@ sub fasta {
     }
   }
   
-  return $html || "No data available";
+  return $html ? "<pre>$html</pre>" : "No data available";
 }
 
 sub features {
@@ -368,7 +368,7 @@ sub flat {
     $seq_dumper->attach_database('estgene', $estgene_db);
   }
   
-  return $seq_dumper->dump($slice, $format);
+  return "<pre>" . $seq_dumper->dump($slice, $format) . "</pre>";
 }
 
 sub export_file {
