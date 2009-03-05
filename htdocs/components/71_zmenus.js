@@ -132,7 +132,9 @@ function _show_zmenu_range( x ) {
 */
   __zmenu_remove();
   var Q = __zmenu_init('zmenu_nav','Region: '+x.bp_start+'-'+x.bp_end);
-  __zmenu_add( Q, '', 'Jump to region',   _new_url( x.bp_start, x.bp_end ) );
+  var D = x.bp_end-x.bp_start;
+  var R = 'Jump to region ('+D+' bp)';
+  __zmenu_add( Q, '', R,   _new_url( x.bp_start, x.bp_end ) );
   __zmenu_add( Q, '', 'Centre here',      _new_url_cp( (x.bp_start+x.bp_end)/2, __seq_region.width-1 ) );
   __zmenu_show(Q, x.x, x.y);
 }
