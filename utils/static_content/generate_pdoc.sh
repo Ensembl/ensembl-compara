@@ -103,7 +103,7 @@ done
 	echo "cd $PDOC_LOC"
 	echo "for i in \`/usr/bin/find . -name \"*.html\" -type f\`"
 	echo "do"
-	echo "perl -i -p -e 'print \"<!--#set var=\\\"decor\\\" value=\\\"none\\\"-->\" if $.==1;s#http://www.ensembl.org##g;' \$i"
+	echo "perl -i -p -e 'print \"<!--#set var=\\\"decor\\\" value=\\\"none\\\"-->\" if $.==1;s#http://www.ensembl.org##g;s#<head>##g;s#</body>##g;s#</html>##g;' \$i"
 	echo "done"
 	echo "echo \"done\""
 ) >> $P2WDOC_LOC/make_html_docs.sh
