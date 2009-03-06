@@ -720,6 +720,16 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
     $all_genomic_align_blocks->{$query_genomic_align_id}->add_GenomicAlign($this_genomic_align);
   }
 
+  foreach my $this_genomic_align_block (@$genomic_align_blocks) {
+    my $ref_genomic_align = $this_genomic_align_block->reference_genomic_align;
+    if ($ref_genomic_align->cigar_line =~ /X/) {
+      # The reference GenomicAlign is part of a composite segment. We have to restrict it
+      $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions(
+          $ref_genomic_align->dnafrag_start, $ref_genomic_align->dnafrag_end, undef,
+          "skip_empty_genomic_aligns");
+    }
+  }
+
   if (defined($start) and defined($end) and $restrict) {
     my $restricted_genomic_align_blocks = [];
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
