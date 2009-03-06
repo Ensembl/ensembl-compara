@@ -990,7 +990,7 @@ sub _get_aligned_scores_from_cigar_line {
     return undef if (!$cigar_line);
     
     my $num_aligned_scores = scalar(@$aligned_scores);
-    my @cig = ( $cigar_line =~ /(\d*[GMD])/g );
+    my @cig = ( $cigar_line =~ /(\d*[GMDIX])/g );
 
     #start and end of region in alignment coords
     my $align_start = 1;
@@ -1214,7 +1214,7 @@ sub _get_aligned_scores_from_cigar_line_fast {
     return undef if (!$cigar_line);
     
     my $num_aligned_scores = scalar(@$aligned_scores);
-    my @cig = ( $cigar_line =~ /(\d*[GMD])/g );
+    my @cig = ( $cigar_line =~ /(\d*[GMDIX])/g );
 
     #start and end of region in alignment coords
     my $align_start = 1;
