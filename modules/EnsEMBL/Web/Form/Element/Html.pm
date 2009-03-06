@@ -11,6 +11,14 @@ use base qw( EnsEMBL::Web::Form::Element::Text );
 
 use XHTML::Validator;
 
+sub new {
+  my $class = shift;
+  my $widget = $class->SUPER::new( @_ );
+  $widget->rows = 20 unless $widget->rows;
+  $widget->cols = 80 unless $widget->cols;
+  return $widget;
+}
+
 sub _is_valid {
   my $self = shift;
   my $validator = new XHTML::Validator;
