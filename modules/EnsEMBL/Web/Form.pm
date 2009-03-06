@@ -80,9 +80,11 @@ sub _next_id {
 
 sub _render_buttons {
   my $self = shift;
-  my $output = qq(<table style="width:100%"><tbody>
+  return unless  @{$self->{'_buttons'}};
+  my $class = $self->{'_attributes'}{'class'};
+  my $output = qq(<table style="width:100%" class="$class"><tbody>
 <tr>
-<td style="width:50%">&nbsp;</td><td style="width:50%">);
+<th>&nbsp;</th><td>);
   foreach my $button ( @{$self->{'_buttons'}}) {
     $output .= $button->render;
   }
