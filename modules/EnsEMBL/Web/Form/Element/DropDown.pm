@@ -69,13 +69,13 @@ sub render {
       $self->classes($classes);
     }
 #       sprintf( "document.forms[%s].submit()", $self->form ) :
+    my $label = $self->label ? CGI::escapeHTML( $self->label ).': ' : '';
     return sprintf( qq(
   <tr>
-    <th><label for="%s">%s: </label></th>
+    <th><label for="%s">%s</label></th>
     <td><select name="%s" id="%s" %s%s>\n%s</select>%s</td>
   </tr>),
-      CGI::escapeHTML( $self->name ), 
-      CGI::escapeHTML( $self->label ),
+      CGI::escapeHTML( $self->name ), $label,
       CGI::escapeHTML( $self->name ), 
       CGI::escapeHTML( $self->id ),
       $self->class_attrib,
