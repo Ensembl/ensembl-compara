@@ -423,7 +423,7 @@ sub _check_if_snp_unique_location {
   my @features = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
 
   my $context = $self->param('vw')||500;
-  unless (scalar @features > 1){
+  if (scalar @features == 1 ){
    my $s =  $features[0]->start; 
    my $e = $features[0]->end;
    my $r = $features[0]->seq_region_name;
