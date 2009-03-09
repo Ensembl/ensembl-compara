@@ -10,9 +10,55 @@ sub render_compact        { return $_[0]->_render();         }
 sub render_signal_map     { return $_[0]->_render('wiggle'); }
 sub render_signal_feature { return $_[0]->_render('both');   }
 
+sub render_text {
+  my ($self, $wiggle) = @_;
+  
+  my $container = $self->{'container'};
+  my $feature_type = $self->my_config('caption');
+  
+  my $method = $self->can('export_feature') ? 'export_feature' : '_render_text';
+  my $export;
+  
+  if ($wiggle ne 'wiggle') {
+    my $element_features = $self->can('element_features') ?  $self->element_features : [];
+    my $strand = $self->strand;
+    my $strand_flag = $self->my_config('strand');
+    my $length = $container->length;
+    
+    my @features = sort { $a->[1] <=> $b->[1] } map { ($strand_flag ne 'b' || $strand == $_->{'strand'}) && $_->{'start'} <= $length && $_->{'end'} >= 1 ? [ $_, $_->{'start'} ] : () } @$element_features;
+     
+    foreach (@features) {
+      my $f = $_->[0];
+      
+      $export .= $self->$method($f, $feature_type, undef, {
+        'seqname' => $f->{'hseqname'}, 
+        'start'   => $f->{'start'} + ($f->{'hstrand'} > 0 ? $f->{'hstart'} : $f->{'hend'}),
+        'end'     => $f->{'end'} + ($f->{'hstrand'} > 0 ? $f->{'hstart'} : $f->{'hend'}),
+        'strand'  => '.',
+        'frame'   => '.'
+      });
+    }
+  }
+  
+  if ($wiggle) {
+    my $score_features = $self->can('score_features') ? $self->score_features : [];
+    my $name = $container->seq_region_name;
+    
+    foreach my $f (@$score_features) {
+      my $pos = $f->seq_region_pos;
+      
+      $export .= $self->$method($f, $feature_type, undef, { 'seqname' => $name, 'start' => $pos, 'end' => $pos });
+    }
+  }
+  
+  return $export;
+}
+
 sub _render { ## Show both map and features
   my $self = shift;
-
+  
+  return $self->render_text(@_) if $self->{'text_export'};
+  
 ## Check to see if we draw anything because of size!
 
   my $max_length    = $self->my_config( 'threshold' ) || 10000;
@@ -190,7 +236,7 @@ sub draw_wiggle_plot {
 
   # Add line of text -------------------------------------------
   my @res_analysis = $self->get_text_width( 0,  $label, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i ); 
-
+  
   $self->push( $self->Text({
     'text'      => $label,
     'width'     => $res_analysis[2],
