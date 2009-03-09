@@ -8,6 +8,8 @@ sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]-
 sub render_normal {
   my $self           = shift;
 
+  return $self->render_text if $self->{'text_export'};
+  
   my $WIDTH          = 1e5;
   my $container      = $self->{'container'};
   my $strand         = $self->strand();
@@ -212,6 +214,9 @@ sub render_normal {
 
 sub render_compact {
   my $self = shift;
+  
+  return $self->render_text if $self->{'text_export'};
+  
   my $WIDTH          = 1e5;
   my $container      = $self->{'container'};
   my $strand         = $self->strand();
@@ -358,8 +363,6 @@ sub render_compact {
   $self->errorTrack( "No ". $self->my_config('name')." features in this region" ) unless( $C || $self->get_parameter( 'opt_empty_tracks')==0 );
 }
 
-1;
-
 sub features {
   my $self = shift;
   return $self->{'container'}->get_all_compara_DnaAlignFeatures(
@@ -370,3 +373,34 @@ sub features {
   );
 }
 
+sub render_text {
+  my $self = shift;
+  
+  my $strand = $self->strand;
+  my $strand_flag = $self->my_config('strand');
+  
+  return if $strand_flag eq 'r' && $strand != -1;
+  return if $strand_flag eq 'f' && $strand != 1;
+
+  my $length = $self->{'container'}->length;
+  my $species = $self->my_config('species');
+  my $type = $self->my_config('type');
+  
+  my $export;
+  
+  foreach my $f (@{$self->features||[]}) {
+    next if $strand_flag eq 'b' && $strand != $f->hstrand || $f->end < 1 || $f->start > $length;
+    
+    $export .= $self->_render_text($f, $type, { 
+      'headers' => [ $species ], 
+      'values' => [ $f->hseqname . ':' . $f->hstart . '-' . $f->hend ]
+    }, {
+      'strand'  => '.',
+      'frame'   => '.'
+    });
+  }
+  
+  return $export;
+}
+
+1;
