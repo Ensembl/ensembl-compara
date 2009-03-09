@@ -75,8 +75,8 @@ sub export_feature {
     'values' => [ [$self->feature_label($feature)]->[0] ]
   }, {
     'seqname' => $container->seq_region_name,
-    'start'   => $container->start + $feature->start - 1,
-    'end'     => $container->start + $feature->end - 1,
+    'start'   => $feature->start + ($container->strand > 0 ? $container->start : $container->end) - 1,
+    'end'     => $feature->end + ($container->strand > 0 ? $container->start : $container->end) - 1,
     'source'  => 'Vega' 
   });
 }
