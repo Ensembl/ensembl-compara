@@ -96,7 +96,7 @@ sub content {
   my $action = $object->action;
 
   if ($count < 1) {
-   $html .= qq(<dt>Location</dt><dd>This feature has not been mapped.</dd>i</dl>);
+   $html .= qq(<dt>Location</dt><dd>This feature has not been mapped.</dd></dl>);
   } else {
     my @locations;
     my $select_html;
