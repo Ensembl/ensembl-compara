@@ -115,7 +115,7 @@ sub block_features_zmenu {
 
 
 sub render_text {
-  my $self = shift;
+  my ($self, $wiggle) = @_;
   
   my $container = $self->{'container'};
   my $feature_type = $self->my_config('caption');
@@ -124,13 +124,7 @@ sub render_text {
   my $export;
   
   foreach (@$features) {
-    if ($feature_type =~ /peak/i) {
-      my $fset = $_->get_displayable_product_FeatureSet;
-      
-      foreach (@{$fset->get_Features_by_Slice($container)}) {
-        $export .= $self->_render_text($_, $feature_type);
-      }
-    } else {
+    if ($wiggle) {
       foreach my $result_set (@{$_->get_displayable_supporting_sets}) { 
         foreach (@{$result_set->get_displayable_ResultFeatures_by_Slice($container)}) {
           my $strand = $_->strand;
@@ -143,6 +137,14 @@ sub render_text {
             'score'  => $_->score
           });
         }
+      }
+    }
+    
+    if ($wiggle ne 'wiggle') {
+      my $fset = $_->get_displayable_product_FeatureSet;
+      
+      foreach (@{$fset->get_Features_by_Slice($container)}) {
+        $export .= $self->_render_text($_, $feature_type);
       }
     }
   }
