@@ -277,7 +277,8 @@ sub run_hcluster {
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
   my $cmd = $hcluster_executable;
-  $cmd .= " ". "-m 750 -w 0 -s 0.34 -O ";
+  my $max_count = int($self->{'max_gene_count'}/2); # hcluster can joint up to (max_count+(max_count-1))
+  $cmd .= " ". "-m $max_count -w 0 -s 0.34 -O ";
   $cmd .= "-C " . $self->worker_temp_directory . "hcluster.cat ";
   $cmd .= "-o " . $self->worker_temp_directory . "hcluster.out ";
   $cmd .= " " . $self->worker_temp_directory . "hcluster.txt";
@@ -380,7 +381,7 @@ sub dataflow_clusters {
   my $clusterset = $self->{'ccEngine'}->clusterset;
   my $clusters = $clusterset->children;
   foreach my $cluster (@{$clusters}) {
-    $DB::single=1;1;
+
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
                             $cluster->node_id, $clusterset->node_id);
     if ($cluster->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
