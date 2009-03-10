@@ -99,8 +99,15 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (132908,"Megabat"
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (132908,"Large flying fox","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9813,"Hyrax","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9813,"cape rock hyrax","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (59729,"Zebra Finch","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (59729,"Zebra Finch","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9358,"Sloth","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9358,"Two-toed sloth","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (28377,"Anole Lizard","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (28377,"Green anole Lizard","ensembl common name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl alias name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl common name");
+
 
 # Internal nodes for the GeneTrees
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (33553,  "Mouse/Rat/Squirrel ancestor","ensembl alias name");
@@ -108,14 +115,14 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (39107,  "Old Wor
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (129949, "Smegmamorph fish","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (186625, "Bony fish","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (207598, "Human/Chimp/Gorilla ancestor","ensembl alias name");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (311790, "Elephant/Armadillo ancestor","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (311790, "African mammals","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (314145, "Carnivore/Insectivore/Ungulate mammalian ancestor","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (314146, "Primates/Rodents ancestor","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (376911, "Wet nose lemurs","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (7147,   "Flies","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (7157,   "Mosquitos","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (7711,   "Chordates","ensembl alias name");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (9347,   "Placentals","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9347,   "Placental mammals","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9362,   "Insectivore mammals","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9989,   "Rodents","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (31031,  "Puffer fish","ensembl alias name");
@@ -138,3 +145,6 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (33316,  "Coeloma
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (376913, "Human/Chimp/Orang/Macaque/Tarsier ancestor","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (91561,  "Cow/Alpaca/Dolphin ancestor","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9397,   "Bats","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (8825,   "Birds","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (32561,  "Reptiles","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9348,   "Sloth/Anteater/Armadillo ancestor","ensembl alias name");

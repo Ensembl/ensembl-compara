@@ -13,7 +13,7 @@ We'll update our "mirror" at each release (every 2 months).
 
 wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
 
-tar xvzf taxdump.tar.gz
+tar xzf taxdump.tar.gz
 
 # It will generate several dmp files of which we want nodes and names
 
@@ -63,15 +63,15 @@ exit
 
 # This should take about 60 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+#ncbi_taxonomy.ncbi_taxa_node: Records: 490867  Deleted: 0  Skipped: 0  Warnings: 1472601
+# v53
 #ncbi_taxonomy.ncbi_taxa_node: Records: 478491  Deleted: 0  Skipped: 0  Warnings: 1435473
-# v52
-#ncbi_taxonomy.ncbi_taxa_node: Records: 465379  Deleted: 0  Skipped: 0  Warnings: 1396137
 
 # This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
+#ncbi_taxonomy.ncbi_taxa_name: Records: 695512  Deleted: 0  Skipped: 0  Warnings: 0
+# v53
 #ncbi_taxonomy.ncbi_taxa_name: Records: 653542  Deleted: 0  Skipped: 0  Warnings: 0
-# v51
-#ncbi_taxonomy.ncbi_taxa_name: Records: 622867  Deleted: 0  Skipped: 0  Warnings: 0
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
