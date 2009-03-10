@@ -221,35 +221,113 @@ sub get_SimpleAlign {
   return $sa;
 }
 
-sub get_all_taxa_by_member_source_name {
-  my $self = shift;
-  my $source_name = shift;
+=head2 get_all_taxa_by_member_source_name
 
-  my $sql = "SELECT distinct(m.taxon_id)
+  Arg [1]    : string $source_name
+               e.g. "ENSEMBLPEP"
+  Example    : 
+  Description: Returns the distinct taxons found in this family across
+               the specified source. If you do not specify a source then
+               the code will return all taxons in this family.
+  Returntype : array reference of distinct Bio::EnsEMBL::Compara::NCBITaxon 
+               objects found in this family
+  Exceptions : 
+  Caller     : public
+
+=cut
+
+sub get_all_taxa_by_member_source_name {
+  my ($self, $source_name) = @_;
+  my $ncbi_ta = $self->adaptor->db->get_NCBITaxonAdaptor();
+  my $sub = sub {
+  	my ($row) = @_;
+  	return $ncbi_ta->fetch_node_by_taxon_id($row->[0]);
+  };
+  my $results = $self->_run_finder_by_member_field_source_name(
+		'taxa', $source_name, $sub);
+	return $results;
+}
+
+=head2 get_all_GenomeDBs_by_member_source_name
+
+  Arg [1]    : string $source_name
+               e.g. "ENSEMBLPEP"
+  Example    : 
+  Description: Returns the distinct GenomeDBs found in this family. Please note
+               that if you specify a source other than an EnsEMBL based one
+               the chances of getting back GenomeDBs are very low.
+  Returntype : array reference of distinct Bio::EnsEMBL::Compara::GenomeDB 
+               objects found in this family
+  Exceptions : 
+  Caller     : public
+
+=cut
+
+sub get_all_GenomeDBs_by_member_source_name {
+	my ($self, $source_name) = @_;
+	my $gdb_a = $self->adaptor->db->get_GenomeDBAdaptor();
+	my $sub = sub {
+		my ($row) = @_;
+		return $gdb_a->fetch_by_dbID($row->[0]);
+	};
+	my $results = $self->_run_finder_by_member_field_source_name(
+		'genome_db', $source_name, $sub);
+	return $results;
+}
+
+=head2 _run_finder_by_member_field_source_name
+
+  Arg [1]    : string $entity
+               e.g. 'taxa' or 'genome_db'
+  Arg [2]    : string $source_name (not required)
+               e.g. 'ENSEMBLPEP'
+  Arg [3]    : code $sub
+               e.g. 'taxa' or 'genome_db'          
+  Example    : 
+  Description: 
+  Returntype : array reference of distinct objects as returned by your 
+               subroutine 
+  Exceptions : If an unknown entity has been given
+  Caller     : private
+
+=cut
+
+sub _run_finder_by_member_field_source_name {
+	my ($self, $entity, $source_name, $sub) = @_;
+	
+	my $field;
+	if($entity eq 'genome_db') {
+		$field = 'genome_db_id';
+	}
+	elsif($entity eq 'taxa') {
+		$field = 'taxon_id';
+	}
+	exception("Unknown entity type given [$entity].") unless $field;
+	
+	my $sql = "SELECT distinct(m.${field})
              FROM family_member fm,member m
-             WHERE fm.family_id= ? AND
-                   fm.member_id=m.member_id";
+             WHERE fm.family_id= ? 
+             AND fm.member_id=m.member_id";
+  my @args = ($self->dbID());
   
   if (defined $source_name) {
-    $sql .= " AND m.source_name = ?"
+    $sql .= ' AND m.source_name = ?';
+    push(@args, $source_name);
   }
-
-  my $sth = $self->adaptor->dbc->prepare($sql);
-  $sth->execute($self->dbID, $source_name );
-
-  my @taxa;
-  my $ncbi_ta = $self->adaptor->db->get_NCBITaxonAdaptor;
-
-  while (my $rowhash = $sth->fetchrow_hashref) {
-    my $taxon_id = $rowhash->{taxon_id};
-    my $taxon = $ncbi_ta->fetch_node_by_taxon_id($taxon_id);
-    push @taxa, $taxon;
+  
+  my @results;
+  
+  my $sth = $self->adaptor()->dbc()->prepare($sql);
+  $sth->execute(@args);
+  while (my $rowarray = $sth->fetchrow_arrayref()) {
+  	if(defined $rowarray->[0]) {
+  		my $val = $sub->($rowarray);
+  		push(@results, $val);
+  	}
   }
-  $sth->finish;
-
-  return \@taxa;
-
-
+  $sth->finish();
+  
+  return \@results;
 }
 
 1;
