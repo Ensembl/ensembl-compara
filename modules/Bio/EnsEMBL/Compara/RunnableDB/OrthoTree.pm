@@ -261,27 +261,6 @@ sub run_analysis
   my $tmp_time = time();
   my $tree = $self->{'protein_tree'};
 
-  # SIS = 0 transforms duplication tags back to speciation in the
-  # homology filtering
-  #   foreach my $subnode ($tree->get_all_subnodes) {
-  #     next if ($subnode->is_leaf);
-  #     my $dup_value = $subnode->get_tagvalue("Duplication");
-  #     my $sis_tag = $subnode->get_tagvalue('species_intersection_score');
-  #     my $sis_value = $subnode->get_tagvalue('DD');
-  #     if ($dup_value ne '' && $dup_value > 0) {
-  #       if ($sis_tag ne '' && 0 == $sis_tag) {
-  #         # We retag the node as speciation in memory -- webteam
-  #         # will code as orange using [$dup_value and $sis_tag]
-  #         # $subnode->add_tag("Duplication",0);
-  #         # FIXME - get rid of orange_node tag after debugging is done
-  #         # $subnode->store_tag("orange_node",1);
-  #         if ($self->debug) {
-  #           print "DD $sis_value -- SIS $sis_tag transforms Duplication $dup_value to 0\n";
-  #         }
-  #       }
-  #     }
-  #   }
-
   my @all_protein_leaves = @{$tree->get_all_leaves};
   my $tree_node_id = $tree->node_id;
 
@@ -1123,7 +1102,7 @@ sub store_homologies
       'OrthoTree_types_hashstr', 
       $self->encode_hash($self->{'orthotree_homology_counts'})) unless ($self->{'_readonly'});
 
-  # FIXME: this has to go to OrthoTree because we haven't stored taxon_id and taxon_name yet here
+  # This has to go to OrthoTree because we haven't stored taxon_id and taxon_name yet here
   # Go through and calculate species sampling and count.
     # Create our taxonomic tree.
 #   my $ta = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
@@ -1420,8 +1399,12 @@ sub generate_attribute_arguments {
   my ($aln1state, $aln2state);
   my ($aln1count, $aln2count);
 
-  my @aln1 = split(//, $protein1->alignment_string);
-  my @aln2 = split(//, $protein2->alignment_string);
+  # my @aln1 = split(//, $protein1->alignment_string); # Speed up
+  # my @aln2 = split(//, $protein2->alignment_string);
+  my $alignment_string = $protein1->alignment_string;
+  my @aln1 = unpack("A1" x length($alignment_string), $alignment_string);
+  $alignment_string = $protein2->alignment_string;
+  my @aln2 = unpack("A1" x length($alignment_string), $alignment_string);
 
   for (my $i=0; $i <= $#aln1; $i++) {
     next if ($aln1[$i] eq "-" && $aln2[$i] eq "-");
