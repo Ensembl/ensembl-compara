@@ -69,8 +69,13 @@ sub fetch_by_Member_paired_species {
   Description: fetch the homology relationships where the given member is implicated
                in pair with another member from the paired species. Member species and
                paired species should be different.
+               
+               When you give the species name the method attempts to find
+               the species without _ subsitution and then replacing them
+               for spaces. This is to help support GenomeDB objects which
+               have _ in their names.
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
-  Exceptions : none
+  Exceptions : If a GenomeDB cannot be found for the given species name
   Caller     : 
 
 =cut
@@ -78,10 +83,14 @@ sub fetch_by_Member_paired_species {
 sub fetch_all_by_Member_paired_species {
   my ($self, $member, $species, $method_link_types) = @_;
 
-  $species =~ tr/_/ /;
-
+	my $gdb_a = $self->db->get_GenomeDBAdaptor();
   my $gdb1 = $member->genome_db;
-  my $gdb2 = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
+  my $gdb2 = eval {$gdb_a->fetch_by_name_assembly($species)};
+  if(!defined $gdb2) {
+  	my $species_no_underscores =~ tr/_/ /;
+  	$gdb2 = eval {$gdb_a->fetch_by_name_assembly($species_no_underscores)};
+  	throw("No GenomeDB found with names [$species | $species_no_underscores]");
+  }
 
   unless (defined $method_link_types) {
     $method_link_types = ['ENSEMBL_ORTHOLOGUES','ENSEMBL_PARALOGUES'];

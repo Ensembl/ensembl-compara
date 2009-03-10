@@ -400,7 +400,9 @@ sub adaptor {
                one.
                NB: You can use underscores instead of whitespaces for
                the name of the species, i.e. Homo_sapiens will be
-               understood as "Homo sapiens".
+               understood as "Homo sapiens". However if the GenomeDB is found
+               to already have _ defined in the name then this behaviour is
+               disabled.
   Returntype : listref of Bio::EnsEMBL::Compara::AlignSlice::Slice
                objects.
   Exceptions : 
@@ -414,8 +416,11 @@ sub get_all_Slices {
 
   if (@species_names) {
     foreach my $slice (@{$self->{_slices}}) {
+    	#Search for underscore in GenomeDB name; if not there (index returned 
+    	#a position less than 0) then allow the "original" behaviour
+    	my $remove_underscore = (index($slice->genome_db->name(),'_') < 0) ? 1 : 0;
       foreach my $this_species_name (@species_names) {
-        $this_species_name =~ s/_/ /g; ## supports names containing underscores instead of whitespaces
+        $this_species_name =~ s/_/ /g if $remove_underscore;
         push(@$slices, $slice) if ($this_species_name eq $slice->genome_db->name);
       }
     }
@@ -425,7 +430,6 @@ sub get_all_Slices {
 
   return $slices;
 }
-
 
 =head2 reference_Slice
 
@@ -723,7 +727,7 @@ sub _get_condensed_conservation_scores {
 
     my $cs_mlss = $mlss_adaptor->fetch_by_dbID($cs_mlss_id);
 
-    my $all_conservation_scores = $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($cs_mlss, $self->{'reference_slice'}, $display_size, $display_type, $window_size);
+    $all_conservation_scores = $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($cs_mlss, $self->{'reference_slice'}, $display_size, $display_type, $window_size);
     
     return $all_conservation_scores;
 }
