@@ -69,7 +69,8 @@ $url ||= $DEFAULT_URL;
 
 my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch($url,'compara');
 
-my $doit = 1;
+my $doit = 0;
+$doit = 1 if ($long);
 
 $|=1;
 
@@ -80,17 +81,20 @@ if ($doit) {
 # Check data consistency between gene_count and number of homology entries
 ##########################################################################
 
-  print STDERR "# Check data consistency between gene_count and number of homology entries\n";
+  print "# Check data consistency between gene_count and number of homology entries\n";
 
   $sql = "select node_id,value,(value*(value-1))/2 from protein_tree_tag where tag='gene_count'";
   
   $sth = $dba->dbc->prepare($sql);
   $sth->execute;
   
+  my $this_count = sprintf("%05d",1);
   while (my $aref = $sth->fetchrow_arrayref) {
     my ($node_id, $value, $homology_count) = @$aref;
     my $sql2 = "select count(*) from homology where tree_node_id=$node_id";
     my $sth2 = $dba->dbc->prepare($sql2);
+    print STDERR "## Checking $node_id / gene_count = $value / $homology_count / [$this_count]\n";
+    $this_count = sprintf("%05d",$this_count+1);
     $sth2->execute;
     my $count = $sth2->fetchrow_array;
     if ($count !=0 && $count != $homology_count) {
@@ -98,6 +102,16 @@ if ($doit) {
       print STDERR "ERROR: USED SQL : $sql\n                  $sql2\n";
     }
     $sth2->finish;
+
+    my $sql3 = "select count(*) from homology h, homology_member hm where h.homology_id=hm.homology_id and h.tree_node_id=$node_id";
+    my $sth3 = $dba->dbc->prepare($sql3);
+    $sth3->execute;
+    $count = $sth3->fetchrow_array;
+    if ($count !=0 && $count != 2*$homology_count) {
+      print STDERR "ERROR: tree $node_id (gene_count = $value) gene_count != homology_member : should have $homology_count homologies instead of $count\n";
+      print STDERR "ERROR: USED SQL : $sql\n                  $sql3\n";
+    }
+    $sth3->finish;
   }
 
   $sth->finish;
@@ -243,7 +257,8 @@ my $mlsses = $mlssa->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
 
 if ($doit) {
 
-$sql = "select h.method_link_species_set_id,hm.member_id from homology h, homology_member hm where h.method_link_species_set_id=? and h.homology_id=hm.homology_id group by hm.member_id having count(*)>1 and group_concat(h.description) like '%ortholog_one2one%'";
+# $sql = "select h.method_link_species_set_id,hm.member_id from homology h, homology_member hm where h.method_link_species_set_id=? and h.homology_id=hm.homology_id group by hm.member_id having count(*)>1 and group_concat(h.description) like '%ortholog_one2one%'";
+$sql = "select h.method_link_species_set_id,hm.member_id from homology h, homology_member hm where h.method_link_species_set_id=? and h.homology_id=hm.homology_id group by hm.member_id having count(*)>1 and group_concat(h.description) like='ortholog_one2one'";
 
 $sth = $dba->dbc->prepare($sql);
 
@@ -253,16 +268,17 @@ while (my $mlss = shift @$mlsses) {
   my $ok = 1;
   while (my $aref = $sth->fetchrow_arrayref) {
     my ($mlss_id, $member_id) = @$aref;
-    print STDERR "ERROR: some [apparent_]one2one_ortholog also one2many or many2many in method_link_species_set_id=$mlss_id!\n";
+    # print STDERR "ERROR: some [apparent_]one2one_ortholog also one2many or many2many in method_link_species_set_id=$mlss_id!\n";
+    print STDERR "ERROR: some one2one_ortholog also one2many or many2many in method_link_species_set_id=$mlss_id!\n";
     print STDERR "ERROR: USED SQL : $sql\n";
     $ok = 0;
     last;
   }
-  print "PASSED: [apparent_]one2one_ortholog are ok in method_link_species_set_id=".$mlss->dbID."\n" if ($ok);
+  # print "PASSED: [apparent_]one2one_ortholog are ok in method_link_species_set_id=".$mlss->dbID."\n" if ($ok);
+  print "PASSED: one2one_ortholog are ok in method_link_species_set_id=".$mlss->dbID."\n" if ($ok);
 }
 
 $sth->finish;
-}
 # check for homology has no duplicates
 ######################################
 
@@ -288,3 +304,4 @@ while (my $mlss = shift @$mlsses) {
 
 $sth->finish;
 
+}
