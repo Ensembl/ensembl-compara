@@ -59,11 +59,14 @@ sequence
 family
 family_member
 homology
-homology_member
 protein_tree_node
 protein_tree_member
 protein_tree_tag
-sitewise_aln);
+protein_tree_stable_id
+mapping_session
+stable_id_history
+sitewise_aln
+homology_member);
 
 
 open F, "mysql -h$host -u$user -p$pass -N -e 'show tables like \"peptide_align_feature%\"' $source_db |";
