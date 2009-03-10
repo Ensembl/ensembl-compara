@@ -184,7 +184,6 @@ sub fetch_distances {
 
   my $starttime = time();
 
-  $DB::single=1;1;#??
   my $gdb_id = $gdb->dbID;
   my $species_name = lc($gdb->name);
   $species_name =~ s/\ /\_/g;
@@ -225,25 +224,31 @@ sub fetch_categories {
   my $species_name = lc($gdb->name);
   $species_name =~ s/\ /\_/g;
   my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
-  my $sql = "SELECT m.member_id".
-        " FROM member m, subset_member sm WHERE m.member_id=sm.member_id AND m.genome_db_id=$gdb_id;";
+  my $sql = "SELECT DISTINCT ".
+            "qmember_id ".
+             "FROM $tbl_name WHERE qgenome_db_id=$gdb_id;";
   print("$sql\n");
   my $sth = $self->dbc->prepare($sql);
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
-  $DB::single=1;1;
+
   my $filename = $self->{fasta_dir} . "/" . "$tbl_name.hcluster.cat";
-  open FILE, ">$filename" or die $!;
 
   my $outgroup = 1;
   $outgroup = 2 if (defined($self->{outgroups}{$gdb_id}));
 
+  my $member_id_hash;
   while ( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($member_id) = @$ref;
-    print FILE "$member_id"."_","$gdb_id\t$outgroup\n";
+    $member_id_hash->{$member_id} = 1;
   }
   $sth->finish;
+  printf("%1.3f secs to gather distinct\n", (time()-$starttime));
+  open FILE, ">$filename" or die $!;
+  foreach my $member_id (keys %$member_id_hash) {
+    print FILE "$member_id"."_","$gdb_id\t$outgroup\n";
+  }
   close FILE;
   printf("%1.3f secs to process\n", (time()-$starttime));
 }
