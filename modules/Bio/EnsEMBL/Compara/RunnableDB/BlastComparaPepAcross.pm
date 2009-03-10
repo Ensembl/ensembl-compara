@@ -123,7 +123,7 @@ sub fetch_input {
   my $cluster_analysis;
   $cluster_analysis = $self->analysis->adaptor->fetch_by_logic_name('PAFCluster');
   $cluster_analysis = $self->analysis->adaptor->fetch_by_logic_name('HclusterPrepare') unless (defined($cluster_analysis));
-  $DB::single=1;1;
+
   my $cluster_parameters = eval($cluster_analysis->parameters);
   my @gdbs;
   foreach my $gdb_id (@{$cluster_parameters->{species_set}}) {
@@ -378,7 +378,6 @@ sub try_reuse_blast {
 
   my $pafs = $paf_adaptor->fetch_all_by_qmember_id_hgenome_db_id($member_reuse->member_id,$hit_genome_db_id);
   my @new_pafs;
-  my $identical = 1;
   foreach my $paf (@$pafs) {
     my $hit_member_reuse = $paf->hit_member;
     my $hit_member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP',$hit_member_reuse->stable_id);
