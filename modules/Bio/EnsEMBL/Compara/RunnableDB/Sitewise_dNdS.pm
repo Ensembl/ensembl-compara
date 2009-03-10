@@ -521,7 +521,7 @@ sub run_gblocks
     $tmpfile->close;
     my $min_leaves_gblocks = int(($self->{'protein_tree'}->num_leaves+1) * $gmin + 0.5);
     my $cmd = "echo -e \"o\n$filename\nt\nb\n2\n$min_leaves_gblocks\n5\n5\ng\nm\nq\n\" | /software/ensembl/compara/bin/Gblocks 2>/dev/null 1>/dev/null";
-    $DB::single=1;1;#??
+
     my $ret = system("$cmd");
     open FLANKS, "$filename-gb.htm" or die "$!\n";
     my $segments_string;
