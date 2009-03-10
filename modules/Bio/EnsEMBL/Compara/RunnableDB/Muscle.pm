@@ -88,7 +88,7 @@ sub fetch_input {
   #$self->{'options'} = "-maxiters 1 -diags1 -sv"; #fast options
   $self->{'options'} = "";
   $self->{'muscle_starttime'} = time()*1000;
-  $self->{'max_gene_count'} = 1000000;
+  $self->{'max_gene_count'} = 1500;
 
   $self->check_job_fail_options;
   
