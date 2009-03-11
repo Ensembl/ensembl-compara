@@ -65,7 +65,8 @@ sub new {
 
 sub _glob {
   my $self = shift;
-  return IO::String->new($self->{content});
+  $self->{_glob} ||= IO::String->new($self->{content});
+  return $self->{_glob};
 }
 
 ## Get/Set filename
@@ -150,8 +151,8 @@ sub md5 {
 ## (adds string to content and saves)
 ## <- returns true on success (could die in some cases on failure, depends on driver)
 sub print {
-  my ($self, $string) = @_;
-  $self->content($self->content . $string);
+  my $self = shift;
+  $self->content(join('', $self->content, @_));
   return $self->save;
 }
 
