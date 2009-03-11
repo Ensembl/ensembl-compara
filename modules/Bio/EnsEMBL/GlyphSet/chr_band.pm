@@ -14,6 +14,8 @@ my %SHORT = qw(
 sub _init {
   my ($self) = @_;
 
+  return $self->render_text if $self->{'text_export'};
+  
   ########## only draw contigs once - on one strand
 
   my $col    = undef;
@@ -106,4 +108,19 @@ sub _init {
   }
 }
 
+sub render_text {
+  my $self = shift;
+  
+  my @bands =  sort { $a->start <=> $b->start } @{$self->{'container'}->get_all_KaryotypeBands||[]};
+  my $export;
+  
+  foreach (@bands) {
+    $export .= $self->_render_text($_, 'Chromosome band', { 
+      'headers' => [ 'name' ], 
+      'values'  => [ $_->name ] 
+    });
+  }
+  
+  return $export;
+}
 1;
