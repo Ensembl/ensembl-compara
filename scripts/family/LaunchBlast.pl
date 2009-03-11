@@ -19,11 +19,16 @@ my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
 my $blast_parser_executable = "/nfs/acari/avilella/bin/mcxdeblast";
 my $tab_file;
 
-GetOptions('idqy=s' => \$idqy,
-	   'fastadb=s' => \$fastadb,
+GetOptions(
+       'idqy=s'       => \$idqy,
+	   'fastadb=s'    => \$fastadb,
 	   'fastaindex=s' => \$fastaindex,
-	   'tab=s' => \$tab_file,
-	   'dir=s' => \$dir);
+	   'tab=s'        => \$tab_file,
+	   'dir=s'        => \$dir,
+       'baexec=s'     => \$blast_executable,
+       'ffexec=s'     => \$fastafetch_executable,
+       'bpexec=s'     => \$blast_parser_executable,
+       );
 
 my $final_raw_file = $dir."/".basename($idqy).".raw";
 
