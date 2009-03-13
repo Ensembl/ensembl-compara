@@ -60,13 +60,12 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
-
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-
+use Bio::EnsEMBL::Utils::Exception qw ( throw warning ) ; 
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
@@ -101,19 +100,17 @@ sub fetch_input
   $self->{'getAllRHS'} = undef; #switch to look for synteny beyond a best (hit_rank>1)
   $self->{'doRHS'} = 1;
   $self->{'onlyOneHomology'} = undef;  #filter to place member in only 1 homology
-  
-  $self->{'comparaDBA'}->dbc->do("analyze table peptide_align_feature"); 
+  $self->{'comparaDBA'}->dbc->do("analyze table peptide_align_feature");  
 
   if($self->debug) { print("input_id = " . $self->input_id . "\n"); }
   
-  if($self->input_id =~ '^{') {
+  if($self->input_id =~ '^{') { 
     $self->load_blasts_from_input();
   }
   elsif($self->input_id eq 'all'){
     # not in pair format, so load all blasts for processing
     $self->load_all_blasts();
   }
-
   if($self->debug) {
     print("blasts :\n");
     foreach my $analysis (@{$self->{'blast_analyses'}}) {
@@ -212,7 +209,7 @@ sub set_member_list
 
   if($self->debug) { print("set_member_list from analysis ".$analysis->logic_name()."\n"); }
 
-  my $subset_id = eval($analysis->parameters)->{'subset_id'};
+  my $subset_id = eval($analysis->data)->{'subset_id'};
 
   my $subset = $self->{'comparaDBA'}->get_SubsetAdaptor->fetch_by_dbID($subset_id);
   foreach my $member_id (@{$subset->member_id_list}) {
@@ -285,12 +282,13 @@ sub determine_method_link_species_set
     print("  analysis2 ".$analysis2->logic_name()."\n");
   }
 
-  my $q_genome_db_id   = eval($analysis1->parameters)->{'genome_db_id'};
-  my $hit_genome_db_id = eval($analysis2->parameters)->{'genome_db_id'};
-  
+  my $q_genome_db_id   = eval($analysis1->data)->{'genome_db_id'}; 
+  my $hit_genome_db_id   = eval($analysis2->data)->{'genome_db_id'};
+
   #
   # create method_link_species_set
-  #
+  # 
+
   my $qGDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($q_genome_db_id);
   my $hGDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($hit_genome_db_id);
   
@@ -301,6 +299,7 @@ sub determine_method_link_species_set
   $self->{'method_link_species_set'} = $mlss;
   return $mlss;
 }
+
 
 
 sub delete_previous_homology_method_link_species_set 
@@ -335,10 +334,11 @@ sub process_species_pair
     print("  analysis2 ".$analysis2->logic_name()."\n");
   }
 
-  my $subset_id        = eval($analysis1->parameters)->{'subset_id'};
-  my $q_genome_db_id   = eval($analysis1->parameters)->{'genome_db_id'};
-  my $hit_genome_db_id = eval($analysis2->parameters)->{'genome_db_id'};
-  
+
+  my $subset_id        = eval($analysis1->data)->{'subset_id'}; 
+  my $q_genome_db_id   = eval($analysis1->data)->{'genome_db_id'}; 
+  my $hit_genome_db_id = eval($analysis2->data)->{'genome_db_id'};
+
   # fetch the peptide members (via subset) ordered on chromosomes
   # then convert into synenty_segments (again of peptide members)
   #
