@@ -200,6 +200,12 @@ sub postReadRequestHandler {
   $r->subprocess_env->{'ENSEMBL_AJAX_VALUE'}  = $cookies{'ENSEMBL_AJAX' } ? $cookies{'ENSEMBL_AJAX' }->value : 'none';
   $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'} = $cookies{'ENSEMBL_WIDTH'} ? $cookies{'ENSEMBL_WIDTH'}->value : 800;
   $ENSEMBL_WEB_REGISTRY->timer_push( 'Post read request handler comoleted', undef, 'Apache' );
+  
+  ## Ensembl DEBUG cookie
+  if ($cookies{'ENSEMBL_DEBUG'}) {
+    $r->headers_out->add('X-MACHINE' => $SiteDefs::ENSEMBL_SERVERNAME);
+  }
+  
   return;
 }
 
