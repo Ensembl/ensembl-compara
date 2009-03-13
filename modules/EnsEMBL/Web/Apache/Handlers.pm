@@ -203,7 +203,7 @@ sub postReadRequestHandler {
   
   ## Ensembl DEBUG cookie
   if ($cookies{'ENSEMBL_DEBUG'}) {
-    $r->headers_out->add('X-MACHINE' => $SiteDefs::ENSEMBL_SERVERNAME);
+    $r->headers_out->add('X-MACHINE' => $SiteDefs::ENSEMBL_SERVER);
   }
   
   return;
