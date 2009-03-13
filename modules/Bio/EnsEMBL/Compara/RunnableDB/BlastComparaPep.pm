@@ -90,7 +90,8 @@ sub fetch_input {
   ## Get the query (corresponds to the member with a member_id = input_id
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-  my $member_id = $self->input_id;
+  my $member_id = $self->input_id; 
+  
   my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
   throw("No member in compara for member_id = $member_id") unless defined($member);
   if (10 > $member->bioseq->length) {
@@ -98,15 +99,18 @@ sub fetch_input {
 	throw("BLAST : Peptide is too short for BLAST");
   }
 
-  my $query = $member->bioseq();
+  my $query = $member->bioseq();  
+
   throw("Unable to make bioseq for member_id = $member_id") unless defined($query);
 
   ## Get the db_file (defined in the analysis)
   my $dbfile = $self->analysis->db_file;
 
   ## Define the filter from the parameters
-  my ($thr, $thr_type, $options);
-  my $p = eval($self->analysis->parameters);
+  my ($thr, $thr_type, $options); 
+
+  #my $p = eval($self->analysis->parameters); 
+  my $p = eval($self->analysis->data);     
 
   if (defined $p->{'-threshold'} && defined $p->{'-threshold_type'}) {
       $thr      = $p->{-threshold};
@@ -116,8 +120,8 @@ sub fetch_input {
       $thr      = 1e-10;
   }
 
-  if (defined $p->{'options'}) {
-    $options = $p->{'options'};
+  if (defined $p->{'options'}) { 
+    $options = $p->{'options'}; 
   } else {
     $options = '';
   }
@@ -258,7 +262,9 @@ sub dumpPeptidesToFasta
   my $self = shift;
 
   my $startTime = time();
-  my $params = eval($self->analysis->parameters);
+  #my $params = eval($self->analysis->parameters); 
+  my $params = eval($self->analysis->data); 
+  
   my $genomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($params->{'genome_db_id'});
   
   # create logical path name for fastafile
