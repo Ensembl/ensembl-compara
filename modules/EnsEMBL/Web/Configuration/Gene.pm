@@ -329,6 +329,15 @@ sub ajax_zmenu      {
         'extra'     => {'external' => 1}, 
       });
     }
+    if( my $dyo_link = $obj->get_ExtURL( 'DYOGENSYNTENY', $obj->stable_id ) ){
+      $panel->add_entry({
+        'type'     => 'Dyogen Synteny',
+        'label'    => 'Dyogen Synteny',
+        'link'     => $dyo_link,
+        'priority' => 195,
+        'extra'     => {'external' => 1}, 
+      });
+    }
   }
 
   $panel->add_entry({
