@@ -140,6 +140,16 @@ sub function     { return $_[0]{'data'}{'_function'};  }
 sub script       { return $_[0]{'data'}{'_script'};  }
 sub species      { return $_[0]{'data'}{'_species'}; }
 
+sub data_species {
+  ## Determines the species for userdata pages (mandatory, since userdata databases are species-specific)
+  my $self = shift;
+  my $species = $self->species;
+  if (!$species || $species eq 'common') {
+    $species = $self->species_defs->ENSEMBL_PRIMARY_SPECIES;
+  }
+  return $species;
+}
+
 sub fix_session {
 ### Fix the session back to the database - if a session object has been created
 ### calls store on... this will check whether (a) there are any saveable
