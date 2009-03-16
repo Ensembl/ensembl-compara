@@ -134,6 +134,7 @@ sub _get_valid_action {
   my $self = shift;
   my $action = shift;
   my $func   = shift;
+  return $action if $action eq 'Wizard';
   # my %hash = map { $_ => 1 } $self->{_data}{tree}->get_node(';
   return undef unless ref $self->{'object'};
   my $node;
@@ -142,7 +143,7 @@ sub _get_valid_action {
 
   return $action."/".$func if $node && $node->get('type') =~ /view/ &&
                               $self->is_available( $node->get('availability') );
-  $node = $self->tree->get_node( $action )           unless $node;
+  $node = $self->tree->get_node( $action ) unless $node;
   return $action if $node && $node->get('type') =~ /view/ &&
                     $self->is_available( $node->get('availability') );
   my @nodes = ( $self->default_action, 'Idhistory', 'Chromosome', 'Genome' );
@@ -155,7 +156,6 @@ sub _get_valid_action {
     }
   }
   return undef;
-#  return $node;
 }
 
 sub _ajax_content {
@@ -1062,16 +1062,6 @@ sub update_configs_from_parameter {
 sub add_panel { $_[0]{page}->content->add_panel( $_[1] ); }
 sub set_title { $_[0]{page}->set_title( $_[1] ); }
 sub add_form  { my($self,$panel,@T)=@_; $panel->add_form( $self->{page}, @T ); }
-
-sub wizard {
-### a
-  my ($self, $wizard) = @_;
-  if ($wizard) {
-    $self->{'wizard'} = $wizard;
-  }
-  return $self->{'wizard'};
-}
-
 
 sub add_block {
   my $self = shift;
