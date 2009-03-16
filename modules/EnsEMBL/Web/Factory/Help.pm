@@ -12,11 +12,8 @@ sub createObjects {
   my $self        = shift;
 
   ## Create a very lightweight object, as the data required for a help page is very variable
-  my $modular = $self->species_defs->ENSEMBL_MODULAR_HELP;
-
   $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
     'Help', {
-      'modular'       => $modular,
       'records'       => undef,
     }, $self->__data
   ) ); 
