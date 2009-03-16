@@ -47,10 +47,10 @@ our %OBJECT_TO_SCRIPT = qw(
   Search      action
   UniSearch   action
 
-  Account     account
-  UserData    user_data
-  Help        help
-  News        news
+  Account     modal
+  UserData    modal
+  Help        modal
+  News        action
   Blast       blast
 );
 
@@ -291,7 +291,7 @@ sub transHandler_das {
 sub transHandler_no_species {
   my( $r, $session_cookie, $species, $path_segments, $querystring ) = @_;
   my $real_script_name = $OBJECT_TO_SCRIPT{ $species };
-  return undef if $real_script_name =~ /^(action|component|zmenu)$/;
+  return undef if $real_script_name =~ /^(component|zmenu)$/;
   
   $r->subprocess_env->{'ENSEMBL_SPECIES'} = 'common';
   $r->subprocess_env->{'ENSEMBL_SCRIPT' } = $real_script_name;
@@ -315,8 +315,9 @@ sub transHandler_no_species {
     $MEMD->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $MEMD;
   }
   if( $to_execute ) {
-    $r->subprocess_env->{'ENSEMBL_TYPE'}   = $species;
-    $r->subprocess_env->{'ENSEMBL_ACTION'} = shift @$path_segments;
+    $r->subprocess_env->{'ENSEMBL_TYPE'}    = $species;
+    $r->subprocess_env->{'ENSEMBL_ACTION'}  = shift @$path_segments;
+    $r->subprocess_env->{'ENSEMBL_FUNCTION'} = shift @$path_segments;
     my $path_info = join '/', @$path_segments;
     $r->filename( $to_execute );
     $r->uri( "/perl/common/$script" );
@@ -546,18 +547,16 @@ sub transHandler {
   my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
   unless ($filename) {
     foreach my $dir (@HTDOCS_TRANS_DIRS) {
-      my $f = sprintf( $dir, $path );
-      if( -d $f ) {
-        $filename = '! '.$f;
-        $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
+      $filename = sprintf( $dir, $path );
+      if( -d $filename ) {
+        $filename = '! '.$filename;
         last;
       }
-      if (-r $f) {
-        $filename = $f;
-        $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
+      if (-r $filename) {
         last;
       }
     }
+    $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
   }
   
   if( $filename =~ /^! (.*)$/ ) {

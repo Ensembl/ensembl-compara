@@ -315,9 +315,7 @@ sub stuff {
 ### heirarchical object navigation
   my $object_type  = shift || $ENV{'ENSEMBL_TYPE'};
   my $action       = shift;
-  my $command      = shift;
   my $doctype      = shift;
-  my $modal_dialog = shift;
   my $session      = $ENSEMBL_WEB_REGISTRY->get_session;
 
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
@@ -330,6 +328,7 @@ sub stuff {
   ## If user logged in, some content depends on user
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
 
+  my $modal_dialog = $doctype eq 'Popup' ? 1 : 0;
 
   my $input = new CGI;
   my $url = undef;
@@ -378,7 +377,6 @@ sub stuff {
       'doctype'    => $doctype,
       'scriptname' => 'action',
       'renderer'   => 'String',
-      'command'    => $command, 
       'cache'      => $MEMD,
       'cgi'        => $input,
     );
@@ -413,7 +411,7 @@ sub stuff {
                  : $f->param('peptide') ? 'ProteinAlignFeature'
              :                        'DnaAlignFeature'
              ;
-        my $URL = sprintf "/%s/$object_type/Karyotype?type=%s;id=%s",
+        my $URL = sprintf "/%s/$object_type/Genome?type=%s;id=%s",
           $webpage->factory->species, $type, $id;
   
         $webpage->redirect( $URL );
@@ -453,11 +451,32 @@ sub stuff {
         $webpage->redirect( $u );
       } else {
         $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
-        $webpage->render;
+
+        my $class;
+        ## Is this a wizard, a data-munging/redirect action or a standard page?
+        if ($ENV{'ENSEMBL_ACTION'} eq 'Wizard') {
+          $class = 'EnsEMBL::Web::Command::Wizard';
+        }
+        else {
+          $class = $webpage->command;
+        }
+        if ($class && $webpage->dynamic_use($class)) {
+          if (_access_ok($webpage, $r, $class)) {
+            my $object = $webpage->dataObjects->[0];
+            ## Set AJAX parameter manually, since Command doesn't pick it up from the page
+            $object->param('x_requested_with', $r->headers_in->{'X-Requested-With'});
+            my $command = $class->new({'object' => $object, 'webpage' => $webpage});
+            $command->process;
+          }
+        }
+        else { ## Render normal webpage
+          if (_access_ok($webpage, $r)) {
+            $webpage->render;
+          }
+        }
         warn $webpage->timer->render if
-          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
-          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
-        #return "Completing action";
+            $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
+            $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_PERL_PROFILER;
       }
     }
 
@@ -473,8 +492,32 @@ sub stuff {
   return "Completing action";
 }
 
+sub _access_ok {
+  my ($webpage, $r, $class) = @_;
+  if (my $filter = $webpage->not_allowed($webpage->dataObjects->[0], $class)) {
+    my $url = $filter->redirect;
+    ## Double-check that a filter name is being passed, since we have the option 
+    ## of using the default URL (current page) rather than setting it explicitly
+    if ($url !~ /filter_module/) {
+      $url .= ($url=~/\?/?';':'?').'filter_module='.$filter->name;
+    }
+    if ($url !~ /filter_code/) {
+      $url .= ($url=~/\?/?';':'?').'filter_code='.$filter->error_code;
+    }
+    ## make sure AJAX parameter is always set, just in case not passed in filter url
+    if( $r->headers_in->{'X-Requested-With'} && $url !~ /x_requested_with/) {
+      $url .= ($url=~/\?/?';':'?').'x_requested_with='
+             .CGI::escape($r->headers_in->{'X-Requested-With'});
+    }
+    warn "REDIRECTING TO $url";
+    $webpage->redirect( $url );
+    return 0;
+  }
+  return 1;
+}
+
 sub modal_stuff {
-  return stuff( @_, 1 );
+  return stuff( undef, undef, 'Popup' );
 }
 
 # Exports data. Function name by order of js5

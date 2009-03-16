@@ -140,6 +140,56 @@ sub dynamic_use_failure {
   return $failed_modules->{$classname};
 }
 
+sub filters   :lvalue { $_[0]->{'filters'}; }
+
+sub not_allowed {
+  ### Loops through array of filters and returns the first one that fails
+  my ($self, $object, $caller) = @_;
+  #warn "!!! CHECKING ACCESS";
+  my $filters = $self->filters || [];
+  foreach my $name (@$filters) {
+    my $class = 'EnsEMBL::Web::Filter::'.$name;
+    #warn "...CHECKING FILTER $class";
+    if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+      my $filter = $class->new({object => $object});
+      ## Check if this filter only applies to certain interface modules
+      ## N.B. At the moment this only works to exclude new record creation from certain filters
+      ## (can't apply, say, the Owner filter to new records, because they don't have one!)
+      my $exceptions = $filter->get_exceptions;
+      use Data::Dumper;
+      warn Dumper($exceptions);
+      my $skip;
+      if ($caller && $exceptions && ref($exceptions) eq 'HASH') {
+        foreach my $action (@{$exceptions->{'list'}}) {
+          if ($exceptions->{'param'}) {
+            if (!$object->param($exceptions->{'param'}) && $caller =~ '::Interface::' && $caller =~ /$action$/) {
+              $skip = 1;
+              last;
+            }
+          }
+          else {
+            if ($caller =~ '::Interface::' && $caller =~ /$action$/) {
+              $skip = 1;
+              last;
+            }
+          }
+        }
+      }
+      next if $skip;
+      $filter->catch;
+      if ($filter->error_code) {
+        #warn "@@@ NOT ALLOWED!";
+        return $filter;
+      }
+    }
+    else {
+      warn "COULD NOT USE FILTER MODULE $class!";
+    }
+  }
+  return undef;
+}
+
+
 sub neat_sr_name {
 ### Returns seq-region name formatted neatly...
   my( $self, $type, $name ) = @_;

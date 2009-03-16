@@ -39,7 +39,6 @@ sub new {
 ### Arg[1]: hash of parameters, keys include;
 ###  scriptname : name of the calling script (def $ENV{'ENSEMBL_SCRIPT'})
 ###  cgi        : CGI object (def CGI->new) 
-###  command    : Access restriction param
 ###  renderer   : E::W::Document::Renderer::<module> to use (def Apache)
 ###  doctype    : E::W::Document::<doctype> to use (def Dynamic)
 ###  outputtype : The output type, e.g. XML, DAS (def HTML). the doctype
@@ -57,6 +56,7 @@ sub new {
     'page'         => undef,
     'factory'      => undef,
     'command'      => undef,
+    'filters'      => undef,
     'configurable' => undef,
     'cache'        => undef,
     'r'            => undef,
@@ -75,8 +75,6 @@ sub new {
   my $input;
   if ($parameters{'cgi'}) {
     $input = $parameters{'cgi'};
-  } elsif ($parameters{'command'}) {
-    $input = $parameters{'command'}->action->get_cgi;
   } else {
     $input  = new CGI;
   }
@@ -201,8 +199,6 @@ sub configure {
       # of the script.
       my $CONF = $config_module_name->new( $self->page, $object, $flag, $common_conf );
       push @modules, [$CONF,$config_module_name];
-      ## Attach any control modules to the configuration
-      $CONF->{wizard}  = $self->{wizard};
       $CONF->{doctype} = $self->{doctype};
     } elsif( $self->dynamic_use_failure( $config_module_name ) !~ /^Can't locate/ ) {
 # Handle "use" failures gracefully...
@@ -223,15 +219,18 @@ sub configure {
   $self->timer_push( 'configuration modules compiled...' );
 ## Tree is now built... so we need to set the action...
 
-  $modules[0][0]->set_action( $ENV{'ENSEMBL_ACTION'} );
+  $modules[0][0]->set_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} );
 
   foreach my $T ( @modules ) {
     my( $CONF,$config_module_name ) = @$T;
 ## Loop through the functions to configure
     foreach my $FN ( @functions ) { 
+     #warn "--- FUNCTION $FN";
       if( $CONF->can($FN) ) {
+        #warn "CAN DO $FN";
 # If this configuration module can perform this function do so...
         eval { $CONF->$FN(); };
+	#warn $@ if $@;
         if( $@ ) { # Catch any errors and display as a "configuration runtime error"
           $self->page->content->add_panel( 
             new EnsEMBL::Web::Document::Panel(
@@ -246,12 +245,14 @@ sub configure {
           );
         } else {
           $FUNCTIONS_CALLED->{$FN} = 1;
-          ## Check if we've added any configurable components
-          my $node = $CONF->get_node( $CONF->_get_valid_action( $ENV{'ENSEMBL_ACTION'} ) );
+          ## Check if we've added any configurable components or if this is a command node
+          my $node = $CONF->get_node( $CONF->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} ) );
+	  #warn "@@@ NODE ".$node->key;
 	  if( $node ) {
             my @components = @{$node->data->{'components'}||[]};
             while( my($code, $module) = splice( @components, 0, 2) ) {
               $module =~ s/\/\w+$//;
+	      #warn "MODULE $module";
               if ($self->dynamic_use($module)) {
                 my $component = $module->new;
                 if ($component->configurable) {
@@ -260,6 +261,8 @@ sub configure {
                 }
               }
             }
+            $self->{'command'} = $node->data->{'command'};
+            $self->{'filters'} = $node->data->{'filters'};
 	  }
         } 
         $self->timer_push( "configuration function $FN called for @$T ...",2 );
@@ -279,7 +282,6 @@ sub configure {
     }
   }
 
-
   $self->add_error_panels(); # Add error panels to end of display!!
   $self->timer_push("Script configured ($objecttype)");
 }   
@@ -292,6 +294,7 @@ sub static_links {
 
 sub factory   :lvalue { $_[0]->{'factory'}; }
 sub page      :lvalue { $_[0]->{'page'};    }
+sub command   :lvalue { $_[0]->{'command'}; }
 
 ## Wrapper functions around factory and page....
 sub has_fatal_problem { my $self = shift; return $self->factory->has_fatal_problem;       }
@@ -301,6 +304,7 @@ sub problem           { my $self = shift; return $self->factory->problem(@_);   
 sub dataObjects       { my $self = shift; return $self->factory->DataObjects;             }
 
 sub restrict  { 
+## Is this in use?
   my $self = shift;
   $self->{'restrict'} = shift if @_;
   return $self->{'restrict'}; ## returns string   
@@ -322,7 +326,6 @@ sub get_user_id {
 
 sub redirect {
   my( $self, $URL ) = @_;
-
   CGI::redirect( $URL );
   alarm(0);
 }
