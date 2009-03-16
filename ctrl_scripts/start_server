@@ -112,7 +112,7 @@ if( $flush || $rmconfig ) {
   # Flush memcached
   ## TODO: kill the hack // looks like it's not a hack anymore
   ## HACK: add extra tag for everything except user upload data	
-  my $cmd = "perl $serverroot/utils/memd.pl flush no_user_upload";
+  my $cmd = "perl $serverroot/utils/memd.pl flush";
   my @res = `$cmd`; chomp @res;
   warn " Flushed memcached entries for this server (@res)\n";
 }
