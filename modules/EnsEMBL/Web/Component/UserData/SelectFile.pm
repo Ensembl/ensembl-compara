@@ -24,7 +24,7 @@ sub content {
   my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
   my $current_species = $self->object->data_species;
 
-  my $form = $self->modal_form('select', "/$current_species/UserData/UploadFile", {'wizard' => 1, 'back_button' => 0});
+  my $form = $self->modal_form('select', "/$current_species/UserData/UploadFile", {'label'=>'Upload'});
   $form->add_notes({'heading'=>'IMPORTANT NOTE:', 'text'=>qq(We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a 5Mb limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">attach it to $sitename</a> without uploading.)});
 
 
