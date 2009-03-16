@@ -551,6 +551,7 @@ sub preview_fields {
   my $element_order = $self->element_order;
   foreach my $field (@$element_order) {
     my $element = $self->element($field);
+    next unless $element;
     next if $element->type eq 'Information';
     next if $element->type eq 'Hidden';
     next if $element->type eq 'Honeypot';
@@ -607,6 +608,7 @@ sub pass_fields {
   foreach my $field (@$element_order) {
     my $name = $field;
     my $element = $elements->{$name};
+    next unless $element;
     next if $element->type eq 'Information';
     next if $element->type eq 'SubHeader';
     next if $element->type eq 'Information';
