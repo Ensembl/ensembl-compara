@@ -15,7 +15,7 @@ my %Options   :ATTR(:set<options> :get<options>);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
-  $self->set_options({});
+  #$self->set_options({});
 }
 
 sub name {
