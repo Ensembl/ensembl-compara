@@ -132,7 +132,7 @@ sub fetch_by_name_assembly {
   unless($name) {
     throw('name arguments are required');
   }
-
+  $name = $name eq 'Gorilla Gorilla gorilla' ? 'Gorilla gorilla' : $name;
   my $sth;
 
   unless (defined $assembly && $assembly ne '') {
