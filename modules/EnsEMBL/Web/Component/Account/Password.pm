@@ -24,12 +24,15 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $form = EnsEMBL::Web::Form->new( 'enter_password', "/Account/SavePassword", 'post' );
+  my $form;
 
+  ## Use different destination, so we can apply different access filters
   if ($object->param('code')) {
+    $form = EnsEMBL::Web::Form->new( 'enter_password', "/Account/SavePassword", 'post' );
     $form->add_element('type'=>'SubHeader', 'value'=>'Activate your account');
   }
   else {
+    $form = EnsEMBL::Web::Form->new( 'enter_password', "/Account/ResetPassword", 'post' );
     $form->add_element('type'=>'SubHeader', 'value'=>'Change your password');
   }
 
@@ -58,13 +61,6 @@ sub content {
       'type'  => 'Hidden',
       'name'  => 'record_id',
       'value' => $object->param('record_id')
-    );
-  }
-  if ($object->param('no_popup')) {
-    $form->add_element(
-      'type'  => 'Hidden',
-      'name'  => 'no_popup',
-      'value' => $object->param('no_popup')
     );
   }
 
