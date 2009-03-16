@@ -15,24 +15,26 @@ no warnings "uninitialized";
 our @ISA = qw( EnsEMBL::Web::Component);
 
 sub edit_link {
-  my ($self, $dir, $module, $id, $text) = @_;
+  my ($self, $module, $id, $text) = @_;
   $text = 'Edit' if !$text;
-  return sprintf(qq(<a class="modal_link" href="%s/Account/%s?dataview=edit;id=%s;_referer=%s">%s</a>), 
-          $dir, $module, $id, CGI::escape($self->object->param('_referer')), $text);
+  return sprintf(qq(<a class="modal_link" href="/Account/%s/Edit?id=%s;_referer=%s;x_requested_with=%s">%s</a>), 
+          $module, $id, CGI::escape($self->object->param('_referer')), 
+          CGI::escape($self->object->param('x_requested_with')), $text);
 } 
 
 sub delete_link {
-  my ($self, $dir, $module, $id, $text) = @_;
+  my ($self, $module, $id, $text) = @_;
   $text = 'Delete' if !$text;
-  return sprintf(qq(<a class="modal_link" href="%s/Account/%s?dataview=delete;id=%s;_referer=%s">%s</a>), 
-          $dir, $module, $id, CGI::escape($self->object->param('_referer')), $text);
+  return sprintf(qq(<a class="modal_link" href="/Account/%s/Delete?id=%s;_referer=%s;x_requested_with=%s">%s</a>), 
+          $module, $id, CGI::escape($self->object->param('_referer')), 
+          CGI::escape($self->object->param('x_requested_with')), $text);
 } 
 
 
 sub share_link {
-  my ($self, $dir, $call, $id) = @_;
-  return sprintf(qq(<a class="modal_link" href="/Account/SelectGroup?id=%s;type=%s;_referer=%s">Share</a>), 
-          $dir, $id, $call, CGI::escape($self->object->param('_referer')) );
+  my ($self, $call, $id) = @_;
+  return sprintf(qq(<a class="modal_link" href="/Account/SelectGroup?id=%s;type=%s;_referer=%s;x_requested_with=%s">Share</a>), 
+          $id, $call, CGI::escape($self->object->param('_referer')), CGI::escape($self->object->param('x_requested_with')) );
 } 
 
 sub dedupe {
