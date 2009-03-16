@@ -22,10 +22,9 @@ sub caption {
 sub content {
   my $self = shift;
 
-  my $form = $self->record_select($object, 'select');
+  my $form = $self->record_select($self->object, 'Edit');
 
   ## navigation elements
-  $form->add_element( 'type' => 'Hidden', 'name' => 'dataview', 'value' => 'edit');
   $form->add_element( 'type' => 'Submit', 'value' => 'Next');
 
   return $form->render;
