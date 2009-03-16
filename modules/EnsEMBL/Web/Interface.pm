@@ -101,7 +101,7 @@ sub caption {
       $self->set_caption($hashref);
     }
     else {
-      return $self->get_caption->{$input};
+      #return $self->get_caption->{$input};
     }
   }
 }
@@ -110,8 +110,21 @@ sub elements {
   ### a
   ### Returns: hashref whose values are E::W::Interface::Element objects
   my $self = shift;
-  $self->set_elements(shift) if @_;
   return $self->get_elements;
+}
+
+sub named_element {
+  my ($self, $name, $element) = @_;
+  return unless $name;
+  my $elements = $self->get_elements;
+  if ($element) {
+    $elements->{$name} = $element;
+    $self->set_elements($elements);
+  }
+  else {
+    $element = $elements->{$name};
+  }
+  return $element;
 }
 
 sub element_order {
@@ -154,7 +167,7 @@ sub option_columns {
 sub option_order {
   ### a
   ### Determines the order in which records are displayed on the dropdown list
-  ### Returns: array
+  ### Returns: arrayref
   my $self = shift;
   $self->set_option_order(shift) if @_;
   return $self->get_option_order;
@@ -174,27 +187,20 @@ sub dropdown {
 
 sub element {
   ### a 
-  ### Sets, gets or alters an individual form element in the $Elements hash
-  ### Parameters: element name, parameter hash (optional)
   my ($self, $name, $param) = @_;
-  if ($name) {
-    my $elements = $self->elements;
-    my $element = $elements->{$name} || EnsEMBL::Web::Interface::Element->new;
-    ## Set passed parameters
-    if ($param && ref($param) eq 'HASH') {
-      while (my ($k, $v) = each (%$param)) {
-        if ($k eq 'label' || $k eq 'type' || $k eq 'name') {
-          $element->$k($v);
-        }
-        else {
-          $element->option($k, $v);
-        }
+  return unless $name;
+  my $element;
+  if ($param && ref($param) eq 'HASH') {
+    $element = EnsEMBL::Web::Interface::Element->new;
+    while (my ($k, $v) = each (%$param)) {
+      if ($k eq 'name' || $k eq 'type' || $k eq 'label') {
+        $element->$k($v);
+      }
+      else {
+        $element->option($k,$v);
       }
     }
     ## Set mandatory fields if still empty
-    unless ($element->name) {
-      $element->name($name);
-    }
     unless ($element->type) {
       $element->type('String');
     }
@@ -203,12 +209,31 @@ sub element {
       $label =~ s/_/ /g;
       $element->label($label);
     }
-    ## append as an Element object
-    $elements->{$name} = $element;
-    $self->set_elements($elements);
-    return $elements->{$name};
+    $self->named_element($name, $element);
+  }
+  else {
+    $element = $self->named_element($name);
+  }
+  return $element;
+}
+
+sub modify_element {
+  my ($self, $name, $param) = @_;
+  return unless $name;
+  return unless $param && ref($param) eq 'HASH';
+  my $element = $self->named_element($name);
+  return unless $element;
+  while (my ($k, $v) = each (%$param)) {
+
+    if ($k eq 'name' || $k eq 'type' || $k eq 'label') {
+      $element->$k($v);
+    }
+    else {
+      $element->option($k,$v);
+    }
   }
 }
+
 
 
 ## Other functions
@@ -220,6 +245,7 @@ sub discover {
 
   my (%elements, @element_order);
   foreach my $field (keys %fields) {
+    
     my ($element_type, $param);
     $param->{'name'} = $field;
     ## set label
@@ -345,60 +371,57 @@ sub configure {
 }
 
 
-=pod
-sub _create_relational_element {
-  my ($self, $type, $class) = @_;
-  if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-    my $object = $class->new();
-    my $name = $object->get_primary_key;
-    my @namespace = split(/::/, $class);
-    my $label = $namespace[-1];
-    $label =~ s/([a-z])([A-Z])/$1 $2/g; ## insert spaces into camel-case names
-  
-    my ($options, @option_values);    
-    if ($type eq 'DropDown') {
-      $options->{'select'} = 'select';
-      @option_values = ({'name'=> '--- Select ---', 'value' => ''});
-    }
-    else {
-      @option_values = ();
-    }
-
-    ## Get default values
-    my $primary_key;
-    my $objects = EnsEMBL::Web::Data::find_all($class);
-    foreach my $obj (@$objects) {
-      push @option_values, {'name'=> $obj->id, 'value' => $obj->id};
-      $primary_key = $obj->get_primary_key;
-    }
-    $options->{'values'} = \@option_values;
-
-    my $element = EnsEMBL::Web::Interface::ElementDef->new({
-    'name'        => $name,
-    'label'       => $label,
-    'type'        => $type,
-    'relational'  => 1,
-    'options'     => $options
-    });
-    return ($primary_key, $element);
-  }
-  else {
-    return undef;
-  }
-}
-=cut
-
 sub record_list {
   ### a
   ### Returns: array of data objects of the same type as the parent
-  my $self = shift;
-  my $records = [];
+  my ($self, $criteria) = @_;
+  my @records;
 
   ## Get data
-  ## TODO: extend to accept non-record Data modules
-  my $method = lc($ENV{'ENSEMBL_ACTION'}).'s';
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  return $user->$method;
+  if (ref($self->data) =~ /User/) {
+    my $method = lc($ENV{'ENSEMBL_ACTION'}).'s';
+    my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+    @records = $user->$method;
+  }
+  else {
+    if ($criteria) {
+      @records = $self->data->search($criteria);
+    }
+    else {
+      @records = $self->data->find_all;
+    }
+  }
+
+  ## Now sort it (can't do this in MySQL owing to 'data' field)
+  my @sort = $self->option_order;
+  ## Build a default sort order if there isn't one configured
+  unless (@sort && $sort[0]) {
+    foreach my $col (@{$self->option_columns}) {
+      push @sort, [$col, 'ASC'];
+    }
+  }
+  if (@sort) {
+    sort {
+      ## Funky custom sort function!
+      foreach my $option (@sort) {
+        my $field = $option->[0];
+        next unless $field;
+        my $dir = $option->[1] || 'ASC';
+        if ($dir eq 'DESC') {
+          my $result = lc($b->$field) cmp lc($a->$field);
+          return $result if $result; 
+        }
+        else {
+          my $result = lc($a->$field) cmp lc($b->$field);
+          return $result if $result; 
+        }
+      }
+      ## End custom sort function
+    } @records;
+  }
+  else {
+    return @records;
+  }
 }
 
 sub cgi_populate {
@@ -436,14 +459,15 @@ sub edit_fields {
   my ($self, $object) = @_;
   my $parameters = [];
   my $data = $self->data;
-  my $dataview = $object->param('dataview');
+  my $dataview = $ENV{'ENSEMBL_FUNCTION'};
   my $element_order = $self->element_order;
   ## populate widgets from Data_of{$self}
   foreach my $field (@$element_order) {
     my $element = $self->element($field);
+    next unless $element;
     my %param = %{$element->widget};
     ## File widgets behave differently depending on user action
-    if ($element->type eq 'File' && $dataview ne 'add') {
+    if ($element->type eq 'File' && $dataview ne 'Add') {
       $param{'type'} = 'NoEdit';
     }
     ## Set field values
