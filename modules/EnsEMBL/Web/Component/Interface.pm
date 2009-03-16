@@ -2,29 +2,30 @@ package EnsEMBL::Web::Component::Interface;
 
 ### Module to create generic forms for Document::Interface and its associated modules
 
-use EnsEMBL::Web::Component;
-use EnsEMBL::Web::Form;
-
-our @ISA = qw( EnsEMBL::Web::Component);
 use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::Form;
+use base qw( EnsEMBL::Web::Component);
+
 ## Some methods common to two or more interface child modules
 
 sub script_name {
-  my ($self, $object) = @_;
-  if ($object->interface->script_name) {
-    return $object->interface->script_name;
-  }
-  return $object->script;
+  my $self = shift;
+  return $self->object->interface->script_name;
 }
 
 sub data_form {
   ### Function to build a record editing form
-  my ($self, $object, $name) = @_;
-  my $script = $self->script_name($object);
-  my $form = EnsEMBL::Web::Form->new($name, "/$script", 'post');
+  my ($self, $name, $next) = @_;
+  my $object = $self->object;
+
+  my $url = '/'.$ENV{'ENSEMBL_SPECIES'};
+  $url = '' if $url !~ /_/;
+  $url = '/'.$self->script_name.'/'.$next;
+  my $form = EnsEMBL::Web::Form->new($name, $url, 'post');
+  $form->add_attribute('class', 'narrow-labels');
 
   ## form widgets
   my ($key) = $object->interface->data->primary_columns;
@@ -47,10 +48,11 @@ sub data_form {
 
 sub record_select {
   ### Function to build a record selection form
-  my($self, $object, $name) = @_;
+  my($self, $object, $action) = @_;
   
   my $script = $self->script_name($object);
-  my $form = EnsEMBL::Web::Form->new($name, "/$script", 'post');
+  my $form = EnsEMBL::Web::Form->new('interface_select', "/$script/$action", 'post');
+  $form->add_attribute('class', 'narrow-labels');
 
   my $select  = $object->interface->dropdown ? 'select' : '';
   my @options;
@@ -59,7 +61,7 @@ sub record_select {
   }
 
   ## Get record index
-  my @unsorted_list = @{$object->interface->record_list};
+  my @unsorted_list = $object->interface->record_list;
   my @columns = @{$object->interface->option_columns};
 
   ## Create field type lookup, for sorting purposes
@@ -94,7 +96,6 @@ sub record_select {
     @list = sort $subref @unsorted_list;
   }
   else { 
-    warn "Not an arrayref";
     @list = @unsorted_list;
   }
 
@@ -106,15 +107,17 @@ sub record_select {
       $text .= $entry->$col.' - ';
     }
     $text =~ s/ - $//;
+    if (length($text) > 50) {
+      $text = substr($text, 0, 50).'...';
+    }
     push @options, {'name'=>$text, 'value'=>$value};
   }
   
-  my ($primary_key) = $object->interface->data->primary_columns;
   $form->add_element( 
             'type'    => 'DropDown', 
             'select'  => $select,
             'title'   => 'Select a Record', 
-            'name'    => $primary_key, 
+            'name'    => 'id', 
             'values'  => \@options,
   );
   
