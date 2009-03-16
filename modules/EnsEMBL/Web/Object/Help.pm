@@ -22,28 +22,6 @@ sub counts        { return undef; }
 #-----------------------------------------------------------------------------
 
 sub adaptor     { return $_[0]->Obj->{'adaptor'}; }
-sub modular     { return $_[0]->Obj->{'modular'}; }
-
-sub search {
-  ### a
-  ### Returns:
-  my $self = shift;
-
-  my $keywords    = $self->param( 'kw' );
-
-  ## Switch to this once modular articles are available
-  #my $modular     = $self->modular;
-  my $modular     = 0;
-
-  my $method = 'fetch_scores_by_string';
-  if (!$modular) {
-    $method = 'search_articles';
-  }
-
-  ## get list of help articles by appropriate method
-  $self->{'data'}{'_results'} = EnsEMBL::Web::Data::Article->$method( $keywords );
-  return $self->results;
-}
 
 sub results :lvalue { $_[0]->{'data'}{'_results'}; }
 
