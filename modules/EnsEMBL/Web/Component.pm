@@ -10,6 +10,7 @@ use EnsEMBL::Web::Component::Export;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 use Text::Wrap qw(wrap);
 use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::Form;
 
 use base qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(cache cache_print);
@@ -131,9 +132,53 @@ sub cache_print {
 
 sub site_name {
   my $self = shift;
-  our $sitename = $SiteDefs::ENSEMBL_SITETYPE eq 'EnsEMBL' ? 'Ensembl' : $SiteDefs::ENSEMBL_SITETYPE;
+  our $sitename = $SiteDefs::ENSEMBL_SITETYPE;
   return $sitename;
 }
+
+sub modal_form {
+  ## Creates a modal-friendly form with hidden elements to automatically pass 
+  ##_referer and x_requested_with - and to optionally handle wizard buttons
+  my ($self, $name, $action, $options) = @_;
+  my $form_action = $action;
+  if ($options->{'wizard'}) {
+    my $species = $ENV{'ENSEMBL_TYPE'} eq 'UserData' ? $self->object->data_species : $self->object->species;
+    if ($species) {
+      $form_action = "/$species";
+    }
+    $form_action .= '/'.$ENV{'ENSEMBL_TYPE'}.'/Wizard';
+  }
+  my $form = EnsEMBL::Web::Form->new($name, $form_action, 'post');
+  my $label = $options->{'label'} || 'Next >';
+
+  $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $self->object->param('_referer'));
+  $form->add_element( 'type' => 'Hidden', 'name' => 'x_requested_with', 'value' => $self->object->param('x_requested_with'));
+  if ($options->{'wizard'}) {
+    unless (defined($options->{'back_button'}) && $options->{'back_button'} == 0) { 
+      $form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back');
+    }
+    ## Include current and former nodes in _backtrack
+    if (my @tracks = $self->object->param('_backtrack')) {
+      foreach my $step (@tracks) {
+        next unless $step;
+        $form->add_element('type' => 'Hidden', 'name' => '_backtrack', 'value' => $step);
+      }
+    }
+    $form->add_element('type' => 'Hidden', 'name' => '_backtrack', 'value' => $ENV{'ENSEMBL_ACTION'});
+
+    $form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => $label);
+    $form->add_element('type' => 'Hidden', 'name' => 'wizard_next', 'value' => $action);
+    $form->add_element('type' => 'Hidden', 'name' => 'wizard_ajax_submit', 'value' => '' );
+  }
+  else {
+    $form->add_button('type' => 'Submit', 'name' => 'submit', 'value' => $label);
+  }
+
+  return $form;
+}
+
+
+## DATA-MUNGING METHODS FOR GENOMIC PAGES -------------------------------------------------------------------
 
 sub new_image {
   my $self = shift;
