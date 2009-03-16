@@ -8,7 +8,7 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Account);
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data::Membership;
+#use EnsEMBL::Web::Data::Membership;
 
 sub _init {
   my $self = shift;
@@ -30,8 +30,6 @@ sub content {
   my $sitename = $self->site_name;
 
   ## Control panel fixes
-  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
-  $dir = '' if $dir !~ /_/;
   my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
 
   return '' unless $object->param('id') && int($object->param('id'));
@@ -39,6 +37,7 @@ sub content {
   my $ok_id = $user->is_administrator_of($object->param('id')) ? $object->param('id') : undef;
   if ($ok_id) {
     my $group = EnsEMBL::Web::Data::Group->new($ok_id);
+    $html .= '<h2>'.$group->name.'</h2>';
 
     ## Error messages from invitation module
     if ($object->param('active') || $object->param('pending')) {
@@ -84,30 +83,31 @@ sub content {
         }
         my ($remove, $promote);
         if ($m->id == $user->id) {
-          $remove = qq(<a href="$dir/Account/Unsubscribe?id=$ok_id;$referer" class="modal_link">Unsubscribe</a> (N.B. You will no longer have any access to this group!));
+          $remove = qq(<a href="/Account/Unsubscribe?id=$ok_id;$referer" class="modal_link">Unsubscribe</a> (N.B. You will no longer have any access to this group!));
         }
         else {
           if ($m->member_status eq 'inactive') {
-            $remove = sprintf(qq(<a href="$dir/Account/RemoveMember?id=$ok_id;user_id=%s;$referer" class="modal_link">Remove from group</a>), $m->user_id);
+            $remove = sprintf(qq(<a href="/Account/RemoveMember?id=$ok_id;user_id=%s;$referer" class="modal_link">Remove from group</a>), $m->user_id);
           }
           else { 
-            $remove = sprintf(qq(<a href="$dir/Account/ChangeStatus?id=$ok_id;new_status=inactive;user_id=%s;$referer" class="modal_link">Deactivate membership</a>), $m->user_id);
+            $remove = sprintf(qq(<a href="/Account/ChangeStatus?id=$ok_id;new_status=inactive;user_id=%s;$referer" class="modal_link">Deactivate membership</a>), $m->user_id);
           }
         }
         if ($status eq 'Administrator') {
-          $promote = sprintf(qq(<a href="$dir/Account/ChangeLevel?id=$ok_id;new_level=member;user_id=%s;$referer" class="modal_link">Demote to standard member</a>), $m->user_id);
+          $promote = sprintf(qq(<a href="/Account/ChangeLevel?id=$ok_id;new_level=member;user_id=%s;$referer" class="modal_link">Demote to standard member</a>), $m->user_id);
         }
         else {
-          $promote = sprintf(qq(<a href="$dir/Account/ChangeLevel?id=$ok_id;new_level=administrator;user_id=%s;$referer" class="modal_link">Promote to administrator</a>), $m->user_id);
+          $promote = sprintf(qq(<a href="/Account/ChangeLevel?id=$ok_id;new_level=administrator;user_id=%s;$referer" class="modal_link">Promote to administrator</a>), $m->user_id);
         }
         $table->add_row({'name' => $m->name, 'status' => $status, 'remove' => $remove, 'promote' => $promote});
+        #$table->add_row({'name' => 'name', 'status' => $status, 'remove' => $remove, 'promote' => $promote});
       }
       $html .= $table->render;
       if ($show_all) {
-        $html .= qq(<p><a href="$dir/Account/ManageGroup?id=$ok_id;$referer" class="modal_link">Hide non-active members</a> (if any)</p>);
+        $html .= qq(<p><a href="/Account/ManageGroup?id=$ok_id;$referer" class="modal_link">Hide non-active members</a> (if any)</p>);
       }
       elsif ($inactive) {
-        $html .= qq(<p><a href="$dir/Account/ManageGroup?id=$ok_id;show_all=yes;$referer" class="modal_link">Show $inactive non-active members</a></p>);
+        $html .= qq(<p><a href="/Account/ManageGroup?id=$ok_id;show_all=yes;$referer" class="modal_link">Show $inactive non-active members</a></p>);
       }
     }
     else {
@@ -128,7 +128,7 @@ sub content {
 
       foreach my $invitation (@invites) {
         $table->add_row({'email' => $invitation->email, 
-          'remove' => qq(<a href="$dir/Account/RemoveInvitation?id=).$invitation->id.';group_id='.$group->id.qq(;$referer" class="modal_link">Cancel invitation</a>)});
+          'remove' => qq(<a href="/Account/RemoveInvitation?id=).$invitation->id.';group_id='.$group->id.qq(;$referer" class="modal_link">Cancel invitation</a>)});
       }
       $html .= $table->render;
     }
@@ -140,7 +140,7 @@ sub content {
     $html .= qq(<h3>Invite new members</h3>
 <p>To invite new members into this group, enter one email address per person. Users not already registered with this website will be asked to do so before accepting your invitation.</p>);
 
-    my $form = EnsEMBL::Web::Form->new('invitations', "$dir/Account/SendInvitation", 'post', 'std check narrow-labels');
+    my $form = EnsEMBL::Web::Form->new('invitations', "/Account/Invite", 'post', 'std check narrow-labels');
 
     $form->add_element(type => 'Text', name=>'emails', label => 'Email addresses', 
                       'notes' => 'Multiple email addresses should be separated by commas');
