@@ -51,8 +51,12 @@ sub record_select {
   my($self, $object, $action) = @_;
   
   my $script = $self->script_name($object);
+<<<<<<< Interface.pm
+  my $form = EnsEMBL::Web::Form->new('select', "/$script/$action", 'post');
+=======
   my $form = EnsEMBL::Web::Form->new('interface_select', "/$script/$action", 'post');
   $form->add_attribute('class', 'narrow-labels');
+>>>>>>> 1.19
 
   my $select  = $object->interface->dropdown ? 'select' : '';
   my @options;

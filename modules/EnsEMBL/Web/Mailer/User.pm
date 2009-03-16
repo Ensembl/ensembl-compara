@@ -5,20 +5,21 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Data::User;
 use base qw(EnsEMBL::Web::Mailer);
 
 {
 
 sub send_activation_email {
   ### Sends an activation email to newly registered users.
-  my ($self, %params) = @_;
+  my ($self, $object) = @_;
 
   my $sitename  = $self->get_site_name;
-  my $user      = $params{'user'};
+  my $user = EnsEMBL::Web::Data::User->find(email => $self->get_to);
   return unless $user;
 
   my $message;
-  if ($params{'lost'}) {
+  if ($object->param('lost')) {
     $self->set_subject("$sitename account reactivation");
     $message = qq(
 Hello ) . $user->name . qq(,
@@ -42,27 +43,27 @@ You just need to activate your account, using the link below:
 
   $message .= $self->get_baseurl.'/Account/Activate?email='.$user->email.';code='.$user->salt;
 
-  if ($params{'group_id'}) {
-    $message .= ";group_id=" . $params{'group_id'};
+  if ($object->param('group_id')) {
+    $message .= ";group_id=" . $object->param('group_id');
   }
-  if ($params{'record_id'}) {
-    $message .= ";record_id=" . $params{'record_id'};
+  if ($object->param('invite_id')) {
+    $message .= ";invite_id=" . $object->param('invite_id');
   }
 
   $message .= $self->email_footer;
   $self->set_message($message);
-  $self->send;
+  $self->send($object);;
 }
 
 sub send_welcome_email {
   ### Sends a welcome email to newly registered users.
-  my ($self, $email) = @_;
+  my ($self, $object) = @_;
   my $sitename = $self->get_site_name;
   my $message = qq(Welcome to $sitename.
 
   Your account has been activated! In future, you can log in to $sitename using your email address and the password you chose during registration:
 
-  Email: ) . $email . qq(
+  Email: ) . $object->param('email') . qq(
 
   More information on how to make the most of your account can be found here:
 
@@ -72,11 +73,11 @@ sub send_welcome_email {
   $message .= $self->email_footer;
   $self->set_subject("Welcome to $sitename");
   $self->set_message($message);
-  $self->send();
+  $self->send($object);
 }
 
 sub send_invitation_email {
-  my ($self, $group, $invite) = @_;
+  my ($self, $object, $group, $invite) = @_;
   my $sitename = $self->get_site_name;
   my $article = 'a';
   if ($sitename =~ /^(a|e|i|o|u)/i) {
@@ -105,7 +106,7 @@ sub send_invitation_email {
   $self->set_to($invite->email);
   $self->set_subject("Invitation to join $article $sitename group");
   $self->set_message($message);
-  $self->send();
+  $self->send($object);
 }
 
 sub email_footer {
