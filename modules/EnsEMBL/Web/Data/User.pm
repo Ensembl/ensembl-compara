@@ -17,6 +17,12 @@ __PACKAGE__->add_queriable_fields(
   status       => 'tinytext',
 );
 
+## These are 'honeypot' fields designed to catch out spambots!
+__PACKAGE__->add_fields(
+  address         => 'text',
+  surname         => 'text',
+);
+
 __PACKAGE__->add_has_many(
   bookmarks      => 'EnsEMBL::Web::Data::Record::Bookmark',
   configurations => 'EnsEMBL::Web::Data::Record::Configuration',
@@ -60,10 +66,29 @@ sub is_administrator_of {
 }
 
 sub is_member_of {
-  my ($self, $group) = @_; 
+  my ($self, $group) = @_;
   return grep {$group eq $_} $self->groups;
 }
 
+sub update_invitations {
+  ## Loops through current invitations and turns any accepted ones into memberships
+  my $self = shift;
+
+  ## Safe mode require, just in case we dont have it here yet
+  $self->_require_class('EnsEMBL::Web::Data::Record::Invite::Group');
+  $self->_require_class('EnsEMBL::Web::Data::Group');
+
+  my @invitations = EnsEMBL::Web::Data::Record::Invite::Group->search_like(data => '%'.$self->email.'%');
+  foreach my $invite (@invitations) {
+    next unless $invite->status eq 'accepted';
+    unless ($self->is_member_of($invite->webgroup_id)) {
+      my $member_id = EnsEMBL::Web::Data::Group->new($invite->webgroup_id)->add_user($self);
+      #warn "Added member ".$invite->email." ($member_id) to group ".$invite->webgroup_id;
+      ## Remove any completed invitations
+      $invite->destroy if $member_id;
+    }
+  }
+}
 
 sub get_all_das {
   my $self    = shift;
