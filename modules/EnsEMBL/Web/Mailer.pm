@@ -9,6 +9,8 @@ no warnings "uninitialized";
 use Class::Std;
 use Mail::Mailer;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Filter::Spam;
+use EnsEMBL::Web::Filter::Sanitize;
 
 {
 
@@ -33,42 +35,23 @@ sub BUILD {
   $BaseUrl{$ident}        = $sd->ENSEMBL_BASE_URL;
 }
 
-sub spam_check {
-  my ($self, $content, $threshold) = @_;
-  return 0 if $content eq '' && $threshold == 1; ## Only way to pass empty fields as spam-free!
-  (my $check = $content) =~ s/<a\s+href=.*?>.*?<\/a>//smg;
-  $check =~ s/\[url=.*?\].*?\[\/url\]//smg;
-  $check =~ s/\[link=.*?\].*?\[\/link\]//smg;
-  $check =~ s/https?:\/\/\S+//smg;
-  $threshold = $self->get_spam_threshold unless $threshold;
-  if( length($check)<length($content)/$threshold ) {
-    warn "@@@ MAIL FILTERED DUE TO BLOG SPAM.....";
-    return 1;
-  }
-  $check =~ s/\s+//gsm;
-  if( $check eq '' ) {
-    warn "@@@ MAIL FILTERED DUE TO ZERO CONTENT!";
-    return 1;
-  }
-  return 0;
-}
-
-sub sanitize_email {
-  my ($self, $email) = @_;
-  $email =~ s/[\r\n].*$//sm;
-  $email =~ s/"//g;
-  $email =~ s/''/'/g;
-  return $email;
-}
-
 sub send {
-  my ($self, $options) = @_;
+  my ($self, $object, $options) = @_;
 
   ## Sanitize input and fill in any missing values
-  $self->set_message( $self->spam_check( $self->get_message  )  ) unless $options->{'spam_check'} == 0;
-  $self->set_from(    $self->sanitize_email( $self->get_from )  );
-  $self->set_to(      $self->sanitize_email( $self->get_to   )  );
-  $self->set_reply(   $self->sanitize_email( $self->get_reply || $self->get_from ) );
+  if ($object) {
+    my $spamfilter = EnsEMBL::Web::Filter::Spam->new({'object' => $object, 'threshold'=>$self->get_spam_threshold});
+    my $sanitizer  = EnsEMBL::Web::Filter::Sanitize->new({'object' => $object});
+    $self->set_message( $spamfilter->check( $self->get_message  )  ) unless $options->{'spam_check'} == 0;
+    $self->set_from(    $sanitizer->clean( $self->get_from )  );
+    $self->set_to(      $sanitizer->clean( $self->get_to   )  );
+    $self->set_reply(   $sanitizer->clean( $self->get_reply || $self->get_from ) );
+  }
+  else {
+    warn '!!! PROXY OBJECT NOT PASSED TO MAILER - CANNOT CHECK FOR SPAM, ETC';
+    warn '!!! MESSAGE NOT SENT';
+    return undef;
+  }
 
   my $mailer   = new Mail::Mailer 'smtp', Server => $self->get_mail_server;
   my @months   = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
