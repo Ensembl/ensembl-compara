@@ -12,7 +12,7 @@ use base 'EnsEMBL::Web::Command';
 
 sub process {
   my $self = shift;
-  my $url = '/'.$self->object->data_species.'/UserData/';
+  my $redirect = '/'.$self->object->data_species.'/UserData/';
   my $param;
 
   my $name = $self->object->param('name');
@@ -31,14 +31,15 @@ sub process {
     if ($self->object->param('save')) {
       $self->object->move_to_user('type'=>'url', 'code'=>$data->{'code'});
     }
-    $url .= 'UrlFeedback';
+    $redirect .= 'UrlFeedback';
   } else {
-    $url .= 'SelectURL';
+    $redirect .= 'SelectURL';
     $param->{'filter_module'} = 'Data';
     $param->{'filter_code'} = 'no_url';
   }
+  warn ">>> URL $redirect";
 
-  $self->ajax_redirect($url, $param); 
+  $self->ajax_redirect($redirect, $param); 
 }
 
 }
