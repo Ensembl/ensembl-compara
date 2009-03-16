@@ -25,8 +25,6 @@ sub content {
   my $html;
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
-  $dir = '' if $dir !~ /_/;
   $html .= sprintf(qq(<dl class="summary">
                 <dt>User name</dt>
                   <dd>%s</dd>
@@ -39,12 +37,12 @@ sub content {
                 <dt>Last updated</dt>
                   <dd>%s</dd>
               </dl>
-      <p style="margin-top:10px"><a href="%s/Account/Update?_referer=%s" class="modal_link">Update these details &rarr;</a></p>),
+      <p style="margin-top:10px"><a href="/Account/Update?_referer=%s;x_requested_with=%s" class="modal_link">Update these details &rarr;</a></p>),
       $user->name, $user->email, $user->organisation, 
       $self->pretty_date($user->created_at), $self->pretty_date($user->modified_at),
-      $dir, CGI::escape($self->object->param('_referer')),
+      CGI::escape($self->object->param('_referer')),
+      CGI::escape($self->object->param('x_requested_with')),
   );
-
 
   return $html;
 }
