@@ -4,14 +4,15 @@ use strict;
 use base qw( EnsEMBL::Web::Root );
 
 use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Tools::RandomString;
 use CGI qw(escapeHTML);
 
 sub new {
   my ($class, %option) = @_;
+  my $name = $option{'name'} || EnsEMBL::Web::Tools::RandomString::random_string;
   my $self = {
-    '_id'               => $option{'form'},
+    '_id'               => $option{'form'}."_$name",
     '_legend'           => $option{'legend'} || '',
-    '_wizard_elements'  => $option{'elements'} || [],
     '_stripes'          => $option{'stripes'} || 0,
     '_elements'         => [],
     '_set_id'     => 1,
@@ -21,6 +22,17 @@ sub new {
     '_notes'      => '',
   };
   bless $self, $class;
+  ## Make adding of form elements as bulletproof as possible!
+  if ($option{'elements'} && ref($option{'elements'}) eq 'ARRAY') {
+    foreach my $element (@{$option{'elements'}}) {
+      if (ref($element) =~ /EnsEMBL::Web::Form::Element/) {
+        $self->_add_element($element);
+      }
+      else {
+        $self->add_element(%$element);
+      }
+    }    
+  }
   return $self;
 }
 
@@ -109,12 +121,6 @@ sub render {
       $output .= '<p>'.$self->notes->{'text'}.'</p>';
     }
     $output .= "</div>\n";
-  }
-  
-  if (scalar(@{$self->{'_wizard_elements'}})) {
-    foreach my $wizard_element (@{$self->{'_wizard_elements'}}) {
-      $self->add_element(%$wizard_element);
-    }
   }
   
   $output .= qq(\n<table style="width:100%"><tbody>\n);
