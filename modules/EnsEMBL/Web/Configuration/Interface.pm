@@ -123,9 +123,7 @@ sub success {
   my $method;
   if ($option) {
     if ($option->{'type'} eq 'url') {
-      my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
-      $dir = '' if $dir !~ /_/; 
-      my $url = $dir.$option->{'action'};
+      my $url = $option->{'action'};
 
       ## pass any additional CGI parameters
       my @parameters = $object->param();

@@ -111,20 +111,15 @@ $pad    </dd>";
         if (!$url) {
           ## This is a tmp hack since we do not have an object here
           ## TODO: propagate object here and use object->_url method
-          $url = '/'.$ENV{'ENSEMBL_SPECIES'}.'/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'};
+          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : '/'.$ENV{'ENSEMBL_SPECIES'};
+          $url .= '/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'};
           my @ok_params;
           my @cgi_params = split(';|&', $ENV{'QUERY_STRING'});
-          if ($ENV{'ENSEMBL_TYPE'} eq 'UserData' || $ENV{'ENSEMBL_TYPE'} eq 'Account' || $ENV{'ENSEMBL_TYPE'} eq 'Help'  || $ENV{'ENSEMBL_TYPE'} eq 'UniSearch' ) { 
-            my $no_popup = 0;
+          if ($ENV{'ENSEMBL_TYPE'} !~ /Location|Gene|Transcript|Variation/) { 
             foreach my $param (@cgi_params) {
               ## Minimal parameters, or it screws up the non-genomic pages!
-              $no_popup = 1 if $param =~ /^no_popup/;
-							$referer = $1 if $param =~ /^_referer=(.*)/;
               next unless ($param =~ /^_referer/ || $param =~ /^x_requested_with/);
               push @ok_params, $param;
-            }
-            if (scalar(@ok_params) < 2 && !$no_popup) {
-              @ok_params = ('_referer='.($referer||$ENV{'REQUEST_URI'}), 'x_requested_with=XMLHttpRequest');
             }
           }
           else {

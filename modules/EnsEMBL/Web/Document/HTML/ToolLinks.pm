@@ -31,7 +31,7 @@ sub render   {
     } else {
       $html .= qq(
       <a style="display:none" href="$dir/Account/Login?_referer=$url" class="modal_link">Login</a> / 
-      <a style="display:none" href="$dir/Account/Register?_referer=$url" class="modal_link">Register</a> &nbsp;|&nbsp;
+      <a style="display:none" href="$dir/Account/User/Add?_referer=$url" class="modal_link">Register</a> &nbsp;|&nbsp;
       );
     }
   }

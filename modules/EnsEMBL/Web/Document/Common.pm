@@ -92,10 +92,13 @@ sub _common_HTML {
   $self->tools->biomart           = $self->species_defs->ENSEMBL_MART_ENABLED;
   if ($self->{'input'}) {
     $self->tools->referer           = $self->{'input'}->param('_referer');
-   # warn "REFERER ".$self->{'input'}->param('_referer');
+    $self->content->filter_module   = $self->{'input'}->param('filter_module');
+    $self->content->filter_code     = $self->{'input'}->param('filter_code');
   }
   else {
-    $self->tools->referer = undef;
+    $self->tools->referer         = undef;
+    $self->content->filter_module = undef;
+    $self->content->filter_code   = undef;
   }
   $self->copyright->sitename     = $self->species_defs->ENSEMBL_SITETYPE;
 }
