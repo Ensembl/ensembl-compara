@@ -101,7 +101,7 @@ sub content {
           $type = 'DAS';
           $name = $file->label;
           if ($sd->ENSEMBL_LOGINS && $user) {
-            $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;dsn=%s;%s" class="modal_link">Save to account</a>', $dir, $file->logic_name, $referer);
+            $save = sprintf('<a href="%s/UserData/SaveRemote?dsn=%s;%s" class="modal_link">Save to account</a>', $dir, $file->logic_name, $referer);
           }
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s;%s" class="modal_link">Remove</a>', $dir, $file->logic_name, $referer);
   
@@ -111,7 +111,7 @@ sub content {
           $name = '<strong>'.$file->{'name'}.'</strong><br />' if $file->{'name'};
           $name .= $file->{'url'}.' ('.$file->{'species'}.')';
           if ($sd->ENSEMBL_LOGINS && $user) {
-            $save = sprintf('<a href="%s/UserData/SaveRemote?wizard_next=save_tempdas;code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
+            $save = sprintf('<a href="%s/UserData/SaveRemote?code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
           }
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="modal_link">Remove</a>', $dir, $file->{'code'}, $referer);
         }
