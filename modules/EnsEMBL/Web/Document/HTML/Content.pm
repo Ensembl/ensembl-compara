@@ -4,6 +4,7 @@ use CGI qw(escapeHTML);
 use Data::Dumper qw(Dumper);
 
 use EnsEMBL::Web::Document::HTML;
+use EnsEMBL::Web::Root;
 
 @EnsEMBL::Web::Document::HTML::Content::ISA = qw(EnsEMBL::Web::Document::HTML);
 
@@ -81,8 +82,10 @@ sub panel {
   return undef;
 }
 
-sub first :lvalue { $_[0]->{'first'}; }
-sub form  :lvalue { $_[0]->{'form'}; }
+sub first           :lvalue { $_[0]->{'first'}; }
+sub form            :lvalue { $_[0]->{'form'}; }
+sub filter_module   :lvalue { $_[0]{'filter_module'};   }
+sub filter_code     :lvalue { $_[0]{'filter_code'};   }
 
 
 sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 2 ); }
@@ -91,6 +94,18 @@ sub render {
   my $self = shift;
   $self->_start;
   $self->print( "\n$self->{'form'}" ) if $self->{'form'};
+  ## Include any access warning at top of page
+  if ($self->filter_module) {
+    my $class = 'EnsEMBL::Web::Filter::'.$self->filter_module;
+    my $html;
+    if ($class && EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+      my $filter = $class->new();
+      $html .= '<div class="panel print_hide">';
+      $html .= sprintf(qq(<div style="width:80%" class="error"><h3>Error</h3><div class="error-pad">%s</div></div>), $filter->error_message($self->filter_code));
+      $html .= '</div>';
+      $self->print($html);
+    }
+  }
   foreach my $panel ( @{$self->{'panels'}} ) { 
     $panel->{'timer'} = $self->{'timer'};
     $panel->render( $self->{'first'} );
