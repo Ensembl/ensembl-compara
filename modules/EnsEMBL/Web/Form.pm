@@ -102,6 +102,15 @@ sub add_hidden {
   }
 }
 
+sub add_notes {
+  my ($self, $notes) = @_;
+  my @fieldsets = @{$self->{'_fieldsets'}};
+  my $fieldset = $fieldsets[0];
+  if ($fieldset && $notes) {
+    $fieldset->notes($notes);
+  }
+} 
+
 sub render {
 ### Render the FORM tag and its contents
   my $self = shift;
@@ -109,6 +118,7 @@ sub render {
   my $widgets = '';
   my $has_file = 0; 
   my $required = 0;
+  my @A = @{$self->{'_fieldsets'}};
   foreach my $fieldset ( @{$self->{'_fieldsets'}} ) {
     $has_file = 1 if $fieldset->{'_file'};
     $required = 1 if $fieldset->{'_required'};
