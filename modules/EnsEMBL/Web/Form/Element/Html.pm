@@ -16,6 +16,7 @@ sub new {
   my $widget = $class->SUPER::new( @_ );
   $widget->rows = 20 unless $widget->rows;
   $widget->cols = 80 unless $widget->cols;
+  $widget->notes .= 'N.B. To comment out code, please do not use HTML comments <!-- -->. Surround the block of HTML with <div class="comment"></div>';
   return $widget;
 }
 
