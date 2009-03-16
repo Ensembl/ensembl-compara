@@ -1,0 +1,2 @@
+use EnsEMBL::Web::Magic;
+magic modal_stuff
