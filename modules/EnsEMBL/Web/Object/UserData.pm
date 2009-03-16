@@ -556,7 +556,8 @@ sub get_das_servers {
 sub get_das_server_dsns {
   my $self = shift;
   
-  my $server = $self->_das_server_param();
+  my $server = $self->das_server_param();
+  warn "!!! SERVER $server";
   my $species = $ENV{ENSEMBL_SPECIES};
   if ($species eq 'common') {
     $species = $self->species_defs->ENSEMBL_PRIMARY_SPECIES;
@@ -592,11 +593,12 @@ sub get_das_server_dsns {
   return $sources;
 }
 
-sub _das_server_param {
+sub das_server_param {
   my $self = shift;
-  
-  for my $key ( 'other_das', 'preconf_das' ) {
-    
+ 
+  for my $key ( 'selected_das', 'other_das', 'preconf_das' ) {
+   
+    warn "--- KEY $key"; 
     # Get and "fix" the server URL
     my $raw = $self->param( $key ) || next;
     return $raw;
