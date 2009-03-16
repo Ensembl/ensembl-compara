@@ -247,8 +247,7 @@ sub configure {
           $FUNCTIONS_CALLED->{$FN} = 1;
           ## Check if we've added any configurable components or if this is a command node
           my $node = $CONF->get_node( $CONF->_get_valid_action( $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'} ) );
-	  #warn "@@@ NODE ".$node->key;
-	  if( $node ) {
+	        if( $node ) {
             my @components = @{$node->data->{'components'}||[]};
             while( my($code, $module) = splice( @components, 0, 2) ) {
               $module =~ s/\/\w+$//;
@@ -263,7 +262,7 @@ sub configure {
             }
             $self->{'command'} = $node->data->{'command'};
             $self->{'filters'} = $node->data->{'filters'};
-	  }
+	        }
         } 
         $self->timer_push( "configuration function $FN called for @$T ...",2 );
       }
