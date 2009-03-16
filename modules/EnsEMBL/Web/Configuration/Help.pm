@@ -78,6 +78,21 @@ sub populate_tree {
       { 'no_menu_entry' => 1 }
   ));
 
+   ## And command nodes
+  $self->create_node( 'DoSearch', '',
+    [],
+    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::DoSearch'}
+  );
+  $self->create_node( 'Feedback', '',
+    [],
+    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::Feedback'}
+  );
+  $self->create_node( 'SendEmail', '',
+    [],
+    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::SendEmail'}
+  );
+
+
 }
 
 1;
