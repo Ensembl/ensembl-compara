@@ -89,7 +89,10 @@ sub fetch_all_by_Member_paired_species {
   if(!defined $gdb2) {
   	my $species_no_underscores =~ tr/_/ /;
   	$gdb2 = eval {$gdb_a->fetch_by_name_assembly($species_no_underscores)};
-  	throw("No GenomeDB found with names [$species | $species_no_underscores]");
+  	$gdb2 = eval {$gdb_a->fetch_by_name_assembly($species_no_underscores)};
+  	if(!defined $gdb2) {
+  		throw("No GenomeDB found with names [$species | $species_no_underscores]");
+  	}
   }
 
   unless (defined $method_link_types) {
