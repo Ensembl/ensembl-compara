@@ -11,9 +11,9 @@ __PACKAGE__->table('help_record');
 __PACKAGE__->set_primary_key('help_record_id');
 
 __PACKAGE__->add_fields(
-  object  => "enum('Location','Gene','Transcript','Variation')",
-  action  => 'string',
-  content => 'text',
+  ensembl_object => "enum('Location','Gene','Transcript','Variation')",
+  ensembl_action => 'string',
+  content    => 'text',
 );
 
 __PACKAGE__->_type('view');
