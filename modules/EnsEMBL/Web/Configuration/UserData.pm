@@ -15,7 +15,7 @@ sub set_default_action {
   my $self = shift;
   my $vc  = $self->object->get_viewconfig;
   if ($self->is_configurable) {
-    $self->{_data}{default} = 'Upload';
+    $self->{_data}{default} = 'SelectFile';
   }
   else {
     $self->{_data}{default} = 'ManageData';
@@ -47,31 +47,138 @@ sub context_panel  { return undef;  }
 sub populate_tree {
   my $self = shift;
 
-  ## N.B. Most of these will be empty, as content is created using 
-  ## wizard methods (below) and Wizard::Node::UserData
   my $has_logins = $self->{object}->species_defs->ENSEMBL_LOGINS;
   my $is_configurable = $self->is_configurable;
   $has_logins = 0 unless $is_configurable;
 
   my $uploaded_menu = $self->create_submenu( 'Uploaded', 'Uploaded data' );
-  $uploaded_menu->append($self->create_node( 'Upload', "Upload Data",
-   [], { 'availability' => $is_configurable }
+
+  ## Upload "wizard"
+  $uploaded_menu->append($self->create_node( 'SelectFile', "Upload Data",
+    [qw(select_file EnsEMBL::Web::Component::UserData::SelectFile)], 
+    { 'availability' => $is_configurable }
   ));
-  $uploaded_menu->append($self->create_node( 'ShareUpload', "Share Data",
-    [], { 'availability' => 1 }
+  $uploaded_menu->append($self->create_node( 'UploadFile', '',
+    [], { 'availability' => 1, 'no_menu_entry' => 1,
+    'command' => 'EnsEMBL::Web::Command::UserData::UploadFile'}
   ));
+  $uploaded_menu->append($self->create_node( 'MoreInput', '',
+    [qw(more_input EnsEMBL::Web::Component::UserData::MoreInput)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+  $uploaded_menu->append($self->create_node( 'UploadFeedback', '',
+    [qw(upload_feedback EnsEMBL::Web::Component::UserData::UploadFeedback)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+
+  ## Share data "wizard"
+  $uploaded_menu->append($self->create_node( 'SelectShare', "Share Data",
+    [qw(select_share EnsEMBL::Web::Component::UserData::SelectShare)], 
+    { 'availability' => $is_configurable, 'filters' => [qw(Shareable)] }
+  ));
+  $uploaded_menu->append($self->create_node( 'CheckShare', '',
+    [], { 'availability' => 1, 'no_menu_entry' => 1,
+    'command' => 'EnsEMBL::Web::Command::UserData::CheckShare'}
+  ));
+  $uploaded_menu->append($self->create_node( 'ShareURL', '',
+    [qw(share_url EnsEMBL::Web::Component::UserData::ShareURL)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+
+  ## Attach DAS "wizard"
+  # Component:     SelectServer
+  #                    |
+  #                    V
+  # Component:     DasSources                
+  #                   |                        
+  #                   V                        
+  # Command:  ValidateDAS---------+           
+  #               |   ^  \        |           
+  #               |   |   \       V           
+  # Component:    |   |    \   DasSpecies  
+  #               |   |     \     |           
+  #               |   |      V    V           
+  # Component:    |   +------DasCoords   
+  #               V                            
+  # Command:  AttachDAS
+  #               |
+  #               V
+  # Component:  DasFeedback                
 
   my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
-  $attached_menu->append($self->create_node( 'AttachDAS', "Attach DAS",
-   [], { 'availability' => $is_configurable }
+  $attached_menu->append($self->create_node( 'SelectServer', "Attach DAS",
+   [qw(select_server EnsEMBL::Web::Component::UserData::SelectServer)], 
+    { 'availability' => $is_configurable }
   ));
-  $attached_menu->append($self->create_node( 'AttachURL', "Attach URL Data",
-   [], { 'availability' => $is_configurable }
+  $attached_menu->append($self->create_node( 'DasSources', '',
+   [qw(das_sources EnsEMBL::Web::Component::UserData::DasSources)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+  $attached_menu->append($self->create_node( 'ValidateDAS', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::ValidateDAS',
+    'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+  $attached_menu->append($self->create_node( 'DasSpecies', '',
+   [qw(das_species EnsEMBL::Web::Component::UserData::DasSpecies)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+  $attached_menu->append($self->create_node( 'DasCoords', '',
+   [qw(das_coords EnsEMBL::Web::Component::UserData::DasCoords)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+  $attached_menu->append($self->create_node( 'AttachDAS', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachDAS', 
+    'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+  $attached_menu->append($self->create_node( 'DasFeedback', '',
+   [qw(das_feedback EnsEMBL::Web::Component::UserData::DasFeedback)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
   ));
 
+  ## URL attachment
+  $attached_menu->append($self->create_node( 'SelectURL', "Attach URL Data",
+   [qw(select_url EnsEMBL::Web::Component::UserData::SelectURL)], 
+    { 'availability' => $is_configurable }
+  ));
+  $attached_menu->append($self->create_node( 'AttachURL', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachURL', 
+    'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+  $attached_menu->append($self->create_node( 'UrlFeedback', '',
+   [qw(url_feedback EnsEMBL::Web::Component::UserData::UrlFeedback)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+
+  ## Saving remote data
+  $attached_menu->append($self->create_node( 'ShowRemote', '',
+   [qw(show_remote EnsEMBL::Web::Component::UserData::ShowRemote)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+  $attached_menu->append($self->create_node( 'SaveRemote', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveRemote', 
+    'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+  $attached_menu->append($self->create_node( 'RemoteFeedback', '',
+   [qw(remote_feedback EnsEMBL::Web::Component::UserData::RemoteFeedback)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  ));
+
+  ## Data management
   $self->create_node( 'ManageData', "Manage Data",
     [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)
     ], { 'availability' => 1, 'concise' => 'Manage Data' }
+  );
+  $self->create_node( 'SaveUpload', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveUpload',
+     'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'DeleteUpload', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::DeleteUpload',
+     'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'DeleteRemote', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::DeleteRemote',
+     'no_menu_entry' => 1 }
   );
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
@@ -80,138 +187,7 @@ sub populate_tree {
         )],
       { 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'SaveUpload', '',
-    [qw(save_upload EnsEMBL::Web::Component::UserData::SaveUpload
-        )],
-      { 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'SaveRemote', '',
-    [qw(save_remote EnsEMBL::Web::Component::UserData::SaveRemote
-        )],
-      { 'no_menu_entry' => 1 }
-  );
 }
 
-
-#####################################################################################
-
-## Wizards have to be done the 'old-fashioned' way, instead of using Magic
-
-sub upload {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  my $wizard = $self->wizard;
-
-  ## CREATE NODES
-  my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
-#  my $session  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_session');
-#  my $warning  = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'overwrite_warning' );
-#  my $save     = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'overwrite_save' );
-  my $select   = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_file' );
-  my $upload   = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'upload');
-  my $more     = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'more_input');
-  my $feedback = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'upload_feedback');
-
-  ## SET UP CONNECTION BUTTONS
-#  $wizard->add_connection( from => $warning,  to => $save);
-  $wizard->add_connection( from => $select,   to => $upload);
-  $wizard->add_connection( from => $upload,   to => $more);
-  $wizard->add_connection( from => $more,     to => $feedback);
-}
-
-sub share_upload {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  my $wizard = $self->wizard;
-
-  ## CREATE NODES
-  my $node  = 'EnsEMBL::Web::Wizard::Node::UploadData';
-  my $shareable = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_shareable', backtrack => 1);
-  my $warning   = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'no_shareable' );
-  my $select    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_upload' );
-  my $check     = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'check_save' );
-  my $share     = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'show_shareable' );
-
-  ## SET UP CONNECTION BUTTONS
-  $wizard->add_connection( from => $select, to => $check);
-}
-
-sub attach_das {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  my $wizard = $self->wizard;
-  
-  # Page:     select_server
-  #               |
-  #               V
-  # Page:    select_das                
-  #               |                        
-  #               V                        
-  # Logic:  validate_das-------+           
-  #           |    ^           |           
-  #           |    |           V           
-  # Page:     |    |   select_das_species  
-  #           |    |           |           
-  #           |    |           V           
-  # Page:     |    +-->select_das_coords   
-  #           V                            
-  # Logic:  attach_das
-  #           |
-  #           V
-  # Page:   das_feedback                
-
-  ## CREATE NODES
-  my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
-  my $server        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_server' );
-  my $source        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das', backtrack => 1 );
-  my $validate_das  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'validate_das');
-  my $species       = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_species', 'backtrack' => 1);
-  my $coords        = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_das_coords', 'backtrack' => 1);
-  my $attach_das    = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'attach_das');
-  
-  # END POINTS:
-  my $feedback    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'das_feedback');
-
-  ## LINK PAGE NODES TOGETHER
-  $wizard->add_connection( from => $server,  to => $source);
-  $wizard->add_connection( from => $source,  to => $validate_das);
-  $wizard->add_connection( from => $species, to => $coords);
-  $wizard->add_connection( from => $coords,  to => $validate_das);
-}
-
-sub save_remote {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  my $wizard = $self->wizard;
-  my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
-  
-  ## CREATE NODES
-  my $start = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'show_tempdas');
-  my $save  = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'save_tempdas');
-  my $end   = $wizard->create_node( object => $object, module => $node, type => 'page', name => 'ok_tempdas');
-
-  ## SET UP CONNECTION BUTTONS
-  $wizard->add_connection( from => $start, to => $save);
-  $wizard->add_connection( from => $save, to => $end);
-}
-
-sub attach_url {
-  my $self   = shift;
-  my $object = $self->{'object'};
-
-  my $wizard = $self->wizard;
-  my $node  = 'EnsEMBL::Web::Wizard::Node::RemoteData';
-  
-  my $select    = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'select_url');
-  my $attach    = $wizard->create_node( object => $object, module => $node, type => 'logic', name => 'attach_url');
-  my $feedback  = $wizard->create_node( object => $object, module => $node, type => 'page',  name => 'url_feedback');
-
-  ## SET UP CONNECTION BUTTONS
-  $wizard->add_connection( from => $select,   to => $attach);
-}
 
 1;
