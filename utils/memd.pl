@@ -31,6 +31,10 @@ if ($MEMD) {
   } elsif ($ARGV[0] =~ /delete/i) {
     shift @ARGV;
     if ($MEMD->delete(@ARGV)) { print "1 item deleted \n"; } else { print "item not found \n"};
+  } elsif ($ARGV[0] =~ /flush_all/i) {
+    print " Flushing ALL cache:\n";
+    MEMD->flush_all;
+    print " done\n";
   } elsif ($ARGV[0] =~ /flush/i) {
     print " Flushing cache:\n";
     shift @ARGV;
