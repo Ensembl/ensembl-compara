@@ -56,28 +56,6 @@ sub ajax_params {
   return $param;
 }
 
-sub message_redirect {
-### Redirects to the appropriate message module
-  my $self = shift;
-  my $type = $ENV{'ENSEMBL_TYPE'} || 'Account';
-  my $url = "/$type/Message";
-  my $param = {
-    '_message_type'     => $self->object->param('_message_type'),
-    '_referer'          => $self->object->param('_referer'),
-    'x_requested_with' => $self->object->param('x_requested_with'),
-  };
-  ## Do appropriate type of redirect
-  my $ajax = $self->object->param('x_requested_with');
-  warn "REDIRECTING TO ".$self->url($url, $param);
-  if ($ajax) {
-    warn '...VIA AJAX';
-    $self->ajax_redirect($url, $param);
-  }
-  else {
-    warn '...VIA CGI';
-    $self->object->redirect($self->url($url, $param));
-  }
-}
 
 }
 
