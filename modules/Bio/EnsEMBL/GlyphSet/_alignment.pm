@@ -314,7 +314,7 @@ sub render_text {
   foreach my $feature_key ($strand < 0 ? sort keys %features : reverse sort keys %features) {
     foreach my $f (@{$features{$feature_key}}) {
       foreach (map { $_->[2] } sort { $a->[0] <=> $b->[0] } map { [ $_->start, $_->end, $_ ] } @{$f||[]}) {
-        $export .= $self->$method($_, $feature_key, { 'headers' => [ 'id' ], 'values' => [ $_->can('hseqname') ? $_->hseqname : '' ] });
+        $export .= $self->$method($_, $self->my_config('caption'), { 'headers' => [ 'id' ], 'values' => [ $_->can('hseqname') ? $_->hseqname : $_->can('id') ? $_->id : '' ] });
       }
     }
   }
