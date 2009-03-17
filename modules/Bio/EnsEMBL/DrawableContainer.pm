@@ -205,10 +205,28 @@ sub new {
       ## load everything from the database
       my $NAME = $glyphset->{'my_config'}->key;
       my $ref_glyphset = ref($glyphset);
+      
       eval {
         $glyphset->{'export_cache'} = $export_cache;
+        
         my $text_export = $glyphset->render;
-        $self->{'export'} .= $text_export;
+        
+        if ($text_export) {
+          # Add a header showing the region being exported
+          if (!$self->{'export'}) {
+            my $container = $glyphset->{'container'};
+            my $core = $self->{'config'}->core_objects;
+            
+            $self->{'export'} .= sprintf("Region:     %s\r\n", $container->name) if $container->can('name');
+            $self->{'export'} .= sprintf("Gene:       %s\r\n", $core->gene_long_caption) if $ENV{'ENSEMBL_TYPE'} eq 'Gene';
+            $self->{'export'} .= sprintf("Transcript: %s\r\n", $core->transcript_long_caption) if $ENV{'ENSEMBL_TYPE'} eq 'Transcript';
+            $self->{'export'} .= sprintf("Protein:    %s\r\n", $container->stable_id) if $container->isa('Bio::EnsEMBL::Translation');
+            $self->{'export'} .= "\r\n";
+          }
+          
+          $self->{'export'} .= $text_export;
+        }
+        
         $export_cache = $glyphset->{'export_cache'};
       };
       ## don't waste any more time on this row if there's nothing in it
