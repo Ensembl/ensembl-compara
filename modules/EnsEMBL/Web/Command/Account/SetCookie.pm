@@ -45,7 +45,8 @@ sub process {
   $user->update_invitations;
 
   if ($object->param('activated')) {
-    $object->redirect($self->url($SD->ENSEMBL_BASEURL));
+    my $home = $SD->ENSEMBL_STYLE->{'SITE_LOGO_HREF'} || '/'; ## URL can't be blank!
+    $object->redirect($self->url($home));
   }
   else {
     ## We need to close down the popup window if using AJAX and refresh the page!
