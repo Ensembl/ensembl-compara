@@ -36,9 +36,9 @@ sub href {
 
 sub export_feature {
   my $self = shift;
-  my ($feature, $transcript_id) = @_;
+  my ($feature, $transcript_id, $source) = @_;
   
-  return $self->_render_text($feature, 'Genescan', { 'headers' => [ 'genscan' ], 'values' => [ $transcript_id ] });
+  return $self->_render_text($feature, "$source prediction", { 'headers' => [ 'transcript_id' ], 'values' => [ $transcript_id ] });
 }
 
 1;
