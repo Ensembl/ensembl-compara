@@ -32,11 +32,11 @@ sub process {
   $interface->caption({edit => 'Edit annotation'});
   $interface->permit_delete('yes');
   $interface->option_columns([qw/stable_id title/]);
-  $interface->element('title',      {type => 'String', label =>'Title'});
-  $interface->element('annotation', {type =>'Text'   , label =>'Annotation notes'});
-  $interface->element('stable_id',  {type =>'NoEdit' , label =>'Stable ID'});
-  $interface->element('url',        {type =>'Hidden'});
-  $interface->element('owner_type', {type => 'Hidden'});
+  $interface->modify_element('title',      {type => 'String', label =>'Title'});
+  $interface->modify_element('annotation', {type =>'Text'   , label =>'Annotation notes'});
+  $interface->modify_element('stable_id',  {type =>'NoEdit' , label =>'Stable ID'});
+  $interface->modify_element('url',        {type =>'Hidden'});
+  $interface->modify_element('owner_type', {type => 'Hidden'});
   $interface->element_order([qw/stable_id title annotation url owner_type/]);
 
   ## Render page or munge data, as appropriate

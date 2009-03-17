@@ -32,8 +32,8 @@ sub process {
   });
 
 ## Form elements
-  $interface->element('name', {'label' => 'Your name', 'required' => 'yes'});
-  $interface->element('email', {'label' => 'Your email address', 'required' => 'yes', 
+  $interface->modify_element('name', {'label' => 'Your name', 'required' => 'yes'});
+  $interface->modify_element('email', {'label' => 'Your email address', 'required' => 'yes', 
                       'notes' => "You'll use this to log in to Ensembl"});
   $interface->extra_data('record_id');
   ## Honeypot fields, hidden from user

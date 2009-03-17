@@ -23,6 +23,8 @@ sub process {
     'x_requested_with' => $self->object->param('x_requested_with'),
   };
   my $method = $self->object->param('url') ? 'url' : 'file';
+  warn "FILE ".$self->object->param('file');
+  warn "URL ".$self->object->param('url');
   if ($self->object->param($method)) {
 
     ## Get original path, so can save file name as default name for upload
@@ -45,7 +47,7 @@ sub process {
       my $data = $file->retrieve;
       my $parser = EnsEMBL::Web::Text::FeatureParser->new();
       $parser = $parser->init($data);
-      if ($parser->{'_info'}->{'count'} > 0) {
+      if ($parser->{'_info'} && $parser->{'_info'}->{'count'} && $parser->{'_info'}->{'count'} > 0) {
         my $format = $parser->{'_info'}->{'format'};
 
         $param->{'parser'} = $parser;

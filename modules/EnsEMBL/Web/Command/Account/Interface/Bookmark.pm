@@ -34,11 +34,11 @@ sub process {
   $interface->caption({'edit'=>'Edit bookmark'});
   $interface->permit_delete('yes');
   $interface->option_columns([qw/name description url/]);
-  $interface->element('url', {'type'=>'String', 'label'=>'The URL of your bookmark'});
-  $interface->element('name', {'type'=>'String', 'label'=>'Bookmark name'});
-  $interface->element('description', {'type'=>'String', 'label'=>'Short description'});
-  $interface->element('click', {'type'=>'Hidden'});
-  $interface->element('owner_type',  { type => 'Hidden'});
+  $interface->modify_element('url', {'type'=>'String', 'label'=>'The URL of your bookmark'});
+  $interface->modify_element('name', {'type'=>'String', 'label'=>'Bookmark name'});
+  $interface->modify_element('description', {'type'=>'String', 'label'=>'Short description'});
+  $interface->modify_element('click', {'type'=>'Hidden'});
+  $interface->modify_element('owner_type',  { type => 'Hidden'});
   $interface->element_order([qw/name description url owner_type click/]);
 
   ## Render page or munge data, as appropriate

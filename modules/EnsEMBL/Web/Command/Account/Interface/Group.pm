@@ -27,8 +27,8 @@ sub process {
   $interface->caption({add  => 'Save group'});
   $interface->caption({edit => 'Edit group'});
   $interface->permit_delete('yes');
-  $interface->element('name',         { type => 'String', label => 'Group name'});
-  $interface->element('blurb',  { type => 'Text',   label => 'A brief description of your group'});
+  $interface->modify_element('name',         { type => 'String', label => 'Group name'});
+  $interface->modify_element('blurb',  { type => 'Text',   label => 'A brief description of your group'});
   $interface->element_order([qw/name blurb/]);
 
   ## Render page or munge data, as appropriate

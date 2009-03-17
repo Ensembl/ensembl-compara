@@ -59,7 +59,7 @@ sub process {
                                  }
   );
 
-  $interface->element('owner_type', { type => 'Hidden'});
+  $interface->modify_element('owner_type', { type => 'Hidden'});
   $interface->element_order(['species', 'owner_type']);
 
   ## Render page or munge data, as appropriate
