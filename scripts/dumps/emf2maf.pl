@@ -1,9 +1,31 @@
 #!/usr/bin/env perl
 
+#####################################################################
+##
+## PROGRAM emf2maf.pl
+##
+## DESCRIPTION
+##   This parser converts an EMF (Ensembl Multi Format) into an
+##   MAF file.
+##
+#####################################################################
+
+
 use strict;
 use warnings;
 
-my $VERSION = "1.0";
+my $VERSION = "1.0.1";
+
+if (!@ARGV) {
+  print STDERR qq"
+  emf2maf.pl v$VERSION - EMF to MAF file converter.
+
+  Use: emf2maf.pl file1.emf [file2.emf ...]
+
+  MAF files will be named file1.maf, file2.maf...
+
+";
+}
 
 foreach my $emf_file (@ARGV) {
   print "Parsing file $emf_file...\n";
@@ -84,10 +106,10 @@ sub write_maf {
       my ($maf_start, $maf_length, $maf_strand);
       if ($this_data->{strand}==1 or $this_data->{strand} eq "+") {
         $maf_start = $this_data->{start} - 1;
-	$maf_strand = "+";
+        $maf_strand = "+";
       } elsif ($this_data->{strand}==-1 or $this_data->{strand} eq "-") {
-        $maf_start = $this_data->{chr_length} - $this_data->{start};
-	$maf_strand = "-";
+        $maf_start = $this_data->{chr_length} - $this_data->{end};
+        $maf_strand = "-";
       } else {
         die "Cannot understand strand <".$this_data->{strand}.">";
       }
