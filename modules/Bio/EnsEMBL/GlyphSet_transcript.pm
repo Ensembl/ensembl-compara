@@ -823,7 +823,10 @@ sub render_text {
         
         next if $target && ($transcript_id ne $target); # For exon_structure diagram only given transcript
         
-        my $transcript_name = $transcript->can('display_xref') && $transcript->display_xref ? $transcript->display_xref->display_id : undef;
+        my $transcript_name = 
+          $transcript->can('display_xref') && $transcript->display_xref ? $transcript->display_xref->display_id : 
+          $transcript->can('analysis') && $transcript->analysis ? $transcript->analysis->logic_name : 
+          undef;
         
         foreach (sort { $a->start <=> $b->start } @{$transcript->get_all_Exons}) {
           next if $_->start > $length || $_->end < 1;
@@ -835,7 +838,7 @@ sub render_text {
             
             $exons->{$stable_id} = 1;
           }
-          
+           
           $export .= $self->export_feature($_, $transcript_id, $transcript_name, $gene_id, $gene_name, $gene_type);
         }
       }
