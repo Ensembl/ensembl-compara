@@ -53,7 +53,9 @@ sub render {
   
   $self->{'text_export'} = $self->{'config'}->get_parameter('text_export');
   
-  return $self->can($method) ? $self->$method(@_) : $self->render_normal;
+  my $text_export = $self->can($method) ? $self->$method(@_) : $self->render_normal;
+  
+  return $self->{'text_export'} ? $text_export : undef;
 }
 
 sub _render_text {
