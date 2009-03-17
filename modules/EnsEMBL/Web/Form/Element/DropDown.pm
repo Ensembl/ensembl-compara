@@ -84,17 +84,29 @@ sub render {
       $self->notes
     );
   } else {
-    my $output = '';
+    my $output = '<tr><th>'.CGI::escapeHTML($self->label).'</th>';
+    if ($self->introduction) {
+      $output .= '<td>'.$self->introduction."</td></tr>\n<tr><td></td>";
+    }
+    $output .= sprintf( '<td%s%s>', $self->class_attrib, $self->style_attrib );
     my $K = 0;
+    my $total = @{$self->values};
     foreach my $V ( @{$self->values} ) {
-      $output .= sprintf( qq(    <tr><td></td><td%s%s><input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label></td></tr>\n),
-        $self->class_attrib, $self->style_attrib, CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V->{'value'}),
+      $output .= sprintf( qq(<input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d" style="margin-right:2em">%s</label>),
+        CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V->{'value'}),
         $self->value eq $V->{'value'} ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
         CGI::escapeHTML($V->{'name'})
       );
+      if ($total > 2 && $K < $total && $K % 2 == 1) {
+        $output .= sprintf( qq(</td></tr>\n<tr><td></td><td%s%s>), $self->class_attrib, $self->style_attrib);
+      }
       $K++;
     }
-    return $self->introduction.$output.$self->notes;
+    $output .= "</td></tr>\n";
+    if ($self->notes) {
+      $output .= '<tr><td></td><td>'.$self->notes.'</td></tr>';
+    }
+    return $output;
   }
 }
 
