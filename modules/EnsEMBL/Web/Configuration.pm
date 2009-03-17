@@ -938,7 +938,7 @@ sub _content_panel {
   
   my $panel = $self->new_panel( 'Navigation', %params );
   if( $panel ) {
-    $panel->add_components( @{$node->data->{'components'}} );
+    $panel->add_components( '__messages', 'EnsEMBL::Web::Component::Messages', @{$node->data->{'components'}} );
     $self->add_panel( $panel );
   }
 }
