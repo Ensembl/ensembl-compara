@@ -20,12 +20,16 @@ sub new {
     prefix       => 'user_upload',
     extension    => 'txt',
     content_type => 'plain/text',
+    drivers      => EnsEMBL::Web::TmpFile::Driver::Disk->new,
     %args,
   );
   
   if ($args{tmp_filename}) {
-    move($args{tmp_filename}, $self->full_path) or die "Move failed $args{tmp_filename} $!";
-    $self->retrieve;
+    open TMP_FILE, $args{tmp_filename};
+    local $/;
+    $self->{content} = do {local $/; <TMP_FILE> };
+    close TMP_FILE;
+    unlink $args{tmp_filename};
   }
 
   return $self;

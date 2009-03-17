@@ -29,6 +29,11 @@ sub new {
   my %args  = @_;
   
   my $species_defs = delete $args{species_defs} || EnsEMBL::Web::SpeciesDefs->new();
+  my $drivers = delete $args{drivers}
+                 || [ 
+                      EnsEMBL::Web::TmpFile::Driver::Memcached->new,
+                      EnsEMBL::Web::TmpFile::Driver::Disk->new
+                    ];
   my $self = {
     species_defs => $species_defs,
     prefix       => undef,
@@ -44,14 +49,10 @@ sub new {
     URL_root     => $species_defs->ENSEMBL_TMP_URL,
     md5          => '',
     URL          => '',
-    drivers      => $args{drivers}
-                    ? ( (ref($args{drivers}) eq 'ARRAY') ? $args{drivers} : [ $args{drivers} ] )
-                    : [ 
-                        EnsEMBL::Web::TmpFile::Driver::Memcached->new,
-                        EnsEMBL::Web::TmpFile::Driver::Disk->new
-                      ],
+    drivers      => (ref($drivers) eq 'ARRAY') ? $drivers : [ $drivers ],
     %args,    
   };
+  
   bless $self, $class;
 
   if ($args{filename}) {
@@ -106,8 +107,6 @@ sub filename {
 
     $self->{shortname} = $filename;
     $self->{shortname} =~ s!^.*/([^/]+)$!$1!g;
-    
-    $self->make_directory($self->{full_path});
   }
   
   return $self->{filename};
