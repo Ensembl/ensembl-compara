@@ -352,7 +352,7 @@ sub transHandler_species {
     
   if( $flag && $real_script_name ) {
     $r->subprocess_env->{'ENSEMBL_TYPE'}     = $script;
-    if( $real_script_name eq 'action' ) {
+    if( $real_script_name eq 'action' || $real_script_name eq 'modal' ) {
       $r->subprocess_env->{'ENSEMBL_ACTION'}   = shift @$path_segments;
       $r->subprocess_env->{'ENSEMBL_FUNCTION'} = shift @$path_segments;
 #      $path_segments                         = [];
