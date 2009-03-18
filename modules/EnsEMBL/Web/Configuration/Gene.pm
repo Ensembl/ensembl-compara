@@ -316,7 +316,16 @@ sub ajax_zmenu      {
         'type'     => 'TreeFam',
         'label'    => 'TreeFam',
         'link'     => $treefam_link,
-        'priority' => 195,
+        'priority' => 193,
+        'extra'     => {'external' => 1}, 
+      });
+    }
+    if( my $dyo_link = $obj->get_ExtURL( 'GENOMICUSSYNTENY', $obj->stable_id ) ){
+      $panel->add_entry({
+        'type'     => 'Synteny',
+        'label'    => 'Genomicus Synteny',
+        'link'     => $dyo_link,
+        'priority' => 194,
         'extra'     => {'external' => 1}, 
       });
     }
@@ -325,15 +334,6 @@ sub ajax_zmenu      {
         'type'     => 'PhylomeDB',
         'label'    => 'PhylomeDB',
         'link'     => $phy_link,
-        'priority' => 195,
-        'extra'     => {'external' => 1}, 
-      });
-    }
-    if( my $dyo_link = $obj->get_ExtURL( 'DYOGENSYNTENY', $obj->stable_id ) ){
-      $panel->add_entry({
-        'type'     => 'Dyogen Synteny',
-        'label'    => 'Dyogen Synteny',
-        'link'     => $dyo_link,
         'priority' => 195,
         'extra'     => {'external' => 1}, 
       });
