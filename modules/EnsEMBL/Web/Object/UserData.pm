@@ -6,14 +6,18 @@ no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Object);
 
+use Data::Dumper;
+use Digest::MD5 qw(md5_hex);
+
+use Bio::EnsEMBL::Utils::Exception qw(try catch);
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser; # for contacting DAS servers
+
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::Data::Record::Upload;
-use Bio::EnsEMBL::Utils::Exception qw(try catch);
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser; # for contacting DAS servers
+use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::TmpFile::Text;
-use Data::Dumper;
-use Digest::MD5 qw(md5_hex);
+
                                                                                    
 
 my $DEFAULT_CS = 'DnaAlignFeature';
@@ -193,6 +197,7 @@ sub delete_upload {
       $self->_delete_datasource($upload->{species}, $_) for @analyses;
     }    
     $self->get_session->purge_data(type => $type, code => $code);
+    EnsEMBL::Web::Data::Session->search(code => $code, type => $type)->delete_all;
   } elsif($id && $user) {
     my ($upload) = $user->uploads($id);
     if ($upload) {
