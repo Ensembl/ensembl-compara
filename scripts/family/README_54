@@ -59,8 +59,8 @@ mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_54" | 
 # cd fasta
 
 # Or move it to (depending on the blast filesystem services you've got)
-mkdir -p /data/blastdb/Ensembl/family_54/fasta
-cd /data/blastdb/Ensembl/family_54/fasta
+# mkdir -p /data/blastdb/Ensembl/family_54/fasta
+# cd /data/blastdb/Ensembl/family_54/fasta
 
 # Takes about 2 minutes
 perl ~avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl -conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_54/genetree_all.conf --noredundancy -fasta metazoa_54.pep > metazoa_54.pep.err 2>&1 &
@@ -83,6 +83,7 @@ grep '>' metazoa_54.pep | wc -l
 fastaindex metazoa_54.pep metazoa_54.index
 
 # Takes about 5 minutes
+# FIXME: a full path to formatdb should be given to avoid difference in versions
 bsub -o /dev/null -q yesterday 'formatdb -p T -l metazoa_54.pep.formatdb.log -i metazoa_54.pep'
 
 # check metazoa_54.pep.formatdb.log if it is ok delete it
@@ -105,7 +106,7 @@ cd /lustre/scratch1/ensembl/lg4/families/family_54/blast_in
 # and would correspond to one blastp job.
 
 # Takes about 1 minute
-perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl -maxids 250 /data/blastdb/Ensembl/family_54/fasta/metazoa_54.index
+perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl -maxids 250 ../fasta/metazoa_54.index
 
 #   The created files are named: PeptideSet.1, PeptideSet.2, ..., PeptideSet.n
 #   so that they are suitable for LSF job array creation. 
@@ -149,7 +150,7 @@ ls ../blast_in |wc -l
 # lg4: the following looks like an important omission:
 #      But I wonder if the /data/blastdb/Ensembl/family_xx/fasta directory was needed in the first place?
 #
-cp /data/blastdb/Ensembl/family_54/fasta/* /lustre/scratch1/ensembl/lg4/families/family_54/fasta/
+# cp /data/blastdb/Ensembl/family_54/fasta/* /lustre/scratch1/ensembl/lg4/families/family_54/fasta/
 
 # LaunchBlast will run like this: system("/usr/local/ensembl/bin/blastall -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
 # where:

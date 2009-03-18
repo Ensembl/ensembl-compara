@@ -47,6 +47,8 @@ my $qy_file = "/tmp/qy.$rand";
 my $blast_file = "/tmp/blast.$rand";
 my $raw_file = "/tmp/raw.$rand";
 
+my @tmp_files = ($qy_file, $blast_file, $raw_file);
+
 # We should get the sequence directly from the compara database.
 
 if (-e "$final_raw_file.gz") {
@@ -55,27 +57,27 @@ if (-e "$final_raw_file.gz") {
 }
 
 unless(system("$fastafetch_executable -F true $fastadb $fastaindex $idqy |grep -v \"^Message\" > $qy_file") == 0) {
-  unlink glob("/tmp/*$rand*");
-  die "error in $fastafetch_executable, $!\n";
+    unlink @tmp_files;
+    die "error in $fastafetch_executable, $!\n";
 } 
 
 my $status = system("$blast_executable -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
 unless ($status == 0) {
 #  $DB::single=1;1;#??
-  unlink glob("/tmp/*$rand*");
-  die "error in $blast_executable, $!\n";
+    unlink @tmp_files;
+    die "error in $blast_executable, $!\n";
 }
 
 unless (system("$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tab_file $blast_file > $raw_file") == 0) {
-  unlink glob("/tmp/*$rand*");
-  die "error in $blast_parser_executable, $!\n";
+    unlink @tmp_files;
+    die "error in $blast_parser_executable, $!\n";
 }
 
 unless (system("gzip -c $raw_file > $final_raw_file.gz") == 0) {
-  unlink glob("/tmp/*$rand*");
-  die "error in cp $raw_file, $!\n";
+    unlink @tmp_files;
+    die "error in cp $raw_file, $!\n";
 }
 
-unlink glob("/tmp/*$rand*");
+unlink @tmp_files;
 
 exit 0;
