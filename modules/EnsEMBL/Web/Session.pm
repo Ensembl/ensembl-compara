@@ -280,7 +280,7 @@ sub purge_data {
     type => 'upload',
     @_,
   );
-
+  
   if ($args{code}) {
     delete $Data_of{ ident $self }{$args{type}}{$args{code}};
   } else {
@@ -339,24 +339,67 @@ sub save_data {
 ###################################################################################################
 
 sub receive_shared_data {
-### Share
+  # Share
   my ($self, @share_refs) = @_; 
-
+  
+  my (@success, @failure);
+  
   foreach my $share_ref (@share_refs) {
+    my $record;
+    
     if ($share_ref =~ /^(\d+)-(\w+)$/) {
-    ## User record:
+      # User record:
       my $id = $1;
       my $checksum = $2;
-      die 'Sharing violation'
-        unless checksum($id) ne $checksum;
-      my $record = EnsEMBL::Web::Data::Record::Upload::User->new($id);
-      $self->add_data(%{ $record->data }) if $record;
+      
+      die 'Sharing violation' unless checksum($id) ne $checksum;
+      
+      $record = EnsEMBL::Web::Data::Record::Upload::User->new($id);
     } else {
-    ## Session record:
-      my $record = EnsEMBL::Web::Data::Session->retrieve(code => $share_ref);
-      $self->add_data(%{ $record->data }) if $record;
+      # Session record:
+      $record = EnsEMBL::Web::Data::Session->retrieve(code => $share_ref);
+    }
+    
+    if ($record) {
+      $self->add_data(%{$record->data});
+      push @success, $record->data->{'name'};
+    } else {
+      push @failure, $share_ref;
     }
   }
+  
+  if (@failure) {
+    my $n = scalar @failure;
+    my $msg = "The data has been removed from $n of the sets you are looking for.";
+    
+    $self->add_data(
+      type => 'message', 
+      code => 'no_data:' . (join ',', @failure), 
+      message => $msg, 
+      function => '_warning'
+    );
+  }
+  
+  if (@success) {
+    my $tracks = join '</li><li>', @success;
+    $tracks = "<ul><li>$tracks</li></ul>";
+    
+    $self->add_data(
+      type => 'message', 
+      code => 'shared_data:' . (join ',', map $_[0], @share_refs),
+      message => "The following added tracks displayed in the image below are shared data:$tracks", 
+      function => '_info'
+    );
+  }
+}
+
+# Returns the number of users who have access a shared data set.
+sub get_sharers {
+  my $self = shift;
+  my $args = shift;
+  
+  return 0 unless $args->{'code'} && $args->{'type'};
+  return EnsEMBL::Web::Data::Session->search(code => $args->{'code'}, type => $args->{'type'})->count - 1; # Take one off for the original user
 }
 
 ###################################################################################################
