@@ -55,8 +55,13 @@ sub features {
     $parser->parse_URL( $self->my_config('url') );
   } else {
     my $file = new EnsEMBL::Web::TmpFile::Text( filename => $self->my_config('file') );
+    
+    return $self->errorTrack("The file ".$self->my_config('caption')." could not be found") if !$file->exists && $self->strand < 0;
+    
     my $data = $file->retrieve;
+    
     return [] unless $data;
+    
     $parser->init($data);
     $parser->parse($data, $self->my_config('format') );
   }
