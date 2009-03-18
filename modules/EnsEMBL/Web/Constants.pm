@@ -220,5 +220,13 @@ sub VARIATION_OPTIONS {
   );
 }
 
+sub MESSAGE_PRIORITY {
+  return (
+    '_error',
+    '_warning',
+    '_info',
+    '_hint'
+  ); 
+}
 
 1;
