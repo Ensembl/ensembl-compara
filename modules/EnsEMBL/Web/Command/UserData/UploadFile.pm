@@ -23,8 +23,7 @@ sub process {
     'x_requested_with' => $self->object->param('x_requested_with'),
   };
   my $method = $self->object->param('url') ? 'url' : 'file';
-  warn "FILE ".$self->object->param('file');
-  warn "URL ".$self->object->param('url');
+
   if ($self->object->param($method)) {
 
     ## Get original path, so can save file name as default name for upload
@@ -72,7 +71,7 @@ sub process {
         }
         else {
           $url = '/UserData/UploadFeedback';
-          $param->{'format'} => $format;
+          $param->{'format'} = $format;
         }
       }
       else {
