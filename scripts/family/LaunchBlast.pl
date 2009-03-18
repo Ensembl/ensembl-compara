@@ -17,6 +17,7 @@ my $blast_executable = "/usr/local/ensembl/bin/blastall";
 
 my $fastafetch_executable = "/usr/local/ensembl/bin/fastafetch";
 my $blast_parser_executable = "/nfs/acari/avilella/bin/mcxdeblast";
+my $blastmat_directory = "/usr/local/ensembl/data/blastmat";
 my $tab_file;
 
 GetOptions(
@@ -28,7 +29,11 @@ GetOptions(
        'baexec=s'     => \$blast_executable,
        'ffexec=s'     => \$fastafetch_executable,
        'bpexec=s'     => \$blast_parser_executable,
-       );
+       'bmdir=s'      => \$blastmat_directory,
+);
+
+# set this in the script for all system() invocations (they will inherit the value)
+$ENV{BLASTMAT} = $blastmat_directory;
 
 my $final_raw_file = $dir."/".basename($idqy).".raw";
 
@@ -56,7 +61,7 @@ unless(system("$fastafetch_executable -F true $fastadb $fastaindex $idqy |grep -
 
 my $status = system("$blast_executable -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
 unless ($status == 0) {
-  $DB::single=1;1;#??
+#  $DB::single=1;1;#??
   unlink glob("/tmp/*$rand*");
   die "error in $blast_executable, $!\n";
 }

@@ -130,8 +130,8 @@ perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl 
 # my $fastafetch_executable
 # my $blast_parser_executable
 
-ls|wc -l
-# v54 8754
+ls ../blast_in |wc -l
+# v54 8753
 # v5? 8032
 # v51 7246
 # v50 6783
@@ -185,9 +185,9 @@ ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was exec
 # Look for the last PeptideSet.NNNN
 ls | awk -F\. '{print $2}' | sort -n | tail
 
-# This will run the rest of the jobs up to 8754
+# This will run the rest of the jobs up to 8753
 cd ../blast_in
-echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp"[2-8754]" -o ../blast_out/PeptideSet.%I.out
+echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp"[2-8753]" -o ../blast_out/PeptideSet.%I.out
 
 # Rerun the failed jobs in ../blast_out.
 
@@ -195,30 +195,48 @@ cd ../blast_out
 
 ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was executed/ {print;exit}' $i;done > ../job_status
 
-grep Exited ../job_status|sed "s/\./ /g"|awk '{print $2}'|sort -n > ../job_status.ids
+grep Exited ../job_status | awk 'BEGIN {FS="."} {print $2}' | sort -n -u >../first_batch.ids
 
-awk 'BEGIN {s=0;e=0;i=0} i==15 {print;i=0} s==0 {s=$1;e=$1;next} $1==e+1 {e=$1;next} $1>e+1 && e==s {printf s",";s=$1;e=$1;i++;next} $1>e+1 && e!=s {printf s"-"e",";s=$1;e=$1;i++;next} END {print s"-"e}' ../job_status.ids > ../job_status.ids.collapse
-
-# awk 'BEGIN {s=0;e=0;i=0} i==15 {print;i=0} s==0 {s=$1;e=$1;next} $1==e+1 {e=$1;next} $1>e+1 && e==s {printf s",";s=$1;e=$1;i++;next} $1>e+1 && e!=s {printf s"-"e",";s=$1;e=$1;i++;next} END {print s"-"e}' undone_blasts.txt
-
-# e.g.
-# 3805,3827,3891,3905,3961-3961
-# echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp"[3805,3827,3891,3905,3961-3961]" -o ../blast_out/PeptideSet.%I.out
+# create the compressed list of ids to be used by bjobs:
+awk 'BEGIN {s=0;e=0;i=1;c=""} s==0 {s=$1;e=$1;c=s;next} $1==e+1 {e=$1;c=s"-"e;next} $1>e+1 {printf c ((i%15)?",":"\n");s=$1;e=$1;c=s;i++;next} END {print c}' ../first_batch.ids >../first_batch_ids.collapsed
 
 cd ..
 
 # Because this only checks the out files, you can resubmit safely even if you still have running jobs, that haven't produced an out file yet:
 grep Exited job_status |awk '{print $1}'|while read i;do rm -f blast_out/$i;done
 
-cd blast_in
-
-cat job_status.ids.collapse|while read i;do echo "echo '/nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchBlast.pl -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub
+cat first_batch_ids.collapsed | while read i;do echo "echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub
 
 # Then move to blast_in and resubmit the failed jobs
 
 cd blast_in
-
 bash rebsub
+
+
+# Sometimes you get jobs that fail because they failed previously and you forgot to remove the output files.
+# Check if you have any of such files:
+
+cd ..
+grep -lr 'Job already finished' blast_out >second_batch.filenames
+
+# If the file is empty - just go to step 8. Otherwise:
+
+# create the list of the ids:
+awk 'BEGIN {FS="."} {print $2}' second_batch.filenames | sort -n -u >second_batch.ids
+
+# compress it:
+awk 'BEGIN {s=0;e=0;i=1;c=""} s==0 {s=$1;e=$1;c=s;next} $1==e+1 {e=$1;c=s"-"e;next} $1>e+1 {printf c ((i%15)?",":"\n");s=$1;e=$1;c=s;i++;next} END {print c}' second_batch.ids >second_batch_ids.collapsed
+
+# actually remove the offending files (both out- and raw-files) (may want a while-read-do-rm solution for longer files?):
+rm `cat second_batch.filenames`
+rm `cat second_batch.filenames | sed "s/blast_out/blast_raw/" | sed "s/.out/.raw.gz/"`
+
+# re-create the submission commands:
+cat second_batch_ids.collapsed | while read i;do echo "echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub2
+
+# actually submit the jobs:
+cd blast_in
+bash rebsub2
 
 8- Build the matrix needed by mcl and check it for symmetry
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -244,9 +262,10 @@ ln -s /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab famil
 # 2023775 family_54.tab
 
 wc -l family_54.tab
-2023775 family_54.tab
-# 1811409 family_54.tab
-# v50 1695699 family_51.raw
+# v54 ....... family_54.tab
+# v5? 2023775 family_5?.tab
+# v51 1811409 family_51.tab
+# v50 1695699 family_50.tab
 # v49 1653108 family_49.tab
 # v48 1520968 family_48.tab
 
