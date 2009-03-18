@@ -156,8 +156,6 @@ sub not_allowed {
       ## N.B. At the moment this only works to exclude new record creation from certain filters
       ## (can't apply, say, the Owner filter to new records, because they don't have one!)
       my $exceptions = $filter->get_exceptions;
-      use Data::Dumper;
-      warn Dumper($exceptions);
       my $skip;
       if ($caller && $exceptions && ref($exceptions) eq 'HASH') {
         foreach my $action (@{$exceptions->{'list'}}) {
