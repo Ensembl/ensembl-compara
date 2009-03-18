@@ -7,10 +7,12 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component);
 
+use EnsEMBL::Web::Constants;
+
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
 sub caption {
@@ -20,8 +22,35 @@ sub caption {
 
 sub content {
   my $self = shift;
-  ### TODO - replace this with a div that pulls messages in via AJAX, so they aren't cached
-  my $html = qq(<div style="width:80%" class="error"><h3>Error</h3><div class="error-pad">Oops, an error!</div></div>);
+  my $object = $self->object;
+  
+  return unless $object->can('get_session');
+  
+  my $session = $object->get_session;
+  
+  my @priority = EnsEMBL::Web::Constants::MESSAGE_PRIORITY;
+  
+  my %messages;
+  my $html;
+  
+  # Group messages by type
+  push @{$messages{$_->{'function'}||'_info'}}, $_->{'message'} for $session->get_data(type => 'message');
+  
+  $session->purge_data(type => 'message');
+  
+  foreach (@priority) {
+    next unless $messages{$_};
+    
+    my $func = $self->can($_) ? $_ : '_info';
+    my $caption = $func eq '_info' ? 'Information' : ucfirst substr $func, 1, length $func;   
+    my $msg = join '</li><li>', @{$messages{$_}};
+    
+    $msg = "<ul><li>$msg</li></ul>" if scalar @{$messages{$_}} > 1;
+    
+    $html .= $self->$func($caption, $msg);
+    $html .= '<br />';
+  }
+  
   return $html;
 }
 
