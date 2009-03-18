@@ -71,6 +71,7 @@ sub save_to_db {
     action   => 'new', # or append
     species  => $tmpdata->{species},
     assembly => $tmpdata->{assembly},
+    default_track_name => $tmpdata->{name}
   };
 
   if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
@@ -250,7 +251,7 @@ sub _store_user_track {
 
   if (my $current_species = $config->{'species'}) {
     my $action = $config->{action} || 'error';
-    if( my $track_name = $track->{config}->{name} || 'Default' ) {
+    if( my $track_name = $track->{config}->{name} || $config->{default_track_name} || 'Default' ) {
 
       my $logic_name = join '_', $config->{track_type}, $config->{id}, md5_hex($track_name);
   
