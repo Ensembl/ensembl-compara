@@ -370,7 +370,7 @@ sub receive_shared_data {
   
   if (@failure) {
     my $n = scalar @failure;
-    my $msg = "The data has been removed from $n of the sets you are looking for.";
+    my $msg = "The data has been removed from $n of the shared sets that you are looking for.";
     
     $self->add_data(
       type => 'message', 
