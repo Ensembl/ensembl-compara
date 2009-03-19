@@ -53,9 +53,8 @@ sub save_to_db {
   my $assembly = $tmpdata->{assembly};
 
   ## TODO: proper error exceptions !!!!!
-  warn 'FILENAME: '.$tmpdata->{'filename'};
   my $file    = new EnsEMBL::Web::TmpFile::Text(
-    filename => $tmpdata->{'filename'},
+    filename => $tmpdata->{'filename'}
   );
   
   my $data    = $file->retrieve
