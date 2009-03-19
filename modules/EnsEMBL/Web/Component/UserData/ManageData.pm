@@ -32,16 +32,6 @@ sub content {
   $html .= '<div id="modal_reload">.</div>' if $object->param('reload');
   $html .= '<h3>Your data</h3>'; # Uploads
   
-  my $not_found = 0;
-  
-  # Extra check if file exists, if not - delete the record
-  foreach my $file (@data) {    
-    if ($file->{'filename'} && !EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'})->exists) {
-      $file->{'name'} .= ' (File could not be found)';
-      $not_found++;
-    }
-  }
-  
   push @data, $user->uploads if $user;
   push @data, values %{$object->get_session->get_all_das};
   push @data, $user->dases if $user;
@@ -67,7 +57,14 @@ sub content {
       { 'key' => 'delete', 'title' => '', 'width' => '15%', 'align' => 'left' }
     );
     
-    foreach my $file (@data) {
+    my $not_found = 0;
+     
+    foreach my $file (@data) { 
+      if ($file->{'filename'} && !EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'})->exists) {
+        $file->{'name'} .= ' (File could not be found)';
+        $not_found++;
+      }
+    
       my $row;
       my $sharers = $object->get_session->get_sharers($file);
       my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
