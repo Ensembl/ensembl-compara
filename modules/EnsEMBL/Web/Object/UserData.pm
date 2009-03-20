@@ -50,43 +50,47 @@ sub save_to_db {
   my %args = @_;
 
   my $tmpdata  = $self->get_session->get_data(%args);
-  my $assembly = $tmpdata->{assembly};
+  my $assembly = $tmpdata->{'assembly'};
 
   ## TODO: proper error exceptions !!!!!
-  my $file    = new EnsEMBL::Web::TmpFile::Text(
+  my $file = new EnsEMBL::Web::TmpFile::Text(
     filename => $tmpdata->{'filename'}
   );
   
-  my $data    = $file->retrieve
-    or die "Can't get data out of the file $tmpdata->{'filename'}";
-  my $format  = $tmpdata->{'format'};
+  return unless $file->exists;
+  
+  my $data = $file->retrieve or die "Can't get data out of the file $tmpdata->{'filename'}";
+  
+  my $format = $tmpdata->{'format'};
   my $report;
 
-  my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+  my $parser = EnsEMBL::Web::Text::FeatureParser->new;
   $parser->init($data);
   $parser->parse($data, $format);
 
   my $config = {
     action   => 'new', # or append
-    species  => $tmpdata->{species},
-    assembly => $tmpdata->{assembly},
-    default_track_name => $tmpdata->{name}
+    species  => $tmpdata->{'species'},
+    assembly => $tmpdata->{'assembly'},
+    default_track_name => $tmpdata->{'name'}
   };
 
   if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
-    $config->{id} = $user->id;
-    $config->{track_type} = 'user';
+    $config->{'id'} = $user->id;
+    $config->{'track_type'} = 'user';
   } else {
-    $config->{id} = $self->session->get_session_id;
-    $config->{track_type} = 'session';
+    $config->{'id'} = $self->session->get_session_id;
+    $config->{'track_type'} = 'session';
   }
+  
   $config->{'file_format'} = $format; 
   my (@analyses, @messages, @errors);
   my @tracks = $parser->get_all_tracks;
-  push @errors, 'Sorry, we couldn\'t parse your data.' unless @tracks;
+  push @errors, "Sorry, we couldn't parse your data." unless @tracks;
   
   foreach my $track (@tracks) {
-    push @errors, 'Sorry, we couldn\'t parse your data.' unless keys %$track;
+    push @errors, "Sorry, we couldn't parse your data." unless keys %$track;
+    
     foreach my $key (keys %$track) {
       my $track_report = $self->_store_user_track($config, $track->{$key});
       push @analyses, $track_report->{'logic_name'} if $track_report->{'logic_name'};
@@ -100,6 +104,7 @@ sub save_to_db {
   $report->{'analyses'} = \@analyses if @analyses;
   $report->{'feedback'} = \@messages if @messages;
   $report->{'errors'}   = \@errors   if @errors;
+  
   return $report;
 }
 
@@ -132,44 +137,62 @@ sub store_data {
   ## Parse file and save to genus_species_userdata
   my $self = shift;
   my %args = @_;
-
-  my $tmp_data = $self->get_session->get_data(%args);
+  
+  my $session = $self->get_session;
+  
+  my $tmp_data = $session->get_data(%args);
   $tmp_data->{'name'} = $self->param('name') if $self->param('name');
 
   my $report = $self->save_to_db(%args);
+  
   unless ($report->{'errors'}) {
-
     ## Delete cached file
     my $file = new EnsEMBL::Web::TmpFile::Text(
-      filename => $tmp_data->{'filename'},
+      filename => $tmp_data->{'filename'}
     );
+    
     $file->delete;
 
     ## logic names
     my $analyses = $report->{'analyses'};
     my @logic_names = ref($analyses) eq 'ARRAY' ? @$analyses : ($analyses);
 
+    my $session_id = $session->get_session_id;    
+    
     if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
-      if (my $upload = $user->add_to_uploads(
-                        %$tmp_data,
-                        type     => 'upload',
-                        filename => '',
-                        analyses => join(', ', @logic_names),
-                        browser_switches => $report->{'browser_switches'}||{}
-                      ))  {
-                            $self->get_session->purge_data(%args);
-                            return $upload->id;
-                      }
+      my $upload = $user->add_to_uploads(
+        %$tmp_data,
+        type     => 'upload',
+        filename => '',
+        analyses => join(', ', @logic_names),
+        browser_switches => $report->{'browser_switches'}||{}
+      );
+      
+      if ($upload) {
+        if (!$tmp_data->{'filename'}) {
+          my $session_record = EnsEMBL::Web::Data::Session->retrieve(session_id => $session_id, code => $tmp_data->{'code'}) if $session_id && $tmp_data->{'code'};
+
+          $session_record->session_id(EnsEMBL::Web::Data::Session->create_session_id);
+          $session_record->save;
+        }
+        
+        $session->purge_data(%args);
+        
+        return $upload->id;
+      }
+      
       warn 'ERROR: Can not save user record.';
+      
       return undef;
     } else {
-      $self->get_session->set_data(
-                         %$tmp_data,
-                         %args,
-                         filename => '',
-                         analyses => join(', ', @logic_names),
-                         browser_switches => $report->{'browser_switches'}||{},
+      $session->set_data(
+         %$tmp_data,
+         %args,
+         filename => '',
+         analyses => join(', ', @logic_names),
+         browser_switches => $report->{'browser_switches'}||{},
       );
+      
       return $args{code};
     }
   }
@@ -188,24 +211,30 @@ sub delete_upload {
   
   if ($type eq 'upload') { 
     my $upload = $self->get_session->get_data(type => $type, code => $code);
-    if ($upload->{filename}) {
+    if ($upload->{'filename'}) {
       EnsEMBL::Web::TmpFile::Text->new(
         filename => $upload->{'filename'},
       )->delete;
     } else {
-      my @analyses = split(', ', $upload->{analyses});
-      $self->_delete_datasource($upload->{species}, $_) for @analyses;
+      my @analyses = split(', ', $upload->{'analyses'});
+      $self->_delete_datasource($upload->{'species'}, $_) for @analyses;
     }    
     $self->get_session->purge_data(type => $type, code => $code);
-    EnsEMBL::Web::Data::Session->search(code => $code, type => $type)->delete_all;
-  } elsif($id && $user) {
+  } elsif ($id && $user) {
     my ($upload) = $user->uploads($id);
+    
     if ($upload) {
       my @analyses = split(', ', $upload->analyses);
+      $code = $upload->code;
+      $type = $upload->type;
+      
       $self->_delete_datasource($upload->species, $_) for @analyses;
       $upload->delete;
     }
   }
+  
+  # Remove all shared data with this code and type
+  EnsEMBL::Web::Data::Session->search(code => $code, type => $type)->delete_all if $code && $type;
 }
 
 sub delete_remote {
