@@ -393,15 +393,6 @@ sub receive_shared_data {
   }
 }
 
-# Returns the number of users who have access a shared data set.
-sub get_sharers {
-  my $self = shift;
-  my $args = shift;
-  
-  return 0 unless $args->{'code'} && $args->{'type'};
-  return EnsEMBL::Web::Data::Session->search(code => $args->{'code'}, type => $args->{'type'})->count - 1; # Take one off for the original user
-}
-
 ###################################################################################################
 
 # This method gets all configured DAS sources for the current session, i.e. all
