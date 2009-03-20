@@ -40,12 +40,15 @@ sub process {
       (content      => get_url_content($self->object->param('url'))) :
       (tmp_filename => $self->object->[1]->{'_input'}->tmpFileName($self->object->param('file'))),
     );
-
+    
     if ($file->save) {
       ## Identify format
       my $data = $file->retrieve;
       my $parser = EnsEMBL::Web::Text::FeatureParser->new();
       $parser = $parser->init($data);
+      
+      my $code = $file->md5 . '_' . $self->object->get_session->get_session_id;
+      
       if ($parser->{'_info'} && $parser->{'_info'}->{'count'} && $parser->{'_info'}->{'count'} > 0) {
         my $format = $parser->{'_info'}->{'format'};
 
@@ -55,7 +58,7 @@ sub process {
         $self->object->get_session->add_data(
           type      => 'upload',
           filename  => $file->filename,
-          code      => $file->md5,
+          code      => $code,
           md5       => $file->md5,
           name      => $name,
           species   => $self->object->param('species'),
@@ -63,7 +66,7 @@ sub process {
           assembly  => $self->object->param('assembly'),
         );
 
-        $param->{'code'}    = $file->md5;
+        $param->{'code'} = $code;
         if (!$format) {
           ## Get more input from user
           $url = '/UserData/MoreInput';
