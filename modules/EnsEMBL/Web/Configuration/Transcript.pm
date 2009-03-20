@@ -220,8 +220,8 @@ sub _ajax_zmenu_protein_feature {
     'priority' => 200});
   if (my $interpro_ac = $pf->interpro_ac) {
     $panel->add_entry({
-      'type'  => 'View Interpro',
-      'label' => 'Interpro',
+      'type'  => 'View InterPro',
+      'label' => 'InterPro',
       'link'  => $obj->get_ExtURL('interpro', $interpro_ac),
       'priority' => 150});
   }
