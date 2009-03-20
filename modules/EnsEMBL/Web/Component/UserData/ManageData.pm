@@ -66,26 +66,28 @@ sub content {
       }
     
       my $row;
-      my $sharers = $object->get_session->get_sharers($file);
+      
+      my $sharers = EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'});
+      $sharers-- unless $file->{'user_id'}; # Take one off for the original user
+      
       my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
-      my $title = sprintf(' title="This data is shared with %d user%s"', $sharers, $sharers > 1 ? 's' : '') if $sharers;
+      my $title = ' title="This data is shared with other users"' if $sharers;
       
       # from user account
-      if (ref $file =~ /Record/) {
+      if (ref ($file) =~ /Record/) {
         my ($type, $name, $date, $delete);
-        
-        if (ref $file =~ /Upload/) {
+        if (ref ($file) =~ /Upload/) {
           $type = 'Upload';
           $name = $file->name;
           $date = $file->modified_at || $file->created_at;
           $date = $self->pretty_date($date);
-          $delete = sprintf('<a href="%s/UserData/DeleteUpload?type=user;id=%s;%s" class="$delete_class"$title>Delete</a>', $dir, $file->id, $referer);
-        } elsif (ref $file =~ /DAS/) {
+          $delete = sprintf('<a href="%s/UserData/DeleteUpload?type=user;id=%s;%s" class="%s"%s>Delete</a>', $dir, $file->id, $referer, $delete_class, $title);
+        } elsif (ref ($file) =~ /DAS/) {
           $type = 'DAS';
           $name = $file->label;
           $date = '-';
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=das;id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
-        } elsif (ref $file =~ /URL/) {
+        } elsif (ref ($file) =~ /URL/) {
           $type = 'URL';
           $name = $file->name;
           $date = '-';
@@ -101,7 +103,7 @@ sub content {
         my $save = sprintf('<a href="%s/Account/Login?%s" class="modal_link">Log in to save</a>', $dir, $referer);
         my ($type, $name, $delete);
         
-        if (ref $file =~ /DASConfig/i) {
+        if (ref ($file) =~ /DASConfig/i) {
           $type = 'DAS';
           $name = $file->label;
           
@@ -127,16 +129,21 @@ sub content {
           $name .= "$file->{'format'} file for $file->{'species'}";
           my $extra = "type=$file->{'type'};code=$file->{'code'}"; 
           
-          if ($sd->ENSEMBL_LOGINS && $user) {
-            $save = qq(<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>);
-          }
+          $save = qq{<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
+          $delete = qq{<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="$delete_class"$title>Remove</a></p>};
           
-          $delete = qq(<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="$delete_class"$title>Remove</a></p>);
-        }
-        
-        if ($file->{'analyses'}) {
-          $file->{'analyses'} =~ /^session_(\d+)_/;
-          $delete = '' if $1 != $object->get_session->get_session_id; # It's not your data, so you aren't allowed to delete it.
+          # Remove save and delete links if the data does not belong to the current user
+          if ($file->{'analyses'} =~ /^(session|user)_(\d+)_/) {
+            my $type = $1;
+            my $id = $2;
+            
+            if (($type eq 'session' && $id != $object->get_session->get_session_id)   || 
+                ($type eq 'user' && $sd->ENSEMBL_LOGINS && $user && $id != $user->id) ||
+                ($type eq 'user' && !($sd->ENSEMBL_LOGINS && $user))) {
+                $save = '';
+                $delete = '';
+            }
+          }
         }
         
         if ($sd->ENSEMBL_LOGINS) {
