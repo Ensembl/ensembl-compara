@@ -50,6 +50,8 @@ our %OBJECT_TO_SCRIPT = qw(
   Account     modal
   UserData    modal
   Help        modal
+  Website     action
+  Healthcheck action
   News        action
   Blast       blast
 );
