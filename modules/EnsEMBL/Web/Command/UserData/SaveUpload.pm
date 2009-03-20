@@ -11,7 +11,7 @@ use base 'EnsEMBL::Web::Command';
 sub process {
   my $self = shift;
   my $object = $self->object;
-  warn ">>> OBJECT $object";
+  
   my $param = {'reload' => 1};
 
   unless ($object->store_data(type => 'upload', code => $object->param('code'))) {
