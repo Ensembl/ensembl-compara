@@ -611,7 +611,7 @@ sub add_das_from_string {
       for ( @{ $parser->fetch_Sources( -location => $server ) } ) {
         # ... and look for one with a matcing URI or DSN
         if ( $_->logic_name eq $identifier || $_->dsn eq $identifier ) {
-          if (!@{ $source->coord_systems }) {
+          if (!@{ $_->coord_systems }) {
             return "Unable to add DAS source $identifier as it does not provide any details of its coordinate systems";
           }
           $source = EnsEMBL::Web::DASConfig->new_from_hashref( $_ );
