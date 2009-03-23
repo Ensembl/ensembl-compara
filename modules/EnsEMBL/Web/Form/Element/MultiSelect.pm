@@ -54,7 +54,6 @@ sub render {
       $self->notes
     );
   } else {
-    warn ">>> MULTISELECT RADIO BUTTONS!";
     my $output = sprintf(qq(
     <tr>
     <th><label class="label" for="%s">%s</label></th>
