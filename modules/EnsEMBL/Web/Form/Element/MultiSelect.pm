@@ -54,12 +54,14 @@ sub render {
       $self->notes
     );
   } else {
+    warn ">>> MULTISELECT RADIO BUTTONS!";
     my $output = sprintf(qq(
     <tr>
     <th><label class="label" for="%s">%s</label></th>
     <td>),
         CGI::escapeHTML($self->id), CGI::escapeHTML( $self->label ));
     my $K = 0;
+    my $separator = @{$self->values} > 2 ? 1 : 0;
 
     foreach my $V ( @{$self->values} ) {
       my $checked = 'no';
@@ -73,14 +75,17 @@ sub render {
       if ($V->{'checked'}) {
         $checked = 'yes';
       }
+      $output .= '<p>' if $separator;
       $output .= sprintf(qq(
-<input type="checkbox" name="%s" id="%s_%d" value="%s" class="input-checkbox" %s/> %s<br />),
+<input type="checkbox" name="%s" id="%s_%d" value="%s" class="input-checkbox" %s /> %s),
 	          CGI::escapeHTML($self->name), 
             CGI::escapeHTML($self->id), $K, 
 	          CGI::escapeHTML($V->{'value'}),
             $checked eq 'yes' ? ' checked="checked"' : '', 
-            CGI::escapeHTML($V->{'name'})
+            CGI::escapeHTML($V->{'name'},
+            )
       );
+      $output .= '</p>' if $separator;
       $K++;
     }
 
