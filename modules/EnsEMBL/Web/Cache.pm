@@ -125,11 +125,7 @@ sub set {
   return unless $value;
   
   _warn("MEMCACHED->set($self->{namespace}$key)");
-  
-  ## TMP workaround: add extra tag for everything except user upload data
-  push @tags, 'no_user_upload'
-    unless 'EnsEMBL::Web::File::Driver::Memcached' eq caller;
-  
+
   my $result = $self->SUPER::set($key, $value, $exptime || $self->{default_exptime});
 
   $self->add_tags($key, $self->{namespace}, @tags)
@@ -150,7 +146,7 @@ sub get {
   ## Hits & Misses statistics
   if ($self->{hm_stats} && @tags) {
     my $suffix = $result ? '::HITS' : '::MISSES';
-    $self->incr("$_$suffix") for ($self->{namespace}, @tags);
+    $self->incr("$_$suffix") for ('', @tags);
   }
 
   return $result;
@@ -162,8 +158,16 @@ sub incr {
 
   _warn("MEMCACHED->incr($key)");
 
-  $self->set($key, 1, undef, 'STATS')
-    unless $self->SUPER::incr($key);
+  my $result = $self->SUPER::incr($key);
+  if ($result) {
+    ##warn "incr [$key] = $result";
+  } else {
+    if ($self->add($key, '0000000001')) {
+      $self->add_tags($key, $self->{namespace}, 'STATS');
+      #my $result = $self->decr($key, 1000000000);
+      ##warn "incr [$key] = $result (set)";
+    }
+  }
 }
 
 sub delete {
