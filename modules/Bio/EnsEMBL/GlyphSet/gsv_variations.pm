@@ -46,7 +46,7 @@ sub _init {
     next if $snp->start > $transcript->end + $EXTENT - $offset;
     my $snp_type = lc($cod_snp->display_consequence); 
     my $colour = $colour_map->{$snp_type}->{'default'};
-    my $aa_change = $cod_snp->pep_allele_string || '-';
+    my $aa_change = $cod_snp->pep_allele_string || '';
    
 
     my $S =  ( $snpref->[0]+$snpref->[1] )/2;
@@ -67,7 +67,8 @@ sub _init {
     $W += 4/$pix_per_bp;
 
     my $dbid = $cod_snp->dbID;  
-    my $variation_id = $snp->variation_name; 
+    my $variation_id = $snp->variation_name;
+    unless ($aa_change =~/^\w+/) { warn $aa_change; $aa_change = '-';} 
     my $href = $self->_url
     ({'action'  => 'Variation',
       'v'     => $variation_id,
