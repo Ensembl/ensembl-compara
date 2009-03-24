@@ -68,7 +68,7 @@ sub _init {
 
     my $dbid = $cod_snp->dbID;  
     my $variation_id = $snp->variation_name;
-    unless ($aa_change =~/^\w+/) { warn $aa_change; $aa_change = '-';} 
+    unless ($aa_change =~/^\w+/) {$aa_change = '-';} 
     my $href = $self->_url
     ({'action'  => 'Variation',
       'v'     => $variation_id,
