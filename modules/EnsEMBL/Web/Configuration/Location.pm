@@ -279,6 +279,7 @@ sub populate_tree {
   my $align_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );
   $align_menu->append( $self->create_node( 'Compara_Alignments', 'Genomic alignments ([[counts::alignments]])',
     [qw(
+      botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
       alignments EnsEMBL::Web::Component::Location::Compara_Alignments
     )],
