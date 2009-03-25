@@ -277,8 +277,11 @@ sub populate_tree {
   );
 
   my $align_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );
-  $align_menu->append( $self->create_node( 'Align', 'Genomic alignments',
-    [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
+  $align_menu->append( $self->create_node( 'Compara_Alignments', 'Genomic alignments ([[counts::alignments]])',
+    [qw(
+      selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
+      alignments EnsEMBL::Web::Component::Location::Compara_Alignments
+    )],
     { 'availability' => 'slice database:compara', 'concise' => 'Genomic alignments' }
   ));
 #      top      EnsEMBL::Web::Component::Location::Compara_AlignSliceTop
