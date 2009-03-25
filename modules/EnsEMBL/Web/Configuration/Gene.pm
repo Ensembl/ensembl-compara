@@ -73,8 +73,8 @@ sub populate_tree {
   my $compara_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );
   $compara_menu->append($self->create_node( 'Compara_Alignments', "Genomic alignments ([[counts::alignments]])",
     [qw(
-      selector   EnsEMBL::Web::Component::Gene::Compara_AlignSliceSelector
-      alignments EnsEMBL::Web::Component::Gene::ComparaAlignments
+      selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
+      alignments EnsEMBL::Web::Component::Gene::Compara_Alignments
     )],
     { 'availability' => 'gene database:compara core', 'concise' => 'Genomic alignments' }
   ));
