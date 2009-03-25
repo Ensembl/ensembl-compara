@@ -22,6 +22,14 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $slice = $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
+  my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+  
+  if ($ENV{'ENSEMBL_TYPE'} eq 'Location' && $slice->length > $threshold) {
+    return $self->_warning(
+      'Region too large',
+      '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>'
+    );
+  }
   
   my $align = $object->param('align');
   
