@@ -515,7 +515,7 @@ sub get_sequence_data {
       foreach (@ordered_snps) {
         my $snp_type = 'snp';
         my $variation_name = $_->variation_name;
-        my $var_class = $_->can('var_class') ? $_->var_class : '';
+        my $var_class = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
         my $dbID = $_->dbID;
         my $start = $_->start;
         my $end = $_->end;
@@ -555,7 +555,7 @@ sub get_sequence_data {
           $snp_end = $end;
         }
         
-        if ($var_class eq 'in-del') {
+        if ($var_class eq 'in-del') {          
           if ($seq_region_start > $seq_region_end) {
             $snp_type = 'insert';
             
@@ -607,12 +607,8 @@ sub get_sequence_data {
       my @exons;
       
       if ($exontype eq 'Ab-initio') {      
-        @exons = ( 
-          grep { $_->seq_region_start <= $slice_end && $_->seq_region_end >= $slice_start }
-          map { @{$_->get_all_Exons } }
-          @{$slice->get_all_PredictionTranscripts} 
-        );
-      } elsif ($exontype eq 'vega' || $exontype eq 'est') {      
+        @exons = grep { $_->seq_region_start <= $slice_end && $_->seq_region_end >= $slice_start } map { @{$_->get_all_Exons} } @{$slice->get_all_PredictionTranscripts};
+      } elsif ($exontype eq 'vega' || $exontype eq 'est') {
         @exons = map { @{$_->get_all_Exons} } @{$slice->get_all_Genes('', $exontype)};
       } else {
         @exons = map { @{$_->get_all_Exons} } @{$slice->get_all_Genes};
@@ -644,8 +640,10 @@ sub get_sequence_data {
         
         ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1) if $slice_strand < 0 && $exon->strand < 0;
         
+        next if $end < 0 || $start >= $slice_length;
+        
         $start = 0 if $start < 0;
-        $end = $config->{'length'} - 1 if $end >= $config->{'length'};
+        $end = $slice_length - 1 if $end >= $slice_length;
         
         for ($start..$end) {          
           push (@{$mk->{'exons'}->{$_}->{'type'}}, $type);          
@@ -890,6 +888,65 @@ sub markup_comparisons {
   $config->{'v_space'} = "\n";
 }
 
+sub markup_conservation {
+  my $self = shift;
+  my ($sequence, $config) = @_;
+
+  # Regions where more than 50% of bps match considered `conserved`
+  my $cons_threshold = int((scalar(@{$config->{'slices'}}) + 1) / 2);
+  
+  my @conservation;
+  my $conserved = 0;
+  
+  foreach (@{$config->{'slices'}}) {
+    # Get conservation scores for each basepair in the alignment.
+    # In future the conservation scores will come out of a database and this will be removed
+    my $idx = 0;
+    
+    $conservation[$idx++]->{uc $_}++ for (split(//, $_->{'slice'}->seq));
+  }
+  
+  # Now for each bp in the alignment identify the nucleotides with scores above the threshold.
+  # In theory the data should come from a database. 
+  foreach my $nt (@conservation) {
+    $nt->{'S'} = join('', grep {$_ ne '~' && $nt->{$_} > $cons_threshold} keys(%{$nt}));
+    $nt->{'S'} =~ s/[-.N]//; # here we remove different representations of nucleotides from  gaps and undefined regions : 
+  }
+
+  foreach my $seq (@$sequence) {    
+    my $f = 0;
+    my $ms = 0;
+    my $i = 0;
+    my @csrv;
+
+    foreach my $sym (map { $_->{'letter'} } @$seq) {
+      if (uc $sym eq $conservation[$i++]->{'S'}) {
+        if ($f == 0) {
+           $f = 1;
+           $ms = $i;
+        }
+      } elsif ($f == 1) {
+        $f = 0;
+        push @csrv, [$ms-1, $i-2];
+      }
+    }
+    
+    if ($f == 1) { 
+      push @csrv, [$ms-1, $i-1];
+    }
+    
+    foreach my $c (@csrv) {
+      $seq->[$_]->{'class'} .= "con " for ($c->[0]..$c->[1]);
+    }
+    
+    $conserved = 1 if scalar @csrv;
+  }
+  
+  if ($conserved) {
+    $config->{'key'} .= sprintf ($config->{'key_template'}, "con", "Location of conserved regions (where >50&#37; of bases in alignments match)");
+  }
+}
+
 sub markup_line_numbers {
   my $self = shift;
   my ($sequence, $config) = @_;
@@ -1052,7 +1109,7 @@ sub markup_line_numbers {
         $end = $e < $config->{'length'} ? $row_start + ($data->{'dir'} * $config->{'display_width'}) - $data->{'dir'} : $data->{'end'};
         
         $start = $row_start;
-
+                
         # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
         $row_start = $end + $data->{'dir'} if $end;
       }
@@ -1114,7 +1171,7 @@ sub build_sequence {
       }
 
       $post .= $seq->{'post'};
-  
+      
       if ($i == 0) {
         $row .= "<span $class $title>";
       } elsif ($class ne $previous_class || $title ne $previous_title) {
@@ -1129,7 +1186,7 @@ sub build_sequence {
       if ($count == $config->{'display_width'} || $i == scalar @$lines) {
         if ($i == $config->{'display_width'}) {
           $row = "$row</span>";
-        } else {
+        } else {        
           $row = "<span $new_line_class $new_line_title>$row</span>";
         }
         
