@@ -36,8 +36,8 @@ sub content {
   
   if ($align && $slice_length >= $self->{'subslice_length'}) {    
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-    my $base_url = qq{/@{[$object->species]}/Component/Web/Compara_Alignments/sub_slice?padding=$padding;length=$slice_length};
-    
+    my $base_url = qq{/@{[$object->species]}/Component/$ENV{'ENSEMBL_TYPE'}/Web/Compara_Alignments/sub_slice?padding=$padding;length=$slice_length};
+        
     $html = $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {
     $html = $self->content_sub_slice($slices, $warnings); # Direct call if the sequence length is short enough
