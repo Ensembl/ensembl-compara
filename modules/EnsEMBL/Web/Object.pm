@@ -17,6 +17,26 @@ use CGI qw(escape);
 
 sub counts       { return {}; } 
 
+sub count_alignments {
+  my $self = shift;
+  
+  my $species = $self->species;
+  my %alignments = $self->species_defs->multi('DATABASE_COMPARA','ALIGNMENTS');
+  my $c_align;
+    my $c_species;
+  
+  foreach (values %alignments) {
+    $c_align++ if $_->{'species'}{$species} && $_->{'type'} !~ /TRANSLATED_BLAT/;
+    
+    next unless $_->{'species'}{$species} && (keys %{$_->{'species'}} == 2);
+    
+    my ($other_species) = grep { $_ ne $species } keys %{$_->{'species'}};
+    $c_species->{$other_species}++;
+  }
+  
+  return ($c_align, $c_species); 
+}
+
 sub _availability { 
   my $self = shift;
   my $hash = {
