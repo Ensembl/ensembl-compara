@@ -109,65 +109,6 @@ sub EC_URL {
   return $self->object->get_ExtURL_link( "EC $string", 'EC_PATHWAY', $URL_string );
 }
 
-sub markup_conservation {
-  my $self = shift;
-  my ($sequence, $config) = @_;
-
-  # Regions where more than 50% of bps match considered `conserved`
-  my $cons_threshold = int((scalar(@{$config->{'slices'}}) + 1) / 2);
-  
-  my @conservation;
-  my $conserved = 0;
-  
-  foreach (@{$config->{'slices'}}) {
-    # Get conservation scores for each basepair in the alignment.
-    # In future the conservation scores will come out of a database and this will be removed
-    my $idx = 0;
-    
-    $conservation[$idx++]->{uc $_}++ for (split(//, $_->{'slice'}->seq));
-  }
-  
-  # Now for each bp in the alignment identify the nucleotides with scores above the threshold.
-  # In theory the data should come from a database. 
-  foreach my $nt (@conservation) {
-    $nt->{'S'} = join('', grep {$_ ne '~' && $nt->{$_} > $cons_threshold} keys(%{$nt}));
-    $nt->{'S'} =~ s/[-.N]//; # here we remove different representations of nucleotides from  gaps and undefined regions : 
-  }
-
-  foreach my $seq (@$sequence) {    
-    my $f = 0;
-    my $ms = 0;
-    my $i = 0;
-    my @csrv;
-
-    foreach my $sym (map { $_->{'letter'} } @$seq) {
-      if (uc $sym eq $conservation[$i++]->{'S'}) {
-        if ($f == 0) {
-           $f = 1;
-           $ms = $i;
-        }
-      } elsif ($f == 1) {
-        $f = 0;
-        push @csrv, [$ms-1, $i-2];
-      }
-    }
-    
-    if ($f == 1) { 
-      push @csrv, [$ms-1, $i-1];
-    }
-    
-    foreach my $c (@csrv) {
-      $seq->[$_]->{'class'} .= "con " for ($c->[0]..$c->[1]);
-    }
-    
-    $conserved = 1 if scalar @csrv;
-  }
-  
-  if ($conserved) {
-    $config->{'key'} .= sprintf ($config->{'key_template'}, "con", "Location of conserved regions (where >50&#37; of bases in alignments match)");
-  }
-}
-
 sub content_export {
   my $self = shift;
   my $object = $self->object;
