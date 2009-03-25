@@ -61,33 +61,26 @@ sub counts {
   unless ($counts) {
     my $species = $self->species;
 
-## Count the entries in the synteny hash for this species...
+    # Count the entries in the synteny hash for this species...
     my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
 
-## Count the alignments (excluding TBLAT for alignslice view AND only pairwise for MultiContigView)
-
-    my %alignments = $self->species_defs->multi('DATABASE_COMPARA','ALIGNMENTS');
-    my %c_species;
-    my $c_align;
-    foreach( values %alignments ) {
-      $c_align++             if $_->{'species'}{$species} && $_->{'type'} !~ /TRANSLATED_BLAT/;
-      next unless $_->{'species'}{$species} && ( keys %{$_->{'species'}} == 2 );
-      my ($other_species) = grep { $_ ne $species } keys %{$_->{'species'}};
-      $c_species{$other_species}++;
-    }
+    my ($alignments, $align_contig) = $self->count_alignments;
 
     $counts = {
-      'synteny'      => scalar( keys %{ $synteny_hash{$species}||{} } ),
-      'align_slice'  => $c_align,
-      'align_contig' => scalar( keys %c_species )
+      'synteny'      => scalar keys %{$synteny_hash{$species}||{}},
+      'alignments'   => $alignments,
+      'align_contig' => scalar keys %$align_contig
     };
-    if( $self->species_defs->databases->{'DATABASE_VARIATION'} ) {
+    
+    if ($self->species_defs->databases->{'DATABASE_VARIATION'}) {
       my $reseq = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'};
-
+      
       $counts->{'reseq_strains'} = $reseq;
     }
+     
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
+  
   return $counts;
 }
 

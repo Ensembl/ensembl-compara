@@ -102,19 +102,7 @@ sub counts {
         $counts->{'families'}    = $res;
       }
       
-      my $species = $self->species;
-      my %alignments = $self->species_defs->multi('DATABASE_COMPARA','ALIGNMENTS');
-      my $c_align;
-      
-      if ($self->get_db eq 'core') {
-        foreach( values %alignments ) {
-          $c_align++ if $_->{'species'}{$species} && $_->{'type'} !~ /TRANSLATED_BLAT/;
-          next unless $_->{'species'}{$species} && ( keys %{$_->{'species'}} == 2 );
-          my ($other_species) = grep { $_ ne $species } keys %{$_->{'species'}};
-        }
-      }
-      
-      $counts->{'alignments'} = $c_align;
+      ($counts->{'alignments'}) = $self->count_alignments if $self->get_db eq 'core';
     }
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
