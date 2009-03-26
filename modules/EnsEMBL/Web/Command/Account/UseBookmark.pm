@@ -17,7 +17,7 @@ sub process {
   my $object = $self->object;
   my $url;
 
-  if ($cgi->param('id') =~ /\D/) {
+  if ($object->param('id') =~ /\D/) {
     ## Fallback in case of XSS exploit
     $url = $object->species_defs->ENSEMBL_BASEURL;
   }
