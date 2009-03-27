@@ -43,7 +43,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::Compara::Production::Anchors::AnchorAlign;
+use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 
@@ -70,10 +70,15 @@ sub run {
 	my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
 	my $dnafrag_ids = $anchor_align_adaptor->fetch_all_dnafrag_ids($self->test_method_link_species_set_id);
 	my (%Overlappping_anchors, %Anchors_2_remove, %Scores);
+	my $test_mlssid = $self->test_method_link_species_set_id;
 	foreach my $genome_db_id(sort keys %{$dnafrag_ids}) {
-		foreach my $dnafrag_id(@{$dnafrag_ids->{$genome_db_id}}) {	
-			my @Dnafrag_anchors = @{$anchor_align_adaptor->fetch_all_anchors_by_dnafrag_id_and_test_mlssid($dnafrag_id,
-						$self->test_method_link_species_set_id)};
+		my %genome_db_dnafrags;
+		foreach my $genome_db_anchors(@{ $anchor_align_adaptor->fetch_all_anchors_by_genome_db_id_and_mlssid(
+						$genome_db_id, $test_mlssid) }) {
+			push(@{ $genome_db_dnafrags{ $genome_db_anchors->[0] } }, [ @{ $genome_db_anchors }[1..4] ]);	
+		}
+		foreach my $dnafrag_id(sort keys %genome_db_dnafrags) {
+			my @Dnafrag_anchors = @{ $genome_db_dnafrags{$dnafrag_id} };
 			for(my$i=0;$i<@Dnafrag_anchors-1;$i++) { #count number of overlaps an anchor has at every position to which it maps
 				for(my$j=$i+1;$j<@Dnafrag_anchors;$j++) {
 					if($Dnafrag_anchors[$i]->[3] >= $Dnafrag_anchors[$j]->[2]) {
@@ -94,7 +99,7 @@ sub run {
 			$Scores{$anchor} += ($Overlappping_anchors{$anchor}{$overlapping_anchor})**2; #score the anchors according to the number of overlaps
 		}
 	}
-	print "scores: ", scalar(keys %Scores), "\n";
+	print STDERR "scores: ", scalar(keys %Scores), "\n";
 	my$flag = 1;
 	while($flag) {
 		$flag = 0;
@@ -112,7 +117,7 @@ sub run {
 		}
 		$flag = 1  if (scalar(keys %Scores));
 	}
-	print "anchors to remove: ", scalar(keys %Anchors_2_remove), "\n";
+	print STDERR "anchors to remove: ", scalar(keys %Anchors_2_remove), "\n";
 	$self->overlapping_ancs_to_remove(\%Anchors_2_remove);
 	return 1;
 }
