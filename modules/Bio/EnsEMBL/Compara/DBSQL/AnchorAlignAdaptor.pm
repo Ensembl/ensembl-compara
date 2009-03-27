@@ -258,7 +258,7 @@ sub fetch_dnafrag_and_genome_db_ids_by_test_mlssid {
 #		df.genome_db_id IN ($question_marks) AND aa.anchor_status IS NULL};
 	my $sth = $self->prepare($query);
 	my $genome_dbs = join(",", @$genome_db_ids);
-	$sth->execute($anchor_id, $test_method_link_species_set_id, @$genome_db_ids) or die $self->errstr;
+	$sth->execute($anchor_id, $test_method_link_species_set_id, @$genome_db_ids) or die;
 	return $sth->fetchall_arrayref;
 }
 
@@ -383,15 +383,46 @@ sub fetch_all_dnafrag_ids {
 	my($self, $mlssid) = @_;
 	my $return_hashref;
 	my $dnafrag_query = qq{
-		SELECT DISTINCT(dnafrag_id) FROM anchor_align
-		WHERE method_link_species_set_id = ?};
+		SELECT DISTINCT(aa.dnafrag_id), df.genome_db_id FROM anchor_align aa
+		INNER JOIN dnafrag df on aa.dnafrag_id = df.dnafrag_id 
+		WHERE aa.method_link_species_set_id = ?};
 #		WHERE df.genome_db_id = ?};  
 	my $sth = $self->prepare($dnafrag_query);
 	$sth->execute($mlssid);
 	while(my@row = $sth->fetchrow_array) {
-		push(@{$return_hashref->{$genome_db_id}}, @row);
+		push(@{$return_hashref->{$row[1]}}, $row[0]);
 	}
 	return $return_hashref;
+}
+
+=head2 fetch_all_anchors_by_genome_db_id_and_mlssid 
+
+  Arg[0]     : genome_db_id, string
+  Arg[1]     : mlssid, string
+  Example    : 
+  Description: 
+  Returntype : arrayref 
+  Exceptions : none
+  Caller     : general
+=cut
+
+#HACK
+
+sub fetch_all_anchors_by_genome_db_id_and_mlssid {
+	my($self, $genome_db_id, $test_mlssid) = @_;
+	unless (defined $genome_db_id && defined $test_mlssid) {
+		throw("fetch_all_anchors_by_dnafrag_id_and_test_mlssid  must 
+			have a genome_db_id and a test_mlssid");
+	}
+	my $dnafrag_query = qq{
+		SELECT aa.dnafrag_id, aa.anchor_align_id, aa.anchor_id, aa.dnafrag_start, aa.dnafrag_end 
+		FROM anchor_align aa
+		INNER JOIN dnafrag df ON df.dnafrag_id = aa.dnafrag_id 
+		WHERE df.genome_db_id = ? AND aa.method_link_species_set_id = ? AND anchor_status 
+		IS NULL ORDER BY dnafrag_start, dnafrag_end};
+	my $sth = $self->prepare($dnafrag_query);
+	$sth->execute($genome_db_id, $test_mlssid) or die $self->errstr;
+	return $sth->fetchall_arrayref();
 }
 
 =head2 fetch_all_anchors_by_dnafrag_id 
