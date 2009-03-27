@@ -8,6 +8,7 @@ use strict;
 use warnings;
 
 use Class::Std;
+use Data::Dumper;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data;
@@ -18,6 +19,7 @@ use EnsEMBL::Web::Interface::Element;
 my %Data              :ATTR(:get<data> :set<data>);
 my %ExtraData         :ATTR(:get<extra_data> :set<extra_data>);
 my %Repeat            :ATTR(:get<repeat> :set<repeat>);
+my %NoPreview         :ATTR(:get<no_preview> :set<no_preview>);
 my %PermitDelete      :ATTR(:get<permit_delete> :set<permit_delete>);
 my %ScriptName        :ATTR(:get<script_name> :set<script_name>);
 
@@ -85,6 +87,14 @@ sub permit_delete {
   my $self = shift;
   $self->set_permit_delete(shift) if @_;
   return $self->get_permit_delete;
+}
+
+sub no_preview {
+  ### a
+  ### Flag to control whether interface offers record preview
+  my $self = shift;
+  $self->set_no_preview(shift) if @_;
+  return $self->get_no_preview;
 }
 
 sub caption {
@@ -240,8 +250,11 @@ sub modify_element {
 
 sub discover {
   ### Autogenerate elements based on data structure
+  ### N.B. this sets up some default values that can be customised later
   my $self = shift;
+  
   my %fields = %{ $self->data->get_all_fields };
+  my %hasa_fields = %{ $self->data->hasa_relations };
 
   my (%elements, @element_order);
   foreach my $field (keys %fields) {
@@ -287,6 +300,20 @@ sub discover {
         $param->{'maxlength'} = $size;
       }
     }
+
+    ## Do any has_a fields, which are added as queriable fields by Data.pm
+    if (my $class = $hasa_fields{$field}) {
+      $element_type = 'DropDown';
+      $param->{'select'} = 'select';
+      my $lookup = $class->get_lookup_values;
+      if ($lookup && ref($lookup) eq 'ARRAY') {
+        $param->{'values'} = $self->create_select_values($lookup);
+      }
+      else {
+        $param->{'values'} = [];
+      }
+    }
+
     ## Record management fields should be non-editable, regardless of type,
     ## and omitted from the standard widget list
     if ($field =~ /^created_|^modified_/) {
@@ -299,37 +326,46 @@ sub discover {
     $self->element($field, $param);
   }
 
-=pod
-
-  ## Also get possible 'belongs to' and 'has many' fields as well
-  ## 'Belongs to' are dropdown by default
-  my $belongs_to = $self->data->get_belongs_to;
-  if ($belongs_to) {
-    foreach my $class (@$belongs_to) {
-      my ($key, $element) = $self->_create_relational_element('DropDown', $class);
-      if ($element) {
-        $elements{$element->name} = $element;
-        push @element_order, $element->name;
-        $self->data->add_queriable_field({ name => $key, type => 'int'});
-      }
+  my %has_many = %{ $self->data->hasmany_relations };
+  while (my ($field, $classes) = each (%has_many)) {
+    my $rel_class = $classes->[1];
+    my $lookup = $rel_class->get_lookup_values;
+    my $select = scalar(@$lookup) > 20 ? 'select' : '';
+    my $param = {
+      'name'    => $field,
+      'label'   => ucfirst($field),
+      'type'    => 'MultiSelect',
+      'select'  => $select,
+      'values'  => $self->create_select_values($lookup),
+    };
+    if ($select) {
+      $param->{'size'} = 10;
+      $param->{'notes'} = 'Use the CTL button to select multiple items';
     }
+    $self->element($field, $param);
+    push @element_order, $field;
   }
-  ## 'Has many' are multiple checkboxes by default
 
-  my $has_many = $self->data->get_has_many;
-  if ($has_many) {
-    foreach my $class (@$has_many) {
-      my ($key, $element) = $self->_create_relational_element('MultiSelect', $class);
-      if ($element) {
-        $elements{$element->name} = $element;
-        push @element_order, $element->name;
-        $self->data->add_queriable_field({ name => $key, type => 'int'});
-      }
-    }
-  }
-=cut
   $self->elements(\%elements);
   $self->element_order(@element_order);
+}
+
+sub create_select_values {
+  my ($self, $lookup) = @_;
+  my $values = [];
+  foreach my $record (@$lookup) {
+    my $order = $record->{'order'};
+    my $field;
+    if ($order) {
+      $field = $order->[0];
+    }
+    else {
+      my @fields = keys %{$record->{'lookups'}};
+      $field = $fields[0];
+    }
+    push @$values, {'value' => $record->{'id'}, 'name' => $record->{'lookups'}{$field}}; 
+  }
+  return $values;
 }
 
 sub configure {
@@ -453,6 +489,9 @@ sub cgi_populate {
   }
 }
 
+sub relational_element {
+}
+
 
 sub edit_fields {
   ### Returns editable fields as form element parameters
@@ -461,15 +500,29 @@ sub edit_fields {
   my $data = $self->data;
   my $dataview = $ENV{'ENSEMBL_FUNCTION'};
   my $element_order = $self->element_order;
+  my %has_many = %{ $self->data->hasmany_relations };
+
   ## populate widgets from Data_of{$self}
   foreach my $field (@$element_order) {
-    my $element = $self->element($field);
+    my $element;
+    $element = $self->element($field);
     next unless $element;
+
     my %param = %{$element->widget};
     ## File widgets behave differently depending on user action
     if ($element->type eq 'File' && $dataview ne 'Add') {
       $param{'type'} = 'NoEdit';
     }
+
+    ## Catch 'has_many' fields before doing normal ones
+    if ($has_many{$field}) {
+      my $value = [];
+      foreach my $many ($data->$field) {
+        push @$value, $many->id;
+      }
+      $param{'value'} = $value;
+    }
+
     ## Set field values
     if (ref($data) && !$param{'value'}) {
       ## Set value from data object, if possible
@@ -483,18 +536,8 @@ sub edit_fields {
         $param{'value'} = $param{'default'};
       }
     }
-    ## deal with multi-value fields
-    #if ($param{'value'} && ref($param{'value'}) eq 'ARRAY') {
-    #  foreach my $v (@{$param{'value'}}) {
-    #    warn "VALUE $v";
-    #    my %multi_param = %param;
-    #    $multi_param{'value'} = $v;
-    #    push @$parameters, \%multi_param;
-    #  }
-    #}
-    #else {
-      push @$parameters, \%param;
-    #}
+    push @$parameters, \%param;
+
     ## pass non-editable elements as additional hidden fields
     if ($element->type eq 'NoEdit') {
       my %hidden = %{$element->hide};
@@ -517,6 +560,7 @@ sub edit_fields {
       }
     }
   } 
+
   ## Add extra data
   my $extras = $self->extra_data;
   if ($extras) {
@@ -549,6 +593,8 @@ sub preview_fields {
 
   my $data = $self->data;
   my $element_order = $self->element_order;
+  my %has_many = %{ $self->data->hasmany_relations };
+
   foreach my $field (@$element_order) {
     my $element = $self->element($field);
     next unless $element;
@@ -558,7 +604,28 @@ sub preview_fields {
     my %param = %{$element->preview};
     if (ref $data) {
       my $var = $data->$field;
-      if ($element->type eq 'DropDown' || $element->type eq 'MultiSelect') {
+  
+      ## Catch 'has_many' fields before doing normal ones
+      if (my $classes = $has_many{$field}) {
+        my $class = $classes->[1];
+        my $lookup = $class->get_lookup_values;
+        my $order = $lookup->[0]{'order'};
+        my $label;
+        if ($order) {
+          $label = $order->[0];
+        }
+        else {
+          my @labels = keys %{$lookup->{'lookups'}};
+          $label = $labels[0];
+        }
+        my @readable;
+        foreach my $many ($data->$field) {
+          my $obj = $class->new($many->id);
+          push @readable, $obj->$label;
+        }
+        $param{'value'} = join(', ', @readable);
+      }
+      elsif ($element->type eq 'DropDown' || $element->type eq 'MultiSelect') {
         my @values = @{$param{'values'}};
         my %lookup;
         foreach my $option (@values) {

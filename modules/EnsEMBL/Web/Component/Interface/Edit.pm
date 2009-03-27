@@ -22,8 +22,9 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
+  my $action = $self->no_preview ? 'Save': 'Preview';
 
-  my $form = $self->data_form('edit', 'Preview');
+  my $form = $self->data_form('edit', $action);
   $form->add_element(
           'type'  => 'Hidden',
           'name'  => 'id',

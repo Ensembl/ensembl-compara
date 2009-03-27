@@ -21,8 +21,9 @@ sub caption {
 
 sub content {
   my $self = shift;
+  my $action = $self->no_preview ? 'Save': 'Preview';
 
-  my $form = $self->data_form('add', 'Preview');
+  my $form = $self->data_form('add', $action);
 
   ## navigation elements
   $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $self->object->param('_referer'));
