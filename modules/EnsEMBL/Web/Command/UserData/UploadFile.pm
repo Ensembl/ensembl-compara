@@ -5,7 +5,7 @@ use warnings;
 
 use Class::Std;
 
-use EnsEMBL::Web::Tools::Misc;
+use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 use EnsEMBL::Web::RegObj;
 use CGI qw(escape escapeHTML);
 use base 'EnsEMBL::Web::Command';
@@ -38,7 +38,7 @@ sub process {
     my $file = new EnsEMBL::Web::TmpFile::Text(
       prefix => 'user_upload',
       ($method eq 'url') ?
-      (content      => EnsEMBL::Web::Tools::Misc::get_url_content($self->object->param('url'))) :
+      (content      => get_url_content($self->object->param('url'))) :
       (tmp_filename => $self->object->[1]->{'_input'}->tmpFileName($self->object->param('file'))),
     );
     
