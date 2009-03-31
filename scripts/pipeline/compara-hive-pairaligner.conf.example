@@ -52,6 +52,8 @@
     'chunk_size'            => 1100000, #optional, default: 1000000
     'overlap'               =>  100000, #optional, default: 0
     'group_set_size'        => 4000000, #optional, default: undef i.e. not sequence grouping
+    'include_non_reference' => 0, #optional, default: 0 do not include non-reference regions eg haplotypes
+    'include_duplicates'    => 0, #optional, default: 0 do not include duplicated regions eg PAR region
     'masking_options'       => "{default_soft_masking => 1}", # 0 for hard masking, comment the line for no masking
 # or  'masking_options'       => "{default_soft_masking => 1, logic_names => ["RepeatMask", "Dust", "TRF"]}",
 # if you want to mask only certain type of repeat logic_name analysis.
@@ -79,6 +81,8 @@
     'genome_name_assembly'  => 'Homo sapiens:NCBI35',
     'region'                => 'chromosome:17',# can also be a restricted region e.g. chromosome:17:100000:500000
     'chunk_size'            => 30000000,
+    'include_non_reference' => 1, #optional, default: 0. In this case include non-reference regions eg haplotypes
+    'include_duplicates'    => 0, #optional, default: 0 do not include duplicated regions eg PAR region
     'masking_options'       => "{default_soft_masking => 1, assembly_exception_type_PAR => 0}",
 #    'masking_options_file'       => '/path/to/masking/options/file/for/human',
   },
