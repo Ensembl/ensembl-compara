@@ -496,6 +496,7 @@ sub _summarise_dasregistry {
     
     # Check if the source is registered
     my $src = $reg_logic{$key};
+
     # Try the actual server URL if it's provided but the registry URI isn't
     if (!$src && $cfg->{'url'} && $cfg->{'dsn'}) {
       my $full_url = $cfg->{'url'} . '/' . $cfg->{'dsn'};
@@ -507,10 +508,11 @@ sub _summarise_dasregistry {
           $src = $server_url{$full_url};
         };
         if ($@) {
-          warn "Unable to parse details for $key - problems contacting server";
+          warn "Unable to parse details for $key - not in registry and server is down";
         }
       }
     }
+
     # Doesn't have to be in the registry... unfortunately
     # But if it is, fill in the blanks
     if ($src) {
@@ -524,11 +526,11 @@ sub _summarise_dasregistry {
     }
     
     if (!$cfg->{'url'}) {
-      warn "DAS source $key has no 'url' property defined";
+      warn "Skipping DAS source $key - unable to find 'url' property (tried looking in registry, server and INI)";
       next;
     }
     if (!$cfg->{'dsn'}) {
-      warn "DAS source $key has no 'dsn' property defined";
+      warn "Skipping DAS source $key - unable to find 'dsn' property (tried looking in registry, server and INI)";
       next;
     }
     
