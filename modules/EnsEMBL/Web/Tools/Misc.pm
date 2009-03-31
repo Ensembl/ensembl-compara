@@ -21,6 +21,7 @@ sub get_url_content {
   my $content;
 
   my $ua = new LWP::UserAgent;
+  $ua->timeout(10);
   $ua->proxy('http', $proxy) if $proxy;
 
   my $request = new HTTP::Request( 'GET', $url );
