@@ -602,8 +602,8 @@ sub render_image_map {
 sub render {
   my( $self, $format ) = @_;
 
-  if ($format) {
-    print $self->drawable_container->render($format);
+  if( $format ) {
+    print $self->drawable_container->render( $format );
     return;
   }
 
