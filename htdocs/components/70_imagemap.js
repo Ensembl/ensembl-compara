@@ -83,12 +83,17 @@ function select_start( evt ) {
   var pY = Event.pointerY(evt) - y[1] -fudge_y;
   var map = $(dragging_image.id+'_map');
   drag_bounds = { lnk: '' };
+  var T = window.location.href.split(/#/);
+  var this_page = T[0];
   $A(map.areas).each(function(Ax){
     var KEY = dragging_image.id+':'+Ax.shape+':'+Ax.coords;
     var link = '';
     if(Ax.href) {
       T = Ax.href.split(/#/);
-      stored_hrefs[KEY] = T.length>1 ? '#'+T[1] : Ax.href;
+      stored_hrefs[KEY] =  Ax.href;
+      if( T.length > 1 && T[0] == this_page ) {
+        stored_hrefs[KEY] = '#'+T[1];
+      }
       Ax.removeAttribute('href');
     }
     link = stored_hrefs[KEY];
@@ -204,12 +209,17 @@ function select_stop( evt ) {
       var drag_href  = '';
       var drag_start = 0;
       var drag_end   = 0;
+      var T = window.location.href.split(/#/);
+      var this_page = T[0];
       $A(image_map.areas).each(function(Ax){
         if(flag==0) { return; }
         var KEY = dragging_image.id+':'+Ax.shape+':'+Ax.coords;
         if(Ax.href) {
           T = Ax.href.split(/#/);
-          stored_hrefs[KEY] = T.length>1 ? '#'+T[1] : Ax.href;
+          stored_hrefs[KEY] =  Ax.href;
+          if( T.length > 1 && T[0] == this_page ) {
+            stored_hrefs[KEY] = '#'+T[1];
+          }
           Ax.removeAttribute('href');
         }
         var link = stored_hrefs[KEY];

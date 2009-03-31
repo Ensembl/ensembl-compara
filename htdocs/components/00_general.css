@@ -124,6 +124,9 @@ dd { margin-bottom:1em; }
 .warning h3 { padding: 2px 0.5em 2px 20px; background-color:#ffb90f;color:black;margin: 0; background-image:url(/i/warning.gif); background-position: top left; background-repeat: no-repeat }
 .info { margin: 0.2em auto; border:1px solid #90ee90;background-color: white; padding: 0; }
 .info h3 { padding: 2px 0.5em 2px 20px; background-color:#90ee90;color:black;margin: 0; background-image:url(/i/info.gif); background-position: top left; background-repeat: no-repeat }
+.hint { margin: 0.2em auto; border:1px solid #90ee90;background-color: white; padding: 0; }
+.hint h3 { padding: 2px 0.5em 2px 20px; background-color:#90ee90;color:black;margin: 0; background-image:url(/i/info.gif); background-position: top left; background-repeat: no-repeat }
+
 
 /***********************************************************************
 **

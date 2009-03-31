@@ -43,4 +43,39 @@ function _cookie_print() {
 }
 
 addLoadEvent( _cookie_print );
- 
+
+function __hide_hint() {
+
+}
+
+var hints_cookie = new Hash();
+function hints_onload() {
+  var t = Cookie.get('ENSEMBL_HINTS');
+  if( t ) t.split(/:/).each(function(x){
+    hints_cookie.set( x, 1 );
+  });
+
+  $$(('.hint_flag')).each(function(n){
+    var name = n.id;
+    if( hints_cookie.get(name) ) {
+      n.hide();
+    } else {
+      var but = Builder.node('a', { },
+        [ Builder.node('img', { 
+          style: 'float:right; vertical-align: top', src: '/i/close.gif', alt:'Hide hint panel', title:'Hide hint panel'
+        } ) ]
+      );
+      var hnode = n.firstChild;
+      hnode.insertBefore( but, hnode.firstChild );
+      Event.observe(but,'click',function(evt){
+        var el = Event.findElement(evt,'div');
+        el.hide();
+        hints_cookie.set( el.id, '' );
+        Cookie.set('ENSEMBL_HINTS',hints_cookie.keys().join(':') );
+      });
+    }
+    n.removeClassName( 'hint_flag' );
+  });
+}
+
+addLoadEvent( hints_onload );
