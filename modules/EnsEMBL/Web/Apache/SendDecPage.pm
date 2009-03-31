@@ -10,6 +10,7 @@ use EnsEMBL::Web::Document::Static;
 use EnsEMBL::Web::RegObj;
 use Data::Dumper;
 use EnsEMBL::Web::Root;
+use Compress::Zlib;
 
 use Apache2::Const qw(:common :methods :http);
 
@@ -30,6 +31,24 @@ sub handler {
   my $r = shift;
   my $i = 0;
   ## First of all check that we should be doing something with the page...
+
+  ## Pick up DAS entry points requests and
+  ## uncompress them dynamically
+
+  if( -e $r->filename && -r $r->filename && $r->filename =~ /\/entry_points$/) {
+    my $gz = gzopen( $r->filename, 'rb' );
+    my $buffer = 0;
+    my $content = '';
+    $content .= $buffer while $gz->gzread( $buffer ) > 0;
+    $gz->gzclose(); 
+    if($ENV{PERL_SEND_HEADER}) {
+      print "Content-type: text/xml; charset=utf-8";
+    } else {
+      $r->content_type('text/xml; charset=utf-8');
+    }
+    $r->print($content);
+    return OK;
+  }
 
   $r->err_headers_out->{'Ensembl-Error'=>"Problem in module EnsEMBL::Web::Apache::SendDecPage"};
   $r->custom_response(SERVER_ERROR, "/Crash");
