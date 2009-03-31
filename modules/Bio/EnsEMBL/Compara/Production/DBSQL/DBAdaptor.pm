@@ -54,6 +54,8 @@ sub get_available_adaptors {
   $pairs->{'DnaFragChunkSet'} = "Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor";
   $pairs->{'DnaCollection'} = "Bio::EnsEMBL::Compara::Production::DBSQL::DnaCollectionAdaptor";
   $pairs->{'AnalysisData'} = "Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor";
+  $pairs->{'AnchorSeq'} = "Bio::EnsEMBL::Compara::Production::DBSQL::AnchorSeqAdaptor";
+  $pairs->{'AnchorAlign'} = "Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor";
   return $pairs;
 }
  
