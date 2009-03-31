@@ -86,12 +86,16 @@ sub fetch_input {
   #
   $self->{'genome_db_id'}             = 0;  # 'gdb'
   $self->{'store_seq'}                = 0;
+  $self->{'store_chunk'}              = 0;
   $self->{'overlap'}                  = 0;
   $self->{'chunk_size'}               = undef;
   $self->{'region'}                   = undef;
   $self->{'masking_analysis_data_id'} = 0;
   $self->{'masking_options'}          = undef;
   $self->{'group_set_size'}           = undef;
+  $self->{'include_non_reference'}    = 0;     # eg haplotypes
+  $self->{'include_duplicates'}       = 0;     # eg PAR region
+
 
   $self->{'analysis_job'}             = undef;
   $self->{'create_analysis_prefix'}   = undef; # 'analysis', 'job'
@@ -178,6 +182,7 @@ sub get_params {
   }
       
   $self->{'store_seq'} = $params->{'store_seq'} if(defined($params->{'store_seq'}));
+  $self->{'store_chunk'} = $params->{'store_chunk'} if(defined($params->{'store_chunk'}));
   $self->{'chunk_size'} = $params->{'chunk_size'} if(defined($params->{'chunk_size'}));
   $self->{'overlap'} = $params->{'overlap'} if(defined($params->{'overlap'}));
 
@@ -201,6 +206,9 @@ sub get_params {
 
   $self->{'collection_name'} = $params->{'collection_name'} if(defined($params->{'collection_name'}));
   $self->{'collection_id'} = $params->{'collection_id'} if(defined($params->{'collection_id'}));
+
+  $self->{'include_non_reference'} = $params->{'include_non_reference'} if(defined($params->{'include_non_reference'}));
+  $self->{'include_duplicates'} = $params->{'include_duplicates'} if(defined($params->{'include_duplicates'}));
   
   return;
 
@@ -214,10 +222,14 @@ sub print_params {
   print("   genome_db_id             : ", $self->{'genome_db_id'},"\n");
   print("   region                   : ", $self->{'region'},"\n") if($self->{'region'});
   print("   store_seq                : ", $self->{'store_seq'},"\n");
+  print("   store_chunk              : ", $self->{'store_chunk'},"\n");
   print("   chunk_size               : ", $self->{'chunk_size'},"\n");
   print("   overlap                  : ", $self->{'overlap'} ,"\n");
   print("   masking_analysis_data_id : ", $self->{'masking_analysis_data_id'} ,"\n");
   print("   masking_options          : ", $self->{'masking_options'} ,"\n") if($self->{'masking_options'});
+  print("   include_non_reference    : ", $self->{'include_non_reference'} ,"\n");
+  print("   include_duplicates       : ", $self->{'include_duplicates'} ,"\n");
+
 }
 
 
@@ -253,11 +265,11 @@ sub create_chunks
       $chromosomes = $SliceAdaptor->fetch_all($coord_system_name);
     }
   } else {
-    # use of ('toplevel', undef,0,1) to include all duplicate reference sequences such as the PAR in
-    # Y chromosome
-    $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef,0,1);
+      #default for $include_non_reference = 0, $include_duplicates = 0
+    $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef, $self->{'include_non_reference'}, $self->{'include_duplicates'});
   }
   print("number of seq_regions ".scalar @{$chromosomes}."\n");
+
   $self->{'chunkset_counter'} = 1;
   $self->{'current_chunkset'} = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
   $self->{'current_chunkset'}->description(sprintf("collection_id:%d group:%d",
@@ -291,9 +303,9 @@ sub create_chunks
       $dnafragDBA->store_if_needed($dnafrag);
     }
 
-    $self->create_dnafrag_chunks($dnafrag);
+    $self->create_dnafrag_chunks($dnafrag, $chr->start, $chr->end);
 
-  }
+}
  
   #save the current_chunkset if it isn't empty
   if($self->{'current_chunkset'}->count > 0) {
@@ -314,6 +326,8 @@ sub create_chunks
 sub create_dnafrag_chunks {
   my $self = shift;
   my $dnafrag = shift;
+  my $region_start = (shift or 1);
+  my $region_end = (shift or $dnafrag->length);
 
  #return if($dnafrag->display_id =~ /random/);
 
@@ -322,8 +336,6 @@ sub create_dnafrag_chunks {
   my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $self->{'region'})
     if($self->{'region'});
 
-  my $region_end = $dnafrag->length;
-  my $region_start = 1;
   if (defined $seq_region_start && defined $seq_region_end) {
     $region_end = $seq_region_end;
     $region_start = $seq_region_start;
@@ -369,6 +381,7 @@ sub create_dnafrag_chunks {
     if($self->{'store_seq'}) {
       $chunk->bioseq; #fetches sequence and stores internally in ->sequence variable
     }
+
     #print "store chunk " . $chunk->dnafrag->name . " " . $chunk->seq_start . " " . $chunk->seq_end . " " . length($chunk->bioseq->seq) . "\n";
 
     $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->store($chunk);
@@ -412,7 +425,7 @@ sub create_dnafrag_chunks {
     $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
 
     $chunk_start = $chunk_end - $overlap + 1;
-}
+  }
 
   #print "Done\n";
   #print scalar(time()-$lasttime), " secs to chunk, and store\n";
