@@ -18,6 +18,11 @@ sub feature_group {
   return $f->id;
 }
 
+sub feature_label {
+  my( $self, $f ) = @_;
+  return $f->id;
+}
+
 our @strand_name = qw(- Forward Reverse);
 
 sub feature_title {

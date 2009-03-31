@@ -19,6 +19,11 @@ sub feature_group {
 
 our @strand_name = qw(- Forward Reverse);
 
+sub feature_label {
+  my( $self, $f, $db_name ) = @_;
+  return $f->hseqname;
+}
+
 sub feature_title {
   my( $self, $f, $db_name ) = @_;
   my $title = sprintf "%s: %s; Start: %d; End: %d; Strand: %s",

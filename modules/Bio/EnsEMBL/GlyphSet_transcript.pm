@@ -204,7 +204,7 @@ sub render_transcripts {
   
   my $Config        = $self->{'config'};
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
-  my $strand_flag   = $self->my_config('strand') || 'b';
+  my $strand_flag   = $self->my_config('strand');
   my $container     = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'} : $self->{'container'};
   my $target        = $self->get_parameter('single_Transcript');
   my $target_gene   = $self->get_parameter('single_Gene'      );
@@ -236,7 +236,7 @@ sub render_transcripts {
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
     my $gene_strand = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id() : undef;
-    next if $gene_strand != $strand and $strand_flag eq 'b'; # skip features on wrong strand....
+    next if $gene_strand != $strand && $strand_flag eq 'b'; # skip features on wrong strand....
     next if $target_gene && $gene_stable_id ne $target_gene;
     my %TAGS = (); my @GENE_TAGS;
     my $tsid;
@@ -281,7 +281,7 @@ sub render_transcripts {
       # Skip if no exons for this transcript
       next if (@exons == 0);
       # If stranded diagram skip if on wrong strand
-      next if (@exons[0]->strand() != $strand && $self->{'do_not_strand'}!=1 );
+      next if (@exons[0]->strand() != $gene_strand && $self->{'do_not_strand'}!=1 );
       # For exon_structure diagram only given transcript
       next if $target && ($transcript->stable_id() ne $target);
 

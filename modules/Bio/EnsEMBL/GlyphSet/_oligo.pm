@@ -17,6 +17,11 @@ sub feature_group {
   return $f->probeset;    ## For core features this is what the sequence name is...
 }
 
+sub feature_label {
+  my( $self, $f ) = @_;
+  return $f->probeset;
+}
+
 sub feature_title {
   my( $self, $f ) = @_;
   return "Probe set: ".$f->probeset;

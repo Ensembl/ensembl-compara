@@ -224,7 +224,7 @@ sub init_label {
     'font'      => $font,
     'ptsize'    => $fsze,
     'title'     => "$name; $desc",
-    'href'      => '#',
+    'href'      => '#'.$self->_url({ 'contigviewbottom', $self->{'my_config'}->key.'=off'}),
     'colour'    => $self->{'label_colour'} || 'black',
     'absolutey' =>1,'height'=>$res[3]}
   ));
@@ -409,6 +409,7 @@ sub sr2slice {
 sub new {
   my $class = shift;
   my $data  = shift;
+warn "NEW: ",$data->{'my_config'};
   if(!$class) {
     warn( "EnsEMBL::GlyphSet::failed at: ".gmtime()." in /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}" );
     warn( "EnsEMBL::GlyphSet::failed with a call of new on an undefined value" );
