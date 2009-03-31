@@ -22,6 +22,7 @@ sub new {
     components      => {},
     component_order => [],
     prefix          => 'p',
+    disable_ajax    => 0,
     asychronous_components => [],
     @_
   };
@@ -273,6 +274,7 @@ sub render_AjaxMenu {
 
 sub render_Text {
   my $self = shift;
+  $self->{'disable_ajax'} = 1;
   if( 0 && exists( $self->{'caption'} ) ) {
     $self->renderer->printf( qq($self->{'caption'}\n\n) );
   }
@@ -304,6 +306,7 @@ sub content_Text() {
   $self->renderer = new EnsEMBL::Web::Document::Renderer::String();
   $self->content();
   my $value = $self->strip_HTML( $self->renderer->content ); 
+my $value =  $self->renderer->content;
   $self->renderer = $temp_renderer;
   $self->renderer->print( $value )
 }
@@ -590,7 +593,8 @@ sub _error {
 sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 3+$_[2] ); }
 
 sub _is_ajax_request {
-  return  $_[0]->renderer->can('r') && $_[0]->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+  return  $_[0]->renderer->can('r') && 
+          $_[0]->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
 }
 
 sub content {
@@ -665,7 +669,9 @@ if ($component eq 'das_features') {
         } else {
           
           my $caption = $comp_obj->caption;
-          if( $comp_obj->ajaxable() && !$self->_is_ajax_request ) {
+          if( ! $self->{'disable_ajax'} &&
+              $comp_obj->ajaxable() && 
+              !$self->_is_ajax_request ) {
 
             my( $ensembl, $plugin, $component, $type, $module ) = split '::', $module_name;
             my $URL = join '/', '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,$module;
