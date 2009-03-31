@@ -79,9 +79,6 @@ sub content {
     $collapsed_nodes = $collapsed_to_dups if( $collapsability eq 'duplications');
     $collapsed_nodes ||= '';
   }
-  #warn "==> $collapsed_to_gene";
-  #warn "==> $collapsed_to_para";
-  #warn "==>$collapsed_to_dups";
 
   push @highlights, $collapsed_nodes || undef;
 
@@ -190,7 +187,7 @@ sub content_align {
 
   #----------
   # Return the text representation of the tree
-  my $htmlt = qq(
+  my $htmlt = q(
 <p>Multiple sequence alignment in "<i>%s</i>" format:</p>
 <p>The sequence alignment format can be configured using the
 'configure page' link in the left panel.<p>
@@ -211,7 +208,10 @@ sub content_align {
   my $aio = Bio::AlignIO->new( -format => $align_format, -fh => $SH );
   $aio->write_aln( $tree->get_SimpleAlign );
 
-  return sprintf( $htmlt, $fmt_caption, $formatted );
+  return $object->param('_format') eq 'Text'
+       ? $formatted 
+       : sprintf( $htmlt, $fmt_caption, $formatted )
+       ;
 }
 
 sub content_text {
@@ -225,7 +225,7 @@ sub content_text {
 
   #----------
   # Template for the section HTML
-  my $htmlt = qq(
+  my $htmlt = q(
 <p>The following is a representation of the tree in "<i>%s</i>" format</p>
 <p>The tree representation can be configured using the
 'configure page' link in the left panel.<p>
@@ -243,12 +243,15 @@ sub content_text {
   my @params = ( map { $object->param( $_ ) } 
                  @{ $formats{$mode}{'parameters'} || [] } );
   my $string = $tree->$fn(@params);
-  if( $formats{$mode}{'split'} ) {
+  if( $formats{$mode}{'split'} && $object->param('_format') ne 'Text') {
     my $reg = '(['.quotemeta($formats{$mode}{'split'}).'])';
     $string =~ s/$reg/$1\n/g;
   }
 
-  return sprintf( $htmlt, $fmt_caption, $string );
+  return $object->param('_format') eq 'Text'
+       ? $string 
+       : sprintf( $htmlt, $fmt_caption, $string )
+       ;
 }
 
 1;
