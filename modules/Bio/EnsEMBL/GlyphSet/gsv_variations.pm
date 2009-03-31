@@ -47,7 +47,6 @@ sub _init {
     my $snp_type = lc($cod_snp->display_consequence); 
     my $colour = $colour_map->{$snp_type}->{'default'};
     my $aa_change = $cod_snp->pep_allele_string || '';
-   
 
     my $S =  ( $snpref->[0]+$snpref->[1] )/2;
     my @res = $self->get_text_width( 0, $aa_change, '', 'font'=>$fontname, 'ptsize' => $fontsize );
@@ -69,6 +68,7 @@ sub _init {
     my $dbid = $cod_snp->dbID;  
     my $variation_id = $snp->variation_name;
     unless ($aa_change =~/^\w+/) {$aa_change = '-';} 
+
     my $href = $self->_url
     ({'action'  => 'Variation',
       'v'     => $variation_id,
