@@ -35,7 +35,7 @@ sub content {
       my $current_gene = $object->param('g') || '';
 
       my $image    = $self->new_karyotype_image();
-      $image->cacheable  = 'no';
+
       $image->image_type = "family";
       $image->image_name = "$species-".$family_id;
       $image->imagemap = 'yes';

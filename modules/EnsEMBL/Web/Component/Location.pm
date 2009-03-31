@@ -483,7 +483,7 @@ sub ideogram {
   my $click_right = int( $wuc->transform->{'scalex'} * $object->seq_region_length + int( $wuc->transform->{'translatex'} ) );
   my $panel_no = ++ $object->__data->{'_cv_panel_no'};
      $image->{'panel_number'} = $panel_no;
-     $image->cacheable   = 'yes';
+#     $image->cacheable   = 'yes';
      $image->image_type  = 'ideogram';
      $image->image_name  = ($object->param('image_width')).'-'.$ENV{'ENSEMBL_SPECIES'}.'-'.$object->seq_region_name;
      $image->set_button( 'drag', 'panel_number' => $panel_no, 'title' => 'Click or drag to centre display' );
