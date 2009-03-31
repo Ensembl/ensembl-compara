@@ -508,7 +508,7 @@ sub _summarise_dasregistry {
           $src = $server_url{$full_url};
         };
         if ($@) {
-          warn "Unable to parse details for $key - not in registry and server is down";
+          warn "DAS source $key might not work - not in registry and server is down";
         }
       }
     }
@@ -526,11 +526,11 @@ sub _summarise_dasregistry {
     }
     
     if (!$cfg->{'url'}) {
-      warn "Skipping DAS source $key - unable to find 'url' property (tried looking in registry, server and INI)";
+      warn "Skipping DAS source $key - unable to find 'url' property (tried looking in registry and INI)";
       next;
     }
     if (!$cfg->{'dsn'}) {
-      warn "Skipping DAS source $key - unable to find 'dsn' property (tried looking in registry, server and INI)";
+      warn "Skipping DAS source $key - unable to find 'dsn' property (tried looking in registry and INI)";
       next;
     }
     
