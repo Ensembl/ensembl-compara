@@ -437,9 +437,8 @@ sub pip_anno_file {
       @exons = reverse @exons if ($gene->strand == -1);
       
       my $out = $outputs->{$o}($transcript, \@exons);
-      
       # write output to file if there are exons in the exported region
-      print $fh $gene_header, $out if $out;
+      print $fh "$gene_header$out" if $out;
     }
   }
   
@@ -475,7 +474,7 @@ sub pip_anno_file_vista {
       $out .= join(" ", $exon->start, $exon->end, "exon\r\n");
     }
   }
-  return $out;
+  return "$out\r\n";
 }
 
 sub pip_anno_file_pipmaker {
@@ -498,7 +497,7 @@ sub pip_anno_file_pipmaker {
     $out .= join(" ", $exon->start, $exon->end, "\r\n");
   }
   
-  return $out;
+  return "$out\r\n";
 }
 
 1;
