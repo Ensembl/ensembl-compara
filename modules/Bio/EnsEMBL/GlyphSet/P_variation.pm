@@ -5,6 +5,9 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
+  
+  return $self->render_text if $self->{'text_export'};
+  
   my $protein = $self->{'container'};
   my $snps    = $self->cache('image_snps');
   my $x       = 0;
@@ -80,24 +83,50 @@ sub _init {
     }
   }
 }
+
+sub render_text {
+  my $self = shift;
+  
+  my $container = $self->{'container'};
+  my $snps = $self->cache('image_snps');
+
+  return unless $snps;
+
+  my $start = 0;
+  my $export;
+
+  foreach (@$snps) {
+    $start++;
+    
+    my $id = $_->{'snp_id'};
+    
+    next unless $id;
+    
+    my ($end, $codon, $type);
+    
+    if ($_->{'type'} eq 'insert' || $_->{'type'} eq 'delete') {
+      $end = $_->{'type'} eq 'insert' ? 1 : length $_->{'allele'};
+    } elsif ($_->{'type'} eq 'snp' || $_->{'type'} eq 'syn') {  
+      $type = $_->{'type'} eq 'snp' ? 'NON_SYNONYMOUS_CODING' : 'SYNONYMOUS_CODING';
+      
+      for my $letter (0..2) { 
+        $codon .= $_->{'ambigcode'}->[$letter] ? qq{[$_->{'ambigcode'}->[$letter]]} : $_->{'nt'}->[$letter]; 
+      }
+    } else {
+      next;
+    }
+    
+    $export .= $self->_render_text($container, 'Variation', { 
+      'headers' => [ 'variation_name', 'alleles', 'class', 'type', 'alternative_residues', 'codon' ],
+      'values' => [ $id, $_->{'allele'}, $_->{'type'}, $type, $_->{'pep_snp'}, $codon ]
+    }, { 
+      'start'  => $start,
+      'end'    => $start + $end,
+      'source' => $_->{'snp_source'}
+    });
+  }
+  
+  return $export;
+}
+
 1;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

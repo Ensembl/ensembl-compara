@@ -4,6 +4,9 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
+  
+  return $self->render_text if $self->{'text_export'};
+  
   my $db;
   my $protein    = $self->{'container'};	
   my $pep_splice = $self->cache('image_splice');
@@ -43,6 +46,36 @@ sub _init {
     }));
   }
 }
+
+sub render_text {
+  my $self = shift;
+  
+  my $container = $self->{'container'};
+  my $pep_splice = $self->cache('image_splice') || {};
+  my $start = 1;
+  my $start_phase = 1;
+  my $export;
+  
+  foreach (sort { $a <=> $b } keys %$pep_splice) {
+    my $exon_id = $pep_splice->{$_}->{'exon'};
+    
+    next unless $exon_id;
+    
+    my $end_phase = $pep_splice->{$_}->{'phase'} + 1;
+    
+    $export .= $self->_render_text($container, 'Protein', { 
+      'headers' => [ 'exon_id', 'start_phase', 'end_phase' ], 
+      'values'  => [ $exon_id, $start_phase, $end_phase ] 
+    }, { 
+      'start' => $start,
+      'end'   => $_
+    });
+    
+    $start = $_ + 1;
+    $start_phase = $end_phase;
+  }
+  
+  return $export;
+}
+
 1;
-
-
