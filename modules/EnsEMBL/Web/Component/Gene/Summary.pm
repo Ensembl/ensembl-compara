@@ -161,9 +161,22 @@ sub content {
     );
    }
   $html .= '
-      </table>
+      </table>';
+  $html .= '
     </dd>
   </dl>';
+  $html .= $self->_hint( 'gene', 'Transcript and Gene level displays',
+    '
+  <p>
+In Ensembl a gene is made up of one or more transcripts. We provide displays at two levels:
+</p>
+<ul>
+  <li>Transcript views which provide information specific to an individual transcript such as the cDNA and CDS sequences and protein domain annotation.</li>
+  <li>Gene views which provide displays for data associated at the gene level such as orthologues and paralogues, regulatory regions and splice variants.</li>
+</ul>
+<p>
+This view is a gene level view. To access the transcript level displays select a Transcript ID in the table above and then navigate to the information you want using the menu at the left hand side of the page.  To return to viewing gene level information click on the Gene tab in the menu bar at the top of the page.
+</p>' );
   return $html;
 }
 
