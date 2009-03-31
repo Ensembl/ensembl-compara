@@ -16,10 +16,12 @@ our @TRANSCRIPT_TYPES = qw(transcript alignslice_transcript tsv_transcript gsv_t
 our $alignment_renderers = [
   'off'         => 'Off',
   'normal'      => 'Normal',
+  'labels'      => 'Labels',
   'half_height' => 'Half height',
   'stack'       => 'Stacked',
   'unlimited'   => 'Stacked unlimited',
-  'ungrouped'   => 'Ungrouped'
+  'ungrouped'   => 'Ungrouped',
+#  'ungrouped_labels'   => 'Ungrouped with labels',
 ];
 our $MEMD = EnsEMBL::Web::Cache->new;
 
@@ -598,14 +600,7 @@ sub add_dna_align_feature {
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
         'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
-        'renderers'   => [
-          'off'         => 'Off',
-          'normal'      => 'Normal',
-          'half_height' => 'Half height',
-          'stack'       => 'Stacked',
-          'unlimited'   => 'Stacked unlimited',
-          'ungrouped'   => 'Ungrouped'
-        ],
+        'renderers'   => $alignment_renderers,
         'strand'      => 'b'
       }));
     }
@@ -633,14 +628,7 @@ sub add_protein_align_feature {
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
       'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
-      'renderers'   => [
-        'off'         => 'Off',
-        'normal'      => 'Normal',
-        'half_height' => 'Half height',
-        'stack'       => 'Stacked',
-        'unlimited'   => 'Stacked unlimited',
-        'ungrouped'   => 'Ungrouped'
-      ],
+      'renderers'   => $alignment_renderers,
       'strand'      => 'b'
     }));
   }
@@ -899,7 +887,7 @@ sub add_protein_feature {
     my $renderer =  $menus{$menu_code}[2];
     foreach my $key_2 ( @$keys ) {
       next if $self->tree->get_node( $type.'_'.$key_2 );
-      next if $type ne $data->{$key_2}{'type'}; ## Don't separate by db in this case!
+      next if $type ne ($data->{$key_2}{'type'}||'feature'); ## Don't separate by db in this case!
       $menu->append( $self->create_track( $type.'_'.$key_2, $data->{$key_2}{'name'}, {
         'strand'      => $gset =~ /P_/ ? 'f' : 'b',
         'depth'       => 1e6,
