@@ -423,11 +423,11 @@ sub _check_if_snp_unique_location {
   my @features = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
 
   my $context = $self->param('vw')||500;
-  if (scalar @features == 1 ){
-   my $s =  $features[0]->start; 
-   my $e = $features[0]->end;
-   my $r = $features[0]->seq_region_name;
-   $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s-$context, $e+$context ) );
+  if( scalar @features == 1 ) {
+    my $s =  $features[0]->start; 
+    my $e = $features[0]->end;
+    my $r = $features[0]->seq_region_name;
+    $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s-$context, $e+$context ) );
   } elsif (scalar @features > 1 && $vf){
     foreach my $var_feat( @features){
       if ($var_feat->dbID eq $vf ) {
