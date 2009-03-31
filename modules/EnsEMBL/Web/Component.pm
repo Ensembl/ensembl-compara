@@ -16,26 +16,26 @@ use base qw(EnsEMBL::Web::Root Exporter);
 our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
 
-sub _error {
-  my($self,$caption,$desc,$width) = @_;
-  return sprintf '<div style="width:%s" class="error"><h3>%s</h3><div class="error-pad">%s</div></div>', 
-    $width || $self->image_width.'px', $caption, $desc;
-}
-sub _warning {
-  my($self,$caption,$desc,$width) = @_;
-  return sprintf '<div style="width:%s" class="warning"><h3>%s</h3><div class="error-pad">%s</div></div>', 
-    $width || $self->image_width.'px', $caption, $desc;
-}
-sub _info {
-  my($self,$caption,$desc,$width) = @_;
-  return sprintf '<div style="width:%s" class="info"><h3>%s</h3><div class="error-pad">%s</div></div>', 
-    $width || $self->image_width.'px', $caption, $desc;
+sub _info_panel {
+  my($self,$class,$caption,$desc,$width) = @_;
+  return sprintf '<div style="width:%s" class="%s"><h3>%s</h3><div class="error-pad">%s</div></div>',
+    $width || $self->image_width.'px', $class, $caption, $desc;
 }
 
-sub _hint {
-  my($self,$caption,$desc,$width) = @_;
-  return sprintf '<div style="width:%s" class="info"><h3>%s</h3><div class="error-pad">%s</div></div>', 
-    $width || $self->image_width.'px', $caption, $desc;
+## Fatal error message... couldn't perform action
+sub _error   { my $self = shift; return $self->_info_panel( 'error',   @_ ); }
+
+## Error message... but not fatal!
+sub _warning { my $self = shift; return $self->_info_panel( 'warning', @_ ); }
+
+## Extra information 
+sub _info    { my $self = shift; return $self->_info_panel( 'info',    @_ ); }
+
+## Extra information - panel will eventually be removable - when extra session stuff is added
+sub _hint    {
+  my($self,$ID,$caption,$desc,$width) = @_;
+  return sprintf '<div id="%s" style="width:%s" class="hint hint_flag"><h3>%s</h3><div class="error-pad">%s</div></div>',
+    $ID, $width || $self->image_width.'px', $caption, $desc;
 }
 
 sub _export_image {
@@ -54,10 +54,10 @@ sub _export_image {
   		$self->object->input->header( -type => $FORMATS{$format}{'mime'}, -inline => $filename );
 		}
 		
-		if ($FORMATS{$format}{'extn'} eq 'txt') {
-  		print $image->drawable_container->{'export'};
-  		return 1;
-		}
+        if ($FORMATS{$format}{'extn'} eq 'txt') {
+          print $image->drawable_container->{'export'};
+          return 1;
+        }
 		
   	$image->render( $format );
     return 1;
@@ -441,7 +441,7 @@ sub _warn_block {
   warn "\n";
 }
 
-# Used by Gene::ComparaAlignments, Gene::GeneSeq and Location::SequenceAlignment
+# Used by ComparaAlignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
   my $self = shift;
   my ($slices, $config) = @_;
@@ -452,7 +452,7 @@ sub get_sequence_data {
   foreach my $sl (@$slices) {
     my $mk = {};
     my $slice = $sl->{'slice'};
-    my $name = $sl->{'name'};    
+    my $name = $sl->{'name'};
     my $seq = uc $slice->seq(1);
     
     my ($slice_start, $slice_end, $slice_length, $slice_strand) = ($slice->start, $slice->end, $slice->length, $slice->strand);
@@ -555,7 +555,7 @@ sub get_sequence_data {
           $snp_end = $end;
         }
         
-        if ($var_class eq 'in-del') {          
+        if ($var_class eq 'in-del') {
           if ($seq_region_start > $seq_region_end) {
             $snp_type = 'insert';
             
@@ -1145,6 +1145,32 @@ sub build_sequence {
   my @output;
   my $s = 0;
   
+  # Temporary patch because Firefox doesn't copy/paste anything but inline styles
+  # If we remove this patch, look at version 1.79 for the correct code to revert to
+  my $styles = $self->object->species_defs->ENSEMBL_STYLE;
+  my %class_to_style = (
+    con => [ 1,  { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}" } ],
+    res => [ 2,  { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}" } ],
+    e0  => [ 3,  { 'color' => "#$styles->{'SEQ_EXON0'}" } ],
+    e1  => [ 4,  { 'color' => "#$styles->{'SEQ_EXON1'}" } ],
+    e2  => [ 5,  { 'color' => "#$styles->{'SEQ_EXON2'}" } ],
+    eo  => [ 6,  { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}" } ],
+    eg  => [ 7,  { 'color' => "#$styles->{'SEQ_EXONGENE'}", 'font-weight' => "bold" } ],
+    c0  => [ 8,  { 'background-color' => "#$styles->{'SEQ_CODONC0'}" } ],
+    c1  => [ 9,  { 'background-color' => "#$styles->{'SEQ_CODONC1'}" } ],
+    cu  => [ 10, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}" } ],
+    sn  => [ 11, { 'background-color' => "#$styles->{'SEQ_SNP'}" } ],      
+    si  => [ 12, { 'background-color' => "#$styles->{'SEQ_SNPINSERT'}" } ],
+    sd  => [ 13, { 'background-color' => "#$styles->{'SEQ_SNPDELETE'}" } ],   
+    snt => [ 14, { 'background-color' => "#$styles->{'SEQ_SNP_TR'}" } ],
+    syn => [ 15, { 'background-color' => "#$styles->{'SEQ_SYN'}" } ],
+    snu => [ 16, { 'background-color' => "#$styles->{'SEQ_SNP_TR_UTR'}" } ],
+    siu => [ 17, { 'background-color' => "#$styles->{'SEQ_SNPINSERT_TR_UTR'}" } ],
+    sdu => [ 18, { 'background-color' => "#$styles->{'SEQ_SNPDELETE_TR_UTR'}" } ],
+    sf  => [ 19, { 'background-color' => "#$styles->{'SEQ_FRAMESHIFT'}" } ],
+    aa  => [ 20, { 'color' => "#$styles->{'SEQ_AMINOACID'}" } ]
+  );
+  
   foreach my $lines (@$sequence) {
     my ($row, $title, $previous_title, $new_line_title, $class, $previous_class, $new_line_class, $pre, $post);
     my ($count, $i);
@@ -1159,23 +1185,35 @@ sub build_sequence {
         $class = $seq->{'class'};
         chomp $class;
         
-        if ($config->{'maintain_colour'} && $previous_class =~ /[" ](e\w)[" ]/ && $class !~ /\s*(e\w)\s*/) {
+        if ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/ && $class !~ /\s*(e\w)\s*/) {
           $class .= " $1";
         }
-        
-        $class = qq{class="$class"};
-      } elsif ($config->{'maintain_colour'} && $previous_class =~ /[" ](e\w)[" ]/) {
-          $class = qq{class="$1"};
+      } elsif ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/) {
+          $class = $1;
       } else {
         $class = '';
       }
 
       $post .= $seq->{'post'};
       
+      my $style;
+      
+      if ($class) {
+        my %style_hash;
+        
+        foreach (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split / /, $class) {
+          my $st = $class_to_style{$_}->[1];
+          
+          map $style_hash{$_} = $st->{$_}, keys %$st;
+        }
+        
+        $style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
+      }
+
       if ($i == 0) {
-        $row .= "<span $class $title>";
+        $row .= "<span $style $title>";
       } elsif ($class ne $previous_class || $title ne $previous_title) {
-        $row .= "</span><span $class $title>";
+        $row .= "</span><span $style $title>";
       }
   
       $row .= $seq->{'letter'};
@@ -1186,8 +1224,24 @@ sub build_sequence {
       if ($count == $config->{'display_width'} || $i == scalar @$lines) {
         if ($i == $config->{'display_width'}) {
           $row = "$row</span>";
-        } else {        
-          $row = "<span $new_line_class $new_line_title>$row</span>";
+        } else {
+          my $new_line_style;
+          
+          if ($new_line_class eq $class) {
+            $new_line_style = $style;
+          } elsif ($new_line_class) {
+            my %style_hash;
+            
+            foreach (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split / /, $new_line_class) {
+              my $st = $class_to_style{$_}->[1];
+              
+              map $style_hash{$_} = $st->{$_}, keys %$st;
+            }
+            
+            $new_line_style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
+          }
+          
+          $row = "<span $new_line_style $new_line_title>$row</span>";
         }
         
         if ($config->{'comparison'}) {
