@@ -418,7 +418,7 @@ sub parse_row {
     } elsif( $format eq 'DAS' ) { 
 #      $current_key = $tab_del[2] if $current_key eq 'default';
       $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::DAS->new( \@tab_del ) ) 
-        if $self->filter($tab_del[4],$tab_del[5],$tab_del[6]);
+        if $self->filter($tab_del[8],$tab_del[10],$tab_del[12]);
     } else {
       my @ws_delim = split /\s+/, $row; 
       if( $format eq 'PSL' ) {
