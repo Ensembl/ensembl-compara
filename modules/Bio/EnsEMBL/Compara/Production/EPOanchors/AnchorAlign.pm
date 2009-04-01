@@ -101,6 +101,8 @@ sub dnafrag {
   my $self = shift;
   if (@_) {
     $self->{_dnafrag} = shift;
+  } elsif (!$self->{_dnafrag} and $self->{_dnafrag_id} and $self->{_adaptor}) {
+    $self->{_dnafrag} = $self->{_adaptor}->db->get_DnaFragAdaptor->fetch_by_dbID($self->{_dnafrag_id});
   }
   return $self->{_dnafrag};
 }
@@ -172,5 +174,15 @@ sub anchor_status {
   return $self->{_anchor_status};
 }
 
+sub seq {
+  my $self = shift;
+  return $self->{'_seq'} if ($self->{'_seq'});
+
+  my $seq = $self->dnafrag->slice()->subseq($self->{'_dnafrag_start'},
+      $self->{'_dnafrag_end'}, $self->{'_dnafrag_strand'});
+  $self->{'_seq'} = $seq;
+
+  return $self->{'_seq'};
+}
 
 1;
