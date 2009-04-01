@@ -113,7 +113,7 @@ sub features {
   my $html;
   
   my @common_fields = qw( seqname source feature start end score strand frame );
-  my @other_fields = qw( hid hstart hend genscan gene_id transcript_id exon_id gene_type );
+  my @other_fields = qw( hid hstart hend genscan gene_id transcript_id exon_id gene_type variation_name );
   
   my $delim = { 'gff' => "\t", 'csv' => ",", 'tab' => "\t" };
   
@@ -149,7 +149,7 @@ sub features {
   
   if ($params->{'variation'}) {
     foreach (@{$slice->get_all_VariationFeatures}) {
-      $html .= feature('variation', $options, $_, {});
+      $html .= feature('variation', $options, $_, { 'variation_name' => $_->variation_name });
     }
   }
   
@@ -245,7 +245,7 @@ sub feature {
   $strand ||= '.';
 
   my @results = ($name, $source, $tag, $start, $end, $score, $strand, $phase);
-
+  
   if ($options->{'format'} eq 'gff') {
     push (@results, join ("; ", map { defined $extra->{$_} ? "$_=$extra->{$_}" : () } @{$options->{'other'}}));
   } else {
