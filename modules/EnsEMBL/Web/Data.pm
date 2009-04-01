@@ -13,10 +13,13 @@ use Data::Dumper qw//;
 #----------------------------------------------------------------------
 # Our Class Data
 #----------------------------------------------------------------------
-__PACKAGE__->mk_classdata(data_fields      => {});
-__PACKAGE__->mk_classdata(queriable_fields => {});
-__PACKAGE__->mk_classdata(relations        => {});
-__PACKAGE__->mk_classdata(cache_tags       => {});
+__PACKAGE__->mk_classdata(data_fields       => {});
+__PACKAGE__->mk_classdata(queriable_fields  => {});
+__PACKAGE__->mk_classdata(relations         => {});
+__PACKAGE__->mk_classdata(hasa_relations    => {});
+__PACKAGE__->mk_classdata(hasmany_relations => {});
+__PACKAGE__->mk_classdata(tie_relations     => {});
+__PACKAGE__->mk_classdata(cache_tags        => {});
 __PACKAGE__->mk_classdata('__type');
 
 
@@ -224,14 +227,48 @@ sub dump_data {
 ##
 ###################################################################################################
 
+sub get_lookup_values {
+  ## Method for getting a standard set of identifying data 
+  ## for dropdown lists and similar usage
+  ## Needs to be defined in children
+  return [];
+}
+
+sub add_hasa_relations {
+  my $class = shift;
+  $class->hasa_relations({
+    %{ $class->hasa_relations },
+    @_,
+  });
+}
+sub add_hasmany_relations {
+  my $class = shift;
+  $class->hasmany_relations({
+    %{ $class->hasmany_relations },
+    @_,
+  });
+}
+sub add_tie_relations {
+  my $class = shift;
+  $class->tie_relations({
+    %{ $class->tie_relations },
+    @_,
+  });
+}
+*add_hasa_relation = \&add_hasa_relations;
+*add_hasmany_relation = \&add_hasmany_relations;
+*add_tie_relation = \&add_tie_relations;
 
 sub has_a {
   my $class    = shift;
   my $accessor = shift;
+  my ($relation_class) = @_;
   
   $accessor .= '_id';
   
+  $class->add_hasa_relation($accessor => $relation_class);
   $class->add_queriable_fields($accessor => 'int');
+
   return $class->SUPER::has_a($accessor => @_);
 }
 
@@ -270,7 +307,10 @@ sub has_many {
   
     my $real_accessor = '_'. $accessor;
     $class->SUPER::has_many($real_accessor => $relation_class);
-  
+ 
+    my $link_table = $relation_class->new;
+    $class->add_hasmany_relation($accessor => [$relation_class, $link_table->tie_relations->{$accessor}]);
+ 
     *{$class."::$accessor"} =
       sub {
         my $self = shift;
@@ -326,6 +366,7 @@ sub _type {
 sub tie_a {
   my $class = shift;
   my ($rel_obj, $rel_class) = @_;
+  $class->add_tie_relation($rel_obj => $rel_class);
   no strict 'refs';
   
   $class->has_a(@_);
