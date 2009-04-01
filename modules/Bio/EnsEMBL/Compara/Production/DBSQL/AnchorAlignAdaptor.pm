@@ -13,7 +13,7 @@ Jessica Severin : jessica@ebi.ac.uk
 =cut
 
 
-package Bio::EnsEMBL::Compara::DBSQL::AnchorAlignAdaptor;
+package Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor;
 
 use Data::Dumper;
 
@@ -48,7 +48,7 @@ sub store {
   my ($self, $anchor_align)  = @_;
 
   throw() unless($anchor_align);
-  throw() unless(UNIVERSAL::isa($anchor_align, 'Bio::EnsEMBL::Compara::Production::AnchorAlign'));
+  throw() unless(UNIVERSAL::isa($anchor_align, 'Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign'));
 
   my $query = qq{
   INSERT INTO anchor_align
@@ -214,6 +214,7 @@ sub fetch_anchors_by_genomedb_id {
   Returntype : hashref 
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub fetch_all_by_anchor_id_and_mlss_id {
@@ -485,7 +486,7 @@ sub fetch_all_filtered_anchors {
   Arg [1]    : int $dbID
   Example    :
   Description: Returns the AnchorAlign obejcts with this anchor_align_id
-  Returntype : Bio::EnsEMBL::Compara::Production::AnchorAlign object
+  Returntype : Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign object
   Exceptions :
   Caller     : general
 =cut
@@ -515,7 +516,7 @@ sub fetch_by_dbID {
   Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
   Example    :
   Description: Returns all the AnchorAlign obejcts for this MethodLinkSpeciesSet
-  Returntype : listref of Bio::EnsEMBL::Compara::Production::AnchorAlign objects
+  Returntype : listref of Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign objects
   Exceptions :
   Caller     : general
 
@@ -595,7 +596,7 @@ sub _objs_from_sth {
   while ($sth->fetch()) {
     my $this_anchor_align;
 
-    $this_anchor_align = Bio::EnsEMBL::Compara::Production::AnchorAlign->new();
+    $this_anchor_align = Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign->new();
 
     $this_anchor_align->adaptor($self);
     $this_anchor_align->dbID($column{'anchor_align_id'});

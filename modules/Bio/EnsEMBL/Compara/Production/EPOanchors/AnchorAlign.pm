@@ -1,4 +1,4 @@
-=head1 NAME - Bio::EnsEMBL::Compara::Production::AnchorAlign
+=head1 NAME - Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign
 
 =head1 SYNOPSIS
 
@@ -14,7 +14,7 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
-package Bio::EnsEMBL::Compara::Production::Anchors::AnchorAlign;
+package Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 
 use strict;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -171,5 +171,6 @@ sub anchor_status {
   }
   return $self->{_anchor_status};
 }
+
 
 1;
