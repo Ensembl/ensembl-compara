@@ -15,10 +15,20 @@ __PACKAGE__->add_queriable_fields(
   declaration => 'text',
   notes       => 'text',
   priority    => 'int',
-  status      => "enum('declared','handed_over','postponed')",
+  status      => "enum('declared','handed_over','postponed','cancelled')",
   news_done   => "enum('N','Y')",
-  news_category_id => 'int',
 );
+
+__PACKAGE__->add_fields(
+  team              => "enum('Compara','Core','Funcgen','Genebuild','Mart','Outreach','Variation','Web')",
+  assembly          => "enum('N','Y')",
+  gene_set          => "enum('N','Y')",
+  repeat_masking    => "enum('N','Y')",
+  stable_id_mapping => "enum('N','Y')",
+  affy_mapping      => "enum('N','Y')",
+  database          => "enum('new','patched')",
+);
+
 
 __PACKAGE__->columns(TEMP => 'category_name');
 

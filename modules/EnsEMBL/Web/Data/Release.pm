@@ -16,7 +16,8 @@ __PACKAGE__->add_queriable_fields(
   number  => 'varchar(5)',
   date    => 'date',
   archive => 'varchar(7)',
-  online  => "enum('N','Y')"
+  online  => "enum('N','Y')",
+  mart    => "enum('N','Y')"
 );
 
 __PACKAGE__->columns(TEMP => qw/full_date short_date shorter_date long_date/);

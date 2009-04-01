@@ -17,4 +17,17 @@ __PACKAGE__->add_queriable_fields(
 
 __PACKAGE__->has_many(news_items => 'EnsEMBL::Web::Data::NewsItem');
 
+sub get_lookup_values {
+  my $self = shift;
+  my $values;
+  my @categories = $self->find_all;
+
+  foreach my $cat (sort {$a->name cmp $b->name} @categories) {
+    push @$values, {'id' => $cat->id,
+                    'lookups' => {'name' => $cat->name},
+                    };
+  }
+  return $values;
+}
+
 1;
