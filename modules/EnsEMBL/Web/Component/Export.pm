@@ -24,7 +24,9 @@ sub export {
   $slice = $slice->invert if ($strand && $strand != $slice->strand);
   $slice = $slice->expand($flank5, $flank3) if ($flank5 || $flank3);
   
-  my $params = {};
+  my $format = $object->param('_format');
+  
+  my $params = { 'html_format' => (!$format || $format eq 'HTML') };
   map { $params->{$_} = 1 } $object->param('st');
   map { $params->{'misc_set'}->{$_} = 1 if $_ } $object->param('miscset');
   
@@ -104,7 +106,9 @@ sub fasta {
     }
   }
   
-  return $html ? "<pre>$html</pre>" : "No data available";
+  $html = "<pre>$html</pre>" if $html && $params->{'html_format'};
+  
+  return $html || "No data available";
 }
 
 sub features {
@@ -174,16 +178,20 @@ sub features {
     }
   }
   
-  $html = "<pre>$header$html</pre>" if $html;
+  if ($html) {
+    $html = "$header$html";
+    $html = "<pre>$html</pre>" if $params->{'html_format'};
+  }
   
   if ($params->{'misc_set'}) {    
     my $misc_sets = $object->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'misc_feature'}{'sets'};
-    my $f = $object->param('_format');
     my $table;
     
     $options->{'seq_region'} = $object->seq_region_name;
     $options->{'start'} = $object->seq_region_start;
     $options->{'end'} = $object->seq_region_end;
+    
+    $html .= "\r\n";
     
     foreach (sort { $misc_sets->{$a}->{'name'} cmp $misc_sets->{$b}->{'name'} } keys %{$params->{'misc_set'}}) {
       my $tmp = { 
@@ -191,12 +199,12 @@ sub features {
         'name' => $misc_sets->{$_}->{'name'}
       };
       
-      $table = $f eq 'Text' ? undef : new EnsEMBL::Web::Document::SpreadSheet;
+      $table = $params->{'html_format'} ? new EnsEMBL::Web::Document::SpreadSheet : undef;
       
       $html .= misc_set($object, $slice, { %$options, %$tmp }, $table);
     }
     
-    $table = $f eq 'Text' ? undef : new EnsEMBL::Web::Document::SpreadSheet;
+    $table = $params->{'html_format'} ? new EnsEMBL::Web::Document::SpreadSheet : undef;
     
     $html .= misc_set_genes($object, $slice, $options, $table);
   }
@@ -259,7 +267,9 @@ sub misc_set {
   my ($object, $slice, $options, $table) = @_;
   
   my @fields = ( 'SeqRegion', 'Start', 'End', 'Name', 'Well name', 'Sanger', 'EMBL Acc', 'FISH', 'Centre', 'State' ); 
-  my $header = "<h2>Features in set $options->{'name'} in Chromosome $options->{'seq_region'} $options->{'start'} - $options->{'end'}</h2>"; 
+  my $header = "Features in set $options->{'name'} in Chromosome $options->{'seq_region'} $options->{'start'} - $options->{'end'}"; 
+  $header = "<h2>$header</h2>" if $table;
+    
   my $db = $object->database('core');
   my @regions;
   my $adaptor;
@@ -313,7 +323,9 @@ sub misc_set_genes {
   my ($object, $slice, $options, $table) = @_;
   
   my @gene_fields = ( 'SeqRegion', 'Start', 'End', 'Ensembl ID', 'DB', 'Name' );
-  my $header = "<h2>Genes in Chromosome $options->{'seq_region'} $options->{'start'} - $options->{'end'}</h2>";
+  my $header = "Genes in Chromosome $options->{'seq_region'} $options->{'start'} - $options->{'end'}";
+  $header = "<h2>$header</h2>" if $table;
+  
   my $row;
   my $results;
   my $i = 0;
@@ -368,7 +380,10 @@ sub flat {
     $seq_dumper->attach_database('estgene', $estgene_db);
   }
   
-  return "<pre>" . $seq_dumper->dump($slice, $format) . "</pre>";
+  my $rtn = $seq_dumper->dump($slice, $format);
+  $rtn = "<pre>$rtn</pre>" if $params->{'html_format'};
+  
+  return $rtn;
 }
 
 sub export_file {
