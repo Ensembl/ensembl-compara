@@ -409,7 +409,7 @@ sub sr2slice {
 sub new {
   my $class = shift;
   my $data  = shift;
-warn "NEW: ",$data->{'my_config'};
+
   if(!$class) {
     warn( "EnsEMBL::GlyphSet::failed at: ".gmtime()." in /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}" );
     warn( "EnsEMBL::GlyphSet::failed with a call of new on an undefined value" );
