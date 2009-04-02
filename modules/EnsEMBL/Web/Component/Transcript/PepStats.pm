@@ -28,6 +28,7 @@ sub content {
       $stats_to_show .= sprintf("%s: %s<br />",$stat->name,$object->thousandify($stat->value));
   }
   my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
+  unless ($stats_to_show =~/^\w/){return;}
   $table->add_row('Statistics',
 		  "<p>$stats_to_show</p>",
 		  1 );
