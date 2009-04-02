@@ -273,7 +273,6 @@ sub render_normal {
       }
     }
     $y_offset -= $strand * ( ($self->_max_bump_row ) * ( $h + $gap + $label_h ) + 6 );
-warn "...", $self->_max_bump_row, " $h + $gap + $label_h ", "... $y_offset" ;
   }
   $self->errorTrack( "No features from '".$self->my_config('name')."' in this region" )
     unless( $features_drawn || $self->get_parameter( 'opt_empty_tracks')==0 );
@@ -387,7 +386,7 @@ $flag++;
         }
       }
     }
-warn ".... $feature_key $flag ...";
+    
     $y_offset -= $strand * ($h+2);# + ( $self->{'show_labels'} ? $label_h+2 : 0 ) ) if $flag;
   }
   $self->errorTrack( "No ".$self->my_config('name')." features in this region" )
