@@ -135,7 +135,7 @@ sub render_normal {
     my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, 'X', '', 'ptsize' => $fontsize, 'font' => $fontname );
     $label_h = $th;
   }
-  warn "LABEL HEIGHT.... $label_h";
+  
   foreach my $feature_key ( $strand < 0 ? sort keys %features : reverse sort keys %features ) {
     $self->_init_bump( undef, $dep );
     my %id             = ();
