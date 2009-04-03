@@ -95,8 +95,11 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'tree_scale'} = 30;
+  $self->{'tree_scale'} = 1;
   $self->{'store_homologies'} = 1;
+  $self->{'max_gene_count'} = 200;
+  $self->{all_between} = 0;
+  $self->{no_between} = 0.25;
 
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -109,7 +112,6 @@ sub fetch_input {
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
-  $self->check_job_fail_options;
 
   if($self->{analysis_data_id}) {
     my $analysis_data_id = $self->{analysis_data_id};
@@ -121,8 +123,10 @@ sub fetch_input {
 
   my $starttime = time();
   $self->{'treeDBA'} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{homologyDBA} = $self->{'comparaDBA'}->get_HomologyAdaptor;
   $self->{'protein_tree'} =  $self->{'treeDBA'}->
          fetch_tree_at_node_id($self->{'protein_tree_id'});
+  $self->check_job_fail_options;
 
   if($self->debug) {
     $self->{'protein_tree'}->print_tree($self->{'tree_scale'});
@@ -133,7 +137,7 @@ sub fetch_input {
   }
   $self->delete_old_homologies;
   $self->delete_old_orthotree_tags;
-  $self->load_species_tree();
+  $self->load_species_tree;
 
   return 1;
 }
@@ -179,20 +183,29 @@ sub check_job_fail_options
 {
   my $self = shift;
 
-  if ($self->input_job->retry_count == 1) {
-    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 300 && !defined($self->worker->{HIGHMEM})) {
-      $self->input_job->update_status('HIGHMEM');
-      $self->DESTROY;
-      throw("OrthoTree job too big: try something else and FAIL it");
-    }
+  if ( $self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'} ) {
+    $self->dataflow_output_id($self->input_id, 2);
+    $self->input_job->update_status('FAILED');
+    $self->{'protein_tree'}->release_tree;
+    $self->{'protein_tree'} = undef;
+    throw("OrthoTree : cluster size over threshold and FAIL it");
   }
 
-  if($self->input_job->retry_count >= 6) {
-    # $self->dataflow_output_id($self->input_id, 2);
+  if($self->input_job->retry_count >= 2) {
+    # Send to QuickTreeBreak
+    $self->dataflow_output_id($self->input_id, 2);
     $self->input_job->update_status('FAILED');
 
     $self->DESTROY;
     throw("OrthoTree job failed >=3 times: try something else and FAIL it");
+  }
+
+  if ($self->input_job->retry_count >= 1) {
+    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 400 && !defined($self->worker->{HIGHMEM})) {
+      $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
+      $self->DESTROY;
+      throw("OrthoTree job too big: try something else and FAIL it");
+    }
   }
 }
 
@@ -236,7 +249,7 @@ sub get_params {
     }
   }
 
-  foreach my $key (qw[cdna species_tree_file protein_tree_id use_genomedb_id analysis_data_id]) {
+  foreach my $key (qw[cdna species_tree_file protein_tree_id use_genomedb_id max_gene_count analysis_data_id]) {
     my $value = $params->{$key};
     $self->{$key} = $value if defined $value;
   }
@@ -253,19 +266,20 @@ sub print_params {
 }
 
 
-sub run_analysis
-{
+sub run_analysis {
   my $self = shift;
 
   my $starttime = time()*1000;
   my $tmp_time = time();
   my $tree = $self->{'protein_tree'};
 
+  print "Getting all leaves\n";
   my @all_protein_leaves = @{$tree->get_all_leaves};
   my $tree_node_id = $tree->node_id;
 
   #precalculate the ancestor species_hash (caches into the metadata of
   #nodes) also augments the Duplication tagging
+  printf("Calculating ancestor species hash\n") if ($self->debug);
   $self->get_ancestor_species_hash($tree);
 
   if($self->debug) {
@@ -282,7 +296,7 @@ sub run_analysis
   $tmp_time = time();
   printf("build fully linked graph\n") if($self->debug);
   my @genepairlinks;
-
+  my $graphcount = 0;
   while (my $protein1 = shift @all_protein_leaves) {
     foreach my $protein2 (@all_protein_leaves) {
       my $ancestor = $protein1->find_first_shared_ancestor($protein2);
@@ -302,6 +316,7 @@ sub run_analysis
       $genepairlink->add_tag("tree_node_id", $tree_node_id);
       push @genepairlinks, $genepairlink;
     }
+    print STDERR "build graph $graphcount\n" if ($graphcount++ % 10 == 0);
   }
   printf("%1.3f secs build links and features\n", time()-$tmp_time) 
     if($self->debug>1);
@@ -319,6 +334,7 @@ sub run_analysis
 
   #analyze every gene pair (genepairlink) to get its classification
   printf("analyze links\n") if($self->debug);
+  printf("%d links\n", scalar(@genepairlinks)) if ($self->debug);
   $tmp_time = time();
   $self->{'old_homology_count'} = 0;
   $self->{'orthotree_homology_counts'} = {};
@@ -344,8 +360,8 @@ sub run_analysis
         );
     }
   }
-
   $self->{'homology_links'} = \@sorted_genepairlinks;
+  $DB::single=1;1;
   return undef;
 }
 
@@ -447,10 +463,10 @@ sub load_species_tree {
     ? $self->load_species_tree_from_file
       : $self->load_species_tree_from_tax
 	;
-  $self->{taxon_tree} = $tree;
-  
+  $self->{'taxon_tree'} = $tree;
+
   if($self->debug) {
-    $tree->print_tree(10);
+    $tree->print_tree(1);
     printf("%1.3f secs for load species tree\n", time()-$starttime);
   }
 }
@@ -672,7 +688,7 @@ sub genepairlink_fetch_homology
 
   my $sql = "select homology.homology_id from homology ".
             "join homology_member hm1 using(homology_id) ".
-            "join homology_member hm2 using (homology_id ) " .
+            "join homology_member hm2 using (homology_id) " .
             "where hm1.peptide_member_id=? and hm2.peptide_member_id=?";
 
   my $sth = $self->dbc->prepare($sql);
@@ -698,23 +714,29 @@ sub delete_old_orthotree_tags
 
   print "deleting old orthotree tags\n" if ($self->debug);
   my @node_ids;
-  my $left_index  = $self->{'protein_tree'}->left_index;
-  my $right_index = $self->{'protein_tree'}->right_index;
-  my $tree_root_node_id = $self->{'protein_tree'}->node_id;
-  # Include the root_id as well as the rest of the nodes within the tree
-  push @node_ids, $tree_root_node_id;
-  my $sql = "select ptn.node_id from protein_tree_node ptn where ptn.left_index>$left_index and ptn.right_index<$right_index";
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute;
-  while (my $aref = $sth->fetchrow_arrayref) {
-    my ($node_id) = @$aref;
-    push @node_ids, $node_id;
+
+#   # Old method -- too slow
+#   my $left_index  = $self->{'protein_tree'}->left_index;
+#   my $right_index = $self->{'protein_tree'}->right_index;
+#   my $tree_root_node_id = $self->{'protein_tree'}->node_id;
+#   # Include the root_id as well as the rest of the nodes within the tree
+#   push @node_ids, $tree_root_node_id;
+#   my $sql = "select ptn.node_id from protein_tree_node ptn where ptn.left_index>$left_index and ptn.right_index<$right_index";
+#   my $sth = $self->dbc->prepare($sql);
+#   $sth->execute;
+#   while (my $aref = $sth->fetchrow_arrayref) {
+#     my ($node_id) = @$aref;
+#     push @node_ids, $node_id;
+#   }
+
+  foreach my $node ($self->{'protein_tree'}->get_all_subnodes) {
+    push @node_ids, $node->node_id;
   }
 
   my @list_ids;
   foreach my $id (@node_ids) {
     push @list_ids, $id;
-    if (scalar @list_ids == 20000) {
+    if (scalar @list_ids == 2000) {
       my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
       my $sth = $self->dbc->prepare($sql);
       $sth->execute;
@@ -722,7 +744,7 @@ sub delete_old_orthotree_tags
       @list_ids = ();
     }
   }
-  
+
   if (scalar @list_ids) {
     my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
     my $sth = $self->dbc->prepare($sql);
@@ -741,46 +763,60 @@ sub delete_old_homologies
   return undef unless ($self->input_job->retry_count > 0);
 
   print "deleting old homologies\n" if ($self->debug);
-  my %homology_ids;
-  my $sql = "select homology_id from homology_member where member_id = ?";
-  my $sth = $self->dbc->prepare($sql);
-  
-  foreach my $leaf (@{$self->{'protein_tree'}->get_all_leaves}) {
-    $sth->execute($leaf->gene_member->member_id);
-    while (my $aref = $sth->fetchrow_arrayref) {
-      my ($homology_id) = @$aref;
-      $homology_ids{$homology_id} = 1;
-    }
-  }
 
-  my @list_ids;
-  foreach my $id (keys %homology_ids) {
-    push @list_ids, $id;
-    if (scalar @list_ids == 20000) {
-      my $sql1 = "delete from homology where homology_id in (".join(",",@list_ids).")";
-      my $sql2 = "delete from homology_member where homology_id in (".join(",",@list_ids).")";
-      my $sth1 = $self->dbc->prepare($sql1);
-      my $sth2 = $self->dbc->prepare($sql2);
-      $sth1->execute;
-      $sth2->execute;
-      $sth1->finish;
-      $sth2->finish;
-      @list_ids = ();
-    }
-  }
-  
-  if (scalar @list_ids) {
-    my $sql1 = "delete from homology where homology_id in (".join(",",@list_ids).")";
-    my $sql2 = "delete from homology_member where homology_id in (".join(",",@list_ids).")";
-    my $sth1 = $self->dbc->prepare($sql1);
-    my $sth2 = $self->dbc->prepare($sql2);
-    $sth1->execute;
-    $sth2->execute;
-    $sth1->finish;
-    $sth2->finish;
-    @list_ids = ();
-  }
+  # New method all in one go -- requires key on tree_node_id
+  my $delete_time = time();
+  my $tree_node_id = $self->{protein_tree}->node_id;
+  my $sql1 = "delete h.*, hm.* from homology h, homology_member hm where h.homology_id=hm.homology_id and h.tree_node_id=$tree_node_id";
+  my $sth1 = $self->dbc->prepare($sql1);
+  $sth1->execute;
+  $sth1->finish;
+  printf("%1.3f secs build links and features\n", time()-$delete_time);
 
+#   # Old method one by one
+#   my %homology_ids;
+#   my $sql = "select homology_id from homology_member where member_id = ?";
+#   my $sth = $self->dbc->prepare($sql);
+
+#   foreach my $leaf (@{$self->{'protein_tree'}->get_all_leaves}) {
+#     $sth->execute($leaf->gene_member->member_id);
+#     while (my $aref = $sth->fetchrow_arrayref) {
+#       my ($homology_id) = @$aref;
+#       $homology_ids{$homology_id} = 1;
+#     }
+#   }
+
+#   my @list_ids;
+#   foreach my $id (keys %homology_ids) {
+#     my $delete_time = time();
+#     push @list_ids, $id;
+#     if (scalar @list_ids == 2000) {
+#       my $sql1 = "delete from homology where homology_id in (".join(",",@list_ids).")";
+#       my $sql2 = "delete from homology_member where homology_id in (".join(",",@list_ids).")";
+#       my $sth1 = $self->dbc->prepare($sql1);
+#       my $sth2 = $self->dbc->prepare($sql2);
+#       $sth1->execute;
+#       $sth2->execute;
+#       $sth1->finish;
+#       $sth2->finish;
+#       @list_ids = ();
+#     }
+#     printf("%1.3f secs build links and features\n", time()-$delete_time);
+#   }
+
+#   if (scalar @list_ids) {
+#     my $sql1 = "delete from homology where homology_id in (".join(",",@list_ids).")";
+#     my $sql2 = "delete from homology_member where homology_id in (".join(",",@list_ids).")";
+#     my $sth1 = $self->dbc->prepare($sql1);
+#     my $sth2 = $self->dbc->prepare($sql2);
+#     $sth1->execute;
+#     $sth2->execute;
+#     $sth1->finish;
+#     $sth2->finish;
+#     @list_ids = ();
+#   }
+
+  $self->{old_homologies_deleted} = 1;
   return undef;
 }
 
@@ -797,7 +833,7 @@ sub delete_old_homologies_old
                        ($member1->gene_member, $member2->gene_member, 'ENSEMBL_ORTHOLOGUES')};
   push @homologies, @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
                         ($member1->gene_member, $member2->gene_member, 'ENSEMBL_PARALOGUES')};
-  
+
   my $sql1 = "DELETE FROM homology WHERE homology_id=?";
   my $sth1 = $self->dbc->prepare($sql1);
   my $sql2 = "DELETE FROM homology_member WHERE homology_id=?";
@@ -848,6 +884,7 @@ sub genepairlink_check_dups
     my $sis_value = $tnode->get_tagvalue("duplication_confidence_score");
     $dup_value = 0 unless (defined($dup_value) && $dup_value ne '');
     $sis_value = 0 unless (defined($sis_value) && $sis_value ne '');
+    $genepairlink->{duplication_confidence_score} = $sis_value;
     unless ($sis_value eq '0') {
       if($dup_value > 0) {
         $has_dup = 1;
@@ -933,6 +970,7 @@ sub inspecies_paralog_test
   # Duplication_confidence_score
   if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
     $self->duplication_confidence_score($ancestor);
+    $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
   }
   return 1;
 }
@@ -984,6 +1022,7 @@ sub ancient_residual_test
     # Duplication_confidence_score
     if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
       $self->duplication_confidence_score($ancestor);
+      $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
     }
   } else {
 #    $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
@@ -1067,6 +1106,7 @@ sub outspecies_test
       # Duplication_confidence_score
       if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
         $self->duplication_confidence_score($ancestor);
+       $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
       }
     } else {
 #      $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
@@ -1087,10 +1127,18 @@ sub outspecies_test
 sub store_homologies
 {
   my $self = shift;
-
+  my $a=1;
+  my $hlinkscount = 0;
   foreach my $genepairlink (@{$self->{'homology_links'}}) {
     $self->display_link_analysis($genepairlink) if($self->debug>2);
+#     unless (defined($self->{all_between})) {
+    my $type = $genepairlink->get_tagvalue("orthotree_type");
+    my $dcs = $genepairlink->{duplication_confidence_score};
+    $DB::single=$a;1;
+    next if ($type eq 'between_species_paralog' && $dcs > $self->{no_between});
+#     }
     $self->store_gene_link_as_homology($genepairlink);
+    print STDERR "homology links $hlinkscount\n" if ($hlinkscount++ % 500 == 0);
   }
 
   my $counts_str = $self->encode_hash($self->{'orthotree_homology_counts'});
@@ -1124,7 +1172,6 @@ sub store_homologies
 #     my $taxon_id = $self->{'protein_tree'}->get_tagvalue("taxon_id");
 #     my $taxon_name = $self->{'protein_tree'}->get_tagvalue("taxon_name");
 #     #print "ID: $taxon_id  $taxon_name\n";
-#     $DB::single=1;1;
 #     my $potential_species = scalar @{$taxon_tree->find_node_by_node_id($taxon_id)->get_all_leaves};
 #     if ($potential_species > 1) {
 #       my %species;
@@ -1143,7 +1190,7 @@ sub store_homologies
 #   }
 #   $self->{'protein_tree'}->store_tag("tree_species_sampling",$tree_species_sampling);
 #   $self->{'protein_tree'}->store_tag("tree_species_num",$tree_species_num);
-
+  $DB::single=1;1;
   return undef;
 }
 
@@ -1219,9 +1266,43 @@ sub store_gene_link_as_homology
 
   $homology->add_Member_Attribute([$protein2->gene_member, $attribute]);
 
-  unless ($self->{'_readonly'}) {
-    $self->{'comparaDBA'}->get_HomologyAdaptor()->store($homology) 
-      if($self->{'store_homologies'});
+  ## Check if it has already been stored, in which case we dont need to store again
+  my $matching_homology = 0;
+  if ($self->input_job->retry_count > 0 && !defined($self->{old_homologies_deleted})) {
+    my $member_id1 = $protein1->gene_member->member_id;
+    my $member_id2 = $protein2->gene_member->member_id;
+    if ($member_id1 == $member_id2) {
+      my $tree_id = $self->{protein_tree}->node_id;
+      my $pmember_id1 = $protein1->member_id; my $pstable_id1 = $protein1->stable_id;
+      my $pmember_id2 = $protein2->member_id; my $pstable_id2 = $protein2->stable_id;
+      $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
+    }
+    my $stored_homology = @{$self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2)}[0];
+    if (defined($stored_homology)) {
+      $matching_homology = 1;
+      $matching_homology = 0 if ($stored_homology->description ne $homology->description);
+      $matching_homology = 0 if ($stored_homology->subtype ne $homology->subtype);
+      $matching_homology = 0 if ($stored_homology->ancestor_node_id ne $homology->ancestor_node_id);
+      $matching_homology = 0 if ($stored_homology->tree_node_id ne $homology->tree_node_id);
+      $matching_homology = 0 if ($stored_homology->method_link_type ne $homology->method_link_type);
+      $matching_homology = 0 if ($stored_homology->method_link_species_set->dbID ne $homology->method_link_species_set->dbID);
+    }
+
+    # Delete old one, then proceed to store new one
+    if (defined($stored_homology) && (0 == $matching_homology)) {
+      my $homology_id = $stored_homology->dbID;
+      my $sql1 = "delete from homology where homology_id=$homology_id";
+      my $sql2 = "delete from homology_member where homology_id=$homology_id";
+      my $sth1 = $self->dbc->prepare($sql1);
+      my $sth2 = $self->dbc->prepare($sql2);
+      $sth1->execute;
+      $sth2->execute;
+      $sth1->finish;
+      $sth2->finish;
+    }
+  }
+  if($self->{'store_homologies'} && 0 == $matching_homology) {
+    $self->{'homologyDBA'}->store($homology);
   }
 
   my $stable_id;
@@ -1234,10 +1315,10 @@ sub store_gene_link_as_homology
   $homology->stable_id($stable_id);
   #TODO: update the stable_id of the homology
 
-  if($self->debug) {
-    print("store: ");
-    $homology->print_homology;
-  }
+#   if($self->debug) {
+#     print("store: ");
+#     $homology->print_homology;
+#   }
 
   return undef;
 }
@@ -1323,6 +1404,7 @@ sub _treefam_genepairlink_stats
   #analyze every gene pair (genepairlink) to get its classification
   printf("analyze links\n") if($self->debug);
   $tmp_time = time();
+  my $count = 0;
   foreach my $genepairlink (@sorted_genepairlinks) {
     my ($protein1, $protein2) = $genepairlink->get_nodes;
     #run feature detectors: precalcs and caches into metadata
@@ -1371,6 +1453,7 @@ sub _treefam_genepairlink_stats
       $genepairlink->get_tagvalue('ancestor')->get_tagvalue('Duplication_alg') || 0;
     $self->{_gpresults} .= "$tree_type,$tree_id,$stids[0]"."_"."$stids[1]".","."$type,$subtype,$dup,$dup_alg\n";
     $self->{_homologytable} .= "$stids[0]".","."$stids[1]".","."$type,$subtype\n";
+    print STDERR "analyze links $count\n" if ($count % 500 == 0);
   }
   printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) 
     if($self->debug > 1);
