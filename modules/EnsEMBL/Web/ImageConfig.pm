@@ -120,6 +120,9 @@ sub load_user_vert_tracks {
 ## at a much smaller scale. We also need to distinguish between
 ## density features, rendered as separate tracks, and pointers,
 ## which are part of the karyotype track
+
+## NB. SEE E::W::Document::Image for old density track code (sub add_tracks)
+
   my( $self, $session ) = @_;
   my $menu = $self->get_node('user_data');
   return unless $menu;
