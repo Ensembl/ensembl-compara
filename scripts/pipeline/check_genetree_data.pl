@@ -78,46 +78,47 @@ my ($sql, $sth);
 
 if ($doit) {
 
-# Check data consistency between gene_count and number of homology entries
-##########################################################################
+# # Check data consistency between gene_count and number of homology entries
+# ##########################################################################
 
-  print "# Check data consistency between gene_count and number of homology entries\n";
+#   print "# Check data consistency between gene_count and number of homology entries\n";
 
-  $sql = "select node_id,value,(value*(value-1))/2 from protein_tree_tag where tag='gene_count'";
-  
-  $sth = $dba->dbc->prepare($sql);
-  $sth->execute;
-  
-  my $this_count = sprintf("%05d",1);
-  while (my $aref = $sth->fetchrow_arrayref) {
-    my ($node_id, $value, $homology_count) = @$aref;
-    my $sql2 = "select count(*) from homology where tree_node_id=$node_id";
-    my $sth2 = $dba->dbc->prepare($sql2);
-    print STDERR "## Checking $node_id / gene_count = $value / $homology_count / [$this_count]\n";
-    $this_count = sprintf("%05d",$this_count+1);
-    $sth2->execute;
-    my $count = $sth2->fetchrow_array;
-    if ($count !=0 && $count != $homology_count) {
-      print STDERR "ERROR: tree $node_id (gene_count = $value) gene_count != homologies : should have $homology_count homologies instead of $count\n";
-      print STDERR "ERROR: USED SQL : $sql\n                  $sql2\n";
-    }
-    $sth2->finish;
+#   $sql = "select node_id,value,(value*(value-1))/2 from protein_tree_tag where tag='gene_count'";
 
-    my $sql3 = "select count(*) from homology h, homology_member hm where h.homology_id=hm.homology_id and h.tree_node_id=$node_id";
-    my $sth3 = $dba->dbc->prepare($sql3);
-    $sth3->execute;
-    $count = $sth3->fetchrow_array;
-    if ($count !=0 && $count != 2*$homology_count) {
-      print STDERR "ERROR: tree $node_id (gene_count = $value) gene_count != homology_member : should have $homology_count homologies instead of $count\n";
-      print STDERR "ERROR: USED SQL : $sql\n                  $sql3\n";
-    }
-    $sth3->finish;
-  }
+#   $sth = $dba->dbc->prepare($sql);
+#   $sth->execute;
 
-  $sth->finish;
+#   my $this_count = sprintf("%05d",1);
+#   while (my $aref = $sth->fetchrow_arrayref) {
+#     my ($node_id, $value, $homology_count) = @$aref;
+#     my $sql2 = "select count(*) from homology where tree_node_id=$node_id";
+#     my $sth2 = $dba->dbc->prepare($sql2);
+#     print STDERR "## Checking $node_id / gene_count = $value / $homology_count / [$this_count]\n";
+#     $this_count = sprintf("%05d",$this_count+1);
+#     $sth2->execute;
+#     my $count = $sth2->fetchrow_array;
+#     if ($count !=0 && $count != $homology_count) {
+#       print STDERR "ERROR: tree $node_id (gene_count = $value) gene_count != homologies : should have $homology_count homologies instead of $count\n";
+#       print STDERR "ERROR: USED SQL : $sql\n                  $sql2\n";
+#     }
+#     $sth2->finish;
+
+#     my $sql3 = "select count(*) from homology h, homology_member hm where h.homology_id=hm.homology_id and h.tree_node_id=$node_id";
+#     my $sth3 = $dba->dbc->prepare($sql3);
+#     $sth3->execute;
+#     $count = $sth3->fetchrow_array;
+#     if ($count !=0 && $count != 2*$homology_count) {
+#       print STDERR "ERROR: tree $node_id (gene_count = $value) gene_count != homology_member : should have $homology_count homologies instead of $count\n";
+#       print STDERR "ERROR: USED SQL : $sql\n                  $sql3\n";
+#     }
+#     $sth3->finish;
+#   }
+
+#   $sth->finish;
 
 # Check for dangling internal nodes that have no children
 ######################################################
+print "# Check for dangling internal nodes that have no children\n";
 
   $sql = "select count(*) from protein_tree_node n1 left join protein_tree_node n2 on n1.node_id=n2.parent_id where n2.parent_id is NULL and n1.right_index-n1.left_index > 1";
   
@@ -139,6 +140,7 @@ if ($doit) {
 
 # Check data consistency between pt* tables on node_id
 ######################################################
+print "# Check data consistency between pt* tables on node_id\n";
 
   $sql = "select count(*) from protein_tree_member ptm left join protein_tree_node ptn on ptm.node_id=ptn.node_id where ptn.node_id is NULL";
   
@@ -176,8 +178,9 @@ if ($doit) {
   
   $sth->finish;
 
-# check for unique member presence in ptm
+# Check for unique member presence in ptm
 #########################################
+print "# Check for unique member presence in ptm\n";
 
   $sql = "select member_id from protein_tree_member group by member_id having count(*)>1";
   
@@ -223,8 +226,10 @@ if ($doit) {
 ##   
 ## 
 
-# check data consistency between pt_node and homology with node_id
+# Check data consistency between pt_node and homology with node_id
 ##################################################################
+print "# Check data consistency between pt_node and homology with node_id\n";
+
 
   $sql = "select count(*) from homology h left join protein_tree_node ptn on h.ancestor_node_id=ptn.node_id where ptn.node_id is NULL";
   
@@ -246,14 +251,44 @@ if ($doit) {
 
 } # end of if ($doit)
 
-# check that one2one genes are not involved in any other orthology
+# Check for homology has no duplicates
+######################################
+print "# Check for homology has no duplicates\n";
+
+my $mlsses;
+my $mlssa;
+
+push @{$mlsses},@{$mlssa->fetch_all_by_method_link_type('ENSEMBL_PARALOGUES')};
+
+$sql = "select hm1.member_id,hm2.member_id,h.method_link_species_set_id from homology_member hm1, homology_member hm2, homology h where h.homology_id=hm1.homology_id and hm1.homology_id=hm2.homology_id and hm1.member_id<hm2.member_id and h.method_link_species_set_id=? group by hm1.member_id,hm2.member_id having count(*)>1";
+
+$sth = $dba->dbc->prepare($sql);
+
+while (my $mlss = shift @$mlsses) {
+  # If no duplicate, each select should return an empty row;
+  $sth->execute($mlss->dbID);
+  my $ok = 1;
+  while (my $aref = $sth->fetchrow_arrayref) {
+    my ($member_id1, $member_id2,$mlss_id) = @$aref;
+    print STDERR "ERROR: some homology duplicates in method_link_species_set_id=$mlss_id!\n";
+    print STDERR "ERROR: USED SQL : $sql\n";
+    $ok = 0;
+    last;
+  }
+  print "PASSED: no homology duplicates in method_link_species_set_id=".$mlss->dbID."\n" if ($ok);
+}
+
+$sth->finish;
+
+# Check that one2one genes are not involved in any other orthology
 # (one2many or many2many)
 # check to be done by method_link_species_set with method_link_type
 # ENSEMBL_ORTHOLOGUES
 ##################################################################
+print "# Check that one2one genes are not involved in any other orthology\n";
 
-my $mlssa = $dba->get_MethodLinkSpeciesSetAdaptor;
-my $mlsses = $mlssa->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
+$mlssa = $dba->get_MethodLinkSpeciesSetAdaptor;
+$mlsses = $mlssa->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
 
 if ($doit) {
 
@@ -276,30 +311,6 @@ while (my $mlss = shift @$mlsses) {
   }
   # print "PASSED: [apparent_]one2one_ortholog are ok in method_link_species_set_id=".$mlss->dbID."\n" if ($ok);
   print "PASSED: one2one_ortholog are ok in method_link_species_set_id=".$mlss->dbID."\n" if ($ok);
-}
-
-$sth->finish;
-# check for homology has no duplicates
-######################################
-
-push @{$mlsses},@{$mlssa->fetch_all_by_method_link_type('ENSEMBL_PARALOGUES')};
-
-$sql = "select hm1.member_id,hm2.member_id,h.method_link_species_set_id from homology_member hm1, homology_member hm2, homology h where h.homology_id=hm1.homology_id and hm1.homology_id=hm2.homology_id and hm1.member_id<hm2.member_id and h.method_link_species_set_id=? group by hm1.member_id,hm2.member_id having count(*)>1";
-
-$sth = $dba->dbc->prepare($sql);
-
-while (my $mlss = shift @$mlsses) {
-  # If no duplicate, each select should return an empty row;
-  $sth->execute($mlss->dbID);
-  my $ok = 1;
-  while (my $aref = $sth->fetchrow_arrayref) {
-    my ($member_id1, $member_id2,$mlss_id) = @$aref;
-    print STDERR "ERROR: some homology duplicates in method_link_species_set_id=$mlss_id!\n";
-    print STDERR "ERROR: USED SQL : $sql\n";
-    $ok = 0;
-    last;
-  }
-  print "PASSED: no homology duplicates in method_link_species_set_id=".$mlss->dbID."\n" if ($ok);
 }
 
 $sth->finish;
