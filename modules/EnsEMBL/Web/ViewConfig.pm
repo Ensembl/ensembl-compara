@@ -3,8 +3,8 @@ package EnsEMBL::Web::ViewConfig;
 use strict;
 use Data::Dumper;
 use EnsEMBL::Web::Form;
-
 use CGI qw(escape unescape);
+
 sub new {
   my($class,$type,$action,$adaptor) = @_;
 
@@ -77,7 +77,9 @@ sub add_image_configs { ## Value indidates that the track can be configured for 
   foreach( keys %$hash_ref ) {
     $self->{_image_config_names}{$_} = $hash_ref->{$_};
     $self->can_upload = 1 if $hash_ref->{$_} eq 'das';
-    $self->has_images(1);
+    if ($hash_ref->{$_} ne 'das' && $hash_ref->{$_} !~ /^V/) {
+      $self->has_images(1);
+    }
   }
 }
 
