@@ -209,7 +209,9 @@ sub cdna_alignment_string {
     my $start = 0;
     my $cdna_align_string = '';
 
-    foreach my $pep (split(//, $self->alignment_string)) {
+    # foreach my $pep (split(//, $self->alignment_string)) { # Speed up below
+    my $alignment_string = $self->alignment_string;
+    foreach my $pep (unpack("A1" x length($alignment_string), $alignment_string)) {
       if($pep eq '-') {
         $cdna_align_string .= '--- ';
       } else {
