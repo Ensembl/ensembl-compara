@@ -30,7 +30,7 @@ sub content {
   my $current_species = $object->data_species;
 
   # URL-based section
-  $form->add_notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can <a href="/$current_species/UserData/Upload?$referer" class="modal_link">upload files</a> to $sitename (only suitable for small, single-species datasets).)});
+  $form->add_notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can <a href="/$current_species/UserData/Upload?$referer" class="modal_link">upload files</a> to $sitename (only suitable for small, single-species datasets).<br /><br />Note also that large files will be parsed into density tracks to avoid overloading our system; if you wish to examine an area in detail, you should attach another file with a more limited set of features.)});
 
   $form->add_element('type'  => 'String',
                      'name'  => 'url',
