@@ -12,17 +12,14 @@ sub init {
     'title'         => 'Karyotype panel',
     'label'         => 'below',     # margin
     'band_labels'   => 'off',
-    'image_height'  => 200,
-    'image_width'   => 225,
     'top_margin'    => 5,
     'band_links'    => 'no',
-    'rows'          => 2,
     'all_chromosomes' => 'yes'
   });
 
   $self->create_menus( 
     'ideogram' => 'Ideogram', # N.B. Karyotype not currently configurable
-    #'user_data'   => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
+    'user_data'  => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
    );
 
   $self->add_tracks( 'ideogram',
@@ -37,6 +34,7 @@ sub init {
     } ],
     [ 'drag_right', '', 'Vdraggable', { 'display' => 'normal', 'part' => 1, 'menu' => 'no' } ],
   );
+
 }
 
 1;
