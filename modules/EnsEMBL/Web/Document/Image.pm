@@ -52,41 +52,42 @@ sub set_extra {
 
                                                                                 
 sub karyotype {
-  my( $self, $object, $highs, $config ) = @_;
+  my( $self, $object, $highs, $config_name ) = @_;
   my @highlights = ref($highs) eq 'ARRAY' ? @$highs : ($highs);
-  
-  ## Obsolete code, remove
-  #  if( $self->cacheable eq 'yes' ) {
-  #    my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
-  #    $image->{'border'} = 1;
-  #    $image->set_cache_filename( $self->image_type, $self->image_name );
-  #    return if -e $image->filename."png" && -f $image->filename."png";
-  #  }
   
   $config ||= 'Vkaryotype';
   my $chr_name;
-  my $wuc = $object->image_config_hash( $config );
+  my $image_config  = $object->get_imageconfig( $config_name );
+  my $view_config   = $object->get_viewconfig;
     
   # set some dimensions based on number and size of chromosomes    
-  if( $wuc->get_parameter('all_chromosomes') eq 'yes' ) {
+  my $chr_length = $view_config->get('chr_length') || 200;
+  my $total_length = $chr_length + 25;
+  if( $image_config->get_parameter('all_chromosomes') eq 'yes' ) {
     $chr_name = 'ALL';
-    $wuc->set_parameters({ 
+    my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
+	  my $rows = $view_config->get('rows') || ceil($total_chrs / 18 );
+
+    $image_config->set_parameters({ 
       'container_width' => $object->species_defs->MAX_CHR_LENGTH,
-      'slice_number'    => '0|1'
+      'rows'            => $rows,
     });
 
-    #$wuc->container_width( 300000000 );
-    my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
-	  $wuc->{'_rows'} = $object->param('rows') || ceil($total_chrs / 18 );
   } 
   else {
     $chr_name = $object->seq_region_name;
-    $wuc->set_parameters({
+    $image_config->set_parameters({
       'container_width' => $object->seq_region_length,
-      'slice_number'    => '0|1'
+      'rows'            => 1,
     });
-    $wuc->{'_rows'} = 1;
   }
+
+  ## Add common parameters
+  $image_config->set_parameters({
+    'slice_number'  => '0|1',
+    'image_height'  => $chr_length,
+    'image_width'   => $total_length,
+  });
 
   if ($object->param('aggregate_colour')) {
     $wuc->{'_aggregate_colour'} = $object->param('aggregate_colour');
@@ -104,7 +105,7 @@ sub karyotype {
 
   # create the container object and add it to the image
   $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer(
-    { 'sa'=>$sa, 'ka'=>$ka, 'da'=>$da, 'chr'=>$chr_name }, $wuc, \@highlights
+    { 'sa'=>$sa, 'ka'=>$ka, 'da'=>$da, 'chr'=>$chr_name }, $image_config, \@highlights
   );
   return undef; ## successful...
 }
@@ -112,10 +113,7 @@ sub karyotype {
 sub add_tracks {
                                                                                 
   my ($self, $object, $config_name, $parser, $track_id) = @_;
-                                                                                
-  if ($object->seq_region_name eq 'ALL') {
-    $self->do_chr_layout($object, $config_name);
-  }
+           
   my $config   = $object->image_config_hash( $config_name );
     
   # SELECT APPROPRIATE FEATURE SET(S)
@@ -316,10 +314,6 @@ $_->{'start'}] }
   # tweaking for some pointer styles
   my $style   = lc($object->param('style')) || lc($extra->{'style'}) || 'rharrow'; 
 
-  if ($config->{'_all_chromosomes'} eq 'yes') {
-    $self->do_chr_layout($object, $config_name, $max_label);
-  }
-
   # CREATE POINTERS ('highlights')
   my %high = ('style' => $style);
   my $species = $object->species;
@@ -399,54 +393,6 @@ $_->{'start'}] }
   }
                                                                                 
   return \%high;
-}
-
-# common code used by add_tracks and add_pointers (not private because presumably you might want a 'bare' karyotype with no additional data)
-                                                                            
-sub do_chr_layout {
-    my ($self, $object, $config_name, $max_label) = @_;
-
-    # CONFIGURE IMAGE SIZE AND LAYOUT
-    my $chr;
-    my $config  = $object->image_config_hash( $config_name );
-    if ($config->{'_all_chromosomes'} eq 'yes') {
-        $chr = 'ALL';
-    }
-    else {
-        $chr = $self->chr_name;
-    }
-    my ($v_padding, $rows);
-    # only allow user to override these if showing multiple chromosomes
-    if ($chr eq 'ALL') {
-        $v_padding = $object->param('v_padding')    || 50;
-        $v_padding      = 20 unless $v_padding >= 20;
-    }
-    my $chr_length  = $object->param('chr_length')   || 300;
-    $chr_length     = 100 unless $chr_length >= 100;
-    my $h_padding   = $object->param('h_padding')    || 4;
-    $h_padding      = 1 unless $h_padding >= 1;
-    my $h_spacing   = $object->param('h_spacing')    || 6;
-    $h_spacing      = 1 unless $h_spacing >= 1;
-                                                                                
-    # hack for text labels on feature pointers
-    if ($object->param('style_0') eq 'text') {
-        # don't show stain labels AND pointers!
-        $config->{'_band_labels'} = 'off';
-        # make space for pointer + text
-        $h_spacing += $max_label * 5;
-        $h_padding = '4';
-    }
-
-    # use these figures to calculate and set image dimensions
-    $config->{'general'}->{$config_name}->{'_settings'}->{'width'} =
-                $chr_length + $v_padding;
-    $config->{'general'}->{$config_name}->{'Videogram'}->{'padding'} =
-                $h_padding;
-    $config->{'_rows'} = $rows;
-    $config->{'_image_height'} = $chr_length;
-    $config->container_width( $object->species_defs->MAX_CHR_LENGTH );
-    
-    return 1;
 }
 
 #############################################################################
