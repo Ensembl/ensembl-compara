@@ -147,6 +147,15 @@ sub store {
   return $node->node_id;
 }
 
+sub delete_tag {
+  my $self = shift;
+  my $node_id = shift;
+  my $tag = shift;
+
+  my $sql = "DELETE from protein_tree_tag where node_id=$node_id and tag=\"$tag\"";
+  #print("$sql\n");
+  $self->dbc->do($sql);
+}
 
 sub store_node {
   my ($self, $node) = @_;
@@ -170,7 +179,7 @@ sub store_node {
     $root_id = $node->root->node_id;
   }
   #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
-  
+
   my $sth = $self->prepare("INSERT INTO protein_tree_node 
                              (parent_id,
                               root_id,
@@ -255,6 +264,18 @@ sub merge_nodes {
   $sth->finish;
 }
 
+sub delete_flattened_leaf {
+  my $self = shift;
+  my $node = shift;
+  
+  my $node_id = $node->node_id;
+  #print("delete node $node_id\n");
+#   $self->dbc->do("UPDATE protein_tree_node dn, protein_tree_node n SET ". 
+#             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
+  $self->dbc->do("DELETE from protein_tree_node WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_tag WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from protein_tree_member WHERE node_id = $node_id");
+}
 
 sub delete_node {
   my $self = shift;
@@ -344,6 +365,7 @@ sub _store_tagvalue {
   #print("$sql\n");
   $self->dbc->do($sql);
 }
+
 
 
 ##################################
