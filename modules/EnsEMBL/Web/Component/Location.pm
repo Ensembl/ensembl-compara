@@ -120,6 +120,7 @@ sub colour_array {
 }
 
 sub create_user_set {
+## Adds a set of userdata pointers to vertical drawing code
   my ($self, $image, $colours) = @_;
   my $object = $self->object;
 
@@ -127,7 +128,7 @@ sub create_user_set {
   my $image_config = $object->get_session->getImageConfig('Vkaryotype');
   my $pointers = [];
 
-  my @usable_types = ('upload');
+  my @usable_types = ('upload'); ## TODO - add 'url'
   my @session_data;
   foreach my $type (@usable_types) {
     push @session_data, $object->get_session->get_data('type' => $type);
