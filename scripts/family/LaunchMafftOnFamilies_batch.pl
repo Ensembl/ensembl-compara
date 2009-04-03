@@ -29,8 +29,9 @@ my ($family_stable_id,$starting_family_id,$starting_family_id_file,$num_families
 my $dir = ".";
 my $store = 0;
 
-my $mafft_executable = "/nfs/acari/avilella/src/mafft/mafft-6.522/scripts/mafft";
-BEGIN {$ENV{MAFFT_BINARIES} = '/nfs/acari/avilella/src/mafft/mafft-6.522/binaries'; }
+#my $mafft_executable = "/nfs/acari/avilella/src/mafft/mafft-6.522/scripts/mafft";
+my $mafft_executable = "/software/ensembl/compara/mafft-6.522/bin/mafft";
+BEGIN {$ENV{MAFFT_BINARIES} = '/software/ensembl/compara/mafft-6.522'; }
 
 unless (-e $mafft_executable) {
   print STDERR "Error no binaries\n";
