@@ -32,6 +32,8 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
+use Bio::TreeIO;
+
 use Bio::EnsEMBL::Compara::Graph::Node;
 our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 
@@ -229,6 +231,9 @@ sub parent {
   if(!defined($self->{'_parent_link'}) and $self->adaptor and $self->_parent_id) {
     my $parent = $self->adaptor->fetch_parent_for_node($self);
     #print("fetched parent : "); $parent->print_node;
+#     if (!defined($parent)) {
+#       $DB::single=1;1;
+#     }
     $parent->add_child($self);
   }
   return undef unless($self->{'_parent_link'});
@@ -277,14 +282,18 @@ sub has_ancestor {
 
 sub root {
   my $self = shift;
-  
+
+  # Only if we don't have it cached
+  # Only if we have left and right and it's not a leaf
+  # Only if it's for release clusterset (1 genetrees - 0 genomic align trees)
   if (!defined($self->{'_parent_link'}) and $self->adaptor 
-     and ($self->right_index-$self->left_index)>1
-     and defined $self->{_parent_id}
-     and $self->{_parent_id} != 0) {
+      and ($self->right_index-$self->left_index)>1
+      and (1==$self->{'_parent_id'})
+     ) {
     return $self->adaptor->fetch_root_by_node($self);
   }
 
+  # Otherwise, go through the step-by-step method
   return $self unless(defined($self->parent));
  #  return $self if($self->node_id eq $self->parent->node_id);
   return $self->parent->root;
@@ -329,6 +338,29 @@ sub children {
     push @kids, $neighbor;
   }
   return \@kids;
+}
+
+sub each_child {
+    my $self = shift;
+
+    # Return an iterator over the children (most effective when children list is LONG)
+    my $count = -1;
+    $self->load_children_if_needed;
+    my @links = @{$self->links};
+
+    return sub {
+	while ($count < scalar(@links)) {
+	    $count++;
+	    my $link = $links[$count];
+	    next unless(defined $link);
+
+	    my $neighbor = $link->get_neighbor($self);
+	    next unless($neighbor->parent_link);
+	    next unless($neighbor->parent_link->equals($link));
+	    return $neighbor;
+	}
+	return undef;
+    };
 }
 
 =head2 sorted_children
@@ -662,6 +694,81 @@ sub distance_to_node {
 }
 
 
+# Returns a TreeI-compliant object based on this NestedSet.
+sub get_TreeI {
+    my $self = shift;
+    my $newick = $self->newick_format();
+
+    open(my $fake_fh, "+<", \$newick);
+    my $treein = new Bio::TreeIO
+	(-fh => $fake_fh,
+	 #-verbose => 1,
+	 -format => 'newick');
+    my $treeI = $treein->next_tree;
+    $treein->close;
+    
+    return $treeI;
+}
+
+sub new_from_newick {
+    my $class = shift;
+    my $file = shift;
+
+    my $treein = new Bio::TreeIO
+        (-file => $file,
+         -format => 'newick');
+    my $treeI = $treein->next_tree;
+    $treein->close;
+
+    my $new_tree = $class->new_from_TreeI($treeI);
+    return bless($new_tree,$class);
+}
+
+sub new_from_TreeI {
+    my $class = shift;
+    my $treeI = shift;
+    
+    my $rootI = $treeI->get_root_node;
+    my $node = new $class;
+
+    # Kick off the recursive, parallel node adding.
+    _add_nodeI_to_node($node,$rootI);
+
+    return bless($node,$class);
+}
+
+# Recursive helper for new_from_TreeI.
+sub _add_nodeI_to_node {
+    my $node = shift; # Our node object (Compara)
+    my $nodeI = shift; # Our nodeI object (BioPerl)
+
+    $node->node_id(-1);
+
+    foreach my $c ($nodeI->each_Descendent) {
+	my $child = ref($node)->new;
+	
+	my $name = $c->id;
+	$name =~ s/^\s+//;
+	$name =~ s/\s+$//;
+
+	if ($c->is_Leaf) {
+	    $child = Bio::EnsEMBL::Compara::Member->new();
+	    $child->stable_id($name);
+	    $child->source_name("NestedSet.pm");
+	}
+
+	# Set name.
+	$child->name($name);
+	$child->store_tag("name",$name);
+
+	# Set branch length.
+	$node->add_child($child,$c->branch_length);
+
+	# Recurse.
+	_add_nodeI_to_node($child,$c);
+    }
+}
+
 =head2 print_tree
 
   Arg [1]     : int $scale
@@ -759,6 +866,7 @@ sub _internal_print_tree {
   }
 }
 
+
 sub print_node {
   my $self = shift;
   print $self->string_node;
@@ -816,7 +924,7 @@ sub _internal_nhx_format {
     $nhx .= ")";
   }
   
-  if($format_mode eq "full" || $format_mode eq "full_web" || $format_mode eq "display_label" || $format_mode eq "display_label_composite" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id") { 
+  if($format_mode eq "full" || $format_mode eq "full_web" || $format_mode eq "display_label" || $format_mode eq "display_label_composite" || $format_mode eq "treebest_ortho" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id") { 
       #full: name and distance on all nodes
       if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
 	  if ($format_mode eq "transcript_id") {
@@ -852,10 +960,13 @@ sub _internal_nhx_format {
             $nhx .= $self->genome_db->short_name;
 	  } elsif ($format_mode eq "protein_id") {
             $nhx .= sprintf("%s", $self->name);
+	  } elsif ($format_mode eq "treebest_ortho") {
+            $nhx .= $self->member_id . "_" . $self->taxon_id;
           }
       } else {
         my $name = sprintf("%s", $self->name);
         $name = sprintf("%s", $self->get_tagvalue("taxon_name")) if ($name eq '');
+	$name =~ s/\ /\_/g;
         $nhx .= $name;
       }
     $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
@@ -884,13 +995,17 @@ sub _internal_nhx_format {
         $nhx .= ":G=$transcript_stable_id";
       } elsif (defined $gene_stable_id && $format_mode eq "protein_id") {
         $nhx .= ":G=$gene_stable_id";
-      }
+       } elsif (defined $gene_stable_id && $format_mode eq "treebest_ortho") {
+# #         $nhx .= ":O=" . $self->stable_id;
+# #         $nhx .= ":G=$gene_stable_id";
+       }
       $taxon_id = $self->taxon_id;
     } else {
       $taxon_id = $self->get_tagvalue("taxon_id");
     }
     if(defined ($taxon_id) && (!($taxon_id eq ''))) {
-	$nhx .= ":T=$taxon_id";
+        $nhx .= ":T=$taxon_id";
+	$nhx .= ":S=$taxon_id" if ($format_mode eq "treebest_ortho");
     }
     $nhx .= "]";
   }
@@ -977,6 +1092,8 @@ sub _internal_newick_format {
       $common =~ s/\ /\./g;
       $common =~ s/\'//g;
       $full_common_name .= " " . $common if (1 < length($common));
+      my $gdb_id = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->taxon_id)->dbID;
+      $full_common_name .= ".$gdb_id";
     }
     $newick .= sprintf("%s", $full_common_name);
     $newick .= sprintf(":%1.4f", $self->distance_to_parent);
@@ -1222,6 +1339,36 @@ sub merge_node_via_shared_ancestor {
   return $self->merge_node_via_shared_ancestor($node->parent);
 }
 
+
+sub extract_subtree_from_leaves {
+    my $self = shift;
+    my $copy = $self->copy;
+    my $node_ids = shift;	# Array ref of node_ids.
+    my @keepers = @{$node_ids};
+    my @all = @{$copy->get_all_nodes};
+
+    # Add all ancestors of kept nodes to the keep list.
+    my @all_keepers = ();
+    foreach my $keeper (@keepers) {
+	my $node = $copy->find_node_by_node_id($keeper);
+	push @all_keepers, $keeper;
+
+	my $parent = $node->parent;
+	while (defined $parent) {
+	    push @all_keepers, $parent->node_id;
+	    $parent = $parent->parent;
+	}
+    }
+
+    my @remove_me = ();
+    foreach my $node (@all) {
+	push @remove_me, $node unless (grep {$node->node_id == $_} @all_keepers);
+    }
+    $copy->remove_nodes(\@remove_me);
+    return $copy;
+}
+
+
 ##################################
 #
 # nested_set manipulations
@@ -1424,7 +1571,7 @@ sub find_node_by_name {
   my $self = shift;
   my $name = shift;
   
-  return $self if($name eq $self->name);
+  return $self if((defined $self->name) && $name eq $self->name);
   
   my $children = $self->children;
   foreach my $child_node (@$children) {
@@ -1521,22 +1668,6 @@ sub get_all_leaves_indexed {
   return \@leaf_list;
 }
 
-# # Returns a TreeI-compliant object based on this NestedSet.
-# sub get_TreeI {
-#     use Bio::TreeIO;
-
-#     my $self = shift;
-#     my $newick = $self->newick_format();
-
-#     open(my $fake_fh, "+<", \$newick);
-#     my $treein = new Bio::TreeIO
-#         (-fh => $fake_fh,
-#          -format => 'newick');
-#     my $treeI = $treein->next_tree;
-#     $treein->close;
-#     return $treeI;
-# }
-
 =head2 max_distance
 
  Title   : max_distance
@@ -1601,7 +1732,7 @@ sub find_first_shared_ancestor {
   my $node = shift;
 
   return $self if($self->equals($node));
-  return $node if($self->has_ancestor($node));  
+  return $node if($self->has_ancestor($node));
   return $self->find_first_shared_ancestor($node->parent);
 }
 
