@@ -687,16 +687,27 @@ sub columns {
           ];
 }
 
-
 sub create_instance_from_rowhash {
-  my $self = shift;
-  my $rowhash = shift;
-
-  my $member = new Bio::EnsEMBL::Compara::Member;
-  $self->init_instance_from_rowhash($member, $rowhash);
-  return $member;
+	my ($self, $rowhash) = @_;
+	
+	return Bio::EnsEMBL::Compara::Member->new_fast({
+		_dbID           => $rowhash->{member_id},
+		_stable_id      => $rowhash->{stable_id},
+		_version        => $rowhash->{version},
+		_taxon_id       => $rowhash->{taxon_id},
+		_genome_db_id   => $rowhash->{genome_db_id},
+		_description    => $rowhash->{description},
+		_chr_name       => $rowhash->{chr_name},
+		_chr_start      => $rowhash->{chr_start},
+		_chr_end        => $rowhash->{chr_end},
+		_chr_strand     => $rowhash->{chr_strand},
+		_sequence_id    => $rowhash->{sequence_id} || 0,
+		_source_name    => $rowhash->{source_name},
+		_display_label  => $rowhash->{display_label},
+		_gene_member_id => $rowhash->{gene_member_id},
+		_adaptor        => $self
+	});
 }
-
 
 sub init_instance_from_rowhash {
   my $self = shift;
