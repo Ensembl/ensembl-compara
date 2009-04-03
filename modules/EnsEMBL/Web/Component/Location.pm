@@ -98,40 +98,113 @@ sub name {
   return 1;
 }
 
-sub create_tempdata_pointers {
-  ## Creates sets of pointers from session data
-  my ($self, $image, $temp_data, $config, $defaults) = @_;
+##---------------------------------------------------------------------------------------
+
+## POINTERS FOR VERTICAL DRAWING CODE
+
+sub pointer_default {
+  my ($self, $feature_type) = @_;
+  my %hash = (
+      'DnaAlignFeature'     => ['red', 'rharrow'],
+      'ProteinAlignFeature' => ['red', 'rharrow'],
+      'RegulatoryFactor'    => ['red', 'rharrow'],
+      'OligoProbe'          => ['red', 'rharrow'],
+      'XRef'                => ['red', 'rharrow'],
+      'Gene'                => ['blue','lharrow'],
+  );
+  return $hash{$feature_type};
+}
+
+sub colour_array {
+  return [qw(red blue green purple orange grey brown magenta darkgreen darkblue violet darkgrey)];
+}
+
+sub create_user_set {
+  my ($self, $image, $colours) = @_;
   my $object = $self->object;
+
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $image_config = $object->get_session->getImageConfig('Vkaryotype');
   my $pointers = [];
 
-  foreach my $stuff (@$temp_data) {
+  my @usable_types = ('upload');
+  my @session_data;
+  foreach my $type (@usable_types) {
+    push @session_data, $object->get_session->get_data('type' => $type);
+  }
 
-    my ($data, $format);
-    if ($stuff->{'filename'}) { ## upload
-      my $file = new EnsEMBL::Web::TmpFile::Text(filename => $stuff->{'filename'});
-      $data    = $file->retrieve;
-      $format  = $stuff->{'format'};
-    } elsif ($stuff->{'url'}) {
-      $data = get_url_content($stuff->{'url'});
+  my $i = 0;
+  foreach my $key (keys %{$image_config->{'_tree'}{'_user_data'}}) {
+    $i = 0 if $i > scalar(@$colours) - 1; ## reset if we have loads of tracks! (unlikely)
+    my $track = {};
+    my ($status, $type, $id) = split('-', $key);
+    my $details = $image_config->get_node($key);
+    my $display = $details->{'_user_data'}{$key}{'display'};
+    my ($render, $style) = split('_', $display);
+    next unless $render eq 'highlight';
+
+    if ($status eq 'user' && $user) {
+      my $method = $type.'s';
+      $track = {
+        'data'    => $user->$method,
+        'colour'  => $colours->[$i], 
+        'style'   => $style,
+      };
+      push @$pointers, @{$self->create_userdata_pointers($image, $track, 'Vkaryotype')};
+      $i++;
     }
-
-    if ($data) {
-      my $parser = EnsEMBL::Web::Text::FeatureParser->new();
-      unless ($format) {
-        my $info = $parser->analyse($data);
-        $format = $info->{'format'};
+    else {
+      foreach my $temp (@session_data) {      
+        if ($temp->{'code'} eq $id) {
+          $track = {
+            'data'    => $temp,
+            'colour'  => $colours->[$i], 
+            'style'   => $style,
+          };
+          push @$pointers, @{$self->create_tempdata_pointers($image, $track, 'Vkaryotype')};
+          $i++;
+          last;
+        }
       }
-      $parser->parse($data, $format);
-
-      ## create image with parsed data
-      my $pointer_set = $image->add_pointers( $object, {
-        'config_name'   => $config,
-        'parser'        => $parser,
-        'color'         => $object->param("col")   || $defaults->[0],
-        'style'         => $object->param("style") || $defaults->[1],
-      });
-      push @$pointers, $pointer_set;
     }
+  }
+
+  return $pointers;
+}
+
+sub create_tempdata_pointers {
+  ## Creates sets of pointers from session data
+  my ($self, $image, $track, $config) = @_;
+  my $object = $self->object;
+  my $data = $track->{'data'};
+  my $pointers = [];
+
+  my ($content, $format);
+  if ($data->{'filename'}) { ## upload
+    my $file = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'});
+    $content = $file->retrieve;
+    $format  = $data->{'format'};
+  } 
+  elsif ($data->{'url'}) {
+    $content = get_url_content($data->{'url'});
+  }
+
+  if ($content) {
+    my $parser =  EnsEMBL::Web::Text::FeatureParser->new();
+    unless ($format) {
+      my $info = $parser->analyse($content);
+      $format = $info->{'format'};
+    }
+    $parser->parse($content, $format);
+
+    ## create image with parsed data
+    my $pointer_set = $image->add_pointers( $object, {
+      'config_name'   => $config,
+      'parser'        => $parser,
+      'color'         => $track->{'colour'},
+      'style'         => $track->{'style'},
+    });
+    push @$pointers, $pointer_set;
   }
 
   return $pointers;
@@ -139,44 +212,45 @@ sub create_tempdata_pointers {
 
 sub create_userdata_pointers {
   ## Creates sets of pointers from user records
-  my ($self, $image, $user_data, $config, $defaults) = @_;
+  my ($self, $image, $track, $config) = @_;
   my $object = $self->object;
+  my $record = $track->{'data'};
   my $pointers = [];
 
-  foreach my $record (@$user_data) {
-    if (ref($record) =~ /Upload/) {
-      my @logic_names = split(', ', $record->analyses);
-      foreach my $logic_name (@logic_names) {
-        my $features = $object->create_UserDataFeature($logic_name);
-        my ($upload_features, $headers) = $object->retrieve_userdata($features);
-        my $upload_pointers = $image->add_pointers( $object, {
-            'config_name' => $config,
-            'features'    => $upload_features,
-            'color'       => $object->param("col")   || $defaults->[0],
-            'style'       => $object->param("style") || $defaults->[1],
-        });
-        push(@$pointers, $upload_pointers);
-      }
-    }
-    elsif (ref($record) =~ /URL/ && $record->url) {
-      my $data = get_url_content($record->url);
-      my $parser = EnsEMBL::Web::Text::FeatureParser->new();
-      my $info = $parser->analyse($data);
-      $parser->parse($data, $info->{'format'});
-
-      ## create image with parsed data
-      my $pointer_set = $image->add_pointers( $object, {
-        'config_name'   => $config,
-        'parser'        => $parser,
-        'color'         => $object->param("col")   || $defaults->[0],
-        'style'         => $object->param("style") || $defaults->[1],
+  if (ref($record) =~ /Upload/) {
+    my @logic_names = split(', ', $record->analyses);
+    foreach my $logic_name (@logic_names) {
+      my $features = $object->create_UserDataFeature($logic_name);
+      my ($upload_features, $headers) = $object->retrieve_userdata($features);
+      my $upload_pointers = $image->add_pointers( $object, {
+          'config_name' => $config,
+          'features'    => $upload_features,
+          'color'       => $track->{'colour'},
+          'style'       => $track->{'style'},
       });
-      push @$pointers, $pointer_set;
+      push(@$pointers, $upload_pointers);
     }
+  }
+  elsif (ref($record) =~ /URL/ && $record->url) {
+    my $data = get_url_content($record->url);
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+    my $info = $parser->analyse($data);
+    $parser->parse($data, $info->{'format'});
+
+    ## create image with parsed data
+    my $pointer_set = $image->add_pointers( $object, {
+      'config_name'   => $config,
+      'parser'        => $parser,
+      'color'         => $track->{'colour'},
+      'style'         => $track->{'style'},
+    });
+    push @$pointers, $pointer_set;
   }
 
   return $pointers;
 }
+
+##---------------------------------------------------------------------------------------
 
 sub multi_ideogram {
   my( $panel, $object ) = @_;
