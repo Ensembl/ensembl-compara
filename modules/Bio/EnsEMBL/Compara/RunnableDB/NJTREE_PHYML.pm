@@ -92,9 +92,8 @@ sub fetch_input {
 
   $self->{'cdna'}           = 1;
   $self->{'bootstrap'}      = 1;
-  $self->{'max_gene_count'} = 1000000;
+  $self->{'max_gene_count'} = 200;
 
-  $self->check_job_fail_options;
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -107,6 +106,7 @@ sub fetch_input {
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
   $self->print_params if($self->debug);
+  $self->check_job_fail_options;
   $self->check_if_exit_cleanly;
 
   unless($self->{'protein_tree'}) {
@@ -114,7 +114,8 @@ sub fetch_input {
   }
   if ($self->{'protein_tree'}->get_tagvalue('gene_count') 
       > $self->{'max_gene_count'}) {
-    $self->dataflow_output_id($self->input_id, 2);
+    # 3 is QuickTreeBreak -- 2 is NJTREE_PHYML jackknife
+    $self->dataflow_output_id($self->input_id, 3);
     $self->input_job->update_status('FAILED');
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
@@ -199,7 +200,7 @@ sub get_params {
       $params = $new_params;
     }
   }
-  
+
   if($self->debug) {
     foreach my $key (keys %$params) {
       print("  $key : ", $params->{$key}, "\n");
@@ -211,6 +212,7 @@ sub get_params {
          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
+  $self->{'jackknife'} = $params->{'jackknife'} if(defined($params->{'jackknife'}));
   $self->{'cdna'} = $params->{'cdna'} if(defined($params->{'cdna'}));
   $self->{'max_gene_count'} = 
     $params->{'max_gene_count'} if(defined($params->{'max_gene_count'}));
@@ -250,19 +252,18 @@ sub run_njtree_phyml
   $self->{'newick_file'} = $self->{'input_aln'} . "_njtree_phyml_tree.txt ";
   
   my $njtree_phyml_executable = $self->analysis->program_file || '';
-  
+
   unless (-e $njtree_phyml_executable) {
-    if (-e "/proc/version") {
+    if (`uname -m` =~ /ia64/) {
+      $njtree_phyml_executable = "/nfs/acari/avilella/src/treesoft/trunk/treebest/ia64/treebest";
+    } else {
       # it is a linux machine
       # md5sum 91a9da7ad7d38ebedd5ce363a28d509b
       # $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386/njtree_gcc";
-      $njtree_phyml_executable = "/nfs/acari/avilella/src/_treesoft/treebest/treebest";
+      # $njtree_phyml_executable = "/nfs/acari/avilella/src/_treesoft/treebest/treebest";
+      $njtree_phyml_executable = "/nfs/acari/avilella/src/treesoft/trunk/treebest/treebest";
     }
   }
-  # FIXME - ask systems to add it to ensembl bin
-  #   unless (-e $phyml_executable) {
-  #     $njtree_phyml_executable = "/usr/local/ensembl/bin/njtree";
-  #   }
 
   throw("can't find a njtree executable to run\n") 
     unless(-e $njtree_phyml_executable);
@@ -281,16 +282,37 @@ sub run_njtree_phyml
     $cmd .= " ". $self->{'input_aln'};
     $cmd .= " -p tree ";
     $cmd .= " -o " . $self->{'newick_file'};
-    $cmd .= " 2>&1 > /dev/null" unless($self->debug);
+    my $logfile = $self->worker_temp_directory. "proteintree_". $self->{'protein_tree'}->node_id . ".log";
+    my $errfile = $self->worker_temp_directory. "proteintree_". $self->{'protein_tree'}->node_id . ".err";
+    $cmd .= " 1>$logfile 2>$errfile";
+    #     $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
     $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
     print("$cmd\n") if($self->debug);
     my $worker_temp_directory = $self->worker_temp_directory;
+
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
       print("$cmd\n");
+      open ERRFILE,"$errfile" or die "couldnt open logfile $errfile: $!\n";
+      while (<ERRFILE>) {
+        if ($_ =~ /NNI/) {
+          # Do jack-knife treebest starting by the sequence with more Ns
+          my $jackknife_value = $self->{'jackknife'} if (defined($self->{'jackknife'}));
+          $jackknife_value++;
+          my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>1, 'jackknife'=>$jackknife_value}", $self->{'protein_tree'}->node_id);
+          $self->input_job->input_id($output_id);
+          $self->dataflow_output_id($output_id, 2);
+          $self->input_job->update_status('FAILED');
+          $self->{'protein_tree'}->release_tree;
+          $self->{'protein_tree'} = undef;
+          warn("NJTREE_PHYML : NNI error, resubmitting as jackknife NJTREE_PHYML");
+          return undef;
+        }
+      }
       $self->check_job_fail_options;
       throw("error running njtree phyml, $!\n");
     }
+
     $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   } elsif (0 == $self->{'bootstrap'}) {
     # first part
@@ -350,14 +372,20 @@ sub check_job_fail_options
 {
   my $self = shift;
 
-  if($self->input_job->retry_count >= 2) {
-    $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
-  
-    if($self->{'protein_tree'}) {
-      $self->{'protein_tree'}->release_tree;
-      $self->{'protein_tree'} = undef;
+  if ($self->input_job->retry_count == 1) {
+    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 200 && !defined($self->worker->{HIGHMEM})) {
+      $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
+      $self->DESTROY;
+      throw("NJTREE PHYML job too big: try something else and FAIL it");
     }
+  }
+
+  # This will go to QuickTreeBreak
+  if($self->input_job->retry_count >= 2 && !defined($self->{'jackknife'})) {
+    $self->dataflow_output_id($self->input_id, 3);
+    $self->input_job->update_status('FAILED');
+
+    $self->DESTROY;
     throw("NJTREE PHYML job failed >=3 times: try something else and FAIL it");
   }
 }
@@ -373,7 +401,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
 {
   my $self = shift;
   my $tree = shift;
-  
+
   my $leafcount = scalar(@{$tree->get_all_leaves});
   if($leafcount<3) {
     printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", 
@@ -408,6 +436,29 @@ sub dumpTreeMultipleAlignmentToWorkdir
      %sa_params
     );
   $sa->set_displayname_flat(1);
+  if (defined($self->{'jackknife'})) {
+    # my $coverage_hash;
+    my $empty_hash;
+    foreach my $seq ($sa->each_seq) {
+      my $sequence = $seq->seq;
+      $sequence =~ s/\-//g;
+      my $full_length = length($sequence);
+      $sequence =~ s/N//g;
+      my $covered_length = length($sequence);
+      my $coverage_proportion = $covered_length/$full_length;
+      my $empty_length = $full_length - $covered_length;
+      # $coverage_hash->{$coverage_proportion} = $seq->display_id if ($coverage_proportion < 1);
+      $empty_hash->{$empty_length} = $seq->display_id if ($empty_length > 0);
+    }
+    my @lowest = sort {$b<=>$a} keys %$empty_hash;
+    my $i = 0;
+    while ($i < $self->{jackknife}) {
+      $sa->remove_seq($sa->each_seq_with_id($empty_hash->{$lowest[$i]}));
+      $sa = $sa->remove_gaps(undef,1);
+      $i++;
+    }
+  }
+
   my $alignIO = Bio::AlignIO->newFh
     (
      -fh => \*OUTSEQ,
@@ -443,6 +494,8 @@ sub store_proteintree
   $self->{'protein_tree'}->store_tag('reconciliation_method', 'njtree_best');
   $self->store_tags($self->{'protein_tree'});
 
+  $self->_store_tree_tags();
+
   return undef;
 }
 
@@ -450,6 +503,12 @@ sub store_tags
 {
   my $self = shift;
   my $node = shift;
+
+  if(defined($self->{'jackknife'})) {
+    my $leaf_count = $self->{protein_tree}->num_leaves;
+    $self->{protein_tree}->adaptor->delete_tag($self->{protein_tree}->node_id,'gene_count');
+    $self->{protein_tree}->store_tag('gene_count', $leaf_count);
+  }
 
   if($node->get_tagvalue("Duplication") eq '1') {
     if($self->debug) { printf("store duplication : "); $node->print_node; }
@@ -573,6 +632,7 @@ sub parse_newick_into_proteintree
   open (FH, $newick_file) or throw("Couldnt open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
+
   my $newtree = 
     Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
   $newtree->print_tree(20) if($self->debug > 1);
@@ -616,5 +676,71 @@ sub parse_newick_into_proteintree
 
   return undef;
 }
+
+sub _store_tree_tags {
+    my $self = shift;
+    my $tree = $self->{'protein_tree'};
+    my $pta = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+
+    print "Storing Tree tags...\n";
+    $tree->_load_tags();
+
+    my @leaves = @{$tree->get_all_leaves};
+    my @nodes = @{$tree->get_all_nodes};
+
+    # Node is a root node (full tree).
+    my $node_is_root = 0;
+    my @roots = @{$pta->fetch_all_roots()};
+    foreach my $root (@roots) {
+	$node_is_root = 1 if ($root->node_id == $tree->parent->node_id);
+    }
+    $tree->store_tag("node_is_root",$node_is_root);
+
+    # Node is leaf node.
+    my $node_is_leaf = 0;
+    $node_is_leaf = 1 if ($tree->is_leaf);
+    $tree->store_tag("node_is_leaf",$node_is_leaf);
+
+    # Tree number of leaves.
+    my $tree_num_leaves = scalar(@leaves);
+    $tree->store_tag("tree_num_leaves",$tree_num_leaves);
+
+    # Tree number of human peptides contained.
+    my $num_hum_peps = 0;
+    foreach my $leaf (@leaves) {
+	$num_hum_peps++ if ($leaf->taxon_id == 9606);
+    }
+    $tree->store_tag("tree_num_human_peps",$num_hum_peps);
+
+    # Tree max root-to-tip distance.
+    my $tree_max_length = $tree->max_distance;
+    $tree->store_tag("tree_max_length",$tree_max_length);
+
+    # Tree max single branch length.
+    my $tree_max_branch = 0;
+    foreach my $node (@nodes) {
+	my $dist = $node->distance_to_parent;
+	$tree_max_branch = $dist if ($dist > $tree_max_branch);
+    }
+    $tree->store_tag("tree_max_branch",$tree_max_branch);
+
+    # Tree number of duplications and speciations.
+    my $tree_num_leaves = scalar(@{$tree->get_all_leaves});
+    my $num_dups = 0;
+    my $num_specs = 0;
+    foreach my $node (@{$tree->get_all_nodes}) {
+	my $dup = $node->get_tagvalue("Duplication");
+	if ($dup ne '' && $dup > 0) {
+	    $num_dups++;
+	} else {
+	    $num_specs++;
+	}
+    }
+    $tree->store_tag("tree_num_dup_nodes",$num_dups);
+    $tree->store_tag("tree_num_spec_nodes",$num_specs);
+
+    print "Done storing stuff!\n" if ($self->debug);
+}
+
 
 1;
