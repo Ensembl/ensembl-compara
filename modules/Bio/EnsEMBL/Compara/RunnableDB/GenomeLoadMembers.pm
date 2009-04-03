@@ -202,7 +202,7 @@ sub loadMembersFromCoreSlices
   print("       ".$self->{'geneCount'}." genes\n");
   print("       ".$self->{'realGeneCount'}." real genes\n");
   print("       ".$self->{'transcriptCount'}." transscripts\n");
-  print("       ".$self->{'longestCount'}." longest transscripts\n");
+  print("       ".$self->{'longestCount'}." longest transcripts\n");
   print("       ".$self->{'pepSubset'}->count()." in Subset\n");
 }
 
