@@ -88,9 +88,12 @@ sub get_params {
   if (defined $params->{'species_sets'}) {
     $self->{'species_sets_aref'} = $params->{'species_sets'};
   }
-  if (defined $params->{'method_link_types'}){
-    $self->{'method_link_types'} = [@{$params->{'method_link_types'}}];
+  if (!defined $params->{'method_link_types'}){
+    # Default will be orthologues
+    $params->{method_link_types} = ['ENSEMBL_ORTHOLOGUES'];
   }
+  $self->{'method_link_types'} = [@{$params->{'method_link_types'}}];
+
   elsif (defined $params->{'method_link_type'}) {
     warn( 'The method_link_type paramerter is deprecated. '.
           'Please use method_link_types with an arrayref value instead' );
