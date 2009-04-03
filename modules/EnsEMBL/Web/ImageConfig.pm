@@ -101,14 +101,126 @@ sub new {
   $self->{'no_image_frame'}=1;
 ## At this point tree doesn't depend on session/user....
 #  if( $can_attach_user ) {
+  if ($class =~ /ImageConfig::V/) {
+    $self->load_user_vert_tracks( $adaptor );
+  }
+  else {
     $self->load_user_tracks( $adaptor );
-#  }
+ }
 ## Add user defined data sources.....
 ## Now tree does depend on session/user...
 #
   ########## load sets up user prefs in $self->{'user'}
 #  $self->load() unless(defined $self->{'no_load'});
   return $self;
+}
+
+sub load_user_vert_tracks {
+## We load less data on vertical drawing code, as it shows regions 
+## at a much smaller scale. We also need to distinguish between
+## density features, rendered as separate tracks, and pointers,
+## which are part of the karyotype track
+  my( $self, $session ) = @_;
+  my $menu = $self->get_node('user_data');
+  return unless $menu;
+
+  ## First, get all the data
+  my $track_keys = [];
+
+  ## Add in temporary data
+  my %types = (upload => 'filename', url => 'url');
+  foreach my $type (keys %types) {
+    my @tracks = $session->get_data('type' => $type);
+    foreach my $track (@tracks) {
+      my $track_info = {
+        'id'      => 'temp-'.$type.'-'.$track->{'code'}, 
+        'species' => $track->{'species'},
+        'code'    => $type,
+        'status'  => 'tmp',
+      };
+      $track_info->{'render'} = $track->{'is_large'} eq 'Y' ? 'density' : 'highlight';
+      if ($track->{'name'}) {
+        $track_info->{'name'} = $track->{'name'};
+      }
+      else {
+        my $other = $types{$type};
+        $track_info->{'name'} = $track->{$other};
+      }
+    }
+  }
+
+  ## Add saved tracks, if any
+  if (my $user = $session->get_adaptor->get_user) {
+    foreach my $type (keys %types) {
+      my $method = $type.'s';
+      my @records = $user->$method;
+      foreach my $record (@records) {
+        my $track_info = {
+          'id'      => 'user-'.$type.'-', 
+          'species' => $record->species,
+          'code'    => $type,
+          'status'  => 'user',
+        };
+        $track_info->{'render'} = $record->is_large eq 'Y' ? 'density' : 'highlight';
+        $track_info->{'id'} .= $record->id;
+        if ($record->name) {
+          $track_info->{'name'} = $record->name;
+        }
+        else {
+          if (ref($record) =~ /Upload/) {
+            $track_info->{'name'} = $record->filename;
+          }
+          elsif (ref($record) =~ /URL/) {
+            $track_info->{'name'} = $record->url;
+          }
+          else {
+            warn "!!! UNKNOWN RECORD TYPE ".ref($record);
+          }
+        }
+      }
+    }
+  }
+
+  my @density_renderers = (
+    'off'     => 'Off',
+    'density_line'    => 'Density plot - line graph',
+    'density_bar'     => 'Density plot - filled bar chart',
+    'density_outline' => 'Density plot - outline bar chart',
+  );
+  my @highlight_renderers = @density_renderers;
+  push @highlight_renderers, (
+    'highlight_lharrow'   => 'Arrow on lefthand side',
+    'highlight_rharrow'   => 'Arrow on righthand side',
+    'highlight_bowtie'    => 'Arrows on both sides',
+    'highlight_wideline'  => 'Line',
+    'highlight_widebox'   => 'Box',
+  );
+
+  ## Now, add these tracks to the menu as checkboxes 
+  foreach my $entry (@user_tracks) {
+    push @$track_keys, $entry->{'id'};
+    if ($entry->{'species'} eq $self->{'species'}) {
+      my $settings = {
+        '_class'      => $entry->{'status'},
+        'glyphset'    => 'Vgeneric',
+        'colourset'   => 'classes',
+        'sub_type'    => 'tmp',
+        'file'        => $entry->{'filename'},
+        'format'      => $entry->{'format'},
+        'caption'     => $entry->{'name'},
+        'description' => '',
+        'display'     => 'off',
+        'strand'      => 'b'
+      };
+      if ($entry->{'render'} eq 'density') {
+        $settings->{'renderers'} = \@density_renderers;
+      }
+      else {
+        $settings->{'renderers'} = \@highlight_renderers;
+      }
+      $menu->append( $self->create_track($entry->{'id'}, $entry->{'name'}, $settings ));
+    }
+  }
 }
 
 sub load_user_tracks {
