@@ -143,9 +143,9 @@ sub run
     my $taxon_id = 33154;
     my $node = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
 
-    #    foreach my $leaf ( @{$node->get_all_leaves} ) {
-    # the indexed method should be much faster when data has left and right indexes built
+    #foreach my $leaf ( @{$node->get_all_leaves} ) {
     foreach my $leaf ( @{$node->get_all_leaves_indexed} ) {
+    # the indexed method should be much faster when data has left and right indexes built
       $allowed_taxon_ids{$leaf->node_id} = 1;
       if ($leaf->rank ne "species") {
         $allowed_taxon_ids{$leaf->parent->node_id} = 1;
@@ -298,10 +298,14 @@ sub pfetch_and_store_by_ids {
     # It only affects the Ensembl species dbs, and right now I am using
     # a home-brewed version of Bio::SeqIO::swiss to parse the PE entries
     # in a similar manner as comments (CC) but of type 'evidence'
-    $DB::single=1;1;
     my $taxon_id; eval { $taxon_id = $seq->species->ncbi_taxid;};
     if (defined($self->{internal_taxon_ids}{$taxon_id})) {
-      my $evidence_annotations = $seq->get_Annotations('evidence');
+      my $evidence_annotations; 
+      eval { $evidence_annotations = $seq->get_Annotations('evidence');}; # old style
+      if ($@) {
+        my $annotation = $seq->annotation;
+        $evidence_annotations = $annotation->get_Annotations('evidence');
+      }
       if (defined $evidence_annotations) {
         if ($evidence_annotations->text =~ /^4/) {
           print STDERR $seq->display_id, "PE discarded ", $evidence_annotations->text, "\n";
