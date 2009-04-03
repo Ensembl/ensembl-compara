@@ -74,7 +74,8 @@ sub new {
         warn "GLYPHSET: glyphset $classname failed (@{[$self->{container}{web_species}]}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason";
 	next;
       }
-      $EW_Glyphset->render_normal();
+      #$EW_Glyphset->render_normal();
+      $EW_Glyphset->render();
       push @glyphsets,  $EW_Glyphset;
       $chr_glyphset_counts{$chr}++;
     }
