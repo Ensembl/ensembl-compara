@@ -128,7 +128,7 @@ sub load_user_vert_tracks {
   return unless $menu;
 
   ## First, get all the data
-  my $track_keys = [];
+  my @user_tracks;
 
   ## Add in temporary data
   my %types = (upload => 'filename', url => 'url');
@@ -149,6 +149,7 @@ sub load_user_vert_tracks {
         my $other = $types{$type};
         $track_info->{'name'} = $track->{$other};
       }
+      push @user_tracks, $track_info;
     }
   }
 
@@ -180,6 +181,7 @@ sub load_user_vert_tracks {
             warn "!!! UNKNOWN RECORD TYPE ".ref($record);
           }
         }
+        push @user_tracks, $track_info;
       }
     }
   }
