@@ -23,7 +23,6 @@
 52	43179	Spermophilus tridecemlineatus	SQUIRREL	1	2006-10-Ensembl	
 53	59463	Myotis lucifugus	MICROBAT1	1	2007-01-Ensembl	
 55	42254	Sorex araneus	COMMON_SHREW1	1	2007-04-Ensembl	
-56	7955	Danio rerio	ZFISH7	1	2007-06-Ensembl	
 57	10090	Mus musculus	NCBIM37	1	2007-04-Ensembl	
 58	30608	Microcebus murinus	micMur1	1	2007-07-Ensembl	
 60	9600	Pongo pygmaeus	PPYG2	1	2007-10-Ensembl	
@@ -48,3 +47,4 @@
 86	9361	Dasypus novemcinctus	dasNov2	1	2008-11-Ensembl	
 87	59729	Taeniopygia guttata	taeGut3.2.4	1	2008-08-Ensembl	
 88	28377	Anolis carolinensis	AnoCar1.0	1	2008-07-Ensembl	
+89	7955	Danio rerio	Zv8	1	2009-01-Ensembl	
