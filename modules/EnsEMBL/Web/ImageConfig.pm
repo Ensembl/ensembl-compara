@@ -128,7 +128,7 @@ sub load_user_vert_tracks {
   return unless $menu;
 
   ## First, get all the data
-  my @user_tracks;
+  my (@user_tracks, $track_keys);
 
   ## Add in temporary data
   my %types = (upload => 'filename', url => 'url');
@@ -1125,18 +1125,23 @@ sub add_synteny {
 
 sub add_alignments {
   my( $self, $key, $hashref,$species ) = @_;
-  return unless $self->_check_menus( qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other) );
+  
+  return unless $self->_check_menus(qw( multiple_align pairwise_tblat pairwise_blastz pairwise_other ));
+  
   my $alignments = {};
-  my $self_label = $self->species_defs->species_label( $species, "no_formatting" );
+  my $self_label = $self->species_defs->species_label($species, "no_formatting");
   my $regexp = $species =~ /^([A-Z])[a-z]*_([a-z]{3})/ ? "-?$1.$2-?" : 'xxxxxx';
-  foreach my $row ( values %{$hashref->{'ALIGNMENTS'}} ) {
+  
+  foreach my $row (values %{$hashref->{'ALIGNMENTS'}}) {
     next unless $row->{'species'}{$species};
-    if( $row->{'class'} =~ /pairwise_alignment/ ) {
-      my( $other_species ) = grep { $species ne $_ } keys %{$row->{'species'}};
-      my $other_label = $self->species_defs->species_label( $other_species, "no_formatting" );
+    
+    if ($row->{'class'} =~ /pairwise_alignment/) {
+      my ($other_species) = grep { $species ne $_ } keys %{$row->{'species'}};
+      my $other_label = $self->species_defs->species_label($other_species, "no_formatting");
       (my $other_species_hr = $other_species ) =~ s/_/ /g;
       my $menu_key;
       my $description;
+      
       if ($row->{'type'} =~ /BLASTZ/) {
         $menu_key = 'pairwise_blastz';
         $description = "<a href=\"/info/docs/compara/analyses.html\" class=\"cp-external\">BLASTz net pairwise alignments</a> between $self_label and $other_label.";
@@ -1147,10 +1152,12 @@ sub add_alignments {
         $menu_key = 'pairwise_align';
         $description = "<a href=\"/info/docs/compara/analyses.html\" class=\"cp-external\">Pairwise alignments</a> between $self_label and $other_label.";
       }
-      (my $caption = $row->{'name'}) =~s/blastz-net \(on.*?\)/BLASTz net/g;
+      
+      (my $caption = $row->{'name'}) =~ s/blastz-net \(on.*?\)/BLASTz net/g;
       $caption =~ s/translated-blat-net/Trans. BLAT net/g;
       $caption =~ s/$regexp//;
-      $alignments->{$menu_key}{ $row->{'id'} } = {
+      
+      $alignments->{$menu_key}{$row->{'id'}} = {
         'db'             => $key,
         'glyphset'       => '_alignment_pairwise',
         'name'           => $row->{'name'},
@@ -1166,14 +1173,16 @@ sub add_alignments {
         'colourset'      => 'pairwise',
         'strand'         => 'r',
         'display'        => 'off', ## Default to on at the moment - change to off by default!
-        'renderers'      => [qw(off Off compact Compact normal Normal)],
+        'renderers'      => [qw( off Off compact Compact normal Normal )],
       };
     } else {
       my $n_species = grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}};
-      if( $row->{'conservation_score'} ) {
+      
+      if ($row->{'conservation_score'}) {
         my ($program) = $hashref->{'CONSERVATION_SCORES'}{$row->{'conservation_score'}}{'type'} =~ /(.+)_CONSERVATION_SCORE/;
-        $alignments->{'multiple_align'}{ $row->{'id'}.'_scores' } = {
-          'db' => $key,
+        
+        $alignments->{'multiple_align'}{$row->{'id'}.'_scores'} = {
+          'db'             => $key,
           'glyphset'       => '_alignment_multiple',
           'name'           => "Conservation score for ".$row->{'name'},
           'short_name'     => $row->{'name'},
@@ -1185,13 +1194,14 @@ sub add_alignments {
           'conservation_score'  => $row->{'conservation_score'},
           'description'    => "<a href=\"/info/docs/compara/analyses.html#conservation\" class=\"cp-external\">$program conservation scores</a> based on the ".$row->{'name'},
           'colourset'      => 'multiple',
-          'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10, $row->{'type'}, $row->{'name'} ),
+          'order'          => sprintf('%12d::%s::%s', 1e12-$n_species*10, $row->{'type'}, $row->{'name'}),
           'strand'         => 'f',
           'display'        => $row->{'id'} == 352 ? 'signal_map' : 'off', ## Default to on at the moment - change to off by default!
-          'renderers'      => ['off'=>'Off','signal_map'=>'Signal map']
+          'renderers'      => [ 'off' => 'Off', 'signal_map' => 'Signal map' ]
         };
-        $alignments->{'multiple_align'}{ $row->{'id'}.'_constrained' } = {
-          'db' => $key,
+        
+        $alignments->{'multiple_align'}{$row->{'id'}.'_constrained'} = {
+          'db'             => $key,
           'glyphset'       => '_alignment_multiple',
           'name'           => "Constrained elements for ".$row->{'name'},
           'short_name'     => $row->{'name'},
@@ -1206,11 +1216,12 @@ sub add_alignments {
           'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10+1, $row->{'type'}, $row->{'name'} ),
           'strand'         => 'f',
           'display'        => $row->{'id'} == 352 ? 'compact' : 'off', ## Default to on at the moment - change to off by default!
-          'renderers'      => [qw(off Off compact Normal)]
+          'renderers'      => [qw( off Off compact Normal )]
         };
       }
-      $alignments->{'multiple_align'}{ $row->{'id'} } = {
-        'db' => $key,
+      
+      $alignments->{'multiple_align'}{$row->{'id'}} = {
+        'db'             => $key,
         'glyphset'       => '_alignment_multiple',
         'name'           => $row->{'name'},
         'short_name'     => $row->{'name'},
@@ -1220,24 +1231,25 @@ sub add_alignments {
         'method_link_species_set_id' => $row->{'id'},
         'class'          => $row->{'class'},
         'description'    => "<a href=\"/info/docs/compara/analyses.html#conservation\">$n_species way whole-genome multiple alignments</a>.; ".
-            join("; ", sort map {$self->species_defs->species_label( $_, "no_formatting" )}
-              grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}}),
+            join("; ", sort map {$self->species_defs->species_label( $_, "no_formatting" )} grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}}),
         'colourset'      => 'multiple',
-        'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10-1, $row->{'type'}, $row->{'name'} ),
+        'order'          => sprintf('%12d::%s::%s', 1e12-$n_species*10-1, $row->{'type'}, $row->{'name'}),
         'strand'         => 'f',
         'display'        => 'off', ## Default to on at the moment - change to off by default!
-        'renderers'      => [qw(off Off compact Normal)],
+        'renderers'      => [qw( off Off compact Normal )],
       };
     } 
   }
-  foreach my $menu_key ( keys %$alignments ) {
-    my $menu = $self->get_node( $menu_key );
+  
+  foreach my $menu_key (keys %$alignments) {
+    my $menu = $self->get_node($menu_key);
     next unless $menu;
-    foreach my $key_2 ( sort {
+    
+    foreach my $key_2 (sort {
       $alignments->{$menu_key}{$a}{'order'} cmp  $alignments->{$menu_key}{$b}{'order'}
-    } keys %{$alignments->{$menu_key}} ) {
+    } keys %{$alignments->{$menu_key}}) {
       my $row = $alignments->{$menu_key}{$key_2};
-      $menu->append( $self->create_track( 'alignment_'.$key.'_'.$key_2, $row->{'caption'}, $row ));
+      $menu->append($self->create_track('alignment_' . $key . '_' . $key_2, $row->{'caption'}, $row));
     }
   }
 }
