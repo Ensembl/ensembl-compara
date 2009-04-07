@@ -26,6 +26,9 @@ sub content {
   if ($id) {
     @faqs = (EnsEMBL::Web::Data::Faq->new($id));
   }
+  elsif (my $kw = $object->param('kw')) {
+    @faqs = EnsEMBL::Web::Data::Faq->find('keyword' => $kw);
+  }
   else {
     @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted;
   }
