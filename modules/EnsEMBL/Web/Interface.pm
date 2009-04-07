@@ -330,7 +330,7 @@ sub discover {
   my %hasmany_relations = %{ $self->data->__meta_info->{has_many} };
   while (my ($field, $relation) = each (%hasmany_relations)) {
     my $class  = $relation->{foreign_class};
-    my $lookup = $relation->{foreign_class}->get_lookup_values;
+    my $lookup = $class->get_lookup_values;
     my $select = scalar(@$lookup) > 20 ? 'select' : '';
     my $param  = {
       'name'    => $field,
@@ -501,7 +501,7 @@ sub edit_fields {
   my $data = $self->data;
   my $dataview = $ENV{'ENSEMBL_FUNCTION'};
   my $element_order = $self->element_order;
-  my %has_many = %{ $self->data->hasmany_relations };
+  my %has_many = %{ $self->data->__meta_info->{has_many} };
 
   ## populate widgets from Data_of{$self}
   foreach my $field (@$element_order) {
@@ -594,7 +594,8 @@ sub preview_fields {
 
   my $data = $self->data;
   my $element_order = $self->element_order;
-  my %has_many = %{ $self->data->hasmany_relations };
+  my %has_many = %{ $self->data->__meta_info->{has_many} };
+
 
   foreach my $field (@$element_order) {
     my $element = $self->element($field);
@@ -607,8 +608,8 @@ sub preview_fields {
       my $var = $data->$field;
   
       ## Catch 'has_many' fields before doing normal ones
-      if (my $classes = $has_many{$field}) {
-        my $class = $classes->[1];
+      if (my $relation = $has_many{$field}) {
+        my $class = $relation->{foreign_class};
         my $lookup = $class->get_lookup_values;
         my $order = $lookup->[0]{'order'};
         my $label;
