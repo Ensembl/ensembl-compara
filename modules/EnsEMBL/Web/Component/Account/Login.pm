@@ -33,6 +33,7 @@ sub content {
   $form->add_element('type'  => 'Email',    'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Password', 'required' => 'yes');
   $form->add_element('type'  => 'Hidden',   'name'  => 'url', 'value' => $self->object->param('url'));
+  $form->add_element('type'  => 'Hidden',   'name'  => 'popup', 'value' => $self->object->param('popup'));
   $form->add_element('type'  => 'Hidden',   'name'  => '_referer', 'value' => $self->object->param('_referer'));
   $form->add_element('type'  => 'Hidden',   'name'  => 'x_requested_with', 'value' => 'XMLHttpRequest');
   $form->add_element('type'  => 'Submit',   'name'  => 'submit', 'value' => 'Log in', 'class'=>'cp-refresh');
