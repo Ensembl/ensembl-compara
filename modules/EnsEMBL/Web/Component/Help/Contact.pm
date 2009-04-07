@@ -18,7 +18,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/SendEmail", 'get' );
+  my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/Preview", 'post' );
 
   if ($object->param('strong')) {
     $form->add_element(
@@ -36,9 +36,15 @@ sub content {
   );
 
   $form->add_element(
-    'type'    => 'Email',
+    'type'    => 'Honeypot',
     'name'    => 'email',
-    'label'   => 'Your email',
+    'label'   => 'Address',
+  );
+
+  $form->add_element(
+    'type'    => 'Email',
+    'name'    => 'address',
+    'label'   => 'Your Email',
   );
 
   $form->add_element(
@@ -48,15 +54,21 @@ sub content {
   );
 
  $form->add_element(
-    'type'    => 'Text',
+    'type'    => 'Honeypot',
     'name'    => 'comments',
+    'label'   => 'Comments',
+  );
+
+ $form->add_element(
+    'type'    => 'Text',
+    'name'    => 'text',
     'label'   => 'Message',
   );
 
   $form->add_element(
     'type'    => 'Hidden',
-    'name'    => 'kw',
-    'value'   => $object->param('kw'),
+    'name'    => 'string',
+    'value'   => $object->param('string'),
   );
 
   $form->add_element(
@@ -68,7 +80,7 @@ sub content {
   $form->add_element(
     'type'    => 'Submit',
     'name'    => 'submit',
-    'value'   => 'Send Email',
+    'value'   => 'Preview',
   );
 
   return $form->render;
