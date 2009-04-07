@@ -254,8 +254,7 @@ sub discover {
   my $self = shift;
   
   my %fields = %{ $self->data->get_all_fields };
-
-  my %hasa_relations = %{ $self->data->__meta_info->{has_a} };
+  my %hasa_fields = %{ $self->data->hasa_relations };
 
   my (%elements, @element_order);
   foreach my $field (keys %fields) {
@@ -303,10 +302,10 @@ sub discover {
     }
 
     ## Do any has_a fields, which are added as queriable fields by Data.pm
-    if (my $relation = $hasa_relations{$field}) {
+    if (my $class = $hasa_fields{$field}) {
       $element_type = 'DropDown';
       $param->{'select'} = 'select';
-      my $lookup = $relation->{'foreign_class'}->get_lookup_values;
+      my $lookup = $class->get_lookup_values;
       if ($lookup && ref($lookup) eq 'ARRAY') {
         $param->{'values'} = $self->create_select_values($lookup);
       }
@@ -327,13 +326,12 @@ sub discover {
     $self->element($field, $param);
   }
 
-  my %hasmany_relations = %{ $self->data->__meta_info->{has_many} };
-  while (my ($field, $relation) = each (%hasmany_relations)) {
-    next unless ref $relation;
-    my $class  = $relation->{foreign_class};
-    my $lookup = $class->get_lookup_values;
+  my %has_many = %{ $self->data->hasmany_relations };
+  while (my ($field, $classes) = each (%has_many)) {
+    my $rel_class = $classes->[1];
+    my $lookup = $rel_class->get_lookup_values;
     my $select = scalar(@$lookup) > 20 ? 'select' : '';
-    my $param  = {
+    my $param = {
       'name'    => $field,
       'label'   => ucfirst($field),
       'type'    => 'MultiSelect',
@@ -502,7 +500,7 @@ sub edit_fields {
   my $data = $self->data;
   my $dataview = $ENV{'ENSEMBL_FUNCTION'};
   my $element_order = $self->element_order;
-  my %has_many = %{ $self->data->__meta_info->{has_many} };
+  my %has_many = %{ $self->data->hasmany_relations };
 
   ## populate widgets from Data_of{$self}
   foreach my $field (@$element_order) {
@@ -595,8 +593,7 @@ sub preview_fields {
 
   my $data = $self->data;
   my $element_order = $self->element_order;
-  my %has_many = %{ $self->data->__meta_info->{has_many} };
-
+  my %has_many = %{ $self->data->hasmany_relations };
 
   foreach my $field (@$element_order) {
     my $element = $self->element($field);
@@ -609,8 +606,8 @@ sub preview_fields {
       my $var = $data->$field;
   
       ## Catch 'has_many' fields before doing normal ones
-      if (my $relation = $has_many{$field}) {
-        my $class = $relation->{foreign_class};
+      if (my $classes = $has_many{$field}) {
+        my $class = $classes->[1];
         my $lookup = $class->get_lookup_values;
         my $order = $lookup->[0]{'order'};
         my $label;
