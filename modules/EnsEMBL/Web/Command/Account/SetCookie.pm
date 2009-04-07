@@ -44,7 +44,7 @@ sub process {
   ## Convert any accepted invitations to memberships
   $user->update_invitations;
 
-  if ($object->param('activated')) {
+  if ($object->param('activated') || ($object->param('popup') && $object->param('popup') eq 'no')) {
     my $home = $SD->ENSEMBL_STYLE->{'SITE_LOGO_HREF'} || '/'; ## URL can't be blank!
     $object->redirect($self->url($home));
   }
