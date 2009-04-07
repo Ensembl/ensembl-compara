@@ -50,6 +50,10 @@ sub populate_tree {
     )],
     { 'availability' => 1}
   );
+  $self->create_node( 'Preview', '',
+    [qw(contact    EnsEMBL::Web::Component::Help::Preview)],
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  );
 
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $T->append($self->create_subnode( 'EmailSent', '',

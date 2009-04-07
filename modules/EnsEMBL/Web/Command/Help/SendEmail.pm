@@ -23,11 +23,17 @@ sub process {
   my $object = $self->object;
 
   my $mailer = EnsEMBL::Web::Mailer->new();
+  my $spam;
 
-  ## Check the user's input for spam _before_ we start adding all our crap!
-  my $comments = $object->param('comments');
-  my $filter = EnsEMBL::Web::Filter::Spam->new();
-  my $spam = $filter->check($comments, 1);
+  ## Check honeypot fields first
+  if ($object->param('honeypot_1') || $object->param('honeypot_2')) {
+    $spam = 1;
+  }
+  else {
+    ## Check the user's input for spam _before_ we start adding all our crap!
+    my $filter = EnsEMBL::Web::Filter::Spam->new();
+    $spam = $filter->check($object->param('message'), 1);
+  }
 
   unless ($spam) {
     my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
@@ -51,7 +57,7 @@ sub process {
     );
     my $message = 'Support question from '.$species_defs->ENSEMBL_SERVERNAME."\n\n";
     $message .= join "\n", map {sprintf("%-16.16s %s","$_->[0]:",$_->[1])} @mail_attributes;
-    $message .= "\n\nComments:\n\n$comments\n\n";
+    $message .= "\n\nComments:\n\n".$object->param('message')."\n\n";
 
     $mailer->set_mail_server('localhost');
     $mailer->set_from($object->param('email'));
