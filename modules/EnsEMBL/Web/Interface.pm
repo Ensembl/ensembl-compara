@@ -329,6 +329,7 @@ sub discover {
 
   my %hasmany_relations = %{ $self->data->__meta_info->{has_many} };
   while (my ($field, $relation) = each (%hasmany_relations)) {
+    next unless ref $relation;
     my $class  = $relation->{foreign_class};
     my $lookup = $class->get_lookup_values;
     my $select = scalar(@$lookup) > 20 ? 'select' : '';

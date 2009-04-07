@@ -276,7 +276,8 @@ sub has_many {
   
     my $real_accessor = '_'. $accessor;
     $class->SUPER::has_many($real_accessor => $relation_class);
-  
+    $class->__meta_info->{has_many}->{$accessor} = $real_accessor;
+    
     *{$class."::$accessor"} =
       sub {
         my $self = shift;
