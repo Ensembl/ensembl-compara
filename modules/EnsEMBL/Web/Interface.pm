@@ -254,7 +254,8 @@ sub discover {
   my $self = shift;
   
   my %fields = %{ $self->data->get_all_fields };
-  my %hasa_fields = %{ $self->data->hasa_relations };
+
+  my %hasa_relations = %{ $self->data->__meta_info->{has_a} };
 
   my (%elements, @element_order);
   foreach my $field (keys %fields) {
@@ -302,10 +303,10 @@ sub discover {
     }
 
     ## Do any has_a fields, which are added as queriable fields by Data.pm
-    if (my $class = $hasa_fields{$field}) {
+    if (my $relation = $hasa_relations{$field}) {
       $element_type = 'DropDown';
       $param->{'select'} = 'select';
-      my $lookup = $class->get_lookup_values;
+      my $lookup = $relation->{'foreign_class'}->get_lookup_values;
       if ($lookup && ref($lookup) eq 'ARRAY') {
         $param->{'values'} = $self->create_select_values($lookup);
       }
@@ -326,12 +327,12 @@ sub discover {
     $self->element($field, $param);
   }
 
-  my %has_many = %{ $self->data->hasmany_relations };
-  while (my ($field, $classes) = each (%has_many)) {
-    my $rel_class = $classes->[1];
-    my $lookup = $rel_class->get_lookup_values;
+  my %hasmany_relations = %{ $self->data->__meta_info->{has_many} };
+  while (my ($field, $relation) = each (%hasmany_relations)) {
+    my $class  = $relation->{foreign_class};
+    my $lookup = $relation->{foreign_class}->get_lookup_values;
     my $select = scalar(@$lookup) > 20 ? 'select' : '';
-    my $param = {
+    my $param  = {
       'name'    => $field,
       'label'   => ucfirst($field),
       'type'    => 'MultiSelect',
