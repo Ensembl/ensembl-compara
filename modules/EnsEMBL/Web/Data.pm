@@ -341,8 +341,8 @@ sub tie_a {
     *{$class."::$column"} = sub { shift->$rel_obj->$column(@_) }
       unless $class->find_column($column);
   }
-  *{$class."::id"} = sub { shift->$rel_obj->id(@_) }
-  *{$class."::get_lookup_values"} = sub { shift->$rel_obj->get_lookup_values(@_) }
+  *{$class."::id"} = sub { shift->$rel_obj->id(@_) };
+  *{$class."::get_lookup_values"} = sub { shift->$rel_obj->get_lookup_values(@_) };
 }
 
 
