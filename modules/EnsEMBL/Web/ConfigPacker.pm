@@ -305,8 +305,8 @@ sub _summarise_website_db {
     $data =~ s/^\$data = //;
     $data =~ s!\+'!'!g;
     $data = eval ($data);
-    my $object = $data->{'object'};
-    my $action = $data->{'action'};
+    my $object = $data->{'ensembl_object'};
+    my $action = $data->{'ensembl_action'};
     $self->db_tree->{'ENSEMBL_HELP'}{$object}{$action} = $row->[0];
   }
 
