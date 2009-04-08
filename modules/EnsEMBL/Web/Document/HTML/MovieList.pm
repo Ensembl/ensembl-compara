@@ -21,8 +21,7 @@ sub render {
   my $html;
   my @movies = sort {$a->list_position <=> $b->list_position} EnsEMBL::Web::Data::Movie->find_all;
 
-  $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly.</p>
-<p class="space-below">Please note that files can be large, so if you are on a dialup connection or a long way from the UK, playback may be jerky.</p>);
+  $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly.</p>);
 
   my $table = EnsEMBL::Web::Document::SpreadSheet->new();
 
@@ -39,6 +38,9 @@ sub render {
 
   }
   $html .= $table->render;
+
+  $html .= qq(<p style="margin-top:1em">Please note that files can be large, so if you are on a dialup connection or a long way from the UK, playback may be jerky. In this case, you may find it easier to view these tutorials on YouTube: <a href="http://www.youtube.com/user/EnsemblHelpdesk">www.youtube.com/user/EnsemblHelpdesk</a>.</p>);
+
   return $html;
 }
 
