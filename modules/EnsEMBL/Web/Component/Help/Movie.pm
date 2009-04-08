@@ -49,12 +49,21 @@ sub content {
       ),
                 $path, $movie->width, $movie->height, $file, $path, $path, $path);
 
-    ## Feedback form
+    ## Feedback
+    my $style = 'text-align:right;margin-right:2em';
     if ($object->param('feedback')) {
-      $html .= '<p style="margin-top:2em">Thank you for your feedback.</p>';
+      $html .= qq(<p style="$style">Thank you for your feedback.</p>);
     }
     else {
-      $html .= $self->help_feedback('/Help/Movie', 'Movie', $movie->id, '"margin-top:2em');
+      ## Feedback form
+      $html .= $self->help_feedback($style, $movie->id, return_url => '/Help/Movie', type => 'Movie',
+          '_referer' => $object->param('_referer'),
+          'x_requested_with' => $object->param('x_requested_with'));
+
+      ## Link to movie-specific feedback form
+      my $title = $movie->title;
+      my $extra = '_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
+      $html .= qq(<div class="info-box" style="float:right;width:50%;padding:10px;margin:5px">If you have problems viewing this movie, we would be grateful if you could <a href="/Help/MovieFeedback?title=$title;$extra" class="modal_link">provide feedback</a> that will help us improve our service. Thank you.</div>);
     }
   }
   elsif (scalar(@movies) > 0 && $movies[0]) {
