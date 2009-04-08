@@ -62,6 +62,7 @@
     'genome_name_assembly'  => 'Homo sapiens:NCBI35',
 #    'chunk_size'            => 250000000,# set it to be over the longest toplevel seq_region
                                          # you expect for this species. If is not defined, then the longest toplevel seg_region is automatically used.
+    'include_non_reference' => 1, #optional, default: 0. In this case include non-reference regions eg haplotypes
     'dump_loc'              => '/acari/work7a/abel/hive/abel_compara_blastz_Hs35Rn3p4c/human_nib_for_chain',
   },
 
