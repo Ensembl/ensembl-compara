@@ -254,6 +254,7 @@ sub discover {
   my $self = shift;
   
   my %fields = %{ $self->data->get_all_fields };
+  $fields{'id'} = 'int';
   my %hasa_fields = %{ $self->data->hasa_relations };
 
   my (%elements, @element_order);
@@ -500,12 +501,14 @@ sub edit_fields {
   my $data = $self->data;
   my $dataview = $ENV{'ENSEMBL_FUNCTION'};
   my $element_order = $self->element_order;
+  warn "@@@ ELEMENTS @$element_order";
   my %has_many = %{ $self->data->hasmany_relations };
 
   ## populate widgets from Data_of{$self}
   foreach my $field (@$element_order) {
     my $element;
     $element = $self->element($field);
+    warn ">>> $field = $element";
     next unless $element;
 
     my %param = %{$element->widget};
