@@ -252,6 +252,10 @@ sub populate_tree {
   $self->create_node( 'SendActivation', '', [],
     { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::SendActivation'}
   );
+  $self->create_node( 'ActivationSent', "",
+    [qw(password EnsEMBL::Web::Component::Account::ActivationSent)], 
+    { 'no_menu_entry' => 1 }
+  );
   $self->create_node( 'SavePassword', '', [],
     { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::SavePassword',
       'filters' => [qw(PasswordSecure)]}

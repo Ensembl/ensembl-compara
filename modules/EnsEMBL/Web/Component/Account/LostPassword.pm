@@ -29,6 +29,7 @@ sub content {
   $form->add_element('type'  => 'String', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Hidden', 'name'  => 'lost', 'value' => 'yes');
   $form->add_element('type'  => 'Hidden', 'name'  => '_referer', 'value' => $self->object->param('_referer'));
+  $form->add_element('type'  => 'Hidden', 'name'  => 'x_requested_with', 'value' => $self->object->param('x_requested_with'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Send', 'class'=>'modal_link');
 
   return $form->render;

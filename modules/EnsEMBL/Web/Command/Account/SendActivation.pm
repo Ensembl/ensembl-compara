@@ -21,7 +21,7 @@ sub process {
 
   $mailer->set_to($object->param('email'));
   $mailer->send_activation_email($object);
-  $self->ajax_redirect('/Account/ActivationSent', {'_referer' => $object->param('_referer')});
+  $self->ajax_redirect('/Account/ActivationSent', {'_referer' => $object->param('_referer'), 'x_requested_with' => $object->param('x_requested_with')});
 }
 
 }
