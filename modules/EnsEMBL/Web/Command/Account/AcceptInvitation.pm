@@ -30,16 +30,16 @@ sub process {
       if ($ENV{'ENSEMBL_USER_ID'}) {
         my $group_id = $invitation->webgroup_id; ## Grab this *before* we destroy the invitation!
         $existing_user->update_invitations;
-        $url = $self->url('/Account/MemberGroups', {'id' => $webgroup_id} );
+        $url = $self->url('/Account/MemberGroups', {'id' => $group_id, 'popup' => 'no'} );
       }
       else {
         ## Encourage user to log in
-        $url = $self->url('/Account/Login', {'email' => $invitation->email} );
+        $url = $self->url('/Account/Login', {'email' => $invitation->email, 'popup' => 'no'} );
       }
     }
     else {
       ## New user, so go to registration
-      $url = $self->url('/Account/User/Add', {'email' => $invitation->email} );
+      $url = $self->url('/Account/User/Add', {'email' => $invitation->email, 'popup' => 'no'} );
     }
   }
   $object->redirect($url);
