@@ -43,13 +43,14 @@ sub content {
     
     $table->add_columns(
       { 'key' => 'type', 'title' => 'Type', 'width' => '10%', 'align' => 'left' },
-      { 'key' => 'name', 'title' => 'File', 'width' => '45%', 'align' => 'left' }
+      { 'key' => 'name', 'title' => 'File', 'width' => '30%', 'align' => 'left' }
     );
     
     if ($sd->ENSEMBL_LOGINS) {
       $table->add_columns(
         { 'key' => 'date', 'title' => 'Last updated', 'width' => '15%', 'align' => 'left' },
-        { 'key' => 'save', 'title' => '', 'width' => '15%', 'align' => 'left' }
+        { 'key' => 'save', 'title' => '', 'width' => '15%', 'align' => 'left' },
+        { 'key' => 'rename', 'title' => '', 'width' => '15%', 'align' => 'left' },
       );
     }
     
@@ -75,27 +76,30 @@ sub content {
       
       # from user account
       if (ref ($file) =~ /Record/) {
-        my ($type, $name, $date, $delete);
+        my ($type, $name, $date, $rename, $delete);
         if (ref ($file) =~ /Upload/) {
           $type = 'Upload';
           $name = $file->name;
           $date = $file->modified_at || $file->created_at;
           $date = $self->pretty_date($date);
+          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=uploads;id=%s;%s" class="%s"%s>Rename</a>', $dir, $file->id, $referer, $delete_class, $title);
           $delete = sprintf('<a href="%s/UserData/DeleteUpload?type=user;id=%s;%s" class="%s"%s>Delete</a>', $dir, $file->id, $referer, $delete_class, $title);
         } elsif (ref ($file) =~ /DAS/) {
           $type = 'DAS';
           $name = $file->label;
           $date = '-';
+          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="modal_link">Rename</a>', $dir, $file->id, $referer);
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=das;id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
         } elsif (ref ($file) =~ /URL/) {
           $type = 'URL';
           $name = $file->name;
           $date = '-';
+          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="modal_link">Rename</a>', $dir, $file->id, $referer);
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
         }
         
         if ($sd->ENSEMBL_LOGINS) {
-          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => $date, 'save' => 'Saved' };
+          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => $date, 'rename' => $rename, 'save' => 'Saved' };
         } else {
           $row = { 'type' => $type, 'name' => $name, 'delete' => $delete };
         }
