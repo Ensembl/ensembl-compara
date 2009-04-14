@@ -52,22 +52,30 @@ sub fasta {
     my $transcript = $_->Obj;
     my $id_type = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->status . '_' . $transcript->biotype;
     my $id = ($object_id ? "$object_id:" : "") . $transcript->stable_id;
+    my $intron_id = 1;
     
     my $output = {
-      'cdna'    => [ "$id cdna:$id_type", $transcript->spliced_seq ],
-      'coding'  => eval { [ "$id cds:$id_type", $transcript->translateable_seq ] },
-      'peptide' => eval { [ "$id peptide:@{[$transcript->translation->stable_id]} pep:$id_type", $transcript->translate->seq ] },
-      'utr3'    => eval { [ "$id utr3:$id_type", $transcript->three_prime_utr->seq ] },
-      'utr5'    => eval { [ "$id utr5:$id_type", $transcript->five_prime_utr->seq ] }
+      'cdna'    => [[ "$id cdna:$id_type", $transcript->spliced_seq ]],
+      'coding'  => eval { [[ "$id cds:$id_type", $transcript->translateable_seq ]] },
+      'peptide' => eval { [[ "$id peptide:@{[$transcript->translation->stable_id]} pep:$id_type", $transcript->translate->seq ]] },
+      'utr3'    => eval { [[ "$id utr3:$id_type", $transcript->three_prime_utr->seq ]] },
+      'utr5'    => eval { [[ "$id utr5:$id_type", $transcript->five_prime_utr->seq ]] },
+      'exons'   => eval { [ map {[ "$id " . $_->id . " exon:$id_type", $_->seq->seq ]} @{$transcript->get_all_Exons} ] },
+      'introns' => eval { [ map {[ "$id intron " . $intron_id++ . ":$id_type", $_->seq ]} @{$transcript->get_all_Introns} ] }
     };
     
     foreach (sort keys %$params) {
       next unless ref $output->{$_} eq 'ARRAY';
       
-      $output->{$_}->[1] =~ s/(.{60})/$1\r\n/g;
-      
-      $html .= ">$output->{$_}->[0]\r\n$output->{$_}->[1]\r\n";
+      foreach (@{$output->{$_}}) {
+        $_->[1] =~ s/(.{60})/$1\r\n/g;
+        $_->[1] =~ s/\r\n$//g;
+        
+        $html .= ">$_->[0]\r\n$_->[1]\r\n";
+      }
     }
+    
+    $html .= "\r\n";
   }
   
   my $genomic = $object->param('genomic');

@@ -19,7 +19,7 @@ sub init {
     $defaults{$_} = 0;
   }
   
-  foreach (qw(cdna coding peptide utr5 utr3)) {
+  foreach (qw(cdna coding peptide utr5 utr3 exons introns)) {
     $defaults{'fasta_' . $_} = 'yes';
   }
   
