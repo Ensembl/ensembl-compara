@@ -360,7 +360,7 @@ sub ajax_zmenu      {
   elsif ($action eq 'ComparaGenomicAlignment') {
     return $self->_ajax_zmenu_ga($panel,$obj);
   }
-  elsif ($action eq 'Align') {
+  elsif ($action eq 'Compara_Alignments') {
     return $self->_ajax_zmenu_av($panel,$obj);
   }
   elsif ($action =~ /View|Overview/) {
