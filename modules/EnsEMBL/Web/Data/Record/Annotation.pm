@@ -9,7 +9,8 @@ __PACKAGE__->_type('annotation');
 __PACKAGE__->add_fields(
   stable_id  => 'text',
   title      => 'text',
-  url        => 'text',
+  ftype      => 'text',
+  species    => 'text',
   annotation => 'text',
 );
 
