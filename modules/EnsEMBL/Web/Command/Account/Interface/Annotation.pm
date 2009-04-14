@@ -30,7 +30,7 @@ sub process {
   ## Customization
   $interface->caption({add  => 'Create annotation'});
   $interface->caption({edit => 'Edit annotation'});
-  #$interface->permit_delete('yes');
+  $interface->permit_delete('yes');
   $interface->option_columns([qw/stable_id title/]);
   $interface->modify_element('title',       {type => 'String', label =>'Title'});
   $interface->modify_element('annotation',  {type =>'Text'   , label =>'Annotation notes'});
