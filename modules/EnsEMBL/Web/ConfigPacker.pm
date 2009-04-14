@@ -346,7 +346,7 @@ sub _summarise_compara_db {
       where mlss.method_link_id = ml.method_link_id and
             mlss.species_set_id=ss.species_set_id and 
             ss.genome_db_id = gd.genome_db_id and
-            ( ml.class like "GenomicAlign%" or ml.class = "ConservationScore.conservation_score" )
+            ( ml.class like "GenomicAlign%" or ml.class like "%.constrained_element" or ml.class = "ConservationScore.conservation_score" )
   ');
   my $constrained_elements = {};# $db_name };
   my %valid_species = map {($_,1)} keys %{$self->full_tree};
