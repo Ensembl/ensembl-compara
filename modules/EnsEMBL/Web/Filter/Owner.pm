@@ -36,10 +36,11 @@ sub catch {
     return;
   }
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  #my $record = 
-  #unless ($user->id == $self->object->param('user_id')) {
-  #  $self->set_error_code('not_owner');
-  #}
+  my $method = $object->param('type').'s';
+  my $record = $user->$method($object->param('id'));
+  unless ($record) {
+    $self->set_error_code('not_owner');
+  }
 }
 
 }
