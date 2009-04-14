@@ -36,7 +36,8 @@ sub catch {
     return;
   }
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $method = $object->param('type').'s';
+  my $type = $object->param('type') || $ENV{'ENSEMBL_ACTION'};
+  my $method = lc($type).'s';
   my $record = $user->$method($object->param('id'));
   unless ($record) {
     $self->set_error_code('not_owner');
