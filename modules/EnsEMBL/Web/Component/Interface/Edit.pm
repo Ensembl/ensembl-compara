@@ -22,7 +22,7 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $action = $self->no_preview ? 'Save': 'Preview';
+  my $action = $object->interface->no_preview ? 'Save': 'Preview';
 
   my $form = $self->data_form('edit', $action);
   $form->add_element(

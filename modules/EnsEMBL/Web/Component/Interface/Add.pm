@@ -21,7 +21,7 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $action = $self->no_preview ? 'Save': 'Preview';
+  my $action = $self->object->interface->no_preview ? 'Save': 'Preview';
 
   my $form = $self->data_form('add', $action);
 
