@@ -1,0 +1,681 @@
+ABOUT
+~~~~~
+
+This document describes how to run the ensembl-compara genetree
+pipeline.
+
+- Loads the canonical or longest peptide for each gene loci in each
+  configured species database into the compara DB's member table.
+
+- Loads each UniProt protein into the member table (metazoa only for
+  now). Only needed if the family pipeline is to be run subsequently.
+
+- Performs all-against-all blastp searched of the member proteins in
+  the DB.
+
+- Run PAFCluster to create the clusters of proteins.
+
+- Run Muscle to obtain the protein multialignments for each cluster.
+
+- Run NJTREE_PHYML with a given species tree to create the protein trees.
+
+- Run OrthoTree to create the homology relationships per each genepair
+in the tree.
+
+- BreakPAFCluster will run with increased BSR (+0.1) in case Muscle or
+  NJTREE_PHYML fail on big trees or complicated alignments and create
+  new jobs for the subclusters that creates.
+
+- Provided that the species are close enough, the pipeline can also
+  run a dN/dS analysis for the orthologs of pairs of species, in the
+  Homology_dNdS analysis. This step is optional.
+
+The genetree process overlaps initially with the homology pipeline,
+but once the clusters are created, it differs in the way things are
+done. Read README-homology for more information.
+
+
+1- code API needed and executable
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  bioperl-live (bioperl-1-2-3)
+  bioperl-run (1.4) for the CodeML runnable/parser
+  ensembl
+  ensembl-compara
+  ensembl-hive
+  ensembl-analysis
+  ensembl-pipeline
+
+  executables
+  ~~~~~~~~~~~
+  wublastp
+      using /usr/local/ensembl/bin/wublastp
+  setdb
+      using /usr/local/ensembl/bin/setdb
+  muscle
+      using /usr/local/ensembl/bin/muscle
+  njtree
+      using /lustre/work1/ensembl/avilella/bin/i386/njtree_gcc
+  codeml
+      using /usr/local/ensembl/bin/codeml
+
+1.2 Code checkout
+
+bioperl code;
+
+  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
+    co -r branch-1-2-3 bioperl-live
+
+bioperl-run code (for the CodeML runnable/parser)
+  
+  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
+    co -r bioperl-run-release-1-4-0 bioperl-run
+
+core ensembl code
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+
+ensembl-compara code (for Compara API and schema)
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
+
+ensembl-analysis code (for Runnables)
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+
+ensembl-pipeline code (for Pipeline)
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-pipeline
+
+ensembl-hive code
+
+  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
+
+
+1.3 Perl environment
+
+in tcsh
+  $ setenv BASEDIR   /some/path/to/modules
+  $ setenv PERL5LIB ${BASEDIR}/ensembl/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/bioperl-live:${PERL5LIB}
+  $ setenv PERL5LIB ${BASEDIR}/bioperl-run:${PERL5LIB}
+
+in bash
+  $ BASEDIR=/some/path/to/modules
+  $ export PERL5LIB=${BASEDIR}/ensembl/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-compara/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-pipeline/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-analysis/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/ensembl-hive/modules:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/bioperl-live:${PERL5LIB}
+  $ export PERL5LIB=${BASEDIR}/bioperl-run:${PERL5LIB}
+
+
+1.4 CPAN Perl modules
+  www.cpan.org
+
+  DBI
+  DBD::mysql
+  Data::UUID
+  Statistics::Descriptive
+
+
+2- Create the tables in the database
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+These tables are already in the main ensembl-compara/sql/table.sql
+file as of ensembl v40.
+
+Pick a mysql instance and create a database;
+
+  $ set COMPARA_DBNAME=${USER}_ensembl_compara_52
+  $ mysql -e "create database $COMPARA_DBNAME"
+
+And load the schemas;
+
+  $ cat $BASEDIR/ensembl-compara/sql/table.sql \
+        $BASEDIR/ensembl-compara/sql/pipeline-tables.sql \
+        $BASEDIR/ensembl-hive/sql/tables.sql \
+    | mysql $COMPARA_DBNAME
+
+And set an environment variable containing the connection parameters
+to the DB as used by many of the compara scripts:
+
+  $ set COMPARA_URL=mysql://<user>:<pass>@<host>:<port>/${COMPARA_DBNAME}
+
+3- Load the NCBI taxonomy data 
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You now need to load the NCBI taxonomy data into the ncbi_taxa_name
+and ncbi_taxa_node tables. See the following file;
+
+  $BASEDIR/ensembl-compara/scripts/taxonomy/README-taxonomy
+
+You may alternatively be able to copy taxonomy tables from an existing
+compara db (this may take a few mins), e.g.
+
+  $ mysqldump --no-create-info ensembl_compara_old \
+    ncbi_taxa_node ncbi_taxa_name \
+    | mysql $COMPARA_DBNAME
+
+Or, (Ensembl-site-specific)
+
+  $ mysqldump -u ensro -h ens-livemirror \
+    --extended-insert --compress --delayed-insert \
+    ncbi_taxonomy ncbi_taxa_node ncbi_taxa_name \
+    | mysql $COMPARA_DBNAME
+
+
+4- compara-hive config file
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Copy and modify the compara-hive config file
+   
+  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+  $ cp compara-hive-genetree.conf.example my_compara.conf
+  <editor> my_compara.conf
+
+You may need to change the database names, port, dbnames, and the
+paths to the 'hive_output_dir' and 'fasta_dir'. Note that these dirs
+must exist.
+
+You can enable/disable various components of the system
+(e.g. MCL-clustering, dNdS) where indicated depending on your
+preferences.
+
+IMPORTANT: The hive system can generate an awful lot of log outputs
+that are dumped in the hive_output_dir. When a pipeline runs fine,
+these are not needed and can take a lot of disk space as well as
+generate a large number of files. If you don't want log outputs
+(recommended), then just don't specify any hive_output_dir.
+
+
+4.1- Species Configuration
+     ----------
+
+Connection parameters to the source ensembl core should be configured
+in this file.
+
+Some 'gotchas' with the core databases should be checked;
+
+- The top-level coordinate system must include a version,
+  mysql> SELECT name, version FROM coord_system ORDER BY rank LIMIT 1;
+
+- There must be a genebuild.version set in the meta table,
+  mysql> SELECT * FROM meta WHERE meta_key="genebuild.version";
+
+- Only genes on slices marked as 'toplevel' will be included.
+  mysql> SELECT count(*) 
+         FROM seq_region cs, seq_region_attrib a, attrib_type at 
+         WHERE cs.seq_region_id=a.seq_region_id 
+         AND   a.attrib_type_id=at.attrib_type_id 
+         AND   at.code="toplevel";
+
+- Only genes with biotype of 'protein_coding' will be dumped;
+  mysql> SELECT count(*) FROM gene WHERE biotype='protein_coding';
+  mysql> SELECT count(*) FROM transcript WHERE biotype='protein_coding';
+
+- The dumping goes much faster if the genes/transcripts are on
+  toplevel slices;
+  mysql> SELECT COUNT(*) 
+         FROM transcript f, seq_region_attrib sra, attrib_type at 
+         WHERE f.seq_region_id=sra.seq_region_id 
+         AND sra.attrib_type_id=at.attrib_type_id  
+         AND at.code='toplevel'
+         AND f.biotype='protein_coding';
+
+- The species.taxonomy_id in the meta table must correspond to that in
+  the 'my_compara.conf' file;
+  mysql> SELECT * FROM meta WHERE meta_key = 'species.taxonomy_id';
+
+4.2- dNdS Configuration
+     ----------
+
+In case you want to run the dN/dS part, you will also need this:
+
+  { TYPE => dNdS,
+    'codeml_parameters' 
+      => do($ENV{BASEDIR}.'/ensembl-compara/scripts/homology/codeml.ctl.hash'),
+    'species_sets' => '[[3,22,25,31,32,33,34,35,38],[4,13]]',
+    'method_link_types' => ['ENSEMBL_ORTHOLOGUES']
+  },
+
+Where the species sets define the pairs of species and
+method_link_types (typically 'ENSEMBL_ORTHOLOGUES' and/or
+'ENSEMBL_PARALOGUES') for which one wants to run the dNdS. For example:
+
+    'species_sets' => '[[a,b,c,d],[x,y]]'
+
+would do the dNdS for the species pairs: a+b, a+c, a+d, b+c, b+d and
+c+d and also between x+y.
+
+One example of the codeml parameters needed can be found in
+ensembl-compara/scripts/homology/codeml.ctl.hash
+
+
+4.3- Bio::EnsEMBL::Analysis::Config files 
+     ----------
+
+Copy and modify the Bio::EnsEMBL::Analysis::Config::General file
+You may need to change the locations of BIN_DIR, DATA_DIR and LIB_DIR;
+
+  $ cd $BASEDIR/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config
+  $ cp General.pm.example General.pm
+  <editor> General.pm
+
+Copy and modify the Bio::EnsEMBL::Analysis::Config::Blast file
+
+  $ cd $BASEDIR/ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config
+  $ cp Blast.pm.example Blast.pm
+  <editor> Blast.pm
+
+
+Set the blast envirnment; these environment variables cannot be set in
+either ::Config::Blast or ::Config::General;
+
+in tcsh:
+  $ setenv PATH /usr/local/ensembl/bin:$PATH
+  $ setenv BLASTMAT /usr/local/ensembl/data/blastmat:$BLASTMAT
+  $ setenv BLASTFILTER /usr/local/ensembl/bin:$BLASTFILTER
+
+
+5- Create the species tree file 
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A NCBI taxon_id phylogenetic tree file representing the species in the
+compara DB is required for the njtree stage. The file must be in Nexus
+(.nh) format. If you are running the pipeline for your own set of
+species, you can generate such a tree with the script
+Ensembl-compara/scripts/tree/testTaxonTree.pl.
+
+One example of the species_tree_file can be found in
+ensembl-compara/scripts/pipeline/species_tree_njtree.taxon_id.nh
+
+To have your list of NCBI taxon_ids, you can use "-query_ncbi_name"
+like this:
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Anopheles gambiae"
+
+NJTREE can distinguish between species that are supposed to have all
+the genes represented in the DB and "incomplete" species, that may
+have only a part of the genes represented. For the latter, NJTREE
+won't try to estimate gene losses given this info.
+
+If you have a DB with say 3 completely sequenced species, Anopheles
+gambiae, Aedes aegypti and Drosophila melanogaster, and 2 incomplete
+species, Pediculus humanus and Culex pipiens, you can create the
+species tree like this:
+
+(a) Look for the NCBI taxon_ids:
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Anopheles gambiae"
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Aedes aegypti"
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Drosophila melanogaster"
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Culex pipiens"
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL -query_ncbi_name "Pediculus humanus"
+
+the first three then being "-extrataxon_sequenced 7165_7159_7227", 
+and the last two being: "-extrataxon_incomplete 7175_121225"
+
+(b) Then you call the script like this:
+
+$ perl $BASEDIR/ensembl-compara/scripts/tree/testTaxonTree.pl \
+  -url $COMPARA_URL \
+  -create_species_tree -extrataxon_sequenced 7165_7159_7227 \
+  -extrataxon_incomplete 7175_121225  -no_previous
+
+Which in this case will create your file with the name
+"njtree.5.ensembl_compara_52.nh":
+
+((((7175,7159*)53550,7165*)7157,7227*)7147,121225);
+
+Also, there is an option to ignore internal nodes present in the NCBI
+taxonomy. This will multifurcate the tree at the point when the given
+node would disappear. For example, if one wants to ignore the
+Coelomata (33316) internal node, and create a multifurcation at that
+point, the option would be "-multifurcation_deletes_node 33316".
+
+If you want to create a species_tree with all the species already
+present in a previous Compara DB plus a few new species, you can use
+the script connecting to that given DB and without the "-no_previous"
+option. For example:
+
+$ testTaxonTree.pl -url $COMPARA_URL \
+  -create_species_tree -extrataxon_sequenced 9823 \
+  -multifurcation_deletes_node 33316
+
+will create a tree with the species in the compara DB, deleting
+the Coelomata internal node and adding the Sus scrofa species as
+completely sequenced.
+
+
+6- Run the configure scripts
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The comparaLoadGenomes script use the information in the conf file to
+connect to the core databases, queries for things like taxon_id,
+assembly, gene_build, and names to create entries in the genome_db
+table.  It also sets the genome_db.locator column to allow the system
+to know where the respective core databases are located.  There is an
+additional table called genome_db_extn which will be deprecated
+shortly, but as of today (23 July 2008) it is still used to hold a
+'phylum' value for each genome to allow the option of building
+homologies only within phylums.  This script will also 'seed' the
+pipeline/hive system by creating the first jobs in the analysis_job
+table for the analysis 'SubmitGenome'. Note that the
+coord_system.version fields in the source species databases must be
+set to a 'true' value for the script to work.
+
+The loadGeneTreeSystem script creates the analysis entries for the
+processing system, and creates both the dataflow rule and the analysis
+control rules.  It also initializes the analysis_stats row for each
+analysis.  These rows hold information like batch_size, hive_capacity,
+and run-time stats that the Hive's Queen will update.
+
+These scripts may give you warnings if the output directories are not
+available or if it's unable to connect to core databases.
+
+ $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+ $ ./comparaLoadGenomes.pl -conf my_compara.conf
+ $ ./loadGeneTreeSystem.pl -conf my_compara.conf
+
+If comparaLoadGenomes.pl or loadGeneTreeSystem.pl goes wrong, the DB
+can be reset as follows (you need to re-run both);
+
+ $ mysql $COMPARA_DBNAME \
+   -e"delete from analysis;" -e"delete from analysis_ctrl_rule;" \
+   -e"delete from analysis_data;" -e"delete from analysis_description;" \
+   -e"delete from analysis_job;" -e"delete from analysis_stats;" \
+   -e"delete from dataflow_rule;" \
+   -e"delete from genome_db;" -e"delete from genome_db_extn;" \
+   -e"delete from hive;" -e"delete from monitor;"
+
+  $ mysql $COMPARA_DBNAME -e"show tables like 'peptide_align_feature_%'"
+  (drop each of these)
+
+7- Create the method_link_species_sets
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are running this for the Ensembl production release, make sure
+that the method_link, species_set and method_link_species_set tables
+in your compara DB are in sycn with the method_link_species_set in the
+compara master db.
+TODO: How to do this?
+
+If not, create the method_link_species_sets that you need with the
+create_mlss.pl script as follows;
+
+7.1. First you will need an ensembl registry file that configures the
+   database connection to the compara database. An example registry
+   file would be;
+
+  ---
+  use Bio::EnsEMBL::Utils::ConfigRegistry;
+  use Bio::EnsEMBL::DBSQL::DBAdaptor;
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+      -host    => 'localhost',
+      -user    => 'admin',
+      -pass    => 'secret',
+      -port    => 3306,
+      -species => 'compara-master',
+      -dbname  => 'my_ensembl_compara_45');
+  Bio::EnsEMBL::Registry->add_alias("compara-master","DEFAULT");
+  1;
+  ---
+
+7.2. You may need to create the following method_link entries;
+     (consistent IDs make merging DBs easier)
+
+  $ mysql $COMPARA_DBNAME -e \
+    'INSERT INTO method_link (method_link_id,type, class) \
+     VALUES (201,"ENSEMBL_ORTHOLOGUES","Homology.homology"), \
+            (202,"ENSEMBL_PARALOGUES", "Homology.homology"), \
+            (204,"ENSEMBL_HOMOLOGUES", "Homology.homology"), \
+            (301,"FAMILY",             "Family.family"), \
+            (401,"PROTEIN_TREES",      "ProteinTree.protein_tree_node")'
+
+7.3. Run the create_mlss.pl script. 
+
+  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
+
+  $ # This gets a comma-separated list of all genome_db_ids in the DB
+  $ set SPECIES_LIST=`mysql $COMPARA_DBNAME -r -e \
+    'select group_concat(genome_db_id) from genome_db' | tail -n 1`
+
+  $ # For orthologues
+  $ ./create_mlss.pl --f --pw \
+    --reg_conf ensembl.registry \
+    --method_link_type ENSEMBL_ORTHOLOGUES \
+    --genome_db_id "$SPECIES_LIST"
+
+  $ # For between-species paralogues
+  $ ./create_mlss.pl --f --pw \
+    --reg_conf ensembl.registry \
+    --method_link_type ENSEMBL_PARALOGUES \
+    --genome_db_id "$SPECIES_LIST"
+
+  $ # For same-species paralogues
+  $ ./create_mlss.pl --f --sg \
+    --reg_conf ensembl.registry \
+    --method_link_type ENSEMBL_PARALOGUES \
+    --genome_db_id "$SPECIES_LIST"
+
+  $ # For protein trees
+  $ ./create_mlss.pl --f \
+    --reg_conf ensembl.registry \
+    --method_link_type PROTEIN_TREES \
+    --genome_db_id "$SPECIES_LIST"
+
+At this point the system is ready to run..
+
+
+8- Run the hive
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+One must first make sure that the available hive scripts are available
+in one's path.  This can be done by either extending PATH or linking the
+scripts to an existing directory in the PATH
+
+  tcsh$ setenv PATH ${PATH}:${BASEDIR}/ensembl-hive/scripts
+  bash$ export PATH=$PATH:$BASEDIR/ensembl-hive/scripts
+
+You may also need to set the LSB_DEFAULTPROJECT environment variable
+if you are using LSF across the sanger farm;
+
+  tcsh$ setenv LSB_DEFAULTPROJECT ensembl-compara
+  bash$ export LSB_DEFAULTPROJECT=ensembl-compara
+       
+There are two beekepers, one which uses LSF job submission system, and
+another that uses the local machine only. If using the local machine,
+add the -local flag to the command and the workers will run as 
+background system commands rather than being submited to an LSF resource.
+
+ $ beekeeper.pl -url $COMPARA_URL -loop
+
+Running the complete build for ensembl45 with 35 species on the Sanger
+CPU cluster takes (depending on availability of resources):
+
+- from 1-3 days for the blasts
+- half a day for the clustering
+- 2-3 days for the multialignments, trees and homologies
+
+If, for some reason, the pipeline hangs, it can sometimes be kicked
+back into action using;
+
+  $ beekeeper.pl -url $COMPARA_URL -sync
+
+If you want to manually run one of the jobs in the pipeline in
+debugging mode to see if everything is working as expected, query the
+db for your analysis_job_id and use the runWorker.pl script like this:
+
+ $ mysql $COMPARA_DBNAME -e \
+   "select * from analysis_job aj, analysis a where \
+   a.analysis_id=aj.analysis_id and a.logic_name='Muscle' limit 10"
+
+This will print the first 10 Muscle jobs, then get the analysis_job_id
+for one of them and run:
+
+ $ runWorker.pl -bk LOCAL \
+   -url $COMPARA_URL -outdir '' -no_cleanup -debug 1 --job_id 1234567
+
+Sometimes you may need to reset a particular job (or even analysis) to
+rerun it. See the beekeeper's '-reset_job_id' and
+'-reset_all_jobs_for_analysis' flags.
+
+Sometimes Muscle jobs fail due to large genetrees, but sometimes it's
+simply that the aligner gets confused somehow. The following SQL lists
+the first 10 failed Muscle jobs;
+ 
+  $ mysql $COMPARA_DBNAME -e \
+   'select a.logic_name, aj.analysis_job_id, aj.input_id \
+    from analysis a join analysis_job aj using( analysis_id ) \
+    where aj.status = "FAILED" and a.logic_name="Muscle" limit 10';
+
+For more details on the failed jobs, e.g. the gene_count, use the
+followimng SQL;
+
+  $ mysql $COMPARA_DBNAME -e \
+'SELECT * \
+ FROM(    \
+   SELECT a.logic_name, CAST( \
+     TRIM( TRAILING "\, \'clusterset_id\'\=\>1\}" \
+           FROM TRIM( LEADING "\{\'protein_tree_id\'\=\>" FROM aj.input_id)) \
+     AS UNSIGNED INT) AS root_id, aj.analysis_job_id \
+   FROM analysis_job aj JOIN analysis a using( analysis_id ) \
+   WHERE a.logic_name="Muscle" \
+   AND aj.status="Failed" ) AS aj \
+   JOIN protein_tree_tag p ON p.node_id=aj.root_id \
+   WHERE p.tag IN( "gene_count" ) \
+ LIMIT 10'
+
+
+Finally, some jobs (e.g. Sitewise_dNdS) rely on some jobs failing in
+order to trigger a resubmit on a different set. As the threshold for
+failed jobs is 0, the pipeline will seem to have failed. The following
+SQL fixes this particular example;
+
+  $ mysql $COMPARA_DBNAME -e \
+"update analysis_stats ast, analysis a \
+set ast.failed_job_tolerance=98 \
+where ast.analysis_id=a.analysis_id and logic_name='Sitewise_dNdS'"
+
+for more details on controling the hive system do
+  $ beekeeper.pl -help
+
+
+9 - Quality Control
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a big cluster is broken into subclusters, the original big
+cluster needs to be deleted with, for example, the following stanza:
+
+  $ mysql -N $COMPARA_DBNAME -e \
+    "SELECT node_id FROM protein_tree_tag \
+     WHERE tag='cluster_had_to_be_broken_down'" \
+    | awk \
+    '{print "SELECT node_id FROM protein_tree_node WHERE node_id="$1";"; \
+      print "SELECT node_id FROM protein_tree_node WHERE parent_id="$1";"}' \
+    | mysql -N $COMPARA_DBNAME  \
+    | awk \
+    '{print "DELETE FROM protein_tree_node   WHERE node_id="$1";";   \
+      print "DELETE FROM protein_tree_tag    WHERE node_id="$1";";   \
+      print "DELETE FROM protein_tree_member WHERE node_id="$1";";}' \
+    > delete_huge_clusters_protein_tree.sql
+
+ $ mysql $COMPARA_DBNAME < delete_huge_clusters_protein_tree.sql
+
+Once this is done, you should have a consistent set of entries in
+homology, homology_member and protein_tree_member,
+protein_tree_node. Consistency of the entries can be tested with the
+following script;
+
+ $ perl ${BASEDIR}/ensembl-compara/scripts/pipeline/check_genetree_data.pl \
+   -url $COMPARA_URL -longtests 1
+
+It has happened before that the farm node on which an OrthoTree job is
+running dies in the middle of the storing of homologies, and this gives
+inconsistent homologies. This script is to check this kind of cases.
+
+10 - Adding the ensembl aliases
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Ensembl species have aliases that are used in the webcode. In the
+EnsemblCompara GeneTrees, aliases can also be defined for the internal
+nodes in the species tree that relates the species set.
+
+The aliases are mapped to the common names in NCBI taxonomy or added
+ad-hoc when not existing, and stored in this file:
+
+ensembl-compara/scripts/taxonomy/ensembl_aliases.sql
+
+For example, the internal node for the puffer fishes:
+
+http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=31031
+
+Tetraodontidae
+Taxonomy ID: 31031
+Genbank common name: puffers
+Other names:
+common name: 	puffer fishes
+
+With this SQL, we map the taxon_ids to "taxon_alias", so that the
+aliases can be used in GeneTreeView (v51ss):
+
+  $ mysql -N $COMPARA_DBNAME -e \
+    "INSERT INTO protein_tree_tag SELECT p1.node_id, 'taxon_alias', n.name \
+     FROM protein_tree_tag p1, protein_tree_tag p2, ncbi_taxa_name n \
+     WHERE n.taxon_id=p2.value and p1.node_id=p2.node_id and \
+     p2.tag=\"taxon_id\" and p1.tag=\"taxon_name\" \
+     and n.name_class=\"ensembl alias name\"
+
+11 - Generate basic statistics
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A basic set of gene tree stats can be generated using the following
+command (should complete within 5 mins):
+
+ $ cat ${BASEDIR}/ensembl-compara/sql/protein_tree-stats.sql \
+   | mysql -vv -t $COMPARA_DBNAME | less
+
+There is also a 'homology-stats.sql' file that can be processed in the
+same way, but this takes longer to run.
+
+For a more detailed analysis of the gene tree data, look at;
+
+ $ perl ${BASEDIR}/ensembl-compara/scripts/tree/geneTreeTool.pl -help
+
+
+12 - Creating the Release Database
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*** What to do about the protein_feature_<species> tables? ***
+
+Once the pipeline has completed, the database contains many
+pipeline/hive specific tables. These can be removed as follows;
+
+  $ cat ${BASEDIR}/ensembl-compara/sql/drop-pipeline-tables.sql \
+    | mysql $COMPARA_DBNAME
+
+
+To merge the GeneTrees + Families to the general compara DB, look at;
+
+  scripts/pipeline/merge_protein_data.pl
+
+And use the standard ImportDB.pl or CopyDBoverserver.pl to copy things
+around...
+
+
+
