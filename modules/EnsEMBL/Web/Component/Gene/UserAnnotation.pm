@@ -12,10 +12,6 @@ sub _init {
   $self->ajaxable(  1 );
 }
 
-sub caption {
-  return 'Annotation';
-}
-
 sub content {
   my $self = shift;
   my $html;
