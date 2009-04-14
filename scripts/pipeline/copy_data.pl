@@ -187,6 +187,8 @@ if ($class =~ /^GenomicAlignBlock/) {
   copy_genomic_align_blocks($from_dba, $to_dba, $mlss_id);
 } elsif ($class =~ /^ConservationScore.conservation_score/) {
   copy_conservation_scores($from_dba, $to_dba, $mlss_id);
+} elsif ($class =~ /^ConstrainedElement.constrained_element/) {
+  copy_constrained_elements($from_dba, $to_dba, $mlss_id);
 } else {
   print " ** ERROR **  Copying data of class $class is not supported yet!\n";
   exit(1);
@@ -541,7 +543,7 @@ sub copy_conservation_scores {
         " WHERE meta_key = \"gerp_$mlss_id\"");
 
   # Most of the times, you want to copy all the data. Check if this is the case as it will be much faster!
-  $sth = $to_dba->dbc->prepare("SELECT count(*)
+  $sth = $from_dba->dbc->prepare("SELECT count(*)
       FROM conservation_score LEFT JOIN genomic_align_block
       USING (genomic_align_block_id)
       WHERE method_link_species_set_id != $gab_mlss_id limit 1");
@@ -568,6 +570,95 @@ sub copy_conservation_scores {
   }
 }
 
+=head2 copy_constrained_elements
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $this_mlss
+
+  Description : copies ConstrainedElements for this MethodLinkSpeciesSet.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_constrained_elements {
+  my ($from_dba, $to_dba, $mlss_id) = @_;
+
+  exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
+      "method_link_species_set_id = $mlss_id");
+
+  ## Check min and max of the relevant internal IDs in the FROM database
+  my $sth = $from_dba->dbc->prepare("SELECT
+        MIN(ce.constrained_element_id), MAX(ce.constrained_element_id)
+      FROM constrained_element ce
+      WHERE
+        ce.method_link_species_set_id = ?");
+
+  $sth->execute($mlss_id);
+  my ($min_ce, $max_ce) = $sth->fetchrow_array();
+  $sth->finish();
+
+  my $lower_limit = $mlss_id * 10**10;
+  my $upper_limit = ($mlss_id + 1) * 10**10;
+  my $fix;
+  if ($max_ce < 10**10) {
+    ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
+    $fix = $lower_limit;
+  } elsif ($max_ce and $min_ce >= $lower_limit) {
+    ## Internal IDs are OK.
+    $fix = 0;
+  } else {
+    print " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
+  }
+
+  ## Check availability of the internal IDs in the TO database
+  $sth = $to_dba->dbc->prepare("SELECT count(*)
+      FROM constrained_element
+      WHERE constrained_element_id >= $lower_limit
+          AND constrained_element_id < $upper_limit");
+  $sth->execute();
+  my ($count) = $sth->fetchrow_array();
+  if ($count) {
+    print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
+      " ** ERROR **  constrained_element table with IDs within the range defined by the\n",
+      " ** ERROR **  convention!\n";
+    exit(1);
+  }
+
+  copy_data($from_dba, $to_dba,
+      "meta",
+      "SELECT NULL, species_id, meta_key, meta_value".
+        " FROM meta ".
+        " WHERE meta_key = \"max_align_$mlss_id\"");
+
+  # Most of the times, you want to copy all the data. Check if this is the case as it will be much faster!
+  $sth = $from_dba->dbc->prepare("SELECT count(*)
+      FROM constrained_element
+      WHERE method_link_species_set_id != $mlss_id limit 1");
+  $sth->execute();
+  ($count) = $sth->fetchrow_array();
+  if ($count) {
+    ## Other constrained elements are in the from database.
+    print " ** WARNING **\n";
+    print " ** WARNING ** Copying only part of the data in the conservation_score table\n";
+    print " ** WARNING ** This process might be very slow.\n";
+    print " ** WARNING **\n";
+    copy_data($from_dba, $to_dba,
+        "constrained_element",
+        "SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end, 
+	method_link_species_set_id, p_value, taxonomic_level, score".
+        " FROM constrained_element".
+        " WHERE method_link_species_set_id = $mlss_id");
+  } else {
+    ## These is only one set of constrained elements. Copy all of them
+    copy_data($from_dba, $to_dba,
+        "constrained_element",
+        "SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end,
+	method_link_species_set_id, p_value, taxonomic_level, score".
+        " FROM constrained_element");
+  }
+}
 
 =head2 copy_data
 
@@ -632,7 +723,6 @@ sub copy_data_in_text_mode {
 
   my $start = 0;
   my $step = 1000000;
-
   while (1) {
     my $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
     $start += $step;
