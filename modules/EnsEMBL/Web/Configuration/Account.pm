@@ -234,10 +234,6 @@ sub populate_tree {
   }
 
   ## Nodes that need to be available, whether or not the user is logged in
-  $self->create_node( 'Message', '',
-    [qw(message EnsEMBL::Web::Component::Account::Message)],
-    { 'no_menu_entry' => 1 }
-  );
   $self->create_node( 'User', '', [],
     { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::Interface::User' }
   );
@@ -252,7 +248,7 @@ sub populate_tree {
   $self->create_node( 'SendActivation', '', [],
     { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::SendActivation'}
   );
-  $self->create_node( 'ActivationSent', "",
+  $self->create_node( 'ActivationSent', 'Activation Sent',
     [qw(password EnsEMBL::Web::Component::Account::ActivationSent)], 
     { 'no_menu_entry' => 1 }
   );
