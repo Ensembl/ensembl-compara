@@ -65,12 +65,11 @@ sub user_populate_tree {
     #    )],
     #  { 'availability' => 1, 'concise' => 'Configurations' }
     #));
-    #$settings_menu->append($self->create_node( 'Annotations', "Gene Annotations ([[counts::annotations]])",
-    #[qw(notes EnsEMBL::Web::Component::Account::Annotations
-    #    )],
-    #  { 'availability' => 1, 'concise' => 'Annotations' }
-    #));
 
+    $settings_menu->append($self->create_node( 'Annotation/List', "Annotations ([[counts::annotations]])",
+    [], { 'command' => 'EnsEMBL::Web::Command::Account::Interface::Annotation',
+        'availability' => 1, 'concise' => 'Annotations' }
+    ));
     $settings_menu->append(
       $self->create_node( 'Newsfilter/List', "News Filters ([[counts::news_filters]])", [],
         { 'command' => 'EnsEMBL::Web::Command::Account::Interface::Newsfilter', 
@@ -108,7 +107,7 @@ sub user_populate_tree {
     ## Add "invisible" nodes used by interface but not displayed in navigation
     ## 1. User records
     $self->create_node( 'Annotation', '', [],
-      { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::Annotation',
+      { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::Interface::Annotation',
         'filters' => [qw(Owner)]}
     );
     $self->create_node( 'Bookmark', '', [],
