@@ -128,10 +128,27 @@ sub create_user_set {
   my $image_config = $object->get_session->getImageConfig('Vkaryotype');
   my $pointers = [];
 
+  ## Key to track colours
+  my $table =  new EnsEMBL::Web::Document::SpreadSheet( [], [], {'width' => '500px', 'margin' => '1em 0px'} );
+  $table->add_columns(
+    {'key'=>'colour',  'title'=>'Track colour', 'align' => 'center' },
+    {'key'=>'track',   'title'=>'Track name', 'align' => 'center' },
+  );
+
   my @usable_types = ('upload'); ## TODO - add 'url'
   my @session_data;
   foreach my $type (@usable_types) {
     push @session_data, $object->get_session->get_data('type' => $type);
+  }
+  my %saved_data;
+  if ($user) {
+    foreach my $type (@usable_types) {
+      my $method = $type.'s';
+      my @records = $user->$method;
+      foreach my $record (@records) {
+        $saved_data{$record->id} = $record;
+      }
+    }
   }
 
   my $i = 0;
@@ -144,13 +161,17 @@ sub create_user_set {
     my ($render, $style) = split('_', $display);
     next unless $render eq 'highlight';
 
+    ## Create pointer configuration
+    my $colour = $colours->[$i];
+    my $label;
     if ($status eq 'user' && $user) {
-      my $method = $type.'s';
+      my $record = $saved_data{$id};
       $track = {
-        'data'    => $user->$method,
-        'colour'  => $colours->[$i], 
+        'data'    => $record,
+        'colour'  => $colour, 
         'style'   => $style,
       };
+      $label = $record->name;
       push @$pointers, @{$self->create_userdata_pointers($image, $track, 'Vkaryotype')};
       $i++;
     }
@@ -159,18 +180,25 @@ sub create_user_set {
         if ($temp->{'code'} eq $id) {
           $track = {
             'data'    => $temp,
-            'colour'  => $colours->[$i], 
+            'colour'  => $colour, 
             'style'   => $style,
           };
+          $label = $temp->{'name'};
           push @$pointers, @{$self->create_tempdata_pointers($image, $track, 'Vkaryotype')};
           $i++;
           last;
         }
       }
     }
+
+    ## Add to key
+    $table->add_row({
+      'colour' => qq(<span style="background-color:$colour;color:#ffffff;padding:2px"><img src="/i/blank.gif" style="width:30px;height:10px" alt="[$colour]" /></span>),
+      'track' => $label,
+    });
   }
 
-  return $pointers;
+  return ($pointers, $table);
 }
 
 sub create_tempdata_pointers {
