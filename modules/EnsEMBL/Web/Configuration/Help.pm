@@ -45,20 +45,25 @@ sub populate_tree {
   ));
 
   $self->create_node( 'Contact', "Contact HelpDesk",
-    [qw(
-      contact    EnsEMBL::Web::Component::Help::Contact
-    )],
+    [qw(contact    EnsEMBL::Web::Component::Help::Contact)],
     { 'availability' => 1}
   );
+
+  ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'Preview', '',
     [qw(contact    EnsEMBL::Web::Component::Help::Preview)],
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
-
-  ## Add "invisible" nodes used by interface but not displayed in navigation
+  $self->create_node( 'MovieFeedback', '',
+    [qw(contact    EnsEMBL::Web::Component::Help::MovieFeedback)],
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'FeedbackPreview', '',
+    [qw(contact    EnsEMBL::Web::Component::Help::FeedbackPreview)],
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  );
   $T->append($self->create_subnode( 'EmailSent', '',
-    [qw(sent EnsEMBL::Web::Component::Help::EmailSent
-        )],
+    [qw(sent EnsEMBL::Web::Component::Help::EmailSent)],
       { 'no_menu_entry' => 1 }
   ));
   $T->append($self->create_subnode( 'Results', '',
@@ -94,6 +99,10 @@ sub populate_tree {
   $self->create_node( 'SendEmail', '',
     [],
     { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::SendEmail'}
+  );
+  $self->create_node( 'MovieEmail', '',
+    [],
+    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::MovieEmail'}
   );
 
 
