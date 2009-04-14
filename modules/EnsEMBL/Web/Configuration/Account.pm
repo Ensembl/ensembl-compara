@@ -145,7 +145,7 @@ sub user_populate_tree {
     ## 1b. Group membership
     $self->create_node( 'SelectGroup', '',
       [qw(select_group EnsEMBL::Web::Component::Account::SelectGroup)],
-      { 'no_menu_entry' => 1, 'filters' => [qw(Owner Member)] }
+      { 'no_menu_entry' => 1 }
     );
     $self->create_node( 'ShareRecord', '', [],
       { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::ShareRecord',
