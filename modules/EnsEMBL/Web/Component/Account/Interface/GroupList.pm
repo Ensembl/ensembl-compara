@@ -91,6 +91,7 @@ sub _show_group_details {
 
   my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 
+  $html .= '<h2>'.$group->name.'</h2>';
   $html .= '<p><strong>Group created by</strong>: '.$creator->name;
   $html .= ' <strong>on</strong> '.$self->pretty_date($group->created_at).'</p>';
 
@@ -118,6 +119,37 @@ sub _show_group_details {
   }
   else {
     $html .= '<p>No shared bookmarks</p>';
+  }
+
+  $html .= '<h3>Annotations</h3>';
+  if ($group->annotations) {
+
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+
+    $table->add_columns(
+      { 'key' => 'type',    'title' => 'Type',          'width' => '20%', 'align' => 'left' },
+      { 'key' => 'id',      'title' => 'Stable ID',     'width' => '30%', 'align' => 'left' },
+      { 'key' => 'title',   'title' => 'Title',         'width' => '50%', 'align' => 'left' },
+    );
+
+    foreach my $note ($group->annotations) {
+      my $row = {};
+      $row->{'type'} = $note->ftype || 'Gene';
+      if ($note->species) {
+        $row->{'id'} = sprintf(qq(<a href="/%s/Gene/UserAnnotation?g=%s%s">%s</a>),
+                      $note->species, $note->stable_id, $referer, $note->stable_id);
+      }
+      else {
+        $row->{'id'} = $note->stable_id; 
+      }
+      $row->{'title'} = $note->title || '&nbsp;';
+
+      $table->add_row($row);
+    }
+    $html .= $table->render;
+  }
+  else {
+    $html .= '<p>No shared annotations</p>';
   }
 
   return $html;  
