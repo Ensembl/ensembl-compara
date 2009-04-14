@@ -202,7 +202,6 @@ sub pretty_date {
   my ($date, $time) = split(' ', $datetime);
   my ($year, $mon, $day) = split('-', $date);
   return '-' unless ($year > 0);
-  my ($hour, $min, $sec) = split(':', $date);
 
   my @months = ('', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
                 'September', 'October', 'November', 'December');
