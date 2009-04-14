@@ -406,9 +406,9 @@ available or if it's unable to connect to core databases.
 
  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
  $ ./comparaLoadGenomes.pl -conf my_compara.conf
- $ ./loadGeneTreeSystem.pl -conf my_compara.conf
+ $ ./loadGeneTreeSystem.hcluster.pl -conf my_compara.conf
 
-If comparaLoadGenomes.pl or loadGeneTreeSystem.pl goes wrong, the DB
+If comparaLoadGenomes.pl or loadGeneTreeSystem.hcluster.pl goes wrong, the DB
 can be reset as follows (you need to re-run both);
 
  $ mysql $COMPARA_DBNAME \
