@@ -17,10 +17,11 @@ use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
 sub new {
   my $class = shift; 
-  my %args  = @_;
 
-  return $class->SUPER::new(%args)
+  return $class->SUPER::new(@_)
      unless $class eq 'EnsEMBL::Web::Data::Record';
+
+  my %args  = @_;
 
   die "Owner & id is necessary for the $class"
     unless $args{owner} && $args{id};
