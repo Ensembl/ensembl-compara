@@ -21,10 +21,6 @@ sub process {
   my $data = $interface->data;
   $data->save;
 
-  my $var = lc(substr($data->type, 0, 1));
-  my $url = '/'.$data->species.'/'.$data->type.'/UserAnnotation';
-  my $param = {$var => $data->stable_id};
-
   ## We need to close down the popup window if using AJAX and refresh the page!
   my $r = Apache2::RequestUtil->request();
   my $ajax_flag = $r && (
@@ -36,6 +32,9 @@ sub process {
     CGI::header( 'text/plain' );
     print "SUCCESS";
   } else {
+    my $var = lc(substr($data->type, 0, 1));
+    my $url = '/'.$data->species.'/'.$data->type.'/UserAnnotation';
+    my $param = {$var => $data->stable_id};
     $object->redirect($self->url($url, $param));
   }
 
