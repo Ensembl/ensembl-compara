@@ -330,21 +330,23 @@ sub discover {
   my %has_many = %{ $self->data->hasmany_relations };
   while (my ($field, $classes) = each (%has_many)) {
     my $rel_class = $classes->[1];
-    my $lookup = $rel_class->get_lookup_values;
-    my $select = scalar(@$lookup) > 20 ? 'select' : '';
-    my $param = {
-      'name'    => $field,
-      'label'   => ucfirst($field),
-      'type'    => 'MultiSelect',
-      'select'  => $select,
-      'values'  => $self->create_select_values($lookup),
-    };
-    if ($select) {
-      $param->{'size'} = 10;
-      $param->{'notes'} = 'Use the CTL button to select multiple items';
+    if ($rel_class) {
+      my $lookup = $rel_class->get_lookup_values;
+      my $select = scalar(@$lookup) > 20 ? 'select' : '';
+      my $param = {
+        'name'    => $field,
+        'label'   => ucfirst($field),
+        'type'    => 'MultiSelect',
+        'select'  => $select,
+        'values'  => $self->create_select_values($lookup),
+      };
+      if ($select) {
+        $param->{'size'} = 10;
+        $param->{'notes'} = 'Use the CTL button to select multiple items';
+      }
+      $self->element($field, $param);
+      push @element_order, $field;
     }
-    $self->element($field, $param);
-    push @element_order, $field;
   }
 
   $self->elements(\%elements);
