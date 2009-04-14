@@ -196,6 +196,7 @@ sub _columns {
 
   return qw (f.family_id
              f.stable_id
+             f.version
              f.method_link_species_set_id
              f.description
              f.description_score);
@@ -204,20 +205,21 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($family_id, $stable_id, $method_link_species_set_id, $description, $description_score);
+  my ($family_id, $stable_id, $version, $method_link_species_set_id, $description, $description_score);
 
-  $sth->bind_columns(\$family_id, \$stable_id, \$method_link_species_set_id, \$description, \$description_score);
+  $sth->bind_columns(\$family_id, \$stable_id, \$version, \$method_link_species_set_id, \$description, \$description_score);
 
   my @families = ();
   
   while ($sth->fetch()) {
     push @families, Bio::EnsEMBL::Compara::Family->new_fast
-      ({'_dbID' => $family_id,
-       '_stable_id' => $stable_id,
-       '_description' => $description,
-       '_description_score' => $description_score,
+      ({'_dbID'                      => $family_id,
+       '_stable_id'                  => $stable_id,
+       '_version'                    => $version,
+       '_description'                => $description,
+       '_description_score'          => $description_score,
        '_method_link_species_set_id' => $method_link_species_set_id,
-       '_adaptor' => $self});
+       '_adaptor'                    => $self});
   }
   
   return \@families;  
@@ -272,9 +274,9 @@ sub store {
     $fam->dbID($rowhash->{family_id});
   } else {
   
-    $sql = "INSERT INTO family (stable_id, method_link_species_set_id, description, description_score) VALUES (?,?,?,?)";
+    $sql = "INSERT INTO family (stable_id, version, method_link_species_set_id, description, description_score) VALUES (?,?,?,?,?)";
     $sth = $self->prepare($sql);
-    $sth->execute($fam->stable_id,$fam->method_link_species_set_id,$fam->description,$fam->description_score);
+    $sth->execute($fam->stable_id, $fam->version, $fam->method_link_species_set_id, $fam->description, $fam->description_score);
     $fam->dbID($sth->{'mysql_insertid'});
   }
 

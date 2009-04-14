@@ -11,10 +11,12 @@ sub new {
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $stable_id, $method_link_species_set_id, $method_link_type, $description, $adaptor) = rearrange([qw(DBID STABLE_ID METHOD_LINK_SPECIES_SET_ID METHOD_LINK_TYPE DESCRIPTION  ADAPTOR)], @args);
+    my ($dbid, $stable_id, $version, $method_link_species_set_id, $method_link_type, $description, $adaptor)
+        = rearrange([qw(DBID STABLE_ID VERSION METHOD_LINK_SPECIES_SET_ID METHOD_LINK_TYPE DESCRIPTION ADAPTOR)], @args);
     
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
+    $version && $self->version($version);
     $description && $self->description($description);
     $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
     $method_link_type && $self->method_link_type($method_link_type);
@@ -74,6 +76,23 @@ sub stable_id {
   my $self = shift;
   $self->{'_stable_id'} = shift if(@_);
   return $self->{'_stable_id'};
+}
+
+=head2 version
+
+  Arg [1]    : string $version (optional)
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub version {
+  my $self = shift;
+  $self->{'_version'} = shift if(@_);
+  return $self->{'_version'};
 }
 
 =head2 description
