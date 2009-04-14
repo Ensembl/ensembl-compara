@@ -23,7 +23,7 @@ sub content {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
   if ($user) {
-    my $id = $self->object->param('g');
+    my $id = $self->object->param('t');
     my $type = 'Transcript';
     my $species = $self->object->species;
 
@@ -39,7 +39,7 @@ sub content {
       $html .= qq(<p><a href="/Account/Annotation/Edit?id=).$annotation->id.qq(;species=$species" class="modal_link">Edit this annotation</a>.</p>);
     }
     else {
-      $html = qq(<p>You don't have any annotation on this gene. <a href="/Account/Annotation/Add?stable_id=$id;ftype=$type;species=$species" class="modal_link">Add an annotation</a>.</p>);
+      $html = qq(<p>You don't have any annotation on this transcript. <a href="/Account/Annotation/Add?stable_id=$id;ftype=$type;species=$species" class="modal_link">Add an annotation</a>.</p>);
     }
   }
   else {
