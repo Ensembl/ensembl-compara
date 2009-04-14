@@ -66,7 +66,7 @@ sub draw_features {
   my $METHOD_ID      = $self->my_config( 'method_link_species_set_id' );
   my $zmenu = {
       'type'   => 'Location',
-      'action' => 'Align',
+      'action' => 'Compara_Alignments',
       'align'  => $METHOD_ID,
   };
 
