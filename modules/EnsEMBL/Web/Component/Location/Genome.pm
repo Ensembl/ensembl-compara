@@ -93,7 +93,8 @@ sub content {
       push @$ok_colours, $colour;
     }
 
-    my $user_pointers = $self->create_user_set($image, $ok_colours);
+    my $user_pointers;
+    ($user_pointers, $table) = $self->create_user_set($image, $ok_colours);
 
     ## Add some settings, if there is any user data
     if( @$user_pointers ) {
