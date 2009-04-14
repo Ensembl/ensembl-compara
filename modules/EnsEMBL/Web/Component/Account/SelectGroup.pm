@@ -28,7 +28,7 @@ sub content {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my @admin_groups = $user->find_administratable_groups;
 
-  my $count = $#admin_groups;
+  my $count = scalar(@admin_groups);
   if ($count > 1) {
     my @ids;
     foreach my $group (@admin_groups) {
