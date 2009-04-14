@@ -7,6 +7,7 @@ use Class::Std;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Filter::Spam;
 use EnsEMBL::Web::Filter::DuplicateUser;
+use EnsEMBL::Web::Tools::RandomString;
 use base 'EnsEMBL::Web::Command';
 
 {
@@ -52,10 +53,13 @@ sub process {
         $param->{'email'} = $object->param('email');
       }
       else {
+        $interface->data->salt(EnsEMBL::Web::Tools::RandomString::random_string(8));
         my $new_id = $interface->data->save;
         if ($new_id) {
           $url = '/Account/SendActivation';
           $param->{'email'} = $object->param('email');
+          $interface->data->created_by($interface->data->id);
+          $interface->data->save;
         }
         else {
           $url .= '/Problem';
@@ -68,7 +72,7 @@ sub process {
     $self->ajax_redirect($url, $param);
   }
   else {
-    $param->{'_referer'} = $object->param{'_referer');
+    $param->{'_referer'} = $object->param('_referer');
     $object->redirect($url, $param);
   }
   
