@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Apache::SendDecPage;
        
 use strict;
-#use Apache::File ();
+# use Apache::File ();
 # use Apache::Log ();
 use SiteDefs qw(:ALL);
 use EnsEMBL::Web::Document::Renderer::Apache;
@@ -18,10 +18,7 @@ use EnsEMBL::Web::Cache;
 
 use Carp qw(cluck);
 
-our $MEMD = EnsEMBL::Web::Cache->new(
-  enable_compress    => 1,
-  compress_threshold => 10_000,
-);
+our $MEMD = EnsEMBL::Web::Cache;
 
 
 #############################################################
