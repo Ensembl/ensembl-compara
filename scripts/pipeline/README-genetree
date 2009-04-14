@@ -10,28 +10,34 @@ pipeline.
 - Loads each UniProt protein into the member table (metazoa only for
   now). Only needed if the family pipeline is to be run subsequently.
 
-- Performs all-against-all blastp searched of the member proteins in
+- Performs all-against-all wublastp searched of the member proteins in
   the DB.
 
-- Run PAFCluster to create the clusters of proteins.
+- Run hcluster_sg to create the clusters of proteins.
 
-- Run Muscle to obtain the protein multialignments for each cluster.
+- Run MCoffee (or Muscle) to obtain the protein multialignments for
+  each cluster.
 
-- Run NJTREE_PHYML with a given species tree to create the protein trees.
+- Run NJTREE_PHYML (aka TreeBeST) with a given species tree to create
+  the protein trees.
 
 - Run OrthoTree to create the homology relationships per each genepair
-in the tree.
+  in the tree.
 
-- BreakPAFCluster will run with increased BSR (+0.1) in case Muscle or
-  NJTREE_PHYML fail on big trees or complicated alignments and create
-  new jobs for the subclusters that creates.
+- QuickTreeBreak will run in case NJTREE_PHYML fails on big alignments
+  and create new jobs for the subclusters that creates. Old clusters
+  will be automatically deleted.
 
 - Provided that the species are close enough, the pipeline can also
   run a dN/dS analysis for the orthologs of pairs of species, in the
   Homology_dNdS analysis. This step is optional.
 
+- For every tree and subsequent subtrees inside, Sitewise_dNdS can be
+  executed to obtain column-wise dN/dS estimates. This step is
+  optional.
+
 The genetree process overlaps initially with the homology pipeline,
-but once the clusters are created, it differs in the way things are
+but once the blasts hits are created, it differs in the way things are
 done. Read README-homology for more information.
 
 
@@ -52,12 +58,23 @@ done. Read README-homology for more information.
       using /usr/local/ensembl/bin/wublastp
   setdb
       using /usr/local/ensembl/bin/setdb
+  hcluster_sg
+      using /nfs/acari/avilella/src/treesoft/trunk/ia64/hcluster/hcluster_sg (turing)
+      using /nfs/acari/avilella/src/treesoft/trunk/hcluster/hcluster_sg (x86_64)
+  mcoffee
+      using /nfs/acari/gj1/bin/t_coffee (needs library dir as well)
   muscle
       using /usr/local/ensembl/bin/muscle
+  quicktree
+      using /nfs/acari/avilella/src/quicktree/quicktree_1.1/bin/quicktree
+      needs /usr/local/ensembl/bin/sreformat
   njtree
-      using /lustre/work1/ensembl/avilella/bin/i386/njtree_gcc
+      using /nfs/acari/avilella/src/treesoft/trunk/treebest/treebest
   codeml
       using /usr/local/ensembl/bin/codeml
+  Slr_ensembl
+      using /software/ensembl/compara/bin/Slr_ensembl
+      needs /software/ensembl/compara/bin/Gblocks
 
 1.2 Code checkout
 
