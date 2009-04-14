@@ -7,6 +7,7 @@ use Class::Std;
 
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Tools::Misc;
 use CGI qw(escape escapeHTML);
 use base 'EnsEMBL::Web::Command';
 
