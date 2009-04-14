@@ -53,19 +53,13 @@ sub assign_level_to_user {
 }
 
 sub add_user {
-  my $self   = shift;
-  my %args = (
-    level  => 'member',
-    status => 'active',
-    ref($_[0])
-      ? (user => $_[0])
-      : @_,
-  );
+  my ($self, $user, $level) = @_;
+  $level = 'member' unless $level;
 
   return $self->add_to_members({
-    user_id       => $args{user}->id,
-    level         => $args{level},
-    member_status => $args{member_status} || $args{status},
+    user_id       => $user->id,
+    level         => $level,
+    member_status => 'active',
   });
 }
 
