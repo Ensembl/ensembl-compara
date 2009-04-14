@@ -152,14 +152,6 @@ sub populate_tree {
       'no_menu_entry' => 1 }
   ));
 
-=pod
-  my $user_menu = $self->create_submenu( 'User', 'User data' );
-  $user_menu->append( $self->create_node( 'User_Notes', "User's gene based annotation",
-    [qw(manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation)],
-    { 'availability' => 1 }
-  ));
-=cut
-
 ## Variation tree
   my $var_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
 
@@ -193,6 +185,13 @@ sub populate_tree {
     [ qw( export EnsEMBL::Web::Component::Gene/export ) ],
     { 'availability' => 'gene', 'no_menu_entry' => 1 }
   );
+
+  my $user_menu = $self->create_submenu( 'User', 'User data' );
+  $user_menu->append( $self->create_node( 'UserAnnotation', "Personal annotation",
+    [qw(manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation)],
+    { 'availability' => 1 }
+  ));
+
 }
 
 sub user_populate_tree {

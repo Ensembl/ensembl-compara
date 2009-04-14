@@ -556,6 +556,13 @@ sub populate_tree {
     [ qw( export EnsEMBL::Web::Component::Transcript/export ) ],
     { 'availability' => 'transcript', 'no_menu_entry' => 1 }
   );
+
+  my $user_menu = $self->create_submenu( 'User', 'User data' );
+  $user_menu->append( $self->create_node( 'UserAnnotation', "Personal annotation",
+    [qw(manual_annotation EnsEMBL::Web::Component::Transcript::UserAnnotation)],
+    { 'availability' => 1 }
+  ));
+
 }
 
 sub user_populate_tree {
