@@ -18,7 +18,7 @@ use EnsEMBL::Web::Cache;
 
 use Carp qw(cluck);
 
-our $MEMD = EnsEMBL::Web::Cache;
+our $MEMD = EnsEMBL::Web::Cache->new;
 
 
 #############################################################
