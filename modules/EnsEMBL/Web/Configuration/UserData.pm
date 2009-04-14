@@ -168,6 +168,14 @@ sub populate_tree {
     [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)
     ], { 'availability' => 1, 'concise' => 'Manage Data' }
   );
+  $self->create_node( 'RenameRecord', '',
+    [qw(manage_remote EnsEMBL::Web::Component::UserData::RenameRecord)
+    ], { 'availability' => 1, 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'SaveRecord', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveRecord',
+     'no_menu_entry' => 1 }
+  );
   $self->create_node( 'SaveUpload', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveUpload',
      'no_menu_entry' => 1 }
