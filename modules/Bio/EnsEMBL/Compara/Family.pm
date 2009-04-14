@@ -131,9 +131,8 @@ sub read_clustalw {
   }
 }
 
-sub read_fasta {
-  my $self = shift;
-  my $file = shift;
+sub load_cigars_from_fasta {
+    my ($self, $file, $store) = @_;
 
   my $alignio = Bio::AlignIO->new
     (-file => "$file",
@@ -141,7 +140,7 @@ sub read_fasta {
   my $aln = $alignio->next_aln;
 
   #place all member attributes in a hash on their member name
-  my @members_attributes;
+  my @members_attributes = ();
 
   push @members_attributes,@{$self->get_Member_Attribute_by_source('ENSEMBLPEP')};
   push @members_attributes,@{$self->get_Member_Attribute_by_source('Uniprot/SWISSPROT')};
@@ -153,34 +152,34 @@ sub read_fasta {
     $attribute_hash{$member->stable_id} = $attribute;
   }
 
-  #assign cigar_line to each of the member attribute
+      #assign cigar_line to each of the member attribute
   foreach my $seq ($aln->each_seq) {
     my $attribute = $attribute_hash{$seq->display_id};
     if($attribute) {
-      my $alignment_string = $seq->seq;
-      $alignment_string =~ s/\-([A-Z])/\- $1/g;
-      $alignment_string =~ s/([A-Z])\-/$1 \-/g;
 
-      my @cigar_segments = split " ",$alignment_string;
-
-      my $cigar_line = "";
-      foreach my $segment (@cigar_segments) {
-        my $seglength = length($segment);
-        $seglength = "" if ($seglength == 1);
-        if ($segment =~ /^\-+$/) {
-          $cigar_line .= $seglength . "D";
-        } else {
-          $cigar_line .= $seglength . "M";
+        my $cigar_line = '';
+        while($seq->seq() =~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
+            $cigar_line .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : 'M');
         }
-      }
 
-      $attribute->cigar_line($cigar_line);
+        $attribute->cigar_line($cigar_line);
 
     } else {
-      my $id = $seq->display_id;
-      throw("No member for alignment portion: [$id]");
+
+        my $id = $seq->display_id;
+        throw("No member for alignment portion: [$id]");
+
     }
   }
+
+        # either store everything or nothing:
+    if($store) {
+        my $family_adaptor = $self->adaptor();
+
+        foreach my $member_attribute (@members_attributes) {
+            $family_adaptor->update_relation($member_attribute);
+        }
+    }
 }
 
 sub get_SimpleAlign {
