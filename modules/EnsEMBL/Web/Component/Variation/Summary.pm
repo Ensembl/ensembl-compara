@@ -26,6 +26,16 @@ sub content {
      <dt> Variation type </dt> 
      <dd>$name</dd>
   );
+
+  ## First check that the variation status is not failed
+  if ($object->Obj->failed_description){
+   my $failed_text = "<p>" . $object->Obj->failed_description . "</p>";
+   $html .= "<br />". $self->_info(
+   'This variation could not be mapped',
+   $failed_text
+   );
+   return $html; 
+  }
  
   ## Add synonyms
   my %synonyms = %{$object->dblinks};
