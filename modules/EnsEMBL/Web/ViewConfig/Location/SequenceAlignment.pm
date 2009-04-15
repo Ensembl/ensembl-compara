@@ -22,12 +22,18 @@ sub init {
   ));
   my $sp = $view_config->species;
   my $var_hash = $view_config->species_defs->databases->{'DATABASE_VARIATION'}||{};
-  foreach( @{ $var_hash->{'DEFAULT_STRAINS'}||[] } ) {
-    $view_config->_set_defaults( $_, 'yes' );
+  my $ref = $var_hash->{'REFERENCE_STRAIN'};
+  
+  foreach(@{$var_hash->{'DEFAULT_STRAINS'}||[]}) {
+    next if $_ eq $ref;
+    $view_config->_set_defaults($_, 'yes');
   }
-  foreach( @{ $var_hash->{'DISPLAY_STRAINS'}||[] } ) {
-    $view_config->_set_defaults( $_, 'no' );
+  
+  foreach(@{$var_hash->{'DISPLAY_STRAINS'}||[]}) {
+    next if $_ eq $ref;
+    $view_config->_set_defaults($_, 'no');
   }
+  
   $view_config->storable = 1;
 }
 
@@ -80,8 +86,9 @@ sub form {
 
   $view_config->add_fieldset( "Options for resequenced $sp $strains" );
 
-  foreach( @{ $var_hash->{'DEFAULT_STRAINS'}||[] },
-           @{ $var_hash->{'DISPLAY_STRAINS'}||[] } ) {
+  foreach(@{$var_hash->{'DEFAULT_STRAINS'}||[]}, @{$var_hash->{'DISPLAY_STRAINS'}||[]}) {
+    next if $_ eq $ref;
+    
     $view_config->add_form_element({
       'type'   => 'CheckBox', 'label' => $_,
       'name'   => $_,
