@@ -49,7 +49,7 @@ sub populate_tree {
   $self->create_node( 'Summary', "Summary",
     [qw(summary EnsEMBL::Web::Component::Variation::VariationSummary
         flanking EnsEMBL::Web::Component::Variation::FlankingSequence )],
-    { 'availability' => 'variation', 'concise' => 'Variation summary' }
+    { 'availability' => 'variation unmapped', 'concise' => 'Variation summary' }
   );
   $self->create_node( 'Mappings', "Gene/Transcript  ([[counts::transcripts]])",
     [qw(summary EnsEMBL::Web::Component::Variation::Mappings)],
