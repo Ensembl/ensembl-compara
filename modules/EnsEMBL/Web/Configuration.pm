@@ -390,7 +390,9 @@ sub _export_configurator {
         [ 'coding', 'Coding sequence', $options->{'translation'} ],
         [ 'peptide', 'Peptide sequence', $options->{'translation'} ],
         [ 'utr5', "5' UTR", $options->{'five'} ],
-        [ 'utr3', "3' UTR", $options->{'three'} ]
+        [ 'utr3', "3' UTR", $options->{'three'} ],
+        [ 'exons', 'Exons' ],
+        [ 'introns', 'Introns' ]
       ]
     },
     'features' => {
