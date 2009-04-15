@@ -1328,7 +1328,7 @@ sub chunked_content {
   
   # The display is split into a managable number of sub slices, which will be processed in parallel by requests
   while ($j <= $total_length) {
-    $url = qq{$base_url;start=$i;end=$j};
+    $url = qq{$base_url;subslice_start=$i;subslice_end=$j};
     
     if ($renderer) {
       map { $url .= ";$_=" . $object->param($_) } $object->param;

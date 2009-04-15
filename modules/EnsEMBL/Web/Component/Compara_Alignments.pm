@@ -61,8 +61,8 @@ sub content_sub_slice {
   my $object = $self->object;
   my $slice = $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
   
-  my $start = $object->param('start');
-  my $end = $object->param('end');
+  my $start = $object->param('subslice_start');
+  my $end = $object->param('subslice_end');
   my $padding = $object->param('padding');
   my $slice_length = $object->param('length') || $slice->length;
 
