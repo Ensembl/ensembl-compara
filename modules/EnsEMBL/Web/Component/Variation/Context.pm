@@ -34,11 +34,7 @@ sub content {
   if( keys %mappings == 1 ) {
     ($v) = values %mappings;
   } else { 
-    foreach my $t (keys %mappings) { 
-      next unless $t eq $object->param('vf');
-      $v = $mappings{$t};
-      last;
-    }
+    $v = $mappings{$object->param('vf')};
   }
   unless ($v) { 
     return $self->_info(
