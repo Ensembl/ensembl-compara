@@ -64,7 +64,7 @@ sub get_url_filesize {
 }
 
 sub style_by_filesize {
-  my $filesize = shift;
+  my $filesize = shift || 0;
   my $style = $filesize > 1048576 ? 'density' : 'highlight'; ## 1048576 bytes = 1Mb
   return $style;
 }
