@@ -17,7 +17,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  ## first check we have uniquely determined variation
+  ## Check we have uniquely determined variation
   unless ($object->core_objects->{'parameters'}{'vf'} ){
     my $html = "<p>You must select a location from the panel above to see this information</p>";
     return $self->_info(
@@ -26,7 +26,9 @@ sub content {
     );
   }
  
-  my $freq_data = $object->freqs; 
+  ## Hacked version of $objects->freqs to allow the return of multiple rows of data per population
+  my $freq_data = $object->freqs_hack; 
+  #my $freq_data = $object->freqs; 
   unless (%$freq_data ){
     my $html = "<p>No genotypes for this variation</p>"; 
     return $self->_info(
@@ -38,6 +40,7 @@ sub content {
  
   return $table->render;
 }
+
 
 sub format_frequencies {
   my ( $object, $freq_data ) = @_;
@@ -51,12 +54,11 @@ sub format_frequencies {
     my %pop_row;
 
     # Freqs alleles ---------------------------------------------
-    my @allele_freq = @{ $freq_data{$pop_id}{AlleleFrequency} };
-    foreach my $gt (  @{ $freq_data{$pop_id}{Alleles} } ) {
+    my @allele_freq = @{ $freq_data{$pop_id}{AlleleFrequency} }; 
+    foreach my $gt (  @{ $freq_data{$pop_id}{Alleles} } ) { 
       my $freq = _format_number(shift @allele_freq);
       $pop_row{"Alleles&nbsp;<br />$gt"} = $freq;
     }
-
     # Freqs genotypes ---------------------------------------------
     my @genotype_freq = @{ $freq_data{$pop_id}{GenotypeFrequency} || [] };
     foreach my $gt ( @{ $freq_data{$pop_id}{Genotypes} } ) {
