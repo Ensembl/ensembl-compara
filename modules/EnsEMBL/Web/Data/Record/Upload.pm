@@ -7,17 +7,17 @@ use base qw(EnsEMBL::Web::Data::Record);
 __PACKAGE__->_type('upload');
 
 __PACKAGE__->add_fields(
-  filename => 'text',
-  name     => 'text',
-  code     => 'text',
-  md5      => 'text',
-  format   => 'text',
-  species  => 'text',
-  assembly => 'text',
-  share_id => 'int',
-  analyses => 'text',
+  filename  => 'text',
+  filesize  => 'int',
+  name      => 'text',
+  code      => 'text',
+  md5       => 'text',
+  format    => 'text',
+  species   => 'text',
+  assembly  => 'text',
+  share_id  => 'int',
+  analyses  => 'text',
   browser_switches => 'text',
-  is_large => "enum('N','Y')",
 );
 
 1;

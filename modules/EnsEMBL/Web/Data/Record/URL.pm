@@ -7,11 +7,11 @@ use base qw(EnsEMBL::Web::Data::Record);
 __PACKAGE__->_type('url');
 
 __PACKAGE__->add_fields(
-  url     => 'text',
-  species => 'text',
-  code    => 'text',
-  name    => 'text',
-  is_large => "enum('N','Y')",
+  url       => 'text',
+  filesize  => 'int',
+  species   => 'text',
+  code      => 'text',
+  name      => 'text',
 );
 
 1;
