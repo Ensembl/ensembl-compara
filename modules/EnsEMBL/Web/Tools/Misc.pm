@@ -33,53 +33,20 @@ sub get_url_content {
 }
 
 sub get_url_filesize {
-## Returns the size of a file, or a message if size is over a given limit
-## Set limits to 0 if you just want to get the file size with no checking
-  my ($url, $proxy, $size_options) = @_;
-  my $abort_size = $size_options->{'abort'} || 1024;
-  my $large_size = $size_options->{'large'} || 10;
+## Returns the size of a file in bytes, or -1 if the request fails
+  my ($url, $proxy) = @_;
   my $file_size = 0;
-  ## Convert to bytes
-  $abort_size = int(1048576 * $abort_size); 
-  $large_size = int(1048576 * $large_size); 
-  #warn "ABORT AT $abort_size BYTES";
-  #warn "LARGE IF $large_size BYTES OR MORE";
 
   my $ua = new LWP::UserAgent;
   $ua->timeout(10);
   $ua->proxy('http', $proxy) if $proxy;
 
-  my ($request, $response);
-  ## First check if file is too large to bother with!
-  if ($abort_size) {
-    #warn "CHECKING IF WAY TOO LARGE!";
-    $ua->max_size($abort_size);
-
-    $request = new HTTP::Request( 'GET', $url );
-    $request->header('Cache-control' => 'no-cache');
-    $request->header('Pragma'        => 'no-cache');
-    $response = $ua->request($request);
-
-    if ($response->header('Client-Aborted') || (my $length = $response->header('Content-Length') && $length > $abort_size)) {
-      #warn "!!! ABORTED - exceeded maximum file size";
-      return 'aborted';
-    }
-  }
-
-  ## Now check if it is large enough to require special handling
-  $ua->max_size($large_size) if $large_size;
-
-  $request = new HTTP::Request( 'GET', $url );
+  my $request = new HTTP::Request( 'GET', $url );
   $request->header('Cache-control' => 'no-cache');
   $request->header('Pragma'        => 'no-cache');
-  $response = $ua->request($request);
-  #warn $response->headers_as_string;
+  my $response = $ua->request($request);
 
-  if ($response->header('Client-Aborted') || (my $length = $response->header('Content-Length') && $length > $large_size)) {
-    #warn "!!! LARGE FILE";
-    return 'large';
-  }
-  elsif ($response->is_success) {
+  if ($response->is_success) {
     #warn "SUCCESS";
     my $file_size = $response->header('Content-Length');
     unless ($file_size) {
@@ -88,13 +55,9 @@ sub get_url_filesize {
         $file_size = length($content);
       }
     }
-    ## Check again in case no useful headers returned
-    if ($abort_size && $file_size >= $abort_size) { 
-      return 'aborted';
-    }
-    elsif ($large_size && $file_size >= $large_size) { 
-      return 'large';
-    }
+  }
+  else {
+    $file_size = -1;
   }
   #warn "FILE SIZE $file_size BYTES";
   return $file_size;
