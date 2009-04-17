@@ -417,6 +417,7 @@ sub _get_gene_transcript_from_location {
 
 sub _check_if_snp_unique_location {
   my ( $self, $vf ) = @_;
+  return if $self->param('region'); 
   return unless $self->variation;
   my $db_adaptor = $self->database('core');
   my $vardb =  $self->database('variation') ; 
