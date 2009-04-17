@@ -50,7 +50,7 @@ perl populate_new_database.pl --help
 perl populate_new_database.pl
     [--reg-conf registry_configuration_file]
     [--skip-data]
-    --master new_database_name
+    --master master_database_name
     --old new_database_name
     --new new_database_name
 
@@ -131,6 +131,7 @@ and skip the method_link_species_sets corresponding to these IDs.
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Getopt::Long;
+use Data::Dumper;
 
 my $help;
 
@@ -175,8 +176,8 @@ if ($old) {
 my $new_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new, "compara");
 die "Cannot connect to new compara database: $new\n" if (!$new_dba);
 $new_dba->get_MetaContainer; # tests that the DB exists
-##
-#################################################
+#
+################################################
 
 ## Sets the schema version for the new database
 update_schema_version($master_dba, $new_dba);
@@ -204,16 +205,18 @@ store_objects($new_dba->get_MethodLinkSpeciesSetAdaptor, $all_default_method_lin
 copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs);
 
 if ($old_dba and !$skip_data) {
-  ## Copy DNA-DNA alignemnts
+## Copy DNA-DNA alignemnts
   copy_dna_dna_alignements($old_dba, $new_dba, $all_default_method_link_species_sets);
-
-  ## Copy Synteny data
+## Copy Synteny data
   copy_synteny_data($old_dba, $new_dba, $all_default_method_link_species_sets);
+## Copy Constrained elements
+   copy_constrained_elements($old_dba, $new_dba, $all_default_method_link_species_sets);
+## Copy Conservation scores
+   copy_conservation_scores($old_dba, $new_dba, $all_default_method_link_species_sets);
 }
 
 ##END
 exit(0);
-
 
 
 =head2 copy_table
@@ -518,6 +521,7 @@ sub copy_dna_dna_alignements {
   $new_dba->dbc->do("ALTER TABLE `genomic_align_block` DISABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align` DISABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align_group` DISABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` DISABLE KEYS");
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     ## For DNA-DNA alignments, the method_link_id is < 100.
     next if ($this_method_link_species_set->method_link_id >= 100);
@@ -540,11 +544,17 @@ sub copy_dna_dna_alignements {
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $pipe = "$mysqldump -w \"$where\" genomic_align_group | $mysql";
     system($pipe);
+    $where = "node_id >= ".
+        ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
+        (($this_method_link_species_set->dbID + 1) * 10**10);
+    $pipe = "$mysqldump -w \"$where\" genomic_align_tree | $mysql";
+    system($pipe);
     print "ok!\n";
   }
   $new_dba->dbc->do("ALTER TABLE `genomic_align_block` ENABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align` ENABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align_group` ENABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` ENABLE KEYS");
 }
 
 
@@ -613,5 +623,117 @@ sub copy_synteny_data {
     }
     unlink("$filename");
   }
+}
+
+
+=head2 copy_constrained_elements
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : listref Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $these_mlss
+  Description : copy constrained_elements for the MethodLinkSpeciesSet listed
+                in $these_mlss. Constrained_elements are stored in the
+                constrained_element table.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_constrained_elements {
+  my ($old_dba, $new_dba, $method_link_species_sets) = @_;
+
+  my $old_user = $old_dba->dbc->username;
+  my $old_pass = $old_dba->dbc->password?"-p".$old_dba->dbc->password:"";
+  my $old_host = $old_dba->dbc->host;
+  my $old_port = $old_dba->dbc->port;
+  my $old_dbname = $old_dba->dbc->dbname;
+
+  my $new_user = $new_dba->dbc->username;
+  my $new_pass = $new_dba->dbc->password?"-p".$new_dba->dbc->password:"";
+  my $new_host = $new_dba->dbc->host;
+  my $new_port = $new_dba->dbc->port;
+  my $new_dbname = $new_dba->dbc->dbname;
+
+  my $mysqldump = "mysqldump -u$old_user $old_pass -h$old_host -P$old_port".
+	" --skip-disable-keys --insert-ignore -t $old_dbname";
+  my $mysql = "mysql -u$new_user $new_pass -h$new_host -P$new_port $new_dbname";
+
+  $new_dba->dbc->do("ALTER TABLE `constrained_element` DISABLE KEYS");
+
+  my $constrained_element_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM constrained_element".
+      " WHERE method_link_species_set_id = ? LIMIT 1");
+  foreach my $this_method_link_species_set (@$method_link_species_sets) {
+    $constrained_element_fetch_sth->execute($this_method_link_species_set->dbID);
+    my $all_rows = $constrained_element_fetch_sth->fetchall_arrayref;
+    if (!@$all_rows) {
+      next;
+    }
+    
+    print "Copying constrained elements for ", $this_method_link_species_set->name,
+	" (", $this_method_link_species_set->dbID, "): ";
+
+    my $where = "constrained_element_id >= ".
+    ($this_method_link_species_set->dbID * 10**10)." AND constrained_element_id < ".
+    (($this_method_link_species_set->dbID + 1) * 10**10);
+    my $pipe = "$mysqldump -w \"$where\" constrained_element | $mysql";
+    system($pipe);
+    print "ok!\n";
+  }
+  $new_dba->dbc->do("ALTER TABLE `constrained_element` ENABLE KEYS");
+}
+
+=head2 copy_conservation_scores
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : listref Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $these_mlss
+  Description : copy conservation_scores for the range of genomic_align_block_ids
+                (generated from $these_mlss). Conservations scores are stored in the
+                conservation_score table.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_conservation_scores {
+  my ($old_dba, $new_dba, $method_link_species_sets) = @_;
+
+  my $old_user = $old_dba->dbc->username;
+  my $old_pass = $old_dba->dbc->password?"-p".$old_dba->dbc->password:"";
+  my $old_host = $old_dba->dbc->host;
+  my $old_port = $old_dba->dbc->port;
+  my $old_dbname = $old_dba->dbc->dbname;
+
+  my $new_user = $new_dba->dbc->username;
+  my $new_pass = $new_dba->dbc->password?"-p".$new_dba->dbc->password:"";
+  my $new_host = $new_dba->dbc->host;
+  my $new_port = $new_dba->dbc->port;
+  my $new_dbname = $new_dba->dbc->dbname;
+
+  $new_dba->dbc->do("ALTER TABLE `conservation_score` DISABLE KEYS");
+  my $conservation_score_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM conservation_score".
+      " WHERE genomic_align_block_id >= ? AND genomic_align_block_id < ? LIMIT 1");
+
+  my $mysqldump = "mysqldump -u$old_user $old_pass -h$old_host -P$old_port".
+	" --skip-disable-keys --insert-ignore -t $old_dbname";
+  my $mysql = "mysql -u$new_user $new_pass -h$new_host -P$new_port $new_dbname";
+
+  foreach my $this_method_link_species_set (@$method_link_species_sets) {
+    my $lower_gab_id = $this_method_link_species_set->dbID * 10**10;
+    my $upper_gab_id = ($this_method_link_species_set->dbID + 1) * 10**10;
+    $conservation_score_fetch_sth->execute($lower_gab_id, $upper_gab_id);
+    my $all_rows = $conservation_score_fetch_sth->fetchall_arrayref;
+    if (!@$all_rows) {
+      next;
+    }
+
+    my $where = "genomic_align_block_id >= $lower_gab_id AND genomic_align_block_id < $upper_gab_id";
+    print "Copying conservation scores for ", $this_method_link_species_set->name,
+	" (", $this_method_link_species_set->dbID, "): ";
+    my $pipe = "$mysqldump -w \"$where\" conservation_score | $mysql";  
+    system($pipe);
+    print "ok!\n";
+  }
+  $new_dba->dbc->do("ALTER TABLE `conservation_score` ENABLE KEYS");
 }
 
