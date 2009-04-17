@@ -440,7 +440,24 @@ sub _combine_genomic_align_trees {
         #   }
         # }
 
-      ## 2. If there is no info about right node or this points to a node not found in next tree,
+      ## 2. Force insertions in a math to the next right_node is expected
+      } elsif (defined($species_right_node_id) and exists($existing_node_ids->{$species_right_node_id})) {
+        splice(@$species_order, $species_counter, 0, {
+            genome_db => $this_genome_db,
+            right_node_id => $this_right_node_id,
+            genomic_align_ids => [@$these_genomic_align_ids],
+          });
+        ## DEBUG info
+        # print "FORCE INSERT!\n";
+        # for (my $i = 0; $i<@$species_order; $i++) {
+        #   if ($i == $species_counter) {
+        #     print $species_order->[$i]->{genome_db}->name, "***\n";
+        #   } else {
+        #     print $species_order->[$i]->{genome_db}->name, "\n";
+        #   }
+        # }
+
+      ## 3. If there is no info about right node or this points to a node not found in next tree,
       ## rely on the species name
       } elsif ($this_genome_db->name eq $species_genome_db->name
                 and (!defined($species_right_node_id) or
@@ -458,7 +475,7 @@ sub _combine_genomic_align_trees {
         #   }
         # }
 
-      ## 3. Insert this species if not found in the remaining set of existing species (in species_order)
+      ## 4. Insert this species if not found in the remaining set of existing species (in species_order)
       } elsif (!defined($existing_right_node_ids->{$this_node_id})
           and !grep {$_ eq $this_genome_db->name} @$existing_species_names) {
         splice(@$species_order, $species_counter, 0, {
@@ -484,7 +501,7 @@ sub _combine_genomic_align_trees {
       shift(@$existing_species_names);
     }
 
-    ## 4. We have not found any good position for this node: add a new track to the $species_order
+    ## 5. We have not found any good position for this node: add a new track to the $species_order
     if (!$match) {
       push(@$species_order, {
             genome_db => $this_genome_db,
