@@ -338,13 +338,6 @@ myisamchk: warning: 1 client is using or hasn't closed the table properly
 // Processes summary
 // SUCCEEDED copy of avilella_ensembl_compara_53 on compara1 to ensembl_compara_53 on ens-staging
 
-Once the copy is in ens-staging, we apply this insert that makes joins
-between core and compara dbs for the member table:
-
-mysql -hens-staging -uensro -N -e 'show databases like "%core\_53\_%"' |awk '{print "UPDATE "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m SET m.display_label=x.display_label WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\";"}' > update_display_label.sql
-
-mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_53 < update_display_label.sql
-
 
 19. Update files in sanger-plugins/htdocs/info/software/compara
 
@@ -356,13 +349,16 @@ Update for schema change and tutorial
 is one last thing to do, update the display_label in member table as well as the gene
 description.
 
-mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{print "UPDATE "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m SET m.display_label=x.display_label WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\";"}' > update_display_label.sql
+Once the copy is in ens-staging, we apply this insert that makes joins
+between core and compara dbs for the member table:
 
-mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_42 < update_display_label.sql
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_54\_%"'|awk '{print "UPDATE "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m SET m.display_label=x.display_label WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\";"}' > update_display_label.sql
 
-mysql -hens-staging -uensro -N -e 'show databases like "%core\_42\_%"'|awk '{ print "UPDATE "$1".gene_stable_id gs, "$1".gene g, member m SET m.description=g.description WHERE g.gene_id=gs.gene_id and gs.stable_id=m.stable_id and m.source_name=\"ENSEMBLGENE\";"}' > update_gene_description.sql
+mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_54 < update_display_label.sql
 
-mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_42 < update_gene_description.sql
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_54\_%"'|awk '{ print "UPDATE "$1".gene_stable_id gs, "$1".gene g, member m SET m.description=g.description WHERE g.gene_id=gs.gene_id and gs.stable_id=m.stable_id and m.source_name=\"ENSEMBLGENE\";"}' > update_gene_description.sql
+
+mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_54 < update_gene_description.sql
 
 Ensure that the indexes in all tables in ens-staging are correct. This will do it as yesterday jobs, which are limited to 10 concurrently running:
 
