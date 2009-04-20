@@ -14,6 +14,7 @@
 
 /* Feature colours - MUST BE FIRST */
 span.con { background-color: [[SEQ_CONSERVATION]] }
+span.dif { background-color: [[SEQ_DIFFERENCE]] }
 span.res { color: [[SEQ_RESEQEUNCING]] }
 
 /* Exon colours */
@@ -29,9 +30,11 @@ span.c1 { background-color: [[SEQ_CODONC1]] }
 span.cu { background-color: [[SEQ_CODONUTR]] }
 
 /* Variation colours */
-span.sn  { background-color: [[SEQ_SNP]] }       /* SNP */
-span.si  { background-color: [[SEQ_SNPINSERT]] } /* Insert */
-span.sd  { background-color: [[SEQ_SNPDELETE]] } /* Delete */
+span.sn   { background-color: [[SEQ_SNP]] }       /* SNP */
+span.si   { background-color: [[SEQ_SNPINSERT]] } /* Insert */
+span.sd   { background-color: [[SEQ_SNPDELETE]] } /* Delete */
+span.var  { color: [[SEQ_MAIN_SNP]] }
+span.bold { font-weight: bold }
 
 /* Variation colours - Transcripts */
 span.snt { background-color: [[SEQ_SNP_TR]] }           /* SNP */
