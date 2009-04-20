@@ -432,16 +432,17 @@ foreach my $spp (@species) {
     } else {
       if ( keys %chr_sorter ) {
         info( 1, "Using chr sorter" );
-        @slices = sort {
-          $chr_sorter{ $b->seq_region_name() } <=>
-            $chr_sorter{ $a->seq_region_name() }
-            || $chr_sorter{ $b->seq_region_name() }
-            cmp $chr_sorter{ $a->seq_region_name() }
-            || $a->seq_region_name() cmp $b->seq_region_name()
-          } @{
-          $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
-            $inc_nonref )
-            || [] };
+        {
+          local ($^W) = 0;    # Turn off warnings in this block only.
+          @slices = sort {
+            $chr_sorter{ $b->seq_region_name() } <=>
+              $chr_sorter{ $a->seq_region_name() }
+              || $a->seq_region_name() cmp $b->seq_region_name()
+            } @{
+            $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
+              $inc_nonref )
+              || [] };
+        }
       } else {
         info( 1, "Unsorted results" );
         @slices = @{
