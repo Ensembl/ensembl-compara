@@ -1496,10 +1496,10 @@ sub get_supporting_evidence { ## USED by alignview as well!
         # skip evidence for this exon if it doesn't support this particular
         # transcript (vega only)
 
-		if ($self->species_defs->ENSEMBL_SITE_NAME eq 'Vega') {
-		  next unless ($trans_evidence{$this_feature->dbID});
-		}
-        
+	if ( ($self->species_defs->ENSEMBL_SITE_NAME eq 'Vega') || ($self->logic_name =~ /otter/) ) {
+	  next unless ($trans_evidence{$this_feature->dbID});
+	}
+
         my $no_version_no;
         if($dl_seq_name =~ /^[A-Z]{2}\.\d+/i) {
           $no_version_no = $dl_seq_name;
