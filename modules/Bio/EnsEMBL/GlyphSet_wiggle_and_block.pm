@@ -214,10 +214,16 @@ sub draw_wiggle_plot {
 
 
   # Draw wiggly plot -------------------------------------------------
-  foreach my $f (@$features) {
+  foreach my $f (@$features) { 
     my $START = $f->start < 1 ? 1 : $f->start;
     my $END   = $f->end   > $slice->length  ? $slice->length : $f->end;
-    my $score = $f->score || 0;
+    my ($score, $min_score);
+    if ($f->isa("Bio::EnsEMBL::Variation::ReadCoverageCollection")){
+      $score = $f->read_coverage_max;
+      $min_score = $f->read_coverage_min;
+    } else {
+      $score = $f->score || 0;
+    }
     # warn(join('*', $f, $START, $END, $score));
     my $y = $score < 0 ? 0 : -$score * $pix_per_score;
     $self->push($self->Rect({
@@ -228,7 +234,18 @@ sub draw_wiggle_plot {
       'absolutey' => 1,
       'title'     => sprintf("%.2f", $score),
       'colour'    => $colour,
-    }));
+    })); 
+    if ($min_score){
+      $self->push($self->Rect({
+        'y'         => $offset + $red_line_offset + $y,
+        'height'    => abs( $min_score * $pix_per_score ),
+        'x'         => $START-1,
+        'width'     => $END - $START+1,
+        'absolutey' => 1,
+        'title'     => sprintf("%.2f", $score),
+        'colour'    => 'black',
+      }));
+    }
   }
 
   $offset = $self->_offset($row_height);
