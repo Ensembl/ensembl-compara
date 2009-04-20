@@ -17,7 +17,8 @@ sub hstrand { return undef; }
 
 
 sub id { my $self = shift; return undef; }
-sub _strand { my($self,$str) = @_;
+sub _strand { 
+  my($self,$str) = @_;
   return $str eq '-' ? -1 : ( $str eq '+' ? 1 : 0 ) ;
 }
 
