@@ -1,20 +1,26 @@
 package EnsEMBL::Web::Component;
 
 use strict;
-use Data::Dumper;
-use EnsEMBL::Web::TmpFile::Text;
-use Exporter;
-use CGI qw(escape);
-use EnsEMBL::Web::Document::SpreadSheet;
-use EnsEMBL::Web::Component::Export;
-use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
-use Text::Wrap qw(wrap);
-use EnsEMBL::Web::Constants;
-use EnsEMBL::Web::Form;
 
 use base qw(EnsEMBL::Web::Root Exporter);
+
+use Exporter;
+
 our @EXPORT_OK = qw(cache cache_print);
-our @EXPORT    = @EXPORT_OK;
+our @EXPORT = @EXPORT_OK;
+
+use CGI qw(escape);
+use Data::Dumper;
+use Text::Wrap qw(wrap);
+
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
+
+use EnsEMBL::Web::Component::Export;
+use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Form;
+use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::TmpFile::Text;
 
 sub _info_panel {
   my($self,$class,$caption,$desc,$width) = @_;
@@ -441,7 +447,7 @@ sub _warn_block {
   warn "\n";
 }
 
-# Used by ComparaAlignments, Gene::GeneSeq and Location::SequenceAlignment
+# Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
   my $self = shift;
   my ($slices, $config) = @_;
@@ -814,7 +820,6 @@ sub markup_variation {
 
       $seq->[$_]->{'letter'} = $ambiguity if $ambiguity;
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
-      
       $seq->[$_]->{'class'} .= "$class->{$variation->{'type'}} ";
       
       if ($config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'}) {          
@@ -844,7 +849,7 @@ sub markup_comparisons {
   my $i = 0;
   my ($species, $length, $length_diff, $pad, $seq, $comparison);
   my $title_check = ($comparison->{'insert'} && $config->{'title_display'});
-
+  
   foreach (@{$config->{'slices'}}) {
     $species = $_->{'name'};
     
@@ -892,54 +897,23 @@ sub markup_conservation {
   my $self = shift;
   my ($sequence, $config) = @_;
 
-  # Regions where more than 50% of bps match considered `conserved`
-  my $cons_threshold = int((scalar(@{$config->{'slices'}}) + 1) / 2);
+  # Regions where more than 50% of bps match considered "conserved"
+  my $cons_threshold = int((scalar(@$sequence) + 1) / 2);
   
-  my @conservation;
   my $conserved = 0;
   
-  foreach (@{$config->{'slices'}}) {
-    # Get conservation scores for each basepair in the alignment.
-    # In future the conservation scores will come out of a database and this will be removed
-    my $idx = 0;
+  for my $i (0..$config->{'length'}-1) {
+    my %cons;
+    map $cons{$_->[$i]->{'letter'}}++, @$sequence;
     
-    $conservation[$idx++]->{uc $_}++ for (split(//, $_->{'slice'}->seq));
-  }
-  
-  # Now for each bp in the alignment identify the nucleotides with scores above the threshold.
-  # In theory the data should come from a database. 
-  foreach my $nt (@conservation) {
-    $nt->{'S'} = join('', grep {$_ ne '~' && $nt->{$_} > $cons_threshold} keys(%{$nt}));
-    $nt->{'S'} =~ s/[-.N]//; # here we remove different representations of nucleotides from  gaps and undefined regions : 
-  }
-
-  foreach my $seq (@$sequence) {    
-    my $f = 0;
-    my $ms = 0;
-    my $i = 0;
-    my @csrv;
-
-    foreach my $sym (map { $_->{'letter'} } @$seq) {
-      if (uc $sym eq $conservation[$i++]->{'S'}) {
-        if ($f == 0) {
-           $f = 1;
-           $ms = $i;
-        }
-      } elsif ($f == 1) {
-        $f = 0;
-        push @csrv, [$ms-1, $i-2];
-      }
+    my $c = join '', grep { $_ !~ /~|[-.N]/ && $cons{$_} > $cons_threshold } keys %cons;
+    
+    foreach (@$sequence) {
+      next unless $_->[$i]->{'letter'} eq $c;
+      
+      $_->[$i]->{'class'} .= "con ";
+      $conserved = 1;
     }
-    
-    if ($f == 1) { 
-      push @csrv, [$ms-1, $i-1];
-    }
-    
-    foreach my $c (@csrv) {
-      $seq->[$_]->{'class'} .= "con " for ($c->[0]..$c->[1]);
-    }
-    
-    $conserved = 1 if scalar @csrv;
   }
   
   if ($conserved) {
@@ -1132,7 +1106,7 @@ sub markup_line_numbers {
   $config->{'padding'}->{'pre_number'}++ if $config->{'padding'}->{'pre_number'}; # Compensate for the : after the label
  
   if ($config->{'line_numbering'} eq 'slice' && $config->{'align'}) {
-    $config->{'key'} .= qq{ NOTE: For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line};
+    $config->{'key'} .= qq{<p>NOTE: For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</p>};
   }
 }
 
@@ -1149,26 +1123,29 @@ sub build_sequence {
   # If we remove this patch, look at version 1.79 for the correct code to revert to
   my $styles = $self->object->species_defs->ENSEMBL_STYLE;
   my %class_to_style = (
-    con => [ 1,  { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}" } ],
-    res => [ 2,  { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}" } ],
-    e0  => [ 3,  { 'color' => "#$styles->{'SEQ_EXON0'}" } ],
-    e1  => [ 4,  { 'color' => "#$styles->{'SEQ_EXON1'}" } ],
-    e2  => [ 5,  { 'color' => "#$styles->{'SEQ_EXON2'}" } ],
-    eo  => [ 6,  { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}" } ],
-    eg  => [ 7,  { 'color' => "#$styles->{'SEQ_EXONGENE'}", 'font-weight' => "bold" } ],
-    c0  => [ 8,  { 'background-color' => "#$styles->{'SEQ_CODONC0'}" } ],
-    c1  => [ 9,  { 'background-color' => "#$styles->{'SEQ_CODONC1'}" } ],
-    cu  => [ 10, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}" } ],
-    sn  => [ 11, { 'background-color' => "#$styles->{'SEQ_SNP'}" } ],      
-    si  => [ 12, { 'background-color' => "#$styles->{'SEQ_SNPINSERT'}" } ],
-    sd  => [ 13, { 'background-color' => "#$styles->{'SEQ_SNPDELETE'}" } ],   
-    snt => [ 14, { 'background-color' => "#$styles->{'SEQ_SNP_TR'}" } ],
-    syn => [ 15, { 'background-color' => "#$styles->{'SEQ_SYN'}" } ],
-    snu => [ 16, { 'background-color' => "#$styles->{'SEQ_SNP_TR_UTR'}" } ],
-    siu => [ 17, { 'background-color' => "#$styles->{'SEQ_SNPINSERT_TR_UTR'}" } ],
-    sdu => [ 18, { 'background-color' => "#$styles->{'SEQ_SNPDELETE_TR_UTR'}" } ],
-    sf  => [ 19, { 'background-color' => "#$styles->{'SEQ_FRAMESHIFT'}" } ],
-    aa  => [ 20, { 'color' => "#$styles->{'SEQ_AMINOACID'}" } ]
+    con =>  [ 1,  { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}" } ],
+    dif =>  [ 2,  { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}" } ],
+    res =>  [ 3,  { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}" } ],
+    e0  =>  [ 4,  { 'color' => "#$styles->{'SEQ_EXON0'}" } ],
+    e1  =>  [ 5,  { 'color' => "#$styles->{'SEQ_EXON1'}" } ],
+    e2  =>  [ 6,  { 'color' => "#$styles->{'SEQ_EXON2'}" } ],
+    eo  =>  [ 7,  { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}" } ],
+    eg  =>  [ 8,  { 'color' => "#$styles->{'SEQ_EXONGENE'}", 'font-weight' => "bold" } ],
+    c0  =>  [ 9,  { 'background-color' => "#$styles->{'SEQ_CODONC0'}" } ],
+    c1  =>  [ 10, { 'background-color' => "#$styles->{'SEQ_CODONC1'}" } ],
+    cu  =>  [ 11, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}" } ],
+    sn  =>  [ 12, { 'background-color' => "#$styles->{'SEQ_SNP'}" } ],      
+    si  =>  [ 13, { 'background-color' => "#$styles->{'SEQ_SNPINSERT'}" } ],
+    sd  =>  [ 14, { 'background-color' => "#$styles->{'SEQ_SNPDELETE'}" } ],   
+    snt =>  [ 15, { 'background-color' => "#$styles->{'SEQ_SNP_TR'}" } ],
+    syn =>  [ 16, { 'background-color' => "#$styles->{'SEQ_SYN'}" } ],
+    snu =>  [ 17, { 'background-color' => "#$styles->{'SEQ_SNP_TR_UTR'}" } ],
+    siu =>  [ 18, { 'background-color' => "#$styles->{'SEQ_SNPINSERT_TR_UTR'}" } ],
+    sdu =>  [ 19, { 'background-color' => "#$styles->{'SEQ_SNPDELETE_TR_UTR'}" } ],
+    sf  =>  [ 20, { 'background-color' => "#$styles->{'SEQ_FRAMESHIFT'}" } ],
+    aa  =>  [ 21, { 'color' => "#$styles->{'SEQ_AMINOACID'}" } ],
+    var =>  [ 22, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}" } ],
+    bold => [ 23, { 'font-weight' => 'bold' } ]
   );
   
   foreach my $lines (@$sequence) {
