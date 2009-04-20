@@ -435,6 +435,8 @@ foreach my $spp (@species) {
         @slices = sort {
           $chr_sorter{ $b->seq_region_name() } <=>
             $chr_sorter{ $a->seq_region_name() }
+            || $chr_sorter{ $b->seq_region_name() }
+            cmp $chr_sorter{ $a->seq_region_name() }
             || $a->seq_region_name() cmp $b->seq_region_name()
           } @{
           $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
