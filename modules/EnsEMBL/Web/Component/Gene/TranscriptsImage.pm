@@ -33,6 +33,8 @@ sub content {
 
   ## We now need to select the correct track to turn on....
   
+  $self->_attach_das( $wuc );
+
   my $key = $wuc->get_track_key( 'transcript', $gene );
   ## Then we turn it on....
   my $n = $wuc->get_node($key);

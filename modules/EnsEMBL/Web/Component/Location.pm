@@ -6,9 +6,7 @@ no warnings "uninitialized";
 
 use POSIX qw(floor);
 
-use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
-
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;

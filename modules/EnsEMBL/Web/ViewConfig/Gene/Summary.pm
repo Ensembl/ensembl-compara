@@ -10,7 +10,7 @@ sub init {
     das_sources),           []
   );
   $view_config->add_image_configs({qw(
-    gene_summary nodas
+    gene_summary das
   )});
   $view_config->default_config = 'gene_summary';
   $view_config->storable = 1;
