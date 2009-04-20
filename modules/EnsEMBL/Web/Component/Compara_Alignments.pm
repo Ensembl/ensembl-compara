@@ -42,13 +42,13 @@ sub content {
   # Get all slices for the gene
   my ($slices, $slice_length) = $self->get_slices($object, $slice, $align, $object->species);
   
-  if ($align && $slice_length >= $self->{'subslice_length'}) {    
+  if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     my $base_url = qq{/@{[$object->species]}/Component/$ENV{'ENSEMBL_TYPE'}/Web/Compara_Alignments/sub_slice?padding=$padding;length=$slice_length};
         
     $html = $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
-  } else {
-    $html = $self->content_sub_slice($slices, $warnings); # Direct call if the sequence length is short enough
+  } else {    
+    $html = $self->content_sub_slice($slice, $slices, $warnings); # Direct call if the sequence length is short enough
   }
   
   return $html;
@@ -56,10 +56,11 @@ sub content {
 
 sub content_sub_slice {
   my $self = shift;
-  my ($slices, $warnings) = @_;
+  my ($slice, $slices, $warnings, $defaults) = @_;
   
   my $object = $self->object;
-  my $slice = $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
+  
+  $slice ||= $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
   
   my $start = $object->param('subslice_start');
   my $end = $object->param('subslice_end');
@@ -86,6 +87,8 @@ sub content_sub_slice {
     $config->{'end_number'} = 1;
     $config->{'number'} = 1;
   }
+  
+  $config = {%$config, %$defaults} if $defaults;
   
   # Requesting data from a sub slice
   if ($start && $end) {
@@ -139,7 +142,7 @@ sub get_slices {
   my $length;
 
   if ($align) {
-    push @slices, @{$self->get_alignments($object, $slice, $align, $species, $start, $end)};
+    push @slices, @{$self->get_alignments(@_)};
   } else {
     # If no alignment selected then we just display the original sequence as in geneseqview
     push @slices, $slice;
@@ -304,11 +307,12 @@ sub get_slice_table {
   my $self = shift;
   my ($slices, $return_padding) = @_;
 
-  my $table_rows;
-  my ($species_padding, $region_padding, $number_padding);
+  my ($table_rows, $species_padding, $region_padding, $number_padding, $ancestral_sequences);
 
   foreach (@$slices) {
     my $species = $_->{'name'};
+    
+    next unless $species;
     
     $species_padding = length $species if $return_padding && length ($species) > $species_padding;
     
@@ -316,10 +320,10 @@ sub get_slice_table {
     <tr>
       <th>$species &gt;&nbsp;</th>
       <td>};
-    
+        
     foreach my $slice (@{$_->{'underlying_slices'}}) {
       next if $slice->seq_region_name eq 'GAP';
-      
+            
       my $slice_name = $slice->name;
       my ($stype, $assembly, $region, $start, $end, $strand) = split (/:/ , $slice_name);
       
@@ -330,6 +334,7 @@ sub get_slice_table {
 
       if ($species eq 'Ancestral_sequences') {
         $table_rows .= $slice->{'_tree'};
+        $ancestral_sequences = 1;
       } else {
         $table_rows .= qq{
           <a href="/$species/Location/View?r=$region:$start-$end">$slice_name</a><br />};
@@ -342,11 +347,13 @@ sub get_slice_table {
   }
   
   $region_padding++ if $region_padding;
-
+  
   my $rtn = qq{
   <table>$table_rows
   </table>
   };
+  
+  $rtn = qq{<p>NOTE: <a href="/info/docs/compara/analyses.html#epo">How ancestral sequences are calcuated</a></p>$rtn} if $ancestral_sequences;
   
   return $return_padding ? ($rtn, "$species_padding,$region_padding,$number_padding") : $rtn;
 }
