@@ -96,7 +96,7 @@ sub content {
         if ($status eq 'Administrator') {
           $promote = sprintf(qq(<a href="/Account/ChangeLevel?id=$ok_id;new_level=member;user_id=%s;$referer" class="modal_link">Demote to standard member</a>), $m->user_id);
         }
-        else {
+        elsif ($m->member_status ne 'active') {
           $promote = sprintf(qq(<a href="/Account/ChangeLevel?id=$ok_id;new_level=administrator;user_id=%s;$referer" class="modal_link">Promote to administrator</a>), $m->user_id);
         }
         $table->add_row({'name' => $m->name, 'status' => $status, 'remove' => $remove, 'promote' => $promote});
