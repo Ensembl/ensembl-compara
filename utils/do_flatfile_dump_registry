@@ -380,8 +380,8 @@ require Bio::EnsEMBL::Utils::SeqDumper;
 unless ($no_log) {
   ( my $time = gmtime(time) ) =~ s/\s+/\./g;
   $logfile ||= "logs/flat" . "_$time.log";
-  print STDERR "Using logfile $logfile\n";
-  open( STDERR, "> $logfile" ) || die "Can't create file:$!\n";
+  # print STDERR "Using logfile $logfile\n";
+  # open( STDERR, "> $logfile" ) || die "Can't create file:$!\n";
 }
 
 $dumpdir ||= $basedir . "release-$sitedefs_release";
@@ -432,17 +432,14 @@ foreach my $spp (@species) {
     } else {
       if ( keys %chr_sorter ) {
         info( 1, "Using chr sorter" );
-        {
-          local ($^W) = 0;    # Turn off warnings in this block only.
-          @slices = sort {
-            $chr_sorter{ $b->seq_region_name() } <=>
-              $chr_sorter{ $a->seq_region_name() }
-              || $a->seq_region_name() cmp $b->seq_region_name()
-            } @{
-            $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
-              $inc_nonref )
-              || [] };
-        }
+        @slices = sort {
+          $chr_sorter{ $b->seq_region_name() } <=>
+            $chr_sorter{ $a->seq_region_name() }
+            || $a->seq_region_name() cmp $b->seq_region_name()
+          } @{
+          $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
+            $inc_nonref )
+            || [] };
       } else {
         info( 1, "Unsorted results" );
         @slices = @{
