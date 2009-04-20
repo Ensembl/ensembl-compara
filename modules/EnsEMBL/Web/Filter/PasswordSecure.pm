@@ -23,6 +23,7 @@ sub BUILD {
 
 sub catch {
   my ($self) = @_;
+  $self->set_redirect('/Account/Password');
   my $object = $self->object;
   my $password_1 = $object->param('new_password_1');
   my $password_2 = $object->param('new_password_2');
