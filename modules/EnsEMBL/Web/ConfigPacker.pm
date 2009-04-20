@@ -273,6 +273,18 @@ sub _summarise_variation_db {
     }
   }
   $self->db_details($db_name)->{'tables'}{'source'}{'counts'} = { map {@$_} values %$temp};
+#---------- Add in strains contained in read_coverage_collection table
+  my $r_aref = $dbh->selectall_arrayref(
+      'select distinct s.name, s.sample_id
+      from sample s, read_coverage_collection r
+      where s.sample_id = r.sample_id' 
+   );
+   my @strains;
+   foreach my $a_aref (@$r_aref){
+     my $strain = $a_aref->[0] . '_' . $a_aref->[1];
+     push (@strains, $strain);
+   }
+   if (@strains) { $self->db_details($db_name)->{'tables'}{'read_coverage_collection_strains'} = join(',', @strains); } 
 
   $dbh->disconnect();
 }
@@ -604,7 +616,7 @@ sub _munge_meta {
   $self->tree->{'ASSEMBLY_DATE'} = $months[$A[1]].' '.$A[0];
 
   ## Do species name and group
-  my @taxonomy = @{$self->_meta_info('DATABASE_CORE','species.classification')};
+  my @taxonomy = grep { $_!~/ / } @{$self->_meta_info('DATABASE_CORE','species.classification')};
   my $order = $self->tree->{'TAXON_ORDER'};
 
   $self->tree->{'SPECIES_BIO_NAME'} = $taxonomy[1].' '.$taxonomy[0];
