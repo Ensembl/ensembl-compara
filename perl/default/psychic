@@ -166,21 +166,21 @@ if ($site eq 'ebi') {
 	  $URL = URL( '/%s/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s', $species, $1, $3 );
 	  $flag = 1;
       }
-  }
-
-  else {
-      $URL = "/$script?species=;idx=;q=";
+  } else {
+    $URL = "/$script?species=;idx=;q=";
   }
 
   unless( $flag ) {
-      $URL = $query =~ /^BLA_\w+$/            ? URL( '/Multi/blastview/%s', $query  )        ## Blast ticket
-	  : $query =~ /^\s*([ACGT]{20,})\s*$/i         ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $1 )         ## BLAST seq search
-	  : $query =~ /^\s*([A-Z]{20,})\s*$/i          ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $1 )         ## BLAST seq search
-	  : URL( 
-              '/%s/'.$script.'?species=%s;idx=%s;q=%s',
-              ( $species eq 'ALL'|| !$species ? 'default' : $species ),
-              $species ? $species : 'all', $index, $query )
-	      ;
+    $URL = $query =~ /^BLA_\w+$/              ? URL( '/Multi/blastview/%s', $query  )        ## Blast ticket
+	       : $query =~ /^\s*([ACGT]{20,})\s*$/i ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $1 )         ## BLAST seq search
+         : $query =~ /^\s*([A-Z]{20,})\s*$/i  ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $1 )         ## BLAST seq search
+	       :                                      URL( '/%s/'.$script.'?species=%s;idx=%s;q=%s',
+                                                  ( $species eq 'ALL'|| !$species ? 'default' : $species ),
+                                                  $species ? $species : 'all',
+                                                  $index,
+                                                  $query
+                                                )
+         ;
   }
 }
 
