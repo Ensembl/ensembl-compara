@@ -355,6 +355,80 @@ $ENSEMBL_LONGPROCESS_MINTIME    = 10;
 ##
 ###############################################################################
 
+sub tmp {
+  my $tmp_dir = shift;
+
+  $SiteDefs::ENSEMBL_TMP_DIR        = $tmp_dir;
+  $SiteDefs::ENSEMBL_TMP_DIR_IMG    = "$tmp_dir/img/tmp";
+  $SiteDefs::ENSEMBL_TMP_DIR_CACHE  = "$tmp_dir/img/cache";
+  $SiteDefs::ENSEMBL_TMP_DIR_DOTTER = "$tmp_dir/dotter";
+  $SiteDefs::ENSEMBL_TMP_DIR_BLAST  = "$tmp_dir/blastqueue";
+}
+
+sub logs {
+  my $log_dir = shift;
+  my $datestamp = '';
+  if( $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_TIMESTAMPED_LOGS ) {
+    my @time = gmtime();
+    $datestamp = sprintf( ".%04d-%02d-%02d-%02d-%02d-%02d", $time[5]+1900, $time[4]+1, @time[3,2,1,0] );
+  }
+
+## Set all log files into the /ensemblweb/tmp/logs/uswest/ directory
+  my $log_prefix                    = "$log_dir/".$SiteDefs::ENSEMBL_SERVER;
+  $SiteDefs::ENSEMBL_PIDFILE        = "$log_prefix.httpd.pid";
+  $SiteDefs::ENSEMBL_ERRORLOG       = "$log_prefix$datestamp.error_log";
+  $SiteDefs::ENSEMBL_CUSTOMLOG      = "$log_prefix$datestamp.access_log ensembl_extended";
+}
+
+sub memcached {
+  my $pars = shift;
+  $pars->{'servers'}  = [] unless exists $pars->{'servers'};
+  unless( @{$pars->{'servers'}} ) {
+    $SiteDefs::ENSEMBL_MEMCACHED = undef;
+    return;
+  }
+  $pars->{'debug'}    = 0  unless exists $pars->{'debug'};
+  $pars->{'hm_stats'} = 0  unless exists $pars->{'hm_stats'};
+  
+  my %flags = map { ( $_ => 1) } qw( 
+    PLUGGABLE_PATHS
+    STATIC_PAGES_CONTENT
+    WEBSITE_DB_DATA
+    USER_DB_DATA
+    DYNAMIC_PAGES_CONTENT
+    TMP_IMAGES
+    ORDERED_TREE
+    OBJECTS_COUNTS
+    IMAGE_CONFIG
+  );
+  foreach my $k ( keys %{$pars->{'flags'}} ) {
+    if( $pars->{'flags'}{$k} ) {
+      $flags{ $k } = 1;
+    } else {
+      delete $flags{ $k };
+    }
+  }
+  $pars->{'flags'} = [ keys %flags ];
+
+  $SiteDefs::ENSEMBL_MEMCACHED = $pars;
+}
+
+=for Information
+
+Use flags to enable what you would like to cache:
+
+ * PLUGGABLE_PATHS       - paths to pluggable scripts and static files
+ * STATIC_PAGES_CONTENT  - .html pages content, any pages which SendDecPafe handler is responsible for
+ * WEBSITE_DB_DATA       - website db data queries results
+ * USER_DB_DATA          - user and group db data queries results (records, etc.)
+ * DYNAMIC_PAGES_CONTENT - all dynamic ajax responses
+ * TMP_IMAGES            - temporary images (the one you see actual genomic data on) and their imagemaps
+ * ORDERED_TREE          - navigation tree
+ * OBJECTS_COUNTS        - defferent counts for objects like gene, transcript, location, etc...
+ * IMAGE_CONFIG          - Image configurations
+
+=cut
+
 sub error {
   my $message = join "\n", @_;
   $message =~ s/\s+$//sm;
