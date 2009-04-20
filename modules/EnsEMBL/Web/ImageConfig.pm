@@ -1490,7 +1490,6 @@ sub add_variation_feature {
     'description' => 'Genotyped variation features from all sources',
     'display'          => 'off'
   }));
-
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'}||{}}) {
     ( my $k = $key_2 ) =~ s/\W/_/g;
     $menu->append( $self->create_track( 'variation_feature_'.$key.'_'.$k, sprintf( "%s variations", $key_2 ), {
@@ -1504,6 +1503,22 @@ sub add_variation_feature {
       'colourset'   => 'variation',
       'description' => sprintf( 'Variation features from the "%s" source', $key_2 ),
       'display'          => 'off'
+    }));
+  }
+  ## add in read coverage wiggle plots  
+  my @read_coverage_strains = split(/,/, $hashref->{'read_coverage_collection_strains'});
+  foreach my $strain_info (@read_coverage_strains) {
+    my ($strain_name, $sample_id) =  split (/_/, $strain_info);
+    $menu->append($self->create_track('read_wiggle_'.$key."_".$sample_id, sprintf("Read Coverage %s", $strain_name ),{
+      'db'          => $key,
+      'glyphset'    => 'read_coverage',
+      'sources'     => undef,
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'colourset'   => 'ctcf',
+      'description' => 'Read Coverage for '. $strain_name,
+      'renderers'      => ['off'=>'Off','signal_map'=>'Normal'],
+      'display'     => 'off'
     }));
   }
   $self->add_track( 'information', 'variation_legend', 'Variation Legend', 'variation_legend', { 'strand' => 'r' } );
