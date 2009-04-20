@@ -153,11 +153,26 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
   ) {
     $extra .= '
  Memcached enabled:  '.
-    join "\n                     ", @{ $conf->ENSEMBL_MEMCACHED->{'servers'}||[] };
+    join "\n                     ", sort @{ $conf->ENSEMBL_MEMCACHED->{'servers'}||[] };
+    $extra .= '
+
+ Memcached flags:    '.
+    join "\n                     ", sort @{ $conf->ENSEMBL_MEMCACHED->{'flags'}||[] };
 
   }
+
   if( $conf->ENSEMBL_DEBUG_FLAGS & $conf->ENSEMBL_DEBUG_VERBOSE_STARTUP ) {
+    my $i = 1;
+    my $T = $conf->ENSEMBL_DEBUG_FLAGS;
     $extra .= '
+
+ Debug flags:        '.
+    join "\n                     ", grep { $T & ( ($i<<=1)>>1 ) } @{$conf->ENSEMBL_FLAG_NAMES_HR};
+
+    $i = 0;
+    $extra .= '
+
+==============================================================================
 
  Species      '.join(  "\n              ", map {
     sprintf '%4d   %-6.6s %-32.32s %s',
@@ -166,14 +181,6 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
       $_,
       $conf->other_species($_,'SPECIES_COMMON_NAME')
     } @{$conf->ENSEMBL_SPECIES}  );
-    my $i = 1;
-    my $T = $conf->ENSEMBL_DEBUG_FLAGS;
-
-
-    $extra .= '
-
- Debug flags:        '.
-    join "\n                     ", grep { $T & ( ($i<<=1)>>1 ) } @{$conf->ENSEMBL_FLAG_NAMES_HR}
     
   }
   warn sprintf '
