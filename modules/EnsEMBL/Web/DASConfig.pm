@@ -270,12 +270,17 @@ sub _guess_views {
   }
   
   my @views = ();
-  if ( $positional ) {
-    push @views, 'cytoview', 'contigviewbottom';
-  }
-  if ( $nonpositional ) {
-    push @views, 'Gene/ExternalData', 'Transcript/ExternalData';
-  }
+
+  push @views, qw(
+    cytoview
+    contigviewbottom
+    gene_summary
+  ) if $positional;
+
+  push @views, qw(
+    Gene/ExternalData
+    Transcript/ExternalData
+  ) if $nonpositional;
   
   return \@views;
 }

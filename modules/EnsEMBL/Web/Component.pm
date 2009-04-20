@@ -69,18 +69,17 @@ sub _export_image {
     return 1;
   }
   
-	return 0;
+  return 0;
 }
+
 sub image_width {
   my $self = shift;
-
   return $ENV{'ENSEMBL_IMAGE_WIDTH'};
 }
+
 sub new {
   my( $class, $object ) = shift;
-  my $self = {
-    'object' => shift,
-  };
+  my $self = { 'object' => shift, };
   bless $self,$class;
   $self->_init();
   return $self;

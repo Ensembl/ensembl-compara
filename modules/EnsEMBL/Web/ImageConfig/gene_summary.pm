@@ -22,6 +22,8 @@ sub init {
     'prediction' => 'Prediction transcripts',
     'variation'  => 'Variation features',
     'functional' => 'Functional genomics',
+    'external_data' => 'External data',
+    'user_data'  => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
     'other'      => 'Decorations',
   );
 
@@ -35,6 +37,7 @@ sub init {
   );
 
   $self->load_tracks;
+  $self->load_configured_das;
 
   $self->modify_configs(
     [qw(fg_regulatory_features_funcgen)],
