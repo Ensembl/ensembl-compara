@@ -19,7 +19,7 @@ sub accession {
   my $html = '<p>';
   if ( $object->param('display') ) {
     $name = $object->name;
-    $html .= qq(The following Ensembl genes have been mapped to Gene Ontology ID: <a href="goview?acc=$acc_id">$acc_id</a> [$name]);
+    $html .= qq(The following genes have been mapped to Gene Ontology ID: <a href="goview?acc=$acc_id">$acc_id</a> [$name]);
   } elsif ($acc_id) {
     $name = $object->name;
     $html .= qq(<strong>$acc_id</strong> [$name]);
@@ -109,7 +109,7 @@ sub tree {
     my $table = EnsEMBL::Web::Document::SpreadSheet->new();
     $table->add_columns(
       {'key' => 'tree', 'title' => "", 'width' => '60%', 'align' => 'left' },
-      {'key' => 'genes', 'title' => "Ensembl Gene Matches", 'width' => '40%', 'align' => 'center'
+      {'key' => 'genes', 'title' => "Gene Matches", 'width' => '40%', 'align' => 'center'
 },
     );
 

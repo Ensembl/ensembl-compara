@@ -16,7 +16,7 @@ sub goview {
   if ($self->{object}->param('display')) {
     ## Panel 2 - view after clicking on gene link
     if( $panel = $self->new_panel( 'Information',
-        'code'    => "info#", 'caption' => 'Ensembl GO/Gene-mapping Report' ) ) {
+        'code'    => "info#", 'caption' => 'GO/Gene-mapping Report' ) ) {
         $panel->add_components(qw(
             accession     EnsEMBL::Web::Component::Go::accession
             search        EnsEMBL::Web::Component::Go::search
@@ -31,7 +31,7 @@ sub goview {
   } else {
     ## Panel 1 - initial/search view
     if( $panel = $self->new_panel( 'Information',
-        'code'    => "info#", 'caption' => 'Ensembl GO Search' ) ) {
+        'code'    => "info#", 'caption' => 'GO Search' ) ) {
         $panel->add_components(qw(
             accession     EnsEMBL::Web::Component::Go::accession
             database      EnsEMBL::Web::Component::Go::database
