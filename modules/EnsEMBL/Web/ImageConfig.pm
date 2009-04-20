@@ -32,19 +32,20 @@ our $MEMD = EnsEMBL::Web::Cache->new;
 #
 
 sub new {
-  my $class   = shift;
-  my $adaptor = shift;
+  my $class           = shift;
+  my $adaptor         = shift;
   my $can_attach_user = shift;
-  my $type    = $class =~/([^:]+)$/ ? $1 : $class;
-  my $style   = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
-  my $self = {
+  my $species         = @_ ? shift : ($ENV{'ENSEMBL_SPECIES'} || '');
+  my $type            = $class =~/([^:]+)$/ ? $1 : $class;
+  my $style           = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
+  my $self            = {
     '_colourmap'        => $adaptor->colourmap,
     '_font_face'        => $style->{GRAPHIC_FONT}                                   || 'Arial',
     '_font_size'        => ( $style->{GRAPHIC_FONTSIZE} * $style->{GRAPHIC_LABEL} ) || 20,
     '_texthelper'       => new Sanger::Graphics::TextHelper,
     '_db'               => $adaptor->get_adaptor,
     'type'              => $type,
-    'species'           => $ENV{'ENSEMBL_SPECIES'} || '',
+    'species'           => $species,
     'species_defs'      => $adaptor->get_species_defs,
     'exturl'            => $adaptor->exturl,
     'general'           => {},
@@ -75,7 +76,7 @@ sub new {
 
   ########## init sets up defaults in $self->{'general'}
   ## Check memcached for defaults
-  if (my $defaults = $MEMD ? $MEMD->get("::${class}::$ENV{ENSEMBL_SPECIES}") : undef) {
+  if (my $defaults = $MEMD ? $MEMD->get("::${class}::$species") : undef) {
     $self->{$_} = $defaults->{$_} for keys %$defaults;
   } else {
     ## No cached defaults found,
@@ -89,11 +90,11 @@ sub new {
         general     => $self->{'general'},
       };
       $MEMD->set(
-        "::${class}::$ENV{ENSEMBL_SPECIES}",
+        "::${class}::$species",
         $defaults,
         undef,
         'IMAGE_CONFIG',
-        $ENV{ENSEMBL_SPECIES},
+        $species,
       );
     }
   }

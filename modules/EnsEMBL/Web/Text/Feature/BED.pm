@@ -22,7 +22,12 @@ sub new {
 }
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }
-sub strand   { my $self = shift; return @{$self->{'__raw__'}}>5 ? -1 : $self->_strand( $self->{'__raw__'}[5] ); }
+sub strand   { my $self = shift;
+  my $T = ( 0+@{$self->{'__raw__'}}) > 5 
+        ? $self->_strand( $self->{'__raw__'}[5] )
+        : -1
+        ;
+}
 sub rawstart { my $self = shift; return $self->{'__raw__'}[1]; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
 
