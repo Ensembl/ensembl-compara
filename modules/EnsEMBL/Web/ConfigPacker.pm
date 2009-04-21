@@ -274,18 +274,19 @@ sub _summarise_variation_db {
   }
   $self->db_details($db_name)->{'tables'}{'source'}{'counts'} = { map {@$_} values %$temp};
 #---------- Add in strains contained in read_coverage_collection table
-  my $r_aref = $dbh->selectall_arrayref(
-      'select distinct s.name, s.sample_id
-      from sample s, read_coverage_collection r
-      where s.sample_id = r.sample_id' 
-   );
-   my @strains;
-   foreach my $a_aref (@$r_aref){
-     my $strain = $a_aref->[0] . '_' . $a_aref->[1];
-     push (@strains, $strain);
-   }
-   if (@strains) { $self->db_details($db_name)->{'tables'}{'read_coverage_collection_strains'} = join(',', @strains); } 
-
+  if ($self->db_details($db_name)->{'tables'}{'read_coverage_collection'}){
+    my $r_aref = $dbh->selectall_arrayref(
+        'select distinct s.name, s.sample_id
+        from sample s, read_coverage_collection r
+        where s.sample_id = r.sample_id' 
+     );
+     my @strains;
+     foreach my $a_aref (@$r_aref){
+       my $strain = $a_aref->[0] . '_' . $a_aref->[1];
+       push (@strains, $strain);
+     }
+     if (@strains) { $self->db_details($db_name)->{'tables'}{'read_coverage_collection_strains'} = join(',', @strains); } 
+  }
   $dbh->disconnect();
 }
 
