@@ -198,7 +198,7 @@ each of the trees for each species combined....
         if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
           ## We need to 
           CGI::header( 'text/plain' );
-  	  print "SUCCESS";
+          print "SUCCESS";
           return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} AJAX";
         }
         if( $input->param('_') eq 'close' ) {
@@ -412,12 +412,12 @@ sub stuff {
         $webpage->redirect( $URL );
         return "Redirecting to $URL (mapped object)";
       } elsif ($webpage->has_problem_type('unmapped')) { #CHANGE# URL function
-        my $f     = $webpage->factory;
-        my $id  = $f->param('peptide') || $f->param('transcript') || $f->param('gene');
+        my $f    = $webpage->factory;
+        my $id   = $f->param('peptide') || $f->param('transcript') || $f->param('gene');
         my $type = $f->param('gene')    ? 'Gene' 
                  : $f->param('peptide') ? 'ProteinAlignFeature'
-             :                        'DnaAlignFeature'
-             ;
+                 :                        'DnaAlignFeature'
+                 ;
         my $URL = sprintf "/%s/$object_type/Genome?type=%s;id=%s",
           $webpage->factory->species, $type, $id;
   
@@ -425,11 +425,12 @@ sub stuff {
         return "Redirecting to $URL (unmapped object)";
       } elsif ($webpage->has_problem_type('archived') ) { #CHANGE# URL function
         my $f     = $webpage->factory;
-        my( $type, $param, $id ) = $f->param('peptide')    ? ( 'Transcript', 'peptide',    $f->param('peptide' )   )
-                                 : $f->param('transcript') ? ( 'Transcript', 'transcript', $f->param('transcript') )
-                     :                           ( 'Gene',       'gene',       $f->param('gene')       )
-                     ;
-        my $URL = sprintf "/%s/%s/History?%s=%s", $webpage->factory->species, $type, $param, $id;
+
+        my( $view, $param, $id ) = $f->param('peptide')    ? ( 'Transcript/Idhistory/Protein', 'protein', $f->param('peptide' ))
+                                 : $f->param('transcript') ? ( 'Transcript/Idhistory', 'transcript', $f->param('transcript') )
+                                 :                           ( 'Gene/Idhistory',       'gene',       $f->param('gene')       )
+                                 ;
+        my $URL = sprintf "/%s/%s?%s=%s", $webpage->factory->species, $view, $param, $id;
         $webpage->redirect( $URL );
         return "Redirecting to $URL (archived object)";
       } else {
