@@ -123,6 +123,14 @@ sub configurator {
     if($config && $vc->has_image_config($config) ) { ### We are updating an image config!
 ## We need to update the image config....
       ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
+
+=for Multi-species configurations....
+
+If we have multiple species in the view (e.g. Align Slice View) then we would
+need to make sure that the image config we have is a merged image config, with
+each of the trees for each species combined....
+
+=cut
       my $ic = $session->getImageConfig( $config, $config );
       $vc->altered = $ic->update_from_input( $input );
       $session->store;
@@ -232,29 +240,29 @@ sub ingredient {
 ### Wrapper around a list of components to produce a panel or
 ### part thereof - for inclusion via AJAX
   my $objecttype  = shift || $ENV{'ENSEMBL_TYPE'};
-  my $session_id   = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+  my $session_id  = $ENSEMBL_WEB_REGISTRY->get_session->get_session_id;
+  my $r           = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+
+  # Set various cache tags and keys....
 
   $ENV{CACHE_TAGS}{'DYNAMIC'}            = 1;
   $ENV{CACHE_TAGS}{'AJAX'}               = 1;
   $ENV{CACHE_TAGS}{$ENV{'HTTP_REFERER'}} = 1;
-
-  my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-
-  $ENV{CACHE_KEY}  = $ENV{REQUEST_URI};
-  $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
-  $ENV{CACHE_KEY} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
+  $ENV{CACHE_KEY}                        = $ENV{REQUEST_URI};
+  $ENV{CACHE_KEY}                       .= "::SESSION[$session_id]" if $session_id;
+  $ENV{CACHE_KEY}                       .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
   
   my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}, keys %{$ENV{CACHE_TAGS}}) : undef;
 
-  timer_push( 'Retrieved content from cache' ); 	 
+  timer_push( 'Retrieved content from cache' );
   $ENSEMBL_WEB_REGISTRY->timer->set_name( "COMPONENT $ENV{'ENSEMBL_SPECIES'} $ENV{'ENSEMBL_COMPONENT'}" );
 
-  if ($content) {
+  if( $content ) { ## Data retrieved from cache....
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}"
       if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
     $r->content_type('text/html');
-  } else {
+  } else { ## Cache miss so we will need to generate the content...
     warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}"
       if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
@@ -271,25 +279,20 @@ sub ingredient {
     );
     $ENV{'ENSEMBL_ACTION'} = $webpage->{'parent'}->{'ENSEMBL_ACTION'};
 
-    $webpage->factory->action( $webpage->{'parent'}->{'ENSEMBL_ACTION'} );
+    $webpage->factory->action( $ENV{'ENSEMBL_ACTION'} );
     if( $webpage->dataObjects->[0] ) {
-      $webpage->dataObjects->[0]->action(  $webpage->{'parent'}->{'ENSEMBL_ACTION'} );
-      if ($objecttype eq 'DAS') {
-	  $webpage->configure( $webpage->dataObjects->[0], $ENV{ENSEMBL_SCRIPT} );
+      $webpage->dataObjects->[0]->action( $ENV{'ENSEMBL_ACTION'} );
+      if( $objecttype eq 'DAS' ) {
+        $webpage->configure( $webpage->dataObjects->[0], $ENV{ENSEMBL_SCRIPT} );
       } else {
-	  $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
+        $webpage->configure( $webpage->dataObjects->[0], 'ajax_content' );
       }
       $webpage->render;
       $content = $webpage->page->renderer->content;
     } else {
       $content = '<p>Unable to produce objects - panic!</p>';
     }
-    $MEMD->set(
-      $ENV{CACHE_KEY},
-      $content,
-      60*60*24*7,
-      keys %{ $ENV{CACHE_TAGS} },
-    ) if $MEMD && $webpage->format eq 'HTML';
+    $MEMD->set( $ENV{CACHE_KEY}, $content, 60*60*24*7, keys %{ $ENV{CACHE_TAGS} } ) if $MEMD && $webpage->format eq 'HTML';
     timer_push( 'Rendered content cached' );
   }
 
@@ -313,35 +316,39 @@ sub stuff {
 ### transmogrifies the URL and separates it into 'species', 'type' 
 ### and 'action' - giving nice, clean, systematic URLs for handling
 ### heirarchical object navigation
-  my $object_type  = shift || $ENV{'ENSEMBL_TYPE'};
-  my $action       = shift;
-  my $doctype      = shift;
-  my $session      = $ENSEMBL_WEB_REGISTRY->get_session;
-
-  my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+  my $object_type = shift || $ENV{'ENSEMBL_TYPE'};
+  my $action      = shift;
+  my $doctype     = shift;
+  my $session     = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $r           = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
 
   $ENV{CACHE_TAGS}{'DYNAMIC'} = 1;
   $ENV{CACHE_TAGS}{'AJAX'}    = 1;
   $ENV{CACHE_TAGS}{$ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL . $ENV{'REQUEST_URI'}} = 1;
-
   $ENV{CACHE_KEY} = $ENV{REQUEST_URI};
   ## If user logged in, some content depends on user
   $ENV{CACHE_KEY} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{ENSEMBL_USER_ID};
 
   my $modal_dialog = $doctype eq 'Popup' ? 1 : 0;
 
+### This block here checks to see if the user has changed the configuration
+### of the page - either by adding a shared URL or, by changing configuration
+### either with a config parameter OR with a "imageconfig" name parameter...
+
   my $input = new CGI;
   my $url = undef;
   $session->set_input( $input );
   if (my @share_ref = $input->param('share_ref')) {
+    ## This should push a message onto the message queue...
     $session->receive_shared_data(@share_ref);
     $input->delete('share_ref');
     $url = $input->self_url;
   }
-  my $vc = $session->getViewConfig( $ENV{'ENSEMBL_TYPE'}, $ENV{'ENSEMBL_ACTION'} );
+  my $vc   = $session->getViewConfig( $ENV{'ENSEMBL_TYPE'}, $ENV{'ENSEMBL_ACTION'} );
+  ## This should push a message onto the message queue...
   my $url2 = $vc->update_from_config_strings( $session, $r );
   $url = $url2 if $url2;
-  if( $url ) {
+  if( $url ) { ## If something has changed then we redirect to the new page!
     CGI::redirect( $url );
     return 'Jumping back in without parameter!';
   }
@@ -349,25 +356,25 @@ sub stuff {
   my $session_id  = $session->get_session_id;
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
 
-  if (
-      $MEMD && 
-      ($r->headers_in->{'Cache-Control'} eq 'max-age=0' || $r->headers_in->{'Pragma'} eq 'no-cache')
-     ) {
-      $MEMD->delete_by_tags(
-        $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'},
-        $session_id ? "session_id[$session_id]" : (),
-      );
+  ## If the user has hit (^R or F5 we need to flush the cache!)
+  if( $MEMD && 
+   ($r->headers_in->{'Cache-Control'} eq 'max-age=0' || $r->headers_in->{'Pragma'} eq 'no-cache')
+  ) {
+    $MEMD->delete_by_tags(
+      $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'},
+      $session_id ? "session_id[$session_id]" : (),
+    );
   }
 
   my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}, keys %{$ENV{CACHE_TAGS}}) : undef;
 
-  if ($content) {
+  if ($content) { ## HIT
     warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}"
       if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
     
     $r->content_type('text/html');
-  } else {
+  } else { ## MISS
     warn "DYNAMIC CONTENT CACHE MISS $ENV{CACHE_KEY}"
       if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;    
@@ -397,14 +404,14 @@ sub stuff {
         }
         $webpage->redirect( $p->name );
         return;
-      } elsif( $webpage->has_problem_type('mapped_id') ) {
+      } elsif( $webpage->has_problem_type('mapped_id') ) { #CHANGE# URL function
         my $feature = $webpage->factory->__data->{'objects'}[0];
         my $URL = sprintf "/%s/%s/%s?%s",
           $webpage->factory->species, $ENV{'ENSEMBL_TYPE'},$ENV{'ENSEMBL_ACTION'},
           join(';',map {"$_=$feature->{$_}"} keys %$feature );
         $webpage->redirect( $URL );
         return "Redirecting to $URL (mapped object)";
-      } elsif ($webpage->has_problem_type('unmapped')) {
+      } elsif ($webpage->has_problem_type('unmapped')) { #CHANGE# URL function
         my $f     = $webpage->factory;
         my $id  = $f->param('peptide') || $f->param('transcript') || $f->param('gene');
         my $type = $f->param('gene')    ? 'Gene' 
@@ -416,7 +423,7 @@ sub stuff {
   
         $webpage->redirect( $URL );
         return "Redirecting to $URL (unmapped object)";
-      } elsif ($webpage->has_problem_type('archived') ) {
+      } elsif ($webpage->has_problem_type('archived') ) { #CHANGE# URL function
         my $f     = $webpage->factory;
         my( $type, $param, $id ) = $f->param('peptide')    ? ( 'Transcript', 'peptide',    $f->param('peptide' )   )
                                  : $f->param('transcript') ? ( 'Transcript', 'transcript', $f->param('transcript') )
@@ -452,27 +459,22 @@ sub stuff {
       } else {
         $webpage->factory->fix_session; ## Will have to look at the way script configs are stored now there is only one script!!
 
-        my $class;
+        
         ## Is this a wizard, a data-munging/redirect action or a standard page?
-        if ($ENV{'ENSEMBL_ACTION'} eq 'Wizard') {
-          $class = 'EnsEMBL::Web::Command::Wizard';
-        }
-        else {
-          $class = $webpage->command;
-        }
-        if ($class && $webpage->dynamic_use($class)) {
-          if (_access_ok($webpage, $r, $class)) {
+        my $class = $ENV{'ENSEMBL_ACTION'} eq 'Wizard' 
+                  ? 'EnsEMBL::Web::Command::Wizard' 
+                  : $webpage->command
+                  ;
+        if( $class && $webpage->dynamic_use($class) ) {
+          if( _access_ok($webpage, $r, $class) ) {
             my $object = $webpage->dataObjects->[0];
             ## Set AJAX parameter manually, since Command doesn't pick it up from the page
             $object->param('x_requested_with', $r->headers_in->{'X-Requested-With'});
             my $command = $class->new({'object' => $object, 'webpage' => $webpage});
             $command->process;
           }
-        }
-        else { ## Render normal webpage
-          if (_access_ok($webpage, $r)) {
-            $webpage->render;
-          }
+        } else { ## Render normal webpage
+          $webpage->render if  _access_ok( $webpage,$r );
         }
         warn $webpage->timer->render if
             $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
@@ -483,9 +485,7 @@ sub stuff {
     $content = $webpage->page->renderer->content;
 
     $MEMD->set($ENV{CACHE_KEY}, $content, 60*60*24*7, keys %{$ENV{CACHE_TAGS}})
-      if $MEMD
-        && !$webpage->has_a_problem
-        &&  $webpage->format eq 'HTML';
+      if $MEMD && !$webpage->has_a_problem &&  $webpage->format eq 'HTML';
   }
   
   print $content;
@@ -557,7 +557,6 @@ sub spell {
   );
   
   $webpage->page->{'_modal_dialog_'} = $ajax_flag;
-  
   $webpage->configure($webpage->dataObjects->[0], qw(export_configurator));
   
   # Now we need to setup the content of the page -- need to set-up 
@@ -565,10 +564,7 @@ sub spell {
   # 2) Local context entries [ hacked versions with # links / and flags ]
   # 3) Content of panel (expansion of tree)
   $webpage->render;
-  
-  my $content = $webpage->page->renderer->content;
-  
-  print $content;
+  print $webpage->page->renderer->content;
   
   return "Generated export panel ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'})";
 }
