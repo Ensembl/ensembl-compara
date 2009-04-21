@@ -221,6 +221,7 @@ sub _init {
                                  'type'    => 'Gene',
                                  'action'  => 'Compara_Tree',
                                  '__clear' => $stable_id != $self->{'config'}{_core}{'parameters'}{'g'}, 
+                                 'r'       => undef,
                                  'g'       => $stable_id } );
         $txt->{'href'} = $href;
       }

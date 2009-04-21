@@ -171,11 +171,11 @@ sub _url {
   my $function  = exists( $params->{'function'}) ? $params->{'function'}: $ENV{'ENSEMBL_FUNCTION'};
   $function = '' if $action ne $ENV{'ENSEMBL_ACTION'};
 
-  my %pars = %{$self->{'config'}{_core}{'parameters'}};
-  if( $params->{'__clear'} ) {
-    %pars = ();
-    delete $params->{'__clear'};
-  }
+  my %pars = $params->{'__clear'}
+           ? () 
+           : %{$self->{'config'}{_core}{'parameters'}}
+           ;
+  delete $params->{'__clear'} if exists $params->{'__clear'};
   delete $pars{'t'}  if $params->{'pt'};
   delete $pars{'pt'} if $params->{'t'}; 
   delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
