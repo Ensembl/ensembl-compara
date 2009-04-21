@@ -16,7 +16,6 @@ use Getopt::Long;
 use Pod::Usage;
 use DBI;
 use Data::Dumper;
-use Compress::Zlib;
 
 # --- load libraries needed for reading config ---
 use vars qw( $SERVERROOT );
@@ -230,23 +229,21 @@ sub entry_points {
   my( $entry_points, $href, $file ) = @_;
 
   mkdir $file, 0775 unless -e $file;
-  my $gz = gzopen( "$file/entry_points", 'wb' );
-
-  $gz->gzwrite( qq(<?xml version="1.0" standalone="no"?>
+  open FH, ">$file/entry_points";
+  print FH qq(<?xml version="1.0" standalone="no"?>
 <?xml-stylesheet type="text/xsl" href="/das/das.xsl"?>
 <!DOCTYPE DASEP SYSTEM "http://www.biodas.org/dtd/dasep.dtd">
 <DASEP>
-  <ENTRY_POINTS href="$href" version="1.0">));
+  <ENTRY_POINTS href="$href" version="1.0">);
   foreach my $s ( sort {  $a->[5] cmp $b->[5] || $a->[0] cmp $b->[0] } @$entry_points) {
-    $gz->gzwrite( sprintf qq(
+    printf FH qq(
     <SEGMENT type="%s" id="%s" start="%d" stop="%d" orientation="+" subparts="%s">%s</SEGMENT>),
-             $s->[5],  $s->[0],1,         $s->[1],                  $s->[4],      $s->[0]
-    );
+             $s->[5],  $s->[0],1,         $s->[1],                  $s->[4],      $s->[0];
   }
-  $gz->gzwrite( qq(
+  print FH qq(
   </ENTRY_POINTS>
-</DASEP>) );
-  $gz->gzclose();
+</DASEP>);
+  close FH;
 }
 
 sub dsn {
