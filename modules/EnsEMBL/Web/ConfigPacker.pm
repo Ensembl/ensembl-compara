@@ -104,7 +104,11 @@ sub _summarise_core_tables {
   );
   my $analysis = {};
   foreach my $a_aref (@$t_aref) {
-    my $T = eval($a_aref->[6]);
+## Strip out "crap" at front and end! probably some q(')s...
+    ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
+       $A =~ s/[^}]+$//;
+    my $T = eval($A);
+
        $T = {} unless ref($T) eq 'HASH';
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
