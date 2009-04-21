@@ -236,14 +236,16 @@ sub draw_wiggle_plot {
       'colour'    => $colour,
     })); 
     if ($min_score){
+      my $y = $score < 0 ? 0 : -$min_score * $pix_per_score;
       $self->push($self->Rect({
+
         'y'         => $offset + $red_line_offset + $y,
         'height'    => abs( $min_score * $pix_per_score ),
         'x'         => $START-1,
         'width'     => $END - $START+1,
         'absolutey' => 1,
         'title'     => sprintf("%.2f", $score),
-        'colour'    => 'black',
+        'colour'    => 'contigblue2',
       }));
     }
   }
