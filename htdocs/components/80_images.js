@@ -86,6 +86,6 @@ image_format_type('png-5', 'PNG (x5)');
 image_format_type('png-2', 'PNG (x2)');
 image_format_type('png', 'PNG');
 image_format_type('png-0.5', 'PNG (x0.5)');
-image_format_type('gff', 'GFF', 'text');
+image_format_type('gff', 'text (GFF)', 'text');
 
 addLoadEvent(__init_image_export);
