@@ -21,7 +21,7 @@ our $alignment_renderers = [
   'stack'       => 'Stacked',
   'unlimited'   => 'Stacked unlimited',
   'ungrouped'   => 'Ungrouped',
-#  'ungrouped_labels'   => 'Ungrouped with labels',
+  'ungrouped_labels'   => 'Ungrouped with labels',
 ];
 our $MEMD = EnsEMBL::Web::Cache->new;
 
@@ -968,14 +968,7 @@ sub add_oligo_probe {
       'caption'     => $key_2,
       'strand'      => 'b',
       'display'     => 'off', 
-      'renderers'   => [
-        'off'         => 'Off',
-        'normal'      => 'Normal',
-        'half_height' => 'Half height',
-        'stack'       => 'Stacked',
-        'unlimited'   => 'Stacked unlimited',
-        'ungrouped'   => 'Ungrouped'
-      ]
+      'renderers'   => $alignment_renderers
     }));
   }
 }
