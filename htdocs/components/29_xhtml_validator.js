@@ -4,14 +4,15 @@ var XhtmlValidator = Class.create( {
   nts: {
   // elements rt?, can have HTML content?, valid attributes [all tg can take class,name,id], child tg...
     'img'    :{rt:1,tx:0,at:{src:1,alt:1,title:1},tg:{}                              },
-    'a'      :{rt:1,tx:1,at:{href:1,name:1,rel:1},tg:{img:1,span:1,em:1,strong:1}    },
-    'strong' :{rt:1,tx:1,at:{},                   tg:{img:1,a:1,em:1,span:1}         },
-    'em'     :{rt:1,tx:1,at:{},                   tg:{img:1,strong:1,a:1,span:1}     },
-    'p'      :{rt:1,tx:1,at:{},                   tg:{img:1,strong:1,em:1,a:1,span:1}},
-    'span'   :{rt:1,tx:1,at:{},                   tg:{img:1,strong:1,em:1,a:1,span:1}},
-    'li'     :{rt:0,tx:1,at:{},                   tg:{span:1,p:1,img:1,strong:1,em:1,a:1,ul:1,ol:1,dl:1}},
-    'dt'     :{rt:0,tx:1,at:{},                   tg:{span:1,p:1,img:1,strong:1,em:1,a:1,ul:1,ol:1,dl:1}},
-    'dd'     :{rt:0,tx:1,at:{},                   tg:{span:1,p:1,img:1,strong:1,em:1,a:1,ul:1,ol:1,dl:1}},
+    'a'      :{rt:1,tx:1,at:{href:1,name:1,rel:1},tg:{img:1,span:1,em:1,i:1,strong:1}    },
+    'strong' :{rt:1,tx:1,at:{},                   tg:{img:1,a:1,em:1,i:1,span:1}         },
+    'i'      :{rt:1,tx:1,at:{},                   tg:{img:1,strong:1,em:1,a:1,span:1}     },
+    'em'     :{rt:1,tx:1,at:{},                   tg:{img:1,strong:1,i:1,em:1,a:1,span:1}     },
+    'p'      :{rt:1,tx:1,at:{},                   tg:{img:1,strong:1,em:1,i:1,a:1,span:1}},
+    'span'   :{rt:1,tx:1,at:{},                   tg:{img:1,strong:1,em:1,i:1,a:1,span:1}},
+    'li'     :{rt:0,tx:1,at:{},                   tg:{span:1,p:1,img:1,strong:1,em:1,i:1,a:1,ul:1,ol:1,dl:1}},
+    'dt'     :{rt:0,tx:1,at:{},                   tg:{span:1,p:1,img:1,strong:1,em:1,i:1,a:1,ul:1,ol:1,dl:1}},
+    'dd'     :{rt:0,tx:1,at:{},                   tg:{span:1,p:1,img:1,strong:1,em:1,i:1,a:1,ul:1,ol:1,dl:1}},
     'ol'     :{rt:1,tx:0,at:{},                   tg:{li:1}                          },
     'ul'     :{rt:1,tx:0,at:{},                   tg:{li:1}                          },
     'dl'     :{rt:1,tx:0,at:{},                   tg:{dd:1,dt:1}                     }
@@ -55,7 +56,7 @@ var XhtmlValidator = Class.create( {
             if( LAST != cls[1] ) err = 'Mismatched tag "/'+cls[1]+'" != "'+LAST+'"';
 	  }
         } else {
-          var tag = w.match(/<(\w+)(.*?)(\/?)>/); 
+          var tag = w.match(/<(\w+)(.*?)(\/?)>/s); 
           if( tag ) {
             TN      = tag[1];
             if( TN.match(/[A-Z]/) ) {
@@ -72,7 +73,7 @@ var XhtmlValidator = Class.create( {
                 SCL  = tag[3]=='/'?1:0;
                 if( ! SCL ) stk.unshift( TN );
                 if( ATS ) { 
-                  while( m = ATS.match(/^\s+(\w+)\s*=\s*"([^"]*)"(.*)$/ ) ){
+                  while( m = ATS.match(/^\s+(\w+)\s*=\s*"([^"]*)"(.*)$/s ) ){
                     var AN = m[1];
                     var vl = m[2];
                     if( AN.match(/[A-Z]/) ) {
