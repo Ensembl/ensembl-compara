@@ -23,7 +23,7 @@ var XhtmlValidator = Class.create( {
     var a   = [];
     var slf = this;
 // Firstly split the HTML up into tg and entries...
-    _tr(string).split( /(?=<)/ ).each(function(w){
+    slf._tr(string).split( /(?=<)/ ).each(function(w){
       if(w.substr(0,1) == '<' ) {
         var x = w.match(/^([^>]+>)([^>]*)$/);
         if(x) {
