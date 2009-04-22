@@ -23,7 +23,7 @@ var XhtmlValidator = Class.create( {
     var a   = [];
     var slf = this;
 // Firstly split the HTML up into tg and entries...
-    string.split( /(?=<)/ ).each(function(w){
+    _tr(string).split( /(?=<)/ ).each(function(w){
       if(w.substr(0,1) == '<' ) {
         var x = w.match(/^([^>]+>)([^>]*)$/);
         if(x) {
@@ -56,7 +56,7 @@ var XhtmlValidator = Class.create( {
             if( LAST != cls[1] ) err = 'Mismatched tag "/'+cls[1]+'" != "'+LAST+'"';
 	  }
         } else {
-          var tag = w.match(/<(\w+)(.*?)(\/?)>/s); 
+          var tag = w.match(/<(\w+)(.*?)(\/?)>/); 
           if( tag ) {
             TN      = tag[1];
             if( TN.match(/[A-Z]/) ) {
@@ -73,7 +73,7 @@ var XhtmlValidator = Class.create( {
                 SCL  = tag[3]=='/'?1:0;
                 if( ! SCL ) stk.unshift( TN );
                 if( ATS ) { 
-                  while( m = ATS.match(/^\s+(\w+)\s*=\s*"([^"]*)"(.*)$/s ) ){
+                  while( m = ATS.match(/^\s+(\w+)\s*=\s*"([^"]*)"(.*)$/ ) ){
                     var AN = m[1];
                     var vl = m[2];
                     if( AN.match(/[A-Z]/) ) {
