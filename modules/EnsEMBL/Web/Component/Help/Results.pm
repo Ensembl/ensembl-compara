@@ -66,7 +66,7 @@ sub content {
         $text   = $help->meaning.'</p>';
       }
       elsif ($help->type eq 'view') {
-        $title = '<h4>'.$help->object.'/'.$help->action.'</h4>';
+        $title = '<h4>'.$help->ensembl_object.'/'.$help->ensembl_action.'</h4>';
         $text = $help->content;
         unless ($text =~ /$</) {
           $text = '<p>'.$text.'</p>';
