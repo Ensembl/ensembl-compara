@@ -294,7 +294,7 @@ sub write_output {
       my $constrained_element =  new Bio::EnsEMBL::Compara::ConstrainedElement(
             -reference_dnafrag_id => $dnafrag_id,
             -start => $genomic_align_start + $start0,
-            -end => $genomic_align_start + $start0,
+            -end => $genomic_align_start + $end - 1,
             -method_link_species_set_id => $phastCons_mlss->dbID,
             -score => 0,
         );
