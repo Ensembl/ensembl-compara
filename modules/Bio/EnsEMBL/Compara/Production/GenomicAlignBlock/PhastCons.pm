@@ -133,6 +133,7 @@ sub fetch_input {
     if (grep {$_ eq $species_name} @uninformative_species) {
       push(@{$self->{uninformative_leaves}}, $leaf->node_id);
     } elsif (!$reference_species or $species_name eq $reference_species) {
+      push(@{$self->{uninformative_leaves}}, $leaf->node_id);
       push(@$reference_leaves, $leaf->node_id);
     }
   }
@@ -144,7 +145,6 @@ sub fetch_input {
 ORDER: 0
 SUBST_MOD: REV
 BACKGROUND: 0.295000 0.205000 0.205000 0.295000
-RATE_MAT:
   -0.976030    0.165175    0.539722    0.271133
    0.237691   -0.990352    0.189637    0.563024
    0.776673    0.189637   -1.248143    0.281833
@@ -230,10 +230,11 @@ sub run {
     my $run_str = "$PHAST_CONS_EXE $ss_file_name ". $self->{mod_file}.
         " -i SS --rho 0.3 --expected-length 45 --target-coverage 0.3";
     if ($self->{uninformative_leaves} and @{$self->{uninformative_leaves}}) {
-      $run_str .= " --not-informative gat_".join(",gat_", @{$self->{uninformative_leaves}});
+      $run_str .= " --not-informative gat_".join(",gat_", grep {$_ ne $node_id} @{$self->{uninformative_leaves}});
     }
     $run_str .= " --most-conserved $bed_file_name --no-post-probs".
         " --seqname gat_".$node_id." --idpref phastCons.$node_id";
+    print $run_str, "\n";
     system($run_str) == 0
         or die "$run_str failed: $?";
     die if (!-e $bed_file_name);
