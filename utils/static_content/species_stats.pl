@@ -153,6 +153,9 @@ foreach my $spp (@valid_spp) {
     $b_latest || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_LATEST!";
     my $b_id    = $SD->get_config($spp, 'GENEBUILD_BY') || '';
     $b_id   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_BY!" unless $pre;
+    my $b_method  = ucfirst($SD->get_config($spp, 'GENEBUILD_METHOD')) || '';
+    $b_method =~ s/_/ /g;
+    $b_method   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_METHOD!" unless $pre;
 
     my $data_version = $SD->get_config($spp, 'SPECIES_RELEASE_VERSION');
     my $db_id = $release_id;
@@ -396,14 +399,18 @@ foreach my $spp (@valid_spp) {
           <td class="value">$b_id</td>
       </tr>
       <tr>
+          <td class="data">Genebuild method:</td>
+          <td class="value">$b_method</td>
+      </tr>
+      <tr class="bg2">
           <td class="data">Genebuild started:</td>
           <td class="value">$b_start</td>
       </tr>
-      <tr class="bg2">
+      <tr>
           <td class="data">Genebuild released:</td>
           <td class="value">$b_release</td>
       </tr>
-      <tr>
+      <tr class="bg2">
           <td class="data">Genebuild last updated/patched:</td>
           <td class="value">$b_latest</td>
       </tr>
@@ -781,7 +788,7 @@ The database location is specified in Ensembl web config file:
   /public-plugins/ensembl/conf/ini-files/<SPECIES>.ini
 
 The statistics are written as html to files:
-  /public-plugins/ensembl/htdocs/<SPECIES>/ssi/stats.html
+  /public-plugins/ensembl/htdocs/ssi/species/stats_<SPECIES>.html
 
 Written by Jim Stalker <jws@sanger.ac.uk>
 Maintained by Anne Parker <ap5@sanger.ac.uk>, Fiona Cunningham <fc1@sanger.ac.uk>
