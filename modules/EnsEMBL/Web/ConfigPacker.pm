@@ -277,6 +277,21 @@ sub _summarise_variation_db {
     }
   }
   $self->db_details($db_name)->{'tables'}{'source'}{'counts'} = { map {@$_} values %$temp};
+#---------- Add in information about the display type from the sample table
+   my $d_aref = $dbh->selectall_arrayref( "select name, display from sample where display not like 'UNDISPLAYABLE'" );
+   my (@default, $reference, @display);
+   foreach (@$d_aref){
+     my  ($name, $type) = @$_;  
+     if ($type eq 'REFERENCE') { $reference = $name;}
+     elsif ($type eq 'DISPLAYABLE'){ push(@display, $name); }
+     elsif ($type eq 'DEFAULT'){ push (@default, $name); }
+   }
+   $self->db_details($db_name)->{'tables'}{'individual.reference_strain'} = $reference;
+   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'REFERENCE_STRAIN'} = $reference; 
+   $self->db_details($db_name)->{'meta_info'}{'individual.default_strain'} = \@default;
+   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} = \@default;  
+   $self->db_details($db_name)->{'meta_info'}{'individual.display_strain'} = \@display;
+   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'} = \@display; 
 #---------- Add in strains contained in read_coverage_collection table
   if ($self->db_details($db_name)->{'tables'}{'read_coverage_collection'}){
     my $r_aref = $dbh->selectall_arrayref(
@@ -643,12 +658,14 @@ sub _munge_variation {
   my $dbh     = $self->db_connect('DATABASE_VARIATION');
   return unless $dbh;
   return unless $self->db_details('DATABASE_VARIATION');
-  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'}  = $self->_meta_info('DATABASE_VARIATION','individual.display_strain');
-  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'}  = $self->_meta_info('DATABASE_VARIATION','individual.default_strain');
-  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'#STRAINS'}         =
-    @{ $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'} }+
-    @{ $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} };
-  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'REFERENCE_STRAIN'} = $self->_meta_info('DATABASE_VARIATION','individual.reference_strain')->[0];
+  my $total = 0;
+  if ( $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'} ) {
+    $total +=  @{ $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'} };
+  }
+  if ( $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} ) {
+    $total +=  @{ $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} }; 
+  }
+  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'#STRAINS'} = $total;
   $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}   = $self->_meta_info('DATABASE_VARIATION','pairwise_ld.default_population')->[0];
 }
 
