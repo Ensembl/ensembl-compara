@@ -678,7 +678,7 @@ sub hits2html {
   my $date    = `date`;
   chomp($date);
 
-  my @domids = sort { $domain->{$b}{genes} <=> $domain->{$a}{genes}} keys %$domain;
+  my @domids = sort { ($domain->{$b}{genes} || 0) <=> ($domain->{$a}{genes} || 0)} keys %$domain;
 
   print qq(<table class="ss tint">\n);
   print qq(<tr
