@@ -60,6 +60,14 @@ perl copy_data.pl
     --to_url release_database_url
     --mlss method_link_species_set_id
 
+example:
+
+bsub  -q yesterday -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000 
+copy_data.pl --from_url mysql://username@server_name/sf5_production 
+--to_url mysql://username:password@server_name/sf5_release --mlss 340
+
+
+
 =head1 REQUIREMENTS
 
 This script uses mysql, mysqldump and mysqlimport programs.
@@ -183,7 +191,7 @@ exit(1) if !check_table("method_link", $from_dba, $to_dba, undef,
     "method_link_id = ".$method_link_species_set->method_link_id);
 exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
     "method_link_species_set_id = $mlss_id");
-if ($class =~ /^GenomicAlignBlock/) {
+if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
   copy_genomic_align_blocks($from_dba, $to_dba, $mlss_id);
 } elsif ($class =~ /^ConservationScore.conservation_score/) {
   copy_conservation_scores($from_dba, $to_dba, $mlss_id);
@@ -357,32 +365,38 @@ sub copy_genomic_align_blocks {
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
         MIN(gab.group_id), MAX(gab.group_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
-        MIN(gag.group_id), MAX(gag.group_id)
+        MIN(gag.group_id), MAX(gag.group_id),
+	MIN(gat.node_id), MAX(gat.node_id)
       FROM genomic_align_block gab
         LEFT JOIN genomic_align ga using (genomic_align_block_id)
         LEFT JOIN genomic_align_group gag using (genomic_align_id)
+	LEFT JOIN genomic_align_tree gat ON gat.node_id = ga.genomic_align_id
       WHERE
         gab.method_link_species_set_id = ?");
 
   $sth->execute($mlss_id);
-  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, $min_gag, $max_gag) =
+  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, $min_gag, $max_gag, $min_gat, $max_gat) =
       $sth->fetchrow_array();
+
   $sth->finish();
 
   my $lower_limit = $mlss_id * 10**10;
   my $upper_limit = ($mlss_id + 1) * 10**10;
-  my $fix;
+  my $fix_lower; 
+  my $fix_higher;
 
   if ($max_gab < 10**10 and $max_ga < 10**10 and (!defined($max_gab_gid) or $max_gab_gid < 10**10) and
       (!defined($max_gag) or $max_gag < 10**10)) {
     ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
-    $fix = $lower_limit;
+    $fix_lower = $lower_limit;
+    $fix_higher = --$upper_limit;
   } elsif ($max_gab < $upper_limit and $max_ga < $upper_limit and (!defined($max_gag) or $max_gag < $upper_limit)
           and (!defined($max_gab_gid) or $max_gab_gid < $upper_limit)
       and $min_gab >= $lower_limit and $min_ga >= $lower_limit and (!defined($min_gag) or $min_gag >= $lower_limit)
           and (!defined($min_gab_gid) or $min_gab_gid >= $lower_limit)) {
     ## Internal IDs are OK.
-    $fix = 0;
+    $fix_lower = 0;
+    $fix_higher = 0;
   } else {
     print " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
   }
@@ -429,6 +443,21 @@ sub copy_genomic_align_blocks {
     }
   }
 
+  if(defined($max_gat)) {
+    $sth = $to_dba->dbc->prepare("SELECT count(*)
+        FROM genomic_align_tree
+        WHERE node_id >= $lower_limit
+            AND node_id < $upper_limit");
+    $sth->execute();
+    ($count) = $sth->fetchrow_array();
+    if ($count) {
+      print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
+        " ** ERROR **  genomic_align_tree table with IDs within the range defined by the\n",
+        " ** ERROR **  convention!\n";
+      exit(1);
+    }
+  }
+
   #copy genomic_align table. Need to update dnafrag column
   if ($trust_to && $fix_dnafrag) {
 
@@ -439,7 +468,7 @@ sub copy_genomic_align_blocks {
       #copy from the temporary genomic_align table
       copy_data($from_dba, $to_dba,
   	    "genomic_align",
-  	    "SELECT ga.genomic_align_id+$fix, ga.genomic_align_block_id+$fix, ga.method_link_species_set_id,".
+  	    "SELECT ga.genomic_align_id+$fix_lower, ga.genomic_align_block_id+$fix_lower, ga.method_link_species_set_id,".
   	    " dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id".
   	    " FROM genomic_align_block gab LEFT JOIN $temp_genomic_align ga USING (genomic_align_block_id)".
   	    " WHERE gab.method_link_species_set_id = $mlss_id");
@@ -450,7 +479,7 @@ sub copy_genomic_align_blocks {
   } else {
       copy_data($from_dba, $to_dba,
 		"genomic_align",
-		"SELECT ga.genomic_align_id+$fix, ga.genomic_align_block_id+$fix, ga.method_link_species_set_id,".
+		"SELECT ga.genomic_align_id+$fix_lower, ga.genomic_align_block_id+$fix_lower, ga.method_link_species_set_id,".
 		" dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id".
 		" FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
 		" WHERE gab.method_link_species_set_id = $mlss_id");
@@ -459,17 +488,25 @@ sub copy_genomic_align_blocks {
   #copy genomic_align_block table
    copy_data($from_dba, $to_dba,
        "genomic_align_block",
-       "SELECT genomic_align_block_id+$fix, method_link_species_set_id, score, perc_id, length, group_id+$fix".
+       "SELECT genomic_align_block_id+$fix_lower, method_link_species_set_id, score, perc_id, length, group_id+$fix_lower".
          " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
 
   #copy genomic_align_group table
   if(defined($max_gag)) {
     copy_data($from_dba, $to_dba,
         "genomic_align_group",
-        "SELECT gag.group_id+$fix, type, gag.genomic_align_id+$fix".
+        "SELECT gag.group_id+$fix_lower, type, gag.genomic_align_id+$fix_lower".
           " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
           " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
           " WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
+  }
+  #copy genomic_align_tree table
+  if(defined($max_gat)) {
+    copy_data($from_dba, $to_dba,
+        "genomic_align_tree",
+        "SELECT node_id+$fix_lower, parent_id, root_id, left_index, right_index, left_node_id, right_node_id, distance_to_parent".
+          " FROM genomic_align_tree ".
+          " WHERE node_id BETWEEN node_id+$fix_lower AND node_id+$fix_higher");
   }
 }
 
@@ -491,7 +528,7 @@ sub copy_conservation_scores {
 
   my ($gab_mlss_id) = @{$from_dba->get_MetaContainer->list_value_by_key("gerp_$mlss_id")};
   if (!$gab_mlss_id) {
-    print " ** ERRROR **  Needs a <gerp_$mlss_id> entry in the meta table!\n";
+    print " ** ERROR **  Needs a <gerp_$mlss_id> entry in the meta table!\n";
     exit(1);
   }
   exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
@@ -722,16 +759,17 @@ sub copy_data_in_text_mode {
   my $dbname = $to_dba->dbc->dbname;
 
   my $start = 0;
-  my $step = 1000000;
+  my $step = 100000;
   while (1) {
     my $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
     $start += $step;
     $sth->execute();
     my $all_rows = $sth->fetchall_arrayref;
+    $sth->finish;
     ## EXIT CONDITION
     return if (!@$all_rows);
-  
-    my $filename = "/tmp/$table_name.copy_data.$$.txt";
+    my$time=time(); 
+    my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
     open(TEMP, ">$filename") or die;
     foreach my $this_row (@$all_rows) {
       print TEMP join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
