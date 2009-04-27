@@ -42,7 +42,7 @@ BEGIN {
 };
 
 ## TODO:
-## Mime types! + utf8
+## cahrset + utf8
 ## Not modified!
 ## restrictions
 ## error pages!
@@ -52,8 +52,6 @@ sub handler {
   my $r = shift;
 
   my $uri  = $r->uri;
-  ## my $mime = mime_type($uri);
-
   my $content = $MEMD && $MEMD->get($uri) || undef;
 
   if ($content) {
@@ -82,7 +80,7 @@ sub handler {
             }
           }
       }
-      ## /pluggable static files
+      ## /
   
       if (-e $file) {
         {
@@ -93,11 +91,11 @@ sub handler {
         }
         $MEMD->set($uri, $content) if $MEMD;
         my @file_info = stat($file);
-        #$r->headers_out->set('Last-Modified'  => HTTP::Date::time2str( $file_info[9] ));
+        $r->headers_out->set('Last-Modified'  => HTTP::Date::time2str( $file_info[9] ));
         $r->headers_out->set('Accept-Ranges'  => 'bytes');
         $r->headers_out->set('Content-Length' => length($content));
-        #$r->headers_out->set('Cache-Control'  => 'max-age=' . 60*60*24*30);
-        #$r->headers_out->set('Expires'        => HTTP::Date::time2str( time + 60*60*24*30 ));
+        $r->headers_out->set('Cache-Control'  => 'max-age=' . 60*60*24*30);
+        $r->headers_out->set('Expires'        => HTTP::Date::time2str( time + 60*60*24*30 ));
         $r->headers_out->set('Content-Type'   => mime_type($uri));
         
         $r->print($content);
