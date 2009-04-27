@@ -51,6 +51,31 @@ BEGIN {
 
 use SiteDefs;
 
+## Walk through the plugin tree and see if there's 'ctrl_scripts/*' in there
+## any files starting with 00_start* to 49_start* will be executed before apache
+## any files starting with 50_start* to 99_start* will be executed after
+## same thing happens with stop_server
+## all scripts must be perl scripts, as they are 'required'
+
+use Data::Dumper;
+
+my @start_before;
+my @start_after;
+
+my @T = reverse @{ $SiteDefs::ENSEMBL_PLUGINS || [] };
+while( my( $dir, $name ) = splice(@T,0,2)  ) {
+  $dir = "$dir/ctrl_scripts";
+  if (opendir(DIR, $dir)) {
+    my @files = readdir(DIR);
+    push @start_before, map {"$dir/$_"} grep {/^[0-5]?[0-9]_start/} @files;
+    push @start_after, map {"$dir/$_"} grep {/^[5-9][0-9]_start/} @files;
+    closedir DIR;
+  }
+}
+
+@start_before = sort @start_before;
+@start_after = sort @start_after;
+
 my $confdir = 'conf';
 &GetOptions(
   "confdir=s"       => \$confdir,
@@ -121,5 +146,6 @@ my $cmd = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profil
 
 $cmd .= $SiteDefs::APACHE_DIR."/bin/httpd -d ".$SiteDefs::APACHE_DIR." -f $serverroot/$confdir/httpd.conf" . ($single ? " -X &" : "");
 
-exec($cmd) or die " Could not start server: $!.\n[FATAL] Server start failed.\n";
-
+require $_ for @start_before;
+system($cmd) == 0 or die " Could not start server: $!.\n[FATAL] Server start failed.\n";
+require $_ for @start_after;
