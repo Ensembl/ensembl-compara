@@ -57,8 +57,6 @@ sub handler {
   my $content = $MEMD && $MEMD->get($uri) || undef;
 
   if ($content) {
-
-warn "memd!";
     $r->headers_out->set('X-MEMCACHED'  => 'yes');
     $r->headers_out->set('Accept-Ranges'  => 'bytes');
     $r->headers_out->set('Content-Length' => length($content));
@@ -94,7 +92,6 @@ warn "memd!";
           close FILE;
         }
         $MEMD->set($uri, $content) if $MEMD;
-warn "here!";
         my @file_info = stat($file);
         #$r->headers_out->set('Last-Modified'  => HTTP::Date::time2str( $file_info[9] ));
         $r->headers_out->set('Accept-Ranges'  => 'bytes');
