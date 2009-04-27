@@ -163,7 +163,7 @@ sub incr {
     ##warn "incr [$key] = $result";
   } else {
     if ($self->add($key, '0000000001')) {
-      $self->add_tags($key, $self->{namespace}, 'STATS');
+      $self->add_tags($key, 'STATS');
       #my $result = $self->decr($key, 1000000000);
       ##warn "incr [$key] = $result (set)";
     }
