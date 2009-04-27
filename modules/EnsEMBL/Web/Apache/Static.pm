@@ -24,8 +24,6 @@ use EnsEMBL::Web::Cache;
 
 our $MEMD = EnsEMBL::Web::Cache->new;
 our $MIME = MIME::Types->new();
-$MIME->add 
-
 
 our @HTDOCS_TRANS_DIRS;
 
