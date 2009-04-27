@@ -33,23 +33,25 @@ sub store {
   my $dcs = $self->dbc->disconnect_when_inactive();
   $self->dbc->disconnect_when_inactive(0);
 
-  $self->dbc->do("LOCK TABLE sequence WRITE");
-
-  my $sth = $self->prepare("SELECT sequence_id FROM sequence WHERE sequence = ?");
-  $sth->execute($sequence);
-  ($seqID) = $sth->fetchrow_array();
-  $sth->finish;
-
-  unless($seqID) {
+  #27/4/2009 kb3 Commented out the following lines so that we no longer check if 
+  #a sequence already exists since this can take a very long time for the 2X 
+  #genomes. May end up with duplicate sequences but we expect this to be rare.
+ # $self->dbc->do("LOCK TABLE sequence WRITE");
+  
+  #my $sth = $self->prepare("SELECT sequence_id FROM sequence WHERE sequence = ?");
+  #$sth->execute($sequence);
+  #($seqID) = $sth->fetchrow_array();
+  #$sth->finish;
+  #unless($seqID) {
     my $length = length($sequence);
 
     my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
     $sth2->execute($sequence, $length);
     $seqID = $sth2->{'mysql_insertid'};
     $sth2->finish;
-  }
-
-  $self->dbc->do("UNLOCK TABLES");
+  #}
+  
+  #$self->dbc->do("UNLOCK TABLES");
   $self->dbc->disconnect_when_inactive($dcs);
   return $seqID;
 }
