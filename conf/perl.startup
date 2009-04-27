@@ -25,6 +25,7 @@ $Data::Dumper::Indent = 1;
 use EnsEMBL::Web::Apache::SendDecPage;
 use EnsEMBL::Web::Apache::ServerError;
 use EnsEMBL::Web::Apache::Handlers;
+use EnsEMBL::Web::Apache::Static;
 use EnsEMBL::Web::Document::DHTMLmerge;
 
 my $conf = EnsEMBL::Web::SpeciesDefs->new();
