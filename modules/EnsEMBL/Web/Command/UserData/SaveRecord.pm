@@ -13,7 +13,7 @@ use base 'EnsEMBL::Web::Command';
 sub process {
   my $self = shift;
   my $object = $self->object;
-  my $url = '/'.$object->data_species.'/UserData/ManageRemote';
+  my $url = '/'.$object->data_species.'/UserData/ManageData';
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $method = $object->param('accessor');
@@ -24,6 +24,7 @@ sub process {
     $record->save;
   }
  
+  warn ">>> URL $url";
   $self->ajax_redirect($url, {'_referer' => $object->param('_referer'), 'x_requested_with' => $object->param('x_requested_with')}); 
 
 }
