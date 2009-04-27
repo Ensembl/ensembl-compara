@@ -187,13 +187,16 @@ sub dumpNibFiles {
     if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
       next if ($dna_object->length <= $self->dump_min_size);
 
+      my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
+      
+      #don't dump nibfile if it already exists
+      next if (-e $nibfile);
+
       my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
       
       #$dna_object->dump_to_fasta_file($fastafile);
       #use this version to solve problem of very large chromosomes eg opossum
       $dna_object->dump_chunks_to_fasta_file($fastafile);
-
-      my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
 
       system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
 
