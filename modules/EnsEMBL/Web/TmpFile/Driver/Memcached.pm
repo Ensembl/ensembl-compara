@@ -42,10 +42,7 @@ sub save {
 
   return $self->memd->set(
     $key,
-    {
-      content => $content,
-      %{ $params || {} },
-    },
+    $content,
     $params->{exptime},
     ( 'TMP', $params->{format}, keys %{ $ENV{CACHE_TAGS}||{} } ),
   );
