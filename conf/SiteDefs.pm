@@ -107,8 +107,8 @@ use Exporter();
 @ISA=qw(Exporter);
 
 $VERSION                   = 54;
-$ARCHIVE_VERSION           = "Apr2009";    # Change this to the archive site for this version
-$ENSEMBL_RELEASE_DATE      = 'Apr 2009';
+$ARCHIVE_VERSION           = "May2009";    # Change this to the archive site for this version
+$ENSEMBL_RELEASE_DATE      = 'May 2009';
 
 $ENSEMBL_MIN_SPARE_SERVERS =  5;
 $ENSEMBL_MAX_SPARE_SERVERS = 20;
