@@ -24,7 +24,6 @@ sub process {
     $record->save;
   }
  
-  warn ">>> URL $url";
   $self->ajax_redirect($url, {'_referer' => $object->param('_referer'), 'x_requested_with' => $object->param('x_requested_with')}); 
 
 }
