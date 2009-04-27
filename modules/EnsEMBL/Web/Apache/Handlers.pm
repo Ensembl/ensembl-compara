@@ -509,13 +509,17 @@ sub transHandler {
 
   my @path_segments = split( m|/|, $file );
   shift @path_segments; # Always empty
+  
+  my $species   = shift @path_segments;
 
   ## Some memcached tags (mainly for statistics)
   my $prefix = '';
   my @tags = map { $prefix = join('/', $prefix, $_); $prefix; } @path_segments;
+  @tags = map { ("/$species$_", $_) } @tags;
+  push @tags, "/$species";
   $ENV{CACHE_TAGS}{$_} = 1 for @tags;
-  
-  my $species   = shift @path_segments;
+  ## /memcached tags
+    
   my $Tspecies  = $species;
   my $script    = undef;
   my $path_info = undef;
@@ -562,21 +566,25 @@ sub transHandler {
   if( $species eq 'biomart' && $script =~ /^mart(service|results|view)/ ) {
     return DECLINED;
   }
+
   my $path = join( "/", $species || (), $script || (), $path_info || () );
   $r->uri( "/$path" );
   my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
-  unless ($filename) {
-    foreach my $dir (@HTDOCS_TRANS_DIRS) {
-      my $f = sprintf( $dir, $path );
-      if( -d $f ) {
-        $filename = '! '.$f;
-        $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
-        last;
-      }
-      if (-r $f) {
-        $filename = $f;
-        $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
-        last;
+
+  if ($path =~ /\.html?/) {
+    unless ($filename) {
+      foreach my $dir (@HTDOCS_TRANS_DIRS) {
+        my $f = sprintf( $dir, $path );
+        if( -d $f ) {
+          $filename = '! '.$f;
+          $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
+          last;
+        }
+        if (-r $f) {
+          $filename = $f;
+          $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
+          last;
+        }
       }
     }
   }
@@ -593,6 +601,7 @@ sub transHandler {
     $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler "OK"', undef, 'Apache' );
     return OK;
   }
+  
 # Give up
   $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler "DECLINED"', undef, 'Apache' );
   return DECLINED;
