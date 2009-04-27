@@ -501,6 +501,9 @@ sub prepareNetSystem {
 	 $params .= "]'";
 	 $input_id .= "params=>{$params}";
      }
+     if (defined $healthcheck_conf{'hc_output_dir'}) {
+	 $input_id .= ",hc_output_dir=>\'" . $healthcheck_conf{'hc_output_dir'} . "\'";
+     }
      $input_id = "{$input_id}";
      
      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
@@ -534,6 +537,10 @@ sub prepareNetSystem {
 	 $params .= "]'";
 	 $input_id .= "params=>{$params}";
      }
+     if (defined $healthcheck_conf{'hc_output_dir'}) {
+	 $input_id .= ",hc_output_dir=>\'" . $healthcheck_conf{'hc_output_dir'} . "\'";
+     }
+     
      $input_id = "{$input_id}";
      
      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
