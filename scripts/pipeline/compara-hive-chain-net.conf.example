@@ -96,6 +96,7 @@
 #    'pairwise_gabs' => "params=>{method_link_type=>\'BLASTZ_NET\',genome_db_ids=>\'[25,22,]\'}", 
     'compare_to_previous_db' => "params=>{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'BLASTZ_NET\',current_genome_db_ids=>\'[25,22,]\',max_percentage_diff=>10}",             
 #    'previous_db_url' => 'mysql://anonymous@ensembldb.ensembl.org', #default mysql://ensro@ens-livemirror
+#     'hc_output_dir' => '/lustre/work1/ensembl/kb3/hive/release_55/kb3_hsap_ggor_blastz_55', #write healthcheck to a file in this directory
 #  },            
 
   { TYPE => END }
