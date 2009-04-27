@@ -105,9 +105,10 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (9358,"Sloth","en
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9358,"Two-toed sloth","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (28377,"Anole Lizard","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (28377,"Green anole Lizard","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9315,"Wallaby","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9315,"Tammar Wallaby","ensembl common name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl alias name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl common name");
-
 
 # Internal nodes for the GeneTrees
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (33553,  "Mouse/Rat/Squirrel ancestor","ensembl alias name");
@@ -148,3 +149,5 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (9397,   "Bats","
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (8825,   "Birds","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (32561,  "Reptiles","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9348,   "Sloth/Anteater/Armadillo ancestor","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9263,   "Marsupials","ensembl alias name");
+#insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl alias name");
