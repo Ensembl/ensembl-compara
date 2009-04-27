@@ -158,6 +158,16 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
+  if ($self->{'hc_output_dir'}) {
+      open OLDOUT, ">&STDOUT";
+      open OLDERR, ">&STDERR";
+      open WORKER_STDOUT, ">>".$self->{'hc_output_dir'} ."/healthcheck.$$.out";
+      open WORKER_STDERR, ">>".$self->{'hc_output_dir'} ."/healthcheck.$$.err";
+      close STDOUT;
+      close STDERR;
+      open STDOUT, ">&WORKER_STDOUT";
+      open STDERR, ">&WORKER_STDERR";
+  }
 
   if ($self->test()) {
     ## Run the method called <_run_[TEST_NAME]_test>
@@ -170,7 +180,15 @@ sub run
       die "There is no test called ".$self->test()."\n";
     }
   }
+  if ($self->{'hc_output_dir'}) {
+      close STDOUT;
+      close STDERR;
+      close WORKER_STDOUT;
+      close WORKER_STDERR;
+      open STDOUT, ">&", \*OLDOUT;
+      open STDERR, ">&", \*OLDERR;
 
+  }
   return 1;
 }
 
@@ -217,6 +235,10 @@ sub get_params {
 
   if (defined($params->{'params'})) {
     $self->parameters($params->{'params'});
+  }
+
+  if (defined($params->{'hc_output_dir'})) {
+      $self->{'hc_output_dir'} = $params->{'hc_output_dir'};
   }
 
   return 1;
@@ -464,6 +486,8 @@ sub _run_pairwise_gabs_test {
   my $method_link_id;
   my $method_link_type;
   my $genome_db_ids;
+  
+  print "_run_pairwise_gabs_test\n";
 
   if ($parameters) {
     if (defined($parameters->{'method_link_species_set_id'})) {
@@ -526,6 +550,10 @@ sub _run_pairwise_gabs_test {
       if ($count3 != 0) {
 	  die("There are $count3 genomic_align_blocks which don't have 2 genomic_aligns for $name!\n");
       }
+
+      print "Number of genomic_align_blocks for $name = $count1\n";
+      print "Number of genomic_aligns for $name = $count2 2*$count1=" . ($count1*2) . "\n";
+      print "Number of genomic_align_blocks which don't have 2 genomic_aligns for $name = $count3\n";
   }
 }
 
@@ -562,6 +590,8 @@ sub _run_pairwise_gabs_test {
 sub _run_compare_to_previous_db_test {
   my ($self, $parameters) = @_;
 
+  print "_run_compare_to_previous_db_test\n";
+
   my $previous_mlss_id;
   my $current_mlss_id;
   my $max_percent_diff = 20;
@@ -570,6 +600,7 @@ sub _run_compare_to_previous_db_test {
   my $previous_genome_db_ids;
   my $current_genome_db_ids;
   my $species_set;
+  my $previous_gdbs;
 
   if ($parameters) {
     if (defined($parameters->{'previous_method_link_species_set_id'})) {
@@ -620,6 +651,9 @@ sub _run_compare_to_previous_db_test {
   my $previous_mlss_adaptor = $previous_compara_dba->get_MethodLinkSpeciesSetAdaptor;
   throw ("No method_link_species_set") if (!$previous_mlss_adaptor);
 
+  my $previous_genome_db_adaptor = $previous_compara_dba->get_GenomeDBAdaptor;
+  throw ("No genome_db") if (!$previous_genome_db_adaptor);
+
 
   #get the current method_link_species_set adaptor
   my $current_mlss_adaptor = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
@@ -646,14 +680,17 @@ sub _run_compare_to_previous_db_test {
       #covert genome_db_ids into species names
       foreach my $g_db_id (@$current_genome_db_ids) {
 	  my $g_db = $current_genome_db_adaptor->fetch_by_dbID($g_db_id);
-	  push @$species_set, $g_db->name;
+
+	  my $previous_gdb = $previous_genome_db_adaptor->fetch_by_name_assembly($g_db->name);
+	  push @$previous_gdbs, $previous_gdb->dbID;
       }
 
       #find corresponding method_link_species_set in previous database
       my $previous_mlss;
       eval {
-	  $previous_mlss = $previous_mlss_adaptor->fetch_by_method_link_type_registry_aliases($method_link_type, ${species_set});
+	  $previous_mlss = $previous_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, ${previous_gdbs});
       };
+
       #Catch throw if these species do not exist in the previous database
       #and return success.
       if ($@ || !defined $previous_mlss) {
@@ -684,11 +721,13 @@ sub _run_compare_to_previous_db_test {
   ## Find percentage difference between the two
   my $current_percent_diff = abs($current_count-$previous_count)/$previous_count*100;
 
+  my $c_perc = sprintf "%.2f", $current_percent_diff;
   ## Report an error if this is higher than max_percent_diff
   if ($current_percent_diff > $max_percent_diff) {
-      my $c_perc = sprintf "%.2f", $current_percent_diff;
       die("The percentage difference between the number of genomic_align_blocks of the current database of $current_name results ($current_count) and the previous database of $previous_name results ($previous_count) is $c_perc% and is greater than $max_percent_diff%!\n");
   }
+
+  print "The percentage difference between the number of genomic_align_blocks of the current database of $current_name results ($current_count) and the previous database of $previous_name results ($previous_count) is $c_perc% and is less than $max_percent_diff%!\n";
 
 }
 
