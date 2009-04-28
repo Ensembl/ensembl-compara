@@ -365,6 +365,8 @@ sub ajax_zmenu      {
   }
   elsif ($action =~ /View|Overview/) {
     return $self->_ajax_zmenu_view($panel,$obj);
+  } elsif ($action eq 'coverage'){
+    return $self->ajax_zmenu_read_coverage($panel, $obj);
   }
   return;
 }
