@@ -1617,6 +1617,30 @@ sub _archive_link {
   return $url;
 }
 
+sub ajax_zmenu_read_coverage {
+  my $self = shift;
+  my $panel = shift;
+  my $obj  = $self->object;
+  return unless $obj->param('disp_level');
+  $panel->{'caption'} = "Resequencing read coverage: ". $obj->param('disp_level');
+  $panel->add_entry({
+    'type'     => 'bp:',
+    'label'    => $obj->param('pos'),
+    'priority' => 12,
+  });
+  $panel->add_entry({
+    'type'     => 'Sample:',
+    'label'    => $obj->param('sp'),
+    'priority' => 8,
+  });
+  $panel->add_entry({
+    'type'     => 'Source:',
+    'label'    => "Sanger",
+    'priority' => 4,
+  });
+
+  return;
+}
 
 
 1;
