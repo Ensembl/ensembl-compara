@@ -584,10 +584,10 @@ sub _dump_tree_as_text{
   my $align = $tree->get_SimpleAlign('','','','','',1);
   my $aio = Bio::AlignIO->new( -format => $format, -fh => IO::String->new(my $var) );
   $aio->write_aln( $align );
-  $file_fa->print($var);
+  print $file_fa $var;
 
   #and nh files
-  $file_nh->print($tree->newick_format("full_web"));
+  print $file_nh $tree->newick_format("full_web");
 
   return( $file_fa->URL, $file_nh->URL );
 }

@@ -54,8 +54,8 @@ sub _embed_jalview {
     eval { $align = $attribute->alignment_string($member); };
     unless ($@) {
       if($attribute->alignment_string($member)) {
-        $file->print(">".$member->stable_id."\n");
-        $file->print($attribute->alignment_string($member)."\n");;
+        print $file ">".$member->stable_id."\n";
+        print $file $attribute->alignment_string($member)."\n";
         $outcount++;
       }
     }
