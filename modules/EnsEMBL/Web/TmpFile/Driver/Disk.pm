@@ -13,20 +13,21 @@ sub new {
 }
 
 sub exists {
-  my ($self, $file) = @_;
-  return -e $file && -f $file;
+  my ($self, $obj) = @_;
+  return -e $obj->full_path && -f $obj->full_path;
 }
 
 sub delete {
-  my ($self, $file) = @_;
-  return unlink $file;
+  my ($self, $obj) = @_;
+  return unlink $obj->full_path;
 }
 
 sub get {
-  my ($self, $file, $params) = @_;
+  my ($self, $obj) = @_;
+  my $file = $obj->full_path;
 
   my $content = '';
-  if ($params->{compress}) {
+  if ($obj->compress) {
     my $gz = gzopen( $file, 'rb' )
          or warn "GZ Cannot open $file: $gzerrno\n";
     if ($gz) {
@@ -44,22 +45,23 @@ sub get {
 }
 
 sub save {
-  my ($self, $file, $content, $params) = @_;
+  my ($self, $obj) = @_;
+  my $file = $obj->full_path;
 
   $self->make_directory($file);
 
   eval {
-    if ($params->{compress}) {
+    if ($obj->compress) {
       my $gz = gzopen($file, 'wb')
            or die "GZ Cannot open $file: $gzerrno\n";
-      $gz->gzwrite($content)
+      $gz->gzwrite($obj->content)
            or die "GZ Cannot srite content: $gzerrno\n";
       $gz->gzclose();
     } else {
       open(FILE, ">$file")
         or die "Cannot open file $file: $!";
       binmode FILE;
-      print FILE $content;
+      print FILE $obj->content;
       close FILE;
     }
   };

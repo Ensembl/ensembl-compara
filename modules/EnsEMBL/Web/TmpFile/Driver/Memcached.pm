@@ -19,32 +19,32 @@ sub new {
 sub memd { $_[0]->{'memd'}; }
 
 sub exists {
-  my ($self, $key) = @_;
-  return $self->memd->get($key);
+  my ($self, $obj) = @_;
+  return $self->memd->get($obj->URL);
 }
 
 sub delete {
-  my ($self, $key) = @_;
-  return $self->memd->delete($key);
+  my ($self, $obj) = @_;
+  return $self->memd->delete($obj->URL);
 }
 
 sub get {
-  my ($self, $key, $params) = @_;
+  my ($self, $obj) = @_;
 
-  $self->memd->enable_compress($params->{compress});
-  return $self->memd->get($key);
+  $self->memd->enable_compress($obj->compress);
+  return $self->memd->get($obj->URL);
 }
 
 sub save {
-  my ($self, $key, $content, $params) = @_;
+  my ($self, $obj) = @_;
 
-  $self->memd->enable_compress($params->{compress});
+  $self->memd->enable_compress($obj->compress);
 
   return $self->memd->set(
-    $key,
-    $content,
-    $params->{exptime},
-    ( 'TMP', $params->{format}, keys %{ $ENV{CACHE_TAGS}||{} } ),
+    $obj->URL,
+    $obj->content,
+    $obj->exptime,
+    ( 'TMP', $obj->format, keys %{ $ENV{CACHE_TAGS}||{} } ),
   );
 }
 

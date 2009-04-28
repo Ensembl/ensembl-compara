@@ -21,7 +21,7 @@ use overload (
   '*{}' => '_glob', 
 );
 
-__PACKAGE__->mk_accessors(qw(species_defs content_type format compress drivers));
+__PACKAGE__->mk_accessors(qw(species_defs content_type format compress drivers exptime));
 __PACKAGE__->mk_ro_accessors(qw(full_path prefix extension file_root path_format URL_root URL shortname token));
 
 sub new {
@@ -168,15 +168,7 @@ sub save {
   
   foreach my $driver ($self->drivers) {
     return 1 
-      if $driver
-      && $driver->save(
-            $self->full_path,
-            $content,
-            {
-              content_type => $self->content_type,
-              %$params,
-            },
-         );    
+      if $driver && $driver->save($self);    
   }
 
   return 0; 
@@ -204,8 +196,7 @@ sub exists {
 
   for my $driver ($self->drivers) {
     return 1
-      if $driver
-      && $driver->exists($self->full_path);
+      if $driver && $driver->exists($self);
   }
 
   return 0; 
@@ -220,8 +211,7 @@ sub delete {
 
   for my $driver ($self->drivers) {
     return 1
-      if $driver
-      && $driver->delete($self->full_path);
+      if $driver && $driver->delete($self);
   }
 
   return 0; 
@@ -231,14 +221,13 @@ sub delete {
 sub retrieve {
   my $self     = shift;
   my $filename = shift;
-  my $params   = shift || {};
 
   $self->filename($filename)
     if $filename;
 
   for my $driver ($self->drivers) {
 
-      if ($driver && (my $result = $driver->get($self->full_path, $params))) {
+      if ($driver && (my $result = $driver->get($self))) {
         if (ref($result) eq 'HASH') {
           $self->{$_} = $result->{$_} for keys %$result;
           return $self->{'content'};
