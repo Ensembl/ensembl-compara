@@ -116,7 +116,7 @@ sub ajax_zmenu      {
   } elsif( $action eq 'ref'){
     return $self->_ajax_zmenu_change_reference($panel, $obj);
   } elsif( $action eq 'coverage'){
-    return $self->_ajax_zmenu_transcript_coverage($panel, $obj);
+    return $self->ajax_zmenu_read_coverage($panel, $obj);
   } elsif( $action eq 'ProteinSummary') {
     return $self->_ajax_zmenu_protein_feature($panel, $obj);
   } else {
@@ -354,31 +354,6 @@ sub _ajax_zmenu_transcript_variation {
 
 }
 
-sub _ajax_zmenu_transcript_coverage {
-  my $self = shift;
-  my $panel = shift;
-  my $obj  = $self->object;
-  return unless $obj->param('disp_level');
-  $panel->{'caption'} = "Resequencing read coverage: ". $obj->param('disp_level');
-  $panel->add_entry({
-    'type'     => 'bp:',
-    'label'    => $obj->param('pos'),
-    'priority' => 12,
-  });
-  $panel->add_entry({
-    'type'     => 'Sample:',
-    'label'    => $obj->param('sp'),
-    'priority' => 8,
-  });
-  $panel->add_entry({
-    'type'     => 'Source:',
-    'label'    => "Sanger",
-    'priority' => 4,
-  });
-
-  return; 
-}
-
 sub do_SE_align_menu {
   my $self = shift;
   my $panel = shift;
@@ -503,11 +478,11 @@ sub populate_tree {
   $var_menu->append($self->create_node( 'Population',  'Population comparison',
     [qw(snptable      EnsEMBL::Web::Component::Transcript::TranscriptSNPTable
         snpinfo       EnsEMBL::Web::Component::Transcript::TranscriptSNPInfo)],
-    { 'availability' => 'either database:variation' }
+    { 'availability' => 'strains database:variation' }
   ));
   $var_menu->append($self->create_node( 'Population/Image',  'Comparison image',
     [qw(snps      EnsEMBL::Web::Component::Transcript::SNPView)],
-    { 'availability' => 'transcript database:variation' }
+    { 'availability' => 'strains database:variation' }
   ));
   my $prot_menu = $self->create_submenu( 'Protein', 'Protein Information' );
   $prot_menu->append($self->create_node( 'ProteinSummary', "Protein summary",
