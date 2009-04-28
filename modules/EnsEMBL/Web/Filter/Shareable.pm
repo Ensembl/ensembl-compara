@@ -17,6 +17,7 @@ sub BUILD {
   ## Set the messages hash here
   $self->set_messages({
     'none' => 'You have no shareable data. Please add some data to your account in order to share it with colleagues or collaborators.',
+    'shared' => 'The selected record(s) are already shared with this group.',
   });
 }
 
