@@ -3,7 +3,7 @@ package EnsEMBL::Web::ViewConfig;
 use strict;
 use Data::Dumper;
 use EnsEMBL::Web::Form;
-use CGI qw(escape unescape);
+use CGI qw(escape unescape escapeHTML);
 
 sub new {
   my($class,$type,$action,$adaptor) = @_;
@@ -204,6 +204,15 @@ sub update_from_config_strings {
       my( $k,$t ) = split /=/, $v,2;
       $self->set($k,$t);
     }
+    $session->add_data(
+      'type'     => 'message',
+      'function' => '_info',
+      'code'     => 'configuration',
+      'message'  => $self->altered
+                  ? 'Your configuration has changed for this page'
+                  : 'The link you followed requested a change to the configuration of this page but no change occured'
+                  ,
+    );
     $params_removed = 1;
     $input->delete('config');
   }
@@ -218,7 +227,7 @@ sub update_from_config_strings {
     }
     if( ($name eq 'contigviewbottom'|| $name eq 'cytoview' ) ) {
       foreach my $v ( $input->param('data_URL') ) {
-        push @values, "url.".escape($v).'=normal';
+        push @values, "url:".escape($v).'=normal';
         $params_removed = 1; 
       }
       $input->delete('data_URL');
@@ -226,7 +235,7 @@ sub update_from_config_strings {
         my $server = $v =~ /url=(https?:[^ +]+)/  ? $1 : '';
         my $dsn    = $v =~ /dsn=(\w+)/       ? $1 : '';
 # warn "$v > $server/$dsn";
-        push @values, 'das.'.escape("$server/$dsn").'=labels' if $r;
+        push @values, 'das:'.escape("$server/$dsn").'=labels' if $r;
         $params_removed = 1;
       }
       $input->delete('add_das_source');
@@ -255,6 +264,15 @@ sub update_from_config_strings {
               'code'    => $code, 
               'name'    => $n
             );
+            $session->add_data(
+              'type'      => 'message',
+              'function'  => '_info',
+              'code'      => 'url_data:'.md5_hex($p),
+              'message'   => sprintf( '
+  Data has been attached to your display from the following URL: %s',
+  escapeHTML( $p )
+              )
+            );
 ## We then have to create a node in the user_config...
             $ic->_add_flat_file_track( undef, 'url', "url_$code", $n, 
               sprintf ( '
@@ -269,8 +287,27 @@ sub update_from_config_strings {
 # warn "ADDING DAS FROM STRING..... $name $p $render";
             $p = unescape($p);
             if (my $error = $session->add_das_from_string( $p, {'ENSEMBL_IMAGE'=>$name}, {'display'=>$render} )) {
+              $session->add_data(
+                'type'      => 'message',
+                'function'  => '_warning',
+                'code'      => 'das:'.md5_hex($p),
+                'message'   => sprintf( '
+  You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s)',
+  escapeHTML( $p ), escapeHTML( $error )
+                )
+              );
               warn $error;
             } else {
+             $session->add_data(
+                'type'      => 'message',
+                'function'  => '_info',
+                'code'      => 'das:'.md5_hex($p),
+                'message'   => sprintf( '
+  You have attached a DAS source with DSN: %s to this display',
+  escapeHTML( $p )
+                )
+              );
+
               $flag ++;
             }
           }
@@ -280,6 +317,15 @@ sub update_from_config_strings {
         }
       }
     }
+  }
+  if( $flag ) {
+    $session->add_data(
+      'type'      => 'message',
+      'function'  => '_info',
+      'code'      => 'image_config',
+      'message'   => '
+        The link you visited has made changes to the tracks displayed on this page'
+    );
   }
   $self->altered = 1 if $flag;
   $session->store;

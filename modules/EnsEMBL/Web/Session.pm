@@ -374,7 +374,7 @@ sub receive_shared_data {
     
     $self->add_data(
       type => 'message', 
-      code => 'no_data:' . (join ',', @failure), 
+      code => 'no_data:' . (join ',', sort @failure), 
       message => $msg, 
       function => '_warning'
     );
