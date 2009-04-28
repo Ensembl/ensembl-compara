@@ -51,39 +51,37 @@ sub populate_tree {
   my $is_configurable = $self->is_configurable;
   $has_logins = 0 unless $is_configurable;
 
-  my $uploaded_menu = $self->create_submenu( 'Uploaded', 'Uploaded data' );
-
   ## Upload "wizard"
-  $uploaded_menu->append($self->create_node( 'SelectFile', "Upload Data",
+  $self->create_node( 'SelectFile', "Upload Data",
     [qw(select_file EnsEMBL::Web::Component::UserData::SelectFile)], 
     { 'availability' => $is_configurable }
-  ));
-  $uploaded_menu->append($self->create_node( 'UploadFile', '',
+  );
+  $self->create_node( 'UploadFile', '',
     [], { 'availability' => 1, 'no_menu_entry' => 1,
     'command' => 'EnsEMBL::Web::Command::UserData::UploadFile'}
-  ));
-  $uploaded_menu->append($self->create_node( 'MoreInput', '',
+  );
+  $self->create_node( 'MoreInput', '',
     [qw(more_input EnsEMBL::Web::Component::UserData::MoreInput)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
-  $uploaded_menu->append($self->create_node( 'UploadFeedback', '',
+  );
+  $self->create_node( 'UploadFeedback', '',
     [qw(upload_feedback EnsEMBL::Web::Component::UserData::UploadFeedback)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
+  );
 
   ## Share data "wizard"
-  $uploaded_menu->append($self->create_node( 'SelectShare', "Share Data",
+  $self->create_node( 'SelectShare', "Share Data",
     [qw(select_share EnsEMBL::Web::Component::UserData::SelectShare)], 
-    { 'availability' => $is_configurable, 'filters' => [qw(Shareable)] }
-  ));
-  $uploaded_menu->append($self->create_node( 'CheckShare', '',
+    { 'availability' => $is_configurable, 'no_menu_entry' => 1, 'filters' => [qw(Shareable)] }
+  );
+  $self->create_node( 'CheckShare', '',
     [], { 'availability' => 1, 'no_menu_entry' => 1,
     'command' => 'EnsEMBL::Web::Command::UserData::CheckShare'}
-  ));
-  $uploaded_menu->append($self->create_node( 'ShareURL', '',
+  );
+  $self->create_node( 'ShareURL', '',
     [qw(share_url EnsEMBL::Web::Component::UserData::ShareURL)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
+  );
 
   ## Attach DAS "wizard"
   # Component:     SelectServer
@@ -105,63 +103,62 @@ sub populate_tree {
   #               V
   # Component:  DasFeedback                
 
-  my $attached_menu = $self->create_submenu( 'Attached', 'Remote data' );
-  $attached_menu->append($self->create_node( 'SelectServer', "Attach DAS",
+  $self->create_node( 'SelectServer', "Attach DAS",
    [qw(select_server EnsEMBL::Web::Component::UserData::SelectServer)], 
     { 'availability' => $is_configurable }
-  ));
-  $attached_menu->append($self->create_node( 'DasSources', '',
+  );
+  $self->create_node( 'DasSources', '',
    [qw(das_sources EnsEMBL::Web::Component::UserData::DasSources)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
-  $attached_menu->append($self->create_node( 'ValidateDAS', '',
+  );
+  $self->create_node( 'ValidateDAS', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::ValidateDAS',
     'availability' => 1, 'no_menu_entry' => 1 }
-  ));
-  $attached_menu->append($self->create_node( 'DasSpecies', '',
+  );
+  $self->create_node( 'DasSpecies', '',
    [qw(das_species EnsEMBL::Web::Component::UserData::DasSpecies)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
-  $attached_menu->append($self->create_node( 'DasCoords', '',
+  );
+  $self->create_node( 'DasCoords', '',
    [qw(das_coords EnsEMBL::Web::Component::UserData::DasCoords)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
-  $attached_menu->append($self->create_node( 'AttachDAS', '',
+  );
+  $self->create_node( 'AttachDAS', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachDAS', 
     'availability' => 1, 'no_menu_entry' => 1 }
-  ));
-  $attached_menu->append($self->create_node( 'DasFeedback', '',
+  );
+  $self->create_node( 'DasFeedback', '',
    [qw(das_feedback EnsEMBL::Web::Component::UserData::DasFeedback)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
+  );
 
   ## URL attachment
-  $attached_menu->append($self->create_node( 'SelectURL', "Attach URL Data",
+  $self->create_node( 'SelectURL', "Attach URL Data",
    [qw(select_url EnsEMBL::Web::Component::UserData::SelectURL)], 
     { 'availability' => $is_configurable }
-  ));
-  $attached_menu->append($self->create_node( 'AttachURL', '',
+  );
+  $self->create_node( 'AttachURL', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachURL', 
     'availability' => 1, 'no_menu_entry' => 1 }
-  ));
-  $attached_menu->append($self->create_node( 'UrlFeedback', '',
+  );
+  $self->create_node( 'UrlFeedback', '',
    [qw(url_feedback EnsEMBL::Web::Component::UserData::UrlFeedback)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
+  );
 
   ## Saving remote data
-  $attached_menu->append($self->create_node( 'ShowRemote', '',
+  $self->create_node( 'ShowRemote', '',
    [qw(show_remote EnsEMBL::Web::Component::UserData::ShowRemote)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
-  $attached_menu->append($self->create_node( 'SaveRemote', '',
+  );
+  $self->create_node( 'SaveRemote', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveRemote', 
     'availability' => 1, 'no_menu_entry' => 1 }
-  ));
-  $attached_menu->append($self->create_node( 'RemoteFeedback', '',
+  );
+  $self->create_node( 'RemoteFeedback', '',
    [qw(remote_feedback EnsEMBL::Web::Component::UserData::RemoteFeedback)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
-  ));
+  );
 
   ## Data management
   $self->create_node( 'ManageData', "Manage Data",
@@ -172,8 +169,20 @@ sub populate_tree {
     [qw(manage_remote EnsEMBL::Web::Component::UserData::RenameRecord)
     ], { 'availability' => 1, 'no_menu_entry' => 1 }
   );
+  $self->create_node( 'RenameTempData', '',
+    [qw(manage_remote EnsEMBL::Web::Component::UserData::RenameTempData)
+    ], { 'availability' => 1, 'no_menu_entry' => 1 }
+  );
   $self->create_node( 'SaveRecord', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveRecord',
+     'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'SaveTempData', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveTempData',
+     'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'ShareRecord', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::ShareRecord',
      'no_menu_entry' => 1 }
   );
   $self->create_node( 'SaveUpload', '',
