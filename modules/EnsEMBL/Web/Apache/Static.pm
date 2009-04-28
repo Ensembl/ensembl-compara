@@ -51,16 +51,18 @@ BEGIN {
 sub handler {
   my $r = shift;
 
+
   my $uri  = $r->uri;
   my $content = $MEMD && $MEMD->get($uri) || undef;
 
   if ($content) {
+
     $r->headers_out->set('X-MEMCACHED'  => 'yes');
     $r->headers_out->set('Accept-Ranges'  => 'bytes');
     $r->headers_out->set('Content-Length' => length($content));
     $r->headers_out->set('Cache-Control'  => 'max-age=' . 60*60*24*30);
     $r->headers_out->set('Expires'        => HTTP::Date::time2str( time + 60*60*24*30 ));
-    $r->headers_out->set('Content-Type'   => mime_type($uri));
+    $r->content_type(mime_type($uri));
     $r->print($content);
     return OK;
 
@@ -68,7 +70,6 @@ sub handler {
     
       my $file = $uri;
       return FORBIDDEN if $file =~ /\.\./;
-  
       ## Not temporary static files are pluggable:
       unless ($file =~ s/^$ENSEMBL_TMP_URL_IMG/$ENSEMBL_TMP_DIR_IMG/g + $file =~ s/^$ENSEMBL_TMP_URL/$ENSEMBL_TMP_DIR/g) {
           ## walk through plugins tree and search for the file in all htdocs dirs
@@ -96,7 +97,7 @@ sub handler {
         $r->headers_out->set('Content-Length' => length($content));
         $r->headers_out->set('Cache-Control'  => 'max-age=' . 60*60*24*30);
         $r->headers_out->set('Expires'        => HTTP::Date::time2str( time + 60*60*24*30 ));
-        $r->headers_out->set('Content-Type'   => mime_type($uri));
+        $r->content_type(mime_type($uri));
         
         $r->print($content);
         return OK;
