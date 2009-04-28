@@ -17,18 +17,20 @@ sub content {
   my $object = $self->object;
 
   ## Add feature type and source
-  my $name = $object->name; warn $name;
-  my $source = $object->source; warn $source;
+  my $name = $object->name; 
+  my $source = $object->source; 
+  my $class  =  uc($object->vari_class);
+   
   if ($source eq 'dbSNP'){
     $name      = $object->get_ExtURL_link($source, 'SNP', $name); 
-    $name = "SNP (source $name)"; 
+    $name = "$class (source $name)"; 
   } else {
-    $name = "SNP (source $source)";
+    $name = "$class (source $source)";
   }
 
   my $html  = '';
   $html .= qq(<dl class="summary">
-     <dt> Variation type </dt> 
+     <dt> Variation class </dt> 
      <dd>$name</dd>
   );
 
