@@ -23,6 +23,8 @@ __PACKAGE__->add_has_many(
   annotations    => 'EnsEMBL::Web::Data::Record::Annotation',
   dases          => 'EnsEMBL::Web::Data::Record::DAS',
   invites        => 'EnsEMBL::Web::Data::Record::Invite',
+  uploads        => 'EnsEMBL::Web::Data::Record::Upload',
+  urls           => 'EnsEMBL::Web::Data::Record::URL',
 );
 
 __PACKAGE__->has_many(members => 'EnsEMBL::Web::Data::Membership');
