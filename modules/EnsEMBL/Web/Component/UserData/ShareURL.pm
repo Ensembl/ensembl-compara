@@ -33,7 +33,7 @@ sub content {
   $url .= $share_ref;
 
   my $html = qq(<p class="space-below">To share this data, use the URL:</p>
-<p class="space-below">$url</p>
+<p class="space-below"><a href="$url">$url</a></p>
 <p class="space-below">Please note that this link will expire after 72 hours.</p>
 );
   
