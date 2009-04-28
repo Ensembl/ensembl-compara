@@ -71,7 +71,7 @@ sub content {
       if ( $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ) {
         $transcript_link = qq(<a href="/@{[$object->species]}/Transcript/Population?db=core;t=$trans_name;v=$name;source=$source">$trans_name</a>);
       } else { 
-        $transcript_link = qq(<a href="/@{[$object->species]}/Transcript/Summary?db=core;t=$trans_name;>$trans_name</a>);
+        $transcript_link = qq(<a href="/@{[$object->species]}/Transcript/Summary?db=core;t=$trans_name;v=$name;source=$source">$trans_name</a>);
       } 
       my $trans_coords = _sort_start_end(
                      $transcript_data->{cdna_start}, $transcript_data->{cdna_end});
