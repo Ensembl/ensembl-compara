@@ -147,9 +147,9 @@ sub user_populate_tree {
       [qw(select_group EnsEMBL::Web::Component::Account::SelectGroup)],
       { 'no_menu_entry' => 1 }
     );
-    $self->create_node( 'ShareRecord', '', [],
-      { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::ShareRecord',
-        'filters' => [qw(Owner Member)]}
+    $self->create_node( 'ShareRecord', '',
+      [], { 'command' => 'EnsEMBL::Web::Command::ShareRecord',
+      'no_menu_entry' => 1 }
     );
     $self->create_node( 'Unsubscribe', '', [],
       { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::Unsubscribe',
