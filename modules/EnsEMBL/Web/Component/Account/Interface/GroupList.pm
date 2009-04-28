@@ -152,6 +152,30 @@ sub _show_group_details {
     $html .= '<p>No shared annotations</p>';
   }
 
+  $html .= '<h3>Custom data</h3>';
+  if ($group->uploads || $group->urls) {
+
+    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+
+    $table->add_columns(
+      { 'key' => 'type',    'title' => 'Type',    'width' => '20%', 'align' => 'left' },
+      { 'key' => 'name',   'title' => 'Name',     'width' => '50%', 'align' => 'left' },
+    );
+
+    my @records = ($group->uploads, $group->urls);
+    foreach my $record (@records) {
+      my $row = {};
+      $row->{'type'} = $record->type;
+      $row->{'name'} = $record->name;
+
+      $table->add_row($row);
+    }
+    $html .= $table->render;
+  }
+  else {
+    $html .= '<p>No shared data</p>';
+  }
+
   return $html;  
 }
 
