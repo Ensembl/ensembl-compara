@@ -18,11 +18,12 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $sd = $object->species_defs;
-    
+
   my $r = Apache2::RequestUtil->request;
   my $referer = '_referer=' . $object->param('_referer') . ';x_requested_with=' . ($object->param('x_requested_with') || $r->headers_in->{'X-Requested-With'});
+
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my @data = $object->get_session->get_data(type => 'upload');
+  my @data; 
   
   # Control panel fixes
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
@@ -33,10 +34,13 @@ sub content {
   $html .= '<h3>Your data</h3>'; # Uploads
   
   push @data, $user->uploads if $user;
-  push @data, values %{$object->get_session->get_all_das};
-  push @data, $user->dases if $user;
-  push @data, $object->get_session->get_data(type => 'url');
+  push @data, $object->get_session->get_data('type' => 'upload');
+
   push @data, $user->urls if $user;
+  push @data, $object->get_session->get_data('type' => 'url');
+
+  push @data, $user->dases if $user;
+  push @data, values %{$object->get_session->get_all_das};
 
   if (@data) {
     my $table = EnsEMBL::Web::Document::SpreadSheet->new;
@@ -55,6 +59,7 @@ sub content {
     }
     
     $table->add_columns(
+      { 'key' => 'share', 'title' => '', 'width' => '15%', 'align' => 'left' },
       { 'key' => 'delete', 'title' => '', 'width' => '15%', 'align' => 'left' }
     );
     
@@ -65,7 +70,6 @@ sub content {
         $file->{'name'} .= ' (File could not be found)';
         $not_found++;
       }
-    
       my $row;
       
       my $sharers = EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'});
@@ -74,38 +78,44 @@ sub content {
       my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
       my $title = ' title="This data is shared with other users"' if $sharers;
       
-      # from user account
+      ## FROM USER ACCOUNT -------------------------------------------------------------
       if (ref ($file) =~ /Record/) {
-        my ($type, $name, $date, $rename, $delete);
+        my ($type, $name, $date, $rename, $share, $delete);
         if (ref ($file) =~ /Upload/) {
           $type = 'Upload';
-          $name = $file->name;
+          $name = '<strong>'.$file->name.'</strong><br />';
+          $name .= $file->format.' file for '.$file->species;
           $date = $file->modified_at || $file->created_at;
           $date = $self->pretty_date($date);
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=uploads;id=%s;%s" class="%s"%s>Rename</a>', $dir, $file->id, $referer, $delete_class, $title);
+          $share = sprintf('<a href="%s/UserData/SelectShare?type=upload;id=%s;%s" class="%s"%s>Share</a>', $dir, $file->id, $referer, $delete_class, $title);
           $delete = sprintf('<a href="%s/UserData/DeleteUpload?type=user;id=%s;%s" class="%s"%s>Delete</a>', $dir, $file->id, $referer, $delete_class, $title);
         } elsif (ref ($file) =~ /DAS/) {
           $type = 'DAS';
           $name = $file->label;
           $date = '-';
+          $share = '-'; ## No point in sharing DAS?
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="modal_link">Rename</a>', $dir, $file->id, $referer);
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=das;id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
         } elsif (ref ($file) =~ /URL/) {
           $type = 'URL';
-          $name = $file->name;
+          $name = '<strong>'.$file->name.'</strong><br />' if $file->name;
+          $name .= $file->url.' ('.$file->species.')';
           $date = '-';
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="modal_link">Rename</a>', $dir, $file->id, $referer);
+          $share = sprintf('<a href="%s/UserData/SelectShare?type=url;id=%s;%s" class="%s"%s>Share</a>', $dir, $file->id, $referer, $delete_class, $title);
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
         }
         
         if ($sd->ENSEMBL_LOGINS) {
-          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => $date, 'rename' => $rename, 'save' => 'Saved' };
+          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => $date, 'rename' => $rename, 'share' => $share, 'save' => 'Saved' };
         } else {
-          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete };
+          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'share' => $share };
         }
       } else {
+      ## TEMP DATA STORED IN SESSION --------------------------------------------
         my $save = sprintf('<a href="%s/Account/Login?%s" class="modal_link">Log in to save</a>', $dir, $referer);
-        my ($type, $name, $delete);
+        my ($type, $name, $delete, $share, $rename);
         
         if (ref ($file) =~ /DASConfig/i) {
           $type = 'DAS';
@@ -115,7 +125,7 @@ sub content {
             $save = sprintf('<a href="%s/UserData/SaveRemote?dsn=%s;%s" class="modal_link">Save to account</a>', $dir, $file->logic_name, $referer);
           }
           
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s;%s" class="modal_link">Remove</a>', $dir, $file->logic_name, $referer);
+          $delete = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s;%s" class="modal_link">Delete</a>', $dir, $file->logic_name, $referer);
         } elsif ($file->{'url'}) {
           $type = 'URL';
           $name = "<strong>$file->{'name'}</strong><br />" if $file->{'name'};
@@ -124,8 +134,10 @@ sub content {
           if ($sd->ENSEMBL_LOGINS && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
           }
+          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s;%s" class="modal_link"%s>Rename</a>', $dir, $file->{'code'}, $referer, $title);
+          $share = sprintf('<a href="%s/UserData/SelectShare?type=url;code=%s;species=%s;%s" class="modal_link"%s>Share</a>', $dir, $file->{'code'}, $file->{'species'}, $referer, $title);
           
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="modal_link">Remove</a>', $dir, $file->{'code'}, $referer);
+          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="modal_link">Delete</a>', $dir, $file->{'code'}, $referer);
         } else {
           $type = 'Upload';
           $name = '<p>';
@@ -134,7 +146,9 @@ sub content {
           my $extra = "type=$file->{'type'};code=$file->{'code'}"; 
           
           $save = qq{<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
-          $delete = qq{<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="$delete_class"$title>Remove</a></p>};
+          $share = sprintf('<a href="%s/UserData/SelectShare?type=upload;%s;%s" class="%s"%s>Share</a>', $dir, $extra, $referer, $delete_class, $title);
+          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s;%s" class="modal_link"%s>Rename</a>', $dir, $file->{'code'}, $referer, $title);
+          $delete = qq{<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="$delete_class"$title>Delete</a></p>};
           
           # Remove save and delete links if the data does not belong to the current user
           if ($file->{'analyses'} =~ /^(session|user)_(\d+)_/) {
@@ -146,14 +160,16 @@ sub content {
                 ($type eq 'user' && !($sd->ENSEMBL_LOGINS && $user))) {
                 $save = '';
                 $delete = '';
+                $share = '';
+                $rename = '';
             }
           }
         }
         
         if ($sd->ENSEMBL_LOGINS) {
-          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => '-', 'save' => $save };
+          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => '-', 'share' => $share, 'rename' => $rename, 'save' => $save };
         } else {
-          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete };
+          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'share' => $share, 'rename' => $rename };
         }
       }
       
@@ -189,5 +205,6 @@ sub content {
 
   return $html;
 }
+
 
 1;
