@@ -7,6 +7,7 @@ use Sanger::Graphics::TextHelper;
 use Bio::EnsEMBL::Registry;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Tools::Misc;
 use Digest::MD5 qw(md5_hex);
 
 my $reg = "Bio::EnsEMBL::Registry";
@@ -142,7 +143,7 @@ sub load_user_vert_tracks {
         'code'    => $type,
         'status'  => 'tmp',
       };
-      $track_info->{'render'} = $track->{'is_large'} eq 'Y' ? 'density' : 'highlight';
+      $track_info->{'render'} = Tools::Misc::style_by_filesize($track->{'filesize'});
       if ($track->{'name'}) {
         $track_info->{'name'} = $track->{'name'};
       }
@@ -166,7 +167,7 @@ sub load_user_vert_tracks {
           'code'    => $type,
           'status'  => 'user',
         };
-        $track_info->{'render'} = $record->is_large eq 'Y' ? 'density' : 'highlight';
+        $track_info->{'render'} = Tools::Misc::style_by_filesize($record->filesize);
         $track_info->{'id'} .= $record->id;
         if ($record->name) {
           $track_info->{'name'} = $record->name;
