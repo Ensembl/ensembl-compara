@@ -5,7 +5,6 @@ use warnings;
 
 use Class::Std;
 
-use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Tools::Misc;
 use CGI qw(escape escapeHTML);
@@ -36,62 +35,72 @@ sub process {
     }
 
     ## Cache data (TmpFile::Text knows whether to use memcached or temp file)
-    my $file = new EnsEMBL::Web::TmpFile::Text(
-      prefix => 'user_upload',
-      ($method eq 'url') ?
-      (content      => get_url_content($self->object->param('url'))) :
-      (tmp_filename => $self->object->[1]->{'_input'}->tmpFileName($self->object->param('file'))),
-    );
+    my ($error, %args);
+    if (my $url = $self->object->param('url')) {
+      $url = 'http://'.$url unless $url =~ /^http/;
+      my $response = get_url_content($url);
+      $error = $response->{'error'};
+      $args{'content'} = $response->{'content'};
+    }
+    else {
+      $args{tmp_filename} = $self->object->[1]->{'_input'}->tmpFileName($self->object->param('file'));
+    }
+    if ($error) {
+      ## Put error message into session for display?
+      $param->{'filter_module'} = 'Data';
+      $param->{'filter_code'} = 'no_response';
+      warn "!!! ERROR: $error";
+    }
+    else {
+      my $file = new EnsEMBL::Web::TmpFile::Text(prefix => 'user_upload', %args);
     
-    if ($file->save) {
-      ## Identify format
-      my $data = $file->retrieve;
-      my $parser = EnsEMBL::Web::Text::FeatureParser->new();
-      $parser = $parser->init($data);
+      if ($file->save) {
+        ## Identify format
+        my $data = $file->retrieve;
+        my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+        $parser = $parser->init($data);
       
-      my $code = $file->md5 . '_' . $self->object->get_session->get_session_id;
+        my $code = $file->md5 . '_' . $self->object->get_session->get_session_id;
       
-      if ($parser->{'_info'} && $parser->{'_info'}->{'count'} && $parser->{'_info'}->{'count'} > 0) {
-        my $format = $parser->{'_info'}->{'format'};
+        if ($parser->{'_info'} && $parser->{'_info'}->{'count'} && $parser->{'_info'}->{'count'} > 0) {
+          my $format = $parser->{'_info'}->{'format'};
 
-        $param->{'parser'} = $parser;
-        $param->{'species'} = $self->object->param('species');
-        ## Attach data species to session
-        $self->object->get_session->add_data(
-          type      => 'upload',
-          filename  => $file->filename,
-          code      => $code,
-          md5       => $file->md5,
-          name      => $name,
-          species   => $self->object->param('species'),
-          format    => $format,
-          assembly  => $self->object->param('assembly'),
-        );
+          $param->{'parser'} = $parser;
+          $param->{'species'} = $self->object->param('species');
+          ## Attach data species to session
+          $self->object->get_session->add_data(
+            type      => 'upload',
+            filename  => $file->filename,
+            filesize  => length($data),
+            code      => $code,
+            md5       => $file->md5,
+            name      => $name,
+            species   => $self->object->param('species'),
+            format    => $format,
+            assembly  => $self->object->param('assembly'),
+          );
 
-        $param->{'code'} = $code;
-        if (!$format) {
-          ## Get more input from user
-          $url = '/UserData/MoreInput';
-          $param->{'format'}  = 'none';
+          $param->{'code'} = $code;
+          if (!$format) {
+            ## Get more input from user
+            $url = '/UserData/MoreInput';
+            $param->{'format'}  = 'none';
+          }
+          else {
+            $url = '/UserData/UploadFeedback';
+            $param->{'format'} = $format;
+          }
         }
         else {
-          $url = '/UserData/UploadFeedback';
-          $param->{'format'} = $format;
+          $param->{'filter_module'} = 'Data';
+          $param->{'filter_code'} = 'empty';
         }
       }
       else {
         $param->{'filter_module'} = 'Data';
-        $param->{'filter_code'} = 'empty';
+        $param->{'filter_code'} = 'no_save';
       }
     }
-    else {
-      $param->{'filter_module'} = 'Data';
-      $param->{'filter_code'} = 'no_save';
-    }
-  }
-  else {
-    $param->{'filter_module'} = 'Data';
-    $param->{'filter_code'} = 'no_data';
   }
   
   if( $self->object->param('uploadto' ) eq 'iframe' ) {
