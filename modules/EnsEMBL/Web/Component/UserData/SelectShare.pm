@@ -21,25 +21,41 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
+  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
 
-  my $form = $self->modal_form('share', '/'.$object->data_species.'/UserData/CheckShare', {'wizard' => 1});
+  my $form = $self->modal_form('share', '/'.$object->data_species.'/UserData/CheckShare', {'wizard' => 1, 'back_button' => 0});
+  $form->add_element('type' => 'SubHeader', 'value' => 'Share with');
 
-  $form->add_notes({
-    heading => 'How it works',
-    text    => qq(You can share your uploaded data with anyone, even if they don't have an
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my @groups = $user->find_administratable_groups;
+  my $has_groups = $#groups > -1 ? 1 : 0;
+
+  if ($has_groups) {
+    my @ids = ({'value' => 0, 'name' => 'Anyone, via URL'});
+    foreach my $group (@groups) {
+      push @ids, {'value'=>$group->id, 'name'=>$group->name};
+    }
+    $form->add_element('type'  => 'RadioGroup', 'name'  => 'webgroup_id', 'values' => \@ids);
+    $form->add_element('type' => 'Hidden', 'name' => 'type', 'value' => $object->param('type'));
+  }
+  else {
+    $form->add_notes({
+      heading => 'How it works',
+      text    => qq(You can share your uploaded data with anyone, even if they don't have an
                   account with $sitename. Just select one or more of your uploads and click on 'Next'
                   to get a shareable URL.
                   Please note that these URLs expire after 72 hours, but if you save the upload
                   to your account, you can create a new shareable URL at any time.)
-  });
+    });
+  }
 
   $form->add_attribute('class', 'narrow-labels');
+  $form->add_element('type' => 'SubHeader', 'value' => 'Data to share');
 
   my @values = ();
 
   ## Session data
-  my @session_uploads = $self->object->get_session->get_data(type => 'upload');
+  my @session_uploads = $object->get_session->get_data(type => 'upload');
   foreach my $upload (@session_uploads) {
     push @values, {
       name  => 'Temporary upload: ' . $upload->{name},
@@ -47,7 +63,6 @@ sub content {
     };
   }
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($user) {
     foreach my $record ($user->uploads) {
       push @values, {
@@ -66,6 +81,17 @@ sub content {
     label  => 'Uploaded files',
     value  => $autoselect,
     values => \@values
+  );
+
+  $form->add_element(
+    'type'    => 'Hidden',
+    'name'    => '_referer',
+    'value'   => $object->param('_referer'),
+  );
+  $form->add_element(
+    'type'    => 'Hidden',
+    'name'    => 'x_requested_with',
+    'value'   => $object->param('x_requested_with'),
   );
 
   return $form->render;
