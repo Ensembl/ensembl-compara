@@ -67,7 +67,12 @@ sub content {
       my $gene_name = $gene->stable_id if $gene;
       my $trans_name = $transcript_data->{transcriptname};
       my $gene_link = qq(<a href="/@{[$object->species]}/Gene/Variation_Gene?db=core;g=$gene_name;v=$name;source=$source;">$gene_name</a>);
-      my $transcript_link = qq(<a href="/@{[$object->species]}/Transcript/Population?db=core;t=$trans_name;v=$name;source=$source">$trans_name</a>);
+      my $transcript_link;  
+      if ( $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ) {
+        $transcript_link = qq(<a href="/@{[$object->species]}/Transcript/Population?db=core;t=$trans_name;v=$name;source=$source">$trans_name</a>);
+      } else { 
+        $transcript_link = $trans_name;
+      } 
       my $trans_coords = _sort_start_end(
                      $transcript_data->{cdna_start}, $transcript_data->{cdna_end});
       my $pep_coords = _sort_start_end(
