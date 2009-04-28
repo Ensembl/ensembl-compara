@@ -47,8 +47,9 @@ sub availability {
     $hash->{'either'}     = 1;
     $hash->{'transcript'} = 1;
     $hash->{'domain'}     = 1;
-    $hash->{'translation'}= $self->Obj->translation ? 1 : 0;
-  }
+    $hash->{'translation'}  = $self->Obj->translation ? 1 : 0;
+    $hash->{'strains'}    = $self->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} ? 1 : 0;
+ }
   return $hash;
 }
 
@@ -624,9 +625,9 @@ sub getAllelesConsequencesOnSlice {
   my $allele_info = $self->__data->{'sample'}{$sample}->{'allele_info'};  
   my $consequences = $self->__data->{'sample'}{$sample}->{'consequences'};    
   return ($allele_info, $consequences) if $allele_info && $consequences;
-
+  
   # Else
-  my $valids = $self->valids; 
+  my $valids = $self->valids;  
 
   # Get all features on slice
   my $allele_features = $sample_slice->get_all_AlleleFeatures_Slice || []; 
@@ -736,11 +737,11 @@ sub get_samples {
 
   my %default_pops; 
   map {$default_pops{$_} = 1 } @{$individual_adaptor->get_default_strains};
-  
+ 
   my %db_pops;
   
   foreach (sort @{$individual_adaptor->get_display_strains}) {
-    next if $default_pops{$_}; 
+   next if $default_pops{$_}; 
     $db_pops{$_} = 1;
   }
 
