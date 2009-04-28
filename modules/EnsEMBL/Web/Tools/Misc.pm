@@ -28,8 +28,12 @@ sub get_url_content {
   $request->header('Cache-control' => 'no-cache');
   $request->header('Pragma'        => 'no-cache');
   my $response = $ua->request($request);
-
-  return $response->is_success && $response->content;
+  if ($response->is_success) {
+    return {'content' => $response->content};
+  }
+  else {
+    return {'error' => $response->content};
+  }
 }
 
 sub get_url_filesize {
@@ -47,8 +51,7 @@ sub get_url_filesize {
   my $response = $ua->request($request);
 
   if ($response->is_success) {
-    #warn "SUCCESS";
-    my $file_size = $response->header('Content-Length');
+    $file_size = $response->header('Content-Length');
     unless ($file_size) {
       my $content = $response->content;
       if ($content) {
@@ -59,7 +62,6 @@ sub get_url_filesize {
   else {
     $file_size = -1;
   }
-  #warn "FILE SIZE $file_size BYTES";
   return $file_size;
 }
 
