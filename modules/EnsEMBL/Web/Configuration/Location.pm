@@ -5,6 +5,7 @@ use strict;
 use base qw( EnsEMBL::Web::Configuration );
 use CGI;
 use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Component::Location;
 
 sub set_default_action {
   my $self = shift;
