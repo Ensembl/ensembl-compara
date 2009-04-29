@@ -1188,7 +1188,7 @@ sub ld_dump {
       
       if ($format eq 'Excel') {
         if (!$table) {
-          my $renderer = new EnsEMBL::Web::Document::Renderer::Excel({ fh => $file->{'full_path'} });
+          my $renderer = new EnsEMBL::Web::Document::Renderer::Excel({ fh => $file });
           $table = $renderer->new_table_renderer;
         }
         
