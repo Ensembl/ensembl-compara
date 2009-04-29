@@ -5,6 +5,9 @@ use warnings;
 use base qw(EnsEMBL::Web::Data::Trackable);
 use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
+## Void call to create virtual 'data' container and propogate triggers
+__PACKAGE__->add_fields;
+
 ###################################################################################################
 ##
 ## New constructor is a bit different for Record
@@ -43,26 +46,27 @@ sub owner {
   my $owner = shift;
   
   no strict 'refs';
-    
+
   if ((ref $owner && $owner->isa('EnsEMBL::Web::Data::User')) || lc($owner) eq 'user') {
     $class->table($class->species_defs->ENSEMBL_USER_DATA_TABLE);
     $class->set_primary_key($class->species_defs->ENSEMBL_USER_DATA_TABLE.'_id');
     $class->has_a(user => 'EnsEMBL::Web::Data::User');
+    *{ "$class\::owner" } = sub { shift->user(@_) };
     *{ "$class\::owner_type" } = sub { return 'user' };
   } elsif ((ref $owner && $owner->isa('EnsEMBL::Web::Data::Group')) || lc($owner) eq 'group') {
     $class->table($class->species_defs->ENSEMBL_GROUP_DATA_TABLE);
     $class->set_primary_key($class->species_defs->ENSEMBL_GROUP_DATA_TABLE.'_id');
     $class->has_a(webgroup => 'EnsEMBL::Web::Data::Group');
     *{ "$class\::owner_type" } = sub { return 'group' };
-    *{ "$class\::group" }      = sub { return shift->webgroup(@_) };
+    *{ "$class\::group" }      = sub { shift->webgroup(@_) };
+    *{ "$class\::owner" }      = sub { shift->group(@_) };
   }
-
 }
 
 sub add_owner {
   my $class = shift;
   my $owner = shift;
-  my $relation_class = $class .'::'. ucfirst($owner);
+  my $relation_class = $class .'::'. ucfirst(lc($owner));
   
   my $package = "package $relation_class;
                 use base qw($class);
@@ -74,12 +78,16 @@ sub add_owner {
   return $relation_class;
 }
 
-## used for making shared records between users and groups
+## hacky sub, used for making group records out of user ones
 sub clone {
-  my $self = shift;
-  my %hash = map { $_ => $self->$_ } keys %{ $self->get_all_fields };
+  my $self  = shift
+
+  my %hash  = map { $_ => $self->$_ } keys %{ $self->queriable_fields };
   delete $hash{user_id};
-  return \%hash;
+
+  my $clone = EnsEMBL::Web::Data::Record::Group->new(\%hash);
+    
+  return $clone;
 }
 
 
@@ -92,7 +100,7 @@ sub clone {
 sub propagate_cache_tags {
   my $proto = shift;
 
-  $proto->SUPER::propagate_cache_tags($proto->__type);
+  $proto->SUPER::propagate_cache_tags($proto->_type);
 }
 
 
