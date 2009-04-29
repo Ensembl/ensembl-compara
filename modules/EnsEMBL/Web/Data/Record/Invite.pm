@@ -14,6 +14,3 @@ __PACKAGE__->add_fields(
 );
 
 1;
-
-
-$user->records($id)->clone->set_owner($group);
