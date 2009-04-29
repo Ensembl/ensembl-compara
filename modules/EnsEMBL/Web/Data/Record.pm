@@ -80,7 +80,7 @@ sub add_owner {
 
 ## hacky sub, used for making group records out of user ones
 sub clone {
-  my $self  = shift
+  my $self  = shift;
 
   my %hash  = map { $_ => $self->$_ } keys %{ $self->queriable_fields };
   delete $hash{user_id};
