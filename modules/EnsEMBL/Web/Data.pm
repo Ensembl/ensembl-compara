@@ -20,7 +20,7 @@ __PACKAGE__->mk_classdata(hasa_relations    => {});
 __PACKAGE__->mk_classdata(hasmany_relations => {});
 __PACKAGE__->mk_classdata(tie_relations     => {});
 __PACKAGE__->mk_classdata(cache_tags        => {});
-__PACKAGE__->mk_classdata('__type');
+__PACKAGE__->mk_classdata('_type');
 
 
 ##
@@ -41,11 +41,11 @@ sub new {
 
   $data = undef if $data eq '';
   if( $data && !ref($data) ) {
-    if ($class->__type) {
+    if ($class->_type) {
       my $key = $class->get_primary_key;
       return $class->retrieve(
         $key => $data,
-        type => $class->__type,
+        type => $class->_type,
       );
     } else {
       return $class->retrieve($data);
@@ -344,8 +344,7 @@ sub has_many {
 
 }
 
-
-sub _type {
+sub set_type {
   my $class = shift;
   my $type  = shift;
   no strict 'refs';
@@ -354,9 +353,9 @@ sub _type {
   *{$class."::retrieve"}     = sub { shift->SUPER::retrieve(type => $type, @_) };
   *{$class."::retrieve_all"} = sub { shift->search(@_) };
 
-  $class->__type($type);
+  $class->_type($type);
   $class->add_queriable_fields(type => 'string');
-  $class->add_trigger(before_create => sub { my $self = shift; $self->type($self->__type) });
+  $class->add_trigger(before_create => sub { my $self = shift; $self->type($self->_type) });
 }
 
 ## 

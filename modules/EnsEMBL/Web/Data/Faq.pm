@@ -10,13 +10,12 @@ use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 
 __PACKAGE__->table('help_record');
 __PACKAGE__->set_primary_key('help_record_id');
+__PACKAGE__->set_type('faq');
 
 __PACKAGE__->add_fields(
   question         => 'string',
   answer           => 'text',
 );
-
-__PACKAGE__->_type('faq');
 
 __PACKAGE__->add_queriable_fields(
   keyword     => 'string',

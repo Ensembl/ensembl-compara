@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use base qw(EnsEMBL::Web::Data::Record);
 
-__PACKAGE__->_type('invite');
+__PACKAGE__->set_type('invite');
 
 __PACKAGE__->add_fields(
   email  => 'text',
@@ -14,3 +14,6 @@ __PACKAGE__->add_fields(
 );
 
 1;
+
+
+$user->records($id)->clone->set_owner($group);

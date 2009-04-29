@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use base qw(EnsEMBL::Web::Data::Record);
 
-__PACKAGE__->_type('upload');
+__PACKAGE__->set_type('upload');
 
 __PACKAGE__->add_fields(
   filename  => 'text',

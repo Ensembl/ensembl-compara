@@ -5,7 +5,7 @@ use warnings;
 
 use base qw(EnsEMBL::Web::Data::Record);
 
-__PACKAGE__->_type('das');
+__PACKAGE__->set_type('das');
 
 __PACKAGE__->add_fields(
   logic_name  => 'text',
