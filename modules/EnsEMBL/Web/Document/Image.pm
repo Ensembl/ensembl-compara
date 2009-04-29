@@ -57,6 +57,32 @@ sub karyotype {
   
   $config ||= 'Vkaryotype';
   my $chr_name;
+
+  my $wuc = $object->image_config_hash( $config_name );
+
+  # set some dimensions based on number and size of chromosomes
+  if( $wuc->get_parameter('all_chromosomes') eq 'yes' ) {
+    $chr_name = 'ALL';
+    $wuc->set_parameters({
+      'container_width' => $object->species_defs->MAX_CHR_LENGTH,
+      'slice_number'    => '0|1'
+    });
+
+    #$wuc->container_width( 300000000 );
+    my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
+    $wuc->{'_rows'} = $object->param('rows') || ceil($total_chrs / 18 );
+  }
+  else {
+    $chr_name = $object->seq_region_name;
+    $wuc->set_parameters({
+      'container_width' => $object->seq_region_length,
+      'slice_number'    => '0|1'
+    });
+    $wuc->{'_rows'} = 1;
+  }
+
+
+=pod
   my $image_config  = $object->get_imageconfig( $config_name );
   my $view_config   = $object->get_viewconfig;
     
@@ -88,6 +114,7 @@ sub karyotype {
     'image_height'  => $chr_length,
     'image_width'   => $total_length,
   });
+=cut
 
   if ($object->param('aggregate_colour')) {
     $wuc->{'_aggregate_colour'} = $object->param('aggregate_colour');
@@ -105,13 +132,13 @@ sub karyotype {
 
   # create the container object and add it to the image
   $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer(
-    { 'sa'=>$sa, 'ka'=>$ka, 'da'=>$da, 'chr'=>$chr_name }, $image_config, \@highlights
+    { 'sa'=>$sa, 'ka'=>$ka, 'da'=>$da, 'chr'=>$chr_name }, $wuc, \@highlights
   );
   return undef; ## successful...
 }
                                           
 sub add_tracks {
-                                                                                
+### TODO - MOVE THIS TO IMAGE CONFIG?                                                                            
   my ($self, $object, $config_name, $parser, $track_id) = @_;
            
   my $config   = $object->image_config_hash( $config_name );
