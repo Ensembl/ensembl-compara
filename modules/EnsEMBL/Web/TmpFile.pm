@@ -18,7 +18,8 @@ use EnsEMBL::Web::TmpFile::Driver::Memcached;
 use base qw(Class::Accessor EnsEMBL::Web::Root);
 
 use overload (
-  '*{}' => '_glob', 
+  '*{}'  => '_glob',
+  'bool' => '_bool',
 );
 
 __PACKAGE__->mk_accessors(qw(species_defs content_type format compress drivers exptime));
@@ -68,6 +69,10 @@ sub _glob {
   my $self = shift;
   $self->{_glob} ||= IO::String->new($self->{content});
   return $self->{_glob};
+}
+
+sub _bool {
+  shift;
 }
 
 ## Get/Set filename
