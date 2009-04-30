@@ -79,7 +79,7 @@ do
     $SOURCE = $PERLMOD_LOC.'/'.$i
   fi
 
- 	echo "$P2WDOCER -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvsweb.sanger.ac.uk/cgi-bin/cvsweb.cgi/$i/ -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
+ 	echo "$P2WDOCER -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
 
   echo "$PERLMOD_LOC/$F1 $HTTP/$F1
 $PERLMOD_LOC/$F2 $HTTP/$F2

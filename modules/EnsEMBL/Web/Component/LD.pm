@@ -89,7 +89,7 @@ sub prediction_method {
     qq(<p>LD values were calculated by a pairwise
  estimation between SNPs genotyped in the same individuals and within a
  100kb window.  An established
- <a HREF="http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/ensembl-variation/scripts/import/calc_genotypes.pl?view=markup">method</a> was used to estimate the maximum
+ <a HREF="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/scripts/import/calc_genotypes.pl?view=markup&root=ensembl">method</a> was used to estimate the maximum
  likelihood of the proportion that each possible haplotype contributed to the
  double heterozygote.</p>);
 
