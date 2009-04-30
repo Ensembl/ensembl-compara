@@ -94,8 +94,8 @@ sub content {
           $type = 'DAS';
           $name = $file->label;
           $date = '-';
-          $share = '-'; ## No point in sharing DAS?
-          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="modal_link">Rename</a>', $dir, $file->id, $referer);
+          $share = ''; ## No point in sharing DAS?
+          $rename = ''; #sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="modal_link">Rename</a>', $dir, $file->id, $referer);
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=das;id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
         } elsif (ref ($file) =~ /URL/) {
           $type = 'URL';

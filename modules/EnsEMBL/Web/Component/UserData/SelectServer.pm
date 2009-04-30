@@ -59,7 +59,7 @@ sub content {
                      'value'  => $object->param('das_name_filter'),
                      'notes'  => 'by name, description or URL');
   $form->add_element('type'   => 'Information',
-                     'value'  => 'Please note that the next page will take a few moments to load.');
+                     'value'  => 'Please note that the next page may take a few moments to load.');
 
   return $form->render;
 }

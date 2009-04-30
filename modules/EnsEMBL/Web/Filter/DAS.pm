@@ -15,6 +15,7 @@ sub BUILD {
   ## Set the messages hash here (DAS message is a fallback in case the server
   ## message stored in the session is lost)
   $self->set_messages({
+    'no_server'     => 'No server was selected.',
     'DAS'           => 'The DAS server returned an error.',
     'none_found'    => 'No sources found on server.',
     'no_coords'     => 'Source has no coordinate systems and none were selected',
@@ -22,8 +23,8 @@ sub BUILD {
 }
 
 sub catch {
-  my ($self, $dsn) = @_;
-  my $sources = $self->object->get_das_server_dsns($dsn);
+  my $self = shift;
+  my $sources = $self->object->get_das_sources(@_);
   # Process any errors
   if (!ref $sources) {
     ## Store the server's message in the session

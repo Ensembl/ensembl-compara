@@ -36,14 +36,14 @@ sub get_assemblies {
 }
 
 sub output_das_text {
-  my ( $self, @sources ) = @_;
+  my ( $self, $form, @sources ) = @_;
   map {
-    $self->add_element( 'type'    => 'Information',
+    $form->add_element( 'type'    => 'Information',
                         'classes'  => ['no-bold'],
                         'value'   => sprintf '<strong>%s</strong><br />%s<br /><a href="%s">%3$s</a>',
-                                           $_->label,
-                                           $_->description,
-                                           $_->homepage );
+                                           $_->{'label'},
+                                           $_->{'description'},
+                                           $_->{'homepage'} );
   } @sources;
 }
 

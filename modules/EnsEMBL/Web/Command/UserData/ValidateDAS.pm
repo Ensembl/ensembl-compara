@@ -17,45 +17,57 @@ sub BUILD {
 sub process {
   my $self = shift;
   my $url = '/'.$self->object->data_species.'/UserData/';
-  my $param;
+  my ($next, $param);
 
-  ## Catch any errors at the server end
-  my $filter = EnsEMBL::Web::Filter::DAS->new({'object'=>$self->object});
-  my $sources = $filter->catch($self->object->param('dsn'));
-  if ($filter->error_code) {
-    $url .= 'SelectDAS';
-    $param->{'filter_module'} = 'DAS';
-    $param->{'filter_code'} = $filter->error_code;
-  }
-  else {
-    my $no_species = 0;
-    my $no_coords  = 0;
-    $param->{'selected_das'} = $self->object->das_server_param;
-    $param->{'species'} = $self->object->param('species');
-    $param->{'coords'} = $self->object->param('coords');
-    $param->{'dsn'} = $self->object->param('dsn');
+  my $server = $self->object->param('das_server');
 
-    for my $source (@{ $sources }) {
-      # If one or more source has missing details, need to fill them in and resubmit
-      unless (@{ $source->coord_systems } || $self->object->param('coords')) {
-        $no_coords = 1;
-        if (!$self->object->param('species')) {
-          $no_species = 1;
+  if ($server) {
+    my $filter = EnsEMBL::Web::Filter::DAS->new({'object'=>$self->object});
+    my $sources = $filter->catch($server, $self->object->param('source_id'));
+    $next = 'AttachDAS';
+
+    if ($filter->error_code) {
+      $next = 'SelectDAS';
+      $param->{'filter_module'} = 'DAS';
+      $param->{'filter_code'} = $filter->error_code;
+    }
+    else {
+      my $no_species = 0;
+      my $no_coords  = 0;
+      $param->{'das_server'} = $self->object->param('das_server');
+      $param->{'species'} = $self->object->param('species');
+
+      my $source_ids = [];
+      for my $source (@{ $sources }) {
+        # If one or more source has missing details, need to fill them in and resubmit
+        unless (@{ $source->{'coords'} } || $self->object->param($source->{'source_id'}.'_coords')) {
+          $next = 'DasCoords' unless $next eq 'DasSpecies'; ## We have to go to species form first
+          if (!$self->object->param('species')) {
+            $next = 'DasSpecies';
+          }
         }
+        push @$source_ids, $source->{'source_id'};
       }
+      $param->{'source_id'} = $source_ids;
+
     }
 
-    warn "++ NO SPECIES: $no_species";
-    warn "++ NO COORDS: $no_coords";
-
-    my $next = $no_species ? 'SelectDasSpecies'
-           : $no_coords  ? 'SelectDasCoords'
-           : 'AttachDAS';
-    warn ">>> NEXT $next";
-    $url .= $next;
+    ## Pass any coordinate parameters
+    if ($next eq 'AttachDAS') {
+      my @params = $self->object->param;
+      foreach my $p (@params) {
+        next unless $p =~ /coords$/;
+        $param->{$p} = $self->object->param($p);
+      }
+    }
   }
-  #$self->ajax_redirect($url, $param); 
+  else {
+    $next = 'SelectDAS';
+    $param->{'filter_module'} = 'DAS';
+    $param->{'filter_code'} = 'no_server';
+  }
 
+  $self->ajax_redirect($url.$next, $param); 
 }
 
 }
