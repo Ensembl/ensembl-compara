@@ -10,6 +10,7 @@
 package SiteDefs;
 use strict;
 use Text::Wrap;
+use Config;
 $Text::Wrap::columns = 75;
 
 use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
@@ -236,14 +237,12 @@ $ENSEMBL_PAGE_CSS = '/css/content.css';
 # httpd.conf creates an alias for ENSEMBL_TMP_URL to ENSEMBL_TMP_DIR
 # httpd.conf also validates the existence of ENSEMBL_TMP_DIR.
 
-tmp("$ENSEMBL_SERVERROOT/tmp");
-
 $ENSEMBL_TMP_CREATE     = 1; # Create tmp dirs on server startup if not found?
 $ENSEMBL_TMP_DELETE     = 0; # Delete files from the tmp dir on server startup? 
 $ENSEMBL_TMP_TMP        = '/tmp';
 $ENSEMBL_TMP_URL        = '/tmp';
 $ENSEMBL_TMP_URL_IMG    = '/img-tmp';
-$ENSEMBL_TMP_URL_CACHE = '/img-cache';
+$ENSEMBL_TMP_URL_CACHE  = '/img-cache';
 
 #$ENSEMBL_TMP_DIR_BLAST  = '/ensemblweb/shared/data/blastqueue';
 #$ENSEMBL_TMP_DIR_BLAST_OLD  = '/ensweb/shared/data/blastqueue';
@@ -278,7 +277,7 @@ $ENSEMBL_PRIVATE_AUTH   = undef;
   $ENSEMBL_SERVERROOT.'/biomart-perl/htdocs'
 );
 
-my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ ) || "5.8.0";
+# my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ ) || "5.8.0";
 
 # Add perl-version specific lib from /ensemblweb/shared/lib for e.g. Storable.pm
 my @vers = split( /[\.0]+/, $] );
@@ -439,6 +438,9 @@ sub error {
        "\n", "#" x 78, "\n";
 }
 
+logs("$ENSEMBL_SERVERROOT/logs");
+tmp( "$ENSEMBL_SERVERROOT/tmp" );
+
 my @T = reverse @{$ENSEMBL_PLUGINS||[]};
 while( my( $dir, $name ) = splice(@T,0,2)  ) {
   my $plugin_conf = $name."::SiteDefs";
@@ -467,7 +469,7 @@ while( my( $dir, $name ) = splice(@T,0,2)  ) {
 ###############################################################################
 
 @ENSEMBL_LIB_DIRS     = (
-  $ENSEMBL_SERVERROOT."/apache2/lib/perl5/site_perl/$perl_version/",
+  $APACHE_DIR."lib/perl5/site_perl/$Config{'version'}/$Config{archname}/",
   $ENSEMBL_SERVERROOT.'/ensembl/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
   $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
@@ -482,11 +484,11 @@ while( my( $dir, $name ) = splice(@T,0,2)  ) {
 @T = reverse @{$ENSEMBL_PLUGINS||[]}; ## These have to go on in reverse order...
 $ENSEMBL_PLUGIN_ROOTS = ();
 while( my( $dir, $name ) = splice(@T,0,2)  ) {
-  unshift @ENSEMBL_PERL_DIRS,   $dir.'/perl'; 
-  unshift @ENSEMBL_HTDOCS_DIRS, $dir.'/htdocs'; 
-  unshift @$ENSEMBL_PLUGIN_ROOTS,   $name;
-  push    @ENSEMBL_CONF_DIRS,   $dir.'/conf'; 
-  unshift    @ENSEMBL_LIB_DIRS,    $dir.'/modules';
+  unshift @ENSEMBL_PERL_DIRS,     $dir.'/perl'; 
+  unshift @ENSEMBL_HTDOCS_DIRS,   $dir.'/htdocs'; 
+  unshift @$ENSEMBL_PLUGIN_ROOTS, $name;
+  push    @ENSEMBL_CONF_DIRS,     $dir.'/conf'; 
+  unshift @ENSEMBL_LIB_DIRS,      $dir.'/modules';
 }
 
 @T = @{$ENSEMBL_PLUGINS||[]};         ## But these have to go on in normal order...
@@ -495,8 +497,6 @@ while( my( $name, $dir ) = splice(@T,0,2)  ) {
 
 @ENSEMBL_LIB_DIRS = reverse @ENSEMBL_LIB_DIRS; # Helps getting @inc into 
                                               # right order
-
-logs("$ENSEMBL_SERVERROOT/logs");
 
 $ENSEMBL_PROXY_PORT = $ENSEMBL_PORT unless ( $ENSEMBL_PROXY_PORT && $ENSEMBL_PROXY_PORT ne "" );
 
