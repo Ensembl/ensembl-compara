@@ -24,6 +24,7 @@ __PACKAGE__->add_fields(
 );
 
 __PACKAGE__->add_has_many(
+  records        => 'EnsEMBL::Web::Data::Record',
   bookmarks      => 'EnsEMBL::Web::Data::Record::Bookmark',
   configurations => 'EnsEMBL::Web::Data::Record::Configuration',
   annotations    => 'EnsEMBL::Web::Data::Record::Annotation',
