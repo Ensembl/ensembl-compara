@@ -58,66 +58,42 @@ sub karyotype {
   $config ||= 'Vkaryotype';
   my $chr_name;
 
-  my $wuc = $object->image_config_hash( $config_name );
+  my $image_config = $object->image_config_hash( $config_name );
+  my $view_config   = $object->get_viewconfig;
 
   # set some dimensions based on number and size of chromosomes
-  if( $wuc->get_parameter('all_chromosomes') eq 'yes' ) {
-    $chr_name = 'ALL';
-    $wuc->set_parameters({
-      'container_width' => $object->species_defs->MAX_CHR_LENGTH,
-      'slice_number'    => '0|1'
-    });
-
-    #$wuc->container_width( 300000000 );
-    my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
-    $wuc->{'_rows'} = $object->param('rows') || ceil($total_chrs / 18 );
-  }
-  else {
-    $chr_name = $object->seq_region_name;
-    $wuc->set_parameters({
-      'container_width' => $object->seq_region_length,
-      'slice_number'    => '0|1'
-    });
-    $wuc->{'_rows'} = 1;
-  }
-
-
-=pod
-  my $image_config  = $object->get_imageconfig( $config_name );
-  my $view_config   = $object->get_viewconfig;
-    
-  # set some dimensions based on number and size of chromosomes    
-  my $chr_length = $view_config->get('chr_length') || 200;
-  my $total_length = $chr_length + 25;
   if( $image_config->get_parameter('all_chromosomes') eq 'yes' ) {
     $chr_name = 'ALL';
     my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
-	  my $rows = $view_config->get('rows') || ceil($total_chrs / 18 );
-
+    my $rows;
+    if ($view_config) {
+      $rows = $view_config->get('rows');
+      my $chr_length = $view_config->get('chr_length') || 200;
+      my $total_length = $chr_length + 25;
+      $image_config->set_parameters({
+        'image_height'  => $chr_length,
+        'image_width'   => $total_length,
+      });
+    }
+    $rows = ceil($total_chrs / 18 ) unless $rows;
+    
     $image_config->set_parameters({ 
       'container_width' => $object->species_defs->MAX_CHR_LENGTH,
       'rows'            => $rows,
+      'slice_number'  => '0|1',
     });
-
-  } 
+  }
   else {
     $chr_name = $object->seq_region_name;
     $image_config->set_parameters({
       'container_width' => $object->seq_region_length,
-      'rows'            => 1,
+      'slice_number'    => '0|1'
     });
+    $image_config->{'_rows'} = 1;
   }
 
-  ## Add common parameters
-  $image_config->set_parameters({
-    'slice_number'  => '0|1',
-    'image_height'  => $chr_length,
-    'image_width'   => $total_length,
-  });
-=cut
-
   if ($object->param('aggregate_colour')) {
-    $wuc->{'_aggregate_colour'} = $object->param('aggregate_colour');
+    $image_config->{'_aggregate_colour'} = $object->param('aggregate_colour');
   }
   
   # get some adaptors for chromosome data
@@ -132,7 +108,7 @@ sub karyotype {
 
   # create the container object and add it to the image
   $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer(
-    { 'sa'=>$sa, 'ka'=>$ka, 'da'=>$da, 'chr'=>$chr_name }, $wuc, \@highlights
+    { 'sa'=>$sa, 'ka'=>$ka, 'da'=>$da, 'chr'=>$chr_name }, $image_config, \@highlights
   );
   return undef; ## successful...
 }
