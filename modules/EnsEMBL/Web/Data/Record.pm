@@ -5,9 +5,8 @@ use warnings;
 use base qw(EnsEMBL::Web::Data::Trackable);
 use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
-__PACKAGE__->add_fields(
-  cloned_from => 'int',
-);
+__PACKAGE__->add_fields(cloned_from => 'int');
+__PACKAGE__->add_queriable_fields(type => 'string');
 
 ###################################################################################################
 ##
