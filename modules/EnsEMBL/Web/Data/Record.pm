@@ -5,8 +5,9 @@ use warnings;
 use base qw(EnsEMBL::Web::Data::Trackable);
 use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
-## Void call to create virtual 'data' container and propogate triggers
-__PACKAGE__->add_fields;
+__PACKAGE__->add_fields(
+  cloned_from => 'int',
+);
 
 ###################################################################################################
 ##
@@ -86,7 +87,8 @@ sub clone {
   delete $hash{user_id};
 
   my $clone = EnsEMBL::Web::Data::Record::Group->new(\%hash);
-    
+  $clone->cloned_from($self->id);
+
   return $clone;
 }
 
