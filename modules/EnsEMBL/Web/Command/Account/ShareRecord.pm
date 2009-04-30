@@ -17,23 +17,22 @@ sub process {
   my $object = $self->object;
 
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $accessor = lc($object->param('type')).'s';
 
   my ($records_accessor) = grep { $_ eq $accessor } keys %{ $user->relations };
   ## TODO: this should use abstraction limiting facility rather then grep
 
-  my ($user_record)      = grep { $_->id == $object->param('id') } $user->$records_accessor;
-
+  my ($user_record) = $user->records($object->param('id'));
   my $group = EnsEMBL::Web::Data::Group->new($object->param('webgroup_id'));
 
   if ($user_record && $group) {
-    my $add_to_accessor = 'add_to_'. $records_accessor;
     my $clone = $user_record->clone;
-    $group->$add_to_accessor($user_record->clone);
-  } 
+    $clone->owner($group);
+    $clone->save;
+  }
   #else {
   #  ## TODO: error exception
   #}
+
   my $url;
   my $param = {
     'id' => $group->id,
