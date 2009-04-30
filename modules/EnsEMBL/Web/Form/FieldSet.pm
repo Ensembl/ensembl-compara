@@ -36,6 +36,17 @@ sub new {
   return $self;
 }
 
+sub create_element {
+  my( $self, $options ) = @_;
+  my $module = 'EnsEMBL::Web::Form::Element::'.$options->{'type'};
+  
+  if( $self->dynamic_use( $module ) ) {
+    return $module->new( 'form' => $self->{'_attributes'}{'id'}, %$options );
+  } else {
+    warn "Unable to dynamically use module $module. Have you spelt the element type correctly?";
+  }
+}
+
 sub add_element {
   my( $self, %options ) = @_;
   my $module = "EnsEMBL::Web::Form::Element::$options{'type'}";
@@ -127,6 +138,9 @@ sub render {
   my $hidden_output;
   my $i;
   foreach my $element ( @{$self->{'_elements'}} ) {
+    #if (ref($element) eq 'HASH') {
+    #  $element = $self->create_element($element);
+    #}
     if ($element->type eq 'Hidden') {
       $hidden_output .= $self->_render_element( $element );
     }
