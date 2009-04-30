@@ -26,11 +26,13 @@ sub process {
     ## Check if it is already shared
     my @ids = ($object->param('share_id'));
     my @shareables;
+
     my $group = EnsEMBL::Web::Data::Group->new($group_id);
-    my $accessor = $object->param('type').'s';
+    my @group_records = $group->records;
+
     foreach my $id (@ids) {
       warn "CHECKING ID $id";
-      my $shared = $group->$accessor('cloned_from' => $id);
+      my $shared = grep { $id == $_->cloned_from } $group->records;
       push @shareables, $id unless $shared;
     }
     if (@shareables) {
