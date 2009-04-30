@@ -438,7 +438,9 @@ sub get_all_das {
   my %by_name = ();
   my %by_url  = ();
   for my $das ( values %{ $Das_sources_of{ ident $self } } ) {
-    $das->matches_species( $species ) || next;
+    unless ($species eq 'ANY') {
+      $das->matches_species( $species ) || next;
+    }
     $by_name{$das->logic_name} = $das;
     $by_url {$das->full_url  } = $das;
   }
@@ -456,9 +458,8 @@ sub get_all_das {
 sub save_das {
   my $self = shift;
   
-  foreach my $source ( values %{ $self->get_all_das } ) {
+  foreach my $source ( values %{ $self->get_all_das('ANY') } ) {
     # If the source hasn't changed in some way, skip it
-#warn "$source -> $source->is_altered";
     next unless $source->is_altered;
     # Delete moved or deleted records
     if( $source->is_deleted || !$source->is_session ) {
@@ -512,9 +513,9 @@ sub add_das {
   my ( $self, $das ) = @_;
   
   # If source is different to any thing added so far, add it
-#warn "ADD $das...";
+warn "ADD $das...";
   if( my $new_name = $self->_get_unique_source_name($das) ) {
-#warn ">> $new_name <<";
+warn ">> $new_name <<";
     $das->logic_name( $new_name );
     $das->category  ( 'session' );
     $das->mark_altered;
