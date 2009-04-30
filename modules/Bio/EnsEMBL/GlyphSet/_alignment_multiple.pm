@@ -284,10 +284,7 @@ sub export_feature {
   my $species = $self->species;
   my $sp = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$self->my_config('method_link_species_set_id')}{'species'};
 
-  return $self->_render_text($feature, $feature_type, {
-    'headers' => [ 'species' ],
-    'values' => [ join ',', grep !/$species/, sort keys %$sp ]
-  }, $default);
+  return $self->_render_text($feature, $feature_type, $extra, $default);
 }
 
 1;
