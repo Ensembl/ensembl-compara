@@ -9,7 +9,7 @@ ensembl-compara
 executables
 ~~~~~~~~~~~
 blastall
-	using /usr/local/ensembl/bin/blastall
+    using /software/ensembl/compara/blast-2.2.6/blastall
 
 mcl (source can be obtained from http://micans.org/mcl/src/)
 	using /nfs/acari/avilella/bin/mcxdeblast
@@ -24,7 +24,7 @@ mcl (source can be obtained from http://micans.org/mcl/src/)
 
 mkdir -p /lustre/scratch1/ensembl/lg4/families/family_54
 cd /lustre/scratch1/ensembl/lg4/families/family_54
-mkdir tmp fasta blast_in blast_out blast_raw mcl muscle clustalw_mpi
+mkdir tmp fasta blast_in blast_out blast_raw mcl 
 
 3- Loading in and dumping from compara the peptides
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,9 +63,6 @@ mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_54" | 
 # cd /data/blastdb/Ensembl/family_54/fasta
 
 # Takes about 2 minutes
-perl ~avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl -conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_54/genetree_all.conf --noredundancy -fasta metazoa_54.pep > metazoa_54.pep.err 2>&1 &
-
-# or if you don't have the hive conf file
 perl ~avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 5316 --dbuser ensro --dbname avilella_compara_homology_54 --noredundancy --fasta metazoa_54.pep > metazoa_54.pep.err 2>&1 &
 
 grep '>' metazoa_54.pep | wc -l
@@ -83,8 +80,7 @@ grep '>' metazoa_54.pep | wc -l
 fastaindex metazoa_54.pep metazoa_54.index
 
 # Takes about 5 minutes
-# FIXME: a full path to formatdb should be given to avoid difference in versions
-bsub -o /dev/null -q yesterday 'formatdb -p T -l metazoa_54.pep.formatdb.log -i metazoa_54.pep'
+bsub -o /dev/null -q yesterday '/software/ensembl/compara/blast-2.2.6/formatdb -p T -l metazoa_54.pep.formatdb.log -i metazoa_54.pep'
 
 # check metazoa_54.pep.formatdb.log if it is ok delete it
 
@@ -103,6 +99,13 @@ awk 'BEGIN {idx=0} {print idx,$1;idx++}' metazoa_54.index > metazoa_54.tab
 5- Prepare files to run blastp
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+###################################
+# FOR NEW DEVELOPMENT (blast-to-DB)
+#
+# Skip this step completely, it is not needed.
+#
+# Otherwise carry on:
+
 cd /lustre/scratch1/ensembl/lg4/families/family_54/blast_in
 
 # Distribute peptide ids in several files. Each of them will contain 100 ids,
@@ -117,6 +120,27 @@ perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl 
 
 6- Run blastp with in a LSF jobs array
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##############################################################################################
+# FOR NEW DEVELOPMENT (running separate blast jobs that directly record the results into the DB):
+#
+### direct execution using bsub (use it either for testing or when having problems with permissions on Albert's generic hive_db):
+##
+## echo '/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/LaunchBlast_viaDB.pl --dbhost compara2 --dbport 5316 --dbuser ensadmin --dbpass ensembl --dbname avilella_compara_homology_54 -s ${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab' | bsub -q yesterday -JFamBl2db"[1]" -o FamBl2db.%I.out
+##
+#
+# This is how it should be done correctly:
+# Let's use a generic hive database for uploading the jobs. Each job is a LaunchBlast_viaDB.pl with its' own sequence_id:
+#
+# perl /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -input_id '/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/LaunchBlast_viaDB.pl --dbhost compara2 --dbport 5316 --dbuser ensadmin --dbpass ensembl --dbname avilella_compara_homology_54 -s $suffix -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab' -suffix_a 1 -suffix_b 6 -hive_capacity 200 -logic_name family_blast_54_1
+#
+# export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
+# beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -sync
+# 
+# beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -lsf_options '-R"select[comparatest2<500] rusage[comparatest2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_blast_54_1
+#
+# Otherwise carry on:
+
 
 # For info on jobs array, see
 # http://www.sanger.ac.uk/campus/IT/ISG/lsf/job-arrays.shtml
@@ -155,19 +179,21 @@ ls ../blast_in |wc -l
 #
 # cp /data/blastdb/Ensembl/family_54/fasta/* /lustre/scratch1/ensembl/lg4/families/family_54/fasta/
 
-# LaunchBlast will run like this: system("/usr/local/ensembl/bin/blastall -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
+
+# make sure the $BLASTMAT points at the right directory (BEFORE EVERY LaunchBlast SUBMISSION):
+export BLASTMAT=/software/ensembl/compara/blast-2.2.6/data
+
+
+# LaunchBlast will run like this: system("/software/ensembl/compara/blast-2.2.6/blastall -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
 # where:
 #   -e  Expectation value (E) [Real]
 #   -v  Number of database sequences to show one-line descriptions for (V) [Integer]
 #   -b  Number of database sequence to show alignments for (B) [Integer]
 
+
 # This will run the first one to check if everything is working properly -- you can use "strace -p pid" to inspect your job in the cluster node
 
 echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -bmdir /software/ensembl/compara/blast-2.2.6/data -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
-
-# Check that the BLASTMAT points to /usr/local/ensembl/data/blastmat
-
-echo $BLASTMAT
 
 # When it is complete, you should get 2 new files
 
@@ -261,6 +287,21 @@ bash rebsub3
 8- Build the matrix needed by mcl and check it for symmetry
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+##############################################################################################
+# FOR NEW DEVELOPMENT (collecting the data from separate blast jobs that left it in the DB)
+#
+# This script is supposed to automate everything in "8- " and needs the following parameters:
+#
+#           (1) the DB connection parameters (this DB has to have a filled-in 'mcl_matrix' table)
+#           (2) tab_file (we are going to get rid of it)
+#           (3) nameprefix (legacy from the way the mcxassemble.sh.tcx takes in the parameters)
+#
+# /nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/dump_matrix_for_mcl.pl -dbhost compara2 -dbport 5316 -dbuser ensro -dbname avilella_compara_homology_54 -tab ../fasta/metazoa_54.tab -nameprefix family_54a
+#
+# After execution make sure you have kept .tcx file in a turing-accessible place and got rid of the huge .raw file.
+#
+# Otherwise carry on:
+
 cd ../blast_raw
 
 # Takes about 8-10 minutes, do on a farm node
@@ -277,7 +318,7 @@ cd ../mcl
 ln -s /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab family_54.tab
 
 # create a family_54.hdr header file,
-# The dimensions should be the number of peptides. That can be obtained by
+# The dimensions must be equal to the number of peptides. That can be obtained by
 
 # wc -l family_54.raw
 # 2188240 family_54.raw
@@ -292,12 +333,13 @@ wc -l family_54.tab
 # v49 1653108 family_49.tab
 # v48 1520968 family_48.tab
 
+FN=`wc -l mcl/family_54.tab | cut -d ' ' -f 1` ; (echo '(mclheader'; echo 'mcltype matrix'; echo dimensions ${FN}x${FN}; echo ')')> family_54.hdr
 
-cat > family_54.hdr
-(mclheader
-mcltype matrix
-dimensions 2188240x2188240
-)
+# cat > family_54.hdr
+# (mclheader
+# mcltype matrix
+# dimensions 2188240x2188240
+# )
 
 # This takes not 30 min but about 8-10 minutes now that we have bigmem
 # fast nodes, and will generate a family_54.bin matrix file.
@@ -322,6 +364,7 @@ mv family_54.tcx ~/family_54/
 # We don't need the raw file anymore and as it takes quite a lot of space, delete it.
 
 rm -f family_54.raw
+
 
 9- Run mcl
    ~~~~~~~
@@ -387,8 +430,8 @@ bsub 'gzip family_54.mcl'
 
 # !!!Step 13 should be run also at the same time. It is not dependant on multiple alignments.
 
-mysql -hcompara2 -P5316 -uensro avilella_compara_homology_54 -e "select count(*), family_id from family_member where cigar_line IS NULL group by family_id having count(*)>1" | wc -l
-# v54 88800
+mysql -hcompara2 -P5316 -uensro avilella_compara_homology_54 -N -e "select count(*), family_id from family_member where cigar_line IS NULL group by family_id having count(*)>1" | wc -l
+# v54 88799
 # v5? 80681
 # v51 74656
 # v50 72676
@@ -402,19 +445,19 @@ cd /lustre/scratch1/ensembl/lg4/families/family_54/
 # will be more randomly distributed in terms of CPU time
 mysql -hcompara2 -P5316 -uensro avilella_compara_homology_54 -N -e "select family_id from family_member group by family_id having count(*)>1 order by RAND()" > family_ids_rand.txt
 
-# I use a generic hive database for uploading the jobs. Each job is a LaunchMafft_batch.pl iwth a family id in the list
-perl /nfs/acari/avilella/src/ensembl_main/ensembl-personal/avilella/hive/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -input_id 'perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/family/LaunchMafftOnFamilies_batch.pl -h compara2 -p 5316 -db avilella_compara_homology_54 -u ensadmin -ps ensembl -f $inputfile -n 1 -s' -inputfile /lustre/scratch1/ensembl/lg4/families/family_54/family_ids_rand.txt -hive_capacity 200 -batch_size 5 -logic_name family_mafft_54_2
+# I use a generic hive database for uploading the jobs. Each job is a LaunchMafft_batch.pl with a family id in the list
+perl /nfs/acari/avilella/src/ensembl_main/ensembl-personal/avilella/hive/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -input_id 'perl /nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/LaunchMafftOnFamilies_batch.pl -h compara2 -p 5316 -db avilella_compara_homology_54 -u ensadmin -ps ensembl -f $inputfile -n 1 -s' -inputfile /lustre/scratch1/ensembl/lg4/families/family_54/family_ids_rand.txt -hive_capacity 200 -batch_size 5 -logic_name family_mafft_54_3
 
-export PATH=$PATH:/nfs/acari/avilella/src/ensembl_main/ensembl-hive/scripts/
-# export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
+# export PATH=$PATH:/nfs/acari/avilella/src/ensembl_main/ensembl-hive/scripts/
+export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
 beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -sync
 
-beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -lsf_options '-R"select[mycompara2<500] rusage[mycompara2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_mafft_54_2
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -lsf_options '-R"select[mycompara2<500] rusage[mycompara2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_mafft_54_3
 
-# The last ~1000 should be done with lots of memory:
-beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -lsf_options '-R"select[mycompara2<500 && mem>15000] rusage[mycompara2=10:duration=10:decay=1:mem=15000]" -M15000000' -lifespan 1200 -loop -logic_name family_mafft_54_2
+# A certain number of the failed ones will have to be re-run with more memory:
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -lsf_options '-R"select[mycompara2<500 && mem>15000] rusage[mycompara2=10:duration=10:decay=1:mem=15000]" -M15000000' -lifespan 1200 -loop -logic_name family_mafft_54_3
 # in case of rel54 only 7 first (biggest) families needed to be run with more memory
-# (and were run directly, bypassing the LSF, on turing)
+# (and were executed directly, bypassing the LSF, on turing)
 
 
 12- Insert the redundant proteins in the compara db
