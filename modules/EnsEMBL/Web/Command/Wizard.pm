@@ -40,9 +40,6 @@ sub process {
   ## Pass the "normal" parameters but munge the wizard ones
   my $param = {};
   foreach my $name ($object->param) {
-    if ($name eq 'selected_das') {
-      warn ">>> DAS SERVER ".$object->param($name);
-    }
     next if $name =~ /^wizard_/;
     my @value = $object->param($name);
     my $value = (@value) ? \@value : $value[0];
