@@ -35,13 +35,13 @@ sub process {
       my $shared = grep { $id == $_->cloned_from } $group->records;
       push @shareables, $id unless $shared;
     }
+    
     if (@shareables) {
       $url .= 'ShareRecord';
       $param->{'webgroup_id'} = $group_id;
       $param->{'id'} = \@shareables;
       $param->{'type'} = $object->param('type');
-    }
-    else {
+    } else {
       $url .= 'SelectShare';
       $param->{'filter_module'} = 'Shareable';
       $param->{'filter_code'} = 'shared';
