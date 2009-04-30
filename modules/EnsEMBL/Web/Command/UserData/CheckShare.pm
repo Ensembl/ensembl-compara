@@ -6,6 +6,8 @@ use warnings;
 use Class::Std;
 
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Data::Record;
 use base 'EnsEMBL::Web::Command';
 
 {
@@ -17,10 +19,10 @@ sub process {
   my $self = shift;
   my $object = $self->object;
   my $url = '/'.$object->data_species.'/UserData/';
-  my $param = {
-    '_referer' => $object->param('_referer'),
-    'x_requested_with' => $object->param('x_requested_with'),
-  };
+  my $param;
+  ## Set these separately, or they cause an error if undef
+  $param->{'_referer'} = $object->param('_referer');
+  $param->{'x_requested_with'} = $object->param('x_requested_with');
 
   if (my $group_id = $object->param('webgroup_id')) { ## Share with group
     ## Check if it is already shared
@@ -31,7 +33,7 @@ sub process {
     my @group_records = $group->records;
 
     foreach my $id (@ids) {
-      warn "CHECKING ID $id";
+      next unless $id;
       my $shared = grep { $id == $_->cloned_from } $group->records;
       push @shareables, $id unless $shared;
     }
@@ -43,8 +45,10 @@ sub process {
       $param->{'type'} = $object->param('type');
     } else {
       $url .= 'SelectShare';
-      $param->{'filter_module'} = 'Shareable';
-      $param->{'filter_code'} = 'shared';
+      unless ($param->{'filter_module'}) {
+        $param->{'filter_module'} = 'Shareable';
+        $param->{'filter_code'} = 'shared';
+      }
     }
   }
   else { ## Share via URL

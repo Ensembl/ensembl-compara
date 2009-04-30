@@ -67,6 +67,14 @@ sub add_user {
 }
 
 
+sub count_records {
+  my $self = shift;
+  my $count = 0;
+  foreach my $accessor (keys %{$self->hasmany_relations}) {
+    $count += $self->$accessor;
+  }
+  return $count;
+}
 
 ###################################################################################################
 ##

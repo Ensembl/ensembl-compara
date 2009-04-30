@@ -7,6 +7,7 @@ use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Component::UserData);
 use Apache2::RequestUtil;
+use CGI qw(escape);
 
 sub _init {
   my $self = shift;
@@ -20,7 +21,7 @@ sub content {
   my $sd = $object->species_defs;
 
   my $r = Apache2::RequestUtil->request;
-  my $referer = '_referer=' . $object->param('_referer') . ';x_requested_with=' . ($object->param('x_requested_with') || $r->headers_in->{'X-Requested-With'});
+  my $referer = '_referer=' . CGI::escape($object->param('_referer')) . ';x_requested_with=' . ($object->param('x_requested_with') || $r->headers_in->{'X-Requested-With'});
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my @data; 
@@ -88,7 +89,7 @@ sub content {
           $date = $file->modified_at || $file->created_at;
           $date = $self->pretty_date($date);
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=uploads;id=%s;%s" class="%s"%s>Rename</a>', $dir, $file->id, $referer, $delete_class, $title);
-          $share = sprintf('<a href="%s/UserData/SelectShare?type=upload;id=%s;%s" class="%s"%s>Share</a>', $dir, $file->id, $referer, $delete_class, $title);
+          $share = sprintf('<a href="%s/UserData/SelectShare?id=%s;%s" class="modal_link">Share</a>', $dir, $file->id, $referer);
           $delete = sprintf('<a href="%s/UserData/DeleteUpload?type=user;id=%s;%s" class="%s"%s>Delete</a>', $dir, $file->id, $referer, $delete_class, $title);
         } elsif (ref ($file) =~ /DAS/) {
           $type = 'DAS';
@@ -102,9 +103,9 @@ sub content {
           $name = '<strong>'.$file->name.'</strong><br />' if $file->name;
           $name .= $file->url.' ('.$file->species.')';
           $date = '-';
-          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="modal_link">Rename</a>', $dir, $file->id, $referer);
-          $share = sprintf('<a href="%s/UserData/SelectShare?type=url;id=%s;%s" class="%s"%s>Share</a>', $dir, $file->id, $referer, $delete_class, $title);
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
+          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="%s">Rename</a>', $dir, $file->id, $referer, $delete_class);
+          $share = sprintf('<a href="%s/UserData/SelectShare?id=%s;%s" class="modal_link">Share</a>', $dir, $file->id, $referer);
+          $delete = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="%s">Delete</a>', $dir, $file->id, $referer, $delete_class);
         }
         
         if ($sd->ENSEMBL_LOGINS) {
@@ -134,10 +135,10 @@ sub content {
           if ($sd->ENSEMBL_LOGINS && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
           }
-          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s;%s" class="modal_link"%s>Rename</a>', $dir, $file->{'code'}, $referer, $title);
-          $share = sprintf('<a href="%s/UserData/SelectShare?type=url;code=%s;species=%s;%s" class="modal_link"%s>Share</a>', $dir, $file->{'code'}, $file->{'species'}, $referer, $title);
+          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s;%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $referer, $delete_class, $title);
+          $share = sprintf('<a href="%s/UserData/SelectShare?code=%s;species=%s;%s" class="modal_link">Share</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
           
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="modal_link">Delete</a>', $dir, $file->{'code'}, $referer);
+          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="%s">Delete</a>', $dir, $file->{'code'}, $referer, $delete_class);
         } else {
           $type = 'Upload';
           $name = '<p>';
@@ -146,8 +147,8 @@ sub content {
           my $extra = "type=$file->{'type'};code=$file->{'code'}"; 
           
           $save = qq{<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
-          $share = sprintf('<a href="%s/UserData/SelectShare?type=upload;%s;%s" class="%s"%s>Share</a>', $dir, $extra, $referer, $delete_class, $title);
-          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s;%s" class="modal_link"%s>Rename</a>', $dir, $file->{'code'}, $referer, $title);
+          $share = sprintf('<a href="%s/UserData/SelectShare?%s;%s" class="modal_link">Share</a>', $dir, $extra, $referer);
+          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s;%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $referer, $delete_class, $title);
           $delete = qq{<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="$delete_class"$title>Delete</a></p>};
           
           # Remove save and delete links if the data does not belong to the current user
@@ -195,12 +196,21 @@ sub content {
   }
 
   # URL
-  unless ($self->is_configurable) {
-    $html .= $self->_info(
-      'Adding tracks',
-      qq(<p>Please note that custom data can only be added on pages that allow these tracks to be configured, for example 'Region in detail' images</p>),
+  if ($user && $user->find_administratable_groups) {
+    $html .= $self->_hint(
+      'manage_user_data', 'Sharing with groups',
+      qq(<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>),
       '100%',
     );
+  }
+  else { 
+    unless ($self->is_configurable) {
+      $html .= $self->_hint(
+        'manage_user_data', 'Adding tracks',
+        qq(<p>Please note that custom data can only be added on pages that allow these tracks to be configured, for example 'Region in detail' images</p>),
+        '100%',
+      );
+    }
   }
 
   return $html;

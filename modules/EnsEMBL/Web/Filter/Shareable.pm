@@ -16,8 +16,10 @@ sub BUILD {
   my ($self, $ident, $args) = @_;
   ## Set the messages hash here
   $self->set_messages({
+    'no_group' => 'Could not find this group. Please try again',
     'none' => 'You have no shareable data. Please add some data to your account in order to share it with colleagues or collaborators.',
     'shared' => 'The selected record(s) are already shared with this group.',
+    'not_shareable' => 'Some of the selected records could not be shared with the group, as they have not been saved to your user account. Please correct this and try again.',
   });
 }
 
