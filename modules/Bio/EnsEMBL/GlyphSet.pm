@@ -41,6 +41,7 @@ sub error_track_name {
 }
 
 sub render_normal {
+#warn ">>> RENDERING NORMAL";
   my $self = shift;
   my $rtn = $self->_init(@_);
   
@@ -49,6 +50,8 @@ sub render_normal {
 
 sub render {
   my $self = shift;
+ # warn ">>> DISPLAY ".$self->{'display'};
+  
   my $method = 'render_' . $self->{'display'};
   
   $self->{'text_export'} = $self->{'config'}->get_parameter('text_export');
@@ -171,7 +174,7 @@ sub _url {
   my $function  = exists( $params->{'function'}) ? $params->{'function'}: $ENV{'ENSEMBL_FUNCTION'};
   $function = '' if $action ne $ENV{'ENSEMBL_ACTION'};
 
-  my %pars = $params->{'__clear'}
+  my %pars = $params->{'__clear'} || !exists $self->{'config'}{_core}{'parameters'}
            ? () 
            : %{$self->{'config'}{_core}{'parameters'}}
            ;
@@ -409,7 +412,6 @@ sub sr2slice {
 sub new {
   my $class = shift;
   my $data  = shift;
-
   if(!$class) {
     warn( "EnsEMBL::GlyphSet::failed at: ".gmtime()." in /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}" );
     warn( "EnsEMBL::GlyphSet::failed with a call of new on an undefined value" );
