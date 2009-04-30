@@ -88,6 +88,7 @@ sub clone {
 
   my $clone = EnsEMBL::Web::Data::Record::Group->new(\%hash);
   $clone->cloned_from($self->id);
+  $clone->type($self->type);
 
   return $clone;
 }
