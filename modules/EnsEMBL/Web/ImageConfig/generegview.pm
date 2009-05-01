@@ -43,7 +43,7 @@ sub init {
   }
 
   $self->modify_configs(
-    [qw(regulatory_search_regions_funcgen)],
+    [qw(regulatory_regions_funcgen_search)],
     {qw(display normal)}
   );
   $self->modify_configs(
@@ -51,11 +51,11 @@ sub init {
     {qw(display normal)}
   );
   $self->modify_configs(
-    [qw(ctcf_wiggle_funcgen)],
+    [qw(ctcf_funcgen)],
     {qw(display signal_map)}
   );
   $self->modify_configs(
-    [qw(ctcf_blocks_funcgen)],
+    [qw(ctcf_funcgen_blocks)],
     {qw(display compact)}
   );
   $self->modify_configs(
