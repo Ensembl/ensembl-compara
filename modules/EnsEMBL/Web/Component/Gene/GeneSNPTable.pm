@@ -35,7 +35,7 @@ sub content {
       { 'key' => 'chr' , 'title' => 'Chr: bp',  },
       { 'key' => 'Alleles', 'align' => 'center' },
       { 'key' => 'Ambiguity', 'align' => 'center', },
-      { 'key' => 'aachange', 'title' => 'AA', 'align' => 'center' },
+      { 'key' => 'aachange', 'title' => 'Amino Acid', 'align' => 'center' },
       { 'key' => 'aacoord',  'title' => 'AA co-ordinate', 'align' => 'center' },
       { 'key' => 'class', 'title' => 'Class', 'align' => 'center' },
       { 'key' => 'Source', },
