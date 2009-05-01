@@ -639,8 +639,8 @@ sub _merge {
   my $tree = $_sub_tree->{'analyses'};
   my $config_name = $self->{'type'};
 
-  foreach my $analysis (keys %$tree) {
-    my $sub_tree = $tree->{$analysis};
+  foreach my $analysis (keys %$tree) { 
+    my $sub_tree = $tree->{$analysis}; 
     next unless $sub_tree->{'disp'}; ## Don't include non-displayable tracks
 #local $Data::Dumper::Indent=0;
     #warn Data::Dumper::Dumper($sub_tree->{'web'});
@@ -1310,115 +1310,77 @@ sub add_tracks {
 #----------------------------------------------------------------------#
 
 sub add_regulation_feature { ## needs configuring so tracks only display if data in species fg_database
-  my( $self, $key, $hashref, $species ) = @_;
+  my( $self, $key, $hashref, $species ) = @_; 
   return unless $self->get_node( 'functional' );
-  my ( $keys, $data) = $self->_merge( $hashref->{'result_set'}); foreach ( keys %$data) {warn $_;}
-  return  unless $hashref->{'feature_set'}{'rows'} > 0;
-  my $menu = $self->get_node( 'functional' );
-  if ($species eq 'Homo_sapiens') {
-    $menu->append($self->create_track('fg_regulatory_features_'.$key, sprintf("Reg. Features"),{
-      'db'          => $key,
-      'glyphset'    => 'fg_regulatory_features',
-      'sources'     => undef,
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'depth'       => 10,
-      'colourset'   => 'fg_regulatory_features',
-      'description' => 'Features from Ensembl Regulatory build',
-      'display'     => 'normal'
-    }));
-    $menu->append($self->create_track('regulatory_search_regions_'.$key, sprintf("cisRED Search Regions"),{
-      'db'          => $key,
-      'glyphset'    => 'regulatory_search_regions',
-      'sources'     => undef,
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'depth'       =>  0.5,
-      'colourset'   => 'regulatory_search_regions',
-      'description' => 'cisRED Search regions',
-      'display'     => 'off'
-    }));
-    $menu->append( $self->create_track('regulatory_regions_'.$key, sprintf("cisRED/miRanda/VISTA"),{
-      'db'          => $key,
-      'glyphset'    => 'regulatory_regions',
-      'sources'     => undef,
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'depth'       =>  0.5,
-      'colourset'   => 'synteny',
-      'description' => ' cisRED motifs; VISTA enhancer set; miRanda miRNA',
-      'display'     => 'off'
-    }));
-    $menu->append($self->create_track('ctcf_wiggle_'.$key, sprintf("CTCF chip"),{
-      'db'          => $key,
-      'glyphset'    => 'ctcf',
-      'sources'     => undef,
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'colourset'   => 'ctcf',
-      'description' => 'Nessie_NG_STD_2_ctcf_ren_BR1',
-      'renderers'      => ['off'=>'Off','signal_map'=>'Normal'],
-     'display'     => 'off'
-    }));
-    $menu->append( $self->create_track('ctcf_blocks_'.$key, sprintf("CTCF peaks"),{
-      'db'          => $key,
-      'glyphset'    => 'ctcf',
-      'sources'     => undef,
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'colourset'   => 'ctcf',
-      'description' => 'CTCF',
-      'display'     => 'off',
-      'renderers'   => [qw(off Off compact Normal)]
-    }));
-    $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', {'strand' => 'r'});
-  } elsif ($species eq 'Mus_musculus'){
-    $menu->append($self->create_track('regulatory_search_regions_'.$key, sprintf("cisRED Search Regions"),{
-      'db'          => $key,
-      'glyphset'    => 'regulatory_search_regions',
-      'sources'     => undef,
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'depth'       =>  0.5,
-      'colourset'   => 'regulatory_search_regions',
-      'description' => 'cisRED search regions',
-      'display'     => 'off'
-    }));
-    $menu->append( $self->create_track('regulatory_regions_'.$key, sprintf("cisRED Motifs"),{
-      'db'          => $key,
-      'glyphset'    => 'regulatory_regions',
-      'sources'     => undef,
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'depth'       =>  0.5,
-      'colourset'   => 'synteny',
-      'description' => 'cisRED motifs',
-      'display'     => 'off'
-    }));
-    $menu->append($self->create_track('histone_modifications_'.$key, sprintf("Histone modifications"),{
-      'db'          => $key,
-      'glyphset'    => 'histone_modifications',
-      'sources'     => undef,
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'colourset'   => 'ctcf',
-      'description' => 'Histone modifications - Vienna MEFf H3K4me3',
-      'renderers'      => ['off'=>'Off','signal_map'=>'Signal map'],
-      'display'     => 'off'
-    }));
-  }elsif ($species eq 'Drosophila_melanogaster'){
-    $menu->append( $self->create_track('regulatory_regions_'.$key, sprintf("'REDfly/BioTIFFIN"),{
-      'db'          => $key,
-      'glyphset'    => 'regulatory_regions',
-      'sources'     => undef,
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'depth'       =>  0.5,
-      'colourset'   => 'synteny',
-      'description' => 'REDfly CRMs, REDfly TFBSs and BioTIFFIN motifs.',
-      'display'     => 'off'
-    }));
+  my ($keys, $data) = $self->_merge($hashref->{'analysis_description'});    
+  my $menu = $self->get_node( 'functional' ); 
+  foreach my $key_2 ( @$keys ) {
+    my $K = $data->{$key_2}{'type'}||'other'; 
+    my $render = ['off'=> 'Off','normal' => 'Normal'];
+    my $legend_flag = 0; 
+    my $wiggle_flag = 0;
+    my $cisred_flag = 0;
 
+    if ( $data->{$key_2}{'renderers'}) {
+      my %renderers = %{ $data->{$key_2}{'renderers'} };
+      my @temp;
+      foreach  (keys %renderers){
+        my $value = $renderers{$_};
+        push (@temp, $_);
+        push (@temp, $value);
+        if ($_ =~/signal/){ 
+          unless ( $data->{$key_2}{'type'} =~/histone/ ){
+          $wiggle_flag = 1; 
+          }      
+        }
+      }
+      $render = \@temp;
+    }
+    if ($K =~/fg_reg/) { $legend_flag = 1; }
+    if ($data->{$key_2}{'description'}  =~/cisRED/){ $cisred_flag = 1; }
+
+    $menu->append($self->create_track ($K.'_'.$key, sprintf($data->{$key_2}{'name'}||$data->{$key_2}{'logic_names'}),{
+      'db'          => $key,
+      'glyphset'    => $K,
+      'sources'     => 'undef',
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'depth'       => $data->{$key_2}{'depth'}||0.5,
+      'colourset'   => $data->{$key_2}{'colourset'}||$K,
+      'description' => $data->{$key_2}{'description'},
+      'display'     => $data->{$key_2}{'display'}||'off', 
+      'renderers'   => $render, 
+    }));
+    if ( $wiggle_flag ){ 
+      $menu->append($self->create_track ($K.'_'.$key. '_blocks', sprintf($data->{$key_2}{'name'} .' peaks'|| $data->{$key_2}{'logic_names'} .' peaks'),{
+        'db'          => $key,
+        'glyphset'    => $K,
+        'sources'     => 'undef',
+        'strand'      => 'r',
+        'labels'      => 'on',
+        'depth'       => $data->{$key_2}{'depth'}||0.5,
+        'colourset'   => $data->{$key_2}{'colourset'}||$K,
+        'description' => $data->{$key_2}{'description'},
+        'display'     => $data->{$key_2}{'display'}||'off',
+        'renderers'   => ['off'=>'Off','compact'=>'Normal'],
+      }));
+    }
+    if ( $legend_flag ){
+       $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', {'strand' => 'r'});
+    }
+    if ($cisred_flag) {
+      $menu->append($self->create_track ($K.'_'.$key .'_search', 'cisRED Search Regions',{
+        'db'          => $key,
+        'glyphset'    => 'regulatory_search_regions',
+        'sources'     => 'undef',
+        'strand'      => 'r',
+        'labels'      => 'on',
+        'depth'       => 0.5,
+        'colourset'   => 'regulatory_search_regions',
+        'description' => 'cisRED Search Regions',
+        'display'     => 'off',
+      }));
+    }
   }
 return;
 }
@@ -1503,15 +1465,15 @@ sub add_variation_feature {
   my @read_coverage_strains = split(/,/, $hashref->{'read_coverage_collection_strains'});
   foreach my $strain_info (@read_coverage_strains) {
     my ($strain_name, $sample_id) =  split (/_/, $strain_info);
-    $menu->append($self->create_track('read_wiggle_'.$key."_".$sample_id, sprintf("Read Coverage %s", $strain_name ),{
+    $menu->append($self->create_track('read_wiggle_'.$key."_".$strain_name, sprintf("RC %s", $strain_name ),{
       'db'          => $key,
       'glyphset'    => 'read_coverage',
       'sources'     => undef,
       'strand'      => 'r',
       'labels'      => 'on',
-      'colourset'   => 'ctcf',
+      'colourset'   => 'read_coverage',
+      'height'      =>  6,
       'description' => 'Read Coverage for '. $strain_name,
-      'renderers'      => ['off'=>'Off','signal_map'=>'Normal'],
       'display'     => 'off'
     }));
   }
