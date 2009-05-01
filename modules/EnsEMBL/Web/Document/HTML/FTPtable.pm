@@ -40,9 +40,10 @@ sub render {
       $emf = qq(<a rel="external" title="Variation and comparative data" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_emf/$sp_var/">EMF</a>);
     }
     my $funcgen = '-';
-    if ($sp_dir =~ /homo_sapiens/) {
+    if ($sp_dir =~ /homo_sapiens/ || $sp_dir =~/mus_musculus/) {
       $funcgen = qq(<a rel="external" title="Functional genomics data in GFF format" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_functional_genomics/$sp_dir/">FUNCGEN</a>);
     }
+    my $bed = '-';
     $class = $row % 2 == 0 ? 'bg1' : 'bg2';
 
     $html .= qq(
@@ -57,6 +58,7 @@ sub render {
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_gtf/">GTF</a></td>
 <td>$emf</td>
 <td>$funcgen</td>
+<td>$bed</td>
 </tr>
       );
     $row++;
@@ -75,6 +77,7 @@ sub render {
 <td>-</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_emf/">EMF</a></td>
 <td>-</td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_bed/">BED</a></td>
 </tr>
 <tr class="$rev">
 <td><strong>Ensembl Mart</strong></td>
@@ -84,6 +87,7 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_mysql/">mySQL</a></td>
+<td>-</td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
