@@ -132,4 +132,21 @@ sub db_connect_multi_species {
   return $self->db_connect( $db_name );
 }
 
+sub _meta_info {
+  my( $self, $db, $key, $species_id ) = @_;
+  $species_id ||= 1;
+  return [] unless $self->db_details($db) &&
+                   exists( $self->db_details($db)->{'meta_info'} );
+  if( exists( $self->db_details($db)->{'meta_info'}{$species_id} ) &&
+      exists( $self->db_details($db)->{'meta_info'}{$species_id}{$key} ) ) {
+    return $self->db_details($db)->{'meta_info'}{$species_id}{$key};
+  }
+  if( exists( $self->db_details($db)->{'meta_info'}{0} ) &&
+      exists( $self->db_details($db)->{'meta_info'}{0}{$key} ) ) {
+    return $self->db_details($db)->{'meta_info'}{0}{$key};
+  }
+  return [];
+}
+
+
 1;
