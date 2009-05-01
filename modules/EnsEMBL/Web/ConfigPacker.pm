@@ -315,7 +315,77 @@ sub _summarise_funcgen_db {
   return unless $dbh;
   push @{ $self->db_tree->{'funcgen_like_databases'} }, $db_name;
   $self->_summarise_generic( $db_name, $dbh );
-#---------- Currently have to do nothing additional to this!!
+#---------- Get information from analysis_description table to auto-configure funcgen tracks
+## Grab each of the analyses - will use these in a moment...
+##
+  my $t_aref = $dbh->selectall_arrayref(
+    "select a.analysis_id, a.logic_name, a.created,
+            ad.display_label, ad.description,
+            ad.displayable, ad.web_data, fs.name 
+       from analysis  a left join analysis_description as ad on a.analysis_id=ad.analysis_id, feature_set fs
+       where ad.web_data not like 'NULL' and fs.analysis_id=ad.analysis_id"   
+  );
+  my $analysis = {};
+  foreach my $a_aref (@$t_aref) {
+## Strip out "crap" at front and end! probably some q(')s...
+    ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
+       $A =~ s/[^}]+$//;
+    my $T = eval($A);
+
+       $T = {} unless ref($T) eq 'HASH';
+    $analysis->{ $a_aref->[0] } = {
+      'logic_name'  => $a_aref->[1],
+      'name'        => $a_aref->[3],
+      'description' => $a_aref->[4],
+      'displayable' => 1,
+      'fs_name'     => $a_aref->[7],
+      'web_data'    => $T
+    };
+  }
+ my $r_aref = $dbh->selectall_arrayref(
+    "select a.analysis_id, a.logic_name, a.created,
+            ad.display_label, ad.description,
+            ad.displayable, ad.web_data, rs.name
+       from analysis  a left join analysis_description as ad on a.analysis_id=ad.analysis_id, result_set rs
+       where ad.web_data not like 'NULL' and rs.analysis_id=ad.analysis_id"
+  );
+  foreach my $a_aref (@$r_aref) {
+## Strip out "crap" at front and end! probably some q(')s...
+    ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
+       $A =~ s/[^}]+$//;
+    my $T = eval($A);
+
+
+       $T = {} unless ref($T) eq 'HASH';
+    $analysis->{ $a_aref->[0] } = {
+      'logic_name'  => $a_aref->[1],
+      'name'        => $a_aref->[3],
+      'description' => $a_aref->[4],
+      'displayable' => 1,
+      'fs_name'     => $a_aref->[7],
+      'web_data'    => $T
+    };
+  }
+ foreach my $table ( qw(
+   analysis_description
+  )) {
+    my $res_aref = $dbh->selectall_arrayref(
+      "select analysis_id,count(*) from $table group by analysis_id"
+    );
+    foreach my $T ( @$res_aref ) {
+      my $a_ref = $analysis->{$T->[0]}
+        || ( warn("Missing analysis entry $table - $T->[0]\n") && next );
+      my $value = {
+        'name'    => $a_ref->{'name'},
+        'desc'    => $a_ref->{'description'},
+        'disp'    => $a_ref->{'displayable'},
+        'web'     => $a_ref->{'web_data'},
+        'feature' => $a_ref->{'fs_name'},
+        'count'   => $T->[1]
+      };
+      $self->db_details($db_name)->{'tables'}{$table}{'analyses'}{$a_ref->{'logic_name'}} = $value;
+    }
+  }
   $dbh->disconnect();
 }
 
