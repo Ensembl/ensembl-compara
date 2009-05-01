@@ -171,45 +171,48 @@ sub draw_wiggle_plot {
     0, $display_max_score, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
   my $textheight_i = $res_i[3];
   my $pix_per_bp = $self->scalex;
-
-  $self->push( $self->Text({
-    'text'          => $display_max_score,
-    'width'         => $res_i[2],
-    'textwidth'     => $res_i[2],
-    'font'          => $fontname_i,
-    'ptsize'        => $fontsize_i,
-    'halign'        => 'right',
-    'valign'        => 'top',
-    'colour'        => $axis_colour,
-    'height'        => $textheight_i,
-    'y'             => $offset,
-    'x'             => -4 - $res_i[2],
-    'absolutey'     => 1,
-    'absolutex'     => 1,
-    'absolutewidth' => 1,
-  }));
-
-  if ($parameters->{'min_score'} < 0) {
-    my $display_min_score = sprintf("%.2f", $N_MIN); 
-    my @res_min = $self->get_text_width(
-      0, $display_min_score, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
-
-    $self->push($self->Text({
-      'text'          => $display_min_score,
-      'height'        => $textheight_i,
-      'width'         => $res_min[2],
-      'textwidth'     => $res_min[2],
+  my $axis_label_flag = $parameters->{'axis_label'} ? "off": "on"; 
+  
+  if ($axis_label_flag eq 'on'){ 
+    $self->push( $self->Text({ 
+      'text'          => $display_max_score,
+      'width'         => $res_i[2],
+      'textwidth'     => $res_i[2],
       'font'          => $fontname_i,
       'ptsize'        => $fontsize_i,
       'halign'        => 'right',
-      'valign'        => 'bottom',
+      'valign'        => 'top',
       'colour'        => $axis_colour,
-      'y'             => $offset + $row_height - $textheight_i,
-      'x'             => -4 - $res_min[2],
+      'height'        => $textheight_i,
+      'y'             => $offset,
+      'x'             => -4 - $res_i[2],
       'absolutey'     => 1,
       'absolutex'     => 1,
       'absolutewidth' => 1,
     }));
+
+    if ($parameters->{'min_score'} < 0) {
+      my $display_min_score = sprintf("%.2f", $N_MIN); 
+      my @res_min = $self->get_text_width(
+        0, $display_min_score, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
+
+      $self->push($self->Text({
+        'text'          => $display_min_score,
+        'height'        => $textheight_i,
+        'width'         => $res_min[2],
+        'textwidth'     => $res_min[2],
+        'font'          => $fontname_i,
+        'ptsize'        => $fontsize_i,
+        'halign'        => 'right',
+        'valign'        => 'bottom',
+        'colour'        => $axis_colour,
+        'y'             => $offset + $row_height - $textheight_i,
+        'x'             => -4 - $res_min[2],
+       'absolutey'     => 1,
+       'absolutex'     => 1,
+       'absolutewidth' => 1,
+      }));
+    }
   }
 
 
@@ -245,7 +248,7 @@ sub draw_wiggle_plot {
         'width'     => $END - $START+1,
         'absolutey' => 1,
         'title'     => sprintf("%.2f", $score),
-        'colour'    => 'contigblue2',
+        'colour'    => 'steelblue',
       }));
     }
   }
