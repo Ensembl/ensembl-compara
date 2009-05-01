@@ -38,7 +38,7 @@ sub content {
   if ($object->Obj->failed_description){
    my $failed_text = "<p>" . $object->Obj->failed_description . "</p>";
    $html .= "<br />". $self->_info(
-   'This variation could not be mapped',
+   'This variation was not mapped',
    $failed_text
    );
    return $html; 
