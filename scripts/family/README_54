@@ -76,6 +76,22 @@ grep '>' metazoa_54.pep | wc -l
 4- Format file for blast
    ~~~~~~~~~~~~~~~~~~~~~
 
+###################################
+# FOR NEW DEVELOPMENT (blast-to-DB)
+#
+# You only (and hopefully temporarily) need the .tab file with name-to-index mapping.
+# While it is still needed, its generation should probably be built into the .pep-file dumper, as a side-product.
+#
+## one-based indices (coming directly from sequence_id:s)  -- BETTER OPTION BUT MAY NOT WORK, NEEDS TESTING
+# time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_54 -e 'SELECT sequence_id, stable_id FROM member WHERE sequence_id IS NOT NULL GROUP BY sequence_id ORDER BY sequence_id' --column-names=0 | awk '{print $1 " " $2}' > metazoa_54.tab
+#
+## zero-based indices (sequence_id-1)s -- SHOULD WORK
+# time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_54 -e 'SELECT sequence_id, stable_id FROM member WHERE sequence_id IS NOT NULL GROUP BY sequence_id ORDER BY sequence_id' --column-names=0 | awk '{print $1-1 " " $2}' > metazoa_54.tab
+# 
+# (the query takes about 2 minutes to run)
+#
+# Otherwise carry on:
+
 # Takes about 16 seconds for rel54
 fastaindex metazoa_54.pep metazoa_54.index
 
