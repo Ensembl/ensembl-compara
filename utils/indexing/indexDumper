@@ -48,6 +48,7 @@ foreach my $species ( @species ) {
   $conf->{'directory'} = "input/$species";
   mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
   $conf->{'species'}   = $species;
+  $conf->{'authority'} = $SD->get_config($species,'AUTHORITY');
   my %dbs = %{$SD->get_config($species,'databases')||{}};
   $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
   $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
@@ -525,50 +526,53 @@ sub domainLine {
 ########################################################################## Families
 
 sub dumpFamily {
-    return; #don't do these for now
-    my $conf = shift;
-    my $FAMDB = $conf->{'dbs'}->{'DATABASE_COMPARA'};
-    my $CORE  = $conf->{'dbs'}->{'DATABASE_CORE'};
-    my $t_sth = $conf->{'dbh'}->prepare(
-	"select meta_value from $CORE.meta where meta_key='species.taxonomy_id'"
-    );
-    $t_sth->execute;
-    my $taxon_id = ($t_sth->fetchrow);
-    return unless $taxon_id;
+  my $conf = shift;
+  my $FAMDB = $conf->{'dbs'}->{'DATABASE_COMPARA'};
+  my $CORE  = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my $t_sth = $conf->{'dbh'}->prepare(
+    "select meta_value from $CORE.meta where meta_key='species.taxonomy_id'"
+  );
+  $t_sth->execute;
+  my $taxon_id = ($t_sth->fetchrow);
+  return unless $taxon_id;
 
-    my $sth = $conf->{'dbh_compara'}->prepare(
-        "select f.stable_id, f.description, m.stable_id
-           from $FAMDB.family as f, $FAMDB.family_member as fm, 
-                $FAMDB.member as m
-          where fm.family_id = f.family_id and fm.member_id = m.member_id and
-                m.taxon_id = $taxon_id
-          order by f.stable_id, m.stable_id"
-    );
+ ( my $species = $conf->{'species'} ) =~ s/_/ /g;
 
-    $sth->execute();
-    open O, ">$conf->{'directory'}/Family.txt";
-    my $old_id      = '';
-    my $IDS         = '';
-    my $description = '';
-    my $counter     = 0;
-    my ( $id, $dbid, $desc, $old_desc );
-    while( ($id, $desc, $dbid ) = $sth->fetchrow_array()){
-        if($id eq $old_id) {
-            $IDS         .= " $dbid";
-            $description .= ", $dbid" if ($counter <8 );
-            $description .= ", ..."   if ($counter == 8 );
-            $counter++;
-        } else {
-            print O &familyLine($conf->{'species'}, $old_id, $IDS, $old_desc, $counter, $description );
-            $description = $dbid;
-            $IDS         = $dbid;
-            $old_id      = $id;
-            $old_desc    = $desc;
-            $counter     = 1;
-        }
-    }
-    print O &familyLine($conf->{'species'}, $old_id, $IDS, $old_desc, $counter, $description );
-    close O;
+  my $sth = $conf->{'dbh_compara'}->prepare( "
+select f.stable_id,
+       f.description,
+       count(*) as N,
+       sum( (source_name = 'ENSEMBLGENE') and (m.genome_db_id = gd.genome_db_id) ) as ensembl_genes_species,
+       sum( (source_name = 'ENSEMBLPEP' ) and (m.genome_db_id = gd.genome_db_id) ) as ensembl_peptides_species,
+       sum(  source_name = 'ENSEMBLGENE'                                         ) as ensembl_genes,
+       sum(  source_name = 'ENSEMBLPEP'                                          ) as ensembl_peptides,
+       sum( (source_name = 'Uniprot/SPTREMBL' ) and (m.taxon_id = gd.taxon_id)   ) as uniprot_sptrembl_species,
+       sum( (source_name = 'Uniprot/SWISSPROT') and (m.taxon_id = gd.taxon_id)   ) as uniprot_swissprot_species,
+       sum(  source_name = 'Uniprot/SPTREMBL'                                    ) as uniprot_sptrembl,
+       sum(  source_name = 'Uniprot/SWISSPROT'                                   ) as uniprot_swissprot
+  from family as f, family_member as fm, member as m, genome_db as gd
+ where f.family_id=fm.family_id and fm.member_id=m.member_id and
+       gd.name = '$species'
+ group by f.family_id 
+having ensembl_genes_species > 0"
+  );
+  $sth->execute();
+  open O, ">$conf->{'directory'}/Family.txt";
+  my $X = $conf->{'authority'} || 'Ensembl';
+  while( my(
+    $fid, $desc, $total, 
+    $ensembl_genes_species, $ensembl_peptides_species, $ensembl_genes, $ensembl_peptides,
+    $uniprot_sptrembl_species, $uniprot_swissprot_species,
+    $uniprot_sptrembl, $uniprot_swissprot
+  ) = $sth->fetchrow_array()) {
+    print O join "\t",
+(INC_SPECIES?"$species\t":"").qq(Ensembl protein family),    ## Type
+        qq($fid),               ## ID
+        qq(/$conf->{'species'}/Gene/Family/Genes?family=$fid), ## URL,
+        qq($fid $desc), ## keywords...
+        qq(Ensembl protein family $fid [$desc] has $total members: $ensembl_genes $X genes ($ensembl_genes_species in $species); $ensembl_peptides $X proteins ($ensembl_peptides_species in $species); $uniprot_swissprot UniProtKB/Swiss-Prot proteins ($uniprot_swissprot_species in $species); $uniprot_sptrembl UniProtUK/TrEMBL proteins ($uniprot_sptrembl_species in $species).\n); ## Description text
+  }
+  close O;
 }
 
 sub familyLine {
