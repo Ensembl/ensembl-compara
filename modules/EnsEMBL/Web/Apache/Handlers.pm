@@ -572,7 +572,7 @@ sub transHandler {
   my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
 
   ## Exclude static files (and no, html is not a static file in ensembl)
-  unless ($path =~ /\.(\w{2,3})/) {
+  unless ($path =~ /\.(\w{2,3})$/) {
     unless ($filename) {
       foreach my $dir (@HTDOCS_TRANS_DIRS) {
         my $f = sprintf( $dir, $path );
