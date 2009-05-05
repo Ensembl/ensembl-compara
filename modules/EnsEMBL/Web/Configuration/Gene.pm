@@ -127,19 +127,19 @@ sub populate_tree {
   my $fam_node = $self->create_node(
     'Family', 'Protein families ([[counts::families]])',
     [qw(family EnsEMBL::Web::Component::Gene::Family)],
-    { 'availability' => 'gene database:compara core' , 'concise' => 'Protein families' }
+    { 'availability' => 'family' , 'concise' => 'Protein families' }
   );
   $compara_menu->append($fam_node);
   my $sd = ref($self->{'object'}) ? $self->{'object'}->species_defs : undef;
   my $name = $sd ? $sd->SPECIES_COMMON_NAME : '';
   $fam_node->append($self->create_subnode(
-    'Family/Genes', 'Other '.$name.' genes in this family',
+    'Family/Genes', uc($name).' genes in this family',
     [qw(genes    EnsEMBL::Web::Component::Gene::FamilyGenes)],
-    { 'availability'  => 'family database:compara core',
+    { 'availability'  => 'family', # database:compara core',
       'no_menu_entry' => 1 }
   ));
   $fam_node->append($self->create_subnode(
-    'Family/Proteins', 'Other proteins in this family',
+    'Family/Proteins', 'Proteins in this family',
     [qw(ensembl EnsEMBL::Web::Component::Gene::FamilyProteins/ensembl
         other   EnsEMBL::Web::Component::Gene::FamilyProteins/other)],
     { 'availability'  => 'family database:compara core',
@@ -601,11 +601,9 @@ our $_JALVIEW_HTML_TMPL = qq(
   <param name="defaultColour" value="clustal">
 </applet> );
 
-sub _compara_tree_jalview_html{
+sub _compara_tree_jalview_html {
   # Constructs the html needed to launch jalview for fasta and nh file urls
-  my $self = shift;
-  my $url_fa = shift;
-  my $url_nh = shift;
+  my( $self, $url_fa, $url_nh ) = @_;
   my $url_site  = $self->object->species_defs->ENSEMBL_BASE_URL;
   my $html = sprintf( $_JALVIEW_HTML_TMPL, $url_site, $url_fa, $url_nh );
   return $html;
