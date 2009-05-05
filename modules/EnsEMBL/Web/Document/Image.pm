@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Document::Image;
 
+use strict;
+
 use EnsEMBL::Web::TmpFile::Image;
 use POSIX qw(floor ceil);
 use Bio::EnsEMBL::DrawableContainer;
@@ -55,11 +57,12 @@ sub karyotype {
   my( $self, $object, $highs, $config_name ) = @_;
   my @highlights = ref($highs) eq 'ARRAY' ? @$highs : ($highs);
   
-  $config ||= 'Vkaryotype';
+  $config_name ||= 'Vkaryotype';
   my $chr_name;
 
   my $image_config = $object->image_config_hash( $config_name );
   my $view_config   = $object->get_viewconfig;
+  warn "$image_config $view_config -> $config_name";
 
   # set some dimensions based on number and size of chromosomes
   if( $image_config->get_parameter('all_chromosomes') eq 'yes' ) {
@@ -312,6 +315,7 @@ $_->{'start'}] }
                                                                                 
   # set sensible defaults
   my $zmenu   = lc($object->param('zmenu'))    || 'on';
+  my $zmenu_config;
   my $color   = lc($object->param('col'))  || lc($extra->{'color'}) || 'red';
   # set style before doing chromosome layout, as layout may need 
   # tweaking for some pointer styles
@@ -378,7 +382,7 @@ $_->{'start'}] }
           $order++;
         }
         elsif ($entry eq 'userdata') {
-          $id = $row->{'label'};
+          my $id = $row->{'label'};
           $key = sprintf('%03d', $order).':'.$id;
           $point->{'zmenu'}->{$key} = '';
           $order++;
@@ -489,7 +493,7 @@ sub render_image_tag {
     my $url = $image->URL;
     $HTML = qq(
                <p style="text-align:left">
-                 The image produced was $width pixels wide,
+                 The image produced was ".$image->width." pixels wide,
                  which may be too large for some web browsers to display.
                  If you would like to see the image, please right-click (MAC: Ctrl-click)
                  on the link below and choose the 'Save Image' option from the pop-up menu.
