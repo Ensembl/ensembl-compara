@@ -93,8 +93,7 @@ sub content {
       push @$ok_colours, $colour;
     }
 
-    my $user_pointers;
-    ($user_pointers, $table) = $self->create_user_set($image, $ok_colours);
+    my ($user_pointers, $table2) = $self->create_user_set($image, $ok_colours);
 
     ## Add some settings, if there is any user data
     if( @$user_pointers ) {
@@ -115,6 +114,7 @@ sub content {
 #		return if $self->_export_image( $image );
 
     $html .= $image->render;
+  #  $html .= $table2->render if $table2; # TODO: User data isn't working properly yet
   }
   else {
     $html .= $self->_info( 'Unassembled genome', '<p>This genome has yet to be assembled into chromosomes</p>' );
@@ -122,8 +122,7 @@ sub content {
 
   if ($table) {
     $html .= $table;
-  }
-  else {
+  } else {
     my $file = '/ssi/species/stats_'.$object->species.'.html';
     $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file);
   }
