@@ -851,7 +851,7 @@ sub _local_tools {
     $self->{'page'}->local_tools->add_entry(
       'caption' => 'Bookmark this page',
       'class'   => 'modal_link',
-      'url'     => $obj->_url({ 'type'     => 'Account', 'action'   => 'Bookmark',
+      'url'     => $obj->_url({ 'type'     => 'Account', 'action'   => 'Bookmark/Add',
                                 '_referer' => $ENV{'REQUEST_URI'}, '__clear'  =>1,
                                 'name'     => $self->{'page'}->title->get,
                                 'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'} })
@@ -941,6 +941,7 @@ sub _content_panel {
 
   ## Check for help
   my %help = $self->{object}->species_defs->multiX('ENSEMBL_HELP');
+  
   $params{'help'} = $help{$ENV{'ENSEMBL_TYPE'}}{$ENV{'ENSEMBL_ACTION'}} if keys %help;
 
   $params{'omit_header'} = $self->{doctype} eq 'Popup' ? 1 : 0;
