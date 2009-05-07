@@ -366,9 +366,14 @@ sub ajax_zmenu      {
   }
   elsif ($action =~ /View|Overview/) {
     return $self->_ajax_zmenu_view($panel,$obj);
-  } elsif ($action eq 'coverage'){
+  }
+   elsif ($action eq 'coverage'){
     return $self->ajax_zmenu_read_coverage($panel, $obj);
   }
+  elsif ($action =~ /Supercontigs/) {
+    return $self->_ajax_zmenu_supercontig($panel,$obj);
+  }
+ 
   return;
 }
 
@@ -398,6 +403,22 @@ sub _ajax_zmenu_view {
 	'action' => $action});
     $panel->add_entry({ 'label' => $r, 'link'  => $url });
   }
+}
+
+sub _ajax_zmenu_supercontig {
+  my $self  = shift;
+  my $panel = shift;
+  my $obj   = shift;
+
+  $panel->{'caption'} = $obj->param('ctg') ." " . $obj->param('r');
+  my $url = $obj->_url({
+    'type'      => 'Location',
+    'action'    => 'Overview',
+    'r'         => $obj->param('r'),
+    'cytoview'  => 'misc_feature_core_superctgs=normal'
+  });
+  $panel->add_entry({'label' => 'Jump to Supercontig', 'link' => $url});
+  return;
 }
 
 sub _ajax_zmenu_synteny {
