@@ -30,6 +30,7 @@ sub content {
     my $f_objects = $object->create_features; ## Now that there's no Feature factory, we create these on the fly
     ## TODO: Should there be some generic object->hash functionality for use with drawing code?
     @features = @{$object->retrieve_features($f_objects)};
+    if (@features) { $table = $self->feature_tables(\@features); }
   }
 
   if ($object->species_defs->MAX_CHR_LENGTH) {
@@ -68,7 +69,6 @@ sub content {
       $html = qq(<strong>$text</strong>);
       $image->image_name = "feature-$species";
       $image->imagemap = 'yes';
-      $table = $self->feature_tables(\@features);
 
       foreach my $set  (@features) {
         my $defaults = $pointer_default{$set->[2]};
