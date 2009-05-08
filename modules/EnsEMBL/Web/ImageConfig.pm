@@ -544,6 +544,7 @@ sub load_tracks {
     $self->add_dna_align_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To cDNA/mRNA, est, RNA, other_alignment trees ##DONE
 #    $self->add_ditag_feature(         $key,$dbs_hash->{$db}{'tables'} ); # To ditag_feature tree                         ##DONE
     $self->add_gene(                  $key,$dbs_hash->{$db}{'tables'} ); # To gene, transcript, align_slice_transcript, tsv_transcript trees
+    $self->add_trans_associated(      $key,$dbs_hash->{$db}{'tables'} ); # To features associated with transcripts
     $self->add_marker_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To marker tree                                ##DONE
     $self->add_qtl_feature(           $key,$dbs_hash->{$db}{'tables'} ); # To marker tree                                ##DONE
     $self->add_misc_feature(          $key,$dbs_hash->{$db}{'tables'} ); # To misc_feature tree                          ##DONE
@@ -753,13 +754,13 @@ sub add_protein_align_feature {
   }
 }
 
-sub add_simple_feature {
+sub add_trans_associated {
   my( $self, $key, $hashref ) = @_;
-  return unless $self->get_node( 'simple' );
+  return unless $self->get_node( 'trans_associated' );
   my( $keys, $data ) = $self->_merge( $hashref->{'simple_feature'} );
-  
-  my $menu = $self->tree->get_node( "simple" );
+  my $menu = $self->tree->get_node( "trans_associated" );
   foreach my $key_2 ( @$keys ) {
+    next unless ($data->{$key_2}{'transcript_associated'});
     $menu->append( $self->create_track( 'simple_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
       'db'          => $key,
       'glyphset'    => '_simple',
@@ -770,6 +771,27 @@ sub add_simple_feature {
       'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
       'renderers'   => [qw(off Off normal Normal)],
       'strand'      => $data->{$key_2}{'strand'} || 'r',
+    }));
+  }
+}
+
+sub add_simple_feature {
+  my( $self, $key, $hashref ) = @_;
+  return unless $self->get_node( 'simple' );
+  my( $keys, $data ) = $self->_merge( $hashref->{'simple_feature'} );
+  my $menu = $self->tree->get_node( "simple" );
+  foreach my $key_2 ( @$keys ) {
+    next if ($data->{$key_2}{'transcript_associated'});
+    $menu->append( $self->create_track( 'simple_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
+      'db'          => $key,
+      'glyphset'    => '_simple',
+      'logicnames'  => $data->{$key_2}{'logic_names'},
+      'colourset'   => 'simple',
+      'caption'     => $data->{$key_2}{'caption'},
+      'description' => $data->{$key_2}{'description'},
+      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+      'renderers'   => [qw(off Off normal Normal)],
+      'strand'      => 'r',
     }));
   }
 }
@@ -913,6 +935,8 @@ sub add_qtl_feature {
   }));
 }
 
+
+
 sub add_misc_feature {
   my( $self, $key, $hashref ) = @_;
   #set some defaults and available tracks
@@ -930,6 +954,7 @@ sub add_misc_feature {
   my $data = $hashref->{'misc_feature'}{'sets'};
   foreach my $key_2 ( sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data ) {
     next if ($default_tracks->{$config_name}{$key_2}{'available'} eq 'no');
+    next if ($key_2 eq 'NoAnnotation');
     my $dets =  {
         'glyphset'    => '_clone',
         'db'          => $key,
@@ -1411,7 +1436,19 @@ sub add_decorations {
       'description'   => 'Cytogenetic bands',
       'colourset'     => 'ideogram'
     }));
-
+  }
+  if( $key eq 'core' && $hashref->{'misc_feature'}{'sets'}{'NoAnnotation'} ) {
+    $menu->append( $self->create_track( 'annotation_status_'.$key, 'Annotation status',{
+      'db'            => $key,
+      'glyphset'      => 'annotation_status',
+      'height'        => 2,
+      'display'       => 'normal',
+      'strand'        => 'x',
+      'label_strand'  => 'r',
+      'short_labels'  => 0,
+      'description'   => 'Cytogenetic bands',
+      'colourset'     => 'annotation_status'
+    }));
   }
 }
 #----------------------------------------------------------------------#
