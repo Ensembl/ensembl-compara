@@ -62,6 +62,9 @@ mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_54" | 
 # mkdir -p /data/blastdb/Ensembl/family_54/fasta
 # cd /data/blastdb/Ensembl/family_54/fasta
 
+# NB:
+# According to the LSF guys (including Guys :), the Blast database should live in /data/blastdb/ , as it is optimized for accessing large files.
+
 # Takes about 2 minutes
 perl ~avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 5316 --dbuser ensro --dbname avilella_compara_homology_54 --noredundancy --fasta metazoa_54.pep > metazoa_54.pep.err 2>&1 &
 
@@ -137,6 +140,11 @@ perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl 
 6- Run blastp with in a LSF jobs array
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# In case you didn't pay attention to this earlier, copy the fasta database across the system:
+    cp /lustre/scratch1/ensembl/lg4/families/family_54/fasta/* /data/blastdb/Ensembl/family_54/fasta/*
+# it will make working with it faster for the LSF.
+
+
 ##############################################################################################
 # FOR NEW DEVELOPMENT (running separate blast jobs that directly record the results into the DB):
 #
@@ -148,12 +156,25 @@ perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl 
 # This is how it should be done correctly:
 # Let's use a generic hive database for uploading the jobs. Each job is a LaunchBlast_viaDB.pl with its' own sequence_id:
 #
-# perl /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -input_id '/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/LaunchBlast_viaDB.pl --dbhost compara2 --dbport 5316 --dbuser ensadmin --dbpass ensembl --dbname avilella_compara_homology_54 -s $suffix -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab' -suffix_a 1 -suffix_b 6 -hive_capacity 200 -logic_name family_blast_54_1
+# /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -input_id '/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/LaunchBlast_viaDB.pl --dbhost compara2 --dbport 5316 --dbuser ensadmin --dbpass ensembl --dbname avilella_compara_homology_54 -s $suffix -fastadb /data/blastdb/Ensembl/family_54/fasta/metazoa_54.pep -tab /data/blastdb/Ensembl/family_54/fasta/metazoa_54.tab' -suffix_a 1 -suffix_b 6 -hive_capacity 200 -logic_name family_blast_54_1
+#
 #
 # export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
 # beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -sync
 # 
 # beekeeper.pl -url mysql://ensadmin:ensembl@compara2/avilella_hive_generic -lsf_options '-R"select[comparatest2<500] rusage[comparatest2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_blast_54_1
+#
+#
+##############################
+# Let's the module instead of the 'SystemCmd' interface for running scripts:
+#
+# /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54 -input_id '{ "sequence_id" => "$suffix" }' -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.pep", "tabfile" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.tab" }' -suffix_a 1 -suffix_b 6 -hive_capacity 200 -logic_name family_blast_54 -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
+#
+# export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
+#
+# beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54 -sync
+#
+# beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54 -lsf_options '-R"select[comparatest2<500] rusage[comparatest2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_blast_54
 #
 # Otherwise carry on:
 
@@ -187,13 +208,6 @@ ls ../blast_in |wc -l
 # It is better to place the output files in a different directory to reduce the burden on the filesystem.
 # (The fewer files per directory the better).
 
-# BDir /data/blastdb/Ensembl/family_54/fasta
-# Ldir /lustre/scratch1/ensembl/lg4/families/family_54/fasta
-
-# lg4: the following looks like an important omission:
-#      But I wonder if the /data/blastdb/Ensembl/family_xx/fasta directory was needed in the first place?
-#
-# cp /data/blastdb/Ensembl/family_54/fasta/* /lustre/scratch1/ensembl/lg4/families/family_54/fasta/
 
 
 # make sure the $BLASTMAT points at the right directory (BEFORE EVERY LaunchBlast SUBMISSION):
