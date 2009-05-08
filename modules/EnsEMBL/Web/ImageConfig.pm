@@ -769,7 +769,7 @@ sub add_simple_feature {
       'description' => $data->{$key_2}{'description'},
       'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
       'renderers'   => [qw(off Off normal Normal)],
-      'strand'      => 'r'
+      'strand'      => $data->{$key_2}{'strand'} || 'r',
     }));
   }
 }
