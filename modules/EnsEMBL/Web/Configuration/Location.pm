@@ -405,16 +405,22 @@ sub _ajax_zmenu_view {
       my $this_assembly = $obj->species_defs->ASSEMBLY_NAME;
       my $alt_assembly = $obj->param('assembly');
       $caption = $alt_assembly.':'.$r;
+
+      #choose where to jump to
       if ($this_assembly eq 'VEGA') {
 	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $r);
       }
       elsif ($alt_assembly eq 'VEGA') {
 	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $r);
       }
+      else {
+      #TO DO - put URL to the latest archive site showing the other assembly (from mapping_session table)
+      }
+
       $panel->add_entry({ 'label' => 'Assembly: '.$alt_assembly, 'priority' => 100});
     }
     $panel->{'caption'} = $caption;
-    $panel->add_entry({ 'label' => $caption, 'link'  => $url, 'priority' => 50 });
+    $panel->add_entry({ 'label' => $r, 'link'  => $url, 'priority' => 50 });
   }
 }
 
