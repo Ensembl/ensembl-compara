@@ -33,6 +33,7 @@ sub init {
   $self->create_menus(
     'sequence'        => 'Sequence',
     'marker'          => 'Markers',
+    'trans_associated'=> 'Transcript Features',
     'transcript'      => 'Genes',
     'prediction'      => 'Prediction Transcripts',
     'protein_align'   => 'Protein alignments',
@@ -58,6 +59,8 @@ sub init {
     'information'     => 'Information',
     'options'         => 'Options'
   );
+
+#  warn $self->tree->dump('here');
 
 ## Note these tracks get added before the "auto-loaded tracks" get added...
   $self->add_tracks( 'sequence', 
