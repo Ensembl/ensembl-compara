@@ -71,9 +71,11 @@ sub init {
   $self->add_tracks( 'decorations',
     [ 'gc_plot',   '%GC',                  'gcplot',          { 'display' => 'normal',  'strand' => 'r', 'description' => 'Shows %age of Gs & Cs in region'  } ],
   );
-  if ($self->species_defs->ALTERNATIVE_ASSEMBLY) {
-    $self->add_tracks( 'misc_feature',
-      [ 'vega_assembly', 'Vega assembly', 'alternative_assembly', { 'display' => 'off',  'strand' => 'r',  'colourset' => 'alternative_assembly' ,  'description' => 'Track indicating Vega assembly'  } ]);
+  if ($self->species_defs->ALTERNATIVE_ASSEMBLIES) {
+    foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES}) {
+      $self->add_tracks( 'misc_feature',
+	[ "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', { 'display' => 'off',  'strand' => 'r',  'colourset' => 'alternative_assembly' ,  'description' => "Track indicating $alt_assembly assembly", 'assembly_name'=> $alt_assembly } ]);
+    }
   }
 
 ## Add in additional

@@ -45,10 +45,13 @@ sub init {
     [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary' } ],
     [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information'  } ],
   );
-  if ($self->species_defs->ALTERNATIVE_ASSEMBLY) {
-    $self->add_tracks( 'misc_feature',
-    [ 'vega_assembly', 'Vega assembly', 'alternative_assembly', { 'display' => 'off',  'strand' => 'f',  'colourset' => 'alternative_assembly' ,  'description' => 'Track indicating Vega assembly'  } ]);
+  if ($self->species_defs->ALTERNATIVE_ASSEMBLIES) {
+    foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES}) {
+      $self->add_tracks( 'misc_feature',
+	[ "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', { 'display' => 'off',  'strand' => 'r',  'colourset' => 'alternative_assembly' ,  'description' => "Track indicating $alt_assembly assembly", 'assembly_name'=> $alt_assembly } ]);
+    }
   }
+
   $self->load_tracks();
   $self->load_configured_das( 'strand' => 'r' );
 
