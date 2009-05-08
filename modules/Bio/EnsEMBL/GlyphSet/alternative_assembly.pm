@@ -13,7 +13,7 @@ sub features {
   my $this_slice = $self->{'container'};
 
   # set dnadb to 'vega' so that the assembly mapping is retrieved from there
-  if( $self->my_config( 'assembly_name' ) eq 'vega' ) {
+  if( $self->my_config( 'assembly_name' ) eq 'VEGA' ) {
     my $vega_dnadb = $reg->get_DNAAdaptor($species, "vega");
     $orig_group = $vega_dnadb->group;
     $reg->add_DNAAdaptor($species, "vega", $species, "vega");
