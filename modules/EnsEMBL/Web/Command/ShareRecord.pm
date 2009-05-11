@@ -17,7 +17,6 @@ sub process {
   my $object = $self->object;
 
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $accessor = lc($object->param('type')).'s';
 
   my $url = '/'.$object->data_species.'/';
   my $param = {

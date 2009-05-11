@@ -38,11 +38,12 @@ sub catch {
   ## Ignore exception actions
   my %exceptions = %{$self->get_exceptions};
   my $ignore = grep {$_ eq $ENV{'ENSEMBL_FUNCTION'}} @{$exceptions{'list'}};
+
   unless ($ignore) {
     my $user = $ENSEMBL_WEB_REGISTRY->get_user;
     my $type = $object->param('type') || $ENV{'ENSEMBL_ACTION'};
-    my $method = lc($type).'s';
-    my $record = $user->$method($object->param('id'));
+#    my $method = lc($type).'s';
+    my $record = $user->records($object->param('id')); 
     unless ($record) {
       $self->set_error_code('not_owner');
     }

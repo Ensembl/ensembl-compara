@@ -60,6 +60,7 @@ sub _embed_jalview {
       }
     }
   }
+  $file->save;
   
   return unless $outcount;
 

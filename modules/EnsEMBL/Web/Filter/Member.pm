@@ -23,7 +23,9 @@ sub BUILD {
 sub catch {
   my $self = shift;
   my $user  = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $group_id = $self->object->param('webgroup_id') || $self->object->param('group_id');
+  
+  ## TODO: finally decide which param to use
+  my $group_id = $self->object->param('webgroup_id') || $self->object->param('group_id') || $self->object->param('id');
   unless ($user->is_member_of($group_id)) {
     $self->set_error_code('not_member');
   }

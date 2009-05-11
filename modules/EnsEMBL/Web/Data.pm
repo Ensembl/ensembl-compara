@@ -23,6 +23,21 @@ __PACKAGE__->mk_classdata(cache_tags        => {});
 __PACKAGE__->mk_classdata('_type');
 
 
+
+##
+## Fix for add_trigger, so that same triggers wont be added twice
+##
+sub add_trigger{
+  my $proto = shift;
+  my @args  = @_;
+  my $when  = $args[0];
+  my $call  = $args[1];
+  
+  $proto->SUPER::add_trigger(@args)
+    unless grep { $call eq $_->[0] } Class::Trigger::__fetch_all_triggers($proto, $when);
+}
+
+
 ##
 ## Enhancement for our MySQLAdaptor (Class::DBI), which doesn't have new constructor by default
 ## arguments:
@@ -192,6 +207,9 @@ sub withdraw_data {
 sub fertilize_data {
   my $self = shift;
   my $data = $self->data || {};
+
+  return unless ref $data;
+
   foreach my $field (keys %{ $self->data_fields }) {
     $data->{$field} = $self->$field;
   }

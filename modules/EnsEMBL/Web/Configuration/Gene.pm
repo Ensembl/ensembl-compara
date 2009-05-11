@@ -585,9 +585,11 @@ sub _dump_tree_as_text{
   my $aio = Bio::AlignIO->new( -format => $format, -fh => IO::String->new(my $var) );
   $aio->write_aln( $align );
   print $file_fa $var;
-
+  $file_fa->save;
+  
   #and nh files
   print $file_nh $tree->newick_format("full_web");
+  $file_nh->save;
 
   return( $file_fa->URL, $file_nh->URL );
 }
@@ -595,7 +597,7 @@ sub _dump_tree_as_text{
 our $_JALVIEW_HTML_TMPL = qq(
 <applet code="jalview.bin.JalviewLite"
        width="140" height="35"
-       archive="%s/jalview/jalviewApplet.jar">
+       archive="%s/jalview/jalviewAppletOld.jar">
   <param name="file" value="%s">
   <param name="treeFile" value="%s">
   <param name="defaultColour" value="clustal">
@@ -605,7 +607,7 @@ sub _compara_tree_jalview_html {
   # Constructs the html needed to launch jalview for fasta and nh file urls
   my( $self, $url_fa, $url_nh ) = @_;
   my $url_site  = $self->object->species_defs->ENSEMBL_BASE_URL;
-  my $html = sprintf( $_JALVIEW_HTML_TMPL, $url_site, $url_fa, $url_nh );
+  my $html = sprintf( $_JALVIEW_HTML_TMPL, $url_site, $url_site.$url_fa, $url_site.$url_nh );
   return $html;
 }
 

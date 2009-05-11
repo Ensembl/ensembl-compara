@@ -146,7 +146,9 @@ sub get {
   ## Hits & Misses statistics
   if ($self->{hm_stats} && @tags) {
     my $suffix = $result ? '::HITS' : '::MISSES';
+    @tags = grep { $_ ne '' } @tags; 
     $self->incr("$_$suffix") for ('', @tags);
+    $self->incr("::TOTAL");
   }
 
   return $result;
@@ -163,7 +165,7 @@ sub incr {
     ##warn "incr [$key] = $result";
   } else {
     if ($self->add($key, '0000000001')) {
-      $self->add_tags($key, 'STATS');
+      $self->add_tags($key, $self->{namespace}, 'STATS');
       #my $result = $self->decr($key, 1000000000);
       ##warn "incr [$key] = $result (set)";
     }

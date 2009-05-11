@@ -27,7 +27,7 @@ sub content {
     );
   }
 
-  my @data = @{$object->get_external_data}; 
+  my @data = @{$object->get_external_data};
   unless (scalar @data >= 1) { return "We do not have any external data for this variation";}
   
   my $table_rows = table_data($object, \@data);
@@ -42,9 +42,9 @@ sub content {
     { 'key' => 'variant', 'title' => 'Associated variant', 'align' => 'left'},
     { 'key' => 'pvalue', 'title' => 'P value', 'align' => 'left'},
   );
-
+ 
   foreach my $row (values %$table_rows){
-    foreach ( @$row) { 
+    foreach ( @$row) {
       $table->add_row($_);
     }
   }
@@ -58,9 +58,9 @@ sub content {
 sub table_data { 
   my ($object, $external_data) = @_;
   my %rows;
-  foreach my $va (@$external_data){
-    my @data_row;   
-    my $disorder = $va->phenotype_description; 
+  foreach my $va (@$external_data){ 
+    my @data_row;
+    my $disorder = $va->phenotype_description;
     if (exists $rows{lc ($disorder)}) { 
       @data_row = @{ $rows{lc ($disorder)} };
       $disorder = "";
@@ -85,7 +85,7 @@ sub table_data {
       'variant'     => $variant_link,
       'pvalue'      => $pval,
     };
-    push @data_row, $row; 
+    push @data_row, $row;
     $rows{lc ($va->phenotype_description)} = \@data_row;
   } 
 

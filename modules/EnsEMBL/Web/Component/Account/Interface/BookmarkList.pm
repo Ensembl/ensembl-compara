@@ -76,9 +76,9 @@ sub content {
       $has_bookmarks = 1;
     }
     $html .= $table->render;
-    $html .= $self->_add_bookmark($referer);
   }
 
+  $html .= $self->_add_bookmark($referer);
 
   ## Get all bookmark records for this user's groups
   my %group_bookmarks = ();
