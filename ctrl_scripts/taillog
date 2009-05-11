@@ -45,8 +45,9 @@ BEGIN {
 use SiteDefs;
 
 
-my ($help, $do_access, $both);
+my ($help, $do_access, $both, $do_nginx);
 &GetOptions(
+  "nginx"   => \$do_nginx,
   "access"  => \$do_access,
   "both"    => \$both,
   "h"       => \$help,
@@ -73,6 +74,10 @@ Notes:
 
 my ($al) = split /\s+/, ( $SiteDefs::ENSEMBL_CUSTOMLOG );
 my $el = $SiteDefs::ENSEMBL_ERRORLOG;
+if( $do_nginx ) {
+  $al = $SiteDefs::ENSEMBL_LOGDIR.'/nginx.access.log';
+  $el = $SiteDefs::ENSEMBL_LOGDIR.'/nginx.error.log';
+}
 
 my $cmd = '';
 if( $both ) {
