@@ -1446,7 +1446,8 @@ sub add_decorations {
       'strand'        => 'x',
       'label_strand'  => 'r',
       'short_labels'  => 0,
-      'description'   => 'Cytogenetic bands',
+      'depth'         => 0,
+      'description'   => 'Unannotated regions',
       'colourset'     => 'annotation_status'
     }));
   }
