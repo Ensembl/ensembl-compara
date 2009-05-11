@@ -45,8 +45,8 @@ sub fetch_input {
     } else {
         die "Problem fetching the sequence with sequence_id='$sequence_id' from the DB";
     }
-
     $sth->finish();
+    $self->dbc->disconnect_if_idle();
 
     return 1;
 }
@@ -108,6 +108,7 @@ sub write_output {
     my $sth = $self->dbc->prepare( $sql );
     $sth->execute( $sequence_id, $rest );
     $sth->finish();
+    $self->dbc->disconnect_if_idle();
 
     return 1;
 }
