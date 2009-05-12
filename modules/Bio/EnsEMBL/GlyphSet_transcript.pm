@@ -255,7 +255,7 @@ sub render_transcripts {
           my @sorted_trans = sort {$a->length <=> $b->length} @{$vtranscripts};
           push @long_trans,(pop @sorted_trans);
         }
-            
+
         if( $Config->{'previous_species'} ) {
           my( $psid, $pid, $href ) = $self->get_homologous_peptide_ids_from_gene( $gene_stable_id, $Config->{'previous_species'} );
           push @{$TAGS{$psid}}, map { $Config->{'slice_id'}. "#$_#$pid" } @{$href};
@@ -298,7 +298,11 @@ sub render_transcripts {
 								   : undef 
 								   )
                                                                  : undef
-								 ;
+								   ;
+      # use another highlight colour if the trans has got a CCDS attrib
+      if ($transcript->get_all_Attributes('ccds')->[0]) {
+	$hilight = $self->my_colour('ccds_hi') || 'lightblue1';
+      }
 
       ($colour,$label) = ('orange','Other') unless $colour;
       $used_colours{ $label } = $colour;
@@ -311,9 +315,9 @@ sub render_transcripts {
         }
       }
       foreach( @GENE_TAGS) {
-      if ($transcript->stable_id eq $tsid) {
-              $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col2, 'line', $join_z ) ;
-          }
+	if ($transcript->stable_id eq $tsid) {
+	  $self->join_tag( $Composite2, $_, 0.5, 0.5 , $join_col2, 'line', $join_z ) ;
+	}
       }
       for(my $i = 0; $i < @exons; $i++) {
         my $exon = @exons[$i];
