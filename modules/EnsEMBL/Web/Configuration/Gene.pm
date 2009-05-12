@@ -81,7 +81,7 @@ sub populate_tree {
 
 ## Compara tree
   my $tree_node = $self->create_node(
-    'Compara_Tree', "Gene Tree",
+    'Compara_Tree', "Gene Tree (image)",
     [qw(image        EnsEMBL::Web::Component::Gene::ComparaTree)],
     { 'availability' => 'gene database:compara core' }
   );
