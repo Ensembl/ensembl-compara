@@ -52,12 +52,14 @@ sub option {
   ### Gets or sets an individual option
   my ($self, $param, $value) = @_;
   if ($param) {
+    my $hashref = $self->get_options || {};
     if ($value) {
-      my $hashref = $self->get_options;
       $hashref->{$param} = $value;
       $self->set_options($hashref);
+      return $self->get_options->{ $param };
+    } else {
+      return $hashref->{ $param };
     }
-    return $self->get_options->{$param};
   }
 }
 

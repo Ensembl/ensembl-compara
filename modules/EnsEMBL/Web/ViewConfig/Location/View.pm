@@ -19,7 +19,7 @@ sub init {
     context       1000
   ));
   $view_config->add_image_configs({qw(
-    contigviewtop    nodas
+    contigviewtop    das
     contigviewbottom das
   )});
   $view_config->default_config = 'contigviewbottom';

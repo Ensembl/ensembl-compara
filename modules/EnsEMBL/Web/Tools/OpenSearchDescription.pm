@@ -3,12 +3,14 @@ package EnsEMBL::Web::Tools::OpenSearchDescription;
 use strict;
 
 sub create {
-  ### This is to try and stop search engines killing e! - it gets created each
-  ### time on server startup and gets placed in the first directory in the htdocs
-  ### tree.
   ### Returns: none
   my $sd = shift;
-  my $root = $SiteDefs::ENSEMBL_HTDOCS_DIRS[0];
+  my $T = $sd->ENSEMBL_HTDOCS_DIRS||[];
+  
+  my $root = $T->[0];
+
+  return unless $root;
+
   my $template = sprintf '<?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription
       xmlns="http://a9.com/-/spec/opensearch/1.1/">

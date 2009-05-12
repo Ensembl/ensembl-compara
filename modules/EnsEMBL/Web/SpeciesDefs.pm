@@ -197,6 +197,7 @@ sub get_config {
   my $S = "SiteDefs::".$var;
   return ${$S} if defined ${$S};
 
+  return \@{$S} if defined @{$S};
   warn "UNDEF ON $var [$species]. Called from ", (caller(1))[1] , " line " , (caller(1))[2] , "\n" if $ENSEMBL_DEBUG_FLAGS & 4;
   return undef;
 }

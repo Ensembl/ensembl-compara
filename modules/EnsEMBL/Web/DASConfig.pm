@@ -273,6 +273,7 @@ sub _guess_views {
 
   push @views, qw(
     cytoview
+    contigviewtop
     contigviewbottom
     gene_summary
   ) if $positional;

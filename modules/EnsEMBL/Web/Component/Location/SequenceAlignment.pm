@@ -19,7 +19,7 @@ sub caption {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-  my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $threshold = 50000;
   
   if ($object->length > $threshold) {
     return $self->_warning(
