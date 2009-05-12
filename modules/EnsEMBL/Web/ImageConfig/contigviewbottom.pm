@@ -60,8 +60,6 @@ sub init {
     'options'         => 'Options'
   );
 
-#  warn $self->tree->dump('here');
-
 ## Note these tracks get added before the "auto-loaded tracks" get added...
   $self->add_tracks( 'sequence', 
     [ 'contig',    'Contigs',              'stranded_contig', { 'display' => 'normal',  'strand' => 'r', 'description' => 'Track showing underlying assembly contigs'  } ],
@@ -77,15 +75,19 @@ sub init {
   if ($self->species_defs->ALTERNATIVE_ASSEMBLIES) {
     foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES}) {
       $self->add_tracks( 'misc_feature',
-	[ "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', { 'display' => 'off',  'strand' => 'r',  'colourset' => 'alternative_assembly' ,  'description' => "Track indicating $alt_assembly assembly", 'assembly_name'=> $alt_assembly } ]);
+	[ "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', { 'display' => 'off',  'strand' => 'f',  'colourset' => 'alternative_assembly' ,  'description' => "Track indicating $alt_assembly assembly", 'assembly_name'=> $alt_assembly } ]);
     }
   }
+  #look for clone versions from other sites
+  $self->add_tracks( 'misc_feature',
+	[ 'v_clones', 'Vega clones', 'alternative_clones',     { 'display' => 'normal', 'strand' => 'f', 'description' => 'Vega clones', 'colourset' => 'alternative_clones', 'das_source' => 'das_VEGACLONES' } ]);
+  $self->add_tracks( 'misc_feature',
+	[ 'e_clones', 'Ensembl clones', 'alternative_clones',     { 'display' => 'normal', 'strand' => 'f', 'description' => 'Ensembl clones', 'colourset' => 'alternative_clones', 'das_source' => 'das_ENSEMBLCLONES' } ]);
 
 ## Add in additional
   $self->load_tracks;
   $self->load_configured_das;
 
-#  foreach ( $self->get_node('variation')->descendants ) { $_->set('style','box'); $_->set('depth',2000); $_->set('bump_Width',1); }
 
 ## These tracks get added after the "auto-loaded tracks get addded...
 
