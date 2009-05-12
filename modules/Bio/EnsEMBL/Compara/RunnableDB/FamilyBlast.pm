@@ -26,27 +26,30 @@ sub fetch_input {
     my $self = shift @_;
 
     my $sequence_id             = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $minibatch               = $self->param('minibatch')   || 1;
 
     my $sql = qq {
-        SELECT m.stable_id, m.description, s.sequence
+        SELECT m.sequence_id, m.stable_id, m.description, s.sequence
           FROM member m, sequence s
-         WHERE s.sequence_id = ?
+         WHERE s.sequence_id BETWEEN ? AND ?
            AND m.sequence_id=s.sequence_id
       GROUP BY m.sequence_id
+      ORDER BY m.sequence_id
     };
 
     my $sth = $self->dbc->prepare( $sql );
-    $sth->execute( $sequence_id );
+    $sth->execute( $sequence_id, $sequence_id+$minibatch-1 );
 
-    if( my ($stable_id, $description, $seq) = $sth->fetchrow() ) {
+    my @fasta_list = ();
+    while( my ($seq_id, $stable_id, $description, $seq) = $sth->fetchrow() ) {
         $seq=~ s/(.{72})/$1\n/g;
         chomp $seq;
-        $self->param('fasta', ">$stable_id $description\n$seq\n");
-    } else {
-        die "Problem fetching the sequence with sequence_id='$sequence_id' from the DB";
+        push @fasta_list, ">$stable_id $description\n$seq\n";
     }
     $sth->finish();
-    $self->dbc->disconnect_if_idle();
+    $self->dbc->disconnect_when_inactive(1);
+
+    $self->param('fasta_list', \@fasta_list);      # store it in a parameter
 
     return 1;
 }
@@ -56,6 +59,7 @@ sub run {
 
     my $fastadb                 = $self->param('fastadb') || die "'fastadb' is an obligatory parameter, please set it in the input_id hashref";
     my $tabfile                 = $self->param('tabfile') || die "'tabfile' is an obligatory parameter, please set it in the input_id hashref";
+    my $minibatch               = $self->param('minibatch') || 1;
 
     my $blastmat_directory      = $self->param('blastmat_dir')  || '/software/ensembl/compara/blast-2.2.6/data';
     my $blastall_executable     = $self->param('blastall_exec') || '/software/ensembl/compara/blast-2.2.6/blastall';
@@ -64,51 +68,54 @@ sub run {
 
     $ENV{BLASTMAT} = $blastmat_directory;
 
-    open2(my $from_blast, my $to_blast, "$blastall_executable -d $fastadb -p blastp -e 0.00001 -v $tophits -b 0")
-        || die "could not execute $blastall_executable, returned error code: $!";
+    my $fasta_listp = $self->param('fasta_list');
 
-    print $to_blast $self->param('fasta');
+    open2(my $from_blast, my $to_blast, 
+                "$blastall_executable -d $fastadb -p blastp -e 0.00001 -v $tophits -b 0"
+    ) || die "could not execute $blastall_executable, returned error code: $!";
+
+    print $to_blast @$fasta_listp;
     close $to_blast;
 
-    open2(my $from_parser, my $to_parser, "$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tabfile -")
-        || die "could not execute $blast_parser_executable, returned error code: $!";
+    open2(my $from_parser, my $to_parser, 
+               "$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tabfile -"
+    ) || die "could not execute $blast_parser_executable pipe, returned error code: $!";
 
-    while(my $blast_output = <$from_blast>) { # isn't there a direct way of coupling file handles?
-        print $to_parser $blast_output;
+    while(my $line = <$from_blast>) {
+        print $to_parser $line;
+
+        chomp $line; print "FROMBLAST [$line]\n";
     }
     close $from_blast;
     close $to_parser;
 
-    my $parsed_line = <$from_parser>;
-    close $from_parser;
+    my %matrix_hash = ();
+    while(my $parsed_line = <$from_parser>) {
+        if($parsed_line=~/^(\d+)\s(.*)$/) {
+            my ($id, $rest) = ($1, $2);
 
-    if($parsed_line=~/^(\d+)\s(.*)$/) {
-        my ($id, $rest) = ($1, $2);
-
-        my $sequence_id = $self->param('sequence_id');
-        if($id eq $sequence_id) {
-            $self->param('rest', $rest);
+            $matrix_hash{$id} = $rest;
         } else {
-            die "sequence_id='$sequence_id', but the blast parser returned '$id', please investigate";
+            die "Got something strange from the blast parser ('$parsed_line'), please investigate";
         }
-    } else {
-        die "Got something wrong from the blast parser ('$parsed_line'), please investigate";
     }
 
+    $self->param('matrix_hash', \%matrix_hash);        # store it in a parameter
     return 1;
 }
 
 sub write_output {
     my $self = shift @_;
 
-    my $sequence_id             = $self->param('sequence_id');
-    my $rest                    = $self->param('rest');
+    my $matrix_hashp = $self->param('matrix_hash');
 
     my $sql = "REPLACE INTO mcl_matrix (id, rest) VALUES (?, ?)";
     my $sth = $self->dbc->prepare( $sql );
-    $sth->execute( $sequence_id, $rest );
+
+    while(my($id, $rest) = each %$matrix_hashp) {
+        $sth->execute( $id, $rest );
+    }
     $sth->finish();
-    $self->dbc->disconnect_if_idle();
 
     return 1;
 }
