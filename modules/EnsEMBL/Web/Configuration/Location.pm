@@ -401,6 +401,8 @@ sub _ajax_zmenu_view {
 	'type' => 'Location',
 	'action' => $action});
     my $caption = $r;
+    my $link_title = $r;
+    #code for alternative asembly zemnu
     if ($obj->param('assembly')) {
       my $this_assembly = $obj->species_defs->ASSEMBLY_NAME;
       my $alt_assembly = $obj->param('assembly');
@@ -409,9 +411,11 @@ sub _ajax_zmenu_view {
       #choose where to jump to
       if ($this_assembly eq 'VEGA') {
 	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $r);
+	$link_title = 'Jump to Ensembl';
       }
       elsif ($alt_assembly eq 'VEGA') {
 	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $r);
+	$link_title = 'Jump to VEGA';
       }
       else {
       #TO DO - put URL to the latest archive site showing the other assembly (from mapping_session table)
@@ -419,8 +423,24 @@ sub _ajax_zmenu_view {
 
       $panel->add_entry({ 'label' => 'Assembly: '.$alt_assembly, 'priority' => 100});
     }
+
+    #code for alternative clones zmenu
+    elsif (my $status = $obj->param('status')) {
+      ($caption) = split ':', $r;
+      if ( $obj->species_defs->ASSEMBLY_NAME eq 'VEGA') {
+	$link_title = 'Jump to Ensembl';
+	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $r);
+      }
+      else {
+	$link_title = 'Jump to Vega';
+	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $r);
+      }
+      $status =~ s/_clone/ version/g;
+      $panel->add_entry({ 'label' => 'Status: '.$status, 'priority' => 100});
+    }
+
     $panel->{'caption'} = $caption;
-    $panel->add_entry({ 'label' => $r, 'link'  => $url, 'priority' => 50 });
+    $panel->add_entry({ 'label' => $link_title, 'link'  => $url, 'priority' => 50 });
   }
 }
 
