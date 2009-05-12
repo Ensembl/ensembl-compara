@@ -78,11 +78,15 @@ sub init {
 	[ "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', { 'display' => 'off',  'strand' => 'f',  'colourset' => 'alternative_assembly' ,  'description' => "Track indicating $alt_assembly assembly", 'assembly_name'=> $alt_assembly } ]);
     }
   }
-  #look for clone versions from other sites
-  $self->add_tracks( 'misc_feature',
-	[ 'v_clones', 'Vega clones', 'alternative_clones',     { 'display' => 'normal', 'strand' => 'f', 'description' => 'Vega clones', 'colourset' => 'alternative_clones', 'das_source' => 'das_VEGACLONES' } ]);
-  $self->add_tracks( 'misc_feature',
-	[ 'e_clones', 'Ensembl clones', 'alternative_clones',     { 'display' => 'normal', 'strand' => 'f', 'description' => 'Ensembl clones', 'colourset' => 'alternative_clones', 'das_source' => 'das_ENSEMBLCLONES' } ]);
+  #show versions of clones from other sites
+  if ($self->species_defs->das_VEGACLONES) {
+    $self->add_tracks( 'misc_feature',
+	[ 'v_clones', 'Vega clones', 'alternative_clones',    { 'display' => 'off', 'strand' => 'f', 'description' => 'Vega clones', 'colourset' => 'alternative_clones', 'das_source' => 'das_VEGACLONES' } ]);
+  }
+  if ($self->species_defs->das_ENSEMBLCLONES) {
+    $self->add_tracks( 'misc_feature',
+	[ 'e_clones', 'Ensembl clones', 'alternative_clones', { 'display' => 'off', 'strand' => 'f', 'description' => 'Ensembl clones', 'colourset' => 'alternative_clones', 'das_source' => 'das_ENSEMBLCLONES' } ]);
+  }
 
 ## Add in additional
   $self->load_tracks;
