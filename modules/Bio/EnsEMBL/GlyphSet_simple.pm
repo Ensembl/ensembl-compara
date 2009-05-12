@@ -97,7 +97,7 @@ sub _init {
   my $max_length     = $self->my_config( 'threshold' )            || 200000000;
   my $navigation     = $self->my_config( 'navigation' )           || 'on';
   my $max_length_nav = $self->my_config( 'navigation_threshold' ) || 15000000;
-  
+
   if( $slice_length > $max_length *1010 ) {
     $self->errorTrack( $self->my_config('caption')." only displayed for less than $max_length Kb.");
     return;
@@ -106,13 +106,13 @@ sub _init {
   ## Decide whether we are going to include navigation (independent of switch) 
   $navigation = ($navigation eq 'on') && ($slice_length <= $max_length_nav *1010);
 
-  ## Set up bumping bitmap    
+  ## Set up bumping bitmap
 
   ## Get information about bp/pixels    
   my $pix_per_bp     = $self->scalex;
   my $bitmap_length  = int($slice->length * $pix_per_bp);
   ## And the colours
-  my $dep            = $self->my_config('depth')||100000;
+  my $dep            = defined($self->my_config('depth')) ? $self->my_config('depth') : 100000;
   $self->_init_bump( undef, $dep );
 
   my $flag           = 1;
@@ -135,7 +135,7 @@ sub _init {
   my $previous_end   = -1e9 ;
   my ($T,$C,$C1) = 0;
   my $optimizable = $self->my_config('optimizable') && $dep<1 ; #at the moment can only optimize repeats...
-  
+
   my $features = $self->features(); 
 
   unless(ref($features)eq'ARRAY') {
@@ -162,6 +162,7 @@ sub _init {
     ## Check start are not outside VC.... ##
     my $start = $f->start();
     next if $start>$slice_length; ## Skip if totally outside VC
+
     $start = 1 if $start < 1;  
     ## Check end are not outside VC.... ##
     my $end   = $f->end();   
@@ -688,7 +689,7 @@ sub _init {
 
     $self->highlight($f, $composite, $pix_per_bp, $h, 'highlight1');
   }
-  # warn( ref($self)," $C1 out of $C out of $T features drawn\n" );
+#   warn( ref($self)," $C1 out of $C out of $T features drawn\n" );
   ## No features show "empty track line" if option set....  ##
   $self->no_features() if $flag; 
 }
