@@ -66,8 +66,40 @@ sub run {
     my $blastall_executable     = $self->param('blastall_exec') || '/software/ensembl/compara/blast-2.2.6/blastall';
     my $blast_parser_executable = $self->param('deblast_exec')  || '/nfs/acari/avilella/bin/mcxdeblast';
     my $tophits                 = $self->param('tophits')       || 250;
+    my $keep_blast_output       = $self->param('keep_blast_output') || 0;
+
+    my $fasta_listp             = $self->param('fasta_list'); # set by fetch_input()
 
     $ENV{BLASTMAT} = $blastmat_directory;
+
+    my $interfile = '/tmp/family_blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
+
+    open( BLAST, "| $blastall_executable -d $fastadb -p blastp -e 0.00001 -v $tophits -b 0 >$interfile")
+        || die "could not execute $blastall_executable, returned error code: $!";
+    
+    print BLAST @$fasta_listp;
+    close BLAST;
+
+    my %matrix_hash = ();
+    open( PARSER, "$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tabfile $interfile |")
+        || die "could not execute $blast_parser_executable, returned error code: $!";
+
+    while(my $line=<PARSER>) {
+        if($line=~/^(\d+)\s(.*)$/) {
+            my ($id, $rest) = ($1, $2);
+
+            $matrix_hash{$id} = $rest;
+        } else {
+            die "Got something strange from the blast parser ('$line'), please investigate";
+        }
+    }
+    close PARSER;
+
+    unless($keep_blast_output) {
+        unlink $interfile;
+    }
+
+=comment
 
     open2(my $from_blast, my $to_blast, 
                 "$blastall_executable -d $fastadb -p blastp -e 0.00001 -v $tophits -b 0"
@@ -77,9 +109,6 @@ sub run {
                "$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tabfile -"
     ) || die "could not execute $blast_parser_executable pipe, returned error code: $!";
 
-    my $fasta_listp = $self->param('fasta_list');
-    my %matrix_hash = ();
-
     my $r_all = new IO::Select( $from_blast, $from_parser );
     my $w_all = new IO::Select( $to_blast, $to_parser );
 
@@ -87,11 +116,6 @@ sub run {
     my $from_blast_no  = fileno $from_blast;
     my $to_parser_no   = fileno $to_parser;
     my $from_parser_no = fileno $from_parser;
-
-    #warn "*** To_blast:    $to_blast_no\n";
-    #warn "*** From_blast:  $from_blast_no\n";
-    #warn "*** To_parser:   $to_parser_no\n";
-    #warn "*** From_parser: $from_parser_no\n";
 
     do {
         my ($r_ready, $w_ready, $e_ready) = IO::Select->select($r_all, $w_all, undef, undef);
@@ -138,8 +162,9 @@ sub run {
         }
 
     } while(scalar(keys %matrix_hash) < $minibatch);
-
     close $from_parser;
+
+=cut
 
     $self->param('matrix_hash', \%matrix_hash);        # store it in a parameter
     return 1;
