@@ -83,7 +83,6 @@ sub content {
     my @ordered_slices = sort { $a->[0] cmp $b->[0] } map { [ ($_->can('display_Slice_name') ? $_->display_Slice_name : $config->{'species'}), $_ ] } @$slice_array;
     
     $config->{'ref_slice_name'} = $ref_slice->get_individuals('reference');
-    $config->{'ref_slice_seq'} = [ split (//, $ref_slice_obj->seq) ];
     
     foreach (@ordered_slices) {
       my $slice = $_->[1];
@@ -95,6 +94,7 @@ sub content {
       
       if ($_->[0] eq $config->{'ref_slice_name'}) {
         unshift (@{$config->{'slices'}}, $sl); # Put the reference slice at the top
+        $config->{'ref_slice_seq'} = [ split (//, $_->[1]->seq) ];
       } else {
         push (@{$config->{'slices'}}, $sl);
       }
