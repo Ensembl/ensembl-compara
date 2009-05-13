@@ -507,6 +507,7 @@ sub get_SimpleAlign {
 	}		
 
 	my $genomic_align_block_adaptor = $self->adaptor->db->get_GenomicAlignBlock;
+	$self->start(1) if $self->start <= 0;
 	my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
 		$orig_mlss, $self->slice->sub_Slice($self->start, $self->end, $self->slice->strand));
 
