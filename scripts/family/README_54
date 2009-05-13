@@ -168,7 +168,13 @@ perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl 
 ##############################
 # Let's the module instead of the 'SystemCmd' interface for running scripts:
 #
-# /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54 -input_id '{ "sequence_id" => "$suffix" }' -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.pep", "tabfile" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.tab" }' -suffix_a 1 -suffix_b 6 -hive_capacity 200 -logic_name family_blast_54 -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
+# /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54 -input_id '{ "sequence_id" => "$suffix" }' -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.pep", "tabfile" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.imitab" }' -suffix_a 1 -suffix_b 6 -hive_capacity 200 -logic_name family_blast_54 -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
+#
+#
+# EXPERIMENTAL (loading in mini-batches):
+#
+# /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54 -input_id '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.pep", "tabfile" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.imitab" }' -suffix_a 200000 -suffix_b 201000 -step 45 -hive_capacity 200 -logic_name family_blast_54a -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
+#
 #
 # export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
 #
