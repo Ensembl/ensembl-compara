@@ -76,7 +76,7 @@ sub new {
       }
       #$EW_Glyphset->render_normal();
       $EW_Glyphset->render();
-      push @glyphsets,  $EW_Glyphset;
+      push @glyphsets,  $EW_Glyphset if @{$EW_Glyphset->{'glyphs'} || []};
       $chr_glyphset_counts{$chr}++;
     }
   }
