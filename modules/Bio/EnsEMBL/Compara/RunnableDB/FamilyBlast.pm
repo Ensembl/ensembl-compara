@@ -3,6 +3,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast;
 use strict;
 use FileHandle;
 use IPC::Open2;
+use IO::Select;
 
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -68,37 +69,77 @@ sub run {
 
     $ENV{BLASTMAT} = $blastmat_directory;
 
-    my $fasta_listp = $self->param('fasta_list');
-
     open2(my $from_blast, my $to_blast, 
                 "$blastall_executable -d $fastadb -p blastp -e 0.00001 -v $tophits -b 0"
     ) || die "could not execute $blastall_executable, returned error code: $!";
-
-    print $to_blast @$fasta_listp;
-    close $to_blast;
 
     open2(my $from_parser, my $to_parser, 
                "$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tabfile -"
     ) || die "could not execute $blast_parser_executable pipe, returned error code: $!";
 
-    while(my $line = <$from_blast>) {
-        print $to_parser $line;
-
-        chomp $line; print "FROMBLAST [$line]\n";
-    }
-    close $from_blast;
-    close $to_parser;
-
+    my $fasta_listp = $self->param('fasta_list');
     my %matrix_hash = ();
-    while(my $parsed_line = <$from_parser>) {
-        if($parsed_line=~/^(\d+)\s(.*)$/) {
-            my ($id, $rest) = ($1, $2);
 
-            $matrix_hash{$id} = $rest;
-        } else {
-            die "Got something strange from the blast parser ('$parsed_line'), please investigate";
+    my $r_all = new IO::Select( $from_blast, $from_parser );
+    my $w_all = new IO::Select( $to_blast, $to_parser );
+
+    my $to_blast_no    = fileno $to_blast;
+    my $from_blast_no  = fileno $from_blast;
+    my $to_parser_no   = fileno $to_parser;
+    my $from_parser_no = fileno $from_parser;
+
+    #warn "*** To_blast:    $to_blast_no\n";
+    #warn "*** From_blast:  $from_blast_no\n";
+    #warn "*** To_parser:   $to_parser_no\n";
+    #warn "*** From_parser: $from_parser_no\n";
+
+    do {
+        my ($r_ready, $w_ready, $e_ready) = IO::Select->select($r_all, $w_all, undef, undef);
+        my %is_ready = map { ((fileno $_) => 1) } (($r_ready ? @$r_ready : ()),($w_ready ? @$w_ready : ()));
+
+            # let's start from the end:
+        if($is_ready{fileno $from_parser}) {
+            #warn "*** Parser is ready to produce";
+            my $parsed_line = <$from_parser>;
+            #warn "read the following line: $parsed_line";
+
+            if($parsed_line=~/^(\d+)\s(.*)$/) {
+                my ($id, $rest) = ($1, $2);
+
+                $matrix_hash{$id} = $rest;
+                #warn "*** There are now ".keys(%matrix_hash). " lines in the matrix description";
+            } else {
+                die "Got something strange from the blast parser ('$parsed_line'), please investigate";
+            }
         }
-    }
+        if($is_ready{$from_blast_no} and $is_ready{$to_parser_no}) {
+            #warn "*** Blast is ready to produce, Parser is ready to read";
+            if(my $line = <$from_blast>) {
+                #warn "*** Line has been read from Blast";
+                print $to_parser $line;
+            } else {
+                #warn "*** Looks like Blast doesn't want to give us any more data, closing file number $from_blast_no";
+                $r_all->remove($from_blast);
+                close $from_blast;
+                #warn "*** Since there is no data, we are also closing the Parser input, file number $to_parser_no";
+                $w_all->remove($to_parser);
+                close $to_parser;
+            }
+        }
+        if($is_ready{$to_blast_no}) {
+            #warn "*** Blast is ready to read";
+            print $to_blast (shift @$fasta_listp);
+            #warn "*** One more sequence given to Blast";
+            if(! @$fasta_listp) {
+                #warn "*** There will be no more sequences to give Blast, closing the file number $to_blast_no";
+                $w_all->remove($to_blast);
+                close $to_blast;
+            }
+        }
+
+    } while(scalar(keys %matrix_hash) < $minibatch);
+
+    close $from_parser;
 
     $self->param('matrix_hash', \%matrix_hash);        # store it in a parameter
     return 1;
