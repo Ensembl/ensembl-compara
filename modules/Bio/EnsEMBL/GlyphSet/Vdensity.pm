@@ -21,18 +21,6 @@ sub _init {
   my $features = 0;
   my $max_value = 0;
 
-  #get the maximum value from all shared types if we want to scale across multiple tracks
-  if ($self->my_config('scale_all')) {
-    foreach my $sv (@{ $Config->get_parameter('scale_values') })  {
-#      if (grep {$sv eq $_->{'key'}} @objs) {
-	my $density = $density_adapt->fetch_Featureset_by_Slice($chr_slice, $sv, 150, 1);
-	my $this_max_value = $density->max_value;
-	$max_value = $this_max_value if $this_max_value > $max_value;
- #     }
-    }
-  }
-
-
 ## Pass one - get all the densities from the database...
   foreach(@objs) {
     $_->{'density'}   = $_->{'key'} ? $density_adapt->fetch_Featureset_by_Slice( $chr_slice, $_->{'key'}, 150, 1 ) : undef;
@@ -42,6 +30,15 @@ sub _init {
     $features += $_->{'density'}->size;
   }
   return unless $max_value;
+
+  #get the maximum value from all defined tracks if we want to scale across multiple tracks
+  if ($self->my_config('scale_all')) {
+    foreach my $sv (@{ $Config->get_parameter('scale_values') })  {
+      my $density = $density_adapt->fetch_Featureset_by_Slice($chr_slice, $sv, 150, 1);
+      my $this_max_value = $density->max_value;
+      $max_value = $this_max_value if $this_max_value > $max_value;
+    }
+  }
 
 ## Pass two - if they are all on the same scale - set scale factor to ratio with highest value..
 
@@ -60,6 +57,9 @@ sub _init {
   }
 
 ## Pass four - render the features if they exist!!
+
+
+#return undef unless @objs;
 
   foreach my $o (@objs) {
     my @a = @{$o->{'values'}||[]};
