@@ -148,7 +148,7 @@ sub get_sequence_data {
         
         foreach my $r ($st..$en) {               
           $mk->{'variations'}->{$r-1}->{'alleles'} .= $alleles;
-          $mk->{'variations'}->{$r-1}->{'url_params'} .= "source=" . $source . ";snp=" . $variation_name;
+          $mk->{'variations'}->{$r-1}->{'url_params'} .= "source=" . $source . ";snp=" . $variation_name. ";";
           $mk->{'variations'}->{$r-1}->{'transcript'} = 1;
           
           my $url_params = $mk->{'variations'}->{$r-1}->{'url_params'};
