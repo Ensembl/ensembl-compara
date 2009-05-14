@@ -36,7 +36,7 @@ BEGIN {
         warn "ENSEMBL_HTDOCS_DIR $dir is not readable\n";
       }
     } else {
-       warn "ENSEMBL_HTDOCS_DIR $dir does not exist\n";
+#       warn "ENSEMBL_HTDOCS_DIR $dir does not exist\n";
     }
   }
 };
