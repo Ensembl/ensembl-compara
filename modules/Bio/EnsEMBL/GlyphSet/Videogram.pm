@@ -23,7 +23,7 @@ sub _init {
   my $col   = undef;
   my $white = 'white';
   my $black = 'black';
-  my $bg    = $self->get_parameter( 'bgcolor');
+  my $bg    = 'background2';
   my $red   = 'red';
 
   $self->{'pix_per_bp'}     = $i_w/$c_w;
