@@ -76,8 +76,15 @@ sub new {
       }
       #$EW_Glyphset->render_normal();
       $EW_Glyphset->render();
-      push @glyphsets,  $EW_Glyphset if @{$EW_Glyphset->{'glyphs'} || []};
-      $chr_glyphset_counts{$chr}++;
+
+      if ( @{$EW_Glyphset->{'glyphs'}||[]}) {
+	push @glyphsets,  $EW_Glyphset;
+	$chr_glyphset_counts{$chr}++;
+      }
+      elsif (!$row_config->get('hide_empty')) {
+	push @glyphsets,  $EW_Glyphset;
+	$chr_glyphset_counts{$chr}++;
+      }
     }
   }
 
@@ -197,6 +204,7 @@ sub render {
   ########## build the name/type of render object we want
   my $renderer_type = qq(Bio::EnsEMBL::VRenderer::$type);
   ########## dynamic require of the right type of renderer
+
   return unless $self->dynamic_use( $renderer_type );
 
   ########## big, shiny, rendering 'GO' button
