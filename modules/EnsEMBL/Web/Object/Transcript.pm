@@ -961,23 +961,6 @@ sub translation_object {
   return $self->{'data'}{'_translation'};
 }
 
-=head2 get_db
-
- Arg[1]      : none
- Example     : $db = $transdata->get_db
- Description : Gets the database name used to create the object
- Return type : string
-                a database type (core, est, snp, etc.)
-
-=cut
-
-# need call in API
-sub get_db {
-  my $self = shift;
-  my $db = $self->core_objects->{'parameters'}{'db'} || $self->param('db') || 'core';
-  return $db eq 'est' ? 'otherfeatures' : $db;
-}
-
 =head2 db_type
 
  Arg[1]      : none
