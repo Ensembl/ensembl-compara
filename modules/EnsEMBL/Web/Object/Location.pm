@@ -43,6 +43,8 @@ sub availability {
   $hash->{'has_LD'} =   exists $self->species_defs->databases->{'DATABASE_VARIATION'} && 
     $self->param('opt_pop') &&
     $self->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'} ? 1 : 0;
+    my $rows = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'};
+  $hash->{'has_markers'} = $self->table_info( $self->get_db, 'marker_feature' )->{'rows'} ? 1 : 0;
   return $hash;
 }
 
