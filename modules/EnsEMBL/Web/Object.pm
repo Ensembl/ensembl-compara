@@ -104,6 +104,12 @@ sub get_adaptor {
   return $adaptor;
 }
 
+#Gets the database name used to create the object
+sub get_db {
+  my $self = shift;
+  my $db = $self->param('db') || 'core';
+  return $db eq 'est' ? 'otherfeatures' : $db;
+}
 
 sub dataobj { 
 ### Deprecated
