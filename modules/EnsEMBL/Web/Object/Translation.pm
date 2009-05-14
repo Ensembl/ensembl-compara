@@ -193,27 +193,6 @@ sub protein{
 
 #----------------------------------------------------------------------
 
-=head2 get_db
-
- Arg[1]         : none
- Example     : $db = $pepdata->get_db
- Description : Gets the database name used to create the object
- Return type : string
-                a database type (core, est, snp, etc.)
-
-=cut
-
-sub get_db {
-    my $self = shift;
-    my $T = $self->param('db') || 'core';    
-    $T = 'otherfeatures' if $T eq 'est';
-    return $T;
-}
-
-#----------------------------------------------------------------------
-
-#----------------------------------------------------------------------
-
 =head2 db_type
 
  Arg[1]         : none
