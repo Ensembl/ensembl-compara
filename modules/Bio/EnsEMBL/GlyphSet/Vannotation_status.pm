@@ -15,21 +15,18 @@ sub _init {
 
   my @features;
   push @features,
-    @{ $chr_slice->get_all_MiscFeatures('NoAnnotation') },
-    @{ $chr_slice->get_all_MiscFeatures('CORFAnnotation') };
+    @{ $chr_slice->get_all_MiscFeatures('NoAnnotation') };
 
   ## get configuration
-  my $tag_pos = $self->{'config'}->get($self->check, 'tag_pos');
+  my $tag_pos = $self->my_config('tag_pos');
   my %colour = (
     'NoAnnotation'      => 'gray75',
-    'CORFAnnotation'    => 'EEEEFF',
   );
 
   ## draw the glyphs
  F:
   foreach my $f (@features) {
     my ($ms) = @{ $f->get_all_MiscSets('NoAnnotation') };
-    ($ms) = @{ $f->get_all_MiscSets('CORFAnnotation') } unless $ms;
 
     #set length of feature to the equivalent of 1 pixel if it's less than 1 pixel
     my $f_length = $f->end - $f->start;
