@@ -45,7 +45,7 @@ sub content {
   if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     my $base_url = qq{/@{[$object->species]}/Component/$ENV{'ENSEMBL_TYPE'}/Web/Compara_Alignments/sub_slice?padding=$padding;length=$slice_length};
-        
+   
     $html = $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {    
     $html = $self->content_sub_slice($slice, $slices, $warnings); # Direct call if the sequence length is short enough
@@ -79,7 +79,7 @@ sub content_sub_slice {
     sub_slice_end => $end
   };
 
-  for ('exon_display', 'exon_ori', 'snp_display', 'line_numbering', 'conservation_display', 'codons_display', 'title_display', 'align') {
+  for ('exon_display', 'exon_ori', 'snp_display', 'line_numbering', 'conservation_display', 'codons_display', 'region_change_display', 'title_display', 'align') {
     $config->{$_} = $object->param($_) unless $object->param($_) eq "off";
   }
   
@@ -103,6 +103,7 @@ sub content_sub_slice {
   # The order these functions are called in is also important because it determines the order in which things are added to $config->{'key'}
   $self->markup_comparisons($sequence, $markup, $config) if $config->{'align'};
   $self->markup_conservation($sequence, $config) if $config->{'conservation_display'};
+  $self->markup_region_change($sequence, $markup, $config) if $config->{'region_change_display'};
   $self->markup_codons($sequence, $markup, $config) if $config->{'codons_display'};
   $self->markup_exons($sequence, $markup, $config) if $config->{'exon_display'};
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
@@ -140,7 +141,7 @@ sub get_slices {
   my @slices;
   my @formatted_slices;
   my $length;
-
+  
   if ($align) {
     push @slices, @{$self->get_alignments(@_)};
   } else {
@@ -271,6 +272,7 @@ sub get_key {
   
   my @map = (
     [ 'conservation_display', 'con' ],
+    [ 'region_change_display', 'end' ],
     [ 'codons_display', 'cu' ],
     [ 'exon_display', 'e2' ],
     [ 'snp_display', 'sn,si,sd' ]
@@ -278,6 +280,7 @@ sub get_key {
   
   my $key = {
     con => "Location of conserved regions (where >50&#37; of bases in alignments match)",
+    end => "Location of start/end of aligned regions",
     cu  => "Location of START/STOP codons",
     e2  => "Location of $exon_label exons",
     sn  => "Location of SNPs",
@@ -356,6 +359,30 @@ sub get_slice_table {
   $rtn = qq{<p>NOTE: <a href="/info/docs/compara/analyses.html#epo">How ancestral sequences are calculated</a></p>$rtn} if $ancestral_sequences;
   
   return $return_padding ? ($rtn, "$species_padding,$region_padding,$number_padding") : $rtn;
+}
+
+sub markup_region_change {
+  my $self = shift;
+  my ($sequence, $markup, $config) = @_;
+
+  my ($change, $class, $seq);
+  my $i = 0;
+
+  foreach my $data (@$markup) {
+    $change = 1 if scalar keys %{$data->{'region_change'}};
+    $seq = $sequence->[$i];
+    
+    foreach (sort {$a <=> $b} keys %{$data->{'region_change'}}) {      
+      $seq->[$_]->{'class'} .= 'end ';
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $data->{'region_change'}->{$_} if $config->{'title_display'};
+    }
+    
+    $i++;
+  }
+
+  if ($change && $config->{'key_template'}) {
+    $config->{'key'} .= sprintf ($config->{'key_template'}, 'end', 'Location of start/end of aligned regions');
+  }
 }
 
 1;

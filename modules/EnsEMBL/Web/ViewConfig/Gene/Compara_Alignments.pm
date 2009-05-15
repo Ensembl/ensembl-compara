@@ -18,6 +18,7 @@ sub init {
     line_numbering        off
     display_width         120
     conservation_display  off
+    region_change_display off
     codons_display        off
     title_display         off
   ));
@@ -60,6 +61,8 @@ sub form {
   }
   
   $view_config->add_form_element($general_markup_options{'line_numbering'});
+  $view_config->add_form_element($other_markup_options{'codons_display'});
+
   $view_config->add_form_element({
     'required' => 'yes',
     'name' => 'conservation_display',
@@ -74,7 +77,21 @@ sub form {
     'type' => 'DropDown',
     'select' => 'select'
   });
-  $view_config->add_form_element($other_markup_options{'codons_display'});
+  $view_config->add_form_element({
+    'required' => 'yes',
+    'name' => 'region_change_display',
+    'values' => [{
+      'value' => 'yes',
+      'name' => 'Yes'
+    }, {
+      'value' => 'off',
+      'name' => 'No'
+    }],
+   'label' => 'Mark alignment start/end',
+   'type' => 'DropDown',
+   'select' => 'select'
+  });
+  
   $view_config->add_form_element($other_markup_options{'title_display'});
 
   my $species = $view_config->species;

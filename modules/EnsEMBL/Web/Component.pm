@@ -499,7 +499,7 @@ sub get_sequence_data {
     
     if ($config->{'match_display'} && $name ne $config->{'ref_slice_name'}) {      
       my $i = 0;
-      my @cmp_seq = map {{ 'letter' => ( $config->{'ref_slice_seq'}->[$i++] eq $_ ? '.' : $_ ) }} split (//, $seq);
+      my @cmp_seq = map {{ 'letter' => ( $config->{'ref_slice_seq'}->[$i++] eq $_ ? '.' : $_ ) }} split(//, $seq);
 
       while ($seq =~ m/([^~]+)/g) {
         my $reseq_length = length $1;
@@ -510,14 +510,35 @@ sub get_sequence_data {
       
       push (@sequence, \@cmp_seq);
     } else {
-      push (@sequence, [ map {{ 'letter' => $_ }} split (//, $seq) ]);
+      push (@sequence, [ map {{ 'letter' => $_ }} split(//, $seq) ]);
+    }
+    
+    if ($config->{'region_change_display'} && $name ne $config->{'species'}) {
+      my $s = 0;
+      
+      # We don't want to mark the very end of the sequence, so don't loop for the last element in the array
+      for (0..scalar(@{$sl->{'underlying_slices'}})-2) {
+        my $end_region   = $sl->{'underlying_slices'}->[$_];
+        my $start_region = $sl->{'underlying_slices'}->[$_+1];
+        warn length($end_region->seq(1)) . " " . $end_region->length;
+        $s += length($end_region->seq(1));
+        
+        $mk->{'region_change'}->{$s-1} = $end_region->name   . ' END';
+        $mk->{'region_change'}->{$s}   = $start_region->name . ' START';
+
+        for ($s-1..$s) {
+          if ($mk->{'region_change'}->{$_} =~ /.*gap.* (\w+)/) {
+            $mk->{'region_change'}->{$_} = "GAP $1";
+          }
+        }
+      }
     }
     
     # Markup inserts on comparisons
     if ($config->{'align'}) {
       while ($seq =~  m/(\-+)[\w\s]/g) {
         my $ins_length = length $1;
-        my $ins_end = pos ($seq) - 1;
+        my $ins_end = pos($seq) - 1;
         
         $mk->{'comparisons'}->{$ins_end-$_}->{'insert'} = "$ins_length bp" for (1..$ins_length);
       }
@@ -1024,7 +1045,7 @@ sub markup_line_numbers {
         label => ''
       });
     }
-      
+    
     my $data = shift @numbering unless ($config->{'numbering'} && !$config->{'numbering'}->[$n]);
     
     my $s = 0;
@@ -1177,7 +1198,8 @@ sub build_sequence {
     sf  =>  [ 20, { 'background-color' => "#$styles->{'SEQ_FRAMESHIFT'}" } ],
     aa  =>  [ 21, { 'color' => "#$styles->{'SEQ_AMINOACID'}" } ],
     var =>  [ 22, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}" } ],
-    bold => [ 23, { 'font-weight' => 'bold' } ]
+    end =>  [ 23, { 'color' => "#$styles->{'SEQ_REGION_CHANGE'}", 'background-color' => "#$styles->{'SEQ_REGION_CHANGE_BG'}" } ],
+    bold => [ 24, { 'font-weight' => 'bold' } ]
   );
   
   foreach my $lines (@$sequence) {
@@ -1325,42 +1347,43 @@ sub build_sequence {
 sub chunked_content {
   my $self = shift;
   my ($total_length, $chunk_length, $base_url) = @_;
-  
+
   my $object = $self->object;
-  
+
   my $i = 1;
   my $j = $chunk_length;
   my $end = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
   my ($url, $html);
-  
+
   my $renderer = ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(session => $object->get_session);
-  
+
   # The display is split into a managable number of sub slices, which will be processed in parallel by requests
   while ($j <= $total_length) {
     $url = qq{$base_url;subslice_start=$i;subslice_end=$j};
-    
+
     if ($renderer) {
       map { $url .= ";$_=" . $object->param($_) } $object->param;
-      
+
       $renderer->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
     } else {
       $html .= qq{<div class="ajax" title="['$url;$ENV{'QUERY_STRING'}']"></div>};
     }
-    
+
     last if $j == $total_length;
-    
+
     $i = $j + 1;
     $j += $chunk_length;
-    
+
     $j = $total_length if $j >= $end;
   }
-  
+
   if ($renderer) {
     $renderer->process;
     $html = $renderer->content;
   }
-  
+
   return $html;
 }
 
 1;
+
