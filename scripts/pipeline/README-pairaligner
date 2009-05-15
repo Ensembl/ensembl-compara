@@ -53,7 +53,7 @@ in tcsh
 
 in bash
     BASEDIR=/some/path/to/modules
-    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive:${BASEDIR}/ensembl-analysis
+    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara/modules:${BASEDIR}/ensembl-hive/modules:${BASEDIR}/ensembl-analysis/modules
     PATH=$PATH:${BASEDIR}/ensembl-compara/scripts/pipeline:${BASEDIR}/ensembl-hive/scripts
 
 Copy General.pm.example to General.pm
@@ -65,12 +65,13 @@ Pick a mysql instance and create a database
 
 mysql -h ia64g -P3306 -uensadmin -pxxxx -e "create database abel_compara_human_cow_blastz_27"
 
-cd ~/src/ensembl_main/ensembl-hive/sql
-mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < tables.sql
-
 cd ~/src/ensembl_main/ensembl-compara/sql
 mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < table.sql
 mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < pipeline-tables.sql
+
+cd ~/src/ensembl_main/ensembl-hive/sql
+mysql -h ia64g -P3306 -uensadmin -pxxxx abel_compara_human_cow_blastz_27 < tables.sql
+
 
 
 
@@ -106,8 +107,8 @@ paths to the 'hive_output_dir' to
 
 Also, the genome with the best assembly should be used as the target.
 
-5- Copy data from the master into the new database
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5- Copy data from the master and an old database (eg. previous release) into the new database
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cd ~/src/ensembl_main/ensembl-compara/scripts/pipeline  
 
