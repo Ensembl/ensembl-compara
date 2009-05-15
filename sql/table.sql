@@ -324,7 +324,7 @@ CREATE TABLE member (
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     int(10) DEFAULT '0', 
 #  source_name                 varchar(40) NOT NULL,
-  source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALCDS') NOT NULL,
+  source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
   sequence_id                 int(10) unsigned, # FK sequence.sequence_id
@@ -467,6 +467,37 @@ CREATE TABLE peptide_align_feature (
   KEY hmember_qgenome  (hmember_id, qgenome_db_id),
   KEY qmember_hgenome  (qmember_id, hgenome_db_id)
 ) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci;
+
+CREATE TABLE peptide_align_feature_prod (
+
+  peptide_align_feature_id    int(10) unsigned NOT NULL auto_increment, # unique internal id
+  qmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
+  hmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
+  qgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
+  hgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
+  analysis_id                 int(10) unsigned NOT NULL, # FK analysis.analysis_id
+  qstart                      int(10) DEFAULT '0' NOT NULL,
+  qend                        int(10) DEFAULT '0' NOT NULL,
+  hstart                      int(11) DEFAULT '0' NOT NULL,
+  hend                        int(11) DEFAULT '0' NOT NULL,
+  score                       double(16,4) DEFAULT '0.0000' NOT NULL,
+  evalue                      double,
+  align_length                int(10),
+  identical_matches           int(10),
+  perc_ident                  int(10),
+  positive_matches            int(10),
+  perc_pos                    int(10),
+  hit_rank                    int(10),
+  cigar_line                  mediumtext,
+
+#   FOREIGN KEY (qmember_id) REFERENCES member(member_id),
+#   FOREIGN KEY (hmember_id) REFERENCES member(member_id),
+#   FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
+#   FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
+#   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
+ 
+  PRIMARY KEY (peptide_align_feature_id)
+) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
 
 
 #
@@ -653,6 +684,7 @@ CREATE TABLE constrained_element (
 --      node_id               -- PRIMARY node id 
 --      parent_id             -- parent node id
 --      root_id               -- to quickly isolated nodes of the different rooted tree sets
+--      clusterset_id         -- node id of the set of clusters
 --      left_index            -- for fast nested set searching
 --      right_index           -- for fast nested set searching
 --      distance_to_parent    -- distance between node_id and its parent_id
@@ -661,6 +693,7 @@ CREATE TABLE protein_tree_node (
   node_id                         int(10) unsigned NOT NULL auto_increment, # unique internal id
   parent_id                       int(10) unsigned NOT NULL,
   root_id                         int(10) unsigned NOT NULL,
+  clusterset_id                   int(10) unsigned NOT NULL,
   left_index                      int(10) NOT NULL,
   right_index                     int(10) NOT NULL,
   distance_to_parent              double default 1.0 NOT NULL,
@@ -681,6 +714,7 @@ CREATE TABLE protein_tree_node (
 --   to allow certain nodes (leaves) to have aligned protein members attached to them   
 -- semantics:
 --    node_id                  -- the id of node associated with this name
+--    root_id                  -- the id of tree root node
 --    member_id                -- link to member.member_id in many-1 relation (single member per node)
 --    method_link_species_set_id -- foreign key from method_link_species_set table
 --    cigar_line               -- compressed alignment information 
@@ -689,6 +723,7 @@ CREATE TABLE protein_tree_node (
 
 CREATE TABLE protein_tree_member (
   node_id                     int(10) unsigned NOT NULL,
+  root_id                     int(10) unsigned NOT NULL,
   member_id                   int(10) unsigned NOT NULL, 
   method_link_species_set_id  int(10) unsigned NOT NULL,
   cigar_line                  mediumtext,
@@ -696,6 +731,7 @@ CREATE TABLE protein_tree_member (
   cigar_end                   int(10),
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+  FOREIGN KEY (root_id) REFERENCES protein_tree_node(root_id),
 
   UNIQUE (node_id),
   KEY (member_id)
@@ -709,6 +745,7 @@ CREATE TABLE protein_tree_member (
 --   to allow certain nodes (leaves) to have aligned protein member_scores attached to them   
 -- semantics:
 --    node_id                  -- the id of node associated with this name
+--    root_id                  -- the id of the tree root
 --    member_id                -- link to member.member_id in many-1 relation (single member per node)
 --    method_link_species_set_id -- foreign key from method_link_species_set table
 --    cigar_line               -- compressed alignment information 
@@ -717,6 +754,7 @@ CREATE TABLE protein_tree_member (
 
 CREATE TABLE protein_tree_member_score (
   node_id                     int(10) unsigned NOT NULL,
+  root_id                     int(10) unsigned NOT NULL,
   member_id                   int(10) unsigned NOT NULL, 
   method_link_species_set_id  int(10) unsigned NOT NULL,
   cigar_line                  mediumtext,
@@ -724,6 +762,7 @@ CREATE TABLE protein_tree_member_score (
   cigar_end                   int(10),
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+  FOREIGN KEY (root_id) REFERENCES protein_tree_node(root_id),
 
   UNIQUE (node_id),
   KEY (member_id)
