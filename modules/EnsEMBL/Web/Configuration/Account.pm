@@ -212,11 +212,6 @@ sub populate_tree {
         'filters' => [qw(PasswordValid PasswordSecure)]}
     );
 
-    ## Add "invisible" nodes used by interface but not displayed in navigation
-    $self->create_node( 'Logout', '', [],
-      { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::LogOut'}
-    );
-
   } else {
     $self->create_node( 'Login', "Log in",
       [qw(account EnsEMBL::Web::Component::Account::Login)],
@@ -233,6 +228,9 @@ sub populate_tree {
   }
 
   ## Nodes that need to be available, whether or not the user is logged in
+  $self->create_node( 'Logout', '', [],
+      { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::LogOut'}
+  );
   $self->create_node( 'User', '', [],
     { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::Interface::User' }
   );
