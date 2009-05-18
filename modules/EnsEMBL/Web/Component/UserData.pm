@@ -41,9 +41,9 @@ sub output_das_text {
     $form->add_element( 'type'    => 'Information',
                         'classes'  => ['no-bold'],
                         'value'   => sprintf '<strong>%s</strong><br />%s<br /><a href="%s">%3$s</a>',
-                                           $_->{'label'},
-                                           $_->{'description'},
-                                           $_->{'homepage'} );
+                                           $_->label,
+                                           $_->description,
+                                           $_->homepage );
   } @sources;
 }
 
