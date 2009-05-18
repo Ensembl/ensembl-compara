@@ -674,7 +674,7 @@ sub build_requests {
     #########
     # loop over dsn basenames
     #
-    for my $request (map { "$bn/$reqname?$_" } @{$queries}) {
+    for my $request (map { $_ ? "$bn/$reqname?$_" : "$bn/$reqname" } @{$queries}) {
       #########
       # and for each dsn, loop over the query request
       #
