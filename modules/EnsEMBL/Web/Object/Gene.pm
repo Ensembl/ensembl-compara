@@ -324,7 +324,8 @@ sub gene_name {
 
 sub short_caption {
   my $self = shift;
-  return $self->type_name.': '.$self->gene_name;
+  return 'Gene-based displays';
+  #return $self->type_name.': '.$self->gene_name;
 }
 
 sub caption           {
