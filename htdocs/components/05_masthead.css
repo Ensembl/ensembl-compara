@@ -23,12 +23,15 @@
   dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid white; vertical-align: top; padding-right: 0.5em }
 
 /** Cell 3 - the breadcrumb links under the logo **/
-  td#mh_bc { color: [[NEUTRAL_BORDER]]; font-weight: bold; padding-left:4px; } 
+  td#mh_bc { color: [[MH_TEXT]]; font-weight: bold; padding-left:4px; }
+/**  td#mh_bc { color: [[NEUTRAL_BORDER]]; font-weight: bold; padding-left:4px; } **/
   #mh_bc a { color: [[MH_TEXT]]; text-decoration: none }
   #mh_bc a:hover { color: [[MH_HOVER]];}
 
 /** Cell 4 - the links at the bottom right **/
-  td#mh_lnk { color: [[NEUTRAL_BORDER]]; font-size:0.9em;font-weight: bold; float: right; text-align: right;
+/**  td#mh_lnk { color: [[NEUTRAL_BORDER]]; font-size:0.9em;font-weight: bold; float: right; text-align: right;
+            white-space: nowrap; padding: 0 10px 4px 2px; } **/
+  td#mh_lnk { color: [[MH_TEXT]]; font-size:0.9em;font-weight: bold; float: right; text-align: right;
             white-space: nowrap; padding: 0 10px 4px 2px; }
   #mh_lnk a { color: [[MH_LINK]]; text-decoration: none }
   #mh_lnk a:hover { color: [[MH_HOVER]];}
