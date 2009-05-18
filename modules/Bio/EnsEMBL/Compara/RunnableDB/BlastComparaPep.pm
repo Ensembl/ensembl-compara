@@ -109,8 +109,15 @@ sub fetch_input {
   ## Define the filter from the parameters
   my ($thr, $thr_type, $options); 
 
-  #my $p = eval($self->analysis->parameters); 
-  my $p = eval($self->analysis->data);     
+  my $p = eval($self->analysis->parameters);
+  if (defined $p->{'analysis_data_id'}) {
+    my $analysis_data_id = $p->{'analysis_data_id'};
+    my $ada = $self->db()->get_AnalysisDataAdaptor();
+    my $new_params = eval($ada->fetch_by_dbID($analysis_data_id));
+    if (defined $new_params) {
+      $p = $new_params;
+    }
+  }
 
   if (defined $p->{'-threshold'} && defined $p->{'-threshold_type'}) {
       $thr      = $p->{-threshold};
