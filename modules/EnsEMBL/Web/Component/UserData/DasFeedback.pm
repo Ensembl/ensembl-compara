@@ -40,7 +40,7 @@ sub content {
             $source->homepage
         );
       } else {
-        $form->add_element( 'type' => 'Information', 'value' => $logic_name);
+        push @skipped, $logic_name;
       }
     }
     $form->add_element( 'type' => 'ForceReload' );
