@@ -122,7 +122,7 @@ sub content {
       { 'key' => 'notes', 'title' => 'Notes', 'width' => '70%' }
     );
     
-    for my $f ( sort { $a->type_label cmp $b->type_label } @features ) {
+    for my $f ( sort { $a->type_label cmp $b->type_label || $a->display_label cmp $b->display_label } @features ) {
       
       if ($f->start || $f->end) {
         $num_positional_features++;
