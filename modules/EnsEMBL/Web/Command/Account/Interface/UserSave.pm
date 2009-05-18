@@ -54,6 +54,8 @@ sub process {
       }
       else {
         $interface->data->salt(EnsEMBL::Web::Tools::RandomString::random_string(8));
+        $interface->data->status('pending');
+        $interface->data->password('');
         my $new_id = $interface->data->save;
         if ($new_id) {
           $url = '/Account/SendActivation';
