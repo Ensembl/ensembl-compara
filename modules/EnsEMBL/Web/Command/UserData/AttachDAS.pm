@@ -44,13 +44,13 @@ sub process {
             @expand_coords = map {
               Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_string($_)
             } @expand_coords;
+            $source->coord_systems(\@expand_coords);
           }
           else {
             $param->{'filter_module'} = 'DAS';
             $param->{'filter_code'} = 'no_coords';
             #warn 'DAS ERROR: Source '.$source->logic_name.' has no coordinate systems and none were selected.';
           }
-          $source->coord_systems(\@expand_coords);
         }
 
         # NOTE: at present the interface only allows adding a source that has not

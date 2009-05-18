@@ -117,11 +117,13 @@ sub content {
         'name' => 'das_server',
         'value' => $object->param('das_server'),
       );
-      $form->add_element(
-        'type' => 'Hidden',
-        'name' => 'logic_name',
-        'value' => $object->param('logic_name'),
-      );
+      for my $v ($object->param('logic_name')) {
+        $form->add_element(
+          'type' => 'Hidden',
+          'name' => 'logic_name',
+          'value' => $v,
+        );
+      }
     }
   }
   else {

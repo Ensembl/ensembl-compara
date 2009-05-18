@@ -64,11 +64,14 @@ sub content {
       $form->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
       my @coord_unknown = grep { !scalar @{ $_->coord_systems } } @{ $sources };
       $self->output_das_text($form, @coord_unknown);
-      $form->add_element(
-        'type' => 'Hidden',
-        'name' => 'logic_name',
-        'value' => $object->param('logic_name'),
-      );
+      
+      for my $v ($object->param('logic_name')) {
+        $form->add_element(
+          'type' => 'Hidden',
+          'name' => 'logic_name',
+          'value' => $v,
+        );
+      }
     }
   }
   else {
