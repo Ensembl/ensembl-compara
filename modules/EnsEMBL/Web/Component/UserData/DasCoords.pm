@@ -29,7 +29,7 @@ sub content {
 
   if ($server) {
     my $filter = EnsEMBL::Web::Filter::DAS->new({'object'=>$object});
-    my $sources = $filter->catch($server, $object->param('source_id'));
+    my $sources = $filter->catch($server, $object->param('logic_name'));
 
     if ($filter->error_code) {
       $form = $self->modal_form('select_das', $url.'SelectDAS', {'wizard' => 1});
@@ -70,7 +70,7 @@ sub content {
             my $das_cs = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_hashref($cs_hashref);
             push @$f_elements, {
               'type'    => 'CheckBox',
-              'name'    => $source->{'source_id'}.'_coords',
+              'name'    => $source->logic_name.'_coords',
               'value'   => $das_cs->to_string,
               'label'   => $das_cs->label 
             };
@@ -80,13 +80,13 @@ sub content {
         }
 
         if (scalar(@GENE_COORDS)) {
-          my $gene_fieldset = {'name' => $source->{'source_id'}.'_gene', 'legend' => 'Gene'};
+          my $gene_fieldset = {'name' => $source->logic_name.'_gene', 'legend' => 'Gene'};
           my $g_elements = [];
           for my $cs (@GENE_COORDS) {
             $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
             push @$g_elements, { 
               'type'    => 'CheckBox',
-              'name'    => $source->{'source_id'}.'coords',
+              'name'    => $source->logic_name.'coords',
               'value'   => $cs->to_string,
               'label'   => $cs->label 
             };
@@ -96,13 +96,13 @@ sub content {
         }
 
         if (scalar(@PROT_COORDS)) {
-          my $prot_fieldset = {'name' => $source->{'source_id'}.'_prot', 'legend' => 'Protein'};
+          my $prot_fieldset = {'name' => $source->logic_name.'_prot', 'legend' => 'Protein'};
           my $p_elements = [];
           for my $cs (@PROT_COORDS) {
             $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
             push @$p_elements, { 
               'type'    => 'CheckBox',
-              'name'    => $source->{'source_id'}.'coords',
+              'name'    => $source->logic_name.'coords',
               'value'   => $cs->to_string,
               'label'   => $cs->label 
             };
@@ -119,8 +119,8 @@ sub content {
       );
       $form->add_element(
         'type' => 'Hidden',
-        'name' => 'source_id',
-        'value' => $object->param('source_id'),
+        'name' => 'logic_name',
+        'value' => $object->param('logic_name'),
       );
     }
   }

@@ -11,9 +11,9 @@ sub new {
   my %params = @_;
   my $das = $params{'das'};
   $params{'long_label'} ||= 1;
-  $params{'name'}       ||= 'source_id';
-  $params{'value'}      ||= $das->{'source_id'};
-  $params{'label'}      ||= $das->{'label'};
+  $params{'name'}       ||= 'logic_name';
+  $params{'value'}      ||= $das->logic_name;
+  $params{'label'}      ||= $das->label;
   $params{'bg'}         ||= 'bg1';
   my $self = $class->SUPER::new( %params );
   $self->checked  = $params{'checked'};
@@ -24,14 +24,14 @@ sub new {
 
 sub _short_das_desc {
   my ($self, $source ) = @_;
-  my $desc = $source->{'description'};
+  my $desc = $source->description;
   if (length $desc > $DAS_DESC_WIDTH) {
     $self->{'comment'} = $desc;
     $desc = substr $desc, 0, $DAS_DESC_WIDTH;
     $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
   }
   $self->{'notes'} = CGI::escapeHTML($desc);
-  $self->{'notes'} .= sprintf ' [<a href="%s">Homepage</a>]', $source->{'homepage'} if $source->{'homepage'};
+  $self->{'notes'} .= sprintf ' [<a href="%s">Homepage</a>]', $source->homepage if $source->homepage;
 }
 
 sub render {

@@ -18,6 +18,7 @@ use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::Data::Record::Upload;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::DASConfig;
 
 
 my $DEFAULT_CS = 'DnaAlignFeature';
@@ -590,7 +591,7 @@ sub get_das_servers {
 # Returns an arrayref of DAS sources for the selected server and species
 sub get_das_sources {
   #warn "!!! ATTEMPTING TO GET DAS SOURCES";
-  my ($self, $server, @source_ids) = @_;
+  my ($self, $server, @logic_names) = @_;
   
   my $species = $ENV{ENSEMBL_SPECIES};
   if ($species eq 'common') {
@@ -601,27 +602,15 @@ sub get_das_sources {
   my $source_info = [];
  
 =pod
+
+THIS CODE IS WRONG - FILTERING IS DONE BY SOURCEPARSER!
+
   ## First check for cached sources
   my $MEMD = new EnsEMBL::Web::Cache;
   #$MEMD->delete($server) if $MEMD;
   if ($MEMD) {
-    my $unfiltered = $MEMD->get($server) || [];
+    my $unfiltered = $MEMD->get($server) || []; # wrong - need more tags
     #warn "FOUND SOURCES IN MEMORY" if scalar @$unfiltered;
-    if (scalar(@$unfiltered)) {
-      ## filter sources
-      foreach my $source (@$unfiltered) {
-        if ($source->{'species'}) {
-          next unless ($source->{'species'} eq $species);
-        }
-        if (scalar @name) {
-          next unless  grep { $source->{'name'} =~ /$_/i } @name;
-        }
-        if (scalar @source_ids) {
-          next unless  grep { $source->{'source_id'} eq $_ } @source_ids;
-        }
-        push @$source_info, $source;
-      }
-    }
   }
 
   ## TODO - cache in session?
@@ -638,10 +627,10 @@ sub get_das_sources {
         -location   => $server,
         -species    => $species || undef,
         -name       => scalar @name  ? \@name  : undef, # label or DSN
-        -logic_name => scalar @source_ids ? \@source_ids : undef, # the URI
-      );
+        -logic_name => scalar @logic_names ? \@logic_names : undef, # the URI
+      ) || [];
     
-      if (!$sources || !scalar @{ $sources }) {
+      if (!scalar @{ $sources }) {
         my $filters = @name ? ' named ' . join ' or ', @name : '';
         $source_info = "No $species DAS sources$filters found for $server";
       }
@@ -655,31 +644,17 @@ sub get_das_sources {
       }
     };
 
-    foreach my $source (@$sources) {
-      my $coord_systems = [];
-      my $has_species;
-      foreach my $cs (@{$source->coord_systems}) {
-        push @$coord_systems, $cs->name;
-        if ($cs->species) {
-          $has_species = $cs->species;
-          last;
-        }
-      }
-      push @$source_info, {
-        'source_id'     => $source->logic_name,
-        'dsn'           => $source->dsn,
-        'label'         => $source->label,
-        'description'   => $source->description,
-        'maintainer'    => $source->maintainer,
-        'homepage'      => $source->homepage,
-        'full_url'      => $source->full_url,
-        'logic_name'    => $source->logic_name,
-        'species'       => $has_species,
-        'coords'        => $coord_systems,
-      };
+    # Cache simple caches, not objects
+    my $cached = [];
+    foreach my $source (@{ $sources }) {
+      my %copy = %{ $source };
+      my @coords = map { my %cs = %{ $_ }; \%cs } @{ $source->coord_systems || [] };
+      $copy{'coords'} = \@coords;
+      push @$cached, \%copy;
+      push @$source_info, EnsEMBL::Web::DASConfig->new_from_hashref( $source );
     }
     ## Cache them for later use
-    #$MEMD->set($server, $source_info, undef, 'DSN_INFO', $species) if $MEMD;
+    #$MEMD->set($server, $cached, undef, 'DSN_INFO', $species) if $MEMD; # wrong
   }
   #warn '>>> RETURNING '.@$source_info.' SOURCES';
   

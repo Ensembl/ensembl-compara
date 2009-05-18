@@ -23,7 +23,7 @@ sub process {
 
   if ($server) {
     my $filter = EnsEMBL::Web::Filter::DAS->new({'object'=>$self->object});
-    my $sources = $filter->catch($server, $self->object->param('source_id'));
+    my $sources = $filter->catch($server, $self->object->param('logic_name'));
     $next = 'AttachDAS';
 
     if ($filter->error_code) {
@@ -37,18 +37,18 @@ sub process {
       $param->{'das_server'} = $self->object->param('das_server');
       $param->{'species'} = $self->object->param('species');
 
-      my $source_ids = [];
+      my @logic_names = ();
       for my $source (@{ $sources }) {
         # If one or more source has missing details, need to fill them in and resubmit
-        unless (@{ $source->{'coords'} } || $self->object->param($source->{'source_id'}.'_coords')) {
+        unless (@{ $source->coord_systems } || $self->object->param($source->logic_name.'_coords')) {
           $next = 'DasCoords' unless $next eq 'DasSpecies'; ## We have to go to species form first
           if (!$self->object->param('species')) {
             $next = 'DasSpecies';
           }
         }
-        push @$source_ids, $source->{'source_id'};
+        push @logic_names, $source->logic_name;
       }
-      $param->{'source_id'} = $source_ids;
+      $param->{'logic_name'} = \@logic_names;
 
     }
 

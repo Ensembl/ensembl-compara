@@ -29,7 +29,7 @@ sub content {
   if ($server) {
     ## Catch any errors at the server end
     my $filter = EnsEMBL::Web::Filter::DAS->new({'object'=>$object});
-    my $sources = $filter->catch($server, $object->param('source_id'));
+    my $sources = $filter->catch($server, $object->param('logic_name'));
 
     if ($filter->error_code) {
       $form = $self->modal_form('select_das', $url.'DasSources', {'wizard' => 1});
@@ -62,12 +62,12 @@ sub content {
       );
 
       $form->add_element( 'type' => 'SubHeader',   'value' => 'DAS Sources' );
-      my @coord_unknown = grep { !scalar @{$_->{'coords'}} } @{ $sources };
+      my @coord_unknown = grep { !scalar @{ $_->coord_systems } } @{ $sources };
       $self->output_das_text($form, @coord_unknown);
       $form->add_element(
         'type' => 'Hidden',
-        'name' => 'source_id',
-        'value' => $object->param('source_id'),
+        'name' => 'logic_name',
+        'value' => $object->param('logic_name'),
       );
     }
   }

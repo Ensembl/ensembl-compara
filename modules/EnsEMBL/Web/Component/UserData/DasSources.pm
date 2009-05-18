@@ -49,7 +49,7 @@ sub content {
     for my $source (@{ $sources }) {
       my $already_added = 0;
       ## If the source is already in the speciesdefs/session/user, skip it
-      if ( $all_das[1]->{ $source->{'full_url'} } ) {
+      if ( $all_das[1]->{ $source->full_url } ) {
         $already_added = 1;
         $count_added++;
       }
