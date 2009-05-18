@@ -27,7 +27,7 @@ sub content {
   $dir = '' if $dir !~ /_/;
   my $referer = '_referer='.$self->object->param('_referer').';x_requested_with=XMLHttpRequest';
   my $form = EnsEMBL::Web::Form->new( 'login', "$dir/Account/SetCookie", 'post' );
-  my $reg_url = $self->url("$dir/Account/Register?$referer");
+  my $reg_url = $self->url("$dir/Account/User/Add?$referer");
   my $pwd_url = $self->url("$dir/Account/LostPassword?$referer");
 
   $form->add_element('type'  => 'Email',    'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
