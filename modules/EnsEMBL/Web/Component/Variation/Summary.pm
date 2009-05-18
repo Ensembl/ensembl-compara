@@ -141,7 +141,7 @@ sub content {
        my $link = $object->_url({'v' => $id, 'source' => $source, 'vf' => $varif_id,});
        $location = qq(<a href="$link">$location_string</a>);
      }
-     my $location_link = $object->_url({'type'=>'Location', 'action'=>'View', 'r' => $display_region, 'v' => $id, 'source' => $source, 'vf' => $varif_id, 'contigviewbotom' => 'variation_feature_variation=normal'});
+     my $location_link = $object->_url({'type'=>'Location', 'action'=>'View', 'r' => $display_region, 'v' => $id, 'source' => $source, 'vf' => $varif_id, 'contigviewbottom' => 'variation_feature_variation=normal'});
 
      my $location_link_html = qq(<a href="$location_link">Jump to region in detail</a>);
       $html.= sprintf( '
