@@ -27,7 +27,7 @@ sub process {
     $next = 'AttachDAS';
 
     if ($filter->error_code) {
-      $next = 'SelectDAS';
+      $next = 'DasSources';
       $param->{'filter_module'} = 'DAS';
       $param->{'filter_code'} = $filter->error_code;
     }
@@ -62,7 +62,7 @@ sub process {
     }
   }
   else {
-    $next = 'SelectDAS';
+    $next = 'DasSources';
     $param->{'filter_module'} = 'DAS';
     $param->{'filter_code'} = 'no_server';
   }
