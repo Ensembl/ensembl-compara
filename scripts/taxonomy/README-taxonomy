@@ -25,10 +25,10 @@ perl -e 'while(<>) {chomp;s/\t\|$//;my @array = split(/\t\|\t/);my ($taxon_id, $
 # this should take about 10 seconds
 perl -e 'while(<>) {chomp;s/\t\|$//;my ($taxon_id, $name, $unique_name, $name_class) = split(/\t\|\t/);print $taxon_id,"\t", $name,"\t",$name_class,"\n";}' names.dmp > ncbi_taxa_name.txt
 
-mysql -hens-livemirror -uensadmin -pxxxxx -N -e "drop database ncbi_taxonomy"
-mysql -hens-livemirror -uensadmin -pxxxxx -N -e "create database ncbi_taxonomy"
+mysql -hens-livemirror -uensadmin -pensembl -N -e "drop database ncbi_taxonomy"
+mysql -hens-livemirror -uensadmin -pensembl -N -e "create database ncbi_taxonomy"
 
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy
 
 # This two tables also exist in ensembl-compara/sql/table.sql
 
@@ -62,48 +62,48 @@ CREATE TABLE ncbi_taxa_name (
 exit
 
 # This should take about 60 seconds
-mysqlimport -hens-livemirror -uensadmin -pxxxxx -L ncbi_taxonomy ncbi_taxa_node.txt
+mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+#ncbi_taxonomy.ncbi_taxa_node: Records: 501241  Deleted: 0  Skipped: 0  Warnings: 1503723
+# v54
 #ncbi_taxonomy.ncbi_taxa_node: Records: 490867  Deleted: 0  Skipped: 0  Warnings: 1472601
-# v53
-#ncbi_taxonomy.ncbi_taxa_node: Records: 478491  Deleted: 0  Skipped: 0  Warnings: 1435473
 
 # This should take about 90-120 seconds
-mysqlimport -hens-livemirror -uensadmin -pxxxxx -L ncbi_taxonomy ncbi_taxa_name.txt
+mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
+ncbi_taxonomy.ncbi_taxa_name: Records: 711161  Deleted: 0  Skipped: 0  Warnings: 0
+# v54
 #ncbi_taxonomy.ncbi_taxa_name: Records: 695512  Deleted: 0  Skipped: 0  Warnings: 0
-# v53
-#ncbi_taxonomy.ncbi_taxa_name: Records: 653542  Deleted: 0  Skipped: 0  Warnings: 0
 
-mysql -hens-livemirror -uensadmin -pxxxxx -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
+mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
 awk '{print $1,$3}' merged.dmp |awk '{print "insert into ncbi_taxa_name (taxon_id, name_class, name) values ("$2",\"merged_taxon_id\","$1");"}' > merged_nodes.sql
 
 # This should take about 10 seconds
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy < merged_nodes.sql
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy < merged_nodes.sql
 
-mysql -hens-livemirror -uensadmin -pxxxxx -N -e "insert into ncbi_taxa_name (taxon_id, name, name_class) select distinct taxon_id, CURRENT_TIMESTAMP, 'import date' from ncbi_taxa_node where parent_id=0" ncbi_taxonomy
+mysql -hens-livemirror -uensadmin -pensembl -N -e "insert into ncbi_taxa_name (taxon_id, name, name_class) select distinct taxon_id, CURRENT_TIMESTAMP, 'import date' from ncbi_taxa_node where parent_id=0" ncbi_taxonomy
 
 # Change some of the names to better reflect web names:
 
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy -e \
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Canis familiaris\" where taxon_id = 9615 and name_class = \"scientific name\" and name = \"Canis lupus familiaris\""
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy -e \
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Canis lupus familiaris\" where taxon_id = 9615 and name_class = \"synonym\" and name = \"Canis familiaris\""
 
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy -e \
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Pongo abelii\" where taxon_id = 9600 and name_class = \"scientific name\" and name = \"Pongo pygmaeus abelii\""
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy -e \
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Pongo pygmaeus abelii\" where taxon_id = 9600 and name_class = \"synonym\" and name = \"Pongo pygmaeus abelii\""
 
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy -e \
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Vicugna pacos\" where taxon_id = 30538 and name_class = \"scientific name\" and name = \"Lama pacos\""
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy -e \
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Lama pacos\" where taxon_id = 30538 and name_class = \"synonym\" and name = \"Vicugna pacos\""
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy -e \
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name=\"Vicugna\" where taxon_id=9839 and name =\"Lama\""
 
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy -e \
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Xenopus tropicalis\" where taxon_id = 8364 and name_class = \"scientific name\" and name = \"Xenopus (Silurana) tropicalis\""
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy -e \
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Xenopus (Silurana) tropicalis\" where taxon_id = 8364 and name_class = \"synonym\" and name = \"Xenopus tropicalis\""
 
 
@@ -115,7 +115,7 @@ bsub -q yesterday -o leftright_indexing.out -e leftright_indexing.err -R"select[
 
 # Import 'ensembl common name' and 'ensembl alias name' for Ensembl web team use.
 
-mysql -hens-livemirror -uensadmin -pxxxxx ncbi_taxonomy < ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy < ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql
 
 ensembl-compara/scripts/taxonomy/ensembl_aliases.sql needs to be updated as new species
 are integrated into Ensembl.
