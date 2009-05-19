@@ -9,7 +9,7 @@ use warnings;
 no warnings 'uninitialized';
 use base qw(EnsEMBL::Web::Data);
 
-use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
+use EnsEMBL::Web::DBSQL::SessionDBConnection (__PACKAGE__->species_defs);
 use HTTP::Date qw(str2time time2iso);
 
 __PACKAGE__->table('session_record');
