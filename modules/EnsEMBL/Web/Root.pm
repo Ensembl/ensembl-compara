@@ -152,28 +152,6 @@ sub not_allowed {
     #warn "...CHECKING FILTER $class";
     if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
       my $filter = $class->new({object => $object});
-      ## Check if this filter only applies to certain interface modules
-      ## N.B. At the moment this only works to exclude new record creation from certain filters
-      ## (can't apply, say, the Owner filter to new records, because they don't have one!)
-      my $exceptions = $filter->get_exceptions;
-      my $skip;
-      if ($caller && $exceptions && ref($exceptions) eq 'HASH') {
-        foreach my $action (@{$exceptions->{'list'}}) {
-          if ($exceptions->{'param'}) {
-            if (!$object->param($exceptions->{'param'}) && $caller =~ '::Interface::' && $caller =~ /$action$/) {
-              $skip = 1;
-              last;
-            }
-          }
-          else {
-            if ($caller =~ '::Interface::' && $caller =~ /$action$/) {
-              $skip = 1;
-              last;
-            }
-          }
-        }
-      }
-      next if $skip;
       $filter->catch;
       if ($filter->error_code) {
         #warn "@@@ NOT ALLOWED!";
