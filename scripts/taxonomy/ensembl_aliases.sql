@@ -19,7 +19,7 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (9913,"cattle","e
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (8364,"X.tropicalis","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (8364,"western clawed frog","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (4932,"S.cerevisiae","ensembl alias name");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (4932,"baker's yeast","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (4932,"baker's yeast","ensembl common name"); #'
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (7719,"C.intestinalis","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (7719,"Sea squirt Ciona intestinalis","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9606,"Human","ensembl alias name");
@@ -125,8 +125,8 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (7157,   "Mosquit
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (7711,   "Chordates","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9347,   "Placental mammals","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9362,   "Insectivore mammals","ensembl alias name");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (9989,   "Rodents","ensembl alias name");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (31031,  "Puffer fish","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9989,   "81.05","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (31031,  "65","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (32523,  "Tetrapods","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (32524,  "Amniotes","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (33554,  "Carnivores","ensembl alias name");
@@ -151,3 +151,45 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (32561,  "Reptile
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9348,   "Sloth/Anteater/Armadillo ancestor","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9263,   "Marsupials","ensembl alias name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl alias name");
+
+# Timetree divergence times for the GeneTree internal nodes
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (33553,  "78.91","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (39107,  "36.95","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (129949, "180","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (186625, "320","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (207598, "8.78","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (311790, "93.95","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (314145, "87.98","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (314146, "106.69","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (376911, "69.22","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (7147,   "250","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (7157,   "200","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (7711,   "550","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9347,   "102.41","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9362,   "67.92","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9989,   "81.05","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (31031,  "65","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (32523,  "358.99","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (32524,  "325.75","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (33554,  "56.34","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (40674,  "183.61","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (117571, "420","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (314147, "81.16","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (7718,   "100","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9443,   "82.95","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9526,   "30.96","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9604,   "16.24","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9975,   "48.42","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (32485,  "190","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (32525,  "165.83","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (33154,  "1500","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (33213,  "580","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (33316,  "570","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (376913, "56.70","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (91561,  "61.33","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9397,   "60.22","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (8825,   "105.00","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (32561,  "267.03","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9348,   "64.50","ensembl timetree mya");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9263,   "148","ensembl timetree mya");
+#insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl timetree mya");
