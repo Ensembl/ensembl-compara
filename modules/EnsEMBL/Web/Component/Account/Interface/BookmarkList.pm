@@ -128,8 +128,7 @@ sub content {
     $html .= $table->render;
   }
 
-  if (!$has_bookmarks) {
-    $html .= qq(<p class="center"><img src="/i/help/bookmark_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
+  if ($has_bookmarks) {
     $html .= $self->_add_bookmark($referer);
   }
 
