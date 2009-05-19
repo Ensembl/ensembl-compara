@@ -65,8 +65,9 @@ sub run {
     my $blastmat_directory      = $self->param('blastmat_dir')  || '/software/ensembl/compara/blast-2.2.6/data';
     my $blastall_executable     = $self->param('blastall_exec') || '/software/ensembl/compara/blast-2.2.6/blastall';
     my $blast_parser_executable = $self->param('deblast_exec')  || '/nfs/acari/avilella/bin/mcxdeblast';
+    my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
-    my $keep_blast_output       = $self->param('keep_blast_output') || 0;
+    my $debug                   = $self->param('debug')         || 0;
 
     my $fasta_listp             = $self->param('fasta_list'); # set by fetch_input()
 
@@ -74,7 +75,7 @@ sub run {
 
     my $interfile = '/tmp/family_blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
 
-    open( BLAST, "| $blastall_executable -d $fastadb -p blastp -e 0.00001 -v $tophits -b 0 >$interfile")
+    open( BLAST, "| $blastall_executable -d $fastadb -p blastp -e $evalue_limit -v $tophits -b 0 >$interfile")
         || die "could not execute $blastall_executable, returned error code: $!";
     
     print BLAST @$fasta_listp;
@@ -85,6 +86,10 @@ sub run {
         || die "could not execute $blast_parser_executable, returned error code: $!";
 
     while(my $line=<PARSER>) {
+        if($debug) {
+            print STDERR "PARSER RETURNED: $line";
+        }
+
         if($line=~/^(\d+)\s(.*)$/) {
             my ($id, $rest) = ($1, $2);
 
@@ -95,8 +100,9 @@ sub run {
     }
     close PARSER;
 
-    unless($keep_blast_output) {
+    unless($debug) {
         unlink $interfile;
+        $self->param('matrix_hash', \%matrix_hash);        # store it in a parameter
     }
 
 =comment
@@ -164,24 +170,25 @@ sub run {
     } while(scalar(keys %matrix_hash) < $minibatch);
     close $from_parser;
 
+    $self->param('matrix_hash', \%matrix_hash);        # store it in a parameter
 =cut
 
-    $self->param('matrix_hash', \%matrix_hash);        # store it in a parameter
     return 1;
 }
 
 sub write_output {
     my $self = shift @_;
 
-    my $matrix_hashp = $self->param('matrix_hash');
+    if(my $matrix_hashp = $self->param('matrix_hash')) {
 
-    my $sql = "REPLACE INTO mcl_matrix (id, rest) VALUES (?, ?)";
-    my $sth = $self->dbc->prepare( $sql );
+        my $sql = "REPLACE INTO mcl_matrix (id, rest) VALUES (?, ?)";
+        my $sth = $self->dbc->prepare( $sql );
 
-    while(my($id, $rest) = each %$matrix_hashp) {
-        $sth->execute( $id, $rest );
+        while(my($id, $rest) = each %$matrix_hashp) {
+            $sth->execute( $id, $rest );
+        }
+        $sth->finish();
     }
-    $sth->finish();
 
     return 1;
 }
