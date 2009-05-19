@@ -242,6 +242,7 @@ sub haploview_files {
 
 sub populate_tree {
   my $self = shift;
+  my $object = $self->object;
 
   $self->create_node( 'Genome', "Whole genome",
     [qw(genome EnsEMBL::Web::Component::Location::Genome)],
@@ -302,7 +303,7 @@ sub populate_tree {
     [qw(gen_alignment      EnsEMBL::Web::Component::Location::ComparaGenomicAlignment)],
     {'no_menu_entry' => 1 }
   ));
-  my $availability = $self->object->availability;
+  my $availability = $object->availability;
   my $caption = $availability->{'chromosome'} ? 'Synteny ([[counts::synteny]])' : 'Synteny';
   $align_menu->append( $self->create_node( 'Synteny', $caption,
     [qw(
@@ -333,6 +334,34 @@ sub populate_tree {
 	  marker EnsEMBL::Web::Component::Location::MarkerDetails) ],
      { 'availability' => 'has_markers' }
   );
+
+  ## Links to external browsers - UCSC, NCBI, etc
+  my %browsers = %{$object->species_defs->EXTERNAL_GENOME_BROWSERS || {}};
+  $browsers{'UCSC_DB'} = $object->species_defs->UCSC_GOLDEN_PATH;
+  $browsers{'NCBI_DB'} = $object->species_defs->NCBI_GOLDEN_PATH;
+  my $url;
+  my $browser_menu = $self->create_submenu('OtherBrowsers', 'Other genome browsers');
+  if ($browsers{'UCSC_DB'}) {
+    $url = $object->get_ExtURL( 'EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end )} );
+    $browser_menu->append( $self->create_node('UCSC_DB', 'UCSC',
+      [], { 'availability' => 1, 'url' => $url, 'raw' => 1 }
+    ));
+    delete($browsers{'UCSC_DB'});
+  }
+  if ($browsers{'NCBI_DB'}) {
+    $url = $object->get_ExtURL('EGB_NCBI', { 'NCBI_DB' => $browsers{'NCBI_DB'}, 'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end )} );
+    $browser_menu->append( $self->create_node('NCBI_DB', 'NCBI',
+      [], { 'availability' => 1, 'url' => $url, 'raw' => 1 }
+    ));
+    delete($browsers{'NCBI_DB'});
+  }
+  foreach (sort keys %browsers) {
+    next unless $browsers{$_};
+    $url = $object->get_ExtURL( $_, {'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end ) } );
+    $browser_menu->append($self->create_node($browsers{$_}, $browsers{$_},
+      [], { 'availability' => 1, 'url' => $url, 'raw' => 1 }
+    ));
+  }
 
   $self->create_subnode(
     'Export', "Export location data",
