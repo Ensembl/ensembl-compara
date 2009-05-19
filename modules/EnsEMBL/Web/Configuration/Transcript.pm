@@ -505,10 +505,14 @@ sub populate_tree {
   ));
   
   # External Data tree, including non-positional DAS sources
-  $self->create_node( 'ExternalData', 'External Data',
+  my $external = $self->create_node( 'ExternalData', 'External Data',
     [qw(external EnsEMBL::Web::Component::Transcript::ExternalData)],
     { 'availability' => 'transcript' }
   );
+  $external->append( $self->create_node( 'UserAnnotation', "Personal annotation",
+    [qw(manual_annotation EnsEMBL::Web::Component::Transcript::UserAnnotation)],
+    { 'availability' => 1 }
+  ));
   
   my $history_menu = $self->create_submenu('History', "ID History");
   $history_menu->append($self->create_node( 'Idhistory', "Transcript history",
@@ -532,11 +536,6 @@ sub populate_tree {
     { 'availability' => 'transcript', 'no_menu_entry' => 1 }
   );
 
-  my $user_menu = $self->create_submenu( 'User', 'User data' );
-  $user_menu->append( $self->create_node( 'UserAnnotation', "Personal annotation",
-    [qw(manual_annotation EnsEMBL::Web::Component::Transcript::UserAnnotation)],
-    { 'availability' => 1 }
-  ));
 
 }
 
