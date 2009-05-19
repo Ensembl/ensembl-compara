@@ -179,7 +179,7 @@ sub new_from_transcript {
   $self->chr_start($transcript->coding_region_start);
   $self->chr_end($transcript->coding_region_end);
   $self->chr_strand($transcript->seq_region_strand);
-  $self->version($transcript->translation->version);
+  $self->version($transcript->translation->version) if ($translate eq 'yes');
 
   if(($translate eq 'translate') or ($translate eq 'yes')) {
     if(not defined($transcript->translation)) {
@@ -581,7 +581,7 @@ sub sequence_exon_cased {
   my %splice_site;
   my $pep_len = 0;
   my $overlap_len = 0;
-  for my $exon (@exons) {
+  while (my $exon = shift @exons) {
     my $exon_len = $exon->length;
     my $pep_seq = $exon->peptide($trans)->length;
     # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq
@@ -613,6 +613,52 @@ sub sequence_exon_cased {
   return $seqsplice;
 }
 
+sub sequence_exon_bounded {
+  my $self = shift;
+
+  my $sequence = $self->sequence;
+  my $trans = $self->transcript;
+  my @exons = @{$trans->get_all_translateable_Exons};
+  return $sequence if (1 == scalar @exons);
+
+  my %splice_site;
+  my $pep_len = 0;
+  my $overlap_len = 0;
+  while (my $exon = shift @exons) {
+    my $exon_len = $exon->length;
+    my $pep_seq = $exon->peptide($trans)->length;
+    # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq
+    $pep_seq -= 1 if ($overlap_len);
+    $pep_len += $pep_seq;
+    if ($overlap_len = (($exon_len + $overlap_len ) %3)){          # if there is an overlap
+      $splice_site{$pep_len-1}{'overlap'} = $pep_len -1;         # stores overlapping aa-exon boundary
+    } else {
+      $overlap_len = 0;
+    }
+    $splice_site{$pep_len}{'phase'} = $overlap_len;                 # positions of exon boundary
+  }
+
+  my $seqsplice = '';
+  my $splice = 0;
+  foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
+    next if (defined($splice_site{$pep_len}{'overlap'}));
+    next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
+    $splice++;
+    my $length = $pep_len;
+    $length-- if (defined($splice_site{$pep_len}{'phase'}) && 1 == $splice_site{$pep_len}{'phase'});
+    my $peptide;
+    $peptide = substr($sequence,$length,length($sequence),'');
+    # $peptide = lc($peptide) unless ($splice % 2); # Even splice lower-cased
+    $seqsplice = $peptide . $seqsplice;
+    $seqsplice = 'o' . $seqsplice if (0 == $splice_site{$pep_len}{'phase'});
+    $seqsplice = 'b' . $seqsplice if (1 == $splice_site{$pep_len}{'phase'});
+    $seqsplice = 'j' . $seqsplice if (2 == $splice_site{$pep_len}{'phase'});
+  }
+  $seqsplice = $sequence . $seqsplice; # First exon AS IS
+
+  return $seqsplice;
+}
+
 # GJ 2008-11-17
 # Returns the amino acid sequence with exon boundaries denoted as O, B, or J depending on the phase (O=0, B=1, J=2)
 sub get_exon_bounded_sequence {
@@ -625,7 +671,8 @@ sub get_exon_bounded_sequence {
     # We'll deal with this during the exon loop.
     my @exons = @{$transcript->get_all_translateable_Exons};
     my $seq_string = "";
-    for my $ex (@exons) {
+    # for my $ex (@exons) {
+    while (my $ex = shift @exons) {
 	my $seq = $ex->peptide($transcript)->seq;
 
 	# PHASE HANDLING
@@ -633,7 +680,7 @@ sub get_exon_bounded_sequence {
 	my $end_phase = $ex->end_phase;
 
 	# First, cut off repeated end residues.
-	if ($end_phase == 1) {
+	if ($end_phase == 1 && 0 < scalar @exons) {
 	    # We only own 1/3, so drop the last residue.
 	    $seq = substr($seq,0,-1);
 	}
