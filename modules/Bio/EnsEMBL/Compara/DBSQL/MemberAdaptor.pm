@@ -872,6 +872,68 @@ sub store {
   return $member->dbID;
 }
 
+sub store_reused {
+  my ($self,$member) = @_;
+
+  unless($member->isa('Bio::EnsEMBL::Compara::Member')) {
+    $self->throw(
+      "member arg must be a [Bio::EnsEMBL::Compara::Member]"
+    . "not a $member");
+  }
+
+#  $member->source_id($self->store_source($member->source_name));
+
+  my $sth = $self->prepare("INSERT ignore INTO member (member_id, stable_id, version, source_name,
+                              taxon_id, genome_db_id, description,
+                              chr_name, chr_start, chr_end, chr_strand,display_label)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+
+  my $insertCount = $sth->execute(
+                  $member->member_id,
+                  $member->stable_id,
+                  $member->version,
+                  $member->source_name,
+                  $member->taxon_id,
+                  $member->genome_db_id,
+                  $member->description,
+                  $member->chr_name,
+                  $member->chr_start,
+                  $member->chr_end,
+                  $member->chr_strand,
+                  $member->display_label);
+  if($insertCount>0) {
+    #sucessful insert
+    $member->dbID( $sth->{'mysql_insertid'} );
+    $sth->finish;
+  } else {
+    $sth->finish;
+    #UNIQUE(source_id,stable_id) prevented insert since member was already inserted
+    #so get member_id with select
+    my $sth2 = $self->prepare("SELECT member_id, sequence_id FROM member WHERE source_name=? and stable_id=?");
+    $sth2->execute($member->source_name, $member->stable_id);
+    my($id, $sequence_id) = $sth2->fetchrow_array();
+    warn("MemberAdaptor: insert failed, but member_id select failed too") unless($id);
+    $member->dbID($id);
+    $member->sequence_id($sequence_id) if ($sequence_id);
+    $sth2->finish;
+  }
+
+  $member->adaptor($self);
+
+  # insert in sequence table to generate new
+  # sequence_id to insert into member table;
+  if(defined($member->sequence) and $member->sequence_id == 0) {
+    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence));
+
+    my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
+    $sth3->execute($member->sequence_id, $member->dbID);
+    $sth3->finish;
+  }
+
+  return $member->dbID;
+}
+
+
 sub update_sequence {
   my ($self, $member) = @_;
 
