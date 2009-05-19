@@ -120,6 +120,24 @@ sub right_index {
   return $self->{'_right_index'};
 }
 
+=head2 clusterset_id
+
+  Arg [1]    : (opt.) integer clusterset_id
+  Example    : my $nsetID = $object->clusterset_id();
+  Example    : $object->clusterset_id(12);
+  Description: Getter/Setter for the clusterset_id of this object in the database
+  Returntype : integer clusterset_id
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub clusterset_id {
+  my $self = shift;
+  $self->{'_clusterset_id'} = shift if(@_);
+  return $self->{'_clusterset_id'};
+}
+
 
 #######################################
 # Set manipulation methods
@@ -376,7 +394,7 @@ sub each_child {
 
 sub sorted_children {
   my $self = shift;
-  
+
   my @sortedkids = 
      sort { $a->is_leaf <=> $b->is_leaf     
                      ||
@@ -465,7 +483,7 @@ sub get_all_nodes_by_tag_value{
 sub get_all_subnodes {
   my $self = shift;
   my $node_hash = shift;
-  
+
   my $toplevel = 0;
   unless($node_hash) {
    $node_hash = {};
@@ -554,13 +572,14 @@ sub get_all_adjacent_subtrees {
 
 =cut
 #'
-sub num_leaves{
+sub num_leaves {
    my $self = shift;
 
    my $left = $self->left_index;
    my $right = $self->right_index;
 
    return undef unless (defined($left) && defined($right));
+   return undef if ($left = 0 || $right = 0);
 
    my $num = $right - $left + 1;
    my $num_leaves = ( ($num/2) + 1 ) / 2;
@@ -591,7 +610,7 @@ sub load_children_if_needed {
 
 sub no_autoload_children {
   my $self = shift;
-  
+
   return if($self->{'_children_loaded'});
   $self->{'_children_loaded'} = 1;
 }
@@ -612,7 +631,7 @@ sub no_autoload_children {
 sub distance_to_parent {
   my $self = shift;
   my $dist = shift;
-  
+
   if($self->{'_parent_link'}) {
     if(defined($dist)) { $self->{'_parent_link'}->distance_between($dist); }
     else { $dist = $self->{'_parent_link'}->distance_between; }
@@ -706,7 +725,7 @@ sub get_TreeI {
 	 -format => 'newick');
     my $treeI = $treein->next_tree;
     $treein->close;
-    
+
     return $treeI;
 }
 
@@ -727,7 +746,7 @@ sub new_from_newick {
 sub new_from_TreeI {
     my $class = shift;
     my $treeI = shift;
-    
+
     my $rootI = $treeI->get_root_node;
     my $node = new $class;
 
@@ -746,7 +765,7 @@ sub _add_nodeI_to_node {
 
     foreach my $c ($nodeI->each_Descendent) {
 	my $child = ref($node)->new;
-	
+
 	my $name = $c->id;
 	$name =~ s/^\s+//;
 	$name =~ s/\s+$//;
@@ -785,7 +804,7 @@ sub _add_nodeI_to_node {
 sub print_tree {
   my $self  = shift;
   my $scale = shift;
-  
+
   $scale = 100 unless($scale);
   $self->_internal_print_tree(undef, 0, $scale);
 }
