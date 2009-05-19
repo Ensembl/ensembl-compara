@@ -357,16 +357,14 @@ sub stuff {
   $ENV{CACHE_KEY} .= "::SESSION[$session_id]" if $session_id;
 
   ## If the user has hit (^R or F5 we need to flush the cache!)
-  if( $MEMD && 
-   ($r->headers_in->{'Cache-Control'} eq 'max-age=0' || $r->headers_in->{'Pragma'} eq 'no-cache')
-  ) {
+  if($MEMD && ($r->headers_in->{'Cache-Control'} eq 'max-age=0' || $r->headers_in->{'Pragma'} eq 'no-cache') && $r->method ne 'POST') {
     $MEMD->delete_by_tags(
       $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'},
       $session_id ? "session_id[$session_id]" : (),
     );
   }
 
-  my $content = $MEMD ? $MEMD->get($ENV{CACHE_KEY}, keys %{$ENV{CACHE_TAGS}}) : undef;
+  my $content = ($MEMD && $r->method ne 'POST') ? $MEMD->get($ENV{CACHE_KEY}, keys %{$ENV{CACHE_TAGS}}) : undef;
 
   if ($content) { ## HIT
     warn "DYNAMIC CONTENT CACHE HIT $ENV{CACHE_KEY}"
