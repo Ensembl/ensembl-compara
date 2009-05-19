@@ -84,10 +84,10 @@ sub fetch_by_Member_root_id {
 
 
 sub fetch_AlignedMember_by_member_id_root_id {
-  my ($self, $member_id, $root_id) = @_;
-    
+  my ($self, $member_id, $clusterset_id) = @_;
+
   my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id";
-  $constraint .= " AND t.root_id = $root_id" if($root_id and $root_id>0);
+  $constraint .= " AND t.clusterset_id = $clusterset_id" if($clusterset_id and $clusterset_id>0);
   my $final_clause = "order by tm.node_id desc";
   $self->final_clause($final_clause);
   my ($node) = @{$self->_generic_fetch($constraint)};
@@ -116,7 +116,7 @@ sub fetch_AlignedMember_by_member_id_root_id {
 
 sub fetch_AlignedMember_by_member_id_mlssID {
   my ($self, $member_id, $mlss_id) = @_;
-    
+
   my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id";
   $constraint .= " AND tm.method_link_species_set_id = $mlss_id" if($mlss_id and $mlss_id>0);
   my ($node) = @{$self->_generic_fetch($constraint)};
@@ -135,15 +135,16 @@ sub store {
   unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
-  
+
   $self->store_node($node);
-  
+
   # recursively do all the children
   my $children = $node->children;
-  foreach my $child_node (@$children) {  
+  foreach my $child_node (@$children) {
+    $child_node->clusterset_id($node->clusterset_id) unless (defined($child_node->clusterset_id));
     $self->store($child_node);
   }
-  
+
   return $node->node_id;
 }
 
@@ -163,7 +164,7 @@ sub store_node {
   unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
-  
+
   if($node->adaptor and 
      $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor') and
      $node->adaptor eq $self) 
@@ -171,22 +172,30 @@ sub store_node {
     #already stored so just update
     return $self->update_node($node);
   }
-  
-  my $parent_id = 0;
-  my $root_id = 0;
+
+  my $parent_id = 0; my $root_id = 0; my $clusterset_id = 0;
   if($node->parent) {
-    $parent_id = $node->parent->node_id ;
-    $root_id = $node->root->node_id;
+    $parent_id = $node->parent->node_id;
+    if (ref($node->node_id)) {
+      # We got here because we haven't stored this node and so it
+      # doesn't have a node_id, returning a hashref (node object) for node_id
+      # instead of an integer
+      $root_id = $node->root->node_id;
+    } else {
+      $root_id = $node->subroot->node_id;
+    }
+    $clusterset_id = $node->clusterset_id;
   }
   #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
 
   my $sth = $self->prepare("INSERT INTO protein_tree_node 
                              (parent_id,
                               root_id,
+                              clusterset_id,
                               left_index,
                               right_index,
-                              distance_to_parent)  VALUES (?,?,?,?,?)");
-  $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
+                              distance_to_parent)  VALUES (?,?,?,?,?,?)");
+  $sth->execute($parent_id, $root_id, $clusterset_id, $node->left_index, $node->right_index, $node->distance_to_parent);
 
   $node->node_id( $sth->{'mysql_insertid'} );
   #printf("  new node_id %d\n", $node->node_id);
@@ -196,10 +205,11 @@ sub store_node {
   if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     $sth = $self->prepare("INSERT ignore INTO protein_tree_member 
                                (node_id,
+                                root_id,
                                 member_id,
                                 method_link_species_set_id,
-                                cigar_line)  VALUES (?,?,?,?)");
-    $sth->execute($node->node_id, $node->member_id, $node->method_link_species_set_id, $node->cigar_line);
+                                cigar_line)  VALUES (?,?,?,?,?)");
+    $sth->execute($node->node_id, $root_id, $node->member_id, $node->method_link_species_set_id, $node->cigar_line);
     $sth->finish;
   }
 
@@ -213,19 +223,29 @@ sub update_node {
   unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
-  
-  my $parent_id = 0;
-  if($node->parent) {
-    $parent_id = $node->parent->node_id ;
-  }
 
+  my $parent_id = 0; my $root_id = 0; my $clusterset_id = 0;
+  if($node->parent) {
+    $parent_id = $node->parent->node_id;
+    if (ref($node->node_id)) {
+      # We got here because we haven't stored this node and so it
+      # doesn't have a node_id, returning a hashref (node object) for node_id
+      # instead of an integer
+      $root_id = $node->root->node_id;
+    } else {
+      $root_id = $node->subroot->node_id;
+    }
+    $clusterset_id = $node->clusterset_id;
+  }
+  $DB::single=1;1;
   my $sth = $self->prepare("UPDATE protein_tree_node SET
-                              parent_id=?,
-                              left_index=?,
-                              right_index=?,
-                              distance_to_parent=? 
+                            parent_id=?,
+                            root_id=?,
+                            left_index=?,
+                            right_index=?,
+                            distance_to_parent=? 
                             WHERE node_id=?");
-  $sth->execute($parent_id, $node->left_index, $node->right_index, 
+  $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, 
                 $node->distance_to_parent, $node->node_id);
 
   $node->adaptor($self);
@@ -234,9 +254,10 @@ sub update_node {
   if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     my $sql = "UPDATE protein_tree_member SET ". 
               "cigar_line='". $node->cigar_line . "'";
-    $sql .= ", cigar_start=" . $node->cigar_start if($node->cigar_start);              
-    $sql .= ", cigar_end=" . $node->cigar_end if($node->cigar_end);              
-    $sql .= ", method_link_species_set_id=" . $node->method_link_species_set_id if($node->method_link_species_set_id);              
+    $sql .= ", cigar_start=" . $node->cigar_start if($node->cigar_start);
+    $sql .= ", cigar_end=" . $node->cigar_end if($node->cigar_end);
+    $sql .= ", root_id=" . $root_id;
+    $sql .= ", method_link_species_set_id=" . $node->method_link_species_set_id if($node->method_link_species_set_id);
     $sql .= " WHERE node_id=". $node->node_id;
     $self->dbc->do($sql);
   }
@@ -250,15 +271,15 @@ sub merge_nodes {
   unless($node1->isa('Bio::EnsEMBL::Compara::NestedSet')) {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node1");
   }
-  
+
   # printf("MERGE children from parent %d => %d\n", $node2->node_id, $node1->node_id);
-  
+
   my $sth = $self->prepare("UPDATE protein_tree_node SET
-                              parent_id=?,
-			                     WHERE parent_id=?");
+                              parent_id=?
+			      WHERE parent_id=?");
   $sth->execute($node1->node_id, $node2->node_id);
   $sth->finish;
-  
+
   $sth = $self->prepare("DELETE from protein_tree_node WHERE node_id=?");
   $sth->execute($node2->node_id);
   $sth->finish;
@@ -267,7 +288,7 @@ sub merge_nodes {
 sub delete_flattened_leaf {
   my $self = shift;
   my $node = shift;
-  
+
   my $node_id = $node->node_id;
   #print("delete node $node_id\n");
 #   $self->dbc->do("UPDATE protein_tree_node dn, protein_tree_node n SET ". 
@@ -280,7 +301,7 @@ sub delete_flattened_leaf {
 sub delete_node {
   my $self = shift;
   my $node = shift;
-  
+
   my $node_id = $node->node_id;
   #print("delete node $node_id\n");
   $self->dbc->do("UPDATE protein_tree_node dn, protein_tree_node n SET ". 
@@ -335,7 +356,7 @@ sub delete_node_and_under {
 sub _load_tagvalues {
   my $self = shift;
   my $node = shift;
-  
+
   unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
@@ -354,7 +375,7 @@ sub _store_tagvalue {
   my $node_id = shift;
   my $tag = shift;
   my $value = shift;
-  
+
   $value="" unless(defined($value));
 
   my $sql = "INSERT ignore into protein_tree_tag (node_id,tag) values ($node_id,\"$tag\")";
@@ -379,10 +400,11 @@ sub columns {
   return ['t.node_id',
           't.parent_id',
           't.root_id',
+          't.clusterset_id',
           't.left_index',
           't.right_index',
           't.distance_to_parent',
-          
+
           'tm.cigar_line',
           'tm.cigar_start',
           'tm.cigar_end',
@@ -408,14 +430,14 @@ sub default_where_clause {
 sub create_instance_from_rowhash {
   my $self = shift;
   my $rowhash = shift;
-  
-  my $node;  
+
+  my $node;
   if($rowhash->{'member_id'}) {
-    $node = new Bio::EnsEMBL::Compara::AlignedMember;    
+    $node = new Bio::EnsEMBL::Compara::AlignedMember;
   } else {
     $node = new Bio::EnsEMBL::Compara::ProteinTree;
   }
-  
+
   $self->init_instance_from_rowhash($node, $rowhash);
   return $node;
 }
@@ -425,7 +447,7 @@ sub _objs_from_sth {
   my $node_list = [];
 
   while(my $rowhash = $sth->fetchrow_hashref) {
-    my $node = $self->create_instance_from_rowhash($rowhash);        
+    my $node = $self->create_instance_from_rowhash($rowhash);
     push @$node_list, $node;
   }
 
@@ -437,12 +459,12 @@ sub init_instance_from_rowhash {
   my $self = shift;
   my $node = shift;
   my $rowhash = shift;
-  
+
   #SUPER is NestedSetAdaptor
   $self->SUPER::init_instance_from_rowhash($node, $rowhash);
    if($rowhash->{'member_id'}) {
     Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->init_instance_from_rowhash($node, $rowhash);
-    
+
     $node->cigar_line($rowhash->{'cigar_line'});
 # cigar_start and cigar_end does not need to be set.
 #    $node->cigar_start($rowhash->{'cigar_start'});
@@ -451,7 +473,7 @@ sub init_instance_from_rowhash {
   # print("  create node : ", $node, " : "); $node->print_node;
 
   $node->adaptor($self);
-  
+
   return $node;
 }
 
@@ -481,6 +503,5 @@ sub fetch_longest_peptide_member_for_gene_member_id {
   my $self = shift;
   return $self->db->get_MemberAdaptor->fetch_longest_peptide_member_for_gene_member_id(@_);
 }
-
 
 1;
