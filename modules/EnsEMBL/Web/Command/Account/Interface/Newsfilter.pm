@@ -52,10 +52,10 @@ sub process {
   #$interface->element('topic', {'type'=>'MultiSelect', 'label'=>'Topic(s)',
   #                              'values' => \@topic_list, value => ''});
   $interface->element('species', {
+                                  name   => 'species',
                                   type   => 'MultiSelect',
                                   label  => 'Species',
                                   values => \@species_list,
-                                  value => ''
                                  }
   );
 
