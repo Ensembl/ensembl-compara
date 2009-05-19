@@ -123,8 +123,11 @@ sub fetch_input {
   my $cluster_analysis;
   $cluster_analysis = $self->analysis->adaptor->fetch_by_logic_name('PAFCluster');
   $cluster_analysis = $self->analysis->adaptor->fetch_by_logic_name('HclusterPrepare') unless (defined($cluster_analysis));
-
   my $cluster_parameters = eval($cluster_analysis->parameters);
+  if (!defined($cluster_parameters)) {
+    my $message = "cluster_parameters is undef in analysis_id=" . $cluster_analysis->dbID;
+    throw ("$message");
+  }
   my @gdbs;
   foreach my $gdb_id (@{$cluster_parameters->{species_set}}) {
     my $genomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
