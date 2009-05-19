@@ -72,7 +72,6 @@ sub content {
 
   if (!$has_filters) {
     my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
-    $html .= qq(<p class="center"><img src="/img/help/filter_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
     $html .= qq(<p class="center">You do not have any filters set, so you will see general headlines.</p>
 <p><a href="/Account/Newsfilter/Add?$referer" class="modal_link">Add a news filter &rarr;</a></p>);
   }
