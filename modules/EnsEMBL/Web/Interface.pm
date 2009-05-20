@@ -27,6 +27,7 @@ my %Caption           :ATTR(:get<caption> :set<caption>);
 my %Elements          :ATTR(:get<elements> :set<elements>);
 my %ElementOrder      :ATTR(:get<element_order> :set<element_order>);
 my %ShowHistory       :ATTR(:get<show_history> :set<show_history>);
+my %LandingPage       :ATTR(:get<landing_page> :set<landing_page>);
 
 my %RecordFilter      :ATTR(:get<record_filter> :set<record_filter>);
 my %OptionColumns     :ATTR(:get<option_columns> :set<option_columns>);
