@@ -29,19 +29,20 @@ sub get_url_content {
   $request->header('Cache-control' => 'no-cache');
   $request->header('Pragma'        => 'no-cache');
   my $response = $ua->request($request);
-  if ($response->is_success) {
-    return {'content' => $response->content};
+  my $error = _get_http_error($response);
+  if ($error) {
+    return {'error' => $error};
   }
   else {
-    return {'error' => $response->content};
+    return {'content' => $response->content};
   }
 }
 
 sub get_url_filesize {
-## Returns the size of a file in bytes, or -1 if the request fails
+## Returns the size of a file in bytes, or an error code if the request fails
   my $url   = shift;
   my $proxy = shift || $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
-  my $file_size = 0;
+  my $feedback = {};
 
   my $ua = new LWP::UserAgent;
   $ua->timeout(10);
@@ -51,21 +52,40 @@ sub get_url_filesize {
   $request->header('Cache-control' => 'no-cache');
   $request->header('Pragma'        => 'no-cache');
   my $response = $ua->request($request);
-
-  if ($response->is_success) {
+  my $error = _get_http_error($response);
+  if ($error) {
+    $feedback->{'error'} = $error;
+  }
+  else {
     $file_size = $response->header('Content-Length');
     unless ($file_size) {
       my $content = $response->content;
       if ($content) {
-        $file_size = length($content);
+        $feedback->{'filesize'} = length($content);
+      }
+      else {
+        $feedback->{'filesize'} = 0;
       }
     }
   }
-  else {
-    $file_size = -1;
-  }
-  return $file_size;
+  return $feedback;
 }
+
+sub _get_http_error {
+  my $response = shift;
+  my $error;
+  if (!$response->code) {
+    $error = 'timeout';
+  }
+  elsif ($response->code >= 400) {
+    $error = $response->status_line;
+  }
+  elsif ($response->content_type =~ /HTML/i) {
+    $error = 'mime';
+  }
+  return $error;
+}
+
 
 sub style_by_filesize {
   my $filesize = shift || 0;
