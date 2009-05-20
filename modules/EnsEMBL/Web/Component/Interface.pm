@@ -23,7 +23,7 @@ sub data_form {
 
   my $url = '/'.$object->species;
   $url = '' if $url !~ /_/;
-  $url = '/'.$self->script_name.'/'.$next;
+  $url .= '/'.$self->script_name.'/'.$next;
   my $form = EnsEMBL::Web::Form->new($name, $url, 'post');
   $form->add_attribute('class', 'narrow-labels');
 
