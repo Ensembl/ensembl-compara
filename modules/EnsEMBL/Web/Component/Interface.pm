@@ -21,7 +21,7 @@ sub data_form {
   my ($self, $name, $next) = @_;
   my $object = $self->object;
 
-  my $url = '/'.$ENV{'ENSEMBL_SPECIES'};
+  my $url = '/'.$object->species;
   $url = '' if $url !~ /_/;
   $url = '/'.$self->script_name.'/'.$next;
   my $form = EnsEMBL::Web::Form->new($name, $url, 'post');
