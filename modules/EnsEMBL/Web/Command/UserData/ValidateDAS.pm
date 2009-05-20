@@ -41,15 +41,11 @@ sub process {
       for my $source (@{ $sources }) {
         # If one or more source has missing details, need to fill them in and resubmit
         unless (@{ $source->coord_systems } || $self->object->param($source->logic_name.'_coords')) {
-          $next = 'DasCoords' unless $next eq 'DasSpecies'; ## We have to go to species form first
-          if (!$self->object->param('species')) {
-            $next = 'DasSpecies';
-          }
+          $next = 'DasSpecies'; ## We have to go to species form first
         }
         push @logic_names, $source->logic_name;
       }
       $param->{'logic_name'} = \@logic_names;
-
     }
 
     ## Pass any coordinate parameters
