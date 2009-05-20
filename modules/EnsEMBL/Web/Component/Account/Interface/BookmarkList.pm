@@ -113,8 +113,8 @@ sub content {
       my $row = {};
       my $bookmark = $group_bookmarks{$bookmark_id}{'bookmark'};
 
-      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s%s" class="cp-external">%s</a>),
-                        $bookmark->id, $referer, $bookmark->name);
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s;group=%s%s" class="cp-external">%s</a>),
+                        $bookmark->id, $bookmark->webgroup_id, $referer, $bookmark->name);
 
       $row->{'desc'} = $bookmark->description || '&nbsp;';
 

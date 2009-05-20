@@ -69,7 +69,7 @@ sub content {
       my @bookmarks = @{$group_bookmarks->{$id}{'bookmarks'}};
       $html .= "<ul>\n";
       foreach my $bookmark (@bookmarks) {
-        $html .= $self->_output_bookmark($bookmark);
+        $html .= $self->_output_bookmark($bookmark, $id);
       }
       $html .= "</ul>\n";
     }
@@ -136,8 +136,12 @@ sub content {
 }
 
 sub _output_bookmark {
-  my ($self, $bookmark) = @_;
-  my $html .= '<li><a href="/Account/UseBookmark?id='.$bookmark->id.'" class="cp-external"';
+  my ($self, $bookmark, $group) = @_;
+  my $html .= '<li><a href="/Account/UseBookmark?id='.$bookmark->id;
+  if ($group) {
+    $html .= ";group=$group";
+  }
+  $html .= '" class="cp-external"';
   if ($bookmark->description) {
     $html .= ' title="'.$bookmark->description.'"';
   }
@@ -145,6 +149,7 @@ sub _output_bookmark {
   return $html;
 }
 
+=pod
 sub _output_config {
   my ($self, $config) = @_;
   my $html .= '<dt>'.$config->name.'</dt><dd><a href="" class="modal_link"';
@@ -158,4 +163,6 @@ sub _output_config {
   $html .= ">Go&nbsp;to&nbsp;saved&nbsp;page</a></dd>\n";
   return $html;
 }
+=cut
+
 1;
