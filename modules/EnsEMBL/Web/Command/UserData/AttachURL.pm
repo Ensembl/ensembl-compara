@@ -30,13 +30,28 @@ sub process {
     $url = 'http://'.$url unless $url =~ /^http/;
 
     ## Check file size
-    my $filesize = EnsEMBL::Web::Tools::Misc::get_url_filesize($url);
-    if ($filesize < 0) {
+    my $feedback = EnsEMBL::Web::Tools::Misc::get_url_filesize($url);
+    if ($feedback->{'error'}) {
       $redirect .= 'SelectURL';
-      $param->{'filter_module'} = 'Data';
-      $param->{'filter_code'} = 'no_response';
+      if ($feedback->{'error'} eq 'timeout') {
+        $param->{'filter_module'} = 'Data';
+        $param->{'filter_code'} = 'no_response';
+      }
+      elsif ($feedback->{'error'} eq 'mime') {
+        $param->{'filter_module'} = 'Data';
+        $param->{'filter_code'} = 'invalid_mime_type';
+      }
+      else {
+        ## Set message in session
+        $object->get_session->add_data(
+          'type'  => 'message',
+          'code'  => 'AttachURL',
+          'message' => 'Unable to access file. Server response: '.$feedback->{'error'},
+          function => '_error'
+        );
+      }
     }
-    elsif ($filesize < 1) {
+    elsif ($feedback->{'filesize'} == 0) {
       $redirect .= 'SelectURL';
       $param->{'filter_module'} = 'Data';
       $param->{'filter_code'} = 'empty';
@@ -47,7 +62,7 @@ sub process {
         url       => $url,
         name      => $name,
         species   => $object->data_species,
-        filesize  => $filesize,
+        filesize  => $feedback->{'filesize'},
       );
       if ($object->param('save')) {
         $object->move_to_user('type'=>'url', 'code'=>$data->{'code'});
