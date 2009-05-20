@@ -26,7 +26,12 @@ sub process {
   my $success = $interface->data->save;
   my $type;
   if ($success) {
-    $type = 'List';
+    if (my $custom = $interface->get_landing_page) {
+      $type = $custom;
+    }
+    else {
+      $type = 'List';
+    }
   }
   else {
     $type = 'Problem';
