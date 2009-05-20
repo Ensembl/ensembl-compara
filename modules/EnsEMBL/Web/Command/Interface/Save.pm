@@ -15,6 +15,7 @@ sub process {
   my $self = shift;
   my $object = $self->object;
   my $interface = $object->interface;
+  my $url = '/'.$interface->script_name.'/';
 
   $interface->cgi_populate($object);
   ## Add user ID to new entries in the user/group_record tables
@@ -27,14 +28,14 @@ sub process {
   my $type;
   if ($success) {
     if (my $custom = $interface->get_landing_page) {
-      $type = $custom;
+      $url = $custom;
     }
     else {
-      $type = 'List';
+      $url .= 'List';
     }
   }
   else {
-    $type = 'Problem';
+    $url .= 'Problem';
   }
 
   my $param = {
@@ -42,12 +43,11 @@ sub process {
     'x_requested_with'  => $object->param('x_requested_with'),
   };
 
-  my $url = $self->url('/'.$interface->script_name.'/'.$type, $param);
   if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($url);
+    $self->ajax_redirect($url, $param);
   }
   else {
-    $object->redirect($url);
+    $object->redirect($url, $param);
   }
 }
 
