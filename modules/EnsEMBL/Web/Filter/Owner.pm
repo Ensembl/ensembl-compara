@@ -16,6 +16,7 @@ sub BUILD {
   ## Set the messages hash here
   $self->set_messages({
     'not_owner' => 'You are not the owner of this record.',
+    'not_member' => 'You are not a member of the group that owns this record.',
     'bogus_id' => 'No valid record selected.',
   });
 }
@@ -33,9 +34,32 @@ sub catch {
     }
     else {
       my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-      my $record = $user->records($object->param('id')); 
-      unless ($record) {
-        $self->set_error_code('not_owner');
+      if ($object->param('group')) {
+        ## First check we have a sensible value for 'id'
+        if ($object->param('group') =~ /\D/) {
+          $self->set_error_code('bogus_id');
+          return;
+        }
+        else {
+          my $group = EnsEMBL::Web::Data::Group->new($object->param('group'));
+          if ($group && $user->is_member_of($group)) {
+            my $record = $group->records($object->param('id')); 
+            unless ($record) {
+              $self->set_error_code('not_owner');
+              return;
+            }
+          }
+          else {
+            $self->set_error_code('not_member');
+            return;
+          }
+        }
+      }
+      else {
+        my $record = $user->records($object->param('id')); 
+        unless ($record) {
+          $self->set_error_code('not_owner');
+        }
       }
     }
   }
