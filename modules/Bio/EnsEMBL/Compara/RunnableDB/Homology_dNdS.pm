@@ -183,13 +183,13 @@ sub calc_genetic_distance
   if($rc == 0) {
     print_simple_align($aln, 80);
     print("codeml error : ", $codeml->error_string, "\n");
-    my $collapsed_aln = $aln->remove_gaps;
-    $collapsed_aln->gap_char('N'); # Ns are not used either, so default to gaps
-    if (0 == $collapsed_aln->remove_gaps->length) {
-      # $self->input_job->update_status('FAILED');
-      # $self->throw("Codeml : The pairwise alignment is all gapped");
-      warn("Codeml : The pairwise alignment is all gapped or Ns");
-      return $homology;
+    if($aln->can('remove_gaps')) {
+			my $collapsed_aln = $aln->remove_gaps();
+			$collapsed_aln->gap_char('N'); # Ns are not used either, so default to gaps
+    	if (0 == $collapsed_aln->remove_gaps()->length()) {
+    		warn("Codeml : The pairwise alignment is all gapped or Ns");
+      	return $homology;
+    	}
     }
     warn("There was an error running codeml");
     return $homology;

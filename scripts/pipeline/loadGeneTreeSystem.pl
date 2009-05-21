@@ -629,6 +629,10 @@ sub build_GeneTreeSystem
     $parameters .= "'saturated'=>" . $sitewise_dnds_params{'saturated'};
     $with_options_sitewise_dnds = 1;
   }
+  if (defined $sitewise_dnds_params{gblocks}) {
+   	$parameters .= q{'gblocks_exe'=>} . $sitewise_dnds_params{'gblocks'};
+  	$with_options_sitewise_dnds = 1;
+  }
   $parameters = '{' . $parameters .'}' if (1==$with_options_sitewise_dnds);
 
   my $Sitewise_dNdS = Bio::EnsEMBL::Analysis->new(
@@ -638,6 +642,15 @@ sub build_GeneTreeSystem
       -program_file    => $sitewise_dnds_params{'program_file'} || '',
       -parameters      => $parameters
   );
+  
+  #If params exceed 254 then use the analysis_data table.
+  if(length($parameters) > 254) {
+  	my $ad_dba =  $self->{'hiveDBA'}->get_AnalysisDataAdaptor();
+   	my $adi = $ad_dba->store_if_needed($parameters);
+   	$parameters = "{'analysis_data_id'=>${adi}}";
+  }
+  $Sitewise_dNdS->parameters($parameters);
+  
   $analysisDBA->store($Sitewise_dNdS);
 
   if(defined($self->{'hiveDBA'})) {
