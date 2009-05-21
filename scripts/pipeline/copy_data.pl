@@ -504,7 +504,7 @@ sub copy_genomic_align_blocks {
   if(defined($max_gat)) {
     copy_data($from_dba, $to_dba,
         "genomic_align_tree",
-        "SELECT node_id+$fix_lower, parent_id, root_id, left_index, right_index, left_node_id, right_node_id, distance_to_parent".
+        "SELECT node_id+$fix_lower, parent_id+$fix_lower, root_id+$fix_lower, left_index, right_index, left_node_id+$fix_lower, right_node_id+$fix_lower, distance_to_parent".
           " FROM genomic_align_tree ".
           " WHERE node_id BETWEEN node_id+$fix_lower AND node_id+$fix_higher");
   }
