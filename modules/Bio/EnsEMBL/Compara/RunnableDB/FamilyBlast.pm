@@ -2,8 +2,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast;
 
 use strict;
 use FileHandle;
-use IPC::Open2;
-use IO::Select;
 
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -23,11 +21,8 @@ sub param {
     return $self->{'_param_hash'}{$param_name};
 }
 
-sub fetch_input {
-    my $self = shift @_;
-
-    my $sequence_id             = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
-    my $minibatch               = $self->param('minibatch')   || 1;
+sub load_fasta_sequences_from_db {
+    my ($self, $sequence_id, $minibatch) = @_;
 
     my $sql = qq {
         SELECT m.sequence_id, m.stable_id, m.description, s.sequence
@@ -50,16 +45,108 @@ sub fetch_input {
     $sth->finish();
     $self->dbc->disconnect_when_inactive(1);
 
-    $self->param('fasta_list', \@fasta_list);      # store it in a parameter
+    return \@fasta_list;
+}
+
+sub load_name2index_mapping_from_db {
+    my ($self) = @_;
+
+    my $sql = qq {
+        SELECT sequence_id, stable_id
+          FROM member
+         WHERE sequence_id
+      GROUP BY sequence_id
+    };
+
+    my $sth = $self->dbc->prepare( $sql );
+    $sth->execute();
+
+    my %name2index = ();
+    while( my ($seq_id, $stable_id) = $sth->fetchrow() ) {
+        $name2index{$stable_id} = $seq_id;
+    }
+    $sth->finish();
+    $self->dbc->disconnect_when_inactive(1);
+
+    return \%name2index;
+}
+
+sub load_name2index_mapping_from_file {
+    my ($self, $filename) = @_;
+
+    my %name2index = ();
+    open(MAPPING, "<$filename");
+    while(my $line = <MAPPING>) {
+        if($line=~/^(\d+)\s+(\w+)/) {
+            $name2index{$2} = $1;
+        }
+    }
+    close MAPPING;
+
+    return \%name2index;
+}
+
+sub fetch_input {
+    my $self = shift @_;
+
+    my $sequence_id             = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $minibatch               = $self->param('minibatch')   || 1;
+    my $tabfile                 = $self->param('tabfile');
+
+    $self->param('fasta_list', $self->load_fasta_sequences_from_db($sequence_id, $minibatch));
+
+    $self->param('name2index', $tabfile
+        ? $self->load_name2index_mapping_from_file($tabfile)
+        : $self->load_name2index_mapping_from_db($tabfile)
+    );
 
     return 1;
 }
 
+sub parse_blast_table_into_matrix_hash {
+    my ($self, $filename) = @_;
+
+    my $name2index = $self->param('name2index');
+
+    my %matrix_hash  = ();
+
+    my $curr_name    = '';
+    my $curr_index   = 0;
+    my @dist_accu    = ();
+
+    open(BLASTTABLE, "<$filename");
+    while(my $line = <BLASTTABLE>) {
+
+        if($line=~/^#/) {
+            if($line=~/^#\s+BLASTP/) {
+                if($curr_index) {
+                    $matrix_hash{$curr_index} = join(' ', @dist_accu, '$'); # flush the buffer
+                    @dist_accu = ();
+                }
+            } elsif($line=~/^#\s+Query:\s+(\w+)\s+/) {
+                $curr_name  = $1;
+                $curr_index = $name2index->{$curr_name};
+            }
+        } else {
+            my ($qname, $hname, $identity, $align_length, $mismatches, $gap_openings, $qstart, $qend, $hstart, $hend, $evalue, $bitscore)
+                = split(/\s+/, $line);
+
+            my $hit_index = $name2index->{$hname};
+            my $distance  = $evalue ? -log($evalue)/log(10) : 200;
+
+            push @dist_accu, $hit_index.':'.$distance;
+        }
+    }
+    close BLASTTABLE;
+    $matrix_hash{$curr_index} = join(' ', @dist_accu, '$'); # flush the buffer
+
+    return \%matrix_hash;
+}
+
 sub run {
-    my $self = shift;
+    my $self = shift @_;
 
     my $fastadb                 = $self->param('fastadb') || die "'fastadb' is an obligatory parameter, please set it in the input_id hashref";
-    my $tabfile                 = $self->param('tabfile') || die "'tabfile' is an obligatory parameter, please set it in the input_id hashref";
     my $minibatch               = $self->param('minibatch') || 1;
 
     my $blastmat_directory      = $self->param('blastmat_dir')  || '/software/ensembl/compara/blast-2.2.6/data';
@@ -75,103 +162,18 @@ sub run {
 
     my $interfile = '/tmp/family_blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
 
-    open( BLAST, "| $blastall_executable -d $fastadb -p blastp -e $evalue_limit -v $tophits -b 0 >$interfile")
+    open( BLAST, "| $blastall_executable -d $fastadb -p blastp -e $evalue_limit -v $tophits -m 9 >$interfile")
         || die "could not execute $blastall_executable, returned error code: $!";
-    
+
     print BLAST @$fasta_listp;
     close BLAST;
 
-    my %matrix_hash = ();
-    open( PARSER, "$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tabfile $interfile |")
-        || die "could not execute $blast_parser_executable, returned error code: $!";
-
-    while(my $line=<PARSER>) {
-        if($debug) {
-            print STDERR "PARSER RETURNED: $line";
-        }
-
-        if($line=~/^(\d+)\s(.*)$/) {
-            my ($id, $rest) = ($1, $2);
-
-            $matrix_hash{$id} = $rest;
-        } else {
-            die "Got something strange from the blast parser ('$line'), please investigate";
-        }
-    }
-    close PARSER;
+    my $matrix_hash = $self->parse_blast_table_into_matrix_hash($interfile);
 
     unless($debug) {
         unlink $interfile;
-        $self->param('matrix_hash', \%matrix_hash);        # store it in a parameter
+        $self->param('matrix_hash', $matrix_hash);        # store it in a parameter
     }
-
-=comment
-
-    open2(my $from_blast, my $to_blast, 
-                "$blastall_executable -d $fastadb -p blastp -e 0.00001 -v $tophits -b 0"
-    ) || die "could not execute $blastall_executable, returned error code: $!";
-
-    open2(my $from_parser, my $to_parser, 
-               "$blast_parser_executable --score=e --sort=a --ecut=0 --tab=$tabfile -"
-    ) || die "could not execute $blast_parser_executable pipe, returned error code: $!";
-
-    my $r_all = new IO::Select( $from_blast, $from_parser );
-    my $w_all = new IO::Select( $to_blast, $to_parser );
-
-    my $to_blast_no    = fileno $to_blast;
-    my $from_blast_no  = fileno $from_blast;
-    my $to_parser_no   = fileno $to_parser;
-    my $from_parser_no = fileno $from_parser;
-
-    do {
-        my ($r_ready, $w_ready, $e_ready) = IO::Select->select($r_all, $w_all, undef, undef);
-        my %is_ready = map { ((fileno $_) => 1) } (($r_ready ? @$r_ready : ()),($w_ready ? @$w_ready : ()));
-
-            # let's start from the end:
-        if($is_ready{fileno $from_parser}) {
-            #warn "*** Parser is ready to produce";
-            my $parsed_line = <$from_parser>;
-            #warn "read the following line: $parsed_line";
-
-            if($parsed_line=~/^(\d+)\s(.*)$/) {
-                my ($id, $rest) = ($1, $2);
-
-                $matrix_hash{$id} = $rest;
-                #warn "*** There are now ".keys(%matrix_hash). " lines in the matrix description";
-            } else {
-                die "Got something strange from the blast parser ('$parsed_line'), please investigate";
-            }
-        }
-        if($is_ready{$from_blast_no} and $is_ready{$to_parser_no}) {
-            #warn "*** Blast is ready to produce, Parser is ready to read";
-            if(my $line = <$from_blast>) {
-                #warn "*** Line has been read from Blast";
-                print $to_parser $line;
-            } else {
-                #warn "*** Looks like Blast doesn't want to give us any more data, closing file number $from_blast_no";
-                $r_all->remove($from_blast);
-                close $from_blast;
-                #warn "*** Since there is no data, we are also closing the Parser input, file number $to_parser_no";
-                $w_all->remove($to_parser);
-                close $to_parser;
-            }
-        }
-        if($is_ready{$to_blast_no}) {
-            #warn "*** Blast is ready to read";
-            print $to_blast (shift @$fasta_listp);
-            #warn "*** One more sequence given to Blast";
-            if(! @$fasta_listp) {
-                #warn "*** There will be no more sequences to give Blast, closing the file number $to_blast_no";
-                $w_all->remove($to_blast);
-                close $to_blast;
-            }
-        }
-
-    } while(scalar(keys %matrix_hash) < $minibatch);
-    close $from_parser;
-
-    $self->param('matrix_hash', \%matrix_hash);        # store it in a parameter
-=cut
 
     return 1;
 }
@@ -181,7 +183,10 @@ sub write_output {
 
     if(my $matrix_hashp = $self->param('matrix_hash')) {
 
-        my $sql = "REPLACE INTO mcl_matrix (id, rest) VALUES (?, ?)";
+# FIXME!!! Restore this line back to mcl_matrix !!!
+        #my $sql = "REPLACE INTO mcl_matrix (id, rest) VALUES (?, ?)";
+        my $sql = "REPLACE INTO mcl_matrix_test (id, rest) VALUES (?, ?)";
+
         my $sth = $self->dbc->prepare( $sql );
 
         while(my($id, $rest) = each %$matrix_hashp) {
