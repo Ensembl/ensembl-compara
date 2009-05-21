@@ -2,9 +2,10 @@ package EnsEMBL::Web::Form::Element::Honeypot;
 
 ### Bogus textarea, hidden using CSS, designed to catch spambots!
 
-use CGI qw(escapeHTML);
-
+use strict;
 use base qw( EnsEMBL::Web::Form::Element );
+
+use CGI qw(escapeHTML);
 
 sub render {
   my $self = shift;

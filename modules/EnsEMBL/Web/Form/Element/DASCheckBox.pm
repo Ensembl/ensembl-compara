@@ -1,7 +1,6 @@
 package EnsEMBL::Web::Form::Element::DASCheckBox;
 
 use strict;
-
 use base qw( EnsEMBL::Web::Form::Element::CheckBox);
 
 my $DAS_DESC_WIDTH = 120;

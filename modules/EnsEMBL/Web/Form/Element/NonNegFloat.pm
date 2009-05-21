@@ -1,5 +1,6 @@
 package EnsEMBL::Web::Form::Element::NonNegFloat;
 
+use strict;
 use base qw( EnsEMBL::Web::Form::Element::String );
 
 sub new { my $class = shift; return $class->SUPER::new( @_, 'style' => 'short' ); }

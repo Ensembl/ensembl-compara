@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Form::Element::Date;
 
-use base qw( EnsEMBL::Web::Form::Element );
 use strict;
+use base qw( EnsEMBL::Web::Form::Element );
 
 our @months = qw(January February March April May June July August September October November December);
 

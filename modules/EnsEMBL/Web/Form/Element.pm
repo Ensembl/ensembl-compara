@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Form::Element;
 
+use strict;
+
 sub required_string { return '<strong title="required field">*</strong>'; }
 sub required_value { return '[required]'; }
 

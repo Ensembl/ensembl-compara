@@ -1,4 +1,5 @@
 package EnsEMBL::Web::Form::Element::ComboBox;
+
 use strict;
 use base qw( EnsEMBL::Web::Form::Element );
 

@@ -3,6 +3,7 @@ package EnsEMBL::Web::Form::Element::Html;
 use strict;
 use warnings;
 no warnings 'uninitialized';
+
 use base qw( EnsEMBL::Web::Form::Element::Text );
 
 ### Html fragment text area element - will need to map JavaScript validator back into Perl to make

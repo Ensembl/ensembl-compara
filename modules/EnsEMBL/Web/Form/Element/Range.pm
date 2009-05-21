@@ -1,8 +1,9 @@
 package EnsEMBL::Web::Form::Element::Range;
 
-use EnsEMBL::Web::Form::Element;
+use strict;
+use base qw( EnsEMBL::Web::Form::Element );
+
 use CGI qq(escapeHTML);
-our @ISA = qw( EnsEMBL::Web::Form::Element );
 
 ## TODO -  Needs updating - probably doesn't work with current JavaScript
 

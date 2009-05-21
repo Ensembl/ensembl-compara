@@ -1,4 +1,5 @@
 package EnsEMBL::Web::Form::Element::CheckBox;
+
 use strict;
 use base qw( EnsEMBL::Web::Form::Element );
 

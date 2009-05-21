@@ -1,6 +1,8 @@
 package EnsEMBL::Web::Form::Element::YesNo;
+
 use strict;
 use base qw( EnsEMBL::Web::Form::Element::DropDown );
+
 #--------------------------------------------------------------------
 # Creates a form element for an option set, as either a select box
 # or a set of radio buttons

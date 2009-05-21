@@ -12,9 +12,11 @@ package EnsEMBL::Web::Form::Element::DropDownAndSubmit;
 # whilst the 'value' element is passed as a form variable
 #--------------------------------------------------------------------
 
-use CGI qw(escapeHTML);
 
+use strict;
 use base qw( EnsEMBL::Web::Form::Element );
+
+use CGI qw(escapeHTML);
 
 sub new {
   my $class = shift;

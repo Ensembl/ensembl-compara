@@ -1,8 +1,9 @@
 package EnsEMBL::Web::Form::Element::Hidden;
 
-use EnsEMBL::Web::Form::Element;
+use strict;
+use base qw( EnsEMBL::Web::Form::Element );
+
 use CGI qw(escapeHTML);
-our @ISA = qw( EnsEMBL::Web::Form::Element );
 
 sub render {
   return sprintf
