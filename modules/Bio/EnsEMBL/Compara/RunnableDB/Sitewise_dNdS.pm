@@ -105,6 +105,11 @@ sub fetch_input {
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
+
+	if(!exists $self->{gblocks_exe}) { 
+		$self->{gblocks_exe} = '/software/ensembl/compara/bin/Gblocks';
+	}
+    
   $self->print_params if($self->debug);
   $self->check_if_exit_cleanly;
 
@@ -240,14 +245,29 @@ sub get_params {
   print("parsing parameter string : ",$param_string,"\n") if($self->debug);
 
   my $params = eval($param_string);
-  return unless($params);
+  if(! $params) {
+    print 'Output was empty: skipping',"\n" if $self->debug();
+  	return;
+  }
+  
+  #If we put data into analysis_data then process this & continue to process 
+  #the current params
+  if(exists $params->{analysis_data_id}) {
+  	my $ad_dba = $self->db()->get_AnalysisDataAdaptor();
+  	my $new_params = $ad_dba->fetch_by_dbID($params->{analysis_data_id});
+  	$self->get_params($new_params);
+  }
 
   if (defined($params->{'protein_tree_id'})) {
     $self->{'protein_tree'} = 
       $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
         fetch_node_by_node_id($params->{'protein_tree_id'});
-  } elsif (defined($params->{'saturated'})) {
-        $self->{'saturated'} = $params->{'saturated'};
+  } 
+  if (defined($params->{'saturated'})) {
+  	$self->{'saturated'} = $params->{'saturated'};
+  } 
+  if (exists $params->{gblocks_exe}) {
+  	$self->{gblocks_exe} = $params->{gblocks_exe};
   }
 
   return;
@@ -258,7 +278,9 @@ sub print_params {
   my $self = shift;
 
   print("params:\n");
-  print("  tree_id   : ", $self->{'protein_tree'}->node_id,"\n") if($self->{'protein_tree'});
+  print('  tree_id     : ', $self->{protein_tree}->node_id,"\n") if($self->{protein_tree});
+  print('  saturated   : ', $self->{saturated},"\n") if($self->{saturated});
+  print('  gblocks_exe : ', $self->{gblocks_exe},"\n") if($self->{gblocks_exe});
 }
 
 
@@ -422,11 +444,12 @@ sub run_sitewise_dNdS
       $rc = 0;
     }
     eval {
-      open RESULTS, "$tmpdir/$outfile" or die "couldnt open results file: $!\n";
+      my $results_file = "$tmpdir/$outfile";
+      open my $results, '<', $results_file or throw "Could not open results file '$results_file': $!\n";
       my $okay = 0;
       my $sites;
       my $type = 'default';
-      while (<RESULTS>) {
+      while (<$results>) {
         chomp $_;
         if ( /^\#/ ) {
           next;
@@ -468,7 +491,7 @@ sub run_sitewise_dNdS
         }
       }
       $results->{sites} = $sites;
-      close RESULTS;
+      close $results;
     };
     if ( $@ ) {
       warn($self->{error_string});
@@ -520,18 +543,27 @@ sub run_gblocks
     $tmpfile->write_aln($aln);
     $tmpfile->close;
     my $min_leaves_gblocks = int(($self->{'protein_tree'}->num_leaves+1) * $gmin + 0.5);
-    my $cmd = "echo -e \"o\n$filename\nt\nb\n2\n$min_leaves_gblocks\n5\n5\ng\nm\nq\n\" | /software/ensembl/compara/bin/Gblocks 2>/dev/null 1>/dev/null";
-
-    my $ret = system("$cmd");
-    open FLANKS, "$filename-gb.htm" or die "$!\n";
+    
+    my $gblocks_exe = $self->{gblocks_exe};
+    
+    my $cmd = "echo -e \"o\n$filename\nt\nb\n2\n$min_leaves_gblocks\n5\n5\ng\nm\nq\n\" | $gblocks_exe 2>/dev/null 1>/dev/null";
+		
+		if($self->debug()) {
+			print "Running command $cmd\n";
+		}
+		
+    my $ret = system($cmd);
+    my $filename = "$filename-gb.htm";
+    open my $flanks_fh, '<', $filename or throw "Could not open file '$filename': $!\n";
     my $segments_string;
-    while (<FLANKS>) {
-      chomp $_;
-      next unless ($_ =~ /Flanks/);
-      $segments_string = $_;
+    while (<$flanks_fh>) {
+    	my $line = $_;
+      chomp $line;
+      next unless ($line =~ /Flanks/);
+      $segments_string = $line;
       last;
     }
-    close FLANKS;
+    close $flanks_fh;
     $segments_string =~ s/Flanks\: //g;
     $segments_string =~ s/\s+$//g;
 
