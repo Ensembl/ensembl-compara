@@ -77,9 +77,8 @@ sub add_image_configs { ## Value indidates that the track can be configured for 
   foreach( keys %$hash_ref ) {
     $self->{_image_config_names}{$_} = $hash_ref->{$_};
     $self->can_upload = 1 if $hash_ref->{$_} eq 'das';
-    if ($hash_ref->{$_} ne 'das' && $hash_ref->{$_} !~ /^V/) {
-      $self->has_images(1);
-    }
+    $self->has_images(1) if # $hash_ref->{$_} ne 'das' && 
+                              $hash_ref->{$_} !~ /^V/
   }
 }
 
@@ -284,7 +283,6 @@ sub update_from_config_strings {
 ## Then we have to set the renderer...
             $flag += $nd->set_user( 'display', $render ) if $nd;
           } elsif( $type eq 'das' ) {
-# warn "ADDING DAS FROM STRING..... $name $p $render";
             $p = unescape($p);
             if (my $error = $session->add_das_from_string( $p, {'ENSEMBL_IMAGE'=>$name}, {'display'=>$render} )) {
               $session->add_data(
@@ -329,6 +327,7 @@ sub update_from_config_strings {
   }
   $self->altered = 1 if $flag;
   $session->store;
+
   return $params_removed ? $input->self_url : undef;
 }
 
