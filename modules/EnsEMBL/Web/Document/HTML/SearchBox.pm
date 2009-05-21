@@ -4,10 +4,9 @@ package EnsEMBL::Web::Document::HTML::SearchBox;
 
 use strict;
 use CGI qw(escapeHTML);
-use EnsEMBL::Web::Document::HTML;
 use EnsEMBL::Web::RegObj;
                                                                                 
-our @ISA = qw(EnsEMBL::Web::Document::HTML);
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   return shift->SUPER::new(
