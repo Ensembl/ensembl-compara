@@ -9,13 +9,12 @@ our $cache = new EnsEMBL::Web::Cache;
 sub import {
   my ($class, $species_defs) = @_;
   my $caller = caller;
-  warn $species_defs->multidb->{'DATABASE_SESSION'}{'NAME'};
   my $dsn = join(':',
     'dbi',
     'mysql',
-    $species_defs->multidb->{'DATABASE_SESSION'}{'NAME'},
-    $species_defs->multidb->{'DATABASE_SESSION'}{'HOST'},
-    $species_defs->multidb->{'DATABASE_SESSION'}{'PORT'},
+    $species_defs->multidb->{'DATABASE_SESSION'}{'NAME'} || $species_defs->ENSEMBL_USERDB_NAME,
+    $species_defs->multidb->{'DATABASE_SESSION'}{'HOST'} || $species_defs->ENSEMBL_USERDB_HOST,
+    $species_defs->multidb->{'DATABASE_SESSION'}{'PORT'} || $species_defs->ENSEMBL_USERDB_PORT,
   );
   $caller->connection(
     $dsn,
