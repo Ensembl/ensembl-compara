@@ -376,6 +376,11 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HclusterRun',
       -parameters      => $parameters
     );
+    
+  if(exists $genetree_params{hcluster_sg}) {
+  	$hclusterrun->program_file($genetree_params{hcluster_sg});
+  }
+  
   $analysisDBA->store($hclusterrun);
   $stats = $hclusterrun->stats;
   $stats->batch_size(1);
