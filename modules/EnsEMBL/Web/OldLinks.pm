@@ -1,5 +1,7 @@
 package EnsEMBL::Web::OldLinks;
 
+use strict;
+
 our @general = qw(assemblyconverter alignview exportview goview historyview fastaview featureview);
 our @linking_scripts = qw(
 jump_to_contig jump_to_location_view martlink psychic r);

@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Tools::RobotsTxt;
 
+use strict;
+
 sub create {
   ### This is to try and stop search engines killing e! - it gets created each
   ### time on server startup and gets placed in the first directory in the htdocs

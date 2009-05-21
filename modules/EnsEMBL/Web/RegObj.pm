@@ -1,5 +1,7 @@
 package EnsEMBL::Web::RegObj;
 
+use strict;
+
 use EnsEMBL::Web::Registry;
 
 use base qw(Exporter);

@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Tools::WebTree;
 
+use strict;
+
 sub read_tree {
 ###
 ### Recursive function which descends into a directory and creates
@@ -49,7 +51,7 @@ sub read_tree {
   my $include = 1;
   foreach my $filename (@$html_files) {
     if( $filename eq 'index.html' || $filename eq 'index.none' ) {
-      ($title, $nav, $order, $index) = get_info( $doc_root . $path . $filename );
+      my ($title, $nav, $order, $index) = get_info( $doc_root . $path . $filename );
       if ($index =~ /NO FOLLOW/) {
         $branch->{_title} = $title;
         $branch->{_nav}   = $nav;
@@ -70,7 +72,7 @@ sub read_tree {
   ## Read files and populate the branch
   foreach my $filename (@$html_files) {
     my $full_path = "$doc_root$path$filename";
-    ($title, $nav, $order, $index) = get_info( $full_path );
+    my ($title, $nav, $order, $index) = get_info( $full_path );
 
     if ($filename eq 'index.html' || $filename eq 'index.none' ) {
       ## add the directory path and index title to array
@@ -216,8 +218,7 @@ sub get_first_header {
     if (m!<h1.*?>(.*?)(?:</h1>|$)!i) {
       $header = $1;
       last;
-    }
-    elsif (m!<h2.*?>(.*?)(?:</h2>|$)!i) {
+    } elsif (m!<h2.*?>(.*?)(?:</h2>|$)!i) {
       $header = $1;
       last;
     }
@@ -227,13 +228,14 @@ sub get_first_header {
     }
   }
   ## Fallback in case no <h> tags
-  unless ($header) {
-    if ($file =~ m!/(\w+)/index\.html!) {
-      $header = $1;
-    } elsif ($file =~ m!/(\w+)\.html!) {
-      $header = $1;
-    }
-  }
+
+#  unless ($header) {
+#    if ($file =~ m!/(\w+)/index\.html!) {
+#      $header = $1;
+#    } elsif ($file =~ m!/(\w+)\.html!) {
+#      $header = $1;
+#    }
+#  }
 
   $header =~ s/\s\s+/ /g;
   $header =~ s/^\s//;

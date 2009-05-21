@@ -1,9 +1,10 @@
 package EnsEMBL::Web::Tools::Registry;
 
-use EnsEMBL::Web::Root;
+use strict;
+use base qw(EnsEMBL::Web::Root);
+
 use Bio::EnsEMBL::Registry;
 
-our @ISA = qw(EnsEMBL::Web::Root);
 
 sub new {
   my( $class, $conf ) = @_;
@@ -39,6 +40,9 @@ sub configure {
   for my $species ( keys %{$self->{'conf'}->{_storage}},'MULTI' ) {
     (my $sp = $species ) =~ s/_/ /g;
     $sp = 'Ancestral sequences' if $sp eq 'MULTI';
+    
+    next unless ref $self->{'conf'}->{'_storage'}{$species};
+    
     Bio::EnsEMBL::Registry->add_alias( $species, $sp );
     for my $type ( keys %{$self->{'conf'}->{'_storage'}{$species}{databases}}){
 ## Grab the configuration information from the SpeciesDefs object

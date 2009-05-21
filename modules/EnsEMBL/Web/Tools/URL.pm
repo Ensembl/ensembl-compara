@@ -1,5 +1,7 @@
 package EnsEMBL::Web::Tools::URL;
 
+use strict;
+
 {
 
 my %URL_of;

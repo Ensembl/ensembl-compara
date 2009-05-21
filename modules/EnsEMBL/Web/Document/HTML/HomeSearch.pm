@@ -3,11 +3,10 @@ package EnsEMBL::Web::Document::HTML::HomeSearch;
 ### Generates the search form used on the main home page and species
 ### home pages, with sample search terms taken from ini files
 
-use EnsEMBL::Web::Document::HTML;
+use strict;
+use base qw(EnsEMBL::Web::Document::HTML);
+
 use EnsEMBL::Web::RegObj;
-
-our @ISA = qw(EnsEMBL::Web::Document::HTML);
-
 
 sub new {
   return shift->SUPER::new(

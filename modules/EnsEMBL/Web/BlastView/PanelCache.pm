@@ -4,6 +4,7 @@
 
 package EnsEMBL::Web::BlastView::PanelCache;
 
+use strict;
 
 #----------------------------------------------------------------------
 
