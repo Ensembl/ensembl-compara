@@ -143,7 +143,7 @@ sub load_user_vert_tracks {
         'code'    => $type,
         'status'  => 'tmp',
       };
-      $track_info->{'render'} = Tools::Misc::style_by_filesize($track->{'filesize'});
+      $track_info->{'render'} = EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'});
       if ($track->{'name'}) {
         $track_info->{'name'} = $track->{'name'};
       }
@@ -167,7 +167,7 @@ sub load_user_vert_tracks {
           'code'    => $type,
           'status'  => 'user',
         };
-        $track_info->{'render'} = Tools::Misc::style_by_filesize($record->filesize);
+        $track_info->{'render'} = EnsEMBL::Web::Tools::Misc::style_by_filesize($record->filesize);
         $track_info->{'id'} .= $record->id;
         if ($record->name) {
           $track_info->{'name'} = $record->name;
