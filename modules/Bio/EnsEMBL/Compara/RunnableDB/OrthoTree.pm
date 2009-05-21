@@ -64,6 +64,7 @@ use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Scalar::Util qw(looks_like_number);
+use List::Util qw(max);
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -495,24 +496,61 @@ sub load_species_tree_from_tax
 }
 
 sub load_species_tree_from_file {
-  my $self = shift @_;
+  my ($self) = @_;
 
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  print "load_species_tree_from_file\n" if $self->debug;
+  my $taxonDBA  = $self->{'comparaDBA'}->get_NCBITaxonAdaptor();
+  my $genomeDBA = $self->{'comparaDBA'}->get_GenomeDBAdaptor();
+  
+  if($self->debug()) {
+  	print "load_species_tree_from_file\n";
+  	print "Using GenomeDB based tree\n" if $self->{use_genomedb_id};
+  }
+  
   my $newick = $self->_slurp($self->{species_tree_file});
   my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
-  foreach my $node (@{$tree->all_nodes_in_graph}) {
+  
+  my %used_ids;
+  
+  foreach my $node (@{$tree->all_nodes_in_graph()}) {
+    
+    #Split based on - to remove comments & sub * for internal nodes.
+    #The ID assigned by NewickParser is not the real ID therefore we need to subsitute this in
     my ($id) = split('-',$node->name);
-    $id =~ s/\*//; # internal nodes have asterisk
+    $id =~ s/\*//;
+    
+    #If it looks like a number then assume we are working with an ID (Taxon or GenomeDB)
     if (looks_like_number($id)) {
       $node->node_id($id);
-      my $ncbi_node = $taxonDBA->fetch_node_by_taxon_id($id);
-      $node->name($ncbi_node->name) if (defined $ncbi_node);
-    } else { # doesnt look like number
+      
+      if($self->{use_genomedb_id}) {
+      	my $gdb = $genomeDBA->fetch_by_dbID($id);
+      	throw("Cannot find a GenomeDB for the ID ${id}. Ensure your tree is correct and you are using use_genomedb_id correctly") if !defined $gdb;
+      	$node->name($gdb->name());
+      	$used_ids{$id} = 1;
+      	$node->add_tag('_found_genomedb', 1);
+      }
+      else {
+      	my $ncbi_node = $taxonDBA->fetch_node_by_taxon_id($id);
+      	$node->name($ncbi_node->name) if (defined $ncbi_node);
+      }
+    } 
+    else {
       $node->name($id);
     }
     $node->add_tag('taxon_id', $id);
   }
+  
+  if($self->{use_genomedb_id}) {
+  	print "Searching for overlapping identifiers\n" if $self->debug();
+  	my $max_id = max(keys(%used_ids));
+  	foreach my $node (@{$tree->all_nodes_in_graph()}) {
+  		if($used_ids{$node->node_id()} && ! $node->get_tagvalue('_found_genomedb')) {
+  			$max_id++;
+  			$node->node_id($max_id);
+  		}
+  	}
+  }
+  
   return $tree;
 }
 
@@ -595,11 +633,9 @@ sub get_ancestor_species_hash
 }
 
 
-sub get_ancestor_taxon_level
-{
-  my $self = shift;
-  my $ancestor = shift;
-
+sub get_ancestor_taxon_level {
+  my ($self, $ancestor) = @_;
+  
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
   return $taxon_level if($taxon_level);
 
@@ -608,20 +644,26 @@ sub get_ancestor_taxon_level
   my $species_hash = $self->get_ancestor_species_hash($ancestor);
 
   foreach my $gdbID (keys(%$species_hash)) {
-    my $gdb = 
-      $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
-    my $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
-
-    unless($taxon) {
-      throw("oops missing taxon " . $gdb->taxon_id ."\n");
-    }
+  	my $taxon;
+  	
+  	if($self->{use_genomedb_id}) {
+			$taxon = $taxon_tree->find_node_by_node_id($gdbID);
+			throw("Missing node in species (taxon) tree for $gdbID") unless $taxon;
+  	}
+  	else {
+  		my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
+  		$taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
+  		throw("oops missing taxon " . $gdb->taxon_id ."\n") unless $taxon;
+  	}
 
     if($taxon_level) {
       $taxon_level = $taxon_level->find_first_shared_ancestor($taxon);
-    } else {
+    } 
+    else {
       $taxon_level = $taxon;
     }
   }
+  
   my $taxon_id = $taxon_level->get_tagvalue("taxon_id");
   $ancestor->add_tag("taxon_level", $taxon_level);
   $ancestor->store_tag("taxon_id", $taxon_id) 
