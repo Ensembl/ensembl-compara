@@ -102,16 +102,18 @@ sub process {
       }
     }
   }
-  
+ 
+  my $dir = '/'.$object->data_species;
+ 
   if( $self->object->param('uploadto' ) eq 'iframe' ) {
     CGI::header( -type=>"text/html",-charset=>'utf-8' );
     printf q(<html><head><script type="text/javascript">
   window.parent.__modal_dialog_link_open_2( '%s' ,'File uploaded' );
 </script>
-</head><body><p>UP</p></body></html>), CGI::escapeHTML($self->url($url, $param));
+</head><body><p>UP</p></body></html>), CGI::escapeHTML($self->url($dir.$url, $param));
   } 
   else {
-    $self->ajax_redirect($url, $param); 
+    $self->ajax_redirect($dir.$url, $param); 
   }
 
 

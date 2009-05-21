@@ -19,7 +19,7 @@ sub process {
   $object->delete_upload
     if $object;
 
-  $self->ajax_redirect('/UserData/ManageData', {'reload' => 1});
+  $self->ajax_redirect('/'.$object->data_species.'/UserData/ManageData', {'reload' => 1});
 }
 
 }

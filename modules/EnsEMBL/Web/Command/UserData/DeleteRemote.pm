@@ -15,7 +15,8 @@ sub BUILD {
 sub process {
   my $self = shift;
   $self->object->delete_remote;
-  $self->ajax_redirect('/UserData/ManageData', {'reload' => 1});
+
+  $self->ajax_redirect('/'.$self->object->data_species.'/UserData/ManageData', {'reload' => 1});
 }
 
 }

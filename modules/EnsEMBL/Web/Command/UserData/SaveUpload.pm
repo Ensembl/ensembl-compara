@@ -19,7 +19,7 @@ sub process {
     $param->{'filter_code'} = 'no_file';
   }
 
-  $self->ajax_redirect('/UserData/ManageData', $param);
+  $self->ajax_redirect('/'.$object->data_species.'/UserData/ManageData', $param);
 }
 
 }
