@@ -52,6 +52,20 @@
 # that they won't try to store any data between the touching and the
 # job killing.
 
+# You can specify multiple custom binary locations when you are running the
+# pipeline on a non-sanger farm machine. The currently available options are:
+#   * hcluster_sg
+#   * treebest
+#   * mcoffee (actually point to t_coffee binary)
+#   * quicktree
+# 
+# Set the value of the keys to the binary location required
+
+# If you specify use_genomedb_id & set the flag to true then this means 
+# the given tree file's node names are infact GenomeDB IDs. For treebest to
+# work all internal nodes must be uniquely named. This method is only 
+# recommended when the taxonomy becomes unsuitable for your data set.
+
   { TYPE => GENE_TREE,
     'cluster_params' => '{species_set=>[3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88,89],max_gene_count=>400,outgroups=>[44]}',
     'species_tree_file' => '/home/user/production/compara_homology_54/hive/compara_homology_54/spec_tax.nh',
@@ -64,7 +78,13 @@
     'method_link_types'=>'["ENSEMBL_ORTHOLOGUES"]'
   },
 
+# You can specify multiple custom binary locations when you are running the
+# pipeline as with GENE_TREE. Available options are:
+#   * program_file (Slr binary location)
+#   * gblocks_exe
+
   # This sets the threshold_on_branch_ds to 1.8 -- branches longer than that will be pruned for Sitewise dNdS
+  # Not setting this value means Sitewise dNdS will not be run
   { TYPE => sitewise_dNdS,
     'saturated' => 1.8
   },

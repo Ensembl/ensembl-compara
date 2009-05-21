@@ -29,6 +29,18 @@
 #    'species_sets' => '[[22,38,31,25,3,40,54,44]]'
 #  },
 
+# You can specify multiple custom binary locations when you are running the
+# pipeline on a non-sanger farm machine. The currently available options are:
+#   * treebest
+#   * muscle
+# 
+# Set the value of the keys to the binary location required
+
+# If you specify use_genomedb_id & set the flag to true then this means 
+# the given tree file's node names are infact GenomeDB IDs. For treebest to
+# work all internal nodes must be uniquely named. This method is only 
+# recommended when the taxonomy becomes unsuitable for your data set.
+
   { TYPE => GENE_TREE,
     'cluster_params' => '{species_set=>[22,38,31,25,3,40,54,44],brh=>1,all_best=>0,bsr_threshold=>0.33,max_gene_count=>750}',
     'breakcluster_params' => '{species_set=>[22,38,31,25,3,40,54,44],bsr_threshold_increase=>0.1,max_gene_count=>750}',
@@ -42,6 +54,15 @@
     'species_sets' => '[[22,38,31,25,3]]',
     'method_link_types' => "['ENSEMBL_ORTHOLOGUES']"
   },
+  
+# You can specify multiple custom binary locations when you are running the
+# pipeline as with GENE_TREE. Available options are:
+#   * program_file (Slr binary location)
+#   * gblocks_exe
+
+	{ TYPE => sitewise_dNdS,
+		#saturation => 1.8
+	},
 
 
 # This is used for the family MCL-clustering part -- comment out if not needed
