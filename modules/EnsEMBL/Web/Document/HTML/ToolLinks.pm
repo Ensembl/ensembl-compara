@@ -21,6 +21,16 @@ sub render   {
   $dir = '' if $dir !~ /_/;
   my $url     = CGI::escape($ENV{'REQUEST_URI'});
   my $html = '<div class="print_hide">';
+
+  my $blast_dir;
+  my $sp_dir = $ENV{'ENSEMBL_SPECIES'};
+  if (!$sp_dir || $sp_dir eq 'Multi' || $sp_dir eq 'common') {
+    $blast_dir = 'Multi';
+  }
+  else {
+    $blast_dir = $sp_dir;
+  }
+
   
   if( $self->logins ) {
     if( $ENV{'ENSEMBL_USER_ID'} ) {
@@ -35,7 +45,7 @@ sub render   {
       );
     }
   }
-  $html .= qq(<a href="/Multi/blastview">BLAST/BLAT</a> &nbsp;|&nbsp;) if $self->blast;
+  $html .= qq(<a href="/$blast_dir/blastview">BLAST/BLAT</a> &nbsp;|&nbsp;) if $self->blast;
   $html .= qq(<a href="/biomart/martview">BioMart</a> &nbsp;|&nbsp;)   if $self->biomart;
   $html .= qq(<a href="/info/website/help/" id="help">Docs &amp; FAQs</a>);
   $html .= '</div>';
