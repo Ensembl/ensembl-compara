@@ -211,7 +211,7 @@ sub submitGenome
     if (defined($species->{species})) {
       $genome_name = $species->{species};
     } else {
-      $genome_name = (defined $meta->get_Species) ? meta->get_Species->binomial : $species->{species};
+      $genome_name = (defined $meta->get_Species) ? $meta->get_Species->binomial : $species->{species};
     }
   }
 
