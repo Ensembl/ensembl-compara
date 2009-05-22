@@ -91,6 +91,24 @@ sub content {
     $reg->add_DNAAdaptor($object->species, "vega", $object->species, $orig_group);
   }
 
+  # Haplotype/PAR locations
+  my $alt_locs = $object->get_alternative_locations;
+  if( @$alt_locs ) {
+    $location_html .= qq(
+          <p> This gene is mapped to the following HAP/PARs:</p>
+          <ul>);
+    foreach my $loc (@$alt_locs){
+      my ($altchr, $altstart, $altend, $altseqregion) = @$loc;
+      $location_html .= sprintf( qq(
+                                 <li>
+                                 <a href="/%s/Location/View?l=%s:%s-%s">%s : %s-%s</a>
+                                 </li>), $object->species, $altchr, $altstart, $altend, $altchr,
+		       $object->thousandify( $altstart ),
+		       $object->thousandify( $altend ));
+    }
+    $location_html .= "\n    </ul>";
+  }
+
   $html .= qq(
     <dl class="summary">
       <dt>Location</dt>
@@ -98,6 +116,7 @@ sub content {
         $location_html
       </dd>
     </dl>);
+
 
 ## Now create the transcript information...
   my $transcripts = $object->Obj->get_all_Transcripts; 
@@ -165,10 +184,11 @@ sub content {
   $html .= '
     </dd>
   </dl>';
+  my $site_type = $object->species_defs->ENSEMBL_SITETYPE;
   $html .= $self->_hint( 'gene', 'Transcript and Gene level displays',
-    '
+   qq(
   <p>
-In Ensembl a gene is made up of one or more transcripts. We provide displays at two levels:
+In $site_type a gene is made up of one or more transcripts. We provide displays at two levels:
 </p>
 <ul>
   <li>Transcript views which provide information specific to an individual transcript such as the cDNA and CDS sequences and protein domain annotation.</li>
@@ -176,7 +196,7 @@ In Ensembl a gene is made up of one or more transcripts. We provide displays at 
 </ul>
 <p>
 This view is a gene level view. To access the transcript level displays select a Transcript ID in the table above and then navigate to the information you want using the menu at the left hand side of the page.  To return to viewing gene level information click on the Gene tab in the menu bar at the top of the page.
-</p>' );
+</p>) );
   return $html;
 }
 
