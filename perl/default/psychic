@@ -15,7 +15,7 @@ use CGI qw(escape);
 
 my $webpage = new EnsEMBL::Web::Document::WebPage;
 my $q = $ENSEMBL_WEB_REGISTRY->get_session->get_input;
-my $site_type = $webpage->{'species_defs'}->ENSEMBL_SITE_NAME =~ /Vega/i ? 'vega' : 'ensembl';
+my $site_type = $webpage->{'species_defs'}->ENSEMBL_SITE_TYPE;
 my $script = $webpage->{'species_defs'}->ENSEMBL_SEARCH;
 my $species;
 if ($q->param('species')) {
@@ -36,23 +36,19 @@ if($dest_site =~ /_all/ ) {
   $species = undef;
 }
 
-warn "dest site = $dest_site";
-warn "site_type = $site_type";
-
 my $other_site_url;
-
 if ($dest_site eq 'ebi') {
   $URL = 'http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query='.$query;
 } elsif ($dest_site eq 'sanger') {
   $URL = 'http://search.sanger.ac.uk/cgi-bin/exasearch?_q='.$query;
-} elsif ($dest_site =~ /vega/) {
-  if ($site_type eq 'vega') {
+} elsif ($dest_site =~ /Vega/) {
+  if ($site_type eq 'Vega') {
     $URL = "/Homo_sapiens/Search/Summary?species=all&idx=All&q=$query";
   } else {
     $URL = "/Homo_sapiens/Search/Summary?species=all&idx=All&q=$query";
     $other_site_url = 'http://vega.sanger.ac.uk';
   }
-} elsif ($site_type eq 'vega') {
+} elsif ($site_type eq 'Vega') {
   $URL = "/Homo_sapiens/Search/Summary?species=all&idx=All&q=$query";
   $other_site_url = 'http://www.ensembl.org'; 
 } else {
@@ -201,7 +197,7 @@ unless( $flag ) {
 $URL = $other_site_url.$URL;
 
 #hack because live vega is still on the old code
-if ($dest_site eq 'vega' && $site_type ne 'vega') {
+if ($dest_site eq 'vega' && $site_type ne 'Vega') {
   $URL =~ s{Search\/Summary}{searchview};
 }
 
