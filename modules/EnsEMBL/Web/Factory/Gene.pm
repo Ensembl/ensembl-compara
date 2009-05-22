@@ -75,8 +75,8 @@ sub createObjects {
     my $adaptor  = $self->database('variation');
     if( $adaptor ){ $db_adaptor->add_db_adaptor( 'variation', $adaptor ) }
   }
-  if( $self->species_defs->databases->{'ENSEMBL_ENSEMBL_VEGA'} ){
-	my $adaptor  = $self->database('ensembl_vega');
+  if( $self->species_defs->databases->{'DATABASE_VEGA_ENSEMBL'} ){
+    my $adaptor  = $self->database('vega_ensembl');
     if( $adaptor ){ $db_adaptor->add_db_adaptor( 'core', $adaptor ) }
   }
   }

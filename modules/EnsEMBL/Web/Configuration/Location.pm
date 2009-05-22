@@ -378,7 +378,7 @@ sub ajax_zmenu      {
   if( $action =~ 'Regulation'){
     return $self->_ajax_zmenu_regulation($panel, $obj);
   }
-  if( $action =~/Variation/){
+  elsif( $action =~/Variation/){
     return $self->ajax_zmenu_variation($panel, $obj);
   }
   elsif( $action =~ /Genome/) {
@@ -402,7 +402,7 @@ sub ajax_zmenu      {
   elsif ($action =~ /Supercontigs/) {
     return $self->_ajax_zmenu_supercontig($panel,$obj);
   }
- 
+
   return;
 }
 
