@@ -12,7 +12,6 @@ blastall
     using /software/ensembl/compara/blast-2.2.6/blastall
 
 mcl (source can be obtained from http://micans.org/mcl/src/)
-	using /nfs/acari/avilella/bin/mcxdeblast
 	using /nfs/acari/avilella/bin/mcxassemble
 	using /nfs/acari/avilella/bin/mcx
 	using /nfs/acari/avilella/bin/mcl
@@ -22,11 +21,18 @@ mcl (source can be obtained from http://micans.org/mcl/src/)
 
 # The family pipeline takes several GB of space (5GB should be sufficient). (df -k)
 
-mkdir -p /lustre/scratch1/ensembl/lg4/families/family_54
-cd /lustre/scratch1/ensembl/lg4/families/family_54
-mkdir tmp fasta blast_in blast_out blast_raw mcl 
+mkdir -p /lustre/scratch1/ensembl/lg4/families/family_55
+cd /lustre/scratch1/ensembl/lg4/families/family_55
+mkdir tmp mcl 
 
-3- Loading in and dumping from compara the peptides
+# NB:
+# According to the LSF guys (including Guys :), the Blast database should live in /data/blastdb/ , as it is optimized for accessing large files:
+
+mkdir -p /data/blastdb/Ensembl/family_55/fasta
+cd /data/blastdb/Ensembl/family_55/fasta
+
+
+3- Loading in and dumping the peptides from compara
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # The loading of ensembl peptides/genes and uniprot is now done as a common trunk with the gene homology pipeline.
@@ -47,34 +53,21 @@ mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_54" | 
 
 mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_54" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select count(*) as number, biotype from gene group by biotype order by number desc"; echo "---"; done | less
 
-# NB: need to add something here on how to load or a reference to homology documentation
 
-# The dumping is done with ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl script.
-# Don't use -noX or nosplit, use the default setting. The dumping process will dump only one version of each sequence,
-# so no redundancy is expected in the fasta file.
 
-# Go to the fasta dir
-# Make it faster for big files in lsf
-# lfs setstripe fasta 0 -1 -1
-# cd fasta
+# Takes about 20 minutes (mostly waiting for the MySQL server to fetch the data)
+#
+perl ~lg4/work/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 5316 --dbuser ensro --dbname avilella_compara_homology_55 --noredundancy --fasta metazoa_55.pep > metazoa_55.pep.err 2>&1 &
 
-# Or move it to (depending on the blast filesystem services you've got)
-# mkdir -p /data/blastdb/Ensembl/family_54/fasta
-# cd /data/blastdb/Ensembl/family_54/fasta
-
-# NB:
-# According to the LSF guys (including Guys :), the Blast database should live in /data/blastdb/ , as it is optimized for accessing large files.
-
-# Takes about 2 minutes
-perl ~avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 5316 --dbuser ensro --dbname avilella_compara_homology_54 --noredundancy --fasta metazoa_54.pep > metazoa_54.pep.err 2>&1 &
-
-grep '>' metazoa_54.pep | wc -l
+grep '>' metazoa_55.pep | wc -l
+#v55 2307222
 #v54 2188240
 #v5? 2023775
 #v51 1811409
 #v50 1695699
 #v49 1653108
 #v48 1520968
+
 
 4- Format file for blast
    ~~~~~~~~~~~~~~~~~~~~~
@@ -85,59 +78,37 @@ grep '>' metazoa_54.pep | wc -l
 # You only (and hopefully temporarily) need the .tab file with name-to-index mapping.
 # While it is still needed, its generation should probably be built into the .pep-file dumper, as a side-product.
 #
-## one-based indices (coming directly from sequence_id:s)  -- BETTER OPTION BUT MAY NOT WORK, NEEDS TESTING
-# time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_54 -e 'SELECT sequence_id, stable_id FROM member WHERE sequence_id IS NOT NULL GROUP BY sequence_id ORDER BY sequence_id' --column-names=0 | awk '{print $1 " " $2}' > metazoa_54.tab
+## one-based indices (coming directly from sequence_id:s)  -- BETTER OPTION BUT MCL MAY NOT LIKE IT, NEEDS TESTING
+
+time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_55 -e 'SELECT sequence_id, stable_id FROM member WHERE sequence_id IS NOT NULL GROUP BY sequence_id ORDER BY sequence_id' --column-names=0 | awk '{print $1 " " $2}' > metazoa_55.tab
 #
-## zero-based indices (sequence_id-1)s -- SHOULD WORK
-# time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_54 -e 'SELECT sequence_id, stable_id FROM member WHERE sequence_id IS NOT NULL GROUP BY sequence_id ORDER BY sequence_id' --column-names=0 | awk '{print $1-1 " " $2}' > metazoa_54.tab
-# 
 # (the query takes about 2 minutes to run)
+
 #
-# Otherwise carry on:
+## zero-based indices (sequence_id-1)s -- SHOULD WORK, but would be inconvenient to use.
+# time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_55 -e 'SELECT sequence_id, stable_id FROM member WHERE sequence_id IS NOT NULL GROUP BY sequence_id ORDER BY sequence_id' --column-names=0 | awk '{print $1-1 " " $2}' > metazoa_55.tab
 
-# Takes about 16 seconds for rel54
-fastaindex metazoa_54.pep metazoa_54.index
 
-# Takes about 5 minutes
-bsub -o /dev/null -q yesterday '/software/ensembl/compara/blast-2.2.6/formatdb -p T -l metazoa_54.pep.formatdb.log -i metazoa_54.pep'
+# Formatting the fasta file for future BLASTPing takes about 5 minutes:
+#
+# WARNING! WARNING! WARNING!
+#
+# Don't run it remotely on the farm. Take a risk and do the whole thing on the farm-login node.
+# This is a very prescious database, as the whole pipeline will depend on it. Don't leave it to the LSF.
+#
+/software/ensembl/compara/blast-2.2.6/formatdb -p T -l metazoa_55.pep.formatdb.log -i metazoa_55.pep
 
-# check metazoa_54.pep.formatdb.log if it is ok delete it
+# check metazoa_55.pep.formatdb.log if it is ok delete it
 
 # Formatted 2023775 sequences in volume 0
 
-rm -f metazoa_54.pep.formatdb.log
+rm -f metazoa_55.pep.formatdb.log
 
-# Create the index file for future run of mcl
-
-# Takes about 4 seconds
-awk 'BEGIN {idx=0} {print idx,$1;idx++}' metazoa_54.index > metazoa_54.tab
-#
 # NB: it is important to make sure the process above has completed
 # and we have as many entries in .tab file as in .index file
 
-5- Prepare files to run blastp
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-###################################
-# FOR NEW DEVELOPMENT (blast-to-DB)
-#
-# Skip this step completely, it is not needed.
-#
-# Otherwise carry on:
-
-cd /lustre/scratch1/ensembl/lg4/families/family_54/blast_in
-
-# Distribute peptide ids in several files. Each of them will contain 100 ids,
-# and would correspond to one blastp job.
-
-# Takes about 1 minute
-perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl -maxids 250 ../fasta/metazoa_54.index
-
-#   The created files are named: PeptideSet.1, PeptideSet.2, ..., PeptideSet.n
-#   so that they are suitable for LSF job array creation. 
- 
-
-6- Run blastp with in a LSF jobs array
+6- Run FamilyBlast.pm analysis
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # In case you didn't pay attention to this earlier, copy the fasta database across the system:
@@ -145,164 +116,27 @@ perl ~avilella/src/ensembl_main/ensembl-compara/scripts/family/SplitPeptides.pl 
 # it will make working with it faster for the LSF.
 
 
-##############################################################################################
-# FOR NEW DEVELOPMENT (running separate blast jobs that directly record the results into the DB):
+# make sure the database contains mcl_matrix table:
 #
-### direct execution using bsub (use it either for testing or when having problems with permissions on Albert's generic hive_db):
-##
-## echo '/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/LaunchBlast_viaDB.pl --dbhost compara2 --dbport 5316 --dbuser ensadmin --dbpass ensembl --dbname avilella_compara_homology_54 -s ${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab' | bsub -q yesterday -JFamBl2db"[1]" -o FamBl2db.%I.out
-##
+mysql --host compara2 --port 5316 --user ensadmin --password=ensembl avilella_compara_homology_55 -e 'DROP TABLE IF EXISTS mcl_matrix'
+mysql --host compara2 --port 5316 --user ensadmin --password=ensembl  avilella_compara_homology_55 -e 'CREATE TABLE mcl_matrix (id int(10) unsigned NOT NULL, rest mediumtext NOT NULL, PRIMARY KEY (id))'
+
+
+# Load the analysis using the cmd_hive.pl script with somewhat extended functionality:
 #
-# This is how it should be done correctly:
-# We are using the FamilyBlast.pm module, so specify it to the cmd_hive.pl job loading script:
-# (setting the minibatch size to 45 gives approximately 1 hour per job)
 #
-# /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54 -input_id '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.pep", "tabfile" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.imitab" }' -suffix_a 1 -suffix_b 2188240 -step 100 -hive_capacity 200 -logic_name family_blast_54a -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
-# (in rel54 took under 1 minute to load 100-minibatches)
+time /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -input_id '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_55/fasta/metazoa_55.pep", "tabfile" => "/data/blastdb/Ensembl/family_55/fasta/metazoa_55.tab" }' -suffix_a 1 -suffix_b 2307222 -step 100 -hive_capacity 1000 -logic_name family_blast_55 -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
 #
-# export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
-#
-# beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54 -sync
-#
-# beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54 -lsf_options '-R"select[comparatest2<500] rusage[comparatest2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_blast_54
-#
-# Otherwise carry on:
+# (execution takes about 1 minute)
 
 
-# For info on jobs array, see
-# http://www.sanger.ac.uk/campus/IT/ISG/lsf/job-arrays.shtml
-# 
-# NB: not done yet, think about putting out the SEG filter in blastp as we do for homologous genepairs, not sure
-# that is a good idea. Replace SEG by CAST filtering.
-# 
-#  The script used to run individual blastp is
-#  ensembl-compara/scripts/family/LaunchBlast.pl
-# 
-#  At the beginning of the script, you may need to update few lines that specifie the path
-#  for the executable to be used
-# 
-# my $blast_executable
-# my $fastafetch_executable
-# my $blast_parser_executable
+export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
 
-ls ../blast_in |wc -l
-# v54 8753
-# v5? 8032
-# v51 7246
-# v50 6783
-# v49 6613
-# v48 6084
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -sync
 
-# will tell you how many jobs have to be run. Just have a try with one to make sure everything is ok.
-#
-# It is better to place the output files in a different directory to reduce the burden on the filesystem.
-# (The fewer files per directory the better).
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -lsf_options '-R"select[comparatest2<1000] rusage[comparatest2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_blast_55
 
 
-
-# make sure the $BLASTMAT points at the right directory (BEFORE EVERY LaunchBlast SUBMISSION):
-export BLASTMAT=/software/ensembl/compara/blast-2.2.6/data
-
-
-# LaunchBlast will run like this: system("/software/ensembl/compara/blast-2.2.6/blastall -d $fastadb -i $qy_file -p blastp -e 0.00001 -v 250 -b 0 > $blast_file");
-# where:
-#   -e  Expectation value (E) [Real]
-#   -v  Number of database sequences to show one-line descriptions for (V) [Integer]
-#   -b  Number of database sequence to show alignments for (B) [Integer]
-
-
-# This will run the first one to check if everything is working properly -- you can use "strace -p pid" to inspect your job in the cluster node
-
-echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -bmdir /software/ensembl/compara/blast-2.2.6/data -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp"[1]" -o ../blast_out/PeptideSet.%I.out
-
-# When it is complete, you should get 2 new files
-
-../blast_out/PeptideSet.1.out
-../blast_raw/PeptideSet.1.raw.gz
-
-# The first is the STDOUT from LSF. The latter is the blastp output parsed (and zipped)
-# in the suitable format needed for the following steps.
-
-# To check if the job finished properly
-
-cd ../blast_out
-ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was executed/ {print;exit}' $i;done|awk '{print $2}'|sort |uniq -c
-
-# That gives you the number of jobs "Done" and "Exited" if any.
-
-# Then run the whole lot of jobs
-
-# Look for the last PeptideSet.NNNN
-ls | awk -F\. '{print $2}' | sort -n | tail
-
-# This will run the rest of the jobs up to 8753
-cd ../blast_in
-echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -bmdir /software/ensembl/compara/blast-2.2.6/data -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp"[2-8753]" -o ../blast_out/PeptideSet.%I.out
-
-# Rerun the failed jobs in ../blast_out.
-
-cd ../blast_out
-
-ls |while read i;do echo -n $i" ";awk '/^Subject/ {printf $NF" "} /^Job was executed/ {print;exit}' $i;done > ../job_status
-
-grep Exited ../job_status | awk 'BEGIN {FS="."} {print $2}' | sort -n -u >../first_batch.ids
-
-# create the compressed list of ids to be used by bjobs:
-awk 'BEGIN {s=0;e=0;i=1;c=""} s==0 {s=$1;e=$1;c=s;next} $1==e+1 {e=$1;c=s"-"e;next} $1>e+1 {printf c ((i%15)?",":"\n");s=$1;e=$1;c=s;i++;next} END {print c}' ../first_batch.ids >../first_batch_ids.collapsed
-
-cd ..
-
-# Because this only checks the out files, you can resubmit safely even if you still have running jobs, that haven't produced an out file yet:
-grep Exited job_status |awk '{print $1}'|while read i;do rm -f blast_out/$i;done
-
-cat first_batch_ids.collapsed | while read i;do echo "echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -bmdir /software/ensembl/compara/blast-2.2.6/data -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub
-
-# Then move to blast_in and resubmit the failed jobs
-
-cd blast_in
-bash rebsub
-
-
-# Sometimes you get jobs that fail because they failed previously and you forgot to remove the output files.
-# Check if you have any of such files:
-
-cd ..
-grep -lr 'Job already finished' blast_out >second_batch.filenames
-
-# If the file is empty - just go to step 8. Otherwise:
-
-# create the list of the ids:
-awk 'BEGIN {FS="."} {print $2}' second_batch.filenames | sort -n -u >second_batch.ids
-
-# compress it:
-awk 'BEGIN {s=0;e=0;i=1;c=""} s==0 {s=$1;e=$1;c=s;next} $1==e+1 {e=$1;c=s"-"e;next} $1>e+1 {printf c ((i%15)?",":"\n");s=$1;e=$1;c=s;i++;next} END {print c}' second_batch.ids >second_batch_ids.collapsed
-
-# actually remove the offending files (both out- and raw-files) (may want a while-read-do-rm solution for longer files?):
-rm `cat second_batch.filenames`
-rm `cat second_batch.filenames | sed "s/blast_out/blast_raw/" | sed "s/.out/.raw.gz/"`
-
-# re-create the submission commands:
-cat second_batch_ids.collapsed | while read i;do echo "echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -bmdir /software/ensembl/compara/blast-2.2.6/data -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub2
-
-# actually submit the jobs:
-cd blast_in
-bash rebsub2
-
-
-# SOMETIMES you get some jobs disappearing completely, without leaving any traces (including the .out files).
-# That's the property you can use to identify them:
-cd ..
-ls blast_in | perl -lane ' unless( -e "blast_out/$F[0].out") { $F[0]=~s/PeptideSet\.//; print $F[0]; }' | sort -n -u >missing.ids
-
-# again, compress the list:
-awk 'BEGIN {s=0;e=0;i=1;c=""} s==0 {s=$1;e=$1;c=s;next} $1==e+1 {e=$1;c=s"-"e;next} $1>e+1 {printf c ((i%15)?",":"\n");s=$1;e=$1;c=s;i++;next} END {print c}' missing.ids >missing_ids.collapsed
-
-# re-create the submission commands:
-cat missing_ids.collapsed | while read i;do echo "echo '/nfs/team71/analysis/lg4/work/ensembl-compara/scripts/family/LaunchBlast.pl -bmdir /software/ensembl/compara/blast-2.2.6/data -baexec /software/ensembl/compara/blast-2.2.6/blastall -idqy PeptideSet.\${LSB_JOBINDEX} -fastadb /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.pep -fastaindex /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.index -tab /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab -dir /lustre/scratch1/ensembl/lg4/families/family_54/blast_raw/' | bsub -q long -JFamilyBlastp\"["$i"]\" -o ../blast_out/PeptideSet.%I.out";echo;done > blast_in/rebsub3
-
-# actually submit the jobs:
-cd blast_in
-bash rebsub3
 
 8- Build the matrix needed by mcl and check it for symmetry
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -310,80 +144,17 @@ bash rebsub3
 ##############################################################################################
 # FOR NEW DEVELOPMENT (collecting the data from separate blast jobs that left it in the DB)
 #
-# This script is supposed to automate everything in "8- " and needs the following parameters:
+# The following script is supposed to automate everything in "8- " and needs the following parameters:
 #
 #           (1) the DB connection parameters (this DB has to have a filled-in 'mcl_matrix' table)
 #           (2) tab_file (we are going to get rid of it)
 #           (3) nameprefix (legacy from the way the mcxassemble.sh.tcx takes in the parameters)
 #
-# /nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/dump_matrix_for_mcl.pl -dbhost compara2 -dbport 5316 -dbuser ensro -dbname avilella_compara_homology_54 -tab ../fasta/metazoa_54.imitab -nameprefix family_54a
-#
+
+/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/dump_matrix_for_mcl.pl -dbhost compara2 -dbport 5316 -dbuser ensro -dbname avilella_compara_homology_54 -tab ../fasta/metazoa_54.tab -nameprefix family_54a
+
 # After execution make sure you have kept .tcx file in a turing-accessible place and got rid of the huge .raw file.
-#
-# Otherwise carry on:
 
-cd ../blast_raw
-
-# Takes about 8-10 minutes, do on a farm node
-# Took 25 seconds with stijn parameters
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -o $TIMESTAMP.out -e $TIMESTAMP.err 'find -name "*.raw.gz"|xargs gunzip -c > ../mcl/family_54.raw'
-
-# To keep the order of the files you can do this instead:
-# find -name '*.raw.gz' | sort -t\. -k3 -n | xargs gunzip -c > ../mcl/family_54.raw
-
-cd ../mcl
-
-# create a symlink to /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab
-
-ln -s /lustre/scratch1/ensembl/lg4/families/family_54/fasta/metazoa_54.tab family_54.tab
-
-# create a family_54.hdr header file,
-# The dimensions must be equal to the number of peptides. That can be obtained by
-
-# wc -l family_54.raw
-# 2188240 family_54.raw
-# lg4@bc-9-1-03:/lustre/scratch1/ensembl/lg4/families/family_54/mcl$ wc -l family_54.tab
-# 2188240 family_54.tab
-
-wc -l family_54.tab
-# v54 2188240 family_54.tab
-# v5? 2023775 family_5?.tab
-# v51 1811409 family_51.tab
-# v50 1695699 family_50.tab
-# v49 1653108 family_49.tab
-# v48 1520968 family_48.tab
-
-FN=`wc -l mcl/family_54.tab | cut -d ' ' -f 1` ; (echo '(mclheader'; echo 'mcltype matrix'; echo dimensions ${FN}x${FN}; echo ')')> family_54.hdr
-
-# cat > family_54.hdr
-# (mclheader
-# mcltype matrix
-# dimensions 2188240x2188240
-# )
-
-# This takes not 30 min but about 8-10 minutes now that we have bigmem
-# fast nodes, and will generate a family_54.bin matrix file.
-# export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-# bsub -o $TIMESTAMP.out -e $TIMESTAMP.err '~avilella/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh family_54'
-
-# lg4: why should we bsub the script to the farm, if it has its own bsub inside?
-
-# 50 min -- tcx file using lots of memory in turing -- bin is machine-dependent -- tcx is cross-machine compatible
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -o $TIMESTAMP.out -e $TIMESTAMP.err '~avilella/src/ensembl_main/ensembl-compara/scripts/family/mcxassemble.sh.tcx family_54'
-
-cd /lustre/scratch1/ensembl/lg4/families/family_54/mcl
-# The home directory is visible to turing, so it's more convenient and doesn't take that much space
-mkdir ~/family_54/
-#cp -f family_54.hdr ~/family_54/
-#cp -f family_54.tab ~/family_54/
-mv family_54.tcx ~/family_54/
-
-# Check that everything is all right in family_54.mcxassemble.err
-
-# We don't need the raw file anymore and as it takes quite a lot of space, delete it.
-
-rm -f family_54.raw
 
 
 9- Run mcl
