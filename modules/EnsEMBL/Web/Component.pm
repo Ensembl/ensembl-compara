@@ -261,10 +261,10 @@ sub new_karyotype_image {
 }
 
 sub _matches {
-  my(  $self, $key, $caption, @keys ) = @_;
+  my ( $self, $key, $caption, @keys ) = @_;
   my $object = $self->object;
-  my $label    = $object->species_defs->translate( $caption );
-  my $obj     = $object->Obj;
+  my $label  = $object->species_defs->translate( $caption );
+  my $obj    = $object->Obj;
 
   # Check cache
   unless ($object->__data->{'links'}){
@@ -280,13 +280,7 @@ sub _matches {
   my $entry = $object->gene_type || 'Ensembl';
 
   # add table call here
-  my $html;
-  if ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-    $html = qq(<p></p>);
-  }
-  else {
-    $html = qq(<p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
-  }
+  my $html = qq(<p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>);
   $html .= qq(<table cellpadding="4">);
   if( $keys[0] eq 'ALT_TRANS' ) {
       @links = $self->remove_redundant_xrefs(@links);
@@ -370,12 +364,14 @@ sub _sort_similarity_links {
       $text .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';
       $join_links = 1;
     }
-    if( ( $object->species_defs->ENSEMBL_PFETCH_SERVER ) &&
-      ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {
-      my $seq_arg = $display_id;
-      $seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
-      $text .= sprintf( ' [<a href="/%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s">align</a>] ',
-                  $object->species, $object->stable_id, $seq_arg, $db );
+    unless ($object->Obj->isa("Bio::EnsEMBL::Gene")) {
+      if( ( $object->species_defs->ENSEMBL_PFETCH_SERVER ) &&
+	    ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {
+	my $seq_arg = $display_id;
+	$seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
+	$text .= sprintf( ' [<a href="/%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s">align</a>] ',
+			  $object->species, $object->stable_id, $seq_arg, $db );
+      }
     }
     if($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link
       $text .= ' [<a href="'.$urls->get_url('GOSEARCH',$primary_id).'">Search GO</a>]';
