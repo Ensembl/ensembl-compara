@@ -57,13 +57,13 @@ sub render {
       $self->notes
     );
   } else {
-    $output = '<tr><th></th><td>';
+    my $output = '<tr><th></th><td>';
     my $K = 0;
     foreach my $V ( @{$self->values} ) {
       $output .= sprintf( qq(<input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label>\n),
-        CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V['value']),
-        $self->value eq $V['value'] ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
-        CGI::escapeHTML($V['name'])
+        CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V->{'value'}),
+        $self->value eq $V->{'value'} ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
+        CGI::escapeHTML($V->{'name'})
       );
       $K++;
     }
