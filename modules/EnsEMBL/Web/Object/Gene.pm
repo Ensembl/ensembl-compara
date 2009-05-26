@@ -145,30 +145,30 @@ sub count_xrefs {
 }
 
 sub count_gene_supporting_evidence {
-    #count all supporting_features and transcript_supporting_features for the gene
-    #- not used in the tree but keep the code just in case we change our minds again!
-    my $self = shift;
-    my $obj = $self->Obj;
-    my $o_type = $self->get_db;
-    my $evi_count = 0;
-    my %c;
-    foreach my $trans (@{$obj->get_all_Transcripts()}) {
-       foreach my $evi (@{$trans->get_all_supporting_features}) {
-           my $hit_name = $evi->hseqname;
-           $c{$hit_name}++;
-       }
-       foreach my $exon (@{$trans->get_all_Exons()}) {
-           foreach my $evi (@{$exon->get_all_supporting_features}) {
-              my $hit_name = $evi->hseqname;
-              $c{$hit_name}++;
-           }
-       }
+  #count all supporting_features and transcript_supporting_features for the gene
+  #- not used in the tree but keep the code just in case we change our minds again!
+  my $self = shift;
+  my $obj = $self->Obj;
+  my $o_type = $self->get_db;
+  my $evi_count = 0;
+  my %c;
+  foreach my $trans (@{$obj->get_all_Transcripts()}) {
+    foreach my $evi (@{$trans->get_all_supporting_features}) {
+      my $hit_name = $evi->hseqname;
+      $c{$hit_name}++;
     }
-    return scalar(keys(%c));
+    foreach my $exon (@{$trans->get_all_Exons()}) {
+      foreach my $evi (@{$exon->get_all_supporting_features}) {
+	my $hit_name = $evi->hseqname;
+	$c{$hit_name}++;
+      }
+    }
+  }
+  return scalar(keys(%c));
 }
 
 sub get_external_dbs {
-    #retrieve a summary of the external_db table from species defs
+  #retrieve a summary of the external_db table from species defs
   my $self = shift;
   my $db   = $self->get_db;
   my $db_type = 'DATABASE_'.uc($db);
@@ -177,120 +177,121 @@ sub get_external_dbs {
 }
 
 sub get_gene_supporting_evidence {
-    #get supporting evidence for the gene: transcript_supporting_features support the
-    #whole transcript or the translation, supporting_features provide depth the the evidence
-    my $self = shift;
-    my $obj = $self->Obj;
-    my $species = $self->species;
-    my $dbentry_adap = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "DBEntry");
-    my $o_type = $self->get_db;
-    my $e;
-    foreach my $trans (@{$obj->get_all_Transcripts()}) {
-       my $tsi = $trans->stable_id;
-       my %t_hits;
-       my %vega_evi;
-      EVI:
-       foreach my $evi (@{$trans->get_all_supporting_features}) {
-           my $name = $evi->hseqname;
-           my $db_name = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
-           #save details of evidence for vega genes for later since we need to combine them 
-           #before we can tellif they match the CDS / UTR 
-           if ($o_type eq 'vega') {
-              push @{$vega_evi{$name}{'data'}}, $evi;
-              $vega_evi{$name}->{'db_name'} = $db_name;
-              $vega_evi{$name}->{'evi_type'} = ref($evi);
-              next EVI;       
-           }
+  #get supporting evidence for the gene: transcript_supporting_features support the
+  #whole transcript or the translation, supporting_features provide depth the the evidence
+  my $self    = shift;
+  my $obj     = $self->Obj;
+  my $species = $self->species;
+  my $ln      = $self->logic_name;
+  my $dbentry_adap = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "DBEntry");
+  my $o_type  = $self->get_db;
+  my $e;
+  foreach my $trans (@{$obj->get_all_Transcripts()}) {
+    my $tsi = $trans->stable_id;
+    my %t_hits;
+    my %vega_evi;
+  EVI:
+    foreach my $evi (@{$trans->get_all_supporting_features}) {
+      my $name = $evi->hseqname;
+      my $db_name = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
+      #save details of evidence for vega genes for later since we need to combine them 
+      #before we can tellif they match the CDS / UTR 
+      if ($ln =~ /otter/) {
+	push @{$vega_evi{$name}{'data'}}, $evi;
+	$vega_evi{$name}->{'db_name'} = $db_name;
+	$vega_evi{$name}->{'evi_type'} = ref($evi);
+	next EVI;
+      }
 
-           #for e! genes...
-           #use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
-           #for protein features give some leeway in matching to transcript - +- 3 bases
-           if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
-              if (   (abs($trans->coding_region_start-$evi->seq_region_start) < 4)
-                        || (abs($trans->coding_region_end-$evi->seq_region_end) < 4)) {
-                  $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
-                  $t_hits{$name}++;
-              }
-              else {
-                  $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
-                  $t_hits{$name}++;
-              }
-           }
-           elsif ( $trans->coding_region_start == $evi->seq_region_start
-                     || $trans->coding_region_end == $evi->seq_region_end ) {
-              $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
-              $t_hits{$name}++;
-           }
+      #for e! genes...
+      #use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
+      #for protein features give some leeway in matching to transcript - +- 3 bases
+      if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
+	if (   (abs($trans->coding_region_start-$evi->seq_region_start) < 4)
+		 || (abs($trans->coding_region_end-$evi->seq_region_end) < 4)) {
+	  $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
+	  $t_hits{$name}++;
+	}
+	else {
+	  $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
+	  $t_hits{$name}++;
+	}
+      }
+      elsif ( $trans->coding_region_start == $evi->seq_region_start
+		|| $trans->coding_region_end == $evi->seq_region_end ) {
+	$e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
+	$t_hits{$name}++;
+      }
 
-           elsif ( $trans->seq_region_start  == $evi->seq_region_start
-                     || $trans->seq_region_end == $evi->seq_region_end ) {
-              $e->{$tsi}{'evidence'}{'UTR'}{$name} = $db_name;
-              $t_hits{$name}++;
-           }
-           else {
-              $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
-              $t_hits{$name}++;              
-           }
-       }
-       $e->{$tsi}{'logic_name'} = $trans->analysis->logic_name;
-       
-       #make a note of the hit_names of the supporting_features (but don't bother for vega db genes)
-       if ($o_type ne 'vega') {
-           foreach my $exon (@{$trans->get_all_Exons()}) {
-              foreach my $evi (@{$exon->get_all_supporting_features}) {
-                  my $hit_name = $evi->hseqname;
-                  if (! exists($t_hits{$hit_name})) {
-                     $e->{$tsi}{'extra_evidence'}{$hit_name}++;
-                  }
-              }
-           }
-       }
-
-       #look at vega evidence to see if it can be assigned to 'CDS' 'UTR' etc
-       while ( my ($hit_name,$rec) = each %vega_evi ) {
-           my ($min_start,$max_end) = (1e8,1);
-           my $db_name  = $rec->{'db_name'};
-           my $evi_type = $rec->{'evi_type'};
-           foreach my $hit (@{$rec->{'data'}}) {
-              $min_start = $hit->seq_region_start <= $min_start ? $hit->seq_region_start : $min_start;
-              $max_end   = $hit->seq_region_end   >= $max_end   ? $hit->seq_region_end   : $max_end;
-           }
-           if ($evi_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') {
-              #protein evidence supports CDS
-              $e->{$tsi}{'evidence'}{'CDS'}{$hit_name} = $db_name;
-           }
-           else {
-              if ($min_start < $trans->coding_region_start && $max_end > $trans->coding_region_end) {
-                  #full length DNA evidence supports CDS
-                  $e->{$tsi}{'evidence'}{'CDS'}{$hit_name} = $db_name;
-              }
-              if (  $max_end   < $trans->coding_region_start
-                       || $min_start > $trans->coding_region_end
-                           || $trans->seq_region_start  == $min_start
-                              || $trans->seq_region_end    == $max_end ) {
-                  #full length DNA evidence or that exclusively in the UTR supports the UTR
-                  $e->{$tsi}{'evidence'}{'UTR'}{$hit_name} = $db_name;
-              }
-              elsif (! $e->{$tsi}{'evidence'}{'CDS'}{$hit_name}) {
-                  $e->{$tsi}{'evidence'}{'UNKNOWN'}{$hit_name} = $db_name;
-              }
-           }
-       }
+      elsif ( $trans->seq_region_start  == $evi->seq_region_start
+		|| $trans->seq_region_end == $evi->seq_region_end ) {
+	$e->{$tsi}{'evidence'}{'UTR'}{$name} = $db_name;
+	$t_hits{$name}++;
+      }
+      else {
+	$e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
+	$t_hits{$name}++;
+      }
     }
-    return $e;
+    $e->{$tsi}{'logic_name'} = $trans->analysis->logic_name;
+
+    #make a note of the hit_names of the supporting_features (but don't bother for vega db genes)
+    if ($ln !~ /otter/) {
+      foreach my $exon (@{$trans->get_all_Exons()}) {
+	foreach my $evi (@{$exon->get_all_supporting_features}) {
+	  my $hit_name = $evi->hseqname;
+	  if (! exists($t_hits{$hit_name})) {
+	    $e->{$tsi}{'extra_evidence'}{$hit_name}++;
+	  }
+	}
+      }
+    }
+
+    #look at vega evidence to see if it can be assigned to 'CDS' 'UTR' etc
+    while ( my ($hit_name,$rec) = each %vega_evi ) {
+      my ($min_start,$max_end) = (1e8,1);
+      my $db_name  = $rec->{'db_name'};
+      my $evi_type = $rec->{'evi_type'};
+      foreach my $hit (@{$rec->{'data'}}) {
+	$min_start = $hit->seq_region_start <= $min_start ? $hit->seq_region_start : $min_start;
+	$max_end   = $hit->seq_region_end   >= $max_end   ? $hit->seq_region_end   : $max_end;
+      }
+      if ($evi_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') {
+	#protein evidence supports CDS
+	$e->{$tsi}{'evidence'}{'CDS'}{$hit_name} = $db_name;
+      }
+      else {
+	if ($min_start < $trans->coding_region_start && $max_end > $trans->coding_region_end) {
+	  #full length DNA evidence supports CDS
+	  $e->{$tsi}{'evidence'}{'CDS'}{$hit_name} = $db_name;
+	}
+	if (  $max_end   < $trans->coding_region_start
+	   || $min_start > $trans->coding_region_end
+	   || $trans->seq_region_start  == $min_start
+           || $trans->seq_region_end    == $max_end ) {
+	  #full length DNA evidence or that exclusively in the UTR supports the UTR
+	  $e->{$tsi}{'evidence'}{'UTR'}{$hit_name} = $db_name;
+	}
+	elsif (! $e->{$tsi}{'evidence'}{'CDS'}{$hit_name}) {
+	  $e->{$tsi}{'evidence'}{'UNKNOWN'}{$hit_name} = $db_name;
+	}
+      }
+    }
+  }
+  return $e;
 }
 
 #generate URLs for evidence links
 sub add_evidence_links {
-    my $self = shift;
-    my $ids  = shift;
-    my $links = [];
-    foreach my $hit_name (sort keys %$ids) {
-       my $db_name = $ids->{$hit_name};
-       my $display = $self->get_ExtURL_link( $hit_name, $db_name, $hit_name );
-       push @{$links}, [$display,$hit_name];
-    }
-    return $links;
+  my $self = shift;
+  my $ids  = shift;
+  my $links = [];
+  foreach my $hit_name (sort keys %$ids) {
+    my $db_name = $ids->{$hit_name};
+    my $display = $self->get_ExtURL_link( $hit_name, $db_name, $hit_name );
+    push @{$links}, [$display,$hit_name];
+  }
+  return $links;
 }
 
 sub get_slice_object {

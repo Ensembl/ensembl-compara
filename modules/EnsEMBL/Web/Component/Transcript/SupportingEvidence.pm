@@ -47,6 +47,7 @@ sub _content {
 
   #slight differences for vega objects...
   my $o_type = lc($object->db_type);
+  my $ln = $object->logic_name;
 
   #user defined width in pixels
   my $image_width  = $self->image_width ? $self->image_width : 700;
@@ -94,7 +95,7 @@ sub _content {
   $wuc->container_width( $fake_length ); #sets width of image
   $trans_obj->{'subslices'}   = $sub_slices; #used to draw lines for exons
   $trans_obj->{'extent'}      = $extent; #used for padding between exons and at the end of the transcript
-  $trans_obj->{'object_type'} = $o_type; #used for drawing the legend for vega / E! transcripts
+  $trans_obj->{'object_type'} = $ln; #used for drawing the legend for vega / E! transcripts
 
   #identify coordinates of the portions of introns and exons to be drawn. Include the exon object
   my $intron_exon_slices;
@@ -195,7 +196,7 @@ sub _content {
     $t_ids{$hit_name}++;
 
     #don't store any transcript_supporting_features for a vega gene
-    next if ($o_type eq 'vega');
+    next if ($ln =~ /otter/);
 
     $t_evidence->{$hit_name}{'hit_name'} = $hit_name;
     $t_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
@@ -238,7 +239,7 @@ sub _content {
             $munged_coords->[0]{'rh-ext'} = $feature->start - $exons->[0]->seq_region_end;
           }
         }
-        $first_feature = 0
+        $first_feature = 0; 
       }
       
       #is the last feature beyond the end of the transcript
@@ -288,7 +289,7 @@ sub _content {
       my $hit_name = $evi->hseqname;
       my $hit_seq_region_start = $evi->seq_region_start;
       my $hit_seq_region_end = $evi->seq_region_end;
-      if ($o_type eq 'vega') {
+      if ($ln =~ /otter/) {
         ###only proceed for vega if this hit name has been used as transcript evidence
         next EVI unless ($t_ids{$hit_name});
       }
@@ -332,7 +333,7 @@ sub _content {
       }
 
       #don't show duplicated bits of the hit for vega since sadly the data has lots of this
-      $hit_mismatch = 0 if ($o_type eq 'vega' && $hit_mismatch < 0);
+      $hit_mismatch = 0 if ($ln =~ /otter/ && $hit_mismatch < 0);
 
       #note position of end of the hit for next iteration
       $evidence_ends{$hit_name}{'last_end'} = $evi->hend;
@@ -383,7 +384,7 @@ sub _content {
   }
 
   #add tags if the merged hit extends beyond the end of the transcript (but not for Vega db genes since they don't mean anything)
-  if ($o_type ne 'vega') {
+  if ($ln =~ /otter/) {
     while ( my ($hit_name, $coords) = each (%evidence_ends)) {
       if ( @{$e_evidence->{$hit_name}{'data'}}) {
         if ($coords->{'start'} < $transcript->start) {
@@ -409,7 +410,7 @@ sub _content {
 
   #we want to show the vega evidence as transcript evidence but we can't munge the cigar strings for vega evidence
   #therefore use the supporting_features as transcript_supporting_features - they should be the same anyway
-  if ($o_type eq 'vega') {
+  if ($ln =~ /otter/) {
       $al_obj->{'transcript_evidence'} = $e_evidence;
       $al_obj->{'evidence'} = {};
   }
@@ -566,7 +567,7 @@ sub split_evidence_and_munge_gaps {
     my $munged_end = $end + $object->munge_gaps( 'supporting_evidence_transcript', $end );
 
     #don't even attempt to show any end mismatches for vega db genes, data won't allow it!
-    if (lc($object->db_type) eq 'vega') {
+    if ($object->logic_name =~ /otter/) {
       $left_end_mismatch = 0;
       $right_end_mismatch = 0;
     }

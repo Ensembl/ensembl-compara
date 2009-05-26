@@ -14,19 +14,20 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  my $type = $object->logic_name;
-  my $o_type = lc($object->get_db);
+  my $self    = shift;
+  my $object  = $self->object;
+  my $ln      = $object->logic_name;
+  my $o_type  = lc($object->get_db);
   my $species = $ENV{'ENSEMBL_SPECIES'}; 
-  my $gsi = $object->stable_id;
-  my $r = $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end;
-  my $html;# = qq(<div class="content">);
-  my $e = $object->get_gene_supporting_evidence;
+  my $gsi     = $object->stable_id;
+  my $r       = $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end;
+  my $e       = $object->get_gene_supporting_evidence;
+  my $html;
+
   if (! $e) {
     $html .=  qq(<dt>No Evidence</dt><dd>);
-    if ($type =~ /otter/ || $o_type eq 'vega'){
-      $html .= qq(<p>Although this Vega Havana gene has been manually annotated and it's structure is supported by experimental evidence, this evidence is currently missing from the database. We are adding the evidence back to the database as time permits</p>);
+    if ($ln =~ /otter/){
+      $html .= qq(<p>Although this Vega gene has been manually annotated and it's structure is supported by experimental evidence, this evidence is currently missing from the database. We are adding the evidence back to the database as time permits</p>);
     }
     else {
       $html .= qq(<p>No supporting evidence available for this gene</p>);
@@ -38,7 +39,7 @@ sub content {
 
   #label and space columns - number of these depends on the data
   # - don't mention exon evidence for Vega
-  if ($o_type ne 'vega') {
+  if ($ln !~ /otter/) {
     my $other_evi = 0;
     foreach my $tsi (sort keys %{$e}) {
       if (my $trans_evi = $e->{$tsi}{'evidence'}) {
@@ -73,7 +74,6 @@ sub content {
 
   #fill the table
   foreach my $tsi (sort keys %{$e}) {
-    my $ln = $e->{$tsi}{'logic_name'};
     my $t_url = $self->object->_url({
       'type'   => 'Transcript',
       'action' => 'SupportingEvidence',
