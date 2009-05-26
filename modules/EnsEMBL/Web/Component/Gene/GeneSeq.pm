@@ -45,16 +45,16 @@ sub content {
   }
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
-  
+
   $self->markup_exons($sequence, $markup, $config) if $config->{'exon_display'};
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
   $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
-  
+  my $site_type = $object->species_defs->ENSEMBL_SITETYPE;
   $config->{'html_template'} = qq{<p>$config->{'key'}</p><pre>&gt;} . $slice->name . qq{\n%s</pre>};
-  
-	return $self->_info( 'Sequence markup', '
+
+  return $self->_info( 'Sequence markup', qq(
 <p>
-  Ensembl has a number of sequence mark up pages on the site, you can look at the exon intron structure
+  $site_type has a number of sequence mark up pages on the site, you can look at the exon intron structure
   of individual transcripts by selecting on the transcript name in the table above and then selecting
   Exons in the left hand side - alternatively you can see the sequence of the transcript along with its
   protein translation and variation features by selecting the transcript then selecting Sequence &gt; cDNA.
@@ -62,7 +62,7 @@ sub content {
 <p>
   This view and the transcript based sequence views are configurable by clicking on the "Configure this page"
   link in the left hand menu
-</p>' ).
+</p>) ).
    $self->build_sequence($sequence, $config);
 }
 
