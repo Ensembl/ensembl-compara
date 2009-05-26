@@ -14,7 +14,7 @@ sub _init {
   my $self = shift;
   $self->cacheable( 1 );
   $self->ajaxable(  1 );
-  $self->configurable( 0 );
+  $self->configurable( 1 );
 }
 
 sub content {
@@ -44,14 +44,13 @@ sub content {
   $config->get_node('Videogram')->set('label',   ucfirst($object->seq_region_type) );
   $config->get_node('Videogram')->set('label_2', $chr_name );
   my $image    = $self->new_karyotype_image();
-    $image->image_type         = 'chromosome';
-    $image->image_name         = $species.'-'.$chr_name;
-    $image->set_button('drag', 'title' => 'Click or drag to jump to a region' );
-    $image->imagemap         = 'yes';
-    $image->{'panel_number'} = 'chrom';
+  $image->image_type         = 'chromosome';
+  $image->image_name         = $species.'-'.$chr_name;
+  $image->set_button('drag', 'title' => 'Click or drag to jump to a region' );
+  $image->imagemap         = 'yes';
+  $image->{'panel_number'} = 'chrom';
 
   my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
-  $image->add_tracks($object, $config_name);
   $image->karyotype($object, undef, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
   return $image->render;
