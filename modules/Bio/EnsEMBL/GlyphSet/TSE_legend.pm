@@ -155,7 +155,7 @@ sub _init {
 
    #draw legends for exon/CDS & hit mismatch (not for vega)
     my %dets;
-    if ($o_type eq 'vega') {
+    if ($o_type =~ /otter/) {
 	%dets = ();
     }
     else {
@@ -287,7 +287,7 @@ sub _init {
     my $miss_col  = $self->my_colour('evi_missing');
     my $extra_col = $self->my_colour('evi_extra');
     %dets = ( $miss_col  => 'part of evidence missing from transcript structure' );
-    unless ($o_type eq 'vega') {
+    unless ($o_type =~ /otter/) {
 	$dets{$extra_col} = 'part of evidence duplicated in transcript structure';
     }
 
@@ -350,7 +350,7 @@ sub _init {
 
     }
 
-    if( $o_type ne 'vega' ) {
+    if( $o_type !~ /otter/ ) {
 
 	#lines extending beyond the end of the hit
 	$colour = $self->my_colour('evi_long');
