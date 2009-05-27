@@ -11,6 +11,7 @@ use Mail::Mailer;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Filter::Spam;
 use EnsEMBL::Web::Filter::Sanitize;
+use Website::StopIPs;
 
 {
 
@@ -42,7 +43,10 @@ sub send {
   if ($object) {
     my $spamfilter = EnsEMBL::Web::Filter::Spam->new({'object' => $object, 'threshold'=>$self->get_spam_threshold});
     my $sanitizer  = EnsEMBL::Web::Filter::Sanitize->new({'object' => $object});
+    my $IPcheck    = Website::StopIPs->new( $sd->ENSEMBL_CHECK_SPAM );
+
     $self->set_message( $spamfilter->check( $self->get_message  )  ) unless $options->{'spam_check'} == 0;
+
     $self->set_from(    $sanitizer->clean( $self->get_from )  );
     $self->set_to(      $sanitizer->clean( $self->get_to   )  );
     $self->set_reply(   $sanitizer->clean( $self->get_reply || $self->get_from ) );
