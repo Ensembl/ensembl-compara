@@ -1,8 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::evega_gene;
 
 use strict;
-use Bio::EnsEMBL::GlyphSet_gene;
-@Bio::EnsEMBL::GlyphSet::evega_gene::ISA = qw(Bio::EnsEMBL::GlyphSet_gene);
+
+use base qw(Bio::EnsEMBL::GlyphSet_gene);
 
 sub my_label {
     my $self = shift;

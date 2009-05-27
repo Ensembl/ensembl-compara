@@ -1,13 +1,13 @@
 package Bio::EnsEMBL::GlyphSet::_das;
 
 use strict;
-use base qw(Bio::EnsEMBL::GlyphSet_generic);
 
 use Bio::EnsEMBL::ExternalData::DAS::Stylesheet;
 use Bio::EnsEMBL::ExternalData::DAS::Feature;
-
 use POSIX qw(floor ceil);
 use Data::Dumper;
+
+use base qw(Bio::EnsEMBL::GlyphSet_generic);
 
 sub gen_feature {
   my $self = shift;

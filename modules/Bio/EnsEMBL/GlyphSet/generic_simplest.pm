@@ -1,8 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::generic_simplest;
 
 use strict;
-use Bio::EnsEMBL::GlyphSet_simple;
-@Bio::EnsEMBL::GlyphSet::generic_simplest::ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
+
+use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub squish { return 1; }
 

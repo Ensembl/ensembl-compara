@@ -1,9 +1,9 @@
 package Bio::EnsEMBL::GlyphSet::tagged_snp;
-use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet::_variation;
 
-@ISA = qw(Bio::EnsEMBL::GlyphSet::_variation);
+use strict;
+
+
+use base qw(Bio::EnsEMBL::GlyphSet::_variation);
 
 sub my_label { return "Tagged SNPs"; }
 

@@ -1,30 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::alignscalebar;
 
-=head1 NAME
-
-EnsEMBL::Web::GlyphSet::alignscalebar;
-
-=head1 SYNOPSIS
-
-The alignscalebar object handles the detailed display of multiple alignments in alignsliceview
-
-=head1 LICENCE
-
-This code is distributed under an Apache style licence:
-Please see http://www.ensembl.org/code_licence.html for details
-
-=head1 CONTACT
-
-Eugene Kulesha - ek3@sanger.ac.uk
-
-=cut
-
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
 use POSIX qw(ceil floor);
-use Data::Dumper;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
     my ($self) = @_;

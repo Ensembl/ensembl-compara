@@ -1,7 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::alternative_assembly;
+
 use strict;
-use base qw(Bio::EnsEMBL::GlyphSet_simple);
+
 use Bio::EnsEMBL::SimpleFeature;
+
+use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub features {
   my $self = shift;

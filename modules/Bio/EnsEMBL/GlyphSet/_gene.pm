@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::_gene;
 
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub features {

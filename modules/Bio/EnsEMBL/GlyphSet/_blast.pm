@@ -1,10 +1,13 @@
 package Bio::EnsEMBL::GlyphSet::_blast;
 
+use strict;
 use warnings;
 no warnings 'uninitialized';
-use strict;
-use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
+
 use Bio::EnsEMBL::External::BlastAdaptor;
+
+use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
+
 
 sub _blast_adaptor {
   my $self = shift;

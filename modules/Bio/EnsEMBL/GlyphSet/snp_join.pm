@@ -1,13 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::snp_join;
-use strict;
-use vars qw(@ISA);
 
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
+use strict;
 
 use Bio::EnsEMBL::Variation::VariationFeature;
-use Bio::EnsEMBL::GlyphSet;
-  
-@Bio::EnsEMBL::GlyphSet::snp_join::ISA = qw(Bio::EnsEMBL::GlyphSet);
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_; 

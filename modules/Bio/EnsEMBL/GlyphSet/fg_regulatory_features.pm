@@ -1,9 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::fg_regulatory_features;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_simple;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
-use Data::Dumper;
+
+use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label { return "Reg. Features"; }
 

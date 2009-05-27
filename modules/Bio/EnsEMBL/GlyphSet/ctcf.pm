@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::ctcf;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
 sub my_helplink { return "ctcf"; }

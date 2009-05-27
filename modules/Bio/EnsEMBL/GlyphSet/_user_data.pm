@@ -1,11 +1,12 @@
 package Bio::EnsEMBL::GlyphSet::_user_data;
+
 use strict;
 use warnings;
 no warnings 'uninitialized';
-use Data::Dumper;
+
+use EnsEMBL::Web::Text::FeatureParser;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
-use EnsEMBL::Web::Text::FeatureParser;
 
 sub _das_link {
   my $self = shift;

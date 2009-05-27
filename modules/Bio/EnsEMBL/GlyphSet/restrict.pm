@@ -1,4 +1,5 @@
 package Bio::EnsEMBL::GlyphSet::restrict;
+
 use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet);

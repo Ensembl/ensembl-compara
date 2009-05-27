@@ -1,28 +1,12 @@
 package Bio::EnsEMBL::GlyphSet::idhistorytree;
 
-=head1 NAME
-
-EnsEMBL::Web::GlyphSet::idhistorytree;
-
-=head1 SYNOPSIS
-
-
-=head1 LICENCE
-
-This code is distributed under an Apache style licence:
-Please see http://www.ensembl.org/code_licence.html for details
-
-=head1 CONTACT
-
-Bethan Pritchard - bp1@sanger.ac.uk
-
-=cut
 use strict;
-use vars qw(@ISA $SCORE_COLOURS $COLOURS);
-use Bio::EnsEMBL::GlyphSet_simple;
+
+use vars qw($SCORE_COLOURS $COLOURS);
+
 use Bio::EnsEMBL::Feature;
-use EnsEMBL::Web::Component;
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
+
+use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 my $k;
 #warn ("A-0:".localtime());

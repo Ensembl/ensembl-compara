@@ -2,6 +2,7 @@ package Bio::EnsEMBL::GlyphSet::missing;
 
 use strict;
 use warnings;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {

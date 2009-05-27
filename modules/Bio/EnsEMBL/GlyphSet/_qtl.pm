@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::_qtl;
 
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub _das_type {  return 'qtl'; }

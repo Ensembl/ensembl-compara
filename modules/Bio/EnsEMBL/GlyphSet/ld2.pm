@@ -1,7 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::ld2;
+
 use strict;
-use base qw(Bio::EnsEMBL::GlyphSet);
+
 use POSIX;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _key { return $_[0]->my_config('key') || 'r2'; }
 

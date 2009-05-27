@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::draggable;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 our $counter;

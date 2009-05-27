@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::non_can_intron;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {

@@ -1,16 +1,17 @@
 package Bio::EnsEMBL::GlyphSet::codonseq;
-use base qw(Bio::EnsEMBL::GlyphSet::sequence);
+
 use strict;
+
+use Bio::EnsEMBL::Feature;
+use Bio::Seq;
+
+use base qw(Bio::EnsEMBL::GlyphSet::sequence);
 
 ## We base this on the sequence drawing as the only
 ## code which is different is the code that gets
 ## the features...
 
 ## We have to create fake features in the features call...
-
-use Bio::EnsEMBL::Feature;
-use Bio::Seq;
-
 sub features {
   my ($self) = @_;
   my $seq = $self->{'container'}->subseq(-2,$self->{'container'}->length+4);

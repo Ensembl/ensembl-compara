@@ -1,10 +1,13 @@
 package Bio::EnsEMBL::GlyphSet::P_protdas;
+
 use strict;
-use base qw(Bio::EnsEMBL::GlyphSet);
+
 use Sanger::Graphics::ColourMap;
 use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Glyph::Symbol::box; 
 use POSIX; #floor
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;

@@ -1,13 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::Vsupercontigs;
+
 use strict;
-use vars qw(@ISA);
 
-
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-
-
-use Data::Dumper;
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
 

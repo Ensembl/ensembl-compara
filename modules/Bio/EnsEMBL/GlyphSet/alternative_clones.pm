@@ -4,14 +4,12 @@ package Bio::EnsEMBL::GlyphSet::alternative_clones;
 
 use strict;
 
-use Bio::EnsEMBL::GlyphSet_simple;
 use Bio::EnsEMBL::SimpleFeature;
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 use Bio::EnsEMBL::ExternalData::DAS::Source;
 use Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
 
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::GlyphSet_simple);
+use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label {
   my $self = shift;

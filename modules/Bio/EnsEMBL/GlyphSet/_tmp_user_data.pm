@@ -1,9 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::_tmp_user_data;
-use strict;
-use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 
-use Data::Dumper;
+use strict;
+
 use EnsEMBL::Web::File::Text;
+
+use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 
 sub features {
   my $self = shift;

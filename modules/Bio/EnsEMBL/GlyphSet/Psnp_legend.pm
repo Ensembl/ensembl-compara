@@ -1,9 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::Psnp_legend;
+
 use strict;
+
 no warnings "uninitialized";
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
     my ($self) = @_;

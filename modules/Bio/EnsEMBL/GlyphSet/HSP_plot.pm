@@ -1,19 +1,11 @@
-#########
-# Author: rmp
-# Maintainer: rmp
-# Created: 2003
-# Last Modified: 2003-05-02
-# ensembl-draw HSP plotting glyphset
-#
 package Bio::EnsEMBL::GlyphSet::HSP_plot;
-use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
 
-@ISA = qw( Bio::EnsEMBL::GlyphSet );
-#use Sanger::Graphics::GlyphSet;
-#@ISA = qw(Sanger::Graphics::GlyphSet);
+use strict;
+
 use Sanger::Graphics::Bump;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
+
 
 sub _init {
   my ($self)        = @_;

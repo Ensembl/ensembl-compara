@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::SE_generic_match_label;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {

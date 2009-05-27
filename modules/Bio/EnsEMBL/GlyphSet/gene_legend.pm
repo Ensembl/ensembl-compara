@@ -1,9 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::gene_legend;
 
 use strict;
-use Bio::EnsEMBL::GlyphSet;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
-our @ISA = qw(Bio::EnsEMBL::GlyphSet);
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;

@@ -1,9 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::_variation;
+
 use strict;
-use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 use Bio::EnsEMBL::Variation::VariationFeature;
 
+use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label { return "Variations"; }
 

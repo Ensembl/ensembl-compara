@@ -1,18 +1,19 @@
 package Sanger::Graphics::GlyphSet::generic_das_feature;
+
 use strict;
-use vars qw(@ISA $TMP_OBJ);
-use Sanger::Graphics::GlyphSet;
+
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Line;
 use Sanger::Graphics::Glyph::Circle;
 use Sanger::Graphics::Bump;
-use Bio::EnsEMBL::Root;
+
 use Bio::Das;
 use Data::Dumper;
 
-@ISA = qw(Sanger::Graphics::GlyphSet);
-$TMP_OBJ      = [];
+use base qw(Sanger::Graphics::GlyphSet);
+
+our $TMP_OBJ      = [];
 
 sub init_label {
     die "function init_label() must be implemented in subclass";

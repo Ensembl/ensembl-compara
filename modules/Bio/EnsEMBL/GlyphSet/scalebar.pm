@@ -1,11 +1,11 @@
 package Bio::EnsEMBL::GlyphSet::scalebar;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 use POSIX qw(ceil floor);
-use Data::Dumper;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
+
 
 my %SHORT = qw(
   chromosome Chr.

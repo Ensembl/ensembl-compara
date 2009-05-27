@@ -1,7 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::tsv_missing;
+
 use strict;
-use Bio::EnsEMBL::GlyphSet;
-our @ISA = qw(Bio::EnsEMBL::GlyphSet);
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 
 # The filter message refers to the number of SNPs removed from the 'snp_fake' track

@@ -1,11 +1,11 @@
 package Bio::EnsEMBL::GlyphSet::_marker;
+
 use strict;
-use vars qw(@ISA);
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
-my $MAP_WEIGHT = 2;
-my $PRIORITY   = 50;
+our $MAP_WEIGHT = 2;
+our $PRIORITY   = 50;
 
 sub _init {
   my $self = shift;

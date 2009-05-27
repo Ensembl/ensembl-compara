@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::_clone;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 ## Retrieve all BAC map clones - these are the clones in the

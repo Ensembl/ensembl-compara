@@ -1,8 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::contig;
-use strict;
-use base qw(Bio::EnsEMBL::GlyphSet);
 
+use strict;
 use constant MAX_VIEWABLE_ASSEMBLY_SIZE => 5e6;
+
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;

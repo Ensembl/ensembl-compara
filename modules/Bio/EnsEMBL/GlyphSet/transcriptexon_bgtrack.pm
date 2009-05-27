@@ -1,12 +1,9 @@
 package Bio::EnsEMBL::GlyphSet::transcriptexon_bgtrack;
+
 use strict;
-use vars qw(@ISA);
 
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
+use base qw(Bio::EnsEMBL::GlyphSet);
 
-use Bio::EnsEMBL::GlyphSet;
-  
-@Bio::EnsEMBL::GlyphSet::transcriptexon_bgtrack::ISA = qw(Bio::EnsEMBL::GlyphSet);
 sub _init {
   my ($self) = @_;
   my $Config        = $self->{'config'};

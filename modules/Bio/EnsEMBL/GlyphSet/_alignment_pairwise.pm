@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::_alignment_pairwise;
 
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub colour   { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }

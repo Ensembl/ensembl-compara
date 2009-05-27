@@ -5,14 +5,15 @@
 # Sangerised Bio::EnsEMBL::GlyphSet::scalebar
 #
 package Sanger::Graphics::GlyphSet::scalebar;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Bump;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
     my ($self) = @_;

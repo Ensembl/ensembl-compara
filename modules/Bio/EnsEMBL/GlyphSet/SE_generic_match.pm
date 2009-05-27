@@ -1,6 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::SE_generic_match;
-use base qw(Bio::EnsEMBL::GlyphSet::TSE_generic_match);
+
 use strict;
+
+use base qw(Bio::EnsEMBL::GlyphSet::TSE_generic_match);
 
 sub _init {
   my $self = shift;

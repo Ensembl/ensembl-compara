@@ -1,6 +1,8 @@
 package Sanger::Graphics::GlyphSet::gradient_key;
-use base EnsEMBL::Web::GlyphSet;
+
 use strict;
+
+use base qw(EnsEMBL::Web::GlyphSet);
 
 sub _init {
   my ($self) = @_;

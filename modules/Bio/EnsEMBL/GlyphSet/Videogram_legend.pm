@@ -1,13 +1,10 @@
-#########
-# Author: js5
-#
 package Bio::EnsEMBL::GlyphSet::Videogram_legend;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
 
 use Sanger::Graphics::Bump;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;

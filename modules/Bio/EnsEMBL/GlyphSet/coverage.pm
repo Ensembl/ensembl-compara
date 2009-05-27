@@ -1,12 +1,11 @@
 package Bio::EnsEMBL::GlyphSet::coverage;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
 use Sanger::Graphics::Bump;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
-use Data::Dumper;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
+
+use base  qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;

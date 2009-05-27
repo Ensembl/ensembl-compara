@@ -1,14 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::read_coverage;
+
 use strict;
-use vars qw(@ISA); 
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-use Sanger::Graphics::Bump;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
-#use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub my_helplink { return "read_coverage_collection"; }
-
 
 sub _init {
   my ($self) = @_; 

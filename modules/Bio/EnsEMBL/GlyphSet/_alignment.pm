@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::_alignment;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 #==============================================================================

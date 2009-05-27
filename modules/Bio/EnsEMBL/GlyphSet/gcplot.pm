@@ -1,9 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::gcplot;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
-use  Sanger::Graphics::Bump;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;

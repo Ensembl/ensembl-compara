@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::ruler;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {

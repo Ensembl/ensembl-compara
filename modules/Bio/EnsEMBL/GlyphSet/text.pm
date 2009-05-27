@@ -1,8 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::text;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub init_label {
     return;

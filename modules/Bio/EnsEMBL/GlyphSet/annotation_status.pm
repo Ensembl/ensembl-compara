@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::annotation_status;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 #annotation status display for vega

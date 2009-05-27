@@ -1,8 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::Vannotation_status;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my $self = shift;

@@ -1,11 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::gsv_domain;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
 use Sanger::Graphics::Bump;
-use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end);
-use Data::Dumper;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;

@@ -1,11 +1,12 @@
 package Sanger::Graphics::GlyphSet::ruler;
+
 use strict;
-use vars qw(@ISA);
-use Sanger::Graphics::GlyphSet;
-@ISA = qw(Sanger::Graphics::GlyphSet);
+
 use Sanger::Graphics::Glyph::Rect;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Poly;
+
+use base qw(Sanger::Graphics::GlyphSet);
 
 sub init_label {
   my ($self) = @_;

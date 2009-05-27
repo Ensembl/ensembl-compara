@@ -1,8 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::comparafake;
 
 use strict;
-use Bio::EnsEMBL::GlyphSet;
-our @ISA = qw(Bio::EnsEMBL::GlyphSet);
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;

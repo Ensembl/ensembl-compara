@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::_simple;
 
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub _das_type {  return 'simple'; }

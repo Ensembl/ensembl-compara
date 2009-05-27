@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::_transcript;
+
 use strict;
+
 use base qw( Bio::EnsEMBL::GlyphSet_transcript );
 
 sub analysis_logic_name{

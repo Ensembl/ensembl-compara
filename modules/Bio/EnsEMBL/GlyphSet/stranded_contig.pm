@@ -1,7 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::stranded_contig;
-use strict;
-use base qw(Bio::EnsEMBL::GlyphSet::contig);
 
+use strict;
+
+use base qw(Bio::EnsEMBL::GlyphSet::contig);
 
 ## We inherit from normal strand-agnostic contig module
 ## but add arrows when we want to draw in stranded form.

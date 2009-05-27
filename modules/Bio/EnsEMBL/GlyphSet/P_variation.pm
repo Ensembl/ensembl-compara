@@ -1,6 +1,9 @@
 package Bio::EnsEMBL::GlyphSet::P_variation;
+
 use strict;
+
 no warnings "uninitialized";
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {

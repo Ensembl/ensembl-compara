@@ -1,6 +1,9 @@
 package Bio::EnsEMBL::GlyphSet::P_domain;
+
 use strict;
-no warnings "uninitialized";
+
+no warnings 'uninitialized';
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 ## Variables defined in UserConfig.pm 

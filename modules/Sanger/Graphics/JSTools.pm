@@ -3,10 +3,14 @@
 # Maintainer: webmaster@sanger.ac.uk
 # Created: 2001
 #
+
 package Sanger::Graphics::JSTools;
+
 use strict;
 use vars qw/@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS/;
+
 require Exporter;
+
 @ISA    = qw(Exporter);
 @EXPORT = qw( js_popup js_menu_header js_menu_div js_menu js_tooltip_header js_tooltip_div js_tooltip js_init);
 

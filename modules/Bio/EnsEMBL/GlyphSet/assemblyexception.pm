@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::assemblyexception;
 
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub squish {1;}

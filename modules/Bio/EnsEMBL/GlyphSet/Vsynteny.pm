@@ -1,9 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::Vsynteny;
-use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
 
+use strict;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub chr_sort {
   my $self = shift;

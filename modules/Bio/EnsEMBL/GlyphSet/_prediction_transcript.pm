@@ -1,8 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::_prediction_transcript;
+
 use strict;
 
-use base qw(Bio::EnsEMBL::GlyphSet::_transcript);
 use Bio::EnsEMBL::Gene;
+
+use base qw(Bio::EnsEMBL::GlyphSet::_transcript);
 
 sub _das_type {
   return "prediction_transcript";

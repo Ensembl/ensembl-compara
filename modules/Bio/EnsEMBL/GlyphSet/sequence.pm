@@ -1,8 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::sequence;
-use base qw(Bio::EnsEMBL::GlyphSet_simple);
+
 use strict;
 
 use Bio::EnsEMBL::Feature;
+
+use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub fixed { return 1;}
 

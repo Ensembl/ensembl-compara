@@ -1,8 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::_synteny;
 
 use strict;
-use base qw(Bio::EnsEMBL::GlyphSet_simple);
+
 use Bio::EnsEMBL::Feature;
+
+use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 ## All Glyphset simple codes should be written with functions in
 ## the following order:

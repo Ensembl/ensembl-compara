@@ -1,7 +1,10 @@
 package Bio::EnsEMBL::GlyphSet::Vdensity;
+
 use strict;
+
 use warnings;
 no warnings 'uninitialized';
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {

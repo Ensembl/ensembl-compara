@@ -1,9 +1,13 @@
 package Bio::EnsEMBL::GlyphSet::Videogram;
+
 use strict;
+
+use Carp;
 use warnings;
 no warnings 'uninitialized';
+
 use base qw(Bio::EnsEMBL::GlyphSet::Videogram_legend);
-use Carp;
+
 
 ####################################################################
 ### set true only while you're generating the vega karyotype image ##

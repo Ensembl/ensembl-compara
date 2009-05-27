@@ -1,12 +1,13 @@
 package Bio::EnsEMBL::GlyphSet::_flat_file;
+
 use strict;
 use warnings;
 no warnings 'uninitialized';
-use Data::Dumper;
 
-use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
+
+use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 
 sub _das_link {
   my $self = shift;

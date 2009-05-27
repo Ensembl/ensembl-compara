@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::Vdraggable;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub render_normal {

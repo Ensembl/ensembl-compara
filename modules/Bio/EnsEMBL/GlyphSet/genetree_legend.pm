@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::genetree_legend;
 
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub render_normal {

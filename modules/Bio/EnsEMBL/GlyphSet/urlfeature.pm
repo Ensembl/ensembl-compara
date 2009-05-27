@@ -1,10 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::urlfeature;
-use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet_feature;
-use Data::Dumper;
 
-@ISA = qw(Bio::EnsEMBL::GlyphSet_feature);
+use strict;
+
+use base qw(Bio::EnsEMBL::GlyphSet_feature);
 
 sub my_label { 
   my $self = shift;

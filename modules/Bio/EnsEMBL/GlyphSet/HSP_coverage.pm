@@ -1,17 +1,10 @@
-#########
-# Author: rmp
-# Maintainer: rmp
-# Created: 2003-03-05
-# Last Modified: 2003-03-05
-# Description:
-# Colour gradient demonstrating HSP coverage of query-sequence
-#
 package Bio::EnsEMBL::GlyphSet::HSP_coverage;
+
 use strict;
-use vars qw(@ISA);
-use Bio::EnsEMBL::GlyphSet;
-@ISA = qw(Bio::EnsEMBL::GlyphSet);
+
 use Sanger::Graphics::Bump;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self)       = @_;

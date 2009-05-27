@@ -1,7 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::P_scalebar;
-use strict;
-use base qw(Bio::EnsEMBL::GlyphSet);
 
+use strict;
+
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;

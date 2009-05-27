@@ -16,9 +16,8 @@ use Sanger::Graphics::Glyph::Intron;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Renderer::png;
 use Sanger::Graphics::Renderer::imagemap;
-use Sanger::Graphics::Root;
 
-our @ISA = qw(Sanger::Graphics::Root);
+use base qw(Sanger::Graphics::Root);
 
 sub _init {
   my $class = shift;

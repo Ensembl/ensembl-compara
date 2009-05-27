@@ -1,5 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::histone_modifications;
+
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
 sub get_block_features {
