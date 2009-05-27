@@ -74,9 +74,10 @@ Notes:
 
 my ($al) = split /\s+/, ( $SiteDefs::ENSEMBL_CUSTOMLOG );
 my $el = $SiteDefs::ENSEMBL_ERRORLOG;
+
 if( $do_nginx ) {
-  $al = $SiteDefs::ENSEMBL_LOGDIR.'/nginx.access.log';
-  $el = $SiteDefs::ENSEMBL_LOGDIR.'/nginx.error.log';
+  $al = $SiteDefs::ENSEMBL_LOGDIR.'/nginx.access_log';
+  $el = $SiteDefs::ENSEMBL_LOGDIR.'/nginx.error_log';
 }
 
 my $cmd = '';
