@@ -83,8 +83,10 @@ sub content {
     push @containers_and_configs, $slice, $wuc_pop;
   }
 
-  my $image    = $self->new_image([ @containers_and_configs, ],
-             $object->highlights, );
+  my $image    = $self->new_image(
+    [ @containers_and_configs, ],
+    $object->highlights,
+  );
   return if $self->_export_image( $image );
   $image->{'panel_number'} = 'top';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );

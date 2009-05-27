@@ -23,6 +23,8 @@ sub init {
     $self->add_tracks( 'other',
     [ 'text',         '',     'text',         { 'display' => 'normal', 'strand' => 'r', 'menu' => 'no' } ],
     [ 'tagged_snp',   '',     'tagged_snp',   { 'display' => 'normal',  'strand' => 'r', 'colours' => $self->species_defs->colour('variation'),  'depth' => '10000',  'style' => 'box', 'caption' => 'Tagged SNPs', 'name' => 'Tagged SNPs'  } ],
+    [ 'ld2_r2',       '',     'ld2',      { 'display' => 'normal',  'strand' => 'r', 'key' => 'r2', 'colours' => $self->species_defs->colour('variation'),  'caption' => 'LD (r2)', 'name' => 'LD2 (r2)', 'height' => 200 } ],
+    [ 'ld2_d_prime',  '',     'ld2',      { 'display' => 'normal',  'strand' => 'r', 'key' => 'd_prime', 'colours' => $self->species_defs->colour('variation'), 'caption' => "LD (d_prime)", 'name' => "LD2 (d')", 'height' => 200  } ],
     [ 'ld_r2',        '',     'ld',      { 'display' => 'normal',  'strand' => 'r', 'key' => 'r2', 'colours' => $self->species_defs->colour('variation'),  'caption' => 'LD (r2)', 'name' => 'LD (r2)'      } ],
     [ 'ld_d_prime',   '',     'ld',      { 'display' => 'normal',  'strand' => 'r', 'key' => 'd_prime', 'colours' => $self->species_defs->colour('variation'), 'caption' => "LD (d_prime)", 'name' => "LD (d')" } ],
  );
@@ -40,10 +42,10 @@ sub init {
   #$self->{'_no_label'} = 'true';
   $self->{'general'}->{'LD_population'} = {
     '_artefacts' => [qw(
-			text
-			tagged_snp
-			ld_r2
-			ld_d_prime 
+      text
+      tagged_snp
+      ld_r2
+      ld_d_prime 
                     )],
     '_options'  => [qw(pos col known unknown)],
     '_settings' => { 
