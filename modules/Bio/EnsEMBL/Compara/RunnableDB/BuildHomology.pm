@@ -102,6 +102,8 @@ sub fetch_input
   $self->{'onlyOneHomology'} = undef;  #filter to place member in only 1 homology
   $self->{'comparaDBA'}->dbc->do("analyze table peptide_align_feature");  
 
+  $self->analyze_tables() ; # Bio::EnsEMBL::Hive::Extensions -> analyzes + re-enables keys of peptide_align_feature tables
+
   if($self->debug) { print("input_id = " . $self->input_id . "\n"); }
   
   if($self->input_id =~ '^{') { 
