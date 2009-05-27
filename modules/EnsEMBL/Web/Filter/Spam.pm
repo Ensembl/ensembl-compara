@@ -3,6 +3,7 @@ package EnsEMBL::Web::Filter::Spam;
 use strict;
 use warnings;
 use Class::Std;
+use Website::StopIPs;
 
 use base qw(EnsEMBL::Web::Filter);
 
@@ -15,13 +16,16 @@ use base qw(EnsEMBL::Web::Filter);
 
 my %Threshold :ATTR(:set<threshold> :get<threshold>);
 my %Honeypots :ATTR(:set<honeypots> :get<honeypots>);
+my %IPchecker :ATTR(:set<ipchecker> :get<ipchecker>);
 
 sub BUILD {
   my ($self, $ident, $args) = @_;
   $Threshold{$ident}  = $args->{threshold} || 60;
+  $IPchecker{$ident}  = Website::StopIPs->new( @{$self->species_defs->ENSEMBL_CHECK_SPAM||[]} );
   ## Set the messages hash here
   $self->set_messages({
-    'spam' => 'Sorry, one of your form entries was identified as spam. Please remove excess URLs and try again.', 
+    'ip'    => 'Unable to send message.',
+    'spam'  => 'Sorry, one of your form entries was identified as spam. Please remove excess URLs and try again.', 
     'empty' => 'Sorry, one of the required fields was empty. Please try again.', 
   });
 }
@@ -54,6 +58,11 @@ sub check {
   $check =~ s/\[link=.*?\].*?\[\/link\]//smg;
   $check =~ s/https?:\/\/\S+//smg;
   ## If insufficient legit content left after link removal, it's probably spam!
+  if( $self->ipchecker->is_blacklisted( $ENV{'REMOVE_ADDR'} ) ) {
+    $self->set_error_code('ip');
+    warn "@@@ FILTERED DUE TO IP RANGE BAN.....";
+    return 1;
+  }
   if( length($check)<length($content)/$threshold ) {
     $self->set_error_code('spam');
     warn "@@@ FILTERED DUE TO BLOG SPAM.....";
