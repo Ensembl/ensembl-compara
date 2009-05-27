@@ -43,6 +43,7 @@ sub _draw_features {
   my $offset = $self->{'container'}->start - 1;
   my $has_labels = 0;
   foreach my $lname   ( sort keys %{$features->{'groups'}} ) {
+    warn ".... $lname -- $render_flags ....";
     foreach my $gkey  ( sort keys %{$features->{'groups'}{$lname}} ) {
       my $group = $features->{'groups'}{$lname}{$gkey}{$ori};
       next unless $group;                                          ## No features from this group on this strand!
@@ -52,10 +53,12 @@ sub _draw_features {
 
       my $g_s = $features->{'g_styles'}{$lname}{$group->{'type'}};             ## Get the group style...
       my $to_join = lc( $g_s->{'style'}{'symbol'} ) ne 'hidden';
+      $g_s->{'style'}{'label'} = 'yes' if $render_flags eq 'force_labels';
       $has_labels = 1 if $g_s->{'style'}{'label'} eq 'yes';
 
       foreach my $style_key ( keys %{$group->{'features'}} ) {
         my $f_s  = $features->{'f_styles'}{$lname}{$style_key};
+        $f_s->{'style'}{'label'} = 'yes' if $render_flags eq 'force_labels';
         $has_labels = 1 if $f_s->{'style'}{'label'} eq 'yes';
         my $to_bump = lc($f_s->{'style'}{'bump'}) eq 'yes' || $f_s->{'style'}{'bump'} eq '1';             ## Bump if style bump is set!
         my $fn_c = "composite_extent_".$f_s->{'style'}{'symbol'};
@@ -89,7 +92,8 @@ sub _draw_features {
   ## All groups and features now have two additional values...
   ## -> extent_start and extent_end so we know where to draw the boxes....
 
-  $has_labels = 0 unless $render_flags eq 'label_under';
+  $has_labels = 0 unless $render_flags eq 'label_under' || $render_flags eq 'force_labels';
+
   my( $fontname, $fontsize ) = ( undef, -2 );
   if( $has_labels ) {
     ( $fontname, $fontsize )  = $self->get_font_details( 'outertext' );
@@ -123,8 +127,15 @@ sub _draw_features {
       if( $composite_flag || $score_based_flag ) {
         my $end;
         my($T,$TF,$tw,$h);
-        if( $has_labels && $group->{'label'} && $g_s->{'style'}{'label'} eq 'yes' ) {
-          ($T,$TF,$tw,$h) = $self->get_text_width( 0, $group->{'label'}, '', {'font'=>$fontname,'ptsize'=>$fontsize} );
+        my $label = '';
+        if( $has_labels && $g_s->{'style'}{'label'} eq 'yes' ) {
+          $label = "$group->{'label'}" ne ''                                      ? "$group->{'label'}"
+                 : ($render_flags eq 'force_labels') && defined( $group->{'id'} ) ? "$group->{'id'}"
+                 : ''
+                 ;
+        }
+        if( $label ne '' ) {
+          ($T,$TF,$tw,$h) = $self->get_text_width( 0, $label, '', {'font'=>$fontname,'ptsize'=>$fontsize} );
           $end = $group->{'start'} + ( $tw + 4 ) * $self->{bppp} ;
         }
         $end = $group->{'end'} if $group->{'end'} > $end;
@@ -175,8 +186,8 @@ sub _draw_features {
             'ptsize'    => $fontsize,
             'font'      => $fontname,
             'colour'    => $g_s->{'style'}{'fgcolor'}||'black',
-            'text'      => $group->{'label'}
-          })) if $has_labels && $group->{'label'} && $g_s->{'style'}{'label'} eq 'yes';
+            'text'      => $label
+          })) if $label ne '';
         }
       }
 
@@ -342,15 +353,20 @@ sub _draw_features {
 
 sub render_nolabels {
   my $self = shift;
-  $self->render_normal( 'nolabel' );
+  $self->_render( 'nolabel' );
+}
+
+sub render_normal {
+  my $self = shift;
+  $self->_render( 'label_under' );
 }
 
 sub render_labels {
   my $self = shift;
-  $self->render_normal( 'label_under' );
+  $self->_render( 'force_labels' );
 }
 
-sub render_normal {
+sub _render {
   my ($self, $render_flags ) = @_;
   
   return $self->render_text if $self->{'text_export'};
