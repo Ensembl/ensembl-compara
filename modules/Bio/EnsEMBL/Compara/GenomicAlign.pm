@@ -2130,7 +2130,7 @@ sub get_Slice {
 =cut
 
 sub restrict {
-  my ($self, $start, $end) = @_;
+  my ($self, $start, $end, $aligned_seq_length) = @_;
   throw("Wrong arguments") if (!$start or !$end);
 
   my $restricted_genomic_align = $self->copy();
@@ -2141,18 +2141,14 @@ sub restrict {
   delete($restricted_genomic_align->{cigar_line});
   $restricted_genomic_align->{original_dbID} = $self->dbID if ($self->dbID);
 
-  my $aligned_seq_length = 0;
-
-  #unable to retrieve $self->genomic_align_block->length 
-  if ((!$self->{'genomic_align_block_id'}) or (!$self->genomic_align_block->length)) {
-      my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);
-      while (my $cigar = shift(@cigar)) {
-	  my ($num, $type) = ($cigar =~ /^(\d*)([GDMXI])/);
-	  $num = 1 if ($num eq "");
-	  $aligned_seq_length += $num unless ($type eq "I");
-      }
-  } else {
-    $aligned_seq_length = $self->genomic_align_block->length;
+  # Need to calculate the aligned sequence length myself
+  if (!$aligned_seq_length) {
+    my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);
+    foreach my $num_type (@cigar) {
+      my $type = substr($num_type, -1, 1, "");
+      $num_type = 1 if ($num_type eq "");
+      $aligned_seq_length += $num_type unless ($type eq "I");
+    }
   }
 
   my $final_aligned_length = $end - $start + 1;

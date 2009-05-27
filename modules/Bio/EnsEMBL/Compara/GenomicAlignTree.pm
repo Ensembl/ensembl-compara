@@ -504,8 +504,9 @@ sub restrict_between_alignment_positions {
     my $genomic_align_group = $this_node->genomic_align_group;
     next if (!$genomic_align_group);
     my $new_genomic_aligns = [];
+    my $length = $this_node->length;
     foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
-      my $restricted_genomic_align = $this_genomic_align->restrict($start, $end);
+      my $restricted_genomic_align = $this_genomic_align->restrict($start, $end, $length);
       if ($genomic_align_tree->reference_genomic_align eq $this_genomic_align) {
         ## Update the reference_genomic_align
         $genomic_align_tree->reference_genomic_align($restricted_genomic_align);
@@ -725,19 +726,17 @@ sub get_all_leaves {
 =cut
 
 sub _sort_children {
-  my $reference_genomic_align;
+  my $reference_genomic_align_node;
 
-  if (defined ($a->root) && defined($b->root) && $a->root eq $b->root and $a->root->reference_genomic_align) {
-    $reference_genomic_align = $a->root->reference_genomic_align;
+  if (defined ($a->root) && defined($b->root) && $a->root eq $b->root and $a->root->reference_genomic_align_node) {
+    $reference_genomic_align_node = $a->root->reference_genomic_align_node;
   }
 
   ## Reference GenomicAlign based sorting
-  if ($reference_genomic_align) {
-    if (grep {$_ eq $reference_genomic_align} map {@{$_->get_all_GenomicAligns}}
-        @{$a->get_all_nodes}) {
+  if ($reference_genomic_align_node) {
+    if (grep {$_ eq $reference_genomic_align_node} @{$a->get_all_leaves}) {
       return -1;
-    } elsif (grep {$_ eq $reference_genomic_align} map {@{$_->get_all_GenomicAligns}}
-        @{$b->get_all_nodes}) {
+    } elsif (grep {$_ eq $reference_genomic_align_node} @{$b->get_all_leaves}) {
       return 1;
     }
   }

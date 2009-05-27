@@ -1569,8 +1569,9 @@ sub restrict_between_alignment_positions {
   my $final_aligned_length = $end - $start + 1;
 
   ## Create a new Bio::EnsEMBL::Compara::GenomicAlignBlock object with restricted GenomicAligns
+  my $length = $self->{length};
   foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
-    my $new_genomic_align = $this_genomic_align->restrict($start, $end);
+    my $new_genomic_align = $this_genomic_align->restrict($start, $end, $length);
     if ($self->reference_genomic_align and $this_genomic_align == $self->reference_genomic_align) {
       $new_reference_genomic_align = $new_genomic_align;
     }
