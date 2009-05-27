@@ -105,7 +105,7 @@ $pad    </dd>";
       } else {
         $title = $name;
       }
-			my $referer = ''; #CGI::param('_referer')|| $ENV{'REQUEST_URI'};
+      my $referer = ''; #CGI::param('_referer')|| $ENV{'REQUEST_URI'};
       if( $node->data->{'availability'} && $self->is_available( $node->data->{'availability'} )) {
         my $url = $node->data->{'url'};
         if (!$url) {
@@ -132,13 +132,13 @@ $pad    </dd>";
             $url .= '?'.join(';', @ok_params);  
           }
         }
-      	$name = sprintf '<a href="%s" title="%s">%s</a>', $url, $title, $name;
+        $name = sprintf '<a href="%s" title="%s">%s</a>', $url, $title, $name;
       } else {
-      	$name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
+        $name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
       }
       my $row_content = '';
       if( $node->is_leaf ) {
-	$content .= sprintf( qq(
+        $content .= sprintf( qq(
 $pad        <dd%s%s>%s</dd>), 
               $node->data->{'id'} ? ' id="'.$node->data->{'id'}.'"' : '',
               $node->key eq $active ? ' class="active"' : '', $name );
@@ -147,9 +147,9 @@ $pad        <dd%s%s>%s</dd>),
 $pad        <dd class="%s">%s
 $pad          <dl>),
         ($node->left <= $active_l && $node->right >= $active_r ? 'open' : 'open').
-	($node->key eq $active ? ' active' :''),
-	$name );
-	$pad .= '    ';
+        ($node->key eq $active ? ' active' :''),
+        $name );
+        $pad .= '    ';
       }
     }
     $previous_node = $node;
