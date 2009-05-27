@@ -47,7 +47,14 @@ sub content {
     $homologies = $ha->fetch_by_Member($qm);
   };
 
-  my %desc_mapping= ('ortholog_one2one' => '1 to 1 orthologue', 'apparent_ortholog_one2one' => '1 to 1 orthologue (apparent)', 'ortholog_one2many' => '1 to many orthologue', 'between_species_paralog' => 'paralogue (between species)', 'ortholog_many2many' => 'many to many orthologue', 'within_species_paralog' => 'paralogue (within species)');
+  my %desc_mapping= (
+    'ortholog_one2one'          => '1 to 1 orthologue',
+    'apparent_ortholog_one2one' => '1 to 1 orthologue (apparent)',
+    'ortholog_one2many'         => '1 to many orthologue',
+    'between_species_paralog'   => 'paralogue (between species)',
+    'ortholog_many2many'        => 'many to many orthologue',
+    'within_species_paralog'    => 'paralogue (within species)',
+  );
 
   foreach my $homology (@{$homologies}) {
     my $sa;
@@ -94,14 +101,15 @@ sub content {
       }
       next unless $FLAG;
       my $homology_types = EnsEMBL::Web::Constants::HOMOLOGY_TYPES;
-
       my $homology_desc= $homology_types->{$homology->{_description}} || $homology->{_description};
 
       # filter out the between species paralogs
       next if($homology_desc eq 'between_species_paralog');
 
-      my $homology_desc_mapped= $desc_mapping{$homology_desc};
-      $homology_desc_mapped= 'no description' unless (defined $homology_desc_mapped);
+      my $homology_desc_mapped = $desc_mapping{$homology_desc} ? $desc_mapping{$homology_desc}
+	                       : $homology_desc            ? $homology_desc
+	                       : 'no description';
+
       $html .= sprintf '<h2>Ortholog type: %s</h2>',$homology_desc_mapped;
 
       my $ss = EnsEMBL::Web::Document::SpreadSheet->new(
