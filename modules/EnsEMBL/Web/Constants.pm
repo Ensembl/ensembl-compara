@@ -19,6 +19,7 @@ sub HOMOLOGY_TYPES {
   return {
     'BRH'  => 'Best Reciprocal Hit',
     'UBRH' => 'Unique Best Reciprocal Hit',
+    'MBRH' => 'Multiple Best Reciprocal Hit',
     'RHS'  => 'Reciprocal Hit based on Synteny around BRH',
     'DWGA' => 'Derived from Whole Genome Alignment'
   };
