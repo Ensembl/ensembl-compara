@@ -1,5 +1,6 @@
 package EnsEMBL::Web::Fake;
 
+use strict;
 ## Module used by CoreObjects to create an ersatz core object for pages that aren't 
 ## based on an actual location, gene or transcript (e.g. the whole genome)
 
