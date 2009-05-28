@@ -58,6 +58,8 @@
 #   * treebest
 #   * mcoffee (actually point to t_coffee binary)
 #   * quicktree
+#   * sreformat
+#   * mafft
 # 
 # Set the value of the keys to the binary location required
 
