@@ -158,7 +158,7 @@ sub _draw_features {
         } elsif( @{$group->{'fnotes'}||[]} ) {
           $title .= join '', map { '; '.CGI::escapeHTML($_)} @{$group->{'fnotes'}};
         }
-        $title .= "; Type: ".$group->{'type'} if $group->{'type'};
+        $title .= "; Type: ".($group->{'type_label'} || $group->{'type'}) if $group->{'type'};
 
         if( $group->{extent_end} >0 &&  $group->{extent_start} < $seq_len ) {
         my $row = $self->bump_row( $group->{'start'}*$ppbp, $end*$ppbp ) + $self->{'_row_offset'};
@@ -242,7 +242,7 @@ sub _draw_features {
           $ori > $f->seq_region_strand ? 'Forward' : $f->seq_region_strand < 0 ? 'Reverse' : '-';
 #        $title .= $f->{'notes'};
         $href = $f->{'link'}->[0]{'href'} if @{$f->{'link'}||[]};
-        $title .= "; Type: ".$f->type_id if $f->type_id;
+        $title .= "; Type: ".($f->type_label || $f->type_id) if $f->type_id;
 
               $self->push( $self->Space({
                 'x'     => $f->{extent_start}-1,

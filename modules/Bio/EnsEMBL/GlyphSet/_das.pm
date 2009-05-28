@@ -130,6 +130,7 @@ sub features       {
               'strand'  => $st,
               'count'   => 1,
               'type'    => $ty,
+              'type_label' => $f->type_label,
               'id'      => $g,
               'label'   => $label,
               'notes'   => $f->{'note'},   ## Push the features notes/links and targets on!
