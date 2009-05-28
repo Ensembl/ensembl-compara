@@ -256,7 +256,7 @@ print "# Check data consistency between pt_node and homology with node_id\n";
 print "# Check for homology has no duplicates\n";
 
 my $mlsses;
-my $mlssa;
+my $mlssa = $dba->get_MethodLinkSpeciesSetAdaptor();
 
 push @{$mlsses},@{$mlssa->fetch_all_by_method_link_type('ENSEMBL_PARALOGUES')};
 
@@ -293,7 +293,7 @@ $mlsses = $mlssa->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
 if ($doit) {
 
 # $sql = "select h.method_link_species_set_id,hm.member_id from homology h, homology_member hm where h.method_link_species_set_id=? and h.homology_id=hm.homology_id group by hm.member_id having count(*)>1 and group_concat(h.description) like '%ortholog_one2one%'";
-$sql = "select h.method_link_species_set_id,hm.member_id from homology h, homology_member hm where h.method_link_species_set_id=? and h.homology_id=hm.homology_id group by hm.member_id having count(*)>1 and group_concat(h.description) like='ortholog_one2one'";
+$sql = "select h.method_link_species_set_id,hm.member_id from homology h, homology_member hm where h.method_link_species_set_id=? and h.homology_id=hm.homology_id group by hm.member_id having count(*)>1 and group_concat(h.description) ='ortholog_one2one'";
 
 $sth = $dba->dbc->prepare($sql);
 

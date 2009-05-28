@@ -104,6 +104,7 @@ sub fetch_input {
   #########################
 
   # Fetch parameters from the two possible locations. Input_id takes precedence!
+  # and parameters can point to an entry in analysis_data
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
@@ -118,7 +119,7 @@ sub fetch_input {
   # Protein Tree input.
   if (defined $self->{'protein_tree_id'}) {
     my $id = $self->{'protein_tree_id'};
-    $self->{'protein_tree'} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor->fetch_node_by_node_id($id);
+    $self->{'protein_tree'} = $self->{treeDBA}->fetch_node_by_node_id($id);
     $self->{'protein_tree'}->flatten_tree; # This makes retries safer
     $self->{'input_fasta'} = $self->dumpProteinTreeToWorkdir($self->{'protein_tree'});
 
@@ -290,6 +291,16 @@ sub get_params {
   }
 
   my $p;
+  
+  #First if this was an analysis data id then we rerun get params for it
+  $p = 'analysis_data_id';
+  if(defined $params->{$p}) {
+  	my $adid = $params->{$p};
+  	my $ad_a = $self->db()->get_AnalysisDataAdaptor();
+  	my $next_param_string = $ad_a->fetch_by_dbID($adid);
+  	$self->get_params($next_param_string);
+  }
+  #The continue onto other params
 
   # METHOD: The style of MCoffee to be run for this alignment.
   # Could be: fmcoffee or cmcoffee
@@ -326,7 +337,11 @@ sub get_params {
   # This is analysis, not production: 'redo' e.g. '1:1000000' from clusterset_id 1 to a different clusterset_id 10000000
   $p = 'redo';
   $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
+  
+  # This is looking for a mafft binary which overides other binary settings
+  $p = 'mafft';
+  $self->{$p} = $params->{$p} if (defined($params->{$p}));
+  
   return;
 }
 
@@ -434,7 +449,14 @@ sub run_mcoffee
   $prefix .= "export TMP_4_TCOFFEE=\"$tempdir\";";
   $prefix .= "export CACHE_4_TCOFFEE=\"$tempdir\";";
   $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
-  $prefix .= "export MAFFT_BINARIES=/nfs/acari/gj1/bin/mafft-bins/binaries;";
+  
+  if(defined $self->{mafft}) {
+  	print "Using defined mafft location $self->{mafft}. Make sure MAFFT_BINARIES is setup correctly\n" if $self->debug();
+  }
+  else {
+  	print "Using default mafft location\n" if $self->debug();
+  	$prefix .= "export MAFFT_BINARIES=/nfs/acari/gj1/bin/mafft-bins/binaries;";
+  }
   print $prefix.$cmd."\n" if ($self->debug);
 
   #
@@ -443,13 +465,22 @@ sub run_mcoffee
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
   my $rc;
   if ($self->{'method'} eq 'mafft') {
-    my $mafft_executable = "/nfs/acari/avilella/src/mafft/mafft-6.522/scripts/mafft";
-    BEGIN {$ENV{MAFFT_BINARIES} = '/nfs/acari/avilella/src/mafft/mafft-6.522/binaries'; }
+  	my ($mafft_env, $mafft_executable);
+  	if(defined $self->{mafft}) {
+  		$mafft_executable = $self->{mafft};
+  	}
+  	else {
+    	$mafft_executable = "/nfs/acari/avilella/src/mafft/mafft-6.522/scripts/mafft";
+    	$mafft_env = '/nfs/acari/avilella/src/mafft/mafft-6.522/binaries';
+  	}
+  	
+  	$ENV{MAFFT_BINARIES} = $mafft_env if $mafft_env;
     print STDERR "### $mafft_executable --auto $input_fasta > $mcoffee_output\n";
     $rc = system("$mafft_executable --auto $input_fasta > $mcoffee_output");
+    
     $self->{'mcoffee_scores'} = undef; #these wont have scores
   } else {
-    $DB::single=1;1;
+    $DB::single=1;
     $rc = system($prefix.$cmd);
   }
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);

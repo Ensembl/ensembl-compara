@@ -200,20 +200,14 @@ sub get_params {
       print("  $key : ", $params->{$key}, "\n");
     }
   }
-
+  
   if(defined($params->{'protein_tree_id'})) {
     $self->{'protein_tree'} =  
          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
-
-  $self->{'max_gene_count'} = 
-    $params->{'max_gene_count'} if(defined($params->{'max_gene_count'}));
-
-  $self->{'clusterset_id'} = 
-    $params->{'clusterset_id'} if(defined($params->{'clusterset_id'}));
-
-  foreach my $key (qw[max_gene_count use_genomedb_id]) {
+  
+  foreach my $key (qw[max_gene_count use_genomedb_id clusterset_id sreformat_exe]) {
     my $value = $params->{$key};
     $self->{$key} = $value if defined $value;
   }
@@ -249,7 +243,7 @@ sub run_quicktreebreak {
     $quicktreebreak_executable = "/nfs/acari/avilella/src/quicktree/quicktree_1.1/bin/quicktree";
   }
 
-  throw("can't find a quicktree executable to run\n") 
+  throw("can't find a quicktree executable to run. Tried $quicktreebreak_executable \n") 
     unless(-e $quicktreebreak_executable);
 
   my $cmd = $quicktreebreak_executable;
@@ -347,12 +341,16 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
   print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
   my $stk_file = $self->{'file_root'} . ".stk";
-  my $cmd = "/usr/local/ensembl/bin/sreformat stockholm $aln_file > $stk_file";
+  
+  my $sreformat_exe = $self->{sreformat_exe};
+  $sreformat_exe = '/usr/local/ensembl/bin/sreformat' unless -e $sreformat_exe;
+  
+  my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
 
   unless( system("$cmd") == 0) {
     print("$cmd\n");
     $self->check_job_fail_options;
-    throw("error running sreformat, $!\n");
+    throw("error running sreformat with cmd $cmd: $!\n");
   }
 
   $self->{'input_aln'} = $stk_file;
