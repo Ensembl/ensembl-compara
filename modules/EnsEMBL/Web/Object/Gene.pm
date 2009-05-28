@@ -36,6 +36,8 @@ sub availability {
     $hash->{'history'}    = $rows ? 1 : 0;
     $hash->{'gene'}       = 1;
     $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
+    $rows = $self->table_info( $self->get_db, 'alt_allele' )->{'rows'};
+    $hash->{'alt_allele'} = $rows ? 1 : 0;
     my $compara_db  = $self->database('compara');
     my $res = 0;
     if ($compara_db) {
@@ -56,6 +58,7 @@ sub analysis {
   my $self = shift;
   return $self->Obj->analysis;
 }
+
 sub counts {
   my $self = shift;
   my $obj = $self->Obj;
@@ -69,12 +72,12 @@ sub counts {
   my $counts;
 
   $counts = $MEMD->get($key) if $MEMD;
-
   unless ($counts) {
     $counts = {};
     $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
     $counts->{'exons'}       = @{$obj->get_all_Exons};
     $counts->{'similarity_matches'} = $self->count_xrefs;
+    $counts->{'alternative_alleles'} = @{$obj->get_all_alt_alleles};
     my $compara_db = $self->database('compara');
     if($compara_db) {
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
@@ -92,7 +95,6 @@ sub counts {
                        h.description = "within_species_paralog" )
                group by type', {}, $obj->stable_id
         )};
-        #warn keys %res;
         $counts->{'orthologs'} = $res{'ENSEMBL_ORTHOLOGUES'};
         $counts->{'paralogs'} = $res{'ENSEMBL_PARALOGUES'};
         my ($res) = $compara_dbh->selectrow_array(
@@ -101,24 +103,22 @@ sub counts {
         );
         $counts->{'families'}    = $res;
       }
-      
       ($counts->{'alignments'}) = $self->count_alignments if $self->get_db eq 'core';
     }
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
-  
   return $counts;
 }
 
 sub count_xrefs {
-    my $self = shift;
-    my $type = $self->get_db;
-    my $dbc = $self->database($type)->dbc;
+  my $self = shift;
+  my $type = $self->get_db;
+  my $dbc = $self->database($type)->dbc;
 
-    #xrefs on the gene
-    my $xrefs_c = 0;
-    my $sql = qq(
+  #xrefs on the gene
+  my $xrefs_c = 0;
+  my $sql = qq(
                 SELECT x.display_label, edb.db_name, edb.status
                   FROM gene g, object_xref ox, xref x, external_db edb
                  WHERE g.gene_id = ox.ensembl_id
@@ -126,22 +126,22 @@ sub count_xrefs {
                    AND x.external_db_id = edb.external_db_id
                    AND ox.ensembl_object_type = 'Gene'
                    AND g.gene_id = ?);
-    my $sth = $dbc->prepare($sql);
-    $sth->execute($self->Obj->dbID);
-    while (my ($label,$db_name,$status) = $sth->fetchrow_array) {
-	#these filters are taken directly from Component::_sort_similarity_links
-	#code duplication needs removing, and some of these may well not be needed any more
-	next if ($status eq 'ORTH');                        # remove all orthologs
-	next if (lc($db_name) eq 'medline');                # ditch medline entries - redundant as we also have pubmed
-	next if ($db_name =~ /^flybase/i && $type =~ /^CG/ ); # Ditch celera genes from FlyBase
-	next if ($db_name eq 'Vega_gene');                  # remove internal links to self and transcripts
-	next if ($db_name eq 'Vega_transcript');
-	next if ($db_name eq 'Vega_translation');
-	next if ($db_name eq 'GO');
-	next if ($db_name eq 'OTTP') && $label =~ /^\d+$/; #ignore xrefs to vega translation_ids
-	$xrefs_c++;
-    }
-    return $xrefs_c;
+  my $sth = $dbc->prepare($sql);
+  $sth->execute($self->Obj->dbID);
+  while (my ($label,$db_name,$status) = $sth->fetchrow_array) {
+    #these filters are taken directly from Component::_sort_similarity_links
+    #code duplication needs removing, and some of these may well not be needed any more
+    next if ($status eq 'ORTH');                        # remove all orthologs
+    next if (lc($db_name) eq 'medline');                # ditch medline entries - redundant as we also have pubmed
+    next if ($db_name =~ /^flybase/i && $type =~ /^CG/ ); # Ditch celera genes from FlyBase
+    next if ($db_name eq 'Vega_gene');                  # remove internal links to self and transcripts
+    next if ($db_name eq 'Vega_transcript');
+    next if ($db_name eq 'Vega_translation');
+    next if ($db_name eq 'GO');
+    next if ($db_name eq 'OTTP') && $label =~ /^\d+$/; #ignore xrefs to vega translation_ids
+    $xrefs_c++;
+  }
+  return $xrefs_c;
 }
 
 sub count_gene_supporting_evidence {
