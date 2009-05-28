@@ -411,6 +411,9 @@ sub build_GeneTreeSystem
   if (defined $genetree_params{'honeycomb_dir'}) {
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
+  if(defined $genetree_params{mafft}) {
+  	$parameters .= qq|, 'mafft' => '$genetree_params{mafft}'|;
+  }
   $parameters .= "}";
 
   my $mcoffee_exe = $genetree_params{'mcoffee'} || '/nfs/acari/gj1/bin/t_coffee';
@@ -418,9 +421,18 @@ sub build_GeneTreeSystem
   my $mcoffee = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'MCoffee',
       -program_file    => $mcoffee_exe,
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MCoffee',
-      -parameters      => $parameters
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MCoffee'
     );
+    
+  #If params exceed 254 then use the analysis_data table.
+  if(length($parameters) > 254) {
+  	my $ad_dba =  $self->{'hiveDBA'}->get_AnalysisDataAdaptor();
+   	my $adi = $ad_dba->store_if_needed($parameters);
+   	$parameters = "{'analysis_data_id'=>${adi}}";
+  }
+  
+  $mcoffee->parameters($parameters);
+    
   $analysisDBA->store($mcoffee);
   $stats = $mcoffee->stats;
   $stats->batch_size(1);
@@ -553,13 +565,22 @@ sub build_GeneTreeSystem
   $stats->hive_capacity($ortho_tree_hive_capacity);
 
   $stats->update();
-
-  $parameters = "{max_gene_count=>".$genetree_params{'max_gene_count'}."}";
+  
+  #
+  # QuickTreeBreak
+  #
+  $parameters = "{max_gene_count=>".$genetree_params{'max_gene_count'};
+  if($genetree_params{sreformat}) {
+  	$parameters .= qq|, sreformat_exe=>'$genetree_params{sreformat}'|;
+  }
+  $parameters .= '}';
+  
   my $quicktreebreak = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'QuickTreeBreak',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::QuickTreeBreak',
       -parameters      => $parameters
       );
+  $quicktreebreak->program_file($genetree_params{quicktree}) if $genetree_params{quicktree};
   $analysisDBA->store($quicktreebreak);
   $stats = $quicktreebreak->stats;
   $stats->batch_size(1);
