@@ -67,8 +67,6 @@ sub get_url_filesize {
   return { 'filesize' => $response->header('Content-Length') || (
     $response->content ? length( $response->content ) : 0
   ) };
-
-  return { 'filesize' => $file_size };
 }
 
 sub _get_http_error {
