@@ -62,6 +62,13 @@ perl update_genome.pl
         already matches the new species DB. This options allows you
         to overcome this. USE ONLY IF YOU REALLY KNOW WHAT YOU ARE
         DOING!
+    [--offset 1000]
+        This allows you to offset identifiers assigned to Genome DBs by a given
+        amount. If not specified we assume we will use the autoincrement key
+        offered by the Genome DB table. If given then IDs will start 
+        from that number (and we will assign according to the current number
+        of Genome DBs exceeding the offset). First ID will be equal to the 
+        offset+1
 
 =head1 OPTIONS
 
@@ -107,12 +114,12 @@ any of the aliases given in the registry_configuration_file
 
 =over
 
-=item B<[--species_name "Species name">
+=item B<[--species_name "Species name"]>
 
 Set up the species name. This is needed when the core database
 misses this information
 
-=item B<[--taxon_id 1234>
+=item B<[--taxon_id 1234]>
 
 Set up the NCBI taxon ID. This is needed when the core database
 misses this information
@@ -123,6 +130,15 @@ This scripts fails if the genome_db table of the compara DB
 already matches the new species DB. This options allows you
 to overcome this. USE ONLY IF YOU REALLY KNOW WHAT YOU ARE
 DOING!
+
+=item B<[--offset 1000]>
+
+This allows you to offset identifiers assigned to Genome DBs by a given
+amount. If not specified we assume we will use the autoincrement key
+offered by the Genome DB table. If given then IDs will start 
+from that number (and we will assign according to the current number
+of Genome DBs exceeding the offset). First ID will be equal to the 
+offset+1
 
 =back
 
@@ -161,6 +177,13 @@ perl update_genome.pl
         already matches the new species DB. This options allows you
         to overcome this. USE ONLY IF YOU REALLY KNOW WHAT YOU ARE
         DOING!
+    [--offset 1000]
+        This allows you to offset identifiers assigned to Genome DBs by a given
+        amount. If not specified we assume we will use the autoincrement key
+        offered by the Genome DB table. If given then IDs will start 
+        from that number (and we will assign according to the current number
+        of Genome DBs exceeding the offset). First ID will be equal to the 
+        offset+1
 };
 
 my $help;
@@ -171,6 +194,7 @@ my $species;
 my $species_name;
 my $taxon_id;
 my $force = 0;
+my $offset = 0;
 
 GetOptions(
     "help" => \$help,
@@ -180,6 +204,7 @@ GetOptions(
     "species_name=s" => \$species_name,
     "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
+    'offset=i' => \$offset,
   );
 
 $| = 0;
@@ -286,19 +311,26 @@ sub update_genome_db {
   my $sql;
   my $sth;
 
-  $genome_db = eval{$genome_db_adaptor->fetch_by_name_assembly(
-          $primary_species_binomial_name, $assembly
-      )};
-  if ($genome_db) { ## New genebuild!
-    $sql = "UPDATE genome_db SET assembly = \"$assembly\", genebuild = \"$genebuild\" WHERE genome_db_id = ".
-        $genome_db->dbID;
-    $sth = $compara_dba->dbc->do($sql);
+  $genome_db = eval {
+  	$genome_db_adaptor->fetch_by_name_assembly($primary_species_binomial_name,
+  		$assembly)
+  };
+  
+  ## New genebuild!
+  if ($genome_db) {
+  	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly =?, genebuild =?, WHERE genome_db_id =?');
+  	$sth->execute($assembly, $genebuild, $genome_db->dbID());
+  	$sth->finish();
+  	
     $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
             $primary_species_binomial_name,
             $assembly
         );
 
-  } else { ## New genome or new assembly!!
+  } 
+  ## New genome or new assembly!!
+  else {
+  	
     if (!defined($taxon_id)) {
       ($taxon_id) = @{$meta_container->list_value_by_key('species.taxonomy_id')};
     }
@@ -307,17 +339,35 @@ sub update_genome_db {
           "   You can use the --taxon_id option";
     }
     print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $assembly\n\n";
-    $sql = "UPDATE genome_db SET assembly_default = 0 WHERE name = \"".
-        $primary_species_binomial_name . "\"";
-    $sth = $compara_dba->dbc->do($sql); 
-    $sql = "INSERT INTO genome_db (taxon_id, name, assembly, genebuild)".
-        " VALUES (\"$taxon_id\", \"$primary_species_binomial_name\",".
-        " \"$assembly\", \"$genebuild\")";
-    $sth = $compara_dba->dbc->do($sql); 
+    
+    $sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name =?');
+    $sth->execute($primary_species_binomial_name);
+    $sth->finish(); 
+    
+    #New ID search if $offset is true
+    my @args = ($taxon_id, $primary_species_binomial_name, $assembly, $genebuild);
+    if($offset) {
+    	$sql = 'INSERT INTO genome_db (genome_db_id, taxon_id, name, assembly, genebuild) values (?,?,?,?,?)';
+    	$sth = $compara_dba->dbc->prepare('select max(genome_db_id) from genome_db where genome_db_id > ?');
+    	$sth->execute($offset);
+    	my ($max_id) = $sth->fetchrow_array();
+    	$sth->finish();
+    	if(!$max_id) {
+    		$max_id = $offset;
+    	}
+    	unshift(@args, $max_id+1);
+    }
+    else {
+    	$sql = 'INSERT INTO genome_db (taxon_id, name, assembly, genebuild) values (?,?,?,?)';
+    } 
+
+    $sth = $compara_dba->dbc->prepare($sql);
+    $sth->execute(@args);
+    $sth->finish();
     $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-            $primary_species_binomial_name,
-            $assembly
-        );
+         $primary_species_binomial_name,
+         $assembly
+    );
   }
   return $genome_db;
 }
