@@ -504,13 +504,16 @@ sub genomic_hit {
       my $DBAdaptor = $self->core_adaptor;
       my $CSAdaptor = $DBAdaptor->get_CoordSystemAdaptor;
       # Transform feature for each coordinate system
+      my @transformedFeatures;
       foreach my $CoordSystem( @{$CSAdaptor->fetch_all} ){
         my $cs = $CoordSystem->name;
         my $csFeature   = $Feature->transform($cs) || next;
-        # Remove adaptors for storability
-        $csFeature->adaptor(undef);
-        $csFeature->slice->adaptor(undef);
-        $csFeature->slice->coord_system->adaptor(undef);
+
+        # Store in array temporarily so can remove adaptors once all transforms 
+        # are done. Don't remove them here because the csFeature and Feature
+        # may be sharing a slice
+        push @transformedFeatures,$csFeature;
+
         # Update self
         $self->{"_genomic_hit_$cs"} = $csFeature;
 
@@ -518,6 +521,12 @@ sub genomic_hit {
         # (this should be the highest coord_system - i.e chr, or scaffold or
         # something).
         $self->{"_genomic_hit"} = $csFeature unless $self->{'_genomic_hit'};
+      }
+      foreach my $csFeature (@transformedFeatures) {
+        # Remove adaptors for storability
+        $csFeature->adaptor(undef);
+        $csFeature->slice->adaptor(undef);
+        $csFeature->slice->coord_system->adaptor(undef);
       }
     } else{
       $csname = $thingy;
