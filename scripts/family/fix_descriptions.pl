@@ -9,7 +9,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 sub parse_description {
     my $old_desc = shift @_;
 
-    my @top_parts = split(/(Includes|Contains):/,$old_desc);
+    my @top_parts = split(/(?!\[\s*)(Includes|Contains):/,$old_desc);
     unshift @top_parts, '';
 
     my ($name, $desc, $flags, $top_prefix, $prev_top_prefix) = (('') x 3);
@@ -29,45 +29,50 @@ sub parse_description {
         }
         my $top_data         = shift @top_parts;
         
-        my @parts = split(/(RecName|SubName|AltName|Flags):/, $top_data);
-        shift @parts;
-        while(@parts) {
-            my $prefix = shift @parts;
-            my $data   = shift @parts;
+        if($top_data=~/^\s*\w+:/) {
+            my @parts = split(/(RecName|SubName|AltName|Flags):/, $top_data);
+            shift @parts;
+            while(@parts) {
+                my $prefix = shift @parts;
+                my $data   = shift @parts;
 
-            if($prefix eq 'Flags') {
-                $data=~/^(.*);/;
-                $flags .= $1;
-            } else {
-                while($data=~/(\w+)\=(.*?);/g) {
-                    my($subprefix,$subdata) = ($1,$2);
-                    if($subprefix eq 'Full') {
-                        if($prefix eq 'RecName') {
-                            if($top_prefix) {
-                                $desc .= $subdata;
-                            } else {
+                if($prefix eq 'Flags') {
+                    $data=~/^(.*?);/;
+                    $flags .= $1;
+                } else {
+                    while($data=~/(\w+)\=([^\[;]*?(?:\[[^\]]*?\])?[^\[;]*?);/g) {
+                        my($subprefix,$subdata) = ($1,$2);
+                        if($subprefix eq 'Full') {
+                            if($prefix eq 'RecName') {
+                                if($top_prefix) {
+                                    $desc .= $subdata;
+                                } else {
+                                    $name .= $subdata;
+                                }
+                            } elsif($prefix eq 'SubName') {
                                 $name .= $subdata;
+                            } elsif($prefix eq 'AltName') {
+                                $desc .= "($subdata)";
                             }
-                        } elsif($prefix eq 'SubName') {
-                            $name .= $subdata;
-                        } elsif($prefix eq 'AltName') {
+                        } elsif($subprefix eq 'Short') {
                             $desc .= "($subdata)";
+                        } elsif($subprefix eq 'EC') {
+                            $desc .= "(EC $subdata)";
+                        } elsif($subprefix eq 'Allergen') {
+                            $desc .= "(Allergen $subdata)";
+                        } elsif($subprefix eq 'INN') {
+                            $desc .= "($subdata)";
+                        } elsif($subprefix eq 'Biotech') {
+                            $desc .= "($subdata)";
+                        } elsif($subprefix eq 'CD_antigen') {
+                            $desc .= "($subdata antigen)";
                         }
-                    } elsif($subprefix eq 'Short') {
-                        $desc .= "($subdata)";
-                    } elsif($subprefix eq 'EC') {
-                        $desc .= "(EC $subdata)";
-                    } elsif($subprefix eq 'Allergen') {
-                        $desc .= "(Allergen $subdata)";
-                    } elsif($subprefix eq 'INN') {
-                        $desc .= "($subdata)";
-                    } elsif($subprefix eq 'Biotech') {
-                        $desc .= "($subdata)";
-                    } elsif($subprefix eq 'CD_antigen') {
-                        $desc .= "($subdata antigen)";
                     }
                 }
             }
+        } else {
+            $desc .= $top_data; # This is to save the names that do not follow the pattern.
+                                # Uniprot curators [should want to] thank us very much for this!
         }
     }
     if($top_prefix) {
