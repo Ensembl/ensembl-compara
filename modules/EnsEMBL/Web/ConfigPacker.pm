@@ -517,8 +517,150 @@ sub _summarise_compara_db {
            ss1.genome_db_id = gd1.genome_db_id and
            ss2.genome_db_id = gd2.genome_db_id
   ));
+
+  #see if there are any intraspecies alignments (ie a self compara)
   my $self_comparisons = 0;
-		  #see if there are any intraspecies alignments (ie a self compara)
+  my %config;
+  my $q = "select ml.type, gd.name, gd.name, count(*) as count
+          from method_link_species_set as mls, method_link as ml, species_set as ss, genome_db as gd 
+         where mls.species_set_id = ss.species_set_id
+           and ss.genome_db_id = gd.genome_db_id 
+           and mls.method_link_id = ml.method_link_id
+           and ml.type not like '%PARALOGUES'
+         group by mls.method_link_species_set_id, mls.method_link_id
+        having count = 1";
+  my $sth = $dbh->prepare( $q );
+  my $rv  = $sth->execute || die( $sth->errstr );
+  my $v_results = $sth->fetchall_arrayref();
+  foreach my $config (@$v_results) {
+    $self_comparisons = 1;
+  }
+
+  #if there are intraspecies alignments then get full details of all genomic alignments, ie start and stop
+  #currently these are only needed for Vega where there are only strictly defined regions in compara
+  #but this could be extended to e! if we needed to know this
+  if ($self_comparisons) {
+#    &eprof_start('new_mysql');	
+    #get details of seq_regions in the database
+    $q = qq(select df.dnafrag_id,
+                     df.name,
+                     df.coord_system_name,
+                     gdb.name
+                from dnafrag df,
+                     genome_db gdb
+               where df.genome_db_id = gdb.genome_db_id );
+    $sth = $dbh->prepare( $q );
+    $rv  = $sth->execute || die( $sth->errstr );
+    my %genomic_regions;
+    while (my ($dnafrag_id,$sr,$coord_system,$species) = $sth->fetchrow_array ) {
+      $species =~ s/ /_/;
+      $genomic_regions{$dnafrag_id} = {
+	species    => $species,
+	seq_region => $sr,
+	coord_system => $coord_system,
+      };
+    }
+#    warn "genomic regions are ",Dumper(\%genomic_regions);
+
+    #get details of methods in the database -
+    $q = qq(select mlss.method_link_species_set_id, ml.type
+                from method_link_species_set mlss, 
+                     method_link ml
+               where mlss.method_link_id = ml.method_link_id);
+    $sth = $dbh->prepare( $q );
+    $rv  = $sth->execute || die( $sth->errstr );
+    my %methods;
+    while (my ($mlss, $type) = $sth->fetchrow_array ) {
+      $methods{$mlss} = $type;
+    }
+#    warn "methods are ",Dumper(\%methods);
+
+    #get details of alignments
+    $q = qq(select genomic_align_block_id,
+                     method_link_species_set_id,
+                     dnafrag_start,
+                     dnafrag_end,
+                     dnafrag_id
+                from genomic_align
+            order by genomic_align_block_id, dnafrag_id);
+    $sth = $dbh->prepare( $q );
+    $rv  = $sth->execute || die( $sth->errstr );
+
+#      &eprof_end('new_mysql');
+	
+      #parse the data
+#    &eprof_start('new parsing');
+    my (@seen_ids,$prev_id,$prev_df_id,$prev_comparison,$prev_method,$prev_start,$prev_end,$prev_sr,$prev_species,$prev_coord_sys);
+    while (my ($gabid,$mlss_id,$start,$end,$df_id) = $sth->fetchrow_array) {
+      my $id = $gabid.$mlss_id;
+      if ($id eq $prev_id) {
+	my $this_method    = $methods{$mlss_id};
+	my $this_sr        = $genomic_regions{$df_id}->{'seq_region'};
+	my $this_species   = $genomic_regions{$df_id}->{'species'};
+	my $this_coord_sys = $genomic_regions{$df_id}->{'coord_system'};
+	my $comparison     = "$this_sr:$prev_sr";
+	my $coords         = "$this_coord_sys:$prev_coord_sys";
+	
+	#add a record of the coord systems used (might be needed for zebrafish ?)
+	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'coord_systems'} = "$coords";
+	#add names of compared regions
+	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'source_name'}    = "$this_sr";
+	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'source_species'} = "$this_species";
+	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'target_name'}    = "$prev_sr";
+	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'target_species'} = "$prev_species";
+	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'mlss_id'}         = "$mlss_id";
+	
+	#look for smallest start in this comparison
+	$self->_get_vega_regions(\%config,$this_method,$comparison,$this_species,$prev_species,$start,$prev_start,'start');
+	#look for largest ends in this comparison
+	$self->_get_vega_regions(\%config,$this_method,$comparison,$this_species,$prev_species,$end,$prev_end,'end');
+      }
+      else {
+	$prev_id        = $id;
+	$prev_df_id     = $df_id;
+	$prev_start     = $start;
+	$prev_end       = $end;
+	$prev_sr        = $genomic_regions{$df_id}->{'seq_region'};
+	$prev_species   = $genomic_regions{$df_id}->{'species'};
+	$prev_coord_sys = $genomic_regions{$df_id}->{'coord_system'};
+      }	
+    }
+
+    #add reciprocal entries for each comparison
+    foreach my $method (keys %config) {
+      foreach my $p_species (keys %{$config{$method}}) {
+	foreach my $s_species ( keys %{$config{$method}{$p_species}} ) {						
+	  foreach my $comp ( keys %{$config{$method}{$p_species}{$s_species}} ) {
+	    my $revcomp = join ':', reverse(split ':',$comp);
+	    unless ( exists($config{$method}{$s_species}{$p_species}{$revcomp} ) ) {
+	      my $coords = $config{$method}{$p_species}{$s_species}{$comp}{'coord_systems'};
+	      my ($a,$b) = split ':',$coords;
+	      $coords = $b.':'.$a;
+	      my $record = {
+		'source_name'    => $config{$method}{$p_species}{$s_species}{$comp}{'target_name'},
+		'source_species' => $config{$method}{$p_species}{$s_species}{$comp}{'target_species'},
+		'source_start'   => $config{$method}{$p_species}{$s_species}{$comp}{'target_start'},
+		'source_end'     => $config{$method}{$p_species}{$s_species}{$comp}{'target_end'},
+		'target_name'    => $config{$method}{$p_species}{$s_species}{$comp}{'source_name'},
+		'target_species' => $config{$method}{$p_species}{$s_species}{$comp}{'source_species'},
+		'target_start'   => $config{$method}{$p_species}{$s_species}{$comp}{'source_start'},
+		'target_end'     => $config{$method}{$p_species}{$s_species}{$comp}{'source_end'},
+		'mlss_id'        => $config{$method}{$p_species}{$s_species}{$comp}{'mlss_id'},
+		'coord_systems'  => $coords,
+	      };
+	      $config{$method}{$s_species}{$p_species}{$revcomp} = $record;
+	    }
+	  }
+	}
+      }
+    }
+
+#    &eprof_end('new parsing');				
+    $self->db_tree->{ $db_name }{'VEGA_COMPARA'} = \%config;
+  }
+  ##That's the end of the compara region munging!
+
+
   my $res_aref_2 = $dbh->selectall_arrayref(qq(
     select ml.type, gd.name, gd.name, count(*) as count
       from method_link_species_set as mls, method_link as ml,
@@ -545,8 +687,44 @@ sub _summarise_compara_db {
   $dbh->disconnect();
 }
 
+sub _get_vega_regions {
+  #compare regions to get the smallest start and largest end
+  my $self = shift;
+  my ($config,$method,$comparison,$species1,$species2,$location1,$location2,$condition) = @_;
+  if ($config->{$method}{$species1}{$species2}{$comparison}{'source_'.$condition}) {
+    if ($self->_comp_se( $condition,$location1,$config->{$method}{$species1}{$species2}{$comparison}{'source_'.$condition} )) {
+      $config->{$method}{$species1}{$species2}{$comparison}{'source_'.$condition} = $location1;
+    }
+  }
+  else {
+    $config->{$method}{$species1}{$species2}{$comparison}{'source_'.$condition} = $location1;	
+  }
+
+  if ($config->{$method}{$species1}{$species2}{$comparison}{'target_'.$condition}) {
+    if ($self->_comp_se( $condition,$location2,$config->{$method}{$species1}{$species2}{$comparison}{'target_'.$condition} )) {
+      $config->{$method}{$species1}{$species2}{$comparison}{'target_'.$condition} = $location2;
+    }
+  }
+  else {
+    $config->{$method}{$species1}{$species2}{$comparison}{'target_'.$condition} = $location2;	
+  }
+}
+
+sub _comp_se {
+# compare start (less than) or end (greater than) regions depending on condition
+  my $self = shift;
+  my ($condition, $location1, $location2) = @_;
+  if ($condition eq 'start') {
+    return $location1 < $location2 ? 1 : 0;
+  }
+  if ($condition eq 'end') {
+    return $location1 > $location2 ? 1 : 0;
+  }
+}
+
+
 sub _summarise_ancestral_db {
-	my($self,$code,$db_name) = @_;
+  my($self,$code,$db_name) = @_;
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   $self->_summarise_generic( $db_name, $dbh );
