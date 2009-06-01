@@ -1,6 +1,10 @@
 #!/usr/local/bin/perl -w
 
-# Fix the incompletely parsed Uniprot descriptions in member table
+# This script fixes the incompletely parsed Uniprot descriptions in member table
+#
+# NB! NB! NB! Only run it once, or else!
+#
+# Or, much better: insert the parse_description() code into the member table loader
 
 use strict;
 use Getopt::Long;
@@ -85,25 +89,35 @@ sub parse_description {
 sub loop_descriptions {
     my ($dbc, $force) = @_;
 
-    my $sth = $dbc->prepare( qq{
+    my $read_sth = $dbc->prepare( qq{
         SELECT member_id, stable_id, description
           FROM member
          WHERE source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL')
            AND (description LIKE '%Contains:%' OR description LIKE '%Includes:%')
     });
 
-    $sth->execute();
-    while( my ($member_id, $stable_id, $old_desc) = $sth->fetchrow()) {
+    my $write_sth = $force && $dbc->prepare( qq{
+        UPDATE member SET description = ? WHERE member_id = ?
+    } );
+
+    $read_sth->execute();
+    while( my ($member_id, $stable_id, $old_desc) = $read_sth->fetchrow()) {
         print "Member: $stable_id (id=$member_id)\n";
         print "OldDescription: $old_desc\n";
         my $new_desc = parse_description($old_desc);
         print "NewDescription: $new_desc\n\n";
+
+        if($force) {
+            $write_sth->execute( $new_desc, $member_id );
+            print "--------------------UPDATED----------\n";
+        }
     }
-    $sth->finish();
+    $read_sth->finish();
+    $write_sth->finish() if($force);
 }
 
 my $force = 0;
-my $dbconn = { -host => 'compara2', -port => '5316', -user => 'ensro', -dbname => 'avilella_compara_homology_55' };
+my $dbconn = { -host => 'compara2', -port => '5316', -user => 'ensadmin', -'pass' => 'ensembl', -dbname => 'avilella_compara_homology_55' };
 
 GetOptions(
             # connection parameters:
