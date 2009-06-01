@@ -147,6 +147,7 @@ sub fetch_input {
 		$genomic_align->dnafrag_id . "_" . $genomic_align->dnafrag_start . "_" . $genomic_align->dnafrag_end . "_";
 	      $leaf->name($name);
 	  }
+
 	  $tree_string = $gat->newick_simple_format();
 
 	  $self->{'modified_tree_file'} = $self->worker_temp_directory . $TREE_FILE;
@@ -326,6 +327,13 @@ sub param_file {
 }
 
 #read from parameters of analysis table
+sub tree_analysis_data_id {
+  my $self = shift;
+  $self->{'_tree_analysis_data_id'} = shift if(@_);
+  return $self->{'_tree_analysis_data_id'};
+}
+
+#read from parameters of analysis table
 sub tree_file {
   my $self = shift;
   $self->{'_tree_file'} = shift if(@_);
@@ -368,6 +376,9 @@ sub get_params {
     #read from parameters in analysis table
     if (defined($params->{'param_file'})) {
 	$self->param_file($params->{'param_file'});
+    }
+    if (defined($params->{'tree_analysis_data_id'})) {
+	$self->tree_analysis_data_id($params->{'tree_analysis_data_id'});
     }
     if (defined($params->{'tree_file'})) {
 	$self->tree_file($params->{'tree_file'});
@@ -450,6 +461,8 @@ sub _writeMultiFastaAlignment {
 
 sub free_aligned_sequence {
     my ($leaf) = @_;
+
+    return if (!$leaf->can("genomic_align_group"));
 
     my $genomic_align_group = $leaf->genomic_align_group;
 
@@ -856,20 +869,26 @@ sub _parse_rates_file {
 sub _build_tree_string {
     my ($self, $genomic_aligns) = @_;
     
-    my $tree_file = $self->tree_file;
-
-    my $newick = "";
-    if (-e $tree_file) {
-	open NEWICK_FILE, $tree_file || throw("Can not open $tree_file");
-	$newick = join("", <NEWICK_FILE>);
-	close NEWICK_FILE;
+    my $newick;
+    if ($self->tree_analysis_data_id) {
+	my $analysis_data_adaptor = $self->{'comparaDBA'}->get_AnalysisDataAdaptor;
+    	$newick = $analysis_data_adaptor->fetch_by_dbID($self->tree_analysis_data_id);
     } else {
-	## Look in the meta table
-	my $meta_adaptor = $self->{'comparaDBA'}->get_MetaContainer;
-	$tree_file =~ s/.*\/([^\/]+)$/$1/;
-	$newick = $meta_adaptor->list_value_by_key("$tree_file")->[0];
+	my $tree_file = $self->tree_file;
+
+	$newick = "";
+	if (-e $tree_file) {
+	    open NEWICK_FILE, $tree_file || throw("Can not open $tree_file");
+	    $newick = join("", <NEWICK_FILE>);
+	    close NEWICK_FILE;
+	} else {
+	    ## Look in the meta table
+	    my $meta_adaptor = $self->{'comparaDBA'}->get_MetaContainer;
+	    $tree_file =~ s/.*\/([^\/]+)$/$1/;
+	    $newick = $meta_adaptor->list_value_by_key("$tree_file")->[0];
+	}
+        return if (!$newick);
     }
-    return if (!$newick);
     
     $newick =~ s/^\s*//;
     $newick =~ s/\s*$//;
@@ -880,7 +899,7 @@ sub _build_tree_string {
     $tree = $self->_update_tree($tree, $genomic_aligns);
     
     my $tree_string = $tree->newick_simple_format;
-    
+
     # Remove quotes around node labels
     $tree_string =~ s/"(_\d+_)"/$1/g;
 
