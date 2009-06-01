@@ -586,9 +586,9 @@ sub _summarise_compara_db {
     $sth = $dbh->prepare( $q );
     $rv  = $sth->execute || die( $sth->errstr );
 
-#      &eprof_end('new_mysql');
+#    &eprof_end('new_mysql');
 	
-      #parse the data
+    #parse the data
 #    &eprof_start('new parsing');
     my (@seen_ids,$prev_id,$prev_df_id,$prev_comparison,$prev_method,$prev_start,$prev_end,$prev_sr,$prev_species,$prev_coord_sys);
     while (my ($gabid,$mlss_id,$start,$end,$df_id) = $sth->fetchrow_array) {
@@ -655,8 +655,23 @@ sub _summarise_compara_db {
       }
     }
 
+    #get a summary of the regions present (used for Vega 'availability' calls)
+    my $region_summary;
+    foreach my $method (keys %config) {
+      foreach my $p_species (keys %{$config{$method}}) {
+	foreach my $s_species ( keys %{$config{$method}{$p_species}} ) {						
+	  foreach my $comp ( keys %{$config{$method}{$p_species}{$s_species}} ) {
+	    my $source_name  = $config{$method}{$p_species}{$s_species}{$comp}{'source_name'};
+	    my $source_start = $config{$method}{$p_species}{$s_species}{$comp}{'source_start'};
+	    my $source_end   = $config{$method}{$p_species}{$s_species}{$comp}{'source_end'};
+	    push @{$region_summary->{$p_species}{$source_name}}, {'start'=>$source_start,'end'=>$source_end};
+	  }
+	}
+      }
+    }
 #    &eprof_end('new parsing');				
     $self->db_tree->{ $db_name }{'VEGA_COMPARA'} = \%config;
+    $self->db_tree->{ $db_name }{'VEGA_COMPARA'}{'REGION_SUMMARY'} = $region_summary;
   }
   ##That's the end of the compara region munging!
 
