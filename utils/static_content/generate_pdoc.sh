@@ -30,6 +30,8 @@
 # jws 2002-01-08
 #
 # fc1 2005-10-21 edits
+#
+# dr2 2009-5-26 added -skip option in core documentation
 
 #. /etc/profile
 
@@ -78,8 +80,11 @@ do
   else
     $SOURCE = $PERLMOD_LOC.'/'.$i
   fi
-
+  if test $i = "ensembl"
+   then	echo "$P2WDOCER -skip Collection,Utils,chimp,Lite -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
+ else
  	echo "$P2WDOCER -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
+ fi
 
   echo "$PERLMOD_LOC/$F1 $HTTP/$F1
 $PERLMOD_LOC/$F2 $HTTP/$F2
