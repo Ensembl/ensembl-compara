@@ -19,9 +19,9 @@ sub _filename {
   my $self = shift;
   my $name = sprintf '%s-gene-%d-%s-%s',
 	  $self->species,
-		$self->species_defs->ENSEMBL_VERSION,
-		$self->get_db,
-		$self->Obj->stable_id;
+	  $self->species_defs->ENSEMBL_VERSION,
+	  $self->get_db,
+	  $self->Obj->stable_id;
   $name =~ s/[^-\w\.]/_/g;
   return $name;
 }
@@ -36,8 +36,8 @@ sub availability {
     $hash->{'history'}    = $rows ? 1 : 0;
     $hash->{'gene'}       = 1;
     $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
-    $rows = $self->table_info( $self->get_db, 'alt_allele' )->{'rows'};
-    $hash->{'alt_allele'} = $rows ? 1 : 0;
+    $hash->{'ortholog_species'} = $self->check_ortholog_species;
+    $hash->{'alt_allele'} = $self->table_info( $self->get_db, 'alt_allele' )->{'rows'};
     my $compara_db  = $self->database('compara');
     my $res = 0;
     if ($compara_db) {
@@ -165,6 +165,33 @@ sub count_gene_supporting_evidence {
     }
   }
   return scalar(keys(%c));
+}
+
+sub check_ortholog_species {
+  #check if orthologues of this gene would have been found (Vega)
+  my $self = shift;
+  my $species = $self->species;
+  my $sd = $self->species_defs;
+  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
+  return 0 unless $hash;
+  unless ($hash->{'BLASTZ_RAW'}{$species}) {
+    return 0; #if this species is not in compara
+  }
+  my $regions  = $hash->{'REGION_SUMMARY'}{$species};
+  my $object   = $self->Obj;
+  my $sr_name  = $object->seq_region_name;
+  unless ($regions->{$sr_name}) {
+    return 0; #if this seq_region is not in compara
+  }
+  my $sr_start = $object->seq_region_start;
+  my $sr_end   = $object->seq_region_end;
+  my $matching = 0;
+  foreach my $compara_region (@{$regions->{$sr_name}}) {
+    if ( ($sr_start < $compara_region->{'end'}) && ($sr_end > $compara_region->{'start'}) ) {
+      $matching = 1; #if the gene overlaps the region in compara
+    }
+  }
+  return $matching;
 }
 
 sub get_external_dbs {
