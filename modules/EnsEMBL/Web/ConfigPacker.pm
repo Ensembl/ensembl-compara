@@ -608,7 +608,7 @@ sub _summarise_compara_db {
 	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'source_species'} = "$this_species";
 	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'target_name'}    = "$prev_sr";
 	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'target_species'} = "$prev_species";
-	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'mlss_id'}         = "$mlss_id";
+	$config{$this_method}{$this_species}{$prev_species}{$comparison}{'mlss_id'}        = "$mlss_id";
 	
 	#look for smallest start in this comparison
 	$self->_get_vega_regions(\%config,$this_method,$comparison,$this_species,$prev_species,$start,$prev_start,'start');
@@ -661,10 +661,14 @@ sub _summarise_compara_db {
       foreach my $p_species (keys %{$config{$method}}) {
 	foreach my $s_species ( keys %{$config{$method}{$p_species}} ) {						
 	  foreach my $comp ( keys %{$config{$method}{$p_species}{$s_species}} ) {
+	    my $target_name  = $config{$method}{$p_species}{$s_species}{$comp}{'target_name'};
 	    my $source_name  = $config{$method}{$p_species}{$s_species}{$comp}{'source_name'};
 	    my $source_start = $config{$method}{$p_species}{$s_species}{$comp}{'source_start'};
 	    my $source_end   = $config{$method}{$p_species}{$s_species}{$comp}{'source_end'};
-	    push @{$region_summary->{$p_species}{$source_name}}, {'start'=>$source_start,'end'=>$source_end};
+	    push @{$region_summary->{$p_species}{$source_name}}, {'secondary_species' => $s_species,
+								  'target_name'       => $target_name,
+								  'start'             => $source_start,
+								  'end'               => $source_end   };
 	  }
 	}
       }
