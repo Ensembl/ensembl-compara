@@ -596,7 +596,7 @@ sub sequence_exon_cased {
   }
 
   my $seqsplice = '';
-  my $splice = 0;
+  my $splice = 1; # zero is the first one, which we do outside the loop
   foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
     next if (defined($splice_site{$pep_len}{'overlap'}));
     next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
