@@ -22,25 +22,29 @@ sub param {
 }
 
 sub load_fasta_sequences_from_db {
-    my ($self, $sequence_id, $minibatch) = @_;
+    my ($self, $start_seq_id, $minibatch, $overwrite) = @_;
 
     my $sql = qq {
-        SELECT m.sequence_id, m.stable_id, m.description, s.sequence
+        SELECT s.sequence_id, m.stable_id, s.sequence
           FROM member m, sequence s
+    }.($overwrite ? '' : ' LEFT JOIN mcl_matrix x ON s.sequence_id=x.id ')
+    .qq{
          WHERE s.sequence_id BETWEEN ? AND ?
            AND m.sequence_id=s.sequence_id
-      GROUP BY m.sequence_id
-      ORDER BY m.sequence_id
+    }.($overwrite ? '' : ' AND x.id IS NULL ')
+    .qq{
+      GROUP BY s.sequence_id
+      ORDER BY s.sequence_id
     };
 
     my $sth = $self->dbc->prepare( $sql );
-    $sth->execute( $sequence_id, $sequence_id+$minibatch-1 );
+    $sth->execute( $start_seq_id, $start_seq_id+$minibatch-1 );
 
     my @fasta_list = ();
-    while( my ($seq_id, $stable_id, $description, $seq) = $sth->fetchrow() ) {
+    while( my ($seq_id, $stable_id, $seq) = $sth->fetchrow() ) {
         $seq=~ s/(.{72})/$1\n/g;
         chomp $seq;
-        push @fasta_list, ">$stable_id $description\n$seq\n";
+        push @fasta_list, ">$stable_id\n$seq\n";
     }
     $sth->finish();
     $self->dbc->disconnect_when_inactive(1);
@@ -77,9 +81,9 @@ sub load_name2index_mapping_from_file {
     my %name2index = ();
     open(MAPPING, "<$filename") || die "Could not open name2index mapping file '$filename'";
     while(my $line = <MAPPING>) {
-        if($line=~/^(\d+)\s+(\w+)/) {
-            $name2index{$2} = $1;
-        }
+        chomp $line;
+        my ($idx, $stable_id) = split(/\s+/,$line);
+        $name2index{$stable_id} = $idx;
     }
     close MAPPING;
 
@@ -89,23 +93,26 @@ sub load_name2index_mapping_from_file {
 sub fetch_input {
     my $self = shift @_;
 
-    my $sequence_id             = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $start_seq_id            = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
     my $minibatch               = $self->param('minibatch')   || 1;
     my $tabfile                 = $self->param('tabfile');
+    my $overwrite               = $self->param('overwrite')   || 0; # overwrite=0 means we only fill in holes, overwrite=1 means we rewrite everything
     my $debug                   = $self->param('debug')       || 0;
 
-    my $fasta_list = $self->load_fasta_sequences_from_db($sequence_id, $minibatch);
+    my $fasta_list = $self->load_fasta_sequences_from_db($start_seq_id, $minibatch, $overwrite);
 
-    if(scalar(@$fasta_list)<$minibatch) {
+    if($overwrite and scalar(@$fasta_list)<$minibatch) {
         die "Could not load all ($minibatch) sequences, please investigate";
     }
 
     $self->param('fasta_list', $fasta_list);
 
-    $self->param('name2index', $tabfile
-        ? $self->load_name2index_mapping_from_file($tabfile)
-        : $self->load_name2index_mapping_from_db()
-    );
+    if(scalar(@$fasta_list)) {
+        $self->param('name2index', $tabfile
+            ? $self->load_name2index_mapping_from_file($tabfile)
+            : $self->load_name2index_mapping_from_db()
+        );
+    } # otherwise: no point in loading the mapping if we have no more work to do
 
     return 1;
 }
@@ -114,6 +121,7 @@ sub parse_blast_table_into_matrix_hash {
     my ($self, $filename) = @_;
 
     my $name2index = $self->param('name2index');
+    my $roundto    = $self->param('roundto') || 0.0001;
 
     my %matrix_hash  = ();
 
@@ -130,17 +138,20 @@ sub parse_blast_table_into_matrix_hash {
                     $matrix_hash{$curr_index} = join(' ', @dist_accu, '$'); # flush the buffer
                     @dist_accu = ();
                 }
-            } elsif($line=~/^#\s+Query:\s+(\w+)/) {
+            } elsif($line=~/^#\s+Query:\s+([^\s]+)/) {
                 $curr_name  = $1;
-                $curr_index = $name2index->{$curr_name};
+                $curr_index = $name2index->{$curr_name} || "UNKNOWN($curr_name)";
             }
         } else {
             my ($qname, $hname, $identity, $align_length, $mismatches, $gap_openings, $qstart, $qend, $hstart, $hend, $evalue, $bitscore)
                 = split(/\s+/, $line);
 
-            my $hit_index = $name2index->{$hname};
+            my $hit_index = $name2index->{$hname} || "UNKNOWN($hname)";
                 # we MUST be explicitly numeric here:
             my $distance  = ($evalue != 0) ? -log($evalue)/log(10) : 200;
+
+                # do the rounding to prevent the unnecessary growth of tables/files
+            $distance = int($distance / $roundto) * $roundto;
 
             push @dist_accu, $hit_index.':'.$distance;
         }
@@ -154,6 +165,16 @@ sub parse_blast_table_into_matrix_hash {
 sub run {
     my $self = shift @_;
 
+    my $fasta_list              = $self->param('fasta_list'); # set by fetch_input()
+    my $debug                   = $self->param('debug')         || 0;
+
+    unless(scalar(@$fasta_list)) { # if we have no more work to do just exit gracefully
+        if($debug) {
+            warn "No work to do, exiting\n";
+        }
+        return 1;
+    }
+
     my $fastadb                 = $self->param('fastadb')   || die "'fastadb' is an obligatory parameter, please set it in the input_id hashref";
     my $minibatch               = $self->param('minibatch') || 1;
 
@@ -161,9 +182,7 @@ sub run {
     my $blastall_executable     = $self->param('blastall_exec') || '/software/ensembl/compara/blast-2.2.6/blastall';
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
-    my $debug                   = $self->param('debug')         || 0;
 
-    my $fasta_list              = $self->param('fasta_list'); # set by fetch_input()
 
     my $blast_infile  = '/tmp/family_blast.in.'.$$;     # only for debugging
     my $blast_outfile = '/tmp/family_blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
@@ -188,7 +207,7 @@ sub run {
 
     my $matrix_hash = $self->parse_blast_table_into_matrix_hash($blast_outfile);
 
-    if(scalar(keys %$matrix_hash)<$minibatch) {
+    if(scalar(keys %$matrix_hash) != scalar(@$fasta_list)) {
         die "According to our parser the table file generated by Blastp is incomplete, please investigate";
     }
 
@@ -205,12 +224,14 @@ sub write_output {
 
     if(my $matrix_hash = $self->param('matrix_hash')) {
 
+        my $offset                  = $self->param('offset') || 0;
+
         my $sql = "REPLACE INTO mcl_matrix (id, rest) VALUES (?, ?)";
 
         my $sth = $self->dbc->prepare( $sql );
 
         while(my($id, $rest) = each %$matrix_hash) {
-            $sth->execute( $id, $rest );
+            $sth->execute( $id + $offset, $rest );
         }
         $sth->finish();
     }
