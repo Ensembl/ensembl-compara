@@ -36,7 +36,7 @@ sub availability {
     $hash->{'history'}    = $rows ? 1 : 0;
     $hash->{'gene'}       = 1;
     $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
-    $hash->{'ortholog_species'} = $self->check_ortholog_species;
+    $hash->{'compara_species'} = $self->check_compara_species_and_locations;
     $hash->{'alt_allele'} = $self->table_info( $self->get_db, 'alt_allele' )->{'rows'};
     my $compara_db  = $self->database('compara');
     my $res = 0;
@@ -77,7 +77,8 @@ sub counts {
     $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
     $counts->{'exons'}       = @{$obj->get_all_Exons};
     $counts->{'similarity_matches'} = $self->count_xrefs;
-    $counts->{'alternative_alleles'} = @{$obj->get_all_alt_alleles};
+    $counts->{'alternative_alleles'} = @{$obj->get_all_alt_alleles}; #vega only, should really go somewhere else
+    $counts->{'self_alignments'} = $self->count_self_alignments; #vega only, should really go somewhere else
     my $compara_db = $self->database('compara');
     if($compara_db) {
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
@@ -167,8 +168,44 @@ sub count_gene_supporting_evidence {
   return scalar(keys(%c));
 }
 
-sub check_ortholog_species {
-  #check if orthologues of this gene would have been found (Vega)
+
+##vega
+sub count_self_alignments {
+  my $self = shift;
+  my $species = $self->species; 
+  my $object   = $self->Obj;
+  my $sd = $self->species_defs;
+
+  ## Get the compara database hash!
+  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
+  my $matches = $hash->{'BLASTZ_RAW'}->{$species};
+
+  ## Get details of the primary slice
+  my $ps_name  = $object->seq_region_name;
+  my $ps_start = $object->seq_region_start;
+  my $ps_end   = $object->seq_region_end;
+
+  ## Identify alignments that match the primary slice
+  my $matching = 0;
+  foreach my $other_species (sort keys %{$matches}) {
+    foreach my $alignment (keys %{$matches->{$other_species}}) {
+      my $this_name = $matches->{$other_species}{$alignment}{'source_name'};
+      #only use alignments that include the primary slice
+      next unless ($ps_name eq $this_name);
+      my $start = $matches->{$other_species}{$alignment}{'source_start'};
+      my $end = $matches->{$other_species}{$alignment}{'source_end'};
+      #only create entries for alignments that overlap the current slice
+      if ($end > $ps_start && $start < $ps_end) {
+	$matching++;
+      }
+    }
+  }
+  return $matching;
+}
+
+##vega
+sub check_compara_species_and_locations {
+  #check if genomic_alignments and or orthologues of this gene would have been found
   my $self = shift;
   my $species = $self->species;
   my $sd = $self->species_defs;
