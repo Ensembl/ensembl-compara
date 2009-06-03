@@ -165,7 +165,7 @@ sub ajax_zmenu      {
       'priority' => 50
     });
     
-    if ($obj->get_db eq 'vega') {
+    if ($obj->get_db eq 'vega' || ($obj->Obj->analysis->logic_name =~ /otter/) ) {
       $panel->add_entry({
 	'type'     => 'Transcript class',
 	'label'    => $obj->transcript_class,
