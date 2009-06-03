@@ -596,7 +596,7 @@ sub sequence_exon_cased {
   }
 
   my $seqsplice = '';
-  my $splice = 0;
+  my $splice = 1;
   foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
     next if (defined($splice_site{$pep_len}{'overlap'}));
     next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
@@ -639,16 +639,13 @@ sub sequence_exon_bounded {
   }
 
   my $seqsplice = '';
-  my $splice = 0;
   foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
     next if (defined($splice_site{$pep_len}{'overlap'}));
     next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
-    $splice++;
     my $length = $pep_len;
     $length-- if (defined($splice_site{$pep_len}{'phase'}) && 1 == $splice_site{$pep_len}{'phase'});
     my $peptide;
     $peptide = substr($sequence,$length,length($sequence),'');
-    # $peptide = lc($peptide) unless ($splice % 2); # Even splice lower-cased
     $seqsplice = $peptide . $seqsplice;
     $seqsplice = 'o' . $seqsplice if (0 == $splice_site{$pep_len}{'phase'});
     $seqsplice = 'b' . $seqsplice if (1 == $splice_site{$pep_len}{'phase'});
