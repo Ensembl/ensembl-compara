@@ -103,7 +103,7 @@ sub process {
     }
   }
  
-  my $dir = '/'.$object->data_species;
+  my $dir = '/'.$self->object->data_species;
  
   if( $self->object->param('uploadto' ) eq 'iframe' ) {
     CGI::header( -type=>"text/html",-charset=>'utf-8' );
