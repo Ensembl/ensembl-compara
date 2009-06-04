@@ -115,22 +115,6 @@ sub create_user_set {
     {'key'=>'track',   'title'=>'Track name', 'align' => 'center' },
   );
 
-  my @usable_types = ('upload'); ## TODO - add 'url'
-  my @session_data;
-  foreach my $type (@usable_types) {
-    push @session_data, $object->get_session->get_data('type' => $type);
-  }
-  my %saved_data;
-  if ($user) {
-    foreach my $type (@usable_types) {
-      my $method = $type.'s';
-      my @records = $user->$method;
-      foreach my $record (@records) {
-        $saved_data{$record->id} = $record;
-      }
-    }
-  }
-
   my $i = 0;
   foreach my $key (keys %{$image_config->{'_tree'}{'_user_data'}}) {
     $i = 0 if $i > scalar(@$colours) - 1; ## reset if we have loads of tracks! (unlikely)
@@ -139,124 +123,34 @@ sub create_user_set {
     my $details = $image_config->get_node($key);
     my $display = $details->{'_user_data'}{$key}{'display'};
     my ($render, $style) = split('_', $display);
-    next unless $render eq 'highlight';
+    next if $display eq 'off';
 
-    ## Create pointer configuration
-    my $colour = $colours->[$i];
-    my $label;
-    if ($status eq 'user' && $user) {
-      my $record = $saved_data{$id};
-      $track = {
-        'data'    => $record,
-        'colour'  => $colour, 
-        'style'   => $style,
-      };
-      $label = $record->name;
-      push @$pointers, @{$self->create_userdata_pointers($image, $track, 'Vkaryotype')};
+    if ($render eq 'highlight') {
+      ## Create pointer configuration
+      my $data = $object->fetch_userdata_by_id($key);
+      my $colour = $colours->[$i];
+      push @$pointers, $image->add_pointers( $object, {
+        'config_name'   => 'Vkaryotype',
+        'parser'        => $data->{'parser'},
+        'features'      => $data->{'features'},
+        'color'         => $colour,
+        'style'         => $style,
+      });
       $i++;
+
+      ## Add to key
+      my $label = $data->{'label'};
+      $table->add_row({
+        'colour' => qq(<span style="background-color:$colour;color:#ffffff;padding:2px"><img src="/i/blank.gif" style="width:30px;height:10px" alt="[$colour]" /></span>),
+        'track' => $label,
+      });
     }
     else {
-      foreach my $temp (@session_data) {      
-        if ($temp->{'code'} eq $id) {
-          $track = {
-            'data'    => $temp,
-            'colour'  => $colour, 
-            'style'   => $style,
-          };
-          $label = $temp->{'name'};
-          push @$pointers, @{$self->create_tempdata_pointers($image, $track, 'Vkaryotype')};
-          $i++;
-          last;
-        }
-      }
+      ## TODO - add density tracks to table
     }
-
-    ## Add to key
-    $table->add_row({
-      'colour' => qq(<span style="background-color:$colour;color:#ffffff;padding:2px"><img src="/i/blank.gif" style="width:30px;height:10px" alt="[$colour]" /></span>),
-      'track' => $label,
-    });
   }
 
   return ($pointers, $table);
-}
-
-sub create_tempdata_pointers {
-  ## Creates sets of pointers from session data
-  my ($self, $image, $track, $config) = @_;
-  my $object = $self->object;
-  my $data = $track->{'data'};
-  my $pointers = [];
-
-  my ($content, $format);
-  if ($data->{'filename'}) { ## upload
-    my $file = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'});
-    $content = $file->retrieve;
-    $format  = $data->{'format'};
-  } 
-  elsif ($data->{'url'}) {
-    $content = get_url_content($data->{'url'});
-  }
-
-  if ($content) {
-    my $parser =  EnsEMBL::Web::Text::FeatureParser->new();
-    unless ($format) {
-      my $info = $parser->analyse($content);
-      $format = $info->{'format'};
-    }
-    $parser->parse($content, $format);
-
-    ## create image with parsed data
-    my $pointer_set = $image->add_pointers( $object, {
-      'config_name'   => $config,
-      'parser'        => $parser,
-      'color'         => $track->{'colour'},
-      'style'         => $track->{'style'},
-    });
-    push @$pointers, $pointer_set;
-  }
-
-  return $pointers;
-}
-
-sub create_userdata_pointers {
-  ## Creates sets of pointers from user records
-  my ($self, $image, $track, $config) = @_;
-  my $object = $self->object;
-  my $record = $track->{'data'};
-  my $pointers = [];
-
-  if (ref($record) =~ /Upload/) {
-    my @logic_names = split(', ', $record->analyses);
-    foreach my $logic_name (@logic_names) {
-      my $features = $object->create_UserDataFeature($logic_name);
-      my ($upload_features, $headers) = $object->retrieve_userdata($features);
-      my $upload_pointers = $image->add_pointers( $object, {
-          'config_name' => $config,
-          'features'    => $upload_features,
-          'color'       => $track->{'colour'},
-          'style'       => $track->{'style'},
-      });
-      push(@$pointers, $upload_pointers);
-    }
-  }
-  elsif (ref($record) =~ /URL/ && $record->url) {
-    my $data = get_url_content($record->url);
-    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
-    my $info = $parser->analyse($data);
-    $parser->parse($data, $info->{'format'});
-
-    ## create image with parsed data
-    my $pointer_set = $image->add_pointers( $object, {
-      'config_name'   => $config,
-      'parser'        => $parser,
-      'color'         => $track->{'colour'},
-      'style'         => $track->{'style'},
-    });
-    push @$pointers, $pointer_set;
-  }
-
-  return $pointers;
 }
 
 ##---------------------------------------------------------------------------------------
