@@ -478,7 +478,7 @@ sub fetch_userdata_by_id {
   }
   else {
     my $feat_objs = [];
-    my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor,
+    my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
     $feat_objs = $fa->fetch_all_by_Slice( $self->chromosome, $track_id );
 
     $data = {'features' => $self->retrieve_userdata($feat_objs)};
