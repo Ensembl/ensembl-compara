@@ -559,4 +559,31 @@ sub init {
   return $self;
 }
 
+
+sub init_density {
+  ## Hack to make init work with userdata density tracks
+  my ($self, $data) = @_;
+  return unless $data;
+
+  my %info;
+  my $has_data = 0;
+  foreach my $row ( split '\n', $data ) {
+    next unless $row;
+    $has_data++;
+    my @analysis = $self->analyse_row($row);
+    if( $analysis[2] ) {
+      $info{$analysis[0]}{$analysis[1]} = $analysis[2];
+    } else {
+      $info{$analysis[0]} = $analysis[1];
+    }
+    ## Should we halt the analysis once we have a file format? Will any other useful info appear later in the file?
+    last if $analysis[0] eq 'format';
+    ## Yes it will all to do with what is in the file! but we can leave this for the moment!
+  }
+  $info{'count'} = $has_data;
+  $self->{_info} = \%info;
+  return $self;
+}
+
+
 1;
