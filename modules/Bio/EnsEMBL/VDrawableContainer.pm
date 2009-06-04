@@ -61,7 +61,7 @@ sub new {
       $flag = 1;
     }
     my $pos = 100000;
-    my $row = '';
+    #my $row = '';
 
     my $scalex = $Config->get_parameter('image_height') / $Config->get_parameter('container_width');
     $Config->{'transform'}->{'scalex'}         = $scalex;
@@ -71,40 +71,48 @@ sub new {
 
     my @glyphsets;
     my @configs = $Config->glyphset_configs;
-    #warn Dumper(\@configs);
     my %chr_glyphset_counts = ();
     foreach my $chr ( @chromosomes ) {
       $Container->{'chr'} = $chr;
-      for my $row_config (@configs) {
+      foreach my $row_config (@configs) {
         my $display = $row_config->get('display')||($row_config->get('on')eq'on'?'normal':'off');
-        next if $display eq 'off';
+        next if ($display eq 'off' || $display =~ /highlight/);
 
         ########## create a new glyphset for this row
         my $glyphset  = $row_config->get('glyphset')||$row_config->code;
-        #warn ">>> GLYPHSET $glyphset";
+        #warn ">>> GLYPHSET $glyphset DISPLAY $display";
         my $classname = qq($self->{'prefix'}::GlyphSet::$glyphset);
         next unless $self->dynamic_use( $classname );
+
         my $EW_Glyphset;
         eval { # Generic glyphsets need to have the type passed as a fifth parameter...
           $EW_Glyphset = new $classname({
 	          'container'  => $Container,
-	          'chr'        => $chr,
 	          'config'     => $Config,
 	          'my_config'  => $row_config,
 	          'strand'     => 0,
-	          'extra'      => {},
 	          'highlights' => $self->{'highlights'},
-	          'row'        => $row,
+            'display'    => $display,
           });
-	        $EW_Glyphset->{'chr'} = $chr;
         };
         if($@ || !$EW_Glyphset) {
           my $reason = $@ || "No reason given just returns undef";
           warn "GLYPHSET: glyphset $classname failed (@{[$self->{container}{web_species}]}/$ENV{'ENSEMBL_SCRIPT'} at ".gmtime()."\nGLYPHSET:  $reason";
 	        next;
         }
-        #$EW_Glyphset->render_normal();
-        $EW_Glyphset->render();
+        $EW_Glyphset->{'chr'} = $chr; 
+
+        ## Parse and/or cache data for use on subsequent chromosomes
+        if ($row_config->get('id')) {
+          my $data = $self->{'storage'}{$row_config->get('id')};
+          unless (defined($data->{$chr})) {
+            $data = $EW_Glyphset->data; 
+            $self->{'storage'}{$row_config->get('id')} = $data;
+          }
+          $EW_Glyphset->{'data'} = $data;
+        }
+
+        $EW_Glyphset->render_normal();
 
         if ( @{$EW_Glyphset->{'glyphs'}||[]}) {
 	        push @glyphsets,  $EW_Glyphset;

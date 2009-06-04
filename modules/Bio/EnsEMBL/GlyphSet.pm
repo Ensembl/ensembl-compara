@@ -41,7 +41,6 @@ sub error_track_name {
 }
 
 sub render_normal {
-#warn ">>> RENDERING NORMAL";
   my $self = shift;
   my $rtn = $self->_init(@_);
   
@@ -50,7 +49,6 @@ sub render_normal {
 
 sub render {
   my $self = shift;
- # warn ">>> DISPLAY ".$self->{'display'};
   
   my $method = 'render_' . $self->{'display'};
   
@@ -465,6 +463,9 @@ sub my_config {
   my( $self, $key ) = @_;
   return $self->{'my_config'}->get( $key );  ## Get value from track configuration...
 }
+
+## Stub - currently only implemented in vertical tracks
+sub data { return undef; }
 
 use Data::Dumper;
 our $CC = 0;
