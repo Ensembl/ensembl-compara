@@ -97,7 +97,6 @@ sub data {
       my $slice = $self->{'container'}->{'sa'}->fetch_by_region('chromosome', $chr, $start, $end);
       my $features = $fa->fetch_all_by_Slice( $slice, $logic_name );
       my $count = scalar(@$features);
-      warn "=== COUNTED $count FEATURES" if $count > 0;
       $scores->[$i] = $count;
       $start += $bin_size; 
       $end   += $bin_size; 
