@@ -28,8 +28,12 @@ sub catch {
   # Process any errors
   if (!ref $sources) {
     ## Store the server's message in the session
-    $self->set_tmp_message('DAS', $sources);
-    $self->set_error_code('DAS');
+    $self->object->get_session->add_data(
+      'type'      => 'message',
+      'code'      => 'DAS_server_error',
+      'message'   => 'Unable to access DAS source. Server response: '.$sources,
+      'function'  => '_error'
+    );
     return undef;
   }
   elsif (!scalar @{ $sources }) {
