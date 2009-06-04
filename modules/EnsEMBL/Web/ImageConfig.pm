@@ -123,8 +123,6 @@ sub load_user_vert_tracks {
 ## density features, rendered as separate tracks, and pointers,
 ## which are part of the karyotype track
 
-## NB. SEE E::W::Document::Image for old density track code (sub add_tracks)
-
   my( $self, $session ) = @_;
   my $menu = $self->get_node('user_data');
   return unless $menu;
@@ -136,12 +134,13 @@ sub load_user_vert_tracks {
   my %types = (upload => 'filename', url => 'url');
   foreach my $type (keys %types) {
     my @tracks = $session->get_data('type' => $type);
+    my $field = $types{$type};
     foreach my $track (@tracks) {
       my $track_info = {
         'id'      => 'temp-'.$type.'-'.$track->{'code'}, 
         'species' => $track->{'species'},
-        'code'    => $type,
-        'status'  => 'tmp',
+        'source'  => $track->{$field},
+        'format'  => $track->{'format'},
       };
       $track_info->{'render'} = EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'});
       if ($track->{'name'}) {
@@ -156,33 +155,42 @@ sub load_user_vert_tracks {
   }
 
   ## Add saved tracks, if any
+  my $user_sources = {};
   if (my $user = $session->get_adaptor->get_user) {
-    foreach my $type (keys %types) {
-      my $method = $type.'s';
-      my @records = $user->$method;
-      foreach my $record (@records) {
-        my $track_info = {
-          'id'      => 'user-'.$type.'-', 
-          'species' => $record->species,
-          'code'    => $type,
-          'status'  => 'user',
+    my @t = $user->uploads;
+    foreach my $entry (@t) {
+      next unless  $entry->species eq $self->{'species'};
+      my @analyses = split /, /, $entry->analyses;
+      foreach my $analysis (@analyses) {
+        $user_sources->{$analysis} = {
+          'id'          => $analysis,
+          'source_name' => $entry->name,
+          'source_type' => 'user',
+          'filesize'    => $entry->filesize,
+          'species'     => $entry->species,
+          'assembly'    => $entry->assembly,
         };
-        $track_info->{'render'} = EnsEMBL::Web::Tools::Misc::style_by_filesize($record->filesize);
-        $track_info->{'id'} .= $record->id;
-        if ($record->name) {
-          $track_info->{'name'} = $record->name;
-        }
-        else {
-          if (ref($record) =~ /Upload/) {
-            $track_info->{'name'} = $record->filename;
-          }
-          elsif (ref($record) =~ /URL/) {
-            $track_info->{'name'} = $record->url;
-          }
-          else {
-            warn "!!! UNKNOWN RECORD TYPE ".ref($record);
-          }
-        }
+      }
+    }
+    if (keys %$user_sources) {
+
+      my $dbs = EnsEMBL::Web::DBSQL::DBConnection->new( $self->{'species'} );
+      my $dba = $dbs->get_DBAdaptor('userdata');
+      my $ana = $dba->get_adaptor( 'Analysis' );
+
+      while (my ($logic_name, $source) = each (%$user_sources) ) {
+        my $analysis = $ana->fetch_by_logic_name($logic_name);
+        next unless $analysis;
+
+        my $track_info = {
+          'id'          => $source->{'id'}, 
+          'species'     => $source->{'species'},
+          'name'        => $analysis->display_label,
+          'logic_name'  => $logic_name,
+          'description' => $analysis->description,
+          'style'       => $analysis->web_data,
+        };
+        $track_info->{'render'} = EnsEMBL::Web::Tools::Misc::style_by_filesize($source->{'filesize'});
         push @user_tracks, $track_info;
       }
     }
@@ -194,8 +202,8 @@ sub load_user_vert_tracks {
     'density_bar'     => 'Density plot - filled bar chart',
     'density_outline' => 'Density plot - outline bar chart',
   );
-  my @highlight_renderers = @density_renderers;
-  push @highlight_renderers, (
+  my @all_renderers = @density_renderers;
+  push @all_renderers, (
     'highlight_lharrow'   => 'Arrow on lefthand side',
     'highlight_rharrow'   => 'Arrow on righthand side',
     'highlight_bowtie'    => 'Arrows on both sides',
@@ -204,26 +212,30 @@ sub load_user_vert_tracks {
   );
 
   ## Now, add these tracks to the menu as checkboxes 
+  my $width = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
   foreach my $entry (@user_tracks) {
     push @$track_keys, $entry->{'id'};
     if ($entry->{'species'} eq $self->{'species'}) {
       my $settings = {
-        '_class'      => $entry->{'status'},
-        'glyphset'    => 'Vgeneric',
-        'colourset'   => 'classes',
-        'sub_type'    => 'tmp',
-        'file'        => $entry->{'filename'},
+        'id'          => $entry->{'id'},
+        'source'      => $entry->{'source'},
         'format'      => $entry->{'format'},
+        'glyphset'    => 'Vuserdata',
+        'colourset'   => 'densities',
+        'maxmin'      =>  1,
+        'logic_name'  => $entry->{'logic_name'},
         'caption'     => $entry->{'name'},
-        'description' => '',
+        'description' => $entry->{'description'},
         'display'     => 'off',
+        'style'       => $entry->{'style'},
+        'width'       => $width,
         'strand'      => 'b'
       };
-      if ($entry->{'render'} eq 'density') {
+      if ($entry->{'render'} eq 'density' || ref($self) =~ /mapview/) {
         $settings->{'renderers'} = \@density_renderers;
       }
       else {
-        $settings->{'renderers'} = \@highlight_renderers;
+        $settings->{'renderers'} = \@all_renderers;
       }
       $menu->append( $self->create_track($entry->{'id'}, $entry->{'name'}, $settings ));
     }
