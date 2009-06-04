@@ -170,13 +170,10 @@ if( $gene ) {
     </table>';
   $html .= '
    </dd>
-  </dl>';  
+  </dl>';
+  my $site_type = $object->species_defs->ENSEMBL_SITETYPE;
   $html .= $self->_hint( 'transcript', 'Transcript and Gene level displays',
-    '
-  <p>
-In Ensembl a gene is made up of one or more transcripts. Views in Ensembl are separated into Gene based views and Transcript based views according to which level the information is more appropriately associated. This view is a transcript level view. To flip between the two sets of views you can click on the Gene and Transcript tabs in the menu bar at the top of the page.
-  </p>' );
-
+    qq(<p>In $site_type a gene is made up of one or more transcripts. Views in Ensembl are separated into Gene based views and Transcript based views according to which level the information is more appropriately associated. This view is a transcript level view. To flip between the two sets of views you can click on the Gene and Transcript tabs in the menu bar at the top of the page.</p>) );
 }
   return  $html;
 }
