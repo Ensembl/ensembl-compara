@@ -8,6 +8,7 @@ use POSIX qw(floor ceil);
 use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Cache;
+use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -89,8 +90,8 @@ sub counts {
 sub short_caption {
   my $self = shift;
   return 'Location-based displays';
-  return $self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
-    $self->thousandify($self->seq_region_end);
+  #return $self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
+  #  $self->thousandify($self->seq_region_end);
 
 }
 
@@ -444,6 +445,47 @@ sub _generic_create {
 
 }
 
+sub fetch_userdata_by_id {
+  my ($self, $track_id) = @_;
+  return unless $track_id;
+  my $data = {};
+
+  my ($status, $type, $id) = split('-', $track_id);
+  
+  if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) { 
+    my ($content, $format);
+
+    my $tempdata = {};
+    if ($status eq 'temp') {
+      $tempdata = $self->get_session->get_data('type' => $type, 'code' => $id);
+    }
+    else {
+      my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+      my $record = $user->uploads($track_id);
+      $tempdata = {'filename' => $record->filename, 'format' => $record->format};
+    }
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+    if ($type eq 'url') {
+      $parser->parse_URL( $tempdata->{'filename'} );
+    }
+    else {
+      my $file = new EnsEMBL::Web::TmpFile::Text( filename => $tempdata->{'filename'} );
+      my $content = $file->retrieve;
+      return {} unless $content;
+      $parser->parse($content, $tempdata->{'format'} );
+    }
+    $data = {'parser' => $parser};
+  }
+  else {
+    my $feat_objs = [];
+    my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor,
+    $feat_objs = $fa->fetch_all_by_Slice( $self->chromosome, $track_id );
+
+    $data = {'features' => $self->retrieve_userdata($feat_objs)};
+  }
+
+  return $data;
+}
 
 ## The following are used to convert full objects into simple data hashes, for use by drawing code
 
