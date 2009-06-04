@@ -131,7 +131,7 @@ sub _line {
   my @data =  @{$T->{'scores'}};
 
   my $old_y = undef;
-  for(my $x = $T->{'v_offset'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
+  for(my $x = $T->{'v_offset'} - $T->{'bin_size'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
     my $datum = shift @data;
     my $new_y = $datum; # / $T->{'max_data'} * $T->{'width'} ;
    
