@@ -51,7 +51,7 @@ sub process {
         );
       }
     }
-    elsif ($feedback->{'filesize'} == 0) {
+    elsif (defined($feedback->{'filesize'}) && $feedback->{'filesize'} == 0) {
       $redirect .= 'SelectURL';
       $param->{'filter_module'} = 'Data';
       $param->{'filter_code'} = 'empty';
