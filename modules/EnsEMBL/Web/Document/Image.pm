@@ -359,16 +359,17 @@ sub render_image_tag {
 
   if ($image->width > 5000) {
     my $url = $image->URL;
+    my $width = $image->width;
     $HTML = qq(
                <p style="text-align:left">
-                 The image produced was ".$image->width." pixels wide,
+                 The image produced was $width pixels wide,
                  which may be too large for some web browsers to display.
                  If you would like to see the image, please right-click (MAC: Ctrl-click)
-                 on the link below and choose the 'Save Image' option from the pop-up menu.
-                 Alternatively, try reconfiguring KaryoView, either merging the features
-                 into a single track (step 1) or selecting one chromosome at a time (Step 3).</p>
+                 on the link below and choose the 'Save Image' option from the pop-up menu.</p>
                <p><a href="$url">Image download</a></p>
             );
+                 #Alternatively, try reconfiguring KaryoView, either merging the features
+                 #into a single track (step 1) or selecting one chromosome at a time (Step 3).</p>
   } else {
     $HTML = sprintf '<img src="%s" alt="%s" title="%s" style="width: %dpx; height: %dpx; %s display: block" %s />',
                        $image->URL,
