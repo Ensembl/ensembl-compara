@@ -19,125 +19,48 @@ sub init {
     'spacing'       => 10
   });
 
-  $self->create_menus( 'features' => 'Features' );
+  $self->create_menus( 
+      'features' => 'Features', 
+      'user_data'  => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
+  );
 
   $self->add_tracks( 'features',
     [ 'drag_left', '', 'Vdraggable', { 'display' => 'normal', 'part' => 0, 'menu' => 'no' } ],
     [ 'Videogram', 'Ideogram', 'Videogram', {
       'display'   => 'normal',
-      'renderers' => [qw(off Off compact On)],
-      'colourset' => 'ideogram'
+      'colourset' => 'ideogram',
+      'renderers' => [qw(normal normal)],
     } ],
-    [ 'Vgenes',    'Genes',    'Vdensity', {
+    [ 'Vgenes',    'Genes',    'Vdensity_features', {
       'same_scale' => 1,
-      'display'   => 'normal',
-      'renderers' => [qw(off Off histogram Histogram)],
-      'keys'      => [qw(knownGeneDensity geneDensity)],
-      'colourset' => 'densities'
-    }],
-    [ 'Vpercents',  'Percent GC/Repeats',    'Vdensity', {
-      'same_scale' => 1,
-      'display'   => 'normal',
+      'display'   => 'density_outline',
       'colourset' => 'densities',
-      'renderers' => [qw(off Off histogram Histogram)],
+      'renderers' => ['off' =>  'Off',
+                      'density_outline' => 'Bar chart',
+                      'density_graph'  =>  'Lines'],
+      'keys'      => [qw(geneDensity knownGeneDensity)],
+    }],
+    [ 'Vpercents',  'Percent GC/Repeats',    'Vdensity_features', {
+      'same_scale' => 1,
+      'display'   => 'density_mixed',
+      'colourset' => 'densities',
+      'renderers' => ['off' => 'Off', 'density_mixed' => 'Histogram and line'],
       'keys'      => [qw(PercentGC PercentageRepeat)]
     }],
-    [ 'Vsnps',      'Variations',    'Vdensity', {
-      'display'   => 'normal',
+    [ 'Vsnps',      'Variations',    'Vdensity_features', {
+      'display'   => 'density_outline',
       'colourset' => 'densities',
-      'renderers' => [qw(off Off histogram Histogram)],
-      'keys'      => [qw(snpDensity)]
+      'maxmin'    => 1,
+      'renderers' => ['off' => 'Off', 
+                      'density_line'    => 'Line graph', 
+                      'density_bar'     => 'Bar chart - filled',
+                      'density_outline' => 'Bar chart - outline',
+                      ],
+      'keys'      => [qw(snpDensity)],
     }],
     [ 'drag_right', '', 'Vdraggable', { 'display' => 'normal', 'part' => 1, 'menu' => 'no' } ],
   );
 }
 
-1;
-__END__
-use base qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
-  my ($self) = @_;
-  $self->{'_label'}           = 'above',
-  $self->{'_band_labels'}     = 'on',
-  $self->{'_image_height'}    = 450,
-  $self->{'_top_margin'}      = 40,
-  $self->{'_band_links'}      = 'yes',
-  $self->{'_userdatatype_ID'} = 109;
-
-  $self->{'general'}->{'Vmapview'} = {
-    #'_artefacts'   => [qw(Vsnps Vpercents Vgenes Vsupercontigs Videogram Vrefseqs)],
-    ## TODO - add supercontigs back in, when their absence is detected correctly
-    '_artefacts'   => [qw(Vsnps Vpercents Vgenes Videogram Vrefseqs)],
-    '_options'   => [],
-
-    '_settings' => {
-      'opt_zclick'  => 1,
-      'width'       => 500, # really height <g>
-      'bgcolor'     => 'background1',
-      'bgcolour1'   => 'background1',
-      'bgcolour2'   => 'background1',
-     },
-    'Vgenes' => {
-      'on'          => 'off',
-      'pos'         => '100',
-      'width'       => 60,
-      'col_genes'   => 'black',
-      'col_xref'    => 'rust',
-      'col_pred'    => 'black',
-      'col_known'   => 'rust',
-      'logicname' => 'knownGeneDensity geneDensity'
-    },
-    'Vrefseqs' => {
-      'on'          => 'off',
-      'pos'         => '110',
-      'width'       => 60,
-      'col'         => 'blue',
-      'logicname' => 'refseqs'
-
-    },        
-    'Vpercents' => {
-      'on'          => 'off',
-      'pos'         => '200',
-      'width'       => 60,
-      'col_gc'      => 'red',
-      'col_repeat'  => 'black',
-      'logicname' => 'PercentageRepeat PercentGC'
-
-    },    
-    'Vsnps' => {
-      'on'          => 'off',
-      'pos'         => '300',
-      'width'       => 60,
-      'col'         => 'blue',
-      'logicname' => 'snpDensity'
-
-    },        
-    'Videogram' => {
-      'on'          => "on",
-      'pos'         => '1000',
-      'width'       => 24,
-      'bandlabels'  => 'on',
-      'totalwidth'  => 100,
-      'col'         => 'g',
-      'padding'     => 6,
-    },
-
-    'Vsupercontigs' => {
-       'on'          => 'off',
-       'pos'         => '400',
-       'width'       =>  20,
-       'totalwidth'  =>  100,
-       'padding'     =>  6,
-       'col'         => 'blue',
-       'col_ctgs1'    => 'green',
-       'col_ctgs2'    => 'darkgreen',
-       'lab'         => 'black',
-       'include_labelling' => 1,
-       'available'   => 'features MAPSET_SUPERCTGS',
-
-    }
-
-  };
-}
 1;
