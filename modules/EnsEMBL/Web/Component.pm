@@ -1167,37 +1167,37 @@ sub build_sequence {
   my $html; 
   my @output;
   my $s = 0;
-  
+
   # Temporary patch because Firefox doesn't copy/paste anything but inline styles
   # If we remove this patch, look at version 1.79 for the correct code to revert to
-  my $styles = $self->object->species_defs->ENSEMBL_STYLE;
+  my $styles = $self->object->species_defs->colour('sequence_markup');
   my %class_to_style = (
-    con =>  [ 1,  { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}" } ],
-    dif =>  [ 2,  { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}" } ],
-    res =>  [ 3,  { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}" } ],
-    e0  =>  [ 4,  { 'color' => "#$styles->{'SEQ_EXON0'}" } ],
-    e1  =>  [ 5,  { 'color' => "#$styles->{'SEQ_EXON1'}" } ],
-    e2  =>  [ 6,  { 'color' => "#$styles->{'SEQ_EXON2'}" } ],
-    eo  =>  [ 7,  { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}" } ],
-    eg  =>  [ 8,  { 'color' => "#$styles->{'SEQ_EXONGENE'}", 'font-weight' => "bold" } ],
-    c0  =>  [ 9,  { 'background-color' => "#$styles->{'SEQ_CODONC0'}" } ],
-    c1  =>  [ 10, { 'background-color' => "#$styles->{'SEQ_CODONC1'}" } ],
-    cu  =>  [ 11, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}" } ],
-    sn  =>  [ 12, { 'background-color' => "#$styles->{'SEQ_SNP'}" } ],      
-    si  =>  [ 13, { 'background-color' => "#$styles->{'SEQ_SNPINSERT'}" } ],
-    sd  =>  [ 14, { 'background-color' => "#$styles->{'SEQ_SNPDELETE'}" } ],   
-    snt =>  [ 15, { 'background-color' => "#$styles->{'SEQ_SNP_TR'}" } ],
-    syn =>  [ 16, { 'background-color' => "#$styles->{'SEQ_SYN'}" } ],
-    snu =>  [ 17, { 'background-color' => "#$styles->{'SEQ_SNP_TR_UTR'}" } ],
-    siu =>  [ 18, { 'background-color' => "#$styles->{'SEQ_SNPINSERT_TR_UTR'}" } ],
-    sdu =>  [ 19, { 'background-color' => "#$styles->{'SEQ_SNPDELETE_TR_UTR'}" } ],
-    sf  =>  [ 20, { 'background-color' => "#$styles->{'SEQ_FRAMESHIFT'}" } ],
-    aa  =>  [ 21, { 'color' => "#$styles->{'SEQ_AMINOACID'}" } ],
-    var =>  [ 22, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}" } ],
-    end =>  [ 23, { 'color' => "#$styles->{'SEQ_REGION_CHANGE'}", 'background-color' => "#$styles->{'SEQ_REGION_CHANGE_BG'}" } ],
+    con =>  [ 1,  { 'background-color' => "#$styles->{'conservation'}{'default'}" } ],
+    dif =>  [ 2,  { 'background-color' => "#$styles->{'difference'}{'default'}" } ],
+    res =>  [ 3,  { 'color' => "#$styles->{'resequencing'}{'default'}" } ],
+    e0  =>  [ 4,  { 'color' => "#$styles->{'exon0'}{'default'}" } ],
+    e1  =>  [ 5,  { 'color' => "#$styles->{'exon1'}{'default'}" } ],
+    e2  =>  [ 6,  { 'color' => "#$styles->{'exon2'}{'default'}" } ],
+    eo  =>  [ 7,  { 'background-color' => "#$styles->{'exon_other'}{'default'}" } ],
+    eg  =>  [ 8,  { 'color' => "#$styles->{'exon_gene'}{'default'}", 'font-weight' => "bold" } ],
+    c0  =>  [ 9,  { 'background-color' => "#$styles->{'codonc0'}{'default'}" } ],
+    c1  =>  [ 10, { 'background-color' => "#$styles->{'codonc1'}{'default'}" } ],
+    cu  =>  [ 11, { 'background-color' => "#$styles->{'codonutr'}{'default'}" } ],
+    sn  =>  [ 12, { 'background-color' => "#$styles->{'snp'}{'default'}" } ],      
+    si  =>  [ 13, { 'background-color' => "#$styles->{'insert'}{'default'}" } ],
+    sd  =>  [ 14, { 'background-color' => "#$styles->{'delete'}{'default'}" } ],   
+    snt =>  [ 15, { 'background-color' => "#$styles->{'snp_tr'}{'default'}" } ],
+    syn =>  [ 16, { 'background-color' => "#$styles->{'syn'}{'default'}" } ],
+    snu =>  [ 17, { 'background-color' => "#$styles->{'snp_tr_utr'}{'default'}" } ],
+    siu =>  [ 18, { 'background-color' => "#$styles->{'snp_insert_tr_utr'}{'default'}" } ],
+    sdu =>  [ 19, { 'background-color' => "#$styles->{'snp_delete_tr_utr'}{'default'}" } ],
+    sf  =>  [ 20, { 'background-color' => "#$styles->{'frameshift'}{'default'}" } ],
+    aa  =>  [ 21, { 'color' => "#$styles->{'aminoacid'}{'default'}" } ],
+    var =>  [ 22, { 'color' => "#$styles->{'main_snp'}{'default'}" } ],
+    end =>  [ 23, { 'color' => "#$styles->{'region_change'}{'default'}", 'background-color' => "#$styles->{'region_change_bg'}{'default'}" } ],
     bold => [ 24, { 'font-weight' => 'bold' } ]
   );
-  
+
   foreach my $lines (@$sequence) {
     my ($row, $title, $previous_title, $new_line_title, $class, $previous_class, $new_line_class, $pre, $post);
     my ($count, $i);
