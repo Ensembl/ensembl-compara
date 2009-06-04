@@ -24,15 +24,16 @@ sub content {
     my $species = $self->object->species;
 
     my @annotations = $user->annotations;
-    my $annotation;
+    my @gene_annotations;
     foreach my $record (@annotations) {
       next unless $record->stable_id eq $id;
-      $annotation = $record;
-      last;
+      push @gene_annotations, $record;
     }
-    if ($annotation) {
-      $html = '<h2>'.$annotation->title.'</h2><pre>'.$annotation->annotation.'</pre>';
-      $html .= qq(<p><a href="/Account/Annotation/Edit?id=).$annotation->id.qq(;species=$species" class="modal_link">Edit this annotation</a>.</p>);
+    if (scalar(@gene_annotations)) {
+      foreach my $annotation (@gene_annotations) {
+        $html = '<h2>'.$annotation->title.'</h2><pre>'.$annotation->annotation.'</pre>';
+        $html .= qq(<p><a href="/Account/Annotation/Edit?id=).$annotation->id.qq(;species=$species" class="modal_link">Edit this annotation</a>.</p>);
+      }
     }
     else {
       $html = qq(<p>You don't have any annotation on this gene. <a href="/Account/Annotation/Add?stable_id=$id;ftype=$type;species=$species" class="modal_link">Add an annotation</a>.</p>);
