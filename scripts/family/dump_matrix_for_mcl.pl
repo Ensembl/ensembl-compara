@@ -1,6 +1,10 @@
 #!/usr/local/bin/perl -w
 
 # Produce the matrix file necessary to run the MCL
+#
+# Restriction from mcxassemble:
+# please only run this on the farm that has 'hugemem' queue (currently it is farm-1, but check 'bqueues' to be sure).
+# Otherwise you can (re)start the assembling binary directly on turing.
 
 use strict;
 use Getopt::Long;
@@ -14,7 +18,7 @@ sub dump_mcl_matrix_into_file {
     if( my ($actual_size) = $check_sth->fetchrow()) {
         $check_sth->finish();
         if( $actual_size==$expected_size or $force ) {
-            my $dump_sth = $dbc->prepare ( "SELECT id, rest FROM mcl_matrix ORDER BY id" );
+            my $dump_sth = $dbc->prepare ( "SELECT id, rest FROM mcl_matrix", { "mysql_use_result" => 1} );
             $dump_sth->execute();
             open(OUT, ">$outfile");
             while( my ($id, $rest) = $dump_sth->fetchrow() ) {
@@ -30,7 +34,7 @@ sub dump_mcl_matrix_into_file {
     }
 }
 
-my $parser_executable = '/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/mcxassemble.sh.tcx';
+my $asm_executable = '/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/mcxassemble.sh.tcx';
 
 my ($tab_file, $nameprefix);
 my $force = 0;
@@ -49,8 +53,8 @@ GetOptions(
 	   'nameprefix=s' => \$nameprefix,
 
             # optional parameters:
-       'pexec=s'      => \$parser_executable,
-       'force!'       => \$force,
+       'aexec=s'      => \$asm_executable,
+       'force!'       => \$force, # ignore the condition that number of lines in the matrix should be equal to number of lines in the .tab file
 );
 
 unless( $tab_file && $nameprefix ) {
@@ -62,15 +66,19 @@ my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%$dbconn)
 
 my $tab_size = `wc -l $tab_file | cut -d ' ' -f 1`; chomp $tab_size;
 
-dump_mcl_matrix_into_file($dba->dbc(), "${nameprefix}.raw", $tab_size, $force);
+dump_mcl_matrix_into_file($dba->dbc(), "${nameprefix}.unsorted", $tab_size, $force);
+
+system("sort -n ${nameprefix}.unsorted >${nameprefix}.raw");
+
+$tab_size++;    # EXPRETIMENTAL: actually having 1..N elements and not wanting to re-number, we pretend to have 0..N
 
 open(HDR, ">${nameprefix}.hdr");
 print HDR "(mclheader\nmcltype matrix\ndimensions ${tab_size}x${tab_size}\n)\n";
 close HDR;
 
-system("ln -s $tab_file ${nameprefix}.tab");
+system("cp $tab_file ${nameprefix}.tab");
 
-if(my $parse_error = system($parser_executable, $nameprefix)) {
-    die "parser executable '$parser_executable' died with error code: $parse_error";
+if(my $asm_error = system($asm_executable, $nameprefix)) {
+    die "matrix assembler executable '$asm_executable' died with error code: $asm_error";
 }
 
