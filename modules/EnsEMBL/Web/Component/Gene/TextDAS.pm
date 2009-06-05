@@ -138,7 +138,13 @@ sub content {
         # OK, we apparently need to support non-spec HTML embedded in notes,
         # so let's decode it.
         my ( $note, $warning ) = $self->_decode_and_validate( $raw );
-        $html .= $warning;
+        # Show the error, but only show one at a time as it could get spammy
+        if ($warning && !$self->{'errored'}) {
+          $self->{'errored'} = 1;
+          $html .= $self->_warning('Problem parsing note',
+                                   "$VALIDATE_ERROR$warning",
+                                   '100%');
+        }
         push @notes, "<div>$note</div>";
       }
       
@@ -148,7 +154,13 @@ sub content {
         # We don't expect embedded HTML here so don't need to decode, but still
         # need to validate to protect against XSS...
         my ( $href, $warning ) = $self->_validate( $raw );
-        $html .= $warning;
+        # Show the error, but only show one at a time as it could get spammy
+        if ($warning && !$self->{'errored'}) {
+          $self->{'errored'} = 1;
+          $html .= $self->_warning('Problem parsing link',
+                                   "$VALIDATE_ERROR$warning",
+                                   '100%');
+        }
         push @links, sprintf '<div><a href="%s">%s</a></div>', $href, $cdata;
       }
       
@@ -187,20 +199,13 @@ sub _decode_and_validate {
 sub _validate {
   my ( $self, $text ) = @_;
   
-  my $warning = '';
   # Check for naughty people trying to do XSS...
-  if ( my $error = $self->{'validator'}->validate( $text ) ) {
+  if ( my $warning = $self->{'validator'}->validate( $text ) ) {
     $text = CGI::escapeHTML( $text );
-    # Show the error, but only show one at a time as it could get spammy
-    if (!$self->{'errored'}) {
-      $self->{'errored'} = 1;
-      $warning = $self->_warning('Problem parsing note',
-                                 "$VALIDATE_ERROR$error",
-                                 '100%');
-    }
+    return ( $text, $warning );
   }
   
-  return ( $text, $warning );
+  return ( $text, undef );
 }
 
 1;
