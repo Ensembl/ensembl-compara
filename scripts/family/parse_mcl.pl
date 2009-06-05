@@ -198,6 +198,7 @@ foreach my $cluster (@clusters) {
   my $family = Bio::EnsEMBL::Compara::Family->new_fast
     ({
       '_stable_id' => $stable_id,
+      '_version'   => 1,
       '_method_link_species_set' => $mlss,
       '_description_score' => 0
      });

@@ -19,13 +19,6 @@ mcl (source can be obtained from http://micans.org/mcl/src/)
 2- Choose a working directory with enough disk space
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# The family pipeline takes several GB of space (5GB should be sufficient). (df -k)
-
-mkdir -p /lustre/scratch1/ensembl/lg4/families/family_55
-cd /lustre/scratch1/ensembl/lg4/families/family_55
-mkdir tmp mcl 
-
-# NB:
 # According to the LSF guys (including Guys :), the Blast database should live in /data/blastdb/ , as it is optimized for accessing large files:
 
 mkdir -p /data/blastdb/Ensembl/family_55/fasta
@@ -77,16 +70,10 @@ grep '>' metazoa_55.pep | wc -l
 #
 # You only (and hopefully temporarily) need the .tab file with name-to-index mapping.
 # While it is still needed, its generation should probably be built into the .pep-file dumper, as a side-product.
-#
-## one-based indices (coming directly from sequence_id:s)  -- BETTER OPTION BUT MCL MAY NOT LIKE IT, NEEDS TESTING
 
 time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_55 -e 'SELECT sequence_id, stable_id FROM member WHERE sequence_id IS NOT NULL GROUP BY sequence_id ORDER BY sequence_id' --column-names=0 | awk '{print $1 " " $2}' > metazoa_55.tab
 #
 # (the query takes about 2 minutes to run)
-
-#
-## zero-based indices (sequence_id-1)s -- SHOULD WORK, but would be inconvenient to use.
-# time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_55 -e 'SELECT sequence_id, stable_id FROM member WHERE sequence_id IS NOT NULL GROUP BY sequence_id ORDER BY sequence_id' --column-names=0 | awk '{print $1-1 " " $2}' > metazoa_55.tab
 
 
 # Formatting the fasta file for future BLASTPing takes about 5 minutes:
@@ -186,16 +173,18 @@ done
 
 # Once you have one of the jobs running, kill the remaining pending jobs with "bkill jobid".
 
+
 10- Load into compara database
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # You'll need a compara database set up, with genome_db, taxon, and method_link tables prefilled.
 
 # Edit the reg_conf.50.pl to point to the compara_homology db
-/lustre/scratch1/ensembl/lg4/families/family_55/mcl/reg_conf_55.pl
-
+# /lustre/scratch1/ensembl/lg4/families/family_55/mcl/reg_conf_55.pl
+#
 # Your reg_conf.pl should be something like
 
+cat <<EOF >~/family_55/reg_conf_55.pl
 use strict;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -207,14 +196,19 @@ new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'compara2',
                                             -species => 'compara55',
                                             -dbname => 'avilella_compara_homology_55');
 1;
+EOF
 
 # This takes around an hour, and you can not do anything else before the loading is completed.
+#
+# NB: turing doesn't have neither /usr/local/bin/perl nor /software/bin/perl,
+#     so parse_mcl.pl will need an additional dance to be performed
 
-nohup ~avilella/src/ensembl_main/ensembl-compara/scripts/family/parse_mcl.pl --dbname compara55 --reg_conf /lustre/scratch1/ensembl/lg4/families/family_55/mcl/reg_conf_55.pl family_55.tab family_55.mcl -prefix fam55 > family_55.description 2> family_55.description.err &
+nohup ~/work/ensembl-compara_HEAD/scripts/family/parse_mcl.pl --dbname compara55 --reg_conf reg_conf_55.pl family_55.tab family_55.mcl -prefix fam55 > family_55.description 2> family_55.description.err &
 
 # To save space,
 
 bsub 'gzip family_55.mcl'
+
 
 11- Run mafft over all the families
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
