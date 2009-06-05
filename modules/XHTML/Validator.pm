@@ -21,7 +21,7 @@ our $sets = {};
 ### Package global variable $sets defines the different groups of tags allowed
 
 $sets->{'no-tags'} = {
-  'ent' => '&(amp|lt|gt|quot|apos);',
+  'ent' => '&(amp|#x26|lt|#x3C|gt|#x3E|quot|#x22|apos|#x27);',
   'ats' => {},
   'nts' => {}
 };
