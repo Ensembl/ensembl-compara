@@ -3,8 +3,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast;
 use strict;
 use FileHandle;
 
-use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Hive::Process);
 
 sub param {
     my $self = shift @_;
