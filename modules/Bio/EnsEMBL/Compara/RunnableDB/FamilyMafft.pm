@@ -108,8 +108,9 @@ sub run {
 
     my $debug                   = $self->param('debug')         || 0;
     my $family_id               = $self->param('family_id');
-    my $mafft_bindir            = $self->param('mafft_bindir')  || '/software/ensembl/compara/mafft-6.522';
-    my $mafft_executable        = $self->param('mafft_exec')    || '/software/ensembl/compara/mafft-6.522/bin/mafft';
+    my $mafft_root              = $self->param('mafft_root')    || '/software/ensembl/compara';
+    my $mafft_bindir            = $self->param('mafft_bindir')  || ( $mafft_root . '/mafft-6.522' );
+    my $mafft_executable        = $self->param('mafft_exec')    || ( $mafft_root . '/mafft-6.522/bin/mafft' );
     my $mafft_args              = $self->param('mafft_args')    || '';
 
     my $pep_file                = $self->param('pep_file');
