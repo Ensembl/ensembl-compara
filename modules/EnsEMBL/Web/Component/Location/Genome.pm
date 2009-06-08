@@ -33,7 +33,7 @@ sub content {
     if (@features) { $table = $self->feature_tables(\@features); }
   }
 
-  if ($object->species_defs->MAX_CHR_LENGTH) {
+  if ($object->species_defs->ENSEMBL_CHROMOSOMES && scalar(@{$object->species_defs->ENSEMBL_CHROMOSOMES}) && $object->species_defs->MAX_CHR_LENGTH) {
     my $image    = $self->new_karyotype_image();
     my $pointers = [];
 
