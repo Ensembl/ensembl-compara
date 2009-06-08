@@ -137,6 +137,7 @@ sub load_cigars_from_fasta {
   my $alignio = Bio::AlignIO->new
     (-file => "$file",
      -format => "fasta");
+
   my $aln = $alignio->next_aln;
 
   #place all member attributes in a hash on their member name
@@ -158,7 +159,8 @@ sub load_cigars_from_fasta {
     if($attribute) {
 
         my $cigar_line = '';
-        while($seq->seq() =~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
+        my $seq_string = $seq->seq();
+        while($seq_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
             $cigar_line .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : 'M');
         }
 
