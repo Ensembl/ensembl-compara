@@ -448,9 +448,6 @@ sub pip_anno_file {
   }
   
   foreach my $gene (@{$slice->get_all_Genes(undef, undef, 1) || []}) {
-    # only include genes that don't overlap slice boundaries
-    next if ($gene->start < 1 or $gene->end > $slice_length);
-    
     my $gene_header = join(" ", ($gene->strand == 1 ? ">" : "<"), $gene->start, $gene->end, $gene->external_name || $gene->stable_id);
     $gene_header .= "\r\n";
     
