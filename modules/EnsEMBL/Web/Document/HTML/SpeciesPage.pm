@@ -43,6 +43,10 @@ sub render {
         'dir' => 'Sus_scrofa',
         'status'  => 'pre',
   };
+  $species{'Marmoset'} = {
+        'dir' => 'Callithrix_jacchus',
+        'status'  => 'pre',
+  };
 
   my $total = scalar(keys %species);
   my $break = int($total / 3);
@@ -56,15 +60,14 @@ sub render {
 <table>
   <tr>
   );
-  my $row = -1;
+  my ($row, $col);
   my @species = sort keys %species;
   for (my $i=0; $i < $total; $i++) {
-    my $col = int($i % 3);
+    $row = int($i/3);
+    $col = $i % 3;
     if ($col == 0 && $i < ($total - 1)) {
      $html .= qq(</tr>\n<tr>);
     }
-    my $row = int($i/3);
-    $row++ if $col == 0;
     my $j = $row + $break * $col;
     my $common = $species[$j];
     next unless $common;
