@@ -48,13 +48,17 @@ function update_species(element) {
       method    : 'get',
       parameters: { favourites: serialized_data },
       onSuccess: function(response){ 
-        $('full_species').innerHTML = response.responseText; performedSave = 0;
+        $('full_species').innerHTML = response.responseText;
+        performedSave = 0;
         $$('.toggle_link').each(function(n){
           if( ENSEMBL_AJAX == 'enabled' ) {
             Event.observe(n,'click',toggle_reorder);
           } else {
             n.hide();
           }
+        });
+        $$('.dropdown_redirect').each(function(n){
+          Event.observe(n,'change',dropdown_redirect);
         });
       }, 
       onFailure: function(response){ performedSave = 0; }
