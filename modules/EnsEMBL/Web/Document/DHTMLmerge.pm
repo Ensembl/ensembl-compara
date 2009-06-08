@@ -83,6 +83,14 @@ $CONTENTS
 
   ## Convert style placeholders to actual colours
   my %colours = %{$species_defs->ENSEMBL_STYLE||{}};
+
+  # Add sequence markup colours to ENSEMBL_STYLE - they are used in CSS. This smells a lot like a hack.
+  my $sequence_markup = $species_defs->colour('sequence_markup') || {};
+  my %styles = ();
+  map $styles{$_} = $sequence_markup->{$_}->{'default'}, keys %$sequence_markup;
+  
+  %colours = (%colours, %styles);
+
   foreach (keys %colours) {
     $colours{$_} =~ s/^([0-9A-F]{6})$/#$1/i;
   }
