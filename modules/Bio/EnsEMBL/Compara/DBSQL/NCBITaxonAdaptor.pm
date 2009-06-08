@@ -192,7 +192,9 @@ sub create_instance_from_rowhash {
   $self->init_instance_from_rowhash($node, $rowhash);
   $self->_load_tagvalues($node);
   
-  #$self->cache_add_object($node);
+  # The genebuilders has troubles with load_taxonomy.pl when the
+  # following line was commented out
+  $self->cache_add_object($node);
 
   return $node;
 }
