@@ -153,9 +153,10 @@ sub form {
           { value => 'hard_masked', name => 'Repeat Masked (hard)' },
           { value => '5_flanking', name => "5' Flanking sequence" },
           { value => '3_flanking', name => "3' Flanking sequence" },
-          { value => '5_3_flanking', name => "5' and 3' Flanking sequences" },
-          { value => 'off', name => 'None' }
+          { value => '5_3_flanking', name => "5' and 3' Flanking sequences" }
         ];
+
+        push @$genomic, { value => 'off', name => 'None' } unless $ENV{'ENSEMBL_TYPE'} eq 'Location';
         
         $view_config->add_form_element({
           'type'     => 'DropDown', 
