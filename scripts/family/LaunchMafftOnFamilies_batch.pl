@@ -1,4 +1,4 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/local/bin/perl -w
 
 use strict;
 use Getopt::Long;
@@ -177,7 +177,7 @@ for my $family_id ($starting_id .. $end_id) {
     }
 
     if ($store) {
-        $family->load_cigars_from_fasta("$mafft_file", 1);
+        $family->load_cigars_from_fasta($mafft_file, 1);
     } else {
         if(system("cp $mafft_file $msc_dir/$family_id.msc")) {
             print STDERR "Failed: could not copy '$mafft_file', because: $!\n";
