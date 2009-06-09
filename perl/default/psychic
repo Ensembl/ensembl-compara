@@ -25,6 +25,12 @@ if ($q->param('species')) {
 }
 my $dest_site = $q->param('site') || undef;
 my $index  = $q->param('idx')  || undef;
+
+if( $species eq 'all' && $dest_site eq 'ensembl' ) {
+  $dest_site = 'ensembl_all';
+  $species = $webpage->{'species_defs'}->ENSEMBL_PRIMARY_SPECIES;
+}
+
 my $query  = $q->param('q');
 my $URL;
 
