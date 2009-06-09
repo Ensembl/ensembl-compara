@@ -44,13 +44,13 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Analysis::Runnable;
 our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
-my $java_exe = "/nfs/acari/bpaten/bin/jre1.6.0/bin/java";
+my $java_exe = "/software/bin/java";
 my $uname = `uname`;
 $uname =~ s/[\r\n]+//;
 my $default_exonerate = "exonerate-1.0.0";
-my $default_jar_file = "pecan.0.6.jar";
+my $default_jar_file = "pecan_v0.8.jar";
 my $default_java_class = "bp.pecan.Pecan";
-my $estimate_tree = "~/pecan/EstimateTree.py";
+my $estimate_tree = "/software/ensembl/compara/pecan/EstimateTree.py";
 
 =head2 new
 
@@ -145,6 +145,8 @@ sub new {
       $self->jar_file($ENV{HOME}."/pecan/$default_jar_file");
     } elsif (-e $ENV{HOME}."/Downloads/$default_jar_file") {
       $self->jar_file($ENV{HOME}."/Downloads/$default_jar_file");
+    } elsif (-e "/software/ensembl/compara/pecan/$default_jar_file") {
+      $self->jar_file("/software/ensembl/compara/pecan/$default_jar_file");
     } else {
       throw("Cannot find Pecan JAR file!");
     }
@@ -230,7 +232,10 @@ sub run_mlagan {
       $command .= " $fasta_file";
     }
   }
-  $command .= " -J '" . $self->exonerate . "' -X";
+
+  #Remove -X option. Transitive anchoring is now switched off by default
+  #$command .= " -J '" . $self->exonerate . "' -X";
+  $command .= " -J '" . $self->exonerate . "'";
   if ($self->tree_string) {
     $command .= " -E '" . $self->tree_string . "'";
   }
