@@ -23,10 +23,15 @@ sub export {
   
   $slice = $slice->invert if ($strand && $strand != $slice->strand);
   $slice = $slice->expand($flank5, $flank3) if ($flank5 || $flank3);
-  
+   
   my $format = $object->param('_format');
-  
   my $params = { 'html_format' => (!$format || $format eq 'HTML') };
+  
+  if ($slice->length > 5000000) {
+    my $error = 'The region selected is too large to export. Please select a region of less than 5Mb.';
+    return $params->{'html_format'} ? $class->_warning('Region too large', "<p>$error</p>") : $error;
+  }
+  
   map { $params->{$_} = 1 } $object->param('st');
   map { $params->{'misc_set'}->{$_} = 1 if $_ } $object->param('miscset');
   
