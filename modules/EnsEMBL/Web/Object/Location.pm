@@ -110,6 +110,13 @@ sub slice            {
     $self->seq_region_type, $self->seq_region_name, $self->seq_region_start, $self->seq_region_end, $self->seq_region_strand );
 }
 
+# Find out if a slice exists for given coordinates
+sub check_slice {
+  my $self = shift;
+  my ($chr, $start, $end, $strand) = @_;
+  return $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region($self->seq_region_type, $chr, $start, $end, $strand);
+}
+
 sub chromosome {
   my ($self, $species) = @_;
   my $sliceAdaptor = $self->get_adaptor('get_SliceAdaptor');
