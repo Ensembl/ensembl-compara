@@ -10,7 +10,7 @@ use EnsEMBL::Web::RegObj;
 
 sub render {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my $page_species = $ENV{'ENSEMBL_SPECIES'};
+  my $page_species = $ENV{'ENSEMBL_SPECIES'} || 'common';
   my $species_name = '';
   $species_name = $species_defs->SPECIES_COMMON_NAME if $page_species;
   if( $species_name =~ /\./ ) {
@@ -21,7 +21,7 @@ sub render {
 
   my $search_url = $species_defs->ENSEMBL_WEB_ROOT;
   $search_url .= $page_species if $page_species.'/';
-  $search_url .= 'psychic';
+  $search_url .= '/psychic';
   my $default_search_code = $species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
 
   $html .= sprintf q(
