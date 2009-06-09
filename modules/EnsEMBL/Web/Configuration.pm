@@ -452,118 +452,151 @@ sub _export_configurator {
   # Second page
   if ($object->param('save')) {
     my $output = $object->param('output');
-    
-    my $href = $object->_url({ 
-      'time' => time, 
-      'action' => 'Export', 
-      'strand' => $object->param('strand'), 
-      'output' => $output 
-    });
+    my $r = $object->param('r');
+    my $check_slice = 1;
 
-    my $map = { 
-      'csv' => 'features',
-      'gff' => 'features',
-      'tab' => 'features',
-      'embl' => 'flat',
-      'genbank' => 'flat',
-      'pipmaker' => 'pip',
-      'vista' => 'pip'
-    };
-    
-    my $key = $map->{$output} || $output;
-    
-    my @formats;
-    
-    if ($key eq 'pip') {
-      my $seq_file  = EnsEMBL::Web::TmpFile::Text->new(
-        extension => 'fa',
-        prefix => '',
-        content_type => 'text/plain; charset=utf-8',
-      );
-      my $anno_file = EnsEMBL::Web::TmpFile::Text->new(
-        filename => $seq_file->filename,
-        extension => 'txt',
-        prefix => '',
-        content_type => 'text/plain; charset=utf-8',
-      );
-      
-      export_file($seq_file, $object, 'seq');
-      export_file($anno_file, $object, $output);
+    if ($object->param('new_region')) {
+      my $s = $object->param('new_start'); 
+      my $e = $object->param('new_end');
 
-      $seq_file->save;
-      $anno_file->save;
-
-      my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
-        filename => $seq_file->filename,
-        prefix => '',
-        use_short_names => 1
-      );
-      
-      $tar_file->add_file($seq_file);
-      $tar_file->add_file($anno_file);
-      $tar_file->save;
-      
-      $text = qq{<p>Your export has been processed successfully. You can download the exported data by following the links below</p>};
-      
-      @formats = (
-        [ 'Sequence data', '', ' rel="external"', ' [FASTA format]', $seq_file->URL ],
-        [ 'Annotation data', '', ' rel="external"', ' [pipmaker format]', $anno_file->URL ],
-        [ 'Combined file', '', '', '', $tar_file->URL ]
-      );
-    } else {
-      @formats = (
-        [ 'HTML', 'HTML', ' rel="external"' ],
-        [ 'Text', 'Text', ' rel="external"' ],
-        [ 'Compressed text (.gz)', 'TextGz' ]
-      );
-    }
-    
-    my $checked_params = {};
-    
-    foreach (@{$config->{$key}->{'params'}}) {
-      $checked_params->{"${output}_$_->[0]"} = 1;
-      
-      if ($object->param("${output}_$_->[0]") eq 'yes') {
-        $_->[0] =~ s/(miscset_)//;
-        
-        $href .= $1 ? ";miscset=$_->[0]" : ";st=$_->[0]";
+      # Flip start and end if end is less than start
+      if ($e < $s) {
+        my $t = $e;
+        $e = $s;
+        $s = $t;
       }
+      
+      $r = $object->param('new_region') . ":$s-$e";
+      
+      $check_slice = $object->check_slice($object->param('new_region'), $s, $e, $object->param('strand'));
     }
-    
-    foreach (grep { /${output}_/ } $object->param) {
-      (my $param = $_) =~ s/${output}_//;
-      $href .= ";$param=" . $object->param($_) unless $checked_params->{$_};
-    }
-    
+  
     # How confusing!
     my $form_action = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }, 1);
     my $hidden_params;
     
     foreach (keys %{$form_action->[1]||{}}) {
       $hidden_params .= qq{
-        <input type="hidden" name="$_" value="$form_action->[1]->{$_}" />};
+            <input type="hidden" name="$_" value="$form_action->[1]->{$_}" />};
     }
-    
-    $content = qq{
-      <h2>Export Configuration - Output Format</h2>
-      <form id="export_output_configuration" class="std check" method="get" action="$form_action->[0]">
-        <fieldset>
-          $text
-          <ul>};
+
+    if ($check_slice) {
+      my $href = $object->_url({ 
+       'r'      => $r,
+       'time'   => time, 
+       'action' => 'Export', 
+       'strand' => $object->param('strand'), 
+       'output' => $output
+      });
+      
+      my $map = { 
+        'csv' => 'features',
+        'gff' => 'features',
+        'tab' => 'features',
+        'embl' => 'flat',
+        'genbank' => 'flat',
+        'pipmaker' => 'pip',
+        'vista' => 'pip'
+      };
+      
+      my $key = $map->{$output} || $output;
+      
+      my @formats;
+      
+      if ($key eq 'pip') {
+        my $seq_file  = EnsEMBL::Web::TmpFile::Text->new(
+          extension => 'fa',
+          prefix => '',
+          content_type => 'text/plain; charset=utf-8',
+        );
+        my $anno_file = EnsEMBL::Web::TmpFile::Text->new(
+          filename => $seq_file->filename,
+          extension => 'txt',
+          prefix => '',
+          content_type => 'text/plain; charset=utf-8',
+        );
+          
+        export_file($seq_file, $object, 'seq');
+        export_file($anno_file, $object, $output);
         
-    foreach (@formats) {
-      my $format = ";_format=$_->[1]" if $_->[1];
-      my $link = $_->[4] || $href;
+        $seq_file->save;
+        $anno_file->save;
+        
+        my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
+          filename => $seq_file->filename,
+          prefix => '',
+          use_short_names => 1
+        );
+        
+        $tar_file->add_file($seq_file);
+        $tar_file->add_file($anno_file);
+        $tar_file->save;
+        
+        $text = qq{<p>Your export has been processed successfully. You can download the exported data by following the links below</p>};
+        
+        @formats = (
+          [ 'Sequence data', '', ' rel="external"', ' [FASTA format]', $seq_file->URL ],
+          [ 'Annotation data', '', ' rel="external"', ' [pipmaker format]', $anno_file->URL ],
+          [ 'Combined file', '', '', '', $tar_file->URL ]
+        );
+      } else {
+        @formats = (
+          [ 'HTML', 'HTML', ' rel="external"' ],
+          [ 'Text', 'Text', ' rel="external"' ],
+          [ 'Compressed text (.gz)', 'TextGz' ]
+        );
+      }
+    
+      my $checked_params = {};
+      
+      foreach (@{$config->{$key}->{'params'}}) {
+        $checked_params->{"${output}_$_->[0]"} = 1;
+        
+        if ($object->param("${output}_$_->[0]") eq 'yes') {
+          $_->[0] =~ s/(miscset_)//;
+          
+          $href .= $1 ? ";miscset=$_->[0]" : ";st=$_->[0]";
+        }
+      }
+      
+      foreach (grep { /${output}_/ } $object->param) {
+        (my $param = $_) =~ s/${output}_//;
+        $href .= ";$param=" . $object->param($_) unless $checked_params->{$_};
+      }
+      
+      $content = qq{
+        <h2>Export Configuration - Output Format</h2>
+        <form id="export_output_configuration" class="std check" method="get" action="$form_action->[0]">
+          <fieldset>
+            $text
+            <ul>};
+          
+      foreach (@formats) {
+        my $format = ";_format=$_->[1]" if $_->[1];
+        my $link = $_->[4] || $href;
+        
+        $content .= qq{
+              <li><a class="modal_close" href="$link$format"$_->[2]>$_->[0]</a>$_->[3]</li>};
+      }
       
       $content .= qq{
-            <li><a class="modal_close" href="$link$format"$_->[2]>$_->[0]</a>$_->[3]</li>};
+            </ul>
+            <input type="submit" value="&lt; Back" class="submit" />
+            $hidden_params
+          </fieldset>
+        </form>};
+    } else { # User has input an invalid location
+      $content = qq{
+        <h2>Export Configuration - Output Format</h2>
+        <form id="export_output_configuration" class="std check" method="get" action="$form_action->[0]">
+          <fieldset>
+            <div class="error"><h3>Invalid Region</h3><p>The region you have chosen does not exist. Please go back and try again.</p></div>
+            <br />
+            <input type="submit" value="&lt; Back" class="submit" />
+            $hidden_params
+          </fieldset>
+        </form>};
     }
-    
-    $content .= qq{
-        </ul>
-        <input type="submit" value="&lt; Back" class="submit" />
-        $hidden_params
-      </form>};
   } else { # First page
     $vc->{'_temp'} = { config => $config, options => $options }; # Hack to get it through to ViewConfig
     $vc->form($object, 1);

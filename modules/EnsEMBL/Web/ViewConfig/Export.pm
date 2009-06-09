@@ -60,6 +60,8 @@ sub form {
   
   $custom_fields ||= [];
   
+  my $slice = $object->can('slice') ? $object->slice : $object->get_Slice;
+  
   # How confusing!
   my $form_action = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }, 1);
   
@@ -73,9 +75,9 @@ sub form {
     'type'  => 'NoEdit',
     'name'  => 'location_to_export',
     'label' => 'Location to export',
-    'value' => ($object->can('slice') ? $object->slice : $object->get_Slice)->name
+    'value' => $slice->name
   });
-    
+  
   if ($ENV{'ENSEMBL_TYPE'} eq 'Gene') {
     $view_config->add_form_element({
       'type'  => 'NoEdit',
@@ -113,15 +115,30 @@ sub form {
     });
   }
   
-  if (scalar @{$options->{'strand_values'}}) {
+  if ($ENV{'ENSEMBL_TYPE'} eq 'Location') {
     $view_config->add_form_element({
-      'type'     => 'DropDown', 
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'strand',
-      'label'    => 'Strand',
-      'values'   => $options->{'strand_values'}
+      'type'  => 'Raw',
+      'label' => 'Select location',
+      'raw'   => sprintf qq{
+        <input type="text" size="1" value="%s" name="new_region" class="input-text required" />
+        <input type="text" size="8" value="%s" name="new_start" class="input-text _posint required" />
+        <input type="text" size="8" value="%s" name="new_end" class="input-text _posint required" />
+        <select size="1" name="strand"><option value="1" %s>1</option><option value="-1" %s>-1</option></select>
+        <input type="hidden" name="g" value="" />
+        <input type="hidden" name="t" value="" />
+      }, $slice->seq_region_name, $slice->start, $slice->end, $slice->strand == 1 ? 'selected="selected"' : '', $slice->strand == 1 ?  '' : 'selected="selected"'
     });
+  } else {
+    if (scalar @{$options->{'strand_values'}}) {
+      $view_config->add_form_element({
+        'type'     => 'DropDown', 
+        'select'   => 'select',
+        'required' => 'yes',
+        'name'     => 'strand',
+        'label'    => 'Strand',
+        'values'   => $options->{'strand_values'}
+      });
+    }
   }
   
   $view_config->add_form_element($gene_markup_options{'flank5_display'});
