@@ -733,7 +733,8 @@ sub add_dna_align_feature {
         'description' => $data->{$key_2}{'description'},
         'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
         'renderers'   => $alignment_renderers,
-        'strand'      => 'b'
+        'strand'      => 'b',
+	'show_strands'=> $data->{$key_2}{'show_strands'} || '', #show alignments all on one strand if configured as such
       }));
     }
   }
