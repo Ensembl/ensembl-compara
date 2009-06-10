@@ -18,12 +18,11 @@ sub _das_link {
 
 sub feature_group {
   my( $self, $f ) = @_;
-  #this regexp will remove the differences in names between the ends of BACs.
-  #Only a start in getting the display accurate however - (i) seperate glyph, (ii) only one strand,
-  #(iii) distinguish between multiple mappings of the same end and the different ends
+  #this regexp will remove the differences in names between the ends of BACs/FOSmids.
+  (my $name = $f->hseqname) =~ s/(\..*|T7|SP6)$//;;
 #  (my $name = $f->hseqname) =~ s/(\.?[xyz][abc]|T7|SP6)$//;;
-#   return $name;
-  return $f->hseqname;    ## For core features this is what the sequence name is...
+  return $name;
+#  return $f->hseqname;    ## For core features this is what the sequence name is...
 }
 
 sub feature_label {
@@ -44,6 +43,14 @@ sub features {
   my @logic_names = @{ $self->my_config( 'logicnames' )||[] };
   $self->timer_push( 'Initializing don', undef, 'fetch' );
   my @results = map { $self->{'container'}->$method($_,undef,$db)||() } @logic_names;
+  #force all features to be on one strand if the config requests it
+  if (my $strand_shown = $self->my_config('show_strands')) {
+    foreach my $r (@results) {
+      foreach my $f (@$r) {
+	$f->strand($strand_shown);
+      }
+    }
+  }
   $self->timer_push( 'Retrieved features', undef, 'fetch' );
   my %results = ( $self->my_config('name') => [@results] );
   return %results;
