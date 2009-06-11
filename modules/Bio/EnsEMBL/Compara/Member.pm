@@ -192,17 +192,17 @@ sub new_from_transcript {
     
     $self->stable_id($transcript->translation->stable_id);
     $self->source_name("ENSEMBLPEP");
-
-   unless ($peptideBioSeq = $transcript->translate) {
-	throw("COREDB error: unable to get a BioSeq translation from ". $transcript->stable_id);
+    
+    unless ($peptideBioSeq = $transcript->translate) {
+      throw("COREDB error: unable to get a BioSeq translation from ". $transcript->stable_id);
     }
     eval {
-	$seq_string = $peptideBioSeq->seq;
+      $seq_string = $peptideBioSeq->seq;
     };
     throw "COREDB error: can't get seq from peptideBioSeq" if $@;
     # OR
     #$seq_string = $transcript->translation->seq;
-
+    
     if ($seq_string =~ /^X+$/) {
       warn("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
     }
@@ -213,16 +213,22 @@ sub new_from_transcript {
       #$seq_string =~ s/(.{72})/$1\n/g;
       $self->sequence($seq_string);
     }
-  }
-  else {
+  } elsif ($translate eq 'ncrna') {
     unless (defined $transcript->stable_id) {
       throw("COREDB error: does not contain transcript stable id for transcript_id ".$transcript->dbID."\n");
     }
     $self->stable_id($transcript->stable_id);
     $self->source_name("ENSEMBLTRANS");
-    #$self->sequence($transcript->seq);
-  }
 
+    unless ($seq_string = $transcript->spliced_seq) {
+      throw("COREDB error: unable to get a BioSeq spliced_seq from ". $transcript->stable_id);
+    }
+    if (length($seq_string) == 0) {
+      warn("zero length sequence from transcript " . $transcript->stable_id."\n");
+    }
+    $self->sequence($seq_string);
+  }
+  
   #print("Member->new_from_transcript\n");
   #print("  source_name = '" . $self->source_name . "'\n");
   #print("  stable_id = '" . $self->stable_id . "'\n");
