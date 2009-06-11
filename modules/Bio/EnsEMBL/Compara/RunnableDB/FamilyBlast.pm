@@ -180,7 +180,7 @@ sub run {
     my $blast_version           = $self->param('blast_version') || 'blast-2.2.6';
     my $blast_root              = $self->param('blast_root')    || ( '/software/ensembl/compara/' . $blast_version );
     my $blastmat_directory      = $self->param('blastmat_dir')  || ( $blast_root . '/data' );
-    my $blastall_executable     = $self->param('blastall_exec') || ( $blast_root . '/bin/blastall' );
+    my $blastall_executable     = $self->param('blastall_exec') || ( $blast_root . '/bin/blastall' ); # a soft link introduced into the directory structure of version 2.2.6 to conform with the pattern
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
 
