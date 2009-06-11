@@ -236,8 +236,12 @@ sub content {
   my $slice = $object->database('core')->get_SliceAdaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
   my $align = $object->param('align');
   
-  my ($html, $warnings);
+  my ($error) = $self->check_for_errors($object, $align, $object->species);
   
+  return $error if $error;
+  
+  my ($html, $warnings);
+ 
   # Get all slices for the gene
   my ($slices, $slice_length) = $self->get_slices($object, $slice, $align, $object->species);
   
