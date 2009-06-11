@@ -213,7 +213,7 @@ sub check_for_errors {
     return $self->_error(
       'Unknown alignment',
       sprintf (
-        '<p>The alignment you have select "%s" does not exist in the current database.</p>',
+        '<p>The alignment you have selected "%s" does not exist in the current database.</p>',
         escapeHTML($align)
       )
     );
