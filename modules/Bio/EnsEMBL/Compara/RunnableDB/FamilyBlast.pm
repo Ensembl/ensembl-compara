@@ -3,7 +3,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast;
 use strict;
 use FileHandle;
 
-use base ('Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Hive::Process');
 
 sub param {
     my $self = shift @_;
@@ -177,8 +177,10 @@ sub run {
     my $fastadb                 = $self->param('fastadb')   || die "'fastadb' is an obligatory parameter, please set it in the input_id hashref";
     my $minibatch               = $self->param('minibatch') || 1;
 
-    my $blastmat_directory      = $self->param('blastmat_dir')  || '/software/ensembl/compara/blast-2.2.6/data';
-    my $blastall_executable     = $self->param('blastall_exec') || '/software/ensembl/compara/blast-2.2.6/blastall';
+    my $blast_version           = $self->param('blast_version') || 'blast-2.2.6';
+    my $blast_root              = $self->param('blast_root')    || ( '/software/ensembl/compara/' . $blast_version );
+    my $blastmat_directory      = $self->param('blastmat_dir')  || ( $blast_root . '/data' );
+    my $blastall_executable     = $self->param('blastall_exec') || ( $blast_root . '/bin/blastall' );
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
 
