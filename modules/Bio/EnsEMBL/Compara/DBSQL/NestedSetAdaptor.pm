@@ -40,6 +40,18 @@ sub fetch_node_by_node_id {
   return $node;
 }
 
+sub fetch_node_by_node_id_with_super {
+  my ($self, $node_id, $super) = @_;
+
+  my $table= $self->tables->[0]->[1];
+  if ($super eq 'super') {
+    $table = 'super_' . $table;
+  }
+  my $constraint = "WHERE $table.node_id = $node_id";
+  my ($node) = @{$self->_generic_fetch($constraint)};
+  return $node;
+}
+
 
 sub fetch_parent_for_node {
   my ($self, $node) = @_;
@@ -161,10 +173,16 @@ sub fetch_subroot_by_left_right_index {
 }
 
 
+# This is experimental -- use at your own risk
 sub fetch_first_shared_ancestor_indexed {
   my $self = shift;
   my $node1 = shift;
   my $node2 = shift;
+
+  my $root_id1 = $node1->root_id;
+  my $root_id2 = $node2->root_id;
+
+  return undef unless ($root_id1 eq $root_id2);
 
   my $left_node_id1 = $node1->left_index;
   my $left_node_id2 = $node2->left_index;
@@ -180,7 +198,7 @@ sub fetch_first_shared_ancestor_indexed {
   $max_right = $right_node_id1 if ($right_node_id1 > $right_node_id2);
   $max_right = $right_node_id2 if ($right_node_id2 > $right_node_id1);
 
-  my $constraint = "WHERE left_index < $min_left";
+  my $constraint = "WHERE root_id=$root_id1 AND left_index < $min_left";
   $constraint .= " AND right_index > $max_right";
   $constraint .= " ORDER BY (right_index-left_index) LIMIT 1";
 
