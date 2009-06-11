@@ -392,8 +392,8 @@ sub _ajax_zmenu_compara_tree_node{
   # Possible speed up below
   # my $tagvalues = $node->{_tags};
   my $is_leaf = $node->is_leaf;
-  # my $leaf_count = scalar @{$node->get_all_leaves}; # Speed up below
-  my $leaf_count  = $node->num_leaves;
+  my $leaf_count = scalar @{$node->get_all_leaves}; # Speed up below
+  # my $leaf_count  = $node->num_leaves;
   my $parent_distance = $node->distance_to_parent || 0;
 
   # Caption
@@ -403,7 +403,9 @@ sub _ajax_zmenu_compara_tree_node{
   }
   $taxon ||= 'unknown';
   $panel->{'caption'} = "Taxon: $taxon";
-  if( my $alias = $tagvalues->{'taxon_alias'} ){
+  if( my $alias = $tagvalues->{'taxon_alias_mya'} ){
+    $panel->{'caption'} .= " ($alias)";
+  } elsif ( my $alias = $tagvalues->{'taxon_alias'} ){
     $panel->{'caption'} .= " ($alias)";
   }
 
