@@ -408,6 +408,48 @@ sub get_DASCollection{
 
 =cut
 
+sub fetch_userdata_by_id {
+  my ($self, $track_id) = @_;
+  return unless $track_id;
+  my $data = {};
+
+  my ($status, $type, $id) = split('-', $track_id);
+
+  if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
+    my ($content, $format);
+
+    my $tempdata = {};
+    if ($status eq 'temp') {
+      $tempdata = $self->get_session->get_data('type' => $type, 'code' => $id);
+    }
+    else {
+      my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+      my $record = $user->uploads($track_id);
+      $tempdata = {'filename' => $record->filename, 'format' => $record->format};
+    }
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+    if ($type eq 'url') {
+      $parser->parse_URL( $tempdata->{'filename'} );
+    }
+    else {
+      my $file = new EnsEMBL::Web::TmpFile::Text( filename => $tempdata->{'filename'} );
+      my $content = $file->retrieve;
+      return {} unless $content;
+      $parser->parse($content, $tempdata->{'format'} );
+    }
+    $data = {'parser' => $parser};
+}
+  else {
+    my $feat_objs = [];
+    my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
+    $feat_objs = $fa->fetch_all_by_Slice( $self->chromosome, $track_id );
+
+    $data = {'features' => $self->retrieve_userdata($feat_objs)};
+  }
+
+  return $data;
+}
+
 
 sub alternative_object_from_factory {
 ### There may be occassions when a script needs to work with features of
