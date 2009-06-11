@@ -25,7 +25,7 @@ sub fetch_by_dbID {
 ################
 
 sub store {
-  my ($self, $sequence) = @_;
+  my ($self, $sequence, $check_redundancy) = @_;
   my $seqID;
 
   return 0 unless($sequence);
@@ -33,25 +33,29 @@ sub store {
   my $dcs = $self->dbc->disconnect_when_inactive();
   $self->dbc->disconnect_when_inactive(0);
 
-  #27/4/2009 kb3 Commented out the following lines so that we no longer check if 
-  #a sequence already exists since this can take a very long time for the 2X 
-  #genomes. May end up with duplicate sequences but we expect this to be rare.
- # $self->dbc->do("LOCK TABLE sequence WRITE");
-  
-  #my $sth = $self->prepare("SELECT sequence_id FROM sequence WHERE sequence = ?");
-  #$sth->execute($sequence);
-  #($seqID) = $sth->fetchrow_array();
-  #$sth->finish;
-  #unless($seqID) {
+  $self->dbc->do("LOCK TABLE sequence WRITE");
+
+  # Check redundancy is now optional -- for genomic alignments it's
+  # faster to store redundant sequences than check for their
+  # existance, but for the GeneTrees we keep the sequences
+  # non-redundant
+  if ($check_redundancy) {
+    my $sth = $self->prepare("SELECT sequence_id FROM sequence WHERE sequence = ?");
+    $sth->execute($sequence);
+    ($seqID) = $sth->fetchrow_array();
+    $sth->finish;
+  }
+
+  if(!$seqID) {
     my $length = length($sequence);
 
     my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
     $sth2->execute($sequence, $length);
     $seqID = $sth2->{'mysql_insertid'};
     $sth2->finish;
-  #}
-  
-  #$self->dbc->do("UNLOCK TABLES");
+  }
+
+  $self->dbc->do("UNLOCK TABLES");
   $self->dbc->disconnect_when_inactive($dcs);
   return $seqID;
 }
