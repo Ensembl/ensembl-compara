@@ -153,7 +153,7 @@ sub _generate_objects_lw {
   my $self = shift;
   my $action = '_generate_objects_'.$ENV{'ENSEMBL_TYPE'};
   $self->timer_push( 'Lightweight core objects call' );
-  foreach (qw(pt t g r db v vdb source _referer align)) {
+  foreach (qw(pt t g r db v vdb source _referer)) {
     $self->{'parameters'}{$_} = $self->param($_);
   }
   $self->$action;
@@ -386,7 +386,6 @@ sub _generate_objects {
     $self->{'parameters'}{'_referer'} = $self->param('_referer') if $self->param('_referer');
   }
   $self->{'parameters'}{'h'} = $self->param('h') if $self->param('h');
-  $self->{'parameters'}{'align'} = $self->param('align') if $self->param('align');
 }
 
 sub _get_gene_location_from_transcript {
