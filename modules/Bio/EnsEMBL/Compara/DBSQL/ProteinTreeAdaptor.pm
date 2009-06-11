@@ -173,7 +173,7 @@ sub store_node {
     return $self->update_node($node);
   }
 
-  my $parent_id = 0; my $root_id = 0; my $clusterset_id = 0;
+  my $parent_id = 0; my $root_id = 0; my $clusterset_id = undef;
   if($node->parent) {
     $parent_id = $node->parent->node_id;
     if (ref($node->node_id)) {
@@ -184,8 +184,8 @@ sub store_node {
     } else {
       $root_id = $node->subroot->node_id;
     }
-    $clusterset_id = $node->clusterset_id;
   }
+  $clusterset_id = $node->clusterset_id || 1;
   #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
 
   my $sth = $self->prepare("INSERT INTO protein_tree_node 
@@ -224,7 +224,7 @@ sub update_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $parent_id = 0; my $root_id = 0; my $clusterset_id = 0;
+  my $parent_id = 0; my $root_id = 0; my $clusterset_id = undef;
   if($node->parent) {
     $parent_id = $node->parent->node_id;
     if (ref($node->node_id)) {
@@ -235,9 +235,9 @@ sub update_node {
     } else {
       $root_id = $node->subroot->node_id;
     }
-    $clusterset_id = $node->clusterset_id;
+    $clusterset_id = $node->clusterset_id || 1;
   }
-  $DB::single=1;1;
+
   my $sth = $self->prepare("UPDATE protein_tree_node SET
                             parent_id=?,
                             root_id=?,
@@ -345,6 +345,27 @@ sub delete_node_and_under {
   $self->dbc->do("DELETE from protein_tree_node WHERE node_id = $node_id");
   $self->dbc->do("DELETE from protein_tree_tag WHERE node_id = $node_id");
   $self->dbc->do("DELETE from protein_tree_member WHERE node_id = $node_id");
+}
+
+sub store_supertree_node_and_under {
+  my $self = shift;
+  my $node = shift;
+  $DB::single=1;1;
+  $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_node like protein_tree_node");
+  $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_member like protein_tree_member");
+  $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_tag like protein_tree_tag");
+
+  my @all_subnodes = $node->get_all_subnodes;
+  foreach my $subnode (@all_subnodes) {
+    my $subnode_id = $subnode->node_id;
+    $self->dbc->do("INSERT IGNORE into super_protein_tree_node SELECT * from protein_tree_node WHERE node_id = $subnode_id");
+    $self->dbc->do("INSERT IGNORE into super_protein_tree_member SELECT * from protein_tree_member WHERE node_id = $subnode_id");
+    $self->dbc->do("INSERT IGNORE into super_protein_tree_tag SELECT * from protein_tree_tag WHERE node_id = $subnode_id");
+  }
+  my $node_id = $node->node_id;
+  $self->dbc->do("INSERT IGNORE into super_protein_tree_node SELECT * from protein_tree_node WHERE node_id = $node_id");
+  $self->dbc->do("INSERT IGNORE into super_protein_tree_member SELECT * from protein_tree_member WHERE node_id = $node_id");
+  $self->dbc->do("INSERT IGNORE into super_protein_tree_tag SELECT * from protein_tree_tag WHERE node_id = $node_id");
 }
 
 ###################################
