@@ -453,6 +453,7 @@ sub _summarise_compara_db {
   ');
   my $constrained_elements = {};# $db_name };
   my %valid_species = map {($_,1)} keys %{$self->full_tree};
+  
   foreach my $row (@$res_aref) {
     my( $class, $type, $species, $name, $id, $species_set_id ) =
       ($row->[0], uc($row->[1]), $row->[2], $row->[3], $row->[4], $row->[5]);
@@ -466,8 +467,8 @@ sub _summarise_compara_db {
       $KEY = "CONSTRAINED_ELEMENTS";
       $constrained_elements->{$species_set_id} = $id;
       $name = "Constrained elements";
-    } elsif( $class =~ /tree_alignment/ || $type  =~ /ORTHEUS/ ) {
-      unless( $name eq '29 eutherian mammals EPO' || exists $self->db_tree->{$db_name}{$KEY}{$id} ) {
+    } elsif( $class =~ /tree_alignment/ || $type  =~ /EPO/ ) {
+      unless( $name eq '31 eutherian mammals EPO' || exists $self->db_tree->{$db_name}{$KEY}{$id} ) {
         $self->db_tree->{ $db_name }{$KEY}{$id}{'species'}{"Ancestral_sequences"}=1;
       }
     }
