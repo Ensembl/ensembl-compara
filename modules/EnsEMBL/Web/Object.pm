@@ -8,12 +8,15 @@ package EnsEMBL::Web::Object;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Proxiable);
+use CGI qw(escape);
 
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Document::Image;
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
-use CGI qw(escape);
+
+use base qw(EnsEMBL::Web::Proxiable);
+
 
 sub counts       { return {}; } 
 
