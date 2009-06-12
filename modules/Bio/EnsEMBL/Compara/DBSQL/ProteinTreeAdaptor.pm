@@ -94,6 +94,41 @@ sub fetch_AlignedMember_by_member_id_root_id {
   return $node;
 }
 
+# This is experimental -- use at your own risk
+sub fetch_first_shared_ancestor_indexed {
+  my $self = shift;
+  my $node1 = shift;
+  my $node2 = shift;
+
+  my $root_id1 = $node1->_root_id; # This depends on the new root_id field in the schema
+  my $root_id2 = $node2->_root_id;
+
+  return undef unless ($root_id1 eq $root_id2);
+
+  my $left_node_id1 = $node1->left_index;
+  my $left_node_id2 = $node2->left_index;
+
+  my $right_node_id1 = $node1->right_index;
+  my $right_node_id2 = $node2->right_index;
+
+  my $min_left;
+  $min_left = $left_node_id1 if ($left_node_id1 < $left_node_id2);
+  $min_left = $left_node_id2 if ($left_node_id2 < $left_node_id1);
+
+  my $max_right;
+  $max_right = $right_node_id1 if ($right_node_id1 > $right_node_id2);
+  $max_right = $right_node_id2 if ($right_node_id2 > $right_node_id1);
+
+  my $constraint = "WHERE t.root_id=$root_id1 AND left_index < $min_left";
+  $constraint .= " AND right_index > $max_right";
+  $constraint .= " ORDER BY (right_index-left_index) LIMIT 1";
+
+  my $ancestor = $self->_generic_fetch($constraint)->[0];
+
+  return $ancestor;
+}
+
+
 =head2 fetch_AlignedMember_by_member_id_mlssID
 
   Arg[1]     : int member_id of a peptide member (longest translation)
