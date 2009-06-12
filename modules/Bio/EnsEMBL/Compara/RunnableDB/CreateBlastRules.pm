@@ -164,7 +164,8 @@ sub createAllBlastRules
       # instead of a job per sp. This is to avoid creating an
       # exponentially large ((n*n-1)/2) number of jobs that collapses
       # the analysis_job table.
-      if ($blastAnalysis->module eq 'Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPepAcross') {
+      if ($blastAnalysis->module eq 'Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPepAcross'
+       || $blastAnalysis->module eq 'Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPepAcrossReuse') {
         my ($submit_id) = $submitAnalysis->logic_name =~ /SubmitPep_(.*)/;
         my ($blast_id) = $blastAnalysis->logic_name =~ /blast_(.*)/;
         next unless ($submit_id eq $blast_id);
