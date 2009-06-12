@@ -1589,15 +1589,15 @@ sub location_string {
 =cut
 
 sub vega_projection {
-	my $self = shift;
-	my $alt_assembly = shift;
-	my $alt_projection = $self->Obj->feature_Slice->project('chromosome', $alt_assembly);
-	my @alt_slices = ();
-	foreach my $seg (@{ $alt_projection }) {
-		my $alt_slice = $seg->to_Slice;
-		push @alt_slices, $alt_slice;
-	}
-	return \@alt_slices;
+  my $self = shift;
+  my $alt_assembly = shift;
+  my $alt_projection = $self->Obj->feature_Slice->project('chromosome', $alt_assembly);
+  my @alt_slices = ();
+  foreach my $seg (@{ $alt_projection }) {
+    my $alt_slice = $seg->to_Slice;
+    push @alt_slices, $alt_slice;
+  }
+  return \@alt_slices;
 }
 
 
@@ -1612,13 +1612,13 @@ sub vega_projection {
 =cut
 
 sub get_exon {
-	my $self    = shift;
-	my $exon_id = shift;
-	my $db      = shift;
-	my $dbs     = $self->DBConnection->get_DBAdaptor($db);
-	my $exon_adaptor = $dbs->get_ExonAdaptor;
-	my $exon    = $exon_adaptor->fetch_by_stable_id($exon_id,1 );
-	return $exon;
+  my $self    = shift;
+  my $exon_id = shift;
+  my $db      = shift;
+  my $dbs     = $self->DBConnection->get_DBAdaptor($db);
+  my $exon_adaptor = $dbs->get_ExonAdaptor;
+  my $exon    = $exon_adaptor->fetch_by_stable_id($exon_id,1 );
+  return $exon;
 }
 
 sub mod_date {
@@ -1683,68 +1683,68 @@ sub history {
 #alignview support features - some ported from schema49 AlignmentFactory#
 
 sub get_sf_hit_db_name {
-    my $self = shift;
-    my ($id) = @_;
-    my $hit = $self->get_hit($id);
-    return unless $hit;
-    return $hit->db_name;
+  my $self = shift;
+  my ($id) = @_;
+  my $hit = $self->get_hit($id);
+  return unless $hit;
+  return $hit->db_name;
 }
 
 sub get_hit {
-    my $self = shift;
-    my ($id) = @_;
-    foreach my $sf (@{$self->Obj->get_all_supporting_features}) {
-	return $sf if ($sf->hseqname eq $id);
+  my $self = shift;
+  my ($id) = @_;
+  foreach my $sf (@{$self->Obj->get_all_supporting_features}) {
+    return $sf if ($sf->hseqname eq $id);
+  }
+  foreach my $exon (@{$self->Obj->get_all_Exons()}) {
+    foreach my $sf (@{$exon->get_all_supporting_features}) {
+      return $sf if ($sf->hseqname eq $id);	
     }
-    foreach my $exon (@{$self->Obj->get_all_Exons()}) {
-	foreach my $sf (@{$exon->get_all_supporting_features}) {
-	    return $sf if ($sf->hseqname eq $id);	
-	}
-    }
-    return;
+  }
+  return;
 }
 
 sub determine_sequence_type{
-    my $self = shift;
-    my $sequence = shift;
-    return 'UNKNOWN' unless $sequence;
-    my $threshold = shift || 70; # %ACGT for seq to qualify as DNA
-    $sequence = uc( $sequence );
-    $sequence =~ s/\s|N//;
-    $sequence =~ s/^>.*\n//; #remove header line since long headers confuse sequence type determination
-    my $all_chars = length( $sequence );
-    return unless $all_chars;
-    my $dna_chars = ( $sequence =~ tr/ACGT// );
-    return ( ( $dna_chars/$all_chars ) * 100 ) > $threshold ? 'DNA' : 'PEP';
+  my $self = shift;
+  my $sequence = shift;
+  return 'UNKNOWN' unless $sequence;
+  my $threshold = shift || 70; # %ACGT for seq to qualify as DNA
+  $sequence = uc( $sequence );
+  $sequence =~ s/\s|N//;
+  $sequence =~ s/^>.*\n//; #remove header line since long headers confuse sequence type determination
+  my $all_chars = length( $sequence );
+  return unless $all_chars;
+  my $dna_chars = ( $sequence =~ tr/ACGT// );
+  return ( ( $dna_chars/$all_chars ) * 100 ) > $threshold ? 'DNA' : 'PEP';
 }
 
 sub split60 {
-    my($self,$seq) = @_;
-    $seq =~s/(.{1,60})/$1\n/g;
-    return $seq;
+  my($self,$seq) = @_;
+  $seq =~s/(.{1,60})/$1\n/g;
+  return $seq;
 }
 
 sub get_int_seq {
-    my $self      = shift;
-    my $obj       = shift  || return undef();
-    my $seq_type  = shift  || return undef(); # DNA || PEP
-    my $other_obj = shift;
-    my $fasta_prefix = join( '', '>',$obj->stable_id(),"<br />\n");
-    if( $seq_type eq "DNA" ){
-	return [ $fasta_prefix.$self->split60($obj->seq->seq()),
-		 length($obj->seq->seq()) ];
+  my $self      = shift;
+  my $obj       = shift  || return undef();
+  my $seq_type  = shift  || return undef(); # DNA || PEP
+  my $other_obj = shift;
+  my $fasta_prefix = join( '', '>',$obj->stable_id(),"<br />\n");
+  if( $seq_type eq "DNA" ){
+    return [ $fasta_prefix.$self->split60($obj->seq->seq()),
+	     length($obj->seq->seq()) ];
+  }
+  elsif( $seq_type eq "PEP" ){
+    if ($obj->isa('Bio::EnsEMBL::Exon') && $other_obj->isa('Bio::EnsEMBL::Transcript') ) {
+      return [ $fasta_prefix.$self->split60($obj->peptide($other_obj)->seq()),
+	       length($obj->peptide($other_obj)->seq()) ] if ($obj->peptide($other_obj) && $other_obj->translate);
     }
-    elsif( $seq_type eq "PEP" ){
-	if ($obj->isa('Bio::EnsEMBL::Exon') && $other_obj->isa('Bio::EnsEMBL::Transcript') ) {
-	    return [ $fasta_prefix.$self->split60($obj->peptide($other_obj)->seq()),
-		     length($obj->peptide($other_obj)->seq()) ] if ($obj->peptide($other_obj) && $other_obj->translate);
-	}
-	elsif( $obj->translate ) {
-	    return [ $fasta_prefix.$self->split60($obj->translate->seq()),
-		     length($obj->translate->seq()) ];
-	}
+    elsif( $obj->translate ) {
+      return [ $fasta_prefix.$self->split60($obj->translate->seq()),
+	       length($obj->translate->seq()) ];
     }
-    return [];
+  }
+  return [];
 }
 
 sub save_seq {
@@ -1772,56 +1772,56 @@ sub save_seq {
 =cut
 
 sub get_alignment{
-    my $self = shift;
-    my $ext_seq  = shift || return undef();
-    my $int_seq  = shift || return undef();
-    $int_seq =~ s/<br \/>//g;
-    my $seq_type = shift || return undef();
-    ## To stop box running out of memory - put an upper limit on the size of sequence
-    ## that alignview can handle...
-    if( length($int_seq) > 1e6 )  {
-	$self->problem('fatal', "Cannot align if sequence > 1 Mbase");
-	return undef;
-    }
-    if( length($ext_seq) > 1e6 )  {
-	$self->problem('fatal', "Cannot align if sequence > 1 Mbase");
-	return undef;
-    }
-    my $int_seq_file = $self->save_seq($int_seq);
-    my $ext_seq_file = $self->save_seq($ext_seq);
+  my $self = shift;
+  my $ext_seq  = shift || return undef();
+  my $int_seq  = shift || return undef();
+  $int_seq =~ s/<br \/>//g;
+  my $seq_type = shift || return undef();
+  ## To stop box running out of memory - put an upper limit on the size of sequence
+  ## that alignview can handle...
+  if( length($int_seq) > 1e6 )  {
+    $self->problem('fatal', "Cannot align if sequence > 1 Mbase");
+    return undef;
+  }
+  if( length($ext_seq) > 1e6 )  {
+    $self->problem('fatal', "Cannot align if sequence > 1 Mbase");
+    return undef;
+  }
+  my $int_seq_file = $self->save_seq($int_seq);
+  my $ext_seq_file = $self->save_seq($ext_seq);
+  
+  my $label_width  = '22'; #width of column for e! object label
+  my $output_width = 61; #width of alignment
+  my $dnaAlignExe = "%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s";
+  my $pepAlignExe = "%s/bin/psw -m %s/wisecfg/blosum62.bla %s %s -n %s -w %s > %s";
 
-    my $label_width  = '22'; #width of column for e! object label
-    my $output_width = 61; #width of alignment
-    my $dnaAlignExe = "%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s";
-    my $pepAlignExe = "%s/bin/psw -m %s/wisecfg/blosum62.bla %s %s -n %s -w %s > %s";
-
-    my $out_file = time().int(rand()*100000000).$$;
-    $out_file = $self->species_defs->ENSEMBL_TMP_DIR.'/'.$out_file.'.out';
-    
-    my $command;
-    if( $seq_type eq 'DNA' ){
-	$command = sprintf( $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file, '-aformat3 pairln' );
-     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
-	`$command`;
-	unless (open( OUT, "<$out_file" )) {
-	    $command = sprintf( $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file );
-     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
-	    `$command`;
-	}
-	unless (open( OUT, "<$out_file" )) {
-	    $self->problem('fatal', "Cannot open alignment file.", $!);
-	}
+  my $out_file = time().int(rand()*100000000).$$;
+  $out_file = $self->species_defs->ENSEMBL_TMP_DIR.'/'.$out_file.'.out';
+  
+  my $command;
+  if( $seq_type eq 'DNA' ){
+    $command = sprintf( $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file, '-aformat3 pairln' );
+    warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
+    `$command`;
+    unless (open( OUT, "<$out_file" )) {
+      $command = sprintf( $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file );
+      warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
+      `$command`;
     }
-    
-    elsif( $seq_type eq 'PEP' ){
-	$command = sprintf( $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $label_width, $output_width, $out_file );
-     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
-	`$command`;
-	unless (open( OUT, "<$out_file" )) {
-	    $self->problem('fatal', "Cannot open alignment file.", $!);
-	}
+    unless (open( OUT, "<$out_file" )) {
+      $self->problem('fatal', "Cannot open alignment file.", $!);
     }
-    else { return undef; }
+  }
+  
+  elsif( $seq_type eq 'PEP' ){
+    $command = sprintf( $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $label_width, $output_width, $out_file );
+    warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
+    `$command`;
+    unless (open( OUT, "<$out_file" )) {
+      $self->problem('fatal', "Cannot open alignment file.", $!);
+    }
+  }
+  else { return undef; }
     
     my $alignment ;
     while( <OUT> ){
