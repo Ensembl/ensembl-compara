@@ -92,7 +92,7 @@ sub fetch_input {
 
   $self->{'cdna'}           = 1;
   $self->{'bootstrap'}      = 1;
-  $self->{'max_gene_count'} = 200;
+  $self->{'max_gene_count'} = 410;
 
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -139,6 +139,7 @@ sub fetch_input {
 
 sub run {
   my $self = shift;
+
   $self->check_if_exit_cleanly;
   $self->run_njtree_phyml;
 }
@@ -212,6 +213,9 @@ sub get_params {
          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
+  if(defined($params->{'clusterset_id'})) {
+    $self->{'clusterset_id'} = $params->{'clusterset_id'};
+  }
   $self->{'jackknife'} = $params->{'jackknife'} if(defined($params->{'jackknife'}));
   $self->{'cdna'} = $params->{'cdna'} if(defined($params->{'cdna'}));
   $self->{'max_gene_count'} = 
@@ -223,7 +227,6 @@ sub get_params {
   }
 
   return;
-
 }
 
 
@@ -250,7 +253,7 @@ sub run_njtree_phyml
   return unless($self->{'input_aln'});
 
   $self->{'newick_file'} = $self->{'input_aln'} . "_njtree_phyml_tree.txt ";
-  
+
   my $njtree_phyml_executable = $self->analysis->program_file || '';
 
   unless (-e $njtree_phyml_executable) {
@@ -264,11 +267,35 @@ sub run_njtree_phyml
       $njtree_phyml_executable = "/nfs/acari/avilella/src/treesoft/trunk/treebest/treebest";
     }
   }
+  $DB::single=1;1;
+  throw("can't find a njtree executable to run\n") unless(-e $njtree_phyml_executable);
 
-  throw("can't find a njtree executable to run\n") 
-    unless(-e $njtree_phyml_executable);
-  throw("can't find species_tree_file\n") 
-    unless(-e $self->{'species_tree_file'});
+  # Defining a species_tree
+  # Option 1 is species_tree_string in protein_tree_tag, which then doesn't require tracking files around
+  # Option 2 is species_tree_file which should still work for compatibility
+  my $sql1 = "select value from protein_tree_tag where tag='species_tree_string'";
+  my $sth1 = $self->dbc->prepare($sql1);
+  $sth1->execute;
+  my $species_tree_string = $sth1->fetchrow_hashref;
+  $sth1->finish;
+  my $eval_species_tree;
+  eval {
+    $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string->{value});
+    my @leaves = @{$eval_species_tree->get_all_leaves};
+  };
+  $DB::single=1;1;
+  if($@) {
+    unless(-e $self->{'species_tree_file'}) {
+      throw("can't find species_tree\n");
+    }
+  } else {
+    $self->{species_tree_string} = $species_tree_string->{value};
+    my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
+    open SPECIESTREE, ">$spfilename" or die "$!";
+    print SPECIESTREE $self->{species_tree_string};
+    close SPECIESTREE;
+    $self->{'species_tree_file'} = $spfilename;
+  }
 
   # ./njtree best -f spec-v4.1.nh -p tree -o $BASENAME.best.nhx \
   # $BASENAME.nucl.mfa -b 100 2>&1/dev/null
@@ -372,13 +399,13 @@ sub check_job_fail_options
 {
   my $self = shift;
 
-  if ($self->input_job->retry_count == 1) {
-    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 200 && !defined($self->worker->{HIGHMEM})) {
-      $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
-      $self->DESTROY;
-      throw("NJTREE PHYML job too big: try something else and FAIL it");
-    }
-  }
+#   if ($self->input_job->retry_count == 1) {
+#     if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 205 && !defined($self->worker->{HIGHMEM})) {
+#       $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
+#       $self->DESTROY;
+#       throw("NJTREE PHYML job too big: try something else and FAIL it");
+#     }
+#   }
 
   # This will go to QuickTreeBreak
   if($self->input_job->retry_count >= 2 && !defined($self->{'jackknife'})) {
@@ -482,6 +509,7 @@ sub store_proteintree
   printf("PHYML::store_proteintree\n") if($self->debug);
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   $treeDBA->sync_tree_leftright_index($self->{'protein_tree'});
+  $self->{'protein_tree'}->clusterset_id($self->{clusterset_id});
   $treeDBA->store($self->{'protein_tree'});
   $treeDBA->delete_nodes_not_in_tree($self->{'protein_tree'});
 
@@ -494,7 +522,7 @@ sub store_proteintree
   $self->{'protein_tree'}->store_tag('reconciliation_method', 'njtree_best');
   $self->store_tags($self->{'protein_tree'});
 
-  $self->_store_tree_tags();
+  $self->_store_tree_tags;
 
   return undef;
 }
@@ -595,15 +623,6 @@ sub store_tags
       $node->store_tag('SIS2', $sis_score);
     }
   }
-#   if (defined($node->get_tagvalue("SIS3"))) {
-#     my $sis_score = $node->get_tagvalue("SIS3");
-#     if (defined($sis_score) && $sis_score ne '') {
-#       if ($self->debug) {
-#         printf("store SIS3 : $sis_score "); $node->print_node;
-#       }
-#       $node->store_tag('SIS3', $sis_score);
-#     }
-#  }
 
   foreach my $child (@{$node->children}) {
     $self->store_tags($child);
@@ -657,7 +676,7 @@ sub parse_newick_into_proteintree
       $member->print_member;
     }
   }
-  
+
   # Merge the trees so that the children of the newick tree are now
   # attached to the input tree's root node
   $tree->merge_children($newtree);
@@ -679,6 +698,7 @@ sub parse_newick_into_proteintree
 
 sub _store_tree_tags {
     my $self = shift;
+
     my $tree = $self->{'protein_tree'};
     my $pta = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
 
@@ -687,14 +707,6 @@ sub _store_tree_tags {
 
     my @leaves = @{$tree->get_all_leaves};
     my @nodes = @{$tree->get_all_nodes};
-
-    # Node is a root node (full tree).
-    my $node_is_root = 0;
-    my @roots = @{$pta->fetch_all_roots()};
-    foreach my $root (@roots) {
-	$node_is_root = 1 if ($root->node_id == $tree->parent->node_id);
-    }
-    $tree->store_tag("node_is_root",$node_is_root);
 
     # Node is leaf node.
     my $node_is_leaf = 0;
