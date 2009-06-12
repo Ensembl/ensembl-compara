@@ -26,8 +26,8 @@ sub content {
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
   $table->add_columns(
     { 'key' => 'res',    'title' => 'Residue',            'width' => '10%', 'align' => 'center' },
-    { 'key' => 'id',     'title' => 'SNP ID',             'width' => '15%', 'align' => 'center' }, 
-    { 'key' => 'type',   'title' => 'SNP type',           'width' => '20%', 'align' => 'center' },
+    { 'key' => 'id',     'title' => 'Variation ID',             'width' => '15%', 'align' => 'center' }, 
+    { 'key' => 'type',   'title' => 'Variation type',           'width' => '20%', 'align' => 'center' },
     { 'key' => 'allele', 'title' => 'Alleles',            'width' => '20%', 'align' => 'center' },
     { 'key' => 'ambig',  'title' => 'Ambiguity code',     'width' => '15%', 'align' => 'center' },
     { 'key' => 'alt',    'title' => 'Alternate residues', 'width' => '20%', 'align' => 'center' }
