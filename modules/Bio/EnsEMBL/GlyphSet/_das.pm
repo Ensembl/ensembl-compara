@@ -45,6 +45,11 @@ sub features       {
   local $Data::Dumper::Indent = 1;    
   for my $logic_name ( @logic_names ) {
 
+    # Pass through errors about the source itself, e.g. unsupported coordinates
+    if (my $source_error = $data->{ $logic_name }{ 'source' }{ 'error' }) {
+      push @errors, $source_error;
+    }
+
     my $stylesheet = $data->{ $logic_name }{ 'stylesheet' }{ 'object' }
       || Bio::EnsEMBL::ExternalData::DAS::Stylesheet->new();
     for my $segment ( keys %{ $data->{ $logic_name }{ 'features' } } ) {
