@@ -172,6 +172,19 @@ sub store_clusters {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   my $starttime = time();
 
+  my $filename;
+  my $fasta_dir = $self->{fasta_dir};
+  if (defined($self->{retry})) {
+    $filename = $fasta_dir . "/" . "hcluster.out";
+  } else {
+    $filename = $self->worker_temp_directory . "/" . "hcluster.out";
+    my $copy_filename = $fasta_dir . "/" . "hcluster.out";
+    my $cpcmd = "cp $filename $copy_filename";
+    unless(system($cpcmd) == 0) {
+      warn "failed to copy $filename to $copy_filename\n";
+    }
+  }
+
   my $clusterset;
   $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
   if (!defined($clusterset)) {
@@ -181,7 +194,7 @@ sub store_clusters {
 
     $clusterset->name("PROTEIN_TREES");
     $treeDBA->store_node($clusterset);
-    printf("root_id %d\n", $clusterset->node_id);
+    printf("clusterset_id %d\n", $clusterset->node_id);
     $self->{'clusterset_id'} = $clusterset->node_id;
     $mlssDBA->store($self->{'cluster_mlss'});
     printf("MLSS %d\n", $self->{'cluster_mlss'}->dbID);
@@ -190,13 +203,6 @@ sub store_clusters {
   my $mlss_id = $self->{'cluster_mlss'}->dbID;
   $mlss_id = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->{cluster_mlss}->method_link_type,$self->{cluster_mlss}->species_set)->dbID unless (defined($mlss_id));
 
-  my $filename;
-  if (defined($self->{retry})) {
-    my $fasta_dir = $self->{fasta_dir};
-    $filename = $fasta_dir . "/" . "hcluster.out";
-  } else {
-    $filename = $self->worker_temp_directory . "/" . "hcluster.out";
-  }
   $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
   $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
 
@@ -216,7 +222,9 @@ sub store_clusters {
     # If it's a singleton, we don't store it as a protein tree
     next if (2 > scalar(@cluster_list));
 
-    if($counter % 20 == 0) { printf("%10d clusters\n", $counter); }
+    if($counter % 20 == 0) { 
+      printf("%10d clusters\n", $counter); 
+    }
     $counter++;
 
     my $cluster = new Bio::EnsEMBL::Compara::NestedSet;
@@ -236,7 +244,6 @@ sub store_clusters {
       next if ($number_raw_cluster == (scalar keys %$already_present));
     }
 
-    $DB::single=1;1;
     foreach my $member_hcluster_id (@cluster_list) {
       my ($pmember_id,$genome_db_id) = split("_",$member_hcluster_id);
       if (defined($self->{retry}) && $self->{retry} >= 20) {
@@ -248,6 +255,7 @@ sub store_clusters {
       my $node = new Bio::EnsEMBL::Compara::NestedSet;
       $node->node_id($pmember_id);
       $cluster->add_child($node);
+      $cluster->clusterset_id($self->{'clusterset_id'});
       #leaves are NestedSet objects, bless to make into AlignedMember objects
       bless $node, "Bio::EnsEMBL::Compara::AlignedMember";
 
@@ -269,7 +277,7 @@ sub store_clusters {
     # $cluster->store_tag('include_brh', $self->{'include_brh'});
     # $cluster->store_tag('bsr_threshold', $self->{'bsr_threshold'});
   }
-
+  close FILE;
   return 1;
 }
 
@@ -353,14 +361,17 @@ sub dataflow_clusters {
     $clusterset = $self->{'ccEngine'}->clusterset;
   }
   my $clusters = $clusterset->children;
+  my $counter = 0;
   foreach my $cluster (@{$clusters}) {
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
                             $cluster->node_id, $clusterset->node_id);
     if (defined($self->{retry})) {
       my $readded_cluster_tag = $cluster->get_tagvalue("readded_cluster");
-      next unless (1 == $readded_cluster_tag); # Will skip flow unless is one of the readded
+      next unless (1 == $readded_cluster_tag || 11 != ($self->{retry})); # Will skip flow unless is one of the readded
     }
     $self->dataflow_output_id($output_id, 2);
+    printf("%10d clusters flowed\n", $counter) if($counter % 20 == 0);
+    $counter++;
   }
 }
 
