@@ -140,25 +140,23 @@ sub get_slices {
   my @slices;
   my @formatted_slices;
   my $length;
-  my $sd = $object->species_defs;
+  my $vega_compara = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
 
   if ($align) {
     push @slices, @{$self->get_alignments(@_)};
   } else {
-    # If no alignment selected then we just display the original sequence as in geneseqview
-    push @slices, $slice;
+    push @slices, $slice; # If no alignment selected then we just display the original sequence as in geneseqview
   }
 
   foreach (@slices) {
-    my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
-    #if we have a self compara then add chrom name to the displays
-    if ($sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'}) {
-      $name = $self->get_full_name($_);
-    }
-    push @formatted_slices, { 'slice' => $_,
-			      'underlying_slices' => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [$_],
-			      'name' => $name,
-			    };
+    my $name = $vega_compara ? $self->get_full_name($_) : $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
+    
+    push @formatted_slices, { 
+      'slice' => $_,
+      'underlying_slices' => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [$_],
+      'name' => $name
+    };
+    
     $length ||= $_->length; # Set the slice length value for the reference slice only
   }
   
@@ -168,7 +166,8 @@ sub get_slices {
 sub get_alignments {
   my $self = shift;
   my ($object, $slice, $selected_alignment, $species, $start, $end) = @_;
-  ($selected_alignment) = split '--', $selected_alignment;  
+  
+  ($selected_alignment) = split '--', $selected_alignment;
   $selected_alignment ||= 'NONE';
   
   my $compara_db = $object->database('compara');
@@ -178,7 +177,7 @@ sub get_alignments {
   my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, 'expanded', 'restrict');
   
   my @selected_species;
-
+  
   foreach (grep { /species_$selected_alignment/ } $object->param) {
     if ($object->param($_) eq 'yes') {
       /species_${selected_alignment}_(.+)/;
@@ -195,7 +194,7 @@ sub get_alignments {
   unshift (@selected_species, $species) if scalar @selected_species;
   
   $align_slice = $align_slice->sub_AlignSlice($start, $end) if ($start && $end);
-  
+   
   return $align_slice->get_all_Slices(@selected_species);
 }
 
@@ -315,11 +314,12 @@ sub get_slice_table {
 
   foreach (@$slices) {
     my $species = $_->{'name'};
+    
     next unless $species;
-    if (my $chr_name = $_->{'chrom_name'}) {
-      $species .= " $chr_name";
-    }
+      
+    $species .= " $_->{'chrom_name'}" if $_->{'chrom_name'};    
     $species_padding = length $species if $return_padding && length ($species) > $species_padding;
+    
     $table_rows .= qq{
     <tr>
       <th>$species &gt;&nbsp;</th>
@@ -386,24 +386,26 @@ sub markup_region_change {
   }
 }
 
-#get full name of seq-region from which the alignment comes
+# get full name of seq-region from which the alignment comes
 sub get_full_name {
   my $self   = shift;
   my $sl     = shift;
   my $object = $self->object;
-  if (ref($sl) eq ('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
+  my $id;  
+  
+  if (ref $sl eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice') {
     my $species_name = $sl->seq_region_name;
     my $chr_name = $sl->{'slice_mapper_pairs'}[0]{'slice'}{'seq_region_name'};
-    my $id = $species_name.':'.$chr_name;
-    $id =~ s/ /_/g;
-    return $id;
+    
+    $id = $species_name . ':' . $chr_name;
+  } else {
+    $id = $object->species;
   }
-  else {
-    my $id = $object->species;
-    $id =~ s/ /_/g;
-    return $id;
-  }
+  
+  $id =~ s/ /_/g;
+
+  return $id;
 }
 
-
 1;
+
