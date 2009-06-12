@@ -258,7 +258,7 @@ sub ExtURL { return $_[0]{'data'}{'_ext_url_'} ||= EnsEMBL::Web::ExtURL->new( $_
 
 sub get_ExtURL      {
   my $self = shift;
-  my $new_url = $self->ExtURL || return;
+  my $new_url = CGI::escapeHTML($self->ExtURL) || return;
   return $new_url->get_url( @_ );
 }
 
