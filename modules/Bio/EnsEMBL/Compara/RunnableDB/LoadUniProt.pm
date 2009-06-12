@@ -73,8 +73,9 @@ use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
 
 use Bio::EnsEMBL::Hive;
-
 use Bio::EnsEMBL::Hive::Process;
+
+use Bio::SeqIO;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 =head2 fetch_input
