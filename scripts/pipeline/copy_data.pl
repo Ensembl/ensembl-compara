@@ -366,16 +366,18 @@ sub copy_genomic_align_blocks {
         MIN(gab.group_id), MAX(gab.group_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
         MIN(gag.group_id), MAX(gag.group_id),
-	MIN(gat.node_id), MAX(gat.node_id)
+	MIN(gat.node_id), MAX(gat.node_id),
+	MAX(gat.right_index)
       FROM genomic_align_block gab
         LEFT JOIN genomic_align ga using (genomic_align_block_id)
         LEFT JOIN genomic_align_group gag using (genomic_align_id)
-	LEFT JOIN genomic_align_tree gat ON gat.node_id = ga.genomic_align_id
+	LEFT JOIN genomic_align_tree gat ON gat.node_id = gag.group_id
       WHERE
         gab.method_link_species_set_id = ?");
 
   $sth->execute($mlss_id);
-  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, $min_gag, $max_gag, $min_gat, $max_gat) =
+  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, $min_gag, 
+		$max_gag, $min_gat, $max_gat, $max_gat_right_index) =
       $sth->fetchrow_array();
 
   $sth->finish();
@@ -383,20 +385,18 @@ sub copy_genomic_align_blocks {
   my $lower_limit = $mlss_id * 10**10;
   my $upper_limit = ($mlss_id + 1) * 10**10;
   my $fix_lower; 
-  my $fix_higher;
+  my $fix_index_length = 0;
 
   if ($max_gab < 10**10 and $max_ga < 10**10 and (!defined($max_gab_gid) or $max_gab_gid < 10**10) and
       (!defined($max_gag) or $max_gag < 10**10)) {
     ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
     $fix_lower = $lower_limit;
-    $fix_higher = --$upper_limit;
   } elsif ($max_gab < $upper_limit and $max_ga < $upper_limit and (!defined($max_gag) or $max_gag < $upper_limit)
           and (!defined($max_gab_gid) or $max_gab_gid < $upper_limit)
       and $min_gab >= $lower_limit and $min_ga >= $lower_limit and (!defined($min_gag) or $min_gag >= $lower_limit)
           and (!defined($min_gab_gid) or $min_gab_gid >= $lower_limit)) {
     ## Internal IDs are OK.
     $fix_lower = 0;
-    $fix_higher = 0;
   } else {
     print " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
   }
@@ -446,18 +446,25 @@ sub copy_genomic_align_blocks {
   if(defined($max_gat)) {
     $sth = $to_dba->dbc->prepare("SELECT count(*)
         FROM genomic_align_tree
-        WHERE node_id >= $lower_limit
-            AND node_id < $upper_limit");
+        WHERE node_id >= $min_gat
+            AND node_id < $max_gat");
     $sth->execute();
-    ($count) = $sth->fetchrow_array();
+    my ($count) = $sth->fetchrow_array();
     if ($count) {
       print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
         " ** ERROR **  genomic_align_tree table with IDs within the range defined by the\n",
         " ** ERROR **  convention!\n";
       exit(1);
-    }
+   }
+   my $sth_index = $to_dba->dbc->prepare("SELECT max(right_index) 
+	FROM genomic_align_tree");
+   $sth_index->execute();
+   #make sure the left_index and right_index are unique in the *to* db
+   $fix_index_length = 10 ** ( length( $sth_index->fetchrow_array() ) );
+   if($max_gat_right_index > $fix_index_length) {
+     $fix_index_length = 0;
+   }
   }
-
   #copy genomic_align table. Need to update dnafrag column
   if ($trust_to && $fix_dnafrag) {
 
@@ -504,9 +511,15 @@ sub copy_genomic_align_blocks {
   if(defined($max_gat)) {
     copy_data($from_dba, $to_dba,
         "genomic_align_tree",
-        "SELECT node_id+$fix_lower, parent_id+$fix_lower, root_id+$fix_lower, left_index, right_index, left_node_id+$fix_lower, right_node_id+$fix_lower, distance_to_parent".
-          " FROM genomic_align_tree ".
-          " WHERE node_id BETWEEN node_id+$fix_lower AND node_id+$fix_higher");
+        "SELECT node_id+$fix_lower, parent_id+$fix_lower, root_id+$fix_lower, left_index+$fix_index_length, right_index+$fix_index_length, left_node_id+$fix_lower, right_node_id+$fix_lower, distance_to_parent".
+        " FROM genomic_align_tree ".
+	"WHERE node_id >= $min_gat AND node_id <= $max_gat");
+    #Reset the appropriate nodes to zero
+    foreach my $gt_field( qw/ parent_id node_id left_node_id right_node_id / ) {
+       my $gt_sth = $to_dba->dbc->prepare("UPDATE genomic_align_tree SET $gt_field = ($gt_field - ?)
+					WHERE $gt_field = ?");
+       $gt_sth->execute($fix_lower, $fix_lower);
+    }
   }
 }
 
@@ -760,6 +773,7 @@ sub copy_data_in_text_mode {
 
   my $start = 0;
   my $step = 100000;
+  $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
   while (1) {
     my $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
     $start += $step;
@@ -782,7 +796,7 @@ sub copy_data_in_text_mode {
     }
     unlink("$filename");
   }
-
+  $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
 }
 
 =head2 copy_data_in_binary_mode
@@ -821,7 +835,7 @@ sub copy_data_in_binary_mode {
 
   my $start = 0;
   my $step = 1000000;
-
+  $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
   while (1) {
     ## Copy data into a aux. table
     my $sth = $from_dba->dbc->prepare("CREATE TABLE temp_$table_name $query LIMIT $start, $step");
@@ -863,6 +877,7 @@ sub copy_data_in_binary_mode {
     ## Delete dump file
     unlink("$filename");
   }
+  $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
 
 }
 
