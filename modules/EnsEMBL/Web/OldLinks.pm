@@ -11,8 +11,10 @@ our %mapping = (
   'mapview'               => [ { 'type' => 'Location',   'action' => 'Chromosome',    'initial_release' => 1 } ],
   'cytoview'              => [ { 'type' => 'Location',   'action' => 'Overview',      'initial_release' => 1 } ],
   'contigview'            => [ { 'type' => 'Location',   'action' => 'View',          'initial_release' => 1 } ],
+  'sequencealignview'     => [ { 'type' => 'Location',   'action' => 'SequenceAlignment','initial_release' => 46} ],
   'syntenyview'           => [ { 'type' => 'Location',   'action' => 'Synteny',       'initial_release' => 1 } ],
   'markerview'            => [ { 'type' => 'Location',   'action' => 'Marker',        'initial_release' => 1 } ],
+  'ldview'                => [ { 'type' => 'Location',   'action' => 'LD',            'initial_release' => 50 } ],
   'geneview'              => [ { 'type' => 'Gene',       'action' => 'Summary',       'initial_release' => 1 },
 			       { 'type' => 'Gene',       'action' => 'Matches',       'initial_release' => 1 },
 			       { 'type' => 'Gene',       'action' => 'Compara_Ortholog', 'initial_release' => 1 },
@@ -64,10 +66,7 @@ our %mapping = (
   #redundant ?
   'dasconfview'           => [ { 'type' => 'UserData',   'action' => 'Attach',        'initial_release' => 1 } ],
   'helpview'              => [ { 'type' => 'Help',       'action' => 'Search',        'initial_release' => 34 } ],
-  'ldtableview'           => [ { 'type' => 'Location',   'action' => 'LDtable',       'initial_release' => 34 } ],
-  'ldview'                => [ { 'type' => 'Location',   'action' => 'LD',            'initial_release' => 31 } ],
   'miscsetview'           => [ { 'type' => 'Location',   'action' => 'Miscset',       'initial_release' => 34 } ],
-  'sequencealignview'     => [ { 'type' => 'Location',   'action' => 'SequenceAlignment','initial_release' => 43 } ],
 );
 
 sub new {
