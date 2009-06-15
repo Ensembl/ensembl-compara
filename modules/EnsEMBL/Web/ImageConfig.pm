@@ -560,7 +560,6 @@ sub load_tracks {
     $self->add_marker_feature(        $key,$dbs_hash->{$db}{'tables'} ); # To marker tree                                ##DONE
     $self->add_qtl_feature(           $key,$dbs_hash->{$db}{'tables'} ); # To marker tree                                ##DONE
     $self->add_misc_feature(          $key,$dbs_hash->{$db}{'tables'} ); # To misc_feature tree                          ##DONE
-    $self->add_oligo_probe(           $key,$dbs_hash->{$db}{'tables'} ); # To oligo tree                                 ##DONE
     $self->add_prediction_transcript( $key,$dbs_hash->{$db}{'tables'} ); # To prediction_transcript tree                 ##DONE
     $self->add_protein_align_feature( $key,$dbs_hash->{$db}{'tables'} ); # To protein_align_feature_tree                 ##DONE
     $self->add_protein_feature(       $key,$dbs_hash->{$db}{'tables'} ); # To protein_feature_tree                       ## 2 do ##
@@ -579,9 +578,10 @@ sub load_tracks {
   }
   foreach my $db ( @{$self->species_defs->funcgen_like_databases||[]} ) {
     next unless exists $dbs_hash->{$db};
-    my $key = lc(substr($db,9));
+    my $key = lc(substr($db,9)); 
     ## Configure 
     $self->add_regulation_feature(    $key,$dbs_hash->{$db}{'tables'}, $species ); # Add to regulation_feature tree
+    $self->add_oligo_probe(           $key,$dbs_hash->{$db}{'tables'} ); # To oligo tree
   }
   foreach my $db ( @{$self->species_defs->variation_like_databases||[]} ) {
     next unless exists $dbs_hash->{$db};
@@ -649,17 +649,17 @@ sub _check_menus {
 sub _merge {
   my( $self, $_sub_tree, $sub_type ) = @_;
   my $data = {};
-  my $tree = $_sub_tree->{'analyses'};
-  my $config_name = $self->{'type'};
+  my $tree = $_sub_tree->{'analyses'};  
+  my $config_name = $self->{'type'};  
 
-  foreach my $analysis (keys %$tree) { 
-    my $sub_tree = $tree->{$analysis}; 
+  foreach my $analysis (keys %$tree) {  
+    my $sub_tree = $tree->{$analysis};  
     next unless $sub_tree->{'disp'}; ## Don't include non-displayable tracks
 #local $Data::Dumper::Indent=0;
     #warn Data::Dumper::Dumper($sub_tree->{'web'});
     #warn ".... $sub_type {",$sub_tree->{'web'}{ $sub_type },"}";
     next if exists $sub_tree->{'web'}{ $sub_type }{'do_not_display'};
-    my $key = $sub_tree->{'web'}{'key'} || $analysis;
+    my $key = $sub_tree->{'web'}{'key'} || $analysis; 
     foreach ( keys %{$sub_tree->{'web'}||{}} ) {
 #warn "............ $_ ...............";
       next if $_ eq 'desc';
@@ -988,7 +988,7 @@ sub add_misc_feature {
 }
 
 sub add_oligo_probe {
-  my( $self, $key, $hashref ) = @_;
+  my( $self, $key, $hashref ) = @_; 
   return unless $self->get_node( 'oligo' );
 
   my $menu = $self->get_node('oligo');
@@ -1348,26 +1348,36 @@ sub add_tracks {
 #----------------------------------------------------------------------#
 
 sub add_regulation_feature { ## needs configuring so tracks only display if data in species fg_database
-  my( $self, $key, $hashref, $species ) = @_; 
-  return unless $self->get_node( 'functional' );
-  my ($keys, $data) = $self->_merge($hashref->{'analysis_description'});    
+  my( $self, $key, $hashref, $species ) = @_;  
+  return unless $self->get_node( 'functional' ); 
   my $menu = $self->get_node( 'functional' ); 
-  foreach my $key_2 ( @$keys ) {
-    my $K = $data->{$key_2}{'type'}||'other'; 
+
+  my $results = $hashref->{'result_set'};
+  my $features = $hashref->{'feature_set'};
+  my %funcgen = (%$results,%$features);
+  my ($keys, $data) = $self->_merge($hashref->{'feature_set'});   
+  my ($keys_a, $data_a) = $self->_merge($hashref->{'result_set'});
+
+  my @all_keys = (@$keys, @$keys_a);
+  my %all_data = (%$data, %$data_a);
+  my $fg_data = \%all_data;
+  foreach my $key_2 ( @all_keys ) { 
+    my $K = $fg_data->{$key_2}{'type'}||'other';   
+    next if $K eq 'other';
     my $render = ['off'=> 'Off','normal' => 'Normal'];
     my $legend_flag = 0; 
     my $wiggle_flag = 0;
     my $cisred_flag = 0;
 
-    if ( $data->{$key_2}{'renderers'}) {
-      my %renderers = %{ $data->{$key_2}{'renderers'} };
+    if ( $fg_data->{$key_2}{'renderers'}) {
+      my %renderers = %{ $fg_data->{$key_2}{'renderers'} };
       my @temp;
       foreach  (keys %renderers){
         my $value = $renderers{$_};
         push (@temp, $_);
         push (@temp, $value);
         if ($_ =~/signal/){ 
-          unless ( $data->{$key_2}{'type'} =~/histone/ ){
+          unless ( $fg_data->{$key_2}{'type'} =~/histone/ ){
           $wiggle_flag = 1; 
           }      
         }
@@ -1375,31 +1385,31 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
       $render = \@temp;
     }
     if ($K =~/fg_reg/) { $legend_flag = 1; }
-    if ($data->{$key_2}{'description'}  =~/cisRED/){ $cisred_flag = 1; }
+    if ($fg_data->{$key_2}{'description'}  =~/cisRED/){ $cisred_flag = 1; }
 
-    $menu->append($self->create_track ($K.'_'.$key, sprintf($data->{$key_2}{'name'}||$data->{$key_2}{'logic_names'}),{
+    $menu->append($self->create_track ($K.'_'.$key, sprintf($fg_data->{$key_2}{'name'}||$fg_data->{$key_2}{'logic_names'}),{
       'db'          => $key,
       'glyphset'    => $K,
       'sources'     => 'undef',
       'strand'      => 'r',
       'labels'      => 'on',
-      'depth'       => $data->{$key_2}{'depth'}||0.5,
-      'colourset'   => $data->{$key_2}{'colourset'}||$K,
-      'description' => $data->{$key_2}{'description'},
-      'display'     => $data->{$key_2}{'display'}||'off', 
+      'depth'       => $fg_data->{$key_2}{'depth'}||0.5,
+      'colourset'   => $fg_data->{$key_2}{'colourset'}||$K,
+      'description' => $fg_data->{$key_2}{'description'},
+      'display'     => $fg_data->{$key_2}{'display'}||'off', 
       'renderers'   => $render, 
     }));
     if ( $wiggle_flag ){ 
-      $menu->append($self->create_track ($K.'_'.$key. '_blocks', sprintf($data->{$key_2}{'name'} .' peaks'|| $data->{$key_2}{'logic_names'} .' peaks'),{
+      $menu->append($self->create_track ($K.'_'.$key. '_blocks', sprintf($fg_data->{$key_2}{'name'} .' peaks'|| $fg_data->{$key_2}{'logic_names'} .' peaks'),{
         'db'          => $key,
         'glyphset'    => $K,
         'sources'     => 'undef',
         'strand'      => 'r',
         'labels'      => 'on',
-        'depth'       => $data->{$key_2}{'depth'}||0.5,
-        'colourset'   => $data->{$key_2}{'colourset'}||$K,
-        'description' => $data->{$key_2}{'description'},
-        'display'     => $data->{$key_2}{'display'}||'off',
+        'depth'       => $fg_data->{$key_2}{'depth'}||0.5,
+        'colourset'   => $fg_data->{$key_2}{'colourset'}||$K,
+        'description' => $fg_data->{$key_2}{'description'},
+        'display'     => $fg_data->{$key_2}{'display'}||'off',
         'renderers'   => ['off'=>'Off','compact'=>'Normal'],
       }));
     }
