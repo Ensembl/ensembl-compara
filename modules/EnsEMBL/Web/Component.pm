@@ -564,8 +564,8 @@ sub get_sequence_data {
         }
       }
       
-      # Put deletes second, so that they will overwrite the markup of other variations in the same location
-      my @ordered_snps = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ $_->end < $_->start ? 1 : 0, $_ ] } @$snps;
+      # Put 1bp snps second, so that they will overwrite the markup of other variations in the same location
+      my @ordered_snps = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ $_->end == $_->start ? 1 : 0, $_ ] } @$snps;
       
       foreach (@ordered_snps) {
         my $snp_type = 'snp';
@@ -636,6 +636,9 @@ sub get_sequence_data {
         # Add the chromosome number for the link text if we're doing species comparisons or resequencing.
         $snp_start = $snp->seq_region_name . ":$snp_start" if (scalar keys %$u_snps && $config->{'line_numbering'} eq 'slice');
         
+        my $species = $config->{'ref_slice_name'} ? $config->{'species'} : $name;
+        my $link_text = qq{ <a href="/$species/Variation/Summary?v=$variation_name;vf=$dbID;vdb=variation">$snp_start:$alleles</a>;};
+        
         for ($s..$e) {
           # FIXME: API currently returns variations when the resequenced individuals match the reference
           # This line can be deleted once we get the correct set.
@@ -646,12 +649,7 @@ sub get_sequence_data {
           $mk->{'variations'}->{$_}->{'type'} = $snp_type;
           $mk->{'variations'}->{$_}->{'alleles'} .= ($mk->{'variations'}->{$_}->{'alleles'} ? '; ' : '') . $alleles;
           
-          if ($_ == $s) {
-            $mk->{'variations'}->{$_}->{'link_text'} = "$snp_start:$alleles";
-            $mk->{'variations'}->{$_}->{'v'} = $variation_name;
-            $mk->{'variations'}->{$_}->{'vf'} = $dbID;
-            $mk->{'variations'}->{$_}->{'species'} = $config->{'ref_slice_name'} ? $config->{'species'} : $name;
-          } 
+          unshift @{$mk->{'variations'}->{$_}->{'link_text'}}, $link_text if $_ == $s;
         }
       }
     }
@@ -872,7 +870,7 @@ sub markup_variation {
       $seq->[$_]->{'class'} .= "$class->{$variation->{'type'}} ";
       
       if ($config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'}) {          
-        $seq->[$_]->{'post'} = qq{ <a href="/$variation->{'species'}/Variation/Summary?v=$variation->{'v'};vf=$variation->{'vf'};vdb=variation">$variation->{'link_text'}</a>;};
+        $seq->[$_]->{'post'} = join '', @{$variation->{'link_text'}};
       }
 
       $snps = 1 if $variation->{'type'} eq 'snp';
