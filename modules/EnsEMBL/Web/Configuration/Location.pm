@@ -243,6 +243,8 @@ sub haploview_files {
 sub populate_tree {
   my $self = shift;
   my $object = $self->object;
+  my $availability = $object->availability;
+  my $caption;
 
   $self->create_node( 'Genome', "Whole genome",
     [qw(genome EnsEMBL::Web::Component::Location::Genome)],
@@ -279,7 +281,8 @@ sub populate_tree {
   );
 
   my $align_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );
-  $align_menu->append( $self->create_node( 'Compara_Alignments', 'Genomic alignments ([[counts::alignments]])',
+  $caption = $availability->{'slice'} ? 'Genomic alignments ([[counts::alignments]])' : 'Genomic alignments';
+  $align_menu->append( $self->create_node( 'Compara_Alignments', $caption,
     [qw(
       botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
@@ -303,8 +306,7 @@ sub populate_tree {
     [qw(gen_alignment      EnsEMBL::Web::Component::Location::ComparaGenomicAlignment)],
     {'no_menu_entry' => 1 }
   ));
-  my $availability = $object->availability;
-  my $caption = $availability->{'chromosome'} ? 'Synteny ([[counts::synteny]])' : 'Synteny';
+  $caption = $availability->{'chromosome'} ? 'Synteny ([[counts::synteny]])' : 'Synteny';
   $align_menu->append( $self->create_node( 'Synteny', $caption,
     [qw(
       image      EnsEMBL::Web::Component::Location::SyntenyImage
