@@ -136,7 +136,7 @@ sub _summarise_core_tables {
   foreach my $table ( qw(
 	dna_align_feature protein_align_feature simple_feature
         protein_feature marker_feature qtl_feature
-	repeat_feature ditag_feature oligo_feature
+	repeat_feature ditag_feature 
         transcript gene prediction_transcript unmapped_object
   )) {
     my $res_aref = $dbh->selectall_arrayref(
@@ -163,19 +163,6 @@ sub _summarise_core_tables {
 #
 
 #
-# * Oligos
-#
-  $t_aref = $dbh->selectall_arrayref(
-    'select a.name,count(*) as n
-       from oligo_array as a straight_join oligo_probe as p on
-            a.oligo_array_id=p.oligo_array_id straight_join oligo_feature f on
-            p.oligo_probe_id=f.oligo_probe_id
-      group by a.name'
-  );
-  foreach my $row (@$t_aref) {
-    $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$row->[0]} = $row->[1];
-  }
-#  
 # * Repeats
 #
   $t_aref = $dbh->selectall_arrayref(
@@ -311,82 +298,79 @@ sub _summarise_variation_db {
 }
 
 sub _summarise_funcgen_db {
-  my($self,$code,$db_name) = @_;
-  my $dbh     = $self->db_connect( $db_name );
+  my($self, $db_key, $db_name) = @_;
+  my $dbh  = $self->db_connect( $db_name );
   return unless $dbh;
   push @{ $self->db_tree->{'funcgen_like_databases'} }, $db_name;
   $self->_summarise_generic( $db_name, $dbh );
-#---------- Get information from analysis_description table to auto-configure funcgen tracks
+##
 ## Grab each of the analyses - will use these in a moment...
 ##
   my $t_aref = $dbh->selectall_arrayref(
-    "select a.analysis_id, a.logic_name, a.created,
+    'select a.analysis_id, a.logic_name, a.created,
             ad.display_label, ad.description,
-            ad.displayable, ad.web_data, fs.name 
-       from analysis  a left join analysis_description as ad on a.analysis_id=ad.analysis_id, feature_set fs
-       where ad.web_data not like 'NULL' and fs.analysis_id=ad.analysis_id"   
+            ad.displayable, ad.web_data
+       from analysis a left join analysis_description as ad on a.analysis_id=ad.analysis_id'
   );
   my $analysis = {};
   foreach my $a_aref (@$t_aref) {
 ## Strip out "crap" at front and end! probably some q(')s...
     ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
-       $A =~ s/[^}]+$//;
+    $A =~ s/[^}]+$//;
     my $T = eval($A);
 
-       $T = {} unless ref($T) eq 'HASH';
+    $T = {} unless ref($T) eq 'HASH';
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
       'description' => $a_aref->[4],
-      'displayable' => 1,
-      'fs_name'     => $a_aref->[7],
+      'displayable' => $a_aref->[5],
       'web_data'    => $T
     };
   }
- my $r_aref = $dbh->selectall_arrayref(
-    "select a.analysis_id, a.logic_name, a.created,
-            ad.display_label, ad.description,
-            ad.displayable, ad.web_data, rs.name
-       from analysis  a left join analysis_description as ad on a.analysis_id=ad.analysis_id, result_set rs
-       where ad.web_data not like 'NULL' and rs.analysis_id=ad.analysis_id"
-  );
-  foreach my $a_aref (@$r_aref) {
-## Strip out "crap" at front and end! probably some q(')s...
-    ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
-       $A =~ s/[^}]+$//;
-    my $T = eval($A);
 
-
-       $T = {} unless ref($T) eq 'HASH';
-    $analysis->{ $a_aref->[0] } = {
-      'logic_name'  => $a_aref->[1],
-      'name'        => $a_aref->[3],
-      'description' => $a_aref->[4],
-      'displayable' => 1,
-      'fs_name'     => $a_aref->[7],
-      'web_data'    => $T
-    };
-  }
- foreach my $table ( qw(
-   analysis_description
+##
+## Let us get analysis information about each feature type...
+##
+  foreach my $table ( qw(
+   probe_feature feature_set result_set 
   )) {
     my $res_aref = $dbh->selectall_arrayref(
       "select analysis_id,count(*) from $table group by analysis_id"
     );
     foreach my $T ( @$res_aref ) {
-      my $a_ref = $analysis->{$T->[0]}
-        || ( warn("Missing analysis entry $table - $T->[0]\n") && next );
+      my $a_ref = $analysis->{$T->[0]};
+        #|| ( warn("Missing analysis entry $table - $T->[0]\n") && next );
       my $value = {
-        'name'    => $a_ref->{'name'},
-        'desc'    => $a_ref->{'description'},
-        'disp'    => $a_ref->{'displayable'},
-        'web'     => $a_ref->{'web_data'},
-        'feature' => $a_ref->{'fs_name'},
-        'count'   => $T->[1]
-      };
+        'name'  => $a_ref->{'name'},
+        'desc'  => $a_ref->{'description'},
+        'disp'  => $a_ref->{'displayable'},
+        'web'   => $a_ref->{'web_data'},
+        'count' => $T->[1]
+      }; 
       $self->db_details($db_name)->{'tables'}{$table}{'analyses'}{$a_ref->{'logic_name'}} = $value;
     }
   }
+
+#---------- Additional queries - by type...
+
+#
+# * Oligos
+#
+  $t_aref = $dbh->selectall_arrayref(
+    'select a.name,count(*) as n
+       from array_chip as a straight_join probe as p on
+            a.array_chip_id=p.array_chip_id straight_join probe_feature f on
+            p.probe_id=f.probe_id
+      group by a.name'
+  );
+  foreach my $row (@$t_aref) {
+    $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$row->[0]} = $row->[1];
+  }
+#
+# * functional genomics tracks
+#
+ 
   $dbh->disconnect();
 }
 
