@@ -70,7 +70,11 @@ sub content {
   
   foreach my $individual (@individuals) {
     my $slice = $ref_slice_obj->get_by_strain($individual);
-    push (@individual_slices, $slice) if $slice;
+    
+    if ($slice) {
+      $slice->remove_indels; # FIXME: Can be removed once resequencing view is fixed by variation team
+      push @individual_slices, $slice;
+    }
   }
   
   if (scalar @individual_slices) {
@@ -112,6 +116,9 @@ sub content {
     if ($slice_array->[0]->isa('Bio::EnsEMBL::StrainSlice')) {
       $config->{'key'} .= '<p><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</p>';
     }
+    
+    # FIXME: Can be removed once resequencing view is fixed by variation team 
+    $config->{'key'} =~ s/(Location of SNPs)/$1 - <strong>Note: Inserts and deletes are currently disabled for this display<\/strong>/;
     
     my $slice_name = $object->slice->name;
     
