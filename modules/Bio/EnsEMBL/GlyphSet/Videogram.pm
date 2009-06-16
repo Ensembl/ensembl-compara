@@ -80,12 +80,13 @@ sub _init {
   #
   my @annot_bands;
 
+  my $alt_stain = 25;
   if(scalar @bands) {
     for my $band (@bands) {
       my $bandname       = $band->name();
       my $vc_band_start  = $band->start() + $v_offset;
       my $vc_band_end    = $band->end() + $v_offset;
-      my $stain          = $band->stain();
+      my $stain          = lc( $band->stain());
 
       if ($stain =~ /Annotation/mx) {
         push @annot_bands, $band;
@@ -99,8 +100,11 @@ sub _init {
           'title' => "Band: ".( $stain eq 'acen' ? 'Centromere' : $bandname )
         );
       }
-
-      my $colour = $self->my_colour($stain);
+      unless($stain) {
+        $stain = 'gpos'.$alt_stain;
+        $alt_stain = 100 - $alt_stain;
+      }
+      my $colour = $self->my_colour($stain); 
       if( $stain eq 'acen' ) {
         if( $done_1_acen ) {
           CORE::push @decorations, $self->Poly({
