@@ -75,7 +75,6 @@ sub _init {
       'absolutey' => 1,
     }));
     
-    #my $fontcolour = $self->my_colour( $stain,'label' ) || 'black';
     if( $fontcolour ne 'invisible' ) {
       my @res = $self->get_text_width( ($vc_band_end-$vc_band_start+1)*$pix_per_bp, $bandname, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     # only add the lable if the box is big enough to hold it...
