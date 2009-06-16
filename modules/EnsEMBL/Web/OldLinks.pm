@@ -41,14 +41,14 @@ our %mapping = (
 			       { 'type' => 'Transcript', 'action' => 'GO',            'initial_release' => 1 },
 			       { 'type' => 'Transcript', 'action' => 'ExternalData',  'initial_release' => 1 },
 			       { 'type' => 'Transcript', 'action' => 'UserAnnotation', 'initial_release' => 1 }, ],
-  'exonview'              => [ { 'type' => 'Transcript', 'action' => 'SupportingEvidence',       'initial_release' => 1 },
-			       { 'type' => 'Transcript', 'action' => 'Exons',         'initial_release' => 1 } ],
+  'exonview'              => [ { 'type' => 'Transcript', 'action' => 'Exons',         'initial_release' => 1 },
+			       { 'type' => 'Transcript', 'action' => 'SupportingEvidence',       'initial_release' => 1 }, ],
   'protview'              => [ { 'type' => 'Transcript', 'action' => 'ProteinSummary','initial_release' => 1 },
 			       { 'type' => 'Transcript', 'action' => 'Domains',        'initial_release' => 1},
 			       { 'type' => 'Transcript', 'action' => 'Sequence_Protein','initial_release' => 1 },
 			       { 'type' => 'Transcript', 'action' => 'ProtVariations', 'initial_release' => 1 },],
-  'transcriptsnpview'     => [ { 'type' => 'Transcript', 'action' => 'Population/Image','initial_release' => 37 } ,
-			       { 'type' => 'Transcript', 'action' => 'Population',    'initial_release' => 37 } ],
+  'transcriptsnpview'     => [ { 'type' => 'Transcript', 'action' => 'Population','initial_release' => 37 } ,
+			       { 'type' => 'Transcript', 'action' => 'Population/Image',    'initial_release' => 37 } ],
   'domainview'            => [ { 'type' => 'Transcript', 'action' => 'Domains/Genes', 'initial_release' => 1,} ],
   'alignview'             => [ { 'type' => 'Transcript', 'action' => 'SupportingEvidence/Alignment', 'initial_release' => 1 },
 			       { 'type' => 'Transcript', 'action' => 'Similarity/Align', 'initial_release' => 1 } ],
@@ -76,7 +76,7 @@ sub new {
 sub get_redirect {
   my( $self, $old_name ) = @_;
   return undef unless exists $mapping{ $old_name };
-  return $mapping{ $old_name }{ 'type' }.'/'.$mapping{ $old_name }{ 'action' };
+  return $mapping{ $old_name }[0]{ 'type' }.'/'.$mapping{ $old_name }[0]{ 'action' };
 }
 
 sub get_archive_redirect {
