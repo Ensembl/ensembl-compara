@@ -69,6 +69,37 @@ sub create_node {
   });
 }
 
+sub create_node_after {
+### Creates a new EnsEMBL::Web::OrderedTree::Node with previous key given by the first parame.
+
+  my( $self,  $key, $data ) = @_;
+  $data ||= {};
+  $key ||= $self->_generate_unique_key();
+  warn "DUPLICATE KEY $key" if exists( $self->{'_tree_info'}{'nodes'}{$key} );
+  return undef if exists( $self->{'_tree_info'}{'nodes'}{$key} );
+  my $prev_node = $self->{'_tree_info'}{'nodes'}{$data->{'prev_node'}};
+  my $left  = $prev_node->{'left'};
+  my $right = $prev_node->{'right'};
+
+  #reset positions of later nodes
+  while (my ($key, $node) = each (%{$self->{'_tree_info'}{'nodes'}})) {
+    next if $node->{'right'} <= $right;
+    $node->{'right'} += 2;
+    $node->{'left'} += 2;
+  }
+  $self->{'_tree_info'}{'nodes'}{$key} = {
+    'left' => $right+1, 'right' => $right+2,
+    'parent_key' => '', 'data' => $data
+  };
+  $self->{'_tree_info'}{'_sorted_keys'} = [];
+  return EnsEMBL::Web::OrderedTree::Node->new({
+    '_key'       => $key,
+    '_tree_info' => $self->{_tree_info},
+    '_user_data' => $self->{_user_data}
+  });
+}
+
+
 sub nodes {
 ### Returns an array of nodes from the tree in L-R order..
   my $self = shift;

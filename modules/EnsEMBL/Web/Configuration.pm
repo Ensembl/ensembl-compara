@@ -1040,6 +1040,23 @@ sub create_node {
   }
 }
 
+sub create_node_after {
+  my ( $self, $prev, $code, $caption, $components, $options ) = @_;
+  my $details = {
+    caption    => $caption,
+    components => $components,
+    code       => $code,
+    type       => 'view',
+    prev_node  => $prev,
+  };
+  foreach ( keys %{$options||{}} ) {
+    $details->{$_} = $options->{$_};
+  }
+  if( $self->tree ) {
+    return $self->tree->create_node_after( $code, $details );
+  }
+}
+
 sub create_subnode {
   my ( $self, $code, $caption, $components, $options ) = @_;
 
