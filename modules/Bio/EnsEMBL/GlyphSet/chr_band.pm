@@ -59,20 +59,23 @@ sub _init {
     my $max_end   = $vc_band_end   if(!defined $max_end   || $max_end   < $vc_band_end); 
 
     my $col = $self->my_colour( $stain );
-    unless( $col ) {
-      $col = shift @t_colour;
-      push @t_colour, ($col = shift @t_colour);
-    } 
+    my $fontcolour = $self->my_colour( $stain,'label' ) || 'black';
+    unless( $stain ) {
+      $stain = shift @t_colour;
+      $col = $self->my_colour( $stain );
+      $fontcolour = $self->my_colour( $stain,'label' );
+      push @t_colour, ($stain = shift @t_colour);
+    }
     $self->push($self->Rect({
       'x'      => $vc_band_start -1 ,
       'y'      => 0,
       'width'  => $vc_band_end - $vc_band_start +1 ,
       'height' => $h + 4,
-      'colour' => $self->my_colour( $stain ) || 'white',
+      'colour' => $col || 'white',
       'absolutey' => 1,
     }));
     
-    my $fontcolour = $self->my_colour( $stain,'label' ) || 'black';
+    #my $fontcolour = $self->my_colour( $stain,'label' ) || 'black';
     if( $fontcolour ne 'invisible' ) {
       my @res = $self->get_text_width( ($vc_band_end-$vc_band_start+1)*$pix_per_bp, $bandname, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     # only add the lable if the box is big enough to hold it...
