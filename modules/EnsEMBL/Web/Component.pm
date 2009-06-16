@@ -516,7 +516,7 @@ sub get_sequence_data {
       for (0..scalar(@{$sl->{'underlying_slices'}})-2) {
         my $end_region   = $sl->{'underlying_slices'}->[$_];
         my $start_region = $sl->{'underlying_slices'}->[$_+1];
-        warn length($end_region->seq(1)) . " " . $end_region->length;
+        
         $s += length($end_region->seq(1));
         
         $mk->{'region_change'}->{$s-1} = $end_region->name   . ' END';
