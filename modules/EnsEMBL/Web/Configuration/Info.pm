@@ -67,6 +67,9 @@ sub populate_tree {
   if($sample_data && keys %$sample_data) {
     my $data_menu = $self->create_submenu( 'Data', 'Sample entry points' );
     my $karyotype = scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}) ? 'Karyotype' : 'Karyotype (not available)';
+    my $karyotype_url = $sample_data->{'KARYOTYPE_PARAM'}
+      ? '/'.$self->species.'/Location/Genome?r='.$sample_data->{'KARYOTYPE_PARAM'}
+      : '/'.$self->species.'/Location/Genome';
 
     my $location_url    = "/$species_path/Location/View?r=".$sample_data->{'LOCATION_PARAM'};
     my $location_text   = $sample_data->{'LOCATION_TEXT'} || 'not available';
@@ -80,7 +83,7 @@ sub populate_tree {
     $data_menu->append( $self->create_node( 'Karyotype', $karyotype,
       [qw(location      EnsEMBL::Web::Component::Location::Genome)],
       { 'availability' => scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}),
-        'url' => '/'.$self->species.'/Location/Genome' }
+        'url' => $karyotype_url }
     ));
     $data_menu->append( $self->create_node( 'Location', "Location ($location_text)",
       [qw(location      EnsEMBL::Web::Component::Location::Summary)],
