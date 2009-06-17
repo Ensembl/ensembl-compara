@@ -69,6 +69,7 @@ sub _summarise_generic {
     }
   }
 #---------- Meta table (everything except patches)
+## Needs tweaking to work with new ensembl_ontology_xx db, which has no species_id in meta table
   if( $self->_table_exists( $db_name, 'meta' ) ) {
     $t_aref  = $dbh->selectall_arrayref(
       'select meta_key,meta_value,meta_id, species_id
@@ -740,7 +741,7 @@ sub _summarise_go_db {
   my $db_name = 'DATABASE_GO';
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
-  $self->_summarise_generic( $db_name, $dbh );
+  #$self->_summarise_generic( $db_name, $dbh );
   $dbh->disconnect();
 }
 
@@ -856,6 +857,16 @@ sub _munge_meta {
     $self->tree->{$key} = $self->_meta_info('DATABASE_CORE',$keys{$key})->[0];
   }
 
+  ## Get assembly mappings (if any)
+  my $mappings = $self->_meta_info('DATABASE_CORE','assembly.mapping') || [];
+  my $chr_mappings = [];
+  foreach my $string (@$mappings) {
+    next unless $string =~ /#chromosome/;
+    push @$chr_mappings, $string;
+  }
+  $self->tree->{'ASSEMBLY_MAPPINGS'} = $chr_mappings;
+
+  ## Munge genebuild info
   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
   my $gb_start = $self->_meta_info('DATABASE_CORE','genebuild.start_date')->[0];
   my @A = split('-', $gb_start);
