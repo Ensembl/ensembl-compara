@@ -352,7 +352,9 @@ sub dumpGenomicAlignment {
                  and t.seq_region_id = sr.seq_region_id
                group by a.logic_name, t.hit_name");
       $sth->execute();
+      my $c = 0;
       while( my( $logic_name, $label, $hid, $sr_name, $sr_start, $sr_end, $count  ) = $sth->fetchrow_array ) {
+	$c++;
 	print D join "\t",
 	  (INC_SPECIES?"$species\t":"")."$type: ".($label||$logic_name),
 	    $hid,
@@ -360,6 +362,7 @@ sub dumpGenomicAlignment {
 		$hid,
 		  qq($logic_name $hid hits the genome in $count locations.\n);
       }
+#      warn "Dumped $c genomic alignments from $DB_NAME $table";
     }
     if (0) {#$db eq 'cdna') { #don't do these for now
       my $sth    = $conf->{'dbh'}->prepare(
@@ -386,21 +389,25 @@ sub dumpOligoProbe {
   my $conf = shift;
   open A, ">$conf->{'directory'}/OligoProbe.txt";
   my $species = $conf->{'species'};
-  my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
-  my $sth    = $conf->{'dbh'}->prepare(
-    "select p.probeset, count(*) as hits, a.type, sr.name, f.seq_region_start, f.seq_region_end
-       from oligo_probe p, oligo_feature f, oligo_array a, seq_region sr
-      where p.oligo_probe_id = f.oligo_probe_id 
-        and p.oligo_array_id = a.oligo_array_id
-        and f.seq_region_id = sr.seq_region_id
-      group by p.probeset"
-  );
-  $sth->execute();
-  while( my( $hid, $count, $type, $sr_name, $sr_start, $sr_end ) = $sth->fetchrow_array ) {
-    next unless $hid;
-    print A join "\t", (INC_SPECIES?"$species\t":"")."$type Oligo Probe set",
-      $hid, "/$species/Location/Genome?ftype=OligoFeature;id=$hid",
-      $hid, qq($type oligo probeset $hid hits the genome in $count locations.\n);
+  my $FUNCDB = $conf->{'dbs'}->{'DATABASE_FUNCGEN'};
+  if ($FUNCDB) {
+    my $sth    = $conf->{'dbh'}->prepare(
+      "select ps.name, count(*) as hits, a.vendor, sr.name, pf.seq_region_start, pf.seq_region_end
+         from $FUNCDB.probe_set ps, $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.seq_region sr, $FUNCDB.array_chip ac, $FUNCDB.array a
+        where ps.probe_set_id = p.probe_set_id
+          and p.probe_id  = pf.probe_id
+          and pf.seq_region_id = sr.seq_region_id
+          and p.array_chip_id = ac.array_chip_id
+          and ac.array_id = a.array_id
+        group by ps.name"
+    );
+    $sth->execute();
+    while( my( $hid, $count, $type, $sr_name, $sr_start, $sr_end ) = $sth->fetchrow_array ) {
+      next unless $hid;
+      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Oligo Probe set",
+	$hid, "/$species/Location/Genome?ftype=OligoFeature;id=$hid",
+	  $hid, qq($type oligo probeset $hid hits the genome in $count locations.\n);
+    }
   }
   close A;
 }
