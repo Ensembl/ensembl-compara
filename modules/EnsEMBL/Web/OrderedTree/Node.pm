@@ -307,7 +307,7 @@ sub add_before {
 }
 
 sub add_after {
-### Splice in subtree $node as sibling before current node!
+### Splice in subtree $node as sibling after current node!
   my( $self, $node ) = @_;
   return undef if $self->is_descendant_of( $node ); # Cannot splice tree as part of parent
   $node->_node()->{parent_key} = $self->parent_key;
