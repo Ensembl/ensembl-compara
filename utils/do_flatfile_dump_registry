@@ -380,8 +380,8 @@ require Bio::EnsEMBL::Utils::SeqDumper;
 unless ($no_log) {
   ( my $time = gmtime(time) ) =~ s/\s+/\./g;
   $logfile ||= "logs/flat" . "_$time.log";
-  # print STDERR "Using logfile $logfile\n";
-  # open( STDERR, "> $logfile" ) || die "Can't create file:$!\n";
+  print STDERR "Using logfile $logfile\n";
+  open( STDERR, "> $logfile" ) || die "Can't create file:$!\n";
 }
 
 $dumpdir ||= $basedir . "release-$sitedefs_release";
@@ -419,8 +419,8 @@ foreach my $spp (@species) {
     # Sort slices
     my $i = 1;
 
-    if ( defined( $chr_list{ lc($spp) } ) ) {
-      foreach ( $chr_list{ lc($spp) } || [] ) {
+    if ( exists( $chr_list{ lc($spp) } ) ) {
+      foreach ( $chr_list{ lc($spp) } ) {
         $chr_sorter{$_} = $i++;
       }
     }
@@ -432,6 +432,9 @@ foreach my $spp (@species) {
     } else {
       if ( keys %chr_sorter ) {
         info( 1, "Using chr sorter" );
+
+        local $^W = 0;
+
         @slices = sort {
           $chr_sorter{ $b->seq_region_name() } <=>
             $chr_sorter{ $a->seq_region_name() }
@@ -440,6 +443,7 @@ foreach my $spp (@species) {
           $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
             $inc_nonref )
             || [] };
+
       } else {
         info( 1, "Unsorted results" );
         @slices = @{
