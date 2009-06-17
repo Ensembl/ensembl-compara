@@ -1,6 +1,8 @@
 package EnsEMBL::Web::CoreObjects;
 
 use strict;
+use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Root);
 use EnsEMBL::Web::RegObj;
@@ -163,11 +165,20 @@ sub _generate_objects_Location {
   my $self = shift; ;
   my($r,$s,$e) = $self->{'parameters'}{'r'} =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
   my $db_adaptor= $self->database('core');
-  my $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+  my $t = undef;
+  eval {
+    $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+  };
+  
   if($t && $s < 1 || $e > $t->seq_region_length ) {
     $s = 1 if $s<1;
+    $e = 1 if $e<1;
+    $s = $t->seq_region_length if $s > $t->seq_region_length;
     $e = $t->seq_region_length if $e > $t->seq_region_length;
-    $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+    $t = undef;
+    eval {
+      $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+    };
   }
   $self->timer_push( 'Location fetched', undef, 'fetch' );
   $self->location( $t );
@@ -192,7 +203,6 @@ sub _generate_objects_Gene {
   my $self = shift;
   $self->{'parameters'}{'db'} ||= 'core';
   my $db_adaptor = $self->database($self->{'parameters'}{'db'});
-  warn "G = ".$self->{'parameters'}{'g'};
   my $t = $db_adaptor->get_GeneAdaptor->fetch_by_stable_id( $self->{'parameters'}{'g'} );
   $self->timer_push( 'Gene fetched', undef, 'fetch' );
   $self->gene( $t );
@@ -204,7 +214,6 @@ sub _generate_objects_Variation {
   my $db_adaptor = $self->database($self->{'parameters'}{'vdb'});
   my $t = $db_adaptor->getVariationAdaptor->fetch_by_name( $self->{'parameters'}{'v'}, $self->{'parameters'}{'source'} );
   $self->timer_push( 'Gene fetched', undef, 'fetch' );
-  warn $t;
   $self->variation( $t );
   $self->timer_push( 'Fetching location', undef );
   $self->_generate_objects_Location;
@@ -332,24 +341,35 @@ sub _generate_objects {
       if( ($s||$e) ) {
         my $db_adaptor= $self->database('core');
         if($db_adaptor){
-        my $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
-        if( $t ) {
-          my @attrib = @{ $t->get_all_Attributes( 'toplevel' )||[] }; ## Check to see if top-level as "toplevel" above is b*ll*cks
-          if( @attrib && ( $s < 1 || $e > $t->seq_region_length ) ) {
-            $s = 1 if $s<1;
-            $e = $t->seq_region_length if $e > $t->seq_region_length;
+          my $t = undef;
+          eval {
             $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+          };
+          if( $t ) {
+            my @attrib = @{ $t->get_all_Attributes( 'toplevel' )||[] }; ## Check to see if top-level as "toplevel" above is b*ll*cks
+            if( @attrib && ( $s < 1 || $e > $t->seq_region_length ) ) {
+              $s = 1 if $s<1;
+              $s = $t->seq_region_length if $s > $t->seq_region_length;
+              $e = 1 if $e<1;
+              $e = $t->seq_region_length if $e > $t->seq_region_length;
+              $t = undef;
+              eval {
+                $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+              };
+            }
+            if( $t && @attrib ) {
+              $self->location( $t );
+              $self->{'parameters'}{'r'} = $t->seq_region_name.':'.$t->start.'-'.$t->end;
+            }
           }
-          if( $t && @attrib ) {
-            $self->location( $t );
-            $self->{'parameters'}{'r'} = $t->seq_region_name.':'.$t->start.'-'.$t->end;
-          }
-        }
         }
       } else {
         my $db_adaptor= $self->database('core');
         if($db_adaptor){
-        my $slice = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r );
+        my $slice = undef;
+        eval {
+          $slice = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r );
+        };
         if( $slice ) {
           my @attrib = @{ $slice->get_all_Attributes( 'toplevel' )||[] };  ## Check to see if top-level as "toplevel" above is b*ll*cks
           if(@attrib){ 
@@ -428,14 +448,22 @@ sub _check_if_snp_unique_location {
     my $s =  $features[0]->start; 
     my $e = $features[0]->end;
     my $r = $features[0]->seq_region_name;
-    $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s-$context, $e+$context ) );
+    my $t = undef;
+    eval {
+      $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s-$context, $e+$context );
+    };
+    $self->location( $t );
   } elsif (scalar @features > 1 && $vf){
     foreach my $var_feat( @features){
       if ($var_feat->dbID eq $vf ) {
         my $s =  $features[0]->start;
         my $e = $features[0]->end;
         my $r = $features[0]->seq_region_name;
-        $self->location(   $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s-$context, $e+$context ) );
+        my $t = undef;
+        eval {
+          $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s-$context, $e+$context );
+        };
+        $self->location( $t );
       }
     }
   } 
