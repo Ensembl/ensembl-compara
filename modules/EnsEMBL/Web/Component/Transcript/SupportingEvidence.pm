@@ -34,7 +34,18 @@ sub content {
     $html .= $self->_content();
   }
   $html .=  "</dd>";
+  $html .= $self->gene_link;
   return $html;
+}
+
+sub gene_link {
+  my $self = shift;
+  my $object = $self->object;
+  my $url = $object->_url({
+    'type'   => 'Gene',
+    'action' => 'Evidence',
+    't'      => undef});
+  return qq(Click <a href="$url">here</a> for a summary of the evidence supporting the parent gene);
 }
 
 sub _content {
