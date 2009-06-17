@@ -524,6 +524,8 @@ sub transHandler {
   my $script    = undef;
   my $path_info = undef;
   my $species_name = $SPECIES_MAP{ lc($species) };
+  $ENSEMBL_WEB_REGISTRY->set_species($species_name);
+
   if( $species eq 'das' ) {
     my $return = transHandler_das( $r, $session_cookie, \@path_segments, $querystring );
     $ENSEMBL_WEB_REGISTRY->timer_push( 'Transhandler for DAS scripts finished', undef, 'Apache' );
