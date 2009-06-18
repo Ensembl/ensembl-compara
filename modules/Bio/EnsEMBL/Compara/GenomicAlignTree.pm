@@ -306,58 +306,65 @@ sub aligned_sequence {
 }
 
 
-# # =head2 group_id
-# # 
-# #   Arg [1]    : integer $group_id
-# #   Example    : my $group_id = $genomic_align_tree->group_id;
-# #   Example    : $genomic_align_tree->group_id(1234);
-# #   Description: get/set for attribute group_id of the underlying
-# #                GenomicAlignBlock objects
-# #   Returntype : integer
-# #   Exceptions : A GenomicAlignTree is made of two GenomicAlignBlock
-# #                object. The method fail when gettign the value if the
-# #                two group_ids don't match
-# #   Caller     : general
-# # 
-# # =cut
-# # 
-# # sub group_id {
-# #     my ($self, $group_id) = @_;
-# # 
-# #     if (defined($group_id)) {
-# #       $self->{'group_id'} = $group_id;
-# #       # Set the group_id on the genomic_align_blocks...
-# #       my %genomic_align_blocks;
-# #       foreach my $this_genomic_align_node (@{$self->get_all_sorted_genomic_align_nodes()}) {
-# #         my $this_genomic_align_block = $this_genomic_align_node->genomic_align->genomic_align_block;
-# #         if ($this_genomic_align_block and !defined($genomic_align_blocks{$this_genomic_align_block})) {
-# #           $this_genomic_align_block->group_id($group_id);
-# #           $genomic_align_blocks{$this_genomic_align_block} = 1;
-# #         }
-# #       }
-# #     } elsif (!defined($self->{'group_id'}) and defined($self->{adaptor})) {
-# #       # Try to get the ID from other sources...
-# #       my %group_ids;
-# #       my $genomic_align_block_adaptor = $self->adaptor->dba->get_GenomicAlignBlockAdaptor;
-# #       foreach my $this_genomic_align_node (@{$self->get_all_sorted_genomic_align_nodes()}) {
-# #         my $this_genomic_align_block_id = $this_genomic_align_node->genomic_align->genomic_align_block_id;
-# #         my $this_genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($this_genomic_align_block_id);
-# #         if ($this_genomic_align_block->group_id) {
-# #           $group_ids{$this_genomic_align_block->group_id} = 1;
-# #         } else {
-# #           $group_ids{"undef"} = 1;
-# #         }
-# #       }
-# #       if (keys %group_ids == 1) {
-# #         if (!defined($group_ids{"undef"})) {
-# #           $self->{'group_id'} = (keys %group_ids)[0];
-# #         }
-# #       } else {
-# #         warning("Different group_ids found for this GenomicAlignTree\n");
-# #       }
-# #     }
-# #     return $self->{'group_id'};
-# # }
+=head2 group_id
+
+  Arg [1]    : integer $group_id
+  Example    : my $group_id = $genomic_align_tree->group_id;
+  Example    : $genomic_align_tree->group_id(1234);
+  Description: get/set for attribute group_id of the underlying
+               GenomicAlignBlock objects
+  Returntype : integer
+  Exceptions : A GenomicAlignTree is made of two GenomicAlignBlock
+               object. The method fail when gettign the value if the
+               two group_ids do not match
+  Caller     : general
+
+=cut
+
+sub group_id {
+    my ($self, $group_id) = @_;
+    
+    if (defined($group_id)) {
+        $self->{'group_id'} = $group_id;
+        # Set the group_id on the genomic_align_blocks...
+        my %genomic_align_blocks;
+        #foreach my $this_genomic_align_node (@{$self->get_all_sorted_genomic_align_nodes()}) {
+        foreach my $this_genomic_align_node (@{$self->get_all_nodes()}) {
+	    next if (!defined $this_genomic_align_node->genomic_align_group);
+	    foreach my $genomic_align (@{$this_genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
+		my $this_genomic_align_block = $genomic_align->genomic_align_block;
+		if ($this_genomic_align_block and !defined($genomic_align_blocks{$this_genomic_align_block})) {
+		    $this_genomic_align_block->group_id($group_id);
+		    $genomic_align_blocks{$this_genomic_align_block} = 1;
+		}
+	    }
+	}
+    } elsif (!defined($self->{'group_id'}) and defined($self->{adaptor})) {
+        # Try to get the ID from other sources...
+        my %group_ids;
+        my $genomic_align_block_adaptor = $self->adaptor->dba->get_GenomicAlignBlockAdaptor;
+        foreach my $this_genomic_align_node (@{$self->get_all_nodes()}) {
+	    next if (!defined $this_genomic_align_node->genomic_align_group);
+	    foreach my $genomic_align (@{$this_genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
+		my $this_genomic_align_block_id = $genomic_align->genomic_align_block_id;
+		my $this_genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($this_genomic_align_block_id);
+		if ($this_genomic_align_block->group_id) {
+		    $group_ids{$this_genomic_align_block->group_id} = 1;
+		} else {
+		    $group_ids{"undef"} = 1;
+		}
+	    }
+        }
+        if (keys %group_ids == 1) {
+	    if (!defined($group_ids{"undef"})) {
+		$self->{'group_id'} = (keys %group_ids)[0];
+	    }
+        } else {
+	    warning("Different group_ids found for this GenomicAlignTree\n");
+        }
+    }
+    return $self->{'group_id'};
+}
 
 
 =head2 name
