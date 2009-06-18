@@ -79,6 +79,9 @@ Few points on specific analysis (logic_name provided here)
 - AlignmentNets-xxxx in cases where the genomic region to net is very large can take a lot
   of memory. This happens usually when comparing very close species (mouse/rat). Apply the same
   approach as for DumpLargeNibForChains.
+- SetInternalIds is optional and if defined in the conf file will ensure that
+  the  BLASTZ_NET genomic_align_block_id and genomic_align_ids to be unique 
+  across a release by adding $mlss_id*10**10
 
 For the above specific problems, avoid running the beekeeper.pl with -loop alone. Prefer
 the addition of -logic_name as well to restrict the loop to particular analysis. This will
