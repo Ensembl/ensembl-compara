@@ -31,6 +31,12 @@ $compara_conf{'-port'} = 3306;
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
 my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
 
+# ok this is a hack, but I'm going to pretend I've got an object here
+# by creating a blessed hash ref and passing it around like an object
+# this is to avoid using global variables in functions, and to consolidate
+# the globals into a nice '$self' package
+my $self = bless {};
+
 GetOptions('help'     => \$help,
            'conf=s'   => \$conf_file,
            'dbhost=s' => \$host,
@@ -43,7 +49,7 @@ GetOptions('help'     => \$help,
 
 if ($help) { usage(); }
 
-parse_conf($conf_file);
+$self->parse_conf($conf_file);
 
 if($host)   { $compara_conf{'-host'}   = $host; }
 if($port)   { $compara_conf{'-port'}   = $port; }
@@ -60,12 +66,6 @@ unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and d
 if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
   die("\nERROR!!\n  ". $analysis_template{'fasta_dir'} . " fasta_dir doesn't exist, can't configure\n");
 }
-
-# ok this is a hack, but I'm going to pretend I've got an object here
-# by creating a blessed hash ref and passing it around like an object
-# this is to avoid using global variables in functions, and to consolidate
-# the globals into a nice '$self' package
-my $self = bless {};
 
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
 $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
@@ -94,7 +94,10 @@ sub usage {
 
 
 sub parse_conf {
+  my $self = shift;
   my($conf_file) = shift;
+
+  $self->{'set_internal_ids'} = 0;
 
   if($conf_file and (-e $conf_file)) {
     #read configuration file from disk
@@ -129,6 +132,9 @@ sub parse_conf {
       }
       elsif($type eq 'MULTIPLE_ALIGNER') {
         push(@$multiple_aligner_params, $confPtr);
+      }
+      elsif($type eq 'SET_INTERNAL_IDS') {
+	  $self->{'set_internal_ids'} = 1;
       }
       elsif($type eq 'CONSERVATION_SCORE') {
         die "You cannot have more than one CONSERVATION_SCORE block in your configuration file"
@@ -230,14 +236,17 @@ sub setup_pipeline
   $ctrlRuleDBA->create_rule($create_blast_rules_analysis, $synteny_map_builder_analysis);
 
 
-  # ANALYSIS 7 - Conservation scores
+  # ANALYSIS 10 - SetInternalIds
+  #This analysis becomes before MultipleAligner analyses but needs to be in 
+  #the loop that creates them and so is called from within the  
+  #$self->create_multiple_aligner_analysis module
+
+  # ANALYSIS 8 - Conservation scores
   my $conservation_score_analysis = $self->create_conservation_score_analysis(%conservation_score_params);
 
-
-  # ANALYSIS 8 - MultipleAligner
-  $self->create_multiple_aligner_analysis($multiple_aligner_params, $synteny_map_builder_analysis,
+  # ANALYSIS 9 - MultipleAligner
+  my $multiple_aligner_analysis = $self->create_multiple_aligner_analysis($multiple_aligner_params, $synteny_map_builder_analysis,
       $conservation_score_analysis);
-
 
   #
   # blast_template
@@ -518,14 +527,57 @@ sub create_multiple_aligner_analysis {
     $stats->status('BLOCKED');
     $stats->update();
 
+    if ($self->{'set_internal_ids'}) {
+	my $set_internal_ids_analysis = $self->create_set_internal_ids_analysis($mlss->dbID);
+	$ctrlRuleDBA->create_rule($synteny_map_builder_analysis,$set_internal_ids_analysis);
+	
+	 $ctrlRuleDBA->create_rule($set_internal_ids_analysis, $multiple_aligner_analysis);
+     }
+
     $dataflowRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
     $ctrlRuleDBA->create_rule($synteny_map_builder_analysis, $multiple_aligner_analysis);
-
+    
     $dataflowRuleDBA->create_rule($multiple_aligner_analysis, $conservation_score_analysis);
     $ctrlRuleDBA->create_rule($multiple_aligner_analysis, $conservation_score_analysis);
   }
 }
 
+#####################################################################
+##
+## create_set_internal_ids_analysis
+##
+#####################################################################
+sub create_set_internal_ids_analysis {
+    my ($self, $mlss_id) = @_;
+    
+    #
+    # Creating SetInternalIds analysis
+    #
+    my $stats;
+    my $setInternalIdsAnalysis = Bio::EnsEMBL::Analysis->new(
+#        -db_version      => '1',
+        -logic_name      => 'SetInternalIds',
+        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SetInternalIds',
+#        -parameters      => ""
+      );
+
+    $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($setInternalIdsAnalysis);
+    $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($setInternalIdsAnalysis->dbID);
+    #$stats = $fixInternalIdsAnalysis->stats;
+    $stats->batch_size(1);
+    $stats->hive_capacity(1); 
+    $stats->update();
+    $self->{'setInternalIdsAnalysis'} = $setInternalIdsAnalysis;
+
+    my $input_id =  "method_link_species_set_id=>$mlss_id";
+
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+            -input_id       => "{$input_id}",
+            -analysis       => $setInternalIdsAnalysis
+    );
+    return $setInternalIdsAnalysis;
+
+}
 
 #####################################################################
 ##
