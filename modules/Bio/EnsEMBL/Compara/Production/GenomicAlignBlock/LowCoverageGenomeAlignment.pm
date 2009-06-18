@@ -117,9 +117,11 @@ sub fetch_input {
 
   #delete any bits in the database left over from a previous, failed run
   if ($self->input_job->retry_count > 0) {
-      print STDERR "Deleting alignments as it is a rerun\n";
-      print STDERR "Not deleting anything at the minute. Need to uncomment\n";
-      #$self->delete_epo_alignments($self->genomic_align_block_id);
+      print STDERR "Deleting alignments for " . $self->genomic_align_block_id . " as it is a rerun\n";
+      print STDERR "But not implemented yet. Need to think of more robust method\n";
+      #Need better method that can cope with partial insertions!
+
+      #$self->_delete_epo_alignments($self->genomic_align_block_id);
   }
 
   #load from genomic_align_block ie using in 2X mode
@@ -174,18 +176,18 @@ sub run
       );
   $self->{'_runnable'} = $runnable;
 
-
   #disconnect pairwise compara database
-  if ($self->{pairwise_compara_dba}) {
+  if (defined $self->{pairwise_compara_dba}) {
       foreach my $dba (values %{$self->{pairwise_compara_dba}}) {
 	  $dba->dbc->disconnect_if_idle;
       }
   }
 
   #disconnect ancestral core database
-  my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Ancestral sequences");
-  my $ancestor_dba = $ancestor_genome_db->db_adaptor;
-  $ancestor_dba->dbc->disconnect_if_idle;
+  #Don't need anymore because I don't use the ancestors
+  #my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Ancestral sequences");
+  #my $ancestor_dba = $ancestor_genome_db->db_adaptor;
+  #$ancestor_dba->dbc->disconnect_if_idle if (defined $ancestor_dba);
 
   #disconnect compara database
   $self->{'comparaDBA'}->dbc->disconnect_if_idle;
@@ -228,23 +230,28 @@ sub write_output {
 
   my $gata = $self->{'comparaDBA'}->get_GenomicAlignTreeAdaptor;
 
-  my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Ancestral sequences");
-  my $ancestor_dba = $ancestor_genome_db->db_adaptor;
-  my $slice_adaptor = $ancestor_dba->get_SliceAdaptor();
-  my $ancestor_coord_system_adaptor = $ancestor_dba->get_CoordSystemAdaptor();
+  my $ancestors = 0;
+  my $slice_adaptor;
   my $ancestor_coord_system;
-  eval{
-    $ancestor_coord_system = $ancestor_coord_system_adaptor->fetch_by_name("ancestralsegment");
-  };
-  if(!$ancestor_coord_system){
-    $ancestor_coord_system = new Bio::EnsEMBL::CoordSystem(
+  my $ancestor_genome_db;
+  if ($ancestors) { 
+     $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Ancestral sequences");
+      my $ancestor_dba = $ancestor_genome_db->db_adaptor;
+      $slice_adaptor = $ancestor_dba->get_SliceAdaptor();
+      my $ancestor_coord_system_adaptor = $ancestor_dba->get_CoordSystemAdaptor();
+      eval{
+	  $ancestor_coord_system = $ancestor_coord_system_adaptor->fetch_by_name("ancestralsegment");
+      };
+      if(!$ancestor_coord_system){
+	  $ancestor_coord_system = new Bio::EnsEMBL::CoordSystem(
             -name            => "ancestralsegment",
             -VERSION         => undef,
             -DEFAULT         => 1,
             -SEQUENCE_LEVEL  => 1,
             -RANK            => 1
-        );
-    $ancestor_coord_system_adaptor->store($ancestor_coord_system);
+								);
+	  $ancestor_coord_system_adaptor->store($ancestor_coord_system);
+      }
   }
 
   foreach my $genomic_align_tree (@{$self->{'_runnable'}->output}) {
@@ -254,6 +261,7 @@ sub write_output {
 	   next if (!defined $genomic_align_node->genomic_align_group);
 	   foreach my $genomic_align (@{$genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
  	      $genomic_align->adaptor($gaa);
+
  	      $genomic_align->method_link_species_set($mlss);
  	      $genomic_align->level_id(1);
 
@@ -315,7 +323,6 @@ sub write_output {
 	       
 	   }
        } else {
-	   
 	   $gata->store($genomic_align_tree);
 	   $self->_write_gerp_dataflow(
 			    $genomic_align_tree->modern_genomic_align_block_id,
@@ -429,7 +436,6 @@ sub _parse_results {
     $alignment_file = $self->{multi_fasta_file};
 
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
-    
     open(F, $alignment_file) || throw("Could not open $alignment_file");
     my $seq = "";
     my $this_genomic_align;
@@ -758,10 +764,47 @@ sub _parse_results {
 	}
     }
 
+    #fetch group_id from base alignment block if there is one
+    my $multi_gab_id = $self->genomic_align_block_id;
+    my $multi_gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
+    my $multi_gab = $multi_gaba->fetch_by_dbID($multi_gab_id);
+    my $group_id = $multi_gab->group_id;
+
+    #fix the group_id so that it starts with the current mlss_id not that of
+    #the base alignment. Will always do this.
+    if ($group_id) {
+	$group_id = _fix_internal_ids($multi_gab->group_id, $multi_gab->method_link_species_set_id, $self->method_link_species_set_id);
+    } 
+    $tree->group_id($group_id);
+
     #print $tree->newick_format("simple"), "\n";
     #print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
     #$self->output([$tree]);
     $self->{'_runnable'}->output([$tree]);
+}
+
+#Fix the group_id so that it starts with the current mlss_id not that of
+#the base alignment. 
+sub _fix_internal_ids {
+    my ($group_id, $multi_mlss_id, $new_mlss_id) = @_;
+    my $multiplier = 10**10;
+    my $lower_limit = $multi_mlss_id * $multiplier;
+    my $upper_limit = ($multi_mlss_id+1) * $multiplier;
+    my $new_group_id;
+    my $new_lower_limit = $new_mlss_id * $multiplier;
+
+
+    #group_id has previous fix applied
+    if ($group_id > $lower_limit && $group_id < $upper_limit) {
+	$new_group_id = $group_id - $lower_limit + $new_lower_limit;
+    } elsif ($group_id < $multiplier) {
+	#group_id has had no fix applied
+	$new_group_id = $group_id + $new_lower_limit;
+    } else {
+	#fix has already been applied!
+	$new_group_id = $group_id;
+    }
+    return $new_group_id;
 }
 
 #create cigar line for 2x genomes manually because I need to add in the
@@ -2014,7 +2057,20 @@ sub get_seq_length_from_cigar {
     return $seq_pos;
 }
 
-sub delete_epo_alignments {
+=head2 _delete_epo_alignments
+
+  Arg [1]    : $gab_id genomic_align_block identifier
+  Example    : $self->_delete_epo_alignments(1);
+  Description: deletes entries from the genomic_align_block, genomic_align,
+               genomic_align_group and genomic_align_tree created by a
+               previous run of this gab_id (from the high coverage base 
+               alignment).
+  Returntype : -none-
+  Exception  :
+  Warning    :
+
+=cut
+sub _delete_epo_alignments {
     my ($self, $gab_id) = @_;
     
     my $dbc = $self->{'comparaDBA'};
@@ -2024,8 +2080,6 @@ sub delete_epo_alignments {
     my $gat_adaptor = $self->{'comparaDBA'}->get_GenomicAlignTreeAdaptor;
     my $genome_db_adaptor = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
 
-    my $ancestor_genome_db = $genome_db_adaptor->fetch_by_name_assembly("Ancestral sequences");
-    my $ancestor_dba = $ancestor_genome_db->db_adaptor;
     my $compara_dba = $gab_adaptor;
     
     #get all genomic_align_blocks for mlss
@@ -2039,150 +2093,58 @@ sub delete_epo_alignments {
     $sth->bind_columns(\$genomic_align_block_id);
 
     while ($sth->fetch()) {
-	print "Gab " . $genomic_align_block_id . "\n";    
 	push @new_gabs, $gab_adaptor->fetch_by_dbID($genomic_align_block_id);
     }
     $sth->finish();
-
     if (@new_gabs == 0) {
 	print STDERR "Nothing to delete\n";
 	return;
     }
 
-    #need to delete any analysis_jobs created for gerp.
-    
-
-
-    my %undeleted_gabs;
+    #get the tree for each block (should hopefully only have one of these)
     foreach my $genomic_align_block (@new_gabs) {
-	my %gabs_to_delete;
-	my @gags_to_delete;
-	my @dnafrags_to_delete;
-	my @seq_regions_to_delete;
+	if (!$genomic_align_block->method_link_species_set->method_link_class =~ /GenomicAlignTree/) {
 
-	$undeleted_gabs{$genomic_align_block->dbID} = 1;
-
-	#delete both modern and ancestral block in each iteration
-	next if (!defined $genomic_align_block);
-	
-	if ($genomic_align_block->method_link_species_set->method_link_class ne "GenomicAlignTree.tree_alignment") {
+	#if ($genomic_align_block->method_link_species_set->method_link_class ne "GenomicAlignTree.tree_alignment") {
 	    warn("This script is for deleting epo alignments only\n");
 	    next;
 	}
 
-	#get the tree for each block
 	my $genomic_align_tree = $gat_adaptor->fetch_by_GenomicAlignBlock($genomic_align_block);
-	
-	#check still have a tree
+    
+	#check have a tree
 	next if (!defined $genomic_align_tree);
-
+	
+	my @gags_to_delete;
 	foreach my $this_node (@{$genomic_align_tree->get_all_nodes}) {
 	    my $genomic_align_group = $this_node->genomic_align_group;
 	    next if (!$genomic_align_group);
-	   
-	    foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
-		
-		#get unique genomic_align_blocks
-		$gabs_to_delete{$this_genomic_align->genomic_align_block_id} = 1;
-
-		#check all gabs end up being deleted
-		delete($undeleted_gabs{$this_genomic_align->genomic_align_block_id});
-
-		#get the ancestral dnafrags
-		my $dnafrag_name = $this_genomic_align->dnafrag->name;
-		if ($dnafrag_name =~ /Ancestor/) {
-		    push @dnafrags_to_delete, $dnafrag_name;
-		}
-	    }
-	    
 	    #get the genomic_align_groups
 	    push @gags_to_delete, $genomic_align_group->dbID;
 	}
 	my $root_id = $genomic_align_tree->root->node_id;
-
+    
 	my ($sql_gab, $sql_ga, $sql_gag, $sql_gat, $sql_dnafrag, $sql_dna, $sql_seq_region);
 	
 	#assume not have too many of these!
-	$sql_gab = "DELETE FROM genomic_align_block WHERE genomic_align_block_id IN ";
-	$sql_ga = "DELETE FROM genomic_align WHERE genomic_align_block_id IN ";
 	$sql_gag = "DELETE FROM genomic_align_group WHERE group_id IN ";
-	$sql_gat = "DELETE FROM genomic_align_tree WHERE root_id =$root_id";
-	$sql_dnafrag = "DELETE FROM dnafrag WHERE genome_db_id = " . $ancestor_genome_db->dbID . " AND name IN ";
 	
-	$sql_dna = "DELETE FROM dna WHERE seq_region_id IN ";
-	$sql_seq_region = "DELETE FROM seq_region WHERE seq_region_id IN ";
-
-	#convert hash to array
-	my @gab_ids;
-	foreach my $gab (keys %gabs_to_delete) {
-	    push @gab_ids, $gab;
-	}
-
-	#find seq_region_ids from names
-	my $sql_seq_region_select = "SELECT seq_region_id FROM seq_region WHERE name IN ";
-	my $sql_seq_region_select_to_exec = $sql_seq_region_select . "(\"" . join("\",\"", @dnafrags_to_delete) . "\")";
-	my $sth = $ancestor_dba->dbc->prepare($sql_seq_region_select_to_exec);
-	#print "SQL: $sql_seq_region_select_to_exec\n";
-	$sth->execute;
-
-	my $this_seq_region_id;
-	$sth->bind_columns(\$this_seq_region_id);
-	while ($sth->fetch()) {
-	    push @seq_regions_to_delete, $this_seq_region_id;
-	}
-    
-	my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
-	my $sql_ga_to_exec = $sql_ga . "(" . join(",", @gab_ids) . ")";
 	my $sql_gag_to_exec = $sql_gag . "(" . join(",", @gags_to_delete) . ")";
-	my $sql_dnafrag_to_exec = $sql_dnafrag . "(\"" . join("\",\"", @dnafrags_to_delete) . "\")";
-	
-	#my $sql_gat_to_exec = $sql_gat . "(" . join(",", @gags_to_delete) . ")";
 	my $sql_gat_to_exec = "DELETE FROM genomic_align_tree WHERE root_id = $root_id";
-	my $sql_dna_to_exec = $sql_dna . "(" . join(",", @seq_regions_to_delete) . ")";
-	my $sql_seq_region_to_exec = $sql_seq_region . "(" . join(",", @seq_regions_to_delete) . ")";
+	my $sql_ga_to_exec = "DELETE FROM genomic_align WHERE genomic_align_block_id = " . $genomic_align_block->dbID;
+	my $sql_gab_to_exec = "DELETE FROM genomic_align_block WHERE genomic_align_block_id = " . $genomic_align_block->dbID;
 	
-
+	
 	#delete genomic_align_block, genomic_aligns, genomic_align_groups, genomic_align_trees, ancestral dnafrags
-	foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec,$sql_gag_to_exec,$sql_gat_to_exec,$sql_dnafrag_to_exec) {
+	foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec,$sql_gag_to_exec,$sql_gat_to_exec) {
 	    my $sth = $compara_dba->dbc->prepare($sql);
 	    print "SQL: $sql\n";
 	    $sth->execute;
 	    $sth->finish;
 	}
-	
-	#delete dna and seq_region from the ancestral_core db
-	foreach my $sql ($sql_dna_to_exec, $sql_seq_region_to_exec) {
-	    my $sth = $ancestor_dba->dbc->prepare($sql);
-	    print "SQL: $sql\n";
-	    $sth->execute;
-	    $sth->finish;
-	}
-	print "\n\n";
+	#Assume no gerp jobs were created because this is done at the end of 
+	#process and if it got this far, it will have finished
     }
-    #convert hash to array
-    my @gab_ids;
-    foreach my $gab_id (keys %undeleted_gabs) {
-	warn("*** This genomic_align_block $gab_id has no tree ***\n");
-	#print "Deleting genomic_align_block and genomic_align only\n";
-	push @gab_ids, $gab_id;
-    }
-    
-    #Deleting genomic_align_block and genomic_align only
-    if (@gab_ids) {
-	my $sql_gab = "DELETE FROM genomic_align_block WHERE genomic_align_block_id IN ";
-	my $sql_ga = "DELETE FROM genomic_align WHERE genomic_align_block_id IN ";
-
-	my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
-	my $sql_ga_to_exec = $sql_ga . "(" . join(",", @gab_ids) . ")";
-	
-	foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec) {
-	    my $sth = $compara_dba->dbc->prepare($sql);
-	    #print "SQL: $sql\n";
-	    #$sth->execute;
-	    $sth->finish;
-	}
-    }
-
 }
 
 1;
