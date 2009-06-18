@@ -124,37 +124,68 @@ sub importAlignment {
     my $analysis_id = $analysis->dbID;
     my $mlss_id = $self->method_link_species_set_id;
 
-    
+    #HACK to just copy over one chr (22) for testing purposes
+    #my $dnafrag_id = 905407;
+    my $dnafrag_id;
+
     #copy genomic_align_block table
-    copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
-       "genomic_align_block",
-       "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
+    if ($dnafrag_id) {
+	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
+		  "genomic_align_block",
+		  "SELECT gab.* FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE ga.method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+    } else {
+	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
+		  "genomic_align_block",
+		  "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
+    }
 
-    my $do_all = 1; 
-    if ($do_all) {
     #copy genomic_align table
-    copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
-		"genomic_align",
-		"SELECT ga.*".
-		" FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
-		" WHERE gab.method_link_species_set_id = $mlss_id");
+    if ($dnafrag_id) {
+	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
+		  "genomic_align",
+		  "SELECT ga.*".
+		  " FROM genomic_align ga ".
+		  " WHERE method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
 
+    } else {
+	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
+		  "genomic_align",
+		  "SELECT ga.*".
+		  " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
+		  " WHERE gab.method_link_species_set_id = $mlss_id");
+    }
     #copy genomic_align_group table
-    copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
-	      "genomic_align_group",
-	      "SELECT gag.*".
-	      " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
-	      " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-	      " WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
-
+    if ($dnafrag_id) {
+	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
+		  "genomic_align_group",
+		  "SELECT gag.*".
+		  " FROM genomic_align_group gag LEFT JOIN genomic_align USING (genomic_align_id)".
+		  " WHERE gag.group_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+    } else {
+	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
+		  "genomic_align_group",
+		  "SELECT gag.*".
+		  " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
+		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
+		  " WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
+    }
     #copy genomic_align_tree table
-    copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
-	      "genomic_align_tree",
-	      "SELECT gat.*".
-	      " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
-	      " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-	      " LEFT JOIN genomic_align_tree gat ON (node_id=gag.group_id) WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
-}
+    if ($dnafrag_id) {
+	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
+		  "genomic_align_tree",
+		  "SELECT gat.*".
+		  " FROM genomic_align_tree gat LEFT JOIN genomic_align_group ON (group_id=node_id)".
+		  " LEFT JOIN genomic_align USING (genomic_align_id)".
+		  " WHERE group_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+
+    } else {
+	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
+		  "genomic_align_tree",
+		  "SELECT gat.*".
+		  " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
+		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
+		  " LEFT JOIN genomic_align_tree gat ON (node_id=gag.group_id) WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
+    }
 }
 
 
@@ -238,13 +269,16 @@ sub copy_data_in_text_mode {
     }
     close(TEMP);
     if ($pass) {
-      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+	unless (system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename) == 0) {
+	    throw("Failed mysqlimport -u$user -p$pass -h$host -P$port -L -l -i $dbname $filename");
+	}
     } else {
-      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+	unless (system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename) ==0) {
+	    throw("Failed mysqlimport -u$user -h$host -P$port -L -l -i $dbname $filename");
+	}
     }
     unlink("$filename");
   }
-
 }
 
 #this assumes the from and to databases are on the same server.
