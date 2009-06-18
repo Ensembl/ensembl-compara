@@ -167,6 +167,9 @@ For the LOW_COVERAGE_GENOME_ALIGNMENT and CONSERVATION_SCORE blocks you can spec
 the logic_name for the method. You can also specify the module name. If none is given, the hive will
 use the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name module.
 
+SET_INTERNAL_IDS is optional and if defined in the conf file will ensure that 
+the internals ids in the genomic_align_block, genomic_align, genomic_align_group and genomic_align_tree tables are unique across a release by adding $mlss_id*10**10.
+
 5- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~
 
