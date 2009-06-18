@@ -26,8 +26,9 @@
         'method_link_species_set_id' => 341,
  },     
 
-##If this is defined, the pipeline will set the BLASTZ_NET genomic_align_block_id
-##and genomic_align_ids to be unique across a release by adding $mlss_id*10**10
+##If this is defined, the pipeline will set the ids in the genomic_align_block,
+##genomic_align, genomic_align_group and genomic_align_tree tables to be unique 
+##across a release by adding $mlss_id*10**10
 #  { TYPE => SET_INTERNAL_IDS,
 #  },
 
