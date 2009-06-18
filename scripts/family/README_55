@@ -91,12 +91,14 @@ time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_55
 #
 #       WARNING! WARNING! WARNING!
 #
-#       Don't run it remotely on the farm. Take a risk and do the whole thing on the farm-login node.
+#       Don't run it remotely on the farm. Neither run it in a "lustre" directory - they are clearly buggy (as of June 2009).
+#       Take a risk and do the whole thing on the farm-login node in your home directory, and then copy the files over.
 #       This is a very prescious database, as the whole pipeline will depend on it. Don't leave it to the LSF/lustre to break it.
 #
 time /software/ensembl/compara/blast-2.2.6/formatdb -p T -l metazoa_55.pep.formatdb.log -i metazoa_55.pep
 #
 # took about 5 minutes in rel.55
+# took 2:10 for blast-2.2.20 with the same db
 
 # check metazoa_55.pep.formatdb.log if it is ok delete it
 
