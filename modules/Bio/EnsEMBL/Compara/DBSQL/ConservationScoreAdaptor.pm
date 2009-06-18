@@ -45,7 +45,7 @@ Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor - Object adaptor to acces
 =head1 DESCRIPTION
 
 This module is used to access data in the conservation_score table.
-Each score is represented by a Bio::EnsEMBL::Compara::ConservationScore. The position and an observed, expected score and a difference score (expected-observed) is stored for each column in a multiple alignment. Not all bases in an alignment have a score (for example, if there is insufficient coverage) and termed here as 'uncalled'. 
+Each score is represented by a Bio::EnsEMBL::Compara::ConservationScore. The position and an observed, expected score and a difference score (expected-observed) is stored for each column in a multiple alignment. Not all columns in an alignment have a score (for example, if there is insufficient coverage) and termed here as 'uncalled'. 
 In order to speed up processing of the scores over large regions, the scores are stored in the database averaged over window_sizes of 1 (no averaging), 10, 100 and 500. When retrieving the scores, the most appropriate window_size is estimated from the length of the alignment or slice and the number of scores requested, given by the display_size. There is no need to specify the window_size directly. If the number of scores requested (display_size) is smaller than the alignment length or slice length, the scores will be either averaged if display_type = "AVERAGE" or the maximum value taken if display_type = "MAX". Scores in uncalled regions are not returned. If a score for each column in an alignment is required, the display_size should be set to be the same size as the alignment length or slice length. 
 
 =head1 AUTHOR - Kathryn Beal
