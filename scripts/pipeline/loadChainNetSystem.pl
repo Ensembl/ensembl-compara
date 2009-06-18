@@ -133,6 +133,7 @@ sub parse_conf {
 
   $self->{'chunk_group_conf_list'} = [];
   $self->{'chunkCollectionHash'} = {};
+  $self->{'set_internal_ids'} = 0;
   
   if($conf_file and (-e $conf_file)) {
     #read configuration file from disk
@@ -158,6 +159,9 @@ sub parse_conf {
       elsif($type eq 'NET_CONFIG') {
         push @{$self->{'net_conf_list'}} , $confPtr;
 #        %net_conf = %{$confPtr};
+      }
+      elsif($type eq 'SET_INTERNAL_IDS') {
+	  $self->{'set_internal_ids'} = 1;
       }
       elsif($type eq 'HEALTHCHECKS') {
         %healthcheck_conf = %{$confPtr};
@@ -324,6 +328,7 @@ sub prepareNetSystem {
       $netConf->{'target_collection_name'} = $netConf->{'non_reference_collection_name'};
   }
 
+
   #
   # createAlignmentNetsJobs Analysis
   #
@@ -334,6 +339,15 @@ sub prepareNetSystem {
   my ($output_method_link_id, $output_method_link_type) = @{$netConf->{'output_method_link'}};
   $sth->execute($output_method_link_id, $output_method_link_type);
   $sth->finish;
+
+  #
+  # Create setInternalIds analysis if required
+  #
+  my $setInternalIdsAnalysis;
+  if ($self->{'set_internal_ids'}) {
+     $setInternalIdsAnalysis = $self->create_set_internal_ids_analysis($output_method_link_type, $netConf);
+     $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, $setInternalIdsAnalysis); 
+  } 
 
   my $createAlignmentNetsJobsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -348,10 +362,14 @@ sub prepareNetSystem {
   $stats->update();
   $self->{'createAlignmentNetsJobsAnalysis'} = $createAlignmentNetsJobsAnalysis;
 
-	#Iterate through all of the created chain jobs & add them as a blocker
-	foreach my $alignmentChainsAnalysis (@{$self->{'alignmentChainsAnalysis'}}) {
-  	$ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $createAlignmentNetsJobsAnalysis);
-	}
+  if ($self->{'set_internal_ids'}) {
+     $ctrlRuleDBA->create_rule($setInternalIdsAnalysis, $createAlignmentNetsJobsAnalysis);
+  }
+
+  #Iterate through all of the created chain jobs & add them as a blocker
+  foreach my $alignmentChainsAnalysis (@{$self->{'alignmentChainsAnalysis'}}) {
+      $ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $createAlignmentNetsJobsAnalysis);
+  }
 
   my $hexkey = sprintf("%x", rand(time()));
   print("hexkey = $hexkey\n");
@@ -411,6 +429,7 @@ sub prepareNetSystem {
     $self->{'updateMaxAlignmentLengthAfterNetAnalysis'} = $updateMaxAlignmentLengthAfterNetAnalysis;
 
 }
+
   $ctrlRuleDBA->create_rule($alignmentNetsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'});
   $dataflowRuleDBA->create_rule($createAlignmentNetsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, 2);
 
@@ -462,6 +481,39 @@ sub prepareNetSystem {
 
   #Create healthcheck jobs
   $self->create_pairwise_healthcheck_analysis($output_method_link_type);
+}
+
+sub create_set_internal_ids_analysis {
+    my ($self, $output_method_link_type, $netConf) = @_;
+    
+    my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
+    
+    my $setInternalIdsAnalysis = Bio::EnsEMBL::Analysis->new(
+       -logic_name      => 'SetInternalIds',
+       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SetInternalIds',
+     );
+
+    $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($setInternalIdsAnalysis);
+    my $stats = $setInternalIdsAnalysis->stats;
+    $stats->batch_size(1);
+    $stats->hive_capacity(1);
+    $stats->status('BLOCKED');
+    $stats->update();
+    $self->{'setInternalIdsAnalysis'} = $setInternalIdsAnalysis;
+
+    my $query_collection_name = $netConf->{'query_collection_name'};
+    my $target_collection_name = $netConf->{'target_collection_name'};
+    my $gdb_id1 = $self->{'chunkCollectionHash'}->{$query_collection_name}->{'genome_db_id'};
+    my $gdb_id2 = $self->{'chunkCollectionHash'}->{$target_collection_name}->{'genome_db_id'};
+    
+    my $input_id = "\'method_link_type\'=>\'$output_method_link_type\',\'genome_db_ids\'=>\'[$gdb_id1, $gdb_id2]\'";
+
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+            -input_id       => "{$input_id}",
+            -analysis       => $setInternalIdsAnalysis
+    );
+
+    return $setInternalIdsAnalysis;
 }
 
  sub create_pairwise_healthcheck_analysis {
@@ -551,14 +603,9 @@ sub prepareNetSystem {
 
      #Create control flow rule to run after last analysis. Need to hard code
      #these for now since we don't have a "do last" analysis control rule.
+     if (defined $self->{'updateMaxAlignmentLengthAfterNetAnalysis'}) {
 
-     #After FilterStack (tblat)
-     if (defined $self->{'updateMaxAlignmentLengthAfterStackAnalysis'}) {
-	 $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterStackAnalysis'}, $pairwise_healthcheck_analysis);
-     } elsif (defined $self->{'updateMaxAlignmentLengthAfterNetAnalysis'}) {
-	 #After Netting (pairwise blastz)
 	 $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, $pairwise_healthcheck_analysis);
-	 
      } else {
 	 #After Chaining (self-self blastz)
 	 $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, $pairwise_healthcheck_analysis);
