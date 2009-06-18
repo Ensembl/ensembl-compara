@@ -465,6 +465,7 @@ sub copy_genomic_align_blocks {
      $fix_index_length = 0;
    }
   }
+
   #copy genomic_align table. Need to update dnafrag column
   if ($trust_to && $fix_dnafrag) {
 
@@ -508,17 +509,22 @@ sub copy_genomic_align_blocks {
           " WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
   }
   #copy genomic_align_tree table
+  #Fixes node_id, parent_id, root_id, left_node_id, right_node_id 
+  #Needs to correct parent_id, left_node_id, right_node_id if these were 0
   if(defined($max_gat)) {
     copy_data($from_dba, $to_dba,
         "genomic_align_tree",
         "SELECT node_id+$fix_lower, parent_id+$fix_lower, root_id+$fix_lower, left_index+$fix_index_length, right_index+$fix_index_length, left_node_id+$fix_lower, right_node_id+$fix_lower, distance_to_parent".
         " FROM genomic_align_tree ".
 	"WHERE node_id >= $min_gat AND node_id <= $max_gat");
-    #Reset the appropriate nodes to zero
-    foreach my $gt_field( qw/ parent_id node_id left_node_id right_node_id / ) {
-       my $gt_sth = $to_dba->dbc->prepare("UPDATE genomic_align_tree SET $gt_field = ($gt_field - ?)
+    #Reset the appropriate nodes to zero. Only needs to be done if fix_lower 
+    #has been applied.
+    if ($fix_lower != 0) {
+	foreach my $gt_field( qw/ parent_id node_id left_node_id right_node_id / ) {
+	    my $gt_sth = $to_dba->dbc->prepare("UPDATE genomic_align_tree SET $gt_field = ($gt_field - ?)
 					WHERE $gt_field = ?");
-       $gt_sth->execute($fix_lower, $fix_lower);
+	    $gt_sth->execute($fix_lower, $fix_lower);
+	}
     }
   }
 }
@@ -740,11 +746,15 @@ sub copy_data {
       last;
     }
   }
+
+  #speed up writing of data by disabling keys, write the data, then enable 
+  $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
   if ($binary_mode) {
     copy_data_in_binary_mode($from_dba, $to_dba, $table_name, $query);
   } else {
     copy_data_in_text_mode($from_dba, $to_dba, $table_name, $query);
   }
+  $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
 }
 
 
@@ -773,7 +783,6 @@ sub copy_data_in_text_mode {
 
   my $start = 0;
   my $step = 100000;
-  $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
   while (1) {
     my $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
     $start += $step;
@@ -796,7 +805,6 @@ sub copy_data_in_text_mode {
     }
     unlink("$filename");
   }
-  $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
 }
 
 =head2 copy_data_in_binary_mode
@@ -835,7 +843,6 @@ sub copy_data_in_binary_mode {
 
   my $start = 0;
   my $step = 1000000;
-  $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
   while (1) {
     ## Copy data into a aux. table
     my $sth = $from_dba->dbc->prepare("CREATE TABLE temp_$table_name $query LIMIT $start, $step");
@@ -877,8 +884,6 @@ sub copy_data_in_binary_mode {
     ## Delete dump file
     unlink("$filename");
   }
-  $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
-
 }
 
 #fix the genomic_align table
