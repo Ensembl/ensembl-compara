@@ -239,7 +239,7 @@ sub filter_duplicates {
       my $sql_gag_to_exec = $sql_ga . "(" . join(",", @gag_ids) . ")";
 
        foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec,$sql_gag_to_exec) {
- 	  my $sth = $self->{'comparaDBA'}->prepare($sql);
+ 	  my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
  	  $sth->execute;
  	  $sth->finish;
        }
