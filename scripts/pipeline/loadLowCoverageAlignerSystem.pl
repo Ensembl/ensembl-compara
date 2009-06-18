@@ -27,6 +27,12 @@ my $alignment_params;
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor, $ensembl_genomes);
 my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
 
+# ok this is a hack, but I'm going to pretend I've got an object here
+# by creating a blessed hash ref and passing it around like an object
+# this is to avoid using global variables in functions, and to consolidate
+# the globals into a nice '$self' package
+my $self = bless {};
+
 GetOptions('help'            => \$help,
            'conf=s'          => \$conf_file,
            'dbhost=s'        => \$host,
@@ -42,7 +48,7 @@ if ($help) { usage(); }
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-parse_conf($conf_file);
+$self->parse_conf($conf_file);
 
 if($host)   { $compara_conf{'-host'}   = $host; }
 if($port)   { $compara_conf{'-port'}   = $port; }
@@ -55,12 +61,6 @@ unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and d
   print "\nERROR : must specify host, user, and database to connect to compara\n\n";
   usage();
 }
-
-# ok this is a hack, but I'm going to pretend I've got an object here
-# by creating a blessed hash ref and passing it around like an object
-# this is to avoid using global variables in functions, and to consolidate
-# the globals into a nice '$self' package
-my $self = bless {};
 
 $self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor(%compara_conf);
 $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
@@ -115,8 +115,10 @@ sub usage {
 
 
 sub parse_conf {
+    my $self = shift;
     my($conf_file) = shift;
-    
+    $self->{'set_internal_ids'} = 0;
+
     if($conf_file and (-e $conf_file)) {
 	#read configuration file from disk
 	my @conf_list = @{do $conf_file};
@@ -144,6 +146,9 @@ sub parse_conf {
 		die "You cannot have more than one CONSERVATION_SCORE block in your configuration file"
 		  if (%conservation_score_params);
 		%conservation_score_params = %{$confPtr};
+	    } 
+	    elsif($type eq 'SET_INTERNAL_IDS') {
+		$self->{'set_internal_ids'} = 1;
 	    }
 	}
     }
@@ -330,6 +335,9 @@ sub prepareLowCoverageAlignerSystem {
 
     #
     #pairwise data
+    #Either define all the url/mlss_id pairs in a string (pairwise_string)
+    #or define all the url/mlss_id pairs in a file (pairwise_file)
+    #or define a single url and a list of mlss_ids in that database
     #
     my $pairwise_string;
     if (defined $alignment_params->{'pairwise_string'}) {
@@ -339,6 +347,12 @@ sub prepareLowCoverageAlignerSystem {
         open PAIRWISE_FILE, $pairwise_file || throw("Can not open $pairwise_file");
         $pairwise_string = join("", <PAIRWISE_FILE>);
         close PAIRWISE_FILE;
+    } elsif (defined $alignment_params->{'pairwise_url'}) {
+	throw("Need to define list of method_link_species_set_ids")
+	  if (!defined $alignment_params->{'pairwise_mlss'});
+	foreach my $mlss (split(",", $alignment_params->{'pairwise_mlss'})) {
+	    $pairwise_string .=  " {compara_db_url=>'" .$alignment_params->{'pairwise_url'} . "',method_link_species_set_id=>$mlss} ";
+	}
     }
 
     if ($pairwise_string) {
@@ -358,17 +372,38 @@ sub setup_pipeline() {
     #ANALYSIS 1 - ImportAlignment
     my $importAlignmentAnalysis = $self->createImportAlignmentAnalysis;
 
-    #ANALYSIS 2 - CreateLowCoverageJobs 
+    #ANALYSIS 2 - SetInternalIds (optional)
+    my $setInternalIdsAnalysis;
+    if ($self->{'set_internal_ids'}) {
+	$setInternalIdsAnalysis = $self->createSetInternalIdsAnalysis;
+	$ctrlRuleDBA->create_rule($importAlignmentAnalysis, $setInternalIdsAnalysis);
+    } 
+
+    #ANALYSIS 3 - CreateLowCoverageJobs 
     my $lowCoverageJobsAnalysis = $self->createLowCoverageJobsAnalysis;
-    $ctrlRuleDBA->create_rule($importAlignmentAnalysis,$lowCoverageJobsAnalysis);
-    #ANALYSIS 3 - LowCoverageGenomeAlignment
+    if ($self->{'set_internal_ids'}) {
+	$ctrlRuleDBA->create_rule($setInternalIdsAnalysis,$lowCoverageJobsAnalysis);
+    } else {
+	$ctrlRuleDBA->create_rule($importAlignmentAnalysis,$lowCoverageJobsAnalysis);
+    }
+    #ANALYSIS 4 - LowCoverageGenomeAlignment
     my $lowCoverageAnalysis = $self->createLowCoverageAnalysis;
     $ctrlRuleDBA->create_rule($lowCoverageJobsAnalysis,$lowCoverageAnalysis);
 
-    #ANALYSIS 4 - Conservation scores
+    #ANALYSIS 5 - DeleteAlignment
+    my $deleteAlignmentAnalysis = $self->createDeleteAlignmentAnalysis;
+    $ctrlRuleDBA->create_rule($lowCoverageAnalysis,$deleteAlignmentAnalysis);
+
+    #ANALYSIS 6 - UpdateMaxAlignmentLength
+    my $updateMaxAlignmentLengthAnalysis = $self->createUpdateMaxAlignmentLengthAnalysis;
+
+    $ctrlRuleDBA->create_rule($deleteAlignmentAnalysis, $updateMaxAlignmentLengthAnalysis);
+
+    
+    #ANALYSIS 7 - Conservation scores
     my $conservation_score_analysis = $self->create_conservation_score_analysis();
     $dataflowRuleDBA->create_rule($lowCoverageAnalysis, $conservation_score_analysis);
-    $ctrlRuleDBA->create_rule($lowCoverageAnalysis, $conservation_score_analysis);
+    $ctrlRuleDBA->create_rule($updateMaxAlignmentLengthAnalysis, $conservation_score_analysis);
     
     #add entry into meta table linking gerp to it's multiple aligner mlss_id
     if (defined($alignment_params->{gerp_mlss_id})) {
@@ -376,6 +411,15 @@ sub setup_pipeline() {
 	my $value = $alignment_params->{method_link_species_set_id};
 	$self->{'comparaDBA'}->get_MetaContainer->store_key_value($key, $value);
     }
+
+    #ANALYSIS 8 - CreateNeighbourNodesJobs
+    my $createNeighbourNodesJobsAnalysis = $self->createNeighbourNodesJobsAnalysis;
+    $ctrlRuleDBA->create_rule($conservation_score_analysis,$createNeighbourNodesJobsAnalysis);
+
+    #ANALYSIS 9 - SetNeighbourNodes
+    my $createSetNeighbourNodesAnalysis = $self->createSetNeighbourNodesAnalysis;
+    $ctrlRuleDBA->create_rule($createNeighbourNodesJobsAnalysis, $createSetNeighbourNodesAnalysis);
+
 }
 
 sub createImportAlignmentAnalysis {
@@ -429,7 +473,6 @@ sub createLowCoverageJobsAnalysis {
     $lc_stats->update();
     $self->{'createLowCoverageJobsAnalysis'} = $createLowCoverageJobsAnalysis;
     
-
     my $input_id = "base_method_link_species_set_id=>" . $import_alignment_params->{'method_link_species_set_id'} . 
       ",new_method_link_species_set_id=>" . $alignment_params->{'method_link_species_set_id'} . 
       ",tree_analysis_data_id=>" . $self->{'tree_analysis_data_id'} . 
@@ -471,6 +514,96 @@ sub createLowCoverageAnalysis {
 
     return $lowCoverageAnalysis;
 }
+
+sub createDeleteAlignmentAnalysis {
+    my $self = shift;
+
+    #
+    # Creating DeleteAlignment analysis
+    #
+    my $stats;
+    my $deleteAlignmentAnalysis = Bio::EnsEMBL::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'DeleteAlignment',
+        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DeleteAlignment',
+#        -parameters      => ""
+      );
+
+     $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($deleteAlignmentAnalysis);
+     $stats = $deleteAlignmentAnalysis->stats;
+     $stats->batch_size(1);
+     $stats->hive_capacity(1); 
+     $stats->update();
+     $self->{'deleteAlignmentAnalysis'} = $deleteAlignmentAnalysis;
+    
+
+    my $input_id =  "method_link_species_set_id=>" . $import_alignment_params->{'method_link_species_set_id'};
+    
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+            -input_id       => "{$input_id}",
+            -analysis       => $deleteAlignmentAnalysis
+    );
+    return $deleteAlignmentAnalysis;
+ }
+
+sub createSetInternalIdsAnalysis {
+    my $self = shift;
+
+    #
+    # Creating SetInternalIds analysis
+    #
+    my $stats;
+    my $setInternalIdsAnalysis = Bio::EnsEMBL::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'SetInternalIds',
+        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SetInternalIds',
+#        -parameters      => ""
+      );
+
+     $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($setInternalIdsAnalysis);
+     $stats = $setInternalIdsAnalysis->stats;
+     $stats->batch_size(1);
+     $stats->hive_capacity(1); 
+     $stats->update();
+     $self->{'setInternalIdsAnalysis'} = $setInternalIdsAnalysis;
+    
+    my $input_id =  "method_link_species_set_id=>" . $alignment_params->{'method_link_species_set_id'};
+    
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+            -input_id       => "{$input_id}",
+            -analysis       => $setInternalIdsAnalysis
+    );
+    return $setInternalIdsAnalysis;
+ }
+
+sub createUpdateMaxAlignmentLengthAnalysis {
+    my $self = shift;
+
+    #
+    # Creating updateMaxAlignmentLength analysis
+    #
+    my $stats;
+    my $updateMaxAlignmentLengthAnalysis = Bio::EnsEMBL::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'UpdateMaxAlignmentLength',
+        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+#        -parameters      => ""
+      );
+
+     $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAnalysis);
+     $stats = $updateMaxAlignmentLengthAnalysis->stats;
+     $stats->batch_size(1);
+     $stats->hive_capacity(1); 
+     $stats->update();
+     $self->{'updateMaxAlignmentLengthAnalysis'} = $updateMaxAlignmentLengthAnalysis;
+    
+    my $input_id = 1;
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+            -analysis       => $updateMaxAlignmentLengthAnalysis,
+            -input_id       => $input_id,
+    );
+    return $updateMaxAlignmentLengthAnalysis;
+ }
 
 #####################################################################
 ##
@@ -589,6 +722,62 @@ sub create_conservation_score_analysis {
 
   return $conservation_score_analysis;
 }
+
+sub createNeighbourNodesJobsAnalysis {
+    my $self = shift;
+
+    #
+    # Creating SetNeighbourNodesJobs analysis
+    #
+    my $stats;
+    my $createNeighbourNodesJobsAnalysis = Bio::EnsEMBL::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'CreateNeighbourNodesJobsAlignment',
+        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateNeighbourNodesJobs',
+#        -parameters      => ""
+      );
+
+     $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createNeighbourNodesJobsAnalysis);
+     $stats = $createNeighbourNodesJobsAnalysis->stats;
+     $stats->batch_size(1);
+     $stats->hive_capacity(1); 
+     $stats->update();
+     $self->{'createNeighbourNodesJobsAnalysis'} = $createNeighbourNodesJobsAnalysis;
+    
+
+    my $input_id =  "method_link_species_set_id=>" .  $alignment_params->{'method_link_species_set_id'};
+    
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+            -input_id       => "{$input_id}",
+            -analysis       => $createNeighbourNodesJobsAnalysis
+    );
+    return $createNeighbourNodesJobsAnalysis;
+ }
+
+sub createSetNeighbourNodesAnalysis {
+    my $self = shift;
+
+    #
+    # Creating SetNeighbourNodes analysis
+    #
+    my $stats;
+    my $createSetNeighbourNodesAnalysis = Bio::EnsEMBL::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'SetNeighbourNodes',
+        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SetNeighbourNodes',
+#        -parameters      => ""
+      );
+
+     $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createSetNeighbourNodesAnalysis);
+     $stats = $createSetNeighbourNodesAnalysis->stats;
+     $stats->batch_size(1);
+     $stats->hive_capacity(15); 
+     $stats->update();
+     $self->{'createSetNeighbourNodesAnalysis'} = $createSetNeighbourNodesAnalysis;
+    
+    return $createSetNeighbourNodesAnalysis;
+ }
+
 
 #####################################################################
 ##
