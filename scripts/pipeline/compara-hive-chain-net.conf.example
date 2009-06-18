@@ -90,6 +90,12 @@
     'output_group_type' => 'default'
   },
 
+##If this is defined, the pipeline will set the BLASTZ_NET genomic_align_block_id
+##and genomic_align_ids to be unique across a release by adding $mlss_id*10**10
+#  { TYPE => SET_INTERNAL_IDS,
+#  },
+
+
 ## HEALTHCHECKS are run at the end of the pipeline.
 ## If not defined, the healthcheck params are automatically created.
 # { TYPE => HEALTHCHECKS,
