@@ -52,6 +52,11 @@
    'method_link' => [10, 'PECAN'],
  },
 
+##If this is defined, the pipeline will set the genomic_align_block_id
+##and genomic_align_ids to be unique across a release by adding $mlss_id*10**10
+#  { TYPE => SET_INTERNAL_IDS,
+#  },
+
   ## CONSERVATION_SCORE is run after the MULTIPLE_ALIGNER, one job per alignment.
   ## You can skip this if you do not want conservation scores.
  { TYPE => CONSERVATION_SCORE,

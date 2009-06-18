@@ -139,6 +139,10 @@ MULTIPLE_ALIGNER block in the configuration file and change the corresponding li
 tree file. The HIVE will run the all-vs-all blastp jobs and then build a Synteny map for each
 multiple alignment pipeline. The resulting syntenies will be used to feed the multiple aligner.
 
+SET_INTERNAL_IDS is optional and if defined in the conf file will ensure that 
+the internals ids in the genomic_align_block and genomic_align tables are unique across a release by adding $mlss_id*10**10.
+
+
 You can also have a CONSERVATION_SCORE block if you want to run Gerp or any other similar software
 to get constrained elements and conservation scores from the resulting multiple alignments.
 
