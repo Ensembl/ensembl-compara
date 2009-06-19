@@ -82,6 +82,7 @@ sub _render_buttons {
   my $self = shift;
   return unless  @{$self->{'_buttons'}};
   my $class = $self->{'_attributes'}{'class'};
+  $class =~ s/check//;
   my $output = qq(<table style="width:100%" class="$class"><tbody>
 <tr>
 <th>&nbsp;</th><td>);
