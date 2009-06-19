@@ -14,7 +14,10 @@ sub _init {
 
 sub _nav_url {
   my( $self, $s, $e ) = @_;
-  return $self->object->_url({'r'=>$self->object->seq_region_name.':'.$s.'-'.$e});
+  return $self->object->_url({ 
+    'r'     => $self->object->seq_region_name . ':' . $s . '-' . $e,
+    'align' => $self->object->param('align')
+  });
 }
 
 sub content_region {
@@ -33,7 +36,7 @@ sub content {
   my $extra_html = '';
   my $cp = int( ($object->seq_region_end+$object->seq_region_start) / 2);
   my $wd = $object->seq_region_end-$object->seq_region_start+1;
-  my $url = $object->_url( {'r'=>undef}, 1 );
+  my $url = $object->_url({ 'r' => undef, 'align' => $object->param('align')}, 1);
   my @mp = ();
   my $x=0;
   foreach(@$ramp_entries) {
