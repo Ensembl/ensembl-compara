@@ -709,7 +709,8 @@ sub _create_from_slice {
     'r' => $TS->seq_region_name.':'.$start.'-'.$end,
     't' => $tid, 'g' => $gid, 'db' => $db
   };
-  
+  $pars->{'align'} = $self->param('align') if $self->param('align');  
+
   return $self->problem( 'redirect', $self->_url($pars));
   my $data = EnsEMBL::Web::Proxy::Object->new( 
     'Location',
