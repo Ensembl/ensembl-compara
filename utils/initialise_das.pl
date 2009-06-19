@@ -32,7 +32,7 @@ BEGIN{
   import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic);
 }
 
-my $sources = {
+my $source_types = {
   'karyotype' => {
     'master_table' => 'karyotype',
     'name'         => 'Karyotype Bands',
@@ -90,10 +90,10 @@ my $sources = {
     'source_id'    => 7,
   },
 };
-my @feature_types       = keys %$sources;
-my %featuresMasterTable = map { ( $_ => $sources->{$_}{'master_table'} ) } keys %$sources;
-my %featuresQuery       = map { ( $_ => $sources->{$_}{'query'}        ) } keys %$sources;
-my %sourcesIds          = ('reference'=>1, map { ( $_ => $sources->{$_}{'source_id'} ) } keys %$sources );
+my @feature_types       = keys %$source_types;
+my %featuresMasterTable = map { ( $_ => $source_types->{$_}{'master_table'} ) } keys %$source_types;
+my %featuresQuery       = map { ( $_ => $source_types->{$_}{'query'}        ) } keys %$source_types;
+my %sourcesIds          = ('reference'=>1, map { ( $_ => $source_types->{$_}{'source_id'} ) } keys %$source_types );
 
 # Load modules needed for reading config -------------------------------------
 require EnsEMBL::Web::SpeciesDefs;
@@ -129,9 +129,9 @@ SPECIES: foreach my $sp (@$species) {
   my $skip = 0;
   
   # Source doesn't have to exist, but must have these coordinates for all species':
-  for my $type ('ensembl_gene', 'ensembl_peptide') {
-    unless (exists $das_coords->{$sp}{$type}) {
-      warn "Coordinate system $sp $type is not in the DAS Registry!";
+  for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
+    unless (exists $das_coords->{$sp}{$coord_type}) {
+      warn "Coordinate system $sp $coord_type is not in the DAS Registry!";
       $skip = 1;
     }
   }
@@ -293,7 +293,7 @@ sub sources {
 
   for my $dsn (sort keys %$sources) {
     
-    my ($sp, $assembly, $sourcetype) = split /\./, $dsn;
+    my ($sp, $assembly, $sourcetype) = $dsn =~ m/^([^\.]+)\.(.+)\.([^\.]+)$/;
     
     my $coordinates = '';  # XML string
     my %coords = %{ $sources->{$dsn}->{coords} };
@@ -304,13 +304,14 @@ sub sources {
     }
 
     my $id;
+    my $source_type_id = $sourcesIds{$sourcetype} || die "Unknown source type: $sourcetype";
     if ($sitetype eq 'Vega') {
-		$sp =~ s/^(\w)[A-Za-z]*_(\w{3}).*/$1$2/;
-		$id = sprintf("VEGA_%s_%s_%s", $sourcesIds{$sourcetype} || $sourcetype, $sp, $assembly);
-	}
-	else {
-		$id = sprintf("%s_%s_%s", uc $sitetype, $sourcesIds{$sourcetype} || $sourcetype, $assembly);
-	}
+      $sp =~ s/^(\w)[A-Za-z]*_(\w{3}).*/$1$2/;
+      $id = sprintf("VEGA_%s_%s_%s", $source_type_id, $sp, $assembly);
+    }
+    else {
+      $id = sprintf("%s_%s_%s", uc $sitetype, $source_type_id, $assembly);
+    }
     my $capability = $sourcetype eq 'reference' ?  qq(      <CAPABILITY  type="das1:entry_points"
                    query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/entry_points" />
       <CAPABILITY  type="das1:sequence"
