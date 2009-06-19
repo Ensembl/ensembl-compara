@@ -24,7 +24,7 @@ sub render {
   return sprintf(
     qq(
   <tr>
-    <td%s>
+    <th%s>
       <label>%s %s</label>
     </th>
     <td%s>

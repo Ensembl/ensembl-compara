@@ -89,6 +89,7 @@ sub _render_buttons {
     $output .= $button->render;
   }
   $output .= qq(</td>
+</tr>
 </tbody></table>);
 
   return $output;
