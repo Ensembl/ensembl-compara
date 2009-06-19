@@ -7,7 +7,7 @@
 .exons_utr    { color: #9400d3 }
 .exons_exon   { color: black }
 .exons_intron { color: blue }   
-.exons_flank, .exons_utr, .exons_intron, .exons_exon { font-family:Courier New, Courier, Monaco, monospace; }
+.exons_flank, .exons_utr, .exons_intron, .exons_exon { font-family: Courier New, Courier, Monaco, monospace; }
 
 .orthologues { width: 100% }
 
@@ -16,6 +16,7 @@
 span.con { background-color: [[SEQ_CONSERVATION]] }
 span.dif { background-color: [[SEQ_DIFFERENCE]] }
 span.res { color: [[SEQ_RESEQEUNCING]] }
+span.end { color: [[SEQ_REGION_CHANGE]]; background-color: [[SEQ_REGION_CHANGE_BG]] }
 
 /* Exon colours */
 span.e0 { color: [[SEQ_EXON0]] }
@@ -33,7 +34,7 @@ span.cu { background-color: [[SEQ_CODONUTR]] }
 span.sn   { background-color: [[SEQ_SNP]] }       /* SNP */
 span.si   { background-color: [[SEQ_SNPINSERT]] } /* Insert */
 span.sd   { background-color: [[SEQ_SNPDELETE]] } /* Delete */
-span.var  { color: [[SEQ_MAIN_SNP]] }
+span.var  { color: [[SEQ_MAIN_SNP]] }             /* Highlight for snp on variation page */
 span.bold { font-weight: bold }
 
 /* Variation colours - Transcripts */
