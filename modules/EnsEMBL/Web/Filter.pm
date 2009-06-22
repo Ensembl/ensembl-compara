@@ -83,7 +83,7 @@ sub redirect {
 ## Defaults to returning the originating URL, unless already set 
 ## within the individual Filter's catch method.
   my $self = shift;
-  my $url = $self->get_redirect;
+  my $url = '/'.$ENV{'ENSEMBL_SPECIES'}.$self->get_redirect;
   my @ok_params;
   if ($url && ($url !~ /_referer/ || $url !~ /x_directed_with/)) {
     ## Automatically add in _referer and x_directed_with, if not present
