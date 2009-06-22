@@ -33,8 +33,7 @@ sub process {
 
 ## Form elements
   $interface->modify_element('name', {'label' => 'Your name', 'required' => 'yes'});
-  $interface->modify_element('email', {'label' => 'Your email address', 'required' => 'yes', 
-                      'notes' => "You'll use this to log in to Ensembl"});
+  $interface->modify_element('email', {'label' => 'Your email address', 'required' => 'yes', 'notes' => "You'll use this to log in to Ensembl", 'type' => 'Email' });
   $interface->extra_data('record_id');
   ## Honeypot fields, hidden from user
   $interface->element('surname', {'type' => 'Honeypot'});
