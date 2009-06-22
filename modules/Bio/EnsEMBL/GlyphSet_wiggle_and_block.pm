@@ -7,8 +7,8 @@ sub draw_error {
   my($self, $string ) = @_;
 }
 sub render_compact        { return $_[0]->_render();         }
-sub render_signal_map     { return $_[0]->_render('wiggle'); }
-sub render_signal_feature { return $_[0]->_render('both');   }
+sub render_tiling     { return $_[0]->_render('wiggle'); }
+sub render_tiling_feature { return $_[0]->_render('both');   }
 
 sub render_text {
   my ($self, $wiggle) = @_;
