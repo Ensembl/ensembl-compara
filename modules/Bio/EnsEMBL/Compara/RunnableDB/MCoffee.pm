@@ -111,42 +111,9 @@ sub fetch_input {
   $self->check_if_exit_cleanly;
 
   $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-
-
-  #
-  # A little logic, depending on the input params.
-  #
-  # Protein Tree input.
-  if (defined $self->{'protein_tree_id'}) {
-    my $id = $self->{'protein_tree_id'};
-    $self->{'protein_tree'} = $self->{treeDBA}->fetch_node_by_node_id($id);
-    $self->{'protein_tree'}->flatten_tree; # This makes retries safer
-    $self->{'input_fasta'} = $self->dumpProteinTreeToWorkdir($self->{'protein_tree'});
-
-    if ($self->{'use_exon_boundaries'}) {
-      $self->{'input_fasta_exons'} = $self->dumpProteinTreeToWorkDir($self->{'protein_tree'},1); # The extra "1" at the end adds the exon markers.
-    }
-  }
-
-  if (defined($self->{'redo'}) && $self->{'method'} eq 'unalign') {
-    # Redo - take previously existing alignment - post-process it
-    $self->{redo_sa} = $self->{'protein_tree'}->get_SimpleAlign(-id_type => 'MEMBER');
-    $self->{redo_sa}->set_displayname_flat(1);
-    $self->{redo_alnname} = $self->worker_temp_directory . $self->{protein_tree}->node_id . ".fasta";
-    my $alignout = Bio::AlignIO->new(-file => ">".$self->{redo_alnname},
-                                     -format => "fasta");
-    $alignout->write_aln($self->{redo_sa});
-  }
-
-  # Auto-switch to fmcoffee if gene count is too big.
-  if ($self->{'method'} eq 'cmcoffee') {
-    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 100) {
-      $self->{'method'} = 'mafft';
-      #       $self->{'method'} = 'fmcoffee';
-      print "MCoffee, auto-switch method to mafft because gene count > 100 \n";
-    }
-  }
-  print "RETRY COUNT:".$self->input_job->retry_count()."\n";
+  my $id = $self->{'protein_tree_id'};
+  $DB::single=1;1;
+  $self->{'protein_tree'} = $self->{treeDBA}->fetch_node_by_node_id($id);
 
 #   if ($self->input_job->retry_count >= 1) {
 #     if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 200) {
@@ -166,13 +133,42 @@ sub fetch_input {
   }
   # Auto-switch to muscle on a third failure.
   if ($self->input_job->retry_count >= 3) {
-    $self->{'method'} = 'mafft';
+    $self->{'method'} = 'mafft'; $self->{'use_exon_boundaries'} = undef;
     # actually, we are going to run mafft directly here, not through mcoffee
     # maybe in the future we want to use this option in tcoffee:
     #       t_coffee ..... -dp_mode myers_miller_pair_wise
   }
+  # Auto-switch to fmcoffee if gene count is too big.
+  if ($self->{'method'} eq 'cmcoffee') {
+    if (200 < @{$self->{'protein_tree'}->get_all_leaves}) {
+      $self->{'method'} = 'mafft'; $self->{'use_exon_boundaries'} = undef;
+      #       $self->{'method'} = 'fmcoffee';
+      print "MCoffee, auto-switch method to mafft because gene count > 100 \n";
+    }
+  }
+  print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
 
   print "MCoffee alignment method: ".$self->{'method'}."\n";
+
+  #
+  # A little logic, depending on the input params.
+  #
+  # Protein Tree input.
+  if (defined $self->{'protein_tree_id'}) {
+    $self->{'protein_tree'}->flatten_tree; # This makes retries safer
+    # The extra option at the end adds the exon markers
+    $self->{'input_fasta'} = $self->dumpProteinTreeToWorkdir($self->{'protein_tree'},$self->{'use_exon_boundaries'});
+  }
+
+  if (defined($self->{'redo'}) && $self->{'method'} eq 'unalign') {
+    # Redo - take previously existing alignment - post-process it
+    $self->{redo_sa} = $self->{'protein_tree'}->get_SimpleAlign(-id_type => 'MEMBER');
+    $self->{redo_sa}->set_displayname_flat(1);
+    $self->{redo_alnname} = $self->worker_temp_directory . $self->{protein_tree}->node_id . ".fasta";
+    my $alignout = Bio::AlignIO->new(-file => ">".$self->{redo_alnname},
+                                     -format => "fasta");
+    $alignout->write_aln($self->{redo_sa});
+  }
 
   #
   # Ways to fail the job before running.
@@ -349,6 +345,7 @@ sub get_params {
 sub run_mcoffee
 {
   my $self = shift;
+  return if (1 == $self->{single_peptide_tree});
   my $input_fasta = $self->{'input_fasta'};
 
   my $mcoffee_output = $self->worker_temp_directory . "output.mfa";
@@ -386,7 +383,7 @@ sub run_mcoffee
   my $method_string = '-method=';
   if ($self->{'method'} && $self->{'method'} eq 'cmcoffee') {
       # CMCoffee, slow, comprehensive multiple alignments.
-      $method_string .= "mafftgins_msa, muscle_msa, kalign_msa, probcons_msa"; #, t_coffee_msa";
+      $method_string .= "mafftgins_msa, muscle_msa, kalign_msa, t_coffee_msa "; #, probcons_msa";
   } elsif ($self->{'method'} eq 'fmcoffee') {
       # FMCoffee, fast but accurate alignments.
       $method_string .= "mafft_msa, muscle_msa, clustalw_msa, kalign_msa";
@@ -402,21 +399,27 @@ sub run_mcoffee
   } elsif (defined($self->{'redo'}) && $self->{'method'} eq 'unalign') {
     my $cutoff = $self->{'cutoff'} || 2;
       # Unalign module
-    $method_string = " -other_pg seq_reformat -in " . $self->{redo_alnname} ." -action +aln2overaln lower $cutoff 1>$mcoffee_output";
+    $method_string = " -other_pg seq_reformat -in " . $self->{redo_alnname} ." -action +aln2overaln unalign 2 30 5 15 0 1>$mcoffee_output";
   }  else {
       throw ("Improper method parameter: ".$self->{'method'});
   }
 
+  my $extra_output = '';
   if ($self->{'use_exon_boundaries'}) {
+    my $exon_file = $self->{'input_fasta_exons'};
+    if (1 == $self->{use_exon_boundaries}) {
       $method_string .= ", exon_pair";
-      my $exon_file = $self->{'input_fasta_exons'};
       print OUTPARAMS "-template_file=$exon_file\n";
+    } elsif (2 == $self->{use_exon_boundaries}) {
+      $self->{'mcoffee_scores'} = undef;
+      $extra_output .= ',overaln  -overaln_param unalign -overaln_P1 150 -overaln_P2 30';
+    }
   }
   $method_string .= "\n";
 
   print OUTPARAMS $method_string;
   print OUTPARAMS "-mode=mcoffee\n";
-  print OUTPARAMS "-output=fasta_aln,score_ascii\n";
+  print OUTPARAMS "-output=fasta_aln,score_ascii" . $extra_output . "\n";
   print OUTPARAMS "-outfile=$mcoffee_output\n";
   print OUTPARAMS "-newtree=$tree_temp\n";
   close(OUTPARAMS);
@@ -458,7 +461,7 @@ sub run_mcoffee
   	$prefix .= "export MAFFT_BINARIES=/nfs/acari/gj1/bin/mafft-bins/binaries;";
   }
   print $prefix.$cmd."\n" if ($self->debug);
-
+  $DB::single=1;1;
   #
   # Run the command.
   #
@@ -477,7 +480,6 @@ sub run_mcoffee
   	$ENV{MAFFT_BINARIES} = $mafft_env if $mafft_env;
     print STDERR "### $mafft_executable --auto $input_fasta > $mcoffee_output\n";
     $rc = system("$mafft_executable --auto $input_fasta > $mcoffee_output");
-    
     $self->{'mcoffee_scores'} = undef; #these wont have scores
   } else {
     $DB::single=1;
@@ -511,13 +513,13 @@ sub update_single_peptide_tree
   }
 }
 
-sub dumpProteinTreeToWorkdir
-{
+sub dumpProteinTreeToWorkdir {
   my $self = shift;
   my $tree = shift;
   my $use_exon_boundaries = shift;
+  $DB::single=1;1;
   my $fastafile;
-  if ($use_exon_boundaries) {
+  if (defined($use_exon_boundaries)) {
       $fastafile = $self->worker_temp_directory. "proteintree_exon_". $tree->node_id. ".fasta";
   } else {
     my $node_id = $tree->node_id;
@@ -525,7 +527,7 @@ sub dumpProteinTreeToWorkdir
   }
 
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if(-e $fastafile);
+  return $fastafile if(-e $fastafile && !defined($use_exon_boundaries));
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
   open(OUTSEQ, ">$fastafile")
@@ -534,7 +536,6 @@ sub dumpProteinTreeToWorkdir
   my $seq_id_hash = {};
   my $residues = 0;
   my $member_list = $tree->get_all_leaves;
-  $DB::single=1;1;
 
   $self->{'tag_gene_count'} = scalar(@{$member_list});
   foreach my $member (@{$member_list}) {
@@ -558,7 +559,7 @@ sub dumpProteinTreeToWorkdir
 
       my $seq = '';
       if ($use_exon_boundaries) {
-	  $seq = $member->get_exon_bounded_sequence;
+	  $seq = $member->sequence_exon_bounded;
       } else {
 	  $seq = $member->sequence;
       }
@@ -572,6 +573,7 @@ sub dumpProteinTreeToWorkdir
 
   if(scalar keys (%{$seq_id_hash}) <= 1) {
     $self->update_single_peptide_tree($tree);
+    $self->{single_peptide_tree} = 1;
   }
 
   $self->{'tag_residue_count'} = $residues;
@@ -581,10 +583,17 @@ sub dumpProteinTreeToWorkdir
 sub parse_and_store_alignment_into_proteintree
 {
   my $self = shift;
+
+  return if (1 == $self->{single_peptide_tree});
   my $mcoffee_output =  $self->{'mcoffee_output'};
   my $mcoffee_scores = $self->{'mcoffee_scores'};
+  my $format = 'fasta';
   my $tree = $self->{'protein_tree'};
 
+  if (2 == $self->{use_exon_boundaries}) {
+    $mcoffee_output .= ".overaln";
+    # $format = 'clustalw';
+  }
   return unless($mcoffee_output and -e $mcoffee_output);
 
   #
@@ -592,7 +601,7 @@ sub parse_and_store_alignment_into_proteintree
   #
   use Bio::AlignIO;
   my $alignio = Bio::AlignIO->new(-file => "$mcoffee_output",
-				  -format => "fasta");
+				  -format => "$format");
   my $aln = $alignio->next_aln();
   my %align_hash;
   foreach my $seq ($aln->each_seq) {
@@ -639,6 +648,7 @@ sub parse_and_store_alignment_into_proteintree
       $alignment_length = length($alignment_string);
     } else {
       if ($alignment_length != length($alignment_string)) {
+        $DB::single=1;1;
         throw("While parsing the alignment, some id did not return the expected alignment length\n");
       }
     }
