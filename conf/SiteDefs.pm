@@ -277,14 +277,6 @@ $ENSEMBL_PRIVATE_AUTH   = undef;
   $ENSEMBL_SERVERROOT.'/biomart-perl/htdocs'
 );
 
-# my $perl_version = sprintf( '%d.%d.%d', $] =~ /(\d)\.(\d{3})(\d{3})/ ) || "5.8.0";
-
-# Add perl-version specific lib from /ensemblweb/shared/lib for e.g. Storable.pm
-my @vers = split( /[\.0]+/, $] );
-my $ver  = join(".",$vers[0], $vers[1]||0, $vers[2]||0 ); # e.g. 5.8.0
-# push @ENSEMBL_LIB_DIRS, "/ensemblweb/shared/lib/perl5/$ver/alpha-dec_osf";
-
-
 ###############################################################################
 ######################### END OF LOCAL CONFIGURATION SECTION ##################
 ###############################################################################
