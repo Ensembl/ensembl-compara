@@ -256,7 +256,7 @@ sub parse {
   $self->_parse();
   $self->store();
   $reg_conf->configure();
-  EnsEMBL::Web::Tools::RobotsTxt::create( $self->ENSEMBL_SPECIES );
+  EnsEMBL::Web::Tools::RobotsTxt::create( $self->ENSEMBL_SPECIES, $self );
   EnsEMBL::Web::Tools::OpenSearchDescription::create( $self );
   $self->{'_parse_caller_array'} = [];
   my $C = 0;

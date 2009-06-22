@@ -7,9 +7,11 @@ sub create {
   ### time on server startup and gets placed in the first directory in the htdocs
   ### tree.
   ### Returns: none
-	my $species = shift;
-  my $root = $SiteDefs::ENSEMBL_HTDOCS_DIRS[0];
-  my %allowed = map { ($_,1) } @{$SiteDefs::ENSEMBL_EXTERNAL_SEARCHABLE||[]};
+  my $species = shift;
+  my $sd      = shift;
+  my $root    = $sd->ENSEMBL_HTDOCS_DIRS->[0];
+  warn $sd->ENSEMBL_EXTERNAL_SEARCHABLE;
+  my @allowed = @{$sd->ENSEMBL_EXTERNAL_SEARCHABLE||[]};
 
   my %ignore = qw(robots.txt 1 .cvsignore 1);
   if( -e "$root/.cvsignore" ) {
@@ -29,15 +31,28 @@ warn "--------------------------------------------------------------------------
   close O;
 
   if( open FH, ">$root/robots.txt" ) {
-    print FH qq(
+## Allowed list is empty so we only allow access to the main
+## index page... /index.html...
+
+    if( @allowed ) {
+      print FH qq(
 User-agent: *
-Disallow: /Multi/
-Disallow: /BioMart/
-);
-    foreach( @{$species||[]} ) {
-      print FH qq(Disallow: /$_/\n);
-      print FH qq(Allow: /$_/geneview\n) if $allowed{'gene'};
-      print FH qq(Allow: /$_/sitemap.xml.gz\n);
+Disallow:   /Multi/
+Disallow:   /BioMart/);
+      foreach( @{$species||[]} ) {
+        print FH qq(
+
+Disallow:   /$_/);
+        foreach my $view ( @allowed ) {
+          print FH qq(
+Allow:      /$_/$view);
+        }
+      }
+    } else {
+      print FH qq(
+User-agent: *
+Disallow:   /
+Allow:      /index.html);
     }
     print FH qq(
 
@@ -48,6 +63,7 @@ Disallow:
   } else {
     warn "Unable to creates robots.txt file in $root-robots";
   }
+  return;
 }
 
 1;
