@@ -19,7 +19,7 @@ sub BUILD {
 
 sub catch {
   my $self = shift;
-  $self->set_redirect('/'.$self->object->data_species.'/UserData/SelectDAS');
+  $self->set_redirect('/UserData/SelectDAS');
   # Process any errors
   if (!$self->object->param('dsn')) {
     ## Store the server's message in the session

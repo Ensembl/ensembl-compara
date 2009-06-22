@@ -25,7 +25,7 @@ sub BUILD {
 
 sub catch {
   my $self = shift;
-  $self->set_redirect('/'.$self->object->data_species.'/UserData/SelectFile');
+  $self->set_redirect('/UserData/SelectFile');
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
