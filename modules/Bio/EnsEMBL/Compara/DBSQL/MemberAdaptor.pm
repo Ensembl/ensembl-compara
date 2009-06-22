@@ -862,7 +862,7 @@ sub store {
   # insert in sequence table to generate new
   # sequence_id to insert into member table;
   if(defined($member->sequence) and $member->sequence_id == 0) {
-    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence),1); # Last parameter induces a check for redundancy
+    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence,1)); # Last parameter induces a check for redundancy
 
     my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
     $sth3->execute($member->sequence_id, $member->dbID);
@@ -923,7 +923,7 @@ sub store_reused {
   # insert in sequence table to generate new
   # sequence_id to insert into member table;
   if(defined($member->sequence) and $member->sequence_id == 0) {
-    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence),1); # Last parameter induces a check for redundancy
+    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence,1)); # Last parameter induces a check for redundancy
 
     my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
     $sth3->execute($member->sequence_id, $member->dbID);
@@ -950,7 +950,7 @@ sub update_sequence {
     $sth->execute($member->sequence, $member->seq_length, $member->sequence_id);
     $sth->finish;
   } else {
-    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence),1); # Last parameter induces a check for redundancy
+    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence,1)); # Last parameter induces a check for redundancy
 
     my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
     $sth3->execute($member->sequence_id, $member->dbID);
