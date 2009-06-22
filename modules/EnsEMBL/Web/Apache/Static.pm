@@ -90,7 +90,7 @@ sub handler {
           $content = <FILE>;
           close FILE;
         }
-        $MEMD->set($uri, $content) if $MEMD;
+        $MEMD->set($uri, $content, 'STATIC') if $MEMD;
         my @file_info = stat($file);
         $r->headers_out->set('Last-Modified'  => HTTP::Date::time2str( $file_info[9] ));
         $r->headers_out->set('Accept-Ranges'  => 'bytes');
