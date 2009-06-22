@@ -98,7 +98,7 @@ sub fetch_input {
 
   $self->{'tree_scale'} = 1;
   $self->{'store_homologies'} = 1;
-  $self->{'max_gene_count'} = 200;
+  $self->{'max_gene_count'} = 999999;
   $self->{all_between} = 0;
   $self->{no_between} = 0.25;
 
@@ -201,13 +201,13 @@ sub check_job_fail_options
     throw("OrthoTree job failed >=3 times: try something else and FAIL it");
   }
 
-  if ($self->input_job->retry_count >= 1) {
-    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 400 && !defined($self->worker->{HIGHMEM})) {
-      $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
-      $self->DESTROY;
-      throw("OrthoTree job too big: try something else and FAIL it");
-    }
-  }
+#   if ($self->input_job->retry_count >= 1) {
+#     if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 400 && !defined($self->worker->{HIGHMEM})) {
+#       $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
+#       $self->DESTROY;
+#       throw("OrthoTree job too big: try something else and FAIL it");
+#     }
+#   }
 }
 
 sub DESTROY {
@@ -362,7 +362,7 @@ sub run_analysis {
     }
   }
   $self->{'homology_links'} = \@sorted_genepairlinks;
-  $DB::single=1;1;
+
   return undef;
 }
 
@@ -460,6 +460,39 @@ sub load_species_tree {
   my $self = shift @_;
 
   my $starttime = time();
+
+  # FIXME -- this species_tree_string entry in protein_tree_tag is to
+  # avoid using lustre filesystem on cluster nodes but right now needs
+  # a bit of a cleanup because it's shared with NJTREE_PHYML -- we
+  # should have a single method for both, potentially in NestedSet
+
+  # Defining a species_tree: Option 1 is species_tree_string in
+  # protein_tree_tag, which then doesn't require tracking files
+  # around.  Option 2 is species_tree_file as defined in the config
+  # file, which should still work for compatibility
+  my $sql1 = "select value from protein_tree_tag where tag='species_tree_string'";
+  my $sth1 = $self->dbc->prepare($sql1);
+  $sth1->execute;
+  my $species_tree_string = $sth1->fetchrow_hashref;
+  $sth1->finish;
+  my $eval_species_tree;
+  eval {
+    $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string->{value});
+    my @leaves = @{$eval_species_tree->get_all_leaves};
+  };
+  if($@) {
+    unless(-e $self->{'species_tree_file'}) {
+      throw("can't find species_tree\n");
+    }
+  } else {
+    $self->{species_tree_string} = $species_tree_string->{value};
+    my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
+    open SPECIESTREE, ">$spfilename" or die "$!";
+    print SPECIESTREE $self->{species_tree_string};
+    close SPECIESTREE;
+    $self->{'species_tree_file'} = $spfilename;
+  }
+
   my $tree = (exists $self->{'species_tree_file'})
     ? $self->load_species_tree_from_file
       : $self->load_species_tree_from_tax
@@ -658,12 +691,10 @@ sub get_ancestor_taxon_level {
 
     if($taxon_level) {
       $taxon_level = $taxon_level->find_first_shared_ancestor($taxon);
-    } 
-    else {
+    } else {
       $taxon_level = $taxon;
     }
   }
-  
   my $taxon_id = $taxon_level->get_tagvalue("taxon_id");
   $ancestor->add_tag("taxon_level", $taxon_level);
   $ancestor->store_tag("taxon_id", $taxon_id) 
@@ -1176,7 +1207,7 @@ sub store_homologies
 #     unless (defined($self->{all_between})) {
     my $type = $genepairlink->get_tagvalue("orthotree_type");
     my $dcs = $genepairlink->{duplication_confidence_score};
-    $DB::single=$a;1;
+
     next if ($type eq 'between_species_paralog' && $dcs > $self->{no_between});
 #     }
     $self->store_gene_link_as_homology($genepairlink);
@@ -1232,7 +1263,7 @@ sub store_homologies
 #   }
 #   $self->{'protein_tree'}->store_tag("tree_species_sampling",$tree_species_sampling);
 #   $self->{'protein_tree'}->store_tag("tree_species_num",$tree_species_num);
-  $DB::single=1;1;
+
   return undef;
 }
 
