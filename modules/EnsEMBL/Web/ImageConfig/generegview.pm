@@ -52,7 +52,7 @@ sub init {
   );
   $self->modify_configs(
     [qw(ctcf_funcgen)],
-    {qw(display signal_map)}
+    {qw(display tiling)}
   );
   $self->modify_configs(
     [qw(ctcf_funcgen_blocks)],
@@ -60,7 +60,7 @@ sub init {
   );
   $self->modify_configs(
     [qw(histone_modifications_funcgen)],
-    {qw(display signal_map)}
+    {qw(display tiling)}
   );
   $self->modify_configs(
     [qw(gene_legend)],

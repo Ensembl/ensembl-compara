@@ -1229,8 +1229,8 @@ sub add_alignments {
           'colourset'      => 'multiple',
           'order'          => sprintf('%12d::%s::%s', 1e12-$n_species*10, $row->{'type'}, $row->{'name'}),
           'strand'         => 'f',
-          'display'        => $row->{'id'} == 352 ? 'signal_map' : 'off', ## Default to on at the moment - change to off by default!
-          'renderers'      => [ 'off' => 'Off', 'signal_map' => 'Signal map' ]
+          'display'        => $row->{'id'} == 352 ? 'tiling' : 'off', ## Default to on at the moment - change to off by default!
+          'renderers'      => [ 'off' => 'Off', 'tiling' => 'Tiling array' ]
         };
         
         $alignments->{'multiple_align'}{$row->{'id'}.'_constrained'} = {
@@ -1376,7 +1376,7 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
         my $value = $renderers{$_};
         push (@temp, $_);
         push (@temp, $value);
-        if ($_ =~/signal/){ 
+        if ($_ =~/tiling/){ 
           unless ( $fg_data->{$key_2}{'type'} =~/histone/ ){
           $wiggle_flag = 1; 
           }      
