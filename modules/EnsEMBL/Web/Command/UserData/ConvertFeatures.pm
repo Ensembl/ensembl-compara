@@ -32,7 +32,8 @@ sub process {
 
     ## Get data for remapping
     next unless $id;
-    my $data = $object->fetch_userdata_by_id($id);
+    my ($file, $name) = split(':', $id);
+    my $data = $object->fetch_userdata_by_id($file);
     my (@fs, $class, $output);
 
     if (my $parser = $data->{'parser'}) {
@@ -113,7 +114,7 @@ sub process {
       );
 
     $temp_file->print($output);
-    push @$temp_files, $temp_file->filename;
+    push @$temp_files, $temp_file->filename.':'.$name;
   }
   $param->{'converted'} = $temp_files;
   $param->{'gaps'} = $gaps;

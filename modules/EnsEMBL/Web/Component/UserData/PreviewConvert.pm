@@ -26,16 +26,26 @@ sub content {
 
   my @files = $object->param('converted');
   my $i = 1;
-  foreach my $file (@files) {
-    next unless $file;
+  foreach my $id (@files) {
+    next unless $id;
+    my ($file, $name) = split(':', $id);
+
+    ## Tidy up user-supplied names
+    $name =~ s/ /_/g;
+    if ($name !~ /\.gff$/i) {
+      $name .= '.gff';
+    }
+    $name = 'converted_'.$name;
+
+    ## Fetch content
     my $tmpfile = new EnsEMBL::Web::TmpFile::Text(
                     filename => $file, prefix => 'export', extension => 'gff'
     );
     next unless $tmpfile->exists;
     my $data = $tmpfile->retrieve;
     if ($data) {
-      my $name = 'converted_data_'.$i.'.gff';
-      $html .= sprintf('<h3>Converted file <a href="/%s/download?file=%s;name=%s;prefix=export;format=gff">%s</a></h3>', $object->species, $file, $name, $name);
+      my $newname = $name || 'converted_data_'.$i.'.gff';
+      $html .= sprintf('<h3>Converted file <a href="/%s/download?file=%s;name=%s;prefix=export;format=gff">%s</a></h3>', $object->species, $file, $newname, $newname);
       $html .= '<pre>';
       my $count = 1;
       foreach my $row ( split /\n/, $data ) {

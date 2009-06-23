@@ -53,7 +53,7 @@ sub content {
     'select'   => 'select',
   );
 
-  ## Check for uploaded data for this species in GFF format
+  ## Check for uploaded data for this species
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   if ($user) {
     my (@data, @temp);
@@ -94,7 +94,7 @@ sub content {
           'type'    => 'CheckBox',
           'name'    => 'convert_file',
           'label'   => $name,
-          'value'   => $id,
+          'value'   => $id.':'.$name,
         );
       }
       $subheader = 'Or upload new file';
