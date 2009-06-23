@@ -18,14 +18,23 @@ sub BUILD {
 sub process {
   my $self = shift;
 
-  my $url = '/UserData/SelectFile'; ## Fallback on error
+  my $url = $self->object->param('previous') || '/UserData/SelectFile'; ## Fallback on error
   my $param = {
     '_referer' => $self->object->param('_referer'),
     'x_requested_with' => $self->object->param('x_requested_with'),
   };
-  my $method = $self->object->param('url') ? 'url' : 'file';
+  my @methods = qw(text file url);
+  my $method;
+  foreach my $M (@methods) {
+    if ($self->object->param($M)) {
+      $method = $M;
+      last;
+    }
+  }
 
   if ($self->object->param($method)) {
+
+    warn "SAVING FILE $method";
 
     ## Get original path, so can save file name as default name for upload
     my $name = $self->object->param('name');
@@ -42,8 +51,11 @@ sub process {
       $error = $response->{'error'};
       $args{'content'} = $response->{'content'};
     }
+    elsif (my $text = $self->object->param('text')) {
+      $args{'content'} = $text;
+    }
     else {
-      $args{tmp_filename} = $self->object->[1]->{'_input'}->tmpFileName($self->object->param('file'));
+      $args{tmp_filename} = $self->object->[1]->{'_input'}->tmpFileName($self->object->param($method));
     }
     if ($error) {
       ## Put error message into session for display?
@@ -87,7 +99,7 @@ sub process {
             $param->{'format'}  = 'none';
           }
           else {
-            $url = '/UserData/UploadFeedback';
+            $url = $self->object->param('next') || '/UserData/UploadFeedback';
             $param->{'format'} = $format;
           }
         }
@@ -115,8 +127,6 @@ sub process {
   else {
     $self->ajax_redirect($dir.$url, $param); 
   }
-
-
 
 }
 
