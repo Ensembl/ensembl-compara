@@ -1,7 +1,10 @@
 package EnsEMBL::Web::ImageConfig::tsv_transcripts_top;
-use strict;
-use base qw(EnsEMBL::Web::ImageConfig);
 
+use warnings;
+no warnings 'uninitialized';
+use strict;
+
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my ($self) = @_;

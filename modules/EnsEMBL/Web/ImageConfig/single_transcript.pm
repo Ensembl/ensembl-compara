@@ -1,5 +1,9 @@
 package EnsEMBL::Web::ImageConfig::single_transcript;
+
 use strict;
+use warnings;
+no warnings 'uninitialized';
+
 use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {

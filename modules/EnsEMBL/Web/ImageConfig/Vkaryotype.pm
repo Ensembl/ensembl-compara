@@ -1,7 +1,8 @@
 package EnsEMBL::Web::ImageConfig::Vkaryotype;
-use strict;
+
 use warnings;
 no warnings 'uninitialized';
+use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 

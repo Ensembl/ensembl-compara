@@ -6,6 +6,10 @@ no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub mergeable_config {
+  return 1;
+}
+
 sub init {
   my ($self) = @_;
 

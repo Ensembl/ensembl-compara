@@ -1,6 +1,8 @@
 package EnsEMBL::Web::ImageConfig::contigviewbottom;
+
 use strict;
-no strict 'refs';
+use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 

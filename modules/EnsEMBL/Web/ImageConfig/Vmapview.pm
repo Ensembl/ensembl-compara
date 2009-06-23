@@ -1,4 +1,5 @@
 package EnsEMBL::Web::ImageConfig::Vmapview;
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

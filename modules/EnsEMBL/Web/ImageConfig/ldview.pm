@@ -1,8 +1,10 @@
 package EnsEMBL::Web::ImageConfig::ldview;
+
 use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my $self = shift; 

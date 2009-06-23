@@ -1,5 +1,9 @@
 package EnsEMBL::Web::ImageConfig::tsv_context;
+
+use warnings;
+no warnings 'uninitialized';
 use strict;
+
 use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {

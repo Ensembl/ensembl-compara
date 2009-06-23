@@ -1,6 +1,10 @@
 package EnsEMBL::Web::ImageConfig::generegview;
+
 use strict;
-use base qw(EnsEMBL::Web::ImageConfig::geneview);
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my $self = shift; 

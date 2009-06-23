@@ -1,6 +1,10 @@
 package EnsEMBL::Web::ImageConfig::hsp_query_plot;
+
 use strict;
-use base qw( EnsEMBL::Web::ImageConfig );
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my ($self) = shift;

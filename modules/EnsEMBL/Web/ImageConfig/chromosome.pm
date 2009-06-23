@@ -1,6 +1,9 @@
 package EnsEMBL::Web::ImageConfig::chromosome;
 
 use strict;
+use warnings;
+no warnings 'uninitialized';
+
 use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {

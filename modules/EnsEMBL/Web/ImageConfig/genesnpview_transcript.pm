@@ -1,9 +1,10 @@
 package EnsEMBL::Web::ImageConfig::genesnpview_transcript;
-use strict;
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
-@ISA = qw(EnsEMBL::Web::ImageConfig);
 
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my ($self) = @_;

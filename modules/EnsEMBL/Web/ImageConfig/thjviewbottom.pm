@@ -1,10 +1,13 @@
 package EnsEMBL::Web::ImageConfig::thjviewbottom;
+
+use warnings;
+no warnings 'uninitialized';
 use strict;
 no strict 'refs';
-use EnsEMBL::Web::ImageConfig;
-use vars qw(@ISA);
+
+use base qw(EnsEMBL::Web::ImageConfig);
+
 my $reg = "Bio::EnsEMBL::Registry";
-@ISA = qw(EnsEMBL::Web::ImageConfig);
 
 sub TRIM   { return sub { return $_[0]=~/(^[^\.]+)\./ ? $1 : $_[0] }; }
 
