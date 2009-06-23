@@ -1,0 +1,32 @@
+## Dinky little script for downloading files from the Ensembl temp file space!
+
+use EnsEMBL::Web::TmpFile::Text;
+
+my $cgi = new CGI;
+my $file = $cgi->param('file');
+my $name = $cgi->param('name');
+my $format = $cgi->param('format') || 'gff';
+my $prefix = $cgi->param('prefix');
+## Strip any invalid characters from params to prevent downloading of arbitrary files!
+$prefix =~ s/\W//g;
+
+## Match only our tmp file path structure (NNN/N/N/NNNNNNN.nnn) !
+if ($file =~ m#^\w[\w/]*(?:\.\w{1,4})?$#) { 
+
+  ## Get content
+  my $tmpfile = new EnsEMBL::Web::TmpFile::Text(
+    filename => $file, prefix => $prefix, extension => $format
+  );
+
+  if ($tmpfile->exists) {
+    my $data = $tmpfile->retrieve;
+    if ($data) {
+      my $length = length($data);
+      print "Content-type: text/plain\n";
+      print "Content-Disposition:attachment; filename=$name\n";
+      print "Content-Length: $length\n\n";
+      print $data;
+    }
+  }
+}
+
