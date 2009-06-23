@@ -508,7 +508,7 @@ CREATE TABLE homology (
   homology_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
   stable_id                   varchar(40),
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','between_species_paralog','UBRH','BRH','MBRH','RHS'),
+  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','putative_gene_split','between_species_paralog','UBRH','BRH','MBRH','RHS'),
   subtype                     varchar(40) NOT NULL DEFAULT '',
   dn                          float(10,5),
   ds                          float(10,5),
@@ -705,6 +705,9 @@ CREATE TABLE protein_tree_node (
   KEY (right_index)
 ) COLLATE=latin1_swedish_ci;
 
+-- overview:
+--   This table holds the few big super protein tree alignments that are then broken down.
+CREATE TABLE super_protein_tree_node LIKE protein_tree_node;
 
 ------------------------------------------------------------------------------------
 --
@@ -736,6 +739,10 @@ CREATE TABLE protein_tree_member (
   UNIQUE (node_id),
   KEY (member_id)
 ) COLLATE=latin1_swedish_ci;
+
+-- overview:
+--   This table holds the few big super protein tree alignments that are then broken down.
+CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
 
 ------------------------------------------------------------------------------------
 --
@@ -793,6 +800,9 @@ CREATE TABLE protein_tree_tag (
   KEY (tag)
 ) COLLATE=latin1_swedish_ci;
 
+-- overview:
+--   This table holds the few big super protein tree alignments that are then broken down.
+CREATE TABLE super_protein_tree_tag LIKE protein_tree_tag;
 
 --------------------------------------------------------------------------------------
 --
