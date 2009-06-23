@@ -464,6 +464,7 @@ sub _summarise_compara_db {
     $self->db_tree->{ $db_name }{$KEY}{$id}{'class'}             = $class;
     $self->db_tree->{ $db_name }{$KEY}{$id}{'species_set_id'}    = $species_set_id;
     $self->db_tree->{ $db_name }{$KEY}{$id}{'species'}{$species} = 1;
+    $self->db_tree->{ $db_name }{$KEY}{$id}{'species'}{'merged'} = 1;
   }
   foreach my $species_set_id (keys %$constrained_elements) {
     my $constr_elem_id = $constrained_elements->{$species_set_id};
@@ -685,7 +686,9 @@ sub _summarise_compara_db {
     my ( $species1, $species2 ) = ( $row->[1], $row->[2] );
     $species1 =~ tr/ /_/;
     $species2 =~ tr/ /_/;
+#warn "... $row->[0] ( $species1 -> $species2 ) ...";
     my $KEY = $sections{uc($row->[0])} || uc( $row->[0] );
+    $self->db_tree->{ $db_name }{$KEY}{'merged'}{$species2}  = $valid_species{ $species2 };
     $self->db_tree->{ $db_name }{$KEY}{$species1}{$species2} = $valid_species{ $species2 };
   }
 #		  &eprof_dump(\*STDERR);		
