@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Form::Element::RadioButton;
 
 use strict;
-use qw(EnsEMBL::Web::Form::Element );
+use base qw(EnsEMBL::Web::Form::Element );
 
 use CGI qw(escapeHTML);
 
