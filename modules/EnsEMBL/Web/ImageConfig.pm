@@ -1,10 +1,14 @@
 package EnsEMBL::Web::ImageConfig;
 
+use warnings;
+no warnings 'uninitialized';
 use strict;
+
 use Data::Dumper;
 use Storable qw( nfreeze freeze thaw);
 use Sanger::Graphics::TextHelper;
 use Bio::EnsEMBL::Registry;
+use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Tools::Misc;
@@ -22,21 +26,28 @@ our $alignment_renderers = [
   'stack'       => 'Stacked',
   'unlimited'   => 'Stacked unlimited',
   'ungrouped'   => 'Ungrouped',
-  'ungrouped_labels'   => 'Ungrouped with labels',
+##  'ungrouped_labels'   => 'Ungrouped with labels',
 ];
 our $MEMD = EnsEMBL::Web::Cache->new;
 
+sub mergeable_config {
+  return 0;
+}
 #########
 # 'general' settings contain defaults.
 # 'user' settings are restored from cookie if available
 # 'general' settings are overridden by 'user' settings
 #
 
+### Takes two parameters...
+### (1) - the adaptor... (i.e. an EnsEMBL::Web::Session object)
+### (2) - the species to use (defaults to the current species)
+
 sub new {
   my $class           = shift;
   my $adaptor         = shift;
-  my $can_attach_user = shift;
   my $species         = @_ ? shift : ($ENV{'ENSEMBL_SPECIES'} || '');
+
   my $type            = $class =~/([^:]+)$/ ? $1 : $class;
   my $style           = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
   my $self            = {
@@ -68,6 +79,10 @@ sub new {
   };
 
   bless($self, $class);
+
+## Special code here to set species back to default if cannot merge!!
+  $self->{'species'} = $ENV{'ENSEMBL_SPECIES'} if $species eq 'merged' && ! $self->mergeable_config;
+     
 ## Check to see if we have a user/session saved copy of tree.... 
 ##   Load tree from cache...
 ##   If not check to see if we have a "common" saved copy of tree
@@ -83,7 +98,7 @@ sub new {
     ## No cached defaults found,
     ## so initialize them
     $self->init if $self->can('init');
-    ## And cahce
+    ## And cache
     if ($MEMD) {
       my $defaults = {
         _tree       => $self->{'_tree'},
@@ -102,18 +117,14 @@ sub new {
   
   $self->{'no_image_frame'}=1;
 ## At this point tree doesn't depend on session/user....
-#  if( $can_attach_user ) {
-  if ($class =~ /ImageConfig::V/) {
+
+  if( $class =~ /ImageConfig::V/ ) {
     $self->load_user_vert_tracks( $adaptor );
-  }
-  else {
+  } else {
     $self->load_user_tracks( $adaptor );
- }
+  }
 ## Add user defined data sources.....
 ## Now tree does depend on session/user...
-#
-  ########## load sets up user prefs in $self->{'user'}
-#  $self->load() unless(defined $self->{'no_load'});
   return $self;
 }
 
@@ -197,7 +208,7 @@ sub load_user_vert_tracks {
   }
 
   my @density_renderers = (
-    'off'     => 'Off',
+    'off'             => 'Off',
     'density_line'    => 'Density plot - line graph',
     'density_bar'     => 'Density plot - filled bar chart',
     'density_outline' => 'Density plot - outline bar chart',
@@ -473,13 +484,25 @@ sub slice_number {
   return $self->get_parameter( 'slice_number' );
 }
 
+sub sd_call { 
+  my( $self,$key ) = @_;
+  $self->species_defs->other_species($self->{'species'},$key) 
+#  return $self->{'merged'}
+#       ? $self->species_defs->other_species('merged',$key) 
+#       : $self->species_defs->$key;
+}
+sub databases {
+  my( $self ) = @_;
+  return $self->sd_call( 'databases' );
+}
+
 sub get_track_key {
   my( $self, $prefix, $obj ) = @_;
 
   my $logic_name = $obj->gene ? $obj->gene->analysis->logic_name : $obj->analysis->logic_name;
   my $db         = $obj->get_db();
   my $db_key     = 'DATABASE_'.uc($db);
-  my $key        = $obj->species_defs->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
+  my $key        = $self->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
   return join '_', $prefix, $db, $key;
 }
 
@@ -546,10 +569,10 @@ sub create_menus {
 
 sub load_tracks { 
   my $self       = shift;
-  my $species    = $ENV{'ENSEMBL_SPECIES'};
-  my $dbs_hash   = $self->species_defs->databases;
+  my $species    = $self->{'species'}; ## ENV{'ENSEMBL_SPECIES'};
+  my $dbs_hash   = $self->databases;
   my $multi_hash = $self->species_defs->multi_hash;
-  foreach my $db ( @{$self->species_defs->core_like_databases||[]} ) {
+  foreach my $db ( @{$self->sd_call('core_like_databases')||[]} ) {
     next unless exists $dbs_hash->{$db};
     my $key = lc(substr($db,9));
 ## Look through tables in databases and add data from each one...
@@ -576,14 +599,14 @@ sub load_tracks {
     $self->add_synteny(               $key,$multi_hash->{$db}, $species ); # Add to synteny tree                         ##DONE
     $self->add_alignments(            $key,$multi_hash->{$db}, $species ); # Add to compara_align tree                   ##DONE
   }
-  foreach my $db ( @{$self->species_defs->funcgen_like_databases||[]} ) {
+  foreach my $db ( @{$self->sd_call('funcgen_like_databases')||[]} ) {
     next unless exists $dbs_hash->{$db};
     my $key = lc(substr($db,9)); 
     ## Configure 
     $self->add_regulation_feature(    $key,$dbs_hash->{$db}{'tables'}, $species ); # Add to regulation_feature tree
     $self->add_oligo_probe(           $key,$dbs_hash->{$db}{'tables'} ); # To oligo tree
   }
-  foreach my $db ( @{$self->species_defs->variation_like_databases||[]} ) {
+  foreach my $db ( @{$self->sd_call('variation_like_databases')||[]} ) {
     next unless exists $dbs_hash->{$db};
     my $key = lc(substr($db,9));
     ## Configure variation features
@@ -665,11 +688,10 @@ sub _merge {
       next if $_ eq 'desc';
       if( $_ eq 'default' ) {
 #warn ".... $_ $config_name : ",keys %{$sub_tree->{'web'}{$_}||{}};
-	if ( ref($sub_tree->{'web'}{$_}) eq 'HASH') {
-	  $data->{$key}{'display'} ||= $sub_tree->{'web'}{$_}{$config_name};
-	}
-	else {
-	  $data->{$key}{'display'} ||= $sub_tree->{'web'}{$_};
+        if( ref($sub_tree->{'web'}{$_}) eq 'HASH' ) {
+          $data->{$key}{'display'} ||= $sub_tree->{'web'}{$_}{$config_name};
+        } else {
+          $data->{$key}{'display'} ||= $sub_tree->{'web'}{$_};
         }
       } else {
         $data->{$key}{$_}    ||= $sub_tree->{'web'}{$_};     # Longer form for help and configuration!
@@ -696,8 +718,8 @@ sub _merge {
     push @{$data->{$key}{'logic_names'}}, $analysis;
   }
   foreach my $key (keys %$data) {
-    $data->{$key}{'name'} ||= $tree->{$key}{'name'};
-    $data->{$key}{'caption'} ||= $data->{$key}{'name'} || $tree->{$key}{'name'};
+    $data->{$key}{'name'}       ||= $tree->{$key}{'name'};
+    $data->{$key}{'caption'}    ||= $data->{$key}{'name'} || $tree->{$key}{'name'};
     $data->{$key}{'description'} .= '</dl>' if $data->{$key}{'description'} =~ '<dl>';
   }
   return ( [sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data], $data );
@@ -734,7 +756,7 @@ sub add_dna_align_feature {
         'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
         'renderers'   => $alignment_renderers,
         'strand'      => 'b',
-	'show_strands'=> $data->{$key_2}{'show_strands'} || '', #show alignments all on one strand if configured as such
+        'show_strands'=> $data->{$key_2}{'show_strands'} || '', #show alignments all on one strand if configured as such
       }));
     }
   }
@@ -883,7 +905,7 @@ sub add_gene {
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'colours'     => $self->species_defs->colour( 'gene' ),
         'caption'     => $data->{$key_2}{'caption'},
-	'colour_key'  => $data->{$key_2}{'colour_key'},
+        'colour_key'  => $data->{$key_2}{'colour_key'},
         'label_key'   => $data->{$key_2}{'label_key'},
         'description' => $data->{$key_2}{'description'},
         'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
@@ -954,11 +976,14 @@ sub add_misc_feature {
   my( $self, $key, $hashref ) = @_;
   #set some defaults and available tracks
   my $default_tracks = {
-      'cytoview'   => {'tilepath' => {'default'   => 'normal'},
-		       'encode'   => {'threshold' => 'no'},
-		   },
-      'contigviewbottom' => {'ntctgs' => {'available' => 'no'},
-			     'encode'   => {'threshold' => 'no'},}
+    'cytoview'   => {
+      'tilepath' => {'default'   => 'normal'},
+      'encode'   => {'threshold' => 'no'}
+    },
+    'contigviewbottom' => {
+      'ntctgs' => {'available' => 'no'},
+      'encode' => {'threshold' => 'no'}
+    }
   };
   return unless $self->get_node( 'misc_feature' );
   my $config_name = $self->{'type'};
@@ -969,19 +994,19 @@ sub add_misc_feature {
     next if ($default_tracks->{$config_name}{$key_2}{'available'} eq 'no');
     next if ($key_2 eq 'NoAnnotation');
     my $dets =  {
-        'glyphset'    => '_clone',
-        'db'          => $key,
-        'set'         => $key_2,
-        'colourset'   => 'clone',
-        'caption'     => $data->{$key_2}{'name'},
-        'description' => $data->{$key_2}{'desc'},
-        'max_length'  => $data->{$key_2}{'max_length'},
-        'strand'      => 'r',
-        'display'     => $default_tracks->{$config_name}{$key_2}{'default'}||$data->{$key_2}{'display'}||'off',
-        'renderers'   => [qw(off Off normal Normal)],
+      'glyphset'    => '_clone',
+      'db'          => $key,
+      'set'         => $key_2,
+      'colourset'   => 'clone',
+      'caption'     => $data->{$key_2}{'name'},
+      'description' => $data->{$key_2}{'desc'},
+      'max_length'  => $data->{$key_2}{'max_length'},
+      'strand'      => 'r',
+      'display'     => $default_tracks->{$config_name}{$key_2}{'default'}||$data->{$key_2}{'display'}||'off',
+      'renderers'   => [qw(off Off normal Normal)],
     };
     unless ($default_tracks->{$config_name}{$key_2}{'threshold'} eq 'no') {
-	$dets->{'outline_threshold'} = 350000;
+      $dets->{'outline_threshold'} = 350000;
     }
     $menu->append( $self->create_track( 'misc_feature_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, $dets));
   }
@@ -1131,19 +1156,21 @@ sub add_synteny {
   my( $self, $key, $hashref, $species ) = @_;
   return unless $self->get_node( 'synteny' );
   my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$species}||{}};
+
   return unless @synteny_species;
   my $menu = $self->get_node( 'synteny' );
   my $self_label = $self->species_defs->species_label( $species, "no_formatting" );
-  foreach my $species ( @synteny_species ) {
-    ( my $species_readable = $species ) =~ s/_/ /g;
+
+  foreach my $species_2 ( @synteny_species ) {
+    ( my $species_readable = $species_2 ) =~ s/_/ /g;
     my ($a,$b) = split / /, $species_readable;
     my $caption = substr($a,0,1).".$b synteny";
-    my $label = $self->species_defs->species_label( $species, "no_formatting" );
+    my $label = $self->species_defs->species_label( $species_2, "no_formatting" );
     ( my $name = "Synteny with $label" ) =~ s/<.*?>//g;
-    $menu->append( $self->create_track( 'synteny_'.$species, $name, {
+    $menu->append( $self->create_track( 'synteny_'.$species_2, $name, {
       'db'          => $key,
       'glyphset'    => '_synteny',
-      'species'     => $species,
+      'species'     => $species_2,
       'species_hr'  => $species_readable,
       'caption'     => $caption,
       'description' => "<a href=\"/info/docs/compara/analyses.html#synteny\" class=\"cp-external\">Synteny regions</a> between $self_label and $label",
@@ -1352,55 +1379,56 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
   return unless $self->get_node( 'functional' ); 
   my $menu = $self->get_node( 'functional' ); 
 
-  my $results = $hashref->{'result_set'};
-  my $features = $hashref->{'feature_set'};
-  my %funcgen = (%$results,%$features);
-  my ($keys, $data) = $self->_merge($hashref->{'feature_set'});   
-  my ($keys_a, $data_a) = $self->_merge($hashref->{'result_set'});
-
-  my @all_keys = (@$keys, @$keys_a);
-  my %all_data = (%$data, %$data_a);
-  my $fg_data = \%all_data;
+  my $results           = $hashref->{'result_set'};
+  my $features          = $hashref->{'feature_set'};
+  my %funcgen           = ( %$results,%$features );
+  my ($keys,   $data  ) = $self->_merge($features);
+  my ($keys_a, $data_a) = $self->_merge($results );
+  my @all_keys          = (@$keys, @$keys_a);
+  my %all_data          = (%$data, %$data_a);
+  my $fg_data           = \%all_data;
+  
   foreach my $key_2 ( @all_keys ) { 
-    my $K = $fg_data->{$key_2}{'type'}||'other';   
+    my $K = $fg_data->{$key_2}{'type'}||'other';
     next if $K eq 'other';
     my $render = ['off'=> 'Off','normal' => 'Normal'];
     my $legend_flag = 0; 
     my $wiggle_flag = 0;
     my $cisred_flag = 0;
 
-    if ( $fg_data->{$key_2}{'renderers'}) {
+    if ( $fg_data->{$key_2}{'renderers'} ) {
       my %renderers = %{ $fg_data->{$key_2}{'renderers'} };
       my @temp;
-      foreach  (keys %renderers){
+      foreach (sort keys %renderers){
         my $value = $renderers{$_};
-        push (@temp, $_);
-        push (@temp, $value);
-        if ($_ =~/tiling/){ 
-          unless ( $fg_data->{$key_2}{'type'} =~/histone/ ){
-          $wiggle_flag = 1; 
-          }      
-        }
+        push @temp, $_ => $value;
+        $wiggle_flag = 1 if /tiling/ && $fg_data->{$key_2}{'type'} !~ /histone/;
       }
       $render = \@temp;
     }
-    if ($K =~/fg_reg/) { $legend_flag = 1; }
-    if ($fg_data->{$key_2}{'description'}  =~/cisRED/){ $cisred_flag = 1; }
-
-    $menu->append($self->create_track ($K.'_'.$key, sprintf($fg_data->{$key_2}{'name'}||$fg_data->{$key_2}{'logic_names'}),{
-      'db'          => $key,
-      'glyphset'    => $K,
-      'sources'     => 'undef',
-      'strand'      => 'r',
-      'labels'      => 'on',
-      'depth'       => $fg_data->{$key_2}{'depth'}||0.5,
-      'colourset'   => $fg_data->{$key_2}{'colourset'}||$K,
-      'description' => $fg_data->{$key_2}{'description'},
-      'display'     => $fg_data->{$key_2}{'display'}||'off', 
-      'renderers'   => $render, 
-    }));
-    if ( $wiggle_flag ){ 
-      $menu->append($self->create_track ($K.'_'.$key. '_blocks', sprintf($fg_data->{$key_2}{'name'} .' peaks'|| $fg_data->{$key_2}{'logic_names'} .' peaks'),{
+    
+    $legend_flag = 1 if $K =~/fg_reg/;
+    $cisred_flag = 1 if $fg_data->{$key_2}{'description'} =~ /cisRED/;
+    
+    $menu->append($self->create_track(
+      $K.'_'.$key.'_'.$key_2, sprintf($fg_data->{$key_2}{'name'}||$fg_data->{$key_2}{'logic_names'}),
+      {
+        'db'          => $key,
+        'glyphset'    => $K,
+        'sources'     => 'undef',
+        'strand'      => 'r',
+        'labels'      => 'on',
+        'depth'       => $fg_data->{$key_2}{'depth'}||0.5,
+        'colourset'   => $fg_data->{$key_2}{'colourset'}||$K,
+        'description' => $fg_data->{$key_2}{'description'},
+        'display'     => $fg_data->{$key_2}{'display'}||'off', 
+        'renderers'   => $render, 
+      }
+    ));
+    
+    $menu->append($self->create_track (
+      $K.'_'.$key. '_blocks_'.$key_2, sprintf( $fg_data->{$key_2}{'name'} .' peaks'|| $fg_data->{$key_2}{'logic_names'} .' peaks' ),
+      {
         'db'          => $key,
         'glyphset'    => $K,
         'sources'     => 'undef',
@@ -1411,26 +1439,27 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
         'description' => $fg_data->{$key_2}{'description'},
         'display'     => $fg_data->{$key_2}{'display'}||'off',
         'renderers'   => ['off'=>'Off','compact'=>'Normal'],
-      }));
-    }
-    if ( $legend_flag ){
-       $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', {'strand' => 'r'});
-    }
-    if ($cisred_flag) {
-      $menu->append($self->create_track ($K.'_'.$key .'_search', 'cisRED Search Regions',{
-        'db'          => $key,
-        'glyphset'    => 'regulatory_search_regions',
-        'sources'     => 'undef',
-        'strand'      => 'r',
-        'labels'      => 'on',
-        'depth'       => 0.5,
-        'colourset'   => 'regulatory_search_regions',
-        'description' => 'cisRED Search Regions',
-        'display'     => 'off',
-      }));
-    }
+      }
+    )) if $wiggle_flag;
+    $self->add_track(
+      'information', 'fg_regulatory_features_legend',
+      'Reg. Features Legend', 'fg_regulatory_features_legend',
+      {'strand' => 'r'}
+    ) if $legend_flag;
+    $menu->append($self->create_track (
+      $K.'_'.$key .'_search', 'cisRED Search Regions',{
+      'db'          => $key,
+      'glyphset'    => 'regulatory_search_regions',
+      'sources'     => 'undef',
+      'strand'      => 'r',
+      'labels'      => 'on',
+      'depth'       => 0.5,
+      'colourset'   => 'regulatory_search_regions',
+      'description' => 'cisRED Search Regions',
+      'display'     => 'off',
+    })) if $cisred_flag;
   }
-return;
+  return;
 }
 
 sub add_decorations {

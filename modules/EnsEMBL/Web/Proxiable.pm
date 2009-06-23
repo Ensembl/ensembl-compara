@@ -3,7 +3,6 @@ package EnsEMBL::Web::Proxiable;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw( EnsEMBL::Web::Root );
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::ExtURL;
@@ -12,6 +11,7 @@ use EnsEMBL::Web::Root;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use CGI qw(escape escapeHTML);
 
+use base qw( EnsEMBL::Web::Root );
 
 sub table_info {
   my $self = shift;
@@ -223,13 +223,14 @@ sub get_imageconfig  {
 
 sub image_config_hash {
 ### Retuns a copy of the script config stored in the database with the given key
-  my $self = shift;
-  my $key  = shift;
-  my $type = shift || $key;
+  my( $self, $key, $type, @species ) = @_;
+
+  $type ||= $key;
+### If anything left this is the species .....
   my $session = $self->get_session;
-#warn "JS5 UCH $key $type";
+# warn "JS5 UCH $key $type @species";
   return undef unless $session;
-  my $T = $session->getImageConfig( $type, $key ); ## {'image_configs'}{$key} ||= $self->get_imageconfig( $type );
+  my $T = $session->getImageConfig( $type, $key, @species );
   return unless $T;
   $T->_set_core( $self->core_objects );
   return $T;

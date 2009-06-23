@@ -1,6 +1,9 @@
 package EnsEMBL::Web::Session;
 
+use warnings;
+no warnings 'uninitialized';
 use strict;
+
 use Storable qw(nfreeze thaw);
 use Bio::EnsEMBL::ColourMap;
 use Apache2::RequestUtil;
@@ -18,8 +21,8 @@ use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
-use EnsEMBL::Web::Root;
-our @ISA = qw(EnsEMBL::Web::Root);
+use base qw(EnsEMBL::Web::Root);
+
 our %DAS_IMAGE_DEFAULTS = ( 'display' => 'off' );
 
 {
@@ -770,7 +773,10 @@ sub getImageConfig {
 ### If passed one parameter then it loads the data (and doesn't cache it)
 ### If passed two parameters it loads the data (and caches it against the second name - NOTE you must use the
 ### second name version IF you want the configuration to be saved by the session - otherwise it will be lost
-  my( $self, $type, $key ) = @_;
+  my( $self, $type, $key, @species ) = @_;
+
+### Third parameter is the species! if passed this gets pushed through to new ImageConfig call
+### via the call get_ImageConfig below...
 
   ## TODO: get rid of session getters,
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
@@ -783,7 +789,8 @@ sub getImageConfig {
   if( $key && exists $ImageConfigs_of{ ident $self }{$key} ) {
     return $ImageConfigs_of{ ident $self }{$key};
   }
-  my $image_config = $self->get_ImageConfig( $type ); # $ImageConfigs_of{ ident $self }{ $type };
+  my $image_config = $self->get_ImageConfig( $type, @species ) ;
+
   foreach my $script ( keys %{$Configs_of{ ident $self }||{}} ) {
     if( $Configs_of{ ident $self }{$script}{'image_config_data'}{$type} ) {
       my $T = $Configs_of{ ident $self }{$script}{'image_config_data'}{$type}||{};
@@ -799,8 +806,8 @@ sub getImageConfig {
 
 sub get_ImageConfig {
 ### Return a new image config object...
-  my $self = shift;
-  my $type = shift;
+  my( $self, $type, @species ) = @_; ## @species is a optional scalar!!!
+
   return undef if $type eq '_page';
   my $classname = '';
 ## Let us hack this for the moment....
@@ -825,7 +832,7 @@ sub get_ImageConfig {
 ## Import the module
   $classname->import();
   $self->colourmap;
-  my $image_config = eval { $classname->new( $self, @_ ); };
+  my $image_config = eval { $classname->new( $self, @species ); };
   if( $@ || !$image_config ) { warn(qq(ImageConfigAdaptor failed to create new $classname: $@\n)); }
 ## Return the respectiv config.
   return $image_config;
