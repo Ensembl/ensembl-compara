@@ -21,7 +21,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $html = qq(<h2>Preview converted file(s)</h2>
-<p>The first ten lines of each file are displayed below. Right-click on the file name to download the complete file</p>
+<p>The first ten lines of each file are displayed below. Click on the file name to download the complete file</p>
 );
 
   my @files = $object->param('converted');
