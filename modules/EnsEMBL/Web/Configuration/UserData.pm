@@ -198,6 +198,40 @@ sub populate_tree {
      'no_menu_entry' => 1 }
   );
 
+  ## Data conversion
+  my $convert_menu = $self->create_submenu( 'Conversion', 'Data Converters' );
+  $convert_menu->append(
+    $self->create_node( 'SelectFeatures', 'Assembly Converter', 
+      [qw(select_features EnsEMBL::Web::Component::UserData::SelectFeatures)],
+      {'availability' => scalar(@{$self->object->species_defs->ASSEMBLY_MAPPINGS})},
+    )
+  );
+  $convert_menu->append(
+    $self->create_node( 'CheckConvert', '', [],
+      {'command' => 'EnsEMBL::Web::Command::UserData::CheckConvert',
+      'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
+  $convert_menu->append(
+    $self->create_node( 'ConvertFeatures', '', [],
+      {'command' => 'EnsEMBL::Web::Command::UserData::ConvertFeatures',
+      'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
+  $convert_menu->append(
+    $self->create_node( 'PreviewConvert', 'Files Converted', 
+      [qw(conversion_done EnsEMBL::Web::Component::UserData::PreviewConvert)],
+      {'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
+
+  $convert_menu->append(
+    $self->create_node( 'UploadStableIDs', 'ID History Converter', 
+      [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)],
+      {'availability' => 1},
+    )
+  );
+
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'Message', '',
     [qw(message EnsEMBL::Web::Component::CommandMessage
