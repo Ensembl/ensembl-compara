@@ -10,7 +10,6 @@ sub new {
   my( $class, $hash_ref ) = @_;
 
   my $extra = {};
-
   if( $hash_ref->[16] =~ /=/ ) {
     my @T = split /;\s*/, $hash_ref->[16];
     foreach (@T) {
@@ -32,6 +31,7 @@ sub new {
   }
   $extra->{'source'}       = [ $hash_ref->[2] ];
   $extra->{'feature_type'} = [ $hash_ref->[4] ];
+  $extra->{'score'}        = [ $hash_ref->[10] ];
   $extra->{'frame'}        = [ $hash_ref->[14]];
   return bless { '__raw__' => $hash_ref, '__extra__' => $extra }, $class;
 }
@@ -56,6 +56,7 @@ sub id       {
 sub hstart  { my $self = shift; return $self->{'__extra__'}{'hstart'}  ? $self->{'__extra__'}{'hstart'}[0]  : undef ;  }
 sub hend    { my $self = shift; return $self->{'__extra__'}{'hend'}    ? $self->{'__extra__'}{'hend'}[0]    : undef ; }
 sub hstrand { my $self = shift; return $self->{'__extra__'}{'hstrand'} ? $self->{'__extra__'}{'hstrand'}[0] : undef ; }
+sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
 sub slide   {
   my $self = shift; my $offset = shift;
