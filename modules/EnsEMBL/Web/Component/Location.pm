@@ -132,7 +132,7 @@ sub create_user_set {
       push @$pointers, $image->add_pointers( $object, {
         'config_name'   => 'Vkaryotype',
         'parser'        => $data->{'parser'},
-        'features'      => $data->{'features'},
+        'features'      => $object->retrieve_userdata($data->{'features'}),
         'color'         => $colour,
         'style'         => $style,
       });
