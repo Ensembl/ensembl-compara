@@ -329,91 +329,10 @@ sub _help_URL {
   return $URL;
 }
 
-=head2 getCoordinateSystem
-
-TODO: replace
-
-sub getCoordinateSystem{
-  my ($self, $cs) = @_;
-
-  my $species = $self->species || $ENV{'ENSEMBL_SPECIES'};
-
-  my %SpeciesMappings = (
-    'Homo_sapiens' => { 'hgnc'         	=> 'HGNC ID' },
-    'Mus_musculus' => { 'mgi' 		=> 'MGI Symbol',
-                        'mgi_acc'       => 'MGI Accession ID' }
-  );
-
-  my %DASMapping = (
-## Gene based entries...
-    'ensembl_gene'                 => 'Ensembl Gene ID',
-## Peptide based entries
-    'ensembl_peptide'              => 'Ensembl Peptide ID',
-    'ensembl_transcript'           => 'Ensembl Transcript ID',
-    'uniprot/swissprot'            => 'UniProt/Swiss-Prot Name',
-    'uniprot/swissprot_acc'        => 'UniProt/Swiss-Prot Acc',
-    'uniprot/sptrembl'             => 'UniProt/TrEMBL',
-    'entrezgene_acc'               => 'Entrez Gene ID',
-    'ipi_acc'                      => 'IPI Accession',
-    'ipi_id'                       => 'IPI ID',
-## Additional species specific peptide based entries...
-    %{ $SpeciesMappings{ $species } || {} },
-## Sequence based entries
-    'ensembl_location_chromosome'  => 'Ensembl Chromosome',
-    'ensembl_location_supercontig' => 'Ensembl NT/Super Contig',
-    'ensembl_location_clone'       => 'Ensembl Clone',
-    'ensembl_location_group'       => 'Ensembl Group',
-    'ensembl_location_contig'      => 'Ensembl Contig',
-    'ensembl_location_scaffold'    => 'Ensembl Scaffold',
-    'ensembl_location_toplevel'    => 'Ensembl Top Level',
-#   'ensembl_location'             => 'Ensembl Location', ##Deprecated - use toplevel instead...
-  );
-
-  return  $cs ? ($DASMapping{$cs} || $cs) : # Either a single entry from the list if there is a param
-                \%DASMapping;               # Or a hash reference if not....
-}
-=cut
-
-=head2 get_DASCollection
-
-  Arg [1]   : none
-  Function  : PRIVATE: Lazy-loads the DASCollection object for this gene, translation or transcript
-  Returntype: EnsEMBL::Web::DataFactory::DASCollectionFactory
-  Exceptions: 
-  Caller    : 
-  Example   : 
-
-TODO: remove
-
-sub get_DASCollection{
-  my $self = shift;
-  return;
-  my $data = $self->__data;
-
-  unless( $data->{_das_collection} ){
-    my $dasfact = EnsEMBL::Web::Proxy::Factory->new( 'DASCollection', $self->__data );
-    $dasfact->createObjects;
-    if( $dasfact->has_a_problem ){
-      my $prob = $dasfact->problem->[0];
-      return;
-    }
-
-    $data->{_das_collection} = $dasfact->DataObjects->[0];
-
-    foreach my $das( @{$data->{_das_collection}->Obj} ){
-      if ($das->adaptor->active) {
-        $self->DBConnection->add_DASFeatureFactory($das);
-      }
-    } 
-  }
-  return $data->{_das_collection};
-}
-
-=cut
-
 sub fetch_userdata_by_id {
-  my ($self, $track_id) = @_;
+  my ($self, $track_id, $chromosome) = @_;
   return unless $track_id;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $data = {};
 
   my ($status, $type, $id) = split('-', $track_id);
@@ -426,13 +345,12 @@ sub fetch_userdata_by_id {
       $tempdata = $self->get_session->get_data('type' => $type, 'code' => $id);
     }
     else {
-      my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-      my $record = $user->uploads($track_id);
-      $tempdata = {'filename' => $record->filename, 'format' => $record->format};
+      my $record = $user->urls($id);
+      $tempdata = {'url' => $record->url};
     }
     my $parser = EnsEMBL::Web::Text::FeatureParser->new();
     if ($type eq 'url') {
-      $parser->parse_URL( $tempdata->{'filename'} );
+      $parser->parse_URL( $tempdata->{'url'} );
     }
     else {
       my $file = new EnsEMBL::Web::TmpFile::Text( filename => $tempdata->{'filename'} );
@@ -441,13 +359,18 @@ sub fetch_userdata_by_id {
       $parser->parse($content, $tempdata->{'format'} );
     }
     $data = {'parser' => $parser};
-}
+  }
   else {
-    my $feat_objs = [];
+    my $features = [];
     my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
-    $feat_objs = $fa->fetch_all_by_Slice( $self->chromosome, $track_id );
-
-    $data = {'features' => $self->retrieve_userdata($feat_objs)};
+    my @records = $user->uploads($id);
+    my $record = $records[0];
+    my @analyses = ($record->analyses);
+    foreach (@analyses) {
+      next unless $_;
+      push @$features, @{$fa->fetch_all_by_logic_name($_)};
+    }
+    $data = {'features' => $features};
   }
 
   return $data;
