@@ -623,11 +623,10 @@ sub _configurator {
   my $self = shift;
   my $obj  = $self->{'object'};
   my $vc   = $obj->get_viewconfig();
-
   my $conf;
   my $config_key = $obj->param('config');
   eval {
-    $conf = $obj->image_config_hash( $obj->param('config') ) if $obj->param('config');
+    $conf = $obj->image_config_hash( $obj->param('config'), undef, 'merged' ) if $obj->param('config');
   };
   my $action = $ENV{'ENSEMBL_TYPE'}.'/'.$ENV{'ENSEMBL_ACTION'};
      $action .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
@@ -666,7 +665,7 @@ sub _configurator {
       );
       my $content  = '';
          $content .= sprintf '<h2>Configuration for: "%s"</h2>', CGI::escapeHTML($vc->title) if $vc->title;
-	 $content .= $vc->get_form->render;
+      $content .= $vc->get_form->render;
       $panel->set_content( $content );
       $self->add_panel( $panel );
       $self->_reset_config_panel( $vc->title, $action );

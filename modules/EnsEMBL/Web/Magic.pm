@@ -131,7 +131,7 @@ need to make sure that the image config we have is a merged image config, with
 each of the trees for each species combined....
 
 =cut
-      my $ic = $session->getImageConfig( $config, $config );
+      my $ic = $session->getImageConfig( $config, $config, 'merged' ); 
       $vc->altered = $ic->update_from_input( $input );
       $session->store;
       if( $input->param('submit') ) {

@@ -433,6 +433,55 @@ sub _merge_db_tree {
   $tree->{$key} = $t;
 }
 
+sub _created_merged_table_hash {
+  my $self = shift;
+  my $tree = shift;
+  my $databases = {};
+  my $extra = {};
+  foreach my $sp ( @$ENSEMBL_SPECIES ) {
+    my $species_dbs = $tree->{ $sp }{'databases'};
+    foreach my $db ( keys %$species_dbs ) {
+      $databases->{$db} ||= {'tables'=>{}};
+      foreach my $tb ( keys %{ $species_dbs->{$db}{'tables'} } ) {
+        my $t_hash = $species_dbs->{$db}{'tables'}{$tb};
+        next unless ref( $t_hash ) eq 'HASH';
+        foreach my $k1 ( keys %$t_hash ) {
+          my $x1 = $t_hash->{$k1};
+          if( ref($x1) eq 'HASH') {
+            foreach my $k2 ( keys %$x1 ) {
+              my $x2 = $x1->{$k2};
+              if( ref($x2) eq 'HASH' ) {
+                foreach my $k3 ( keys %$x2 ) {
+                  $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3} ||= $x2->{$k3};
+#warn sprintf "A:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, $x2->{$k3} if $tb eq 'gene';
+                }
+              } else {
+                $databases->{$db}{'tables'}{$tb}{$k1}{$k2} ||= $x2;
+#warn sprintf "B:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, " ", $x2 if $tb eq 'gene';
+              }
+            }
+          } else {
+            $databases->{$db}{'tables'}{$tb}{$k1} ||= $x1;
+#warn sprintf "C:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, " ", " ", $x1 if $tb eq 'gene';
+          }
+        }
+      }
+    }
+    foreach my $n ( keys %{$tree->{$sp}} ) {
+      if( $n =~ /^\w+_like_databases$/ ) {
+        foreach my $db ( @{$tree->{$sp}{$n}||[]} ) {
+          $extra->{$n}{$db}++;
+        }
+      }
+    }
+  }
+  foreach ( keys %$extra ) {
+    $extra->{$_} = [ sort keys %{$extra->{$_}} ];
+  }
+  $extra->{'databases'} = $databases;
+  return $extra;
+}
+
 sub _parse {
 ### Does the actual parsing of .ini files
 ### (1) Open up the DEFAULTS.ini file(s)
@@ -503,8 +552,12 @@ sub _parse {
       lock_nstore( $das_tree->{ $species }||{}, $das_packed );
     }
     $self->_merge_db_tree( $tree, $das_tree, $species );
-#  }
-}
+  }
+#------------ Lets try and fake a databases/tables hash so we can
+#             mess around in ImageConfig with an all species
+#             configuration
+ 
+  $tree->{'merged'} = $self->_created_merged_table_hash( $tree );
 #------------ Do the same for the multi-species file...
   $tree->{'MULTI'} = $self->_read_in_ini_file( 'MULTI', $defaults );                       $self->_info_line( 'Parsing', "MULTI ini file" );
   $tree->{'MULTI'}{'COLOURSETS'} = $self->_munge_colours( $self->_read_in_ini_file( 'COLOUR', {} ) );
