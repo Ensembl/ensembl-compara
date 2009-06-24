@@ -61,8 +61,13 @@ sub upload {
   ## Get original path, so can save file name as default name for upload
   my $name = $object->param('name');
   unless ($name) {
-    my @orig_path = split('/', $object->param($method));
-    $name = $orig_path[-1];
+    if ($method eq 'text') {
+      $name = 'Data';
+    }
+    else {
+      my @orig_path = split('/', $object->param($method));
+      $name = $orig_path[-1];
+    }
   }
   $param->{'name'} = $name;
 
