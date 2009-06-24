@@ -10,7 +10,6 @@ sub create {
   my $species = shift;
   my $sd      = shift;
   my $root    = $sd->ENSEMBL_HTDOCS_DIRS->[0];
-  warn $sd->ENSEMBL_EXTERNAL_SEARCHABLE;
   my @allowed = @{$sd->ENSEMBL_EXTERNAL_SEARCHABLE||[]};
 
   my %ignore = qw(robots.txt 1 .cvsignore 1);
