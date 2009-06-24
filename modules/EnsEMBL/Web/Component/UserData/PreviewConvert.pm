@@ -28,7 +28,7 @@ sub content {
   my $i = 1;
   foreach my $id (@files) {
     next unless $id;
-    my ($file, $name) = split(':', $id);
+    my ($file, $name, $gaps) = split(':', $id);
 
     ## Tidy up user-supplied names
     $name =~ s/ /_/g;
@@ -45,7 +45,10 @@ sub content {
     my $data = $tmpfile->retrieve;
     if ($data) {
       my $newname = $name || 'converted_data_'.$i.'.gff';
-      $html .= sprintf('<h3>Converted file <a href="/%s/download?file=%s;name=%s;prefix=export;format=gff">%s</a></h3>', $object->species, $file, $newname, $newname);
+      $html .= sprintf('<h3>File <a href="/%s/download?file=%s;name=%s;prefix=export;format=gff">%s</a></h3>', $object->species, $file, $newname, $newname);
+      if ($gaps) {
+        $html .= "<p>This data has $gaps gaps when mapped to the new assembly</p>";
+      }
       $html .= '<pre>';
       my $count = 1;
       foreach my $row ( split /\n/, $data ) {

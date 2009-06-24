@@ -100,7 +100,7 @@ sub process {
         );
       }
       else {
-        $line = 'GAP';
+        $line = "GAP\n";
         $gaps++;
       }
       $output .= $line;
@@ -114,7 +114,11 @@ sub process {
       );
 
     $temp_file->print($output);
-    push @$temp_files, $temp_file->filename.':'.$name;
+    my $converted = $temp_file->filename.':'.$name;
+    if ($gaps > 0) {
+      $converted .= ':'.$gaps;
+    }
+    push @$temp_files, $converted;
   }
   $param->{'converted'} = $temp_files;
   $param->{'gaps'} = $gaps;
