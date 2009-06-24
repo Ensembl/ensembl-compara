@@ -27,5 +27,6 @@ sub score { my $self = shift; return $self->{'__raw__'}[5]; }
 sub type { my $self = shift; return $self->{'__raw__'}[6]; }
 sub note { my $self = shift; return $self->{'__raw__'}[7]; }
 sub link { my $self = shift; return $self->{'__raw__'}[8]; }
+sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
 1;

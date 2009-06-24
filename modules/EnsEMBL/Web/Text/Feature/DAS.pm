@@ -19,5 +19,6 @@ sub _seqname { my $self = shift; return $self->{'__raw__'}[8]; }
 sub strand   { my $self = shift; return $self->_strand( $self->{'__raw__'}[14] ); }
 sub rawstart { my $self = shift; return $self->{'__raw__'}[10]; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[12]; }
+sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
 1;

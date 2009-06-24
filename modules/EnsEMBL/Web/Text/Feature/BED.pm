@@ -30,8 +30,8 @@ sub strand   { my $self = shift;
 }
 sub rawstart { my $self = shift; return $self->{'__raw__'}[1]; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
-
 sub id       { my $self = shift; return $self->{'__raw__'}[3]; }
+sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
 sub slide    {
   my $self = shift; 

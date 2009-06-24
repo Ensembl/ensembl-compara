@@ -10,5 +10,6 @@ sub seqname   	{  return $_[0]->{'__raw__'}[1]; }
 sub rawstart 	{  return $_[0]->{'__raw__'}[2]; }
 sub rawend 		{  return $_[0]->{'__raw__'}[3]; }
 sub id       	{  return $_[0]->{'__raw__'}[4]; }
+sub external_data { return undef; }
 
 1;

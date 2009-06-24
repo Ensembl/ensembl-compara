@@ -34,6 +34,7 @@ sub id       { my $self = shift; return $self->{'__raw__'}[9]; }
 sub hstart   { my $self = shift; return $self->{'__raw__'}[11]; }
 sub hend     { my $self = shift; return $self->{'__raw__'}[12]; }
 sub hstrand  { my $self = shift; return $self->_strand( substr($self->{'__raw__'}[8],0,1)); }
+sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
 sub slide   {
   my $self = shift; my $offset = shift;
