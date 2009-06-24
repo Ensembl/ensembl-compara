@@ -321,7 +321,7 @@ sub load_user_tracks {
         'source_type' => 'user' 
       };
     }
-    my @t = $user->uploads;
+    @t = $user->uploads;
     foreach my $entry (@t) {
       next unless  $entry->species eq $self->{'species'};
       my @analyses = split /, /, $entry->analyses;
