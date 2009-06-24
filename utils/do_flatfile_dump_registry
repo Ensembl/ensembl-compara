@@ -414,7 +414,8 @@ foreach my $spp (@species) {
 
     my $slice_adaptor = $reg->get_adaptor( $spp, 'Core', 'Slice' );
 
-    $slice_adaptor->cache_toplevel_seq_mappings();
+#    $slice_adaptor->cache_toplevel_seq_mappings();
+# No point caching as we now zap the cachw later
 
     # Sort slices
     my $i = 1;
@@ -440,15 +441,15 @@ foreach my $spp (@species) {
             $chr_sorter{ $a->seq_region_name() }
             || $a->seq_region_name() cmp $b->seq_region_name()
           } @{
-          $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
-            $inc_nonref )
+          $slice_adaptor->fetch_all( 'toplevel', undef,
+            $inc_nonref, $inc_dupes )
             || [] };
 
       } else {
         info( 1, "Unsorted results" );
         @slices = @{
-          $slice_adaptor->fetch_all( 'toplevel', undef, $inc_dupes,
-            $inc_nonref )
+          $slice_adaptor->fetch_all( 'toplevel', undef,
+            $inc_nonref , $inc_dupes)
             || [] };
       }
     }
