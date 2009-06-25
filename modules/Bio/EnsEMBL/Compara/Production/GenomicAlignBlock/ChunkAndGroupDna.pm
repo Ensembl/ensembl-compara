@@ -63,6 +63,7 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Hive::Process;
+
 our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Analysis::RunnableDB);
 
 
@@ -85,7 +86,10 @@ sub fetch_input {
   # $self->input_id
   #
   $self->{'genome_db_id'}             = 0;  # 'gdb'
-  $self->{'store_seq'}                = 0;
+
+  #set default store_seq to 1 so that the sequence table is populated during
+  #the chunking process rather than later during eg Blastz analysis.
+  $self->{'store_seq'}                = 1;
   $self->{'store_chunk'}              = 0;
   $self->{'overlap'}                  = 0;
   $self->{'chunk_size'}               = undef;
@@ -378,7 +382,14 @@ sub create_dnafrag_chunks {
       $chunk->masking_options($self->{'masking_options'});
     }
 
+    #Store the sequence at this point, rather than in the blastz analysis
     if($self->{'store_seq'}) {
+
+	#Set the masking_options variable for the masking_analysis_data_id
+	if (!$self->{'_masking_options'} && $chunk->masking_analysis_data_id) {
+	    $chunk->masking_options($self->{'comparaDBA'}->get_DnaFragChunkAdaptor->_fetch_MaskingOptions_by_dbID($chunk->masking_analysis_data_id));
+	}
+
       $chunk->bioseq; #fetches sequence and stores internally in ->sequence variable
     }
 
@@ -424,13 +435,18 @@ sub create_dnafrag_chunks {
     $self->submit_job($chunk) if($self->{'analysis_job'});
     $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
 
+    #This is very important, otherwise it leaks
+    undef($chunk->{'_sequence'});
+
+    #These 2 don't seem to have any effect
+    #undef($chunk->{'_slice'});
+    #undef($chunk);
     $chunk_start = $chunk_end - $overlap + 1;
   }
 
   #print "Done\n";
   #print scalar(time()-$lasttime), " secs to chunk, and store\n";
 }
-
 
 sub submit_job {
   my $self  = shift;
