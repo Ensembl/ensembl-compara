@@ -242,7 +242,7 @@ sub load_user_vert_tracks {
         'width'       => $width,
         'strand'      => 'b'
       };
-      if ($entry->{'render'} eq 'density' || ref($self) =~ /mapview/) {
+      if ($entry->{'format'} =~ /wig/i || $entry->{'render'} eq 'density' || ref($self) =~ /mapview/) {
         $settings->{'renderers'} = \@density_renderers;
       }
       else {
