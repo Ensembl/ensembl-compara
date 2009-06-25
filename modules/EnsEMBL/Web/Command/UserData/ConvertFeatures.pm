@@ -47,7 +47,7 @@ sub process {
             $ddaf->start($_->rawstart);
             $ddaf->end($_->rawend);
             $ddaf->strand($_->strand);
-            $ddaf->seqname($_->_seqname);
+            $ddaf->seqname($_->seqname);
             $ddaf->score($_->external_data->{'score'}[0]);
             $ddaf->extra_data($_->external_data);
             push @fs, $ddaf;
@@ -85,24 +85,25 @@ sub process {
         } 
       }
       $f->slice($current_slice);
-      my $new_feature = $f->transform($new_name, $new_version);
-      if ($new_feature) {
-        my $extra = {};
-        my $other = [];
-        while (my ($k, $v) = each(%{$f->extra_data})) {
-          next if $k =~ /$skip/;
-          push @$other, $k;
-          $extra->{$k} = $v->[0];
-        }
-        $line = EnsEMBL::Web::Component::Export::feature($f->extra_data->{'feature_type'}[0],
-          {'format' => 'gff', 'delim' => "\t", 'other' => $other}, 
-          $new_feature, $extra, $f->extra_data->{'source'}[0]
-        );
+      my $feature = $f->transform($new_name, $new_version);
+      my $extra = {};
+      my $other = [];
+      while (my ($k, $v) = each(%{$f->extra_data})) {
+        next if $k =~ /$skip/;
+        push @$other, $k;
+        $extra->{$k} = $v->[0];
       }
-      else {
-        $line = "GAP\n";
+      my $feature_type = $f->extra_data->{'feature_type'}[0];
+      my $source = $f->extra_data->{'source'}[0];
+      unless ($feature) {
+        $f->seqname('GAP');
+        $feature = $f;
         $gaps++;
       }
+      $line = EnsEMBL::Web::Component::Export::feature($feature_type,
+        {'format' => 'gff', 'delim' => "\t", 'other' => $other}, 
+        $feature, $extra, $source
+      );
       $output .= $line;
     }
     
