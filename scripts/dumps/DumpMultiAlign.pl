@@ -809,10 +809,15 @@ sub print_my_emf {
       $aligned_sequence = $this_genomic_align->aligned_sequence;
     }
       #Fixed memory problem. Don't need these anymore
-      my $gas = $this_genomic_align->get_all_GenomicAligns; 
-     foreach my $ga (@$gas) {
-	  undef($ga->{original_sequence});
-	  undef($ga->{aligned_sequence});
+      if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
+	  my $gas = $this_genomic_align->get_all_GenomicAligns; 
+	  foreach my $ga (@$gas) {
+	      undef($ga->{original_sequence});
+	      undef($ga->{aligned_sequence});
+	  }
+      } else {
+	  undef($this_genomic_align->{original_sequence});
+	  undef($this_genomic_align->{aligned_sequence});
       }
     for (my $i = 0; $i<length($aligned_sequence); $i++) {
       $aligned_seqs->[$i] .= substr($aligned_sequence, $i, 1);
