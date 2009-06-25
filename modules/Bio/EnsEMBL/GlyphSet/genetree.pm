@@ -17,9 +17,10 @@ sub _init {
   # Populate the canvas with feaures represented as glyphs
   my ($self) = @_;
 
-  my $current_gene        = $self->{highlights}->[0];
-  my $current_genome_db   = $self->{highlights}->[1] || ' ';
-  my $collapsed_nodes_str = $self->{highlights}->[2] || '';
+  my $current_gene          = $self->{highlights}->[0];
+  my $current_genome_db     = $self->{highlights}->[1] || ' ';
+  my $collapsed_nodes_str   = $self->{highlights}->[2] || '';
+  my $coloured_nodes        = $self->{highlights}->[3] || {};
   my $tree          = $self->{'container'};
   my $Config        = $self->{'config'};
   my $bitmap_width = $Config->image_width(); 
@@ -36,7 +37,18 @@ sub _init {
   # I have mailed james to see if the arbitrary URL params can be included 
   # by default.
   $self->{'config'}{_core}{'parameters'}{'collapse'} = $collapsed_nodes_str;
-  
+
+  foreach my $key (sort
+      {scalar(@{$coloured_nodes->{$b}}) <=> scalar(@{$coloured_nodes->{$a}})}
+      keys %$coloured_nodes) {
+    my $value = $coloured_nodes->{$key};
+    my ($clade, $mode, $colour) = split("-", $key);
+    foreach my $node_id (@$value) {
+      $self->{"_${mode}_coloured_nodes"}->{$node_id} =
+          {'clade' => $clade, 'colour' => $colour};
+    }
+  }
+
   # Create a sorted list of tree nodes sorted by rank then id
   my @nodes = ( sort { ($a->{_rank} <=> $b->{_rank}) * 10  
                            + ( $a->{_id} <=> $b->{_id}) } 
@@ -88,6 +100,9 @@ sub _init {
   my %Nodes;
   map { $Nodes{$_->{_id}} = $_} @nodes;
   my @alignments;
+    my @node_glyphs;
+    my @bg_glyphs;
+    my @labels;
   foreach my $f (@nodes) {
      # Ensure connector enters at base of node glyph
     my $parent_node = $Nodes{$f->{_parent}} || {x=>0};
@@ -99,11 +114,11 @@ sub _init {
     }
     
     # Node glyph, coloured for for duplication/speciation
-    my $node_colour = ($f->{_dup} 
-                       ? ($f->{_dubious_dup} ? 'turquoise' : 'red3') 
-                       : 'navyblue');
-    my $label_colour     = 'black';
-    my $collapsed_colour = 'grey';
+    my ($node_colour, $label_colour, $collapsed_colour);
+    if ($f->{_dup}) {
+      $node_colour = ($f->{_dubious_dup} ? 'turquoise' : 'red3');
+    }
+
     if ($f->{label}) {
       if( $f->{_genome_dbs}->{$current_genome_db} ){
         $label_colour     = 'blue';
@@ -112,15 +127,39 @@ sub _init {
       if( $f->{_genes}->{$current_gene} ){
         $label_colour     = 'red';
         $collapsed_colour = 'red';
+        $node_colour = "royalblue";
       }
     }
+    if ($f->{_fg_colour}) {
+      # Use this foreground colour for this node if not already set
+      $node_colour = $f->{_fg_colour} if (!$node_colour);
+      $label_colour = $f->{_fg_colour} if (!$label_colour);
+      $collapsed_colour = $f->{_fg_colour} if (!$collapsed_colour);
+    }
+    $node_colour = "navyblue" if (!$node_colour); # Default colour
+    $label_colour = "black" if (!$label_colour); # Default colour
+    $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
 
     my $node_href = $self->_url
         ({ 'action'   => 'Compara_Tree_Node',
            'node'     => $f->{'_id'} });
 
-    my @node_glyphs;
     my $collapsed_xoffset = 0;
+    if ($f->{_bg_colour}) {
+      my $width  = $bitmap_width;
+      my $y = $f->{y_from} + 2;
+      my $height = $f->{y_to} - $f->{y_from} - 1;
+      my $x = $f->{x};
+      my $width = $bitmap_width - $x - 5;
+      push @bg_glyphs, Sanger::Graphics::Glyph::Rect->new
+          ({
+            'x'      => $x,
+            'y'      => $y,
+            'width'  => $width,
+            'height' => $height,
+            'colour' => $f->{_bg_colour},
+          });
+    }
     if( $f->{_collapsed} ){ # Collapsed
 
       my $height = $f->{_height};
@@ -177,11 +216,8 @@ sub _init {
           });
     }
     
-    $self->push( @node_glyphs );
-    
     # Leaf label or collapsed node label, coloured for focus gene/species
     if ($f->{label}) {
-      
       # Draw the label
       my $txt = $self->Text
           ({
@@ -208,11 +244,14 @@ sub _init {
                                  'g'       => $stable_id } );
         $txt->{'href'} = $href;
       }
+      
+      push(@labels, $txt);
 
-      $self->push($txt);
 
     }
   }
+    
+  $self->push( @bg_glyphs );
 
   my $max_x = (sort {$a->{x} <=> $b->{x}} @nodes)[-1]->{x};
   my $min_y = (sort {$a->{y} <=> $b->{y}} @nodes)[0]->{y};
@@ -233,6 +272,7 @@ sub _init {
       
       # Connector colour depends on scaling
       my $col = $connector_colours{ ($Nodes{$f}->{_cut} || 0) } || 'red';
+      $col = $Nodes{$f}->{_fg_colour} if ($Nodes{$f}->{_fg_colour});
 
       # Vertical connector
       my $v_line = $self->Line
@@ -244,7 +284,7 @@ sub _init {
             'colour'    => $col,
             'zindex'    => 0, 
           });
-      $self->unshift( $v_line );
+      $self->push( $v_line );
       
       # Horizontal connector
       my $width = $xc - $xp - 2;
@@ -259,10 +299,13 @@ sub _init {
               'zindex'    => 0,
               'dotted' => $Nodes{$f}->{_cut} || undef,
             });
-        $self->unshift( $h_line );
+        $self->push( $h_line );
       }
     }
   }
+
+  $self->push( @node_glyphs );
+  $self->push(@labels);
 
   #----------
   # Alignments
@@ -302,7 +345,7 @@ sub _init {
       'colour'    => $box_colour,
       'zindex' => 0,
     });
-    
+
     $self->push( $t );
 
 
@@ -377,6 +420,14 @@ sub features {
     '_cut'         => $cut,
   };
 
+  # Initialised colouring
+  if( $self->{_fg_coloured_nodes}->{$node_id} ){
+    $f->{_fg_colour} = $self->{_fg_coloured_nodes}->{$node_id}->{colour};
+  }
+  if( $self->{_bg_coloured_nodes}->{$node_id} ){
+    $f->{_bg_colour} = $self->{_bg_coloured_nodes}->{$node_id}->{colour};
+  }
+
   # Initialised collapsed nodes
   if( $self->{_collapsed_nodes}->{$node_id} ){
     # What is the size of the collapsed node?
@@ -385,12 +436,14 @@ sub features {
     my $sum_dist = 0;
     my %genome_dbs;
     my %genes;
+    my %leaves;
     foreach my $leaf( @{$tree->get_all_leaves} ){
       my $dist = $leaf->distance_to_ancestor($tree);
       $leaf_count++;
       $sum_dist += $dist || 0;
       $genome_dbs{$leaf->genome_db->dbID} ++;
       $genes{$leaf->gene_member->stable_id} ++;
+      $leaves{$leaf->node_id} ++;
     }
     $f->{_collapsed}          = 1,
     $f->{_collapsed_count}    = $leaf_count;
@@ -403,13 +456,14 @@ sub features {
     #}
     $f->{_genome_dbs} = {%genome_dbs};
     $f->{_genes}      = {%genes};
+    $f->{_leaves}     = {%leaves};
     $f->{label} = sprintf( '%s: %d homologs', 
                            $tree->get_tagvalue('taxon_name'), $leaf_count );
   }
   #----------
   #----------
   # Recurse for each child node
-  unless( $f->{_collapsed} ){
+  if (!$f->{_collapsed} and @{$tree->sorted_children}){
     foreach my $child_node (@{$tree->sorted_children}) {  
       $f->{_child_count} ++;
       push( @features, 
@@ -421,12 +475,16 @@ sub features {
   # Assign 'y' coordinates
   if ( @features > 0) { # Internal node
     $f->{y} = ($features[0]->{y} + $features[-1]->{y}) / 2;
+    $f->{y_from} = $features[0]->{y_from};
+    $f->{y_to} = $features[-1]->{y_to};
   } else { # Leaf node or collapsed
     my $height = int( $f->{_height} || 0 ) + 1;
     if( $height < $MIN_ROW_HEIGHT ){ $height = $MIN_ROW_HEIGHT }
     #$f->{y} = ($CURRENT_ROW++) * 20;
     $f->{y} = $CURRENT_Y + ($height/2);
+    $f->{y_from} = $CURRENT_Y;
     $CURRENT_Y += $height;
+    $f->{y_to} = $CURRENT_Y;
   }
 
   #----------
