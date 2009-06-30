@@ -44,7 +44,7 @@ sub get_all_das {
   
   # First hash is keyed by logic_name, second is keyed by full_url
   my %by_name = ( %{ $spec_das[0] }, %{ $user_das[0] }, %{ $sess_das[0] } );
-  my %by_url  = ( %{ $spec_das[1] }, %{ $user_das[1] }, %{ $sess_das[1] } );
+  my %by_url  = ( %{ $spec_das[1] || {}}, %{ $user_das[1] || {} }, %{ $sess_das[1] || {}} );
   return wantarray ? ( \%by_name, \%by_url ) : \%by_name;
 }
 
