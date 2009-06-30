@@ -294,14 +294,18 @@ sub populate_tree {
 #      selector EnsEMBL::Web::Component::Location::Compara_AlignSliceSelector
 #      nav      EnsEMBL::Web::Component::Location::ViewBottomNav
 #      bottom   EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom
-
 #      zoomnav EnsEMBL::Web::Component::Location::Compara_AlignSliceZoomNav
 #      zoom    EnsEMBL::Web::Component::Location::Compara_AlignSliceZoom
 
-#  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comp. ([[counts::align_contig]])",
-#    [qw(blank      EnsEMBL::Web::Component::Location::UnderConstruction)],
-#    { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
-#  ));
+  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comp. ([[counts::align_contig]])",
+    [qw(top         EnsEMBL::Web::Component::Location::MultiIdeogram
+	overview    EnsEMBL::Web::Component::Location::MultiTop
+	bottom      EnsEMBL::Web::Component::Location::MultiBottom
+      )],
+    { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
+  ));
+#	bottom_nav  EnsEMBL::Web::Component::Location::ViewBottomNav
+
   $align_menu->append( $self->create_subnode( 'ComparaGenomicAlignment', '',
     [qw(gen_alignment      EnsEMBL::Web::Component::Location::ComparaGenomicAlignment)],
     {'no_menu_entry' => 1 }
