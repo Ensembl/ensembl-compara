@@ -164,6 +164,7 @@ sub _generate_objects_lw {
 sub _generate_objects_Location {
   my $self = shift; ;
   my($r,$s,$e) = $self->{'parameters'}{'r'} =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
+  warn "parsing here 1";
   my $db_adaptor= $self->database('core');
   my $t = undef;
   eval {
@@ -335,7 +336,8 @@ sub _generate_objects {
   }
   $self->{'parameters'}{'r'} = $self->location->seq_region_name.':'.$self->location->start.'-'.$self->location->end if $self->location;
   if( $self->param('r') ) {
-    my($r,$s,$e) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
+#    warn "parsing here 2";
+    my($r,$s,$e,$strand) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-\d+))?/;
     $r ||= $self->param('r');
     if( $r ) {
       if( ($s||$e) ) {
@@ -359,7 +361,7 @@ sub _generate_objects {
             }
             if( $t && @attrib ) {
               $self->location( $t );
-              $self->{'parameters'}{'r'} = $t->seq_region_name.':'.$t->start.'-'.$t->end;
+              $self->{'parameters'}{'r'} = $strand ? $t->seq_region_name.':'.$t->start.'-'.$t->end.':'.$strand : $t->seq_region_name.':'.$t->start.'-'.$t->end;
             }
           }
         }
