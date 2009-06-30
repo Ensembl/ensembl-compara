@@ -11,11 +11,9 @@ sub new {
   my $extra = { '_type' => ['transcript']};
   my @T = split /;\s*/, $hash_ref->[16];
   foreach (@T) {
-    my($k,$v)= split /=/, $_, 2;
-    $k =~ s/^\s+//;
-    $k =~ s/\s+$//;
-    $v =~ s/^\s+//;
-    $v =~ s/\s+$//;
+    $_ =~ s/^\s+//;
+    $_ =~ s/\s+$//;
+    my($k,$v)= split /\s+/, $_, 2;
     $v =~ s/^"([^"]+)"$/$1/;
     push @{$extra->{$k}},$v;
   }
