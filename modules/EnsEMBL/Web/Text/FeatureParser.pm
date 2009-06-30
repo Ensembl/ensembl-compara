@@ -229,14 +229,16 @@ sub analyse_row {
 
     my $current_key = $self->{'_current_key'} ;
     if( $tab_del[12] eq '.' || $tab_del[12] eq '+' || $tab_del[12] eq '-' ) {
-      if( $tab_del[16] =~ /^(gene_id|transcript_id) [^;]+(\; (gene_id|transcript_id) [^;]+)?/ ) { ## GTF format
-        return ('format', 'GTF');   
-      } else {     ## GFF format
-        return ('format', 'GFF');   
-      }
+      warn "@@@ GF-type";
+#      if( $tab_del[16] =~ /^(gene_id|transcript_id) [^;]+(\; (gene_id|transcript_id) [^;]+)?/ ) { ## GTF format
+#        return ('format', 'GTF');   
+#      } else {     ## GFF format
+#        return ('format', 'GFF');   
+#      }
     } elsif ( $tab_del[14] eq '+' || $tab_del[14] eq '-' || $tab_del[14] eq '.') { # DAS format accepted by Ensembl
       return ('format', 'DAS');   
     } else {
+      warn "@@@ GENERIC/PSL FORMAT";
       my @ws_delim = split /\s+/, $row;
       if( $ws_delim[8] =~/^[-+][-+]?$/  ) { ## PSL format
         return ('format', 'PSL');   
@@ -408,13 +410,13 @@ sub parse_row {
     return unless $row =~ /\d+/g ;
     my @tab_del = split /(\t|  +)/, $row;
     my $current_key = $self->{'_current_key'} ;
-    if( $format =~ /^G[TF]F/ ) { ## Hack can't distinguish GFF from GTF cleanly
+    if ($format eq 'GTF')  {
+      $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GTF->new( \@tab_del ) ) 
+        if $self->filter($tab_del[0],$tab_del[6],$tab_del[8]);
+    }
+    elsif ( $format eq 'GFF' ) { 
       $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GFF->new( \@tab_del ) ) 
         if $self->filter($tab_del[0],$tab_del[6],$tab_del[8]);
-#    } 
-#  elsif ($format eq 'GTF')  { 
-#    $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GTF->new( \@tab_del ) ) 
-#    if $self->filter($tab_del[0],$tab_del[6],$tab_del[8]);
     } elsif( $format eq 'DAS' ) { 
 #      $current_key = $tab_del[2] if $current_key eq 'default';
       $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::DAS->new( \@tab_del ) ) 
