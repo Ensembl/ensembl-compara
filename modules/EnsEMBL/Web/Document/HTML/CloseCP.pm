@@ -15,6 +15,7 @@ sub referer   :lvalue { $_[0]{'referer'};   }
 sub logins    :lvalue { $_[0]{'logins'};   }
 sub blast     :lvalue { $_[0]{'blast'};   }
 sub biomart   :lvalue { $_[0]{'biomart'};   }
+sub mirror_icon :lvalue { $_[0]{'mirror_icon'};   }
 
 sub render   {
   my $self = shift;
