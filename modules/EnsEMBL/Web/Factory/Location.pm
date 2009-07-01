@@ -246,31 +246,29 @@ sub generate_full_url {
     $complete = 0 unless exists($ids->{$no}{'r'});
   }
 
-#  warn Dumper($ids);
+#  warn "do I need a redirect",Dumper($ids);
 #  warn "complete = $complete";
 
   if (! $complete) {
   PAR:
     foreach my $par ( $self->param ) {
-      foreach my $par ( $self->param ) {
-	#given a s param, get locations...
-	# - might need modif. if we can go in on a gene only ?
+      #given a s param, get locations...
+      # - might need modif. if we can go in on a gene only ?
 
-	if( $par =~ /^s(\d+)$/ ) {
-	  my $ID = $1;
-	  next PAR if $ids->{$ID}{'r'}; #don't attempt to do anything if we already have an r param
-	  my $species = $self->map_alias_to_species( $self->param($par) );
-	  my $width = $slice->end - $slice->start + 1;
-
-	  #get chr argument for self compara
-	  my $chrom = '';
+      if( $par =~ /^s(\d+)$/ ) {
+	my $ID = $1;
+	next PAR if $ids->{$ID}{'r'}; #don't attempt to do anything if we already have an r param
+	my $species = $self->map_alias_to_species( $self->param($par) );
+	my $width = $slice->end - $slice->start + 1;
+	
+	#get chr argument for self compara
+	my $chrom = '';
 #	  if ($self->param("sr$ID")) {
 #	    $chrom = $self->param("sr$ID");
 #	  } elsif ($sc) {
 #	    ($chrom) =  $self->param("c$ID") =~ /^([-\w\.]+):?/;
-#	  }
-	  $self->_best_guess( $slice, $species, $width, $chrom, $ID ); #...and do a redirct
-	}
+	#	  }
+	$self->_best_guess( $slice, $species, $width, $chrom, $ID ); #...and do a redirct
       }
     }
   }
@@ -327,7 +325,6 @@ sub _check_slice_exists_and_redirect {
     $start = 1 if $start < 1;     ## Truncate slice to start of seq region
     ($start,$end) = ($end, $start) if $start > $end;
     my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
-    warn ref($query_slice_adaptor);
 
     foreach my $system ( @{$self->__coord_systems} ) {
       my $slice;
@@ -335,7 +332,6 @@ sub _check_slice_exists_and_redirect {
 
       warn $@ if $@;
       next if $@;
-#      warn "found a slice";
       if( $slice ) {
         if( $start >  $slice->seq_region_length || $end >  $slice->seq_region_length ) {
           $start = $slice->seq_region_length if $start > $slice->seq_region_length;
@@ -390,12 +386,8 @@ sub createObjectsLocation {
       'slice'            => $slice
     };
     push @$sec_slices, $data;
-#    $Data::Dumper::Maxdepth = 2;
-#    $self->DataObjects($data);
-#    warn ($self->{'data'}{'_dataObjects'}
   }
-  push @{$self->{'data'}{'_dataObjects'}[0][2]},$sec_slices;
-#  warn "in factory",Dumper($self->{'data'}{'_dataObjects'}[0][2]);
+  $self->{'data'}{'_dataObjects'}[0][1]{'_other_locations'} = $sec_slices;
   return;
 }
 
