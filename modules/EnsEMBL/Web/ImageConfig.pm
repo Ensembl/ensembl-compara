@@ -1020,13 +1020,13 @@ sub add_oligo_probe {
   my $data = $hashref->{'oligo_feature'}{'arrays'};
   my $description = $hashref->{'oligo_feature'}{'analyses'}{'AlignAffy'}{'desc'};
   ## Different loop - no analyses - base on probeset query results... = $hashref->{'oligo_feaature'}{'arrays'};
-  foreach my $key_2 ( sort keys %$data ) {
+  foreach my $key_2 ( sort keys %$data ) { 
     $menu->append( $self->create_track( 'oligo_'.$key.'_'.$key_2, $key_2, {
       'glyphset'    => '_oligo',
       'db'          => $key,
       'sub_type'    => 'oligo',
       'array'       => $key_2,
-      'object_type' => 'OligoProbe',
+      'object_type' => 'ProbeFeature',
       'colourset'   => 'feature',
       'description' => $description,
       'caption'     => $key_2,
