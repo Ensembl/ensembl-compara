@@ -20,7 +20,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $object = $self->object; 
   my $species = $object->species;
 
   my ($html, $table);
@@ -31,7 +31,7 @@ sub content {
     ## TODO: Should there be some generic object->hash functionality for use with drawing code?
     @features = @{$object->retrieve_features($f_objects)};
     if (@features) { $table = $self->feature_tables(\@features); }
-  }
+  } 
 
   if ($object->species_defs->ENSEMBL_CHROMOSOMES && scalar(@{$object->species_defs->ENSEMBL_CHROMOSOMES}) && $object->species_defs->MAX_CHR_LENGTH) {
     my $image    = $self->new_karyotype_image();
@@ -54,7 +54,7 @@ sub content {
       'DnaAlignFeature'     => ['red', 'rharrow'],
       'ProteinAlignFeature' => ['red', 'rharrow'],
       'RegulatoryFactor'    => ['red', 'rharrow'],
-      'OligoProbe'          => ['red', 'rharrow'],
+      'ProbeFeature'          => ['red', 'rharrow'],
       'XRef'                => ['red', 'rharrow'],
       'Gene'                => ['blue','lharrow'],
     );
@@ -192,7 +192,7 @@ sub feature_tables {
 	  $data_row = { 'extname' => $extname, 'names' => $names};
 	}
 	else {
-	  if ($feat_type !~ /align|RegulatoryFactor|OligoProbe/i && $row->{'label'}) {
+	  if ($feat_type !~ /align|RegulatoryFactor|ProbeFeature/i && $row->{'label'}) {
 	    $names = sprintf('<a href="/%s/Gene/Summary?g=%s;r=%s:%d-%d">%s</a>',
 			     $object->species, $row->{'label'},
 			     $row->{'region'}, $row->{'start'}, $row->{'end'},
