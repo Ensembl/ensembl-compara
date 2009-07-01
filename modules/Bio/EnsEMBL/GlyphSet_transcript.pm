@@ -64,6 +64,7 @@ sub render_collapsed {
   my $join_col2     = 'chocolate1';
   my $join_z        = -10;
 
+  my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname );
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
     my $gene_strand       = $gene->strand;
     next if $gene_strand != $strand && $strand_flag eq 'b';
@@ -145,7 +146,7 @@ sub render_collapsed {
         $lines[0] = $lines[0].' >' if $strand >= 1;
         for( my $i=0; $i<@lines; $i++ ){
           my $line = $lines[$i].' ';
-          my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
+          my( $txt, $bit, $w,$th2 ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
           $Composite->push( $self->Text({
             'x'         => $Composite->x(),
             'y'         => $y + $h + $i*($th+1),
@@ -159,6 +160,7 @@ sub render_collapsed {
             'absolutey' => 1,
           }));
           $bump_height += $th+1;
+          warn "$line -> $th - $th2";
         }
       }
     }
@@ -232,7 +234,8 @@ sub render_transcripts {
 
   my $compara = $Config->{'compara'};
   my $link    = $compara ? $Config->get_parameter( 'opt_join_transcript') : 0;
-  
+  my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname );
+
   foreach my $gene ( @{$self->features()} ) { # For alternate splicing diagram only draw transcripts in gene
     my $gene_strand = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id() : undef;
@@ -410,12 +413,12 @@ sub render_transcripts {
       my $bump_height = 1.5 * $h;
       if( $self->my_config('show_labels') ne 'off' && $labels ) {
         if(my $text_label = $self->text_label($gene, $transcript) ) {
-      my @lines = split "\n", $text_label; 
+          my @lines = split "\n", $text_label; 
           $lines[0] = "< $lines[0]" if $strand < 1;
           $lines[0] = $lines[0].' >' if $strand >= 1;
           for( my $i=0; $i<@lines; $i++ ){
             my $line = $lines[$i].' ';
-            my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
+            my( $txt, $bit, $w,$th2 ) = $self->get_text_width( 0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname );
             $Composite->push( $self->Text({
               'x'         => $Composite->x(),
               'y'         => $y + $h + $i*($th+1),
@@ -429,7 +432,7 @@ sub render_transcripts {
               'absolutey' => 1,
             }));
             $bump_height += $th+1;
-      }
+          }
         }
       }
 
