@@ -914,11 +914,12 @@ sub _ajax_zmenu_alignment {
   my $db        = $obj->param('db')  || 'core';
   my $db_adaptor = $obj->database(lc($db));
   my $adaptor_name = "get_${obj_type}Adaptor";
-  my $feat_adap =  $db_adaptor->$adaptor_name;
+  my $feat_adap =  $db_adaptor->$adaptor_name;  
   my $fs = $feat_adap->can( 'fetch_all_by_hit_name' ) ? $feat_adap->fetch_all_by_hit_name($id)
     : $feat_adap->can( 'fetch_all_by_probeset' ) ? $feat_adap->fetch_all_by_probeset($id)
     :                                              []
     ;
+
   my $external_db_id = ($fs->[0] && $fs->[0]->can('external_db_id')) ? $fs->[0]->external_db_id : '';
   my $extdbs = $external_db_id ? $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
   my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
@@ -926,11 +927,10 @@ sub _ajax_zmenu_alignment {
   if ($fs->[0]->analysis->logic_name =~ /sheep_bac_ends|BACends/) {
     $hit_db_name = 'TRACE';
   }
-
   my $species= $obj->species;
 
-  #different zmenu for oligofeatures
-  if ($obj_type eq 'OligoFeature') {
+  # different zmenu for oligofeatures
+  if ($obj_type eq 'ProbeFeature') {
     my $array_name = $obj->param('array') || '';
     $panel->{'caption'} = "Probe set: $id";
     my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
@@ -944,8 +944,9 @@ sub _ajax_zmenu_alignment {
     #details of each probe within the probe set on the array that are found within the slice
     my ($r_name,$r_start,$r_end) = $obj->param('r') =~ /(\w+):(\d+)-(\d+)/;
     my %probes;
-    foreach my $of (@$fs){
-      my $op = $of->probe;
+
+    foreach my $of (@$fs){ 
+      my $op = $of->probe; 
       my $of_name    = $of->probe->get_probename($array_name);
       my $of_sr_name = $of->seq_region_name;
       next if ("$of_sr_name" ne "$r_name");
