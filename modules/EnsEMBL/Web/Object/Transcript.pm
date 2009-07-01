@@ -226,18 +226,19 @@ sub count_similarity_matches {
 
 sub count_oligos {
     my $self = shift;
-    my $type = $self->get_db;
-    my $dbc = $self->database($type)->dbc;
+    #my $type = $self->get_db;
+    my $type = 'funcgen';
+    my $dbc = $self->database($type)->dbc; 
     my $sql = qq(
-                SELECT count(distinct(x.display_label))
-                  FROM object_xref ox, xref x, external_db edb
-                 WHERE ox.xref_id = x.xref_id
-                   AND x.external_db_id = edb.external_db_id
-                   AND ox.ensembl_object_type = 'Transcript'
-                   AND edb.type = 'ARRAY'
-                   AND ox.ensembl_id = ?);
-    my $sth = $dbc->prepare($sql);
-    $sth->execute($self->Obj->dbID);
+               SELECT count(distinct(ox.ensembl_id))
+                 FROM object_xref ox, xref x, external_db edb
+                WHERE ox.xref_id = x.xref_id
+                  AND x.external_db_id = edb.external_db_id
+                  AND ox.ensembl_object_type = 'ProbeSet'
+                  AND x.info_text = 'Transcript'
+                  AND x.dbprimary_acc = ?);
+    my $sth = $dbc->prepare($sql); 
+    $sth->execute($self->Obj->stable_id);  
     my $c = $sth->fetchall_arrayref->[0][0];
     return $c;
 }
@@ -1373,7 +1374,8 @@ sub get_markedup_trans_seq {
 =cut
 
 sub get_similarity_hash{
-  my($self,$recurse) = @_;
+  my($self,$recurse) = @_;  
+
   $recurse = 1 unless defined $recurse;
   my $DBLINKS;
   eval { $DBLINKS = $recurse ? $self->transcript->get_all_DBLinks
@@ -1427,6 +1429,106 @@ sub get_go_list {
     $go_hash{$go} = [$evidence, $term_name, $info_text];
   }
   return \%go_hash;
+}
+
+=head2 get_oligo_probe_data
+ Arg[1]       : none 
+ Example      : %probe_data  = %{$transdate->get_oligo_probe_data}
+ Description  : Retrieves all oligo probe releated DBEntries for this transcript
+ Returntype   : Hashref of probe info
+
+=cut 
+
+sub get_oligo_probe_data {
+  my $self = shift; 
+  my $fg_db = $self->database('funcgen'); 
+  my $probe_adaptor = $fg_db->get_ProbeAdaptor(); 
+  my @transcript_xrefd_probes = @{$probe_adaptor->fetch_all_by_external_name($self->stable_id)};
+  my $probe_set_adaptor = $fg_db->get_ProbeSetAdaptor(); 
+  my @transcript_xrefd_probesets = @{$probe_set_adaptor->fetch_all_by_external_name($self->stable_id)};
+  my %probe_data;
+
+  ## First retrieve data for Probes linked to transcript
+  foreach my $probe (@transcript_xrefd_probes) {
+    my ($array_name, $probe_name, $vendor, $additional_text);
+    my @names = @{$probe->get_all_complete_names};
+    foreach (@names){
+      ($array_name, $probe_name) = split (/:/, $_); 
+    }
+    my %arrays = %{$probe->get_names_Arrays};
+    foreach (values %arrays) {
+      $vendor =  $_->vendor;
+    }
+    my @dbentries = @{$probe->get_all_Transcript_DBEntries};
+    foreach my $entry (@dbentries) {
+      $additional_text =  $entry->linkage_annotation;
+    }
+ 
+    my $key = $vendor ." ". $array_name;
+    if ($vendor eq $array_name) {$key = $vendor;}
+
+    if (exists $probe_data{$key}){
+      my %probes = %{$probe_data{$key}};
+      $probes{$probe_name} = $additional_text;
+      $probe_data{$key} = \%probes;
+    } else {
+      my %probes = ($probe_name, $additional_text);
+      $probe_data{$key} = \%probes;
+    }
+  }
+
+  ## Next retrieve same information for probesets linked to transcript
+  foreach my $probeset (@transcript_xrefd_probesets) {
+    my ($array_name, $probe_name, $vendor, $additional_text);
+
+    $probe_name =  $probeset->name;
+    my @arrays = @{$probeset->get_all_Arrays};
+    foreach ( @arrays) {
+     $vendor =  $_->vendor;
+     $array_name = $_->name;
+    }
+    my @dbentries = @{$probeset->get_all_Transcript_DBEntries};
+    foreach my $entry (@dbentries) {
+      $additional_text =  $entry->linkage_annotation; 
+    }
+    my $key = $vendor ." ". $array_name;
+    my @values = ($probe_name, $additional_text);
+    if (exists $probe_data{$key}){
+      my %probes = %{$probe_data{$key}};
+      $probes{$probe_name} = $additional_text;
+      $probe_data{$key} = \%probes;
+    } else {
+      my %probes = ($probe_name, $additional_text);
+      $probe_data{$key} = \%probes;
+    }
+  }
+
+  $self->sort_oligo_data(\%probe_data); 
+}
+
+
+sub sort_oligo_data {
+  my ( $self, $data) = @_; warn 'TEST';
+  my %probe_data = %$data;
+
+  foreach my $array (sort keys %probe_data) {
+    my $text;
+    my %data = %{$probe_data{$array}};
+    foreach my $probe_name (sort keys %data) {
+      $text .= qq(<div class="multicol">);
+      my $probe_text = $data{$probe_name};
+      $text  .= qq($probe_name);
+      if ($probe_text) { $text .= '<span class="small"> ['.$probe_text .']</span>'; }
+      my $url = $self->_url({
+        'type'   => 'Location',
+        'action' => 'Genome',
+        'id'     => $probe_name,
+        'ftype'  => 'ProbeFeature',
+      });
+      $text .= qq(  [<a href="$url">view all locations</a>]</div>);
+    }
+    push @{$self->__data->{'links'}{'ARRAY'}}, [ $array || $array, $text ]
+  }
 }
 
 =head2 get_supporting_evidence
