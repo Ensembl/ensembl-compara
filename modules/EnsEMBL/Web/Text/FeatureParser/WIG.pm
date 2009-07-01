@@ -98,6 +98,7 @@ sub parse_row {
 	    };
 	    $self->{'tracks'}{ $current_key }->{'mode'} = $wigConfig;
 	} else {
+      $row =~ s/^\s+//;
 	    my @ws_delimited = split /\s+/, $row;
 	    push @ws_delimited, $ws_delimited[0];
 
