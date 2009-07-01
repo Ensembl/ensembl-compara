@@ -17,11 +17,12 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $transcript = $self->object;
 
+  my $transcript = $self->object;
+  $transcript->get_oligo_probe_data;
   my $html = $self->_matches('oligo_arrays', 'Oligo Matches', 'ARRAY' );
 
- return $html;
+  return $html;
 }
-
 1;
+
