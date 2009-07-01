@@ -883,13 +883,7 @@ sub _munge_meta {
   }
 
   ## Get assembly mappings (if any)
-  my $mappings = $self->_meta_info('DATABASE_CORE','assembly.mapping') || [];
-  my $chr_mappings = [];
-  foreach my $string (@$mappings) {
-    next unless $string =~ /#chromosome/;
-    push @$chr_mappings, $string;
-  }
-  $self->tree->{'ASSEMBLY_MAPPINGS'} = $chr_mappings;
+  $self->tree->{'ASSEMBLY_MAPPINGS'} = $self->_meta_info('DATABASE_CORE','liftover.mapping') || [];
 
   ## Munge genebuild info
   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
