@@ -234,7 +234,8 @@ sub count_oligos {
                  FROM object_xref ox, xref x, external_db edb
                 WHERE ox.xref_id = x.xref_id
                   AND x.external_db_id = edb.external_db_id
-                  AND ox.ensembl_object_type = 'ProbeSet'
+                  AND (ox.ensembl_object_type = 'ProbeSet'
+                       OR ox.ensembl_object_type = 'Probe')
                   AND x.info_text = 'Transcript'
                   AND x.dbprimary_acc = ?);
     my $sth = $dbc->prepare($sql); 
