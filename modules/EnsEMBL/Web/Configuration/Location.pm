@@ -926,6 +926,7 @@ sub _ajax_zmenu_alignment {
     my $probe_adap = $db_adaptor->get_ProbeAdaptor;
     my $probe_obj = $probe_adap->fetch_by_array_probe_probeset_name($obj->param('array'), $id);
     $fs = $feat_adap->fetch_all_by_Probe($probe_obj);
+    $panel->{'caption'} = "Probe: $id";
   }
   my $external_db_id = ($fs->[0] && $fs->[0]->can('external_db_id')) ? $fs->[0]->external_db_id : '';
   my $extdbs = $external_db_id ? $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
@@ -939,7 +940,7 @@ sub _ajax_zmenu_alignment {
   # different zmenu for oligofeatures
   if ($obj_type eq 'ProbeFeature') {
     my $array_name = $obj->param('array') || '';
-    $panel->{'caption'} = "Probe set: $id";
+    unless ($panel->{'caption'}) { $panel->{'caption'} = "Probe set: $id"; }
     my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
     my $p = 50;
     $panel->add_entry({ 
