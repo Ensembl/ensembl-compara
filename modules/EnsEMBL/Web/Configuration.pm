@@ -838,28 +838,6 @@ sub _local_tools {
         'title'   => 'There are no options for this page'
       );
     }
-    if( $vc->can_upload || $vc_2_flag ) {
-      my $caption = 'Add custom data to page';
-      my $action = 'Upload';
-
-      my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-    
-      my @temp_uploads = $self->object->get_session->get_data(type => 'upload');
-      my @user_uploads = $user ? $user->uploads : ();
-
-      if (@temp_uploads || @user_uploads) { 
-        $caption = 'Add/manage custom data';
-        $action = 'ManageData';
-      }
-
-      $self->{'page'}->local_tools->add_entry(
-        'caption' => $caption,
-        'class'   => 'modal_link',
-        'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => $action,
-                                 '_referer' => $referer, '__clear' => 1 })
-      );
-      $disabled_upload = 0;
-    }
   } else {
     $self->{'page'}->local_tools->add_entry(
       'caption' => 'Configure this page',
@@ -868,14 +846,25 @@ sub _local_tools {
       'title'   => 'There are no options for this page'
     );
   }
-  if( $disabled_upload ) {
-    $self->{'page'}->local_tools->add_entry(
-      'caption' => 'Add custom data to page',
-      'class'   => 'disabled',
-      'url'     => undef,
-      'title'   => 'You cannot add custom data to this page'
-    );
+  my $caption = 'Manage your data';
+  my $action = 'Upload';
+
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+    
+  my @temp_uploads = $self->object->get_session->get_data(type => 'upload');
+  my @user_uploads = $user ? $user->uploads : ();
+
+  if (@temp_uploads || @user_uploads) { 
+    $action = 'ManageData';
   }
+
+  $self->{'page'}->local_tools->add_entry(
+    'caption' => $caption,
+    'class'   => 'modal_link',
+    'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => $action,
+                             '_referer' => $referer, '__clear' => 1 })
+  );
+  $disabled_upload = 0;
   
   if ($obj->can_export) {
     my $action = $obj->type.'/'.$obj->action;
