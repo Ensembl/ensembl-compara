@@ -54,11 +54,8 @@ our $MEMD = new EnsEMBL::Web::Cache;
 sub counts {
   my $self = shift;
   my $obj = $self->Obj;
-
   my $key = '::COUNTS::LOCATION::'. $ENV{ENSEMBL_SPECIES};
-
   my $counts;
-
   $counts = $MEMD->get($key) if $MEMD;
 
   unless ($counts) {
@@ -66,25 +63,34 @@ sub counts {
 
     # Count the entries in the synteny hash for this species...
     my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-
     my ($alignments, $align_contig) = $self->count_alignments;
-
     $counts = {
       'synteny'      => scalar keys %{$synteny_hash{$species}||{}},
       'alignments'   => $alignments,
       'align_contig' => scalar keys %$align_contig
     };
-    
+    $counts->{'pairwise_alignments'} = $self->count_pairwise_alignments;
     if ($self->species_defs->databases->{'DATABASE_VARIATION'}) {
       my $reseq = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'};
-      
       $counts->{'reseq_strains'} = $reseq;
     }
-     
+    
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
-  
+
   return $counts;
+}
+
+sub count_pairwise_alignments {
+  my $self = shift;
+  my $species = $self->species;
+  my %alignments = $self->species_defs->multi('DATABASE_COMPARA','ALIGNMENTS');
+  my $c;
+  foreach my $align (values %alignments) {
+    next unless $align->{'class'} =~ /pairwise_alignment/;
+    $c++ if $align->{'species'}{$species};
+  }
+  return $c;
 }
 
 sub short_caption {
@@ -1255,8 +1261,12 @@ sub focus {
 
 sub can_export {
   my $self = shift;
-
   return $self->action =~ /^Export$|^Chromosome$|^Genome$|^Synteny$/ ? 0 : $self->availability->{'slice'};
+}
+
+sub other_locations {
+  my $self = shift;
+  return $self->{'data'}{'_other_locations'} ? $self->{'data'}{'_other_locations'} : [];
 }
 
 1;
