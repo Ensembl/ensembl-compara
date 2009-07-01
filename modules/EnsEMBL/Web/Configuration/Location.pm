@@ -922,6 +922,11 @@ sub _ajax_zmenu_alignment {
     :                                              []
     ;
 
+  if ( scalar @$fs == 0  && $feat_adap->can( 'fetch_all_by_Probe' ) ){
+    my $probe_adap = $db_adaptor->get_ProbeAdaptor;
+    my $probe_obj = $probe_adap->fetch_by_array_probe_probeset_name($obj->param('array'), $id);
+    $fs = $feat_adap->fetch_all_by_Probe($probe_obj);
+  }
   my $external_db_id = ($fs->[0] && $fs->[0]->can('external_db_id')) ? $fs->[0]->external_db_id : '';
   my $extdbs = $external_db_id ? $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
   my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
