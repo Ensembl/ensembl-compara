@@ -297,9 +297,11 @@ sub populate_tree {
 #      zoomnav EnsEMBL::Web::Component::Location::Compara_AlignSliceZoomNav
 #      zoom    EnsEMBL::Web::Component::Location::Compara_AlignSliceZoom
 
-  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comp. ([[counts::align_contig]])",
-    [qw(top         EnsEMBL::Web::Component::Location::MultiIdeogram
+  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comp. ([[counts::pairwise_alignments]])",
+    [qw(selector    EnsEMBL::Web::Component::Location::SelectAlignment
+	top         EnsEMBL::Web::Component::Location::MultiIdeogram
 	overview    EnsEMBL::Web::Component::Location::MultiTop
+	nav      EnsEMBL::Web::Component::Location::ViewBottomNav
 	bottom      EnsEMBL::Web::Component::Location::MultiBottom
       )],
     { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
