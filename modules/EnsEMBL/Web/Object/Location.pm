@@ -192,7 +192,7 @@ sub create_features {
   my $self = shift;
   my $features = {};
 
-  my $db        = $self->param('db')  || 'core';
+  my $db        = $self->param('db')  || 'core'; 
   my ($identifier, $fetch_call, $featureobj, $dataobject);
 
   ## Are we inputting IDs or searching on a text term?
@@ -201,7 +201,7 @@ sub create_features {
     $features = $self->search_Xref($db, \@exdb, $self->param('xref_term'));
   }
   else {
-    my $feature_type  = $self->param('ftype') ||$self->param('type') || 'OligoFeature'; 
+    my $feature_type  = $self->param('ftype') ||$self->param('type') || 'ProbeFeature'; 
     ## deal with xrefs
     my $subtype;
     if ($feature_type =~ /^Xref_/) {
@@ -217,11 +217,11 @@ sub create_features {
   return $features;
 }
 
-sub _create_OligoFeature {
+sub _create_ProbeFeature {
   # get Oligo hits plus corresponding genes
-  my $probe = $_[0]->_generic_create( 'OligoProbe', 'fetch_all_by_probeset', $_[1] );
+  my $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] ); 
   my $probe_trans = $_[0]->_generic_create( 'Transcript', 'fetch_all_by_external_name', $_[1], undef, 'no_errors' );
-  my %features = ('OligoProbe' => $probe);
+  my %features = ('ProbeFeature' => $probe);
   $features{'Transcript'} = $probe_trans if $probe_trans;
   return \%features;
 }
@@ -376,7 +376,7 @@ sub _create_XrefArray {
 }
 
 sub _generic_create {
-  my( $self, $object_type, $accessor, $db, $id, $flag ) = @_;
+  my( $self, $object_type, $accessor, $db, $id, $flag ) = @_; 
   $db ||= 'core';
   if (!$id ) {
     my @ids = $self->param( 'id' );
@@ -501,9 +501,9 @@ sub retrieve_userdata {
 sub retrieve_features {
   my ($self, $features) = @_;
   my $method;
-  my $results = [];
+  my $results = [];  
   while (my ($type, $data) = each (%$features)) { 
-    $method = 'retrieve_'.$type;
+    $method = 'retrieve_'.$type; 
     push @$results, [$self->$method($data,$type)] if defined &$method;
   }
   return $results;
@@ -591,17 +591,21 @@ sub retrieve_Xref {
   return ( $results, ['Description'], $type );
 }
 
-sub retrieve_OligoProbe {
+sub retrieve_ProbeFeature {
   my ($self, $data, $type) = @_;
   my $results = [];
-  foreach my $probe (@$data) {
+  
+  foreach my $probefeature (@$data) { 
+    my $probe = $probefeature->probe;
     if (ref($probe) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($probe);
       push(@$results, $unmapped);
     }
     else {
+      ##my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe->get_all_complete_names()}
       my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe->get_all_complete_names()};
-      foreach my $f (@{$probe->get_all_OligoFeatures()}) {
+       
+      foreach my $f (@{$probe->get_all_ProbeFeatures()}) { #my @a = @{$f->get_all_Transcript_DBEntries}; unless ( scalar @a == 0){ warn $a[0]->primary_id; } 
         push @$results, {
           'region'   => $f->seq_region_name,
           'start'    => $f->start,
@@ -1233,7 +1237,7 @@ sub focus {
     my $snp = $obj->core_objects->variation;
     my $name = $snp->name;
     my $source = $snp->source;
-    my $link_name  = $obj->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP'; warn $link_name;
+    my $link_name  = $obj->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP';# warn $link_name;
     $info .= "$link_name ($source ". $snp->adaptor->get_source_version($source).")";
   }
   elsif ( $obj->core_objects->{'parameters'}{'g'} ) {
