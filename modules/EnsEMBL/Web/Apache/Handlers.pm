@@ -347,14 +347,14 @@ sub transHandler_no_species {
     $MEMD->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $MEMD;
   }
   if( $to_execute ) {
-    $r->subprocess_env->{'ENSEMBL_TYPE'}    = $species;
-    $r->subprocess_env->{'ENSEMBL_ACTION'}  = shift @$path_segments;
-    $r->subprocess_env->{'ENSEMBL_FUNCTION'} = shift @$path_segments;
+    $r->subprocess_env->{'ENSEMBL_TYPE'}     = my $t1 = $species;
+    $r->subprocess_env->{'ENSEMBL_ACTION'}   = my $t2 = shift @$path_segments;
+    $r->subprocess_env->{'ENSEMBL_FUNCTION'} = my $t3 = shift @$path_segments;
     my $path_info = join '/', @$path_segments;
     $r->filename( $to_execute );
     $r->uri( "/perl/common/$script" );
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
-    push_script_line( $species, $script, $querystring )
+    push_script_line( $species, "$t1/$t2/$t3", $querystring )
       if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
     $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script       ); 
     $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
@@ -375,20 +375,24 @@ sub transHandler_species {
 
   $r->custom_response($_, "/$species/Info/Error/$_")
     for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
-    
+  
+  my $t1 = $script;
+  my $t2;
+  my $t3;
   if( $flag && $real_script_name ) {
-    $r->subprocess_env->{'ENSEMBL_TYPE'}     = $script;
+    $r->subprocess_env->{'ENSEMBL_TYPE'}     = $t1 = $script;
     if( $real_script_name eq 'action' || $real_script_name eq 'modal' ) {
-      $r->subprocess_env->{'ENSEMBL_ACTION'}   = shift @$path_segments;
-      $r->subprocess_env->{'ENSEMBL_FUNCTION'} = shift @$path_segments;
+      $r->subprocess_env->{'ENSEMBL_ACTION'}   = $t2 = shift @$path_segments;
+      $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $t3 = shift @$path_segments;
+
 #      $path_segments                         = [];
     } elsif( $real_script_name eq 'zmenu' || $real_script_name eq 'config' || $real_script_name eq 'export' ) {
       $type   = shift @$path_segments;
       $action = shift @$path_segments;
       $function = shift @$path_segments;
-      $r->subprocess_env->{'ENSEMBL_TYPE'}     = $type;
-      $r->subprocess_env->{'ENSEMBL_ACTION'}   = $action;
-      $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $function;
+      $r->subprocess_env->{'ENSEMBL_TYPE'}     = $t1 = $type;
+      $r->subprocess_env->{'ENSEMBL_ACTION'}   = $t2 = $action;
+      $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $t3 = $function;
     } elsif( $real_script_name eq 'component' ) {
       $type = shift @$path_segments;
       my @T                                  = map { s/\W//g;$_ } @$path_segments;
@@ -396,11 +400,11 @@ sub transHandler_species {
       my $Module                             = shift @T;
       my $fn                                 = shift @T;
       $r->subprocess_env->{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $Module;
-      $r->subprocess_env->{'ENSEMBL_FUNCTION'}  = $fn;
-      $r->subprocess_env->{'ENSEMBL_TYPE'}      = $type;
-      $path_segments                         = [];
+      $r->subprocess_env->{'ENSEMBL_FUNCTION'}  = $t3 = $fn;
+      $r->subprocess_env->{'ENSEMBL_TYPE'}      = $t1 = $type;
+      $path_segments                            = [];
     } else { ## This is a user space script - don't do anything - I think!
-      $r->subprocess_env->{'ENSEMBL_ACTION'} = shift @$path_segments;
+      $r->subprocess_env->{'ENSEMBL_ACTION'}    = $t2 = shift @$path_segments;
     }
     $script                                  = $real_script_name;
     $redirect_if_different                   = 0;
@@ -454,7 +458,7 @@ sub transHandler_species {
     $r->filename( $to_execute );
     $r->uri( "/perl/$species/$script" );
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
-    push_script_line( $species, $script, $querystring )
+    push_script_line( $species, "$t1/$t2/$t3", $querystring )
       if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
     $r->push_handlers( PerlCleanupHandler => \&cleanupHandler_script       );
     $r->push_handlers( PerlCleanupHandler => \&Apache2::SizeLimit::handler );
