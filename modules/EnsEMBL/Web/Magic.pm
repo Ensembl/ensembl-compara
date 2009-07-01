@@ -292,7 +292,9 @@ sub ingredient {
     } else {
       $content = '<p>Unable to produce objects - panic!</p>';
     }
-    $MEMD->set( $ENV{CACHE_KEY}, $content, 60*60*24*7, keys %{ $ENV{CACHE_TAGS} } ) if $MEMD && $webpage->format eq 'HTML';
+    
+    $MEMD->set( $ENV{CACHE_KEY}, $content, 60*60*24*7, keys %{ $ENV{CACHE_TAGS} } )
+      if $MEMD && !$webpage->has_a_problem && $webpage->format eq 'HTML';
     timer_push( 'Rendered content cached' );
   }
 
