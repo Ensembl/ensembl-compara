@@ -16,7 +16,7 @@ sub new {
   my %args  = @_;
 
   my $self = $class->SUPER::new(
-    compress     => 0,
+    tmp_filename => undef,         ## for user uploaded files
     prefix       => 'user_upload',
     extension    => 'txt',
     content_type => 'plain/text',

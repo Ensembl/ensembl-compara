@@ -4,7 +4,6 @@ use strict;
 use Compress::Zlib;
 
 use EnsEMBL::Web::Cache;
-use base 'EnsEMBL::Web::Root';
 
 sub new {
   my $class = shift;
@@ -44,7 +43,7 @@ sub save {
     $obj->URL,
     $obj->content,
     $obj->exptime,
-    ( 'TMP', $obj->format, keys %{ $ENV{CACHE_TAGS}||{} } ),
+    ( 'TMP', $obj->extension, keys %{ $ENV{CACHE_TAGS}||{} } ),
   );
 }
 

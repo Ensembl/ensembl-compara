@@ -18,9 +18,7 @@ sub new {
   my $species_defs = delete $args{species_defs} || EnsEMBL::Web::SpeciesDefs->new();
   my $self = $class->SUPER::new(
     species_defs => $species_defs,
-    compress     => 0,
     extension    => 'png',
-    content_type => 'image/png',
     file_root    => $species_defs->ENSEMBL_TMP_DIR_IMG,
     URL_root     => $species_defs->ENSEMBL_TMP_URL_IMG,
     %args,

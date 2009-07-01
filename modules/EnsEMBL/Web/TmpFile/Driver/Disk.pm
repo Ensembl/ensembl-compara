@@ -1,8 +1,10 @@
 package EnsEMBL::Web::TmpFile::Driver::Disk;
 
 use strict;
+
 use Compress::Zlib;
-use base 'EnsEMBL::Web::Root';
+use File::Path;
+use File::Spec::Functions qw(splitpath);
 
 sub new {
   my $class = shift;
@@ -74,5 +76,13 @@ sub save {
   return 1;
 }
 
+sub make_directory {
+### Creates a writeable directory - making sure all parents exist!
+  my ($self, $path) = @_;
+
+  my ($volume, $dir_path, $file) = splitpath( $path );
+  mkpath( $dir_path, 0, 0777 );
+  return ($dir_path, $file);
+}
 
 1;
