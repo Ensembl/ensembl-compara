@@ -358,16 +358,38 @@ sub _summarise_funcgen_db {
 #
 # * Oligos
 #
+#  $t_aref = $dbh->selectall_arrayref(
+#    'select a.vendor, a.name,count(*)
+#       from array as a, array_chip as c straight_join probe as p on
+#            c.array_chip_id=p.array_chip_id straight_join probe_feature f on
+#            p.probe_id=f.probe_id where a.name = c.name
+#      group by a.name'
+#  );
+
   $t_aref = $dbh->selectall_arrayref(
-    'select a.name,count(*) as n
-       from array_chip as a straight_join probe as p on
-            a.array_chip_id=p.array_chip_id straight_join probe_feature f on
-            p.probe_id=f.probe_id
-      group by a.name'
+    'select a.vendor, a.name, a.array_id  
+       from array a, array_chip c, status s, status_name sn where  sn.name="DISPLAYABLE" 
+       and sn.status_name_id=s.status_name_id and s.table_name="array" and s.table_id=a.array_id 
+       and a.array_id=c.array_id
+    '       
+  );
+  my $sth = $dbh->prepare(
+    'select count(pf.probe_feature_id)
+       from array_chip ac, probe p, probe_feature pf, seq_region sr, coord_system cs
+       where ac.array_chip_id=p.array_chip_id and p.probe_id=pf.probe_id  
+       and pf.seq_region_id=sr.seq_region_id and sr.coord_system_id=cs.coord_system_id 
+       and cs.is_current=1 and ac.array_id = ?
+    '
   );
   foreach my $row (@$t_aref) {
-    $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$row->[0]} = $row->[1];
+    my $array_name = $row->[0] .':'. $row->[1];
+    $sth->bind_param(1, $row->[2]);
+    $sth->execute;
+    my $count = $sth->fetchrow_array(); warn $array_name ." ". $count;
+    if (exists $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$array_name} ) {warn "FOUND";}
+    $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$array_name} = $count;
   }
+  $sth->finish;
 #
 # * functional genomics tracks
 #
