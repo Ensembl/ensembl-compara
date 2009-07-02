@@ -1,6 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::_oligo;
 
 use strict;
+use warnings;
+no warnings 'uninitialized';
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 
@@ -21,8 +23,7 @@ sub features {
 
   $self->timer_push( 'Preped');
   my ($vendor_name, $array_name ) = split (/:/, $self->my_config('array'));
-  #warn $self->{'container'};
-  my $T = $probe_feature_adaptor->fetch_all_by_Slice_array_vendor($slice, $array_name, $vendor_name);
+  my $T = $probe_feature_adaptor->fetch_all_by_Slice_array_vendor( $slice, $array_name, $vendor_name );
   $self->timer_push( 'Retrieved oligos', undef, 'fetch' );
   return ( $self->my_config('array') => [$T] );
 }

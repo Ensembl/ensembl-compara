@@ -590,11 +590,11 @@ sub draw_cigar_feature {
 ## Parse the cigar string, splitting up into an array
 ## like ('10M','2I','30M','I','M','20M','2D','2020M');
 ## original string - "10M2I30MIM20M2D2020M"
-  foreach( $f->cigar_string=~/(\d*[MDI])/g ) {
+  foreach( $f->cigar_string=~/(\d*[MDImU])/g ) {
 ## Split each of the {number}{Letter} entries into a pair of [ {number}, {letter} ] 
 ## representing length and feature type ( 'M' -> 'Match/mismatch', 'I' -> Insert, 'D' -> Deletion )
 ## If there is no number convert it to [ 1, {letter} ] as no-number implies a single base pair...
-    my ($l,$type) = /^(\d+)([MDI])/ ? ($1,$2):(1,$_);
+    my ($l,$type) = /^(\d+)([MDImU])/ ? ($1,$2):(1,$_);
 ## If it is a D (this is a deletion) and so we note it as a feature between the end
 ## of the current and the start of the next feature...
 ##                      ( current start, current start - ORIENTATION )
@@ -604,7 +604,7 @@ sub draw_cigar_feature {
     my $s = $S;
     my $e = ( $S += ( $type eq 'D' ? 0 : $l*$O ) ) - $O;
 ## If a match/mismatch - draw box....
-    if($type eq 'M') {
+    if($type eq 'M' || $type eq 'm' || $type eq 'U') {
       ($s,$e) = ($e,$s) if $s>$e;      ## Sort out flipped features...
       next if $e < 1 || $s > $length;  ## Skip if all outside the box...
       $s = 1       if $s<1;            ## Trim to area of box...
