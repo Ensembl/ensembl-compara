@@ -88,7 +88,7 @@ sub pointer_default {
       'DnaAlignFeature'     => ['red', 'rharrow'],
       'ProteinAlignFeature' => ['red', 'rharrow'],
       'RegulatoryFactor'    => ['red', 'rharrow'],
-      'OligoProbe'          => ['red', 'rharrow'],
+      'ProbeFeature'          => ['red', 'rharrow'],
       'XRef'                => ['red', 'rharrow'],
       'Gene'                => ['blue','lharrow'],
   );
