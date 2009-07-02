@@ -6,7 +6,10 @@ package EnsEMBL::Web::Command;
 use strict;
 use warnings;
 no warnings qw(uninitialized);
+
+use CGI qw(escape);
 use Class::Std;
+
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Interface;
 use EnsEMBL::Web::Data::User;
@@ -51,8 +54,10 @@ sub ajax_redirect {
 
 sub ajax_params {
   my ($self, $param) = @_;
-  $param->{'_referer'} = $self->object->param('_referer') unless $param->{'_referer'};
-  $param->{'x_requested_with'} = $self->object->param('x_requested_with') unless $param->{'x_requested_with'};
+  $param->{'_referer'} ||= $self->object->param('_referer') if $self->object->param('_referer');
+  $param->{'_referer'} = CGI::escape($param->{'_referer'}) if $param->{'_referer'} =~ /\//;
+  
+  $param->{'x_requested_with'} ||= $self->object->param('x_requested_with') if $self->object->param('x_requested_with');
   return $param;
 }
 
