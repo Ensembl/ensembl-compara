@@ -39,10 +39,7 @@ The rest of the documentation details each of the object methods. Internal metho
 
 package EnsEMBL::Web::Text::DensityFeatureParser;
 
-use EnsEMBL::Web::Text::FeatureParser;
-
-@EnsEMBL::Web::Text::DensityFeatureParser::ISA =
-  qw(EnsEMBL::Web::Text::FeatureParser);
+use base qw(EnsEMBL::Web::Text::FeatureParser);
 
 use strict;
 use warnings;
