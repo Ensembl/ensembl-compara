@@ -84,6 +84,11 @@ sub handler {
       ## /
   
       if (-e $file) {
+        ## Send 2MB+ files without caching them
+        if (-s $file > 2*1024*1024) {
+          return $r->sendfile($file);
+        }
+        
         {
           local $/=undef;
           open FILE, $file or die "Couldn't open file: $!";
