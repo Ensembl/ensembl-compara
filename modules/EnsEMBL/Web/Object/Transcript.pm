@@ -1451,7 +1451,7 @@ sub get_oligo_probe_data {
 
   ## First retrieve data for Probes linked to transcript
   foreach my $probe (@transcript_xrefd_probes) {
-    my ($array_name, $probe_name, $vendor, $additional_text);
+    my ($array_name, $probe_name, $vendor, @info);
     my @names = @{$probe->get_all_complete_names};
     foreach (@names){
       ($array_name, $probe_name) = split (/:/, $_); 
@@ -1462,7 +1462,7 @@ sub get_oligo_probe_data {
     }
     my @dbentries = @{$probe->get_all_Transcript_DBEntries};
     foreach my $entry (@dbentries) {
-      $additional_text =  $entry->linkage_annotation;
+      @info = ('probe', $entry->linkage_annotation);
     }
  
     my $key = $vendor ." ". $array_name;
@@ -1470,17 +1470,17 @@ sub get_oligo_probe_data {
 
     if (exists $probe_data{$key}){
       my %probes = %{$probe_data{$key}};
-      $probes{$probe_name} = $additional_text;
+      $probes{$probe_name} = \@info;
       $probe_data{$key} = \%probes;
     } else {
-      my %probes = ($probe_name, $additional_text);
+      my %probes = ($probe_name, \@info);
       $probe_data{$key} = \%probes;
     }
   }
 
   ## Next retrieve same information for probesets linked to transcript
   foreach my $probeset (@transcript_xrefd_probesets) {
-    my ($array_name, $probe_name, $vendor, $additional_text);
+    my ($array_name, $probe_name, $vendor, @info);
 
     $probe_name =  $probeset->name;
     my @arrays = @{$probeset->get_all_Arrays};
@@ -1490,16 +1490,16 @@ sub get_oligo_probe_data {
     }
     my @dbentries = @{$probeset->get_all_Transcript_DBEntries};
     foreach my $entry (@dbentries) {
-      $additional_text =  $entry->linkage_annotation; 
+      @info = ('pset', $entry->linkage_annotation); 
     }
     my $key = $vendor ." ". $array_name;
-    my @values = ($probe_name, $additional_text);
+   # my @values = ($probe_name, $additiona);
     if (exists $probe_data{$key}){
       my %probes = %{$probe_data{$key}};
-      $probes{$probe_name} = $additional_text;
+      $probes{$probe_name} = \@info;
       $probe_data{$key} = \%probes;
     } else {
-      my %probes = ($probe_name, $additional_text);
+      my %probes = ($probe_name, \@info);
       $probe_data{$key} = \%probes;
     }
   }
@@ -1509,15 +1509,17 @@ sub get_oligo_probe_data {
 
 
 sub sort_oligo_data {
-  my ( $self, $data) = @_; warn 'TEST';
+  my ( $self, $data) = @_; 
   my %probe_data = %$data;
 
   foreach my $array (sort keys %probe_data) {
     my $text;
+    my $p_type = 'pset';
+
     my %data = %{$probe_data{$array}};
     foreach my $probe_name (sort keys %data) {
       $text .= qq(<div class="multicol">);
-      my $probe_text = $data{$probe_name};
+      my($p_type, $probe_text )= @{$data{$probe_name}};
       $text  .= qq($probe_name);
       if ($probe_text) { $text .= '<span class="small"> ['.$probe_text .']</span>'; }
       my $url = $self->_url({
@@ -1525,6 +1527,8 @@ sub sort_oligo_data {
         'action' => 'Genome',
         'id'     => $probe_name,
         'ftype'  => 'ProbeFeature',
+        'fdb'    => 'funcgen',
+        'ptype'  => $p_type, 
       });
       $text .= qq(  [<a href="$url">view all locations</a>]</div>);
     }
