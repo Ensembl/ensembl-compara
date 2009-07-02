@@ -18,13 +18,8 @@ sub caption {
 sub content {
   my $self = shift;
   my $matches = $self->_matches('similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC', 'LIT');
-  my $html = $matches ? $matches : 'No external references assigned to this gene<br /><br />';
-  $html .= $self->_info( 'Transcript and protein references','
-  <p>
-These are external records attached specifically to the gene; please see the transcript panel for those attached to the transcript(s) and protein(s).
-  </p>
-'
-         );
+  my $no_matches = qq(No external references assigned to this gene. Please see the transcript pages for references attached to this gene's transcript(s) and protein(s));
+  my $html = $matches ? $matches : $no_matches;
   return $html;
 }
 
