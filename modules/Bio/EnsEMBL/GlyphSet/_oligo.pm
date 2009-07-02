@@ -21,8 +21,8 @@ sub features {
   }; 
   my $probe_feature_adaptor = $fg_db->get_ProbeFeatureAdaptor();
 
-  $self->timer_push( 'Preped');
-  my ($vendor_name, $array_name ) = split (/:/, $self->my_config('array'));
+  $self->timer_push( 'Preped'); 
+  my ($vendor_name, $array_name ) = split (/__/, $self->my_config('array')); 
   my $T = $probe_feature_adaptor->fetch_all_by_Slice_array_vendor( $slice, $array_name, $vendor_name );
   $self->timer_push( 'Retrieved oligos', undef, 'fetch' );
   return ( $self->my_config('array') => [$T] );
@@ -31,7 +31,7 @@ sub features {
 sub feature_group {
   my( $self, $f ) = @_; 
   next unless ( $f && $f->isa('Bio::EnsEMBL::Funcgen::ProbeFeature'));
-  my ($vendor_name, $array_name ) = split (/:/, $self->my_config('array')); 
+  my ($vendor_name, $array_name ) = split (/__/, $self->my_config('array')); 
   if ( $f->probeset_id) { 
     return $f->probe->probeset->name;
   } else { 
@@ -52,7 +52,7 @@ sub feature_title {
 sub href {
 ### Links to /Location/Genome with type of 'ProbeFeature'
   my ($self, $f ) = @_;
-  my ($vendor, $array_name ) = split (/:/, $self->my_config('array'));
+  my ($vendor, $array_name ) = split (/__/, $self->my_config('array'));
   my ($probe_name, $probe_type);
   if ( $f->probeset_id) {
     $probe_name = $f->probe->probeset->name;
