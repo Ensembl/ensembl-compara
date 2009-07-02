@@ -913,16 +913,21 @@ sub _ajax_zmenu_alignment {
   my $obj  = shift;
   my $id        = $obj->param('id');
   my $obj_type  = $obj->param('ftype');
-  my $db        = $obj->param('db')  || 'core';
+  my $db        = $obj->param('db')  || 'core'; 
+  if ( $obj->param('fdb')) { $db = $obj->param('fdb');}
   my $db_adaptor = $obj->database(lc($db));
   my $adaptor_name = "get_${obj_type}Adaptor";
-  my $feat_adap =  $db_adaptor->$adaptor_name;  
-  my $fs = $feat_adap->can( 'fetch_all_by_hit_name' ) ? $feat_adap->fetch_all_by_hit_name($id)
-    : $feat_adap->can( 'fetch_all_by_probeset' ) ? $feat_adap->fetch_all_by_probeset($id)
-    :                                              []
-    ;
+  my $feat_adap =  $db_adaptor->$adaptor_name; 
+  my $fs =[]; 
+  unless ( $obj->param('ptype') eq 'probe' ){
+    $fs = $feat_adap->can( 'fetch_all_by_hit_name' ) ? $feat_adap->fetch_all_by_hit_name($id)
+      : $feat_adap->can( 'fetch_all_by_probeset' ) ? $feat_adap->fetch_all_by_probeset($id)
+      :                                              []
+      ;
 
-  if ( scalar @$fs == 0  && $feat_adap->can( 'fetch_all_by_Probe' ) ){
+  } 
+
+  if ( @$fs ==0  && $feat_adap->can( 'fetch_all_by_Probe' ) ){
     my $probe_adap = $db_adaptor->get_ProbeAdaptor;
     my $probe_obj = $probe_adap->fetch_by_array_probe_probeset_name($obj->param('array'), $id);
     $fs = $feat_adap->fetch_all_by_Probe($probe_obj);
@@ -940,8 +945,9 @@ sub _ajax_zmenu_alignment {
   # different zmenu for oligofeatures
   if ($obj_type eq 'ProbeFeature') {
     my $array_name = $obj->param('array') || '';
+    my $ptype = $obj->param('ptype') || '';
     unless ($panel->{'caption'}) { $panel->{'caption'} = "Probe set: $id"; }
-    my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'db'=>$db});
+    my $fv_url = $obj->_url({'type'=>'Location','action'=>'Genome','ftype'=>$obj_type,'id'=>$id,'fdb'=>'funcgen', 'ptype'=>$ptype, 'db' =>'core'});
     my $p = 50;
     $panel->add_entry({ 
       'label' => 'View all probe hits',

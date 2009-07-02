@@ -199,8 +199,9 @@ sub create_features {
   my $features = {};
 
   my $db        = $self->param('db')  || 'core'; 
-  my ($identifier, $fetch_call, $featureobj, $dataobject);
-
+  if ($self->param('fdb')){ $db = $self->param('fdb');}
+  my ($identifier, $fetch_call, $featureobj, $dataobject, $subtype);
+  
   ## Are we inputting IDs or searching on a text term?
   if ($self->param('xref_term')) {
     my @exdb = $self->param('xref_db');
@@ -208,8 +209,10 @@ sub create_features {
   }
   else {
     my $feature_type  = $self->param('ftype') ||$self->param('type') || 'ProbeFeature'; 
-    ## deal with xrefs
-    my $subtype;
+    if ( ($self->param('ftype') eq 'ProbeFeature') && $self->param('ptype')) {
+      $subtype = $self->param('ptype');
+    } 
+   ## deal with xrefs
     if ($feature_type =~ /^Xref_/) {
       ## Don't use split here - external DB name may include underscores!
       ($subtype = $feature_type) =~ s/Xref_//;
@@ -225,11 +228,79 @@ sub create_features {
 
 sub _create_ProbeFeature {
   # get Oligo hits plus corresponding genes
-  my $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] ); 
-  my $probe_trans = $_[0]->_generic_create( 'Transcript', 'fetch_all_by_external_name', $_[1], undef, 'no_errors' );
+  my $probe;
+  if ( $_[2] eq 'pset'){
+    $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] );
+  } else {
+    $probe = $_[0]->_create_ProbeFeatures_by_probe_id;
+  }
+  #my $probe_trans = $_[0]->_generic_create( 'Transcript', 'fetch_all_by_external_name', $_[1], undef, 'no_errors' );
+  my $probe_trans = $_[0]->_create_ProbeFeatures_linked_transcripts($_[2]);
   my %features = ('ProbeFeature' => $probe);
   $features{'Transcript'} = $probe_trans if $probe_trans;
   return \%features;
+}
+
+sub _create_ProbeFeatures_by_probe_id {
+  my $self = shift;
+  my $db_adaptor = $self->_get_funcgen_db_adaptor; 
+  my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;
+  my @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
+  my $probe_obj = $probe_objs[0];
+  my $probe_feature_adaptor = $db_adaptor->get_ProbeFeatureAdaptor;
+  my @probe_features =  @{$probe_feature_adaptor->fetch_all_by_Probe($probe_obj)};
+  return \@probe_features;
+}
+
+sub _create_ProbeFeatures_linked_transcripts {
+  my ($self, $ptype)  = @_;
+  my $db_adaptor = $self->_get_funcgen_db_adaptor;
+  my (@probe_objs, @transcripts, %seen );
+
+  if ($ptype eq 'pset'){
+  my  $probe_feature_adaptor = $db_adaptor->get_ProbeFeatureAdaptor;
+  @probe_objs = @{$probe_feature_adaptor->fetch_all_by_probeset($self->param('id'))}; 
+  } else {
+    my  $probe_adaptor = $db_adaptor->get_ProbeAdaptor;
+    @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
+  } 
+ ## Now retrieve transcript ID and create transcript Objects 
+  foreach my $probe (@probe_objs){
+    my @dbentries = @{$probe->get_all_Transcript_DBEntries};
+    foreach my $entry (@dbentries) {
+      my $core_db_adaptor = $self->_get_core_adaptor ;
+      my $transcript_adaptor = $core_db_adaptor->get_TranscriptAdaptor; 
+      unless (exists $seen{$entry->primary_id}){
+        my $transcript = $transcript_adaptor->fetch_by_stable_id($entry->primary_id);  
+        push (@transcripts, $transcript);  
+        $seen{$entry->primary_id} =1;
+      }
+    }
+  }
+
+  return \@transcripts;
+}
+
+sub _get_funcgen_db_adaptor {
+   my $self = shift;
+   my $db = $self->param('db');
+   if ($self->param('fdb')) { $db = $self->param('fdb');}
+   my $db_adaptor  = $self->database(lc($db));
+   unless( $db_adaptor ){
+     $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+     return undef;
+   }
+  return $db_adaptor;
+}
+
+sub _get_core_adaptor {
+   my $self = shift;
+   my $db_adaptor  = $self->database('core');
+   unless( $db_adaptor ){
+     $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." );
+     return undef;
+   }
+  return $db_adaptor;
 }
 
 sub _create_DnaAlignFeature {
@@ -608,10 +679,8 @@ sub retrieve_ProbeFeature {
       push(@$results, $unmapped);
     }
     else {
-      ##my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe->get_all_complete_names()}
       my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe->get_all_complete_names()};
-       
-      foreach my $f (@{$probe->get_all_ProbeFeatures()}) { #my @a = @{$f->get_all_Transcript_DBEntries}; unless ( scalar @a == 0){ warn $a[0]->primary_id; } 
+      foreach my $f (@{$probe->get_all_ProbeFeatures()}) {  
         push @$results, {
           'region'   => $f->seq_region_name,
           'start'    => $f->start,
