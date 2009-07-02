@@ -39,7 +39,7 @@ sub process {
     $url .= '/UserData/SelectFile';
   }
   $param->{'_referer'} = $self->object->param('_referer');
-  $param->{'x_requested_with'} => $self->object->param('x_requested_with');
+  $param->{'x_requested_with'} = $self->object->param('x_requested_with');
  
   if( $self->object->param('uploadto' ) eq 'iframe' ) {
     CGI::header( -type=>"text/html",-charset=>'utf-8' );
@@ -58,6 +58,18 @@ sub upload {
   my ($method, $object) = @_;
   my $param = {};
 
+  ## Try to guess the format from the extension
+  my ($format, $filename);
+  unless ($method eq 'text') {
+    my @orig_path = split('/', $object->param($method));
+    $filename = $orig_path[-1];
+    $filename =~ /\.(\w{1,4})$/;
+    my $ext = $1;
+    if ($ext =~ /bed/i || $ext =~ /psl/i || $ext =~ /gff/i || $ext =~ /gtf/i) {
+      $format = uc($ext);
+    }
+  }
+
   ## Get original path, so can save file name as default name for upload
   my $name = $object->param('name');
   unless ($name) {
@@ -65,8 +77,7 @@ sub upload {
       $name = 'Data';
     }
     else {
-      my @orig_path = split('/', $object->param($method));
-      $name = $orig_path[-1];
+      $name = $filename;
     }
   }
   $param->{'name'} = $name;
@@ -90,28 +101,30 @@ sub upload {
     ## Put error message into session for display?
     $param->{'filter_module'} = 'Data';
     $param->{'filter_code'} = 'no_response';
-    warn "!!! ERROR: $error";
   }
   else {
     my $file = new EnsEMBL::Web::TmpFile::Text(prefix => 'user_upload', %args);
   
-    if ($file->save) {
-      ## Identify format
-      my $data = $file->retrieve;
-      my $parser = EnsEMBL::Web::Text::FeatureParser->new();
-      $parser = $parser->init($data);
+    if ($file->content) {
+      if ($file->save) {
+        if (!$format) {
+          ## Final attempt to work out format!
+          my $data = $file->retrieve;
+          my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+          $parser = $parser->init($data);
+          $format = $parser->{'_info'}->{'format'};
+          if (!$format) {
+            $param->{'format'}  = 'none';
+          }
+        } 
+        my $code = $file->md5 . '_' . $object->get_session->get_session_id;
      
-      my $code = $file->md5 . '_' . $object->get_session->get_session_id;
-     
-      if ($parser->{'_info'} && $parser->{'_info'}->{'count'} && $parser->{'_info'}->{'count'} > 0) {
-        my $format = $parser->{'_info'}->{'format'};
-
         $param->{'species'} = $object->param('species') || $object->species;
         ## Attach data species to session
         $object->get_session->add_data(
           type      => 'upload',
           filename  => $file->filename,
-          filesize  => length($data),
+          filesize  => length($file->content),
           code      => $code,
           md5       => $file->md5,
           name      => $name,
@@ -121,21 +134,15 @@ sub upload {
         );
 
         $param->{'code'} = $code;
-        if (!$format) {
-          $param->{'format'}  = 'none';
-        }
-        else {
-          $param->{'format'} = $format;
-        }
       }
       else {
         $param->{'filter_module'} = 'Data';
-        $param->{'filter_code'} = 'empty';
+        $param->{'filter_code'} = 'no_save';
       }
     }
     else {
       $param->{'filter_module'} = 'Data';
-      $param->{'filter_code'} = 'no_save';
+      $param->{'filter_code'} = 'empty';
     }
   }
   return $param;
