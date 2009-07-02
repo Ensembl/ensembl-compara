@@ -694,7 +694,7 @@ sub retrieve_ProbeFeature {
       }
     }
   }
-  return ( $results, ['Mismatches', 'Cigar_String'], $type );
+  return ( $results, ['Mismatches', 'Cigar String'], $type );
 }
 
 sub retrieve_DnaAlignFeature {
