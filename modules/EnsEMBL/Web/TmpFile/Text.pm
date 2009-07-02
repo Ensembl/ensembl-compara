@@ -19,7 +19,6 @@ sub new {
     tmp_filename => undef,         ## for user uploaded files
     prefix       => 'user_upload',
     extension    => 'txt',
-    content_type => 'plain/text',
     drivers      => EnsEMBL::Web::TmpFile::Driver::Disk->new,
     %args,
   );
