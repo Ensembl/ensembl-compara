@@ -19,7 +19,7 @@ sub new {
   my $self = $class->SUPER::new(
     species_defs => $species_defs,
     extension    => 'png',
-    file_root    => $species_defs->ENSEMBL_TMP_DIR_IMG,
+    tmp_dir      => $species_defs->ENSEMBL_TMP_DIR_IMG,
     URL_root     => $species_defs->ENSEMBL_TMP_URL_IMG,
     %args,
   );
