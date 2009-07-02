@@ -4,7 +4,8 @@ use strict;
 
 use Sanger::Graphics::Bump;
 
-use vars qw(Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet);
+
 
 sub _init {
   my ($self) = @_; 
