@@ -27,9 +27,8 @@ sub content {
   my $current_species = $object->data_species;
 
   ## Get assembly info
-  my $html;
-
-#  $html .= $self->_hint('assembly_converter', 'Availability', 'Please note that data can only be converted for the species you are currently on. Also, we currently only export data in GFF format.');
+  my $html = qq(<p class="space-below">Map your data to the current assembly. Accepted file formats: GFF, GTF, BED, PSL</p>
+<p class="space-below">N.B. Export is currently in GFF only</p>);
 
   my $form = $self->modal_form('select', "/$current_species/UserData/CheckConvert");
   my $subheader = 'Upload file';
