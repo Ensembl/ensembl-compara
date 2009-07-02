@@ -32,6 +32,7 @@ sub content {
 
     ## Tidy up user-supplied names
     $name =~ s/ /_/g;
+    $name =~ s/\.(\w{1,4})$/.gff/;
     if ($name !~ /\.gff$/i) {
       $name .= '.gff';
     }
