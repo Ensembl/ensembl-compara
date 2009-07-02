@@ -47,23 +47,30 @@ sub feature_label {
 sub feature_title {
   my( $self, $f ) = @_; 
   return $self->feature_group($f);
-#  return "Probe set: ".$f->probe->probeset->name;
 }
 
 sub href {
-### Links to /Location/Feature with type of 'OligoProbe'
+### Links to /Location/Genome with type of 'ProbeFeature'
   my ($self, $f ) = @_;
-  my ($vendor, $name ) = split (/:/, $self->my_config('array'));
-  return;
+  my ($vendor, $array_name ) = split (/:/, $self->my_config('array'));
+  my ($probe_name, $probe_type);
+  if ( $f->probeset_id) {
+    $probe_name = $f->probe->probeset->name;
+    $probe_type = 'pset';
+  } else { 
+    $probe_name = $f->probe->get_probename($array_name);
+    $probe_type = 'probe';
+  }  
 
-#  return $self->_url({
-#    'object' => 'Location',
-#    'action' => 'Genome',
-#    'db'     => 'funcgen',
-#    'ftype'  => 'ProbeFeature',
-#    'id'     => $f->probe->probeset->name,
-#    'array'  => $name,
-#  });
+  return $self->_url({
+    'object' => 'Location',
+    'action' => 'Genome',
+    'fdb'     => 'funcgen',
+    'ftype'  => 'ProbeFeature',
+    'id'     => $probe_name,
+    'ptype'  => $probe_type,
+    'array'  => $array_name,
+  }); 
 }
 
 sub export_feature {
