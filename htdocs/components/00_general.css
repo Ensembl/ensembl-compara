@@ -118,7 +118,7 @@ dd { margin-bottom:1em; }
 .syntax-error { color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]] }
 
 .error { margin: 0.2em auto; border:1px solid [[ALERT_BORDER]]; color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]]; padding: 0; }
-.error h3 { padding: 2px 0.5em 2px 20px; background-color:[[ALERT_BORDER]];color:[[ALERT_BG]];margin: 0;  background-image:url(/i/warning.gif); background-position: top left; background-repeat: no-repeat }
+.error h3, .error h4 { padding: 2px 0.5em 2px 20px; background-color:[[ALERT_BORDER]];color:[[ALERT_BG]];margin: 0;  background-image:url(/i/warning.gif); background-position: top left; background-repeat: no-repeat }
 .error-pad { padding: 0.5em }
 .warning { margin: 0.2em auto; border:1px solid #ffb90f;background-color: white; padding: 0; }
 .warning h3 { padding: 2px 0.5em 2px 20px; background-color:#ffb90f;color:black;margin: 0; background-image:url(/i/warning.gif); background-position: top left; background-repeat: no-repeat }
