@@ -146,7 +146,9 @@ sub content {
           $name .= "$file->{'format'} file for $file->{'species'}";
           my $extra = "type=$file->{'type'};code=$file->{'code'}"; 
           
-          $save = qq{<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
+          if ($file->{'format'} && $file->{'format'} !~ /wig/i) {
+            $save = qq{<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
+          }
           $share = sprintf('<a href="%s/UserData/SelectShare?%s;%s" class="modal_link">Share</a>', $dir, $extra, $referer);
           $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s;%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $referer, $delete_class, $title);
           $delete = qq{<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="$delete_class"$title>Delete</a></p>};
