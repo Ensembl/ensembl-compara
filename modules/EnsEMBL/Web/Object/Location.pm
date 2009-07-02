@@ -208,7 +208,7 @@ sub create_features {
     $features = $self->search_Xref($db, \@exdb, $self->param('xref_term'));
   }
   else {
-    my $feature_type  = $self->param('ftype') ||$self->param('type') || 'ProbeFeature'; 
+    my $feature_type  = $self->param('ftype') ||$self->param('type') || 'ProbeFeature';  
     if ( ($self->param('ftype') eq 'ProbeFeature') && $self->param('ptype')) {
       $subtype = $self->param('ptype');
     } 
@@ -229,8 +229,8 @@ sub create_features {
 sub _create_ProbeFeature {
   # get Oligo hits plus corresponding genes
   my $probe;
-  if ( $_[2] eq 'pset'){
-    $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] );
+  if ( $_[2] eq 'pset'){ 
+    $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] ); 
   } else {
     $probe = $_[0]->_create_ProbeFeatures_by_probe_id;
   }
@@ -689,12 +689,12 @@ sub retrieve_ProbeFeature {
           'length'   => $f->end-$f->start+1,
           'label'    => $names,
           'gene_id'  => [$names],
-          'extra'    => [ $f->mismatchcount ]
+          'extra'    => [ $f->mismatchcount, $f->cigar_string ]
         }
       }
     }
   }
-  return ( $results, ['Mismatches'], $type );
+  return ( $results, ['Mismatches', 'Cigar_String'], $type );
 }
 
 sub retrieve_DnaAlignFeature {
