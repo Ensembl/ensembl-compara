@@ -70,7 +70,8 @@ sub legend {
 sub notes {
 ### a
   my $self = shift;
-  $self->{'_notes'} = shift if @_;
+  $self->{'_notes'} ||= [];
+  push @{$self->{'_notes'}}, shift if @_;
   return $self->{'_notes'};
 }
 
@@ -103,24 +104,35 @@ sub _render_element {
 
 sub render {
   my $self = shift;
+  
   my $output = '<fieldset'.$self->extra.">\n";
-  $output .= '<h2>'.CGI::escapeHTML( $self->legend )."</h2>\n" if $self->legend; 
-  if ($self->notes) {
-    $output .= '<div class="notes">';
-    if ($self->notes->{'heading'}) {
-      $output .= '<h4>'.$self->notes->{'heading'}.'</h4>';
-    }
-    if ($self->notes->{'list'}) {
-      $output .= '<ul>';
-      foreach my $item (@{$self->notes->{'list'}}) {
-        $output .= "<li>$item</li>\n";
+  $output .= '<h2>'.CGI::escapeHTML( $self->legend )."</h2>\n" if $self->legend;
+  
+  my @notes = @{$self->notes||[]};
+  
+  if (@notes) {
+    foreach my $note (@notes) {
+      my $class = exists $note->{'class'} && !defined $note->{'class'} ? '' : $note->{'class'} || 'notes';
+      $class = qq{ class="$class"} if $class;
+      
+      $output .= qq{<div$class>};
+      
+      if ($note->{'heading'}) {
+        $output .= "<h4>$note->{'heading'}</h4>";
       }
-      $output .= '</ul>';
+      
+      if ($note->{'list'}) {
+        $output .= '<ul>';
+        $output .= "<li>$_</li>\n" for @{$note->{'list'}};
+        $output .= '</ul>';
+      } elsif ($note->{'text'}) {
+        $output .= "<p>$note->{'text'}</p>";
+      }
+      
+      $output .= "</div>\n";
     }
-    else {
-      $output .= '<p>'.$self->notes->{'text'}.'</p>';
-    }
-    $output .= "</div>\n";
+
+    
   }
   
   $output .= qq(\n<table style="width:100%"><tbody>\n);
