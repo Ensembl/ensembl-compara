@@ -913,8 +913,8 @@ sub _ajax_zmenu_alignment {
   my $obj  = shift;
   my $id        = $obj->param('id');
   my $obj_type  = $obj->param('ftype');
-  my $db        = $obj->param('db')  || 'core'; 
-  if ( $obj->param('fdb')) { $db = $obj->param('fdb');}
+  my $db        = $obj->param('fdb') || $obj->param('db') || 'core'; 
+
   my $db_adaptor = $obj->database(lc($db));
   my $adaptor_name = "get_${obj_type}Adaptor";
   my $feat_adap =  $db_adaptor->$adaptor_name; 
