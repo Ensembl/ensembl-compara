@@ -106,10 +106,15 @@ sub fix_filename {
   my $self = shift;
 
   if (my $filename = shift) {
-    my $extension = $self->extension;
     my $prefix    = $self->prefix;
     my $tmp_dir   = $self->tmp_dir;
     my $URL_root  = $self->URL_root;
+
+    if (my $extension = $self->extension) {
+      $extension =~ s/^\.//g;
+      $filename  =~ s/(\.\w{0,4})?$/.$extension/;
+      $self->{extension} = $extension;
+    }
 
     if ($filename =~ m!^/!) {
 
@@ -122,11 +127,6 @@ sub fix_filename {
       $self->{URL}       = undef;
       
     } else {
-
-      ## SET extension, unless there is one
-      if ($extension && $filename !~ /\.\w{0,4}$/) {
-        $filename .= (substr($extension, 0, 1) eq '.') ? $extension : ".$extension";
-      }
 
       ## Fix file root
       $tmp_dir .= "/$prefix"
@@ -146,7 +146,6 @@ sub fix_filename {
 
     }
 
-   ($self->{extension}) = $filename =~ m!\.((?:\w{1,3}\.)?\w{0,4})$!;
    ($self->{shortname}) = $filename =~ m!([^/]+)$!;
     $self->{filename}   = $filename;
   }
