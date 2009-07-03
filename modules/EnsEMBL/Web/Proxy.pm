@@ -41,35 +41,35 @@ sub new {
 
   my( $class, $supertype, $type, $data, %extra_elements ) = @_;
   my $self  = [
-    $type,
+    $type, ## Gene / Transcript / Location ...
     {
-      '_core_objects'    => $data->{_core_objects}    || undef,
-      '_problem'         => $data->{_problem}         || [],
-      '_species_defs'    => $data->{_species_defs}    || undef,
-      '_ext_url_'        => $data->{_ext_url}         || undef,
-      '_parent'          => $data->{_parent}          || undef,
-      '_user'            => $data->{_user}            || undef,
-      '_input'           => $data->{_input}           || undef,
-      '_databases'       => $data->{_databases}       || undef,
-      '_wsc_adaptor'     => $data->{_wsc_adaptor}     || undef,
-      '_wuc_adaptor'     => $data->{_wuc_adaptor}     || undef,
-      '_view_configs_'   => $data->{_view_configs_} || {},
-      '_user_details'    => $data->{_user_details}    || undef,
+      '_core_objects'    => $data->{_core_objects}    || undef, 
+      '_problem'         => $data->{_problem}         || [],    
+      '_species_defs'    => $data->{_species_defs}    || undef, 
+      '_ext_url_'        => $data->{_ext_url}         || undef, # EnsEMBL::Web::ExtURL object used to create external links...
+      '_parent'          => $data->{_parent}          || undef, # Information about the referer... hash ref...
+      '_user'            => $data->{_user}            || undef, ##
+      '_input'           => $data->{_input}           || undef, ## extended of CGI
+      '_databases'       => $data->{_databases}       || undef, ## getting database handles
+      '_wsc_adaptor'     => $data->{_wsc_adaptor}     || undef, ## Replaced by Session
+      '_wuc_adaptor'     => $data->{_wuc_adaptor}     || undef, ## Replaced by Session
+      '_view_configs_'   => $data->{_view_configs_}   || {},    ## {}
+      '_user_details'    => $data->{_user_details}    || undef, ## 
       '_web_user_db'     => $data->{_web_user_db}     || undef,
       '_apache_handle'   => $data->{_apache_handle}   || undef,
-      '_type'            => $data->{_type}            || $ENV{'ENSEMBL_TYPE'},
-      '_action'          => $data->{_action}          || $ENV{'ENSEMBL_ACTION'},
-      '_function'        => $data->{_function}        || $ENV{'ENSEMBL_FUNCTION'},
+      '_type'            => $data->{_type}            || $ENV{'ENSEMBL_TYPE'},     ## Parsed from URL... Gene/Transcript/Location
+      '_action'          => $data->{_action}          || $ENV{'ENSEMBL_ACTION'},   ## View/Summary/....
+      '_function'        => $data->{_function}        || $ENV{'ENSEMBL_FUNCTION'}, ## Extra path info...
       '_species'         => $data->{_species}         || $ENV{'ENSEMBL_SPECIES'},
-      '_script'          => $data->{_script}          || $ENV{'ENSEMBL_SCRIPT'},
+      '_script'          => $data->{_script}          || $ENV{'ENSEMBL_SCRIPT'},   ## name of script in this case action... ## deprecated
 #      '_feature_types'   => $data->{_feature_types}   || [],
-#      '_feature_ids'     => $data->{_feature_ids}   || [],
-      'timer'            => $data->{timer}   || [],
-#      '_group_ids'       => $data->{_group_ids}   || [],
+#      '_feature_ids'     => $data->{_feature_ids}     || [],
+      'timer'            => $data->{timer}            || [],  ## Diagnostic object....
+#      '_group_ids'       => $data->{_group_ids}      || [],
       %extra_elements
     },
-    [],
-    $supertype 
+    [], 
+    $supertype ## Factory / Object / ...
   ];
   bless $self, $class;
   $ENSEMBL_WEB_REGISTRY->timer_push( "Adding all plugins... $supertype $type" );
@@ -182,6 +182,7 @@ sub has_fatal_problem { return scalar( grep {$_->isFatal}            @{$_[0][1]{
 sub has_problem_type  { return scalar( grep {$_->get_by_type($_[1])} @{$_[0][1]{'_problem'}} ); }
 sub get_problem_type  { return         grep {$_->get_by_type($_[1])} @{$_[0][1]{'_problem'}};   }
 sub clear_problems    {                                                $_[0][1]{'_problem'} = []; }
+
 sub problem {
   my $self = shift;
   push @{$self->[1]{'_problem'}}, EnsEMBL::Web::Problem->new(@_) if @_;
