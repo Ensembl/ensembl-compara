@@ -26,7 +26,8 @@ $rdb->run;
 
 =head1 DESCRIPTION
 
-Blah
+This analysis will import peptide_align_feature tables from previous
+compara release using a mysql-dependent mysqldump pipe mysql command.
 
 =cut
 
