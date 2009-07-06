@@ -91,12 +91,30 @@ sub load_name2index_mapping_from_file {
     return \%name2index;
 }
 
+sub name2index { # can load the name2index mapping from db/file if necessary
+    my ($self, $name) = @_;
+
+    if($name=~/^seq_id_(\d+)_/) {
+        return $1;
+    } else {
+        my $name2index;
+        unless($name2index = param('name2index')) {
+            my $tabfile                 = $self->param('tabfile');
+
+            $name2index = $self->param('name2index', $tabfile
+                ? $self->load_name2index_mapping_from_file($tabfile)
+                : $self->load_name2index_mapping_from_db()
+            );
+        }
+        return $name2index->{$name} || "UNKNOWN($name)";
+    }
+}
+
 sub fetch_input {
     my $self = shift @_;
 
     my $start_seq_id            = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
     my $minibatch               = $self->param('minibatch')   || 1;
-    my $tabfile                 = $self->param('tabfile');
     my $overwrite               = $self->param('overwrite')   || 0; # overwrite=0 means we only fill in holes, overwrite=1 means we rewrite everything
     my $debug                   = $self->param('debug')       || 0;
 
@@ -108,20 +126,12 @@ sub fetch_input {
 
     $self->param('fasta_list', $fasta_list);
 
-    if(scalar(@$fasta_list)) {
-        $self->param('name2index', $tabfile
-            ? $self->load_name2index_mapping_from_file($tabfile)
-            : $self->load_name2index_mapping_from_db()
-        );
-    } # otherwise: no point in loading the mapping if we have no more work to do
-
     return 1;
 }
 
 sub parse_blast_table_into_matrix_hash {
     my ($self, $filename) = @_;
 
-    my $name2index = $self->param('name2index');
     my $roundto    = $self->param('roundto') || 0.0001;
 
     my %matrix_hash  = ();
@@ -141,13 +151,13 @@ sub parse_blast_table_into_matrix_hash {
                 }
             } elsif($line=~/^#\s+Query:\s+(\S+)/) {
                 $curr_name  = $1;
-                $curr_index = $name2index->{$curr_name} || "UNKNOWN($curr_name)";
+                $curr_index = $self->name2index($curr_name);
             }
         } else {
             my ($qname, $hname, $identity, $align_length, $mismatches, $gap_openings, $qstart, $qend, $hstart, $hend, $evalue, $bitscore)
                 = split(/\s+/, $line);
 
-            my $hit_index = $name2index->{$hname} || "UNKNOWN($hname)";
+            my $hit_index = $self->name2index($hname);
                 # we MUST be explicitly numeric here:
             my $distance  = ($evalue != 0) ? -log($evalue)/log(10) : 200;
 
