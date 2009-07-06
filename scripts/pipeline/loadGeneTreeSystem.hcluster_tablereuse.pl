@@ -229,6 +229,7 @@ sub build_GeneTreeSystem
   $stats = $analysisStatsDBA->fetch_by_analysis_id($loadUniProt->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
+  $stats->failed_job_tolerance(100); # This wont block the main pipeline
   $stats->status('LOADING');
   $stats->update();
 
@@ -523,6 +524,7 @@ sub build_GeneTreeSystem
   $analysisDBA->store($njtree_phyml);
   $stats = $njtree_phyml->stats;
   $stats->batch_size(1);
+  $stats->failed_job_tolerance(5); # Some of the biggest clusters can fail and go through the other options
   my $njtree_hive_capacity = $hive_params{'njtree_hive_capacity'};
   $njtree_hive_capacity = 400 unless defined $njtree_hive_capacity;
   $stats->hive_capacity($njtree_hive_capacity);
@@ -583,6 +585,7 @@ sub build_GeneTreeSystem
   $analysisDBA->store($orthotree);
   $stats = $orthotree->stats;
   $stats->batch_size(1);
+  $stats->failed_job_tolerance(5); # Some of the biggest clusters can fail and go through the other options
   my $ortho_tree_hive_capacity = $hive_params{'ortho_tree_hive_capacity'};
   $ortho_tree_hive_capacity = 200 unless defined $ortho_tree_hive_capacity;
   $stats->hive_capacity($ortho_tree_hive_capacity);
@@ -721,6 +724,7 @@ sub build_GeneTreeSystem
       my $stats = $analysisStatsDBA->fetch_by_analysis_id($Sitewise_dNdS->dbID);
       $stats->batch_size(1);
       $stats->hive_capacity(600);
+      $stats->failed_job_tolerance(5); # Some of the biggest clusters can fail and go through the other options
       $stats->status('BLOCKED');
       $stats->update();
       $ctrlRuleDBA->create_rule($orthotree,$Sitewise_dNdS);
