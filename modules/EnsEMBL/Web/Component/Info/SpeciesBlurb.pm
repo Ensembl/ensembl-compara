@@ -16,7 +16,17 @@ sub _init {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-  my $html; 
+  my $name_string;
+  my $bio_name = $object->species;
+  $bio_name =~ s/_/ /g;
+  my $common_name = $object->species_defs->SPECIES_COMMON_NAME;
+  if ($common_name =~ /\./) {
+    $name_string = "<i>$bio_name</i>";
+  }
+  else {
+    $name_string = "$common_name (<i>$bio_name</i>)";
+  }
+  my $html = qq(<h1>$name_string</h1>); 
 
   my $file = '/ssi/species/about_'.$object->species.'.html';
   $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file); 
