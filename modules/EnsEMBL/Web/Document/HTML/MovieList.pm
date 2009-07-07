@@ -19,27 +19,29 @@ sub render {
   my $self = shift;
 
   my $html;
-  my @movies = sort {$a->list_position <=> $b->list_position} EnsEMBL::Web::Data::Movie->find_all;
+  my @movies = sort {
+                $a->list_position <=> $b->list_position
+                || $a->title cmp $b->title
+                } EnsEMBL::Web::Data::Movie->search({'status'=>'live'});
 
-  $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly.</p>);
+  $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly.</p>
+<p>Note that we are now hosting all our tutorials on <a href="http://www.youtube.com/user/EnsemblHelpdesk">YouTube</a> 
+for ease of maintenance</a>);
 
   my $table = EnsEMBL::Web::Document::SpreadSheet->new();
 
   $table->add_columns(
       {'key' => "title", 'title' => 'Title', 'width' => '60%', 'align' => 'left' },
-      {'key' => "size", 'title' => 'File size (MB)', 'width' => '20%', 'align' => 'left' },
       {'key' => "mins", 'title' => 'Running time (minutes)', 'width' => '20%', 'align' => 'left' },
   );
 
   foreach my $movie (@movies) {
-
-    my $title_link = sprintf(qq(<a href="/Help/Movie?id=%s;_referer=/info/website/tutorials/index.html" class="modal_link">%s</a>\n), $movie->help_record_id, $movie->title);
-    $table->add_row( { 'title'  => $title_link, 'size' => $movie->filesize, 'mins' => $movie->length } );
+    next unless $movie->url;
+    my $title_link = sprintf(qq(<a href="%s" rel="external">%s</a>\n), $movie->url, $movie->title);
+    $table->add_row( { 'title'  => $title_link, 'mins' => $movie->length } );
 
   }
   $html .= $table->render;
-
-  $html .= qq(<p style="margin-top:1em">Please note that files can be large, so if you are on a dialup connection or a long way from the UK, playback may be jerky. In this case, you may find it easier to view these tutorials on YouTube: <a href="http://www.youtube.com/user/EnsemblHelpdesk">www.youtube.com/user/EnsemblHelpdesk</a>.</p>);
 
   return $html;
 }
