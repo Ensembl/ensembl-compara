@@ -16,7 +16,6 @@ use Text::Wrap qw(wrap);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
-use EnsEMBL::Web::Component::Export;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Form;
@@ -186,7 +185,7 @@ sub modal_form {
     }
     $form_action .= '/'.$ENV{'ENSEMBL_TYPE'}.'/Wizard';
   }
-  my $form = EnsEMBL::Web::Form->new($name, $form_action, 'post');
+  my $form = EnsEMBL::Web::Form->new($name, $form_action, $options->{'method'} || 'post');
   my $label = $options->{'label'} || 'Next >';
 
   $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $self->object->param('_referer'));
@@ -207,8 +206,7 @@ sub modal_form {
     $form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => $label);
     $form->add_element('type' => 'Hidden', 'name' => 'wizard_next', 'value' => $action);
     $form->add_element('type' => 'Hidden', 'name' => 'wizard_ajax_submit', 'value' => '' );
-  }
-  else {
+  } elsif (!$options->{'no_button'}) {
     $form->add_button('type' => 'Submit', 'name' => 'submit', 'value' => $label);
   }
 
@@ -410,8 +408,6 @@ sub _sort_similarity_links {
     push @{$object->__data->{'links'}{$type->type}}, [ $type->db_display_name || $externalDB, $text ] ;
   }
 }
-
-sub _export { return EnsEMBL::Web::Component::Export::export(@_); }
 
 sub remove_redundant_xrefs {
   my ($self,@links) = @_;
