@@ -313,97 +313,94 @@ my $value =  $self->renderer->content;
 }
 
 sub render {
-  my( $self, $first ) = @_;
-
-  if( exists $self->{'raw'} ) {
-    $self->renderer->print( $self->{'raw'} );
+  my ($self, $first) = @_;
+  my $object = $self->{'object'};
+  
+  if (exists $self->{'raw'}) {
+    $self->renderer->print($self->{'raw'});
   } else {
-    my $status = $self->{'object'} ? $self->{'object'}->param($self->{'status'}) : undef;
+    my $status = $object ? $object->param($self->{'status'}) : undef;
     my $content = '';
-    if( $status ne 'off' && $self->{'delayed_write'} ) {
-      $content = $self->_content_delayed();
-      if( !$content && exists( $self->{null_data} ) && ! defined( $self->{null_data} ) ) {
-        return;
-      }
+    
+    if ($status ne 'off' && $self->{'delayed_write'}) {
+      $content = $self->_content_delayed;
+      
+      return if !$content && exists($self->{'null_data'}) && !defined $self->{'null_data'};
     }
-    my $HTML = q(
-    <div class="panel">);
+    
+    my $HTML = '
+    <div class="panel">';
+    
     my $button_text;
     my $counts = {};
-    if( !$self->{omit_header}) {
-      if (exists $self->{'previous'} || exists $self->{'next'} ) {
-        $HTML .= qq(<div class="nav-heading">
-          <div class="left-button print_hide">);
-        if (exists $self->{'previous'}) {
+    
+    if (!$self->{'omit_header'}) {
+      if (exists $self->{'previous'} || exists $self->{'next'}) {
+        $HTML .= '<div class="nav-heading">
+          <div class="left-button print_hide">';
+        
+        if (exists $self->{'previous'} && !$self->{'previous'}{'external'}) {
           $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
+          
           if ($button_text) {
-            my $url = $self->{'previous'}{'url'};
-            if (!$url) {
-              $url = $self->{'object'}->_url({'action'=>$self->{'previous'}{'code'},'function'=>undef});
-            }
-            $HTML .= sprintf q(<a href="%s">&laquo;&nbsp;%s</a>),CGI::escapeHTML($url),CGI::escapeHTML($button_text);
-          }
-          else {
-            $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
-          }
-        } 
-        else {
-          $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
-        }
-        $HTML .= q(</div>
-          <div class="right-button print_hide">);
-        if( exists $self->{'next'} ) {
-          $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
-          if ($button_text) {
-            my $url = $self->{'next'}{'url'};
-            if (!$url) {
-              $url = $self->{'object'}->_url({'action'=>$self->{'next'}{'code'},'function'=>undef});
-            }
-            $HTML .= sprintf q(<a href="%s">%s&nbsp;&raquo;</a>),CGI::escapeHTML($url),CGI::escapeHTML($button_text);
-          }
-          else {
-            $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
+            my $url = $self->{'previous'}{'url'} ||  $object->_url({ 'action' => $self->{'previous'}{'code'}, 'function' => undef });
+            $HTML .= sprintf '<a href="%s">&laquo;&nbsp;%s</a>', CGI::escapeHTML($url), CGI::escapeHTML($button_text);
+          } else {
+            $HTML .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
           }
         } else {
-          $HTML .= q(<span>&nbsp;</span>); # Do not remove this span it breaks IE7 if only a &nbsp;
+          $HTML .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
         }
-        $HTML .= q(</div>);
-        if( exists $self->{'caption'} ) {
-          $HTML .= $self->_caption_with_helplink;
+        
+        $HTML .= '</div>
+          <div class="right-button print_hide">';
+          
+        if (exists $self->{'next'} && !$self->{'next'}{'external'}) {
+          $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
+          
+          if ($button_text) {
+            my $url = $self->{'next'}{'url'} || $object->_url({ 'action' => $self->{'next'}{'code'}, 'function' => undef });
+            $HTML .= sprintf '<a href="%s">%s&nbsp;&raquo;</a>', CGI::escapeHTML($url), CGI::escapeHTML($button_text);
+          } else {
+            $HTML .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
+          }
+        } else {
+          $HTML .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
         }
-        $HTML .= q(
-          <p class="invisible">.</p></div>);
-      } 
-      elsif( exists $self->{'caption'} ) {
+        
+        $HTML .= '</div>';
+        $HTML .= $self->_caption_with_helplink if exists $self->{'caption'};
+        $HTML .= '<p class="invisible">.</p></div>';
+      } elsif (exists $self->{'caption'}) {
         $HTML .= $self->_caption_with_helplink;
       }
     }
+    
     $self->renderer->print($HTML);
-    if( $status ne 'off' ) {
-
-      if( $self->{'_delayed_write_'} ) {
+    
+    if ($status ne 'off') {
+      if ($self->{'_delayed_write_'}) {
         $self->renderer->print($content);
       } else {
-
         my $temp_renderer = $self->renderer;
+        
         $self->renderer = new EnsEMBL::Web::Document::Renderer::Assembler(
           r       => $temp_renderer->r,
           cache   => $temp_renderer->cache,
-          session => $self->{object} ? $self->{object}->get_session : undef,
+          session => $object ? $object->get_session : undef,
         );
-
-        $self->_render_content();
-        $self->renderer->close();
-
+        
+        $self->_render_content;
+        $self->renderer->close;
+        
         $content = $self->renderer->content;
         $self->renderer = $temp_renderer;
-        $self->renderer->print( $content );          
-
+        $self->renderer->print($content);
       }
-
     }
-    $self->renderer->print( q(
-    <p class="invisible">.</p></div>) );
+    
+    $self->renderer->print('
+    <p class="invisible">.</p></div>');
   }
 }
 
