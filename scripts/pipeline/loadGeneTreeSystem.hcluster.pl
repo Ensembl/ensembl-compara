@@ -617,8 +617,8 @@ sub build_GeneTreeSystem
         (
          -input_id       => ( '{species_sets=>' 
                               . $dnds_params{'species_sets'} 
-                              . ',method_link_types=>'
-                              . $dnds_params{'method_link_types'}
+#                               . ',method_link_types=>'
+#                               . $dnds_params{'method_link_types'}
                               . '}' ),
          -analysis       => $CreateHomology_dNdSJob,
         );
@@ -667,10 +667,11 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'species_sets'}) {
     $self->{'hiveDBA'}->get_AnalysisJobAdaptor->CreateNewJob
         (
-         -input_id => '{species_sets=>' 
-               . $dnds_params{'species_sets'} 
-               . ',method_link_types=>\''
-               . $dnds_params{'method_link_types'}.'\'}',
+         -input_id       => ( '{species_sets=>' 
+                              . $dnds_params{'species_sets'} 
+#                               . ',method_link_types=>'
+#                               . $dnds_params{'method_link_types'}
+                              . '}' ),
          -analysis       => $threshold_on_dS,
         );
   }
@@ -753,6 +754,7 @@ sub build_GeneTreeSystem
   $dataflowRuleDBA->create_rule($njtree_phyml, $njtree_phyml, 2);
   $dataflowRuleDBA->create_rule($njtree_phyml, $quicktreebreak, 3);
   $dataflowRuleDBA->create_rule($orthotree, $quicktreebreak, 2);
+  $dataflowRuleDBA->create_rule($quicktreebreak, $mcoffee, 1);
   $dataflowRuleDBA->create_rule($njtree_phyml, $orthotree, 1);
 
 #  $dataflowRuleDBA->create_rule($njtree_phyml, $BreakPAFCluster, 2);
