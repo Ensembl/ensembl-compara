@@ -44,7 +44,7 @@ sub init {
     'dna_align_est'   => 'EST alignments',
     'dna_align_rna'   => 'RNA alignments',
     'dna_align_other' => 'Other DNA alignments', 
-    'oligo'           => 'Oligo features',
+    'oligo'           => 'Probe features',
     'ditag'           => 'Ditag features',
     'external_data'   => 'External data',
     'user_data'       => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
