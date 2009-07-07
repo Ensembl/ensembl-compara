@@ -1023,7 +1023,7 @@ sub add_oligo_probe {
   foreach my $key_2 ( sort keys %$data ) {
     my $key_3 = $key_2;
     $key_2 =~s/:/__/; 
-    $menu->append( $self->create_track( 'oligo_'.$key.'_'.$key_2, $key_2, {
+    $menu->append( $self->create_track( 'oligo_'.$key.'_'.$key_2, $key_3, {
       'glyphset'    => '_oligo',
       'db'          => $key,
       'sub_type'    => 'oligo',
