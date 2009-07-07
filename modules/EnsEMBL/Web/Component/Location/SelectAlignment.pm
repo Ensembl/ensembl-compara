@@ -25,13 +25,15 @@ sub content {
   my $species = $object->species;
   my $options;
   my $species_hash;
+  my $c = 0;
   foreach my $i (keys %$hash) {
     foreach (keys %{$hash->{$i}->{'species'}}) {
       #this will fail for vega intra species compara
       if ($hash->{$i}->{'class'} =~ /pairwise/ && $hash->{$i}->{'species'}->{$species} && $_ ne $species) {
 	my $type = lc $hash->{$i}->{'type'};
-	$type =~ s/_net//i;
 	$type =~ s/_/ /g;
+	next if ($object->species_defs->species_label($_, 1) eq 'Ancestral sequence');
+	$c++;
 	$species_hash->{$_} = $object->species_defs->species_label($_, 1) . "###$type";
       }
     }
