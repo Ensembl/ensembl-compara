@@ -21,14 +21,16 @@ sub createObjects {
   ) {
     $self->_create_object_from_core;
     my $obj = $self->DataObjects->[0];
-    if ($self->param( 's1')) {
-      warn "created new core object ", ref($obj);
-      $self->generate_full_url($obj);
-      if ($self->core_objects->location) {
-	$self->createObjectsLocation($obj);
-      }
-      elsif ($self->core_objects->gene) {
-#	$self->createObjectsGene($obj);
+    foreach my $param ($self->param) {
+      if ($param =~ /^s\d+$/) {
+#	warn "created new core object ", ref($obj);
+	$self->generate_full_url($obj);
+	if ($self->core_objects->location) {
+	  $self->createObjectsLocation($obj);
+	}
+	elsif ($self->core_objects->gene) {
+	  #$self->createObjectsGene($obj);
+	}
       }
     }
     return $self;
@@ -230,51 +232,79 @@ sub createObjects {
 sub generate_full_url {
   my $self = shift;
   my $obj = shift;
-  my $slice = $obj->slice;
+
   #show input parameters
 #   foreach ($self->param) {	  
 #     warn "$_ = ",$self->param($_),"\n";
 #   }
-  my $ids;
+
+  #study input params to see if there are any extra species, or species to be removed
+  my ($ids,$sp_dets);
+  my $max_s = 0;
   foreach my $par ( $self->param ) {
     if ($par =~ /^([sgr])(\d+)$/ ) {
       $ids->{$2}{$1} = 1;
     }
+    if ($par =~ /^(s)(\d+)$/ ) {
+      push @{$sp_dets->{$self->param($par)}}, $2;
+      $max_s = $2 > $max_s ? $2 : $max_s;
+    }
   }
+
+  #are there any to be removed ?
+  foreach my $sp (keys %$sp_dets) {
+    if (scalar @{$sp_dets->{$sp}} > 1 ) {
+      $self->remove_species_and_generate_url($sp);
+    }
+  }
+
+  #could identify missing numbers by specifically pushing into an array rather than usig $max_s
+
+
+  #are there any species that don't have an r param ?
   my $complete = 1;
   foreach my $no (keys %$ids) {
     $complete = 0 unless exists($ids->{$no}{'r'});
   }
 
-#  warn "do I need a redirect",Dumper($ids);
-#  warn "complete = $complete";
+  $self->find_missing_locations($obj,$ids) if (! $complete);
 
-  if (! $complete) {
-  PAR:
-    foreach my $par ( $self->param ) {
-      #given a s param, get locations...
-      # - might need modif. if we can go in on a gene only ?
+  return;
+}
 
-      if( $par =~ /^s(\d+)$/ ) {
-	my $ID = $1;
-	next PAR if $ids->{$ID}{'r'}; #don't attempt to do anything if we already have an r param
-	my $species = $self->map_alias_to_species( $self->param($par) );
-	my $width = $slice->end - $slice->start + 1;
-	
-	#get chr argument for self compara
-	my $chrom = '';
-#	  if ($self->param("sr$ID")) {
-#	    $chrom = $self->param("sr$ID");
-#	  } elsif ($sc) {
-#	    ($chrom) =  $self->param("c$ID") =~ /^([-\w\.]+):?/;
-	#	  }
-	$self->_best_guess( $slice, $species, $width, $chrom, $ID ); #...and do a redirct
-      }
+sub find_missing_locations {
+  my $self = shift;
+  my $obj = shift;
+  my $ids = shift;
+  my $slice = $obj->slice;
+ PAR:
+  foreach my $par ( $self->param ) {
+    #given a s param, get locations...
+    # - might need modif. if we can go in on a gene only ?
+
+    if( $par =~ /^s(\d+)$/ ) {
+      my $ID = $1;
+      next PAR if $ids->{$ID}{'r'}; #don't attempt to do anything if we already have an r param
+      my $species = $self->map_alias_to_species( $self->param($par) );
+      my $width = $slice->end - $slice->start + 1;
+
+      #get chr argument for self compara
+      my $chrom = '';
+      #	  if ($self->param("sr$ID")) {
+      #	    $chrom = $self->param("sr$ID");
+      #	  } elsif ($sc) {
+      #	    ($chrom) =  $self->param("c$ID") =~ /^([-\w\.]+):?/;
+      #	  }
+      $self->_best_guess( $slice, $species, $width, $chrom, $ID ); #...and do a redirct
     }
   }
-  else {
-    return;
-  }
+}
+
+sub remove_species_and_generate_url {
+  my $self = shift;
+  my $sp = shift;
+  warn "need to remove $sp and also rejig url";
+  return;
 }
 
 sub _best_guess {
