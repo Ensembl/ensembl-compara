@@ -447,9 +447,6 @@ sub propagate_cache_tags {
   
   $ENV{CACHE_TAGS} ||= {};
   $ENV{CACHE_TAGS}->{$_} = 1 for @tags;
-  
-  ## TODO: Kill this warn:
-  #warn ' + + + + +  Propagate tags for '. $ENV{CACHE_KEY} ." \n ".Data::Dumper::Dumper($ENV{CACHE_TAGS});
 }
 
 ###################################################################################################
