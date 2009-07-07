@@ -26,7 +26,9 @@ sub render {
 
   $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly.</p>
 <p>Note that we are now hosting all our tutorials on <a href="http://www.youtube.com/user/EnsemblHelpdesk">YouTube</a> 
-for ease of maintenance</a>);
+for ease of maintenance</a>. If you are unable to access YouTube, please accept our apologies 
+- a selection of tutorials is available on the 
+<a href="http://www.ebi.ac.uk/2can/evideos/index.html">EBI E-Video website</a>);
 
   my $table = EnsEMBL::Web::Document::SpreadSheet->new();
 
