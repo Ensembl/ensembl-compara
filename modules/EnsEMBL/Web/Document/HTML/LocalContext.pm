@@ -132,7 +132,7 @@ $pad    </dd>";
             $url .= '?'.join(';', @ok_params);  
           }
         }
-        $name = sprintf '<a href="%s" title="%s">%s</a>', $url, $title, $name;
+        $name = sprintf '<a href="%s" title="%s"%s>%s</a>', $url, $title, $node->data->{'external'} ? ' rel="external"' : '', $name;
       } else {
         $name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
       }
