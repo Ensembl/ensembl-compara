@@ -7,6 +7,11 @@ use base qw(EnsEMBL::Web::Component::Location);
 
 use Data::Dumper;
 
+my %SHORT = qw(
+  chromosome Chr.
+  supercontig S'ctg
+);
+
 sub _init {
   my $self = shift;
   $self->cacheable( 1 );
@@ -33,15 +38,29 @@ sub content {
   my $counter = 1;
   my $other_locs = $object->other_locations;
   my $max_count = @{$other_locs} + 1;
-  my $wuc = $object->image_config_hash( "contigviewtop_$counter", 'MultiTop',  $ploc->species);
-  $wuc->set_parameters({
+  my $pwuc = $object->image_config_hash( "contigviewtop_$counter", 'MultiTop',  $ploc->species);
+  $pwuc->set_parameters({
     'container_width' => $new_pslice->length,
     'image_width'     => $self->image_width,
     'slice_number'    => "1|$max_count",
-    'caption'         => $object->seq_region_type.' '.$object->seq_region_name,
-  });
+   });
   my $images;
-  push @$images, ($new_pslice, $wuc);
+  #add panel caption (displayed by scalebar glyphset)
+  my $type = $pslice->coord_system_name();
+  my $chr = $pslice->seq_region_name();
+  my $chr_raw = $chr;
+  unless( $chr =~ /^$type/i ) {
+    $type = $SHORT{lc($type)} || ucfirst( $type );
+    $chr = "$type $chr";
+  }
+  if( length($chr) > 9 ) {
+    $chr = $chr_raw;
+  }
+  (my $abbrev = $ploc->species ) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
+  $chr = "$abbrev $chr"; 
+  $self->{'caption'} = $chr;
+  $pwuc->get_node('ruler')->set('caption', $chr );
+  push @$images, ($new_pslice, $pwuc);
 
   #add secondary slices
   if (@$other_locs) {
@@ -56,8 +75,24 @@ sub content {
 	'container_width' => $new_slice->length,
 	'image_width'     => $self->image_width,
 	'slice_number'    => "$counter|$max_count",
-	'caption'         => $object->seq_region_type.' '.$object->seq_region_name,
       });
+
+      #add panel caption (displayed by scalebar glyphset)
+      my $type = $slice->coord_system_name();
+      my $chr = $slice->seq_region_name();
+      my $chr_raw = $chr;
+      unless( $chr =~ /^$type/i ) {
+	$type = $SHORT{lc($type)} || ucfirst( $type );
+	$chr = "$type $chr";
+      }
+      if( length($chr) > 9 ) {
+	$chr = $chr_raw;
+      }
+      (my $abbrev = $loc->{'real_species'} ) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
+      $chr = "$abbrev $chr"; 
+      $self->{'caption'} = $chr;
+      $wuc->get_node('ruler')->set('caption', $chr );
+
       push @$images, ($new_slice, $wuc);
       $counter++;
     }
