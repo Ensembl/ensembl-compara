@@ -160,7 +160,7 @@ sub render_collapsed {
             'absolutey' => 1,
           }));
           $bump_height += $th+1;
-          warn "$line -> $th - $th2";
+#          warn "$line -> $th - $th2";
         }
       }
     }
