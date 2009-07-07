@@ -49,28 +49,28 @@ sub content {
     $options .= qq{
           <optgroup label="Pairwise alignments">};
 
-    my $species_hash = {};
+    my %species_hash;
     
-    foreach my $i (keys %$hash) {
+    foreach my $i (grep { $hash->{$_}{'class'} =~ /pairwise/ } keys %$hash) {
       foreach (keys %{$hash->{$i}->{'species'}}) {
-        if ($hash->{$i}->{'class'} =~ /pairwise/ && $hash->{$i}->{'species'}->{$species} && $_ ne $species) {
+        if ($hash->{$i}->{'species'}->{$species} && $_ ne $species && $_ ne 'merged') {
           my $type = lc $hash->{$i}->{'type'};
           
-          $type =~ s/_net//i;
+          $type =~ s/_net//;
           $type =~ s/_/ /g;
           
-          $species_hash->{$object->species_defs->species_label($_, 1) . "###$type"} = $i;
+          $species_hash{$object->species_defs->species_label($_, 1) . "###$type"} = $i;
         }
       } 
     }
     
-    foreach (sort { $a cmp $b } keys %$species_hash) {
-      my ($name, $type) = split (/###/, $_);
+    foreach (sort { $a cmp $b } keys %species_hash) {
+      my ($name, $type) = split /###/, $_;
       
       $options .= sprintf '
             <option value="%d"%s>%s</option>',
-        $species_hash->{$_},
-        $species_hash->{$_} eq $align ? ' selected="selected"' : '',
+        $species_hash{$_},
+        $species_hash{$_} eq $align ? ' selected="selected"' : '',
         "$name - $type";
     }
     
