@@ -352,14 +352,14 @@ sub populate_tree {
   if ($browsers{'UCSC_DB'}) {
     $url = $object->get_ExtURL( 'EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end )} );
     $browser_menu->append( $self->create_node('UCSC_DB', 'UCSC',
-      [], { 'availability' => 1, 'url' => $url, 'raw' => 1 }
+      [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }
     ));
     delete($browsers{'UCSC_DB'});
   }
   if ($browsers{'NCBI_DB'}) {
     $url = $object->get_ExtURL('EGB_NCBI', { 'NCBI_DB' => $browsers{'NCBI_DB'}, 'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end )} );
     $browser_menu->append( $self->create_node('NCBI_DB', 'NCBI',
-      [], { 'availability' => 1, 'url' => $url, 'raw' => 1 }
+      [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }
     ));
     delete($browsers{'NCBI_DB'});
   }
@@ -367,7 +367,7 @@ sub populate_tree {
     next unless $browsers{$_};
     $url = $object->get_ExtURL( $_, {'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end ) } );
     $browser_menu->append($self->create_node($browsers{$_}, $browsers{$_},
-      [], { 'availability' => 1, 'url' => $url, 'raw' => 1 }
+      [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }
     ));
   }
 
