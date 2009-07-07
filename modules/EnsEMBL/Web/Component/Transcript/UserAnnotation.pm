@@ -29,7 +29,7 @@ sub content {
       next unless $record->stable_id eq $id;
       push @trans_annotations, $record;
     }
-    if (scalar(@trans_$annotations)) {
+    if (scalar(@trans_annotations)) {
       foreach my $annotation (@trans_annotations) {
         $html = '<h2>'.$annotation->title.'</h2><pre>'.$annotation->annotation.'</pre>';
         $html .= qq(<p><a href="/Account/Annotation/Edit?id=).$annotation->id.qq(;species=$species" class="modal_link">Edit this annotation</a>.</p>);
