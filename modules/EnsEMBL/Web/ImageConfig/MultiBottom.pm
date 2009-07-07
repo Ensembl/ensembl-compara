@@ -24,11 +24,10 @@ sub init {
 
 ## Now let us set some of the optional parameters....
     'opt_halfheight'    => 0,    # glyphs are half-height [ probably removed when this becomes a track config ]
-#    'opt_empty_tracks'  => 0,    # include empty tracks..
     'opt_lines'         => 1,    # draw registry lines
     'opt_restrict_zoom' => 1,   # when we get "zoom" working draw restriction enzyme info on it!!
-## Finally some colours... background image colors;
-## and alternating colours for tracks...
+
+    'spritelib' => { 'default' => $self->{'species_defs'}->ENSEMBL_SERVERROOT.'/htdocs/img/sprites' },
   });
 
 ## First add menus in the order you want them for this display....
@@ -57,64 +56,25 @@ sub init {
     'pairwise_blastz' => 'BLASTZ alignments',
     'pairwise_tblat'  => 'Translated blat alignments',
     'pairwise_other'  => 'Pairwise alignment',
-    'decorations'     => 'Additional decorations',
     'information'     => 'Information',
+    'decorations'     => 'Additional decorations',
     'options'         => 'Options'
   );
-
-## Note these tracks get added before the "auto-loaded tracks" get added...
-  $self->add_tracks( 'sequence', 
-    [ 'contig',    'Contigs',              'stranded_contig', { 'display' => 'normal',  'strand' => 'r', 'description' => 'Track showing underlying assembly contigs'  } ],
-#   [ 'prelim',    'Preliminary release', 'preliminary',      { 'display' => 'off', 'menu' => 'no',  'strand' => 'r' } ],
-    [ 'seq',       'Sequence',             'sequence',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.2, 'colourset' => 'seq',      'description' => 'Track showing sequence in both directions'  } ],
-    [ 'codon_seq', 'Translated sequence',  'codonseq',        { 'display' => 'off',  'strand' => 'b', 'threshold' => 0.5, 'colourset' => 'codonseq', 'description' => 'Track showing 6-frame translation of sequence'  } ],
-    [ 'codons',    'Start/stop codons',    'codons',          { 'display' => 'off',  'strand' => 'b', 'threshold' => 50,  'colourset' => 'codons' ,  'description' => 'Track indicating locations of start and stop codons in region'  } ],
-    [ 'blast',     'BLAT/BLAST hits', '_blast', { 'display' => 'normal', 'strand' => 'b', 'description' => 'BLAT/BLAST hits', 'menu' => 'no', 'sub_type' => 'blast', 'colourset' => 'feature' } ]
-  );
-  $self->add_tracks( 'decorations',
-    [ 'gc_plot',   '%GC',                  'gcplot',          { 'display' => 'normal',  'strand' => 'r', 'description' => 'Shows %age of Gs & Cs in region'  } ],
-  );
-  if ($self->species_defs->ALTERNATIVE_ASSEMBLIES) {
-    foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES}) {
-      $self->add_tracks( 'misc_feature',
-	[ "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', { 'display' => 'off',  'strand' => 'f',  'colourset' => 'alternative_assembly' ,  'description' => "Track indicating $alt_assembly assembly", 'assembly_name'=> $alt_assembly } ]);
-    }
-  }
-  #show versions of clones from other sites
-  if ($self->species_defs->das_VEGACLONES) {
-    $self->add_tracks( 'misc_feature',
-	[ 'v_clones', 'Vega clones', 'alternative_clones',    { 'display' => 'off', 'strand' => 'f', 'description' => 'Vega clones', 'colourset' => 'alternative_clones', 'das_source' => 'das_VEGACLONES' } ]);
-  }
-  if ($self->species_defs->das_ENSEMBLCLONES) {
-    $self->add_tracks( 'misc_feature',
-	[ 'e_clones', 'Ensembl clones', 'alternative_clones', { 'display' => 'off', 'strand' => 'f', 'description' => 'Ensembl clones', 'colourset' => 'alternative_clones', 'das_source' => 'das_ENSEMBLCLONES' } ]);
-  }
 
 ## Add in additional
   $self->load_tracks;
   $self->load_configured_das;
-
-
-## These tracks get added after the "auto-loaded tracks get addded...
-
-  if( $self->species_defs->ENSEMBL_MOD ) {
-    $self->add_track( 'information', 'mod', '', 'text', {
-      'name' => 'Message of the day',
-      'display'   => 'normal',
-      'menu' => 'no',
-      'strand' => 'r', 
-      'text' => $self->species_defs->ENSEMBL_MOD
-    } )
-  }
-
+  $self->add_track( 'sequence',    'contig',    'Contigs',             'stranded_contig', { 'display' => 'normal', 'strand' => 'f' } );
   $self->add_tracks( 'information',
     [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary', 'description' => 'Show counts of number of tracks turned off by the user' } ],
     [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information',            'description' => 'Details of the region shown in the image'               } ],
   );
-  $self->add_tracks( 'decorations',  
-    [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar', 'description' => 'Track ' } ],
-    [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler',     'description' => 'Shows the length of the region being displayed'    } ],
-    [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+
+  $self->add_tracks( 'decorations',
+   [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler',     'description' => 'Shows the length of the region being displayed'    } ],
+   [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar', 'description' => 'Track ', 'menu' => 'no' } ],
+   [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
+   [ 'nav',       '',            'navigation',      { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no' } ],
   );
 
 ## Finally add details of the options to the options menu...
@@ -126,5 +86,49 @@ sub init {
 
   #use Data::Dumper; local $Data::Dumper::Indent = 1; warn Data::Dumper::Dumper( $self->tree );
 }
+
+sub mult {
+  my $self = shift;
+  my @species = @{$self->{'species_defs'}->ENSEMBL_SPECIES};
+  my $compara = 3000;
+  my @methods = (
+    [ 'BLASTZ_NET'           ,'pink',  'cons',  'darkseagreen1', -20  ],
+    [ 'BLASTZ_NET_TIGHT'     ,'pink3', 'high cons','darkolivegreen2', -19   ],
+    [ 'BLASTZ_GROUP'         ,'pink',  'cons', 'darkseagreen1', -20  ],
+    [ 'BLASTZ_GROUP_TIGHT'   ,'pink3', 'high cons','darkolivegreen2', -19   ],
+    [ 'PHUSION_BLASTN'       ,'pink',  'cons', 'darkseagreen1', -20  ],
+    [ 'PHUSION_BLASTN_TIGHT' ,'pink3', 'high cons','darkolivegreen2', -19   ],
+    [ 'BLASTZ_RECIP_NET'     ,'pink',  'cons', 'darkseagreen1', -20  ],
+    [ 'TRANSLATED_BLAT'      ,'orchid1', 'trans BLAT','chartreuse', -18 ],
+  );
+
+  foreach my $METHOD (@methods) {
+    foreach my $SPECIES (@species) {
+      (my $species = $SPECIES ) =~ s/_\d+//;
+      (my $short = $species ) =~ s/^(\w)\w+_(\w)\w+$/$1$2/g;
+      $compara++;
+      my $KEY = lc($SPECIES).'_'.lc($METHOD->[0]).'_match';
+      $self->{'general'}->{'MultiBottom'}{$KEY} = {
+        'glyphset' => 'generic_alignment',
+        'species'  => $species,
+        'on'       => 'off',
+        'compact'  => 'yes',
+        'dep'      => 6,
+        'pos'      => $compara+300,
+        'col'      => $METHOD->[1],
+        'join' => 0,
+        'join_col' => $METHOD->[3],
+        'join_z'   => $METHOD->[4],
+        'str'      => 'f',
+        'available'=> "multi ".$METHOD->[0]."|$species",
+        'method'   => $METHOD->[0],
+        'label'    => "$short $METHOD->[2]",
+      };
+      push @{ $self->{'general'}->{'MultiBottom'}{ '_artefacts'} }, $KEY;
+    }
+  }
+}
+
+
 
 1;
