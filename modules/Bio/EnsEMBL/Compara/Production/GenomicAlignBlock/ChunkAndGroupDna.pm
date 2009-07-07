@@ -280,10 +280,21 @@ sub create_chunks
                                  $self->{'dna_collection'}->dbID, 
                                  $self->{'chunkset_counter'}++));
 
+  #Temporary fix to problem in core when masking haplotypes because the
+  #assembly mapper is cached but shouldn't be
+  #if including haplotypes
+  my $asm;
+  if ($self->{'include_non_reference'}) {
+      my $asma = $genome_db->db_adaptor->get_AssemblyMapperAdaptor;
+      my $csa = $genome_db->db_adaptor->get_CoordSystemAdaptor;
+      my $cs1 = $csa->fetch_by_name("Chromosome",$genome_db->assembly);
+      my $cs2 = $csa->fetch_by_name("Contig");
+      $asm = $asma->fetch_by_CoordSystems($cs1,$cs2);
+  }
+
   my $starttime = time();
   foreach my $chr (@{$chromosomes}) {
     #print "fetching dnafrag\n";
-    
     if (defined $self->{'region'}) {
       next unless (scalar @{$chr->get_all_Attributes('toplevel')});
     }
@@ -306,11 +317,14 @@ sub create_chunks
       $dnafrag->length($chr->length);
       $dnafragDBA->store_if_needed($dnafrag);
     }
-
     $self->create_dnafrag_chunks($dnafrag, $chr->start, $chr->end);
+    #Temporary fix to problem in core when masking haplotypes because the
+    #assembly mapper is cached but shouldn't be  
+    if (defined $asm) {
+	$asm->flush;
+    }
+  }
 
-}
- 
   #save the current_chunkset if it isn't empty
   if($self->{'current_chunkset'}->count > 0) {
     $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($self->{'current_chunkset'});
@@ -324,6 +338,7 @@ sub create_chunks
   $collectionDBA->store($self->{'dna_collection'});
 
   print "genome_db ",$genome_db->dbID, " : total time ", (time()-$starttime), " secs\n";
+
 }
 
 
