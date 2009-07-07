@@ -56,7 +56,7 @@ sub store {
 
   if($dfc->masking_analysis_data_id==0 and defined($dfc->masking_options)) {
     my $dataDBA = $self->db->get_AnalysisDataAdaptor;
-    $dfc->masking_analysis_data_id($dataDBA->store($dfc->masking_options));
+    $dfc->masking_analysis_data_id($dataDBA->store_if_needed($dfc->masking_options));
   }
 
   #print("$query\n");
