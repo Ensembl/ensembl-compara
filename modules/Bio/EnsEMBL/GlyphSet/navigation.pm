@@ -23,9 +23,7 @@ sub _init {
   }
 
   my $base_href = $self->{'config'}->{'_parameters'}{'base_url'};
-  my $im_width  = $self->{'config'}->{'_parameters'}{'image_width'};
-
-  $im_width -= 128; #really don't like doing this!
+  my $im_width  = $self->image_width;
 
   my $SPRITE_SIZE = 20;
   my $SPRITE_PAD = 3;
