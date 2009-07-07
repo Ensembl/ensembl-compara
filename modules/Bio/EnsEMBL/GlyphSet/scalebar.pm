@@ -30,43 +30,48 @@ sub _init {
   $highlights        = $highlights ? ";h=$highlights" : '';
 
   #do stuff here for a multicontigview display (add lhs line and tags for primary compara species). Only display on forward strand
-  if( $self->{'config'}->{'_parameters'}{'compara'} && ($self->strand > 0) ) {
+  if( $self->{'config'}->get_parameter('compara')) {
+    if ($self->strand > 0) {
+      my $line = new Sanger::Graphics::Glyph::Rect({
+	'z' => 11,
+	'x' => -120,
+	'y' => 0,
+	'colour' => 'black',
+	'width' => 120,
+	'height' => 0,
+	'absolutex'     => 1,
+	'absolutewidth' => 1,
+	'absolutey'     => 1,
+      });
+      $self->join_tag( $line, "bracket", 0,0, 'black' );
 
-    my $line = new Sanger::Graphics::Glyph::Rect({
-      'z' => 11,
-      'x' => -120,
-      'y' => 0,
-      'colour' => 'black',
-      'width' => 120,
-      'height' => 0,
-      'absolutex'     => 1,
-      'absolutewidth' => 1,
-      'absolutey'     => 1,
-    });
-    $self->join_tag( $line, "bracket", 0,0, 'black' );
-
-    if( $self->{'config'}->{'_parameters'}{'compara'} eq 'primary' ) {
-      $self->join_tag( $line, "bracket2", 0  ,0, 'rosybrown1', 'fill', -40 );
-      $self->join_tag( $line, "bracket2", 0.9,0, 'rosybrown1', 'fill', -40 );
-    }
-    $self->push($line);
-
-    my $C = 0; ###doubt this works
-    foreach( @{ $self->{'config'}{'other_slices'}} ) {
-      if( $C!= $self->{'config'}->{'slice_number'} ) {
-        if( $C ) {
-          if( $_->{'location'} ) {
-            $highlights .= sprintf( ";s$C=%s;c$C=%s:%s:%s;w$C=%s", $_->{'species'}, 
-				    $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'ori'}, $_->{'location'}->length );
-          } else {
-            $highlights .= sprintf( ";s$C=%s", $_->{'species'} ); 
-          }
-        } else {
-          $highlights .= sprintf( ";c=%s:%s:1;w=%s", 
-				  $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'location'}->length );
-        }
+      if( $self->{'config'}->get_parameter('compara') eq 'primary') {
+	$self->join_tag( $line, "bracket2", 0  ,0, 'rosybrown1', 'fill', -40 );
+	$self->join_tag( $line, "bracket2", 0.9,0, 'rosybrown1', 'fill', -40 );
       }
-      $C++;
+      $self->push($line);
+
+      my $C = 0; ###doubt this works
+      foreach( @{ $self->{'config'}{'other_slices'}} ) {
+	if( $C!= $self->{'config'}->{'slice_number'} ) {
+	  if( $C ) {
+	    if( $_->{'location'} ) {
+	      $highlights .= sprintf( ";s$C=%s;c$C=%s:%s:%s;w$C=%s", $_->{'species'}, 
+				      $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'ori'}, $_->{'location'}->length );
+	    } else {
+	      $highlights .= sprintf( ";s$C=%s", $_->{'species'} ); 
+	    }
+	  } else {
+	    $highlights .= sprintf( ";c=%s:%s:1;w=%s", 
+				    $_->{'location'}->seq_region_name, $_->{'location'}->centrepoint, $_->{'location'}->length );
+	  }
+	}
+	$C++;
+      }
+    }
+    else {
+      #switch off label on reverse strand
+  #    $self->config->set_parameter('caption','')
     }
   }
   my $REGISTER_LINE  = $Config->get_parameter( 'opt_lines');
