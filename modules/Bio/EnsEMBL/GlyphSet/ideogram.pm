@@ -20,15 +20,14 @@ sub _init {
   my $black  = 'black';
   my $red    = 'red';
 
-  
   my $im_width = $self->image_width();
   my $chr      = $self->{'container'}->seq_region_name();
   my $len      = $self->{'container'}->length();
 
   # fetch the chromosome bands that cover this VC.
   my $bands    = $self->{'container'}->adaptor()->db()->get_KaryotypeBandAdaptor()->fetch_all_by_chr_name($chr);
-  my $chr_length  = $self->{'container'}->length();
-  
+  my $chr_length  = $self->{'container'}->seq_region_length();
+
   # get rid of div by zero...
   $chr_length ||= 1;
 
@@ -41,7 +40,7 @@ sub _init {
     'bordercolour' => $white,
     'absolutey'    => 1,
   }));
-    
+
   my $done_one_acen = 0;      # flag for tracking place in chromsome
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
@@ -157,9 +156,9 @@ sub _init {
     }));
   }
 
-    ##############################################
-    # Draw the ends of the ideogram
-    ##############################################
+  ##############################################
+  # Draw the ends of the ideogram
+  ##############################################
   foreach my $end (qw(0 1)) {
     my %partials = map { uc($_) => 1 } @{ $self->species_defs->PARTIAL_CHROMOSOMES || [] };
     if( $partials{ uc($chr) } ) {
