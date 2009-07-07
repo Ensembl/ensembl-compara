@@ -116,8 +116,8 @@ sub get_params {
   if (defined $params->{'species_set'}) {
     $self->{'species_set'} = $params->{'species_set'};
   }
-  if (defined $params->{'fasta_dir'}) {
-    $self->{'fasta_dir'} = $params->{'fasta_dir'};
+  if (defined $params->{'cluster_dir'}) {
+    $self->{'cluster_dir'} = $params->{'cluster_dir'};
   }
   if (defined $params->{'outgroups'}) {
     foreach my $outgroup (@{$params->{'outgroups'}}) {
@@ -129,7 +129,7 @@ sub get_params {
   }
 
   print("parameters...\n");
-  printf("  fasta_dir      : %d\n", $self->{'fasta_dir'});
+  printf("  cluster_dir    : %d\n", $self->{'cluster_dir'});
   printf("  species_set    : (%s)\n", join(',', @{$self->{'species_set'}}));
   printf("  outgroups      : (%s)\n", join(',', keys %{$self->{'outgroups'}}));
   printf("  max_gene_count : %d\n", $self->{'max_gene_count'});
@@ -173,12 +173,12 @@ sub store_clusters {
   my $starttime = time();
 
   my $filename;
-  my $fasta_dir = $self->{fasta_dir};
+  my $cluster_dir = $self->{cluster_dir};
   if (defined($self->{retry})) {
-    $filename = $fasta_dir . "/" . "hcluster.out";
+    $filename = $cluster_dir . "/" . "hcluster.out";
   } else {
     $filename = $self->worker_temp_directory . "/" . "hcluster.out";
-    my $copy_filename = $fasta_dir . "/" . "hcluster.out";
+    my $copy_filename = $cluster_dir . "/" . "hcluster.out";
     my $cpcmd = "cp $filename $copy_filename";
     unless(system($cpcmd) == 0) {
       warn "failed to copy $filename to $copy_filename\n";
@@ -293,18 +293,18 @@ sub gather_input {
   my $starttime = time();
   return undef if ($self->input_job->retry_count > 10);
 
-  my $fasta_dir = $self->{fasta_dir};
+  my $cluster_dir = $self->{cluster_dir};
   my $output_dir = $self->worker_temp_directory;
   my $cmd;
   print "gathering input in $output_dir\n" if ($self->debug);
 
-  $cmd ="cat $fasta_dir/*.hcluster.cat > $output_dir/hcluster.cat";
+  $cmd ="cat $cluster_dir/*.hcluster.cat > $output_dir/hcluster.cat";
   unless(system($cmd) == 0) {
     $self->check_job_fail_options;
     throw("error gathering category files for Hcluster, $!\n");
   }
   printf("%1.3f secs to gather category entries\n", (time()-$starttime));
-  $cmd ="cat $fasta_dir/*.hcluster.txt > $output_dir/hcluster.txt";
+  $cmd ="cat $cluster_dir/*.hcluster.txt > $output_dir/hcluster.txt";
   unless(system($cmd) == 0) {
     $self->check_job_fail_options;
     throw("error gathering distance files for Hcluster, $!\n");

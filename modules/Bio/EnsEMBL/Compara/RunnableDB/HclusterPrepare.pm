@@ -99,8 +99,8 @@ sub get_params {
   if (defined $params->{'species_set'}) {
     $self->{'species_set'} = $params->{'species_set'};
   }
-  if (defined $params->{'fasta_dir'}) {
-    $self->{'fasta_dir'} = $params->{'fasta_dir'};
+  if (defined $params->{'cluster_dir'}) {
+    $self->{'cluster_dir'} = $params->{'cluster_dir'};
   }
   if (defined $params->{'outgroups'}) {
     foreach my $outgroup (@{$params->{'outgroups'}}) {
@@ -109,7 +109,7 @@ sub get_params {
   }
 
   print("parameters...\n");
-  printf("  fasta_dir    : %d\n", $self->{'fasta_dir'});
+  printf("  cluster_dir    : %d\n", $self->{'cluster_dir'});
   printf("  species_set  : (%s)\n", join(',', @{$self->{'species_set'}}));
   printf("  outgroups    : (%s)\n", join(',', keys %{$self->{'outgroups'}}));
 
@@ -199,7 +199,7 @@ sub fetch_distances {
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
-  my $filename = $self->{fasta_dir} . "/" . "$tbl_name.hcluster.txt";
+  my $filename = $self->{cluster_dir} . "/" . "$tbl_name.hcluster.txt";
   open FILE, ">$filename" or die $!;
   while ( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($query_id, $hit_id, $score) = @$ref;
@@ -233,7 +233,7 @@ sub fetch_categories {
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
 
-  my $filename = $self->{fasta_dir} . "/" . "$tbl_name.hcluster.cat";
+  my $filename = $self->{cluster_dir} . "/" . "$tbl_name.hcluster.cat";
 
   my $outgroup = 1;
   $outgroup = 2 if (defined($self->{outgroups}{$gdb_id}));

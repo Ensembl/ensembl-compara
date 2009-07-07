@@ -50,8 +50,8 @@ unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and d
   usage();
 }
 
-if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
-  die("\nERROR!!\n  ". $analysis_template{'fasta_dir'} . " fasta_dir doesn't exist, can't configure\n");
+if(%analysis_template and (not(-d $analysis_template{'fasta_dir'})) and (not(-d $analysis_template{'cluster_dir'})) ) {
+  die("\nERROR!!\n  ". $analysis_template{'fasta_dir'} . ' fasta_dir or ' . $analysis_template{'cluster_dir'} . " cluster_dir doesn't exist, can't configure\n");
 }
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -361,7 +361,7 @@ sub build_GeneTreeSystem
   $parameters = $genetree_params{'cluster_params'};
   $parameters =~ s/\A{//;
   $parameters =~ s/}\Z//;
-  $parameters = '{' . $parameters . ",fasta_dir=>'" . $analysis_template{fasta_dir} . "'}";
+  $parameters = '{' . $parameters . ",cluster_dir=>'" . $analysis_template{cluster_dir} . "'}";
 
   my $CreateHclusterPrepareJobs = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -389,7 +389,7 @@ sub build_GeneTreeSystem
   $parameters = $genetree_params{'cluster_params'};
   $parameters =~ s/\A{//;
   $parameters =~ s/}\Z//;
-  $parameters = '{' . $parameters . ",fasta_dir=>'" . $analysis_template{fasta_dir} . "'}";
+  $parameters = '{' . $parameters . ",cluster_dir=>'" . $analysis_template{cluster_dir} . "'}";
   my $hclusterprepare = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'HclusterPrepare',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HclusterPrepare',
@@ -408,7 +408,7 @@ sub build_GeneTreeSystem
   $parameters = $genetree_params{'cluster_params'};
   $parameters =~ s/\A{//;
   $parameters =~ s/}\Z//;
-  $parameters = '{' . $parameters . ",fasta_dir=>'" . $analysis_template{fasta_dir} . "'}";
+  $parameters = '{' . $parameters . ",cluster_dir=>'" . $analysis_template{cluster_dir} . "'}";
   my $hclusterrun = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'HclusterRun',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HclusterRun',
