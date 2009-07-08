@@ -56,7 +56,6 @@ sub init {
     'pairwise_blastz' => 'BLASTZ alignments',
     'pairwise_tblat'  => 'Translated blat alignments',
     'pairwise_other'  => 'Pairwise alignment',
-    'information'     => 'Information',
     'decorations'     => 'Additional decorations',
     'options'         => 'Options'
   );
@@ -65,10 +64,6 @@ sub init {
   $self->load_tracks;
   $self->load_configured_das;
   $self->add_track( 'sequence',    'contig',    'Contigs',             'stranded_contig', { 'display' => 'normal', 'strand' => 'f' } );
-  $self->add_tracks( 'information',
-    [ 'missing',   '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Disabled track summary', 'description' => 'Show counts of number of tracks turned off by the user' } ],
-    [ 'info',      '', 'text', { 'display' => 'normal', 'strand' => 'r', 'name' => 'Information',            'description' => 'Details of the region shown in the image'               } ],
-  );
 
   $self->add_tracks( 'decorations',
    [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler',     'description' => 'Shows the length of the region being displayed'    } ],
