@@ -43,6 +43,12 @@ sub counts {
   return $counts;
 }
 
+sub availability {
+  my $self = shift;
+  my $hash = $self->_availability;
+  $hash->{'has_id_mapping'} = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'} ? 1 : 0;
+  return $hash;
+}
 
 #---------------------------------- userdata DB functionality ----------------------------------
 
