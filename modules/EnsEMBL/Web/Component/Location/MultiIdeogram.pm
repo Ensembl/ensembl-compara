@@ -26,7 +26,6 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $html;
   my $ploc = $object->[2][0];
   my $pslice = $ploc->slice;
   my $counter = 1;
@@ -54,7 +53,7 @@ sub content {
   $pwuc->set_parameters({
     'container_width' => $object->seq_region_length,
     'image_width'     => $self->image_width,
-    'slice_number'    => "1|$max_count",
+    'slice_number'    => "1|1",
   });
 
 #  warn "1. ",$self->image_width;
@@ -79,18 +78,18 @@ sub content {
       $wuc->set_parameters({
 	'container_width' => $slice->seq_region_length,
 	'image_width'     => $self->image_width,
-	'slice_number'    => "$counter|$max_count",
+	'slice_number'    => "$counter|1",
       });
       $wuc->get_node('ideogram')->set('caption', $loc->{'short_name'} );
       push @$images, ( $slice, $wuc);
-      $counter++;
     }
   }
   my $image = $self->new_image( $images );
+  return if $self->_export_image( $image );
   $image->imagemap = 'yes';
   $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
-  return if $self->_export_image( $image );
-  $html .= $image->render;
+  $image->{'panel_number'} = 'ideogram';
+  my $html = $image->render;
   return $html;
 }
 

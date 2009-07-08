@@ -37,7 +37,7 @@ sub content {
   $pwuc->set_parameters({
     'container_width' => $object->length,
     'image_width'     => $self->image_width,
-    'slice_number'    => 0,
+    'slice_number'    => "1|3",
     'caption'         => $object->seq_region_type.' '.$object->seq_region_name,
     'multi'           => 1,
     'compara'         => 'primary',
@@ -72,7 +72,7 @@ sub content {
       $wuc->set_parameters({
 	'container_width' => $slice->length,
 	'image_width'     => $self->image_width,
-	'slice_number'    => $counter,
+	'slice_number'    => "$counter|3",
 	'caption'         => $object->seq_region_type.' '.$object->seq_region_name,
 	'multi'           => 1,
 	'compara'         => 'secondary',
@@ -86,10 +86,12 @@ sub content {
     }
   }
   my $image = $self->new_image( $images );
+  return if $self->_export_image( $image );
   $image->imagemap = 'yes';
   $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
-  return if $self->_export_image( $image );
-  $html .= $image->render;  $html .= $self->_info(
+  $image->{'panel_number'} = 'bottom';
+  my $html = $image->render;
+  $html .= $self->_info(
     'Configuring the display',
     sprintf '
   <p>

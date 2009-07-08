@@ -26,7 +26,6 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $html;
   my $ploc = $object->[2][0];
   my $pslice = $ploc->slice; #slice for region in detail
 
@@ -42,7 +41,7 @@ sub content {
   $pwuc->set_parameters({
     'container_width' => $new_pslice->length,
     'image_width'     => $self->image_width,
-    'slice_number'    => "1|$max_count",
+    'slice_number'    => "1|2",
    });
   my $images;
   #add panel caption (displayed by scalebar glyphset)
@@ -74,19 +73,19 @@ sub content {
       $wuc->set_parameters({
 	'container_width' => $new_slice->length,
 	'image_width'     => $self->image_width,
-	'slice_number'    => "$counter|$max_count",
+	'slice_number'    => "$counter|2",
       });
       $wuc->get_node('ruler')->set('caption', $loc->{'short_name'});
       push @$images, ($new_slice, $wuc);
-      $counter++;
     }
   }
 
   my $image = $self->new_image( $images );
+  return if $self->_export_image( $image );
   $image->imagemap = 'yes';
   $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
-  return if $self->_export_image( $image );
-  $html .= $image->render;
+  $image->{'panel_number'} = 'top';
+  my $html = $image->render;
   return $html;
 }
 
