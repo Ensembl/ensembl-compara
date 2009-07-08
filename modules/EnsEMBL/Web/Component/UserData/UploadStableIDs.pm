@@ -36,53 +36,6 @@ sub content {
   $form->add_element( type => 'NoEdit', name => 'show_species', label => 'Species', 'value' => $self->object->species_defs->species_label($current_species));
   $form->add_element( type => 'Hidden', name => 'species', 'value' => $current_species);
   $form->add_element( type => 'Hidden', name => 'id_mapper', 'value' => 1);
-  ## Check for uploaded data for this species
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  if ($user) {
-    my (@data, @temp);
-    foreach my $upload ($user->uploads) {
-      next unless $upload->species eq $object->species;
-      push @data, $upload;
-    }
-    foreach my $upload ($object->get_session->get_data('type' => 'upload')) {
-      next unless $upload->{'species'} eq $object->species;
-      push @data, $upload;
-    }
-    foreach my $url ($user->urls) {
-      next unless $url->species eq $object->species;
-      push @data, $url;
-    }
-    foreach my $url ($object->get_session->get_data('type' => 'url')) {
-      next unless $url->{'species'} eq $object->species;
-    }
-
-    if (@data) {
-      $form->add_element('type' => 'SubHeader',
-        'value' => 'Select existing upload(s)',
-      );
-      foreach my $file (@data) {
-        my ($name, $id, $species);
-        if (ref ($file) =~ /Record/) {
-          my $type = $file->type;
-          $name = $file->name;
-          $id   = 'user-'.$type.'-'.$file->id;
-        }
-        else {
-          my $type = $file->{'type'};
-          $name = $file->{'name'};
-          $id   = 'temp-'.$type.'-'.$file->{'code'};
-        }
-        $form->add_element(
-          'type'    => 'CheckBox',
-          'name'    => 'convert_file',
-          'label'   => $name,
-          'value'   => $id.':'.$name,
-        );
-      }
-      $subheader = 'Or upload new file';
-    }
-  }
-
   $form->add_element('type' => 'SubHeader', 'value' => $subheader);
 
   $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
