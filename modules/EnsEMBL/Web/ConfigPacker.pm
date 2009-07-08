@@ -379,6 +379,7 @@ sub _summarise_funcgen_db {
        where ac.array_chip_id=p.array_chip_id and p.probe_id=pf.probe_id  
        and pf.seq_region_id=sr.seq_region_id and sr.coord_system_id=cs.coord_system_id 
        and cs.is_current=1 and ac.array_id = ?
+       limit 1 
     '
   );
   foreach my $row (@$t_aref) {
