@@ -54,6 +54,7 @@ our %mapping = (
 			       { 'type' => 'Transcript', 'action' => 'Similarity/Align', 'initial_release' => 1 } ],
   'snpview'               => [ { 'type' => 'Variation',  'action' => 'Summary',       'initial_release' => 1 } ],
   'searchview'            => [ { 'type' => 'Search',     'action' => 'Summary',       'initial_release' => 1 } ],
+  'search'                => [ { 'type' => 'Search',     'action' => 'Summary',       'initial_release' => 1 } ],
   'new_views'             => [ { 'type' => 'Location',   'action' => 'Compara_Alignments', 'initial_release' => 54 } ,
 			       { 'type' => 'Gene',       'action' => 'Evidence',      'initial_release' => 51 }, ],
   #internal views
