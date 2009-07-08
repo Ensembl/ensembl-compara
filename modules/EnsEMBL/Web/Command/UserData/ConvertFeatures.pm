@@ -11,7 +11,7 @@ use EnsEMBL::Web::Component::Export;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
 {
-
+ 
 sub process {
   my $self = shift;
   my $object = $self->object;

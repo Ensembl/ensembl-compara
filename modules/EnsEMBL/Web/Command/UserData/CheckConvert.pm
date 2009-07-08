@@ -14,7 +14,12 @@ use base 'EnsEMBL::Web::Command';
 sub process {
   my $self = shift;
   my $object = $self->object;
-  my $url = '/'.$object->data_species.'/UserData/ConvertFeatures';
+  my $url;
+  if ($object->param('id_mapper')){
+    $url = '/'.$object->data_species.'/UserData/SelectOutput';
+  } else {
+    $url = '/'.$object->data_species.'/UserData/ConvertFeatures';
+  }
   my $param;
 
   my @methods = qw(text file url);
@@ -42,20 +47,20 @@ sub process {
     push @$files_to_convert, $object->param('convert_file');
   }
   $param->{'convert_file'} = $files_to_convert;
-  $param->{'conversion'} = $object->param('conversion');
-
+  unless ($object->param('id_mapper')){
+    $param->{'conversion'} = $object->param('conversion');
+  }
   ## Set these separately, or they cause an error if undef
   $param->{'_referer'} = $object->param('_referer');
   $param->{'x_requested_with'} = $object->param('x_requested_with');
-
   if( $self->object->param('uploadto' ) eq 'iframe' ) {
     CGI::header( -type=>"text/html",-charset=>'utf-8' );
     printf q(<html><head><script type="text/javascript">
   window.parent.__modal_dialog_link_open_2( '%s' ,'File uploaded' );
 </script>
-</head><body><p>UP</p></body></html>), CGI::escapeHTML($self->url($url, $param));
+</head><body><p>UP</p></body></html>), CGI::escapeHTML($self->url($url, $param)); 
   }
-  else {
+  else { 
     $self->ajax_redirect($url, $param);
   }
 
