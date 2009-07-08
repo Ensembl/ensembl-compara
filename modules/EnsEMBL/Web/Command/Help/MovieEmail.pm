@@ -7,7 +7,7 @@ use warnings;
 
 use Class::Std;
 use EnsEMBL::Web::Mailer;
-use EnsEMBL::Web::Filter::Spam;
+#use EnsEMBL::Web::Filter::Spam;
 use EnsEMBL::Web::RegObj;
 
 use base 'EnsEMBL::Web::Command';
@@ -31,8 +31,8 @@ sub process {
   }
   else {
     ## Check the user's input for spam _before_ we start adding all our crap!
-    my $filter = EnsEMBL::Web::Filter::Spam->new();
-    $spam = $filter->check($object->param('message'), 1);
+#    my $filter = EnsEMBL::Web::Filter::Spam->new();
+#    $spam = $filter->check($object->param('message'), 1);
   }
 
   unless ($spam) {

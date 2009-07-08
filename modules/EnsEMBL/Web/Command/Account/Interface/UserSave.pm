@@ -5,7 +5,7 @@ use warnings;
 
 use Class::Std;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Filter::Spam;
+#use EnsEMBL::Web::Filter::Spam;
 use EnsEMBL::Web::Filter::DuplicateUser;
 use EnsEMBL::Web::Tools::RandomString;
 use base 'EnsEMBL::Web::Command';
