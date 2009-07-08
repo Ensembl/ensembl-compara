@@ -38,6 +38,7 @@ use EnsEMBL::Web::Text::FeatureParser::PSL;
 use EnsEMBL::Web::Text::FeatureParser::DAS;
 use EnsEMBL::Web::Text::FeatureParser::WIG;
 use EnsEMBL::Web::Text::FeatureParser::GBrowse;
+use EnsEMBL::Web::Text::FeatureParser::ID;
 use EnsEMBL::Web::Text::Feature::generic;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::CompressionSupport;
@@ -238,9 +239,11 @@ sub analyse_row {
     } elsif ( $tab_del[14] eq '+' || $tab_del[14] eq '-' || $tab_del[14] eq '.') { # DAS format accepted by Ensembl
       return ('format', 'DAS');   
     } else {
-      warn "@@@ GENERIC/PSL FORMAT";
+     # warn "@@@ GENERIC/PSL FORMAT";
       my @ws_delim = split /\s+/, $row;
-      if( $ws_delim[8] =~/^[-+][-+]?$/  ) { ## PSL format
+      if (scalar @ws_delim == 1 ){ ## one element per line assume we have list of stable IDs
+        return ('format', 'ID');
+      } elsif( $ws_delim[8] =~/^[-+][-+]?$/  ) { ## PSL format
         return ('format', 'PSL');   
       } elsif ($ws_delim[0] =~/^>/ ) {  ## Simple format (chr/start/end/type
         return ('format', 'generic');   
@@ -272,7 +275,7 @@ sub analyse_row {
 sub parse {
   my ($self, $data, $format) = @_;
   return unless $data;
-  foreach my $row ( split /\n/, $data ) {
+  foreach my $row ( split /\n/, $data ) { 
     $self->parse_row($row, $format);
   }
 
@@ -304,7 +307,7 @@ sub parse_old {
 =cut
 
 sub parse_file {
-  my( $self, $file, $format ) = @_;
+  my( $self, $file, $format ) = @_; 
   return unless $file;
 
   if( !$format ) {
@@ -372,10 +375,9 @@ sub parse_URL {
 =cut
 
 sub parse_row {
-  my( $self, $row, $format ) = @_;
+  my( $self, $row, $format ) = @_; 
   return if ($row =~ /^\#/);
-  $row =~ s/[\t\r\s]+$//g;
-
+  $row =~ s/[\t\r\s]+$//g; 
 
   if( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
     $self->{'browser_switches'}{$1}=$2;   
@@ -400,14 +402,14 @@ sub parse_row {
       } else {
         $row ='';
       }
-    }
+    } 
  
     $config{'name'} ||= 'default';
-    my $current_key = $config{'name'};# || 'default';
+    my $current_key = $config{'name'};# || 'default';  
     $self->{'tracks'}{ $current_key } ||= { 'features' => [], 'config' => \%config };
     $self->{'_current_key'} = $current_key;
-  } else {
-    return unless $row =~ /\d+/g ;
+  } else { 
+    unless ( $format eq 'ID' ) { return unless $row =~ /\d+/g ; }
     my @tab_del = split /(\t|  +)/, $row;
     my $current_key = $self->{'_current_key'} ;
     if ($format eq 'GTF')  {
@@ -426,6 +428,8 @@ sub parse_row {
       if( $format eq 'PSL' ) {
         $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::PSL->new( \@ws_delim ) ) 
           if $self->filter($ws_delim[13],$ws_delim[15],$ws_delim[16]);
+      } elsif ( $format eq 'ID' ) {
+        $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::ID->new( \@ws_delim ) )
       } elsif( $format eq 'BED' ) {
 #        $current_key = $ws_delim[3] if $current_key eq 'default';
         $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::BED->new( \@ws_delim ) )
@@ -452,7 +456,7 @@ sub parse_row {
 =cut
 
 sub store_feature {
-  my ( $self, $key, $feature ) = @_;
+  my ( $self, $key, $feature ) = @_; 
   push @{$self->{'tracks'}{$key}{'features'}}, $feature;
 }
 
@@ -548,7 +552,7 @@ sub init {
       $info{$analysis[0]} = $analysis[1];
     }
     ## Should we halt the analysis once we have a file format? Will any other useful info appear later in the file?
-    last if $analysis[0] eq 'format';
+    last if $analysis[0] eq 'format'; 
     ## Yes it will all to do with what is in the file! but we can leave this for the moment!
   }
   $info{'count'} = $has_data;
