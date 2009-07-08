@@ -22,9 +22,11 @@ sub createObjects {
     $self->_create_object_from_core;
     my $obj = $self->DataObjects->[0];
     foreach my $param ($self->param) {
+      #multicontigview
       if ($param =~ /^s\d+$/) {
-#	warn "created new core object ", ref($obj);
+	#first, check if we need to generate a url
 	$self->generate_full_url($obj);
+	#then go and create the objects
 	if ($self->core_objects->location) {
 	  $self->createObjectsLocation($obj);
 	}
@@ -387,6 +389,10 @@ sub _check_slice_exists_and_redirect {
 
 sub createObjectsLocation {
   my $self = shift;
+  my %SHORT = qw(chromosome Chr.
+	       supercontig S'ctg
+	       );
+
   my $ids;
   foreach my $par ( $self->param ) {
     if ($par =~ /^([sgr])(\d+)$/ ) {
@@ -402,18 +408,33 @@ sub createObjectsLocation {
     my ($chr,$start,$end,$strand) = $r =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-\d+))?/;
     eval { $slice = $slice_adaptor->fetch_by_region( undef, $chr, $start, $end, $strand ); };
     warn $@ if $@;
+
+    #generate short caption name
+    my $type = $slice->coord_system_name();
+    my $chr_name = $slice->seq_region_name();
+    my $chr_raw = $chr_name;
+    unless( $chr_name =~ /^$type/i ) {
+      $type = $SHORT{lc($type)} || ucfirst( $type );
+      $chr_name = "$type $chr_name";
+    }
+    if( length($chr_name) > 9 ) {
+      $chr_name = $chr_raw;
+    }
+    (my $abbrev = $species ) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
+    my $chr_short = "$abbrev $chr_name";
     my $data = {
       'type' => 'Location',
-      'real_species'     => $species,
-      'name'             => $slice->seq_region_name,
-      'seq_region_name'  => $slice->seq_region_name,
-      'seq_region_start' => $slice->start,
-      'seq_region_end'    => $slice->end,
-      'seq_region_strand' => $strand,
-      'seq_region_type'   => $slice->coord_system->name,
+      'real_species'       => $species,
+      'name'               => $slice->seq_region_name,
+      'seq_region_name'    => $slice->seq_region_name,
+      'seq_region_start'   => $slice->start,
+      'seq_region_end'     => $slice->end,
+      'seq_region_strand'  => $strand,
+      'seq_region_type'    => $slice->coord_system->name,
       'raw_feature_strand' => 1,
-      'seq_region_length' => $slice->seq_region_length,
-      'slice'            => $slice
+      'seq_region_length'  => $slice->seq_region_length,
+      'short_name'         => $chr_short,
+      'slice'              => $slice,
     };
     push @$sec_slices, $data;
   }
