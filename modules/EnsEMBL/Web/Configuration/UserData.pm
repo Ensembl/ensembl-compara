@@ -245,7 +245,7 @@ sub populate_tree {
   $convert_menu->append(
     $self->create_node( 'UploadStableIDs', 'ID History Converter', 
       [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)],
-      {'availability' => 1},
+      {'availability' => 'has_id_mapping'},
     )
   );
   $convert_menu->append(
