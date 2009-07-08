@@ -19,7 +19,7 @@ use EnsEMBL::Web::Data::Record::Upload;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::DASConfig;
-
+use Bio::EnsEMBL::StableIdHistoryTree;
 
 my $DEFAULT_CS = 'DnaAlignFeature';
 
@@ -520,7 +520,7 @@ sub _save_genomic_features {
                   -slice        => $slice,
                   -start        => $s,
                   -end          => $e,
-                  -strand       => $f->strand,
+                  -
                   -hseqname   => ($f->id."" eq "") ? '-' : $f->id,
                   -hstart       => $f->hstart,
                   -hend         => $f->hend,
@@ -552,6 +552,43 @@ sub _save_genomic_features {
   return $report;
 }
 
+#---------------------------------- ID history functionality ---------------------------------
+
+sub get_stable_id_history_data {
+  my ($self, $file) = @_;
+  my $data = $self->fetch_userdata_by_id($file);
+  my (@fs, $class, $output, $super_tree, %stable_ids, %unmapped);
+
+  if (my $parser = $data->{'parser'}) { 
+    foreach my $track ($parser->{'tracks'}) { 
+      foreach my $type (keys %{$track}) {  
+        my $features = $parser->fetch_features_by_tracktype($type);
+        $super_tree = Bio::EnsEMBL::StableIdHistoryTree->new;
+        my $archive_id_adaptor = $self->get_adaptor('get_ArchiveStableIdAdaptor', 'core', $self->species);
+
+        %stable_ids = ();
+        foreach (@$features) {
+          my $id_to_convert = $_->id;
+          my $archive_id_obj = $archive_id_adaptor->fetch_by_stable_id($id_to_convert);
+          unless ($archive_id_obj) { 
+            $unmapped{$id_to_convert} = 1;
+            next;
+          }
+          my $history = $archive_id_obj->get_history_tree;
+          $super_tree->add_StableIdEvents(@{ $history->get_all_StableIdEvents });
+          $stable_ids{$archive_id_obj->stable_id} = [$archive_id_obj->type, $history];
+        }
+
+        # consolidate tree and calculate grid coordinates
+        $super_tree->consolidate_tree;
+        $super_tree->add_ArchiveStableIds_for_events;
+        $super_tree->calculate_coords;
+      }
+    }
+  }
+  my @data = ($super_tree, \%stable_ids, \%unmapped);
+  return \@data;
+}
 
 #---------------------------------- DAS functionality ----------------------------------
 
