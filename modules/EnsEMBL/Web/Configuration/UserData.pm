@@ -198,6 +198,11 @@ sub populate_tree {
      'no_menu_entry' => 1 }
   );
 
+  $self->create_node( 'IDConversion', "Stable ID Conversion", 
+     [ qw(idmapper  EnsEMBL::Web::Component::UserData::IDmapper) ],
+     { 'no_menu_entry' => 1 }
+  );
+
   ## Data conversion
   my $convert_menu = $self->create_submenu( 'Conversion', 'Data Converters' );
   $convert_menu->append(
@@ -224,14 +229,31 @@ sub populate_tree {
       {'availability' => 1, 'no_menu_entry' => 1},
     )
   );
+  $convert_menu->append(
+    $self->create_node( 'MapIDs', '', [],
+      {'command' => 'EnsEMBL::Web::Command::UserData::MapIDs',
+      'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
 
+  $convert_menu->append(
+     $self->create_node( 'SelectOutput', '', 
+      [qw(command  EnsEMBL::Web::Component::UserData::SelectOutput)],
+      {'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
   $convert_menu->append(
     $self->create_node( 'UploadStableIDs', 'ID History Converter', 
       [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)],
       {'availability' => 1},
     )
   );
-
+  $convert_menu->append(
+    $self->create_node( 'PreviewConvertIDs', 'Files Converted',
+      [qw(conversion_done EnsEMBL::Web::Component::UserData::PreviewConvertIDs)],
+      {'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'Message', '',
     [qw(message EnsEMBL::Web::Component::CommandMessage
