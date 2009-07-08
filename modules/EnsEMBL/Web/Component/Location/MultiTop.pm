@@ -76,23 +76,7 @@ sub content {
 	'image_width'     => $self->image_width,
 	'slice_number'    => "$counter|$max_count",
       });
-
-      #add panel caption (displayed by scalebar glyphset)
-      my $type = $slice->coord_system_name();
-      my $chr = $slice->seq_region_name();
-      my $chr_raw = $chr;
-      unless( $chr =~ /^$type/i ) {
-	$type = $SHORT{lc($type)} || ucfirst( $type );
-	$chr = "$type $chr";
-      }
-      if( length($chr) > 9 ) {
-	$chr = $chr_raw;
-      }
-      (my $abbrev = $loc->{'real_species'} ) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
-      $chr = "$abbrev $chr"; 
-      $self->{'caption'} = $chr;
-      $wuc->get_node('ruler')->set('caption', $chr );
-
+      $wuc->get_node('ruler')->set('caption', $loc->{'short_name'});
       push @$images, ($new_slice, $wuc);
       $counter++;
     }

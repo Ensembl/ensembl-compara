@@ -73,32 +73,15 @@ sub content {
       my $slice = $loc->{'slice'}; 
       my $species = $loc->{'real_species'};
 
-      #add panel caption (displayed by ideogram glyphset) - go into factory ?
-      my $type = $slice->coord_system_name();
-      my $chr = $slice->seq_region_name();
-      my $chr_raw = $chr;
-      unless( $chr =~ /^$type/i ) {
-	$type = $SHORT{lc($type)} || ucfirst( $type );
-	$chr = "$type $chr";
-      }
-      if( length($chr) > 9 ) {
-	$chr = $chr_raw;
-      }
-      (my $abbrev = $species ) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
-      $chr = "$abbrev $chr";
-      $self->{'caption'} = $chr;
-
       my $wuc = $object->image_config_hash( "chromosome_$counter", 'MultiIdeogram', $species );
       $wuc->container_width( $slice->seq_region_length );
-#      warn "chr length is ", $slice->seq_region_length;
-#      warn "slice_length = ",$slice->length;
 
       $wuc->set_parameters({
-#	'container_width' => $slice->seq_region_length,
+	'container_width' => $slice->seq_region_length,
 	'image_width'     => $self->image_width,
-#	'slice_number'    => "$counter|$max_count",
+	'slice_number'    => "$counter|$max_count",
       });
-      $wuc->get_node('ideogram')->set('caption', $chr );
+      $wuc->get_node('ideogram')->set('caption', $loc->{'short_name'} );
       push @$images, ( $slice, $wuc);
       $counter++;
     }

@@ -6,7 +6,6 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 
 #use Data::Dumper;
-
 my %SHORT = qw(
   chromosome Chr.
   supercontig S'ctg
@@ -57,7 +56,6 @@ sub content {
   }
   (my $abbrev = $ploc->species ) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
   $chr = "$abbrev $chr"; 
-  $self->{'caption'} = $chr;
   $pwuc->get_node('scalebar')->set('caption', $chr );
 
   $pwuc->mult;
@@ -79,22 +77,7 @@ sub content {
 	'multi'           => 1,
 	'compara'         => 'secondary',
       });
-
-      #add panel caption (displayed by scalebar glyphset)
-      my $type = $slice->coord_system_name();
-      my $chr = $slice->seq_region_name();
-      my $chr_raw = $chr;
-      unless( $chr =~ /^$type/i ) {
-	$type = $SHORT{lc($type)} || ucfirst( $type );
-	$chr = "$type $chr";
-      }
-      if( length($chr) > 9 ) {
-	$chr = $chr_raw;
-      }
-      (my $abbrev = $loc->{'real_species'} ) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
-      $chr = "$abbrev $chr"; 
-      $self->{'caption'} = $chr;
-      $wuc->get_node('scalebar')->set('caption', $chr );
+      $wuc->get_node('scalebar')->set('caption', $loc->{'short_name'} );
 
       $wuc->mult;
 #      $loc->slice->{_config_file_name_} = $loc->{'real_species'};
@@ -106,7 +89,13 @@ sub content {
   $image->imagemap = 'yes';
   $image->set_button( 'drag', 'title' => 'Click or drag to centre display' );
   return if $self->_export_image( $image );
-  $html .= $image->render;
+  $html .= $image->render;  $html .= $self->_info(
+    'Configuring the display',
+    sprintf '
+  <p>
+    %s. To change the tracks you are displaying, use the "<strong>Configure this page</strong>" link on the left.
+  </p>'
+  );
   return $html;
 }
 
