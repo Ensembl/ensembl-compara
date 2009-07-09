@@ -40,7 +40,7 @@ sub availability {
     $hash->{'alt_allele'} = $self->table_info( $self->get_db, 'alt_allele' )->{'rows'};
     my $funcgen_db = $self->database('funcgen');
     my $funcgen_res = 0;
-    if ($funcgen_db){  warn $self->table_info('funcgen', 'feature_set' )->{'rows'};
+    if ($funcgen_db){  
      $funcgen_res = $self->table_info('funcgen', 'feature_set' )->{'rows'} ? 1 : 0; 
     }
     $hash->{'regulation'} = $funcgen_res ? 1 : 0; 
