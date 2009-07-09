@@ -27,6 +27,7 @@ $self->{'drawtree'} = 0;
 $self->{'extrataxon_sequenced'} = undef;
 $self->{'extrataxon_incomplete'} = undef;
 $self->{'multifurcation_deletes_node'} = undef;
+$self->{'multifurcation_deletes_all_subnodes'} = undef;
 my $state = 4;
 
 my $conf_file;
@@ -48,6 +49,7 @@ GetOptions('help'        => \$help,
            'extrataxon_sequenced=s'  => \$self->{'extrataxon_sequenced'},
            'extrataxon_incomplete=s' => \$self->{'extrataxon_incomplete'},
            'multifurcation_deletes_node=s' => \$self->{'multifurcation_deletes_node'},
+           'multifurcation_deletes_all_subnodes=s' => \$self->{'multifurcation_deletes_all_subnodes'},
            'scale=f'     => \$self->{'scale'},
            'mini'        => \$self->{'minimize_tree'},
            'count'       => \$self->{'stats'},
@@ -220,6 +222,11 @@ sub create_species_tree {
     my $temp = $self->{'multifurcation_deletes_node'};
     @multifurcation_deletes_node = split ('_',$temp);
   }
+  my @multifurcation_deletes_all_subnodes;
+  if($self->{'multifurcation_deletes_all_subnodes'}) { 
+    my $temp = $self->{'multifurcation_deletes_all_subnodes'};
+    @multifurcation_deletes_all_subnodes = split ('_',$temp);
+  }
 
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
   my $root = $self->{'root'};
@@ -287,20 +294,42 @@ sub create_species_tree {
     }
   }
 
+  # Deleting subnodes down to a given node
+  @subnodes = $root->get_all_subnodes;
+  print STDERR "Multifurcating subnodes...\n" if (0 != scalar(@multifurcation_deletes_all_subnodes));
+  foreach my $extra_taxon (@multifurcation_deletes_all_subnodes) {
+    my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
+    my $taxon_name = $taxon->name;
+    my $taxon_id = $taxon->taxon_id;
+    print STDERR "* $taxon_name [$taxon_id]\n";
+    $DB::single=1;1;
+    my $node_in_root = $root->find_node_by_node_id($taxon_id);
+    foreach my $node ($node_in_root->get_all_subnodes) {
+      next if ($node->is_leaf);
+      my $node_children = $node->children;
+      foreach my $child (@$node_children) {
+        $node->parent->add_child($child);
+      }
+      $node->disavow_parent;
+    }
+  }
+
+
 #   print STDERR "#\n After multifurcation_deletes_node\n\n";
   $root->print_tree($self->{'scale'});
 
   my $outname = $self->{'comparaDBA'}->dbc->dbname;
   my $num_leaves = scalar(@{$root->get_all_leaves});
   $outname = $num_leaves . "." . $outname;
+  my $newick_common;
+  eval {$newick_common = $root->newick_format("full_common");};
+  unless ($@) {
+    print("\n\n$newick_common\n\n");
 
-  my $newick_common = $root->newick_format("full_common");
-  print("\n\n$newick_common\n\n");
-
-  open T,">newick_common.$outname.nh" or die "$!";
-  print T $newick_common;
-  close T;
-
+    open T,">newick_common.$outname.nh" or die "$!";
+    print T $newick_common;
+    close T;
+  }
   my $newick = $root->newick_format;
   print("\n\n$newick\n\n");
 
