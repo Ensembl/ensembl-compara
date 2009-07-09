@@ -60,7 +60,7 @@ sub populate_tree {
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
       features EnsEMBL::Web::Component::Gene::RegulationTable
     )],
-    { 'availability' => 'gene database:funcgen' }
+    { 'availability' => 'regulation' }
   );
 
 # $self->create_node( 'XRefs', "External references",
