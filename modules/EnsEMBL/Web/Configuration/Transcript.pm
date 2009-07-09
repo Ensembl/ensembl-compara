@@ -468,7 +468,7 @@ sub populate_tree {
   ));
   $record_menu->append($self->create_node( 'Oligos', "Oligo probes  ([[counts::oligos]])",
     [qw(arrays      EnsEMBL::Web::Component::Transcript::OligoArrays)],
-    { 'availability' => 'transcript core',  'concise' => 'Oligo probes'}
+    { 'availability' => 'transcript database:funcgen',  'concise' => 'Oligo probes'}
   ));
   $record_menu->append($self->create_node( 'GO', "Gene ontology  ([[counts::go]])",
     [qw(go          EnsEMBL::Web::Component::Transcript::Go)],
