@@ -350,7 +350,7 @@ sub _best_guess {
   my( $self, $slice, $species, $width, $chrom, $ID ) = @_;
   ( my $S2 = $species ) =~ s/_/ /g;
   ## foreach my $method ( @{$self->species_defs->COMPARATIVE_METHODS} ) {
-  foreach my $method ( qw(BLASTZ_NET TRANSLATED_BLAT BLASTZ_RAW BLASTZ_CHAIN) ) {
+  foreach my $method ( qw(BLASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN) ) {
     my( $seq_region, $cp, $strand );
     eval {
       ( $seq_region, $cp, $strand ) = $self->_dna_align_feature_adaptor->interpolate_best_location( $slice, $S2, $method, $chrom );
@@ -363,7 +363,6 @@ sub _best_guess {
       if ($ID) {
 	$self->param('r'.$ID,"$seq_region:$start-$end:$strand");
       }
-#      warn "ID is $ID";
       $self->_check_slice_exists_and_redirect( $species, $seq_region, $start, $end, $strand, 1 );
     }
   }
@@ -398,7 +397,6 @@ sub _check_slice_exists_and_redirect {
     foreach my $system ( @{$self->__coord_systems} ) {
       my $slice;
       eval { $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand ); };
-
       warn $@ if $@;
       next if $@;
       if( $slice ) {
