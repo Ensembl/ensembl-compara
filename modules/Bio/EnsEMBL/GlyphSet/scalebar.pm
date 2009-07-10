@@ -70,8 +70,8 @@ sub _init {
       }
     }
     else {
-      #switch off label on reverse strand
-  #    $self->config->set_parameter('caption','')
+      #switch off label on reverse strand (doesn't seem to work, but display is fine without it
+#      $self->set_my_config('caption',undef);
     }
   }
   my $REGISTER_LINE  = $Config->get_parameter( 'opt_lines');
