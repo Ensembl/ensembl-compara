@@ -240,38 +240,82 @@ sub generate_full_url {
 #     warn "$_ = ",$self->param($_),"\n";
 #   }
 
-  #study input params to see if there are any extra species, or species to be removed
+  #study input params...
   my ($ids,$sp_dets);
-  my $max_s = 0;
   foreach my $par ( $self->param ) {
     if ($par =~ /^([sgr])(\d+)$/ ) {
       $ids->{$2}{$1} = 1;
     }
     if ($par =~ /^(s)(\d+)$/ ) {
       push @{$sp_dets->{$self->param($par)}}, $2;
-      $max_s = $2 > $max_s ? $2 : $max_s;
     }
   }
 
-  #are there any to be removed ?
+  #Are there any species to be removed ?
   foreach my $sp (keys %$sp_dets) {
     if (scalar @{$sp_dets->{$sp}} > 1 ) {
       $self->remove_species_and_generate_url($sp);
     }
   }
 
-  #could identify missing numbers by specifically pushing into an array rather than usig $max_s
 
-
-  #are there any species that don't have an r param ?
+  #Are there any new species (ie don't have an r param) ?
   my $complete = 1;
   foreach my $no (keys %$ids) {
     $complete = 0 unless exists($ids->{$no}{'r'});
   }
-
   $self->find_missing_locations($obj,$ids) if (! $complete);
 
+  #otherwise return and get on with generating the page
   return;
+}
+
+
+sub remove_species_and_generate_url {
+  my $self = shift;
+  my $sp = shift; #species to go
+  my $new_pars;
+
+  #only keep non-unwanted species
+  my @numbers_to_stay;
+  foreach my $par ( $self->param ) {
+    if ($par =~ /^(s)(\d+)$/ ) {
+      if ($self->param($par) ne $sp) {
+	push @numbers_to_stay, $2;
+	$new_pars->{$par} = $self->param($par);
+      }
+    }
+    else {
+      $new_pars->{$par} = $self->param($par);
+    }
+  }
+  #remove other params associated with the species to go
+  foreach my $k (keys %$new_pars) {
+    if ($k =~ /^([gr])(\d+)$/) {
+      my $num = $2;
+      if (! grep {$_ eq $num}  @numbers_to_stay) {
+	delete $new_pars->{$k};
+      }
+    }
+  }
+
+  #accounting for missing species, bump the values up to condensify the url
+  my $q;
+  my $i = 1;
+  foreach my $k ( sort keys %$new_pars) {
+    if ( $k =~ /^s(\d+)$/ ) {
+      if ( $new_pars->{$k}) {
+	$q->{"s$i"} = $new_pars->{"s$1"};
+	$q->{"r$i"} = $new_pars->{"r$1"};
+	$q->{"g$i"} = $new_pars->{"g$1"} if $new_pars->{"g$1"};
+	$i++;
+      }
+    }
+    elsif ($k !~ /^[sgr]\d+$/ ) {
+      $q->{$k} = $new_pars->{$k};
+    }
+  }
+  return $self->problem( 'redirect', $self->_url($q));
 }
 
 sub find_missing_locations {
@@ -300,13 +344,6 @@ sub find_missing_locations {
       $self->_best_guess( $slice, $species, $width, $chrom, $ID ); #...and do a redirct
     }
   }
-}
-
-sub remove_species_and_generate_url {
-  my $self = shift;
-  my $sp = shift;
-  warn "need to remove $sp and also rejig url";
-  return;
 }
 
 sub _best_guess {
