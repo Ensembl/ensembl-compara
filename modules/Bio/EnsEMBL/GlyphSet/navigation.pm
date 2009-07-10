@@ -47,9 +47,9 @@ sub _init {
 
   if(! ($self->{'config'}->{'align_slice'})) {
     # in case of AlignSlice - don't display navigation buttons
-    push @{$SPRITES->{'nav'}}, 
+    push @{$SPRITES->{'nav'}},
       ['flip_strand'    => 'flip'],
-	['set_as_primary' => 'primary'] if $self->{'config'}->{'_parameters'}{'slice_number'};
+      ['set_as_primary' => 'primary'] if ($self->{'config'}->get_parameter('compara') eq 'secondary');
 
     foreach my $key ( keys %$SPRITES ) {
       my( $pos, $step,  @sprite_array ) =  @{$SPRITES->{$key}};
