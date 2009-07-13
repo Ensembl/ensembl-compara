@@ -200,11 +200,9 @@ sub get_params {
       print("  $key : ", $params->{$key}, "\n");
     }
   }
-  
+
   if(defined($params->{'protein_tree_id'})) {
-    $self->{'protein_tree'} =  
-         $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
-         fetch_node_by_node_id($params->{'protein_tree_id'});
+    $self->{'protein_tree'} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor->fetch_node_by_node_id($params->{'protein_tree_id'});
   }
   
   foreach my $key (qw[max_gene_count use_genomedb_id clusterset_id sreformat_exe]) {
@@ -389,6 +387,9 @@ sub store_clusters {
   my $clusters = $clusterset->children;
   foreach my $cluster (@{$clusters}) {
     my $node_id = $treeDBA->store($cluster);
+    # Although the leaves wont have the right root_id pointing to the $cluster->node_id,
+    # this will be solved when we store back the results after the new MSA job.
+
     #calc residue count total
     my $leafcount = scalar(@{$cluster->get_all_leaves});
     $cluster->store_tag('gene_count', $leafcount);
@@ -396,10 +397,12 @@ sub store_clusters {
     print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
 
     # Dataflow clusters
+    # This will create a new MSA alignment job for each of the newly generated clusters
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
-       $node_id, $clusterset->node_id);
-    $self->dataflow_output_id($output_id, 2);
-    print STDERR "Created QuickTreeBreak job for $node_id\n";
+                            $node_id, $clusterset->node_id);
+    $DB::single=1;1;
+    $self->dataflow_output_id($output_id, 2); # FIXME? should it be 1 or 2?
+    print STDERR "Created new cluster $node_id\n";
   }
 }
 
@@ -417,6 +420,8 @@ sub delete_original_cluster {
   $sth1->execute;
   $sth1->finish;
 
+  $self->{original_cluster}->adaptor->store_supertree_node_and_under($self->{original_cluster});
+  printf("%1.3f secs to copy old cluster $original_cluster into supertree tables\n", time()-$delete_time);
   $self->{original_cluster}->adaptor->delete_node_and_under($self->{original_cluster});
   printf("%1.3f secs to delete old cluster $original_cluster\n", time()-$delete_time);
 
