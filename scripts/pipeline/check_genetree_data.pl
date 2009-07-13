@@ -178,6 +178,26 @@ print "# Check data consistency between pt* tables on node_id\n";
   
   $sth->finish;
 
+# Check that the gene_count tags and the right-left index counts are equivalent
+  $sql = "select p1.*, ROUND((((p1.right_index-p1.left_index+1)/2)+1)/2) as p1_size, ptt1.value as gene_count from protein_tree_node p1, protein_tree_tag ptt1 where p1.parent_id=1 and p1.node_id=ptt1.node_id and ptt1.tag='gene_count' and ROUND((((p1.right_index-p1.left_index+1)/2)+1)/2)!=ptt1.value";
+  
+  $sth = $dba->dbc->prepare($sql);
+  $sth->execute;
+  
+  while (my $aref = $sth->fetchrow_arrayref) {
+    #should be 0, if not delete culprit node_id in protein_tree_tag
+    my ($count) = @$aref;
+    if ($count == 0) {
+      print "PASSED: protein_tree_tag gene_count versus right_index left_index formula is consistent\n";
+    } else {
+      print STDERR "ERROR: protein_tree_tag versus protein_tree_node is NOT consistent\n";
+      print STDERR "ERROR: USED SQL : $sql\n";
+    }
+  }
+  
+  $sth->finish;
+
+
 # Check for unique member presence in ptm
 #########################################
 print "# Check for unique member presence in ptm\n";
@@ -256,7 +276,10 @@ print "# Check data consistency between pt_node and homology with node_id\n";
 print "# Check for homology has no duplicates\n";
 
 my $mlsses;
-my $mlssa = $dba->get_MethodLinkSpeciesSetAdaptor();
+my $mlssa;
+
+$mlssa = $dba->get_MethodLinkSpeciesSetAdaptor;
+$mlsses = $mlssa->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
 
 push @{$mlsses},@{$mlssa->fetch_all_by_method_link_type('ENSEMBL_PARALOGUES')};
 
