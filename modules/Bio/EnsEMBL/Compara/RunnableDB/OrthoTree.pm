@@ -100,7 +100,7 @@ sub fetch_input {
   $self->{'store_homologies'} = 1;
   $self->{'max_gene_count'} = 999999;
   $self->{all_between} = 0;
-  $self->{no_between} = 0.25;
+  $self->{no_between} = 0.25; # dont store all between_species_paralogs
 
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -668,7 +668,7 @@ sub get_ancestor_species_hash
 
 sub get_ancestor_taxon_level {
   my ($self, $ancestor) = @_;
-  
+
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
   return $taxon_level if($taxon_level);
 
@@ -678,7 +678,7 @@ sub get_ancestor_taxon_level {
 
   foreach my $gdbID (keys(%$species_hash)) {
   	my $taxon;
-  	
+
   	if($self->{use_genomedb_id}) {
 			$taxon = $taxon_tree->find_node_by_node_id($gdbID);
 			throw("Missing node in species (taxon) tree for $gdbID") unless $taxon;
@@ -1204,13 +1204,12 @@ sub store_homologies
   my $hlinkscount = 0;
   foreach my $genepairlink (@{$self->{'homology_links'}}) {
     $self->display_link_analysis($genepairlink) if($self->debug>2);
-#     unless (defined($self->{all_between})) {
+
     my $type = $genepairlink->get_tagvalue("orthotree_type");
     my $dcs = $genepairlink->{duplication_confidence_score};
-
     next if ($type eq 'between_species_paralog' && $dcs > $self->{no_between});
-#     }
-    $self->store_gene_link_as_homology($genepairlink);
+
+    my $homology = $self->store_gene_link_as_homology($genepairlink);
     print STDERR "homology links $hlinkscount\n" if ($hlinkscount++ % 500 == 0);
   }
 
@@ -1222,47 +1221,6 @@ sub store_homologies
   $self->{'protein_tree'}->store_tag(
       'OrthoTree_types_hashstr', 
       $self->encode_hash($self->{'orthotree_homology_counts'})) unless ($self->{'_readonly'});
-
-  # This has to go to OrthoTree because we haven't stored taxon_id and taxon_name yet here
-  # Go through and calculate species sampling and count.
-    # Create our taxonomic tree.
-#   my $ta = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-#   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
-#   my $taxon_tree=undef;
-#   foreach my $gdb (@{$gdb_list}) {
-#     next if ($gdb->name =~ /Ancestral/);
-#     next if ($gdb->name =~ /ilurana/);
-#     my $taxon = $ta->fetch_node_by_taxon_id($gdb->taxon_id);
-#     $taxon->no_autoload_children;
-#     $taxon_tree = $taxon->root unless($taxon_tree);
-#     $taxon_tree->merge_node_via_shared_ancestor($taxon);
-#   }
-#   $taxon_tree = $taxon_tree->minimize_tree;
-#   my $tree_species_sampling = 0;
-#   my $tree_species_num = 0;
-#   my $num_leaves = $self->{'protein_tree'}->num_leaves;
-#   if ($num_leaves >= 4) {
-#     my $taxon_id = $self->{'protein_tree'}->get_tagvalue("taxon_id");
-#     my $taxon_name = $self->{'protein_tree'}->get_tagvalue("taxon_name");
-#     #print "ID: $taxon_id  $taxon_name\n";
-#     my $potential_species = scalar @{$taxon_tree->find_node_by_node_id($taxon_id)->get_all_leaves};
-#     if ($potential_species > 1) {
-#       my %species;
-#       my @species_array = map {$_->taxon->name} @{$self->{'protein_tree'}->get_all_leaves};  # Create an array of species names.
-#       @species{@species_array} = (1) x @species_array;  # Fill the hashtable with the taxon names of all represented species.
-#       my $represented_species = scalar keys %species; # Count up the number of unique represented species.
-#       my $species_sampling = $represented_species / $potential_species;
-#       # Tree species sampling.
-#       $tree_species_sampling = sprintf("%.4f",$species_sampling);  # Format the decimals.
-#       # Tree species number.
-#       $tree_species_num = $represented_species;
-#     } else {
-#       $tree_species_sampling = 1;
-#       $tree_species_num = 1;
-#     }
-#   }
-#   $self->{'protein_tree'}->store_tag("tree_species_sampling",$tree_species_sampling);
-#   $self->{'protein_tree'}->store_tag("tree_species_num",$tree_species_num);
 
   return undef;
 }
@@ -1325,7 +1283,8 @@ sub store_gene_link_as_homology
   $attribute->perc_id(int($perc_id1));
   $attribute->perc_pos(int($perc_pos1));
 
-  $homology->add_Member_Attribute([$protein1->gene_member, $attribute]);
+  my $gene_member1 = $protein1->gene_member;
+  $homology->add_Member_Attribute([$gene_member1, $attribute]);
 
   #
   # HIT member
@@ -1337,7 +1296,23 @@ sub store_gene_link_as_homology
   $attribute->perc_id(int($perc_id2));
   $attribute->perc_pos(int($perc_pos2));
 
-  $homology->add_Member_Attribute([$protein2->gene_member, $attribute]);
+  my $gene_member2 = $protein2->gene_member;
+  $homology->add_Member_Attribute([$gene_member2, $attribute]);
+
+  # Pre-tagging potential_gene_split paralogies
+  if ($type eq 'within_species_paralog' && 0 == $perc_id1 && 0 == $perc_id2 && 0 == $perc_pos1 && 0 == $perc_pos2) {
+    $self->{'orthotree_homology_counts'}->{'within_species_paralog'}--;
+    # If same seq region and less than 1MB distance
+    if ($gene_member1->chr_name eq $gene_member2->chr_name 
+        && (1000000 > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
+        && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
+      $DB::single=1;1;
+      $homology->description('contiguous_gene_split');
+      $self->{'orthotree_homology_counts'}->{'contiguous_gene_split'}++;
+    } else {
+      $self->{'orthotree_homology_counts'}->{'putative_gene_split'}++;
+    }
+  }
 
   ## Check if it has already been stored, in which case we dont need to store again
   my $matching_homology = 0;
@@ -1393,7 +1368,7 @@ sub store_gene_link_as_homology
 #     $homology->print_homology;
 #   }
 
-  return undef;
+  return $homology;
 }
 
 
