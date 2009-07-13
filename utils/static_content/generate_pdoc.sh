@@ -38,8 +38,8 @@
 PERLMOD_LOC="/ensemblweb/www/www_52"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
-PDOC_LOC="$PERLMOD_LOC/public-plugins/ensembl/htdocs/info/docs/api/Pdoc"    # where you want Pdocs created
-HTTP="/info/docs/api/Pdoc"
+PDOC_LOC="$PERLMOD_LOC/public-plugins/ensembl/htdocs/info/docs/Pdoc"    # where you want Pdocs created
+HTTP="/info/docs/Pdoc"
 P2WDOC_LOC="/localsw/ensembl_web/pdoc-live"  # Pdoc code location
 P2WDOCER="/localsw/ensembl_web/pdoc-live/scripts/perlmod2www.pl"
 BIOPERL="/localsw/ensembl_web/bioperl-live"
