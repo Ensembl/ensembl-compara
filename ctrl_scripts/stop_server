@@ -98,29 +98,45 @@ Options:
 
 my $hostname = hostname_long();
 
-require $_ for @stop_before;
-
-# stop the server
-warn "Stopping httpd daemon...\n";
-
-open (P, "<$PID") or die
-    "Could not open PID file $serverroot/logs/$hostname.httpd.pid: $!\n" .
-    "[FATAL] Restart failed.\n";
-my $pid = <P>;
-close P;
-chomp $pid;
-die "Invalid PID: $pid\n[FATAL] Restart failed.\n" unless ($pid =~ /\d+/);
-
-system("kill -TERM $pid") == 0 or die
-    "Could not stop server: $!.\n" .
-    "[FATAL] Restart failed.\n";
-
-if ($delay) {
-    warn "Waiting $delay seconds for server to shut down...\n";
-    sleep $delay;
+for (@stop_before) {
+  eval { require $_; };
+  warn $@ if $@;
 }
 
-require $_ for @stop_after;
+eval {
+  # stop the server
+  warn "Stopping httpd daemon...\n";
+  open (P, "<$PID") or warn
+      "Could not open PID file $serverroot/logs/$hostname.httpd.pid: $!\n" .
+      "STOP failed.\n";
+      
+  my $pid = <P>;
+  close P;
+  chomp $pid;
+  
+  if ($pid =~ /\d+/) {
+  
+    system("kill -TERM $pid") == 0 or warn
+        "Could not stop server: $!.\n" .
+        "STOP failed.\n";
+  
+    if ($delay) {
+        warn "Waiting $delay seconds for server to shut down...\n";
+        sleep $delay;
+    }
+  
+  } else {
+    warn "Invalid PID: $pid\nSTOP failed.\n";
+  }
+};
+
+warn $@ if $@;
+
+for (@stop_after) {
+  eval { require $_; };
+  warn $@ if $@;
+}
+
 
 warn "Done.\n";
 
