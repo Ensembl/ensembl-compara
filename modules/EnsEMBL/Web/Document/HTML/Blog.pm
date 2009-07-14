@@ -7,9 +7,10 @@ use strict;
 use warnings;
 
 use LWP::UserAgent qw();
-use XML::RSS qw();
+use XML::Atom::Feed;
 use Data::Dumper;
 
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Root);
@@ -23,36 +24,37 @@ our $MEMD = EnsEMBL::Web::Cache->new(
 {
 
 sub render {
-  my $self = shift;
-
+  my $self  = shift;
+  
   ## Ensembl blog (ensembl.blogspot.com)
   my $html = qq(<h2>Latest Blog Entries</h2>);
 
-  my $items = $MEMD ? $MEMD->get('::BLOG') : undef;
+  my @entries = $MEMD ? (@{ $MEMD->get('::BLOG') || [] }) : ();
 
-  unless ($items) {
+  unless (@entries) {
     my $ua = new LWP::UserAgent;
-    $ua->proxy(['http', 'ftp'], 'http://wwwcache.sanger.ac.uk:3128/');
+
+    my $proxy = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
+    $ua->proxy( 'http', $proxy ) if $proxy;
   
     my $response = $ua->get('http://ensembl.blogspot.com/rss.xml');
-    my $rss = new XML::RSS;
+    my $feed = XML::Atom::Feed->new(\$response->decoded_content);
     
-    my $r = $rss->parse($response->decoded_content);
+    @entries = $feed->entries;
     
-    $items = $rss->{'items'};
     $ENV{CACHE_TIMEOUT} = 3600;
-    $MEMD->set('::BLOG', $items, $ENV{CACHE_TIMEOUT}, qw(STATIC BLOG))
+    $MEMD->set('::BLOG', \@entries, $ENV{CACHE_TIMEOUT}, qw(STATIC BLOG))
       if $MEMD;
   }
 
   my $count = 3;
-  if (@$items) {
+  if (@entries) {
     $html .= "<ul>\n";
-    for (my $i = 0; $i < $count && $i < scalar(@$items);$i++) {
-      my $item = $items->[$i];
-      my $title = $item->{'title'};
-      my $url   = $item->{'link'};
-      my $date  = substr($item->{'pubDate'}, 0, 16);
+    for (my $i = 0; $i < $count && $i < scalar(@entries);$i++) {
+      my $title = $entries[$i]->title;
+      my $url   = $entries[$i]->link->href;
+      my $date  = substr($entries[$i]->updated, 0, 10);
+
       $html .= "<li>$date: <a href=\"$url\">$title</a></li>\n"; 
     }
     $html .= "</ul>\n";
