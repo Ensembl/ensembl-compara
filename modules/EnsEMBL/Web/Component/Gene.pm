@@ -109,11 +109,4 @@ sub EC_URL {
   return $self->object->get_ExtURL_link( "EC $string", 'EC_PATHWAY', $URL_string );
 }
 
-sub content_export {
-  my $self = shift;
-  my $object = $self->object;
-  
-  return $self->_export(undef, $object->get_all_transcripts, $object->stable_id);
-}
-
 1;

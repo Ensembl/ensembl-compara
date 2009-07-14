@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
-use POSIX qw(floor ceil);
 use CGI qw(escape);
 use Time::HiRes qw(time);
 
@@ -12,10 +11,7 @@ use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::TmpFile::Tar;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Component::Export qw(export_file);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -370,258 +366,6 @@ sub _reset_config_panel {
   $self->add_panel( $panel );
 }
 
-sub _export_configurator {
-  my ($self, $options) = @_;
-  
-  my $object = $self->{'object'};
-  my $type = $object->type;
-  my $content;
-  my $text;
-  
-  $self->tree->_flush_tree;
-  
-  my $vc = $object->get_viewconfig($type, 'Export');
-  
-  my $config = {
-    'fasta' => {
-      'label' => 'FASTA sequence',
-      'formats' => [
-        [ 'fasta', 'FASTA sequence' ]
-      ],
-      'params' => [
-        [ 'cdna', 'cDNA' ],
-        [ 'coding', 'Coding sequence', $options->{'translation'} ],
-        [ 'peptide', 'Peptide sequence', $options->{'translation'} ],
-        [ 'utr5', "5' UTR", $options->{'five'} ],
-        [ 'utr3', "3' UTR", $options->{'three'} ],
-        [ 'exons', 'Exons' ],
-        [ 'introns', 'Introns' ]
-      ]
-    },
-    'features' => {
-      'label' => 'Feature File',
-      'formats' => [
-        [ 'csv', 'CSV (Comma separated values)' ],
-        [ 'gff', 'GFF Format' ],
-        [ 'tab', 'Tab separated values' ]
-      ],
-      'params' => [
-        [ 'similarity', 'Similarity features' ],
-        [ 'repeat', 'Repeat features' ],
-        [ 'genscan', 'Prediction features (genscan)' ],
-        [ 'variation', 'Variation features' ],
-        [ 'gene', 'Gene Information' ]
-      ]
-    },
-    'flat' => {
-      'label' => 'Flat File',
-      'formats' => [
-        [ 'embl', 'EMBL' ],
-        [ 'genbank', 'GenBank' ]
-      ],
-      'params' => [
-        [ 'similarity', 'Similarity features' ],
-        [ 'repeat', 'Repeat features' ],
-        [ 'genscan', 'Prediction features (genscan)' ],
-        [ 'contig', 'Contig Information' ],
-        [ 'variation', 'Variation features' ],
-        [ 'marker', 'Marker features' ],
-        [ 'gene', 'Gene Information' ],
-        [ 'vegagene', 'Vega Gene Information' ],
-        [ 'estgene', 'EST Gene Information' ]
-      ]
-    },
-    'pip' => {
-      'label' => 'PIP (%age identity plot)',
-      'formats' => [
-        [ 'pipmaker', 'Pipmaker / zPicture format' ],
-        [ 'vista', 'Vista Format' ]
-      ]
-    }
-  };
-  
-  if ($options->{'config_merge'}) {
-    for (keys %{$options->{'config_merge'}}) {
-      $config->{$_} = { %{$config->{$_}}, %{$options->{'config_merge'}->{$_}} };
-    }
-  }
-  
-  $options->{'strand_values'} ||= [
-    { value => 'feature', name => 'Feature strand' },
-    { value => '1', name => 'Forward strand' },
-    { value => '-1', name => 'Reverse strand' }
-  ];
-  
-  # Second page
-  if ($object->param('save')) {
-    my $output = $object->param('output');
-    my $r = $object->param('r');
-    my $check_slice = 1;
-
-    if ($object->param('new_region')) {
-      my $s = $object->param('new_start'); 
-      my $e = $object->param('new_end');
-
-      # Flip start and end if end is less than start
-      if ($e < $s) {
-        my $t = $e;
-        $e = $s;
-        $s = $t;
-      }
-      
-      $r = $object->param('new_region') . ":$s-$e";
-      
-      $check_slice = $object->check_slice($object->param('new_region'), $s, $e, $object->param('strand'));
-    }
-  
-    # How confusing!
-    my $form_action = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }, 1);
-    my $hidden_params;
-    
-    foreach (keys %{$form_action->[1]||{}}) {
-      $hidden_params .= qq{
-            <input type="hidden" name="$_" value="$form_action->[1]->{$_}" />};
-    }
-
-    if ($check_slice) {
-      my $href = $object->_url({ 
-       'r'      => $r,
-       'time'   => time, 
-       'action' => 'Export', 
-       'strand' => $object->param('strand'), 
-       'output' => $output
-      });
-      
-      my $map = { 
-        'csv' => 'features',
-        'gff' => 'features',
-        'tab' => 'features',
-        'embl' => 'flat',
-        'genbank' => 'flat',
-        'pipmaker' => 'pip',
-        'vista' => 'pip'
-      };
-      
-      my $key = $map->{$output} || $output;
-      
-      my @formats;
-      
-      if ($key eq 'pip') {
-        my $seq_file  = EnsEMBL::Web::TmpFile::Text->new(
-          extension => 'fa',
-          prefix => '',
-          content_type => 'text/plain; charset=utf-8',
-        );
-        my $anno_file = EnsEMBL::Web::TmpFile::Text->new(
-          filename => $seq_file->filename,
-          extension => 'txt',
-          prefix => '',
-          content_type => 'text/plain; charset=utf-8',
-        );
-          
-        export_file($seq_file, $object, 'seq');
-        export_file($anno_file, $object, $output);
-        
-        $seq_file->save;
-        $anno_file->save;
-        
-        my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
-          filename => $seq_file->filename,
-          prefix => '',
-          use_short_names => 1
-        );
-        
-        $tar_file->add_file($seq_file);
-        $tar_file->add_file($anno_file);
-        $tar_file->save;
-        
-        $text = qq{<p>Your export has been processed successfully. You can download the exported data by following the links below</p>};
-        
-        @formats = (
-          [ 'Sequence data', '', ' rel="external"', ' [FASTA format]', $seq_file->URL ],
-          [ 'Annotation data', '', ' rel="external"', ' [pipmaker format]', $anno_file->URL ],
-          [ 'Combined file', '', '', '', $tar_file->URL ]
-        );
-      } else {
-        @formats = (
-          [ 'HTML', 'HTML', ' rel="external"' ],
-          [ 'Text', 'Text', ' rel="external"' ],
-          [ 'Compressed text (.gz)', 'TextGz' ]
-        );
-      }
-    
-      my $checked_params = {};
-      
-      foreach (@{$config->{$key}->{'params'}}) {
-        $checked_params->{"${output}_$_->[0]"} = 1;
-        
-        if ($object->param("${output}_$_->[0]") eq 'yes') {
-          $_->[0] =~ s/(miscset_)//;
-          
-          $href .= $1 ? ";miscset=$_->[0]" : ";st=$_->[0]";
-        }
-      }
-      
-      foreach (grep { /${output}_/ } $object->param) {
-        (my $param = $_) =~ s/${output}_//;
-        $href .= ";$param=" . $object->param($_) unless $checked_params->{$_};
-      }
-      
-      $content = qq{
-        <h2>Export Configuration - Output Format</h2>
-        <form id="export_output_configuration" class="std check" method="get" action="$form_action->[0]">
-          <fieldset>
-            $text
-            <ul>};
-          
-      foreach (@formats) {
-        my $format = ";_format=$_->[1]" if $_->[1];
-        my $link = $_->[4] || $href;
-        
-        $content .= qq{
-              <li><a class="modal_close" href="$link$format"$_->[2]>$_->[0]</a>$_->[3]</li>};
-      }
-      
-      $content .= qq{
-            </ul>
-            <input type="submit" value="&lt; Back" class="submit" />
-            $hidden_params
-          </fieldset>
-        </form>};
-    } else { # User has input an invalid location
-      $content = qq{
-        <h2>Export Configuration - Output Format</h2>
-        <form id="export_output_configuration" class="std check" method="get" action="$form_action->[0]">
-          <fieldset>
-            <div class="error"><h3>Invalid Region</h3><p>The region you have chosen does not exist. Please go back and try again.</p></div>
-            <br />
-            <input type="submit" value="&lt; Back" class="submit" />
-            $hidden_params
-          </fieldset>
-        </form>};
-    }
-  } else { # First page
-    $vc->{'_temp'} = { config => $config, options => $options }; # Hack to get it through to ViewConfig
-    $vc->form($object, 1);
-    delete $vc->{'_temp'};
-    
-    $content = qq{
-    <h2>Export Configuration - Feature List</h2>};
-    
-    $content .= $vc->get_form->render;
-  }
-  
-  my $panel = $self->new_panel(
-    'Configurator',
-    'code' => 'configurator',
-    'object'=> $object
-  );
-  
-  $panel->set_content($content);
-
-  $self->add_panel($panel);
-}
-
 sub _configurator {
   my $self = shift;
   my $obj  = $self->{'object'};
@@ -869,14 +613,11 @@ sub _local_tools {
   );
   $disabled_upload = 0;
   
-  if ($obj->can_export) {
-    my $action = $obj->type.'/'.$obj->action;
-       $action .= '/'.$obj->function if $obj->function;
-       
+  if ($obj->can_export) {       
     $self->{'page'}->local_tools->add_entry(
       'caption' => 'Export data',
       'class'   => 'modal_link',
-      'url'     => $obj->_url({ 'time' => time, 'type' => 'Export', 'action' => $action, '_referer' => $referer })
+      'url'     => $obj->_url({ type => 'Export', action => $obj->type, function => $obj->action, '_referer' => $referer })
     );
   } else {
     $self->{'page'}->local_tools->add_entry(
@@ -891,9 +632,9 @@ sub _local_tools {
       'caption' => 'Bookmark this page',
       'class'   => 'modal_link',
       'url'     => $obj->_url({ 'type'     => 'Account', 'action'   => 'Bookmark/Add',
-                                '_referer' => $ENV{'REQUEST_URI'}, '__clear'  =>1,
+                                '_referer' => $referer, '__clear'  =>1,
                                 'name'     => $self->{'page'}->title->get,
-                                'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$ENV{'REQUEST_URI'} })
+                                'url'      => $obj->species_defs->ENSEMBL_BASE_URL . $referer })
     );
   } else {
     $self->{'page'}->local_tools->add_entry(
