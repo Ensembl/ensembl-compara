@@ -3,6 +3,8 @@ package Bio::EnsEMBL::GlyphSet_generic;
 use strict;
 use warnings;
 no warnings 'uninitialized';
+require HTML::Entities;
+require CGI;
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 use Data::Dumper;
@@ -147,16 +149,15 @@ sub _draw_features {
           $group->{'end'}   + $offset,
           $group->{'strand'} > 0 ? 'Forward' : $group->{'strand'} < 0 ? 'Reverse' : '-';
         $title .= '; Features: '.$group->{'count'} if $group->{'count'} > 1;
-#        $title .= $group->{'notes'};
         if( @{$group->{'links'}||[]} ) {
           $href = $group->{'links'}[0]{'href'};
         } elsif( @{$group->{'flinks'}||[]} ) {
           $href = $group->{'flinks'}[0]{'href'};
         }
         if( @{$group->{'notes'}||[]} ) {
-          $title .= join '', map { '; '.CGI::escapeHTML($_)} @{ $group->{'notes'}};
+          $title .= join '', map { '; '.CGI::escapeHTML(HTML::Entities::decode_entities($_))} @{ $group->{'notes'}};
         } elsif( @{$group->{'fnotes'}||[]} ) {
-          $title .= join '', map { '; '.CGI::escapeHTML($_)} @{$group->{'fnotes'}};
+          $title .= join '', map { '; '.CGI::escapeHTML(HTML::Entities::decode_entities($_))} @{$group->{'fnotes'}};
         }
         $title .= "; Type: ".($group->{'type_label'} || $group->{'type'}) if $group->{'type'};
 
@@ -234,15 +235,19 @@ sub _draw_features {
                 $f->{'y'} = - $strand * $row * ($self->{h}+$fontsize+4);
                 ## reposition!
               }
-        my $href = undef;
-        my $title = sprintf "%s; Start: %s; End: %s; Strand: %s",
-          $f->display_label||$f->display_id,
-          $f->seq_region_start,
-          $f->seq_region_end,
-          $ori > $f->seq_region_strand ? 'Forward' : $f->seq_region_strand < 0 ? 'Reverse' : '-';
-#        $title .= $f->{'notes'};
-        $href = $f->{'link'}->[0]{'href'} if @{$f->{'link'}||[]};
-        $title .= "; Type: ".($f->type_label || $f->type_id) if $f->type_id;
+
+              my $href = undef;
+              my $title = sprintf "%s; Start: %s; End: %s; Strand: %s",
+                $f->display_label||$f->display_id,
+                $f->seq_region_start,
+                $f->seq_region_end,
+                $ori > $f->seq_region_strand ? 'Forward' : $f->seq_region_strand < 0 ? 'Reverse' : '-';
+                
+              $href = $f->{'link'}->[0]{'href'} if @{$f->{'link'}||[]};
+              $title .= "; Type: ".($f->type_label || $f->type_id) if $f->type_id;
+              if( @{$f->{'note'}||[]} ) {
+                #$title .= join '', map { '; '.CGI::escapeHTML(HTML::Entities::decode_entities($_))} @{ $f->{'note'}};
+              }
 
               $self->push( $self->Space({
                 'x'     => $f->{extent_start}-1,
