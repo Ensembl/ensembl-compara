@@ -1217,154 +1217,6 @@ sub get_contig_location {
   );
 }
 
-=head2 get_trans_seq
-
- Arg[1]      : none
- Example     : $trans_seq = $transdata->get_trans_seq
- Description : returns a plain transcript sequence, if option numbers = on then
-                bp numbers are also added
- Return type : a string
-                transcript sequence
-
-=cut
-
-sub get_trans_seq{
-  my $self   = shift;
-  my $revcom = shift;
-  my $trans  = $self->Obj;
-  my $number = $self->param('number');   
-  my $flip = 0;
-  my $wrap = 60;
-  my $pos = 1-$wrap; 
-  my $fasta;  
-  my @exons = @{$trans->get_all_Exons};
-  foreach my $t (@exons){
-    my $subseq = uc($t->seq->seq);
-       $subseq = lc($subseq) if ($flip++)%2;
-       $fasta.=$subseq;
-  }
-  $fasta = $trans->seq->revcom->seq if $revcom;
-  if($number eq 'on') {
-    $fasta =~ s|(\w{1,$wrap})|sprintf( "%6d %s\n",$pos+=$wrap,"$1")|eg;    
-  } else {
-    $fasta =~ s|(\w{1,$wrap})|$1\n|g;    
-  }
-  return $fasta;
-}
-
-=head2 get_markedup_trans_seq
-
- Arg[1]      : none
- Example     : $trans_seq = $transdata->get_markedup_trans_seq
- Description : returns the the transcript sequence along with positions for markup
- Return type : list of coding_start, coding_end, trans_strand, array ref of positions
-
-=cut
-
-sub get_markedup_trans_seq {
-  my $self   = shift;
-  my $trans  = $self->Obj;
-  my $number = $self->param('number');
-  my $show   = $self->param('show');
-  my $flip   = 1;
-
-  my @exons = @{$trans->get_all_Exons};
-  my $trans_strand = $exons[0]->strand;
-  my @exon_colours = qw(black blue);
-  my @bps = map { $flip = 1-$flip; map {{
-    'peptide'   => '.',
-    'ambigcode' => ' ',
-    'snp'       => '',
-    'alleles'   => '',
-    'aminoacids'=> '',
-    'letter'    => $_,
-    'fg'        => $exon_colours[$flip],
-    'bg'        => 'utr'
-    }} split (//, uc($_->seq->seq))
-  } @exons;
-
-  my $cd_start = $trans->cdna_coding_start;
-  my $cd_end   = $trans->cdna_coding_end;
-  my $peptide;
-  my $can_translate = 0;
-  my $pep_obj = '';
-  eval {
-    my $pep_obj = $trans->translate;
-    $peptide = $pep_obj->seq();
-    $can_translate = 1;
-    $flip = 0;
-    my $startphase = $trans->translation->start_Exon->phase;
-    
-    for my $i ( ($cd_start-1)..($cd_end-1) ) {
-      $bps[$i]{'bg'} = "c99";
-    }
-    my $S = 0;
-    if( $startphase > 0 ) {
-      $S = 3 - $startphase;
-      $peptide = substr($peptide,1);
-    }
-    for( my $i= $cd_start + $S - 1; ($i+2)<= $cd_end; $i+=3) {
-      $bps[$i]{'bg'}=$bps[$i+1]{'bg'}=$bps[$i+2]{'bg'} = "c$flip";
-      $bps[$i]{'peptide'}=$bps[$i+2]{'peptide'}='-';    # puts dash a beginging AND end of codon
-      $bps[$i+1]{'peptide'}=substr($peptide,int( ($i+1-$cd_start)/3 ), 1 ) || ($i+1 < $cd_end ? '*' : '.');
-      $flip = 1-$flip;
-    }
-    $peptide = '';
-  };
-
-  if($show =~ /snp/) {
-    $self->database('variation');
-    my $source = "";
-    if (exists($self->species_defs->databases->{'ENSEMBL_GLOVAR'})) {
-      $source = "glovar";
-      $self->database('glovar');
-    }
-    $source = 'variation' if $self->database('variation');
-    my %snps = %{$trans->get_all_cdna_SNPs($source)};
-    my %protein_features = $can_translate==0 ? () : %{ $trans->get_all_peptide_variations($source) };
-    foreach my $t (values %snps) {
-      foreach my $snp (@$t) {
-# Due to some changes start of a variation can be greater than its end - insertion happend
-        my ($st, $en);
-        if($snp->start > $snp->end) {
-          $st = $snp->end;
-          $en = $snp->start;
-        } else {
-          $en = $snp->end;
-          $st = $snp->start;
-        }
-        foreach my $r ($st..$en) {
-          $bps[$r-1]{'alleles'}.= $snp->allele_string;
-          $bps[$r-1]{'url_params'}.= "source=".$snp->source.";snp=".$snp->variation_name;
-          my $snpclass = $snp->var_class;
-          if($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') {
-            my $aa = int(($r-$cd_start+3)/3);
-            my $aa_bp = $aa*3+$cd_start - 3;
-            my @Q = @{$protein_features{ "$aa" }||[]};
-            if(@Q>1) {
-              my $aas = join ', ', @Q;
-              $bps[ $aa_bp - 1 ]{'aminoacids'} =
-              $bps[ $aa_bp     ]{'aminoacids'} = 
-              $bps[ $aa_bp + 1 ]{'aminoacids'} = $aas;
-              $bps[ $aa_bp - 1 ]{'peptide'} =
-              $bps[ $aa_bp + 1 ]{'peptide'} = '=';
-            }
-            $bps[$r-1]{'ambigcode'}= $snp->ambig_code;
-            if ($snp->strand ne "$trans_strand"){
-              $bps[$r-1]{'ambigcode'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-              $bps[$r-1]{'alleles'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-            }
-            $bps[$r-1]{'snp'}= ( $bps[$r-1]{'snp'} eq 'snp' || @Q!=1 ) ? 'snp' : 'syn';
-          } else {
-            $bps[$r-1]{'snp'}= 'indel';
-          }
-        }
-      }
-    }
-  } 
-  return ($cd_start, $cd_end, $trans_strand, \@bps);
-}
-
 =head2 get_similarity_hash
 
  Arg[1]      : none
@@ -1958,6 +1810,74 @@ sub get_alignment{
 
 ###################################
 #end of alignview support features
+
+sub get_genetic_variations {
+  my $self = shift;
+  my @samples = @_;
+  
+  my $tsv_extent = $self->param('context') eq 'FULL' ? 1000 : $self->param('context');
+  my $snp_data = {};
+
+  foreach my $sample (@samples) {
+    my $munged_transcript = $self->get_munged_slice('tsv_transcript',  $tsv_extent, 1);    
+    my $sample_slice = $munged_transcript->[1]->get_by_strain($sample);
+    my ($allele_info, $consequences) = $self->getAllelesConsequencesOnSlice($sample, 'tsv_transcript', $sample_slice);
+    
+    next unless @$consequences && @$allele_info;
+    
+    my $index = 0;
+    
+    foreach my $allele_ref (@$allele_info) {
+      my $allele = $allele_ref->[2];
+      my $conseq_type = $consequences->[$index];
+      
+      $index++;
+      
+      next unless $conseq_type && $allele;
+
+      # Type
+      my $type = join ', ', @{$conseq_type->type || []};
+      $type .= ' (Same As Ref. Assembly)' if $type eq 'SARA';
+
+      # Position
+      my $offset = $sample_slice->strand > 0 ? $sample_slice->start - 1 : $sample_slice->end + 1;
+      my $chr_start = $allele->start + $offset;
+      my $chr_end = $allele->end + $offset;
+      my $pos = $chr_start;
+      
+      if ($chr_end < $chr_start) {
+        $pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
+      } elsif ($chr_end > $chr_start) {
+        $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
+      }
+      
+      my $chr = $sample_slice->seq_region_name;
+      my $aa_alleles = $conseq_type->aa_alleles || [];
+      my $sources = join ', ' , @{$allele->get_all_sources || []};
+      my $vid = $allele->variation_name;
+      my $source = $allele->source;
+      my $vf = $allele->variation->dbID;
+      
+      my $url = $self->_url({ 
+        type   => 'Variation', 
+        action => 'Summary', 
+        v      => $vid , 
+        vf     => $vf, 
+        source => $source 
+     });
+      
+      my $row = {
+        ID          => qq{<a href="$url">$vid</a>},
+        consequence => $type,
+        aachange    => $conseq_type->aa_alleles ? (join "/", @$aa_alleles) || '' : '-'
+      };
+      
+      push @{$snp_data->{"$chr:$pos"}->{$sample}}, $row;
+    }
+  }
+  
+  return $snp_data;
+}
 
 sub can_export {
   my $self = shift;
