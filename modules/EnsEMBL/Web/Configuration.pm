@@ -83,6 +83,9 @@ sub new {
     }
   }
 
+  $self->extra_populate_tree
+    if $self->can('extra_populate_tree');
+  
   $self->set_default_action;
   return $self;
 }
