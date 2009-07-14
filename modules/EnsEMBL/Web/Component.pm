@@ -16,7 +16,6 @@ use Text::Wrap qw(wrap);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
-use EnsEMBL::Web::Component::Export;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Form;
@@ -409,8 +408,6 @@ sub _sort_similarity_links {
     push @{$object->__data->{'links'}{$type->type}}, [ $type->db_display_name || $externalDB, $text ] ;
   }
 }
-
-sub _export { return EnsEMBL::Web::Component::Export::export(@_); }
 
 sub remove_redundant_xrefs {
   my ($self,@links) = @_;

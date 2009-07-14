@@ -35,8 +35,8 @@ our %LOOKUP_HASH;
 our %OBJECT_TO_SCRIPT = qw(
   Config      config
   Component   component
-  Export      export
   Zmenu       zmenu
+  Blast       blast
 
   Gene        action
   Transcript  action
@@ -46,14 +46,14 @@ our %OBJECT_TO_SCRIPT = qw(
   Info        action
   Search      action
   UniSearch   action
-
-  Account     modal
-  UserData    modal
-  Help        modal
   Website     action
   Healthcheck action
   News        action
-  Blast       blast
+  
+  Account     modal
+  UserData    modal
+  Help        modal
+  Export      modal
 );
 
 #======================================================================#
