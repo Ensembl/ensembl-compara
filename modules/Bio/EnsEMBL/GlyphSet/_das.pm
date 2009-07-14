@@ -141,7 +141,11 @@ sub features       {
               'notes'   => $f->{'note'},   ## Push the features notes/links and targets on!
               'links'   => $f->{'link'},
               'targets' => $f->{'target'},
-              'features'=>{$style_key=>[$f]},'start'=>$f->start,'end'=>$f->end
+              'features'=> {
+                            $style_key => [ $f ]
+                           },
+              'start'   => $f->start,
+              'end'     => $f->end
             };
           }
         }
