@@ -10,7 +10,6 @@ use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::Utils::Exception qw(try catch);
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser; # for contacting DAS servers
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::RegObj;
