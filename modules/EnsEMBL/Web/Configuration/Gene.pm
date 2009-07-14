@@ -185,8 +185,8 @@ sub populate_tree {
   ));
   
   $self->create_subnode(
-    'Export', "Export gene data",
-    [ qw( export EnsEMBL::Web::Component::Gene/export ) ],
+    'Export', 'Export Gene Data',
+    [qw( export EnsEMBL::Web::Component::Export::Gene )],
     { 'availability' => 'gene', 'no_menu_entry' => 1 }
   );
 
@@ -224,22 +224,6 @@ sub ajax_content   { return $_[0]->_ajax_content;   }
 
 sub configurator {
   return $_[0]->_configurator;
-}
-
-sub export_configurator {
-  my $self = shift;
-  
-  my $options = { 'translation' => 0, 'three' => 0, 'five' => 0 };
-  
-  for (@{$self->object->get_all_transcripts}) {
-    $options->{'translation'} = 1 if $_->Obj->translation;
-    $options->{'three'} = 1 if $_->Obj->three_prime_utr;
-    $options->{'five'} = 1 if $_->Obj->five_prime_utr;
-    
-    last if $options->{'translation'} && $options->{'three'} && $options->{'five'};
-  }
-  
-  return $self->_export_configurator($options);
 }
 
 sub ajax_zmenu      {

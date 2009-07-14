@@ -33,66 +33,6 @@ sub local_tools    { return $_[0]->_local_tools;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel;  }
 
-sub export_configurator {
-  my $self = shift;
-  my $object = $self->object;
-  
-  return $self->pop_export_configurator if $object->action eq 'Population';  
-  return $self->_export_configurator;
-}
-
-
-sub pop_export_configurator {
-  my $self = shift;
-  my $object = $self->{'object'};
-  
-  my $time = time;
-  
-  my $params = {
-    'time' => $time, 
-    'action' => 'Export', 
-    'output' => 'gen_var'
-  };
-  
-  map { $params->{$_} = $object->param($_) unless $object->param($_) eq 'off' } $object->param;
-  
-  my $href = $object->_url($params);
-  
-  my @formats = (
-    [ 'HTML', 'HTML', ' rel="external"' ],
-    [ 'Text', 'Text', ' rel="external"' ]
-  );
-  
-  my $content = qq{
-    <h2>Export Configuration - Transcript Genetic Variation</h2>
-    <form id="export_output_configuration" class="std check" method="get" action="#">
-      <fieldset>
-        <p>Dump of SNP data per individual (SNPs in rows, individuals in columns). For more advanced data queries use <a href="/biomart/martview">BioMart</a>.</p>
-        <p>Please choose a format for your exported data</p>
-        <ul>};
-        
-    foreach (@formats) {
-      my $format = ";_format=$_->[1]" if $_->[1];
-      
-      $content .= qq{
-          <li><a class="modal_close" href="$href$format"$_->[2]>$_->[0]</a>$_->[3]</li>};
-    }
-    
-    $content .= qq{
-      </ul>
-    </form>};
-      
-  my $panel = $self->new_panel(
-    'Configurator',
-    'code' => 'configurator',
-    'object'=> $object
-  );
-  
-  $panel->set_content($content);
-
-  $self->add_panel($panel);
-}
-
 sub ajax_zmenu      {
   my $self = shift;
   my $panel = $self->_ajax_zmenu;
@@ -530,9 +470,11 @@ sub populate_tree {
       { 'availability' => 'history_protein', 'concise' => 'ID History' }
   ));
   
+  my $export_label = $self->object->function eq 'Population' ? 'Export Genetic Variation Data' : 'Export Transcript Data';
+  
   $self->create_subnode(
-    'Export', "Export transcript data",
-    [ qw( export EnsEMBL::Web::Component::Transcript/export ) ],
+    'Export', $export_label,
+    [qw( export EnsEMBL::Web::Component::Export::Transcript )],
     { 'availability' => 'transcript', 'no_menu_entry' => 1 }
   );
 

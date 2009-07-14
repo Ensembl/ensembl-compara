@@ -13,7 +13,7 @@ sub init {
   my %defaults;
   
   $defaults{'output'} = 'fasta';
-  $defaults{'strand'} = $ENV{'ENSEMBL_TYPE'} eq 'Location' ? 'forward' : 'feature';
+  $defaults{'strand'} = $ENV{'ENSEMBL_ACTION'} eq 'Location' ? 'forward' : 'feature';
   
   foreach (qw(flank5_display flank3_display)) {
     $defaults{$_} = 0;
@@ -47,50 +47,43 @@ sub init {
 }
 
 sub form {
-  my ($view_config, $object, $custom_fields) = @_;
+  my ($view_config, $object) = @_;
   
-  my $type = $object->type;
+  my $function = $object->function;
   
+  return if $function !~ /Location|Gene|Transcript/;
+  
+  my $config = $object->config;
+  my $slice = $object->slice;
+  my $form_action = $object->_url({ action => 'Form', function => $function }, 1);
   my %gene_markup_options = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
   
-  my $config = $view_config->{'_temp'}->{'config'};
-  my $options = $view_config->{'_temp'}->{'options'};
-  
-  return unless $config; # Gets called twice on an Export page itself - first time is from the wrong place
-  
-  $custom_fields ||= [];
-  
-  my $slice = $object->can('slice') ? $object->slice : $object->get_Slice;
-  
-  # How confusing!
-  my $form_action = $object->_url({ 'action' => $type, 'type' => 'Export', 'function' => $object->action }, 1);
-  
   $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
-  $view_config->get_form->{'_attributes'}{'id'} = "export_configuration";
-  $view_config->get_form->{'_attributes'}{'method'} = "get";
+  $view_config->get_form->{'_attributes'}{'id'} = 'export_configuration';
+  $view_config->get_form->{'_attributes'}{'method'} = 'get';
     
   $view_config->add_fieldset;
   
   $view_config->add_form_element({
-    'type'  => 'NoEdit',
-    'name'  => 'location_to_export',
-    'label' => 'Location to export',
-    'value' => $slice->name
+    type  => 'NoEdit',
+    name  => 'location_to_export',
+    label => 'Location to export',
+    value => $slice->name
   });
   
-  if ($ENV{'ENSEMBL_TYPE'} eq 'Gene') {
+  if ($function eq 'Gene') {
     $view_config->add_form_element({
-      'type'  => 'NoEdit',
-      'name'  => 'gene_to_export',
-      'label' => 'Gene to export',
-      'value' => $object->core_objects->gene_long_caption
+      type  => 'NoEdit',
+      name  => 'gene_to_export',
+      label => 'Gene to export',
+      value => $object->core_objects->gene_long_caption
     });
-  } elsif ($ENV{'ENSEMBL_TYPE'} eq 'Transcript') {
+  } elsif ($function eq 'Transcript') {
     $view_config->add_form_element({
-      'type'  => 'NoEdit',
-      'name'  => 'transcript_to_export',
-      'label' => 'Transcript to export',
-      'value' => $object->core_objects->transcript_long_caption
+      type  => 'NoEdit',
+      name  => 'transcript_to_export',
+      label => 'Transcript to export',
+      value => $object->core_objects->transcript_long_caption
     });
   } 
   
@@ -106,56 +99,53 @@ sub form {
   
   if (scalar @output_values) {
     $view_config->add_form_element({
-      'type'     => 'DropDown', 
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'output',
-      'label'    => 'Output',
-      'values'   => \@output_values
+      type     => 'DropDown', 
+      select   => 'select',
+      required => 'yes',
+      name     => 'output',
+      label    => 'Output',
+      values   => \@output_values
     });
   }
   
-  if ($ENV{'ENSEMBL_TYPE'} eq 'Location') {
+  if ($function eq 'Location') {
+    my $s = $slice->strand;
+    my @strand = map $s == $_ ? 'selected="selected"' : '', (1, -1);
+    
     $view_config->add_form_element({
-      'type'  => 'Raw',
-      'label' => 'Select location',
-      'raw'   => sprintf qq{
+      type  => 'Raw',
+      label => 'Select location',
+      raw   => sprintf qq{
         <input type="text" size="1" value="%s" name="new_region" class="input-text required" />
         <input type="text" size="8" value="%s" name="new_start" class="input-text _posint required" />
         <input type="text" size="8" value="%s" name="new_end" class="input-text _posint required" />
         <select size="1" name="strand"><option value="1" %s>1</option><option value="-1" %s>-1</option></select>
-        <input type="hidden" name="g" value="" />
-        <input type="hidden" name="t" value="" />
-      }, $slice->seq_region_name, $slice->start, $slice->end, $slice->strand == 1 ? 'selected="selected"' : '', $slice->strand == 1 ?  '' : 'selected="selected"'
+      }, $slice->seq_region_name, $slice->start, $slice->end, @strand
     });
   } else {
-    if (scalar @{$options->{'strand_values'}}) {
-      $view_config->add_form_element({
-        'type'     => 'DropDown', 
-        'select'   => 'select',
-        'required' => 'yes',
-        'name'     => 'strand',
-        'label'    => 'Strand',
-        'values'   => $options->{'strand_values'}
-      });
-    }
+    $view_config->add_form_element({
+      type     => 'DropDown', 
+      select   => 'select',
+      required => 'yes',
+      name     => 'strand',
+      label    => 'Strand',
+      values   => [
+        { value => 'feature', name => 'Feature strand' },
+        { value => '1',       name => 'Forward strand' },
+        { value => '-1',      name => 'Reverse strand' }
+      ]
+    });
   }
   
   $view_config->add_form_element($gene_markup_options{'flank5_display'});
   $view_config->add_form_element($gene_markup_options{'flank3_display'});
   
   $view_config->add_form_element({
-    'type' => 'Submit',
-    'class' => 'submit',
-    'name' => 'next_top',
-    'value' => 'Next >'
+    type  => 'Submit',
+    class => 'submit',
+    name  => 'next_top',
+    value => 'Next >'
   });
-    
-  foreach (@{$options->{'custom_fields'}||[]}) {
-    my $func = $_->[0];
-    
-    $view_config->$func($_->[1]);
-  }
   
   foreach my $c (sort keys %$config) {
     next unless $config->{$c}->{'params'};
@@ -173,15 +163,15 @@ sub form {
           { value => '5_3_flanking', name => "5' and 3' Flanking sequences" }
         ];
 
-        push @$genomic, { value => 'off', name => 'None' } unless $ENV{'ENSEMBL_TYPE'} eq 'Location';
+        push @$genomic, { value => 'off', name => 'None' } unless $ENV{'ENSEMBL_ACTION'} eq 'Location';
         
         $view_config->add_form_element({
-          'type'     => 'DropDown', 
-          'select'   => 'select',
-          'required' => 'yes',
-          'name'     => 'fasta_genomic',
-          'label'    => 'Genomic',
-          'values'   => $genomic
+          type     => 'DropDown', 
+          select   => 'select',
+          required => 'yes',
+          name     => 'fasta_genomic',
+          label    => 'Genomic',
+          values   => $genomic
         });
       }
       
@@ -189,33 +179,33 @@ sub form {
         next if $_->[2] eq '0'; # Next if 0, but not if undef. Where is my === operator, perl?
         
         $view_config->add_form_element({
-          'type' => $config->{$c}->{'type'} || 'CheckBox',
-          'label' => $_->[1],
-          'name' => "$f->[0]_$_->[0]",
-          'value' => 'yes'
+          type => $config->{$c}->{'type'} || 'CheckBox',
+          label => $_->[1],
+          name => "$f->[0]_$_->[0]",
+          value => 'yes'
         });
       }
     }
   }
   
   $view_config->add_form_element({
-    'type' => 'Submit',
-    'class' => 'submit',
-    'name' => 'next_bottom',
-    'value' => 'Next >'
+    type  => 'Submit',
+    class => 'submit',
+    name  => 'next_bottom',
+    value => 'Next >'
   });
   
   $view_config->add_form_element({
-    'type' => 'Hidden',
-    'name' => 'save',
-    'value' => 'yes'
+    type  => 'Hidden',
+    name  => 'save',
+    value => 'yes'
   });
   
-  foreach (keys %{$form_action->[1]||{}}) {
+  foreach (keys %{$form_action->[1]}) {
     $view_config->add_form_element({
-      'type' => 'Hidden',
-      'name' => $_,
-      'value' => $form_action->[1]->{$_}
+      type  => 'Hidden',
+      name  => $_,
+      value => $form_action->[1]->{$_}
     });
   }
 }
