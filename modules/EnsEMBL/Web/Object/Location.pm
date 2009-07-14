@@ -5,6 +5,9 @@ use warnings;
 no warnings "uninitialized";
 use Data::Dumper;
 use POSIX qw(floor ceil);
+
+use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
+
 use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Cache;
@@ -1225,6 +1228,104 @@ sub get_all_misc_sets {
     $result->{$_->code} = $_;
   }
   return $result;
+}
+
+sub get_ld_values {
+  my $self = shift;
+  my ($populations, $snp, $zoom) = @_;
+  
+  ## set path information for LD calculations
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $self->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $self->species_defs->ENSEMBL_TMP_TMP;
+  
+  my %ld_values;
+  my $display_zoom = $self->round_bp($zoom);
+
+  foreach my $pop_name (sort split (/\|/, $populations)) {
+    my $pop_obj = $self->pop_obj_from_name($pop_name);
+    
+    next unless $pop_obj;
+    
+    my $pop_id = $pop_obj->{$pop_name}{'dbID'};
+    my $data = $self->ld_for_slice($pop_obj->{$pop_name}{'PopObject'}, $zoom);
+    
+    foreach my $ld_type ('r2', 'd_prime') {
+      my $display = $ld_type eq 'r2' ? 'r2' : "D'";
+      my $no_data = "No $display linkage data in $display_zoom window for population $pop_name";
+      
+      unless (%$data && keys %$data) {
+        $ld_values{$ld_type}{$pop_name}{'text'} = $no_data;
+        next;
+      }
+
+      my @snp_list = sort { $a->[1]->start <=> $b->[1]->start } map  {[ $_ => $data->{'variationFeatures'}{$_} ]} keys %{$data->{'variationFeatures'}};
+
+      unless (scalar @snp_list) {
+        $ld_values{$ld_type}{$pop_name}{'text'} = $no_data;
+        next;
+      }
+
+      # Do each column starting from 1 because first col is empty
+      my @table;
+      my $flag = 0;
+      
+      for (my $x = 0; $x < scalar @snp_list; $x++) { 
+        # Do from left side of table row across to current snp
+        for (my $y = 0; $y < $x; $y++) {
+          my $ld_pair1 = "$snp_list[$x]->[0]" . -$snp_list[$y]->[0];
+          my $ld_pair2 = "$snp_list[$y]->[0]" . -$snp_list[$x]->[0];
+          my $cell;
+          
+          if ($data->{'ldContainer'}{$ld_pair1}) {
+            $cell = $data->{'ldContainer'}{$ld_pair1}{$pop_id}{$ld_type};
+          } elsif ($data->{'ldContainer'}{$ld_pair2}) {
+            $cell = $data->{'ldContainer'}{$ld_pair2}{$pop_id}{$ld_type};
+          }
+          
+          $flag = $cell ? 1 : 0 unless $flag;
+          $table[$x][$y] = $cell;
+        }
+      }
+      
+      unless ($flag) {
+        $ld_values{$ld_type}{$pop_name}{'text'} = $no_data;
+        next;
+      }
+
+      # Turn snp_list from an array of variation_feature IDs to SNP 'rs' names
+      # Make current SNP bold
+      my @snp_names;
+      my @starts_list;
+      
+      foreach (@snp_list) {
+        my $name = $_->[1]->variation_name;
+        
+        if ($name eq $snp || $name eq "rs$snp") {
+          push (@snp_names, "*$name*");
+        } else { 
+          push (@snp_names, $name);
+        }
+
+        my ($start, $end) = ($_->[1]->start, $_->[1]->end);
+        my $pos = $start;
+        
+        if ($start > $end) {
+          $pos = "between $start & $end";
+        } elsif ($start < $end) {
+          $pos = "$start-$end";
+        }
+        
+        push (@starts_list, $pos);
+      }
+
+      my $location = $self->seq_region_name . ':' . $self->seq_region_start . '-' . $self->seq_region_end;
+      
+      $ld_values{$ld_type}{$pop_name}{'text'} = "Pairwise $display values for $location. Population: $pop_name";
+      $ld_values{$ld_type}{$pop_name}{'data'} = [ \@starts_list, \@snp_names, \@table ];
+    }
+  }
+  
+  return \%ld_values;
 }
 
 #------ Individual stuff ------------------------------------------------
