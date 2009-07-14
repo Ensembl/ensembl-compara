@@ -201,12 +201,12 @@ sub version_check {
       my $res = $self->_write_and_read($sock, "version\r\n");
       $res =~ s/[\n|\r]//g;
       if ($res && $res =~ /tags/) {
-        _warn("$host - $res");
+        warn("$host - $res");
       } elsif ($res) {
-        _warn("$host - $res, Incorrect version");
+        warn("$host - $res, Incorrect version");
         $correct = 0;
       } else {
-        _warn("$host - connection error, ignoring");
+        warn("$host - connection error, ignoring");
       }
   }
 
