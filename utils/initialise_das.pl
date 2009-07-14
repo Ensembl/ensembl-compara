@@ -29,7 +29,7 @@ BEGIN{
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
   require Bio::EnsEMBL::ExternalData::DAS::SourceParser;
-  import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic);
+  import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic %COORD_MAPPINGS %TYPE_MAPPINGS %AUTHORITY_MAPPINGS %NON_GENOMIC_COORDS);
 }
 
 my $source_types = {
@@ -126,17 +126,6 @@ SPECIES: foreach my $sp (@$species) {
   my $type = $species_defs->get_config($sp,'ASSEMBLY_NAME');
   my $mapmaster = sprintf("%s.%s.reference", $sp, $species_defs->get_config($sp,'ASSEMBLY_NAME'));
   
-  my $skip = 0;
-  
-  # Source doesn't have to exist, but must have these coordinates for all species':
-  for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
-    unless (exists $das_coords->{$sp}{$coord_type}) {
-      warn "Coordinate system $sp $coord_type is not in the DAS Registry!";
-      $skip = 1;
-    }
-  }
-
-  # Get top level slices from the database
   my $db_info = $species_defs->get_config($sp, 'databases')->{'DATABASE_CORE'};
   my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -species => $sp,
@@ -146,6 +135,26 @@ SPECIES: foreach my $sp (@$species) {
     -user    => $db_info->{'USER'},
     -driver  => $db_info->{'DRIVER'},
   );
+  my $meta = $db->get_MetaContainer();
+  my $taxid = $meta->get_taxonomy_id();
+  
+  my $skip = 0;
+  
+  # Registry does not have anything for this species - we can't add it ourselves
+  if (!exists $das_coords->{$sp}) {
+    warn "Species $sp is not in the DAS Registry!";
+    $skip = 1;
+  } else {
+    # Source doesn't have to exist, but must have these coordinates for all species':
+    for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
+      unless (exists $das_coords->{$sp}{$coord_type}) {
+        my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid));
+        $tmp->{$sp}{$coord_type} || die "Unable to create $coord_type $sp coordinates";
+      }
+    }
+  }
+
+  # Get top level slices from the database
   my $dbh = $db->dbc->db_handle;
   my $toplevel_slices   = $dbh->selectall_arrayref( q(
   select sr.name   , 
@@ -177,9 +186,13 @@ SPECIES: foreach my $sp (@$species) {
         $cs_xml = $das_coords->{$sp}{$_->[5]}{$_->[6]};
       }
       if (!$cs_xml) {
-        warn "Coordinate system $_->[5] $_->[6] is not in the DAS Registry!";
-        $skip = 1;
-        $cs_xml = 'bad';
+        my $tmp = _get_das_coords(_coord_system_as_xml($_->[5], $_->[6], $sp, $taxid));
+        $cs_xml = $tmp->{$sp}{$_->[5]}{$_->[6]};
+        if (!$cs_xml) {
+          warn "Coordinate system $_->[5] $_->[6] is not in the DAS Registry!";
+          $skip = 1;
+          $cs_xml = 'bad';
+        }
       }
       my $start = $_->[2] || 1;
       my $end   = $_->[3] || $_->[1];
@@ -338,11 +351,75 @@ $coordinates$capability
   close FH;
 }
 
+sub _coord_system_as_xml {
+  my ($cs_name, $cs_version, $cs_species, $taxid) = @_;
+  
+  my ($type, $authority, $version, $species);
+  
+  my $cs_string = join ':', $cs_name, $cs_version, $cs_species;
+  for (keys %COORD_MAPPINGS) {
+    $type = $_;
+    for (keys %{ $COORD_MAPPINGS{$type} }) {
+      $authority = $_;
+      for (keys %{ $COORD_MAPPINGS{$type}{$authority} }) {
+        $version = $_;
+        for (keys %{ $COORD_MAPPINGS{$type}{$authority}{$version} }) {
+          $species = $_;
+          if ($cs_string eq $COORD_MAPPINGS{$type}{$authority}{$version}{$species}) {
+            goto CREATE;
+          }
+        }
+      }
+    }
+  }
+  
+  $species = $cs_species;
+  $species =~ s/_/ /g;
+  $version = undef;
+  
+  for (keys %NON_GENOMIC_COORDS) {
+    $type = $_;
+    for (keys %{ $NON_GENOMIC_COORDS{$type} }) {
+      $authority = $_;
+      my $cs = $NON_GENOMIC_COORDS{$type}{$authority};
+      if ($cs->name eq $cs_name) {
+        goto CREATE;
+      }
+    }
+  }
+  
+  ($authority, $version) = $cs_version =~ m/([^\d]+)(.+)/;
+  
+  my %reverse_types = map { $TYPE_MAPPINGS{$_} => $_ } keys %TYPE_MAPPINGS;
+  my %reverse_auths = map { $AUTHORITY_MAPPINGS{$_} => $_ } keys %AUTHORITY_MAPPINGS;
+  
+  $type = $reverse_types{$cs_name} || $cs_name;
+  $authority = $reverse_auths{$authority} || $authority;
+  
+  CREATE:
+  my $xml = $version ? sprintf q(<COORDINATES source="%s" authority="%s" version="%s" taxid="%s">%2$s_%3$s,%1$s,%s</COORDINATES>),
+                               $type, $authority, $version, $taxid, $species
+                     : sprintf q(<COORDINATES source="%s" authority="%s" taxid="%s">%2$s,%1$s,%s</COORDINATES>),
+                               $type, $authority, $taxid, $species;
+  return $xml;
+}
+
 sub _get_das_coords {
-  my $ua = LWP::UserAgent->new(agent=>$sitetype);
+  my ($add_data) = @_;
+  my $ua = LWP::UserAgent->new(agent => $sitetype);
   $ua->proxy('http', $species_defs->ENSEMBL_WWW_PROXY);
   $ua->no_proxy(@{$species_defs->ENSEMBL_NO_PROXY||[]});
-  my $resp = $ua->get('http://www.dasregistry.org/das/coordinatesystem');
+  my $method = $add_data ? 'POST' : 'GET';
+  my $req  = HTTP::Request->new($method => 'http://www.dasregistry.org/das/coordinatesystem');
+  
+  # If we have XML for a new coordinate system, add it
+  if ($add_data) {
+    $add_data = qq(<?xml version='1.0' ?>\n<DASCOORDINATESYSTEM>\n  $add_data\n</DASCOORDINATESYSTEM>);
+    $req->content($add_data);
+    $req->content_length(length $add_data);
+  }
+  
+  my $resp = $ua->request( $req );
   $resp->is_success || die "Unable to retrieve coordinate system list from the DAS Registry: ".$resp->status_line;
   my $xml = $resp->content;
   $xml =~ s{^\s*(<\?xml.*?>)?(\s*</?DASCOORDINATESYSTEM>\s*)?}{}mix;
@@ -355,6 +432,7 @@ sub _get_das_coords {
     my ($type) = m/source\s*=\s*"(.*?)"/mx;
     my ($authority) = m/authority\s*=\s*"(.*?)"/mx;
     my ($version) = m/version\s*=\s*"(.*?)"/mx;
+    my ($taxid) = m/taxid\s*=\s*"(.*?)"/mx;
     my ($des) = m/>(.*)$/mx;
     my (undef, undef, $species) = split /,/, $des, 3;
     
