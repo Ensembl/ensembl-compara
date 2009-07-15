@@ -17,6 +17,11 @@ sub process {
   my $interface = $object->interface;
   my $url = '/'.$interface->script_name.'/';
 
+  my $param = {
+    '_referer'  => $object->param('_referer'),
+    'x_requested_with'  => $object->param('x_requested_with'),
+  };
+
   $interface->cgi_populate($object);
   ## Add user ID to new entries in the user/group_record tables
   if (!$object->param('id') && ref($interface->data) =~ /Record/) {
@@ -27,6 +32,7 @@ sub process {
   my $success = $interface->data->save;
   my $type;
   if ($success) {
+    $param->{'id'} = $success;
     if (my $custom = $interface->get_landing_page) {
       $url = $custom;
     }
@@ -38,16 +44,11 @@ sub process {
     $url .= 'Problem';
   }
 
-  my $param = {
-    '_referer'  => $object->param('_referer'),
-    'x_requested_with'  => $object->param('x_requested_with'),
-  };
-
   if ($object->param('x_requested_with')) {
     $self->ajax_redirect($url, $param);
   }
   else {
-    $object->redirect($url, $param);
+    $object->redirect($object->url($url, $param));
   }
 }
 
