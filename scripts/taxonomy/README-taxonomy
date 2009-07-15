@@ -63,15 +63,15 @@ exit
 
 # This should take about 60 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+#ncbi_taxonomy.ncbi_taxa_node: Records: 518512  Deleted: 0  Skipped: 0  Warnings: 1555536
+# v55
 #ncbi_taxonomy.ncbi_taxa_node: Records: 501241  Deleted: 0  Skipped: 0  Warnings: 1503723
-# v54
-#ncbi_taxonomy.ncbi_taxa_node: Records: 490867  Deleted: 0  Skipped: 0  Warnings: 1472601
 
 # This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
+#ncbi_taxonomy.ncbi_taxa_name: Records: 737626  Deleted: 0  Skipped: 0  Warnings: 0
+# v55
 ncbi_taxonomy.ncbi_taxa_name: Records: 711161  Deleted: 0  Skipped: 0  Warnings: 0
-# v54
-#ncbi_taxonomy.ncbi_taxa_name: Records: 695512  Deleted: 0  Skipped: 0  Warnings: 0
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
@@ -139,26 +139,6 @@ mysql -hens-livemirror -uensro ncbi_taxonomy -e "select * from ncbi_taxa_name wh
 +----------+---------------------+-----------------+
 |        1 | all                 | synonym         | 
 |        1 | root                | scientific name | 
-|        1 | 2009-01-08 10:41:20 | import date     | 
+|        1 | 2009-07-15 11:12:06 | import date     | 
 +----------+---------------------+-----------------+
 
-taxon_name -- Choloepus hoffmanni
-taxon_id -- 9358
-scientific name -- Choloepus hoffmanni
-genbank common name -- Hoffmann's two-fingered sloth
-common name -- Hoffmann's two-toed sloth
-name -- Choloepus hoffmanni
-
-taxon_name -- Anolis carolinensis
-taxon_id -- 28377
-scientific name -- Anolis carolinensis
-genbank common name -- green anole
-name -- Anolis carolinensis
-
-taxon_name -- Taeniopygia guttata
-taxon_id -- 59729
-scientific name -- Taeniopygia guttata
-synonym -- ARRAY(0x18e1920)
-common name -- zebra finch
-name -- Taeniopygia guttata
-merged_taxon_id -- ARRAY(0x18e1970)
