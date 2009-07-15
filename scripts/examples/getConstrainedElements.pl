@@ -2,6 +2,7 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::AlignIO;
+use Data::Dumper;
 
 #
 # Simple example to retrieve the constrained elements from the PECAN 10 way or
@@ -9,9 +10,9 @@ use Bio::AlignIO;
 #
 
 my $spp = "Homo sapiens";
-my $chr = "1";
-my $start = 238563427;
-my $end = 238565434;
+my $chr = "15";
+my $start = 76628758; 
+my $end = 76635191;
 
 #example for ensembl 49
 #my $version = 49;
@@ -74,12 +75,12 @@ my $end = 238565434;
 #Species in EPO 31 way alignment
 my $spp_list = ["Rattus norvegicus","Homo sapiens","Macaca mulatta","Echinops telfairi","Oryctolagus cuniculus","Pan troglodytes","Canis familiaris","Tupaia belangeri","Erinaceus europaeus","Otolemur garnettii","Spermophilus tridecemlineatus","Myotis lucifugus","Sorex araneus","Mus musculus","Microcebus murinus","Pongo pygmaeus","Equus caballus","Bos taurus","Felis catus","Ochotona princeps","Cavia porcellus","Gorilla gorilla","Choloepus hoffmanni","Procavia capensis","Tursiops truncatus","Loxodonta africana","Tarsius syrichta","Dipodomys ordii","Vicugna pacos","Pteropus vampyrus","Dasypus novemcinctus"];
 
-my $version = 53;
+my $version = 55;
 my $original_alignment_mlss_id = 364; #mlssid from alignments from which the constrained elements were derived.
 
 #Bio::EnsEMBL::Registry->load_registry_from_db(-host =>'ensembldb.ensembl.org', 
-Bio::EnsEMBL::Registry->load_registry_from_db(-host =>'ens-staging',
-					      -user => 'ensro',
+Bio::EnsEMBL::Registry->load_registry_from_db(-host =>'ensembldb.ensembl.org',
+					      -user => 'anonymous',
 					      -db_version => $version);
 
 # set up an AlignIO to format SimpleAlign output
@@ -99,8 +100,20 @@ my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor('Multi
 my $ce_mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_registry_aliases("GERP_CONSTRAINED_ELEMENT", $spp_list);
 
 #Get the mlss object from the alignement from which the constrained elements were generated (31-way ORTHEUS)
-my $orig_mlss = $method_link_species_set_adaptor->fetch_by_dbID( $original_alignment_mlss_id );
+#my $orig_mlss = $method_link_species_set_adaptor->fetch_by_dbID( $original_alignment_mlss_id );
 
+##Alternatively
+
+my $orig_mlss;
+my $num_species = 31;
+my $all_mlss = $method_link_species_set_adaptor->fetch_all_by_method_link_type("EPO_LOW_COVERAGE");
+foreach my $this_mlss (@$all_mlss) {
+	if (@{$this_mlss->species_set} == $num_species) {
+		$orig_mlss = $this_mlss;
+		last;
+	}
+}
+throw("Unable to find method_link_species_set") if (!defined($orig_mlss));
 
 #Get constrained_element adaptor
 my $ce_adaptor = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'compara', 'ConstrainedElement');
@@ -108,6 +121,7 @@ my $ce_adaptor = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'compara', 'Constr
 #Fetch all constrained elements
 my $cons = $ce_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($ce_mlss,$query_slice);
 
+#print Dumper $cons;
 print "Number of constrained elements: " . @$cons . "\n";
 
 #Print out information
