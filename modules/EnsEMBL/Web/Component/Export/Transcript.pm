@@ -22,32 +22,26 @@ sub genetic_variation {
   my $self = shift;
   my $object = $self->object;
   
-  my $transcript_id = $object->stable_id;
-  my $format = $object->param('_format');
-  
   my $params;
   map { /opt_pop_(.+)/; $params->{$1} = 1 if $object->param($_) ne 'off' } grep { /opt_pop_/ } $object->param;
   
   my @samples = $object->get_samples(undef, $params);
   my $snp_data = $object->get_genetic_variations(@samples);
   
-  my $header = qq{
-    <h2>Variation data for strains on transcript $transcript_id</h2>
-    <p>Format: tab separated per strain (SNP id; Type; Amino acid change;)</p>
-  };
+  $self->html(sprintf '<h2>Variation data for strains on transcript %s</h2>', $object->stable_id);
+  $self->html('<p>Format: tab separated per strain (SNP id; Type; Amino acid change;)</p>');
+  $self->html('');
   
   my $colours = $object->species_defs->colour('variation');
   my $colour_map = $object->get_session->colourmap;
   
-  my ($html, $table, $text);
+  my $table = new EnsEMBL::Web::Document::SpreadSheet if $self->html_format;
   
-  if ($format eq 'Text') {
-    $text = join "\t", 'bp position', @samples, "\r\n";
-  } else {
-    $table = new EnsEMBL::Web::Document::SpreadSheet;
-    
+  if ($table) {
     $table->add_option('cellspacing', 2);
     $table->add_columns(map {{ title => $_, align => 'left' }} ( 'bp&nbsp;position', @samples ));
+  } else {
+    $self->html(join "\t", 'bp position', @samples);
   }
   
   foreach my $snp_pos (sort keys %$snp_data) {
@@ -70,24 +64,15 @@ sub genetic_variation {
       }
     }
     
-    if ($format eq 'Text') {
-      $text .= join "\t", @info, "\r\n";
-    } else {
+    if ($table) {
       $table->add_row(\@info);
       $table->add_option('row_style', \@row_style);
+    } else {
+      $self->html(join "\t", @info);
     }
   }
   
-  if ($format eq 'Text') {
-    $html = "$text\r\n";
-    $html =~ s/<.*?>//g; # Strip html tags
-  } else {
-    $html = $table->render;
-  }
-  
-  $html ||= 'No data available';
-  
-  return $header . $html;
+  $self->html($table->render) if $table;
 }
 
 1;
