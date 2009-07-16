@@ -132,7 +132,7 @@ sub set_primary_key {
   my $class = shift;
   $class->columns(Primary => @_);
 }
-
+*set_primary_keys = \&set_primary_key;
 
 sub get_primary_key {
   my $class = shift;
