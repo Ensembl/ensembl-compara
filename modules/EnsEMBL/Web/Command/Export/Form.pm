@@ -71,8 +71,9 @@ sub get_formats {
     
     my $map = { 
       csv      => 'features',
-      gff      => 'features',
       tab      => 'features',
+      gff      => 'features',
+      gff3     => 'features',
       embl     => 'flat',
       genbank  => 'flat',
       pipmaker => 'pip',
@@ -88,7 +89,7 @@ sub get_formats {
       if ($object->param("${output}_$_->[0]") eq 'yes') {
         $_->[0] =~ s/(miscset_)//;
         
-        $href .= $1 ? ";miscset=$_->[0]" : ";st=$_->[0]";
+        $href .= $1 ? ";misc_set=$_->[0]" : ";param=$_->[0]";
       }
     }
     

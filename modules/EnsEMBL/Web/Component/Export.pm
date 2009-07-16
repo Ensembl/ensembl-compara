@@ -26,32 +26,49 @@ sub export {
   $slice = $slice->invert if $strand && $strand != $slice->strand;
   $slice = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
   
-  my $params = { html_format => !$format || $format eq 'HTML' };
+  my $params = {};
+  
+  my $html_format = !$format || $format eq 'HTML';
   
   if ($slice->length > 5000000) {
     my $error = 'The region selected is too large to export. Please select a region of less than 5Mb.';
-    return $params->{'html_format'} ? $self->_warning('Region too large', "<p>$error</p>") : $error;
+    
+    $self->string($html_format ? $self->_warning('Region too large', "<p>$error</p>") : $error);
+  } else {
+    my $outputs = {
+      fasta   => sub { return $self->fasta(@inputs); },
+      csv     => sub { return $self->features('csv'); },
+      tab     => sub { return $self->features('tab'); },
+      gff     => sub { return $self->features('gff'); },
+      gff3    => sub { return $self->gff3_features; },
+      embl    => sub { return $self->flat('embl'); },
+      genbank => sub { return $self->flat('genbank'); },
+      %$custom_outputs
+    };
+    
+    if ($outputs->{$o}) {
+      map { $params->{$_} = 1 if $_ } $object->param('param');
+      map { $params->{'misc_set'}->{$_} = 1 if $_ } $object->param('misc_set');
+      
+      $self->slice($slice);
+      $self->params($params);
+      $self->html_format($html_format);
+      
+      $outputs->{$o}();
+    }
   }
   
-  my $outputs = {
-    fasta   => sub { return $self->fasta(@inputs); },
-    csv     => sub { return $self->features('csv'); },
-    gff     => sub { return $self->features('gff'); },
-    tab     => sub { return $self->features('tab'); },
-    embl    => sub { return $self->flat('embl'); },
-    genbank => sub { return $self->flat('genbank'); },
-    %$custom_outputs
-  };
+  my $string = $self->string;
+  my $html   = $self->html; # contains html tags
   
-  if ($outputs->{$o}) {
-    map { $params->{$_} = 1 } $object->param('st');
-    map { $params->{'misc_set'}->{$_} = 1 if $_ } $object->param('miscset');
-    
-    $self->slice($slice);
-    $self->params($params);
-    
-    return $outputs->{$o}();
+  if ($html_format) {
+    $string = "<pre>$string</pre>" if $string;
+  } else {
+    s/<.*?>//g for $string, $html; # Strip html tags;
+    $string .= "\r\n" if $html;
   }
+  
+  return $string . $html;
 }
 
 sub slice {
@@ -64,6 +81,22 @@ sub params {
   my $self = shift;
   $self->{'params'} = $_[0] if $_[0];
   return $self->{'params'};
+}
+
+sub html_format {
+  my $self = shift;
+  $self->{'html_format'} = $_[0] if $_[0];
+  return $self->{'html_format'};
+}
+
+sub string { return shift->output('string', @_); }
+sub html   { return shift->output('html',   @_); }
+
+sub output {
+  my ($self, $key, $string) = @_;
+  
+  $self->{$key} .= "$string\r\n" if defined $string;
+  return $self->{$key};
 }
 
 sub fasta {
@@ -81,323 +114,68 @@ sub fasta {
   my $slice_length = $slice->length;
   my $strand = $slice->strand;
   
-  my $html;
+  my $fasta;
   
-  foreach (@$trans_objects) {
-    my $transcript = $_->Obj;
-    my $id_type = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->status . '_' . $transcript->biotype;
-    my $id = ($object_id ? "$object_id:" : '') . $transcript->stable_id;
-    my $intron_id = 1;
+  if (scalar keys %$params) {
+    my $intron_id;
     
     my $output = {
-      cdna    => [[ "$id cdna:$id_type", $transcript->spliced_seq ]],
-      coding  => eval { [[ "$id cds:$id_type", $transcript->translateable_seq ]] },
-      peptide => eval { [[ "$id peptide:@{[$transcript->translation->stable_id]} pep:$id_type", $transcript->translate->seq ]] },
-      utr3    => eval { [[ "$id utr3:$id_type", $transcript->three_prime_utr->seq ]] },
-      utr5    => eval { [[ "$id utr5:$id_type", $transcript->five_prime_utr->seq ]] },
-      exons   => eval { [ map {[ "$id " . $_->id . " exon:$id_type", $_->seq->seq ]} @{$transcript->get_all_Exons} ] },
-      introns => eval { [ map {[ "$id intron " . $intron_id++ . ":$id_type", $_->seq ]} @{$transcript->get_all_Introns} ] }
+      cdna    => sub { my ($t, $id, $type) = @_; [[ "$id cdna:$type", $t->spliced_seq ]] },
+      coding  => sub { my ($t, $id, $type) = @_; [[ "$id cds:$type", $t->translateable_seq ]] },
+      peptide => sub { my ($t, $id, $type) = @_; eval { [[ "$id peptide: " . $t->translation->stable_id . " pep:$type", $t->translate->seq ]] }},
+      utr3    => sub { my ($t, $id, $type) = @_; eval { [[ "$id utr3:$type", $t->three_prime_utr->seq ]] }},
+      utr5    => sub { my ($t, $id, $type) = @_; eval { [[ "$id utr5:$type", $t->five_prime_utr->seq ]] }},
+      exon    => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id " . $_->id . " exon:$type", $_->seq->seq ]} @{$t->get_all_Exons} ] }},
+      intron  => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id intron " . $intron_id++ . ":$type", $_->seq ]} @{$t->get_all_Introns} ] }}
     };
     
-    foreach (sort keys %$params) {
-      next unless ref $output->{$_} eq 'ARRAY';
+    foreach (@$trans_objects) {
+      my $transcript = $_->Obj;
+      my $id         = ($object_id ? "$object_id:" : '') . $transcript->stable_id;
+      my $type       = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->status . '_' . $transcript->biotype;
       
-      foreach (@{$output->{$_}}) {
-        $_->[1] =~ s/(.{60})/$1\r\n/g;
-        $_->[1] =~ s/\r\n$//g;
+      $intron_id = 1;
+      
+      foreach (sort keys %$params) {      
+        my $o = $output->{$_}($transcript, $id, $type) if exists $output->{$_};
         
-        $html .= ">$_->[0]\r\n$_->[1]\r\n";
+        next unless ref $o eq 'ARRAY';
+        
+        foreach (@$o) {
+          $self->string(">$_->[0]");
+          $self->string($fasta) while $fasta = substr $_->[1], 0, 60, '';
+        }
       }
+      
+      $self->string('');
     }
-    
-    $html .= "\r\n";
   }
   
   if (defined $genomic && $genomic ne 'off') {
     my $masking = $genomic eq 'soft_masked' ? 1 : $genomic eq 'hard_masked' ? 0 : undef;
-    my ($name, $seq);
+    my ($seq, $start, $end, $flank_slice);
     
     if ($genomic =~ /flanking/) {
-      if ($genomic =~ /5/) {
-        my $flank5_slice = $slice->sub_Slice(1, $object->param('flank5_display'), $strand);
-        
-        if ($flank5_slice) {
-          $name = $flank5_slice->name;
-          $seq = $flank5_slice->seq;
-          $seq =~ s/(.{60})/$1\r\n/g;
+      for (5, 3) {
+        if ($genomic =~ /$_/) {
+          ($start, $end) = $_ == 3 ? ($slice_length - $object->param('flank3_display'), $slice_length) : (1, $object->param('flank5_display'));
+          $flank_slice = $slice->sub_Slice($start, $end, $strand);
           
-          $html .= ">5' Flanking sequence $name\r\n$seq\r\n";
-        }
-      }
-      
-      if ($genomic =~ /3/) {
-        my $flank3_slice = $slice->sub_Slice($slice_length - $object->param('flank3_display'), $slice_length, $strand);
-        
-        if ($flank3_slice) {
-          $name = $flank3_slice->name;
-          $seq = $flank3_slice->seq;
-          $seq =~ s/(.{60})/$1\r\n/g;
-          
-          $html .= ">3' Flanking sequence $name\r\n$seq\r\n";
+          if ($flank_slice) {
+            $seq  = $flank_slice->seq;
+            
+            $self->string(">$_' Flanking sequence " . $flank_slice->name);
+            $self->string($fasta) while $fasta = substr $seq, 0, 60, '';
+          }
         }
       }
     } else {
       $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $masking)->seq : $slice->seq;
-      $seq =~ s/(.{60})/$1\r\n/g;
       
-      $html .= ">$seq_region_name dna:$seq_region_type $slice_name\r\n$seq\r\n";
+      $self->string(">$seq_region_name dna:$seq_region_type $slice_name");
+      $self->string($fasta) while $fasta = substr $seq, 0, 60, '';
     }
   }
-  
-  $html = "<pre>$html</pre>" if $html && $params->{'html_format'};
-  
-  return $html || 'No data available';
-}
-
-sub features {
-  my $self = shift;
-  my $format = shift;
-  
-  my $object = $self->object;
-  my $species_defs = $object->species_defs;
-  my $slice = $self->slice;
-  my $params = $self->params;
-  
-  my $html;
-  
-  my @common_fields = qw( seqname source feature start end score strand frame );
-  my @other_fields  = qw( hid hstart hend genscan gene_id transcript_id exon_id gene_type variation_name );
-  
-  my $options = {
-    other  => \@other_fields,
-    format => $format,
-    delim  => $format eq 'csv' ? ',' : "\t"
-  };
-  
-  my @features;
-  
-  my $header = join ($options->{'delim'}, @common_fields, @other_fields) . "\r\n" if $format ne 'gff';
-  
-  if ($params->{'similarity'}) {
-    foreach (@{$slice->get_all_SimilarityFeatures}) {
-      $html .= $self->feature('similarity', $_, $options, { hid => $_->hseqname, hstart => $_->hstart, hend => $_->hend });
-    }
-  }
-  
-  if ($params->{'repeat'}) {
-    foreach (@{$slice->get_all_RepeatFeatures}) {
-      $html .= $self->feature('repeat', $_, $options, { hid => $_->repeat_consensus->name, hstart => $_->hstart, hend => $_->hend });
-    }
-  }
-  
-  if ($params->{'genscan'}) {
-    foreach my $t (@{$slice->get_all_PredictionTranscripts}) {
-      foreach my $e (@{$t->get_all_Exons}) {
-        $html .= $self->feature('pred.trans.', $e, $options, { genscan => $t->stable_id });
-      }
-    }
-  }
-  
-  if ($params->{'variation'}) {
-    foreach (@{$slice->get_all_VariationFeatures}) {
-      $html .= $self->feature('variation', $_, $options, { variation_name => $_->variation_name });
-    }
-  }
-  
-  if ($params->{'gene'}) {
-    my @dbs = ('core');
-    push @dbs, 'vega' if $species_defs->databases->{'DATABASE_VEGA'};
-    push @dbs, 'otherfeatures' if $species_defs->databases->{'DATABASE_OTHERFEATURES'};
-  
-    foreach my $db (@dbs) {
-      foreach my $g (@{$slice->get_all_Genes(undef, $db)}) {
-        foreach my $t (@{$g->get_all_Transcripts}) {
-          foreach my $e (@{$t->get_all_Exons}) {
-            $html .= $self->feature('gene', $e, $options, { 
-               exon_id       => $e->stable_id, 
-               transcript_id => $t->stable_id, 
-               gene_id       => $g->stable_id, 
-               gene_type     => $g->status . '_' . $g->biotype
-            }, $db eq 'vega' ? 'Vega' : 'Ensembl');
-          }
-        }
-      }
-    }
-  }
-  
-  if ($html) {
-    $html = "$header$html";
-    $html = "<pre>$html</pre>" if $params->{'html_format'};
-  }
-  
-  if ($params->{'misc_set'}) {    
-    my $sets = $species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
-    
-    $options->{'seq_region'} = $object->seq_region_name;
-    $options->{'start'} = $object->seq_region_start;
-    $options->{'end'} = $object->seq_region_end;
-    
-    $html .= "\r\n";
-    $html .= $self->misc_set({%$options, ( misc_set => $_, name => $sets->{$_}->{'name'} )}) for sort { $sets->{$a}->{'name'} cmp $sets->{$b}->{'name'} } keys %{$params->{'misc_set'}};
-    $html .= $self->misc_set_genes($options);
-  }
-  
-  return $html || 'No data available';
-}
-
-sub feature {
-  my $self = shift;
-  my ($type, $feature, $options, $extra, $def_source) = @_;
-  
-  my $score  = $feature->can('score') ? $feature->score : '.';
-  my $source = $feature->can('source_tag') ? $feature->source_tag : ($def_source || 'Ensembl');
-  my $tag    = $feature->can('primary_tag') ? $feature->primary_tag : (ucfirst(lc $type) || '.');
-  
-  $source =~ s/\s/_/g;
-  $tag    =~ s/\s/_/g;
-  
-  my ($name, $strand, $start, $end, $phase);
-  
-  if ($feature->can('seq_region_name')) {
-    $strand = $feature->seq_region_strand;
-    $name   = $feature->seq_region_name;
-    $start  = $feature->seq_region_start;
-    $end    = $feature->seq_region_end;
-  } else {
-    $strand = $feature->can('strand') ? $feature->strand : undef;
-    $name   = $feature->can('entire_seq') && $feature->entire_seq ? $feature->entire_seq->name : $feature->can('seqname') ? $feature->seqname : undef;
-    $start  = $feature->can('start') ? $feature->start : undef;
-    $end    = $feature->can('end') ? $feature->end : undef;
-  }
-  
-  $name ||= 'SEQ';
-  $name =~ s/\s/_/g;
-  
-  if ($strand == 1) {
-    $strand = '+';
-    $phase = $feature->can('phase') ? $feature->phase : '.';
-  } elsif ($strand == -1) {
-    $strand = '-';
-    $phase = $feature->can('end_phase') ? $feature->end_phase : '.';
-  }
-  
-  $phase = '.' if $phase == -1 || !defined $phase;
-  
-  $strand ||= '.';
-  
-  my @results = ($name, $source, $tag, $start, $end, $score, $strand, $phase);
-  
-  if ($options->{'format'} eq 'gff') {
-    push @results, join ';', map { defined $extra->{$_} ? "$_=$extra->{$_}" : () } @{$options->{'other'}};
-  } else {
-    push @results, map { $extra->{$_} } @{$options->{'other'}};
-  }
-  
-  return join ($options->{'delim'}, @results) . "\r\n";
-}
-
-sub misc_set {
-  my $self = shift;
-  my $options = shift;
-  
-  my $object = $self->object;
-  my $table = new EnsEMBL::Web::Document::SpreadSheet if $self->params->{'html_format'};
-  
-  my @fields = ( 'SeqRegion', 'Start', 'End', 'Name', 'Well name', 'Sanger', 'EMBL Acc', 'FISH', 'Centre', 'State' ); 
-  my $header = "Features in set $options->{'name'} in Chromosome $options->{'seq_region'} $options->{'start'} - $options->{'end'}"; 
-  $header = "<h2>$header</h2>" if $table;
-    
-  my $db = $object->database('core');
-  my @regions;
-  my $adaptor;
-  my $row;
-  my $results;
-  my $i = 0;
-
-  eval {
-    $adaptor = $db->get_MiscSetAdaptor->fetch_by_code($options->{'misc_set'});
-  };
-  
-  if ($adaptor) {
-    if ($table) {
-      $table->add_columns(map {{ title => $_, align => 'left' }} @fields);
-    } else {
-      $header .= "\r\n" . join ($options->{'delim'}, @fields) . "\r\n";
-    }
-    
-    push @regions, $self->slice;
-    
-    foreach my $r (@regions) {
-      foreach (sort { $a->start <=> $b->start } @{$db->get_MiscFeatureAdaptor->fetch_all_by_Slice_and_set_code($r, $adaptor->code)}) {
-        $row = [
-          $_->seq_region_name,
-          $_->seq_region_start,
-          $_->seq_region_end,
-          join (';', @{$_->get_all_attribute_values('clone_name')}, @{$_->get_all_attribute_values('name')}),
-          join (';', @{$_->get_all_attribute_values('well_name')}),
-          join (';', @{$_->get_all_attribute_values('synonym')}, @{$_->get_all_attribute_values('sanger_project')}),
-          join (';', @{$_->get_all_attribute_values('embl_acc')}),
-          $_->get_scalar_attribute('fish'),
-          $_->get_scalar_attribute('org'),
-          $_->get_scalar_attribute('state')
-        ];
-        
-        if ($table) {
-          $table->add_row($row);
-        } else {
-          $results .= join ($options->{'delim'}, @$row) . "\r\n";
-        }
-        
-        $i++;
-      }
-    }
-  }
-  
-  return $header . ($i ? ($table ? $table->render : $results) : "No data available\r\n") . ($table ? '<br /><br />' : "\r\n");
-}
-
-sub misc_set_genes {
-  my $self = shift;
-  my $options = shift;
-  
-  my $object = $self->object;
-  my $slice = $self->slice;
-  my $table = new EnsEMBL::Web::Document::SpreadSheet if $self->params->{'html_format'};
-  
-  my @gene_fields = ( 'SeqRegion', 'Start', 'End', 'Ensembl ID', 'DB', 'Name' );
-  my $header = "Genes in Chromosome $options->{'seq_region'} $options->{'start'} - $options->{'end'}";
-  $header = "<h2>$header</h2>" if $table;
-  
-  my $row;
-  my $results;
-  my $i = 0;
-  
-  if ($table) {
-    $table->add_columns(map {{ title => $_, align => 'left' }} @gene_fields);
-  } else {
-    $header .= "\r\n" . join ($options->{'delim'}, @gene_fields) . "\r\n";
-  }
-  
-  foreach (sort { $a->seq_region_start <=> $b->seq_region_start } map { @{$slice->get_all_Genes($_)||[]} } qw( ensembl havana ensembl_havana_gene )) {
-    $row = [
-      $_->seq_region_name,
-      $_->seq_region_start,
-      $_->seq_region_end,
-      $_->stable_id,
-      $_->external_db || '-',
-      $_->external_name || '-novel-'
-    ];
-    
-    if ($table) {
-      $table->add_row($row);
-    } else {
-      $results .= join ($options->{'delim'}, @$row) . "\r\n";
-    }
-    
-    $i++;
-  }
-  
-  return $header . ($i ? ($table ? $table->render : $results) : 'No data available');
 }
 
 sub flat {
@@ -427,10 +205,386 @@ sub flat {
     $seq_dumper->attach_database('estgene', $estgene_db);
   }
   
-  my $html = $seq_dumper->dump($slice, $format);
-  $html = "<pre>$html</pre>" if $params->{'html_format'};
+  $self->string($seq_dumper->dump($slice, $format));
+}
+
+sub features {
+  my $self = shift;
+  my $format = shift;
   
-  return $html || 'No data available';
+  my $object = $self->object;
+  my $slice  = $self->slice;
+  my $params = $self->params;
+  
+  my @common_fields = qw( seqname source feature start end score strand frame );
+  my @extra_fields  = qw( hid hstart hend genscan gene_id transcript_id exon_id gene_type variation_name );
+  
+  $self->{'config'} = {
+    extra_fields  => \@extra_fields,
+    format        => $format,
+    delim         => $format eq 'csv' ? ',' : "\t"
+  };
+  
+  $self->string(join $self->{'config'}->{'delim'}, @common_fields, @extra_fields) unless $format eq 'gff';
+  
+  if ($params->{'similarity'}) {
+    foreach (@{$slice->get_all_SimilarityFeatures}) {
+      $self->feature('similarity', $_, { 
+        hid    => $_->hseqname, 
+        hstart => $_->hstart, 
+        hend   => $_->hend 
+      });
+    }
+  }
+  
+  if ($params->{'repeat'}) {
+    foreach (@{$slice->get_all_RepeatFeatures}) {
+      $self->feature('repeat', $_, { 
+        hid    => $_->repeat_consensus->name, 
+        hstart => $_->hstart, 
+        hend   => $_->hend 
+      });
+    }
+  }
+  
+  if ($params->{'genscan'}) {
+    foreach my $t (@{$slice->get_all_PredictionTranscripts}) {
+      foreach my $e (@{$t->get_all_Exons}) {
+        $self->feature('pred.trans.', $e, { genscan => $t->stable_id });
+      }
+    }
+  }
+  
+  if ($params->{'variation'}) {
+    foreach (@{$slice->get_all_VariationFeatures}) {
+      $self->feature('variation', $_, { variation_name => $_->variation_name });
+    }
+  }
+  
+  if ($params->{'gene'}) {
+    my $species_defs = $object->species_defs;
+    
+    my @dbs = ('core');
+    push @dbs, 'vega' if $species_defs->databases->{'DATABASE_VEGA'};
+    push @dbs, 'otherfeatures' if $species_defs->databases->{'DATABASE_OTHERFEATURES'};
+  
+    foreach my $db (@dbs) {
+      foreach my $g (@{$slice->get_all_Genes(undef, $db)}) {
+        foreach my $t (@{$g->get_all_Transcripts}) {
+          foreach my $e (@{$t->get_all_Exons}) {
+            $self->feature('gene', $e, { 
+               exon_id       => $e->stable_id, 
+               transcript_id => $t->stable_id, 
+               gene_id       => $g->stable_id, 
+               gene_type     => $g->status . '_' . $g->biotype
+            }, { source => $db eq 'vega' ? 'Vega' : 'Ensembl' });
+          }
+        }
+      }
+    }
+  }
+  
+  $self->misc_sets(keys %{$params->{'misc_set'}}) if $params->{'misc_set'};
+}
+
+sub gff3_features {
+  my $self = shift;
+  
+  my $object       = $self->object;
+  my $slice        = $self->slice;
+  my $params       = $self->params;
+  my $species_defs = $object->species_defs;
+  
+  $self->{'config'} = {
+    format             => 'gff3',
+    delim              => "\t",
+    ordered_attributes => {},
+    feature_order      => {},
+    feature_type_count => 0
+  };
+  
+  
+  my @dbs = ('core');
+  push @dbs, 'vega' if $species_defs->databases->{'DATABASE_VEGA'};
+  push @dbs, 'otherfeatures' if $species_defs->databases->{'DATABASE_OTHERFEATURES'};
+  
+  my ($g_id, $t_id);
+  
+  foreach my $db (@dbs) {
+    my $properties = { source => $db eq 'vega' ? 'Vega' : 'Ensembl' };
+    
+    foreach my $g (@{$slice->get_all_Genes(undef, $db)}) {
+      if ($params->{'gene'}) {
+        $g_id = $g->stable_id;
+        $self->feature('gene', $g, { ID => $g_id, Name => $g_id, biotype => $g->biotype }, $properties);
+      }
+    
+      foreach my $t (@{$g->get_all_Transcripts}) {
+        if ($params->{'transcript'}) {
+          $t_id = $t->stable_id;
+          $self->feature('transcript', $t, { ID => $t_id, Parent => $g_id, Name => $t_id, biotype => $t->biotype }, $properties);
+        }
+        
+        if ($params->{'intron'}) {
+          $self->feature('intron', $_, { Parent => $t_id, Name => $self->id_counter('intron') }, $properties) for @{$t->get_all_Introns};
+        }
+        
+        if ($params->{'exon'} || $params->{'cds'}) {
+          foreach my $e (@{$t->get_all_Exons}) {
+            $self->feature('exon', $e, { Parent => $t_id, Name => $e->stable_id }, $properties) if $params->{'exon'};
+            
+            if ($params->{'cds'}) {
+              my $start = $e->coding_region_start($t);
+              my $end   = $e->coding_region_end($t);
+              
+              next unless $start || $end;
+              
+              $_ += $e->seq_region_start for $start, $end; # why isn't there an API call for this?
+              
+              $self->feature('CDS', $e, { Parent => $t_id, Name => $t->translation->stable_id }, { start => $start, end => $end, %$properties });
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  my %order = reverse %{$self->{'config'}->{'feature_order'}};
+  
+  $self->string(join "\t", '##gff-version', '3');
+  $self->string(join "\t", '##sequence-region', $slice->seq_region_name, '1', $slice->seq_region_length);
+  $self->string('');
+  $self->string($self->output($order{$_})) for sort { $a <=> $b } keys %order;
+}
+
+sub feature {
+  my $self = shift;
+  my ($type, $feature, $attributes, $properties) = @_;
+  
+  my $config = $self->{'config'};
+  
+  my %vals;
+  
+  if ($feature->can('seq_region_name')) {
+    %vals = (
+      seqid  => $feature->seq_region_name,
+      start  => $feature->seq_region_start,
+      end    => $feature->seq_region_end,
+      strand => $feature->seq_region_strand
+    );
+  } else {
+    %vals = (
+      seqid  => $feature->can('entire_seq') && $feature->entire_seq ? $feature->entire_seq->name : $feature->can('seqname') ? $feature->seqname : undef,
+      start  => $feature->can('start') ? $feature->start : undef,
+      end    => $feature->can('end') ? $feature->end : undef,
+      strand => $feature->can('strand') ? $feature->strand : undef
+    );
+  }   
+  
+  %vals = (%vals, (
+    type   => $type || ($feature->can('primary_tag') ? $feature->primary_tag : '.'),
+    source => $feature->can('source_tag') ? $feature->source_tag : $feature->can('source') ? $feature->source : 'Ensembl',
+    score  => $feature->can('score') ? $feature->score : '.',
+    phase  => '.'
+  ));
+  
+  # Overwrite values where passed in
+  foreach (keys %$properties) {
+    $vals{$_} = $properties->{$_} if defined $properties->{$_};
+  }
+  
+  if ($vals{'strand'} == 1) {
+    $vals{'strand'} = '+';
+    $vals{'phase'}  = $feature->phase if $feature->can('phase');
+  } elsif ($vals{'strand'} == -1) {
+    $vals{'strand'} = '-';
+    $vals{'phase'}  = $feature->end_phase if $feature->can('end_phase');
+  }
+  
+  $vals{'phase'} = '.' if $vals{'phase'} == -1;
+  $vals{'strand'} ||= '.';
+  $vals{'seqid'}  ||= 'SEQ';
+  
+  my @results = map { $vals{$_} =~ s/ /_/g; $vals{$_} } qw(seqid source type start end score strand phase);
+  
+  if ($config->{'format'} eq 'gff') {
+    push @results, join ';', map { defined $attributes->{$_} ? "$_=$attributes->{$_}" : () } @{$config->{'extra_fields'}};
+  } elsif ($config->{'format'} eq 'gff3') {
+    push @results, join ';', map { "$_=" . $self->escape_attribute($attributes->{$_}) } $self->order_attributes($type, $attributes);
+  } else {
+    push @results, map { $attributes->{$_} } @{$config->{'extra_fields'}};
+  }
+  
+  if ($config->{'format'} eq 'gff3') {
+    $config->{'feature_order'}->{$type} ||= ++$config->{'feature_type_count'};
+    $self->output($type, join "\t", @results);
+  } else {
+    $self->string(join $config->{'delim'}, @results);
+  }
+}
+
+sub misc_sets {
+  my $self = shift;
+  
+  my $object = $self->object;
+  
+  my $sets = $object->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
+  my @misc_sets = sort { $sets->{$a}->{'name'} cmp $sets->{$b}->{'name'} } @_;
+  
+  my $region = $object->seq_region_name;
+  my $start  = $object->seq_region_start;
+  my $end    = $object->seq_region_end;
+  my $db     = $object->database('core');
+  my $delim  = $self->{'config'}->{'delim'};
+    
+  my $header_map = {
+    _gene   => { 
+      title   => "Genes in Chromosome $region $start - $end",
+      columns => [ 'SeqRegion', 'Start', 'End', 'Ensembl ID', 'DB', 'Name' ]
+    },
+    default => {
+      title   => "Features in set %s in Chromosome $region $start - $end",
+      columns => [ 'SeqRegion', 'Start', 'End', 'Name', 'Well name', 'Sanger', 'EMBL Acc', 'FISH', 'Centre', 'State' ]
+    }
+  };
+  
+  my ($header, $table, @sets);
+  
+  foreach (@misc_sets, '_gene') {
+    $header = $header_map->{$_} || $header_map->{'default'};
+    $table = new EnsEMBL::Web::Document::SpreadSheet if $self->html_format;
+    
+    $self->html(sprintf "<h2>$header->{'title'}</h2>", $sets->{$_}->{'name'});
+    
+    if ($table) {
+      $table->add_columns(map {{ title => $_, align => 'left' }} @{$header->{'columns'}});
+    } else {
+      $self->html(join $delim, @{$header->{'columns'}});
+    }
+    
+    @sets = $_ eq '_gene' ? $self->misc_set_genes : $self->misc_set($_, $sets->{$_}->{'name'}, $db);
+    
+    if (scalar @sets) {
+      foreach (@sets) {
+        if ($table) {
+          $table->add_row($_);
+        } else {
+          $self->html(join $delim, @$_);
+        }
+      }
+      
+      $self->html($table->render) if $table;
+    } else {
+      $self->html('No data available');
+    }
+  
+    $self->html('<br /><br />');
+  }
+}
+
+sub misc_set {
+  my $self = shift;
+  my ($misc_set, $name, $db) = @_;
+  
+  my $adaptor;
+  my @rows;
+
+  eval {
+    $adaptor = $db->get_MiscSetAdaptor->fetch_by_code($misc_set);
+  };
+  
+  if ($adaptor) {    
+    foreach (sort { $a->start <=> $b->start } @{$db->get_MiscFeatureAdaptor->fetch_all_by_Slice_and_set_code($self->slice, $adaptor->code)}) {
+      push @rows, [
+        $_->seq_region_name,
+        $_->seq_region_start,
+        $_->seq_region_end,
+        join (';', @{$_->get_all_attribute_values('clone_name')}, @{$_->get_all_attribute_values('name')}),
+        join (';', @{$_->get_all_attribute_values('well_name')}),
+        join (';', @{$_->get_all_attribute_values('synonym')}, @{$_->get_all_attribute_values('sanger_project')}),
+        join (';', @{$_->get_all_attribute_values('embl_acc')}),
+        $_->get_scalar_attribute('fish'),
+        $_->get_scalar_attribute('org'),
+        $_->get_scalar_attribute('state')
+      ];
+    }
+  }
+  
+  return @rows;
+}
+
+sub misc_set_genes {
+  my $self = shift;
+  
+  my $slice = $self->slice;
+  my @rows;
+  
+  foreach (sort { $a->seq_region_start <=> $b->seq_region_start } map @{$slice->get_all_Genes($_)||[]}, qw(ensembl havana ensembl_havana_gene)) {
+    push @rows, [
+      $_->seq_region_name,
+      $_->seq_region_start,
+      $_->seq_region_end,
+      $_->stable_id,
+      $_->external_db || '-',
+      $_->external_name || '-novel-'
+    ];
+  }
+  
+  return @rows;
+}
+
+# Orders attributes - predefined array first, then all other keys in alphabetical order
+# Also strip any attributes for which we have keys but no values
+sub order_attributes {
+  my $self = shift;
+  my ($key, $attrs) = @_;
+  
+  my $attributes = $self->{'config'}->{'ordered_attributes'};
+  
+  return @{$attributes->{$key}} if $key && $attributes->{$key}; # Reduce the work done
+  
+  my $i = 1;
+  
+  my %predefined = map { $_ => $i++ } qw(ID Name Alias Parent Target Gap Derives_from Note Dbxref Ontology_term);
+  my %order = map { defined $attrs->{$_} ? ($predefined{$_} || $i++ => $_) : () } sort keys %$attrs;
+  my @rtn = map { $order{$_} } sort { $a <=> $b } keys %order;
+  
+  @{$attributes->{$key}} = @rtn if $key;
+  
+  return @rtn;
+}
+
+sub id_counter {
+  my ($self, $type) = @_;
+  
+  return sprintf '%s%05d', $type, ++$self->{'id_counter'}->{$type};
+}
+
+sub escape {
+  my $self = shift;
+  my ($string, $match) = @_;
+  
+  return '' unless defined $string;
+  
+  $match ||= '([^a-zA-Z0-9.:^*$@!+_?-|])';
+  
+  $string =~ s/$match/sprintf("%%%02x",ord($1))/eg;
+  
+  return $string;
+}
+
+# Can take array, will return comma separated string if this is the case
+sub escape_attribute {
+  my $self = shift;
+  my $attr = shift;
+  
+  return '' unless defined $attr;
+  
+  my $match = '([,=;\t])';
+  
+  $attr = ref $attr eq 'ARRAY' ? join ',', map { $_ ? $self->escape($_, $match) : () } @$attr : $self->escape($attr, $match);
+  
+  return $attr;
 }
 
 1;

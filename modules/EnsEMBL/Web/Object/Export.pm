@@ -71,53 +71,58 @@ sub config {
         [ 'fasta', 'FASTA sequence' ]
       ],
       params => [
-        [ 'cdna', 'cDNA' ],
-        [ 'coding', 'Coding sequence' ],
+        [ 'cdna',    'cDNA' ],
+        [ 'coding',  'Coding sequence' ],
         [ 'peptide', 'Peptide sequence' ],
-        [ 'utr5', "5' UTR" ],
-        [ 'utr3', "3' UTR" ],
-        [ 'exons', 'Exons' ],
-        [ 'introns', 'Introns' ]
+        [ 'utr5',    "5' UTR" ],
+        [ 'utr3',    "3' UTR" ],
+        [ 'exon',    'Exons' ],
+        [ 'intron',  'Introns' ]
       ]
     },
     features => {
       label => 'Feature File',
       formats => [
-        [ 'csv', 'CSV (Comma separated values)' ],
-        [ 'gff', 'GFF Format' ],
-        [ 'tab', 'Tab separated values' ]
+        [ 'csv',  'CSV (Comma separated values)' ],
+        [ 'tab',  'Tab separated values' ],
+        [ 'gff',  'Generic Feature Format' ],
+        [ 'gff3', 'Generic Feature Format Version 3' ],
       ],
       params => [
         [ 'similarity', 'Similarity features' ],
-        [ 'repeat', 'Repeat features' ],
-        [ 'genscan', 'Prediction features (genscan)' ],
-        [ 'variation', 'Variation features' ],
-        [ 'gene', 'Gene Information' ]
+        [ 'repeat',     'Repeat features' ],
+        [ 'genscan',    'Prediction features (genscan)' ],
+        [ 'variation',  'Variation features' ],
+        [ 'gene',       'Gene information' ],
+        [ 'transcript', 'Transcripts' ],
+        [ 'exon',       'Exons' ],
+        [ 'intron',     'Introns' ],
+        [ 'cds',        'Coding sequences' ],
       ]
     },
     flat => {
       label => 'Flat File',
       formats => [
-        [ 'embl', 'EMBL' ],
+        [ 'embl',    'EMBL' ],
         [ 'genbank', 'GenBank' ]
       ],
       params => [
         [ 'similarity', 'Similarity features' ],
-        [ 'repeat', 'Repeat features' ],
-        [ 'genscan', 'Prediction features (genscan)' ],
-        [ 'contig', 'Contig Information' ],
-        [ 'variation', 'Variation features' ],
-        [ 'marker', 'Marker features' ],
-        [ 'gene', 'Gene Information' ],
-        [ 'vegagene', 'Vega Gene Information' ],
-        [ 'estgene', 'EST Gene Information' ]
+        [ 'repeat',     'Repeat features' ],
+        [ 'genscan',    'Prediction features (genscan)' ],
+        [ 'contig',     'Contig Information' ],
+        [ 'variation',  'Variation features' ],
+        [ 'marker',     'Marker features' ],
+        [ 'gene',       'Gene Information' ],
+        [ 'vegagene',   'Vega Gene Information' ],
+        [ 'estgene',    'EST Gene Information' ]
       ]
     },
     pip => {
       label => 'PIP (%age identity plot)',
       formats => [
         [ 'pipmaker', 'Pipmaker / zPicture format' ],
-        [ 'vista', 'Vista Format' ]
+        [ 'vista',    'Vista Format' ]
       ]
     }
   };
@@ -131,8 +136,8 @@ sub config {
 sub modify_location_options {
   my $self = shift;
   
-  my $sets = $self->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'} || {};
-  my @misc_set_params = map [ "miscset_$_", $sets->{$_}->{'name'} ], keys %$sets;
+  my $misc_sets = $self->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'} || {};
+  my @misc_set_params = map [ "miscset_$_", $misc_sets->{$_}->{'name'} ], keys %$misc_sets;
   
   $self->__data->{'config'}->{'fasta'}->{'params'} = [];
   push @{$self->__data->{'config'}->{'features'}->{'params'}}, @misc_set_params;
@@ -153,13 +158,13 @@ sub modify_gene_options {
   }
   
   $self->__data->{'config'}->{'fasta'}->{'params'} = [
-    [ 'cdna', 'cDNA' ],
-    [ 'coding', 'Coding sequence', $options->{'translation'} ],
+    [ 'cdna',    'cDNA' ],
+    [ 'coding',  'Coding sequence',  $options->{'translation'} ],
     [ 'peptide', 'Peptide sequence', $options->{'translation'} ],
-    [ 'utr5', "5' UTR", $options->{'five'} ],
-    [ 'utr3', "3' UTR", $options->{'three'} ],
-    [ 'exons', 'Exons' ],
-    [ 'introns', 'Introns' ]
+    [ 'utr5',    "5' UTR",           $options->{'five'} ],
+    [ 'utr3',    "3' UTR",           $options->{'three'} ],
+    [ 'exon',    'Exons' ],
+    [ 'intron',  'Introns' ]
   ];
 }
 

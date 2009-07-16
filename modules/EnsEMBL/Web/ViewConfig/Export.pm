@@ -10,35 +10,30 @@ use EnsEMBL::Web::Constants;
 sub init {
   my $view_config = shift;
   
+  my $misc_sets = $view_config->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
+  
   my %defaults;
   
   $defaults{'output'} = 'fasta';
   $defaults{'strand'} = $ENV{'ENSEMBL_ACTION'} eq 'Location' ? 'forward' : 'feature';
   
-  foreach (qw(flank5_display flank3_display)) {
-    $defaults{$_} = 0;
-  }
+  $defaults{$_} = 0 for qw(flank5_display flank3_display);
   
-  foreach (qw(cdna coding peptide utr5 utr3 exons introns)) {
-    $defaults{'fasta_' . $_} = 'yes';
-  }
+  $defaults{'fasta_' . $_} = 'yes' for qw(cdna coding peptide utr5 utr3 exon intron);
+  $defaults{'gff3_'  . $_} = 'yes' for qw(gene transcript exon intron cds);
   
   $defaults{'fasta_genomic'} = 'unmasked';
   
-  foreach my $f(qw(csv gff tab)) {
-    foreach (qw(similarity repeat genscan variation gene)) {
-      $defaults{$f . '_' . $_} = 'yes';
-    }
+  foreach my $f (qw(csv tab gff)) {
+    $defaults{$f . '_' . $_}         = 'yes' for qw(similarity repeat genscan variation gene);
     
-    foreach (keys %{$view_config->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'misc_feature'}{'sets'}}) {
-      $defaults{$f . '_miscset_' . $_} = 'yes';
-    }
+    next if $f eq 'gff';
+    
+    $defaults{$f . '_miscset_' . $_} = 'yes' for keys %$misc_sets;
   }
   
-  foreach my $f(qw(embl genbank)) {
-    foreach (qw(similarity repeat genscan contig variation marker gene vegagene estgene)) {
-      $defaults{$f . '_' . $_} = 'yes';
-    }
+  foreach my $f (qw(embl genbank)) {
+    $defaults{$f . '_' . $_} = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
   }
   
   $view_config->_set_defaults(%defaults);
@@ -150,16 +145,16 @@ sub form {
   foreach my $c (sort keys %$config) {
     next unless $config->{$c}->{'params'};
     
-    foreach my $f (@{$config->{$c}->{'formats'}}) {      
+    foreach my $f (@{$config->{$c}->{'formats'}}) {
       $view_config->add_fieldset("Options for $f->[1]");
       
       if ($f->[0] eq 'fasta') {
         my $genomic = [
-          { value => 'unmasked', name => 'Unmasked' },
-          { value => 'soft_masked', name => 'Repeat Masked (soft)' },
-          { value => 'hard_masked', name => 'Repeat Masked (hard)' },
-          { value => '5_flanking', name => "5' Flanking sequence" },
-          { value => '3_flanking', name => "3' Flanking sequence" },
+          { value => 'unmasked',     name => 'Unmasked' },
+          { value => 'soft_masked',  name => 'Repeat Masked (soft)' },
+          { value => 'hard_masked',  name => 'Repeat Masked (hard)' },
+          { value => '5_flanking',   name => "5' Flanking sequence" },
+          { value => '3_flanking',   name => "3' Flanking sequence" },
           { value => '5_3_flanking', name => "5' and 3' Flanking sequences" }
         ];
 
@@ -176,12 +171,13 @@ sub form {
       }
       
       foreach (@{$config->{$c}->{'params'}}) {
+        next unless defined $view_config->get("$f->[0]_$_->[0]");
         next if $_->[2] eq '0'; # Next if 0, but not if undef. Where is my === operator, perl?
         
         $view_config->add_form_element({
-          type => $config->{$c}->{'type'} || 'CheckBox',
+          type  => $config->{$c}->{'type'} || 'CheckBox',
           label => $_->[1],
-          name => "$f->[0]_$_->[0]",
+          name  => "$f->[0]_$_->[0]",
           value => 'yes'
         });
       }
