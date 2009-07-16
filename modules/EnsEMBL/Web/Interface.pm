@@ -527,10 +527,11 @@ sub edit_fields {
       $param{'value'} = $value;
     }
 
+    my $extra_data = $self->extra_data;
     ## Set field values
     if (ref($data) && !$param{'value'}) {
-      ## Set value from data object, if possible
-      $param{'value'} = $data->$field;
+      ## Set value from data object, if possible 
+      $param{'value'} = $data->$field unless exists $extra_data->{$field};
       ## Make sure checkboxes are checked
       if ($param{'type'} eq 'CheckBox' && $param{'value'}) {
         $param{'checked'} = 'yes';
@@ -596,6 +597,7 @@ sub preview_fields {
   my $parameters = [];
 
   my $data = $self->data;
+  my $extra_data = $self->extra_data;
   my $element_order = $self->element_order;
   my %has_many = %{ $self->data->hasmany_relations };
 
@@ -607,10 +609,17 @@ sub preview_fields {
     next if $element->type eq 'Honeypot';
     my %param = %{$element->preview};
     if (ref $data) {
-      my $var = $data->$field;
+      my $var;
+      if (exists $extra_data->{$field}) {
+        $var = $object->param($field);
+      }
+      else {
+        $var = $data->$field;
+      }
   
       ## Catch 'has_many' fields before doing normal ones
       if (my $classes = $has_many{$field}) {
+        warn ">>> HAS MANY $field";
         my $class = $classes->[1];
         my $lookup = $class->get_lookup_values;
         my $order = $lookup->[0]{'order'};
@@ -627,6 +636,7 @@ sub preview_fields {
           my $obj = $class->new($many->id);
           push @readable, $obj->$label;
         }
+        #warn Dumper($data->$field);
         $param{'value'} = join(', ', @readable);
       }
       elsif ($element->type eq 'DropDown' || $element->type eq 'MultiSelect') {
@@ -671,9 +681,10 @@ sub preview_fields {
 
 sub pass_fields {
   ### Returns editable fields as hidden element parameters
-  my ($self, $id) = @_;
+  my ($self, $id, $object) = @_;
   my $parameters = [];
   my $data = $self->data;
+  my $extra_data = $self->extra_data;
   my $elements = $self->elements;
   my $element_order = $self->element_order;
   foreach my $field (@$element_order) {
@@ -685,7 +696,13 @@ sub pass_fields {
     next if $element->type eq 'Information';
     my %param = %{$element->hide};
     if (ref $data) {
-      my $var = $data->$field;
+      my $var;
+      if (exists $extra_data->{$field}) {
+        $var = $object->param($field);
+      }
+      else {
+        $var = $data->$field;
+      }
       if (ref($var) eq 'ARRAY') {
         foreach my $v (@$var) {
           if ($v ne '') {
