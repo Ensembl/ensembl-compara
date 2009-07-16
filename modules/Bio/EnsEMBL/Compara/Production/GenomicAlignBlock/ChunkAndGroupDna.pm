@@ -398,14 +398,17 @@ sub create_dnafrag_chunks {
     }
 
     #Store the sequence at this point, rather than in the blastz analysis
-    if($self->{'store_seq'}) {
+    #only try to store the sequence if its length is less than that
+    #allowed by myslwd max_allowed_packet=12M
+    if($self->{'store_seq'} && 
+       ($chunk->seq_end - $chunk->seq_start + 1) <= 11500000) {
 
 	#Set the masking_options variable for the masking_analysis_data_id
 	if (!$self->{'_masking_options'} && $chunk->masking_analysis_data_id) {
 	    $chunk->masking_options($self->{'comparaDBA'}->get_DnaFragChunkAdaptor->_fetch_MaskingOptions_by_dbID($chunk->masking_analysis_data_id));
 	}
 
-      $chunk->bioseq; #fetches sequence and stores internally in ->sequence variable
+	$chunk->bioseq; #fetches sequence and stores internally in ->sequence variable
     }
 
     #print "store chunk " . $chunk->dnafrag->name . " " . $chunk->seq_start . " " . $chunk->seq_end . " " . length($chunk->bioseq->seq) . "\n";
