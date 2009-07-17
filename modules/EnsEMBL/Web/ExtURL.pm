@@ -36,7 +36,7 @@ sub get_url {
 ## Sets URL to the the entry for the given name, OR the default value OTHERWISE returns....
   my $url= $self->{'URLS'}{$species}{ uc($db) } || $self->{'URLS'}{$species}{'DEFAULT'};
   $url =~ s/###(\w+)###/CGI->escape( exists $data->{$1} ? $data->{$1} : "(($1))" )/ge;
-  return $url;
+  return CGI->escapeHTML($url);
 }
 
 sub is_linked{ return exists $_[0]->{'URLS'}{$_[0]->{'species'}}{uc($_[1])}; }
