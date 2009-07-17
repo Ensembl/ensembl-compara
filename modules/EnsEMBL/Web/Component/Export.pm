@@ -2,8 +2,12 @@ package EnsEMBL::Web::Component::Export;
 
 use strict;
 
-use EnsEMBL::Web::SeqDumper;
+use Bio::AlignIO;
+use IO::String;
+
+use EnsEMBL::Web::Component::Compara_Alignments;
 use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::SeqDumper;
 
 use base 'EnsEMBL::Web::Component';
 
@@ -36,13 +40,14 @@ sub export {
     $self->string($html_format ? $self->_warning('Region too large', "<p>$error</p>") : $error);
   } else {
     my $outputs = {
-      fasta   => sub { return $self->fasta(@inputs); },
-      csv     => sub { return $self->features('csv'); },
-      tab     => sub { return $self->features('tab'); },
-      gff     => sub { return $self->features('gff'); },
-      gff3    => sub { return $self->gff3_features; },
-      embl    => sub { return $self->flat('embl'); },
-      genbank => sub { return $self->flat('genbank'); },
+      fasta     => sub { return $self->fasta(@inputs); },
+      csv       => sub { return $self->features('csv'); },
+      tab       => sub { return $self->features('tab'); },
+      gff       => sub { return $self->features('gff'); },
+      gff3      => sub { return $self->gff3_features; },
+      embl      => sub { return $self->flat('embl'); },
+      genbank   => sub { return $self->flat('genbank'); },
+      alignment => sub { return $self->alignment; },
       %$custom_outputs
     };
     
@@ -65,7 +70,7 @@ sub export {
     $string = "<pre>$string</pre>" if $string;
   } else {
     s/<.*?>//g for $string, $html; # Strip html tags;
-    $string .= "\r\n" if $html;
+    $string .= "\r\n" if $string && $html;
   }
   
   return $string . $html;
@@ -206,6 +211,27 @@ sub flat {
   }
   
   $self->string($seq_dumper->dump($slice, $format));
+}
+
+sub alignment {
+  my $self = shift;
+  
+  my $object = $self->object;
+  my $species = $object->species;$object->param('align');
+  
+  $self->{'alignments_function'} = 'get_SimpleAlign';
+  
+  my $alignments = EnsEMBL::Web::Component::Compara_Alignments::get_alignments($self, $object, $self->slice, $object->param('align'), $object->species);
+  my $export;
+
+  my $align_io = Bio::AlignIO->newFh(
+    -fh     => new IO::String($export),
+    -format => $object->param('format')
+  );
+
+  print $align_io $alignments;
+  
+  $self->string($export);
 }
 
 sub features {

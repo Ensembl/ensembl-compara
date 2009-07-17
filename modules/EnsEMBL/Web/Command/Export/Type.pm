@@ -24,6 +24,8 @@ sub process {
     $type = 'LDFormats';
   } elsif ($action eq 'Transcript' && $function eq 'Population') {
     $type = 'PopulationFormats';
+  } elsif ($function eq 'Compara_Alignments') {
+    $type = 'Alignments';
   } else {
     $type = 'Configure';
   }
