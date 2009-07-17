@@ -112,6 +112,8 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (9823,"Pig","ense
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9823,"pig","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9483,"Marmoset","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9483,"marmoset","ensembl common name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9557,"Hamadryas baboon","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9557,"hamadryas baboon","ensembl common name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl alias name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl common name");
 
