@@ -477,25 +477,7 @@ sub cgi_populate {
                 : $object->param($field);
     $data->$field($value);
   }
-
-  ## Check for extra arbitrary data fields
-  my $extras = $self->extra_data;
-  if ($extras) {
-    foreach my $key (keys %$extras) {
-      my @extra_check = $object->param($key);
-      if (scalar(@extra_check) > 1) {
-        $self->extra_data($key, [$object->param($key)]);
-      }
-      else {
-        $self->extra_data($key, $object->param($key));
-      }
-    }
-  }
 }
-
-sub relational_element {
-}
-
 
 sub edit_fields {
   ### Returns editable fields as form element parameters
@@ -527,8 +509,8 @@ sub edit_fields {
       $param{'value'} = $value;
     }
 
-    my $extra_data = $self->extra_data;
     ## Set field values
+    my $extra_data = $self->extra_data;
     if (ref($data) && !$param{'value'}) {
       ## Set value from data object, if possible 
       $param{'value'} = $data->$field unless exists $extra_data->{$field};
@@ -566,23 +548,6 @@ sub edit_fields {
     }
   } 
 
-  ## Add extra data
-  my $extras = $self->extra_data;
-  if ($extras) {
-    while (my($k, $v) = each (%$extras)) {
-      if ($v && ref($v) eq 'ARRAY') {
-        foreach my $m (@$v) {
-          my %multi_ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$m);
-          push @$parameters, \%multi_ex;
-        }
-      }
-      else {
-        my %ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$v);
-        push @$parameters, \%ex;
-      }   
-    }
-  }
-
   ## Force passing of _referer parameter
   if ($object->param('_referer')) {
     push @$parameters, {'type'=>'Hidden', 'name'=>'_referer', 'value'=> $object->param('_referer')};
@@ -607,19 +572,14 @@ sub preview_fields {
     next if $element->type eq 'Information';
     next if $element->type eq 'Hidden';
     next if $element->type eq 'Honeypot';
+    ## Don't show extra_data fields, as they are generally used to control underlying logic
+    next if exists $extra_data->{$field};
     my %param = %{$element->preview};
     if (ref $data) {
-      my $var;
-      if (exists $extra_data->{$field}) {
-        $var = $object->param($field);
-      }
-      else {
-        $var = $data->$field;
-      }
-  
+      my $var = $data->field;
+ 
       ## Catch 'has_many' fields before doing normal ones
       if (my $classes = $has_many{$field}) {
-        warn ">>> HAS MANY $field";
         my $class = $classes->[1];
         my $lookup = $class->get_lookup_values;
         my $order = $lookup->[0]{'order'};
@@ -632,8 +592,8 @@ sub preview_fields {
           $label = $labels[0];
         }
         my @readable;
-        foreach my $many ($data->$field) {
-          my $obj = $class->new($many->id);
+        foreach my $id ($object->param($field)) {
+          my $obj = $class->new($id);
           push @readable, $obj->$label;
         }
         #warn Dumper($data->$field);
@@ -645,18 +605,20 @@ sub preview_fields {
         foreach my $option (@values) {
           $lookup{$option->{'value'}} = $option->{'name'};
         }
-        if (ref($var) eq 'ARRAY') {
-          my @readable;
-          foreach my $key (@$var) {
-            if ($key ne '') {
-              push @readable, $lookup{$key};
+        if (keys %lookup) {
+          if (ref($var) eq 'ARRAY') {
+            my @readable;
+            foreach my $key (@$var) {
+              if ($key ne '') {
+                push @readable, $lookup{$key};
+              }
             }
+            $param{'value'} = join(', ', @readable);
           }
-          $param{'value'} = join(', ', @readable);
-        }
-        else {
-          $param{'value'} = $lookup{$var};
-        }
+          else {
+            $param{'value'} = $lookup{$var};
+          }
+        } 
       }
       elsif ($element->type eq 'Text' && $var =~ m#</|/>#) {
         $param{'value'} = '<pre>'.$var.'</pre>';
@@ -666,16 +628,7 @@ sub preview_fields {
       }
     }
     push @$parameters, \%param;
-  } 
-  ## Add extra data
-  my $extras = $self->extra_data;
-  if ($extras) {
-    while (my($k, $v) = each (%$extras)) {
-      my %ex = ('name'=>$k, 'type'=>'Hidden', 'value'=>$v);
-      push @$parameters, \%ex;  
-    }
   }
-
   return $parameters;
 }
 
@@ -685,6 +638,8 @@ sub pass_fields {
   my $parameters = [];
   my $data = $self->data;
   my $extra_data = $self->extra_data;
+  my %has_many = %{ $self->data->hasmany_relations };
+
   my $elements = $self->elements;
   my $element_order = $self->element_order;
   foreach my $field (@$element_order) {
@@ -693,12 +648,17 @@ sub pass_fields {
     next unless $element;
     next if $element->type eq 'Information';
     next if $element->type eq 'SubHeader';
-    next if $element->type eq 'Information';
     my %param = %{$element->hide};
     if (ref $data) {
       my $var;
       if (exists $extra_data->{$field}) {
-        $var = $object->param($field);
+        my @extra = ($object->param($field));
+        $var = scalar(@extra) > 1 ? \@extra : $extra[0];
+      }
+      elsif (my $classes = $has_many{$field}) {
+        ## Populate has_many fields from CGI
+        my @temp = ($object->param($field));
+        $var = scalar(@temp) > 1 ? \@temp : $temp[0];
       }
       else {
         $var = $data->$field;
