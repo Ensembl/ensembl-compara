@@ -55,6 +55,19 @@ sub content {
           $html .= $self->_output_link(\%archive, $release, $url);
         }
       }
+      #species home pages
+      if ($type eq 'Info' && $action eq 'Index') {
+	foreach my $release (reverse sort keys %archive) {
+	  if ($release > 50) {
+	    next if $release == $object->species_defs->VERSION;
+	    $html .= $self->_output_link(\%archive, $release, $url);
+	  }
+	  else {
+	    $url =~ s/Info\/Index/index\.html/;
+	    $html .= $self->_output_link(\%archive, $release, $url);
+	  }
+	}
+      }
       else {
 	my $releases = EnsEMBL::Web::OldLinks::get_archive_redirect($type, $action, $object);
 	foreach my $poss_release (reverse sort keys %archive) {
