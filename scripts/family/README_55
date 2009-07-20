@@ -212,7 +212,7 @@ EOF
 # NB: turing doesn't have neither /usr/local/bin/perl nor /software/bin/perl,
 #     so parse_mcl.pl will need an additional dance to be performed
 
-nohup ~/work/ensembl-compara_HEAD/scripts/family/parse_mcl.pl --dbname compara55 --reg_conf reg_conf_55.pl family_55.tab family_55.mcl -prefix fam55 > family_55.description 2> family_55.description.err &
+nohup ~/work/ensembl-compara_HEAD/scripts/family/parse_mcl.pl --dbname compara55 --reg_conf reg_conf_55.pl --prefix fam55 family_55.mcl family_55.tab > family_55.description 2> family_55.description.err &
 
 # to save space
 #
