@@ -184,13 +184,13 @@ sub fetch_input {
     $self->DESTROY;
     throw("MCoffee job, error writing input Fasta");
   }
-  # Gene count too big.
-  if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
-    $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
-    $self->DESTROY;
-    throw("Mcoffee job too big: try something else and FAIL it");
-  }
+#  # Gene count too big.
+#   if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
+#     $self->dataflow_output_id($self->input_id, 2);
+#     $self->input_job->update_status('FAILED');
+#     $self->DESTROY;
+#     throw("Mcoffee job too big: try something else and FAIL it");
+#   }
   # Retry count >= 3.
   if ($self->input_job->retry_count >= 5) {
     $self->dataflow_output_id($self->input_id, 2);
@@ -541,12 +541,13 @@ sub dumpProteinTreeToWorkdir {
   foreach my $member (@{$member_list}) {
 
     # Double-check we are only using longest
-    my $longest_member = $member->gene_member->get_longest_peptide_Member;
-    unless ($longest_member->member_id eq $member->member_id) {
+    my $gene_member; my $longest_member = undef;
+    eval {$gene_member = $member->gene_member; $longest_member = $gene_member->get_longest_peptide_Member; };
+    unless (defined($longest_member) && ($longest_member->member_id eq $member->member_id) ) {
+      $DB::single=1;1;
       $member->disavow_parent;
       $self->{treeDBA}->delete_flattened_leaf($member);
-      my $updated_gene_count = $tree->get_tagvalue('gene_count');
-      $updated_gene_count--;
+      my $updated_gene_count = scalar(@{$tree->get_all_leaves});
       $tree->adaptor->delete_tag($tree->node_id,'gene_count');
       $tree->store_tag('gene_count', $updated_gene_count);
       next;
