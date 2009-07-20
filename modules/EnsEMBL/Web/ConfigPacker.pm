@@ -955,7 +955,7 @@ sub _munge_website_multi {
 sub _configure_blast {
   my $self = shift;
   my $tree = $self->tree;
-  my $species = $self->tree->{'SPECIES_BIO_NAME'};
+  my $species = $self->species;
   $species =~ s/ /_/g;
   my $method = $self->full_tree->{'MULTI'}{'ENSEMBL_BLAST_METHODS'};
   foreach my $blast_type (keys %$method) { ## BLASTN, BLASTP, BLAT, etc
