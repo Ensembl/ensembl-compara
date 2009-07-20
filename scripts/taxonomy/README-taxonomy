@@ -106,6 +106,12 @@ mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
 mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Xenopus (Silurana) tropicalis\" where taxon_id = 8364 and name_class = \"synonym\" and name = \"Xenopus tropicalis\""
 
+# And change this internal node name as requested by Dr. Brandon Menzies:
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
+ "update ncbi_taxa_name set name = \"Marsupialia\" where taxon_id = 9263 and name_class = \"scientific name\" and name = \"Metatheria\""
+mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
+ "update ncbi_taxa_name set name = \"Metatheria\" where taxon_id = 9263 and name_class = \"synonym\" and name = \"Marsupialia\""
+
 
 # Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrieval if needed.
 
