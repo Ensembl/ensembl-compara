@@ -4,6 +4,8 @@ use strict;
 
 use CGI qw(unescape);
 
+use EnsEMBL::Web::Constants;
+
 use base 'EnsEMBL::Web::Component::Export';
 
 sub content {
@@ -21,12 +23,10 @@ sub content {
   };
   
   my $href = CGI::unescape($object->_url($params));
-
-  my @list;
   
-  for(qw( CLUSTAL FASTA Mega MSF Nexus Pfam Phylip PSI Selex )) {
-    push @list, sprintf '<a class="modal_close" href="%s;format=%s;_format=Text" rel="external">%s</a>', $href, $_ eq 'CLUSTAL' ? 'clustalw' : lc $_, $_;
-  }
+  my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+  
+  my @list = map qq{<a class="modal_close" href="$href;format=$_;_format=Text" rel="external">$formats{$_}</a>}, sort keys %formats;
   
   my $form = $self->modal_form('export_output_configuration', '#', { no_button => 1, method => 'get' });
   
