@@ -272,6 +272,9 @@ sub write_output {
  	      if ($genomic_align->dnafrag_id == -1) {
  		  ## INTERNAL NODE, i.e. an ancestral sequence
  		  my $length = length($genomic_align->original_sequence);
+ 		  
+ 		  #Trigger loading of seq adaptor to avoid locked table problems
+ 		  $slice_adaptor->db()->get_SequenceAdaptor();
  		  $slice_adaptor->dbc->db_handle->do("LOCK TABLES seq_region WRITE, dna WRITE");
  		  my $last_id = $slice_adaptor->dbc->db_handle->selectrow_array("SELECT max(seq_region_id) FROM seq_region");
  		  $last_id++;
