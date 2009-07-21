@@ -362,6 +362,8 @@ sub run_mcoffee
     unless (-e $mcoffee_executable) {
       print "Using default T-Coffee executable!\n";
       $mcoffee_executable = "/software/ensembl/compara/tcoffee-7.86b/t_coffee";
+        # path to t_coffee components:
+      $ENV{'PATH'}=$ENV{'PATH'}.':/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux';
   }
   throw("can't find a M-Coffee executable to run\n") unless(-e $mcoffee_executable);
 
@@ -458,7 +460,9 @@ sub run_mcoffee
   }
   else {
   	print "Using default mafft location\n" if $self->debug();
-  	$prefix .= "export MAFFT_BINARIES=/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux;";
+  	$prefix .= 'export MAFFT_BINARIES=/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
+        # path to t_coffee components:
+  	$prefix .= 'export PATH=$PATH:/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
   }
   print $prefix.$cmd."\n" if ($self->debug);
   $DB::single=1;1;
