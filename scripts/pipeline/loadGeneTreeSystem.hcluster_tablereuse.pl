@@ -446,7 +446,7 @@ sub build_GeneTreeSystem
   }
   $parameters .= "}";
 
-  my $mcoffee_exe = $genetree_params{'mcoffee'} || '/nfs/acari/avilella/src/tcoffee/T-COFFEE_distribution_Version_7.86/t_coffee';
+  my $mcoffee_exe = $genetree_params{'mcoffee'} || '/software/ensembl/compara/tcoffee-7.86b/t_coffee';
 
   my $mcoffee = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'MCoffee',

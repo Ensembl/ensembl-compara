@@ -458,7 +458,7 @@ sub run_mcoffee
   }
   else {
   	print "Using default mafft location\n" if $self->debug();
-  	$prefix .= "export MAFFT_BINARIES=/nfs/acari/avilella/src/tcoffee/T-COFFEE_distribution_Version_7.86/install4tcoffee/bin/linux;";
+  	$prefix .= "export MAFFT_BINARIES=/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux;";
   }
   print $prefix.$cmd."\n" if ($self->debug);
   $DB::single=1;1;
