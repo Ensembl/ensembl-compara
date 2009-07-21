@@ -403,6 +403,12 @@ sub store_supertree_node_and_under {
   $self->dbc->do("INSERT IGNORE into super_protein_tree_tag SELECT * from protein_tree_tag WHERE node_id = $node_id");
 }
 
+# Fetch data from stable_id table -- similar in concept to fetching sequence from member
+sub _fetch_stable_id_by_node_id {
+  my ($self, $node_id) = @_;
+  return $self->db->get_ProteinTreeStableIdAdaptor->fetch_by_node_id($node_id);
+}
+
 ###################################
 #
 # tagging 

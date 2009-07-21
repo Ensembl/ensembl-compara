@@ -192,4 +192,21 @@ sub get_SitewiseOmega_values {
   return \@values;
 }
 
+# Get the internal Ensembl GeneTree stable_id from the separate table
+sub stable_id {
+  my $self = shift;
+
+  if(@_) {
+    $self->{'_stable_id'} = shift;
+    return $self->{'_stable_id'};
+  }
+
+  if(!defined($self->{'_stable_id'}))
+  {
+    $self->{'_stable_id'} = $self->adaptor->_fetch_stable_id_by_node_id($self->node_id);
+  }
+
+  return $self->{'_stable_id'};
+}
+
 1;
