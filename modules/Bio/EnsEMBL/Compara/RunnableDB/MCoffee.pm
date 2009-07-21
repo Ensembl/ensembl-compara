@@ -473,10 +473,10 @@ sub run_mcoffee
   		$mafft_executable = $self->{mafft};
   	}
   	else {
-    	$mafft_executable = "/nfs/acari/avilella/src/mafft/mafft-6.522/scripts/mafft";
-    	$mafft_env = '/nfs/acari/avilella/src/mafft/mafft-6.522/binaries';
+    	$mafft_executable = "/software/ensembl/compara/mafft-6.707/bin/mafft";
+    	$mafft_env = '/software/ensembl/compara/mafft-6.707/binaries';
   	}
-  	
+
   	$ENV{MAFFT_BINARIES} = $mafft_env if $mafft_env;
     print STDERR "### $mafft_executable --auto $input_fasta > $mcoffee_output\n";
     $rc = system("$mafft_executable --auto $input_fasta > $mcoffee_output");
