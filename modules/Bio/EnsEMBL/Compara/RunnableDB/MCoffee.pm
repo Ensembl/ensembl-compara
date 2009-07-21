@@ -361,7 +361,7 @@ sub run_mcoffee
   my $mcoffee_executable = $self->analysis->program_file;
     unless (-e $mcoffee_executable) {
       print "Using default T-Coffee executable!\n";
-      $mcoffee_executable = "/nfs/acari/avilella/src/tcoffee/compara/t_coffee";
+      $mcoffee_executable = "/software/ensembl/compara/tcoffee-7.86b/t_coffee";
   }
   throw("can't find a M-Coffee executable to run\n") unless(-e $mcoffee_executable);
 
