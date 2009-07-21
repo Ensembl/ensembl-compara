@@ -257,8 +257,8 @@ sub DESTROY {
     # unlink ($self->{'input_params'}) if($self->{'input_params'});
     # unlink ($self->{'input_fasta'}) if($self->{'input_fasta'});
     # if($self->{'mcoffee_output'}) {
-	# unlink ($self->{'mcoffee_output'});
-	# unlink ($self->{'mcoffee_output'} . ".log");
+	#    unlink ($self->{'mcoffee_output'});
+	#    unlink ($self->{'mcoffee_output'} . ".log");
     # }
 
     $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
