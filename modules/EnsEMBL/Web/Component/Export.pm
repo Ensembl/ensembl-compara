@@ -73,7 +73,7 @@ sub export {
     $string .= "\r\n" if $string && $html;
   }
   
-  return $string . $html;
+  return ($string . $html) || 'No data available';
 }
 
 sub slice {
