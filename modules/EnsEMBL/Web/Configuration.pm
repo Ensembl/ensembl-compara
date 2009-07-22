@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Configuration;
 
 use strict;
@@ -215,12 +217,19 @@ sub _global_context {
   $self->{'page'}->global_context->active( lc($type) );
 }
 
+sub modal_context {
+  my $self = shift;
+  
+  $self->_user_context('modal_context') if $self->{'page'}->{'modal_context'};
+}
+
 sub _user_context {
   my $self = shift;
+  my $section = shift || 'global_context';
   my $type = $self->type;
   my $obj  = $self->{'object'};
   my $qs = $self->query_string;
-
+  
   my $referer = $obj->param('_referer') || 
                 $obj->_url({ type   => $type, action => $ENV{'ENSEMBL_ACTION'}, time   => undef });
 
@@ -243,12 +252,12 @@ sub _user_context {
   my $flag = $obj->param('config') ? 0 : 1;
   my $active_config = $obj->param('config') || $vc->default_config();
 
-  my $active = $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
+  my $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
 
   my $upload_data = $vc->can_upload;
 
   if( $vc->has_form ) { 
-    $self->{'page'}->global_context->add_entry(
+    $self->{'page'}->$section->add_entry(
       'type'      => 'Config',
       'id'        => "config_page",
       'caption'   => 'Configure page',
@@ -264,8 +273,8 @@ sub _user_context {
   }
   foreach my $ic_code (sort keys %ics) {
     my $ic = $obj->get_imageconfig( $ic_code );
-    $active = $type ne 'Account' && $type ne 'UserData' && $active_config eq $ic_code || $flag;
-    $self->{'page'}->global_context->add_entry(
+    $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq $ic_code || $flag;
+    $self->{'page'}->$section->add_entry(
       'type'      => 'Config',
       'id'        => "config_$ic_code",
       'caption'   => $ic->get_parameter('title'),
@@ -280,9 +289,9 @@ sub _user_context {
     $flag = 0;
   }
   
-  $active = $type eq 'UserData';
+  $active = $section eq 'global_context' && $type eq 'UserData';
   my $module = $vc->can_upload ? 'Upload' : 'ManageData';
-  $self->{'page'}->global_context->add_entry(
+  $self->{'page'}->$section->add_entry(
     'type'      => 'UserData',
     'id'        => 'user_data',
     'caption'   => 'Custom Data',
@@ -296,10 +305,10 @@ sub _user_context {
   );
 
   ## Now the user account link - varies depending on whether the user is logged in or not!
-  $active = $type eq 'Account';
+  $active = $section eq 'global_context' && $type eq 'Account';
   if( $obj->species_defs->ENSEMBL_LOGINS) {
     my $user_action = $ENSEMBL_WEB_REGISTRY->get_user ? 'Links' : 'Login';
-    $self->{'page'}->global_context->add_entry( 
+    $self->{'page'}->$section->add_entry( 
       'type'      => 'Account',
       'id'        => 'account',
       'caption'   => 'Your account',
@@ -313,7 +322,7 @@ sub _user_context {
     );
   }
 
-  $self->{'page'}->global_context->active( lc($type) );
+  $self->{'page'}->$section->active( lc($type) );
 }
 
 
@@ -324,7 +333,7 @@ sub _reset_config_panel {
     'code' => 'x',
     'object' => $obj
   );
-  my $url = $obj->_url({'type'=>'Config','action'=>$action,'reset'=>1,'config'=>$config,'time'=>time});
+  my $url = $obj->_url({ type => 'Config', action => $action, reset => 1 , config => $config, _referer => $obj->param('_referer') });
   my $c = sprintf '
 <p>
   To update this configuration, select your tracks and other options in the box above and close
@@ -430,7 +439,7 @@ sub _configurator {
   $self->tree->_flush_tree();
 
   my $rhs_content = sprintf '
-      <form id="configuration" action="%s" method="post">
+      <form class="configuration" action="%s" method="post">
         <div>', $url->[0];
   foreach( keys %{ $url->[1] } ) {
     $rhs_content .= sprintf '
@@ -454,7 +463,7 @@ sub _configurator {
     my $link_key = 'link_'.$node->key;
     my $menu_key = 'menu_'.$node->key;
     $rhs_content .= sprintf '
-      <div id="%s">
+      <div id="%s" class="config">
       <h2>%s</h2>
       <dl class="config_menu">', $menu_key, CGI::escapeHTML( $node->get('caption') );
 #      <dl class="config_menu" id="%s">
@@ -481,7 +490,7 @@ sub _configurator {
         $t = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc($class), $class, $class, $t;
       }
       $rhs_content .= sprintf '
-        </select> %s</dt>', $t;
+        </select> <span>%s</span></dt>', $t;
       my $desc =  $track_node->get('description');
       if( $desc ) {
         $desc =~ s/&(?!\w+;)/&amp;/g;
@@ -517,11 +526,7 @@ sub _configurator {
     'code'         => 'configurator_search',
     'object'       => $obj
   );
-  $search_panel->set_content( '
-      <form id="configuration_search" action="" method="get">
-        Search display: <input id="configuration_search_text" />
-      </form>'
-  );
+  $search_panel->set_content('<div class="configuration_search">Search display: <input class="configuration_search_text" /></div>');
   $self->add_panel( $search_panel );
   my $panel = $self->new_panel(
     'Configurator',
@@ -634,7 +639,7 @@ sub _local_tools {
       'url'     => $obj->_url({ 'type'     => 'Account', 'action'   => 'Bookmark/Add',
                                 '_referer' => $referer, '__clear'  =>1,
                                 'name'     => $self->{'page'}->title->get,
-                                'url'      => $obj->species_defs->ENSEMBL_BASE_URL . $referer })
+                                'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$referer })
     );
   } else {
     $self->{'page'}->local_tools->add_entry(
