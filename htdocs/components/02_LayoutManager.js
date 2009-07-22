@@ -95,7 +95,7 @@ Ensembl.LayoutManager.extend({
   makeZMenu: function (id, params) {
     $('<table class="zmenu" id="' + id + '" style="display:none">' +
       '  <thead>' + 
-      '    <tr><th class="caption" colspan="2"><span class="title"></span><span class="close">X</span></th></tr>' +
+      '    <tr><th class="caption" colspan="2"><span class="close">X</span><span class="title"></span></th></tr>' +
       '  </thead>' + 
       '  <tbody></tbody>' + 
       '</table>').draggable({ handle: 'th' }).appendTo('body');
