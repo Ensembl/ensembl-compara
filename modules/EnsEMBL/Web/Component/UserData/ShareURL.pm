@@ -29,7 +29,7 @@ sub content {
   );
 
   my $url = $self->object->species_defs->ENSEMBL_BASE_URL . $self->object->param('_referer');
-  $url .= $self->object->param('_referer') =~ /\?/ ? ';' : '?';
+  $url .= $self->object->param('_referer') =~ /\?/ ? ';' : '?' unless $url =~ /;$/;
   $url .= $share_ref;
 
   my $html = qq(<p class="space-below">To share this data, use the URL:</p>
