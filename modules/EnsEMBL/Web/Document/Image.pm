@@ -513,15 +513,15 @@ sub render {
         if ($_->{'text'}) {
           next if $self->{'export'} =~ /no_text/;
           
-          $export .= qq{<dt><a href="$href" style="width:9em" rel="external">Export as $_->{'label'}</a></dt>};
+          $export .= qq{<div><a href="$href" style="width:9em" rel="external">Export as $_->{'label'}</a></div>};
         } else {
-          $export .= qq{<dt><a href="$href;download=1" style="width:9em" rel="external">Export as $_->{'label'}</a><a style="float:right" href="$href" rel="external">[view]</a></dt>};
+          $export .= qq{<div><a href="$href;download=1" style="width:9em" rel="external">Export as $_->{'label'}</a><a class="view" href="$href" rel="external">[view]</a></div>};
         }
       }
       
       $export = qq{
         <div class="$self->{'export'}" style="width:$image->{'width'}px;"><a class="print_hide" href="${url}pdf">Export Image</a></div>
-        <dl class="iexport_mn" style="display:none">$export</dl>
+        <div class="iexport_menu">$export</div>
       };
     }
            
