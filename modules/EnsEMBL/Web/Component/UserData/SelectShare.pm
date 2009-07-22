@@ -112,17 +112,6 @@ sub content {
     values => \@values
   );
 
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => '_referer',
-    'value'   => $object->param('_referer'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'x_requested_with',
-    'value'   => $object->param('x_requested_with'),
-  );
-
   $html .= $form->render;
   return $html;
 }
