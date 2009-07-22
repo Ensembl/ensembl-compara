@@ -386,7 +386,7 @@ sub _summarise_funcgen_db {
     my $array_name = $row->[0] .':'. $row->[1];
     $sth->bind_param(1, $row->[2]);
     $sth->execute;
-    my $count = $sth->fetchrow_array(); warn $array_name ." ". $count;
+    my $count = $sth->fetchrow_array(); #warn $array_name ." ". $count;
     if (exists $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$array_name} ) {warn "FOUND";}
     $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$array_name} = $count;
   }
