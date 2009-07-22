@@ -66,24 +66,25 @@ sub _parse_referer {
   };
 }
 
+# Assembles a valid URL, adding the site's base URL and CGI-escaping any parameters
+# returns a URL string
+# TODO: add site base url
 sub url { 
-  ### Assembles a valid URL, adding the site's base URL
-  ### and CGI-escaping any parameters
-  ### returns a URL string
   my ($self, $script, $param) = @_;
-  my $url = $script; # TO DO - add site base URL
+
   my @params;
-  my $x = $script =~ /\?/ ? ';' : '?';
+  
   while (my ($k, $v) = each (%$param)) {
     if (ref($v) eq 'ARRAY') {
-      foreach my $t (@$v) {
-        $url .= "$x$k=".escapeHTML($t); $x = ';';
-      }
+      push @params, "$k=" . escapeHTML(escape($_)) for @$v;
     } else {
-      $url .= "$x$k=".escapeHTML($v); $x = ';';
+      push @params, "$k=" . escapeHTML(escape($v));
     }
-  } 
-  return $url;
+  }
+  
+  $script .= $script =~ /\?/ ? ';' : '?';
+  
+  return $script . (join ';', @params);
 }
 
 sub _format_error {
