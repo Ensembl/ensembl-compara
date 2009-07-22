@@ -525,7 +525,7 @@ sub _save_genomic_features {
                   -slice        => $slice,
                   -start        => $s,
                   -end          => $e,
-                  -
+                  -strand       => $f->strand,
                   -hseqname   => ($f->id."" eq "") ? '-' : $f->id,
                   -hstart       => $f->hstart,
                   -hend         => $f->hend,
