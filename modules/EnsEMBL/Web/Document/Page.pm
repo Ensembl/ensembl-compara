@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Page;
 
 use strict;
@@ -9,6 +11,7 @@ use constant DEFAULT_DOCTYPE_VERSION => '4.01 Trans';
 use constant DEFAULT_ENCODING        => 'ISO-8859-1';
 use constant DEFAULT_LANGUAGE        => 'en-gb';
 
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Tools::PluginLocator;
 
@@ -345,81 +348,120 @@ sub timer_push { $_[0]->{'timer'} && $_[0]->{'timer'}->push( $_[1], 1 ); }
 sub render {
   my $self = shift;
   my $flag = shift;
-  ## If this is an AJAX request then we will not render the page wrapper!
-  if( $self->{'_modal_dialog_'} ) {
-    ## We need to add the dialog tabs and navigation tree here....
-    $self->global_context->render_modal;
-    $self->local_context->render_modal;
-    ## and then add in the fact that it is an XMLHttpRequest object to render the content only...
-  }
-  if( $self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
+  my $ajax_request = (
+    $self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
     $self->{'input'} && $self->{'input'}->param('x_requested_with') eq 'XMLHttpRequest'
-  ) {
+  );
+    
+  # If this is an AJAX request then we will not render the page wrapper
+  if ($self->renderer->{'_modal_dialog_'}) {    
+    # We need to add the dialog tabs and navigation tree here
+    my $json = join ',', map $self->$_->get_json, qw(global_context local_context content);
+    
+    $self->print("{$json}");
+    return;
+  }
+  
+  # and then add in the fact that it is an XMLHttpRequest object to render the content only
+  if ($ajax_request) {
     $self->content->render; 
     return;
   }
-  ## This is now a full page...
-  my $X = '';
-  unless( $flag eq 'end' ) {
+  
+  # This is now a full page
+  my $html = '';
+  
+  if ($flag ne 'end') {
     $self->_render_head_and_body_tag;
-  #  my $X = $self->{'page_template'};
-    if( $self->species_defs->ENSEMBL_DEBUG_FLAGS & 1024 && $flag ne 'end' ) {
-      $X .= '  <div id="debug"></div>';  ## UNTIL WE GO LIVE PLEASE LEAVE THIS IN !
+    
+    $html .= '
+    <table class="mh" summary="layout table">
+      <tr>
+        <td id="mh_lo">[[logo]]</td>
+        <td id="mh_search">[[search_box]]
+        </td>
+      </tr>
+    </table>
+    <table class="mh" summary="layout table">
+      <tr>
+        <td id="mh_bc">[[breadcrumbs]]</td>
+        <td id="mh_lnk">[[tools]]
+        </td>
+      </tr>
+    </table>
+    <table class="mh print_hide" summary="layout table">
+      <tr>
+        <td>[[global_context]]</td>
+      </tr>
+    </table>
+    <div style="position: relative">';
+    
+    if ($self->include_navigation) {
+      $html .= qq{
+      <div id="nav" class="print_hide">
+        [[local_context]]
+        [[local_tools]]
+        <p class="invisible">.</p>
+      </div>};
     }
-    $X .= '
-  <table class="mh" summary="layout table">
-    <tr>
-      <td id="mh_lo">[[logo]]</td>
-      <td id="mh_search">[[search_box]]
-      </td>
-    </tr>
-  </table>
-  <table class="mh" summary="layout table">
-    <tr>
-      <td id="mh_bc">[[breadcrumbs]]</td>
-      <td id="mh_lnk">[[tools]]
-      </td>
-    </tr>
-  </table>
-  <table class="mh print_hide" summary="layout table">
-    <tr>
-      <td>[[global_context]]</td>
-    </tr>
-  </table>
-  <div style="position: relative">';
-    if( $self->include_navigation ) {
-      $X .= '
-      <div id="nav" class="print_hide">[[local_context]][[local_tools]]<p class="invisible">.</p></div>';
-    }
-    $X .= '
+    
+    $html .= '
       <div id="main">
-<!-- Start of real content --> ';
+        <!-- Start of real content --> 
+        ';
   }
-  $X .= '
-      [[content]]' unless $flag;
-  unless( $flag eq 'start' ) {
-    $X .= '
-<!-- End of real content -->
+  
+  $html .= '[[content]]' unless $flag;
+      
+  if ($flag ne 'start') {
+    $html .= '
+        <!-- End of real content -->
       </div>';
-    if( $self->include_navigation ) {
-      $X .= '   <div id="footer">[[copyright]][[footerlinks]]</div>';
+      
+    if ($self->include_navigation) {
+      $html .= '
+      <div id="footer">[[copyright]][[footerlinks]]</div>';
+    } else {
+      $html .= '
+      <div id="wide-footer">[[copyright]][[footerlinks]]</div>';
     }
-    else {
-      $X .= '   <div id="wide-footer">[[copyright]][[footerlinks]]</div>';
-    }
-    $X .= '
-  </div>
-[[body_javascript]]';
-
+    
+    $html .= '
+    </div>
+    [[body_javascript]]';
   }
-  $self->timer_push( 'template generated' );
-  while( $X =~ s/(.*?)\[\[([\w:]+)\]\]//sm ) {
-    my($start,$page_element) = ($1,$2);
-    $self->print( $start );
-    eval{ $self->$page_element->render if $self->can($page_element); };
-    $self->printf( '%s - %s', $page_element, $@ ) if $@;
+  
+  
+  $html .= '[[modal_context]]' if $ENSEMBL_WEB_REGISTRY->check_ajax || $ENV{'ENSEMBL_AJAX_VALUE'} eq 'none';
+  
+  if ($self->can('panel_type')) {
+    $html = sprintf ('
+      <div class="js_panel">
+        %s
+        %s
+      </div>',
+      $self->panel_type,
+      $html
+    );
+  } else {
+    $html =~ s/(<div id="nav" class="print_hide)">/$1 js_panel"><input type="hidden" class="panel_type" value="LocalContext" \/>/;
   }
-  $self->print( $X );
+  
+  $self->timer_push('template generated');
+  
+  while ($html =~ s/(.*?)\[\[([\w:]+)\]\]//sm) {
+    my ($start, $page_element) = ($1, $2);
+    
+    $self->print($start);
+    
+    eval { 
+      $self->$page_element->render if $self->can($page_element); 
+    };
+    
+    $self->printf('%s - %s', $page_element, $@) if $@;
+  }
+  
+  $self->print($html);
   $self->_render_close_body_tag unless $flag eq 'start';
 }
 

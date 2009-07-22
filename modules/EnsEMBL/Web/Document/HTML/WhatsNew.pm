@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::WhatsNew;
 
 ### This module outputs a selection of news headlines for the home page, 
@@ -114,7 +116,7 @@ sub render {
   }
 
   if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
-    $html .= qq(<div class="ajax" title="['/blog.html']"></div>);
+    $html .= qq(<div class="js_panel ajax" id="blog" title="['/blog.html']"><input type="hidden" class="panel_type" value="Content" /></div>);
   } else {
     my $content;
     eval {
@@ -122,19 +124,7 @@ sub render {
       $html .=  EnsEMBL::Web::Document::HTML::Blog->render;
     };    
   }
-
-=pod
-  if ($species_defs->ENSEMBL_LOGINS) {
-    if ($user && $user->id) {
-      #if (!$filtered) {
-        $html .= qq(<p>Go to <a href="/common/user/account?tab=news">your account</a> to customise this news panel</p>);
-      #}
-    }
-    else {
-      $html .= qq(<p><a href="javascript:login_link();">Log in</a> to see customised news &middot; <a href="/common/user/register">Register</a></p>);
-    }
-  }
-=cut
+  
   return $html;
 }
 

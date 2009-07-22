@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::DocsMenu;
 
 ### Generates "local context" menu for documentation (/info/)
@@ -83,7 +85,7 @@ sub render {
   }
  
   my $html = qq(
-<dl id="local">
+<dl class="local_context">
 <dt>Help &amp; Documentation</dt>
 );
   if ($page_count > 5) {

@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::SpeciesList;
 
 use strict;
@@ -9,18 +11,20 @@ use EnsEMBL::Web::RegObj;
 {
 
 sub render {
-
   my $class = shift;
-
+  my $fragment = (shift eq 'fragment');
+  
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 
   my @valid_species = $species_defs->valid_species;
   my $species_check;
+  
   foreach my $sp (@valid_species) {
     $species_check->{$sp}++;
   }
 
   my %species_info;
+  
   foreach my $species (@valid_species) {
     my $info = {};
     $info->{'common'}     = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
@@ -32,75 +36,94 @@ sub render {
   my %species_description = _setup_species_descriptions(\%species_info);
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $html = '';
-
-  $html .= qq(<div id="reorder_species" style="display: none;">);
-  $html .= _render_ajax_reorder_list(\%species_info); 
-  $html .= qq(</div>\n<div id="full_species">);
-  $html .= _render_species_list(\%species_info, \%species_description); 
-  $html .= qq(</div>
-);
+  my $full_list = _render_species_list(\%species_info, \%species_description, $fragment);
+  
+  my $html = $fragment ? $full_list : '
+    <div id="species_list" class="js_panel">
+      <input type="hidden" class="panel_type" value="SpeciesList" />
+      <div class="reorder_species" style="display: none;">
+         ' . _render_ajax_reorder_list(\%species_info) . '
+      </div>
+      <div class="full_species">
+        ' . $full_list . ' 
+      </div>
+    </div>
+  ';
 
   return $html;
-
 }
 
 sub _render_species_list {
-  my ($species_info, $description) = @_;
-  my ($html, $species_name, $species_dir, $id, $group);
+  my ($species_info, $description, $fragment) = @_;
+  
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
 
   my @favourites = @{_get_favourites($user, $species_info)};
-  if (scalar(@favourites) < 1) {
-    @favourites = @{_get_defaults($species_defs)};
-  }
+  
+  @favourites = @{_get_defaults($species_defs)} if scalar @favourites < 1;
+  
   my (%check_faves, @ok_faves);
+  
   foreach my $fave (@favourites) {
     push @ok_faves, $fave unless $check_faves{$fave};
     $check_faves{$fave}++;
   }
- 
-  ## output list
-  $html .= qq(<div id="static_favourite_species">
-<p>);
-
-  if ($species_defs->ENSEMBL_LOGINS && $user && scalar(@ok_faves)) {
-    $html .= qq(<span style="font-size:1.2em;font-weight:bold">Favourite genomes</span>);
-  }
-  else {
-    $html .= qq(<span style="font-size:1.2em;font-weight:bold">Popular genomes</span>);
-  }
-  if (!$user) {
-    if ($species_defs->ENSEMBL_LOGINS) {
-      $html .= qq# (<a href="/Account/Login" class="modal_link">Log in to customize this list</a>)#;
-    }
-  } else {
-    if ($species_defs->ENSEMBL_LOGINS) {
-      $html .= ' (<span class="link toggle_link">Change favourites</span>)';
-    }
-  }
-  $html .= '</p>';
-
+  
   my $count = @ok_faves;
-  if ($count > 3) {
-    my $breakpoint = int($count / 2) + ($count % 2);
-    my @first_half = splice(@ok_faves, 0, $breakpoint);
-    $html .= qq(<table style="width:100%"><tr><td style="width:50%">);
-    $html .= _render_with_images(\@first_half, $species_defs, $description);
-    $html .= qq(</td><td style="width:50%">);
-    $html .= _render_with_images(\@ok_faves, $species_defs, $description);
-    $html .= qq(</td></tr></table>);
-  }
-  else {
-    $html .= _render_with_images(\@ok_faves, $species_defs, $description);
-  }
+  
+  my $fav_html = _render_favourites($count, \@ok_faves, $description, $species_defs);
+  
+  return $fav_html if $fragment;
+  
+  # output list
+  my $html = '
+    <div class="static_favourite_species">
+      <p>';
 
+  if ($species_defs->ENSEMBL_LOGINS && $user && $count) {
+    $html .= '<span style="font-size:1.2em;font-weight:bold">Favourite genomes</span>';
+  } else {
+    $html .= '<span style="font-size:1.2em;font-weight:bold">Popular genomes</span>';
+  }
+  
+  if ($species_defs->ENSEMBL_LOGINS) {
+    if ($user) {
+      $html .= ' (<span class="link toggle_link">Change favourites</span>)';
+    } else {
+      $html .= ' (<a href="/Account/Login" class="modal_link">Log in to customize this list</a>)';
+    }
+  }
+  
+  $html .= '</p>';
+  $html .= qq{<div class="species_list_container">$fav_html</div>};
   $html .= "</div>\n";
 
-  $html .= qq(<div id='static_all_species'>);
+  $html .= '<div class="static_all_species">';
   $html .= _render_species_dropdown($species_info, $description);
-  $html .= qq(</div>\n);
+  $html .= "</div>\n";
+  
+  return $html;
+}
+
+sub _render_favourites {
+  my ($count, $ok_faves, $description, $species_defs) = @_;
+  
+  my $html;
+  
+  if ($count > 3) {
+    my $breakpoint = int($count / 2) + ($count % 2);
+    my @first_half = splice @$ok_faves, 0, $breakpoint;
+    
+    $html  = '<table style="width:100%"><tr><td style="width:50%">';
+    $html .= _render_with_images(\@first_half, $species_defs, $description);
+    $html .= '</td><td style="width:50%">';
+    $html .= _render_with_images($ok_faves, $species_defs, $description);
+    $html .= '</td></tr></table>';
+  } else {
+    $html  = _render_with_images($ok_faves, $species_defs, $description);
+  }
+  
   return $html;
 }
 
@@ -112,7 +135,7 @@ sub _render_species_dropdown {
   my $html = qq(<form action="#">
 <h3>All genomes</h3>
 <div>
-<select name="species" class="dropdown_redirect" id="species_dropdown">
+<select name="species" class="dropdown_redirect">
   <option value="/">-- Select a species --</option>
 );
 
@@ -211,13 +234,13 @@ sub _render_ajax_reorder_list {
 
   $html .= qq(For easy access to commonly used genomes, drag from the bottom list to the top one &middot; <span class="link toggle_link">Save</span><br /><br />\n);
 
-  $html .= qq(<div id="favourite_species">\n<strong>Favourites</strong>);
+  $html .= qq(<strong>Favourites</strong>);
   my @favourites = @{_get_favourites($user, $species_info)};
   if (scalar(@favourites) < 1) {
     @favourites = @{_get_defaults($species_defs)};
   }
 
-  $html .= qq(<ul id="favourites_list">\n);
+  $html .= qq(<ul class="favourites list">\n);
   foreach $species_name (@favourites) {
     $species_dir = $species_name;
     $species_name =~ s/_/ /;
@@ -225,9 +248,9 @@ sub _render_ajax_reorder_list {
     $html .= qq#<li id="favourite-$species_dir">$common (<em>$species_name</em>)</li>\n#;
   }
 
-  $html .= qq(</ul></div>
-  <div id="all_species">\n<strong>Other available species</strong>
-    <ul id="species_list">\n);
+  $html .= qq(</ul>
+  <strong>Other available species</strong>
+    <ul class="species list">\n);
 
   my %sp_to_sort = %$species_info;
   foreach my $fave (@favourites) {
@@ -246,7 +269,7 @@ sub _render_ajax_reorder_list {
     $html .= qq#<li id="species-$species_dir">$common (<em>$species_name</em>)</li>\n#;
   }
 
-  $html .= qq(</ul></div>
+  $html .= qq(</ul>
       <span class="link toggle_link">Save selection</span> &middot; <a href="/Account/ResetFavourites">Restore default list</a>);
 
   return $html;

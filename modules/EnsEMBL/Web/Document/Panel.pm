@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Panel;
 
 use strict;
@@ -284,28 +286,28 @@ sub render_Text {
 
 sub render_XML {
   my $self = shift;
-  $self->content();
+  $self->content;
 }
 
 sub render_Excel {
   my $self = shift;
-  $self->content_Excel();
+  $self->content_Excel;
 }
 
 
-sub content_Excel() { 
+sub content_Excel { 
   my $self = shift;
 #  $self->renderer = new EnsEMBL::Web::Document::Renderer::Excel();
-  $self->content();
+  $self->content;
 #  $self->renderer->print( qq(<$self->{'caption'}>))
 }
 
 
-sub content_Text() { 
+sub content_Text { 
   my $self = shift;
   my $temp_renderer = $self->renderer;
-  $self->renderer = new EnsEMBL::Web::Document::Renderer::String();
-  $self->content();
+  $self->renderer = new EnsEMBL::Web::Document::Renderer::String;
+  $self->content;
   my $value = $self->strip_HTML( $self->renderer->content ); 
 my $value =  $self->renderer->content;
   $self->renderer = $temp_renderer;
@@ -325,58 +327,50 @@ sub render {
     if ($status ne 'off' && $self->{'delayed_write'}) {
       $content = $self->_content_delayed;
       
-      return if !$content && exists($self->{'null_data'}) && !defined $self->{'null_data'};
+      return if !$content && exists $self->{'null_data'} && !defined $self->{'null_data'};
     }
     
-    my $HTML = '
-    <div class="panel">';
+    my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
     
-    my $button_text;
+    my $html = qq{<div class="panel js_panel"><input type="hidden" class="panel_type" value="$panel_type" />};
     my $counts = {};
     
     if (!$self->{'omit_header'}) {
       if (exists $self->{'previous'} || exists $self->{'next'}) {
-        $HTML .= '<div class="nav-heading">
-          <div class="left-button print_hide">';
+        my @buttons = (
+          [ 'previous', 'left',  '&laquo;&nbsp;%s' ],
+          [ 'next',     'right', '%s&nbsp;&raquo;' ]
+        );
         
-        if (exists $self->{'previous'} && !$self->{'previous'}{'external'}) {
-          $button_text = $self->{'previous'}{'concise'} || $self->{'previous'}{'caption'};
+        $html .= '<div class="nav-heading">';
+        
+        foreach (@buttons) {
+          my $label = $_->[0];
+          my $button_text = exists $self->{$label} && !$self->{$label}->{'external'} ? $self->{$label}->{'concise'} || $self->{$label}->{'caption'} : undef;
+          
+          $html .= qq{
+            <div class="$_->[1]-button print_hide">};
           
           if ($button_text) {
-            my $url = $self->{'previous'}{'url'} ||  $object->_url({ 'action' => $self->{'previous'}{'code'}, 'function' => undef });
-            $HTML .= sprintf '<a href="%s">&laquo;&nbsp;%s</a>', CGI::escapeHTML($url), CGI::escapeHTML($button_text);
+            my $url = $self->{$label}->{'url'} || $self->{'object'}->_url({ 'action' => $self->{$label}->{'code'}, 'function' => undef });
+            
+            $html .= sprintf qq{<a href="%s">$_->[2]</a>}, CGI::escapeHTML($url), CGI::escapeHTML($button_text);
           } else {
-            $HTML .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
+            $html .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
           }
-        } else {
-          $HTML .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
+          
+          $html .= '</div>';
         }
         
-        $HTML .= '</div>
-          <div class="right-button print_hide">';
-          
-        if (exists $self->{'next'} && !$self->{'next'}{'external'}) {
-          $button_text = $self->{'next'}{'concise'} || $self->{'next'}{'caption'};
-          
-          if ($button_text) {
-            my $url = $self->{'next'}{'url'} || $object->_url({ 'action' => $self->{'next'}{'code'}, 'function' => undef });
-            $HTML .= sprintf '<a href="%s">%s&nbsp;&raquo;</a>', CGI::escapeHTML($url), CGI::escapeHTML($button_text);
-          } else {
-            $HTML .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
-          }
-        } else {
-          $HTML .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
-        }
-        
-        $HTML .= '</div>';
-        $HTML .= $self->_caption_with_helplink if exists $self->{'caption'};
-        $HTML .= '<p class="invisible">.</p></div>';
+        $html .= $self->_caption_with_helplink if exists $self->{'caption'};
+        $html .= '
+        <p class="invisible">.</p></div>';
       } elsif (exists $self->{'caption'}) {
-        $HTML .= $self->_caption_with_helplink;
+        $html .= $self->_caption_with_helplink;
       }
     }
     
-    $self->renderer->print($HTML);
+    $self->renderer->print($html) unless $self->{'json'};
     
     if ($status ne 'off') {
       if ($self->{'_delayed_write_'}) {
@@ -389,11 +383,14 @@ sub render {
           cache   => $temp_renderer->cache,
           session => $object ? $object->get_session : undef,
         );
-        
+
         $self->_render_content;
         $self->renderer->close;
-        
+
         $content = $self->renderer->content;
+        
+        return qq{$content<p class="invisible">.</p>} if $self->{'json'};
+        
         $self->renderer = $temp_renderer;
         $self->renderer->print($content);
       }
@@ -596,149 +593,156 @@ sub _is_ajax_request {
 }
 
 sub content {
-  my( $self ) = @_;
-
+  my ($self) = @_;
+  my $object = $self->{'object'};
+  
   $self->reset_buffer;
   $self->_start;
-  if( $self->{'content'} ) {
-    $self->print( $self->{'content'} );
+  
+  if ($self->{'content'}) {
+    $self->print($self->{'content'});
   }
+  
   foreach my $component ($self->components) {
-if ($component eq 'das_features') {
-    foreach my $function_name ( @{$self->{'components'}{$component}} ) {
-	my $result;
-	(my $module_name = $function_name ) =~s/::\w+$//;
-	if( $self->dynamic_use( $module_name ) ) {
-	    $self->{'object'} && $self->{'object'}->prefix($self->prefix);
-	    no strict 'refs';
-	    eval {
-		    $result = &$function_name( $self, $self->{'object'} );
-	    };
-	    if( $@ ) {
-		my $error = sprintf( '<pre>%s</pre>', $self->_format_error($@) );
-		$self->_error( qq(Runtime Error in component "<b>$component</b>"),
-			       qq(<p>Function <strong>$function_name</strong> fails to execute due to the following error:</p>$error)
-			       );
-		warn( "Component $function_name (runtime failure)" );
-#	    } else {
-#		warn( "Component $function_name succeeded" );
-	    }
-	} else {
-	    $self->_error( qq(Compile error in component "<b>$component</b>"),
-			   qq(
-			      <p>Function <strong>$function_name</strong> not executed as unable to use module <strong>$module_name</strong>
-			      due to syntax error.</p>
-			      <pre>@{[ $self->_format_error( $self->dynamic_use_failure($module_name) ) ]}</pre>
-			      )
-			   );
-	    warn( "Component $function_name (compile failure)" );
-	}
-	last if $result;
-    }
-
-    next;
-}
-    foreach my $temp ( @{$self->{'components'}{$component}} ) { 
-      my( $module_name, $function_name ) = split /\//, $temp;
-      my $result;
-      # (my $module_name = $function_name ) =~s/::\w+$//;
-      if( $self->dynamic_use( $module_name ) ) {
-
-        $self->{'object'} && $self->{'object'}->prefix( $self->prefix );
-
-        no strict 'refs';
-        my $comp_obj;
-        eval {
-          $comp_obj = $module_name->new( $self->{'object'} ); # &$function_name( $self, $self->{'object'} );
-        };
-        $result = $comp_obj->{_end_processing_};
-
-
-        if( $@ ) {
-          warn $@;
-          $self->_error(
-            qq(Runtime Error in component "<strong>$component</strong> [new]"),
-            qq(<p>
-                Function <strong>$module_name</strong> fails to
-                execute due to the following error:
-               </p>).$self->_format_error($@),
-          );
-          $self->timer_push( "Component $module_name (runtime failure [new])" );
-        } else {
+    if ($component eq 'das_features') {
+      foreach my $function_name (@{$self->{'components'}{$component}}) {
+        my $result;
+        (my $module_name = $function_name) =~ s/::\w+$//;
+        
+        if ($self->dynamic_use($module_name)) {
+          $object && $object->prefix($self->prefix);
           
-          my $caption = $comp_obj->caption;
-          if( ! $self->{'disable_ajax'} &&
-              $comp_obj->ajaxable() && 
-              !$self->_is_ajax_request ) {
-
-            my( $ensembl, $plugin, $component, $type, $module ) = split '::', $module_name;
-            my $URL = join '/', '', $ENV{'ENSEMBL_SPECIES'},'Component',$ENV{'ENSEMBL_TYPE'},$plugin,$module;
-            $URL .= "/$function_name" if $function_name && $comp_obj->can( "content_$function_name" );
-            $URL .= "?$ENV{'QUERY_STRING'}";
-            $URL .= ';_rmd=' . substr(Digest::MD5::md5_hex($ENV{'REQUEST_URI'}), 0, 4);
-            # $self->renderer->{'r'}->parsed_uri->query;
-
-            ## Check if ajax enabled
-            if( $ENSEMBL_WEB_REGISTRY->check_ajax ) {
-
-              if( $caption ) {
-                $self->printf( qq(<div class="ajax" title="['%s','%s']"></div>), CGI::escapeHTML($caption),CGI::escapeHTML($URL) );
-              } else {
-                $self->printf( qq(<div class="ajax" title="['%s']"></div>), CGI::escapeHTML($URL) );
-              }
-
-            } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
-
-              ## if ajax disabled - we get all content by parallel requests to ourself
-              $self->print(
-                HTTP::Request->new('GET', $self->{'object'}->species_defs->ENSEMBL_BASE_URL.$URL)
-              );
-
+          no strict 'refs';
+          
+          eval {
+            $result = &$function_name($self, $object);
+          };
+          
+          if ($@) {
+            my $error = sprintf('<pre>%s</pre>', $self->_format_error($@));
+            
+            $self->_error(
+              qq{Runtime Error in component "<b>$component</b>"},
+              qq{<p>Function <strong>$function_name</strong> fails to execute due to the following error:</p>$error}
+            );
+            
+            warn "Component $function_name (runtime failure)";
+          }
+        } else {
+          $self->_error(
+            qq{Compile error in component "<b>$component</b>"},
+            qq{
+              <p>Function <strong>$function_name</strong> not executed as unable to use module <strong>$module_name</strong> due to syntax error.</p>
+              <pre>@{[$self->_format_error($self->dynamic_use_failure($module_name))]}</pre>
             }
+          );
+          
+          warn "Component $function_name (compile failure)";
+        }
+        
+        last if $result;
+      }
+    } else {
+      foreach my $temp (@{$self->{'components'}{$component}}) {
+        my ($module_name, $function_name) = split /\//, $temp;
+        my $result;
+        
+        if ($self->dynamic_use($module_name)) {
+          $object && $object->prefix($self->prefix);
 
+          no strict 'refs';
+          
+          my $comp_obj;
+          
+          eval {
+            $comp_obj = $module_name->new($object);
+          };
+          
+          $result = $comp_obj->{'_end_processing_'};
+
+          if ($@) {
+            warn $@;
+            
+            $self->_error(
+              qq{Runtime Error in component "<strong>$component</strong> [new]"},
+              qq{<p>Function <strong>$module_name</strong> fails to execute due to the following error:</p>} . $self->_format_error($@),
+            );
+            
+            $self->timer_push("Component $module_name (runtime failure [new])");
           } else {
-            my $content;
-            eval {
-              my $FN = $self->_is_ajax_request ? lc($ENV{'ENSEMBL_FUNCTION'}) : $function_name;
-              $FN = $FN ? "content_$FN" : $FN;
-      	      $content = $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
-            };
-            if ($@) {
-              warn $@;
-              $self->_error( qq(Runtime Error in component "<strong>$component</strong> [content]"),
-                qq(<p>
-                    Function <strong>$module_name</strong> fails to
-                    execute due to the following error:
-                   </p>).$self->_format_error($@)
-              );
-              $self->timer_push( "Component $module_name (runtime failure [content])" );
-            } else {
-              if( $content ) {
-                    if( ! $self->_is_ajax_request ) {
-                              my $caption = $comp_obj->caption;
-                              $self->printf( "<h2>%s</h2>", CGI::escapeHTML($caption) ) if $caption;
-                    }
-                $self->print( $content );
+            my $caption = $comp_obj->caption;
+            
+            if (!$self->{'disable_ajax'} && $comp_obj->ajaxable && !$self->_is_ajax_request) {
+              my ($ensembl, $plugin, $component, $type, $module) = split '::', $module_name;
+              
+              my $URL = join '/', '', $ENV{'ENSEMBL_SPECIES'}, 'Component', $ENV{'ENSEMBL_TYPE'}, $plugin, $module;
+              $URL .= "/$function_name" if $function_name && $comp_obj->can("content_$function_name");
+              $URL .= "?$ENV{'QUERY_STRING'}";
+              $URL .= ';_rmd=' . substr(Digest::MD5::md5_hex($ENV{'REQUEST_URI'}), 0, 4);
+
+              # Check if ajax enabled
+              if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
+                if ($caption) {
+                  $self->printf(qq{<div class="ajax" title="['%s','%s']"></div>}, CGI::escapeHTML($caption), CGI::escapeHTML($URL));
+                } else {
+                  $self->printf(qq{<div class="ajax" title="['%s']"></div>}, CGI::escapeHTML($URL));
+                }
+              } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
+                # if ajax disabled - we get all content by parallel requests to ourself
+                $self->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $URL));
               }
-              $self->timer_push( "Component $module_name succeeded" );
+            } else {
+              my $content;
+              
+              eval {
+                my $FN = $self->_is_ajax_request ? lc($ENV{'ENSEMBL_FUNCTION'}) : $function_name;
+                $FN = $FN ? "content_$FN" : $FN;
+                $content = $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
+              };
+              
+              if ($@) {
+                warn $@;
+                
+                $self->_error(
+                  qq{Runtime Error in component "<strong>$component</strong> [content]"},
+                  qq{<p>Function <strong>$module_name</strong> fails to execute due to the following error:</p>} . $self->_format_error($@)
+                );
+                
+                $self->timer_push("Component $module_name (runtime failure [content])");
+              } else {
+                if ($content) {
+                  if ($self->_is_ajax_request) {
+                    my $id = $ENV{'ENSEMBL_FUNCTION'} eq 'sub_slice' ? '' : $comp_obj->id;
+                    
+                    $content = qq{<div class="js_panel" id="$id">$content</div>};
+                  } else {
+                    my $caption = $comp_obj->caption;
+                    $self->printf("<h2>%s</h2>", CGI::escapeHTML($caption)) if $caption;
+                  }
+                  
+                  $self->print($content);
+                }
+                
+                $self->timer_push("Component $module_name succeeded");
+              }
             }
           }
+        } else {
+          $self->_error(
+            qq{Compile error in component "<strong>$component</strong>"},
+            qq{<p>Component <strong>$module_name</strong> not used as unable to compile module.</p>} . $self->_format_error($self->dynamic_use_failure($module_name))
+          );
+          
+          $self->timer_push("Component $module_name (compile failure)");
         }
-      } else {
-        $self->_error( qq(Compile error in component "<strong>$component</strong>"),
-          qq(
-    <p>
-      Component <strong>$module_name</strong> not used
-      as unable to compile module.
-    </p>). $self->_format_error( $self->dynamic_use_failure($module_name) )
-        );
-        $self->timer_push( "Component $module_name (compile failure)" );
+        
+        last if $result;
       }
-      last if $result;
     }
-#warn "Ending component $component";
   }
+  
   $self->_end;
+  
   return $self->buffer;
 }
 

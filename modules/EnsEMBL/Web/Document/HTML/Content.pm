@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::Content;
 use strict;
 use CGI qw(escapeHTML);
@@ -114,6 +116,49 @@ sub render {
   }
   $self->print( "\n</form>" ) if $self->{'form'};
   $self->_end;
+}
+
+sub get_json {
+  my $self = shift;
+  
+  my $panel_type = 'ModalContent';
+  my $single = (scalar @{$self->{'panels'}} == 1);
+  my $wrapper = 'modal_wrapper' . ($single ? ' panel' : '');
+  
+  my $filter;
+  my $content;
+  
+  # Include any access warning at top of page
+  if ($self->filter_module) {
+    my $class = 'EnsEMBL::Web::Filter::' . $self->filter_module;
+    
+    if ($class && EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+      $filter = $class->new;
+      
+      $content .= '<div class="panel print_hide">';
+      $content .= sprintf '<div style="width:80%" class="error"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);
+      $content .= '</div>';
+    }
+  }
+  
+  foreach my $panel (@{$self->{'panels'}}) { 
+    $panel->{'json'} = 1;
+    
+    my $p = $panel->render;
+    $p = qq{<div class="panel">$p</div>} if $filter && $single;
+    
+    $content .= $p;
+    
+    $panel_type = 'Configurator' if ref($panel) =~ /Configurator/;
+  }
+  
+  $content = "$self->{'form'}$content</form>" if $self->{'form'};
+  
+  $content =~ s/\n//g;
+  $content =~ s/\r//g;
+  $content =~ s/'/&#39/g;
+  
+  return qq{'content':'$content','wrapper':'<div class="$wrapper"></div>','panelType':'$panel_type'};
 }
 
 1;

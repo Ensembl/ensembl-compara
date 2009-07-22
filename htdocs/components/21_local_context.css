@@ -1,11 +1,17 @@
-#local dl { overflow: hidden; width: 14em; margin: 0 }
-#local dd { margin-bottom: 0; overflow: hidden }
-#local dt { border-bottom: 1px solid [[NEUTRAL_BORDER]]; padding: 2px; }
-#local dd.notl dl, #local dd.notl { background: url(/i/line.gif) repeat-y;  }
-#local dd.notl dl { margin: 0 }
-#local dd.last { background: [[PANEL_BG]] url(/i/last.gif) no-repeat }
-#local dd.active, #local a.active { font-weight: bold; background-color: [[TINT_BG]] }
-#local dd.active dl { background-color: [[PANEL_BG]] }
-#local dd.active dd { font-weight: normal }
+.local_context {margin: 0 0 0.5em 0; border:1px solid [[PANEL_BORDER]];padding:0;background-color:[[PANEL_BG]]}
+.local_context dt {font-weight:bold}
+.local_context dd {margin-left:0; white-space: nowrap}
+.local_context dd dl {border:0;padding:0 0 0 14px}
+.local_context dd img {height:14px;width:14px;border:0;vertical-align:top;padding-right:5px}
+
+.local_context dl { overflow: hidden; width: 14em; margin: 0 }
+.local_context dd { margin-bottom: 0; overflow: hidden }
+.local_context dt { border-bottom: 1px solid [[NEUTRAL_BORDER]]; padding: 2px; }
+.local_context dd.notl dl, .local_context dd.notl { background: url(/i/line.gif) repeat-y;  }
+.local_context dd.notl dl { margin: 0 }
+.local_context dd.last { background: [[PANEL_BG]] url(/i/last.gif) no-repeat }
+.local_context dd.active, .local_context a.active { font-weight: bold; background-color: [[TINT_BG]] }
+.local_context dd.active dl { background-color: [[PANEL_BG]] }
+.local_context dd.active dd { font-weight: normal }
 
 #local-tools li.disabled { color:[[PAGE_TEXT]] }

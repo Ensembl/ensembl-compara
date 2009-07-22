@@ -1,11 +1,6 @@
 #main { margin:0;padding:0; border: 0; position: relative; }
 
 #nav {width:14em;margin:0 0.25em;border:0;padding:0;z-index:100; position:absolute; top: 5px; left: 0}
-#nav dl {margin: 0 0 0.5em 0; border:1px solid [[PANEL_BORDER]];padding:0;background-color:[[PANEL_BG]]}
-#nav dt {font-weight:bold}
-#nav dd {margin-left:0; white-space: nowrap}
-#nav dd dl {border:0;padding:0 0 0 14px}
-#nav dd img {height:14px;width:14px;border:0;vertical-align:top;padding-right:5px}
 #nav ul {margin: 0 0 0.5em 0; border:1px solid [[PANEL_BORDER]];padding:0.2em 0 0 1.5em;background-color:[[PANEL_BG]]}
 #nav ul li { margin-bottom:0; list-style-image:none; color:[[CONTRAST_HEADER]]; }
 #nav a {color:[[MH_BORDER]];text-decoration:none;}

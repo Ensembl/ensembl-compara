@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Panel::AjaxMenu;
 
 use strict;
@@ -34,43 +36,33 @@ sub add_entry {
 
 sub content {
   my $self = shift;
-  $self->print('
-<tbody class="real">');
-  $self->printf('
-  <tr>
-    <th class="caption" colspan="2">%s</th>
-  </tr>', escapeHTML($self->{'caption'}) );
-  foreach my $entry ( sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'label'} cmp $b->{'label'} } @{$self->{'entries'}||[]} ) {
-    my $txt = escapeHTML( $entry->{'label'} );
-    $txt .= ( $entry->{'label_html'} );
-    if( $entry->{'link'} ) {
-      if ($entry->{'extra'}{'abs_url'}) {
-	$txt = $entry->{'link'};
-      }
-      else {
-	$txt = sprintf( '<a href="%s"%s %s>%s</a>',
-          escapeHTML($entry->{'link'}),
-	  $entry->{'extra'}{'external'} ? ' rel="external"' : '',
-	  $entry->{'class'} ? sprintf(' class="%s"',$entry->{'class'} ) : '',
-	  $txt
+  
+  my @entries;
+  
+  foreach (sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'label'} cmp $b->{'label'} } @{$self->{'entries'}||[]}) {
+    my $link;
+    my $type = sprintf ", type: '%s'", escapeHTML($_->{'type'}) if $_->{'type'};
+    
+    if ($_->{'link'}) {
+      if ($_->{'extra'}->{'abs_url'}) {
+        $link = $_->{'link'};
+      } else {
+        $link = sprintf(
+          '<a href="%s"%s %s>%s</a>',
+          escapeHTML($_->{'link'}),
+          $_->{'extra'}{'external'} ? ' rel="external"' : '',
+          $_->{'class'} ? qq{ class="$_->{'class'}"} : '',
+          escapeHTML($_->{'label'} . $_->{'label_html'})
         );
       }
-    }
-    if( $entry->{'type'} ) {
-      $self->printf( '
-  <tr>
-    <th>%s</th>
-    <td>%s</td>
-  </tr>', escapeHTML($entry->{'type'}), $txt );
     } else {
-      $self->printf( '
-  <tr>
-    <td colspan="2">%s</td>
-  </tr>', $txt );
+      $link = escapeHTML($_->{'label'} . $_->{'label_html'})
     }
+    
+    push @entries, "{link: '$link'$type}";
   }
-  $self->print('
-</tbody>');
+  
+  $self->printf("{caption: '%s', entries: [%s]}", escapeHTML($self->{'caption'}), join ',', @entries);
 }
 
 sub render {

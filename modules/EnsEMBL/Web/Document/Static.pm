@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Static;
 
 use strict;
@@ -25,6 +27,7 @@ sub _initialize {
     tools           EnsEMBL::Web::Document::HTML::ToolLinks
     content         EnsEMBL::Web::Document::HTML::Content
     global_context  EnsEMBL::Web::Document::HTML::GlobalContext
+    modal_context   EnsEMBL::Web::Document::HTML::ModalContext
   );
   if( $self->include_navigation ) {
     $self->add_body_elements qw(

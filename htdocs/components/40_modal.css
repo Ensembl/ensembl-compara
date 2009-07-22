@@ -1,46 +1,34 @@
 .pointer { cursor:pointer }
 
-#modal_bg { position: absolute; top: 0; z-index:19999; background: [[MH_BORDER]]; margin:0;border:0; padding:0; text-align: center; vertical-align: middle; top:0; left:0}
-#modal_disable { position: absolute; top: 0; z-index:20001; background: [[MH_BORDER]]; margin:0;border:0; padding:0; text-align: center; vertical-align: middle; top:0; left:0}
-#modal_panel { text-align: left; position: absolute; background-color: [[PANEL_BG]]; margin: auto; z-index: 20000; padding:0; border: 1px solid [[CONTRAST_TEXT]]; }
-#modal_title { overflow: hidden; background-color: [[PANEL_TEXT]]; margin: 0; padding: 2px 2px 0 2px; color: [[PANEL_BG]]; font-weight: bold; }
-#modal_content { overflow:scroll; }
+#modal_bg { position: absolute; top: 0; z-index:19999; background: [[MH_BORDER]]; margin:0;border:0; padding:0; text-align: center; vertical-align: middle; top:0; left:0; display: none; }
+#modal_panel { text-align: left; position: absolute; background-color: [[PANEL_BG]]; margin: auto; z-index: 20000; padding:0; border: 1px solid [[CONTRAST_TEXT]]; display: none; }
+.modal_title { overflow: hidden; background-color: [[PANEL_TEXT]]; margin: 0; padding: 2px 2px 0 2px; color: [[PANEL_BG]]; font-weight: bold; clear: both }
 
-.modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color:[[PANEL_BORDER]]; margin: 2px; text-align: center; font-weight: bold; color: [[CONTRAST_TEXT]]; cursor:pointer; }
+.modal_caption { float: left }
+.modal_content { overflow:scroll; height: 100%; }
 
-#modal_close { float:right;margin:0;padding:0; width: 10em; text-align: center }
+.modal_title ul { margin: 0; padding: 0 }
+.modal_title li { list-style: none; padding: 0 0.5em; background-color: #999; margin: 0 0.5em; float: left; }
+.modal_title li a { color: [[PANEL_BG]]; padding: 0 0.5em; text-decoration: none; }
+.modal_title li a:link, .modal_title a:hover { color: [[PANEL_BG]] }
+.modal_title li.active { color: [[PAGE_TEXT]]; background-color: [[PANEL_BG]] }
+.modal_title li.ui-tabs-selected { color: [[PAGE_TEXT]]; background-color: [[PANEL_BG]] }
+.modal_title li.active a { color:[[PAGE_TEXT]]; }
+.modal_title li.ui-tabs-selected a { color:[[PAGE_TEXT]]; }
 
-#modal_caption { padding-bottom:2px }
-/* tab bar on pop-up... */
+.local_modal { width: 14em; margin:0 0.25em; position: absolute; top: 2em; left: 0; border: 1px solid #ccc; padding: 0; background-color: [[PANEL_BG]]; overflow: hidden }
+.local_modal dt { font-weight: bold }
+.local_modal dd { margin-left:0; margin-bottom: 0; white-space: nowrap }
+.local_modal dd dl { border: 0; padding: 0 0 0 14px }
+.local_modal dd img { height: 14px; width: 14px; border: 0; vertical-align: top; padding-right: 5px } /* #nav dd img */
+.local_modal ul { margin: 0 0 0.5em 0; border: 1px solid #ccc; padding: 0.2em 0 0 1.5em; background-color: [[PANEL_BG]] }
+.local_modal ul li { margin-bottom:0; list-style-image :none; color: #933; }
+.local_modal span.fake_link , dl.local_modal a { color: #369; text-decoration: none; }
 
-#modal_caption dl.tabs { padding: 0; background-color: yellow; margin: 0 }
-#modal_caption dl.tabs dd { padding: 0 0.5em; background-color: #999; margin: 0 0.5em }
-#modal_caption dl.tabs dd a { color: [[PANEL_BG]] }
-#modal_caption dl.tabs dd a:link, #modal_caption dl.tabs a:hover { color: [[PANEL_BG]] }
-#modal_caption dl.tabs dd.active { color: [[PAGE_TEXT]]; background-color: [[PANEL_BG]] }
-#modal_caption dl.tabs dd.active a { color:[[PAGE_TEXT]]; }
-#modal_caption dl.tabs dd.active a:link,
-#modal_caption dl.tabs dd.active a:hover ,
-#modal_caption dl.tabs dd.active a:visited { color:#fc9 }
+.modal_reload { display: none }
 
-dl#local_modal {width:14em; margin:0 0.25em; position:absolute; top: 2em; left: 0;
-  border:1px solid #ccc;padding:0;background-color:[[PANEL_BG]]; overflow: hidden}
+.modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color:[[PANEL_BORDER]] !important; margin: 2px; text-align: center; font-weight: bold; color: [[CONTRAST_TEXT]]; cursor:pointer; }
 
-dl#local_modal dt { border-bottom: 1px solid #ccc; padding: 2px; font-weight: bold }
+.modal_title .modal_close { float:right; margin:0;padding:0; width: 10em; text-align: center; }
 
-dl#local_modal dd { margin-bottom: 0; overflow: hidden }
-dl#local_modal dd.notl dl, #local_modal dd.notl { background: url(/i/line.gif) repeat-y;  }
-dl#local_modal dd.notl dl { margin:0}
-dl#local_modal dd.last { background: [[PANEL_BG]] url(/i/last.gif) no-repeat }
-dl#local_modal dd.active,
-  #local_modal a.active { background-color: [[TINT_BG]]; font-weight: bold; color:#f00 }
-
-
-dl#local_modal dd {margin-left:0;margin-bottom:0; white-space: nowrap}
-dl#local_modal dd dl {border:0;padding:0 0 0 14px}
-dl#local_modal dd img {height:14px;width:14px;border:0;vertical-align:top;padding-right:5px}
-dl#local_modal ul {margin: 0 0 0.5em 0; border:1px solid #ccc;padding:0.2em 0 0 1.5em;background-color:[[PANEL_BG]]}
-dl#local_modal ul li { margin-bottom:0; list-style-image:none; color:#933; }
-dl#local_modal span.fake_link , dl#local_modal a {color:#369;text-decoration:none;}
-
-#modal_reload { display: none }
+.ui-tabs-hide { display: none; }

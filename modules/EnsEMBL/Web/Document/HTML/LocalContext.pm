@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::LocalContext;
 
 ### Generates the local context navigation menu, used in dynamic pages
@@ -49,8 +51,19 @@ sub counts {
 sub render_modal {
   my $self = shift;
   my $t = $self->_content;
-     $t =~ s/id="local"/id="local_modal"/;
+     $t =~ s/class="local_context"/class="local_context local_modal"/;
   return $self->print( $t );
+}
+
+sub get_json {
+  my $self = shift;
+  
+  my $content = $self->_content;
+  
+  $content =~ s/class="local_context"/class="local_context local_modal"/;
+  $content =~ s/\n//g;
+  
+  return qq{'nav':'$content'};
 }
 
 sub render {
@@ -67,7 +80,7 @@ sub _content {
   $caption =~ s/<[^>]+>/ /g;
   $caption =~ s/\s+/ /g;
   my $content = sprintf( q(
-      <dl id="local"%s>
+      <dl class="local_context"%s>
         <dt>%s</dt>),
     $self->{'class'} ? qq( class="$self->{class}") : '',
     CGI::escapeHTML( $caption )

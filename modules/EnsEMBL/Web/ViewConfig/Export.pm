@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Export;
 
 use strict;
@@ -55,6 +57,7 @@ sub form {
   
   $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
   $view_config->get_form->{'_attributes'}{'id'} = 'export_configuration';
+  $view_config->get_form->{'_attributes'}{'class'} .= ' export';
   $view_config->get_form->{'_attributes'}{'method'} = 'get';
     
   $view_config->add_fieldset;

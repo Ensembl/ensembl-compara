@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::GlobalContext;
 
 ### Generates the global context navigation menu, used in dynamic pages
@@ -27,12 +29,47 @@ sub entries {
 }
 
 sub render_modal {
+  return;
   my $self = shift;
   my $T = $self->_content;
      $T =~ s/id="tabs"/id="modal_tabs"/;
      $T =~ s/class="link /class="/g;
      $T =~ s/ class=""//g;
   $self->print( $T );
+}
+
+sub get_json {
+  my $self = shift;
+  
+  return unless scalar @{$self->entries};
+  
+  my $content = '<ul class="tabs">';
+  my $i = 0;
+  my $active;
+  
+  foreach my $entry (@{$self->entries}) {
+    my $name = $entry->{'caption'};
+    my $id = lc('tab_' . ($entry->{'id'} || $entry->{'type'}));
+    
+    if ($name eq '-') {
+      $name =  qq{<span title="$entry->{'disabled'}">$entry->{'type'}</span>};
+    } else { 
+      $name =~ s/<\\\w+>//g;
+      $name =~ s/<[^>]+>/ /g;
+      $name =~ s/\s+/ /g;
+      $name = CGI::escapeHTML($name);
+      $name = qq{<a href="$entry->{'url'}">$name</a>} if $entry->{'url'};
+    }
+    
+    $content .= qq{<li id="$id" class="$entry->{'class'}">$name</li>};
+    
+    $active = $i if $entry->{'class'} =~ /\bactive\b/;
+    $i++;
+  }
+  
+  $content .= '</ul>';
+  
+  return qq{'tabs':'$content','activeTab':'$active'};
 }
 
 sub render {
@@ -42,6 +79,7 @@ sub render {
 
 sub _content {
   my $self = shift;
+  
   return '' unless scalar(@{$self->entries});
   my $content = '
     <div id="tabs">

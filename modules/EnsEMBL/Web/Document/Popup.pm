@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Popup;
 
 use strict;
@@ -46,7 +48,10 @@ sub _initialize_HTML {
   $self->call_child_functions( 'extra_configuration' );
 
   $self->timer_push( "menu items configured" );
+}
 
+sub panel_type {
+  return '<input type="hidden" class="panel_type" value="ModalContent" />';
 }
 
 1;

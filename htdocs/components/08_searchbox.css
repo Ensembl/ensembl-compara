@@ -1,10 +1,11 @@
-  /** search box... **/
 #mh form { margin: 2px; padding: 0; border: 0 }
-table#se { float: right; margin: 2px; background-color:[[PANEL_BG]]; border: 1px solid [[MH_BORDER]]; border-collapse: collapse; }
-table#se td { border: 1px solid [[MH_BORDER]]; vertical-align: middle }
-table#se img { cursor: pointer; padding: 2px; height: 16px; width: 16px; }
-#se_q { border:0; width: 20em }
-  /** search menu selector **/
-dl#se_mn { z-index:100;width: 15em; margin: 2px; border-top: 1px solid [[MH_BORDER]]; position: absolute; cursor: pointer }
-dl#se_mn dt { border: 1px solid [[MH_BORDER]] ; border-top: 0; font-size: 0.8em;  padding: 0; background-color: [[PANEL_BG]] }
-dl#se_mn dt img { height: 16px; width: 16px; border: 2px solid [[PANEL_BG]]; vertical-align: top; padding-right: 0.5em }
+table.search { float: right; margin: 2px; background-color:[[PANEL_BG]]; border: 1px solid [[MH_BORDER]]; border-collapse: collapse; }
+table.search img { cursor: pointer; padding: 2px; height: 16px; width: 16px; }
+table.search td { border: 1px solid [[MH_BORDER]]; vertical-align: middle }
+table.search td.button { cursor: pointer; }
+table.search td.button input { padding: 1px 0.5em; font-size: 0.8em; }
+input#se_q { border: 0; width: 20em; }
+
+dl.site_menu { z-index:100;width: 15em; margin: 2px; border-top: 1px solid [[MH_BORDER]]; position: absolute; cursor: pointer }
+dl.site_menu dt { border: 1px solid [[MH_BORDER]] ; border-top: 0; font-size: 0.8em;  padding: 0; background-color: [[PANEL_BG]] }
+dl.site_menu dt img { height: 16px; width: 16px; border: 2px solid [[PANEL_BG]]; vertical-align: top; padding-right: 0.5em }

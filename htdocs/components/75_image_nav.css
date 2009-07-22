@@ -1,13 +1,13 @@
 /**
  zmenu styling... keeping it nice and simple!!
 **/
-.zmenu         { position: absolute; width: 18em; background-color: [[NEUTRAL_BG]]; margin: 0; border-collapse: collapse; border: 1px solid [[NEUTRAL_BG]]; z-index: 200 }
-.zmenu th      { font-weight: bold; padding: 2px; margin:0; text-align: right; width: 8em; font-size: 0.8em ; background-color: [[NEUTRAL_BG]] }
-.zmenu th.caption { width: auto; text-align: left; font-size: 1em }
-.zmenu .close  { float: right; background-color: [[NEUTRAL_BORDER]]; color: [[CONTRAST_TEXT]]; height: 1em; width: 1em; cursor: pointer; text-align: center }
+.zmenu          { position: absolute; width: 18em; background-color: [[NEUTRAL_BG]]; margin: 0; border-collapse: collapse; border: 1px solid [[NEUTRAL_BG]]; z-index: 200 }
+.zmenu th       { font-weight: bold; padding: 2px; margin:0; text-align: right; width: 8em; font-size: 0.8em ; background-color: [[NEUTRAL_BG]] }
+.zmenu .caption { width: 18em; text-align: left; font-size: 1em }
+.zmenu .close   { float: right; background-color: [[NEUTRAL_BORDER]]; color: [[CONTRAST_TEXT]]; height: 1em; width: 1em; cursor: pointer; text-align: center }
 
-.zmenu td      { background-color: [[PANEL_BG]]; border: 1px solid [[NEUTRAL_BG]]; margin: 0; padding: 2px; font-size: 0.8em; padding: 2px }
-.zmenu a       { text-decoration: none; font-weight: bold }
+.zmenu td       { background-color: [[PANEL_BG]]; border: 1px solid [[NEUTRAL_BG]]; margin: 0; padding: 2px; font-size: 0.8em; padding: 2px; width: 18em; }
+.zmenu a        { text-decoration: none; font-weight: bold }
 
 /**
  redbox      - red box around slice to indicate where in upper slice this slice is!
