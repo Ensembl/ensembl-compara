@@ -576,7 +576,7 @@ sub preview_fields {
     next if exists $extra_data->{$field};
     my %param = %{$element->preview};
     if (ref $data) {
-      my $var = $data->field;
+      my $var = $data->$field;
  
       ## Catch 'has_many' fields before doing normal ones
       if (my $classes = $has_many{$field}) {
