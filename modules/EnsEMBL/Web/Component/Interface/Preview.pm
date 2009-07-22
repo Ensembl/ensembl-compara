@@ -57,7 +57,7 @@ sub content {
   foreach $element (@$preview_fields) {
     $form->add_element(%$element);
   }
-  my $pass_fields = $object->interface->pass_fields($id);
+  my $pass_fields = $object->interface->pass_fields($id, $object);
   foreach $element (@$pass_fields) {
     $form->add_element(%$element);
   }

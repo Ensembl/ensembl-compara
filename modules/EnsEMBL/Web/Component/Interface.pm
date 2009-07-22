@@ -20,7 +20,6 @@ sub data_form {
   ### Function to build a record editing form
   my ($self, $name, $next) = @_;
   my $object = $self->object;
-
   my $url = '/'.$object->species;
   $url = '' if $url !~ /_/;
   $url .= '/'.$self->script_name.'/'.$next;
