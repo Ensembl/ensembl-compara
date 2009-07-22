@@ -417,7 +417,7 @@ sub render_image_map {
   my $map_name = $self->{'image_id'} || $image->token;
 
   return qq{
-    <map name="$map_name">
+    <map name="$map_name" id="map_$map_name">
       $imagemap
     </map>
     <input type="hidden" class="panel_type" value="ImageMap" />
@@ -515,7 +515,7 @@ sub render {
           
           $export .= qq{<dt><a href="$href" style="width:9em" rel="external">Export as $_->{'label'}</a></dt>};
         } else {
-          $export .= qq{<dt><div style="float:right"><a href="$href" rel="external">[view]</a></div><a href="$href;download=1" style="width:9em" rel="external">Export as $_->{'label'}</a></dt>};
+          $export .= qq{<dt><a href="$href;download=1" style="width:9em" rel="external">Export as $_->{'label'}</a><a style="float:right" href="$href" rel="external">[view]</a></dt>};
         }
       }
       
