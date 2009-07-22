@@ -401,7 +401,7 @@ sub store_clusters {
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
                             $node_id, $clusterset->node_id);
     $DB::single=1;1;
-    $self->dataflow_output_id($output_id, 2); # FIXME? should it be 1 or 2?
+    $self->dataflow_output_id($output_id, 1);
     print STDERR "Created new cluster $node_id\n";
   }
 }
