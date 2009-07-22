@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component;
 
 use strict;
@@ -110,10 +112,16 @@ sub image_width {
 }
 
 sub new {
-  my( $class, $object ) = shift;
-  my $self = { 'object' => shift, };
-  bless $self,$class;
-  $self->_init();
+  my ($class, $object) = shift;
+  
+  my $self = {
+    'object' => shift,
+    'id' => [split /::/, $class]->[-1]
+  };
+  
+  bless $self, $class;
+  $self->_init;
+  
   return $self;
 }
 
@@ -121,6 +129,12 @@ sub object {
   my $self = shift;
   $self->{'object'} = shift if @_;
   return $self->{'object'};
+}
+
+sub id {
+  my $self = shift;
+  $self->{'id'} = shift if @_;
+  return $self->{'id'};
 }
 
 sub cacheable {
