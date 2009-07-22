@@ -49,6 +49,8 @@ sub availability {
     $hash->{'domain'}     = 1;
     $hash->{'translation'}  = $self->Obj->translation ? 1 : 0;
     $hash->{'strains'}    = $self->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} ? 1 : 0;
+    $hash->{'history_protein'} = 0 unless $self->translation_object;
+
  }
   return $hash;
 }
