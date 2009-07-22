@@ -275,7 +275,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     var css = {
       left: this.position.left, 
-      top: this.position.top
+      top: this.position.top,
+      position: 'absolute'
     };
     
     if (this.position.left + menuWidth > windowWidth) {
