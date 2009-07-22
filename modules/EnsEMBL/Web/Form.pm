@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Form;
 
 use strict;
@@ -113,51 +115,49 @@ sub add_notes {
   }
 } 
 
+# Render the FORM tag and its contents
 sub render {
-### Render the FORM tag and its contents
   my $self = shift;
-
-  my $widgets = '';
+  
   my $has_file = 0; 
   my $required = 0;
-  my @A = @{$self->{'_fieldsets'}};
-  foreach my $fieldset ( @{$self->{'_fieldsets'}} ) {
+  
+  foreach my $fieldset (@{$self->{'_fieldsets'}}) {
     $has_file = 1 if $fieldset->{'_file'};
     $required = 1 if $fieldset->{'_required'};
-    $widgets .= $fieldset->render;
+    
+    last if $has_file && $required;
   }
-
-  if( $has_file ) { # File types must always be multipart Posts 
-    $self->add_attribute( 'method',  'post' );
-    $self->add_attribute( 'class',   'upload' );
-    $self->add_attribute( 'enctype', 'multipart/form-data' );
+  
+  if ($has_file) { # File types must always be multipart Posts 
+    $self->add_attribute('method',  'post');
+    $self->add_attribute('class',   'upload');
+    $self->add_attribute('enctype', 'multipart/form-data');
+    $self->add_attribute('target',  'uploadframe');
+    
+    $self->add_element(
+      'type'  => 'Hidden',
+      'name'  => 'uploadto',
+      'value' => 'iframe'
+    );
   }
-  $self->add_element( 'type' => 'Hidden',
-    'name' => '__submit',
-    'value' => ''
-  );
-
-  my $output = "<form";
-  while (my ($k, $v) = each ( %{$self->{'_attributes'}} )) {
+  
+  $self->add_element(type => 'Information', value => 'Fields marked with <strong>*</strong> are required') if $required;
+  
+  my $output = '<form';
+  
+  while (my ($k, $v) = each (%{$self->{'_attributes'}})) {
     $output .= sprintf ' %s="%s"', CGI::escapeHTML($k), CGI::escapeHTML($v);
   }
-  $output .= '>';
-
-  if ($self->{'_extra_buttons'} eq 'top') {
-    $output .= $self->_render_buttons;
-  }
-
-  $output .= $widgets;
   
-  if ($required) {
-    $self->add_element( 'type' => 'Information', 
-    'value' => 'Fields marked with <strong>*</strong> are required'
-    )
-  }
-
+  $output .= '>';
+  $output .= $self->_render_buttons if $self->{'_extra_buttons'} eq 'top';
+  $output .= $_->render for @{$self->{'_fieldsets'}};
+  
   $output .= $self->_render_buttons;
   $output .= "\n</form>\n";
   $output .= '<div style="height:1px;overflow: hidden;clear:both;font-size:1pt">&nbsp;</div>';
+  
   return $output;
 }
 
