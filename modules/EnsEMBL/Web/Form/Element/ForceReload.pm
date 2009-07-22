@@ -11,7 +11,7 @@ sub new {
 
 sub render {
   my $self = shift;
-  return '<div id="modal_reload">This window will try and reload when closed</div>';
+  return '<div class="modal_reload">This window will try and reload when closed</div>';
 }
 
 1;
