@@ -56,7 +56,7 @@ sub content {
         );
       }
     } else {
-      $link = escapeHTML($_->{'label'} . $_->{'label_html'})
+      $link = escapeHTML($_->{'label'}) . $_->{'label_html'};
     }
     
     push @entries, "{link: '$link'$type}";
