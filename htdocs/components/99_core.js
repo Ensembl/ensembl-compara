@@ -1,19 +1,15 @@
-/*
-  Any clean up - nothing at the moment
-*/
-
-function __init_ensembl_rel_external() {
-  $$('a[rel="external"]').each(function(n){
-    n.target = '__blank';
-  });
+// Stop console commands causing problems
+if (!('console' in window) || !('firebug' in console)) {
+  (function () {
+    var names = [ 'log','debug','info','warn','error','assert','dir','dirxml','group','groupEnd','time','timeEnd','count','trace','profile','profileEnd' ];
+    window.console = {};
+    
+    for (var i = 0; i < names.length; i++) {
+      window.console[names[i]] = function () {};
+    }
+  })();
 }
-addLoadEvent( __init_ensembl_rel_external );
 
-var ENSEMBL_LOAD_TIME = _time_diff(ENSEMBL_START_TIME);
-
-function __end_of_add_on_load() {
-  __info( 'On load events all fired' );
-}
-addLoadEvent( __end_of_add_on_load );
-
-
+$(function () {
+  Ensembl.initialize();
+});
