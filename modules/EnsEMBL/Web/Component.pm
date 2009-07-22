@@ -116,7 +116,7 @@ sub new {
   
   my $self = {
     'object' => shift,
-    'id' => [split /::/, $class]->[-1]
+    'id' => [split /::/, $class]->[-1] . 'Panel'
   };
   
   bless $self, $class;
