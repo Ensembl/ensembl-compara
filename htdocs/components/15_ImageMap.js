@@ -13,7 +13,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.elLk.map = $('map', this.el);
     
-    this.makeImageMap(this.elLk.map); 
+    this.makeImageMap(); 
     
     $('.iexport a', this.el).click(function () {
       $(this).parent().next().css({ left: $(this).offset().left }).toggle();
@@ -22,10 +22,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
   },
   
-  makeImageMap: function (map) {
+  makeImageMap: function () {
     var myself = this;
     
-    this.elLk.img = map.siblings('img');
+    this.elLk.img = this.elLk.map.siblings('img');
     
     this.linked = false;
     this.dragCoords = {};
@@ -35,7 +35,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.dragging = false;
     this.click = true;
     
-    var areas = map.attr('areas');
+    var areas = this.elLk.map.attr('areas');
+    
     var rect = [ 'l', 't', 'r', 'b' ];
     var drag, i, c;
     
