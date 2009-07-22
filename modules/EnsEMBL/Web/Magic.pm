@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Magic;
 
 ### EnsEMBL::Web::Magic is the new module which handles
@@ -93,10 +95,11 @@ sub configurator {
   my $r = Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $session = $ENSEMBL_WEB_REGISTRY->get_session;
 
-  my $input  = new CGI;
-  $session->set_input( $input );
+  my $input = new CGI;
+  $session->set_input($input);
+  
   my $ajax_flag = $r && (
-    $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'||
+    $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
     $input->param('x_requested_with') eq 'XMLHttpRequest'
   );
 
@@ -107,130 +110,135 @@ sub configurator {
     'r'          => $r,
     'ajax_flag'  => $ajax_flag,
     'cgi'        => $input,
-#    'parent'     => $referer_hash,
     'renderer'   => 'String',
     'cache'      => $MEMD,
   );
-  $webpage->page->{'_modal_dialog_'} = $ajax_flag;
+  
+  $webpage->page->renderer->{'_modal_dialog_'} = $ajax_flag;
 
   my $root = $session->get_species_defs->ENSEMBL_BASE_URL;
-  if(
-    $input->param('submit') ||
-    $input->param('reset')
-  ) {
+  
+  if ($input->param('submit') || $input->param('reset')) {
     my $config = $input->param('config');
-    my $vc = $session->getViewConfig( $ENV{'ENSEMBL_TYPE'}, $ENV{'ENSEMBL_ACTION'} );
-    if($config && $vc->has_image_config($config) ) { ### We are updating an image config!
-## We need to update the image config....
-      ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
-
-=for Multi-species configurations....
-
-If we have multiple species in the view (e.g. Align Slice View) then we would
-need to make sure that the image config we have is a merged image config, with
-each of the trees for each species combined....
-
-=cut
-      my $ic = $session->getImageConfig( $config, $config, 'merged' ); 
-      $vc->altered = $ic->update_from_input( $input );
+    my $vc = $session->getViewConfig($ENV{'ENSEMBL_TYPE'}, $ENV{'ENSEMBL_ACTION'});
+    
+    # We are updating an image config
+    if ($config && $vc->has_image_config($config)) {
+      # If we have multiple species in the view (e.g. Align Slice View) then we would
+      # need to make sure that the image config we have is a merged image config, with
+      # each of the trees for each species combined
+      my $ic = $session->getImageConfig($config, $config, 'merged'); 
+      
+      $vc->altered = $ic->update_from_input($input);
       $session->store;
-      if( $input->param('submit') ) {
-        if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
-## Note reset links drop back into the form....
-        ## We need to
-          CGI::header( 'text/plain' );
-          print "SUCCESS";
+      
+      if ($input->param('submit')) {
+        if ($ajax_flag) {
+          CGI::header('text/plain');
+          print "SUCCESS"; # Forces page reload on close
           return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config)";
         }
-        if( $input->param('_') eq 'close' ) {
-          if( $input->param('force_close') ) {
-            CGI::header();
-            print '<html>
-<head>
-  <title>Please close this window</title>
-</head>
-<body onload="window.close()">
-  <p>Your configuration has been updated, please close this window and reload you main Ensembl view page</p> 
-</body>
-</html>';
+        
+        # If not AJAX, refresh the page
+        if ($input->param('_') eq 'close') {
+          if ($input->param('force_close')) {
+            CGI::header;
+            print '
+            <html>
+            <head>
+              <title>Please close this window</title>
+            </head>
+            <body onload="window.close()">
+              <p>Your configuration has been updated, please close this window and reload you main Ensembl view page</p> 
+            </body>
+            </html>';
             return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config Redirect (closing form nasty hack)";
           } else {
-            CGI::redirect( $root.$input->param('_referer') );
+            CGI::redirect($root . $input->param('_referer'));
             return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config Redirect (closing form)";
           }
         }
-        CGI::redirect( $input->param('_') );
+        
+        CGI::redirect($input->param('_'));
         return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'}::$config Redirect (new form page)";
       }
-      ## If not AJAX - refresh page!
-      # redirect( to this page )
-    } else { ### We are updating a view config!
-      $vc->update_from_input( $input );
-      if( $ENV{'ENSEMBL_ACTION'} ne 'ExternalData' ) {
-        my $vc_2 = $session->getViewConfig( $ENV{'ENSEMBL_TYPE'}, 'ExternalData' );
-        $vc_2->update_from_input( $input ) if $vc_2;
+    } else { # We are updating a view config
+      $vc->update_from_input($input);
+      
+      if ($ENV{'ENSEMBL_ACTION'} ne 'ExternalData') {
+        my $vc_2 = $session->getViewConfig($ENV{'ENSEMBL_TYPE'}, 'ExternalData');
+        $vc_2->update_from_input($input) if $vc_2;
       }
+      
       $session->store;
+      
       my $cookie_host = $session->get_species_defs->ENSEMBL_COOKIEHOST;
-      if( $input->param( 'cookie_width' ) && $input->param( 'cookie_width' ) != $ENV{'ENSEMBL_IMAGE_WIDTH'} ) { ## Set width!
+      
+      if ($input->param('cookie_width') && $input->param('cookie_width') != $ENV{'ENSEMBL_IMAGE_WIDTH'}) { # Set width
         my $cookie = CGI::Cookie->new(
           -name    => 'ENSEMBL_WIDTH',
-          -value   => $input->param( 'cookie_width' ),
+          -value   => $input->param('cookie_width'),
           -domain  => $cookie_host,
-          -path    => "/",
-          -expires => $input->param( 'cookie_width' ) =~ /\d+/ ? "Monday, 31-Dec-2037 23:59:59 GMT" : "Monday, 31-Dec-1970 00:00:01 GMT"
+          -path    => '/',
+          -expires => $input->param('cookie_width') =~ /\d+/ ? 'Monday, 31-Dec-2037 23:59:59 GMT' : 'Monday, 31-Dec-1970 00:00:01 GMT'
         );
-        $r->headers_out->add(  'Set-cookie' => $cookie );
-        $r->err_headers_out->add( 'Set-cookie' => $cookie );
+        
+        $r->headers_out->add('Set-cookie' => $cookie);
+        $r->err_headers_out->add('Set-cookie' => $cookie);
       }
-      if( $input->param( 'cookie_ajax' ) && $input->param( 'cookie_ajax' ) ne $ENV{'ENSEMBL_AJAX_VALUE'} ) {  ## Set ajax cookie!
+      
+      if ($input->param('cookie_ajax') && $input->param('cookie_ajax') ne $ENV{'ENSEMBL_AJAX_VALUE'}) { # Set ajax cookie
         my $cookie = CGI::Cookie->new(
           -name    => 'ENSEMBL_AJAX',
-          -value   => $input->param( 'cookie_ajax' ),
+          -value   => $input->param('cookie_ajax'),
           -domain  => $cookie_host,
-          -path    => "/",
-          -expires => "Monday, 31-Dec-2037 23:59:59 GMT"
+          -path    => '/',
+          -expires => 'Monday, 31-Dec-2037 23:59:59 GMT'
         );
-        $r->headers_out->add(  'Set-cookie' => $cookie );
-        $r->err_headers_out->add( 'Set-cookie' => $cookie );
+        
+        $r->headers_out->add('Set-cookie' => $cookie);
+        $r->err_headers_out->add('Set-cookie' => $cookie);
       }
-      if( $input->param('submit') ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
-        if( $ajax_flag ) { ## If AJAX - return "SUCCESSFUL RESPONSE" -> Force reload page on close....
-          ## We need to 
-          CGI::header( 'text/plain' );
-          print "SUCCESS";
+      
+      if ($input->param('submit')) {
+        if ($ajax_flag) {
+          CGI::header('text/plain');
+          print "SUCCESS"; # Forces page reload on close
           return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} AJAX";
         }
-        if( $input->param('_') eq 'close' ) {
-          if( $input->param('force_close') ) {
-            CGI::header();
-            print '<html>
-<head>
-  <title>Please close this window</title>
-</head>
-<body onload="window.close()">
-  <p>Your configuration has been updated, please close this window and reload you main Ensembl view page</p> 
-</body>
-</html>';
+        
+        if ($input->param('_') eq 'close') {
+          if ($input->param('force_close')) {
+            CGI::header;
+            print '
+            <html>
+            <head>
+              <title>Please close this window</title>
+            </head>
+            <body onload="window.close()">
+              <p>Your configuration has been updated, please close this window and reload you main Ensembl view page</p> 
+            </body>
+            </html>';
             return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} Redirect (closing form nasty hack)";
           } else {
-            CGI::redirect( $root.$input->param('_referer') );
+            CGI::redirect($root . $input->param('_referer'));
             return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} Redirect (closing form)";
           }
         }
-        CGI::redirect( $input->param('_') );
+        
+        CGI::redirect($input->param('_'));
         return "Updated configuration for ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'} Redirect (new form page)";
       }
     }
   }
-  $webpage->configure( $webpage->dataObjects->[0], qw(user_context configurator) );
-    ## Now we need to setup the content of the page -- need to set-up 
-    ##  1) Global context entries
-    ##  2) Local context entries   [ hacked versions with # links / and flags ]
-    ##  3) Content of panel (expansion of tree)
+  
+  $webpage->configure($webpage->dataObjects->[0], qw(user_context configurator));
   $webpage->render;
+  
   my $content = $webpage->page->renderer->content;
+  
   print $content;
+  
   return "Generated configuration panel ($ENV{'ENSEMBL_TYPE'}::$ENV{'ENSEMBL_ACTION'})";
 }
 
@@ -388,7 +396,7 @@ sub stuff {
       'cgi'        => $input,
     );
     if( $modal_dialog ) {
-      $webpage->page->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
+      $webpage->page->renderer->{'_modal_dialog_'} = $webpage->page->renderer->{'r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
                                            $webpage->factory->param('x_requested_with') eq 'XMLHttpRequest';
     }
     # The whole problem handling code possibly needs re-factoring 
@@ -446,9 +454,8 @@ sub stuff {
         if ($doctype && $doctype eq 'Popup') {
           @sections = qw(global_context local_context content_panel local_tools);
         } else {
-          @sections = qw(global_context local_context context_panel content_panel local_tools);
+          @sections = qw(global_context local_context modal_context context_panel content_panel local_tools);
         }
-        
         $webpage->configure( $object, @sections );
       }
       if( $webpage->dataObjects->[0] && $webpage->dataObjects->[0]->has_problem_type( 'redirect' ) ) {

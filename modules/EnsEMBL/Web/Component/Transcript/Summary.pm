@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Transcript::Summary;
 
 use strict;
@@ -120,8 +122,8 @@ if( $gene ) {
     <dl class="summary">
     <dt>Gene</dt>
     <dd>
-      <p id="transcripts_text">This transcript is a product of gene <a href="$gene_url">$gene_id</a> - There $plural_1 $count $plural_2 in this gene: </p>
-      <table id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
+      <p class="toggle_text" id="transcripts_text">This transcript is a product of gene <a href="$gene_url">$gene_id</a> - There $plural_1 $count $plural_2 in this gene: </p>
+      <table class="toggle_table" id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
       <tr>
         <th>Name</th>
         <th>Transcript ID</th>

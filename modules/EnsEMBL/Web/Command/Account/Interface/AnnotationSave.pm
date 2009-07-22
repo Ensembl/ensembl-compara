@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Command::Account::Interface::AnnotationSave;
 
 use strict;
@@ -29,10 +31,10 @@ sub process {
     $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'||
     $object->param('x_requested_with') eq 'XMLHttpRequest'
   );
-  #warn "@@@ AJAX $ajax_flag";
+  
   if( $ajax_flag ) {
     CGI::header( 'text/plain' );
-    print "SUCCESS";
+    print "{'success':true}";
   } else {
     my $data = $interface->data;
     my $var = lc(substr($data->type, 0, 1));

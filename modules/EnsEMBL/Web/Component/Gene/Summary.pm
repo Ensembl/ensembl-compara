@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::Summary;
 
 use strict;
@@ -133,8 +135,8 @@ sub content {
     <dl class="summary">
       <dt>Transcripts</dt>
       <dd>
-        <p id="transcripts_text">There $plural_1  $count $plural_2 in this gene:</p>
-        <table id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
+        <p class="toggle_text" id="transcripts_text">There $plural_1  $count $plural_2 in this gene:</p>
+        <table class="toggle_table" id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
         <tr>
           <th>Name</th>
           <th>Transcript ID</th>

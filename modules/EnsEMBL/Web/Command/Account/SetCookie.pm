@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Command::Account::SetCookie;
 
 use strict;
@@ -58,7 +60,7 @@ sub process {
     #warn "@@@ AJAX $ajax_flag";
     if( $ajax_flag ) { 
       CGI::header( 'text/plain' );
-      print "SUCCESS";
+      print "{'success':true}";
     } else {
       $object->redirect($self->url('/Account/Links'));
     }

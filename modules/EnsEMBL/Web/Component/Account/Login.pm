@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::Login;
 
 ### Module to create user login form 
@@ -6,6 +8,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Account);
+use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
 
 sub _init {
@@ -25,7 +28,10 @@ sub content {
   ## Control panel fixes
   my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
   $dir = '' if $dir !~ /_/;
-  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with=XMLHttpRequest';
+  
+  my $referer = '_referer=' . $self->object->param('_referer');
+  $referer .= ';x_requested_with=XMLHttpRequest' if $ENSEMBL_WEB_REGISTRY->check_ajax;
+  
   my $form = EnsEMBL::Web::Form->new( 'login', "$dir/Account/SetCookie", 'post' );
   my $reg_url = $self->url("$dir/Account/User/Add?$referer");
   my $pwd_url = $self->url("$dir/Account/LostPassword?$referer");

@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Variation::Summary;
 
 use strict;
@@ -118,8 +120,8 @@ sub content {
     my @locations;
     my $select_html;
     if ($count >1){ $select_html = "<br />Please select a location to display information relating to $id in that genomic region.";}
-    $html .= qq(<dt>Location</dt><dd><p id="locations_text"> This feature maps to $count genomic location(s). $select_html </p>
-    <table id="locations">);
+    $html .= qq(<dt>Location</dt><dd><p class="toggle_text" id="locations_text"> This feature maps to $count genomic location(s). $select_html </p>
+    <table class="toggle_table" id="locations">);
 
     foreach my $varif_id (keys %mappings) {
      my %chr_info;

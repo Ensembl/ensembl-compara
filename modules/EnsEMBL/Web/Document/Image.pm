@@ -1,11 +1,14 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Image;
 
 use strict;
 
-use EnsEMBL::Web::TmpFile::Image;
+
 use POSIX qw(floor ceil);
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
+use EnsEMBL::Web::TmpFile::Image;
 
 sub new {
   my( $class, $species_defs, $panel_name ) = @_;
@@ -411,14 +414,14 @@ sub render_image_map {
 
   my $imagemap = $self->drawable_container->render('imagemap');
 
-  my $map_name = $self->{'image_id'} ? "$self->{'image_id'}_map" : $image->token;
+  my $map_name = $self->{'image_id'} || $image->token;
 
-  return sprintf(
-            qq(<map name="%s" id="%s">\n%s\n</map>),
-            $map_name,
-            $map_name,
-            $imagemap
-  );
+  return qq{
+    <map name="$map_name">
+      $imagemap
+    </map>
+    <input type="hidden" class="panel_type" value="ImageMap" />
+  };
 }
 
 sub render {
@@ -484,10 +487,43 @@ sub render {
     ### This has to have a vertical padding of 0px as it is used in a number of places
     ### butted up to another container! - if you need a vertical padding of 10px add it
     ### outside this module!
-    my $URL = $ENV{'REQUEST_URI'};
-       $URL =~ s/;$//;
-       $URL .= $URL =~ /\?/ ? ';' : '?';
-       $URL .= 'export=pdf';
+    
+    my $export;
+    
+    if ($self->{'export'}) {
+      my @formats = (
+        { f => 'pdf',     label=> 'PDF' },
+        { f => 'svg',     label=> 'SVG' },
+        { f => 'eps',     label=> 'PostScript' },
+        { f => 'png-10',  label=> 'PNG (x10)' },
+        { f => 'png-5',   label=> 'PNG (x5)' },
+        { f => 'png-2',   label=> 'PNG (x2)' },
+        { f => 'png',     label=> 'PNG' },
+        { f => 'png-0.5', label=> 'PNG (x0.5)' },
+        { f => 'gff',     label=> 'text (GFF)', text => 1 }
+      );
+      
+      my $url = $ENV{'REQUEST_URI'};
+      $url =~ s/;$//;
+      $url .= ($url =~ /\?/ ? ';' : '?') . 'export=';
+      
+      for (@formats) {
+        my $href = $url . $_->{'f'};
+        
+        if ($_->{'text'}) {
+          next if $self->{'export'} =~ /no_text/;
+          
+          $export .= qq{<dt><a href="$href" style="width:9em" rel="external">Export as $_->{'label'}</a></dt>};
+        } else {
+          $export .= qq{<dt><div style="float:right"><a href="$href" rel="external">[view]</a></div><a href="$href;download=1" style="width:9em" rel="external">Export as $_->{'label'}</a></dt>};
+        }
+      }
+      
+      $export = qq{
+        <div class="$self->{'export'}" style="width:$image->{'width'}px;"><a class="print_hide" href="${url}pdf">Export Image</a></div>
+        <dl class="iexport_mn" style="display:none">$export</dl>
+      };
+    }
            
     $HTML .= '<div style="text-align:center">' .
              '<div style="text-align:center;margin:auto;border:0px;padding:0px">' .
@@ -499,7 +535,7 @@ sub render {
              $tag .
              ($self->imagemap eq 'yes' ? $self->render_image_map($image) : '' ) .
              '</div>' .
-             ( $self->{'export'} ? qq{<div class="$self->{'export'}" style="width:$image->{'width'}px;"><a href="$URL">Export</a></div>} : '' ) .
+             $export .
              ( $self->caption ? sprintf(qq(<div style="text-align: center; font-weight: bold">%s</div>), $self->caption) : '' ) .
              '</div></div>';
   } else {

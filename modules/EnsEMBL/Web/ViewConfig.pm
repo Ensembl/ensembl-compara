@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig;
 
 use strict;
@@ -23,6 +25,7 @@ sub new {
     '_default_config'     => '_page',
     '_can_upload'         => 0,
     '_form'               => undef,
+    '_form_id'            => sprintf '%s_%s_configuration', lc $type, lc $action,
     '_url'                => undef,
     'no_load'             => undef,
   };
@@ -134,13 +137,13 @@ sub has_form {
 
 sub get_form {
   my $self = shift;
-  $self->{_form}||=EnsEMBL::Web::Form->new( 'configuration', $self->url,'post' );
-  return $self->{_form};
+  $self->{'_form'} ||= EnsEMBL::Web::Form->new($self->{'_form_id'}, $self->url, 'post', 'configuration std check');
+  return $self->{'_form'};
 }
 
 sub add_fieldset {
   my( $self, $legend, $layout ) = @_;
-  my $fieldset = $self->get_form->add_fieldset('form'=>'configuration', 'layout' => $layout );
+  my $fieldset = $self->get_form->add_fieldset('form' => $self->{'_form_id'}, 'layout' => $layout);
   $fieldset->legend($legend);
 }
 

@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Command::UserData::UploadFile;
 
 use strict;
@@ -43,10 +45,15 @@ sub process {
  
   if( $self->object->param('uploadto' ) eq 'iframe' ) {
     CGI::header( -type=>"text/html",-charset=>'utf-8' );
-    printf q(<html><head><script type="text/javascript">
-  window.parent.__modal_dialog_link_open_2( '%s' ,'File uploaded' );
-</script>
-</head><body><p>UP</p></body></html>), CGI::escapeHTML($self->url($url, $param));
+    printf q(
+    <html>
+    <head>
+      <script type="text/javascript">
+        window.parent.Ensembl.EventManager.trigger('modalOpen', { href: '%s', title: 'File uploaded' });
+      </script>
+    </head>
+    <body><p>UP</p></body>
+    </html>), CGI::escapeHTML($self->url($url, $param));
   } 
   else {
     $self->ajax_redirect($url, $param); 
