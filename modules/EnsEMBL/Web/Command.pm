@@ -7,7 +7,6 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
-use CGI qw(escape);
 use Class::Std;
 
 use EnsEMBL::Web::RegObj;
@@ -55,8 +54,6 @@ sub ajax_redirect {
 sub ajax_params {
   my ($self, $param) = @_;
   $param->{'_referer'} ||= $self->object->param('_referer') if $self->object->param('_referer');
-  $param->{'_referer'} = CGI::escape($param->{'_referer'}) if $param->{'_referer'} =~ /\//;
-  
   $param->{'x_requested_with'} ||= $self->object->param('x_requested_with') if $self->object->param('x_requested_with');
   return $param;
 }
