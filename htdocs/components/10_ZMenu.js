@@ -1,4 +1,4 @@
-// $Rev 1.21
+// $Revision$
 
 Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   constructor: function (id, data) {

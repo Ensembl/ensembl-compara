@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   constructor: function (id) {
     var myself = this;

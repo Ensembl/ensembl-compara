@@ -1,3 +1,5 @@
+// $Revision$
+
 // Stop console commands causing problems
 if (!('console' in window) || !('firebug' in console)) {
   (function () {

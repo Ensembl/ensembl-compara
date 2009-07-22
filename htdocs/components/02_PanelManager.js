@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.PanelManager = new Base();
 
 Ensembl.PanelManager.extend({

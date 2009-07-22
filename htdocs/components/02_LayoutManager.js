@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.LayoutManager = new Base();
 
 Ensembl.LayoutManager.extend({

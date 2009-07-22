@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.EventManager = {
   // The repository for all event data
   registry: {},

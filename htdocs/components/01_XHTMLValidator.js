@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.XHTMLValidator = {
   ent: /&(amp|lt|gt|quot|apos);/i,
   

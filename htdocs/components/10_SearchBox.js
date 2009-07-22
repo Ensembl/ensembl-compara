@@ -1,4 +1,4 @@
-// $Rev 1.8 
+// $Revision$
 
 Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
   init: function () {

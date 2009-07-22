@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.FormValidator = {
   colours: {
     required: '#fec',

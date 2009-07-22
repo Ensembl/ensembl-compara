@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.Panel = Base.extend({  
   constructor: function (id, params) {
     if (typeof id != 'undefined') {

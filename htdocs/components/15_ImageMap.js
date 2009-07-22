@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   constructor: function (id, params) {
     this.base(id, params);

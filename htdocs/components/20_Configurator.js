@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   constructor: function (id) {
     this.base(id);

@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   constructor: function (id) {
     this.base(id);
