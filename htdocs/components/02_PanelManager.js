@@ -155,7 +155,7 @@ Ensembl.PanelManager.extend({
   },
   
   /**
-   * Organise the drawing of the red boxs on location images
+   * Organise the drawing of the red boxs on images
    */
   highlightImageMaps: function () {
     var panels = this.getPanels('ImageMap');
@@ -170,8 +170,8 @@ Ensembl.PanelManager.extend({
         region = linkedPanel.region.a.href.split('|');
         start = parseInt(region[5]);
         end = parseInt(region[6]);
-      } else {
-        // Highlight from the page's region parameter
+      } else if (window.location.href.match(/\/Location\//)) {
+        // Highlight from the page's region parameter - only required for location pages
         start = Ensembl.location.start;
         end = Ensembl.location.end;
         link = false;
