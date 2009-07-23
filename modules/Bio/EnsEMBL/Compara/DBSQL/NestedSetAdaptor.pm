@@ -152,7 +152,7 @@ sub fetch_tree_at_node_id {
 sub fetch_all_roots {
   my $self = shift;
 
-  my $constraint = "t.WHERE root_id = 0";
+  my $constraint = "WHERE t.root_id = 0";
   return $self->_generic_fetch($constraint);
 }
 
