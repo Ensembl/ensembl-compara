@@ -219,7 +219,7 @@ sub createSubmitPepAnalysis {
 
     my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($analysis->dbID);
     $stats->batch_size(500);
-    $stats->hive_capacity(3);
+    $stats->hive_capacity(10);
     $stats->status('BLOCKED');
     $stats->update();   
   }
