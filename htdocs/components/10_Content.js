@@ -12,8 +12,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   ajaxLoad: function () {
-    var myself = this;
-    
     var ajax = $('.ajax', this.el);
     
     if ($(this.el).hasClass('ajax')) {

@@ -43,7 +43,7 @@ Ensembl.FormValidator = {
       case 'posfloat'   : return this.isFloat(s) && parseFloat(s) >  0;
       case 'nonnegfloat': return this.isFloat(s) && parseFloat(s) >= 0;
       default           : return true;
-    };
+    }
   },
   
   check: function (el) {
@@ -54,7 +54,7 @@ Ensembl.FormValidator = {
     }
     
     var value = this.trim(el.val());
-    var colour = (value == '') ? (required ? this.colours.required : this.colours.optional) : (this.valid(el, value) ? this.colours.valid : this.colours.error);
+    var colour = (value === '') ? (required ? this.colours.required : this.colours.optional) : (this.valid(el, value) ? this.colours.valid : this.colours.error);
     
     el.css('backgroundColor', colour);
   },
@@ -94,9 +94,9 @@ Ensembl.FormValidator = {
     var value = this.trim(input.val());
     
     if (input.is('select')) {
-      template = value == '' && required ? 'You must select a value for %s' : '';
+      template = value === '' && required ? 'You must select a value for %s' : '';
     } else {
-      if  (value == '') {
+      if  (value === '') {
         template = required ? 'You must enter a value for %s' : '';
       } else if (type == 'html') {         
         var err = Ensembl.XHTMLValidator.validate(value); // Validate as XHTML
@@ -115,4 +115,4 @@ Ensembl.FormValidator = {
       return '';
     }
   }
-}
+};

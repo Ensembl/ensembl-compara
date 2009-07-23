@@ -71,7 +71,7 @@ Ensembl.extend({
     this.location = { width: 100000 };
     
     if (tab) {
-      var match = tab.replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
+      match = tab.replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
       
       if (match) {
         this.location = { name: match[1], start: parseInt(match[2]), end: parseInt(match[3]) };
@@ -85,7 +85,7 @@ Ensembl.extend({
     var d = new Date();
     var time = d.getTime() + d.getMilliseconds() / 1000;
     
-    url = url.replace(/\&/g, ';').replace(/#.*$/g, '').replace(/\?time=[^;]+;?/g, '\?').replace(/;time=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
+    url = url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/\?time=[^;]+;?/g, '?').replace(/;time=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
     url += (url.match(/\?/) ? ';' : '?') + 'time=' + time;
     
     return url;

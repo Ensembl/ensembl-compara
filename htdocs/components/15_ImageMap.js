@@ -113,7 +113,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var diff = { 
         x: e.pageX - this.dragCoords.page.x, 
         y: e.pageY - this.dragCoords.page.y
-      }
+      };
       
       // Set a limit below which we consider the event to be a click rather than a drag
       if (Math.abs(diff.x) < 3 && Math.abs(diff.y) < 3) {

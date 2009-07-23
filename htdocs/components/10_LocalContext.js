@@ -2,9 +2,7 @@
 
 // Left menu panel - both on the main page and the popup config-type box
 Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
-  init: function () {
-    var myself = this;
-    
+  init: function () {    
     this.base();
     
     this.elLk.links = $('dl.local_context dd', this.el);

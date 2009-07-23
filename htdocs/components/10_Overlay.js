@@ -48,11 +48,11 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     var height = this.windowHeight - this.dimensions.padding;
     
     if (width < this.dimensions.minWidth) {
-      width = [ this.dimensions.minWidth, this.windowWidth - this.dimensions.minPad ].sort(function (a, b) { return a - b })[0];
+      width = [ this.dimensions.minWidth, this.windowWidth - this.dimensions.minPad ].sort(function (a, b) { return a - b; })[0];
     }
     
     if (height < this.dimensions.minHeight) {
-      height = [ this.dimensions.minHeight, this.windowHeight - this.dimensions.minPad ].sort(function (a, b) { return a - b })[0];
+      height = [ this.dimensions.minHeight, this.windowHeight - this.dimensions.minPad ].sort(function (a, b) { return a - b; })[0];
     }
     
     return { w: width, h: height };
@@ -84,9 +84,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
    * This sets the background overlays width and height and decides if we should
    * be hiding the selects on the page
    */
-  setBackground: function () {
-    var width, height;
-    
+  setBackground: function () {    
     // hide all selects if we are IE and can not handle selects properly
     if ($.browser.msie) {
       $('select').hide();
@@ -94,8 +92,8 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     
     // show overlay on screen
     this.background.css({
-      width:  [ this.scrollWidth,  this.windowWidth  ].sort(function (a, b) { return b - a })[0], 
-      height: [ this.scrollHeight, this.windowHeight ].sort(function (a, b) { return b - a })[0]
+      width:  [ this.scrollWidth,  this.windowWidth  ].sort(function (a, b) { return b - a; })[0], 
+      height: [ this.scrollHeight, this.windowHeight ].sort(function (a, b) { return b - a; })[0]
     }).show();
   },
   
@@ -120,8 +118,8 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
       this.scrollWidth  = this.windowWidth  + window.scrollMaxX;  
       this.scrollHeight = this.windowHeight + window.scrollMaxY;
     } else {
-      this.scrollWidth  = [ this.windowWidth,  document.body.scrollWidth,  document.body.offsetWidth  ].sort(function (a, b) { return b - a })[0];
-      this.scrollHeight = [ this.windowHeight, document.body.scrollHeight, document.body.offsetHeight ].sort(function (a, b) { return b - a })[0];
+      this.scrollWidth  = [ this.windowWidth,  document.body.scrollWidth,  document.body.offsetWidth  ].sort(function (a, b) { return b - a; })[0];
+      this.scrollHeight = [ this.windowHeight, document.body.scrollHeight, document.body.offsetHeight ].sort(function (a, b) { return b - a; })[0];
     }
   },
   

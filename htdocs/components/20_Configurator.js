@@ -66,7 +66,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         myself.query = this.value;
         
-        myself.searchTimer = setTimeout(function () { myself.search() }, 250);
+        myself.searchTimer = setTimeout(function () { myself.search(); }, 250);
       }
     });
     
@@ -230,7 +230,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         var dt = $(this);
         
         if ($('span', dt).html().match(myself.query, 'i')) {
-          dt.show()
+          dt.show();
           show = true;
         } else {
           dt.hide().next('dd').hide();
@@ -253,8 +253,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
 
   makeMenu: function (img) {
-    var myself = this;
-    
     $('.popup_menu', this.el).remove();
     
     var menu = $('<dl class="popup_menu"></dl>');   

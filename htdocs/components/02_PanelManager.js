@@ -161,7 +161,7 @@ Ensembl.PanelManager.extend({
     var panels = this.getPanels('ImageMap');
     var i = panels.length;
     var link = true;
-    var panel, linkedPanel, region, start, end;
+    var linkedPanel, region, start, end;
     
     while (i--) {
       linkedPanel = panels[i+1];

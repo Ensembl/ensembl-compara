@@ -106,7 +106,7 @@ Ensembl.EventManager = {
     
     if (rtn.length == 1) {
       rtn = rtn[0];
-    } else if (rtn.length == 0) {
+    } else if (rtn.length === 0) {
       rtn = undefined;
     }
     
@@ -119,7 +119,6 @@ Ensembl.EventManager = {
   triggerSpecific: function (eventName, id) {
     var args = [];
     var i = arguments.length;
-    var callId;
     
     if (this.registry[eventName] && this.registry[eventName].ref[id]) {
       while (i--) {

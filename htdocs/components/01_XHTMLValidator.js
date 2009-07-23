@@ -69,7 +69,7 @@ Ensembl.XHTMLValidator = {
         var cls = w.match(/<\/(\w+)>/);
         
         if (cls) {
-          if (stack.length == 0) {
+          if (stack.length === 0) {
             error = 'Attempt to close too many tags "/' + cls[1] + '"';
           } else {
             var LAST = stack.shift();
@@ -101,7 +101,7 @@ Ensembl.XHTMLValidator = {
                   stack.unshift(TN);
                 }
                 
-                if (ATS) { 
+                if (ATS) {
                   while (m = ATS.match(/^\s+(\w+)\s*=\s*"([^"]*)"(.*)$/)) {
                     var AN = m[1];
                     var vl = m[2];

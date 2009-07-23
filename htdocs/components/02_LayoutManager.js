@@ -8,9 +8,7 @@ Ensembl.LayoutManager.extend({
   /**
    * Creates events on elements outside of the domain of panels
    */
-  initialize: function () {
-    var myself = this;
-    
+  initialize: function () {    
     this.id = 'LayoutManager';
     this.ajaxContent = $('.ajax');
     
@@ -81,7 +79,7 @@ Ensembl.LayoutManager.extend({
   reloadPage: function () {
     var date = new Date();
     var time = date.getTime() + date.getMilliseconds() / 1000;
-    var url = window.location.href.replace(/\&/g, ';').replace(/#.*$/g, '').replace(/\?time=[^;]+;?/g, '\?').replace(/;time=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
+    var url = window.location.href.replace(/&/g, ';').replace(/#.*$/g, '').replace(/\?time=[^;]+;?/g, '?').replace(/;time=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
     
     window.location = url + (url.match(/\?/) ? ';' : '?') + 'time=' + time;
   },
