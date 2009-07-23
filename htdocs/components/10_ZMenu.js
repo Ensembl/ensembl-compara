@@ -31,6 +31,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       myself.hide();
     });
     
+    this.baseURL = window.location.href.replace(/&/g, ';').replace(/#.*$/g, '').replace(/\?r=[^;]+;?/g, '?').replace(/;r=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
+    this.baseURL += this.baseURL.match(/\?/) ? ';' : '?';
+    
     this.getContent();
   },
   
@@ -106,14 +109,16 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.location = parseInt(r[1]) + (r[2] - r[1]) / 2;
       
       extra += '<tr>&nbsp;<td><a href="' + this.zoomURL(1) + '">Centre on feature</a></td></tr>';
-      extra += '<tr>&nbsp;<td><a href="' + window.location.href.replace(/r=\w+:\d+-\d+/, 'r=' + loc[1]) + '">Zoom to feature</a></td></tr>';
+      extra += '<tr>&nbsp;<td><a href="' + this.baseURL + 'r=' + loc[1] + '">Zoom to feature</a></td></tr>';
     }
     
     this.populate(true, extra);
   },
   
   populateRegion: function () {
-    var start, end, tmp, url;
+    var myself = this;
+    
+    var start, end, tmp, url, href;
     var arr, caption;
     
     var area = this.area.href.split('|');
@@ -143,9 +148,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       this.location = (start + end) / 2;
       
-      url = window.location.href.replace(/\&/g, ';').replace(/#.*$/g, '').replace(/\?r=[^;]+;?/g, '\?').replace(/;r=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
-      url += url.match(/\?/) ? ';' : '?';
-      url += 'r=' + area[4] + ':' + start + '-' + end;
+      url = this.baseURL + 'r=' + area[4] + ':' + start + '-' + end;
       
       arr = [
         '<a href="' + url + '">Jump to region (' + (end - start) + ' bp)</a>',
@@ -160,11 +163,17 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         '<a href="' + this.zoomURL(10)  + '">Zoom out x10</a>',
         '<a href="' + this.zoomURL(5)   + '">Zoom out x5</a>',
         '<a href="' + this.zoomURL(2)   + '">Zoom out x2</a>',
-        '<a href="' + this.zoomURL(1)   + '">Centre here</a>',
-        '<a href="' + this.zoomURL(0.5) + '">Zoom in x2</a>',
-        '<a href="' + this.zoomURL(0.2) + '">Zoom in x5</a>',
-        '<a href="' + this.zoomURL(0.1) + '">Zoom in x10</a>'
+        '<a href="' + this.zoomURL(1)   + '">Centre here</a>'
       ];
+      
+      // Only add zoom in links if there is space to zoom in to.
+      $.each([2, 5, 10], function () {
+        href = myself.zoomURL(1 / this);
+        
+        if (href !== '') {
+          arr.push('<a href="' + href + '">Zoom in x' + this + '</a>');
+        }
+      });
       
       caption = 'Location: ' + this.location;
     }
@@ -173,14 +182,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populateVRegion: function () {
-    var start, end, view, url, arr, caption, tmp;
+    var start, end, view, arr, caption, tmp, url;
     
     var area = this.area.href.split('|');
     var min = parseInt(area[5]);
     var max = parseInt(area[6]);
-    
-    var url = window.location.search.replace(/\?r=[^;]+;?/, '\?').replace(/;r=[^;]+;?/, ';').replace(/[\?;]$/g, '');
-    url += url.match(/\?/) ? ';' : '?';
     
     var scale = (max - min + 1) / (this.areaCoords.b - this.areaCoords.t);
     
@@ -223,11 +229,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       caption = area[4] + ': ' + this.location;
     }
     
-    url += 'r=' + area[4] + ':' + start + '-' + end;
+    url = this.baseURL + 'r=' + area[4] + ':' + start + '-' + end;
     
-    var arr = [
-      '<a href="/' + area[3] + '/Location/' + view + url + 'r=' + area[4] + ':' + start + '-' + end + '">Jump to location ' + view + '</a>',
-      '<a href="/' + area[3] + '/Location/Chromosome' + url + 'r=' + area[4] + ':' + start + '-' + end + '">Chromosome summary</a>'
+    arr = [
+      '<a href="/' + area[3] + '/Location/' + view + url + '">Jump to location ' + view + '</a>',
+      '<a href="/' + area[3] + '/Location/Chromosome' + url + '">Chromosome summary</a>'
     ];
     
     this.buildMenu(arr, caption);
@@ -259,14 +265,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   zoomURL: function (scale) {    
     var w = Ensembl.location.width * scale;
     
-    if (w < 1) {
-      return '';
-    }
-    
-    var url = window.location.href.replace(/\&/g, ';').replace(/#.*$/g, '').replace(/\?r=[^;]+;?/g, '\?').replace(/;r=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
-    url += url.match(/\?/) ? ';' : '?';
-    
-    return url + "r=" + Ensembl.location.name + ':' + Math.round(this.location - (w - 1) / 2) + '-' + Math.round(this.location + (w - 1) / 2);
+    return w < 1 ? '' : this.baseURL + 'r=' + Ensembl.location.name + ':' + Math.round(this.location - (w - 1) / 2) + '-' + Math.round(this.location + (w - 1) / 2);
   },
   
   show: function () {
