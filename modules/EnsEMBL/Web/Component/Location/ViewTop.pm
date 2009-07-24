@@ -34,12 +34,12 @@ sub content {
     );
   } else {
     my $c = int($object->centrepoint);
-    my $s = $c - $threshold/2;
-    $s = 1 if $s<1;
+    my $s = ($c - $threshold/2) + 1;
+    $s = 1 if $s < 1;
     my $e = $s + $threshold - 1;
     if( $e > $object->seq_region_length ) {
       $e = $object->seq_region_length;
-      $s = $e - $threshold + 1;
+      $s = $e - $threshold - 1;
     }
     $slice = $object->database('core')->get_SliceAdaptor()->fetch_by_region(
       $object->seq_region_type, $object->seq_region_name, $s, $e, 1
