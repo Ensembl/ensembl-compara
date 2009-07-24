@@ -22,21 +22,25 @@ sub add_canvas_frame {
 
 sub render_Rect {
   my ($self, $glyph) = @_;
-  my $href = $self->_getHref( $glyph );
-  return unless defined $href;
-  return if $href eq '';
-  my $x1 = int( $glyph->pixelx() );
-  my $x2 = int( $x1 + $glyph->pixelwidth() );
-  my $y1 = int( $glyph->pixely() );
-  my $y2 = int( $y1 + $glyph->pixelheight() );
+  
+  my $href = $self->_getHref($glyph);
+  
+  return unless $href;
+  
+  my $class = $href =~ /#vdrag/ ? ' class="vdrag"' : '';
+  
+  my $x1 = int $glyph->pixelx;
+  my $x2 = int $x1 + $glyph->pixelwidth;
+  my $y1 = int $glyph->pixely;
+  my $y2 = int $y1 + $glyph->pixelheight;
 
-  $x1 = 0 if($x1<0);
-  $x2 = 0 if($x2<0);
-  $y1 = 0 if($y1<0);
-  $y2 = 0 if($y2<0);
-  $y2 ++;
-  $x2 ++;
-  $self->{'canvas'} = qq(<area shape="rect" coords="$y1 $x1 $y2 $x2"$href />\n).$self->{'canvas'}; 
+  $x1 = 0 if $x1 < 0;
+  $x2 = 0 if $x2 < 0;
+  $y1 = 0 if $y1 < 0;
+  $y2 = 0 if $y2 < 0;
+  $y2++;
+  $x2++;
+  $self->{'canvas'} = qq{<area shape="rect" coords="$y1 $x1 $y2 $x2"$href$class />\n$self->{'canvas'}}; 
 }
 
 sub render_Text {
