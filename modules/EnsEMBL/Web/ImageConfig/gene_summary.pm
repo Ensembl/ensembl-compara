@@ -52,6 +52,11 @@ sub init {
     {qw(display off)} 
   );
 
+  $self->modify_configs(
+    [qw(transcript_core_ensembl)],
+    {qw(display transcript_label)}
+  );
+
 }
 1;
 
