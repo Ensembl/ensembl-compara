@@ -4,6 +4,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   constructor: function (id, params) {
     this.base(id, params);
     
+    this.linked = false;
+    this.dragging = false;
+    this.clicking = true;
+    this.dragCoords = {};
+    
+    this.region = {};
+    this.areas = []; // TODO: do we need both areas and draggables?
+    this.draggables = [];
+    
     Ensembl.EventManager.register('highlightImage', this, this.highlightImage);
     Ensembl.EventManager.register('dragStop', this, this.dragStop);
   },
@@ -12,6 +21,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.base();
     
     this.elLk.map = $('map', this.el);
+    this.elLk.img = this.elLk.map.siblings('img');
+    this.elLk.areas = $('area', this.elLk.map);
+    
+    this.vdrag = this.elLk.areas.hasClass('vdrag');
     
     this.makeImageMap(); 
     
@@ -25,39 +38,25 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   makeImageMap: function () {
     var myself = this;
     
-    this.elLk.img = this.elLk.map.siblings('img');
-    
-    this.linked = false;
-    this.dragCoords = {};
-    this.region = {};
-    this.areas = []; // TODO: do we need both areas and draggables?
-    this.draggables = [];
-    this.dragging = false;
-    this.click = true;
-    
-    var areas = this.elLk.map.attr('areas');
-    
     var rect = [ 'l', 't', 'r', 'b' ];
-    var drag, i, c;
+    var c;
     
-    for (i = 0; i < areas.length; i++) {
-      c = { a: areas[i] };
-      drag = areas[i].href.match(/#(v*)drag/);
+    this.elLk.areas.each(function () {
+      c = { a: this };
       
-      if (areas[i].shape && areas[i].shape.toLowerCase() != 'rect') {
+      if (this.shape && this.shape.toLowerCase() != 'rect') {
         c.c = [];
-        $.each(areas[i].coords.split(/[ ,]/), function () { c.c.push(parseInt(this)); });
+        $.each(this.coords.split(/[ ,]/), function () { c.c.push(parseInt(this)); });
       } else {
-        $.each(areas[i].coords.split(/[ ,]/), function (j) { c[rect[j]] = parseInt(this); });
+        $.each(this.coords.split(/[ ,]/), function (i) { c[rect[i]] = parseInt(this); });
       }
       
-      this.areas.push(c);
+      myself.areas.push(c);
       
-      if (drag) {
-        this.draggables.push(c);
-        this.vdrag = !!drag[1];
+      if (this.className.match(/drag/)) {
+        myself.draggables.push(c);
       }
-    }
+    });
     
     if (this.draggables.length && !this.vdrag) {
       this.region = this.draggables[0];      
@@ -73,10 +72,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       return false;
     }).click(function (e) {
-      if (myself.click) {
+      if (myself.clicking) {
         myself.makeZMenu(e, myself.getMapCoords(e));
       } else {
-        myself.click = true;
+        myself.clicking = true;
       }
     });
   },
@@ -117,7 +116,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       // Set a limit below which we consider the event to be a click rather than a drag
       if (Math.abs(diff.x) < 3 && Math.abs(diff.y) < 3) {
-        this.click = true; // Chrome fires mousemove even when there has been no movement, so catch clicks here
+        this.clicking = true; // Chrome fires mousemove even when there has been no movement, so catch clicks here
         this.makeZMenu(this.dragging, this.dragCoords.map); // use the original mousedown (stored in this.dragging) to create the zmenu
       } else {
         var range = this.vdrag ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
@@ -125,7 +124,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         this.makeZMenu(e, range);
         
         this.dragging = false;
-        this.click = false;
+        this.clicking = false;
       }
     }
   },
@@ -176,7 +175,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return;
     }
     
-    id += area.t + '_' + area.r + '_' + area.b + '_' + area.l;
+    id += area.a.coords.replace(/[ ,]/g, '_');
     
     
     Ensembl.EventManager.trigger('makeZMenu', id, { position: { left: e.pageX, top: e.pageY }, coords: coords, area: area });
@@ -204,12 +203,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.highlight(this.region, 'redbox');
     }
     
-    if (start > min && end < max) {
-      this.highlight(coords, 'redbox2');
-    }
-    
     if (link === true) {
+      if (start >= min && end <= max) {
+        this.highlight(coords, 'redbox2');
+      }
+    
       this.linked = true;
+    } else if (start > min && end < max) {
+      // In this case start and end have come from Ensembl.location, so don't draw the red box if start = min and end = max
+      this.highlight(coords, 'redbox2');
     }
   },
   
