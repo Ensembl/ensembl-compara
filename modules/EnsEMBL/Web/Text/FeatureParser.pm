@@ -230,7 +230,6 @@ sub analyse_row {
 
     my $current_key = $self->{'_current_key'} ;
     if( $tab_del[12] eq '.' || $tab_del[12] eq '+' || $tab_del[12] eq '-' ) {
-      warn "@@@ GF-type";
 #      if( $tab_del[16] =~ /^(gene_id|transcript_id) [^;]+(\; (gene_id|transcript_id) [^;]+)?/ ) { ## GTF format
 #        return ('format', 'GTF');   
 #      } else {     ## GFF format
