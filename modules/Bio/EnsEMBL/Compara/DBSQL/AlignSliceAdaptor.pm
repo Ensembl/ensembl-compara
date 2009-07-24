@@ -211,6 +211,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
     my $last_node_id = undef;
     my $tree_order;
     foreach my $this_genomic_align_tree (@$genomic_align_trees) {
+      next unless $this_genomic_align_tree;
       if ($last_node_id) {
         $tree_order->{$this_genomic_align_tree->node_id}->{prev} = $last_node_id;
         $tree_order->{$last_node_id}->{next} = $this_genomic_align_tree;
@@ -219,6 +220,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
     }
 
     ## First tree. Build the species order using the first tree only
+    return undef unless $genomic_align_trees->[0];
     foreach my $this_genomic_align_node (@{$genomic_align_trees->[0]->get_all_sorted_genomic_align_nodes}) {
       next if (!@{$this_genomic_align_node->get_all_GenomicAligns});
       my $this_genomic_align = $this_genomic_align_node->get_all_GenomicAligns->[0];

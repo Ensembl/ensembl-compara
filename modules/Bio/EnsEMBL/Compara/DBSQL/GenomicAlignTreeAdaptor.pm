@@ -305,6 +305,7 @@ sub fetch_by_GenomicAlignBlock {
   my ($self, $genomic_align_block) = @_;
 
   my $genomic_align_block_id = $genomic_align_block->dbID;
+  return undef unless $genomic_align_block_id;
 
 #  my $join = [
 #      [["genomic_align_tree","gat2"], "gat2.root_id = gat.node_id", undef],
