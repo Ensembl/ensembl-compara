@@ -35,7 +35,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var select = $('select', dt);
       var option = $('option[value=' + this.className + ']', select).attr('selected', 'selected');
       
-      $('img', dt).attr({ 
+      $('>img', dt).attr({ 
         src: '/i/render/' + this.className + '.gif', 
         title: option.text() 
       });
