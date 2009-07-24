@@ -34,7 +34,7 @@ sub process {
     next unless $id;
     my ($file, $name) = split(':', $id);
     my $data = $object->fetch_userdata_by_id($file);
-    my (@fs, $class, $output);
+    my (@fs, $class);
 
     if (my $parser = $data->{'parser'}) {
       foreach my $track ($parser->{'tracks'}) {
@@ -61,12 +61,17 @@ sub process {
     my $cs = $object->database('core',$object->species)->get_CoordSystemAdaptor->fetch_by_name($new_name, $new_version);
 
     ## Loop through features
-    my $line;
     my $current_slice;
     ## NB - this next bit only works for GFF export!
     my @skip = qw(_type source feature_type score frame);
     my $skip = join('|', map {'^'.$_.'$'} @skip);
-
+    
+    my $exporter = new EnsEMBL::Web::Component::Export;
+    $exporter->{'config'} = {
+      format => 'gff',
+      delim  => "\t"
+    };
+    
     foreach my $f (@fs) {    
       ## Set feature slice object to one from core database, so we can map cleanly on current db
       ## N.B. Don't create new object unless we need to! Also use a whole seq region for efficiency
@@ -100,12 +105,12 @@ sub process {
         $feature = $f;
         $gaps++;
       }
-      $line = EnsEMBL::Web::Component::Export::feature($feature_type,
-        {'format' => 'gff', 'delim' => "\t", 'other' => $other}, 
-        $feature, $extra, $source
-      );
-      $output .= $line;
+      
+      $exporter->{'config'}->{'extra_fields'} = $other;
+      $exporter->feature($feature_type, $feature, $extra, { 'source' => $source });
     }
+    
+    my $output = $exporter->string;
     
     ## Output new data to temp file
     my $temp_file = EnsEMBL::Web::TmpFile::Text->new(
