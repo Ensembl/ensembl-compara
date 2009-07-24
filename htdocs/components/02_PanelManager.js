@@ -160,8 +160,7 @@ Ensembl.PanelManager.extend({
   highlightImageMaps: function () {
     var panels = this.getPanels('ImageMap');
     var i = panels.length;
-    var link = true;
-    var linkedPanel, region, start, end;
+    var link, linkedPanel, region, start, end;
     
     while (i--) {
       linkedPanel = panels[i+1];
@@ -170,6 +169,7 @@ Ensembl.PanelManager.extend({
         region = linkedPanel.region.a.href.split('|');
         start = parseInt(region[5]);
         end = parseInt(region[6]);
+        link = true;
       } else if (window.location.href.match(/\/Location\//)) {
         // Highlight from the page's region parameter - only required for location pages
         start = Ensembl.location.start;
