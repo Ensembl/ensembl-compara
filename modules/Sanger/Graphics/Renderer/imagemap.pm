@@ -38,23 +38,25 @@ sub add_canvas_frame {
 sub render_Rect {
   my ($self, $glyph) = @_;
   my $href = $self->_getHref($glyph);
-  $href or return;
-
+  
+  return unless $href;
+  
+  my $class = $href =~ /#drag/ ? ' class="drag"' : '';
+  
   my $x1 = int $glyph->{'pixelx'};
   my $x2 = int $glyph->{'pixelx'} + $glyph->{'pixelwidth'};
   my $y1 = int $glyph->{'pixely'};
   my $y2 = int $glyph->{'pixely'} + $glyph->{'pixelheight'};
 
-  $x1 = 0 if($x1<0);
-  $x2 = 0 if($x2<0);
-  $y1 = 0 if($y1<0);
-  $y2 = 0 if($y2<0);
+  $x1 = 0 if $x1 < 0;
+  $x2 = 0 if $x2 < 0;
+  $y1 = 0 if $y1 < 0;
+  $y2 = 0 if $y2 < 0;
 
-  $y2 += 1;
-  $x2 += 1;
+  $y2++;
+  $x2++;
 
-  $self->{'canvas'} = qq(<area coords="$x1 $y1 $x2 $y2"$href />\n).$self->{'canvas'};
-  return;
+  $self->{'canvas'} = qq{<area coords="$x1 $y1 $x2 $y2"$href$class />\n$self->{'canvas'}};
 }
 
 sub render_Text {
@@ -140,43 +142,23 @@ sub render_Line {
 }
 
 sub _getHref {
-  my( $self, $glyph ) = @_;
+  my ($self, $glyph) = @_;
 
   my %actions = ();
-
-  foreach (qw(title onmouseover onmouseout onclick alt href target)) {
+  
+  foreach (qw(title alt href target)) {
     my $X = $glyph->$_;
-    if(defined $X) {
+    if (defined $X) {
       $actions{$_} = $X;
 
-      if($_ eq 'alt' || $_ eq 'title') {
-	$actions{'title'} = CGI::escapeHTML($X);
-	$actions{'alt'}   = CGI::escapeHTML($X);
+      if ($_ eq 'alt' || $_ eq 'title') {
+        $actions{'title'} = CGI::escapeHTML($X);
+        $actions{'alt'}   = CGI::escapeHTML($X);
       }
     }
   }
 
-  if($self->{'show_zmenus'} == 1) {
-    my $zmenu = undef; # $glyph->zmenu();
-    if(defined $zmenu && ((ref $zmenu  eq q()) ||
-			  (ref $zmenu eq 'HASH')
-			  && scalar keys(%{$zmenu}) > 0)) {
-
-      if($self->{'zmenu_zclick'} || ($self->{'zmenu_behaviour'} =~ /onClick/mix)) {
-#        $actions{'alt'}     = 'Click for Menu';
-        $actions{'onclick'} = Sanger::Graphics::JSTools::js_menu($zmenu).q(;return false;);
-        delete $actions{'onmouseover'};
-        delete $actions{'onmouseout'};
-
-      } else {
-        delete $actions{'alt'};
-        $actions{'onmouseover'} = Sanger::Graphics::JSTools::js_menu($zmenu);
-      }
-      $actions{'href'} ||= 'javascript:void(0);';
-    }
-  }
-
-  if(keys %actions && !$actions{'href'}) {
+  if (keys %actions && !$actions{'href'}) {
     $actions{'nohref'} = 'nohref';
     delete $actions{'href'};
   }
