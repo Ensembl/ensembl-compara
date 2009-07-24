@@ -154,7 +154,7 @@ sub get_json {
   
   $content = "$self->{'form'}$content</form>" if $self->{'form'};
   
-  $content =~ s/\n//g;
+  $content =~ s/\n/\\n/g;
   $content =~ s/\r//g;
   $content =~ s/'/&#39/g;
   
