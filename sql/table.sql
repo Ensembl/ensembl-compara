@@ -916,5 +916,26 @@ CREATE TABLE sitewise_aln (
   KEY (node_id)
 ) COLLATE=latin1_swedish_ci;
 
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'protein_tree_hmmprofile'
+--
+-- overview:
+--   to allow nodes to have hmm profiles attached to them   
+-- semantics:
+--    node_id                  -- the id of the root node associated with this hmm profile
+--    type                     -- type of hmm profile (eg: 'hmmls','hmmfs','hmms','hmmsw')
+--    hmmprofile               -- foreign key from method_link_species_set table
+
+CREATE TABLE protein_tree_hmmprofile (
+  node_id                     int(10) unsigned NOT NULL,
+  type                        varchar(40) DEFAULT '' NOT NULL,
+  hmmprofile                  mediumtext,
+
+  KEY(node_id),
+  UNIQUE KEY type_node_id (type, node_id)
+) COLLATE=latin1_swedish_ci;
+
+
 # Auto add schema version to database
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "54");
