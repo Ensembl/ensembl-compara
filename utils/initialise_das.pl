@@ -118,13 +118,27 @@ my $das_coords = _get_das_coords();
 my $species = $SiteDefs::ENSEMBL_SPECIES || [];
 my $shash;
 $| = 1;
+
+my $force_update = $ARGV[0] && $ARGV[0] =~ m/^-f|--force$/;
+
 SPECIES: foreach my $sp (@$species) {
-  warn "Parsing species $sp ".gmtime();
   my $search_info = $species_defs->get_config($sp, 'SEARCH_LINKS');
   (my $vsp = $sp) =~ s/\_/ /g;
   $species_info->{$sp}->{'species'}  = $vsp;
-  my $type = $species_defs->get_config($sp,'ASSEMBLY_NAME');
-  my $mapmaster = sprintf("%s.%s.reference", $sp, $species_defs->get_config($sp,'ASSEMBLY_NAME'));
+  
+  my $type = $species_defs->get_config($sp,'ASSEMBLY_NAME') || die "[FATAL] ASSEMBLY_NAME is missing for $sp";
+  my $mapmaster = sprintf("%s.%s.reference", $sp, $type);
+  
+  if (-e "$SERVERROOT/htdocs/das/$mapmaster/entry_points") {
+    if ($force_update) {
+      unlink "$SERVERROOT/htdocs/das/$mapmaster/entry_points";
+    } else {
+      print STDERR "[INFO]  Already processed $sp - skipping\n";
+      next SPECIES;
+    }
+  }
+  
+  print STDERR "[INFO]  Parsing species $sp at ".gmtime()."\n";
   
   my $db_info = $species_defs->get_config($sp, 'databases')->{'DATABASE_CORE'};
   my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -138,19 +152,12 @@ SPECIES: foreach my $sp (@$species) {
   my $meta = $db->get_MetaContainer();
   my $taxid = $meta->get_taxonomy_id();
   
-  my $skip = 0;
-  
-  # Registry does not have anything for this species - we can't add it ourselves
-  if (!exists $das_coords->{$sp}) {
-    warn "Species $sp is not in the DAS Registry!";
-    $skip = 1;
-  } else {
-    # Source doesn't have to exist, but must have these coordinates for all species':
-    for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
-      unless (exists $das_coords->{$sp}{$coord_type}) {
-        my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid));
-        $tmp->{$sp}{$coord_type} || die "Unable to create $coord_type $sp coordinates";
-      }
+  # Must have these coordinates for all species' (though we don't create sources for them yet):
+  for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
+    unless (exists $das_coords->{$sp}{$coord_type}) {
+      # Add to the registry and check it came back OK
+      my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid), $coord_type);
+      $tmp->{$sp}{$coord_type} || die "[FATAL] Unable to create $coord_type $sp coordinates";
     }
   }
 
@@ -178,7 +185,7 @@ SPECIES: foreach my $sp (@$species) {
   my %coords = ();
   for (@$toplevel_slices) {
     # Set up the coordinate system details
-    $_->[6] ||= '';
+    $_->[6] ||= ''; # version
     if (!$coords{$_->[5]}{$_->[6]}) {
       my $cs_xml = $das_coords->{$sp}{$_->[5]}{$_->[6]};
       if (!$cs_xml) {
@@ -186,12 +193,12 @@ SPECIES: foreach my $sp (@$species) {
         $cs_xml = $das_coords->{$sp}{$_->[5]}{$_->[6]};
       }
       if (!$cs_xml) {
-        my $tmp = _get_das_coords(_coord_system_as_xml($_->[5], $_->[6], $sp, $taxid));
+        # Add to the registry and check it came back OK
+        my $tmp = _get_das_coords(_coord_system_as_xml($_->[5], $_->[6], $sp, $taxid), "$_->[5] $_->[6]");
         $cs_xml = $tmp->{$sp}{$_->[5]}{$_->[6]};
         if (!$cs_xml) {
-          warn "Coordinate system $_->[5] $_->[6] is not in the DAS Registry!";
-          $skip = 1;
-          $cs_xml = 'bad';
+          print STDERR "[ERROR] Coordinate system $_->[5] $_->[6] is not in the DAS Registry! Skipping\n";
+          next SPECIES;
         }
       }
       my $start = $_->[2] || 1;
@@ -201,15 +208,10 @@ SPECIES: foreach my $sp (@$species) {
       $coords{$_->[5]}{$_->[6]} = $cs_xml;
     }
   }
-  
-  if ($skip) {
-    warn "Skipping $sp";
-    next SPECIES;
-  }
 
   $shash->{$mapmaster}->{coords} = \%coords;
   $shash->{$mapmaster}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
-  $shash->{$mapmaster}->{description} = sprintf("%s Reference server based on %s assembly. Contains %d top level entries.", $sp, $species_defs->get_config($sp,'ASSEMBLY_NAME'), 0 + @$toplevel_slices );
+  $shash->{$mapmaster}->{description} = sprintf("%s Reference server based on %s assembly. Contains %d top level entries.", $sp, $type, 0 + @$toplevel_slices );
 # my $sl = $thash{$search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'}} || $toplevel_slices[0];
     #warn Data::Dumper::Dumper(\%thash);
 
@@ -245,7 +247,7 @@ SPECIES: foreach my $sp (@$species) {
 sources( $shash, "$SERVERROOT/htdocs/das/sources", $sitetype );
 dsn(     $shash, "$SERVERROOT/htdocs/das/dsn"     );
 
-print STDERR sprintf("%d sources are active\n", scalar(keys %$shash));
+print STDERR sprintf("[INFO]  %d sources have been set up\n", scalar(keys %$shash));
 #print STDERR Data::Dumper::Dumper($species_info);
 
 sub entry_points {
@@ -405,22 +407,25 @@ sub _coord_system_as_xml {
 }
 
 sub _get_das_coords {
-  my ($add_data) = @_;
+  my ($add_data, $add_name) = @_;
   my $ua = LWP::UserAgent->new(agent => $sitetype);
   $ua->proxy('http', $species_defs->ENSEMBL_WWW_PROXY);
   $ua->no_proxy(@{$species_defs->ENSEMBL_NO_PROXY||[]});
+
   my $method = $add_data ? 'POST' : 'GET';
   my $req  = HTTP::Request->new($method => 'http://www.dasregistry.org/das/coordinatesystem');
   
   # If we have XML for a new coordinate system, add it
   if ($add_data) {
+    print STDERR "[INFO]  Adding coordinate system '$add_name' to the DAS Registry\n";
     $add_data = qq(<?xml version='1.0' ?>\n<DASCOORDINATESYSTEM>\n  $add_data\n</DASCOORDINATESYSTEM>);
     $req->content($add_data);
     $req->content_length(length $add_data);
   }
   
   my $resp = $ua->request( $req );
-  $resp->is_success || die "Unable to retrieve coordinate system list from the DAS Registry: ".$resp->status_line;
+  $resp->is_success || die "Unable to retrieve coordinate system list from the DAS Registry: ".$resp->status_line." : ".$resp->content;
+  
   my $xml = $resp->content;
   $xml =~ s{^\s*(<\?xml.*?>)?(\s*</?DASCOORDINATESYSTEM>\s*)?}{}mix;
   $xml =~ s/\s*$//mx;
@@ -461,6 +466,10 @@ A script that generates XML file that effectivly is a response to
 htdocs/dsn and htdocs/sources.
 
 ./initialise_das.pl
+
+OR
+
+./initialise_das.pl --force|-f     (forces processing of previously generated species')
 
 If this script complains about coordinate systems, check that they actually exist
 in the DAS registry (http://www.dasregistry.org). If not, request they be added.
