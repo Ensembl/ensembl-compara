@@ -32,7 +32,7 @@ sub init {
     'prediction'  => 'Prediction transcripts',
     'sequence'    => 'Sequence',
     'variation'   => 'Variation',
-    'information' => 'Information',
+    'information' => 'Information', 
     'other'       => 'Decorations',
   );
 
@@ -42,11 +42,11 @@ sub init {
   );
 
   $self->add_tracks( 'information',
-    [ 'variation_legend',      '',   'variation_legend',     { 'display' => 'on', 'strand' => 'r',  'caption' => 'Variation legend'         } ],
+    [ 'variation_legend',      '',   'variation_legend',     { 'display' => 'normal', 'strand' => 'r', 'name' => 'Variation Legend',  'caption' => 'Variation legend'         } ],
   ); 
   $self->add_tracks( 'other',
     [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler'      } ],
-    [ 'scalebar',  '',            'scalebar',        { 'display' => 'on',  'strand' => 'r', 'name' => 'Scale bar'  } ],
+    [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'r', 'name' => 'Scale bar'  } ],
   );
 
 
