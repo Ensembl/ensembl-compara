@@ -37,28 +37,31 @@ sub ajax_zmenu      {
   my $self = shift;
   my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
-  my $dest = $obj->action().'/'.$obj->function();
   my $action = $obj->action;
+  my $dest = "$action/" . $obj->function;
+  
   if ($dest eq 'SupportingEvidence/Alignment') {
     return $self->do_SE_align_menu($panel,$obj);
-  } elsif ($action eq 'Idhistory_Node'){
-    return $self->ajax_zmenu_id_history_tree_node();
-  } elsif ($action eq 'Idhistory_Branch'){
-    return $self->ajax_zmenu_id_history_tree_branch();
-  } elsif ($action eq 'Idhistory_Label'){
-    return $self->ajax_zmenu_id_history_tree_label();
-  } elsif( $action eq 'Variation'){
+  } elsif ($action eq 'Idhistory_Node') {
+    return $self->ajax_zmenu_id_history_tree_node;
+  } elsif ($action eq 'Idhistory_Branch') {
+    return $self->ajax_zmenu_id_history_tree_branch;
+  } elsif ($action eq 'Idhistory_Label') {
+    return $self->ajax_zmenu_id_history_tree_label;
+  } elsif ($action eq 'Variation') {
     return $self->ajax_zmenu_variation($panel, $obj);
-  } elsif( $action eq 'Variation_transcript'){
+  } elsif ($action eq 'Variation_transcript') {
     return $self->ajax_zmenu_variation_transcript($panel, $obj);
-  } elsif( $action eq 'Transcript_Variation'){ 
+  } elsif ($action eq 'Transcript_Variation') { 
     return $self->_ajax_zmenu_transcript_variation($panel, $obj);
-  } elsif( $action eq 'ref'){
+  } elsif ($action eq 'ref') {
     return $self->_ajax_zmenu_change_reference($panel, $obj);
-  } elsif( $action eq 'coverage'){
+  } elsif ($action eq 'coverage') {
     return $self->ajax_zmenu_read_coverage($panel, $obj);
-  } elsif( $action eq 'ProteinSummary') {
+  } elsif ($action eq 'ProteinSummary') {
     return $self->_ajax_zmenu_protein_feature($panel, $obj);
+  } elsif ($action eq 'Das') {
+    return $self->_ajax_zmenu_das($panel, $obj);
   } else {
     my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
     $panel->{'caption'} = $disp_id ? "$db_label: $disp_id"

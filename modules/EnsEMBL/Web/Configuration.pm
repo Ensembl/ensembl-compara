@@ -6,8 +6,11 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
-use CGI qw(escape);
+use CGI qw(escape escapeHTML);
 use Time::HiRes qw(time);
+use XHTML::Validator;
+
+use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::OrderedTree;
@@ -1357,6 +1360,101 @@ sub ajax_zmenu_id_history_tree_label {
 
 
  return
+}
+
+sub _ajax_zmenu_das {
+  my $self = shift;
+  my ($panel, $object) = @_;
+  
+  my $logic_name = $object->param('logic_name') || die 'No logic name in params';
+  
+  my $feature_id = $object->param('feature_id');
+  my $group_id = $object->param('group_id');
+  my $start = $object->param('start');
+  my $end = $object->param('end');
+  my $strand = $object->param('strand');
+  my $click_start = $object->param('click_start');
+  my $click_end = $object->param('click_end');
+  
+  my %strand_map = ( 1 => '+', -1 => '-' );
+  
+  my %das = %{$ENSEMBL_WEB_REGISTRY->get_all_das($object->species)};
+  
+  my ($name, $l) = split ':', $object->parent->{'params'}->{'r'}->[0];
+  my ($region_start, $region_end) = split '-', $l;
+  
+  my $slice = $object->database('core')->get_SliceAdaptor->fetch_by_region(undef, $name, $region_start, $region_end, $strand);
+  
+  my $coordinator = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
+    -sources => [ $das{$logic_name} ],
+    -proxy   => $object->species_defs->ENSEMBL_WWW_PROXY,
+    -noproxy => $object->species_defs->ENSEMBL_NO_PROXY,
+    -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT
+  );
+  
+  my $features = $coordinator->fetch_Features($slice, ( feature => $feature_id, group => $group_id ));
+  
+  return unless $features && $features->{$logic_name};
+  
+  my $validator = XHTML::Validator->new('extended');
+  
+  my $id = $feature_id || $group_id;
+  
+  $strand = $strand_map{$strand} || '0';
+  
+  $panel->caption($id);
+  
+  foreach (keys %{$features->{$logic_name}->{'features'}}) {
+    my $objects = $features->{$logic_name}->{'features'}->{$_}->{'objects'};
+    
+    next unless scalar @$objects;
+    
+    my $nearest_feature = 1; # Initialise so it exists
+    my $nearest = 1e12; # Arbitrary large number
+    my ($left, $right, $min, @feat);
+    
+    foreach (@$objects) {
+      $left  = $_->seq_region_start - $click_start;
+      $right = $click_end - $_->seq_region_end;
+      
+      # If both are 0 or positive, feature is inside the click region.
+      # If both are negative, click is inside the feature.
+      if (($left >= 0 && $right >= 0) || ($left < 0 && $right < 0)) {
+        push @feat, $_;
+        
+        $nearest_feature = undef;
+      } elsif ($nearest_feature) {
+        $min = [ sort { $a <=> $b } abs($left), abs($right) ]->[0];
+        
+        if ($min < $nearest) {
+          $nearest_feature = $_;
+          $nearest = $min;
+        }
+      }
+    }
+    
+    push @feat, $nearest_feature if $nearest_feature;
+    
+    foreach (@feat) {
+      my $label = $_->display_label;
+      my $method = $_->method_label; 
+      
+      if ($label ne $id || scalar @feat > 1) {
+        $label = "Nearest feature: $label" if $nearest_feature;
+        
+        $panel->add_subheader($label);
+      }
+      
+      $panel->add_entry({ type => 'Type:',   label_html => $_->type_label });
+      $panel->add_entry({ type => 'Method:', label_html => $method }) if $method;
+      $panel->add_entry({ type => 'Start:',  label_html => $_->seq_region_start });
+      $panel->add_entry({ type => 'End:',    label_html => $_->seq_region_end });
+      $panel->add_entry({ type => 'Strand:', label_html => $strand });
+      
+      $panel->add_entry({ label_html => $_->{'txt'}, link => $_->{'href'} }) for @{$_->links};
+      $panel->add_entry({ label_html => $validator->validate($_) ? escapeHTML($_) : $_ }) for @{$_->notes};
+    }
+  }
 }
 
 sub _archive_link {

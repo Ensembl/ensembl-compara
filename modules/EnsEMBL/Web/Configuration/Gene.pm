@@ -226,34 +226,29 @@ sub configurator {
   return $_[0]->_configurator;
 }
 
-sub ajax_zmenu      {
+sub ajax_zmenu {
   my $self = shift;
   my $panel = $self->_ajax_zmenu;
-  my $obj  = $self->object;
+  my $obj = $self->object;
 
   my $action = $obj->[1]{'_action'} || 'Summary'; 
-  #warn $action;
 
-  if( $action =~ 'Idhistory_Node'){
-    return $self->ajax_zmenu_id_history_tree_node();
-  }
-  if( $action =~ 'Idhistory_Branch'){
-    return $self->ajax_zmenu_id_history_tree_branch();
-  }
-   if( $action =~ 'Idhistory_Label'){
-    return $self->ajax_zmenu_id_history_tree_label();
-  }
-  if( $action =~ 'Regulation'){
+  if ($action =~ /Idhistory_Node/) {
+    return $self->ajax_zmenu_id_history_tree_node;
+  } elsif ($action =~ /Idhistory_Branch/) {
+    return $self->ajax_zmenu_id_history_tree_branch;
+  } elsif ($action =~ /Idhistory_Label/) {
+    return $self->ajax_zmenu_id_history_tree_label;
+  } elsif ($action =~ /Regulation/) {
     return $self->_ajax_zmenu_regulation($panel, $obj);
-  }
-  if( $action eq 'Variation'){
+  } elsif ($action eq 'Variation') {
     return $self->ajax_zmenu_variation($panel, $obj);
-  }
-  if( $action eq 'Variation_transcript'){
+  } elsif ($action eq 'Variation_transcript') {
     return $self->ajax_zmenu_variation_transcript($panel, $obj);
-  }
-  if( $action =~ 'Compara_Tree_Node' ){
+  } elsif ($action =~ /Compara_Tree_Node/) {
     return $self->_ajax_zmenu_compara_tree_node($panel);
+  } elsif ($action eq 'Das') {
+    return $self->_ajax_zmenu_das($panel, $obj);
   }
 
   my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;

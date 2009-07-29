@@ -3,7 +3,9 @@ package EnsEMBL::Web::Configuration::Location;
 use strict;
 
 use base qw( EnsEMBL::Web::Configuration );
+
 use CGI;
+
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Component::Location;
 
@@ -181,32 +183,27 @@ sub ajax_zmenu      {
   my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
   my $action = $obj->[1]{'_action'} || 'Summary';
-  if( $action =~ 'Regulation'){
+  
+  if ($action =~ /Regulation/) {
     return $self->_ajax_zmenu_regulation($panel, $obj);
-  }
-  elsif( $action =~/Variation/){
+  } elsif($action =~ /Variation/) {
     return $self->ajax_zmenu_variation($panel, $obj);
-  }
-  elsif( $action =~ /Genome/) {
-    return $self->_ajax_zmenu_alignment($panel,$obj);
-  }
-  elsif ( $action =~ /Marker/) {
-    return $self->_ajax_zmenu_marker($panel,$obj);
-  }
-  elsif ($action eq 'ComparaGenomicAlignment') {
-    return $self->_ajax_zmenu_ga($panel,$obj);
-  }
-  elsif ($action eq 'Compara_Alignments') {
-    return $self->_ajax_zmenu_av($panel,$obj);
-  }
-  elsif ($action =~ /View|Overview/) {
-    return $self->_ajax_zmenu_view($panel,$obj);
-  }
-   elsif ($action eq 'coverage'){
+  } elsif($action =~ /Genome/) {
+    return $self->_ajax_zmenu_alignment($panel, $obj);
+  } elsif ($action =~ /Marker/) {
+    return $self->_ajax_zmenu_marker($panel, $obj);
+  } elsif ($action eq 'ComparaGenomicAlignment') {
+    return $self->_ajax_zmenu_ga($panel, $obj);
+  } elsif ($action eq 'Compara_Alignments') {
+    return $self->_ajax_zmenu_av($panel, $obj);
+  } elsif ($action =~ /View|Overview/) {
+    return $self->_ajax_zmenu_view($panel, $obj);
+  } elsif ($action eq 'coverage'){
     return $self->ajax_zmenu_read_coverage($panel, $obj);
-  }
-  elsif ($action =~ /Supercontigs/) {
-    return $self->_ajax_zmenu_supercontig($panel,$obj);
+  } elsif ($action =~ /Supercontigs/) {
+    return $self->_ajax_zmenu_supercontig($panel, $obj);
+  } elsif ($action eq 'Das') {
+    return $self->_ajax_zmenu_das($panel, $obj);
   }
 
   return;
