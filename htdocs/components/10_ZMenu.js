@@ -4,12 +4,24 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   constructor: function (id, data) {
     this.base(id);
     
+    var area = $(data.area.a);
+    
+    this.drag = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
+    this.das  = area.hasClass('das') && area.hasClass('group') ? 'group' : area.hasClass('das') ? 'feature' : false;
+    this.href = area.attr('href');
+    this.title = area.attr('title');
+    
+    if (this.das !== false) {
+      this.logicName = area.attr('class').replace(/das/, '').replace(/group/, '').replace(/ /g, '');
+    }
+    
+    area = null;
+    
     this.position = data.position;
     this.coords = data.coords;
-    this.area = data.area.a;
     this.areaCoords = $.extend({}, data.area);
     this.location = 0;
-
+    
     delete this.areaCoords.a;
     
     Ensembl.EventManager.register('showExistingZMenu', this, this.showExisting);
@@ -38,78 +50,108 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   getContent: function () {
-    if (!this.area.href) {
+    if (this.drag == 'drag') {
+      this.populateRegion();
+    } else if (this.drag == 'vdrag') {
+      this.populateVRegion();
+    } else if (this.das !== false && Ensembl.ajax == 'enabled') {
+      this.populateDas();
+    } else if (!this.href) {
       this.populate();
-    } else if (this.area.href.match(/#/)) {
-      if (this.area.href.match(/#drag/)) {
-        this.populateRegion();
-      } else if (this.area.href.match(/#vdrag/)) {
-        this.populateVRegion();
-      } else {
-        this.populate(true);
-      }    
-    } else {      
-      if (Ensembl.ajax == 'enabled') {
-        this.populateAjax();
-      } else {
-        this.populateNoAjax();
-      }
+    } else if (this.href.match(/#/)) {
+      this.populate(true);
+    } else if (Ensembl.ajax == 'enabled') {
+      this.populateAjax();
+    } else {
+      this.populateNoAjax();
     }
   },
   
   populate: function (link, extra) {
-    var arr = this.area.title.split(';');
+    var arr = this.title.split(';');
     var caption = arr.shift();
     
     this.buildMenu(arr, caption, link, extra);
   },
   
-  populateAjax: function () {
+  populateDas: function () {
+    var strandMap = { '+': 1, '-': -1 };
+    
+    var start  = this.title.match(/Start: (\d+)/)[1];
+    var end    = this.title.match(/End: (\d+)/)[1];
+    var strand = this.title.match(/Strand: ([-+])/)[1];
+    
+    var url = window.location.pathname.replace(/\/(\w+)\/\w+$/, '/Zmenu/$1/Das') +
+      '?logic_name=' + this.logicName +
+      ';' + this.das + '_id=' + this.title.split(';')[0] +
+      ';start=' + start + 
+      ';end=' + end + 
+      ';strand=' + strandMap[strand] + 
+      ';click_start=' + this.coords.clickStart + 
+      ';click_end=' + this.coords.clickEnd;
+      
+    for (var p in Ensembl.coreParams) {
+      if (Ensembl.coreParams[p]) {
+        url += ';' + p + '=' + Ensembl.coreParams[p];
+      }
+    }
+    
+    this.populateAjax(url);
+  },
+  
+  populateAjax: function (url) {
     var myself = this;
     
-    var a = this.area.href.split(/\?/);
-    var arr = a[0].match(/^(https?:\/\/[^\/]+\/[^\/]+\/)(.+)/);
+    url = url || this.href.replace(/\/(\w+\/\w+)\?/, '/Zmenu/$1?');
     
-    if (arr.length) {
+    if (url) {
       $.ajax({
-        url: arr[1] + 'Zmenu/' + arr[2] + '?' + a[1],
+        url: url,
         dataType: 'json',
         success: function (json) {
-          var body = '';
-          var row;
-          
-          for (var i in json.entries) {
-            if (json.entries[i].type) {
-              row = '<th>' + json.entries[i].type + '</th><td>' + json.entries[i].link + '</td>';
-            } else {
-              row = '<td colspan="2">' + json.entries[i].link + '</td>';
+          if (json.entries.length) {
+            var body = '';
+            var row;
+            
+            for (var i in json.entries) {
+              if (json.entries[i].type == 'subheader') {
+                row = '<th class="subheader" colspan="2">' + json.entries[i].link + '</th>';
+              } else if (json.entries[i].type) {
+                row = '<th>' + json.entries[i].type + '</th><td>' + json.entries[i].link + '</td>';
+              } else {
+                row = '<td colspan="2">' + json.entries[i].link + '</td>';
+              }
+              
+              body += '<tr>' + row + '</tr>';
             }
             
-            body += '<tr>' + row + '</tr>';
+            myself.elLk.tbody.html(body);
+            myself.elLk.caption.html(json.caption);
+            
+            myself.show();
+          } else {
+            myself.populateNoAjax();
           }
-          
-          myself.elLk.tbody.html(body);
-          myself.elLk.caption.html(json.caption);
-          
-          myself.show();
         },
         error: function () {
           myself.populateNoAjax();
         }
       });
+    } else {
+      this.populateNoAjax();
     }
   },
   
   populateNoAjax: function () {
     var extra = '';
-    var loc = this.area.title.match(/Location: (\S+)/);
+    var loc = this.title.match(/Location: (\S+)/);
     
     if (loc) {          
       var r = loc[1].split(/\W/);
       this.location = parseInt(r[1]) + (r[2] - r[1]) / 2;
       
-      extra += '<tr>&nbsp;<td><a href="' + this.zoomURL(1) + '">Centre on feature</a></td></tr>';
-      extra += '<tr>&nbsp;<td><a href="' + this.baseURL + 'r=' + loc[1] + '">Zoom to feature</a></td></tr>';
+      extra += '<tr><th></th><td><a href="' + this.zoomURL(1) + '">Centre on feature</a></td></tr>';
+      extra += '<tr><th></th><td><a href="' + this.baseURL + 'r=' + loc[1] + '">Zoom to feature</a></td></tr>';
     }
     
     this.populate(true, extra);
@@ -121,9 +163,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var start, end, tmp, url, href;
     var arr, caption;
     
-    var area = this.area.href.split('|');
-    var min = parseInt(area[5]);
-    var max = parseInt(area[6]);
+    var a = this.href.split('|');
+    var min = parseInt(a[5]);
+    var max = parseInt(a[6]);
     
     var scale = (max - min + 1) / (this.areaCoords.r - this.areaCoords.l);
     
@@ -148,7 +190,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       this.location = (start + end) / 2;
       
-      url = this.baseURL + 'r=' + area[4] + ':' + start + '-' + end;
+      url = this.baseURL + 'r=' + a[4] + ':' + start + '-' + end;
       
       arr = [
         '<a href="' + url + '">Jump to region (' + (end - start) + ' bp)</a>',
@@ -184,9 +226,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   populateVRegion: function () {
     var start, end, view, arr, caption, tmp, url;
     
-    var area = this.area.href.split('|');
-    var min = parseInt(area[5]);
-    var max = parseInt(area[6]);
+    var a = this.href.split('|');
+    var min = parseInt(a[5]);
+    var max = parseInt(a[6]);
     
     var scale = (max - min + 1) / (this.areaCoords.b - this.areaCoords.t);
     
@@ -213,7 +255,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       this.location = (start + end) / 2;
       
-      caption = area[4] + ': ' + start + '-' + end;
+      caption = a[4] + ': ' + start + '-' + end;
     } else {
       view = 'View';
       
@@ -226,14 +268,14 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         start = 1;
       }
       
-      caption = area[4] + ': ' + this.location;
+      caption = a[4] + ': ' + this.location;
     }
     
-    url = this.baseURL + 'r=' + area[4] + ':' + start + '-' + end;
+    url = this.baseURL + 'r=' + a[4] + ':' + start + '-' + end;
     
     arr = [
-      '<a href="/' + area[3] + '/Location/' + view + url + '">Jump to location ' + view + '</a>',
-      '<a href="/' + area[3] + '/Location/Chromosome' + url + '">Chromosome summary</a>'
+      '<a href="/' + a[3] + '/Location/' + view + url + '">Jump to location ' + view + '</a>',
+      '<a href="/' + a[3] + '/Location/Chromosome' + url + '">Chromosome summary</a>'
     ];
     
     this.buildMenu(arr, caption);
@@ -247,8 +289,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     extra = extra || '';
     
     if (link === true) {
-      title = this.area.title ? this.area.title.split(';')[0] : caption;
-      extra = '<tr><th>Link</th><td><a href="' + this.area.href + '">' + title + '</a></td></tr>' + extra;
+      title = this.title ? this.title.split(';')[0] : caption;
+      extra = '<tr><th>Link</th><td><a href="' + this.href + '">' + title + '</a></td></tr>' + extra;
     }
     
     $.each(content, function () {
@@ -292,16 +334,14 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   showExisting: function (data) {
     this.position = data.position;
     this.coords = data.coords;
-    this.area = data.area.a;
-    this.areaCoords = $.extend({}, data.area);
     
-    if (this.area.href.match(/#/)) {
+    if (this.das == 'group' || this.drag) {
       this.elLk.tbody.empty();
       this.elLk.caption.empty();
       
       this.getContent();
     } else {
       this.show();
-    }
+    };
   }
 });
