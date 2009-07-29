@@ -329,17 +329,13 @@ sub extraHTML {
   my $self = shift;
   my $extra = '';
 
-  if( $self->{'image_id'} ) {
-    $extra .= qq(id="$self->{'image_id'}" )
-  }
+  $extra .= qq{class="imagemap" };
 
-  if( $self->{'img_map'} ) {
-    if( $self->{'id'} ) {
-      $extra .= qq(usemap="#$self->{'id'}_map" );
-    } else {
-      $extra .= qq(usemap="#$self->{'token'}" );
-    }
-  }
+  # if ($self->imagemap eq 'yes') {
+    # my $map_name = $self->{'image_id'} || $self->{'token'};
+    # $extra .= qq{usemap="#$map_name" };
+  # }
+  
   return $extra;
 }
 
@@ -417,7 +413,7 @@ sub render_image_map {
   my $map_name = $self->{'image_id'} || $image->token;
 
   return qq{
-    <map name="$map_name" id="map_$map_name">
+    <map name="$map_name" id="$map_name">
       $imagemap
     </map>
     <input type="hidden" class="panel_type" value="ImageMap" />
