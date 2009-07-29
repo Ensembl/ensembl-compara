@@ -395,7 +395,8 @@ sub store_gene_and_all_transcripts
   }
 
   foreach my $transcript (@{$gene->get_all_Transcripts}) {
-    unless (defined $transcript->translation) {
+    my $translation = $transcript->translation;
+    unless (defined $translation) {
       warn("COREDB error: No translation for transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
       next;
     }
@@ -408,7 +409,6 @@ sub store_gene_and_all_transcripts
 #      $next = 1;
 #    };
 #    next if ($next);
-    my $translation = $transcript->translation;
 
     if(defined($self->{'pseudo_stableID_prefix'})) {
       $transcript->stable_id($self->{'pseudo_stableID_prefix'} ."T_". $transcript->dbID);
