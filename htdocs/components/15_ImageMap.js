@@ -18,18 +18,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   init: function () {
+    var myself = this;
+    
     this.base();
     
     this.elLk.map = $('map', this.el);
-    this.elLk.img = this.elLk.map.siblings('img');
+    this.elLk.img = $('img.imagemap', this.el);
     this.elLk.areas = $('area', this.elLk.map);
+    this.elLk.exportMenu = $('.iexport_menu', this.el);
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     
     this.makeImageMap(); 
     
     $('.iexport a', this.el).click(function () {
-      $(this).parent().next().css({ left: $(this).offset().left }).toggle();
+      myself.elLk.exportMenu.css({ left: $(this).offset().left }).toggle();
 
       return false;
     });
@@ -177,6 +180,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     id += area.a.coords.replace(/[ ,]/g, '_');
     
+    if (this.range) {
+      var location = this.range.start + (this.range.scale * (coords.x - this.region.l));
+      var fuzziness = this.range.scale * 2; // Increase the size of the click so we can have some measure of certainty for returning the right menu
+      
+      coords.clickStart = Math.floor(location - fuzziness);
+      coords.clickEnd = Math.ceil(location + fuzziness);
+      
+      if (coords.clickStart < this.range.start) {
+        coords.clickStart = this.range.start;
+      }
+      
+      if (coords.clickEnd > this.range.end) {
+        coords.clickEnd = this.range.end;
+      }
+    }
     
     Ensembl.EventManager.trigger('makeZMenu', id, { position: { left: e.pageX, top: e.pageY }, coords: coords, area: area });
   },
@@ -189,7 +207,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var r = this.region.a.href.split('|'); // Find bp range for the map
     var min = parseInt(r[5]);
     var max = parseInt(r[6]);
-    var scale = (max - min + 1) / (this.region.r - this.region.l); // bps per pixel on previous image
+    var scale = (max - min + 1) / (this.region.r - this.region.l); // bps per pixel on image
     
     var coords = {
       t: this.region.t + 2,
@@ -213,6 +231,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       // In this case start and end have come from Ensembl.location, so don't draw the red box if start = min and end = max
       this.highlight(coords, 'redbox2');
     }
+    
+    this.range = { start: min, end: max, scale: scale };
   },
   
   highlight: function (coords, cl) {  
