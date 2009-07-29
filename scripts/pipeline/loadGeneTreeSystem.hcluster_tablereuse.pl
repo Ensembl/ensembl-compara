@@ -146,6 +146,7 @@ sub build_GeneTreeSystem
 
   #
   # SubmitGenome
+  print STDERR "SubmitGenome...\n";
   #
   my $submit_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -182,6 +183,7 @@ sub build_GeneTreeSystem
 
   #
   # GenomeLoadReuseMembers
+  print STDERR "GenomeLoadReuseMembers...\n";
   #
   # Uses GenomeLoadReuseMembers and will not execute run section if it's a new genome
   my $loadreuse_genome =  Bio::EnsEMBL::Analysis->new(
@@ -200,6 +202,7 @@ sub build_GeneTreeSystem
 
   #
   # GenomeLoadMembers
+  print STDERR "GenomeLoadMembers...\n";
   #
   # Uses GenomeLoadReuseMembers but will not execute run section if it's a reused genome
   my $load_genome = Bio::EnsEMBL::Analysis->new(
@@ -218,6 +221,7 @@ sub build_GeneTreeSystem
 
   #
   # LoadUniProt
+  print STDERR "LoadUniProt...\n";
   #
   # Only needed to load uniprot sequences. Used for the MCL Families pipeline
   my $loadUniProt = Bio::EnsEMBL::Analysis->new(
@@ -235,6 +239,7 @@ sub build_GeneTreeSystem
 
   #
   # BlastSubsetStaging
+  print STDERR "BlastSubsetStaging...\n";
   #
   my $blastSubsetStaging = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -252,6 +257,7 @@ sub build_GeneTreeSystem
 
   #
   # GenomeSubmitPep
+  print STDERR "GenomeSubmitPep...\n";
   #
   my $submitpep_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -276,6 +282,7 @@ sub build_GeneTreeSystem
 
   #
   # GenomeDumpFasta
+  print STDERR "GenomeDumpFasta...\n";
   #
   my $dumpfasta_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -294,6 +301,7 @@ sub build_GeneTreeSystem
 
   #
   # CreateBlastRules
+  print STDERR "CreateBlastRules...\n";
   #
   # Only run the next analysis, CreateHclustePrepareJobs, when all blasts are finished
   $parameters = "{phylumBlast=>0, selfBlast=>1,cr_analysis_logic_name=>'CreateHclusterPrepareJobs'}";
@@ -322,6 +330,7 @@ sub build_GeneTreeSystem
 
   #
   # BlastTableReuse
+  print STDERR "BlastTableReuse...\n";
   #
   my $blasttablereuse = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -340,6 +349,7 @@ sub build_GeneTreeSystem
 
   #
   # Create peptide_align_feature per-species tables
+  print STDERR "Create peptide_align_feature_ per-species tables...\n";
   #
   foreach my $speciesPtr (@speciesList) {
     my $gdb_id = $speciesPtr->{'genome_db_id'};
@@ -350,12 +360,13 @@ sub build_GeneTreeSystem
     my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
     my $sql = "CREATE TABLE IF NOT EXISTS $tbl_name like peptide_align_feature";
 
-    #print("$sql\n");
+    print STDERR "## $sql\n";
     my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
     $sth->execute();
   }
 
   # CreateHclusterPrepareJobs
+  print STDERR "CreateHclusterPrepareJobs...\n";
   #
   # FIXME
   $parameters = $genetree_params{'cluster_params'};
@@ -385,6 +396,7 @@ sub build_GeneTreeSystem
 
   #
   # HclusterPrepare
+  print STDERR "HclusterPrepare...\n";
   #
   $parameters = $genetree_params{'cluster_params'};
   $parameters =~ s/\A{//;
@@ -404,6 +416,7 @@ sub build_GeneTreeSystem
 
   #
   # HclusterRun
+  print STDERR "HclusterRun...\n";
   #
   $parameters = $genetree_params{'cluster_params'};
   $parameters =~ s/\A{//;
@@ -423,6 +436,7 @@ sub build_GeneTreeSystem
 
   #
   # Clusterset_staging
+  print STDERR "Clusterset_staging...\n";
   #
   my $clusterset_staging = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Clusterset_staging',
@@ -435,7 +449,8 @@ sub build_GeneTreeSystem
   $stats->update();
 
   #
-  # Mcoffee
+  # MCoffee
+  print STDERR "MCoffee...\n";
   #
   $parameters = "{'method'=>'cmcoffee',use_exon_boundaries=>2";
   if (defined $genetree_params{'max_gene_count'}) {
@@ -457,7 +472,7 @@ sub build_GeneTreeSystem
   $analysisDBA->store($mcoffee);
   $stats = $mcoffee->stats;
   $stats->batch_size(10);
-  $stats->hive_capacity(400);
+  $stats->hive_capacity(600);
   $stats->update();
 
 #   #
@@ -488,6 +503,7 @@ sub build_GeneTreeSystem
 
   #
   # NJTREE_PHYML
+  print STDERR "NJTREE_PHYML...\n";
   #
   $parameters = "{cdna=>1,bootstrap=>1";
   if (defined $genetree_params{'max_gene_count'}) {
@@ -542,6 +558,7 @@ sub build_GeneTreeSystem
 
   #
   # OrthoTree
+  print STDERR "OrthoTree...\n";
   #
   my $with_options_orthotree = 0;
   my $ortho_params = '';
@@ -603,13 +620,12 @@ sub build_GeneTreeSystem
   $stats->batch_size(1);
   my $quicktreebreak_hive_capacity = 1; # Some deletes in OrthoTree can be hard on the mysql server
   $stats->hive_capacity($quicktreebreak_hive_capacity);
-
   $stats->update();
-
 
   # turn these two on if you need dnds from the old homology system
   #
   # CreateHomology_dNdSJob
+  print STDERR "CreateHomology_dNdSJob...\n";
   #
   my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -643,6 +659,7 @@ sub build_GeneTreeSystem
 
   #
   # Homology_dNdS
+  print STDERR "Homology_dNdS...\n";
   #
   my $homology_dNdS = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -665,7 +682,24 @@ sub build_GeneTreeSystem
   }
 
   #
+  # OtherParalogs
+  print STDERR "OtherParalogs...\n";
+  #
+  my $otherparalogs = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'OtherParalogs',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::OtherParalogs',
+      # -parameters      => $parameters
+      );
+  $analysisDBA->store($otherparalogs);
+  $stats = $otherparalogs->stats;
+  $stats->batch_size(1);
+  my $otherparalogs_hive_capacity = 50;
+  $stats->hive_capacity($otherparalogs_hive_capacity);
+  $stats->update();
+
+  #
   # Threshold_on_dS
+  print STDERR "Threshold_on_dS...\n";
   #
   my $threshold_on_dS = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -696,6 +730,7 @@ sub build_GeneTreeSystem
 
   #
   # Sitewise_dNdS
+  print STDERR "Sitewise_dNdS...\n";
   #
 
   if (defined $sitewise_dnds_params{'saturated'}) {
@@ -763,8 +798,18 @@ sub build_GeneTreeSystem
   # Failing small seqnum jobs create new Jackknife jobs of the same kind
   $dataflowRuleDBA->create_rule($njtree_phyml, $njtree_phyml, 2);
   $dataflowRuleDBA->create_rule($njtree_phyml, $quicktreebreak, 3);
+  $dataflowRuleDBA->create_rule($njtree_phyml, $otherparalogs, 3);
   $dataflowRuleDBA->create_rule($orthotree, $quicktreebreak, 2);
+  $dataflowRuleDBA->create_rule($orthotree, $otherparalogs, 2);
   $dataflowRuleDBA->create_rule($quicktreebreak, $mcoffee, 1);
+
+  # OtherParalogs are calculated for every QuickTreeBreak, but only
+  # after all clusters are analysed, to avoid descriptions clashing
+  # between OrthoTree and OtherParalogs.
+  $ctrlRuleDBA->create_rule($orthotree,   $otherparalogs);
+  $ctrlRuleDBA->create_rule($njtree_phyml,$otherparalogs);
+  $ctrlRuleDBA->create_rule($mcoffee,     $otherparalogs);
+
   $dataflowRuleDBA->create_rule($njtree_phyml, $orthotree, 1);
 
 #  $dataflowRuleDBA->create_rule($njtree_phyml, $BreakPAFCluster, 2);
@@ -774,6 +819,7 @@ sub build_GeneTreeSystem
 
   #
   # create initial job
+  print STDERR "create initial job...\n";
   #
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
@@ -788,6 +834,8 @@ sub build_GeneTreeSystem
  #       -analysis       => $paf_cluster,
         -analysis       => $hclusterrun,
        );
+
+  print STDERR "Done.\n";
   return 1;
 }
 
