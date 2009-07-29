@@ -9,7 +9,6 @@ use warnings;
 sub new {
   my $class = shift;
   my $self = $class->SUPER::new( 'scripts' => '', 'sources' => {} );
-  $self->add_script( 'var ENSEMBL_START_TIME=new Date();' );
   return $self;
 }
 
