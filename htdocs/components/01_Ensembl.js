@@ -33,7 +33,7 @@ Ensembl.extend({
       });
     }
     
-    this.setLocation();
+    this.setCoreParams();
     
     this.LayoutManager.initialize();
     this.PanelManager.initialize();
@@ -64,18 +64,39 @@ Ensembl.extend({
     this.cookie.set('ENSEMBL_WIDTH', this.width);
   },
   
-  setLocation: function () {
-    var tab = $('a', '#tab_location').html();
-    var match;
+  setCoreParams: function () {
+    var myself = this;
     
+    var regex = '[;&?]%s=(.+?)[;&]';
+    var url = window.location.search + ';';
+    var tab, match;
+    
+    this.coreParams = {};
     this.location = { width: 100000 };
     
-    if (tab) {
-      match = tab.replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
+    $.each(['r', 'g', 't', 'v'], function () {
+      myself.coreParams[this] = url.match(regex.replace('%s', this));
       
-      if (match) {
-        this.location = { name: match[1], start: parseInt(match[2]), end: parseInt(match[3]) };
-        this.location.width = this.location.end - this.location.start + 1;
+      if (myself.coreParams[this]) {
+        myself.coreParams[this] = unescape(myself.coreParams[this][1]);
+      }
+    });
+    
+    if (this.coreParams.r) {
+      match = this.coreParams.r.split(/\b/);
+      
+      this.location = { name: match[0], start: parseInt(match[2]), end: parseInt(match[4]) };
+      this.location.width = this.location.end - this.location.start + 1;
+    } else {
+      tab = $('a', '#tab_location').html();
+      
+      if (tab) {
+        match = tab.replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
+        
+        if (match) {
+          this.location = { name: match[1], start: parseInt(match[2]), end: parseInt(match[3]) };
+          this.location.width = this.location.end - this.location.start + 1;
+        }
       }
     }
   },
