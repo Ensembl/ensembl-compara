@@ -1200,7 +1200,6 @@ sub outspecies_test
 sub store_homologies
 {
   my $self = shift;
-  my $a=1;
   my $hlinkscount = 0;
   foreach my $genepairlink (@{$self->{'homology_links'}}) {
     $self->display_link_analysis($genepairlink) if($self->debug>2);
@@ -1306,10 +1305,10 @@ sub store_gene_link_as_homology
     if ($gene_member1->chr_name eq $gene_member2->chr_name 
         && (1000000 > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
         && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
-      $DB::single=1;1;
       $homology->description('contiguous_gene_split');
       $self->{'orthotree_homology_counts'}->{'contiguous_gene_split'}++;
     } else {
+      $homology->description('putative_gene_split');
       $self->{'orthotree_homology_counts'}->{'putative_gene_split'}++;
     }
   }
