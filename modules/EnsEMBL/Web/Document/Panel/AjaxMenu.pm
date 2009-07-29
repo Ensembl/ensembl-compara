@@ -34,6 +34,18 @@ sub add_entry {
   };
 }
 
+sub add_subheader {
+  my ($self, $label) = @_;
+  
+  return unless defined $label;
+  
+  push @{$self->{'entries'}}, {
+    'type'       => 'subheader',
+    'label_html' => $label,
+    'priority'   => 100
+  };
+}
+
 sub content {
   my $self = shift;
   
