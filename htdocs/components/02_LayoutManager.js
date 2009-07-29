@@ -96,7 +96,7 @@ Ensembl.LayoutManager.extend({
       '    <tr><th class="caption" colspan="2"><span class="close">X</span><span class="title"></span></th></tr>' +
       '  </thead>' + 
       '  <tbody></tbody>' + 
-      '</table>').draggable({ handle: 'th' }).appendTo('body');
+      '</table>').draggable({ handle: 'thead' }).appendTo('body');
     
     Ensembl.EventManager.trigger('addPanel', id, 'ZMenu', undefined, undefined, params, 'showExistingZMenu');
   }
