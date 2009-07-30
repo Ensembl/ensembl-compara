@@ -165,7 +165,7 @@ Ensembl.PanelManager.extend({
     while (i--) {
       linkedPanel = panels[i+1];
       
-      if (linkedPanel && linkedPanel.region) {
+      if (linkedPanel && linkedPanel.region && linkedPanel.region.a) {
         region = linkedPanel.region.a.href.split('|');
         start = parseInt(region[5]);
         end = parseInt(region[6]);

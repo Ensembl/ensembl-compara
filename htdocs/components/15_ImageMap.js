@@ -192,7 +192,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   highlightImage: function (start, end, link) {    
-    if (this.linked === true) {
+    if (this.linked === true || !this.region.a) {
       return;
     }
     
