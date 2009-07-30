@@ -1452,7 +1452,7 @@ sub _ajax_zmenu_das {
       $panel->add_entry({ type => 'End:',    label_html => $_->seq_region_end });
       $panel->add_entry({ type => 'Strand:', label_html => $strand });
       
-      $panel->add_entry({ label_html => $_->{'txt'}, link => $_->{'href'} }) for @{$_->links};
+      $panel->add_entry({ label_html => $_->{'txt'}, link => $_->{'href'}, extra => { external => ($_->{'href'} !~ /^http:\/\/www.ensembl.org/) } }) for @{$_->links};
       $panel->add_entry({ label_html => $validator->validate($_) ? escapeHTML($_) : $_ }) for @{$_->notes};
     }
   }
