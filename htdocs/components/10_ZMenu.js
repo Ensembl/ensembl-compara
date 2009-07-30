@@ -288,7 +288,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     caption = caption || 'Menu';
     extra = extra || '';
     
-    if (link === true) {
+    if (link === true && this.href) {
       title = this.title ? this.title.split(';')[0] : caption;
       extra = '<tr><th>Link</th><td><a href="' + this.href + '">' + title + '</a></td></tr>' + extra;
     }
