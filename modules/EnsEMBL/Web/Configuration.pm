@@ -1433,7 +1433,8 @@ sub _ajax_zmenu_das {
       }
     }
     
-    push @feat, $nearest_feature if $nearest_feature;
+    # Return the nearest feature if it's inside two click widths
+    push @feat, $nearest_feature if $nearest_feature && $nearest < 2*($click_end - $click_start);
     
     foreach (@feat) {
       my $label = $_->display_label;
