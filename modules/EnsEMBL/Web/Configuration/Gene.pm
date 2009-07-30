@@ -288,10 +288,10 @@ sub ajax_zmenu {
     }
 
     # Link to TreeFam
-    if( my $treefam_link = $obj->get_ExtURL( 'TREEFAM', $obj->stable_id ) ){
+    if( my $treefam_link = $obj->get_ExtURL( 'TREEFAMSEQ', $obj->stable_id ) ){
       $panel->add_entry({
         'type'     => 'TreeFam',
-        'label'    => 'TreeFam',
+        'label'    => 'Gene in TreeFam',
         'link'     => $treefam_link,
         'priority' => 193,
         'extra'     => {'external' => 1}, 
@@ -299,8 +299,8 @@ sub ajax_zmenu {
     }
     if( my $dyo_link = $obj->get_ExtURL( 'GENOMICUSSYNTENY', $obj->stable_id ) ){
       $panel->add_entry({
-        'type'     => 'Synteny',
-        'label'    => 'Genomicus Synteny',
+        'type'     => 'Genomicus Synteny',
+        'label'    => 'Gene in Genomicus',
         'link'     => $dyo_link,
         'priority' => 194,
         'extra'     => {'external' => 1}, 
@@ -309,7 +309,7 @@ sub ajax_zmenu {
     if( my $phy_link = $obj->get_ExtURL( 'PHYLOMEDB', $obj->stable_id ) ){
       $panel->add_entry({
         'type'     => 'PhylomeDB',
-        'label'    => 'PhylomeDB',
+        'label'    => 'Gene in PhylomeDB',
         'link'     => $phy_link,
         'priority' => 195,
         'extra'     => {'external' => 1}, 
@@ -392,7 +392,7 @@ sub _ajax_zmenu_compara_tree_node{
   $panel->add_entry({
     'type' => 'Branch_Length',
     'label' => $parent_distance,
-    'priority' => 9,
+    'priority' => 8,
   });
 
   # Bootstrap
@@ -400,7 +400,7 @@ sub _ajax_zmenu_compara_tree_node{
     $panel->add_entry({
       'type' => 'Bootstrap',
       'label' => $boot,
-      'priority' => 8,
+      'priority' => 7,
     });
   }
 
@@ -478,12 +478,35 @@ sub _ajax_zmenu_compara_tree_node{
         'priority' => 7,
       });
     }
-    
+
+    if( my $tree_stable_id = $node->stable_id ) {
+      # GeneTree StableID
+      $panel->add_entry({
+        'type' => 'GeneTree_StableID',
+        'label' => $tree_stable_id,
+        'priority' => 10,
+       });
+
+      # Link to TreeFam Tree
+      my $treefam_tree = $tagvalues->{'treefam_id'} || $tagvalues->{'part_treefam_id'} || $tagvalues->{'cont_treefam_id'} || $tagvalues->{'dev_treefam_id'} || $tagvalues->{'dev_part_treefam_id'} || $tagvalues->{'dev_cont_treefam_id'} || undef;
+      if(defined($treefam_tree)) {
+        if( my $treefam_link = $obj->get_ExtURL( 'TREEFAMTREE', $treefam_tree ) ){
+          $panel->add_entry({
+             'type'     => 'Equivalent in TreeFam',
+             'label'    => "$treefam_tree in Treefam",
+             'link'     => $treefam_link,
+             'priority' => 193,
+             'extra'     => {'external' => 1}, 
+            });
+        }
+      }
+    }
+
     # Gene count
     $panel->add_entry({
       'type' => 'Gene_Count',
       'label' => $leaf_count,
-      'priority' => 10,
+      'priority' => 9,
     });
 
     # Expand this node
