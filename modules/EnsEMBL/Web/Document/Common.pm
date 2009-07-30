@@ -1,9 +1,10 @@
 package EnsEMBL::Web::Document::Common;
 
 use strict;
-use EnsEMBL::Web::Document::Page;
 
-our @ISA = qw(EnsEMBL::Web::Document::Page);
+use CGI;
+
+use base qw(EnsEMBL::Web::Document::Page);
 
 sub set_title {
   my $self  = shift;
@@ -34,14 +35,28 @@ sub script_name {
 
 sub _basic_HTML {
   my $self = shift;
-## Main document attributes...
+  
+  $self->set_doc_type('XHTML', '1.0 Trans');
+  $self->_init;
+  $self->add_body_attr('id' => 'ensembl-webpage');
+  
+  if (CGI->new->param('debug') eq 'js') {
+    foreach my $root (reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS) {
+      my $dir = "$root/components";
 
-  $self->set_doc_type( 'XHTML', '1.0 Trans' );
-# $self->set_doc_type( 'XHTML', '1.0 Strict' );
-  $self->_init();
-  $self->add_body_attr( 'id' => 'ensembl-webpage' );
-  $self->body_javascript->add_source(  sprintf( '/%s/%s.js',  $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_JS_NAME ));
-  $self->stylesheet->add_sheet( 'all', sprintf( '/%s/%s.css', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_CSS_NAME ));
+      if (-e $dir && -d $dir) {
+        opendir DH, $dir;
+        my @files = readdir DH;
+        closedir DH;
+
+        $self->body_javascript->add_source("/components/$_") for sort grep { /^\d/ && -f "$dir/$_" && /\.js$/ } @files;
+      }
+    }
+  } else {
+    $self->body_javascript->add_source(sprintf '/%s/%s.js', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_JS_NAME)
+  }
+
+  $self->stylesheet->add_sheet('all', sprintf '/%s/%s.css', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_CSS_NAME);
 }
  
 sub _common_HTML {
