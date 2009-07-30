@@ -456,17 +456,19 @@ sub _ajax_zmenu_region {
       (my $short_name = $new_slice_name) =~ s/\.\d+$//;
       $priority--;
       $panel->add_entry({
-	'type'     => 'EMBL',
-	'label'    => $new_slice_name,
-	'link'     => $obj->get_ExtURL('EMBL',$new_slice_name),
-	'priority' => $priority,
+        'type'     => 'EMBL',
+        'label'    => $new_slice_name,
+        'link'     => $obj->get_ExtURL('EMBL', $new_slice_name),
+        'priority' => $priority,
+        'extra'    => { external => 1 }
       });
       $priority--;
       $panel->add_entry({
-	'type'     => 'EMBL (latest version)',
-	'label'    => $short_name,
-	'link'     => $obj->get_ExtURL('EMBL',$short_name),
-	'priority' => $priority,
+        'type'     => 'EMBL (latest version)',
+        'label'    => $short_name,
+        'link'     => $obj->get_ExtURL('EMBL', $short_name),
+        'priority' => $priority,
+        'extra'    => { external => 1 }
       });
     }
   }
