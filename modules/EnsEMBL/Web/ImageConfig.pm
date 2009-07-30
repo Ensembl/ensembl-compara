@@ -744,7 +744,7 @@ sub add_dna_align_feature {
   foreach my $key_2 ( @$keys ) {
     my $K = $data->{$key_2}{'type'}||'other';
     my $menu = $self->tree->get_node( "dna_align_$K" );
-    if( $menu ) {
+    if( $menu ) { 
       $menu->append( $self->create_track( 'dna_align_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
         'glyphset'    => '_alignment',
@@ -898,7 +898,7 @@ sub add_gene {
   foreach my $type ( @TRANSCRIPT_TYPES ) {
     my $menu = $self->get_node( $type );
     next unless $menu;
-    foreach my $key_2 ( @$keys ) {
+    foreach my $key_2 ( @$keys ) { 
       $menu->append( $self->create_track( $type.'_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
         'glyphset'    => ($type=~/_/?'':'_').$type, ## QUICK HACK..
@@ -1402,19 +1402,21 @@ sub add_regulation_feature { ## needs configuring so tracks only display if data
       my %renderers = %{ $fg_data->{$key_2}{'renderers'} };
       my @temp;
       foreach (sort keys %renderers){
-        my $value = $renderers{$_};
-        push @temp, $_ => $value;
-        $wiggle_flag = 1 if /tiling/ && $fg_data->{$key_2}{'type'} !~ /histone/;
+        my $value = $renderers{$_}; 
+        ## hack to ensire we are not using term signal_map. should be safe to remove once DBs are updated in 56 ##
+        if ($_ =~/signal/) { $_ = 'tiling';}
+        push @temp, $_ => $value; 
+        $wiggle_flag = 1 if /tiling/ && $fg_data->{$key_2}{'type'} !~ /histone/; 
       }
       $render = \@temp;
     }
     
     $legend_flag = 1 if $K =~/fg_reg/;
     $cisred_flag = 1 if $fg_data->{$key_2}{'description'} =~ /cisRED/;
-    
-    $menu->append($self->create_track(
+  
+    $menu->append($self->create_track( 
       $K.'_'.$key.'_'.$key_2, sprintf($fg_data->{$key_2}{'name'}||$fg_data->{$key_2}{'logic_names'}),
-      {
+      { 
         'db'          => $key,
         'glyphset'    => $K,
         'sources'     => 'undef',
