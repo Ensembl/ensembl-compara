@@ -163,26 +163,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   makeZMenu: function (e, coords) {
-    var area;
-    var id = 'zmenu_';
-    
-    if (coords.r) { 
-      // Range select
-      area = this.region;
-    } else { 
-      // Point select
-      area = this.getArea(coords.x, coords.y);
-    }
+    var area = coords.r ? this.region : this.getArea(coords.x, coords.y);
     
     if (!area) {
       return;
     }
     
-    id += area.a.coords.replace(/[ ,]/g, '_');
+    var id = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
+    var location, fuzziness;
     
     if (this.range) {
-      var location = this.range.start + (this.range.scale * (coords.x - this.region.l));
-      var fuzziness = this.range.scale * 2; // Increase the size of the click so we can have some measure of certainty for returning the right menu
+      location = this.range.start + (this.range.scale * (coords.x - this.region.l));
+      fuzziness = this.range.scale * 2; // Increase the size of the click so we can have some measure of certainty for returning the right menu
       
       coords.clickStart = Math.floor(location - fuzziness);
       coords.clickEnd = Math.ceil(location + fuzziness);
@@ -239,10 +231,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var w = coords.r - coords.l + 1;
     var h = coords.b - coords.t + 1;
     
-    var styleL = { left: coords.l, width: 1, top: coords.t, height: h };
-    var styleR = { left: coords.r, width: 1, top: coords.t, height: h };
-    var styleT = { left: coords.l, width: w, top: coords.t, height: 1 };
-    var styleB = { left: coords.l, width: w, top: coords.b, height: 1 };
+    var style = {
+      l: { left: coords.l, width: 1, top: coords.t, height: h },
+      r: { left: coords.r, width: 1, top: coords.t, height: h },
+      t: { left: coords.l, width: w, top: coords.t, height: 1 },
+      b: { left: coords.l, width: w, top: coords.b, height: 1 }
+    };
     
     if (!$('.' + cl, this.el).length) {
       this.elLk.img.after(
@@ -253,14 +247,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       );
     }
     
-    var divs = $('.' + cl, this.el);
-    
-    divs.filter('.l').css(styleL);
-    divs.filter('.r').css(styleR);
-    divs.filter('.t').css(styleT);
-    divs.filter('.b').css(styleB);
-    
-    divs = null;
+    $('.' + cl, this.el).each(function () {
+      $(this).css(style[this.className.split(' ')[1]]);
+    });
   },
   
   getMapCoords: function (e) {
