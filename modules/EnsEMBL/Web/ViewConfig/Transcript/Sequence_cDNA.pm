@@ -8,12 +8,12 @@ sub init {
   $view_config->_set_defaults(qw(
     exons         yes
     codons        yes
-    coding_seq    yes
+    coding_seq    no
     display_width 60
-    translation   yes
-    rna           yes
-    variation     yes
-    number        yes
+    translation   no
+    rna           no
+    variation     no
+    number        no
   ));
   $view_config->storable = 1;
 }

@@ -8,8 +8,8 @@ sub init {
   $view_config->_set_defaults(qw(
     exons         yes
     display_width 60
-    variation     yes
-    number        yes
+    variation     no
+    number        no
   ));
   $view_config->storable = 1;
 }
