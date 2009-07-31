@@ -13,6 +13,7 @@ my $genome_dbs = $compara_dba->get_GenomeDBAdaptor->fetch_all();
 
 my $species_name_to_dbID;
 foreach my $this_genome_db (@$genome_dbs) {
+    next if (!$this_genome_db->assembly_default);
     $species_name_to_dbID->{$this_genome_db->name} = $this_genome_db->dbID;
 }
 my $no_id = 1000;
