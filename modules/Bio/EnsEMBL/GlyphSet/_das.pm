@@ -168,7 +168,7 @@ sub features {
               'features'   => { $style_key => [ $f ] },
               'start'      => $f->start,
               'end'        => $f->end,
-              'class'      => "das $logic_name"
+              'class'      => sprintf "das %s$logic_name", $pseudogroup ? 'pseudogroup ' : ''
             };
           }
         }
