@@ -7,7 +7,7 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 sub _init {
   my ($self) = @_;
 
-  my $Config        = $self->{'config'};
+  my $Config        = $self->{'config'}; 
   my $conf_colours  = $self->my_config('colours' );
 
   my @snps = @{$Config->{'snps'}};
@@ -25,7 +25,7 @@ sub _init {
 
   my $fully_inbred;
   foreach my $data ( @{$Config->{'snp_fake_haplotype'}} ) { 
-    my( $strain, $allele_ref, $coverage_ref ) = @$data;
+    my( $strain, $allele_ref, $coverage_ref ) = @$data; 
 
     # find out once if this species is inbred or not. Then apply to all
     unless (defined $fully_inbred) {
@@ -33,10 +33,10 @@ sub _init {
       if ($individual) {
 	      $fully_inbred = $individual->type_individual eq 'Fully_inbred' ? 1 : 0;
       }
-    }
+    } 
     $strain_alleles{$strain} = {};  # every strain should be in here
-    foreach my $a_ref ( @$allele_ref ) { 
-      next unless $a_ref->[2];
+    foreach my $a_ref ( @$allele_ref ) {
+      next unless $a_ref->[2];  
 
       # strain_alleles{strain_name}{snp_id::start} = allele
       $strain_alleles{$strain}{ join "::", $a_ref->[2]->{'_variation_id'}, $a_ref->[2]->{'start'} } = $a_ref->[2]->allele_string ;
@@ -102,24 +102,24 @@ sub _init {
   foreach my $snp_ref ( @snps ) {
     my $start = $snp_ref->[0];
     my $end   = $snp_ref->[1];
-    my $snp   = $snp_ref->[2];
+    my $snp   = $snp_ref->[2]; 
 
     my @res = $self->get_text_width( ($end-$start+1)*$pix_per_bp, 'X|X', 'X|X', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $tmp_width = ($w*2+$res[2])/$pix_per_bp;
     $tmp_width =  $end-$start+1 if  $end-$start+1 < $tmp_width;
     push @widths, $tmp_width;
-    my $label =  $snp->allele_string; 
+    my $label =  $snp->allele_string;  
 
-    my ($golden_path_base) = split "\/", $label;
+    my ($golden_path_base) = split "\/", $label; 
     my $reference_base;
     my $colour = "white";
 
-    if ($reference_name eq $golden_path) {
+    if ($reference_name eq $golden_path) { 
       $reference_base = $golden_path_base; 
     }
     else { 
       return unless $strain_alleles{$reference_name};
-      my $start  = $snp->start;
+      my $start  = $snp->start; 
       $reference_base =  $strain_alleles{$reference_name}{ join "::", $snp->{_variation_id}, $start }; 
 
       # If no allele for SNP but there is coverage, allele = golden path allele
@@ -135,7 +135,7 @@ sub _init {
       # Golden path ne reference but still need the golden path track in there somewhere
       my $golden_colour = undef;
 
-      if ($reference_base) { # determine colours for golden path row dp on reference colours
+      if ($reference_base) { # determine colours for golden path row dp on reference colours  
       	$conf_colours->{$self->bases_match($golden_path_base, $reference_base) }->{'default'};
       }
       push @golden_path, {
@@ -149,20 +149,23 @@ sub _init {
     # Set ref base colour and draw glyphs ----------------------------------
     $colour = $conf_colours->{'same'}->{'default'} if $reference_base; 
     $snp_ref->[3] = {};
-
+    
     # If ref base is like "G", have to define "G|G" as also having ref base colour
-    if (length $reference_base ==1) {
+    if (length $reference_base ==1) { 
       $snp_ref->[3]{ "$reference_base|$reference_base"} = $conf_colours->{'same'}{'default'};
       $snp_ref->[3]{ $reference_base} = $conf_colours->{'same'}{'default'};
     }
-    elsif ($reference_base =~/(\w)\|(\w)/) {
+    elsif ($reference_base =~/(\w)\|(\w)/) { 
       if ($1 ne $2) { # heterozygous it should be stripy
 	      $snp_ref->[3]{ $reference_base} = $conf_colours->{'het'}{'default'};
 	      $snp_ref->[3]{ $2.$1} = $conf_colours->{'het'}{'deafult'};
       }
-      else {
+      else { 
 	      $snp_ref->[3]{ $reference_base } = $conf_colours->{'same'}{'default'};
       }
+    } 
+    else {
+      $snp_ref->[3]{ $reference_base } = $conf_colours->{'same'}{'default'};
     }
 
     $snp_ref->[4] = $reference_base ;
@@ -191,12 +194,12 @@ sub _init {
     $self->strain_name_text($th,$fontname, $fontsize, $offset, $strain, $Config, $fully_inbred);
 
     my $c = 0;
-    foreach my $snp_ref ( @snps ) {
-      my $snp = $snp_ref->[2];
-      my $label =  $snp->allele_string;
+    foreach my $snp_ref ( @snps ) {  
+      my $snp = $snp_ref->[2]; 
+      my $label =  $snp->allele_string; 
       my $start  = $snp->start;
 
-      my $allele_string =  $strain_alleles{$strain}{ join "::", $snp->{_variation_id}, $start };
+      my $allele_string =  $strain_alleles{$strain}{ join "::", $snp->{_variation_id}, $start };  
 
       # If no allele for SNP but there is coverage, allele = reference allele
       unless( $allele_string ) {
@@ -205,25 +208,25 @@ sub _init {
 	          ($allele_string) = split "\/", $label;
 	          last;
 	        }
-	      }
-      }
+	      } 
+      }   
 
       # Determine colour ------------------------------------
       my $colour = "white";#undef;
-      my $text = $snp_ref->[4] ? "white" : "black"; # text colour white if ref base defined
+      my $text = $snp_ref->[4] ? "white" : "black"; # text colour white if ref base defined 
       if( $allele_string && $snp_ref->[4] ) {      # only fill in colour if ref base is defined
-        $colour = $snp_ref->[3]{ $allele_string };
-	
-        unless($colour) {                           # allele not the same as reference
-	  if (length $allele_string ==1 ) {
-	    $colour =  $snp_ref->[3]{ $allele_string } = $conf_colours->{'different'}{'default'};
-	  }
-	  else{ # must be a het or must be different
-	    my $type = $self->bases_match((split /\|/, $allele_string), "one_allele");
-	    $colour = $snp_ref->[3]{ $allele_string } = $conf_colours->{$type}{'default'};
-	    #$colours[ scalar(values %{ $snp_ref->[3] } )] || $colours[-1];
-	  }
+        $colour = $snp_ref->[3]{ $allele_string };  
 
+        unless($colour) {                           # allele not the same as reference
+	        if (length $allele_string == 1 ) {
+	          $colour =  $snp_ref->[3]{ $allele_string } = $conf_colours->{'different'}{'default'}; 
+	        }
+	        else{ # must be a het or must be different
+            my @alleles = split /\|/, $allele_string; 
+	          my $type = $self->bases_match((split /\|/, $allele_string), "one_allele"); 
+	          $colour = $snp_ref->[3]{ $allele_string } = $conf_colours->{$type}{'default'}; 
+	          #$colours[ scalar(values %{ $snp_ref->[3] } )] || $colours[-1];
+	        }
         }
       }
 
@@ -330,7 +333,7 @@ sub do_glyphs {
 }
 
 sub bases_match {
-  my ($self, $one, $two, $one_allele) = @_;
+  my ($self, $one, $two, $one_allele) = @_; 
   $one .= "|$one" if length $one == 1;
   $two .= "|$two" if length $two == 1;
 
