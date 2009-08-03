@@ -1398,7 +1398,7 @@ sub _ajax_zmenu_das {
   
   my $validator = XHTML::Validator->new('extended');
   
-  my $id = $feature_id || $group_id;
+  my $id = $feature_id || $group_id || 'default';
   
   $strand = $strand_map{$strand} || '0';
   
