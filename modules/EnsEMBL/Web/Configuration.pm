@@ -1439,6 +1439,7 @@ sub _ajax_zmenu_das {
     foreach (@feat) {
       my $label = $_->display_label;
       my $method = $_->method_label; 
+      my $score = $_->score; 
       
       if ($label ne $id || scalar @feat > 1) {
         $label = "Nearest feature: $label" if $nearest_feature;
@@ -1451,6 +1452,7 @@ sub _ajax_zmenu_das {
       $panel->add_entry({ type => 'Start:',  label_html => $_->seq_region_start });
       $panel->add_entry({ type => 'End:',    label_html => $_->seq_region_end });
       $panel->add_entry({ type => 'Strand:', label_html => $strand });
+      $panel->add_entry({ type => 'Score:',  label_html => $score }) if $score;
       
       $panel->add_entry({ label_html => $_->{'txt'}, link => $_->{'href'}, extra => { external => ($_->{'href'} !~ /^http:\/\/www.ensembl.org/) } }) for @{$_->links};
       $panel->add_entry({ label_html => $validator->validate($_) ? escapeHTML($_) : $_ }) for @{$_->notes};
