@@ -51,6 +51,17 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   getContent: function () {
+    var myself = this;
+    
+    this.populated = false;
+    
+    setTimeout(function () {
+      if (myself.populated === false) {
+        myself.elLk.caption.html('<p class="spinner" style="font-weight:normal">Loading component</p>');
+        myself.show();
+      }
+    }, 300);
+  
     if (this.drag == 'drag') {
       this.populateRegion();
     } else if (this.drag == 'vdrag') {
@@ -110,6 +121,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         url: url,
         dataType: 'json',
         success: function (json) {
+          myself.populated = true;
+          
           if (json.entries.length) {
             var body = '';
             var row;
@@ -298,6 +311,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       arr = this.split(': ');
       body += '<tr>' + (arr.length == 2 ? '<th>' + arr[0] + '</th><td>' + arr[1] + '</td>' : '<td colspan="2">' + this + '</td>') + '</tr>';
     });
+    
+    this.populated = true;
     
     this.elLk.tbody.html(body + extra);
     this.elLk.caption.html(caption);
