@@ -227,11 +227,11 @@ sub count_similarity_matches {
 }
 
 sub count_oligos {
-    my $self = shift;
-    my $type = 'funcgen';
-    return unless $self->database('funcgen');
-    my $dbc = $self->database($type)->dbc; 
-    my $sql = qq(
+  my $self = shift;
+  my $type = 'funcgen';
+  return unless $self->database('funcgen');
+  my $dbc = $self->database($type)->dbc; 
+  my $sql = qq(
                SELECT count(distinct(ox.ensembl_id))
                  FROM object_xref ox, xref x, external_db edb
                 WHERE ox.xref_id = x.xref_id
@@ -240,10 +240,10 @@ sub count_oligos {
                        OR ox.ensembl_object_type = 'Probe')
                   AND x.info_text = 'Transcript'
                   AND x.dbprimary_acc = ?);
-    my $sth = $dbc->prepare($sql); 
-    $sth->execute($self->Obj->stable_id);  
-    my $c = $sth->fetchall_arrayref->[0][0];
-    return $c;
+  my $sth = $dbc->prepare($sql); 
+  $sth->execute($self->Obj->stable_id);
+  my $c = $sth->fetchall_arrayref->[0][0];
+  return $c;
 }
 
 sub count_go {
@@ -1021,7 +1021,7 @@ sub gene_stat_and_biotype {
   my $db = $self->get_db;
   my $type = '';
   if( $db eq 'core' ){
-    $type = ucfirst(lc($self->gene->status))." ".$self->gene->biotype;
+    $type = ucfirst(lc($self->gene->status))." ".ucfirst(lc($self->gene->biotype));
     $type =~ s/_/ /;
     $type ||= $self->db_type;
   } elsif ($db eq 'vega') {

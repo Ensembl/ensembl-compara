@@ -558,7 +558,7 @@ sub gene_type {
   my $db = $self->get_db;
   my $type = '';
   if( $db eq 'core' ){
-    $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
+    $type = ucfirst(lc($self->Obj->status))." ".ucfirst(lc($self->Obj->biotype));
     $type =~ s/_/ /;
     $type ||= $self->db_type;
   } elsif ($db eq 'vega') {
