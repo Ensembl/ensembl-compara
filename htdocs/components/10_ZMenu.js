@@ -7,12 +7,13 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var area = $(data.area.a);
     
     this.drag = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
-    this.das  = area.hasClass('das') && area.hasClass('group') ? 'group' : area.hasClass('das') ? 'feature' : false;
     this.href = area.attr('href');
     this.title = area.attr('title');
+    this.das  = false;
     
-    if (this.das !== false) {
-      this.logicName = area.attr('class').replace(/das/, '').replace(/group/, '').replace(/ /g, '');
+    if (area.hasClass('das')) {
+      this.das = area.hasClass('group') ? 'group' : area.hasClass('pseudogroup') ? 'pseudogroup' : 'feature';
+      this.logicName = area.attr('class').replace(/das/, '').replace(/(pseudo)?group/, '').replace(/ /g, '');
     }
     
     area = null;
@@ -335,9 +336,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.position = data.position;
     this.coords = data.coords;
     
-    if (this.das == 'group' || this.drag) {
-      this.elLk.tbody.empty();
-      this.elLk.caption.empty();
+   if (this.das == 'group' || this.das == 'pseudogroup' || this.drag) {
+     this.elLk.tbody.empty();
+     this.elLk.caption.empty();
       
       this.getContent();
     } else {
