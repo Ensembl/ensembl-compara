@@ -41,15 +41,15 @@ sub render {
 
     my $count = 3;
     if (@entries) {
-      $html .= "<ul>\n";
+      $html .= "<ul>";
       for (my $i = 0; $i < $count && $i < scalar(@entries);$i++) {
-        my $title = $entries[$i]->title;
-        my $url   = $entries[$i]->link->href;
-        my $date  = substr($entries[$i]->updated, 0, 10);
+        my $title  = $entries[$i]->title;
+        my ($link) = grep { $_->rel eq 'alternate' } $entries[$i]->link;
+        my $date   = substr($entries[$i]->updated, 0, 10);
   
-        $html .= "<li>$date: <a href=\"$url\">$title</a></li>\n"; 
+        $html .= '<li>'. $date .': <a href="'. $link->href .'">'. $title .'</a></li>'; 
       }
-      $html .= "</ul>\n";
+      $html .= "</ul>";
     } else {
       $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
     }
