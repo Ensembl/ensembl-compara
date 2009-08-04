@@ -27,9 +27,10 @@ sub render {
   my $self  = shift;
   ## Ensembl blog (ensembl.blogspot.com)
 
-  my $html = $MEMD && $MEMD->get('::BLOG') || '';
+  my $html = qq(<div class="info-box embedded-box float-right"><img src="/i/help/compass.gif" alt="" style="float:left;padding-right:10px" /><a href="http://ensembl.blogspot.com/search/label/navigation%20tips">Navigation tips</a> from our blog</div>);
+  my $blog = $MEMD && $MEMD->get('::BLOG') || '';
   
-  unless ($html) {
+  unless ($blog) {
     my $ua = new LWP::UserAgent;
     my $proxy = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
     $ua->proxy( 'http', $proxy ) if $proxy;
@@ -47,20 +48,20 @@ sub render {
         my ($link) = grep { $_->rel eq 'alternate' } $entries[$i]->link;
         my $date   = substr($entries[$i]->updated, 0, 10);
   
-        $html .= '<li>'. $date .': <a href="'. $link->href .'">'. $title .'</a></li>'; 
+        $blog .= '<li>'. $date .': <a href="'. $link->href .'">'. $title .'</a></li>'; 
       }
-      $html .= "</ul>";
+      $blog .= "</ul>";
     } else {
-      $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
+      $blog .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
     }
   
-    $html .= qq(<a href="http://ensembl.blogspot.com/">Go to Ensembl blog &rarr;</a>);
+    $blog .= qq(<a href="http://ensembl.blogspot.com/">Go to Ensembl blog &rarr;</a>);
 
-    $MEMD->set('::BLOG', $html, 3600, qw(STATIC BLOG))
+    $MEMD->set('::BLOG', $blog, 3600, qw(STATIC BLOG))
       if $MEMD;
   }
 
-  return $html;
+  return $html.$blog;
 }
 
 }
