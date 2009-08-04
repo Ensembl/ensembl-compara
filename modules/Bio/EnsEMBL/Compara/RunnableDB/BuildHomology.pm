@@ -66,8 +66,10 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw ( throw warning ) ; 
-use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use Bio::EnsEMBL::Hive::Process;  
+
+use Bio::EnsEMBL::Analysis::RunnableDB; 
+our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Analysis::RunnableDB );
 
 ####################################
 #
