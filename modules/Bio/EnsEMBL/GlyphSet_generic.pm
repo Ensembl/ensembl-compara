@@ -615,7 +615,7 @@ sub _colour {
   return $cps->[-1] if $val >= 1;
   
   my $division = int($val * $divisions);
-  my $o = ($val - $division)/$divisions;
+  my $o = ($val * $divisions) - $division;
   
   return [ map { $cps->[$division][$_]*(1-$o) + $cps->[$division+1][$_] * $o } (0..2) ];
 }
