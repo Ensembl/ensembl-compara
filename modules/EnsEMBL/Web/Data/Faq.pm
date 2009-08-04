@@ -36,7 +36,7 @@ __PACKAGE__->set_sql(sorted => qq{
 sub fetch_sorted {
   my ($class, $limit) = @_;
 
-  my $where = ' WHERE type = ? ';
+  my $where = ' WHERE type = ? AND status = "live"';
   my $order = ' ORDER BY helpful DESC, not_helpful ASC ';
   $limit = " LIMIT $limit " if $limit;
   my @args = ('faq');
