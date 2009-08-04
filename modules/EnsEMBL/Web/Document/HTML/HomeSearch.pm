@@ -33,7 +33,7 @@ sub render {
 
   my $input_size = 50;
 
-  if (!$page_species) {
+  if ($page_species eq 'common') {
     $html .= q(
     <label for="species">Search</label>: <select id="species" name="species">
       <option value="">All species</option>
@@ -62,17 +62,21 @@ sub render {
     <input type="submit" value="Go" class="input-submit" />);
 
   ## Examples
-  my %sample_data = %{$species_defs->SAMPLE_DATA};
   my @examples;
-  if (!$page_species) {
-    @examples = ('human gene BRCA2', 'rat X:100000..200000', 'insulin');
+  if ($page_species eq 'common') {
+    my $sample_data = species_defs->get_config('MULTI', 'GENERIC_DATA') || {};
+    if (keys %$sample_data) {
+    @examples = ($sample_data->{'GENE_TEXT'}, $sample_data->{'LOCATION_TEXT'}, $sample_data->{'SEARCH_TEXT'});
   }
   else {
-    @examples = ('gene '.$sample_data{'GENE_TEXT'}, $sample_data{'LOCATION_TEXT'}, $sample_data{'SEARCH_TEXT'});
+    my $sample_data = $species_defs->SAMPLE_DATA;
+    if (keys %$sample_data) {
+      @examples = ('gene '.$sample_data->{'GENE_TEXT'}, $sample_data->{'LOCATION_TEXT'}, $sample_data->{'SEARCH_TEXT'});
+    }
   }
-  $html .= '
-    <p>e.g. ' . join(' or ', map {'<strong>'.$_.'</strong>'} @examples) . '</p>';
-
+  if (scalar(@examples)) {
+    $html .= '<p>e.g. ' . join(' or ', map {'<strong>'.$_.'</strong>'} @examples) . '</p>';
+  }
   $html .= qq(
   </div></form>
 </div>);
