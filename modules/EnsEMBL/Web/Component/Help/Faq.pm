@@ -24,10 +24,10 @@ sub content {
   
   my @faqs;
   if ($id) {
-    @faqs = (EnsEMBL::Web::Data::Faq->new($id));
+    @faqs = (EnsEMBL::Web::Data::Faq->find('help_record_id' => $id, 'status' => 'live'));
   }
   elsif (my $kw = $object->param('kw')) {
-    @faqs = EnsEMBL::Web::Data::Faq->find('keyword' => $kw);
+    @faqs = EnsEMBL::Web::Data::Faq->find('keyword' => $kw, 'status' => 'live');
   }
   else {
     @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted;
