@@ -100,6 +100,7 @@ sub record_select {
 
   ## Output list
   foreach my $entry (@list) {
+    next unless $entry;
     my $value = $entry->id;
     my $text;
     foreach my $col (@columns) {

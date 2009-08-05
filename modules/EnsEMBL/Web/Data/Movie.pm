@@ -11,11 +11,7 @@ __PACKAGE__->set_type('movie');
 
 __PACKAGE__->add_fields(
   title         => 'string',
-  url           => 'string',
-  filename      => 'string',
-  width         => 'int',
-  height        => 'int',
-  filesize      => 'float(3,1)',
+  youtube_id    => 'string',
   length        => 'string',
   list_position => 'int',
 );

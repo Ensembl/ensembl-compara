@@ -254,6 +254,7 @@ sub discover {
   ### N.B. this sets up some default values that can be customised later
   my $self = shift;
   
+  return unless $self->data;
   my %fields = %{ $self->data->get_all_fields };
   $fields{'id'} = 'int';
   my %hasa_fields = %{ $self->data->hasa_relations };
@@ -423,7 +424,7 @@ sub record_list {
     my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
     @records = $user->$method;
   }
-  else {
+  elsif (ref($self->data)) {
     if ($criteria) {
       @records = $self->data->search($criteria);
     }
@@ -431,6 +432,7 @@ sub record_list {
       @records = $self->data->find_all;
     }
   }
+  return undef unless scalar(@records);
 
   ## Now sort it (can't do this in MySQL owing to 'data' field)
   my @sort = $self->option_order;

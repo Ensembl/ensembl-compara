@@ -6,6 +6,7 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
 use CGI qw(escapeHTML);
 use EnsEMBL::Web::Data::View;
+use EnsEMBL::Web::Component::Help::Movie;
 
 sub _init {
   my $self = shift;
@@ -22,7 +23,14 @@ sub content {
 
   my $help = EnsEMBL::Web::Data::View->new(CGI::escapeHTML($object->param('id')));
   if ($help) {
-    $html .= $help->content;  
+    my $content = $help->content;
+    ### Parse help looking for embedded movie placeholders
+    foreach my $line (split('\n', $content)) {
+      if ($line =~ /\[\[movie=(\d+)/i) {
+        $line = EnsEMBL::Web::Component::Help::Movie::embed_movie($1);
+      }
+      $html .= $line;
+    }
   }
 
   return $html;

@@ -31,23 +31,12 @@ sub content {
     }
   }
   else {
-    @movies = sort {$a->title cmp $b->title} EnsEMBL::Web::Data::Movie->find_all;
+    @movies = sort {$a->title cmp $b->title} EnsEMBL::Web::Data::Movie->search({'status' => 'live'});
   }
 
   if (scalar(@movies) == 1 && $movies[0]) {
     my $movie = $movies[0];
-    $html .= '<h3>'.$movie->title."</h3>";
-
-    ## Embedded flash movie
-    my $file = $movie->filename;
-    $file =~ s/\.swf$//;
-    my $movie_server = ''; # $object->species_defs->ENSEMBL_MOVIE_SERVER;
-    my $path = $movie_server.'/flash/'.$file;
-    $html .= sprintf(qq(
-<embed type="application/x-shockwave-flash" src="%s_controller.swf" width="%s" height="%s" id="%s_controller.swf" name="%s_controller.swf" bgcolor="#FFFFFF" quality="best" flashvars="csConfigFile=%s_config.xml&csColor=FFFFFF&csPreloader=%s_preload.swf"/>
-
-      ),
-                $path, $movie->width, $movie->height, $file, $path, $path, $path);
+    $html .= embed_movie($movie);
 
     ## Feedback
     my $style = 'text-align:right;margin-right:2em';
@@ -74,6 +63,26 @@ sub content {
   else {
     $html .= qq(<p>Sorry, we have no video tutorials at the moment, as they are being updated for the new site design. Please try again after the next release.</p>);
   }
+
+  return $html;
+}
+
+sub embed_movie {
+  my $movie = shift;
+
+  ## Check if we're just passing an ID from other code
+  unless (ref($movie) eq 'EnsEMBL::Web::Data::Movie') {
+    my @results = EnsEMBL::Web::Data::Movie->search({'help_record_id' => $movie, 'status' => 'live'});
+    $movie = $results[0];
+    return undef unless $movie && ref($movie) eq 'EnsEMBL::Web::Data::Movie';
+  }
+
+  my $html = '<h3>'.$movie->title."</h3>";
+
+  $html .= sprintf(qq(
+<object width="425" height="344"><param name="movie" value="http://www.youtube.com/v/%s&amp;hl=en&amp;fs=1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/%s&amp;hl=en&amp;fs=1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="425" height="344"></embed></object>
+    ), $movie->youtube_id, $movie->youtube_id);
+
 
   return $html;
 }
