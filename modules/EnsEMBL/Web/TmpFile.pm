@@ -36,8 +36,11 @@ sub _bool {
   shift;
 }
 
+sub token {
+
+}
 __PACKAGE__->mk_accessors(qw(species_defs compress drivers exptime URL));
-__PACKAGE__->mk_ro_accessors(qw(full_path prefix extension tmp_dir path_pattern URL_root shortname));
+__PACKAGE__->mk_ro_accessors(qw(full_path prefix extension tmp_dir path_pattern URL_root shortname token));
 
 ## new - tmp file constructor
 ## accepts either filename string
