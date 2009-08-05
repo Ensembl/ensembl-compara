@@ -7,6 +7,7 @@ use warnings;
 no warnings qw(uninitialized);
 
 use CGI qw(escape escapeHTML);
+use HTML::Entities qw(encode_entities decode_entities);
 use Time::HiRes qw(time);
 use XHTML::Validator;
 
@@ -1455,7 +1456,7 @@ sub _ajax_zmenu_das {
       $panel->add_entry({ type => 'Score:',  label_html => $score }) if $score;
       
       $panel->add_entry({ label_html => $_->{'txt'}, link => $_->{'href'}, extra => { external => ($_->{'href'} !~ /^http:\/\/www.ensembl.org/) } }) for @{$_->links};
-      $panel->add_entry({ label_html => $validator->validate($_) ? escapeHTML($_) : $_ }) for @{$_->notes};
+      $panel->add_entry({ label_html => $validator->validate($_) ? encode_entities($_) : $_ }) for map decode_entities($_), @{$_->notes};
     }
   }
 }
