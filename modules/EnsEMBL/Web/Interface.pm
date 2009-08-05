@@ -254,7 +254,7 @@ sub discover {
   ### N.B. this sets up some default values that can be customised later
   my $self = shift;
   
-  return unless $self->data;
+  return unless ref($self->data);
   my %fields = %{ $self->data->get_all_fields };
   $fields{'id'} = 'int';
   my %hasa_fields = %{ $self->data->hasa_relations };
