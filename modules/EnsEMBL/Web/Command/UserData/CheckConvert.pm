@@ -52,6 +52,9 @@ sub process {
   unless ($object->param('id_mapper')){
     $param->{'conversion'} = $object->param('conversion');
   }
+  if ($object->param('id_limit')) {
+    $param->{'id_limit'} = $object->param('id_limit');
+  }
   ## Set these separately, or they cause an error if undef
   $param->{'_referer'} = $object->param('_referer');
   $param->{'x_requested_with'} = $object->param('x_requested_with');
