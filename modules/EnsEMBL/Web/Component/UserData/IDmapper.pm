@@ -23,19 +23,19 @@ sub content {
   my $object = $self->object;
   my $html = '<h2>Stable ID Mapper Results:</h2>';
   my $referer =  $object->param('_referer');
+  my $size_limit = $object->param('id_limit'); 
   $html .= qq(<br /><a href="$referer">Back to previous view</a><br />);
   
   my @files = ($object->param('convert_file'));
 
   foreach my $file_name (@files) {
     my ($file, $name) = split(':', $file_name);
-    my ($super_tree, $ids, $unmapped) = @{$object->get_stable_id_history_data($file)};
-    my $table = $self->format_mapped_ids($super_tree, $ids);
+    my ($ids, $unmapped) = @{$object->get_stable_id_history_data($file, $size_limit)}; 
+    my $table = $self->format_mapped_ids($ids);
     $html .= $table;
     $html .= $self->_info('Information',
     " <p>The numbers in the above table indicate the version of a stable ID present in a particular release.</p>"
     );
-
 
     if (scalar keys %$unmapped > 0) { $html .= $self->add_unmapped_ids($unmapped); }    
   }
@@ -53,7 +53,8 @@ sub add_unmapped_ids {
 }
 
 sub format_mapped_ids { 
-  my ($self, $super_tree, $ids) = @_;
+ # my ($self, $super_tree, $ids) = @_;
+  my ($self, $ids) = @_;
   my %stable_ids = %$ids; 
   if (scalar keys %stable_ids < 1) { return '<p>No IDs were succesfully converted</p>';}
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' } );
@@ -64,48 +65,51 @@ sub format_mapped_ids {
     { 'key' => 'rel', 'align'=>'left', 'title' => 'Releases:' },
   );
 
-  my @releases = @{ $super_tree->get_release_display_names };
-  foreach my $release (@releases) {
-    $table->add_columns(
-      { 'key' => $release, 'align' => 'left', 'title' => $release },
-    );
-  }
 
-  # now add the data rows
+  my (%releases, @rows);
+
   foreach my $req_id (sort keys %stable_ids) {
     my $matches = {};
-
-    # build grid matrix
     foreach my $a_id (@{ $stable_ids{$req_id}->[1]->get_all_ArchiveStableIds }) {
-      # we only need x coordinate
-      my ($x) = @{ $super_tree->coords_by_ArchiveStableId($a_id) };
       my $linked_text =   $a_id->version;
-      unless ($releases[$x] <= $self->object->species_defs->EARLIEST_ARCHIVE){
-        my $archive_link = $self->_archive_link($stable_ids{$req_id}->[0], $a_id->stable_id, $a_id->version, $releases[$x]);
-        $linked_text = '<a href='.$archive_link.'>'.$linked_text.'</a>'; 
-      }    
-      $matches->{$a_id->stable_id}->{$releases[$x]} = $linked_text;
+      $releases{$a_id->release} = 1; 
+      unless ($a_id->release <= $self->object->species_defs->EARLIEST_ARCHIVE){
+        my $archive_link = $self->_archive_link($stable_ids{$req_id}->[0], $a_id->stable_id, $a_id->version, $a_id->release);
+        $linked_text = '<a href='.$archive_link.'>'.$linked_text.'</a>';
+      }
+     $matches->{$a_id->stable_id}->{$a_id->release} = $linked_text; 
     }
     # self matches
-    $table->add_row({
+    my $row = ({
       'request' => $self->_idhistoryview_link($stable_ids{$req_id}->[0], $req_id),
       'match'   => $req_id,
       'rel'     => '',
        %{ $matches->{$req_id} },
     });
+    push (@rows, $row); 
+
     # other matches
     foreach my $a_id (sort keys %$matches) {
       next if ($a_id eq $req_id);
 
-      $table->add_row({
+      my $row = ({
         'request' => '',
         'match'   => $a_id,
         'rel'     => '',
         %{ $matches->{$a_id} },
       });
+      push (@rows, $row);
     }
+  } 
 
-  }  
+  foreach my $release (sort keys %releases) {
+    $table->add_columns({ 'key' => $release, 'align' => 'left', 'title' => $release },);
+  }
+
+  foreach my $row (@rows) {
+    $table->add_row($row);
+  } 
+
   return  $table->render;
 }
 
