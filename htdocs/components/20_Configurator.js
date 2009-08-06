@@ -22,8 +22,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       myself.initialConfig[this.name] = this.value;
     });
     
-    this.currentConfig = $.extend({}, this.initialConfig);
-    
     this.styleTracks();
     this.showTracks();
     
@@ -40,18 +38,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         title: option.text() 
       });
       
-      myself.currentConfig[select.attr('id')] = this.className;
-      
       menu.remove();
       
       menu = null;
       dt = null;
       select = null;
       option = null;
-    });
-    
-    $('select', this.elLk.form).change(function () {
-      myself.currentConfig[this.name] = this.value;
     });
     
     $('.configuration_search_text', this.el).keyup(function () {
@@ -96,13 +88,22 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     var d = false;
     var diff = { config: this.initialConfig.config };
+    var checked = $.extend({}, this.initialConfig);
     
     $.each(this.elLk.form.serializeArray(), function () {
       if (this.value != myself.initialConfig[this.name]) {
         diff[this.name] = this.value;
         d = true;
       }
+      
+      delete checked[this.name];
     });
+    
+    // Add unchecked checkboxes to the diff
+    for (var i in checked) {
+      diff[i] = 'off';
+      d = true;
+    }
     
     if (d === true) {
       $.extend(this.initialConfig, diff);
