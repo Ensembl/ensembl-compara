@@ -53,6 +53,8 @@ perl populate_new_database.pl
     --master master_database_name
     --old new_database_name
     --new new_database_name
+    [--species human --species mouse...]
+    [--mlss 123 --mlss 321]
 
 =head1 REQUIREMENTS
 
@@ -114,6 +116,11 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 Copy data for this species only. This option can be used several times in order to restrict
 the copy to several species.
 
+=item B<[--mlss MLSS_id]>
+
+Copy data for this method-link-species-set only. This option can be used several times in order to restrict
+the copy to several MLSS_ids.
+
 =item B<[--[no]skip-data]>
 
 Do not store DNA-DNA alignments nor synteny data.
@@ -140,7 +147,8 @@ my $skip_data = 0;
 my $master = "compara-master";
 my $old = undef;
 my $new = undef;
-my @species;
+my $species = [];
+my $mlsss = [];
 
 GetOptions(
     "help" => \$help,
@@ -149,7 +157,8 @@ GetOptions(
     "master=s" => \$master,
     "old=s" => \$old,
     "new=s" => \$new,
-    "species=s" => \@species,
+    "species=s@" => \$species,
+    "mlss|method_link_species_sets=s@" => \$mlsss,
   );
 
 
@@ -160,7 +169,7 @@ if ($help or !$master or !$new) {
 
 #################################################
 ## Get the DBAdaptors from the Registry
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 1);
 
 my $master_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($master, "compara");
 die "Cannot connect to master compara database: $master\n" if (!$master_dba);
@@ -183,7 +192,7 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 update_schema_version($master_dba, $new_dba);
 
 ## Get all the genome_dbs with a default assembly
-my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, @species);
+my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, $species, $mlsss);
 
 ## Copy taxa and method_link tables
 copy_table($master_dba, $new_dba, "ncbi_taxa_name");
@@ -192,10 +201,10 @@ copy_table($master_dba, $new_dba, "method_link");
 
 ## Store them in the new DB
 store_objects($new_dba->get_GenomeDBAdaptor, $all_default_genome_dbs,
-    @species?"default genome_dbs for ".join(", ", @species):"all default genome_dbs");
+    @$species?"default genome_dbs for ".join(", ", @$species):"all default genome_dbs");
 
 ## Get all the MethodLinkSpeciesSet for the default assemblies
-my $all_default_method_link_species_sets = get_all_method_link_species_sets($master_dba, $all_default_genome_dbs);
+my $all_default_method_link_species_sets = get_all_method_link_species_sets($master_dba, $all_default_genome_dbs, $mlsss);
 
 ## Store them in the new DB
 store_objects($new_dba->get_MethodLinkSpeciesSetAdaptor, $all_default_method_link_species_sets,
@@ -319,7 +328,8 @@ sub update_schema_version {
 =head2 get_all_default_genome_dbs
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : (optional) list_of_strings @species_names
+  Arg[2]      : (optional) listref_of_strings $species_names
+  Arg[3]      : (optional) listref_of_ints $MLSS_ids
   Description : get the list of all the default GenomeDBs, i.e. the
                 GenomeDBs where the default_assembly is true.
   Returns     : listref of Bio::EnsEMBL::Compara::GenomeDB objects
@@ -328,17 +338,31 @@ sub update_schema_version {
 =cut
 
 sub get_all_default_genome_dbs {
-  my ($compara_dba, @species_names) = @_;
+  my ($compara_dba, $species_names, $mlss_ids) = @_;
 
   throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
       unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+
+  my $all_species;
+
+  if (@$mlss_ids) {
+    my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
+    throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor")
+        unless ($method_link_species_set_adaptor);
+    foreach my $this_mlss_id (@$mlss_ids) {
+      my $this_mlss = $method_link_species_set_adaptor->fetch_by_dbID($this_mlss_id);
+      foreach my $this_genome_db (@{$this_mlss->species_set}) {
+        $all_species->{$this_genome_db->name} = $this_genome_db;
+      }
+    }
+    return [values %$all_species];
+  }
 
   my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
   throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor")
       unless ($genome_db_adaptor);
 
-  my $all_species;
-  foreach my $this_species (@species_names) {
+  foreach my $this_species (@$species_names) {
     if (defined($all_species->{$this_species})) {
       warn (" ** WARNING ** Species <$this_species> defined twice!\n");
     }
@@ -347,10 +371,10 @@ sub get_all_default_genome_dbs {
 
   my $all_genome_dbs = $genome_db_adaptor->fetch_all();
   $all_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {$_->assembly_default} @$all_genome_dbs];
-  if (@species_names) {
+  if (@$species_names) {
     for (my $i = 0; $i < @$all_genome_dbs; $i++) {
       my $this_genome_db_name = $all_genome_dbs->[$i]->name;
-      if (grep {/$this_genome_db_name/} @species_names) {
+      if (grep {/$this_genome_db_name/} @$species_names) {
         $all_species->{$this_genome_db_name} = 1;
         next;
       }
@@ -361,7 +385,7 @@ sub get_all_default_genome_dbs {
   }
 
   my $fail = 0;
-  foreach my $this_species (@species_names) {
+  foreach my $this_species (@$species_names) {
     if (!$all_species->{$this_species}) {
       print " ** ERROR ** No GenomeDB for species <$this_species>\n";
       $fail = 1;
@@ -377,6 +401,7 @@ sub get_all_default_genome_dbs {
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
   Arg[2]      : listref Bio::EnsEMBL::Compara::GenomeDB $genome_dbs
+  Arg[3]      : (optional) listref_of_ints $MLSS_ids
   Description : get the list of all the MethodLinkSpeciesSets which
                 contain GenomeDBs from the $genome_dbs list only.
   Returns     : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
@@ -385,7 +410,7 @@ sub get_all_default_genome_dbs {
 =cut
 
 sub get_all_method_link_species_sets {
-  my ($compara_dba, $genome_dbs) = @_;
+  my ($compara_dba, $genome_dbs, $mlss_ids) = @_;
   my $all_method_link_species_sets = {};
 
   throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
@@ -394,6 +419,17 @@ sub get_all_method_link_species_sets {
   my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
   throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor")
       unless ($method_link_species_set_adaptor);
+
+  if (@$mlss_ids) {
+    my $mlsss = [];
+    foreach my $this_mlss_id (@$mlss_ids) {
+      my $this_mlss = $method_link_species_set_adaptor->fetch_by_dbID($this_mlss_id);
+      $this_mlss->species_set_id; # Just to instantiate the species_set_id
+                                  # make sure we use the same in the new DB
+      push(@$mlsss, $this_mlss);
+    }
+    return $mlsss;
+  }
 
   ## Get the list of MLSS to skip from the meta table of the master DB
   my $meta_container = $compara_dba->get_MetaContainer();
