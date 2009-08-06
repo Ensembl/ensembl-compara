@@ -26,13 +26,14 @@ sub process {
   $param->{'species'} = $object->param('species');
   my $output;
   my $temp_files = [];  
+  my $size_limit =  $object->param('id_limit');
 
   foreach my $file_name (@files) {
     next unless $file_name;
     my ($file, $name) = split(':', $file_name);
     my $data = $object->fetch_userdata_by_id($file);
-    my ($super_tree, $ids, $unmapped) = @{$object->get_stable_id_history_data($file)};
-    $output .= process_data($super_tree, $ids); 
+    my ($ids, $unmapped) = @{$object->get_stable_id_history_data($file, $size_limit)};
+    $output .= process_data($ids); 
     $output .= $self->add_unmapped($unmapped);
 
     ## Output new data to temp file
@@ -57,7 +58,7 @@ sub process {
 }
 
 sub process_data {
-  my ($super_tree, $ids) = @_; 
+  my ($ids) = @_; 
   my %stable_ids = %$ids;
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' } );
   $table->add_option('triangular',1);
@@ -67,15 +68,10 @@ sub process_data {
     { 'key' => 'rel', 'align'=>'left', 'title' => 'Releases:' },
   );
 
-  my @releases = @{ $super_tree->get_release_display_names };
-
   foreach my $req_id (sort keys %stable_ids) {
     my $matches = {};
-    # build grid matrix
     foreach my $a_id (@{ $stable_ids{$req_id}->[1]->get_all_ArchiveStableIds }) {
-      # we only need x coordinate
-      my ($x) = @{ $super_tree->coords_by_ArchiveStableId($a_id) }; 
-      $matches->{$a_id->stable_id}->{$releases[$x]} = $a_id->release .':'. $a_id->version;
+      $matches->{$a_id->stable_id}->{$a_id->release} = $a_id->release .':'. $a_id->version;
     }
     my %release_match_string;
     foreach my $st_id ( sort keys  %$matches) {
