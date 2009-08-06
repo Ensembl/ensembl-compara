@@ -33,6 +33,9 @@ sub content {
   if ($object->param('convert_file')) {
     $convert_file = ';convert_file='.$object->param('convert_file');
   }
+  if ($object->param('id_limit')) {
+    $convert_file .=';id_limit=' .$object->param('id_limit');
+  }
   my $species= ';species='.$object->param('species');
   my $html_url = '/'.$object->data_species.'/UserData/IDConversion?format=html' .$convert_file.$referer.$species;
   my $text_url = '/'.$object->data_species.'/UserData/MapIDs?format=text' .$convert_file.$referer.$extra_param.$species;
