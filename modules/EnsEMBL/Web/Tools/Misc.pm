@@ -5,6 +5,7 @@ use strict;
 
 use LWP::UserAgent;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::CompressionSupport;
 
 use base qw(Exporter);
 
@@ -35,11 +36,13 @@ sub get_url_content {
 
   my $response = $ua->request( $request );
   my $error    = _get_http_error( $response );
-
-  return $error
-       ? { 'error'   => $error }
-       : { 'content' => $response->content }
-       ;
+  if ($error) {
+    return { 'error'   => $error };
+  }
+  else {
+    my $content  = $response->content;
+    return { 'content' => EnsEMBL::Web::CompressionSupport::uncomp( \$content ); }
+  }
 }
 
 sub get_url_filesize {
@@ -63,10 +66,17 @@ sub get_url_filesize {
   return { 'error' => $error } if $error;
 
   # Get the size of the file - either trust the header - or find the size of the response!
-
-  return { 'filesize' => $response->header('Content-Length') || (
-    $response->content ? length( $response->content ) : 0
-  ) };
+  my $size = 0;
+  if ($response->header('Content-Length')) {
+    $size = $response->header('Content-Length');
+  }
+  else {
+    my $content = $response->content;
+    if ($content) {
+      $size = length(EnsEMBL::Web::CompressionSupport::uncomp( \$content ));
+    }
+  }
+  return {'filesize' => $size};
 }
 
 sub _get_http_error {
