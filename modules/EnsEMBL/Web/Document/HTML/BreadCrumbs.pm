@@ -41,6 +41,7 @@ sub render   {
       else {
         $html .= qq(<a href="/$species/Info/Index">).$display_name.qq(</a>);
       }
+      $html .= ' <span style="font-size:75%">['.$species_defs->ASSEMBLY_DISPLAY_NAME.']</span>';
     }
   }
   elsif ($you_are_here =~ m#^/info/#) {
