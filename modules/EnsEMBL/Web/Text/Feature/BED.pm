@@ -7,18 +7,18 @@ no warnings 'uninitialized';
 use base qw(EnsEMBL::Web::Text::Feature);
 
 sub new {
-  my( $class, $hash_ref ) = @_;
+  my( $class, $args ) = @_;
   
   my $extra     = {
-    'thick_start' => [ $hash_ref->[6] ],
-    'thick_end'   => [ $hash_ref->[7] ],
-    'item_colour' => [ $hash_ref->[8] ],
-    'expCount'    => [ $hash_ref->[12] ],
-    'expIds'      => [ split ',', $hash_ref->[13] ],
-    'expScores'   => [ split ',', $hash_ref->[14] ]
+    'thick_start' => [ $args->[6] ],
+    'thick_end'   => [ $args->[7] ],
+    'item_colour' => [ $args->[8] ],
+    'expCount'    => [ $args->[11] ],
+    'expIds'      => [ split ',', $args->[12] ],
+    'expScores'   => [ split ',', $args->[13] ]
   };
 
-  return bless { '__raw__' => $hash_ref, '__extra__' => $extra }, $class;
+  return bless { '__raw__' => $args, '__extra__' => $extra }, $class;
 }
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }

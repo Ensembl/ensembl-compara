@@ -7,11 +7,11 @@ no warnings 'uninitialized';
 use base qw(EnsEMBL::Web::Text::Feature);
 
 sub new {
-  my( $class, $hash_ref ) = @_;
+  my( $class, $args ) = @_;
 
   my $extra = {};
-  if( $hash_ref->[16] =~ /=/ ) {
-    my @T = split /;\s*/, $hash_ref->[16];
+  if( $args->[16] =~ /=/ ) {
+    my @T = split /;\s*/, $args->[8];
     foreach (@T) {
       if( /=/ ) {
         my($k,$v)= split /=/, $_, 2;
@@ -29,17 +29,22 @@ sub new {
       }
     }
   }
-  $extra->{'source'}       = [ $hash_ref->[2] ];
-  $extra->{'feature_type'} = [ $hash_ref->[4] ];
-  $extra->{'score'}        = [ $hash_ref->[10] ];
-  $extra->{'frame'}        = [ $hash_ref->[14]];
-  return bless { '__raw__' => $hash_ref, '__extra__' => $extra }, $class;
+  $extra->{'source'}       = [ $args->[1] ];
+  $extra->{'feature_type'} = [ $args->[2] ];
+  $extra->{'score'}        = [ $args->[5] ];
+  $extra->{'frame'}        = [ $args->[7]];
+  return bless { '__raw__' => $args, '__extra__' => $extra }, $class;
+}
+
+sub coords {
+  my ($self, $data) = @_;
+  return ($data->[0], $data->[3], $data->[4]);
 }
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }
-sub strand   { my $self = shift; return $self->_strand( $self->{'__raw__'}[12] ); }
-sub rawstart { my $self = shift; return $self->{'__raw__'}[6]; }
-sub rawend   { my $self = shift; return $self->{'__raw__'}[8]; }
+sub strand   { my $self = shift; return $self->_strand( $self->{'__raw__'}[6] ); }
+sub rawstart { my $self = shift; return $self->{'__raw__'}[3]; }
+sub rawend   { my $self = shift; return $self->{'__raw__'}[4]; }
 
 sub id       {
   my $self = shift;
@@ -48,8 +53,8 @@ sub id       {
   return $self->{'__extra__'}{'transcript_id'} ? $self->{'__extra__'}{'transcript_id'}[0]
        : $self->{'__extra__'}{'genscan'      } ? $self->{'__extra__'}{'genscan'}[0]
        : $self->{'__extra__'}{'hid'          } ? $self->{'__extra__'}{'hid'}[0]
-       : $self->{'__raw__'}[16]                ? $self->{'__raw__'}[16]
-       :                                         $self->{'__raw__'}[4]
+       : $self->{'__raw__'}[8]                ? $self->{'__raw__'}[8]
+       :                                         $self->{'__raw__'}[2]
        ;
 }
 
@@ -60,13 +65,13 @@ sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__e
 
 sub slide   {
   my $self = shift; my $offset = shift;
-  $self->{'start'} = $self->{'__raw__'}[6]+ $offset;
-  $self->{'end'}   = $self->{'__raw__'}[8]+ $offset;
+  $self->{'start'} = $self->{'__raw__'}[3]+ $offset;
+  $self->{'end'}   = $self->{'__raw__'}[4]+ $offset;
 }
 
 sub cigar_string {
   my $self = shift;
-  return $self->{'_cigar'}||=($self->{'__raw__'}[8]-$self->{'__raw__'}[6]+1)."M";
+  return $self->{'_cigar'}||=($self->{'__raw__'}[4]-$self->{'__raw__'}[3]+1)."M";
 }
 
 sub extra_data {
@@ -82,4 +87,5 @@ sub extra_data {
 
   return \%extra;
 }
+
 1;

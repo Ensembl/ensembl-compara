@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Text::Feature::GBrowse;
+package EnsEMBL::Web::Text::Feature::GBROWSE;
 
 use strict;
 use warnings;
@@ -7,14 +7,14 @@ no warnings 'uninitialized';
 use base qw(EnsEMBL::Web::Text::Feature);
 
 sub new {
-  my( $class, $hash_ref ) = @_;
+  my( $class, $args ) = @_;
 
   my $extra      = {};
-  $extra->{'type'} = [$hash_ref->[6]] if defined $hash_ref->[6];
-  $extra->{'note'} = [$hash_ref->[7]] if defined $hash_ref->[7];
-  $extra->{'link'} = [$hash_ref->[8]] if defined $hash_ref->[8];
+  $extra->{'type'} = [$args->[6]] if defined $args->[6];
+  $extra->{'note'} = [$args->[7]] if defined $args->[7];
+  $extra->{'link'} = [$args->[8]] if defined $args->[8];
 
-  return bless { '__raw__' => $hash_ref, '__extra__' => $extra }, $class;
+  return bless { '__raw__' => $args, '__extra__' => $extra }, $class;
 }
 
 
