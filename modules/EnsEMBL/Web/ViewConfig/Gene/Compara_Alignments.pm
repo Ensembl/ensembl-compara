@@ -108,6 +108,8 @@ sub form {
     $view_config->add_fieldset("Options for $row->{'name'}");
     
     foreach (sort keys %{$row->{'species'}}) {
+      next if /merged/;
+      
       my $name = 'species_'.$row_key.'_'.lc($_);
       
       if ($_ eq $species) {
