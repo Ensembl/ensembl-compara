@@ -24,13 +24,20 @@ sub render_normal {
   my $A = $self->my_config('part');
 
   my $href = join '|',
-    '#vdrag', $self->get_parameter('slice_number')||1,
+    '#vdrag', $self->get_parameter('slice_number') || 1,
     $self->{'container'}->{'web_species'}, $chr,
     1, $len, 1;
 
-  my @common = ( 'y' => $A, 'style' => 'fill', 'z' => -10, 'href' => $href );
-  $self->join_tag( $glyph, 'draggable', { 'x' =>   $A, @common });
-  $self->join_tag( $glyph, 'draggable', { 'x' => 1-$A, @common });
+  my @common = ( 
+    'y'     => $A,
+    'style' => 'fill', 
+    'z'     => -10,
+    'href'  => $href, 
+    'class' => 'vdrag'
+  );
+  
+  $self->join_tag($glyph, 'draggable', { 'x' => $A, @common });
+  $self->join_tag($glyph, 'draggable', { 'x' => 1 - $A, @common });
 }
 
 1;
