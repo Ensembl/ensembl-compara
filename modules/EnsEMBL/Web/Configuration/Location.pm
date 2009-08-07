@@ -72,103 +72,119 @@ sub populate_tree {
   my $object = $self->object;
   my $availability = $object->availability;
   my $caption;
-
-  $self->create_node( 'Genome', "Whole genome",
-    [qw(genome EnsEMBL::Web::Component::Location::Genome)],
+  
+  $self->create_node('Genome', 'Whole genome',
+    [qw( genome EnsEMBL::Web::Component::Location::Genome )],
     { 'availability' => 'karyotype'},
   );
 
-  $self->create_node( 'Chromosome', 'Chromosome summary',
+  $self->create_node('Chromosome', 'Chromosome summary',
     [qw(
-        image           EnsEMBL::Web::Component::Location::ChromosomeImage
-        change          EnsEMBL::Web::Component::Location::ChangeChromosome
-        stats           EnsEMBL::Web::Component::Location::ChromosomeStats
+      image  EnsEMBL::Web::Component::Location::ChromosomeImage
+      change EnsEMBL::Web::Component::Location::ChangeChromosome
+      stats  EnsEMBL::Web::Component::Location::ChromosomeStats
     )],
-    { 'availability' => 'chromosome',
-      'disabled' => 'This sequence region is not part of an assembled chromosome' }
+    { 'availability' => 'chromosome', 'disabled' => 'This sequence region is not part of an assembled chromosome' }
   );
 
-  $self->create_node( 'Overview', "Region overview",
+  $self->create_node('Overview', 'Region overview',
     [qw(
-      nav    EnsEMBL::Web::Component::Location::ViewBottomNav/region
-      top    EnsEMBL::Web::Component::Location::Region
+      nav EnsEMBL::Web::Component::Location::ViewBottomNav/region
+      top EnsEMBL::Web::Component::Location::Region
     )],
     { 'availability' => 'slice'}
   );
 
-  $self->create_node( 'View', "Region in detail",
+  $self->create_node('View', 'Region in detail',
     [qw(
-      top     EnsEMBL::Web::Component::Location::ViewTop
-      botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
-      bottom  EnsEMBL::Web::Component::Location::ViewBottom
+      top    EnsEMBL::Web::Component::Location::ViewTop
+      botnav EnsEMBL::Web::Component::Location::ViewBottomNav
+      bottom EnsEMBL::Web::Component::Location::ViewBottom
     )],
-#      zoomnav EnsEMBL::Web::Component::Location::ViewZoomNav
-#      zoom    EnsEMBL::Web::Component::Location::ViewZoom
     { 'availability' => 'slice' }
   );
 
-  my $align_menu = $self->create_submenu( 'Compara', 'Comparative Genomics' );
-  $caption = $availability->{'slice'} ? 'Genomic alignments ([[counts::alignments]])' : 'Genomic alignments';
-  $align_menu->append( $self->create_node( 'Compara_Alignments', $caption,
+  my $align_menu = $self->create_submenu('Compara', 'Comparative Genomics');
+  
+  $caption = $availability->{'slice'} ? 'Genomic align slice ([[counts::alignments]])' : 'Genomic align slice';
+  
+  $align_menu->append($self->create_node('Align', $caption, 
     [qw(
-      botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
+      top      EnsEMBL::Web::Component::Location::ViewTop
+      botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
+      selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
+      bottom   EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom
+    )],
+    { 'availability' => 'slice database:compara', 'concise' => 'Genomic align slice' }
+  ));
+  
+  $caption = $availability->{'slice'} ? 'Genomic alignments ([[counts::alignments]])' : 'Genomic alignments';
+  
+  $align_menu->append($self->create_node('Compara_Alignments', $caption,
+    [qw(
+      botnav     EnsEMBL::Web::Component::Location::ViewBottomNav
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
       alignments EnsEMBL::Web::Component::Location::Compara_Alignments
     )],
     { 'availability' => 'slice database:compara', 'concise' => 'Genomic alignments' }
   ));
-#      top      EnsEMBL::Web::Component::Location::Compara_AlignSliceTop
-#      selector EnsEMBL::Web::Component::Location::Compara_AlignSliceSelector
-#      nav      EnsEMBL::Web::Component::Location::ViewBottomNav
-#      bottom   EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom
-#      zoomnav EnsEMBL::Web::Component::Location::Compara_AlignSliceZoomNav
-#      zoom    EnsEMBL::Web::Component::Location::Compara_AlignSliceZoom
-
-  $align_menu->append( $self->create_node( 'Comparison', "Multi-species comp. ([[counts::pairwise_alignments]])",
-    [qw(selector    EnsEMBL::Web::Component::Location::SelectAlignment
-	top         EnsEMBL::Web::Component::Location::MultiIdeogram
-	overview    EnsEMBL::Web::Component::Location::MultiTop
-	nav         EnsEMBL::Web::Component::Location::ViewBottomNav
-	bottom      EnsEMBL::Web::Component::Location::MultiBottom
-      )],
+  
+  $align_menu->append($self->create_node('Comparison', 'Multi-species comp. ([[counts::pairwise_alignments]])',
+    [qw(
+      selector EnsEMBL::Web::Component::Location::SelectAlignment
+      top      EnsEMBL::Web::Component::Location::MultiIdeogram
+      overview EnsEMBL::Web::Component::Location::MultiTop
+      nav      EnsEMBL::Web::Component::Location::ViewBottomNav
+      bottom   EnsEMBL::Web::Component::Location::MultiBottom
+    )],
     { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
   ));
-
-  $align_menu->append( $self->create_subnode( 'ComparaGenomicAlignment', '',
-    [qw(gen_alignment      EnsEMBL::Web::Component::Location::ComparaGenomicAlignment)],
-    {'no_menu_entry' => 1 }
+  
+  $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',
+    [qw( gen_alignment EnsEMBL::Web::Component::Location::ComparaGenomicAlignment )],
+    { 'no_menu_entry' => 1 }
   ));
+  
   $caption = $availability->{'chromosome'} ? 'Synteny ([[counts::synteny]])' : 'Synteny';
-  $align_menu->append( $self->create_node( 'Synteny', $caption,
+  
+  $align_menu->append($self->create_node('Synteny', $caption,
     [qw(
-      image      EnsEMBL::Web::Component::Location::SyntenyImage
-      species    EnsEMBL::Web::Component::Location::ChangeSpecies
-      change     EnsEMBL::Web::Component::Location::ChangeChromosome
-      homo_nav   EnsEMBL::Web::Component::Location::NavigateHomology
-      matches    EnsEMBL::Web::Component::Location::SyntenyMatches
+      image    EnsEMBL::Web::Component::Location::SyntenyImage
+      species  EnsEMBL::Web::Component::Location::ChangeSpecies
+      change   EnsEMBL::Web::Component::Location::ChangeChromosome
+      homo_nav EnsEMBL::Web::Component::Location::NavigateHomology
+      matches  EnsEMBL::Web::Component::Location::SyntenyMatches
     )],
-    { 'availability' => 'chromosome has_synteny', 'concise' => 'Synteny'}
+    { 'availability' => 'chromosome has_synteny', 'concise' => 'Synteny' }
   ));
+  
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
+  
   $caption = $availability->{'slice'} ? 'Resequencing ([[counts::reseq_strains]])' : 'Resequencing';
-  $variation_menu->append( $self->create_node( 'SequenceAlignment', $caption,
-    [qw(botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
-	      align   EnsEMBL::Web::Component::Location::SequenceAlignment)],
+  
+  $variation_menu->append($self->create_node('SequenceAlignment', $caption,
+    [qw(
+      botnav EnsEMBL::Web::Component::Location::ViewBottomNav
+            align  EnsEMBL::Web::Component::Location::SequenceAlignment
+    )],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
-  $variation_menu->append( $self->create_node( 'LD', "Linkage Data ",
-    [qw(ld  EnsEMBL::Web::Component::Location::LD
-        ldimage  EnsEMBL::Web::Component::Location::LDImage)],
+  $variation_menu->append($self->create_node('LD', 'Linkage Data',
+    [qw(
+      ld      EnsEMBL::Web::Component::Location::LD
+      ldimage EnsEMBL::Web::Component::Location::LDImage
+    )],
     { 'availability' => 'slice has_LD', 'concise' => 'Linkage Disequilibrium Data' }
   ));
-#EnsEMBL::Web::Component::Location::LD)],
 
-  $self->create_node( 'Marker', "Markers",
-     [ qw(botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
-	  marker EnsEMBL::Web::Component::Location::MarkerDetails) ],
-     { 'availability' => 'has_markers' }
+  $self->create_node('Marker', 'Markers',
+    [qw(
+      botnav EnsEMBL::Web::Component::Location::ViewBottomNav
+      marker EnsEMBL::Web::Component::Location::MarkerDetails
+    )],
+    { 'availability' => 'has_markers' }
   );
-  
+
   my $export_label = $object->action eq 'LD' ? 'Export Linkage Disequilibrium Data Data' : 'Export Location Data';
   
   $self->create_subnode(
@@ -178,17 +194,17 @@ sub populate_tree {
   );
 }
 
-sub ajax_zmenu      {
+sub ajax_zmenu {
   my $self = shift;
   my $panel = $self->_ajax_zmenu;
-  my $obj  = $self->object;
+  my $obj = $self->object;
   my $action = $obj->[1]{'_action'} || 'Summary';
   
   if ($action =~ /Regulation/) {
     return $self->_ajax_zmenu_regulation($panel, $obj);
-  } elsif($action =~ /Variation/) {
+  } elsif ($action =~ /Variation/) {
     return $self->ajax_zmenu_variation($panel, $obj);
-  } elsif($action =~ /Genome/) {
+  } elsif ($action =~ /Genome/) {
     return $self->_ajax_zmenu_alignment($panel, $obj);
   } elsif ($action =~ /Marker/) {
     return $self->_ajax_zmenu_marker($panel, $obj);
@@ -198,81 +214,77 @@ sub ajax_zmenu      {
     return $self->_ajax_zmenu_av($panel, $obj);
   } elsif ($action =~ /View|Overview/) {
     return $self->_ajax_zmenu_view($panel, $obj);
-  } elsif ($action eq 'coverage'){
+  } elsif ($action eq 'coverage') {
     return $self->ajax_zmenu_read_coverage($panel, $obj);
   } elsif ($action =~ /Supercontigs/) {
     return $self->_ajax_zmenu_supercontig($panel, $obj);
   } elsif ($action eq 'Das') {
     return $self->_ajax_zmenu_das($panel, $obj);
   }
-
-  return;
 }
 
 sub _ajax_zmenu_view {
   my $self  = shift;
   my $panel = shift;
   my $obj   = shift;
-  if( $obj->param('mfid')) {
+  
+  if ($obj->param('mfid')) {
     return $self->_ajax_zmenu_misc_feature($panel,$obj);
   } elsif ($obj->param('region_n')) {
     return $self->_ajax_zmenu_region($panel,$obj);
   } elsif ($obj->param('r1') || $obj->param('ori')) {
     return $self->_ajax_zmenu_synteny($panel,$obj);
   } else {
-    #otherwise simply show a link to View/Overview
+    # otherwise simply show a link to View/Overview
     my $r             = $obj->param('r');
     my ($chr, $loc)   = split ':', $r;
     my ($start,$stop) = split '-', $loc;
     my $action        = $obj->[1]{'_action'} || 'View';
     my $threshold     = 1000100 * ($obj->species_defs->ENSEMBL_GENOME_SIZE||1);
 
-    #go to Overview if region too large for View
-    $action = 'Overview' if ( ($stop-$start+1 > $threshold) && $action eq 'View') ;
-    my $url             = $obj->_url({
-	'type' => 'Location',
-	'action' => $action});
+    # go to Overview if region too large for View
+    $action = 'Overview' if (($stop-$start+1 > $threshold) && $action eq 'View');
+    my $url = $obj->_url({
+      'type' => 'Location',
+      'action' => $action
+    });
+   
     my $caption = $r;
     my $link_title = $r;
-    #code for alternative asembly zemnu
+    # code for alternative asembly zemnu
     if ($obj->param('assembly')) {
       my $this_assembly = $obj->species_defs->ASSEMBLY_NAME;
       my $alt_assembly = $obj->param('assembly');
       $caption = $alt_assembly.':'.$r;
 
-      #choose where to jump to
+      # choose where to jump to
       if ($this_assembly eq 'VEGA') {
-	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $r);
-	$link_title = 'Jump to Ensembl';
-      }
-      elsif ($alt_assembly eq 'VEGA') {
-	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $r);
-	$link_title = 'Jump to VEGA';
-      }
-      else {
-      #TO DO - put URL to the latest archive site showing the other assembly (from mapping_session table)
+        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $r);
+        $link_title = 'Jump to Ensembl';
+      } elsif ($alt_assembly eq 'VEGA') {
+        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $r);
+        $link_title = 'Jump to VEGA';
+      } else {
+        # TODO: put URL to the latest archive site showing the other assembly (from mapping_session table)
       }
 
       $panel->add_entry({ 'label' => 'Assembly: '.$alt_assembly, 'priority' => 100});
-    }
-
-    #code for alternative clones zmenu
-    elsif (my $status = $obj->param('status')) {
+    } elsif (my $status = $obj->param('status')) { # code for alternative clones zmenu
       ($caption) = split ':', $r;
       if ( $obj->species_defs->ASSEMBLY_NAME eq 'VEGA') {
-	$link_title = 'Jump to Ensembl';
-	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $r);
+        $link_title = 'Jump to Ensembl';
+        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $r);
       }
       else {
-	$link_title = 'Jump to Vega';
-	$url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $r);
+        $link_title = 'Jump to Vega';
+        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $r);
       }
       $status =~ s/_clone/ version/g;
       $panel->add_entry({ 'label' => 'Status: '.$status, 'priority' => 100});
     }
-
+    
     $panel->{'caption'} = $caption;
-    $panel->add_entry({ 'label' => $link_title, 'link'  => $url, 'priority' => 50 });
+    $panel->add_entry({ 'label' => $link_title, 'link' => $url, 'priority' => 50 });
   }
 }
 
@@ -335,20 +347,20 @@ sub _ajax_zmenu_synteny {
       'r'            => "$chr:$new_start-$new_end"});
     if (my $ori = $obj->param('ori')) {
       $panel->add_entry({
-	'label'   => 'Center display on this chr',
-	'link'    => $synt_url,
-	'priority'=> 80,
+        'label'   => 'Center display on this chr',
+        'link'    => $synt_url,
+        'priority'=> 80,
       });
       $panel->add_entry({
-	'label'   => "Orientation: $ori",
-	'priority'=> 70,
+        'label'   => "Orientation: $ori",
+        'priority'=> 70,
       });
     }
     else {
       $panel->add_entry({
-	'label'   => 'Center gene list',
-	'link'    => $synt_url,
-	'priority'=> 80,
+        'label'   => 'Center gene list',
+        'link'    => $synt_url,
+        'priority'=> 80,
       });
     }
   }
@@ -432,10 +444,9 @@ sub _ajax_zmenu_region {
       'link'    => $new_slice_URL,
       'priority'=> $priority,
     });
-#    $referer = $obj->_url({'type'=>'Location','action'=>"$action",'r'=>undef,'region'=>$new_slice_name});
 
-    #would be nice if exportview could work with the region parameter, either in the referer or in the real URL
-    #since it doesn't we have to explicitly calculate the locations of all regions on top level
+    # would be nice if exportview could work with the region parameter, either in the referer or in the real URL
+    # since it doesn't we have to explicitly calculate the locations of all regions on top level
     my $top_level_proj  = $new_slice->project('toplevel');
     my $top_level_slice = $top_level_proj->[0]->to_Slice;
     my $top_level_name  = $top_level_slice->seq_region_name;
@@ -503,7 +514,7 @@ sub _ajax_zmenu_misc_feature {
     'priority' => 180,
   });
 
-  #add entries for each of the following attributes
+  # add entries for each of the following attributes
   my @names = ( 
     ['name',           'Name'                   ],
     ['well_name',      'Well name'              ],
@@ -531,7 +542,7 @@ sub _ajax_zmenu_misc_feature {
     my $value = $mf->get_scalar_attribute($name->[0]);
     my $entry;
 
-    #hacks for these type of entries
+    # hacks for these type of entries
     if ($name->[0] eq 'BACend_flag') {
       $value = ('Interpolated', 'Start located', 'End located', 'Both ends located') [$value]; 
     }
@@ -540,11 +551,11 @@ sub _ajax_zmenu_misc_feature {
     }
     if ($value) {
       $entry = {
-	'type'     => $name->[1],
-	'label'    => $value,
-	'priority' => $priority,};
+        'type'     => $name->[1],
+        'label'    => $value,
+        'priority' => $priority,};
       if ($name->[2]) {
-	$entry->{'link'} = $obj->get_ExtURL($name->[2],$value);
+        $entry->{'link'} = $obj->get_ExtURL($name->[2],$value);
       }
       $panel->add_entry($entry);
       $priority--;
@@ -557,18 +568,18 @@ sub _ajax_zmenu_misc_feature {
     'priority' => $priority,
   });
 
-    #this is all for pre so can be sorted for that when the time comes
-    #my $links = $self->my_config('LINKS');
-    #if( $links ) {
-    #	my $Z = 80;
-    #	foreach ( @$links ) {
-    #	    my $val = $f->get_scalar_attribute($_->[1]);
-    #   next unless $val;
-    #	    (my $href = $_->[2]) =~ s/###ID###/$val/g;
-    #	    $zmenu->{"$Z:$_->[0]: $val"} = $href;
-    #	    $Z++;
-    #	}
-    #}
+  # this is all for pre so can be sorted for that when the time comes
+  # my $links = $self->my_config('LINKS');
+  # if( $links ) {
+  #   my $Z = 80;
+  #   foreach ( @$links ) {
+  #     my $val = $f->get_scalar_attribute($_->[1]);
+  #     next unless $val;
+  #     (my $href = $_->[2]) =~ s/###ID###/$val/g;
+  #     $zmenu->{"$Z:$_->[0]: $val"} = $href;
+  #     $Z++;
+  #   }
+  # }
 
 }
 
@@ -580,21 +591,27 @@ sub _ajax_zmenu_av {
   my $obj_type  = $obj->param('ftype');
   my $align = $obj->param('align');
   my $hash = $obj->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'};
-  my $caption = $hash->{$align}{'name'};;
-  my $url = $obj->_url({'type'=>'Location','action'=>'Compara_Alignments','align'=>$align});
+  my $caption = $hash->{$align}{'name'};
+  my $url = $obj->_url({ 'type' => 'Location', 'action' => 'Compara_Alignments', 'align' => $align });
+
   my ($chr, $start, $end) = split(/[\:\-]/, $obj->param('r'));
-  #if there's a score than show it and also change the name of the track (hacky)
-  if ($obj_type and $id) {
-    my $db_adaptor   = $obj->database("compara");
+  
+  # if there's a score than show it and also change the name of the track (hacky)
+  if ($obj_type && $id) {
+    my $db_adaptor   = $obj->database('compara');
     my $adaptor_name = "get_${obj_type}Adaptor";
     my $feat_adap =  $db_adaptor->$adaptor_name;
     my $feature = $feat_adap->fetch_by_dbID($id);
-    if ($obj_type eq "ConstrainedElement") {
-      $panel->add_entry({
-        'type'  => 'p-value',
-        'label' => sprintf("%.2e", $feature->p_value),
-        'priority' => 107,
-      }) if ($feature->p_value);
+    
+    if ($obj_type eq 'ConstrainedElement') {
+      if ($feature->p_value) {
+        $panel->add_entry({
+          'type'     => 'p-value',
+          'label'    => sprintf("%.2e", $feature->p_value),
+          'priority' => 107
+        });
+      }
+      
       $panel->add_entry({
         'type'  => 'Score',
         'label' => sprintf("%.2f", $feature->score),
@@ -628,7 +645,7 @@ sub _ajax_zmenu_av {
   $panel->add_entry({
     'label' => 'View alignments',
     'link'  => $url,
-    'priority' => 100, #default
+    'priority' => 100, # default
   });
   return;
 }
@@ -654,10 +671,12 @@ sub _ajax_zmenu_ga {
     'label'    => $orient,
     'priority' => 200,
   });
-  my $url = $obj->_url({'type'    => 'Location',
-			'action'  => 'View',
-			'species' => $sp1,
-			'r'       => $r1} );
+  my $url = $obj->_url({
+    'type'    => 'Location',
+    'action'  => 'View',
+    'species' => $sp1,
+    'r'       => $r1
+  });
   $panel->add_entry({
     'label'    => "Jump to $sp1",
     'link'     => $url,
@@ -665,25 +684,29 @@ sub _ajax_zmenu_ga {
   });
 
   if ($obj->param('method')) {
-    $url = $obj->_url({'type'  =>'Location',
-		       'action'=>'ComparaGenomicAlignment',
-		       's1'    =>$sp1,
-		       'r1'    =>$obj->param('r1'),
-		       'method'=>$obj->param('method')} );
+    $url = $obj->_url({
+      'type'  =>'Location',
+      'action'=>'ComparaGenomicAlignment',
+      's1'    =>$sp1,
+      'r1'    =>$obj->param('r1'),
+      'method'=>$obj->param('method')
+     });
     $panel->add_entry({
       'label'    => 'View alignment',
       'link'     => $url,
       'priority' => 100,
     });
 
-    $url = $obj->_url({'type'  =>'Location',
-		       'action'=>'View',
-		       'r'     =>$obj->param('r')} );
+    $url = $obj->_url({
+      'type'  =>'Location',
+      'action'=>'View',
+      'r'     =>$obj->param('r')
+    });
     $panel->add_entry({
       'label'    => 'Center on this location',
       'link'     => $url,
       'priority' => 50,
-	});
+    });
   }
   return;
 }
@@ -703,7 +726,7 @@ sub _ajax_zmenu_marker {
 }
 
 
-#zmenu for aligments (directed to /Location/Genome)
+# zmenu for aligments (directed to /Location/Genome)
 sub _ajax_zmenu_alignment {
   my $self = shift;
   my $panel = shift;
@@ -733,10 +756,11 @@ sub _ajax_zmenu_alignment {
   my $external_db_id = ($fs->[0] && $fs->[0]->can('external_db_id')) ? $fs->[0]->external_db_id : '';
   my $extdbs = $external_db_id ? $obj->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
   my $hit_db_name = $extdbs->{$external_db_id}{'db_name'} || 'External Feature';
-  #hack to link sheep bac ends to trace archive
+  # hack to link sheep bac ends to trace archive
   if ($fs->[0]->analysis->logic_name =~ /sheep_bac_ends|BACends/) {
     $hit_db_name = 'TRACE';
   }
+
   my $species= $obj->species;
 
   # different zmenu for oligofeatures
@@ -752,7 +776,7 @@ sub _ajax_zmenu_alignment {
       'priority' => $p,
     });
 
-    #details of each probe within the probe set on the array that are found within the slice
+    # details of each probe within the probe set on the array that are found within the slice
     my ($r_name,$r_start,$r_end) = $obj->param('r') =~ /(\w+):(\d+)-(\d+)/;
     my %probes;
 
@@ -779,24 +803,22 @@ sub _ajax_zmenu_alignment {
       $p--;
       my $loc = $probes{$probe}->{'loc'};
       $panel->add_entry({
-	'type'     => $type,
-	'label'    => "$probe ($loc)",
-	'priority' => $p,
+        'type'     => $type,
+        'label'    => "$probe ($loc)",
+        'priority' => $p,
       });
     }
-  }
-
-  else {
+  } else {
     $panel->{'caption'} = "$id ($hit_db_name)";
     my @seq = [];
     @seq = split "\n", $obj->get_ext_seq($id,$hit_db_name) if ($hit_db_name !~ /CCDS/); #don't show EMBL desc for CCDS
     my $desc = $seq[0];
     if ($desc) {
       if ($desc =~ s/^>//) {
-	$panel->add_entry({
-	  'label' => $desc,
-	  'priority' => 150,
-	});
+        $panel->add_entry({
+          'label' => $desc,
+          'priority' => 150,
+        });
       }
     }
     my $URL = CGI::escapeHTML( $obj->get_ExtURL($hit_db_name, $id) );
@@ -970,276 +992,6 @@ sub _ajax_zmenu_regulation {
   }
  
   return;
-}
-
-############################ OLD CODE! ###############################################################
-
-
-### Functions to configure contigview, ldview etc
-
-###   The description of each component indicates the usual Panel subtype e.g. Panel::Image.
-###  my $info_panel = $self->new_panel( "Information",
-###    "code"    => "info#",
-###     "caption"=> "Linkage disequilibrium report: [[object->type]] [[object->name]]"
-### 				   )) {
-###
-###     $info_panel->add_components(qw(
-###     focus                EnsEMBL::Web::Component::LD::focus
-###     prediction_method    EnsEMBL::Web::Component::LD::prediction_method
-###     population_info      EnsEMBL::Web::Component::LD::population_info
-### 				  ));
-###     $self->{page}->content->add_panel( $info_panel );
-
-sub load_configuration {
-  my ($self, $config) = @_;
-  my $obj  = $self->{object};
-  my $config_string = $config->config;
-  $config_string =~ s/&quote;/'/g;
-#  warn $config_string;
-  my $config_data = eval($config_string);
-  foreach my $key (keys %{ $config_data }) {
-    #warn "ADDING CONFIG SETTINGS FOR: " . $key;
-    my $wuc = $obj->image_config_hash($key);
-    $wuc->{'user'} = $config_data;
-#    $wuc->save;
-  }
-}
-
-
-sub sequencealignview {
-  my $self = shift;
-
-  my $region_name = $self->{object}->slice->name;
-
-  $self->set_title( "Sequence Alignment for $region_name");
-  if( my $panel1 = $self->new_panel( 'Information',
-	'code'    => "info#",
-	'caption' => "Sequence Alignment for $region_name",
-     ) ) {
-
-	$panel1->add_components(qw(
-	        markup_options EnsEMBL::Web::Component::Slice::sequence_markup_options
-	        sequence       EnsEMBL::Web::Component::Slice::sequencealignview
-	));
-
-	$self->add_panel( $panel1 );
-  }
-}
-
-sub add_das_sources {
-  my( $self, $scriptname ) = @_;
-  my $obj    = $self->{object};
-  my @T = $obj->param('das_sources');
-  @T = grep {$_} @T;
-  if( @T ) {
-    my $wuc = $obj->image_config_hash( $scriptname );
-    foreach my $source (@T) {
-      $wuc->set("managed_extdas_$source", 'on', 'on', 1);
-    }
-#    $wuc->save;
-  }
-}
-
-sub top_start_end {
-  my( $self, $obj, $max_length ) = @_;
-  my($start,$end) = ($obj->seq_region_start,$obj->seq_region_end);
-  if( $obj->seq_region_length < $max_length || $obj->length >= $obj->seq_region_length ) {
-    $start = 1;
-    $end   = $obj->seq_region_length;
-  } elsif( $obj->length < $max_length ) {
-    $start -= ( $max_length - $obj->length ) / 2;
-    $end   += ( $max_length - $obj->length ) / 2;
-    if( $start < 1 ) {
-      $start = 1;
-      $end   = $start + $max_length - 1;
-    } elsif( $end > $obj->seq_region_length ) {
-      $end   = $obj->seq_region_length;
-      $start = $end - $max_length + 1;
-    }
-  }
-  return ( $start, $end );
-}
-
-
-sub alignsliceview {
-  my $self   = shift;
-  my $obj    = $self->{object};
-  my $species    = $obj->species;
-  my $q_string = sprintf( '%s:%s-%s', $obj->seq_region_name, $obj->seq_region_start, $obj->seq_region_end );
-
-  my $config_name = 'alignsliceviewbottom';
-  $self->update_configs_from_parameter( 'bottom', $config_name );
-
-  my $wsc = $self->{object}->get_viewconfig();
-  my $wuc = $obj->image_config_hash( $config_name );
-
-  my @align_modes = grep { /opt_align/ }keys (%{$wsc->{_options}});
-  if (my $set_align = $obj->param('align')) {
-    foreach my $opt (@align_modes) {
-      $wsc->set($opt, "off", 1);
-    }
-#warn "SETTING.... $set_align on";
-    $wsc->set($set_align, "on", 1);
-#warn "$set_align....";
-    $wuc->set('alignslice', 'align', $set_align, 1);
-#   $wsc->save();
-  }
-
-    ## Unset conservation_scores and constrained_elements
-  $wuc->set( 'alignslice',  'constrained_elements', "", 1);
-  $wuc->set( 'alignslice',  'conservation_scores', "", 1);
-
-  foreach my $opt (@align_modes) {
-    #warn "$opt - ",$wsc->get($opt,"on");
-    if( $wsc->get($opt, "on") eq 'on' ) {
-      my ($atype, $id);
-      my @selected_species;
-      if ($opt =~ /^opt_align_(.*)/) {
-        $id = $1;
-        my @align_species = grep { /opt_${id}_/ } keys (%{$wsc->{_options}});
-        foreach my $sp (@align_species) {
-          if ($sp =~ /opt_${id}_constrained_elem/) {
-            if ($wsc->get($sp, "on") eq 'on') {
-              $wuc->set( 'alignslice',  'constrained_elements', "on", 1);
-            }
-            next;
-          }
-          if ($sp =~ /opt_${id}_conservation_score/) {
-            if ($wsc->get($sp, "on") eq 'on') {
-              $wuc->set( 'alignslice',  'conservation_scores', "on", 1);
-            }
-            next;
-          }
-          if ($wsc->get($sp, "on") eq 'on') {
-            $sp =~ s/opt_${id}_//;
-            push @selected_species, $sp if ($sp ne $species);
-          }
-        }
-      }
-# 	    warn("STEP1: ($opt : $id : @selected_species )");
-      $wuc->set( 'alignslice',  'id', $id, 1);
-      $wuc->set( 'alignslice',  'species', \@selected_species, 1);
-      $wuc->set( 'alignslice',  'align', $opt, 1);
-      last;
-    }
-  }
-#    $wuc->save();
-  $obj->get_session->_temp_store( 'alignsliceview' , 'alignsliceviewbottom' );
-  my $last_rendered_panel = undef;
-  my @common = ( 'params' => { 'l'=>$q_string, 'h' => $obj->highlights_string } );
-
-    ## Initialize the ideogram image...
-    my $ideo = $self->new_panel( 'Image',
-				 'code'    => "ideogram_#", 'caption' => $obj->seq_region_type_and_name, 'status'  => 'panel_ideogram', @common
-                                );
-     $last_rendered_panel = $ideo if $obj->param('panel_ideogram') ne 'off';
-     $ideo->add_components(qw(image EnsEMBL::Web::Component::Location::ideogram_old));
-     $self->{page}->content->add_panel( $ideo );
-
-    ## Now the overview panel...
-    my $over = $self->new_panel( 'Image',
-				 'code'    => "overview_#", 'caption' => 'Overview', 'status'  => 'panel_top', @common
-				 );
-    my $max_length = ($obj->species_defs->ENSEMBL_GENOME_SIZE||1) * 1.001e6;
-    if( $obj->param('panel_top') ne 'off' ) {
-	my($start,$end) = $self->top_start_end( $obj, $max_length );
-	#$last_rendered_panel->add_option( 'red_box' , [ $start, $end ] ) if $last_rendered_panel;
-	$over->add_option( 'start', $start );
-	$over->add_option( 'end',   $end   );
-	$over->add_option( 'red_edge', 'yes' );
-	$last_rendered_panel = $over;
-    }
-    $over->add_components(qw(image EnsEMBL::Web::Component::Location::alignsliceviewtop));
-    $self->{page}->content->add_panel( $over );
-
-    $self->initialize_zmenu_javascript;
-    $self->initialize_ddmenu_javascript;
-
-    my $bottom = $self->new_panel( 'Image',
-				   'code'    => "bottom_#", 'caption' => 'Detailed view', 'status'  => 'panel_bottom', @common
-				   );
-
-    ## Big switch time....
-    if( $obj->length > $max_length ) {
-	$bottom->add_components(qw(
-                                  menu  EnsEMBL::Web::Component::Location::alignsliceviewbottom_menu
-                                  nav   EnsEMBL::Web::Component::Location::alignsliceviewbottom_nav
-                                  text  EnsEMBL::Web::Component::Location::alignsliceviewbottom_text
-				   ));
-       $self->{page}->content->add_panel( $bottom );
-    } else {
-	if( $obj->param('panel_bottom') ne 'off' ) {
-	    if( $last_rendered_panel ) {
-		#$last_rendered_panel->add_option( 'red_box' , [ $obj->seq_region_start, $obj->seq_region_end ] );
-		$bottom->add_option( 'red_edge', 'yes' );
-	    }
-	    $last_rendered_panel = $bottom;
-	}
-	$bottom->add_components(qw(
-				   menu  EnsEMBL::Web::Component::Location::alignsliceviewbottom_menu
-				   nav   EnsEMBL::Web::Component::Location::alignsliceviewbottom_nav
-				   image EnsEMBL::Web::Component::Location::alignsliceviewbottom
-				   ));
-	$self->{page}->content->add_panel( $bottom );
-	my $base = $self->new_panel( 'Image',
-				     'code'    => "basepair_#", 'caption' => 'Basepair view', 'status'  => 'panel_zoom', @common
-				     );
-       if( $obj->param('panel_zoom') ne 'off' ) {
-           my $zw = int(abs($obj->param('zoom_width')));
-              $zw = 1 if $zw <1;
-
-           my( $start, $end ) = $obj->length < $zw ? ( $obj->seq_region_start, $obj->seq_region_end ) : ( $obj->centrepoint - ($zw-1)/2 , $obj->centrepoint + ($zw-1)/2 );
-           $base->add_option( 'start', $start );
-           $base->add_option( 'end',   $end );
-           if( $last_rendered_panel ) {
-               #$last_rendered_panel->add_option( 'red_box' , [ $start, $end ] );
-               $bottom->add_option( 'red_edge', 'yes' );
-           }
-           $last_rendered_panel = $base;
-       }
-       $base->add_components(qw(
-                                nav   EnsEMBL::Web::Component::Location::alignsliceviewzoom_nav
-                                image EnsEMBL::Web::Component::Location::alignsliceviewzoom
-                                ));
-       $self->{page}->content->add_panel( $base );
-     }
-    $self->{page}->set_title( "Features on ".$obj->seq_region_type_and_name.' '.$self->{object}->seq_region_start.'-'.$self->{object}->seq_region_end );
-}
-
-
-###############################################################################
-## Helper functions....
-###############################################################################
-## add_format, get_format are helper functions for configuring ExportView #####
-###############################################################################
-
-sub add_format {
-  my( $self, $code, $name, $form, $display, %options ) = @_;
-  unless( $self->{object}->__data->{'formats'}{$code} ) {
-    $self->{object}->__data->{'formats'}{$code} = {
-      'name' => $name, 'form' => $form, 'display' => $display, 'sub'  => {}
-    };
-    foreach ( keys %options ) {
-      $self->{object}->__data->{'formats'}{$code}{'sub'}{$_} = $options{$_};
-    }
-  }
-}
-
-sub get_format {
-  my( $self, $code ) = @_;
-  my $formats = $self->{object}->__data->{'formats'};
-  foreach my $super ( keys %$formats ) {
-    foreach ( keys %{$formats->{$super}{'sub'}} ) {
-      return {
-        'super'        => $super,
-        'supername'    => $formats->{$super}{'name'},
-        'superform'    => $formats->{$super}{'form'},
-        'superdisplay' => $formats->{$super}{'display'},
-        'code'         => $_,
-        'name'         => $formats->{$super}{'sub'}{$_}
-      } if $code eq $_;
-    }
-  }
 }
 
 1;
