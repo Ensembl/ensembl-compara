@@ -16,7 +16,7 @@ send the DOI after the Genebuilders
 
 3. Define priorities and assign jobs to the team members.
 
-3bis. The new compara_master database is now kb3_ensembl_compara_master on compara1 
+3bis. The current (rel.56) compara_master database is sf5_ensembl_compara_master on compara1 
 
 4. Add in the master compara database
 (compara1:3306/kb3_ensembl_compara_master) the new entries in the

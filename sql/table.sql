@@ -938,4 +938,4 @@ CREATE TABLE protein_tree_hmmprofile (
 
 
 # Auto add schema version to database
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "54");
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "55");
