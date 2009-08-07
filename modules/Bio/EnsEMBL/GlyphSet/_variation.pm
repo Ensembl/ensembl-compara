@@ -79,12 +79,18 @@ sub title {
           ;
   return "Variation: $vid; Location: $loc; Consequence: $type; Ambiguity code: ".$f->ambig_code;
 }
+
 sub href {
   my ($self, $f)  = @_;
-  my $vid = $f->variation_name;
-  my $dbid = $f->dbID;
-  my $href = $self->_url({'type' => 'Variation', 'action'=>'Variation','v'=>$vid, 'vf' => $dbid, 'snp_fake' => '1' });
-  return $href;
+  
+  return $self->_url({
+    species  => $self->species,
+    type     => 'Variation',
+    action   => 'Variation',
+    v        => $f->variation_name,
+    vf       => $f->dbID,
+    snp_fake => 1
+  });
 }
 
 sub feature_label {

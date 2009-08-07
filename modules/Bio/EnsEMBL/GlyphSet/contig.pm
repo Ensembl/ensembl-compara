@@ -116,7 +116,7 @@ sub _init {
   } else {
     my $msg = 'Golden path gap - no contigs to display!';
     
-    if ($Container->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') && $Container->{'compara'} ne 'primary') {
+    if ($Container->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice') && $self->get_parameter('compara') ne 'primary') {
       $msg = 'Alignment gap - no contigs to display!';
     }
     
@@ -154,6 +154,7 @@ sub _init_non_assembled_contig {
 
     my $action = 'View';
     my $region = $tile->{'name'};
+    my $species = $self->species;
     
     my $dets = {
       'x'         => $rstart - 1,
@@ -162,11 +163,12 @@ sub _init_non_assembled_contig {
       'height'    => $box_h,
       'colour'    => $colours[$i]->[0],
       'absolutey' => 1,
-      'title'     => $region
+      'title'     => $region 
     };
     
-    if ($show_navigation) {
+    if ($show_navigation && $species ne 'Ancestral_sequences') {
       my $url = $self->_url({
+        'species'  => $self->species,
         'type'     => 'Location',
         'action'   => $action,
         'region_n' => $region,
