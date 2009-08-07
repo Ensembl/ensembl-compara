@@ -1,92 +1,27 @@
 package EnsEMBL::Web::Text::FeatureParser;
 
-=head1 NAME
-
-EnsEMBL::Web::Text::FeatureParser;
-
-=head1 SYNOPSIS
-
-This object parses data supplied by the user and identifies sequence locations for use by other Ensembl objects
-
-=head1 DESCRIPTION
-
-  my $parser = EnsEMBL::Web::Text::FeatureParser->new();
-    
-      $parser->parse($data);
-
-=head1 LICENCE
-
-This code is distributed under an Apache style licence:
-Please see http://www.ensembl.org/code_licence.html for details
-
-=head1 CONTACT
-
-=cut
+### This object parses data supplied by the user and identifies sequence locations for use by other Ensembl objects
 
 use strict;
 use warnings;
 no warnings "uninitialized";
-use LWP::UserAgent;
-use HTTP::Request;
-use HTTP::Response;
+use EnsEMBL::Web::Root;
 use Data::Dumper;
-
-use EnsEMBL::Web::Text::FeatureParser::BED;
-use EnsEMBL::Web::Text::FeatureParser::GFF;
-use EnsEMBL::Web::Text::FeatureParser::GTF;
-use EnsEMBL::Web::Text::FeatureParser::PSL;
-use EnsEMBL::Web::Text::FeatureParser::DAS;
-use EnsEMBL::Web::Text::FeatureParser::WIG;
-use EnsEMBL::Web::Text::FeatureParser::GBrowse;
-use EnsEMBL::Web::Text::FeatureParser::ID;
-use EnsEMBL::Web::Text::Feature::generic;
-use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::CompressionSupport;
-
-
-#----------------------------------------------------------------------
-
-=head2 new
-
-  Arg [1]   : Ensembl Object 
-  Function  : creates a new FeatureParser object
-  Returntype: EnsEMBL::Web::Text::FeatureParser
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
 
 sub new {
   my $class = shift;
   my $data = {
-  'filter' => {},
-  'URLs'       => [],
-  'browser_switches' => {},
-  'tracks'       => {},
-  '_current_key'   => 'default',
+  'format'            => '',
+  'has_data'          => 0,
+  'valid_coords'      => {},
+  'browser_switches'  => {},
+  'tracks'            => {},
+  'filter'            => undef,
+  '_current_key'      => 'default',
   };
   bless $data, $class;
   return $data;
 }
-
-sub species_defs {
-  my $self = shift;
-  return $self->{'_species_defs'} ||= EnsEMBL::Web::SpeciesDefs->new(); 
-}
-
-#----------------------------------------------------------------------
-
-=head2 current_key
-
-  Arg [1]   :  
-  Function  : 
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
 
 sub current_key {
   my $self = shift;
@@ -94,501 +29,227 @@ sub current_key {
   return $self->{'_current_key'};
 }
 
-
-#----------------------------------------------------------------------
-
-=head2 format
-
-  Arg [1]   :  
-  Function  : 
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
-
 sub format {
   my $self = shift;
-  $self->{_info}{format} = shift if @_;
-  return $self->{'_info'}->{'format'};
+  $self->{format} = shift if @_;
+  return $self->{'format'};
 }
 
-sub get_format {
-  my $self = shift;
-  return $self->{'_info'}->{'format'};
-}
-
-#----------------------------------------------------------------------
-
-=head2 set_filter
-
-  Arg [1]   :  
-  Function  : 
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
-
-sub set_filter {
-  my $self = shift;
-  $self->{'filter'} = {
-     'chr'  => $_[0] eq 'ALL' ? undef : $_[0],
-     'start'  => $_[1],
-     'end'  => $_[2],
+sub filter {
+  my ($self, @args) = @_;
+  if (scalar(@args) && $args[0] ne 'ALL') {
+    $self->{'filter'} = {
+      'chr'   => $args[0],
+      'start' => $args[1],
+      'end'   => $args[2],
+    };
   }
+  return $self->{'filter'};
 }
-
-
-#----------------------------------------------------------------------
-
-=head2 analyse
-
-  Arg [1]   :  
-  Function  : Analyses a data string (e.g. from a form input), with the intention of identifying file format and other contents
-  Returntype: hash reference 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
-
-sub analyse {
-  my ($self, $data) = @_;
-  return unless $data;
-  my %info;
-  foreach my $row ( split /\n/, $data ) {
-    my @analysis = $self->analyse_row($row);
-    if( $analysis[2] ) {
-      $info{$analysis[0]}{$analysis[1]} = $analysis[2];
-    } else {
-      $info{$analysis[0]} = $analysis[1];
-    }
-  ## Should we halt the analysis once we have a file format? Will any other useful info appear later in the file?
-    last if $analysis[0] eq 'format';
-  }
-
-  $self->format($info{'format'});
-  return \%info;
-}
-
-#----------------------------------------------------------------------
-
-=head2 analyse_row
-
-  Arg [1]   :  
-  Function  : Parses an individual row of data, i.e. a single feature
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
-
-sub analyse_row {
-  my( $self, $row ) = @_;
-  chomp;
-  $row =~ s/[\t\r\s]+$//g;
-  
-  if( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
-    return ('browser_switches', $1, $2);
-  } elsif ($row =~ s/^track\s+(.*)$/$1/i) {
-    my %config;
-    while( $row ne '' ) {
-      if( $row =~ s/^(\w+)\s*=\s*\"([^\"]+)\"// ) {  
-        my $key   = $1;
-        my $value = $2;
-        while( $value =~ s/\\$// && $row ne '') {
-          if( $row =~ s/^([^\"]+)\"\s*// ) {
-            $value .= "\"$1";
-          } else {
-            $value .= "\"$row"; 
-            $row = '';
-          }
-        }
-        $row =~ s/^\s*//;
-        $config{$key} = $value;
-      } 
-      elsif( $row =~ s/(\w+)\s*=\s*(\S+)\s*// ) {
-        $config{$1} = $2;
-      } 
-      else {
-        $row ='';
-      }
-    }
-    if (my $ttype = $config{type}) {
-      return ('format', 'WIG') if ($ttype =~ /wiggle_0/i);
-    }
-  } else {
-    return unless $row =~ /\d+/g ;
-    if( $row =~ /^reference(\s+)?=(\s+)?(.+)/ ) {
-      return ('format', 'GBrowse');
-    }   
-    my @tab_del = split /(\t|  +)/, $row;
-
-    my $current_key = $self->{'_current_key'} ;
-    if( $tab_del[12] eq '.' || $tab_del[12] eq '+' || $tab_del[12] eq '-' ) {
-#      if( $tab_del[16] =~ /^(gene_id|transcript_id) [^;]+(\; (gene_id|transcript_id) [^;]+)?/ ) { ## GTF format
-#        return ('format', 'GTF');   
-#      } else {     ## GFF format
-#        return ('format', 'GFF');   
-#      }
-    } elsif ( $tab_del[14] eq '+' || $tab_del[14] eq '-' || $tab_del[14] eq '.') { # DAS format accepted by Ensembl
-      return ('format', 'DAS');   
-    } else {
-     # warn "@@@ GENERIC/PSL FORMAT";
-      my @ws_delim = split /\s+/, $row;
-      if (scalar @ws_delim == 1 ){ ## one element per line assume we have list of stable IDs
-        return ('format', 'ID');
-      } elsif( $ws_delim[8] =~/^[-+][-+]?$/  ) { ## PSL format
-        return ('format', 'PSL');   
-      } elsif ($ws_delim[0] =~/^>/ ) {  ## Simple format (chr/start/end/type
-        return ('format', 'generic');   
-      } else { 
-        my $fcount = scalar(@ws_delim);
-        if ($fcount > 2 and $fcount < 13) {
-          if ($ws_delim[1] =~ /\d+/ && $ws_delim[2] =~ /\d+/) {
-            return ('format', 'BED');   
-          }
-        }
-      }
-    } 
-  }
-}
- 
-#----------------------------------------------------------------------
-
-=head2 parse
-
-  Arg [1]   :  
-  Function  : Parses a data string (e.g. from a form input)
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
 
 sub parse {
   my ($self, $data, $format) = @_;
-  return unless $data;
-  foreach my $row ( split /\n/, $data ) { 
-    $self->parse_row($row, $format);
-  }
+  return 'No data supplied' unless $data;
 
+  my $error = $self->check_format($data, $format);
+  if ($error) {
+    warn "!!! PARSER ERROR $error";
+    return $error;
+  }
+  else {
+    warn ">>> PARSING DATA $format";
+    $format = uc($self->format);
+    my $filter = $self->filter;
+
+    ## Some complex formats need extra parsing capabilities
+    if ($format eq 'WIG' || $format eq 'GBROWSE') {
+      my $new_class = '__PACKAGE__'."::$format";
+      bless $self, $new_class;
+    }
+
+    ## Create an empty feature that gives us access to feature info
+    my $feature_class = 'EnsEMBL::Web::Text::Feature::'.uc($format); 
+    my $empty = $feature_class->new();
+
+    foreach my $row ( split /\n/, $data ) {
+
+      ## Skip crap and clean up what's left
+      next unless $row;
+      next if $row =~ /^#/;
+      $row =~ s/[\t\r\s]+$//g;
+
+      ## Parse as appropriate
+      if ( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
+        $self->{'browser_switches'}{$1} = {$2};
+      }
+      elsif ($row =~ /^track/) {
+        $row =~ s/^track\s+(.*)$/$1/i; 
+        $self->add_track($row);
+      }
+      else {
+        my $columns;
+        if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') {
+          ## 'Normal' format consisting of a straightforward feature
+          ($columns) = $self->split_into_columns($row);
+        }
+        else {
+          ## Complex format requiring special parsing (e.g. WIG)
+          $columns = $self->parse_row($row);
+        }
+        if ($columns && scalar(@$columns)) {
+          ## Optional - filter content by location
+          if ($filter) {
+            my ($chr, $start, $end) = $empty->coords($columns);
+            if ($chr eq $filter->{'chr'} || $chr eq 'chr'.$filter->{'chr'}) {
+              if ($filter->{'start'} && $filter->{'end'}) {
+                next unless $start >= $filter->{'start'} && $end <= $filter->{'end'};
+              }
+            }
+            else {
+              next;
+            }
+          }
+          ## Check the coordinates are valid for this assembly
+
+          ## Everything OK, so store
+          my $feature = $feature_class->new($columns);
+          $self->store_feature($feature);
+        }
+      }
+    }
+  }
 }
 
-sub parse_old {
+sub split_into_columns {
+  my ($self, $row) = @_;
+  my @columns;
+  my $tabbed = 0;
+  if ($row =~ /\t/) {
+    @columns = split /\t/, $row;
+    $tabbed = 1;
+  }
+  else {
+    @columns = split /\s/, $row;
+  }
+  @columns = grep /\S/, @columns;
+  return (\@columns, $tabbed);
+}
+
+sub check_format {
   my ($self, $data, $format) = @_;
-  return unless $data;
-  if (!$format) {
-    my $info = $self->analyse($data);
-    $format = $info->{'format'};
-  }
-  foreach my $row ( split /\n/, $data ) {
-   $self->parse_row($row, $format);
-  }
-}
 
-#----------------------------------------------------------------------
-
-=head2 parse_file
-
-  Arg [1]   :  
-  Function  : 
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
-
-sub parse_file {
-  my( $self, $file, $format ) = @_; 
-  return unless $file;
-
-  if( !$format ) {
-    while( <$file> ) {
-      my @analysis = $self->analyse_row( $_ );
-      if( $analysis[0] eq 'format') {
-        $format = $analysis[1];
+  unless ($format) {
+    foreach my $row ( split /\n/, $data ) {
+      next unless $row;
+      next if $row =~ /^#/;
+      next if $row =~ /^browser/; 
+      last if $format;
+      if ($row =~ /^reference/i) {
+        $format = 'GBROWSE';
         last;
       }
-    }   
-  }
-
-  while( <$file> ) {
-    $self->parse_row( $_, $format );
-  }   
-}
-
-#----------------------------------------------------------------------
-
-=head2 parse_URL
-
-  Arg [1]   :  
-  Function  : 
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
-
-sub parse_URL {
-  my( $self, $url, $format ) = @_;
-  my $useragent = LWP::UserAgent->new();  
-  $useragent->proxy( 'http', $self->species_defs->ENSEMBL_WWW_PROXY ) if( $self->species_defs->ENSEMBL_WWW_PROXY );   
-  foreach my $URL ( $url ) {  
-    my $request = new HTTP::Request( 'GET', $URL );
-    $request->header( 'Pragma'       => 'no-cache' );
-    $request->header( 'Cache-control' => 'no-cache' );
-    my $response = $useragent->request($request); 
-    if( $response->is_success ) {
-      my $content = $response->content;
-      EnsEMBL::Web::CompressionSupport::uncomp( \$content ); 
-      if (!$format) {
-        my $info = $self->analyse( $content );
-        $format = $info->{'format'};
-      }
-      $self->parse( $content, $format );
-    } else {
-       warn( "Failed to parse: $URL" );
-    }
-  }   
-}
-
-#----------------------------------------------------------------------
-
-=head2 parse_row
-
-  Arg [1]   :  
-  Function  : Parses an individual row of data, i.e. a single feature
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
-
-sub parse_row {
-  my( $self, $row, $format ) = @_; 
-  return if ($row =~ /^\#/);
-  $row =~ s/[\t\r\s]+$//g; 
-
-  if( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
-    $self->{'browser_switches'}{$1}=$2;   
-  } elsif ($row =~ s/^track\s+(.*)$/$1/i) {
-    my %config;
-    while( $row ne '' ) {
-      if( $row =~ s/^(\w+)\s*=\s*"([^"]+)"// ) {  
-        my $key   = $1;
-        my $value = $2;
-        while( $value =~ s/\\$// && $row ne '') {
-          if( $row =~ s/^([^"]+)"\s*// ) {
-            $value .= "\"$1";
-          } else {
-            $value .= "\"$row"; 
-            $row = '';
-          }
+      elsif ($row =~ /^track\s+/i) {
+        if ($row =~ /type = wiggle/) {
+          $format = 'WIG';
+          last;
         }
-        $row =~ s/^\s*//;
-        $config{$key} = $value;
-      } elsif( $row =~ s/(\w+)\s*=\s*(\S+)\s*// ) {
-        $config{$1} = $2;
-      } else {
-        $row ='';
+        next;
       }
-    } 
- 
-    $config{'name'} ||= 'default';
-    my $current_key = $config{'name'};# || 'default';  
-    $self->{'tracks'}{ $current_key } ||= { 'features' => [], 'config' => \%config };
-    $self->{'_current_key'} = $current_key;
-  } else { 
-    unless ( $format eq 'ID' ) { return unless $row =~ /\d+/g ; }
-    my @tab_del = split /(\t|  +)/, $row;
-    my $current_key = $self->{'_current_key'} ;
-    if ($format eq 'GTF')  {
-      $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GTF->new( \@tab_del ) ) 
-        if $self->filter($tab_del[0],$tab_del[6],$tab_del[8]);
+      else {
+        ## Parse a row of actual data
+        $format = $self->analyse_row($row);
+      }
     }
-    elsif ( $format eq 'GFF' ) { 
-      $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::GFF->new( \@tab_del ) ) 
-        if $self->filter($tab_del[0],$tab_del[6],$tab_del[8]);
-    } elsif( $format eq 'DAS' ) { 
-#      $current_key = $tab_del[2] if $current_key eq 'default';
-      $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::DAS->new( \@tab_del ) ) 
-        if $self->filter($tab_del[8],$tab_del[10],$tab_del[12]);
-    } else {
-      my @ws_delim = split /\s+/, $row; 
-      if( $format eq 'PSL' ) {
-        $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::PSL->new( \@ws_delim ) ) 
-          if $self->filter($ws_delim[13],$ws_delim[15],$ws_delim[16]);
-      } elsif ( $format eq 'ID' ) {
-        $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::ID->new( \@ws_delim ) )
-      } elsif( $format eq 'BED' ) {
-#        $current_key = $ws_delim[3] if $current_key eq 'default';
-        $self->store_feature( $current_key, EnsEMBL::Web::Text::Feature::BED->new( \@ws_delim ) )
-          if $self->filter($ws_delim[0],$ws_delim[1],$ws_delim[2]);
-      } else {
-        $self->store_feature( $ws_delim[4], EnsEMBL::Web::Text::Feature::generic->new( \@ws_delim ) ) 
-          if $self->filter($ws_delim[1],$ws_delim[2],$ws_delim[3]);
-      } 
+  }
+
+  ## Sanity check - can we actually parse this?
+  if (!$format || !(EnsEMBL::Web::Root::dynamic_use(undef, 'EnsEMBL::Web::Text::Feature::'.uc($format))) ) {
+    return 'Unrecognised format';
+  }
+
+  $self->format($format);
+  return undef;
+}
+
+sub analyse_row {
+### Parses an individual row of data, i.e. a single feature
+  my( $self, $row ) = @_;
+  my $format;
+
+  return unless $row =~ /\d+/g ;
+  ## Remove trailing white space
+  $row =~ s/[\t\r\s]+$//g;
+ 
+  ## Split row into columns by either tabs or whitespaces, then remove empty values 
+  my ($columns, $tabbed) = $self->split_into_columns($row);
+
+  if (scalar(@$columns) == 1) {
+    ## one element per line assume we have list of stable IDs
+    $format = 'ID';
+  }
+  elsif (scalar(@$columns) == 21 && $columns->[8] =~/^[-+][-+]?$/) {
+    $format = 'PSL';   
+  }
+  elsif ($tabbed && _is_strand($columns->[7])) {
+    if ($columns->[8] =~ /(; )+/ && $columns->[8] =~ /^[gene_id|transcript_id]/) {
+      $format = 'GTF';   
     } 
+    else {
+      $format = 'GFF';   
+    }
+  } 
+  elsif ( _is_strand($columns->[9])) { # DAS format accepted by Ensembl
+    $format = 'DAS';   
+  } 
+  elsif ($columns->[0] =~ /^>/ ) {  ## Simple format (chr/start/end/type
+    $format = 'GENERIC';   
+  } 
+  elsif (scalar(@$columns) > 2 && scalar(@$columns) < 13 && $columns->[1] =~ /\d+/ && $columns->[2] =~ /\d+/) { 
+    $format = 'BED';   
+  }
+  return $format;
+}
+
+sub _is_strand {
+  my $value = shift;
+  if ($value eq '+' || $value eq '-' || $value eq '.') {
+    return 1;
+  }
+  else {
+    return 0;
   }
 }
 
-#----------------------------------------------------------------------
+sub add_track {
+  my ($self, $row) = @_;
+  my $config = {'name' => 'default'};
 
-=head2 
+  ## Pull out any parameters with quote-delimited strings
+  while ($row =~ s/(\w+)="(\w+|\s*)"//g) {
+    $config->{$1} = $2;
+  }
+  ## Split on any remaining white space
+  if ($row) {
+    while ($row =~ /(\w+)=(\S+)/g) {
+      $config->{$1} = $2;
+    }
+  }
 
-  Arg [1]   :  
-  Function  : stores a feature in the parser object
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
-
-sub store_feature {
-  my ( $self, $key, $feature ) = @_; 
-  push @{$self->{'tracks'}{$key}{'features'}}, $feature;
+  $self->current_key($config->{'name'});
+  $self->{'tracks'}{ $self->current_key } = { 'features' => [], 'config' => $config };
 }
-
-#----------------------------------------------------------------------
-
-=head2 
-
-  Arg [1]   :  
-  Function  : 
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
+ 
+sub store_feature {
+  my ( $self, $feature ) = @_; 
+  #warn $self->current_key." = FEATURE ".Dumper($feature);
+  push @{$self->{'tracks'}{$self->current_key}{'features'}}, $feature;
+}
 
 sub get_all_tracks{$_[0]->{'tracks'}}
-
-#----------------------------------------------------------------------
-
-=head2 
-
-  Arg [1]   :  
-  Function  : 
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
 
 sub fetch_features_by_tracktype{
   my ( $self, $type ) = @_;
   return $self->{'tracks'}{ $type }{'features'} ;
 }
-
-#----------------------------------------------------------------------
-
-=head2 
-
-  Arg [1]   :  
-  Function  : 
-  Returntype: 
-  Exceptions: 
-  Caller  : 
-  Example   : 
-
-=cut
-
-sub filter {
-  my ( $self, $chr, $start, $end) = @_;
-  return ( ! $self->{'filter'}{'chr'}   || $chr eq 'chr'.$self->{'filter'}{'chr'} 
-        || $chr eq $self->{'filter'}{'chr'}   ) &&
-     ( ! $self->{'filter'}{'end'}   || $start <= $self->{'filter'}{'end'}   ) &&
-     ( ! $self->{'filter'}{'start'} || $end   >= $self->{'filter'}{'start'} )  ;
-}
-
-sub _check_data_row {
-  my $self = shift;
-  my @formatCheck = $self->my_spec;
-
-  my @fields = ();
-  for (my $i=0; $i<$#fields; $i++) {
-    my $check = $formatCheck[$i] or return 'Unexpected field';
-    my $regexp = $check->{'regexp'} or next; # Field can contain anything
-    if ($fields[$i] =~ /$regexp/) {
-      $formatCheck[$i]->{check_fail} = 0;
-    } else {
-      return 'Illegal field entry';
-    }
-  }
-  
-  foreach my $f (@formatCheck) {
-    return 'Missing required field' if ($f->{'check_fail'});
-  }
-  
-  return;
-}
-
-sub init {
-  my ($self, $data) = @_;
-  return unless $data;
-
-  my %info;
-  my $has_data = 0;
-  foreach my $row ( split '\n', $data ) {
-    next unless $row;
-    $has_data++;
-    my @analysis = $self->analyse_row($row);
-    if( $analysis[2] ) {
-      $info{$analysis[0]}{$analysis[1]} = $analysis[2];
-    } else {
-      $info{$analysis[0]} = $analysis[1];
-    }
-    ## Should we halt the analysis once we have a file format? Will any other useful info appear later in the file?
-    last if $analysis[0] eq 'format'; 
-    ## Yes it will all to do with what is in the file! but we can leave this for the moment!
-  }
-  $info{'count'} = $has_data;
-  if (my $format = $info{'format'}) {
-#     my $p =  __PACKAGE__."::$format";
-#     $self = $p->new();
-    bless $self, __PACKAGE__."::$format";
-  }
-  $self->{_info} = \%info;
-  return $self;
-}
-
-
-sub init_density {
-  ## Hack to make init work with userdata density tracks
-  my ($self, $data) = @_;
-  return unless $data;
-
-  my %info;
-  my $has_data = 0;
-  foreach my $row ( split '\n', $data ) {
-    next unless $row;
-    $has_data++;
-    my @analysis = $self->analyse_row($row);
-    if( $analysis[2] ) {
-      $info{$analysis[0]}{$analysis[1]} = $analysis[2];
-    } else {
-      $info{$analysis[0]} = $analysis[1];
-    }
-    ## Should we halt the analysis once we have a file format? Will any other useful info appear later in the file?
-    last if $analysis[0] eq 'format';
-    ## Yes it will all to do with what is in the file! but we can leave this for the moment!
-  }
-  $info{'count'} = $has_data;
-  $self->{_info} = \%info;
-  return $self;
-}
-
 
 1;
