@@ -45,11 +45,11 @@ sub _init {
     ]
   };
 
-  if(! ($self->{'config'}->{'align_slice'})) {
+  if (!$self->{'config'}->{'align_slice'}) {
     # in case of AlignSlice - don't display navigation buttons
     push @{$SPRITES->{'nav'}},
       ['flip_strand'    => 'flip'],
-      ['set_as_primary' => 'primary'] if ($self->{'config'}->get_parameter('compara') eq 'secondary');
+      ['set_as_primary' => 'primary'] if $self->get_parameter('compara') eq 'secondary';
 
     foreach my $key ( keys %$SPRITES ) {
       my( $pos, $step,  @sprite_array ) =  @{$SPRITES->{$key}};
@@ -85,7 +85,8 @@ sub _init {
     'absolutey'     => 1,
   });
   $self->join_tag( $line, "bracket", 0,0, 'black' );
-  if( $self->{'config'}->{'_parameters'}{'compara'} eq 'primary' ) {
+  
+  if ($self->get_parameter('compara') eq 'primary') {
     $self->join_tag( $line, "bracket2", 0.9,0, 'rosybrown1', 'fill', -40 );
     $self->join_tag( $line, "bracket2", 0,0, 'rosybrown1', 'fill', -40 );
   }
