@@ -87,7 +87,6 @@ sub get_attributes {
   return unless $actions{'title'} || $actions{'href'};
   
   $actions{'alt'} ||= '';
-  $actions{'class'} = 'vdrag' if $actions{'href'} =~ /#vdrag/;
 
   return join '', map qq{ $_="$actions{$_}"}, keys %actions;
 }
