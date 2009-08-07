@@ -4,6 +4,7 @@ use base qw(Bio::EnsEMBL::GlyphSet::V_density);
 use EnsEMBL::Web::Text::DensityFeatureParser;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Tools::Misc;
 
 ### Fetches userdata and munges it into a basic format 
 ### for rendering by the parent module
@@ -38,19 +39,19 @@ sub data {
     my $parser = EnsEMBL::Web::Text::DensityFeatureParser->new();
     $parser->no_of_bins($bins);
     $parser->bin_size($bin_size);
-    unless ($self->{'config'}{'all_chromosome'} eq 'yes') {
-      $parser->set_filter($chr);
+    unless ($self->{'config'}{'all_chromosomes'} eq 'yes') {
+      $parser->filter($chr);
     }
 
     if ($type eq 'url') {
-      $parser->parse_URL( $self->my_config('source') );
+      my $data = EnsEMBL::Web::Tools::Misc::get_url_content( $self->my_config('source') );
+      $parser->parse($data);
     }
     else {
       my $file = new EnsEMBL::Web::TmpFile::Text( filename => $self->my_config('source') );
       my $content = $file->retrieve;
       return undef unless $content;
 
-      $parser->init_density($content);
       $parser->parse($content, $self->my_config('format') );
     }
 

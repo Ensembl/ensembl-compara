@@ -6,6 +6,7 @@ no warnings 'uninitialized';
 
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Tools::Misc;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 
@@ -58,7 +59,8 @@ sub features {
   $parser->set_filter( $self->{'container'}->seq_region_name, $self->{'container'}->start, $self->{'container'}->end );
   $self->{'parser'} = $parser;
   if( $sub_type eq 'url' ) {
-    $parser->parse_URL( $self->my_config('url') );
+    my $data = EnsEMBL::Web::Tools::Misc::get_url_content($self->my_config('url') );
+    $parser->parse($data);
   } else {
     my $file = new EnsEMBL::Web::TmpFile::Text( filename => $self->my_config('file') );
     
@@ -68,7 +70,6 @@ sub features {
     
     return [] unless $data;
     
-    $parser->init($data);
     $parser->parse($data, $self->my_config('format') );
   }
 
