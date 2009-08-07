@@ -134,7 +134,7 @@ sub dbadaptor  {
 }
 sub species {
   my $self = shift;
-  return $self->{'container'}{'web_species'};
+  return $self->{'config'}{'species'} || $self->{'container'}{'web_species'};
 }
 sub timer_push {
   my($self,$capt,$dep,$flag) = @_;
@@ -209,26 +209,29 @@ sub init_label {
   my $self = shift;
   return $self->label(undef) if defined $self->{'config'}->{'_no_label'};
   
-  my $text = $self->my_config( 'caption' );
+  my $text = $self->my_config('caption');
+  
   return $self->label(undef) unless $text;
-  my $name = $self->my_config( 'name'    );
-  my $desc = $self->my_config( 'description' );
+  
+  my $name = $self->my_config('name');
+  my $desc = $self->my_config('description');
+  my $title = "$name; $desc" if $desc;
   
   my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
   my $font = $ST->{'GRAPHIC_FONT'};
   my $fsze = $ST->{'GRAPHIC_FONTSIZE'} * $ST->{'GRAPHIC_LABEL'};
 
-  my @res = $self->get_text_width(0,$text,'','font'=>$font,'ptsize'=>$fsze);
+  my @res = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
 
-  $self->label( $self->Text({
-    'text'      => "$text",
+  $self->label($self->Text({
+    'text'      => $text,
     'font'      => $font,
     'ptsize'    => $fsze,
-    'title'     => "$name; $desc",
-    'href'      => '#'.$self->_url({ 'contigviewbottom', $self->{'my_config'}->key.'=off'}),
+    'title'     => $title,
     'colour'    => $self->{'label_colour'} || 'black',
-    'absolutey' =>1,'height'=>$res[3]}
-  ));
+    'absolutey' => 1,
+    'height'    => $res[3]
+  }));
 }
 
 sub species_defs {

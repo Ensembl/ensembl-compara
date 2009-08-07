@@ -46,9 +46,7 @@ sub render_collapsed {
 
   my $y             = 0;
   my $h             = 8;
-
-  my %highlights;
-  @highlights{$self->highlights} = ();    # build hashkeys of highlight list
+  
   my %used_colours  = ();
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
@@ -79,7 +77,7 @@ sub render_collapsed {
     my $gene_key          = $self->gene_key( $gene );
 
     my $Composite            = $self->Composite({'y'=>$y,'height'=>$h, 'title' => $self->gene_title( $gene ) });
-       $Composite->{'href'}  = $self->gene_href( $gene, %highlights );
+       $Composite->{'href'}  = $self->gene_href($gene);
 
     my $colour  = $self->my_colour( $gene_key );
     my $label   = $self->my_colour( $gene_key , 'text' );
@@ -161,7 +159,6 @@ sub render_collapsed {
             'absolutey' => 1,
           }));
           $bump_height += $th+1;
-#          warn "$line -> $th - $th2";
         }
       }
     }
@@ -187,14 +184,6 @@ sub render_collapsed {
       'priority' => $self->_pos,
       'legend'   => \@legend
     };
-
-    ## my ($key, $priority, $legend) = $self->legend( $colours );
-    # define which legend_features should be displayed
-    # this is being used by GlyphSet::gene_legend
-    ## $Config->{'legend_features'}->{$key} = {
-    ##  'priority' => $priority,
-    ##  'legend'   => $legend
-    ## } if defined($key);
   } elsif( $Config->get_parameter( 'opt_empty_tracks')!=0) {
     $self->errorTrack( "No ".$self->error_track_name()." in this region" );
   }
@@ -217,13 +206,9 @@ sub render_transcripts {
   my $selected_trans= $self->core('t');
     
   my $y             = 0;
-  my $h             = $self->my_config('height') || ( $target ? 30 : 8 );
-                        #Single transcript mode - set height to 30 - width to 8!
+  my $h             = $self->my_config('height') || ( $target ? 30 : 8 ); #Single transcript mode - set height to 30 - width to 8!
   my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
   my $non_coding_start  = ($h-$non_coding_height)/2;
-    
-  my %highlights;
-  @highlights{$self->highlights} = ();    # build hashkeys of highlight list
 
   my %used_colours  = ();
   my $pix_per_bp    = $self->scalex;
@@ -292,7 +277,7 @@ sub render_transcripts {
       $transcript_drawn=1;        
 
       my $Composite = $self->Composite({'y'=>$y,'height'=>$h,'title'=>$self->title($transcript,$gene) });
-         $Composite->{'href'} = $self->href( $gene, $transcript, %highlights );
+         $Composite->{'href'} = $self->href($gene, $transcript);
 
       my $colour_key = $self->transcript_key($transcript,$gene);
       my $colour  = $self->my_colour( $colour_key );
@@ -496,19 +481,11 @@ sub render_transcripts {
       'priority' => $self->_pos,
       'legend'   => \@legend
     };
-
-    ## my ($key, $priority, $legend) = $self->legend( $colours );
-    # define which legend_features should be displayed
-    # this is being used by GlyphSet::gene_legend
-    ## $Config->{'legend_features'}->{$key} = {
-    ##  'priority' => $priority,
-    ##  'legend'   => $legend
-    ## } if defined($key);
   } elsif( $Config->get_parameter( 'opt_empty_tracks')!=0) {
     $self->errorTrack( "No ".$self->error_track_name()." in this region" );
   }
 }
-      
+
 sub render_alignslice_transcript {
   my ($self, $labels) = @_;
 
@@ -536,24 +513,24 @@ sub render_alignslice_transcript {
   my %used_colours;
   
   $self->_init_bump;
-    
+  
   foreach my $gene (@{$self->features}) {
     my $gene_strand = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
     
     next if $gene_strand != $strand && $strand_flag eq 'b'; # skip features on wrong strand
     next if $target_gene && $gene_stable_id ne $target_gene;
-
+    
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
       next if $transcript->start > $length || $transcript->end < 1;
       
       my @exons = $self->map_AlignSlice_Exons($transcript, $length);
       
       next if scalar @exons == 0;
-
+      
       # For exon_structure diagram only given transcript
       next if $target && $transcript->stable_id ne $target;
-
+      
       $transcript_drawn = 1;
       
       my $Composite = $self->Composite({ 
@@ -586,13 +563,13 @@ sub render_alignslice_transcript {
       # now draw exons
       for (my $i = 0; $i < scalar @exons; $i++) {
         my $exon = @exons[$i];
-         
+        
         next unless defined $exon; # Skip this exon if it is not defined (can happen w/ genscans) 
         last if $exon->start > $length; # We are finished if this exon starts outside the slice
         
         my ($box_start, $box_end);
-        # only draw this exon if is inside the slice
         
+        # only draw this exon if is inside the slice
         if ($exon->end > 0) { # calculate exon region within boundaries of slice
           $box_start = $exon->start;
           $box_start = 1 if $box_start < 1 ;
@@ -708,8 +685,8 @@ sub render_alignslice_transcript {
           for (my $i = 0; $i < scalar @lines; $i++) {
             my $line = $lines[$i];
             my ($txt, $bit, $w, $th) = $self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname);
-
-            $Composite->push( $self->Text({
+            
+            $Composite->push($self->Text({
               x         => $Composite->x,
               y         => $y + $h + $i * ($th + 1),
               height    => $th,
@@ -726,7 +703,7 @@ sub render_alignslice_transcript {
           }
         }
       }
-        
+      
       # bump
       my $bump_start = int($Composite->x * $pix_per_bp);
       my $bump_end = $bump_start + int($Composite->width * $pix_per_bp) + 1;
@@ -737,7 +714,7 @@ sub render_alignslice_transcript {
       $Composite->y($Composite->y - $strand * $bump_height * $row);
       $Composite->colour($hilight) if defined $hilight && !defined $target;
       $self->push($Composite);
-        
+      
       if ($target) {
         # check the strand of one of the transcript's exons
         my ($trans_exon) = @{$transcript->get_all_Exons};
@@ -800,7 +777,7 @@ sub render_alignslice_transcript {
 
 sub render_alignslice_collapsed {
   my ($self, $labels) = @_;
-
+  
   return $self->render_text('transcript') if $self->{'text_export'};
 
   my $Config      = $self->{'config'};
@@ -843,7 +820,7 @@ sub render_alignslice_collapsed {
     my $hilight    = $selected_db eq $db && $selected_gene eq $gene_stable_id && $gene_stable_id ? 'highlight1' : undef;
     
     ($colour, $label) = ('orange', 'Other') unless $colour;
-
+    
     $used_colours{$label} = $colour;
     
     my @exons;
@@ -853,11 +830,11 @@ sub render_alignslice_collapsed {
       next if $transcript->start > $length ||  $transcript->end < 1;
       push @exons, $self->map_AlignSlice_Exons($transcript, $length);
     }
-
+    
     next unless @exons;
-
+    
     my $Composite2 = $self->Composite({ y => $y, height => $h });
-  
+    
     # All exons in the gene will be connected by a simple line which starts from a first exon if it within the viewed region, otherwise from the first pixel. 
     # The line ends with last exon of the gene or the end of the image
     my $start = $exons[0]->{'exon'}->{'etype'} eq 'B' ? 1 : 0;       # Start line from 1 if there are preceeding exons    
@@ -865,7 +842,7 @@ sub render_alignslice_collapsed {
     
     # Get only exons in view
     my @exons_in_view = grep { $_->{'exon'}->{'etype'} =~ /[NM]/} @exons;
-
+    
     # Set start and end of the connecting line if they are not set yet
     $start ||= $exons_in_view[0]->start;
     $end   ||= $exons_in_view[-1]->end;
@@ -889,7 +866,7 @@ sub render_alignslice_collapsed {
         absolutey => 1
       }));
     }
-
+    
     # Draw connecting line
     $Composite2->push($self->Rect({
       x         => $start, 
@@ -909,9 +886,9 @@ sub render_alignslice_collapsed {
         $self->join_tag($Composite2, $_, 1, $self->strand == -1 ? 0 : 1, 'grey60');
       }
     }
-
+    
     $Composite->push($Composite2);
-
+    
     my $bump_height = $h + 2;
     
     if ($self->my_config('show_labels') ne 'off' && $labels) {
@@ -941,7 +918,7 @@ sub render_alignslice_collapsed {
         }
       }
     }
-
+    
     # bump
     my $bump_start = int($Composite->x * $pix_per_bp);
     my $bump_end = $bump_start + int($Composite->width * $pix_per_bp) + 1;
@@ -953,7 +930,7 @@ sub render_alignslice_collapsed {
     $Composite->colour($hilight) if defined $hilight;
     $self->push($Composite);
   }
-    
+  
   if ($transcript_drawn) {
     my $type = $self->_type;
     my @legend = %used_colours;
@@ -1151,9 +1128,6 @@ sub render_genes {
   my $FONTSIZE       = $self->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONTSIZE'} *
                        $self->species_defs->ENSEMBL_STYLE->{'GRAPHIC_OUTERTEXT'};
 
-  my %highlights;
-  @highlights{$self->highlights} = ();    # build hashkeys of highlight list
-
   $self->_init_bump();
   my $vc_length      = $vc->length;
   my $pix_per_bp     = $self->scalex;
@@ -1195,7 +1169,6 @@ sub render_genes {
 
     my $gene_type  = $self->my_colour( $gene_key, 'text' );
     my $label      = $g->external_name || $g->stable_id;
-#    my $high = exists $highlights{ lc($gene_label) } || exists $highlights{ lc($g->stable_id) };
     my $high = $g->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'g'};
 
     my $start = $g->start;
@@ -1307,21 +1280,8 @@ my($a,$b,$c,$H) = $self->get_text_width( 0,'X_y','','font'=>$FONT,'ptsize'=>$FON
         })) if $gr->{'highlight'};
       }
     }
-    #$Config->{'legend_features'}->{$type} = {
-#      'priority' => $Config->get( $type, 'pos' ),
-#      'legend'  => $self->legend( $used_colours )
-#    };
   }
 }
-
-#sub legend {
-#  my( $self, $colours ) = @_;
-#  my @legend = ();
-#  my %X;
-#  foreach my $Y ( values %$colours ) { $X{$Y->[1]} = $Y->[0]; }
-#  my @legend = %X;
-#  return \@legend;
-#}
 
 sub render_text {
   my $self = shift;
