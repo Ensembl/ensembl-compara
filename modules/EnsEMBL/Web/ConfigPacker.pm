@@ -128,9 +128,14 @@ sub _summarise_core_tables {
   );
   my $date;
   foreach my $a_aref (@$r_aref){
-    $date = $a_aref->[0];     
+    $date = $a_aref->[0];
   } 
   if ($date) { $self->db_tree->{'REPEAT_MASK_DATE'} = $date; }
+
+  #get website version the db was first released on - needed for Vega BLAST auto configuration
+  (my $initial_release) = $dbh->selectrow_array(qq(SELECT meta_value FROM meta WHERE meta_key = 'initial_release.version'));
+  if ($initial_release) { $self->db_tree->{'DB_RELEASE_VERSION'} = $initial_release; }
+
 ## 
 ## Let us get analysis information about each feature type...
 ##
@@ -374,7 +379,7 @@ sub _summarise_funcgen_db {
     '       
   );
   my $sth = $dbh->prepare(
-    'select count(pf.probe_feature_id)
+    'select pf.probe_feature_id
        from array_chip ac, probe p, probe_feature pf, seq_region sr, coord_system cs
        where ac.array_chip_id=p.array_chip_id and p.probe_id=pf.probe_id  
        and pf.seq_region_id=sr.seq_region_id and sr.coord_system_id=cs.coord_system_id 
@@ -386,9 +391,11 @@ sub _summarise_funcgen_db {
     my $array_name = $row->[0] .':'. $row->[1];
     $sth->bind_param(1, $row->[2]);
     $sth->execute;
-    my $count = $sth->fetchrow_array(); #warn $array_name ." ". $count;
-    if (exists $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$array_name} ) {warn "FOUND";}
-    $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$array_name} = $count;
+    my $count = $sth->fetchrow_array();# warn $array_name ." ". $count;
+    if( exists $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$array_name} ) {
+      warn "FOUND";
+    }
+    $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$array_name} = $count ? 1 : 0;
   }
   $sth->finish;
 #
@@ -959,7 +966,7 @@ sub _configure_blast {
   $species =~ s/ /_/g;
   my $method = $self->full_tree->{'MULTI'}{'ENSEMBL_BLAST_METHODS'};
   foreach my $blast_type (keys %$method) { ## BLASTN, BLASTP, BLAT, etc
-		next unless ref($method->{$blast_type}) eq 'ARRAY';
+    next unless ref($method->{$blast_type}) eq 'ARRAY';
     my @method_info = @{$method->{$blast_type}};
     my $search_type = uc($method_info[0]); ## BLAST or BLAT at the moment
     my $sources = $self->full_tree->{'MULTI'}{$search_type.'_DATASOURCES'};
@@ -984,20 +991,21 @@ sub _configure_blast {
         if ($search_type ne 'BLAT') {
           $type =~ s/latestgp(.*)/dna$1\.toplevel/;
           $type =~ s/.masked/_rm/;
-          my $repeat_date = $self->db_tree->{'REPEAT_MASK_DATE'};;
+          my $repeat_date = $self->db_tree->{'REPEAT_MASK_DATE'} || $self->db_tree->{'DB_RELEASE_VERSION'};
           my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $repeat_date, $type ).".fa";
-          #print "AUTOGENERATING $source......$new_file\t";
+#          print "AUTOGENERATING $source_type......$file\n";
           $tree->{$blast_type.'_DATASOURCES'}{$source_type} = $file;
         }
       } 
       else {
         $type = "ncrna" if $type eq 'rna.nc';
-        my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $SiteDefs::ENSEMBL_VERSION, $type ).".fa";
-        #print "AUTOGENERATING $source......$new_file\t";
+	my $version = $self->db_tree->{'DB_RELEASE_VERSION'} || $SiteDefs::ENSEMBL_VERSION;
+        my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $version, $type ).".fa";
+#        print "AUTOGENERATING $source_type......$file\n";
         $tree->{$blast_type.'_DATASOURCES'}{$source_type} = $file;
       }
     }
-    #warn "TREE $blast_type = ".Dumper($tree->{$blast_type.'_DATASOURCES'});
+#    warn "TREE $blast_type = ".Dumper($tree->{$blast_type.'_DATASOURCES'});
   }
 }
 
