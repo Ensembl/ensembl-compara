@@ -190,7 +190,7 @@ my $help;
 
 my $reg_conf;
 my $compara;
-my $species;
+my $species = "";
 my $species_name;
 my $taxon_id;
 my $force = 0;
