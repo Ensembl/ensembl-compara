@@ -41,7 +41,7 @@ sub get_url_content {
   }
   else {
     my $content  = $response->content;
-    return { 'content' => EnsEMBL::Web::CompressionSupport::uncomp( \$content ); }
+    return { 'content' => EnsEMBL::Web::CompressionSupport::uncomp( \$content ) }
   }
 }
 
