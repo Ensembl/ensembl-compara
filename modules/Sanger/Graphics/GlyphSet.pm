@@ -80,8 +80,9 @@ sub glob_bp {
 #);
 
 sub join_tag {
-  my( $self, $glyph, $tag, $x_pos, $y_pos, $col, $style, $zindex, $href, $alt ) = @_;
-  if( ref($x_pos) eq 'HASH' ) {
+  my ($self, $glyph, $tag, $x_pos, $y_pos, $col, $style, $zindex, $href, $alt, $class) = @_;
+  
+  if (ref $x_pos eq 'HASH') {
     CORE::push @{$self->{'tags'}{$tag}}, {
       %$x_pos,
       'glyph' => $glyph
@@ -89,13 +90,14 @@ sub join_tag {
   } else {
     CORE::push @{$self->{'tags'}{$tag}}, {
       'glyph' => $glyph,
-      'x'   => $x_pos,
-      'y'   => $y_pos,
+      'x'     => $x_pos,
+      'y'     => $y_pos,
       'col'   => $col, 
       'style' => $style,
-      'z'   => $zindex,
+      'z'     => $zindex,
       'href'  => $href,
-      'alt'   => $alt
+      'alt'   => $alt,
+      'class' => $class
     };
   }
 }
