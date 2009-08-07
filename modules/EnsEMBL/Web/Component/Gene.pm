@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Component::Slice;
 use EnsEMBL::Web::RegObj;
 
 use EnsEMBL::Web::Form;
