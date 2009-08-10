@@ -38,6 +38,7 @@ GET / SET VALUES
   $constrained_element->slice($slice);
   $constrained_element->start($constrained_element_start - $slice_start + 1);
   $constrained_element->end($constrained_element_end - $slice_start + 1);
+  $constrained_element->strand($strand);
   $constrained_element->reference_dnafrag_id($dnafrag_id);
 
 =head1 OBJECT ATTRIBUTES
@@ -80,10 +81,14 @@ corresponds to a constrained_element.dnafrag_start (in slice coordinates)
 
 corresponds to a constrained_element.dnafrag_end (in slice coordinates)
 
+=item strand
+
+corresponds to a constrained_element.strand
+
 =item $alignment_segments
 
 listref of listrefs (each of which contain 5 strings (dnafrag.dnafrag_id, constrained_element.dnafrag_start, 
-constrained_element.dnafrag_end, genome_db.genome_db_id, dnafrag.dnafrag_name) 
+constrained_element.dnafrag_end, constrained_element.strand, genome_db.genome_db_id, dnafrag.dnafrag_name) 
    [ [ $dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], .. ]
 Each inner listref contains information about one of the species sequences which make up the constarained 
 element block from the alignment. 
@@ -154,6 +159,8 @@ use Data::Dumper;
 	     : (opt.) int ($dnafrag_start - Bio::EnsEMBL::Slice->start + 1).
   Arg [-END]
 	     : (opt.) int ($dnafrag_end - Bio::EnsEMBL::Slice->start + 1).
+  Arg [-STRAND]
+	     : (opt.) int (the strand from the genomic_align).
   Arg [-REFERENCE_DNAFRAG_ID]
 	     : (opt.) int $dnafrag_id of the slice or dnafrag 
 
@@ -170,6 +177,7 @@ use Data::Dumper;
 		       -slice => $slice_obj,
 		       -start => ( $dnafrag_start - $slice_obj->start + 1),
 		       -end => ( $dnafrag_end - $slice_obj->start + 1),
+		       -strand => $strand,
 		       -reference_dnafrag_id => $dnafrag_id,
                    );
   Description: Creates a new ConstrainedElement object
@@ -187,11 +195,11 @@ sub new {
     
   my ($adaptor, $dbID, $alignment_segments, 
 	$method_link_species_set_id, $score, $p_value, 
-	$taxonomic_level, $slice, $start, $end, $reference_dnafrag_id) = 
+	$taxonomic_level, $slice, $start, $end, $strand, $reference_dnafrag_id) = 
     rearrange([qw(
         ADAPTOR DBID ALIGNMENT_SEGMENTS 
   METHOD_LINK_SPECIES_SET_ID SCORE P_VALUE TAXONOMIC_LEVEL
-  SLICE START END REFERENCE_DNAFRAG_ID 
+  SLICE START END STRAND REFERENCE_DNAFRAG_ID 
 	)],
             @args);
 
@@ -209,6 +217,7 @@ sub new {
   $self->slice($slice) if (defined ($slice));
   $self->start($start) if (defined ($start));
   $self->end($end) if (defined ($end));
+  $self->strand($strand) if (defined ($strand));
   $self->reference_dnafrag_id($reference_dnafrag_id)
       if (defined($reference_dnafrag_id));
   return $self;
@@ -246,7 +255,6 @@ sub adaptor {
 
   return $self->{'adaptor'};
 }
-
 
 =head2 dbID
 
@@ -444,6 +452,28 @@ sub end {
   }
 
   return $self->{'end'};
+}
+
+=head2 strand
+
+  Arg [1]    : (optional) int $stand$
+  Example    : $end = $constrained_element->strand;
+  Example    : $constrained_element->end($strand);
+  Description: Getter/Setter for the attribute genomic_align strand.
+  Returntype : int
+  Exceptions : returns undef if no ref.strand
+  Caller     : object::methodname
+
+=cut
+
+sub strand {
+  my ($self, $strand) = @_;
+
+  if (defined($strand)) {
+    $self->{'strand'} = $strand;
+  }
+
+  return $self->{'strand'};
 }
 
 =head2 reference_dnafrag_id
