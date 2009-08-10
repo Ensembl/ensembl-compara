@@ -638,6 +638,7 @@ sub _parse_cons_file {
                 	        -reference_dnafrag_id => $genomic_align->dnafrag_id,
 				-start => $genomic_align->dnafrag_start,
 				-end => $genomic_align->dnafrag_end,
+				-strand => $genomic_align->dnafrag_strand,
                         	-score => $rej_subs,
                         	-p_value => $p_value,
                         	-method_link_species_set => $mlss->dbID,
