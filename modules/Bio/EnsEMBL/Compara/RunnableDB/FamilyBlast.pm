@@ -24,6 +24,7 @@ sub load_fasta_sequences_from_db {
     my ($self, $start_seq_id, $minibatch, $overwrite) = @_;
 
     my $offset                  = $self->param('offset') || 0;
+    my $built_in_indices        = $self->param('built_in_indices') || 0;
 
     my $sql = qq {
         SELECT s.sequence_id, m.stable_id, s.sequence
@@ -45,7 +46,9 @@ sub load_fasta_sequences_from_db {
     while( my ($seq_id, $stable_id, $seq) = $sth->fetchrow() ) {
         $seq=~ s/(.{72})/$1\n/g;
         chomp $seq;
-        push @fasta_list, ">$stable_id sequence_id=$seq_id\n$seq\n";
+        push @fasta_list, ($built_in_indices
+                                ? ">seq_id_${seq_id}_${stable_id}\n$seq\n"
+                                : ">$stable_id sequence_id=$seq_id\n$seq\n") ;
     }
     $sth->finish();
     $self->dbc->disconnect_when_inactive(1);
@@ -98,7 +101,7 @@ sub name2index { # can load the name2index mapping from db/file if necessary
         return $1;
     } else {
         my $name2index;
-        unless($name2index = param('name2index')) {
+        unless($name2index = $self->param('name2index')) {
             my $tabfile                 = $self->param('tabfile');
 
             $name2index = $self->param('name2index', $tabfile
