@@ -650,14 +650,12 @@ CREATE TABLE conservation_score (
 ) MAX_ROWS = 15000000 AVG_ROW_LENGTH = 841 COLLATE=latin1_swedish_ci;
 
 #
-# Table structure for table 'constrained_element'
-#
-
-CREATE TABLE constrained_element (
+# Table structure for table 'constrained_element (
   constrained_element_id bigint(20) unsigned NOT NULL,
   dnafrag_id int(12) unsigned NOT NULL,
   dnafrag_start int(12) unsigned NOT NULL,
   dnafrag_end int(12) unsigned NOT NULL,
+  dnafrag_strand int(2),
   method_link_species_set_id int(10) unsigned NOT NULL,
   p_value mediumtext,
   taxonomic_level mediumtext,
