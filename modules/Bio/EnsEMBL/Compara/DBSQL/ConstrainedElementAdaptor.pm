@@ -55,11 +55,12 @@ sub store {
 		dnafrag_id,
 		dnafrag_start, 
 		dnafrag_end,
+		dnafrag_strand,
 		score,
 		method_link_species_set_id,
 		p_value,
 		taxonomic_level
-	) VALUES (?,?,?,?,?,?,?,?)};
+	) VALUES (?,?,?,?,?,?,?,?,?)};
 
 	my $constrained_element_sth = $self->prepare($constrained_element_sql) or die;
 
@@ -78,6 +79,7 @@ sub store {
 				$constrained_element->reference_dnafrag_id,
 				$constrained_element->start,
 				$constrained_element->end,
+				$constrained_element->strand,
 				$constrained_element->score,
 				$mlssid,
 				($constrained_element->p_value or undef),
