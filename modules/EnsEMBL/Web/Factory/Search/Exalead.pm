@@ -61,6 +61,11 @@ sub _search_all {
     }
     $exalead->parse( $q );
   }
+  
+  if ($exalead->__error || $exalead->__status eq 'failure') {
+    die 'Exalead failure: ' . $exalead->__error;
+  }
+  
   return EnsEMBL::Web::Proxy::Object->new( 'Search', $exalead, $self->__data );
 }
 
