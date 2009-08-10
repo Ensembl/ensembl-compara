@@ -221,7 +221,7 @@ sub store_gene_and_all_transcripts
   my $gene_member;
   my $gene_member_not_stored = 1;
 
-  my $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor();
+  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor();
 
   if(defined($self->{'pseudo_stableID_prefix'})) {
     $gene->stable_id($self->{'pseudo_stableID_prefix'} ."G_". $gene->dbID);
