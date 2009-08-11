@@ -580,7 +580,9 @@ sub build_GeneTreeSystem
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
     $stats->batch_size(10);
-    $stats->hive_capacity(200);
+    my $homology_dnds_hive_capacity = $hive_params{homology_dnds_hive_capacity};
+  	$homology_dnds_hive_capacity = 200 unless defined $homology_dnds_hive_capacity;
+  	$stats->hive_capacity($homology_dnds_hive_capacity);
     $stats->status('BLOCKED');
     $stats->update();
     $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
