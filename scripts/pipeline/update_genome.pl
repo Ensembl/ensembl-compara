@@ -65,9 +65,9 @@ perl update_genome.pl
     [--offset 1000]
         This allows you to offset identifiers assigned to Genome DBs by a given
         amount. If not specified we assume we will use the autoincrement key
-        offered by the Genome DB table. If given then IDs will start 
+        offered by the Genome DB table. If given then IDs will start
         from that number (and we will assign according to the current number
-        of Genome DBs exceeding the offset). First ID will be equal to the 
+        of Genome DBs exceeding the offset). First ID will be equal to the
         offset+1
 
 =head1 OPTIONS
@@ -135,9 +135,9 @@ DOING!
 
 This allows you to offset identifiers assigned to Genome DBs by a given
 amount. If not specified we assume we will use the autoincrement key
-offered by the Genome DB table. If given then IDs will start 
+offered by the Genome DB table. If given then IDs will start
 from that number (and we will assign according to the current number
-of Genome DBs exceeding the offset). First ID will be equal to the 
+of Genome DBs exceeding the offset). First ID will be equal to the
 offset+1
 
 =back
@@ -152,10 +152,10 @@ use Getopt::Long;
 
 my $usage = qq{
 perl update_genome.pl
-  
+
   Getting help:
     [--help]
-  
+
   General configuration:
     [--reg_conf registry_configuration_file]
         the Bio::EnsEMBL::Registry configuration file. If none given,
@@ -180,9 +180,9 @@ perl update_genome.pl
     [--offset 1000]
         This allows you to offset identifiers assigned to Genome DBs by a given
         amount. If not specified we assume we will use the autoincrement key
-        offered by the Genome DB table. If given then IDs will start 
+        offered by the Genome DB table. If given then IDs will start
         from that number (and we will assign according to the current number
-        of Genome DBs exceeding the offset). First ID will be equal to the 
+        of Genome DBs exceeding the offset). First ID will be equal to the
         offset+1
 };
 
@@ -260,7 +260,7 @@ exit(0);
 
 sub update_genome_db {
   my ($species_dba, $compara_dba, $force) = @_;
-  
+
   my $slice_adaptor = $species_dba->get_adaptor("Slice");
 	my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
   my $meta_container = $species_dba->get_MetaContainer;
@@ -269,10 +269,10 @@ sub update_genome_db {
   if (defined($species_name)) {
     $primary_species_binomial_name = $species_name;
   } else {
-    if (!$meta_container->get_Species()) {
+    $primary_species_binomial_name = $genome_db_adaptor->get_species_name_from_core_MetaContainer($meta_container);
+    if (!$primary_species_binomial_name) {
       throw "Cannot get the species name from the database. Use the --species_name option";
     }
-    $primary_species_binomial_name = $genome_db_adaptor->get_species_name_from_core_MetaContainer($meta_container);
   }
   my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
   my $primary_species_assembly = $highest_cs->version();
@@ -298,8 +298,9 @@ sub update_genome_db {
     warning "Cannot find assembly.default in meta table for $primary_species_binomial_name";
     $assembly = $primary_species_assembly;
 	}
-	my ($genebuild) = @{$meta_container->list_value_by_key('genebuild.version')};
-	if (!defined($genebuild)) {
+
+	my $genebuild = $meta_container->get_genebuild();
+	if (! $genebuild) {
 			warning "Cannot find genebuild.version in meta table for $primary_species_binomial_name";
 			$genebuild = '';
 	}
@@ -315,22 +316,22 @@ sub update_genome_db {
   	$genome_db_adaptor->fetch_by_name_assembly($primary_species_binomial_name,
   		$assembly)
   };
-  
+
   ## New genebuild!
   if ($genome_db) {
   	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly =?, genebuild =?, WHERE genome_db_id =?');
   	$sth->execute($assembly, $genebuild, $genome_db->dbID());
   	$sth->finish();
-  	
+
     $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
             $primary_species_binomial_name,
             $assembly
         );
 
-  } 
+  }
   ## New genome or new assembly!!
   else {
-  	
+
     if (!defined($taxon_id)) {
       ($taxon_id) = @{$meta_container->list_value_by_key('species.taxonomy_id')};
     }
@@ -339,11 +340,11 @@ sub update_genome_db {
           "   You can use the --taxon_id option";
     }
     print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $assembly\n\n";
-    
+
     $sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name =?');
     $sth->execute($primary_species_binomial_name);
-    $sth->finish(); 
-    
+    $sth->finish();
+
     #New ID search if $offset is true
     my @args = ($taxon_id, $primary_species_binomial_name, $assembly, $genebuild);
     if($offset) {
@@ -359,7 +360,7 @@ sub update_genome_db {
     }
     else {
     	$sql = 'INSERT INTO genome_db (taxon_id, name, assembly, genebuild) values (?,?,?,?)';
-    } 
+    }
 
     $sth = $compara_dba->dbc->prepare($sql);
     $sth->execute(@args);
