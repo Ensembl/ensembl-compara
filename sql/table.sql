@@ -15,7 +15,7 @@ CREATE TABLE meta (
   species_id                  INT UNSIGNED DEFAULT 1,
   meta_key                    VARCHAR(40) NOT NULL,
   meta_value                  VARCHAR(255) BINARY NOT NULL,
-	
+
   PRIMARY   KEY (meta_id),
   UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value),
   KEY species_value_idx (species_id, meta_value)
@@ -41,7 +41,7 @@ CREATE TABLE ncbi_taxa_node (
   left_index                      int(10) NOT NULL,
   right_index                     int(10) NOT NULL,
   root_id                         int(10) default 1 NOT NULL,
-  
+
   PRIMARY KEY (taxon_id),
   KEY (parent_id),
   KEY (rank)
@@ -91,7 +91,7 @@ CREATE TABLE method_link (
   method_link_id              int(10) unsigned NOT NULL auto_increment, # unique internal id
   type                        varchar(50) DEFAULT '' NOT NULL,
   class                       varchar(50) DEFAULT '' NOT NULL,
-  
+
   PRIMARY KEY (method_link_id),
   KEY type (type)
 ) COLLATE=latin1_swedish_ci;
@@ -183,7 +183,7 @@ CREATE TABLE genomic_align_block (
 
 #
 # Table structure for table 'genomic_align'
-# 
+#
 #   This table stores the sequences belonging to the same genomic_align_block entry
 #
 -- primary key is used when fecthing by dbID
@@ -205,7 +205,7 @@ CREATE TABLE genomic_align (
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
   # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
-  
+
   PRIMARY KEY genomic_align_id (genomic_align_id),
   KEY genomic_align_block_id (genomic_align_block_id),
   KEY dnafrag (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end)
@@ -214,7 +214,7 @@ CREATE TABLE genomic_align (
 
 #
 # Table structure for table 'genomic_align_group'
-# 
+#
 #   This table can store several groupings of the genomic aligned sequences
 #
 
@@ -232,7 +232,7 @@ CREATE TABLE genomic_align_group (
 
 #
 # Table structure for table 'genomic_align_tree'
-# 
+#
 #   This table stores the phylogenetic relationship between different genomic_align entries.
 #   This is required to store the tree alignments, i.e. multiple sequence alignments with
 #   ancestral sequence reconstruction. This table stores the tree underlying each tree
@@ -322,7 +322,7 @@ CREATE TABLE sequence (
 CREATE TABLE member (
   member_id                   int(10) unsigned NOT NULL auto_increment, # unique internal id
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
-  version                     int(10) DEFAULT '0', 
+  version                     int(10) DEFAULT '0',
 #  source_name                 varchar(40) NOT NULL,
   source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
@@ -495,9 +495,9 @@ CREATE TABLE peptide_align_feature_prod (
 #   FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
 #   FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
 #   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
- 
+
   PRIMARY KEY (peptide_align_feature_id)
-) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
+) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci;-- PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
 
 
 #
@@ -572,7 +572,7 @@ CREATE TABLE family (
   # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
   # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
-  PRIMARY KEY (family_id), 
+  PRIMARY KEY (family_id),
   UNIQUE (stable_id),
   KEY (method_link_species_set_id),
   KEY (description)
@@ -590,7 +590,7 @@ CREATE TABLE family_member (
 
   FOREIGN KEY (family_id) REFERENCES family(family_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
- 
+
   UNIQUE family_member_id (family_id,member_id),
   KEY (family_id),
   KEY (member_id)
@@ -650,7 +650,8 @@ CREATE TABLE conservation_score (
 ) MAX_ROWS = 15000000 AVG_ROW_LENGTH = 841 COLLATE=latin1_swedish_ci;
 
 #
-# Table structure for table 'constrained_element (
+# Table structure for table 'constrained_element'
+CREATE TABLE constrained_element (
   constrained_element_id bigint(20) unsigned NOT NULL,
   dnafrag_id int(12) unsigned NOT NULL,
   dnafrag_start int(12) unsigned NOT NULL,
@@ -675,11 +676,11 @@ CREATE TABLE conservation_score (
 -- Table structure for table 'protein_tree_node'
 --
 -- overview:
---   This table holds the protein tree data structure, such as root, relation between 
+--   This table holds the protein tree data structure, such as root, relation between
 --   parent and child, leaves
 --
 -- semantics:
---      node_id               -- PRIMARY node id 
+--      node_id               -- PRIMARY node id
 --      parent_id             -- parent node id
 --      root_id               -- to quickly isolated nodes of the different rooted tree sets
 --      clusterset_id         -- node id of the set of clusters
@@ -712,20 +713,20 @@ CREATE TABLE super_protein_tree_node LIKE protein_tree_node;
 -- Table structure for table 'protein_tree_member'
 --
 -- overview:
---   to allow certain nodes (leaves) to have aligned protein members attached to them   
+--   to allow certain nodes (leaves) to have aligned protein members attached to them
 -- semantics:
 --    node_id                  -- the id of node associated with this name
 --    root_id                  -- the id of tree root node
 --    member_id                -- link to member.member_id in many-1 relation (single member per node)
 --    method_link_species_set_id -- foreign key from method_link_species_set table
---    cigar_line               -- compressed alignment information 
+--    cigar_line               -- compressed alignment information
 --    cigar_start              -- protein start (0 if the whole protein is in the alignment)
 --    cigar_end                -- protein end (0 if the whole protein is in the alignment)
 
 CREATE TABLE protein_tree_member (
   node_id                     int(10) unsigned NOT NULL,
   root_id                     int(10) unsigned NOT NULL,
-  member_id                   int(10) unsigned NOT NULL, 
+  member_id                   int(10) unsigned NOT NULL,
   method_link_species_set_id  int(10) unsigned NOT NULL,
   cigar_line                  mediumtext,
   cigar_start                 int(10),
@@ -747,20 +748,20 @@ CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
 -- Table structure for table 'protein_tree_member_score'
 --
 -- overview:
---   to allow certain nodes (leaves) to have aligned protein member_scores attached to them   
+--   to allow certain nodes (leaves) to have aligned protein member_scores attached to them
 -- semantics:
 --    node_id                  -- the id of node associated with this name
 --    root_id                  -- the id of the tree root
 --    member_id                -- link to member.member_id in many-1 relation (single member per node)
 --    method_link_species_set_id -- foreign key from method_link_species_set table
---    cigar_line               -- compressed alignment information 
+--    cigar_line               -- compressed alignment information
 --    cigar_start              -- protein start (0 if the whole protein is in the alignment)
 --    cigar_end                -- protein end (0 if the whole protein is in the alignment)
 
 CREATE TABLE protein_tree_member_score (
   node_id                     int(10) unsigned NOT NULL,
   root_id                     int(10) unsigned NOT NULL,
-  member_id                   int(10) unsigned NOT NULL, 
+  member_id                   int(10) unsigned NOT NULL,
   method_link_species_set_id  int(10) unsigned NOT NULL,
   cigar_line                  mediumtext,
   cigar_start                 int(10),
@@ -778,9 +779,9 @@ CREATE TABLE protein_tree_member_score (
 --
 -- Table structure for table 'protein_tree_tag'
 --
--- overview: 
+-- overview:
 --    to allow for tagging nodes.
---    
+--
 -- semantics:
 --    node_id             -- node_id foreign key from protein_tree_node table
 --    tag                 -- tag used to fecth/store a value associated to it
@@ -849,10 +850,10 @@ CREATE TABLE mapping_session (
 --
 -- overview:
 --      'stable_id_history' table keeps the history of stable_id changes from one release to another.
--- 
+--
 --      The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to.
 --      Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field.
--- 
+--
 --      Since both stable_ids are listed in the primary key,
 --      they are not allowed to be NULLs. We shall treat empty strings as NULLs.
 --
@@ -914,12 +915,32 @@ CREATE TABLE sitewise_aln (
   KEY (node_id)
 ) COLLATE=latin1_swedish_ci;
 
+
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'lr_index_offset'
+--
+-- overview:
+--   Used to store the current maximum left right index for a given table. Table
+--   name is unique and lr_index should be equal to the SQL statement
+--   select max(right_index) from table_name
+-- semantics:
+--   table_name      -- name of the table this lr_index corresponds to
+--   lr_index        -- max right index for the given table
+
+CREATE TABLE lr_index_offset (
+	table_name  varchar(64) NOT NULL,
+	lr_index    int(10) unsigned NOT NULL,
+
+	PRIMARY KEY (table_name)
+) COLLATE=latin1_swedish_ci;
+
 ------------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_hmmprofile'
 --
 -- overview:
---   to allow nodes to have hmm profiles attached to them   
+--   to allow nodes to have hmm profiles attached to them
 -- semantics:
 --    node_id                  -- the id of the root node associated with this hmm profile
 --    type                     -- type of hmm profile (eg: 'hmmls','hmmfs','hmms','hmmsw')
