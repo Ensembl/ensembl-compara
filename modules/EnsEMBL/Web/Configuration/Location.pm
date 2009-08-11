@@ -220,6 +220,8 @@ sub ajax_zmenu {
     return $self->_ajax_zmenu_supercontig($panel, $obj);
   } elsif ($action eq 'Das') {
     return $self->_ajax_zmenu_das($panel, $obj);
+  } elsif ($action eq 'Align') {
+    return $self->_ajax_zmenu_alignslice($panel, $obj);
   }
 }
 
@@ -992,6 +994,99 @@ sub _ajax_zmenu_regulation {
   }
  
   return;
+}
+
+sub _ajax_zmenu_alignslice {
+  my ($self, $panel, $object) = @_;
+  
+  my $r     = $object->param('r');
+  my $break = $object->param('break');
+  
+  my @location = split /\b/, $r;
+  my ($start, $end) = ($location[2], $location[4]);
+  
+  my ($start_type, $end_type);
+  my $length = abs($end - $start);
+  
+  $panel->{'caption'} = 'AlignSlice';
+  
+  if ($break) {
+    $length--;
+    $start_type = 'From:';
+    $end_type   = 'To:';
+    
+    $panel->{'caption'} .= ' Break';
+    
+    $panel->add_entry({
+      'type'     => 'Info:',
+      'label'    => 'There is a gap in the original chromosome between these two alignments',
+      'priority' => 10
+    });
+  } else {
+    my $strand   = $object->param('strand');
+    my $interval = $object->param('interval');
+    
+    my ($i_start, $i_end) = split '-', $interval;
+    
+    $length++;
+    $start_type = 'Start:';
+    $end_type   = 'End:';
+    
+    $panel->add_entry({
+      'type'     => 'Strand:',
+      'label'    => $strand > 0 ? '+' : '-',
+      'priority' => 8
+    });
+    
+    $panel->add_entry({
+      'type'     => 'Interval Start:',
+      'label'    => $i_start,
+      'priority' => 3
+    });
+    
+    $panel->add_entry({
+      'type'     => 'Interval End:',
+      'label'    => $i_end,
+      'priority' => 2
+    });
+    
+    $panel->add_entry({
+      'type'     => 'Interval Length:',
+      'label'    => abs($i_end - $i_start) + 1,
+      'priority' => 1
+    });
+  }
+  
+  $panel->add_entry({
+    'type'     => 'Chromosome:',
+    'label'    => $location[0],
+    'priority' => 9
+  });
+  
+  $panel->add_entry({
+    'type'     => $start_type,
+    'label'    => $start,
+    'priority' => 7
+  });
+  
+  $panel->add_entry({
+    'type'     => $end_type,
+    'label'    => $end,
+    'priority' => 6
+  });
+  
+  $panel->add_entry({
+    'type'     => 'Length:',
+    'label'    => $length,
+    'priority' => 5
+  });
+  
+  $panel->add_entry({
+    'type'     => 'Link',
+    'label'    => 'Region in detail',
+    'link'     => $object->_url({ action => 'View' }),
+    'priority' => 4
+  });
 }
 
 1;
