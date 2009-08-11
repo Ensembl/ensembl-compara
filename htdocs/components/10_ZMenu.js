@@ -7,6 +7,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var area = $(data.area.a);
     
     this.drag = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
+    this.align = area.hasClass('align');
     this.href = area.attr('href');
     this.title = area.attr('title');
     this.das  = false;
@@ -44,7 +45,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       myself.hide();
     });
     
-    this.baseURL = window.location.href.replace(/&/g, ';').replace(/#.*$/g, '').replace(/\?r=[^;]+;?/g, '?').replace(/;r=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
+    this.baseURL = window.location.href.replace(/&/g, ';').replace(/#.*$/g, '').replace(/(\?|;)r=[^;]+;?/g, '$1').replace(/[\?;]$/g, '');
     this.baseURL += this.baseURL.match(/\?/) ? ';' : '?';
     
     this.getContent();
@@ -204,7 +205,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       this.location = (start + end) / 2;
       
-      url = this.baseURL + 'r=' + a[4] + ':' + start + '-' + end;
+      if (this.align) {
+        url = this.baseURL + 'c=' + Ensembl.location.name + ':' + (this.location + Ensembl.location.start) + ';w=' + (end - start);
+      } else {
+        url = this.baseURL + 'r=' + a[4] + ':' + start + '-' + end;
+      }
       
       arr = [
         '<a href="' + url + '">Jump to region (' + (end - start) + ' bp)</a>',
@@ -320,10 +325,14 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.show();
   },
   
-  zoomURL: function (scale) {    
+  zoomURL: function (scale) {
     var w = Ensembl.location.width * scale;
     
-    return w < 1 ? '' : this.baseURL + 'r=' + Ensembl.location.name + ':' + Math.round(this.location - (w - 1) / 2) + '-' + Math.round(this.location + (w - 1) / 2);
+    if (this.align === true) {
+      return w < 1 ? '' : this.baseURL + 'c=' + Ensembl.location.name + ':' + (Ensembl.location.start + this.location) + ';w=' + Math.round(w);
+    } else {
+      return w < 1 ? '' : this.baseURL + 'r=' + Ensembl.location.name + ':' + Math.round(this.location - (w - 1) / 2) + '-' + Math.round(this.location + (w - 1) / 2);
+    }
   },
   
   show: function () {
