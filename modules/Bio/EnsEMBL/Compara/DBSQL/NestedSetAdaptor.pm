@@ -114,7 +114,7 @@ sub fetch_subtree_under_node {
   my $table = $self->tables->[0]->[0];
   my $alias = $self->tables->[0]->[1];
 
-  my $constraint = ", $table AS root_node WHERE $alias.left_index 
+  my $constraint = ", $table AS root_node WHERE $alias.left_index
                          BETWEEN root_node.left_index AND root_node.right_index
                     AND root_node.node_id=". $node->node_id;
 
@@ -139,7 +139,7 @@ sub fetch_tree_at_node_id {
   my $table = $self->tables->[0]->[0];
   my $alias = $self->tables->[0]->[1];
 
-  my $constraint = ", $table AS root_node WHERE $alias.left_index 
+  my $constraint = ", $table AS root_node WHERE $alias.left_index
                          BETWEEN root_node.left_index AND root_node.right_index
                     AND root_node.node_id=". $node_id;
 
@@ -284,45 +284,93 @@ sub store {
   #now recursively do all the children
   #
   my $children = $node->children_nodes;
-  foreach my $child_node (@$children) {  
+  foreach my $child_node (@$children) {
     $self->store($child_node);
   }
 
   return $node->dbID;
 }
 
+=head2 sync_tree_leftright_index
+
+  Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $root
+  Example    : $nsa->sync_tree_leftright_index($root);
+  Description: For the given root this method looks for left right index
+               offset recorded in lr_index_offset for the configured
+               table. The program locks on this table to reserve a batch
+               of identifiers which are then used to left_right index
+               the tree.
+
+               The left right indexing is called by this method on your given
+               tree root
+  Returntype : Nothing
+  Exceptions : Only raised from DBI problems
+  Caller     : Public
+
+=cut
 
 sub sync_tree_leftright_index {
-  my $self= shift;
-  my $tree_root = shift;
-
-  my $table = $self->tables->[0]->[0];
-  
-  my $dc = $self->dbc->disconnect_when_inactive;
-  $self->dbc->disconnect_when_inactive(0);
-
-  $self->dbc->do("LOCK TABLES $table WRITE");
-
-  my $sql = "SELECT max(right_index) FROM $table;";
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute();
-  my ($max_counter) = $sth->fetchrow_array();
-  $sth->finish;
-  
-  $tree_root->build_leftright_indexing($max_counter+1);
-
-  $sql = "UPDATE $table SET ".
-            "left_index=" . $tree_root->left_index .
-            ",right_index=" . $tree_root->right_index .
-         " WHERE $table.node_id=". $tree_root->node_id;
-  $self->dbc->do($sql);
-
-  $self->dbc->do("UNLOCK TABLES");
-  $self->dbc->disconnect_when_inactive($dc);
-
-  return undef;
+	my ($self, $tree_root) = @_;
+	my $starting_lr_index = $self->_get_starting_lr_index($tree_root);
+	$tree_root->build_leftright_indexing($starting_lr_index);
+	return;
 }
 
+# Rather than the old algorithm this uses the lr_index_offset table to
+# lock on & to record the current max lr index for a given table.
+# Offset is pre-calculated by taking the number of nodes in the tree
+# and multiplying by 2. This is then stored & passed back to
+# sync_tree_leftright_index()
+
+sub _get_starting_lr_index {
+	my ($self, $tree_root) = @_;
+
+	my $starting_lr_index;
+	my $table = $self->_lr_table_name();
+
+	my $node_count = scalar(@{$tree_root->get_all_nodes()});
+	my $lr_ids_needed = $node_count*2;
+
+	my $original_dwi = $self->dbc()->disconnect_when_inactive();
+	$self->dbc()->disconnect_when_inactive(0);
+
+	eval {
+		$self->dbc->do("LOCK TABLES lr_index_offset WRITE");
+
+		my $sth = $self->prepare('select max(lr_index) from lr_index_offset where table_name =?');
+		$sth->execute($table);
+		my ($max_lr_index) = $sth->fetchrow_array();
+		$sth->finish();
+
+		my $sql;
+		my $new_max_lr_index;
+		if(defined $max_lr_index) {
+			$sql = 'update lr_index_offset set lr_index =? where table_name =?';
+			$starting_lr_index = $max_lr_index+1;
+			$new_max_lr_index = $max_lr_index+$lr_ids_needed;
+		}
+		else {
+			$sql = 'insert into lr_index_offset (lr_index, table_name) values (?,?)';
+			$starting_lr_index = 1;
+			$new_max_lr_index = $lr_ids_needed;
+		}
+
+		$sth = $self->prepare($sql);
+		$sth->execute($new_max_lr_index, $table);
+		$sth->finish();
+
+		$self->dbc->do("UNLOCK TABLES");
+	};
+	$self->dbc()->disconnect_when_inactive($original_dwi);
+	throw("Problem occured whilst getting next lr index for $table: $@") if $@;
+
+	return $starting_lr_index;
+}
+
+sub _lr_table_name {
+	my ($self) = @_;
+	return $self->tables->[0]->[0];
+}
 
 ##################################
 #
@@ -362,10 +410,10 @@ sub create_instance_from_rowhash {
 
   #my $node = $self->cache_fetch_by_id($rowhash->{'node_id'});
   #return $node if($node);
-  
+
   my $node = new Bio::EnsEMBL::Compara::NestedSet;
   $self->init_instance_from_rowhash($node, $rowhash);
-  
+
   #$self->cache_add_object($node);
 
   return $node;
@@ -384,7 +432,7 @@ sub init_instance_from_rowhash {
   $node->left_index            ($rowhash->{'left_index'});
   $node->right_index           ($rowhash->{'right_index'});
   $node->distance_to_parent    ($rowhash->{'distance_to_parent'});
-  
+
   return $node;
 }
 
@@ -399,7 +447,7 @@ sub new {
   my $class = shift;
 
   my $self = $class->SUPER::new(@_);
-  
+
   $self->{'_node_cache'} = [];
   return $self;
 }
@@ -413,12 +461,12 @@ sub DESTROY {
 sub cache_fetch_by_id {
   my $self = shift;
   my $node_id = shift;
-  
+
   for(my $index=0; $index<scalar(@{$self->{'_node_cache'}}); $index++) {
     my $node = $self->{'_node_cache'}->[$index];
     if($node->node_id == $node_id) {
       splice(@{$self->{'_node_cache'}}, $index, 1); #removes from list
-      unshift @{$self->{'_node_cache'}}, $node; #put at front of list 
+      unshift @{$self->{'_node_cache'}}, $node; #put at front of list
       return $node;
     }
   }
@@ -431,7 +479,7 @@ sub cache_add_object
   my $self = shift;
   my $node = shift;
 
-  unshift @{$self->{'_node_cache'}}, $node; #put at front of list 
+  unshift @{$self->{'_node_cache'}}, $node; #put at front of list
   while(scalar(@{$self->{'_node_cache'}}) > 3000) {
     my $old = pop @{$self->{'_node_cache'}};
     #print("shrinking cache : "); $old->print_node;
@@ -441,7 +489,7 @@ sub cache_add_object
 
 sub clear_cache {
   my $self = shift;
-  
+
   $self->{'_node_cache'} = [];
   return undef;
 }
@@ -456,12 +504,12 @@ sub _build_tree_from_nodes {
     $node->no_autoload_children;
     $node_hash{$node->node_id} = $node;
   }
-  
+
   #next add children to their parents
   my $root = undef;
   foreach my $node (@{$node_list}) {
     my $parent = $node_hash{$node->_parent_id};
-    if($parent) { $parent->add_child($node); } 
+    if($parent) { $parent->add_child($node); }
     else { $root = $node; }
   }
   return $root;
@@ -488,7 +536,7 @@ sub _build_tree_from_nodes {
   Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
 
 =cut
-  
+
 sub _generic_fetch {
   my ($self, $constraint, $join, $final_clause) = @_;
 
@@ -510,10 +558,10 @@ sub _construct_sql_query {
 
   my @tables = @{$self->tables};
   my $columns = join(', ', @{$self->columns()});
-  
+
   my $default_where = $self->default_where_clause;
   if($default_where) {
-    if($constraint) { 
+    if($constraint) {
       $constraint .= " AND $default_where ";
     } else {
       $constraint = " WHERE $default_where ";
@@ -525,19 +573,19 @@ sub _construct_sql_query {
       my ($tablename, $condition, $extracolumns) = @{$single_join};
       if ($tablename && $condition) {
         push @tables, $tablename;
-        
+
         if($constraint) {
           $constraint .= " AND $condition";
         } else {
           $constraint = " WHERE $condition";
         }
-      } 
+      }
       if ($extracolumns) {
         $columns .= ", " . join(', ', @{$extracolumns});
       }
     }
   }
-      
+
   #construct a nice table string like 'table1 t1, table2 t2'
   my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
 
