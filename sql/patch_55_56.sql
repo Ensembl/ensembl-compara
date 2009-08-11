@@ -17,3 +17,8 @@ CREATE TABLE IF NOT EXISTS lr_index_offset (
 	PRIMARY KEY (table_name)
 ) COLLATE=latin1_swedish_ci;
 
+
+-- Increasing the size of 3 columns in analysis
+ALTER TABLE analysis MODIFY COLUMN db_file varchar(255);
+ALTER TABLE analysis MODIFY COLUMN program varchar(255);
+ALTER TABLE analysis MODIFY COLUMN program_file varchar(255);
