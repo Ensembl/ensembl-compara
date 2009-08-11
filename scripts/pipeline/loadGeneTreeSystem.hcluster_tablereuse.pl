@@ -427,6 +427,11 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HclusterRun',
       -parameters      => $parameters
     );
+    
+  if(exists $genetree_params{hcluster_sg}) {
+  	$hclusterrun->program_file($genetree_params{hcluster_sg});
+  }
+    
   $analysisDBA->store($hclusterrun);
   $stats = $hclusterrun->stats;
   $stats->batch_size(1);
@@ -459,6 +464,9 @@ sub build_GeneTreeSystem
   if (defined $genetree_params{'honeycomb_dir'}) {
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
+  if(defined $genetree_params{mafft}) {
+  	$parameters .= qq|, 'mafft' => '$genetree_params{mafft}'|;
+  }
   $parameters .= "}";
 
   my $mcoffee_exe = $genetree_params{'mcoffee'} || '/software/ensembl/compara/tcoffee-7.86b/t_coffee';
@@ -466,9 +474,18 @@ sub build_GeneTreeSystem
   my $mcoffee = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'MCoffee',
       -program_file    => $mcoffee_exe,
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MCoffee',
-      -parameters      => $parameters
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MCoffee'
     );
+    
+  #If params exceed 254 then use the analysis_data table.
+  if(length($parameters) > 254) {
+  	my $ad_dba =  $self->{'hiveDBA'}->get_AnalysisDataAdaptor();
+   	my $adi = $ad_dba->store_if_needed($parameters);
+   	$parameters = "{'analysis_data_id'=>${adi}}";
+  }
+  
+  $mcoffee->parameters($parameters);
+    
   $analysisDBA->store($mcoffee);
   $stats = $mcoffee->stats;
   $stats->batch_size(10);
@@ -609,12 +626,22 @@ sub build_GeneTreeSystem
 
   $stats->update();
 
-  $parameters = "{max_gene_count=>".$genetree_params{'max_gene_count'}."}";
+  #
+  # QuickTreeBreak
+  #
+  print STDERR "QuickTreeBreak...\n";
+  #
+   $parameters = "{max_gene_count=>".$genetree_params{'max_gene_count'};
+  if($genetree_params{sreformat}) {
+  	$parameters .= qq|, sreformat_exe=>'$genetree_params{sreformat}'|;
+  }
+  $parameters .= '}';
   my $quicktreebreak = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'QuickTreeBreak',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::QuickTreeBreak',
       -parameters      => $parameters
       );
+  $quicktreebreak->program_file($genetree_params{quicktree}) if $genetree_params{quicktree};
   $analysisDBA->store($quicktreebreak);
   $stats = $quicktreebreak->stats;
   $stats->batch_size(1);
@@ -674,7 +701,9 @@ sub build_GeneTreeSystem
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
     $stats->batch_size(10);
-    $stats->hive_capacity(200);
+    my $homology_dnds_hive_capacity = $hive_params{homology_dnds_hive_capacity};
+  	$homology_dnds_hive_capacity = 200 unless defined $homology_dnds_hive_capacity;
+  	$stats->hive_capacity($homology_dnds_hive_capacity);
     $stats->failed_job_tolerance(2);
     $stats->status('BLOCKED');
     $stats->update();
@@ -744,6 +773,10 @@ sub build_GeneTreeSystem
       $parameters .= "'saturated'=>" . $sitewise_dnds_params{'saturated'};
       $with_options_sitewise_dnds = 1;
     }
+    if (defined $sitewise_dnds_params{gblocks}) {
+    	$parameters .= q{'gblocks_exe'=>} . $sitewise_dnds_params{'gblocks'};
+    	$with_options_sitewise_dnds = 1;
+    }
     $parameters = '{' . $parameters .'}' if (1==$with_options_sitewise_dnds);
 
     my $Sitewise_dNdS = Bio::EnsEMBL::Analysis->new
@@ -751,9 +784,17 @@ sub build_GeneTreeSystem
        -db_version      => '1',
        -logic_name      => 'Sitewise_dNdS',
        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Sitewise_dNdS',
-       -program_file    => $sitewise_dnds_params{'program_file'} || '',
-       -parameters      => $parameters
+       -program_file    => $sitewise_dnds_params{'program_file'} || ''
       );
+    
+    #If params exceed 254 then use the analysis_data table.
+    if(length($parameters) > 254) {
+    	my $ad_dba =  $self->{'hiveDBA'}->get_AnalysisDataAdaptor();
+    	my $adi = $ad_dba->store_if_needed($parameters);
+    	$parameters = "{'analysis_data_id'=>${adi}}";
+    }
+    $Sitewise_dNdS->parameters($parameters);
+      
     $analysisDBA->store($Sitewise_dNdS);
 
     if(defined($self->{'hiveDBA'})) {
