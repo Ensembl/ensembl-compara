@@ -8,8 +8,18 @@
     '-dbname'   => "compara_homology_54",
     '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
   },
+  
+  #The pipeline can optionally throttle analysis workers without the need
+  #to issue separate update commands to the hive database & re-sync the 
+  #beekeeper. Currently supported analyses are
+  #
+  # * blast_hive_capacity - Workers per created blast analysis
+  # * ortho_tree_hive_capacity 
+  # * njtree_hive_capacity
+  # * homology_dnds_hive_capacity
 
   { TYPE => HIVE,
+  	# 'njtree_hive_capacity' => 100,
   },
 
   { TYPE => 'BLASTP_TEMPLATE',
