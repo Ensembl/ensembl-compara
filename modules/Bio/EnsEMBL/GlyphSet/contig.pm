@@ -94,6 +94,7 @@ sub _init {
           eval { $path = $ctg_slice->project($_->name); };
           
           next unless $path || @$path == 1;
+          next unless $path->[0];
           
           $path = $path->[0]->to_Slice;
           
