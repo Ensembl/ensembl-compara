@@ -14,83 +14,87 @@ use POSIX qw(floor ceil);
 use Data::Dumper;
 
 sub createObjects {
-  my $self      = shift; 
-  if(   $self->core_objects->location
+  my $self = shift;
+  
+  if ($self->core_objects->location
      && !$self->core_objects->location->isa('EnsEMBL::Web::Fake') 
      && !$self->core_objects->gene
   ) {
     $self->_create_object_from_core;
     my $obj = $self->DataObjects->[0];
+    
     foreach my $param ($self->param) {
-      #multicontigview
+      # multicontigview
       if ($param =~ /^s\d+$/) {
-	#first, check if we need to generate a url
-	$self->generate_full_url($obj);
-	#then go and create the objects
-	if ($self->core_objects->location) {
-	  $self->createObjectsLocation($obj);
-	}
-	elsif ($self->core_objects->gene) {
-	  #$self->createObjectsGene($obj);
-	}
+        $self->generate_full_url($obj); # first, check if we need to generate a url
+        
+        if ($self->core_objects->location) { 
+          $self->createObjectsLocation($obj) # then go and create the objects
+        } elsif ($self->core_objects->gene) {
+          # $self->createObjectsGene($obj);
+        }
       }
     }
+    
     return $self;
   }
-  $self->get_databases($self->__gene_databases, 'compara','blast');
-  my $database  = $self->database('core');
-  return $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." ) unless $database;
-## First lets try and locate the slice....
+  
+  $self->get_databases($self->__gene_databases, 'compara', 'blast');
+  my $database = $self->database('core');
+  
+  return $self->problem('Fatal', 'Database Error', 'Could not connect to the core database.') unless $database;
+  
+  ## First lets try and locate the slice....
 
-## Gene
+  ## Gene
   my $location;
   my $temp_id;
-  my $strand     = $self->param( 'strand' )    || $self->param( 'seq_region_strand' ) || 1;
-  my $seq_region = $self->param( 'region' )    || $self->param( 'contig' )     ||
-                   $self->param( 'clone'  )    || $self->param( 'seqregion' )  ||
-                   $self->param( 'chr' )       || $self->param( 'seq_region_name' );
-  my $start      = $self->param( 'vc_start'  ) || $self->param( 'chr_start' )  ||
-                   $self->param( 'wvc_start' ) || $self->param( 'fpos_start' ) ||
-                   $self->param( 'start' );
-  my $end        = $self->param( 'vc_end'  )   || $self->param( 'chr_end' )    ||
-                   $self->param( 'wvc_end' )   || $self->param( 'fpos_end' )   ||
-                   $self->param( 'end' );
-  if( defined $self->param('r') && ! $self->core_objects->gene && ! $self->core_objects->variation ) {
-    ($seq_region,$start,$end) = $self->param('r') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
+  
+  my $strand     = $self->param('strand')    || $self->param('seq_region_strand') || 1;
+  
+  my $seq_region = $self->param('region')    || $self->param('contig')     ||
+                   $self->param('clone')     || $self->param('seqregion')  ||
+                   $self->param('chr')       || $self->param('seq_region_name');
+                   
+  my $start      = $self->param('vc_start')  || $self->param('chr_start')  ||
+                   $self->param('wvc_start') || $self->param('fpos_start') ||
+                   $self->param('start');
+                   
+  my $end        = $self->param('vc_end')    || $self->param('chr_end')    ||
+                   $self->param('wvc_end')   || $self->param('fpos_end')   ||
+                   $self->param('end');
+                   
+  if (defined $self->param('r') && !$self->core_objects->gene && !$self->core_objects->variation) {
+    ($seq_region, $start, $end) = $self->param('r') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
   } 
 
-  if( defined $self->param('l') ) { 
-    ($seq_region,$start,$end) = $self->param('l') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
+  if (defined $self->param('l')) { 
+    ($seq_region, $start, $end) = $self->param('l') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
   } 
 
-  $start = $self->evaluate_bp( $start ) if defined $start;
-  $end   = $self->evaluate_bp( $end )   if defined $end;
-#  if( defined $self->param( 'data_URL' ) ) {
-#    my $loc = $self->_location_from_URL( $self->param( 'data_URL' ) );
-#    if($loc) {
-#      $self->DataObjects( $loc );
-#      return;
-#    }
-#    $self->clear_problems(); 
-#  }
-  if( defined $self->param('c') ) {
-    my($cp,$t_strand);
-    ($seq_region,$cp,$t_strand) = $self->param('c') =~ /^([-\w\.]+):(-?[.\w,]+)(:-?1)?$/;
-    $cp = $self->evaluate_bp( $cp );
-    my $w = $self->evaluate_bp( $self->param('w') );
+  $start = $self->evaluate_bp($start) if defined $start;
+  $end   = $self->evaluate_bp($end)   if defined $end;
+  
+  if (defined $self->param('c')) {
+    my ($cp, $t_strand);
+    
+    ($seq_region, $cp, $t_strand) = $self->param('c') =~ /^([-\w\.]+):(-?[.\w,]+)(:-?1)?$/;
+    $cp = $self->evaluate_bp($cp);
+    my $w = $self->evaluate_bp($self->param('w'));
+    
     $start = $cp - ($w-1)/2;
     $end   = $cp + ($w-1)/2;
-    if( $t_strand ) {
-      $strand = $t_strand eq ':-1' ? -1 : 1;
-    }
+    
+    $strand = $t_strand eq ':-1' ? -1 : 1 if $t_strand;
   }
-  if( defined $self->param('centrepoint') ) {
-    my $cp = $self->evaluate_bp( $self->param('centrepoint') );
-    my $w  = $self->evaluate_bp( $self->param('width') );
+  
+  if (defined $self->param('centrepoint')) {
+    my $cp = $self->evaluate_bp($self->param('centrepoint'));
+    my $w  = $self->evaluate_bp($self->param('width'));
     $start = $cp - ($w-1)/2;
     $end   = $cp + ($w-1)/2;
   }
@@ -236,7 +240,7 @@ sub generate_full_url {
   my $obj = shift;
 
   #show input parameters
-#   foreach ($self->param) {	  
+#   foreach ($self->param) {          
 #     warn "$_ = ",$self->param($_),"\n";
 #   }
 
@@ -281,8 +285,8 @@ sub remove_species_and_generate_url {
   foreach my $par ( $self->param ) {
     if ($par =~ /^(s)(\d+)$/ ) {
       if ($self->param($par) ne $sp) {
-	push @numbers_to_stay, $2;
-	$new_pars->{$par} = $self->param($par);
+        push @numbers_to_stay, $2;
+        $new_pars->{$par} = $self->param($par);
       }
     }
     else {
@@ -294,7 +298,7 @@ sub remove_species_and_generate_url {
     if ($k =~ /^([gr])(\d+)$/) {
       my $num = $2;
       if (! grep {$_ eq $num}  @numbers_to_stay) {
-	delete $new_pars->{$k};
+        delete $new_pars->{$k};
       }
     }
   }
@@ -305,10 +309,10 @@ sub remove_species_and_generate_url {
   foreach my $k ( sort keys %$new_pars) {
     if ( $k =~ /^s(\d+)$/ ) {
       if ( $new_pars->{$k}) {
-	$q->{"s$i"} = $new_pars->{"s$1"};
-	$q->{"r$i"} = $new_pars->{"r$1"};
-	$q->{"g$i"} = $new_pars->{"g$1"} if $new_pars->{"g$1"};
-	$i++;
+        $q->{"s$i"} = $new_pars->{"s$1"};
+        $q->{"r$i"} = $new_pars->{"r$1"};
+        $q->{"g$i"} = $new_pars->{"g$1"} if $new_pars->{"g$1"};
+        $i++;
       }
     }
     elsif ($k !~ /^[sgr]\d+$/ ) {
@@ -336,11 +340,11 @@ sub find_missing_locations {
 
       #get chr argument for self compara
       my $chrom = '';
-      #	  if ($self->param("sr$ID")) {
-      #	    $chrom = $self->param("sr$ID");
-      #	  } elsif ($sc) {
-      #	    ($chrom) =  $self->param("c$ID") =~ /^([-\w\.]+):?/;
-      #	  }
+      #          if ($self->param("sr$ID")) {
+      #            $chrom = $self->param("sr$ID");
+      #          } elsif ($sc) {
+      #            ($chrom) =  $self->param("c$ID") =~ /^([-\w\.]+):?/;
+      #          }
       $self->_best_guess( $slice, $species, $width, $chrom, $ID ); #...and do a redirct
     }
   }
@@ -361,7 +365,7 @@ sub _best_guess {
       my $end   = floor($cp + ($width-1)/2);
       $self->__set_species( $species );
       if ($ID) {
-	$self->param('r'.$ID,"$seq_region:$start-$end:$strand");
+        $self->param('r'.$ID,"$seq_region:$start-$end:$strand");
       }
       $self->_check_slice_exists_and_redirect( $species, $seq_region, $start, $end, $strand, 1 );
     }
@@ -405,13 +409,13 @@ sub _check_slice_exists_and_redirect {
           $end   = $slice->seq_region_length if $end   > $slice->seq_region_length;
           $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand );
         }
-	my $pars;
-	foreach my $par ($self->param) {
-	  if ($par =~ /^[sgr]\d+|align/) {
-	    $pars->{$par} = $self->param($par);
-	  }
-	}
-	return $self->problem( 'redirect', $self->_url($pars));
+        my $pars;
+        foreach my $par ($self->param) {
+          if ($par =~ /^[sgr]\d+|align/) {
+            $pars->{$par} = $self->param($par);
+          }
+        }
+        return $self->problem( 'redirect', $self->_url($pars));
       }
     }
     $self->problem( "fatal", "Locate error", $self->_help( "Cannot locate region $chr: $start - $end on the current assembly." ));
@@ -425,8 +429,8 @@ sub _check_slice_exists_and_redirect {
 sub createObjectsLocation {
   my $self = shift;
   my %SHORT = qw(chromosome Chr.
-	       supercontig S'ctg
-	       );
+               supercontig S'ctg
+               );
 
   my $ids;
   foreach my $par ( $self->param ) {
@@ -995,8 +999,11 @@ sub _create_from_slice {
   }
 
   my $pars = {
-    'r' => $TS->seq_region_name.':'.$start.'-'.$end,
-    't' => $tid, 'g' => $gid, 'db' => $db
+    'r'     => $TS->seq_region_name.':'.$start.'-'.$end,
+    't'     => $tid, 
+    'g'     => $gid, 
+    'db'    => $db,
+    'align' => $self->param('align')
   };
   return $self->problem( 'redirect', $self->_url($pars));
 }
