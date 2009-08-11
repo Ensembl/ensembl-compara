@@ -1,9 +1,9 @@
 # Copyright EnsEMBL 2004
 #
 # Ensembl module for Bio::EnsEMBL::DBSQL::MethodLinkSpeciesAdaptor
-# 
+#
 # POD documentation - main docs before the code
-# 
+#
 
 =head1 NAME
 
@@ -14,7 +14,7 @@ and method_link tables
 
 =head2 Connecting to the database using the old way:
 
-  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor; 
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
   my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (
       -host => $host,
       -user => $dbuser,
@@ -26,11 +26,11 @@ and method_link tables
   my $mlssa = $db->get_MethodLinkSpeciesSetAdaptor();
 
 =head2 Connecting to the database using the new way (recommended):
-  
-  use Bio::EnsEMBL::Registry; 
+
+  use Bio::EnsEMBL::Registry;
   Bio::EnsEMBL::Registry->load_all($conf_file); # $conf_file can be undef
 
-  use Bio::EnsEMBL::Registry; 
+  use Bio::EnsEMBL::Registry;
   Bio::EnsEMBL::Registry->load_all($conf_file); # $conf_file can be undef
 
   Bio::EnsEMBL::Registry->load_all();
@@ -39,7 +39,7 @@ and method_link tables
       $compara_db_name, "compara", "MethodLinkSpeciesSet");
 
 =head2 Store/Delete data from the database
-  
+
   $mlssa->store($method_link_species_set);
 
 =head2 Retrieve data from the database
@@ -137,15 +137,14 @@ sub new {
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exception  : Thrown if the argument is not a
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
-  Exception  : Thrown if the corresponding method_link is not in the 
+  Exception  : Thrown if the corresponding method_link is not in the
                database
-  Caller     : 
+  Caller     :
 
 =cut
 
 sub store {
   my ($self, $method_link_species_set) = @_;
-  my $sth;
 
   throw("method_link_species_set must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
     unless ($method_link_species_set && ref $method_link_species_set &&
@@ -173,31 +172,34 @@ sub store {
   my $method_link_class = ($method_link_species_set->method_link_class or "");
   my $species_set = $method_link_species_set->species_set;
 
+
+
   ## If we have method_link_type but no method_link_id
   if( $method_link_type and ! $method_link_id ){
     # Is the type in the DB?
     my $sth = $self->prepare($method_link_type_sql);
     $sth->execute( $method_link_type );
-    if( my $res = $sth->fetchrow_arrayref ){
-      # Found existing
-      $method_link_id = $res->[0];
-    } else {
+    ($method_link_id) = $sth->fetchrow_array;
+    $sth->finish();
+    if( ! $method_link_id ) {
       # Insert new
-      my $sth = $self->prepare($method_link_insert_sql);
+      $sth = $self->prepare($method_link_insert_sql);
       $sth->execute( $method_link_type, $method_link_class );
-      $method_link_id = $sth->{'mysql_insertid'};      
+      $method_link_id = $sth->{'mysql_insertid'};
+      $sth->finish();
     }
     # Update the object
     $method_link_species_set->method_link_id($method_link_id);
   }
 
   ## Checks if method_link_id already exists in the database
-  $sth = $self->prepare($method_link_sql);
+  my $sth = $self->prepare($method_link_sql);
   $sth->execute($method_link_id);
-  if (!$sth->fetchrow_array) {
+  my ($has_ml) = $sth->fetchrow_array();
+  $sth->finish();
+  if (!$has_ml) {
     throw("method_link_id $method_link_id is not in the database!\n");
   }
-  $sth->finish;
 
   ## Fetch genome_db_ids from Bio::EnsEMBL::Compara::GenomeDB objects
   my @genome_db_ids;
@@ -206,7 +208,7 @@ sub store {
   }
 
   my $dbID;
-  my $already_existing_method_link_species_set = 
+  my $already_existing_method_link_species_set =
       $self->fetch_by_method_link_type_GenomeDBs($method_link_type,$species_set, 1);
   if ($already_existing_method_link_species_set) {
     $dbID = $already_existing_method_link_species_set->dbID;
@@ -214,16 +216,19 @@ sub store {
 
   if (!$dbID) {
     ## Lock the table in order to avoid a concurrent process to store the same object with a different dbID
-    # from mysql documentation 13.4.5 : 
-    #   "If your queries refer to a table using an alias, then you must lock the table using that same alias. 
-    #   "It will not work to lock the table without specifying the alias" 
-    #Thus we need to lock method_link_species_set as a, method_link_species_set as b, and method_link_species_set 
+    # from mysql documentation 13.4.5 :
+    #   "If your queries refer to a table using an alias, then you must lock the table using that same alias.
+    #   "It will not work to lock the table without specifying the alias"
+    #Thus we need to lock method_link_species_set as a, method_link_species_set as b, and method_link_species_set
 
-    $self->dbc->do(qq{ LOCK TABLES method_link WRITE, 
-                       method_link_species_set as mlss WRITE, 
-                       method_link_species_set as mlss1 WRITE, 
-                       method_link_species_set as mlss2 WRITE, 
-                       method_link as ml WRITE, 
+		my $original_dwi = $self->dbc()->disconnect_when_inactive();
+  	$self->dbc()->disconnect_when_inactive(0);
+
+    $self->dbc->do(qq{ LOCK TABLES method_link WRITE,
+                       method_link_species_set as mlss WRITE,
+                       method_link_species_set as mlss1 WRITE,
+                       method_link_species_set as mlss2 WRITE,
+                       method_link as ml WRITE,
                        species_set WRITE,
                        species_set as ss WRITE,
                        species_set as ss1 WRITE,
@@ -231,7 +236,7 @@ sub store {
                        method_link_species_set WRITE });
 
     # Now, check if the object has not been stored before (tables are locked)
-    $already_existing_method_link_species_set = 
+    $already_existing_method_link_species_set =
         $self->fetch_by_method_link_type_GenomeDBs($method_link_type,$species_set, 1);
     if ($already_existing_method_link_species_set) {
       $dbID = $already_existing_method_link_species_set->dbID;
@@ -262,14 +267,16 @@ sub store {
         $sth2->execute();
         ($dbID) = $sth2->fetchrow_array();
         $dbID = 10000 * int($method_link_id / 100) + 1 if (!defined($dbID));
+        $sth2->finish();
       }
       my $species_set_id;
-      if ($method_link_species_set->species_set_id) { 
+      if ($method_link_species_set->species_set_id) {
         $species_set_id = $method_link_species_set->species_set_id;
         my $sth2 = $self->prepare("INSERT IGNORE INTO species_set VALUES (?, ?)");
         foreach my $genome_db_id (@genome_db_ids) {
           $sth2->execute($species_set_id, $genome_db_id);
         }
+        $sth2->finish();
       } else {
         $species_set_id = $self->_get_species_set_id_from_species_set($species_set);
       }
@@ -279,16 +286,19 @@ sub store {
           $sth2->execute(($species_set_id or "NULL"), $genome_db_id);
           $species_set_id = $sth2->{'mysql_insertid'};
         }
+        $sth2->finish();
       }
-      $sth = $self->prepare($method_link_species_set_sql);
-      $sth->execute(($dbID or "NULL"), $method_link_id, $species_set_id,
+      my $sth2 = $self->prepare($method_link_species_set_sql);
+      $sth2->execute(($dbID or "NULL"), $method_link_id, $species_set_id,
           ($method_link_species_set->name or "NULL"), ($method_link_species_set->source or "NULL"),
           ($method_link_species_set->url or ""));
-      $dbID = $sth->{'mysql_insertid'};
+      $dbID = $sth2->{'mysql_insertid'};
+      $sth2->finish();
     }
 
     ## Unlock tables
     $self->dbc->do("UNLOCK TABLES");
+    $self->dbc()->disconnect_when_inactive($original_dwi);
   }
 
   ## If this MethodLinkSpeciesSet object has a max_alignment_length attribute.
@@ -312,10 +322,8 @@ sub store {
     }
   }
 
-  $sth->finish;
-  
   $method_link_species_set->dbID($dbID);
-  
+
   return $method_link_species_set;
 }
 
@@ -327,14 +335,14 @@ sub store {
   Description: Deletes a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet entry from
                the database.
   Returntype : none
-  Exception  : 
-  Caller     : 
+  Exception  :
+  Caller     :
 
 =cut
 
 sub delete {
   my ($self, $method_link_species_set_id) = @_;
-  my $sth;  
+  my $sth;
 
   my $method_link_species_set_sql = qq{
           DELETE FROM
@@ -344,6 +352,7 @@ sub delete {
       };
   $sth = $self->prepare($method_link_species_set_sql);
   $sth->execute($method_link_species_set_id);
+  $sth->finish();
 
   ## Delete corresponding entry in meta table
   $self->db->get_MetaContainer->delete_key("max_align_$method_link_species_set_id");
@@ -358,14 +367,14 @@ sub delete {
                objects
   Returntype : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
   Exceptions : none
-  Caller     : 
+  Caller     :
 
 =cut
 
 sub fetch_all {
   my ($self) = @_;
   my $method_link_species_sets = [];
-  
+
   my $sql = qq{
           SELECT
             method_link_species_set_id,
@@ -402,6 +411,8 @@ sub fetch_all {
     push(@{$all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}},
         $gdba->fetch_by_dbID($genome_db_id));
   }
+
+  $sth->finish();
 
   foreach my $method_link_species_set_id (keys %$all_method_link_species_sets) {
     my $this_method_link_species_set;
@@ -449,7 +460,7 @@ sub fetch_all {
 sub fetch_by_dbID {
   my ($self, $dbID) = @_;
   my $method_link_species_set; # returned object
-  
+
   my $gdba = $self->db->get_GenomeDBAdaptor;
   my $sql = qq{
           SELECT
@@ -472,9 +483,9 @@ sub fetch_by_dbID {
 
   my $sth = $self->prepare($sql);
   $sth->execute($dbID);
-  
+
   my $this_method_link_species_set;
-  
+
   ## Get all rows corresponding to this method_link_species_set
   while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url,
       $species_set_id, $genome_db_id, $type, $class) = $sth->fetchrow_array()) {
@@ -486,9 +497,11 @@ sub fetch_by_dbID {
     $this_method_link_species_set->{'URL'} = $url;
     push(@{$this_method_link_species_set->{'SPECIES_SET'}}, $gdba->fetch_by_dbID($genome_db_id));
   }
-  
+
+  $sth->finish();
+
   return undef if (!defined($this_method_link_species_set));
-  
+
   ## Create the object
   $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
           -adaptor => $self,
@@ -519,7 +532,7 @@ sub fetch_by_dbID {
                corresponding to the given method_link_type
   Returntype : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
   Exceptions : none
-  Caller     : 
+  Caller     :
 
 =cut
 
@@ -549,7 +562,7 @@ sub fetch_all_by_method_link_type {
                object or the genome_db_id in the species_set
   Returntype : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
   Exceptions : wrong argument throws
-  Caller     : 
+  Caller     :
 
 =cut
 
@@ -588,14 +601,14 @@ sub fetch_all_by_GenomeDB {
                given Bio::EnsEBML::Compara::GenomeDB
   Returntype : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
   Exceptions : none
-  Caller     : 
+  Caller     :
 
 =cut
 
 sub fetch_all_by_method_link_type_GenomeDB {
   my ($self, $method_link_type, $genome_db) = @_;
   my $method_link_species_sets = [];
-  
+
   throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID"
       unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
   my $genome_db_id = $genome_db->dbID;
@@ -647,7 +660,7 @@ sub fetch_by_method_link_type_GenomeDBs {
     push (@$genome_db_ids, $genome_db_id);
   }
   my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
-  
+
   $method_link_species_set = $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids);
   if (!$method_link_species_set and !$no_warning) {
     my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
@@ -675,16 +688,16 @@ sub fetch_by_method_link_type_GenomeDBs {
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                object is found
-  Caller     : 
+  Caller     :
 
 =cut
 
 sub fetch_by_method_link_type_genome_db_ids {
   my ($self, $method_link_type, $genome_db_ids) = @_;
   my $method_link_species_set;
-   
+
   my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
-  
+
   return $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids)
 }
 
@@ -702,7 +715,7 @@ sub fetch_by_method_link_type_genome_db_ids {
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                object is found
-  Caller     : 
+  Caller     :
 
 =cut
 
@@ -711,8 +724,8 @@ sub fetch_by_method_link_type_registry_aliases {
 
   my $gdba = $self->db->get_GenomeDBAdaptor;
   my @genome_dbs;
-  
-  foreach my $alias (@{$registry_aliases}) { 
+
+  foreach my $alias (@{$registry_aliases}) {
     if (Bio::EnsEMBL::Registry->alias_exists($alias)) {
       my ($binomial, $gdb);
       try {
@@ -736,12 +749,12 @@ sub fetch_by_method_link_type_registry_aliases {
 =head2 get_max_alignment_length
 
   Arg 1      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
-  Example    : 
+  Example    :
   Description: Retrieve the maximum length for this type of alignments.
                This method is used for genomic (dna/dna) alignments only.
                This method sets and returns this attribute for this object
   Returntype : integer
-  Exceptions : 
+  Exceptions :
   Caller     : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor
 
 =cut
@@ -785,7 +798,7 @@ sub get_max_alignment_length {
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                object is found
-  Caller     : 
+  Caller     :
 
 =cut
 
@@ -808,9 +821,8 @@ sub _run_query_from_method_link_id_genome_db_ids {
     my $sth = $self->prepare($sql);
     $sth->execute();
     my ($dbID) = $sth->fetchrow_array();
-
+    $sth->finish();
     $method_link_species_set = $self->fetch_by_dbID($dbID);
-    $sth->finish;
   }
 
   return $method_link_species_set;
@@ -824,26 +836,14 @@ sub _run_query_from_method_link_id_genome_db_ids {
   Description: Retrieve method_link_class corresponding to the method_link_id
   Returntype : string $method_link_class
   Exceptions : none
-  Caller     : 
+  Caller     :
 
 =cut
 
 sub _get_method_link_class_from_id {
   my ($self, $method_link_id) = @_;
-  my $class; # returned string
-  
-  my $sql = qq{
-		SELECT class
-		FROM method_link
-		WHERE method_link_id = ?
-	};
-
-  my $sth = $self->prepare($sql);
-  $sth->execute($method_link_id);
-  
-  $class = $sth->fetchrow_array();
-
-  return $class;
+	my $attributes = $self->_get_ml_attributes_from_ml_id($method_link_id);
+	return $attributes->{class};
 }
 
 
@@ -854,26 +854,14 @@ sub _get_method_link_class_from_id {
   Description: Retrieve method_link_type corresponding to the method_link_id
   Returntype : string $method_link_type
   Exceptions : none
-  Caller     : 
+  Caller     :
 
 =cut
 
 sub get_method_link_type_from_method_link_id {
   my ($self, $method_link_id) = @_;
-  my $type; # returned string
-  
-  my $sql = qq{
-		SELECT type
-		FROM method_link
-		WHERE method_link_id = ?
-	};
-
-  my $sth = $self->prepare($sql);
-  $sth->execute($method_link_id);
-  
-  $type = $sth->fetchrow_array();
-
-  return $type;
+	my $attributes = $self->_get_ml_attributes_from_ml_id($method_link_id);
+	return $attributes->{type};
 }
 
 
@@ -884,15 +872,14 @@ sub get_method_link_type_from_method_link_id {
   Description: Retrieve method_link_id corresponding to the method_link_type
   Returntype : integer $method_link_id
   Exceptions : warns when no method_link matches the $method_link_type
-  Caller     : 
+  Caller     :
 
 =cut
 
 sub get_method_link_id_from_method_link_type {
   my ($self, $method_link_type) = @_;
-  my $dbID; # returned integer
-  
-  my $sql = qq{
+
+  my $sql = q{
 		SELECT method_link_id
 		FROM method_link
 		WHERE type = ?
@@ -900,8 +887,8 @@ sub get_method_link_id_from_method_link_type {
 
   my $sth = $self->prepare($sql);
   $sth->execute($method_link_type);
-  
-  $dbID = $sth->fetchrow_array();
+
+  my ($dbID) = $sth->fetchrow_array();
   $sth->finish;
 
   if (!$dbID) {
@@ -911,6 +898,38 @@ sub get_method_link_id_from_method_link_type {
   return $dbID;
 }
 
+=head2 _get_ml_attributes_from_ml_id
+
+  Arg  1     : int $method_link_id
+  Example    : my $values = $mlssa->_get_ml_values_from_ml_id(1)
+  Description: Retrieve attributes for a given Method Link ID
+  Returntype : HashRef keyed by type and class
+  Exceptions : warns when no method_link matches the $method_link_id
+  Caller     : Internal
+
+=cut
+
+sub _get_ml_attributes_from_ml_id {
+	my ($self, $method_link_id) = @_;
+
+	my $sql = qq{
+		SELECT type, class
+		FROM method_link
+		WHERE method_link_id = ?
+	};
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($method_link_id);
+
+  my ($type, $class) = $sth->fetchrow_array();
+  $sth->finish();
+
+	my %attributes;
+	$attributes{type}  = $type if defined $type;
+	$attributes{class} = $class if defined $class;
+
+  return \%attributes;
+}
 
 =head2 _get_species_set_id_from_species_set
 
@@ -966,6 +985,8 @@ sub _get_species_set_id_from_genome_db_ids {
   my $sth = $self->prepare($sql);
   $sth->execute();
   my $all_rows = $sth->fetchall_arrayref();
+  $sth->finish();
+
   if (!@$all_rows) {
     return undef;
   }
@@ -986,6 +1007,9 @@ sub _get_species_set_id_from_genome_db_ids {
   $sth->execute();
 
   $all_rows = $sth->fetchall_arrayref();
+
+  $sth->finish();
+
   if (!@$all_rows) {
     return undef;
   } elsif (@$all_rows > 1) {
