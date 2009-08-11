@@ -8,3 +8,12 @@ UPDATE meta SET meta_value = 56 where meta_key = "schema_version";
 alter table constrained_element add column dnafrag_strand int(2);
 
 
+-- Adding lr_index_offset if not already there (introduced into 55
+-- post release).
+CREATE TABLE IF NOT EXISTS lr_index_offset (
+	table_name  varchar(64) NOT NULL,
+	lr_index    int(10) unsigned NOT NULL,
+
+	PRIMARY KEY (table_name)
+) COLLATE=latin1_swedish_ci;
+
