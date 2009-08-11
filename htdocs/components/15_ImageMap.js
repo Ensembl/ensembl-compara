@@ -58,11 +58,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       if (this.className.match(/drag/)) {
         myself.draggables.push(c);
+        
+        if (!myself.vrdag && this.href.split('|')[3] == Ensembl.species) {
+          myself.region = c;
+        }
       }
     });
     
     if (this.draggables.length && !this.vdrag) {
-      this.region = this.draggables[0];      
       Ensembl.EventManager.trigger('highlightImageMaps');
     }
     
@@ -197,6 +200,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     var r = this.region.a.href.split('|'); // Find bp range for the map
+    
+    if (r[3] != Ensembl.species) {
+      return;
+    }
+    
     var min = parseInt(r[5]);
     var max = parseInt(r[6]);
     var scale = (max - min + 1) / (this.region.r - this.region.l); // bps per pixel on image
