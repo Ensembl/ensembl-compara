@@ -492,8 +492,8 @@ sub _ajax_zmenu_compara_tree_node{
       if(defined($treefam_tree)) {
         if( my $treefam_link = $obj->get_ExtURL( 'TREEFAMTREE', $treefam_tree ) ){
           $panel->add_entry({
-             'type'     => 'Equivalent in TreeFam',
-             'label'    => "$treefam_tree in Treefam",
+             'type'     => 'Equivalent tree in TreeFam',
+             'label'    => "$treefam_tree",
              'link'     => $treefam_link,
              'priority' => 193,
              'extra'     => {'external' => 1}, 
