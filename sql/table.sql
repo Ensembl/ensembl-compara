@@ -497,7 +497,7 @@ CREATE TABLE peptide_align_feature_prod (
 #   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
   PRIMARY KEY (peptide_align_feature_id)
-) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci;-- PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
+) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
 
 
 #
