@@ -73,6 +73,7 @@ Ensembl.extend({
     
     this.coreParams = {};
     this.location = { width: 100000 };
+    this.species = window.location.pathname.split('/')[1];
     
     $.each(['r', 'g', 't', 'v'], function () {
       myself.coreParams[this] = url.match(regex.replace('%s', this));
