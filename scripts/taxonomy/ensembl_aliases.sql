@@ -56,8 +56,6 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (9615,"Dog","ense
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9615,"dog","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9258,"Platypus","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9258,"platypus","ensembl common name");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (9823,"Pig","ensembl alias name");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (9823,"pig","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9685,"Cat","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9685,"cat","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9600,"Orangutan","ensembl alias name");
