@@ -34,19 +34,18 @@ sub render {
     $species{$common} = $info;
   }
 
-  ## Add in pre species (currently hard-coded)
-  $species{'Lamprey'} = {
-        'dir' => 'Petromyzon_marinus',
-        'status'  => 'pre',
-  };
-  $species{'Pig'} = {
-        'dir' => 'Sus_scrofa',
-        'status'  => 'pre',
-  };
-  $species{'Marmoset'} = {
-        'dir' => 'Callithrix_jacchus',
-        'status'  => 'pre',
-  };
+  ## Add in pre species
+  my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
+  if ($pre_species) {
+    while (my ($bioname, $common) = each (%$pre_species)) {
+      my $status = $species{$common} ? 'both' : 'pre';
+      $species{$common} = {
+        'dir'     => $bioname,
+        'status'  => $status,
+      };
+    }
+  }
+  
 
   my $total = scalar(keys %species);
   my $break = int($total / 3);
@@ -85,7 +84,10 @@ sub render {
     $html .= qq(</td><td style="width:25%;padding:2px;padding-bottom:1em">);
     if ($dir) {
       if ($info->{'status'} eq 'pre') {
-        $html .= qq(<a href="http://pre.ensembl.org/$dir/" style="$link_style" rel="external">$link_text</a> (preview - assembly only));
+        $html .= qq(<span style = "$link_style">$link_text</span> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview - assembly only</a>));
+      }
+      elsif ($info->{'status'} eq 'both') {
+        $html .= qq#<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview new assembly</a>)#;
       }
       else {
         $html .= qq(<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a>);
