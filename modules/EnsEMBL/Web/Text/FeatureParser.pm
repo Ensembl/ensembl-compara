@@ -57,7 +57,6 @@ sub parse {
     return $error;
   }
   else {
-    warn ">>> PARSING DATA $format";
     $format = uc($self->format);
     my $filter = $self->filter;
 
@@ -80,10 +79,10 @@ sub parse {
 
       ## Parse as appropriate
       if ( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
-        $self->{'browser_switches'}{$1} = {$2};
+        $self->{'browser_switches'}{$1} = {$2} if $2;
       }
       elsif ($row =~ /^track/) {
-        $row =~ s/^track\s+(.*)$/$1/i; 
+        $row =~ s/^track\s+(.*)$/$1/i;
         $self->add_track($row);
       }
       else {
@@ -98,6 +97,7 @@ sub parse {
         }
         if ($columns && scalar(@$columns)) {
           ## Optional - filter content by location
+=pod
           if ($filter) {
             my ($chr, $start, $end) = $empty->coords($columns);
             if ($chr eq $filter->{'chr'} || $chr eq 'chr'.$filter->{'chr'}) {
@@ -110,7 +110,7 @@ sub parse {
             }
           }
           ## Check the coordinates are valid for this assembly
-
+=cut
           ## Everything OK, so store
           my $feature = $feature_class->new($columns);
           $self->store_feature($feature);
@@ -224,13 +224,15 @@ sub add_track {
   my ($self, $row) = @_;
   my $config = {'name' => 'default'};
 
-  ## Pull out any parameters with quote-delimited strings
-  while ($row =~ s/(\w+)="(\w+|\s*)"//g) {
-    $config->{$1} = $2;
+  ## Pull out any parameters with "-delimited strings (without losing internal escaped '"')
+  while ($row =~ s/(\w+)\s*=\s*"(([\\"]|[^"]*)+)"//) {
+    my $key = $1;
+    (my $value = $2) =~ s/\\//g;
+    $config->{$key} = $value;
   }
-  ## Split on any remaining white space
+  ## Grab any remaining whitespace-free content
   if ($row) {
-    while ($row =~ /(\w+)=(\S+)/g) {
+    while ($row =~ s/(\w+)\s*=\s*(\S+)//) {
       $config->{$1} = $2;
     }
   }
