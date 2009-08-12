@@ -486,9 +486,9 @@ sub slice_number {
 
 sub sd_call { 
   my( $self,$key ) = @_;
-  $self->species_defs->other_species($self->{'species'},$key) 
+  $self->species_defs->get_config($self->{'species'},$key) 
 #  return $self->{'merged'}
-#       ? $self->species_defs->other_species('merged',$key) 
+#       ? $self->species_defs->get_config('merged',$key) 
 #       : $self->species_defs->$key;
 }
 sub databases {
@@ -1228,7 +1228,7 @@ sub add_alignments {
         'species_set_id' => $row->{'species_set_id'},
         'species'        => $other_species,
         'species_hr'     => $other_species_hr,
-        '_assembly'      => $self->species_defs->other_species( $other_species, 'ENSEMBL_GOLDEN_PATH' ),
+        '_assembly'      => $self->species_defs->get_config( $other_species, 'ENSEMBL_GOLDEN_PATH' ),
         'class'          => $row->{'class'},
         'description'    => $description,
         'order'          => $row->{'type'}.'::'.$other_species,

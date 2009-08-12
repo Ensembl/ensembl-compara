@@ -251,7 +251,7 @@ sub content {
   my $ancestral_seq;
   
   foreach my $s (@$slices) {
-    my $other_species = $species_defs->other_species($s->{'name'});
+    my $other_species = $species_defs->get_config($s->{'name'});
     my $name = $species_defs->species_label($s->{'name'});
     
     if ($s->{'name'} eq 'Ancestral_sequences') {

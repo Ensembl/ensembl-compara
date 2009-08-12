@@ -203,7 +203,7 @@ sub handler {
 sub template_SPECIESINFO {
   my( $r, $code ) = @_;
   my($sp,$code) = split /:/, $code;
-  return $ENSEMBL_WEB_REGISTRY->species_defs->other_species($sp,$code);
+  return $ENSEMBL_WEB_REGISTRY->species_defs->get_config($sp,$code);
 }
 sub template_SPECIESDEFS {
   my( $r, $code ) = @_;

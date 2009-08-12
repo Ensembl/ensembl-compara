@@ -25,7 +25,7 @@ sub content {
  
   my $chr = $object->seq_region_name;
   my %chr_1  =  map { ($_,1) } @{$object->species_defs->ENSEMBL_CHROMOSOMES||[]};
-  my $chr_2 = scalar  @{$object->species_defs->other_species( $other , 'ENSEMBL_CHROMOSOMES' ) };
+  my $chr_2 = scalar  @{$object->species_defs->get_config( $other , 'ENSEMBL_CHROMOSOMES' ) };
         
   unless ($synteny{ $other }){
     $object->problem('fatal', "Can't display synteny",  "There is no synteny data for these two species ($species and $other)") ;
