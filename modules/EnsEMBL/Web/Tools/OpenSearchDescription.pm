@@ -35,10 +35,10 @@ sub create {
   open O,">$root/opensearch/all.xml";
   printf O $template, 'All', 'All species', 'All species', $sd->ENSEMBL_STYLE->{'SITE_ICON'}, 'common', 'ensembl_all';
   close O;
-  foreach( @{$sd->ENSEMBL_SPECIES} ) {
-    my $sn = substr( $sd->other_species($_,'SPECIES_BIO_SHORT'),0,5);
-    my $cn = $sd->other_species($_,'SPECIES_COMMON_NAME');
-    my $bn = $sd->other_species($_,'SPECIES_BIO_NAME');
+  foreach( $sd->valid_species ) {
+    my $sn = substr( $sd->get_config($_,'SPECIES_BIO_SHORT'),0,5);
+    my $cn = $sd->get_config($_,'SPECIES_COMMON_NAME');
+    my $bn = $sd->get_config($_,'SPECIES_BIO_NAME');
     open O,">$root/opensearch/$_.xml";
     printf O $template, $sn, "$cn - $bn", "$cn $bn", $sd->ENSEMBL_STYLE->{'SITE_ICON'}, $_, 'ensembl';
     close O;
