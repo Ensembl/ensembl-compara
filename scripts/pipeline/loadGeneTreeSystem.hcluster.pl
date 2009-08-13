@@ -49,7 +49,7 @@ if($pass)   { $compara_conf{'-pass'}   = $pass; }
 
 unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and defined($compara_conf{'-dbname'})) {
   print "\nERROR : must specify host, user, and database to connect to compara\n\n";
-  usage(); 
+  usage();
 }
 
 if(%analysis_template and (not(-d $analysis_template{'fasta_dir'}))) {
@@ -289,9 +289,15 @@ sub build_GeneTreeSystem
   # it will not have rules so it will never execute
   # used to store module,parameters... to be used as template for
   # the dynamic creation of the analyses like blast_1_NCBI34
-  my $blast_template = new Bio::EnsEMBL::Analysis(%analysis_template);
+
+  #Have to generate new parameters & not use analysis_template as
+  #that now has keys which are not prefixed by a -
+  #Since hash order is unpredictable this causes problems with rearrange
+  my %new_params = map { $_ => $analysis_template{$_} } grep {$_ =~ /^-/} keys(%analysis_template);
+
+  my $blast_template = new Bio::EnsEMBL::Analysis(%new_params);
   $blast_template->logic_name("blast_template");
-  my $blast_template_analysis_data_id = 
+  my $blast_template_analysis_data_id =
     $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($blast_template->parameters);
   $parameters = undef;
   if (defined $blast_template_analysis_data_id) {
@@ -305,7 +311,7 @@ sub build_GeneTreeSystem
   #
   foreach my $speciesPtr (@speciesList) {
     my $gdb_id = $speciesPtr->{'genome_db_id'};
-    my $gdb = $self->{gdba}->fetch_by_dbID($gdb_id) 
+    my $gdb = $self->{gdba}->fetch_by_dbID($gdb_id)
         || die( "Cannot fetch_by_dbID genome_db $gdb_id" );
     my $species_name = lc($gdb->name);
     $species_name =~ s/\ /\_/g;
@@ -376,11 +382,11 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HclusterRun',
       -parameters      => $parameters
     );
-    
+
   if(exists $genetree_params{hcluster_sg}) {
   	$hclusterrun->program_file($genetree_params{hcluster_sg});
   }
-  
+
   $analysisDBA->store($hclusterrun);
   $stats = $hclusterrun->stats;
   $stats->batch_size(1);
@@ -423,16 +429,16 @@ sub build_GeneTreeSystem
       -program_file    => $mcoffee_exe,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MCoffee'
     );
-    
+
   #If params exceed 254 then use the analysis_data table.
   if(length($parameters) > 254) {
   	my $ad_dba =  $self->{'hiveDBA'}->get_AnalysisDataAdaptor();
    	my $adi = $ad_dba->store_if_needed($parameters);
    	$parameters = "{'analysis_data_id'=>${adi}}";
   }
-  
+
   $mcoffee->parameters($parameters);
-    
+
   $analysisDBA->store($mcoffee);
   $stats = $mcoffee->stats;
   $stats->batch_size(1);
@@ -506,12 +512,12 @@ sub build_GeneTreeSystem
   $stats->update();
 
   #
-  # Change $dnds_params{'method_link_type'} to {'method_link_types'} 
-  # 
+  # Change $dnds_params{'method_link_type'} to {'method_link_types'}
+  #
   if( defined( $dnds_params{'method_link_type'} ) ){
     warn('[WARN] dNdS => method_link_type is deprecated. '
          .'Use method_link_types instead');
-    $dnds_params{'method_link_types'} 
+    $dnds_params{'method_link_types'}
       ||= '['. $dnds_params{'method_link_type'} . ']';
   }
 
@@ -527,7 +533,7 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'species_sets'}) {
     $ortho_params .= ',species_sets=>' . $dnds_params{'species_sets'};
     if( defined $dnds_params{'method_link_types'} ){
-      $ortho_params .= ',method_link_types=>' 
+      $ortho_params .= ',method_link_types=>'
           . $dnds_params{'method_link_types'};
     }
     $with_options_orthotree = 1;
@@ -565,7 +571,7 @@ sub build_GeneTreeSystem
   $stats->hive_capacity($ortho_tree_hive_capacity);
 
   $stats->update();
-  
+
   #
   # QuickTreeBreak
   #
@@ -574,7 +580,7 @@ sub build_GeneTreeSystem
   	$parameters .= qq|, sreformat_exe=>'$genetree_params{sreformat}'|;
   }
   $parameters .= '}';
-  
+
   my $quicktreebreak = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'QuickTreeBreak',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::QuickTreeBreak',
@@ -615,8 +621,8 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'species_sets'}) {
     $self->{'hiveDBA'}->get_AnalysisJobAdaptor->CreateNewJob
         (
-         -input_id       => ( '{species_sets=>' 
-                              . $dnds_params{'species_sets'} 
+         -input_id       => ( '{species_sets=>'
+                              . $dnds_params{'species_sets'}
 #                               . ',method_link_types=>'
 #                               . $dnds_params{'method_link_types'}
                               . '}' ),
@@ -639,7 +645,7 @@ sub build_GeneTreeSystem
   $analysisDBA->store($homology_dNdS);
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
-    $stats->batch_size(10); 
+    $stats->batch_size(10);
     my $homology_dnds_hive_capacity = $hive_params{homology_dnds_hive_capacity};
   	$homology_dnds_hive_capacity = 200 unless defined $homology_dnds_hive_capacity;
   	$stats->hive_capacity($homology_dnds_hive_capacity);
@@ -669,8 +675,8 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'species_sets'}) {
     $self->{'hiveDBA'}->get_AnalysisJobAdaptor->CreateNewJob
         (
-         -input_id       => ( '{species_sets=>' 
-                              . $dnds_params{'species_sets'} 
+         -input_id       => ( '{species_sets=>'
+                              . $dnds_params{'species_sets'}
 #                               . ',method_link_types=>'
 #                               . $dnds_params{'method_link_types'}
                               . '}' ),
@@ -706,7 +712,7 @@ sub build_GeneTreeSystem
        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Sitewise_dNdS',
        -program_file    => $sitewise_dnds_params{'program_file'} || ''
       );
-    
+
     #If params exceed 254 then use the analysis_data table.
     if(length($parameters) > 254) {
     	my $ad_dba =  $self->{'hiveDBA'}->get_AnalysisDataAdaptor();
@@ -714,7 +720,7 @@ sub build_GeneTreeSystem
     	$parameters = "{'analysis_data_id'=>${adi}}";
     }
     $Sitewise_dNdS->parameters($parameters);
-    
+
     $analysisDBA->store($Sitewise_dNdS);
 
     if(defined($self->{'hiveDBA'})) {
