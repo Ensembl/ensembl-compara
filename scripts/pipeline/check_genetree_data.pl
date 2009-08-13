@@ -138,64 +138,65 @@ print "# Check for dangling internal nodes that have no children\n";
   
   $sth->finish;
 
-# Check data consistency between pt* tables on node_id
-######################################################
-print "# Check data consistency between pt* tables on node_id\n";
+## This check is not relevant any more since we don't store all between_species_paralogs
+# # Check data consistency between pt* tables on node_id
+# ######################################################
+# print "# Check data consistency between pt* tables on node_id\n";
 
-  $sql = "select count(*) from protein_tree_member ptm left join protein_tree_node ptn on ptm.node_id=ptn.node_id where ptn.node_id is NULL";
+#   $sql = "select count(*) from protein_tree_member ptm left join protein_tree_node ptn on ptm.node_id=ptn.node_id where ptn.node_id is NULL";
   
-  $sth = $dba->dbc->prepare($sql);
-  $sth->execute;
+#   $sth = $dba->dbc->prepare($sql);
+#   $sth->execute;
   
-  while (my $aref = $sth->fetchrow_arrayref) {
-    #should 0, if not delete culprit node_id in protein_tree_member
-    my ($count) = @$aref;
-    if ($count == 0) {
-      print "PASSED: protein_tree_member versus protein_tree_node is consistent\n";
-    } else {
-      print STDERR "ERROR: protein_tree_member versus protein_tree_node is NOT consistent\n";
-      print STDERR "ERROR: USED SQL : $sql\n";
-    }
-  }
+#   while (my $aref = $sth->fetchrow_arrayref) {
+#     #should 0, if not delete culprit node_id in protein_tree_member
+#     my ($count) = @$aref;
+#     if ($count == 0) {
+#       print "PASSED: protein_tree_member versus protein_tree_node is consistent\n";
+#     } else {
+#       print STDERR "ERROR: protein_tree_member versus protein_tree_node is NOT consistent\n";
+#       print STDERR "ERROR: USED SQL : $sql\n";
+#     }
+#   }
   
-  $sth->finish;
+#   $sth->finish;
   
-  $sql = "select count(*) from protein_tree_tag ptt left join protein_tree_node ptn on ptt.node_id=ptn.node_id where ptn.node_id is NULL";
+#   $sql = "select count(*) from protein_tree_tag ptt left join protein_tree_node ptn on ptt.node_id=ptn.node_id where ptn.node_id is NULL";
   
-  $sth = $dba->dbc->prepare($sql);
-  $sth->execute;
+#   $sth = $dba->dbc->prepare($sql);
+#   $sth->execute;
   
-  while (my $aref = $sth->fetchrow_arrayref) {
-    #should be 0, if not delete culprit node_id in protein_tree_tag
-    my ($count) = @$aref;
-    if ($count == 0) {
-      print "PASSED: protein_tree_tag versus protein_tree_node is consistent\n";
-    } else {
-      print STDERR "ERROR: protein_tree_tag versus protein_tree_node is NOT consistent\n";
-      print STDERR "ERROR: USED SQL : $sql\n";
-    }
-  }
+#   while (my $aref = $sth->fetchrow_arrayref) {
+#     #should be 0, if not delete culprit node_id in protein_tree_tag
+#     my ($count) = @$aref;
+#     if ($count == 0) {
+#       print "PASSED: protein_tree_tag versus protein_tree_node is consistent\n";
+#     } else {
+#       print STDERR "ERROR: protein_tree_tag versus protein_tree_node is NOT consistent\n";
+#       print STDERR "ERROR: USED SQL : $sql\n";
+#     }
+#   }
   
-  $sth->finish;
+#   $sth->finish;
 
-# Check that the gene_count tags and the right-left index counts are equivalent
-  $sql = "select p1.*, ROUND((((p1.right_index-p1.left_index+1)/2)+1)/2) as p1_size, ptt1.value as gene_count from protein_tree_node p1, protein_tree_tag ptt1 where p1.parent_id=1 and p1.node_id=ptt1.node_id and ptt1.tag='gene_count' and ROUND((((p1.right_index-p1.left_index+1)/2)+1)/2)!=ptt1.value";
+# # Check that the gene_count tags and the right-left index counts are equivalent
+#   $sql = "select p1.*, ROUND((((p1.right_index-p1.left_index+1)/2)+1)/2) as p1_size, ptt1.value as gene_count from protein_tree_node p1, protein_tree_tag ptt1 where p1.parent_id=1 and p1.node_id=ptt1.node_id and ptt1.tag='gene_count' and ROUND((((p1.right_index-p1.left_index+1)/2)+1)/2)!=ptt1.value";
   
-  $sth = $dba->dbc->prepare($sql);
-  $sth->execute;
+#   $sth = $dba->dbc->prepare($sql);
+#   $sth->execute;
   
-  while (my $aref = $sth->fetchrow_arrayref) {
-    #should be 0, if not delete culprit node_id in protein_tree_tag
-    my ($count) = @$aref;
-    if ($count == 0) {
-      print "PASSED: protein_tree_tag gene_count versus right_index left_index formula is consistent\n";
-    } else {
-      print STDERR "ERROR: protein_tree_tag versus protein_tree_node is NOT consistent\n";
-      print STDERR "ERROR: USED SQL : $sql\n";
-    }
-  }
+#   while (my $aref = $sth->fetchrow_arrayref) {
+#     #should be 0, if not delete culprit node_id in protein_tree_tag
+#     my ($count) = @$aref;
+#     if ($count == 0) {
+#       print "PASSED: protein_tree_tag gene_count versus right_index left_index formula is consistent\n";
+#     } else {
+#       print STDERR "ERROR: protein_tree_tag versus protein_tree_node is NOT consistent\n";
+#       print STDERR "ERROR: USED SQL : $sql\n";
+#     }
+#   }
   
-  $sth->finish;
+#   $sth->finish;
 
 
 # Check for unique member presence in ptm
@@ -251,7 +252,7 @@ print "# Check for unique member presence in ptm\n";
 print "# Check data consistency between pt_node and homology with node_id\n";
 
 
-  $sql = "select count(*) from homology h left join protein_tree_node ptn on h.ancestor_node_id=ptn.node_id where ptn.node_id is NULL";
+  $sql = "select count(*) from homology h left join protein_tree_node ptn on h.ancestor_node_id=ptn.node_id where h.description!='other_paralog' AND ptn.node_id is NULL";
   
   $sth = $dba->dbc->prepare($sql);
   $sth->execute;
