@@ -31,17 +31,12 @@
 #    '-parameters'      => "{options=>'-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1'}",
     # BlastComparaPepAcross only creates jobs for every peptide against all other dbs, making analysis_job leaner and faster
     '-module'          => 'Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPepAcross',
-#    '-module'          => 'Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPep',
     '-module_version'  => undef,
     '-gff_source'      => undef,
     '-gff_feature'     => undef,
     'fasta_dir'        => "/home/user/production/compara_homology_54/hive/54/bDB",
+    'cluster_dir'      => "/home/user/production/compara_homology_54/hive/54/hcluster",
   },
-
-## This is needed for the old homology pipeline, not the genetrees
-#  { TYPE => HOMOLOGY,
-#    'species_sets' => '[[22,38,31,25,3,40,54,44]]'
-#  },
 
 # One can generate a species_tree_file with something like: (see
 # README-genetree documentation, also -no_previous 1 option)
