@@ -462,7 +462,8 @@ create_mlss.pl script as follows;
             (202,"ENSEMBL_PARALOGUES", "Homology.homology"), \
             (204,"ENSEMBL_HOMOLOGUES", "Homology.homology"), \
             (301,"FAMILY",             "Family.family"), \
-            (401,"PROTEIN_TREES",      "ProteinTree.protein_tree_node")'
+            (401,"PROTEIN_TREES",      "ProteinTree.protein_tree_node"), \
+            (402,"NC_TREES",           "NCTree.nc_tree_node")'
 
 7.3. Run the create_mlss.pl script. 
 
