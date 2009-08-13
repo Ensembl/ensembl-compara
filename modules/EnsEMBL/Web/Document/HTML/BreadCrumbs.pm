@@ -31,15 +31,18 @@ sub render   {
       $html .= qq(<strong>Control Panel</strong>);
     }
     else {
-      my $display_name = $species_defs->SPECIES_COMMON_NAME;
-      if ($display_name =~ /\./) {
-        $display_name = '<i>'.$display_name.'</i>'
+      if ($species_defs->SPP_ARE_GROUPED) {
+        $html .= '<a href="/'.$species_defs->GROUP_URL.'/">'.$species_defs->DISPLAY_NAME.'</a> &gt; ';
+      }
+      my $species_name = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
+      if ($species_name =~ /\./) {
+        $species_name = '<i>'.$species_name.'</i>'
       }
       if ($ENV{'ENSEMBL_TYPE'} eq 'Info') {
-        $html .= qq(<strong>$display_name</strong>);
+        $html .= qq(<strong>$species_name</strong>);
       }
       else {
-        $html .= qq(<a href="/$species/Info/Index">).$display_name.qq(</a>);
+        $html .= qq(<a href="/$species/Info/Index">).$species_name.qq(</a>);
       }
       $html .= ' <span style="font-size:75%">['.$species_defs->ASSEMBLY_DISPLAY_NAME.']</span>';
     }

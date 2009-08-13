@@ -12,7 +12,8 @@ use EnsEMBL::Web::RegObj;
 sub caption {
   my $self   = shift;
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  return 'Search '.$species_defs->ENSEMBL_SITETYPE.' '.$species_defs->SPECIES_COMMON_NAME;
+  return 'Search '.$species_defs->ENSEMBL_SITETYPE
+    .' '.$species_defs->get_config($self->species, 'SPECIES_COMMON_NAME');
 }
 
 

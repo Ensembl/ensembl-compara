@@ -4,6 +4,7 @@ package EnsEMBL::Web::Document::HTML::SpeciesList;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 use Data::Dumper;
 
 use EnsEMBL::Web::RegObj;
@@ -27,9 +28,9 @@ sub render {
   
   foreach my $species (@valid_species) {
     my $info = {};
-    $info->{'common'}     = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
-    $info->{'assembly'}   = $species_defs->get_config($species, "ASSEMBLY_NAME");
-    $info->{'genebuild'}  = $species_defs->get_config($species, "GENEBUILD_LATEST");
+    $info->{'name'}       = $species_defs->get_config($species, "SPECIES_BIO_NAME", 1);
+    $info->{'common'}     = $species_defs->get_config($species, "SPECIES_COMMON_NAME", 1);
+    $info->{'assembly'}   = $species_defs->get_config($species, "ASSEMBLY_NAME", 1);
     $species_info{$species} = $info;
   }
 

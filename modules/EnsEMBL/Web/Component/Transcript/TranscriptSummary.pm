@@ -17,7 +17,7 @@ sub content {
   my $self   = shift;
   my $object = $self->object;
   my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
-  my $sp     = $object->species_defs->SPECIES_COMMON_NAME;
+  my $sp     = $object->species_defs->DISPLAY_NAME;
 
 ## add transcript stats
   my $exons     = @{ $object->Obj->get_all_Exons };

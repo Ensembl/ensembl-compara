@@ -12,7 +12,7 @@ sub render {
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $page_species = $ENV{'ENSEMBL_SPECIES'} || 'common';
   my $species_name = '';
-  $species_name = $species_defs->SPECIES_COMMON_NAME if $page_species;
+  $species_name = $species_defs->DISPLAY_NAME if $page_species;
   if( $species_name =~ /\./ ) {
     $species_name = '<i>'.$species_name.'</i>'
   }
@@ -42,8 +42,8 @@ sub render {
     $input_size = 30;
 
     my %species = map {
-      $species_defs->get_config($_, 'SPECIES_COMMON_NAME') => $_
-    } @{$species_defs->ENSEMBL_SPECIES};
+      $species_defs->get_config($_, 'DISPLAY_NAME') => $_
+    } @{$species_defs->ENSEMBL_DATASETS};
     foreach my $common_name (sort {uc($a) cmp uc($b)} keys %species) {
       $html .= qq(<option value="$species{$common_name}">$common_name</option>);
     }

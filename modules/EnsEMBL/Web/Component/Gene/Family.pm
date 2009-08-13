@@ -16,7 +16,7 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $sp = $object->species_defs->SPECIES_COMMON_NAME;
+  my $sp = $object->species_defs->DISPLAY_NAME;
   my $families = $object->get_all_families;
 
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );

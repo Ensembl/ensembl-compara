@@ -127,11 +127,12 @@ sub name {
   ### a
   ### returns the name of the current species
   ## TO DO - rename method to 'species'
+
   return $ENV{'ENSEMBL_SPECIES'}|| $ENSEMBL_PRIMARY_SPECIES;
 }
 
 
-sub valid_species(){
+sub valid_species {
   ### Filters the list of species to those configured in the object.
   ### If an empty list is passes, returns a list of all configured species
   ### Returns: array of configured species names
@@ -139,9 +140,12 @@ sub valid_species(){
   my %test_species = map{ $_=>1 } @_;
 
   #my $species_ref = $CONF->{'_storage'}; # This includes 'Multi'
-  my %species       = map{ $_=>1 } values %{$SiteDefs::ENSEMBL_SPECIES_ALIASES};
-  my @valid_species = keys %species;
-
+  #my %species       = map{ $_=>1 } values %{$SiteDefs::ENSEMBL_SPECIES_ALIASES};
+  #my @valid_species = keys %species;
+  my @valid_species;
+  foreach my $species ( @$ENSEMBL_DATASETS ) {
+    push @valid_species, @{$self->get_config($species, 'DB_SPECIES')};
+  }
   if( %test_species ){ # Test arg list if required
     @valid_species = grep{ $test_species{$_} } @valid_species;
   }
@@ -189,6 +193,10 @@ sub get_config {
   my $var     = shift || $species;
 
   if(defined $CONF->{'_storage'}) {
+    return $CONF->{'_storage'}{$species}{$species}{$var} 
+      if exists $CONF->{'_storage'}{$species}
+        && exists $CONF->{'_storage'}{$species}{$species} 
+        && exists $CONF->{'_storage'}{$species}{$species}{$var};
     return $CONF->{'_storage'}{$species}{$var} if exists $CONF->{'_storage'}{$species} &&
                                                   exists $CONF->{'_storage'}{$species}{$var};
     return $CONF->{'_storage'}{$var}           if exists $CONF->{'_storage'}{$var};
@@ -256,7 +264,7 @@ sub parse {
   $self->_parse();
   $self->store();
   $reg_conf->configure();
-  EnsEMBL::Web::Tools::RobotsTxt::create( $self->ENSEMBL_SPECIES, $self );
+  EnsEMBL::Web::Tools::RobotsTxt::create( $self->ENSEMBL_DATASETS, $self );
   EnsEMBL::Web::Tools::OpenSearchDescription::create( $self );
   $self->{'_parse_caller_array'} = [];
   my $C = 0;
@@ -438,7 +446,7 @@ sub _created_merged_table_hash {
   my $tree = shift;
   my $databases = {};
   my $extra = {};
-  foreach my $sp ( @$ENSEMBL_SPECIES ) {
+  foreach my $sp ( @$ENSEMBL_DATASETS ) {
     my $species_dbs = $tree->{ $sp }{'databases'};
     foreach my $db ( keys %$species_dbs ) {
       $databases->{$db} ||= {'tables'=>{}};
@@ -523,7 +531,7 @@ sub _parse {
 #             IF  the DB/DAS packed files exist expand them
 #             o/w attach the species databases/parse the DAS registry, load the
 #                 data and store the DB/DAS packed files...
-  foreach my $species ( @$ENSEMBL_SPECIES ) {
+  foreach my $species ( @$ENSEMBL_DATASETS ) {
     $tree->{$species} = $self->_read_in_ini_file( $species, $defaults );                   $self->_info_line( 'Parsing', "$species ini file" );
     $self->_expand_database_templates( $species, $tree->{$species} );
     $self->_promote_general(           $tree->{$species} );
@@ -578,7 +586,7 @@ sub _parse {
 #------------ Loop over each tree and make further manipulations
                                                                                            $self->_info_log(  'Parser', "Post processing ini files" );
   $self->_merge_in_dhtml( $tree );
-  foreach my $species ( @$ENSEMBL_SPECIES ) {
+  foreach my $species ( @$ENSEMBL_DATASETS ) {
     $plugin_locator->parameters( [$species] );
     $plugin_locator->call( 'species' );
     $plugin_locator->call( '_munge_config_tree' );                                         $self->_info_line( 'munging', "$species config" );
@@ -620,17 +628,6 @@ sub timer_push {
   my $self = shift;
   return $self->timer->push(@_);
 }
-sub anyother_species {
-  ### DEPRECATED - use get_config instead
-  my ($self, $var) = @_;
-  my( $species ) = keys %{$CONF->{'_storage'}};
-  return $self->get_config( $species, $var );
-}
-sub other_species {
-  ### DEPRECATED - use get_config instead
-  my ($self, $species, $var) = @_;
-  return $self->get_config( $species, $var );
-}
 
 sub marts {
   my $self = shift;
@@ -658,6 +655,7 @@ sub multi {
   ### Arguments: configuration type (string), species name (string)
   my( $self, $type, $species ) = @_;
   $species ||= $ENV{'ENSEMBL_SPECIES'};
+  warn "MULTI $species";
   return 
     exists $CONF->{'_storage'} && 
     exists $CONF->{'_storage'}{'MULTI'} && 
@@ -714,6 +712,7 @@ sub set_write_access {
   my $self = shift;
   my $type = shift;
   my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
+  warn "WRITE $species";
   if( $type =~ /DATABASE_(\w+)/ ) {
 ## If the value is defined then we will create the adaptor here...
     my $key = $1;
@@ -838,7 +837,7 @@ sub _is_available_artefact{
     return $success if (scalar(keys %alignment));
     return $fail;
   } elsif( $test[0] eq 'database_features' ){ ## Is the given database specified?
-    my $ft = $self->other_species($def_species,'DB_FEATURES') || {};
+    my $ft = $self->get_config($def_species,'DB_FEATURES') || {};
 #  use Data::Dumper;
 #  warn Dumper($ft);
     my @T = split /\|/, $test[1];
@@ -851,12 +850,12 @@ sub _is_available_artefact{
     return $fail if $flag;
     return $success;
   } elsif( $test[0] eq 'databases' ){ ## Is the given database specified?
-    my $db = $self->other_species($def_species,'databases')  || {};
+    my $db = $self->get_config($def_species,'databases')  || {};
     return $fail unless $db->{$test[1]}       ;
     return $fail unless $db->{$test[1]}{NAME} ;
     return $success;
   } elsif( $test[0] eq 'features' ){ ## Is the given db feature specified?
-    my $ft = $self->other_species($def_species,'DB_FEATURES') || {};
+    my $ft = $self->get_config($def_species,'DB_FEATURES') || {};
     my @T = split /\|/, $test[1];
     my $flag = 1;
     foreach( @T ) {
@@ -865,14 +864,14 @@ sub _is_available_artefact{
     return $fail if $flag;
     return $success;
   } elsif( $test[0] eq 'any_feature' ){ ## Are any of the given db features specified?
-    my $ft = $self->other_species($def_species,'DB_FEATURES') || {};
+    my $ft = $self->get_config($def_species,'DB_FEATURES') || {};
     shift @test;
     foreach (@test) {
       return $success if $ft->{uc($_)};
     }
     return $fail;
   } elsif( $test[0] eq 'species_defs') {
-    return $self->other_species($def_species,$test[1]) ? $success : $fail;
+    return $self->get_config($def_species,$test[1]) ? $success : $fail;
   } elsif( $test[0] eq 'species') {
     if(Bio::EnsEMBL::Registry->get_alias($def_species,"no throw") ne Bio::EnsEMBL::Registry->get_alias($test[1],"no throw")){
       return $fail;
@@ -896,7 +895,7 @@ sub table_info {
 sub table_info_other {
   my( $self, $sp, $db, $table ) =@_;
   $db = "DATABASE_".uc($db) unless $db =~ /^DATABASE_/;
-  my $db_hash = $self->other_species( $sp, 'databases');
+  my $db_hash = $self->get_config( $sp, 'databases');
   return {} unless $db_hash && exists $db_hash->{$db} && exists $db_hash->{$db}{'tables'};
   return $db_hash->{$db}{'tables'}{$table}||{};
 }
@@ -904,10 +903,10 @@ sub table_info_other {
 
 sub species_label {
   my( $self, $key, $no_formatting ) = @_;
-  return "Ancestral sequence" unless $self->other_species( $key, 'SPECIES_BIO_NAME' );
-  my $common = $self->other_species( $key, 'SPECIES_COMMON_NAME' );
+  return "Ancestral sequence" unless $self->get_config( $key, 'SPECIES_BIO_NAME' );
+  my $common = $self->get_config( $key, 'SPECIES_COMMON_NAME' );
 
-  my $rtn = $self->other_species( $key, 'SPECIES_BIO_NAME' );  
+  my $rtn = $self->get_config( $key, 'SPECIES_BIO_NAME' );  
   $rtn = sprintf('<i>%s</i>', $rtn) unless $no_formatting;
   
   if ($common =~ /\./) {

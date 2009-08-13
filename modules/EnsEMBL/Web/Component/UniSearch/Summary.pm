@@ -47,7 +47,7 @@ sub content {
     my $dir = $species ? '/'.$species : '';
 
     my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-    my $sp_name = $object->species_defs->SPECIES_COMMON_NAME || '';
+    my $sp_name = $object->species_defs->DISPLAY_NAME || '';
     $html = qq(<h3>Search $sitename $sp_name</h3>);
 
     my $form = EnsEMBL::Web::Form->new( 'unisearch', "$dir/UniSearch/Summary", 'get' );

@@ -18,7 +18,7 @@ sub content {
   my $object        = $self->object;
   my $table         = new EnsEMBL::Web::Document::HTML::TwoCol;
 
-  my $sp            = $object->species_defs->SPECIES_COMMON_NAME;
+  my $sp            = $object->species_defs->DISPLAY_NAME;
   my $species       = $object->species;
   my $gene_id       = $object->stable_id;
   my $transcript    = $object->core_objects->transcript;

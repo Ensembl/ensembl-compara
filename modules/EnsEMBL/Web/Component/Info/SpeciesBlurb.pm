@@ -18,8 +18,8 @@ sub content {
   my $object = $self->object;
   my $name_string;
   my $bio_name = $object->species;
+  my $common_name = $object->species_defs->get_config($bio_name, 'SPECIES_COMMON_NAME');
   $bio_name =~ s/_/ /g;
-  my $common_name = $object->species_defs->SPECIES_COMMON_NAME;
   if ($common_name =~ /\./) {
     $name_string = "<i>$bio_name</i>";
   }

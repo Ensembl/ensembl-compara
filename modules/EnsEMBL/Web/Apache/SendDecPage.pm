@@ -213,7 +213,7 @@ sub template_SPECIESDEFS {
 sub template_SPECIES {
   my( $r, $code ) = @_;
   return $ENV{'ENSEMBL_SPECIES'} if $code eq 'code';
-  return $ENSEMBL_WEB_REGISTRY->species_defs->SPECIES_COMMON_NAME if $code eq 'name';
+  return $ENSEMBL_WEB_REGISTRY->species_defs->DISPLAY_NAME if $code eq 'name';
   return $ENSEMBL_WEB_REGISTRY->species_defs->SPECIES_RELEASE_VERSION if $code eq 'version';
   return "**$code**";
 }

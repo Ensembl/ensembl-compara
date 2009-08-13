@@ -31,7 +31,7 @@ sub content {
       'name'  => 'otherspecies',
       'value' => $object->param('otherspecies') || $self->default_otherspecies,
     );
-    $label = 'Jump to '.$object->species_defs->SPECIES_COMMON_NAME.' chromosome';
+    $label = 'Jump to '.$object->species_defs->DISPLAY_NAME.' chromosome';
   }
 
   $form->add_element(

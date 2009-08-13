@@ -27,14 +27,14 @@ sub render {
 </tr>
 
 );
-  my @species = $species_defs->valid_species;
+  my @species = $species_defs->ENSEMBL_DATASETS;
   my $row = 0;
   my $class;
-  foreach my $spp (sort @species) {
+  foreach my $spp (sort @{$species_defs->ENSEMBL_DATASETS}) {
     (my $sp_name = $spp) =~ s/_/ /;
      my $sp_dir =lc($spp);
      my $sp_var = lc($spp).'_variation';
-     my $common = $species_defs->get_config($spp, 'SPECIES_COMMON_NAME');
+     my $common = $species_defs->get_config($spp, 'DISPLAY_NAME');
      my $emf = '-';
     if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
       $emf = qq(<a rel="external" title="Variation and comparative data" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_emf/$sp_var/">EMF</a>);
