@@ -155,7 +155,6 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (8825,   "Birds",
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (32561,  "Reptiles","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9348,   "Sloth/Anteater/Armadillo ancestor","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9263,   "Marsupials","ensembl alias name");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (91561,"Even-toed ungulates","ensembl alias name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (314293,"Simians","ensembl alias name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl alias name");
 
@@ -200,6 +199,5 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (32561,  "267.03"
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9348,   "64.50","ensembl timetree mya");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9263,   "148","ensembl timetree mya");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (314293, "45.16","ensembl timetree mya");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (91561,  "65.22","ensembl timetree mya");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9528,   "13.64","ensembl timetree mya");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl timetree mya");
