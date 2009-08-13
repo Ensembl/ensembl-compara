@@ -58,6 +58,7 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $ENSEMBL_TMP_DIR_CACHE
   $ENSEMBL_TMP_URL_CACHE
   $ENSEMBL_MINIAD_DIR
+  $ENSEMBL_DATASETS
   $ENSEMBL_SPECIES
   $ENSEMBL_PRIMARY_SPECIES
   $ENSEMBL_SECONDARY_SPECIES
@@ -500,23 +501,23 @@ $ENSEMBL_PROXY_PORT = $ENSEMBL_PORT unless ( $ENSEMBL_PROXY_PORT && $ENSEMBL_PRO
 ## And one without the _ in...
 
 $ENSEMBL_SPECIES_ALIASES = {};
-$ENSEMBL_SPECIES = [ sort keys %__species_aliases ];
+$ENSEMBL_DATASETS = [ sort keys %__species_aliases ];
 
-foreach my $binomial ( @$ENSEMBL_SPECIES ) {
-  foreach my $alias ( @{$__species_aliases{$binomial}} ) {
-    $ENSEMBL_SPECIES_ALIASES->{lc($alias)} = $binomial;
+foreach my $name ( @$ENSEMBL_DATASETS ) {
+  foreach my $alias ( @{$__species_aliases{$name}} ) {
+    $ENSEMBL_SPECIES_ALIASES->{lc($alias)} = $name;
   }
-  my $key = lc($binomial);
-  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # homo_sapiens
+  my $key = lc($name);
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # homo_sapiens
   $key =~s/\.//g;
-  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # homosapiens
-  $key = lc($binomial);
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # homosapiens
+  $key = lc($name);
   $key =~s/^([a-z])[a-z]*_/$1_/g;
-  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # h_sapiens
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # h_sapiens
   $key =~s/_/\./g;
-  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # h.sapiens
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # h.sapiens
   $key =~s/_//g;
-  $ENSEMBL_SPECIES_ALIASES->{$key} = $binomial;   # hsapiens
+  $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # hsapiens
 }
 $ENSEMBL_SHORTEST_ALIAS = {};
 foreach my $key (keys %$ENSEMBL_SPECIES_ALIASES) {
@@ -525,7 +526,7 @@ foreach my $key (keys %$ENSEMBL_SPECIES_ALIASES) {
     length($key) < length($ENSEMBL_SHORTEST_ALIAS->{$bin});
   
 }
-my @temp_species = @{$ENSEMBL_SPECIES};
+my @temp_species = @{$ENSEMBL_DATASETS};
 unless( $__species_aliases{$ENSEMBL_PRIMARY_SPECIES} ) {
   error( qq(Species "$ENSEMBL_PRIMARY_SPECIES" not defined in ENSEMBL_SPECIES_ALIASES) );
   $ENSEMBL_PRIMARY_SPECIES = shift @temp_species;
@@ -589,6 +590,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
   $ENSEMBL_TMP_DIR_CACHE
   $ENSEMBL_TMP_URL_CACHE
   $ENSEMBL_MINIAD_DIR
+  $ENSEMBL_DATASETS
   $ENSEMBL_SPECIES
   $ENSEMBL_CONFIG_FILENAME
   $ENSEMBL_CONFIG_BUILD
@@ -658,6 +660,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
   $ENSEMBL_TMP_DIR_CACHE
   $ENSEMBL_TMP_URL_CACHE
   $ENSEMBL_MINIAD_DIR
+  $ENSEMBL_DATASETS
   $ENSEMBL_SPECIES
   $ENSEMBL_PRIMARY_SPECIES
   $ENSEMBL_SECONDARY_SPECIES
@@ -740,6 +743,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
     $ENSEMBL_TMP_DIR_CACHE
     $ENSEMBL_TMP_URL_CACHE
     $ENSEMBL_MINIAD_DIR
+    $ENSEMBL_DATASETS
     $ENSEMBL_SPECIES
     $ENSEMBL_PRIMARY_SPECIES
     $ENSEMBL_SECONDARY_SPECIES
@@ -864,6 +868,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
     $ENSEMBL_BLASTSCRIPT
     $ENSEMBL_TMP_DIR_BLAST
     $ENSEMBL_TMP_DIR_BLAST_OLD
+    $ENSEMBL_DATASETS
     $ENSEMBL_SPECIES
     $ENSEMBL_PRIMARY_SPECIES
     $ENSEMBL_SECONDARY_SPECIES
