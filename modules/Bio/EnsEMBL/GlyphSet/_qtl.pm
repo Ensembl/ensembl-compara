@@ -44,7 +44,9 @@ sub href {
   my $id = $syns->{$src};
 
   ( my $SRC = uc( $src ) ) =~s/ /_/g;
-  return $self->ID_URL( $SRC, $id);
+  my $qtl_link = $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$SRC};
+  $qtl_link =~ s/###ID###/$id/;
+  return $qtl_link;
 }
 
 sub _se {
