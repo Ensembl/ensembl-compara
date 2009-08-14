@@ -525,43 +525,19 @@ sub check {
 
 ## Stuff copied out of scalebar.pm so that contig.pm can use it!
 
-sub HASH_URL {
-  my($self,$db,$hash) = @_;
-  return "/@{[$self->{container}{web_species}]}/r?d=$db;".join ';', map { "$_=$hash->{$_}" } keys %{$hash||{}};
-}
-
 sub ID_URL {
   my($self,$db,$id) = @_;
   return undef unless $self->species_defs;
   return undef if $db eq 'NULL';
-  return exists( $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db}) ? "/@{[$self->{container}{web_species}]}/r?d=$db;ID=$id" : "";
-}
-
-=pod
-
-sub zoom_URL {
-  my( $self, $PART, $interval_middle, $width, $factor, $highlights, $config_number, $ori) = @_;
-  my $extra;
-  if( $config_number ) {
-    $extra = "o$config_number=c$config_number=$PART:$interval_middle:$ori;w$config_number=$width"; 
-  } else {
-    $extra = "c=$PART:$interval_middle;w=$width";
+  if (exists( $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db})) {
+    my $url = $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db};
+    $url =~ s/###ID###/$id/;
+    return $url;
   }
-  return qq(/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}?$extra$highlights);
+  else {
+    return '';
+  }
 }
-
-sub zoom_zoom_zmenu {
-  my ($self, $chr, $interval_middle, $width, $highlights, $zoom_width, $config_number, $ori) = @_;
-  $chr =~s/.*=//;
-  return qq(zz('/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$zoom_width', '$highlights','$ori','$config_number', '@{[$self->{container}{web_species}]}'));
-}
-sub zoom_zmenu {
-  my ($self, $chr, $interval_middle, $width, $highlights, $config_number, $ori ) = @_;
-  $chr =~s/.*=//;
-  return qq(zn('/$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}', '$chr', '$interval_middle', '$width', '$highlights','$ori','$config_number', '@{[$self->{container}{web_species}]}' ));
-}
-
-=cut
 
 sub draw_cigar_feature {
   my( $self, $Composite, $f, $h, $feature_colour, $delete_colour, $pix_per_bp, $DO_NOT_FLIP ) = @_;
