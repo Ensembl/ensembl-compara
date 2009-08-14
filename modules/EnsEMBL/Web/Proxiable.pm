@@ -64,7 +64,7 @@ sub _url {
 
 sub hack_escape {
   my( $self, $s ) = @_;
-  (my $t = escape($s)) =~ s/%3A/:/;
+  (my $t = escape($s)) =~ s/%3A/:/g;
   return $t;
 }
 
