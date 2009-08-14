@@ -58,10 +58,13 @@ sub process {
     elsif ($data->{'features'}) {
       @fs = @{$data->{'features'}};
     }
-    my $cs = $object->database('core',$object->species)->get_CoordSystemAdaptor->fetch_by_name($new_name, $new_version);
+    my $csa    = $object->database('core',$object->species)->get_CoordSystemAdaptor;
+    my $ama    = $object->database('core', $object->species)->get_AssemblyMapperAdaptor;
+    my $old_cs = $csa->fetch_by_name($old_name, $old_version);
+    my $new_cs = $csa->fetch_by_name($new_name, $new_version);
+    my $mapper = $ama->fetch_by_CoordSystems($old_cs, $new_cs);
 
     ## Loop through features
-    my $current_slice;
     ## NB - this next bit only works for GFF export!
     my @skip = qw(_type source feature_type score frame);
     my $skip = join('|', map {'^'.$_.'$'} @skip);
@@ -71,47 +74,40 @@ sub process {
       format => 'gff',
       delim  => "\t"
     };
-    
+    my $current_slice;
+
     foreach my $f (@fs) {    
-      ## Set feature slice object to one from core database, so we can map cleanly on current db
-      ## N.B. Don't create new object unless we need to! Also use a whole seq region for efficiency
-      if ($f->slice) {
-        unless ($current_slice 
-          && $f->slice->seq_region_name eq $current_slice->seq_region_name
-        ) {
-          $current_slice = $sa->fetch_by_region(undef, $f->slice->seq_region_name);
-        } 
+      my @coords = $mapper->map($f->seqname, $f->start, $f->end, $f->strand, $old_cs);
+
+      foreach my $new (@coords) {
+        unless ($current_slice && $f->seqname eq $current_slice->seq_region_name) {
+          $current_slice = $sa->fetch_by_seq_region_id($new->id);
+        }
+        $f->slice($current_slice);
+
+        if (ref($new) =~ /Gap/) {
+          $gaps++;
+        }
+        $f->start($new->start);
+        $f->end($new->end);
+
+        my $feature_type = $f->extra_data->{'feature_type'}[0];
+        my $source = $f->extra_data->{'source'}[0];
+
+        my $extra = {};
+        my $other = [];
+        while (my ($k, $v) = each(%{$f->extra_data})) {
+          next if $k =~ /$skip/;
+          push @$other, $k;
+          $extra->{$k} = $v->[0];
+        }
+        $exporter->{'config'}->{'extra_fields'} = $other;
+        $exporter->feature($feature_type, $f, $extra, { 'source' => $source });
       }
-      else {
-        unless ($current_slice 
-          && $f->seqname eq $current_slice->seq_region_name
-          ) {
-          $current_slice = $sa->fetch_by_region(undef, $f->seqname);
-        } 
-      }
-      $f->slice($current_slice);
-      my $feature = $f->transform($new_name, $new_version);
-      my $extra = {};
-      my $other = [];
-      while (my ($k, $v) = each(%{$f->extra_data})) {
-        next if $k =~ /$skip/;
-        push @$other, $k;
-        $extra->{$k} = $v->[0];
-      }
-      my $feature_type = $f->extra_data->{'feature_type'}[0];
-      my $source = $f->extra_data->{'source'}[0];
-      unless ($feature) {
-        $f->seqname('GAP');
-        $feature = $f;
-        $gaps++;
-      }
-      
-      $exporter->{'config'}->{'extra_fields'} = $other;
-      $exporter->feature($feature_type, $feature, $extra, { 'source' => $source });
     }
     
     my $output = $exporter->string;
-    
+
     ## Output new data to temp file
     my $temp_file = EnsEMBL::Web::TmpFile::Text->new(
         extension => 'gff',
@@ -142,3 +138,4 @@ sub process {
 }
 
 1;
+
