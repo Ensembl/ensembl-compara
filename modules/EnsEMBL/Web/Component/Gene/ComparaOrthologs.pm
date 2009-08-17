@@ -140,7 +140,7 @@ sub content {
       The following gene(s) have been identified as putative
       orthologues:
     </p>
-    <p>(N.B. The type "<b>paralogue (between species)</b>" is not an ortholog prediction, but it is provided as the closest prediction in the gene tree. Please view the <a href="%s">gene tree info</a> to see more.)</p>%s),
+    <p>(N.B. The type "<b>paralogue (between species)</b>" is not a definitive ortholog prediction, but it is provided as the closest prediction in this gene tree. Please view the <a href="%s">gene tree info</a> to see more.)</p>%s),
       $gene->_url({'action'=>'Compara_Tree'}), $html;
     if( $ALIGNVIEW && keys %orthologue_list ) {
       my $url = $gene->_url({ 'action' => 'Compara_Ortholog/Alignment' });
