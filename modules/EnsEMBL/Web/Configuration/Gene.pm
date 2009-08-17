@@ -491,14 +491,16 @@ sub _ajax_zmenu_compara_tree_node{
       # Link to TreeFam Tree
       my $treefam_tree = $tagvalues->{'treefam_id'} || $tagvalues->{'part_treefam_id'} || $tagvalues->{'cont_treefam_id'} || $tagvalues->{'dev_treefam_id'} || $tagvalues->{'dev_part_treefam_id'} || $tagvalues->{'dev_cont_treefam_id'} || undef;
       if(defined($treefam_tree)) {
-        if( my $treefam_link = $obj->get_ExtURL( 'TREEFAMTREE', $treefam_tree ) ){
-          $panel->add_entry({
-             'type'     => 'Equivalent in TreeFam',
-             'label'    => "$treefam_tree in Treefam",
-             'link'     => $treefam_link,
-             'priority' => 193,
-             'extra'     => {'external' => 1}, 
-            });
+        foreach my $treefam_id (split ';',$treefam_tree) {
+          if( my $treefam_link = $obj->get_ExtURL( 'TREEFAMTREE', $treefam_id ) ){
+            $panel->add_entry({
+                               'type'     => 'Maps to TreeFam',
+                               'label'    => "$treefam_id",
+                               'link'     => $treefam_link,
+                               'priority' => 5,
+                               'extra'     => {'external' => 1}, 
+                              });
+          }
         }
       }
     }
