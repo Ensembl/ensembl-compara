@@ -146,6 +146,7 @@ sub build_GeneTreeSystem
 
   #
   # SubmitGenome
+  print STDERR "SubmitGenome...\n";
   #
   my $submit_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -169,9 +170,15 @@ sub build_GeneTreeSystem
   # it will not have rules so it will never execute
   # used to store module,parameters... to be used as template for
   # the dynamic creation of the analyses like blast_1_NCBI34
-  my $blast_template = new Bio::EnsEMBL::Analysis(%analysis_template);
+
+  #Have to generate new parameters & not use analysis_template as
+  #that now has keys which are not prefixed by a -
+  #Since hash order is unpredictable this causes problems with rearrange
+  my %new_params = map { $_ => $analysis_template{$_} } grep {$_ =~ /^-/} keys(%analysis_template);
+
+  my $blast_template = new Bio::EnsEMBL::Analysis(%new_params);
   $blast_template->logic_name("blast_template");
-  my $blast_template_analysis_data_id = 
+  my $blast_template_analysis_data_id =
     $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($blast_template->parameters);
   my $parameters = undef;
   if (defined $blast_template_analysis_data_id) {
@@ -182,6 +189,7 @@ sub build_GeneTreeSystem
 
   #
   # GenomeLoadReuseMembers
+  print STDERR "GenomeLoadReuseMembers...\n";
   #
   # Uses GenomeLoadReuseMembers and will not execute run section if it's a new genome
   my $loadreuse_genome =  Bio::EnsEMBL::Analysis->new(
@@ -200,6 +208,7 @@ sub build_GeneTreeSystem
 
   #
   # GenomeLoadMembers
+  print STDERR "GenomeLoadMembers...\n";
   #
   # Uses GenomeLoadReuseMembers but will not execute run section if it's a reused genome
   my $load_genome = Bio::EnsEMBL::Analysis->new(
@@ -218,6 +227,7 @@ sub build_GeneTreeSystem
 
   #
   # LoadUniProt
+  print STDERR "LoadUniProt...\n";
   #
   # Only needed to load uniprot sequences. Used for the MCL Families pipeline
   my $loadUniProt = Bio::EnsEMBL::Analysis->new(
@@ -235,6 +245,7 @@ sub build_GeneTreeSystem
 
   #
   # BlastSubsetStaging
+  print STDERR "BlastSubsetStaging...\n";
   #
   my $blastSubsetStaging = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -252,6 +263,7 @@ sub build_GeneTreeSystem
 
   #
   # GenomeSubmitPep
+  print STDERR "GenomeSubmitPep...\n";
   #
   my $submitpep_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -276,6 +288,7 @@ sub build_GeneTreeSystem
 
   #
   # GenomeDumpFasta
+  print STDERR "GenomeDumpFasta...\n";
   #
   my $dumpfasta_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -294,6 +307,7 @@ sub build_GeneTreeSystem
 
   #
   # CreateBlastRules
+  print STDERR "CreateBlastRules...\n";
   #
   # Only run the next analysis, CreateHclustePrepareJobs, when all blasts are finished
   $parameters = "{phylumBlast=>0, selfBlast=>1,cr_analysis_logic_name=>'CreateHclusterPrepareJobs'}";
@@ -322,6 +336,7 @@ sub build_GeneTreeSystem
 
   #
   # BlastTableReuse
+  print STDERR "BlastTableReuse...\n";
   #
   my $blasttablereuse = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -340,22 +355,24 @@ sub build_GeneTreeSystem
 
   #
   # Create peptide_align_feature per-species tables
+  print STDERR "Create peptide_align_feature_ per-species tables...\n";
   #
   foreach my $speciesPtr (@speciesList) {
     my $gdb_id = $speciesPtr->{'genome_db_id'};
-    my $gdb = $self->{gdba}->fetch_by_dbID($gdb_id) 
+    my $gdb = $self->{gdba}->fetch_by_dbID($gdb_id)
         || die( "Cannot fetch_by_dbID genome_db $gdb_id" );
     my $species_name = lc($gdb->name);
     $species_name =~ s/\ /\_/g;
     my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
     my $sql = "CREATE TABLE IF NOT EXISTS $tbl_name like peptide_align_feature";
 
-    #print("$sql\n");
+    print STDERR "## $sql\n";
     my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
     $sth->execute();
   }
 
   # CreateHclusterPrepareJobs
+  print STDERR "CreateHclusterPrepareJobs...\n";
   #
   # FIXME
   $parameters = $genetree_params{'cluster_params'};
@@ -385,6 +402,7 @@ sub build_GeneTreeSystem
 
   #
   # HclusterPrepare
+  print STDERR "HclusterPrepare...\n";
   #
   $parameters = $genetree_params{'cluster_params'};
   $parameters =~ s/\A{//;
@@ -404,6 +422,7 @@ sub build_GeneTreeSystem
 
   #
   # HclusterRun
+  print STDERR "HclusterRun...\n";
   #
   $parameters = $genetree_params{'cluster_params'};
   $parameters =~ s/\A{//;
@@ -414,6 +433,11 @@ sub build_GeneTreeSystem
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HclusterRun',
       -parameters      => $parameters
     );
+
+  if(exists $genetree_params{hcluster_sg}) {
+  	$hclusterrun->program_file($genetree_params{hcluster_sg});
+  }
+
   $analysisDBA->store($hclusterrun);
   $stats = $hclusterrun->stats;
   $stats->batch_size(1);
@@ -423,6 +447,7 @@ sub build_GeneTreeSystem
 
   #
   # Clusterset_staging
+  print STDERR "Clusterset_staging...\n";
   #
   my $clusterset_staging = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Clusterset_staging',
@@ -435,14 +460,19 @@ sub build_GeneTreeSystem
   $stats->update();
 
   #
-  # Mcoffee
+  # MCoffee
+  print STDERR "MCoffee...\n";
   #
-  $parameters = "{'method'=>'cmcoffee',use_exon_boundaries=>2";
+#  $parameters = "{'method'=>'cmcoffee',use_exon_boundaries=>2";
+	$parameters = "{'method'=>'cmcoffee'";
   if (defined $genetree_params{'max_gene_count'}) {
     $parameters .= ",'max_gene_count'=>".$genetree_params{'max_gene_count'};
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
+  }
+  if(defined $genetree_params{mafft}) {
+  	$parameters .= qq|, 'mafft' => '$genetree_params{mafft}'|;
   }
   $parameters .= "}";
 
@@ -451,9 +481,18 @@ sub build_GeneTreeSystem
   my $mcoffee = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'MCoffee',
       -program_file    => $mcoffee_exe,
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MCoffee',
-      -parameters      => $parameters
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MCoffee'
     );
+
+  #If params exceed 254 then use the analysis_data table.
+  if(length($parameters) > 254) {
+  	my $ad_dba =  $self->{'hiveDBA'}->get_AnalysisDataAdaptor();
+   	my $adi = $ad_dba->store_if_needed($parameters);
+   	$parameters = "{'analysis_data_id'=>${adi}}";
+  }
+
+  $mcoffee->parameters($parameters);
+
   $analysisDBA->store($mcoffee);
   $stats = $mcoffee->stats;
   $stats->batch_size(10);
@@ -488,6 +527,7 @@ sub build_GeneTreeSystem
 
   #
   # NJTREE_PHYML
+  print STDERR "NJTREE_PHYML...\n";
   #
   $parameters = "{cdna=>1,bootstrap=>1";
   if (defined $genetree_params{'max_gene_count'}) {
@@ -531,17 +571,18 @@ sub build_GeneTreeSystem
   $stats->update();
 
   #
-  # Change $dnds_params{'method_link_type'} to {'method_link_types'} 
-  # 
+  # Change $dnds_params{'method_link_type'} to {'method_link_types'}
+  #
   if( defined( $dnds_params{'method_link_type'} ) ){
     warn('[WARN] dNdS => method_link_type is deprecated. '
          .'Use method_link_types instead');
-    $dnds_params{'method_link_types'} 
+    $dnds_params{'method_link_types'}
       ||= '['. $dnds_params{'method_link_type'} . ']';
   }
 
   #
   # OrthoTree
+  print STDERR "OrthoTree...\n";
   #
   my $with_options_orthotree = 0;
   my $ortho_params = '';
@@ -552,7 +593,7 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'species_sets'}) {
     $ortho_params .= ',species_sets=>' . $dnds_params{'species_sets'};
     if( defined $dnds_params{'method_link_types'} ){
-      $ortho_params .= ',method_link_types=>' 
+      $ortho_params .= ',method_link_types=>'
           . $dnds_params{'method_link_types'};
     }
     $with_options_orthotree = 1;
@@ -592,24 +633,33 @@ sub build_GeneTreeSystem
 
   $stats->update();
 
-  $parameters = "{max_gene_count=>".$genetree_params{'max_gene_count'}."}";
+  #
+  # QuickTreeBreak
+  #
+  print STDERR "QuickTreeBreak...\n";
+  #
+   $parameters = "{max_gene_count=>".$genetree_params{'max_gene_count'};
+  if($genetree_params{sreformat}) {
+  	$parameters .= qq|, sreformat_exe=>'$genetree_params{sreformat}'|;
+  }
+  $parameters .= '}';
   my $quicktreebreak = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'QuickTreeBreak',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::QuickTreeBreak',
       -parameters      => $parameters
       );
+  $quicktreebreak->program_file($genetree_params{quicktree}) if $genetree_params{quicktree};
   $analysisDBA->store($quicktreebreak);
   $stats = $quicktreebreak->stats;
   $stats->batch_size(1);
   my $quicktreebreak_hive_capacity = 1; # Some deletes in OrthoTree can be hard on the mysql server
   $stats->hive_capacity($quicktreebreak_hive_capacity);
-
   $stats->update();
-
 
   # turn these two on if you need dnds from the old homology system
   #
   # CreateHomology_dNdSJob
+  print STDERR "CreateHomology_dNdSJob...\n";
   #
   my $CreateHomology_dNdSJob = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -632,8 +682,8 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'species_sets'}) {
     $self->{'hiveDBA'}->get_AnalysisJobAdaptor->CreateNewJob
         (
-         -input_id       => ( '{species_sets=>' 
-                              . $dnds_params{'species_sets'} 
+         -input_id       => ( '{species_sets=>'
+                              . $dnds_params{'species_sets'}
 #                               . ',method_link_types=>'
 #                               . $dnds_params{'method_link_types'}
                               . '}' ),
@@ -643,6 +693,7 @@ sub build_GeneTreeSystem
 
   #
   # Homology_dNdS
+  print STDERR "Homology_dNdS...\n";
   #
   my $homology_dNdS = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -657,7 +708,10 @@ sub build_GeneTreeSystem
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
     $stats->batch_size(10);
-    $stats->hive_capacity(200);
+    my $homology_dnds_hive_capacity = $hive_params{homology_dnds_hive_capacity};
+  	$homology_dnds_hive_capacity = 200 unless defined $homology_dnds_hive_capacity;
+  	$stats->hive_capacity($homology_dnds_hive_capacity);
+    $stats->failed_job_tolerance(2);
     $stats->status('BLOCKED');
     $stats->update();
     $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$homology_dNdS);
@@ -665,6 +719,7 @@ sub build_GeneTreeSystem
 
   #
   # Threshold_on_dS
+  print STDERR "Threshold_on_dS...\n";
   #
   my $threshold_on_dS = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -684,8 +739,8 @@ sub build_GeneTreeSystem
   if (defined $dnds_params{'species_sets'}) {
     $self->{'hiveDBA'}->get_AnalysisJobAdaptor->CreateNewJob
         (
-         -input_id       => ( '{species_sets=>' 
-                              . $dnds_params{'species_sets'} 
+         -input_id       => ( '{species_sets=>'
+                              . $dnds_params{'species_sets'}
 #                               . ',method_link_types=>'
 #                               . $dnds_params{'method_link_types'}
                               . '}' ),
@@ -695,6 +750,7 @@ sub build_GeneTreeSystem
 
   #
   # Sitewise_dNdS
+  print STDERR "Sitewise_dNdS...\n";
   #
 
   if (defined $sitewise_dnds_params{'saturated'}) {
@@ -708,6 +764,10 @@ sub build_GeneTreeSystem
       $parameters .= "'saturated'=>" . $sitewise_dnds_params{'saturated'};
       $with_options_sitewise_dnds = 1;
     }
+    if (defined $sitewise_dnds_params{gblocks}) {
+    	$parameters .= q{'gblocks_exe'=>} . $sitewise_dnds_params{'gblocks'};
+    	$with_options_sitewise_dnds = 1;
+    }
     $parameters = '{' . $parameters .'}' if (1==$with_options_sitewise_dnds);
 
     my $Sitewise_dNdS = Bio::EnsEMBL::Analysis->new
@@ -715,9 +775,17 @@ sub build_GeneTreeSystem
        -db_version      => '1',
        -logic_name      => 'Sitewise_dNdS',
        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Sitewise_dNdS',
-       -program_file    => $sitewise_dnds_params{'program_file'} || '',
-       -parameters      => $parameters
+       -program_file    => $sitewise_dnds_params{'program_file'} || ''
       );
+
+    #If params exceed 254 then use the analysis_data table.
+    if(length($parameters) > 254) {
+    	my $ad_dba =  $self->{'hiveDBA'}->get_AnalysisDataAdaptor();
+    	my $adi = $ad_dba->store_if_needed($parameters);
+    	$parameters = "{'analysis_data_id'=>${adi}}";
+    }
+    $Sitewise_dNdS->parameters($parameters);
+
     $analysisDBA->store($Sitewise_dNdS);
 
     if(defined($self->{'hiveDBA'})) {
@@ -773,6 +841,7 @@ sub build_GeneTreeSystem
 
   #
   # create initial job
+  print STDERR "create initial job...\n";
   #
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
@@ -787,6 +856,8 @@ sub build_GeneTreeSystem
  #       -analysis       => $paf_cluster,
         -analysis       => $hclusterrun,
        );
+
+  print STDERR "Done.\n";
   return 1;
 }
 
