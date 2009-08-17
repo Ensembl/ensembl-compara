@@ -436,8 +436,9 @@ sub run_mcoffee
   #
   # Output some environment variables for tcoffee
   #
-  my $prefix = "export HOME_4_TCOFFEE=\"$tempdir\";";
-  $prefix .= "export DIR_4_TCOFFEE=\"$tempdir\";";
+  my $prefix = '';
+  $prefix = "export HOME_4_TCOFFEE=\"$tempdir\";" if ! $ENV{HOME_4_TCOFFEE};
+  $prefix .= "export DIR_4_TCOFFEE=\"$tempdir\";" if ! $ENV{DIR_4_TCOFFEE};
   $prefix .= "export TMP_4_TCOFFEE=\"$tempdir\";";
   $prefix .= "export CACHE_4_TCOFFEE=\"$tempdir\";";
   $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
