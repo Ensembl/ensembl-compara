@@ -106,8 +106,8 @@ sub usage {
   print "  -dbuser <name>         : compara mysql connection user <name>\n";
   print "  -dbpass <pass>         : compara mysql connection password\n";
 	print "  -ensembl_genomes       : use ensembl genomes specific code\n";
-  print "comparaLoadGenomes.pl v1.2\n";
-  
+  print "comparaLoadGenomes.pl v1.3\n";
+
   exit(1);
 }
 
@@ -181,49 +181,12 @@ sub submitGenome
   my $meta = $genomeDBA->get_MetaContainer;
   my $taxon_id = $meta->get_taxonomy_id;
 
-#   # If we are in E_G then we need to look for a taxon in meta by 'NAME.species.taxonomy_id'
-#   if($ensembl_genomes) {
-#     if(!defined $taxon_id or $taxon_id == 1) {
-#       # We make the same call as in the MetaContainer code, but with the NAME appendage
-#       my $key = $species->{eg_name}.'.'.'species.taxonomy_id';
-#       my $arrRef = $meta->list_value_by_key($key);
-#       if( @$arrRef ) {
-#         $taxon_id = $arrRef->[0];
-#         print "Found taxonid ${taxon_id}\n" if $verbose;
-#       }
-#       else {
-#         warning("Please insert meta_key '${key}' in meta table at core db.\n");
-#       }
-#     }
-#   }
-
   my $ncbi_taxon = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
-  my $genome_name;
-  # check for ncbi table
-  if (defined $ncbi_taxon) {
-    $genome_name = $ncbi_taxon->binomial;
-  }
-  # Some NCBI taxons for complete genomes have no binomial, so one has
-  # to go to the species level - A.G.
-  if (!defined $genome_name ) {
-    $verbose && print"  Cannot get binomial from NCBITaxon, try Meta...\n";
-    # We assume that the species field is the binomial name
-    if (defined($species->{species})) {
-      $genome_name = $species->{species};
-    } else {
-      $genome_name = (defined $meta->get_Species) ? meta->get_Species->binomial : $species->{species};
-    }
-  }
+  my $genome_name = $self->_get_name($species, $meta, $ncbi_taxon);
 
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
-  $assembly = '-undef-' if ($ensembl_genomes && !$cs->version);
   my $genebuild = ($meta->get_genebuild or "");
-
-  #EDIT because the meta container always returns a value
-  if ($ensembl_genomes && 1 == length($genebuild)) {
-	$genebuild = '' if (1 == $genebuild);
-  }
 
   if($species->{taxon_id} && ($taxon_id ne $species->{taxon_id})) {
     throw("$genome_name taxon_id=$taxon_id not as expected ". $species->{taxon_id});
@@ -345,4 +308,46 @@ sub submitUniprot
         -input_job_id   => 0
         );
 
+}
+
+sub _get_name {
+	my ($self, $species, $meta, $ncbi_taxon) = @_;
+
+	my $genome_name;
+
+	#If we have both taxon & species then check rules & assign
+	if(defined $ncbi_taxon && defined $species->{species}) {
+		print "Taxon & Species given; checking for equality\n" if $verbose;
+		if($ncbi_taxon->binomial() ne $species->{species}) {
+			if($ensembl_genomes) {
+				print "Taxon bionmial & species name differ; using species name as we are in ensembl_genomes mode\n" if $verbose;
+				$genome_name = $species->{species};
+			}
+			else {
+				print "Taxon bionmial & species name differ; using taxon binomial as we are in compara mode\n" if $verbose;
+				$genome_name = $ncbi_taxon->binomial();
+			}
+		}
+		else {
+			print "Taxon binomial & species agree with name\n";
+			$genome_name = $ncbi_taxon->binomial();
+		}
+  }
+  #If just had taxon then taxon wins
+  elsif(defined $ncbi_taxon) {
+  	print "Taxon found but no species name given; using taxon binomal\n" if $verbose;
+		$genome_name = $ncbi_taxon->binomial();
+  }
+  #Otherwise best guess from meta
+  else {
+  	$verbose && print"  Cannot get binomial from NCBITaxon, try Meta...\n";
+  	if (defined($species->{species})) {
+      $genome_name = $species->{species};
+    }
+    else {
+    	$genome_name = (defined $meta->get_Species()) ? $meta->get_Species()->binomial() : $species->{species};
+    }
+  }
+
+  return $genome_name;
 }
