@@ -99,7 +99,7 @@ sub counts {
                      ml.method_link_id = mlss.method_link_id and
                      ( ml.type = "ENSEMBL_ORTHOLOGUES" or
                        ml.type = "ENSEMBL_PARALOGUES" and
-                       h.description = "within_species_paralog" )
+                       h.description in ("within_species_paralog","other_paralog","contiguous_gene_split","putative_gene_split") )
                group by type', {}, $obj->stable_id
         )};
         $counts->{'orthologs'} = $res{'ENSEMBL_ORTHOLOGUES'};
@@ -558,7 +558,7 @@ sub gene_type {
   my $db = $self->get_db;
   my $type = '';
   if( $db eq 'core' ){
-    $type = ucfirst(lc($self->Obj->status))." ".ucfirst(lc($self->Obj->biotype));
+    $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
     $type =~ s/_/ /;
     $type ||= $self->db_type;
   } elsif ($db eq 'vega') {
@@ -631,7 +631,10 @@ sub get_homology_matches{
       'ortholog_one2many'         => '1-to-many',
       'between_species_paralog'   => 'paralogue (between species)',
       'ortholog_many2many'        => 'many-to-many',
-      'within_species_paralog'    => 'paralog (within species)'
+      'within_species_paralog'    => 'paralogue (within species)',
+      'other_paralog'             => 'other paralogue (within species)',
+      'putative_gene_split'       => 'putative gene split',
+      'contiguous_gene_split'     => 'contiguous gene split'
     );
 
     foreach my $displayspp (keys (%homologues)){
@@ -694,18 +697,18 @@ sub fetch_homology_species_hash {
   # We use right - left indexes to get the order in the hierarchy.
   
   my %classification;
-
+  $classification{'Undetermined'} = 99999999;
   if (my $taxon = $query_member->taxon) {
-      my $node = $taxon->root();
- 
-  while ($node){
-    $node->get_tagvalue('scientific name');
-    # Found a speed boost with nytprof -- avilella
-    # $classification{$node->get_tagvalue('scientific name')} = $node->right_index - $node->left_index;
-    $classification{$node->{_tags}{'scientific name'}} = $node->{_right_index} - $node->{_left_index};
-    $node = $node->children->[0];
+    my $node = $taxon->root();
+
+    while ($node){
+      $node->get_tagvalue('scientific name');
+      # Found a speed boost with nytprof -- avilella
+      # $classification{$node->get_tagvalue('scientific name')} = $node->right_index - $node->left_index;
+      $classification{$node->{_tags}{'scientific name'}} = $node->{_right_index} - $node->{_left_index};
+      $node = $node->children->[0];
+    }
   }
-} 
   $self->timer_push( 'classification' , 6 );
  
  foreach my $homology (@{$homologies_array}){
