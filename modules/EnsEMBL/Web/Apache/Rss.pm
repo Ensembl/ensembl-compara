@@ -108,7 +108,7 @@ sub handler {
 
       my @tags = qw(STATIC RSS);
       push @tags, keys %{ $ENV{CACHE_TAGS} } if $ENV{CACHE_TAGS};
-      $MEMD->set($ENV{CACHE_KEY}, $rss, $ENV{CACHE_TIMEOUT}, @tags);
+      $MEMD->set($ENV{CACHE_KEY}, $rss, $ENV{CACHE_TIMEOUT}, @tags) if defined $MEMD;
       
       $r->content_type('xml/rss');
       my $rc = $r->print($rss);
