@@ -480,6 +480,7 @@ sub _ajax_zmenu_compara_tree_node{
     }
 
     if( my $tree_stable_id = $node->stable_id ) {
+      warn("$tree_stable_id\n");
       # GeneTree StableID
       $panel->add_entry({
         'type' => 'GeneTree_StableID',
@@ -492,8 +493,8 @@ sub _ajax_zmenu_compara_tree_node{
       if(defined($treefam_tree)) {
         if( my $treefam_link = $obj->get_ExtURL( 'TREEFAMTREE', $treefam_tree ) ){
           $panel->add_entry({
-             'type'     => 'Equivalent tree in TreeFam',
-             'label'    => "$treefam_tree",
+             'type'     => 'Equivalent in TreeFam',
+             'label'    => "$treefam_tree in Treefam",
              'link'     => $treefam_link,
              'priority' => 193,
              'extra'     => {'external' => 1}, 
