@@ -21,11 +21,10 @@ sub content {
 
 ## call table method here
   my $db              = $gene->get_db() ;
-  my $paralogue = $gene->get_homology_matches('ENSEMBL_PARALOGUES', 'within_species_paralog');
+  my $paralogue = $gene->get_homology_matches('ENSEMBL_PARALOGUES', 'th\S+paralog|gene_split');
   my $html;
-  return qq(<p>No paralogues have been identified for this gene</p>) unless keys %$paralogue;
-
   my %paralogue_list = %{$paralogue};
+  return qq(<p>No paralogues have been identified for this gene</p>) unless keys %paralogue_list;
   $html = qq(
     <p>
       The following gene(s) have been identified as putative paralogues (within species):
@@ -43,7 +42,6 @@ sub content {
   my $ALIGNVIEW = 0;
   my $EXTRA2;
   my $matching_paralogues = 0;
-  my $previous = '';
   foreach my $species (sort keys %paralogue_list){
     foreach my $stable_id (sort {$paralogue_list{$species}{$a}{'order'} <=> $paralogue_list{$species}{$b}{'order'}} keys %{$paralogue_list{$species}}){
       my $OBJ = $paralogue_list{$species}{$stable_id};
@@ -61,8 +59,9 @@ sub content {
           'g' => $stable_id,
           'r' => undef
         });
-        my $EXTRA = sprintf '<span class="small">[<a href="%s;s1=%s;g1=%s;context=1000">MultiContigView</a>]</span>',
-          $MCV_STUB, $spp, CGI::escapeHTML( $stable_id );
+				my $EXTRA;
+#        my $EXTRA = sprintf '<span class="small">[<a href="%s;s1=%s;g1=%s;context=1000">MultiContigView</a>]</span>',
+#          $MCV_STUB, $spp, CGI::escapeHTML( $stable_id );
         if( $paralogue_desc ne 'DWGA' ) {
           my $url = $gene->_url({ 'action' => 'Compara_Paralog/Alignment', 'g1' => $stable_id });
           $EXTRA .= sprintf '&nbsp;<span class="small">[<a href="%s">Align</a>]</span>', $url;
@@ -78,18 +77,17 @@ sub content {
         }
         $html .= qq(
     <tr>
-      <td>).($paralogue_subtype eq $previous ? '&nbsp' : $paralogue_subtype).qq(</td>
+      <td>$paralogue_subtype<br>$paralogue_desc</td>
       <td><a href="$link">$stable_id</a> (@{[ $OBJ->{'display_id'} ]}) $EXTRA<br />
       <span class="small">$description</span>$EXTRA2</td>
     </tr>);
        } else {
         $html .= qq(
     <tr>
-      <td>).($paralogue_subtype eq $previous ? '&nbsp' : $paralogue_subtype).qq(</td>
+      <td>$paralogue_subtype<br>$paralogue_desc</td>
       <td>$stable_id <br /><span class="small">$description</span>$EXTRA2</td>
     </tr>);
       }
-      $previous = $paralogue_subtype;
     }
   }
   $html .= qq(</table>);
