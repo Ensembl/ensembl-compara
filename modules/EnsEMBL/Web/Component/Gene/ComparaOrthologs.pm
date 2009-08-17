@@ -21,7 +21,8 @@ sub content {
   my $db   = $gene->get_db() ;
   my $html;
   my $orthologue = $gene->get_homology_matches('ENSEMBL_ORTHOLOGUES');
-  my %orthologue_list = %{$orthologue};
+  my $betweens = $gene->get_homology_matches('ENSEMBL_PARALOGUES','between_species_paralog');
+  my %orthologue_list = (%{$orthologue},%{$betweens});
 
   if (keys %orthologue_list) {
 # Find the selected method_link_set
@@ -72,7 +73,7 @@ sub content {
 ## (Column 2) Add in Orthologue description...
         my $orthologue_desc = $orthologue_map{ $OBJ->{'homology_desc'} } || $OBJ->{'homology_desc'};
 ## (Column 3) Add in the dN/dS ratio...
-        my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'};
+        my $orthologue_dnds_ratio = $OBJ->{'homology_dnds_ratio'} || 'na';
            $orthologue_dnds_ratio = '&nbsp;' unless defined $orthologue_dnds_ratio;
 ## (Column 4) Sort out (1) the link to the other species
 ##                     (2) information about %ids
@@ -139,9 +140,7 @@ sub content {
       The following gene(s) have been identified as putative
       orthologues:
     </p>
-    <p>(N.B. If you don't find a homologue here, it may be a "between-species paralogue".
-Please view the <a href="%s">gene tree info</a> or export between-species
-paralogues with BioMart to see more.)</p>%s),
+    <p>(N.B. The type "<b>paralogue (between species)</b>" is not an ortholog prediction, but it is provided as the closest prediction in the gene tree. Please view the <a href="%s">gene tree info</a> to see more.)</p>%s),
       $gene->_url({'action'=>'Compara_Tree'}), $html;
     if( $ALIGNVIEW && keys %orthologue_list ) {
       my $url = $gene->_url({ 'action' => 'Compara_Ortholog/Alignment' });
