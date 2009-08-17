@@ -187,26 +187,30 @@ sub get_config {
   ### Returns:  parameter value (any type), or undef on failure
   my $self = shift;
   my $species = shift;
-  if ($species eq 'common') {
-    $species = $ENSEMBL_PRIMARY_SPECIES;
-  }
-  my $var     = shift || $species;
+  $species = $ENSEMBL_PRIMARY_SPECIES if $species eq 'common';
+  
+  my $var = shift || $species;
 
-  if(defined $CONF->{'_storage'}) {
-    return $CONF->{'_storage'}{$species}{$species}{$var} 
-      if exists $CONF->{'_storage'}{$species}
-        && exists $CONF->{'_storage'}{$species}{$species} 
-        && exists $CONF->{'_storage'}{$species}{$species}{$var};
+  if (defined $CONF->{'_storage'}) {
+    return $CONF->{'_storage'}{$species}{$species}{$var} if exists $CONF->{'_storage'}{$species} && 
+                                                            exists $CONF->{'_storage'}{$species}{$species} && 
+                                                            exists $CONF->{'_storage'}{$species}{$species}{$var};
+                                                            
     return $CONF->{'_storage'}{$species}{$var} if exists $CONF->{'_storage'}{$species} &&
                                                   exists $CONF->{'_storage'}{$species}{$var};
-    return $CONF->{'_storage'}{$var}           if exists $CONF->{'_storage'}{$var};
+                                                  
+    return $CONF->{'_storage'}{$var} if exists $CONF->{'_storage'}{$var};
   }
+  
   no strict 'refs';
   my $S = "SiteDefs::".$var;
+  
   return ${$S} if defined ${$S};
-
+  
   return \@{$S} if defined @{$S};
+  
   warn "UNDEF ON $var [$species]. Called from ", (caller(1))[1] , " line " , (caller(1))[2] , "\n" if $ENSEMBL_DEBUG_FLAGS & 4;
+  
   return undef;
 }
 
@@ -655,7 +659,7 @@ sub multi {
   ### Arguments: configuration type (string), species name (string)
   my( $self, $type, $species ) = @_;
   $species ||= $ENV{'ENSEMBL_SPECIES'};
-  warn "MULTI $species";
+  
   return 
     exists $CONF->{'_storage'} && 
     exists $CONF->{'_storage'}{'MULTI'} && 
@@ -712,7 +716,7 @@ sub set_write_access {
   my $self = shift;
   my $type = shift;
   my $species = shift || $ENV{'ENSEMBL_SPECIES'} || $ENSEMBL_PRIMARY_SPECIES;
-  warn "WRITE $species";
+  
   if( $type =~ /DATABASE_(\w+)/ ) {
 ## If the value is defined then we will create the adaptor here...
     my $key = $1;
