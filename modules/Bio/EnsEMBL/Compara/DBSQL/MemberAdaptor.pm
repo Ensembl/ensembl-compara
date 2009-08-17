@@ -60,7 +60,7 @@ sub fetch_by_dbID {
   my ($self,$id) = @_;
 
   unless(defined $id) {
-    $self->throw("fetch_by_dbID must have an id");
+    throw("fetch_by_dbID must have an id");
   }
 
   my ($name, $syn) = @{$self->tables->[0]};
@@ -163,7 +163,7 @@ sub fetch_by_source {
 sub fetch_all_by_source {
   my ($self,$source_name) = @_;
 
-  $self->throw("source_name arg is required\n")
+  throw("source_name arg is required\n")
     unless ($source_name);
 
 #  my $source_id = $self->get_source_id_from_name($source_name);
@@ -200,7 +200,7 @@ sub fetch_by_source_taxon {
 sub fetch_all_by_source_taxon {
   my ($self,$source_name,$taxon_id) = @_;
 
-  $self->throw("source_name and taxon_id args are required") 
+  throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
 #  my $source_id = $self->get_source_id_from_name($source_name);    
@@ -225,7 +225,7 @@ sub fetch_all_by_source_taxon {
 sub get_source_taxon_count {
   my ($self,$source_name,$taxon_id) = @_;
 
-  $self->throw("source_name and taxon_id args are required") 
+  throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
   my $sth = $self->prepare
@@ -266,7 +266,7 @@ sub fetch_all_by_relation {
   my $join;
   my $constraint;
 
-  $self->throw() 
+  throw() 
     unless (defined $relation && ref $relation);
   
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
@@ -302,7 +302,7 @@ sub fetch_all_by_relation {
     $join = [[['homology_member', 'hm'], 'm.member_id = hm.member_id', $extra_columns]];
   }
   else {
-    $self->throw();
+    throw();
   }
 
   return $self->_generic_fetch($constraint, $join);
@@ -334,10 +334,10 @@ sub fetch_by_relation_source {
 sub fetch_all_by_relation_source {
   my ($self, $relation, $source_name) = @_;
 
-  $self->throw() 
+  throw() 
     unless (defined $relation && ref $relation);
   
-  $self->throw("source_name arg is required\n")
+  throw("source_name arg is required\n")
     unless ($source_name);
 
   my $join;
@@ -377,7 +377,7 @@ sub fetch_all_by_relation_source {
     $join = [[['homology_member', 'hm'], 'm.member_id = hm.member_id', $extra_columns]];
   }
   else {
-    $self->throw();
+    throw();
   }
   return $self->_generic_fetch($constraint, $join);
 }
@@ -408,10 +408,10 @@ sub fetch_by_relation_source_taxon {
 sub fetch_all_by_relation_source_taxon {
   my ($self, $relation, $source_name, $taxon_id) = @_;
 
-  $self->throw()
+  throw()
     unless (defined $relation && ref $relation);
   
-  $self->throw("source_name and taxon_id args are required") 
+  throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
   my $join;
@@ -438,7 +438,7 @@ sub fetch_all_by_relation_source_taxon {
 #  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
 #  }
   else {
-    $self->throw();
+    throw();
   }
   return $self->_generic_fetch($constraint, $join);
 }
@@ -471,7 +471,7 @@ sub fetch_by_subset_id {
 sub fetch_all_by_subset_id {
   my ($self, $subset_id) = @_;
 
-  $self->throw() unless (defined $subset_id);
+  throw() unless (defined $subset_id);
 
   my $constraint = "sm.subset_id = '$subset_id'";
 
@@ -496,7 +496,7 @@ sub fetch_all_by_subset_id {
 sub fetch_gene_for_peptide_member_id {
   my ($self, $peptide_member_id) = @_;
 
-  $self->throw() unless (defined $peptide_member_id);
+  throw() unless (defined $peptide_member_id);
 
   my $constraint = "pepm.member_id = '$peptide_member_id'";
 
@@ -536,7 +536,7 @@ sub fetch_peptides_for_gene_member_id {
 sub fetch_all_peptides_for_gene_member_id {
   my ($self, $gene_member_id) = @_;
 
-  $self->throw() unless (defined $gene_member_id);
+  throw() unless (defined $gene_member_id);
 
   my $constraint = "m.gene_member_id = '$gene_member_id'";
 
@@ -562,7 +562,7 @@ sub fetch_all_peptides_for_gene_member_id {
 sub fetch_longest_peptide_member_for_gene_member_id {
   my ($self, $gene_member_id) = @_;
 
-  $self->throw() unless (defined $gene_member_id);
+  throw() unless (defined $gene_member_id);
 
   my $constraint = "m.gene_member_id = '$gene_member_id'";
 
@@ -817,7 +817,7 @@ sub store {
   my ($self,$member) = @_;
 
   unless($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    $self->throw(
+    throw(
       "member arg must be a [Bio::EnsEMBL::Compara::Member]"
     . "not a $member");
   }
@@ -876,7 +876,7 @@ sub store_reused {
   my ($self,$member) = @_;
 
   unless($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    $self->throw(
+    throw(
       "member arg must be a [Bio::EnsEMBL::Compara::Member]"
     . "not a $member");
   }

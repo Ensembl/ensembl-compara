@@ -281,6 +281,7 @@ sub delete_by_dbID {
   ## Deletes genomic_align_block entry 
   my $sth = $self->prepare($genomic_align_block_sql);
   $sth->execute($genomic_align_block_id);
+  $sth->finish();
   
   ## Deletes corresponding genomic_align entries
   my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
@@ -322,6 +323,8 @@ sub fetch_by_dbID {
   my $sth = $self->prepare($sql);
   $sth->execute($dbID);
   my $array_ref = $sth->fetchrow_arrayref();
+  $sth->finish();
+  
   if ($array_ref) {
     my ($method_link_species_set_id, $score, $perc_id, $length, $group_id) = @$array_ref;
   
@@ -411,6 +414,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
         );
     push(@$genomic_align_blocks, $this_genomic_align_block);
   }
+  
+  $sth->finish();
   
   return $genomic_align_blocks;
 }
@@ -1176,6 +1181,7 @@ sub retrieve_all_direct_attributes {
   my $sth = $self->prepare($sql);
   $sth->execute($genomic_align_block->dbID);
   my ($method_link_species_set_id, $score, $perc_id, $length, $group_id) = $sth->fetchrow_array();
+  $sth->finish();
   
   ## Populate the object
   $genomic_align_block->adaptor($self);
