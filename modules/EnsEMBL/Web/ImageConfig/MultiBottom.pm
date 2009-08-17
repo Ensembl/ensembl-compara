@@ -84,7 +84,7 @@ sub init {
 
 sub mult {
   my $self = shift;
-  my @species = @{$self->{'species_defs'}->ENSEMBL_SPECIES};
+  my @species = $self->{'species_defs'}->valid_species;
   my $compara = 3000;
   my @methods = (
     [ 'BLASTZ_NET'           ,'pink',  'cons',  'darkseagreen1', -20  ],

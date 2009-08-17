@@ -47,9 +47,8 @@ sub get_all_packed_files {
 
 sub get_all_species {
   my $self = shift;
-  my @species = @{ $self->species_defs->ENSEMBL_SPECIES };
   my @data = ();
-  foreach my $species (@species) {
+  foreach my $species ($self->species_defs->valid_species) {
     (my $name = $species ) =~ s/_/ /g;
     push @data, {
       'species'  => $name,

@@ -11,7 +11,7 @@ sub init {
   our %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
 
   $view_config->_set_defaults(
-    map( { 'species_'.lc($_) => 'yes' } @{$view_config->species_defs->ENSEMBL_SPECIES} ), 
+    map( { 'species_'.lc($_) => 'yes' } $view_config->species_defs->valid_species ),
     map( { 'opt_'.lc($_) => 'yes' } keys %formats )
 
   );
@@ -23,7 +23,7 @@ sub form {
   our %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
 
   $view_config->add_fieldset('Show genes from the following species');
-  foreach( @{$view_config->species_defs->ENSEMBL_SPECIES} ) {
+  foreach ($view_config->species_defs->valid_species) {
     $view_config->add_form_element({
       'type'     => 'CheckBox', 'label' => $view_config->_species_label($_),
       'name'     => 'species_'.lc($_),
