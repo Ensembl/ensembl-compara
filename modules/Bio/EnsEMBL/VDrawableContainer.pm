@@ -57,12 +57,11 @@ sub new {
     my @chromosomes = ($Container->{'chr'});
     my $flag        = 0;
     if( $Config->get_parameter('all_chromosomes') eq 'yes' ) { 
-      @chromosomes =  @{$Config->{species_defs}->other_species($Container->{'web_species'}, 'ENSEMBL_CHROMOSOMES')||[] };
+      @chromosomes = @{$Config->{'species_defs'}->get_config($Container->{'web_species'}, 'ENSEMBL_CHROMOSOMES')||[]};
       $flag = 1;
     }
+    
     my $pos = 100000;
-    #my $row = '';
-
     my $scalex = $Config->get_parameter('image_height') / $Config->get_parameter('container_width');
     $Config->{'transform'}->{'scalex'}         = $scalex;
     $Config->texthelper->{'_scalex'}           = $scalex;
