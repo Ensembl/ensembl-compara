@@ -3,7 +3,7 @@
 #
 # POD documentation - main docs before the code
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::RunnableDB::MCoffee
 =head1 SYNOPSIS
 
 my $db     = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $mcoffee = Bio::EnsEMBL::Compara::RunnableDB::Mcoffee->new ( 
+my $mcoffee = Bio::EnsEMBL::Compara::RunnableDB::Mcoffee->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id,
                                                     -analysis   => $analysis );
@@ -47,7 +47,7 @@ input_id/parameters format eg: "{'protein_tree_id'=>726093, 'clusterset_id'=>1}"
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
+The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
@@ -254,12 +254,12 @@ sub DESTROY {
     }
 
     # Cleanup temp files and stuff.
-    unlink ($self->{'input_params'}) if($self->{'input_params'});
-    unlink ($self->{'input_fasta'}) if($self->{'input_fasta'});
-    if($self->{'mcoffee_output'}) {
-	unlink ($self->{'mcoffee_output'});
-	unlink ($self->{'mcoffee_output'} . ".log");
-    }
+#    unlink ($self->{'input_params'}) if($self->{'input_params'});
+#    unlink ($self->{'input_fasta'}) if($self->{'input_fasta'});
+#    if($self->{'mcoffee_output'}) {
+#	unlink ($self->{'mcoffee_output'});
+#	unlink ($self->{'mcoffee_output'} . ".log");
+#    }
 
     $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
@@ -287,7 +287,7 @@ sub get_params {
   }
 
   my $p;
-  
+
   #First if this was an analysis data id then we rerun get params for it
   $p = 'analysis_data_id';
   if(defined $params->{$p}) {
@@ -333,11 +333,11 @@ sub get_params {
   # This is analysis, not production: 'redo' e.g. '1:1000000' from clusterset_id 1 to a different clusterset_id 10000000
   $p = 'redo';
   $self->{$p} = $params->{$p} if (defined($params->{$p}));
-  
+
   # This is looking for a mafft binary which overides other binary settings
   $p = 'mafft';
   $self->{$p} = $params->{$p} if (defined($params->{$p}));
-  
+
   return;
 }
 
@@ -387,20 +387,7 @@ sub run_mcoffee
   } elsif ($self->{'method'} eq 'fmcoffee') {
       # FMCoffee, fast but accurate alignments.
       $method_string .= "mafft_msa, muscle_msa, clustalw_msa, kalign_msa";
-  } elsif ($self->{'method'} eq 'muscle') {
-      # MUSCLE: quick, kind of crappy alignments.
-      $method_string .= "muscle_msa";
-  } elsif ($self->{'method'} eq 'mafft') {
-      # MAFFT FAST: very quick alignments.
-      $method_string .= "mafft_msa";
-  } elsif ($self->{'method'} eq 'prank') {
-      # PRANK: phylogeny-aware alignment.
-      $method_string .= "prank_msa";
-  } elsif (defined($self->{'redo'}) && $self->{'method'} eq 'unalign') {
-    my $cutoff = $self->{'cutoff'} || 2;
-      # Unalign module
-    $method_string = " -other_pg seq_reformat -in " . $self->{redo_alnname} ." -action +aln2overaln unalign 2 30 5 15 0 1>$mcoffee_output";
-  }  else {
+  } else {
       throw ("Improper method parameter: ".$self->{'method'});
   }
 
@@ -452,7 +439,7 @@ sub run_mcoffee
   $prefix .= "export TMP_4_TCOFFEE=\"$tempdir\";";
   $prefix .= "export CACHE_4_TCOFFEE=\"$tempdir\";";
   $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
-  
+
   if(defined $self->{mafft}) {
   	print "Using defined mafft location $self->{mafft}. Make sure MAFFT_BINARIES is setup correctly\n" if $self->debug();
   }
@@ -476,7 +463,7 @@ sub run_mcoffee
     	$mafft_executable = "/nfs/acari/avilella/src/mafft/mafft-6.522/scripts/mafft";
     	$mafft_env = '/nfs/acari/avilella/src/mafft/mafft-6.522/binaries';
   	}
-  	
+
   	$ENV{MAFFT_BINARIES} = $mafft_env if $mafft_env;
     print STDERR "### $mafft_executable --auto $input_fasta > $mcoffee_output\n";
     $rc = system("$mafft_executable --auto $input_fasta > $mcoffee_output");
@@ -489,7 +476,7 @@ sub run_mcoffee
 
   unless($rc == 0) {
       $self->DESTROY;
-      throw("MCoffee job, error running executable: $\n");
+      throw("MCoffee job, error running executable: $!\n");
   }
 }
 
@@ -592,7 +579,7 @@ sub parse_and_store_alignment_into_proteintree
 
   if (2 == $self->{use_exon_boundaries}) {
     $mcoffee_output .= ".overaln";
-    # $format = 'clustalw';
+#    $format = 'clustalw';
   }
   return unless($mcoffee_output and -e $mcoffee_output);
 
@@ -660,7 +647,7 @@ sub parse_and_store_alignment_into_proteintree
     # We clone the tree, attach it to the new clusterset_id, then store it.
     # protein_tree_member is now linked to the new one
     my ($from_clusterset_id, $to_clusterset_id) = split(":",$self->{'redo'});
-    throw("malformed redo option: ". $self->{'redo'}." should be like 1:1000000") 
+    throw("malformed redo option: ". $self->{'redo'}." should be like 1:1000000")
       unless (defined($from_clusterset_id) && defined($to_clusterset_id));
     my $clone_tree = $self->{protein_tree}->copy;
     my $clusterset = $self->{treeDBA}->fetch_node_by_node_id($to_clusterset_id);
@@ -705,7 +692,7 @@ sub parse_and_store_alignment_into_proteintree
 	  #
 	  my $table_name = $self->{'output_table'};
 	  printf("Updating $table_name %s : %s\n",$member->stable_id,$member->cigar_line) if ($self->debug);
-	  my $sth = $self->{treeDBA}->prepare("INSERT ignore INTO $table_name 
+	  my $sth = $self->{treeDBA}->prepare("INSERT ignore INTO $table_name
                                (node_id,member_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?)");
 	  $sth->execute($member->node_id,$member->member_id,$member->method_link_species_set_id,$member->cigar_line);
 	  $sth->finish;
@@ -715,7 +702,7 @@ sub parse_and_store_alignment_into_proteintree
         # Do a manual insert of the *scores* into the correct score output table.
         #
         my $table_name = $self->{'output_table'} . "_score";
-        my $sth = $self->{treeDBA}->prepare("INSERT ignore INTO $table_name 
+        my $sth = $self->{treeDBA}->prepare("INSERT ignore INTO $table_name
                                (node_id,member_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?)");
         my $score_string = $score_hash{$member->sequence_id} || '';
         $score_string =~ s/[^\d-]/9/g;   # Convert non-digits and non-dashes into 9s. This is necessary because t_coffee leaves some leftover letters.
