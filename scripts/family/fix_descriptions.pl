@@ -93,7 +93,7 @@ sub loop_descriptions {
         SELECT member_id, stable_id, description
           FROM member
          WHERE source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL')
-           AND (description LIKE '%Contains:%' OR description LIKE '%Includes:%')
+           AND (description LIKE '%Name:%' or description LIKE '%Contains:%' OR description LIKE '%Includes:%')
     });
 
     my $write_sth = $force && $dbc->prepare( qq{

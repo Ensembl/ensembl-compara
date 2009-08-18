@@ -149,8 +149,8 @@ beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56
 #           (2) nameprefix (legacy from the way the mcxassemble.sh.tcx takes in the parameters)
 #
 
-## NB: please execute this script on the farm that has 'hugemem' queue (from rel.56 farm-2 can be used)
-#  (otherwise the last step (the matrix assembly) will fail and may need to be re-submitted manually)
+## NB: it is better to execute this script on one of the Farm-2 machines - they now have an access to the 'hugemem' queue.
+#  (otherwise the last step (the matrix assembly itself) will fail and may need to be re-submitted manually)
 
 /nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/dump_matrix_for_mcl.pl -dbhost compara2 -dbport 3306 -dbuser ensro -dbname lg4_compara_families_56 -nameprefix family_56
 
@@ -197,7 +197,7 @@ bsub 'gzip family_56.tcx'
 #
 # NB: NB: NB: only run this script once! :
 #
-    ~/work/ensembl-compara_HEAD/scripts/family/fix_descriptions.pl -dbhost compara2 -dbport 3306 -dbuser ensadmin -dbpass ensembl -dbname lg4_compara_families_56 -force
+    ~lg4/work/ensembl-compara_HEAD/scripts/family/fix_descriptions.pl -dbhost compara2 -dbport 3306 -dbuser ensadmin -dbpass ensembl -dbname lg4_compara_families_56 -force
 #
 # (takes seconds)
 
@@ -225,7 +225,7 @@ EOF
 # NB: turing doesn't have neither /usr/local/bin/perl nor /software/bin/perl,
 #     so parse_mcl.pl will need an additional dance to be performed
 
-nohup ~/work/ensembl-compara_HEAD/scripts/family/parse_mcl.pl --reg_conf reg_conf_56.pl --prefix fam56 family_56.mcl compara56 > family_56.description 2> family_56.description.err &
+nohup ~lg4/work/ensembl-compara_HEAD/scripts/family/parse_mcl.pl --reg_conf reg_conf_56.pl --prefix fam56 family_56.mcl compara56 > family_56.description 2> family_56.description.err &
 
 # to save space
 #
@@ -303,7 +303,7 @@ time mysql -h compara2 -uensadmin -pensembl -P3306 lg4_compara_families_56 < upd
 # rel.55    5m
 # rel.56    1h
 
-~/work/ensembl-compara_HEAD/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf_56.pl --dbname compara56 > Redundancy_and_Genes_load.err 2>&1
+~lg4/work/ensembl-compara_HEAD/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf_56.pl --dbname compara56 > Redundancy_and_Genes_load.err 2>&1
 # rel.56    5m
 # rel.55    14m
 # rel.54    86m
@@ -331,19 +331,19 @@ This should only list the families for which multiple alignment could not be run
 
 ####  The following part really sucks and need a profound rethinking to get the description more clean and consistent.
 
-time ~/work/ensembl-compara_HEAD/scripts/family/consensifier.pl -d "Uniprot/SWISSPROT" family_56.description > family_56.description.SWISSPROT-consensus 2> family_56.description.SWISSPROT-consensus.err
+time ~lg4/work/ensembl-compara_HEAD/scripts/family/consensifier.pl -d "Uniprot/SWISSPROT" family_56.description > family_56.description.SWISSPROT-consensus 2> family_56.description.SWISSPROT-consensus.err
 #
 # rel.56    6m30
 # rel.55    12m
 # rel.54    28m
 
-time ~/work/ensembl-compara_HEAD/scripts/family/consensifier.pl -d "Uniprot/SPTREMBL" family_56.description > family_56.description.SPTREMBL-consensus 2> family_56.description.SPTREMBL-consensus.err
+time ~lg4/work/ensembl-compara_HEAD/scripts/family/consensifier.pl -d "Uniprot/SPTREMBL" family_56.description > family_56.description.SPTREMBL-consensus 2> family_56.description.SPTREMBL-consensus.err
 #
 # rel.56    4h
 # rel.55    8h20m
 # rel.54    8h
 
-time ~/work/ensembl-compara_HEAD/scripts/family/assemble-consensus.pl family_56.description family_56.description.SWISSPROT-consensus family_56.description.SPTREMBL-consensus  > family_56.description-consensus 2> family_56.description-consensus.err
+time ~lg4/work/ensembl-compara_HEAD/scripts/family/assemble-consensus.pl family_56.description family_56.description.SWISSPROT-consensus family_56.description.SPTREMBL-consensus  > family_56.description-consensus 2> family_56.description-consensus.err
 #
 # rel.56    2m
 # rel.55    5m
@@ -353,7 +353,7 @@ time ~/work/ensembl-compara_HEAD/scripts/family/assemble-consensus.pl family_56.
 # update the family description in ensembl_family_56 with the data in family_56.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
 # (Use the same reg_conf.pl as in step 11)
 
-time ~/work/ensembl-compara_HEAD/scripts/family/LoadDescriptionInFamily.pl --reg_conf reg_conf_56.pl --dbname compara56 family_56.description-consensus
+time ~lg4/work/ensembl-compara_HEAD/scripts/family/LoadDescriptionInFamily.pl --reg_conf reg_conf_56.pl --dbname compara56 family_56.description-consensus
 #
 # rel.56    2m40
 # rel.55    5m
