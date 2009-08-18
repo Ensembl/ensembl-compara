@@ -72,9 +72,9 @@ sub embed_movie {
 
   ## Check if we're just passing an ID from other code
   unless (ref($movie) eq 'EnsEMBL::Web::Data::Movie') {
-    my @results = EnsEMBL::Web::Data::Movie->search({'help_record_id' => $movie, 'status' => 'live'});
+    my @results = EnsEMBL::Web::Data::Movie->new($movie);
     $movie = $results[0];
-    return undef unless $movie && ref($movie) eq 'EnsEMBL::Web::Data::Movie';
+    return undef unless $movie && ref($movie) eq 'EnsEMBL::Web::Data::Movie' && $movie->status eq 'live';
   }
 
   my $html = '<h3>'.$movie->title."</h3>";
