@@ -70,9 +70,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     if (this.multi) {
-      var r = new RegExp('\/' + Ensembl.species + '\/')
+      var r = new RegExp('\/' + Ensembl.species + '\/');
       
-      this.baseURL = this.baseURL.replace(this.species, Ensembl.species).replace(r, '/' + this.species + '/').replace(/%s/, Ensembl.coreParams.r).replace(/r=[^&;]*([&;]?)/, 'r=%s$1');
+      this.baseURL = this.baseURL
+        .replace(this.species, Ensembl.species).replace(r, '/' + this.species + '/') // Switch species
+        .replace(/%s/, Ensembl.coreParams.r).replace(/r=[^&;]*([&;]?)/, 'r=%s$1')    // Switch r for new species' region
+        .replace(/align=\d+;*/, '').replace(/;$/, ''); // Remove align parameter when changing species
     }
     
     this.getContent();

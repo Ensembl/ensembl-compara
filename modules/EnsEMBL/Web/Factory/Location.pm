@@ -260,6 +260,7 @@ sub change_primary_species {
   $self->param('r', $self->param("r$id"));
   $self->param('g', $self->param("g$id")) if $self->param("g$id");
   $self->param('s99999', $self->__species); # Set arbitrarily high - will be recuded by remove_species_and_generate_url
+  $self->param('align', ''); # Remove the align parameter because it may not be applicable for the new species
   
   $self->remove_species_and_generate_url($object, $id, $self->param("s$id"));
 }
