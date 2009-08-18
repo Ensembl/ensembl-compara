@@ -19,16 +19,16 @@ sub createObjects {
   if ($self->core_objects->location && !$self->core_objects->location->isa('EnsEMBL::Web::Fake') && !$self->core_objects->gene) {
     $self->_create_object_from_core;
     
-    # multicontigview
+    # MultiContig View
     if (grep { /^s\d+$/ } $self->param) {
-      my $obj = $self->DataObjects->[0];
-    
-      $self->generate_full_url($obj); # first, check if we need to generate a url
+      my $object = $self->DataObjects->[0];
       
-      if ($self->core_objects->location) { 
-        $self->createObjectsLocation($obj) # then go and create the objects
+      $self->generate_full_url($object); # first, check if we need to generate a url
+      
+      if ($self->core_objects->location) {
+        $self->createObjectsLocation($object); # then go and create the objects
       } elsif ($self->core_objects->gene) {
-        # $self->createObjectsGene($obj);
+        # $self->createObjectsGene($object);
       }
     }
     
@@ -36,15 +36,13 @@ sub createObjects {
   }
   
   $self->get_databases($self->__gene_databases, 'compara', 'blast');
+  
   my $database = $self->database('core');
   
   return $self->problem('Fatal', 'Database Error', 'Could not connect to the core database.') unless $database;
   
-  ## First lets try and locate the slice....
-
-  ## Gene
-  my $location;
-  my $temp_id;
+  # First lets try and locate the slice
+  my ($location, $temp_id);
   
   my $strand     = $self->param('strand')    || $self->param('seq_region_strand') || 1;
   
@@ -80,6 +78,7 @@ sub createObjects {
     
     ($seq_region, $cp, $t_strand) = $self->param('c') =~ /^([-\w\.]+):(-?[.\w,]+)(:-?1)?$/;
     $cp = $self->evaluate_bp($cp);
+    
     my $w = $self->evaluate_bp($self->param('w'));
     
     $start = $cp - ($w-1)/2;
@@ -99,163 +98,115 @@ sub createObjects {
   my $ftype_1   = $self->param('type1');
   my $temp_2_id = $self->param('anchor2');
   my $ftype_2   = $self->param('type2');
-  my @anchorview = ();
+  my @anchorview;
 
-  push @anchorview, [ $self->param('type1'), $self->param('anchor1') ]
-    if $self->param('anchor1') && $self->param('type1');
-  push @anchorview, [ $self->param('type2'), $self->param('anchor2') ]
-    if $self->param('anchor2') && $self->param('type2');
-  if( @anchorview ) {
-    foreach my $O ( @anchorview ) {
+  push @anchorview, [ $self->param('type1'), $self->param('anchor1') ] if $self->param('anchor1') && $self->param('type1');
+  push @anchorview, [ $self->param('type2'), $self->param('anchor2') ] if $self->param('anchor2') && $self->param('type2');
+  
+  if (@anchorview) {
+    foreach my $O (@anchorview) {
       $location = undef;
-      my( $ftype, $temp_id ) = @$O;
-      if( $ftype eq 'gene' || $ftype eq 'all' ) {
-        $location = $self->_location_from_Gene( $temp_id );
-      } 
-      if(!$location && ($ftype eq 'transcript' || $ftype eq 'all') ) { 
-        $location = $self->_location_from_Transcript( $temp_id );
-      } 
-      if(!$location && ($ftype eq 'peptide' || $ftype eq 'all') ) { 
-        $location = $self->_location_from_Peptide( $temp_id );
-      } 
-      if(!$location && $ftype eq 'marker') {
-        $location = $self->_location_from_Marker( $temp_id, $seq_region );
-      } 
-      if(!$location && $ftype eq 'band') {
-        $location = $self->_location_from_Band( $temp_id, $seq_region );
-      } 
-      if (!$location && ($ftype eq 'misc_feature' || $ftype eq 'all') ) {
-        $location = $self->_location_from_MiscFeature( $temp_id );
-      } 
-      if(!$location && ($ftype eq 'region' || $ftype eq 'all') ) {
-        $location = $self->_location_from_SeqRegion( $temp_id );
-      } 
-      if(!$location && ($ftype eq 'region' ) ) {
-        $location = $self->_location_from_MiscFeature( $temp_id );
-      }
-      if (!$location) {
-        $location = $self->_location_from_SeqRegion( $seq_region, $temp_id, $temp_id );
-      }
-      $self->DataObjects( $location ) if $location;
+      
+      my ($ftype, $temp_id) = @$O;
+      
+      $location = $self->_location_from_Gene($temp_id)                if $ftype eq 'gene' || $ftype eq 'all';
+      $location = $self->_location_from_Transcript($temp_id)          if !$location && ($ftype eq 'transcript' || $ftype eq 'all');
+      $location = $self->_location_from_Peptide($temp_id)             if !$location && ($ftype eq 'peptide' || $ftype eq 'all');
+      $location = $self->_location_from_Marker($temp_id, $seq_region) if !$location && $ftype eq 'marker';
+      $location = $self->_location_from_Band($temp_id, $seq_region)   if !$location && $ftype eq 'band';
+      $location = $self->_location_from_MiscFeature($temp_id)         if !$location && ($ftype eq 'misc_feature' || $ftype eq 'all');
+      $location = $self->_location_from_SeqRegion($temp_id)           if !$location && ($ftype eq 'region' || $ftype eq 'all');
+      $location = $self->_location_from_MiscFeature($temp_id)         if !$location && $ftype eq 'region';
+      
+      $location ||= $self->_location_from_SeqRegion($seq_region, $temp_id, $temp_id);
+      
+      $self->DataObjects($location) if $location;
     }
-    if( $self->DataObjects ) {
-      $self->merge;
-    }
-=pod 
-    else {
-      return $self->problem( 'Fatal',
-        'Unknown region',
-        'Could not locate the region you have specified.  You may not have specified enough information'
-      );
-    }
-=cut
+    
+    $self->merge if $self->DataObjects;
   } else {
-    ## Gene (completed)
-    if(!defined($start) && (
-      $temp_id = $self->param('geneid') || $self->param('gene') 
-#      || ( $self->core_objects->gene ? undef : $self->param('g') )
-    )) {
-      $location = $self->_location_from_Gene( $temp_id );
-    ## Transcript (completed)
-    } elsif( $temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript')
-#      || ( $self->core_objects->transcript ? undef : $self->param('t' ) )
-    ) {
-      $location = $self->_location_from_Transcript( $temp_id );
-    } elsif( $temp_id = $self->param('exonid') || $self->param('exon') ) {  
-      $location = $self->_location_from_Exon( $temp_id );
-    ## Translation (completed)
-    } elsif( $temp_id = $self->param('peptide') || $self->param('pepid') || $self->param('peptideid') || $self->param('translation') ) {
-      $location = $self->_location_from_Peptide( $temp_id );
-    ## MiscFeature (completed)
-    } elsif( $temp_id = $self->param('mapfrag') || $self->param('miscfeature') || $self->param('misc_feature') ) {
-        $location = $self->_location_from_MiscFeature( $temp_id );
-    ## Marker (completed)
-    } elsif( $temp_id = $self->param('marker') ) { 
-        $location = $self->_location_from_Marker( $temp_id, $seq_region );
-    ## Band (completed)
-    } elsif( $temp_id = $self->param('band') ) { 
-        $location = $self->_location_from_Band( $temp_id, $seq_region );
-    } elsif( !$start && ($temp_id = $self->param('snp')||$self->param('variation') 
-      # || $self->param('v')
-    ) ) { 
-        $location = $self->_location_from_Variation( $temp_id, $seq_region );
+    if (!defined $start && ($temp_id = $self->param('geneid') || $self->param('gene'))) {
+      $location = $self->_location_from_Gene($temp_id);
+    } elsif ($temp_id = $self->param('transid') || $self->param('trans') || $self->param('transcript')) {
+      $location = $self->_location_from_Transcript($temp_id);
+    } elsif ($temp_id = $self->param('exonid') || $self->param('exon')) {  
+      $location = $self->_location_from_Exon($temp_id); 
+    } elsif ($temp_id = $self->param('peptide') || $self->param('pepid') || $self->param('peptideid') || $self->param('translation')) {
+      $location = $self->_location_from_Peptide($temp_id);
+    } elsif ($temp_id = $self->param('mapfrag') || $self->param('miscfeature') || $self->param('misc_feature')) {
+      $location = $self->_location_from_MiscFeature($temp_id);
+    } elsif ($temp_id = $self->param('marker')) { 
+      $location = $self->_location_from_Marker($temp_id, $seq_region);
+    } elsif ($temp_id = $self->param('band')) { 
+      $location = $self->_location_from_Band($temp_id, $seq_region);
+    } elsif (!$start && ($temp_id = $self->param('snp') || $self->param('variation'))) { 
+      $location = $self->_location_from_Variation( $temp_id, $seq_region );
     } else {
-      if( $self->param( 'click_to_move_window.x' ) ) {
-        $location = $self->_location_from_SeqRegion( $seq_region, $start, $end );
-        if( $location ) {
-          $location->setCentrePoint( floor(
-            ( $self->param( 'click_to_move_window.x' ) - $self->param( 'vc_left' ) ) /
-            ( $self->param( 'vc_pix' )||1 ) * $self->param( 'tvc_length' )
-          ) );
+      if ($self->param('click_to_move_window.x')) {
+        $location = $self->_location_from_SeqRegion($seq_region, $start, $end);
+        
+        if ($location) {
+          $location->setCentrePoint(floor(
+            ($self->param('click_to_move_window.x') - $self->param('vc_left')) / 
+            ($self->param('vc_pix') || 1) * $self->param('tvc_length')
+          ));
         }
-      ## Chromosome click...
-      } elsif( $self->param( 'click_to_move_chr.x' ) ) { 
-        $location = $self->_location_from_SeqRegion( $seq_region );
-        if( $location ) { 
-          $location->setCentrePoint( floor(
-            ( $self->param( 'click_to_move_chr.x' ) - $self->param( 'chr_left' ) ) /
-            ( $self->param( 'chr_pix' )||1) * $self->param( 'chr_len' )
-          ) );
+      } elsif ($self->param('click_to_move_chr.x')) { # Chromosome click
+        $location = $self->_location_from_SeqRegion($seq_region);
+        
+        if ($location) { 
+          $location->setCentrePoint(floor(
+            ($self->param('click_to_move_chr.x') - $self->param('chr_left')) /
+            ($self->param('chr_pix') || 1) * $self->param('chr_len')
+          ));
         }
-      } elsif( $temp_id = $self->param( 'click.x' ) + $self->param( 'vclick.y' ) ) {
-        $location = $self->_location_from_SeqRegion( $seq_region );
-        if( $location ) { 
-          $location->setCentrePoint( floor(
-            $self->param( 'seq_region_left' ) +
-            ( $temp_id - $self->param( 'click_left' ) + 0.5 ) /
-            ( $self->param( 'click_right' ) - $self->param( 'click_left' ) + 1 ) *
-            ( $self->param( 'seq_region_right' ) - $self->param( 'seq_region_left' ) + 1 )
-          ), $self->param( 'seq_region_width' ) );
+      } elsif ($temp_id = $self->param('click.x') + $self->param('vclick.y')) {
+        $location = $self->_location_from_SeqRegion($seq_region);
+        if ($location) { 
+          $location->setCentrePoint(floor(
+            $self->param('seq_region_left') +
+            ($temp_id - $self->param('click_left') + 0.5) /
+            ($self->param('click_right') - $self->param('click_left') + 1) *
+            ($self->param('seq_region_right') - $self->param('seq_region_left') + 1)
+          ), $self->param('seq_region_width'));
         }
-## SeqRegion
-      } elsif( $seq_region ) {
-        $location = $self->_location_from_SeqRegion( $seq_region, $start, $end, $strand );
+      } elsif ($seq_region) { # SeqRegion
+        $location = $self->_location_from_SeqRegion($seq_region, $start, $end, $strand);
       }
     }
-#    if( $self->param( 'data_URL' ) ) {
-#      my $newloc   = $self->_location_from_URL();
-#      $location = $newloc if $newloc;
-#    }
-    if( $location ) {
-      $self->DataObjects( $location );
-    } elsif( $self->core_objects->location ) {
+    
+    if ($location) {
+      $self->DataObjects($location);
+    } elsif ($self->core_objects->location) {
       $self->_create_object_from_core;
     }
-=pod 
-    else {
-      return $self->problem( 'Fatal', 'Unknown region', 'Could not locate the region you have specified.  You may not have specified enough information.' );
-    }
-=cut
   }
-## Push location....
 }
 
-# do redirects for mcv
+# do redirects for MulitContig View
 sub generate_full_url {
-  my ($self, $obj) = @_;
+  my ($self, $object) = @_;
   
   my $remove = $self->param('remove_alignment');
   my (%species, @missing);
-  
-  $self->param('remove_alignment', '');
   
   foreach ($self->param) {
     push @missing, $1 if /^s(\d+)$/ && !defined $self->param("r$1");
   }
   
   # Remove species duplicated in the url
-  $self->remove_species_and_generate_url($obj, $remove) if $remove;
+  $self->remove_species_and_generate_url($object, $remove) if $remove;
   
   # Add species missing r parameters
-  $self->find_missing_locations($obj, \@missing) if scalar @missing;
+  $self->find_missing_locations($object, \@missing) if scalar @missing;
 }
 
 sub remove_species_and_generate_url {
-  my ($self, $obj, $remove, $primary_species) = @_;
+  my ($self, $object, $remove, $primary_species) = @_;
   
   $self->param("$_$remove", '') for qw(s g r);
   
-  my $new_params = $obj->multi_params;
+  my $new_params = $object->multi_params;
 
   # accounting for missing species, bump the values up to condense the url
   my $params;
@@ -314,9 +265,9 @@ sub change_primary_species {
 }
 
 sub find_missing_locations {
-  my ($self, $obj, $ids) = @_;
+  my ($self, $object, $ids) = @_;
   
-  my $slice = $obj->slice;
+  my $slice = $object->slice;
   
   foreach (@$ids) {
     my $chrom = ''; # get chr argument for self compara
@@ -327,23 +278,34 @@ sub find_missing_locations {
     #   ($chrom) = $self->param("c$_") =~ /^([-\w\.]+):?/;
     # }
     
-    $self->_best_guess($obj, $slice, $_, $chrom);
+    if (!$self->_best_guess($slice, $_, $chrom)) {
+      my $session = $self->session->add_data(
+        type     => 'message',
+        function => '_warning',
+        code     => 'missing_species',
+        message  => 'There is no alignment in this region for ' . $self->species_defs->species_label($self->param("s$_"))
+      );
+      
+      $self->param("s$_", '');
+    }
   }
+  
+  $self->problem('redirect', $self->_url($object->multi_params));
 }
 
 sub map_alias_to_species {
   my ($self, $name) = @_;
   
-  my $ESA = $self->species_defs->ENSEMBL_SPECIES_ALIASES;
-  my %map = map { lc, $ESA->{$_} } keys %$ESA;
+  my $esa = $self->species_defs->ENSEMBL_SPECIES_ALIASES;
+  my %map = map { lc, $esa->{$_} } keys %$esa;
   
   return $map{lc $name};
 }
 
 sub _best_guess {
-  my ($self, $object, $slice, $id, $chrom) = @_;
+  my ($self, $slice, $id, $chrom) = @_;
   
-  # given a s param, get locations - might need modifying if we can go in on a gene only?
+  # given an s param, get locations - might need modifying if we can go in on a gene only?
   my $species = $self->map_alias_to_species($self->param("s$id"));
   my $width = $slice->end - $slice->start + 1;
   
@@ -360,23 +322,25 @@ sub _best_guess {
       my $start = floor($cp - ($width-1)/2);
       my $end   = floor($cp + ($width-1)/2);
       
-      $self->__set_species($species);
-      
-      $self->_check_slice_exists_and_redirect($id, $object, $species, $seq_region, $start, $end, $strand);
+      return 1 if $self->_check_slice_exists($id, $species, $seq_region, $start, $end, $strand);
     }
   }
+  
+  return 0;
 }
 
 sub _dna_align_feature_adaptor {
   my $self = shift;
   
-  return $self->__data->{'compara_adaptors'}{'dna_align_feature'} ||= $self->database('compara')->get_DnaAlignFeatureAdaptor;
+  return $self->__data->{'compara_adaptors'}->{'dna_align_feature'} ||= $self->database('compara')->get_DnaAlignFeatureAdaptor;
 }
 
-sub _check_slice_exists_and_redirect {
-  my ($self, $id, $object, $species, $chr, $start, $end, $strand) = @_;
+sub _check_slice_exists {
+  my ($self, $id, $species, $chr, $start, $end, $strand) = @_;
   
   if (defined $start) {
+    $self->__set_species($species);
+    
     $start = floor($start);
     
     $end = $start unless defined $end;
@@ -409,14 +373,14 @@ sub _check_slice_exists_and_redirect {
           $slice = $self->_slice_adaptor->fetch_by_region($system->name, $chr, $start, $end, $strand);
         }
         
-        $self->param('r' . ($id || ''), "$chr:$start-$end:$strand");
+        $self->param('r' . ($id || ''), "$chr:$start-$end:$strand"); # Set the r parameter for use in the redirect
         
-        return $self->problem('redirect', $self->_url($object->multi_params));
+        return 1;
       }
     }
   }
   
-  $self->problem('fatal', 'Locate error', $self->_help("Cannot locate region $chr: $start - $end on the current assembly."));
+  return 0;
 }
 
 sub createObjectsLocation {
@@ -460,36 +424,27 @@ sub createObjectsLocation {
     };
     
     if ($action) {
-      $modifiers->{$action}();
+      $modifiers->{$action}() if exists $modifiers->{$action};
       
-      $self->__set_species($species);
-      $self->_check_slice_exists_and_redirect($_, $object, $species, $chr, $s, $e, $strand);
+      $self->_check_slice_exists($_, $species, $chr, $s, $e, $strand);
+      $self->problem('redirect', $self->_url($object->multi_params));
     }
     
     eval { $slice = $slice_adaptor->fetch_by_region(undef, $chr, $s, $e, $strand); };
     warn $@ and next if $@;
     
-    my $data = {
-      'type'               => 'Location',
-      'real_species'       => $species,
-      'name'               => $slice->seq_region_name,
-      'seq_region_name'    => $slice->seq_region_name,
-      'seq_region_start'   => $slice->start,
-      'seq_region_end'     => $slice->end,
-      'seq_region_strand'  => $strand,
-      'seq_region_type'    => $slice->coord_system->name,
-      'raw_feature_strand' => 1,
-      'seq_region_length'  => $slice->seq_region_length,
-      'short_name'         => $object->chr_short_name($slice, $species),
-      'slice'              => $slice
+    push @slices, {
+      slice      => $slice,
+      species    => $species,
+      name       => $slice->seq_region_name,
+      short_name => $object->chr_short_name($slice, $species),
+      start      => $slice->start,
+      end        => $slice->end,
+      length     => $slice->seq_region_length
     };
-    
-    push @slices, $data;
   }
   
   $self->{'data'}{'_dataObjects'}[0][1]{'_multi_locations'} = \@slices;
-  
-  return;
 }
 
 sub _help {
