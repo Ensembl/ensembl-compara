@@ -1434,9 +1434,70 @@ sub can_export {
   return $self->action =~ /^Export$|^Chromosome$|^Genome$|^Synteny$/ ? 0 : $self->availability->{'slice'};
 }
 
-sub other_locations {
+sub multi_locations {
   my $self = shift;
-  return $self->{'data'}{'_other_locations'} ? $self->{'data'}{'_other_locations'} : [];
+  
+  my $locations = $self->{'data'}{'_multi_locations'} || [];
+  
+  if (!scalar @$locations) {
+    my $slice = $self->slice;
+    
+    push @$locations, {
+      type               => 'Location',
+      real_species       => $self->species,
+      name               => $slice->seq_region_name,
+      seq_region_name    => $slice->seq_region_name,
+      seq_region_start   => $slice->start,
+      seq_region_end     => $slice->end,
+      seq_region_strand  => $slice->strand,
+      seq_region_type    => $slice->coord_system->name,
+      raw_feature_strand => 1,
+      seq_region_length  => $slice->seq_region_length,
+      short_name         => $self->chr_short_name,
+      slice              => $slice
+    }
+  }
+  
+  return $locations;
+}
+
+# generate short caption name
+sub chr_short_name {
+  my $self = shift;
+  
+  my $slice   = shift || $self->slice;
+  my $species = shift || $self->species;
+  
+  my $type = $slice->coord_system_name;
+  my $chr_name = $slice->seq_region_name;
+  my $chr_raw = $chr_name;
+  
+  my %short = (
+    chromosome  => 'Chr.',
+    supercontig => "S'ctg"
+  );
+  
+  if ($chr_name !~ /^$type/i) {
+    $type = $short{lc $type} || ucfirst $type;
+    $chr_name = "$type $chr_name";
+  }
+  
+  $chr_name = $chr_raw if CORE::length($chr_name) > 9;
+  
+  (my $abbrev = $species) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
+  
+  return "$abbrev $chr_name";
+}
+
+sub multi_params {
+  my $self = shift;
+  my $realign = shift;
+  
+  my %params = defined $realign ? 
+    map { $_ => $self->param($_) } grep { $realign ? /^([srg]\d*|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|align)$/ } $self->param :
+    map { $_ => $self->param($_) } grep { /^([srg]\d*|align)$/ } $self->param;
+  
+  return \%params;
 }
 
 1;
