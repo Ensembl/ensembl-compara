@@ -5,3 +5,7 @@
 .navbar img.blank_high {background-color:[[CONTRAST_HEADER]];height:4px;vertical-align:bottom;width:4px;border: outset 1px [[CONTRAST_HEADER]] }
 .navbar img.zoom  {height:18px;width:18px;vertical-align:bottom}
 .go-button { color: [[MH_BORDER]]; background-color:[[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight:bold; }
+
+div.alignment_selector        { padding: 2px; }
+div.alignment_selector label  { width: 150px; display: inline-block; }
+div.alignment_selector select { width: 345px; }
