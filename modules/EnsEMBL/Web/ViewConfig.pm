@@ -1,5 +1,3 @@
-# $Id$
-
 package EnsEMBL::Web::ViewConfig;
 
 use strict;

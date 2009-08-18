@@ -535,9 +535,60 @@ sub _generic_create {
 
 ## The following are used to convert full objects into simple data hashes, for use by drawing code
 
+sub get_tracks {
+  my ($self, $key) = @_;
+  my $data = $self->fetch_userdata_by_id($key);
+  my $tracks = {};
+
+  if (my $parser = $data->{'parser'}) {
+    while (my ($type, $track) = each(%{$parser->get_all_tracks})) {
+      my @A = @{$track->{'features'}};
+      my @rows;
+      foreach my $feature (@{$track->{'features'}}) {
+        my $data_row = {
+          'chr'     => $feature->seqname(),
+          'start'   => $feature->rawstart(),
+          'end'     => $feature->rawend(),
+          'label'   => $feature->id(),
+          'gene_id' => $feature->id(),
+        };
+        push (@rows, $data_row);
+      }
+      $tracks->{$type} = {'features' => \@rows, 'config' => $track->{'config'}};
+    }
+  }
+  else { 
+    while (my ($analysis, $track) = each(%{$data})) {
+      my @rows;
+      foreach my $f (
+        map { $_->[0] }
+        sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
+        map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'},
+$_->{'start'}] }
+        @{$track->{'features'}}
+        ) {
+        my $data_row = {
+          'chr'       => $f->{'region'},          
+          'start'     => $f->{'start'},
+          'end'       => $f->{'end'},
+          'length'    => $f->{'length'},
+          'label'     => $f->{'label'},
+          'gene_id'   => $f->{'gene_id'},
+        };
+        push (@rows, $data_row);
+      }
+      $tracks->{$analysis} = {'features' => \@rows, 'config' => $track->{'config'}};
+    } 
+  } 
+
+  return $tracks;
+}
+
 sub retrieve_userdata {
   ## Based on DnaAlignFeature, below
   my ($self, $data) = @_;
+  warn "USERDATA @$data" if $data;
+  return [] unless $data;
   my $type = 'DnaAlignFeature';
   my $results = [];
 

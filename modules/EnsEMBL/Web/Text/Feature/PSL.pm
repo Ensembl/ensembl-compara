@@ -30,7 +30,7 @@ sub coords {
   return ($data->[9], $data->[11], $data->[12]);
 }
 
-sub _seqname { my $self = shift; return $self->{'__raw__'}[9]; }
+sub _seqname { my $self = shift; return $self->{'__raw__'}[13]; }
 sub strand   { my $self = shift; return $self->_strand( substr($self->{'__raw__'}[8],-1) ); }
 sub rawstart { my $self = shift; return $self->{'__raw__'}[15]; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[16]; }

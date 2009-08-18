@@ -124,69 +124,13 @@ sub add_pointers {
   my $config_name = $extra->{'config_name'};
   my $config   = $object->image_config_hash($config_name);
 
-  # CREATE DATA ARRAY FROM APPROPRIATE FEATURE SET
-  my ($data, @data, $max_label, %chrs);
-  my $parser = $extra->{'parser'};
+  my @data = @{$extra->{'features'}};
 
-  #warn           "Parser:     $parser";
-  if ($parser) { # use parsed userdata
-    my $max_label = 0;
-    foreach my $track ($parser->{'tracks'}) {
-      #warn         "  Track:    $track ",keys %$track;
-      foreach my $type (keys %{$track}) {
-        #warn       "    Type:   $type";
-        my @features = $parser->fetch_features_by_tracktype($type);
-        foreach my $row (@features) {
-          #warn     "      Row:  $row";
-          my @array = @$row;
-          foreach my $feature (@array) {
-            #warn   "        F:  $feature";
-            my $data_row = {
-                           'chr'   => $feature->seqname(),
-                           'start' => $feature->rawstart(),
-                           'end'   => $feature->rawend(),
-                           'label' => $feature->id(),
-                           'gene_id' => $feature->id(),
-                            };
-            push (@data, $data_row);
-            $chrs{$feature->seqname()}++;                                         
-            # track max label length for use with 'text' option
-            my $label_len = CORE::length($feature->id());
-            if ($label_len > $max_label) {
-              $max_label = $label_len;
-            }
-          }
-        }
-      }
-    }
-  }
-  else { # get features for this object
-    $data = $extra->{'features'};
-    foreach my $row (
-      map { $_->[0] }
-      sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
-      map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'},
-$_->{'start'}] }
-      @$data
-      ) {
-      my $data_row = {
-          'chr'       => $row->{'region'},
-          'start'     => $row->{'start'},
-          'end'       => $row->{'end'},
-          'length'    => $row->{'length'},
-          'label'     => $row->{'label'},
-          'gene_id'   => $row->{'gene_id'},
-        };
-      push (@data, $data_row);
-      $chrs{$row->{'region'}}++;                                         
-    }
-  }
-                                                                                
   # CONFIGURE POINTERS
                                                                                 
   # set sensible defaults
-  my $zmenu   = lc($object->param('zmenu'))    || 'on';
-  my $zmenu_config;
+  #my $zmenu   = lc($object->param('zmenu'))    || 'on';
+  #my $zmenu_config;
   my $color   = lc($object->param('col'))  || lc($extra->{'color'}) || 'red';
   # set style before doing chromosome layout, as layout may need 
   # tweaking for some pointer styles
@@ -202,7 +146,8 @@ $_->{'start'}] }
             'end'   => $row->{'end'},
             'id'    => $row->{'label'},
             'col'   => $color,
-            };
+    };
+=pod
     if ($zmenu eq 'on') {
       $zmenu_config = $extra->{'zmenu_config'};
       $point->{'zmenu'} = {
@@ -260,6 +205,7 @@ $_->{'start'}] }
         }
       }
     }
+=cut
 
     # OK, we now have a complete pointer, so add it to the hash of arrays
     if(exists $high{$chr}) {

@@ -11,6 +11,8 @@ no warnings "uninitialized";
 use CGI qw(escape);
 
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Tools::Misc;
+use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::Document::Image;
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
@@ -330,12 +332,12 @@ sub _help_URL {
 }
 
 sub fetch_userdata_by_id {
-  my ($self, $track_id, $chromosome) = @_;
-  return unless $track_id;
+  my ($self, $record_id) = @_;
+  return unless $record_id;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $data = {};
 
-  my ($status, $type, $id) = split('-', $track_id);
+  my ($status, $type, $id) = split('-', $record_id);
 
   if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
     my ($content, $format);
@@ -350,27 +352,25 @@ sub fetch_userdata_by_id {
     }
     my $parser = EnsEMBL::Web::Text::FeatureParser->new();
     if ($type eq 'url') {
-      $parser->parse_URL( $tempdata->{'url'} );
+      $content = EnsEMBL::Web::Tools::Misc::get_url_content( $tempdata->{'url'} );
     }
     else {
       my $file = new EnsEMBL::Web::TmpFile::Text( filename => $tempdata->{'filename'} );
-      my $content = $file->retrieve;
+      $content = $file->retrieve;
       return {} unless $content;
-      $parser->parse($content, $tempdata->{'format'} );
     }
+    $parser->parse($content, $tempdata->{'format'} );
     $data = {'parser' => $parser};
   }
   else {
-    my $features = [];
     my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
     my @records = $user->uploads($id);
     my $record = $records[0];
     my @analyses = ($record->analyses);
     foreach (@analyses) {
       next unless $_;
-      push @$features, @{$fa->fetch_all_by_logic_name($_)};
+      $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {}};
     }
-    $data = {'features' => $features};
   }
 
   return $data;

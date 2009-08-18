@@ -113,29 +113,34 @@ sub create_user_set {
     next if $display eq 'off';
 
     if ($render eq 'highlight') {
-      # Create pointer configuration
-      my $data = $object->fetch_userdata_by_id($key);
-      my $colour = $colours->[$i];
-      
-      push @$pointers, $image->add_pointers($object, {
-        'config_name' => 'Vkaryotype',
-        'parser'      => $data->{'parser'},
-        'features'    => $object->retrieve_userdata($data->{'features'}),
-        'color'       => $colour,
-        'style'       => $style
-      });
-      
-      $i++;
+      ## Create pointer configuration
+      my $tracks = $object->get_tracks($key);
+      while (my ($label, $track) = each (%$tracks)) {
+        my $colour; 
+        if ($track->{'config'} && $track->{'config'}{'color'}) {
+          $colour = $track->{'config'}{'color'};
+        }
+        else {
+          $colour = $colours->[$i];
+          $i++;
+        }
+        push @$pointers, $image->add_pointers( $object, {
+          'config_name'   => 'Vkaryotype',
+          'features'      => $track->{'features'},
+          'color'         => $colour,
+          'style'         => $style,
+        });
+      }
 
-      # Add to key
-      my $label = $data->{'label'};
-      
-      $table->add_row({
-        'colour' => qq{<span style="background-color:$colour;color:#ffffff;padding:2px"><img src="/i/blank.gif" style="width:30px;height:10px" alt="[$colour]" /></span>},
-        'track' => $label
-      });
-    } else {
-      # TODO - add density tracks to table
+      ## Add to key
+      #my $label = $data->{'label'};
+      #$table->add_row({
+      #  'colour' => qq(<span style="background-color:$colour;color:#ffffff;padding:2px"><img src="/i/blank.gif" style="width:30px;height:10px" alt="[$colour]" /></span>),
+      #  'track' => $label,
+      #});
+    }
+    else {
+      ## TODO - add density tracks to table
     }
   }
 

@@ -659,7 +659,6 @@ sub multi {
   ### Arguments: configuration type (string), species name (string)
   my( $self, $type, $species ) = @_;
   $species ||= $ENV{'ENSEMBL_SPECIES'};
-  
   return 
     exists $CONF->{'_storage'} && 
     exists $CONF->{'_storage'}{'MULTI'} && 

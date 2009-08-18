@@ -15,6 +15,12 @@ sub hstart  { return undef; }
 sub hend    { return undef; }
 sub hstrand { return undef; }
 
+sub coords {
+  ## Default parser for raw data - this is the commonest format
+  my ($self, $data) = @_;
+  (my $chr = $data->[0]) =~ s/chr//;
+  return ($chr, $data->[1], $data->[2]);
+}
 
 sub id { my $self = shift; return undef; }
 sub _strand { 

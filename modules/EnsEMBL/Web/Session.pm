@@ -706,9 +706,9 @@ sub getViewConfig {
         if( $@ ) {
           my $message = "Undefined subroutine &$method_name called";
           if( $@ =~ /$message/ ) {
-            warn qq(ViewConfig: init not defined in $classname\n);
+            warn qq(ViewConfig: $part not defined in $classname\n);
           } else {
-            warn qq(ViewConfig: init call on $classname failed:\n$@);
+            warn qq(ViewConfig: $part call on $classname failed:\n$@);
           }
         } else {
           $view_config->real = 1;

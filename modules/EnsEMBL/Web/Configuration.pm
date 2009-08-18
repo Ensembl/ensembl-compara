@@ -569,31 +569,21 @@ sub _local_tools {
   my $vc = $obj->get_viewconfig;
   my $config = $vc->default_config;
 
-  my $disabled_upload = 1;
   my $vc_2_flag = 0;
-  if( $ENV{'ENSEMBL_ACTION'} ne 'ExternalData' ) {
+  if( $ENV{'ENSEMBL_TYPE'} eq 'Gene' && $ENV{'ENSEMBL_ACTION'} ne 'ExternalData' ) {
     my $vc_2 = $obj->get_viewconfig( undef, 'ExternalData' );
     $vc_2_flag = $vc_2 && $vc_2->can_upload;
   }
 
   if( ($vc->real && $config) || $vc_2_flag ) {
-    if( $vc->real || $config ) { 
-      my $action = $obj->type.'/'.$obj->action;
-         $action .= '/'.$obj->function if $obj->function;
-      $self->{'page'}->local_tools->add_entry(
-        'caption' => 'Configure this page',
-        'class'   => 'modal_link',
-        'url'     => $obj->_url({ 'time' => time, 'type' => 'Config', 'action' => $action,
+    my $action = $obj->type.'/'.$obj->action;
+    $action .= '/'.$obj->function if $obj->function;
+    $self->{'page'}->local_tools->add_entry(
+      'caption' => 'Configure this page',
+      'class'   => 'modal_link',
+      'url'     => $obj->_url({ 'time' => time, 'type' => 'Config', 'action' => $action,
                                   'config' => $config, '_referer' => $referer })
-      );
-    } else {
-      $self->{'page'}->local_tools->add_entry(
-        'caption' => 'Configure this page',
-        'class'   => 'disabled',
-        'url'     => undef,
-        'title'   => 'There are no options for this page'
-      );
-    }
+    );
   } else {
     $self->{'page'}->local_tools->add_entry(
       'caption' => 'Configure this page',
@@ -620,7 +610,6 @@ sub _local_tools {
     'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => $action,
                              '_referer' => $referer, '__clear' => 1 })
   );
-  $disabled_upload = 0;
   
   if ($obj->can_export) {       
     $self->{'page'}->local_tools->add_entry(

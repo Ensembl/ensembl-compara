@@ -72,7 +72,7 @@ sub upload {
     $filename = $orig_path[-1];
     $filename =~ /\.(\w{1,4})$/;
     my $ext = $1;
-    if ($ext =~ /bed/i || $ext =~ /psl/i || $ext =~ /gff/i || $ext =~ /gtf/i) {
+    if ($ext =~ /bed/i || $ext =~ /psl/i || $ext =~ /gff/i || $ext =~ /gtf/i || $ext =~ /wig/i) {
       $format = uc($ext);
     }
   }
@@ -118,10 +118,10 @@ sub upload {
           ## Final attempt to work out format!
           my $data = $file->retrieve;
           my $parser = EnsEMBL::Web::Text::FeatureParser->new();
-          $parser = $parser->init($data);
-          $format = $parser->{'_info'}->{'format'};
+          $parser->check_format($data);
+          $format = $parser->format;
           if (!$format) {
-            $param->{'format'}  = 'none';
+            $param->{'format'}  = 'unknown';
           }
         } 
         my $code = $file->md5 . '_' . $object->get_session->get_session_id;

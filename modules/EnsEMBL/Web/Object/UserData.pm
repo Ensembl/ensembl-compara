@@ -71,7 +71,6 @@ sub save_to_db {
   my $report;
 
   my $parser = EnsEMBL::Web::Text::FeatureParser->new;
-  $parser->init($data);
   $parser->parse($data, $format);
 
   my $config = {

@@ -25,7 +25,7 @@ sub parse_row {
 		  'start' => $2,
 		  'step' => $3,
 	  };
-	  $self->{'tracks'}{ $current_key }->{'mode'} = $wigConfig;
+	  $self->{'tracks'}{ $self->current_key }->{'mode'} = $wigConfig;
 	} 
   else {
     ## Actual data row
@@ -33,7 +33,7 @@ sub parse_row {
 	  my @ws_delimited = split /\s+/, $row;
 	  push @ws_delimited, $ws_delimited[0];
 
-	  my $wigConfig = $self->{'tracks'}{ $current_key }->{'mode'};
+	  my $wigConfig = $self->{'tracks'}{ $self->current_key }->{'mode'};
 	  if ($wigConfig->{format}) {
 		  if ($wigConfig->{format} eq 'v') {
 		    $columns = [
@@ -52,7 +52,7 @@ sub parse_row {
                     $ws_delimited[0], 
                     $ws_delimited[1]
         ];
-		    $self->{'tracks'}{ $current_key }->{'mode'}->{'start'} += $wigConfig->{step};
+		    $self->{'tracks'}{ $self->current_key }->{'mode'}->{'start'} += $wigConfig->{step};
 		  }
 	  } 
     else {
@@ -61,5 +61,6 @@ sub parse_row {
 	}
   return $columns; 
 }
+
 
 1;

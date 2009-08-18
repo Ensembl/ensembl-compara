@@ -47,9 +47,8 @@ sub content {
     if ($data) {
       my $newname = $name || 'converted_data_'.$i.'.gff';
       $html .= sprintf('<h3>File <a href="/%s/download?file=%s;name=%s;prefix=export;format=gff">%s</a></h3>', $object->species, $file, $newname, $newname);
-      if ($gaps) {
-        $html .= "<p>This data has $gaps gaps when mapped to the new assembly</p>";
-      }
+      my $gaps = $gaps ? $gaps : 0;
+      $html .= "<p>This data has $gaps gaps when mapped to the new assembly</p>";
       $html .= '<pre>';
       my $count = 1;
       foreach my $row ( split /\n/, $data ) {

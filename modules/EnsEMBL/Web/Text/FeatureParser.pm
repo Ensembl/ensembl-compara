@@ -1,6 +1,7 @@
 package EnsEMBL::Web::Text::FeatureParser;
 
-### This object parses data supplied by the user and identifies sequence locations for use by other Ensembl objects
+### This object parses data supplied by the user and identifies 
+### sequence locations for use by other Ensembl objects
 
 use strict;
 use warnings;
@@ -12,7 +13,7 @@ sub new {
   my $class = shift;
   my $data = {
   'format'            => '',
-  'has_data'          => 0,
+  'feature_count'     => 0,
   'valid_coords'      => {},
   'browser_switches'  => {},
   'tracks'            => {},
@@ -21,6 +22,13 @@ sub new {
   };
   bless $data, $class;
   return $data;
+}
+
+sub get_all_tracks{$_[0]->{'tracks'}}
+
+sub fetch_features_by_tracktype{
+  my ( $self, $type ) = @_;
+  return $self->{'tracks'}{ $type }{'features'} ;
 }
 
 sub current_key {
@@ -61,17 +69,17 @@ sub parse {
     my $filter = $self->filter;
 
     ## Some complex formats need extra parsing capabilities
-    if ($format eq 'WIG' || $format eq 'GBROWSE') {
-      my $new_class = '__PACKAGE__'."::$format";
-      bless $self, $new_class;
+    my $sub_package = __PACKAGE__."::$format";
+    if (EnsEMBL::Web::Root::dynamic_use(undef, $sub_package)) {
+      bless $self, $sub_package;
     }
 
     ## Create an empty feature that gives us access to feature info
     my $feature_class = 'EnsEMBL::Web::Text::Feature::'.uc($format); 
     my $empty = $feature_class->new();
+    my $count;
 
     foreach my $row ( split /\n/, $data ) {
-
       ## Skip crap and clean up what's left
       next unless $row;
       next if $row =~ /^#/;
@@ -79,10 +87,11 @@ sub parse {
 
       ## Parse as appropriate
       if ( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
-        $self->{'browser_switches'}{$1} = {$2} if $2;
+        $self->{'browser_switches'}{$1} = $2;
       }
       elsif ($row =~ /^track/) {
         $row =~ s/^track\s+(.*)$/$1/i;
+        warn "SELF $self";
         $self->add_track($row);
       }
       else {
@@ -96,8 +105,8 @@ sub parse {
           $columns = $self->parse_row($row);
         }
         if ($columns && scalar(@$columns)) {
-          ## Optional - filter content by location
 =pod
+          ## Optional - filter content by location
           if ($filter) {
             my ($chr, $start, $end) = $empty->coords($columns);
             if ($chr eq $filter->{'chr'} || $chr eq 'chr'.$filter->{'chr'}) {
@@ -112,11 +121,19 @@ sub parse {
           ## Check the coordinates are valid for this assembly
 =cut
           ## Everything OK, so store
-          my $feature = $feature_class->new($columns);
-          $self->store_feature($feature);
+          if ($self->no_of_bins) {
+            $self->store_density_feature($empty->coords($columns));
+          }
+          else {
+            my $feature = $feature_class->new($columns);
+            warn "@@@ FEATURE $feature";
+            $self->store_feature($feature);
+          }
+          $count++;
         }
       }
     }
+    $self->{'feature_count'} = $count;
   }
 }
 
@@ -243,15 +260,55 @@ sub add_track {
  
 sub store_feature {
   my ( $self, $feature ) = @_; 
-  #warn $self->current_key." = FEATURE ".Dumper($feature);
+  unless ($self->{'tracks'}{$self->current_key}) {
+    $self->add_track();
+  }
   push @{$self->{'tracks'}{$self->current_key}{'features'}}, $feature;
 }
 
-sub get_all_tracks{$_[0]->{'tracks'}}
+##-----------------------------------------------------------
 
-sub fetch_features_by_tracktype{
-  my ( $self, $type ) = @_;
-  return $self->{'tracks'}{ $type }{'features'} ;
+## DENSITY FEATURE FUNCTIONALITY
+
+sub no_of_bins {
+  my $self = shift;
+  $self->{'_no_of_bins'} = shift if @_;
+  return $self->{'_no_of_bins'};
+}
+
+sub bin_size {
+  my $self = shift;
+  $self->{'_bin_size'} = shift if @_;
+  return $self->{'_bin_size'};
+}
+
+sub store_density_feature {
+  my ( $self, $chr, $start, $end ) = @_;
+  unless ($self->{'tracks'}{$self->current_key}) {
+    $self->add_track();
+  }
+  $start = int($start / $self->{'_bin_size'} );
+  $end = int( $end / $self->{'_bin_size'} );
+  $end = $self->{'_no_of_bins'} - 1 if $end >= $self->{'_no_of_bins'};
+  $self->{'tracks'}{$self->current_key}{'bins'}{$chr} ||= [ map { 0 } 1..$self->{'_no_of_bins'} ];
+  foreach( $start..$end ) {
+    $self->{'tracks'}{$self->current_key}{'bins'}{$chr}[$_]++; 
+  }
+  $self->{'tracks'}{$self->current_key}{'counts'}++;
+}
+
+sub max_values {
+  my $self = shift;
+  my $max_value;
+  while (my ($name, $track) = each (%{$self->{'tracks'}}) ) {
+    $max_value->{$name} = 0;
+    while (my ($chr, $values) = each (%{$track->{'bins'}}) ) {
+      foreach my $v (@$values) {
+        $max_value->{$name} = $v if $v > $max_value->{$name};
+      }
+    }
+  }
+  return $max_value;
 }
 
 1;

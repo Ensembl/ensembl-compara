@@ -406,7 +406,6 @@ sub feature {
       strand => $feature->can('strand') ? $feature->strand : undef
     );
   }   
-  
   %vals = (%vals, (
     type   => $type || ($feature->can('primary_tag') ? $feature->primary_tag : '.'),
     source => $feature->can('source_tag') ? $feature->source_tag : $feature->can('source') ? $feature->source : 'Ensembl',
