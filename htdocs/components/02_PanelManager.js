@@ -22,7 +22,6 @@ Ensembl.PanelManager.extend({
     Ensembl.EventManager.register('addPanel', this, this.addPanel);
     Ensembl.EventManager.register('panelToFront', this, this.panelToFront);
     Ensembl.EventManager.register('resetZIndex', this, this.resetZIndex);
-    Ensembl.EventManager.register('highlightImageMaps', this, this.highlightImageMaps);
     
     panels.each(function () {      
       myself.generateId(this);
@@ -151,33 +150,6 @@ Ensembl.PanelManager.extend({
     
     for (p in zInd.sort(sort)) {
       this.panels[zInd[p].id].el.style.zIndex = ++this.zIndex;
-    }
-  },
-  
-  /**
-   * Organise the drawing of the red boxs on images
-   */
-  highlightImageMaps: function () {
-    var panels = this.getPanels('ImageMap');
-    var i = panels.length;
-    var link, linkedPanel, region, start, end;
-    
-    while (i--) {
-      linkedPanel = panels[i+1];
-      
-      if (linkedPanel && linkedPanel.region && linkedPanel.region.a) {
-        region = linkedPanel.region.a.href.split('|');
-        start = parseInt(region[5]);
-        end = parseInt(region[6]);
-        link = true;
-      } else if (window.location.href.match(/\/Location\//)) {
-        // Highlight from the page's region parameter - only required for location pages
-        start = Ensembl.location.start;
-        end = Ensembl.location.end;
-        link = false;
-      }
-      
-      Ensembl.EventManager.triggerSpecific('highlightImage', panels[i].id, start, end, link);
     }
   }
 });
