@@ -14,16 +14,8 @@ Ensembl.extend({
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
     }
     
-    this.ajax  = this.cookie.get('ENSEMBL_AJAX');
-    this.width = this.cookie.get('ENSEMBL_WIDTH');
-    
-    if (!this.ajax) {
-      this.setAjax();
-    }
-    
-    if (!this.width) {
-      this.setWidth();
-    }
+    this.ajax  = this.cookie.get('ENSEMBL_AJAX')  || this.setAjax();
+    this.width = this.cookie.get('ENSEMBL_WIDTH') || this.setWidth();
     
     this.hideHints = {};
     
@@ -74,6 +66,7 @@ Ensembl.extend({
     this.coreParams = {};
     this.location = { width: 100000 };
     this.species = window.location.pathname.split('/')[1];
+    this.multiSpecies = {};
     
     $.each(['r', 'g', 't', 'v'], function () {
       myself.coreParams[this] = url.match(regex.replace('%s', this));
@@ -99,6 +92,34 @@ Ensembl.extend({
           this.location.width = this.location.end - this.location.start + 1;
         }
       }
+    }
+    
+    match = url.match(/s\d+=.+?;/g);
+    
+    if (match) {      
+      var m, i, s, r;
+      
+      $.each(match, function () {
+        m = this.split('=');
+        i = m[0].substr(1);
+        s = m[1].replace(/;/, '');
+        
+        myself.multiSpecies[s] = {};
+        
+        $.each(['r', 'g'], function () {
+          myself.multiSpecies[s][this] = url.match(regex.replace('%s', this + i));
+          
+          if (myself.multiSpecies[s][this]) {
+            myself.multiSpecies[s][this] = unescape(myself.multiSpecies[s][this][1]);
+          }
+          
+          if (this == 'r') {
+            r = myself.multiSpecies[s].r.split(/\b/);
+            
+            myself.multiSpecies[s].location = { name: r[0], start: parseInt(r[2]), end: parseInt(r[4]) };
+          }
+        });
+      });
     }
   },
   
