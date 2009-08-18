@@ -41,7 +41,7 @@ sub _init {
     'style' => 'fill',
     'z'     => -10,
     'href'  => $href,
-    'class' => 'drag' . ($self->get_parameter('compara') ? ' align' : '')
+    'class' => 'drag' . ($self->get_parameter('multi') ? ' multi' : $self->get_parameter('compara') ? ' align' : '')
   );
   
   $self->join_tag($glyph, 'draggable', { 'x' => $A, @common });
