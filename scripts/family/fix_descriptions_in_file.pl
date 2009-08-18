@@ -1,14 +1,12 @@
 #!/usr/local/bin/perl -w
 
-# This script fixes the incompletely parsed Uniprot descriptions in member table
+# This script can retro-fix the incompletely parsed Uniprot descriptions
+# after they have been read into a separate file by parse_mcl.pl
 #
-# NB! NB! NB! Only run it once, or else!
-#
-# Or, much better: insert the parse_description() code into the member table loader
+# (NB: you would still need to fix the Uniprot members' descriptions in the database)
 
 use strict;
 use Getopt::Long;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 sub parse_description {
     my $old_desc = shift @_;
@@ -86,53 +84,28 @@ sub parse_description {
     return $name . $flags . $desc;
 }
 
-sub loop_descriptions {
-    my ($dbc, $force) = @_;
+sub loop_on_file {
+    my ($filename) = @_;
 
-    my $read_sth = $dbc->prepare( qq{
-        SELECT member_id, stable_id, description
-          FROM member
-         WHERE source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL')
-           AND (description LIKE '%Contains:%' OR description LIKE '%Includes:%')
-    });
+    open(INFILE,"<$filename");
 
-    my $write_sth = $force && $dbc->prepare( qq{
-        UPDATE member SET description = ? WHERE member_id = ?
-    } );
+    while(my $line = <INFILE>) {
+        chomp $line;
+        my ($member_source, $family_dbID, $member_stable_id, $old_description) = split(/\t/, $line, 4);
 
-    $read_sth->execute();
-    while( my ($member_id, $stable_id, $old_desc) = $read_sth->fetchrow()) {
-        print "Member: $stable_id (id=$member_id)\n";
-        print "OldDescription: $old_desc\n";
-        my $new_desc = parse_description($old_desc);
-        print "NewDescription: $new_desc\n\n";
-
-        if($force) {
-            $write_sth->execute( $new_desc, $member_id );
-            print "--------------------UPDATED----------\n";
-        }
+        my $new_description = parse_description($old_description);
+        
+        print join("\t", $member_source, $family_dbID, $member_stable_id, $new_description)."\n";
     }
-    $read_sth->finish();
-    $write_sth->finish() if($force);
+
+    close INFILE;
 }
 
-my $force = 0;
-my $dbconn = { -host => 'compara2', -port => '3306', -user => 'ensadmin', -'pass' => 'ensembl', -dbname => 'lg4_compara_families_56' };
 
-GetOptions(
-            # connection parameters:
-        'dbhost=s' => \$dbconn->{-host},
-        'dbport=i' => \$dbconn->{-port},
-        'dbuser=s' => \$dbconn->{-user},
-        'dbpass=s' => \$dbconn->{-pass},
-        'dbname=s' => \$dbconn->{-dbname},
+unless(@ARGV == 1) {
+    die "Need one input_file argument";
+}
 
-            # optional parameters:
-       'force!'       => \$force,
-);
+my ($filename) = @ARGV;
 
-my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%$dbconn)
-        || die "Could not create the DBAdaptor";
-
-loop_descriptions($dba->dbc(), $force);
-
+loop_on_file($filename);

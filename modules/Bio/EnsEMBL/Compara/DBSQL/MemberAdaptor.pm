@@ -81,6 +81,16 @@ sub fetch_by_dbIDs {
   return $self->_generic_fetch($constraint);
 }
 
+sub fetch_all_by_sequence_id {
+  my ($self, $sequence_id) = @_;
+
+  $self->throw("sequence_id arg is required\n")
+    unless (defined($sequence_id));
+
+  my $constraint = "m.sequence_id = $sequence_id";
+  return $self->_generic_fetch($constraint);
+}
+
 =head2 fetch_by_source_stable_id
 
   Arg [1]    : (optional) string $source_name

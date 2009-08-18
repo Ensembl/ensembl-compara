@@ -25,7 +25,7 @@ $self->{'speciesList'}     = [];
 $self->{'removeXedSeqs'}   = undef;
 $self->{'outputFasta'}     = undef;
 $self->{'noSplitSeqLines'} = undef;
-$self->{'name2index'}      = 0;
+$self->{'idprefixed'}      = 0;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
@@ -42,7 +42,7 @@ GetOptions('help'     => \$help,
            'noX=i'    => \$self->{'removeXedSeqs'},
            'nosplit'  => \$self->{'noSplitSeqLines'},
            'noredundancy' => \$noredundancy,
-           'name2index!'  => \$self->{'name2index'},
+           'idprefixed=i' => \$self->{'idprefixed'},
           );
 
 if ($help) { usage(); }
@@ -98,7 +98,7 @@ sub usage {
   print "  -noX <num>             : don't dump if <num> 'X's in a row in sequence\n";
   print "  -nosplit               : don't split sequence lines into readable format\n";
   print "  -noredundancy          : will dump only one copy of the same peptide\n";
-  print "  -name2index 1          : will introduce sequence_id into names (for fast mapping)\n";
+  print "  -idprefixed 1          : will introduce sequence_id into names (for fast mapping)\n";
   print "comparaDumpAllPeptides.pl v1.1\n";
   
   exit(1);  
@@ -132,7 +132,7 @@ sub parse_conf {
 sub dump_fasta {
   my $self = shift;
 
-  my $name2index = $self->{'name2index'};
+  my $idprefixed = $self->{'idprefixed'};
 
   my $sql = "SELECT member.sequence_id, member.stable_id, member.description, sequence.sequence, member.taxon_id, member.source_name " .
             " FROM member, sequence " .
@@ -169,7 +169,7 @@ sub dump_fasta {
     unless($self->{'removeXedSeqs'} and ($sequence =~ /X{$self->{'removeXedSeqs'},}?/)) {
       $sequence =~ s/(.{72})/$1\n/g  unless($self->{'noSplitSeqLines'});
       chomp $sequence;
-      my $nameprefix = $name2index ? ('seq_id_'.$sequence_id.'_') : '';
+      my $nameprefix = $idprefixed ? ('seq_id_'.$sequence_id.'_') : '';
       print FASTAFILE ">${nameprefix}${stable_id} $description\n$sequence\n";
     }
   }

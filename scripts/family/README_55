@@ -10,6 +10,7 @@ executables
 ~~~~~~~~~~~
 blastall
     /software/ensembl/compara/blast-2.2.6/blastall
+    /software/ensembl/compara/blast-2.2.21/bin/blastall
 
 mcl (source can be obtained from http://micans.org/mcl/src/)
 	using /nfs/acari/avilella/bin/mcxassemble
@@ -19,6 +20,11 @@ mcl (source can be obtained from http://micans.org/mcl/src/)
 mafft
     /software/ensembl/compara/mafft-6.522/bin/mafft
 
+#
+# NB: if you are going to run Family pipeline in a separate database,
+# make sure you have copied over all the necessary tables from tree/homology database (member, sequence, genome_db).
+# Later make sure you have everything for a successful merger (non-colliding ids).
+
 
 2- Choose a working directory with enough disk space
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -27,15 +33,16 @@ mafft
 # there are no file arrays, so all of the files can happily coexist in the same directory.
 # It would be ideal that all blades of the farm and turing could have easy access to it.
 #
-# I am using ~/family_55 for this purpose.
+# I am using ~/family_56 for this purpose.
 
-mkdir ~/family_55
+mkdir ~/family_56
 
-# However, ccording to the LSF guys (including Guys :),
-# the Blast database should live in /data/blastdb/ , as it is optimized for accessing large files:
+# In addition, we will need another directory for the BlastDB files to live in.
+# /data/blastdb on Farm-1 has been compromised during 2 releases (55 and 56),
+# so we are moving to Farm-2 and the proposed place for the BlastDB files is:
 
-mkdir -p /data/blastdb/Ensembl/family_55/fasta
-cd /data/blastdb/Ensembl/family_55/fasta
+mkdir -p /lustre/scratch103/ensembl/lg4/family_56
+cd /lustre/scratch103/ensembl/lg4/family_56
 
 
 3- Loading in and dumping the peptides from compara
@@ -49,24 +56,26 @@ cd /data/blastdb/Ensembl/family_55/fasta
 # a) stable ids are in (look in tables 'exon_stable_id', 'translation_stable_id', 'transcript_stable_id' 
 #    and 'gene_stable_id')
 
-mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_55" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from exon_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from translation_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from transcript_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from gene_stable_id limit 10"; echo "---"; done | less
+mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_56" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from exon_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from translation_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from transcript_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from gene_stable_id limit 10"; echo "---"; done | less
 
 # b) species data in 'meta' table up to date
 
-mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_55" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from meta" | grep species; echo "---"; done | less
+mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_56" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from meta" | grep species; echo "---"; done | less
 
 # c) check the gene type e.g. pseudogene or RNA that you don't want to load and update the filter out condition if necessary
 
-mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_55" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select count(*) as number, biotype from gene group by biotype order by number desc"; echo "---"; done | less
+mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_56" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select count(*) as number, biotype from gene group by biotype order by number desc"; echo "---"; done | less
 
 
 # perform the actual dump:
 #
-perl ~lg4/work/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 5316 --dbuser ensro --dbname avilella_compara_homology_55 --noredundancy --fasta metazoa_55.pep > metazoa_55.pep.err 2>&1 &
+time ~lg4/work/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 3306 --dbuser ensro --dbname lg4_compara_families_56 --idprefixed 1 --noredundancy --fasta metazoa_56.pep > metazoa_56.pep.err 2>&1
 #
-# took about 20 minutes in rel.55 (mostly waiting for the MySQL server to fetch the data
+# rel.56    4m30 (it was run in ~/family_56 as opposed to lustre mess)
+# rel.55    ~20m (mostly waiting for the MySQL server to fetch the data
 
-grep '>' metazoa_55.pep | wc -l
+grep '>' metazoa_56.pep | wc -l
+# rel.56    2467787
 # rel.55    2307222
 # rel.54    2188240
 # rel.5?    2023775
@@ -79,14 +88,6 @@ grep '>' metazoa_55.pep | wc -l
 4- Format the fasta file for Blast
    ~~~~~~~~~~~~~~~~~~~~~
 
-# You only (and hopefully temporarily) need the .tab file with name-to-index mapping.
-# While it is still needed, its generation should probably be built into the .pep-file dumper, as a side-product.
-
-time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_55 -e 'SELECT sequence_id, stable_id FROM member WHERE sequence_id IS NOT NULL GROUP BY sequence_id ORDER BY sequence_id' --column-names=0 | awk '{print $1 " " $2}' > metazoa_55.tab
-#
-# took about 2 minutes in rel.55
-
-
 # Formatting the fasta file for future BLASTPing:
 #
 #       WARNING! WARNING! WARNING!
@@ -95,19 +96,18 @@ time mysql --host compara2 --port 5316 --user ensro avilella_compara_homology_55
 #       Take a risk and do the whole thing on the farm-login node in your home directory, and then copy the files over.
 #       This is a very prescious database, as the whole pipeline will depend on it. Don't leave it to the LSF/lustre to break it.
 #
-time /software/ensembl/compara/blast-2.2.6/formatdb -p T -l metazoa_55.pep.formatdb.log -i metazoa_55.pep
+time /software/ensembl/compara/blast-2.2.21/bin/formatdb -p T -l metazoa_56.pep.formatdb.log -i metazoa_56.pep
 #
-# took about 5 minutes in rel.55
-# took 2:10 for blast-2.2.20 with the same db
+# rel.56    (blast 2.2.21)  2m19
+# rel.55    (blast 2.2.20)  2m10
+# rel.55    (blast 2.2.6)   ~5m
 
-# check metazoa_55.pep.formatdb.log if it is ok delete it
+# check metazoa_56.pep.formatdb.log if it is ok delete it
 
 # Formatted 2023775 sequences in volume 0
 
-rm -f metazoa_55.pep.formatdb.log
+rm -f metazoa_56.pep.formatdb.log
 
-# NB: it is important to make sure the process above has completed
-# and we have as many entries in .tab file as sequence_ids
 
 
 6- Run FamilyBlast.pm analysis
@@ -115,28 +115,28 @@ rm -f metazoa_55.pep.formatdb.log
 
 # make sure the database contains mcl_matrix table:
 #
-mysql --host compara2 --port 5316 --user ensadmin --password=ensembl avilella_compara_homology_55 -e 'DROP TABLE IF EXISTS mcl_matrix'
-mysql --host compara2 --port 5316 --user ensadmin --password=ensembl  avilella_compara_homology_55 -e 'CREATE TABLE mcl_matrix (id int(10) unsigned NOT NULL, rest mediumtext NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB'
+mysql --host compara2 --port 3306 --user ensadmin --password=ensembl lg4_compara_families_56 -e 'DROP TABLE IF EXISTS mcl_matrix'
+mysql --host compara2 --port 3306 --user ensadmin --password=ensembl  lg4_compara_families_56 -e 'CREATE TABLE mcl_matrix (id int(10) unsigned NOT NULL, rest mediumtext NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB'
 
 
 # Load the analysis using the cmd_hive.pl script with somewhat extended functionality:
-#
-#
-time /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -input_id '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_55/fasta/metazoa_55.pep", "tabfile" => "/data/blastdb/Ensembl/family_55/fasta/metazoa_55.tab" }' -suffix_a 1 -suffix_b 2307222 -step 100 -hive_capacity 1000 -logic_name family_blast_55 -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
-#
-# took about 1 minute in rel.55
 
-cd ~/family_55
+time /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -input_id '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' -parameters '{ "fastadb" => "/lustre/scratch103/ensembl/lg4/family_56/metazoa_56.pep", "blast_version" => "blast-2.2.21", "idprefixed" => 1 }' -suffix_a 1 -suffix_b 2467787 -step 100 -hive_capacity 1000 -logic_name family_blast_56 -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
+#
+# rel.56    0m23
+# rel.55    ~1m
 
-export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
+cd ~/family_56
 
-beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -sync
+# export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
+
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -sync
 
 # in the long Q:
-beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -lsf_options '-q long -R"select[comparatest2<1000] rusage[comparatest2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_blast_55
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -lsf_options '-q long -R"select[mycompara2<1000] rusage[mycompara2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_blast_56
 
 # in the normal Q:
-beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -lsf_options '-R"select[comparatest2<1000] rusage[comparatest2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_blast_55
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -lsf_options '-R"select[mycompara2<1000] rusage[mycompara2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_blast_56
 
 
 
@@ -146,14 +146,13 @@ beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homolo
 # The following script is supposed to automate everything in "8- " and needs the following parameters:
 #
 #           (1) the DB connection parameters (this DB has to have a filled-in 'mcl_matrix' table)
-#           (2) tab_file (we are going to get rid of it)
-#           (3) nameprefix (legacy from the way the mcxassemble.sh.tcx takes in the parameters)
+#           (2) nameprefix (legacy from the way the mcxassemble.sh.tcx takes in the parameters)
 #
 
-## NB: please execute this script on the farm that has 'hugemem' queue
+## NB: please execute this script on the farm that has 'hugemem' queue (from rel.56 farm-2 can be used)
 #  (otherwise the last step (the matrix assembly) will fail and may need to be re-submitted manually)
 
-/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/dump_matrix_for_mcl.pl -dbhost compara2 -dbport 5316 -dbuser ensro -dbname avilella_compara_homology_55 -tab /data/blastdb/Ensembl/family_55/fasta/metazoa_55.tab -nameprefix family_55
+/nfs/team71/analysis/lg4/work/ensembl-compara_HEAD/scripts/family/dump_matrix_for_mcl.pl -dbhost compara2 -dbport 3306 -dbuser ensro -dbname lg4_compara_families_56 -nameprefix family_56
 
 # After execution make sure you have kept .tcx file in a turing-accessible place and got rid of the huge .raw file.
 
@@ -172,16 +171,21 @@ do
         do
                 sleep 1
                 hmem=$(($mem * 1000))
-                export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -C0 -R "select[ncpus>=$n && mem>$mem] rusage[mem=$mem] span[hosts=1]" -M$hmem -q hugemem -n $n "/nfs/acari/avilella/src/mcl-08-152/src/shmcl/mcl ~/family_55/family_55.tcx -I 2.1 -t $n -tf 'gq(50)' -scheme 6 -o ~/family_55/family_55.mcl.turing.gq50.6.$n.$mem.$TIMESTAMP"
+                export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -o $TIMESTAMP.out -e $TIMESTAMP.err -C0 -R "select[ncpus>=$n && mem>$mem] rusage[mem=$mem] span[hosts=1]" -M$hmem -q hugemem -n $n "/nfs/acari/avilella/src/mcl-08-152/src/shmcl/mcl ~/family_56/family_56.tcx -I 2.1 -t $n -tf 'gq(50)' -scheme 6 -o ~/family_56/family_56.mcl.turing.gq50.6.$n.$mem.$TIMESTAMP"
                 done
 done
 
 # Once you have one of the jobs running, kill the remaining pending jobs with "bkill jobid".
+#
 
+
+# After this step is done, rename the file with the funky long name into family_56.mcl
+#
+#
 
 # to save space
 #
-bsub 'gzip family_55.tcl'
+bsub 'gzip family_56.tcx'
 #
 # took 16 minutes in rel.55
 
@@ -189,11 +193,20 @@ bsub 'gzip family_55.tcl'
 10- Load into compara database
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# Fix the Uniprot descriptions if it has not been done during loading
+#
+# NB: NB: NB: only run this script once! :
+#
+    ~/work/ensembl-compara_HEAD/scripts/family/fix_descriptions.pl -dbhost compara2 -dbport 3306 -dbuser ensadmin -dbpass ensembl -dbname lg4_compara_families_56 -force
+#
+# (takes seconds)
+
+
 # You'll need a compara database set up, with genome_db, taxon, and method_link tables prefilled.
 
-# Your reg_conf_55.pl should be something like:
+# Your reg_conf_56.pl should be something like:
 
-cat <<EOF >~/family_55/reg_conf_55.pl
+cat <<EOF >~/family_56/reg_conf_56.pl
 use strict;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -201,9 +214,9 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'compara2',
                                             -user => 'ensadmin',
                                             -pass => 'ensembl',
-                                            -port => 5316,
-                                            -species => 'compara55',
-                                            -dbname => 'avilella_compara_homology_55');
+                                            -port => 3306,
+                                            -species => 'compara56',
+                                            -dbname => 'lg4_compara_families_56');
 1;
 EOF
 
@@ -212,19 +225,29 @@ EOF
 # NB: turing doesn't have neither /usr/local/bin/perl nor /software/bin/perl,
 #     so parse_mcl.pl will need an additional dance to be performed
 
-nohup ~/work/ensembl-compara_HEAD/scripts/family/parse_mcl.pl --dbname compara55 --reg_conf reg_conf_55.pl --prefix fam55 family_55.mcl family_55.tab > family_55.description 2> family_55.description.err &
+nohup ~/work/ensembl-compara_HEAD/scripts/family/parse_mcl.pl --reg_conf reg_conf_56.pl --prefix fam56 family_56.mcl compara56 > family_56.description 2> family_56.description.err &
 
 # to save space
 #
-bsub 'gzip family_55.mcl'
+bsub 'gzip family_56.mcl'
 
 
 11- Run FamilyMafft.pm analysis over all the families
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# !!!Step 13 should be run also at the same time. It is not dependant on multiple alignments.
+# !!!Step 13 should be run also at the same time. It is not dependent on multiple alignments.
 
-mysql -hcompara2 -P5316 -uensro avilella_compara_homology_55 -N -e "select count(*), family_id from family_member where cigar_line IS NULL group by family_id having count(*)>1" | wc -l
+#
+# Make sure the tables that will be updated the most (hive, family_member) are InnoDB,
+# as the DB traffic (of parallel inserts) in this analysis is really high:
+#
+mysql -hcompara2 -P3306 -uensro lg4_compara_families_56 -N -e "alter table hive engine=InnoDB"
+mysql -hcompara2 -P3306 -uensro lg4_compara_families_56 -N -e "alter table family_member engine=InnoDB"
+
+
+
+mysql -hcompara2 -P3306 -uensro lg4_compara_families_56 -N -e "select count(*), family_id from family_member where cigar_line IS NULL group by family_id having count(*)>1" | wc -l
+# rel.56    98401
 # rel.55    94930
 # rel.54    88799
 # rel.5?    80681
@@ -236,23 +259,23 @@ mysql -hcompara2 -P5316 -uensro avilella_compara_homology_55 -N -e "select count
 
 # Get a list of all the family ids with more than one member. If you get it in random order, then the size of each id will be randomly spread in the list, and the jobs
 # will be more randomly distributed in terms of CPU time
-mysql -hcompara2 -P5316 -uensro avilella_compara_homology_55 -N -e "select family_id from family_member group by family_id having count(*)>1 order by RAND()" > family_ids_rand.txt
+mysql -hcompara2 -P3306 -uensro lg4_compara_families_56 -N -e "select family_id from family_member group by family_id having count(*)>1 order by RAND()" > family_ids_rand.txt
 
 
 # Upload the Mafft multiple alignment jobs using cmd_hive.pl
 # (the module to be run is our shiny new FamilyMafft.pm)
 #
-# time /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -input_id '{ "family_id" => "$inputfile" }' -inputfile ~/family_55/family_ids_rand.txt -hive_capacity 400 -batch_size 10 -logic_name family_mafft_55m -module Bio::EnsEMBL::Compara::RunnableDB::FamilyMafft
+time /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -input_id '{ "family_id" => "$inputfile" }' -inputfile ~/family_56/family_ids_rand.txt -hive_capacity 400 -batch_size 10 -logic_name family_mafft_56 -module Bio::EnsEMBL::Compara::RunnableDB::FamilyMafft
 
-export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
+# export PATH=$PATH:/nfs/team71/analysis/lg4/work/ensembl-hive/scripts
 
-beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -sync
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -sync
 
-beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -lsf_options '-R"select[comparatest2<500] rusage[comparatest2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_mafft_55m
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -lsf_options '-R"select[mycompara2<500] rusage[mycompara2=10:duration=10:decay=1]"' -lifespan 1200 -loop -logic_name family_mafft_56
 
 
 # A certain number of the failed ones will have to be re-run with more memory:
-beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_55 -lsf_options '-R"select[comparatest2<500 && mem>15000] rusage[comparatest2=10:duration=10:decay=1:mem=15000]" -M15000000' -lifespan 1200 -loop -logic_name family_mafft_55m
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -lsf_options '-R"select[mycompara2<500 && mem>15000] rusage[mycompara2=10:duration=10:decay=1:mem=15000]" -M15000000' -lifespan 1200 -loop -logic_name family_mafft_56
 #
 # in rel.54 only 7 first (biggest) families needed to be run with more memory (and were executed directly, bypassing the LSF, on turing)
 
@@ -261,6 +284,8 @@ beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homolo
 # They were run separately on Turing (set batch_count in analysis_stats to 1 if you want to use beekeeper + hugemem queue combination efficiently).
 # Parallel execution of the two took 20 hours.
 
+# in rel.56 (farm-2) only the biggest family (#1) needed to be run separately on Turing
+
 
 
 12- Insert the redundant proteins in the compara db
@@ -268,24 +293,27 @@ beekeeper.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homolo
 
 #First, set all singletons cigar_line to the length(m.sequence) + "M", because some singletons will disappear with the addition of redundant sequences.
 
-mysql -h compara2 -u ensro -P5316 -N -e "select family_id,count(*) as count from family_member group by family_id having count=1" avilella_compara_homology_55 | awk '{print "select family_id, length(s.sequence) from member m,family_member fm, sequence s where fm.member_id=m.member_id and fm.family_id="$1" and s.sequence_id = m.sequence_id;"}'|mysql -h compara2 -u ensro -P5316 -N avilella_compara_homology_55 |awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}'|sort -u > update_singletons_cigar_line.sql
-# took 52 minutes for rel.54
-# took 4 minutes for rel.55
+time mysql -h compara2 -u ensro -P3306 -N -e "select family_id,count(*) as count from family_member group by family_id having count=1" lg4_compara_families_56 | awk '{print "select family_id, length(s.sequence) from member m,family_member fm, sequence s where fm.member_id=m.member_id and fm.family_id="$1" and s.sequence_id = m.sequence_id;"}'|mysql -h compara2 -u ensro -P3306 -N lg4_compara_families_56 |awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}'|sort -u > update_singletons_cigar_line.sql
+# rel.56    5m
+# rel.55    4m
+# rel.54    52m
 
-mysql -h compara2 -uensadmin -pensembl -P5316 avilella_compara_homology_55 < update_singletons_cigar_line.sql
-# took 59 minutes for rel.54
-# took 5 minutes for rel.55
+time mysql -h compara2 -uensadmin -pensembl -P3306 lg4_compara_families_56 < update_singletons_cigar_line.sql
+# rel.56    2m50
+# rel.55    5m
+# rel.56    1h
 
-~/work/ensembl-compara_HEAD/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf_55.pl --dbname compara55 > Redundancy_and_Genes_load.err 2>&1
-# took 86 minutes for rel.54
-# took 14 minutes for rel.55
+~/work/ensembl-compara_HEAD/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf_56.pl --dbname compara56 > Redundancy_and_Genes_load.err 2>&1
+# rel.56    5m
+# rel.55    14m
+# rel.54    86m
 
 # IMPORTANT: add healthcheck about NULL cigar_line
-mysql -hcompara2 -P5316 -uensro avilella_compara_homology_55 -e "select m.source_name,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL group by m.source_name"
+mysql -hcompara2 -P3306 -uensro lg4_compara_families_56 -e "select m.source_name,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL group by m.source_name"
 
 # This should return count for ENSEMBLGENE;
 
-mysql -hcompara2 -P5316 -uensro avilella_compara_homology_55 -e "select fm.family_id,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL and m.source_name!='ENSEMBLGENE' group by fm.family_id"
+mysql -hcompara2 -P3306 -uensro lg4_compara_families_56 -e "select fm.family_id,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL and m.source_name!='ENSEMBLGENE' group by fm.family_id"
 
 This should only list the families for which multiple alignment could not be run.
 
@@ -300,29 +328,34 @@ This should only list the families for which multiple alignment could not be run
 13- Generates the family descriptions
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    This part really sucks and need a profound rethinking to get the description more clean and consistant.
 
-#      ensembl-compara/scripts/family/consensifier.pl 
-#      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-       ~/work/ensembl-compara_HEAD/scripts/family/consensifier.pl -d "Uniprot/SWISSPROT" family_55.description > family_55.description.SWISSPROT-consensus 2> family_55.description.SWISSPROT-consensus.err
-# took 28 mins in rel.54
-# took 12 mins in rel.55
+####  The following part really sucks and need a profound rethinking to get the description more clean and consistent.
 
-       ~/work/ensembl-compara_HEAD/scripts/family/consensifier.pl -d "Uniprot/SPTREMBL" family_55.description > family_55.description.SPTREMBL-consensus 2> family_55.description.SPTREMBL-consensus.err
-# took 8 hours in rel.54
-# took 8.3 hours in rel.55
+time ~/work/ensembl-compara_HEAD/scripts/family/consensifier.pl -d "Uniprot/SWISSPROT" family_56.description > family_56.description.SWISSPROT-consensus 2> family_56.description.SWISSPROT-consensus.err
+#
+# rel.56    6m30
+# rel.55    12m
+# rel.54    28m
 
-#      ensembl-compara/scripts/family/assemble-consensus.pl
-#      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-       ~/work/ensembl-compara_HEAD/scripts/family/assemble-consensus.pl family_55.description family_55.description.SWISSPROT-consensus family_55.description.SPTREMBL-consensus  > family_55.description-consensus 2> family_55.description-consensus.err
-# took 4 minutes in rel.54
-# took 5 minutes in rel.55
+time ~/work/ensembl-compara_HEAD/scripts/family/consensifier.pl -d "Uniprot/SPTREMBL" family_56.description > family_56.description.SPTREMBL-consensus 2> family_56.description.SPTREMBL-consensus.err
+#
+# rel.56    4h
+# rel.55    8h20m
+# rel.54    8h
+
+time ~/work/ensembl-compara_HEAD/scripts/family/assemble-consensus.pl family_56.description family_56.description.SWISSPROT-consensus family_56.description.SPTREMBL-consensus  > family_56.description-consensus 2> family_56.description-consensus.err
+#
+# rel.56    2m
+# rel.55    5m
+# rel.54    4m
 
 
-# update the family description in ensembl_family_55 with the data in family_55.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
-# (Use the same reg_cong.pl as in step 11)
+# update the family description in ensembl_family_56 with the data in family_56.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
+# (Use the same reg_conf.pl as in step 11)
 
-~/work/ensembl-compara_HEAD/scripts/family/LoadDescriptionInFamily.pl --reg_conf reg_conf_55.pl --dbname compara55 family_55.description-consensus
-# took 55 minutes in rel.54
-# took 5 minutes in rel.55
+time ~/work/ensembl-compara_HEAD/scripts/family/LoadDescriptionInFamily.pl --reg_conf reg_conf_56.pl --dbname compara56 family_56.description-consensus
+#
+# rel.56    2m40
+# rel.55    5m
+# rel.54    55m
 

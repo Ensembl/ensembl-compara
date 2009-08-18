@@ -24,7 +24,7 @@ sub load_fasta_sequences_from_db {
     my ($self, $start_seq_id, $minibatch, $overwrite) = @_;
 
     my $offset                  = $self->param('offset') || 0;
-    my $built_in_indices        = $self->param('built_in_indices') || 0;
+    my $idprefixed              = $self->param('idprefixed') || 0;
 
     my $sql = qq {
         SELECT s.sequence_id, m.stable_id, s.sequence
@@ -46,7 +46,7 @@ sub load_fasta_sequences_from_db {
     while( my ($seq_id, $stable_id, $seq) = $sth->fetchrow() ) {
         $seq=~ s/(.{72})/$1\n/g;
         chomp $seq;
-        push @fasta_list, ($built_in_indices
+        push @fasta_list, ($idprefixed
                                 ? ">seq_id_${seq_id}_${stable_id}\n$seq\n"
                                 : ">$stable_id sequence_id=$seq_id\n$seq\n") ;
     }
@@ -155,6 +155,11 @@ sub parse_blast_table_into_matrix_hash {
             } elsif($line=~/^#\s+Query:\s+(\S+)/) {
                 $curr_name  = $1;
                 $curr_index = $self->name2index($curr_name);
+
+                # for debugging purposes only:
+                unless($curr_index) {
+                    push @dist_accu, "PARSE_ERROR=($curr_name)";
+                }
             }
         } else {
             my ($qname, $hname, $identity, $align_length, $mismatches, $gap_openings, $qstart, $qend, $hstart, $hend, $evalue, $bitscore)

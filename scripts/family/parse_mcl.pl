@@ -207,14 +207,19 @@ foreach my $cluster (@clusters) {
           die "member does not exist in the database";
         }
     } else {
-        $member = $ma->fetch_by_dbID($tab_idx);
+        ($member) = @{ $ma->fetch_all_by_sequence_id($tab_idx) };
+        unless($member) {
+            warn "Could not fetch member by sequence_id=$tab_idx";
+        }
     }
     
-        # A funny way to add members to a family.
-        # You cannot do it without introducing an empty attribute, it seems?
-        #
-    my $attribute = new Bio::EnsEMBL::Compara::Attribute;
-    $family->add_Member_Attribute([$member, $attribute]);
+    if($member) {
+            # A funny way to add members to a family.
+            # You cannot do it without introducing an empty attribute, it seems?
+            #
+        my $attribute = new Bio::EnsEMBL::Compara::Attribute;
+        $family->add_Member_Attribute([$member, $attribute]);
+    }
   }
 
   my $family_dbID = $fa->store($family);

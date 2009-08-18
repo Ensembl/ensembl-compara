@@ -32,11 +32,11 @@ if ($help) {
 # if no reg_conf file is given.
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-my %redundant_sequence_id2member_ids;
+my %sequence_id2member_id;
 
 my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname,'compara')->dbc;
 
-print STDERR "Getting sequence_id vs member_id information from the database...";
+print STDERR "Loading sequence_id to member_id mapping from the database...";
 
 my $sql = "select sequence_id,member_id from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP')";
 my $sth = $dbc->prepare($sql);
@@ -46,18 +46,17 @@ my ($sequence_id,$member_id);
 $sth->bind_columns(\$sequence_id,\$member_id);
 
 while ( $sth->fetch() ) {
-    push @{$redundant_sequence_id2member_ids{$sequence_id}},$member_id;
+    push @{$sequence_id2member_id{$sequence_id}},$member_id;
 }
-
 $sth->finish;
-
 print STDERR "Done\n";
+
 
 print STDERR "Loading redundant peptides in families...";
 
-foreach my $sequence_id (keys %redundant_sequence_id2member_ids) {
-  next if (scalar @{$redundant_sequence_id2member_ids{$sequence_id}} == 1);
-  my $member_ids = join(",", @{$redundant_sequence_id2member_ids{$sequence_id}});
+foreach my $sequence_id (keys %sequence_id2member_id) {
+  next if (scalar @{$sequence_id2member_id{$sequence_id}} == 1);    # skip cases where there is no redundancy (1 member per sequence)
+  my $member_ids = join(",", @{$sequence_id2member_id{$sequence_id}});
   my $sql = "select * from family_member where member_id in ($member_ids)";
   my $sth = $dbc->prepare($sql);
   $sth->execute;
@@ -81,7 +80,7 @@ foreach my $sequence_id (keys %redundant_sequence_id2member_ids) {
     next;
   }
 
-  foreach my $member_id (@{$redundant_sequence_id2member_ids{$sequence_id}}) {
+  foreach my $member_id (@{$sequence_id2member_id{$sequence_id}}) {
     next if ($member_id == $ref_member_id);
     $sth2->execute($family_id, $member_id, $cigar_line);
   }
