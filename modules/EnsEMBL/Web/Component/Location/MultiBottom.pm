@@ -27,7 +27,7 @@ sub content {
   my $base_url = $object->_url($object->multi_params);
   
   foreach (@$slices) {
-    my $image_config = $object->image_config_hash('contigview_bottom_' . $i, 'MultiBottom', $_->{'real_species'});
+    my $image_config = $object->image_config_hash('contigview_bottom_' . $i, 'MultiBottom', $_->{'species'});
     
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,

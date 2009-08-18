@@ -24,15 +24,15 @@ sub content {
   foreach (@{$object->multi_locations}) {
     my $slice = $_->{'slice'};
     my $expand = ($expansion - $slice->length) / 2;
-    my $l = $_->{'seq_region_start'} - $expand < 1 ? $_->{'seq_region_start'} : $expand;
-    my $r = $_->{'seq_region_end'} + $expand > $_->{'seq_region_length'} ? $_->{'seq_region_length'} - $_->{'seq_region_end'} : $expand;
+    my $l = $_->{'start'} - $expand < 1 ? $_->{'start'} : $expand;
+    my $r = $_->{'end'} + $expand > $_->{'length'} ? $_->{'length'} - $_->{'end'} : $expand;
     
     $l += $expand - $r if $r < $expand;
     $r += $expand - $l if $l < $expand;
     
-    $slice = $slice->expand($l, $r) if $expand > 0 && $_->{'seq_region_length'} > $expansion;
+    $slice = $slice->expand($l, $r) if $expand > 0 && $_->{'length'} > $expansion;
     
-    my $image_config = $object->image_config_hash('contigviewtop_' . $i, 'MultiTop', $_->{'real_species'});
+    my $image_config = $object->image_config_hash('contigviewtop_' . $i, 'MultiTop', $_->{'species'});
     
     $image_config->set_parameters({
       container_width => $slice->length,

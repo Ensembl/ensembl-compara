@@ -587,7 +587,7 @@ $_->{'start'}] }
 sub retrieve_userdata {
   ## Based on DnaAlignFeature, below
   my ($self, $data) = @_;
-  warn "USERDATA @$data" if $data;
+  
   return [] unless $data;
   my $type = 'DnaAlignFeature';
   my $results = [];
@@ -1169,7 +1169,7 @@ sub current_pop_name {
   # Read in all in viewconfig stuff
   foreach ($view_config->options) {
     next unless $_ =~ s/opt_pop_//;
-    warn $_;
+    
     $pops_on{$_}  = 1 if $view_config->get("opt_pop_$_") eq 'on';
     $pops_off{$_} = 1 if $view_config->get("opt_pop_$_") eq 'off';
   }
@@ -1482,7 +1482,7 @@ sub focus {
 
 sub can_export {
   my $self = shift;
-  return $self->action =~ /^Export$|^Chromosome$|^Genome$|^Synteny$/ ? 0 : $self->availability->{'slice'};
+  return $self->action =~ /^(Export|Chromosome|Genome|Synteny)$/ ? 0 : $self->availability->{'slice'};
 }
 
 sub multi_locations {
@@ -1493,19 +1493,14 @@ sub multi_locations {
   if (!scalar @$locations) {
     my $slice = $self->slice;
     
-    push @$locations, {
-      type               => 'Location',
-      real_species       => $self->species,
-      name               => $slice->seq_region_name,
-      seq_region_name    => $slice->seq_region_name,
-      seq_region_start   => $slice->start,
-      seq_region_end     => $slice->end,
-      seq_region_strand  => $slice->strand,
-      seq_region_type    => $slice->coord_system->name,
-      raw_feature_strand => 1,
-      seq_region_length  => $slice->seq_region_length,
-      short_name         => $self->chr_short_name,
-      slice              => $slice
+    push @$locations, {      
+      slice      => $slice,
+      species    => $self->species,
+      name       => $slice->seq_region_name,
+      short_name => $self->chr_short_name,
+      start      => $slice->start,
+      end        => $slice->end,
+      length     => $slice->seq_region_length
     }
   }
   
@@ -1545,8 +1540,8 @@ sub multi_params {
   my $realign = shift;
   
   my %params = defined $realign ? 
-    map { $_ => $self->param($_) } grep { $realign ? /^([srg]\d*|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|align)$/ } $self->param :
-    map { $_ => $self->param($_) } grep { /^([srg]\d*|align)$/ } $self->param;
+    map { $_ => $self->param($_) } grep { $realign ? /^([srg]\d*|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|align)$/ && $self->param($_) } $self->param :
+    map { $_ => $self->param($_) } grep { /^([srg]\d*|align)$/ && $self->param($_) } $self->param;
   
   return \%params;
 }
