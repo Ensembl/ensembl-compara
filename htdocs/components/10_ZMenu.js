@@ -6,15 +6,29 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     var area = $(data.area.a);
     
-    this.drag = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
-    this.align = area.hasClass('align');
-    this.href = area.attr('href');
-    this.title = area.attr('title');
-    this.das  = false;
+    this.drag   = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
+    this.align  = area.hasClass('align');
+    this.href   = area.attr('href');
+    this.title  = area.attr('title');
+    this.das    = false;
+    this.mutli  = '';
     
     if (area.hasClass('das')) {
       this.das = area.hasClass('group') ? 'group' : area.hasClass('pseudogroup') ? 'pseudogroup' : 'feature';
       this.logicName = area.attr('class').replace(/das/, '').replace(/(pseudo)?group/, '').replace(/ /g, '');
+    }
+    
+    if (this.drag) {
+      var params = this.href.split('|');
+      
+      this.species = params[3];
+      this.chr     = params[4];
+      this.start   = parseInt(params[5]);
+      this.end     = parseInt(params[6])
+      
+      var n = parseInt(params[1]) - 1;
+      
+      this.multi = area.hasClass('multi') ? n || '' : ''; // Empty string for primary species, 1 for s1 etc.
     }
     
     area = null;
@@ -32,6 +46,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   init: function () {
     var myself = this;
     
+    var r = new RegExp('([\\?;]r' + this.multi + '=)[^;]+;?', 'g'); // The r parameter to remove from the current URL for this.baseURL
+    
     this.base();
     
     this.elLk.caption = $('span.title', this.el);
@@ -45,8 +61,19 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       myself.hide();
     });
     
-    this.baseURL = window.location.href.replace(/&/g, ';').replace(/#.*$/g, '').replace(/(\?|;)r=[^;]+;?/g, '$1').replace(/[\?;]$/g, '');
-    this.baseURL += this.baseURL.match(/\?/) ? ';' : '?';
+    // The location parameter that is due to be changed has its value replaced with %s
+    this.baseURL = window.location.href.replace(/&/g, ';').replace(/#.*$/g, '').replace(r, '$1%s;').replace(/[\?;]$/g, '');
+    
+    // Add r parameter if it doesn't exist already
+    if (!this.baseURL.match(/%s/)) {
+      this.baseURL += (this.baseURL.match(/\?/) ? ';' : '?') + 'r=%s';
+    }
+    
+    if (this.multi) {
+      var r = new RegExp('\/' + Ensembl.species + '\/')
+      
+      this.baseURL = this.baseURL.replace(this.species, Ensembl.species).replace(r, '/' + this.species + '/').replace(/%s/, Ensembl.coreParams.r).replace(/r=[^&;]*([&;]?)/, 'r=%s$1');
+    }
     
     this.getContent();
   },
@@ -166,7 +193,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.location = parseInt(r[1]) + (r[2] - r[1]) / 2;
       
       extra += '<tr><th></th><td><a href="' + this.zoomURL(1) + '">Centre on feature</a></td></tr>';
-      extra += '<tr><th></th><td><a href="' + this.baseURL + 'r=' + loc[1] + '">Zoom to feature</a></td></tr>';
+      extra += '<tr><th></th><td><a href="' + this.baseURL.replace(/%s/, loc[1]) + '">Zoom to feature</a></td></tr>';
     }
     
     this.populate(true, extra);
@@ -175,14 +202,15 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   populateRegion: function () {
     var myself = this;
     
-    var start, end, tmp, url, href;
+    var start, end, tmp, href;
     var arr, caption;
     
-    var a = this.href.split('|');
-    var min = parseInt(a[5]);
-    var max = parseInt(a[6]);
+    var min = this.start;
+    var max = this.end;
     
     var scale = (max - min + 1) / (this.areaCoords.r - this.areaCoords.l);
+    
+    var url = this.baseURL;
     
     // Region select
     if (this.coords.r) {
@@ -206,9 +234,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.location = (start + end) / 2;
       
       if (this.align) {
-        url = this.baseURL + 'c=' + Ensembl.location.name + ':' + (this.location + Ensembl.location.start) + ';w=' + (end - start);
+        url = url.replace(/r=%s/, 'c=' + Ensembl.location.name + ':' + (this.location + Ensembl.location.start) + ';w=' + (end - start));
       } else {
-        url = this.baseURL + 'r=' + a[4] + ':' + start + '-' + end;
+        url = url.replace(/%s/, this.chr + ':' + start + '-' + end);
       }
       
       arr = [
@@ -221,10 +249,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);
       
       arr = [
-        '<a href="' + this.zoomURL(10)  + '">Zoom out x10</a>',
-        '<a href="' + this.zoomURL(5)   + '">Zoom out x5</a>',
-        '<a href="' + this.zoomURL(2)   + '">Zoom out x2</a>',
-        '<a href="' + this.zoomURL(1)   + '">Centre here</a>'
+        '<a href="' + this.zoomURL(10) + '">Zoom out x10</a>',
+        '<a href="' + this.zoomURL(5)  + '">Zoom out x5</a>',
+        '<a href="' + this.zoomURL(2)  + '">Zoom out x2</a>',
+        '<a href="' + this.zoomURL(1)  + '">Centre here</a>'
       ];
       
       // Only add zoom in links if there is space to zoom in to.
@@ -245,9 +273,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   populateVRegion: function () {
     var start, end, view, arr, caption, tmp, url;
     
-    var a = this.href.split('|');
-    var min = parseInt(a[5]);
-    var max = parseInt(a[6]);
+    var min = this.start;
+    var max = this.end;
     
     var scale = (max - min + 1) / (this.areaCoords.b - this.areaCoords.t);
     
@@ -274,27 +301,27 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       this.location = (start + end) / 2;
       
-      caption = a[4] + ': ' + start + '-' + end;
+      caption = this.chr + ': ' + start + '-' + end;
     } else {
       view = 'View';
       
       this.location = Math.floor(min + (this.coords.y - this.areaCoords.t) * scale);
       
-      start = this.location - (Ensembl.location.width / 2);
-      end   = this.location + (Ensembl.location.width / 2);
+      start = Math.floor(this.location - (Ensembl.location.width / 2));
+      end   = Math.floor(this.location + (Ensembl.location.width / 2));
       
       if (start < 1) {
         start = 1;
       }
       
-      caption = a[4] + ': ' + this.location;
+      caption = this.chr + ': ' + this.location;
     }
     
-    url = this.baseURL + 'r=' + a[4] + ':' + start + '-' + end;
+    url = this.baseURL.replace(/.+\?/, '?').replace(/%s/, this.chr + ':' + start + '-' + end);
     
     arr = [
-      '<a href="/' + a[3] + '/Location/' + view + url + '">Jump to location ' + view + '</a>',
-      '<a href="/' + a[3] + '/Location/Chromosome' + url + '">Chromosome summary</a>'
+      '<a href="/' + this.species + '/Location/' + view + url + '">Jump to location ' + view + '</a>',
+      '<a href="/' + this.species + '/Location/Chromosome' + url + '">Chromosome summary</a>'
     ];
     
     this.buildMenu(arr, caption);
@@ -328,10 +355,21 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   zoomURL: function (scale) {
     var w = Ensembl.location.width * scale;
     
+    if (w < 1) {
+      return '';
+    }
+    
     if (this.align === true) {
-      return w < 1 ? '' : this.baseURL + 'c=' + Ensembl.location.name + ':' + (Ensembl.location.start + this.location) + ';w=' + Math.round(w);
+      return this.baseURL.replace(/r=%s/, 'c=' + this.chr + ':' + (Ensembl.location.start + this.location) + ';w=' + Math.round(w));
     } else {
-      return w < 1 ? '' : this.baseURL + 'r=' + Ensembl.location.name + ':' + Math.round(this.location - (w - 1) / 2) + '-' + Math.round(this.location + (w - 1) / 2);
+      var start = Math.round(this.location - (w - 1) / 2);
+      var end   = Math.round(this.location + (w - 1) / 2); // No constraints on end - can't know how long the chromosome is, and perl will deal with overflow
+      
+      if (start < 1) {
+        start = this.start;
+      }
+      
+      return this.baseURL.replace(/%s/, this.chr + ':' + start + '-' + end);
     }
   },
   
