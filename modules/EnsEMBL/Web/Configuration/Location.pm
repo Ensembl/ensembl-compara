@@ -30,8 +30,27 @@ sub ajax_content   { return $_[0]->_ajax_content;   }
 sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;    }
 sub content_panel  { return $_[0]->_content_panel;  }
-sub context_panel  { return $_[0]->_context_panel;  }
 sub configurator   { return $_[0]->_configurator;   }
+sub context_panel  { return $_[0]->_context_panel;  }
+
+sub context_panel {
+  my $self   = shift;
+  my $object = $self->object;
+  
+  if ($object->action eq 'Comparison') {
+    my $panel  = $self->new_panel('Summary',
+      'code'    => 'summary_panel',
+      'object'  => $object,
+      'caption' => $object->caption
+    );
+    
+    $panel->add_component('summary' => 'EnsEMBL::Web::Component::Location::MultiIdeogram');
+    $self->add_panel($panel);
+  } else {
+    $self->_context_panel;
+  }
+}
+
 
 sub extra_populate_tree {
   my $self = shift;
@@ -111,8 +130,8 @@ sub populate_tree {
   $align_menu->append($self->create_node('Align', $caption, 
     [qw(
       top      EnsEMBL::Web::Component::Location::ViewTop
-      botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
+      botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       bottom   EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom
     )],
     { 'availability' => 'slice database:compara', 'concise' => 'Genomic align slice' }
@@ -122,8 +141,8 @@ sub populate_tree {
   
   $align_menu->append($self->create_node('Compara_Alignments', $caption,
     [qw(
-      botnav     EnsEMBL::Web::Component::Location::ViewBottomNav
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
+      botnav     EnsEMBL::Web::Component::Location::ViewBottomNav
       alignments EnsEMBL::Web::Component::Location::Compara_Alignments
     )],
     { 'availability' => 'slice database:compara', 'concise' => 'Genomic alignments' }
@@ -132,9 +151,8 @@ sub populate_tree {
   $align_menu->append($self->create_node('Comparison', 'Multi-species comp. ([[counts::pairwise_alignments]])',
     [qw(
       selector EnsEMBL::Web::Component::Location::SelectAlignment
-      top      EnsEMBL::Web::Component::Location::MultiIdeogram
-      overview EnsEMBL::Web::Component::Location::MultiTop
-      nav      EnsEMBL::Web::Component::Location::ViewBottomNav
+      top      EnsEMBL::Web::Component::Location::MultiTop
+      botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       bottom   EnsEMBL::Web::Component::Location::MultiBottom
     )],
     { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
