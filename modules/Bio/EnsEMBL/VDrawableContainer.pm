@@ -105,7 +105,7 @@ sub new {
         if ($row_config->get('id')) {
           my $data = $self->{'storage'}{$row_config->get('id')};
           unless (defined($data->{$chr})) {
-            $data = $EW_Glyphset->data; 
+            $data = $EW_Glyphset->data(\@chromosomes); 
             $self->{'storage'}{$row_config->get('id')} = $data;
           }
           $EW_Glyphset->{'data'} = $data;

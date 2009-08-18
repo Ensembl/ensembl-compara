@@ -1,7 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::Vuserdata;
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet::V_density);
-use EnsEMBL::Web::Text::DensityFeatureParser;
+
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::Misc;
@@ -17,14 +18,17 @@ sub _init {
 
 sub data { 
 ## Grabs the user data and, if relevant, passes back to VDrawable container for 'caching'
-  my $self = shift;
-  my $data;
+  my ($self, $chrs) = @_;
   my $chr = $self->{'chr'} || $self->{'container'}{'chr'};
+  unless (scalar(@$chrs) > 1) {
+    $chrs = [$chr];
+  }
+  my $data = {map {($_,{})} @$chrs};
+
   my $track_id = $self->{'my_config'}->get('id');
   my ($status, $type, $id) = split('-|_', $track_id);
   return unless $status && $type && $id;
 
-  ## TODO - show separate tracks within a file
   my @colours = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
   unshift(@colours, 'black') if ($self->{'config'}{'display'} eq 'density_graph'); 
 
@@ -36,7 +40,7 @@ sub data {
  
   if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
     ## Parse data and store by chromosome
-    my $parser = EnsEMBL::Web::Text::DensityFeatureParser->new();
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
     $parser->no_of_bins($bins);
     $parser->bin_size($bin_size);
     unless ($self->{'config'}{'all_chromosomes'} eq 'yes') {
@@ -44,8 +48,8 @@ sub data {
     }
 
     if ($type eq 'url') {
-      my $data = EnsEMBL::Web::Tools::Misc::get_url_content( $self->my_config('source') );
-      $parser->parse($data);
+      my $content = EnsEMBL::Web::Tools::Misc::get_url_content( $self->my_config('source') );
+      $parser->parse($content);
     }
     else {
       my $file = new EnsEMBL::Web::TmpFile::Text( filename => $self->my_config('source') );
@@ -57,23 +61,21 @@ sub data {
 
     ## Build initial data structure
     my $max_values = $parser->max_values();
-    my @types = $parser->feature_types;
     my $sort = 0;
-    foreach my $type (@types) {
-      my %features = %{$parser->features_of_type($type)};
+    while (my ($name, $track) = each (%{$parser->get_all_tracks})) {
       my $count;
-      foreach my $chr (keys %features) {
-        my @results = @{$features{$chr}};
+      while (my ($chr, $results) = each (%{$track->{'bins'}})) {
         my $scores = [];
         for (my $i=0; $i < $bins; $i++) {
-          my $score = $results[$i];
+          my $score = $results->[$i];
           $scores->[$i] = $score;
         }
-        $data->{$chr}{$track_id}{$type} = {'scores' => $scores, 'colour' => $colours[$count], 'sort' => $sort};
+        my $colour = $track->{'config'}{'color'} || $colours[$count];
+        $data->{$chr}{$track_id}{$name} = {'scores' => $scores, 'colour' => $colour, 'sort' => $sort};
       }
-      my $current_max = $max_values->{$type};
+      my $current_max = $max_values->{$name};
       $max = $current_max if $max < $current_max;
-      $count++;
+      $count++ unless $track->{'config'}{'color'};
       $sort++;
     }
 

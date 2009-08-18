@@ -1,6 +1,7 @@
 package Bio::EnsEMBL::GlyphSet::V_density;
 use strict;
 use base qw(Bio::EnsEMBL::GlyphSet);
+use Data::Dumper;
 
 ### Parent module for vertical density tracks - does some generic data munging
 ### and draws the histogram/graph components
@@ -58,7 +59,6 @@ sub build_tracks {
     my $T = {};
     my $scores = $info->{'scores'};
     next unless $scores && ref($scores) eq 'ARRAY' && scalar(@$scores);
-    #warn ">>> TRACK $track";
     
     $T->{'style'}     = $info->{'display'} || $display;
     $T->{'histogram'} = $info->{'histogram'} || $histogram;
