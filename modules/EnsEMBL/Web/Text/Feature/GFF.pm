@@ -63,12 +63,6 @@ sub hend    { my $self = shift; return $self->{'__extra__'}{'hend'}    ? $self->
 sub hstrand { my $self = shift; return $self->{'__extra__'}{'hstrand'} ? $self->{'__extra__'}{'hstrand'}[0] : undef ; }
 sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
-sub slide   {
-  my $self = shift; my $offset = shift;
-  $self->{'start'} = $self->{'__raw__'}[3]+ $offset;
-  $self->{'end'}   = $self->{'__raw__'}[4]+ $offset;
-}
-
 sub cigar_string {
   my $self = shift;
   return $self->{'_cigar'}||=($self->{'__raw__'}[4]-$self->{'__raw__'}[3]+1)."M";

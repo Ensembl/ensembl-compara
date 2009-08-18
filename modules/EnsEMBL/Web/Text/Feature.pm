@@ -47,6 +47,14 @@ sub map {
   return $self;
 }
 
+sub slide    {
+  my $self = shift;
+  my $offset = shift;
+  $self->{'start'} = $self->rawstart + $offset;
+  $self->{'end'}   = $self->rawend + $offset;
+}
+
+
 sub strand { return undef; }
 
 sub type { return undef; }
@@ -58,4 +66,5 @@ sub score { return undef; }
 sub link { return undef; }  
 
 sub extra_data { return $_[0]{__extra__}; }
+
 1;

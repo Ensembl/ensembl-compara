@@ -33,13 +33,6 @@ sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
 sub id       { my $self = shift; return $self->{'__raw__'}[3]; }
 sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
-sub slide    {
-  my $self = shift; 
-  my $offset = shift;
-  $self->{'start'} = $self->{'__raw__'}[1]+ $offset;
-  $self->{'end'}   = $self->{'__raw__'}[2]+ $offset;
-}
-
 sub cigar_string {
   my $self = shift;
   return $self->{'_cigar'} if $self->{'_cigar'};

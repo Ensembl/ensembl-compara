@@ -126,7 +126,6 @@ sub parse {
           }
           else {
             my $feature = $feature_class->new($columns);
-            warn "@@@ FEATURE $feature";
             $self->store_feature($feature);
           }
           $count++;
