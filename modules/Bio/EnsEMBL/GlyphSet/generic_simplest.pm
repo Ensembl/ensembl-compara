@@ -18,7 +18,7 @@ sub das_link {
   
   my $slice   = $self->{container};
   my $species = $slice->{web_species};
-  my $assembly = $self->{'config'}->species_defs->other_species($species, 'ENSEMBL_GOLDEN_PATH' );
+  my $assembly = $self->{'config'}->species_defs->get_species($species, 'ENSEMBL_GOLDEN_PATH');
 
   my $dsn = "$species.$assembly.".join('-',$type, $database, @logic_names);
   my $das_link = "/das/$dsn/features?segment=".$slice->seq_region_name.':'.$slice->start.','.$slice->end;

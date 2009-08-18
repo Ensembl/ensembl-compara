@@ -812,7 +812,7 @@ sub das_link {
   return sprintf "/das/%s.%s.%s/features?segment=%s:%d-%d",
     $slice->seq_region_name,
     $slice->species,
-    $self->species_defs->other_species($species,'ENSEMBL_GOLDEN_PATH'),
+    $self->species_defs->get_config($species,'ENSEMBL_GOLDEN_PATH'),
     join('-',$das_type,$self->my_config('db'),@{$self->my_config('logicnames')||[]}),
     $slice->start,
     $slice->end;

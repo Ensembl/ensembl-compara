@@ -47,12 +47,12 @@ sub _init {
     my $OTHER       = $self->{'container'}->{'other_species'};
     my $OTHER_T     = $OTHER; $OTHER_T =~s/_/ /g;
     my $SPECIES_T   = $self->{container}{web_species}; $SPECIES_T =~s/_/ /g;
-    my $OTHER_SHORT = $self->species_defs->other_species($OTHER,'SPECIES_COMMON_NAME');
+    my $OTHER_SHORT = $self->species_defs->get_config($OTHER,'SPECIES_COMMON_NAME');
     my $SPECIES_SHORT = $self->species_defs->SPECIES_COMMON_NAME;
     $SPECIES_T =~ s/_/ /g;
 ## This is the list of chromosomes we will be drawing     
 
-    my %other_chrs = map { ($_ , 1) } @{ $self->species_defs->other_species($OTHER,'ENSEMBL_CHROMOSOMES') };
+    my %other_chrs = map { ($_ , 1) } @{ $self->species_defs->get_config($OTHER,'ENSEMBL_CHROMOSOMES') };
     
 ## LETS GRAB THE CHROMOSOME BANDS FOR THE CENTRAL CHROMOSOME
 
