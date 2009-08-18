@@ -200,7 +200,7 @@ sub fetch_distances {
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
   my $filename = $self->{cluster_dir} . "/" . "$tbl_name.hcluster.txt";
-  open FILE, ">$filename" or die $!;
+  open FILE, ">$filename" or die "Cannot open $filename: $!";
   while ( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($query_id, $hit_id, $score) = @$ref;
     print FILE "$query_id\t$hit_id\t$score\n";
@@ -245,7 +245,7 @@ sub fetch_categories {
   }
   $sth->finish;
   printf("%1.3f secs to gather distinct\n", (time()-$starttime));
-  open FILE, ">$filename" or die $!;
+  open FILE, ">$filename" or die "Cannot open $filename: $!";
   foreach my $member_id (keys %$member_id_hash) {
     print FILE "$member_id"."_","$gdb_id\t$outgroup\n";
   }
