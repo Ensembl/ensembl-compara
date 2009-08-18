@@ -16,23 +16,19 @@ use Data::Dumper;
 sub createObjects {
   my $self = shift;
   
-  if ($self->core_objects->location
-     && !$self->core_objects->location->isa('EnsEMBL::Web::Fake') 
-     && !$self->core_objects->gene
-  ) {
+  if ($self->core_objects->location && !$self->core_objects->location->isa('EnsEMBL::Web::Fake') && !$self->core_objects->gene) {
     $self->_create_object_from_core;
-    my $obj = $self->DataObjects->[0];
     
-    foreach my $param ($self->param) {
-      # multicontigview
-      if ($param =~ /^s\d+$/) {
-        $self->generate_full_url($obj); # first, check if we need to generate a url
-        
-        if ($self->core_objects->location) { 
-          $self->createObjectsLocation($obj) # then go and create the objects
-        } elsif ($self->core_objects->gene) {
-          # $self->createObjectsGene($obj);
-        }
+    # multicontigview
+    if (grep { /^s\d+$/ } $self->param) {
+      my $obj = $self->DataObjects->[0];
+    
+      $self->generate_full_url($obj); # first, check if we need to generate a url
+      
+      if ($self->core_objects->location) { 
+        $self->createObjectsLocation($obj) # then go and create the objects
+      } elsif ($self->core_objects->gene) {
+        # $self->createObjectsGene($obj);
       }
     }
     
@@ -234,235 +230,247 @@ sub createObjects {
 ## Push location....
 }
 
-#do redirects for mcv
+# do redirects for mcv
 sub generate_full_url {
-  my $self = shift;
-  my $obj = shift;
-
-  #show input parameters
-#   foreach ($self->param) {          
-#     warn "$_ = ",$self->param($_),"\n";
-#   }
-
-  #study input params...
-  my ($ids,$sp_dets);
-  foreach my $par ( $self->param ) {
-    if ($par =~ /^([sgr])(\d+)$/ ) {
-      $ids->{$2}{$1} = 1;
-    }
-    if ($par =~ /^(s)(\d+)$/ ) {
-      push @{$sp_dets->{$self->param($par)}}, $2;
-    }
+  my ($self, $obj) = @_;
+  
+  my $remove = $self->param('remove_alignment');
+  my (%species, @missing);
+  
+  $self->param('remove_alignment', '');
+  
+  foreach ($self->param) {
+    push @missing, $1 if /^s(\d+)$/ && !defined $self->param("r$1");
   }
-
-  #Are there any species to be removed ?
-  foreach my $sp (keys %$sp_dets) {
-    if (scalar @{$sp_dets->{$sp}} > 1 ) {
-      $self->remove_species_and_generate_url($sp);
-    }
-  }
-
-
-  #Are there any new species (ie don't have an r param) ?
-  my $complete = 1;
-  foreach my $no (keys %$ids) {
-    $complete = 0 unless exists($ids->{$no}{'r'});
-  }
-  $self->find_missing_locations($obj,$ids) if (! $complete);
-
-  #otherwise return and get on with generating the page
-  return;
+  
+  # Remove species duplicated in the url
+  $self->remove_species_and_generate_url($obj, $remove) if $remove;
+  
+  # Add species missing r parameters
+  $self->find_missing_locations($obj, \@missing) if scalar @missing;
 }
 
-
 sub remove_species_and_generate_url {
-  my $self = shift;
-  my $sp = shift; #species to go
-  my $new_pars;
+  my ($self, $obj, $remove, $primary_species) = @_;
+  
+  $self->param("$_$remove", '') for qw(s g r);
+  
+  my $new_params = $obj->multi_params;
 
-  #only keep non-unwanted species
-  my @numbers_to_stay;
-  foreach my $par ( $self->param ) {
-    if ($par =~ /^(s)(\d+)$/ ) {
-      if ($self->param($par) ne $sp) {
-        push @numbers_to_stay, $2;
-        $new_pars->{$par} = $self->param($par);
-      }
-    }
-    else {
-      $new_pars->{$par} = $self->param($par);
-    }
-  }
-  #remove other params associated with the species to go
-  foreach my $k (keys %$new_pars) {
-    if ($k =~ /^([gr])(\d+)$/) {
-      my $num = $2;
-      if (! grep {$_ eq $num}  @numbers_to_stay) {
-        delete $new_pars->{$k};
-      }
-    }
-  }
-
-  #accounting for missing species, bump the values up to condensify the url
-  my $q;
+  # accounting for missing species, bump the values up to condense the url
+  my $params;
   my $i = 1;
-  foreach my $k ( sort keys %$new_pars) {
-    if ( $k =~ /^s(\d+)$/ ) {
-      if ( $new_pars->{$k}) {
-        $q->{"s$i"} = $new_pars->{"s$1"};
-        $q->{"r$i"} = $new_pars->{"r$1"};
-        $q->{"g$i"} = $new_pars->{"g$1"} if $new_pars->{"g$1"};
-        $i++;
-      }
-    }
-    elsif ($k !~ /^[sgr]\d+$/ ) {
-      $q->{$k} = $new_pars->{$k};
+  
+  foreach (sort keys %$new_params) {
+    if (/^s(\d+)$/ && $new_params->{$_}) {
+      $params->{"s$i"} = $new_params->{"s$1"};
+      $params->{"r$i"} = $new_params->{"r$1"};
+      $params->{"g$i"} = $new_params->{"g$1"} if $new_params->{"g$1"};
+      $i++;
+    } elsif (!/^[sgr]\d+$/) {
+      $params->{$_} = $new_params->{$_};
     }
   }
-  return $self->problem( 'redirect', $self->_url($q));
+  
+  $params->{'species'} = $primary_species if $primary_species;
+  
+  return $self->problem('redirect', $self->_url($params));
+}
+
+sub realign {
+  my ($self, $object, $inputs, $id) = @_;
+  
+  my $species = $self->__species;
+  my $params = $object->multi_params($id);
+  my $alignments = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
+  
+  my %allowed;
+  
+  foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
+    foreach (keys %{$alignments->{$i}->{'species'}}) {
+      $allowed{$_} = 1 if $alignments->{$i}->{'species'}->{$species} && $_ ne $species && $_ ne 'merged'; 
+    }
+  }
+  
+  # Retain r/g for species with no alignments
+  foreach (keys %$inputs) {
+    next if $allowed{$inputs->{$_}->{'s'}} || $_ == 0;
+    
+    $params->{"r$_"} = $inputs->{$_}->{'r'};
+    $params->{"g$_"} = $inputs->{$_}->{'g'};
+  }
+  
+  $self->problem('redirect', $self->_url($params));
+}
+
+sub change_primary_species {
+  my ($self, $object, $id) = @_;
+  
+  $self->param('r', $self->param("r$id"));
+  $self->param('g', $self->param("g$id")) if $self->param("g$id");
+  $self->param('s99999', $self->__species); # Set arbitrarily high - will be recuded by remove_species_and_generate_url
+  
+  $self->remove_species_and_generate_url($object, $id, $self->param("s$id"));
 }
 
 sub find_missing_locations {
-  my $self = shift;
-  my $obj = shift;
-  my $ids = shift;
+  my ($self, $obj, $ids) = @_;
+  
   my $slice = $obj->slice;
- PAR:
-  foreach my $par ( $self->param ) {
-    #given a s param, get locations...
-    # - might need modif. if we can go in on a gene only ?
-
-    if( $par =~ /^s(\d+)$/ ) {
-      my $ID = $1;
-      next PAR if $ids->{$ID}{'r'}; #don't attempt to do anything if we already have an r param
-      my $species = $self->map_alias_to_species( $self->param($par) );
-      my $width = $slice->end - $slice->start + 1;
-
-      #get chr argument for self compara
-      my $chrom = '';
-      #          if ($self->param("sr$ID")) {
-      #            $chrom = $self->param("sr$ID");
-      #          } elsif ($sc) {
-      #            ($chrom) =  $self->param("c$ID") =~ /^([-\w\.]+):?/;
-      #          }
-      $self->_best_guess( $slice, $species, $width, $chrom, $ID ); #...and do a redirct
-    }
+  
+  foreach (@$ids) {
+    my $chrom = ''; # get chr argument for self compara
+    
+    # if ($self->param("sr$_")) {
+    #   $chrom = $self->param("sr$_");
+    # } elsif ($sc) {
+    #   ($chrom) = $self->param("c$_") =~ /^([-\w\.]+):?/;
+    # }
+    
+    $self->_best_guess($obj, $slice, $_, $chrom);
   }
-}
-
-sub _best_guess {
-  my( $self, $slice, $species, $width, $chrom, $ID ) = @_;
-  ( my $S2 = $species ) =~ s/_/ /g;
-  ## foreach my $method ( @{$self->species_defs->COMPARATIVE_METHODS} ) {
-  foreach my $method ( qw(BLASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN) ) {
-    my( $seq_region, $cp, $strand );
-    eval {
-      ( $seq_region, $cp, $strand ) = $self->_dna_align_feature_adaptor->interpolate_best_location( $slice, $S2, $method, $chrom );
-    };
-    if( $seq_region ) {
-#      warn "found another location -  $seq_region, $cp, $strand, $species, $ID";
-      my $start = floor($cp - ($width-1)/2);
-      my $end   = floor($cp + ($width-1)/2);
-      $self->__set_species( $species );
-      if ($ID) {
-        $self->param('r'.$ID,"$seq_region:$start-$end:$strand");
-      }
-      $self->_check_slice_exists_and_redirect( $species, $seq_region, $start, $end, $strand, 1 );
-    }
-  }
-  return ();
 }
 
 sub map_alias_to_species {
-  my( $self, $name ) = @_;
+  my ($self, $name) = @_;
+  
   my $ESA = $self->species_defs->ENSEMBL_SPECIES_ALIASES;
-  my %map = map { lc($_), $ESA->{$_} } keys %$ESA;
-  return $map{lc($name)};
+  my %map = map { lc, $ESA->{$_} } keys %$ESA;
+  
+  return $map{lc $name};
+}
+
+sub _best_guess {
+  my ($self, $object, $slice, $id, $chrom) = @_;
+  
+  # given a s param, get locations - might need modifying if we can go in on a gene only?
+  my $species = $self->map_alias_to_species($self->param("s$id"));
+  my $width = $slice->end - $slice->start + 1;
+  
+  (my $sp = $species) =~ s/_/ /g;
+  
+  foreach my $method (qw( BLASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN )) {
+    my ($seq_region, $cp, $strand);
+    
+    eval {
+      ($seq_region, $cp, $strand) = $self->_dna_align_feature_adaptor->interpolate_best_location($slice, $sp, $method, $chrom);
+    };
+    
+    if ($seq_region) {
+      my $start = floor($cp - ($width-1)/2);
+      my $end   = floor($cp + ($width-1)/2);
+      
+      $self->__set_species($species);
+      
+      $self->_check_slice_exists_and_redirect($id, $object, $species, $seq_region, $start, $end, $strand);
+    }
+  }
 }
 
 sub _dna_align_feature_adaptor {
   my $self = shift;
-  return $self->__data->{'compara_adaptors'}{'dna_align_feature'} ||=
-    $self->database('compara')->get_DnaAlignFeatureAdaptor();
+  
+  return $self->__data->{'compara_adaptors'}{'dna_align_feature'} ||= $self->database('compara')->get_DnaAlignFeatureAdaptor;
 }
 
 sub _check_slice_exists_and_redirect {
-  my( $self, $species, $chr, $start, $end, $strand, $keep_slice ) = @_;
-  if( defined $start ) {
-    $start = floor( $start );
-    $end   = $start unless defined $end;
-    $end   = floor( $end );
-    $end   = 1 if $end < 1;
+  my ($self, $id, $object, $species, $chr, $start, $end, $strand) = @_;
+  
+  if (defined $start) {
+    $start = floor($start);
+    
+    $end = $start unless defined $end;
+    $end = floor($end);
+    $end = 1 if $end < 1;
+    
+    # Truncate slice to start of seq region
+    if ($start < 1) {
+      $end += abs($start) + 1;
+      $start = 1;
+    }
+    
+    ($start, $end) = ($end, $start) if $start > $end;
+    
     $strand ||= 1;
-    $start = 1 if $start < 1;     ## Truncate slice to start of seq region
-    ($start,$end) = ($end, $start) if $start > $end;
-    my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
-
-    foreach my $system ( @{$self->__coord_systems} ) {
+    
+    my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
+    
+    foreach my $system (@{$self->__coord_systems}) {
       my $slice;
-      eval { $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand ); };
-      warn $@ if $@;
-      next if $@;
-      if( $slice ) {
-        if( $start >  $slice->seq_region_length || $end >  $slice->seq_region_length ) {
-          $start = $slice->seq_region_length if $start > $slice->seq_region_length;
-          $end   = $slice->seq_region_length if $end   > $slice->seq_region_length;
-          $slice = $self->_slice_adaptor->fetch_by_region( $system->name, $chr, $start, $end, $strand );
+      
+      eval { $slice = $self->_slice_adaptor->fetch_by_region($system->name, $chr, $start, $end, $strand); };
+      warn $@ and next if $@;
+      
+      if ($slice) {
+        if ($start > $slice->seq_region_length || $end > $slice->seq_region_length) {
+          ($start, $end) = ($slice->seq_region_length - $slice->length + 1, $slice->seq_region_length);
+          $start = 1 if $start < 1;
+          
+          $slice = $self->_slice_adaptor->fetch_by_region($system->name, $chr, $start, $end, $strand);
         }
-        my $pars;
-        foreach my $par ($self->param) {
-          if ($par =~ /^[sgr]\d+|align/) {
-            $pars->{$par} = $self->param($par);
-          }
-        }
-        return $self->problem( 'redirect', $self->_url($pars));
+        
+        $self->param('r' . ($id || ''), "$chr:$start-$end:$strand");
+        
+        return $self->problem('redirect', $self->_url($object->multi_params));
       }
     }
-    $self->problem( "fatal", "Locate error", $self->_help( "Cannot locate region $chr: $start - $end on the current assembly." ));
-    return undef;
-  } else {
-    $self->problem( "fatal", "Locate error", $self->_help( "Cannot locate region $chr: $start - $end on the current assembly." ));
-    return undef;
   }
+  
+  $self->problem('fatal', 'Locate error', $self->_help("Cannot locate region $chr: $start - $end on the current assembly."));
 }
 
 sub createObjectsLocation {
-  my $self = shift;
-  my %SHORT = qw(chromosome Chr.
-               supercontig S'ctg
-               );
-
-  my $ids;
-  foreach my $par ( $self->param ) {
-    if ($par =~ /^([sgr])(\d+)$/ ) {
-      $ids->{$2}{$1} = $self->param($par);
-    }
+  my ($self, $object) = @_;
+  
+  my @slices;
+  
+  my %ids = ( 0 => { s => $self->__species });
+  map $ids{0}->{$_} = $self->param($_), grep $self->param($_), qw(g r);
+  
+  foreach ($self->param) {
+    $ids{$2}->{$1} = $self->param($_) if /^([sgr])(\d+)$/;
   }
-  my $sec_slices;
-  while (my ($no,$dets) = each (%$ids)) {
-    my $species = $dets->{'s'};
-    my $r =  $dets->{'r'};
-    my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
+  
+  my $action_id = $self->param('id');
+  $ids{$action_id}->{'action'} = $self->param('action') if $ids{$action_id};
+  
+  foreach (sort { $a <=> $b } keys %ids) {
+    my $species = $ids{$_}->{'s'};
+    my $r = $ids{$_}->{'r'};
+    
+    next unless $species && $r;
+    
+    my $action = $ids{$_}->{'action'};
+    
+    my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
+    my ($chr, $s, $e, $strand) = $r =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-?\d+))?/;
+    
     my $slice;
-    my ($chr,$start,$end,$strand) = $r =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-\d+))?/;
-    eval { $slice = $slice_adaptor->fetch_by_region( undef, $chr, $start, $end, $strand ); };
-    warn $@ if $@;
-
-    #generate short caption name
-    my $type = $slice->coord_system_name();
-    my $chr_name = $slice->seq_region_name();
-    my $chr_raw = $chr_name;
-    unless( $chr_name =~ /^$type/i ) {
-      $type = $SHORT{lc($type)} || ucfirst( $type );
-      $chr_name = "$type $chr_name";
+    
+    my $modifiers = {
+      in      => sub { ($s, $e) = ((3*$s + $e)/4, (3*$e + $s)/4) },     # Half the length
+      out     => sub { ($s, $e) = ((3*$s - $e)/2, (3*$e - $s)/2) },     # Double the length
+      left    => sub { ($s, $e) = ($s - ($e-$s)/10, $e - ($e-$s)/10) }, # Shift left by length/10
+      left2   => sub { ($s, $e) = ($s - ($e-$s)/2,  $e - ($e-$s)/2) },  # Shift left by length/2
+      right   => sub { ($s, $e) = ($s + ($e-$s)/10, $e + ($e-$s)/10) }, # Shift right by length/10
+      right2  => sub { ($s, $e) = ($s + ($e-$s)/2,  $e + ($e-$s)/2) },  # Shift right by length/2
+      flip    => sub { ($strand ||= 1) *= -1 },
+      realign => sub { $self->realign($object, \%ids, $_); },
+      primary => sub { $self->change_primary_species($object, $_); }
+    };
+    
+    if ($action) {
+      $modifiers->{$action}();
+      
+      $self->__set_species($species);
+      $self->_check_slice_exists_and_redirect($_, $object, $species, $chr, $s, $e, $strand);
     }
-    if( length($chr_name) > 9 ) {
-      $chr_name = $chr_raw;
-    }
-    (my $abbrev = $species ) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
-    my $chr_short = "$abbrev $chr_name";
+    
+    eval { $slice = $slice_adaptor->fetch_by_region(undef, $chr, $s, $e, $strand); };
+    warn $@ and next if $@;
+    
     my $data = {
-      'type' => 'Location',
+      'type'               => 'Location',
       'real_species'       => $species,
       'name'               => $slice->seq_region_name,
       'seq_region_name'    => $slice->seq_region_name,
@@ -472,15 +480,17 @@ sub createObjectsLocation {
       'seq_region_type'    => $slice->coord_system->name,
       'raw_feature_strand' => 1,
       'seq_region_length'  => $slice->seq_region_length,
-      'short_name'         => $chr_short,
-      'slice'              => $slice,
+      'short_name'         => $object->chr_short_name($slice, $species),
+      'slice'              => $slice
     };
-    push @$sec_slices, $data;
+    
+    push @slices, $data;
   }
-  $self->{'data'}{'_dataObjects'}[0][1]{'_other_locations'} = $sec_slices;
+  
+  $self->{'data'}{'_dataObjects'}[0][1]{'_multi_locations'} = \@slices;
+  
   return;
 }
-
 
 sub _help {
   my( $self, $string ) = @_;
@@ -1005,7 +1015,7 @@ sub _create_from_slice {
     'db'    => $db,
     'align' => $self->param('align')
   };
-  return $self->problem( 'redirect', $self->_url($pars));
+  return $self->problem('redirect', $self->_url($pars));
 }
 
 sub merge {
