@@ -4,8 +4,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use EnsEMBL::Web::Text::FeatureParser;
-
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
 
 sub _das_link {
