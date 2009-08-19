@@ -78,6 +78,8 @@ sub parse {
     my $feature_class = 'EnsEMBL::Web::Text::Feature::'.uc($format); 
     my $empty = $feature_class->new();
     my $count;
+    my $current_max = 0;
+    my $current_min = 0;
 
     foreach my $row ( split /\n/, $data ) {
       ## Skip crap and clean up what's left
@@ -92,6 +94,9 @@ sub parse {
       elsif ($row =~ /^track/) {
         $row =~ s/^track\s+(.*)$/$1/i;
         $self->add_track($row);
+        ## Reset max and min in case this is a multi-track file
+        $current_max = 0;
+        $current_min = 0;
       }
       else {
         my $columns;
@@ -125,6 +130,14 @@ sub parse {
           }
           else {
             my $feature = $feature_class->new($columns);
+            if ($feature->can('score')) {
+              $current_max = $self->{'tracks'}{$self->current_key}{'config'}{'max_score'};
+              $current_min = $self->{'tracks'}{$self->current_key}{'config'}{'min_score'};
+              $current_max = $feature->score if $feature->score > $current_max;
+              $current_min = $feature->score if $feature->score < $current_min;
+              $self->{'tracks'}{$self->current_key}{'config'}{'max_score'} = $current_max;
+              $self->{'tracks'}{$self->current_key}{'config'}{'min_score'} = $current_min;
+            }
             $self->store_feature($feature);
           }
           $count++;
