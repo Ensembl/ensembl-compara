@@ -137,9 +137,9 @@ sub draw_wiggle_plot {
   my $pix_per_score   = ($P_MAX-$N_MIN) ? $row_height / ( $P_MAX-$N_MIN ) : 0;
   my $red_line_offset = $P_MAX * $pix_per_score;
 
-  my $colour          = $self->my_colour('score')|| 'blue';
-  my $axis_colour     = $self->my_colour('axis') || 'red';
-  my $label           = $self->my_colour('score','text');
+  my $colour          = $parameters->{'score_colour'}|| $self->my_colour('score')|| 'blue';
+  my $axis_colour     = $parameters->{'axis_colour'} || $self->my_colour('axis') || 'red';
+  my $label           = $parameters->{'description'} || $self->my_colour('score','text');
   my $name            = $self->my_config('short_name') || $self->my_config('name');
      $label =~ s/\[\[name\]\]/$name/;
 
@@ -227,11 +227,14 @@ sub draw_wiggle_plot {
     } else {
       $score = $f->score || 0;
     }
-    # warn(join('*', $f, $START, $END, $score));
     my $y = $score < 0 ? 0 : -$score * $pix_per_score;
+    my $height = $parameters->{'graph_type'} eq 'points' ? 20 : $score;
+    $height *= $pix_per_score;
+
+    # warn(join('*', $f, $START, $END, $score));
     $self->push($self->Rect({
       'y'         => $offset + $red_line_offset + $y,
-      'height'    => abs( $score * $pix_per_score ),
+      'height'    => abs( $height ),
       'x'         => $START-1,
       'width'     => $END - $START+1,
       'absolutey' => 1,
