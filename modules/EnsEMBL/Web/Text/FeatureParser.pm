@@ -91,7 +91,6 @@ sub parse {
       }
       elsif ($row =~ /^track/) {
         $row =~ s/^track\s+(.*)$/$1/i;
-        warn "SELF $self";
         $self->add_track($row);
       }
       else {
@@ -241,7 +240,7 @@ sub add_track {
   my $config = {'name' => 'default'};
 
   ## Pull out any parameters with "-delimited strings (without losing internal escaped '"')
-  while ($row =~ s/(\w+)\s*=\s*"(([\\"]|[^"]*)+)"//) {
+  while ($row =~ s/(\w+)\s*=\s*"(([\\"]|[^"])+?)"//) {
     my $key = $1;
     (my $value = $2) =~ s/\\//g;
     $config->{$key} = $value;
