@@ -298,6 +298,7 @@ sub load_user_tracks {
     } 
     else {
       my $display = $entry->{'format'} eq 'WIG' ? 'tiling' : 'normal';
+      my $strand  = $entry->{'format'} eq 'WIG' ? 'r' : 'b';
       $menu->append( $self->create_track( 'tmp_'.$entry->{'code'}, $entry->{'name'}, {
         '_class'      => 'tmp',
         'glyphset'    => '_flat_file',
@@ -310,7 +311,7 @@ sub load_user_tracks {
         'description' => '
   Data that has been temporarily uploaded to the web server.',
         'display'     => $display,
-        'strand'      => 'b'
+        'strand'      => $strand,
       })) if $entry->{'species'} eq $self->{'species'};
     }
   }
