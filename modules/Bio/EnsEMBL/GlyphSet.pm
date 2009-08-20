@@ -645,7 +645,6 @@ sub errorTrack {
   return $res[3];
 }
 
-
 sub get_featurestyle {
   my ($self, $f, $configuration) = @_;
   my $style;
