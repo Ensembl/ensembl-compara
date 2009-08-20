@@ -94,7 +94,7 @@ Ensembl.extend({
       }
     }
     
-    match = url.match(/s\d+=.+?;/g);
+    match = url.match(/s\d+=.+?[;&]/g);
     
     if (match) {      
       var m, i, s, r;
@@ -102,7 +102,7 @@ Ensembl.extend({
       $.each(match, function () {
         m = this.split('=');
         i = m[0].substr(1);
-        s = m[1].replace(/;/, '');
+        s = m[1].replace(/[;&]/, '');
         
         myself.multiSpecies[s] = {};
         
@@ -113,7 +113,7 @@ Ensembl.extend({
             myself.multiSpecies[s][this] = unescape(myself.multiSpecies[s][this][1]);
           }
           
-          if (this == 'r') {
+          if (this == 'r' && myself.multiSpecies[s].r) {
             r = myself.multiSpecies[s].r.split(/\b/);
             
             myself.multiSpecies[s].location = { name: r[0], start: parseInt(r[2]), end: parseInt(r[4]) };
