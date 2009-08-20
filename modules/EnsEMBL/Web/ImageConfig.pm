@@ -361,22 +361,30 @@ sub load_user_tracks {
     foreach my $logic_name ( keys %user_sources ) {
       my $analysis = $an_adaptor->fetch_by_logic_name($logic_name);
       next unless $analysis;
+      my $display = 'normal';
+      my $renderers = $alignment_renderers;
+      my $strand = 'b'; 
+      if ($analysis->program_version eq 'WIG') {
+        $display = 'tiling';
+        $strand  = 'r';
+        $renderers = [ 'off' => 'Off', 'tiling' => 'Wiggle plot' ];
+      }
+      my $description = CGI::escapeHTML($analysis->description) 
+          || 'User data from dataset '.CGI::escapeHTML($user_sources{$logic_name}{'source_name'});
       push @tracks, ['user_'.$logic_name, $analysis->display_label, {
         '_class'      => 'user',
         'glyphset'    => '_user_data',
         'colourset'   => 'classes',
         'sub_type'    => 'user',
-        'renderers'   => $alignment_renderers,
+        'renderers'   => $renderers,
         'source_name' => $user_sources{$logic_name}{'source_name'},
         'logic_name'  => $logic_name,
         'caption'     => $analysis->display_label,
         'data_type'   => $analysis->module,
-        'description' => sprintf ( '
-  Data uploaded by a user, in data set %s.
-  %s', CGI::escapeHTML($user_sources{$logic_name}{'source_name'}), CGI::escapeHTML($analysis->description) ),
-        'display'     => 'normal',
+        'description' => $description,
+        'display'     => $display,
         'style'       => $analysis->web_data,
-        'strand'      => 'b'
+        'strand'      => $strand,
       }];
     }
     foreach( sort {
