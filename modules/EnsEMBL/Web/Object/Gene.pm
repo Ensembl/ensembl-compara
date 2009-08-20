@@ -70,51 +70,56 @@ sub counts {
   my $obj = $self->Obj;
 
   return {} unless $obj->isa('Bio::EnsEMBL::Gene');
-  my $key = '::COUNTS::GENE::'.
-            $ENV{ENSEMBL_SPECIES}                 .'::'.
-            $self->core_objects->{parameters}{db} .'::'.
-            $self->core_objects->{parameters}{g}  .'::';
-
-  my $counts;
-
-  $counts = $MEMD->get($key) if $MEMD;
-  unless ($counts) {
-    $counts = {};
-    $counts->{'transcripts'} = @{$obj->get_all_Transcripts};
-    $counts->{'exons'}       = @{$obj->get_all_Exons};
-    $counts->{'similarity_matches'} = $self->count_xrefs;
-    $counts->{'alternative_alleles'} = @{$obj->get_all_alt_alleles}; #vega only, should really go somewhere else
-    $counts->{'self_alignments'} = $self->count_self_alignments; #vega only, should really go somewhere else
+  
+  my $key = "::COUNTS::GENE::$ENV{'ENSEMBL_SPECIES'}::$self->core_objects->{'parameters'}{'db'}::$self->core_objects->{'parameters'}{'g'}::";
+  my $counts = $MEMD->get($key) if $MEMD;
+  
+  if (!$counts) {
+    $counts = {
+      transcripts         => scalar @{$obj->get_all_Transcripts},
+      exons               => scalar @{$obj->get_all_Exons},
+      similarity_matches  => $self->count_xrefs,
+      alternative_alleles => scalar @{$obj->get_all_alt_alleles}, # vega only, should really go somewhere else
+      self_alignments     => $self->count_self_alignments         # vega only, should really go somewhere else
+    }; 
+    
     my $compara_db = $self->database('compara');
-    if($compara_db) {
+    
+    if ($compara_db) {
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
-      if($compara_dbh) {
+      
+      if ($compara_dbh) {
         my %res = map { @$_ } @{$compara_dbh->selectall_arrayref('
-              select ml.type, count(*) as N
-                from member as m, homology_member as hm, homology as h,
-                     method_link as ml, method_link_species_set as mlss
-               where m.stable_id = ? and hm.member_id = m.member_id and
-                     h.homology_id = hm.homology_id and 
-                     mlss.method_link_species_set_id = h.method_link_species_set_id and
-                     ml.method_link_id = mlss.method_link_id and
-                     ( ml.type = "ENSEMBL_ORTHOLOGUES" or
-                       ml.type = "ENSEMBL_PARALOGUES" and
-                       h.description in ("within_species_paralog","other_paralog","contiguous_gene_split","putative_gene_split") )
-               group by type', {}, $obj->stable_id
+          select ml.type, count(*) as N
+            from member as m, homology_member as hm, homology as h,
+                 method_link as ml, method_link_species_set as mlss
+           where m.stable_id = ? and hm.member_id = m.member_id and
+                 h.homology_id = hm.homology_id and 
+                 mlss.method_link_species_set_id = h.method_link_species_set_id and
+                 ml.method_link_id = mlss.method_link_id and
+                 ( ml.type = "ENSEMBL_ORTHOLOGUES" or
+                   ml.type = "ENSEMBL_PARALOGUES" and
+                   h.description in ("within_species_paralog","other_paralog","contiguous_gene_split","putative_gene_split") )
+           group by type', {}, $obj->stable_id
         )};
+        
         $counts->{'orthologs'} = $res{'ENSEMBL_ORTHOLOGUES'};
-        $counts->{'paralogs'} = $res{'ENSEMBL_PARALOGUES'};
+        $counts->{'paralogs'}  = $res{'ENSEMBL_PARALOGUES'};
+        
         my ($res) = $compara_dbh->selectrow_array(
           'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
           {}, $obj->stable_id
         );
-        $counts->{'families'}    = $res;
+        
+        $counts->{'families'} = $res;
       }
-      ($counts->{'alignments'}) = $self->count_alignments if $self->get_db eq 'core';
+      
+      $counts->{'alignments'} = $self->count_alignments->{'all'} if $self->get_db eq 'core';
     }
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
+  
   return $counts;
 }
 

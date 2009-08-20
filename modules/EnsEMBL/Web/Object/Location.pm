@@ -56,44 +56,28 @@ our $MEMD = new EnsEMBL::Web::Cache;
 
 sub counts {
   my $self = shift;
+  
   my $obj = $self->Obj;
-  my $key = '::COUNTS::LOCATION::'. $ENV{ENSEMBL_SPECIES};
-  my $counts;
-  $counts = $MEMD->get($key) if $MEMD;
-
-  unless ($counts) {
+  my $key = "::COUNTS::LOCATION::$ENV{'ENSEMBL_SPECIES'}";
+  my $counts = $MEMD->get($key) if $MEMD;
+  
+  if (!$counts) {
     my $species = $self->species;
-
-    # Count the entries in the synteny hash for this species...
-    my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-    my ($alignments, $align_contig) = $self->count_alignments;
+    my %synteny = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+    my $alignments = $self->count_alignments;
+    
     $counts = {
-      'synteny'      => scalar keys %{$synteny_hash{$species}||{}},
-      'alignments'   => $alignments,
-      'align_contig' => scalar keys %$align_contig
+      synteny             => scalar keys %{$synteny{$species}||{}},
+      alignments          => $alignments->{'all'},
+      pairwise_alignments => $alignments->{'pairwise'}
     };
-    $counts->{'pairwise_alignments'} = $self->count_pairwise_alignments;
-    if ($self->species_defs->databases->{'DATABASE_VARIATION'}) {
-      my $reseq = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'};
-      $counts->{'reseq_strains'} = $reseq;
-    }
+    
+    $counts->{'reseq_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} if $self->species_defs->databases->{'DATABASE_VARIATION'};
     
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
 
   return $counts;
-}
-
-sub count_pairwise_alignments {
-  my $self = shift;
-  my $species = $self->species;
-  my %alignments = $self->species_defs->multi('DATABASE_COMPARA','ALIGNMENTS');
-  my $c;
-  foreach my $align (values %alignments) {
-    next unless $align->{'class'} =~ /pairwise_alignment/;
-    $c++ if $align->{'species'}{$species};
-  }
-  return $c;
 }
 
 sub short_caption {

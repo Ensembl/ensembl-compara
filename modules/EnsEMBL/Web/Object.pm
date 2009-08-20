@@ -20,26 +20,21 @@ use Bio::EnsEMBL::VDrawableContainer;
 use base qw(EnsEMBL::Web::Proxiable);
 
 
-sub counts       { return {}; } 
+sub counts { return {}; } 
 
 sub count_alignments {
   my $self = shift;
   
   my $species = $self->species;
-  my %alignments = $self->species_defs->multi('DATABASE_COMPARA','ALIGNMENTS');
-  my $c_align;
-    my $c_species;
+  my %alignments = $self->species_defs->multi('DATABASE_COMPARA', 'ALIGNMENTS');
+  my $c = { all => 0, pairwise => 0 };
   
-  foreach (values %alignments) {
-    $c_align++ if $_->{'species'}{$species} && $_->{'type'} !~ /TRANSLATED_BLAT/;
-    
-    next unless $_->{'species'}{$species} && (keys %{$_->{'species'}} == 2);
-    
-    my ($other_species) = grep { $_ ne $species } keys %{$_->{'species'}};
-    $c_species->{$other_species}++;
+  foreach (grep $_->{'species'}{$species}, values %alignments) {
+    $c->{'all'}++ ;
+    $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/;
   }
   
-  return ($c_align, $c_species); 
+  return $c; 
 }
 
 sub _availability { 
