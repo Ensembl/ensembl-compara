@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use base qw(Bio::EnsEMBL::GlyphSet::_alignment);
+use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
 sub _das_link {
   my $self = shift;
@@ -22,6 +22,32 @@ sub feature_label {
   my( $self, $f, $db_name ) = @_;
   return $f->hseqname;
 }
+
+sub draw_features {
+  my ($self, $wiggle)= @_;
+
+  my %data = $self->features;
+  return 0 unless keys %data;
+
+  if ( $wiggle ){
+    while (my ($key, $features) = each (%data)) {
+      my $description = $self->{'my_config'}{'_tree_info'}{'nodes'}{'user_'.$key}{'data'}{'description'};
+      my $config      = $self->{'my_config'}{'_tree_info'}{'nodes'}{'user_'.$key}{'data'}{'style'};
+      my ($min_score,$max_score) = split(':', $config->{'viewLimits'});
+      $min_score = $config->{'min_score'} unless $min_score;
+      $max_score = $config->{'max_score'} unless $max_score;
+      $self->draw_wiggle_plot(
+        $features->[0], {
+          'min_score' => $min_score, 'max_score' => $max_score,
+          'score_colour' => $config->{'color'}, 'axis_colour' => $config->{'color'},
+          'description' => $description, 'graph_type' => $config->{'graphType'},
+      });
+    }
+  }
+
+ return 1;
+}
+
 
 sub feature_title {
   my( $self, $f, $db_name ) = @_;
