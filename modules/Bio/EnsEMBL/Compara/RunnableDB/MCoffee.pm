@@ -389,6 +389,16 @@ sub run_mcoffee
   } elsif ($self->{'method'} eq 'fmcoffee') {
       # FMCoffee, fast but accurate alignments.
       $method_string .= "mafft_msa, muscle_msa, clustalw_msa, kalign_msa";
+  } elsif ($self->{'method'} eq 'mafft') {
+      # MAFFT FAST: very quick alignments.
+      $method_string .= "mafft_msa";
+  } elsif ($self->{'method'} eq 'prank') {
+      # PRANK: phylogeny-aware alignment.
+      $method_string .= "prank_msa";
+  } elsif (defined($self->{'redo'}) && $self->{'method'} eq 'unalign') {
+    my $cutoff = $self->{'cutoff'} || 2;
+      # Unalign module
+    $method_string = " -other_pg seq_reformat -in " . $self->{redo_alnname} ." -action +aln2overaln unalign 2 30 5 15 0 1>$mcoffee_output";
   } else {
       throw ("Improper method parameter: ".$self->{'method'});
   }
