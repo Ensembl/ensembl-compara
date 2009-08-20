@@ -31,7 +31,7 @@ sub content {
   my $extra_html = '';
   my $cp = int(($seq_region_end + $seq_region_start) / 2);
   my $wd = $seq_region_end - $seq_region_start + 1;
-  my $url = $object->_url({ 'r' => undef, 'align' => $object->param('align')}, 1);
+  my $url = $object->_url({%{$object->multi_params}, ( r => undef )}, 1);
   my @mp;
   my $x = 0;
   
@@ -103,8 +103,8 @@ sub _nav_url {
   ($s, $e) = ($max - ($e - $s), $max) if $e > $max;
   
   return $object->_url({ 
-    'r'     => $object->seq_region_name . ':' . $s . '-' . $e,
-    'align' => $object->param('align')
+    'r' => $object->seq_region_name . ':' . $s . '-' . $e,
+    %{$object->multi_params}
   });
 }
 
