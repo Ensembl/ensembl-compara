@@ -1519,15 +1519,4 @@ sub chr_short_name {
   return "$abbrev $chr_name";
 }
 
-sub multi_params {
-  my $self = shift;
-  my $realign = shift;
-  
-  my %params = defined $realign ? 
-    map { $_ => $self->param($_) } grep { $realign ? /^([srg]\d*|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|align)$/ && $self->param($_) } $self->param :
-    map { $_ => $self->param($_) } grep { /^([srg]\d*|align)$/ && $self->param($_) } $self->param;
-  
-  return \%params;
-}
-
 1;
