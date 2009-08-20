@@ -420,6 +420,14 @@ sub _get_gene_location_from_transcript {
   ); 	 
   my $slice = $self->transcript->feature_Slice; 	 
      $slice = $slice->invert() if $slice->strand < 0; 	 
+# in case genes are attached to contigs or supercontigs we need to get the chromosome coordinates
+  if (! $slice->is_toplevel) {
+      my $toplevel_projection = $slice->project('toplevel');
+      if (my $seg = shift @$toplevel_projection) {
+          $slice = $seg->to_Slice();
+      }
+  }
+
   $self->location( $slice ); 	 
 }
 
@@ -429,6 +437,14 @@ sub _get_location_from_gene {
 
   my $slice = $self->gene->feature_Slice;
      $slice = $slice->invert() if $slice->strand < 0;
+# in case genes are attached to contigs or supercontigs we need to get the chromosome coordinates
+  if (! $slice->is_toplevel) {
+      my $toplevel_projection = $slice->project('toplevel');
+      if (my $seg = shift @$toplevel_projection) {
+          $slice = $seg->to_Slice();
+      }
+  }
+
   $self->location( $slice );
 }
 
