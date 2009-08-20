@@ -1191,9 +1191,17 @@ sub render_genes {
     $rect->{'title'} = ( $g->external_name ? $g->external_name.'; ':'' ).
                        "Gene: ".$g->stable_id."; Location: ".
                        $g->seq_region_name.':'.$g->seq_region_start.'-'.$g->seq_region_end;
-    if($show_navigation) {
-      $rect->{'href'}  = $self->_url({'type'=>'Gene','action'=>'Summary','g'=>$g->stable_id,'db'=>$database});
+                       
+    if ($show_navigation) {
+      $rect->{'href'} = $self->_url({
+        species => $self->species,
+        type    => 'Gene',
+        action  => 'Summary',
+        g       => $g->stable_id,
+        db      => $database
+      });
     }
+    
     push @GENES_TO_LABEL , {
       'start'     => $start,
       'label'     => $label,
