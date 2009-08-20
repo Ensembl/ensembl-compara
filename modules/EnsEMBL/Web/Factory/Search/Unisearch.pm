@@ -1,5 +1,15 @@
 package EnsEMBL::Web::Factory::Search::Unisearch;
 
+##
+## Deprecated, please see EnsEMBL::Web::Factory::UniSearch
+##
+
+
+
+
+
+
+
 use strict;
 
 use EnsEMBL::Web::Factory;
@@ -8,6 +18,9 @@ our @ISA = qw(EnsEMBL::Web::Factory);
 
 sub createObjects { 
   my $self       = shift;    
+  
+  warn __PACKAGE__ . " has been deprecated";
+
   ### Parse parameters to get index names
   my $idx      = $self->param('type') || $self->param('idx') || 'all';
   ### Parse parameters to get Species names
@@ -17,6 +30,10 @@ sub createObjects {
 
 sub selectall_arrayref {
   my( $self, $species, $db, $sql ) = @_;
+
+  warn __PACKAGE__ . " has been deprecated";
+
+
 
   my $db = $self->database($db,$species);
   warn $db;
@@ -40,6 +57,10 @@ sub selectall_arrayref {
 
 sub search_ALL {
   my( $self, $species ) = @_;
+
+  warn __PACKAGE__ . " has been deprecated";
+
+
   my $package_space = __PACKAGE__.'::';
   no strict 'refs';
   my @methods = map { /(search_\w+)/ && $1 ne 'search_ALL' ? $1 : () } keys %$package_space;
