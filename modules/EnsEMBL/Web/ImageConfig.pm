@@ -297,8 +297,14 @@ sub load_user_tracks {
       }
     } 
     else {
-      my $display = $entry->{'format'} eq 'WIG' ? 'tiling' : 'normal';
-      my $strand  = $entry->{'format'} eq 'WIG' ? 'r' : 'b';
+      my $display = 'normal';
+      my $renderers = $alignment_renderers;
+      my $strand = 'b'; 
+      if ($entry->{'format'} eq 'WIG') {
+        $display = 'tiling';
+        $strand  = 'r';
+        $renderers = [ 'off' => 'Off', 'tiling' => 'Wiggle plot' ];
+      }
       $menu->append( $self->create_track( 'tmp_'.$entry->{'code'}, $entry->{'name'}, {
         '_class'      => 'tmp',
         'glyphset'    => '_flat_file',
@@ -307,9 +313,8 @@ sub load_user_tracks {
         'file'        => $entry->{'filename'},
         'format'      => $entry->{'format'},
         'caption'     => $entry->{'name'},
-        'renderers'   => $alignment_renderers,
-        'description' => '
-  Data that has been temporarily uploaded to the web server.',
+        'renderers'   => $renderers,
+        'description' => 'Data that has been temporarily uploaded to the web server.',
         'display'     => $display,
         'strand'      => $strand,
       })) if $entry->{'species'} eq $self->{'species'};
