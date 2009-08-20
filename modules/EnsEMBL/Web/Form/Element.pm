@@ -6,41 +6,45 @@ sub required_string { return '<strong title="required field">*</strong>'; }
 sub required_value { return '[required]'; }
 
 sub new {
-  my( $class, %array ) = @_;
+  my ($class, %params) = @_;
+  
   my $self = {
-    'form'         => $array{ 'form'  },
-    'id'           => $array{ 'id'  },
-    'type'         => $array{ 'type'  },
-    'value'        => $array{ 'value' },
-    'default'      => $array{ 'default' },
-    'values'       => $array{ 'values' } || {},
-    'widget_type'  => $array{ 'widget_type'} || 'text',
+    'form'         => $params{'form'},
+    'id'           => $params{'id'},
+    'type'         => $params{'type'},
+    'value'        => $params{'value'},
+    'default'      => $params{'default'},
+    'values'       => $params{'values'} || {},
+    'widget_type'  => $params{'widget_type'} || 'text',
     '_validate'    => 0,
-    'layout'       => $array{ 'layout'}    || 'normal',
-    'name'         => $array{ 'name' },
-    'size'         => $array{ 'size' },
-    'rows'         => $array{ 'rows' },
-    'cols'         => $array{ 'cols' },
-    'required'     => $array{ 'required' },
-    'notes'        => $array{ 'notes' },
-    'bg'           => $array{ 'bg' },
-    'style'        => $array{ 'style' } || 'normal',
-    'classes'      => $array{ 'classes' } || [],
-    'styles'       => $array{ 'styles' } || [],
-    'introduction' => $array{ 'introduction' },
-    'label'        => $array{ 'label' },
-    'comment'      => $array{ 'comment' },
-    'hidden_label' => $array{ 'hidden_label' },
-    'render_as'    => $array{ 'render_as'    },
-    'src'          => $array{ 'src'    },
-    'alt'          => $array{ 'alt'    },
-    'width'        => $array{ 'width' },
-    'height'       => $array{ 'height' },
-    'noescape'     => $array{ 'noescape' },
-    'raw'          => $array{ 'raw' } || 0,
+    'layout'       => $params{'layout'} || 'normal',
+    'name'         => $params{'name'},
+    'size'         => $params{'size'},
+    'rows'         => $params{'rows'},
+    'cols'         => $params{'cols'},
+    'required'     => $params{'required'},
+    'notes'        => $params{'notes'},
+    'bg'           => $params{'bg'},
+    'style'        => $params{'style'} || 'normal',
+    'classes'      => $params{'classes'} || [],
+    'styles'       => $params{'styles'} || [],
+    'introduction' => $params{'introduction'},
+    'label'        => $params{'label'},
+    'comment'      => $params{'comment'},
+    'hidden_label' => $params{'hidden_label'},
+    'render_as'    => $params{'render_as'},
+    'src'          => $params{'src'},
+    'alt'          => $params{'alt'},
+    'width'        => $params{'width'},
+    'height'       => $params{'height'},
+    'noescape'     => $params{'noescape'},
+    'max'          => $params{'max'},
+    'raw'          => $params{'raw'} || 0,
     'in_error'     => 'no'
   };
+  
   bless $self, $class;
+  
   return $self; 
 }
 
@@ -69,12 +73,13 @@ sub comment      :lvalue { $_[0]{'comment'}; }
 sub hidden_label :lvalue { $_[0]{'hidden_label'}; }
 sub in_error     :lvalue { $_[0]{'in_error'}; }
 sub render_as    :lvalue { $_[0]{'render_as'}; }
-sub raw          :lvalue { $_[0]{'raw'};   }
-sub src          :lvalue { $_[0]{'src'};   }
-sub alt          :lvalue { $_[0]{'alt'};   }
-sub width        :lvalue { $_[0]{'width'};   }
-sub height       :lvalue { $_[0]{'height'};   }
-sub noescape     :lvalue { $_[0]{'noescape'};   }
+sub raw          :lvalue { $_[0]{'raw'}; }
+sub src          :lvalue { $_[0]{'src'}; }
+sub alt          :lvalue { $_[0]{'alt'}; }
+sub width        :lvalue { $_[0]{'width'}; }
+sub height       :lvalue { $_[0]{'height'}; }
+sub noescape     :lvalue { $_[0]{'noescape'}; }
+sub max          :lvalue { $_[0]{'max'}; }
 
 sub _is_valid    { return 1; }
 sub validate     { return $_[0]->required eq 'yes'; }
