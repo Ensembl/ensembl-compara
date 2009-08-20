@@ -1214,40 +1214,38 @@ sub add_alignments {
     next unless $row->{'species'}{$species};
     
     if ($row->{'class'} =~ /pairwise_alignment/) {
-      my ($other_species) = grep { $species ne $_ } keys %{$row->{'species'}};
-      my $other_label = $self->species_defs->species_label($other_species, "no_formatting");
-      (my $other_species_hr = $other_species ) =~ s/_/ /g;
+      my ($other_species) = grep { !/^$species|merged$/ } keys %{$row->{'species'}};
+      my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
+      (my $other_species_hr = $other_species) =~ s/_/ /g;
       my $menu_key;
       my $description;
       
       if ($row->{'type'} =~ /BLASTZ/) {
         $menu_key = 'pairwise_blastz';
-        $description = "<a href=\"/info/docs/compara/analyses.html\" class=\"cp-external\">BLASTz net pairwise alignments</a> between $self_label and $other_label.";
+        $description = qq{<a href="/info/docs/compara/analyses.html" class="cp-external">BLASTz net pairwise alignments</a> between $self_label and $other_label};
       } elsif ($row->{'type'} =~ /TRANSLATED_BLAT/) {
         $menu_key = 'pairwise_tblat';
-        $description = "<a href=\"/info/docs/compara/analyses.html\" class=\"cp-external\">Trans. BLAT net pairwise alignments</a> between $self_label and $other_label.";
+        $description = qq{<a href="/info/docs/compara/analyses.html" class="cp-external">Trans. BLAT net pairwise alignments</a> between $self_label and $other_label};
       } else {
         $menu_key = 'pairwise_align';
-        $description = "<a href=\"/info/docs/compara/analyses.html\" class=\"cp-external\">Pairwise alignments</a> between $self_label and $other_label.";
+        $description = qq{<a href="/info/docs/compara/analyses.html" class="cp-external">Pairwise alignments</a> between $self_label and $other_label};
       }
       
-      (my $caption = $row->{'name'}) =~ s/blastz-net \(on.*?\)/BLASTz net/g;
-      $caption =~ s/translated-blat-net/Trans. BLAT net/g;
-      $caption =~ s/$regexp//;
+      $description .= " $1" if $row->{'name'} =~ /\((on.+)\)/;
       
       $alignments->{$menu_key}{$row->{'id'}} = {
         'db'             => $key,
         'glyphset'       => '_alignment_pairwise',
-        'name'           => $row->{'name'},
-        'caption'        => $caption,
+        'name'           => $other_label,
+        'caption'        => $row->{'name'},
         'type'           => $row->{'type'},
         'species_set_id' => $row->{'species_set_id'},
         'species'        => $other_species,
         'species_hr'     => $other_species_hr,
-        '_assembly'      => $self->species_defs->get_config( $other_species, 'ENSEMBL_GOLDEN_PATH' ),
+        '_assembly'      => $self->species_defs->get_config($other_species, 'ENSEMBL_GOLDEN_PATH'),
         'class'          => $row->{'class'},
         'description'    => $description,
-        'order'          => $row->{'type'}.'::'.$other_species,
+        'order'          => $other_label,
         'colourset'      => 'pairwise',
         'strand'         => 'r',
         'display'        => 'off', ## Default to on at the moment - change to off by default!
@@ -1270,7 +1268,7 @@ sub add_alignments {
           'method_link_species_set_id' => $row->{'id'},
           'class'          => $row->{'class'},
           'conservation_score'  => $row->{'conservation_score'},
-          'description'    => "<a href=\"/info/docs/compara/analyses.html#conservation\" class=\"cp-external\">$program conservation scores</a> based on the ".$row->{'name'},
+          'description'    => qq{<a href="/info/docs/compara/analyses.html#conservation" class="cp-external">$program conservation scores</a> based on the $row->{'name'}},
           'colourset'      => 'multiple',
           'order'          => sprintf('%12d::%s::%s', 1e12-$n_species*10, $row->{'type'}, $row->{'name'}),
           'strand'         => 'f',
@@ -1281,7 +1279,7 @@ sub add_alignments {
         $alignments->{'multiple_align'}{$row->{'id'}.'_constrained'} = {
           'db'             => $key,
           'glyphset'       => '_alignment_multiple',
-          'name'           => "Constrained elements for ".$row->{'name'},
+          'name'           => "Constrained elements for $row->{'name'}",
           'short_name'     => $row->{'name'},
           'caption'        => "$n_species way $program elements",
           'type'           => $row->{'type'},
@@ -1289,7 +1287,7 @@ sub add_alignments {
           'method_link_species_set_id' => $row->{'id'},
           'class'          => $row->{'class'},
           'constrained_element' => $row->{'constrained_element'},
-          'description'    => "<a href=\"/info/docs/compara/analyses.html#conservation\" class=\"cp-external\">$program constrained elements</a> based on the ".$row->{'name'},
+          'description'    => qq{<a href="/info/docs/compara/analyses.html#conservation" class="cp-external">$program constrained elements</a> based on the $row->{'name'}},
           'colourset'      => 'multiple',
           'order'          => sprintf( '%12d::%s::%s',1e12-$n_species*10+1, $row->{'type'}, $row->{'name'} ),
           'strand'         => 'f',
@@ -1308,8 +1306,8 @@ sub add_alignments {
         'species_set_id' => $row->{'species_set_id'},
         'method_link_species_set_id' => $row->{'id'},
         'class'          => $row->{'class'},
-        'description'    => "<a href=\"/info/docs/compara/analyses.html#conservation\">$n_species way whole-genome multiple alignments</a>.; ".
-            join("; ", sort map {$self->species_defs->species_label( $_, "no_formatting" )} grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}}),
+        'description'    => qq{<a href="/info/docs/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>. } .
+            join('; ', sort map { $self->species_defs->species_label($_, 'no_formatting') } grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}}),
         'colourset'      => 'multiple',
         'order'          => sprintf('%12d::%s::%s', 1e12-$n_species*10-1, $row->{'type'}, $row->{'name'}),
         'strand'         => 'f',
